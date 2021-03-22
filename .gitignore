@@ -1,0 +1,10 @@
+*.so
+*.png
+*.jpg
+*.npy
+*.mp4
+Saves/
+testplots/
+build/
+Sniff_all/
+__pycache__/
