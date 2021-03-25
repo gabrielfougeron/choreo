@@ -13,11 +13,12 @@ import time
 from Choreo_funs import *
 
 
-nbody = np.array([1,1,1])
+# ~ nbody = np.array([1,1,1,1,1])
+# ~ nbody = np.array([1,1,1])
 # ~ nbody = np.array([2,2])
 # ~ nbody = np.array([3])
 # ~ nbody = np.array([4])
-# ~ nbody = np.array([5])
+nbody = np.array([5])
 # ~ nbody = np.array([6])
 # ~ nbody = np.array([7])
 # ~ nbody = np.array([9])
@@ -53,8 +54,8 @@ Reconverge_sols = True
 n_reconverge_it_max = 4
 
 # ~ theta_rot_dupl = [0.,.2,.4,.6,.8]
-theta_rot_dupl = np.linspace(start=0.,stop=twopi,endpoint=False,num=nbody[0])
-dt_shift_dupl = np.linspace(start=0.,stop=1.,endpoint=False,num=nbody[0]*5)
+theta_rot_dupl = np.linspace(start=0.,stop=twopi,endpoint=False,num=nbody[0]*3)
+dt_shift_dupl = np.linspace(start=0.,stop=1.,endpoint=False,num=nbody[0]*3)
 
 # ~ print(1/0)
 
@@ -68,9 +69,6 @@ ncoeff_init = 600
 # ~ ncoeff_cutoff = ncoeff_init
 ncoeff_cutoff = 100
 
-change_var_coeff =1.
-# ~ change_var_coeff =0.5
-
 MomCons_As_Sym = True
 # ~ MomCons_As_Sym = False
 
@@ -80,7 +78,7 @@ for i in range(nloop-1):
     LoopSelect = np.array([i],dtype=int)
     LoopPerm = np.array([i+1],dtype=int)
 
-    rot_angle = twopi * 1/3
+    rot_angle = 0
     SpaceSym = False 
     if (SpaceSym):
         s = -1
@@ -90,7 +88,7 @@ for i in range(nloop-1):
     TimeRev = False
     # ~ TimeRev = True
 
-    TimeShift = 0
+    TimeShift = 1/5
 
     SymGens.extend([{
     'LoopSelect' : LoopSelect,
@@ -104,9 +102,9 @@ for i in range(nloop-1):
 
 il = 0
 SymType = {
-    'name'  : 'D',
+    'name'  : 'C',
     'n'     : nbody[il],
-    'k'     : 1,
+    'k'     : 5,
     'l'     : 1,
 }
 SymGens.extend(Make2DSymOneLoop(SymType,il))
@@ -144,7 +142,7 @@ for i in range(n_reconverge_it_max+1):
     
     ncoeff = ncoeff_init * (2**i)
     
-    coeff_to_param , param_to_coeff = setup_changevar(nloop,nbody,ncoeff,mass,MomCons=MomCons_As_Sym,n_grad_change=change_var_coeff,Sym_list=SymGens)
+    coeff_to_param , param_to_coeff = setup_changevar(nloop,nbody,ncoeff,mass,MomCons=MomCons_As_Sym,Sym_list=SymGens)
     
     print('Number of scalar parameters before symmetries : ',coeff_to_param.shape[1])
     print('Number of scalar parameters after  symmetries : ',coeff_to_param.shape[0])
@@ -411,8 +409,10 @@ while (True):
                         all_coeffs = Unpackage_all_coeffs(best_sol.x,callfun)
                         
                         print('Opt Action Grad Norm : ',best_sol.f_norm)
+
+                        # Computing Newton error on more points in order to better detect collisions
                     
-                        Newt_err = Compute_Newton_err(nloop,nbody,ncoeff,mass,nint,all_coeffs)
+                        Newt_err = Compute_Newton_err(nloop,nbody,ncoeff,mass,2*nint,all_coeffs)
                         Newt_err_norm = np.linalg.norm(Newt_err)
                         
                         print('Newton Error : ',Newt_err_norm)

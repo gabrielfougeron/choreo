@@ -14,8 +14,11 @@ from Choreo_funs import *
 # ~ nbody = np.array([12])
 # ~ nbody = np.array([3,3])
 # ~ nbody = np.array([1,2,3])
+# ~ nbody = np.array([1,1,1,1,1,1])
 # ~ nbody = np.array([1,1,1,1,1])
-nbody = np.array([6])
+# ~ nbody = np.array([3,3,3,3,3])
+# ~ nbody = np.array([6])
+nbody = np.array([8])
 
 nloop = nbody.size
 mass = np.ones((nloop))
@@ -40,20 +43,29 @@ save_init = False
 save_approx = False
 # ~ save_approx = True
 
+nint_plot = 4000
+nperiod = 1/4
+
+Plot_anim = True
+# ~ Plot_anim = False
+
+# ~ Plot_trace = False
+Plot_trace = True
+
 # ~ Reconverge_sols = False
 Reconverge_sols = True
 
-n_reconverge_it_max = 4
+n_reconverge_it_max = 5
 
 # ~ theta_rot_dupl = [0.,.2,.4,.6,.8]
-theta_rot_dupl = np.linspace(start=0.,stop=twopi,endpoint=False,num=nbody[0]*3)
-dt_shift_dupl = np.linspace(start=0.,stop=1.,endpoint=False,num=nbody[0]*3)
+theta_rot_dupl = np.linspace(start=0.,stop=twopi,endpoint=False,num=np.sum(nbody))
+dt_shift_dupl = np.linspace(start=0.,stop=1.,endpoint=False,num=np.sum(nbody))
 
 # ~ print(1/0)
 
 # ~ ncoeff_init = 100
-# ~ ncoeff_init = 600
-ncoeff_init = 1200
+ncoeff_init = 600
+# ~ ncoeff_init = 1200
 # ~ ncoeff_init = 90
 
 # ~ ncoeff_cutoff = ncoeff_init
@@ -64,6 +76,46 @@ change_var_coeff =1.
 
 MomCons_As_Sym = True
 # ~ MomCons_As_Sym = False
+
+SymGens = []
+
+# ~ for i in [0,1,2]:
+    # ~ LoopTarget = np.array([i],dtype=int)
+    # ~ LoopSource = np.array([i+1],dtype=int)
+
+    # ~ rot_angle = twopi * 1/4
+    # ~ SpaceSym = False 
+    # ~ SpaceSym = True 
+    # ~ if (SpaceSym):
+        # ~ s = -1
+    # ~ else:
+        # ~ s = 1
+
+    # ~ TimeRev = False
+    # ~ TimeRev = True
+
+    # ~ TimeShift = 1/4
+
+    # ~ SymGens.extend([{
+    # ~ 'LoopTarget' : LoopTarget,
+    # ~ 'LoopSource' : LoopSource,
+    # ~ 'SpaceRot' : np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64),
+    # ~ 'TimeRev' : TimeRev,
+    # ~ 'TimeShift' : TimeShift,
+    # ~ }])
+
+
+
+il = 0
+SymType = {
+    'name'  : 'C',
+    'n'     : nbody[il],
+    'k'     : 15,
+    'l'     : 7 ,
+}
+SymGens.extend(Make2DSymOneLoop(SymType,il))
+
+
 
 n_opt = 0
 
@@ -84,6 +136,9 @@ krylov_method = 'lgmres'
 # ~ krylov_method = 'cgs'
 # ~ krylov_method = 'minres'
 
+
+
+
 coeff_to_param_list = []
 param_to_coeff_list = []
 
@@ -91,10 +146,16 @@ for i in range(n_reconverge_it_max+1):
     
     ncoeff = ncoeff_init * (2**i)
     
-    coeff_to_param , param_to_coeff = setup_changevar(nloop,nbody,ncoeff,mass,MomCons=MomCons_As_Sym,n_grad_change=change_var_coeff)
+    coeff_to_param , param_to_coeff = setup_changevar(nloop,nbody,ncoeff,mass,MomCons=MomCons_As_Sym,Sym_list=SymGens)
+    
+    print('Number of scalar parameters before symmetries : ',coeff_to_param.shape[1])
+    print('Number of scalar parameters after  symmetries : ',coeff_to_param.shape[0])
+    print('Reduction of ',100*(1-coeff_to_param.shape[0]/coeff_to_param.shape[1]),' %')
+    print('')
     
     coeff_to_param_list.append(coeff_to_param)
     param_to_coeff_list.append(param_to_coeff)
+
 
 while (True):
     
@@ -126,8 +187,8 @@ while (True):
                 randampl = np.random.rand()* amplitude_o
             
                 ko = 3
-                k1 = 12 
-                k2= 20
+                k1 = 30
+                k2= 50
                 if (k <= ko):
                     # ~ randampl = 0.12
                     randampl = 0.001 * np.random.rand()
@@ -292,7 +353,9 @@ while (True):
                     
                     print('Opt Action Grad Norm : ',best_sol.f_norm)
                 
-                    Newt_err = Compute_Newton_err(nloop,nbody,ncoeff,mass,nint,all_coeffs)
+                    # Computing Newton error on more points in order to better detect collisions
+                
+                    Newt_err = Compute_Newton_err(nloop,nbody,ncoeff,mass,2*nint,all_coeffs)
                     Newt_err_norm = np.linalg.norm(Newt_err)
                     
                     print('Newton Error : ',Newt_err_norm)
@@ -349,11 +412,10 @@ while (True):
                     
                     print('Saving solution as '+filename_output+'.*')
                     
-                    nint_plot = 1000
-                    nperiod = 2
                     np.save(filename_output+'.npy',all_coeffs)
                     plot_all_2D(nloop,nbody,nint_plot,all_coeffs,filename_output+'.png')
-                    plot_all_2D_anim(nloop,nbody,nint_plot,nperiod,all_coeffs,filename_output+'.mp4')
+                    if (Plot_anim):
+                        plot_all_2D_anim(nloop,nbody,nint_plot,nperiod,all_coeffs,filename_output+'.mp4',Plot_trace=Plot_trace)
                     Write_Descriptor(nloop,nbody,ncoeff,mass,nint,all_coeffs,filename_output+'.txt')
             
     

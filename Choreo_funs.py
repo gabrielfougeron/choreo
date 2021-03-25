@@ -10,7 +10,9 @@ import scipy.optimize as opt
 import scipy.linalg as la
 import scipy.sparse as sp
 import sparseqr
+import networkx as nx
 
+import fractions
 
 from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
@@ -29,26 +31,6 @@ fourpi = 4 * np.pi
 fourpisq = twopi*twopi
 
 nnm1 = n*(n-1)
-        
-def proj_zero_mean(nloop,nbody,ncoeff,mass,all_coeffs):
-    
-    mass_cen = np.zeros((ndim),dtype=np.float64)
-    mass_tot = 0.
-    
-    for il in range(nloop):
-        
-        mass_l =  mass[il]*nbody[il]
-        mass_tot +=  mass_l
-        mass_cen += mass_l * all_coeffs[il,:,0,0]
-
-    mass_cen /= mass_tot
-    
-    # ~ print('Mass cent : ',mass_cen)
-  
-    for il in range(nloop):
-
-        all_coeffs[il,:,0,0] -=  mass_cen
-
             
 def setup_changevar(nloop,nbody,ncoeff,mass=None,MomCons=False,n_grad_change=1.,Sym_list=[]):
     
@@ -98,10 +80,10 @@ def setup_changevar(nloop,nbody,ncoeff,mass=None,MomCons=False,n_grad_change=1.,
     
     for Sym in Sym_list :
     
-        for iln in range(len(Sym['LoopSelect'])):
+        for iln in range(len(Sym['LoopTarget'])):
             
-            il = Sym['LoopSelect'][iln]
-            ilp = Sym['LoopPerm'][iln]
+            il = Sym['LoopTarget'][iln]
+            ilp = Sym['LoopSource'][iln]
             
             if (il == ilp):
                 
@@ -378,7 +360,6 @@ def setup_changevar(nloop,nbody,ncoeff,mass=None,MomCons=False,n_grad_change=1.,
     
     cstrmat_sp =  sp.coo_matrix((cstr_data,(cstr_row,cstr_col)),shape=(n_idx,ncstr), dtype=np.float64)
     
-    deb = time.time()
     param_to_coeff = null_space_sparseqr(cstrmat_sp)
     coeff_to_param = param_to_coeff.transpose(copy=True)
     
@@ -407,11 +388,6 @@ def setup_changevar(nloop,nbody,ncoeff,mass=None,MomCons=False,n_grad_change=1.,
             kfac = 1.
         
         coeff_to_param.data[idx] *= kfac
-    
-    # ~ coeff_to_param = sp.identity(n_idx,dtype=np.float64,format="coo")
-    # ~ param_to_coeff = sp.identity(n_idx,dtype=np.float64,format="coo")
-    
-    
     
     return coeff_to_param , param_to_coeff    
 
@@ -496,7 +472,7 @@ def plot_all_2D_anim(nloop,nbody,nint,nperiod,all_coeffs,filename,Plot_trace=Tru
 
         return lines + points
 
-    anim = animation.FuncAnimation(fig, update, frames=nperiod*nint,init_func=init, blit=True)
+    anim = animation.FuncAnimation(fig, update, frames=int(nperiod*nint),init_func=init, blit=True)
                         
     # Save as mp4. This requires mplayer or ffmpeg to be installed
     # ~ anim.save(filename, fps=30, extra_args=['-vcodec', 'libx264'])
@@ -655,9 +631,41 @@ def Compute_action_hess_LinOpt_package(x,callfun):
 
     args=callfun[0]
 
-    return sp.linalg.LinearOperator((args['n_idx'],args['n_idx']),
+    return sp.linalg.LinearOperator((args['coeff_to_param'].shape[0],args['coeff_to_param'].shape[0]),
         matvec =  (lambda dx,xl=x,callfunl=callfun : Compute_action_hess_mul_package(xl,dx,callfunl)),
         rmatvec = (lambda dx,xl=x,callfunl=callfun : Compute_action_hess_mul_package(xl,dx,callfunl)))
+   
+def Compute_Pure_Hessian_Signature(nloop,nbody,ncoeff,mass,nint,all_coeffs):
+    
+    coeff_to_param, param_to_coeff = setup_changevar(nloop=nloop,nbody=nbody,ncoeff=ncoeff,mass=mass,MomCons=False,n_grad_change=1.,Sym_list=[])
+    
+    x, callfun = Package_args(nloop,nbody,ncoeff,mass,nint,all_coeffs,coeff_to_param,param_to_coeff)
+    
+    HessMat = Compute_action_hess_LinOpt_package(x,callfun)
+    
+    min_thresh = -1e-10
+    
+    k = 5
+    kmax = 100
+    GoOn = True
+    while (GoOn):
+        
+        w, v = sp.linalg.eigsh(HessMat, k=k, which='SA', v0=None, ncv=None, maxiter=None, tol=1e-12, return_eigenvectors=True)
+        
+        print(w)
+        
+        sig = 0
+        while (sig < k):
+            if (w[sig] < min_thresh):
+                sig+=1
+            else:
+                return sig
+
+        GoOn = not(k==kmax)
+        k*=2
+        k = min(k,kmax)
+
+    return ' >= {:%d}'.format(kmax)
     
 def Current_disp(transform,callfun):
     
@@ -904,7 +912,7 @@ def Check_Duplicates_nosym(file_path_list,all_coeffs,duplicate_eps,ncoeff_cutoff
             
     return Found_duplicate,dist_sols,file_path_min
 
-def Write_Descriptor(nloop,nbody,ncoeff,mass,nint,all_coeffs,filename):
+def Write_Descriptor(nloop,nbody,ncoeff,mass,nint,all_coeffs,filename,WriteSignature=False):
     with open(filename,'w') as filename_write:
         
         filename_write.write('Number of loops : {:d}\n'.format(nloop))
@@ -933,6 +941,12 @@ def Write_Descriptor(nloop,nbody,ncoeff,mass,nint,all_coeffs,filename):
         
         dxmin = Compute_mindist(nloop,nbody,ncoeff,nint,all_coeffs)
         filename_write.write('Minimum inter-body distance : {:.10E}\n'.format(dxmin))
+        
+        if (WriteSignature):            
+            sig = Compute_Pure_Hessian_Signature(nloop,nbody,ncoeff,mass,nint,all_coeffs)
+            filename_write.write('Signature of Hessian : {:d}\n'.format(sig))
+        
+        
         
 def null_space_sparseqr(AT):
     # AT must be in COO format
@@ -990,7 +1004,6 @@ def Make2DSymOneLoop(SymType,loop):
         # Dp(n,1,#) 
         # Dp(n,2,#) 
         
-        
     SymGens = []
     
     if ((SymType['name'] == 'C') or (SymType['name'] == 'D')):
@@ -1001,8 +1014,8 @@ def Make2DSymOneLoop(SymType,loop):
         TimeShift = - 1 / SymType['k']
         
         SymGens.append ({
-            'LoopSelect' : [loop],
-            'LoopPerm' : [loop],
+            'LoopTarget' : [loop],
+            'LoopSource' : [loop],
             'SpaceRot' : np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64),
             'TimeRev' : TimeRev,
             'TimeShift' : TimeShift,
@@ -1016,8 +1029,8 @@ def Make2DSymOneLoop(SymType,loop):
         TimeShift = 0
         
         SymGens.append ({
-            'LoopSelect' : [loop],
-            'LoopPerm' : [loop],
+            'LoopTarget' : [loop],
+            'LoopSource' : [loop],
             'SpaceRot' : np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64),
             'TimeRev' : TimeRev,
             'TimeShift' : TimeShift,
@@ -1031,8 +1044,8 @@ def Make2DSymOneLoop(SymType,loop):
         TimeShift =  1/2
         
         SymGens.append ({
-            'LoopSelect' : [loop],
-            'LoopPerm' : [loop],
+            'LoopTarget' : [loop],
+            'LoopSource' : [loop],
             'SpaceRot' : np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64),
             'TimeRev' : TimeRev,
             'TimeShift' : TimeShift,
@@ -1046,8 +1059,8 @@ def Make2DSymOneLoop(SymType,loop):
         TimeShift = 0
         
         SymGens.append ({
-            'LoopSelect' : [loop],
-            'LoopPerm' : [loop],
+            'LoopTarget' : [loop],
+            'LoopSource' : [loop],
             'SpaceRot' : np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64),
             'TimeRev' : TimeRev,
             'TimeShift' : TimeShift,
@@ -1057,5 +1070,390 @@ def Make2DSymOneLoop(SymType,loop):
     
     return SymGens
     
+class ChoreoSym():
+
+    def __init__(
+            self,
+            LoopTarget=0,
+            LoopSource=0,
+            SpaceRot=np.identity(ndim,dtype=np.float64),
+            TimeRev=1,
+            TimeShift=fractions.Fraction(numerator=0,denominator=1)
+            ):
+
+        self.LoopTarget = LoopTarget
+        self.LoopSource = LoopSource
+        self.SpaceRot = SpaceRot
+        self.TimeRev = TimeRev
+        self.TimeShift = TimeShift
+        
+    def Inverse(self):
+        
+        return ChoreoSym(
+            LoopTarget=self.LoopSource,
+            LoopSource=self.LoopTarget,
+            SpaceRot = self.SpaceRot.transpose(),
+            TimeRev = self.TimeRev,
+            # ~ TimeShift = -self.TimeRev*self.TimeShift            
+            TimeShift = fractions.Fraction(numerator=-int(self.TimeRev)*self.TimeShift.numerator,denominator=self.TimeShift.denominator)
+            )
+
+    def Compose(B,A):
+        # Composition B o A, i.e. applies A then B
+        
+        if (A.LoopTarget == B.LoopSource):
+
+            return ChoreoSym(
+                LoopTarget = B.LoopTarget,
+                LoopSource = A.LoopSource,
+                SpaceRot = np.dot(B.SpaceRot,A.SpaceRot),
+                TimeRev = (B.TimeRev * A.TimeRev),
+                # ~ TimeShift = B.TimeShift + B.TimeRev * A.TimeShift
+                TimeShift = B.TimeShift + fractions.Fraction(numerator=int(B.TimeRev)*A.TimeShift.numerator,denominator=A.TimeShift.denominator)
+                )
+        else:
+            
+            print(B.LoopTarget,B.LoopSource)
+            print(A.LoopTarget,A.LoopSource)
+            
+            raise ValueError("Symmetries cannot be composed")
     
+    def IsIdentity(self):
+        
+        atol = 1e-10
+        
+        if ((abs(self.TimeShift) < atol) and (self.TimeRev == 1) and (self.LoopTarget == self.LoopSource)):
+            
+            return np.allclose(self.SpaceRot,np.identity(ndim,dtype=np.float64),rtol=0.,atol=atol)
+            
+        else:
+        
+            return False
+
+
+def TreatSymmetries(nbody,ncoeff,nint=None,mass=None,MomCons=False,n_grad_change=1.,Sym_list=[]):
     
+    if nint is None:
+        nint = 2*ncoeff
+    
+    SymGraph = nx.Graph()
+    for i in range(nbody):
+        SymGraph.add_node(i,Constraint_list=[])
+    
+    for Sym in Sym_list:
+        
+        if (Sym.LoopTarget > Sym.LoopSource):
+            Sym=Sym.Inverse()
+        
+        if (Sym.LoopTarget == Sym.LoopSource):
+            # Add constraint
+            if not(Sym.IsIdentity()):
+                SymGraph.nodes[Sym.LoopSource]["Constraint_list"].append(Sym)
+            
+        else:
+            
+            edge = (Sym.LoopTarget,Sym.LoopSource)
+            
+            if edge in SymGraph.edges: # adds constraint instead of adding parallel edge
+                
+                Constraint = Sym.Inverse().Compose(SymGraph.edges[edge]["Sym"])
+                
+                if not(Constraint.IsIdentity()):
+                    SymGraph.nodes[Constraint.LoopSource]["Constraint_list"].append(Constraint)
+            
+            else: # Really adds edge
+                
+                SymGraph.add_edge(*edge,Sym=Sym)
+            
+    Cycles = list(nx.cycle_basis(SymGraph))    
+    # Aggregate cycles symmetries into constraints
+    
+    for Cycle in Cycles:
+
+        Constraint = ChoreoSym(LoopTarget=Cycle[0],LoopSource=Cycle[0])
+        
+        Cycle_len = len(Cycle)
+        
+        for iedge in range(Cycle_len):
+            
+            ibeg = Cycle[iedge]
+            iend = Cycle[(iedge+1)%Cycle_len]
+            
+            if (ibeg < iend):
+
+                Constraint = Constraint.Compose(SymGraph.edges[(ibeg,iend)]["Sym"])
+                
+            else:
+                
+                Constraint = Constraint.Compose(SymGraph.edges[(iend,ibeg)]["Sym"].Inverse())
+            
+        if not(Constraint.IsIdentity()):
+            
+            SymGraph.nodes[Cycle[0]]["Constraint_list"].append(Constraint)
+            
+    # Choose one representative per connected component
+    # And aggregate path from the representative to each node of cycle
+    # Then bring all constraints back to this node, and aggregate constraints
+    
+    ConnectedComponents = list(nx.connected_components(SymGraph))    
+
+    nloop = len(ConnectedComponents)
+
+    maxlooplen = 0
+    for il in range(nloop):
+        looplen = len(ConnectedComponents[il])
+        if (looplen > maxlooplen):
+            maxlooplen = looplen
+
+
+    loopgen = np.zeros((nloop,),dtype=int)
+    
+    Targets = np.zeros((nloop,maxlooplen),dtype=int)
+    SpaceRots = np.zeros((nloop,maxlooplen,ndim,ndim),dtype=np.float64)
+    TimeRevs = np.zeros((nloop,maxlooplen),dtype=int)
+    TimeShiftNum = np.zeros((nloop,maxlooplen),dtype=int)
+    TimeShiftDen = np.zeros((nloop,maxlooplen),dtype=int)
+
+    for il in range(len(ConnectedComponents)):
+        
+        loopgen[il] = ConnectedComponents[il].pop()
+        
+        paths_to_gen = nx.shortest_path(SymGraph, target=loopgen[il])
+        
+        ib = 0
+        
+        for istart,path in paths_to_gen.items():
+            
+            Sym = ChoreoSym(LoopTarget=istart,LoopSource=istart)
+            
+            path_len = len(path)
+            
+            for iedge in range(path_len-1):
+                
+                ibeg = path[iedge]
+                iend = path[iedge+1]
+                
+                if (ibeg < iend):
+                    
+                    Sym = Sym.Compose(SymGraph.edges[(ibeg,iend)]["Sym"])
+
+                else:
+                    
+                    Sym = Sym.Compose(SymGraph.edges[(iend,ibeg)]["Sym"].Inverse())
+            
+            Targets[il,ib] = istart
+            SpaceRots[il,ib,:,:] = Sym.SpaceRot
+            TimeRevs[il,ib] = Sym.TimeRev
+            TimeShiftNum[il,ib] = Sym.TimeShift.numerator
+            TimeShiftDen[il,ib] = Sym.TimeShift.denominator
+            
+            for Constraint in SymGraph.nodes[Sym.LoopTarget]["Constraint_list"]:
+
+                Constraint = (Sym.Inverse()).Compose(Constraint.Compose(Sym))
+
+                if not(Constraint.IsIdentity()):
+                    SymGraph.nodes[loopgen[il]]["Constraint_list"].append(Constraint)
+        
+            
+            ib+=1
+            
+
+    # Now detect parameters and build change of variables
+        
+    eps_zero = 1e-14
+    
+    # il,idim,k,ift => ift + 2*(k + ncoeff*(idim + ndim*il))
+    n_idx = nloop*ndim*ncoeff*2
+
+    cstr_data = []
+    cstr_row = []
+    cstr_col = []
+
+    icstr=0
+    
+    icstr=0
+    for il in range(nloop):
+        for idim in range(ndim):
+            
+            i = 1 + 2*(0 + ncoeff*(idim + ndim*il))
+
+            cstr_row.append(i)
+            cstr_col.append(icstr)
+            cstr_data.append(1.)            
+            
+            icstr +=1 
+
+    cs = np.zeros((2),dtype=np.float64)
+    
+    for il in range(nloop):
+        
+        for Constraint in SymGraph.nodes[loopgen[il]]["Constraint_list"] :
+
+            for k in range(ncoeff):
+                
+                dt = Sym.TimeShift.numerator/Sym.TimeShift.denominator
+                
+                if (Sym.TimeRev == 1):
+
+                    cs[0] = np.cos(  - twopi * k*dt)
+                    cs[1] = np.sin(  - twopi * k*dt)                        
+                        
+                    for idim in range(ndim):
+                            
+                        for jdim in range(ndim):
+                                
+                            i =  0 + 2*(k + ncoeff*(jdim + ndim*il))
+
+                            val = Sym.SpaceRot[idim,jdim]*cs[0]
+                            
+                            if (idim == jdim):
+                                val -=1.
+
+                            if (abs(val) > eps_zero):
+                            
+                                cstr_row.append(i)
+                                cstr_col.append(icstr)
+                                cstr_data.append(val)
+                                
+                            i =  1 + 2*(k + ncoeff*(jdim + ndim*il))
+
+                            val = - Sym.SpaceRot[idim,jdim]*cs[1]
+                            
+                            if (abs(val) > eps_zero):
+                            
+                                cstr_row.append(i)
+                                cstr_col.append(icstr)
+                                cstr_data.append(val)
+                                
+                        icstr+=1
+                            
+                        for jdim in range(ndim):
+                                
+                            i =  1 + 2*(k + ncoeff*(jdim + ndim*il))
+
+                            val = Sym.SpaceRot[idim,jdim]*cs[0]
+                            
+                            if (idim == jdim):
+                                val -=1.
+
+                            if (abs(val) > eps_zero):
+                            
+                                cstr_row.append(i)
+                                cstr_col.append(icstr)
+                                cstr_data.append(val)
+                                
+                            i =  0 + 2*(k + ncoeff*(jdim + ndim*il))
+
+                            val = Sym.SpaceRot[idim,jdim]*cs[1]
+                            
+                            if (abs(val) > eps_zero):
+                            
+                                cstr_row.append(i)
+                                cstr_col.append(icstr)
+                                cstr_data.append(val)
+
+                        icstr+=1
+                                             
+                elif (Sym.TimeRev == 1):
+
+                    cs[0] = np.cos(   twopi * k*dt)
+                    cs[1] = np.sin(   twopi * k*dt)
+                    
+                    for idim in range(ndim):
+                            
+                        for jdim in range(ndim):
+                                
+                            i =  0 + 2*(k + ncoeff*(jdim + ndim*il))
+
+                            val = Sym.SpaceRot[idim,jdim]*cs[0]
+                            
+                            if (idim == jdim):
+                                val -=1.
+                            
+                            if (abs(val) > eps_zero):
+                            
+                                cstr_row.append(i)
+                                cstr_col.append(icstr)
+                                cstr_data.append(val)
+                                
+                            i =  1 + 2*(k + ncoeff*(jdim + ndim*il))
+
+                            val = Sym.SpaceRot[idim,jdim]*cs[1]
+                            
+                            if (abs(val) > eps_zero):
+                            
+                                cstr_row.append(i)
+                                cstr_col.append(icstr)
+                                cstr_data.append(val)
+                                
+                        icstr+=1
+                            
+                        for jdim in range(ndim):
+                                
+                            i =  1 + 2*(k + ncoeff*(jdim + ndim*il))
+
+                            val = - Sym.SpaceRot[idim,jdim]*cs[0]
+                            
+                            if (idim == jdim):
+                                val -=1.
+
+                            if (abs(val) > eps_zero):
+                            
+                                cstr_row.append(i)
+                                cstr_col.append(icstr)
+                                cstr_data.append(val)
+                                
+                            i =  0 + 2*(k + ncoeff*(jdim + ndim*il))
+
+                            val = Sym.SpaceRot[idim,jdim]*cs[1]
+                            
+                            if (abs(val) > eps_zero):
+                            
+                                cstr_row.append(i)
+                                cstr_col.append(icstr)
+                                cstr_data.append(val)
+
+                        icstr+=1
+                                       
+                else:
+                    raise ValueError("Invalid TimeRev")
+
+
+
+    ncstr = icstr
+    cstr_data = np.array(cstr_data,dtype=np.float64)
+    cstr_row  = np.array(cstr_row,dtype=int)
+    cstr_col  = np.array(cstr_col,dtype=int)
+    
+    cstrmat_sp =  sp.coo_matrix((cstr_data,(cstr_row,cstr_col)),shape=(n_idx,ncstr), dtype=np.float64)
+    
+    param_to_coeff = null_space_sparseqr(cstrmat_sp)
+    coeff_to_param = param_to_coeff.transpose(copy=True)
+    
+    for idx in range(param_to_coeff.nnz):
+    
+        res,ift = divmod(param_to_coeff.row[idx],2     )
+        res,k   = divmod(res ,ncoeff)
+        il ,idim= divmod(res ,ndim  )
+    
+        if (k >=2):
+            kfac = pow(k,-n_grad_change)
+        else:
+            kfac = 1.
+        
+        param_to_coeff.data[idx] *= kfac
+    
+    for idx in range(coeff_to_param.nnz):
+    
+        res,ift = divmod(coeff_to_param.col[idx],2     )
+        res,k   = divmod(res ,ncoeff)
+        il ,idim= divmod(res ,ndim  )
+    
+        if (k >=2):
+            kfac = pow(k,n_grad_change)
+        else:
+            kfac = 1.
+        
+        coeff_to_param.data[idx] *= kfac
+    
+    return coeff_to_param , param_to_coeff  
