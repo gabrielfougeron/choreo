@@ -55,22 +55,175 @@ cdef inline (double, double, double) CCpt_interbody_pot_new(double xsq):  # xsq 
 def Cpt_interbody_pot(double xsq): 
     return CCpt_interbody_pot(xsq)
     
+#~ @cython.boundscheck(False)
+#~ @cython.wraparound(False)
+#~ def Compute_action(
+#~     long nloop,
+#~     np.ndarray[long, ndim=1, mode="c"] nbody  not None ,
+#~     long ncoeff,
+#~     np.ndarray[double, ndim=1, mode="c"] mass  not None ,
+#~     long nint,
+#~     np.ndarray[double, ndim=4, mode="c"]  all_coeffs  not None
+#~     ):
+
+#~     cdef np.ndarray[double, ndim=4, mode="c"] Action_grad = np.zeros((nloop,ndim,ncoeff,2),np.float64)
+
+#~     c_coeffs = all_coeffs.view(dtype=np.complex128)[...,0]
+    
+#~     cdef np.ndarray[double, ndim=3, mode="c"] all_pos = np.fft.irfft(c_coeffs,n=nint,axis=2)*nint
+
+#~     cdef long il,ilp,i
+#~     cdef long idim,idimp
+#~     cdef long ib,ibp
+#~     cdef long iint
+#~     cdef long div
+#~     cdef long k,kp,k2
+#~     cdef double pot,potp,potpp
+#~     cdef double prod_mass,a,b,dx2,prod_fac
+#~     cdef np.ndarray[double, ndim=1, mode="c"]  dx = np.zeros((ndim),dtype=np.float64)
+#~     cdef np.ndarray[double, ndim=1, mode="c"]  df = np.zeros((ndim),dtype=np.float64)
+        
+#~     cdef long maxnbody = nbody.max()
+
+#~     cdef np.ndarray[long, ndim=2, mode="c"]  all_shifts = np.zeros((nloop,maxnbody),dtype=np.int_)
+    
+#~     # Prepares data
+#~     for il in range(nloop):
+        
+#~         if not(( nint % nbody[il] ) == 0):
+#~             print("WARNING : remainder in integer division")
+        
+#~         div = nint // nbody[il]
+        
+#~         for i in range(nbody[il]):
+#~             all_shifts[il,i] = (-i*div)% nint
+
+    
+#~     cdef double Kin_en = 0
+
+#~     for il in range(nloop):
+        
+#~         prod_fac = mass[il]*nbody[il]*fourpisq
+        
+#~         for idim in range(ndim):
+#~             for k in range(1,ncoeff):
+                
+#~                 k2 = k*k
+#~                 a = prod_fac*k2
+#~                 b=2*a
+                
+#~                 Kin_en += a *((all_coeffs[il,idim,k,0]*all_coeffs[il,idim,k,0]) + (all_coeffs[il,idim,k,1]*all_coeffs[il,idim,k,1]))
+                
+#~                 Action_grad[il,idim,k,0] += b*all_coeffs[il,idim,k,0]
+#~                 Action_grad[il,idim,k,1] += b*all_coeffs[il,idim,k,1]
+        
+#~     cdef double Pot_en = 0.
+    
+#~     cdef np.ndarray[double, ndim=3, mode="c"] grad_pot_all = np.zeros((nloop,ndim,nint),dtype=np.float64)
+
+#~     for iint in range(nint):
+        
+#~         for il in range(nloop):
+#~             for ib in range(nbody[il]):
+#~                 all_shifts[il,ib] = (all_shifts[il,ib]+1) % nint
+    
+#~         # Different loops
+#~         for il in range(nloop):
+#~             for ilp in range(il+1,nloop):
+                
+#~                 prod_mass = mass[il]*mass[ilp]
+                
+#~                 for ib in range(nbody[il]):
+#~                     for ibp in range(nbody[ilp]):
+
+#~                         for idim in range(ndim):
+#~                             dx[idim] = all_pos[il,idim,all_shifts[il,ib]] - all_pos[ilp,idim,all_shifts[ilp,ibp]]
+
+#~                         dx2 = dx[0]*dx[0]
+#~                         for idim in range(1,ndim):
+#~                             dx2 += dx[idim]*dx[idim]
+
+#~                         pot,potp,potpp = CCpt_interbody_pot(dx2)
+                        
+#~                         Pot_en += pot*prod_mass
+                        
+#~                         a = (2*prod_mass*potp)
+
+#~                         for idim in range(ndim):
+#~                             b = a*dx[idim]
+
+#~                             grad_pot_all[il ,idim,all_shifts[il ,ib ]] += b
+#~                             grad_pot_all[ilp,idim,all_shifts[ilp,ibp]] -= b
+
+
+#~         # Same loop + symmetry
+#~         for il in range(nloop):
+
+#~             prod_mass = (nbody[il]*(mass[il]*mass[il]))/2
+            
+#~             for ib in range(1,nbody[il]):
+
+#~                 for idim in range(ndim):
+#~                     dx[idim] = all_pos[il,idim,all_shifts[il,ib]] - all_pos[il,idim,all_shifts[il,0]]
+
+#~                 dx2 = dx[0]*dx[0]
+#~                 for idim in range(1,ndim):
+#~                     dx2 += dx[idim]*dx[idim]
+
+#~                 pot,potp,potpp = CCpt_interbody_pot(dx2)
+
+#~                 Pot_en += pot*prod_mass
+                
+#~                 a = 2*prod_mass*potp
+                
+#~                 for idim in range(ndim):
+#~                     b = a*dx[idim]
+                
+#~                     grad_pot_all[il,idim,all_shifts[il,ib]] += b
+#~                     grad_pot_all[il,idim,all_shifts[il,0 ]] -= b
+
+
+#~     cdef np.ndarray[doublecomplex , ndim=3, mode="c"]  grad_pot_fft = np.fft.ihfft(grad_pot_all,nint)
+
+#~     for il in range(nloop):
+#~         for idim in range(ndim):
+            
+#~             Action_grad[il,idim,0,0] -= grad_pot_fft[il,idim,0].real
+            
+#~             for k in range(1,ncoeff):
+            
+#~                 Action_grad[il,idim,k,0] -= 2*grad_pot_fft[il,idim,k].real
+#~                 Action_grad[il,idim,k,1] += 2*grad_pot_fft[il,idim,k].imag
+
+#~     Pot_en = Pot_en / nint
+    
+#~     Action = Kin_en-Pot_en
+
+#~     return Action,Action_grad
+    
+    
 @cython.boundscheck(False)
 @cython.wraparound(False)
 def Compute_action(
     long nloop,
-    np.ndarray[long, ndim=1, mode="c"] nbody  not None ,
     long ncoeff,
-    np.ndarray[double, ndim=1, mode="c"] mass  not None ,
     long nint,
+    np.ndarray[double, ndim=1, mode="c"] mass not None ,
+    np.ndarray[long, ndim=1, mode="c"] loopnb not None ,
+    np.ndarray[long, ndim=2, mode="c"] Targets not None ,
+    np.ndarray[double, ndim=1, mode="c"] MassSum not None ,
+    np.ndarray[double, ndim=4, mode="c"] SpaceRotsUn not None ,
+    np.ndarray[long, ndim=2, mode="c"] TimeRevsUn not None ,
+    np.ndarray[long, ndim=2, mode="c"] TimeShiftNumUn not None ,
+    np.ndarray[long, ndim=2, mode="c"] TimeShiftDenUn not None ,
+    np.ndarray[long, ndim=1, mode="c"] loopnbi not None ,
+    np.ndarray[double, ndim=2, mode="c"] ProdMassSumAll not None ,
+    np.ndarray[double, ndim=4, mode="c"] SpaceRotsBin not None ,
+    np.ndarray[long, ndim=2, mode="c"] TimeRevsBin not None ,
+    np.ndarray[long, ndim=2, mode="c"] TimeShiftNumBin not None ,
+    np.ndarray[long, ndim=2, mode="c"] TimeShiftDenBin not None ,
     np.ndarray[double, ndim=4, mode="c"]  all_coeffs  not None
     ):
-
-    cdef np.ndarray[double, ndim=4, mode="c"] Action_grad = np.zeros((nloop,ndim,ncoeff,2),np.float64)
-
-    c_coeffs = all_coeffs.view(dtype=np.complex128)[...,0]
-    
-    cdef np.ndarray[double, ndim=3, mode="c"] all_pos = np.fft.irfft(c_coeffs,n=nint,axis=2)*nint
 
     cdef long il,ilp,i
     cdef long idim,idimp
@@ -83,27 +236,16 @@ def Compute_action(
     cdef np.ndarray[double, ndim=1, mode="c"]  dx = np.zeros((ndim),dtype=np.float64)
     cdef np.ndarray[double, ndim=1, mode="c"]  df = np.zeros((ndim),dtype=np.float64)
         
-    cdef long maxnbody = nbody.max()
+    cdef long maxloopnb = loopnb.max()
+    cdef long maxloopnbi = loopnbi.max()
 
-    cdef np.ndarray[long, ndim=2, mode="c"]  all_shifts = np.zeros((nloop,maxnbody),dtype=np.int_)
-    
-    # Prepares data
-    for il in range(nloop):
-        
-        if not(( nint % nbody[il] ) == 0):
-            print("WARNING : remainder in integer division")
-        
-        div = nint // nbody[il]
-        
-        for i in range(nbody[il]):
-            all_shifts[il,i] = (-i*div)% nint
-
-    
     cdef double Kin_en = 0
 
+    cdef np.ndarray[double, ndim=4, mode="c"] Action_grad = np.zeros((nloop,ndim,ncoeff,2),np.float64)
+
     for il in range(nloop):
         
-        prod_fac = mass[il]*nbody[il]*fourpisq
+        prod_fac = MassSum[il]*fourpisq
         
         for idim in range(ndim):
             for k in range(1,ncoeff):
@@ -118,26 +260,46 @@ def Compute_action(
                 Action_grad[il,idim,k,1] += b*all_coeffs[il,idim,k,1]
         
     cdef double Pot_en = 0.
+
+    c_coeffs = all_coeffs.view(dtype=np.complex128)[...,0]
+    
+    cdef np.ndarray[double, ndim=3, mode="c"] all_pos = np.fft.irfft(c_coeffs,n=nint,axis=2)*nint
+
+    cdef np.ndarray[long, ndim=2, mode="c"]  all_shiftsUn = np.zeros((nloop,maxloopnb),dtype=np.int_)
+    cdef np.ndarray[long, ndim=2, mode="c"]  all_shiftsBin = np.zeros((nloop,maxloopnbi),dtype=np.int_)
+    
+    for il in range(nloop):
+        for ib in range(loopnb[il]):
+                
+            if not(( (nint*TimeShiftNumUn[il,ib]) % TimeShiftDenUn[il,ib] ) == 0):
+                print("WARNING : remainder in integer division")
+                
+            all_shiftsUn[il,ib] = (-TimeRevsUn[il,ib]*nint*TimeShiftNumUn[il,ib]) // TimeShiftDenUn[il,ib]
+        
+        for ibi in range(loopnbi[il]):
+
+            if not(( (nint*TimeShiftNumBin[il,ibi]) % TimeShiftDenBin[il,ibi] ) == 0):
+                print("WARNING : remainder in integer division")
+                
+            all_shiftsBin[il,ibi] = (-TimeRevsBin[il,ibi]*nint*TimeShiftNumBin[il,ibi]) // TimeShiftDenBin[il,ibi]
     
     cdef np.ndarray[double, ndim=3, mode="c"] grad_pot_all = np.zeros((nloop,ndim,nint),dtype=np.float64)
 
     for iint in range(nint):
-        
-        for il in range(nloop):
-            for ib in range(nbody[il]):
-                all_shifts[il,ib] = (all_shifts[il,ib]+1) % nint
     
         # Different loops
         for il in range(nloop):
             for ilp in range(il+1,nloop):
-                
-                prod_mass = mass[il]*mass[ilp]
-                
-                for ib in range(nbody[il]):
-                    for ibp in range(nbody[ilp]):
+
+                for ib in range(loopnb[il]):
+                    for ibp in range(loopnb[ilp]):
+                        
+                        prod_mass = mass[Targets[il,ib]]*mass[Targets[ilp,ibp]]
 
                         for idim in range(ndim):
-                            dx[idim] = all_pos[il,idim,all_shifts[il,ib]] - all_pos[ilp,idim,all_shifts[ilp,ibp]]
+                            dx[idim] = SpaceRotsUn[il,ib,idim,0]*all_pos[il,0,all_shiftsUn[il,ib]] - SpaceRotsUn[ilp,ibp,idim,0]*all_pos[ilp,0,all_shiftsUn[ilp,ibp]]
+                            for jdim in range(1,ndim):
+                                dx[idim] += SpaceRotsUn[il,ib,idim,jdim]*all_pos[il,jdim,all_shiftsUn[il,ib]] - SpaceRotsUn[ilp,ibp,idim,jdim]*all_pos[ilp,jdim,all_shiftsUn[ilp,ibp]]
 
                         dx2 = dx[0]*dx[0]
                         for idim in range(1,ndim):
@@ -150,38 +312,64 @@ def Compute_action(
                         a = (2*prod_mass*potp)
 
                         for idim in range(ndim):
-                            b = a*dx[idim]
+                            dx[idim] = a*dx[idim]
 
-                            grad_pot_all[il ,idim,all_shifts[il ,ib ]] += b
-                            grad_pot_all[ilp,idim,all_shifts[ilp,ibp]] -= b
-
+                        for idim in range(ndim):
+                            
+                            b = SpaceRotsUn[il,ib,0,idim]*dx[0]
+                            for jdim in range(1,ndim):
+                                b+=SpaceRotsUn[il,ib,jdim,idim]*dx[jdim]
+                            
+                            grad_pot_all[il ,idim,all_shiftsUn[il ,ib ]] += b
+                            
+                            b = SpaceRotsUn[ilp,ibp,0,idim]*dx[0]
+                            for jdim in range(1,ndim):
+                                b+=SpaceRotsUn[ilp,ibp,jdim,idim]*dx[jdim]
+                            
+                            grad_pot_all[il ,idim,all_shiftsUn[ilp,ibp]] -= b
 
         # Same loop + symmetry
         for il in range(nloop):
 
-            prod_mass = (nbody[il]*(mass[il]*mass[il]))/2
-            
-            for ib in range(1,nbody[il]):
-
+            for ibi in range(loopnbi[il]):
+                
+#~                 prod_mass = ProdMassSumAll[il,ibi]
+        
                 for idim in range(ndim):
-                    dx[idim] = all_pos[il,idim,all_shifts[il,ib]] - all_pos[il,idim,all_shifts[il,0]]
+                    dx[idim] = SpaceRotsBin[il,ibi,idim,0]*all_pos[il,0,all_shiftsBin[il,ibi]] - all_pos[il,0,iint]
+                    for jdim in range(1,ndim):
+                        dx[idim] += SpaceRotsBin[il,ibi,idim,jdim]*all_pos[il,jdim,all_shiftsBin[il,ibi]] - all_pos[il,jdim,iint]
 
                 dx2 = dx[0]*dx[0]
                 for idim in range(1,ndim):
                     dx2 += dx[idim]*dx[idim]
 
                 pot,potp,potpp = CCpt_interbody_pot(dx2)
+                
+                Pot_en += pot*ProdMassSumAll[il,ibi]
+                
+                a = (2*ProdMassSumAll[il,ibi]*potp)
 
-                Pot_en += pot*prod_mass
-                
-                a = 2*prod_mass*potp
-                
                 for idim in range(ndim):
-                    b = a*dx[idim]
-                
-                    grad_pot_all[il,idim,all_shifts[il,ib]] += b
-                    grad_pot_all[il,idim,all_shifts[il,0 ]] -= b
+                    dx[idim] = a*dx[idim]
 
+                for idim in range(ndim):
+                    
+                    b = SpaceRotsBin[il,ibi,0,idim]*dx[0]
+                    for jdim in range(1,ndim):
+                        b+=SpaceRotsBin[il,ibi,jdim,idim]*dx[jdim]
+                    
+                    grad_pot_all[il ,idim,all_shiftsBin[il,ibi]] += b
+                    
+                    grad_pot_all[il ,idim,iint] -= dx[idim]
+
+        # Increments time at the end
+        for il in range(nloop):
+            for ib in range(loopnb[il]):
+                all_shiftsUn[il,ib] = (all_shiftsUn[il,ib]+TimeShiftNumUn[il,ib]) % nint
+                
+            for ibi in range(loopnbi[il]):
+                all_shiftsBin[il,ibi] = (all_shiftsBin[il,ibi]+TimeShiftNumBin[il,ibi]) % nint
 
     cdef np.ndarray[doublecomplex , ndim=3, mode="c"]  grad_pot_fft = np.fft.ihfft(grad_pot_all,nint)
 

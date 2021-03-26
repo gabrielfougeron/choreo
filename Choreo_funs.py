@@ -32,364 +32,364 @@ fourpisq = twopi*twopi
 
 nnm1 = n*(n-1)
             
-def setup_changevar(nloop,nbody,ncoeff,mass=None,MomCons=False,n_grad_change=1.,Sym_list=[]):
+# ~ def setup_changevar(nloop,nbody,ncoeff,mass=None,MomCons=False,n_grad_change=1.,Sym_list=[]):
     
-    eps_zero = 1e-14
+    # ~ eps_zero = 1e-14
     
-    # il,idim,k,ift => ift + 2*(k + ncoeff*(idim + ndim*il))
-    n_idx = nloop*ndim*ncoeff*2
+    # ~ # il,idim,k,ift => ift + 2*(k + ncoeff*(idim + ndim*il))
+    # ~ n_idx = nloop*ndim*ncoeff*2
 
-    cstr_data = []
-    cstr_row = []
-    cstr_col = []
+    # ~ cstr_data = []
+    # ~ cstr_row = []
+    # ~ cstr_col = []
 
-    icstr=0
-    for il in range(nloop):
-        for idim in range(ndim):
+    # ~ icstr=0
+    # ~ for il in range(nloop):
+        # ~ for idim in range(ndim):
             
-            i = 1 + 2*(0 + ncoeff*(idim + ndim*il))
+            # ~ i = 1 + 2*(0 + ncoeff*(idim + ndim*il))
 
-            cstr_row.append(i)
-            cstr_col.append(icstr)
-            cstr_data.append(1.)            
+            # ~ cstr_row.append(i)
+            # ~ cstr_col.append(icstr)
+            # ~ cstr_data.append(1.)            
             
-            icstr +=1 
+            # ~ icstr +=1 
             
-    if (MomCons):
-        for k in range(ncoeff):
-            NonZeroSym = False
-            for il in range(nloop):
-                NonZeroSym = NonZeroSym or ((k % nbody[il]) == 0)
+    # ~ if (MomCons):
+        # ~ for k in range(ncoeff):
+            # ~ NonZeroSym = False
+            # ~ for il in range(nloop):
+                # ~ NonZeroSym = NonZeroSym or ((k % nbody[il]) == 0)
                 
-            if (NonZeroSym):
+            # ~ if (NonZeroSym):
 
-                for idim in range(ndim):
-                    for ift in range(2):
-                        for il in range(nloop):
-                            if ((k % nbody[il]) == 0):
+                # ~ for idim in range(ndim):
+                    # ~ for ift in range(2):
+                        # ~ for il in range(nloop):
+                            # ~ if ((k % nbody[il]) == 0):
                                 
-                                i = ift + 2*(k + ncoeff*(idim + ndim*il))
+                                # ~ i = ift + 2*(k + ncoeff*(idim + ndim*il))
 
-                                cstr_row.append(i)
-                                cstr_col.append(icstr)
-                                cstr_data.append(mass[il]*nbody[il])
+                                # ~ cstr_row.append(i)
+                                # ~ cstr_col.append(icstr)
+                                # ~ cstr_data.append(mass[il]*nbody[il])
                                 
-                        icstr+=1
+                        # ~ icstr+=1
     
-    cs = np.zeros((2),dtype=np.float64)
+    # ~ cs = np.zeros((2),dtype=np.float64)
     
-    for Sym in Sym_list :
+    # ~ for Sym in Sym_list :
     
-        for iln in range(len(Sym['LoopTarget'])):
+        # ~ for iln in range(len(Sym['LoopTarget'])):
             
-            il = Sym['LoopTarget'][iln]
-            ilp = Sym['LoopSource'][iln]
+            # ~ il = Sym['LoopTarget'][iln]
+            # ~ ilp = Sym['LoopSource'][iln]
             
-            if (il == ilp):
+            # ~ if (il == ilp):
                 
-                for k in range(ncoeff):
+                # ~ for k in range(ncoeff):
                     
-                    if (Sym['TimeRev']):
-                        cs[0] = np.cos(   twopi * k*Sym['TimeShift'])
-                        cs[1] = np.sin(   twopi * k*Sym['TimeShift'])
+                    # ~ if (Sym['TimeRev']):
+                        # ~ cs[0] = np.cos(   twopi * k*Sym['TimeShift'])
+                        # ~ cs[1] = np.sin(   twopi * k*Sym['TimeShift'])
                         
-                        for idim in range(ndim):
+                        # ~ for idim in range(ndim):
                                 
-                            for jdim in range(ndim):
+                            # ~ for jdim in range(ndim):
                                     
-                                i =  0 + 2*(k + ncoeff*(jdim + ndim*il))
+                                # ~ i =  0 + 2*(k + ncoeff*(jdim + ndim*il))
 
-                                val = Sym['SpaceRot'][idim,jdim]*cs[0]
+                                # ~ val = Sym['SpaceRot'][idim,jdim]*cs[0]
                                 
-                                if (idim == jdim):
-                                    val -=1.
+                                # ~ if (idim == jdim):
+                                    # ~ val -=1.
                                 
-                                if (abs(val) > eps_zero):
+                                # ~ if (abs(val) > eps_zero):
                                 
-                                    cstr_row.append(i)
-                                    cstr_col.append(icstr)
-                                    cstr_data.append(val)
+                                    # ~ cstr_row.append(i)
+                                    # ~ cstr_col.append(icstr)
+                                    # ~ cstr_data.append(val)
                                     
-                                i =  1 + 2*(k + ncoeff*(jdim + ndim*il))
+                                # ~ i =  1 + 2*(k + ncoeff*(jdim + ndim*il))
 
-                                val = Sym['SpaceRot'][idim,jdim]*cs[1]
+                                # ~ val = Sym['SpaceRot'][idim,jdim]*cs[1]
                                 
-                                if (abs(val) > eps_zero):
+                                # ~ if (abs(val) > eps_zero):
                                 
-                                    cstr_row.append(i)
-                                    cstr_col.append(icstr)
-                                    cstr_data.append(val)
+                                    # ~ cstr_row.append(i)
+                                    # ~ cstr_col.append(icstr)
+                                    # ~ cstr_data.append(val)
                                     
-                            icstr+=1
+                            # ~ icstr+=1
                                 
-                            for jdim in range(ndim):
+                            # ~ for jdim in range(ndim):
                                     
-                                i =  1 + 2*(k + ncoeff*(jdim + ndim*il))
+                                # ~ i =  1 + 2*(k + ncoeff*(jdim + ndim*il))
 
-                                val = - Sym['SpaceRot'][idim,jdim]*cs[0]
+                                # ~ val = - Sym['SpaceRot'][idim,jdim]*cs[0]
                                 
-                                if (idim == jdim):
-                                    val -=1.
+                                # ~ if (idim == jdim):
+                                    # ~ val -=1.
 
-                                if (abs(val) > eps_zero):
+                                # ~ if (abs(val) > eps_zero):
                                 
-                                    cstr_row.append(i)
-                                    cstr_col.append(icstr)
-                                    cstr_data.append(val)
+                                    # ~ cstr_row.append(i)
+                                    # ~ cstr_col.append(icstr)
+                                    # ~ cstr_data.append(val)
                                     
-                                i =  0 + 2*(k + ncoeff*(jdim + ndim*il))
+                                # ~ i =  0 + 2*(k + ncoeff*(jdim + ndim*il))
 
-                                val = Sym['SpaceRot'][idim,jdim]*cs[1]
+                                # ~ val = Sym['SpaceRot'][idim,jdim]*cs[1]
                                 
-                                if (abs(val) > eps_zero):
+                                # ~ if (abs(val) > eps_zero):
                                 
-                                    cstr_row.append(i)
-                                    cstr_col.append(icstr)
-                                    cstr_data.append(val)
+                                    # ~ cstr_row.append(i)
+                                    # ~ cstr_col.append(icstr)
+                                    # ~ cstr_data.append(val)
     
-                            icstr+=1
+                            # ~ icstr+=1
                                                         
-                    else:
-                        cs[0] = np.cos(  - twopi * k*Sym['TimeShift'])
-                        cs[1] = np.sin(  - twopi * k*Sym['TimeShift'])                        
+                    # ~ else:
+                        # ~ cs[0] = np.cos(  - twopi * k*Sym['TimeShift'])
+                        # ~ cs[1] = np.sin(  - twopi * k*Sym['TimeShift'])                        
                             
-                        for idim in range(ndim):
+                        # ~ for idim in range(ndim):
                                 
-                            for jdim in range(ndim):
+                            # ~ for jdim in range(ndim):
                                     
-                                i =  0 + 2*(k + ncoeff*(jdim + ndim*il))
+                                # ~ i =  0 + 2*(k + ncoeff*(jdim + ndim*il))
 
-                                val = Sym['SpaceRot'][idim,jdim]*cs[0]
+                                # ~ val = Sym['SpaceRot'][idim,jdim]*cs[0]
                                 
-                                if (idim == jdim):
-                                    val -=1.
+                                # ~ if (idim == jdim):
+                                    # ~ val -=1.
 
-                                if (abs(val) > eps_zero):
+                                # ~ if (abs(val) > eps_zero):
                                 
-                                    cstr_row.append(i)
-                                    cstr_col.append(icstr)
-                                    cstr_data.append(val)
+                                    # ~ cstr_row.append(i)
+                                    # ~ cstr_col.append(icstr)
+                                    # ~ cstr_data.append(val)
                                     
-                                i =  1 + 2*(k + ncoeff*(jdim + ndim*il))
+                                # ~ i =  1 + 2*(k + ncoeff*(jdim + ndim*il))
 
-                                val = - Sym['SpaceRot'][idim,jdim]*cs[1]
+                                # ~ val = - Sym['SpaceRot'][idim,jdim]*cs[1]
                                 
-                                if (abs(val) > eps_zero):
+                                # ~ if (abs(val) > eps_zero):
                                 
-                                    cstr_row.append(i)
-                                    cstr_col.append(icstr)
-                                    cstr_data.append(val)
+                                    # ~ cstr_row.append(i)
+                                    # ~ cstr_col.append(icstr)
+                                    # ~ cstr_data.append(val)
                                     
-                            icstr+=1
+                            # ~ icstr+=1
                                 
-                            for jdim in range(ndim):
+                            # ~ for jdim in range(ndim):
                                     
-                                i =  1 + 2*(k + ncoeff*(jdim + ndim*il))
+                                # ~ i =  1 + 2*(k + ncoeff*(jdim + ndim*il))
 
-                                val = Sym['SpaceRot'][idim,jdim]*cs[0]
+                                # ~ val = Sym['SpaceRot'][idim,jdim]*cs[0]
                                 
-                                if (idim == jdim):
-                                    val -=1.
+                                # ~ if (idim == jdim):
+                                    # ~ val -=1.
 
-                                if (abs(val) > eps_zero):
+                                # ~ if (abs(val) > eps_zero):
                                 
-                                    cstr_row.append(i)
-                                    cstr_col.append(icstr)
-                                    cstr_data.append(val)
+                                    # ~ cstr_row.append(i)
+                                    # ~ cstr_col.append(icstr)
+                                    # ~ cstr_data.append(val)
                                     
-                                i =  0 + 2*(k + ncoeff*(jdim + ndim*il))
+                                # ~ i =  0 + 2*(k + ncoeff*(jdim + ndim*il))
 
-                                val = Sym['SpaceRot'][idim,jdim]*cs[1]
+                                # ~ val = Sym['SpaceRot'][idim,jdim]*cs[1]
                                 
-                                if (abs(val) > eps_zero):
+                                # ~ if (abs(val) > eps_zero):
                                 
-                                    cstr_row.append(i)
-                                    cstr_col.append(icstr)
-                                    cstr_data.append(val)
+                                    # ~ cstr_row.append(i)
+                                    # ~ cstr_col.append(icstr)
+                                    # ~ cstr_data.append(val)
     
-                            icstr+=1
+                            # ~ icstr+=1
                             
-            else:
+            # ~ else:
         
-                for k in range(ncoeff):
+                # ~ for k in range(ncoeff):
                     
-                    if (Sym['TimeRev']):
-                        cs[0] = np.cos(   twopi * k*Sym['TimeShift'])
-                        cs[1] = np.sin(   twopi * k*Sym['TimeShift'])
+                    # ~ if (Sym['TimeRev']):
+                        # ~ cs[0] = np.cos(   twopi * k*Sym['TimeShift'])
+                        # ~ cs[1] = np.sin(   twopi * k*Sym['TimeShift'])
                         
-                        for idim in range(ndim):
+                        # ~ for idim in range(ndim):
                                 
-                            for jdim in range(ndim):
+                            # ~ for jdim in range(ndim):
                                     
-                                i =  0 + 2*(k + ncoeff*(jdim + ndim*ilp))
+                                # ~ i =  0 + 2*(k + ncoeff*(jdim + ndim*ilp))
 
-                                val = Sym['SpaceRot'][idim,jdim]*cs[0]
+                                # ~ val = Sym['SpaceRot'][idim,jdim]*cs[0]
         
-                                if (abs(val) > eps_zero):
+                                # ~ if (abs(val) > eps_zero):
                                 
-                                    cstr_row.append(i)
-                                    cstr_col.append(icstr)
-                                    cstr_data.append(val)
+                                    # ~ cstr_row.append(i)
+                                    # ~ cstr_col.append(icstr)
+                                    # ~ cstr_data.append(val)
                                     
-                                i =  1 + 2*(k + ncoeff*(jdim + ndim*ilp))
+                                # ~ i =  1 + 2*(k + ncoeff*(jdim + ndim*ilp))
 
-                                val = Sym['SpaceRot'][idim,jdim]*cs[1]
+                                # ~ val = Sym['SpaceRot'][idim,jdim]*cs[1]
 
-                                if (abs(val) > eps_zero):
+                                # ~ if (abs(val) > eps_zero):
                                 
-                                    cstr_row.append(i)
-                                    cstr_col.append(icstr)
-                                    cstr_data.append(val)
+                                    # ~ cstr_row.append(i)
+                                    # ~ cstr_col.append(icstr)
+                                    # ~ cstr_data.append(val)
 
-                            i =  0 + 2*(k + ncoeff*(idim + ndim*il))
+                            # ~ i =  0 + 2*(k + ncoeff*(idim + ndim*il))
 
-                            val = -1.
+                            # ~ val = -1.
 
-                            cstr_row.append(i)
-                            cstr_col.append(icstr)
-                            cstr_data.append(val)
+                            # ~ cstr_row.append(i)
+                            # ~ cstr_col.append(icstr)
+                            # ~ cstr_data.append(val)
 
-                            icstr+=1
+                            # ~ icstr+=1
                                 
-                            for jdim in range(ndim):
+                            # ~ for jdim in range(ndim):
                                     
-                                i =  1 + 2*(k + ncoeff*(jdim + ndim*ilp))
+                                # ~ i =  1 + 2*(k + ncoeff*(jdim + ndim*ilp))
 
-                                val = - Sym['SpaceRot'][idim,jdim]*cs[0]
+                                # ~ val = - Sym['SpaceRot'][idim,jdim]*cs[0]
 
-                                if (abs(val) > eps_zero):
+                                # ~ if (abs(val) > eps_zero):
                                 
-                                    cstr_row.append(i)
-                                    cstr_col.append(icstr)
-                                    cstr_data.append(val)
+                                    # ~ cstr_row.append(i)
+                                    # ~ cstr_col.append(icstr)
+                                    # ~ cstr_data.append(val)
                                     
-                                i =  0 + 2*(k + ncoeff*(jdim + ndim*ilp))
+                                # ~ i =  0 + 2*(k + ncoeff*(jdim + ndim*ilp))
 
-                                val = Sym['SpaceRot'][idim,jdim]*cs[1]
+                                # ~ val = Sym['SpaceRot'][idim,jdim]*cs[1]
 
-                                if (abs(val) > eps_zero):
+                                # ~ if (abs(val) > eps_zero):
                                 
-                                    cstr_row.append(i)
-                                    cstr_col.append(icstr)
-                                    cstr_data.append(val)
+                                    # ~ cstr_row.append(i)
+                                    # ~ cstr_col.append(icstr)
+                                    # ~ cstr_data.append(val)
 
-                            i =  1 + 2*(k + ncoeff*(idim + ndim*il))
+                            # ~ i =  1 + 2*(k + ncoeff*(idim + ndim*il))
 
-                            val = -1.
+                            # ~ val = -1.
                         
-                            cstr_row.append(i)
-                            cstr_col.append(icstr)
-                            cstr_data.append(val)
+                            # ~ cstr_row.append(i)
+                            # ~ cstr_col.append(icstr)
+                            # ~ cstr_data.append(val)
     
-                            icstr+=1
+                            # ~ icstr+=1
                                                         
-                    else:
-                        cs[0] = np.cos(  - twopi * k*Sym['TimeShift'])
-                        cs[1] = np.sin(  - twopi * k*Sym['TimeShift'])                        
+                    # ~ else:
+                        # ~ cs[0] = np.cos(  - twopi * k*Sym['TimeShift'])
+                        # ~ cs[1] = np.sin(  - twopi * k*Sym['TimeShift'])                        
                             
-                        for idim in range(ndim):
+                        # ~ for idim in range(ndim):
                                 
-                            for jdim in range(ndim):
+                            # ~ for jdim in range(ndim):
                                     
-                                i =  0 + 2*(k + ncoeff*(jdim + ndim*ilp))
+                                # ~ i =  0 + 2*(k + ncoeff*(jdim + ndim*ilp))
 
-                                val = Sym['SpaceRot'][idim,jdim]*cs[0]
+                                # ~ val = Sym['SpaceRot'][idim,jdim]*cs[0]
         
-                                if (abs(val) > eps_zero):
+                                # ~ if (abs(val) > eps_zero):
                                 
-                                    cstr_row.append(i)
-                                    cstr_col.append(icstr)
-                                    cstr_data.append(val)
+                                    # ~ cstr_row.append(i)
+                                    # ~ cstr_col.append(icstr)
+                                    # ~ cstr_data.append(val)
                                     
-                                i =  1 + 2*(k + ncoeff*(jdim + ndim*ilp))
+                                # ~ i =  1 + 2*(k + ncoeff*(jdim + ndim*ilp))
 
-                                val = - Sym['SpaceRot'][idim,jdim]*cs[1]
+                                # ~ val = - Sym['SpaceRot'][idim,jdim]*cs[1]
                                 
-                                if (abs(val) > eps_zero):
+                                # ~ if (abs(val) > eps_zero):
                                 
-                                    cstr_row.append(i)
-                                    cstr_col.append(icstr)
-                                    cstr_data.append(val)
+                                    # ~ cstr_row.append(i)
+                                    # ~ cstr_col.append(icstr)
+                                    # ~ cstr_data.append(val)
                                   
-                            i =  0 + 2*(k + ncoeff*(idim + ndim*il))
+                            # ~ i =  0 + 2*(k + ncoeff*(idim + ndim*il))
 
-                            val = -1.
+                            # ~ val = -1.
                         
-                            cstr_row.append(i)
-                            cstr_col.append(icstr)
-                            cstr_data.append(val)
+                            # ~ cstr_row.append(i)
+                            # ~ cstr_col.append(icstr)
+                            # ~ cstr_data.append(val)
                                 
-                            icstr+=1
+                            # ~ icstr+=1
                                 
-                            for jdim in range(ndim):
+                            # ~ for jdim in range(ndim):
                                     
-                                i =  1 + 2*(k + ncoeff*(jdim + ndim*ilp))
+                                # ~ i =  1 + 2*(k + ncoeff*(jdim + ndim*ilp))
 
-                                val = Sym['SpaceRot'][idim,jdim]*cs[0]
+                                # ~ val = Sym['SpaceRot'][idim,jdim]*cs[0]
 
-                                if (abs(val) > eps_zero):
+                                # ~ if (abs(val) > eps_zero):
                                 
-                                    cstr_row.append(i)
-                                    cstr_col.append(icstr)
-                                    cstr_data.append(val)
+                                    # ~ cstr_row.append(i)
+                                    # ~ cstr_col.append(icstr)
+                                    # ~ cstr_data.append(val)
                                     
-                                i =  0 + 2*(k + ncoeff*(jdim + ndim*ilp))
+                                # ~ i =  0 + 2*(k + ncoeff*(jdim + ndim*ilp))
 
-                                val = Sym['SpaceRot'][idim,jdim]*cs[1]
+                                # ~ val = Sym['SpaceRot'][idim,jdim]*cs[1]
                                 
-                                if (abs(val) > eps_zero):
+                                # ~ if (abs(val) > eps_zero):
                                 
-                                    cstr_row.append(i)
-                                    cstr_col.append(icstr)
-                                    cstr_data.append(val)
+                                    # ~ cstr_row.append(i)
+                                    # ~ cstr_col.append(icstr)
+                                    # ~ cstr_data.append(val)
     
-                            i =  1 + 2*(k + ncoeff*(idim + ndim*il))
+                            # ~ i =  1 + 2*(k + ncoeff*(idim + ndim*il))
 
-                            val = -1.
+                            # ~ val = -1.
                                                         
-                            cstr_row.append(i)
-                            cstr_col.append(icstr)
-                            cstr_data.append(val)
+                            # ~ cstr_row.append(i)
+                            # ~ cstr_col.append(icstr)
+                            # ~ cstr_data.append(val)
     
-                            icstr+=1
+                            # ~ icstr+=1
               
-    ncstr = icstr
-    cstr_data = np.array(cstr_data,dtype=np.float64)
-    cstr_row  = np.array(cstr_row,dtype=int)
-    cstr_col  = np.array(cstr_col,dtype=int)
+    # ~ ncstr = icstr
+    # ~ cstr_data = np.array(cstr_data,dtype=np.float64)
+    # ~ cstr_row  = np.array(cstr_row,dtype=int)
+    # ~ cstr_col  = np.array(cstr_col,dtype=int)
     
-    cstrmat_sp =  sp.coo_matrix((cstr_data,(cstr_row,cstr_col)),shape=(n_idx,ncstr), dtype=np.float64)
+    # ~ cstrmat_sp =  sp.coo_matrix((cstr_data,(cstr_row,cstr_col)),shape=(n_idx,ncstr), dtype=np.float64)
     
-    param_to_coeff = null_space_sparseqr(cstrmat_sp)
-    coeff_to_param = param_to_coeff.transpose(copy=True)
+    # ~ param_to_coeff = null_space_sparseqr(cstrmat_sp)
+    # ~ coeff_to_param = param_to_coeff.transpose(copy=True)
     
-    for idx in range(param_to_coeff.nnz):
+    # ~ for idx in range(param_to_coeff.nnz):
     
-        res,ift = divmod(param_to_coeff.row[idx],2     )
-        res,k   = divmod(res ,ncoeff)
-        il ,idim= divmod(res ,ndim  )
+        # ~ res,ift = divmod(param_to_coeff.row[idx],2     )
+        # ~ res,k   = divmod(res ,ncoeff)
+        # ~ il ,idim= divmod(res ,ndim  )
     
-        if (k >=2):
-            kfac = pow(k,-n_grad_change)
-        else:
-            kfac = 1.
+        # ~ if (k >=2):
+            # ~ kfac = pow(k,-n_grad_change)
+        # ~ else:
+            # ~ kfac = 1.
         
-        param_to_coeff.data[idx] *= kfac
+        # ~ param_to_coeff.data[idx] *= kfac
     
-    for idx in range(coeff_to_param.nnz):
+    # ~ for idx in range(coeff_to_param.nnz):
     
-        res,ift = divmod(coeff_to_param.col[idx],2     )
-        res,k   = divmod(res ,ncoeff)
-        il ,idim= divmod(res ,ndim  )
+        # ~ res,ift = divmod(coeff_to_param.col[idx],2     )
+        # ~ res,k   = divmod(res ,ncoeff)
+        # ~ il ,idim= divmod(res ,ndim  )
     
-        if (k >=2):
-            kfac = pow(k,n_grad_change)
-        else:
-            kfac = 1.
+        # ~ if (k >=2):
+            # ~ kfac = pow(k,n_grad_change)
+        # ~ else:
+            # ~ kfac = 1.
         
-        coeff_to_param.data[idx] *= kfac
+        # ~ coeff_to_param.data[idx] *= kfac
     
-    return coeff_to_param , param_to_coeff    
+    # ~ return coeff_to_param , param_to_coeff    
 
 
 def plot_all_2D_anim(nloop,nbody,nint,nperiod,all_coeffs,filename,Plot_trace=True):
@@ -588,21 +588,7 @@ def Unpackage_all_coeffs(x,callfun):
     all_coeffs = y.reshape(args['nloop'],ndim,args['ncoeff'],2)
     
     return all_coeffs
-    
-def Compute_action_package(x,callfun):
 
-    args=callfun[0]
-    
-    y = args['param_to_coeff'] * x
-    all_coeffs = y.reshape(args['nloop'],ndim,args['ncoeff'],2)
-
-    J,GradJ =  Compute_action(args['nloop'],args['nbody'],args['ncoeff'],args['mass'],args['nint'],all_coeffs)
-
-    GJ = GradJ.reshape(-1)
-    y = GJ * args['param_to_coeff']
-    
-    return J,y
-    
 def Compute_action_onlygrad_package(x,callfun):
 
     J,y = Compute_action_package(x,callfun)
@@ -946,8 +932,6 @@ def Write_Descriptor(nloop,nbody,ncoeff,mass,nint,all_coeffs,filename,WriteSigna
             sig = Compute_Pure_Hessian_Signature(nloop,nbody,ncoeff,mass,nint,all_coeffs)
             filename_write.write('Signature of Hessian : {:d}\n'.format(sig))
         
-        
-        
 def null_space_sparseqr(AT):
     # AT must be in COO format
     # The nullspace of the TRANSPOSE of AT will be returned
@@ -1143,7 +1127,7 @@ class ChoreoSym():
         
 
 
-def TreatSymmetries(nbody,ncoeff,mass,nint=None,MomCons=False,n_grad_change=1.,Sym_list=[]):
+def setup_changevar(nbody,ncoeff,mass,nint=None,MomCons=False,n_grad_change=1.,Sym_list=[]):
     
     if nint is None:
         nint = 2*ncoeff
@@ -1219,17 +1203,19 @@ def TreatSymmetries(nbody,ncoeff,mass,nint=None,MomCons=False,n_grad_change=1.,S
 
     loopgen = np.zeros((nloop),dtype=int)
     loopnb = np.zeros((nloop),dtype=int)
+    loopnbi = np.zeros((nloop),dtype=int)
     
     loop_gen_to_target = []
     
     Targets = np.zeros((nloop,maxlooplen),dtype=int)
     MassSum = np.zeros((nloop),dtype=np.float64)
-    ProdMassSumAll = []
+    ProdMassSumAll_list = []
+    UniqueSymsAll_list = []
     
-    SpaceRots = np.zeros((nloop,maxlooplen,ndim,ndim),dtype=np.float64)
-    TimeRevs = np.zeros((nloop,maxlooplen),dtype=int)
-    TimeShiftNum = np.zeros((nloop,maxlooplen),dtype=int)
-    TimeShiftDen = np.zeros((nloop,maxlooplen),dtype=int)
+    SpaceRotsUn = np.zeros((nloop,maxlooplen,ndim,ndim),dtype=np.float64)
+    TimeRevsUn = np.zeros((nloop,maxlooplen),dtype=int)
+    TimeShiftNumUn = np.zeros((nloop,maxlooplen),dtype=int)
+    TimeShiftDenUn = np.zeros((nloop,maxlooplen),dtype=int)
 
     for il in range(len(ConnectedComponents)):
         
@@ -1263,10 +1249,11 @@ def TreatSymmetries(nbody,ncoeff,mass,nint=None,MomCons=False,n_grad_change=1.,S
                     Sym = Sym.Compose(SymGraph.edges[(iend,ibeg)]["Sym"].Inverse())
             
             Targets[il,ib] = istart
-            SpaceRots[il,ib,:,:] = Sym.SpaceRot
-            TimeRevs[il,ib] = Sym.TimeRev
-            TimeShiftNum[il,ib] = Sym.TimeShift.numerator
-            TimeShiftDen[il,ib] = Sym.TimeShift.denominator
+                    
+            SpaceRotsUn[il,ib,:,:] = Sym.SpaceRot
+            TimeRevsUn[il,ib] = Sym.TimeRev
+            TimeShiftNumUn[il,ib] = Sym.TimeShift.numerator
+            TimeShiftDenUn[il,ib] = Sym.TimeShift.denominator
             
             for Constraint in SymGraph.nodes[Sym.LoopTarget]["Constraint_list"]:
 
@@ -1281,6 +1268,8 @@ def TreatSymmetries(nbody,ncoeff,mass,nint=None,MomCons=False,n_grad_change=1.,S
             ib+=1
 
         loopnb[il] = ib
+        
+        nbi = 0
 
         UniqueSyms = []
         ProdMassSum = []
@@ -1301,20 +1290,45 @@ def TreatSymmetries(nbody,ncoeff,mass,nint=None,MomCons=False,n_grad_change=1.,S
                 if IsUnique:
                     UniqueSyms.append(Sym)
                     ProdMassSum.append(mass[Targets[il,ib]]*mass[Targets[il,ibp]])
+                    loopnbi[il]+=1
                 else:
                     ProdMassSum[isym]+=mass[Targets[il,ib]]*mass[Targets[il,ibp]]
                     
-
-        ProdMassSumAll.append(ProdMassSum)
+        UniqueSymsAll_list.append(UniqueSyms)
+        ProdMassSumAll_list.append(ProdMassSum)
         
+        
+    print("Loops :")
+    print(nloop)
     print(MassSum)
-    print(ProdMassSumAll)
+    print("")
+        
+    print("Loops Unary :")
+    print(loopnb)
+    print("")
+        
+    print("Loops Binary :")
+    print(loopnbi)    
+    print(ProdMassSumAll_list)
+    print("")
 
+    maxloopnbi = loopnbi.max()
+    
+    ProdMassSumAll = np.zeros((nloop,maxloopnbi),dtype=np.float64)
+    SpaceRotsBin = np.zeros((nloop,maxloopnbi,ndim,ndim),dtype=np.float64)
+    TimeRevsBin = np.zeros((nloop,maxloopnbi),dtype=int)
+    TimeShiftNumBin = np.zeros((nloop,maxloopnbi),dtype=int)
+    TimeShiftDenBin = np.zeros((nloop,maxloopnbi),dtype=int)
 
+    for il in range(nloop):
+        for ibi in range(loopnbi[il]):
+            
+            ProdMassSumAll[il,ibi] = ProdMassSumAll_list[il][ibi]
 
-
-
-
+            SpaceRotsBin[il,ibi,:,:] = UniqueSymsAll_list[il][ibi].SpaceRot
+            TimeRevsBin[il,ibi] = UniqueSymsAll_list[il][ibi].TimeRev
+            TimeShiftNumBin[il,ibi] = UniqueSymsAll_list[il][ibi].TimeShift.numerator
+            TimeShiftDenBin[il,ibi] = UniqueSymsAll_list[il][ibi].TimeShift.denominator
 
     # Now detect parameters and build change of variables
         
@@ -1512,4 +1526,67 @@ def TreatSymmetries(nbody,ncoeff,mass,nint=None,MomCons=False,n_grad_change=1.,S
         
         coeff_to_param.data[idx] *= kfac
     
-    return nloop, loopnb, loopgen, Targets, SpaceRots, TimeRevs, TimeShiftNum, TimeShiftDen, coeff_to_param , param_to_coeff  
+    SpaceRotsUn = np.zeros((nloop,maxlooplen,ndim,ndim),dtype=np.float64)
+    TimeRevsUn = np.zeros((nloop,maxlooplen),dtype=int)
+    TimeShiftNumUn = np.zeros((nloop,maxlooplen),dtype=int)
+    TimeShiftDenUn = np.zeros((nloop,maxlooplen),dtype=int)
+    
+    callfun = {
+    "nloop"             :   nloop           ,
+    "ncoeff"            :   ncoeff          ,
+    "nint"              :   nint            ,
+    "mass"              :   mass            ,
+    "loopnb"            :   loopnb          ,
+    "loopgen"           :   loopgen         ,
+    "Targets"           :   Targets         ,
+    "MassSum"           :   MassSum         ,
+    "SpaceRotsUn"       :   SpaceRotsUn     ,
+    "TimeRevsUn"        :   TimeRevsUn      ,
+    "TimeShiftNumUn"    :   TimeShiftNumUn  ,
+    "TimeShiftDenUn"    :   TimeShiftDenUn  ,
+    "loopnbi"           :   loopnbi         ,
+    "ProdMassSumAll"    :   ProdMassSumAll  ,
+    "SpaceRotsBin"      :   SpaceRotsBin    ,
+    "TimeRevsBin"       :   TimeRevsBin     ,
+    "TimeShiftNumBin"   :   TimeShiftNumBin ,
+    "TimeShiftDenBin"   :   TimeShiftDenBin ,
+    "param_to_coeff"    :   param_to_coeff  ,
+    "coeff_to_param"    :   coeff_to_param  ,
+    }
+    
+    return [callfun]
+
+    
+def Compute_action_package(x,callfun):
+
+    args=callfun[0]
+    
+    y = args['param_to_coeff'] * x
+    all_coeffs = y.reshape(args['nloop'],ndim,args['ncoeff'],2)
+    
+    J,GradJ =  Compute_action(
+        args['nloop']           ,
+        args['ncoeff']          ,
+        args['nint']            ,
+        args['mass']            ,
+        args['loopnb']          ,
+        args['Targets']         ,
+        args['MassSum']         ,
+        args['SpaceRotsUn']     ,
+        args['TimeRevsUn']      ,
+        args['TimeShiftNumUn']  ,
+        args['TimeShiftDenUn']  ,
+        args['loopnbi']         ,
+        args['ProdMassSumAll']  ,
+        args['SpaceRotsBin']    ,
+        args['TimeRevsBin']     ,
+        args['TimeShiftNumBin'] ,
+        args['TimeShiftDenBin'] ,
+        all_coeffs
+        )
+
+    GJ = GradJ.reshape(-1)
+    y = GJ * args['param_to_coeff']
+    
+    return J,y
+    
