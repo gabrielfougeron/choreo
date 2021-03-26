@@ -15,16 +15,20 @@ from Choreo_funs import *
 
 import networkx as nx
 
-nbody = 3
+nbody = 4
 ncoeff = 100
+mass = np.ones((nbody))
 
+rotangle = 2*np.pi * 1/4
+
+rotmat = np.array([[np.cos(rotangle),-np.sin(rotangle)],[np.sin(rotangle),np.cos(rotangle)]],dtype=np.float64)
 
 Sym_list = []
 
 Sym_list.append(ChoreoSym(
     LoopTarget=0,
     LoopSource=1,
-    SpaceRot = np.identity(ndim,dtype=np.float64),
+    SpaceRot = rotmat,
     TimeRev=1,
     TimeShift=fractions.Fraction(numerator=1,denominator=3)
     ))
@@ -32,17 +36,28 @@ Sym_list.append(ChoreoSym(
 Sym_list.append(ChoreoSym(
     LoopTarget=1,
     LoopSource=2,
-    SpaceRot = np.identity(ndim,dtype=np.float64),
+    SpaceRot = rotmat,
+    TimeRev=1,
+    TimeShift=fractions.Fraction(numerator=1,denominator=3)
+    ))
+
+
+Sym_list.append(ChoreoSym(
+    LoopTarget=3,
+    LoopSource=2,
+    SpaceRot = rotmat,
     TimeRev=1,
     TimeShift=fractions.Fraction(numerator=1,denominator=3)
     ))
 
 Sym_list.append(ChoreoSym(
-    LoopTarget=2,
-    LoopSource=0,
-    SpaceRot = np.identity(ndim,dtype=np.float64),
+    LoopTarget=1,
+    LoopSource=3,
+    SpaceRot = rotmat,
     TimeRev=1,
     TimeShift=fractions.Fraction(numerator=1,denominator=3)
     ))
 
-# ~ TreatSymmetries(nbody,ncoeff,Sym_list=Sym_list)
+
+TreatSymmetries(nbody,ncoeff,mass,Sym_list=Sym_list)
+# ~ TreatSymmetries(nbody,ncoeff,mass,Sym_list=[])
