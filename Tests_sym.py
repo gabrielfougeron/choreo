@@ -59,5 +59,5 @@ Sym_list.append(ChoreoSym(
     ))
 
 
-TreatSymmetries(nbody,ncoeff,mass,Sym_list=Sym_list)
-# ~ TreatSymmetries(nbody,ncoeff,mass,Sym_list=[])
+setup_changevar(nbody,ncoeff,mass,Sym_list=Sym_list)
+# ~ setup_changevar(nbody,ncoeff,mass,Sym_list=[])
