@@ -1093,35 +1093,41 @@ class ChoreoSym():
             LoopTarget=self.LoopSource,
             LoopSource=self.LoopTarget,
             SpaceRot = self.SpaceRot.transpose(),
-            TimeRev = self.TimeRev,
-            # ~ TimeShift = -self.TimeRev*self.TimeShift            
-            TimeShift = fractions.Fraction(numerator=-int(self.TimeRev)*self.TimeShift.numerator,denominator=self.TimeShift.denominator)
+            TimeRev = self.TimeRev,         
+            TimeShift = fractions.Fraction(numerator=((-int(self.TimeRev)*self.TimeShift.numerator) % self.TimeShift.denominator),denominator=self.TimeShift.denominator)
+            )
+
+    def ComposeLight(B,A):
+        # Composition B o A, i.e. applies A then B, ignoring that target A might be different from source B
+        
+        tshift = B.TimeShift + fractions.Fraction(numerator=int(B.TimeRev)*A.TimeShift.numerator,denominator=A.TimeShift.denominator)
+        tshiftmod = fractions.Fraction(numerator=tshift.numerator % tshift.denominator,denominator =tshift.denominator)
+    
+        return ChoreoSym(
+            LoopTarget = B.LoopTarget,
+            LoopSource = A.LoopSource,
+            SpaceRot = np.dot(B.SpaceRot,A.SpaceRot),
+            TimeRev = (B.TimeRev * A.TimeRev),
+            TimeShift = tshiftmod
             )
 
     def Compose(B,A):
         # Composition B o A, i.e. applies A then B
         
         if (A.LoopTarget == B.LoopSource):
-
-            return ChoreoSym(
-                LoopTarget = B.LoopTarget,
-                LoopSource = A.LoopSource,
-                SpaceRot = np.dot(B.SpaceRot,A.SpaceRot),
-                TimeRev = (B.TimeRev * A.TimeRev),
-                # ~ TimeShift = B.TimeShift + B.TimeRev * A.TimeShift
-                TimeShift = B.TimeShift + fractions.Fraction(numerator=int(B.TimeRev)*A.TimeShift.numerator,denominator=A.TimeShift.denominator)
-                )
+            return B.ComposeLight(A)
+            
         else:
             
             print(B.LoopTarget,B.LoopSource)
             print(A.LoopTarget,A.LoopSource)
             
             raise ValueError("Symmetries cannot be composed")
-    
+
     def IsIdentity(self):
         
         atol = 1e-10
-        
+
         if ((abs(self.TimeShift) < atol) and (self.TimeRev == 1) and (self.LoopTarget == self.LoopSource)):
             
             return np.allclose(self.SpaceRot,np.identity(ndim,dtype=np.float64),rtol=0.,atol=atol)
@@ -1129,9 +1135,15 @@ class ChoreoSym():
         else:
         
             return False
+            
+    def IsSame(self,other):
+        
+        return ((self.Inverse()).ComposeLight(other)).IsIdentity()
+
+        
 
 
-def TreatSymmetries(nbody,ncoeff,nint=None,mass=None,MomCons=False,n_grad_change=1.,Sym_list=[]):
+def TreatSymmetries(nbody,ncoeff,mass,nint=None,MomCons=False,n_grad_change=1.,Sym_list=[]):
     
     if nint is None:
         nint = 2*ncoeff
@@ -1205,10 +1217,15 @@ def TreatSymmetries(nbody,ncoeff,nint=None,mass=None,MomCons=False,n_grad_change
         if (looplen > maxlooplen):
             maxlooplen = looplen
 
-
-    loopgen = np.zeros((nloop,),dtype=int)
+    loopgen = np.zeros((nloop),dtype=int)
+    loopnb = np.zeros((nloop),dtype=int)
+    
+    loop_gen_to_target = []
     
     Targets = np.zeros((nloop,maxlooplen),dtype=int)
+    MassSum = np.zeros((nloop),dtype=np.float64)
+    ProdMassSumAll = []
+    
     SpaceRots = np.zeros((nloop,maxlooplen,ndim,ndim),dtype=np.float64)
     TimeRevs = np.zeros((nloop,maxlooplen),dtype=int)
     TimeShiftNum = np.zeros((nloop,maxlooplen),dtype=int)
@@ -1222,7 +1239,11 @@ def TreatSymmetries(nbody,ncoeff,nint=None,mass=None,MomCons=False,n_grad_change
         
         ib = 0
         
+        gen_to_target = []
+        
         for istart,path in paths_to_gen.items():
+            
+            MassSum[il] += mass[istart]
             
             Sym = ChoreoSym(LoopTarget=istart,LoopSource=istart)
             
@@ -1255,8 +1276,45 @@ def TreatSymmetries(nbody,ncoeff,nint=None,mass=None,MomCons=False,n_grad_change
                     SymGraph.nodes[loopgen[il]]["Constraint_list"].append(Constraint)
         
             
-            ib+=1
+            gen_to_target.append(Sym)
             
+            ib+=1
+
+        loopnb[il] = ib
+
+        UniqueSyms = []
+        ProdMassSum = []
+        # Count unique pair transformations
+        for ib in range(loopnb[il]-1):
+            for ibp in range(ib+1,loopnb[il]):                
+                
+                Sym = (gen_to_target[ibp].Inverse()).ComposeLight(gen_to_target[ib])
+                
+                IsUnique = True
+                for isym in range(len(UniqueSyms)):
+
+                    IsUnique = not(Sym.IsSame(UniqueSyms[isym]))
+
+                    if not(IsUnique):
+                        break
+
+                if IsUnique:
+                    UniqueSyms.append(Sym)
+                    ProdMassSum.append(mass[Targets[il,ib]]*mass[Targets[il,ibp]])
+                else:
+                    ProdMassSum[isym]+=mass[Targets[il,ib]]*mass[Targets[il,ibp]]
+                    
+
+        ProdMassSumAll.append(ProdMassSum)
+        
+    print(MassSum)
+    print(ProdMassSumAll)
+
+
+
+
+
+
 
     # Now detect parameters and build change of variables
         
@@ -1271,7 +1329,6 @@ def TreatSymmetries(nbody,ncoeff,nint=None,mass=None,MomCons=False,n_grad_change
 
     icstr=0
     
-    icstr=0
     for il in range(nloop):
         for idim in range(ndim):
             
@@ -1354,7 +1411,7 @@ def TreatSymmetries(nbody,ncoeff,nint=None,mass=None,MomCons=False,n_grad_change
 
                         icstr+=1
                                              
-                elif (Sym.TimeRev == 1):
+                elif (Sym.TimeRev == -1):
 
                     cs[0] = np.cos(   twopi * k*dt)
                     cs[1] = np.sin(   twopi * k*dt)
@@ -1416,9 +1473,8 @@ def TreatSymmetries(nbody,ncoeff,nint=None,mass=None,MomCons=False,n_grad_change
                         icstr+=1
                                        
                 else:
+                    print(Sym.TimeRev)
                     raise ValueError("Invalid TimeRev")
-
-
 
     ncstr = icstr
     cstr_data = np.array(cstr_data,dtype=np.float64)
@@ -1456,4 +1512,4 @@ def TreatSymmetries(nbody,ncoeff,nint=None,mass=None,MomCons=False,n_grad_change
         
         coeff_to_param.data[idx] *= kfac
     
-    return coeff_to_param , param_to_coeff  
+    return nloop, loopnb, loopgen, Targets, SpaceRots, TimeRevs, TimeShiftNum, TimeShiftDen, coeff_to_param , param_to_coeff  

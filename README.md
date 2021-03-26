@@ -18,7 +18,8 @@ Finds periodic solutions to the N-body problem
   - LibSuiteSparse => apt-get install libsuitesparse-dev
   
   
-  ## Compilation of Cython code
-  
-    Run the following :
+## Compilation of Cython code
+
+Run the following :
+
     python setup.py build_ext --inplace
