@@ -659,16 +659,19 @@ def Make2DChoreoSym(SymType,ib_list):
     SymGens = []
     
     if (SymType['name'] in ['C','D','Cp','Dp']):
-        # Choreographic symmetries
+        
+        rot_angle =  twopi * SymType['p'] /  SymType['q']
+        s = 1
+        
         for ib_rel in range(len(ib_list)-1):
             SymGens.append(ChoreoSym(
                 LoopTarget=ib_list[ib_rel+1],
                 LoopSource=ib_list[ib_rel  ],
-                SpaceRot = np.identity(ndim,dtype=np.float64),
+                SpaceRot = np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64),
                 TimeRev=1,
                 TimeShift=fractions.Fraction(numerator=-1,denominator=SymType['n'])
                 ))
-    
+
     if ((SymType['name'] == 'C') or (SymType['name'] == 'D')):
         
         rot_angle = twopi * SymType['l'] /  SymType['k']
@@ -720,28 +723,6 @@ def Make2DChoreoSym(SymType,ib_list):
             TimeRev=-1,
             TimeShift=fractions.Fraction(numerator=0,denominator=1)
             ))
-    
-    if (SymType['name'] in ['E','Ep']):
-        # Shifted choreographic symmetries
-        
-        rot_angle =  twopi * SymType['l'] /  SymType['k']
-        
-        if (SymType['name'] in ['Ep']):
-            s=-1
-        else:
-            s = 1
-        
-        for ib_rel in range(len(ib_list)-1):
-            SymGens.append(ChoreoSym(
-                LoopTarget=ib_list[ib_rel+1],
-                LoopSource=ib_list[ib_rel  ],
-                SpaceRot = np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64),
-                TimeRev=1,
-                TimeShift=fractions.Fraction(numerator=-1,denominator=SymType['n'])
-                # ~ TimeShift=fractions.Fraction(numerator=0,denominator=SymType['n'])
-                ))
-    
-    
     
     return SymGens
 
