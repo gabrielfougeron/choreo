@@ -29,5 +29,5 @@ extension = Extension("Choreo_cython_funs", ["Choreo_cython_funs.pyx"],
                   )
 
 setup(
-    ext_modules = cythonize(extension, language_level = "3")
+    ext_modules = cythonize(extension, language_level = "3",annotate=True)
 )
