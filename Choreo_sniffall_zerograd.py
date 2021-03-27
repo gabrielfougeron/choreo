@@ -12,50 +12,19 @@ import time
 from Choreo_funs import *
 
 
-nbody = 4
+nbody = 9
 mass = np.ones((nbody))
-
-# ~ rotangle = 2*np.pi * 1/3
-# ~ rotangle = 2*np.pi * 1/4
-rotangle = 2*np.pi * 0/4
-mirror = 1
-
-rotmat = np.array([[mirror*np.cos(rotangle),-mirror*np.sin(rotangle)],[np.sin(rotangle),np.cos(rotangle)]],dtype=np.float64)
 
 Sym_list = []
 
-Sym_list.append(ChoreoSym(
-    LoopTarget=1,
-    LoopSource=0,
-    SpaceRot = rotmat,
-    TimeRev=1,
-    TimeShift=fractions.Fraction(numerator=1,denominator=4)
-    ))
+SymType = {
+    'name'  : 'Dp',
+    'n'     : nbody,
+    'k'     : 1,
+    'l'     : 1 ,
+}
 
-Sym_list.append(ChoreoSym(
-    LoopTarget=2,
-    LoopSource=1,
-    SpaceRot = rotmat,
-    TimeRev=1,
-    TimeShift=fractions.Fraction(numerator=1,denominator=4)
-    ))
-
-Sym_list.append(ChoreoSym(
-    LoopTarget=3,
-    LoopSource=2,
-    SpaceRot = rotmat,
-    TimeRev=1,
-    TimeShift=fractions.Fraction(numerator=1,denominator=4)
-    ))
-
-# ~ Sym_list.append(ChoreoSym(
-    # ~ LoopTarget=4,
-    # ~ LoopSource=3,
-    # ~ SpaceRot = rotmat,
-    # ~ TimeRev=1,
-    # ~ TimeShift=fractions.Fraction(numerator=1,denominator=5)
-    # ~ ))
-
+Sym_list.extend(Make2DChoreoSym(SymType,range(nbody)))
 
 
 
@@ -90,9 +59,9 @@ dt_shift_dupl = np.linspace(start=0.,stop=1.,endpoint=False,num=nbody)
 # ~ print(1/0)
 
 # ~ ncoeff_init = 100
-ncoeff_init = 30
+# ~ ncoeff_init = 800
 # ~ ncoeff_init = 700
-# ~ ncoeff_init = 900
+ncoeff_init = 900
 # ~ ncoeff_init = 1200
 # ~ ncoeff_init = 90
 
@@ -151,15 +120,15 @@ not_disp_list = []
 not_disp_list = ['coeff_to_param','param_to_coeff']
 
 
-for key,value in args.items():
-    if key not in not_disp_list:
-        print(key)
-        print(value)
-        print('')
-    else:
-        print(key)
-        print(value.shape)
-        print('')
+# ~ for key,value in args.items():
+    # ~ if key not in not_disp_list:
+        # ~ print(key)
+        # ~ print(value)
+        # ~ print('')
+    # ~ else:
+        # ~ print(key)
+        # ~ print(value.shape)
+        # ~ print('')
 
 
 print('Imposed constraints lead to the detection of :')
@@ -180,8 +149,13 @@ for i in range(n_reconverge_it_max+1):
     print('')
     
 
+callfun = callfun_list[0]
+x0 = np.random.random(callfun[0]['param_to_coeff'].shape[1])
+xmin = Compute_MinDist(x0,callfun)
+if (xmin < 1e-5):
+    print(xmin)
+    raise ValueError("Init inter body distance too low. There is something wrong with constraints")
 
-# ~ print(1/0)
 
 
 n_opt = 0
@@ -219,8 +193,8 @@ while (n_opt < n_opt_max):
                 randampl = np.random.rand()* amplitude_o
             
                 ko = 0
-                k1 =10
-                k2= 10
+                k1 =20
+                k2= 30
                 if (k <= ko):
                     # ~ randampl = 0.12
                     randampl = 0.00 * np.random.rand()
@@ -253,15 +227,13 @@ while (n_opt < n_opt_max):
     f0 = Compute_action_onlygrad(x0,callfun)
     best_sol = current_best(x0,f0)
     
+    # ~ print(x0)
     # ~ Action,GradAction = Compute_action(x0,callfun)    
     # ~ print(Action)
     # ~ print(1/0)
     
     gradtol = 1e-5
     maxiter = 5000
-
-    # ~ gradtol = 1e-7
-    # ~ maxiter = 1000
 
     try : 
         
@@ -390,7 +362,7 @@ while (n_opt < n_opt_max):
                         print('Opt Action Grad Norm : ',best_sol.f_norm)
                     
                         Newt_err = Compute_Newton_err(best_sol.x,callfun)
-                        Newt_err_norm = np.linalg.norm(Newt_err)
+                        Newt_err_norm = np.linalg.norm(Newt_err)/args['nint']
                         
                         print('Newton Error : ',Newt_err_norm)
                     
@@ -449,16 +421,16 @@ while (n_opt < n_opt_max):
                     
                     print('Saving solution as '+filename_output+'.*')
                     
-                    nint_plot = 1000
-                    nperiod = 2
+                    nint_plot = 10000
                     # ~ np.save(filename_output+'.npy',all_coeffs)
                     plot_all_2D(best_sol.x,nint_plot,callfun,filename_output+'.png')
                     
                     
                     # ~ print(all_coeffs)
                     # ~ print(1/0)
-                    
-                    # ~ plot_all_2D_anim(nloop,nbody,nint_plot,nperiod,all_coeffs,filename_output+'.mp4')
+                    nint_plot = 1000
+                    nperiod = 1
+                    plot_all_2D_anim(best_sol.x,nint_plot,callfun,filename_output+'.mp4',nperiod,Plot_trace=True)
                     Write_Descriptor(best_sol.x,callfun,filename_output+'.txt')
     
     print('')

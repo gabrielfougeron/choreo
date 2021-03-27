@@ -32,95 +32,7 @@ fourpisq = twopi*twopi
 
 nnm1 = n*(n-1)
 
-def plot_all_2D_anim(nloop,nbody,nint,nperiod,all_coeffs,filename,Plot_trace=True):
-    
-    all_pos = []
-    all_shifts = []
-
-    xmin = all_coeffs[0,0,0,0]
-    xmax = xmin
-    ymin = all_coeffs[0,1,0,0]
-    ymax = ymin
-    
-    # Prepares data
-    for il in range(nloop):
-        
-        c_coeffs = all_coeffs[il,:,:,:].view(dtype=np.complex128)[...,0]
-        
-        pos = np.zeros((ndim,nint+1),dtype=np.float64)
-        
-        pos[:,0:nint] = np.fft.irfft(c_coeffs,n=nint,axis=1)*nint
-        
-        pos[:,nint] = pos[:,0]
-        
-        all_pos.append(pos)
-        
-        div = nint // nbody[il]
-        
-        shift = np.zeros((nbody[il]),int)
-        for i in range(nbody[il]):
-            shift[i] = (-i*div)% nint
-            
-        all_shifts.append(shift)
-        
-        xmin = min(xmin,pos[0,...].min())
-        xmax = max(xmax,pos[0,...].max())
-        ymin = min(ymin,pos[1,...].min())
-        ymax = max(ymax,pos[1,...].max())
-    
-    r = 0.03
-    
-    xinf = xmin - r*(xmax-xmin)
-    xsup = xmax + r*(xmax-xmin)
-    
-    yinf = ymin - r*(ymax-ymin)
-    ysup = ymax + r*(ymax-ymin)
-    
-    
-        
-    # Plot-related
-    fig = plt.figure()
-    ax = plt.gca()
-    lines = sum([ax.plot([], [],'-')  for il in range(nloop)], [])
-    points = sum([ax.plot([], [],'o')for il in range(nloop)], [])
-    
-    # ~ print(xinf,xsup)
-    # ~ print(yinf,ysup)
-    
-    ax.axis('off')
-    ax.set_xlim([xinf, xsup])
-    ax.set_ylim([yinf, ysup ])
-    ax.set_aspect('equal', adjustable='box')
-    plt.tight_layout()
-    
-    def init():
-        
-        if (Plot_trace):
-            for il in range(nloop):
-                lines[il].set_data(all_pos[il][0,:], all_pos[il][1,:])
-        
-        return lines + points
-
-    def update(i):
-        
-        for il in range(nloop):
-            
-            for ib in range(nbody[il]):
-                all_shifts[il][ib] = (all_shifts[il][ib]+1) % nint
-            
-            points[il].set_data(all_pos[il][0,all_shifts[il]], all_pos[il][1,all_shifts[il]])
-
-        return lines + points
-
-    anim = animation.FuncAnimation(fig, update, frames=int(nperiod*nint),init_func=init, blit=True)
-                        
-    # Save as mp4. This requires mplayer or ffmpeg to be installed
-    # ~ anim.save(filename, fps=30, extra_args=['-vcodec', 'libx264'])
-    anim.save(filename, fps=30)
-    
-    plt.close()
-    
-def plot_all_2D(x,nint_plot,callfun,filename):
+def plot_all_2D(x,nint_plot,callfun,filename,fig_size=(10,10)):
     
     args = callfun[0]
     
@@ -162,9 +74,10 @@ def plot_all_2D(x,nint_plot,callfun,filename):
 
     # Plot-related
     fig = plt.figure()
+    fig.set_size_inches(fig_size)
     ax = plt.gca()
-    lines = sum([ax.plot([], [],'-')  for ib in range(nbody)], [])
-    points = sum([ax.plot([], [],'o')for ib in range(nbody)], [])
+    lines = sum([ax.plot([], [],'b-')  for ib in range(nbody)], [])
+    points = sum([ax.plot([], [],'ro')for ib in range(nbody)], [])
     
     # ~ print(xinf,xsup)
     # ~ print(yinf,ysup)
@@ -182,6 +95,125 @@ def plot_all_2D(x,nint_plot,callfun,filename):
     plt.savefig(filename)
     
     plt.close()
+ 
+def plot_all_2D_anim(x,nint_plot,callfun,filename,nperiod=1,Plot_trace=True,fig_size=(5,5)):
+    
+    args = callfun[0]
+    
+    all_coeffs = Unpackage_all_coeffs(x,callfun)
+    
+    nloop = args['nloop']
+    nbody = args['nbody']
+    loopnb = args['loopnb']
+    Targets = args['Targets']
+    SpaceRotsUn = args['SpaceRotsUn']
+    TimeRevsUn = args['TimeRevsUn']
+    TimeShiftNumUn = args['TimeShiftNumUn']
+    TimeShiftDenUn = args['TimeShiftDenUn']
+    
+    maxloopnb = loopnb.max()
+    
+    c_coeffs = all_coeffs.view(dtype=np.complex128)[...,0]
+    
+    all_pos = np.zeros((nloop,ndim,nint_plot+1),dtype=np.float64)
+    all_pos[:,:,0:nint_plot] = np.fft.irfft(c_coeffs,n=nint_plot,axis=2)*nint_plot
+    all_pos[:,:,nint_plot] = all_pos[:,:,0]
+    
+    all_pos_b = np.zeros((nbody,ndim,nint_plot+1),dtype=np.float64)
+    all_shiftsUn = np.zeros((nloop,maxloopnb),dtype=np.int_)
+    
+    xmin = all_coeffs[0,0,0,0]
+    xmax = xmin
+    ymin = all_coeffs[0,1,0,0]
+    ymax = ymin
+    
+    for il in range(nloop):
+        for ib in range(loopnb[il]):
+                
+            # ~ if not(((-TimeRevsUn[il,ib]*nint_plot*TimeShiftNumUn[il,ib]) % TimeShiftDenUn[il,ib]) == 0):
+                # ~ print("WARNING : remainder in integer division")
+                
+            all_shiftsUn[il,ib] = ((-TimeRevsUn[il,ib]*nint_plot*TimeShiftNumUn[il,ib]) // TimeShiftDenUn[il,ib] ) % nint_plot
+
+    for iint in range(nint_plot+1):    
+        for il in range(nloop):
+            for ib in range(loopnb[il]):
+
+                all_pos_b[Targets[il,ib],:,iint] = np.dot(SpaceRotsUn[il,ib,:,:],all_pos[il,:,all_shiftsUn[il,ib]])
+
+                all_shiftsUn[il,ib] = (all_shiftsUn[il,ib]+TimeRevsUn[il,ib]) % nint_plot
+                
+                xmin = min(xmin,all_pos_b[Targets[il,ib],0,iint])
+                xmax = max(xmax,all_pos_b[Targets[il,ib],0,iint])
+                ymin = min(ymin,all_pos_b[Targets[il,ib],1,iint])
+                ymax = max(ymax,all_pos_b[Targets[il,ib],1,iint])
+                              
+    r = 0.03
+    
+    xinf = xmin - r*(xmax-xmin)
+    xsup = xmax + r*(xmax-xmin)
+    
+    yinf = ymin - r*(ymax-ymin)
+    ysup = ymax + r*(ymax-ymin)
+    
+    # Plot-related
+    fig = plt.figure()
+    fig.set_size_inches(fig_size)
+    ax = plt.gca()
+    lines = sum([ax.plot([], [],'-')  for ib in range(nbody)], [])
+    points = sum([ax.plot([], [],'o')for ib in range(nbody)], [])
+    
+    # ~ print(xinf,xsup)
+    # ~ print(yinf,ysup)
+    
+    ax.axis('off')
+    ax.set_xlim([xinf, xsup])
+    ax.set_ylim([yinf, ysup ])
+    ax.set_aspect('equal', adjustable='box')
+    plt.tight_layout()
+    
+    iint = [0]
+    
+    def init():
+        
+        if (Plot_trace):
+            for ib in range(nbody):
+                lines[ib].set_data(all_pos_b[ib,0,:], all_pos_b[ib,1,:])
+        
+        return lines + points
+
+    def update(i):
+        
+        for ib in range(nbody):
+            points[ib].set_data(all_pos_b[ib,0,iint[0]], all_pos_b[ib,1,iint[0]])
+            
+        iint[0] = ((iint[0]+1) % nint_plot)
+
+        return lines + points
+    
+    anim = animation.FuncAnimation(fig, update, frames=int(nperiod*nint_plot),init_func=init, blit=True)
+                        
+    # Save as mp4. This requires mplayer or ffmpeg to be installed
+    # ~ anim.save(filename, fps=30, extra_args=['-vcodec', 'libx264'])
+    anim.save(filename, fps=30)
+    
+    plt.close()
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
  
 def Package_all_coeffs(all_coeffs,callfun):
     
@@ -217,7 +249,7 @@ def Compute_action_hess_mul(x,dx,callfun):
     dy = args['param_to_coeff'] * dx
     all_coeffs_d = dy.reshape(args['nloop'],ndim,args['ncoeff'],2)
 
-    HessJdx =  Compute_action_hess_mul(args['nloop'],args['nbody'],args['ncoeff'],args['mass'],args['nint'],all_coeffs,all_coeffs_d)
+    HessJdx =  Compute_action_hess_mul_Cython(args['nloop'],args['nbody'],args['ncoeff'],args['mass'],args['nint'],all_coeffs,all_coeffs_d)
     
     HJdx = HessJdx.reshape(-1)
     
@@ -551,87 +583,6 @@ class current_best:
     def get_best(self):
         return self.x,self.f,self.f_norm
         
-def Make2DSymOneLoop(SymType,loop):
-    
-    # ~ SymType  => Name of sym, see https://arxiv.org/abs/1305.0470
-        # ~ 'name'
-        # ~ 'n'
-        # ~ 'k'
-        # ~ 'l'
-        
-        # Classification :
-        # C(n,k,l) with k and l relative primes
-        # D(n,k,l) with k and l relative primes
-        # Cp(n,2,#) 
-        # Dp(n,1,#) 
-        # Dp(n,2,#) 
-        
-    SymGens = []
-    
-    if ((SymType['name'] == 'C') or (SymType['name'] == 'D')):
-        
-        rot_angle = twopi * SymType['l'] /  SymType['k']
-        s = 1
-        TimeRev = False
-        TimeShift = - 1 / SymType['k']
-        
-        SymGens.append ({
-            'LoopTarget' : [loop],
-            'LoopSource' : [loop],
-            'SpaceRot' : np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64),
-            'TimeRev' : TimeRev,
-            'TimeShift' : TimeShift,
-            })
-    
-    if (SymType['name'] == 'D'):
-        
-        rot_angle = 0
-        s = -1
-        TimeRev = True
-        TimeShift = 0
-        
-        SymGens.append ({
-            'LoopTarget' : [loop],
-            'LoopSource' : [loop],
-            'SpaceRot' : np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64),
-            'TimeRev' : TimeRev,
-            'TimeShift' : TimeShift,
-            })
-            
-    if ((SymType['name'] == 'Cp') or ((SymType['name'] == 'Dp') and (SymType['k'] == 2))):
-        
-        rot_angle = 0
-        s = -1
-        TimeRev = False
-        TimeShift =  1/2
-        
-        SymGens.append ({
-            'LoopTarget' : [loop],
-            'LoopSource' : [loop],
-            'SpaceRot' : np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64),
-            'TimeRev' : TimeRev,
-            'TimeShift' : TimeShift,
-            })
-
-    if (SymType['name'] == 'Dp'):
-        
-        rot_angle = np.pi
-        s = 1
-        TimeRev = True
-        TimeShift = 0
-        
-        SymGens.append ({
-            'LoopTarget' : [loop],
-            'LoopSource' : [loop],
-            'SpaceRot' : np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64),
-            'TimeRev' : TimeRev,
-            'TimeShift' : TimeShift,
-            })
-            
-    
-    
-    return SymGens
-    
 class ChoreoSym():
 
     def __init__(
@@ -701,6 +652,122 @@ class ChoreoSym():
     def IsSame(self,other):
         
         return ((self.Inverse()).ComposeLight(other)).IsIdentity()
+
+def Make2DChoreoSym(SymType,ib_list):
+    
+    # ~ SymType  => Name of sym, see https://arxiv.org/abs/1305.0470
+        # ~ 'name'
+        # ~ 'n'
+        # ~ 'k'
+        # ~ 'l'
+        
+        # Classification :
+        # C(n,k,l) with k and l relative primes
+        # D(n,k,l) with k and l relative primes
+        # Cp(n,2,#) 
+        # Dp(n,1,#) 
+        # Dp(n,2,#) 
+        
+    if (len(ib_list) != SymType['n']):
+        print("Warning : SymType and LoopLength are inconsistent")
+        
+    SymGens = []
+    
+    # Choreographic symmetries
+    for ib_rel in range(len(ib_list)-1):
+        SymGens.append(ChoreoSym(
+            LoopTarget=ib_list[ib_rel+1],
+            LoopSource=ib_list[ib_rel  ],
+            SpaceRot = np.identity(ndim,dtype=np.float64),
+            TimeRev=1,
+            TimeShift=fractions.Fraction(numerator=-1,denominator=SymType['n'])
+            ))
+    
+    if ((SymType['name'] == 'C') or (SymType['name'] == 'D')):
+        
+        rot_angle = twopi * SymType['l'] /  SymType['k']
+        s = 1
+        
+        SymGens.append(ChoreoSym(
+            LoopTarget=ib_list[0],
+            LoopSource=ib_list[0],
+            SpaceRot = np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64),
+            TimeRev=1,
+            TimeShift=fractions.Fraction(numerator=1,denominator=SymType['k'])
+            ))
+
+    if (SymType['name'] == 'D'):
+        
+        rot_angle = 0
+        s = -1
+
+        SymGens.append(ChoreoSym(
+            LoopTarget=ib_list[0],
+            LoopSource=ib_list[0],
+            SpaceRot = np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64),
+            TimeRev=-1,
+            TimeShift=fractions.Fraction(numerator=0,denominator=1)
+            ))
+        
+    if ((SymType['name'] == 'Cp') or ((SymType['name'] == 'Dp') and (SymType['k'] == 2))):
+        
+        rot_angle = 0
+        s = -1
+
+        SymGens.append(ChoreoSym(
+            LoopTarget=ib_list[0],
+            LoopSource=ib_list[0],
+            SpaceRot = np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64),
+            TimeRev=1,
+            TimeShift=fractions.Fraction(numerator=1,denominator=2)
+            ))
+
+    if (SymType['name'] == 'Dp'):
+        
+        rot_angle =  np.pi
+        s = 1
+
+        SymGens.append(ChoreoSym(
+            LoopTarget=ib_list[0],
+            LoopSource=ib_list[0],
+            SpaceRot = np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64),
+            TimeRev=-1,
+            TimeShift=fractions.Fraction(numerator=0,denominator=1)
+            ))
+    
+    return SymGens
+
+# ~ def Make2DChoreoShiftSym(SymType,ib_list):
+
+    # ~ SymType  => Name of sym, see https://arxiv.org/abs/1305.0470
+        # ~ 'name'
+        # ~ 'n'
+        # ~ 'k'
+        # ~ 'l'
+        
+        # Classification :
+        # C(n,k,l) with k and l relative primes
+        # D(n,k,l) with k and l relative primes
+        # Cp(n,2,#) 
+        # Dp(n,1,#) 
+        # Dp(n,2,#) 
+        
+    # ~ if (len(ib_list) != SymType['n']):
+        # ~ print("Warning : SymType and LoopLength are inconsistent")
+        
+    # ~ SymGens = []
+    
+    # ~ # Choreographic symmetries
+    # ~ for ib_rel in range(len(ib_list)-1):
+        # ~ SymGens.append(ChoreoSym(
+            # ~ LoopTarget=ib_list[ib_rel+1],
+            # ~ LoopSource=ib_list[ib_rel  ],
+            # ~ SpaceRot = np.identity(ndim,dtype=np.float64),
+            # ~ TimeRev=1,
+            # ~ TimeShift=fractions.Fraction(numerator=-1,denominator=SymType['n'])
+            # ~ ))
+    
+    # ~ return SymGens
 
 def setup_changevar(nbody,ncoeff,mass,nint=None,MomCons=True,n_grad_change=1.,Sym_list=[]):
     
@@ -830,13 +897,14 @@ def setup_changevar(nbody,ncoeff,mass,nint=None,MomCons=True,n_grad_change=1.,Sy
             TimeShiftNumUn[il,ib] = Sym.TimeShift.numerator
             TimeShiftDenUn[il,ib] = Sym.TimeShift.denominator
             
-            for Constraint in SymGraph.nodes[Sym.LoopTarget]["Constraint_list"]:
+            if (Sym.LoopTarget != loopgen[il]):
+                
+                for Constraint in SymGraph.nodes[Sym.LoopTarget]["Constraint_list"]:
 
-                Constraint = (Sym.Inverse()).Compose(Constraint.Compose(Sym))
+                    Constraint = (Sym.Inverse()).Compose(Constraint.Compose(Sym))
 
-                if not(Constraint.IsIdentity()):
-                    SymGraph.nodes[loopgen[il]]["Constraint_list"].append(Constraint)
-        
+                    if not(Constraint.IsIdentity()):
+                        SymGraph.nodes[loopgen[il]]["Constraint_list"].append(Constraint)
             
             gen_to_target.append(Sym)
             
@@ -880,21 +948,6 @@ def setup_changevar(nbody,ncoeff,mass,nint=None,MomCons=True,n_grad_change=1.,Sy
                     
         UniqueSymsAll_list.append(UniqueSyms)
         ProdMassSumAll_list.append(ProdMassSum)
-        
-        
-    # ~ print("Loops :")
-    # ~ print(nloop)
-    # ~ print(MassSum)
-    # ~ print("")
-        
-    # ~ print("Loops Unary :")
-    # ~ print(loopnb)
-    # ~ print("")
-        
-    # ~ print("Loops Binary :")
-    # ~ print(loopnbi)    
-    # ~ print(ProdMassSumAll_list)
-    # ~ print("")
 
     maxloopnbi = loopnbi.max()
     
@@ -946,9 +999,9 @@ def setup_changevar(nbody,ncoeff,mass,nint=None,MomCons=True,n_grad_change=1.,Sy
 
             for k in range(ncoeff):
                 
-                dt = Sym.TimeShift.numerator/Sym.TimeShift.denominator
+                dt = Constraint.TimeShift.numerator/Constraint.TimeShift.denominator
                 
-                if (Sym.TimeRev == 1):
+                if (Constraint.TimeRev == 1):
 
                     cs[0] = np.cos(  - twopi * k*dt)
                     cs[1] = np.sin(  - twopi * k*dt)                        
@@ -959,7 +1012,7 @@ def setup_changevar(nbody,ncoeff,mass,nint=None,MomCons=True,n_grad_change=1.,Sy
                                 
                             i =  0 + 2*(k + ncoeff*(jdim + ndim*il))
 
-                            val = Sym.SpaceRot[idim,jdim]*cs[0]
+                            val = Constraint.SpaceRot[idim,jdim]*cs[0]
                             
                             if (idim == jdim):
                                 val -=1.
@@ -972,7 +1025,7 @@ def setup_changevar(nbody,ncoeff,mass,nint=None,MomCons=True,n_grad_change=1.,Sy
                                 
                             i =  1 + 2*(k + ncoeff*(jdim + ndim*il))
 
-                            val = - Sym.SpaceRot[idim,jdim]*cs[1]
+                            val = - Constraint.SpaceRot[idim,jdim]*cs[1]
                             
                             if (abs(val) > eps_zero):
                             
@@ -986,7 +1039,7 @@ def setup_changevar(nbody,ncoeff,mass,nint=None,MomCons=True,n_grad_change=1.,Sy
                                 
                             i =  1 + 2*(k + ncoeff*(jdim + ndim*il))
 
-                            val = Sym.SpaceRot[idim,jdim]*cs[0]
+                            val = Constraint.SpaceRot[idim,jdim]*cs[0]
                             
                             if (idim == jdim):
                                 val -=1.
@@ -999,7 +1052,7 @@ def setup_changevar(nbody,ncoeff,mass,nint=None,MomCons=True,n_grad_change=1.,Sy
                                 
                             i =  0 + 2*(k + ncoeff*(jdim + ndim*il))
 
-                            val = Sym.SpaceRot[idim,jdim]*cs[1]
+                            val = Constraint.SpaceRot[idim,jdim]*cs[1]
                             
                             if (abs(val) > eps_zero):
                             
@@ -1009,7 +1062,7 @@ def setup_changevar(nbody,ncoeff,mass,nint=None,MomCons=True,n_grad_change=1.,Sy
 
                         icstr+=1
                                              
-                elif (Sym.TimeRev == -1):
+                elif (Constraint.TimeRev == -1):
 
                     cs[0] = np.cos(   twopi * k*dt)
                     cs[1] = np.sin(   twopi * k*dt)
@@ -1020,7 +1073,7 @@ def setup_changevar(nbody,ncoeff,mass,nint=None,MomCons=True,n_grad_change=1.,Sy
                                 
                             i =  0 + 2*(k + ncoeff*(jdim + ndim*il))
 
-                            val = Sym.SpaceRot[idim,jdim]*cs[0]
+                            val = Constraint.SpaceRot[idim,jdim]*cs[0]
                             
                             if (idim == jdim):
                                 val -=1.
@@ -1033,7 +1086,7 @@ def setup_changevar(nbody,ncoeff,mass,nint=None,MomCons=True,n_grad_change=1.,Sy
                                 
                             i =  1 + 2*(k + ncoeff*(jdim + ndim*il))
 
-                            val = Sym.SpaceRot[idim,jdim]*cs[1]
+                            val = Constraint.SpaceRot[idim,jdim]*cs[1]
                             
                             if (abs(val) > eps_zero):
                             
@@ -1047,7 +1100,7 @@ def setup_changevar(nbody,ncoeff,mass,nint=None,MomCons=True,n_grad_change=1.,Sy
                                 
                             i =  1 + 2*(k + ncoeff*(jdim + ndim*il))
 
-                            val = - Sym.SpaceRot[idim,jdim]*cs[0]
+                            val = - Constraint.SpaceRot[idim,jdim]*cs[0]
                             
                             if (idim == jdim):
                                 val -=1.
@@ -1060,7 +1113,7 @@ def setup_changevar(nbody,ncoeff,mass,nint=None,MomCons=True,n_grad_change=1.,Sy
                                 
                             i =  0 + 2*(k + ncoeff*(jdim + ndim*il))
 
-                            val = Sym.SpaceRot[idim,jdim]*cs[1]
+                            val = Constraint.SpaceRot[idim,jdim]*cs[1]
                             
                             if (abs(val) > eps_zero):
                             
@@ -1071,7 +1124,7 @@ def setup_changevar(nbody,ncoeff,mass,nint=None,MomCons=True,n_grad_change=1.,Sy
                         icstr+=1
                                        
                 else:
-                    print(Sym.TimeRev)
+                    print(Constraint.TimeRev)
                     raise ValueError("Invalid TimeRev")
 
     ncstr = icstr
@@ -1169,7 +1222,6 @@ def Compute_action(x,callfun):
     
     return J,y
     
-
 def Compute_Newton_err(x,callfun):
     # WARNING : DOUBLING NUMBER OF INTEGRATION POINTS
 
@@ -1194,7 +1246,6 @@ def Compute_Newton_err(x,callfun):
         )
 
     return all_Newt_err
-    # ~ return 0.
     
 def Compute_Loop_Dist_Size(x,callfun):
     
@@ -1322,7 +1373,7 @@ def Write_Descriptor(x,callfun,filename,WriteSignature=False):
         filename_write.write('Value of the Norm of the Gradient of the Action : {:.10E}\n'.format(np.linalg.norm(Gradaction)))
 
         Newt_err = Compute_Newton_err(x,callfun)
-        Newt_err_norm = np.linalg.norm(Newt_err)
+        Newt_err_norm = np.linalg.norm(Newt_err)/args['nint']
         filename_write.write('Sum of Newton Errors : {:.10E}\n'.format(Newt_err_norm))
         
         dxmin = Compute_MinDist(x,callfun)
@@ -1361,7 +1412,6 @@ def SelectFiles_Action(store_folder,Action_val,Action_eps):
                             file_path_list.append(store_folder+'/'+file_root)
                             
     return file_path_list
-
 
 def Check_Duplicates(x,callfun,store_folder,duplicate_eps,Action_eps=1e-5,theta_rot_dupl=[],dt_shift_dupl=[],TimeReversal=False,SpaceSym=False):
 
