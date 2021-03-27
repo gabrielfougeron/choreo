@@ -9,29 +9,58 @@ import copy
 import os, shutil
 import time
 
-
 from Choreo_funs import *
 
 
-# ~ nbody = np.array([1,1,1,1,1])
-# ~ nbody = np.array([1,1,1])
-# ~ nbody = np.array([2,2])
-# ~ nbody = np.array([3])
-# ~ nbody = np.array([4])
-nbody = np.array([5])
-# ~ nbody = np.array([6])
-# ~ nbody = np.array([7])
-# ~ nbody = np.array([9])
+nbody = 4
+mass = np.ones((nbody))
 
-nloop = nbody.size
-mass = np.ones((nloop))
-# ~ mass = np.array([100,10,1],dtype=np.float64)
+# ~ rotangle = 2*np.pi * 1/3
+# ~ rotangle = 2*np.pi * 1/4
+rotangle = 2*np.pi * 0/4
+mirror = 1
+
+rotmat = np.array([[mirror*np.cos(rotangle),-mirror*np.sin(rotangle)],[np.sin(rotangle),np.cos(rotangle)]],dtype=np.float64)
+
+Sym_list = []
+
+Sym_list.append(ChoreoSym(
+    LoopTarget=1,
+    LoopSource=0,
+    SpaceRot = rotmat,
+    TimeRev=1,
+    TimeShift=fractions.Fraction(numerator=1,denominator=4)
+    ))
+
+Sym_list.append(ChoreoSym(
+    LoopTarget=2,
+    LoopSource=1,
+    SpaceRot = rotmat,
+    TimeRev=1,
+    TimeShift=fractions.Fraction(numerator=1,denominator=4)
+    ))
+
+Sym_list.append(ChoreoSym(
+    LoopTarget=3,
+    LoopSource=2,
+    SpaceRot = rotmat,
+    TimeRev=1,
+    TimeShift=fractions.Fraction(numerator=1,denominator=4)
+    ))
+
+# ~ Sym_list.append(ChoreoSym(
+    # ~ LoopTarget=4,
+    # ~ LoopSource=3,
+    # ~ SpaceRot = rotmat,
+    # ~ TimeRev=1,
+    # ~ TimeShift=fractions.Fraction(numerator=1,denominator=5)
+    # ~ ))
 
 
-store_folder = './Sniff_all/'
-store_folder = store_folder+str(nbody[0])
-for i in range(len(nbody)-1):
-    store_folder = store_folder+'x'+str(nbody[i+1])
+
+
+store_folder = './Sniff_all_sym/'
+store_folder = store_folder+str(nbody)
 
 
 Look_for_duplicates = True
@@ -44,23 +73,24 @@ save_init = False
 
 # ~ save_init = True
 
-# ~ save_approx = False
-save_approx = True
+save_approx = False
+# ~ save_approx = True
 
 # ~ Reconverge_sols = False
 Reconverge_sols = True
 
 
 n_reconverge_it_max = 4
+# ~ n_reconverge_it_max = 0
 
 # ~ theta_rot_dupl = [0.,.2,.4,.6,.8]
-theta_rot_dupl = np.linspace(start=0.,stop=twopi,endpoint=False,num=nbody[0]*3)
-dt_shift_dupl = np.linspace(start=0.,stop=1.,endpoint=False,num=nbody[0]*3)
+theta_rot_dupl = np.linspace(start=0.,stop=twopi,endpoint=False,num=nbody)
+dt_shift_dupl = np.linspace(start=0.,stop=1.,endpoint=False,num=nbody)
 
 # ~ print(1/0)
 
 # ~ ncoeff_init = 100
-ncoeff_init = 600
+ncoeff_init = 30
 # ~ ncoeff_init = 700
 # ~ ncoeff_init = 900
 # ~ ncoeff_init = 1200
@@ -69,50 +99,6 @@ ncoeff_init = 600
 # ~ ncoeff_cutoff = ncoeff_init
 ncoeff_cutoff = 100
 
-MomCons_As_Sym = True
-# ~ MomCons_As_Sym = False
-
-SymGens = []
-
-for i in range(nloop-1):
-    LoopSelect = np.array([i],dtype=int)
-    LoopPerm = np.array([i+1],dtype=int)
-
-    rot_angle = 0
-    SpaceSym = False 
-    if (SpaceSym):
-        s = -1
-    else:
-        s = 1
-
-    TimeRev = False
-    # ~ TimeRev = True
-
-    TimeShift = 1/5
-
-    SymGens.extend([{
-    'LoopSelect' : LoopSelect,
-    'LoopPerm' : LoopPerm,
-    'SpaceRot' : np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64),
-    'TimeRev' : TimeRev,
-    'TimeShift' : TimeShift,
-    }])
-
-
-
-il = 0
-SymType = {
-    'name'  : 'C',
-    'n'     : nbody[il],
-    'k'     : 5,
-    'l'     : 1,
-}
-SymGens.extend(Make2DSymOneLoop(SymType,il))
-
-
-
-
-n_opt = 0
 
 disp_scipy_opt = False
 # ~ disp_scipy_opt = True
@@ -135,29 +121,80 @@ krylov_method = 'cgs'
 # ~ line_search = 'armijo'
 line_search = 'wolfe'
 
-coeff_to_param_list = []
-param_to_coeff_list = []
+callfun_list = []
+
+print('Searching periodic solutions of {:d} bodies'.format(nbody))
+print('Processing symmetries for {:d} convergence levels ...'.format(n_reconverge_it_max+1))
+print('')
 
 for i in range(n_reconverge_it_max+1):
     
     ncoeff = ncoeff_init * (2**i)
     
-    coeff_to_param , param_to_coeff = setup_changevar(nloop,nbody,ncoeff,mass,MomCons=MomCons_As_Sym,Sym_list=SymGens)
+    callfun = setup_changevar(nbody,ncoeff,mass,Sym_list=Sym_list)
+
+    callfun_list.append(callfun)
+
+args = callfun_list[0][0]
+nloop = args['nloop']
+loopnb = args['loopnb']
+loopnbi = args['loopnbi']
+nbi_tot = 0
+for il in range(nloop):
+    for ilp in range(il+1,nloop):
+        nbi_tot += loopnb[il]*loopnb[ilp]
+    nbi_tot += loopnbi[il]
+nbi_naive = (nbody*(nbody-1))//2
+
+
+not_disp_list = []
+not_disp_list = ['coeff_to_param','param_to_coeff']
+
+
+for key,value in args.items():
+    if key not in not_disp_list:
+        print(key)
+        print(value)
+        print('')
+    else:
+        print(key)
+        print(value.shape)
+        print('')
+
+
+print('Imposed constraints lead to the detection of :')
+print('    {:d} independant loops'.format(nloop))
+print('    {0:d} binary interactions'.format(nbi_tot))
+print('    ==> reduction of {0:f} % wrt the {1:d} naive binary iteractions'.format(100*(1-nbi_tot/nbi_naive),nbi_naive))
+print('')
+
+
+
+for i in range(n_reconverge_it_max+1):
     
-    print('Number of scalar parameters before symmetries : ',coeff_to_param.shape[1])
-    print('Number of scalar parameters after  symmetries : ',coeff_to_param.shape[0])
-    print('Reduction of ',100*(1-coeff_to_param.shape[0]/coeff_to_param.shape[1]),' %')
+    args = callfun_list[i][0]
+    print('Convergence attempt number : ',i+1)
+    print('    Number of scalar parameters before symmetries : ',args['coeff_to_param'].shape[1])
+    print('    Number of scalar parameters after  symmetries : ',args['coeff_to_param'].shape[0])
+    print('    Reduction of ',100*(1-args['coeff_to_param'].shape[0]/args['coeff_to_param'].shape[1]),' %')
     print('')
     
-    coeff_to_param_list.append(coeff_to_param)
-    param_to_coeff_list.append(param_to_coeff)
 
-while (True):
+
+# ~ print(1/0)
+
+
+n_opt = 0
+# ~ n_opt_max = 1
+n_opt_max = 1e10
+while (n_opt < n_opt_max):
     
     n_opt += 1
     
     print('Optimization attempt number : ',n_opt)
-
+    
+    callfun = callfun_list[0]
+    
     ncoeff = ncoeff_init
     nint = 2*ncoeff
     
@@ -181,9 +218,9 @@ while (True):
                 randphase = np.random.rand() * twopi * 3.
                 randampl = np.random.rand()* amplitude_o
             
-                ko = 10
-                k1 = 20
-                k2= 30
+                ko = 0
+                k1 =10
+                k2= 10
                 if (k <= ko):
                     # ~ randampl = 0.12
                     randampl = 0.00 * np.random.rand()
@@ -203,34 +240,20 @@ while (True):
                     kfac = kfac* decrease_fac
                     randampl = randampl*kfac
                 
-                # ~ if (k >= k_thresh_damp):
-                    # ~ kfac = 0.
-                
-                # ~ if (k >= k_thresh_damp):
-                    # ~ kfac = 1./ ((k-k_thresh_damp+1)**decrease_pow)
-                    
-                # ~ if (k % nbody[il]  == 0):
-                    # ~ randampl = 0.
-                    
-                
-                
-                # ~ if ((il==0) and (k % nbody[1] != 0)):
-                    # ~ print(k)
-                    # ~ randampl = 0
-                    
+      
                 all_coeffs[il,idim,k,0] = randampl*np.cos(randphase)
                 all_coeffs[il,idim,k,1] = randampl*np.sin(randphase)
                 
-    if (save_init):
-        nint_plot = 200
-        plot_all_2D(nloop,nbody,nint_plot,all_coeffs,'init.png')
-        np.save('init.npy',all_coeffs)
+    # ~ if (save_init):
+        # ~ nint_plot = 200
+        # ~ plot_all_2D(nloop,nbody,nint_plot,all_coeffs,'init.png')
+        # ~ np.save('init.npy',all_coeffs)
 
-    x0,callfun = Package_args(nloop,nbody,ncoeff,mass,nint,all_coeffs,coeff_to_param_list[0],param_to_coeff_list[0])
-    f0 = Compute_action_onlygrad_package(x0,callfun)
+    x0 = Package_all_coeffs(all_coeffs,callfun)
+    f0 = Compute_action_onlygrad(x0,callfun)
     best_sol = current_best(x0,f0)
     
-    # ~ Action,GradAction = Compute_action_package(x0,callfun)    
+    # ~ Action,GradAction = Compute_action(x0,callfun)    
     # ~ print(Action)
     # ~ print(1/0)
     
@@ -239,10 +262,10 @@ while (True):
 
     # ~ gradtol = 1e-7
     # ~ maxiter = 1000
-    
+
     try : 
         
-        opt_result = opt.root(fun=Compute_action_onlygrad_package,x0=x0,args=callfun,method='krylov', options={'line_search':line_search,'disp':disp_scipy_opt,'maxiter':maxiter,'fatol':gradtol,'jac_options':{'method':krylov_method}},callback=best_sol.update)
+        opt_result = opt.root(fun=Compute_action_onlygrad,x0=x0,args=callfun,method='krylov', options={'line_search':line_search,'disp':disp_scipy_opt,'maxiter':maxiter,'fatol':gradtol,'jac_options':{'method':krylov_method}},callback=best_sol.update)
         
         print("After Krylov : ",best_sol.f_norm)
         
@@ -260,45 +283,24 @@ while (True):
         gradtol = 1e-5
         maxiter = 5000
         x0 = best_sol.x
-        opt_result = opt.root(fun=Compute_action_onlygrad_package,x0=x0,args=callfun,method='df-sane', options={'disp':disp_scipy_opt,'maxfev':maxiter,'fatol':gradtol},callback=best_sol.update)
+        opt_result = opt.root(fun=Compute_action_onlygrad,x0=x0,args=callfun,method='df-sane', options={'disp':disp_scipy_opt,'maxfev':maxiter,'fatol':gradtol},callback=best_sol.update)
 
         print("After DF-SANE : ",best_sol.f_norm)
         
         Go_On = opt_result['success']
-    
-    elif (Go_On):
-        
-        opt_grad = opt_result['fun']
-        opt_grad_norm = np.linalg.norm(opt_grad)
 
-    
     if ((Go_On) and (Check_loop_dist)):
-        
-        x_opt = opt_result['x']
-        all_coeffs = Unpackage_all_coeffs(x_opt,callfun)
-        
-        max_loop_size = 0.
-        for il in range(nloop):
-            loop_size = np.linalg.norm(all_coeffs[il,:,1:ncoeff,:])
-            max_loop_size = max(loop_size,max_loop_size)
-        
-        max_loop_dist = 0.
-        for il in range(nloop):
-            for ilp in range(nloop):
-                loop_dist = np.linalg.norm(all_coeffs[il,:,0,0] - all_coeffs[ilp,:,0,0] )
-                max_loop_dist = max(loop_dist,max_loop_dist)
-        
-        Go_On = (max_loop_dist < (4.5 * nloop * max_loop_size))
-        
+
+        Go_On = not(Detect_Escape(best_sol.x,callfun))
+
         if not(Go_On):
             print('One loop escaped. Starting over')    
     
     if (Go_On):
 
-        print('Approximate solution found ! Action Grad Norm : ',opt_grad_norm)
+        print('Approximate solution found ! Action Grad Norm : ',best_sol.f_norm)
 
-        x_opt = opt_result['x']
-        all_coeffs = Unpackage_all_coeffs(x_opt,callfun)
+        all_coeffs = Unpackage_all_coeffs(best_sol.x,callfun)
 
         if (save_approx):
             nint_plot = 200
@@ -310,9 +312,9 @@ while (True):
             
             print('Checking Duplicates.')
 
-            Action,GradAction = Compute_action_package(best_sol.x,callfun)
-
-            Found_duplicate,dist_sols,file_path = Check_Duplicates(store_folder,all_coeffs,nbody,duplicate_eps,Action_val=Action,ncoeff_cutoff=ncoeff_cutoff,theta_rot_dupl=theta_rot_dupl,dt_shift_dupl=dt_shift_dupl,TimeReversal=True,SpaceSym=True)
+            Action,GradAction = Compute_action(best_sol.x,callfun)
+            
+            Found_duplicate,dist_sols,file_path = Check_Duplicates(best_sol.x,callfun,store_folder,duplicate_eps,theta_rot_dupl=theta_rot_dupl,dt_shift_dupl=dt_shift_dupl,TimeReversal=True,SpaceSym=True)
             
         else:
             Found_duplicate = False
@@ -335,11 +337,6 @@ while (True):
 
                 while ((Newt_err_norm > Newt_err_norm_max) and (n_reconverge_it < n_reconverge_it_max) and Go_On):
                             
-                    # ~ nint_plot = 200
-                    # ~ imgfilename = store_folder+'/'+str(n_opt)+'_'+str(n_reconverge_it)
-                    # ~ plot_all_2D(nloop,nbody,nint_plot,all_coeffs,imgfilename+'.png')
-                    
-                    
                     n_reconverge_it = n_reconverge_it + 1
                     
                     all_coeffs_old = np.copy(all_coeffs)
@@ -353,25 +350,20 @@ while (True):
                     ncoeff = ncoeff_new
                     nint = 2*ncoeff
                     
-                    x0,callfun = Package_args(nloop,nbody,ncoeff,mass,nint,all_coeffs,coeff_to_param_list[n_reconverge_it],param_to_coeff_list[n_reconverge_it])
+                    callfun = callfun_list[n_reconverge_it]
+                    x0 = Package_all_coeffs(all_coeffs,callfun)
                     
-                    f0 = Compute_action_onlygrad_package(x0,callfun)
+                    f0 = Compute_action_onlygrad(x0,callfun)
                     best_sol = current_best(x0,f0)
                     
                     print('After Resize : Action Grad Norm : ',best_sol.f_norm)
-                    
-                    gradtol = 1e-11
-                    maxiter = 1000
-                    # ~ opt_result = opt.root(fun=Compute_action_onlygrad_package,x0=x0,args=callfun,method='df-sane', options={'disp':disp_scipy_opt,'maxfev':maxiter,'fatol':gradtol})
-
-                    # ~ x0 = opt_result['x']
 
                     maxiter = 100
                     gradtol = 1e-15
                     
                     try : 
                                     
-                        opt_result = opt.root(fun=Compute_action_onlygrad_package,x0=x0,args=callfun,method='krylov', options={'line_search':line_search,'disp':disp_scipy_opt,'maxiter':maxiter,'fatol':gradtol,'jac_options':{'method':krylov_method}},callback=best_sol.update)
+                        opt_result = opt.root(fun=Compute_action_onlygrad,x0=x0,args=callfun,method='krylov', options={'line_search':line_search,'disp':disp_scipy_opt,'maxiter':maxiter,'fatol':gradtol,'jac_options':{'method':krylov_method}},callback=best_sol.update)
 
                         Go_On = True
                         
@@ -384,40 +376,28 @@ while (True):
 
                     if ((Go_On) and (Check_loop_dist)):
                         
-                        x_opt = opt_result['x']
-                        all_coeffs = Unpackage_all_coeffs(x_opt,callfun)
-                        
-                        max_loop_size = 0.
-                        for il in range(nloop):
-                            loop_size = np.linalg.norm(all_coeffs[il,:,1:ncoeff,:])
-                            max_loop_size = max(loop_size,max_loop_size)
-                        
-                        max_loop_dist = 0.
-                        for il in range(nloop):
-                            for ilp in range(nloop):
-                                loop_dist = np.linalg.norm(all_coeffs[il,:,0,0] - all_coeffs[ilp,:,0,0] )
-                                max_loop_dist = max(loop_dist,max_loop_dist)
-                        
-                        Go_On = (max_loop_dist < (4.5 * nloop * max_loop_size))
-                        
+                        Go_On = not(Detect_Escape(best_sol.x,callfun))
+
                         if not(Go_On):
                             print('One loop escaped. Starting over')    
                             SaveSol = False
                     
                     if (Go_On):
-
+                        
+                        x_opt = best_sol.x
                         all_coeffs = Unpackage_all_coeffs(best_sol.x,callfun)
                         
                         print('Opt Action Grad Norm : ',best_sol.f_norm)
-
-                        # Computing Newton error on more points in order to better detect collisions
                     
-                        Newt_err = Compute_Newton_err(nloop,nbody,ncoeff,mass,2*nint,all_coeffs)
+                        Newt_err = Compute_Newton_err(best_sol.x,callfun)
                         Newt_err_norm = np.linalg.norm(Newt_err)
                         
                         print('Newton Error : ',Newt_err_norm)
                     
                         SaveSol = (Newt_err_norm < Newt_err_norm_max_save)
+                        
+                # ~ else:
+                    # ~ SaveSol = True
                 
                 if (Go_On and not(SaveSol)):
                     print('Newton Error too high, discarding solution')
@@ -432,9 +412,9 @@ while (True):
                     
                     print('Checking Duplicates.')
                 
-                    Action,GradAction = Compute_action_package(best_sol.x,callfun)
+                    Action,GradAction = Compute_action(best_sol.x,callfun)
                     
-                    Found_duplicate,dist_sols,file_path = Check_Duplicates(store_folder,all_coeffs,nbody,duplicate_eps,Action_val=Action,ncoeff_cutoff=ncoeff_cutoff,theta_rot_dupl=theta_rot_dupl,dt_shift_dupl=dt_shift_dupl,TimeReversal=True,SpaceSym=True)
+                    Found_duplicate,dist_sols,file_path = Check_Duplicates(best_sol.x,callfun,store_folder,duplicate_eps,theta_rot_dupl=theta_rot_dupl,dt_shift_dupl=dt_shift_dupl,TimeReversal=True,SpaceSym=True)
                 
                 else:
                     Found_duplicate = False
@@ -454,7 +434,7 @@ while (True):
                         file_path = os.path.join(store_folder, filename)
                         file_root, file_ext = os.path.splitext(os.path.basename(file_path))
                         
-                        if (file_ext == '.npy' ):
+                        if (file_ext == '.txt' ):
                             try:
                                 max_num_file = max(max_num_file,int(file_root))
                             except:
@@ -471,10 +451,15 @@ while (True):
                     
                     nint_plot = 1000
                     nperiod = 2
-                    np.save(filename_output+'.npy',all_coeffs)
-                    plot_all_2D(nloop,nbody,nint_plot,all_coeffs,filename_output+'.png')
-                    plot_all_2D_anim(nloop,nbody,nint_plot,nperiod,all_coeffs,filename_output+'.mp4')
-                    Write_Descriptor(nloop,nbody,ncoeff,mass,nint,all_coeffs,filename_output+'.txt')
+                    # ~ np.save(filename_output+'.npy',all_coeffs)
+                    plot_all_2D(best_sol.x,nint_plot,callfun,filename_output+'.png')
+                    
+                    
+                    # ~ print(all_coeffs)
+                    # ~ print(1/0)
+                    
+                    # ~ plot_all_2D_anim(nloop,nbody,nint_plot,nperiod,all_coeffs,filename_output+'.mp4')
+                    Write_Descriptor(best_sol.x,callfun,filename_output+'.txt')
     
     print('')
     print('')

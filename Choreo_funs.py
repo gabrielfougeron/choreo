@@ -31,366 +31,6 @@ fourpi = 4 * np.pi
 fourpisq = twopi*twopi
 
 nnm1 = n*(n-1)
-            
-# ~ def setup_changevar(nloop,nbody,ncoeff,mass=None,MomCons=False,n_grad_change=1.,Sym_list=[]):
-    
-    # ~ eps_zero = 1e-14
-    
-    # ~ # il,idim,k,ift => ift + 2*(k + ncoeff*(idim + ndim*il))
-    # ~ n_idx = nloop*ndim*ncoeff*2
-
-    # ~ cstr_data = []
-    # ~ cstr_row = []
-    # ~ cstr_col = []
-
-    # ~ icstr=0
-    # ~ for il in range(nloop):
-        # ~ for idim in range(ndim):
-            
-            # ~ i = 1 + 2*(0 + ncoeff*(idim + ndim*il))
-
-            # ~ cstr_row.append(i)
-            # ~ cstr_col.append(icstr)
-            # ~ cstr_data.append(1.)            
-            
-            # ~ icstr +=1 
-            
-    # ~ if (MomCons):
-        # ~ for k in range(ncoeff):
-            # ~ NonZeroSym = False
-            # ~ for il in range(nloop):
-                # ~ NonZeroSym = NonZeroSym or ((k % nbody[il]) == 0)
-                
-            # ~ if (NonZeroSym):
-
-                # ~ for idim in range(ndim):
-                    # ~ for ift in range(2):
-                        # ~ for il in range(nloop):
-                            # ~ if ((k % nbody[il]) == 0):
-                                
-                                # ~ i = ift + 2*(k + ncoeff*(idim + ndim*il))
-
-                                # ~ cstr_row.append(i)
-                                # ~ cstr_col.append(icstr)
-                                # ~ cstr_data.append(mass[il]*nbody[il])
-                                
-                        # ~ icstr+=1
-    
-    # ~ cs = np.zeros((2),dtype=np.float64)
-    
-    # ~ for Sym in Sym_list :
-    
-        # ~ for iln in range(len(Sym['LoopTarget'])):
-            
-            # ~ il = Sym['LoopTarget'][iln]
-            # ~ ilp = Sym['LoopSource'][iln]
-            
-            # ~ if (il == ilp):
-                
-                # ~ for k in range(ncoeff):
-                    
-                    # ~ if (Sym['TimeRev']):
-                        # ~ cs[0] = np.cos(   twopi * k*Sym['TimeShift'])
-                        # ~ cs[1] = np.sin(   twopi * k*Sym['TimeShift'])
-                        
-                        # ~ for idim in range(ndim):
-                                
-                            # ~ for jdim in range(ndim):
-                                    
-                                # ~ i =  0 + 2*(k + ncoeff*(jdim + ndim*il))
-
-                                # ~ val = Sym['SpaceRot'][idim,jdim]*cs[0]
-                                
-                                # ~ if (idim == jdim):
-                                    # ~ val -=1.
-                                
-                                # ~ if (abs(val) > eps_zero):
-                                
-                                    # ~ cstr_row.append(i)
-                                    # ~ cstr_col.append(icstr)
-                                    # ~ cstr_data.append(val)
-                                    
-                                # ~ i =  1 + 2*(k + ncoeff*(jdim + ndim*il))
-
-                                # ~ val = Sym['SpaceRot'][idim,jdim]*cs[1]
-                                
-                                # ~ if (abs(val) > eps_zero):
-                                
-                                    # ~ cstr_row.append(i)
-                                    # ~ cstr_col.append(icstr)
-                                    # ~ cstr_data.append(val)
-                                    
-                            # ~ icstr+=1
-                                
-                            # ~ for jdim in range(ndim):
-                                    
-                                # ~ i =  1 + 2*(k + ncoeff*(jdim + ndim*il))
-
-                                # ~ val = - Sym['SpaceRot'][idim,jdim]*cs[0]
-                                
-                                # ~ if (idim == jdim):
-                                    # ~ val -=1.
-
-                                # ~ if (abs(val) > eps_zero):
-                                
-                                    # ~ cstr_row.append(i)
-                                    # ~ cstr_col.append(icstr)
-                                    # ~ cstr_data.append(val)
-                                    
-                                # ~ i =  0 + 2*(k + ncoeff*(jdim + ndim*il))
-
-                                # ~ val = Sym['SpaceRot'][idim,jdim]*cs[1]
-                                
-                                # ~ if (abs(val) > eps_zero):
-                                
-                                    # ~ cstr_row.append(i)
-                                    # ~ cstr_col.append(icstr)
-                                    # ~ cstr_data.append(val)
-    
-                            # ~ icstr+=1
-                                                        
-                    # ~ else:
-                        # ~ cs[0] = np.cos(  - twopi * k*Sym['TimeShift'])
-                        # ~ cs[1] = np.sin(  - twopi * k*Sym['TimeShift'])                        
-                            
-                        # ~ for idim in range(ndim):
-                                
-                            # ~ for jdim in range(ndim):
-                                    
-                                # ~ i =  0 + 2*(k + ncoeff*(jdim + ndim*il))
-
-                                # ~ val = Sym['SpaceRot'][idim,jdim]*cs[0]
-                                
-                                # ~ if (idim == jdim):
-                                    # ~ val -=1.
-
-                                # ~ if (abs(val) > eps_zero):
-                                
-                                    # ~ cstr_row.append(i)
-                                    # ~ cstr_col.append(icstr)
-                                    # ~ cstr_data.append(val)
-                                    
-                                # ~ i =  1 + 2*(k + ncoeff*(jdim + ndim*il))
-
-                                # ~ val = - Sym['SpaceRot'][idim,jdim]*cs[1]
-                                
-                                # ~ if (abs(val) > eps_zero):
-                                
-                                    # ~ cstr_row.append(i)
-                                    # ~ cstr_col.append(icstr)
-                                    # ~ cstr_data.append(val)
-                                    
-                            # ~ icstr+=1
-                                
-                            # ~ for jdim in range(ndim):
-                                    
-                                # ~ i =  1 + 2*(k + ncoeff*(jdim + ndim*il))
-
-                                # ~ val = Sym['SpaceRot'][idim,jdim]*cs[0]
-                                
-                                # ~ if (idim == jdim):
-                                    # ~ val -=1.
-
-                                # ~ if (abs(val) > eps_zero):
-                                
-                                    # ~ cstr_row.append(i)
-                                    # ~ cstr_col.append(icstr)
-                                    # ~ cstr_data.append(val)
-                                    
-                                # ~ i =  0 + 2*(k + ncoeff*(jdim + ndim*il))
-
-                                # ~ val = Sym['SpaceRot'][idim,jdim]*cs[1]
-                                
-                                # ~ if (abs(val) > eps_zero):
-                                
-                                    # ~ cstr_row.append(i)
-                                    # ~ cstr_col.append(icstr)
-                                    # ~ cstr_data.append(val)
-    
-                            # ~ icstr+=1
-                            
-            # ~ else:
-        
-                # ~ for k in range(ncoeff):
-                    
-                    # ~ if (Sym['TimeRev']):
-                        # ~ cs[0] = np.cos(   twopi * k*Sym['TimeShift'])
-                        # ~ cs[1] = np.sin(   twopi * k*Sym['TimeShift'])
-                        
-                        # ~ for idim in range(ndim):
-                                
-                            # ~ for jdim in range(ndim):
-                                    
-                                # ~ i =  0 + 2*(k + ncoeff*(jdim + ndim*ilp))
-
-                                # ~ val = Sym['SpaceRot'][idim,jdim]*cs[0]
-        
-                                # ~ if (abs(val) > eps_zero):
-                                
-                                    # ~ cstr_row.append(i)
-                                    # ~ cstr_col.append(icstr)
-                                    # ~ cstr_data.append(val)
-                                    
-                                # ~ i =  1 + 2*(k + ncoeff*(jdim + ndim*ilp))
-
-                                # ~ val = Sym['SpaceRot'][idim,jdim]*cs[1]
-
-                                # ~ if (abs(val) > eps_zero):
-                                
-                                    # ~ cstr_row.append(i)
-                                    # ~ cstr_col.append(icstr)
-                                    # ~ cstr_data.append(val)
-
-                            # ~ i =  0 + 2*(k + ncoeff*(idim + ndim*il))
-
-                            # ~ val = -1.
-
-                            # ~ cstr_row.append(i)
-                            # ~ cstr_col.append(icstr)
-                            # ~ cstr_data.append(val)
-
-                            # ~ icstr+=1
-                                
-                            # ~ for jdim in range(ndim):
-                                    
-                                # ~ i =  1 + 2*(k + ncoeff*(jdim + ndim*ilp))
-
-                                # ~ val = - Sym['SpaceRot'][idim,jdim]*cs[0]
-
-                                # ~ if (abs(val) > eps_zero):
-                                
-                                    # ~ cstr_row.append(i)
-                                    # ~ cstr_col.append(icstr)
-                                    # ~ cstr_data.append(val)
-                                    
-                                # ~ i =  0 + 2*(k + ncoeff*(jdim + ndim*ilp))
-
-                                # ~ val = Sym['SpaceRot'][idim,jdim]*cs[1]
-
-                                # ~ if (abs(val) > eps_zero):
-                                
-                                    # ~ cstr_row.append(i)
-                                    # ~ cstr_col.append(icstr)
-                                    # ~ cstr_data.append(val)
-
-                            # ~ i =  1 + 2*(k + ncoeff*(idim + ndim*il))
-
-                            # ~ val = -1.
-                        
-                            # ~ cstr_row.append(i)
-                            # ~ cstr_col.append(icstr)
-                            # ~ cstr_data.append(val)
-    
-                            # ~ icstr+=1
-                                                        
-                    # ~ else:
-                        # ~ cs[0] = np.cos(  - twopi * k*Sym['TimeShift'])
-                        # ~ cs[1] = np.sin(  - twopi * k*Sym['TimeShift'])                        
-                            
-                        # ~ for idim in range(ndim):
-                                
-                            # ~ for jdim in range(ndim):
-                                    
-                                # ~ i =  0 + 2*(k + ncoeff*(jdim + ndim*ilp))
-
-                                # ~ val = Sym['SpaceRot'][idim,jdim]*cs[0]
-        
-                                # ~ if (abs(val) > eps_zero):
-                                
-                                    # ~ cstr_row.append(i)
-                                    # ~ cstr_col.append(icstr)
-                                    # ~ cstr_data.append(val)
-                                    
-                                # ~ i =  1 + 2*(k + ncoeff*(jdim + ndim*ilp))
-
-                                # ~ val = - Sym['SpaceRot'][idim,jdim]*cs[1]
-                                
-                                # ~ if (abs(val) > eps_zero):
-                                
-                                    # ~ cstr_row.append(i)
-                                    # ~ cstr_col.append(icstr)
-                                    # ~ cstr_data.append(val)
-                                  
-                            # ~ i =  0 + 2*(k + ncoeff*(idim + ndim*il))
-
-                            # ~ val = -1.
-                        
-                            # ~ cstr_row.append(i)
-                            # ~ cstr_col.append(icstr)
-                            # ~ cstr_data.append(val)
-                                
-                            # ~ icstr+=1
-                                
-                            # ~ for jdim in range(ndim):
-                                    
-                                # ~ i =  1 + 2*(k + ncoeff*(jdim + ndim*ilp))
-
-                                # ~ val = Sym['SpaceRot'][idim,jdim]*cs[0]
-
-                                # ~ if (abs(val) > eps_zero):
-                                
-                                    # ~ cstr_row.append(i)
-                                    # ~ cstr_col.append(icstr)
-                                    # ~ cstr_data.append(val)
-                                    
-                                # ~ i =  0 + 2*(k + ncoeff*(jdim + ndim*ilp))
-
-                                # ~ val = Sym['SpaceRot'][idim,jdim]*cs[1]
-                                
-                                # ~ if (abs(val) > eps_zero):
-                                
-                                    # ~ cstr_row.append(i)
-                                    # ~ cstr_col.append(icstr)
-                                    # ~ cstr_data.append(val)
-    
-                            # ~ i =  1 + 2*(k + ncoeff*(idim + ndim*il))
-
-                            # ~ val = -1.
-                                                        
-                            # ~ cstr_row.append(i)
-                            # ~ cstr_col.append(icstr)
-                            # ~ cstr_data.append(val)
-    
-                            # ~ icstr+=1
-              
-    # ~ ncstr = icstr
-    # ~ cstr_data = np.array(cstr_data,dtype=np.float64)
-    # ~ cstr_row  = np.array(cstr_row,dtype=int)
-    # ~ cstr_col  = np.array(cstr_col,dtype=int)
-    
-    # ~ cstrmat_sp =  sp.coo_matrix((cstr_data,(cstr_row,cstr_col)),shape=(n_idx,ncstr), dtype=np.float64)
-    
-    # ~ param_to_coeff = null_space_sparseqr(cstrmat_sp)
-    # ~ coeff_to_param = param_to_coeff.transpose(copy=True)
-    
-    # ~ for idx in range(param_to_coeff.nnz):
-    
-        # ~ res,ift = divmod(param_to_coeff.row[idx],2     )
-        # ~ res,k   = divmod(res ,ncoeff)
-        # ~ il ,idim= divmod(res ,ndim  )
-    
-        # ~ if (k >=2):
-            # ~ kfac = pow(k,-n_grad_change)
-        # ~ else:
-            # ~ kfac = 1.
-        
-        # ~ param_to_coeff.data[idx] *= kfac
-    
-    # ~ for idx in range(coeff_to_param.nnz):
-    
-        # ~ res,ift = divmod(coeff_to_param.col[idx],2     )
-        # ~ res,k   = divmod(res ,ncoeff)
-        # ~ il ,idim= divmod(res ,ndim  )
-    
-        # ~ if (k >=2):
-            # ~ kfac = pow(k,n_grad_change)
-        # ~ else:
-            # ~ kfac = 1.
-        
-        # ~ coeff_to_param.data[idx] *= kfac
-    
-    # ~ return coeff_to_param , param_to_coeff    
-
 
 def plot_all_2D_anim(nloop,nbody,nint,nperiod,all_coeffs,filename,Plot_trace=True):
     
@@ -480,31 +120,37 @@ def plot_all_2D_anim(nloop,nbody,nint,nperiod,all_coeffs,filename,Plot_trace=Tru
     
     plt.close()
     
-def plot_all_2D(nloop,nbody,nint,all_coeffs,filename):
+def plot_all_2D(x,nint_plot,callfun,filename):
     
-    all_shifts = []
-
+    args = callfun[0]
+    
+    all_coeffs = Unpackage_all_coeffs(x,callfun)
+    
+    nloop = args['nloop']
+    nbody = args['nbody']
+    loopnb = args['loopnb']
+    Targets = args['Targets']
+    SpaceRotsUn = args['SpaceRotsUn']
+    
     c_coeffs = all_coeffs.view(dtype=np.complex128)[...,0]
     
-    all_pos = np.zeros((nloop,ndim,nint+1),dtype=np.float64)
-    all_pos[:,:,0:nint] = np.fft.irfft(c_coeffs,n=nint,axis=2)*nint
-    all_pos[:,:,nint] = all_pos[:,:,0]
-
-    # Prepares data
+    all_pos = np.zeros((nloop,ndim,nint_plot+1),dtype=np.float64)
+    all_pos[:,:,0:nint_plot] = np.fft.irfft(c_coeffs,n=nint_plot,axis=2)*nint_plot
+    all_pos[:,:,nint_plot] = all_pos[:,:,0]
+    
+    all_pos_b = np.zeros((nbody,ndim,nint_plot+1),dtype=np.float64)
+    
     for il in range(nloop):
-        
-        div = nint // nbody[il]
-        
-        shift = np.zeros((nbody[il]),int)
-        for i in range(nbody[il]):
-            shift[i] = (-i*div)% nint
-            
-        all_shifts.append(shift)
-        
-    xmin = all_pos[:,0,:].min()
-    xmax = all_pos[:,0,:].max()
-    ymin = all_pos[:,1,:].min()
-    ymax = all_pos[:,1,:].max()
+        for ib in range(loopnb[il]):
+            for iint in range(nint_plot+1):
+                # exact time is irrelevant
+                all_pos_b[Targets[il,ib],:,iint] = np.dot(SpaceRotsUn[il,ib,:,:],all_pos[il,:,iint])
+    
+
+    xmin = all_pos_b[:,0,:].min()
+    xmax = all_pos_b[:,0,:].max()
+    ymin = all_pos_b[:,1,:].min()
+    ymax = all_pos_b[:,1,:].max()
     
     r = 0.03
     
@@ -514,12 +160,11 @@ def plot_all_2D(nloop,nbody,nint,all_coeffs,filename):
     yinf = ymin - r*(ymax-ymin)
     ysup = ymax + r*(ymax-ymin)
 
-        
     # Plot-related
     fig = plt.figure()
     ax = plt.gca()
-    lines = sum([ax.plot([], [],'-')  for il in range(nloop)], [])
-    points = sum([ax.plot([], [],'o')for il in range(nloop)], [])
+    lines = sum([ax.plot([], [],'-')  for ib in range(nbody)], [])
+    points = sum([ax.plot([], [],'o')for ib in range(nbody)], [])
     
     # ~ print(xinf,xsup)
     # ~ print(yinf,ysup)
@@ -530,55 +175,22 @@ def plot_all_2D(nloop,nbody,nint,all_coeffs,filename):
     ax.set_aspect('equal', adjustable='box')
     plt.tight_layout()
     
-    for il in range(nloop):
-        lines[il].set_data(all_pos[il,0,:], all_pos[il,1,:])
+    for ib in range(nbody):
+
+        lines[ib].set_data(all_pos_b[ib,0,:], all_pos_b[ib,1,:])
 
     plt.savefig(filename)
     
     plt.close()
-          
-# ~ def plot_Newt_err(all_Newt_err,filename):    
+ 
+def Package_all_coeffs(all_coeffs,callfun):
     
-    # ~ nloop = len(all_Newt_err)
-    # ~ nbody = np.zeros((nloop),int)
-    # ~ for il in range(nloop):
-        # ~ nbody[il] = all_Newt_err[il].shape[0]
-    
-    # ~ nint = all_Newt_err[0].shape[2]
+    args = callfun[0]
 
-    # ~ int_times = np.linspace(start = 0.,stop=1.,num=nint,endpoint=False)
-    
-    # ~ # Plot-related
-    # ~ fig = plt.figure()
-    # ~ ax = plt.gca()
-    
-    
-    # ~ for il in range(nloop):
-        # ~ for ib in range(nbody[il]):
-            # ~ y = np.linalg.norm(all_Newt_err[il][ib,:,:],axis=0)
-
-            # ~ ax.semilogy(int_times,y,'-')
-
-    # ~ plt.savefig(filename)
-    
-    # ~ plt.close()
-   
-def Package_args(nloop,nbody,ncoeff,mass,nint,all_coeffs,coeff_to_param,param_to_coeff):
-    
-    callfun=[{
-    'nloop'                 : nloop     ,
-    'nbody'                 : nbody     ,
-    'ncoeff'                : ncoeff    ,
-    'mass'                  : mass      ,
-    'nint'                  : nint      ,
-    'coeff_to_param'        : coeff_to_param      ,
-    'param_to_coeff'        : param_to_coeff      ,
-        }]
-    
     y = all_coeffs.reshape(-1)
-    x = coeff_to_param.dot(y)
+    x = args['coeff_to_param'].dot(y)
     
-    return x,callfun
+    return x
     
 def Unpackage_all_coeffs(x,callfun):
     
@@ -589,13 +201,13 @@ def Unpackage_all_coeffs(x,callfun):
     
     return all_coeffs
 
-def Compute_action_onlygrad_package(x,callfun):
+def Compute_action_onlygrad(x,callfun):
 
-    J,y = Compute_action_package(x,callfun)
+    J,y = Compute_action(x,callfun)
     
     return y
     
-def Compute_action_hess_mul_package(x,dx,callfun):
+def Compute_action_hess_mul(x,dx,callfun):
     
     args=callfun[0]
     
@@ -613,13 +225,13 @@ def Compute_action_hess_mul_package(x,dx,callfun):
     
     return z
     
-def Compute_action_hess_LinOpt_package(x,callfun):
+def Compute_action_hess_LinOpt(x,callfun):
 
     args=callfun[0]
 
     return sp.linalg.LinearOperator((args['coeff_to_param'].shape[0],args['coeff_to_param'].shape[0]),
-        matvec =  (lambda dx,xl=x,callfunl=callfun : Compute_action_hess_mul_package(xl,dx,callfunl)),
-        rmatvec = (lambda dx,xl=x,callfunl=callfun : Compute_action_hess_mul_package(xl,dx,callfunl)))
+        matvec =  (lambda dx,xl=x,callfunl=callfun : Compute_action_hess_mul(xl,dx,callfunl)),
+        rmatvec = (lambda dx,xl=x,callfunl=callfun : Compute_action_hess_mul(xl,dx,callfunl)))
    
 def Compute_Pure_Hessian_Signature(nloop,nbody,ncoeff,mass,nint,all_coeffs):
     
@@ -627,7 +239,7 @@ def Compute_Pure_Hessian_Signature(nloop,nbody,ncoeff,mass,nint,all_coeffs):
     
     x, callfun = Package_args(nloop,nbody,ncoeff,mass,nint,all_coeffs,coeff_to_param,param_to_coeff)
     
-    HessMat = Compute_action_hess_LinOpt_package(x,callfun)
+    HessMat = Compute_action_hess_LinOpt(x,callfun)
     
     min_thresh = -1e-10
     
@@ -705,7 +317,7 @@ def Compute_Dist_loops_local(all_coeffs1,all_coeffs2,init_transform = np.zeros((
 
     return opt_result['fun']
 
-def SelectFiles_Action(store_folder,Action_val,Action_eps):
+def SelectFiles_Action_old(store_folder,Action_val,Action_eps):
     
     Action_msg = 'Value of the Action : '
     Action_msg_len = len(Action_msg)
@@ -734,7 +346,7 @@ def SelectFiles_Action(store_folder,Action_val,Action_eps):
                             
     return file_path_list
 
-def Check_Duplicates(store_folder,all_coeffs,nbody,duplicate_eps,Action_val=-1.,Action_eps=1e-5,ncoeff_cutoff=-1,theta_rot_dupl=[],dt_shift_dupl=[],TimeReversal=False,SpaceSym=False):
+def Check_Duplicates_old(store_folder,all_coeffs,nbody,duplicate_eps,Action_val=-1.,Action_eps=1e-5,ncoeff_cutoff=-1,theta_rot_dupl=[],dt_shift_dupl=[],TimeReversal=False,SpaceSym=False):
 
 
     if (Action_val > 0):
@@ -898,40 +510,6 @@ def Check_Duplicates_nosym(file_path_list,all_coeffs,duplicate_eps,ncoeff_cutoff
             
     return Found_duplicate,dist_sols,file_path_min
 
-def Write_Descriptor(nloop,nbody,ncoeff,mass,nint,all_coeffs,filename,WriteSignature=False):
-    with open(filename,'w') as filename_write:
-        
-        filename_write.write('Number of loops : {:d}\n'.format(nloop))
-        
-        filename_write.write('Number of bodies in each loop : ')
-        for il in range(nloop):
-            filename_write.write(' {:d}'.format(nbody[il]))
-        filename_write.write('\n')
-        
-        filename_write.write('Mass of those bodies : ')
-        for il in range(nloop):
-            filename_write.write(' {:f}'.format(mass[il]))
-        filename_write.write('\n')
-        
-        filename_write.write('Number of Fourier coefficients in each loop : {:d}\n'.format(ncoeff))
-        filename_write.write('Number of integration points for the action : {:d}\n'.format(nint))
-        
-        Action,Gradaction = Compute_action(nloop,nbody,ncoeff,mass,nint,all_coeffs)
-        
-        filename_write.write('Value of the Action : {:.10f}\n'.format(Action))
-        filename_write.write('Value of the Norm of the Gradient of the Action : {:.10E}\n'.format(np.linalg.norm(Gradaction)))
-
-        Newt_err = Compute_Newton_err(nloop,nbody,ncoeff,mass,nint,all_coeffs)
-        Newt_err_norm = np.linalg.norm(Newt_err)
-        filename_write.write('Sum of Newton Errors : {:.10E}\n'.format(Newt_err_norm))
-        
-        dxmin = Compute_mindist(nloop,nbody,ncoeff,nint,all_coeffs)
-        filename_write.write('Minimum inter-body distance : {:.10E}\n'.format(dxmin))
-        
-        if (WriteSignature):            
-            sig = Compute_Pure_Hessian_Signature(nloop,nbody,ncoeff,mass,nint,all_coeffs)
-            filename_write.write('Signature of Hessian : {:d}\n'.format(sig))
-        
 def null_space_sparseqr(AT):
     # AT must be in COO format
     # The nullspace of the TRANSPOSE of AT will be returned
@@ -1124,10 +702,7 @@ class ChoreoSym():
         
         return ((self.Inverse()).ComposeLight(other)).IsIdentity()
 
-        
-
-
-def setup_changevar(nbody,ncoeff,mass,nint=None,MomCons=False,n_grad_change=1.,Sym_list=[]):
+def setup_changevar(nbody,ncoeff,mass,nint=None,MomCons=True,n_grad_change=1.,Sym_list=[]):
     
     if nint is None:
         nint = 2*ncoeff
@@ -1279,9 +854,18 @@ def setup_changevar(nbody,ncoeff,mass,nint=None,MomCons=False,n_grad_change=1.,S
                 
                 Sym = (gen_to_target[ibp].Inverse()).ComposeLight(gen_to_target[ib])
                 
+                if Sym.IsIdentity():
+                    raise ValueError("Two bodies have identical trajectories")
+                
                 IsUnique = True
                 for isym in range(len(UniqueSyms)):
 
+                    IsUnique = not(Sym.IsSame(UniqueSyms[isym]))
+
+                    if not(IsUnique):
+                        break
+
+                    Sym = Sym.Inverse()
                     IsUnique = not(Sym.IsSame(UniqueSyms[isym]))
 
                     if not(IsUnique):
@@ -1298,19 +882,19 @@ def setup_changevar(nbody,ncoeff,mass,nint=None,MomCons=False,n_grad_change=1.,S
         ProdMassSumAll_list.append(ProdMassSum)
         
         
-    print("Loops :")
-    print(nloop)
-    print(MassSum)
-    print("")
+    # ~ print("Loops :")
+    # ~ print(nloop)
+    # ~ print(MassSum)
+    # ~ print("")
         
-    print("Loops Unary :")
-    print(loopnb)
-    print("")
+    # ~ print("Loops Unary :")
+    # ~ print(loopnb)
+    # ~ print("")
         
-    print("Loops Binary :")
-    print(loopnbi)    
-    print(ProdMassSumAll_list)
-    print("")
+    # ~ print("Loops Binary :")
+    # ~ print(loopnbi)    
+    # ~ print(ProdMassSumAll_list)
+    # ~ print("")
 
     maxloopnbi = loopnbi.max()
     
@@ -1526,12 +1110,8 @@ def setup_changevar(nbody,ncoeff,mass,nint=None,MomCons=False,n_grad_change=1.,S
         
         coeff_to_param.data[idx] *= kfac
     
-    SpaceRotsUn = np.zeros((nloop,maxlooplen,ndim,ndim),dtype=np.float64)
-    TimeRevsUn = np.zeros((nloop,maxlooplen),dtype=int)
-    TimeShiftNumUn = np.zeros((nloop,maxlooplen),dtype=int)
-    TimeShiftDenUn = np.zeros((nloop,maxlooplen),dtype=int)
-    
-    callfun = {
+    callfun = [{
+    "nbody"             :   nbody           ,
     "nloop"             :   nloop           ,
     "ncoeff"            :   ncoeff          ,
     "nint"              :   nint            ,
@@ -1552,19 +1132,18 @@ def setup_changevar(nbody,ncoeff,mass,nint=None,MomCons=False,n_grad_change=1.,S
     "TimeShiftDenBin"   :   TimeShiftDenBin ,
     "param_to_coeff"    :   param_to_coeff  ,
     "coeff_to_param"    :   coeff_to_param  ,
-    }
+    }]
     
-    return [callfun]
+    return callfun
 
-    
-def Compute_action_package(x,callfun):
+def Compute_action(x,callfun):
 
     args=callfun[0]
     
     y = args['param_to_coeff'] * x
     all_coeffs = y.reshape(args['nloop'],ndim,args['ncoeff'],2)
     
-    J,GradJ =  Compute_action(
+    J,GradJ =  Compute_action_Cython(
         args['nloop']           ,
         args['ncoeff']          ,
         args['nint']            ,
@@ -1590,3 +1169,215 @@ def Compute_action_package(x,callfun):
     
     return J,y
     
+
+def Compute_Newton_err(x,callfun):
+    # WARNING : DOUBLING NUMBER OF INTEGRATION POINTS
+
+    args=callfun[0]
+    
+    y = args['param_to_coeff'] * x
+    all_coeffs = y.reshape(args['nloop'],ndim,args['ncoeff'],2)
+    
+    all_Newt_err =  Compute_Newton_err_Cython(
+        args['nbody']           ,
+        args['nloop']           ,
+        args['ncoeff']          ,
+        args['nint']*2          ,
+        args['mass']            ,
+        args['loopnb']          ,
+        args['Targets']         ,
+        args['SpaceRotsUn']     ,
+        args['TimeRevsUn']      ,
+        args['TimeShiftNumUn']  ,
+        args['TimeShiftDenUn']  ,
+        all_coeffs
+        )
+
+    return all_Newt_err
+    # ~ return 0.
+    
+def Compute_Loop_Dist_Size(x,callfun):
+    
+    args = callfun[0]
+    
+    all_coeffs = Unpackage_all_coeffs(x,callfun)
+    
+    max_loop_size = 0.
+    for il in range(args['nloop']):
+        loop_size = np.linalg.norm(all_coeffs[il,:,1:args['ncoeff'],:])
+        max_loop_size = max(loop_size,max_loop_size)
+    
+    max_loop_dist = 0.
+    for il in range(args['nloop']-1):
+        for ilp in range(il,args['nloop']):
+            
+            for ib in range(args['loopnb'][il]):
+                for ibp in range(args['loopnb'][ilp]):
+
+                    loop_dist = np.linalg.norm(np.dot(args['SpaceRotsUn'][il,ib,:,:],all_coeffs[il,:,0,0]) - np.dot(args['SpaceRotsUn'][ilp,ibp,:,:],all_coeffs[ilp,:,0,0]))
+                    max_loop_dist = max(loop_dist,max_loop_dist)
+                    
+    for il in range(args['nloop']):
+        for ibi in range(args['loopnbi'][il]):
+                
+            loop_dist = np.linalg.norm(np.dot(args['SpaceRotsBin'][il,ibi,:,:],all_coeffs[il,:,0,0]) - all_coeffs[il,:,0,0])
+            max_loop_dist = max(loop_dist,max_loop_dist)
+    
+    return max_loop_dist,max_loop_size
+    
+def Detect_Escape(x,callfun):
+    
+    max_loop_dist,max_loop_size = Compute_Loop_Dist_Size(x,callfun)
+    
+    return (max_loop_dist > (4.5 * callfun[0]['nbody'] * max_loop_size))
+    
+def Compute_MinDist(x,callfun):
+    
+    args=callfun[0]
+    
+    y = args['param_to_coeff'] * x
+    all_coeffs = y.reshape(args['nloop'],ndim,args['ncoeff'],2)
+    
+    MinDist =  Compute_MinDist_Cython(
+        args['nloop']           ,
+        args['ncoeff']          ,
+        args['nint']            ,
+        args['mass']            ,
+        args['loopnb']          ,
+        args['Targets']         ,
+        args['MassSum']         ,
+        args['SpaceRotsUn']     ,
+        args['TimeRevsUn']      ,
+        args['TimeShiftNumUn']  ,
+        args['TimeShiftDenUn']  ,
+        args['loopnbi']         ,
+        args['ProdMassSumAll']  ,
+        args['SpaceRotsBin']    ,
+        args['TimeRevsBin']     ,
+        args['TimeShiftNumBin'] ,
+        args['TimeShiftDenBin'] ,
+        all_coeffs
+        )
+    
+    return MinDist
+    
+
+# ~ def Write_Descriptor_old(nloop,nbody,ncoeff,mass,nint,all_coeffs,filename,WriteSignature=False):
+    # ~ with open(filename,'w') as filename_write:
+        
+        # ~ filename_write.write('Number of loops : {:d}\n'.format(nloop))
+        
+        # ~ filename_write.write('Number of bodies in each loop : ')
+        # ~ for il in range(nloop):
+            # ~ filename_write.write(' {:d}'.format(nbody[il]))
+        # ~ filename_write.write('\n')
+        
+        # ~ filename_write.write('Mass of those bodies : ')
+        # ~ for il in range(nloop):
+            # ~ filename_write.write(' {:f}'.format(mass[il]))
+        # ~ filename_write.write('\n')
+        
+        # ~ filename_write.write('Number of Fourier coefficients in each loop : {:d}\n'.format(ncoeff))
+        # ~ filename_write.write('Number of integration points for the action : {:d}\n'.format(nint))
+        
+        # ~ Action,Gradaction = Compute_action(nloop,nbody,ncoeff,mass,nint,all_coeffs)
+        
+        # ~ filename_write.write('Value of the Action : {:.10f}\n'.format(Action))
+        # ~ filename_write.write('Value of the Norm of the Gradient of the Action : {:.10E}\n'.format(np.linalg.norm(Gradaction)))
+
+        # ~ Newt_err = Compute_Newton_err(nloop,nbody,ncoeff,mass,nint,all_coeffs)
+        # ~ Newt_err_norm = np.linalg.norm(Newt_err)
+        # ~ filename_write.write('Sum of Newton Errors : {:.10E}\n'.format(Newt_err_norm))
+        
+        # ~ dxmin = Compute_mindist(nloop,nbody,ncoeff,nint,all_coeffs)
+        # ~ filename_write.write('Minimum inter-body distance : {:.10E}\n'.format(dxmin))
+        
+        # ~ if (WriteSignature):            
+            # ~ sig = Compute_Pure_Hessian_Signature(nloop,nbody,ncoeff,mass,nint,all_coeffs)
+            # ~ filename_write.write('Signature of Hessian : {:d}\n'.format(sig))
+        
+    
+
+def Write_Descriptor(x,callfun,filename,WriteSignature=False):
+    
+    args = callfun[0]
+    
+    with open(filename,'w') as filename_write:
+        
+        filename_write.write('Number of bodies : {:d}\n'.format(args['nbody']))
+        
+        # ~ filename_write.write('Number of loops : {:d}\n'.format(args['nloop']))
+        
+        filename_write.write('Mass of those bodies : ')
+        for il in range(args['nbody']):
+            filename_write.write(' {:f}'.format(args['mass'][il]))
+        filename_write.write('\n')
+        
+        filename_write.write('Number of Fourier coefficients in each loop : {:d}\n'.format(args['ncoeff']))
+        filename_write.write('Number of integration points for the action : {:d}\n'.format(args['nint']))
+        
+        Action,Gradaction = Compute_action(x,callfun)
+        
+        filename_write.write('Value of the Action : {:.10f}\n'.format(Action))
+        filename_write.write('Value of the Norm of the Gradient of the Action : {:.10E}\n'.format(np.linalg.norm(Gradaction)))
+
+        Newt_err = Compute_Newton_err(x,callfun)
+        Newt_err_norm = np.linalg.norm(Newt_err)
+        filename_write.write('Sum of Newton Errors : {:.10E}\n'.format(Newt_err_norm))
+        
+        dxmin = Compute_MinDist(x,callfun)
+        filename_write.write('Minimum inter-body distance : {:.10E}\n'.format(dxmin))
+        
+        # ~ if (WriteSignature):            
+            # ~ sig = Compute_Pure_Hessian_Signature(nloop,nbody,ncoeff,mass,nint,all_coeffs)
+            # ~ filename_write.write('Signature of Hessian : {:d}\n'.format(sig))
+        
+
+def SelectFiles_Action(store_folder,Action_val,Action_eps):
+    
+    Action_msg = 'Value of the Action : '
+    Action_msg_len = len(Action_msg)
+    
+    file_path_list = []
+    for file_path in os.listdir(store_folder):
+        file_path = os.path.join(store_folder, file_path)
+        file_root, file_ext = os.path.splitext(os.path.basename(file_path))
+        
+        if (file_ext == '.txt' ):
+            # ~ print(file_path)
+            with open(file_path,'r') as file_read:
+                file_readlines = file_read.readlines()
+                for iline in range(len(file_readlines)):
+                    line = file_readlines[iline]
+                    
+                    if (line[0:Action_msg_len] == Action_msg):
+                        This_Action = float(line[Action_msg_len:])
+                        # ~ print(This_Action)
+                        
+                        if (abs(This_Action-Action_val) < Action_eps):
+                            
+                            # ~ print(store_folder+'/'+file_root+'.npy')
+                            
+                            file_path_list.append(store_folder+'/'+file_root)
+                            
+    return file_path_list
+
+
+def Check_Duplicates(x,callfun,store_folder,duplicate_eps,Action_eps=1e-5,theta_rot_dupl=[],dt_shift_dupl=[],TimeReversal=False,SpaceSym=False):
+
+    Action,Gradaction = Compute_action(x,callfun)
+
+    file_path_list = SelectFiles_Action(store_folder,Action,Action_eps)
+    
+    if (len(file_path_list) == 0):
+        
+        Found_duplicate = False
+        dist_sols = 1e100
+        file_path = ''
+    
+    else:
+        Found_duplicate = True
+        dist_sols = 0
+        file_path = file_path_list[0]
+    
+    return Found_duplicate,dist_sols,file_path

@@ -13,158 +13,120 @@ import time
 from Choreo_funs import *
 
 
-# ~ A =  np.random.rand(100, 2)
-# ~ # Cast the array as a complex array
-# ~ A_comp = A.view(dtype=np.complex128)
-# ~ # To get the original array A back from the complex version
-# ~ A = A.view(dtype=np.float64)
 
 
+nbody = 3
+mass = np.ones((nbody))
+ncoeff = 12
+rotangle = 2*np.pi * 0/3
+mirror = 1
+
+rotmat = np.array([[mirror*np.cos(rotangle),-mirror*np.sin(rotangle)],[np.sin(rotangle),np.cos(rotangle)]],dtype=np.float64)
+
+Sym_list = []
+
+Sym_list.append(ChoreoSym(
+    LoopTarget=1,
+    LoopSource=0,
+    SpaceRot = rotmat,
+    TimeRev=1,
+    TimeShift=fractions.Fraction(numerator=1,denominator=3)
+    ))
+
+Sym_list.append(ChoreoSym(
+    LoopTarget=2,
+    LoopSource=1,
+    SpaceRot = rotmat,
+    TimeRev=1,
+    TimeShift=fractions.Fraction(numerator=1,denominator=3)
+    ))
+
+# ~ Sym_list.append(ChoreoSym(
+    # ~ LoopTarget=0,
+    # ~ LoopSource=2,
+    # ~ SpaceRot = rotmat,
+    # ~ TimeRev=1,
+    # ~ TimeShift=fractions.Fraction(numerator=1,denominator=3)
+    # ~ ))
 
 
-# ~ nloop = 1
-nloop = 3
-ndim = 2
-ncoeff = 2*3*5
+callfun = setup_changevar(nbody,ncoeff,mass,Sym_list=Sym_list)
 
-nint = 4*(ncoeff)
-# ~ nint =   4*(ncoeff-1)
+ncoeffs_args = callfun[0]['coeff_to_param'].shape[0]
 
-nbody = np.array([2,3,5])
-# ~ nbody = np.array([2])
-mass = np.ones((nloop))
+x0 = np.random.random((ncoeffs_args))
 
-all_coeffs = np.zeros((nloop,ndim,ncoeff,2),dtype=np.float64)
-
-np.random.seed(10)
-
-amplitude_o = 0.1
-
-for il in range(nloop):
-    for idim in range(ndim):
-        for k in range(ncoeff):
-            
-            randphase = np.random.rand() * twopi
-            randampl = np.random.rand()* amplitude_o
-        
-            ko = 2
-            if (k <= ko):
-                randampl = 0.
-            
-        
-            k_thresh_damp = 5
-            
-            if (k >= k_thresh_damp):
-                randampl = randampl / ((k-k_thresh_damp+1)**2)
-                
-            all_coeffs[il,idim,k,0] = randampl*np.cos(randphase)
-            all_coeffs[il,idim,k,1] = randampl*np.sin(randphase)
-
-all_coeffs2 = np.zeros((nloop,ndim,ncoeff,2),dtype=np.float64)
-
-for il in range(nloop):
-    for idim in range(ndim):
-        for k in range(ncoeff):
-            
-            randphase = np.random.rand() * twopi
-            randampl = np.random.rand()* amplitude_o
-        
-            ko = 2
-            if (k <= ko):
-                randampl = 0.
-            
-        
-            k_thresh_damp = 5
-            
-            if (k >= k_thresh_damp):
-                randampl = randampl / ((k-k_thresh_damp+1)**2)
-                
-            all_coeffs2[il,idim,k,0] = randampl*np.cos(randphase)
-            all_coeffs2[il,idim,k,1] = randampl*np.sin(randphase)
-            
+# ~ not_disp_list = []
+# ~ not_disp_list = ['coeff_to_param','param_to_coeff']
 
 
-
-# ~ input_filename = 'opt_result'
-# ~ input_filename = 'opt_result_2'
-# ~ input_filename = 'opt_result_3'
-
-# ~ all_coeffs = np.load(input_filename+'.npy')
-# ~ nloop = all_coeffs.shape[0]
-# ~ ndim = all_coeffs.shape[1]
-# ~ ncoeff = all_coeffs.shape[2]
-
-# ~ nint = 2*ncoeff
-
-# ~ nbody = np.array([3,4])
-# ~ mass = np.ones((nloop))
-
-n_idx,all_idx =  setup_idx(nloop,nbody,ncoeff)
-# ~ change_var_coeff = 0.
-change_var_coeff = 1.
+# ~ for key,value in callfun[0].items():
+    # ~ if key not in not_disp_list:
+        # ~ print(key)
+        # ~ print(value)
+        # ~ print('')
+    # ~ else:
+        # ~ print(key)
+        # ~ print(value.shape)
+        # ~ print('')
 
 
-VelChangeVar = {
-'direct' : lambda nloop,nbody,ncoeff,all_coeffs :  VelChangeDirect(nloop,nbody,ncoeff,all_coeffs,change_var_coeff),
-'inverse' : lambda nloop,nbody,ncoeff,all_coeffs :  VelChangeInverse(nloop,nbody,ncoeff,all_coeffs,change_var_coeff),
-'Grad' : lambda nloop,nbody,ncoeff,all_idx,Action_grad :  VelChangeGrad(nloop,nbody,ncoeff,all_idx,Action_grad,change_var_coeff),
-}
-
-x0,callfun = Package_args(nloop,nbody,ncoeff,mass,nint,all_coeffs,n_idx,all_idx,VelChangeVar)
-
+# ~ print(callfun)
 
 Actiono, Actiongrado = Compute_action_package(x0,callfun)
 # ~ Actiono, Actiongrado = Compute_action_gradnormsq_package(x0,callfun)
 # ~ sq_disto, sq_distgrado = sq_dist_transform_2d(nloop,ncoeff,all_coeffs,all_coeffs2,x0)
-sq_disto, sq_distgrado = sq_dist_transform_2d_noscal(nloop,ncoeff,all_coeffs,all_coeffs2,x0)
+# ~ sq_disto, sq_distgrado = sq_dist_transform_2d_noscal(nloop,ncoeff,all_coeffs,all_coeffs2,x0)
 
 # ~ print('Action 0 : ',Actiono)
 
-ncoeffs_args = x0.shape[0]
+# ~ print(Actiongrado)
 
 
 
-dx = np.random.random((ncoeffs_args))
-
-
-
-# ~ dx[0] = 0
-# ~ dx[1] = 0
-# ~ dx[2] = 0
-# ~ dx[3] = 0
-
-
-df_ex = np.dot(Actiongrado,dx)
 
 print('\n\n\n')
 
-for exponent_eps in range(0):
-# ~ for exponent_eps in range(8):
+# ~ for i in range(ncoeffs_args):
+for i in range(1):
+    dx = np.zeros((ncoeffs_args))
+    dx[i] = 1
     
-    eps = 10**(-exponent_eps)
+    dx = np.random.random((ncoeffs_args))
+    
+    
+    df_ex = np.dot(Actiongrado,dx)
 
 
-    xp = np.copy(x0) + eps*dx
-    fp ,gfp = Compute_action_package(xp,callfun)
-    # ~ fp ,gfp = Compute_action_gradnormsq_package(xp,callfun)
-    # ~ fp ,gfp = sq_dist_transform_2d_noscal(nloop,ncoeff,all_coeffs,all_coeffs2,xp)
-    xm = np.copy(x0) - eps*dx
-    fm ,gfm = Compute_action_package(xm,callfun)
-    # ~ fm ,gfm = Compute_action_gradnormsq_package(xm,callfun)
-    # ~ fm ,gfm = sq_dist_transform_2d_noscal(nloop,ncoeff,all_coeffs,all_coeffs2,xm)
-
-    df_difffin = (fp-fm)/(2*eps)
-
-    print('')
-    print('eps : ',eps)
-    print('df : ',df_difffin,df_ex)
-    print('Abs_diff : ',abs(df_difffin-df_ex))
-    print('Rel_diff : ',abs(df_difffin-df_ex)/((abs(df_ex)+abs(df_difffin))/2))
+    for exponent_eps in [8]:
+    # ~ for exponent_eps in range(16):
+        
+        eps = 10**(-exponent_eps)
 
 
+        xp = np.copy(x0) + eps*dx
+        fp ,gfp = Compute_action_package(xp,callfun)
+        # ~ fp ,gfp = Compute_action_gradnormsq_package(xp,callfun)
+        # ~ fp ,gfp = sq_dist_transform_2d_noscal(nloop,ncoeff,all_coeffs,all_coeffs2,xp)
+        xm = np.copy(x0) - eps*dx
+        fm ,gfm = Compute_action_package(xm,callfun)
+        # ~ fm ,gfm = Compute_action_gradnormsq_package(xm,callfun)
+        # ~ fm ,gfm = sq_dist_transform_2d_noscal(nloop,ncoeff,all_coeffs,all_coeffs2,xm)
 
-dxa = np.random.random((ncoeffs_args))
-dxb =  np.random.random((ncoeffs_args))
+        df_difffin = (fp-fm)/(2*eps)
+
+        print('')
+        print('eps : ',eps)
+        print('df : ',df_difffin,df_ex)
+        print('Abs_diff : ',abs(df_difffin-df_ex))
+        print('Rel_diff : ',abs(df_difffin-df_ex)/((abs(df_ex)+abs(df_difffin))/2))
+        
+        print(i,df_difffin,df_ex)
+
+
+
+# ~ dxa = np.random.random((ncoeffs_args))
+# ~ dxb =  np.random.random((ncoeffs_args))
 
 # ~ dxa = np.zeros((ncoeffs_args))
 # ~ dxb =  np.zeros((ncoeffs_args))
@@ -180,35 +142,35 @@ dxb =  np.random.random((ncoeffs_args))
 # ~ j_nz = all_idx[0,0,1,0]
 # ~ dxb[j_nz] = 1.
 
-Hdxb = Compute_action_hess_mul_package(x0,dxb,callfun)
+# ~ Hdxb = Compute_action_hess_mul_package(x0,dxb,callfun)
 
     
 
 
 
 # ~ for exponent_eps in [8]:
-for exponent_eps in range(16):
+# ~ for exponent_eps in range(16):
     
-    eps = 10**(-exponent_eps)
+    # ~ eps = 10**(-exponent_eps)
     
-    xp = np.copy(x0) + eps*dxb
-    fp, gfp = Compute_action_package(xp,callfun)
-    dfp = np.dot(gfp,dxa)
+    # ~ xp = np.copy(x0) + eps*dxb
+    # ~ fp, gfp = Compute_action_package(xp,callfun)
+    # ~ dfp = np.dot(gfp,dxa)
     
-    xm = np.copy(x0) - eps*dxb
-    fm, gfm = Compute_action_package(xm,callfun)
-    dfm = np.dot(gfm,dxa)
+    # ~ xm = np.copy(x0) - eps*dxb
+    # ~ fm, gfm = Compute_action_package(xm,callfun)
+    # ~ dfm = np.dot(gfm,dxa)
     
-    dgf_difffin = (gfp-gfm)/(2*eps)
+    # ~ dgf_difffin = (gfp-gfm)/(2*eps)
     
-    print('')
-    print('eps : ',eps)
-    print('Abs_diff : ')
-    err_vect = dgf_difffin-Hdxb
-    print('DF : ',np.linalg.norm(dgf_difffin))
-    print('EX : ',np.linalg.norm(Hdxb))
-    print('Abs_diff : ',np.linalg.norm(err_vect))
-    print('Rel_diff : ',np.linalg.norm(err_vect)/(np.linalg.norm(dgf_difffin)+np.linalg.norm(Hdxb)))
+    # ~ print('')
+    # ~ print('eps : ',eps)
+    # ~ print('Abs_diff : ')
+    # ~ err_vect = dgf_difffin-Hdxb
+    # ~ print('DF : ',np.linalg.norm(dgf_difffin))
+    # ~ print('EX : ',np.linalg.norm(Hdxb))
+    # ~ print('Abs_diff : ',np.linalg.norm(err_vect))
+    # ~ print('Rel_diff : ',np.linalg.norm(err_vect)/(np.linalg.norm(dgf_difffin)+np.linalg.norm(Hdxb)))
     
     # ~ ddf_difffin = (dfp-dfm)/(2*eps)
     
