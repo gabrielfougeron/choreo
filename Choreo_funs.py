@@ -76,8 +76,9 @@ def plot_all_2D(x,nint_plot,callfun,filename,fig_size=(10,10)):
     fig = plt.figure()
     fig.set_size_inches(fig_size)
     ax = plt.gca()
-    lines = sum([ax.plot([], [],'b-')  for ib in range(nbody)], [])
-    points = sum([ax.plot([], [],'ro')for ib in range(nbody)], [])
+    # ~ lines = sum([ax.plot([], [],'b-', antialiased=True)  for ib in range(nbody)], [])
+    lines = sum([ax.plot([], [],'-', antialiased=True,zorder=-ib)  for ib in range(nbody)], [])
+    points = sum([ax.plot([], [],'ko', antialiased=True)for ib in range(nbody)], [])
     
     # ~ print(xinf,xsup)
     # ~ print(yinf,ysup)
@@ -160,8 +161,8 @@ def plot_all_2D_anim(x,nint_plot,callfun,filename,nperiod=1,Plot_trace=True,fig_
     fig = plt.figure()
     fig.set_size_inches(fig_size)
     ax = plt.gca()
-    lines = sum([ax.plot([], [],'-')  for ib in range(nbody)], [])
-    points = sum([ax.plot([], [],'o')for ib in range(nbody)], [])
+    lines = sum([ax.plot([], [],'-', antialiased=True,zorder=-ib)  for ib in range(nbody)], [])
+    points = sum([ax.plot([], [],'ko', antialiased=True)for ib in range(nbody)], [])
     
     # ~ print(xinf,xsup)
     # ~ print(yinf,ysup)
@@ -198,22 +199,6 @@ def plot_all_2D_anim(x,nint_plot,callfun,filename,nperiod=1,Plot_trace=True,fig_
     anim.save(filename, fps=30)
     
     plt.close()
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
  
 def Package_all_coeffs(all_coeffs,callfun):
     
@@ -673,15 +658,16 @@ def Make2DChoreoSym(SymType,ib_list):
         
     SymGens = []
     
-    # Choreographic symmetries
-    for ib_rel in range(len(ib_list)-1):
-        SymGens.append(ChoreoSym(
-            LoopTarget=ib_list[ib_rel+1],
-            LoopSource=ib_list[ib_rel  ],
-            SpaceRot = np.identity(ndim,dtype=np.float64),
-            TimeRev=1,
-            TimeShift=fractions.Fraction(numerator=-1,denominator=SymType['n'])
-            ))
+    if (SymType['name'] in ['C','D','Cp','Dp']):
+        # Choreographic symmetries
+        for ib_rel in range(len(ib_list)-1):
+            SymGens.append(ChoreoSym(
+                LoopTarget=ib_list[ib_rel+1],
+                LoopSource=ib_list[ib_rel  ],
+                SpaceRot = np.identity(ndim,dtype=np.float64),
+                TimeRev=1,
+                TimeShift=fractions.Fraction(numerator=-1,denominator=SymType['n'])
+                ))
     
     if ((SymType['name'] == 'C') or (SymType['name'] == 'D')):
         
@@ -735,39 +721,29 @@ def Make2DChoreoSym(SymType,ib_list):
             TimeShift=fractions.Fraction(numerator=0,denominator=1)
             ))
     
+    if (SymType['name'] in ['E','Ep']):
+        # Shifted choreographic symmetries
+        
+        rot_angle =  twopi * SymType['l'] /  SymType['k']
+        
+        if (SymType['name'] in ['Ep']):
+            s=-1
+        else:
+            s = 1
+        
+        for ib_rel in range(len(ib_list)-1):
+            SymGens.append(ChoreoSym(
+                LoopTarget=ib_list[ib_rel+1],
+                LoopSource=ib_list[ib_rel  ],
+                SpaceRot = np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64),
+                TimeRev=1,
+                TimeShift=fractions.Fraction(numerator=-1,denominator=SymType['n'])
+                # ~ TimeShift=fractions.Fraction(numerator=0,denominator=SymType['n'])
+                ))
+    
+    
+    
     return SymGens
-
-# ~ def Make2DChoreoShiftSym(SymType,ib_list):
-
-    # ~ SymType  => Name of sym, see https://arxiv.org/abs/1305.0470
-        # ~ 'name'
-        # ~ 'n'
-        # ~ 'k'
-        # ~ 'l'
-        
-        # Classification :
-        # C(n,k,l) with k and l relative primes
-        # D(n,k,l) with k and l relative primes
-        # Cp(n,2,#) 
-        # Dp(n,1,#) 
-        # Dp(n,2,#) 
-        
-    # ~ if (len(ib_list) != SymType['n']):
-        # ~ print("Warning : SymType and LoopLength are inconsistent")
-        
-    # ~ SymGens = []
-    
-    # ~ # Choreographic symmetries
-    # ~ for ib_rel in range(len(ib_list)-1):
-        # ~ SymGens.append(ChoreoSym(
-            # ~ LoopTarget=ib_list[ib_rel+1],
-            # ~ LoopSource=ib_list[ib_rel  ],
-            # ~ SpaceRot = np.identity(ndim,dtype=np.float64),
-            # ~ TimeRev=1,
-            # ~ TimeShift=fractions.Fraction(numerator=-1,denominator=SymType['n'])
-            # ~ ))
-    
-    # ~ return SymGens
 
 def setup_changevar(nbody,ncoeff,mass,nint=None,MomCons=True,n_grad_change=1.,Sym_list=[]):
     
@@ -1312,43 +1288,6 @@ def Compute_MinDist(x,callfun):
     
     return MinDist
     
-
-# ~ def Write_Descriptor_old(nloop,nbody,ncoeff,mass,nint,all_coeffs,filename,WriteSignature=False):
-    # ~ with open(filename,'w') as filename_write:
-        
-        # ~ filename_write.write('Number of loops : {:d}\n'.format(nloop))
-        
-        # ~ filename_write.write('Number of bodies in each loop : ')
-        # ~ for il in range(nloop):
-            # ~ filename_write.write(' {:d}'.format(nbody[il]))
-        # ~ filename_write.write('\n')
-        
-        # ~ filename_write.write('Mass of those bodies : ')
-        # ~ for il in range(nloop):
-            # ~ filename_write.write(' {:f}'.format(mass[il]))
-        # ~ filename_write.write('\n')
-        
-        # ~ filename_write.write('Number of Fourier coefficients in each loop : {:d}\n'.format(ncoeff))
-        # ~ filename_write.write('Number of integration points for the action : {:d}\n'.format(nint))
-        
-        # ~ Action,Gradaction = Compute_action(nloop,nbody,ncoeff,mass,nint,all_coeffs)
-        
-        # ~ filename_write.write('Value of the Action : {:.10f}\n'.format(Action))
-        # ~ filename_write.write('Value of the Norm of the Gradient of the Action : {:.10E}\n'.format(np.linalg.norm(Gradaction)))
-
-        # ~ Newt_err = Compute_Newton_err(nloop,nbody,ncoeff,mass,nint,all_coeffs)
-        # ~ Newt_err_norm = np.linalg.norm(Newt_err)
-        # ~ filename_write.write('Sum of Newton Errors : {:.10E}\n'.format(Newt_err_norm))
-        
-        # ~ dxmin = Compute_mindist(nloop,nbody,ncoeff,nint,all_coeffs)
-        # ~ filename_write.write('Minimum inter-body distance : {:.10E}\n'.format(dxmin))
-        
-        # ~ if (WriteSignature):            
-            # ~ sig = Compute_Pure_Hessian_Signature(nloop,nbody,ncoeff,mass,nint,all_coeffs)
-            # ~ filename_write.write('Signature of Hessian : {:d}\n'.format(sig))
-        
-    
-
 def Write_Descriptor(x,callfun,filename,WriteSignature=False):
     
     args = callfun[0]
