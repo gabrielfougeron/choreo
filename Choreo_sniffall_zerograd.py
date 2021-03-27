@@ -18,10 +18,12 @@ mass = np.ones((nbody))
 Sym_list = []
 
 SymType = {
-    'name'  : 'E',
+    'name'  : 'C',
     'n'     : nbody,
-    'k'     : 6 ,
+    'k'     : 5,
     'l'     : 1 ,
+    'p'     : 1 ,
+    'q'     : nbody ,
 }
 
 Sym_list.extend(Make2DChoreoSym(SymType,range(nbody)))
