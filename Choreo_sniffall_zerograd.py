@@ -12,15 +12,15 @@ import time
 from Choreo_funs import *
 
 
-nbody = 9
+nbody = 6
 mass = np.ones((nbody))
 
 Sym_list = []
 
 SymType = {
-    'name'  : 'Dp',
+    'name'  : 'E',
     'n'     : nbody,
-    'k'     : 1,
+    'k'     : 6 ,
     'l'     : 1 ,
 }
 
