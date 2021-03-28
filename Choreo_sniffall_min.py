@@ -11,7 +11,7 @@ import time
 
 from Choreo_funs import *
 
-nbody = 6
+nbody = 3
 mass = np.ones((nbody))
 
 Sym_list = []
@@ -21,17 +21,27 @@ SymType = {
     'n'     : 2,
     'k'     : 1,
     'l'     : 1 ,
-    'p'     : 1 ,
+    'p'     : 0 ,
     'q'     : 2 ,
 }
 
 Sym_list.extend(Make2DChoreoSym(SymType,[0,1]))
 
-Sym_list.extend(Make2DChoreoSym(SymType,[2,3]))
+Sym = ChoreoSym(
+    LoopTarget=2,
+    LoopSource=2,
+    SpaceRot = np.identity(ndim),
+    TimeRev=1,
+    TimeShift=fractions.Fraction(numerator=1,denominator=2)
+    )
 
-Sym_list.extend(Make2DChoreoSym(SymType,[4,5]))
+Sym_list.append(Sym)
 
-# ~ Sym_list.extend(Make2DChoreoSym(SymType,range(nbody)))
+# ~ Sym_list.extend(Make2DChoreoSym(SymType,[1]))
+
+# ~ Sym_list.extend(Make2DChoreoSym(SymType,[2]))
+
+
 
 store_folder = './Sniff_all_sym/'
 store_folder = store_folder+str(nbody)
@@ -286,7 +296,7 @@ while (n_opt < n_opt_max):
                 
                 n_reconverge_it = 0
                 
-                while ((Newt_err_norm > Newt_err_norm_max) and (n_reconverge_it < n_reconverge_it_max)):
+                while ((Newt_err_norm > Newt_err_norm_max) and (n_reconverge_it < n_reconverge_it_max) and Go_On):
                             
                     # ~ nint_plot = 200
                     # ~ imgfilename = store_folder+'/'+str(n_opt)+'_'+str(n_reconverge_it)
@@ -323,7 +333,6 @@ while (n_opt < n_opt_max):
                     gradtol = 1e-15
                     opt_result = opt.root(fun=Compute_action_onlygrad,x0=x0,args=callfun,method='krylov', options={'disp':disp_scipy_opt,'maxiter':maxiter,'fatol':gradtol,'jac_options':{'method':krylov_method}},callback=best_sol.update)
 
-                    x_opt = best_sol.x
                     all_coeffs = Unpackage_all_coeffs(best_sol.x,callfun)
                     
                     print('Opt Action Grad Norm : ',best_sol.f_norm)
@@ -334,6 +343,13 @@ while (n_opt < n_opt_max):
                     print('Newton Error : ',Newt_err_norm)
                 
                     SaveSol = (Newt_err_norm < Newt_err_norm_max_save)
+                                    
+                    if (Check_loop_dist):
+                        
+                        Go_On = not(Detect_Escape(best_sol.x,callfun))
+
+                        if not(Go_On):
+                            print('One loop escaped. Starting over')    
                 
                 if not(SaveSol):
                     print('Newton Error too high, discarding solution')

@@ -12,27 +12,27 @@ import time
 from Choreo_funs import *
 
 
-nbody = 6
+nbody = 3
 mass = np.ones((nbody))
 
 Sym_list = []
 
 SymType = {
-    'name'  : 'C',
-    'n'     : 2,
+    'name'  : 'D',
+    'n'     : 1,
     'k'     : 1,
     'l'     : 1 ,
-    'p'     : 1 ,
-    'q'     : 2 ,
+    'p'     : 0 ,
+    'q'     : 1 ,
 }
 
-Sym_list.extend(Make2DChoreoSym(SymType,[0,1]))
+Sym_list.extend(Make2DChoreoSym(SymType,[0]))
 
-Sym_list.extend(Make2DChoreoSym(SymType,[2,3]))
+Sym_list.extend(Make2DChoreoSym(SymType,[1]))
 
-Sym_list.extend(Make2DChoreoSym(SymType,[4,5]))
+Sym_list.extend(Make2DChoreoSym(SymType,[2]))
 
-# ~ Sym_list.extend(Make2DChoreoSym(SymType,range(nbody)))
+
 
 store_folder = './Sniff_all_sym/'
 store_folder = store_folder+str(nbody)
