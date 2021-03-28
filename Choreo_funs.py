@@ -220,12 +220,32 @@ def Compute_action_hess_mul(x,dx,callfun):
     
     y = args['param_to_coeff'] * x
     all_coeffs = y.reshape(args['nloop'],ndim,args['ncoeff'],2)
-
+    
     dy = args['param_to_coeff'] * dx
     all_coeffs_d = dy.reshape(args['nloop'],ndim,args['ncoeff'],2)
-
-    HessJdx =  Compute_action_hess_mul_Cython(args['nloop'],args['nbody'],args['ncoeff'],args['mass'],args['nint'],all_coeffs,all_coeffs_d)
     
+    HessJdx =  Compute_action_hess_mul_Cython(
+        args['nloop']           ,
+        args['ncoeff']          ,
+        args['nint']            ,
+        args['mass']            ,
+        args['loopnb']          ,
+        args['Targets']         ,
+        args['MassSum']         ,
+        args['SpaceRotsUn']     ,
+        args['TimeRevsUn']      ,
+        args['TimeShiftNumUn']  ,
+        args['TimeShiftDenUn']  ,
+        args['loopnbi']         ,
+        args['ProdMassSumAll']  ,
+        args['SpaceRotsBin']    ,
+        args['TimeRevsBin']     ,
+        args['TimeShiftNumBin'] ,
+        args['TimeShiftDenBin'] ,
+        all_coeffs              ,
+        all_coeffs_d            ,
+        )
+
     HJdx = HessJdx.reshape(-1)
     
     z = HJdx * args['param_to_coeff']
@@ -1123,7 +1143,7 @@ def SelectFiles_Action(store_folder,Action_val,Action_Hash_val,rtol):
                     
     return file_path_list
 
-def Check_Duplicates(x,callfun,store_folder,duplicate_eps,rtol=1e-5,theta_rot_dupl=[],dt_shift_dupl=[],TimeReversal=False,SpaceSym=False):
+def Check_Duplicates(x,callfun,store_folder,duplicate_eps,rtol=1e-5):
 
     Action,Gradaction = Compute_action(x,callfun)
     Hash_Action = Compute_hash_action(x,callfun)
