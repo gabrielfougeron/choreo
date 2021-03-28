@@ -11,35 +11,48 @@ import time
 
 from Choreo_funs import *
 
-nbody = 3
+nbody = 4
 mass = np.ones((nbody))
 
 Sym_list = []
 
 SymType = {
     'name'  : 'C',
-    'n'     : 2,
+    'n'     : 4,
     'k'     : 1,
     'l'     : 1 ,
     'p'     : 0 ,
-    'q'     : 2 ,
+    'q'     : 4 ,
 }
 
-Sym_list.extend(Make2DChoreoSym(SymType,[0,1]))
+Sym_list.extend(Make2DChoreoSym(SymType,range(4)))
 
-Sym = ChoreoSym(
-    LoopTarget=2,
-    LoopSource=2,
-    SpaceRot = np.identity(ndim),
-    TimeRev=1,
-    TimeShift=fractions.Fraction(numerator=1,denominator=2)
-    )
 
-Sym_list.append(Sym)
+# ~ SymType = {
+    # ~ 'name'  : 'C',
+    # ~ 'n'     : 1,
+    # ~ 'k'     : 5,
+    # ~ 'l'     : 1 ,
+    # ~ 'p'     : 0 ,
+    # ~ 'q'     : 2 ,
+# ~ }
 
-# ~ Sym_list.extend(Make2DChoreoSym(SymType,[1]))
+# ~ Sym_list.extend(Make2DChoreoSym(SymType,[3]))
 
-# ~ Sym_list.extend(Make2DChoreoSym(SymType,[2]))
+
+
+# ~ Sym = ChoreoSym(
+    # ~ LoopTarget=3,
+    # ~ LoopSource=3,
+    # ~ SpaceRot = np.identity(ndim),
+    # ~ TimeRev=1,
+    # ~ TimeShift=fractions.Fraction(1,3)
+    # ~ )
+
+# ~ Sym_list.append(Sym)
+
+# ~ Sym_list.extend(Make2DChoreoSym(SymType,[2,3]))
+
 
 
 
@@ -68,7 +81,7 @@ Reconverge_sols = True
 Save_anim = True
 # ~ Save_anim = False
 
-n_reconverge_it_max = 3
+n_reconverge_it_max = 6
 # ~ n_reconverge_it_max = 0
 
 # ~ ncoeff_init = 100
@@ -88,6 +101,8 @@ Newt_err_norm_max_save = Newt_err_norm_max * 100
 # ~ Save_Bad_Sols = True
 Save_Bad_Sols = False
 
+Search_Min_Only = False
+# ~ Search_Min_Only = True
 
 duplicate_eps = 1e-9
 
@@ -231,19 +246,60 @@ while (n_opt < n_opt_max):
       
                 all_coeffs[il,idim,k,0] = randampl*np.cos(randphase)
                 all_coeffs[il,idim,k,1] = randampl*np.sin(randphase)
-                
+    
     x0 = Package_all_coeffs(all_coeffs,callfun)
     
-    gradtol = 1e-5
-    maxiter = 1000
-
-    opt_result = opt.minimize(fun=Compute_action,x0=x0,args=callfun,method='trust-krylov',jac=True,hessp=Compute_action_hess_mul,options={'disp':disp_scipy_opt,'maxiter':maxiter,'gtol' : gradtol,'inexact': True})
-    
-    Go_On = True
-    
-    if (Check_loop_dist):
+    if Search_Min_Only:
+                    
+        gradtol = 1e-5
+        maxiter = 1000
+        
+        opt_result = opt.minimize(fun=Compute_action,x0=x0,args=callfun,method='trust-krylov',jac=True,hessp=Compute_action_hess_mul,options={'disp':disp_scipy_opt,'maxiter':maxiter,'gtol' : gradtol,'inexact': True})
         
         x_opt = opt_result['x']
+        
+        Go_On = True
+        
+    else:
+            
+        f0 = Compute_action_onlygrad(x0,callfun)
+        best_sol = current_best(x0,f0)
+
+        gradtol = 1e-5
+        maxiter = 5000
+
+        try : 
+            
+            opt_result = opt.root(fun=Compute_action_onlygrad,x0=x0,args=callfun,method='krylov', options={'line_search':line_search,'disp':disp_scipy_opt,'maxiter':maxiter,'fatol':gradtol,'jac_options':{'method':krylov_method}},callback=best_sol.update)
+            
+            print("After Krylov : ",best_sol.f_norm)
+            
+            Go_On = True
+            
+            x_opt = best_sol.x
+            
+        except ValueError:
+            
+            print("Value Error occured, skipping.")
+            Go_On = False
+        
+        
+        if (Go_On and not(opt_result['success'])):
+            
+                    
+            gradtol = 1e-5
+            maxiter = 5000
+            x0 = best_sol.x
+            opt_result = opt.root(fun=Compute_action_onlygrad,x0=x0,args=callfun,method='df-sane', options={'disp':disp_scipy_opt,'maxfev':maxiter,'fatol':gradtol},callback=best_sol.update)
+
+            print("After DF-SANE : ",best_sol.f_norm)
+            
+            x_opt = best_sol.x
+            
+            Go_On = opt_result['success']
+
+    if (Check_loop_dist and Go_On):
+        
         Go_On = not(Detect_Escape(x_opt,callfun))
 
         if not(Go_On):
@@ -251,13 +307,12 @@ while (n_opt < n_opt_max):
     
     if (Go_On):
 
-        x0 = opt_result['x']
-        f0 = Compute_action_onlygrad(x0,callfun)
+        f0 = Compute_action_onlygrad(x_opt,callfun)
         best_sol = current_best(x0,f0)
 
         maxiter = 10
         gradtol = 1e-11
-        opt_result = opt.root(fun=Compute_action_onlygrad,x0=x0,args=callfun,method='krylov', options={'disp':disp_scipy_opt,'maxiter':maxiter,'fatol':gradtol,'jac_options':{'method':krylov_method}},callback=best_sol.update)
+        opt_result = opt.root(fun=Compute_action_onlygrad,x0=x_opt,args=callfun,method='krylov', options={'disp':disp_scipy_opt,'maxiter':maxiter,'fatol':gradtol,'jac_options':{'method':krylov_method}},callback=best_sol.update)
 
         all_coeffs = Unpackage_all_coeffs(best_sol.x,callfun)
         
@@ -322,16 +377,35 @@ while (n_opt < n_opt_max):
                     best_sol = current_best(x0,f0)
                     
                     print('After Resize : Action Grad Norm : ',best_sol.f_norm)
+                                    
+                    if Search_Min_Only:
+                             
+                        gradtol = 1e-7
+                        maxiter = 1000
+                        opt_result = opt.minimize(fun=Compute_action,x0=x0,args=callfun,method='trust-krylov',jac=True,hessp=Compute_action_hess_mul,options={'disp':disp_scipy_opt,'maxiter':maxiter,'gtol' : gradtol,'inexact': True})
+
+                        x0 = opt_result['x']
+
+                        maxiter = 20
+                        gradtol = 1e-15
+                        opt_result = opt.root(fun=Compute_action_onlygrad,x0=x0,args=callfun,method='krylov', options={'disp':disp_scipy_opt,'maxiter':maxiter,'fatol':gradtol,'jac_options':{'method':krylov_method}},callback=best_sol.update)
                     
-                    gradtol = 1e-7
-                    maxiter = 1000
-                    opt_result = opt.minimize(fun=Compute_action,x0=x0,args=callfun,method='trust-krylov',jac=True,hessp=Compute_action_hess_mul,options={'disp':disp_scipy_opt,'maxiter':maxiter,'gtol' : gradtol,'inexact': True})
+                    else:
 
-                    x0 = opt_result['x']
+                        maxiter = 50
+                        gradtol = 1e-15
+                        
+                        try : 
+                                        
+                            opt_result = opt.root(fun=Compute_action_onlygrad,x0=x0,args=callfun,method='krylov', options={'line_search':line_search,'disp':disp_scipy_opt,'maxiter':maxiter,'fatol':gradtol,'jac_options':{'method':krylov_method}},callback=best_sol.update)
 
-                    maxiter = 20
-                    gradtol = 1e-15
-                    opt_result = opt.root(fun=Compute_action_onlygrad,x0=x0,args=callfun,method='krylov', options={'disp':disp_scipy_opt,'maxiter':maxiter,'fatol':gradtol,'jac_options':{'method':krylov_method}},callback=best_sol.update)
+                            Go_On = True
+                            
+                        except ValueError:
+                            
+                            print("Value Error occured, skipping.")
+                            Go_On = False
+                            SaveSol = False
 
                     all_coeffs = Unpackage_all_coeffs(best_sol.x,callfun)
                     
@@ -358,7 +432,7 @@ while (n_opt < n_opt_max):
                 
                 SaveSol = True
             
-            if ((SaveSol) or (Save_Bad_Sols)):
+            if (((SaveSol) or (Save_Bad_Sols)) and Go_On):
                         
                 if (Look_for_duplicates):
                     

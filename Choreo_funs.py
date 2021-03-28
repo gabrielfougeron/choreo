@@ -22,7 +22,7 @@ from matplotlib import animation
 
 from Choreo_cython_funs import *
 
-def plot_all_2D(x,nint_plot,callfun,filename,fig_size=(10,10)):
+def plot_all_2D(x,nint_plot,callfun,filename,fig_size=(15,15)):
     
     args = callfun[0]
     
