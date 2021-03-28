@@ -272,24 +272,6 @@ def Compute_Pure_Hessian_Signature(nloop,nbody,ncoeff,mass,nint,all_coeffs):
 
     return ' >= {:%d}'.format(kmax)
     
-def Current_disp(transform,callfun):
-    
-    args = callfun[0]
-
-    return sq_dist_transform_2d_noscal(args['nloop'],args['ncoeff'],args['all_coeffs'],args['all_coeffs2'],transform)
-    
-def Current_disp_funonly(transform,callfun):
-    
-    f,g = Current_disp(transform,callfun)
-    
-    return f
-    
-def Current_disp_gradonly(transform,callfun):
-    
-    f,g = Current_disp(transform,callfun)
-    
-    return g
-    
 def null_space_sparseqr(AT):
     # AT must be in COO format
     # The nullspace of the TRANSPOSE of AT will be returned
@@ -1103,7 +1085,7 @@ def Write_Descriptor(x,callfun,filename,WriteSignature=False):
             # ~ filename_write.write('Signature of Hessian : {:d}\n'.format(sig))
         
 
-def SelectFiles_Action(store_folder,Action_val,Action_Hash_val,Action_eps):
+def SelectFiles_Action(store_folder,Action_val,Action_Hash_val,rtol):
     
     Action_msg = 'Value of the Action : '
     Action_msg_len = len(Action_msg)
@@ -1131,9 +1113,9 @@ def SelectFiles_Action(store_folder,Action_val,Action_Hash_val,Action_eps):
                         
                         This_Action_Hash = np.array([float(num_str) for num_str in split_nums])
                         
-                IsCandidate = (abs(This_Action-Action_val) < Action_eps)
+                IsCandidate = (abs(This_Action-Action_val) < ((abs(This_Action)+abs(Action_val))*rtol))
                 for ihash in range(nhash):
-                    IsCandidate = (IsCandidate and (abs(This_Action_Hash[ihash]-Action_Hash_val[ihash]) < Action_eps))
+                    IsCandidate = (IsCandidate and (abs(This_Action_Hash[ihash]-Action_Hash_val[ihash]) < (abs(This_Action_Hash[ihash])+abs(Action_Hash_val[ihash]))*rtol))
                 
                 if IsCandidate:
                     
@@ -1141,12 +1123,12 @@ def SelectFiles_Action(store_folder,Action_val,Action_Hash_val,Action_eps):
                     
     return file_path_list
 
-def Check_Duplicates(x,callfun,store_folder,duplicate_eps,Action_eps=1e-5,theta_rot_dupl=[],dt_shift_dupl=[],TimeReversal=False,SpaceSym=False):
+def Check_Duplicates(x,callfun,store_folder,duplicate_eps,rtol=1e-5,theta_rot_dupl=[],dt_shift_dupl=[],TimeReversal=False,SpaceSym=False):
 
     Action,Gradaction = Compute_action(x,callfun)
     Hash_Action = Compute_hash_action(x,callfun)
 
-    file_path_list = SelectFiles_Action(store_folder,Action,Hash_Action,Action_eps)
+    file_path_list = SelectFiles_Action(store_folder,Action,Hash_Action,rtol)
     
     if (len(file_path_list) == 0):
         
