@@ -14,36 +14,20 @@ from libc.math cimport isnan as cisnan
 from libc.math cimport isinf as cisinf
 import time
 
-cdef long ndim = 2
+cdef long cndim = 2
 
-cdef double n = -0.5  #coeff of x^2 in the potential power law
-cdef double nm1 = n-1  #coeff of x^2 in the potential power law
-cdef double nm2 = n-2  #coeff of x^2 in the potential power law
+cdef double cn = -0.5  #coeff of x^2 in the potential power law
+cdef double cnm1 = cn-1  #coeff of x^2 in the potential power law
+cdef double cnm2 = cn-2  #coeff of x^2 in the potential power law
 
-cdef double nppi = np.pi
-cdef double twopi = 2* np.pi
-cdef double fourpi = 4 * np.pi
-cdef double fourpisq = twopi*twopi
+cdef double ctwopi = 2* np.pi
+cdef double cfourpi = 4 * np.pi
+cdef double cfourpisq = ctwopi*ctwopi
 
-cdef double nnm1 = n*(n-1)
+cdef double cnnm1 = cn*(cn-1)
 
-cdef double mn = -n
-cdef double mnnm1 = -nnm1
-
-cdef inline (double, double, double) CCpt_interbody_pot(double xsq):  # xsq is the square of the distance between two bodies !
-    
-    cdef double a = cpow(xsq,nm2)
-    cdef double b = xsq*a
-    
-    cdef double pot = -xsq*b
-    cdef double potp = mn*b
-    cdef double potpp = mnnm1*a
-    
-    return pot,potp,potpp
-    
-def Cpt_interbody_pot(double xsq): 
-    return CCpt_interbody_pot(xsq)
-    
+cdef double cmn = -cn
+cdef double cmnnm1 = -cnnm1
 
 # cdef  np.ndarray[double, ndim=1, mode="c"] hash_exps = np.array([0.3,0.4,0.6],dtype=np.float64)
 # cdef long cnhash = hash_exps.size
@@ -55,8 +39,38 @@ cdef double hash_exp2 = 0.6
 
 cdef long cnhash = 3
 
+
+ndim = cndim
+
+n = cn
+nm1 = cnm1
+nm2 = cnm2
+
+twopi = ctwopi
+fourpi = cfourpi
+fourpisq = cfourpisq
+
+nnm1 = cnnm1
+
+mn = cmn
+mnnm1 = cmnnm1
+
 nhash = cnhash
+
+cdef inline (double, double, double) CCpt_interbody_pot(double xsq):  # xsq is the square of the distance between two bodies !
     
+    cdef double a = cpow(xsq,cnm2)
+    cdef double b = xsq*a
+    
+    cdef double pot = -xsq*b
+    cdef double potp = cmn*b
+    cdef double potpp = cmnnm1*a
+    
+    return pot,potp,potpp
+    
+def Cpt_interbody_pot(double xsq): 
+    return CCpt_interbody_pot(xsq)
+     
 def CCpt_hash_pot(double xsq):  # xsq is the square of the distance between two bodies !
     
     cdef np.ndarray[double, ndim=1, mode="c"] hash_pots = np.zeros((cnhash),dtype=np.float64)
@@ -97,21 +111,21 @@ def Compute_action_Cython(
     cdef long k,kp,k2
     cdef double pot,potp,potpp
     cdef double prod_mass,a,b,dx2,prod_fac
-    cdef np.ndarray[double, ndim=1, mode="c"]  dx = np.zeros((ndim),dtype=np.float64)
-    cdef np.ndarray[double, ndim=1, mode="c"]  df = np.zeros((ndim),dtype=np.float64)
+    cdef np.ndarray[double, ndim=1, mode="c"]  dx = np.zeros((cndim),dtype=np.float64)
+    cdef np.ndarray[double, ndim=1, mode="c"]  df = np.zeros((cndim),dtype=np.float64)
         
     cdef long maxloopnb = loopnb.max()
     cdef long maxloopnbi = loopnbi.max()
     
     cdef double Kin_en = 0
 
-    cdef np.ndarray[double, ndim=4, mode="c"] Action_grad = np.zeros((nloop,ndim,ncoeff,2),np.float64)
+    cdef np.ndarray[double, ndim=4, mode="c"] Action_grad = np.zeros((nloop,cndim,ncoeff,2),np.float64)
 
     for il in range(nloop):
         
-        prod_fac = MassSum[il]*fourpisq
+        prod_fac = MassSum[il]*cfourpisq
         
-        for idim in range(ndim):
+        for idim in range(cndim):
             for k in range(1,ncoeff):
                 
                 k2 = k*k
@@ -147,7 +161,7 @@ def Compute_action_Cython(
                 
             all_shiftsBin[il,ibi] = ((-TimeRevsBin[il,ibi]*nint*TimeShiftNumBin[il,ibi]) // TimeShiftDenBin[il,ibi]) % nint
     
-    cdef np.ndarray[double, ndim=3, mode="c"] grad_pot_all = np.zeros((nloop,ndim,nint),dtype=np.float64)
+    cdef np.ndarray[double, ndim=3, mode="c"] grad_pot_all = np.zeros((nloop,cndim,nint),dtype=np.float64)
 
     for iint in range(nint):
 
@@ -160,13 +174,13 @@ def Compute_action_Cython(
                         
                         prod_mass = mass[Targets[il,ib]]*mass[Targets[ilp,ibp]]
 
-                        for idim in range(ndim):
+                        for idim in range(cndim):
                             dx[idim] = SpaceRotsUn[il,ib,idim,0]*all_pos[il,0,all_shiftsUn[il,ib]] - SpaceRotsUn[ilp,ibp,idim,0]*all_pos[ilp,0,all_shiftsUn[ilp,ibp]]
-                            for jdim in range(1,ndim):
+                            for jdim in range(1,cndim):
                                 dx[idim] += SpaceRotsUn[il,ib,idim,jdim]*all_pos[il,jdim,all_shiftsUn[il,ib]] - SpaceRotsUn[ilp,ibp,idim,jdim]*all_pos[ilp,jdim,all_shiftsUn[ilp,ibp]]
 
                         dx2 = dx[0]*dx[0]
-                        for idim in range(1,ndim):
+                        for idim in range(1,cndim):
                             dx2 += dx[idim]*dx[idim]
                             
                         pot,potp,potpp = CCpt_interbody_pot(dx2)
@@ -175,19 +189,19 @@ def Compute_action_Cython(
 
                         a = (2*prod_mass*potp)
 
-                        for idim in range(ndim):
+                        for idim in range(cndim):
                             dx[idim] = a*dx[idim]
 
-                        for idim in range(ndim):
+                        for idim in range(cndim):
                             
                             b = SpaceRotsUn[il,ib,0,idim]*dx[0]
-                            for jdim in range(1,ndim):
+                            for jdim in range(1,cndim):
                                 b+=SpaceRotsUn[il,ib,jdim,idim]*dx[jdim]
                             
                             grad_pot_all[il ,idim,all_shiftsUn[il ,ib ]] += b
                             
                             b = SpaceRotsUn[ilp,ibp,0,idim]*dx[0]
-                            for jdim in range(1,ndim):
+                            for jdim in range(1,cndim):
                                 b+=SpaceRotsUn[ilp,ibp,jdim,idim]*dx[jdim]
                             
                             grad_pot_all[ilp,idim,all_shiftsUn[ilp,ibp]] -= b
@@ -197,15 +211,15 @@ def Compute_action_Cython(
 
             for ibi in range(loopnbi[il]):
                 
-                for idim in range(ndim):
+                for idim in range(cndim):
                     dx[idim] = SpaceRotsBin[il,ibi,idim,0]*all_pos[il,0,all_shiftsBin[il,ibi]]
-                    for jdim in range(1,ndim):
+                    for jdim in range(1,cndim):
                         dx[idim] += SpaceRotsBin[il,ibi,idim,jdim]*all_pos[il,jdim,all_shiftsBin[il,ibi]]
                     
                     dx[idim] -= all_pos[il,idim,iint]
                     
                 dx2 = dx[0]*dx[0]
-                for idim in range(1,ndim):
+                for idim in range(1,cndim):
                     dx2 += dx[idim]*dx[idim]
 
                 pot,potp,potpp = CCpt_interbody_pot(dx2)
@@ -214,13 +228,13 @@ def Compute_action_Cython(
                 
                 a = (2*ProdMassSumAll[il,ibi]*potp)
 
-                for idim in range(ndim):
+                for idim in range(cndim):
                     dx[idim] = a*dx[idim]
 
-                for idim in range(ndim):
+                for idim in range(cndim):
                     
                     b = SpaceRotsBin[il,ibi,0,idim]*dx[0]
-                    for jdim in range(1,ndim):
+                    for jdim in range(1,cndim):
                         b+=SpaceRotsBin[il,ibi,jdim,idim]*dx[jdim]
                     
                     grad_pot_all[il ,idim,all_shiftsBin[il,ibi]] += b
@@ -239,7 +253,7 @@ def Compute_action_Cython(
 
 
     for il in range(nloop):
-        for idim in range(ndim):
+        for idim in range(cndim):
             
             Action_grad[il,idim,0,0] -= grad_pot_fft[il,idim,0].real
             
@@ -289,7 +303,7 @@ def Compute_hash_action_Cython(
     cdef long k,kp,k2
     cdef double pot,potp,potpp
     cdef double prod_mass,a,b,dx2,prod_fac
-    cdef np.ndarray[double, ndim=1, mode="c"]  dx = np.zeros((ndim),dtype=np.float64)
+    cdef np.ndarray[double, ndim=1, mode="c"]  dx = np.zeros((cndim),dtype=np.float64)
         
     cdef long maxloopnb = loopnb.max()
     cdef long maxloopnbi = loopnbi.max()
@@ -321,7 +335,7 @@ def Compute_hash_action_Cython(
                 
             all_shiftsBin[il,ibi] = ((-TimeRevsBin[il,ibi]*nint*TimeShiftNumBin[il,ibi]) // TimeShiftDenBin[il,ibi]) % nint
     
-    cdef np.ndarray[double, ndim=3, mode="c"] grad_pot_all = np.zeros((nloop,ndim,nint),dtype=np.float64)
+    cdef np.ndarray[double, ndim=3, mode="c"] grad_pot_all = np.zeros((nloop,cndim,nint),dtype=np.float64)
 
     for iint in range(nint):
 
@@ -334,13 +348,13 @@ def Compute_hash_action_Cython(
                         
                         prod_mass = mass[Targets[il,ib]]*mass[Targets[ilp,ibp]]
 
-                        for idim in range(ndim):
+                        for idim in range(cndim):
                             dx[idim] = SpaceRotsUn[il,ib,idim,0]*all_pos[il,0,all_shiftsUn[il,ib]] - SpaceRotsUn[ilp,ibp,idim,0]*all_pos[ilp,0,all_shiftsUn[ilp,ibp]]
-                            for jdim in range(1,ndim):
+                            for jdim in range(1,cndim):
                                 dx[idim] += SpaceRotsUn[il,ib,idim,jdim]*all_pos[il,jdim,all_shiftsUn[il,ib]] - SpaceRotsUn[ilp,ibp,idim,jdim]*all_pos[ilp,jdim,all_shiftsUn[ilp,ibp]]
 
                         dx2 = dx[0]*dx[0]
-                        for idim in range(1,ndim):
+                        for idim in range(1,cndim):
                             dx2 += dx[idim]*dx[idim]
                             
                         Hash_pot = CCpt_hash_pot(dx2)
@@ -353,15 +367,15 @@ def Compute_hash_action_Cython(
 
             for ibi in range(loopnbi[il]):
                 
-                for idim in range(ndim):
+                for idim in range(cndim):
                     dx[idim] = SpaceRotsBin[il,ibi,idim,0]*all_pos[il,0,all_shiftsBin[il,ibi]]
-                    for jdim in range(1,ndim):
+                    for jdim in range(1,cndim):
                         dx[idim] += SpaceRotsBin[il,ibi,idim,jdim]*all_pos[il,jdim,all_shiftsBin[il,ibi]]
                     
                     dx[idim] -= all_pos[il,idim,iint]
                     
                 dx2 = dx[0]*dx[0]
-                for idim in range(1,ndim):
+                for idim in range(1,cndim):
                     dx2 += dx[idim]*dx[idim]
 
                 Hash_pot = CCpt_hash_pot(dx2)
@@ -410,8 +424,8 @@ def Compute_MinDist_Cython(
     cdef long k,kp,k2
     cdef double pot,potp,potpp
     cdef double prod_mass,a,b,dx2,prod_fac
-    cdef np.ndarray[double, ndim=1, mode="c"]  dx = np.zeros((ndim),dtype=np.float64)
-    cdef np.ndarray[double, ndim=1, mode="c"]  df = np.zeros((ndim),dtype=np.float64)
+    cdef np.ndarray[double, ndim=1, mode="c"]  dx = np.zeros((cndim),dtype=np.float64)
+    cdef np.ndarray[double, ndim=1, mode="c"]  df = np.zeros((cndim),dtype=np.float64)
         
     cdef long maxloopnb = loopnb.max()
     cdef long maxloopnbi = loopnbi.max()
@@ -449,13 +463,13 @@ def Compute_MinDist_Cython(
                 for ib in range(loopnb[il]):
                     for ibp in range(loopnb[ilp]):
                         
-                        for idim in range(ndim):
+                        for idim in range(cndim):
                             dx[idim] = SpaceRotsUn[il,ib,idim,0]*all_pos[il,0,all_shiftsUn[il,ib]] - SpaceRotsUn[ilp,ibp,idim,0]*all_pos[ilp,0,all_shiftsUn[ilp,ibp]]
-                            for jdim in range(1,ndim):
+                            for jdim in range(1,cndim):
                                 dx[idim] += SpaceRotsUn[il,ib,idim,jdim]*all_pos[il,jdim,all_shiftsUn[il,ib]] - SpaceRotsUn[ilp,ibp,idim,jdim]*all_pos[ilp,jdim,all_shiftsUn[ilp,ibp]]
 
                         dx2 = dx[0]*dx[0]
-                        for idim in range(1,ndim):
+                        for idim in range(1,cndim):
                             dx2 += dx[idim]*dx[idim]
                             
                         if (dx2 < dx2min):
@@ -466,15 +480,15 @@ def Compute_MinDist_Cython(
 
             for ibi in range(loopnbi[il]):
                 
-                for idim in range(ndim):
+                for idim in range(cndim):
                     dx[idim] = SpaceRotsBin[il,ibi,idim,0]*all_pos[il,0,all_shiftsBin[il,ibi]]
-                    for jdim in range(1,ndim):
+                    for jdim in range(1,cndim):
                         dx[idim] += SpaceRotsBin[il,ibi,idim,jdim]*all_pos[il,jdim,all_shiftsBin[il,ibi]]
                     
                     dx[idim] -= all_pos[il,idim,iint]
                     
                 dx2 = dx[0]*dx[0]
-                for idim in range(1,ndim):
+                for idim in range(1,cndim):
                     dx2 += dx[idim]*dx[idim]
                     
                 if (dx2 < dx2min):
@@ -500,7 +514,7 @@ def Compute_action_hess_mul(
     np.ndarray[double, ndim=4, mode="c"]  all_coeffs_d  not None ,
     ):
 
-    cdef np.ndarray[double, ndim=4, mode="c"] Action_hess_dx = np.zeros((nloop,ndim,ncoeff,2),np.float64)
+    cdef np.ndarray[double, ndim=4, mode="c"] Action_hess_dx = np.zeros((nloop,cndim,ncoeff,2),np.float64)
 
     c_coeffs = all_coeffs.view(dtype=np.complex128)[...,0]
     cdef np.ndarray[double, ndim=3, mode="c"]  all_pos = np.fft.irfft(c_coeffs,n=nint,axis=2)*nint
@@ -516,9 +530,9 @@ def Compute_action_hess_mul(
     cdef long k,kp,k2
     cdef double pot,potp,potpp
     cdef double prod_mass,a,b,dx2,prod_fac,dxtddx,c
-    cdef np.ndarray[double, ndim=1, mode="c"]  dx = np.zeros((ndim),dtype=np.float64)
-    cdef np.ndarray[double, ndim=1, mode="c"]  ddx = np.zeros((ndim),dtype=np.float64)
-    cdef np.ndarray[double, ndim=1, mode="c"]  dhdx = np.zeros((ndim),dtype=np.float64)
+    cdef np.ndarray[double, ndim=1, mode="c"]  dx = np.zeros((cndim),dtype=np.float64)
+    cdef np.ndarray[double, ndim=1, mode="c"]  ddx = np.zeros((cndim),dtype=np.float64)
+    cdef np.ndarray[double, ndim=1, mode="c"]  dhdx = np.zeros((cndim),dtype=np.float64)
         
     cdef long maxnbody = nbody.max()
 
@@ -537,9 +551,9 @@ def Compute_action_hess_mul(
 
     for il in range(nloop):
         
-        prod_fac = mass[il]*nbody[il]*fourpisq
+        prod_fac = mass[il]*nbody[il]*cfourpisq
         
-        for idim in range(ndim):
+        for idim in range(cndim):
             for k in range(1,ncoeff):
                 
                 k2 = k*k
@@ -549,7 +563,7 @@ def Compute_action_hess_mul(
                 Action_hess_dx[il,idim,k,1] += a*all_coeffs_d[il,idim,k,1]
     
 
-    cdef np.ndarray[double, ndim=3, mode="c"] hess_pot_all_d = np.zeros((nloop,ndim,nint),dtype=np.float64)
+    cdef np.ndarray[double, ndim=3, mode="c"] hess_pot_all_d = np.zeros((nloop,cndim,nint),dtype=np.float64)
 
     for iint in range(nint):
         
@@ -566,13 +580,13 @@ def Compute_action_hess_mul(
                 for ib in range(nbody[il]):
                     for ibp in range(nbody[ilp]):
                         
-                        for idim in range(ndim):
+                        for idim in range(cndim):
                             dx[idim]  = all_pos[il,idim,all_shifts[il,ib]] - all_pos[ilp,idim,all_shifts[ilp,ibp]]
                             ddx[idim] = all_pos_d[il,idim,all_shifts[il,ib]] - all_pos_d[ilp,idim,all_shifts[ilp,ibp]]
 
                         dx2 = dx[0]*dx[0]
                         dxtddx = dx[0]*ddx[0]
-                        for idim in range(1,ndim):
+                        for idim in range(1,cndim):
                             dx2 += dx[idim]*dx[idim]
                             dxtddx += dx[idim]*ddx[idim]
                         
@@ -581,7 +595,7 @@ def Compute_action_hess_mul(
                         a = 2*prod_mass*potp
                         b = (4*prod_mass*potpp*dxtddx)
 
-                        for idim in range(ndim):
+                        for idim in range(cndim):
                             c = b*dx[idim] + a*ddx[idim]
                             
                             hess_pot_all_d[il ,idim,all_shifts[il ,ib ]] += c
@@ -596,13 +610,13 @@ def Compute_action_hess_mul(
             
             for ib in range(1,nbody[il]):
 
-                for idim in range(ndim):
+                for idim in range(cndim):
                     dx[idim]  = all_pos[il,idim,all_shifts[il,ib]] - all_pos[il,idim,all_shifts[il,0]]
                     ddx[idim] = all_pos_d[il,idim,all_shifts[il,ib]] - all_pos_d[il,idim,all_shifts[il,0]]
 
                 dx2 = dx[0]*dx[0]
                 dxtddx = dx[0]*ddx[0]
-                for idim in range(1,ndim):
+                for idim in range(1,cndim):
                     dx2 += dx[idim]*dx[idim]
                     dxtddx += dx[idim]*ddx[idim]
                 
@@ -611,7 +625,7 @@ def Compute_action_hess_mul(
                 a = 2*prod_mass*potp
                 b = (4*prod_mass*potpp*dxtddx)
 
-                for idim in range(ndim):
+                for idim in range(cndim):
                     c = b*dx[idim] + a*ddx[idim]
                     
                     hess_pot_all_d[il,idim,all_shifts[il,ib ]] += c
@@ -620,7 +634,7 @@ def Compute_action_hess_mul(
     cdef np.ndarray[doublecomplex , ndim=3, mode="c"]  hess_dx_pot_fft = np.fft.ihfft(hess_pot_all_d,nint)
     
     for il in range(nloop):
-        for idim in range(ndim):
+        for idim in range(cndim):
             
             Action_hess_dx[il,idim,0,0] -= hess_dx_pot_fft[il,idim,0].real
             
@@ -655,24 +669,24 @@ def Compute_Newton_err_Cython(
     cdef long k,kp,k2
     cdef double pot,potp,potpp
     cdef double prod_mass,a,b,dx2,prod_fac
-    cdef np.ndarray[double, ndim=1, mode="c"]  dx = np.zeros((ndim),dtype=np.float64)
+    cdef np.ndarray[double, ndim=1, mode="c"]  dx = np.zeros((cndim),dtype=np.float64)
         
     cdef long maxloopnb = loopnb.max()
     
-    cdef np.ndarray[double, ndim=4, mode="c"] acc_coeff = np.zeros((nloop,ndim,ncoeff,2),dtype=np.float64)
+    cdef np.ndarray[double, ndim=4, mode="c"] acc_coeff = np.zeros((nloop,cndim,ncoeff,2),dtype=np.float64)
 
     for il in range(nloop):
-        for idim in range(ndim):
+        for idim in range(cndim):
             for k in range(ncoeff):
                 
                 k2 = k*k
-                acc_coeff[il,idim,k,0] = k2*fourpisq*all_coeffs[il,idim,k,0]
-                acc_coeff[il,idim,k,1] = k2*fourpisq*all_coeffs[il,idim,k,1]
+                acc_coeff[il,idim,k,0] = k2*cfourpisq*all_coeffs[il,idim,k,0]
+                acc_coeff[il,idim,k,1] = k2*cfourpisq*all_coeffs[il,idim,k,1]
                 
     c_acc_coeffs = acc_coeff.view(dtype=np.complex128)[...,0]
     cdef np.ndarray[double, ndim=3, mode="c"] all_acc = np.fft.irfft(c_acc_coeffs,n=nint,axis=2)*nint
     
-    cdef np.ndarray[double, ndim=3, mode="c"] all_Newt_err = np.zeros((nbody,ndim,nint),np.float64)
+    cdef np.ndarray[double, ndim=3, mode="c"] all_Newt_err = np.zeros((nbody,cndim,nint),np.float64)
     
     c_coeffs = all_coeffs.view(dtype=np.complex128)[...,0]
     
@@ -692,10 +706,10 @@ def Compute_Newton_err_Cython(
 
         for il in range(nloop):
             for ib in range(loopnb[il]):
-                for idim in range(ndim):
+                for idim in range(cndim):
                     
                     b = SpaceRotsUn[il,ib,idim,0]*all_acc[il,0,all_shiftsUn[il,ib]]
-                    for jdim in range(1,ndim):  
+                    for jdim in range(1,cndim):  
                         b += SpaceRotsUn[il,ib,idim,jdim]*all_acc[il,jdim,all_shiftsUn[il,ib]]                  
 
                     all_Newt_err[Targets[il,ib],idim,iint] -= mass[Targets[il,ib]]*b
@@ -709,20 +723,20 @@ def Compute_Newton_err_Cython(
                         
                         prod_mass = mass[Targets[il,ib]]*mass[Targets[ilp,ibp]]
 
-                        for idim in range(ndim):
+                        for idim in range(cndim):
                             dx[idim] = SpaceRotsUn[il,ib,idim,0]*all_pos[il,0,all_shiftsUn[il,ib]] - SpaceRotsUn[ilp,ibp,idim,0]*all_pos[ilp,0,all_shiftsUn[ilp,ibp]]
-                            for jdim in range(1,ndim):
+                            for jdim in range(1,cndim):
                                 dx[idim] += SpaceRotsUn[il,ib,idim,jdim]*all_pos[il,jdim,all_shiftsUn[il,ib]] - SpaceRotsUn[ilp,ibp,idim,jdim]*all_pos[ilp,jdim,all_shiftsUn[ilp,ibp]]
 
                         dx2 = dx[0]*dx[0]
-                        for idim in range(1,ndim):
+                        for idim in range(1,cndim):
                             dx2 += dx[idim]*dx[idim]
                             
                         pot,potp,potpp = CCpt_interbody_pot(dx2)
                         
                         a = (2*prod_mass*potp)
 
-                        for idim in range(ndim):
+                        for idim in range(cndim):
                                 
                             b = a*dx[idim]
                             all_Newt_err[Targets[il ,ib ],idim,iint] += b
@@ -736,20 +750,20 @@ def Compute_Newton_err_Cython(
                     
                     prod_mass = mass[Targets[il,ib]]*mass[Targets[il,ibp]]
 
-                    for idim in range(ndim):
+                    for idim in range(cndim):
                         dx[idim] = SpaceRotsUn[il,ib,idim,0]*all_pos[il,0,all_shiftsUn[il,ib]] - SpaceRotsUn[il,ibp,idim,0]*all_pos[il,0,all_shiftsUn[il,ibp]]
-                        for jdim in range(1,ndim):
+                        for jdim in range(1,cndim):
                             dx[idim] += SpaceRotsUn[il,ib,idim,jdim]*all_pos[il,jdim,all_shiftsUn[il,ib]] - SpaceRotsUn[il,ibp,idim,jdim]*all_pos[il,jdim,all_shiftsUn[il,ibp]]
                     
                     dx2 = dx[0]*dx[0]
-                    for idim in range(1,ndim):
+                    for idim in range(1,cndim):
                         dx2 += dx[idim]*dx[idim]
                         
                     pot,potp,potpp = CCpt_interbody_pot(dx2)
                     
                     a = (2*prod_mass*potp)
 
-                    for idim in range(ndim):
+                    for idim in range(cndim):
                         
                         b = a*dx[idim]
                         all_Newt_err[Targets[il,ib] ,idim,iint] += b

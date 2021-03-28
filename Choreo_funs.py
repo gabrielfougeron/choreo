@@ -22,17 +22,6 @@ from matplotlib import animation
 
 from Choreo_cython_funs import *
 
-
-ndim = 2
-n = -0.5  #coeff of x^2 in the potential power law
-# ~ n = -1.  #coeff of x^2 in the potential power law
-
-twopi = 2* np.pi
-fourpi = 4 * np.pi
-fourpisq = twopi*twopi
-
-nnm1 = n*(n-1)
-
 def plot_all_2D(x,nint_plot,callfun,filename,fig_size=(10,10)):
     
     args = callfun[0]
@@ -301,69 +290,6 @@ def Current_disp_gradonly(transform,callfun):
     
     return g
     
-def Compute_Dist_loops_local(all_coeffs1,all_coeffs2,init_transform = np.zeros((4),dtype=np.float64)):
-    
-    nloop1 = all_coeffs1.shape[0]
-    ndim1 = all_coeffs1.shape[1]
-    ncoeff1 = all_coeffs1.shape[2]
-
-    nloop2 = all_coeffs2.shape[0]
-    ndim2 = all_coeffs2.shape[1]
-    ncoeff2 = all_coeffs2.shape[2]
-
-    if ((nloop1 != nloop2)):
-        raise ValueError('Different number of loops')
-
-    nloop = nloop1
-
-    if ((ndim1 != ndim2) or (ndim1 != ndim)):
-        raise ValueError('Number of space dimension error')
-
-    if (ncoeff1 != ncoeff2):
-        raise ValueError('Different number of coefficients')
-    
-    ncoeff = ncoeff1
-    
-    callfun = [{
-    'nloop'         : nloop,
-    'ncoeff'        : ncoeff,
-    'all_coeffs'    : all_coeffs1,
-    'all_coeffs2'   : all_coeffs2,
-    }]
-    
-    opt_result = opt.minimize(fun=Current_disp,x0=init_transform,args=callfun,method='L-BFGS-B',jac=True,options={'disp':False,'maxiter':100,'ftol' : 1e-13,'gtol': 1e-10,})
-
-    return opt_result['fun']
-
-def SelectFiles_Action_old(store_folder,Action_val,Action_eps):
-    
-    Action_msg = 'Value of the Action : '
-    Action_msg_len = len(Action_msg)
-    
-    file_path_list = []
-    for file_path in os.listdir(store_folder):
-        file_path = os.path.join(store_folder, file_path)
-        file_root, file_ext = os.path.splitext(os.path.basename(file_path))
-        
-        if (file_ext == '.txt' ):
-            # ~ print(file_path)
-            with open(file_path,'r') as file_read:
-                file_readlines = file_read.readlines()
-                for iline in range(len(file_readlines)):
-                    line = file_readlines[iline]
-                    
-                    if (line[0:Action_msg_len] == Action_msg):
-                        This_Action = float(line[Action_msg_len:])
-                        # ~ print(This_Action)
-                        
-                        if (abs(This_Action-Action_val) < Action_eps):
-                            
-                            # ~ print(store_folder+'/'+file_root+'.npy')
-                            
-                            file_path_list.append(store_folder+'/'+file_root+'.npy')
-                            
-    return file_path_list
-
 def null_space_sparseqr(AT):
     # AT must be in COO format
     # The nullspace of the TRANSPOSE of AT will be returned

@@ -19,20 +19,20 @@ Sym_list = []
 
 SymType = {
     'name'  : 'C',
-    'n'     : 2,
+    'n'     : nbody,
     'k'     : 1,
     'l'     : 1 ,
     'p'     : 1 ,
-    'q'     : 2 ,
+    'q'     : nbody ,
 }
 
-Sym_list.extend(Make2DChoreoSym(SymType,[0,1]))
+# ~ Sym_list.extend(Make2DChoreoSym(SymType,[0,1]))
 
-Sym_list.extend(Make2DChoreoSym(SymType,[2,3]))
+# ~ Sym_list.extend(Make2DChoreoSym(SymType,[2,3]))
 
-Sym_list.extend(Make2DChoreoSym(SymType,[4,5]))
+# ~ Sym_list.extend(Make2DChoreoSym(SymType,[4,5]))
 
-
+Sym_list.extend(Make2DChoreoSym(SymType,range(nbody)))
 
 store_folder = './Sniff_all_sym/'
 store_folder = store_folder+str(nbody)
