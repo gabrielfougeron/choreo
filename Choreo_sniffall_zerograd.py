@@ -12,7 +12,7 @@ import time
 from Choreo_funs import *
 
 
-nbody = 6
+nbody = 2
 mass = np.ones((nbody))
 
 Sym_list = []
@@ -20,7 +20,7 @@ Sym_list = []
 SymType = {
     'name'  : 'C',
     'n'     : nbody,
-    'k'     : 5,
+    'k'     : 1,
     'l'     : 1 ,
     'p'     : 1 ,
     'q'     : nbody ,
@@ -50,8 +50,10 @@ save_approx = False
 # ~ Reconverge_sols = False
 Reconverge_sols = True
 
+# ~ Save_anim = True
+Save_anim = False
 
-n_reconverge_it_max = 4
+n_reconverge_it_max = 5
 # ~ n_reconverge_it_max = 0
 
 # ~ theta_rot_dupl = [0.,.2,.4,.6,.8]
@@ -63,19 +65,16 @@ dt_shift_dupl = np.linspace(start=0.,stop=1.,endpoint=False,num=nbody)
 # ~ ncoeff_init = 100
 # ~ ncoeff_init = 800
 # ~ ncoeff_init = 700
-ncoeff_init = 900
+# ~ ncoeff_init = 900
+ncoeff_init = 990
 # ~ ncoeff_init = 1200
 # ~ ncoeff_init = 90
-
-# ~ ncoeff_cutoff = ncoeff_init
-ncoeff_cutoff = 100
-
 
 disp_scipy_opt = False
 # ~ disp_scipy_opt = True
 
 Newt_err_norm_max = 1e-9
-Newt_err_norm_max_save = Newt_err_norm_max * 1000
+Newt_err_norm_max_save = Newt_err_norm_max * 100
 
 # ~ Save_Bad_Sols = True
 Save_Bad_Sols = False
@@ -95,16 +94,19 @@ line_search = 'wolfe'
 callfun_list = []
 
 print('Searching periodic solutions of {:d} bodies'.format(nbody))
-print('Processing symmetries for {:d} convergence levels ...'.format(n_reconverge_it_max+1))
-print('')
+# ~ print('Processing symmetries for {:d} convergence levels ...'.format(n_reconverge_it_max+1))
 
 for i in range(n_reconverge_it_max+1):
+    
+    print('Processing symmetries for convergence level {0:d} of {1:d}'.format(i+1,n_reconverge_it_max+1))
     
     ncoeff = ncoeff_init * (2**i)
     
     callfun = setup_changevar(nbody,ncoeff,mass,Sym_list=Sym_list)
 
     callfun_list.append(callfun)
+
+print('')
 
 args = callfun_list[0][0]
 nloop = args['nloop']
@@ -141,7 +143,8 @@ print('')
 
 
 
-for i in range(n_reconverge_it_max+1):
+# ~ for i in range(n_reconverge_it_max+1):
+for i in [0]:
     
     args = callfun_list[i][0]
     print('Convergence attempt number : ',i+1)
@@ -332,7 +335,7 @@ while (n_opt < n_opt_max):
                     
                     print('After Resize : Action Grad Norm : ',best_sol.f_norm)
 
-                    maxiter = 100
+                    maxiter = 50
                     gradtol = 1e-15
                     
                     try : 
@@ -430,10 +433,13 @@ while (n_opt < n_opt_max):
                     
                     # ~ print(all_coeffs)
                     # ~ print(1/0)
-                    nint_plot = 1000
-                    nperiod = 1
-                    plot_all_2D_anim(best_sol.x,nint_plot,callfun,filename_output+'.mp4',nperiod,Plot_trace=True)
+                    
+                    if Save_anim :
+                        nint_plot = 1000
+                        nperiod = 1
+                        plot_all_2D_anim(best_sol.x,nint_plot,callfun,filename_output+'.mp4',nperiod,Plot_trace=True)
                     Write_Descriptor(best_sol.x,callfun,filename_output+'.txt')
+                    # ~ pickle.dump(best_sol.x,filename_output+'_params.txt'
     
     print('')
     print('')

@@ -3,6 +3,7 @@ import itertools
 import copy
 import h5py
 import time
+import pickle
 
 import numpy as np
 import math as m
@@ -1178,6 +1179,36 @@ def Compute_action(x,callfun):
     y = GJ * args['param_to_coeff']
     
     return J,y
+
+def Compute_hash_action(x,callfun):
+
+    args=callfun[0]
+    
+    y = args['param_to_coeff'] * x
+    all_coeffs = y.reshape(args['nloop'],ndim,args['ncoeff'],2)
+    
+    Hash_Action =  Compute_hash_action_Cython(
+        args['nloop']           ,
+        args['ncoeff']          ,
+        args['nint']            ,
+        args['mass']            ,
+        args['loopnb']          ,
+        args['Targets']         ,
+        args['MassSum']         ,
+        args['SpaceRotsUn']     ,
+        args['TimeRevsUn']      ,
+        args['TimeShiftNumUn']  ,
+        args['TimeShiftDenUn']  ,
+        args['loopnbi']         ,
+        args['ProdMassSumAll']  ,
+        args['SpaceRotsBin']    ,
+        args['TimeRevsBin']     ,
+        args['TimeShiftNumBin'] ,
+        args['TimeShiftDenBin'] ,
+        all_coeffs
+        )
+
+    return Hash_Action
     
 def Compute_Newton_err(x,callfun):
     # WARNING : DOUBLING NUMBER OF INTEGRATION POINTS
@@ -1299,15 +1330,24 @@ def Write_Descriptor(x,callfun,filename,WriteSignature=False):
         dxmin = Compute_MinDist(x,callfun)
         filename_write.write('Minimum inter-body distance : {:.10E}\n'.format(dxmin))
         
+        Hash_Action = Compute_hash_action(x,callfun)
+        filename_write.write('Hash Action for duplicate detection : ')
+        for ihash in range(nhash):
+            filename_write.write(' {:.10f}'.format(Hash_Action[ihash]))
+        filename_write.write('\n')
+        
         # ~ if (WriteSignature):            
             # ~ sig = Compute_Pure_Hessian_Signature(nloop,nbody,ncoeff,mass,nint,all_coeffs)
             # ~ filename_write.write('Signature of Hessian : {:d}\n'.format(sig))
         
 
-def SelectFiles_Action(store_folder,Action_val,Action_eps):
+def SelectFiles_Action(store_folder,Action_val,Action_Hash_val,Action_eps):
     
     Action_msg = 'Value of the Action : '
     Action_msg_len = len(Action_msg)
+    
+    Action_Hash_msg = 'Hash Action for duplicate detection : '
+    Action_Hash_msg_len = len(Action_Hash_msg)
     
     file_path_list = []
     for file_path in os.listdir(store_folder):
@@ -1320,24 +1360,31 @@ def SelectFiles_Action(store_folder,Action_val,Action_eps):
                 file_readlines = file_read.readlines()
                 for iline in range(len(file_readlines)):
                     line = file_readlines[iline]
-                    
+
                     if (line[0:Action_msg_len] == Action_msg):
                         This_Action = float(line[Action_msg_len:])
-                        # ~ print(This_Action)
+                    
+                    elif (line[0:Action_Hash_msg_len] == Action_Hash_msg):
+                        split_nums = line[Action_Hash_msg_len:].split()
                         
-                        if (abs(This_Action-Action_val) < Action_eps):
-                            
-                            # ~ print(store_folder+'/'+file_root+'.npy')
-                            
-                            file_path_list.append(store_folder+'/'+file_root)
-                            
+                        This_Action_Hash = np.array([float(num_str) for num_str in split_nums])
+                        
+                IsCandidate = (abs(This_Action-Action_val) < Action_eps)
+                for ihash in range(nhash):
+                    IsCandidate = (IsCandidate and (abs(This_Action_Hash[ihash]-Action_Hash_val[ihash]) < Action_eps))
+                
+                if IsCandidate:
+                    
+                    file_path_list.append(store_folder+'/'+file_root)
+                    
     return file_path_list
 
 def Check_Duplicates(x,callfun,store_folder,duplicate_eps,Action_eps=1e-5,theta_rot_dupl=[],dt_shift_dupl=[],TimeReversal=False,SpaceSym=False):
 
     Action,Gradaction = Compute_action(x,callfun)
+    Hash_Action = Compute_hash_action(x,callfun)
 
-    file_path_list = SelectFiles_Action(store_folder,Action,Action_eps)
+    file_path_list = SelectFiles_Action(store_folder,Action,Hash_Action,Action_eps)
     
     if (len(file_path_list) == 0):
         
