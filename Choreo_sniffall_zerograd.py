@@ -12,26 +12,33 @@ import time
 from Choreo_funs import *
 
 
-nbody = 2
+nbody = 6
 mass = np.ones((nbody))
 
 Sym_list = []
 
 SymType = {
     'name'  : 'C',
-    'n'     : nbody,
+    'n'     : 2,
     'k'     : 1,
     'l'     : 1 ,
     'p'     : 1 ,
-    'q'     : nbody ,
+    'q'     : 2 ,
 }
 
-Sym_list.extend(Make2DChoreoSym(SymType,range(nbody)))
+Sym_list.extend(Make2DChoreoSym(SymType,[0,1]))
+
+Sym_list.extend(Make2DChoreoSym(SymType,[2,3]))
+
+Sym_list.extend(Make2DChoreoSym(SymType,[4,5]))
 
 
 
 store_folder = './Sniff_all_sym/'
 store_folder = store_folder+str(nbody)
+if not(os.path.isdir(store_folder)):
+    os.mkdir(store_folder)
+
 
 
 Look_for_duplicates = True
@@ -41,7 +48,6 @@ Check_loop_dist = True
 # ~ Check_loop_dist = False
 
 save_init = False
-
 # ~ save_init = True
 
 save_approx = False
@@ -50,8 +56,8 @@ save_approx = False
 # ~ Reconverge_sols = False
 Reconverge_sols = True
 
-# ~ Save_anim = True
-Save_anim = False
+Save_anim = True
+# ~ Save_anim = False
 
 n_reconverge_it_max = 5
 # ~ n_reconverge_it_max = 0
@@ -291,15 +297,14 @@ while (n_opt < n_opt_max):
 
             Action,GradAction = Compute_action(best_sol.x,callfun)
             
-            Found_duplicate,dist_sols,file_path = Check_Duplicates(best_sol.x,callfun,store_folder,duplicate_eps,theta_rot_dupl=theta_rot_dupl,dt_shift_dupl=dt_shift_dupl,TimeReversal=True,SpaceSym=True)
+            Found_duplicate,file_path = Check_Duplicates(best_sol.x,callfun,store_folder,duplicate_eps,theta_rot_dupl=theta_rot_dupl,dt_shift_dupl=dt_shift_dupl,TimeReversal=True,SpaceSym=True)
             
         else:
             Found_duplicate = False
             
         if (Found_duplicate):
         
-            print('Found Duplicate !')  
-            print('Distance :',dist_sols)  
+            print('Found Duplicate !')   
             print('Path : ',file_path)
             
         else:
@@ -391,7 +396,7 @@ while (n_opt < n_opt_max):
                 
                     Action,GradAction = Compute_action(best_sol.x,callfun)
                     
-                    Found_duplicate,dist_sols,file_path = Check_Duplicates(best_sol.x,callfun,store_folder,duplicate_eps,theta_rot_dupl=theta_rot_dupl,dt_shift_dupl=dt_shift_dupl,TimeReversal=True,SpaceSym=True)
+                    Found_duplicate,file_path = Check_Duplicates(best_sol.x,callfun,store_folder,duplicate_eps,theta_rot_dupl=theta_rot_dupl,dt_shift_dupl=dt_shift_dupl,TimeReversal=True,SpaceSym=True)
                 
                 else:
                     Found_duplicate = False
@@ -400,7 +405,6 @@ while (n_opt < n_opt_max):
                 if (Found_duplicate):
                 
                     print('Found Duplicate !')  
-                    print('Distance :',dist_sols)  
                     print('Path : ',file_path) 
                 
                 else:
