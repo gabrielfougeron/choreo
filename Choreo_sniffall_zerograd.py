@@ -19,20 +19,20 @@ Sym_list = []
 
 SymType = {
     'name'  : 'C',
-    'n'     : nbody,
+    'n'     : 2,
     'k'     : 1,
     'l'     : 1 ,
     'p'     : 1 ,
-    'q'     : nbody ,
+    'q'     : 2 ,
 }
 
-# ~ Sym_list.extend(Make2DChoreoSym(SymType,[0,1]))
+Sym_list.extend(Make2DChoreoSym(SymType,[0,1]))
 
-# ~ Sym_list.extend(Make2DChoreoSym(SymType,[2,3]))
+Sym_list.extend(Make2DChoreoSym(SymType,[2,3]))
 
-# ~ Sym_list.extend(Make2DChoreoSym(SymType,[4,5]))
+Sym_list.extend(Make2DChoreoSym(SymType,[4,5]))
 
-Sym_list.extend(Make2DChoreoSym(SymType,range(nbody)))
+# ~ Sym_list.extend(Make2DChoreoSym(SymType,range(nbody)))
 
 store_folder = './Sniff_all_sym/'
 store_folder = store_folder+str(nbody)
@@ -59,20 +59,14 @@ Reconverge_sols = True
 Save_anim = True
 # ~ Save_anim = False
 
-n_reconverge_it_max = 5
+n_reconverge_it_max = 3
 # ~ n_reconverge_it_max = 0
-
-# ~ theta_rot_dupl = [0.,.2,.4,.6,.8]
-theta_rot_dupl = np.linspace(start=0.,stop=twopi,endpoint=False,num=nbody)
-dt_shift_dupl = np.linspace(start=0.,stop=1.,endpoint=False,num=nbody)
-
-# ~ print(1/0)
 
 # ~ ncoeff_init = 100
 # ~ ncoeff_init = 800
 # ~ ncoeff_init = 700
-# ~ ncoeff_init = 900
-ncoeff_init = 990
+ncoeff_init = 600
+# ~ ncoeff_init = 990
 # ~ ncoeff_init = 1200
 # ~ ncoeff_init = 90
 
@@ -229,19 +223,9 @@ while (n_opt < n_opt_max):
                 all_coeffs[il,idim,k,0] = randampl*np.cos(randphase)
                 all_coeffs[il,idim,k,1] = randampl*np.sin(randphase)
                 
-    # ~ if (save_init):
-        # ~ nint_plot = 200
-        # ~ plot_all_2D(nloop,nbody,nint_plot,all_coeffs,'init.png')
-        # ~ np.save('init.npy',all_coeffs)
-
     x0 = Package_all_coeffs(all_coeffs,callfun)
     f0 = Compute_action_onlygrad(x0,callfun)
     best_sol = current_best(x0,f0)
-    
-    # ~ print(x0)
-    # ~ Action,GradAction = Compute_action(x0,callfun)    
-    # ~ print(Action)
-    # ~ print(1/0)
     
     gradtol = 1e-5
     maxiter = 5000
@@ -297,9 +281,10 @@ while (n_opt < n_opt_max):
 
             Action,GradAction = Compute_action(best_sol.x,callfun)
             
-            Found_duplicate,file_path = Check_Duplicates(best_sol.x,callfun,store_folder,duplicate_eps,theta_rot_dupl=theta_rot_dupl,dt_shift_dupl=dt_shift_dupl,TimeReversal=True,SpaceSym=True)
+            Found_duplicate,file_path = Check_Duplicates(best_sol.x,callfun,store_folder,duplicate_eps)
             
         else:
+            
             Found_duplicate = False
             
         if (Found_duplicate):
@@ -378,9 +363,6 @@ while (n_opt < n_opt_max):
                     
                         SaveSol = (Newt_err_norm < Newt_err_norm_max_save)
                         
-                # ~ else:
-                    # ~ SaveSol = True
-                
                 if (Go_On and not(SaveSol)):
                     print('Newton Error too high, discarding solution')
             
@@ -396,7 +378,7 @@ while (n_opt < n_opt_max):
                 
                     Action,GradAction = Compute_action(best_sol.x,callfun)
                     
-                    Found_duplicate,file_path = Check_Duplicates(best_sol.x,callfun,store_folder,duplicate_eps,theta_rot_dupl=theta_rot_dupl,dt_shift_dupl=dt_shift_dupl,TimeReversal=True,SpaceSym=True)
+                    Found_duplicate,file_path = Check_Duplicates(best_sol.x,callfun,store_folder,duplicate_eps)
                 
                 else:
                     Found_duplicate = False

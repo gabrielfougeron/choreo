@@ -73,8 +73,8 @@ x0 = np.random.random((ncoeffs_args))
 
 # ~ print(callfun)
 
-Actiono, Actiongrado = Compute_action_package(x0,callfun)
-# ~ Actiono, Actiongrado = Compute_action_gradnormsq_package(x0,callfun)
+Actiono, Actiongrado = Compute_action(x0,callfun)
+# ~ Actiono, Actiongrado = Compute_action_gradnormsq(x0,callfun)
 # ~ sq_disto, sq_distgrado = sq_dist_transform_2d(nloop,ncoeff,all_coeffs,all_coeffs2,x0)
 # ~ sq_disto, sq_distgrado = sq_dist_transform_2d_noscal(nloop,ncoeff,all_coeffs,all_coeffs2,x0)
 
@@ -88,7 +88,8 @@ Actiono, Actiongrado = Compute_action_package(x0,callfun)
 print('\n\n\n')
 
 # ~ for i in range(ncoeffs_args):
-for i in range(1):
+# ~ for i in range(1):
+for i in range(0):
     dx = np.zeros((ncoeffs_args))
     dx[i] = 1
     
@@ -105,12 +106,12 @@ for i in range(1):
 
 
         xp = np.copy(x0) + eps*dx
-        fp ,gfp = Compute_action_package(xp,callfun)
-        # ~ fp ,gfp = Compute_action_gradnormsq_package(xp,callfun)
+        fp ,gfp = Compute_action(xp,callfun)
+        # ~ fp ,gfp = Compute_action_gradnormsq(xp,callfun)
         # ~ fp ,gfp = sq_dist_transform_2d_noscal(nloop,ncoeff,all_coeffs,all_coeffs2,xp)
         xm = np.copy(x0) - eps*dx
-        fm ,gfm = Compute_action_package(xm,callfun)
-        # ~ fm ,gfm = Compute_action_gradnormsq_package(xm,callfun)
+        fm ,gfm = Compute_action(xm,callfun)
+        # ~ fm ,gfm = Compute_action_gradnormsq(xm,callfun)
         # ~ fm ,gfm = sq_dist_transform_2d_noscal(nloop,ncoeff,all_coeffs,all_coeffs2,xm)
 
         df_difffin = (fp-fm)/(2*eps)
@@ -125,8 +126,8 @@ for i in range(1):
 
 
 
-# ~ dxa = np.random.random((ncoeffs_args))
-# ~ dxb =  np.random.random((ncoeffs_args))
+dxa = np.random.random((ncoeffs_args))
+dxb =  np.random.random((ncoeffs_args))
 
 # ~ dxa = np.zeros((ncoeffs_args))
 # ~ dxb =  np.zeros((ncoeffs_args))
@@ -142,37 +143,37 @@ for i in range(1):
 # ~ j_nz = all_idx[0,0,1,0]
 # ~ dxb[j_nz] = 1.
 
-# ~ Hdxb = Compute_action_hess_mul_package(x0,dxb,callfun)
+Hdxb = Compute_action_hess_mul(x0,dxb,callfun)
 
     
 
 
 
 # ~ for exponent_eps in [8]:
-# ~ for exponent_eps in range(16):
+for exponent_eps in range(16):
     
-    # ~ eps = 10**(-exponent_eps)
+    eps = 10**(-exponent_eps)
     
-    # ~ xp = np.copy(x0) + eps*dxb
-    # ~ fp, gfp = Compute_action_package(xp,callfun)
-    # ~ dfp = np.dot(gfp,dxa)
+    xp = np.copy(x0) + eps*dxb
+    fp, gfp = Compute_action(xp,callfun)
+    dfp = np.dot(gfp,dxa)
     
-    # ~ xm = np.copy(x0) - eps*dxb
-    # ~ fm, gfm = Compute_action_package(xm,callfun)
-    # ~ dfm = np.dot(gfm,dxa)
+    xm = np.copy(x0) - eps*dxb
+    fm, gfm = Compute_action(xm,callfun)
+    dfm = np.dot(gfm,dxa)
     
-    # ~ dgf_difffin = (gfp-gfm)/(2*eps)
+    dgf_difffin = (gfp-gfm)/(2*eps)
     
-    # ~ print('')
-    # ~ print('eps : ',eps)
-    # ~ print('Abs_diff : ')
-    # ~ err_vect = dgf_difffin-Hdxb
-    # ~ print('DF : ',np.linalg.norm(dgf_difffin))
-    # ~ print('EX : ',np.linalg.norm(Hdxb))
-    # ~ print('Abs_diff : ',np.linalg.norm(err_vect))
-    # ~ print('Rel_diff : ',np.linalg.norm(err_vect)/(np.linalg.norm(dgf_difffin)+np.linalg.norm(Hdxb)))
+    print('')
+    print('eps : ',eps)
+    print('Abs_diff : ')
+    err_vect = dgf_difffin-Hdxb
+    print('DF : ',np.linalg.norm(dgf_difffin))
+    print('EX : ',np.linalg.norm(Hdxb))
+    print('Abs_diff : ',np.linalg.norm(err_vect))
+    print('Rel_diff : ',np.linalg.norm(err_vect)/(np.linalg.norm(dgf_difffin)+np.linalg.norm(Hdxb)))
     
-    # ~ ddf_difffin = (dfp-dfm)/(2*eps)
+    ddf_difffin = (dfp-dfm)/(2*eps)
     
     # ~ print('')
     # ~ print('eps : ',eps)

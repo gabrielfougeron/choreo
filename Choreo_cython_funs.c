@@ -1782,6 +1782,7 @@ static const char __pyx_k_mn[] = "mn";
 static const char __pyx_k_np[] = "np";
 static const char __pyx_k_os[] = "os";
 static const char __pyx_k_pi[] = "pi";
+static const char __pyx_k_ddf[] = "ddf";
 static const char __pyx_k_ddx[] = "ddx";
 static const char __pyx_k_div[] = "div";
 static const char __pyx_k_dx2[] = "dx2";
@@ -1889,6 +1890,7 @@ static const char __pyx_k_Compute_MinDist_Cython[] = "Compute_MinDist_Cython";
 static const char __pyx_k_Compute_action_hess_mul[] = "Compute_action_hess_mul";
 static const char __pyx_k_Compute_Newton_err_Cython[] = "Compute_Newton_err_Cython";
 static const char __pyx_k_Compute_hash_action_Cython[] = "Compute_hash_action_Cython";
+static const char __pyx_k_Compute_action_hess_mul_Cython[] = "Compute_action_hess_mul_Cython";
 static const char __pyx_k_numpy_core_multiarray_failed_to[] = "numpy.core.multiarray failed to import";
 static const char __pyx_k_Action_is_Infinity_Likely_explai[] = "Action is Infinity. Likely explaination : two body positions might have been identical";
 static const char __pyx_k_WARNING_remainder_in_integer_div[] = "WARNING : remainder in integer division";
@@ -1905,6 +1907,7 @@ static PyObject *__pyx_n_s_Compute_MinDist_Cython;
 static PyObject *__pyx_n_s_Compute_Newton_err_Cython;
 static PyObject *__pyx_n_s_Compute_action_Cython;
 static PyObject *__pyx_n_s_Compute_action_hess_mul;
+static PyObject *__pyx_n_s_Compute_action_hess_mul_Cython;
 static PyObject *__pyx_n_s_Compute_hash_action_Cython;
 static PyObject *__pyx_n_s_Cpt_interbody_pot;
 static PyObject *__pyx_n_s_Hash_En;
@@ -1943,6 +1946,7 @@ static PyObject *__pyx_n_s_c_coeffs;
 static PyObject *__pyx_n_s_c_coeffs_d;
 static PyObject *__pyx_n_s_cline_in_traceback;
 static PyObject *__pyx_n_s_complex128;
+static PyObject *__pyx_n_s_ddf;
 static PyObject *__pyx_n_s_ddx;
 static PyObject *__pyx_n_s_df;
 static PyObject *__pyx_n_s_dhdx;
@@ -2025,8 +2029,9 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_2CCpt_hash_pot(CYTHON_UNUSED PyOb
 static PyObject *__pyx_pf_18Choreo_cython_funs_4Compute_action_Cython(CYTHON_UNUSED PyObject *__pyx_self, long __pyx_v_nloop, long __pyx_v_ncoeff, long __pyx_v_nint, PyArrayObject *__pyx_v_mass, PyArrayObject *__pyx_v_loopnb, PyArrayObject *__pyx_v_Targets, PyArrayObject *__pyx_v_MassSum, PyArrayObject *__pyx_v_SpaceRotsUn, PyArrayObject *__pyx_v_TimeRevsUn, PyArrayObject *__pyx_v_TimeShiftNumUn, PyArrayObject *__pyx_v_TimeShiftDenUn, PyArrayObject *__pyx_v_loopnbi, PyArrayObject *__pyx_v_ProdMassSumAll, PyArrayObject *__pyx_v_SpaceRotsBin, PyArrayObject *__pyx_v_TimeRevsBin, PyArrayObject *__pyx_v_TimeShiftNumBin, PyArrayObject *__pyx_v_TimeShiftDenBin, PyArrayObject *__pyx_v_all_coeffs); /* proto */
 static PyObject *__pyx_pf_18Choreo_cython_funs_6Compute_hash_action_Cython(CYTHON_UNUSED PyObject *__pyx_self, long __pyx_v_nloop, CYTHON_UNUSED long __pyx_v_ncoeff, long __pyx_v_nint, PyArrayObject *__pyx_v_mass, PyArrayObject *__pyx_v_loopnb, PyArrayObject *__pyx_v_Targets, CYTHON_UNUSED PyArrayObject *__pyx_v_MassSum, PyArrayObject *__pyx_v_SpaceRotsUn, PyArrayObject *__pyx_v_TimeRevsUn, PyArrayObject *__pyx_v_TimeShiftNumUn, PyArrayObject *__pyx_v_TimeShiftDenUn, PyArrayObject *__pyx_v_loopnbi, PyArrayObject *__pyx_v_ProdMassSumAll, PyArrayObject *__pyx_v_SpaceRotsBin, PyArrayObject *__pyx_v_TimeRevsBin, PyArrayObject *__pyx_v_TimeShiftNumBin, PyArrayObject *__pyx_v_TimeShiftDenBin, PyArrayObject *__pyx_v_all_coeffs); /* proto */
 static PyObject *__pyx_pf_18Choreo_cython_funs_8Compute_MinDist_Cython(CYTHON_UNUSED PyObject *__pyx_self, long __pyx_v_nloop, CYTHON_UNUSED long __pyx_v_ncoeff, long __pyx_v_nint, CYTHON_UNUSED PyArrayObject *__pyx_v_mass, PyArrayObject *__pyx_v_loopnb, CYTHON_UNUSED PyArrayObject *__pyx_v_Targets, CYTHON_UNUSED PyArrayObject *__pyx_v_MassSum, PyArrayObject *__pyx_v_SpaceRotsUn, PyArrayObject *__pyx_v_TimeRevsUn, PyArrayObject *__pyx_v_TimeShiftNumUn, PyArrayObject *__pyx_v_TimeShiftDenUn, PyArrayObject *__pyx_v_loopnbi, CYTHON_UNUSED PyArrayObject *__pyx_v_ProdMassSumAll, PyArrayObject *__pyx_v_SpaceRotsBin, PyArrayObject *__pyx_v_TimeRevsBin, PyArrayObject *__pyx_v_TimeShiftNumBin, PyArrayObject *__pyx_v_TimeShiftDenBin, PyArrayObject *__pyx_v_all_coeffs); /* proto */
-static PyObject *__pyx_pf_18Choreo_cython_funs_10Compute_action_hess_mul(CYTHON_UNUSED PyObject *__pyx_self, long __pyx_v_nloop, PyArrayObject *__pyx_v_nbody, long __pyx_v_ncoeff, PyArrayObject *__pyx_v_mass, long __pyx_v_nint, PyArrayObject *__pyx_v_all_coeffs, PyArrayObject *__pyx_v_all_coeffs_d); /* proto */
-static PyObject *__pyx_pf_18Choreo_cython_funs_12Compute_Newton_err_Cython(CYTHON_UNUSED PyObject *__pyx_self, long __pyx_v_nbody, long __pyx_v_nloop, long __pyx_v_ncoeff, long __pyx_v_nint, PyArrayObject *__pyx_v_mass, PyArrayObject *__pyx_v_loopnb, PyArrayObject *__pyx_v_Targets, PyArrayObject *__pyx_v_SpaceRotsUn, PyArrayObject *__pyx_v_TimeRevsUn, PyArrayObject *__pyx_v_TimeShiftNumUn, PyArrayObject *__pyx_v_TimeShiftDenUn, PyArrayObject *__pyx_v_all_coeffs); /* proto */
+static PyObject *__pyx_pf_18Choreo_cython_funs_10Compute_action_hess_mul_Cython(CYTHON_UNUSED PyObject *__pyx_self, long __pyx_v_nloop, long __pyx_v_ncoeff, long __pyx_v_nint, PyArrayObject *__pyx_v_mass, PyArrayObject *__pyx_v_loopnb, PyArrayObject *__pyx_v_Targets, PyArrayObject *__pyx_v_MassSum, PyArrayObject *__pyx_v_SpaceRotsUn, PyArrayObject *__pyx_v_TimeRevsUn, PyArrayObject *__pyx_v_TimeShiftNumUn, PyArrayObject *__pyx_v_TimeShiftDenUn, PyArrayObject *__pyx_v_loopnbi, PyArrayObject *__pyx_v_ProdMassSumAll, PyArrayObject *__pyx_v_SpaceRotsBin, PyArrayObject *__pyx_v_TimeRevsBin, PyArrayObject *__pyx_v_TimeShiftNumBin, PyArrayObject *__pyx_v_TimeShiftDenBin, PyArrayObject *__pyx_v_all_coeffs, PyArrayObject *__pyx_v_all_coeffs_d); /* proto */
+static PyObject *__pyx_pf_18Choreo_cython_funs_12Compute_action_hess_mul(CYTHON_UNUSED PyObject *__pyx_self, long __pyx_v_nloop, PyArrayObject *__pyx_v_nbody, long __pyx_v_ncoeff, PyArrayObject *__pyx_v_mass, long __pyx_v_nint, PyArrayObject *__pyx_v_all_coeffs, PyArrayObject *__pyx_v_all_coeffs_d); /* proto */
+static PyObject *__pyx_pf_18Choreo_cython_funs_14Compute_Newton_err_Cython(CYTHON_UNUSED PyObject *__pyx_self, long __pyx_v_nbody, long __pyx_v_nloop, long __pyx_v_ncoeff, long __pyx_v_nint, PyArrayObject *__pyx_v_mass, PyArrayObject *__pyx_v_loopnb, PyArrayObject *__pyx_v_Targets, PyArrayObject *__pyx_v_SpaceRotsUn, PyArrayObject *__pyx_v_TimeRevsUn, PyArrayObject *__pyx_v_TimeShiftNumUn, PyArrayObject *__pyx_v_TimeShiftDenUn, PyArrayObject *__pyx_v_all_coeffs); /* proto */
 static PyObject *__pyx_int_0;
 static PyObject *__pyx_int_2;
 static PyObject *__pyx_int_4;
@@ -2043,6 +2048,7 @@ static PyObject *__pyx_tuple__13;
 static PyObject *__pyx_tuple__15;
 static PyObject *__pyx_tuple__17;
 static PyObject *__pyx_tuple__19;
+static PyObject *__pyx_tuple__21;
 static PyObject *__pyx_codeobj__8;
 static PyObject *__pyx_codeobj__10;
 static PyObject *__pyx_codeobj__12;
@@ -2050,6 +2056,7 @@ static PyObject *__pyx_codeobj__14;
 static PyObject *__pyx_codeobj__16;
 static PyObject *__pyx_codeobj__18;
 static PyObject *__pyx_codeobj__20;
+static PyObject *__pyx_codeobj__22;
 /* Late includes */
 
 /* "Choreo_cython_funs.pyx":60
@@ -8337,7 +8344,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_8Compute_MinDist_Cython(CYTHON_UN
  * 
  *     return csqrt(dx2min)             # <<<<<<<<<<<<<<
  * 
- * def Compute_action_hess_mul(
+ * def Compute_action_hess_mul_Cython(
  */
   __Pyx_XDECREF(__pyx_r);
   __pyx_t_1 = PyFloat_FromDouble(sqrt(__pyx_v_dx2min)); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 505, __pyx_L1_error)
@@ -8425,15 +8432,2743 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_8Compute_MinDist_Cython(CYTHON_UN
 /* "Choreo_cython_funs.pyx":507
  *     return csqrt(dx2min)
  * 
+ * def Compute_action_hess_mul_Cython(             # <<<<<<<<<<<<<<
+ *     long nloop,
+ *     long ncoeff,
+ */
+
+/* Python wrapper */
+static PyObject *__pyx_pw_18Choreo_cython_funs_11Compute_action_hess_mul_Cython(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
+static PyMethodDef __pyx_mdef_18Choreo_cython_funs_11Compute_action_hess_mul_Cython = {"Compute_action_hess_mul_Cython", (PyCFunction)(void*)(PyCFunctionWithKeywords)__pyx_pw_18Choreo_cython_funs_11Compute_action_hess_mul_Cython, METH_VARARGS|METH_KEYWORDS, 0};
+static PyObject *__pyx_pw_18Choreo_cython_funs_11Compute_action_hess_mul_Cython(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
+  long __pyx_v_nloop;
+  long __pyx_v_ncoeff;
+  long __pyx_v_nint;
+  PyArrayObject *__pyx_v_mass = 0;
+  PyArrayObject *__pyx_v_loopnb = 0;
+  PyArrayObject *__pyx_v_Targets = 0;
+  PyArrayObject *__pyx_v_MassSum = 0;
+  PyArrayObject *__pyx_v_SpaceRotsUn = 0;
+  PyArrayObject *__pyx_v_TimeRevsUn = 0;
+  PyArrayObject *__pyx_v_TimeShiftNumUn = 0;
+  PyArrayObject *__pyx_v_TimeShiftDenUn = 0;
+  PyArrayObject *__pyx_v_loopnbi = 0;
+  PyArrayObject *__pyx_v_ProdMassSumAll = 0;
+  PyArrayObject *__pyx_v_SpaceRotsBin = 0;
+  PyArrayObject *__pyx_v_TimeRevsBin = 0;
+  PyArrayObject *__pyx_v_TimeShiftNumBin = 0;
+  PyArrayObject *__pyx_v_TimeShiftDenBin = 0;
+  PyArrayObject *__pyx_v_all_coeffs = 0;
+  PyArrayObject *__pyx_v_all_coeffs_d = 0;
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  PyObject *__pyx_r = 0;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("Compute_action_hess_mul_Cython (wrapper)", 0);
+  {
+    static PyObject **__pyx_pyargnames[] = {&__pyx_n_s_nloop,&__pyx_n_s_ncoeff,&__pyx_n_s_nint,&__pyx_n_s_mass,&__pyx_n_s_loopnb,&__pyx_n_s_Targets,&__pyx_n_s_MassSum,&__pyx_n_s_SpaceRotsUn,&__pyx_n_s_TimeRevsUn,&__pyx_n_s_TimeShiftNumUn,&__pyx_n_s_TimeShiftDenUn,&__pyx_n_s_loopnbi,&__pyx_n_s_ProdMassSumAll,&__pyx_n_s_SpaceRotsBin,&__pyx_n_s_TimeRevsBin,&__pyx_n_s_TimeShiftNumBin,&__pyx_n_s_TimeShiftDenBin,&__pyx_n_s_all_coeffs,&__pyx_n_s_all_coeffs_d,0};
+    PyObject* values[19] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+    if (unlikely(__pyx_kwds)) {
+      Py_ssize_t kw_args;
+      const Py_ssize_t pos_args = PyTuple_GET_SIZE(__pyx_args);
+      switch (pos_args) {
+        case 19: values[18] = PyTuple_GET_ITEM(__pyx_args, 18);
+        CYTHON_FALLTHROUGH;
+        case 18: values[17] = PyTuple_GET_ITEM(__pyx_args, 17);
+        CYTHON_FALLTHROUGH;
+        case 17: values[16] = PyTuple_GET_ITEM(__pyx_args, 16);
+        CYTHON_FALLTHROUGH;
+        case 16: values[15] = PyTuple_GET_ITEM(__pyx_args, 15);
+        CYTHON_FALLTHROUGH;
+        case 15: values[14] = PyTuple_GET_ITEM(__pyx_args, 14);
+        CYTHON_FALLTHROUGH;
+        case 14: values[13] = PyTuple_GET_ITEM(__pyx_args, 13);
+        CYTHON_FALLTHROUGH;
+        case 13: values[12] = PyTuple_GET_ITEM(__pyx_args, 12);
+        CYTHON_FALLTHROUGH;
+        case 12: values[11] = PyTuple_GET_ITEM(__pyx_args, 11);
+        CYTHON_FALLTHROUGH;
+        case 11: values[10] = PyTuple_GET_ITEM(__pyx_args, 10);
+        CYTHON_FALLTHROUGH;
+        case 10: values[9] = PyTuple_GET_ITEM(__pyx_args, 9);
+        CYTHON_FALLTHROUGH;
+        case  9: values[8] = PyTuple_GET_ITEM(__pyx_args, 8);
+        CYTHON_FALLTHROUGH;
+        case  8: values[7] = PyTuple_GET_ITEM(__pyx_args, 7);
+        CYTHON_FALLTHROUGH;
+        case  7: values[6] = PyTuple_GET_ITEM(__pyx_args, 6);
+        CYTHON_FALLTHROUGH;
+        case  6: values[5] = PyTuple_GET_ITEM(__pyx_args, 5);
+        CYTHON_FALLTHROUGH;
+        case  5: values[4] = PyTuple_GET_ITEM(__pyx_args, 4);
+        CYTHON_FALLTHROUGH;
+        case  4: values[3] = PyTuple_GET_ITEM(__pyx_args, 3);
+        CYTHON_FALLTHROUGH;
+        case  3: values[2] = PyTuple_GET_ITEM(__pyx_args, 2);
+        CYTHON_FALLTHROUGH;
+        case  2: values[1] = PyTuple_GET_ITEM(__pyx_args, 1);
+        CYTHON_FALLTHROUGH;
+        case  1: values[0] = PyTuple_GET_ITEM(__pyx_args, 0);
+        CYTHON_FALLTHROUGH;
+        case  0: break;
+        default: goto __pyx_L5_argtuple_error;
+      }
+      kw_args = PyDict_Size(__pyx_kwds);
+      switch (pos_args) {
+        case  0:
+        if (likely((values[0] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_nloop)) != 0)) kw_args--;
+        else goto __pyx_L5_argtuple_error;
+        CYTHON_FALLTHROUGH;
+        case  1:
+        if (likely((values[1] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_ncoeff)) != 0)) kw_args--;
+        else {
+          __Pyx_RaiseArgtupleInvalid("Compute_action_hess_mul_Cython", 1, 19, 19, 1); __PYX_ERR(0, 507, __pyx_L3_error)
+        }
+        CYTHON_FALLTHROUGH;
+        case  2:
+        if (likely((values[2] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_nint)) != 0)) kw_args--;
+        else {
+          __Pyx_RaiseArgtupleInvalid("Compute_action_hess_mul_Cython", 1, 19, 19, 2); __PYX_ERR(0, 507, __pyx_L3_error)
+        }
+        CYTHON_FALLTHROUGH;
+        case  3:
+        if (likely((values[3] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_mass)) != 0)) kw_args--;
+        else {
+          __Pyx_RaiseArgtupleInvalid("Compute_action_hess_mul_Cython", 1, 19, 19, 3); __PYX_ERR(0, 507, __pyx_L3_error)
+        }
+        CYTHON_FALLTHROUGH;
+        case  4:
+        if (likely((values[4] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_loopnb)) != 0)) kw_args--;
+        else {
+          __Pyx_RaiseArgtupleInvalid("Compute_action_hess_mul_Cython", 1, 19, 19, 4); __PYX_ERR(0, 507, __pyx_L3_error)
+        }
+        CYTHON_FALLTHROUGH;
+        case  5:
+        if (likely((values[5] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_Targets)) != 0)) kw_args--;
+        else {
+          __Pyx_RaiseArgtupleInvalid("Compute_action_hess_mul_Cython", 1, 19, 19, 5); __PYX_ERR(0, 507, __pyx_L3_error)
+        }
+        CYTHON_FALLTHROUGH;
+        case  6:
+        if (likely((values[6] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_MassSum)) != 0)) kw_args--;
+        else {
+          __Pyx_RaiseArgtupleInvalid("Compute_action_hess_mul_Cython", 1, 19, 19, 6); __PYX_ERR(0, 507, __pyx_L3_error)
+        }
+        CYTHON_FALLTHROUGH;
+        case  7:
+        if (likely((values[7] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_SpaceRotsUn)) != 0)) kw_args--;
+        else {
+          __Pyx_RaiseArgtupleInvalid("Compute_action_hess_mul_Cython", 1, 19, 19, 7); __PYX_ERR(0, 507, __pyx_L3_error)
+        }
+        CYTHON_FALLTHROUGH;
+        case  8:
+        if (likely((values[8] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_TimeRevsUn)) != 0)) kw_args--;
+        else {
+          __Pyx_RaiseArgtupleInvalid("Compute_action_hess_mul_Cython", 1, 19, 19, 8); __PYX_ERR(0, 507, __pyx_L3_error)
+        }
+        CYTHON_FALLTHROUGH;
+        case  9:
+        if (likely((values[9] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_TimeShiftNumUn)) != 0)) kw_args--;
+        else {
+          __Pyx_RaiseArgtupleInvalid("Compute_action_hess_mul_Cython", 1, 19, 19, 9); __PYX_ERR(0, 507, __pyx_L3_error)
+        }
+        CYTHON_FALLTHROUGH;
+        case 10:
+        if (likely((values[10] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_TimeShiftDenUn)) != 0)) kw_args--;
+        else {
+          __Pyx_RaiseArgtupleInvalid("Compute_action_hess_mul_Cython", 1, 19, 19, 10); __PYX_ERR(0, 507, __pyx_L3_error)
+        }
+        CYTHON_FALLTHROUGH;
+        case 11:
+        if (likely((values[11] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_loopnbi)) != 0)) kw_args--;
+        else {
+          __Pyx_RaiseArgtupleInvalid("Compute_action_hess_mul_Cython", 1, 19, 19, 11); __PYX_ERR(0, 507, __pyx_L3_error)
+        }
+        CYTHON_FALLTHROUGH;
+        case 12:
+        if (likely((values[12] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_ProdMassSumAll)) != 0)) kw_args--;
+        else {
+          __Pyx_RaiseArgtupleInvalid("Compute_action_hess_mul_Cython", 1, 19, 19, 12); __PYX_ERR(0, 507, __pyx_L3_error)
+        }
+        CYTHON_FALLTHROUGH;
+        case 13:
+        if (likely((values[13] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_SpaceRotsBin)) != 0)) kw_args--;
+        else {
+          __Pyx_RaiseArgtupleInvalid("Compute_action_hess_mul_Cython", 1, 19, 19, 13); __PYX_ERR(0, 507, __pyx_L3_error)
+        }
+        CYTHON_FALLTHROUGH;
+        case 14:
+        if (likely((values[14] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_TimeRevsBin)) != 0)) kw_args--;
+        else {
+          __Pyx_RaiseArgtupleInvalid("Compute_action_hess_mul_Cython", 1, 19, 19, 14); __PYX_ERR(0, 507, __pyx_L3_error)
+        }
+        CYTHON_FALLTHROUGH;
+        case 15:
+        if (likely((values[15] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_TimeShiftNumBin)) != 0)) kw_args--;
+        else {
+          __Pyx_RaiseArgtupleInvalid("Compute_action_hess_mul_Cython", 1, 19, 19, 15); __PYX_ERR(0, 507, __pyx_L3_error)
+        }
+        CYTHON_FALLTHROUGH;
+        case 16:
+        if (likely((values[16] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_TimeShiftDenBin)) != 0)) kw_args--;
+        else {
+          __Pyx_RaiseArgtupleInvalid("Compute_action_hess_mul_Cython", 1, 19, 19, 16); __PYX_ERR(0, 507, __pyx_L3_error)
+        }
+        CYTHON_FALLTHROUGH;
+        case 17:
+        if (likely((values[17] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_all_coeffs)) != 0)) kw_args--;
+        else {
+          __Pyx_RaiseArgtupleInvalid("Compute_action_hess_mul_Cython", 1, 19, 19, 17); __PYX_ERR(0, 507, __pyx_L3_error)
+        }
+        CYTHON_FALLTHROUGH;
+        case 18:
+        if (likely((values[18] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_all_coeffs_d)) != 0)) kw_args--;
+        else {
+          __Pyx_RaiseArgtupleInvalid("Compute_action_hess_mul_Cython", 1, 19, 19, 18); __PYX_ERR(0, 507, __pyx_L3_error)
+        }
+      }
+      if (unlikely(kw_args > 0)) {
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "Compute_action_hess_mul_Cython") < 0)) __PYX_ERR(0, 507, __pyx_L3_error)
+      }
+    } else if (PyTuple_GET_SIZE(__pyx_args) != 19) {
+      goto __pyx_L5_argtuple_error;
+    } else {
+      values[0] = PyTuple_GET_ITEM(__pyx_args, 0);
+      values[1] = PyTuple_GET_ITEM(__pyx_args, 1);
+      values[2] = PyTuple_GET_ITEM(__pyx_args, 2);
+      values[3] = PyTuple_GET_ITEM(__pyx_args, 3);
+      values[4] = PyTuple_GET_ITEM(__pyx_args, 4);
+      values[5] = PyTuple_GET_ITEM(__pyx_args, 5);
+      values[6] = PyTuple_GET_ITEM(__pyx_args, 6);
+      values[7] = PyTuple_GET_ITEM(__pyx_args, 7);
+      values[8] = PyTuple_GET_ITEM(__pyx_args, 8);
+      values[9] = PyTuple_GET_ITEM(__pyx_args, 9);
+      values[10] = PyTuple_GET_ITEM(__pyx_args, 10);
+      values[11] = PyTuple_GET_ITEM(__pyx_args, 11);
+      values[12] = PyTuple_GET_ITEM(__pyx_args, 12);
+      values[13] = PyTuple_GET_ITEM(__pyx_args, 13);
+      values[14] = PyTuple_GET_ITEM(__pyx_args, 14);
+      values[15] = PyTuple_GET_ITEM(__pyx_args, 15);
+      values[16] = PyTuple_GET_ITEM(__pyx_args, 16);
+      values[17] = PyTuple_GET_ITEM(__pyx_args, 17);
+      values[18] = PyTuple_GET_ITEM(__pyx_args, 18);
+    }
+    __pyx_v_nloop = __Pyx_PyInt_As_long(values[0]); if (unlikely((__pyx_v_nloop == (long)-1) && PyErr_Occurred())) __PYX_ERR(0, 508, __pyx_L3_error)
+    __pyx_v_ncoeff = __Pyx_PyInt_As_long(values[1]); if (unlikely((__pyx_v_ncoeff == (long)-1) && PyErr_Occurred())) __PYX_ERR(0, 509, __pyx_L3_error)
+    __pyx_v_nint = __Pyx_PyInt_As_long(values[2]); if (unlikely((__pyx_v_nint == (long)-1) && PyErr_Occurred())) __PYX_ERR(0, 510, __pyx_L3_error)
+    __pyx_v_mass = ((PyArrayObject *)values[3]);
+    __pyx_v_loopnb = ((PyArrayObject *)values[4]);
+    __pyx_v_Targets = ((PyArrayObject *)values[5]);
+    __pyx_v_MassSum = ((PyArrayObject *)values[6]);
+    __pyx_v_SpaceRotsUn = ((PyArrayObject *)values[7]);
+    __pyx_v_TimeRevsUn = ((PyArrayObject *)values[8]);
+    __pyx_v_TimeShiftNumUn = ((PyArrayObject *)values[9]);
+    __pyx_v_TimeShiftDenUn = ((PyArrayObject *)values[10]);
+    __pyx_v_loopnbi = ((PyArrayObject *)values[11]);
+    __pyx_v_ProdMassSumAll = ((PyArrayObject *)values[12]);
+    __pyx_v_SpaceRotsBin = ((PyArrayObject *)values[13]);
+    __pyx_v_TimeRevsBin = ((PyArrayObject *)values[14]);
+    __pyx_v_TimeShiftNumBin = ((PyArrayObject *)values[15]);
+    __pyx_v_TimeShiftDenBin = ((PyArrayObject *)values[16]);
+    __pyx_v_all_coeffs = ((PyArrayObject *)values[17]);
+    __pyx_v_all_coeffs_d = ((PyArrayObject *)values[18]);
+  }
+  goto __pyx_L4_argument_unpacking_done;
+  __pyx_L5_argtuple_error:;
+  __Pyx_RaiseArgtupleInvalid("Compute_action_hess_mul_Cython", 1, 19, 19, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 507, __pyx_L3_error)
+  __pyx_L3_error:;
+  __Pyx_AddTraceback("Choreo_cython_funs.Compute_action_hess_mul_Cython", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_RefNannyFinishContext();
+  return NULL;
+  __pyx_L4_argument_unpacking_done:;
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_mass), __pyx_ptype_5numpy_ndarray, 0, "mass", 0))) __PYX_ERR(0, 511, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_loopnb), __pyx_ptype_5numpy_ndarray, 0, "loopnb", 0))) __PYX_ERR(0, 512, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_Targets), __pyx_ptype_5numpy_ndarray, 0, "Targets", 0))) __PYX_ERR(0, 513, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_MassSum), __pyx_ptype_5numpy_ndarray, 0, "MassSum", 0))) __PYX_ERR(0, 514, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_SpaceRotsUn), __pyx_ptype_5numpy_ndarray, 0, "SpaceRotsUn", 0))) __PYX_ERR(0, 515, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_TimeRevsUn), __pyx_ptype_5numpy_ndarray, 0, "TimeRevsUn", 0))) __PYX_ERR(0, 516, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_TimeShiftNumUn), __pyx_ptype_5numpy_ndarray, 0, "TimeShiftNumUn", 0))) __PYX_ERR(0, 517, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_TimeShiftDenUn), __pyx_ptype_5numpy_ndarray, 0, "TimeShiftDenUn", 0))) __PYX_ERR(0, 518, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_loopnbi), __pyx_ptype_5numpy_ndarray, 0, "loopnbi", 0))) __PYX_ERR(0, 519, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_ProdMassSumAll), __pyx_ptype_5numpy_ndarray, 0, "ProdMassSumAll", 0))) __PYX_ERR(0, 520, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_SpaceRotsBin), __pyx_ptype_5numpy_ndarray, 0, "SpaceRotsBin", 0))) __PYX_ERR(0, 521, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_TimeRevsBin), __pyx_ptype_5numpy_ndarray, 0, "TimeRevsBin", 0))) __PYX_ERR(0, 522, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_TimeShiftNumBin), __pyx_ptype_5numpy_ndarray, 0, "TimeShiftNumBin", 0))) __PYX_ERR(0, 523, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_TimeShiftDenBin), __pyx_ptype_5numpy_ndarray, 0, "TimeShiftDenBin", 0))) __PYX_ERR(0, 524, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_all_coeffs), __pyx_ptype_5numpy_ndarray, 0, "all_coeffs", 0))) __PYX_ERR(0, 525, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_all_coeffs_d), __pyx_ptype_5numpy_ndarray, 0, "all_coeffs_d", 0))) __PYX_ERR(0, 526, __pyx_L1_error)
+  __pyx_r = __pyx_pf_18Choreo_cython_funs_10Compute_action_hess_mul_Cython(__pyx_self, __pyx_v_nloop, __pyx_v_ncoeff, __pyx_v_nint, __pyx_v_mass, __pyx_v_loopnb, __pyx_v_Targets, __pyx_v_MassSum, __pyx_v_SpaceRotsUn, __pyx_v_TimeRevsUn, __pyx_v_TimeShiftNumUn, __pyx_v_TimeShiftDenUn, __pyx_v_loopnbi, __pyx_v_ProdMassSumAll, __pyx_v_SpaceRotsBin, __pyx_v_TimeRevsBin, __pyx_v_TimeShiftNumBin, __pyx_v_TimeShiftDenBin, __pyx_v_all_coeffs, __pyx_v_all_coeffs_d);
+
+  /* function exit code */
+  goto __pyx_L0;
+  __pyx_L1_error:;
+  __pyx_r = NULL;
+  __pyx_L0:;
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static PyObject *__pyx_pf_18Choreo_cython_funs_10Compute_action_hess_mul_Cython(CYTHON_UNUSED PyObject *__pyx_self, long __pyx_v_nloop, long __pyx_v_ncoeff, long __pyx_v_nint, PyArrayObject *__pyx_v_mass, PyArrayObject *__pyx_v_loopnb, PyArrayObject *__pyx_v_Targets, PyArrayObject *__pyx_v_MassSum, PyArrayObject *__pyx_v_SpaceRotsUn, PyArrayObject *__pyx_v_TimeRevsUn, PyArrayObject *__pyx_v_TimeShiftNumUn, PyArrayObject *__pyx_v_TimeShiftDenUn, PyArrayObject *__pyx_v_loopnbi, PyArrayObject *__pyx_v_ProdMassSumAll, PyArrayObject *__pyx_v_SpaceRotsBin, PyArrayObject *__pyx_v_TimeRevsBin, PyArrayObject *__pyx_v_TimeShiftNumBin, PyArrayObject *__pyx_v_TimeShiftDenBin, PyArrayObject *__pyx_v_all_coeffs, PyArrayObject *__pyx_v_all_coeffs_d) {
+  long __pyx_v_il;
+  long __pyx_v_ilp;
+  long __pyx_v_idim;
+  long __pyx_v_ibi;
+  long __pyx_v_ib;
+  long __pyx_v_ibp;
+  long __pyx_v_iint;
+  long __pyx_v_k;
+  long __pyx_v_k2;
+  CYTHON_UNUSED double __pyx_v_pot;
+  double __pyx_v_potp;
+  double __pyx_v_potpp;
+  double __pyx_v_prod_mass;
+  double __pyx_v_a;
+  double __pyx_v_b;
+  double __pyx_v_c;
+  double __pyx_v_dx2;
+  double __pyx_v_prod_fac;
+  double __pyx_v_dxtddx;
+  PyArrayObject *__pyx_v_dx = 0;
+  PyArrayObject *__pyx_v_ddx = 0;
+  PyArrayObject *__pyx_v_ddf = 0;
+  long __pyx_v_maxloopnb;
+  long __pyx_v_maxloopnbi;
+  CYTHON_UNUSED double __pyx_v_Kin_en;
+  PyArrayObject *__pyx_v_Action_hess_dx = 0;
+  PyObject *__pyx_v_c_coeffs = NULL;
+  PyArrayObject *__pyx_v_all_pos = 0;
+  PyObject *__pyx_v_c_coeffs_d = NULL;
+  PyArrayObject *__pyx_v_all_pos_d = 0;
+  PyArrayObject *__pyx_v_all_shiftsUn = 0;
+  PyArrayObject *__pyx_v_all_shiftsBin = 0;
+  PyArrayObject *__pyx_v_hess_pot_all_d = 0;
+  long __pyx_v_jdim;
+  PyArrayObject *__pyx_v_hess_dx_pot_fft = 0;
+  __Pyx_LocalBuf_ND __pyx_pybuffernd_Action_hess_dx;
+  __Pyx_Buffer __pyx_pybuffer_Action_hess_dx;
+  __Pyx_LocalBuf_ND __pyx_pybuffernd_MassSum;
+  __Pyx_Buffer __pyx_pybuffer_MassSum;
+  __Pyx_LocalBuf_ND __pyx_pybuffernd_ProdMassSumAll;
+  __Pyx_Buffer __pyx_pybuffer_ProdMassSumAll;
+  __Pyx_LocalBuf_ND __pyx_pybuffernd_SpaceRotsBin;
+  __Pyx_Buffer __pyx_pybuffer_SpaceRotsBin;
+  __Pyx_LocalBuf_ND __pyx_pybuffernd_SpaceRotsUn;
+  __Pyx_Buffer __pyx_pybuffer_SpaceRotsUn;
+  __Pyx_LocalBuf_ND __pyx_pybuffernd_Targets;
+  __Pyx_Buffer __pyx_pybuffer_Targets;
+  __Pyx_LocalBuf_ND __pyx_pybuffernd_TimeRevsBin;
+  __Pyx_Buffer __pyx_pybuffer_TimeRevsBin;
+  __Pyx_LocalBuf_ND __pyx_pybuffernd_TimeRevsUn;
+  __Pyx_Buffer __pyx_pybuffer_TimeRevsUn;
+  __Pyx_LocalBuf_ND __pyx_pybuffernd_TimeShiftDenBin;
+  __Pyx_Buffer __pyx_pybuffer_TimeShiftDenBin;
+  __Pyx_LocalBuf_ND __pyx_pybuffernd_TimeShiftDenUn;
+  __Pyx_Buffer __pyx_pybuffer_TimeShiftDenUn;
+  __Pyx_LocalBuf_ND __pyx_pybuffernd_TimeShiftNumBin;
+  __Pyx_Buffer __pyx_pybuffer_TimeShiftNumBin;
+  __Pyx_LocalBuf_ND __pyx_pybuffernd_TimeShiftNumUn;
+  __Pyx_Buffer __pyx_pybuffer_TimeShiftNumUn;
+  __Pyx_LocalBuf_ND __pyx_pybuffernd_all_coeffs;
+  __Pyx_Buffer __pyx_pybuffer_all_coeffs;
+  __Pyx_LocalBuf_ND __pyx_pybuffernd_all_coeffs_d;
+  __Pyx_Buffer __pyx_pybuffer_all_coeffs_d;
+  __Pyx_LocalBuf_ND __pyx_pybuffernd_all_pos;
+  __Pyx_Buffer __pyx_pybuffer_all_pos;
+  __Pyx_LocalBuf_ND __pyx_pybuffernd_all_pos_d;
+  __Pyx_Buffer __pyx_pybuffer_all_pos_d;
+  __Pyx_LocalBuf_ND __pyx_pybuffernd_all_shiftsBin;
+  __Pyx_Buffer __pyx_pybuffer_all_shiftsBin;
+  __Pyx_LocalBuf_ND __pyx_pybuffernd_all_shiftsUn;
+  __Pyx_Buffer __pyx_pybuffer_all_shiftsUn;
+  __Pyx_LocalBuf_ND __pyx_pybuffernd_ddf;
+  __Pyx_Buffer __pyx_pybuffer_ddf;
+  __Pyx_LocalBuf_ND __pyx_pybuffernd_ddx;
+  __Pyx_Buffer __pyx_pybuffer_ddx;
+  __Pyx_LocalBuf_ND __pyx_pybuffernd_dx;
+  __Pyx_Buffer __pyx_pybuffer_dx;
+  __Pyx_LocalBuf_ND __pyx_pybuffernd_hess_dx_pot_fft;
+  __Pyx_Buffer __pyx_pybuffer_hess_dx_pot_fft;
+  __Pyx_LocalBuf_ND __pyx_pybuffernd_hess_pot_all_d;
+  __Pyx_Buffer __pyx_pybuffer_hess_pot_all_d;
+  __Pyx_LocalBuf_ND __pyx_pybuffernd_loopnb;
+  __Pyx_Buffer __pyx_pybuffer_loopnb;
+  __Pyx_LocalBuf_ND __pyx_pybuffernd_loopnbi;
+  __Pyx_Buffer __pyx_pybuffer_loopnbi;
+  __Pyx_LocalBuf_ND __pyx_pybuffernd_mass;
+  __Pyx_Buffer __pyx_pybuffer_mass;
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  PyObject *__pyx_t_1 = NULL;
+  PyObject *__pyx_t_2 = NULL;
+  PyObject *__pyx_t_3 = NULL;
+  PyObject *__pyx_t_4 = NULL;
+  PyObject *__pyx_t_5 = NULL;
+  PyArrayObject *__pyx_t_6 = NULL;
+  PyArrayObject *__pyx_t_7 = NULL;
+  PyArrayObject *__pyx_t_8 = NULL;
+  long __pyx_t_9;
+  PyObject *__pyx_t_10 = NULL;
+  int __pyx_t_11;
+  PyArrayObject *__pyx_t_12 = NULL;
+  long __pyx_t_13;
+  long __pyx_t_14;
+  Py_ssize_t __pyx_t_15;
+  long __pyx_t_16;
+  long __pyx_t_17;
+  long __pyx_t_18;
+  long __pyx_t_19;
+  long __pyx_t_20;
+  long __pyx_t_21;
+  Py_ssize_t __pyx_t_22;
+  Py_ssize_t __pyx_t_23;
+  Py_ssize_t __pyx_t_24;
+  Py_ssize_t __pyx_t_25;
+  Py_ssize_t __pyx_t_26;
+  Py_ssize_t __pyx_t_27;
+  Py_ssize_t __pyx_t_28;
+  PyArrayObject *__pyx_t_29 = NULL;
+  PyArrayObject *__pyx_t_30 = NULL;
+  PyArrayObject *__pyx_t_31 = NULL;
+  PyArrayObject *__pyx_t_32 = NULL;
+  int __pyx_t_33;
+  PyArrayObject *__pyx_t_34 = NULL;
+  long __pyx_t_35;
+  long __pyx_t_36;
+  long __pyx_t_37;
+  long __pyx_t_38;
+  long __pyx_t_39;
+  long __pyx_t_40;
+  long __pyx_t_41;
+  long __pyx_t_42;
+  long __pyx_t_43;
+  Py_ssize_t __pyx_t_44;
+  Py_ssize_t __pyx_t_45;
+  Py_ssize_t __pyx_t_46;
+  Py_ssize_t __pyx_t_47;
+  Py_ssize_t __pyx_t_48;
+  Py_ssize_t __pyx_t_49;
+  Py_ssize_t __pyx_t_50;
+  Py_ssize_t __pyx_t_51;
+  Py_ssize_t __pyx_t_52;
+  Py_ssize_t __pyx_t_53;
+  Py_ssize_t __pyx_t_54;
+  long __pyx_t_55;
+  long __pyx_t_56;
+  long __pyx_t_57;
+  __pyx_ctuple_double__and_double__and_double __pyx_t_58;
+  double __pyx_t_59;
+  double __pyx_t_60;
+  double __pyx_t_61;
+  PyArrayObject *__pyx_t_62 = NULL;
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  __Pyx_RefNannySetupContext("Compute_action_hess_mul_Cython", 0);
+  __pyx_pybuffer_dx.pybuffer.buf = NULL;
+  __pyx_pybuffer_dx.refcount = 0;
+  __pyx_pybuffernd_dx.data = NULL;
+  __pyx_pybuffernd_dx.rcbuffer = &__pyx_pybuffer_dx;
+  __pyx_pybuffer_ddx.pybuffer.buf = NULL;
+  __pyx_pybuffer_ddx.refcount = 0;
+  __pyx_pybuffernd_ddx.data = NULL;
+  __pyx_pybuffernd_ddx.rcbuffer = &__pyx_pybuffer_ddx;
+  __pyx_pybuffer_ddf.pybuffer.buf = NULL;
+  __pyx_pybuffer_ddf.refcount = 0;
+  __pyx_pybuffernd_ddf.data = NULL;
+  __pyx_pybuffernd_ddf.rcbuffer = &__pyx_pybuffer_ddf;
+  __pyx_pybuffer_Action_hess_dx.pybuffer.buf = NULL;
+  __pyx_pybuffer_Action_hess_dx.refcount = 0;
+  __pyx_pybuffernd_Action_hess_dx.data = NULL;
+  __pyx_pybuffernd_Action_hess_dx.rcbuffer = &__pyx_pybuffer_Action_hess_dx;
+  __pyx_pybuffer_all_pos.pybuffer.buf = NULL;
+  __pyx_pybuffer_all_pos.refcount = 0;
+  __pyx_pybuffernd_all_pos.data = NULL;
+  __pyx_pybuffernd_all_pos.rcbuffer = &__pyx_pybuffer_all_pos;
+  __pyx_pybuffer_all_pos_d.pybuffer.buf = NULL;
+  __pyx_pybuffer_all_pos_d.refcount = 0;
+  __pyx_pybuffernd_all_pos_d.data = NULL;
+  __pyx_pybuffernd_all_pos_d.rcbuffer = &__pyx_pybuffer_all_pos_d;
+  __pyx_pybuffer_all_shiftsUn.pybuffer.buf = NULL;
+  __pyx_pybuffer_all_shiftsUn.refcount = 0;
+  __pyx_pybuffernd_all_shiftsUn.data = NULL;
+  __pyx_pybuffernd_all_shiftsUn.rcbuffer = &__pyx_pybuffer_all_shiftsUn;
+  __pyx_pybuffer_all_shiftsBin.pybuffer.buf = NULL;
+  __pyx_pybuffer_all_shiftsBin.refcount = 0;
+  __pyx_pybuffernd_all_shiftsBin.data = NULL;
+  __pyx_pybuffernd_all_shiftsBin.rcbuffer = &__pyx_pybuffer_all_shiftsBin;
+  __pyx_pybuffer_hess_pot_all_d.pybuffer.buf = NULL;
+  __pyx_pybuffer_hess_pot_all_d.refcount = 0;
+  __pyx_pybuffernd_hess_pot_all_d.data = NULL;
+  __pyx_pybuffernd_hess_pot_all_d.rcbuffer = &__pyx_pybuffer_hess_pot_all_d;
+  __pyx_pybuffer_hess_dx_pot_fft.pybuffer.buf = NULL;
+  __pyx_pybuffer_hess_dx_pot_fft.refcount = 0;
+  __pyx_pybuffernd_hess_dx_pot_fft.data = NULL;
+  __pyx_pybuffernd_hess_dx_pot_fft.rcbuffer = &__pyx_pybuffer_hess_dx_pot_fft;
+  __pyx_pybuffer_mass.pybuffer.buf = NULL;
+  __pyx_pybuffer_mass.refcount = 0;
+  __pyx_pybuffernd_mass.data = NULL;
+  __pyx_pybuffernd_mass.rcbuffer = &__pyx_pybuffer_mass;
+  __pyx_pybuffer_loopnb.pybuffer.buf = NULL;
+  __pyx_pybuffer_loopnb.refcount = 0;
+  __pyx_pybuffernd_loopnb.data = NULL;
+  __pyx_pybuffernd_loopnb.rcbuffer = &__pyx_pybuffer_loopnb;
+  __pyx_pybuffer_Targets.pybuffer.buf = NULL;
+  __pyx_pybuffer_Targets.refcount = 0;
+  __pyx_pybuffernd_Targets.data = NULL;
+  __pyx_pybuffernd_Targets.rcbuffer = &__pyx_pybuffer_Targets;
+  __pyx_pybuffer_MassSum.pybuffer.buf = NULL;
+  __pyx_pybuffer_MassSum.refcount = 0;
+  __pyx_pybuffernd_MassSum.data = NULL;
+  __pyx_pybuffernd_MassSum.rcbuffer = &__pyx_pybuffer_MassSum;
+  __pyx_pybuffer_SpaceRotsUn.pybuffer.buf = NULL;
+  __pyx_pybuffer_SpaceRotsUn.refcount = 0;
+  __pyx_pybuffernd_SpaceRotsUn.data = NULL;
+  __pyx_pybuffernd_SpaceRotsUn.rcbuffer = &__pyx_pybuffer_SpaceRotsUn;
+  __pyx_pybuffer_TimeRevsUn.pybuffer.buf = NULL;
+  __pyx_pybuffer_TimeRevsUn.refcount = 0;
+  __pyx_pybuffernd_TimeRevsUn.data = NULL;
+  __pyx_pybuffernd_TimeRevsUn.rcbuffer = &__pyx_pybuffer_TimeRevsUn;
+  __pyx_pybuffer_TimeShiftNumUn.pybuffer.buf = NULL;
+  __pyx_pybuffer_TimeShiftNumUn.refcount = 0;
+  __pyx_pybuffernd_TimeShiftNumUn.data = NULL;
+  __pyx_pybuffernd_TimeShiftNumUn.rcbuffer = &__pyx_pybuffer_TimeShiftNumUn;
+  __pyx_pybuffer_TimeShiftDenUn.pybuffer.buf = NULL;
+  __pyx_pybuffer_TimeShiftDenUn.refcount = 0;
+  __pyx_pybuffernd_TimeShiftDenUn.data = NULL;
+  __pyx_pybuffernd_TimeShiftDenUn.rcbuffer = &__pyx_pybuffer_TimeShiftDenUn;
+  __pyx_pybuffer_loopnbi.pybuffer.buf = NULL;
+  __pyx_pybuffer_loopnbi.refcount = 0;
+  __pyx_pybuffernd_loopnbi.data = NULL;
+  __pyx_pybuffernd_loopnbi.rcbuffer = &__pyx_pybuffer_loopnbi;
+  __pyx_pybuffer_ProdMassSumAll.pybuffer.buf = NULL;
+  __pyx_pybuffer_ProdMassSumAll.refcount = 0;
+  __pyx_pybuffernd_ProdMassSumAll.data = NULL;
+  __pyx_pybuffernd_ProdMassSumAll.rcbuffer = &__pyx_pybuffer_ProdMassSumAll;
+  __pyx_pybuffer_SpaceRotsBin.pybuffer.buf = NULL;
+  __pyx_pybuffer_SpaceRotsBin.refcount = 0;
+  __pyx_pybuffernd_SpaceRotsBin.data = NULL;
+  __pyx_pybuffernd_SpaceRotsBin.rcbuffer = &__pyx_pybuffer_SpaceRotsBin;
+  __pyx_pybuffer_TimeRevsBin.pybuffer.buf = NULL;
+  __pyx_pybuffer_TimeRevsBin.refcount = 0;
+  __pyx_pybuffernd_TimeRevsBin.data = NULL;
+  __pyx_pybuffernd_TimeRevsBin.rcbuffer = &__pyx_pybuffer_TimeRevsBin;
+  __pyx_pybuffer_TimeShiftNumBin.pybuffer.buf = NULL;
+  __pyx_pybuffer_TimeShiftNumBin.refcount = 0;
+  __pyx_pybuffernd_TimeShiftNumBin.data = NULL;
+  __pyx_pybuffernd_TimeShiftNumBin.rcbuffer = &__pyx_pybuffer_TimeShiftNumBin;
+  __pyx_pybuffer_TimeShiftDenBin.pybuffer.buf = NULL;
+  __pyx_pybuffer_TimeShiftDenBin.refcount = 0;
+  __pyx_pybuffernd_TimeShiftDenBin.data = NULL;
+  __pyx_pybuffernd_TimeShiftDenBin.rcbuffer = &__pyx_pybuffer_TimeShiftDenBin;
+  __pyx_pybuffer_all_coeffs.pybuffer.buf = NULL;
+  __pyx_pybuffer_all_coeffs.refcount = 0;
+  __pyx_pybuffernd_all_coeffs.data = NULL;
+  __pyx_pybuffernd_all_coeffs.rcbuffer = &__pyx_pybuffer_all_coeffs;
+  __pyx_pybuffer_all_coeffs_d.pybuffer.buf = NULL;
+  __pyx_pybuffer_all_coeffs_d.refcount = 0;
+  __pyx_pybuffernd_all_coeffs_d.data = NULL;
+  __pyx_pybuffernd_all_coeffs_d.rcbuffer = &__pyx_pybuffer_all_coeffs_d;
+  {
+    __Pyx_BufFmt_StackElem __pyx_stack[1];
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_mass.rcbuffer->pybuffer, (PyObject*)__pyx_v_mass, &__Pyx_TypeInfo_double, PyBUF_FORMAT| PyBUF_C_CONTIGUOUS, 1, 0, __pyx_stack) == -1)) __PYX_ERR(0, 507, __pyx_L1_error)
+  }
+  __pyx_pybuffernd_mass.diminfo[0].strides = __pyx_pybuffernd_mass.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_mass.diminfo[0].shape = __pyx_pybuffernd_mass.rcbuffer->pybuffer.shape[0];
+  {
+    __Pyx_BufFmt_StackElem __pyx_stack[1];
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_loopnb.rcbuffer->pybuffer, (PyObject*)__pyx_v_loopnb, &__Pyx_TypeInfo_long, PyBUF_FORMAT| PyBUF_C_CONTIGUOUS, 1, 0, __pyx_stack) == -1)) __PYX_ERR(0, 507, __pyx_L1_error)
+  }
+  __pyx_pybuffernd_loopnb.diminfo[0].strides = __pyx_pybuffernd_loopnb.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_loopnb.diminfo[0].shape = __pyx_pybuffernd_loopnb.rcbuffer->pybuffer.shape[0];
+  {
+    __Pyx_BufFmt_StackElem __pyx_stack[1];
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_Targets.rcbuffer->pybuffer, (PyObject*)__pyx_v_Targets, &__Pyx_TypeInfo_long, PyBUF_FORMAT| PyBUF_C_CONTIGUOUS, 2, 0, __pyx_stack) == -1)) __PYX_ERR(0, 507, __pyx_L1_error)
+  }
+  __pyx_pybuffernd_Targets.diminfo[0].strides = __pyx_pybuffernd_Targets.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_Targets.diminfo[0].shape = __pyx_pybuffernd_Targets.rcbuffer->pybuffer.shape[0]; __pyx_pybuffernd_Targets.diminfo[1].strides = __pyx_pybuffernd_Targets.rcbuffer->pybuffer.strides[1]; __pyx_pybuffernd_Targets.diminfo[1].shape = __pyx_pybuffernd_Targets.rcbuffer->pybuffer.shape[1];
+  {
+    __Pyx_BufFmt_StackElem __pyx_stack[1];
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_MassSum.rcbuffer->pybuffer, (PyObject*)__pyx_v_MassSum, &__Pyx_TypeInfo_double, PyBUF_FORMAT| PyBUF_C_CONTIGUOUS, 1, 0, __pyx_stack) == -1)) __PYX_ERR(0, 507, __pyx_L1_error)
+  }
+  __pyx_pybuffernd_MassSum.diminfo[0].strides = __pyx_pybuffernd_MassSum.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_MassSum.diminfo[0].shape = __pyx_pybuffernd_MassSum.rcbuffer->pybuffer.shape[0];
+  {
+    __Pyx_BufFmt_StackElem __pyx_stack[1];
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_SpaceRotsUn.rcbuffer->pybuffer, (PyObject*)__pyx_v_SpaceRotsUn, &__Pyx_TypeInfo_double, PyBUF_FORMAT| PyBUF_C_CONTIGUOUS, 4, 0, __pyx_stack) == -1)) __PYX_ERR(0, 507, __pyx_L1_error)
+  }
+  __pyx_pybuffernd_SpaceRotsUn.diminfo[0].strides = __pyx_pybuffernd_SpaceRotsUn.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_SpaceRotsUn.diminfo[0].shape = __pyx_pybuffernd_SpaceRotsUn.rcbuffer->pybuffer.shape[0]; __pyx_pybuffernd_SpaceRotsUn.diminfo[1].strides = __pyx_pybuffernd_SpaceRotsUn.rcbuffer->pybuffer.strides[1]; __pyx_pybuffernd_SpaceRotsUn.diminfo[1].shape = __pyx_pybuffernd_SpaceRotsUn.rcbuffer->pybuffer.shape[1]; __pyx_pybuffernd_SpaceRotsUn.diminfo[2].strides = __pyx_pybuffernd_SpaceRotsUn.rcbuffer->pybuffer.strides[2]; __pyx_pybuffernd_SpaceRotsUn.diminfo[2].shape = __pyx_pybuffernd_SpaceRotsUn.rcbuffer->pybuffer.shape[2]; __pyx_pybuffernd_SpaceRotsUn.diminfo[3].strides = __pyx_pybuffernd_SpaceRotsUn.rcbuffer->pybuffer.strides[3]; __pyx_pybuffernd_SpaceRotsUn.diminfo[3].shape = __pyx_pybuffernd_SpaceRotsUn.rcbuffer->pybuffer.shape[3];
+  {
+    __Pyx_BufFmt_StackElem __pyx_stack[1];
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_TimeRevsUn.rcbuffer->pybuffer, (PyObject*)__pyx_v_TimeRevsUn, &__Pyx_TypeInfo_long, PyBUF_FORMAT| PyBUF_C_CONTIGUOUS, 2, 0, __pyx_stack) == -1)) __PYX_ERR(0, 507, __pyx_L1_error)
+  }
+  __pyx_pybuffernd_TimeRevsUn.diminfo[0].strides = __pyx_pybuffernd_TimeRevsUn.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_TimeRevsUn.diminfo[0].shape = __pyx_pybuffernd_TimeRevsUn.rcbuffer->pybuffer.shape[0]; __pyx_pybuffernd_TimeRevsUn.diminfo[1].strides = __pyx_pybuffernd_TimeRevsUn.rcbuffer->pybuffer.strides[1]; __pyx_pybuffernd_TimeRevsUn.diminfo[1].shape = __pyx_pybuffernd_TimeRevsUn.rcbuffer->pybuffer.shape[1];
+  {
+    __Pyx_BufFmt_StackElem __pyx_stack[1];
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_TimeShiftNumUn.rcbuffer->pybuffer, (PyObject*)__pyx_v_TimeShiftNumUn, &__Pyx_TypeInfo_long, PyBUF_FORMAT| PyBUF_C_CONTIGUOUS, 2, 0, __pyx_stack) == -1)) __PYX_ERR(0, 507, __pyx_L1_error)
+  }
+  __pyx_pybuffernd_TimeShiftNumUn.diminfo[0].strides = __pyx_pybuffernd_TimeShiftNumUn.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_TimeShiftNumUn.diminfo[0].shape = __pyx_pybuffernd_TimeShiftNumUn.rcbuffer->pybuffer.shape[0]; __pyx_pybuffernd_TimeShiftNumUn.diminfo[1].strides = __pyx_pybuffernd_TimeShiftNumUn.rcbuffer->pybuffer.strides[1]; __pyx_pybuffernd_TimeShiftNumUn.diminfo[1].shape = __pyx_pybuffernd_TimeShiftNumUn.rcbuffer->pybuffer.shape[1];
+  {
+    __Pyx_BufFmt_StackElem __pyx_stack[1];
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_TimeShiftDenUn.rcbuffer->pybuffer, (PyObject*)__pyx_v_TimeShiftDenUn, &__Pyx_TypeInfo_long, PyBUF_FORMAT| PyBUF_C_CONTIGUOUS, 2, 0, __pyx_stack) == -1)) __PYX_ERR(0, 507, __pyx_L1_error)
+  }
+  __pyx_pybuffernd_TimeShiftDenUn.diminfo[0].strides = __pyx_pybuffernd_TimeShiftDenUn.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_TimeShiftDenUn.diminfo[0].shape = __pyx_pybuffernd_TimeShiftDenUn.rcbuffer->pybuffer.shape[0]; __pyx_pybuffernd_TimeShiftDenUn.diminfo[1].strides = __pyx_pybuffernd_TimeShiftDenUn.rcbuffer->pybuffer.strides[1]; __pyx_pybuffernd_TimeShiftDenUn.diminfo[1].shape = __pyx_pybuffernd_TimeShiftDenUn.rcbuffer->pybuffer.shape[1];
+  {
+    __Pyx_BufFmt_StackElem __pyx_stack[1];
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_loopnbi.rcbuffer->pybuffer, (PyObject*)__pyx_v_loopnbi, &__Pyx_TypeInfo_long, PyBUF_FORMAT| PyBUF_C_CONTIGUOUS, 1, 0, __pyx_stack) == -1)) __PYX_ERR(0, 507, __pyx_L1_error)
+  }
+  __pyx_pybuffernd_loopnbi.diminfo[0].strides = __pyx_pybuffernd_loopnbi.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_loopnbi.diminfo[0].shape = __pyx_pybuffernd_loopnbi.rcbuffer->pybuffer.shape[0];
+  {
+    __Pyx_BufFmt_StackElem __pyx_stack[1];
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_ProdMassSumAll.rcbuffer->pybuffer, (PyObject*)__pyx_v_ProdMassSumAll, &__Pyx_TypeInfo_double, PyBUF_FORMAT| PyBUF_C_CONTIGUOUS, 2, 0, __pyx_stack) == -1)) __PYX_ERR(0, 507, __pyx_L1_error)
+  }
+  __pyx_pybuffernd_ProdMassSumAll.diminfo[0].strides = __pyx_pybuffernd_ProdMassSumAll.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_ProdMassSumAll.diminfo[0].shape = __pyx_pybuffernd_ProdMassSumAll.rcbuffer->pybuffer.shape[0]; __pyx_pybuffernd_ProdMassSumAll.diminfo[1].strides = __pyx_pybuffernd_ProdMassSumAll.rcbuffer->pybuffer.strides[1]; __pyx_pybuffernd_ProdMassSumAll.diminfo[1].shape = __pyx_pybuffernd_ProdMassSumAll.rcbuffer->pybuffer.shape[1];
+  {
+    __Pyx_BufFmt_StackElem __pyx_stack[1];
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_SpaceRotsBin.rcbuffer->pybuffer, (PyObject*)__pyx_v_SpaceRotsBin, &__Pyx_TypeInfo_double, PyBUF_FORMAT| PyBUF_C_CONTIGUOUS, 4, 0, __pyx_stack) == -1)) __PYX_ERR(0, 507, __pyx_L1_error)
+  }
+  __pyx_pybuffernd_SpaceRotsBin.diminfo[0].strides = __pyx_pybuffernd_SpaceRotsBin.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_SpaceRotsBin.diminfo[0].shape = __pyx_pybuffernd_SpaceRotsBin.rcbuffer->pybuffer.shape[0]; __pyx_pybuffernd_SpaceRotsBin.diminfo[1].strides = __pyx_pybuffernd_SpaceRotsBin.rcbuffer->pybuffer.strides[1]; __pyx_pybuffernd_SpaceRotsBin.diminfo[1].shape = __pyx_pybuffernd_SpaceRotsBin.rcbuffer->pybuffer.shape[1]; __pyx_pybuffernd_SpaceRotsBin.diminfo[2].strides = __pyx_pybuffernd_SpaceRotsBin.rcbuffer->pybuffer.strides[2]; __pyx_pybuffernd_SpaceRotsBin.diminfo[2].shape = __pyx_pybuffernd_SpaceRotsBin.rcbuffer->pybuffer.shape[2]; __pyx_pybuffernd_SpaceRotsBin.diminfo[3].strides = __pyx_pybuffernd_SpaceRotsBin.rcbuffer->pybuffer.strides[3]; __pyx_pybuffernd_SpaceRotsBin.diminfo[3].shape = __pyx_pybuffernd_SpaceRotsBin.rcbuffer->pybuffer.shape[3];
+  {
+    __Pyx_BufFmt_StackElem __pyx_stack[1];
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_TimeRevsBin.rcbuffer->pybuffer, (PyObject*)__pyx_v_TimeRevsBin, &__Pyx_TypeInfo_long, PyBUF_FORMAT| PyBUF_C_CONTIGUOUS, 2, 0, __pyx_stack) == -1)) __PYX_ERR(0, 507, __pyx_L1_error)
+  }
+  __pyx_pybuffernd_TimeRevsBin.diminfo[0].strides = __pyx_pybuffernd_TimeRevsBin.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_TimeRevsBin.diminfo[0].shape = __pyx_pybuffernd_TimeRevsBin.rcbuffer->pybuffer.shape[0]; __pyx_pybuffernd_TimeRevsBin.diminfo[1].strides = __pyx_pybuffernd_TimeRevsBin.rcbuffer->pybuffer.strides[1]; __pyx_pybuffernd_TimeRevsBin.diminfo[1].shape = __pyx_pybuffernd_TimeRevsBin.rcbuffer->pybuffer.shape[1];
+  {
+    __Pyx_BufFmt_StackElem __pyx_stack[1];
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_TimeShiftNumBin.rcbuffer->pybuffer, (PyObject*)__pyx_v_TimeShiftNumBin, &__Pyx_TypeInfo_long, PyBUF_FORMAT| PyBUF_C_CONTIGUOUS, 2, 0, __pyx_stack) == -1)) __PYX_ERR(0, 507, __pyx_L1_error)
+  }
+  __pyx_pybuffernd_TimeShiftNumBin.diminfo[0].strides = __pyx_pybuffernd_TimeShiftNumBin.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_TimeShiftNumBin.diminfo[0].shape = __pyx_pybuffernd_TimeShiftNumBin.rcbuffer->pybuffer.shape[0]; __pyx_pybuffernd_TimeShiftNumBin.diminfo[1].strides = __pyx_pybuffernd_TimeShiftNumBin.rcbuffer->pybuffer.strides[1]; __pyx_pybuffernd_TimeShiftNumBin.diminfo[1].shape = __pyx_pybuffernd_TimeShiftNumBin.rcbuffer->pybuffer.shape[1];
+  {
+    __Pyx_BufFmt_StackElem __pyx_stack[1];
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_TimeShiftDenBin.rcbuffer->pybuffer, (PyObject*)__pyx_v_TimeShiftDenBin, &__Pyx_TypeInfo_long, PyBUF_FORMAT| PyBUF_C_CONTIGUOUS, 2, 0, __pyx_stack) == -1)) __PYX_ERR(0, 507, __pyx_L1_error)
+  }
+  __pyx_pybuffernd_TimeShiftDenBin.diminfo[0].strides = __pyx_pybuffernd_TimeShiftDenBin.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_TimeShiftDenBin.diminfo[0].shape = __pyx_pybuffernd_TimeShiftDenBin.rcbuffer->pybuffer.shape[0]; __pyx_pybuffernd_TimeShiftDenBin.diminfo[1].strides = __pyx_pybuffernd_TimeShiftDenBin.rcbuffer->pybuffer.strides[1]; __pyx_pybuffernd_TimeShiftDenBin.diminfo[1].shape = __pyx_pybuffernd_TimeShiftDenBin.rcbuffer->pybuffer.shape[1];
+  {
+    __Pyx_BufFmt_StackElem __pyx_stack[1];
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_all_coeffs.rcbuffer->pybuffer, (PyObject*)__pyx_v_all_coeffs, &__Pyx_TypeInfo_double, PyBUF_FORMAT| PyBUF_C_CONTIGUOUS, 4, 0, __pyx_stack) == -1)) __PYX_ERR(0, 507, __pyx_L1_error)
+  }
+  __pyx_pybuffernd_all_coeffs.diminfo[0].strides = __pyx_pybuffernd_all_coeffs.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_all_coeffs.diminfo[0].shape = __pyx_pybuffernd_all_coeffs.rcbuffer->pybuffer.shape[0]; __pyx_pybuffernd_all_coeffs.diminfo[1].strides = __pyx_pybuffernd_all_coeffs.rcbuffer->pybuffer.strides[1]; __pyx_pybuffernd_all_coeffs.diminfo[1].shape = __pyx_pybuffernd_all_coeffs.rcbuffer->pybuffer.shape[1]; __pyx_pybuffernd_all_coeffs.diminfo[2].strides = __pyx_pybuffernd_all_coeffs.rcbuffer->pybuffer.strides[2]; __pyx_pybuffernd_all_coeffs.diminfo[2].shape = __pyx_pybuffernd_all_coeffs.rcbuffer->pybuffer.shape[2]; __pyx_pybuffernd_all_coeffs.diminfo[3].strides = __pyx_pybuffernd_all_coeffs.rcbuffer->pybuffer.strides[3]; __pyx_pybuffernd_all_coeffs.diminfo[3].shape = __pyx_pybuffernd_all_coeffs.rcbuffer->pybuffer.shape[3];
+  {
+    __Pyx_BufFmt_StackElem __pyx_stack[1];
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_all_coeffs_d.rcbuffer->pybuffer, (PyObject*)__pyx_v_all_coeffs_d, &__Pyx_TypeInfo_double, PyBUF_FORMAT| PyBUF_C_CONTIGUOUS, 4, 0, __pyx_stack) == -1)) __PYX_ERR(0, 507, __pyx_L1_error)
+  }
+  __pyx_pybuffernd_all_coeffs_d.diminfo[0].strides = __pyx_pybuffernd_all_coeffs_d.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_all_coeffs_d.diminfo[0].shape = __pyx_pybuffernd_all_coeffs_d.rcbuffer->pybuffer.shape[0]; __pyx_pybuffernd_all_coeffs_d.diminfo[1].strides = __pyx_pybuffernd_all_coeffs_d.rcbuffer->pybuffer.strides[1]; __pyx_pybuffernd_all_coeffs_d.diminfo[1].shape = __pyx_pybuffernd_all_coeffs_d.rcbuffer->pybuffer.shape[1]; __pyx_pybuffernd_all_coeffs_d.diminfo[2].strides = __pyx_pybuffernd_all_coeffs_d.rcbuffer->pybuffer.strides[2]; __pyx_pybuffernd_all_coeffs_d.diminfo[2].shape = __pyx_pybuffernd_all_coeffs_d.rcbuffer->pybuffer.shape[2]; __pyx_pybuffernd_all_coeffs_d.diminfo[3].strides = __pyx_pybuffernd_all_coeffs_d.rcbuffer->pybuffer.strides[3]; __pyx_pybuffernd_all_coeffs_d.diminfo[3].shape = __pyx_pybuffernd_all_coeffs_d.rcbuffer->pybuffer.shape[3];
+
+  /* "Choreo_cython_funs.pyx":538
+ *     cdef double pot,potp,potpp
+ *     cdef double prod_mass,a,b,c,dx2,prod_fac,dxtddx
+ *     cdef np.ndarray[double, ndim=1, mode="c"]  dx = np.zeros((cndim),dtype=np.float64)             # <<<<<<<<<<<<<<
+ *     cdef np.ndarray[double, ndim=1, mode="c"]  ddx = np.zeros((cndim),dtype=np.float64)
+ *     cdef np.ndarray[double, ndim=1, mode="c"]  ddf = np.zeros((cndim),dtype=np.float64)
+ */
+  __Pyx_GetModuleGlobalName(__pyx_t_1, __pyx_n_s_np); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 538, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_zeros); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 538, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+  __pyx_t_1 = __Pyx_PyInt_From_long(__pyx_v_18Choreo_cython_funs_cndim); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 538, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_t_3 = PyTuple_New(1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 538, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __Pyx_GIVEREF(__pyx_t_1);
+  PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_1);
+  __pyx_t_1 = 0;
+  __pyx_t_1 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 538, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __Pyx_GetModuleGlobalName(__pyx_t_4, __pyx_n_s_np); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 538, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_float64); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 538, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_dtype, __pyx_t_5) < 0) __PYX_ERR(0, 538, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+  __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_3, __pyx_t_1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 538, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+  if (!(likely(((__pyx_t_5) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_5, __pyx_ptype_5numpy_ndarray))))) __PYX_ERR(0, 538, __pyx_L1_error)
+  __pyx_t_6 = ((PyArrayObject *)__pyx_t_5);
+  {
+    __Pyx_BufFmt_StackElem __pyx_stack[1];
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_dx.rcbuffer->pybuffer, (PyObject*)__pyx_t_6, &__Pyx_TypeInfo_double, PyBUF_FORMAT| PyBUF_C_CONTIGUOUS| PyBUF_WRITABLE, 1, 0, __pyx_stack) == -1)) {
+      __pyx_v_dx = ((PyArrayObject *)Py_None); __Pyx_INCREF(Py_None); __pyx_pybuffernd_dx.rcbuffer->pybuffer.buf = NULL;
+      __PYX_ERR(0, 538, __pyx_L1_error)
+    } else {__pyx_pybuffernd_dx.diminfo[0].strides = __pyx_pybuffernd_dx.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_dx.diminfo[0].shape = __pyx_pybuffernd_dx.rcbuffer->pybuffer.shape[0];
+    }
+  }
+  __pyx_t_6 = 0;
+  __pyx_v_dx = ((PyArrayObject *)__pyx_t_5);
+  __pyx_t_5 = 0;
+
+  /* "Choreo_cython_funs.pyx":539
+ *     cdef double prod_mass,a,b,c,dx2,prod_fac,dxtddx
+ *     cdef np.ndarray[double, ndim=1, mode="c"]  dx = np.zeros((cndim),dtype=np.float64)
+ *     cdef np.ndarray[double, ndim=1, mode="c"]  ddx = np.zeros((cndim),dtype=np.float64)             # <<<<<<<<<<<<<<
+ *     cdef np.ndarray[double, ndim=1, mode="c"]  ddf = np.zeros((cndim),dtype=np.float64)
+ * 
+ */
+  __Pyx_GetModuleGlobalName(__pyx_t_5, __pyx_n_s_np); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 539, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
+  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_n_s_zeros); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 539, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+  __pyx_t_5 = __Pyx_PyInt_From_long(__pyx_v_18Choreo_cython_funs_cndim); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 539, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
+  __pyx_t_3 = PyTuple_New(1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 539, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __Pyx_GIVEREF(__pyx_t_5);
+  PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_5);
+  __pyx_t_5 = 0;
+  __pyx_t_5 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 539, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
+  __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_np); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 539, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_float64); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 539, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_dtype, __pyx_t_4) < 0) __PYX_ERR(0, 539, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_t_3, __pyx_t_5); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 539, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+  if (!(likely(((__pyx_t_4) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_4, __pyx_ptype_5numpy_ndarray))))) __PYX_ERR(0, 539, __pyx_L1_error)
+  __pyx_t_7 = ((PyArrayObject *)__pyx_t_4);
+  {
+    __Pyx_BufFmt_StackElem __pyx_stack[1];
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_ddx.rcbuffer->pybuffer, (PyObject*)__pyx_t_7, &__Pyx_TypeInfo_double, PyBUF_FORMAT| PyBUF_C_CONTIGUOUS| PyBUF_WRITABLE, 1, 0, __pyx_stack) == -1)) {
+      __pyx_v_ddx = ((PyArrayObject *)Py_None); __Pyx_INCREF(Py_None); __pyx_pybuffernd_ddx.rcbuffer->pybuffer.buf = NULL;
+      __PYX_ERR(0, 539, __pyx_L1_error)
+    } else {__pyx_pybuffernd_ddx.diminfo[0].strides = __pyx_pybuffernd_ddx.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_ddx.diminfo[0].shape = __pyx_pybuffernd_ddx.rcbuffer->pybuffer.shape[0];
+    }
+  }
+  __pyx_t_7 = 0;
+  __pyx_v_ddx = ((PyArrayObject *)__pyx_t_4);
+  __pyx_t_4 = 0;
+
+  /* "Choreo_cython_funs.pyx":540
+ *     cdef np.ndarray[double, ndim=1, mode="c"]  dx = np.zeros((cndim),dtype=np.float64)
+ *     cdef np.ndarray[double, ndim=1, mode="c"]  ddx = np.zeros((cndim),dtype=np.float64)
+ *     cdef np.ndarray[double, ndim=1, mode="c"]  ddf = np.zeros((cndim),dtype=np.float64)             # <<<<<<<<<<<<<<
+ * 
+ *     cdef long maxloopnb = loopnb.max()
+ */
+  __Pyx_GetModuleGlobalName(__pyx_t_4, __pyx_n_s_np); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 540, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_zeros); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 540, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  __pyx_t_4 = __Pyx_PyInt_From_long(__pyx_v_18Choreo_cython_funs_cndim); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 540, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __pyx_t_3 = PyTuple_New(1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 540, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __Pyx_GIVEREF(__pyx_t_4);
+  PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_4);
+  __pyx_t_4 = 0;
+  __pyx_t_4 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 540, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __Pyx_GetModuleGlobalName(__pyx_t_1, __pyx_n_s_np); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 540, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_float64); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 540, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_dtype, __pyx_t_2) < 0) __PYX_ERR(0, 540, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_t_3, __pyx_t_4); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 540, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  if (!(likely(((__pyx_t_2) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_2, __pyx_ptype_5numpy_ndarray))))) __PYX_ERR(0, 540, __pyx_L1_error)
+  __pyx_t_8 = ((PyArrayObject *)__pyx_t_2);
+  {
+    __Pyx_BufFmt_StackElem __pyx_stack[1];
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_ddf.rcbuffer->pybuffer, (PyObject*)__pyx_t_8, &__Pyx_TypeInfo_double, PyBUF_FORMAT| PyBUF_C_CONTIGUOUS| PyBUF_WRITABLE, 1, 0, __pyx_stack) == -1)) {
+      __pyx_v_ddf = ((PyArrayObject *)Py_None); __Pyx_INCREF(Py_None); __pyx_pybuffernd_ddf.rcbuffer->pybuffer.buf = NULL;
+      __PYX_ERR(0, 540, __pyx_L1_error)
+    } else {__pyx_pybuffernd_ddf.diminfo[0].strides = __pyx_pybuffernd_ddf.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_ddf.diminfo[0].shape = __pyx_pybuffernd_ddf.rcbuffer->pybuffer.shape[0];
+    }
+  }
+  __pyx_t_8 = 0;
+  __pyx_v_ddf = ((PyArrayObject *)__pyx_t_2);
+  __pyx_t_2 = 0;
+
+  /* "Choreo_cython_funs.pyx":542
+ *     cdef np.ndarray[double, ndim=1, mode="c"]  ddf = np.zeros((cndim),dtype=np.float64)
+ * 
+ *     cdef long maxloopnb = loopnb.max()             # <<<<<<<<<<<<<<
+ *     cdef long maxloopnbi = loopnbi.max()
+ * 
+ */
+  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_loopnb), __pyx_n_s_max); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 542, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __pyx_t_3 = NULL;
+  if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_4))) {
+    __pyx_t_3 = PyMethod_GET_SELF(__pyx_t_4);
+    if (likely(__pyx_t_3)) {
+      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_4);
+      __Pyx_INCREF(__pyx_t_3);
+      __Pyx_INCREF(function);
+      __Pyx_DECREF_SET(__pyx_t_4, function);
+    }
+  }
+  __pyx_t_2 = (__pyx_t_3) ? __Pyx_PyObject_CallOneArg(__pyx_t_4, __pyx_t_3) : __Pyx_PyObject_CallNoArg(__pyx_t_4);
+  __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
+  if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 542, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  __pyx_t_9 = __Pyx_PyInt_As_long(__pyx_t_2); if (unlikely((__pyx_t_9 == (long)-1) && PyErr_Occurred())) __PYX_ERR(0, 542, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __pyx_v_maxloopnb = __pyx_t_9;
+
+  /* "Choreo_cython_funs.pyx":543
+ * 
+ *     cdef long maxloopnb = loopnb.max()
+ *     cdef long maxloopnbi = loopnbi.max()             # <<<<<<<<<<<<<<
+ * 
+ *     cdef double Kin_en = 0
+ */
+  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_loopnbi), __pyx_n_s_max); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 543, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __pyx_t_3 = NULL;
+  if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_4))) {
+    __pyx_t_3 = PyMethod_GET_SELF(__pyx_t_4);
+    if (likely(__pyx_t_3)) {
+      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_4);
+      __Pyx_INCREF(__pyx_t_3);
+      __Pyx_INCREF(function);
+      __Pyx_DECREF_SET(__pyx_t_4, function);
+    }
+  }
+  __pyx_t_2 = (__pyx_t_3) ? __Pyx_PyObject_CallOneArg(__pyx_t_4, __pyx_t_3) : __Pyx_PyObject_CallNoArg(__pyx_t_4);
+  __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
+  if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 543, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  __pyx_t_9 = __Pyx_PyInt_As_long(__pyx_t_2); if (unlikely((__pyx_t_9 == (long)-1) && PyErr_Occurred())) __PYX_ERR(0, 543, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __pyx_v_maxloopnbi = __pyx_t_9;
+
+  /* "Choreo_cython_funs.pyx":545
+ *     cdef long maxloopnbi = loopnbi.max()
+ * 
+ *     cdef double Kin_en = 0             # <<<<<<<<<<<<<<
+ * 
+ *     cdef np.ndarray[double, ndim=4, mode="c"] Action_hess_dx = np.zeros((nloop,cndim,ncoeff,2),np.float64)
+ */
+  __pyx_v_Kin_en = 0.0;
+
+  /* "Choreo_cython_funs.pyx":547
+ *     cdef double Kin_en = 0
+ * 
+ *     cdef np.ndarray[double, ndim=4, mode="c"] Action_hess_dx = np.zeros((nloop,cndim,ncoeff,2),np.float64)             # <<<<<<<<<<<<<<
+ * 
+ *     for il in range(nloop):
+ */
+  __Pyx_GetModuleGlobalName(__pyx_t_4, __pyx_n_s_np); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 547, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_zeros); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 547, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  __pyx_t_4 = __Pyx_PyInt_From_long(__pyx_v_nloop); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 547, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __pyx_t_5 = __Pyx_PyInt_From_long(__pyx_v_18Choreo_cython_funs_cndim); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 547, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
+  __pyx_t_1 = __Pyx_PyInt_From_long(__pyx_v_ncoeff); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 547, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_t_10 = PyTuple_New(4); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 547, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_10);
+  __Pyx_GIVEREF(__pyx_t_4);
+  PyTuple_SET_ITEM(__pyx_t_10, 0, __pyx_t_4);
+  __Pyx_GIVEREF(__pyx_t_5);
+  PyTuple_SET_ITEM(__pyx_t_10, 1, __pyx_t_5);
+  __Pyx_GIVEREF(__pyx_t_1);
+  PyTuple_SET_ITEM(__pyx_t_10, 2, __pyx_t_1);
+  __Pyx_INCREF(__pyx_int_2);
+  __Pyx_GIVEREF(__pyx_int_2);
+  PyTuple_SET_ITEM(__pyx_t_10, 3, __pyx_int_2);
+  __pyx_t_4 = 0;
+  __pyx_t_5 = 0;
+  __pyx_t_1 = 0;
+  __Pyx_GetModuleGlobalName(__pyx_t_1, __pyx_n_s_np); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 547, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_float64); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 547, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+  __pyx_t_1 = NULL;
+  __pyx_t_11 = 0;
+  if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_3))) {
+    __pyx_t_1 = PyMethod_GET_SELF(__pyx_t_3);
+    if (likely(__pyx_t_1)) {
+      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_3);
+      __Pyx_INCREF(__pyx_t_1);
+      __Pyx_INCREF(function);
+      __Pyx_DECREF_SET(__pyx_t_3, function);
+      __pyx_t_11 = 1;
+    }
+  }
+  #if CYTHON_FAST_PYCALL
+  if (PyFunction_Check(__pyx_t_3)) {
+    PyObject *__pyx_temp[3] = {__pyx_t_1, __pyx_t_10, __pyx_t_5};
+    __pyx_t_2 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_11, 2+__pyx_t_11); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 547, __pyx_L1_error)
+    __Pyx_XDECREF(__pyx_t_1); __pyx_t_1 = 0;
+    __Pyx_GOTREF(__pyx_t_2);
+    __Pyx_DECREF(__pyx_t_10); __pyx_t_10 = 0;
+    __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+  } else
+  #endif
+  #if CYTHON_FAST_PYCCALL
+  if (__Pyx_PyFastCFunction_Check(__pyx_t_3)) {
+    PyObject *__pyx_temp[3] = {__pyx_t_1, __pyx_t_10, __pyx_t_5};
+    __pyx_t_2 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_11, 2+__pyx_t_11); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 547, __pyx_L1_error)
+    __Pyx_XDECREF(__pyx_t_1); __pyx_t_1 = 0;
+    __Pyx_GOTREF(__pyx_t_2);
+    __Pyx_DECREF(__pyx_t_10); __pyx_t_10 = 0;
+    __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+  } else
+  #endif
+  {
+    __pyx_t_4 = PyTuple_New(2+__pyx_t_11); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 547, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_4);
+    if (__pyx_t_1) {
+      __Pyx_GIVEREF(__pyx_t_1); PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_1); __pyx_t_1 = NULL;
+    }
+    __Pyx_GIVEREF(__pyx_t_10);
+    PyTuple_SET_ITEM(__pyx_t_4, 0+__pyx_t_11, __pyx_t_10);
+    __Pyx_GIVEREF(__pyx_t_5);
+    PyTuple_SET_ITEM(__pyx_t_4, 1+__pyx_t_11, __pyx_t_5);
+    __pyx_t_10 = 0;
+    __pyx_t_5 = 0;
+    __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_4, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 547, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_2);
+    __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  }
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  if (!(likely(((__pyx_t_2) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_2, __pyx_ptype_5numpy_ndarray))))) __PYX_ERR(0, 547, __pyx_L1_error)
+  __pyx_t_12 = ((PyArrayObject *)__pyx_t_2);
+  {
+    __Pyx_BufFmt_StackElem __pyx_stack[1];
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_Action_hess_dx.rcbuffer->pybuffer, (PyObject*)__pyx_t_12, &__Pyx_TypeInfo_double, PyBUF_FORMAT| PyBUF_C_CONTIGUOUS| PyBUF_WRITABLE, 4, 0, __pyx_stack) == -1)) {
+      __pyx_v_Action_hess_dx = ((PyArrayObject *)Py_None); __Pyx_INCREF(Py_None); __pyx_pybuffernd_Action_hess_dx.rcbuffer->pybuffer.buf = NULL;
+      __PYX_ERR(0, 547, __pyx_L1_error)
+    } else {__pyx_pybuffernd_Action_hess_dx.diminfo[0].strides = __pyx_pybuffernd_Action_hess_dx.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_Action_hess_dx.diminfo[0].shape = __pyx_pybuffernd_Action_hess_dx.rcbuffer->pybuffer.shape[0]; __pyx_pybuffernd_Action_hess_dx.diminfo[1].strides = __pyx_pybuffernd_Action_hess_dx.rcbuffer->pybuffer.strides[1]; __pyx_pybuffernd_Action_hess_dx.diminfo[1].shape = __pyx_pybuffernd_Action_hess_dx.rcbuffer->pybuffer.shape[1]; __pyx_pybuffernd_Action_hess_dx.diminfo[2].strides = __pyx_pybuffernd_Action_hess_dx.rcbuffer->pybuffer.strides[2]; __pyx_pybuffernd_Action_hess_dx.diminfo[2].shape = __pyx_pybuffernd_Action_hess_dx.rcbuffer->pybuffer.shape[2]; __pyx_pybuffernd_Action_hess_dx.diminfo[3].strides = __pyx_pybuffernd_Action_hess_dx.rcbuffer->pybuffer.strides[3]; __pyx_pybuffernd_Action_hess_dx.diminfo[3].shape = __pyx_pybuffernd_Action_hess_dx.rcbuffer->pybuffer.shape[3];
+    }
+  }
+  __pyx_t_12 = 0;
+  __pyx_v_Action_hess_dx = ((PyArrayObject *)__pyx_t_2);
+  __pyx_t_2 = 0;
+
+  /* "Choreo_cython_funs.pyx":549
+ *     cdef np.ndarray[double, ndim=4, mode="c"] Action_hess_dx = np.zeros((nloop,cndim,ncoeff,2),np.float64)
+ * 
+ *     for il in range(nloop):             # <<<<<<<<<<<<<<
+ * 
+ *         prod_fac = MassSum[il]*cfourpisq
+ */
+  __pyx_t_9 = __pyx_v_nloop;
+  __pyx_t_13 = __pyx_t_9;
+  for (__pyx_t_14 = 0; __pyx_t_14 < __pyx_t_13; __pyx_t_14+=1) {
+    __pyx_v_il = __pyx_t_14;
+
+    /* "Choreo_cython_funs.pyx":551
+ *     for il in range(nloop):
+ * 
+ *         prod_fac = MassSum[il]*cfourpisq             # <<<<<<<<<<<<<<
+ * 
+ *         for idim in range(cndim):
+ */
+    __pyx_t_15 = __pyx_v_il;
+    __pyx_v_prod_fac = ((*__Pyx_BufPtrCContig1d(double *, __pyx_pybuffernd_MassSum.rcbuffer->pybuffer.buf, __pyx_t_15, __pyx_pybuffernd_MassSum.diminfo[0].strides)) * __pyx_v_18Choreo_cython_funs_cfourpisq);
+
+    /* "Choreo_cython_funs.pyx":553
+ *         prod_fac = MassSum[il]*cfourpisq
+ * 
+ *         for idim in range(cndim):             # <<<<<<<<<<<<<<
+ *             for k in range(1,ncoeff):
+ * 
+ */
+    __pyx_t_16 = __pyx_v_18Choreo_cython_funs_cndim;
+    __pyx_t_17 = __pyx_t_16;
+    for (__pyx_t_18 = 0; __pyx_t_18 < __pyx_t_17; __pyx_t_18+=1) {
+      __pyx_v_idim = __pyx_t_18;
+
+      /* "Choreo_cython_funs.pyx":554
+ * 
+ *         for idim in range(cndim):
+ *             for k in range(1,ncoeff):             # <<<<<<<<<<<<<<
+ * 
+ *                 k2 = k*k
+ */
+      __pyx_t_19 = __pyx_v_ncoeff;
+      __pyx_t_20 = __pyx_t_19;
+      for (__pyx_t_21 = 1; __pyx_t_21 < __pyx_t_20; __pyx_t_21+=1) {
+        __pyx_v_k = __pyx_t_21;
+
+        /* "Choreo_cython_funs.pyx":556
+ *             for k in range(1,ncoeff):
+ * 
+ *                 k2 = k*k             # <<<<<<<<<<<<<<
+ *                 a = prod_fac*k2
+ *                 b=2*a
+ */
+        __pyx_v_k2 = (__pyx_v_k * __pyx_v_k);
+
+        /* "Choreo_cython_funs.pyx":557
+ * 
+ *                 k2 = k*k
+ *                 a = prod_fac*k2             # <<<<<<<<<<<<<<
+ *                 b=2*a
+ * 
+ */
+        __pyx_v_a = (__pyx_v_prod_fac * __pyx_v_k2);
+
+        /* "Choreo_cython_funs.pyx":558
+ *                 k2 = k*k
+ *                 a = prod_fac*k2
+ *                 b=2*a             # <<<<<<<<<<<<<<
+ * 
+ *                 Action_hess_dx[il,idim,k,0] += b*all_coeffs_d[il,idim,k,0]
+ */
+        __pyx_v_b = (2.0 * __pyx_v_a);
+
+        /* "Choreo_cython_funs.pyx":560
+ *                 b=2*a
+ * 
+ *                 Action_hess_dx[il,idim,k,0] += b*all_coeffs_d[il,idim,k,0]             # <<<<<<<<<<<<<<
+ *                 Action_hess_dx[il,idim,k,1] += b*all_coeffs_d[il,idim,k,1]
+ * 
+ */
+        __pyx_t_15 = __pyx_v_il;
+        __pyx_t_22 = __pyx_v_idim;
+        __pyx_t_23 = __pyx_v_k;
+        __pyx_t_24 = 0;
+        __pyx_t_25 = __pyx_v_il;
+        __pyx_t_26 = __pyx_v_idim;
+        __pyx_t_27 = __pyx_v_k;
+        __pyx_t_28 = 0;
+        *__Pyx_BufPtrCContig4d(double *, __pyx_pybuffernd_Action_hess_dx.rcbuffer->pybuffer.buf, __pyx_t_25, __pyx_pybuffernd_Action_hess_dx.diminfo[0].strides, __pyx_t_26, __pyx_pybuffernd_Action_hess_dx.diminfo[1].strides, __pyx_t_27, __pyx_pybuffernd_Action_hess_dx.diminfo[2].strides, __pyx_t_28, __pyx_pybuffernd_Action_hess_dx.diminfo[3].strides) += (__pyx_v_b * (*__Pyx_BufPtrCContig4d(double *, __pyx_pybuffernd_all_coeffs_d.rcbuffer->pybuffer.buf, __pyx_t_15, __pyx_pybuffernd_all_coeffs_d.diminfo[0].strides, __pyx_t_22, __pyx_pybuffernd_all_coeffs_d.diminfo[1].strides, __pyx_t_23, __pyx_pybuffernd_all_coeffs_d.diminfo[2].strides, __pyx_t_24, __pyx_pybuffernd_all_coeffs_d.diminfo[3].strides)));
+
+        /* "Choreo_cython_funs.pyx":561
+ * 
+ *                 Action_hess_dx[il,idim,k,0] += b*all_coeffs_d[il,idim,k,0]
+ *                 Action_hess_dx[il,idim,k,1] += b*all_coeffs_d[il,idim,k,1]             # <<<<<<<<<<<<<<
+ * 
+ *     c_coeffs = all_coeffs.view(dtype=np.complex128)[...,0]
+ */
+        __pyx_t_24 = __pyx_v_il;
+        __pyx_t_23 = __pyx_v_idim;
+        __pyx_t_22 = __pyx_v_k;
+        __pyx_t_15 = 1;
+        __pyx_t_28 = __pyx_v_il;
+        __pyx_t_27 = __pyx_v_idim;
+        __pyx_t_26 = __pyx_v_k;
+        __pyx_t_25 = 1;
+        *__Pyx_BufPtrCContig4d(double *, __pyx_pybuffernd_Action_hess_dx.rcbuffer->pybuffer.buf, __pyx_t_28, __pyx_pybuffernd_Action_hess_dx.diminfo[0].strides, __pyx_t_27, __pyx_pybuffernd_Action_hess_dx.diminfo[1].strides, __pyx_t_26, __pyx_pybuffernd_Action_hess_dx.diminfo[2].strides, __pyx_t_25, __pyx_pybuffernd_Action_hess_dx.diminfo[3].strides) += (__pyx_v_b * (*__Pyx_BufPtrCContig4d(double *, __pyx_pybuffernd_all_coeffs_d.rcbuffer->pybuffer.buf, __pyx_t_24, __pyx_pybuffernd_all_coeffs_d.diminfo[0].strides, __pyx_t_23, __pyx_pybuffernd_all_coeffs_d.diminfo[1].strides, __pyx_t_22, __pyx_pybuffernd_all_coeffs_d.diminfo[2].strides, __pyx_t_15, __pyx_pybuffernd_all_coeffs_d.diminfo[3].strides)));
+      }
+    }
+  }
+
+  /* "Choreo_cython_funs.pyx":563
+ *                 Action_hess_dx[il,idim,k,1] += b*all_coeffs_d[il,idim,k,1]
+ * 
+ *     c_coeffs = all_coeffs.view(dtype=np.complex128)[...,0]             # <<<<<<<<<<<<<<
+ *     cdef np.ndarray[double, ndim=3, mode="c"] all_pos = np.fft.irfft(c_coeffs,n=nint,axis=2)*nint
+ * 
+ */
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_all_coeffs), __pyx_n_s_view); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 563, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __pyx_t_3 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 563, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __Pyx_GetModuleGlobalName(__pyx_t_4, __pyx_n_s_np); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 563, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_complex128); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 563, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_dtype, __pyx_t_5) < 0) __PYX_ERR(0, 563, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+  __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_empty_tuple, __pyx_t_3); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 563, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  __pyx_t_3 = __Pyx_PyObject_GetItem(__pyx_t_5, __pyx_tuple_); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 563, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+  __pyx_v_c_coeffs = __pyx_t_3;
+  __pyx_t_3 = 0;
+
+  /* "Choreo_cython_funs.pyx":564
+ * 
+ *     c_coeffs = all_coeffs.view(dtype=np.complex128)[...,0]
+ *     cdef np.ndarray[double, ndim=3, mode="c"] all_pos = np.fft.irfft(c_coeffs,n=nint,axis=2)*nint             # <<<<<<<<<<<<<<
+ * 
+ *     c_coeffs_d = all_coeffs_d.view(dtype=np.complex128)[...,0]
+ */
+  __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_n_s_np); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 564, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_fft); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 564, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_n_s_irfft); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 564, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+  __pyx_t_5 = PyTuple_New(1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 564, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
+  __Pyx_INCREF(__pyx_v_c_coeffs);
+  __Pyx_GIVEREF(__pyx_v_c_coeffs);
+  PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_v_c_coeffs);
+  __pyx_t_2 = __Pyx_PyDict_NewPresized(2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 564, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __pyx_t_4 = __Pyx_PyInt_From_long(__pyx_v_nint); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 564, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_n, __pyx_t_4) < 0) __PYX_ERR(0, 564, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_axis, __pyx_int_2) < 0) __PYX_ERR(0, 564, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_5, __pyx_t_2); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 564, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __pyx_t_2 = __Pyx_PyInt_From_long(__pyx_v_nint); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 564, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __pyx_t_5 = PyNumber_Multiply(__pyx_t_4, __pyx_t_2); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 564, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  if (!(likely(((__pyx_t_5) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_5, __pyx_ptype_5numpy_ndarray))))) __PYX_ERR(0, 564, __pyx_L1_error)
+  __pyx_t_29 = ((PyArrayObject *)__pyx_t_5);
+  {
+    __Pyx_BufFmt_StackElem __pyx_stack[1];
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_all_pos.rcbuffer->pybuffer, (PyObject*)__pyx_t_29, &__Pyx_TypeInfo_double, PyBUF_FORMAT| PyBUF_C_CONTIGUOUS, 3, 0, __pyx_stack) == -1)) {
+      __pyx_v_all_pos = ((PyArrayObject *)Py_None); __Pyx_INCREF(Py_None); __pyx_pybuffernd_all_pos.rcbuffer->pybuffer.buf = NULL;
+      __PYX_ERR(0, 564, __pyx_L1_error)
+    } else {__pyx_pybuffernd_all_pos.diminfo[0].strides = __pyx_pybuffernd_all_pos.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_all_pos.diminfo[0].shape = __pyx_pybuffernd_all_pos.rcbuffer->pybuffer.shape[0]; __pyx_pybuffernd_all_pos.diminfo[1].strides = __pyx_pybuffernd_all_pos.rcbuffer->pybuffer.strides[1]; __pyx_pybuffernd_all_pos.diminfo[1].shape = __pyx_pybuffernd_all_pos.rcbuffer->pybuffer.shape[1]; __pyx_pybuffernd_all_pos.diminfo[2].strides = __pyx_pybuffernd_all_pos.rcbuffer->pybuffer.strides[2]; __pyx_pybuffernd_all_pos.diminfo[2].shape = __pyx_pybuffernd_all_pos.rcbuffer->pybuffer.shape[2];
+    }
+  }
+  __pyx_t_29 = 0;
+  __pyx_v_all_pos = ((PyArrayObject *)__pyx_t_5);
+  __pyx_t_5 = 0;
+
+  /* "Choreo_cython_funs.pyx":566
+ *     cdef np.ndarray[double, ndim=3, mode="c"] all_pos = np.fft.irfft(c_coeffs,n=nint,axis=2)*nint
+ * 
+ *     c_coeffs_d = all_coeffs_d.view(dtype=np.complex128)[...,0]             # <<<<<<<<<<<<<<
+ *     cdef np.ndarray[double, ndim=3, mode="c"]  all_pos_d = np.fft.irfft(c_coeffs_d,n=nint,axis=2)*nint
+ * 
+ */
+  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_all_coeffs_d), __pyx_n_s_view); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 566, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
+  __pyx_t_2 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 566, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __Pyx_GetModuleGlobalName(__pyx_t_4, __pyx_n_s_np); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 566, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_complex128); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 566, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_dtype, __pyx_t_3) < 0) __PYX_ERR(0, 566, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_empty_tuple, __pyx_t_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 566, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __pyx_t_2 = __Pyx_PyObject_GetItem(__pyx_t_3, __pyx_tuple_); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 566, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  __pyx_v_c_coeffs_d = __pyx_t_2;
+  __pyx_t_2 = 0;
+
+  /* "Choreo_cython_funs.pyx":567
+ * 
+ *     c_coeffs_d = all_coeffs_d.view(dtype=np.complex128)[...,0]
+ *     cdef np.ndarray[double, ndim=3, mode="c"]  all_pos_d = np.fft.irfft(c_coeffs_d,n=nint,axis=2)*nint             # <<<<<<<<<<<<<<
+ * 
+ *     cdef np.ndarray[long, ndim=2, mode="c"]  all_shiftsUn = np.zeros((nloop,maxloopnb),dtype=np.int_)
+ */
+  __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_np); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 567, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_fft); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 567, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_irfft); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 567, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  __pyx_t_3 = PyTuple_New(1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 567, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __Pyx_INCREF(__pyx_v_c_coeffs_d);
+  __Pyx_GIVEREF(__pyx_v_c_coeffs_d);
+  PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_v_c_coeffs_d);
+  __pyx_t_5 = __Pyx_PyDict_NewPresized(2); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 567, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
+  __pyx_t_4 = __Pyx_PyInt_From_long(__pyx_v_nint); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 567, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_n, __pyx_t_4) < 0) __PYX_ERR(0, 567, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_axis, __pyx_int_2) < 0) __PYX_ERR(0, 567, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_3, __pyx_t_5); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 567, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+  __pyx_t_5 = __Pyx_PyInt_From_long(__pyx_v_nint); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 567, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
+  __pyx_t_3 = PyNumber_Multiply(__pyx_t_4, __pyx_t_5); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 567, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+  if (!(likely(((__pyx_t_3) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_3, __pyx_ptype_5numpy_ndarray))))) __PYX_ERR(0, 567, __pyx_L1_error)
+  __pyx_t_30 = ((PyArrayObject *)__pyx_t_3);
+  {
+    __Pyx_BufFmt_StackElem __pyx_stack[1];
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_all_pos_d.rcbuffer->pybuffer, (PyObject*)__pyx_t_30, &__Pyx_TypeInfo_double, PyBUF_FORMAT| PyBUF_C_CONTIGUOUS, 3, 0, __pyx_stack) == -1)) {
+      __pyx_v_all_pos_d = ((PyArrayObject *)Py_None); __Pyx_INCREF(Py_None); __pyx_pybuffernd_all_pos_d.rcbuffer->pybuffer.buf = NULL;
+      __PYX_ERR(0, 567, __pyx_L1_error)
+    } else {__pyx_pybuffernd_all_pos_d.diminfo[0].strides = __pyx_pybuffernd_all_pos_d.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_all_pos_d.diminfo[0].shape = __pyx_pybuffernd_all_pos_d.rcbuffer->pybuffer.shape[0]; __pyx_pybuffernd_all_pos_d.diminfo[1].strides = __pyx_pybuffernd_all_pos_d.rcbuffer->pybuffer.strides[1]; __pyx_pybuffernd_all_pos_d.diminfo[1].shape = __pyx_pybuffernd_all_pos_d.rcbuffer->pybuffer.shape[1]; __pyx_pybuffernd_all_pos_d.diminfo[2].strides = __pyx_pybuffernd_all_pos_d.rcbuffer->pybuffer.strides[2]; __pyx_pybuffernd_all_pos_d.diminfo[2].shape = __pyx_pybuffernd_all_pos_d.rcbuffer->pybuffer.shape[2];
+    }
+  }
+  __pyx_t_30 = 0;
+  __pyx_v_all_pos_d = ((PyArrayObject *)__pyx_t_3);
+  __pyx_t_3 = 0;
+
+  /* "Choreo_cython_funs.pyx":569
+ *     cdef np.ndarray[double, ndim=3, mode="c"]  all_pos_d = np.fft.irfft(c_coeffs_d,n=nint,axis=2)*nint
+ * 
+ *     cdef np.ndarray[long, ndim=2, mode="c"]  all_shiftsUn = np.zeros((nloop,maxloopnb),dtype=np.int_)             # <<<<<<<<<<<<<<
+ *     cdef np.ndarray[long, ndim=2, mode="c"]  all_shiftsBin = np.zeros((nloop,maxloopnbi),dtype=np.int_)
+ * 
+ */
+  __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_n_s_np); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 569, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_zeros); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 569, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  __pyx_t_3 = __Pyx_PyInt_From_long(__pyx_v_nloop); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 569, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __pyx_t_4 = __Pyx_PyInt_From_long(__pyx_v_maxloopnb); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 569, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __pyx_t_2 = PyTuple_New(2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 569, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __Pyx_GIVEREF(__pyx_t_3);
+  PyTuple_SET_ITEM(__pyx_t_2, 0, __pyx_t_3);
+  __Pyx_GIVEREF(__pyx_t_4);
+  PyTuple_SET_ITEM(__pyx_t_2, 1, __pyx_t_4);
+  __pyx_t_3 = 0;
+  __pyx_t_4 = 0;
+  __pyx_t_4 = PyTuple_New(1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 569, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __Pyx_GIVEREF(__pyx_t_2);
+  PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_2);
+  __pyx_t_2 = 0;
+  __pyx_t_2 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 569, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_n_s_np); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 569, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __pyx_t_10 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_int); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 569, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_10);
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_dtype, __pyx_t_10) < 0) __PYX_ERR(0, 569, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_10); __pyx_t_10 = 0;
+  __pyx_t_10 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_t_4, __pyx_t_2); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 569, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_10);
+  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  if (!(likely(((__pyx_t_10) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_10, __pyx_ptype_5numpy_ndarray))))) __PYX_ERR(0, 569, __pyx_L1_error)
+  __pyx_t_31 = ((PyArrayObject *)__pyx_t_10);
+  {
+    __Pyx_BufFmt_StackElem __pyx_stack[1];
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_all_shiftsUn.rcbuffer->pybuffer, (PyObject*)__pyx_t_31, &__Pyx_TypeInfo_long, PyBUF_FORMAT| PyBUF_C_CONTIGUOUS| PyBUF_WRITABLE, 2, 0, __pyx_stack) == -1)) {
+      __pyx_v_all_shiftsUn = ((PyArrayObject *)Py_None); __Pyx_INCREF(Py_None); __pyx_pybuffernd_all_shiftsUn.rcbuffer->pybuffer.buf = NULL;
+      __PYX_ERR(0, 569, __pyx_L1_error)
+    } else {__pyx_pybuffernd_all_shiftsUn.diminfo[0].strides = __pyx_pybuffernd_all_shiftsUn.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_all_shiftsUn.diminfo[0].shape = __pyx_pybuffernd_all_shiftsUn.rcbuffer->pybuffer.shape[0]; __pyx_pybuffernd_all_shiftsUn.diminfo[1].strides = __pyx_pybuffernd_all_shiftsUn.rcbuffer->pybuffer.strides[1]; __pyx_pybuffernd_all_shiftsUn.diminfo[1].shape = __pyx_pybuffernd_all_shiftsUn.rcbuffer->pybuffer.shape[1];
+    }
+  }
+  __pyx_t_31 = 0;
+  __pyx_v_all_shiftsUn = ((PyArrayObject *)__pyx_t_10);
+  __pyx_t_10 = 0;
+
+  /* "Choreo_cython_funs.pyx":570
+ * 
+ *     cdef np.ndarray[long, ndim=2, mode="c"]  all_shiftsUn = np.zeros((nloop,maxloopnb),dtype=np.int_)
+ *     cdef np.ndarray[long, ndim=2, mode="c"]  all_shiftsBin = np.zeros((nloop,maxloopnbi),dtype=np.int_)             # <<<<<<<<<<<<<<
+ * 
+ *     for il in range(nloop):
+ */
+  __Pyx_GetModuleGlobalName(__pyx_t_10, __pyx_n_s_np); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 570, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_10);
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_10, __pyx_n_s_zeros); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 570, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __Pyx_DECREF(__pyx_t_10); __pyx_t_10 = 0;
+  __pyx_t_10 = __Pyx_PyInt_From_long(__pyx_v_nloop); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 570, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_10);
+  __pyx_t_4 = __Pyx_PyInt_From_long(__pyx_v_maxloopnbi); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 570, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __pyx_t_5 = PyTuple_New(2); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 570, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
+  __Pyx_GIVEREF(__pyx_t_10);
+  PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_10);
+  __Pyx_GIVEREF(__pyx_t_4);
+  PyTuple_SET_ITEM(__pyx_t_5, 1, __pyx_t_4);
+  __pyx_t_10 = 0;
+  __pyx_t_4 = 0;
+  __pyx_t_4 = PyTuple_New(1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 570, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __Pyx_GIVEREF(__pyx_t_5);
+  PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_5);
+  __pyx_t_5 = 0;
+  __pyx_t_5 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 570, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
+  __Pyx_GetModuleGlobalName(__pyx_t_10, __pyx_n_s_np); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 570, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_10);
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_10, __pyx_n_s_int); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 570, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __Pyx_DECREF(__pyx_t_10); __pyx_t_10 = 0;
+  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_dtype, __pyx_t_3) < 0) __PYX_ERR(0, 570, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_4, __pyx_t_5); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 570, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+  if (!(likely(((__pyx_t_3) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_3, __pyx_ptype_5numpy_ndarray))))) __PYX_ERR(0, 570, __pyx_L1_error)
+  __pyx_t_32 = ((PyArrayObject *)__pyx_t_3);
+  {
+    __Pyx_BufFmt_StackElem __pyx_stack[1];
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_all_shiftsBin.rcbuffer->pybuffer, (PyObject*)__pyx_t_32, &__Pyx_TypeInfo_long, PyBUF_FORMAT| PyBUF_C_CONTIGUOUS| PyBUF_WRITABLE, 2, 0, __pyx_stack) == -1)) {
+      __pyx_v_all_shiftsBin = ((PyArrayObject *)Py_None); __Pyx_INCREF(Py_None); __pyx_pybuffernd_all_shiftsBin.rcbuffer->pybuffer.buf = NULL;
+      __PYX_ERR(0, 570, __pyx_L1_error)
+    } else {__pyx_pybuffernd_all_shiftsBin.diminfo[0].strides = __pyx_pybuffernd_all_shiftsBin.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_all_shiftsBin.diminfo[0].shape = __pyx_pybuffernd_all_shiftsBin.rcbuffer->pybuffer.shape[0]; __pyx_pybuffernd_all_shiftsBin.diminfo[1].strides = __pyx_pybuffernd_all_shiftsBin.rcbuffer->pybuffer.strides[1]; __pyx_pybuffernd_all_shiftsBin.diminfo[1].shape = __pyx_pybuffernd_all_shiftsBin.rcbuffer->pybuffer.shape[1];
+    }
+  }
+  __pyx_t_32 = 0;
+  __pyx_v_all_shiftsBin = ((PyArrayObject *)__pyx_t_3);
+  __pyx_t_3 = 0;
+
+  /* "Choreo_cython_funs.pyx":572
+ *     cdef np.ndarray[long, ndim=2, mode="c"]  all_shiftsBin = np.zeros((nloop,maxloopnbi),dtype=np.int_)
+ * 
+ *     for il in range(nloop):             # <<<<<<<<<<<<<<
+ *         for ib in range(loopnb[il]):
+ * 
+ */
+  __pyx_t_9 = __pyx_v_nloop;
+  __pyx_t_13 = __pyx_t_9;
+  for (__pyx_t_14 = 0; __pyx_t_14 < __pyx_t_13; __pyx_t_14+=1) {
+    __pyx_v_il = __pyx_t_14;
+
+    /* "Choreo_cython_funs.pyx":573
+ * 
+ *     for il in range(nloop):
+ *         for ib in range(loopnb[il]):             # <<<<<<<<<<<<<<
+ * 
+ *             if not(((-TimeRevsUn[il,ib]*nint*TimeShiftNumUn[il,ib]) % TimeShiftDenUn[il,ib]) == 0):
+ */
+    __pyx_t_15 = __pyx_v_il;
+    __pyx_t_16 = (*__Pyx_BufPtrCContig1d(long *, __pyx_pybuffernd_loopnb.rcbuffer->pybuffer.buf, __pyx_t_15, __pyx_pybuffernd_loopnb.diminfo[0].strides));
+    __pyx_t_17 = __pyx_t_16;
+    for (__pyx_t_18 = 0; __pyx_t_18 < __pyx_t_17; __pyx_t_18+=1) {
+      __pyx_v_ib = __pyx_t_18;
+
+      /* "Choreo_cython_funs.pyx":575
+ *         for ib in range(loopnb[il]):
+ * 
+ *             if not(((-TimeRevsUn[il,ib]*nint*TimeShiftNumUn[il,ib]) % TimeShiftDenUn[il,ib]) == 0):             # <<<<<<<<<<<<<<
+ *                 print("WARNING : remainder in integer division")
+ * 
+ */
+      __pyx_t_15 = __pyx_v_il;
+      __pyx_t_22 = __pyx_v_ib;
+      __pyx_t_23 = __pyx_v_il;
+      __pyx_t_24 = __pyx_v_ib;
+      __pyx_t_19 = (((-(*__Pyx_BufPtrCContig2d(long *, __pyx_pybuffernd_TimeRevsUn.rcbuffer->pybuffer.buf, __pyx_t_15, __pyx_pybuffernd_TimeRevsUn.diminfo[0].strides, __pyx_t_22, __pyx_pybuffernd_TimeRevsUn.diminfo[1].strides))) * __pyx_v_nint) * (*__Pyx_BufPtrCContig2d(long *, __pyx_pybuffernd_TimeShiftNumUn.rcbuffer->pybuffer.buf, __pyx_t_23, __pyx_pybuffernd_TimeShiftNumUn.diminfo[0].strides, __pyx_t_24, __pyx_pybuffernd_TimeShiftNumUn.diminfo[1].strides)));
+      __pyx_t_24 = __pyx_v_il;
+      __pyx_t_23 = __pyx_v_ib;
+      __pyx_t_20 = (*__Pyx_BufPtrCContig2d(long *, __pyx_pybuffernd_TimeShiftDenUn.rcbuffer->pybuffer.buf, __pyx_t_24, __pyx_pybuffernd_TimeShiftDenUn.diminfo[0].strides, __pyx_t_23, __pyx_pybuffernd_TimeShiftDenUn.diminfo[1].strides));
+      if (unlikely(__pyx_t_20 == 0)) {
+        PyErr_SetString(PyExc_ZeroDivisionError, "integer division or modulo by zero");
+        __PYX_ERR(0, 575, __pyx_L1_error)
+      }
+      __pyx_t_33 = ((!((__Pyx_mod_long(__pyx_t_19, __pyx_t_20) == 0) != 0)) != 0);
+      if (__pyx_t_33) {
+
+        /* "Choreo_cython_funs.pyx":576
+ * 
+ *             if not(((-TimeRevsUn[il,ib]*nint*TimeShiftNumUn[il,ib]) % TimeShiftDenUn[il,ib]) == 0):
+ *                 print("WARNING : remainder in integer division")             # <<<<<<<<<<<<<<
+ * 
+ *             all_shiftsUn[il,ib] = ((-TimeRevsUn[il,ib]*nint*TimeShiftNumUn[il,ib]) // TimeShiftDenUn[il,ib] ) % nint
+ */
+        __pyx_t_3 = __Pyx_PyObject_Call(__pyx_builtin_print, __pyx_tuple__2, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 576, __pyx_L1_error)
+        __Pyx_GOTREF(__pyx_t_3);
+        __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+
+        /* "Choreo_cython_funs.pyx":575
+ *         for ib in range(loopnb[il]):
+ * 
+ *             if not(((-TimeRevsUn[il,ib]*nint*TimeShiftNumUn[il,ib]) % TimeShiftDenUn[il,ib]) == 0):             # <<<<<<<<<<<<<<
+ *                 print("WARNING : remainder in integer division")
+ * 
+ */
+      }
+
+      /* "Choreo_cython_funs.pyx":578
+ *                 print("WARNING : remainder in integer division")
+ * 
+ *             all_shiftsUn[il,ib] = ((-TimeRevsUn[il,ib]*nint*TimeShiftNumUn[il,ib]) // TimeShiftDenUn[il,ib] ) % nint             # <<<<<<<<<<<<<<
+ * 
+ *         for ibi in range(loopnbi[il]):
+ */
+      __pyx_t_23 = __pyx_v_il;
+      __pyx_t_24 = __pyx_v_ib;
+      __pyx_t_22 = __pyx_v_il;
+      __pyx_t_15 = __pyx_v_ib;
+      __pyx_t_20 = (((-(*__Pyx_BufPtrCContig2d(long *, __pyx_pybuffernd_TimeRevsUn.rcbuffer->pybuffer.buf, __pyx_t_23, __pyx_pybuffernd_TimeRevsUn.diminfo[0].strides, __pyx_t_24, __pyx_pybuffernd_TimeRevsUn.diminfo[1].strides))) * __pyx_v_nint) * (*__Pyx_BufPtrCContig2d(long *, __pyx_pybuffernd_TimeShiftNumUn.rcbuffer->pybuffer.buf, __pyx_t_22, __pyx_pybuffernd_TimeShiftNumUn.diminfo[0].strides, __pyx_t_15, __pyx_pybuffernd_TimeShiftNumUn.diminfo[1].strides)));
+      __pyx_t_15 = __pyx_v_il;
+      __pyx_t_22 = __pyx_v_ib;
+      __pyx_t_19 = (*__Pyx_BufPtrCContig2d(long *, __pyx_pybuffernd_TimeShiftDenUn.rcbuffer->pybuffer.buf, __pyx_t_15, __pyx_pybuffernd_TimeShiftDenUn.diminfo[0].strides, __pyx_t_22, __pyx_pybuffernd_TimeShiftDenUn.diminfo[1].strides));
+      if (unlikely(__pyx_t_19 == 0)) {
+        PyErr_SetString(PyExc_ZeroDivisionError, "integer division or modulo by zero");
+        __PYX_ERR(0, 578, __pyx_L1_error)
+      }
+      else if (sizeof(long) == sizeof(long) && (!(((long)-1) > 0)) && unlikely(__pyx_t_19 == (long)-1)  && unlikely(UNARY_NEG_WOULD_OVERFLOW(__pyx_t_20))) {
+        PyErr_SetString(PyExc_OverflowError, "value too large to perform division");
+        __PYX_ERR(0, 578, __pyx_L1_error)
+      }
+      __pyx_t_21 = __Pyx_div_long(__pyx_t_20, __pyx_t_19);
+      if (unlikely(__pyx_v_nint == 0)) {
+        PyErr_SetString(PyExc_ZeroDivisionError, "integer division or modulo by zero");
+        __PYX_ERR(0, 578, __pyx_L1_error)
+      }
+      __pyx_t_22 = __pyx_v_il;
+      __pyx_t_15 = __pyx_v_ib;
+      *__Pyx_BufPtrCContig2d(long *, __pyx_pybuffernd_all_shiftsUn.rcbuffer->pybuffer.buf, __pyx_t_22, __pyx_pybuffernd_all_shiftsUn.diminfo[0].strides, __pyx_t_15, __pyx_pybuffernd_all_shiftsUn.diminfo[1].strides) = __Pyx_mod_long(__pyx_t_21, __pyx_v_nint);
+    }
+
+    /* "Choreo_cython_funs.pyx":580
+ *             all_shiftsUn[il,ib] = ((-TimeRevsUn[il,ib]*nint*TimeShiftNumUn[il,ib]) // TimeShiftDenUn[il,ib] ) % nint
+ * 
+ *         for ibi in range(loopnbi[il]):             # <<<<<<<<<<<<<<
+ * 
+ *             if not(((-TimeRevsBin[il,ibi]*nint*TimeShiftNumBin[il,ibi]) % TimeShiftDenBin[il,ibi]) == 0):
+ */
+    __pyx_t_15 = __pyx_v_il;
+    __pyx_t_16 = (*__Pyx_BufPtrCContig1d(long *, __pyx_pybuffernd_loopnbi.rcbuffer->pybuffer.buf, __pyx_t_15, __pyx_pybuffernd_loopnbi.diminfo[0].strides));
+    __pyx_t_17 = __pyx_t_16;
+    for (__pyx_t_18 = 0; __pyx_t_18 < __pyx_t_17; __pyx_t_18+=1) {
+      __pyx_v_ibi = __pyx_t_18;
+
+      /* "Choreo_cython_funs.pyx":582
+ *         for ibi in range(loopnbi[il]):
+ * 
+ *             if not(((-TimeRevsBin[il,ibi]*nint*TimeShiftNumBin[il,ibi]) % TimeShiftDenBin[il,ibi]) == 0):             # <<<<<<<<<<<<<<
+ *                 print("WARNING : remainder in integer division")
+ * 
+ */
+      __pyx_t_15 = __pyx_v_il;
+      __pyx_t_22 = __pyx_v_ibi;
+      __pyx_t_24 = __pyx_v_il;
+      __pyx_t_23 = __pyx_v_ibi;
+      __pyx_t_21 = (((-(*__Pyx_BufPtrCContig2d(long *, __pyx_pybuffernd_TimeRevsBin.rcbuffer->pybuffer.buf, __pyx_t_15, __pyx_pybuffernd_TimeRevsBin.diminfo[0].strides, __pyx_t_22, __pyx_pybuffernd_TimeRevsBin.diminfo[1].strides))) * __pyx_v_nint) * (*__Pyx_BufPtrCContig2d(long *, __pyx_pybuffernd_TimeShiftNumBin.rcbuffer->pybuffer.buf, __pyx_t_24, __pyx_pybuffernd_TimeShiftNumBin.diminfo[0].strides, __pyx_t_23, __pyx_pybuffernd_TimeShiftNumBin.diminfo[1].strides)));
+      __pyx_t_23 = __pyx_v_il;
+      __pyx_t_24 = __pyx_v_ibi;
+      __pyx_t_19 = (*__Pyx_BufPtrCContig2d(long *, __pyx_pybuffernd_TimeShiftDenBin.rcbuffer->pybuffer.buf, __pyx_t_23, __pyx_pybuffernd_TimeShiftDenBin.diminfo[0].strides, __pyx_t_24, __pyx_pybuffernd_TimeShiftDenBin.diminfo[1].strides));
+      if (unlikely(__pyx_t_19 == 0)) {
+        PyErr_SetString(PyExc_ZeroDivisionError, "integer division or modulo by zero");
+        __PYX_ERR(0, 582, __pyx_L1_error)
+      }
+      __pyx_t_33 = ((!((__Pyx_mod_long(__pyx_t_21, __pyx_t_19) == 0) != 0)) != 0);
+      if (__pyx_t_33) {
+
+        /* "Choreo_cython_funs.pyx":583
+ * 
+ *             if not(((-TimeRevsBin[il,ibi]*nint*TimeShiftNumBin[il,ibi]) % TimeShiftDenBin[il,ibi]) == 0):
+ *                 print("WARNING : remainder in integer division")             # <<<<<<<<<<<<<<
+ * 
+ *             all_shiftsBin[il,ibi] = ((-TimeRevsBin[il,ibi]*nint*TimeShiftNumBin[il,ibi]) // TimeShiftDenBin[il,ibi]) % nint
+ */
+        __pyx_t_3 = __Pyx_PyObject_Call(__pyx_builtin_print, __pyx_tuple__2, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 583, __pyx_L1_error)
+        __Pyx_GOTREF(__pyx_t_3);
+        __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+
+        /* "Choreo_cython_funs.pyx":582
+ *         for ibi in range(loopnbi[il]):
+ * 
+ *             if not(((-TimeRevsBin[il,ibi]*nint*TimeShiftNumBin[il,ibi]) % TimeShiftDenBin[il,ibi]) == 0):             # <<<<<<<<<<<<<<
+ *                 print("WARNING : remainder in integer division")
+ * 
+ */
+      }
+
+      /* "Choreo_cython_funs.pyx":585
+ *                 print("WARNING : remainder in integer division")
+ * 
+ *             all_shiftsBin[il,ibi] = ((-TimeRevsBin[il,ibi]*nint*TimeShiftNumBin[il,ibi]) // TimeShiftDenBin[il,ibi]) % nint             # <<<<<<<<<<<<<<
+ * 
+ *     cdef np.ndarray[double, ndim=3, mode="c"] hess_pot_all_d = np.zeros((nloop,cndim,nint),dtype=np.float64)
+ */
+      __pyx_t_24 = __pyx_v_il;
+      __pyx_t_23 = __pyx_v_ibi;
+      __pyx_t_22 = __pyx_v_il;
+      __pyx_t_15 = __pyx_v_ibi;
+      __pyx_t_19 = (((-(*__Pyx_BufPtrCContig2d(long *, __pyx_pybuffernd_TimeRevsBin.rcbuffer->pybuffer.buf, __pyx_t_24, __pyx_pybuffernd_TimeRevsBin.diminfo[0].strides, __pyx_t_23, __pyx_pybuffernd_TimeRevsBin.diminfo[1].strides))) * __pyx_v_nint) * (*__Pyx_BufPtrCContig2d(long *, __pyx_pybuffernd_TimeShiftNumBin.rcbuffer->pybuffer.buf, __pyx_t_22, __pyx_pybuffernd_TimeShiftNumBin.diminfo[0].strides, __pyx_t_15, __pyx_pybuffernd_TimeShiftNumBin.diminfo[1].strides)));
+      __pyx_t_15 = __pyx_v_il;
+      __pyx_t_22 = __pyx_v_ibi;
+      __pyx_t_21 = (*__Pyx_BufPtrCContig2d(long *, __pyx_pybuffernd_TimeShiftDenBin.rcbuffer->pybuffer.buf, __pyx_t_15, __pyx_pybuffernd_TimeShiftDenBin.diminfo[0].strides, __pyx_t_22, __pyx_pybuffernd_TimeShiftDenBin.diminfo[1].strides));
+      if (unlikely(__pyx_t_21 == 0)) {
+        PyErr_SetString(PyExc_ZeroDivisionError, "integer division or modulo by zero");
+        __PYX_ERR(0, 585, __pyx_L1_error)
+      }
+      else if (sizeof(long) == sizeof(long) && (!(((long)-1) > 0)) && unlikely(__pyx_t_21 == (long)-1)  && unlikely(UNARY_NEG_WOULD_OVERFLOW(__pyx_t_19))) {
+        PyErr_SetString(PyExc_OverflowError, "value too large to perform division");
+        __PYX_ERR(0, 585, __pyx_L1_error)
+      }
+      __pyx_t_20 = __Pyx_div_long(__pyx_t_19, __pyx_t_21);
+      if (unlikely(__pyx_v_nint == 0)) {
+        PyErr_SetString(PyExc_ZeroDivisionError, "integer division or modulo by zero");
+        __PYX_ERR(0, 585, __pyx_L1_error)
+      }
+      __pyx_t_22 = __pyx_v_il;
+      __pyx_t_15 = __pyx_v_ibi;
+      *__Pyx_BufPtrCContig2d(long *, __pyx_pybuffernd_all_shiftsBin.rcbuffer->pybuffer.buf, __pyx_t_22, __pyx_pybuffernd_all_shiftsBin.diminfo[0].strides, __pyx_t_15, __pyx_pybuffernd_all_shiftsBin.diminfo[1].strides) = __Pyx_mod_long(__pyx_t_20, __pyx_v_nint);
+    }
+  }
+
+  /* "Choreo_cython_funs.pyx":587
+ *             all_shiftsBin[il,ibi] = ((-TimeRevsBin[il,ibi]*nint*TimeShiftNumBin[il,ibi]) // TimeShiftDenBin[il,ibi]) % nint
+ * 
+ *     cdef np.ndarray[double, ndim=3, mode="c"] hess_pot_all_d = np.zeros((nloop,cndim,nint),dtype=np.float64)             # <<<<<<<<<<<<<<
+ * 
+ *     for iint in range(nint):
+ */
+  __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_n_s_np); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 587, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_zeros); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 587, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  __pyx_t_3 = __Pyx_PyInt_From_long(__pyx_v_nloop); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 587, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __pyx_t_4 = __Pyx_PyInt_From_long(__pyx_v_18Choreo_cython_funs_cndim); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 587, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __pyx_t_2 = __Pyx_PyInt_From_long(__pyx_v_nint); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 587, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __pyx_t_10 = PyTuple_New(3); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 587, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_10);
+  __Pyx_GIVEREF(__pyx_t_3);
+  PyTuple_SET_ITEM(__pyx_t_10, 0, __pyx_t_3);
+  __Pyx_GIVEREF(__pyx_t_4);
+  PyTuple_SET_ITEM(__pyx_t_10, 1, __pyx_t_4);
+  __Pyx_GIVEREF(__pyx_t_2);
+  PyTuple_SET_ITEM(__pyx_t_10, 2, __pyx_t_2);
+  __pyx_t_3 = 0;
+  __pyx_t_4 = 0;
+  __pyx_t_2 = 0;
+  __pyx_t_2 = PyTuple_New(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 587, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __Pyx_GIVEREF(__pyx_t_10);
+  PyTuple_SET_ITEM(__pyx_t_2, 0, __pyx_t_10);
+  __pyx_t_10 = 0;
+  __pyx_t_10 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 587, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_10);
+  __Pyx_GetModuleGlobalName(__pyx_t_4, __pyx_n_s_np); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 587, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_float64); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 587, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  if (PyDict_SetItem(__pyx_t_10, __pyx_n_s_dtype, __pyx_t_3) < 0) __PYX_ERR(0, 587, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_t_2, __pyx_t_10); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 587, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __Pyx_DECREF(__pyx_t_10); __pyx_t_10 = 0;
+  if (!(likely(((__pyx_t_3) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_3, __pyx_ptype_5numpy_ndarray))))) __PYX_ERR(0, 587, __pyx_L1_error)
+  __pyx_t_34 = ((PyArrayObject *)__pyx_t_3);
+  {
+    __Pyx_BufFmt_StackElem __pyx_stack[1];
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_hess_pot_all_d.rcbuffer->pybuffer, (PyObject*)__pyx_t_34, &__Pyx_TypeInfo_double, PyBUF_FORMAT| PyBUF_C_CONTIGUOUS| PyBUF_WRITABLE, 3, 0, __pyx_stack) == -1)) {
+      __pyx_v_hess_pot_all_d = ((PyArrayObject *)Py_None); __Pyx_INCREF(Py_None); __pyx_pybuffernd_hess_pot_all_d.rcbuffer->pybuffer.buf = NULL;
+      __PYX_ERR(0, 587, __pyx_L1_error)
+    } else {__pyx_pybuffernd_hess_pot_all_d.diminfo[0].strides = __pyx_pybuffernd_hess_pot_all_d.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_hess_pot_all_d.diminfo[0].shape = __pyx_pybuffernd_hess_pot_all_d.rcbuffer->pybuffer.shape[0]; __pyx_pybuffernd_hess_pot_all_d.diminfo[1].strides = __pyx_pybuffernd_hess_pot_all_d.rcbuffer->pybuffer.strides[1]; __pyx_pybuffernd_hess_pot_all_d.diminfo[1].shape = __pyx_pybuffernd_hess_pot_all_d.rcbuffer->pybuffer.shape[1]; __pyx_pybuffernd_hess_pot_all_d.diminfo[2].strides = __pyx_pybuffernd_hess_pot_all_d.rcbuffer->pybuffer.strides[2]; __pyx_pybuffernd_hess_pot_all_d.diminfo[2].shape = __pyx_pybuffernd_hess_pot_all_d.rcbuffer->pybuffer.shape[2];
+    }
+  }
+  __pyx_t_34 = 0;
+  __pyx_v_hess_pot_all_d = ((PyArrayObject *)__pyx_t_3);
+  __pyx_t_3 = 0;
+
+  /* "Choreo_cython_funs.pyx":589
+ *     cdef np.ndarray[double, ndim=3, mode="c"] hess_pot_all_d = np.zeros((nloop,cndim,nint),dtype=np.float64)
+ * 
+ *     for iint in range(nint):             # <<<<<<<<<<<<<<
+ * 
+ *         # Different loops
+ */
+  __pyx_t_9 = __pyx_v_nint;
+  __pyx_t_13 = __pyx_t_9;
+  for (__pyx_t_14 = 0; __pyx_t_14 < __pyx_t_13; __pyx_t_14+=1) {
+    __pyx_v_iint = __pyx_t_14;
+
+    /* "Choreo_cython_funs.pyx":592
+ * 
+ *         # Different loops
+ *         for il in range(nloop):             # <<<<<<<<<<<<<<
+ *             for ilp in range(il+1,nloop):
+ * 
+ */
+    __pyx_t_16 = __pyx_v_nloop;
+    __pyx_t_17 = __pyx_t_16;
+    for (__pyx_t_18 = 0; __pyx_t_18 < __pyx_t_17; __pyx_t_18+=1) {
+      __pyx_v_il = __pyx_t_18;
+
+      /* "Choreo_cython_funs.pyx":593
+ *         # Different loops
+ *         for il in range(nloop):
+ *             for ilp in range(il+1,nloop):             # <<<<<<<<<<<<<<
+ * 
+ *                 for ib in range(loopnb[il]):
+ */
+      __pyx_t_20 = __pyx_v_nloop;
+      __pyx_t_21 = __pyx_t_20;
+      for (__pyx_t_19 = (__pyx_v_il + 1); __pyx_t_19 < __pyx_t_21; __pyx_t_19+=1) {
+        __pyx_v_ilp = __pyx_t_19;
+
+        /* "Choreo_cython_funs.pyx":595
+ *             for ilp in range(il+1,nloop):
+ * 
+ *                 for ib in range(loopnb[il]):             # <<<<<<<<<<<<<<
+ *                     for ibp in range(loopnb[ilp]):
+ * 
+ */
+        __pyx_t_15 = __pyx_v_il;
+        __pyx_t_35 = (*__Pyx_BufPtrCContig1d(long *, __pyx_pybuffernd_loopnb.rcbuffer->pybuffer.buf, __pyx_t_15, __pyx_pybuffernd_loopnb.diminfo[0].strides));
+        __pyx_t_36 = __pyx_t_35;
+        for (__pyx_t_37 = 0; __pyx_t_37 < __pyx_t_36; __pyx_t_37+=1) {
+          __pyx_v_ib = __pyx_t_37;
+
+          /* "Choreo_cython_funs.pyx":596
+ * 
+ *                 for ib in range(loopnb[il]):
+ *                     for ibp in range(loopnb[ilp]):             # <<<<<<<<<<<<<<
+ * 
+ *                         prod_mass = mass[Targets[il,ib]]*mass[Targets[ilp,ibp]]
+ */
+          __pyx_t_15 = __pyx_v_ilp;
+          __pyx_t_38 = (*__Pyx_BufPtrCContig1d(long *, __pyx_pybuffernd_loopnb.rcbuffer->pybuffer.buf, __pyx_t_15, __pyx_pybuffernd_loopnb.diminfo[0].strides));
+          __pyx_t_39 = __pyx_t_38;
+          for (__pyx_t_40 = 0; __pyx_t_40 < __pyx_t_39; __pyx_t_40+=1) {
+            __pyx_v_ibp = __pyx_t_40;
+
+            /* "Choreo_cython_funs.pyx":598
+ *                     for ibp in range(loopnb[ilp]):
+ * 
+ *                         prod_mass = mass[Targets[il,ib]]*mass[Targets[ilp,ibp]]             # <<<<<<<<<<<<<<
+ * 
+ *                         for idim in range(cndim):
+ */
+            __pyx_t_15 = __pyx_v_il;
+            __pyx_t_22 = __pyx_v_ib;
+            __pyx_t_23 = (*__Pyx_BufPtrCContig2d(long *, __pyx_pybuffernd_Targets.rcbuffer->pybuffer.buf, __pyx_t_15, __pyx_pybuffernd_Targets.diminfo[0].strides, __pyx_t_22, __pyx_pybuffernd_Targets.diminfo[1].strides));
+            __pyx_t_24 = __pyx_v_ilp;
+            __pyx_t_25 = __pyx_v_ibp;
+            __pyx_t_26 = (*__Pyx_BufPtrCContig2d(long *, __pyx_pybuffernd_Targets.rcbuffer->pybuffer.buf, __pyx_t_24, __pyx_pybuffernd_Targets.diminfo[0].strides, __pyx_t_25, __pyx_pybuffernd_Targets.diminfo[1].strides));
+            __pyx_v_prod_mass = ((*__Pyx_BufPtrCContig1d(double *, __pyx_pybuffernd_mass.rcbuffer->pybuffer.buf, __pyx_t_23, __pyx_pybuffernd_mass.diminfo[0].strides)) * (*__Pyx_BufPtrCContig1d(double *, __pyx_pybuffernd_mass.rcbuffer->pybuffer.buf, __pyx_t_26, __pyx_pybuffernd_mass.diminfo[0].strides)));
+
+            /* "Choreo_cython_funs.pyx":600
+ *                         prod_mass = mass[Targets[il,ib]]*mass[Targets[ilp,ibp]]
+ * 
+ *                         for idim in range(cndim):             # <<<<<<<<<<<<<<
+ *                             dx[idim] = SpaceRotsUn[il,ib,idim,0]*all_pos[il,0,all_shiftsUn[il,ib]] - SpaceRotsUn[ilp,ibp,idim,0]*all_pos[ilp,0,all_shiftsUn[ilp,ibp]]
+ *                             ddx[idim] = SpaceRotsUn[il,ib,idim,0]*all_pos_d[il,0,all_shiftsUn[il,ib]] - SpaceRotsUn[ilp,ibp,idim,0]*all_pos_d[ilp,0,all_shiftsUn[ilp,ibp]]
+ */
+            __pyx_t_41 = __pyx_v_18Choreo_cython_funs_cndim;
+            __pyx_t_42 = __pyx_t_41;
+            for (__pyx_t_43 = 0; __pyx_t_43 < __pyx_t_42; __pyx_t_43+=1) {
+              __pyx_v_idim = __pyx_t_43;
+
+              /* "Choreo_cython_funs.pyx":601
+ * 
+ *                         for idim in range(cndim):
+ *                             dx[idim] = SpaceRotsUn[il,ib,idim,0]*all_pos[il,0,all_shiftsUn[il,ib]] - SpaceRotsUn[ilp,ibp,idim,0]*all_pos[ilp,0,all_shiftsUn[ilp,ibp]]             # <<<<<<<<<<<<<<
+ *                             ddx[idim] = SpaceRotsUn[il,ib,idim,0]*all_pos_d[il,0,all_shiftsUn[il,ib]] - SpaceRotsUn[ilp,ibp,idim,0]*all_pos_d[ilp,0,all_shiftsUn[ilp,ibp]]
+ *                             for jdim in range(1,cndim):
+ */
+              __pyx_t_25 = __pyx_v_il;
+              __pyx_t_24 = __pyx_v_ib;
+              __pyx_t_26 = __pyx_v_idim;
+              __pyx_t_22 = 0;
+              __pyx_t_15 = __pyx_v_il;
+              __pyx_t_23 = __pyx_v_ib;
+              __pyx_t_27 = __pyx_v_il;
+              __pyx_t_28 = 0;
+              __pyx_t_44 = (*__Pyx_BufPtrCContig2d(long *, __pyx_pybuffernd_all_shiftsUn.rcbuffer->pybuffer.buf, __pyx_t_15, __pyx_pybuffernd_all_shiftsUn.diminfo[0].strides, __pyx_t_23, __pyx_pybuffernd_all_shiftsUn.diminfo[1].strides));
+              __pyx_t_45 = __pyx_v_ilp;
+              __pyx_t_46 = __pyx_v_ibp;
+              __pyx_t_47 = __pyx_v_idim;
+              __pyx_t_48 = 0;
+              __pyx_t_49 = __pyx_v_ilp;
+              __pyx_t_50 = __pyx_v_ibp;
+              __pyx_t_51 = __pyx_v_ilp;
+              __pyx_t_52 = 0;
+              __pyx_t_53 = (*__Pyx_BufPtrCContig2d(long *, __pyx_pybuffernd_all_shiftsUn.rcbuffer->pybuffer.buf, __pyx_t_49, __pyx_pybuffernd_all_shiftsUn.diminfo[0].strides, __pyx_t_50, __pyx_pybuffernd_all_shiftsUn.diminfo[1].strides));
+              __pyx_t_54 = __pyx_v_idim;
+              *__Pyx_BufPtrCContig1d(double *, __pyx_pybuffernd_dx.rcbuffer->pybuffer.buf, __pyx_t_54, __pyx_pybuffernd_dx.diminfo[0].strides) = (((*__Pyx_BufPtrCContig4d(double *, __pyx_pybuffernd_SpaceRotsUn.rcbuffer->pybuffer.buf, __pyx_t_25, __pyx_pybuffernd_SpaceRotsUn.diminfo[0].strides, __pyx_t_24, __pyx_pybuffernd_SpaceRotsUn.diminfo[1].strides, __pyx_t_26, __pyx_pybuffernd_SpaceRotsUn.diminfo[2].strides, __pyx_t_22, __pyx_pybuffernd_SpaceRotsUn.diminfo[3].strides)) * (*__Pyx_BufPtrCContig3d(double *, __pyx_pybuffernd_all_pos.rcbuffer->pybuffer.buf, __pyx_t_27, __pyx_pybuffernd_all_pos.diminfo[0].strides, __pyx_t_28, __pyx_pybuffernd_all_pos.diminfo[1].strides, __pyx_t_44, __pyx_pybuffernd_all_pos.diminfo[2].strides))) - ((*__Pyx_BufPtrCContig4d(double *, __pyx_pybuffernd_SpaceRotsUn.rcbuffer->pybuffer.buf, __pyx_t_45, __pyx_pybuffernd_SpaceRotsUn.diminfo[0].strides, __pyx_t_46, __pyx_pybuffernd_SpaceRotsUn.diminfo[1].strides, __pyx_t_47, __pyx_pybuffernd_SpaceRotsUn.diminfo[2].strides, __pyx_t_48, __pyx_pybuffernd_SpaceRotsUn.diminfo[3].strides)) * (*__Pyx_BufPtrCContig3d(double *, __pyx_pybuffernd_all_pos.rcbuffer->pybuffer.buf, __pyx_t_51, __pyx_pybuffernd_all_pos.diminfo[0].strides, __pyx_t_52, __pyx_pybuffernd_all_pos.diminfo[1].strides, __pyx_t_53, __pyx_pybuffernd_all_pos.diminfo[2].strides))));
+
+              /* "Choreo_cython_funs.pyx":602
+ *                         for idim in range(cndim):
+ *                             dx[idim] = SpaceRotsUn[il,ib,idim,0]*all_pos[il,0,all_shiftsUn[il,ib]] - SpaceRotsUn[ilp,ibp,idim,0]*all_pos[ilp,0,all_shiftsUn[ilp,ibp]]
+ *                             ddx[idim] = SpaceRotsUn[il,ib,idim,0]*all_pos_d[il,0,all_shiftsUn[il,ib]] - SpaceRotsUn[ilp,ibp,idim,0]*all_pos_d[ilp,0,all_shiftsUn[ilp,ibp]]             # <<<<<<<<<<<<<<
+ *                             for jdim in range(1,cndim):
+ *                                 dx[idim] += SpaceRotsUn[il,ib,idim,jdim]*all_pos[il,jdim,all_shiftsUn[il,ib]] - SpaceRotsUn[ilp,ibp,idim,jdim]*all_pos[ilp,jdim,all_shiftsUn[ilp,ibp]]
+ */
+              __pyx_t_50 = __pyx_v_il;
+              __pyx_t_49 = __pyx_v_ib;
+              __pyx_t_53 = __pyx_v_idim;
+              __pyx_t_52 = 0;
+              __pyx_t_51 = __pyx_v_il;
+              __pyx_t_48 = __pyx_v_ib;
+              __pyx_t_47 = __pyx_v_il;
+              __pyx_t_46 = 0;
+              __pyx_t_45 = (*__Pyx_BufPtrCContig2d(long *, __pyx_pybuffernd_all_shiftsUn.rcbuffer->pybuffer.buf, __pyx_t_51, __pyx_pybuffernd_all_shiftsUn.diminfo[0].strides, __pyx_t_48, __pyx_pybuffernd_all_shiftsUn.diminfo[1].strides));
+              __pyx_t_23 = __pyx_v_ilp;
+              __pyx_t_15 = __pyx_v_ibp;
+              __pyx_t_44 = __pyx_v_idim;
+              __pyx_t_28 = 0;
+              __pyx_t_27 = __pyx_v_ilp;
+              __pyx_t_22 = __pyx_v_ibp;
+              __pyx_t_26 = __pyx_v_ilp;
+              __pyx_t_24 = 0;
+              __pyx_t_25 = (*__Pyx_BufPtrCContig2d(long *, __pyx_pybuffernd_all_shiftsUn.rcbuffer->pybuffer.buf, __pyx_t_27, __pyx_pybuffernd_all_shiftsUn.diminfo[0].strides, __pyx_t_22, __pyx_pybuffernd_all_shiftsUn.diminfo[1].strides));
+              __pyx_t_54 = __pyx_v_idim;
+              *__Pyx_BufPtrCContig1d(double *, __pyx_pybuffernd_ddx.rcbuffer->pybuffer.buf, __pyx_t_54, __pyx_pybuffernd_ddx.diminfo[0].strides) = (((*__Pyx_BufPtrCContig4d(double *, __pyx_pybuffernd_SpaceRotsUn.rcbuffer->pybuffer.buf, __pyx_t_50, __pyx_pybuffernd_SpaceRotsUn.diminfo[0].strides, __pyx_t_49, __pyx_pybuffernd_SpaceRotsUn.diminfo[1].strides, __pyx_t_53, __pyx_pybuffernd_SpaceRotsUn.diminfo[2].strides, __pyx_t_52, __pyx_pybuffernd_SpaceRotsUn.diminfo[3].strides)) * (*__Pyx_BufPtrCContig3d(double *, __pyx_pybuffernd_all_pos_d.rcbuffer->pybuffer.buf, __pyx_t_47, __pyx_pybuffernd_all_pos_d.diminfo[0].strides, __pyx_t_46, __pyx_pybuffernd_all_pos_d.diminfo[1].strides, __pyx_t_45, __pyx_pybuffernd_all_pos_d.diminfo[2].strides))) - ((*__Pyx_BufPtrCContig4d(double *, __pyx_pybuffernd_SpaceRotsUn.rcbuffer->pybuffer.buf, __pyx_t_23, __pyx_pybuffernd_SpaceRotsUn.diminfo[0].strides, __pyx_t_15, __pyx_pybuffernd_SpaceRotsUn.diminfo[1].strides, __pyx_t_44, __pyx_pybuffernd_SpaceRotsUn.diminfo[2].strides, __pyx_t_28, __pyx_pybuffernd_SpaceRotsUn.diminfo[3].strides)) * (*__Pyx_BufPtrCContig3d(double *, __pyx_pybuffernd_all_pos_d.rcbuffer->pybuffer.buf, __pyx_t_26, __pyx_pybuffernd_all_pos_d.diminfo[0].strides, __pyx_t_24, __pyx_pybuffernd_all_pos_d.diminfo[1].strides, __pyx_t_25, __pyx_pybuffernd_all_pos_d.diminfo[2].strides))));
+
+              /* "Choreo_cython_funs.pyx":603
+ *                             dx[idim] = SpaceRotsUn[il,ib,idim,0]*all_pos[il,0,all_shiftsUn[il,ib]] - SpaceRotsUn[ilp,ibp,idim,0]*all_pos[ilp,0,all_shiftsUn[ilp,ibp]]
+ *                             ddx[idim] = SpaceRotsUn[il,ib,idim,0]*all_pos_d[il,0,all_shiftsUn[il,ib]] - SpaceRotsUn[ilp,ibp,idim,0]*all_pos_d[ilp,0,all_shiftsUn[ilp,ibp]]
+ *                             for jdim in range(1,cndim):             # <<<<<<<<<<<<<<
+ *                                 dx[idim] += SpaceRotsUn[il,ib,idim,jdim]*all_pos[il,jdim,all_shiftsUn[il,ib]] - SpaceRotsUn[ilp,ibp,idim,jdim]*all_pos[ilp,jdim,all_shiftsUn[ilp,ibp]]
+ *                                 ddx[idim] += SpaceRotsUn[il,ib,idim,jdim]*all_pos_d[il,jdim,all_shiftsUn[il,ib]] - SpaceRotsUn[ilp,ibp,idim,jdim]*all_pos_d[ilp,jdim,all_shiftsUn[ilp,ibp]]
+ */
+              __pyx_t_55 = __pyx_v_18Choreo_cython_funs_cndim;
+              __pyx_t_56 = __pyx_t_55;
+              for (__pyx_t_57 = 1; __pyx_t_57 < __pyx_t_56; __pyx_t_57+=1) {
+                __pyx_v_jdim = __pyx_t_57;
+
+                /* "Choreo_cython_funs.pyx":604
+ *                             ddx[idim] = SpaceRotsUn[il,ib,idim,0]*all_pos_d[il,0,all_shiftsUn[il,ib]] - SpaceRotsUn[ilp,ibp,idim,0]*all_pos_d[ilp,0,all_shiftsUn[ilp,ibp]]
+ *                             for jdim in range(1,cndim):
+ *                                 dx[idim] += SpaceRotsUn[il,ib,idim,jdim]*all_pos[il,jdim,all_shiftsUn[il,ib]] - SpaceRotsUn[ilp,ibp,idim,jdim]*all_pos[ilp,jdim,all_shiftsUn[ilp,ibp]]             # <<<<<<<<<<<<<<
+ *                                 ddx[idim] += SpaceRotsUn[il,ib,idim,jdim]*all_pos_d[il,jdim,all_shiftsUn[il,ib]] - SpaceRotsUn[ilp,ibp,idim,jdim]*all_pos_d[ilp,jdim,all_shiftsUn[ilp,ibp]]
+ * 
+ */
+                __pyx_t_22 = __pyx_v_il;
+                __pyx_t_27 = __pyx_v_ib;
+                __pyx_t_25 = __pyx_v_idim;
+                __pyx_t_24 = __pyx_v_jdim;
+                __pyx_t_26 = __pyx_v_il;
+                __pyx_t_28 = __pyx_v_ib;
+                __pyx_t_44 = __pyx_v_il;
+                __pyx_t_15 = __pyx_v_jdim;
+                __pyx_t_23 = (*__Pyx_BufPtrCContig2d(long *, __pyx_pybuffernd_all_shiftsUn.rcbuffer->pybuffer.buf, __pyx_t_26, __pyx_pybuffernd_all_shiftsUn.diminfo[0].strides, __pyx_t_28, __pyx_pybuffernd_all_shiftsUn.diminfo[1].strides));
+                __pyx_t_48 = __pyx_v_ilp;
+                __pyx_t_51 = __pyx_v_ibp;
+                __pyx_t_45 = __pyx_v_idim;
+                __pyx_t_46 = __pyx_v_jdim;
+                __pyx_t_47 = __pyx_v_ilp;
+                __pyx_t_52 = __pyx_v_ibp;
+                __pyx_t_53 = __pyx_v_ilp;
+                __pyx_t_49 = __pyx_v_jdim;
+                __pyx_t_50 = (*__Pyx_BufPtrCContig2d(long *, __pyx_pybuffernd_all_shiftsUn.rcbuffer->pybuffer.buf, __pyx_t_47, __pyx_pybuffernd_all_shiftsUn.diminfo[0].strides, __pyx_t_52, __pyx_pybuffernd_all_shiftsUn.diminfo[1].strides));
+                __pyx_t_54 = __pyx_v_idim;
+                *__Pyx_BufPtrCContig1d(double *, __pyx_pybuffernd_dx.rcbuffer->pybuffer.buf, __pyx_t_54, __pyx_pybuffernd_dx.diminfo[0].strides) += (((*__Pyx_BufPtrCContig4d(double *, __pyx_pybuffernd_SpaceRotsUn.rcbuffer->pybuffer.buf, __pyx_t_22, __pyx_pybuffernd_SpaceRotsUn.diminfo[0].strides, __pyx_t_27, __pyx_pybuffernd_SpaceRotsUn.diminfo[1].strides, __pyx_t_25, __pyx_pybuffernd_SpaceRotsUn.diminfo[2].strides, __pyx_t_24, __pyx_pybuffernd_SpaceRotsUn.diminfo[3].strides)) * (*__Pyx_BufPtrCContig3d(double *, __pyx_pybuffernd_all_pos.rcbuffer->pybuffer.buf, __pyx_t_44, __pyx_pybuffernd_all_pos.diminfo[0].strides, __pyx_t_15, __pyx_pybuffernd_all_pos.diminfo[1].strides, __pyx_t_23, __pyx_pybuffernd_all_pos.diminfo[2].strides))) - ((*__Pyx_BufPtrCContig4d(double *, __pyx_pybuffernd_SpaceRotsUn.rcbuffer->pybuffer.buf, __pyx_t_48, __pyx_pybuffernd_SpaceRotsUn.diminfo[0].strides, __pyx_t_51, __pyx_pybuffernd_SpaceRotsUn.diminfo[1].strides, __pyx_t_45, __pyx_pybuffernd_SpaceRotsUn.diminfo[2].strides, __pyx_t_46, __pyx_pybuffernd_SpaceRotsUn.diminfo[3].strides)) * (*__Pyx_BufPtrCContig3d(double *, __pyx_pybuffernd_all_pos.rcbuffer->pybuffer.buf, __pyx_t_53, __pyx_pybuffernd_all_pos.diminfo[0].strides, __pyx_t_49, __pyx_pybuffernd_all_pos.diminfo[1].strides, __pyx_t_50, __pyx_pybuffernd_all_pos.diminfo[2].strides))));
+
+                /* "Choreo_cython_funs.pyx":605
+ *                             for jdim in range(1,cndim):
+ *                                 dx[idim] += SpaceRotsUn[il,ib,idim,jdim]*all_pos[il,jdim,all_shiftsUn[il,ib]] - SpaceRotsUn[ilp,ibp,idim,jdim]*all_pos[ilp,jdim,all_shiftsUn[ilp,ibp]]
+ *                                 ddx[idim] += SpaceRotsUn[il,ib,idim,jdim]*all_pos_d[il,jdim,all_shiftsUn[il,ib]] - SpaceRotsUn[ilp,ibp,idim,jdim]*all_pos_d[ilp,jdim,all_shiftsUn[ilp,ibp]]             # <<<<<<<<<<<<<<
+ * 
+ *                         dx2 = dx[0]*dx[0]
+ */
+                __pyx_t_52 = __pyx_v_il;
+                __pyx_t_47 = __pyx_v_ib;
+                __pyx_t_50 = __pyx_v_idim;
+                __pyx_t_49 = __pyx_v_jdim;
+                __pyx_t_53 = __pyx_v_il;
+                __pyx_t_46 = __pyx_v_ib;
+                __pyx_t_45 = __pyx_v_il;
+                __pyx_t_51 = __pyx_v_jdim;
+                __pyx_t_48 = (*__Pyx_BufPtrCContig2d(long *, __pyx_pybuffernd_all_shiftsUn.rcbuffer->pybuffer.buf, __pyx_t_53, __pyx_pybuffernd_all_shiftsUn.diminfo[0].strides, __pyx_t_46, __pyx_pybuffernd_all_shiftsUn.diminfo[1].strides));
+                __pyx_t_28 = __pyx_v_ilp;
+                __pyx_t_26 = __pyx_v_ibp;
+                __pyx_t_23 = __pyx_v_idim;
+                __pyx_t_15 = __pyx_v_jdim;
+                __pyx_t_44 = __pyx_v_ilp;
+                __pyx_t_24 = __pyx_v_ibp;
+                __pyx_t_25 = __pyx_v_ilp;
+                __pyx_t_27 = __pyx_v_jdim;
+                __pyx_t_22 = (*__Pyx_BufPtrCContig2d(long *, __pyx_pybuffernd_all_shiftsUn.rcbuffer->pybuffer.buf, __pyx_t_44, __pyx_pybuffernd_all_shiftsUn.diminfo[0].strides, __pyx_t_24, __pyx_pybuffernd_all_shiftsUn.diminfo[1].strides));
+                __pyx_t_54 = __pyx_v_idim;
+                *__Pyx_BufPtrCContig1d(double *, __pyx_pybuffernd_ddx.rcbuffer->pybuffer.buf, __pyx_t_54, __pyx_pybuffernd_ddx.diminfo[0].strides) += (((*__Pyx_BufPtrCContig4d(double *, __pyx_pybuffernd_SpaceRotsUn.rcbuffer->pybuffer.buf, __pyx_t_52, __pyx_pybuffernd_SpaceRotsUn.diminfo[0].strides, __pyx_t_47, __pyx_pybuffernd_SpaceRotsUn.diminfo[1].strides, __pyx_t_50, __pyx_pybuffernd_SpaceRotsUn.diminfo[2].strides, __pyx_t_49, __pyx_pybuffernd_SpaceRotsUn.diminfo[3].strides)) * (*__Pyx_BufPtrCContig3d(double *, __pyx_pybuffernd_all_pos_d.rcbuffer->pybuffer.buf, __pyx_t_45, __pyx_pybuffernd_all_pos_d.diminfo[0].strides, __pyx_t_51, __pyx_pybuffernd_all_pos_d.diminfo[1].strides, __pyx_t_48, __pyx_pybuffernd_all_pos_d.diminfo[2].strides))) - ((*__Pyx_BufPtrCContig4d(double *, __pyx_pybuffernd_SpaceRotsUn.rcbuffer->pybuffer.buf, __pyx_t_28, __pyx_pybuffernd_SpaceRotsUn.diminfo[0].strides, __pyx_t_26, __pyx_pybuffernd_SpaceRotsUn.diminfo[1].strides, __pyx_t_23, __pyx_pybuffernd_SpaceRotsUn.diminfo[2].strides, __pyx_t_15, __pyx_pybuffernd_SpaceRotsUn.diminfo[3].strides)) * (*__Pyx_BufPtrCContig3d(double *, __pyx_pybuffernd_all_pos_d.rcbuffer->pybuffer.buf, __pyx_t_25, __pyx_pybuffernd_all_pos_d.diminfo[0].strides, __pyx_t_27, __pyx_pybuffernd_all_pos_d.diminfo[1].strides, __pyx_t_22, __pyx_pybuffernd_all_pos_d.diminfo[2].strides))));
+              }
+            }
+
+            /* "Choreo_cython_funs.pyx":607
+ *                                 ddx[idim] += SpaceRotsUn[il,ib,idim,jdim]*all_pos_d[il,jdim,all_shiftsUn[il,ib]] - SpaceRotsUn[ilp,ibp,idim,jdim]*all_pos_d[ilp,jdim,all_shiftsUn[ilp,ibp]]
+ * 
+ *                         dx2 = dx[0]*dx[0]             # <<<<<<<<<<<<<<
+ *                         dxtddx = dx[0]*ddx[0]
+ *                         for idim in range(1,cndim):
+ */
+            __pyx_t_24 = 0;
+            __pyx_t_44 = 0;
+            __pyx_v_dx2 = ((*__Pyx_BufPtrCContig1d(double *, __pyx_pybuffernd_dx.rcbuffer->pybuffer.buf, __pyx_t_24, __pyx_pybuffernd_dx.diminfo[0].strides)) * (*__Pyx_BufPtrCContig1d(double *, __pyx_pybuffernd_dx.rcbuffer->pybuffer.buf, __pyx_t_44, __pyx_pybuffernd_dx.diminfo[0].strides)));
+
+            /* "Choreo_cython_funs.pyx":608
+ * 
+ *                         dx2 = dx[0]*dx[0]
+ *                         dxtddx = dx[0]*ddx[0]             # <<<<<<<<<<<<<<
+ *                         for idim in range(1,cndim):
+ *                             dx2 += dx[idim]*dx[idim]
+ */
+            __pyx_t_44 = 0;
+            __pyx_t_24 = 0;
+            __pyx_v_dxtddx = ((*__Pyx_BufPtrCContig1d(double *, __pyx_pybuffernd_dx.rcbuffer->pybuffer.buf, __pyx_t_44, __pyx_pybuffernd_dx.diminfo[0].strides)) * (*__Pyx_BufPtrCContig1d(double *, __pyx_pybuffernd_ddx.rcbuffer->pybuffer.buf, __pyx_t_24, __pyx_pybuffernd_ddx.diminfo[0].strides)));
+
+            /* "Choreo_cython_funs.pyx":609
+ *                         dx2 = dx[0]*dx[0]
+ *                         dxtddx = dx[0]*ddx[0]
+ *                         for idim in range(1,cndim):             # <<<<<<<<<<<<<<
+ *                             dx2 += dx[idim]*dx[idim]
+ *                             dxtddx += dx[idim]*ddx[idim]
+ */
+            __pyx_t_41 = __pyx_v_18Choreo_cython_funs_cndim;
+            __pyx_t_42 = __pyx_t_41;
+            for (__pyx_t_43 = 1; __pyx_t_43 < __pyx_t_42; __pyx_t_43+=1) {
+              __pyx_v_idim = __pyx_t_43;
+
+              /* "Choreo_cython_funs.pyx":610
+ *                         dxtddx = dx[0]*ddx[0]
+ *                         for idim in range(1,cndim):
+ *                             dx2 += dx[idim]*dx[idim]             # <<<<<<<<<<<<<<
+ *                             dxtddx += dx[idim]*ddx[idim]
+ * 
+ */
+              __pyx_t_24 = __pyx_v_idim;
+              __pyx_t_44 = __pyx_v_idim;
+              __pyx_v_dx2 = (__pyx_v_dx2 + ((*__Pyx_BufPtrCContig1d(double *, __pyx_pybuffernd_dx.rcbuffer->pybuffer.buf, __pyx_t_24, __pyx_pybuffernd_dx.diminfo[0].strides)) * (*__Pyx_BufPtrCContig1d(double *, __pyx_pybuffernd_dx.rcbuffer->pybuffer.buf, __pyx_t_44, __pyx_pybuffernd_dx.diminfo[0].strides))));
+
+              /* "Choreo_cython_funs.pyx":611
+ *                         for idim in range(1,cndim):
+ *                             dx2 += dx[idim]*dx[idim]
+ *                             dxtddx += dx[idim]*ddx[idim]             # <<<<<<<<<<<<<<
+ * 
+ *                         pot,potp,potpp = CCpt_interbody_pot(dx2)
+ */
+              __pyx_t_44 = __pyx_v_idim;
+              __pyx_t_24 = __pyx_v_idim;
+              __pyx_v_dxtddx = (__pyx_v_dxtddx + ((*__Pyx_BufPtrCContig1d(double *, __pyx_pybuffernd_dx.rcbuffer->pybuffer.buf, __pyx_t_44, __pyx_pybuffernd_dx.diminfo[0].strides)) * (*__Pyx_BufPtrCContig1d(double *, __pyx_pybuffernd_ddx.rcbuffer->pybuffer.buf, __pyx_t_24, __pyx_pybuffernd_ddx.diminfo[0].strides))));
+            }
+
+            /* "Choreo_cython_funs.pyx":613
+ *                             dxtddx += dx[idim]*ddx[idim]
+ * 
+ *                         pot,potp,potpp = CCpt_interbody_pot(dx2)             # <<<<<<<<<<<<<<
+ * 
+ *                         a = (2*prod_mass*potp)
+ */
+            __pyx_t_58 = __pyx_f_18Choreo_cython_funs_CCpt_interbody_pot(__pyx_v_dx2);
+            __pyx_t_59 = __pyx_t_58.f0;
+            __pyx_t_60 = __pyx_t_58.f1;
+            __pyx_t_61 = __pyx_t_58.f2;
+            __pyx_v_pot = __pyx_t_59;
+            __pyx_v_potp = __pyx_t_60;
+            __pyx_v_potpp = __pyx_t_61;
+
+            /* "Choreo_cython_funs.pyx":615
+ *                         pot,potp,potpp = CCpt_interbody_pot(dx2)
+ * 
+ *                         a = (2*prod_mass*potp)             # <<<<<<<<<<<<<<
+ *                         b = (4*prod_mass*potpp*dxtddx)
+ * 
+ */
+            __pyx_v_a = ((2.0 * __pyx_v_prod_mass) * __pyx_v_potp);
+
+            /* "Choreo_cython_funs.pyx":616
+ * 
+ *                         a = (2*prod_mass*potp)
+ *                         b = (4*prod_mass*potpp*dxtddx)             # <<<<<<<<<<<<<<
+ * 
+ *                         for idim in range(cndim):
+ */
+            __pyx_v_b = (((4.0 * __pyx_v_prod_mass) * __pyx_v_potpp) * __pyx_v_dxtddx);
+
+            /* "Choreo_cython_funs.pyx":618
+ *                         b = (4*prod_mass*potpp*dxtddx)
+ * 
+ *                         for idim in range(cndim):             # <<<<<<<<<<<<<<
+ *                             ddf[idim] = b*dx[idim]+a*ddx[idim]
+ * 
+ */
+            __pyx_t_41 = __pyx_v_18Choreo_cython_funs_cndim;
+            __pyx_t_42 = __pyx_t_41;
+            for (__pyx_t_43 = 0; __pyx_t_43 < __pyx_t_42; __pyx_t_43+=1) {
+              __pyx_v_idim = __pyx_t_43;
+
+              /* "Choreo_cython_funs.pyx":619
+ * 
+ *                         for idim in range(cndim):
+ *                             ddf[idim] = b*dx[idim]+a*ddx[idim]             # <<<<<<<<<<<<<<
+ * 
+ *                         for idim in range(cndim):
+ */
+              __pyx_t_24 = __pyx_v_idim;
+              __pyx_t_44 = __pyx_v_idim;
+              __pyx_t_22 = __pyx_v_idim;
+              *__Pyx_BufPtrCContig1d(double *, __pyx_pybuffernd_ddf.rcbuffer->pybuffer.buf, __pyx_t_22, __pyx_pybuffernd_ddf.diminfo[0].strides) = ((__pyx_v_b * (*__Pyx_BufPtrCContig1d(double *, __pyx_pybuffernd_dx.rcbuffer->pybuffer.buf, __pyx_t_24, __pyx_pybuffernd_dx.diminfo[0].strides))) + (__pyx_v_a * (*__Pyx_BufPtrCContig1d(double *, __pyx_pybuffernd_ddx.rcbuffer->pybuffer.buf, __pyx_t_44, __pyx_pybuffernd_ddx.diminfo[0].strides))));
+            }
+
+            /* "Choreo_cython_funs.pyx":621
+ *                             ddf[idim] = b*dx[idim]+a*ddx[idim]
+ * 
+ *                         for idim in range(cndim):             # <<<<<<<<<<<<<<
+ * 
+ *                             c = SpaceRotsUn[il,ib,0,idim]*ddf[0]
+ */
+            __pyx_t_41 = __pyx_v_18Choreo_cython_funs_cndim;
+            __pyx_t_42 = __pyx_t_41;
+            for (__pyx_t_43 = 0; __pyx_t_43 < __pyx_t_42; __pyx_t_43+=1) {
+              __pyx_v_idim = __pyx_t_43;
+
+              /* "Choreo_cython_funs.pyx":623
+ *                         for idim in range(cndim):
+ * 
+ *                             c = SpaceRotsUn[il,ib,0,idim]*ddf[0]             # <<<<<<<<<<<<<<
+ *                             for jdim in range(1,cndim):
+ *                                 c+=SpaceRotsUn[il,ib,jdim,idim]*ddf[jdim]
+ */
+              __pyx_t_44 = __pyx_v_il;
+              __pyx_t_24 = __pyx_v_ib;
+              __pyx_t_22 = 0;
+              __pyx_t_27 = __pyx_v_idim;
+              __pyx_t_25 = 0;
+              __pyx_v_c = ((*__Pyx_BufPtrCContig4d(double *, __pyx_pybuffernd_SpaceRotsUn.rcbuffer->pybuffer.buf, __pyx_t_44, __pyx_pybuffernd_SpaceRotsUn.diminfo[0].strides, __pyx_t_24, __pyx_pybuffernd_SpaceRotsUn.diminfo[1].strides, __pyx_t_22, __pyx_pybuffernd_SpaceRotsUn.diminfo[2].strides, __pyx_t_27, __pyx_pybuffernd_SpaceRotsUn.diminfo[3].strides)) * (*__Pyx_BufPtrCContig1d(double *, __pyx_pybuffernd_ddf.rcbuffer->pybuffer.buf, __pyx_t_25, __pyx_pybuffernd_ddf.diminfo[0].strides)));
+
+              /* "Choreo_cython_funs.pyx":624
+ * 
+ *                             c = SpaceRotsUn[il,ib,0,idim]*ddf[0]
+ *                             for jdim in range(1,cndim):             # <<<<<<<<<<<<<<
+ *                                 c+=SpaceRotsUn[il,ib,jdim,idim]*ddf[jdim]
+ * 
+ */
+              __pyx_t_55 = __pyx_v_18Choreo_cython_funs_cndim;
+              __pyx_t_56 = __pyx_t_55;
+              for (__pyx_t_57 = 1; __pyx_t_57 < __pyx_t_56; __pyx_t_57+=1) {
+                __pyx_v_jdim = __pyx_t_57;
+
+                /* "Choreo_cython_funs.pyx":625
+ *                             c = SpaceRotsUn[il,ib,0,idim]*ddf[0]
+ *                             for jdim in range(1,cndim):
+ *                                 c+=SpaceRotsUn[il,ib,jdim,idim]*ddf[jdim]             # <<<<<<<<<<<<<<
+ * 
+ *                             hess_pot_all_d[il ,idim,all_shiftsUn[il ,ib ]] += c
+ */
+                __pyx_t_25 = __pyx_v_il;
+                __pyx_t_27 = __pyx_v_ib;
+                __pyx_t_22 = __pyx_v_jdim;
+                __pyx_t_24 = __pyx_v_idim;
+                __pyx_t_44 = __pyx_v_jdim;
+                __pyx_v_c = (__pyx_v_c + ((*__Pyx_BufPtrCContig4d(double *, __pyx_pybuffernd_SpaceRotsUn.rcbuffer->pybuffer.buf, __pyx_t_25, __pyx_pybuffernd_SpaceRotsUn.diminfo[0].strides, __pyx_t_27, __pyx_pybuffernd_SpaceRotsUn.diminfo[1].strides, __pyx_t_22, __pyx_pybuffernd_SpaceRotsUn.diminfo[2].strides, __pyx_t_24, __pyx_pybuffernd_SpaceRotsUn.diminfo[3].strides)) * (*__Pyx_BufPtrCContig1d(double *, __pyx_pybuffernd_ddf.rcbuffer->pybuffer.buf, __pyx_t_44, __pyx_pybuffernd_ddf.diminfo[0].strides))));
+              }
+
+              /* "Choreo_cython_funs.pyx":627
+ *                                 c+=SpaceRotsUn[il,ib,jdim,idim]*ddf[jdim]
+ * 
+ *                             hess_pot_all_d[il ,idim,all_shiftsUn[il ,ib ]] += c             # <<<<<<<<<<<<<<
+ * 
+ *                             c = SpaceRotsUn[ilp,ibp,0,idim]*ddf[0]
+ */
+              __pyx_t_44 = __pyx_v_il;
+              __pyx_t_24 = __pyx_v_ib;
+              __pyx_t_22 = __pyx_v_il;
+              __pyx_t_27 = __pyx_v_idim;
+              __pyx_t_25 = (*__Pyx_BufPtrCContig2d(long *, __pyx_pybuffernd_all_shiftsUn.rcbuffer->pybuffer.buf, __pyx_t_44, __pyx_pybuffernd_all_shiftsUn.diminfo[0].strides, __pyx_t_24, __pyx_pybuffernd_all_shiftsUn.diminfo[1].strides));
+              *__Pyx_BufPtrCContig3d(double *, __pyx_pybuffernd_hess_pot_all_d.rcbuffer->pybuffer.buf, __pyx_t_22, __pyx_pybuffernd_hess_pot_all_d.diminfo[0].strides, __pyx_t_27, __pyx_pybuffernd_hess_pot_all_d.diminfo[1].strides, __pyx_t_25, __pyx_pybuffernd_hess_pot_all_d.diminfo[2].strides) += __pyx_v_c;
+
+              /* "Choreo_cython_funs.pyx":629
+ *                             hess_pot_all_d[il ,idim,all_shiftsUn[il ,ib ]] += c
+ * 
+ *                             c = SpaceRotsUn[ilp,ibp,0,idim]*ddf[0]             # <<<<<<<<<<<<<<
+ *                             for jdim in range(1,cndim):
+ *                                 c+=SpaceRotsUn[ilp,ibp,jdim,idim]*ddf[jdim]
+ */
+              __pyx_t_24 = __pyx_v_ilp;
+              __pyx_t_44 = __pyx_v_ibp;
+              __pyx_t_25 = 0;
+              __pyx_t_27 = __pyx_v_idim;
+              __pyx_t_22 = 0;
+              __pyx_v_c = ((*__Pyx_BufPtrCContig4d(double *, __pyx_pybuffernd_SpaceRotsUn.rcbuffer->pybuffer.buf, __pyx_t_24, __pyx_pybuffernd_SpaceRotsUn.diminfo[0].strides, __pyx_t_44, __pyx_pybuffernd_SpaceRotsUn.diminfo[1].strides, __pyx_t_25, __pyx_pybuffernd_SpaceRotsUn.diminfo[2].strides, __pyx_t_27, __pyx_pybuffernd_SpaceRotsUn.diminfo[3].strides)) * (*__Pyx_BufPtrCContig1d(double *, __pyx_pybuffernd_ddf.rcbuffer->pybuffer.buf, __pyx_t_22, __pyx_pybuffernd_ddf.diminfo[0].strides)));
+
+              /* "Choreo_cython_funs.pyx":630
+ * 
+ *                             c = SpaceRotsUn[ilp,ibp,0,idim]*ddf[0]
+ *                             for jdim in range(1,cndim):             # <<<<<<<<<<<<<<
+ *                                 c+=SpaceRotsUn[ilp,ibp,jdim,idim]*ddf[jdim]
+ * 
+ */
+              __pyx_t_55 = __pyx_v_18Choreo_cython_funs_cndim;
+              __pyx_t_56 = __pyx_t_55;
+              for (__pyx_t_57 = 1; __pyx_t_57 < __pyx_t_56; __pyx_t_57+=1) {
+                __pyx_v_jdim = __pyx_t_57;
+
+                /* "Choreo_cython_funs.pyx":631
+ *                             c = SpaceRotsUn[ilp,ibp,0,idim]*ddf[0]
+ *                             for jdim in range(1,cndim):
+ *                                 c+=SpaceRotsUn[ilp,ibp,jdim,idim]*ddf[jdim]             # <<<<<<<<<<<<<<
+ * 
+ *                             hess_pot_all_d[ilp,idim,all_shiftsUn[ilp,ibp]] -= c
+ */
+                __pyx_t_22 = __pyx_v_ilp;
+                __pyx_t_27 = __pyx_v_ibp;
+                __pyx_t_25 = __pyx_v_jdim;
+                __pyx_t_44 = __pyx_v_idim;
+                __pyx_t_24 = __pyx_v_jdim;
+                __pyx_v_c = (__pyx_v_c + ((*__Pyx_BufPtrCContig4d(double *, __pyx_pybuffernd_SpaceRotsUn.rcbuffer->pybuffer.buf, __pyx_t_22, __pyx_pybuffernd_SpaceRotsUn.diminfo[0].strides, __pyx_t_27, __pyx_pybuffernd_SpaceRotsUn.diminfo[1].strides, __pyx_t_25, __pyx_pybuffernd_SpaceRotsUn.diminfo[2].strides, __pyx_t_44, __pyx_pybuffernd_SpaceRotsUn.diminfo[3].strides)) * (*__Pyx_BufPtrCContig1d(double *, __pyx_pybuffernd_ddf.rcbuffer->pybuffer.buf, __pyx_t_24, __pyx_pybuffernd_ddf.diminfo[0].strides))));
+              }
+
+              /* "Choreo_cython_funs.pyx":633
+ *                                 c+=SpaceRotsUn[ilp,ibp,jdim,idim]*ddf[jdim]
+ * 
+ *                             hess_pot_all_d[ilp,idim,all_shiftsUn[ilp,ibp]] -= c             # <<<<<<<<<<<<<<
+ * 
+ *         # Same loop + symmetry
+ */
+              __pyx_t_24 = __pyx_v_ilp;
+              __pyx_t_44 = __pyx_v_ibp;
+              __pyx_t_25 = __pyx_v_ilp;
+              __pyx_t_27 = __pyx_v_idim;
+              __pyx_t_22 = (*__Pyx_BufPtrCContig2d(long *, __pyx_pybuffernd_all_shiftsUn.rcbuffer->pybuffer.buf, __pyx_t_24, __pyx_pybuffernd_all_shiftsUn.diminfo[0].strides, __pyx_t_44, __pyx_pybuffernd_all_shiftsUn.diminfo[1].strides));
+              *__Pyx_BufPtrCContig3d(double *, __pyx_pybuffernd_hess_pot_all_d.rcbuffer->pybuffer.buf, __pyx_t_25, __pyx_pybuffernd_hess_pot_all_d.diminfo[0].strides, __pyx_t_27, __pyx_pybuffernd_hess_pot_all_d.diminfo[1].strides, __pyx_t_22, __pyx_pybuffernd_hess_pot_all_d.diminfo[2].strides) -= __pyx_v_c;
+            }
+          }
+        }
+      }
+    }
+
+    /* "Choreo_cython_funs.pyx":636
+ * 
+ *         # Same loop + symmetry
+ *         for il in range(nloop):             # <<<<<<<<<<<<<<
+ * 
+ *             for ibi in range(loopnbi[il]):
+ */
+    __pyx_t_16 = __pyx_v_nloop;
+    __pyx_t_17 = __pyx_t_16;
+    for (__pyx_t_18 = 0; __pyx_t_18 < __pyx_t_17; __pyx_t_18+=1) {
+      __pyx_v_il = __pyx_t_18;
+
+      /* "Choreo_cython_funs.pyx":638
+ *         for il in range(nloop):
+ * 
+ *             for ibi in range(loopnbi[il]):             # <<<<<<<<<<<<<<
+ * 
+ *                 for idim in range(cndim):
+ */
+      __pyx_t_44 = __pyx_v_il;
+      __pyx_t_20 = (*__Pyx_BufPtrCContig1d(long *, __pyx_pybuffernd_loopnbi.rcbuffer->pybuffer.buf, __pyx_t_44, __pyx_pybuffernd_loopnbi.diminfo[0].strides));
+      __pyx_t_21 = __pyx_t_20;
+      for (__pyx_t_19 = 0; __pyx_t_19 < __pyx_t_21; __pyx_t_19+=1) {
+        __pyx_v_ibi = __pyx_t_19;
+
+        /* "Choreo_cython_funs.pyx":640
+ *             for ibi in range(loopnbi[il]):
+ * 
+ *                 for idim in range(cndim):             # <<<<<<<<<<<<<<
+ *                     dx[idim]  = SpaceRotsBin[il,ibi,idim,0]*all_pos[il,0,all_shiftsBin[il,ibi]]
+ *                     ddx[idim] = SpaceRotsBin[il,ibi,idim,0]*all_pos_d[il,0,all_shiftsBin[il,ibi]]
+ */
+        __pyx_t_35 = __pyx_v_18Choreo_cython_funs_cndim;
+        __pyx_t_36 = __pyx_t_35;
+        for (__pyx_t_37 = 0; __pyx_t_37 < __pyx_t_36; __pyx_t_37+=1) {
+          __pyx_v_idim = __pyx_t_37;
+
+          /* "Choreo_cython_funs.pyx":641
+ * 
+ *                 for idim in range(cndim):
+ *                     dx[idim]  = SpaceRotsBin[il,ibi,idim,0]*all_pos[il,0,all_shiftsBin[il,ibi]]             # <<<<<<<<<<<<<<
+ *                     ddx[idim] = SpaceRotsBin[il,ibi,idim,0]*all_pos_d[il,0,all_shiftsBin[il,ibi]]
+ *                     for jdim in range(1,cndim):
+ */
+          __pyx_t_44 = __pyx_v_il;
+          __pyx_t_24 = __pyx_v_ibi;
+          __pyx_t_22 = __pyx_v_idim;
+          __pyx_t_27 = 0;
+          __pyx_t_25 = __pyx_v_il;
+          __pyx_t_15 = __pyx_v_ibi;
+          __pyx_t_23 = __pyx_v_il;
+          __pyx_t_26 = 0;
+          __pyx_t_28 = (*__Pyx_BufPtrCContig2d(long *, __pyx_pybuffernd_all_shiftsBin.rcbuffer->pybuffer.buf, __pyx_t_25, __pyx_pybuffernd_all_shiftsBin.diminfo[0].strides, __pyx_t_15, __pyx_pybuffernd_all_shiftsBin.diminfo[1].strides));
+          __pyx_t_46 = __pyx_v_idim;
+          *__Pyx_BufPtrCContig1d(double *, __pyx_pybuffernd_dx.rcbuffer->pybuffer.buf, __pyx_t_46, __pyx_pybuffernd_dx.diminfo[0].strides) = ((*__Pyx_BufPtrCContig4d(double *, __pyx_pybuffernd_SpaceRotsBin.rcbuffer->pybuffer.buf, __pyx_t_44, __pyx_pybuffernd_SpaceRotsBin.diminfo[0].strides, __pyx_t_24, __pyx_pybuffernd_SpaceRotsBin.diminfo[1].strides, __pyx_t_22, __pyx_pybuffernd_SpaceRotsBin.diminfo[2].strides, __pyx_t_27, __pyx_pybuffernd_SpaceRotsBin.diminfo[3].strides)) * (*__Pyx_BufPtrCContig3d(double *, __pyx_pybuffernd_all_pos.rcbuffer->pybuffer.buf, __pyx_t_23, __pyx_pybuffernd_all_pos.diminfo[0].strides, __pyx_t_26, __pyx_pybuffernd_all_pos.diminfo[1].strides, __pyx_t_28, __pyx_pybuffernd_all_pos.diminfo[2].strides)));
+
+          /* "Choreo_cython_funs.pyx":642
+ *                 for idim in range(cndim):
+ *                     dx[idim]  = SpaceRotsBin[il,ibi,idim,0]*all_pos[il,0,all_shiftsBin[il,ibi]]
+ *                     ddx[idim] = SpaceRotsBin[il,ibi,idim,0]*all_pos_d[il,0,all_shiftsBin[il,ibi]]             # <<<<<<<<<<<<<<
+ *                     for jdim in range(1,cndim):
+ *                         dx[idim]  += SpaceRotsBin[il,ibi,idim,jdim]*all_pos[il,jdim,all_shiftsBin[il,ibi]]
+ */
+          __pyx_t_15 = __pyx_v_il;
+          __pyx_t_25 = __pyx_v_ibi;
+          __pyx_t_28 = __pyx_v_idim;
+          __pyx_t_26 = 0;
+          __pyx_t_23 = __pyx_v_il;
+          __pyx_t_27 = __pyx_v_ibi;
+          __pyx_t_22 = __pyx_v_il;
+          __pyx_t_24 = 0;
+          __pyx_t_44 = (*__Pyx_BufPtrCContig2d(long *, __pyx_pybuffernd_all_shiftsBin.rcbuffer->pybuffer.buf, __pyx_t_23, __pyx_pybuffernd_all_shiftsBin.diminfo[0].strides, __pyx_t_27, __pyx_pybuffernd_all_shiftsBin.diminfo[1].strides));
+          __pyx_t_46 = __pyx_v_idim;
+          *__Pyx_BufPtrCContig1d(double *, __pyx_pybuffernd_ddx.rcbuffer->pybuffer.buf, __pyx_t_46, __pyx_pybuffernd_ddx.diminfo[0].strides) = ((*__Pyx_BufPtrCContig4d(double *, __pyx_pybuffernd_SpaceRotsBin.rcbuffer->pybuffer.buf, __pyx_t_15, __pyx_pybuffernd_SpaceRotsBin.diminfo[0].strides, __pyx_t_25, __pyx_pybuffernd_SpaceRotsBin.diminfo[1].strides, __pyx_t_28, __pyx_pybuffernd_SpaceRotsBin.diminfo[2].strides, __pyx_t_26, __pyx_pybuffernd_SpaceRotsBin.diminfo[3].strides)) * (*__Pyx_BufPtrCContig3d(double *, __pyx_pybuffernd_all_pos_d.rcbuffer->pybuffer.buf, __pyx_t_22, __pyx_pybuffernd_all_pos_d.diminfo[0].strides, __pyx_t_24, __pyx_pybuffernd_all_pos_d.diminfo[1].strides, __pyx_t_44, __pyx_pybuffernd_all_pos_d.diminfo[2].strides)));
+
+          /* "Choreo_cython_funs.pyx":643
+ *                     dx[idim]  = SpaceRotsBin[il,ibi,idim,0]*all_pos[il,0,all_shiftsBin[il,ibi]]
+ *                     ddx[idim] = SpaceRotsBin[il,ibi,idim,0]*all_pos_d[il,0,all_shiftsBin[il,ibi]]
+ *                     for jdim in range(1,cndim):             # <<<<<<<<<<<<<<
+ *                         dx[idim]  += SpaceRotsBin[il,ibi,idim,jdim]*all_pos[il,jdim,all_shiftsBin[il,ibi]]
+ *                         ddx[idim] += SpaceRotsBin[il,ibi,idim,jdim]*all_pos_d[il,jdim,all_shiftsBin[il,ibi]]
+ */
+          __pyx_t_38 = __pyx_v_18Choreo_cython_funs_cndim;
+          __pyx_t_39 = __pyx_t_38;
+          for (__pyx_t_40 = 1; __pyx_t_40 < __pyx_t_39; __pyx_t_40+=1) {
+            __pyx_v_jdim = __pyx_t_40;
+
+            /* "Choreo_cython_funs.pyx":644
+ *                     ddx[idim] = SpaceRotsBin[il,ibi,idim,0]*all_pos_d[il,0,all_shiftsBin[il,ibi]]
+ *                     for jdim in range(1,cndim):
+ *                         dx[idim]  += SpaceRotsBin[il,ibi,idim,jdim]*all_pos[il,jdim,all_shiftsBin[il,ibi]]             # <<<<<<<<<<<<<<
+ *                         ddx[idim] += SpaceRotsBin[il,ibi,idim,jdim]*all_pos_d[il,jdim,all_shiftsBin[il,ibi]]
+ * 
+ */
+            __pyx_t_27 = __pyx_v_il;
+            __pyx_t_23 = __pyx_v_ibi;
+            __pyx_t_44 = __pyx_v_idim;
+            __pyx_t_24 = __pyx_v_jdim;
+            __pyx_t_22 = __pyx_v_il;
+            __pyx_t_26 = __pyx_v_ibi;
+            __pyx_t_28 = __pyx_v_il;
+            __pyx_t_25 = __pyx_v_jdim;
+            __pyx_t_15 = (*__Pyx_BufPtrCContig2d(long *, __pyx_pybuffernd_all_shiftsBin.rcbuffer->pybuffer.buf, __pyx_t_22, __pyx_pybuffernd_all_shiftsBin.diminfo[0].strides, __pyx_t_26, __pyx_pybuffernd_all_shiftsBin.diminfo[1].strides));
+            __pyx_t_46 = __pyx_v_idim;
+            *__Pyx_BufPtrCContig1d(double *, __pyx_pybuffernd_dx.rcbuffer->pybuffer.buf, __pyx_t_46, __pyx_pybuffernd_dx.diminfo[0].strides) += ((*__Pyx_BufPtrCContig4d(double *, __pyx_pybuffernd_SpaceRotsBin.rcbuffer->pybuffer.buf, __pyx_t_27, __pyx_pybuffernd_SpaceRotsBin.diminfo[0].strides, __pyx_t_23, __pyx_pybuffernd_SpaceRotsBin.diminfo[1].strides, __pyx_t_44, __pyx_pybuffernd_SpaceRotsBin.diminfo[2].strides, __pyx_t_24, __pyx_pybuffernd_SpaceRotsBin.diminfo[3].strides)) * (*__Pyx_BufPtrCContig3d(double *, __pyx_pybuffernd_all_pos.rcbuffer->pybuffer.buf, __pyx_t_28, __pyx_pybuffernd_all_pos.diminfo[0].strides, __pyx_t_25, __pyx_pybuffernd_all_pos.diminfo[1].strides, __pyx_t_15, __pyx_pybuffernd_all_pos.diminfo[2].strides)));
+
+            /* "Choreo_cython_funs.pyx":645
+ *                     for jdim in range(1,cndim):
+ *                         dx[idim]  += SpaceRotsBin[il,ibi,idim,jdim]*all_pos[il,jdim,all_shiftsBin[il,ibi]]
+ *                         ddx[idim] += SpaceRotsBin[il,ibi,idim,jdim]*all_pos_d[il,jdim,all_shiftsBin[il,ibi]]             # <<<<<<<<<<<<<<
+ * 
+ *                     dx[idim]  -= all_pos[il,idim,iint]
+ */
+            __pyx_t_26 = __pyx_v_il;
+            __pyx_t_22 = __pyx_v_ibi;
+            __pyx_t_15 = __pyx_v_idim;
+            __pyx_t_25 = __pyx_v_jdim;
+            __pyx_t_28 = __pyx_v_il;
+            __pyx_t_24 = __pyx_v_ibi;
+            __pyx_t_44 = __pyx_v_il;
+            __pyx_t_23 = __pyx_v_jdim;
+            __pyx_t_27 = (*__Pyx_BufPtrCContig2d(long *, __pyx_pybuffernd_all_shiftsBin.rcbuffer->pybuffer.buf, __pyx_t_28, __pyx_pybuffernd_all_shiftsBin.diminfo[0].strides, __pyx_t_24, __pyx_pybuffernd_all_shiftsBin.diminfo[1].strides));
+            __pyx_t_46 = __pyx_v_idim;
+            *__Pyx_BufPtrCContig1d(double *, __pyx_pybuffernd_ddx.rcbuffer->pybuffer.buf, __pyx_t_46, __pyx_pybuffernd_ddx.diminfo[0].strides) += ((*__Pyx_BufPtrCContig4d(double *, __pyx_pybuffernd_SpaceRotsBin.rcbuffer->pybuffer.buf, __pyx_t_26, __pyx_pybuffernd_SpaceRotsBin.diminfo[0].strides, __pyx_t_22, __pyx_pybuffernd_SpaceRotsBin.diminfo[1].strides, __pyx_t_15, __pyx_pybuffernd_SpaceRotsBin.diminfo[2].strides, __pyx_t_25, __pyx_pybuffernd_SpaceRotsBin.diminfo[3].strides)) * (*__Pyx_BufPtrCContig3d(double *, __pyx_pybuffernd_all_pos_d.rcbuffer->pybuffer.buf, __pyx_t_44, __pyx_pybuffernd_all_pos_d.diminfo[0].strides, __pyx_t_23, __pyx_pybuffernd_all_pos_d.diminfo[1].strides, __pyx_t_27, __pyx_pybuffernd_all_pos_d.diminfo[2].strides)));
+          }
+
+          /* "Choreo_cython_funs.pyx":647
+ *                         ddx[idim] += SpaceRotsBin[il,ibi,idim,jdim]*all_pos_d[il,jdim,all_shiftsBin[il,ibi]]
+ * 
+ *                     dx[idim]  -= all_pos[il,idim,iint]             # <<<<<<<<<<<<<<
+ *                     ddx[idim] -= all_pos_d[il,idim,iint]
+ * 
+ */
+          __pyx_t_24 = __pyx_v_il;
+          __pyx_t_28 = __pyx_v_idim;
+          __pyx_t_27 = __pyx_v_iint;
+          __pyx_t_23 = __pyx_v_idim;
+          *__Pyx_BufPtrCContig1d(double *, __pyx_pybuffernd_dx.rcbuffer->pybuffer.buf, __pyx_t_23, __pyx_pybuffernd_dx.diminfo[0].strides) -= (*__Pyx_BufPtrCContig3d(double *, __pyx_pybuffernd_all_pos.rcbuffer->pybuffer.buf, __pyx_t_24, __pyx_pybuffernd_all_pos.diminfo[0].strides, __pyx_t_28, __pyx_pybuffernd_all_pos.diminfo[1].strides, __pyx_t_27, __pyx_pybuffernd_all_pos.diminfo[2].strides));
+
+          /* "Choreo_cython_funs.pyx":648
+ * 
+ *                     dx[idim]  -= all_pos[il,idim,iint]
+ *                     ddx[idim] -= all_pos_d[il,idim,iint]             # <<<<<<<<<<<<<<
+ * 
+ *                 dx2 = dx[0]*dx[0]
+ */
+          __pyx_t_27 = __pyx_v_il;
+          __pyx_t_28 = __pyx_v_idim;
+          __pyx_t_24 = __pyx_v_iint;
+          __pyx_t_23 = __pyx_v_idim;
+          *__Pyx_BufPtrCContig1d(double *, __pyx_pybuffernd_ddx.rcbuffer->pybuffer.buf, __pyx_t_23, __pyx_pybuffernd_ddx.diminfo[0].strides) -= (*__Pyx_BufPtrCContig3d(double *, __pyx_pybuffernd_all_pos_d.rcbuffer->pybuffer.buf, __pyx_t_27, __pyx_pybuffernd_all_pos_d.diminfo[0].strides, __pyx_t_28, __pyx_pybuffernd_all_pos_d.diminfo[1].strides, __pyx_t_24, __pyx_pybuffernd_all_pos_d.diminfo[2].strides));
+        }
+
+        /* "Choreo_cython_funs.pyx":650
+ *                     ddx[idim] -= all_pos_d[il,idim,iint]
+ * 
+ *                 dx2 = dx[0]*dx[0]             # <<<<<<<<<<<<<<
+ *                 dxtddx = dx[0]*ddx[0]
+ *                 for idim in range(1,cndim):
+ */
+        __pyx_t_24 = 0;
+        __pyx_t_28 = 0;
+        __pyx_v_dx2 = ((*__Pyx_BufPtrCContig1d(double *, __pyx_pybuffernd_dx.rcbuffer->pybuffer.buf, __pyx_t_24, __pyx_pybuffernd_dx.diminfo[0].strides)) * (*__Pyx_BufPtrCContig1d(double *, __pyx_pybuffernd_dx.rcbuffer->pybuffer.buf, __pyx_t_28, __pyx_pybuffernd_dx.diminfo[0].strides)));
+
+        /* "Choreo_cython_funs.pyx":651
+ * 
+ *                 dx2 = dx[0]*dx[0]
+ *                 dxtddx = dx[0]*ddx[0]             # <<<<<<<<<<<<<<
+ *                 for idim in range(1,cndim):
+ *                     dx2 += dx[idim]*dx[idim]
+ */
+        __pyx_t_28 = 0;
+        __pyx_t_24 = 0;
+        __pyx_v_dxtddx = ((*__Pyx_BufPtrCContig1d(double *, __pyx_pybuffernd_dx.rcbuffer->pybuffer.buf, __pyx_t_28, __pyx_pybuffernd_dx.diminfo[0].strides)) * (*__Pyx_BufPtrCContig1d(double *, __pyx_pybuffernd_ddx.rcbuffer->pybuffer.buf, __pyx_t_24, __pyx_pybuffernd_ddx.diminfo[0].strides)));
+
+        /* "Choreo_cython_funs.pyx":652
+ *                 dx2 = dx[0]*dx[0]
+ *                 dxtddx = dx[0]*ddx[0]
+ *                 for idim in range(1,cndim):             # <<<<<<<<<<<<<<
+ *                     dx2 += dx[idim]*dx[idim]
+ *                     dxtddx += dx[idim]*ddx[idim]
+ */
+        __pyx_t_35 = __pyx_v_18Choreo_cython_funs_cndim;
+        __pyx_t_36 = __pyx_t_35;
+        for (__pyx_t_37 = 1; __pyx_t_37 < __pyx_t_36; __pyx_t_37+=1) {
+          __pyx_v_idim = __pyx_t_37;
+
+          /* "Choreo_cython_funs.pyx":653
+ *                 dxtddx = dx[0]*ddx[0]
+ *                 for idim in range(1,cndim):
+ *                     dx2 += dx[idim]*dx[idim]             # <<<<<<<<<<<<<<
+ *                     dxtddx += dx[idim]*ddx[idim]
+ * 
+ */
+          __pyx_t_24 = __pyx_v_idim;
+          __pyx_t_28 = __pyx_v_idim;
+          __pyx_v_dx2 = (__pyx_v_dx2 + ((*__Pyx_BufPtrCContig1d(double *, __pyx_pybuffernd_dx.rcbuffer->pybuffer.buf, __pyx_t_24, __pyx_pybuffernd_dx.diminfo[0].strides)) * (*__Pyx_BufPtrCContig1d(double *, __pyx_pybuffernd_dx.rcbuffer->pybuffer.buf, __pyx_t_28, __pyx_pybuffernd_dx.diminfo[0].strides))));
+
+          /* "Choreo_cython_funs.pyx":654
+ *                 for idim in range(1,cndim):
+ *                     dx2 += dx[idim]*dx[idim]
+ *                     dxtddx += dx[idim]*ddx[idim]             # <<<<<<<<<<<<<<
+ * 
+ *                 pot,potp,potpp = CCpt_interbody_pot(dx2)
+ */
+          __pyx_t_28 = __pyx_v_idim;
+          __pyx_t_24 = __pyx_v_idim;
+          __pyx_v_dxtddx = (__pyx_v_dxtddx + ((*__Pyx_BufPtrCContig1d(double *, __pyx_pybuffernd_dx.rcbuffer->pybuffer.buf, __pyx_t_28, __pyx_pybuffernd_dx.diminfo[0].strides)) * (*__Pyx_BufPtrCContig1d(double *, __pyx_pybuffernd_ddx.rcbuffer->pybuffer.buf, __pyx_t_24, __pyx_pybuffernd_ddx.diminfo[0].strides))));
+        }
+
+        /* "Choreo_cython_funs.pyx":656
+ *                     dxtddx += dx[idim]*ddx[idim]
+ * 
+ *                 pot,potp,potpp = CCpt_interbody_pot(dx2)             # <<<<<<<<<<<<<<
+ * 
+ *                 a = (2*ProdMassSumAll[il,ibi]*potp)
+ */
+        __pyx_t_58 = __pyx_f_18Choreo_cython_funs_CCpt_interbody_pot(__pyx_v_dx2);
+        __pyx_t_61 = __pyx_t_58.f0;
+        __pyx_t_60 = __pyx_t_58.f1;
+        __pyx_t_59 = __pyx_t_58.f2;
+        __pyx_v_pot = __pyx_t_61;
+        __pyx_v_potp = __pyx_t_60;
+        __pyx_v_potpp = __pyx_t_59;
+
+        /* "Choreo_cython_funs.pyx":658
+ *                 pot,potp,potpp = CCpt_interbody_pot(dx2)
+ * 
+ *                 a = (2*ProdMassSumAll[il,ibi]*potp)             # <<<<<<<<<<<<<<
+ *                 b = (4*ProdMassSumAll[il,ibi]*potpp*dxtddx)
+ * 
+ */
+        __pyx_t_24 = __pyx_v_il;
+        __pyx_t_28 = __pyx_v_ibi;
+        __pyx_v_a = ((2.0 * (*__Pyx_BufPtrCContig2d(double *, __pyx_pybuffernd_ProdMassSumAll.rcbuffer->pybuffer.buf, __pyx_t_24, __pyx_pybuffernd_ProdMassSumAll.diminfo[0].strides, __pyx_t_28, __pyx_pybuffernd_ProdMassSumAll.diminfo[1].strides))) * __pyx_v_potp);
+
+        /* "Choreo_cython_funs.pyx":659
+ * 
+ *                 a = (2*ProdMassSumAll[il,ibi]*potp)
+ *                 b = (4*ProdMassSumAll[il,ibi]*potpp*dxtddx)             # <<<<<<<<<<<<<<
+ * 
+ * 
+ */
+        __pyx_t_28 = __pyx_v_il;
+        __pyx_t_24 = __pyx_v_ibi;
+        __pyx_v_b = (((4.0 * (*__Pyx_BufPtrCContig2d(double *, __pyx_pybuffernd_ProdMassSumAll.rcbuffer->pybuffer.buf, __pyx_t_28, __pyx_pybuffernd_ProdMassSumAll.diminfo[0].strides, __pyx_t_24, __pyx_pybuffernd_ProdMassSumAll.diminfo[1].strides))) * __pyx_v_potpp) * __pyx_v_dxtddx);
+
+        /* "Choreo_cython_funs.pyx":662
+ * 
+ * 
+ *                 for idim in range(cndim):             # <<<<<<<<<<<<<<
+ *                     ddf[idim] = b*dx[idim]+a*ddx[idim]
+ * 
+ */
+        __pyx_t_35 = __pyx_v_18Choreo_cython_funs_cndim;
+        __pyx_t_36 = __pyx_t_35;
+        for (__pyx_t_37 = 0; __pyx_t_37 < __pyx_t_36; __pyx_t_37+=1) {
+          __pyx_v_idim = __pyx_t_37;
+
+          /* "Choreo_cython_funs.pyx":663
+ * 
+ *                 for idim in range(cndim):
+ *                     ddf[idim] = b*dx[idim]+a*ddx[idim]             # <<<<<<<<<<<<<<
+ * 
+ *                 for idim in range(cndim):
+ */
+          __pyx_t_24 = __pyx_v_idim;
+          __pyx_t_28 = __pyx_v_idim;
+          __pyx_t_27 = __pyx_v_idim;
+          *__Pyx_BufPtrCContig1d(double *, __pyx_pybuffernd_ddf.rcbuffer->pybuffer.buf, __pyx_t_27, __pyx_pybuffernd_ddf.diminfo[0].strides) = ((__pyx_v_b * (*__Pyx_BufPtrCContig1d(double *, __pyx_pybuffernd_dx.rcbuffer->pybuffer.buf, __pyx_t_24, __pyx_pybuffernd_dx.diminfo[0].strides))) + (__pyx_v_a * (*__Pyx_BufPtrCContig1d(double *, __pyx_pybuffernd_ddx.rcbuffer->pybuffer.buf, __pyx_t_28, __pyx_pybuffernd_ddx.diminfo[0].strides))));
+        }
+
+        /* "Choreo_cython_funs.pyx":665
+ *                     ddf[idim] = b*dx[idim]+a*ddx[idim]
+ * 
+ *                 for idim in range(cndim):             # <<<<<<<<<<<<<<
+ * 
+ *                     c = SpaceRotsBin[il,ibi,0,idim]*ddf[0]
+ */
+        __pyx_t_35 = __pyx_v_18Choreo_cython_funs_cndim;
+        __pyx_t_36 = __pyx_t_35;
+        for (__pyx_t_37 = 0; __pyx_t_37 < __pyx_t_36; __pyx_t_37+=1) {
+          __pyx_v_idim = __pyx_t_37;
+
+          /* "Choreo_cython_funs.pyx":667
+ *                 for idim in range(cndim):
+ * 
+ *                     c = SpaceRotsBin[il,ibi,0,idim]*ddf[0]             # <<<<<<<<<<<<<<
+ *                     for jdim in range(1,cndim):
+ *                         c+=SpaceRotsBin[il,ibi,jdim,idim]*ddf[jdim]
+ */
+          __pyx_t_28 = __pyx_v_il;
+          __pyx_t_24 = __pyx_v_ibi;
+          __pyx_t_27 = 0;
+          __pyx_t_23 = __pyx_v_idim;
+          __pyx_t_44 = 0;
+          __pyx_v_c = ((*__Pyx_BufPtrCContig4d(double *, __pyx_pybuffernd_SpaceRotsBin.rcbuffer->pybuffer.buf, __pyx_t_28, __pyx_pybuffernd_SpaceRotsBin.diminfo[0].strides, __pyx_t_24, __pyx_pybuffernd_SpaceRotsBin.diminfo[1].strides, __pyx_t_27, __pyx_pybuffernd_SpaceRotsBin.diminfo[2].strides, __pyx_t_23, __pyx_pybuffernd_SpaceRotsBin.diminfo[3].strides)) * (*__Pyx_BufPtrCContig1d(double *, __pyx_pybuffernd_ddf.rcbuffer->pybuffer.buf, __pyx_t_44, __pyx_pybuffernd_ddf.diminfo[0].strides)));
+
+          /* "Choreo_cython_funs.pyx":668
+ * 
+ *                     c = SpaceRotsBin[il,ibi,0,idim]*ddf[0]
+ *                     for jdim in range(1,cndim):             # <<<<<<<<<<<<<<
+ *                         c+=SpaceRotsBin[il,ibi,jdim,idim]*ddf[jdim]
+ * 
+ */
+          __pyx_t_38 = __pyx_v_18Choreo_cython_funs_cndim;
+          __pyx_t_39 = __pyx_t_38;
+          for (__pyx_t_40 = 1; __pyx_t_40 < __pyx_t_39; __pyx_t_40+=1) {
+            __pyx_v_jdim = __pyx_t_40;
+
+            /* "Choreo_cython_funs.pyx":669
+ *                     c = SpaceRotsBin[il,ibi,0,idim]*ddf[0]
+ *                     for jdim in range(1,cndim):
+ *                         c+=SpaceRotsBin[il,ibi,jdim,idim]*ddf[jdim]             # <<<<<<<<<<<<<<
+ * 
+ *                     hess_pot_all_d[il ,idim,all_shiftsBin[il,ibi]] += c
+ */
+            __pyx_t_44 = __pyx_v_il;
+            __pyx_t_23 = __pyx_v_ibi;
+            __pyx_t_27 = __pyx_v_jdim;
+            __pyx_t_24 = __pyx_v_idim;
+            __pyx_t_28 = __pyx_v_jdim;
+            __pyx_v_c = (__pyx_v_c + ((*__Pyx_BufPtrCContig4d(double *, __pyx_pybuffernd_SpaceRotsBin.rcbuffer->pybuffer.buf, __pyx_t_44, __pyx_pybuffernd_SpaceRotsBin.diminfo[0].strides, __pyx_t_23, __pyx_pybuffernd_SpaceRotsBin.diminfo[1].strides, __pyx_t_27, __pyx_pybuffernd_SpaceRotsBin.diminfo[2].strides, __pyx_t_24, __pyx_pybuffernd_SpaceRotsBin.diminfo[3].strides)) * (*__Pyx_BufPtrCContig1d(double *, __pyx_pybuffernd_ddf.rcbuffer->pybuffer.buf, __pyx_t_28, __pyx_pybuffernd_ddf.diminfo[0].strides))));
+          }
+
+          /* "Choreo_cython_funs.pyx":671
+ *                         c+=SpaceRotsBin[il,ibi,jdim,idim]*ddf[jdim]
+ * 
+ *                     hess_pot_all_d[il ,idim,all_shiftsBin[il,ibi]] += c             # <<<<<<<<<<<<<<
+ * 
+ *                     hess_pot_all_d[il ,idim,iint] -= ddf[idim]
+ */
+          __pyx_t_28 = __pyx_v_il;
+          __pyx_t_24 = __pyx_v_ibi;
+          __pyx_t_27 = __pyx_v_il;
+          __pyx_t_23 = __pyx_v_idim;
+          __pyx_t_44 = (*__Pyx_BufPtrCContig2d(long *, __pyx_pybuffernd_all_shiftsBin.rcbuffer->pybuffer.buf, __pyx_t_28, __pyx_pybuffernd_all_shiftsBin.diminfo[0].strides, __pyx_t_24, __pyx_pybuffernd_all_shiftsBin.diminfo[1].strides));
+          *__Pyx_BufPtrCContig3d(double *, __pyx_pybuffernd_hess_pot_all_d.rcbuffer->pybuffer.buf, __pyx_t_27, __pyx_pybuffernd_hess_pot_all_d.diminfo[0].strides, __pyx_t_23, __pyx_pybuffernd_hess_pot_all_d.diminfo[1].strides, __pyx_t_44, __pyx_pybuffernd_hess_pot_all_d.diminfo[2].strides) += __pyx_v_c;
+
+          /* "Choreo_cython_funs.pyx":673
+ *                     hess_pot_all_d[il ,idim,all_shiftsBin[il,ibi]] += c
+ * 
+ *                     hess_pot_all_d[il ,idim,iint] -= ddf[idim]             # <<<<<<<<<<<<<<
+ * 
+ *         # Increments time at the end
+ */
+          __pyx_t_24 = __pyx_v_idim;
+          __pyx_t_28 = __pyx_v_il;
+          __pyx_t_44 = __pyx_v_idim;
+          __pyx_t_23 = __pyx_v_iint;
+          *__Pyx_BufPtrCContig3d(double *, __pyx_pybuffernd_hess_pot_all_d.rcbuffer->pybuffer.buf, __pyx_t_28, __pyx_pybuffernd_hess_pot_all_d.diminfo[0].strides, __pyx_t_44, __pyx_pybuffernd_hess_pot_all_d.diminfo[1].strides, __pyx_t_23, __pyx_pybuffernd_hess_pot_all_d.diminfo[2].strides) -= (*__Pyx_BufPtrCContig1d(double *, __pyx_pybuffernd_ddf.rcbuffer->pybuffer.buf, __pyx_t_24, __pyx_pybuffernd_ddf.diminfo[0].strides));
+        }
+      }
+    }
+
+    /* "Choreo_cython_funs.pyx":676
+ * 
+ *         # Increments time at the end
+ *         for il in range(nloop):             # <<<<<<<<<<<<<<
+ *             for ib in range(loopnb[il]):
+ *                 all_shiftsUn[il,ib] = (all_shiftsUn[il,ib]+TimeRevsUn[il,ib]) % nint
+ */
+    __pyx_t_16 = __pyx_v_nloop;
+    __pyx_t_17 = __pyx_t_16;
+    for (__pyx_t_18 = 0; __pyx_t_18 < __pyx_t_17; __pyx_t_18+=1) {
+      __pyx_v_il = __pyx_t_18;
+
+      /* "Choreo_cython_funs.pyx":677
+ *         # Increments time at the end
+ *         for il in range(nloop):
+ *             for ib in range(loopnb[il]):             # <<<<<<<<<<<<<<
+ *                 all_shiftsUn[il,ib] = (all_shiftsUn[il,ib]+TimeRevsUn[il,ib]) % nint
+ * 
+ */
+      __pyx_t_24 = __pyx_v_il;
+      __pyx_t_20 = (*__Pyx_BufPtrCContig1d(long *, __pyx_pybuffernd_loopnb.rcbuffer->pybuffer.buf, __pyx_t_24, __pyx_pybuffernd_loopnb.diminfo[0].strides));
+      __pyx_t_21 = __pyx_t_20;
+      for (__pyx_t_19 = 0; __pyx_t_19 < __pyx_t_21; __pyx_t_19+=1) {
+        __pyx_v_ib = __pyx_t_19;
+
+        /* "Choreo_cython_funs.pyx":678
+ *         for il in range(nloop):
+ *             for ib in range(loopnb[il]):
+ *                 all_shiftsUn[il,ib] = (all_shiftsUn[il,ib]+TimeRevsUn[il,ib]) % nint             # <<<<<<<<<<<<<<
+ * 
+ *             for ibi in range(loopnbi[il]):
+ */
+        __pyx_t_24 = __pyx_v_il;
+        __pyx_t_23 = __pyx_v_ib;
+        __pyx_t_44 = __pyx_v_il;
+        __pyx_t_28 = __pyx_v_ib;
+        __pyx_t_35 = ((*__Pyx_BufPtrCContig2d(long *, __pyx_pybuffernd_all_shiftsUn.rcbuffer->pybuffer.buf, __pyx_t_24, __pyx_pybuffernd_all_shiftsUn.diminfo[0].strides, __pyx_t_23, __pyx_pybuffernd_all_shiftsUn.diminfo[1].strides)) + (*__Pyx_BufPtrCContig2d(long *, __pyx_pybuffernd_TimeRevsUn.rcbuffer->pybuffer.buf, __pyx_t_44, __pyx_pybuffernd_TimeRevsUn.diminfo[0].strides, __pyx_t_28, __pyx_pybuffernd_TimeRevsUn.diminfo[1].strides)));
+        if (unlikely(__pyx_v_nint == 0)) {
+          PyErr_SetString(PyExc_ZeroDivisionError, "integer division or modulo by zero");
+          __PYX_ERR(0, 678, __pyx_L1_error)
+        }
+        __pyx_t_28 = __pyx_v_il;
+        __pyx_t_44 = __pyx_v_ib;
+        *__Pyx_BufPtrCContig2d(long *, __pyx_pybuffernd_all_shiftsUn.rcbuffer->pybuffer.buf, __pyx_t_28, __pyx_pybuffernd_all_shiftsUn.diminfo[0].strides, __pyx_t_44, __pyx_pybuffernd_all_shiftsUn.diminfo[1].strides) = __Pyx_mod_long(__pyx_t_35, __pyx_v_nint);
+      }
+
+      /* "Choreo_cython_funs.pyx":680
+ *                 all_shiftsUn[il,ib] = (all_shiftsUn[il,ib]+TimeRevsUn[il,ib]) % nint
+ * 
+ *             for ibi in range(loopnbi[il]):             # <<<<<<<<<<<<<<
+ *                 all_shiftsBin[il,ibi] = (all_shiftsBin[il,ibi]+TimeRevsBin[il,ibi]) % nint
+ * 
+ */
+      __pyx_t_44 = __pyx_v_il;
+      __pyx_t_20 = (*__Pyx_BufPtrCContig1d(long *, __pyx_pybuffernd_loopnbi.rcbuffer->pybuffer.buf, __pyx_t_44, __pyx_pybuffernd_loopnbi.diminfo[0].strides));
+      __pyx_t_21 = __pyx_t_20;
+      for (__pyx_t_19 = 0; __pyx_t_19 < __pyx_t_21; __pyx_t_19+=1) {
+        __pyx_v_ibi = __pyx_t_19;
+
+        /* "Choreo_cython_funs.pyx":681
+ * 
+ *             for ibi in range(loopnbi[il]):
+ *                 all_shiftsBin[il,ibi] = (all_shiftsBin[il,ibi]+TimeRevsBin[il,ibi]) % nint             # <<<<<<<<<<<<<<
+ * 
+ *     cdef np.ndarray[doublecomplex , ndim=3, mode="c"]  hess_dx_pot_fft = np.fft.ihfft(hess_pot_all_d,nint)
+ */
+        __pyx_t_44 = __pyx_v_il;
+        __pyx_t_28 = __pyx_v_ibi;
+        __pyx_t_23 = __pyx_v_il;
+        __pyx_t_24 = __pyx_v_ibi;
+        __pyx_t_35 = ((*__Pyx_BufPtrCContig2d(long *, __pyx_pybuffernd_all_shiftsBin.rcbuffer->pybuffer.buf, __pyx_t_44, __pyx_pybuffernd_all_shiftsBin.diminfo[0].strides, __pyx_t_28, __pyx_pybuffernd_all_shiftsBin.diminfo[1].strides)) + (*__Pyx_BufPtrCContig2d(long *, __pyx_pybuffernd_TimeRevsBin.rcbuffer->pybuffer.buf, __pyx_t_23, __pyx_pybuffernd_TimeRevsBin.diminfo[0].strides, __pyx_t_24, __pyx_pybuffernd_TimeRevsBin.diminfo[1].strides)));
+        if (unlikely(__pyx_v_nint == 0)) {
+          PyErr_SetString(PyExc_ZeroDivisionError, "integer division or modulo by zero");
+          __PYX_ERR(0, 681, __pyx_L1_error)
+        }
+        __pyx_t_24 = __pyx_v_il;
+        __pyx_t_23 = __pyx_v_ibi;
+        *__Pyx_BufPtrCContig2d(long *, __pyx_pybuffernd_all_shiftsBin.rcbuffer->pybuffer.buf, __pyx_t_24, __pyx_pybuffernd_all_shiftsBin.diminfo[0].strides, __pyx_t_23, __pyx_pybuffernd_all_shiftsBin.diminfo[1].strides) = __Pyx_mod_long(__pyx_t_35, __pyx_v_nint);
+      }
+    }
+  }
+
+  /* "Choreo_cython_funs.pyx":683
+ *                 all_shiftsBin[il,ibi] = (all_shiftsBin[il,ibi]+TimeRevsBin[il,ibi]) % nint
+ * 
+ *     cdef np.ndarray[doublecomplex , ndim=3, mode="c"]  hess_dx_pot_fft = np.fft.ihfft(hess_pot_all_d,nint)             # <<<<<<<<<<<<<<
+ * 
+ * 
+ */
+  __Pyx_GetModuleGlobalName(__pyx_t_10, __pyx_n_s_np); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 683, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_10);
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_10, __pyx_n_s_fft); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 683, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __Pyx_DECREF(__pyx_t_10); __pyx_t_10 = 0;
+  __pyx_t_10 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_ihfft); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 683, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_10);
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __pyx_t_2 = __Pyx_PyInt_From_long(__pyx_v_nint); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 683, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __pyx_t_5 = NULL;
+  __pyx_t_11 = 0;
+  if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_10))) {
+    __pyx_t_5 = PyMethod_GET_SELF(__pyx_t_10);
+    if (likely(__pyx_t_5)) {
+      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_10);
+      __Pyx_INCREF(__pyx_t_5);
+      __Pyx_INCREF(function);
+      __Pyx_DECREF_SET(__pyx_t_10, function);
+      __pyx_t_11 = 1;
+    }
+  }
+  #if CYTHON_FAST_PYCALL
+  if (PyFunction_Check(__pyx_t_10)) {
+    PyObject *__pyx_temp[3] = {__pyx_t_5, ((PyObject *)__pyx_v_hess_pot_all_d), __pyx_t_2};
+    __pyx_t_3 = __Pyx_PyFunction_FastCall(__pyx_t_10, __pyx_temp+1-__pyx_t_11, 2+__pyx_t_11); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 683, __pyx_L1_error)
+    __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
+    __Pyx_GOTREF(__pyx_t_3);
+    __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  } else
+  #endif
+  #if CYTHON_FAST_PYCCALL
+  if (__Pyx_PyFastCFunction_Check(__pyx_t_10)) {
+    PyObject *__pyx_temp[3] = {__pyx_t_5, ((PyObject *)__pyx_v_hess_pot_all_d), __pyx_t_2};
+    __pyx_t_3 = __Pyx_PyCFunction_FastCall(__pyx_t_10, __pyx_temp+1-__pyx_t_11, 2+__pyx_t_11); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 683, __pyx_L1_error)
+    __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
+    __Pyx_GOTREF(__pyx_t_3);
+    __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  } else
+  #endif
+  {
+    __pyx_t_4 = PyTuple_New(2+__pyx_t_11); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 683, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_4);
+    if (__pyx_t_5) {
+      __Pyx_GIVEREF(__pyx_t_5); PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_5); __pyx_t_5 = NULL;
+    }
+    __Pyx_INCREF(((PyObject *)__pyx_v_hess_pot_all_d));
+    __Pyx_GIVEREF(((PyObject *)__pyx_v_hess_pot_all_d));
+    PyTuple_SET_ITEM(__pyx_t_4, 0+__pyx_t_11, ((PyObject *)__pyx_v_hess_pot_all_d));
+    __Pyx_GIVEREF(__pyx_t_2);
+    PyTuple_SET_ITEM(__pyx_t_4, 1+__pyx_t_11, __pyx_t_2);
+    __pyx_t_2 = 0;
+    __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_10, __pyx_t_4, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 683, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_3);
+    __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  }
+  __Pyx_DECREF(__pyx_t_10); __pyx_t_10 = 0;
+  if (!(likely(((__pyx_t_3) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_3, __pyx_ptype_5numpy_ndarray))))) __PYX_ERR(0, 683, __pyx_L1_error)
+  __pyx_t_62 = ((PyArrayObject *)__pyx_t_3);
+  {
+    __Pyx_BufFmt_StackElem __pyx_stack[1];
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_hess_dx_pot_fft.rcbuffer->pybuffer, (PyObject*)__pyx_t_62, &__Pyx_TypeInfo___pyx_t_double_complex, PyBUF_FORMAT| PyBUF_C_CONTIGUOUS, 3, 0, __pyx_stack) == -1)) {
+      __pyx_v_hess_dx_pot_fft = ((PyArrayObject *)Py_None); __Pyx_INCREF(Py_None); __pyx_pybuffernd_hess_dx_pot_fft.rcbuffer->pybuffer.buf = NULL;
+      __PYX_ERR(0, 683, __pyx_L1_error)
+    } else {__pyx_pybuffernd_hess_dx_pot_fft.diminfo[0].strides = __pyx_pybuffernd_hess_dx_pot_fft.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_hess_dx_pot_fft.diminfo[0].shape = __pyx_pybuffernd_hess_dx_pot_fft.rcbuffer->pybuffer.shape[0]; __pyx_pybuffernd_hess_dx_pot_fft.diminfo[1].strides = __pyx_pybuffernd_hess_dx_pot_fft.rcbuffer->pybuffer.strides[1]; __pyx_pybuffernd_hess_dx_pot_fft.diminfo[1].shape = __pyx_pybuffernd_hess_dx_pot_fft.rcbuffer->pybuffer.shape[1]; __pyx_pybuffernd_hess_dx_pot_fft.diminfo[2].strides = __pyx_pybuffernd_hess_dx_pot_fft.rcbuffer->pybuffer.strides[2]; __pyx_pybuffernd_hess_dx_pot_fft.diminfo[2].shape = __pyx_pybuffernd_hess_dx_pot_fft.rcbuffer->pybuffer.shape[2];
+    }
+  }
+  __pyx_t_62 = 0;
+  __pyx_v_hess_dx_pot_fft = ((PyArrayObject *)__pyx_t_3);
+  __pyx_t_3 = 0;
+
+  /* "Choreo_cython_funs.pyx":686
+ * 
+ * 
+ *     for il in range(nloop):             # <<<<<<<<<<<<<<
+ *         for idim in range(cndim):
+ * 
+ */
+  __pyx_t_9 = __pyx_v_nloop;
+  __pyx_t_13 = __pyx_t_9;
+  for (__pyx_t_14 = 0; __pyx_t_14 < __pyx_t_13; __pyx_t_14+=1) {
+    __pyx_v_il = __pyx_t_14;
+
+    /* "Choreo_cython_funs.pyx":687
+ * 
+ *     for il in range(nloop):
+ *         for idim in range(cndim):             # <<<<<<<<<<<<<<
+ * 
+ *             Action_hess_dx[il,idim,0,0] -= hess_dx_pot_fft[il,idim,0].real
+ */
+    __pyx_t_16 = __pyx_v_18Choreo_cython_funs_cndim;
+    __pyx_t_17 = __pyx_t_16;
+    for (__pyx_t_18 = 0; __pyx_t_18 < __pyx_t_17; __pyx_t_18+=1) {
+      __pyx_v_idim = __pyx_t_18;
+
+      /* "Choreo_cython_funs.pyx":689
+ *         for idim in range(cndim):
+ * 
+ *             Action_hess_dx[il,idim,0,0] -= hess_dx_pot_fft[il,idim,0].real             # <<<<<<<<<<<<<<
+ * 
+ *             for k in range(1,ncoeff):
+ */
+      __pyx_t_23 = __pyx_v_il;
+      __pyx_t_24 = __pyx_v_idim;
+      __pyx_t_28 = 0;
+      __pyx_t_44 = __pyx_v_il;
+      __pyx_t_27 = __pyx_v_idim;
+      __pyx_t_25 = 0;
+      __pyx_t_15 = 0;
+      *__Pyx_BufPtrCContig4d(double *, __pyx_pybuffernd_Action_hess_dx.rcbuffer->pybuffer.buf, __pyx_t_44, __pyx_pybuffernd_Action_hess_dx.diminfo[0].strides, __pyx_t_27, __pyx_pybuffernd_Action_hess_dx.diminfo[1].strides, __pyx_t_25, __pyx_pybuffernd_Action_hess_dx.diminfo[2].strides, __pyx_t_15, __pyx_pybuffernd_Action_hess_dx.diminfo[3].strides) -= __Pyx_CREAL((*__Pyx_BufPtrCContig3d(__pyx_t_double_complex *, __pyx_pybuffernd_hess_dx_pot_fft.rcbuffer->pybuffer.buf, __pyx_t_23, __pyx_pybuffernd_hess_dx_pot_fft.diminfo[0].strides, __pyx_t_24, __pyx_pybuffernd_hess_dx_pot_fft.diminfo[1].strides, __pyx_t_28, __pyx_pybuffernd_hess_dx_pot_fft.diminfo[2].strides)));
+
+      /* "Choreo_cython_funs.pyx":691
+ *             Action_hess_dx[il,idim,0,0] -= hess_dx_pot_fft[il,idim,0].real
+ * 
+ *             for k in range(1,ncoeff):             # <<<<<<<<<<<<<<
+ * 
+ *                 Action_hess_dx[il,idim,k,0] -= 2*hess_dx_pot_fft[il,idim,k].real
+ */
+      __pyx_t_20 = __pyx_v_ncoeff;
+      __pyx_t_21 = __pyx_t_20;
+      for (__pyx_t_19 = 1; __pyx_t_19 < __pyx_t_21; __pyx_t_19+=1) {
+        __pyx_v_k = __pyx_t_19;
+
+        /* "Choreo_cython_funs.pyx":693
+ *             for k in range(1,ncoeff):
+ * 
+ *                 Action_hess_dx[il,idim,k,0] -= 2*hess_dx_pot_fft[il,idim,k].real             # <<<<<<<<<<<<<<
+ *                 Action_hess_dx[il,idim,k,1] += 2*hess_dx_pot_fft[il,idim,k].imag
+ * 
+ */
+        __pyx_t_28 = __pyx_v_il;
+        __pyx_t_24 = __pyx_v_idim;
+        __pyx_t_23 = __pyx_v_k;
+        __pyx_t_15 = __pyx_v_il;
+        __pyx_t_25 = __pyx_v_idim;
+        __pyx_t_27 = __pyx_v_k;
+        __pyx_t_44 = 0;
+        *__Pyx_BufPtrCContig4d(double *, __pyx_pybuffernd_Action_hess_dx.rcbuffer->pybuffer.buf, __pyx_t_15, __pyx_pybuffernd_Action_hess_dx.diminfo[0].strides, __pyx_t_25, __pyx_pybuffernd_Action_hess_dx.diminfo[1].strides, __pyx_t_27, __pyx_pybuffernd_Action_hess_dx.diminfo[2].strides, __pyx_t_44, __pyx_pybuffernd_Action_hess_dx.diminfo[3].strides) -= (2.0 * __Pyx_CREAL((*__Pyx_BufPtrCContig3d(__pyx_t_double_complex *, __pyx_pybuffernd_hess_dx_pot_fft.rcbuffer->pybuffer.buf, __pyx_t_28, __pyx_pybuffernd_hess_dx_pot_fft.diminfo[0].strides, __pyx_t_24, __pyx_pybuffernd_hess_dx_pot_fft.diminfo[1].strides, __pyx_t_23, __pyx_pybuffernd_hess_dx_pot_fft.diminfo[2].strides))));
+
+        /* "Choreo_cython_funs.pyx":694
+ * 
+ *                 Action_hess_dx[il,idim,k,0] -= 2*hess_dx_pot_fft[il,idim,k].real
+ *                 Action_hess_dx[il,idim,k,1] += 2*hess_dx_pot_fft[il,idim,k].imag             # <<<<<<<<<<<<<<
+ * 
+ *     return Action_hess_dx
+ */
+        __pyx_t_23 = __pyx_v_il;
+        __pyx_t_24 = __pyx_v_idim;
+        __pyx_t_28 = __pyx_v_k;
+        __pyx_t_44 = __pyx_v_il;
+        __pyx_t_27 = __pyx_v_idim;
+        __pyx_t_25 = __pyx_v_k;
+        __pyx_t_15 = 1;
+        *__Pyx_BufPtrCContig4d(double *, __pyx_pybuffernd_Action_hess_dx.rcbuffer->pybuffer.buf, __pyx_t_44, __pyx_pybuffernd_Action_hess_dx.diminfo[0].strides, __pyx_t_27, __pyx_pybuffernd_Action_hess_dx.diminfo[1].strides, __pyx_t_25, __pyx_pybuffernd_Action_hess_dx.diminfo[2].strides, __pyx_t_15, __pyx_pybuffernd_Action_hess_dx.diminfo[3].strides) += (2.0 * __Pyx_CIMAG((*__Pyx_BufPtrCContig3d(__pyx_t_double_complex *, __pyx_pybuffernd_hess_dx_pot_fft.rcbuffer->pybuffer.buf, __pyx_t_23, __pyx_pybuffernd_hess_dx_pot_fft.diminfo[0].strides, __pyx_t_24, __pyx_pybuffernd_hess_dx_pot_fft.diminfo[1].strides, __pyx_t_28, __pyx_pybuffernd_hess_dx_pot_fft.diminfo[2].strides))));
+      }
+    }
+  }
+
+  /* "Choreo_cython_funs.pyx":696
+ *                 Action_hess_dx[il,idim,k,1] += 2*hess_dx_pot_fft[il,idim,k].imag
+ * 
+ *     return Action_hess_dx             # <<<<<<<<<<<<<<
+ * 
+ * 
+ */
+  __Pyx_XDECREF(__pyx_r);
+  __Pyx_INCREF(((PyObject *)__pyx_v_Action_hess_dx));
+  __pyx_r = ((PyObject *)__pyx_v_Action_hess_dx);
+  goto __pyx_L0;
+
+  /* "Choreo_cython_funs.pyx":507
+ *     return csqrt(dx2min)
+ * 
+ * def Compute_action_hess_mul_Cython(             # <<<<<<<<<<<<<<
+ *     long nloop,
+ *     long ncoeff,
+ */
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_XDECREF(__pyx_t_2);
+  __Pyx_XDECREF(__pyx_t_3);
+  __Pyx_XDECREF(__pyx_t_4);
+  __Pyx_XDECREF(__pyx_t_5);
+  __Pyx_XDECREF(__pyx_t_10);
+  { PyObject *__pyx_type, *__pyx_value, *__pyx_tb;
+    __Pyx_PyThreadState_declare
+    __Pyx_PyThreadState_assign
+    __Pyx_ErrFetch(&__pyx_type, &__pyx_value, &__pyx_tb);
+    __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_Action_hess_dx.rcbuffer->pybuffer);
+    __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_MassSum.rcbuffer->pybuffer);
+    __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_ProdMassSumAll.rcbuffer->pybuffer);
+    __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_SpaceRotsBin.rcbuffer->pybuffer);
+    __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_SpaceRotsUn.rcbuffer->pybuffer);
+    __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_Targets.rcbuffer->pybuffer);
+    __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_TimeRevsBin.rcbuffer->pybuffer);
+    __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_TimeRevsUn.rcbuffer->pybuffer);
+    __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_TimeShiftDenBin.rcbuffer->pybuffer);
+    __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_TimeShiftDenUn.rcbuffer->pybuffer);
+    __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_TimeShiftNumBin.rcbuffer->pybuffer);
+    __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_TimeShiftNumUn.rcbuffer->pybuffer);
+    __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_all_coeffs.rcbuffer->pybuffer);
+    __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_all_coeffs_d.rcbuffer->pybuffer);
+    __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_all_pos.rcbuffer->pybuffer);
+    __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_all_pos_d.rcbuffer->pybuffer);
+    __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_all_shiftsBin.rcbuffer->pybuffer);
+    __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_all_shiftsUn.rcbuffer->pybuffer);
+    __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_ddf.rcbuffer->pybuffer);
+    __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_ddx.rcbuffer->pybuffer);
+    __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_dx.rcbuffer->pybuffer);
+    __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_hess_dx_pot_fft.rcbuffer->pybuffer);
+    __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_hess_pot_all_d.rcbuffer->pybuffer);
+    __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_loopnb.rcbuffer->pybuffer);
+    __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_loopnbi.rcbuffer->pybuffer);
+    __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_mass.rcbuffer->pybuffer);
+  __Pyx_ErrRestore(__pyx_type, __pyx_value, __pyx_tb);}
+  __Pyx_AddTraceback("Choreo_cython_funs.Compute_action_hess_mul_Cython", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = NULL;
+  goto __pyx_L2;
+  __pyx_L0:;
+  __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_Action_hess_dx.rcbuffer->pybuffer);
+  __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_MassSum.rcbuffer->pybuffer);
+  __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_ProdMassSumAll.rcbuffer->pybuffer);
+  __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_SpaceRotsBin.rcbuffer->pybuffer);
+  __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_SpaceRotsUn.rcbuffer->pybuffer);
+  __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_Targets.rcbuffer->pybuffer);
+  __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_TimeRevsBin.rcbuffer->pybuffer);
+  __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_TimeRevsUn.rcbuffer->pybuffer);
+  __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_TimeShiftDenBin.rcbuffer->pybuffer);
+  __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_TimeShiftDenUn.rcbuffer->pybuffer);
+  __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_TimeShiftNumBin.rcbuffer->pybuffer);
+  __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_TimeShiftNumUn.rcbuffer->pybuffer);
+  __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_all_coeffs.rcbuffer->pybuffer);
+  __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_all_coeffs_d.rcbuffer->pybuffer);
+  __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_all_pos.rcbuffer->pybuffer);
+  __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_all_pos_d.rcbuffer->pybuffer);
+  __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_all_shiftsBin.rcbuffer->pybuffer);
+  __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_all_shiftsUn.rcbuffer->pybuffer);
+  __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_ddf.rcbuffer->pybuffer);
+  __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_ddx.rcbuffer->pybuffer);
+  __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_dx.rcbuffer->pybuffer);
+  __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_hess_dx_pot_fft.rcbuffer->pybuffer);
+  __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_hess_pot_all_d.rcbuffer->pybuffer);
+  __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_loopnb.rcbuffer->pybuffer);
+  __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_loopnbi.rcbuffer->pybuffer);
+  __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_mass.rcbuffer->pybuffer);
+  __pyx_L2:;
+  __Pyx_XDECREF((PyObject *)__pyx_v_dx);
+  __Pyx_XDECREF((PyObject *)__pyx_v_ddx);
+  __Pyx_XDECREF((PyObject *)__pyx_v_ddf);
+  __Pyx_XDECREF((PyObject *)__pyx_v_Action_hess_dx);
+  __Pyx_XDECREF(__pyx_v_c_coeffs);
+  __Pyx_XDECREF((PyObject *)__pyx_v_all_pos);
+  __Pyx_XDECREF(__pyx_v_c_coeffs_d);
+  __Pyx_XDECREF((PyObject *)__pyx_v_all_pos_d);
+  __Pyx_XDECREF((PyObject *)__pyx_v_all_shiftsUn);
+  __Pyx_XDECREF((PyObject *)__pyx_v_all_shiftsBin);
+  __Pyx_XDECREF((PyObject *)__pyx_v_hess_pot_all_d);
+  __Pyx_XDECREF((PyObject *)__pyx_v_hess_dx_pot_fft);
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "Choreo_cython_funs.pyx":699
+ * 
+ * 
  * def Compute_action_hess_mul(             # <<<<<<<<<<<<<<
  *     long nloop,
  *     np.ndarray[long, ndim=1, mode="c"] nbody  not None ,
  */
 
 /* Python wrapper */
-static PyObject *__pyx_pw_18Choreo_cython_funs_11Compute_action_hess_mul(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
-static PyMethodDef __pyx_mdef_18Choreo_cython_funs_11Compute_action_hess_mul = {"Compute_action_hess_mul", (PyCFunction)(void*)(PyCFunctionWithKeywords)__pyx_pw_18Choreo_cython_funs_11Compute_action_hess_mul, METH_VARARGS|METH_KEYWORDS, 0};
-static PyObject *__pyx_pw_18Choreo_cython_funs_11Compute_action_hess_mul(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
+static PyObject *__pyx_pw_18Choreo_cython_funs_13Compute_action_hess_mul(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
+static PyMethodDef __pyx_mdef_18Choreo_cython_funs_13Compute_action_hess_mul = {"Compute_action_hess_mul", (PyCFunction)(void*)(PyCFunctionWithKeywords)__pyx_pw_18Choreo_cython_funs_13Compute_action_hess_mul, METH_VARARGS|METH_KEYWORDS, 0};
+static PyObject *__pyx_pw_18Choreo_cython_funs_13Compute_action_hess_mul(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
   long __pyx_v_nloop;
   PyArrayObject *__pyx_v_nbody = 0;
   long __pyx_v_ncoeff;
@@ -8480,41 +11215,41 @@ static PyObject *__pyx_pw_18Choreo_cython_funs_11Compute_action_hess_mul(PyObjec
         case  1:
         if (likely((values[1] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_nbody)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("Compute_action_hess_mul", 1, 7, 7, 1); __PYX_ERR(0, 507, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("Compute_action_hess_mul", 1, 7, 7, 1); __PYX_ERR(0, 699, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  2:
         if (likely((values[2] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_ncoeff)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("Compute_action_hess_mul", 1, 7, 7, 2); __PYX_ERR(0, 507, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("Compute_action_hess_mul", 1, 7, 7, 2); __PYX_ERR(0, 699, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  3:
         if (likely((values[3] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_mass)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("Compute_action_hess_mul", 1, 7, 7, 3); __PYX_ERR(0, 507, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("Compute_action_hess_mul", 1, 7, 7, 3); __PYX_ERR(0, 699, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  4:
         if (likely((values[4] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_nint)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("Compute_action_hess_mul", 1, 7, 7, 4); __PYX_ERR(0, 507, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("Compute_action_hess_mul", 1, 7, 7, 4); __PYX_ERR(0, 699, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  5:
         if (likely((values[5] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_all_coeffs)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("Compute_action_hess_mul", 1, 7, 7, 5); __PYX_ERR(0, 507, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("Compute_action_hess_mul", 1, 7, 7, 5); __PYX_ERR(0, 699, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  6:
         if (likely((values[6] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_all_coeffs_d)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("Compute_action_hess_mul", 1, 7, 7, 6); __PYX_ERR(0, 507, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("Compute_action_hess_mul", 1, 7, 7, 6); __PYX_ERR(0, 699, __pyx_L3_error)
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "Compute_action_hess_mul") < 0)) __PYX_ERR(0, 507, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "Compute_action_hess_mul") < 0)) __PYX_ERR(0, 699, __pyx_L3_error)
       }
     } else if (PyTuple_GET_SIZE(__pyx_args) != 7) {
       goto __pyx_L5_argtuple_error;
@@ -8527,27 +11262,27 @@ static PyObject *__pyx_pw_18Choreo_cython_funs_11Compute_action_hess_mul(PyObjec
       values[5] = PyTuple_GET_ITEM(__pyx_args, 5);
       values[6] = PyTuple_GET_ITEM(__pyx_args, 6);
     }
-    __pyx_v_nloop = __Pyx_PyInt_As_long(values[0]); if (unlikely((__pyx_v_nloop == (long)-1) && PyErr_Occurred())) __PYX_ERR(0, 508, __pyx_L3_error)
+    __pyx_v_nloop = __Pyx_PyInt_As_long(values[0]); if (unlikely((__pyx_v_nloop == (long)-1) && PyErr_Occurred())) __PYX_ERR(0, 700, __pyx_L3_error)
     __pyx_v_nbody = ((PyArrayObject *)values[1]);
-    __pyx_v_ncoeff = __Pyx_PyInt_As_long(values[2]); if (unlikely((__pyx_v_ncoeff == (long)-1) && PyErr_Occurred())) __PYX_ERR(0, 510, __pyx_L3_error)
+    __pyx_v_ncoeff = __Pyx_PyInt_As_long(values[2]); if (unlikely((__pyx_v_ncoeff == (long)-1) && PyErr_Occurred())) __PYX_ERR(0, 702, __pyx_L3_error)
     __pyx_v_mass = ((PyArrayObject *)values[3]);
-    __pyx_v_nint = __Pyx_PyInt_As_long(values[4]); if (unlikely((__pyx_v_nint == (long)-1) && PyErr_Occurred())) __PYX_ERR(0, 512, __pyx_L3_error)
+    __pyx_v_nint = __Pyx_PyInt_As_long(values[4]); if (unlikely((__pyx_v_nint == (long)-1) && PyErr_Occurred())) __PYX_ERR(0, 704, __pyx_L3_error)
     __pyx_v_all_coeffs = ((PyArrayObject *)values[5]);
     __pyx_v_all_coeffs_d = ((PyArrayObject *)values[6]);
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("Compute_action_hess_mul", 1, 7, 7, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 507, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("Compute_action_hess_mul", 1, 7, 7, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 699, __pyx_L3_error)
   __pyx_L3_error:;
   __Pyx_AddTraceback("Choreo_cython_funs.Compute_action_hess_mul", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_nbody), __pyx_ptype_5numpy_ndarray, 0, "nbody", 0))) __PYX_ERR(0, 509, __pyx_L1_error)
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_mass), __pyx_ptype_5numpy_ndarray, 0, "mass", 0))) __PYX_ERR(0, 511, __pyx_L1_error)
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_all_coeffs), __pyx_ptype_5numpy_ndarray, 0, "all_coeffs", 0))) __PYX_ERR(0, 513, __pyx_L1_error)
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_all_coeffs_d), __pyx_ptype_5numpy_ndarray, 0, "all_coeffs_d", 0))) __PYX_ERR(0, 514, __pyx_L1_error)
-  __pyx_r = __pyx_pf_18Choreo_cython_funs_10Compute_action_hess_mul(__pyx_self, __pyx_v_nloop, __pyx_v_nbody, __pyx_v_ncoeff, __pyx_v_mass, __pyx_v_nint, __pyx_v_all_coeffs, __pyx_v_all_coeffs_d);
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_nbody), __pyx_ptype_5numpy_ndarray, 0, "nbody", 0))) __PYX_ERR(0, 701, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_mass), __pyx_ptype_5numpy_ndarray, 0, "mass", 0))) __PYX_ERR(0, 703, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_all_coeffs), __pyx_ptype_5numpy_ndarray, 0, "all_coeffs", 0))) __PYX_ERR(0, 705, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_all_coeffs_d), __pyx_ptype_5numpy_ndarray, 0, "all_coeffs_d", 0))) __PYX_ERR(0, 706, __pyx_L1_error)
+  __pyx_r = __pyx_pf_18Choreo_cython_funs_12Compute_action_hess_mul(__pyx_self, __pyx_v_nloop, __pyx_v_nbody, __pyx_v_ncoeff, __pyx_v_mass, __pyx_v_nint, __pyx_v_all_coeffs, __pyx_v_all_coeffs_d);
 
   /* function exit code */
   goto __pyx_L0;
@@ -8558,7 +11293,7 @@ static PyObject *__pyx_pw_18Choreo_cython_funs_11Compute_action_hess_mul(PyObjec
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_18Choreo_cython_funs_10Compute_action_hess_mul(CYTHON_UNUSED PyObject *__pyx_self, long __pyx_v_nloop, PyArrayObject *__pyx_v_nbody, long __pyx_v_ncoeff, PyArrayObject *__pyx_v_mass, long __pyx_v_nint, PyArrayObject *__pyx_v_all_coeffs, PyArrayObject *__pyx_v_all_coeffs_d) {
+static PyObject *__pyx_pf_18Choreo_cython_funs_12Compute_action_hess_mul(CYTHON_UNUSED PyObject *__pyx_self, long __pyx_v_nloop, PyArrayObject *__pyx_v_nbody, long __pyx_v_ncoeff, PyArrayObject *__pyx_v_mass, long __pyx_v_nint, PyArrayObject *__pyx_v_all_coeffs, PyArrayObject *__pyx_v_all_coeffs_d) {
   PyArrayObject *__pyx_v_Action_hess_dx = 0;
   PyObject *__pyx_v_c_coeffs = NULL;
   PyArrayObject *__pyx_v_all_pos = 0;
@@ -8728,44 +11463,44 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_10Compute_action_hess_mul(CYTHON_
   __pyx_pybuffernd_all_coeffs_d.rcbuffer = &__pyx_pybuffer_all_coeffs_d;
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
-    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_nbody.rcbuffer->pybuffer, (PyObject*)__pyx_v_nbody, &__Pyx_TypeInfo_long, PyBUF_FORMAT| PyBUF_C_CONTIGUOUS, 1, 0, __pyx_stack) == -1)) __PYX_ERR(0, 507, __pyx_L1_error)
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_nbody.rcbuffer->pybuffer, (PyObject*)__pyx_v_nbody, &__Pyx_TypeInfo_long, PyBUF_FORMAT| PyBUF_C_CONTIGUOUS, 1, 0, __pyx_stack) == -1)) __PYX_ERR(0, 699, __pyx_L1_error)
   }
   __pyx_pybuffernd_nbody.diminfo[0].strides = __pyx_pybuffernd_nbody.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_nbody.diminfo[0].shape = __pyx_pybuffernd_nbody.rcbuffer->pybuffer.shape[0];
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
-    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_mass.rcbuffer->pybuffer, (PyObject*)__pyx_v_mass, &__Pyx_TypeInfo_double, PyBUF_FORMAT| PyBUF_C_CONTIGUOUS, 1, 0, __pyx_stack) == -1)) __PYX_ERR(0, 507, __pyx_L1_error)
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_mass.rcbuffer->pybuffer, (PyObject*)__pyx_v_mass, &__Pyx_TypeInfo_double, PyBUF_FORMAT| PyBUF_C_CONTIGUOUS, 1, 0, __pyx_stack) == -1)) __PYX_ERR(0, 699, __pyx_L1_error)
   }
   __pyx_pybuffernd_mass.diminfo[0].strides = __pyx_pybuffernd_mass.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_mass.diminfo[0].shape = __pyx_pybuffernd_mass.rcbuffer->pybuffer.shape[0];
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
-    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_all_coeffs.rcbuffer->pybuffer, (PyObject*)__pyx_v_all_coeffs, &__Pyx_TypeInfo_double, PyBUF_FORMAT| PyBUF_C_CONTIGUOUS, 4, 0, __pyx_stack) == -1)) __PYX_ERR(0, 507, __pyx_L1_error)
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_all_coeffs.rcbuffer->pybuffer, (PyObject*)__pyx_v_all_coeffs, &__Pyx_TypeInfo_double, PyBUF_FORMAT| PyBUF_C_CONTIGUOUS, 4, 0, __pyx_stack) == -1)) __PYX_ERR(0, 699, __pyx_L1_error)
   }
   __pyx_pybuffernd_all_coeffs.diminfo[0].strides = __pyx_pybuffernd_all_coeffs.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_all_coeffs.diminfo[0].shape = __pyx_pybuffernd_all_coeffs.rcbuffer->pybuffer.shape[0]; __pyx_pybuffernd_all_coeffs.diminfo[1].strides = __pyx_pybuffernd_all_coeffs.rcbuffer->pybuffer.strides[1]; __pyx_pybuffernd_all_coeffs.diminfo[1].shape = __pyx_pybuffernd_all_coeffs.rcbuffer->pybuffer.shape[1]; __pyx_pybuffernd_all_coeffs.diminfo[2].strides = __pyx_pybuffernd_all_coeffs.rcbuffer->pybuffer.strides[2]; __pyx_pybuffernd_all_coeffs.diminfo[2].shape = __pyx_pybuffernd_all_coeffs.rcbuffer->pybuffer.shape[2]; __pyx_pybuffernd_all_coeffs.diminfo[3].strides = __pyx_pybuffernd_all_coeffs.rcbuffer->pybuffer.strides[3]; __pyx_pybuffernd_all_coeffs.diminfo[3].shape = __pyx_pybuffernd_all_coeffs.rcbuffer->pybuffer.shape[3];
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
-    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_all_coeffs_d.rcbuffer->pybuffer, (PyObject*)__pyx_v_all_coeffs_d, &__Pyx_TypeInfo_double, PyBUF_FORMAT| PyBUF_C_CONTIGUOUS, 4, 0, __pyx_stack) == -1)) __PYX_ERR(0, 507, __pyx_L1_error)
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_all_coeffs_d.rcbuffer->pybuffer, (PyObject*)__pyx_v_all_coeffs_d, &__Pyx_TypeInfo_double, PyBUF_FORMAT| PyBUF_C_CONTIGUOUS, 4, 0, __pyx_stack) == -1)) __PYX_ERR(0, 699, __pyx_L1_error)
   }
   __pyx_pybuffernd_all_coeffs_d.diminfo[0].strides = __pyx_pybuffernd_all_coeffs_d.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_all_coeffs_d.diminfo[0].shape = __pyx_pybuffernd_all_coeffs_d.rcbuffer->pybuffer.shape[0]; __pyx_pybuffernd_all_coeffs_d.diminfo[1].strides = __pyx_pybuffernd_all_coeffs_d.rcbuffer->pybuffer.strides[1]; __pyx_pybuffernd_all_coeffs_d.diminfo[1].shape = __pyx_pybuffernd_all_coeffs_d.rcbuffer->pybuffer.shape[1]; __pyx_pybuffernd_all_coeffs_d.diminfo[2].strides = __pyx_pybuffernd_all_coeffs_d.rcbuffer->pybuffer.strides[2]; __pyx_pybuffernd_all_coeffs_d.diminfo[2].shape = __pyx_pybuffernd_all_coeffs_d.rcbuffer->pybuffer.shape[2]; __pyx_pybuffernd_all_coeffs_d.diminfo[3].strides = __pyx_pybuffernd_all_coeffs_d.rcbuffer->pybuffer.strides[3]; __pyx_pybuffernd_all_coeffs_d.diminfo[3].shape = __pyx_pybuffernd_all_coeffs_d.rcbuffer->pybuffer.shape[3];
 
-  /* "Choreo_cython_funs.pyx":517
+  /* "Choreo_cython_funs.pyx":709
  *     ):
  * 
  *     cdef np.ndarray[double, ndim=4, mode="c"] Action_hess_dx = np.zeros((nloop,cndim,ncoeff,2),np.float64)             # <<<<<<<<<<<<<<
  * 
  *     c_coeffs = all_coeffs.view(dtype=np.complex128)[...,0]
  */
-  __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_np); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 517, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_np); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 709, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_zeros); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 517, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_zeros); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 709, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = __Pyx_PyInt_From_long(__pyx_v_nloop); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 517, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyInt_From_long(__pyx_v_nloop); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 709, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_4 = __Pyx_PyInt_From_long(__pyx_v_18Choreo_cython_funs_cndim); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 517, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyInt_From_long(__pyx_v_18Choreo_cython_funs_cndim); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 709, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_5 = __Pyx_PyInt_From_long(__pyx_v_ncoeff); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 517, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyInt_From_long(__pyx_v_ncoeff); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 709, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
-  __pyx_t_6 = PyTuple_New(4); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 517, __pyx_L1_error)
+  __pyx_t_6 = PyTuple_New(4); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 709, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
   __Pyx_GIVEREF(__pyx_t_2);
   PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_t_2);
@@ -8779,9 +11514,9 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_10Compute_action_hess_mul(CYTHON_
   __pyx_t_2 = 0;
   __pyx_t_4 = 0;
   __pyx_t_5 = 0;
-  __Pyx_GetModuleGlobalName(__pyx_t_5, __pyx_n_s_np); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 517, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_5, __pyx_n_s_np); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 709, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
-  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_n_s_float64); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 517, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_n_s_float64); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 709, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
   __pyx_t_5 = NULL;
@@ -8799,7 +11534,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_10Compute_action_hess_mul(CYTHON_
   #if CYTHON_FAST_PYCALL
   if (PyFunction_Check(__pyx_t_3)) {
     PyObject *__pyx_temp[3] = {__pyx_t_5, __pyx_t_6, __pyx_t_4};
-    __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_7, 2+__pyx_t_7); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 517, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_7, 2+__pyx_t_7); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 709, __pyx_L1_error)
     __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
@@ -8809,7 +11544,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_10Compute_action_hess_mul(CYTHON_
   #if CYTHON_FAST_PYCCALL
   if (__Pyx_PyFastCFunction_Check(__pyx_t_3)) {
     PyObject *__pyx_temp[3] = {__pyx_t_5, __pyx_t_6, __pyx_t_4};
-    __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_7, 2+__pyx_t_7); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 517, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_7, 2+__pyx_t_7); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 709, __pyx_L1_error)
     __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
@@ -8817,7 +11552,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_10Compute_action_hess_mul(CYTHON_
   } else
   #endif
   {
-    __pyx_t_2 = PyTuple_New(2+__pyx_t_7); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 517, __pyx_L1_error)
+    __pyx_t_2 = PyTuple_New(2+__pyx_t_7); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 709, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     if (__pyx_t_5) {
       __Pyx_GIVEREF(__pyx_t_5); PyTuple_SET_ITEM(__pyx_t_2, 0, __pyx_t_5); __pyx_t_5 = NULL;
@@ -8828,18 +11563,18 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_10Compute_action_hess_mul(CYTHON_
     PyTuple_SET_ITEM(__pyx_t_2, 1+__pyx_t_7, __pyx_t_4);
     __pyx_t_6 = 0;
     __pyx_t_4 = 0;
-    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_2, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 517, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_2, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 709, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   }
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  if (!(likely(((__pyx_t_1) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_1, __pyx_ptype_5numpy_ndarray))))) __PYX_ERR(0, 517, __pyx_L1_error)
+  if (!(likely(((__pyx_t_1) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_1, __pyx_ptype_5numpy_ndarray))))) __PYX_ERR(0, 709, __pyx_L1_error)
   __pyx_t_8 = ((PyArrayObject *)__pyx_t_1);
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
     if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_Action_hess_dx.rcbuffer->pybuffer, (PyObject*)__pyx_t_8, &__Pyx_TypeInfo_double, PyBUF_FORMAT| PyBUF_C_CONTIGUOUS| PyBUF_WRITABLE, 4, 0, __pyx_stack) == -1)) {
       __pyx_v_Action_hess_dx = ((PyArrayObject *)Py_None); __Pyx_INCREF(Py_None); __pyx_pybuffernd_Action_hess_dx.rcbuffer->pybuffer.buf = NULL;
-      __PYX_ERR(0, 517, __pyx_L1_error)
+      __PYX_ERR(0, 709, __pyx_L1_error)
     } else {__pyx_pybuffernd_Action_hess_dx.diminfo[0].strides = __pyx_pybuffernd_Action_hess_dx.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_Action_hess_dx.diminfo[0].shape = __pyx_pybuffernd_Action_hess_dx.rcbuffer->pybuffer.shape[0]; __pyx_pybuffernd_Action_hess_dx.diminfo[1].strides = __pyx_pybuffernd_Action_hess_dx.rcbuffer->pybuffer.strides[1]; __pyx_pybuffernd_Action_hess_dx.diminfo[1].shape = __pyx_pybuffernd_Action_hess_dx.rcbuffer->pybuffer.shape[1]; __pyx_pybuffernd_Action_hess_dx.diminfo[2].strides = __pyx_pybuffernd_Action_hess_dx.rcbuffer->pybuffer.strides[2]; __pyx_pybuffernd_Action_hess_dx.diminfo[2].shape = __pyx_pybuffernd_Action_hess_dx.rcbuffer->pybuffer.shape[2]; __pyx_pybuffernd_Action_hess_dx.diminfo[3].strides = __pyx_pybuffernd_Action_hess_dx.rcbuffer->pybuffer.strides[3]; __pyx_pybuffernd_Action_hess_dx.diminfo[3].shape = __pyx_pybuffernd_Action_hess_dx.rcbuffer->pybuffer.shape[3];
     }
   }
@@ -8847,79 +11582,79 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_10Compute_action_hess_mul(CYTHON_
   __pyx_v_Action_hess_dx = ((PyArrayObject *)__pyx_t_1);
   __pyx_t_1 = 0;
 
-  /* "Choreo_cython_funs.pyx":519
+  /* "Choreo_cython_funs.pyx":711
  *     cdef np.ndarray[double, ndim=4, mode="c"] Action_hess_dx = np.zeros((nloop,cndim,ncoeff,2),np.float64)
  * 
  *     c_coeffs = all_coeffs.view(dtype=np.complex128)[...,0]             # <<<<<<<<<<<<<<
  *     cdef np.ndarray[double, ndim=3, mode="c"]  all_pos = np.fft.irfft(c_coeffs,n=nint,axis=2)*nint
  * 
  */
-  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_all_coeffs), __pyx_n_s_view); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 519, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_all_coeffs), __pyx_n_s_view); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 711, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_3 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 519, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 711, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_np); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 519, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_np); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 711, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_complex128); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 519, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_complex128); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 711, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_dtype, __pyx_t_4) < 0) __PYX_ERR(0, 519, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_dtype, __pyx_t_4) < 0) __PYX_ERR(0, 711, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_empty_tuple, __pyx_t_3); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 519, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_empty_tuple, __pyx_t_3); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 711, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_3 = __Pyx_PyObject_GetItem(__pyx_t_4, __pyx_tuple_); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 519, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetItem(__pyx_t_4, __pyx_tuple_); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 711, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   __pyx_v_c_coeffs = __pyx_t_3;
   __pyx_t_3 = 0;
 
-  /* "Choreo_cython_funs.pyx":520
+  /* "Choreo_cython_funs.pyx":712
  * 
  *     c_coeffs = all_coeffs.view(dtype=np.complex128)[...,0]
  *     cdef np.ndarray[double, ndim=3, mode="c"]  all_pos = np.fft.irfft(c_coeffs,n=nint,axis=2)*nint             # <<<<<<<<<<<<<<
  * 
  *     c_coeffs_d = all_coeffs_d.view(dtype=np.complex128)[...,0]
  */
-  __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_n_s_np); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 520, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_n_s_np); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 712, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_fft); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 520, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_fft); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 712, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_irfft); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 520, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_irfft); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 712, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  __pyx_t_4 = PyTuple_New(1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 520, __pyx_L1_error)
+  __pyx_t_4 = PyTuple_New(1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 712, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_INCREF(__pyx_v_c_coeffs);
   __Pyx_GIVEREF(__pyx_v_c_coeffs);
   PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_v_c_coeffs);
-  __pyx_t_1 = __Pyx_PyDict_NewPresized(2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 520, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyDict_NewPresized(2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 712, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __Pyx_PyInt_From_long(__pyx_v_nint); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 520, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyInt_From_long(__pyx_v_nint); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 712, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_n, __pyx_t_2) < 0) __PYX_ERR(0, 520, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_n, __pyx_t_2) < 0) __PYX_ERR(0, 712, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_axis, __pyx_int_2) < 0) __PYX_ERR(0, 520, __pyx_L1_error)
-  __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_4, __pyx_t_1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 520, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_axis, __pyx_int_2) < 0) __PYX_ERR(0, 712, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_4, __pyx_t_1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 712, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = __Pyx_PyInt_From_long(__pyx_v_nint); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 520, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyInt_From_long(__pyx_v_nint); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 712, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_4 = PyNumber_Multiply(__pyx_t_2, __pyx_t_1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 520, __pyx_L1_error)
+  __pyx_t_4 = PyNumber_Multiply(__pyx_t_2, __pyx_t_1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 712, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  if (!(likely(((__pyx_t_4) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_4, __pyx_ptype_5numpy_ndarray))))) __PYX_ERR(0, 520, __pyx_L1_error)
+  if (!(likely(((__pyx_t_4) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_4, __pyx_ptype_5numpy_ndarray))))) __PYX_ERR(0, 712, __pyx_L1_error)
   __pyx_t_9 = ((PyArrayObject *)__pyx_t_4);
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
     if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_all_pos.rcbuffer->pybuffer, (PyObject*)__pyx_t_9, &__Pyx_TypeInfo_double, PyBUF_FORMAT| PyBUF_C_CONTIGUOUS, 3, 0, __pyx_stack) == -1)) {
       __pyx_v_all_pos = ((PyArrayObject *)Py_None); __Pyx_INCREF(Py_None); __pyx_pybuffernd_all_pos.rcbuffer->pybuffer.buf = NULL;
-      __PYX_ERR(0, 520, __pyx_L1_error)
+      __PYX_ERR(0, 712, __pyx_L1_error)
     } else {__pyx_pybuffernd_all_pos.diminfo[0].strides = __pyx_pybuffernd_all_pos.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_all_pos.diminfo[0].shape = __pyx_pybuffernd_all_pos.rcbuffer->pybuffer.shape[0]; __pyx_pybuffernd_all_pos.diminfo[1].strides = __pyx_pybuffernd_all_pos.rcbuffer->pybuffer.strides[1]; __pyx_pybuffernd_all_pos.diminfo[1].shape = __pyx_pybuffernd_all_pos.rcbuffer->pybuffer.shape[1]; __pyx_pybuffernd_all_pos.diminfo[2].strides = __pyx_pybuffernd_all_pos.rcbuffer->pybuffer.strides[2]; __pyx_pybuffernd_all_pos.diminfo[2].shape = __pyx_pybuffernd_all_pos.rcbuffer->pybuffer.shape[2];
     }
   }
@@ -8927,79 +11662,79 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_10Compute_action_hess_mul(CYTHON_
   __pyx_v_all_pos = ((PyArrayObject *)__pyx_t_4);
   __pyx_t_4 = 0;
 
-  /* "Choreo_cython_funs.pyx":522
+  /* "Choreo_cython_funs.pyx":714
  *     cdef np.ndarray[double, ndim=3, mode="c"]  all_pos = np.fft.irfft(c_coeffs,n=nint,axis=2)*nint
  * 
  *     c_coeffs_d = all_coeffs_d.view(dtype=np.complex128)[...,0]             # <<<<<<<<<<<<<<
  *     cdef np.ndarray[double, ndim=3, mode="c"]  all_pos_d = np.fft.irfft(c_coeffs_d,n=nint,axis=2)*nint
  * 
  */
-  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_all_coeffs_d), __pyx_n_s_view); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 522, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_all_coeffs_d), __pyx_n_s_view); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 714, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_1 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 522, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 714, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_np); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 522, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_np); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 714, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_complex128); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 522, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_complex128); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 714, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_dtype, __pyx_t_3) < 0) __PYX_ERR(0, 522, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_dtype, __pyx_t_3) < 0) __PYX_ERR(0, 714, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_empty_tuple, __pyx_t_1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 522, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_empty_tuple, __pyx_t_1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 714, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = __Pyx_PyObject_GetItem(__pyx_t_3, __pyx_tuple_); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 522, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_GetItem(__pyx_t_3, __pyx_tuple_); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 714, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __pyx_v_c_coeffs_d = __pyx_t_1;
   __pyx_t_1 = 0;
 
-  /* "Choreo_cython_funs.pyx":523
+  /* "Choreo_cython_funs.pyx":715
  * 
  *     c_coeffs_d = all_coeffs_d.view(dtype=np.complex128)[...,0]
  *     cdef np.ndarray[double, ndim=3, mode="c"]  all_pos_d = np.fft.irfft(c_coeffs_d,n=nint,axis=2)*nint             # <<<<<<<<<<<<<<
  * 
  *     cdef long il,ilp,i
  */
-  __Pyx_GetModuleGlobalName(__pyx_t_1, __pyx_n_s_np); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 523, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_1, __pyx_n_s_np); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 715, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_fft); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 523, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_fft); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 715, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_irfft); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 523, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_irfft); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 715, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_3 = PyTuple_New(1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 523, __pyx_L1_error)
+  __pyx_t_3 = PyTuple_New(1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 715, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_INCREF(__pyx_v_c_coeffs_d);
   __Pyx_GIVEREF(__pyx_v_c_coeffs_d);
   PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_v_c_coeffs_d);
-  __pyx_t_4 = __Pyx_PyDict_NewPresized(2); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 523, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyDict_NewPresized(2); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 715, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_2 = __Pyx_PyInt_From_long(__pyx_v_nint); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 523, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyInt_From_long(__pyx_v_nint); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 715, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_n, __pyx_t_2) < 0) __PYX_ERR(0, 523, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_n, __pyx_t_2) < 0) __PYX_ERR(0, 715, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_axis, __pyx_int_2) < 0) __PYX_ERR(0, 523, __pyx_L1_error)
-  __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_t_3, __pyx_t_4); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 523, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_axis, __pyx_int_2) < 0) __PYX_ERR(0, 715, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_t_3, __pyx_t_4); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 715, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  __pyx_t_4 = __Pyx_PyInt_From_long(__pyx_v_nint); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 523, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyInt_From_long(__pyx_v_nint); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 715, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_3 = PyNumber_Multiply(__pyx_t_2, __pyx_t_4); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 523, __pyx_L1_error)
+  __pyx_t_3 = PyNumber_Multiply(__pyx_t_2, __pyx_t_4); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 715, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  if (!(likely(((__pyx_t_3) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_3, __pyx_ptype_5numpy_ndarray))))) __PYX_ERR(0, 523, __pyx_L1_error)
+  if (!(likely(((__pyx_t_3) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_3, __pyx_ptype_5numpy_ndarray))))) __PYX_ERR(0, 715, __pyx_L1_error)
   __pyx_t_10 = ((PyArrayObject *)__pyx_t_3);
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
     if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_all_pos_d.rcbuffer->pybuffer, (PyObject*)__pyx_t_10, &__Pyx_TypeInfo_double, PyBUF_FORMAT| PyBUF_C_CONTIGUOUS, 3, 0, __pyx_stack) == -1)) {
       __pyx_v_all_pos_d = ((PyArrayObject *)Py_None); __Pyx_INCREF(Py_None); __pyx_pybuffernd_all_pos_d.rcbuffer->pybuffer.buf = NULL;
-      __PYX_ERR(0, 523, __pyx_L1_error)
+      __PYX_ERR(0, 715, __pyx_L1_error)
     } else {__pyx_pybuffernd_all_pos_d.diminfo[0].strides = __pyx_pybuffernd_all_pos_d.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_all_pos_d.diminfo[0].shape = __pyx_pybuffernd_all_pos_d.rcbuffer->pybuffer.shape[0]; __pyx_pybuffernd_all_pos_d.diminfo[1].strides = __pyx_pybuffernd_all_pos_d.rcbuffer->pybuffer.strides[1]; __pyx_pybuffernd_all_pos_d.diminfo[1].shape = __pyx_pybuffernd_all_pos_d.rcbuffer->pybuffer.shape[1]; __pyx_pybuffernd_all_pos_d.diminfo[2].strides = __pyx_pybuffernd_all_pos_d.rcbuffer->pybuffer.strides[2]; __pyx_pybuffernd_all_pos_d.diminfo[2].shape = __pyx_pybuffernd_all_pos_d.rcbuffer->pybuffer.shape[2];
     }
   }
@@ -9007,46 +11742,46 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_10Compute_action_hess_mul(CYTHON_
   __pyx_v_all_pos_d = ((PyArrayObject *)__pyx_t_3);
   __pyx_t_3 = 0;
 
-  /* "Choreo_cython_funs.pyx":533
+  /* "Choreo_cython_funs.pyx":725
  *     cdef double pot,potp,potpp
  *     cdef double prod_mass,a,b,dx2,prod_fac,dxtddx,c
  *     cdef np.ndarray[double, ndim=1, mode="c"]  dx = np.zeros((cndim),dtype=np.float64)             # <<<<<<<<<<<<<<
  *     cdef np.ndarray[double, ndim=1, mode="c"]  ddx = np.zeros((cndim),dtype=np.float64)
  *     cdef np.ndarray[double, ndim=1, mode="c"]  dhdx = np.zeros((cndim),dtype=np.float64)
  */
-  __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_n_s_np); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 533, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_n_s_np); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 725, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_zeros); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 533, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_zeros); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 725, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_3 = __Pyx_PyInt_From_long(__pyx_v_18Choreo_cython_funs_cndim); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 533, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyInt_From_long(__pyx_v_18Choreo_cython_funs_cndim); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 725, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_2 = PyTuple_New(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 533, __pyx_L1_error)
+  __pyx_t_2 = PyTuple_New(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 725, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_GIVEREF(__pyx_t_3);
   PyTuple_SET_ITEM(__pyx_t_2, 0, __pyx_t_3);
   __pyx_t_3 = 0;
-  __pyx_t_3 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 533, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 725, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __Pyx_GetModuleGlobalName(__pyx_t_1, __pyx_n_s_np); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 533, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_1, __pyx_n_s_np); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 725, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_float64); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 533, __pyx_L1_error)
+  __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_float64); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 725, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_dtype, __pyx_t_6) < 0) __PYX_ERR(0, 533, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_dtype, __pyx_t_6) < 0) __PYX_ERR(0, 725, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-  __pyx_t_6 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_t_2, __pyx_t_3); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 533, __pyx_L1_error)
+  __pyx_t_6 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_t_2, __pyx_t_3); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 725, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  if (!(likely(((__pyx_t_6) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_6, __pyx_ptype_5numpy_ndarray))))) __PYX_ERR(0, 533, __pyx_L1_error)
+  if (!(likely(((__pyx_t_6) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_6, __pyx_ptype_5numpy_ndarray))))) __PYX_ERR(0, 725, __pyx_L1_error)
   __pyx_t_11 = ((PyArrayObject *)__pyx_t_6);
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
     if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_dx.rcbuffer->pybuffer, (PyObject*)__pyx_t_11, &__Pyx_TypeInfo_double, PyBUF_FORMAT| PyBUF_C_CONTIGUOUS| PyBUF_WRITABLE, 1, 0, __pyx_stack) == -1)) {
       __pyx_v_dx = ((PyArrayObject *)Py_None); __Pyx_INCREF(Py_None); __pyx_pybuffernd_dx.rcbuffer->pybuffer.buf = NULL;
-      __PYX_ERR(0, 533, __pyx_L1_error)
+      __PYX_ERR(0, 725, __pyx_L1_error)
     } else {__pyx_pybuffernd_dx.diminfo[0].strides = __pyx_pybuffernd_dx.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_dx.diminfo[0].shape = __pyx_pybuffernd_dx.rcbuffer->pybuffer.shape[0];
     }
   }
@@ -9054,46 +11789,46 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_10Compute_action_hess_mul(CYTHON_
   __pyx_v_dx = ((PyArrayObject *)__pyx_t_6);
   __pyx_t_6 = 0;
 
-  /* "Choreo_cython_funs.pyx":534
+  /* "Choreo_cython_funs.pyx":726
  *     cdef double prod_mass,a,b,dx2,prod_fac,dxtddx,c
  *     cdef np.ndarray[double, ndim=1, mode="c"]  dx = np.zeros((cndim),dtype=np.float64)
  *     cdef np.ndarray[double, ndim=1, mode="c"]  ddx = np.zeros((cndim),dtype=np.float64)             # <<<<<<<<<<<<<<
  *     cdef np.ndarray[double, ndim=1, mode="c"]  dhdx = np.zeros((cndim),dtype=np.float64)
  * 
  */
-  __Pyx_GetModuleGlobalName(__pyx_t_6, __pyx_n_s_np); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 534, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_6, __pyx_n_s_np); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 726, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_6, __pyx_n_s_zeros); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 534, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_6, __pyx_n_s_zeros); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 726, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-  __pyx_t_6 = __Pyx_PyInt_From_long(__pyx_v_18Choreo_cython_funs_cndim); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 534, __pyx_L1_error)
+  __pyx_t_6 = __Pyx_PyInt_From_long(__pyx_v_18Choreo_cython_funs_cndim); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 726, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
-  __pyx_t_2 = PyTuple_New(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 534, __pyx_L1_error)
+  __pyx_t_2 = PyTuple_New(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 726, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_GIVEREF(__pyx_t_6);
   PyTuple_SET_ITEM(__pyx_t_2, 0, __pyx_t_6);
   __pyx_t_6 = 0;
-  __pyx_t_6 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 534, __pyx_L1_error)
+  __pyx_t_6 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 726, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
-  __Pyx_GetModuleGlobalName(__pyx_t_4, __pyx_n_s_np); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 534, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_4, __pyx_n_s_np); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 726, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_float64); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 534, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_float64); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 726, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  if (PyDict_SetItem(__pyx_t_6, __pyx_n_s_dtype, __pyx_t_1) < 0) __PYX_ERR(0, 534, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_6, __pyx_n_s_dtype, __pyx_t_1) < 0) __PYX_ERR(0, 726, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_2, __pyx_t_6); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 534, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_2, __pyx_t_6); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 726, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-  if (!(likely(((__pyx_t_1) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_1, __pyx_ptype_5numpy_ndarray))))) __PYX_ERR(0, 534, __pyx_L1_error)
+  if (!(likely(((__pyx_t_1) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_1, __pyx_ptype_5numpy_ndarray))))) __PYX_ERR(0, 726, __pyx_L1_error)
   __pyx_t_12 = ((PyArrayObject *)__pyx_t_1);
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
     if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_ddx.rcbuffer->pybuffer, (PyObject*)__pyx_t_12, &__Pyx_TypeInfo_double, PyBUF_FORMAT| PyBUF_C_CONTIGUOUS| PyBUF_WRITABLE, 1, 0, __pyx_stack) == -1)) {
       __pyx_v_ddx = ((PyArrayObject *)Py_None); __Pyx_INCREF(Py_None); __pyx_pybuffernd_ddx.rcbuffer->pybuffer.buf = NULL;
-      __PYX_ERR(0, 534, __pyx_L1_error)
+      __PYX_ERR(0, 726, __pyx_L1_error)
     } else {__pyx_pybuffernd_ddx.diminfo[0].strides = __pyx_pybuffernd_ddx.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_ddx.diminfo[0].shape = __pyx_pybuffernd_ddx.rcbuffer->pybuffer.shape[0];
     }
   }
@@ -9101,46 +11836,46 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_10Compute_action_hess_mul(CYTHON_
   __pyx_v_ddx = ((PyArrayObject *)__pyx_t_1);
   __pyx_t_1 = 0;
 
-  /* "Choreo_cython_funs.pyx":535
+  /* "Choreo_cython_funs.pyx":727
  *     cdef np.ndarray[double, ndim=1, mode="c"]  dx = np.zeros((cndim),dtype=np.float64)
  *     cdef np.ndarray[double, ndim=1, mode="c"]  ddx = np.zeros((cndim),dtype=np.float64)
  *     cdef np.ndarray[double, ndim=1, mode="c"]  dhdx = np.zeros((cndim),dtype=np.float64)             # <<<<<<<<<<<<<<
  * 
  *     cdef long maxnbody = nbody.max()
  */
-  __Pyx_GetModuleGlobalName(__pyx_t_1, __pyx_n_s_np); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 535, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_1, __pyx_n_s_np); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 727, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_zeros); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 535, __pyx_L1_error)
+  __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_zeros); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 727, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = __Pyx_PyInt_From_long(__pyx_v_18Choreo_cython_funs_cndim); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 535, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyInt_From_long(__pyx_v_18Choreo_cython_funs_cndim); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 727, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = PyTuple_New(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 535, __pyx_L1_error)
+  __pyx_t_2 = PyTuple_New(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 727, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_GIVEREF(__pyx_t_1);
   PyTuple_SET_ITEM(__pyx_t_2, 0, __pyx_t_1);
   __pyx_t_1 = 0;
-  __pyx_t_1 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 535, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 727, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_n_s_np); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 535, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_n_s_np); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 727, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_float64); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 535, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_float64); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 727, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_dtype, __pyx_t_4) < 0) __PYX_ERR(0, 535, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_dtype, __pyx_t_4) < 0) __PYX_ERR(0, 727, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_t_2, __pyx_t_1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 535, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_t_2, __pyx_t_1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 727, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  if (!(likely(((__pyx_t_4) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_4, __pyx_ptype_5numpy_ndarray))))) __PYX_ERR(0, 535, __pyx_L1_error)
+  if (!(likely(((__pyx_t_4) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_4, __pyx_ptype_5numpy_ndarray))))) __PYX_ERR(0, 727, __pyx_L1_error)
   __pyx_t_13 = ((PyArrayObject *)__pyx_t_4);
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
     if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_dhdx.rcbuffer->pybuffer, (PyObject*)__pyx_t_13, &__Pyx_TypeInfo_double, PyBUF_FORMAT| PyBUF_C_CONTIGUOUS, 1, 0, __pyx_stack) == -1)) {
       __pyx_v_dhdx = ((PyArrayObject *)Py_None); __Pyx_INCREF(Py_None); __pyx_pybuffernd_dhdx.rcbuffer->pybuffer.buf = NULL;
-      __PYX_ERR(0, 535, __pyx_L1_error)
+      __PYX_ERR(0, 727, __pyx_L1_error)
     } else {__pyx_pybuffernd_dhdx.diminfo[0].strides = __pyx_pybuffernd_dhdx.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_dhdx.diminfo[0].shape = __pyx_pybuffernd_dhdx.rcbuffer->pybuffer.shape[0];
     }
   }
@@ -9148,14 +11883,14 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_10Compute_action_hess_mul(CYTHON_
   __pyx_v_dhdx = ((PyArrayObject *)__pyx_t_4);
   __pyx_t_4 = 0;
 
-  /* "Choreo_cython_funs.pyx":537
+  /* "Choreo_cython_funs.pyx":729
  *     cdef np.ndarray[double, ndim=1, mode="c"]  dhdx = np.zeros((cndim),dtype=np.float64)
  * 
  *     cdef long maxnbody = nbody.max()             # <<<<<<<<<<<<<<
  * 
  *     cdef np.ndarray[long, ndim=2, mode="c"]  all_shifts = np.zeros((nloop,maxnbody),dtype=np.int_)
  */
-  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_nbody), __pyx_n_s_max); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 537, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_nbody), __pyx_n_s_max); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 729, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_t_2 = NULL;
   if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_1))) {
@@ -9169,30 +11904,30 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_10Compute_action_hess_mul(CYTHON_
   }
   __pyx_t_4 = (__pyx_t_2) ? __Pyx_PyObject_CallOneArg(__pyx_t_1, __pyx_t_2) : __Pyx_PyObject_CallNoArg(__pyx_t_1);
   __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
-  if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 537, __pyx_L1_error)
+  if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 729, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_14 = __Pyx_PyInt_As_long(__pyx_t_4); if (unlikely((__pyx_t_14 == (long)-1) && PyErr_Occurred())) __PYX_ERR(0, 537, __pyx_L1_error)
+  __pyx_t_14 = __Pyx_PyInt_As_long(__pyx_t_4); if (unlikely((__pyx_t_14 == (long)-1) && PyErr_Occurred())) __PYX_ERR(0, 729, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   __pyx_v_maxnbody = __pyx_t_14;
 
-  /* "Choreo_cython_funs.pyx":539
+  /* "Choreo_cython_funs.pyx":731
  *     cdef long maxnbody = nbody.max()
  * 
  *     cdef np.ndarray[long, ndim=2, mode="c"]  all_shifts = np.zeros((nloop,maxnbody),dtype=np.int_)             # <<<<<<<<<<<<<<
  * 
  *     # Prepares data
  */
-  __Pyx_GetModuleGlobalName(__pyx_t_4, __pyx_n_s_np); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 539, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_4, __pyx_n_s_np); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 731, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_zeros); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 539, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_zeros); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 731, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  __pyx_t_4 = __Pyx_PyInt_From_long(__pyx_v_nloop); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 539, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyInt_From_long(__pyx_v_nloop); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 731, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_2 = __Pyx_PyInt_From_long(__pyx_v_maxnbody); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 539, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyInt_From_long(__pyx_v_maxnbody); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 731, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_6 = PyTuple_New(2); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 539, __pyx_L1_error)
+  __pyx_t_6 = PyTuple_New(2); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 731, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
   __Pyx_GIVEREF(__pyx_t_4);
   PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_t_4);
@@ -9200,32 +11935,32 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_10Compute_action_hess_mul(CYTHON_
   PyTuple_SET_ITEM(__pyx_t_6, 1, __pyx_t_2);
   __pyx_t_4 = 0;
   __pyx_t_2 = 0;
-  __pyx_t_2 = PyTuple_New(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 539, __pyx_L1_error)
+  __pyx_t_2 = PyTuple_New(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 731, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_GIVEREF(__pyx_t_6);
   PyTuple_SET_ITEM(__pyx_t_2, 0, __pyx_t_6);
   __pyx_t_6 = 0;
-  __pyx_t_6 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 539, __pyx_L1_error)
+  __pyx_t_6 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 731, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
-  __Pyx_GetModuleGlobalName(__pyx_t_4, __pyx_n_s_np); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 539, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_4, __pyx_n_s_np); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 731, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_int); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 539, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_int); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 731, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  if (PyDict_SetItem(__pyx_t_6, __pyx_n_s_dtype, __pyx_t_3) < 0) __PYX_ERR(0, 539, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_6, __pyx_n_s_dtype, __pyx_t_3) < 0) __PYX_ERR(0, 731, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_t_2, __pyx_t_6); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 539, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_t_2, __pyx_t_6); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 731, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-  if (!(likely(((__pyx_t_3) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_3, __pyx_ptype_5numpy_ndarray))))) __PYX_ERR(0, 539, __pyx_L1_error)
+  if (!(likely(((__pyx_t_3) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_3, __pyx_ptype_5numpy_ndarray))))) __PYX_ERR(0, 731, __pyx_L1_error)
   __pyx_t_15 = ((PyArrayObject *)__pyx_t_3);
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
     if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_all_shifts.rcbuffer->pybuffer, (PyObject*)__pyx_t_15, &__Pyx_TypeInfo_long, PyBUF_FORMAT| PyBUF_C_CONTIGUOUS| PyBUF_WRITABLE, 2, 0, __pyx_stack) == -1)) {
       __pyx_v_all_shifts = ((PyArrayObject *)Py_None); __Pyx_INCREF(Py_None); __pyx_pybuffernd_all_shifts.rcbuffer->pybuffer.buf = NULL;
-      __PYX_ERR(0, 539, __pyx_L1_error)
+      __PYX_ERR(0, 731, __pyx_L1_error)
     } else {__pyx_pybuffernd_all_shifts.diminfo[0].strides = __pyx_pybuffernd_all_shifts.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_all_shifts.diminfo[0].shape = __pyx_pybuffernd_all_shifts.rcbuffer->pybuffer.shape[0]; __pyx_pybuffernd_all_shifts.diminfo[1].strides = __pyx_pybuffernd_all_shifts.rcbuffer->pybuffer.strides[1]; __pyx_pybuffernd_all_shifts.diminfo[1].shape = __pyx_pybuffernd_all_shifts.rcbuffer->pybuffer.shape[1];
     }
   }
@@ -9233,7 +11968,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_10Compute_action_hess_mul(CYTHON_
   __pyx_v_all_shifts = ((PyArrayObject *)__pyx_t_3);
   __pyx_t_3 = 0;
 
-  /* "Choreo_cython_funs.pyx":542
+  /* "Choreo_cython_funs.pyx":734
  * 
  *     # Prepares data
  *     for il in range(nloop):             # <<<<<<<<<<<<<<
@@ -9245,7 +11980,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_10Compute_action_hess_mul(CYTHON_
   for (__pyx_t_17 = 0; __pyx_t_17 < __pyx_t_16; __pyx_t_17+=1) {
     __pyx_v_il = __pyx_t_17;
 
-    /* "Choreo_cython_funs.pyx":544
+    /* "Choreo_cython_funs.pyx":736
  *     for il in range(nloop):
  * 
  *         if not(( nint % nbody[il] ) == 0):             # <<<<<<<<<<<<<<
@@ -9256,23 +11991,23 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_10Compute_action_hess_mul(CYTHON_
     __pyx_t_19 = (*__Pyx_BufPtrCContig1d(long *, __pyx_pybuffernd_nbody.rcbuffer->pybuffer.buf, __pyx_t_18, __pyx_pybuffernd_nbody.diminfo[0].strides));
     if (unlikely(__pyx_t_19 == 0)) {
       PyErr_SetString(PyExc_ZeroDivisionError, "integer division or modulo by zero");
-      __PYX_ERR(0, 544, __pyx_L1_error)
+      __PYX_ERR(0, 736, __pyx_L1_error)
     }
     __pyx_t_20 = ((!((__Pyx_mod_long(__pyx_v_nint, __pyx_t_19) == 0) != 0)) != 0);
     if (__pyx_t_20) {
 
-      /* "Choreo_cython_funs.pyx":545
+      /* "Choreo_cython_funs.pyx":737
  * 
  *         if not(( nint % nbody[il] ) == 0):
  *             print("WARNING : remainder in integer division")             # <<<<<<<<<<<<<<
  * 
  *         div = nint // nbody[il]
  */
-      __pyx_t_3 = __Pyx_PyObject_Call(__pyx_builtin_print, __pyx_tuple__2, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 545, __pyx_L1_error)
+      __pyx_t_3 = __Pyx_PyObject_Call(__pyx_builtin_print, __pyx_tuple__2, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 737, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_3);
       __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-      /* "Choreo_cython_funs.pyx":544
+      /* "Choreo_cython_funs.pyx":736
  *     for il in range(nloop):
  * 
  *         if not(( nint % nbody[il] ) == 0):             # <<<<<<<<<<<<<<
@@ -9281,7 +12016,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_10Compute_action_hess_mul(CYTHON_
  */
     }
 
-    /* "Choreo_cython_funs.pyx":547
+    /* "Choreo_cython_funs.pyx":739
  *             print("WARNING : remainder in integer division")
  * 
  *         div = nint // nbody[il]             # <<<<<<<<<<<<<<
@@ -9292,15 +12027,15 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_10Compute_action_hess_mul(CYTHON_
     __pyx_t_19 = (*__Pyx_BufPtrCContig1d(long *, __pyx_pybuffernd_nbody.rcbuffer->pybuffer.buf, __pyx_t_18, __pyx_pybuffernd_nbody.diminfo[0].strides));
     if (unlikely(__pyx_t_19 == 0)) {
       PyErr_SetString(PyExc_ZeroDivisionError, "integer division or modulo by zero");
-      __PYX_ERR(0, 547, __pyx_L1_error)
+      __PYX_ERR(0, 739, __pyx_L1_error)
     }
     else if (sizeof(long) == sizeof(long) && (!(((long)-1) > 0)) && unlikely(__pyx_t_19 == (long)-1)  && unlikely(UNARY_NEG_WOULD_OVERFLOW(__pyx_v_nint))) {
       PyErr_SetString(PyExc_OverflowError, "value too large to perform division");
-      __PYX_ERR(0, 547, __pyx_L1_error)
+      __PYX_ERR(0, 739, __pyx_L1_error)
     }
     __pyx_v_div = __Pyx_div_long(__pyx_v_nint, __pyx_t_19);
 
-    /* "Choreo_cython_funs.pyx":549
+    /* "Choreo_cython_funs.pyx":741
  *         div = nint // nbody[il]
  * 
  *         for i in range(nbody[il]):             # <<<<<<<<<<<<<<
@@ -9313,7 +12048,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_10Compute_action_hess_mul(CYTHON_
     for (__pyx_t_22 = 0; __pyx_t_22 < __pyx_t_21; __pyx_t_22+=1) {
       __pyx_v_i = __pyx_t_22;
 
-      /* "Choreo_cython_funs.pyx":550
+      /* "Choreo_cython_funs.pyx":742
  * 
  *         for i in range(nbody[il]):
  *             all_shifts[il,i] = (-i*div)% nint             # <<<<<<<<<<<<<<
@@ -9323,7 +12058,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_10Compute_action_hess_mul(CYTHON_
       __pyx_t_23 = ((-__pyx_v_i) * __pyx_v_div);
       if (unlikely(__pyx_v_nint == 0)) {
         PyErr_SetString(PyExc_ZeroDivisionError, "integer division or modulo by zero");
-        __PYX_ERR(0, 550, __pyx_L1_error)
+        __PYX_ERR(0, 742, __pyx_L1_error)
       }
       __pyx_t_18 = __pyx_v_il;
       __pyx_t_24 = __pyx_v_i;
@@ -9331,7 +12066,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_10Compute_action_hess_mul(CYTHON_
     }
   }
 
-  /* "Choreo_cython_funs.pyx":552
+  /* "Choreo_cython_funs.pyx":744
  *             all_shifts[il,i] = (-i*div)% nint
  * 
  *     for il in range(nloop):             # <<<<<<<<<<<<<<
@@ -9343,7 +12078,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_10Compute_action_hess_mul(CYTHON_
   for (__pyx_t_17 = 0; __pyx_t_17 < __pyx_t_16; __pyx_t_17+=1) {
     __pyx_v_il = __pyx_t_17;
 
-    /* "Choreo_cython_funs.pyx":554
+    /* "Choreo_cython_funs.pyx":746
  *     for il in range(nloop):
  * 
  *         prod_fac = mass[il]*nbody[il]*cfourpisq             # <<<<<<<<<<<<<<
@@ -9354,7 +12089,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_10Compute_action_hess_mul(CYTHON_
     __pyx_t_18 = __pyx_v_il;
     __pyx_v_prod_fac = (((*__Pyx_BufPtrCContig1d(double *, __pyx_pybuffernd_mass.rcbuffer->pybuffer.buf, __pyx_t_24, __pyx_pybuffernd_mass.diminfo[0].strides)) * (*__Pyx_BufPtrCContig1d(long *, __pyx_pybuffernd_nbody.rcbuffer->pybuffer.buf, __pyx_t_18, __pyx_pybuffernd_nbody.diminfo[0].strides))) * __pyx_v_18Choreo_cython_funs_cfourpisq);
 
-    /* "Choreo_cython_funs.pyx":556
+    /* "Choreo_cython_funs.pyx":748
  *         prod_fac = mass[il]*nbody[il]*cfourpisq
  * 
  *         for idim in range(cndim):             # <<<<<<<<<<<<<<
@@ -9366,7 +12101,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_10Compute_action_hess_mul(CYTHON_
     for (__pyx_t_22 = 0; __pyx_t_22 < __pyx_t_21; __pyx_t_22+=1) {
       __pyx_v_idim = __pyx_t_22;
 
-      /* "Choreo_cython_funs.pyx":557
+      /* "Choreo_cython_funs.pyx":749
  * 
  *         for idim in range(cndim):
  *             for k in range(1,ncoeff):             # <<<<<<<<<<<<<<
@@ -9378,7 +12113,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_10Compute_action_hess_mul(CYTHON_
       for (__pyx_t_26 = 1; __pyx_t_26 < __pyx_t_25; __pyx_t_26+=1) {
         __pyx_v_k = __pyx_t_26;
 
-        /* "Choreo_cython_funs.pyx":559
+        /* "Choreo_cython_funs.pyx":751
  *             for k in range(1,ncoeff):
  * 
  *                 k2 = k*k             # <<<<<<<<<<<<<<
@@ -9387,7 +12122,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_10Compute_action_hess_mul(CYTHON_
  */
         __pyx_v_k2 = (__pyx_v_k * __pyx_v_k);
 
-        /* "Choreo_cython_funs.pyx":560
+        /* "Choreo_cython_funs.pyx":752
  * 
  *                 k2 = k*k
  *                 a = 2*prod_fac*k2             # <<<<<<<<<<<<<<
@@ -9396,7 +12131,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_10Compute_action_hess_mul(CYTHON_
  */
         __pyx_v_a = ((2.0 * __pyx_v_prod_fac) * __pyx_v_k2);
 
-        /* "Choreo_cython_funs.pyx":562
+        /* "Choreo_cython_funs.pyx":754
  *                 a = 2*prod_fac*k2
  * 
  *                 Action_hess_dx[il,idim,k,0] += a*all_coeffs_d[il,idim,k,0]             # <<<<<<<<<<<<<<
@@ -9413,7 +12148,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_10Compute_action_hess_mul(CYTHON_
         __pyx_t_32 = 0;
         *__Pyx_BufPtrCContig4d(double *, __pyx_pybuffernd_Action_hess_dx.rcbuffer->pybuffer.buf, __pyx_t_29, __pyx_pybuffernd_Action_hess_dx.diminfo[0].strides, __pyx_t_30, __pyx_pybuffernd_Action_hess_dx.diminfo[1].strides, __pyx_t_31, __pyx_pybuffernd_Action_hess_dx.diminfo[2].strides, __pyx_t_32, __pyx_pybuffernd_Action_hess_dx.diminfo[3].strides) += (__pyx_v_a * (*__Pyx_BufPtrCContig4d(double *, __pyx_pybuffernd_all_coeffs_d.rcbuffer->pybuffer.buf, __pyx_t_18, __pyx_pybuffernd_all_coeffs_d.diminfo[0].strides, __pyx_t_24, __pyx_pybuffernd_all_coeffs_d.diminfo[1].strides, __pyx_t_27, __pyx_pybuffernd_all_coeffs_d.diminfo[2].strides, __pyx_t_28, __pyx_pybuffernd_all_coeffs_d.diminfo[3].strides)));
 
-        /* "Choreo_cython_funs.pyx":563
+        /* "Choreo_cython_funs.pyx":755
  * 
  *                 Action_hess_dx[il,idim,k,0] += a*all_coeffs_d[il,idim,k,0]
  *                 Action_hess_dx[il,idim,k,1] += a*all_coeffs_d[il,idim,k,1]             # <<<<<<<<<<<<<<
@@ -9433,25 +12168,25 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_10Compute_action_hess_mul(CYTHON_
     }
   }
 
-  /* "Choreo_cython_funs.pyx":566
+  /* "Choreo_cython_funs.pyx":758
  * 
  * 
  *     cdef np.ndarray[double, ndim=3, mode="c"] hess_pot_all_d = np.zeros((nloop,cndim,nint),dtype=np.float64)             # <<<<<<<<<<<<<<
  * 
  *     for iint in range(nint):
  */
-  __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_n_s_np); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 566, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_n_s_np); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 758, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_zeros); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 566, __pyx_L1_error)
+  __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_zeros); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 758, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_3 = __Pyx_PyInt_From_long(__pyx_v_nloop); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 566, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyInt_From_long(__pyx_v_nloop); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 758, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_2 = __Pyx_PyInt_From_long(__pyx_v_18Choreo_cython_funs_cndim); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 566, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyInt_From_long(__pyx_v_18Choreo_cython_funs_cndim); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 758, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_1 = __Pyx_PyInt_From_long(__pyx_v_nint); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 566, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyInt_From_long(__pyx_v_nint); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 758, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_4 = PyTuple_New(3); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 566, __pyx_L1_error)
+  __pyx_t_4 = PyTuple_New(3); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 758, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_GIVEREF(__pyx_t_3);
   PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_3);
@@ -9462,32 +12197,32 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_10Compute_action_hess_mul(CYTHON_
   __pyx_t_3 = 0;
   __pyx_t_2 = 0;
   __pyx_t_1 = 0;
-  __pyx_t_1 = PyTuple_New(1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 566, __pyx_L1_error)
+  __pyx_t_1 = PyTuple_New(1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 758, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_GIVEREF(__pyx_t_4);
   PyTuple_SET_ITEM(__pyx_t_1, 0, __pyx_t_4);
   __pyx_t_4 = 0;
-  __pyx_t_4 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 566, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 758, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_np); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 566, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_np); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 758, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_float64); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 566, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_float64); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 758, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_dtype, __pyx_t_3) < 0) __PYX_ERR(0, 566, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_dtype, __pyx_t_3) < 0) __PYX_ERR(0, 758, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_t_1, __pyx_t_4); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 566, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_t_1, __pyx_t_4); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 758, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  if (!(likely(((__pyx_t_3) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_3, __pyx_ptype_5numpy_ndarray))))) __PYX_ERR(0, 566, __pyx_L1_error)
+  if (!(likely(((__pyx_t_3) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_3, __pyx_ptype_5numpy_ndarray))))) __PYX_ERR(0, 758, __pyx_L1_error)
   __pyx_t_33 = ((PyArrayObject *)__pyx_t_3);
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
     if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_hess_pot_all_d.rcbuffer->pybuffer, (PyObject*)__pyx_t_33, &__Pyx_TypeInfo_double, PyBUF_FORMAT| PyBUF_C_CONTIGUOUS| PyBUF_WRITABLE, 3, 0, __pyx_stack) == -1)) {
       __pyx_v_hess_pot_all_d = ((PyArrayObject *)Py_None); __Pyx_INCREF(Py_None); __pyx_pybuffernd_hess_pot_all_d.rcbuffer->pybuffer.buf = NULL;
-      __PYX_ERR(0, 566, __pyx_L1_error)
+      __PYX_ERR(0, 758, __pyx_L1_error)
     } else {__pyx_pybuffernd_hess_pot_all_d.diminfo[0].strides = __pyx_pybuffernd_hess_pot_all_d.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_hess_pot_all_d.diminfo[0].shape = __pyx_pybuffernd_hess_pot_all_d.rcbuffer->pybuffer.shape[0]; __pyx_pybuffernd_hess_pot_all_d.diminfo[1].strides = __pyx_pybuffernd_hess_pot_all_d.rcbuffer->pybuffer.strides[1]; __pyx_pybuffernd_hess_pot_all_d.diminfo[1].shape = __pyx_pybuffernd_hess_pot_all_d.rcbuffer->pybuffer.shape[1]; __pyx_pybuffernd_hess_pot_all_d.diminfo[2].strides = __pyx_pybuffernd_hess_pot_all_d.rcbuffer->pybuffer.strides[2]; __pyx_pybuffernd_hess_pot_all_d.diminfo[2].shape = __pyx_pybuffernd_hess_pot_all_d.rcbuffer->pybuffer.shape[2];
     }
   }
@@ -9495,7 +12230,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_10Compute_action_hess_mul(CYTHON_
   __pyx_v_hess_pot_all_d = ((PyArrayObject *)__pyx_t_3);
   __pyx_t_3 = 0;
 
-  /* "Choreo_cython_funs.pyx":568
+  /* "Choreo_cython_funs.pyx":760
  *     cdef np.ndarray[double, ndim=3, mode="c"] hess_pot_all_d = np.zeros((nloop,cndim,nint),dtype=np.float64)
  * 
  *     for iint in range(nint):             # <<<<<<<<<<<<<<
@@ -9507,7 +12242,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_10Compute_action_hess_mul(CYTHON_
   for (__pyx_t_17 = 0; __pyx_t_17 < __pyx_t_16; __pyx_t_17+=1) {
     __pyx_v_iint = __pyx_t_17;
 
-    /* "Choreo_cython_funs.pyx":570
+    /* "Choreo_cython_funs.pyx":762
  *     for iint in range(nint):
  * 
  *         for il in range(nloop):             # <<<<<<<<<<<<<<
@@ -9519,7 +12254,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_10Compute_action_hess_mul(CYTHON_
     for (__pyx_t_22 = 0; __pyx_t_22 < __pyx_t_21; __pyx_t_22+=1) {
       __pyx_v_il = __pyx_t_22;
 
-      /* "Choreo_cython_funs.pyx":571
+      /* "Choreo_cython_funs.pyx":763
  * 
  *         for il in range(nloop):
  *             for ib in range(nbody[il]):             # <<<<<<<<<<<<<<
@@ -9532,7 +12267,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_10Compute_action_hess_mul(CYTHON_
       for (__pyx_t_26 = 0; __pyx_t_26 < __pyx_t_25; __pyx_t_26+=1) {
         __pyx_v_ib = __pyx_t_26;
 
-        /* "Choreo_cython_funs.pyx":572
+        /* "Choreo_cython_funs.pyx":764
  *         for il in range(nloop):
  *             for ib in range(nbody[il]):
  *                 all_shifts[il,ib] = (all_shifts[il,ib]+1) % nint             # <<<<<<<<<<<<<<
@@ -9544,7 +12279,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_10Compute_action_hess_mul(CYTHON_
         __pyx_t_34 = ((*__Pyx_BufPtrCContig2d(long *, __pyx_pybuffernd_all_shifts.rcbuffer->pybuffer.buf, __pyx_t_18, __pyx_pybuffernd_all_shifts.diminfo[0].strides, __pyx_t_24, __pyx_pybuffernd_all_shifts.diminfo[1].strides)) + 1);
         if (unlikely(__pyx_v_nint == 0)) {
           PyErr_SetString(PyExc_ZeroDivisionError, "integer division or modulo by zero");
-          __PYX_ERR(0, 572, __pyx_L1_error)
+          __PYX_ERR(0, 764, __pyx_L1_error)
         }
         __pyx_t_24 = __pyx_v_il;
         __pyx_t_18 = __pyx_v_ib;
@@ -9552,7 +12287,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_10Compute_action_hess_mul(CYTHON_
       }
     }
 
-    /* "Choreo_cython_funs.pyx":575
+    /* "Choreo_cython_funs.pyx":767
  * 
  *         # Different loops
  *         for il in range(nloop):             # <<<<<<<<<<<<<<
@@ -9564,7 +12299,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_10Compute_action_hess_mul(CYTHON_
     for (__pyx_t_22 = 0; __pyx_t_22 < __pyx_t_21; __pyx_t_22+=1) {
       __pyx_v_il = __pyx_t_22;
 
-      /* "Choreo_cython_funs.pyx":576
+      /* "Choreo_cython_funs.pyx":768
  *         # Different loops
  *         for il in range(nloop):
  *             for ilp in range(il+1,nloop):             # <<<<<<<<<<<<<<
@@ -9576,7 +12311,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_10Compute_action_hess_mul(CYTHON_
       for (__pyx_t_26 = (__pyx_v_il + 1); __pyx_t_26 < __pyx_t_25; __pyx_t_26+=1) {
         __pyx_v_ilp = __pyx_t_26;
 
-        /* "Choreo_cython_funs.pyx":578
+        /* "Choreo_cython_funs.pyx":770
  *             for ilp in range(il+1,nloop):
  * 
  *                 prod_mass = mass[il]*mass[ilp]             # <<<<<<<<<<<<<<
@@ -9587,7 +12322,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_10Compute_action_hess_mul(CYTHON_
         __pyx_t_24 = __pyx_v_ilp;
         __pyx_v_prod_mass = ((*__Pyx_BufPtrCContig1d(double *, __pyx_pybuffernd_mass.rcbuffer->pybuffer.buf, __pyx_t_18, __pyx_pybuffernd_mass.diminfo[0].strides)) * (*__Pyx_BufPtrCContig1d(double *, __pyx_pybuffernd_mass.rcbuffer->pybuffer.buf, __pyx_t_24, __pyx_pybuffernd_mass.diminfo[0].strides)));
 
-        /* "Choreo_cython_funs.pyx":580
+        /* "Choreo_cython_funs.pyx":772
  *                 prod_mass = mass[il]*mass[ilp]
  * 
  *                 for ib in range(nbody[il]):             # <<<<<<<<<<<<<<
@@ -9600,7 +12335,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_10Compute_action_hess_mul(CYTHON_
         for (__pyx_t_36 = 0; __pyx_t_36 < __pyx_t_35; __pyx_t_36+=1) {
           __pyx_v_ib = __pyx_t_36;
 
-          /* "Choreo_cython_funs.pyx":581
+          /* "Choreo_cython_funs.pyx":773
  * 
  *                 for ib in range(nbody[il]):
  *                     for ibp in range(nbody[ilp]):             # <<<<<<<<<<<<<<
@@ -9613,7 +12348,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_10Compute_action_hess_mul(CYTHON_
           for (__pyx_t_39 = 0; __pyx_t_39 < __pyx_t_38; __pyx_t_39+=1) {
             __pyx_v_ibp = __pyx_t_39;
 
-            /* "Choreo_cython_funs.pyx":583
+            /* "Choreo_cython_funs.pyx":775
  *                     for ibp in range(nbody[ilp]):
  * 
  *                         for idim in range(cndim):             # <<<<<<<<<<<<<<
@@ -9625,7 +12360,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_10Compute_action_hess_mul(CYTHON_
             for (__pyx_t_42 = 0; __pyx_t_42 < __pyx_t_41; __pyx_t_42+=1) {
               __pyx_v_idim = __pyx_t_42;
 
-              /* "Choreo_cython_funs.pyx":584
+              /* "Choreo_cython_funs.pyx":776
  * 
  *                         for idim in range(cndim):
  *                             dx[idim]  = all_pos[il,idim,all_shifts[il,ib]] - all_pos[ilp,idim,all_shifts[ilp,ibp]]             # <<<<<<<<<<<<<<
@@ -9645,7 +12380,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_10Compute_action_hess_mul(CYTHON_
               __pyx_t_45 = __pyx_v_idim;
               *__Pyx_BufPtrCContig1d(double *, __pyx_pybuffernd_dx.rcbuffer->pybuffer.buf, __pyx_t_45, __pyx_pybuffernd_dx.diminfo[0].strides) = ((*__Pyx_BufPtrCContig3d(double *, __pyx_pybuffernd_all_pos.rcbuffer->pybuffer.buf, __pyx_t_27, __pyx_pybuffernd_all_pos.diminfo[0].strides, __pyx_t_28, __pyx_pybuffernd_all_pos.diminfo[1].strides, __pyx_t_29, __pyx_pybuffernd_all_pos.diminfo[2].strides)) - (*__Pyx_BufPtrCContig3d(double *, __pyx_pybuffernd_all_pos.rcbuffer->pybuffer.buf, __pyx_t_32, __pyx_pybuffernd_all_pos.diminfo[0].strides, __pyx_t_43, __pyx_pybuffernd_all_pos.diminfo[1].strides, __pyx_t_44, __pyx_pybuffernd_all_pos.diminfo[2].strides)));
 
-              /* "Choreo_cython_funs.pyx":585
+              /* "Choreo_cython_funs.pyx":777
  *                         for idim in range(cndim):
  *                             dx[idim]  = all_pos[il,idim,all_shifts[il,ib]] - all_pos[ilp,idim,all_shifts[ilp,ibp]]
  *                             ddx[idim] = all_pos_d[il,idim,all_shifts[il,ib]] - all_pos_d[ilp,idim,all_shifts[ilp,ibp]]             # <<<<<<<<<<<<<<
@@ -9666,7 +12401,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_10Compute_action_hess_mul(CYTHON_
               *__Pyx_BufPtrCContig1d(double *, __pyx_pybuffernd_ddx.rcbuffer->pybuffer.buf, __pyx_t_45, __pyx_pybuffernd_ddx.diminfo[0].strides) = ((*__Pyx_BufPtrCContig3d(double *, __pyx_pybuffernd_all_pos_d.rcbuffer->pybuffer.buf, __pyx_t_44, __pyx_pybuffernd_all_pos_d.diminfo[0].strides, __pyx_t_43, __pyx_pybuffernd_all_pos_d.diminfo[1].strides, __pyx_t_32, __pyx_pybuffernd_all_pos_d.diminfo[2].strides)) - (*__Pyx_BufPtrCContig3d(double *, __pyx_pybuffernd_all_pos_d.rcbuffer->pybuffer.buf, __pyx_t_29, __pyx_pybuffernd_all_pos_d.diminfo[0].strides, __pyx_t_28, __pyx_pybuffernd_all_pos_d.diminfo[1].strides, __pyx_t_27, __pyx_pybuffernd_all_pos_d.diminfo[2].strides)));
             }
 
-            /* "Choreo_cython_funs.pyx":587
+            /* "Choreo_cython_funs.pyx":779
  *                             ddx[idim] = all_pos_d[il,idim,all_shifts[il,ib]] - all_pos_d[ilp,idim,all_shifts[ilp,ibp]]
  * 
  *                         dx2 = dx[0]*dx[0]             # <<<<<<<<<<<<<<
@@ -9677,7 +12412,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_10Compute_action_hess_mul(CYTHON_
             __pyx_t_18 = 0;
             __pyx_v_dx2 = ((*__Pyx_BufPtrCContig1d(double *, __pyx_pybuffernd_dx.rcbuffer->pybuffer.buf, __pyx_t_24, __pyx_pybuffernd_dx.diminfo[0].strides)) * (*__Pyx_BufPtrCContig1d(double *, __pyx_pybuffernd_dx.rcbuffer->pybuffer.buf, __pyx_t_18, __pyx_pybuffernd_dx.diminfo[0].strides)));
 
-            /* "Choreo_cython_funs.pyx":588
+            /* "Choreo_cython_funs.pyx":780
  * 
  *                         dx2 = dx[0]*dx[0]
  *                         dxtddx = dx[0]*ddx[0]             # <<<<<<<<<<<<<<
@@ -9688,7 +12423,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_10Compute_action_hess_mul(CYTHON_
             __pyx_t_24 = 0;
             __pyx_v_dxtddx = ((*__Pyx_BufPtrCContig1d(double *, __pyx_pybuffernd_dx.rcbuffer->pybuffer.buf, __pyx_t_18, __pyx_pybuffernd_dx.diminfo[0].strides)) * (*__Pyx_BufPtrCContig1d(double *, __pyx_pybuffernd_ddx.rcbuffer->pybuffer.buf, __pyx_t_24, __pyx_pybuffernd_ddx.diminfo[0].strides)));
 
-            /* "Choreo_cython_funs.pyx":589
+            /* "Choreo_cython_funs.pyx":781
  *                         dx2 = dx[0]*dx[0]
  *                         dxtddx = dx[0]*ddx[0]
  *                         for idim in range(1,cndim):             # <<<<<<<<<<<<<<
@@ -9700,7 +12435,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_10Compute_action_hess_mul(CYTHON_
             for (__pyx_t_42 = 1; __pyx_t_42 < __pyx_t_41; __pyx_t_42+=1) {
               __pyx_v_idim = __pyx_t_42;
 
-              /* "Choreo_cython_funs.pyx":590
+              /* "Choreo_cython_funs.pyx":782
  *                         dxtddx = dx[0]*ddx[0]
  *                         for idim in range(1,cndim):
  *                             dx2 += dx[idim]*dx[idim]             # <<<<<<<<<<<<<<
@@ -9711,7 +12446,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_10Compute_action_hess_mul(CYTHON_
               __pyx_t_18 = __pyx_v_idim;
               __pyx_v_dx2 = (__pyx_v_dx2 + ((*__Pyx_BufPtrCContig1d(double *, __pyx_pybuffernd_dx.rcbuffer->pybuffer.buf, __pyx_t_24, __pyx_pybuffernd_dx.diminfo[0].strides)) * (*__Pyx_BufPtrCContig1d(double *, __pyx_pybuffernd_dx.rcbuffer->pybuffer.buf, __pyx_t_18, __pyx_pybuffernd_dx.diminfo[0].strides))));
 
-              /* "Choreo_cython_funs.pyx":591
+              /* "Choreo_cython_funs.pyx":783
  *                         for idim in range(1,cndim):
  *                             dx2 += dx[idim]*dx[idim]
  *                             dxtddx += dx[idim]*ddx[idim]             # <<<<<<<<<<<<<<
@@ -9723,7 +12458,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_10Compute_action_hess_mul(CYTHON_
               __pyx_v_dxtddx = (__pyx_v_dxtddx + ((*__Pyx_BufPtrCContig1d(double *, __pyx_pybuffernd_dx.rcbuffer->pybuffer.buf, __pyx_t_18, __pyx_pybuffernd_dx.diminfo[0].strides)) * (*__Pyx_BufPtrCContig1d(double *, __pyx_pybuffernd_ddx.rcbuffer->pybuffer.buf, __pyx_t_24, __pyx_pybuffernd_ddx.diminfo[0].strides))));
             }
 
-            /* "Choreo_cython_funs.pyx":593
+            /* "Choreo_cython_funs.pyx":785
  *                             dxtddx += dx[idim]*ddx[idim]
  * 
  *                         pot,potp,potpp = CCpt_interbody_pot(dx2)             # <<<<<<<<<<<<<<
@@ -9738,7 +12473,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_10Compute_action_hess_mul(CYTHON_
             __pyx_v_potp = __pyx_t_48;
             __pyx_v_potpp = __pyx_t_49;
 
-            /* "Choreo_cython_funs.pyx":595
+            /* "Choreo_cython_funs.pyx":787
  *                         pot,potp,potpp = CCpt_interbody_pot(dx2)
  * 
  *                         a = 2*prod_mass*potp             # <<<<<<<<<<<<<<
@@ -9747,7 +12482,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_10Compute_action_hess_mul(CYTHON_
  */
             __pyx_v_a = ((2.0 * __pyx_v_prod_mass) * __pyx_v_potp);
 
-            /* "Choreo_cython_funs.pyx":596
+            /* "Choreo_cython_funs.pyx":788
  * 
  *                         a = 2*prod_mass*potp
  *                         b = (4*prod_mass*potpp*dxtddx)             # <<<<<<<<<<<<<<
@@ -9756,7 +12491,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_10Compute_action_hess_mul(CYTHON_
  */
             __pyx_v_b = (((4.0 * __pyx_v_prod_mass) * __pyx_v_potpp) * __pyx_v_dxtddx);
 
-            /* "Choreo_cython_funs.pyx":598
+            /* "Choreo_cython_funs.pyx":790
  *                         b = (4*prod_mass*potpp*dxtddx)
  * 
  *                         for idim in range(cndim):             # <<<<<<<<<<<<<<
@@ -9768,7 +12503,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_10Compute_action_hess_mul(CYTHON_
             for (__pyx_t_42 = 0; __pyx_t_42 < __pyx_t_41; __pyx_t_42+=1) {
               __pyx_v_idim = __pyx_t_42;
 
-              /* "Choreo_cython_funs.pyx":599
+              /* "Choreo_cython_funs.pyx":791
  * 
  *                         for idim in range(cndim):
  *                             c = b*dx[idim] + a*ddx[idim]             # <<<<<<<<<<<<<<
@@ -9779,7 +12514,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_10Compute_action_hess_mul(CYTHON_
               __pyx_t_18 = __pyx_v_idim;
               __pyx_v_c = ((__pyx_v_b * (*__Pyx_BufPtrCContig1d(double *, __pyx_pybuffernd_dx.rcbuffer->pybuffer.buf, __pyx_t_24, __pyx_pybuffernd_dx.diminfo[0].strides))) + (__pyx_v_a * (*__Pyx_BufPtrCContig1d(double *, __pyx_pybuffernd_ddx.rcbuffer->pybuffer.buf, __pyx_t_18, __pyx_pybuffernd_ddx.diminfo[0].strides))));
 
-              /* "Choreo_cython_funs.pyx":601
+              /* "Choreo_cython_funs.pyx":793
  *                             c = b*dx[idim] + a*ddx[idim]
  * 
  *                             hess_pot_all_d[il ,idim,all_shifts[il ,ib ]] += c             # <<<<<<<<<<<<<<
@@ -9793,7 +12528,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_10Compute_action_hess_mul(CYTHON_
               __pyx_t_29 = (*__Pyx_BufPtrCContig2d(long *, __pyx_pybuffernd_all_shifts.rcbuffer->pybuffer.buf, __pyx_t_18, __pyx_pybuffernd_all_shifts.diminfo[0].strides, __pyx_t_24, __pyx_pybuffernd_all_shifts.diminfo[1].strides));
               *__Pyx_BufPtrCContig3d(double *, __pyx_pybuffernd_hess_pot_all_d.rcbuffer->pybuffer.buf, __pyx_t_27, __pyx_pybuffernd_hess_pot_all_d.diminfo[0].strides, __pyx_t_28, __pyx_pybuffernd_hess_pot_all_d.diminfo[1].strides, __pyx_t_29, __pyx_pybuffernd_hess_pot_all_d.diminfo[2].strides) += __pyx_v_c;
 
-              /* "Choreo_cython_funs.pyx":602
+              /* "Choreo_cython_funs.pyx":794
  * 
  *                             hess_pot_all_d[il ,idim,all_shifts[il ,ib ]] += c
  *                             hess_pot_all_d[ilp,idim,all_shifts[ilp,ibp]] -= c             # <<<<<<<<<<<<<<
@@ -9812,7 +12547,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_10Compute_action_hess_mul(CYTHON_
       }
     }
 
-    /* "Choreo_cython_funs.pyx":605
+    /* "Choreo_cython_funs.pyx":797
  * 
  * 
  *         i_sp = 0             # <<<<<<<<<<<<<<
@@ -9821,7 +12556,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_10Compute_action_hess_mul(CYTHON_
  */
     __pyx_v_i_sp = 0;
 
-    /* "Choreo_cython_funs.pyx":607
+    /* "Choreo_cython_funs.pyx":799
  *         i_sp = 0
  *         # Same loop + symmetry
  *         for il in range(nloop):             # <<<<<<<<<<<<<<
@@ -9833,7 +12568,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_10Compute_action_hess_mul(CYTHON_
     for (__pyx_t_22 = 0; __pyx_t_22 < __pyx_t_21; __pyx_t_22+=1) {
       __pyx_v_il = __pyx_t_22;
 
-      /* "Choreo_cython_funs.pyx":609
+      /* "Choreo_cython_funs.pyx":801
  *         for il in range(nloop):
  * 
  *             prod_mass = (nbody[il]*mass[il]*mass[il])/2             # <<<<<<<<<<<<<<
@@ -9845,7 +12580,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_10Compute_action_hess_mul(CYTHON_
       __pyx_t_27 = __pyx_v_il;
       __pyx_v_prod_mass = ((((*__Pyx_BufPtrCContig1d(long *, __pyx_pybuffernd_nbody.rcbuffer->pybuffer.buf, __pyx_t_18, __pyx_pybuffernd_nbody.diminfo[0].strides)) * (*__Pyx_BufPtrCContig1d(double *, __pyx_pybuffernd_mass.rcbuffer->pybuffer.buf, __pyx_t_24, __pyx_pybuffernd_mass.diminfo[0].strides))) * (*__Pyx_BufPtrCContig1d(double *, __pyx_pybuffernd_mass.rcbuffer->pybuffer.buf, __pyx_t_27, __pyx_pybuffernd_mass.diminfo[0].strides))) / 2.0);
 
-      /* "Choreo_cython_funs.pyx":611
+      /* "Choreo_cython_funs.pyx":803
  *             prod_mass = (nbody[il]*mass[il]*mass[il])/2
  * 
  *             for ib in range(1,nbody[il]):             # <<<<<<<<<<<<<<
@@ -9858,7 +12593,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_10Compute_action_hess_mul(CYTHON_
       for (__pyx_t_26 = 1; __pyx_t_26 < __pyx_t_25; __pyx_t_26+=1) {
         __pyx_v_ib = __pyx_t_26;
 
-        /* "Choreo_cython_funs.pyx":613
+        /* "Choreo_cython_funs.pyx":805
  *             for ib in range(1,nbody[il]):
  * 
  *                 for idim in range(cndim):             # <<<<<<<<<<<<<<
@@ -9870,7 +12605,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_10Compute_action_hess_mul(CYTHON_
         for (__pyx_t_36 = 0; __pyx_t_36 < __pyx_t_35; __pyx_t_36+=1) {
           __pyx_v_idim = __pyx_t_36;
 
-          /* "Choreo_cython_funs.pyx":614
+          /* "Choreo_cython_funs.pyx":806
  * 
  *                 for idim in range(cndim):
  *                     dx[idim]  = all_pos[il,idim,all_shifts[il,ib]] - all_pos[il,idim,all_shifts[il,0]]             # <<<<<<<<<<<<<<
@@ -9890,7 +12625,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_10Compute_action_hess_mul(CYTHON_
           __pyx_t_45 = __pyx_v_idim;
           *__Pyx_BufPtrCContig1d(double *, __pyx_pybuffernd_dx.rcbuffer->pybuffer.buf, __pyx_t_45, __pyx_pybuffernd_dx.diminfo[0].strides) = ((*__Pyx_BufPtrCContig3d(double *, __pyx_pybuffernd_all_pos.rcbuffer->pybuffer.buf, __pyx_t_18, __pyx_pybuffernd_all_pos.diminfo[0].strides, __pyx_t_28, __pyx_pybuffernd_all_pos.diminfo[1].strides, __pyx_t_29, __pyx_pybuffernd_all_pos.diminfo[2].strides)) - (*__Pyx_BufPtrCContig3d(double *, __pyx_pybuffernd_all_pos.rcbuffer->pybuffer.buf, __pyx_t_32, __pyx_pybuffernd_all_pos.diminfo[0].strides, __pyx_t_43, __pyx_pybuffernd_all_pos.diminfo[1].strides, __pyx_t_44, __pyx_pybuffernd_all_pos.diminfo[2].strides)));
 
-          /* "Choreo_cython_funs.pyx":615
+          /* "Choreo_cython_funs.pyx":807
  *                 for idim in range(cndim):
  *                     dx[idim]  = all_pos[il,idim,all_shifts[il,ib]] - all_pos[il,idim,all_shifts[il,0]]
  *                     ddx[idim] = all_pos_d[il,idim,all_shifts[il,ib]] - all_pos_d[il,idim,all_shifts[il,0]]             # <<<<<<<<<<<<<<
@@ -9911,7 +12646,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_10Compute_action_hess_mul(CYTHON_
           *__Pyx_BufPtrCContig1d(double *, __pyx_pybuffernd_ddx.rcbuffer->pybuffer.buf, __pyx_t_45, __pyx_pybuffernd_ddx.diminfo[0].strides) = ((*__Pyx_BufPtrCContig3d(double *, __pyx_pybuffernd_all_pos_d.rcbuffer->pybuffer.buf, __pyx_t_44, __pyx_pybuffernd_all_pos_d.diminfo[0].strides, __pyx_t_43, __pyx_pybuffernd_all_pos_d.diminfo[1].strides, __pyx_t_32, __pyx_pybuffernd_all_pos_d.diminfo[2].strides)) - (*__Pyx_BufPtrCContig3d(double *, __pyx_pybuffernd_all_pos_d.rcbuffer->pybuffer.buf, __pyx_t_29, __pyx_pybuffernd_all_pos_d.diminfo[0].strides, __pyx_t_28, __pyx_pybuffernd_all_pos_d.diminfo[1].strides, __pyx_t_18, __pyx_pybuffernd_all_pos_d.diminfo[2].strides)));
         }
 
-        /* "Choreo_cython_funs.pyx":617
+        /* "Choreo_cython_funs.pyx":809
  *                     ddx[idim] = all_pos_d[il,idim,all_shifts[il,ib]] - all_pos_d[il,idim,all_shifts[il,0]]
  * 
  *                 dx2 = dx[0]*dx[0]             # <<<<<<<<<<<<<<
@@ -9922,7 +12657,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_10Compute_action_hess_mul(CYTHON_
         __pyx_t_24 = 0;
         __pyx_v_dx2 = ((*__Pyx_BufPtrCContig1d(double *, __pyx_pybuffernd_dx.rcbuffer->pybuffer.buf, __pyx_t_27, __pyx_pybuffernd_dx.diminfo[0].strides)) * (*__Pyx_BufPtrCContig1d(double *, __pyx_pybuffernd_dx.rcbuffer->pybuffer.buf, __pyx_t_24, __pyx_pybuffernd_dx.diminfo[0].strides)));
 
-        /* "Choreo_cython_funs.pyx":618
+        /* "Choreo_cython_funs.pyx":810
  * 
  *                 dx2 = dx[0]*dx[0]
  *                 dxtddx = dx[0]*ddx[0]             # <<<<<<<<<<<<<<
@@ -9933,7 +12668,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_10Compute_action_hess_mul(CYTHON_
         __pyx_t_27 = 0;
         __pyx_v_dxtddx = ((*__Pyx_BufPtrCContig1d(double *, __pyx_pybuffernd_dx.rcbuffer->pybuffer.buf, __pyx_t_24, __pyx_pybuffernd_dx.diminfo[0].strides)) * (*__Pyx_BufPtrCContig1d(double *, __pyx_pybuffernd_ddx.rcbuffer->pybuffer.buf, __pyx_t_27, __pyx_pybuffernd_ddx.diminfo[0].strides)));
 
-        /* "Choreo_cython_funs.pyx":619
+        /* "Choreo_cython_funs.pyx":811
  *                 dx2 = dx[0]*dx[0]
  *                 dxtddx = dx[0]*ddx[0]
  *                 for idim in range(1,cndim):             # <<<<<<<<<<<<<<
@@ -9945,7 +12680,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_10Compute_action_hess_mul(CYTHON_
         for (__pyx_t_36 = 1; __pyx_t_36 < __pyx_t_35; __pyx_t_36+=1) {
           __pyx_v_idim = __pyx_t_36;
 
-          /* "Choreo_cython_funs.pyx":620
+          /* "Choreo_cython_funs.pyx":812
  *                 dxtddx = dx[0]*ddx[0]
  *                 for idim in range(1,cndim):
  *                     dx2 += dx[idim]*dx[idim]             # <<<<<<<<<<<<<<
@@ -9956,7 +12691,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_10Compute_action_hess_mul(CYTHON_
           __pyx_t_24 = __pyx_v_idim;
           __pyx_v_dx2 = (__pyx_v_dx2 + ((*__Pyx_BufPtrCContig1d(double *, __pyx_pybuffernd_dx.rcbuffer->pybuffer.buf, __pyx_t_27, __pyx_pybuffernd_dx.diminfo[0].strides)) * (*__Pyx_BufPtrCContig1d(double *, __pyx_pybuffernd_dx.rcbuffer->pybuffer.buf, __pyx_t_24, __pyx_pybuffernd_dx.diminfo[0].strides))));
 
-          /* "Choreo_cython_funs.pyx":621
+          /* "Choreo_cython_funs.pyx":813
  *                 for idim in range(1,cndim):
  *                     dx2 += dx[idim]*dx[idim]
  *                     dxtddx += dx[idim]*ddx[idim]             # <<<<<<<<<<<<<<
@@ -9968,7 +12703,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_10Compute_action_hess_mul(CYTHON_
           __pyx_v_dxtddx = (__pyx_v_dxtddx + ((*__Pyx_BufPtrCContig1d(double *, __pyx_pybuffernd_dx.rcbuffer->pybuffer.buf, __pyx_t_24, __pyx_pybuffernd_dx.diminfo[0].strides)) * (*__Pyx_BufPtrCContig1d(double *, __pyx_pybuffernd_ddx.rcbuffer->pybuffer.buf, __pyx_t_27, __pyx_pybuffernd_ddx.diminfo[0].strides))));
         }
 
-        /* "Choreo_cython_funs.pyx":623
+        /* "Choreo_cython_funs.pyx":815
  *                     dxtddx += dx[idim]*ddx[idim]
  * 
  *                 pot,potp,potpp = CCpt_interbody_pot(dx2)             # <<<<<<<<<<<<<<
@@ -9983,7 +12718,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_10Compute_action_hess_mul(CYTHON_
         __pyx_v_potp = __pyx_t_48;
         __pyx_v_potpp = __pyx_t_47;
 
-        /* "Choreo_cython_funs.pyx":625
+        /* "Choreo_cython_funs.pyx":817
  *                 pot,potp,potpp = CCpt_interbody_pot(dx2)
  * 
  *                 a = 2*prod_mass*potp             # <<<<<<<<<<<<<<
@@ -9992,7 +12727,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_10Compute_action_hess_mul(CYTHON_
  */
         __pyx_v_a = ((2.0 * __pyx_v_prod_mass) * __pyx_v_potp);
 
-        /* "Choreo_cython_funs.pyx":626
+        /* "Choreo_cython_funs.pyx":818
  * 
  *                 a = 2*prod_mass*potp
  *                 b = (4*prod_mass*potpp*dxtddx)             # <<<<<<<<<<<<<<
@@ -10001,7 +12736,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_10Compute_action_hess_mul(CYTHON_
  */
         __pyx_v_b = (((4.0 * __pyx_v_prod_mass) * __pyx_v_potpp) * __pyx_v_dxtddx);
 
-        /* "Choreo_cython_funs.pyx":628
+        /* "Choreo_cython_funs.pyx":820
  *                 b = (4*prod_mass*potpp*dxtddx)
  * 
  *                 for idim in range(cndim):             # <<<<<<<<<<<<<<
@@ -10013,7 +12748,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_10Compute_action_hess_mul(CYTHON_
         for (__pyx_t_36 = 0; __pyx_t_36 < __pyx_t_35; __pyx_t_36+=1) {
           __pyx_v_idim = __pyx_t_36;
 
-          /* "Choreo_cython_funs.pyx":629
+          /* "Choreo_cython_funs.pyx":821
  * 
  *                 for idim in range(cndim):
  *                     c = b*dx[idim] + a*ddx[idim]             # <<<<<<<<<<<<<<
@@ -10024,7 +12759,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_10Compute_action_hess_mul(CYTHON_
           __pyx_t_24 = __pyx_v_idim;
           __pyx_v_c = ((__pyx_v_b * (*__Pyx_BufPtrCContig1d(double *, __pyx_pybuffernd_dx.rcbuffer->pybuffer.buf, __pyx_t_27, __pyx_pybuffernd_dx.diminfo[0].strides))) + (__pyx_v_a * (*__Pyx_BufPtrCContig1d(double *, __pyx_pybuffernd_ddx.rcbuffer->pybuffer.buf, __pyx_t_24, __pyx_pybuffernd_ddx.diminfo[0].strides))));
 
-          /* "Choreo_cython_funs.pyx":631
+          /* "Choreo_cython_funs.pyx":823
  *                     c = b*dx[idim] + a*ddx[idim]
  * 
  *                     hess_pot_all_d[il,idim,all_shifts[il,ib ]] += c             # <<<<<<<<<<<<<<
@@ -10038,7 +12773,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_10Compute_action_hess_mul(CYTHON_
           __pyx_t_29 = (*__Pyx_BufPtrCContig2d(long *, __pyx_pybuffernd_all_shifts.rcbuffer->pybuffer.buf, __pyx_t_24, __pyx_pybuffernd_all_shifts.diminfo[0].strides, __pyx_t_27, __pyx_pybuffernd_all_shifts.diminfo[1].strides));
           *__Pyx_BufPtrCContig3d(double *, __pyx_pybuffernd_hess_pot_all_d.rcbuffer->pybuffer.buf, __pyx_t_18, __pyx_pybuffernd_hess_pot_all_d.diminfo[0].strides, __pyx_t_28, __pyx_pybuffernd_hess_pot_all_d.diminfo[1].strides, __pyx_t_29, __pyx_pybuffernd_hess_pot_all_d.diminfo[2].strides) += __pyx_v_c;
 
-          /* "Choreo_cython_funs.pyx":632
+          /* "Choreo_cython_funs.pyx":824
  * 
  *                     hess_pot_all_d[il,idim,all_shifts[il,ib ]] += c
  *                     hess_pot_all_d[il,idim,all_shifts[il,0  ]] -= c             # <<<<<<<<<<<<<<
@@ -10056,22 +12791,22 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_10Compute_action_hess_mul(CYTHON_
     }
   }
 
-  /* "Choreo_cython_funs.pyx":634
+  /* "Choreo_cython_funs.pyx":826
  *                     hess_pot_all_d[il,idim,all_shifts[il,0  ]] -= c
  * 
  *     cdef np.ndarray[doublecomplex , ndim=3, mode="c"]  hess_dx_pot_fft = np.fft.ihfft(hess_pot_all_d,nint)             # <<<<<<<<<<<<<<
  * 
  *     for il in range(nloop):
  */
-  __Pyx_GetModuleGlobalName(__pyx_t_4, __pyx_n_s_np); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 634, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_4, __pyx_n_s_np); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 826, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_fft); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 634, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_fft); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 826, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_ihfft); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 634, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_ihfft); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 826, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = __Pyx_PyInt_From_long(__pyx_v_nint); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 634, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyInt_From_long(__pyx_v_nint); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 826, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_t_6 = NULL;
   __pyx_t_7 = 0;
@@ -10088,7 +12823,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_10Compute_action_hess_mul(CYTHON_
   #if CYTHON_FAST_PYCALL
   if (PyFunction_Check(__pyx_t_4)) {
     PyObject *__pyx_temp[3] = {__pyx_t_6, ((PyObject *)__pyx_v_hess_pot_all_d), __pyx_t_1};
-    __pyx_t_3 = __Pyx_PyFunction_FastCall(__pyx_t_4, __pyx_temp+1-__pyx_t_7, 2+__pyx_t_7); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 634, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyFunction_FastCall(__pyx_t_4, __pyx_temp+1-__pyx_t_7, 2+__pyx_t_7); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 826, __pyx_L1_error)
     __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
@@ -10097,14 +12832,14 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_10Compute_action_hess_mul(CYTHON_
   #if CYTHON_FAST_PYCCALL
   if (__Pyx_PyFastCFunction_Check(__pyx_t_4)) {
     PyObject *__pyx_temp[3] = {__pyx_t_6, ((PyObject *)__pyx_v_hess_pot_all_d), __pyx_t_1};
-    __pyx_t_3 = __Pyx_PyCFunction_FastCall(__pyx_t_4, __pyx_temp+1-__pyx_t_7, 2+__pyx_t_7); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 634, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyCFunction_FastCall(__pyx_t_4, __pyx_temp+1-__pyx_t_7, 2+__pyx_t_7); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 826, __pyx_L1_error)
     __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   } else
   #endif
   {
-    __pyx_t_2 = PyTuple_New(2+__pyx_t_7); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 634, __pyx_L1_error)
+    __pyx_t_2 = PyTuple_New(2+__pyx_t_7); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 826, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     if (__pyx_t_6) {
       __Pyx_GIVEREF(__pyx_t_6); PyTuple_SET_ITEM(__pyx_t_2, 0, __pyx_t_6); __pyx_t_6 = NULL;
@@ -10115,18 +12850,18 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_10Compute_action_hess_mul(CYTHON_
     __Pyx_GIVEREF(__pyx_t_1);
     PyTuple_SET_ITEM(__pyx_t_2, 1+__pyx_t_7, __pyx_t_1);
     __pyx_t_1 = 0;
-    __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_t_2, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 634, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_t_2, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 826, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   }
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  if (!(likely(((__pyx_t_3) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_3, __pyx_ptype_5numpy_ndarray))))) __PYX_ERR(0, 634, __pyx_L1_error)
+  if (!(likely(((__pyx_t_3) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_3, __pyx_ptype_5numpy_ndarray))))) __PYX_ERR(0, 826, __pyx_L1_error)
   __pyx_t_50 = ((PyArrayObject *)__pyx_t_3);
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
     if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_hess_dx_pot_fft.rcbuffer->pybuffer, (PyObject*)__pyx_t_50, &__Pyx_TypeInfo___pyx_t_double_complex, PyBUF_FORMAT| PyBUF_C_CONTIGUOUS, 3, 0, __pyx_stack) == -1)) {
       __pyx_v_hess_dx_pot_fft = ((PyArrayObject *)Py_None); __Pyx_INCREF(Py_None); __pyx_pybuffernd_hess_dx_pot_fft.rcbuffer->pybuffer.buf = NULL;
-      __PYX_ERR(0, 634, __pyx_L1_error)
+      __PYX_ERR(0, 826, __pyx_L1_error)
     } else {__pyx_pybuffernd_hess_dx_pot_fft.diminfo[0].strides = __pyx_pybuffernd_hess_dx_pot_fft.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_hess_dx_pot_fft.diminfo[0].shape = __pyx_pybuffernd_hess_dx_pot_fft.rcbuffer->pybuffer.shape[0]; __pyx_pybuffernd_hess_dx_pot_fft.diminfo[1].strides = __pyx_pybuffernd_hess_dx_pot_fft.rcbuffer->pybuffer.strides[1]; __pyx_pybuffernd_hess_dx_pot_fft.diminfo[1].shape = __pyx_pybuffernd_hess_dx_pot_fft.rcbuffer->pybuffer.shape[1]; __pyx_pybuffernd_hess_dx_pot_fft.diminfo[2].strides = __pyx_pybuffernd_hess_dx_pot_fft.rcbuffer->pybuffer.strides[2]; __pyx_pybuffernd_hess_dx_pot_fft.diminfo[2].shape = __pyx_pybuffernd_hess_dx_pot_fft.rcbuffer->pybuffer.shape[2];
     }
   }
@@ -10134,7 +12869,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_10Compute_action_hess_mul(CYTHON_
   __pyx_v_hess_dx_pot_fft = ((PyArrayObject *)__pyx_t_3);
   __pyx_t_3 = 0;
 
-  /* "Choreo_cython_funs.pyx":636
+  /* "Choreo_cython_funs.pyx":828
  *     cdef np.ndarray[doublecomplex , ndim=3, mode="c"]  hess_dx_pot_fft = np.fft.ihfft(hess_pot_all_d,nint)
  * 
  *     for il in range(nloop):             # <<<<<<<<<<<<<<
@@ -10146,7 +12881,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_10Compute_action_hess_mul(CYTHON_
   for (__pyx_t_17 = 0; __pyx_t_17 < __pyx_t_16; __pyx_t_17+=1) {
     __pyx_v_il = __pyx_t_17;
 
-    /* "Choreo_cython_funs.pyx":637
+    /* "Choreo_cython_funs.pyx":829
  * 
  *     for il in range(nloop):
  *         for idim in range(cndim):             # <<<<<<<<<<<<<<
@@ -10158,7 +12893,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_10Compute_action_hess_mul(CYTHON_
     for (__pyx_t_22 = 0; __pyx_t_22 < __pyx_t_21; __pyx_t_22+=1) {
       __pyx_v_idim = __pyx_t_22;
 
-      /* "Choreo_cython_funs.pyx":639
+      /* "Choreo_cython_funs.pyx":831
  *         for idim in range(cndim):
  * 
  *             Action_hess_dx[il,idim,0,0] -= hess_dx_pot_fft[il,idim,0].real             # <<<<<<<<<<<<<<
@@ -10174,7 +12909,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_10Compute_action_hess_mul(CYTHON_
       __pyx_t_31 = 0;
       *__Pyx_BufPtrCContig4d(double *, __pyx_pybuffernd_Action_hess_dx.rcbuffer->pybuffer.buf, __pyx_t_28, __pyx_pybuffernd_Action_hess_dx.diminfo[0].strides, __pyx_t_29, __pyx_pybuffernd_Action_hess_dx.diminfo[1].strides, __pyx_t_30, __pyx_pybuffernd_Action_hess_dx.diminfo[2].strides, __pyx_t_31, __pyx_pybuffernd_Action_hess_dx.diminfo[3].strides) -= __Pyx_CREAL((*__Pyx_BufPtrCContig3d(__pyx_t_double_complex *, __pyx_pybuffernd_hess_dx_pot_fft.rcbuffer->pybuffer.buf, __pyx_t_24, __pyx_pybuffernd_hess_dx_pot_fft.diminfo[0].strides, __pyx_t_27, __pyx_pybuffernd_hess_dx_pot_fft.diminfo[1].strides, __pyx_t_18, __pyx_pybuffernd_hess_dx_pot_fft.diminfo[2].strides)));
 
-      /* "Choreo_cython_funs.pyx":641
+      /* "Choreo_cython_funs.pyx":833
  *             Action_hess_dx[il,idim,0,0] -= hess_dx_pot_fft[il,idim,0].real
  * 
  *             for k in range(1,ncoeff):             # <<<<<<<<<<<<<<
@@ -10186,7 +12921,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_10Compute_action_hess_mul(CYTHON_
       for (__pyx_t_26 = 1; __pyx_t_26 < __pyx_t_25; __pyx_t_26+=1) {
         __pyx_v_k = __pyx_t_26;
 
-        /* "Choreo_cython_funs.pyx":643
+        /* "Choreo_cython_funs.pyx":835
  *             for k in range(1,ncoeff):
  * 
  *                 Action_hess_dx[il,idim,k,0] -= 2*hess_dx_pot_fft[il,idim,k].real             # <<<<<<<<<<<<<<
@@ -10202,7 +12937,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_10Compute_action_hess_mul(CYTHON_
         __pyx_t_28 = 0;
         *__Pyx_BufPtrCContig4d(double *, __pyx_pybuffernd_Action_hess_dx.rcbuffer->pybuffer.buf, __pyx_t_31, __pyx_pybuffernd_Action_hess_dx.diminfo[0].strides, __pyx_t_30, __pyx_pybuffernd_Action_hess_dx.diminfo[1].strides, __pyx_t_29, __pyx_pybuffernd_Action_hess_dx.diminfo[2].strides, __pyx_t_28, __pyx_pybuffernd_Action_hess_dx.diminfo[3].strides) -= (2.0 * __Pyx_CREAL((*__Pyx_BufPtrCContig3d(__pyx_t_double_complex *, __pyx_pybuffernd_hess_dx_pot_fft.rcbuffer->pybuffer.buf, __pyx_t_18, __pyx_pybuffernd_hess_dx_pot_fft.diminfo[0].strides, __pyx_t_27, __pyx_pybuffernd_hess_dx_pot_fft.diminfo[1].strides, __pyx_t_24, __pyx_pybuffernd_hess_dx_pot_fft.diminfo[2].strides))));
 
-        /* "Choreo_cython_funs.pyx":644
+        /* "Choreo_cython_funs.pyx":836
  * 
  *                 Action_hess_dx[il,idim,k,0] -= 2*hess_dx_pot_fft[il,idim,k].real
  *                 Action_hess_dx[il,idim,k,1] += 2*hess_dx_pot_fft[il,idim,k].imag             # <<<<<<<<<<<<<<
@@ -10221,7 +12956,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_10Compute_action_hess_mul(CYTHON_
     }
   }
 
-  /* "Choreo_cython_funs.pyx":646
+  /* "Choreo_cython_funs.pyx":838
  *                 Action_hess_dx[il,idim,k,1] += 2*hess_dx_pot_fft[il,idim,k].imag
  * 
  *     return Action_hess_dx             # <<<<<<<<<<<<<<
@@ -10233,8 +12968,8 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_10Compute_action_hess_mul(CYTHON_
   __pyx_r = ((PyObject *)__pyx_v_Action_hess_dx);
   goto __pyx_L0;
 
-  /* "Choreo_cython_funs.pyx":507
- *     return csqrt(dx2min)
+  /* "Choreo_cython_funs.pyx":699
+ * 
  * 
  * def Compute_action_hess_mul(             # <<<<<<<<<<<<<<
  *     long nloop,
@@ -10301,7 +13036,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_10Compute_action_hess_mul(CYTHON_
   return __pyx_r;
 }
 
-/* "Choreo_cython_funs.pyx":648
+/* "Choreo_cython_funs.pyx":840
  *     return Action_hess_dx
  * 
  * def Compute_Newton_err_Cython(             # <<<<<<<<<<<<<<
@@ -10310,9 +13045,9 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_10Compute_action_hess_mul(CYTHON_
  */
 
 /* Python wrapper */
-static PyObject *__pyx_pw_18Choreo_cython_funs_13Compute_Newton_err_Cython(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
-static PyMethodDef __pyx_mdef_18Choreo_cython_funs_13Compute_Newton_err_Cython = {"Compute_Newton_err_Cython", (PyCFunction)(void*)(PyCFunctionWithKeywords)__pyx_pw_18Choreo_cython_funs_13Compute_Newton_err_Cython, METH_VARARGS|METH_KEYWORDS, 0};
-static PyObject *__pyx_pw_18Choreo_cython_funs_13Compute_Newton_err_Cython(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
+static PyObject *__pyx_pw_18Choreo_cython_funs_15Compute_Newton_err_Cython(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
+static PyMethodDef __pyx_mdef_18Choreo_cython_funs_15Compute_Newton_err_Cython = {"Compute_Newton_err_Cython", (PyCFunction)(void*)(PyCFunctionWithKeywords)__pyx_pw_18Choreo_cython_funs_15Compute_Newton_err_Cython, METH_VARARGS|METH_KEYWORDS, 0};
+static PyObject *__pyx_pw_18Choreo_cython_funs_15Compute_Newton_err_Cython(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
   long __pyx_v_nbody;
   long __pyx_v_nloop;
   long __pyx_v_ncoeff;
@@ -10374,71 +13109,71 @@ static PyObject *__pyx_pw_18Choreo_cython_funs_13Compute_Newton_err_Cython(PyObj
         case  1:
         if (likely((values[1] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_nloop)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("Compute_Newton_err_Cython", 1, 12, 12, 1); __PYX_ERR(0, 648, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("Compute_Newton_err_Cython", 1, 12, 12, 1); __PYX_ERR(0, 840, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  2:
         if (likely((values[2] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_ncoeff)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("Compute_Newton_err_Cython", 1, 12, 12, 2); __PYX_ERR(0, 648, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("Compute_Newton_err_Cython", 1, 12, 12, 2); __PYX_ERR(0, 840, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  3:
         if (likely((values[3] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_nint)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("Compute_Newton_err_Cython", 1, 12, 12, 3); __PYX_ERR(0, 648, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("Compute_Newton_err_Cython", 1, 12, 12, 3); __PYX_ERR(0, 840, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  4:
         if (likely((values[4] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_mass)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("Compute_Newton_err_Cython", 1, 12, 12, 4); __PYX_ERR(0, 648, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("Compute_Newton_err_Cython", 1, 12, 12, 4); __PYX_ERR(0, 840, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  5:
         if (likely((values[5] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_loopnb)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("Compute_Newton_err_Cython", 1, 12, 12, 5); __PYX_ERR(0, 648, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("Compute_Newton_err_Cython", 1, 12, 12, 5); __PYX_ERR(0, 840, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  6:
         if (likely((values[6] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_Targets)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("Compute_Newton_err_Cython", 1, 12, 12, 6); __PYX_ERR(0, 648, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("Compute_Newton_err_Cython", 1, 12, 12, 6); __PYX_ERR(0, 840, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  7:
         if (likely((values[7] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_SpaceRotsUn)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("Compute_Newton_err_Cython", 1, 12, 12, 7); __PYX_ERR(0, 648, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("Compute_Newton_err_Cython", 1, 12, 12, 7); __PYX_ERR(0, 840, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  8:
         if (likely((values[8] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_TimeRevsUn)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("Compute_Newton_err_Cython", 1, 12, 12, 8); __PYX_ERR(0, 648, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("Compute_Newton_err_Cython", 1, 12, 12, 8); __PYX_ERR(0, 840, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  9:
         if (likely((values[9] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_TimeShiftNumUn)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("Compute_Newton_err_Cython", 1, 12, 12, 9); __PYX_ERR(0, 648, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("Compute_Newton_err_Cython", 1, 12, 12, 9); __PYX_ERR(0, 840, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case 10:
         if (likely((values[10] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_TimeShiftDenUn)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("Compute_Newton_err_Cython", 1, 12, 12, 10); __PYX_ERR(0, 648, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("Compute_Newton_err_Cython", 1, 12, 12, 10); __PYX_ERR(0, 840, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case 11:
         if (likely((values[11] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_all_coeffs)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("Compute_Newton_err_Cython", 1, 12, 12, 11); __PYX_ERR(0, 648, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("Compute_Newton_err_Cython", 1, 12, 12, 11); __PYX_ERR(0, 840, __pyx_L3_error)
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "Compute_Newton_err_Cython") < 0)) __PYX_ERR(0, 648, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "Compute_Newton_err_Cython") < 0)) __PYX_ERR(0, 840, __pyx_L3_error)
       }
     } else if (PyTuple_GET_SIZE(__pyx_args) != 12) {
       goto __pyx_L5_argtuple_error;
@@ -10456,10 +13191,10 @@ static PyObject *__pyx_pw_18Choreo_cython_funs_13Compute_Newton_err_Cython(PyObj
       values[10] = PyTuple_GET_ITEM(__pyx_args, 10);
       values[11] = PyTuple_GET_ITEM(__pyx_args, 11);
     }
-    __pyx_v_nbody = __Pyx_PyInt_As_long(values[0]); if (unlikely((__pyx_v_nbody == (long)-1) && PyErr_Occurred())) __PYX_ERR(0, 649, __pyx_L3_error)
-    __pyx_v_nloop = __Pyx_PyInt_As_long(values[1]); if (unlikely((__pyx_v_nloop == (long)-1) && PyErr_Occurred())) __PYX_ERR(0, 650, __pyx_L3_error)
-    __pyx_v_ncoeff = __Pyx_PyInt_As_long(values[2]); if (unlikely((__pyx_v_ncoeff == (long)-1) && PyErr_Occurred())) __PYX_ERR(0, 651, __pyx_L3_error)
-    __pyx_v_nint = __Pyx_PyInt_As_long(values[3]); if (unlikely((__pyx_v_nint == (long)-1) && PyErr_Occurred())) __PYX_ERR(0, 652, __pyx_L3_error)
+    __pyx_v_nbody = __Pyx_PyInt_As_long(values[0]); if (unlikely((__pyx_v_nbody == (long)-1) && PyErr_Occurred())) __PYX_ERR(0, 841, __pyx_L3_error)
+    __pyx_v_nloop = __Pyx_PyInt_As_long(values[1]); if (unlikely((__pyx_v_nloop == (long)-1) && PyErr_Occurred())) __PYX_ERR(0, 842, __pyx_L3_error)
+    __pyx_v_ncoeff = __Pyx_PyInt_As_long(values[2]); if (unlikely((__pyx_v_ncoeff == (long)-1) && PyErr_Occurred())) __PYX_ERR(0, 843, __pyx_L3_error)
+    __pyx_v_nint = __Pyx_PyInt_As_long(values[3]); if (unlikely((__pyx_v_nint == (long)-1) && PyErr_Occurred())) __PYX_ERR(0, 844, __pyx_L3_error)
     __pyx_v_mass = ((PyArrayObject *)values[4]);
     __pyx_v_loopnb = ((PyArrayObject *)values[5]);
     __pyx_v_Targets = ((PyArrayObject *)values[6]);
@@ -10471,21 +13206,21 @@ static PyObject *__pyx_pw_18Choreo_cython_funs_13Compute_Newton_err_Cython(PyObj
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("Compute_Newton_err_Cython", 1, 12, 12, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 648, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("Compute_Newton_err_Cython", 1, 12, 12, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 840, __pyx_L3_error)
   __pyx_L3_error:;
   __Pyx_AddTraceback("Choreo_cython_funs.Compute_Newton_err_Cython", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_mass), __pyx_ptype_5numpy_ndarray, 0, "mass", 0))) __PYX_ERR(0, 653, __pyx_L1_error)
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_loopnb), __pyx_ptype_5numpy_ndarray, 0, "loopnb", 0))) __PYX_ERR(0, 654, __pyx_L1_error)
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_Targets), __pyx_ptype_5numpy_ndarray, 0, "Targets", 0))) __PYX_ERR(0, 655, __pyx_L1_error)
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_SpaceRotsUn), __pyx_ptype_5numpy_ndarray, 0, "SpaceRotsUn", 0))) __PYX_ERR(0, 656, __pyx_L1_error)
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_TimeRevsUn), __pyx_ptype_5numpy_ndarray, 0, "TimeRevsUn", 0))) __PYX_ERR(0, 657, __pyx_L1_error)
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_TimeShiftNumUn), __pyx_ptype_5numpy_ndarray, 0, "TimeShiftNumUn", 0))) __PYX_ERR(0, 658, __pyx_L1_error)
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_TimeShiftDenUn), __pyx_ptype_5numpy_ndarray, 0, "TimeShiftDenUn", 0))) __PYX_ERR(0, 659, __pyx_L1_error)
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_all_coeffs), __pyx_ptype_5numpy_ndarray, 0, "all_coeffs", 0))) __PYX_ERR(0, 660, __pyx_L1_error)
-  __pyx_r = __pyx_pf_18Choreo_cython_funs_12Compute_Newton_err_Cython(__pyx_self, __pyx_v_nbody, __pyx_v_nloop, __pyx_v_ncoeff, __pyx_v_nint, __pyx_v_mass, __pyx_v_loopnb, __pyx_v_Targets, __pyx_v_SpaceRotsUn, __pyx_v_TimeRevsUn, __pyx_v_TimeShiftNumUn, __pyx_v_TimeShiftDenUn, __pyx_v_all_coeffs);
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_mass), __pyx_ptype_5numpy_ndarray, 0, "mass", 0))) __PYX_ERR(0, 845, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_loopnb), __pyx_ptype_5numpy_ndarray, 0, "loopnb", 0))) __PYX_ERR(0, 846, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_Targets), __pyx_ptype_5numpy_ndarray, 0, "Targets", 0))) __PYX_ERR(0, 847, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_SpaceRotsUn), __pyx_ptype_5numpy_ndarray, 0, "SpaceRotsUn", 0))) __PYX_ERR(0, 848, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_TimeRevsUn), __pyx_ptype_5numpy_ndarray, 0, "TimeRevsUn", 0))) __PYX_ERR(0, 849, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_TimeShiftNumUn), __pyx_ptype_5numpy_ndarray, 0, "TimeShiftNumUn", 0))) __PYX_ERR(0, 850, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_TimeShiftDenUn), __pyx_ptype_5numpy_ndarray, 0, "TimeShiftDenUn", 0))) __PYX_ERR(0, 851, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_all_coeffs), __pyx_ptype_5numpy_ndarray, 0, "all_coeffs", 0))) __PYX_ERR(0, 852, __pyx_L1_error)
+  __pyx_r = __pyx_pf_18Choreo_cython_funs_14Compute_Newton_err_Cython(__pyx_self, __pyx_v_nbody, __pyx_v_nloop, __pyx_v_ncoeff, __pyx_v_nint, __pyx_v_mass, __pyx_v_loopnb, __pyx_v_Targets, __pyx_v_SpaceRotsUn, __pyx_v_TimeRevsUn, __pyx_v_TimeShiftNumUn, __pyx_v_TimeShiftDenUn, __pyx_v_all_coeffs);
 
   /* function exit code */
   goto __pyx_L0;
@@ -10496,7 +13231,7 @@ static PyObject *__pyx_pw_18Choreo_cython_funs_13Compute_Newton_err_Cython(PyObj
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_18Choreo_cython_funs_12Compute_Newton_err_Cython(CYTHON_UNUSED PyObject *__pyx_self, long __pyx_v_nbody, long __pyx_v_nloop, long __pyx_v_ncoeff, long __pyx_v_nint, PyArrayObject *__pyx_v_mass, PyArrayObject *__pyx_v_loopnb, PyArrayObject *__pyx_v_Targets, PyArrayObject *__pyx_v_SpaceRotsUn, PyArrayObject *__pyx_v_TimeRevsUn, PyArrayObject *__pyx_v_TimeShiftNumUn, PyArrayObject *__pyx_v_TimeShiftDenUn, PyArrayObject *__pyx_v_all_coeffs) {
+static PyObject *__pyx_pf_18Choreo_cython_funs_14Compute_Newton_err_Cython(CYTHON_UNUSED PyObject *__pyx_self, long __pyx_v_nbody, long __pyx_v_nloop, long __pyx_v_ncoeff, long __pyx_v_nint, PyArrayObject *__pyx_v_mass, PyArrayObject *__pyx_v_loopnb, PyArrayObject *__pyx_v_Targets, PyArrayObject *__pyx_v_SpaceRotsUn, PyArrayObject *__pyx_v_TimeRevsUn, PyArrayObject *__pyx_v_TimeShiftNumUn, PyArrayObject *__pyx_v_TimeShiftDenUn, PyArrayObject *__pyx_v_all_coeffs) {
   long __pyx_v_il;
   long __pyx_v_ilp;
   long __pyx_v_idim;
@@ -10672,85 +13407,85 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_12Compute_Newton_err_Cython(CYTHO
   __pyx_pybuffernd_all_coeffs.rcbuffer = &__pyx_pybuffer_all_coeffs;
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
-    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_mass.rcbuffer->pybuffer, (PyObject*)__pyx_v_mass, &__Pyx_TypeInfo_double, PyBUF_FORMAT| PyBUF_C_CONTIGUOUS, 1, 0, __pyx_stack) == -1)) __PYX_ERR(0, 648, __pyx_L1_error)
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_mass.rcbuffer->pybuffer, (PyObject*)__pyx_v_mass, &__Pyx_TypeInfo_double, PyBUF_FORMAT| PyBUF_C_CONTIGUOUS, 1, 0, __pyx_stack) == -1)) __PYX_ERR(0, 840, __pyx_L1_error)
   }
   __pyx_pybuffernd_mass.diminfo[0].strides = __pyx_pybuffernd_mass.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_mass.diminfo[0].shape = __pyx_pybuffernd_mass.rcbuffer->pybuffer.shape[0];
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
-    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_loopnb.rcbuffer->pybuffer, (PyObject*)__pyx_v_loopnb, &__Pyx_TypeInfo_long, PyBUF_FORMAT| PyBUF_C_CONTIGUOUS, 1, 0, __pyx_stack) == -1)) __PYX_ERR(0, 648, __pyx_L1_error)
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_loopnb.rcbuffer->pybuffer, (PyObject*)__pyx_v_loopnb, &__Pyx_TypeInfo_long, PyBUF_FORMAT| PyBUF_C_CONTIGUOUS, 1, 0, __pyx_stack) == -1)) __PYX_ERR(0, 840, __pyx_L1_error)
   }
   __pyx_pybuffernd_loopnb.diminfo[0].strides = __pyx_pybuffernd_loopnb.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_loopnb.diminfo[0].shape = __pyx_pybuffernd_loopnb.rcbuffer->pybuffer.shape[0];
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
-    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_Targets.rcbuffer->pybuffer, (PyObject*)__pyx_v_Targets, &__Pyx_TypeInfo_long, PyBUF_FORMAT| PyBUF_C_CONTIGUOUS, 2, 0, __pyx_stack) == -1)) __PYX_ERR(0, 648, __pyx_L1_error)
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_Targets.rcbuffer->pybuffer, (PyObject*)__pyx_v_Targets, &__Pyx_TypeInfo_long, PyBUF_FORMAT| PyBUF_C_CONTIGUOUS, 2, 0, __pyx_stack) == -1)) __PYX_ERR(0, 840, __pyx_L1_error)
   }
   __pyx_pybuffernd_Targets.diminfo[0].strides = __pyx_pybuffernd_Targets.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_Targets.diminfo[0].shape = __pyx_pybuffernd_Targets.rcbuffer->pybuffer.shape[0]; __pyx_pybuffernd_Targets.diminfo[1].strides = __pyx_pybuffernd_Targets.rcbuffer->pybuffer.strides[1]; __pyx_pybuffernd_Targets.diminfo[1].shape = __pyx_pybuffernd_Targets.rcbuffer->pybuffer.shape[1];
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
-    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_SpaceRotsUn.rcbuffer->pybuffer, (PyObject*)__pyx_v_SpaceRotsUn, &__Pyx_TypeInfo_double, PyBUF_FORMAT| PyBUF_C_CONTIGUOUS, 4, 0, __pyx_stack) == -1)) __PYX_ERR(0, 648, __pyx_L1_error)
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_SpaceRotsUn.rcbuffer->pybuffer, (PyObject*)__pyx_v_SpaceRotsUn, &__Pyx_TypeInfo_double, PyBUF_FORMAT| PyBUF_C_CONTIGUOUS, 4, 0, __pyx_stack) == -1)) __PYX_ERR(0, 840, __pyx_L1_error)
   }
   __pyx_pybuffernd_SpaceRotsUn.diminfo[0].strides = __pyx_pybuffernd_SpaceRotsUn.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_SpaceRotsUn.diminfo[0].shape = __pyx_pybuffernd_SpaceRotsUn.rcbuffer->pybuffer.shape[0]; __pyx_pybuffernd_SpaceRotsUn.diminfo[1].strides = __pyx_pybuffernd_SpaceRotsUn.rcbuffer->pybuffer.strides[1]; __pyx_pybuffernd_SpaceRotsUn.diminfo[1].shape = __pyx_pybuffernd_SpaceRotsUn.rcbuffer->pybuffer.shape[1]; __pyx_pybuffernd_SpaceRotsUn.diminfo[2].strides = __pyx_pybuffernd_SpaceRotsUn.rcbuffer->pybuffer.strides[2]; __pyx_pybuffernd_SpaceRotsUn.diminfo[2].shape = __pyx_pybuffernd_SpaceRotsUn.rcbuffer->pybuffer.shape[2]; __pyx_pybuffernd_SpaceRotsUn.diminfo[3].strides = __pyx_pybuffernd_SpaceRotsUn.rcbuffer->pybuffer.strides[3]; __pyx_pybuffernd_SpaceRotsUn.diminfo[3].shape = __pyx_pybuffernd_SpaceRotsUn.rcbuffer->pybuffer.shape[3];
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
-    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_TimeRevsUn.rcbuffer->pybuffer, (PyObject*)__pyx_v_TimeRevsUn, &__Pyx_TypeInfo_long, PyBUF_FORMAT| PyBUF_C_CONTIGUOUS, 2, 0, __pyx_stack) == -1)) __PYX_ERR(0, 648, __pyx_L1_error)
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_TimeRevsUn.rcbuffer->pybuffer, (PyObject*)__pyx_v_TimeRevsUn, &__Pyx_TypeInfo_long, PyBUF_FORMAT| PyBUF_C_CONTIGUOUS, 2, 0, __pyx_stack) == -1)) __PYX_ERR(0, 840, __pyx_L1_error)
   }
   __pyx_pybuffernd_TimeRevsUn.diminfo[0].strides = __pyx_pybuffernd_TimeRevsUn.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_TimeRevsUn.diminfo[0].shape = __pyx_pybuffernd_TimeRevsUn.rcbuffer->pybuffer.shape[0]; __pyx_pybuffernd_TimeRevsUn.diminfo[1].strides = __pyx_pybuffernd_TimeRevsUn.rcbuffer->pybuffer.strides[1]; __pyx_pybuffernd_TimeRevsUn.diminfo[1].shape = __pyx_pybuffernd_TimeRevsUn.rcbuffer->pybuffer.shape[1];
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
-    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_TimeShiftNumUn.rcbuffer->pybuffer, (PyObject*)__pyx_v_TimeShiftNumUn, &__Pyx_TypeInfo_long, PyBUF_FORMAT| PyBUF_C_CONTIGUOUS, 2, 0, __pyx_stack) == -1)) __PYX_ERR(0, 648, __pyx_L1_error)
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_TimeShiftNumUn.rcbuffer->pybuffer, (PyObject*)__pyx_v_TimeShiftNumUn, &__Pyx_TypeInfo_long, PyBUF_FORMAT| PyBUF_C_CONTIGUOUS, 2, 0, __pyx_stack) == -1)) __PYX_ERR(0, 840, __pyx_L1_error)
   }
   __pyx_pybuffernd_TimeShiftNumUn.diminfo[0].strides = __pyx_pybuffernd_TimeShiftNumUn.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_TimeShiftNumUn.diminfo[0].shape = __pyx_pybuffernd_TimeShiftNumUn.rcbuffer->pybuffer.shape[0]; __pyx_pybuffernd_TimeShiftNumUn.diminfo[1].strides = __pyx_pybuffernd_TimeShiftNumUn.rcbuffer->pybuffer.strides[1]; __pyx_pybuffernd_TimeShiftNumUn.diminfo[1].shape = __pyx_pybuffernd_TimeShiftNumUn.rcbuffer->pybuffer.shape[1];
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
-    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_TimeShiftDenUn.rcbuffer->pybuffer, (PyObject*)__pyx_v_TimeShiftDenUn, &__Pyx_TypeInfo_long, PyBUF_FORMAT| PyBUF_C_CONTIGUOUS, 2, 0, __pyx_stack) == -1)) __PYX_ERR(0, 648, __pyx_L1_error)
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_TimeShiftDenUn.rcbuffer->pybuffer, (PyObject*)__pyx_v_TimeShiftDenUn, &__Pyx_TypeInfo_long, PyBUF_FORMAT| PyBUF_C_CONTIGUOUS, 2, 0, __pyx_stack) == -1)) __PYX_ERR(0, 840, __pyx_L1_error)
   }
   __pyx_pybuffernd_TimeShiftDenUn.diminfo[0].strides = __pyx_pybuffernd_TimeShiftDenUn.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_TimeShiftDenUn.diminfo[0].shape = __pyx_pybuffernd_TimeShiftDenUn.rcbuffer->pybuffer.shape[0]; __pyx_pybuffernd_TimeShiftDenUn.diminfo[1].strides = __pyx_pybuffernd_TimeShiftDenUn.rcbuffer->pybuffer.strides[1]; __pyx_pybuffernd_TimeShiftDenUn.diminfo[1].shape = __pyx_pybuffernd_TimeShiftDenUn.rcbuffer->pybuffer.shape[1];
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
-    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_all_coeffs.rcbuffer->pybuffer, (PyObject*)__pyx_v_all_coeffs, &__Pyx_TypeInfo_double, PyBUF_FORMAT| PyBUF_C_CONTIGUOUS, 4, 0, __pyx_stack) == -1)) __PYX_ERR(0, 648, __pyx_L1_error)
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_all_coeffs.rcbuffer->pybuffer, (PyObject*)__pyx_v_all_coeffs, &__Pyx_TypeInfo_double, PyBUF_FORMAT| PyBUF_C_CONTIGUOUS, 4, 0, __pyx_stack) == -1)) __PYX_ERR(0, 840, __pyx_L1_error)
   }
   __pyx_pybuffernd_all_coeffs.diminfo[0].strides = __pyx_pybuffernd_all_coeffs.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_all_coeffs.diminfo[0].shape = __pyx_pybuffernd_all_coeffs.rcbuffer->pybuffer.shape[0]; __pyx_pybuffernd_all_coeffs.diminfo[1].strides = __pyx_pybuffernd_all_coeffs.rcbuffer->pybuffer.strides[1]; __pyx_pybuffernd_all_coeffs.diminfo[1].shape = __pyx_pybuffernd_all_coeffs.rcbuffer->pybuffer.shape[1]; __pyx_pybuffernd_all_coeffs.diminfo[2].strides = __pyx_pybuffernd_all_coeffs.rcbuffer->pybuffer.strides[2]; __pyx_pybuffernd_all_coeffs.diminfo[2].shape = __pyx_pybuffernd_all_coeffs.rcbuffer->pybuffer.shape[2]; __pyx_pybuffernd_all_coeffs.diminfo[3].strides = __pyx_pybuffernd_all_coeffs.rcbuffer->pybuffer.strides[3]; __pyx_pybuffernd_all_coeffs.diminfo[3].shape = __pyx_pybuffernd_all_coeffs.rcbuffer->pybuffer.shape[3];
 
-  /* "Choreo_cython_funs.pyx":672
+  /* "Choreo_cython_funs.pyx":864
  *     cdef double pot,potp,potpp
  *     cdef double prod_mass,a,b,dx2,prod_fac
  *     cdef np.ndarray[double, ndim=1, mode="c"]  dx = np.zeros((cndim),dtype=np.float64)             # <<<<<<<<<<<<<<
  * 
  *     cdef long maxloopnb = loopnb.max()
  */
-  __Pyx_GetModuleGlobalName(__pyx_t_1, __pyx_n_s_np); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 672, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_1, __pyx_n_s_np); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 864, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_zeros); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 672, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_zeros); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 864, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = __Pyx_PyInt_From_long(__pyx_v_18Choreo_cython_funs_cndim); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 672, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyInt_From_long(__pyx_v_18Choreo_cython_funs_cndim); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 864, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_3 = PyTuple_New(1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 672, __pyx_L1_error)
+  __pyx_t_3 = PyTuple_New(1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 864, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_GIVEREF(__pyx_t_1);
   PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_1);
   __pyx_t_1 = 0;
-  __pyx_t_1 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 672, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 864, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __Pyx_GetModuleGlobalName(__pyx_t_4, __pyx_n_s_np); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 672, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_4, __pyx_n_s_np); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 864, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_float64); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 672, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_float64); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 864, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_dtype, __pyx_t_5) < 0) __PYX_ERR(0, 672, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_dtype, __pyx_t_5) < 0) __PYX_ERR(0, 864, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_3, __pyx_t_1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 672, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_3, __pyx_t_1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 864, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  if (!(likely(((__pyx_t_5) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_5, __pyx_ptype_5numpy_ndarray))))) __PYX_ERR(0, 672, __pyx_L1_error)
+  if (!(likely(((__pyx_t_5) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_5, __pyx_ptype_5numpy_ndarray))))) __PYX_ERR(0, 864, __pyx_L1_error)
   __pyx_t_6 = ((PyArrayObject *)__pyx_t_5);
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
     if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_dx.rcbuffer->pybuffer, (PyObject*)__pyx_t_6, &__Pyx_TypeInfo_double, PyBUF_FORMAT| PyBUF_C_CONTIGUOUS| PyBUF_WRITABLE, 1, 0, __pyx_stack) == -1)) {
       __pyx_v_dx = ((PyArrayObject *)Py_None); __Pyx_INCREF(Py_None); __pyx_pybuffernd_dx.rcbuffer->pybuffer.buf = NULL;
-      __PYX_ERR(0, 672, __pyx_L1_error)
+      __PYX_ERR(0, 864, __pyx_L1_error)
     } else {__pyx_pybuffernd_dx.diminfo[0].strides = __pyx_pybuffernd_dx.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_dx.diminfo[0].shape = __pyx_pybuffernd_dx.rcbuffer->pybuffer.shape[0];
     }
   }
@@ -10758,14 +13493,14 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_12Compute_Newton_err_Cython(CYTHO
   __pyx_v_dx = ((PyArrayObject *)__pyx_t_5);
   __pyx_t_5 = 0;
 
-  /* "Choreo_cython_funs.pyx":674
+  /* "Choreo_cython_funs.pyx":866
  *     cdef np.ndarray[double, ndim=1, mode="c"]  dx = np.zeros((cndim),dtype=np.float64)
  * 
  *     cdef long maxloopnb = loopnb.max()             # <<<<<<<<<<<<<<
  * 
  *     cdef np.ndarray[double, ndim=4, mode="c"] acc_coeff = np.zeros((nloop,cndim,ncoeff,2),dtype=np.float64)
  */
-  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_loopnb), __pyx_n_s_max); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 674, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_loopnb), __pyx_n_s_max); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 866, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_t_3 = NULL;
   if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_1))) {
@@ -10779,32 +13514,32 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_12Compute_Newton_err_Cython(CYTHO
   }
   __pyx_t_5 = (__pyx_t_3) ? __Pyx_PyObject_CallOneArg(__pyx_t_1, __pyx_t_3) : __Pyx_PyObject_CallNoArg(__pyx_t_1);
   __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
-  if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 674, __pyx_L1_error)
+  if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 866, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_7 = __Pyx_PyInt_As_long(__pyx_t_5); if (unlikely((__pyx_t_7 == (long)-1) && PyErr_Occurred())) __PYX_ERR(0, 674, __pyx_L1_error)
+  __pyx_t_7 = __Pyx_PyInt_As_long(__pyx_t_5); if (unlikely((__pyx_t_7 == (long)-1) && PyErr_Occurred())) __PYX_ERR(0, 866, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
   __pyx_v_maxloopnb = __pyx_t_7;
 
-  /* "Choreo_cython_funs.pyx":676
+  /* "Choreo_cython_funs.pyx":868
  *     cdef long maxloopnb = loopnb.max()
  * 
  *     cdef np.ndarray[double, ndim=4, mode="c"] acc_coeff = np.zeros((nloop,cndim,ncoeff,2),dtype=np.float64)             # <<<<<<<<<<<<<<
  * 
  *     for il in range(nloop):
  */
-  __Pyx_GetModuleGlobalName(__pyx_t_5, __pyx_n_s_np); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 676, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_5, __pyx_n_s_np); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 868, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
-  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_n_s_zeros); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 676, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_n_s_zeros); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 868, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  __pyx_t_5 = __Pyx_PyInt_From_long(__pyx_v_nloop); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 676, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyInt_From_long(__pyx_v_nloop); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 868, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
-  __pyx_t_3 = __Pyx_PyInt_From_long(__pyx_v_18Choreo_cython_funs_cndim); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 676, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyInt_From_long(__pyx_v_18Choreo_cython_funs_cndim); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 868, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_2 = __Pyx_PyInt_From_long(__pyx_v_ncoeff); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 676, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyInt_From_long(__pyx_v_ncoeff); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 868, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_4 = PyTuple_New(4); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 676, __pyx_L1_error)
+  __pyx_t_4 = PyTuple_New(4); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 868, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_GIVEREF(__pyx_t_5);
   PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_5);
@@ -10818,32 +13553,32 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_12Compute_Newton_err_Cython(CYTHO
   __pyx_t_5 = 0;
   __pyx_t_3 = 0;
   __pyx_t_2 = 0;
-  __pyx_t_2 = PyTuple_New(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 676, __pyx_L1_error)
+  __pyx_t_2 = PyTuple_New(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 868, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_GIVEREF(__pyx_t_4);
   PyTuple_SET_ITEM(__pyx_t_2, 0, __pyx_t_4);
   __pyx_t_4 = 0;
-  __pyx_t_4 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 676, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 868, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_n_s_np); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 676, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_n_s_np); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 868, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_float64); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 676, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_float64); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 868, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_dtype, __pyx_t_5) < 0) __PYX_ERR(0, 676, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_dtype, __pyx_t_5) < 0) __PYX_ERR(0, 868, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_t_2, __pyx_t_4); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 676, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_t_2, __pyx_t_4); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 868, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  if (!(likely(((__pyx_t_5) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_5, __pyx_ptype_5numpy_ndarray))))) __PYX_ERR(0, 676, __pyx_L1_error)
+  if (!(likely(((__pyx_t_5) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_5, __pyx_ptype_5numpy_ndarray))))) __PYX_ERR(0, 868, __pyx_L1_error)
   __pyx_t_8 = ((PyArrayObject *)__pyx_t_5);
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
     if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_acc_coeff.rcbuffer->pybuffer, (PyObject*)__pyx_t_8, &__Pyx_TypeInfo_double, PyBUF_FORMAT| PyBUF_C_CONTIGUOUS| PyBUF_WRITABLE, 4, 0, __pyx_stack) == -1)) {
       __pyx_v_acc_coeff = ((PyArrayObject *)Py_None); __Pyx_INCREF(Py_None); __pyx_pybuffernd_acc_coeff.rcbuffer->pybuffer.buf = NULL;
-      __PYX_ERR(0, 676, __pyx_L1_error)
+      __PYX_ERR(0, 868, __pyx_L1_error)
     } else {__pyx_pybuffernd_acc_coeff.diminfo[0].strides = __pyx_pybuffernd_acc_coeff.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_acc_coeff.diminfo[0].shape = __pyx_pybuffernd_acc_coeff.rcbuffer->pybuffer.shape[0]; __pyx_pybuffernd_acc_coeff.diminfo[1].strides = __pyx_pybuffernd_acc_coeff.rcbuffer->pybuffer.strides[1]; __pyx_pybuffernd_acc_coeff.diminfo[1].shape = __pyx_pybuffernd_acc_coeff.rcbuffer->pybuffer.shape[1]; __pyx_pybuffernd_acc_coeff.diminfo[2].strides = __pyx_pybuffernd_acc_coeff.rcbuffer->pybuffer.strides[2]; __pyx_pybuffernd_acc_coeff.diminfo[2].shape = __pyx_pybuffernd_acc_coeff.rcbuffer->pybuffer.shape[2]; __pyx_pybuffernd_acc_coeff.diminfo[3].strides = __pyx_pybuffernd_acc_coeff.rcbuffer->pybuffer.strides[3]; __pyx_pybuffernd_acc_coeff.diminfo[3].shape = __pyx_pybuffernd_acc_coeff.rcbuffer->pybuffer.shape[3];
     }
   }
@@ -10851,7 +13586,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_12Compute_Newton_err_Cython(CYTHO
   __pyx_v_acc_coeff = ((PyArrayObject *)__pyx_t_5);
   __pyx_t_5 = 0;
 
-  /* "Choreo_cython_funs.pyx":678
+  /* "Choreo_cython_funs.pyx":870
  *     cdef np.ndarray[double, ndim=4, mode="c"] acc_coeff = np.zeros((nloop,cndim,ncoeff,2),dtype=np.float64)
  * 
  *     for il in range(nloop):             # <<<<<<<<<<<<<<
@@ -10863,7 +13598,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_12Compute_Newton_err_Cython(CYTHO
   for (__pyx_t_10 = 0; __pyx_t_10 < __pyx_t_9; __pyx_t_10+=1) {
     __pyx_v_il = __pyx_t_10;
 
-    /* "Choreo_cython_funs.pyx":679
+    /* "Choreo_cython_funs.pyx":871
  * 
  *     for il in range(nloop):
  *         for idim in range(cndim):             # <<<<<<<<<<<<<<
@@ -10875,7 +13610,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_12Compute_Newton_err_Cython(CYTHO
     for (__pyx_t_13 = 0; __pyx_t_13 < __pyx_t_12; __pyx_t_13+=1) {
       __pyx_v_idim = __pyx_t_13;
 
-      /* "Choreo_cython_funs.pyx":680
+      /* "Choreo_cython_funs.pyx":872
  *     for il in range(nloop):
  *         for idim in range(cndim):
  *             for k in range(ncoeff):             # <<<<<<<<<<<<<<
@@ -10887,7 +13622,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_12Compute_Newton_err_Cython(CYTHO
       for (__pyx_t_16 = 0; __pyx_t_16 < __pyx_t_15; __pyx_t_16+=1) {
         __pyx_v_k = __pyx_t_16;
 
-        /* "Choreo_cython_funs.pyx":682
+        /* "Choreo_cython_funs.pyx":874
  *             for k in range(ncoeff):
  * 
  *                 k2 = k*k             # <<<<<<<<<<<<<<
@@ -10896,7 +13631,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_12Compute_Newton_err_Cython(CYTHO
  */
         __pyx_v_k2 = (__pyx_v_k * __pyx_v_k);
 
-        /* "Choreo_cython_funs.pyx":683
+        /* "Choreo_cython_funs.pyx":875
  * 
  *                 k2 = k*k
  *                 acc_coeff[il,idim,k,0] = k2*cfourpisq*all_coeffs[il,idim,k,0]             # <<<<<<<<<<<<<<
@@ -10913,7 +13648,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_12Compute_Newton_err_Cython(CYTHO
         __pyx_t_24 = 0;
         *__Pyx_BufPtrCContig4d(double *, __pyx_pybuffernd_acc_coeff.rcbuffer->pybuffer.buf, __pyx_t_21, __pyx_pybuffernd_acc_coeff.diminfo[0].strides, __pyx_t_22, __pyx_pybuffernd_acc_coeff.diminfo[1].strides, __pyx_t_23, __pyx_pybuffernd_acc_coeff.diminfo[2].strides, __pyx_t_24, __pyx_pybuffernd_acc_coeff.diminfo[3].strides) = ((__pyx_v_k2 * __pyx_v_18Choreo_cython_funs_cfourpisq) * (*__Pyx_BufPtrCContig4d(double *, __pyx_pybuffernd_all_coeffs.rcbuffer->pybuffer.buf, __pyx_t_17, __pyx_pybuffernd_all_coeffs.diminfo[0].strides, __pyx_t_18, __pyx_pybuffernd_all_coeffs.diminfo[1].strides, __pyx_t_19, __pyx_pybuffernd_all_coeffs.diminfo[2].strides, __pyx_t_20, __pyx_pybuffernd_all_coeffs.diminfo[3].strides)));
 
-        /* "Choreo_cython_funs.pyx":684
+        /* "Choreo_cython_funs.pyx":876
  *                 k2 = k*k
  *                 acc_coeff[il,idim,k,0] = k2*cfourpisq*all_coeffs[il,idim,k,0]
  *                 acc_coeff[il,idim,k,1] = k2*cfourpisq*all_coeffs[il,idim,k,1]             # <<<<<<<<<<<<<<
@@ -10933,79 +13668,79 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_12Compute_Newton_err_Cython(CYTHO
     }
   }
 
-  /* "Choreo_cython_funs.pyx":686
+  /* "Choreo_cython_funs.pyx":878
  *                 acc_coeff[il,idim,k,1] = k2*cfourpisq*all_coeffs[il,idim,k,1]
  * 
  *     c_acc_coeffs = acc_coeff.view(dtype=np.complex128)[...,0]             # <<<<<<<<<<<<<<
  *     cdef np.ndarray[double, ndim=3, mode="c"] all_acc = np.fft.irfft(c_acc_coeffs,n=nint,axis=2)*nint
  * 
  */
-  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_acc_coeff), __pyx_n_s_view); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 686, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_acc_coeff), __pyx_n_s_view); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 878, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
-  __pyx_t_4 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 686, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 878, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_np); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 686, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_np); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 878, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_complex128); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 686, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_complex128); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 878, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_dtype, __pyx_t_1) < 0) __PYX_ERR(0, 686, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_dtype, __pyx_t_1) < 0) __PYX_ERR(0, 878, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_empty_tuple, __pyx_t_4); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 686, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_empty_tuple, __pyx_t_4); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 878, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  __pyx_t_4 = __Pyx_PyObject_GetItem(__pyx_t_1, __pyx_tuple_); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 686, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_GetItem(__pyx_t_1, __pyx_tuple_); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 878, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __pyx_v_c_acc_coeffs = __pyx_t_4;
   __pyx_t_4 = 0;
 
-  /* "Choreo_cython_funs.pyx":687
+  /* "Choreo_cython_funs.pyx":879
  * 
  *     c_acc_coeffs = acc_coeff.view(dtype=np.complex128)[...,0]
  *     cdef np.ndarray[double, ndim=3, mode="c"] all_acc = np.fft.irfft(c_acc_coeffs,n=nint,axis=2)*nint             # <<<<<<<<<<<<<<
  * 
  *     cdef np.ndarray[double, ndim=3, mode="c"] all_Newt_err = np.zeros((nbody,cndim,nint),np.float64)
  */
-  __Pyx_GetModuleGlobalName(__pyx_t_4, __pyx_n_s_np); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 687, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_4, __pyx_n_s_np); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 879, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_fft); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 687, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_fft); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 879, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_irfft); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 687, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_irfft); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 879, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = PyTuple_New(1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 687, __pyx_L1_error)
+  __pyx_t_1 = PyTuple_New(1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 879, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_INCREF(__pyx_v_c_acc_coeffs);
   __Pyx_GIVEREF(__pyx_v_c_acc_coeffs);
   PyTuple_SET_ITEM(__pyx_t_1, 0, __pyx_v_c_acc_coeffs);
-  __pyx_t_5 = __Pyx_PyDict_NewPresized(2); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 687, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyDict_NewPresized(2); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 879, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
-  __pyx_t_2 = __Pyx_PyInt_From_long(__pyx_v_nint); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 687, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyInt_From_long(__pyx_v_nint); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 879, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_n, __pyx_t_2) < 0) __PYX_ERR(0, 687, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_n, __pyx_t_2) < 0) __PYX_ERR(0, 879, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_axis, __pyx_int_2) < 0) __PYX_ERR(0, 687, __pyx_L1_error)
-  __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_t_1, __pyx_t_5); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 687, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_axis, __pyx_int_2) < 0) __PYX_ERR(0, 879, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_t_1, __pyx_t_5); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 879, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  __pyx_t_5 = __Pyx_PyInt_From_long(__pyx_v_nint); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 687, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyInt_From_long(__pyx_v_nint); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 879, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
-  __pyx_t_1 = PyNumber_Multiply(__pyx_t_2, __pyx_t_5); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 687, __pyx_L1_error)
+  __pyx_t_1 = PyNumber_Multiply(__pyx_t_2, __pyx_t_5); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 879, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  if (!(likely(((__pyx_t_1) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_1, __pyx_ptype_5numpy_ndarray))))) __PYX_ERR(0, 687, __pyx_L1_error)
+  if (!(likely(((__pyx_t_1) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_1, __pyx_ptype_5numpy_ndarray))))) __PYX_ERR(0, 879, __pyx_L1_error)
   __pyx_t_25 = ((PyArrayObject *)__pyx_t_1);
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
     if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_all_acc.rcbuffer->pybuffer, (PyObject*)__pyx_t_25, &__Pyx_TypeInfo_double, PyBUF_FORMAT| PyBUF_C_CONTIGUOUS, 3, 0, __pyx_stack) == -1)) {
       __pyx_v_all_acc = ((PyArrayObject *)Py_None); __Pyx_INCREF(Py_None); __pyx_pybuffernd_all_acc.rcbuffer->pybuffer.buf = NULL;
-      __PYX_ERR(0, 687, __pyx_L1_error)
+      __PYX_ERR(0, 879, __pyx_L1_error)
     } else {__pyx_pybuffernd_all_acc.diminfo[0].strides = __pyx_pybuffernd_all_acc.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_all_acc.diminfo[0].shape = __pyx_pybuffernd_all_acc.rcbuffer->pybuffer.shape[0]; __pyx_pybuffernd_all_acc.diminfo[1].strides = __pyx_pybuffernd_all_acc.rcbuffer->pybuffer.strides[1]; __pyx_pybuffernd_all_acc.diminfo[1].shape = __pyx_pybuffernd_all_acc.rcbuffer->pybuffer.shape[1]; __pyx_pybuffernd_all_acc.diminfo[2].strides = __pyx_pybuffernd_all_acc.rcbuffer->pybuffer.strides[2]; __pyx_pybuffernd_all_acc.diminfo[2].shape = __pyx_pybuffernd_all_acc.rcbuffer->pybuffer.shape[2];
     }
   }
@@ -11013,25 +13748,25 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_12Compute_Newton_err_Cython(CYTHO
   __pyx_v_all_acc = ((PyArrayObject *)__pyx_t_1);
   __pyx_t_1 = 0;
 
-  /* "Choreo_cython_funs.pyx":689
+  /* "Choreo_cython_funs.pyx":881
  *     cdef np.ndarray[double, ndim=3, mode="c"] all_acc = np.fft.irfft(c_acc_coeffs,n=nint,axis=2)*nint
  * 
  *     cdef np.ndarray[double, ndim=3, mode="c"] all_Newt_err = np.zeros((nbody,cndim,nint),np.float64)             # <<<<<<<<<<<<<<
  * 
  *     c_coeffs = all_coeffs.view(dtype=np.complex128)[...,0]
  */
-  __Pyx_GetModuleGlobalName(__pyx_t_5, __pyx_n_s_np); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 689, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_5, __pyx_n_s_np); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 881, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_n_s_zeros); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 689, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_n_s_zeros); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 881, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  __pyx_t_5 = __Pyx_PyInt_From_long(__pyx_v_nbody); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 689, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyInt_From_long(__pyx_v_nbody); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 881, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
-  __pyx_t_4 = __Pyx_PyInt_From_long(__pyx_v_18Choreo_cython_funs_cndim); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 689, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyInt_From_long(__pyx_v_18Choreo_cython_funs_cndim); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 881, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_3 = __Pyx_PyInt_From_long(__pyx_v_nint); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 689, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyInt_From_long(__pyx_v_nint); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 881, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_26 = PyTuple_New(3); if (unlikely(!__pyx_t_26)) __PYX_ERR(0, 689, __pyx_L1_error)
+  __pyx_t_26 = PyTuple_New(3); if (unlikely(!__pyx_t_26)) __PYX_ERR(0, 881, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_26);
   __Pyx_GIVEREF(__pyx_t_5);
   PyTuple_SET_ITEM(__pyx_t_26, 0, __pyx_t_5);
@@ -11042,9 +13777,9 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_12Compute_Newton_err_Cython(CYTHO
   __pyx_t_5 = 0;
   __pyx_t_4 = 0;
   __pyx_t_3 = 0;
-  __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_n_s_np); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 689, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_n_s_np); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 881, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_float64); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 689, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_float64); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 881, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __pyx_t_3 = NULL;
@@ -11062,7 +13797,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_12Compute_Newton_err_Cython(CYTHO
   #if CYTHON_FAST_PYCALL
   if (PyFunction_Check(__pyx_t_2)) {
     PyObject *__pyx_temp[3] = {__pyx_t_3, __pyx_t_26, __pyx_t_4};
-    __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_2, __pyx_temp+1-__pyx_t_27, 2+__pyx_t_27); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 689, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_2, __pyx_temp+1-__pyx_t_27, 2+__pyx_t_27); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 881, __pyx_L1_error)
     __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_26); __pyx_t_26 = 0;
@@ -11072,7 +13807,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_12Compute_Newton_err_Cython(CYTHO
   #if CYTHON_FAST_PYCCALL
   if (__Pyx_PyFastCFunction_Check(__pyx_t_2)) {
     PyObject *__pyx_temp[3] = {__pyx_t_3, __pyx_t_26, __pyx_t_4};
-    __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_2, __pyx_temp+1-__pyx_t_27, 2+__pyx_t_27); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 689, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_2, __pyx_temp+1-__pyx_t_27, 2+__pyx_t_27); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 881, __pyx_L1_error)
     __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_26); __pyx_t_26 = 0;
@@ -11080,7 +13815,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_12Compute_Newton_err_Cython(CYTHO
   } else
   #endif
   {
-    __pyx_t_5 = PyTuple_New(2+__pyx_t_27); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 689, __pyx_L1_error)
+    __pyx_t_5 = PyTuple_New(2+__pyx_t_27); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 881, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
     if (__pyx_t_3) {
       __Pyx_GIVEREF(__pyx_t_3); PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_3); __pyx_t_3 = NULL;
@@ -11091,18 +13826,18 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_12Compute_Newton_err_Cython(CYTHO
     PyTuple_SET_ITEM(__pyx_t_5, 1+__pyx_t_27, __pyx_t_4);
     __pyx_t_26 = 0;
     __pyx_t_4 = 0;
-    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_5, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 689, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_5, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 881, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
   }
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  if (!(likely(((__pyx_t_1) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_1, __pyx_ptype_5numpy_ndarray))))) __PYX_ERR(0, 689, __pyx_L1_error)
+  if (!(likely(((__pyx_t_1) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_1, __pyx_ptype_5numpy_ndarray))))) __PYX_ERR(0, 881, __pyx_L1_error)
   __pyx_t_28 = ((PyArrayObject *)__pyx_t_1);
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
     if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_all_Newt_err.rcbuffer->pybuffer, (PyObject*)__pyx_t_28, &__Pyx_TypeInfo_double, PyBUF_FORMAT| PyBUF_C_CONTIGUOUS| PyBUF_WRITABLE, 3, 0, __pyx_stack) == -1)) {
       __pyx_v_all_Newt_err = ((PyArrayObject *)Py_None); __Pyx_INCREF(Py_None); __pyx_pybuffernd_all_Newt_err.rcbuffer->pybuffer.buf = NULL;
-      __PYX_ERR(0, 689, __pyx_L1_error)
+      __PYX_ERR(0, 881, __pyx_L1_error)
     } else {__pyx_pybuffernd_all_Newt_err.diminfo[0].strides = __pyx_pybuffernd_all_Newt_err.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_all_Newt_err.diminfo[0].shape = __pyx_pybuffernd_all_Newt_err.rcbuffer->pybuffer.shape[0]; __pyx_pybuffernd_all_Newt_err.diminfo[1].strides = __pyx_pybuffernd_all_Newt_err.rcbuffer->pybuffer.strides[1]; __pyx_pybuffernd_all_Newt_err.diminfo[1].shape = __pyx_pybuffernd_all_Newt_err.rcbuffer->pybuffer.shape[1]; __pyx_pybuffernd_all_Newt_err.diminfo[2].strides = __pyx_pybuffernd_all_Newt_err.rcbuffer->pybuffer.strides[2]; __pyx_pybuffernd_all_Newt_err.diminfo[2].shape = __pyx_pybuffernd_all_Newt_err.rcbuffer->pybuffer.shape[2];
     }
   }
@@ -11110,79 +13845,79 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_12Compute_Newton_err_Cython(CYTHO
   __pyx_v_all_Newt_err = ((PyArrayObject *)__pyx_t_1);
   __pyx_t_1 = 0;
 
-  /* "Choreo_cython_funs.pyx":691
+  /* "Choreo_cython_funs.pyx":883
  *     cdef np.ndarray[double, ndim=3, mode="c"] all_Newt_err = np.zeros((nbody,cndim,nint),np.float64)
  * 
  *     c_coeffs = all_coeffs.view(dtype=np.complex128)[...,0]             # <<<<<<<<<<<<<<
  * 
  *     cdef np.ndarray[double, ndim=3, mode="c"] all_pos = np.fft.irfft(c_coeffs,n=nint,axis=2)*nint
  */
-  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_all_coeffs), __pyx_n_s_view); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 691, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_all_coeffs), __pyx_n_s_view); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 883, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 691, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 883, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __Pyx_GetModuleGlobalName(__pyx_t_5, __pyx_n_s_np); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 691, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_5, __pyx_n_s_np); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 883, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
-  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_n_s_complex128); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 691, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_n_s_complex128); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 883, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_dtype, __pyx_t_4) < 0) __PYX_ERR(0, 691, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_dtype, __pyx_t_4) < 0) __PYX_ERR(0, 883, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_empty_tuple, __pyx_t_2); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 691, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_empty_tuple, __pyx_t_2); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 883, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = __Pyx_PyObject_GetItem(__pyx_t_4, __pyx_tuple_); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 691, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetItem(__pyx_t_4, __pyx_tuple_); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 883, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   __pyx_v_c_coeffs = __pyx_t_2;
   __pyx_t_2 = 0;
 
-  /* "Choreo_cython_funs.pyx":693
+  /* "Choreo_cython_funs.pyx":885
  *     c_coeffs = all_coeffs.view(dtype=np.complex128)[...,0]
  * 
  *     cdef np.ndarray[double, ndim=3, mode="c"] all_pos = np.fft.irfft(c_coeffs,n=nint,axis=2)*nint             # <<<<<<<<<<<<<<
  * 
  *     cdef np.ndarray[long, ndim=2, mode="c"]  all_shiftsUn = np.zeros((nloop,maxloopnb),dtype=np.int_)
  */
-  __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_np); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 693, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_np); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 885, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_fft); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 693, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_fft); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 885, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_irfft); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 693, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_irfft); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 885, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  __pyx_t_4 = PyTuple_New(1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 693, __pyx_L1_error)
+  __pyx_t_4 = PyTuple_New(1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 885, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_INCREF(__pyx_v_c_coeffs);
   __Pyx_GIVEREF(__pyx_v_c_coeffs);
   PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_v_c_coeffs);
-  __pyx_t_1 = __Pyx_PyDict_NewPresized(2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 693, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyDict_NewPresized(2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 885, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_5 = __Pyx_PyInt_From_long(__pyx_v_nint); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 693, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyInt_From_long(__pyx_v_nint); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 885, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
-  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_n, __pyx_t_5) < 0) __PYX_ERR(0, 693, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_n, __pyx_t_5) < 0) __PYX_ERR(0, 885, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_axis, __pyx_int_2) < 0) __PYX_ERR(0, 693, __pyx_L1_error)
-  __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_4, __pyx_t_1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 693, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_axis, __pyx_int_2) < 0) __PYX_ERR(0, 885, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_4, __pyx_t_1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 885, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = __Pyx_PyInt_From_long(__pyx_v_nint); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 693, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyInt_From_long(__pyx_v_nint); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 885, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_4 = PyNumber_Multiply(__pyx_t_5, __pyx_t_1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 693, __pyx_L1_error)
+  __pyx_t_4 = PyNumber_Multiply(__pyx_t_5, __pyx_t_1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 885, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  if (!(likely(((__pyx_t_4) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_4, __pyx_ptype_5numpy_ndarray))))) __PYX_ERR(0, 693, __pyx_L1_error)
+  if (!(likely(((__pyx_t_4) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_4, __pyx_ptype_5numpy_ndarray))))) __PYX_ERR(0, 885, __pyx_L1_error)
   __pyx_t_29 = ((PyArrayObject *)__pyx_t_4);
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
     if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_all_pos.rcbuffer->pybuffer, (PyObject*)__pyx_t_29, &__Pyx_TypeInfo_double, PyBUF_FORMAT| PyBUF_C_CONTIGUOUS, 3, 0, __pyx_stack) == -1)) {
       __pyx_v_all_pos = ((PyArrayObject *)Py_None); __Pyx_INCREF(Py_None); __pyx_pybuffernd_all_pos.rcbuffer->pybuffer.buf = NULL;
-      __PYX_ERR(0, 693, __pyx_L1_error)
+      __PYX_ERR(0, 885, __pyx_L1_error)
     } else {__pyx_pybuffernd_all_pos.diminfo[0].strides = __pyx_pybuffernd_all_pos.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_all_pos.diminfo[0].shape = __pyx_pybuffernd_all_pos.rcbuffer->pybuffer.shape[0]; __pyx_pybuffernd_all_pos.diminfo[1].strides = __pyx_pybuffernd_all_pos.rcbuffer->pybuffer.strides[1]; __pyx_pybuffernd_all_pos.diminfo[1].shape = __pyx_pybuffernd_all_pos.rcbuffer->pybuffer.shape[1]; __pyx_pybuffernd_all_pos.diminfo[2].strides = __pyx_pybuffernd_all_pos.rcbuffer->pybuffer.strides[2]; __pyx_pybuffernd_all_pos.diminfo[2].shape = __pyx_pybuffernd_all_pos.rcbuffer->pybuffer.shape[2];
     }
   }
@@ -11190,23 +13925,23 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_12Compute_Newton_err_Cython(CYTHO
   __pyx_v_all_pos = ((PyArrayObject *)__pyx_t_4);
   __pyx_t_4 = 0;
 
-  /* "Choreo_cython_funs.pyx":695
+  /* "Choreo_cython_funs.pyx":887
  *     cdef np.ndarray[double, ndim=3, mode="c"] all_pos = np.fft.irfft(c_coeffs,n=nint,axis=2)*nint
  * 
  *     cdef np.ndarray[long, ndim=2, mode="c"]  all_shiftsUn = np.zeros((nloop,maxloopnb),dtype=np.int_)             # <<<<<<<<<<<<<<
  * 
  *     for il in range(nloop):
  */
-  __Pyx_GetModuleGlobalName(__pyx_t_4, __pyx_n_s_np); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 695, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_4, __pyx_n_s_np); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 887, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_zeros); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 695, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_zeros); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 887, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  __pyx_t_4 = __Pyx_PyInt_From_long(__pyx_v_nloop); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 695, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyInt_From_long(__pyx_v_nloop); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 887, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_5 = __Pyx_PyInt_From_long(__pyx_v_maxloopnb); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 695, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyInt_From_long(__pyx_v_maxloopnb); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 887, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
-  __pyx_t_2 = PyTuple_New(2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 695, __pyx_L1_error)
+  __pyx_t_2 = PyTuple_New(2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 887, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_GIVEREF(__pyx_t_4);
   PyTuple_SET_ITEM(__pyx_t_2, 0, __pyx_t_4);
@@ -11214,32 +13949,32 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_12Compute_Newton_err_Cython(CYTHO
   PyTuple_SET_ITEM(__pyx_t_2, 1, __pyx_t_5);
   __pyx_t_4 = 0;
   __pyx_t_5 = 0;
-  __pyx_t_5 = PyTuple_New(1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 695, __pyx_L1_error)
+  __pyx_t_5 = PyTuple_New(1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 887, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
   __Pyx_GIVEREF(__pyx_t_2);
   PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_2);
   __pyx_t_2 = 0;
-  __pyx_t_2 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 695, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 887, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __Pyx_GetModuleGlobalName(__pyx_t_4, __pyx_n_s_np); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 695, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_4, __pyx_n_s_np); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 887, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_26 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_int); if (unlikely(!__pyx_t_26)) __PYX_ERR(0, 695, __pyx_L1_error)
+  __pyx_t_26 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_int); if (unlikely(!__pyx_t_26)) __PYX_ERR(0, 887, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_26);
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_dtype, __pyx_t_26) < 0) __PYX_ERR(0, 695, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_dtype, __pyx_t_26) < 0) __PYX_ERR(0, 887, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_26); __pyx_t_26 = 0;
-  __pyx_t_26 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_t_5, __pyx_t_2); if (unlikely(!__pyx_t_26)) __PYX_ERR(0, 695, __pyx_L1_error)
+  __pyx_t_26 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_t_5, __pyx_t_2); if (unlikely(!__pyx_t_26)) __PYX_ERR(0, 887, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_26);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  if (!(likely(((__pyx_t_26) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_26, __pyx_ptype_5numpy_ndarray))))) __PYX_ERR(0, 695, __pyx_L1_error)
+  if (!(likely(((__pyx_t_26) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_26, __pyx_ptype_5numpy_ndarray))))) __PYX_ERR(0, 887, __pyx_L1_error)
   __pyx_t_30 = ((PyArrayObject *)__pyx_t_26);
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
     if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_all_shiftsUn.rcbuffer->pybuffer, (PyObject*)__pyx_t_30, &__Pyx_TypeInfo_long, PyBUF_FORMAT| PyBUF_C_CONTIGUOUS| PyBUF_WRITABLE, 2, 0, __pyx_stack) == -1)) {
       __pyx_v_all_shiftsUn = ((PyArrayObject *)Py_None); __Pyx_INCREF(Py_None); __pyx_pybuffernd_all_shiftsUn.rcbuffer->pybuffer.buf = NULL;
-      __PYX_ERR(0, 695, __pyx_L1_error)
+      __PYX_ERR(0, 887, __pyx_L1_error)
     } else {__pyx_pybuffernd_all_shiftsUn.diminfo[0].strides = __pyx_pybuffernd_all_shiftsUn.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_all_shiftsUn.diminfo[0].shape = __pyx_pybuffernd_all_shiftsUn.rcbuffer->pybuffer.shape[0]; __pyx_pybuffernd_all_shiftsUn.diminfo[1].strides = __pyx_pybuffernd_all_shiftsUn.rcbuffer->pybuffer.strides[1]; __pyx_pybuffernd_all_shiftsUn.diminfo[1].shape = __pyx_pybuffernd_all_shiftsUn.rcbuffer->pybuffer.shape[1];
     }
   }
@@ -11247,7 +13982,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_12Compute_Newton_err_Cython(CYTHO
   __pyx_v_all_shiftsUn = ((PyArrayObject *)__pyx_t_26);
   __pyx_t_26 = 0;
 
-  /* "Choreo_cython_funs.pyx":697
+  /* "Choreo_cython_funs.pyx":889
  *     cdef np.ndarray[long, ndim=2, mode="c"]  all_shiftsUn = np.zeros((nloop,maxloopnb),dtype=np.int_)
  * 
  *     for il in range(nloop):             # <<<<<<<<<<<<<<
@@ -11259,7 +13994,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_12Compute_Newton_err_Cython(CYTHO
   for (__pyx_t_10 = 0; __pyx_t_10 < __pyx_t_9; __pyx_t_10+=1) {
     __pyx_v_il = __pyx_t_10;
 
-    /* "Choreo_cython_funs.pyx":698
+    /* "Choreo_cython_funs.pyx":890
  * 
  *     for il in range(nloop):
  *         for ib in range(loopnb[il]):             # <<<<<<<<<<<<<<
@@ -11272,7 +14007,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_12Compute_Newton_err_Cython(CYTHO
     for (__pyx_t_13 = 0; __pyx_t_13 < __pyx_t_12; __pyx_t_13+=1) {
       __pyx_v_ib = __pyx_t_13;
 
-      /* "Choreo_cython_funs.pyx":700
+      /* "Choreo_cython_funs.pyx":892
  *         for ib in range(loopnb[il]):
  * 
  *             if not(((-TimeRevsUn[il,ib]*nint*TimeShiftNumUn[il,ib]) % TimeShiftDenUn[il,ib]) == 0):             # <<<<<<<<<<<<<<
@@ -11289,23 +14024,23 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_12Compute_Newton_err_Cython(CYTHO
       __pyx_t_15 = (*__Pyx_BufPtrCContig2d(long *, __pyx_pybuffernd_TimeShiftDenUn.rcbuffer->pybuffer.buf, __pyx_t_20, __pyx_pybuffernd_TimeShiftDenUn.diminfo[0].strides, __pyx_t_19, __pyx_pybuffernd_TimeShiftDenUn.diminfo[1].strides));
       if (unlikely(__pyx_t_15 == 0)) {
         PyErr_SetString(PyExc_ZeroDivisionError, "integer division or modulo by zero");
-        __PYX_ERR(0, 700, __pyx_L1_error)
+        __PYX_ERR(0, 892, __pyx_L1_error)
       }
       __pyx_t_31 = ((!((__Pyx_mod_long(__pyx_t_14, __pyx_t_15) == 0) != 0)) != 0);
       if (__pyx_t_31) {
 
-        /* "Choreo_cython_funs.pyx":701
+        /* "Choreo_cython_funs.pyx":893
  * 
  *             if not(((-TimeRevsUn[il,ib]*nint*TimeShiftNumUn[il,ib]) % TimeShiftDenUn[il,ib]) == 0):
  *                 print("WARNING : remainder in integer division")             # <<<<<<<<<<<<<<
  * 
  *             all_shiftsUn[il,ib] = ((-TimeRevsUn[il,ib]*nint*TimeShiftNumUn[il,ib]) // TimeShiftDenUn[il,ib] ) % nint
  */
-        __pyx_t_26 = __Pyx_PyObject_Call(__pyx_builtin_print, __pyx_tuple__2, NULL); if (unlikely(!__pyx_t_26)) __PYX_ERR(0, 701, __pyx_L1_error)
+        __pyx_t_26 = __Pyx_PyObject_Call(__pyx_builtin_print, __pyx_tuple__2, NULL); if (unlikely(!__pyx_t_26)) __PYX_ERR(0, 893, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_26);
         __Pyx_DECREF(__pyx_t_26); __pyx_t_26 = 0;
 
-        /* "Choreo_cython_funs.pyx":700
+        /* "Choreo_cython_funs.pyx":892
  *         for ib in range(loopnb[il]):
  * 
  *             if not(((-TimeRevsUn[il,ib]*nint*TimeShiftNumUn[il,ib]) % TimeShiftDenUn[il,ib]) == 0):             # <<<<<<<<<<<<<<
@@ -11314,7 +14049,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_12Compute_Newton_err_Cython(CYTHO
  */
       }
 
-      /* "Choreo_cython_funs.pyx":703
+      /* "Choreo_cython_funs.pyx":895
  *                 print("WARNING : remainder in integer division")
  * 
  *             all_shiftsUn[il,ib] = ((-TimeRevsUn[il,ib]*nint*TimeShiftNumUn[il,ib]) // TimeShiftDenUn[il,ib] ) % nint             # <<<<<<<<<<<<<<
@@ -11331,16 +14066,16 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_12Compute_Newton_err_Cython(CYTHO
       __pyx_t_14 = (*__Pyx_BufPtrCContig2d(long *, __pyx_pybuffernd_TimeShiftDenUn.rcbuffer->pybuffer.buf, __pyx_t_17, __pyx_pybuffernd_TimeShiftDenUn.diminfo[0].strides, __pyx_t_18, __pyx_pybuffernd_TimeShiftDenUn.diminfo[1].strides));
       if (unlikely(__pyx_t_14 == 0)) {
         PyErr_SetString(PyExc_ZeroDivisionError, "integer division or modulo by zero");
-        __PYX_ERR(0, 703, __pyx_L1_error)
+        __PYX_ERR(0, 895, __pyx_L1_error)
       }
       else if (sizeof(long) == sizeof(long) && (!(((long)-1) > 0)) && unlikely(__pyx_t_14 == (long)-1)  && unlikely(UNARY_NEG_WOULD_OVERFLOW(__pyx_t_15))) {
         PyErr_SetString(PyExc_OverflowError, "value too large to perform division");
-        __PYX_ERR(0, 703, __pyx_L1_error)
+        __PYX_ERR(0, 895, __pyx_L1_error)
       }
       __pyx_t_16 = __Pyx_div_long(__pyx_t_15, __pyx_t_14);
       if (unlikely(__pyx_v_nint == 0)) {
         PyErr_SetString(PyExc_ZeroDivisionError, "integer division or modulo by zero");
-        __PYX_ERR(0, 703, __pyx_L1_error)
+        __PYX_ERR(0, 895, __pyx_L1_error)
       }
       __pyx_t_18 = __pyx_v_il;
       __pyx_t_17 = __pyx_v_ib;
@@ -11348,7 +14083,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_12Compute_Newton_err_Cython(CYTHO
     }
   }
 
-  /* "Choreo_cython_funs.pyx":705
+  /* "Choreo_cython_funs.pyx":897
  *             all_shiftsUn[il,ib] = ((-TimeRevsUn[il,ib]*nint*TimeShiftNumUn[il,ib]) // TimeShiftDenUn[il,ib] ) % nint
  * 
  *     for iint in range(nint):             # <<<<<<<<<<<<<<
@@ -11360,7 +14095,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_12Compute_Newton_err_Cython(CYTHO
   for (__pyx_t_10 = 0; __pyx_t_10 < __pyx_t_9; __pyx_t_10+=1) {
     __pyx_v_iint = __pyx_t_10;
 
-    /* "Choreo_cython_funs.pyx":707
+    /* "Choreo_cython_funs.pyx":899
  *     for iint in range(nint):
  * 
  *         for il in range(nloop):             # <<<<<<<<<<<<<<
@@ -11372,7 +14107,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_12Compute_Newton_err_Cython(CYTHO
     for (__pyx_t_13 = 0; __pyx_t_13 < __pyx_t_12; __pyx_t_13+=1) {
       __pyx_v_il = __pyx_t_13;
 
-      /* "Choreo_cython_funs.pyx":708
+      /* "Choreo_cython_funs.pyx":900
  * 
  *         for il in range(nloop):
  *             for ib in range(loopnb[il]):             # <<<<<<<<<<<<<<
@@ -11385,7 +14120,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_12Compute_Newton_err_Cython(CYTHO
       for (__pyx_t_15 = 0; __pyx_t_15 < __pyx_t_14; __pyx_t_15+=1) {
         __pyx_v_ib = __pyx_t_15;
 
-        /* "Choreo_cython_funs.pyx":709
+        /* "Choreo_cython_funs.pyx":901
  *         for il in range(nloop):
  *             for ib in range(loopnb[il]):
  *                 for idim in range(cndim):             # <<<<<<<<<<<<<<
@@ -11397,7 +14132,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_12Compute_Newton_err_Cython(CYTHO
         for (__pyx_t_34 = 0; __pyx_t_34 < __pyx_t_33; __pyx_t_34+=1) {
           __pyx_v_idim = __pyx_t_34;
 
-          /* "Choreo_cython_funs.pyx":711
+          /* "Choreo_cython_funs.pyx":903
  *                 for idim in range(cndim):
  * 
  *                     b = SpaceRotsUn[il,ib,idim,0]*all_acc[il,0,all_shiftsUn[il,ib]]             # <<<<<<<<<<<<<<
@@ -11415,7 +14150,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_12Compute_Newton_err_Cython(CYTHO
           __pyx_t_35 = (*__Pyx_BufPtrCContig2d(long *, __pyx_pybuffernd_all_shiftsUn.rcbuffer->pybuffer.buf, __pyx_t_21, __pyx_pybuffernd_all_shiftsUn.diminfo[0].strides, __pyx_t_22, __pyx_pybuffernd_all_shiftsUn.diminfo[1].strides));
           __pyx_v_b = ((*__Pyx_BufPtrCContig4d(double *, __pyx_pybuffernd_SpaceRotsUn.rcbuffer->pybuffer.buf, __pyx_t_17, __pyx_pybuffernd_SpaceRotsUn.diminfo[0].strides, __pyx_t_18, __pyx_pybuffernd_SpaceRotsUn.diminfo[1].strides, __pyx_t_20, __pyx_pybuffernd_SpaceRotsUn.diminfo[2].strides, __pyx_t_19, __pyx_pybuffernd_SpaceRotsUn.diminfo[3].strides)) * (*__Pyx_BufPtrCContig3d(double *, __pyx_pybuffernd_all_acc.rcbuffer->pybuffer.buf, __pyx_t_23, __pyx_pybuffernd_all_acc.diminfo[0].strides, __pyx_t_24, __pyx_pybuffernd_all_acc.diminfo[1].strides, __pyx_t_35, __pyx_pybuffernd_all_acc.diminfo[2].strides)));
 
-          /* "Choreo_cython_funs.pyx":712
+          /* "Choreo_cython_funs.pyx":904
  * 
  *                     b = SpaceRotsUn[il,ib,idim,0]*all_acc[il,0,all_shiftsUn[il,ib]]
  *                     for jdim in range(1,cndim):             # <<<<<<<<<<<<<<
@@ -11427,7 +14162,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_12Compute_Newton_err_Cython(CYTHO
           for (__pyx_t_38 = 1; __pyx_t_38 < __pyx_t_37; __pyx_t_38+=1) {
             __pyx_v_jdim = __pyx_t_38;
 
-            /* "Choreo_cython_funs.pyx":713
+            /* "Choreo_cython_funs.pyx":905
  *                     b = SpaceRotsUn[il,ib,idim,0]*all_acc[il,0,all_shiftsUn[il,ib]]
  *                     for jdim in range(1,cndim):
  *                         b += SpaceRotsUn[il,ib,idim,jdim]*all_acc[il,jdim,all_shiftsUn[il,ib]]             # <<<<<<<<<<<<<<
@@ -11446,7 +14181,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_12Compute_Newton_err_Cython(CYTHO
             __pyx_v_b = (__pyx_v_b + ((*__Pyx_BufPtrCContig4d(double *, __pyx_pybuffernd_SpaceRotsUn.rcbuffer->pybuffer.buf, __pyx_t_22, __pyx_pybuffernd_SpaceRotsUn.diminfo[0].strides, __pyx_t_21, __pyx_pybuffernd_SpaceRotsUn.diminfo[1].strides, __pyx_t_35, __pyx_pybuffernd_SpaceRotsUn.diminfo[2].strides, __pyx_t_24, __pyx_pybuffernd_SpaceRotsUn.diminfo[3].strides)) * (*__Pyx_BufPtrCContig3d(double *, __pyx_pybuffernd_all_acc.rcbuffer->pybuffer.buf, __pyx_t_20, __pyx_pybuffernd_all_acc.diminfo[0].strides, __pyx_t_18, __pyx_pybuffernd_all_acc.diminfo[1].strides, __pyx_t_17, __pyx_pybuffernd_all_acc.diminfo[2].strides))));
           }
 
-          /* "Choreo_cython_funs.pyx":715
+          /* "Choreo_cython_funs.pyx":907
  *                         b += SpaceRotsUn[il,ib,idim,jdim]*all_acc[il,jdim,all_shiftsUn[il,ib]]
  * 
  *                     all_Newt_err[Targets[il,ib],idim,iint] -= mass[Targets[il,ib]]*b             # <<<<<<<<<<<<<<
@@ -11466,7 +14201,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_12Compute_Newton_err_Cython(CYTHO
       }
     }
 
-    /* "Choreo_cython_funs.pyx":718
+    /* "Choreo_cython_funs.pyx":910
  * 
  *         # Different loops
  *         for il in range(nloop):             # <<<<<<<<<<<<<<
@@ -11478,7 +14213,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_12Compute_Newton_err_Cython(CYTHO
     for (__pyx_t_13 = 0; __pyx_t_13 < __pyx_t_12; __pyx_t_13+=1) {
       __pyx_v_il = __pyx_t_13;
 
-      /* "Choreo_cython_funs.pyx":719
+      /* "Choreo_cython_funs.pyx":911
  *         # Different loops
  *         for il in range(nloop):
  *             for ilp in range(il+1,nloop):             # <<<<<<<<<<<<<<
@@ -11490,7 +14225,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_12Compute_Newton_err_Cython(CYTHO
       for (__pyx_t_15 = (__pyx_v_il + 1); __pyx_t_15 < __pyx_t_14; __pyx_t_15+=1) {
         __pyx_v_ilp = __pyx_t_15;
 
-        /* "Choreo_cython_funs.pyx":721
+        /* "Choreo_cython_funs.pyx":913
  *             for ilp in range(il+1,nloop):
  * 
  *                 for ib in range(loopnb[il]):             # <<<<<<<<<<<<<<
@@ -11503,7 +14238,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_12Compute_Newton_err_Cython(CYTHO
         for (__pyx_t_34 = 0; __pyx_t_34 < __pyx_t_33; __pyx_t_34+=1) {
           __pyx_v_ib = __pyx_t_34;
 
-          /* "Choreo_cython_funs.pyx":722
+          /* "Choreo_cython_funs.pyx":914
  * 
  *                 for ib in range(loopnb[il]):
  *                     for ibp in range(loopnb[ilp]):             # <<<<<<<<<<<<<<
@@ -11516,7 +14251,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_12Compute_Newton_err_Cython(CYTHO
           for (__pyx_t_38 = 0; __pyx_t_38 < __pyx_t_37; __pyx_t_38+=1) {
             __pyx_v_ibp = __pyx_t_38;
 
-            /* "Choreo_cython_funs.pyx":724
+            /* "Choreo_cython_funs.pyx":916
  *                     for ibp in range(loopnb[ilp]):
  * 
  *                         prod_mass = mass[Targets[il,ib]]*mass[Targets[ilp,ibp]]             # <<<<<<<<<<<<<<
@@ -11531,7 +14266,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_12Compute_Newton_err_Cython(CYTHO
             __pyx_t_21 = (*__Pyx_BufPtrCContig2d(long *, __pyx_pybuffernd_Targets.rcbuffer->pybuffer.buf, __pyx_t_20, __pyx_pybuffernd_Targets.diminfo[0].strides, __pyx_t_18, __pyx_pybuffernd_Targets.diminfo[1].strides));
             __pyx_v_prod_mass = ((*__Pyx_BufPtrCContig1d(double *, __pyx_pybuffernd_mass.rcbuffer->pybuffer.buf, __pyx_t_17, __pyx_pybuffernd_mass.diminfo[0].strides)) * (*__Pyx_BufPtrCContig1d(double *, __pyx_pybuffernd_mass.rcbuffer->pybuffer.buf, __pyx_t_21, __pyx_pybuffernd_mass.diminfo[0].strides)));
 
-            /* "Choreo_cython_funs.pyx":726
+            /* "Choreo_cython_funs.pyx":918
  *                         prod_mass = mass[Targets[il,ib]]*mass[Targets[ilp,ibp]]
  * 
  *                         for idim in range(cndim):             # <<<<<<<<<<<<<<
@@ -11543,7 +14278,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_12Compute_Newton_err_Cython(CYTHO
             for (__pyx_t_41 = 0; __pyx_t_41 < __pyx_t_40; __pyx_t_41+=1) {
               __pyx_v_idim = __pyx_t_41;
 
-              /* "Choreo_cython_funs.pyx":727
+              /* "Choreo_cython_funs.pyx":919
  * 
  *                         for idim in range(cndim):
  *                             dx[idim] = SpaceRotsUn[il,ib,idim,0]*all_pos[il,0,all_shiftsUn[il,ib]] - SpaceRotsUn[ilp,ibp,idim,0]*all_pos[ilp,0,all_shiftsUn[ilp,ibp]]             # <<<<<<<<<<<<<<
@@ -11571,7 +14306,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_12Compute_Newton_err_Cython(CYTHO
               __pyx_t_51 = __pyx_v_idim;
               *__Pyx_BufPtrCContig1d(double *, __pyx_pybuffernd_dx.rcbuffer->pybuffer.buf, __pyx_t_51, __pyx_pybuffernd_dx.diminfo[0].strides) = (((*__Pyx_BufPtrCContig4d(double *, __pyx_pybuffernd_SpaceRotsUn.rcbuffer->pybuffer.buf, __pyx_t_18, __pyx_pybuffernd_SpaceRotsUn.diminfo[0].strides, __pyx_t_20, __pyx_pybuffernd_SpaceRotsUn.diminfo[1].strides, __pyx_t_21, __pyx_pybuffernd_SpaceRotsUn.diminfo[2].strides, __pyx_t_19, __pyx_pybuffernd_SpaceRotsUn.diminfo[3].strides)) * (*__Pyx_BufPtrCContig3d(double *, __pyx_pybuffernd_all_pos.rcbuffer->pybuffer.buf, __pyx_t_35, __pyx_pybuffernd_all_pos.diminfo[0].strides, __pyx_t_24, __pyx_pybuffernd_all_pos.diminfo[1].strides, __pyx_t_22, __pyx_pybuffernd_all_pos.diminfo[2].strides))) - ((*__Pyx_BufPtrCContig4d(double *, __pyx_pybuffernd_SpaceRotsUn.rcbuffer->pybuffer.buf, __pyx_t_42, __pyx_pybuffernd_SpaceRotsUn.diminfo[0].strides, __pyx_t_43, __pyx_pybuffernd_SpaceRotsUn.diminfo[1].strides, __pyx_t_44, __pyx_pybuffernd_SpaceRotsUn.diminfo[2].strides, __pyx_t_45, __pyx_pybuffernd_SpaceRotsUn.diminfo[3].strides)) * (*__Pyx_BufPtrCContig3d(double *, __pyx_pybuffernd_all_pos.rcbuffer->pybuffer.buf, __pyx_t_48, __pyx_pybuffernd_all_pos.diminfo[0].strides, __pyx_t_49, __pyx_pybuffernd_all_pos.diminfo[1].strides, __pyx_t_50, __pyx_pybuffernd_all_pos.diminfo[2].strides))));
 
-              /* "Choreo_cython_funs.pyx":728
+              /* "Choreo_cython_funs.pyx":920
  *                         for idim in range(cndim):
  *                             dx[idim] = SpaceRotsUn[il,ib,idim,0]*all_pos[il,0,all_shiftsUn[il,ib]] - SpaceRotsUn[ilp,ibp,idim,0]*all_pos[ilp,0,all_shiftsUn[ilp,ibp]]
  *                             for jdim in range(1,cndim):             # <<<<<<<<<<<<<<
@@ -11583,7 +14318,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_12Compute_Newton_err_Cython(CYTHO
               for (__pyx_t_54 = 1; __pyx_t_54 < __pyx_t_53; __pyx_t_54+=1) {
                 __pyx_v_jdim = __pyx_t_54;
 
-                /* "Choreo_cython_funs.pyx":729
+                /* "Choreo_cython_funs.pyx":921
  *                             dx[idim] = SpaceRotsUn[il,ib,idim,0]*all_pos[il,0,all_shiftsUn[il,ib]] - SpaceRotsUn[ilp,ibp,idim,0]*all_pos[ilp,0,all_shiftsUn[ilp,ibp]]
  *                             for jdim in range(1,cndim):
  *                                 dx[idim] += SpaceRotsUn[il,ib,idim,jdim]*all_pos[il,jdim,all_shiftsUn[il,ib]] - SpaceRotsUn[ilp,ibp,idim,jdim]*all_pos[ilp,jdim,all_shiftsUn[ilp,ibp]]             # <<<<<<<<<<<<<<
@@ -11613,7 +14348,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_12Compute_Newton_err_Cython(CYTHO
               }
             }
 
-            /* "Choreo_cython_funs.pyx":731
+            /* "Choreo_cython_funs.pyx":923
  *                                 dx[idim] += SpaceRotsUn[il,ib,idim,jdim]*all_pos[il,jdim,all_shiftsUn[il,ib]] - SpaceRotsUn[ilp,ibp,idim,jdim]*all_pos[ilp,jdim,all_shiftsUn[ilp,ibp]]
  * 
  *                         dx2 = dx[0]*dx[0]             # <<<<<<<<<<<<<<
@@ -11624,7 +14359,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_12Compute_Newton_err_Cython(CYTHO
             __pyx_t_35 = 0;
             __pyx_v_dx2 = ((*__Pyx_BufPtrCContig1d(double *, __pyx_pybuffernd_dx.rcbuffer->pybuffer.buf, __pyx_t_19, __pyx_pybuffernd_dx.diminfo[0].strides)) * (*__Pyx_BufPtrCContig1d(double *, __pyx_pybuffernd_dx.rcbuffer->pybuffer.buf, __pyx_t_35, __pyx_pybuffernd_dx.diminfo[0].strides)));
 
-            /* "Choreo_cython_funs.pyx":732
+            /* "Choreo_cython_funs.pyx":924
  * 
  *                         dx2 = dx[0]*dx[0]
  *                         for idim in range(1,cndim):             # <<<<<<<<<<<<<<
@@ -11636,7 +14371,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_12Compute_Newton_err_Cython(CYTHO
             for (__pyx_t_41 = 1; __pyx_t_41 < __pyx_t_40; __pyx_t_41+=1) {
               __pyx_v_idim = __pyx_t_41;
 
-              /* "Choreo_cython_funs.pyx":733
+              /* "Choreo_cython_funs.pyx":925
  *                         dx2 = dx[0]*dx[0]
  *                         for idim in range(1,cndim):
  *                             dx2 += dx[idim]*dx[idim]             # <<<<<<<<<<<<<<
@@ -11648,7 +14383,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_12Compute_Newton_err_Cython(CYTHO
               __pyx_v_dx2 = (__pyx_v_dx2 + ((*__Pyx_BufPtrCContig1d(double *, __pyx_pybuffernd_dx.rcbuffer->pybuffer.buf, __pyx_t_35, __pyx_pybuffernd_dx.diminfo[0].strides)) * (*__Pyx_BufPtrCContig1d(double *, __pyx_pybuffernd_dx.rcbuffer->pybuffer.buf, __pyx_t_19, __pyx_pybuffernd_dx.diminfo[0].strides))));
             }
 
-            /* "Choreo_cython_funs.pyx":735
+            /* "Choreo_cython_funs.pyx":927
  *                             dx2 += dx[idim]*dx[idim]
  * 
  *                         pot,potp,potpp = CCpt_interbody_pot(dx2)             # <<<<<<<<<<<<<<
@@ -11663,7 +14398,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_12Compute_Newton_err_Cython(CYTHO
             __pyx_v_potp = __pyx_t_57;
             __pyx_v_potpp = __pyx_t_58;
 
-            /* "Choreo_cython_funs.pyx":737
+            /* "Choreo_cython_funs.pyx":929
  *                         pot,potp,potpp = CCpt_interbody_pot(dx2)
  * 
  *                         a = (2*prod_mass*potp)             # <<<<<<<<<<<<<<
@@ -11672,7 +14407,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_12Compute_Newton_err_Cython(CYTHO
  */
             __pyx_v_a = ((2.0 * __pyx_v_prod_mass) * __pyx_v_potp);
 
-            /* "Choreo_cython_funs.pyx":739
+            /* "Choreo_cython_funs.pyx":931
  *                         a = (2*prod_mass*potp)
  * 
  *                         for idim in range(cndim):             # <<<<<<<<<<<<<<
@@ -11684,7 +14419,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_12Compute_Newton_err_Cython(CYTHO
             for (__pyx_t_41 = 0; __pyx_t_41 < __pyx_t_40; __pyx_t_41+=1) {
               __pyx_v_idim = __pyx_t_41;
 
-              /* "Choreo_cython_funs.pyx":741
+              /* "Choreo_cython_funs.pyx":933
  *                         for idim in range(cndim):
  * 
  *                             b = a*dx[idim]             # <<<<<<<<<<<<<<
@@ -11694,7 +14429,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_12Compute_Newton_err_Cython(CYTHO
               __pyx_t_19 = __pyx_v_idim;
               __pyx_v_b = (__pyx_v_a * (*__Pyx_BufPtrCContig1d(double *, __pyx_pybuffernd_dx.rcbuffer->pybuffer.buf, __pyx_t_19, __pyx_pybuffernd_dx.diminfo[0].strides)));
 
-              /* "Choreo_cython_funs.pyx":742
+              /* "Choreo_cython_funs.pyx":934
  * 
  *                             b = a*dx[idim]
  *                             all_Newt_err[Targets[il ,ib ],idim,iint] += b             # <<<<<<<<<<<<<<
@@ -11708,7 +14443,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_12Compute_Newton_err_Cython(CYTHO
               __pyx_t_21 = __pyx_v_iint;
               *__Pyx_BufPtrCContig3d(double *, __pyx_pybuffernd_all_Newt_err.rcbuffer->pybuffer.buf, __pyx_t_18, __pyx_pybuffernd_all_Newt_err.diminfo[0].strides, __pyx_t_20, __pyx_pybuffernd_all_Newt_err.diminfo[1].strides, __pyx_t_21, __pyx_pybuffernd_all_Newt_err.diminfo[2].strides) += __pyx_v_b;
 
-              /* "Choreo_cython_funs.pyx":743
+              /* "Choreo_cython_funs.pyx":935
  *                             b = a*dx[idim]
  *                             all_Newt_err[Targets[il ,ib ],idim,iint] += b
  *                             all_Newt_err[Targets[ilp,ibp],idim,iint] -= b             # <<<<<<<<<<<<<<
@@ -11727,7 +14462,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_12Compute_Newton_err_Cython(CYTHO
       }
     }
 
-    /* "Choreo_cython_funs.pyx":746
+    /* "Choreo_cython_funs.pyx":938
  * 
  *         # Same Loop
  *         for il in range(nloop):             # <<<<<<<<<<<<<<
@@ -11739,7 +14474,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_12Compute_Newton_err_Cython(CYTHO
     for (__pyx_t_13 = 0; __pyx_t_13 < __pyx_t_12; __pyx_t_13+=1) {
       __pyx_v_il = __pyx_t_13;
 
-      /* "Choreo_cython_funs.pyx":748
+      /* "Choreo_cython_funs.pyx":940
  *         for il in range(nloop):
  * 
  *             for ib in range(loopnb[il]):             # <<<<<<<<<<<<<<
@@ -11752,7 +14487,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_12Compute_Newton_err_Cython(CYTHO
       for (__pyx_t_15 = 0; __pyx_t_15 < __pyx_t_14; __pyx_t_15+=1) {
         __pyx_v_ib = __pyx_t_15;
 
-        /* "Choreo_cython_funs.pyx":749
+        /* "Choreo_cython_funs.pyx":941
  * 
  *             for ib in range(loopnb[il]):
  *                 for ibp in range(ib+1,loopnb[il]):             # <<<<<<<<<<<<<<
@@ -11765,7 +14500,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_12Compute_Newton_err_Cython(CYTHO
         for (__pyx_t_34 = (__pyx_v_ib + 1); __pyx_t_34 < __pyx_t_33; __pyx_t_34+=1) {
           __pyx_v_ibp = __pyx_t_34;
 
-          /* "Choreo_cython_funs.pyx":751
+          /* "Choreo_cython_funs.pyx":943
  *                 for ibp in range(ib+1,loopnb[il]):
  * 
  *                     prod_mass = mass[Targets[il,ib]]*mass[Targets[il,ibp]]             # <<<<<<<<<<<<<<
@@ -11780,7 +14515,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_12Compute_Newton_err_Cython(CYTHO
           __pyx_t_24 = (*__Pyx_BufPtrCContig2d(long *, __pyx_pybuffernd_Targets.rcbuffer->pybuffer.buf, __pyx_t_20, __pyx_pybuffernd_Targets.diminfo[0].strides, __pyx_t_21, __pyx_pybuffernd_Targets.diminfo[1].strides));
           __pyx_v_prod_mass = ((*__Pyx_BufPtrCContig1d(double *, __pyx_pybuffernd_mass.rcbuffer->pybuffer.buf, __pyx_t_18, __pyx_pybuffernd_mass.diminfo[0].strides)) * (*__Pyx_BufPtrCContig1d(double *, __pyx_pybuffernd_mass.rcbuffer->pybuffer.buf, __pyx_t_24, __pyx_pybuffernd_mass.diminfo[0].strides)));
 
-          /* "Choreo_cython_funs.pyx":753
+          /* "Choreo_cython_funs.pyx":945
  *                     prod_mass = mass[Targets[il,ib]]*mass[Targets[il,ibp]]
  * 
  *                     for idim in range(cndim):             # <<<<<<<<<<<<<<
@@ -11792,7 +14527,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_12Compute_Newton_err_Cython(CYTHO
           for (__pyx_t_38 = 0; __pyx_t_38 < __pyx_t_37; __pyx_t_38+=1) {
             __pyx_v_idim = __pyx_t_38;
 
-            /* "Choreo_cython_funs.pyx":754
+            /* "Choreo_cython_funs.pyx":946
  * 
  *                     for idim in range(cndim):
  *                         dx[idim] = SpaceRotsUn[il,ib,idim,0]*all_pos[il,0,all_shiftsUn[il,ib]] - SpaceRotsUn[il,ibp,idim,0]*all_pos[il,0,all_shiftsUn[il,ibp]]             # <<<<<<<<<<<<<<
@@ -11820,7 +14555,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_12Compute_Newton_err_Cython(CYTHO
             __pyx_t_51 = __pyx_v_idim;
             *__Pyx_BufPtrCContig1d(double *, __pyx_pybuffernd_dx.rcbuffer->pybuffer.buf, __pyx_t_51, __pyx_pybuffernd_dx.diminfo[0].strides) = (((*__Pyx_BufPtrCContig4d(double *, __pyx_pybuffernd_SpaceRotsUn.rcbuffer->pybuffer.buf, __pyx_t_21, __pyx_pybuffernd_SpaceRotsUn.diminfo[0].strides, __pyx_t_20, __pyx_pybuffernd_SpaceRotsUn.diminfo[1].strides, __pyx_t_24, __pyx_pybuffernd_SpaceRotsUn.diminfo[2].strides, __pyx_t_35, __pyx_pybuffernd_SpaceRotsUn.diminfo[3].strides)) * (*__Pyx_BufPtrCContig3d(double *, __pyx_pybuffernd_all_pos.rcbuffer->pybuffer.buf, __pyx_t_22, __pyx_pybuffernd_all_pos.diminfo[0].strides, __pyx_t_23, __pyx_pybuffernd_all_pos.diminfo[1].strides, __pyx_t_17, __pyx_pybuffernd_all_pos.diminfo[2].strides))) - ((*__Pyx_BufPtrCContig4d(double *, __pyx_pybuffernd_SpaceRotsUn.rcbuffer->pybuffer.buf, __pyx_t_45, __pyx_pybuffernd_SpaceRotsUn.diminfo[0].strides, __pyx_t_48, __pyx_pybuffernd_SpaceRotsUn.diminfo[1].strides, __pyx_t_42, __pyx_pybuffernd_SpaceRotsUn.diminfo[2].strides, __pyx_t_43, __pyx_pybuffernd_SpaceRotsUn.diminfo[3].strides)) * (*__Pyx_BufPtrCContig3d(double *, __pyx_pybuffernd_all_pos.rcbuffer->pybuffer.buf, __pyx_t_50, __pyx_pybuffernd_all_pos.diminfo[0].strides, __pyx_t_46, __pyx_pybuffernd_all_pos.diminfo[1].strides, __pyx_t_47, __pyx_pybuffernd_all_pos.diminfo[2].strides))));
 
-            /* "Choreo_cython_funs.pyx":755
+            /* "Choreo_cython_funs.pyx":947
  *                     for idim in range(cndim):
  *                         dx[idim] = SpaceRotsUn[il,ib,idim,0]*all_pos[il,0,all_shiftsUn[il,ib]] - SpaceRotsUn[il,ibp,idim,0]*all_pos[il,0,all_shiftsUn[il,ibp]]
  *                         for jdim in range(1,cndim):             # <<<<<<<<<<<<<<
@@ -11832,7 +14567,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_12Compute_Newton_err_Cython(CYTHO
             for (__pyx_t_41 = 1; __pyx_t_41 < __pyx_t_40; __pyx_t_41+=1) {
               __pyx_v_jdim = __pyx_t_41;
 
-              /* "Choreo_cython_funs.pyx":756
+              /* "Choreo_cython_funs.pyx":948
  *                         dx[idim] = SpaceRotsUn[il,ib,idim,0]*all_pos[il,0,all_shiftsUn[il,ib]] - SpaceRotsUn[il,ibp,idim,0]*all_pos[il,0,all_shiftsUn[il,ibp]]
  *                         for jdim in range(1,cndim):
  *                             dx[idim] += SpaceRotsUn[il,ib,idim,jdim]*all_pos[il,jdim,all_shiftsUn[il,ib]] - SpaceRotsUn[il,ibp,idim,jdim]*all_pos[il,jdim,all_shiftsUn[il,ibp]]             # <<<<<<<<<<<<<<
@@ -11862,7 +14597,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_12Compute_Newton_err_Cython(CYTHO
             }
           }
 
-          /* "Choreo_cython_funs.pyx":758
+          /* "Choreo_cython_funs.pyx":950
  *                             dx[idim] += SpaceRotsUn[il,ib,idim,jdim]*all_pos[il,jdim,all_shiftsUn[il,ib]] - SpaceRotsUn[il,ibp,idim,jdim]*all_pos[il,jdim,all_shiftsUn[il,ibp]]
  * 
  *                     dx2 = dx[0]*dx[0]             # <<<<<<<<<<<<<<
@@ -11873,7 +14608,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_12Compute_Newton_err_Cython(CYTHO
           __pyx_t_22 = 0;
           __pyx_v_dx2 = ((*__Pyx_BufPtrCContig1d(double *, __pyx_pybuffernd_dx.rcbuffer->pybuffer.buf, __pyx_t_35, __pyx_pybuffernd_dx.diminfo[0].strides)) * (*__Pyx_BufPtrCContig1d(double *, __pyx_pybuffernd_dx.rcbuffer->pybuffer.buf, __pyx_t_22, __pyx_pybuffernd_dx.diminfo[0].strides)));
 
-          /* "Choreo_cython_funs.pyx":759
+          /* "Choreo_cython_funs.pyx":951
  * 
  *                     dx2 = dx[0]*dx[0]
  *                     for idim in range(1,cndim):             # <<<<<<<<<<<<<<
@@ -11885,7 +14620,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_12Compute_Newton_err_Cython(CYTHO
           for (__pyx_t_38 = 1; __pyx_t_38 < __pyx_t_37; __pyx_t_38+=1) {
             __pyx_v_idim = __pyx_t_38;
 
-            /* "Choreo_cython_funs.pyx":760
+            /* "Choreo_cython_funs.pyx":952
  *                     dx2 = dx[0]*dx[0]
  *                     for idim in range(1,cndim):
  *                         dx2 += dx[idim]*dx[idim]             # <<<<<<<<<<<<<<
@@ -11897,7 +14632,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_12Compute_Newton_err_Cython(CYTHO
             __pyx_v_dx2 = (__pyx_v_dx2 + ((*__Pyx_BufPtrCContig1d(double *, __pyx_pybuffernd_dx.rcbuffer->pybuffer.buf, __pyx_t_22, __pyx_pybuffernd_dx.diminfo[0].strides)) * (*__Pyx_BufPtrCContig1d(double *, __pyx_pybuffernd_dx.rcbuffer->pybuffer.buf, __pyx_t_35, __pyx_pybuffernd_dx.diminfo[0].strides))));
           }
 
-          /* "Choreo_cython_funs.pyx":762
+          /* "Choreo_cython_funs.pyx":954
  *                         dx2 += dx[idim]*dx[idim]
  * 
  *                     pot,potp,potpp = CCpt_interbody_pot(dx2)             # <<<<<<<<<<<<<<
@@ -11912,7 +14647,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_12Compute_Newton_err_Cython(CYTHO
           __pyx_v_potp = __pyx_t_57;
           __pyx_v_potpp = __pyx_t_56;
 
-          /* "Choreo_cython_funs.pyx":764
+          /* "Choreo_cython_funs.pyx":956
  *                     pot,potp,potpp = CCpt_interbody_pot(dx2)
  * 
  *                     a = (2*prod_mass*potp)             # <<<<<<<<<<<<<<
@@ -11921,7 +14656,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_12Compute_Newton_err_Cython(CYTHO
  */
           __pyx_v_a = ((2.0 * __pyx_v_prod_mass) * __pyx_v_potp);
 
-          /* "Choreo_cython_funs.pyx":766
+          /* "Choreo_cython_funs.pyx":958
  *                     a = (2*prod_mass*potp)
  * 
  *                     for idim in range(cndim):             # <<<<<<<<<<<<<<
@@ -11933,7 +14668,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_12Compute_Newton_err_Cython(CYTHO
           for (__pyx_t_38 = 0; __pyx_t_38 < __pyx_t_37; __pyx_t_38+=1) {
             __pyx_v_idim = __pyx_t_38;
 
-            /* "Choreo_cython_funs.pyx":768
+            /* "Choreo_cython_funs.pyx":960
  *                     for idim in range(cndim):
  * 
  *                         b = a*dx[idim]             # <<<<<<<<<<<<<<
@@ -11943,7 +14678,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_12Compute_Newton_err_Cython(CYTHO
             __pyx_t_35 = __pyx_v_idim;
             __pyx_v_b = (__pyx_v_a * (*__Pyx_BufPtrCContig1d(double *, __pyx_pybuffernd_dx.rcbuffer->pybuffer.buf, __pyx_t_35, __pyx_pybuffernd_dx.diminfo[0].strides)));
 
-            /* "Choreo_cython_funs.pyx":769
+            /* "Choreo_cython_funs.pyx":961
  * 
  *                         b = a*dx[idim]
  *                         all_Newt_err[Targets[il,ib] ,idim,iint] += b             # <<<<<<<<<<<<<<
@@ -11957,7 +14692,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_12Compute_Newton_err_Cython(CYTHO
             __pyx_t_24 = __pyx_v_iint;
             *__Pyx_BufPtrCContig3d(double *, __pyx_pybuffernd_all_Newt_err.rcbuffer->pybuffer.buf, __pyx_t_21, __pyx_pybuffernd_all_Newt_err.diminfo[0].strides, __pyx_t_20, __pyx_pybuffernd_all_Newt_err.diminfo[1].strides, __pyx_t_24, __pyx_pybuffernd_all_Newt_err.diminfo[2].strides) += __pyx_v_b;
 
-            /* "Choreo_cython_funs.pyx":770
+            /* "Choreo_cython_funs.pyx":962
  *                         b = a*dx[idim]
  *                         all_Newt_err[Targets[il,ib] ,idim,iint] += b
  *                         all_Newt_err[Targets[il,ibp],idim,iint] -= b             # <<<<<<<<<<<<<<
@@ -11975,7 +14710,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_12Compute_Newton_err_Cython(CYTHO
       }
     }
 
-    /* "Choreo_cython_funs.pyx":773
+    /* "Choreo_cython_funs.pyx":965
  * 
  *         # Increments time at the end
  *         for il in range(nloop):             # <<<<<<<<<<<<<<
@@ -11987,7 +14722,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_12Compute_Newton_err_Cython(CYTHO
     for (__pyx_t_13 = 0; __pyx_t_13 < __pyx_t_12; __pyx_t_13+=1) {
       __pyx_v_il = __pyx_t_13;
 
-      /* "Choreo_cython_funs.pyx":774
+      /* "Choreo_cython_funs.pyx":966
  *         # Increments time at the end
  *         for il in range(nloop):
  *             for ib in range(loopnb[il]):             # <<<<<<<<<<<<<<
@@ -12000,7 +14735,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_12Compute_Newton_err_Cython(CYTHO
       for (__pyx_t_15 = 0; __pyx_t_15 < __pyx_t_14; __pyx_t_15+=1) {
         __pyx_v_ib = __pyx_t_15;
 
-        /* "Choreo_cython_funs.pyx":775
+        /* "Choreo_cython_funs.pyx":967
  *         for il in range(nloop):
  *             for ib in range(loopnb[il]):
  *                 all_shiftsUn[il,ib] = (all_shiftsUn[il,ib]+TimeRevsUn[il,ib]) % nint             # <<<<<<<<<<<<<<
@@ -12014,7 +14749,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_12Compute_Newton_err_Cython(CYTHO
         __pyx_t_32 = ((*__Pyx_BufPtrCContig2d(long *, __pyx_pybuffernd_all_shiftsUn.rcbuffer->pybuffer.buf, __pyx_t_35, __pyx_pybuffernd_all_shiftsUn.diminfo[0].strides, __pyx_t_22, __pyx_pybuffernd_all_shiftsUn.diminfo[1].strides)) + (*__Pyx_BufPtrCContig2d(long *, __pyx_pybuffernd_TimeRevsUn.rcbuffer->pybuffer.buf, __pyx_t_21, __pyx_pybuffernd_TimeRevsUn.diminfo[0].strides, __pyx_t_20, __pyx_pybuffernd_TimeRevsUn.diminfo[1].strides)));
         if (unlikely(__pyx_v_nint == 0)) {
           PyErr_SetString(PyExc_ZeroDivisionError, "integer division or modulo by zero");
-          __PYX_ERR(0, 775, __pyx_L1_error)
+          __PYX_ERR(0, 967, __pyx_L1_error)
         }
         __pyx_t_20 = __pyx_v_il;
         __pyx_t_21 = __pyx_v_ib;
@@ -12023,7 +14758,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_12Compute_Newton_err_Cython(CYTHO
     }
   }
 
-  /* "Choreo_cython_funs.pyx":777
+  /* "Choreo_cython_funs.pyx":969
  *                 all_shiftsUn[il,ib] = (all_shiftsUn[il,ib]+TimeRevsUn[il,ib]) % nint
  * 
  *     return all_Newt_err             # <<<<<<<<<<<<<<
@@ -12035,7 +14770,7 @@ static PyObject *__pyx_pf_18Choreo_cython_funs_12Compute_Newton_err_Cython(CYTHO
   __pyx_r = ((PyObject *)__pyx_v_all_Newt_err);
   goto __pyx_L0;
 
-  /* "Choreo_cython_funs.pyx":648
+  /* "Choreo_cython_funs.pyx":840
  *     return Action_hess_dx
  * 
  * def Compute_Newton_err_Cython(             # <<<<<<<<<<<<<<
@@ -13003,6 +15738,7 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_n_s_Compute_Newton_err_Cython, __pyx_k_Compute_Newton_err_Cython, sizeof(__pyx_k_Compute_Newton_err_Cython), 0, 0, 1, 1},
   {&__pyx_n_s_Compute_action_Cython, __pyx_k_Compute_action_Cython, sizeof(__pyx_k_Compute_action_Cython), 0, 0, 1, 1},
   {&__pyx_n_s_Compute_action_hess_mul, __pyx_k_Compute_action_hess_mul, sizeof(__pyx_k_Compute_action_hess_mul), 0, 0, 1, 1},
+  {&__pyx_n_s_Compute_action_hess_mul_Cython, __pyx_k_Compute_action_hess_mul_Cython, sizeof(__pyx_k_Compute_action_hess_mul_Cython), 0, 0, 1, 1},
   {&__pyx_n_s_Compute_hash_action_Cython, __pyx_k_Compute_hash_action_Cython, sizeof(__pyx_k_Compute_hash_action_Cython), 0, 0, 1, 1},
   {&__pyx_n_s_Cpt_interbody_pot, __pyx_k_Cpt_interbody_pot, sizeof(__pyx_k_Cpt_interbody_pot), 0, 0, 1, 1},
   {&__pyx_n_s_Hash_En, __pyx_k_Hash_En, sizeof(__pyx_k_Hash_En), 0, 0, 1, 1},
@@ -13041,6 +15777,7 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_n_s_c_coeffs_d, __pyx_k_c_coeffs_d, sizeof(__pyx_k_c_coeffs_d), 0, 0, 1, 1},
   {&__pyx_n_s_cline_in_traceback, __pyx_k_cline_in_traceback, sizeof(__pyx_k_cline_in_traceback), 0, 0, 1, 1},
   {&__pyx_n_s_complex128, __pyx_k_complex128, sizeof(__pyx_k_complex128), 0, 0, 1, 1},
+  {&__pyx_n_s_ddf, __pyx_k_ddf, sizeof(__pyx_k_ddf), 0, 0, 1, 1},
   {&__pyx_n_s_ddx, __pyx_k_ddx, sizeof(__pyx_k_ddx), 0, 0, 1, 1},
   {&__pyx_n_s_df, __pyx_k_df, sizeof(__pyx_k_df), 0, 0, 1, 1},
   {&__pyx_n_s_dhdx, __pyx_k_dhdx, sizeof(__pyx_k_dhdx), 0, 0, 1, 1},
@@ -13262,26 +15999,38 @@ static CYTHON_SMALL_CODE int __Pyx_InitCachedConstants(void) {
   /* "Choreo_cython_funs.pyx":507
  *     return csqrt(dx2min)
  * 
+ * def Compute_action_hess_mul_Cython(             # <<<<<<<<<<<<<<
+ *     long nloop,
+ *     long ncoeff,
+ */
+  __pyx_tuple__17 = PyTuple_Pack(58, __pyx_n_s_nloop, __pyx_n_s_ncoeff, __pyx_n_s_nint, __pyx_n_s_mass, __pyx_n_s_loopnb, __pyx_n_s_Targets, __pyx_n_s_MassSum, __pyx_n_s_SpaceRotsUn, __pyx_n_s_TimeRevsUn, __pyx_n_s_TimeShiftNumUn, __pyx_n_s_TimeShiftDenUn, __pyx_n_s_loopnbi, __pyx_n_s_ProdMassSumAll, __pyx_n_s_SpaceRotsBin, __pyx_n_s_TimeRevsBin, __pyx_n_s_TimeShiftNumBin, __pyx_n_s_TimeShiftDenBin, __pyx_n_s_all_coeffs, __pyx_n_s_all_coeffs_d, __pyx_n_s_il, __pyx_n_s_ilp, __pyx_n_s_i, __pyx_n_s_idim, __pyx_n_s_idimp, __pyx_n_s_ibi, __pyx_n_s_ib, __pyx_n_s_ibp, __pyx_n_s_iint, __pyx_n_s_div, __pyx_n_s_k, __pyx_n_s_kp, __pyx_n_s_k2, __pyx_n_s_pot, __pyx_n_s_potp, __pyx_n_s_potpp, __pyx_n_s_prod_mass, __pyx_n_s_a, __pyx_n_s_b, __pyx_n_s_c, __pyx_n_s_dx2, __pyx_n_s_prod_fac, __pyx_n_s_dxtddx, __pyx_n_s_dx, __pyx_n_s_ddx, __pyx_n_s_ddf, __pyx_n_s_maxloopnb, __pyx_n_s_maxloopnbi, __pyx_n_s_Kin_en, __pyx_n_s_Action_hess_dx, __pyx_n_s_c_coeffs, __pyx_n_s_all_pos, __pyx_n_s_c_coeffs_d, __pyx_n_s_all_pos_d, __pyx_n_s_all_shiftsUn, __pyx_n_s_all_shiftsBin, __pyx_n_s_hess_pot_all_d, __pyx_n_s_jdim, __pyx_n_s_hess_dx_pot_fft); if (unlikely(!__pyx_tuple__17)) __PYX_ERR(0, 507, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__17);
+  __Pyx_GIVEREF(__pyx_tuple__17);
+  __pyx_codeobj__18 = (PyObject*)__Pyx_PyCode_New(19, 0, 58, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__17, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_Choreo_cython_funs_pyx, __pyx_n_s_Compute_action_hess_mul_Cython, 507, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__18)) __PYX_ERR(0, 507, __pyx_L1_error)
+
+  /* "Choreo_cython_funs.pyx":699
+ * 
+ * 
  * def Compute_action_hess_mul(             # <<<<<<<<<<<<<<
  *     long nloop,
  *     np.ndarray[long, ndim=1, mode="c"] nbody  not None ,
  */
-  __pyx_tuple__17 = PyTuple_Pack(42, __pyx_n_s_nloop, __pyx_n_s_nbody, __pyx_n_s_ncoeff, __pyx_n_s_mass, __pyx_n_s_nint, __pyx_n_s_all_coeffs, __pyx_n_s_all_coeffs_d, __pyx_n_s_Action_hess_dx, __pyx_n_s_c_coeffs, __pyx_n_s_all_pos, __pyx_n_s_c_coeffs_d, __pyx_n_s_all_pos_d, __pyx_n_s_il, __pyx_n_s_ilp, __pyx_n_s_i, __pyx_n_s_idim, __pyx_n_s_idimp, __pyx_n_s_ib, __pyx_n_s_ibp, __pyx_n_s_iint, __pyx_n_s_div, __pyx_n_s_k, __pyx_n_s_kp, __pyx_n_s_k2, __pyx_n_s_pot, __pyx_n_s_potp, __pyx_n_s_potpp, __pyx_n_s_prod_mass, __pyx_n_s_a, __pyx_n_s_b, __pyx_n_s_dx2, __pyx_n_s_prod_fac, __pyx_n_s_dxtddx, __pyx_n_s_c, __pyx_n_s_dx, __pyx_n_s_ddx, __pyx_n_s_dhdx, __pyx_n_s_maxnbody, __pyx_n_s_all_shifts, __pyx_n_s_hess_pot_all_d, __pyx_n_s_i_sp, __pyx_n_s_hess_dx_pot_fft); if (unlikely(!__pyx_tuple__17)) __PYX_ERR(0, 507, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__17);
-  __Pyx_GIVEREF(__pyx_tuple__17);
-  __pyx_codeobj__18 = (PyObject*)__Pyx_PyCode_New(7, 0, 42, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__17, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_Choreo_cython_funs_pyx, __pyx_n_s_Compute_action_hess_mul, 507, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__18)) __PYX_ERR(0, 507, __pyx_L1_error)
+  __pyx_tuple__19 = PyTuple_Pack(42, __pyx_n_s_nloop, __pyx_n_s_nbody, __pyx_n_s_ncoeff, __pyx_n_s_mass, __pyx_n_s_nint, __pyx_n_s_all_coeffs, __pyx_n_s_all_coeffs_d, __pyx_n_s_Action_hess_dx, __pyx_n_s_c_coeffs, __pyx_n_s_all_pos, __pyx_n_s_c_coeffs_d, __pyx_n_s_all_pos_d, __pyx_n_s_il, __pyx_n_s_ilp, __pyx_n_s_i, __pyx_n_s_idim, __pyx_n_s_idimp, __pyx_n_s_ib, __pyx_n_s_ibp, __pyx_n_s_iint, __pyx_n_s_div, __pyx_n_s_k, __pyx_n_s_kp, __pyx_n_s_k2, __pyx_n_s_pot, __pyx_n_s_potp, __pyx_n_s_potpp, __pyx_n_s_prod_mass, __pyx_n_s_a, __pyx_n_s_b, __pyx_n_s_dx2, __pyx_n_s_prod_fac, __pyx_n_s_dxtddx, __pyx_n_s_c, __pyx_n_s_dx, __pyx_n_s_ddx, __pyx_n_s_dhdx, __pyx_n_s_maxnbody, __pyx_n_s_all_shifts, __pyx_n_s_hess_pot_all_d, __pyx_n_s_i_sp, __pyx_n_s_hess_dx_pot_fft); if (unlikely(!__pyx_tuple__19)) __PYX_ERR(0, 699, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__19);
+  __Pyx_GIVEREF(__pyx_tuple__19);
+  __pyx_codeobj__20 = (PyObject*)__Pyx_PyCode_New(7, 0, 42, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__19, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_Choreo_cython_funs_pyx, __pyx_n_s_Compute_action_hess_mul, 699, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__20)) __PYX_ERR(0, 699, __pyx_L1_error)
 
-  /* "Choreo_cython_funs.pyx":648
+  /* "Choreo_cython_funs.pyx":840
  *     return Action_hess_dx
  * 
  * def Compute_Newton_err_Cython(             # <<<<<<<<<<<<<<
  *     long nbody,
  *     long nloop,
  */
-  __pyx_tuple__19 = PyTuple_Pack(43, __pyx_n_s_nbody, __pyx_n_s_nloop, __pyx_n_s_ncoeff, __pyx_n_s_nint, __pyx_n_s_mass, __pyx_n_s_loopnb, __pyx_n_s_Targets, __pyx_n_s_SpaceRotsUn, __pyx_n_s_TimeRevsUn, __pyx_n_s_TimeShiftNumUn, __pyx_n_s_TimeShiftDenUn, __pyx_n_s_all_coeffs, __pyx_n_s_il, __pyx_n_s_ilp, __pyx_n_s_i, __pyx_n_s_idim, __pyx_n_s_idimp, __pyx_n_s_ibi, __pyx_n_s_ib, __pyx_n_s_ibp, __pyx_n_s_iint, __pyx_n_s_div, __pyx_n_s_k, __pyx_n_s_kp, __pyx_n_s_k2, __pyx_n_s_pot, __pyx_n_s_potp, __pyx_n_s_potpp, __pyx_n_s_prod_mass, __pyx_n_s_a, __pyx_n_s_b, __pyx_n_s_dx2, __pyx_n_s_prod_fac, __pyx_n_s_dx, __pyx_n_s_maxloopnb, __pyx_n_s_acc_coeff, __pyx_n_s_c_acc_coeffs, __pyx_n_s_all_acc, __pyx_n_s_all_Newt_err, __pyx_n_s_c_coeffs, __pyx_n_s_all_pos, __pyx_n_s_all_shiftsUn, __pyx_n_s_jdim); if (unlikely(!__pyx_tuple__19)) __PYX_ERR(0, 648, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__19);
-  __Pyx_GIVEREF(__pyx_tuple__19);
-  __pyx_codeobj__20 = (PyObject*)__Pyx_PyCode_New(12, 0, 43, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__19, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_Choreo_cython_funs_pyx, __pyx_n_s_Compute_Newton_err_Cython, 648, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__20)) __PYX_ERR(0, 648, __pyx_L1_error)
+  __pyx_tuple__21 = PyTuple_Pack(43, __pyx_n_s_nbody, __pyx_n_s_nloop, __pyx_n_s_ncoeff, __pyx_n_s_nint, __pyx_n_s_mass, __pyx_n_s_loopnb, __pyx_n_s_Targets, __pyx_n_s_SpaceRotsUn, __pyx_n_s_TimeRevsUn, __pyx_n_s_TimeShiftNumUn, __pyx_n_s_TimeShiftDenUn, __pyx_n_s_all_coeffs, __pyx_n_s_il, __pyx_n_s_ilp, __pyx_n_s_i, __pyx_n_s_idim, __pyx_n_s_idimp, __pyx_n_s_ibi, __pyx_n_s_ib, __pyx_n_s_ibp, __pyx_n_s_iint, __pyx_n_s_div, __pyx_n_s_k, __pyx_n_s_kp, __pyx_n_s_k2, __pyx_n_s_pot, __pyx_n_s_potp, __pyx_n_s_potpp, __pyx_n_s_prod_mass, __pyx_n_s_a, __pyx_n_s_b, __pyx_n_s_dx2, __pyx_n_s_prod_fac, __pyx_n_s_dx, __pyx_n_s_maxloopnb, __pyx_n_s_acc_coeff, __pyx_n_s_c_acc_coeffs, __pyx_n_s_all_acc, __pyx_n_s_all_Newt_err, __pyx_n_s_c_coeffs, __pyx_n_s_all_pos, __pyx_n_s_all_shiftsUn, __pyx_n_s_jdim); if (unlikely(!__pyx_tuple__21)) __PYX_ERR(0, 840, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__21);
+  __Pyx_GIVEREF(__pyx_tuple__21);
+  __pyx_codeobj__22 = (PyObject*)__Pyx_PyCode_New(12, 0, 43, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__21, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_Choreo_cython_funs_pyx, __pyx_n_s_Compute_Newton_err_Cython, 840, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__22)) __PYX_ERR(0, 840, __pyx_L1_error)
   __Pyx_RefNannyFinishContext();
   return 0;
   __pyx_L1_error:;
@@ -13976,25 +16725,37 @@ if (!__Pyx_RefNanny) {
   /* "Choreo_cython_funs.pyx":507
  *     return csqrt(dx2min)
  * 
+ * def Compute_action_hess_mul_Cython(             # <<<<<<<<<<<<<<
+ *     long nloop,
+ *     long ncoeff,
+ */
+  __pyx_t_1 = PyCFunction_NewEx(&__pyx_mdef_18Choreo_cython_funs_11Compute_action_hess_mul_Cython, NULL, __pyx_n_s_Choreo_cython_funs); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 507, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_Compute_action_hess_mul_Cython, __pyx_t_1) < 0) __PYX_ERR(0, 507, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+
+  /* "Choreo_cython_funs.pyx":699
+ * 
+ * 
  * def Compute_action_hess_mul(             # <<<<<<<<<<<<<<
  *     long nloop,
  *     np.ndarray[long, ndim=1, mode="c"] nbody  not None ,
  */
-  __pyx_t_1 = PyCFunction_NewEx(&__pyx_mdef_18Choreo_cython_funs_11Compute_action_hess_mul, NULL, __pyx_n_s_Choreo_cython_funs); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 507, __pyx_L1_error)
+  __pyx_t_1 = PyCFunction_NewEx(&__pyx_mdef_18Choreo_cython_funs_13Compute_action_hess_mul, NULL, __pyx_n_s_Choreo_cython_funs); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 699, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_Compute_action_hess_mul, __pyx_t_1) < 0) __PYX_ERR(0, 507, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_Compute_action_hess_mul, __pyx_t_1) < 0) __PYX_ERR(0, 699, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "Choreo_cython_funs.pyx":648
+  /* "Choreo_cython_funs.pyx":840
  *     return Action_hess_dx
  * 
  * def Compute_Newton_err_Cython(             # <<<<<<<<<<<<<<
  *     long nbody,
  *     long nloop,
  */
-  __pyx_t_1 = PyCFunction_NewEx(&__pyx_mdef_18Choreo_cython_funs_13Compute_Newton_err_Cython, NULL, __pyx_n_s_Choreo_cython_funs); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 648, __pyx_L1_error)
+  __pyx_t_1 = PyCFunction_NewEx(&__pyx_mdef_18Choreo_cython_funs_15Compute_Newton_err_Cython, NULL, __pyx_n_s_Choreo_cython_funs); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 840, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_Compute_Newton_err_Cython, __pyx_t_1) < 0) __PYX_ERR(0, 648, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_Compute_Newton_err_Cython, __pyx_t_1) < 0) __PYX_ERR(0, 840, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
   /* "Choreo_cython_funs.pyx":1
