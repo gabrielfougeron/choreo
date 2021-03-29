@@ -1,5 +1,18 @@
 #cython: language_level=3, boundscheck=False, wraparound = False
 
+'''
+Choreo_cython_funs.pyx : Defines useful compiled functions in the Choreographies2 project.
+
+The functions in this file are (as much as possible) written is Cython.
+They will be cythonized (i.e. processed by Cython into a C code, which will be compiled ) in setup.py.
+
+Hence, in this file, performance is favored against readability or ease of use.
+
+This file also defines global constants in both C and Python format like the nuber of space dimensions (ndim), the potential law, ect ...
+
+'''
+
+
 import os
 import numpy as np
 cimport numpy as np
@@ -14,7 +27,7 @@ from libc.math cimport isnan as cisnan
 from libc.math cimport isinf as cisinf
 import time
 
-cdef long cndim = 2
+cdef long cndim = 2 # Number of space dimensions
 
 cdef double cn = -0.5  #coeff of x^2 in the potential power law
 cdef double cnm1 = cn-1  #coeff of x^2 in the potential power law
@@ -39,6 +52,7 @@ cdef double hash_exp2 = 0.6
 
 cdef long cnhash = 3
 
+# Python definition of the very same variables
 
 ndim = cndim
 
@@ -58,6 +72,7 @@ mnnm1 = cmnnm1
 nhash = cnhash
 
 cdef inline (double, double, double) CCpt_interbody_pot(double xsq):  # xsq is the square of the distance between two bodies !
+    # Cython dedinition of the potential law
     
     cdef double a = cpow(xsq,cnm2)
     cdef double b = xsq*a
@@ -69,9 +84,12 @@ cdef inline (double, double, double) CCpt_interbody_pot(double xsq):  # xsq is t
     return pot,potp,potpp
     
 def Cpt_interbody_pot(double xsq): 
+    # Python definition of the potential law
+    
     return CCpt_interbody_pot(xsq)
      
 def CCpt_hash_pot(double xsq):  # xsq is the square of the distance between two bodies !
+    # C definition of the hashing potential. Allows easy detection of duplicates 
     
     cdef np.ndarray[double, ndim=1, mode="c"] hash_pots = np.zeros((cnhash),dtype=np.float64)
 
@@ -101,7 +119,9 @@ def Compute_action_Cython(
     np.ndarray[long  , ndim=2, mode="c"] TimeShiftDenBin not None ,
     np.ndarray[double, ndim=4, mode="c"] all_coeffs  not None
     ):
-
+    # This function is probably the most important one.
+    # Computes the action and its gradient with respect to the Fourier coefficients of the generator in each loop.
+    
     cdef long il,ilp,i
     cdef long idim,idimp
     cdef long ibi
@@ -293,6 +313,9 @@ def Compute_hash_action_Cython(
     np.ndarray[long  , ndim=2, mode="c"] TimeShiftDenBin not None ,
     np.ndarray[double, ndim=4, mode="c"] all_coeffs  not None
     ):
+    # Computes the hash of a set of trajectories.
+    # The hash is meant to provide a likely unique short identification for duplicate detection.
+    # It is hence engineered to be invariant wrt permutation of bodies, time shifts / reversals and space isometries.
 
     cdef long il,ilp,i
     cdef long idim,idimp
@@ -417,6 +440,8 @@ def Compute_MinDist_Cython(
     np.ndarray[long  , ndim=2, mode="c"] TimeShiftDenBin not None ,
     np.ndarray[double, ndim=4, mode="c"]  all_coeffs  not None
     ):
+    # Computes the minimum inter-body distance along the trajectory.
+    # A useful tool for collision detection.
 
     cdef long il,ilp,i
     cdef long idim,idimp
@@ -528,6 +553,8 @@ def Compute_action_hess_mul_Cython(
     np.ndarray[double, ndim=4, mode="c"] all_coeffs  not None       ,
     np.ndarray[double, ndim=4, mode="c"] all_coeffs_d  not None
     ):
+    # Computes the matrix vector product H*dx where H is the Hessian of the action.
+    # Useful to guide the root finding / optimisation process and to better understand the topography of the action (critical points / Morse theory).
 
     cdef long il,ilp,i
     cdef long idim,idimp
@@ -712,6 +739,10 @@ def Compute_Newton_err_Cython(
     np.ndarray[long  , ndim=2, mode="c"] TimeShiftDenUn not None ,
     np.ndarray[double, ndim=4, mode="c"] all_coeffs  not None
     ):
+    # Computes the "Newton error", i.e. the deviation wrt to the fundamental theorem of Newtonian dynamics m_i * a_i - \sum_j f_ij = 0
+    # If the Newton error is zero, then the trajectory is physical.
+    # Under some symmetry hypotheses, this is the Fourier transform of the gradient of the action.
+    # Computing it explicitely is a useful safeguard.
 
     cdef long il,ilp,i
     cdef long idim,idimp
