@@ -19,8 +19,8 @@ Sym_list = []
 SymType = {
     'name'  : 'C',
     'n'     : nbody,
-    'k'     : 5,
-    'l'     : 2 ,
+    'k'     : 7,
+    'l'     : 1 ,
     'p'     : 0 ,
     'q'     : nbody ,
 }
@@ -89,9 +89,6 @@ save_init = False
 
 save_approx = False
 # ~ save_approx = True
-
-# ~ Reconverge_sols = False
-Reconverge_sols = True
 
 Save_img = True
 # ~ Save_img = False
@@ -365,95 +362,91 @@ while (n_opt < n_opt_max):
             
         else:
 
-            if (Reconverge_sols):
-                
-                print('Reconverging solution')
-                
-                Newt_err_norm = 1.
-                
-                n_reconverge_it = 0
-                
-                while ((Newt_err_norm > Newt_err_norm_max) and (n_reconverge_it < n_reconverge_it_max) and Go_On):
-                            
-                    # ~ nint_plot = 200
-                    # ~ imgfilename = store_folder+'/'+str(n_opt)+'_'+str(n_reconverge_it)
-                    # ~ plot_all_2D(nloop,nbody,nint_plot,all_coeffs,imgfilename+'.png')
-                    
-                    n_reconverge_it = n_reconverge_it + 1
-                    
-                    all_coeffs_old = np.copy(all_coeffs)
-                    
-                    ncoeff_new = ncoeff * 2
-
-                    all_coeffs = np.zeros((nloop,ndim,ncoeff_new,2),dtype=np.float64)
-                    for k in range(ncoeff):
-                        all_coeffs[:,:,k,:] = all_coeffs_old[:,:,k,:]
+            print('Reconverging solution')
+            
+            Newt_err_norm = 1.
+            
+            n_reconverge_it = 0
+            
+            while ((Newt_err_norm > Newt_err_norm_max) and (n_reconverge_it < n_reconverge_it_max) and Go_On):
                         
-                    ncoeff = ncoeff_new
-                    nint = 2*ncoeff
+                # ~ nint_plot = 200
+                # ~ imgfilename = store_folder+'/'+str(n_opt)+'_'+str(n_reconverge_it)
+                # ~ plot_all_2D(nloop,nbody,nint_plot,all_coeffs,imgfilename+'.png')
+                
+                n_reconverge_it = n_reconverge_it + 1
+                
+                all_coeffs_old = np.copy(all_coeffs)
+                
+                ncoeff_new = ncoeff * 2
+
+                all_coeffs = np.zeros((nloop,ndim,ncoeff_new,2),dtype=np.float64)
+                for k in range(ncoeff):
+                    all_coeffs[:,:,k,:] = all_coeffs_old[:,:,k,:]
                     
-                    callfun = callfun_list[n_reconverge_it]
-                    x0 = Package_all_coeffs(all_coeffs,callfun)
+                ncoeff = ncoeff_new
+                nint = 2*ncoeff
+                
+                callfun = callfun_list[n_reconverge_it]
+                x0 = Package_all_coeffs(all_coeffs,callfun)
+                
+                f0 = Compute_action_onlygrad(x0,callfun)
+                best_sol = current_best(x0,f0)
+                
+                print('After Resize : Action Grad Norm : ',best_sol.f_norm)
+                                
+                if Search_Min_Only:
+                         
+                    gradtol = 1e-7
+                    maxiter = 1000
+                    opt_result = opt.minimize(fun=Compute_action,x0=x0,args=callfun,method='trust-krylov',jac=True,hessp=Compute_action_hess_mul,options={'disp':disp_scipy_opt,'maxiter':maxiter,'gtol' : gradtol,'inexact': True})
+
+                    x0 = opt_result['x']
+
+                    maxiter = 20
+                    gradtol = 1e-15
+                    opt_result = opt.root(fun=Compute_action_onlygrad,x0=x0,args=callfun,method='krylov', options={'disp':disp_scipy_opt,'maxiter':maxiter,'fatol':gradtol,'jac_options':{'method':krylov_method}},callback=best_sol.update)
+                
+                else:
+
+                    maxiter = 50
+                    gradtol = 1e-15
                     
-                    f0 = Compute_action_onlygrad(x0,callfun)
-                    best_sol = current_best(x0,f0)
-                    
-                    print('After Resize : Action Grad Norm : ',best_sol.f_norm)
+                    try : 
                                     
-                    if Search_Min_Only:
-                             
-                        gradtol = 1e-7
-                        maxiter = 1000
-                        opt_result = opt.minimize(fun=Compute_action,x0=x0,args=callfun,method='trust-krylov',jac=True,hessp=Compute_action_hess_mul,options={'disp':disp_scipy_opt,'maxiter':maxiter,'gtol' : gradtol,'inexact': True})
+                        opt_result = opt.root(fun=Compute_action_onlygrad,x0=x0,args=callfun,method='krylov', options={'line_search':line_search,'disp':disp_scipy_opt,'maxiter':maxiter,'fatol':gradtol,'jac_options':{'method':krylov_method}},callback=best_sol.update)
 
-                        x0 = opt_result['x']
-
-                        maxiter = 20
-                        gradtol = 1e-15
-                        opt_result = opt.root(fun=Compute_action_onlygrad,x0=x0,args=callfun,method='krylov', options={'disp':disp_scipy_opt,'maxiter':maxiter,'fatol':gradtol,'jac_options':{'method':krylov_method}},callback=best_sol.update)
-                    
-                    else:
-
-                        maxiter = 50
-                        gradtol = 1e-15
+                        Go_On = True
+                                
+                        all_coeffs = Unpackage_all_coeffs(best_sol.x,callfun)
                         
-                        try : 
+                        print('Opt Action Grad Norm : ',best_sol.f_norm)
+                    
+                        Newt_err = Compute_Newton_err(best_sol.x,callfun)
+                        Newt_err_norm = np.linalg.norm(Newt_err)/args['nint']
+                        
+                        print('Newton Error : ',Newt_err_norm)
+                    
+                        SaveSol = (Newt_err_norm < Newt_err_norm_max_save)
                                         
-                            opt_result = opt.root(fun=Compute_action_onlygrad,x0=x0,args=callfun,method='krylov', options={'line_search':line_search,'disp':disp_scipy_opt,'maxiter':maxiter,'fatol':gradtol,'jac_options':{'method':krylov_method}},callback=best_sol.update)
-
-                            Go_On = True
+                        if (Check_loop_dist):
                             
-                        except ValueError:
-                            
-                            print("Value Error occured, skipping.")
-                            Go_On = False
-                            SaveSol = False
+                            Go_On = not(Detect_Escape(best_sol.x,callfun))
 
-                    all_coeffs = Unpackage_all_coeffs(best_sol.x,callfun)
+                            if not(Go_On):
+                                print('One loop escaped. Starting over')    
                     
-                    print('Opt Action Grad Norm : ',best_sol.f_norm)
-                
-                    Newt_err = Compute_Newton_err(best_sol.x,callfun)
-                    Newt_err_norm = np.linalg.norm(Newt_err)/args['nint']
-                    
-                    print('Newton Error : ',Newt_err_norm)
-                
-                    SaveSol = (Newt_err_norm < Newt_err_norm_max_save)
-                                    
-                    if (Check_loop_dist):
+                    except ValueError:
                         
-                        Go_On = not(Detect_Escape(best_sol.x,callfun))
+                        print("Value Error occured, skipping.")
+                        Go_On = False
+                        SaveSol = False
 
-                        if not(Go_On):
-                            print('One loop escaped. Starting over')    
-                
-                if (not(SaveSol) and Go_On):
-                    print('Newton Error too high, discarding solution')
-            
-            else:
-                
-                SaveSol = True
-            
+
+
+            if (not(SaveSol) and Go_On):
+                print('Newton Error too high, discarding solution')
+        
             if (((SaveSol) or (Save_Bad_Sols)) and Go_On):
                         
                 if (Look_for_duplicates):
