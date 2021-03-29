@@ -1,3 +1,8 @@
+'''
+Choreo_funs.py : Defines useful functions in the Choreographies2 project.
+
+'''
+
 import os
 import itertools
 import copy
@@ -23,6 +28,7 @@ from matplotlib import animation
 from Choreo_cython_funs import *
 
 def plot_all_2D(x,nint_plot,callfun,filename,fig_size=(15,15)):
+    # Plots 2D trajectories and saves image under filename
     
     args = callfun[0]
     
@@ -88,6 +94,7 @@ def plot_all_2D(x,nint_plot,callfun,filename,fig_size=(15,15)):
     plt.close()
  
 def plot_all_2D_anim(x,nint_plot,callfun,filename,nperiod=1,Plot_trace=True,fig_size=(5,5)):
+    # Creates a vide of the bodies moving along their trajectories, and saves the file under filename
     
     args = callfun[0]
     
@@ -191,6 +198,8 @@ def plot_all_2D_anim(x,nint_plot,callfun,filename,nperiod=1,Plot_trace=True,fig_
     plt.close()
  
 def Package_all_coeffs(all_coeffs,callfun):
+    # Transfers the Fourier coefficients of the generators to a single vector of parameters.
+    # The packaging process projects the trajectory onto the space of constrraint satisfying trajectories.
     
     args = callfun[0]
 
@@ -200,6 +209,7 @@ def Package_all_coeffs(all_coeffs,callfun):
     return x
     
 def Unpackage_all_coeffs(x,callfun):
+    # Computes the Fourier coefficients of the generator given the parameters.
     
     args=callfun[0]
     
@@ -209,12 +219,14 @@ def Unpackage_all_coeffs(x,callfun):
     return all_coeffs
 
 def Compute_action_onlygrad(x,callfun):
-
+    # Wrapper function that returns ONLY the gradient of the action with respect to the parameters 
+    
     J,y = Compute_action(x,callfun)
     
     return y
     
 def Compute_action_hess_mul(x,dx,callfun):
+    # Returns the Hessian of the action (computed wrt the parameters) times a test vector of parameter deviations.
     
     args=callfun[0]
     
@@ -253,6 +265,7 @@ def Compute_action_hess_mul(x,dx,callfun):
     return z
     
 def Compute_action_hess_LinOpt(x,callfun):
+    # Defines the Hessian of the action wrt parameters at a given point as a Scipy LinearOperator
 
     args=callfun[0]
 
@@ -261,6 +274,7 @@ def Compute_action_hess_LinOpt(x,callfun):
         rmatvec = (lambda dx,xl=x,callfunl=callfun : Compute_action_hess_mul(xl,dx,callfunl)))
    
 def Compute_Pure_Hessian_Signature(nloop,nbody,ncoeff,mass,nint,all_coeffs):
+    # Deprecated function to be updated
     
     coeff_to_param, param_to_coeff = setup_changevar(nloop=nloop,nbody=nbody,ncoeff=ncoeff,mass=mass,MomCons=False,n_grad_change=1.,Sym_list=[])
     
@@ -293,6 +307,7 @@ def Compute_Pure_Hessian_Signature(nloop,nbody,ncoeff,mass,nint,all_coeffs):
     return ' >= {:%d}'.format(kmax)
     
 def null_space_sparseqr(AT):
+    # Returns a basis of the null space of a matrix A.
     # AT must be in COO format
     # The nullspace of the TRANSPOSE of AT will be returned
     
@@ -314,6 +329,8 @@ def null_space_sparseqr(AT):
         return sp.coo_matrix((Q.data[iker:],(Q.row[iker:],Q.col[iker:]-rank)),shape=(nrow,nrow-rank))
 
 class current_best:
+    # Class meant to store the best solution during scipy optimization / root finding
+    # Useful since scipy does not return the best solution, but rathe the solution at the last iteration.
     
     def __init__(self,x,f):
         
@@ -334,6 +351,8 @@ class current_best:
         return self.x,self.f,self.f_norm
         
 class ChoreoSym():
+    # This class defines the symmetries of the action
+    # Useful to detect loops and constraints.
 
     def __init__(
             self,
@@ -404,20 +423,28 @@ class ChoreoSym():
         return ((self.Inverse()).ComposeLight(other)).IsIdentity()
 
 def Make2DChoreoSym(SymType,ib_list):
+    # Defines symmetries of a 2-D system of bodies as classfied in [1] 
     
-    # ~ SymType  => Name of sym, see https://arxiv.org/abs/1305.0470
-        # ~ 'name'
-        # ~ 'n'
-        # ~ 'k'
-        # ~ 'l'
+    # Classification :
+    # C(n,k,l) with k and l relative primes
+    # D(n,k,l) with k and l relative primes
+    # Cp(n,2,#) 
+    # Dp(n,1,#) 
+    # Dp(n,2,#) 
+    # Those are exhaustive for 2-D purely choreographic symmetries (i.e. 1 loop with 1 path)
+    
+    # I also added p and q for space rotation. This might however not be exhaustive.
+    
+    # SymType  => Dictionary containing the following keys :
+        # 'name'
+        # 'n'
+        # 'k'
+        # 'l'
+        # 'p'
+        # 'q'
         
-        # Classification :
-        # C(n,k,l) with k and l relative primes
-        # D(n,k,l) with k and l relative primes
-        # Cp(n,2,#) 
-        # Dp(n,1,#) 
-        # Dp(n,2,#) 
-        
+    # [1] : https://arxiv.org/abs/1305.0470
+
     if (len(ib_list) != SymType['n']):
         print("Warning : SymType and LoopLength are inconsistent")
         
@@ -492,6 +519,12 @@ def Make2DChoreoSym(SymType,ib_list):
     return SymGens
 
 def setup_changevar(nbody,ncoeff,mass,nint=None,MomCons=True,n_grad_change=1.,Sym_list=[]):
+    # This function returns the callfun dictionnary to be given as input to virtually all other function.
+    # It detects loops and constraints based on symmetries.
+    # It defines parameters according to given constraints and diagonal change of variable
+    # It computes useful objects to optimize the computation of the action :
+    #   - Exhaustive list of unary transformation for generator to body
+    #   - Exhaustive list of binary transformations from generator within each loop.
     
     if nint is None:
         nint = 2*ncoeff
@@ -912,6 +945,7 @@ def setup_changevar(nbody,ncoeff,mass,nint=None,MomCons=True,n_grad_change=1.,Sy
     return callfun
 
 def Compute_action(x,callfun):
+    # Cumputes the action and its gradient with respect to the parameters at a given value of the parameters
 
     args=callfun[0]
     
@@ -945,6 +979,8 @@ def Compute_action(x,callfun):
     return J,y
 
 def Compute_hash_action(x,callfun):
+    # Returns an invariant hash of the trajectories.
+    # Useful for duplicate detection
 
     args=callfun[0]
     
@@ -975,6 +1011,7 @@ def Compute_hash_action(x,callfun):
     return Hash_Action
     
 def Compute_Newton_err(x,callfun):
+    # Computes the Newton error at a certain value of parameters
     # WARNING : DOUBLING NUMBER OF INTEGRATION POINTS
 
     args=callfun[0]
@@ -1000,6 +1037,8 @@ def Compute_Newton_err(x,callfun):
     return all_Newt_err
     
 def Compute_Loop_Dist_Size(x,callfun):
+    # Computes sizes of trajetories and distance between center of trajectories
+    # Useful to detect escape.
     
     args = callfun[0]
     
@@ -1029,12 +1068,14 @@ def Compute_Loop_Dist_Size(x,callfun):
     return max_loop_dist,max_loop_size
     
 def Detect_Escape(x,callfun):
+    # Returns True if the trajectories are so far that they are likely to never interact again
     
     max_loop_dist,max_loop_size = Compute_Loop_Dist_Size(x,callfun)
     
     return (max_loop_dist > (4.5 * callfun[0]['nbody'] * max_loop_size))
     
 def Compute_MinDist(x,callfun):
+    # Returns the minimum inter-body distance along a set of trajecctories
     
     args=callfun[0]
     
@@ -1065,6 +1106,7 @@ def Compute_MinDist(x,callfun):
     return MinDist
     
 def Write_Descriptor(x,callfun,filename,WriteSignature=False):
+    # Dumps a text file describing the current trajectories
     
     args = callfun[0]
     
@@ -1106,6 +1148,7 @@ def Write_Descriptor(x,callfun,filename,WriteSignature=False):
         
 
 def SelectFiles_Action(store_folder,Action_val,Action_Hash_val,rtol):
+    # Creates a list of possible duplicates based on value of the action and hashes
     
     Action_msg = 'Value of the Action : '
     Action_msg_len = len(Action_msg)
@@ -1144,6 +1187,7 @@ def SelectFiles_Action(store_folder,Action_val,Action_Hash_val,rtol):
     return file_path_list
 
 def Check_Duplicates(x,callfun,store_folder,duplicate_eps,rtol=1e-5):
+    # Checks whether there is a duplicate of a given trajecory in the provided folder
 
     Action,Gradaction = Compute_action(x,callfun)
     Hash_Action = Compute_hash_action(x,callfun)
