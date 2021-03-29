@@ -17,11 +17,11 @@ mass = np.ones((nbody))
 Sym_list = []
 
 SymType = {
-    'name'  : 'C',
+    'name'  : 'D',
     'n'     : nbody,
     'k'     : 1,
     'l'     : 1 ,
-    'p'     : 2 ,
+    'p'     : 0 ,
     'q'     : nbody ,
 }
 
@@ -54,13 +54,13 @@ Sym_list.extend(Make2DChoreoSym(SymType,range(nbody)))
 # ~ Sym_list.extend(Make2DChoreoSym(SymType,[2,3]))
 
 
-
+MomConsImposed = True
+# ~ MomConsImposed = False
 
 store_folder = './Sniff_all_sym/'
 store_folder = store_folder+str(nbody)
 if not(os.path.isdir(store_folder)):
     os.mkdir(store_folder)
-
 
 
 Look_for_duplicates = True
@@ -81,7 +81,7 @@ Reconverge_sols = True
 Save_anim = True
 # ~ Save_anim = False
 
-n_reconverge_it_max = 6
+n_reconverge_it_max = 1
 # ~ n_reconverge_it_max = 0
 
 # ~ ncoeff_init = 100
@@ -101,8 +101,8 @@ Newt_err_norm_max_save = Newt_err_norm_max * 100
 # ~ Save_Bad_Sols = True
 Save_Bad_Sols = False
 
-Search_Min_Only = False
-# ~ Search_Min_Only = True
+# ~ Search_Min_Only = False
+Search_Min_Only = True
 
 duplicate_eps = 1e-9
 
@@ -126,7 +126,7 @@ for i in range(n_reconverge_it_max+1):
     
     ncoeff = ncoeff_init * (2**i)
     
-    callfun = setup_changevar(nbody,ncoeff,mass,Sym_list=Sym_list)
+    callfun = setup_changevar(nbody,ncoeff,mass,Sym_list=Sym_list,MomCons=MomConsImposed)
 
     callfun_list.append(callfun)
 
@@ -248,7 +248,7 @@ while (n_opt < n_opt_max):
                 all_coeffs[il,idim,k,1] = randampl*np.sin(randphase)
     
     x0 = Package_all_coeffs(all_coeffs,callfun)
-    
+
     if Search_Min_Only:
                     
         gradtol = 1e-5
