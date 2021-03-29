@@ -1,3 +1,8 @@
+'''
+Creates anc compiles C code from Cython file
+
+'''
+
 import os
 from distutils.core import setup, Extension
 from Cython.Build import cythonize
