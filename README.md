@@ -23,3 +23,9 @@ Finds periodic solutions to the N-body problem
 Run the following :
 
     python setup.py build_ext --inplace
+
+
+## Want to start finding new solutions ?
+
+Run Choreo_sniffall.py !
+
