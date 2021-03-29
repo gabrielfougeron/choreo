@@ -27,7 +27,7 @@ from matplotlib import animation
 
 from Choreo_cython_funs import *
 
-def plot_all_2D(x,nint_plot,callfun,filename,fig_size=(15,15)):
+def plot_all_2D(x,nint_plot,callfun,filename,fig_size=(10,10)):
     # Plots 2D trajectories and saves image under filename
     
     args = callfun[0]
@@ -525,7 +525,7 @@ def setup_changevar(nbody,ncoeff,mass,nint=None,MomCons=True,n_grad_change=1.,Sy
     # It computes useful objects to optimize the computation of the action :
     #   - Exhaustive list of unary transformation for generator to body
     #   - Exhaustive list of binary transformations from generator within each loop.
-    
+
     if nint is None:
         nint = 2*ncoeff
     
@@ -722,243 +722,48 @@ def setup_changevar(nbody,ncoeff,mass,nint=None,MomCons=True,n_grad_change=1.,Sy
             TimeShiftNumBin[il,ibi] = UniqueSymsAll_list[il][ibi].TimeShift.numerator
             TimeShiftDenBin[il,ibi] = UniqueSymsAll_list[il][ibi].TimeShift.denominator
 
+    # Count constraints
+    
+    loopncstr = np.zeros((nloop),dtype=int)
+    
+    for il in range(nloop):
+        loopncstr[il] = len(SymGraph.nodes[loopgen[il]]["Constraint_list"])
+    
+    maxloopncstr = loopncstr.max()
+    
+    SpaceRotsCstr = np.zeros((nloop,maxloopncstr,ndim,ndim),dtype=np.float64)
+    TimeRevsCstr = np.zeros((nloop,maxloopncstr),dtype=int)
+    TimeShiftNumCstr = np.zeros((nloop,maxloopncstr),dtype=int)
+    TimeShiftDenCstr = np.zeros((nloop,maxloopncstr),dtype=int)
+    
+    for il in range(nloop):
+        for i in range(loopncstr[il]):
+            
+            SpaceRotsCstr[il,i,:,:] = SymGraph.nodes[loopgen[il]]["Constraint_list"][i].SpaceRot
+            TimeRevsCstr[il,i] = SymGraph.nodes[loopgen[il]]["Constraint_list"][i].TimeRev
+            TimeShiftNumCstr[il,i] = SymGraph.nodes[loopgen[il]]["Constraint_list"][i].TimeShift.numerator
+            TimeShiftDenCstr[il,i] = SymGraph.nodes[loopgen[il]]["Constraint_list"][i].TimeShift.denominator
+
     # Now detect parameters and build change of variables
+
+    cstrmat_sp = Assemble_Cstr_Matrix(
+    nloop               ,
+    ncoeff              ,
+    MomCons             ,
+    mass                ,
+    loopnb              ,
+    Targets             ,
+    SpaceRotsUn         ,
+    TimeRevsUn          ,
+    TimeShiftNumUn      ,
+    TimeShiftDenUn      ,
+    loopncstr           ,
+    SpaceRotsCstr       ,
+    TimeRevsCstr        ,
+    TimeShiftNumCstr    ,
+    TimeShiftDenCstr    
+    )
         
-    eps_zero = 1e-14
-    
-    # il,idim,k,ift => ift + 2*(k + ncoeff*(idim + ndim*il))
-    n_idx = nloop*ndim*ncoeff*2
-
-    cstr_data = []
-    cstr_row = []
-    cstr_col = []
-
-    icstr=0
-    
-    # Removes imaginary part of c_0
-    for il in range(nloop):
-        for idim in range(ndim):
-            
-            i = 1 + 2*(0 + ncoeff*(idim + ndim*il))
-
-            cstr_row.append(i)
-            cstr_col.append(icstr)
-            cstr_data.append(1.)            
-            
-            icstr +=1 
-
-    cs = np.zeros((2),dtype=np.float64)
-    
-    # Zero momentum constraint
-    if MomCons :
-        
-        for k in range(ncoeff):
-            for idim in range(ndim):
-                                      
-                for il in range(nloop):
-                    for ib in range(loopnb[il]):
-                        
-                        dt = TimeShiftNumUn[il,ib] / TimeShiftDenUn[il,ib]
-                        cs[0] = np.cos(  - twopi * k*dt)
-                        cs[1] = np.sin(  - twopi * k*dt)  
-                        
-                        for jdim in range(ndim):
-                                
-                            i =  0 + 2*(k + ncoeff*(jdim + ndim*il))
-
-                            val = SpaceRotsUn[il,ib,idim,jdim]*cs[0]*mass[Targets[il,ib]]
-
-                            if (abs(val) > eps_zero):
-                            
-                                cstr_row.append(i)
-                                cstr_col.append(icstr)
-                                cstr_data.append(val)
-                                
-                            i =  1 + 2*(k + ncoeff*(jdim + ndim*il))
-
-                            val = -TimeRevsUn[il,ib]*SpaceRotsUn[il,ib,idim,jdim]*cs[1]*mass[Targets[il,ib]]
-
-                            if (abs(val) > eps_zero):
-                            
-                                cstr_row.append(i)
-                                cstr_col.append(icstr)
-                                cstr_data.append(val)
-                                
-                icstr +=1
-                    
-                for il in range(nloop):
-                    for ib in range(loopnb[il]):
-                        
-                        dt = TimeShiftNumUn[il,ib] / TimeShiftDenUn[il,ib]
-                        cs[0] = np.cos(  - twopi * k*dt)
-                        cs[1] = np.sin(  - twopi * k*dt)  
-                        
-                        for jdim in range(ndim):
-                                
-                            i =  0 + 2*(k + ncoeff*(jdim + ndim*il))
-
-                            val = SpaceRotsUn[il,ib,idim,jdim]*cs[1]*mass[Targets[il,ib]]
-
-                            if (abs(val) > eps_zero):
-                            
-                                cstr_row.append(i)
-                                cstr_col.append(icstr)
-                                cstr_data.append(val)
-                                
-                            i =  1 + 2*(k + ncoeff*(jdim + ndim*il))
-
-                            val = TimeRevsUn[il,ib]*SpaceRotsUn[il,ib,idim,jdim]*cs[0]*mass[Targets[il,ib]]
-
-                            if (abs(val) > eps_zero):
-                            
-                                cstr_row.append(i)
-                                cstr_col.append(icstr)
-                                cstr_data.append(val)
-                                
-                icstr +=1
-             
-    # Symmetry constraints on loops
-    for il in range(nloop):
-        
-        for Constraint in SymGraph.nodes[loopgen[il]]["Constraint_list"] :
-
-            for k in range(ncoeff):
-                
-                dt = Constraint.TimeShift.numerator/Constraint.TimeShift.denominator
-                
-                if (Constraint.TimeRev == 1):
-
-                    cs[0] = np.cos(  - twopi * k*dt)
-                    cs[1] = np.sin(  - twopi * k*dt)                        
-                        
-                    for idim in range(ndim):
-                            
-                        for jdim in range(ndim):
-                                
-                            i =  0 + 2*(k + ncoeff*(jdim + ndim*il))
-
-                            val = Constraint.SpaceRot[idim,jdim]*cs[0]
-                            
-                            if (idim == jdim):
-                                val -=1.
-
-                            if (abs(val) > eps_zero):
-                            
-                                cstr_row.append(i)
-                                cstr_col.append(icstr)
-                                cstr_data.append(val)
-                                
-                            i =  1 + 2*(k + ncoeff*(jdim + ndim*il))
-
-                            val = - Constraint.SpaceRot[idim,jdim]*cs[1]
-                            
-                            if (abs(val) > eps_zero):
-                            
-                                cstr_row.append(i)
-                                cstr_col.append(icstr)
-                                cstr_data.append(val)
-                                
-                        icstr+=1
-                            
-                        for jdim in range(ndim):
-                                
-                            i =  1 + 2*(k + ncoeff*(jdim + ndim*il))
-
-                            val = Constraint.SpaceRot[idim,jdim]*cs[0]
-                            
-                            if (idim == jdim):
-                                val -=1.
-
-                            if (abs(val) > eps_zero):
-                            
-                                cstr_row.append(i)
-                                cstr_col.append(icstr)
-                                cstr_data.append(val)
-                                
-                            i =  0 + 2*(k + ncoeff*(jdim + ndim*il))
-
-                            val = Constraint.SpaceRot[idim,jdim]*cs[1]
-                            
-                            if (abs(val) > eps_zero):
-                            
-                                cstr_row.append(i)
-                                cstr_col.append(icstr)
-                                cstr_data.append(val)
-
-                        icstr+=1
-                                             
-                elif (Constraint.TimeRev == -1):
-
-                    cs[0] = np.cos(   twopi * k*dt)
-                    cs[1] = np.sin(   twopi * k*dt)
-                    
-                    for idim in range(ndim):
-                            
-                        for jdim in range(ndim):
-                                
-                            i =  0 + 2*(k + ncoeff*(jdim + ndim*il))
-
-                            val = Constraint.SpaceRot[idim,jdim]*cs[0]
-                            
-                            if (idim == jdim):
-                                val -=1.
-                            
-                            if (abs(val) > eps_zero):
-                            
-                                cstr_row.append(i)
-                                cstr_col.append(icstr)
-                                cstr_data.append(val)
-                                
-                            i =  1 + 2*(k + ncoeff*(jdim + ndim*il))
-
-                            val = Constraint.SpaceRot[idim,jdim]*cs[1]
-                            
-                            if (abs(val) > eps_zero):
-                            
-                                cstr_row.append(i)
-                                cstr_col.append(icstr)
-                                cstr_data.append(val)
-                                
-                        icstr+=1
-                            
-                        for jdim in range(ndim):
-                                
-                            i =  1 + 2*(k + ncoeff*(jdim + ndim*il))
-
-                            val = - Constraint.SpaceRot[idim,jdim]*cs[0]
-                            
-                            if (idim == jdim):
-                                val -=1.
-
-                            if (abs(val) > eps_zero):
-                            
-                                cstr_row.append(i)
-                                cstr_col.append(icstr)
-                                cstr_data.append(val)
-                                
-                            i =  0 + 2*(k + ncoeff*(jdim + ndim*il))
-
-                            val = Constraint.SpaceRot[idim,jdim]*cs[1]
-                            
-                            if (abs(val) > eps_zero):
-                            
-                                cstr_row.append(i)
-                                cstr_col.append(icstr)
-                                cstr_data.append(val)
-
-                        icstr+=1
-                                       
-                else:
-                    print(Constraint.TimeRev)
-                    raise ValueError("Invalid TimeRev")
-
-    ncstr = icstr
-    cstr_data = np.array(cstr_data,dtype=np.float64)
-    cstr_row  = np.array(cstr_row,dtype=int)
-    cstr_col  = np.array(cstr_col,dtype=int)
-    
-    cstrmat_sp =  sp.coo_matrix((cstr_data,(cstr_row,cstr_col)),shape=(n_idx,ncstr), dtype=np.float64)
-    
     param_to_coeff = null_space_sparseqr(cstrmat_sp)
     coeff_to_param = param_to_coeff.transpose(copy=True)
     

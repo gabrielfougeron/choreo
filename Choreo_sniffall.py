@@ -11,19 +11,21 @@ import time
 
 from Choreo_funs import *
 
-nbody = 6
+nbody = 3
 mass = np.ones((nbody))
 
 Sym_list = []
 
 SymType = {
-    'name'  : 'D',
+    'name'  : 'C',
     'n'     : nbody,
-    'k'     : 1,
-    'l'     : 1 ,
+    'k'     : 5,
+    'l'     : 2 ,
     'p'     : 0 ,
     'q'     : nbody ,
 }
+
+
 
 Sym_list.extend(Make2DChoreoSym(SymType,range(nbody)))
 
@@ -42,17 +44,30 @@ Sym_list.extend(Make2DChoreoSym(SymType,range(nbody)))
 
 
 # ~ Sym = ChoreoSym(
-    # ~ LoopTarget=3,
-    # ~ LoopSource=3,
-    # ~ SpaceRot = np.identity(ndim),
+    # ~ LoopTarget=1,
+    # ~ LoopSource=0,
+    # ~ SpaceRot = np.array([[0,-1],[1,0]]),
+    # ~ TimeRev=-1,
+    # ~ TimeShift=fractions.Fraction(0,1)
+    # ~ )
+
+# ~ Sym_list.append(Sym)
+
+# ~ Sym = ChoreoSym(
+    # ~ LoopTarget=2,
+    # ~ LoopSource=2,
+    # ~ SpaceRot = np.array([[1,0],[0,1]]),
     # ~ TimeRev=1,
-    # ~ TimeShift=fractions.Fraction(1,3)
+    # ~ TimeShift=fractions.Fraction(1,2)
     # ~ )
 
 # ~ Sym_list.append(Sym)
 
 # ~ Sym_list.extend(Make2DChoreoSym(SymType,[2,3]))
 
+
+Search_Min_Only = False
+# ~ Search_Min_Only = True
 
 MomConsImposed = True
 # ~ MomConsImposed = False
@@ -78,11 +93,21 @@ save_approx = False
 # ~ Reconverge_sols = False
 Reconverge_sols = True
 
+Save_img = True
+# ~ Save_img = False
+
+img_size = (12,12) # Image size in inches
+
 Save_anim = True
 # ~ Save_anim = False
 
-n_reconverge_it_max = 1
-# ~ n_reconverge_it_max = 0
+vid_size = (5,5) # Image size in inches
+
+Plot_trace_anim = True
+# ~ Plot_trace_anim = False
+
+n_reconverge_it_max = 7
+# ~ n_reconverge_it_max = 1
 
 # ~ ncoeff_init = 100
 # ~ ncoeff_init = 800
@@ -100,9 +125,6 @@ Newt_err_norm_max_save = Newt_err_norm_max * 100
 
 # ~ Save_Bad_Sols = True
 Save_Bad_Sols = False
-
-# ~ Search_Min_Only = False
-Search_Min_Only = True
 
 duplicate_eps = 1e-9
 
@@ -222,18 +244,18 @@ while (n_opt < n_opt_max):
                 randampl = np.random.rand()* amplitude_o
             
                 ko = 2
-                k1 =20
-                k2= 30
+                k1 =30
+                k2= 50
                 if (k <= ko):
                     # ~ randampl = 0.12
                     randampl = 0.00 * np.random.rand()
                     
                 
                 elif (k <= k1):
-                    randampl = 0.05*np.random.rand()
+                    randampl = 0.03*np.random.rand()
                 
                 elif (k <= k2):
-                    randampl = 0.03*np.random.rand()
+                    randampl = 0.005*np.random.rand()
                 
             
                 k_thresh_damp = k2
@@ -474,18 +496,15 @@ while (n_opt < n_opt_max):
                     
                     print('Saving solution as '+filename_output+'.*')
                     
-                    nint_plot = 10000
-                    # ~ np.save(filename_output+'.npy',all_coeffs)
-                    plot_all_2D(best_sol.x,nint_plot,callfun,filename_output+'.png')
-                    
-                    
-                    # ~ print(all_coeffs)
-                    # ~ print(1/0)
-                    
+                    if Save_img :
+                        nint_plot = 10000
+                        plot_all_2D(best_sol.x,nint_plot,callfun,filename_output+'.png',fig_size=img_size)
+                        
                     if Save_anim :
                         nint_plot = 1000
                         nperiod = 1
-                        plot_all_2D_anim(best_sol.x,nint_plot,callfun,filename_output+'.mp4',nperiod,Plot_trace=True)
+                        plot_all_2D_anim(best_sol.x,nint_plot,callfun,filename_output+'.mp4',nperiod,Plot_trace=Plot_trace_anim,fig_size=vid_size)
+                        
                     Write_Descriptor(best_sol.x,callfun,filename_output+'.txt')
                     # ~ pickle.dump(best_sol.x,filename_output+'_params.txt'
             
