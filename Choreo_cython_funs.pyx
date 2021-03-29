@@ -754,7 +754,7 @@ def Compute_Newton_err_Cython(
     cdef double pot,potp,potpp
     cdef double prod_mass,a,b,dx2,prod_fac
     cdef np.ndarray[double, ndim=1, mode="c"]  dx = np.zeros((cndim),dtype=np.float64)
-        
+
     cdef long maxloopnb = loopnb.max()
     
     cdef np.ndarray[double, ndim=4, mode="c"] acc_coeff = np.zeros((nloop,cndim,ncoeff,2),dtype=np.float64)

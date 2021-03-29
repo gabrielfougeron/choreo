@@ -735,6 +735,7 @@ def setup_changevar(nbody,ncoeff,mass,nint=None,MomCons=True,n_grad_change=1.,Sy
 
     icstr=0
     
+    # Removes imaginary part of c_0
     for il in range(nloop):
         for idim in range(ndim):
             
@@ -748,6 +749,75 @@ def setup_changevar(nbody,ncoeff,mass,nint=None,MomCons=True,n_grad_change=1.,Sy
 
     cs = np.zeros((2),dtype=np.float64)
     
+    # Zero momentum constraint
+    if MomCons :
+        
+        for k in range(ncoeff):
+            for idim in range(ndim):
+                                      
+                for il in range(nloop):
+                    for ib in range(loopnb[il]):
+                        
+                        dt = TimeShiftNumUn[il,ib] / TimeShiftDenUn[il,ib]
+                        cs[0] = np.cos(  - twopi * k*dt)
+                        cs[1] = np.sin(  - twopi * k*dt)  
+                        
+                        for jdim in range(ndim):
+                                
+                            i =  0 + 2*(k + ncoeff*(jdim + ndim*il))
+
+                            val = SpaceRotsUn[il,ib,idim,jdim]*cs[0]*mass[Targets[il,ib]]
+
+                            if (abs(val) > eps_zero):
+                            
+                                cstr_row.append(i)
+                                cstr_col.append(icstr)
+                                cstr_data.append(val)
+                                
+                            i =  1 + 2*(k + ncoeff*(jdim + ndim*il))
+
+                            val = -TimeRevsUn[il,ib]*SpaceRotsUn[il,ib,idim,jdim]*cs[1]*mass[Targets[il,ib]]
+
+                            if (abs(val) > eps_zero):
+                            
+                                cstr_row.append(i)
+                                cstr_col.append(icstr)
+                                cstr_data.append(val)
+                                
+                icstr +=1
+                    
+                for il in range(nloop):
+                    for ib in range(loopnb[il]):
+                        
+                        dt = TimeShiftNumUn[il,ib] / TimeShiftDenUn[il,ib]
+                        cs[0] = np.cos(  - twopi * k*dt)
+                        cs[1] = np.sin(  - twopi * k*dt)  
+                        
+                        for jdim in range(ndim):
+                                
+                            i =  0 + 2*(k + ncoeff*(jdim + ndim*il))
+
+                            val = SpaceRotsUn[il,ib,idim,jdim]*cs[1]*mass[Targets[il,ib]]
+
+                            if (abs(val) > eps_zero):
+                            
+                                cstr_row.append(i)
+                                cstr_col.append(icstr)
+                                cstr_data.append(val)
+                                
+                            i =  1 + 2*(k + ncoeff*(jdim + ndim*il))
+
+                            val = TimeRevsUn[il,ib]*SpaceRotsUn[il,ib,idim,jdim]*cs[0]*mass[Targets[il,ib]]
+
+                            if (abs(val) > eps_zero):
+                            
+                                cstr_row.append(i)
+                                cstr_col.append(icstr)
+                                cstr_data.append(val)
+                                
+                icstr +=1
+             
+    # Symmetry constraints on loops
     for il in range(nloop):
         
         for Constraint in SymGraph.nodes[loopgen[il]]["Constraint_list"] :
