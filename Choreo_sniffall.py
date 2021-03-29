@@ -11,21 +11,21 @@ import time
 
 from Choreo_funs import *
 
-nbody = 4
+nbody = 6
 mass = np.ones((nbody))
 
 Sym_list = []
 
 SymType = {
     'name'  : 'C',
-    'n'     : 4,
+    'n'     : nbody,
     'k'     : 1,
     'l'     : 1 ,
-    'p'     : 0 ,
-    'q'     : 4 ,
+    'p'     : 2 ,
+    'q'     : nbody ,
 }
 
-Sym_list.extend(Make2DChoreoSym(SymType,range(4)))
+Sym_list.extend(Make2DChoreoSym(SymType,range(nbody)))
 
 
 # ~ SymType = {
@@ -221,7 +221,7 @@ while (n_opt < n_opt_max):
                 randphase = np.random.rand() * twopi * 3.
                 randampl = np.random.rand()* amplitude_o
             
-                ko = 0
+                ko = 2
                 k1 =20
                 k2= 30
                 if (k <= ko):
@@ -233,7 +233,7 @@ while (n_opt < n_opt_max):
                     randampl = 0.05*np.random.rand()
                 
                 elif (k <= k2):
-                    randampl = 0.00*np.random.rand()
+                    randampl = 0.03*np.random.rand()
                 
             
                 k_thresh_damp = k2
@@ -425,7 +425,7 @@ while (n_opt < n_opt_max):
                         if not(Go_On):
                             print('One loop escaped. Starting over')    
                 
-                if not(SaveSol):
+                if (not(SaveSol) and Go_On):
                     print('Newton Error too high, discarding solution')
             
             else:
