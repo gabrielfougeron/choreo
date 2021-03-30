@@ -353,7 +353,13 @@ class current_best:
 class ChoreoSym():
     # This class defines the symmetries of the action
     # Useful to detect loops and constraints.
-
+    #
+    # Syntax : Giving one ChoreoSym to setup_changevar prescrbes the following symmetry / constraint :
+    # x_LoopTarget(t) = SpaceRot * x_LoopSource (TimeRev * (t - TimeShift))
+    #
+    # Where SpaceRot is assumed orthogonal (never actually checked, so beware)
+    # and TimeShift is defined as a rational fraction.
+    
     def __init__(
             self,
             LoopTarget=0,
