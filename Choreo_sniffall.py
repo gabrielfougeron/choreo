@@ -17,10 +17,10 @@ mass = np.ones((nbody))
 Sym_list = []
 
 SymType = {
-    'name'  : 'C',
+    'name'  : 'D',
     'n'     : nbody,
     'k'     : 7,
-    'l'     : 1 ,
+    'l'     : 3 ,
     'p'     : 0 ,
     'q'     : nbody ,
 }
@@ -66,8 +66,8 @@ Sym_list.extend(Make2DChoreoSym(SymType,range(nbody)))
 # ~ Sym_list.extend(Make2DChoreoSym(SymType,[2,3]))
 
 
-Search_Min_Only = False
-# ~ Search_Min_Only = True
+# ~ Search_Min_Only = False
+Search_Min_Only = True
 
 MomConsImposed = True
 # ~ MomConsImposed = False
@@ -120,8 +120,8 @@ disp_scipy_opt = False
 Newt_err_norm_max = 1e-9
 Newt_err_norm_max_save = Newt_err_norm_max * 100
 
-# ~ Save_Bad_Sols = True
-Save_Bad_Sols = False
+Save_Bad_Sols = True
+# ~ Save_Bad_Sols = False
 
 duplicate_eps = 1e-9
 
@@ -406,7 +406,24 @@ while (n_opt < n_opt_max):
                     maxiter = 20
                     gradtol = 1e-15
                     opt_result = opt.root(fun=Compute_action_onlygrad,x0=x0,args=callfun,method='krylov', options={'disp':disp_scipy_opt,'maxiter':maxiter,'fatol':gradtol,'jac_options':{'method':krylov_method}},callback=best_sol.update)
+                    
+                    all_coeffs = Unpackage_all_coeffs(best_sol.x,callfun)
+                    
+                    print('Opt Action Grad Norm : ',best_sol.f_norm)
                 
+                    Newt_err = Compute_Newton_err(best_sol.x,callfun)
+                    Newt_err_norm = np.linalg.norm(Newt_err)/args['nint']
+                    
+                    print('Newton Error : ',Newt_err_norm)
+                
+                    SaveSol = (Newt_err_norm < Newt_err_norm_max_save)
+                                    
+                    if (Check_loop_dist):
+                        
+                        Go_On = not(Detect_Escape(best_sol.x,callfun))
+
+                        if not(Go_On):
+                            print('One loop escaped. Starting over')   
                 else:
 
                     maxiter = 50
@@ -415,8 +432,6 @@ while (n_opt < n_opt_max):
                     try : 
                                     
                         opt_result = opt.root(fun=Compute_action_onlygrad,x0=x0,args=callfun,method='krylov', options={'line_search':line_search,'disp':disp_scipy_opt,'maxiter':maxiter,'fatol':gradtol,'jac_options':{'method':krylov_method}},callback=best_sol.update)
-
-                        Go_On = True
                                 
                         all_coeffs = Unpackage_all_coeffs(best_sol.x,callfun)
                         
