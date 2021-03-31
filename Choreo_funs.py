@@ -277,9 +277,9 @@ def null_space_sparseqr(AT):
     # Returns a basis of the null space of a matrix A.
     # AT must be in COO format
     # The nullspace of the TRANSPOSE of AT will be returned
-    
+
     Q, R, E, rank = sparseqr.qr( AT )
-    
+
     nrow = AT.shape[0]
     
     if (nrow <= rank):
@@ -492,8 +492,6 @@ def setup_changevar(nbody,ncoeff,mass,nint=None,MomCons=True,n_grad_change=1.,Sy
     # It computes useful objects to optimize the computation of the action :
     #   - Exhaustive list of unary transformation for generator to body
     #   - Exhaustive list of binary transformations from generator within each loop.
-
-    timings=[time.time()]
 
     if nint is None:
         nint = 2*ncoeff
@@ -732,14 +730,10 @@ def setup_changevar(nbody,ncoeff,mass,nint=None,MomCons=True,n_grad_change=1.,Sy
     TimeShiftNumCstr    ,
     TimeShiftDenCstr    
     )
-        
-    timings.append(time.time()) #1
-        
+
     param_to_coeff = null_space_sparseqr(cstrmat_sp)
     coeff_to_param = param_to_coeff.transpose(copy=True)
-    
-    timings.append(time.time())#2
-    
+
     diag_changevar(
         param_to_coeff.nnz,
         ncoeff,
@@ -780,12 +774,6 @@ def setup_changevar(nbody,ncoeff,mass,nint=None,MomCons=True,n_grad_change=1.,Sy
     "coeff_to_param"    :   coeff_to_param  ,
     }]
 
-    timings.append(time.time()) #3
-    
-    for i in range(len(timings)-1):
-        print(i+1,timings[i+1]-timings[i])
-        
-    
     return callfun
     
 
