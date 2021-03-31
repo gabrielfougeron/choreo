@@ -272,39 +272,6 @@ def Compute_action_hess_LinOpt(x,callfun):
     return sp.linalg.LinearOperator((args['coeff_to_param'].shape[0],args['coeff_to_param'].shape[0]),
         matvec =  (lambda dx,xl=x,callfunl=callfun : Compute_action_hess_mul(xl,dx,callfunl)),
         rmatvec = (lambda dx,xl=x,callfunl=callfun : Compute_action_hess_mul(xl,dx,callfunl)))
-   
-def Compute_Pure_Hessian_Signature(nloop,nbody,ncoeff,mass,nint,all_coeffs):
-    # Deprecated function to be updated
-    
-    coeff_to_param, param_to_coeff = setup_changevar(nloop=nloop,nbody=nbody,ncoeff=ncoeff,mass=mass,MomCons=False,n_grad_change=1.,Sym_list=[])
-    
-    x, callfun = Package_args(nloop,nbody,ncoeff,mass,nint,all_coeffs,coeff_to_param,param_to_coeff)
-    
-    HessMat = Compute_action_hess_LinOpt(x,callfun)
-    
-    min_thresh = -1e-10
-    
-    k = 5
-    kmax = 100
-    GoOn = True
-    while (GoOn):
-        
-        w, v = sp.linalg.eigsh(HessMat, k=k, which='SA', v0=None, ncv=None, maxiter=None, tol=1e-12, return_eigenvectors=True)
-        
-        print(w)
-        
-        sig = 0
-        while (sig < k):
-            if (w[sig] < min_thresh):
-                sig+=1
-            else:
-                return sig
-
-        GoOn = not(k==kmax)
-        k*=2
-        k = min(k,kmax)
-
-    return ' >= {:%d}'.format(kmax)
     
 def null_space_sparseqr(AT):
     # Returns a basis of the null space of a matrix A.
@@ -525,6 +492,8 @@ def setup_changevar(nbody,ncoeff,mass,nint=None,MomCons=True,n_grad_change=1.,Sy
     # It computes useful objects to optimize the computation of the action :
     #   - Exhaustive list of unary transformation for generator to body
     #   - Exhaustive list of binary transformations from generator within each loop.
+
+    timings=[time.time()]
 
     if nint is None:
         nint = 2*ncoeff
@@ -764,35 +733,29 @@ def setup_changevar(nbody,ncoeff,mass,nint=None,MomCons=True,n_grad_change=1.,Sy
     TimeShiftDenCstr    
     )
         
+    timings.append(time.time()) #1
+        
     param_to_coeff = null_space_sparseqr(cstrmat_sp)
     coeff_to_param = param_to_coeff.transpose(copy=True)
     
-    for idx in range(param_to_coeff.nnz):
+    timings.append(time.time())#2
     
-        res,ift = divmod(param_to_coeff.row[idx],2     )
-        res,k   = divmod(res ,ncoeff)
-        il ,idim= divmod(res ,ndim  )
+    diag_changevar(
+        param_to_coeff.nnz,
+        ncoeff,
+        -n_grad_change,
+        param_to_coeff.row,
+        param_to_coeff.data
+        )
     
-        if (k >=2):
-            kfac = pow(k,-n_grad_change)
-        else:
-            kfac = 1.
-        
-        param_to_coeff.data[idx] *= kfac
-    
-    for idx in range(coeff_to_param.nnz):
-    
-        res,ift = divmod(coeff_to_param.col[idx],2     )
-        res,k   = divmod(res ,ncoeff)
-        il ,idim= divmod(res ,ndim  )
-    
-        if (k >=2):
-            kfac = pow(k,n_grad_change)
-        else:
-            kfac = 1.
-        
-        coeff_to_param.data[idx] *= kfac
-    
+    diag_changevar(
+        coeff_to_param.nnz,
+        ncoeff,
+        n_grad_change,
+        coeff_to_param.row,
+        coeff_to_param.data
+        )
+
     callfun = [{
     "nbody"             :   nbody           ,
     "nloop"             :   nloop           ,
@@ -816,8 +779,15 @@ def setup_changevar(nbody,ncoeff,mass,nint=None,MomCons=True,n_grad_change=1.,Sy
     "param_to_coeff"    :   param_to_coeff  ,
     "coeff_to_param"    :   coeff_to_param  ,
     }]
+
+    timings.append(time.time()) #3
+    
+    for i in range(len(timings)-1):
+        print(i+1,timings[i+1]-timings[i])
+        
     
     return callfun
+    
 
 def Compute_action(x,callfun):
     # Cumputes the action and its gradient with respect to the parameters at a given value of the parameters

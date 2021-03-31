@@ -11,36 +11,21 @@ import time
 
 from Choreo_funs import *
 
-nbody = 3
+nbody =     7
 mass = np.ones((nbody))
 
 Sym_list = []
 
 SymType = {
-    'name'  : 'D',
+    'name'  : 'C',
     'n'     : nbody,
-    'k'     : 7,
-    'l'     : 3 ,
+    'k'     : 1,
+    'l'     : 1 ,
     'p'     : 0 ,
     'q'     : nbody ,
 }
 
-
-
 Sym_list.extend(Make2DChoreoSym(SymType,range(nbody)))
-
-
-# ~ SymType = {
-    # ~ 'name'  : 'C',
-    # ~ 'n'     : 1,
-    # ~ 'k'     : 5,
-    # ~ 'l'     : 1 ,
-    # ~ 'p'     : 0 ,
-    # ~ 'q'     : 2 ,
-# ~ }
-
-# ~ Sym_list.extend(Make2DChoreoSym(SymType,[3]))
-
 
 
 # ~ Sym = ChoreoSym(
@@ -103,13 +88,13 @@ vid_size = (5,5) # Image size in inches
 Plot_trace_anim = True
 # ~ Plot_trace_anim = False
 
-n_reconverge_it_max = 7
+n_reconverge_it_max = 6
 # ~ n_reconverge_it_max = 1
 
 # ~ ncoeff_init = 100
 # ~ ncoeff_init = 800
-# ~ ncoeff_init = 700
-ncoeff_init = 600
+ncoeff_init = 1400   
+# ~ ncoeff_init = 600
 # ~ ncoeff_init = 990
 # ~ ncoeff_init = 1200
 # ~ ncoeff_init = 90
@@ -120,8 +105,8 @@ disp_scipy_opt = False
 Newt_err_norm_max = 1e-9
 Newt_err_norm_max_save = Newt_err_norm_max * 100
 
-Save_Bad_Sols = True
-# ~ Save_Bad_Sols = False
+# ~ Save_Bad_Sols = True
+Save_Bad_Sols = False
 
 duplicate_eps = 1e-9
 
@@ -191,8 +176,8 @@ for i in [0]:
     
     args = callfun_list[i][0]
     print('Convergence attempt number : ',i+1)
-    print('    Number of scalar parameters before symmetries : ',args['coeff_to_param'].shape[1])
-    print('    Number of scalar parameters after  symmetries : ',args['coeff_to_param'].shape[0])
+    print('    Number of scalar parameters before constraints : ',args['coeff_to_param'].shape[1])
+    print('    Number of scalar parameters after  constraints : ',args['coeff_to_param'].shape[0])
     print('    Reduction of ',100*(1-args['coeff_to_param'].shape[0]/args['coeff_to_param'].shape[1]),' %')
     print('')
     
@@ -240,9 +225,9 @@ while (n_opt < n_opt_max):
                 randphase = np.random.rand() * twopi * 3.
                 randampl = np.random.rand()* amplitude_o
             
-                ko = 2
-                k1 =30
-                k2= 50
+                ko = 0
+                k1 =20
+                k2= 40
                 if (k <= ko):
                     # ~ randampl = 0.12
                     randampl = 0.00 * np.random.rand()
@@ -267,6 +252,8 @@ while (n_opt < n_opt_max):
                 all_coeffs[il,idim,k,1] = randampl*np.sin(randphase)
     
     x0 = Package_all_coeffs(all_coeffs,callfun)
+    
+    
 
     if Search_Min_Only:
                     

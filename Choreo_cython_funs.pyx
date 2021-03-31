@@ -1291,3 +1291,31 @@ def Assemble_Cstr_Matrix(
     cdef long n_idx = nloop*cndim*ncoeff*2
 
     return  sp.coo_matrix((cstr_data,(cstr_row,cstr_col)),shape=(n_idx,icstr), dtype=np.float64)
+    
+@cython.cdivision(True)
+def diag_changevar(
+    long nnz,
+    long ncoeff,
+    double n_grad_change,
+    int [:] idxarray not None,
+    double [:] data not None
+    ):
+    
+    cdef long idx, res, ift, k , il, idim
+    cdef double kfac,kd
+        
+    for idx in range(nnz):
+    
+        res,ift = divmod(idxarray[idx],2 )
+        res,k   = divmod(res ,ncoeff)
+        il ,idim= divmod(res ,ndim  )
+    
+        if (k >=2):
+            kd = k
+            kfac = cpow(kd,n_grad_change)
+        else:
+            kfac = 1.
+        
+        data[idx] *= kfac
+    
+    
