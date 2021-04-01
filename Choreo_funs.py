@@ -752,7 +752,7 @@ def setup_changevar(nbody,ncoeff,mass,nint=None,MomCons=True,n_grad_change=1.,Sy
         coeff_to_param.nnz,
         ncoeff,
         n_grad_change,
-        coeff_to_param.row,
+        coeff_to_param.col,
         coeff_to_param.data
         )
 
@@ -782,7 +782,6 @@ def setup_changevar(nbody,ncoeff,mass,nint=None,MomCons=True,n_grad_change=1.,Sy
 
     return callfun
     
-
 def Compute_action(x,callfun):
     # Cumputes the action and its gradient with respect to the parameters at a given value of the parameters
 

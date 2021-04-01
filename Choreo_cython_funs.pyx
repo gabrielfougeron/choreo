@@ -1305,11 +1305,16 @@ def diag_changevar(
     cdef double kfac,kd
         
     for idx in range(nnz):
+
+        ift = idxarray[idx]%2
+        res = idxarray[idx]/2
     
-        res,ift = divmod(idxarray[idx],2 )
-        res,k   = divmod(res ,ncoeff)
-        il ,idim= divmod(res ,ndim  )
-    
+        k = res % ncoeff
+        res = res / ncoeff
+                
+        idim = res % cndim
+        il = res / cndim
+
         if (k >=2):
             kd = k
             kfac = cpow(kd,n_grad_change)
