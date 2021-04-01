@@ -124,7 +124,7 @@ print('Searching periodic solutions of {:d} bodies'.format(nbody))
 
 
 print('Processing symmetries for {0:d} convergence levels'.format(n_reconverge_it_max+1))
-callfun = setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max,Sym_list=Sym_list,MomCons=MomConsImposed)
+callfun = setup_changevar(nbody,ncoeff_init,mass,Sym_list=Sym_list,MomCons=MomConsImposed)
 
 
 print('')
@@ -141,6 +141,21 @@ for il in range(nloop):
 nbi_naive = (nbody*(nbody-1))//2
 
 
+not_disp_list = []
+not_disp_list = ['coeff_to_param','param_to_coeff']
+
+
+# ~ for key,value in args.items():
+    # ~ if key not in not_disp_list:
+        # ~ print(key)
+        # ~ print(value)
+        # ~ print('')
+    # ~ else:
+        # ~ print(key)
+        # ~ print(value.shape)
+        # ~ print('')
+
+
 print('Imposed constraints lead to the detection of :')
 print('    {:d} independant loops'.format(nloop))
 print('    {0:d} binary interactions'.format(nbi_tot))
@@ -154,13 +169,13 @@ for i in [0]:
     
     args = callfun[0]
     print('Convergence attempt number : ',i+1)
-    print('    Number of scalar parameters before constraints : ',args['coeff_to_param_list'][i].shape[1])
-    print('    Number of scalar parameters after  constraints : ',args['coeff_to_param_list'][i].shape[0])
-    print('    Reduction of ',100*(1-args['coeff_to_param_list'][i].shape[0]/args['coeff_to_param_list'][i].shape[1]),' %')
+    print('    Number of scalar parameters before constraints : ',args['coeff_to_param'][i].shape[1])
+    print('    Number of scalar parameters after  constraints : ',args['coeff_to_param'][i].shape[0])
+    print('    Reduction of ',100*(1-args['coeff_to_param'][i].shape[0]/args['coeff_to_param'][i].shape[1]),' %')
     print('')
     
 
-x0 = np.random.random(callfun[0]['param_to_coeff_list'][i].shape[1])
+x0 = np.random.random(callfun[0]['param_to_coeff'][i].shape[1])
 xmin = Compute_MinDist(x0,callfun)
 if (xmin < 1e-5):
     print(xmin)
@@ -178,9 +193,10 @@ while (n_opt < n_opt_max):
     n_opt += 1
     
     print('Optimization attempt number : ',n_opt)
-
-    callfun[0]["current_cvg_lvl"] = 0
-    ncoeff = callfun[0]["ncoeff_list"][callfun[0]["current_cvg_lvl"]]
+    
+    callfun = callfun_list[0]
+    
+    ncoeff = ncoeff_init
     nint = 2*ncoeff
     
     all_coeffs = np.zeros((nloop,ndim,ncoeff,2),dtype=np.float64)
@@ -204,8 +220,8 @@ while (n_opt < n_opt_max):
                 randampl = np.random.rand()* amplitude_o
             
                 ko = 1
-                k1 =20
-                k2= 40
+                k1 =10
+                k2= 20
                 if (k <= ko):
                     # ~ randampl = 0.12
                     randampl = 0.00 * np.random.rand()
@@ -311,23 +327,25 @@ while (n_opt < n_opt_max):
             
             Newt_err_norm = 1.
             
-            while ((Newt_err_norm > Newt_err_norm_max) and (callfun[0]["current_cvg_lvl"] < n_reconverge_it_max) and Go_On):
+            n_reconverge_it = 0
+            
+            while ((Newt_err_norm > Newt_err_norm_max) and (n_reconverge_it < n_reconverge_it_max) and Go_On):
                         
+                n_reconverge_it = n_reconverge_it + 1
+
                 all_coeffs_old = Unpackage_all_coeffs(best_sol.x,callfun)
                 
-                ncoeff = callfun[0]["ncoeff_list"][callfun[0]["current_cvg_lvl"]]
                 ncoeff_new = ncoeff * 2
 
                 all_coeffs = np.zeros((nloop,ndim,ncoeff_new,2),dtype=np.float64)
                 for k in range(ncoeff):
                     all_coeffs[:,:,k,:] = all_coeffs_old[:,:,k,:]   
                 
-                callfun[0]["current_cvg_lvl"] += 1
+                ncoeff = ncoeff_new
+                nint = 2*ncoeff
+                
+                callfun = callfun_list[n_reconverge_it]
                 x0 = Package_all_coeffs(all_coeffs,callfun)
-                
-                ncoeff = callfun[0]["ncoeff_list"][callfun[0]["current_cvg_lvl"]]
-                nint = callfun[0]["nint_list"][callfun[0]["current_cvg_lvl"]]
-                
                 
                 f0 = Compute_action_onlygrad(x0,callfun)
                 best_sol = current_best(x0,f0)
@@ -351,7 +369,7 @@ while (n_opt < n_opt_max):
                     print('Opt Action Grad Norm : ',best_sol.f_norm)
                 
                     Newt_err = Compute_Newton_err(best_sol.x,callfun)
-                    Newt_err_norm = np.linalg.norm(Newt_err)/nint
+                    Newt_err_norm = np.linalg.norm(Newt_err)/args['nint']
                     
                     print('Newton Error : ',Newt_err_norm)
                 
@@ -377,7 +395,7 @@ while (n_opt < n_opt_max):
                         print('Opt Action Grad Norm : ',best_sol.f_norm)
                     
                         Newt_err = Compute_Newton_err(best_sol.x,callfun)
-                        Newt_err_norm = np.linalg.norm(Newt_err)/nint
+                        Newt_err_norm = np.linalg.norm(Newt_err)/args['nint']
                         
                         print('Newton Error : ',Newt_err_norm)
                     
