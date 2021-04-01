@@ -204,7 +204,7 @@ def Package_all_coeffs(all_coeffs,callfun):
     args = callfun[0]
 
     y = all_coeffs.reshape(-1)
-    x = args['coeff_to_param'].dot(y)
+    x = args['coeff_to_param_list'][args["current_cvg_lvl"]].dot(y)
     
     return x
     
@@ -213,10 +213,17 @@ def Unpackage_all_coeffs(x,callfun):
     
     args=callfun[0]
     
-    y = args['param_to_coeff'] * x
-    all_coeffs = y.reshape(args['nloop'],ndim,args['ncoeff'],2)
+    y = args['param_to_coeff_list'][args["current_cvg_lvl"]] * x
+    all_coeffs = y.reshape(args['nloop'],ndim,args['ncoeff_list'][args["current_cvg_lvl"]],2)
     
     return all_coeffs
+
+def Compute_action_onlygrad(x,callfun):
+    # Wrapper function that returns ONLY the gradient of the action with respect to the parameters 
+    
+    J,y = Compute_action(x,callfun)
+    
+    return y
 
 def Compute_action_onlygrad(x,callfun):
     # Wrapper function that returns ONLY the gradient of the action with respect to the parameters 
@@ -230,16 +237,16 @@ def Compute_action_hess_mul(x,dx,callfun):
     
     args=callfun[0]
     
-    y = args['param_to_coeff'] * x
-    all_coeffs = y.reshape(args['nloop'],ndim,args['ncoeff'],2)
+    y = args['param_to_coeff_list'][args["current_cvg_lvl"]] * x
+    all_coeffs = y.reshape(args['nloop'],ndim,args['ncoeff_list'][args["current_cvg_lvl"]],2)
     
-    dy = args['param_to_coeff'] * dx
-    all_coeffs_d = dy.reshape(args['nloop'],ndim,args['ncoeff'],2)
+    dy = args['param_to_coeff_list'][args["current_cvg_lvl"]] * dx
+    all_coeffs_d = dy.reshape(args['nloop'],ndim,args['ncoeff_list'][args["current_cvg_lvl"]],2)
     
     HessJdx =  Compute_action_hess_mul_Cython(
         args['nloop']           ,
-        args['ncoeff']          ,
-        args['nint']            ,
+        args['ncoeff_list'][args["current_cvg_lvl"]]          ,
+        args['nint_list']            ,
         args['mass']            ,
         args['loopnb']          ,
         args['Targets']         ,
@@ -260,7 +267,7 @@ def Compute_action_hess_mul(x,dx,callfun):
 
     HJdx = HessJdx.reshape(-1)
     
-    z = HJdx * args['param_to_coeff']
+    z = HJdx * args['param_to_coeff_list'][args["current_cvg_lvl"]]
     
     return z
     
@@ -269,7 +276,7 @@ def Compute_action_hess_LinOpt(x,callfun):
 
     args=callfun[0]
 
-    return sp.linalg.LinearOperator((args['coeff_to_param'].shape[0],args['coeff_to_param'].shape[0]),
+    return sp.linalg.LinearOperator((args['coeff_to_param_list'][args["current_cvg_lvl"]].shape[0],args['coeff_to_param_list'][args["current_cvg_lvl"]].shape[0]),
         matvec =  (lambda dx,xl=x,callfunl=callfun : Compute_action_hess_mul(xl,dx,callfunl)),
         rmatvec = (lambda dx,xl=x,callfunl=callfun : Compute_action_hess_mul(xl,dx,callfunl)))
     
@@ -491,16 +498,13 @@ def Make2DChoreoSym(SymType,ib_list):
     
     return SymGens
 
-def setup_changevar(nbody,ncoeff,mass,nint=None,MomCons=True,n_grad_change=1.,Sym_list=[]):
+def setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max=6,MomCons=True,n_grad_change=1.,Sym_list=[]):
     # This function returns the callfun dictionnary to be given as input to virtually all other function.
     # It detects loops and constraints based on symmetries.
     # It defines parameters according to given constraints and diagonal change of variable
     # It computes useful objects to optimize the computation of the action :
     #   - Exhaustive list of unary transformation for generator to body
     #   - Exhaustive list of binary transformations from generator within each loop.
-
-    if nint is None:
-        nint = 2*ncoeff
     
     SymGraph = nx.Graph()
     for i in range(nbody):
@@ -719,65 +723,76 @@ def setup_changevar(nbody,ncoeff,mass,nint=None,MomCons=True,n_grad_change=1.,Sy
 
     # Now detect parameters and build change of variables
 
-    cstrmat_sp = Assemble_Cstr_Matrix(
-    nloop               ,
-    ncoeff              ,
-    MomCons             ,
-    mass                ,
-    loopnb              ,
-    Targets             ,
-    SpaceRotsUn         ,
-    TimeRevsUn          ,
-    TimeShiftNumUn      ,
-    TimeShiftDenUn      ,
-    loopncstr           ,
-    SpaceRotsCstr       ,
-    TimeRevsCstr        ,
-    TimeShiftNumCstr    ,
-    TimeShiftDenCstr    
-    )
+    ncoeff_list = []
+    nint_list = []
+    param_to_coeff_list = []
+    coeff_to_param_list = []
 
-    param_to_coeff = null_space_sparseqr(cstrmat_sp)
-    coeff_to_param = param_to_coeff.transpose(copy=True)
+    for i in range(n_reconverge_it_max+1):
+        
+        ncoeff_list.append(ncoeff_init * (2**i))
+        nint_list.append(2*ncoeff_list[i])
 
-    diag_changevar(
-        param_to_coeff.nnz,
-        ncoeff,
-        -n_grad_change,
-        param_to_coeff.row,
-        param_to_coeff.data
+        cstrmat_sp = Assemble_Cstr_Matrix(
+        nloop               ,
+        ncoeff_list[i]      ,
+        MomCons             ,
+        mass                ,
+        loopnb              ,
+        Targets             ,
+        SpaceRotsUn         ,
+        TimeRevsUn          ,
+        TimeShiftNumUn      ,
+        TimeShiftDenUn      ,
+        loopncstr           ,
+        SpaceRotsCstr       ,
+        TimeRevsCstr        ,
+        TimeShiftNumCstr    ,
+        TimeShiftDenCstr    
         )
-    
-    diag_changevar(
-        coeff_to_param.nnz,
-        ncoeff,
-        n_grad_change,
-        coeff_to_param.col,
-        coeff_to_param.data
-        )
+
+        param_to_coeff_list.append(null_space_sparseqr(cstrmat_sp))
+        coeff_to_param_list.append(param_to_coeff_list[i].transpose(copy=True))
+
+        diag_changevar(
+            param_to_coeff_list[i].nnz,
+            ncoeff_list[i],
+            -n_grad_change,
+            param_to_coeff_list[i].row,
+            param_to_coeff_list[i].data
+            )
+        
+        diag_changevar(
+            coeff_to_param_list[i].nnz,
+            ncoeff_list[i],
+            n_grad_change,
+            coeff_to_param_list[i].col,
+            coeff_to_param_list[i].data
+            )
 
     callfun = [{
-    "nbody"             :   nbody           ,
-    "nloop"             :   nloop           ,
-    "ncoeff"            :   ncoeff          ,
-    "nint"              :   nint            ,
-    "mass"              :   mass            ,
-    "loopnb"            :   loopnb          ,
-    "loopgen"           :   loopgen         ,
-    "Targets"           :   Targets         ,
-    "MassSum"           :   MassSum         ,
-    "SpaceRotsUn"       :   SpaceRotsUn     ,
-    "TimeRevsUn"        :   TimeRevsUn      ,
-    "TimeShiftNumUn"    :   TimeShiftNumUn  ,
-    "TimeShiftDenUn"    :   TimeShiftDenUn  ,
-    "loopnbi"           :   loopnbi         ,
-    "ProdMassSumAll"    :   ProdMassSumAll  ,
-    "SpaceRotsBin"      :   SpaceRotsBin    ,
-    "TimeRevsBin"       :   TimeRevsBin     ,
-    "TimeShiftNumBin"   :   TimeShiftNumBin ,
-    "TimeShiftDenBin"   :   TimeShiftDenBin ,
-    "param_to_coeff"    :   param_to_coeff  ,
-    "coeff_to_param"    :   coeff_to_param  ,
+    "nbody"                 :   nbody               ,
+    "nloop"                 :   nloop               ,
+    "mass"                  :   mass                ,
+    "loopnb"                :   loopnb              ,
+    "loopgen"               :   loopgen             ,
+    "Targets"               :   Targets             ,
+    "MassSum"               :   MassSum             ,
+    "SpaceRotsUn"           :   SpaceRotsUn         ,
+    "TimeRevsUn"            :   TimeRevsUn          ,
+    "TimeShiftNumUn"        :   TimeShiftNumUn      ,
+    "TimeShiftDenUn"        :   TimeShiftDenUn      ,
+    "loopnbi"               :   loopnbi             ,
+    "ProdMassSumAll"        :   ProdMassSumAll      ,
+    "SpaceRotsBin"          :   SpaceRotsBin        ,
+    "TimeRevsBin"           :   TimeRevsBin         ,
+    "TimeShiftNumBin"       :   TimeShiftNumBin     ,
+    "TimeShiftDenBin"       :   TimeShiftDenBin     ,
+    "ncoeff_list"           :   ncoeff_list         ,
+    "nint_list"             :   nint_list           ,
+    "param_to_coeff_list"   :   param_to_coeff_list ,
+    "coeff_to_param_list"   :   coeff_to_param_list ,
+    "current_cvg_lvl"       :   0                   ,
     }]
 
     return callfun
@@ -787,13 +802,13 @@ def Compute_action(x,callfun):
 
     args=callfun[0]
     
-    y = args['param_to_coeff'] * x
-    all_coeffs = y.reshape(args['nloop'],ndim,args['ncoeff'],2)
+    y = args['param_to_coeff_list'][args["current_cvg_lvl"]] * x
+    all_coeffs = y.reshape(args['nloop'],ndim,args['ncoeff_list'][args["current_cvg_lvl"]],2)
     
     J,GradJ =  Compute_action_Cython(
         args['nloop']           ,
-        args['ncoeff']          ,
-        args['nint']            ,
+        args['ncoeff_list'][args["current_cvg_lvl"]]          ,
+        args['nint_list'][args["current_cvg_lvl"]]            ,
         args['mass']            ,
         args['loopnb']          ,
         args['Targets']         ,
@@ -812,7 +827,7 @@ def Compute_action(x,callfun):
         )
 
     GJ = GradJ.reshape(-1)
-    y = GJ * args['param_to_coeff']
+    y = GJ * args['param_to_coeff_list'][args["current_cvg_lvl"]]
     
     return J,y
 
@@ -822,13 +837,13 @@ def Compute_hash_action(x,callfun):
 
     args=callfun[0]
     
-    y = args['param_to_coeff'] * x
-    all_coeffs = y.reshape(args['nloop'],ndim,args['ncoeff'],2)
+    y = args['param_to_coeff_list'][args["current_cvg_lvl"]] * x
+    all_coeffs = y.reshape(args['nloop'],ndim,args['ncoeff_list'][args["current_cvg_lvl"]],2)
     
     Hash_Action =  Compute_hash_action_Cython(
         args['nloop']           ,
-        args['ncoeff']          ,
-        args['nint']            ,
+        args['ncoeff_list'][args["current_cvg_lvl"]]          ,
+        args['nint_list'][args["current_cvg_lvl"]]            ,
         args['mass']            ,
         args['loopnb']          ,
         args['Targets']         ,
@@ -854,14 +869,14 @@ def Compute_Newton_err(x,callfun):
 
     args=callfun[0]
     
-    y = args['param_to_coeff'] * x
-    all_coeffs = y.reshape(args['nloop'],ndim,args['ncoeff'],2)
+    y = args['param_to_coeff_list'][args["current_cvg_lvl"]] * x
+    all_coeffs = y.reshape(args['nloop'],ndim,args['ncoeff_list'][args["current_cvg_lvl"]],2)
     
     all_Newt_err =  Compute_Newton_err_Cython(
         args['nbody']           ,
         args['nloop']           ,
-        args['ncoeff']          ,
-        args['nint']*2          ,
+        args['ncoeff_list'][args["current_cvg_lvl"]]          ,
+        args['nint_list'][args["current_cvg_lvl"]]*2          ,
         args['mass']            ,
         args['loopnb']          ,
         args['Targets']         ,
@@ -884,7 +899,7 @@ def Compute_Loop_Dist_Size(x,callfun):
     
     max_loop_size = 0.
     for il in range(args['nloop']):
-        loop_size = np.linalg.norm(all_coeffs[il,:,1:args['ncoeff'],:])
+        loop_size = np.linalg.norm(all_coeffs[il,:,1:args['ncoeff_list'][args["current_cvg_lvl"]],:])
         max_loop_size = max(loop_size,max_loop_size)
     
     max_loop_dist = 0.
@@ -917,13 +932,13 @@ def Compute_MinDist(x,callfun):
     
     args=callfun[0]
     
-    y = args['param_to_coeff'] * x
-    all_coeffs = y.reshape(args['nloop'],ndim,args['ncoeff'],2)
+    y = args['param_to_coeff_list'][args["current_cvg_lvl"]] * x
+    all_coeffs = y.reshape(args['nloop'],ndim,args['ncoeff_list'][args["current_cvg_lvl"]],2)
     
     MinDist =  Compute_MinDist_Cython(
         args['nloop']           ,
-        args['ncoeff']          ,
-        args['nint']            ,
+        args['ncoeff_list'][args["current_cvg_lvl"]]          ,
+        args['nint_list'][args["current_cvg_lvl"]]            ,
         args['mass']            ,
         args['loopnb']          ,
         args['Targets']         ,
@@ -943,7 +958,7 @@ def Compute_MinDist(x,callfun):
     
     return MinDist
     
-def Write_Descriptor(x,callfun,filename,WriteSignature=False):
+def Write_Descriptor(x,callfun,filename):
     # Dumps a text file describing the current trajectories
     
     args = callfun[0]
@@ -959,8 +974,8 @@ def Write_Descriptor(x,callfun,filename,WriteSignature=False):
             filename_write.write(' {:f}'.format(args['mass'][il]))
         filename_write.write('\n')
         
-        filename_write.write('Number of Fourier coefficients in each loop : {:d}\n'.format(args['ncoeff']))
-        filename_write.write('Number of integration points for the action : {:d}\n'.format(args['nint']))
+        filename_write.write('Number of Fourier coefficients in each loop : {:d}\n'.format(args['ncoeff_list'][args["current_cvg_lvl"]]))
+        filename_write.write('Number of integration points for the action : {:d}\n'.format(args['nint_list'][args["current_cvg_lvl"]]))
         
         Action,Gradaction = Compute_action(x,callfun)
         
@@ -968,7 +983,7 @@ def Write_Descriptor(x,callfun,filename,WriteSignature=False):
         filename_write.write('Value of the Norm of the Gradient of the Action : {:.10E}\n'.format(np.linalg.norm(Gradaction)))
 
         Newt_err = Compute_Newton_err(x,callfun)
-        Newt_err_norm = np.linalg.norm(Newt_err)/args['nint']
+        Newt_err_norm = np.linalg.norm(Newt_err)/args['nint_list'][args["current_cvg_lvl"]]
         filename_write.write('Sum of Newton Errors : {:.10E}\n'.format(Newt_err_norm))
         
         dxmin = Compute_MinDist(x,callfun)
@@ -979,10 +994,6 @@ def Write_Descriptor(x,callfun,filename,WriteSignature=False):
         for ihash in range(nhash):
             filename_write.write(' {:.10f}'.format(Hash_Action[ihash]))
         filename_write.write('\n')
-        
-        # ~ if (WriteSignature):            
-            # ~ sig = Compute_Pure_Hessian_Signature(nloop,nbody,ncoeff,mass,nint,all_coeffs)
-            # ~ filename_write.write('Signature of Hessian : {:d}\n'.format(sig))
         
 
 def SelectFiles_Action(store_folder,Action_val,Action_Hash_val,rtol):
