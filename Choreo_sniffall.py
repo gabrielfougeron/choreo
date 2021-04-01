@@ -11,13 +11,13 @@ import time
 
 from Choreo_funs import *
 
-nbody =     7
+nbody =     4
 mass = np.ones((nbody))
 
 Sym_list = []
 
 SymType = {
-    'name'  : 'C',
+    'name'  : 'D',
     'n'     : nbody,
     'k'     : 1,
     'l'     : 1 ,
@@ -51,8 +51,8 @@ Sym_list.extend(Make2DChoreoSym(SymType,range(nbody)))
 # ~ Sym_list.extend(Make2DChoreoSym(SymType,[2,3]))
 
 
-# ~ Search_Min_Only = False
-Search_Min_Only = True
+Search_Min_Only = False
+# ~ Search_Min_Only = True
 
 MomConsImposed = True
 # ~ MomConsImposed = False
@@ -80,21 +80,21 @@ Save_img = True
 
 img_size = (12,12) # Image size in inches
 
-Save_anim = True
-# ~ Save_anim = False
+# ~ Save_anim = True
+Save_anim = False
 
 vid_size = (5,5) # Image size in inches
 
 Plot_trace_anim = True
 # ~ Plot_trace_anim = False
 
-n_reconverge_it_max = 6
+n_reconverge_it_max = 5
 # ~ n_reconverge_it_max = 1
 
 # ~ ncoeff_init = 100
 # ~ ncoeff_init = 800
-ncoeff_init = 1400   
-# ~ ncoeff_init = 600
+# ~ ncoeff_init = 350   
+ncoeff_init = 600
 # ~ ncoeff_init = 990
 # ~ ncoeff_init = 1200
 # ~ ncoeff_init = 90
@@ -189,6 +189,8 @@ if (xmin < 1e-5):
     print(xmin)
     raise ValueError("Init inter body distance too low. There is something wrong with constraints")
 
+# ~ filehandler = open(store_folder+'/callfun_list.pkl',"wb")
+# ~ pickle.dump(callfun_list,filehandler)
 
 
 n_opt = 0
@@ -225,9 +227,9 @@ while (n_opt < n_opt_max):
                 randphase = np.random.rand() * twopi * 3.
                 randampl = np.random.rand()* amplitude_o
             
-                ko = 0
-                k1 =20
-                k2= 40
+                ko = 1
+                k1 =10
+                k2= 20
                 if (k <= ko):
                     # ~ randampl = 0.12
                     randampl = 0.00 * np.random.rand()
@@ -284,25 +286,11 @@ while (n_opt < n_opt_max):
             
             x_opt = best_sol.x
             
-        except ValueError:
+        except Exception as exc:
             
+            print(exc)
             print("Value Error occured, skipping.")
             Go_On = False
-        
-        
-        if (Go_On and not(opt_result['success'])):
-            
-                    
-            gradtol = 1e-5
-            maxiter = 5000
-            x0 = best_sol.x
-            opt_result = opt.root(fun=Compute_action_onlygrad,x0=x0,args=callfun,method='df-sane', options={'disp':disp_scipy_opt,'maxfev':maxiter,'fatol':gradtol},callback=best_sol.update)
-
-            print("After DF-SANE : ",best_sol.f_norm)
-            
-            x_opt = best_sol.x
-            
-            Go_On = opt_result['success']
 
     if (Check_loop_dist and Go_On):
         
@@ -314,19 +302,13 @@ while (n_opt < n_opt_max):
     if (Go_On):
 
         f0 = Compute_action_onlygrad(x_opt,callfun)
-        best_sol = current_best(x0,f0)
+        best_sol = current_best(x_opt,f0)
 
         maxiter = 10
         gradtol = 1e-11
         opt_result = opt.root(fun=Compute_action_onlygrad,x0=x_opt,args=callfun,method='krylov', options={'disp':disp_scipy_opt,'maxiter':maxiter,'fatol':gradtol,'jac_options':{'method':krylov_method}},callback=best_sol.update)
 
-        all_coeffs = Unpackage_all_coeffs(best_sol.x,callfun)
-        
         print('Approximate solution found ! Action Grad Norm : ',best_sol.f_norm)
-
-        if (save_approx):
-            nint_plot = 200
-            plot_all_2D(nloop,nbody,nint_plot,all_coeffs,'approx.png')
 
         Found_duplicate = False
 
@@ -357,20 +339,16 @@ while (n_opt < n_opt_max):
             
             while ((Newt_err_norm > Newt_err_norm_max) and (n_reconverge_it < n_reconverge_it_max) and Go_On):
                         
-                # ~ nint_plot = 200
-                # ~ imgfilename = store_folder+'/'+str(n_opt)+'_'+str(n_reconverge_it)
-                # ~ plot_all_2D(nloop,nbody,nint_plot,all_coeffs,imgfilename+'.png')
-                
                 n_reconverge_it = n_reconverge_it + 1
-                
-                all_coeffs_old = np.copy(all_coeffs)
+
+                all_coeffs_old = Unpackage_all_coeffs(best_sol.x,callfun)
                 
                 ncoeff_new = ncoeff * 2
 
                 all_coeffs = np.zeros((nloop,ndim,ncoeff_new,2),dtype=np.float64)
                 for k in range(ncoeff):
-                    all_coeffs[:,:,k,:] = all_coeffs_old[:,:,k,:]
-                    
+                    all_coeffs[:,:,k,:] = all_coeffs_old[:,:,k,:]   
+                
                 ncoeff = ncoeff_new
                 nint = 2*ncoeff
                 
@@ -437,13 +415,13 @@ while (n_opt < n_opt_max):
 
                             if not(Go_On):
                                 print('One loop escaped. Starting over')    
-                    
-                    except ValueError:
+
+                    except Exception as exc:
                         
+                        print(exc)
                         print("Value Error occured, skipping.")
                         Go_On = False
                         SaveSol = False
-
 
 
             if (not(SaveSol) and Go_On):
@@ -501,8 +479,23 @@ while (n_opt < n_opt_max):
                         plot_all_2D_anim(best_sol.x,nint_plot,callfun,filename_output+'.mp4',nperiod,Plot_trace=Plot_trace_anim,fig_size=vid_size)
                         
                     Write_Descriptor(best_sol.x,callfun,filename_output+'.txt')
+                    
+                    all_coeffs = Unpackage_all_coeffs(best_sol.x,callfun)
+                    np.save(filename_output+'.npy',all_coeffs)
+                    
                     # ~ pickle.dump(best_sol.x,filename_output+'_params.txt'
+                    # ~ pickle.dump(best_sol.x,filename_output+'_params.txt'
+                    
+                    
+                    # ~ HessMat = Compute_action_hess_LinOpt(best_sol.x,callfun)
+                    # ~ w ,v = sp.linalg.eigsh(HessMat,k=10,which='SA')
+                    
+                    # ~ print(w)
+                    
             
+                    # ~ print('Press Enter to continue ...')
+                    # ~ pause = input()
+    
     
     
     print('')
