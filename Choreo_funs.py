@@ -224,13 +224,6 @@ def Compute_action_onlygrad(x,callfun):
     J,y = Compute_action(x,callfun)
     
     return y
-
-def Compute_action_onlygrad(x,callfun):
-    # Wrapper function that returns ONLY the gradient of the action with respect to the parameters 
-    
-    J,y = Compute_action(x,callfun)
-    
-    return y
     
 def Compute_action_hess_mul(x,dx,callfun):
     # Returns the Hessian of the action (computed wrt the parameters) times a test vector of parameter deviations.
@@ -246,7 +239,7 @@ def Compute_action_hess_mul(x,dx,callfun):
     HessJdx =  Compute_action_hess_mul_Cython(
         args['nloop']           ,
         args['ncoeff_list'][args["current_cvg_lvl"]]          ,
-        args['nint_list']            ,
+        args['nint_list'][args["current_cvg_lvl"]]            ,
         args['mass']            ,
         args['loopnb']          ,
         args['Targets']         ,
@@ -1053,3 +1046,57 @@ def Check_Duplicates(x,callfun,store_folder,duplicate_eps,rtol=1e-5):
         file_path = file_path_list[0]
     
     return Found_duplicate,file_path
+
+def Init_deflation(callfun,defl_cvg_lvl = 0):
+    
+    callfun[0]['defl_vec_list'] = []
+    callfun[0]['defl_cvg_lvl'] = defl_cvg_lvl
+    
+def Add_deflation_coeffs(all_coeffs,callfun):
+    
+    all_coeffs_new = np.zeros((callfun[0]['nloop'],ndim,callfun[0]['ncoeff_list'][callfun[0]['defl_cvg_lvl']],2),dtype=np.float64)
+
+    ncoeff_min = min(all_coeffs_new.shape[2],all_coeffs.shape[2])
+    
+    for k in range(ncoeff_min):
+        all_coeffs_new[:,:,k,:] = all_coeffs[:,:,k,:]  
+
+    y = all_coeffs_new.reshape(-1)
+    callfun[0]['defl_vec_list'].append(callfun[0]['coeff_to_param_list'][callfun[0]["defl_cvg_lvl"]].dot(y))
+
+def Load_all_defl(dirname,callfun):
+    
+    for file_path in os.listdir(dirname):
+        file_path = os.path.join(dirname, file_path)
+        file_root, file_ext = os.path.splitext(os.path.basename(file_path))
+        
+        if (file_ext == '.npy' ):
+            
+            all_coeffs = np.load(file_path)
+            Add_deflation_coeffs(all_coeffs,callfun)
+
+
+def Compute_action_defl(x,callfun):
+    # Wrapper function that returns a deflated version of the gradient of the action.
+    
+    J,y = Compute_action(x,callfun)
+    
+    kfac = Compute_defl_fac(x,callfun)
+    
+    y = y*kfac
+    
+    return y
+
+def Compute_defl_fac(x,callfun):
+    
+    kfac = 1.
+    for defl_vec in callfun[0]['defl_vec_list']:
+        
+        dist2 = Compute_square_dist(defl_vec,x,callfun[0]['coeff_to_param_list'][callfun[0]["defl_cvg_lvl"]].shape[0])
+        
+        kfac*= dist2 * 50
+        
+        
+    kfac = 1. / np.sqrt(kfac) + 1. 
+    
+    return kfac

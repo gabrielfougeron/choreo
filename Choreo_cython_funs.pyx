@@ -1323,4 +1323,19 @@ def diag_changevar(
         
         data[idx] *= kfac
     
+def Compute_square_dist(
+    np.ndarray[double, ndim=1, mode="c"] x not None ,
+    np.ndarray[double, ndim=1, mode="c"] y not None ,
+    long s
+    ):
+        
+    cdef double diff
+    cdef double res = 0.
+    cdef long i
     
+    for i in range(s):
+        
+        diff = x[i]-y[i]
+        res+=diff*diff
+    
+    return res

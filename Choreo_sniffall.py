@@ -63,6 +63,9 @@ if not(os.path.isdir(store_folder)):
     os.mkdir(store_folder)
 
 
+# ~ Use_deflation = True
+Use_deflation = False
+
 Look_for_duplicates = True
 # ~ Look_for_duplicates = False
 
@@ -94,9 +97,9 @@ n_reconverge_it_max = 7
 # ~ ncoeff_init = 100
 # ~ ncoeff_init = 800
 # ~ ncoeff_init = 350   
-# ~ ncoeff_init = 600
+ncoeff_init = 600
 # ~ ncoeff_init = 990
-ncoeff_init = 1200
+# ~ ncoeff_init = 1200
 # ~ ncoeff_init = 90
 
 disp_scipy_opt = False
@@ -169,6 +172,18 @@ if (xmin < 1e-5):
 # ~ filehandler = open(store_folder+'/callfun_list.pkl',"wb")
 # ~ pickle.dump(callfun_list,filehandler)
 
+if (Use_deflation):
+    print('Loading previously saved sols as deflation vectors')
+    
+    Init_deflation(callfun)
+    Load_all_defl(store_folder,callfun)
+    
+    Action_grad_mod = Compute_action_defl
+    
+else:
+    
+    Action_grad_mod = Compute_action_onlygrad
+
 
 n_opt = 0
 # ~ n_opt_max = 1
@@ -181,7 +196,7 @@ while (n_opt < n_opt_max):
 
     callfun[0]["current_cvg_lvl"] = 0
     ncoeff = callfun[0]["ncoeff_list"][callfun[0]["current_cvg_lvl"]]
-    nint = 2*ncoeff
+    nint = callfun[0]["nint_list"][callfun[0]["current_cvg_lvl"]]
     
     all_coeffs = np.zeros((nloop,ndim,ncoeff,2),dtype=np.float64)
 
@@ -246,15 +261,15 @@ while (n_opt < n_opt_max):
         
     else:
             
-        f0 = Compute_action_onlygrad(x0,callfun)
+        f0 = Action_grad_mod(x0,callfun)
         best_sol = current_best(x0,f0)
 
-        gradtol = 1e-5
-        maxiter = 5000
+        gradtol = 1e-12
+        maxiter = 500
 
         try : 
             
-            opt_result = opt.root(fun=Compute_action_onlygrad,x0=x0,args=callfun,method='krylov', options={'line_search':line_search,'disp':disp_scipy_opt,'maxiter':maxiter,'fatol':gradtol,'jac_options':{'method':krylov_method}},callback=best_sol.update)
+            opt_result = opt.root(fun=Action_grad_mod,x0=x0,args=callfun,method='krylov', options={'line_search':line_search,'disp':disp_scipy_opt,'maxiter':maxiter,'fatol':gradtol,'jac_options':{'method':krylov_method}},callback=best_sol.update)
             
             print("After Krylov : ",best_sol.f_norm)
             
@@ -277,12 +292,12 @@ while (n_opt < n_opt_max):
     
     if (Go_On):
 
-        f0 = Compute_action_onlygrad(x_opt,callfun)
+        f0 = Action_grad_mod(x_opt,callfun)
         best_sol = current_best(x_opt,f0)
 
-        maxiter = 10
-        gradtol = 1e-11
-        opt_result = opt.root(fun=Compute_action_onlygrad,x0=x_opt,args=callfun,method='krylov', options={'disp':disp_scipy_opt,'maxiter':maxiter,'fatol':gradtol,'jac_options':{'method':krylov_method}},callback=best_sol.update)
+        # ~ maxiter = 10
+        # ~ gradtol = 1e-11
+        # ~ opt_result = opt.root(fun=Action_grad_mod,x0=x_opt,args=callfun,method='krylov', options={'disp':disp_scipy_opt,'maxiter':maxiter,'fatol':gradtol,'jac_options':{'method':krylov_method}},callback=best_sol.update)
 
         print('Approximate solution found ! Action Grad Norm : ',best_sol.f_norm)
 
@@ -329,7 +344,7 @@ while (n_opt < n_opt_max):
                 nint = callfun[0]["nint_list"][callfun[0]["current_cvg_lvl"]]
                 
                 
-                f0 = Compute_action_onlygrad(x0,callfun)
+                f0 = Action_grad_mod(x0,callfun)
                 best_sol = current_best(x0,f0)
                 
                 print('After Resize : Action Grad Norm : ',best_sol.f_norm)
@@ -344,7 +359,7 @@ while (n_opt < n_opt_max):
 
                     maxiter = 20
                     gradtol = 1e-15
-                    opt_result = opt.root(fun=Compute_action_onlygrad,x0=x0,args=callfun,method='krylov', options={'disp':disp_scipy_opt,'maxiter':maxiter,'fatol':gradtol,'jac_options':{'method':krylov_method}},callback=best_sol.update)
+                    opt_result = opt.root(fun=Action_grad_mod,x0=x0,args=callfun,method='krylov', options={'disp':disp_scipy_opt,'maxiter':maxiter,'fatol':gradtol,'jac_options':{'method':krylov_method}},callback=best_sol.update)
                     
                     all_coeffs = Unpackage_all_coeffs(best_sol.x,callfun)
                     
@@ -370,7 +385,7 @@ while (n_opt < n_opt_max):
                     
                     try : 
                                     
-                        opt_result = opt.root(fun=Compute_action_onlygrad,x0=x0,args=callfun,method='krylov', options={'line_search':line_search,'disp':disp_scipy_opt,'maxiter':maxiter,'fatol':gradtol,'jac_options':{'method':krylov_method}},callback=best_sol.update)
+                        opt_result = opt.root(fun=Action_grad_mod,x0=x0,args=callfun,method='krylov', options={'line_search':line_search,'disp':disp_scipy_opt,'maxiter':maxiter,'fatol':gradtol,'jac_options':{'method':krylov_method}},callback=best_sol.update)
                                 
                         all_coeffs = Unpackage_all_coeffs(best_sol.x,callfun)
                         
@@ -469,9 +484,32 @@ while (n_opt < n_opt_max):
             
                     # ~ print('Press Enter to continue ...')
                     # ~ pause = input()
+                    
+                    
+    if (Use_deflation):
+        
+        # ~ HessMat = Compute_action_hess_LinOpt(best_sol.x,callfun)
+        # ~ w ,v = sp.linalg.eigsh(HessMat,k=10,which='SA')
+        
+        # ~ print(w)
+        
+        Newt_err = Compute_Newton_err(best_sol.x,callfun)
+        Newt_err_norm = np.linalg.norm(Newt_err)/nint
+        
+        if(Newt_err_norm < Newt_err_norm_max_save):
+            
+            print("Deflation coeff at sol : ",Compute_defl_fac(best_sol.x,callfun))
+            print("Modified Action Grad at sol : ",np.linalg.norm(Compute_action_defl(best_sol.x,callfun)))
+            
+            all_coeffs = Unpackage_all_coeffs(best_sol.x,callfun)
+            Add_deflation_coeffs(all_coeffs,callfun)            
+            
+            print("Added to deflation vects list")
+            print("Length of deflation vects list : ",len(callfun[0]['defl_vec_list']))
     
-    
-    
+    # ~ print('Press Enter to continue ...')
+    # ~ pause = input()
+
     print('')
     print('')
     print('')
