@@ -11,44 +11,45 @@ import time
 
 from Choreo_funs import *
 
-nbody =     4
+nbody =     3
 mass = np.ones((nbody))
 
 Sym_list = []
 
-SymType = {
-    'name'  : 'D',
-    'n'     : nbody,
-    'k'     : 1,
-    'l'     : 1 ,
-    'p'     : 0 ,
-    'q'     : nbody ,
-}
+# ~ SymType = {
+    # ~ 'name'  : 'C',
+    # ~ 'n'     : 2,
+    # ~ 'k'     : 1,
+    # ~ 'l'     : 1 ,
+    # ~ 'p'     : 0 ,
+    # ~ 'q'     : 2 ,
+# ~ }
 
-Sym_list.extend(Make2DChoreoSym(SymType,range(nbody)))
+# ~ Sym_list.extend(Make2DChoreoSym(SymType,[0,1]))
 
-
-# ~ Sym = ChoreoSym(
-    # ~ LoopTarget=1,
-    # ~ LoopSource=0,
-    # ~ SpaceRot = np.array([[0,-1],[1,0]]),
-    # ~ TimeRev=-1,
-    # ~ TimeShift=fractions.Fraction(0,1)
-    # ~ )
-
-# ~ Sym_list.append(Sym)
-
-# ~ Sym = ChoreoSym(
-    # ~ LoopTarget=2,
-    # ~ LoopSource=2,
-    # ~ SpaceRot = np.array([[1,0],[0,1]]),
-    # ~ TimeRev=1,
-    # ~ TimeShift=fractions.Fraction(1,2)
-    # ~ )
-
-# ~ Sym_list.append(Sym)
+# ~ SymType = {
+    # ~ 'name'  : 'C',
+    # ~ 'n'     : 2,
+    # ~ 'k'     : 1,
+    # ~ 'l'     : 1 ,
+    # ~ 'p'     : 0 ,
+    # ~ 'q'     : 2 ,
+# ~ }
 
 # ~ Sym_list.extend(Make2DChoreoSym(SymType,[2,3]))
+
+# ~ SymType = {
+    # ~ 'name'  : 'C',
+    # ~ 'n'     : 2,
+    # ~ 'k'     : 1,
+    # ~ 'l'     : 1 ,
+    # ~ 'p'     : 0 ,
+    # ~ 'q'     : 2 ,
+# ~ }
+
+# ~ Sym_list.extend(Make2DChoreoSym(SymType,[4,5]))
+
+
 
 
 Search_Min_Only = False
@@ -264,7 +265,7 @@ while (n_opt < n_opt_max):
         f0 = Action_grad_mod(x0,callfun)
         best_sol = current_best(x0,f0)
 
-        gradtol = 1e-12
+        gradtol = 1e-5
         maxiter = 500
 
         try : 
@@ -295,9 +296,9 @@ while (n_opt < n_opt_max):
         f0 = Action_grad_mod(x_opt,callfun)
         best_sol = current_best(x_opt,f0)
 
-        # ~ maxiter = 10
-        # ~ gradtol = 1e-11
-        # ~ opt_result = opt.root(fun=Action_grad_mod,x0=x_opt,args=callfun,method='krylov', options={'disp':disp_scipy_opt,'maxiter':maxiter,'fatol':gradtol,'jac_options':{'method':krylov_method}},callback=best_sol.update)
+        maxiter = 10
+        gradtol = 1e-11
+        opt_result = opt.root(fun=Action_grad_mod,x0=x_opt,args=callfun,method='krylov', options={'disp':disp_scipy_opt,'maxiter':maxiter,'fatol':gradtol,'jac_options':{'method':krylov_method}},callback=best_sol.update)
 
         print('Approximate solution found ! Action Grad Norm : ',best_sol.f_norm)
 
