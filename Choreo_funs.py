@@ -18,6 +18,13 @@ import scipy.sparse as sp
 import sparseqr
 import networkx as nx
 
+import logging
+logging.disable(logging.WARNING)
+
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
+import tensorflow as tf
+import tensorflow_probability as tfp
+
 import fractions
 
 from matplotlib import pyplot as plt
@@ -1100,3 +1107,25 @@ def Compute_defl_fac(x,callfun):
     kfac = 1. / np.sqrt(kfac) + 1. 
     
     return kfac
+
+class UniformRandom():
+    def __init__(self, d):
+        self.d = d
+
+    def random(self):
+        return np.random.random((self.d))
+
+class Halton():
+    def __init__(self, d):
+        self.d = d
+        self.n_gen = 0
+
+    def random(self):
+        
+        sequence_indices = tf.range(start=self.n_gen, limit=self.n_gen+1,dtype=tf.int32)
+        
+        sample_leaped = tfp.mcmc.sample_halton_sequence(self.d,sequence_indices=sequence_indices).numpy().reshape(-1)
+
+        self.n_gen +=1
+        
+        return sample_leaped
