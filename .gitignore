@@ -5,6 +5,7 @@
 *.npy
 *.mp4
 *.html
+*.txt
 Saves/
 testplots/
 build/

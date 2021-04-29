@@ -11,52 +11,128 @@ import time
 
 from Choreo_funs import *
 
-nbody =     3
+nbody =     10
+# ~ nbody =     6
 mass = np.ones((nbody))
+mass[0] = 10
 
 Sym_list = []
 
 # ~ SymType = {
     # ~ 'name'  : 'C',
-    # ~ 'n'     : 2,
+    # ~ 'n'     : nbody,
     # ~ 'k'     : 1,
     # ~ 'l'     : 1 ,
     # ~ 'p'     : 0 ,
-    # ~ 'q'     : 2 ,
+    # ~ 'q'     : 1 ,
 # ~ }
+# ~ Sym_list.extend(Make2DChoreoSym(SymType,range(nbody)))
 
-# ~ Sym_list.extend(Make2DChoreoSym(SymType,[0,1]))
+SymType = {
+    'name'  : 'D',
+    'n'     : -12,
+    'k'     : 1,
+    'l'     : 1 ,
+    'p'     : 0 ,
+    'q'     : 1 ,
+}
 
-# ~ SymType = {
-    # ~ 'name'  : 'C',
-    # ~ 'n'     : 2,
-    # ~ 'k'     : 1,
-    # ~ 'l'     : 1 ,
-    # ~ 'p'     : 0 ,
-    # ~ 'q'     : 2 ,
-# ~ }
+Sym_list.extend(Make2DChoreoSym(SymType,[0]))
 
-# ~ Sym_list.extend(Make2DChoreoSym(SymType,[2,3]))
+Sym_list.append(ChoreoSym(
+                LoopTarget=0,
+                LoopSource=0,
+                SpaceRot = np.identity(ndim,dtype=np.float64),
+                TimeRev=1,
+                TimeShift=fractions.Fraction(numerator=1,denominator=12)
+                ))
 
-# ~ SymType = {
-    # ~ 'name'  : 'C',
-    # ~ 'n'     : 2,
-    # ~ 'k'     : 1,
-    # ~ 'l'     : 1 ,
-    # ~ 'p'     : 0 ,
-    # ~ 'q'     : 2 ,
-# ~ }
+SymType = {
+    'name'  : 'D',
+    'n'     : -12,
+    'k'     : 1,
+    'l'     : 1 ,
+    'p'     : 0 ,
+    'q'     : 1 ,
+}
 
-# ~ Sym_list.extend(Make2DChoreoSym(SymType,[4,5]))
+Sym_list.extend(Make2DChoreoSym(SymType,[i+1 for i in range(2)]))
 
 
+Sym_list.append(ChoreoSym(
+                LoopTarget=1,
+                LoopSource=1,
+                SpaceRot = np.identity(ndim,dtype=np.float64),
+                TimeRev=1,
+                TimeShift=fractions.Fraction(numerator=2,denominator=12)
+                ))
+
+
+
+
+SymType = {
+    'name'  : 'D',
+    'n'     : -12,
+    'k'     : 1,
+    'l'     : 1 ,
+    'p'     : 0 ,
+    'q'     : 1 ,
+}
+
+Sym_list.extend(Make2DChoreoSym(SymType,[i+3 for i in range(3)]))
+
+
+Sym_list.append(ChoreoSym(
+                LoopTarget=3,
+                LoopSource=3,
+                SpaceRot = np.identity(ndim,dtype=np.float64),
+                TimeRev=1,
+                TimeShift=fractions.Fraction(numerator=3,denominator=12)
+                ))
+
+
+
+SymType = {
+    'name'  : 'D',
+    'n'     : -12,
+    'k'     : 1,
+    'l'     : 1 ,
+    'p'     : 0 ,
+    'q'     :  1,
+}
+
+Sym_list.extend(Make2DChoreoSym(SymType,[i+6 for i in range(4)]))
+
+Sym_list.append(ChoreoSym(
+                LoopTarget=6,
+                LoopSource=6,
+                SpaceRot = np.identity(ndim,dtype=np.float64),
+                TimeRev=1,
+                TimeShift=fractions.Fraction(numerator=4,denominator=12)
+                ))
+
+# ~ Sym_list.append(ChoreoSym(
+                # ~ LoopTarget=2,
+                # ~ LoopSource=2,
+                # ~ SpaceRot = np.identity(ndim,dtype=np.float64),
+                # ~ TimeRev=1,
+                # ~ TimeShift=fractions.Fraction(numerator=1,denominator=2)
+                # ~ ))
+
+# ~ Sym_list.append(ChoreoSym(
+                # ~ LoopTarget=5,
+                # ~ LoopSource=5,
+                # ~ SpaceRot = np.identity(ndim,dtype=np.float64),
+                # ~ TimeRev=1,
+                # ~ TimeShift=fractions.Fraction(numerator=1,denominator=6)
+                # ~ ))
 
 
 Search_Min_Only = False
 # ~ Search_Min_Only = True
 
-MomConsImposed = True
-# ~ MomConsImposed = False
+# ~ MomConsImposed = True
+MomConsImposed = False
 
 store_folder = './Sniff_all_sym/'
 store_folder = store_folder+str(nbody)
@@ -92,7 +168,7 @@ vid_size = (5,5) # Image size in inches
 Plot_trace_anim = True
 # ~ Plot_trace_anim = False
 
-n_reconverge_it_max = 7
+n_reconverge_it_max = 5
 # ~ n_reconverge_it_max = 1
 
 # ~ ncoeff_init = 100
@@ -185,6 +261,50 @@ else:
     
     Action_grad_mod = Compute_action_onlygrad
 
+callfun[0]["current_cvg_lvl"] = 0
+ncoeff = callfun[0]["ncoeff_list"][callfun[0]["current_cvg_lvl"]]
+nint = callfun[0]["nint_list"][callfun[0]["current_cvg_lvl"]]
+
+all_coeffs_min = np.zeros((nloop,ndim,ncoeff,2),dtype=np.float64)
+all_coeffs_max = np.zeros((nloop,ndim,ncoeff,2),dtype=np.float64)
+
+for il in range(nloop):
+    for idim in range(ndim):
+        for k in range(1,ncoeff):
+
+            ko = 2
+            k1 =50
+            k2= 10
+            if (k <= ko):
+                randampl = 0.
+            elif (k <= k1):
+                # ~ randampl = 1.5
+                randampl = 1.
+            elif (k <= k2):
+                randampl = 0.005
+            else:
+                randampl = 0.
+
+            all_coeffs_min[il,idim,k,0] = -randampl
+            all_coeffs_min[il,idim,k,1] = -randampl
+            all_coeffs_max[il,idim,k,0] =  randampl
+            all_coeffs_max[il,idim,k,1] =  randampl
+
+x_min = Package_all_coeffs(all_coeffs_min,callfun)
+x_max = Package_all_coeffs(all_coeffs_max,callfun)
+
+rand_eps = 1e-6
+rand_dim = 0
+for i in range(callfun[0]['coeff_to_param_list'][0].shape[0]):
+    if ((x_max[i] - x_min[i]) > rand_eps):
+        rand_dim +=1
+
+print('Number of initialization dimensions : ',rand_dim)
+
+
+sampler = UniformRandom(d=rand_dim)
+# ~ sampler = Halton(d=rand_dim)
+
 
 n_opt = 0
 # ~ n_opt_max = 1
@@ -199,59 +319,27 @@ while (n_opt < n_opt_max):
     ncoeff = callfun[0]["ncoeff_list"][callfun[0]["current_cvg_lvl"]]
     nint = callfun[0]["nint_list"][callfun[0]["current_cvg_lvl"]]
     
-    all_coeffs = np.zeros((nloop,ndim,ncoeff,2),dtype=np.float64)
-
-    # ~ amplitude_o = 0.3
-    # ~ amplitude_o = 0.1
-    amplitude_o = 0.001
-    # ~ amplitude_o = 0.08
-
-    decrease_pow = 2.
-    decrease_fac = 1 - 0.3
-
-    for il in range(nloop):
-        # ~ mass[il] = np.random.rand()+2.
-        for idim in range(ndim):
-            # ~ kfac = 1.
-            kfac = 1.
-            for k in range(1,ncoeff):
-                
-                randphase = np.random.rand() * twopi * 3.
-                randampl = np.random.rand()* amplitude_o
-            
-                ko = 1
-                k1 =20
-                k2= 40
-                if (k <= ko):
-                    # ~ randampl = 0.12
-                    randampl = 0.00 * np.random.rand()
-                    
-                
-                elif (k <= k1):
-                    randampl = 0.03*np.random.rand()
-                
-                elif (k <= k2):
-                    randampl = 0.005*np.random.rand()
-                
-            
-                k_thresh_damp = k2
-                # ~ k_thresh_damp = 1
-                
-                if (k >= k_thresh_damp):
-                    kfac = kfac* decrease_fac
-                    randampl = randampl*kfac
-                
-      
-                all_coeffs[il,idim,k,0] = randampl*np.cos(randphase)
-                all_coeffs[il,idim,k,1] = randampl*np.sin(randphase)
+    x0 = np.zeros((callfun[0]['coeff_to_param_list'][callfun[0]["current_cvg_lvl"]].shape[0]),dtype=np.float64)
     
-    x0 = Package_all_coeffs(all_coeffs,callfun)
+    xrand = sampler.random()
     
-    
+    rand_dim = 0
+    for i in range(callfun[0]['coeff_to_param_list'][callfun[0]["current_cvg_lvl"]].shape[0]):
+        if ((x_max[i] - x_min[i]) > rand_eps):
+            x0[i] = x_min[i] + (x_max[i] - x_min[i])*xrand[rand_dim]
+            rand_dim +=1
+        else:
+            x0[i] = 0.
 
+    if save_init:
+    
+        nint_plot = 10000
+        plot_all_2D(x0,nint_plot,callfun,'init.png',fig_size=img_size)        
+
+    
     if Search_Min_Only:
                     
-        gradtol = 1e-5
+        gradtol = 1e-1
         maxiter = 1000
         
         opt_result = opt.minimize(fun=Compute_action,x0=x0,args=callfun,method='trust-krylov',jac=True,hessp=Compute_action_hess_mul,options={'disp':disp_scipy_opt,'maxiter':maxiter,'gtol' : gradtol,'inexact': True})
@@ -265,7 +353,7 @@ while (n_opt < n_opt_max):
         f0 = Action_grad_mod(x0,callfun)
         best_sol = current_best(x0,f0)
 
-        gradtol = 1e-5
+        gradtol = 1e-1
         maxiter = 500
 
         try : 
@@ -296,7 +384,7 @@ while (n_opt < n_opt_max):
         f0 = Action_grad_mod(x_opt,callfun)
         best_sol = current_best(x_opt,f0)
 
-        maxiter = 10
+        maxiter = 20
         gradtol = 1e-11
         opt_result = opt.root(fun=Action_grad_mod,x0=x_opt,args=callfun,method='krylov', options={'disp':disp_scipy_opt,'maxiter':maxiter,'fatol':gradtol,'jac_options':{'method':krylov_method}},callback=best_sol.update)
 
@@ -455,7 +543,8 @@ while (n_opt < n_opt_max):
                     filename_output = store_folder+'/'+str(max_num_file)
                     
                     if not(SaveSol):
-                        filename_output = filename_output + '_bad'
+                        # ~ filename_output = filename_output + '_bad'
+                        filename_output = 'bad'
                     
                     print('Saving solution as '+filename_output+'.*')
                     
@@ -486,7 +575,7 @@ while (n_opt < n_opt_max):
                     # ~ print('Press Enter to continue ...')
                     # ~ pause = input()
                     
-                    
+
     if (Use_deflation):
         
         # ~ HessMat = Compute_action_hess_LinOpt(best_sol.x,callfun)
