@@ -1,8 +1,9 @@
 import subprocess
 
-job = 'python Choreo_sniffall.py' 
+# ~ job = 'python Choreo_sniffall.py' 
+job = 'python Choreo_target_custom.py' 
 
-n=4
+n=6
 
 job_all = ''
 for i in range(n):

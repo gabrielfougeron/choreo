@@ -11,8 +11,28 @@ import time
 
 from Choreo_funs import *
 
-nbody =     4
-# ~ nbody =     2
+
+# ~ slow_base_filename = './data/2_cercle.npy'
+slow_base_filename = './data/3_huit.npy'
+
+fast_base_filename = './data/2_cercle.npy'
+# ~ fast_base_filename = './data/3_huit.npy'
+
+nTf = 51
+nbs = 3
+nbf = 2
+
+all_coeffs_slow_load = np.load(slow_base_filename)
+all_coeffs_fast_load = np.load(fast_base_filename)
+
+if (all_coeffs_slow_load.shape[0] != 1):
+    raise ValueError("Several loops in slow base")
+
+if (all_coeffs_fast_load.shape[0] != 1):
+    raise ValueError("Several loops in fast base")
+
+nbody =  nbs * nbf
+
 mass = np.ones((nbody))
 
 Sym_list = []
@@ -20,122 +40,14 @@ Sym_list = []
 SymType = {
     'name'  : 'C',
     'n'     : nbody,
-    'k'     : 13,
-    'l'     : 2 ,
+    'k'     : 1,
+    'l'     : 1 ,
     'p'     : 0 ,
     'q'     : 1 ,
 }
 
-# ~ SymType = {
-    # ~ 'name'  : 'C',
-    # ~ 'n'     : nbody,
-    # ~ 'k'     : 1,
-    # ~ 'l'     : 1 ,
-    # ~ 'p'     : 0 ,
-    # ~ 'q'     : 1 ,
-# ~ }
-
 
 Sym_list.extend(Make2DChoreoSym(SymType,range(nbody)))
-
-# ~ SymType = {
-    # ~ 'name'  : 'D',
-    # ~ 'n'     : -12,
-    # ~ 'k'     : 1,
-    # ~ 'l'     : 1 ,
-    # ~ 'p'     : 0 ,
-    # ~ 'q'     : 1 ,
-# ~ }
-
-# ~ Sym_list.extend(Make2DChoreoSym(SymType,[0]))
-
-# ~ Sym_list.append(ChoreoSym(
-                # ~ LoopTarget=0,
-                # ~ LoopSource=0,
-                # ~ SpaceRot = np.identity(ndim,dtype=np.float64),
-                # ~ TimeRev=1,
-                # ~ TimeShift=fractions.Fraction(numerator=1,denominator=12)
-                # ~ ))
-
-# ~ SymType = {
-    # ~ 'name'  : 'D',
-    # ~ 'n'     : -12,
-    # ~ 'k'     : 1,
-    # ~ 'l'     : 1 ,
-    # ~ 'p'     : 0 ,
-    # ~ 'q'     : 1 ,
-# ~ }
-
-# ~ Sym_list.extend(Make2DChoreoSym(SymType,[i+1 for i in range(2)]))
-
-
-# ~ Sym_list.append(ChoreoSym(
-                # ~ LoopTarget=1,
-                # ~ LoopSource=1,
-                # ~ SpaceRot = np.identity(ndim,dtype=np.float64),
-                # ~ TimeRev=1,
-                # ~ TimeShift=fractions.Fraction(numerator=2,denominator=12)
-                # ~ ))
-
-
-
-
-# ~ SymType = {
-    # ~ 'name'  : 'D',
-    # ~ 'n'     : -12,
-    # ~ 'k'     : 1,
-    # ~ 'l'     : 1 ,
-    # ~ 'p'     : 0 ,
-    # ~ 'q'     : 1 ,
-# ~ }
-
-# ~ Sym_list.extend(Make2DChoreoSym(SymType,[i+3 for i in range(3)]))
-
-
-# ~ Sym_list.append(ChoreoSym(
-                # ~ LoopTarget=3,
-                # ~ LoopSource=3,
-                # ~ SpaceRot = np.identity(ndim,dtype=np.float64),
-                # ~ TimeRev=1,
-                # ~ TimeShift=fractions.Fraction(numerator=3,denominator=12)
-                # ~ ))
-
-
-
-# ~ SymType = {
-    # ~ 'name'  : 'D',
-    # ~ 'n'     : -12,
-    # ~ 'k'     : 1,
-    # ~ 'l'     : 1 ,
-    # ~ 'p'     : 0 ,
-    # ~ 'q'     :  1,
-# ~ }
-
-# ~ Sym_list.extend(Make2DChoreoSym(SymType,[i+6 for i in range(4)]))
-
-# ~ Sym_list.append(ChoreoSym(
-                # ~ LoopTarget=6,
-                # ~ LoopSource=6,
-                # ~ SpaceRot = np.identity(ndim,dtype=np.float64),
-                # ~ TimeRev=1,
-                # ~ TimeShift=fractions.Fraction(numerator=4,denominator=12)
-                # ~ ))
-
-# ~ Sym_list.append(ChoreoSym(
-                # ~ LoopTarget=2,
-                # ~ LoopSource=2,
-                # ~ SpaceRot = np.identity(ndim,dtype=np.float64),
-                # ~ TimeRev=1,
-                # ~ TimeShift=fractions.Fraction(numerator=1,denominator=2)
-                # ~ ))
-
-# ~ Sym_list.append(ChoreoSym(
-                # ~ LoopTarget=5,
-                # ~ LoopSource=5,
-                # ~ SpaceRot = np.identity(ndim,dtype=np.float64),
-                # ~ TimeRev=1,
-                # ~ TimeShift=fractions.Fraction(numerator=1,denominator=6)
-                # ~ ))
 
 
 Search_Min_Only = False
@@ -144,7 +56,7 @@ Search_Min_Only = False
 MomConsImposed = True
 # ~ MomConsImposed = False
 
-store_folder = './Sniff_all_sym/'
+store_folder = './Target_res/'
 store_folder = store_folder+str(nbody)
 if not(os.path.isdir(store_folder)):
     os.mkdir(store_folder)
@@ -165,7 +77,7 @@ save_init = False
 save_approx = False
 # ~ save_approx = True
 
-Save_img = True
+Save_img = True 
 # ~ Save_img = False
 
 # ~ img_size = (12,12) # Image size in inches
@@ -282,6 +194,73 @@ callfun[0]["current_cvg_lvl"] = 0
 ncoeff = callfun[0]["ncoeff_list"][callfun[0]["current_cvg_lvl"]]
 nint = callfun[0]["nint_list"][callfun[0]["current_cvg_lvl"]]
 
+ncoeff_slow = all_coeffs_slow_load.shape[2]
+ncoeff_fast = all_coeffs_fast_load.shape[2]
+
+all_coeffs_slow_mod = np.zeros((nloop,ndim,ncoeff,2),dtype=np.float64)
+all_coeffs_fast_mod = np.zeros((nloop,ndim,ncoeff,2),dtype=np.float64)
+
+
+phys_exp = 1./(-n+1)
+
+
+rfac_slow = (nbf)**(-phys_exp/2)
+rfac_fast = (1. / nTf)**phys_exp
+
+
+# ~ rfac_slow = 1.
+# ~ rfac_fast = 1.
+
+print(nbs,nbf,nTf,n)
+print('rfac_slow = ',rfac_slow)
+print('rfac_fast = ',rfac_fast)
+
+k_fac_slow = nbf
+# ~ k_fac_fast = nbs*nbf*nTf
+k_fac_fast = nTf
+
+for il in range(nloop):
+    for idim in range(ndim):
+        for k in range(1,min(ncoeff//k_fac_slow,ncoeff_slow)):
+            
+            all_coeffs_slow_mod[il,idim,k*k_fac_slow,0]  = rfac_slow * all_coeffs_slow_load[il,idim,k,0]
+            all_coeffs_slow_mod[il,idim,k*k_fac_slow,1]  = rfac_slow * all_coeffs_slow_load[il,idim,k,1]
+
+theta = 2 * np.pi * np.random.random()
+RanRotMat = np.array( [[np.cos(theta) , np.sin(theta)] , [-np.sin(theta),np.cos(theta)]])
+TimeRevscal = 1 if (np.random.random() > 1./2.) else -1
+
+for il in range(nloop):
+    for k in range(1,min(ncoeff // (k_fac_fast),ncoeff_slow)):
+            
+        v = RanRotMat.dot(all_coeffs_fast_load[il,:,k,0])
+        w = TimeRevscal * RanRotMat.dot(all_coeffs_fast_load[il,:,k,1])
+            
+        for idim in range(ndim):
+            
+            all_coeffs_fast_mod[il,idim,k*k_fac_fast,0]  = rfac_fast * v[idim]
+            all_coeffs_fast_mod[il,idim,k*k_fac_fast,1]  = rfac_fast * w[idim]
+            
+
+all_coeffs_avg = all_coeffs_fast_mod + all_coeffs_slow_mod
+
+
+# ~ for il in range(nloop):
+    # ~ for k in range(ncoeff):
+        # ~ if (k < 50):
+            # ~ print(k,np.linalg.norm(all_coeffs_avg[il,:,k,:]) )
+
+
+
+
+
+
+
+
+
+
+
+
 all_coeffs_min = np.zeros((nloop,ndim,ncoeff,2),dtype=np.float64)
 all_coeffs_max = np.zeros((nloop,ndim,ncoeff,2),dtype=np.float64)
 
@@ -289,14 +268,18 @@ for il in range(nloop):
     for idim in range(ndim):
         for k in range(1,ncoeff):
 
-            ko = 2
-            k1 =50
-            k2= 10
+            ko = 10
+            k1 =5
+            k2= 0
+
+            # ~ ko = 0  
+            # ~ k1 = 0
+            # ~ k2=  0
             if (k <= ko):
-                randampl = 0.
+                randampl = 0.0005
             elif (k <= k1):
                 # ~ randampl = 1.5
-                randampl = 1.
+                randampl = 0.0001
             elif (k <= k2):
                 randampl = 0.005
             else:
@@ -307,6 +290,7 @@ for il in range(nloop):
             all_coeffs_max[il,idim,k,0] =  randampl
             all_coeffs_max[il,idim,k,1] =  randampl
 
+x_avg = Package_all_coeffs(all_coeffs_avg,callfun)
 x_min = Package_all_coeffs(all_coeffs_min,callfun)
 x_max = Package_all_coeffs(all_coeffs_max,callfun)
 
@@ -343,15 +327,21 @@ while (n_opt < n_opt_max):
     rand_dim = 0
     for i in range(callfun[0]['coeff_to_param_list'][callfun[0]["current_cvg_lvl"]].shape[0]):
         if ((x_max[i] - x_min[i]) > rand_eps):
-            x0[i] = x_min[i] + (x_max[i] - x_min[i])*xrand[rand_dim]
+            x0[i] = x_avg[i] + x_min[i] + (x_max[i] - x_min[i])*xrand[rand_dim]
             rand_dim +=1
         else:
-            x0[i] = 0.
+            x0[i] = x_avg[i]
 
     if save_init:
     
         plot_all_2D(x0,nint_plot_img,callfun,'init.png',fig_size=img_size)        
+        
+        if Save_anim :
+            plot_all_2D_anim(x0,nint_plot_anim,callfun,'init.mp4',nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size)      
 
+        all_coeffs = Unpackage_all_coeffs(x0,callfun)
+        np.save('init.npy',all_coeffs)
+    
     
     if Search_Min_Only:
                     

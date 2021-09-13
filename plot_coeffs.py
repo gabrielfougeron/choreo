@@ -12,9 +12,10 @@ import time
 
 from Choreo_funs import *
 
-# ~ all_coeffs = np.load('./Sniff_all/1x1x1x1/1.npy')
-all_coeffs = np.load('./Sniff_all/2x2x2/114.npy')
-# ~ all_coeffs = np.load('./init.npy')
+# ~ all_coeffs = np.load('./Sniff_all_sym/4/2.npy')
+# ~ all_coeffs = np.load('./Sniff_all_sym/4/5.npy')
+# ~ all_coeffs = np.load('./Target_res/4/6.npy')
+all_coeffs = np.load('./init.npy')
 
 
 
@@ -35,6 +36,13 @@ ampl = np.zeros((nloop,ncoeff_plot),dtype=np.float64)
 for il in range(nloop):
     for k in range(ncoeff_plot):
         ampl[il,k] = np.linalg.norm(all_coeffs[il,:,k,:]) + eps
+
+for il in range(nloop):
+    for k in range(ncoeff_plot):
+        if (k<20):
+            print(k,ampl[il,k])
+        
+        
         
 
 ind = np.arange(ncoeff_plot) 
