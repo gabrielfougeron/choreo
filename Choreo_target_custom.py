@@ -12,15 +12,18 @@ import time
 from Choreo_funs import *
 
 
-slow_base_filename = './data/2_cercle.npy'
+# ~ slow_base_filename = './data/2_cercle.npy'
+slow_base_filename = './data/3_cercle.npy'
 # ~ slow_base_filename = './data/3_huit.npy'
 
-fast_base_filename = './data/2_cercle.npy'
+# ~ fast_base_filename = './data/2_cercle.npy'
+fast_base_filename = './data/3_cercle.npy'
 # ~ fast_base_filename = './data/3_huit.npy'
+# ~ fast_base_filename = './data/3_heart.npy'
 
-nTf = 5
-nbs = 2
-nbf = 2
+nTf = 22
+nbs = 3
+nbf = 3
 
 Rotate_fast_with_slow = True
 # ~ Rotate_fast_with_slow = False
@@ -78,8 +81,11 @@ Look_for_duplicates = True
 Check_loop_dist = True
 # ~ Check_loop_dist = False
 
-# ~ save_init = False
-save_init = True
+# ~ save_first_init = False
+save_first_init = True
+
+save_init = False
+# ~ save_init = True
 
 save_approx = False
 # ~ save_approx = True
@@ -110,8 +116,8 @@ n_reconverge_it_max = 5
 # ~ ncoeff_init = 100
 # ~ ncoeff_init = 800
 # ~ ncoeff_init = 350   
-ncoeff_init = 600
-# ~ ncoeff_init = 990
+# ~ ncoeff_init = 600
+ncoeff_init = 900
 # ~ ncoeff_init = 1200
 # ~ ncoeff_init = 90
 
@@ -217,10 +223,11 @@ rfac_slow = (nbf)**(-phys_exp/2)
 rfac_fast = (1. / nTf)**phys_exp
 
 
-# ~ rfac_slow = 1.
-# ~ rfac_fast = 1.
 
-print(nbs,nbf,nTf,n)
+print('nbs = ',nbs)
+print('nbf = ',nbf)
+print('nTf = ',nTf)
+
 print('rfac_slow = ',rfac_slow)
 print('rfac_fast = ',rfac_fast)
 
@@ -349,8 +356,8 @@ for il in range(nloop):
     for idim in range(ndim):
         for k in range(1,ncoeff):
 
-            ko = 10
-            k1 =5
+            ko = 0
+            k1 = 50
             k2= 0
 
             # ~ ko = 0  
@@ -389,8 +396,8 @@ sampler = UniformRandom(d=rand_dim)
 
 
 n_opt = 0
-n_opt_max = 1
-# ~ n_opt_max = 1e10
+# ~ n_opt_max = 1
+n_opt_max = 1e10
 while (n_opt < n_opt_max):
 
     n_opt += 1
@@ -403,17 +410,24 @@ while (n_opt < n_opt_max):
     
     x0 = np.zeros((callfun[0]['coeff_to_param_list'][callfun[0]["current_cvg_lvl"]].shape[0]),dtype=np.float64)
     
-    xrand = sampler.random()
-    
-    rand_dim = 0
-    for i in range(callfun[0]['coeff_to_param_list'][callfun[0]["current_cvg_lvl"]].shape[0]):
-        if ((x_max[i] - x_min[i]) > rand_eps):
-            x0[i] = x_avg[i] + x_min[i] + (x_max[i] - x_min[i])*xrand[rand_dim]
-            rand_dim +=1
-        else:
+    if (n_opt == 1) :
+            
+        for i in range(callfun[0]['coeff_to_param_list'][callfun[0]["current_cvg_lvl"]].shape[0]):
             x0[i] = x_avg[i]
+        
+    else :
+        
+        xrand = sampler.random()
+        
+        rand_dim = 0
+        for i in range(callfun[0]['coeff_to_param_list'][callfun[0]["current_cvg_lvl"]].shape[0]):
+            if ((x_max[i] - x_min[i]) > rand_eps):
+                x0[i] = x_avg[i] + x_min[i] + (x_max[i] - x_min[i])*xrand[rand_dim]
+                rand_dim +=1
+            else:
+                x0[i] = x_avg[i]
 
-    if save_init:
+    if save_init or (save_first_init and n_opt == 1):
     
         plot_all_2D(x0,nint_plot_img,callfun,'init.png',fig_size=img_size)        
         
