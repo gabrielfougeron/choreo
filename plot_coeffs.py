@@ -13,10 +13,11 @@ import time
 from Choreo_funs import *
 
 # ~ all_coeffs = np.load('./Sniff_all_sym/4/2.npy')
-# ~ all_coeffs = np.load('./Sniff_all_sym/4/5.npy')
-# ~ all_coeffs = np.load('./Target_res/4/6.npy')
+# ~ all_coeffs = np.load('./Target_res/9/140.npy')
 all_coeffs = np.load('./init.npy')
 
+
+k_plot_max = 20
 
 
 nloop = all_coeffs.shape[0]
@@ -39,7 +40,7 @@ for il in range(nloop):
 
 for il in range(nloop):
     for k in range(ncoeff_plot):
-        if (k<20):
+        if (k<k_plot_max):
             print(k,ampl[il,k])
         
         
