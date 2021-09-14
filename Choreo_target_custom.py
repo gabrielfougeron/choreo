@@ -12,15 +12,22 @@ import time
 from Choreo_funs import *
 
 
-# ~ slow_base_filename = './data/2_cercle.npy'
-slow_base_filename = './data/3_huit.npy'
+slow_base_filename = './data/2_cercle.npy'
+# ~ slow_base_filename = './data/3_huit.npy'
 
 fast_base_filename = './data/2_cercle.npy'
 # ~ fast_base_filename = './data/3_huit.npy'
 
-nTf = 51
-nbs = 3
+nTf = 5
+nbs = 2
 nbf = 2
+
+Rotate_fast_with_slow = True
+# ~ Rotate_fast_with_slow = False
+
+Randomize_Fast_Init = True
+# ~ Randomize_Fast_Init = False
+
 
 all_coeffs_slow_load = np.load(slow_base_filename)
 all_coeffs_fast_load = np.load(fast_base_filename)
@@ -71,8 +78,8 @@ Look_for_duplicates = True
 Check_loop_dist = True
 # ~ Check_loop_dist = False
 
-save_init = False
-# ~ save_init = True
+# ~ save_init = False
+save_init = True
 
 save_approx = False
 # ~ save_approx = True
@@ -197,6 +204,8 @@ nint = callfun[0]["nint_list"][callfun[0]["current_cvg_lvl"]]
 ncoeff_slow = all_coeffs_slow_load.shape[2]
 ncoeff_fast = all_coeffs_fast_load.shape[2]
 
+
+
 all_coeffs_slow_mod = np.zeros((nloop,ndim,ncoeff,2),dtype=np.float64)
 all_coeffs_fast_mod = np.zeros((nloop,ndim,ncoeff,2),dtype=np.float64)
 
@@ -226,12 +235,22 @@ for il in range(nloop):
             all_coeffs_slow_mod[il,idim,k*k_fac_slow,0]  = rfac_slow * all_coeffs_slow_load[il,idim,k,0]
             all_coeffs_slow_mod[il,idim,k*k_fac_slow,1]  = rfac_slow * all_coeffs_slow_load[il,idim,k,1]
 
-theta = 2 * np.pi * np.random.random()
+if Randomize_Fast_Init :
+
+    theta = 2 * np.pi * np.random.random()
+    TimeRevscal = 1. if (np.random.random() > 1./2.) else -1.
+
+else :
+        
+    theta = 0.
+    TimeRevscal = 1.
+
+
 RanRotMat = np.array( [[np.cos(theta) , np.sin(theta)] , [-np.sin(theta),np.cos(theta)]])
-TimeRevscal = 1 if (np.random.random() > 1./2.) else -1
+
 
 for il in range(nloop):
-    for k in range(1,min(ncoeff // (k_fac_fast),ncoeff_slow)):
+    for k in range(1,min(ncoeff // (k_fac_fast),ncoeff_fast)):
             
         v = RanRotMat.dot(all_coeffs_fast_load[il,:,k,0])
         w = TimeRevscal * RanRotMat.dot(all_coeffs_fast_load[il,:,k,1])
@@ -240,9 +259,71 @@ for il in range(nloop):
             
             all_coeffs_fast_mod[il,idim,k*k_fac_fast,0]  = rfac_fast * v[idim]
             all_coeffs_fast_mod[il,idim,k*k_fac_fast,1]  = rfac_fast * w[idim]
+ 
+
+if Rotate_fast_with_slow :
+
+    c_coeffs_slow = all_coeffs_slow_mod.view(dtype=np.complex128)[...,0]
+    all_pos_slow = np.fft.irfft(c_coeffs_slow,n=nint,axis=2)
+
+    c_coeffs_fast = all_coeffs_fast_mod.view(dtype=np.complex128)[...,0]
+    all_pos_fast = np.fft.irfft(c_coeffs_fast,n=nint,axis=2)
+
+
+    all_coeffs_slow_mod_speed = np.zeros((nloop,ndim,ncoeff,2),dtype=np.float64)
+
+
+    for il in range(nloop):
+        for idim in range(ndim):
+            for k in range(ncoeff):
+
+                all_coeffs_slow_mod_speed[il,idim,k,0] = k * all_coeffs_slow_mod[il,idim,k,1] 
+                all_coeffs_slow_mod_speed[il,idim,k,1] = -k * all_coeffs_slow_mod[il,idim,k,0] 
             
 
-all_coeffs_avg = all_coeffs_fast_mod + all_coeffs_slow_mod
+    c_coeffs_slow_mod_speed = all_coeffs_slow_mod_speed.view(dtype=np.complex128)[...,0]
+    all_pos_slow_mod_speed = np.fft.irfft(c_coeffs_slow_mod_speed,n=nint,axis=2)
+
+    all_pos_avg = np.zeros((nloop,ndim,nint),dtype=np.float64)
+
+    for il in range(nloop):
+        for iint in range(nint):
+            
+            v = all_pos_slow_mod_speed[il,:,iint]
+            v = v / np.linalg.norm(v)
+
+            SpRotMat = np.array( [[v[0] , -v[1]] , [v[1],v[0]]])
+            # ~ SpRotMat = np.array( [[v[0] , v[1]] , [-v[1],v[0]]])
+            
+            all_pos_avg[il,:,iint] = all_pos_slow[il,:,iint] + SpRotMat.dot(all_pos_fast[il,:,iint])
+
+
+    c_coeffs_avg = np.fft.rfft(all_pos_avg,n=nint,axis=2)
+    all_coeffs_avg = np.zeros((nloop,ndim,ncoeff,2),dtype=np.float64)
+
+    for il in range(nloop):
+        for idim in range(ndim):
+            for k in range(min(ncoeff,ncoeff_slow)):
+                all_coeffs_avg[il,idim,k,0] = c_coeffs_avg[il,idim,k].real
+                all_coeffs_avg[il,idim,k,1] = c_coeffs_avg[il,idim,k].imag
+                
+                
+else :
+    
+    all_coeffs_avg = all_coeffs_fast_mod + all_coeffs_slow_mod
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 # ~ for il in range(nloop):
@@ -308,8 +389,8 @@ sampler = UniformRandom(d=rand_dim)
 
 
 n_opt = 0
-# ~ n_opt_max = 1
-n_opt_max = 1e10
+n_opt_max = 1
+# ~ n_opt_max = 1e10
 while (n_opt < n_opt_max):
 
     n_opt += 1

@@ -1,5 +1,10 @@
 import subprocess
 
+# In order to kill all the created jobs : either quit the terminal or run the following command in another terminal :
+# pkill -9 python
+
+
+
 # ~ job = 'python Choreo_sniffall.py' 
 job = 'python Choreo_target_custom.py' 
 
