@@ -395,6 +395,8 @@ sampler = UniformRandom(d=rand_dim)
 # ~ sampler = Halton(d=rand_dim)
 
 
+hash_dict = {}
+
 n_opt = 0
 # ~ n_opt_max = 1
 # ~ n_opt_max = 1e10
@@ -500,7 +502,7 @@ while (n_opt < n_opt_max):
 
             Action,GradAction = Compute_action(best_sol.x,callfun)
             
-            Found_duplicate,file_path = Check_Duplicates(best_sol.x,callfun,store_folder,duplicate_eps)
+            Found_duplicate,file_path = Check_Duplicates(best_sol.x,callfun,hash_dict,store_folder,duplicate_eps)
             
         else:
             
@@ -615,7 +617,7 @@ while (n_opt < n_opt_max):
                     
                     Action,GradAction = Compute_action(best_sol.x,callfun)
             
-                    Found_duplicate,file_path = Check_Duplicates(best_sol.x,callfun,store_folder,duplicate_eps)
+                    Found_duplicate,file_path = Check_Duplicates(best_sol.x,callfun,hash_dict,store_folder,duplicate_eps)
                     
                 else:
                     Found_duplicate = False

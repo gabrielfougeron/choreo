@@ -996,7 +996,7 @@ def Write_Descriptor(x,callfun,filename):
         filename_write.write('\n')
         
 
-def SelectFiles_Action(store_folder,Action_val,Action_Hash_val,rtol):
+def SelectFiles_Action(store_folder,hash_dict,Action_val,Action_Hash_val,rtol):
     # Creates a list of possible duplicates based on value of the action and hashes
     
     Action_msg = 'Value of the Action : '
@@ -1011,37 +1011,50 @@ def SelectFiles_Action(store_folder,Action_val,Action_Hash_val,rtol):
         file_root, file_ext = os.path.splitext(os.path.basename(file_path))
         
         if (file_ext == '.txt' ):
-            # ~ print(file_path)
-            with open(file_path,'r') as file_read:
-                file_readlines = file_read.readlines()
-                for iline in range(len(file_readlines)):
-                    line = file_readlines[iline]
+            
+            Saved_Action = hash_dict.get(file_root)
+            
+            if (Saved_Action is None) :
+            
+                # ~ print(file_path)
+                with open(file_path,'r') as file_read:
+                    file_readlines = file_read.readlines()
+                    for iline in range(len(file_readlines)):
+                        line = file_readlines[iline]
 
-                    if (line[0:Action_msg_len] == Action_msg):
-                        This_Action = float(line[Action_msg_len:])
+                        if (line[0:Action_msg_len] == Action_msg):
+                            This_Action = float(line[Action_msg_len:])
+                        
+                        elif (line[0:Action_Hash_msg_len] == Action_Hash_msg):
+                            split_nums = line[Action_Hash_msg_len:].split()
+                            
+                            This_Action_Hash = np.array([float(num_str) for num_str in split_nums])
+                            
                     
-                    elif (line[0:Action_Hash_msg_len] == Action_Hash_msg):
-                        split_nums = line[Action_Hash_msg_len:].split()
-                        
-                        This_Action_Hash = np.array([float(num_str) for num_str in split_nums])
-                        
-                IsCandidate = (abs(This_Action-Action_val) < ((abs(This_Action)+abs(Action_val))*rtol))
-                for ihash in range(nhash):
-                    IsCandidate = (IsCandidate and (abs(This_Action_Hash[ihash]-Action_Hash_val[ihash]) < (abs(This_Action_Hash[ihash])+abs(Action_Hash_val[ihash]))*rtol))
+                    hash_dict[file_root] = [This_Action,This_Action_Hash]
+                    
+            else:
                 
-                if IsCandidate:
-                    
-                    file_path_list.append(store_folder+'/'+file_root)
+                 This_Action = Saved_Action[0]
+                 This_Action_Hash = Saved_Action[1]
+                        
+            IsCandidate = (abs(This_Action-Action_val) < ((abs(This_Action)+abs(Action_val))*rtol))
+            for ihash in range(nhash):
+                IsCandidate = (IsCandidate and (abs(This_Action_Hash[ihash]-Action_Hash_val[ihash]) < (abs(This_Action_Hash[ihash])+abs(Action_Hash_val[ihash]))*rtol))
+            
+            if IsCandidate:
+                
+                file_path_list.append(store_folder+'/'+file_root)
                     
     return file_path_list
 
-def Check_Duplicates(x,callfun,store_folder,duplicate_eps,rtol=1e-5):
+def Check_Duplicates(x,callfun,hash_dict,store_folder,duplicate_eps,rtol=1e-5):
     # Checks whether there is a duplicate of a given trajecory in the provided folder
 
     Action,Gradaction = Compute_action(x,callfun)
     Hash_Action = Compute_hash_action(x,callfun)
 
-    file_path_list = SelectFiles_Action(store_folder,Action,Hash_Action,rtol)
+    file_path_list = SelectFiles_Action(store_folder,hash_dict,Action,Hash_Action,rtol)
     
     if (len(file_path_list) == 0):
         
