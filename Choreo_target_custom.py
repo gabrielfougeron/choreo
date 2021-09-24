@@ -13,15 +13,15 @@ from Choreo_funs import *
 
 
 # ~ slow_base_filename = './data/2_cercle.npy'
-slow_base_filename = './data/3_cercle.npy'
-# ~ slow_base_filename = './data/3_huit.npy'
+# ~ slow_base_filename = './data/3_cercle.npy'
+slow_base_filename = './data/3_huit.npy'
 
 # ~ fast_base_filename = './data/2_cercle.npy'
-fast_base_filename = './data/3_cercle.npy'
-# ~ fast_base_filename = './data/3_huit.npy'
+# ~ fast_base_filename = './data/3_cercle.npy'
+fast_base_filename = './data/3_huit.npy'
 # ~ fast_base_filename = './data/3_heart.npy'
 
-nTf = 22
+nTf = 23
 nbs = 3
 nbf = 3
 
@@ -364,10 +364,10 @@ for il in range(nloop):
             # ~ k1 = 0
             # ~ k2=  0
             if (k <= ko):
-                randampl = 0.0005
+                randampl = 0.00005
             elif (k <= k1):
                 # ~ randampl = 1.5
-                randampl = 0.0001
+                randampl = 0.00001
             elif (k <= k2):
                 randampl = 0.005
             else:
@@ -397,7 +397,8 @@ sampler = UniformRandom(d=rand_dim)
 
 n_opt = 0
 # ~ n_opt_max = 1
-n_opt_max = 1e10
+# ~ n_opt_max = 1e10
+n_opt_max = 100
 while (n_opt < n_opt_max):
 
     n_opt += 1

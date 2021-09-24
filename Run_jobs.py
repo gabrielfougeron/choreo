@@ -1,6 +1,6 @@
 import subprocess
 
-# In order to kill all the created jobs : either quit the terminal or run the following command in another terminal :
+# In order to kill all the created jobs : either quit the terminal or run the following command (possibly in another terminal):
 # pkill -9 python
 
 
@@ -9,6 +9,7 @@ import subprocess
 job = 'python Choreo_target_custom.py' 
 
 n=6
+# ~ n=1
 
 job_all = ''
 for i in range(n):
