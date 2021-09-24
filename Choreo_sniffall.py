@@ -318,6 +318,7 @@ for i in range(callfun[0]['coeff_to_param_list'][0].shape[0]):
 
 print('Number of initialization dimensions : ',rand_dim)
 
+hash_dict = {}
 
 sampler = UniformRandom(d=rand_dim)
 # ~ sampler = Halton(d=rand_dim)
@@ -414,7 +415,7 @@ while (n_opt < n_opt_max):
 
             Action,GradAction = Compute_action(best_sol.x,callfun)
             
-            Found_duplicate,file_path = Check_Duplicates(best_sol.x,callfun,store_folder,duplicate_eps)
+            Found_duplicate,file_path = Check_Duplicates(best_sol.x,callfun,hash_dict,store_folder,duplicate_eps)
             
         else:
             
@@ -529,7 +530,7 @@ while (n_opt < n_opt_max):
                     
                     Action,GradAction = Compute_action(best_sol.x,callfun)
             
-                    Found_duplicate,file_path = Check_Duplicates(best_sol.x,callfun,store_folder,duplicate_eps)
+                    Found_duplicate,file_path = Check_Duplicates(best_sol.x,callfun,hash_dict,store_folder,duplicate_eps)
                     
                 else:
                     Found_duplicate = False
