@@ -21,7 +21,7 @@ slow_base_filename = './data/3_huit.npy'
 fast_base_filename = './data/3_huit.npy'
 # ~ fast_base_filename = './data/3_heart.npy'
 
-nTf = 23
+nTf = 13
 nbs = 3
 nbf = 3
 
@@ -47,8 +47,17 @@ mass = np.ones((nbody))
 
 Sym_list = []
 
+# ~ SymType = {
+    # ~ 'name'  : 'C',
+    # ~ 'n'     : nbody,
+    # ~ 'k'     : 1,
+    # ~ 'l'     : 1 ,
+    # ~ 'p'     : 0 ,
+    # ~ 'q'     : 1 ,
+# ~ }
+
 SymType = {
-    'name'  : 'C',
+    'name'  : 'Dp',
     'n'     : nbody,
     'k'     : 1,
     'l'     : 1 ,
@@ -364,7 +373,7 @@ for il in range(nloop):
             # ~ k1 = 0
             # ~ k2=  0
             if (k <= ko):
-                randampl = 0.00005
+                randampl = 0.0005
             elif (k <= k1):
                 # ~ randampl = 1.5
                 randampl = 0.00001
@@ -399,8 +408,8 @@ hash_dict = {}
 
 n_opt = 0
 # ~ n_opt_max = 1
-# ~ n_opt_max = 1e10
-n_opt_max = 100
+n_opt_max = 1e10
+# ~ n_opt_max = 100
 while (n_opt < n_opt_max):
 
     n_opt += 1
