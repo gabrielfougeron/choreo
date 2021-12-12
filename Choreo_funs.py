@@ -21,9 +21,9 @@ import networkx as nx
 import logging
 logging.disable(logging.WARNING)
 
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
-import tensorflow as tf
-import tensorflow_probability as tfp
+# ~ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
+# ~ import tensorflow as tf
+# ~ import tensorflow_probability as tfp
 
 import fractions
 
@@ -285,7 +285,10 @@ def null_space_sparseqr(AT):
     # AT must be in COO format
     # The nullspace of the TRANSPOSE of AT will be returned
 
-    Q, R, E, rank = sparseqr.qr( AT )
+    # ~ tolerance = 1e-5
+    tolerance = None
+
+    Q, R, E, rank = sparseqr.qr( AT, tolerance=tolerance )
 
     nrow = AT.shape[0]
     
@@ -402,6 +405,10 @@ class ChoreoSym():
         
         return ((self.Inverse()).ComposeLight(other)).IsIdentity()
 
+    
+
+
+
 def Make2DChoreoSym(SymType,ib_list):
     # Defines symmetries of a 2-D system of bodies as classfied in [1] 
     
@@ -425,8 +432,8 @@ def Make2DChoreoSym(SymType,ib_list):
         
     # [1] : https://arxiv.org/abs/1305.0470
 
-    if (len(ib_list) != SymType['n']):
-        print("Warning : SymType and LoopLength are inconsistent")
+    # ~ if (len(ib_list) != SymType['n']):
+        # ~ print("Warning : SymType and LoopLength are inconsistent")
         
     SymGens = []
     
@@ -497,6 +504,71 @@ def Make2DChoreoSym(SymType,ib_list):
             ))
     
     return SymGens
+
+
+
+def Make2DChoreoSymManyLoops(nloop=None,nbpl=None,SymName=None):
+
+    if nloop is None :
+        if nbpl is None :
+            raise ValueError("1")
+        else:
+            if isinstance(nbpl,list):
+                nloop = len(nbpl)
+            else:
+                raise ValueError("2")
+                
+    else:
+        if nbpl is None :
+            raise ValueError("3")
+        else:
+            if isinstance(nbpl,int):
+                nloop = [ nbpl for il in range(nloop) ]
+            elif isinstance(nbpl,list):
+                    if nloop != len(nbpl):
+                        raise ValueError("4")
+            else:
+                raise ValueError("5")
+
+    if (SymName is None):
+        SymName = ['C' for il in range(nloop)]
+    elif isinstance(SymName,str):
+        SymName = [SymName for il in range(nloop)]
+
+    SymGens = []
+
+    the_lcm = m.lcm(*nbpl)
+
+    istart = 0
+    for il in range(nloop):
+
+        SymType = {
+            'name'  : SymName[il],
+            'n'     : -the_lcm,
+            'k'     : 1,
+            'l'     : 1 ,
+            'p'     : 0 ,
+            'q'     : 1 ,
+        }
+
+        SymGens.extend(Make2DChoreoSym(SymType,[(i+istart) for i in range(nbpl[il])]))
+                
+        SymGens.append(ChoreoSym(
+                        LoopTarget=istart,
+                        LoopSource=istart,
+                        SpaceRot = np.identity(ndim,dtype=np.float64),
+                        TimeRev=1,
+                        TimeShift=fractions.Fraction(numerator=1,denominator=the_lcm//nbpl[il])
+                        ))
+        
+        istart += nbpl[il]
+        
+    nbody = istart
+        
+    return SymGens,nbody
+
+    
+
 
 def setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max=6,MomCons=True,n_grad_change=1.,Sym_list=[]):
     # This function returns the callfun dictionnary to be given as input to virtually all other function.
@@ -1127,18 +1199,3 @@ class UniformRandom():
 
     def random(self):
         return np.random.random((self.d))
-
-class Halton():
-    def __init__(self, d):
-        self.d = d
-        self.n_gen = 0
-
-    def random(self):
-        
-        sequence_indices = tf.range(start=self.n_gen, limit=self.n_gen+1,dtype=tf.int32)
-        
-        sample_leaped = tfp.mcmc.sample_halton_sequence(self.d,sequence_indices=sequence_indices).numpy().reshape(-1)
-
-        self.n_gen +=1
-        
-        return sample_leaped

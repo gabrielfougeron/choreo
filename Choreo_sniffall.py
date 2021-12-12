@@ -1,3 +1,4 @@
+import random
 import numpy as np
 import math as m
 import scipy.optimize as opt
@@ -11,131 +12,74 @@ import time
 
 from Choreo_funs import *
 
-nbody =     4
-# ~ nbody =     2
-mass = np.ones((nbody))
+# ~ nbody =     8
+# ~ mass = np.ones((nbody))
 
-Sym_list = []
-
-SymType = {
-    'name'  : 'C',
-    'n'     : nbody,
-    'k'     : 13,
-    'l'     : 2 ,
-    'p'     : 0 ,
-    'q'     : 1 ,
-}
+# ~ Sym_list = []
 
 # ~ SymType = {
     # ~ 'name'  : 'C',
-    # ~ 'n'     : nbody,
+    # ~ 'n'     : -15,
+    # ~ 'k'     : 1,
+    # ~ 'l'     : 1 ,
+    # ~ 'p'     : 0 ,
+    # ~ 'q'     : 1 ,
+# ~ }
+# ~ istart = 0
+# ~ Sym_list.extend(Make2DChoreoSym(SymType,[i+istart for i in range(5)]))
+# ~ Sym_list.append(ChoreoSym(
+                # ~ LoopTarget=istart,
+                # ~ LoopSource=istart,
+                # ~ SpaceRot = np.identity(ndim,dtype=np.float64),
+                # ~ TimeRev=1,
+                # ~ TimeShift=fractions.Fraction(numerator=1,denominator=3)
+                # ~ ))
+
+
+# ~ SymType = {
+    # ~ 'name'  : 'C',
+    # ~ 'n'     : -15,
     # ~ 'k'     : 1,
     # ~ 'l'     : 1 ,
     # ~ 'p'     : 0 ,
     # ~ 'q'     : 1 ,
 # ~ }
 
-
-Sym_list.extend(Make2DChoreoSym(SymType,range(nbody)))
-
-# ~ SymType = {
-    # ~ 'name'  : 'D',
-    # ~ 'n'     : -12,
-    # ~ 'k'     : 1,
-    # ~ 'l'     : 1 ,
-    # ~ 'p'     : 0 ,
-    # ~ 'q'     : 1 ,
-# ~ }
-
-# ~ Sym_list.extend(Make2DChoreoSym(SymType,[0]))
-
+# ~ istart = 5
+# ~ Sym_list.extend(Make2DChoreoSym(SymType,[i+istart for i in range(3)]))
 # ~ Sym_list.append(ChoreoSym(
-                # ~ LoopTarget=0,
-                # ~ LoopSource=0,
+                # ~ LoopTarget=istart,
+                # ~ LoopSource=istart,
                 # ~ SpaceRot = np.identity(ndim,dtype=np.float64),
                 # ~ TimeRev=1,
-                # ~ TimeShift=fractions.Fraction(numerator=1,denominator=12)
+                # ~ TimeShift=fractions.Fraction(numerator=1,denominator=5)
                 # ~ ))
 
-# ~ SymType = {
-    # ~ 'name'  : 'D',
-    # ~ 'n'     : -12,
-    # ~ 'k'     : 1,
-    # ~ 'l'     : 1 ,
-    # ~ 'p'     : 0 ,
-    # ~ 'q'     : 1 ,
-# ~ }
+# ~ nbpl = [3,3,5]
+# ~ SymName = [ 'C', 'C' , 'D' ]
+# ~ Sym_list,nbody = Make2DChoreoSymManyLoops(nbpl=nbpl,SymName=SymName)
 
-# ~ Sym_list.extend(Make2DChoreoSym(SymType,[i+1 for i in range(2)]))
-
-
-# ~ Sym_list.append(ChoreoSym(
-                # ~ LoopTarget=1,
-                # ~ LoopSource=1,
-                # ~ SpaceRot = np.identity(ndim,dtype=np.float64),
-                # ~ TimeRev=1,
-                # ~ TimeShift=fractions.Fraction(numerator=2,denominator=12)
-                # ~ ))
+nbpl = [1,2,3,4]
+the_lcm = m.lcm(*nbpl)
+SymName = [ 'C', 'C' ,'C' , 'C' ]
+Sym_list,nbody = Make2DChoreoSymManyLoops(nbpl=nbpl,SymName=SymName)
 
 
 
 
-# ~ SymType = {
-    # ~ 'name'  : 'D',
-    # ~ 'n'     : -12,
-    # ~ 'k'     : 1,
-    # ~ 'l'     : 1 ,
-    # ~ 'p'     : 0 ,
-    # ~ 'q'     : 1 ,
-# ~ }
 
-# ~ Sym_list.extend(Make2DChoreoSym(SymType,[i+3 for i in range(3)]))
-
-
-# ~ Sym_list.append(ChoreoSym(
-                # ~ LoopTarget=3,
-                # ~ LoopSource=3,
-                # ~ SpaceRot = np.identity(ndim,dtype=np.float64),
-                # ~ TimeRev=1,
-                # ~ TimeShift=fractions.Fraction(numerator=3,denominator=12)
-                # ~ ))
+mass = np.ones((nbody))
 
 
 
-# ~ SymType = {
-    # ~ 'name'  : 'D',
-    # ~ 'n'     : -12,
-    # ~ 'k'     : 1,
-    # ~ 'l'     : 1 ,
-    # ~ 'p'     : 0 ,
-    # ~ 'q'     :  1,
-# ~ }
 
-# ~ Sym_list.extend(Make2DChoreoSym(SymType,[i+6 for i in range(4)]))
 
-# ~ Sym_list.append(ChoreoSym(
-                # ~ LoopTarget=6,
-                # ~ LoopSource=6,
-                # ~ SpaceRot = np.identity(ndim,dtype=np.float64),
-                # ~ TimeRev=1,
-                # ~ TimeShift=fractions.Fraction(numerator=4,denominator=12)
-                # ~ ))
 
-# ~ Sym_list.append(ChoreoSym(
-                # ~ LoopTarget=2,
-                # ~ LoopSource=2,
-                # ~ SpaceRot = np.identity(ndim,dtype=np.float64),
-                # ~ TimeRev=1,
-                # ~ TimeShift=fractions.Fraction(numerator=1,denominator=2)
-                # ~ ))
 
-# ~ Sym_list.append(ChoreoSym(
-                # ~ LoopTarget=5,
-                # ~ LoopSource=5,
-                # ~ SpaceRot = np.identity(ndim,dtype=np.float64),
-                # ~ TimeRev=1,
-                # ~ TimeShift=fractions.Fraction(numerator=1,denominator=6)
-                # ~ ))
+
+
+
+
 
 
 Search_Min_Only = False
@@ -177,9 +121,12 @@ Save_anim = True
 # ~ Save_anim = False
 
 vid_size = (8,8) # Image size in inches
-nint_plot_anim = nbody*250
-nperiod_anim = 1./nbody
-# ~ nperiod_anim = 1.
+nint_plot_anim = nbody*300
+# ~ nperiod_anim = 1./nbody
+if the_lcm is None:
+    nperiod_anim = 1.
+else:
+    nperiod_anim = 1./the_lcm
 
 
 Plot_trace_anim = True
@@ -285,27 +232,30 @@ nint = callfun[0]["nint_list"][callfun[0]["current_cvg_lvl"]]
 all_coeffs_min = np.zeros((nloop,ndim,ncoeff,2),dtype=np.float64)
 all_coeffs_max = np.zeros((nloop,ndim,ncoeff,2),dtype=np.float64)
 
+randlimfac = 0.1
+# ~ randlimfac = 0.
+
 for il in range(nloop):
     for idim in range(ndim):
         for k in range(1,ncoeff):
 
             ko = 2
-            k1 =50
-            k2= 10
+            k1 =20
+            k2= 50
             if (k <= ko):
-                randampl = 0.
+                randampl = 0
             elif (k <= k1):
                 # ~ randampl = 1.5
-                randampl = 1.
+                randampl = 0.5
             elif (k <= k2):
-                randampl = 0.005
+                randampl = 0.0005
             else:
                 randampl = 0.
 
-            all_coeffs_min[il,idim,k,0] = -randampl
-            all_coeffs_min[il,idim,k,1] = -randampl
-            all_coeffs_max[il,idim,k,0] =  randampl
-            all_coeffs_max[il,idim,k,1] =  randampl
+            all_coeffs_min[il,idim,k,0] = -randampl* (1+random.random()*randlimfac)
+            all_coeffs_min[il,idim,k,1] = -randampl* (1+random.random()*randlimfac)
+            all_coeffs_max[il,idim,k,0] =  randampl* (1+random.random()*randlimfac)
+            all_coeffs_max[il,idim,k,1] =  randampl* (1+random.random()*randlimfac)
 
 x_min = Package_all_coeffs(all_coeffs_min,callfun)
 x_max = Package_all_coeffs(all_coeffs_max,callfun)
@@ -321,7 +271,6 @@ print('Number of initialization dimensions : ',rand_dim)
 hash_dict = {}
 
 sampler = UniformRandom(d=rand_dim)
-# ~ sampler = Halton(d=rand_dim)
 
 
 n_opt = 0
@@ -350,9 +299,14 @@ while (n_opt < n_opt_max):
             x0[i] = 0.
 
     if save_init:
-    
-        plot_all_2D(x0,nint_plot_img,callfun,'init.png',fig_size=img_size)        
 
+        if Save_img :
+            plot_all_2D(x0,nint_plot_img,callfun,'init.png',fig_size=img_size)        
+            
+        if Save_anim :
+            plot_all_2D_anim(x0,nint_plot_anim,callfun,'init.mp4',nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size)
+            
+        print(1/0)
     
     if Search_Min_Only:
                     
