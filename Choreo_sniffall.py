@@ -59,10 +59,47 @@ from Choreo_funs import *
 # ~ SymName = [ 'C', 'C' , 'D' ]
 # ~ Sym_list,nbody = Make2DChoreoSymManyLoops(nbpl=nbpl,SymName=SymName)
 
-nbpl = [1,2,3,4]
+nbpl = [1,1,1,1,1]
 the_lcm = m.lcm(*nbpl)
-SymName = [ 'C', 'C' ,'C' , 'C' ]
+# ~ SymName = [ 'C', 'D']
+SymName = None
 Sym_list,nbody = Make2DChoreoSymManyLoops(nbpl=nbpl,SymName=SymName)
+
+Sym_list = []
+
+rot_angle =  twopi * 1 /  2
+s = 1
+
+Sym_list.append(ChoreoSym(
+    LoopTarget=0,
+    LoopSource=1,
+    SpaceRot = np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64),
+    TimeRev=1,
+    TimeShift=fractions.Fraction(numerator=-1,denominator=2)
+    ))
+
+Sym_list.append(ChoreoSym(
+    LoopTarget=2,
+    LoopSource=3,
+    SpaceRot = np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64),
+    TimeRev=1,
+    TimeShift=fractions.Fraction(numerator=-1,denominator=2)
+    ))
+
+
+
+rot_angle = 0
+s = -1
+
+Sym_list.append(ChoreoSym(
+    LoopTarget=4,
+    LoopSource=4,
+    SpaceRot = np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64),
+    TimeRev=-1,
+    TimeShift=fractions.Fraction(numerator=0,denominator=1)
+    ))
+
+
 
 
 
@@ -137,8 +174,8 @@ n_reconverge_it_max = 5
 
 # ~ ncoeff_init = 100
 # ~ ncoeff_init = 800
-# ~ ncoeff_init = 350   
-ncoeff_init = 600
+ncoeff_init = 300   
+# ~ ncoeff_init = 600
 # ~ ncoeff_init = 990
 # ~ ncoeff_init = 1200
 # ~ ncoeff_init = 90
@@ -240,8 +277,8 @@ for il in range(nloop):
         for k in range(1,ncoeff):
 
             ko = 2
-            k1 =20
-            k2= 50
+            k1 =50
+            k2= 5000
             if (k <= ko):
                 randampl = 0
             elif (k <= k1):
@@ -259,6 +296,9 @@ for il in range(nloop):
 
 x_min = Package_all_coeffs(all_coeffs_min,callfun)
 x_max = Package_all_coeffs(all_coeffs_max,callfun)
+
+# ~ for i in range(x_min.shape[0]):
+    # ~ print(x_min[i],x_max[i])
 
 rand_eps = 1e-6
 rand_dim = 0
