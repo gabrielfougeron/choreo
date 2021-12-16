@@ -232,7 +232,6 @@ def Compute_action_onlygrad(x,callfun):
     
     return y
     
-
 def Compute_action_onlygrad_escape(x,callfun):
     # Cumputes the action and its gradient with respect to the parameters at a given value of the parameters
 
@@ -262,7 +261,8 @@ def Compute_action_onlygrad_escape(x,callfun):
         all_coeffs
         )
 
-    escape_pen = 1 + args['escape_fac'] * abs(size_dist[1]/(args['escape_min_dist']+size_dist[0]))**args['escape_pow']
+    # ~ escape_pen = 1 + args['escape_fac'] * abs(size_dist[1]/(args['escape_min_dist']+size_dist[0]))**args['escape_pow']
+    escape_pen = 1 + args['escape_fac'] * abs(size_dist[1])**args['escape_pow']
     
     # ~ print("escape_pen = ",escape_pen)
 
@@ -465,10 +465,6 @@ class ChoreoSym():
         
         return ((self.Inverse()).ComposeLight(other)).IsIdentity()
 
-    
-
-
-
 def Make2DChoreoSym(SymType,ib_list):
     # Defines symmetries of a 2-D system of bodies as classfied in [1] 
     
@@ -565,8 +561,6 @@ def Make2DChoreoSym(SymType,ib_list):
     
     return SymGens
 
-
-
 def Make2DChoreoSymManyLoops(nloop=None,nbpl=None,SymName=None):
 
     if nloop is None :
@@ -626,9 +620,6 @@ def Make2DChoreoSymManyLoops(nloop=None,nbpl=None,SymName=None):
     nbody = istart
         
     return SymGens,nbody
-
-    
-
 
 def setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max=6,MomCons=True,n_grad_change=1.,Sym_list=[]):
     # This function returns the callfun dictionnary to be given as input to virtually all other function.
@@ -1166,7 +1157,6 @@ def Write_Descriptor(x,callfun,filename):
             filename_write.write(' {:.10f}'.format(Hash_Action[ihash]))
         filename_write.write('\n')
         
-
 def SelectFiles_Action(store_folder,hash_dict,Action_val,Action_Hash_val,rtol):
     # Creates a list of possible duplicates based on value of the action and hashes
     
@@ -1265,7 +1255,6 @@ def Load_all_defl(dirname,callfun):
             
             all_coeffs = np.load(file_path)
             Add_deflation_coeffs(all_coeffs,callfun)
-
 
 def Compute_action_defl(x,callfun):
     # Wrapper function that returns a deflated version of the gradient of the action.

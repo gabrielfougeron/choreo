@@ -582,8 +582,10 @@ def Compute_Loop_Size_Dist_Cython(
                 
                 loop_size += all_coeffs[il,idim,k,0]*all_coeffs[il,idim,k,0]+all_coeffs[il,idim,k,1]*all_coeffs[il,idim,k,1]
         
-        if (loop_size > max_loop_size):
-            max_loop_size = loop_size
+# ~         if (loop_size > max_loop_size):
+# ~             max_loop_size = loop_size
+        
+        max_loop_size += loop_size
             
     res[0] = csqrt(max_loop_size)
     
@@ -604,15 +606,12 @@ def Compute_Loop_Size_Dist_Cython(
                     for idim in range(1,cndim):
                         dx2 += dx[idim]*dx[idim]
 
-                    if (dx2 > max_loop_dist):
-                        max_loop_dist = dx2
-                    
-                    
-                    
+# ~                     if (dx2 > max_loop_dist):
+# ~                         max_loop_dist = dx2
 
-#~                     loop_dist = np.linalg.norm(np.dot(args['SpaceRotsUn'][il,ib,:,:],all_coeffs[il,:,0,0]) - np.dot(args['SpaceRotsUn'][ilp,ibp,:,:],all_coeffs[ilp,:,0,0]))
-#~                     max_loop_dist = max(loop_dist,max_loop_dist)
-                    
+                    max_loop_dist += dx2
+
+
     for il in range(nloop):
         for ibi in range(loopnbi[il]):
                 
@@ -628,15 +627,11 @@ def Compute_Loop_Size_Dist_Cython(
                 for idim in range(1,cndim):
                     dx2 += dx[idim]*dx[idim]
 
-                if (dx2 > max_loop_dist):
-                    max_loop_dist = dx2
-            
-                
-                
-                
-#~             loop_dist = np.linalg.norm(np.dot(args['SpaceRotsBin'][il,ibi,:,:],all_coeffs[il,:,0,0]) - all_coeffs[il,:,0,0])
-#~             max_loop_dist = max(loop_dist,max_loop_dist)
-    
+# ~                 if (dx2 > max_loop_dist):
+# ~                     max_loop_dist = dx2
+
+                max_loop_dist += dx2
+             
     res[1] = csqrt(max_loop_dist)
     
     return res

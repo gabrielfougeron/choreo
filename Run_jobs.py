@@ -8,7 +8,7 @@ import subprocess
 job = 'python Choreo_sniffall.py' 
 # ~ job = 'python Choreo_target_custom.py' 
 
-n=6
+n=10
 # ~ n=1
 
 job_all = ''
