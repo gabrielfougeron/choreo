@@ -182,8 +182,8 @@ n_reconverge_it_max = 5
 
 # ~ ncoeff_init = 100
 # ~ ncoeff_init = 800
-ncoeff_init = 300   
-# ~ ncoeff_init = 600
+# ~ ncoeff_init = 300   
+ncoeff_init = 600
 # ~ ncoeff_init = 990
 # ~ ncoeff_init = 1200
 # ~ ncoeff_init = 90

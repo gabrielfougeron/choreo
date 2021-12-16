@@ -240,7 +240,7 @@ def Compute_action_onlygrad_escape(x,callfun):
     y = args['param_to_coeff_list'][args["current_cvg_lvl"]] * x
     all_coeffs = y.reshape(args['nloop'],ndim,args['ncoeff_list'][args["current_cvg_lvl"]],2)
 
-    size_dist = Compute_Loop_Size_Dist_Cython(
+    rms_dist = Compute_Loop_Dist_Cython(
         args['nloop']           ,
         args['ncoeff_list'][args["current_cvg_lvl"]]          ,
         args['nint_list'][args["current_cvg_lvl"]]            ,
@@ -261,8 +261,7 @@ def Compute_action_onlygrad_escape(x,callfun):
         all_coeffs
         )
 
-    # ~ escape_pen = 1 + args['escape_fac'] * abs(size_dist[1]/(args['escape_min_dist']+size_dist[0]))**args['escape_pow']
-    escape_pen = 1 + args['escape_fac'] * abs(size_dist[1])**args['escape_pow']
+    escape_pen = 1 + args['escape_fac'] * abs(rms_dist)**args['escape_pow']
     
     # ~ print("escape_pen = ",escape_pen)
 
