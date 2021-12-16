@@ -232,6 +232,66 @@ def Compute_action_onlygrad(x,callfun):
     
     return y
     
+
+def Compute_action_onlygrad_escape(x,callfun):
+    # Cumputes the action and its gradient with respect to the parameters at a given value of the parameters
+
+    args=callfun[0]
+    
+    y = args['param_to_coeff_list'][args["current_cvg_lvl"]] * x
+    all_coeffs = y.reshape(args['nloop'],ndim,args['ncoeff_list'][args["current_cvg_lvl"]],2)
+
+    size_dist = Compute_Loop_Size_Dist_Cython(
+        args['nloop']           ,
+        args['ncoeff_list'][args["current_cvg_lvl"]]          ,
+        args['nint_list'][args["current_cvg_lvl"]]            ,
+        args['mass']            ,
+        args['loopnb']          ,
+        args['Targets']         ,
+        args['MassSum']         ,
+        args['SpaceRotsUn']     ,
+        args['TimeRevsUn']      ,
+        args['TimeShiftNumUn']  ,
+        args['TimeShiftDenUn']  ,
+        args['loopnbi']         ,
+        args['ProdMassSumAll']  ,
+        args['SpaceRotsBin']    ,
+        args['TimeRevsBin']     ,
+        args['TimeShiftNumBin'] ,
+        args['TimeShiftDenBin'] ,
+        all_coeffs
+        )
+
+    escape_pen = 1 + args['escape_fac'] * abs(size_dist[1]/(args['escape_min_dist']+size_dist[0]))**args['escape_pow']
+    
+    # ~ print("escape_pen = ",escape_pen)
+
+    J,GradJ =  Compute_action_Cython(
+        args['nloop']           ,
+        args['ncoeff_list'][args["current_cvg_lvl"]]          ,
+        args['nint_list'][args["current_cvg_lvl"]]            ,
+        args['mass']            ,
+        args['loopnb']          ,
+        args['Targets']         ,
+        args['MassSum']         ,
+        args['SpaceRotsUn']     ,
+        args['TimeRevsUn']      ,
+        args['TimeShiftNumUn']  ,
+        args['TimeShiftDenUn']  ,
+        args['loopnbi']         ,
+        args['ProdMassSumAll']  ,
+        args['SpaceRotsBin']    ,
+        args['TimeRevsBin']     ,
+        args['TimeShiftNumBin'] ,
+        args['TimeShiftDenBin'] ,
+        all_coeffs
+        )
+
+    GJ = GradJ.reshape(-1)
+    GJparam = (GJ * args['param_to_coeff_list'][args["current_cvg_lvl"]]) * escape_pen
+    
+    return GJparam
+    
 def Compute_action_hess_mul(x,dx,callfun):
     # Returns the Hessian of the action (computed wrt the parameters) times a test vector of parameter deviations.
     
@@ -961,9 +1021,10 @@ def Compute_Newton_err(x,callfun):
 
     return all_Newt_err
     
-def Compute_Loop_Dist_Size(x,callfun):
+def Compute_Loop_Size_Dist(x,callfun):
     # Computes sizes of trajetories and distance between center of trajectories
     # Useful to detect escape.
+    # For checks only. There is a Cython version now
     
     args = callfun[0]
     
@@ -990,17 +1051,55 @@ def Compute_Loop_Dist_Size(x,callfun):
             loop_dist = np.linalg.norm(np.dot(args['SpaceRotsBin'][il,ibi,:,:],all_coeffs[il,:,0,0]) - all_coeffs[il,:,0,0])
             max_loop_dist = max(loop_dist,max_loop_dist)
     
-    return max_loop_dist,max_loop_size
+
+    return max_loop_size,max_loop_dist
     
 def Detect_Escape(x,callfun):
     # Returns True if the trajectories are so far that they are likely to never interact again
     
-    max_loop_dist,max_loop_size = Compute_Loop_Dist_Size(x,callfun)
+    # ~ max_loop_size,max_loop_dist = Compute_Loop_Size_Dist(x,callfun)
     
-    return (max_loop_dist > (4.5 * callfun[0]['nbody'] * max_loop_size))
+    args=callfun[0]
+    
+    y = args['param_to_coeff_list'][args["current_cvg_lvl"]] * x
+    all_coeffs = y.reshape(args['nloop'],ndim,args['ncoeff_list'][args["current_cvg_lvl"]],2)
+    
+    res = Compute_Loop_Size_Dist_Cython(
+        args['nloop']           ,
+        args['ncoeff_list'][args["current_cvg_lvl"]]          ,
+        args['nint_list'][args["current_cvg_lvl"]]            ,
+        args['mass']            ,
+        args['loopnb']          ,
+        args['Targets']         ,
+        args['MassSum']         ,
+        args['SpaceRotsUn']     ,
+        args['TimeRevsUn']      ,
+        args['TimeShiftNumUn']  ,
+        args['TimeShiftDenUn']  ,
+        args['loopnbi']         ,
+        args['ProdMassSumAll']  ,
+        args['SpaceRotsBin']    ,
+        args['TimeRevsBin']     ,
+        args['TimeShiftNumBin'] ,
+        args['TimeShiftDenBin'] ,
+        all_coeffs
+        )
+    
+    # ~ print("Compare SIZES in ESCAPE")
+    # ~ print(abs(max_loop_size-res[0])/max_loop_size , abs(max_loop_dist-res[1])/max_loop_dist )
+    
+    # ~ print(max_loop_size,max_loop_dist)
+    # ~ print(res)
+    
+    # ~ print("")
+    # ~ print("")
+    # ~ print("")
+    
+    # ~ return (max_loop_dist > (4.5 * callfun[0]['nbody'] * max_loop_size))
+    return (res[1] > (4.5 * callfun[0]['nbody'] * res[0]))
     
 def Compute_MinDist(x,callfun):
-    # Returns the minimum inter-body distance along a set of trajecctories
+    # Returns the minimum inter-body distance along a set of trajectories
     
     args=callfun[0]
     
