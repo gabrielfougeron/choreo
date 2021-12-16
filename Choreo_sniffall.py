@@ -56,8 +56,10 @@ from Choreo_funs import *
                 # ~ TimeShift=fractions.Fraction(numerator=1,denominator=5)
                 # ~ ))
 
-nbpl = [3,2,5]
-# ~ nbpl = [2,2,2]
+# ~ nbpl = [3,2,5]
+nbpl = [2,2,2]
+the_lcm = m.lcm(*nbpl)
+
 # ~ SymName = [ 'C', 'C' , 'D' ]
 SymName = None
 Sym_list,nbody = Make2DChoreoSymManyLoops(nbpl=nbpl,SymName=SymName)
