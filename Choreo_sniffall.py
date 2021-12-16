@@ -12,21 +12,22 @@ import time
 
 from Choreo_funs import *
 
-# ~ nbody =     8
+# ~ nbody =     6
 # ~ mass = np.ones((nbody))
-
 # ~ Sym_list = []
+
+# ~ the_lcm = 2
 
 # ~ SymType = {
     # ~ 'name'  : 'C',
-    # ~ 'n'     : -15,
+    # ~ 'n'     : nbody,
     # ~ 'k'     : 1,
-    # ~ 'l'     : 1 ,
-    # ~ 'p'     : 0 ,
-    # ~ 'q'     : 1 ,
+    # ~ 'l'     : 0 ,
+    # ~ 'p'     : the_lcm ,
+    # ~ 'q'     : nbody ,
 # ~ }
 # ~ istart = 0
-# ~ Sym_list.extend(Make2DChoreoSym(SymType,[i+istart for i in range(5)]))
+# ~ Sym_list.extend(Make2DChoreoSym(SymType,[i+istart for i in range(nbody)]))
 # ~ Sym_list.append(ChoreoSym(
                 # ~ LoopTarget=istart,
                 # ~ LoopSource=istart,
@@ -55,49 +56,49 @@ from Choreo_funs import *
                 # ~ TimeShift=fractions.Fraction(numerator=1,denominator=5)
                 # ~ ))
 
-# ~ nbpl = [3,3,5]
+# ~ nbpl = [3,2,5]
+nbpl = [2,2]
 # ~ SymName = [ 'C', 'C' , 'D' ]
-# ~ Sym_list,nbody = Make2DChoreoSymManyLoops(nbpl=nbpl,SymName=SymName)
-
-nbpl = [1,1,1,1,1]
-the_lcm = m.lcm(*nbpl)
-# ~ SymName = [ 'C', 'D']
 SymName = None
 Sym_list,nbody = Make2DChoreoSymManyLoops(nbpl=nbpl,SymName=SymName)
 
-Sym_list = []
+# ~ nbpl = [1,1,1,1]
+# ~ nbpl = [3,2,5]
+# ~ the_lcm = m.lcm(*nbpl)
+# ~ SymName = None
+# ~ Sym_list,nbody = Make2DChoreoSymManyLoops(nbpl=nbpl,SymName=SymName)
 
-rot_angle =  twopi * 1 /  2
-s = 1
+# ~ rot_angle =  twopi * 1 /  2
+# ~ s = 1
 
-Sym_list.append(ChoreoSym(
-    LoopTarget=0,
-    LoopSource=1,
-    SpaceRot = np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64),
-    TimeRev=1,
-    TimeShift=fractions.Fraction(numerator=-1,denominator=2)
-    ))
+# ~ Sym_list.append(ChoreoSym(
+    # ~ LoopTarget=0,
+    # ~ LoopSource=1,
+    # ~ SpaceRot = np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64),
+    # ~ TimeRev=1,
+    # ~ TimeShift=fractions.Fraction(numerator=-1,denominator=2)
+    # ~ ))
 
-Sym_list.append(ChoreoSym(
-    LoopTarget=2,
-    LoopSource=3,
-    SpaceRot = np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64),
-    TimeRev=1,
-    TimeShift=fractions.Fraction(numerator=-1,denominator=2)
-    ))
+# ~ Sym_list.append(ChoreoSym(
+    # ~ LoopTarget=2,
+    # ~ LoopSource=3,
+    # ~ SpaceRot = np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64),
+    # ~ TimeRev=1,
+    # ~ TimeShift=fractions.Fraction(numerator=-1,denominator=2)
+    # ~ ))
 
 
 
-rot_angle = 0
-s = -1
+# ~ rot_angle = 0
+# ~ s = -1
 
-Sym_list.append(ChoreoSym(
-    LoopTarget=4,
-    LoopSource=4,
-    SpaceRot = np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64),
-    TimeRev=-1,
-    TimeShift=fractions.Fraction(numerator=0,denominator=1)
-    ))
+# ~ Sym_list.append(ChoreoSym(
+    # ~ LoopTarget=4,
+    # ~ LoopSource=4,
+    # ~ SpaceRot = np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64),
+    # ~ TimeRev=-1,
+    # ~ TimeShift=fractions.Fraction(numerator=0,denominator=1)
+    # ~ ))
 
 
 
@@ -106,6 +107,7 @@ Sym_list.append(ChoreoSym(
 
 
 mass = np.ones((nbody))
+# ~ mass = np.array([1.,2.,4.,8.])
 
 
 
@@ -122,8 +124,8 @@ mass = np.ones((nbody))
 Search_Min_Only = False
 # ~ Search_Min_Only = True
 
-MomConsImposed = True
-# ~ MomConsImposed = False
+# ~ MomConsImposed = True
+MomConsImposed = False
 
 store_folder = './Sniff_all_sym/'
 store_folder = store_folder+str(nbody)
@@ -139,6 +141,9 @@ Look_for_duplicates = True
 
 Check_loop_dist = True
 # ~ Check_loop_dist = False
+
+Penalize_Escape = True
+# ~ Penalize_Escape = False
 
 save_init = False
 # ~ save_init = True
@@ -158,9 +163,12 @@ Save_anim = True
 # ~ Save_anim = False
 
 vid_size = (8,8) # Image size in inches
-nint_plot_anim = nbody*300
+nint_plot_anim = 2*2*2*3*3*5
 # ~ nperiod_anim = 1./nbody
-if the_lcm is None:
+
+try:
+    the_lcm
+except NameError:
     nperiod_anim = 1.
 else:
     nperiod_anim = 1./the_lcm
@@ -200,6 +208,10 @@ krylov_method = 'cgs'
 # ~ line_search = 'armijo'
 line_search = 'wolfe'
 
+escape_fac = 1e1
+escape_min_dist = 1
+escape_pow = 2
+
 print('Searching periodic solutions of {:d} bodies'.format(nbody))
 # ~ print('Processing symmetries for {:d} convergence levels ...'.format(n_reconverge_it_max+1))
 
@@ -211,6 +223,10 @@ callfun = setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max,Sym_list=Sy
 print('')
 
 args = callfun[0]
+args['escape_fac'] = escape_fac
+args['escape_min_dist'] = escape_min_dist
+args['escape_pow'] = escape_pow
+
 nloop = args['nloop']
 loopnb = args['loopnb']
 loopnbi = args['loopnbi']
@@ -250,7 +266,11 @@ if (xmin < 1e-5):
 # ~ filehandler = open(store_folder+'/callfun_list.pkl',"wb")
 # ~ pickle.dump(callfun_list,filehandler)
 
-if (Use_deflation):
+if (Penalize_Escape):
+
+    Action_grad_mod = Compute_action_onlygrad_escape
+
+elif (Use_deflation):
     print('Loading previously saved sols as deflation vectors')
     
     Init_deflation(callfun)
@@ -276,9 +296,9 @@ for il in range(nloop):
     for idim in range(ndim):
         for k in range(1,ncoeff):
 
-            ko = 2
+            ko = 0
             k1 =50
-            k2= 5000
+            k2= 500
             if (k <= ko):
                 randampl = 0
             elif (k <= k1):

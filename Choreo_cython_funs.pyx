@@ -455,7 +455,7 @@ def Compute_MinDist_Cython(
     cdef double pot,potp,potpp
     cdef double prod_mass,a,b,dx2,prod_fac
     cdef np.ndarray[double, ndim=1, mode="c"]  dx = np.zeros((cndim),dtype=np.float64)
-    cdef np.ndarray[double, ndim=1, mode="c"]  df = np.zeros((cndim),dtype=np.float64)
+#~     cdef np.ndarray[double, ndim=1, mode="c"]  df = np.zeros((cndim),dtype=np.float64)
         
     cdef long maxloopnb = loopnb.max()
     cdef long maxloopnbi = loopnbi.max()
@@ -533,6 +533,113 @@ def Compute_MinDist_Cython(
                 all_shiftsBin[il,ibi] = (all_shiftsBin[il,ibi]+TimeRevsBin[il,ibi]) % nint
 
     return csqrt(dx2min)
+   
+def Compute_Loop_Size_Dist_Cython(
+    long nloop,
+    long ncoeff,
+    long nint,
+    np.ndarray[double, ndim=1, mode="c"] mass not None ,
+    np.ndarray[long  , ndim=1, mode="c"] loopnb not None ,
+    np.ndarray[long  , ndim=2, mode="c"] Targets not None ,
+    np.ndarray[double, ndim=1, mode="c"] MassSum not None ,
+    np.ndarray[double, ndim=4, mode="c"] SpaceRotsUn not None ,
+    np.ndarray[long  , ndim=2, mode="c"] TimeRevsUn not None ,
+    np.ndarray[long  , ndim=2, mode="c"] TimeShiftNumUn not None ,
+    np.ndarray[long  , ndim=2, mode="c"] TimeShiftDenUn not None ,
+    np.ndarray[long  , ndim=1, mode="c"] loopnbi not None ,
+    np.ndarray[double, ndim=2, mode="c"] ProdMassSumAll not None ,
+    np.ndarray[double, ndim=4, mode="c"] SpaceRotsBin not None ,
+    np.ndarray[long  , ndim=2, mode="c"] TimeRevsBin not None ,
+    np.ndarray[long  , ndim=2, mode="c"] TimeShiftNumBin not None ,
+    np.ndarray[long  , ndim=2, mode="c"] TimeShiftDenBin not None ,
+    np.ndarray[double, ndim=4, mode="c"]  all_coeffs  not None
+    ):
+    # Computes the minimum inter-body distance along the trajectory.
+    # A useful tool for collision detection.
+
+    cdef long il,ilp,i
+    cdef long idim,idimp
+    cdef long ibi
+    cdef long ib,ibp
+    cdef long iint
+    cdef long div
+    cdef long k,kp,k2
+    cdef double loop_size,max_loop_size
+    cdef double loop_dist,max_loop_dist
+    cdef double dx2
+    cdef np.ndarray[double, ndim=1, mode="c"]  dx = np.zeros((cndim),dtype=np.float64)
+    
+    cdef np.ndarray[double, ndim=1, mode="c"]  res = np.zeros((2),dtype=np.float64)
+
+
+    max_loop_size = 0.
+    for il in range(nloop):
+        
+        loop_size = 0
+        
+        for idim in range(cndim):
+            for k in range(1,ncoeff):
+                
+                loop_size += all_coeffs[il,idim,k,0]*all_coeffs[il,idim,k,0]+all_coeffs[il,idim,k,1]*all_coeffs[il,idim,k,1]
+        
+        if (loop_size > max_loop_size):
+            max_loop_size = loop_size
+            
+    res[0] = csqrt(max_loop_size)
+    
+    max_loop_dist = 0.
+    for il in range(nloop-1):
+        for ilp in range(il,nloop):
+            
+            for ib in range(loopnb[il]):
+                for ibp in range(loopnb[ilp]):
+                    
+                    for idim in range(cndim):
+                        dx[idim] = SpaceRotsUn[il,ib,idim,0]*all_coeffs[il,0,0,0] - SpaceRotsUn[ilp,ibp,idim,0]*all_coeffs[ilp,0,0,0]
+                    
+                        for jdim in range(1,cndim):
+                            dx[idim] += SpaceRotsUn[il,ib,idim,jdim]*all_coeffs[il,jdim,0,0] - SpaceRotsUn[ilp,ibp,idim,jdim]*all_coeffs[ilp,jdim,0,0]
+                            
+                    dx2 = dx[0]*dx[0]
+                    for idim in range(1,cndim):
+                        dx2 += dx[idim]*dx[idim]
+
+                    if (dx2 > max_loop_dist):
+                        max_loop_dist = dx2
+                    
+                    
+                    
+
+#~                     loop_dist = np.linalg.norm(np.dot(args['SpaceRotsUn'][il,ib,:,:],all_coeffs[il,:,0,0]) - np.dot(args['SpaceRotsUn'][ilp,ibp,:,:],all_coeffs[ilp,:,0,0]))
+#~                     max_loop_dist = max(loop_dist,max_loop_dist)
+                    
+    for il in range(nloop):
+        for ibi in range(loopnbi[il]):
+                
+            for idim in range(cndim):
+                
+                dx[idim] = SpaceRotsBin[il,ibi,idim,0]*all_coeffs[il,0,0,0] - all_coeffs[il,idim,0,0]
+                for jdim in range(1,cndim):
+                    
+                    dx[idim] += SpaceRotsBin[il,ibi,idim,jdim]*all_coeffs[il,jdim,0,0]
+                    
+                
+                dx2 = dx[0]*dx[0]
+                for idim in range(1,cndim):
+                    dx2 += dx[idim]*dx[idim]
+
+                if (dx2 > max_loop_dist):
+                    max_loop_dist = dx2
+            
+                
+                
+                
+#~             loop_dist = np.linalg.norm(np.dot(args['SpaceRotsBin'][il,ibi,:,:],all_coeffs[il,:,0,0]) - all_coeffs[il,:,0,0])
+#~             max_loop_dist = max(loop_dist,max_loop_dist)
+    
+    res[1] = csqrt(max_loop_dist)
+    
+    return res
    
 def Compute_action_hess_mul_Cython(
     long nloop,
