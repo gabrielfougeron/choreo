@@ -56,8 +56,8 @@ from Choreo_funs import *
                 # ~ TimeShift=fractions.Fraction(numerator=1,denominator=5)
                 # ~ ))
 
-# ~ nbpl = [3,2,5]
-nbpl = [2,2]
+nbpl = [3,2,5]
+# ~ nbpl = [2,2,2]
 # ~ SymName = [ 'C', 'C' , 'D' ]
 SymName = None
 Sym_list,nbody = Make2DChoreoSymManyLoops(nbpl=nbpl,SymName=SymName)
@@ -130,7 +130,7 @@ MomConsImposed = False
 store_folder = './Sniff_all_sym/'
 store_folder = store_folder+str(nbody)
 if not(os.path.isdir(store_folder)):
-    os.mkdir(store_folder)
+    os.makedirs(store_folder)
 
 
 # ~ Use_deflation = True
@@ -208,7 +208,9 @@ krylov_method = 'cgs'
 # ~ line_search = 'armijo'
 line_search = 'wolfe'
 
-escape_fac = 1e1
+# ~ escape_fac = 1e-1
+escape_fac = 1e-3
+# ~ escape_fac = 0
 escape_min_dist = 1
 escape_pow = 2
 
@@ -334,7 +336,7 @@ sampler = UniformRandom(d=rand_dim)
 
 
 n_opt = 0
-# ~ n_opt_max = 1
+# ~ n_opt_max = 100
 n_opt_max = 1e10
 while (n_opt < n_opt_max):
 
