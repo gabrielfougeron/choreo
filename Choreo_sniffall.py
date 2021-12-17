@@ -57,7 +57,8 @@ from Choreo_funs import *
                 # ~ ))
 
 # ~ nbpl = [3,2,5]
-nbpl = [2,2,2]
+# ~ nbpl = [2,2,2]
+nbpl = [2,3]
 the_lcm = m.lcm(*nbpl)
 
 # ~ SymName = [ 'C', 'C' , 'D' ]
@@ -165,8 +166,12 @@ Save_anim = True
 # ~ Save_anim = False
 
 vid_size = (8,8) # Image size in inches
-nint_plot_anim = 2*2*2*3*3*5
+nint_plot_anim = 2*2*2*3*3*5 * 3
 # ~ nperiod_anim = 1./nbody
+
+# ~ color = "body"
+# ~ color = "velocity"
+color = "all"
 
 try:
     the_lcm
@@ -210,11 +215,11 @@ krylov_method = 'cgs'
 # ~ line_search = 'armijo'
 line_search = 'wolfe'
 
-# ~ escape_fac = 1e-1
-escape_fac = 1e-3
+escape_fac = 1e0
+# ~ escape_fac = 1e-3
 # ~ escape_fac = 0
 escape_min_dist = 1
-escape_pow = 2
+escape_pow = 2.5
 
 print('Searching periodic solutions of {:d} bodies'.format(nbody))
 # ~ print('Processing symmetries for {:d} convergence levels ...'.format(n_reconverge_it_max+1))
@@ -368,7 +373,7 @@ while (n_opt < n_opt_max):
             plot_all_2D(x0,nint_plot_img,callfun,'init.png',fig_size=img_size)        
             
         if Save_anim :
-            plot_all_2D_anim(x0,nint_plot_anim,callfun,'init.mp4',nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size)
+            plot_all_2D_anim(x0,nint_plot_anim,callfun,'init.mp4',nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size,color=color)
             
         print(1/0)
     
@@ -418,12 +423,19 @@ while (n_opt < n_opt_max):
 
         f0 = Action_grad_mod(x_opt,callfun)
         best_sol = current_best(x_opt,f0)
+        
+        try : 
 
-        maxiter = 20
-        gradtol = 1e-11
-        opt_result = opt.root(fun=Action_grad_mod,x0=x_opt,args=callfun,method='krylov', options={'disp':disp_scipy_opt,'maxiter':maxiter,'fatol':gradtol,'jac_options':{'method':krylov_method}},callback=best_sol.update)
+            maxiter = 20
+            gradtol = 1e-11
+            opt_result = opt.root(fun=Action_grad_mod,x0=x_opt,args=callfun,method='krylov', options={'disp':disp_scipy_opt,'maxiter':maxiter,'fatol':gradtol,'jac_options':{'method':krylov_method}},callback=best_sol.update)
 
-        print('Approximate solution found ! Action Grad Norm : ',best_sol.f_norm)
+            print('Approximate solution found ! Action Grad Norm : ',best_sol.f_norm)
+            
+        except Exception as exc:
+            
+            print(exc)
+            print("Value Error occured, skipping.")
 
         Found_duplicate = False
 
@@ -586,7 +598,7 @@ while (n_opt < n_opt_max):
                     Write_Descriptor(best_sol.x,callfun,filename_output+'.txt')
                     
                     if Save_img :
-                        plot_all_2D(best_sol.x,nint_plot_img,callfun,filename_output+'.png',fig_size=img_size)
+                        plot_all_2D(best_sol.x,nint_plot_img,callfun,filename_output+'.png',fig_size=img_size,color=color)
                         
                     if Save_anim :
                         plot_all_2D_anim(best_sol.x,nint_plot_anim,callfun,filename_output+'.mp4',nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size)
