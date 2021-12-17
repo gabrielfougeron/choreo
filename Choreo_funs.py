@@ -139,13 +139,16 @@ def plot_all_2D_cpv(x,nint_plot,callfun,filename,fig_size=(10,10)):
     all_pos[:,:,0:nint_plot] = np.fft.irfft(c_coeffs,n=nint_plot,axis=2)*nint_plot
     all_pos[:,:,nint_plot] = all_pos[:,:,0]
     
-    for k in range(args['ncoeff_list'][args["current_cvg_lvl"]]):
-        all_coeffs[:,:,k,:] *= k
+    all_coeffs_v = np.zeros(all_coeffs.shape)
     
-    c_coeffs = all_coeffs.view(dtype=np.complex128)[...,0] # probably useless
+    for k in range(args['ncoeff_list'][args["current_cvg_lvl"]]):
+        all_coeffs_v[:,:,k,0] = -k * all_coeffs[:,:,k,1]
+        all_coeffs_v[:,:,k,1] =  k * all_coeffs[:,:,k,0]
+    
+    c_coeffs_v = all_coeffs_v.view(dtype=np.complex128)[...,0]
     
     all_vel = np.zeros((nloop,nint_plot+1),dtype=np.float64)
-    all_vel[:,0:nint_plot] = np.linalg.norm(np.fft.irfft(c_coeffs,n=nint_plot,axis=2),axis=1)*nint_plot
+    all_vel[:,0:nint_plot] = np.linalg.norm(np.fft.irfft(c_coeffs_v,n=nint_plot,axis=2),axis=1)*nint_plot
     all_vel[:,nint_plot] = all_vel[:,0]
     
     all_pos_b = np.zeros((nbody,ndim,nint_plot+1),dtype=np.float64)
