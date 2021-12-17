@@ -21,21 +21,40 @@ import networkx as nx
 import logging
 logging.disable(logging.WARNING)
 
-# ~ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
-# ~ import tensorflow as tf
-# ~ import tensorflow_probability as tfp
-
 import fractions
 
 from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.colors import cnames
+from matplotlib.collections import LineCollection
 from matplotlib import animation
 
 from Choreo_cython_funs import *
 
-def plot_all_2D(x,nint_plot,callfun,filename,fig_size=(10,10)):
+def plot_all_2D(x,nint_plot,callfun,filename,fig_size=(10,10),color=None):
     # Plots 2D trajectories and saves image under filename
+    
+    if (color is None) or (color == "body"):
+        
+        plot_all_2D_cpb(x,nint_plot,callfun,filename,fig_size=(10,10))
+        
+    elif (color == "velocity"):
+        
+        plot_all_2D_cpv(x,nint_plot,callfun,filename,fig_size=(10,10))
+        
+    elif (color == "all"):
+        
+        file_bas,file_ext = os.path.splitext(filename)
+        
+        plot_all_2D_cpb(x,nint_plot,callfun,file_bas+'_bod'+file_ext,fig_size=(10,10))
+        plot_all_2D_cpv(x,nint_plot,callfun,file_bas+'_vel'+file_ext,fig_size=(10,10))
+    
+    else:
+        
+        raise ValueError("Unknown color scheme")
+
+def plot_all_2D_cpb(x,nint_plot,callfun,filename,fig_size=(10,10)):
+    # Plots 2D trajectories with one color per body and saves image under filename
     
     args = callfun[0]
     
@@ -95,6 +114,95 @@ def plot_all_2D(x,nint_plot,callfun,filename,fig_size=(10,10)):
     for ib in range(nbody):
 
         lines[ib].set_data(all_pos_b[ib,0,:], all_pos_b[ib,1,:])
+
+    plt.savefig(filename)
+    
+    plt.close()
+ 
+
+def plot_all_2D_cpv(x,nint_plot,callfun,filename,fig_size=(10,10)):
+    # Plots 2D trajectories with one color per body and saves image under filename
+    
+    args = callfun[0]
+    
+    all_coeffs = Unpackage_all_coeffs(x,callfun)
+    
+    nloop = args['nloop']
+    nbody = args['nbody']
+    loopnb = args['loopnb']
+    Targets = args['Targets']
+    SpaceRotsUn = args['SpaceRotsUn']
+    
+    c_coeffs = all_coeffs.view(dtype=np.complex128)[...,0]
+    
+    all_pos = np.zeros((nloop,ndim,nint_plot+1),dtype=np.float64)
+    all_pos[:,:,0:nint_plot] = np.fft.irfft(c_coeffs,n=nint_plot,axis=2)*nint_plot
+    all_pos[:,:,nint_plot] = all_pos[:,:,0]
+    
+    for k in range(args['ncoeff_list'][args["current_cvg_lvl"]]):
+        all_coeffs[:,:,k,:] *= k
+    
+    c_coeffs = all_coeffs.view(dtype=np.complex128)[...,0] # probably useless
+    
+    all_vel = np.zeros((nloop,nint_plot+1),dtype=np.float64)
+    all_vel[:,0:nint_plot] = np.linalg.norm(np.fft.irfft(c_coeffs,n=nint_plot,axis=2),axis=1)*nint_plot
+    all_vel[:,nint_plot] = all_vel[:,0]
+    
+    all_pos_b = np.zeros((nbody,ndim,nint_plot+1),dtype=np.float64)
+    
+    for il in range(nloop):
+        for ib in range(loopnb[il]):
+            for iint in range(nint_plot+1):
+                # exact time is irrelevant
+                all_pos_b[Targets[il,ib],:,iint] = np.dot(SpaceRotsUn[il,ib,:,:],all_pos[il,:,iint])
+    
+    all_vel_b = np.zeros((nbody,nint_plot+1),dtype=np.float64)
+    
+    for il in range(nloop):
+        for ib in range(loopnb[il]):
+            for iint in range(nint_plot+1):
+                # exact time is irrelevant
+                all_vel_b[Targets[il,ib],iint] = all_vel[il,iint]
+    
+    xmin = all_pos_b[:,0,:].min()
+    xmax = all_pos_b[:,0,:].max()
+    ymin = all_pos_b[:,1,:].min()
+    ymax = all_pos_b[:,1,:].max()
+    
+    r = 0.03
+    
+    xinf = xmin - r*(xmax-xmin)
+    xsup = xmax + r*(xmax-xmin)
+    
+    yinf = ymin - r*(ymax-ymin)
+    ysup = ymax + r*(ymax-ymin)
+
+    # Plot-related
+    fig = plt.figure()
+    fig.set_size_inches(fig_size)
+    ax = plt.gca()
+
+    # ~ cmap = None
+    cmap = 'turbo'
+    # ~ cmap = 'rainbow'
+    
+    norm = plt.Normalize(0,all_vel_b.max())
+    
+    for ib in range(nbody-1,-1,-1):
+                
+        points = all_pos_b[ib,:,:].T.reshape(-1,1,2)
+        segments = np.concatenate([points[:-1],points[1:]],axis=1)
+        
+        lc = LineCollection(segments,cmap=cmap,norm=norm)
+        lc.set_array(all_vel_b[ib,:])
+        
+        ax.add_collection(lc)
+
+    ax.axis('off')
+    ax.set_xlim([xinf, xsup])
+    ax.set_ylim([yinf, ysup ])
+    ax.set_aspect('equal', adjustable='box')
+    plt.tight_layout()
 
     plt.savefig(filename)
     
