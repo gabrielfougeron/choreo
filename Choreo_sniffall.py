@@ -12,22 +12,26 @@ import time
 
 from Choreo_funs import *
 
-nbody =     8
-mass = np.ones((nbody))
-Sym_list = []
+# ~ nbody =     8
 
+# ~ Sym_list = []
+nbpl = [2,2]
+Sym_list,nbody = Make2DChoreoSymManyLoops(nbpl=nbpl)
 the_lcm = 2
+mass = np.ones((nbody))
 
-SymType = {
-    'name'  : 'D',
-    'n'     : nbody,
-    'k'     : 1,
-    'l'     : 0 ,
-    'p'     : the_lcm ,
-    'q'     : nbody ,
-}
-istart = 0
-Sym_list.extend(Make2DChoreoSym(SymType,[i+istart for i in range(nbody)]))
+
+
+# ~ SymType = {
+    # ~ 'name'  : 'D',
+    # ~ 'n'     : nbody,
+    # ~ 'k'     : 1,
+    # ~ 'l'     : 0 ,
+    # ~ 'p'     : the_lcm ,
+    # ~ 'q'     : nbody ,
+# ~ }
+# ~ istart = 0
+# ~ Sym_list.extend(Make2DChoreoSym(SymType,[i+istart for i in range(nbody)]))
 # ~ Sym_list.append(ChoreoSym(
                 # ~ LoopTarget=istart,
                 # ~ LoopSource=istart,
@@ -109,7 +113,7 @@ Sym_list.extend(Make2DChoreoSym(SymType,[i+istart for i in range(nbody)]))
 
 
 
-# ~ mass = np.ones((nbody))
+mass = np.ones((nbody))
 # ~ mass = np.array([1.,2.,4.,8.])
 
 
@@ -170,8 +174,9 @@ nint_plot_anim = 2*2*2*3*3*5 * 3
 # ~ nperiod_anim = 1./nbody
 
 # ~ color = "body"
-color = "velocity"
-# ~ color = "all"
+# ~ color = "loop"
+# ~ color = "velocity"
+color = "all"
 
 try:
     the_lcm
@@ -189,8 +194,8 @@ n_reconverge_it_max = 5
 
 # ~ ncoeff_init = 100
 # ~ ncoeff_init = 800
-# ~ ncoeff_init = 300   
-ncoeff_init = 600
+ncoeff_init = 300   
+# ~ ncoeff_init = 600
 # ~ ncoeff_init = 990
 # ~ ncoeff_init = 1200
 # ~ ncoeff_init = 90
@@ -370,10 +375,10 @@ while (n_opt < n_opt_max):
     if save_init:
 
         if Save_img :
-            plot_all_2D(x0,nint_plot_img,callfun,'init.png',fig_size=img_size)        
+            plot_all_2D(x0,nint_plot_img,callfun,'init.png',fig_size=img_size,color=color)        
             
         if Save_anim :
-            plot_all_2D_anim(x0,nint_plot_anim,callfun,'init.mp4',nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size,color=color)
+            plot_all_2D_anim(x0,nint_plot_anim,callfun,'init.mp4',nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size)
             
         print(1/0)
     
