@@ -12,22 +12,22 @@ import time
 
 from Choreo_funs import *
 
-# ~ nbody =     6
-# ~ mass = np.ones((nbody))
-# ~ Sym_list = []
+nbody =     8
+mass = np.ones((nbody))
+Sym_list = []
 
-# ~ the_lcm = 2
+the_lcm = 2
 
-# ~ SymType = {
-    # ~ 'name'  : 'C',
-    # ~ 'n'     : nbody,
-    # ~ 'k'     : 1,
-    # ~ 'l'     : 0 ,
-    # ~ 'p'     : the_lcm ,
-    # ~ 'q'     : nbody ,
-# ~ }
-# ~ istart = 0
-# ~ Sym_list.extend(Make2DChoreoSym(SymType,[i+istart for i in range(nbody)]))
+SymType = {
+    'name'  : 'D',
+    'n'     : nbody,
+    'k'     : 1,
+    'l'     : 0 ,
+    'p'     : the_lcm ,
+    'q'     : nbody ,
+}
+istart = 0
+Sym_list.extend(Make2DChoreoSym(SymType,[i+istart for i in range(nbody)]))
 # ~ Sym_list.append(ChoreoSym(
                 # ~ LoopTarget=istart,
                 # ~ LoopSource=istart,
@@ -58,12 +58,12 @@ from Choreo_funs import *
 
 # ~ nbpl = [3,2,5]
 # ~ nbpl = [2,2,2]
-nbpl = [2,3]
-the_lcm = m.lcm(*nbpl)
+# ~ nbpl = [3]
+# ~ the_lcm = m.lcm(*nbpl)
 
-# ~ SymName = [ 'C', 'C' , 'D' ]
-SymName = None
-Sym_list,nbody = Make2DChoreoSymManyLoops(nbpl=nbpl,SymName=SymName)
+# ~ SymName = ['D' ]
+# ~ SymName = None
+# ~ Sym_list,nbody = Make2DChoreoSymManyLoops(nbpl=nbpl,SymName=SymName)
 
 # ~ nbpl = [1,1,1,1]
 # ~ nbpl = [3,2,5]
@@ -109,7 +109,7 @@ Sym_list,nbody = Make2DChoreoSymManyLoops(nbpl=nbpl,SymName=SymName)
 
 
 
-mass = np.ones((nbody))
+# ~ mass = np.ones((nbody))
 # ~ mass = np.array([1.,2.,4.,8.])
 
 
@@ -127,8 +127,8 @@ mass = np.ones((nbody))
 Search_Min_Only = False
 # ~ Search_Min_Only = True
 
-# ~ MomConsImposed = True
-MomConsImposed = False
+MomConsImposed = True
+# ~ MomConsImposed = False
 
 store_folder = './Sniff_all_sym/'
 store_folder = store_folder+str(nbody)
@@ -170,8 +170,8 @@ nint_plot_anim = 2*2*2*3*3*5 * 3
 # ~ nperiod_anim = 1./nbody
 
 # ~ color = "body"
-# ~ color = "velocity"
-color = "all"
+color = "velocity"
+# ~ color = "all"
 
 try:
     the_lcm
@@ -483,6 +483,7 @@ while (n_opt < n_opt_max):
                 f0 = Action_grad_mod(x0,callfun)
                 best_sol = current_best(x0,f0)
                 
+                print('')
                 print('After Resize : Action Grad Norm : ',best_sol.f_norm)
                                 
                 if Search_Min_Only:
@@ -516,7 +517,7 @@ while (n_opt < n_opt_max):
                             print('One loop escaped. Starting over')   
                 else:
 
-                    maxiter = 500
+                    maxiter = 50
                     gradtol = 1e-13
                     
                     try : 
@@ -531,6 +532,29 @@ while (n_opt < n_opt_max):
                         Newt_err_norm = np.linalg.norm(Newt_err)/nint
                         
                         print('Newton Error : ',Newt_err_norm)
+                        
+                        if (save_approx):
+                            
+                            max_num_file = 0
+                            
+                            for filename in os.listdir(store_folder):
+                                file_path = os.path.join(store_folder, filename)
+                                file_root, file_ext = os.path.splitext(os.path.basename(file_path))
+                                
+                                if (file_ext == '.txt' ):
+                                    try:
+                                        max_num_file = max(max_num_file,int(file_root))
+                                    except:
+                                        pass
+                                
+                            max_num_file = max_num_file + 1
+                            
+                            
+                            
+                            filename_output = store_folder+'/'+str(max_num_file)+'_'+str(callfun[0]["current_cvg_lvl"])
+                            
+                            plot_all_2D(best_sol.x,nint_plot_img,callfun,filename_output+'.png',fig_size=img_size,color=color)
+                            
                     
                         SaveSol = (Newt_err_norm < Newt_err_norm_max_save)
                                         
@@ -540,6 +564,21 @@ while (n_opt < n_opt_max):
 
                             if not(Go_On):
                                 print('One loop escaped. Starting over')    
+                                        
+                        if (Look_for_duplicates):
+                            
+                            print('Checking Duplicates.')
+                            
+                            Action,GradAction = Compute_action(best_sol.x,callfun)
+                    
+                            Found_duplicate,file_path = Check_Duplicates(best_sol.x,callfun,hash_dict,store_folder,duplicate_eps)
+                            
+                            Go_On = not(Found_duplicate)
+                            
+                            if (Found_duplicate):
+                            
+                                print('Found Duplicate !')  
+                                print('Path : ',file_path) 
 
                     except Exception as exc:
                         
