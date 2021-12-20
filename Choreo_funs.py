@@ -31,12 +31,22 @@ from matplotlib import animation
 
 from Choreo_cython_funs import *
 
-def plot_all_2D(x,nint_plot,callfun,filename,fig_size=(10,10),color=None):
+def plot_all_2D(x,nint_plot,callfun,filename,fig_size=(10,10),color=None,color_list = plt.rcParams['axes.prop_cycle'].by_key()['color']):
     # Plots 2D trajectories and saves image under filename
     
-    if (color is None) or (color == "body"):
+    if isinstance(color,list):
         
-        plot_all_2D_cpb(x,nint_plot,callfun,filename,fig_size=(10,10))
+        for the_color in color :
+            
+            file_bas,file_ext = os.path.splitext(filename)
+            
+            the_filename = file_bas+'_'+the_color+file_ext
+            
+            plot_all_2D(x=x,nint_plot=nint_plot,callfun=callfun,filename=the_filename,fig_size=fig_size,color=the_color,color_list=color_list)
+    
+    elif (color is None) or (color == "body") or (color == "loop"):
+        
+        plot_all_2D_cpb(x,nint_plot,callfun,filename,fig_size=(10,10),color=color,color_list=color_list)
         
     elif (color == "velocity"):
         
@@ -44,16 +54,13 @@ def plot_all_2D(x,nint_plot,callfun,filename,fig_size=(10,10),color=None):
         
     elif (color == "all"):
         
-        file_bas,file_ext = os.path.splitext(filename)
-        
-        plot_all_2D_cpb(x,nint_plot,callfun,file_bas+'_bod'+file_ext,fig_size=(10,10))
-        plot_all_2D_cpv(x,nint_plot,callfun,file_bas+'_vel'+file_ext,fig_size=(10,10))
-    
+        plot_all_2D(x=x,nint_plot=nint_plot,callfun=callfun,filename=filename,fig_size=fig_size,color=["body","velocity"],color_list=color_list)
+
     else:
         
         raise ValueError("Unknown color scheme")
 
-def plot_all_2D_cpb(x,nint_plot,callfun,filename,fig_size=(10,10)):
+def plot_all_2D_cpb(x,nint_plot,callfun,filename,fig_size=(10,10),color=None,color_list = plt.rcParams['axes.prop_cycle'].by_key()['color']):
     # Plots 2D trajectories with one color per body and saves image under filename
     
     args = callfun[0]
@@ -80,6 +87,22 @@ def plot_all_2D_cpb(x,nint_plot,callfun,filename,fig_size=(10,10)):
                 # exact time is irrelevant
                 all_pos_b[Targets[il,ib],:,iint] = np.dot(SpaceRotsUn[il,ib,:,:],all_pos[il,:,iint])
     
+    ncol = len(color_list)
+    
+    cb = ['b' for ib in range(nbody)]
+
+    if (color is None) or (color == "body"):
+        for ib in range(nbody):
+            cb[ib] = color_list[ib%ncol]
+        
+    elif (color == "loop"):
+        
+        for il in range(nloop):
+            for ib in range(loopnb[il]):
+                ibb = Targets[il,ib]
+                cb[ibb] = color_list[il%ncol]
+
+
 
     xmin = all_pos_b[:,0,:].min()
     xmax = all_pos_b[:,0,:].max()
@@ -99,7 +122,7 @@ def plot_all_2D_cpb(x,nint_plot,callfun,filename,fig_size=(10,10)):
     fig.set_size_inches(fig_size)
     ax = plt.gca()
     # ~ lines = sum([ax.plot([], [],'b-', antialiased=True)  for ib in range(nbody)], [])
-    lines = sum([ax.plot([], [],'-', antialiased=True,zorder=-ib)  for ib in range(nbody)], [])
+    lines = sum([ax.plot([], [],'-',color=cb[ib] ,antialiased=True,zorder=-ib)  for ib in range(nbody)], [])
     points = sum([ax.plot([], [],'ko', antialiased=True)for ib in range(nbody)], [])
     
     # ~ print(xinf,xsup)
