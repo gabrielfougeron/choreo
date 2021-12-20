@@ -12,13 +12,13 @@ import time
 
 from Choreo_funs import *
 
-# ~ nbody =     8
+nbody =     3
 
-# ~ Sym_list = []
-nbpl = [2,2]
-Sym_list,nbody = Make2DChoreoSymManyLoops(nbpl=nbpl)
-the_lcm = 2
-mass = np.ones((nbody))
+Sym_list = []
+# ~ nbpl = [2,2]
+# ~ Sym_list,nbody = Make2DChoreoSymManyLoops(nbpl=nbpl)
+# ~ the_lcm = 2
+# ~ mass = np.ones((nbody))
 
 
 
@@ -70,7 +70,7 @@ mass = np.ones((nbody))
 # ~ Sym_list,nbody = Make2DChoreoSymManyLoops(nbpl=nbpl,SymName=SymName)
 
 # ~ nbpl = [1,1,1,1]
-# ~ nbpl = [3,2,5]
+# ~ nbpl = [2,3]
 # ~ the_lcm = m.lcm(*nbpl)
 # ~ SymName = None
 # ~ Sym_list,nbody = Make2DChoreoSymManyLoops(nbpl=nbpl,SymName=SymName)
@@ -114,14 +114,14 @@ mass = np.ones((nbody))
 
 
 mass = np.ones((nbody))
-# ~ mass = np.array([1.,2.,4.,8.])
 
+mass[0]=2
 
+# ~ mass = np.array([1.,1.5])
 
-
-
-
-
+# ~ mass[0:3]  = 2*5
+# ~ mass[3:5]  = 3*5
+# ~ mass[5:10] = 2*3
 
 
 
@@ -152,8 +152,8 @@ Check_loop_dist = True
 Penalize_Escape = True
 # ~ Penalize_Escape = False
 
-save_init = False
-# ~ save_init = True
+# ~ save_init = False
+save_init = True
 
 save_approx = False
 # ~ save_approx = True
@@ -234,6 +234,7 @@ print('Processing symmetries for {0:d} convergence levels'.format(n_reconverge_i
 callfun = setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max,Sym_list=Sym_list,MomCons=MomConsImposed)
 
 
+
 print('')
 
 args = callfun[0]
@@ -251,14 +252,11 @@ for il in range(nloop):
     nbi_tot += loopnbi[il]
 nbi_naive = (nbody*(nbody-1))//2
 
-
 print('Imposed constraints lead to the detection of :')
 print('    {:d} independant loops'.format(nloop))
 print('    {0:d} binary interactions'.format(nbi_tot))
 print('    ==> reduction of {0:f} % wrt the {1:d} naive binary iteractions'.format(100*(1-nbi_tot/nbi_naive),nbi_naive))
 print('')
-
-
 
 # ~ for i in range(n_reconverge_it_max+1):
 for i in [0]:
@@ -377,8 +375,8 @@ while (n_opt < n_opt_max):
         if Save_img :
             plot_all_2D(x0,nint_plot_img,callfun,'init.png',fig_size=img_size,color=color)        
             
-        if Save_anim :
-            plot_all_2D_anim(x0,nint_plot_anim,callfun,'init.mp4',nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size)
+        # ~ if Save_anim :
+            # ~ plot_all_2D_anim(x0,nint_plot_anim,callfun,'init.mp4',nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size)
             
         print(1/0)
     

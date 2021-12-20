@@ -1038,6 +1038,7 @@ def Assemble_Cstr_Matrix(
     np.ndarray[double, ndim=1, mode="c"] mass not None ,
     np.ndarray[long  , ndim=1, mode="c"] loopnb not None ,
     np.ndarray[long  , ndim=2, mode="c"] Targets not None ,
+    np.ndarray[double, ndim=1, mode="c"] MassSum not None ,
     np.ndarray[double, ndim=4, mode="c"] SpaceRotsUn not None ,
     np.ndarray[long  , ndim=2, mode="c"] TimeRevsUn not None ,
     np.ndarray[long  , ndim=2, mode="c"] TimeShiftNumUn not None ,
@@ -1060,6 +1061,8 @@ def Assemble_Cstr_Matrix(
     cdef long ilcstr
     
     cdef double val,dt
+    cdef double masstot=0
+    cdef double invmasstot
     cdef np.ndarray[double, ndim=1, mode="c"] cs = np.zeros((2),dtype=np.float64)
     
     # Removes imaginary part of c_0
@@ -1070,6 +1073,13 @@ def Assemble_Cstr_Matrix(
     
     # Zero momentum constraint
     if MomCons :
+        
+        for il in range(nloop):
+            for ib in range(loopnb[il]):
+                
+                masstot += mass[Targets[il,ib]]
+                
+        invmasstot = cpow(masstot,-1)
         
         for k in range(ncoeff):
             for idim in range(cndim):
@@ -1083,13 +1093,15 @@ def Assemble_Cstr_Matrix(
                         
                         for jdim in range(cndim):
 
-                            val = SpaceRotsUn[il,ib,idim,jdim]*cs[0]*mass[Targets[il,ib]]
+# ~                             val = SpaceRotsUn[il,ib,idim,jdim]*cs[0]*mass[Targets[il,ib]]
+                            val = SpaceRotsUn[il,ib,idim,jdim]*cs[0]*mass[Targets[il,ib]]*invmasstot
 
                             if (cfabs(val) > eps_zero):
                             
                                 nnz +=1
 
-                            val = -TimeRevsUn[il,ib]*SpaceRotsUn[il,ib,idim,jdim]*cs[1]*mass[Targets[il,ib]]
+# ~                             val = -TimeRevsUn[il,ib]*SpaceRotsUn[il,ib,idim,jdim]*cs[1]*mass[Targets[il,ib]]
+                            val = -TimeRevsUn[il,ib]*SpaceRotsUn[il,ib,idim,jdim]*cs[1]*mass[Targets[il,ib]]*invmasstot
 
                             if (cfabs(val) > eps_zero):
                             
@@ -1104,13 +1116,15 @@ def Assemble_Cstr_Matrix(
                         
                         for jdim in range(cndim):
                                 
-                            val = SpaceRotsUn[il,ib,idim,jdim]*cs[1]*mass[Targets[il,ib]]
+# ~                             val = SpaceRotsUn[il,ib,idim,jdim]*cs[1]*mass[Targets[il,ib]]
+                            val = SpaceRotsUn[il,ib,idim,jdim]*cs[1]*mass[Targets[il,ib]]*invmasstot
 
                             if (cfabs(val) > eps_zero):
                             
                                 nnz +=1
 
-                            val = TimeRevsUn[il,ib]*SpaceRotsUn[il,ib,idim,jdim]*cs[0]*mass[Targets[il,ib]]
+# ~                             val = TimeRevsUn[il,ib]*SpaceRotsUn[il,ib,idim,jdim]*cs[0]*mass[Targets[il,ib]]
+                            val = TimeRevsUn[il,ib]*SpaceRotsUn[il,ib,idim,jdim]*cs[0]*mass[Targets[il,ib]]*invmasstot
 
                             if (cfabs(val) > eps_zero):
                             
@@ -1248,7 +1262,8 @@ def Assemble_Cstr_Matrix(
                                 
                             i =  0 + 2*(k + ncoeff*(jdim + cndim*il))
 
-                            val = SpaceRotsUn[il,ib,idim,jdim]*cs[0]*mass[Targets[il,ib]]
+# ~                             val = SpaceRotsUn[il,ib,idim,jdim]*cs[0]*mass[Targets[il,ib]]
+                            val = SpaceRotsUn[il,ib,idim,jdim]*cs[0]*mass[Targets[il,ib]]*invmasstot
 
                             if (cfabs(val) > eps_zero):
                             
@@ -1260,7 +1275,8 @@ def Assemble_Cstr_Matrix(
                                 
                             i =  1 + 2*(k + ncoeff*(jdim + cndim*il))
 
-                            val = -TimeRevsUn[il,ib]*SpaceRotsUn[il,ib,idim,jdim]*cs[1]*mass[Targets[il,ib]]
+# ~                             val = -TimeRevsUn[il,ib]*SpaceRotsUn[il,ib,idim,jdim]*cs[1]*mass[Targets[il,ib]]
+                            val = -TimeRevsUn[il,ib]*SpaceRotsUn[il,ib,idim,jdim]*cs[1]*mass[Targets[il,ib]]*invmasstot
 
                             if (cfabs(val) > eps_zero):
                             
@@ -1283,7 +1299,8 @@ def Assemble_Cstr_Matrix(
                                 
                             i =  0 + 2*(k + ncoeff*(jdim + cndim*il))
 
-                            val = SpaceRotsUn[il,ib,idim,jdim]*cs[1]*mass[Targets[il,ib]]
+# ~                             val = SpaceRotsUn[il,ib,idim,jdim]*cs[1]*mass[Targets[il,ib]]
+                            val = SpaceRotsUn[il,ib,idim,jdim]*cs[1]*mass[Targets[il,ib]]*invmasstot
 
                             if (cfabs(val) > eps_zero):
                                                 
@@ -1295,7 +1312,8 @@ def Assemble_Cstr_Matrix(
                                 
                             i =  1 + 2*(k + ncoeff*(jdim + cndim*il))
 
-                            val = TimeRevsUn[il,ib]*SpaceRotsUn[il,ib,idim,jdim]*cs[0]*mass[Targets[il,ib]]
+# ~                             val = TimeRevsUn[il,ib]*SpaceRotsUn[il,ib,idim,jdim]*cs[0]*mass[Targets[il,ib]]
+                            val = TimeRevsUn[il,ib]*SpaceRotsUn[il,ib,idim,jdim]*cs[0]*mass[Targets[il,ib]]*invmasstot
 
                             if (cfabs(val) > eps_zero):
                                                 
@@ -1468,7 +1486,8 @@ def diag_changevar(
     long ncoeff,
     double n_grad_change,
     int [:] idxarray not None,
-    double [:] data not None
+    double [:] data not None,
+    double [:] MassSum not None ,
     ):
     
     cdef long idx, res, ift, k , il, idim
@@ -1486,7 +1505,9 @@ def diag_changevar(
         il = res / cndim
 
         if (k >=2):
-            kd = k
+            kd = k*cpow(MassSum[il],0.5)
+# ~             kd = k*MassSum[il]
+# ~             kd = k
             kfac = cpow(kd,n_grad_change)
         else:
             kfac = 1.
