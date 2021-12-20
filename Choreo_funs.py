@@ -996,6 +996,7 @@ def setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max=6,MomCons=True,n_
         mass                ,
         loopnb              ,
         Targets             ,
+        MassSum             ,
         SpaceRotsUn         ,
         TimeRevsUn          ,
         TimeShiftNumUn      ,
@@ -1015,7 +1016,8 @@ def setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max=6,MomCons=True,n_
             ncoeff_list[i],
             -n_grad_change,
             param_to_coeff_list[i].row,
-            param_to_coeff_list[i].data
+            param_to_coeff_list[i].data,
+            MassSum
             )
         
         diag_changevar(
@@ -1023,7 +1025,8 @@ def setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max=6,MomCons=True,n_
             ncoeff_list[i],
             n_grad_change,
             coeff_to_param_list[i].col,
-            coeff_to_param_list[i].data
+            coeff_to_param_list[i].data,
+            MassSum
             )
 
     callfun = [{
