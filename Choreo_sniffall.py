@@ -12,9 +12,10 @@ import time
 
 from Choreo_funs import *
 
-nbody =     3
 
-Sym_list = []
+# ~ nbody =     3
+
+# ~ Sym_list = []
 # ~ nbpl = [2,2]
 # ~ Sym_list,nbody = Make2DChoreoSymManyLoops(nbpl=nbpl)
 # ~ the_lcm = 2
@@ -60,14 +61,15 @@ Sym_list = []
                 # ~ TimeShift=fractions.Fraction(numerator=1,denominator=5)
                 # ~ ))
 
-# ~ nbpl = [3,2,5]
+nbpl = [3,2,5]
+# ~ nbpl = [2,1,1]
 # ~ nbpl = [2,2,2]
 # ~ nbpl = [3]
-# ~ the_lcm = m.lcm(*nbpl)
+the_lcm = m.lcm(*nbpl)
 
 # ~ SymName = ['D' ]
-# ~ SymName = None
-# ~ Sym_list,nbody = Make2DChoreoSymManyLoops(nbpl=nbpl,SymName=SymName)
+SymName = None
+Sym_list,nbody = Make2DChoreoSymManyLoops(nbpl=nbpl,SymName=SymName)
 
 # ~ nbpl = [1,1,1,1]
 # ~ nbpl = [2,3]
@@ -115,7 +117,7 @@ Sym_list = []
 
 mass = np.ones((nbody))
 
-mass[0]=2
+# ~ mass[0]=2
 
 # ~ mass = np.array([1.,1.5])
 
@@ -152,8 +154,8 @@ Check_loop_dist = True
 Penalize_Escape = True
 # ~ Penalize_Escape = False
 
-# ~ save_init = False
-save_init = True
+save_init = False
+# ~ save_init = True
 
 save_approx = False
 # ~ save_approx = True
@@ -194,8 +196,8 @@ n_reconverge_it_max = 5
 
 # ~ ncoeff_init = 100
 # ~ ncoeff_init = 800
-ncoeff_init = 300   
-# ~ ncoeff_init = 600
+# ~ ncoeff_init = 300   
+ncoeff_init = 600
 # ~ ncoeff_init = 990
 # ~ ncoeff_init = 1200
 # ~ ncoeff_init = 90
@@ -213,18 +215,21 @@ duplicate_eps = 1e-9
 
 # ~ krylov_method = 'lgmres'
 # ~ krylov_method = 'gmres'
-# ~ krylov_method = 'bicgstab'
-krylov_method = 'cgs'
+krylov_method = 'bicgstab'
+# ~ krylov_method = 'cgs'
 # ~ krylov_method = 'minres'
 
 # ~ line_search = 'armijo'
 line_search = 'wolfe'
 
 escape_fac = 1e0
-# ~ escape_fac = 1e-3
+# ~ escape_fac = 1e-2
+# ~ escape_fac = 1e-1
 # ~ escape_fac = 0
 escape_min_dist = 1
-escape_pow = 2.5
+escape_pow = 2.0
+# ~ escape_pow = 1.5
+# ~ escape_pow = 0.5
 
 print('Searching periodic solutions of {:d} bodies'.format(nbody))
 # ~ print('Processing symmetries for {:d} convergence levels ...'.format(n_reconverge_it_max+1))
@@ -397,6 +402,7 @@ while (n_opt < n_opt_max):
         best_sol = current_best(x0,f0)
 
         gradtol = 1e-1
+        # ~ gradtol = 1e-2
         maxiter = 500
 
         try : 
@@ -431,18 +437,22 @@ while (n_opt < n_opt_max):
 
             maxiter = 20
             gradtol = 1e-11
-            opt_result = opt.root(fun=Action_grad_mod,x0=x_opt,args=callfun,method='krylov', options={'disp':disp_scipy_opt,'maxiter':maxiter,'fatol':gradtol,'jac_options':{'method':krylov_method}},callback=best_sol.update)
+            opt_result = opt.root(fun=Action_grad_mod,x0=x_opt,args=callfun,method='krylov', options={'line_search':line_search,'disp':disp_scipy_opt,'maxiter':maxiter,'fatol':gradtol,'jac_options':{'method':krylov_method}},callback=best_sol.update)
 
             print('Approximate solution found ! Action Grad Norm : ',best_sol.f_norm)
             
+            PreciseEnough = (best_sol.f_norm < 1e-1)
+            ErrorOccured = False
+            
         except Exception as exc:
             
+            ErrorOccured = True
+            PreciseEnough = False
             print(exc)
-            print("Value Error occured, skipping.")
 
         Found_duplicate = False
 
-        if (Look_for_duplicates):
+        if (Look_for_duplicates and PreciseEnough):
             
             print('Checking Duplicates.')
 
@@ -454,7 +464,17 @@ while (n_opt < n_opt_max):
             
             Found_duplicate = False
             
-        if (Found_duplicate):
+        if (ErrorOccured):
+            
+            print("Value Error occured, skipping.")
+            
+        elif (not(PreciseEnough)):
+        
+            print('Initial convergence not good enough')   
+            print('Restarting')   
+            
+            
+        elif (Found_duplicate):
         
             print('Found Duplicate !')   
             print('Path : ',file_path)
