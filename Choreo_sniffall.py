@@ -13,6 +13,13 @@ import time
 from Choreo_funs import *
 
 
+
+# ~ print(os.environ['OMP_NUM_THREADS']      )
+# ~ print(os.environ['NUMEXPR_NUM_THREADS']  )
+# ~ print(os.environ['OPENBLAS_NUM_THREADS'] )
+# ~ print(os.environ['MKL_NUM_THREADS']      )
+
+
 # ~ nbody =     3
 
 # ~ Sym_list = []
