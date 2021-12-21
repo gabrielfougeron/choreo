@@ -1,9 +1,10 @@
 import subprocess
 import os
 
-os.environ['NUMEXPR=_NUM_THREAD'] = '1'
-os.environ['OPENBLAS_NUM_THREAD'] = '1'
-os.environ['MKL_NUM_THREAD'] = '1'
+os.environ['OMP_NUM_THREADS'] = '1'
+os.environ['NUMEXPR_NUM_THREADS'] = '1'
+os.environ['OPENBLAS_NUM_THREADS'] = '1'
+os.environ['MKL_NUM_THREADS'] = '1'
 
 
 # In order to kill all the created jobs : either quit the terminal or run the following command (possibly in another terminal):
