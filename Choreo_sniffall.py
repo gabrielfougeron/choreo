@@ -13,40 +13,24 @@ import time
 from Choreo_funs import *
 
 
+nbody =     3
 
-# ~ print(os.environ['OMP_NUM_THREADS']      )
-# ~ print(os.environ['NUMEXPR_NUM_THREADS']  )
-# ~ print(os.environ['OPENBLAS_NUM_THREADS'] )
-# ~ print(os.environ['MKL_NUM_THREADS']      )
-
-
-# ~ nbody =     3
-
-# ~ Sym_list = []
-# ~ nbpl = [2,2]
-# ~ Sym_list,nbody = Make2DChoreoSymManyLoops(nbpl=nbpl)
-# ~ the_lcm = 2
-# ~ mass = np.ones((nbody))
+Sym_list = []
+the_lcm = 3
 
 
 
-# ~ SymType = {
-    # ~ 'name'  : 'D',
-    # ~ 'n'     : nbody,
-    # ~ 'k'     : 1,
-    # ~ 'l'     : 0 ,
-    # ~ 'p'     : the_lcm ,
-    # ~ 'q'     : nbody ,
-# ~ }
-# ~ istart = 0
-# ~ Sym_list.extend(Make2DChoreoSym(SymType,[i+istart for i in range(nbody)]))
-# ~ Sym_list.append(ChoreoSym(
-                # ~ LoopTarget=istart,
-                # ~ LoopSource=istart,
-                # ~ SpaceRot = np.identity(ndim,dtype=np.float64),
-                # ~ TimeRev=1,
-                # ~ TimeShift=fractions.Fraction(numerator=1,denominator=3)
-                # ~ ))
+SymType = {
+    'name'  : 'D',
+    'n'     : nbody,
+    'k'     : 1,
+    'l'     : 0 ,
+    'p'     : 0 ,
+    'q'     : 1 ,
+}
+istart = 0
+Sym_list.extend(Make2DChoreoSym(SymType,[i+istart for i in range(nbody)]))
+
 
 
 # ~ SymType = {
@@ -68,31 +52,38 @@ from Choreo_funs import *
                 # ~ TimeShift=fractions.Fraction(numerator=1,denominator=5)
                 # ~ ))
 
-nbpl = [3,2,5]
+# ~ nbpl = [3,2,5]
 # ~ nbpl = [2,1,1]
-# ~ nbpl = [2,2,2]
-# ~ nbpl = [3]
-the_lcm = m.lcm(*nbpl)
+# ~ nbpl = [3,2]
+# ~ nbpl = [2,3]
+# ~ nbpl = [i+1 for i in range(4)]
+# ~ nbpl = [1 for i in range(10)]
+# ~ nbpl = [5]
+# ~ the_lcm = m.lcm(*nbpl)
 
 # ~ SymName = ['D' ]
-SymName = None
-Sym_list,nbody = Make2DChoreoSymManyLoops(nbpl=nbpl,SymName=SymName)
+# ~ SymName = None
+# ~ Sym_list,nbody = Make2DChoreoSymManyLoops(nbpl=nbpl,SymName=SymName)
 
-# ~ nbpl = [1,1,1,1]
-# ~ nbpl = [2,3]
+# ~ nbpl = [1,1,1,1,1]
+# ~ nbpl = [4,3,2]
+# ~ nbpl = [1,2,3,4]
+
 # ~ the_lcm = m.lcm(*nbpl)
 # ~ SymName = None
 # ~ Sym_list,nbody = Make2DChoreoSymManyLoops(nbpl=nbpl,SymName=SymName)
+
+
 
 # ~ rot_angle =  twopi * 1 /  2
 # ~ s = 1
 
 # ~ Sym_list.append(ChoreoSym(
-    # ~ LoopTarget=0,
-    # ~ LoopSource=1,
+    # ~ LoopTarget=2,
+    # ~ LoopSource=3,
     # ~ SpaceRot = np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64),
     # ~ TimeRev=1,
-    # ~ TimeShift=fractions.Fraction(numerator=-1,denominator=2)
+    # ~ TimeShift=fractions.Fraction(numerator=0,denominator=2)
     # ~ ))
 
 # ~ Sym_list.append(ChoreoSym(
@@ -158,8 +149,8 @@ Look_for_duplicates = True
 Check_loop_dist = True
 # ~ Check_loop_dist = False
 
-Penalize_Escape = True
-# ~ Penalize_Escape = False
+# ~ Penalize_Escape = True
+Penalize_Escape = False
 
 save_init = False
 # ~ save_init = True
@@ -179,7 +170,7 @@ Save_anim = True
 # ~ Save_anim = False
 
 vid_size = (8,8) # Image size in inches
-nint_plot_anim = 2*2*2*3*3*5 * 3
+nint_plot_anim = 2*2*2*3*3*5
 # ~ nperiod_anim = 1./nbody
 
 # ~ color = "body"
@@ -190,19 +181,22 @@ color = "all"
 try:
     the_lcm
 except NameError:
-    nperiod_anim = 1.
+    period_div = 1.
 else:
-    nperiod_anim = 1./the_lcm
+    period_div = the_lcm
 
+
+nperiod_anim = 1./period_div
 
 Plot_trace_anim = True
 # ~ Plot_trace_anim = False
 
-n_reconverge_it_max = 5
+n_reconverge_it_max = 4
 # ~ n_reconverge_it_max = 1
 
-# ~ ncoeff_init = 100
+# ~ ncoeff_init = 102
 # ~ ncoeff_init = 800
+# ~ ncoeff_init = 201   
 # ~ ncoeff_init = 300   
 ncoeff_init = 600
 # ~ ncoeff_init = 990
@@ -222,19 +216,23 @@ duplicate_eps = 1e-9
 
 # ~ krylov_method = 'lgmres'
 # ~ krylov_method = 'gmres'
-krylov_method = 'bicgstab'
-# ~ krylov_method = 'cgs'
+# ~ krylov_method = 'bicgstab'
+krylov_method = 'cgs'
 # ~ krylov_method = 'minres'
 
 # ~ line_search = 'armijo'
 line_search = 'wolfe'
 
-escape_fac = 1e0
-# ~ escape_fac = 1e-2
+# ~ escape_fac = 1e0
 # ~ escape_fac = 1e-1
+escape_fac = 1e-2
+# ~ escape_fac = 1e-3
+# ~ escape_fac = 1e-4
+# ~ escape_fac = 1e-5
 # ~ escape_fac = 0
 escape_min_dist = 1
 escape_pow = 2.0
+# ~ escape_pow = 2.5
 # ~ escape_pow = 1.5
 # ~ escape_pow = 0.5
 
@@ -322,6 +320,7 @@ for il in range(nloop):
 
             ko = 0
             k1 =50
+            # ~ k1 =100
             k2= 500
             if (k <= ko):
                 randampl = 0
@@ -344,6 +343,8 @@ x_max = Package_all_coeffs(all_coeffs_max,callfun)
 # ~ for i in range(x_min.shape[0]):
     # ~ print(x_min[i],x_max[i])
 
+freq_erase_dict = 1000
+
 rand_eps = 1e-6
 rand_dim = 0
 for i in range(callfun[0]['coeff_to_param_list'][0].shape[0]):
@@ -356,11 +357,15 @@ hash_dict = {}
 
 sampler = UniformRandom(d=rand_dim)
 
-
 n_opt = 0
 # ~ n_opt_max = 100
 n_opt_max = 1e10
 while (n_opt < n_opt_max):
+    
+    if ((n_opt % freq_erase_dict) == 0):
+        
+        hash_dict = {}
+        _ = SelectFiles_Action(store_folder,hash_dict)
 
     n_opt += 1
     
@@ -410,11 +415,17 @@ while (n_opt < n_opt_max):
 
         gradtol = 1e-1
         # ~ gradtol = 1e-2
-        maxiter = 500
+        # ~ maxiter = 500
+        maxiter = 2000
 
         try : 
             
-            opt_result = opt.root(fun=Action_grad_mod,x0=x0,args=callfun,method='krylov', options={'line_search':line_search,'disp':disp_scipy_opt,'maxiter':maxiter,'fatol':gradtol,'jac_options':{'method':krylov_method}},callback=best_sol.update)
+            # ~ rdiff = 1e-7
+            # ~ rdiff = 0
+            rdiff = None
+            
+            # ~ opt_result = opt.root(fun=Action_grad_mod,x0=x0,args=callfun,method='krylov', options={'line_search':line_search,'disp':disp_scipy_opt,'maxiter':maxiter,'fatol':gradtol,'jac_options':{'method':krylov_method}},callback=best_sol.update)
+            opt_result = opt.root(fun=Action_grad_mod,x0=x0,args=callfun,method='krylov', options={'line_search':line_search,'disp':disp_scipy_opt,'maxiter':maxiter,'fatol':gradtol,'jac_options':{'method':krylov_method,'rdiff':rdiff }},callback=best_sol.update)
             
             print("After Krylov : ",best_sol.f_norm)
             
@@ -430,7 +441,8 @@ while (n_opt < n_opt_max):
 
     if (Check_loop_dist and Go_On):
         
-        Go_On = not(Detect_Escape(x_opt,callfun))
+        Escaped,_ = Detect_Escape(x_opt,callfun)
+        Go_On = not(Escaped)
 
         if not(Go_On):
             print('One loop escaped. Starting over')    
@@ -541,7 +553,8 @@ while (n_opt < n_opt_max):
                                     
                     if (Check_loop_dist):
                         
-                        Go_On = not(Detect_Escape(best_sol.x,callfun))
+                        Escaped,_ = Detect_Escape(best_sol.x,callfun)
+                        Go_On = Go_On and not(Escaped)
 
                         if not(Go_On):
                             print('One loop escaped. Starting over')   
@@ -590,8 +603,9 @@ while (n_opt < n_opt_max):
                                         
                         if (Check_loop_dist):
                             
-                            Go_On = not(Detect_Escape(best_sol.x,callfun))
-
+                            Escaped,_ = Detect_Escape(best_sol.x,callfun)
+                            Go_On = Go_On and not(Escaped)
+                            
                             if not(Go_On):
                                 print('One loop escaped. Starting over')    
                                         
@@ -603,7 +617,7 @@ while (n_opt < n_opt_max):
                     
                             Found_duplicate,file_path = Check_Duplicates(best_sol.x,callfun,hash_dict,store_folder,duplicate_eps)
                             
-                            Go_On = not(Found_duplicate)
+                            Go_On = Go_On and not(Found_duplicate)
                             
                             if (Found_duplicate):
                             
@@ -717,3 +731,5 @@ while (n_opt < n_opt_max):
     print('')
     print('')
 
+
+print('Done !')
