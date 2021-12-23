@@ -374,7 +374,28 @@ def Compute_action_onlygrad_escape(x,callfun):
     y = args['param_to_coeff_list'][args["current_cvg_lvl"]] * x
     all_coeffs = y.reshape(args['nloop'],ndim,args['ncoeff_list'][args["current_cvg_lvl"]],2)
 
-    rms_dist = Compute_Loop_Dist_Cython(
+    # ~ rms_dist = Compute_Loop_Dist_Cython(
+        # ~ args['nloop']           ,
+        # ~ args['ncoeff_list'][args["current_cvg_lvl"]]          ,
+        # ~ args['nint_list'][args["current_cvg_lvl"]]            ,
+        # ~ args['mass']            ,
+        # ~ args['loopnb']          ,
+        # ~ args['Targets']         ,
+        # ~ args['MassSum']         ,
+        # ~ args['SpaceRotsUn']     ,
+        # ~ args['TimeRevsUn']      ,
+        # ~ args['TimeShiftNumUn']  ,
+        # ~ args['TimeShiftDenUn']  ,
+        # ~ args['loopnbi']         ,
+        # ~ args['ProdMassSumAll']  ,
+        # ~ args['SpaceRotsBin']    ,
+        # ~ args['TimeRevsBin']     ,
+        # ~ args['TimeShiftNumBin'] ,
+        # ~ args['TimeShiftDenBin'] ,
+        # ~ all_coeffs
+        # ~ )
+
+    rms_dist = Compute_Loop_Dist_Cython_test(
         args['nloop']           ,
         args['ncoeff_list'][args["current_cvg_lvl"]]          ,
         args['nint_list'][args["current_cvg_lvl"]]            ,
@@ -1223,7 +1244,7 @@ def Detect_Escape(x,callfun):
     # ~ print("")
     
     # ~ return (max_loop_dist > (4.5 * callfun[0]['nbody'] * max_loop_size))
-    return (res[1] > (4.5 * callfun[0]['nbody'] * res[0]))
+    return (res[1] > (4.5 * callfun[0]['nbody'] * res[0])),res
     
 def Compute_MinDist(x,callfun):
     # Returns the minimum inter-body distance along a set of trajectories
@@ -1293,7 +1314,24 @@ def Write_Descriptor(x,callfun,filename):
             filename_write.write(' {:.10f}'.format(Hash_Action[ihash]))
         filename_write.write('\n')
         
-def SelectFiles_Action(store_folder,hash_dict,Action_val,Action_Hash_val,rtol):
+        Escaped,dists = Detect_Escape(x,callfun)
+        
+        filename_write.write('Escaped detection : ')
+        if Escaped:
+            filename_write.write(' True ')
+        else:
+            filename_write.write(' False ')
+            
+        for i in range(2):
+            filename_write.write(' {:.10f}'.format(dists[i]))
+        filename_write.write(' {:.10f}'.format(dists[1]/(args['nbody']*dists[0])))    
+        
+        filename_write.write('\n')
+        
+        
+        
+        
+def SelectFiles_Action(store_folder,hash_dict,Action_val=0,Action_Hash_val=np.zeros((nhash)),rtol=1e-5):
     # Creates a list of possible duplicates based on value of the action and hashes
     
     Action_msg = 'Value of the Action : '

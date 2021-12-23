@@ -554,9 +554,7 @@ def Compute_Loop_Dist_Cython(
     np.ndarray[long  , ndim=2, mode="c"] TimeShiftDenBin not None ,
     np.ndarray[double, ndim=4, mode="c"]  all_coeffs  not None
     ):
-    # Computes the minimum inter-body distance along the trajectory.
-    # A useful tool for collision detection.
-
+        
     cdef long il,ilp,i
     cdef long idim,idimp
     cdef long ibi
@@ -608,6 +606,52 @@ def Compute_Loop_Dist_Cython(
     return csqrt(sum_loop_dist2)
    
    
+   
+def Compute_Loop_Dist_Cython_test(
+    long nloop,
+    long ncoeff,
+    long nint,
+    np.ndarray[double, ndim=1, mode="c"] mass not None ,
+    np.ndarray[long  , ndim=1, mode="c"] loopnb not None ,
+    np.ndarray[long  , ndim=2, mode="c"] Targets not None ,
+    np.ndarray[double, ndim=1, mode="c"] MassSum not None ,
+    np.ndarray[double, ndim=4, mode="c"] SpaceRotsUn not None ,
+    np.ndarray[long  , ndim=2, mode="c"] TimeRevsUn not None ,
+    np.ndarray[long  , ndim=2, mode="c"] TimeShiftNumUn not None ,
+    np.ndarray[long  , ndim=2, mode="c"] TimeShiftDenUn not None ,
+    np.ndarray[long  , ndim=1, mode="c"] loopnbi not None ,
+    np.ndarray[double, ndim=2, mode="c"] ProdMassSumAll not None ,
+    np.ndarray[double, ndim=4, mode="c"] SpaceRotsBin not None ,
+    np.ndarray[long  , ndim=2, mode="c"] TimeRevsBin not None ,
+    np.ndarray[long  , ndim=2, mode="c"] TimeShiftNumBin not None ,
+    np.ndarray[long  , ndim=2, mode="c"] TimeShiftDenBin not None ,
+    np.ndarray[double, ndim=4, mode="c"]  all_coeffs  not None
+    ):
+
+    cdef long il,ilp,i
+    cdef long idim,idimp
+    cdef long ibi
+    cdef long ib,ibp
+    cdef long iint
+    cdef long div
+    cdef long k,kp,k2
+    cdef double sum_loop_dist2
+    cdef double dx2
+    cdef np.ndarray[double, ndim=1, mode="c"]  dx = np.zeros((cndim),dtype=np.float64)
+
+    sum_loop_dist2 = 0.
+    for il in range(nloop-1):
+        
+        dx2 = all_coeffs[il,0,0,0]*all_coeffs[il,0,0,0]
+        for idim in range(1,cndim):
+            dx2 += all_coeffs[il,idim,0,0]*all_coeffs[il,idim,0,0]
+
+        sum_loop_dist2 += dx2
+
+
+    return csqrt(sum_loop_dist2)
+   
+   
 def Compute_Loop_Size_Dist_Cython(
     long nloop,
     long ncoeff,
@@ -628,8 +672,6 @@ def Compute_Loop_Size_Dist_Cython(
     np.ndarray[long  , ndim=2, mode="c"] TimeShiftDenBin not None ,
     np.ndarray[double, ndim=4, mode="c"]  all_coeffs  not None
     ):
-    # Computes the minimum inter-body distance along the trajectory.
-    # A useful tool for collision detection.
 
     cdef long il,ilp,i
     cdef long idim,idimp
