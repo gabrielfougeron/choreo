@@ -16,12 +16,11 @@ from Choreo_funs import *
 nbody =     3
 
 Sym_list = []
-the_lcm = 3
-
+# ~ the_lcm = 3
 
 
 SymType = {
-    'name'  : 'D',
+    'name'  : 'C',
     'n'     : nbody,
     'k'     : 1,
     'l'     : 0 ,
@@ -67,7 +66,7 @@ Sym_list.extend(Make2DChoreoSym(SymType,[i+istart for i in range(nbody)]))
 
 # ~ nbpl = [1,1,1,1,1]
 # ~ nbpl = [4,3,2]
-# ~ nbpl = [1,2,3,4]
+# ~ nbpl = [1,2]
 
 # ~ the_lcm = m.lcm(*nbpl)
 # ~ SymName = None
@@ -224,8 +223,8 @@ krylov_method = 'cgs'
 line_search = 'wolfe'
 
 # ~ escape_fac = 1e0
-# ~ escape_fac = 1e-1
-escape_fac = 1e-2
+escape_fac = 1e-1
+# ~ escape_fac = 1e-2
 # ~ escape_fac = 1e-3
 # ~ escape_fac = 1e-4
 # ~ escape_fac = 1e-5
@@ -236,12 +235,15 @@ escape_pow = 2.0
 # ~ escape_pow = 1.5
 # ~ escape_pow = 0.5
 
+n_grad_change = 1.
+# ~ n_grad_change = 1.5
+
 print('Searching periodic solutions of {:d} bodies'.format(nbody))
 # ~ print('Processing symmetries for {:d} convergence levels ...'.format(n_reconverge_it_max+1))
 
 
 print('Processing symmetries for {0:d} convergence levels'.format(n_reconverge_it_max+1))
-callfun = setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max,Sym_list=Sym_list,MomCons=MomConsImposed)
+callfun = setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change)
 
 
 
@@ -319,8 +321,8 @@ for il in range(nloop):
         for k in range(1,ncoeff):
 
             ko = 0
-            k1 =50
-            # ~ k1 =100
+            # ~ k1 =30
+            k1 =10
             k2= 500
             if (k <= ko):
                 randampl = 0

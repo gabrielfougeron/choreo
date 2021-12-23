@@ -13,17 +13,17 @@ from Choreo_funs import *
 
 
 # ~ slow_base_filename = './data/2_cercle.npy'
-# ~ slow_base_filename = './data/3_cercle.npy'
-slow_base_filename = './data/3_huit.npy'
+slow_base_filename = './data/3_cercle.npy'
+# ~ slow_base_filename = './data/3_huit.npy'
 
-# ~ fast_base_filename = './data/2_cercle.npy'
+fast_base_filename = './data/2_cercle.npy'
 # ~ fast_base_filename = './data/3_cercle.npy'
-fast_base_filename = './data/3_huit.npy'
+# ~ fast_base_filename = './data/3_huit.npy'
 # ~ fast_base_filename = './data/3_heart.npy'
 
 nTf = 13
 nbs = 3
-nbf = 3
+nbf = 2
 
 Rotate_fast_with_slow = True
 # ~ Rotate_fast_with_slow = False
@@ -56,17 +56,8 @@ Sym_list = []
     # ~ 'q'     : 1 ,
 # ~ }
 
-SymType = {
-    'name'  : 'Dp',
-    'n'     : nbody,
-    'k'     : 1,
-    'l'     : 1 ,
-    'p'     : 0 ,
-    'q'     : 1 ,
-}
 
-
-Sym_list.extend(Make2DChoreoSym(SymType,range(nbody)))
+# ~ Sym_list.extend(Make2DChoreoSym(SymType,range(nbody)))
 
 
 Search_Min_Only = False
@@ -78,7 +69,7 @@ MomConsImposed = True
 store_folder = './Target_res/'
 store_folder = store_folder+str(nbody)
 if not(os.path.isdir(store_folder)):
-    os.mkdir(store_folder)
+    os.makedirs(store_folder)
 
 
 # ~ Use_deflation = True
@@ -218,7 +209,6 @@ nint = callfun[0]["nint_list"][callfun[0]["current_cvg_lvl"]]
 
 ncoeff_slow = all_coeffs_slow_load.shape[2]
 ncoeff_fast = all_coeffs_fast_load.shape[2]
-
 
 
 all_coeffs_slow_mod = np.zeros((nloop,ndim,ncoeff,2),dtype=np.float64)
@@ -487,7 +477,8 @@ while (n_opt < n_opt_max):
 
     if (Check_loop_dist and Go_On):
         
-        Go_On = not(Detect_Escape(x_opt,callfun))
+        Escaped,_ = Detect_Escape(x_opt,callfun)
+        Go_On = Go_On and not(Escaped)
 
         if not(Go_On):
             print('One loop escaped. Starting over')    
@@ -576,8 +567,9 @@ while (n_opt < n_opt_max):
                                     
                     if (Check_loop_dist):
                         
-                        Go_On = not(Detect_Escape(best_sol.x,callfun))
-
+                        Escaped,_ = Detect_Escape(best_sol.x,callfun)
+                        Go_On = Go_On and not(Escaped)
+                        
                         if not(Go_On):
                             print('One loop escaped. Starting over')   
                 else:
@@ -602,7 +594,8 @@ while (n_opt < n_opt_max):
                                         
                         if (Check_loop_dist):
                             
-                            Go_On = not(Detect_Escape(best_sol.x,callfun))
+                            Escaped,_ = Detect_Escape(best_sol.x,callfun)
+                            Go_On = Go_On and not(Escaped)
 
                             if not(Go_On):
                                 print('One loop escaped. Starting over')    
