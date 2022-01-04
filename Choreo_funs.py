@@ -1459,7 +1459,8 @@ class UniformRandom():
         return np.random.random((self.d))
 
 def Transform_Coeffs(SpaceRots, TimeRevs, TimeShiftNum, TimeShiftDen, all_coeffs):
-        
+    # Transforms coeffs defining a path and returns updated coeffs
+    
     nloop = all_coeffs.shape[0]
     ncoeff = all_coeffs.shape[2]
         
@@ -1469,18 +1470,100 @@ def Transform_Coeffs(SpaceRots, TimeRevs, TimeShiftNum, TimeShiftDen, all_coeffs
     for il in range(nloop):
         for k in range(ncoeff):
             
-        dt = TimeShiftNumUn[il,ib] / TimeShiftDenUn[il,ib]
-        cs[0] = ccos( - twopi * k*dt)
-        cs[1] = csin( - twopi * k*dt)  
-            
-        v = all_coeffs[il,:,k,0] * cs[0] - TimeRevs[il] * all_coeffs[il,:,k,1] * cs[1]
-        w = all_coeffs[il,:,k,0] * cs[1] + TimeRevs[il] * all_coeffs[il,:,k,1] * cs[0]
-            
-        all_coeffs_new[il,:,k,0] = SpaceRots[il,:,:].dot(v)
-        all_coeffs_new[il,:,k,1] = SpaceRots[il,:,:].dot(w)
+            dt = TimeShiftNum[il] / TimeShiftDen[il]
+            cs[0] = m.cos( - twopi * k*dt)
+            cs[1] = m.sin( - twopi * k*dt)  
+                
+            v = all_coeffs[il,:,k,0] * cs[0] - TimeRevs[il] * all_coeffs[il,:,k,1] * cs[1]
+            w = all_coeffs[il,:,k,0] * cs[1] + TimeRevs[il] * all_coeffs[il,:,k,1] * cs[0]
+                
+            all_coeffs_new[il,:,k,0] = SpaceRots[il,:,:].dot(v)
+            all_coeffs_new[il,:,k,1] = SpaceRots[il,:,:].dot(w)
         
     return all_coeffs_new
 
-def Compose_Two_Paths():
+def Compose_Two_Paths(nTf,nbs,nbf,ncoeff,all_coeffs_slow,all_coeffs_fast,Rotate_fast_with_slow=True):
+    # Composes a "slow" with a "fast" path
     
+    k_fac_slow = nbf
+    k_fac_fast = nTf
     
+    phys_exp = 2*(1-n)
+
+    rfac_slow = (k_fac_slow)**(-1./phys_exp)
+    rfac_fast = (k_fac_fast)**(-2./phys_exp)
+    
+    ncoeff_slow = all_coeffs_slow.shape[2]
+    ncoeff_fast = all_coeffs_fast.shape[2]
+    
+    if (all_coeffs_slow.shape[0] != all_coeffs_fast.shape[0] ):
+        raise ValueError("Fast and slow have different number of loops")
+    else:
+        nloop = all_coeffs_slow.shape[0]
+    
+    all_coeffs_slow_mod = np.zeros((nloop,ndim,ncoeff,2),dtype=np.float64)
+    all_coeffs_fast_mod = np.zeros((nloop,ndim,ncoeff,2),dtype=np.float64)
+        
+    for il in range(nloop):
+        for idim in range(ndim):
+            for k in range(1,min(ncoeff//k_fac_slow,ncoeff_slow)):
+                
+                all_coeffs_slow_mod[il,idim,k*k_fac_slow,:]  = rfac_slow * all_coeffs_slow[il,idim,k,:]
+
+    for il in range(nloop):
+        for idim in range(ndim):
+            for k in range(1,min(ncoeff//k_fac_fast,ncoeff_fast)):
+                
+                all_coeffs_fast_mod[il,idim,k*k_fac_fast,:]  = rfac_fast * all_coeffs_fast[il,idim,k,:]
+    
+
+    if Rotate_fast_with_slow :
+        
+        nint = 2*ncoeff
+
+        c_coeffs_slow = all_coeffs_slow_mod.view(dtype=np.complex128)[...,0]
+        all_pos_slow = np.fft.irfft(c_coeffs_slow,n=nint,axis=2)
+
+        c_coeffs_fast = all_coeffs_fast_mod.view(dtype=np.complex128)[...,0]
+        all_pos_fast = np.fft.irfft(c_coeffs_fast,n=nint,axis=2)
+
+        all_coeffs_slow_mod_speed = np.zeros((nloop,ndim,ncoeff,2),dtype=np.float64)
+
+        for il in range(nloop):
+            for idim in range(ndim):
+                for k in range(ncoeff):
+
+                    all_coeffs_slow_mod_speed[il,idim,k,0] = k * all_coeffs_slow_mod[il,idim,k,1] 
+                    all_coeffs_slow_mod_speed[il,idim,k,1] = -k * all_coeffs_slow_mod[il,idim,k,0] 
+                
+        c_coeffs_slow_mod_speed = all_coeffs_slow_mod_speed.view(dtype=np.complex128)[...,0]
+        all_pos_slow_mod_speed = np.fft.irfft(c_coeffs_slow_mod_speed,n=nint,axis=2)
+        
+        all_pos_avg = np.zeros((nloop,ndim,nint),dtype=np.float64)
+
+        for il in range(nloop):
+            for iint in range(nint):
+                
+                v = all_pos_slow_mod_speed[il,:,iint]
+                v = v / np.linalg.norm(v)
+
+                SpRotMat = np.array( [[v[0] , -v[1]] , [v[1],v[0]]])
+                # ~ SpRotMat = np.array( [[v[0] , v[1]] , [-v[1],v[0]]])
+                
+                all_pos_avg[il,:,iint] = all_pos_slow[il,:,iint] + SpRotMat.dot(all_pos_fast[il,:,iint])
+
+        c_coeffs_avg = np.fft.rfft(all_pos_avg,n=nint,axis=2)
+        all_coeffs_composed = np.zeros((nloop,ndim,ncoeff,2),dtype=np.float64)
+
+        for il in range(nloop):
+            for idim in range(ndim):
+                for k in range(min(ncoeff,ncoeff_slow)):
+                    all_coeffs_composed[il,idim,k,0] = c_coeffs_avg[il,idim,k].real
+                    all_coeffs_composed[il,idim,k,1] = c_coeffs_avg[il,idim,k].imag
+                    
+                    
+    else :
+        
+        all_coeffs_composed = all_coeffs_fast_mod[:,:,0:ncoeff,:]  + all_coeffs_slow_mod[:,:,0:ncoeff,:] 
+
+    return all_coeffs_composed
