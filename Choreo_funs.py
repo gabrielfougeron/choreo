@@ -141,7 +141,6 @@ def plot_all_2D_cpb(x,nint_plot,callfun,filename,fig_size=(10,10),color=None,col
     plt.savefig(filename)
     
     plt.close()
- 
 
 def plot_all_2D_cpv(x,nint_plot,callfun,filename,fig_size=(10,10)):
     # Plots 2D trajectories with one color per body and saves image under filename
@@ -395,7 +394,7 @@ def Compute_action_onlygrad_escape(x,callfun):
         # ~ all_coeffs
         # ~ )
 
-    rms_dist = Compute_Loop_Dist_Cython_test(
+    rms_dist = Compute_Loop_Dist_btw_avg_Cython(
         args['nloop']           ,
         args['ncoeff_list'][args["current_cvg_lvl"]]          ,
         args['nint_list'][args["current_cvg_lvl"]]            ,
@@ -1327,10 +1326,7 @@ def Write_Descriptor(x,callfun,filename):
         filename_write.write(' {:.10f}'.format(dists[1]/(args['nbody']*dists[0])))    
         
         filename_write.write('\n')
-        
-        
-        
-        
+         
 def SelectFiles_Action(store_folder,hash_dict,Action_val=0,Action_Hash_val=np.zeros((nhash)),rtol=1e-5):
     # Creates a list of possible duplicates based on value of the action and hashes
     
@@ -1461,3 +1457,30 @@ class UniformRandom():
 
     def random(self):
         return np.random.random((self.d))
+
+def Transform_Coeffs(SpaceRots, TimeRevs, TimeShiftNum, TimeShiftDen, all_coeffs):
+        
+    nloop = all_coeffs.shape[0]
+    ncoeff = all_coeffs.shape[2]
+        
+    cs = np.zeros((2))
+    all_coeffs_new = np.zeros(all_coeffs.shape)
+
+    for il in range(nloop):
+        for k in range(ncoeff):
+            
+        dt = TimeShiftNumUn[il,ib] / TimeShiftDenUn[il,ib]
+        cs[0] = ccos( - twopi * k*dt)
+        cs[1] = csin( - twopi * k*dt)  
+            
+        v = all_coeffs[il,:,k,0] * cs[0] - TimeRevs[il] * all_coeffs[il,:,k,1] * cs[1]
+        w = all_coeffs[il,:,k,0] * cs[1] + TimeRevs[il] * all_coeffs[il,:,k,1] * cs[0]
+            
+        all_coeffs_new[il,:,k,0] = SpaceRots[il,:,:].dot(v)
+        all_coeffs_new[il,:,k,1] = SpaceRots[il,:,:].dot(w)
+        
+    return all_coeffs_new
+
+def Compose_Two_Paths():
+    
+    

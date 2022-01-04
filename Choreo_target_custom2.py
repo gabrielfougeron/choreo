@@ -13,115 +13,41 @@ import time
 from Choreo_funs import *
 
 
-# ~ nbody =     3
 
-# ~ Sym_list = []
-# ~ the_lcm = 3
+# ~ slow_base_filename = './data/2_cercle.npy'
+slow_base_filename = './data/3_cercle.npy'
+# ~ slow_base_filename = './data/3_huit.npy'
 
+fast_base_filename = './data/2_cercle.npy'
+# ~ fast_base_filename = './data/3_cercle.npy'
+# ~ fast_base_filename = './data/3_huit.npy'
+# ~ fast_base_filename = './data/3_heart.npy'
 
-# ~ SymType = {
-    # ~ 'name'  : 'C',
-    # ~ 'n'     : nbody,
-    # ~ 'k'     : 1,
-    # ~ 'l'     : 0 ,
-    # ~ 'p'     : 0 ,
-    # ~ 'q'     : 1 ,
-# ~ }
-# ~ istart = 0
-# ~ Sym_list.extend(Make2DChoreoSym(SymType,[i+istart for i in range(nbody)]))
+nTf = 13
+nbs = 3
+nbf = 2
 
+Rotate_fast_with_slow = True
+# ~ Rotate_fast_with_slow = False
 
-
-# ~ SymType = {
-    # ~ 'name'  : 'C',
-    # ~ 'n'     : -15,
-    # ~ 'k'     : 1,
-    # ~ 'l'     : 1 ,
-    # ~ 'p'     : 0 ,
-    # ~ 'q'     : 1 ,
-# ~ }
-
-# ~ istart = 5
-# ~ Sym_list.extend(Make2DChoreoSym(SymType,[i+istart for i in range(3)]))
-# ~ Sym_list.append(ChoreoSym(
-                # ~ LoopTarget=istart,
-                # ~ LoopSource=istart,
-                # ~ SpaceRot = np.identity(ndim,dtype=np.float64),
-                # ~ TimeRev=1,
-                # ~ TimeShift=fractions.Fraction(numerator=1,denominator=5)
-                # ~ ))
-
-# ~ nbpl = [3,2,5]
-nbpl = [1,2,3,4,5]
-# ~ nbpl = [2,1,1]
-# ~ nbpl = [3,2]
-# ~ nbpl = [2,3]
-# ~ nbpl = [i+1 for i in range(4)]
-# ~ nbpl = [1 for i in range(10)]
-# ~ nbpl = [5]
-the_lcm = m.lcm(*nbpl)
-
-# ~ SymName = ['D' ]
-SymName = None
-Sym_list,nbody = Make2DChoreoSymManyLoops(nbpl=nbpl,SymName=SymName)
-
-# ~ nbpl = [1,1,1,1,1]
-# ~ nbpl = [4,3,2]
-# ~ nbpl = [1,2]
-
-# ~ the_lcm = m.lcm(*nbpl)
-# ~ SymName = None
-# ~ Sym_list,nbody = Make2DChoreoSymManyLoops(nbpl=nbpl,SymName=SymName)
+Randomize_Fast_Init = True
+# ~ Randomize_Fast_Init = False
 
 
+all_coeffs_slow_load = np.load(slow_base_filename)
+all_coeffs_fast_load = np.load(fast_base_filename)
 
-# ~ rot_angle =  twopi * 1 /  2
-# ~ s = 1
+if (all_coeffs_slow_load.shape[0] != 1):
+    raise ValueError("Several loops in slow base")
 
-# ~ Sym_list.append(ChoreoSym(
-    # ~ LoopTarget=2,
-    # ~ LoopSource=3,
-    # ~ SpaceRot = np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64),
-    # ~ TimeRev=1,
-    # ~ TimeShift=fractions.Fraction(numerator=0,denominator=2)
-    # ~ ))
+if (all_coeffs_fast_load.shape[0] != 1):
+    raise ValueError("Several loops in fast base")
 
-# ~ Sym_list.append(ChoreoSym(
-    # ~ LoopTarget=2,
-    # ~ LoopSource=3,
-    # ~ SpaceRot = np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64),
-    # ~ TimeRev=1,
-    # ~ TimeShift=fractions.Fraction(numerator=-1,denominator=2)
-    # ~ ))
-
-
-
-# ~ rot_angle = 0
-# ~ s = -1
-
-# ~ Sym_list.append(ChoreoSym(
-    # ~ LoopTarget=4,
-    # ~ LoopSource=4,
-    # ~ SpaceRot = np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64),
-    # ~ TimeRev=-1,
-    # ~ TimeShift=fractions.Fraction(numerator=0,denominator=1)
-    # ~ ))
-
-
-
-
-
-
+nbody =  nbs * nbf
 
 mass = np.ones((nbody))
 
-# ~ mass[0]=2
-
-# ~ mass = np.array([1.,1.5])
-
-# ~ mass[0:3]  = 2*5
-# ~ mass[3:5]  = 3*5
-# ~ mass[5:10] = 2*3
+Sym_list = []
 
 
 
