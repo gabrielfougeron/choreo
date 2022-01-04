@@ -275,9 +275,7 @@ if Rotate_fast_with_slow :
     c_coeffs_fast = all_coeffs_fast_mod.view(dtype=np.complex128)[...,0]
     all_pos_fast = np.fft.irfft(c_coeffs_fast,n=nint,axis=2)
 
-
     all_coeffs_slow_mod_speed = np.zeros((nloop,ndim,ncoeff,2),dtype=np.float64)
-
 
     for il in range(nloop):
         for idim in range(ndim):

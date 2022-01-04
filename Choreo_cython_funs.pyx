@@ -32,8 +32,8 @@ import time
 cdef long cndim = 2 # Number of space dimensions
 
 cdef double cn = -0.5  #coeff of x^2 in the potential power law
-cdef double cnm1 = cn-1  #coeff of x^2 in the potential power law
-cdef double cnm2 = cn-2  #coeff of x^2 in the potential power law
+cdef double cnm1 = cn-1
+cdef double cnm2 = cn-2
 
 cdef double ctwopi = 2* np.pi
 cdef double cfourpi = 4 * np.pi
@@ -605,9 +605,7 @@ def Compute_Loop_Dist_Cython(
 
     return csqrt(sum_loop_dist2)
    
-   
-   
-def Compute_Loop_Dist_Cython_test(
+def Compute_Loop_Dist_btw_avg_Cython(
     long nloop,
     long ncoeff,
     long nint,
@@ -650,7 +648,6 @@ def Compute_Loop_Dist_Cython_test(
 
 
     return csqrt(sum_loop_dist2)
-   
    
 def Compute_Loop_Size_Dist_Cython(
     long nloop,
