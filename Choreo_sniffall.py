@@ -52,8 +52,8 @@ from Choreo_funs import *
                 # ~ ))
 
 # ~ nbpl = [3,2,5]
-nbpl = [1,2,3,4,5]
-# ~ nbpl = [2,1,1]
+# ~ nbpl = [1,2,3,4,5]
+nbpl = [3]
 # ~ nbpl = [3,2]
 # ~ nbpl = [2,3]
 # ~ nbpl = [i+1 for i in range(4)]
@@ -61,8 +61,8 @@ nbpl = [1,2,3,4,5]
 # ~ nbpl = [5]
 the_lcm = m.lcm(*nbpl)
 
-# ~ SymName = ['D' ]
-SymName = None
+SymName = ['D' ]
+# ~ SymName = None
 Sym_list,nbody = Make2DChoreoSymManyLoops(nbpl=nbpl,SymName=SymName)
 
 # ~ nbpl = [1,1,1,1,1]
@@ -322,8 +322,8 @@ for il in range(nloop):
         for k in range(1,ncoeff):
 
             ko = 0
-            k1 =100
-            k2= 300
+            k1 =10
+            k2= 20
             if (k <= ko):
                 randampl = 0
             elif (k <= k1):
@@ -398,7 +398,10 @@ while (n_opt < n_opt_max):
             # ~ plot_all_2D_anim(x0,nint_plot_anim,callfun,'init.mp4',nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size)
             
         print(1/0)
-    
+        
+    f0 = Action_grad_mod(x0,callfun)
+    best_sol = current_best(x0,f0)
+        
     if Search_Min_Only:
                     
         gradtol = 1e-1
@@ -411,9 +414,6 @@ while (n_opt < n_opt_max):
         Go_On = True
         
     else:
-            
-        f0 = Action_grad_mod(x0,callfun)
-        best_sol = current_best(x0,f0)
 
         gradtol = 1e-1
         # ~ gradtol = 1e-2
