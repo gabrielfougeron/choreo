@@ -18,20 +18,28 @@ slow_base_filename = './data/2_cercle.npy'
 # ~ slow_base_filename = './data/3_cercle.npy'
 # ~ slow_base_filename = './data/3_huit.npy'
 
-fast_base_filename = './data/2_cercle.npy'
+# ~ fast_base_filename = './data/2_cercle.npy'
 # ~ fast_base_filename = './data/3_cercle.npy'
 # ~ fast_base_filename = './data/3_huit.npy'
-# ~ fast_base_filename = './data/3_heart.npy'
+fast_base_filename = './data/3_heart.npy'
+# ~ fast_base_filename = './data/3_dbl_heart.npy'
 
-nTf = 31
+# ~ nTf = 101
+# ~ nTf = 31
+nTf = 7
 nbs = 2
-nbf = 2
+nbf = 3
+
 
 Rotate_fast_with_slow = True
 # ~ Rotate_fast_with_slow = False
 
-Randomize_Fast_Init = True
-# ~ Randomize_Fast_Init = False
+Optimize_Init = True
+# ~ Optimize_Init = False
+
+
+# ~ Randomize_Fast_Init = True
+Randomize_Fast_Init = False
 
 
 all_coeffs_slow_load = np.load(slow_base_filename)
@@ -57,6 +65,16 @@ the_lcm = m.lcm(*nbpl)
 SymName = None
 Sym_list,nbody = Make2DChoreoSymManyLoops(nbpl=nbpl,SymName=SymName)
 
+rot_angle = twopi * nbf /  nTf
+s = 1
+
+Sym_list.append(ChoreoSym(
+    LoopTarget=0,
+    LoopSource=0,
+    SpaceRot = np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64),
+    TimeRev=1,
+    TimeShift=fractions.Fraction(numerator=1,denominator=nTf)
+    ))
 
 
 
@@ -146,9 +164,9 @@ Save_Bad_Sols = False
 
 duplicate_eps = 1e-9
 
-# ~ krylov_method = 'lgmres'
+krylov_method = 'lgmres'
 # ~ krylov_method = 'gmres'
-krylov_method = 'bicgstab'
+# ~ krylov_method = 'bicgstab'
 # ~ krylov_method = 'cgs'
 # ~ krylov_method = 'minres'
 
@@ -244,8 +262,59 @@ ncoeff = callfun[0]["ncoeff_list"][callfun[0]["current_cvg_lvl"]]
 nint = callfun[0]["nint_list"][callfun[0]["current_cvg_lvl"]]
 
 
+if Optimize_Init :
+    
+    init_TimeRevscal = 1. if (np.random.random() > 1./2.) else -1.
+    Act_Mul = 1. if (np.random.random() > 1./2.) else -1.
 
-if Randomize_Fast_Init :
+    def init_opt_fun(x):
+
+         
+        theta = x[0]
+        TimeRevscal = init_TimeRevscal
+        TimeShiftNum = x[1]
+        TimeShiftDen = 1
+
+        RanRotMat = np.array( [[np.cos(theta) , np.sin(theta)] , [-np.sin(theta),np.cos(theta)]])
+
+        SpaceRots = np.reshape(RanRotMat,(1,ndim,ndim))
+        TimeRevs = np.array([TimeRevscal])
+        TimeShiftNum = np.array([TimeShiftNum])
+        TimeShiftDen = np.array([TimeShiftDen])
+
+        all_coeffs_fast = Transform_Coeffs(SpaceRots, TimeRevs, TimeShiftNum, TimeShiftDen, all_coeffs_fast_load)
+        all_coeffs_avg = Compose_Two_Paths(nTf,nbs,nbf,ncoeff,all_coeffs_slow_load,all_coeffs_fast,Rotate_fast_with_slow)
+        
+        x_avg = Package_all_coeffs(all_coeffs_avg,callfun)
+            
+        Act, GAct = Compute_action(x_avg,callfun)
+        
+        return Act_Mul * Act
+        
+    init_x = np.array([2 * np.pi * np.random.random(),np.random.random()])
+    
+    maxiter = 1000
+    tol = 1e-10
+
+    # ~ opt_result = opt.minimize(fun=init_opt_fun,x0=init_x,method='BFGS',options={'disp':True,'maxiter':maxiter,'gtol':tol},tol=tol)
+    opt_result = opt.minimize(fun=init_opt_fun,x0=init_x,method='CG',options={'disp':True,'maxiter':maxiter,'gtol':tol},tol=tol)
+
+    x_opt = opt_result['x']
+    
+    print(opt_result)
+    
+    theta = x_opt[0]
+    TimeRevscal = init_TimeRevscal
+    TimeShiftNum = x_opt[1]
+    TimeShiftDen = 1
+    
+    print('')
+    print('')
+    print('')
+    print('')
+    
+
+elif Randomize_Fast_Init :
 
     theta = 2 * np.pi * np.random.random()
     TimeRevscal = 1. if (np.random.random() > 1./2.) else -1.
@@ -267,9 +336,7 @@ TimeRevs = np.array([TimeRevscal])
 TimeShiftNum = np.array([TimeShiftNum])
 TimeShiftDen = np.array([TimeShiftDen])
 
-
 all_coeffs_fast = Transform_Coeffs(SpaceRots, TimeRevs, TimeShiftNum, TimeShiftDen, all_coeffs_fast_load)
-
 all_coeffs_avg = Compose_Two_Paths(nTf,nbs,nbf,ncoeff,all_coeffs_slow_load,all_coeffs_fast,Rotate_fast_with_slow)
 
 
@@ -292,7 +359,8 @@ for il in range(nloop):
                 randampl = 0.0005
             elif (k <= k1):
                 
-                randampl = 0.00001
+                # ~ randampl = 0.00001
+                randampl = 0.000001
             elif (k <= k2):
                 randampl = 0.005
             else:
@@ -308,14 +376,6 @@ x_min = Package_all_coeffs(all_coeffs_min,callfun)
 x_max = Package_all_coeffs(all_coeffs_max,callfun)
 x_avg = Package_all_coeffs(all_coeffs_avg,callfun)
 
-
-
-
-# ~ for i in range(x_min.shape[0]):
-    # ~ print(x_min[i],x_max[i])
-
-freq_erase_dict = 1000
-
 rand_eps = 1e-6
 rand_dim = 0
 for i in range(callfun[0]['coeff_to_param_list'][0].shape[0]):
@@ -324,13 +384,18 @@ for i in range(callfun[0]['coeff_to_param_list'][0].shape[0]):
 
 print('Number of initialization dimensions : ',rand_dim)
 
-hash_dict = {}
-
 sampler = UniformRandom(d=rand_dim)
 
+
+
+
+freq_erase_dict = 1000
+hash_dict = {}
+
+
 n_opt = 0
-# ~ n_opt_max = 100
-n_opt_max = 1e10
+n_opt_max = 5
+# ~ n_opt_max = 1e10
 while (n_opt < n_opt_max):
     
     if ((n_opt % freq_erase_dict) == 0):
@@ -370,10 +435,16 @@ while (n_opt < n_opt_max):
         if Save_img :
             plot_all_2D(x0,nint_plot_img,callfun,'init.png',fig_size=img_size,color=color)        
             
-        # ~ if Save_anim :
-            # ~ plot_all_2D_anim(x0,nint_plot_anim,callfun,'init.mp4',nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size)
+        if Save_anim :
+            plot_all_2D_anim(x0,nint_plot_anim,callfun,'init.mp4',nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size)
             
         print(1/0)
+        
+    f0 = Action_grad_mod(x0,callfun)
+    best_sol = current_best(x0,f0)
+
+    print('Initialization Action Grad Norm : ',best_sol.f_norm)
+        
     
     if Search_Min_Only:
                     
@@ -387,14 +458,11 @@ while (n_opt < n_opt_max):
         Go_On = True
         
     else:
-            
-        f0 = Action_grad_mod(x0,callfun)
-        best_sol = current_best(x0,f0)
 
         gradtol = 1e-1
         # ~ gradtol = 1e-2
-        maxiter = 500
-        # ~ maxiter = 2000
+        # ~ maxiter = 500
+        maxiter = 5000
 
         try : 
             
@@ -538,7 +606,8 @@ while (n_opt < n_opt_max):
                             print('One loop escaped. Starting over')   
                 else:
 
-                    maxiter = 50
+                    # ~ maxiter = 50
+                    maxiter = 500
                     gradtol = 1e-13
                     
                     try : 
