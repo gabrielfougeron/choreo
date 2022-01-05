@@ -20,13 +20,13 @@ slow_base_filename = './data/2_cercle.npy'
 
 # ~ fast_base_filename = './data/2_cercle.npy'
 # ~ fast_base_filename = './data/3_cercle.npy'
-# ~ fast_base_filename = './data/3_huit.npy'
-fast_base_filename = './data/3_heart.npy'
+fast_base_filename = './data/3_huit.npy'
+# ~ fast_base_filename = './data/3_heart.npy'
 # ~ fast_base_filename = './data/3_dbl_heart.npy'
 
 # ~ nTf = 101
-# ~ nTf = 31
-nTf = 7
+nTf = 31
+# ~ nTf = 7
 nbs = 2
 nbf = 3
 
@@ -65,16 +65,16 @@ the_lcm = m.lcm(*nbpl)
 SymName = None
 Sym_list,nbody = Make2DChoreoSymManyLoops(nbpl=nbpl,SymName=SymName)
 
-rot_angle = twopi * nbf /  nTf
-s = 1
+# ~ rot_angle = twopi * nbf /  nTf
+# ~ s = 1
 
-Sym_list.append(ChoreoSym(
-    LoopTarget=0,
-    LoopSource=0,
-    SpaceRot = np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64),
-    TimeRev=1,
-    TimeShift=fractions.Fraction(numerator=1,denominator=nTf)
-    ))
+# ~ Sym_list.append(ChoreoSym(
+    # ~ LoopTarget=0,
+    # ~ LoopSource=0,
+    # ~ SpaceRot = np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64),
+    # ~ TimeRev=1,
+    # ~ TimeShift=fractions.Fraction(numerator=1,denominator=nTf)
+    # ~ ))
 
 
 
@@ -148,8 +148,8 @@ n_reconverge_it_max = 4
 # ~ ncoeff_init = 800
 # ~ ncoeff_init = 201   
 # ~ ncoeff_init = 300   
-ncoeff_init = 600
-# ~ ncoeff_init = 990
+# ~ ncoeff_init = 600
+ncoeff_init = 900
 # ~ ncoeff_init = 1200
 # ~ ncoeff_init = 90
 
@@ -264,6 +264,7 @@ nint = callfun[0]["nint_list"][callfun[0]["current_cvg_lvl"]]
 
 if Optimize_Init :
     
+    init_SpaceRevscal = 1. if (np.random.random() > 1./2.) else -1.
     init_TimeRevscal = 1. if (np.random.random() > 1./2.) else -1.
     Act_Mul = 1. if (np.random.random() > 1./2.) else -1.
 
@@ -271,11 +272,12 @@ if Optimize_Init :
 
          
         theta = x[0]
+        SpaceRevscal = init_SpaceRevscal
         TimeRevscal = init_TimeRevscal
         TimeShiftNum = x[1]
         TimeShiftDen = 1
 
-        RanRotMat = np.array( [[np.cos(theta) , np.sin(theta)] , [-np.sin(theta),np.cos(theta)]])
+        RanRotMat = np.array( [[SpaceRevscal*np.cos(theta) , SpaceRevscal*np.sin(theta)] , [-np.sin(theta),np.cos(theta)]])
 
         SpaceRots = np.reshape(RanRotMat,(1,ndim,ndim))
         TimeRevs = np.array([TimeRevscal])
@@ -304,6 +306,7 @@ if Optimize_Init :
     print(opt_result)
     
     theta = x_opt[0]
+    SpaceRevscal = init_SpaceRevscal
     TimeRevscal = init_TimeRevscal
     TimeShiftNum = x_opt[1]
     TimeShiftDen = 1
@@ -317,6 +320,7 @@ if Optimize_Init :
 elif Randomize_Fast_Init :
 
     theta = 2 * np.pi * np.random.random()
+    SpaceRevscal = 1. if (np.random.random() > 1./2.) else -1.
     TimeRevscal = 1. if (np.random.random() > 1./2.) else -1.
     TimeShiftNum = np.random.random()
     TimeShiftDen = 1
@@ -324,12 +328,13 @@ elif Randomize_Fast_Init :
 else :
         
     theta = 0.
+    SpaceRevscal = 1.
     TimeRevscal = 1.
     TimeShiftNum = 0
     TimeShiftDen = 1
 
 
-RanRotMat = np.array( [[np.cos(theta) , np.sin(theta)] , [-np.sin(theta),np.cos(theta)]])
+RanRotMat = np.array( [[SpaceRevscal*np.cos(theta) , SpaceRevscal*np.sin(theta)] , [-np.sin(theta),np.cos(theta)]])
 
 SpaceRots = np.reshape(RanRotMat,(1,ndim,ndim))
 TimeRevs = np.array([TimeRevscal])
@@ -338,7 +343,6 @@ TimeShiftDen = np.array([TimeShiftDen])
 
 all_coeffs_fast = Transform_Coeffs(SpaceRots, TimeRevs, TimeShiftNum, TimeShiftDen, all_coeffs_fast_load)
 all_coeffs_avg = Compose_Two_Paths(nTf,nbs,nbf,ncoeff,all_coeffs_slow_load,all_coeffs_fast,Rotate_fast_with_slow)
-
 
 
 all_coeffs_min = np.zeros((nloop,ndim,ncoeff,2),dtype=np.float64)
@@ -572,7 +576,7 @@ while (n_opt < n_opt_max):
                 best_sol = current_best(x0,f0)
                 
                 print('')
-                print('After Resize : Action Grad Norm : ',best_sol.f_norm)
+                print('After Resize lvl '+str(callfun[0]["current_cvg_lvl"])+' : Action Grad Norm : ',best_sol.f_norm)
                                 
                 if Search_Min_Only:
                          

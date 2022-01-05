@@ -15,7 +15,8 @@ os.environ['MKL_NUM_THREADS'] = '1'
 # ~ job = 'python Choreo_sniffall.py' 
 job = 'python Choreo_target_custom.py' 
 
-n=10
+# ~ n=10
+n=6
 # ~ n=3
 
 job_all = ''
