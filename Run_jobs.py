@@ -22,7 +22,7 @@ n=6
 job_all = ''
 for i in range(n):
     
-    job_all = job_all + job + ' & '
+    job_all = job_all + job + ' -pp '+ str(i) + ' & '
 
 subprocess.run(job_all, shell=True)
 
