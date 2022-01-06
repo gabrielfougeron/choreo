@@ -27,28 +27,27 @@ def main(preprint_msg=''):
 
     # ~ slow_base_filename = './data/2_cercle.npy'
     # ~ slow_base_filename = './data/3_cercle.npy'
-    # ~ slow_base_filename = './data/3_huit.npy'
-    slow_base_filename = './data/3_heart.npy'
+    slow_base_filename = './data/3_huit.npy'
+    # ~ slow_base_filename = './data/3_heart.npy'
 
-    fast_base_filename = './data/2_cercle.npy'
+    # ~ fast_base_filename = './data/2_cercle.npy'
     # ~ fast_base_filename = './data/3_cercle.npy'
-    # ~ fast_base_filename = './data/3_huit.npy'
+    fast_base_filename = './data/3_huit.npy'
     # ~ fast_base_filename = './data/3_heart.npy'
     # ~ fast_base_filename = './data/3_dbl_heart.npy'
 
-    # ~ nTf = 101
-    nTf = 31
+    nTf = 101
+    # ~ nTf = 31
     # ~ nTf = 7
     nbs = 3
-    nbf = 2
+    nbf = 3
 
 
-    Rotate_fast_with_slow = True
-    # ~ Rotate_fast_with_slow = False
+    # ~ Rotate_fast_with_slow = True
+    Rotate_fast_with_slow = False
 
     Optimize_Init = True
     # ~ Optimize_Init = False
-
 
     # ~ Randomize_Fast_Init = True
     Randomize_Fast_Init = False
@@ -161,7 +160,8 @@ def main(preprint_msg=''):
     # ~ ncoeff_init = 201   
     # ~ ncoeff_init = 300   
     # ~ ncoeff_init = 600
-    ncoeff_init = 900
+    # ~ ncoeff_init = 900
+    ncoeff_init = 1800
     # ~ ncoeff_init = 1200
     # ~ ncoeff_init = 90
 
@@ -273,7 +273,6 @@ def main(preprint_msg=''):
     ncoeff = callfun[0]["ncoeff_list"][callfun[0]["current_cvg_lvl"]]
     nint = callfun[0]["nint_list"][callfun[0]["current_cvg_lvl"]]
 
-
     if Optimize_Init :
         
         init_SpaceRevscal = 1. if (np.random.random() > 1./2.) else -1.
@@ -344,7 +343,6 @@ def main(preprint_msg=''):
         TimeShiftNum = 0
         TimeShiftDen = 1
 
-
     RanRotMat = np.array( [[SpaceRevscal*np.cos(theta) , SpaceRevscal*np.sin(theta)] , [-np.sin(theta),np.cos(theta)]])
 
     SpaceRots = np.reshape(RanRotMat,(1,ndim,ndim))
@@ -371,11 +369,11 @@ def main(preprint_msg=''):
                 k2= 0
 
                 if (k <= ko):
-                    randampl = 0.0005
+                    randampl = 0.005
                 elif (k <= k1):
                     
                     # ~ randampl = 0.00001
-                    randampl = 0.000001
+                    randampl = 0.0000001
                 elif (k <= k2):
                     randampl = 0.005
                 else:
@@ -409,7 +407,7 @@ def main(preprint_msg=''):
 
 
     n_opt = 0
-    n_opt_max = 5
+    n_opt_max = 1
     # ~ n_opt_max = 1e10
     while (n_opt < n_opt_max):
         
@@ -473,10 +471,11 @@ def main(preprint_msg=''):
             
         else:
 
-            gradtol = 1e-1
+            # ~ gradtol = 1e-1
             # ~ gradtol = 1e-2
+            gradtol = 1e-3
             # ~ maxiter = 500
-            maxiter = 5000
+            maxiter = 25000
 
             try : 
                 
@@ -486,6 +485,8 @@ def main(preprint_msg=''):
                 
                 # ~ opt_result = opt.root(fun=Action_grad_mod,x0=x0,args=callfun,method='krylov', options={'line_search':line_search,'disp':disp_scipy_opt,'maxiter':maxiter,'fatol':gradtol,'jac_options':{'method':krylov_method}},callback=best_sol.update)
                 opt_result = opt.root(fun=Action_grad_mod,x0=x0,args=callfun,method='krylov', options={'line_search':line_search,'disp':disp_scipy_opt,'maxiter':maxiter,'fatol':gradtol,'jac_options':{'method':krylov_method,'rdiff':rdiff }},callback=best_sol.update)
+                
+                # ~ print(opt_result)
                 
                 print("After Krylov : ",best_sol.f_norm)
                 
@@ -620,7 +621,7 @@ def main(preprint_msg=''):
                     else:
 
                         # ~ maxiter = 50
-                        maxiter = 500
+                        maxiter = 25000
                         gradtol = 1e-13
                                             
                         # ~ if (best_sol.f_norm < 1e-4):
