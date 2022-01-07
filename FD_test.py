@@ -13,48 +13,46 @@ import time
 from Choreo_funs import *
 
 
+# ~ ncoeff = 3**10
+
+load_file = './save_tests/9/8.npy'
+all_coeffs = np.load(load_file)
+ncoeff = all_coeffs.shape[2]
 
 
-nbody = 3
+
+
+ncoeff_init = ncoeff
+
+nTf = 101
+nbs = 3
+nbf = 3
+nbody =  nbs * nbf
+
 mass = np.ones((nbody))
-ncoeff = 12
-rotangle = 2*np.pi * 0/3
-mirror = 1
-
-rotmat = np.array([[mirror*np.cos(rotangle),-mirror*np.sin(rotangle)],[np.sin(rotangle),np.cos(rotangle)]],dtype=np.float64)
 
 Sym_list = []
 
-Sym_list.append(ChoreoSym(
-    LoopTarget=1,
-    LoopSource=0,
-    SpaceRot = rotmat,
-    TimeRev=1,
-    TimeShift=fractions.Fraction(numerator=1,denominator=3)
-    ))
+nbpl = [nbody]
+the_lcm = m.lcm(*nbpl)
+SymName = None
+Sym_list,nbody = Make2DChoreoSymManyLoops(nbpl=nbpl,SymName=SymName)
 
-Sym_list.append(ChoreoSym(
-    LoopTarget=2,
-    LoopSource=1,
-    SpaceRot = rotmat,
-    TimeRev=1,
-    TimeShift=fractions.Fraction(numerator=1,denominator=3)
-    ))
-
-# ~ Sym_list.append(ChoreoSym(
-    # ~ LoopTarget=0,
-    # ~ LoopSource=2,
-    # ~ SpaceRot = rotmat,
-    # ~ TimeRev=1,
-    # ~ TimeShift=fractions.Fraction(numerator=1,denominator=3)
-    # ~ ))
+# ~ MomConsImposed = True
+MomConsImposed = False
 
 
-callfun = setup_changevar(nbody,ncoeff,mass,Sym_list=Sym_list)
 
-ncoeffs_args = callfun[0]['coeff_to_param'].shape[0]
+n_reconverge_it_max = 1
+n_grad_change = 1.
+callfun = setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change)
+ncoeffs_args = callfun[0]['coeff_to_param_list'][0].shape[0]
 
 x0 = np.random.random((ncoeffs_args))
+# ~ x0 = Package_all_coeffs(all_coeffs,callfun)
+
+
+
 
 # ~ not_disp_list = []
 # ~ not_disp_list = ['coeff_to_param','param_to_coeff']
@@ -74,18 +72,19 @@ x0 = np.random.random((ncoeffs_args))
 # ~ print(callfun)
 
 Actiono, Actiongrado = Compute_action(x0,callfun)
-# ~ Actiono, Actiongrado = Compute_action_gradnormsq(x0,callfun)
-# ~ sq_disto, sq_distgrado = sq_dist_transform_2d(nloop,ncoeff,all_coeffs,all_coeffs2,x0)
-# ~ sq_disto, sq_distgrado = sq_dist_transform_2d_noscal(nloop,ncoeff,all_coeffs,all_coeffs2,x0)
 
 # ~ print('Action 0 : ',Actiono)
-
-# ~ print(Actiongrado)
+print(np.linalg.norm(Actiongrado))
 
 
 
 
 print('\n\n\n')
+
+epslist = []
+Abs_difflist = []
+Rel_difflist = []
+
 
 # ~ for i in range(ncoeffs_args):
 # ~ for i in range(1):
@@ -117,10 +116,15 @@ for i in range(0):
         df_difffin = (fp-fm)/(2*eps)
 
         print('')
+        epslist.appdn(eps)
         print('eps : ',eps)
         print('df : ',df_difffin,df_ex)
-        print('Abs_diff : ',abs(df_difffin-df_ex))
-        print('Rel_diff : ',abs(df_difffin-df_ex)/((abs(df_ex)+abs(df_difffin))/2))
+        Abs_diff = abs(df_difffin-df_ex)
+        Abs_difflist.append(Abs_diff)
+        print('Abs_diff : ',Abs_diff)
+        Rel_diff = abs(df_difffin-df_ex)/((abs(df_ex)+abs(df_difffin))/2)
+        Rel_difflist.append(Rel_diff)
+        print('Rel_diff : ',Rel_diff)
         
         print(i,df_difffin,df_ex)
 
@@ -147,6 +151,9 @@ Hdxb = Compute_action_hess_mul(x0,dxb,callfun)
 
     
 
+epslist = []
+Abs_difflist = []
+Rel_difflist = []
 
 
 # ~ for exponent_eps in [8]:
@@ -154,25 +161,44 @@ for exponent_eps in range(16):
     
     eps = 10**(-exponent_eps)
     
+    # Second order approx
+    # ~ xp = np.copy(x0) + eps*dxb
+    # ~ fp, gfp = Compute_action(xp,callfun)
+    # ~ dfp = np.dot(gfp,dxa)
+    
+    # ~ xm = np.copy(x0) - eps*dxb
+    # ~ fm, gfm = Compute_action(xm,callfun)
+    # ~ dfm = np.dot(gfm,dxa)
+    
+    # ~ dgf_difffin = (gfp-gfm)/(2*eps)
+    
+    # First order scipy_like approx
     xp = np.copy(x0) + eps*dxb
     fp, gfp = Compute_action(xp,callfun)
     dfp = np.dot(gfp,dxa)
     
-    xm = np.copy(x0) - eps*dxb
+    xm = np.copy(x0)
     fm, gfm = Compute_action(xm,callfun)
     dfm = np.dot(gfm,dxa)
     
-    dgf_difffin = (gfp-gfm)/(2*eps)
+    dgf_difffin = (gfp-gfm)/(eps)
+    
+    
     
     print('')
+    epslist.append(eps)
     print('eps : ',eps)
-    print('Abs_diff : ')
     err_vect = dgf_difffin-Hdxb
     print('DF : ',np.linalg.norm(dgf_difffin))
     print('EX : ',np.linalg.norm(Hdxb))
-    print('Abs_diff : ',np.linalg.norm(err_vect))
-    print('Rel_diff : ',np.linalg.norm(err_vect)/(np.linalg.norm(dgf_difffin)+np.linalg.norm(Hdxb)))
-    
+
+    Abs_diff = np.linalg.norm(err_vect)
+    Abs_difflist.append(Abs_diff)
+    print('Abs_diff : ',Abs_diff)
+    Rel_diff = np.linalg.norm(err_vect)/(np.linalg.norm(dgf_difffin)+np.linalg.norm(Hdxb))
+    Rel_difflist.append(Rel_diff)
+    print('Rel_diff : ',Rel_diff)
+
     ddf_difffin = (dfp-dfm)/(2*eps)
     
     # ~ print('')
@@ -182,4 +208,20 @@ for exponent_eps in range(16):
     # ~ print('Rel_diff : ',abs(ddf_difffin-ddf_fft_d)/((abs(ddf_fft_d)+abs(ddf_difffin))/2))
     
 
+fig = plt.figure()
+fig.set_size_inches(10, 8)
+ax = fig.add_subplot(111)
 
+plt.plot(epslist,Rel_difflist)
+
+ax.invert_xaxis()
+plt.yscale('log')
+plt.xscale('log')
+
+plt.tight_layout()
+
+filename = './FD_cvgence.png'
+
+plt.savefig(filename)
+
+plt.close()
