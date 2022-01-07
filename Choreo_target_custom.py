@@ -1,3 +1,10 @@
+import os
+
+os.environ['OMP_NUM_THREADS'] = '1'
+os.environ['NUMEXPR_NUM_THREADS'] = '1'
+os.environ['OPENBLAS_NUM_THREADS'] = '1'
+os.environ['MKL_NUM_THREADS'] = '1'
+
 import sys,argparse
 import random
 import numpy as np
@@ -8,10 +15,13 @@ from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.colors import cnames
 from matplotlib import animation
 import copy
-import os, shutil
+import shutil
 import time
 
 from Choreo_funs import *
+from scipy_root_plus import ExactKrylovJacobian
+
+
 
 def main(preprint_msg=''):
     
@@ -36,12 +46,10 @@ def main(preprint_msg=''):
     # ~ fast_base_filename = './data/3_heart.npy'
     # ~ fast_base_filename = './data/3_dbl_heart.npy'
 
-    nTf = 101
-    # ~ nTf = 31
-    # ~ nTf = 7
+    # ~ nTf = 101
+    nTf = 37
     nbs = 3
     nbf = 3
-
 
     # ~ Rotate_fast_with_slow = True
     Rotate_fast_with_slow = False
@@ -49,8 +57,8 @@ def main(preprint_msg=''):
     Optimize_Init = True
     # ~ Optimize_Init = False
 
-    # ~ Randomize_Fast_Init = True
-    Randomize_Fast_Init = False
+    Randomize_Fast_Init = True
+    # ~ Randomize_Fast_Init = False
 
 
     all_coeffs_slow_load = np.load(slow_base_filename)
@@ -88,18 +96,16 @@ def main(preprint_msg=''):
         # ~ ))
 
 
-
-    Search_Min_Only = False
-    # ~ Search_Min_Only = True
-
-    # ~ MomConsImposed = True
-    MomConsImposed = False
+    MomConsImposed = True
+    # ~ MomConsImposed = False
 
     store_folder = './Target_res/'
     store_folder = store_folder+str(nbody)
     if not(os.path.isdir(store_folder)):
         os.makedirs(store_folder)
 
+    Use_exact_Jacobian = True
+    # ~ Use_exact_Jacobian = False
 
     # ~ Use_deflation = True
     Use_deflation = False
@@ -131,7 +137,7 @@ def main(preprint_msg=''):
     # ~ Save_anim = False
 
     vid_size = (8,8) # Image size in inches
-    nint_plot_anim = 2*2*2*3*3*5 * 6
+    nint_plot_anim = 2*2*2*3*3*5 * 6 *3
     # ~ nperiod_anim = 1./nbody
 
     color = "body"
@@ -160,9 +166,9 @@ def main(preprint_msg=''):
     # ~ ncoeff_init = 201   
     # ~ ncoeff_init = 300   
     # ~ ncoeff_init = 600
-    # ~ ncoeff_init = 900
-    ncoeff_init = 1800
-    # ~ ncoeff_init = 1200
+    ncoeff_init = 900
+    # ~ ncoeff_init = 1800
+    # ~ ncoeff_init = 1206
     # ~ ncoeff_init = 90
 
     disp_scipy_opt = False
@@ -174,7 +180,7 @@ def main(preprint_msg=''):
     # ~ Save_Bad_Sols = True
     Save_Bad_Sols = False
 
-    duplicate_eps = 1e-9
+    duplicate_eps = 1e-8
 
     krylov_method = 'lgmres'
     # ~ krylov_method = 'gmres'
@@ -207,8 +213,6 @@ def main(preprint_msg=''):
 
     print('Processing symmetries for {0:d} convergence levels'.format(n_reconverge_it_max+1))
     callfun = setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change)
-
-
 
     print('')
 
@@ -274,14 +278,23 @@ def main(preprint_msg=''):
     nint = callfun[0]["nint_list"][callfun[0]["current_cvg_lvl"]]
 
     if Optimize_Init :
-        
-        init_SpaceRevscal = 1. if (np.random.random() > 1./2.) else -1.
-        init_TimeRevscal = 1. if (np.random.random() > 1./2.) else -1.
-        Act_Mul = 1. if (np.random.random() > 1./2.) else -1.
+                
+        if Randomize_Fast_Init :
+
+            init_SpaceRevscal = 1. if (np.random.random() > 1./2.) else -1.
+            init_TimeRevscal = 1. if (np.random.random() > 1./2.) else -1.
+            Act_Mul = 1. if (np.random.random() > 1./2.) else -1.
+            init_x = np.array([2 * np.pi * np.random.random(),np.random.random()])
+
+        else:
+
+            init_SpaceRevscal = 1.
+            init_TimeRevscal = 1.
+            Act_Mul = 1.
+            init_x = np.array([0,0])
 
         def init_opt_fun(x):
 
-             
             theta = x[0]
             SpaceRevscal = init_SpaceRevscal
             TimeRevscal = init_TimeRevscal
@@ -304,8 +317,7 @@ def main(preprint_msg=''):
             
             return Act_Mul * Act
             
-        init_x = np.array([2 * np.pi * np.random.random(),np.random.random()])
-        
+
         maxiter = 1000
         tol = 1e-10
 
@@ -313,13 +325,7 @@ def main(preprint_msg=''):
         opt_result = opt.minimize(fun=init_opt_fun,x0=init_x,method='CG',options={'disp':False,'maxiter':maxiter,'gtol':tol},tol=tol)
 
         x_opt = opt_result['x']
-        
-        # ~ print(opt_result)
-        # ~ print('')
-        # ~ print('')
-        # ~ print('')
-        # ~ print('')
-                
+
         theta = x_opt[0]
         SpaceRevscal = init_SpaceRevscal
         TimeRevscal = init_TimeRevscal
@@ -399,12 +405,8 @@ def main(preprint_msg=''):
 
     sampler = UniformRandom(d=rand_dim)
 
-
-
-
     freq_erase_dict = 1000
     hash_dict = {}
-
 
     n_opt = 0
     n_opt_max = 1
@@ -457,48 +459,58 @@ def main(preprint_msg=''):
         best_sol = current_best(x0,f0)
 
         print('Initialization Action Grad Norm : ',best_sol.f_norm)
+
+        # ~ gradtol = 1e-1
+        # ~ gradtol = 1e-2
+        gradtol = 1e-7
+        # ~ gradtol = 1e-11
+        # ~ maxiter = 500
+        maxiter = 25000
+
+        try : 
             
-        if Search_Min_Only:
-                        
-            gradtol = 1e-1
-            maxiter = 1000
+            # ~ rdiff = 1e-7
+            # ~ rdiff = 0   
+            rdiff = None
+            # ~ rdiff = 1e-1
             
-            opt_result = opt.minimize(fun=Compute_action,x0=x0,args=callfun,method='trust-krylov',jac=True,hessp=Compute_action_hess_mul,options={'disp':disp_scipy_opt,'maxiter':maxiter,'gtol' : gradtol,'inexact': True})
+            outer_k = 3
             
-            x_opt = opt_result['x']
+            # Classical root
+            # ~ opt_result = opt.root(fun=Action_grad_mod,x0=x0,args=callfun,method='krylov', options={'line_search':line_search,'disp':disp_scipy_opt,'maxiter':maxiter,'fatol':gradtol,'jac_options':{'method':krylov_method,'rdiff':rdiff }},callback=best_sol.update)
+            
+            if (Use_exact_Jacobian):
+
+                # Non-classical nonlin_solve with exact Krylov Jacobian
+                F = lambda x : Action_grad_mod(x,callfun)
+                FGrad = lambda x,dx : Compute_action_hess_mul(x,dx,callfun)
+
+                jac_options = {'method':krylov_method,'rdiff':rdiff,'outer_k':outer_k }
+                jacobian = ExactKrylovJacobian(exactgrad=FGrad,**jac_options)
+
+                opt_result = opt.nonlin.nonlin_solve(F=F,x0=x0,jacobian=jacobian,verbose=disp_scipy_opt,maxiter=maxiter,f_tol=gradtol,line_search=line_search,callback=best_sol.update,raise_exception=False)
+            
+            else: 
+                
+                # Classical nonlin_solve with standard Krylov Jacobian
+                F = lambda x : Action_grad_mod(x,callfun)
+
+                jac_options = {'method':krylov_method,'rdiff':rdiff,'outer_k':outer_k }
+                jacobian = opt.nonlin.KrylovJacobian(**jac_options)
+
+                opt_result = opt.nonlin.nonlin_solve(F=F,x0=x0,jacobian=jacobian,verbose=disp_scipy_opt,maxiter=maxiter,f_tol=gradtol,line_search=line_search,callback=best_sol.update,raise_exception=False)
+
+            print("After Krylov : ",best_sol.f_norm)
             
             Go_On = True
             
-        else:
-
-            # ~ gradtol = 1e-1
-            # ~ gradtol = 1e-2
-            gradtol = 1e-3
-            # ~ maxiter = 500
-            maxiter = 25000
-
-            try : 
-                
-                # ~ rdiff = 1e-7
-                # ~ rdiff = 0
-                rdiff = None
-                
-                # ~ opt_result = opt.root(fun=Action_grad_mod,x0=x0,args=callfun,method='krylov', options={'line_search':line_search,'disp':disp_scipy_opt,'maxiter':maxiter,'fatol':gradtol,'jac_options':{'method':krylov_method}},callback=best_sol.update)
-                opt_result = opt.root(fun=Action_grad_mod,x0=x0,args=callfun,method='krylov', options={'line_search':line_search,'disp':disp_scipy_opt,'maxiter':maxiter,'fatol':gradtol,'jac_options':{'method':krylov_method,'rdiff':rdiff }},callback=best_sol.update)
-                
-                # ~ print(opt_result)
-                
-                print("After Krylov : ",best_sol.f_norm)
-                
-                Go_On = True
-                
-                x_opt = best_sol.x
-                
-            except Exception as exc:
-                
-                print(exc)
-                print("Value Error occured, skipping.")
-                Go_On = False
+            x_opt = best_sol.x
+            
+        except Exception as exc:
+            
+            print(exc)
+            print("Value Error occured, skipping.")
+            Go_On = False
 
         if (Check_loop_dist and Go_On):
             
@@ -513,22 +525,10 @@ def main(preprint_msg=''):
             f0 = Action_grad_mod(x_opt,callfun)
             best_sol = current_best(x_opt,f0)
             
-            try : 
-
-                maxiter = 20
-                gradtol = 1e-11
-                opt_result = opt.root(fun=Action_grad_mod,x0=x_opt,args=callfun,method='krylov', options={'line_search':line_search,'disp':disp_scipy_opt,'maxiter':maxiter,'fatol':gradtol,'jac_options':{'method':krylov_method}},callback=best_sol.update)
-
-                print('Approximate solution found ! Action Grad Norm : ',best_sol.f_norm)
-                
-                PreciseEnough = (best_sol.f_norm < 1e-1)
-                ErrorOccured = False
-                
-            except Exception as exc:
-                
-                ErrorOccured = True
-                PreciseEnough = False
-                print(exc)
+            print('Approximate solution found ! Action Grad Norm : ',best_sol.f_norm)
+            
+            PreciseEnough = (best_sol.f_norm < (gradtol*10))
+            ErrorOccured = False
 
             Found_duplicate = False
 
@@ -588,18 +588,42 @@ def main(preprint_msg=''):
                     print('')
                     print('After Resize lvl '+str(callfun[0]["current_cvg_lvl"])+' : Action Grad Norm : ',best_sol.f_norm)
                                     
-                    if Search_Min_Only:
-                             
-                        gradtol = 1e-7
-                        maxiter = 1000
-                        opt_result = opt.minimize(fun=Compute_action,x0=x0,args=callfun,method='trust-krylov',jac=True,hessp=Compute_action_hess_mul,options={'disp':disp_scipy_opt,'maxiter':maxiter,'gtol' : gradtol,'inexact': True})
 
-                        x0 = opt_result['x']
+                    # ~ maxiter = 50
+                    maxiter = 500
+                    # ~ maxiter = 1000
+                    gradtol = 1e-13
+                    
+                    outer_k = 5
+                    # ~ outer_k = 10
+                    # ~ outer_k = 100
 
-                        maxiter = 20
-                        gradtol = 1e-15
-                        opt_result = opt.root(fun=Action_grad_mod,x0=x0,args=callfun,method='krylov', options={'disp':disp_scipy_opt,'maxiter':maxiter,'fatol':gradtol,'jac_options':{'method':krylov_method}},callback=best_sol.update)
+                    try : 
+
+                        # Classical root
+                        # ~ opt_result = opt.root(fun=Action_grad_mod,x0=x0,args=callfun,method='krylov', options={'line_search':line_search,'disp':disp_scipy_opt,'maxiter':maxiter,'fatol':gradtol,'jac_options':{'method':krylov_method,'rdiff':rdiff }},callback=best_sol.update)
                         
+                        if (Use_exact_Jacobian):
+
+                            # Non-classical nonlin_solve with exact Krylov Jacobian
+                            F = lambda x : Action_grad_mod(x,callfun)
+                            FGrad = lambda x,dx : Compute_action_hess_mul(x,dx,callfun)
+
+                            jac_options = {'method':krylov_method,'rdiff':rdiff,'outer_k':outer_k }
+                            jacobian = ExactKrylovJacobian(exactgrad=FGrad,**jac_options)
+
+                            opt_result = opt.nonlin.nonlin_solve(F=F,x0=x0,jacobian=jacobian,verbose=disp_scipy_opt,maxiter=maxiter,f_tol=gradtol,line_search=line_search,callback=best_sol.update,raise_exception=False)
+                
+                        else:
+                            
+                            # Classical nonlin_solve with standard Krylov Jacobian
+                            F = lambda x : Action_grad_mod(x,callfun)
+
+                            jac_options = {'method':krylov_method,'rdiff':rdiff,'outer_k':outer_k }
+                            jacobian = opt.nonlin.KrylovJacobian(**jac_options)
+
+                            opt_result = opt.nonlin.nonlin_solve(F=F,x0=x0,jacobian=jacobian,verbose=disp_scipy_opt,maxiter=maxiter,f_tol=gradtol,line_search=line_search,callback=best_sol.update,raise_exception=False)
+            
                         all_coeffs = Unpackage_all_coeffs(best_sol.x,callfun)
                         
                         print('Opt Action Grad Norm : ',best_sol.f_norm)
@@ -608,95 +632,58 @@ def main(preprint_msg=''):
                         Newt_err_norm = np.linalg.norm(Newt_err)/nint
                         
                         print('Newton Error : ',Newt_err_norm)
-                    
+                        
+                        if (save_approx):
+                            
+                            max_num_file = 0
+                            
+                            for filename in os.listdir(store_folder):
+                                file_path = os.path.join(store_folder, filename)
+                                file_root, file_ext = os.path.splitext(os.path.basename(file_path))
+                                
+                                if (file_ext == '.txt' ):
+                                    try:
+                                        max_num_file = max(max_num_file,int(file_root))
+                                    except:
+                                        pass
+                                
+                            max_num_file = max_num_file + 1
+
+                            filename_output = store_folder+'/'+str(max_num_file)+'_'+str(callfun[0]["current_cvg_lvl"])
+                            
+                            plot_all_2D(best_sol.x,nint_plot_img,callfun,filename_output+'.png',fig_size=img_size,color=color)
+                            
                         SaveSol = (Newt_err_norm < Newt_err_norm_max_save)
                                         
                         if (Check_loop_dist):
                             
                             Escaped,_ = Detect_Escape(best_sol.x,callfun)
                             Go_On = Go_On and not(Escaped)
-
+                            
                             if not(Go_On):
-                                print('One loop escaped. Starting over')   
-                    else:
-
-                        # ~ maxiter = 50
-                        maxiter = 25000
-                        gradtol = 1e-13
-                                            
-                        # ~ if (best_sol.f_norm < 1e-4):
-                            # ~ krylov_method = 'bicgstab'
-                            # ~ # krylov_method = 'cgs'
-                        # ~ else:
-                            # ~ krylov_method = 'lgmres'
-                            
-                        try : 
+                                print('One loop escaped. Starting over')    
                                         
-                            opt_result = opt.root(fun=Action_grad_mod,x0=x0,args=callfun,method='krylov', options={'line_search':line_search,'disp':disp_scipy_opt,'maxiter':maxiter,'fatol':gradtol,'jac_options':{'method':krylov_method}},callback=best_sol.update)
-                                    
-                            all_coeffs = Unpackage_all_coeffs(best_sol.x,callfun)
+                        if (Look_for_duplicates):
                             
-                            print('Opt Action Grad Norm : ',best_sol.f_norm)
-                        
-                            Newt_err = Compute_Newton_err(best_sol.x,callfun)
-                            Newt_err_norm = np.linalg.norm(Newt_err)/nint
+                            print('Checking Duplicates.')
                             
-                            print('Newton Error : ',Newt_err_norm)
+                            Action,GradAction = Compute_action(best_sol.x,callfun)
+                    
+                            Found_duplicate,file_path = Check_Duplicates(best_sol.x,callfun,hash_dict,store_folder,duplicate_eps)
                             
-                            if (save_approx):
-                                
-                                max_num_file = 0
-                                
-                                for filename in os.listdir(store_folder):
-                                    file_path = os.path.join(store_folder, filename)
-                                    file_root, file_ext = os.path.splitext(os.path.basename(file_path))
-                                    
-                                    if (file_ext == '.txt' ):
-                                        try:
-                                            max_num_file = max(max_num_file,int(file_root))
-                                        except:
-                                            pass
-                                    
-                                max_num_file = max_num_file + 1
-                                
-                                
-                                
-                                filename_output = store_folder+'/'+str(max_num_file)+'_'+str(callfun[0]["current_cvg_lvl"])
-                                
-                                plot_all_2D(best_sol.x,nint_plot_img,callfun,filename_output+'.png',fig_size=img_size,color=color)
-                                
-                        
-                            SaveSol = (Newt_err_norm < Newt_err_norm_max_save)
-                                            
-                            if (Check_loop_dist):
-                                
-                                Escaped,_ = Detect_Escape(best_sol.x,callfun)
-                                Go_On = Go_On and not(Escaped)
-                                
-                                if not(Go_On):
-                                    print('One loop escaped. Starting over')    
-                                            
-                            if (Look_for_duplicates):
-                                
-                                print('Checking Duplicates.')
-                                
-                                Action,GradAction = Compute_action(best_sol.x,callfun)
-                        
-                                Found_duplicate,file_path = Check_Duplicates(best_sol.x,callfun,hash_dict,store_folder,duplicate_eps)
-                                
-                                Go_On = Go_On and not(Found_duplicate)
-                                
-                                if (Found_duplicate):
-                                
-                                    print('Found Duplicate !')  
-                                    print('Path : ',file_path) 
+                            Go_On = Go_On and not(Found_duplicate)
+                            
+                            if (Found_duplicate):
+                            
+                                print('Found Duplicate !')  
+                                print('Path : ',file_path) 
 
-                        except Exception as exc:
-                            
-                            print(exc)
-                            print("Value Error occured, skipping.")
-                            Go_On = False
-                            SaveSol = False
+                    except Exception as exc:
+
+                        print(exc)
+                        print("Value Error occured, skipping.")
+                        Go_On = False
+                        SaveSol = False
 
 
                 if (not(SaveSol) and Go_On):
@@ -755,20 +742,6 @@ def main(preprint_msg=''):
                         
                         all_coeffs = Unpackage_all_coeffs(best_sol.x,callfun)
                         np.save(filename_output+'.npy',all_coeffs)
-                        
-                        # ~ pickle.dump(best_sol.x,filename_output+'_params.txt'
-                        # ~ pickle.dump(best_sol.x,filename_output+'_params.txt'
-                        
-                        
-                        # ~ HessMat = Compute_action_hess_LinOpt(best_sol.x,callfun)
-                        # ~ w ,v = sp.linalg.eigsh(HessMat,k=10,which='SA')
-                        
-                        # ~ print(w)
-                        
-                
-                        # ~ print('Press Enter to continue ...')
-                        # ~ pause = input()
-                        
 
         if (Use_deflation):
             

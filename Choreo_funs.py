@@ -1310,7 +1310,7 @@ def Write_Descriptor(x,callfun,filename):
         Hash_Action = Compute_hash_action(x,callfun)
         filename_write.write('Hash Action for duplicate detection : ')
         for ihash in range(nhash):
-            filename_write.write(' {:.10f}'.format(Hash_Action[ihash]))
+            filename_write.write(' {:.16f}'.format(Hash_Action[ihash]))
         filename_write.write('\n')
         
         Escaped,dists = Detect_Escape(x,callfun)
@@ -1379,13 +1379,13 @@ def SelectFiles_Action(store_folder,hash_dict,Action_val=0,Action_Hash_val=np.ze
                     
     return file_path_list
 
-def Check_Duplicates(x,callfun,hash_dict,store_folder,duplicate_eps,rtol=1e-5):
+def Check_Duplicates(x,callfun,hash_dict,store_folder,duplicate_eps):
     # Checks whether there is a duplicate of a given trajecory in the provided folder
 
     Action,Gradaction = Compute_action(x,callfun)
     Hash_Action = Compute_hash_action(x,callfun)
 
-    file_path_list = SelectFiles_Action(store_folder,hash_dict,Action,Hash_Action,rtol)
+    file_path_list = SelectFiles_Action(store_folder,hash_dict,Action,Hash_Action,duplicate_eps)
     
     if (len(file_path_list) == 0):
         
