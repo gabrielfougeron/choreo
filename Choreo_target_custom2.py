@@ -1,3 +1,10 @@
+import os
+
+# ~ os.environ['OMP_NUM_THREADS'] = '1'
+# ~ os.environ['NUMEXPR_NUM_THREADS'] = '1'
+# ~ os.environ['OPENBLAS_NUM_THREADS'] = '1'
+# ~ os.environ['MKL_NUM_THREADS'] = '1'
+
 import sys,argparse
 import random
 import numpy as np
@@ -8,11 +15,12 @@ from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.colors import cnames
 from matplotlib import animation
 import copy
-import os, shutil
+import shutil
 import time
 
 from Choreo_funs import *
 from scipy_root_plus import ExactKrylovJacobian
+
 
 
 def main(preprint_msg=''):
@@ -27,9 +35,9 @@ def main(preprint_msg=''):
         return __builtins__.print(*args, **kwargs)
     
 
-    slow_base_filename = './data/2_cercle.npy'
+    # ~ slow_base_filename = './data/2_cercle.npy'
     # ~ slow_base_filename = './data/3_cercle.npy'
-    # ~ slow_base_filename = './data/3_huit.npy'
+    slow_base_filename = './data/3_huit.npy'
     # ~ slow_base_filename = './data/3_heart.npy'
 
     fast_base_filename = './data/2_cercle.npy'
@@ -38,10 +46,8 @@ def main(preprint_msg=''):
     # ~ fast_base_filename = './data/3_heart.npy'
     # ~ fast_base_filename = './data/3_dbl_heart.npy'
 
-    nTf = 7*3*3 +2
-    # ~ nTf = 31
-    # ~ nTf = 7
-    nbs = 2
+    nTf = 101
+    nbs = 3
     nbf = 2
 
 
@@ -51,8 +57,8 @@ def main(preprint_msg=''):
     Optimize_Init = True
     # ~ Optimize_Init = False
 
-    # ~ Randomize_Fast_Init = True
-    Randomize_Fast_Init = False
+    Randomize_Fast_Init = True
+    # ~ Randomize_Fast_Init = False
 
 
     all_coeffs_slow_load = np.load(slow_base_filename)
@@ -90,8 +96,8 @@ def main(preprint_msg=''):
         # ~ ))
 
 
-    # ~ MomConsImposed = True
-    MomConsImposed = False
+    MomConsImposed = True
+    # ~ MomConsImposed = False
 
     store_folder = './Target_res/'
     store_folder = store_folder+str(nbody)
@@ -99,8 +105,8 @@ def main(preprint_msg=''):
         os.makedirs(store_folder)
 
 
-    # ~ Use_exact_Jacobian = True
-    Use_exact_Jacobian = False
+    Use_exact_Jacobian = True
+    # ~ Use_exact_Jacobian = False
 
     # ~ Use_deflation = True
     Use_deflation = False
@@ -153,7 +159,7 @@ def main(preprint_msg=''):
     Plot_trace_anim = True
     # ~ Plot_trace_anim = False
 
-    n_reconverge_it_max = 4
+    n_reconverge_it_max = 2
     # ~ n_reconverge_it_max = 1
 
     # ~ ncoeff_init = 102
@@ -163,7 +169,7 @@ def main(preprint_msg=''):
     ncoeff_init = 600
     # ~ ncoeff_init = 900
     # ~ ncoeff_init = 1800
-    # ~ ncoeff_init = 1200
+    # ~ ncoeff_init = 1206
     # ~ ncoeff_init = 90
 
     disp_scipy_opt = False
@@ -275,10 +281,20 @@ def main(preprint_msg=''):
     nint = callfun[0]["nint_list"][callfun[0]["current_cvg_lvl"]]
 
     if Optimize_Init :
-        
-        init_SpaceRevscal = 1. if (np.random.random() > 1./2.) else -1.
-        init_TimeRevscal = 1. if (np.random.random() > 1./2.) else -1.
-        Act_Mul = 1. if (np.random.random() > 1./2.) else -1.
+                
+        if Randomize_Fast_Init :
+
+            init_SpaceRevscal = 1. if (np.random.random() > 1./2.) else -1.
+            init_TimeRevscal = 1. if (np.random.random() > 1./2.) else -1.
+            Act_Mul = 1. if (np.random.random() > 1./2.) else -1.
+            init_x = np.array([2 * np.pi * np.random.random(),np.random.random()])
+
+        else:
+
+            init_SpaceRevscal = 1.
+            init_TimeRevscal = 1.
+            Act_Mul = 1.
+            init_x = np.array([0,0])
 
         def init_opt_fun(x):
 
@@ -304,8 +320,7 @@ def main(preprint_msg=''):
             
             return Act_Mul * Act
             
-        init_x = np.array([2 * np.pi * np.random.random(),np.random.random()])
-        
+
         maxiter = 1000
         tol = 1e-10
 
@@ -313,13 +328,7 @@ def main(preprint_msg=''):
         opt_result = opt.minimize(fun=init_opt_fun,x0=init_x,method='CG',options={'disp':False,'maxiter':maxiter,'gtol':tol},tol=tol)
 
         x_opt = opt_result['x']
-        
-        # ~ print(opt_result)
-        # ~ print('')
-        # ~ print('')
-        # ~ print('')
-        # ~ print('')
-                
+
         theta = x_opt[0]
         SpaceRevscal = init_SpaceRevscal
         TimeRevscal = init_TimeRevscal
@@ -458,7 +467,8 @@ def main(preprint_msg=''):
 
         # ~ gradtol = 1e-1
         # ~ gradtol = 1e-2
-        gradtol = 1e-3
+        gradtol = 1e-7
+        # ~ gradtol = 1e-11
         # ~ maxiter = 500
         maxiter = 25000
 
@@ -467,6 +477,9 @@ def main(preprint_msg=''):
             # ~ rdiff = 1e-7
             # ~ rdiff = 0   
             rdiff = None
+            # ~ rdiff = 1e-1
+            
+            outer_k = 10
             
             # Classical root
             # ~ opt_result = opt.root(fun=Action_grad_mod,x0=x0,args=callfun,method='krylov', options={'line_search':line_search,'disp':disp_scipy_opt,'maxiter':maxiter,'fatol':gradtol,'jac_options':{'method':krylov_method,'rdiff':rdiff }},callback=best_sol.update)
@@ -477,26 +490,21 @@ def main(preprint_msg=''):
                 F = lambda x : Action_grad_mod(x,callfun)
                 FGrad = lambda x,dx : Compute_action_hess_mul(x,dx,callfun)
 
-                jac_options = {'method':krylov_method,'rdiff':rdiff }
+                jac_options = {'method':krylov_method,'rdiff':rdiff,'outer_k':outer_k }
                 jacobian = ExactKrylovJacobian(exactgrad=FGrad,**jac_options)
 
-                opt_result = opt.nonlin.nonlin_solve(F=F,x0=x0,jacobian=jacobian,verbose=disp_scipy_opt,maxiter=maxiter,f_tol=gradtol,line_search=line_search,callback=best_sol.update)
+                opt_result = opt.nonlin.nonlin_solve(F=F,x0=x0,jacobian=jacobian,verbose=disp_scipy_opt,maxiter=maxiter,f_tol=gradtol,line_search=line_search,callback=best_sol.update,raise_exception=False)
             
             else: 
                 
                 # Classical nonlin_solve with standard Krylov Jacobian
                 F = lambda x : Action_grad_mod(x,callfun)
 
-                jac_options = {'method':krylov_method,'rdiff':rdiff }
+                jac_options = {'method':krylov_method,'rdiff':rdiff,'outer_k':outer_k }
                 jacobian = opt.nonlin.KrylovJacobian(**jac_options)
 
-                opt_result = opt.nonlin.nonlin_solve(F=F,x0=x0,jacobian=jacobian,verbose=disp_scipy_opt,maxiter=maxiter,f_tol=gradtol,line_search=line_search,callback=best_sol.update)
-                
+                opt_result = opt.nonlin.nonlin_solve(F=F,x0=x0,jacobian=jacobian,verbose=disp_scipy_opt,maxiter=maxiter,f_tol=gradtol,line_search=line_search,callback=best_sol.update,raise_exception=False)
 
-            
-
-            # ~ print(opt_result)
-            
             print("After Krylov : ",best_sol.f_norm)
             
             Go_On = True
@@ -586,21 +594,18 @@ def main(preprint_msg=''):
                     print('After Resize lvl '+str(callfun[0]["current_cvg_lvl"])+' : Action Grad Norm : ',best_sol.f_norm)
                                     
 
-                    maxiter = 50
-                    # ~ maxiter = 25000
+                    # ~ maxiter = 50
+                    maxiter = 500
+                    # ~ maxiter = 1000
                     gradtol = 1e-13
-                                        
-                    # ~ if (best_sol.f_norm < 1e-4):
-                        # ~ krylov_method = 'bicgstab'
-                        # ~ # krylov_method = 'cgs'
-                    # ~ else:
-                        # ~ krylov_method = 'lgmres'
-                        
+                    
+                    # ~ outer_k = 5
+                    outer_k = 100
+
                     try : 
 
                         # Classical root
                         # ~ opt_result = opt.root(fun=Action_grad_mod,x0=x0,args=callfun,method='krylov', options={'line_search':line_search,'disp':disp_scipy_opt,'maxiter':maxiter,'fatol':gradtol,'jac_options':{'method':krylov_method,'rdiff':rdiff }},callback=best_sol.update)
-
                         
                         if (Use_exact_Jacobian):
 
@@ -608,20 +613,20 @@ def main(preprint_msg=''):
                             F = lambda x : Action_grad_mod(x,callfun)
                             FGrad = lambda x,dx : Compute_action_hess_mul(x,dx,callfun)
 
-                            jac_options = {'method':krylov_method,'rdiff':rdiff }
+                            jac_options = {'method':krylov_method,'rdiff':rdiff,'outer_k':outer_k }
                             jacobian = ExactKrylovJacobian(exactgrad=FGrad,**jac_options)
 
-                            opt_result = opt.nonlin.nonlin_solve(F=F,x0=x0,jacobian=jacobian,verbose=disp_scipy_opt,maxiter=maxiter,f_tol=gradtol,line_search=line_search,callback=best_sol.update)
+                            opt_result = opt.nonlin.nonlin_solve(F=F,x0=x0,jacobian=jacobian,verbose=disp_scipy_opt,maxiter=maxiter,f_tol=gradtol,line_search=line_search,callback=best_sol.update,raise_exception=False)
                 
                         else:
                             
                             # Classical nonlin_solve with standard Krylov Jacobian
                             F = lambda x : Action_grad_mod(x,callfun)
 
-                            jac_options = {'method':krylov_method,'rdiff':rdiff }
+                            jac_options = {'method':krylov_method,'rdiff':rdiff,'outer_k':outer_k }
                             jacobian = opt.nonlin.KrylovJacobian(**jac_options)
 
-                            opt_result = opt.nonlin.nonlin_solve(F=F,x0=x0,jacobian=jacobian,verbose=disp_scipy_opt,maxiter=maxiter,f_tol=gradtol,line_search=line_search,callback=best_sol.update)
+                            opt_result = opt.nonlin.nonlin_solve(F=F,x0=x0,jacobian=jacobian,verbose=disp_scipy_opt,maxiter=maxiter,f_tol=gradtol,line_search=line_search,callback=best_sol.update,raise_exception=False)
             
                         all_coeffs = Unpackage_all_coeffs(best_sol.x,callfun)
                         
@@ -647,9 +652,7 @@ def main(preprint_msg=''):
                                         pass
                                 
                             max_num_file = max_num_file + 1
-                            
-                            
-                            
+
                             filename_output = store_folder+'/'+str(max_num_file)+'_'+str(callfun[0]["current_cvg_lvl"])
                             
                             plot_all_2D(best_sol.x,nint_plot_img,callfun,filename_output+'.png',fig_size=img_size,color=color)
@@ -681,7 +684,7 @@ def main(preprint_msg=''):
                                 print('Path : ',file_path) 
 
                     except Exception as exc:
-                        
+
                         print(exc)
                         print("Value Error occured, skipping.")
                         Go_On = False
@@ -744,20 +747,6 @@ def main(preprint_msg=''):
                         
                         all_coeffs = Unpackage_all_coeffs(best_sol.x,callfun)
                         np.save(filename_output+'.npy',all_coeffs)
-                        
-                        # ~ pickle.dump(best_sol.x,filename_output+'_params.txt'
-                        # ~ pickle.dump(best_sol.x,filename_output+'_params.txt'
-                        
-                        
-                        # ~ HessMat = Compute_action_hess_LinOpt(best_sol.x,callfun)
-                        # ~ w ,v = sp.linalg.eigsh(HessMat,k=10,which='SA')
-                        
-                        # ~ print(w)
-                        
-                
-                        # ~ print('Press Enter to continue ...')
-                        # ~ pause = input()
-                        
 
         if (Use_deflation):
             
