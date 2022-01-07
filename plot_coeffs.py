@@ -13,8 +13,9 @@ import time
 from Choreo_funs import *
 
 # ~ all_coeffs = np.load('./Sniff_all_sym/4/2.npy')
-# ~ all_coeffs = np.load('./Target_res/9/140.npy')
-all_coeffs = np.load('./init.npy')
+# ~ all_coeffs = np.load('./save_tests/9/8.npy')
+all_coeffs = np.load('./save_tests/9/8.npy')
+# ~ all_coeffs = np.load('./init.npy')
 
 
 k_plot_max = 20
