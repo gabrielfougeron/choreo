@@ -166,8 +166,8 @@ def main(preprint_msg=''):
     # ~ ncoeff_init = 201   
     # ~ ncoeff_init = 300   
     # ~ ncoeff_init = 600
-    ncoeff_init = 900
-    # ~ ncoeff_init = 1800
+    # ~ ncoeff_init = 900
+    ncoeff_init = 1800
     # ~ ncoeff_init = 1206
     # ~ ncoeff_init = 90
 
@@ -527,7 +527,7 @@ def main(preprint_msg=''):
             
             print('Approximate solution found ! Action Grad Norm : ',best_sol.f_norm)
             
-            PreciseEnough = (best_sol.f_norm < (gradtol*10))
+            PreciseEnough = (best_sol.f_norm < (gradtol*100))
             ErrorOccured = False
 
             Found_duplicate = False
@@ -590,7 +590,7 @@ def main(preprint_msg=''):
                                     
 
                     # ~ maxiter = 50
-                    maxiter = 500
+                    maxiter = 10000
                     # ~ maxiter = 1000
                     gradtol = 1e-13
                     

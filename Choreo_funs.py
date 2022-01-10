@@ -419,6 +419,10 @@ def Compute_action_onlygrad_escape(x,callfun):
     
     # ~ print("escape_pen = ",escape_pen)
 
+    nint = args['nint_list'][args["current_cvg_lvl"]]
+    c_coeffs = all_coeffs.view(dtype=np.complex128)[...,0]
+    all_pos = np.fft.irfft(c_coeffs,n=nint,axis=2)*nint
+
     J,GradJ =  Compute_action_Cython(
         args['nloop']           ,
         args['ncoeff_list'][args["current_cvg_lvl"]]          ,
@@ -437,7 +441,8 @@ def Compute_action_onlygrad_escape(x,callfun):
         args['TimeRevsBin']     ,
         args['TimeShiftNumBin'] ,
         args['TimeShiftDenBin'] ,
-        all_coeffs
+        all_coeffs              ,
+        all_pos
         )
 
     GJ = GradJ.reshape(-1)
@@ -449,12 +454,18 @@ def Compute_action_hess_mul(x,dx,callfun):
     # Returns the Hessian of the action (computed wrt the parameters) times a test vector of parameter deviations.
     
     args=callfun[0]
-    
-    y = args['param_to_coeff_list'][args["current_cvg_lvl"]] * x
-    all_coeffs = y.reshape(args['nloop'],ndim,args['ncoeff_list'][args["current_cvg_lvl"]],2)
-    
+
     dy = args['param_to_coeff_list'][args["current_cvg_lvl"]] * dx
     all_coeffs_d = dy.reshape(args['nloop'],ndim,args['ncoeff_list'][args["current_cvg_lvl"]],2)
+    
+    if args["Do_Pos_FFT"]:
+        
+        y = args['param_to_coeff_list'][args["current_cvg_lvl"]] * x
+        args['last_all_coeffs'] = y.reshape(args['nloop'],ndim,args['ncoeff_list'][args["current_cvg_lvl"]],2)
+        
+        nint = args['nint_list'][args["current_cvg_lvl"]]
+        c_coeffs = all_coeffs.view(dtype=np.complex128)[...,0]
+        args['last_all_pos'] = np.fft.irfft(c_coeffs,n=nint,axis=2)*nint
     
     HessJdx =  Compute_action_hess_mul_Cython(
         args['nloop']           ,
@@ -474,8 +485,9 @@ def Compute_action_hess_mul(x,dx,callfun):
         args['TimeRevsBin']     ,
         args['TimeShiftNumBin'] ,
         args['TimeShiftDenBin'] ,
-        all_coeffs              ,
+        args['last_all_coeffs'] ,
         all_coeffs_d            ,
+        args['last_all_pos']    ,
         )
 
     HJdx = HessJdx.reshape(-1)
@@ -1072,6 +1084,9 @@ def setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max=6,MomCons=True,n_
     "param_to_coeff_list"   :   param_to_coeff_list ,
     "coeff_to_param_list"   :   coeff_to_param_list ,
     "current_cvg_lvl"       :   0                   ,
+    "last_all_coeffs"       :   None                ,
+    "last_all_pos"          :   None                ,
+    "Do_Pos_FFT"            :   True                ,
     }]
 
     return callfun
@@ -1081,13 +1096,19 @@ def Compute_action(x,callfun):
 
     args=callfun[0]
     
-    y = args['param_to_coeff_list'][args["current_cvg_lvl"]] * x
-    all_coeffs = y.reshape(args['nloop'],ndim,args['ncoeff_list'][args["current_cvg_lvl"]],2)
+    if args["Do_Pos_FFT"]:
+        
+        y = args['param_to_coeff_list'][args["current_cvg_lvl"]] * x
+        args['last_all_coeffs'] = y.reshape(args['nloop'],ndim,args['ncoeff_list'][args["current_cvg_lvl"]],2)
+        
+        nint = args['nint_list'][args["current_cvg_lvl"]]
+        c_coeffs = all_coeffs.view(dtype=np.complex128)[...,0]
+        args['last_all_pos'] = np.fft.irfft(c_coeffs,n=nint,axis=2)*nint
     
     J,GradJ =  Compute_action_Cython(
         args['nloop']           ,
         args['ncoeff_list'][args["current_cvg_lvl"]]          ,
-        args['nint_list'][args["current_cvg_lvl"]]            ,
+        nint                    ,
         args['mass']            ,
         args['loopnb']          ,
         args['Targets']         ,
@@ -1102,7 +1123,8 @@ def Compute_action(x,callfun):
         args['TimeRevsBin']     ,
         args['TimeShiftNumBin'] ,
         args['TimeShiftDenBin'] ,
-        all_coeffs
+        args['last_all_coeffs'] ,
+        args['last_all_pos'] 
         )
 
     GJ = GradJ.reshape(-1)
