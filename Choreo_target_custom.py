@@ -483,7 +483,12 @@ def main(preprint_msg=''):
 
                 # Non-classical nonlin_solve with exact Krylov Jacobian
                 F = lambda x : Action_grad_mod(x,callfun)
-                FGrad = lambda x,dx : Compute_action_hess_mul(x,dx,callfun)
+                # ~ FGrad = lambda x,dx : Compute_action_hess_mul(x,dx,callfun)
+                def FGrad(x,dx): 
+                    callfun["Do_Pos_FFT"] = False
+                    res = Compute_action_hess_mul(x,dx,callfun)
+                    callfun["Do_Pos_FFT"] = True
+                    return res
 
                 jac_options = {'method':krylov_method,'rdiff':rdiff,'outer_k':outer_k }
                 jacobian = ExactKrylovJacobian(exactgrad=FGrad,**jac_options)
@@ -500,12 +505,8 @@ def main(preprint_msg=''):
 
                 opt_result = opt.nonlin.nonlin_solve(F=F,x0=x0,jacobian=jacobian,verbose=disp_scipy_opt,maxiter=maxiter,f_tol=gradtol,line_search=line_search,callback=best_sol.update,raise_exception=False)
 
-            print("After Krylov : ",best_sol.f_norm)
-            
             Go_On = True
-            
-            x_opt = best_sol.x
-            
+
         except Exception as exc:
             
             print(exc)
@@ -514,16 +515,13 @@ def main(preprint_msg=''):
 
         if (Check_loop_dist and Go_On):
             
-            Escaped,_ = Detect_Escape(x_opt,callfun)
+            Escaped,_ = Detect_Escape(best_sol.x,callfun)
             Go_On = not(Escaped)
 
             if not(Go_On):
                 print('One loop escaped. Starting over')    
         
         if (Go_On):
-
-            f0 = Action_grad_mod(x_opt,callfun)
-            best_sol = current_best(x_opt,f0)
             
             print('Approximate solution found ! Action Grad Norm : ',best_sol.f_norm)
             
