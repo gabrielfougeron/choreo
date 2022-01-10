@@ -37,8 +37,8 @@ def main(preprint_msg=''):
 
     # ~ slow_base_filename = './data/2_cercle.npy'
     # ~ slow_base_filename = './data/3_cercle.npy'
-    slow_base_filename = './data/3_huit.npy'
-    # ~ slow_base_filename = './data/3_heart.npy'
+    # ~ slow_base_filename = './data/3_huit.npy'
+    slow_base_filename = './data/3_heart.npy'
 
     # ~ fast_base_filename = './data/2_cercle.npy'
     fast_base_filename = './data/3_cercle.npy'
@@ -46,19 +46,19 @@ def main(preprint_msg=''):
     # ~ fast_base_filename = './data/3_heart.npy'
     # ~ fast_base_filename = './data/3_dbl_heart.npy'
 
-    nTf = 101
-    # ~ nTf = 37
+    # ~ nTf = 101
+    nTf = 37
     nbs = 3
     nbf = 3
 
     # ~ Rotate_fast_with_slow = True
     Rotate_fast_with_slow = False
 
-    # ~ Optimize_Init = True
-    Optimize_Init = False
+    Optimize_Init = True
+    # ~ Optimize_Init = False
 
-    # ~ Randomize_Fast_Init = True
-    Randomize_Fast_Init = False
+    Randomize_Fast_Init = True
+    # ~ Randomize_Fast_Init = False
 
 
     all_coeffs_slow_load = np.load(slow_base_filename)
@@ -104,8 +104,8 @@ def main(preprint_msg=''):
     if not(os.path.isdir(store_folder)):
         os.makedirs(store_folder)
 
-    # ~ Use_exact_Jacobian = True
-    Use_exact_Jacobian = False
+    Use_exact_Jacobian = True
+    # ~ Use_exact_Jacobian = False
 
     # ~ Use_deflation = True
     Use_deflation = False
@@ -133,8 +133,8 @@ def main(preprint_msg=''):
 
     nint_plot_img = 10000
 
-    # ~ Save_anim = True
-    Save_anim = False
+    Save_anim = True
+    # ~ Save_anim = False
 
     vid_size = (8,8) # Image size in inches
     nint_plot_anim = 2*2*2*3*3*5 * 6 *3
@@ -158,8 +158,8 @@ def main(preprint_msg=''):
     Plot_trace_anim = True
     # ~ Plot_trace_anim = False
 
-    # ~ n_reconverge_it_max = 4
-    n_reconverge_it_max = 1
+    n_reconverge_it_max = 3
+    # ~ n_reconverge_it_max = 1
 
     # ~ ncoeff_init = 102
     # ~ ncoeff_init = 800
@@ -462,7 +462,7 @@ def main(preprint_msg=''):
 
         # ~ gradtol = 1e-1
         # ~ gradtol = 1e-2
-        gradtol = 1e-7
+        gradtol = 1e-9
         # ~ gradtol = 1e-11
         # ~ maxiter = 500
         maxiter = 25000
