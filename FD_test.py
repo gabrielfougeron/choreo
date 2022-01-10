@@ -21,11 +21,12 @@ import time
 from Choreo_funs import *
 
 
-# ~ ncoeff = 3**10
+ncoeff = 12
+# ~ ncoeff = 900
 
-load_file = './save_tests/9/9.npy'
-all_coeffs = np.load(load_file)
-ncoeff = all_coeffs.shape[2]
+# ~ load_file = './save_tests/9/9.npy'
+# ~ all_coeffs = np.load(load_file)
+# ~ ncoeff = all_coeffs.shape[2]
 
 
 
@@ -34,22 +35,26 @@ ncoeff_init = ncoeff
 
 print("ncoeffs : ",ncoeff_init)
 
-nTf = 101
-nbs = 3
-nbf = 3
-nbody =  nbs * nbf
+# ~ nTf = 101
+# ~ nbs = 3
+# ~ nbf = 3
+# ~ nbody =  nbs * nbf
 
-mass = np.ones((nbody))
+nbody = 3
+
+# ~ mass = np.ones((nbody))
+# ~ mass = np.array([1.+x for x in range(nbody)])
+mass = np.array([1.,1,2])
 
 Sym_list = []
 
-nbpl = [nbody]
+nbpl = [2,1]
 the_lcm = m.lcm(*nbpl)
 SymName = None
 Sym_list,nbody = Make2DChoreoSymManyLoops(nbpl=nbpl,SymName=SymName)
 
-# ~ MomConsImposed = True
-MomConsImposed = False
+MomConsImposed = True
+# ~ MomConsImposed = False
 
 
 
@@ -57,6 +62,8 @@ n_reconverge_it_max = 1
 n_grad_change = 1.
 callfun = setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change)
 ncoeffs_args = callfun[0]['coeff_to_param_list'][0].shape[0]
+
+print('n params ',ncoeffs_args)
 
 x0 = np.random.random((ncoeffs_args))
 # ~ x0 = Package_all_coeffs(all_coeffs,callfun)
@@ -88,9 +95,6 @@ print(np.linalg.norm(Actiongrado))
 
 
 
-
-print('\n\n\n')
-
 epslist = []
 Abs_difflist = []
 Rel_difflist = []
@@ -98,6 +102,11 @@ Rel_difflist = []
 
 dxa = np.random.random((ncoeffs_args))
 dxb =  np.random.random((ncoeffs_args))
+
+
+Hdxb = Compute_action_hess_mul(x0,dxb,callfun)
+
+
 
 # ~ dxa = np.zeros((ncoeffs_args))
 # ~ dxb =  np.zeros((ncoeffs_args))
@@ -114,31 +123,67 @@ dxb =  np.random.random((ncoeffs_args))
 # ~ dxb[j_nz] = 1.
 
 
-nperf = 1000
+# ~ nperf = 100
 
-tstart = time.perf_counter()
-for iperf in range(nperf):
-    Actiono, Actiongrado = Compute_action(x0,callfun)
-tstop = time.perf_counter()
-print("GRAD fft YES recompute time ",tstop-tstart)
+# ~ tstart = time.perf_counter()
+# ~ for iperf in range(nperf):
+    # ~ Actiono, Actiongrado = Compute_action(x0,callfun)
+# ~ tstop = time.perf_counter()
+# ~ print("GRAD fft YES recompute time ",tstop-tstart)
 
-tstart = time.perf_counter()
-for iperf in range(nperf):
-    Hdxb = Compute_action_hess_mul(x0,dxb,callfun)
-tstop = time.perf_counter()
-print("HESS fft YES recompute time ",tstop-tstart)
+# ~ tstart = time.perf_counter()
+# ~ for iperf in range(nperf):
+    # ~ Hdxb = Compute_action_hess_mul(x0,dxb,callfun)
+# ~ tstop = time.perf_counter()
+# ~ print("HESS fft YES recompute time ",tstop-tstart)
 
-callfun[0]["Do_Pos_FFT"] = False
-tstart = time.perf_counter()
-for iperf in range(nperf):
-    Hdxb = Compute_action_hess_mul(x0,dxb,callfun)
-tstop = time.perf_counter()
-print("HESS fft NO recompute time ",tstop-tstart)
+# ~ callfun[0]["Do_Pos_FFT"] = False
+# ~ tstart = time.perf_counter()
+# ~ for iperf in range(nperf):
+    # ~ Hdxb = Compute_action_hess_mul(x0,dxb,callfun)
+# ~ tstop = time.perf_counter()
+# ~ print("HESS fft NO recompute time ",tstop-tstart)
 
 callfun[0]["Do_Pos_FFT"] = True
 
 
-sys.exit(0)
+
+tstart = time.perf_counter()
+HessMat = Compute_action_hess_LinOpt(x0,callfun)
+w ,v = sp.linalg.eigsh(HessMat,k=45,which='SA')
+tstop = time.perf_counter()
+print("EIG fft YES recompute time ",tstop-tstart)
+
+# ~ callfun[0]["Do_Pos_FFT"] = False
+
+# ~ tstart = time.perf_counter()
+# ~ HessMat = Compute_action_hess_LinOpt(x0,callfun)
+# ~ w ,v = sp.linalg.eigsh(HessMat,k=10,which='SA')
+# ~ tstop = time.perf_counter()
+# ~ print("EIG fft NO recompute time ",tstop-tstart)
+
+
+# ~ callfun[0]["Do_Pos_FFT"] = True
+
+
+
+
+print(w)
+
+# ~ print(v.shape)
+# ~ for i in range(v.shape[1]):
+    #for j in range(v.shape[0]):
+    # ~ for j in range(4):
+        # ~ if (abs(v[j,i]) > 1e-9):
+            # ~ print(i,j)
+        
+
+# ~ print(v)
+
+
+
+
+# ~ sys.exit(0)
 
 
 epslist = []

@@ -805,11 +805,10 @@ def Compute_action_hess_mul_Cython(
             for k in range(1,ncoeff):
                 
                 k2 = k*k
-                a = prod_fac*k2
-                b=2*a
+                a = 2*prod_fac*k2
                 
-                Action_hess_dx[il,idim,k,0] += b*all_coeffs_d[il,idim,k,0]
-                Action_hess_dx[il,idim,k,1] += b*all_coeffs_d[il,idim,k,1]
+                Action_hess_dx[il,idim,k,0] += a*all_coeffs_d[il,idim,k,0]
+                Action_hess_dx[il,idim,k,1] += a*all_coeffs_d[il,idim,k,1]
 
     c_coeffs_d = all_coeffs_d.view(dtype=np.complex128)[...,0]
 # ~     cdef np.ndarray[double, ndim=3, mode="c"]  all_pos_d = np.fft.irfft(c_coeffs_d,n=nint,axis=2)*nint
@@ -1553,10 +1552,11 @@ def diag_changevar(
         idim = res % cndim
         il = res / cndim
 
-        if (k >=2):
-            kd = k*cpow(MassSum[il],0.5)
+        if (k >=1):
+# ~             kd = k*cpow(MassSum[il],0.5)
 # ~             kd = k*MassSum[il]
-# ~             kd = k
+            kd = k*ctwopi*cpow(2.*MassSum[il],0.5)
+# ~             kd = 1
             kfac = cpow(kd,n_grad_change)
         else:
             kfac = 1.
