@@ -12,6 +12,7 @@ import pickle
 
 import numpy as np
 import math as m
+import scipy.fft
 import scipy.optimize as opt
 import scipy.linalg as la
 import scipy.sparse as sp
@@ -419,9 +420,16 @@ def Compute_action_onlygrad_escape(x,callfun):
     
     # ~ print("escape_pen = ",escape_pen)
 
-    nint = args['nint_list'][args["current_cvg_lvl"]]
-    c_coeffs = all_coeffs.view(dtype=np.complex128)[...,0]
-    all_pos = np.fft.irfft(c_coeffs,n=nint,axis=2)*nint
+    
+    if args["Do_Pos_FFT"]:
+        
+        y = args['param_to_coeff_list'][args["current_cvg_lvl"]] * x
+        args['last_all_coeffs'] = y.reshape(args['nloop'],ndim,args['ncoeff_list'][args["current_cvg_lvl"]],2)
+        
+        nint = args['nint_list'][args["current_cvg_lvl"]]
+        c_coeffs = args['last_all_coeffs'].view(dtype=np.complex128)[...,0]
+        # ~ args['last_all_pos'] = np.fft.irfft(c_coeffs,n=nint,axis=2)*nint
+        args['last_all_pos'] = the_irfft(c_coeffs,n=nint,axis=2)*nint
 
     J,GradJ =  Compute_action_Cython(
         args['nloop']           ,
@@ -441,8 +449,8 @@ def Compute_action_onlygrad_escape(x,callfun):
         args['TimeRevsBin']     ,
         args['TimeShiftNumBin'] ,
         args['TimeShiftDenBin'] ,
-        all_coeffs              ,
-        all_pos
+        args['last_all_coeffs'] ,
+        args['last_all_pos'] 
         )
 
     GJ = GradJ.reshape(-1)
@@ -465,7 +473,8 @@ def Compute_action_hess_mul(x,dx,callfun):
         
         nint = args['nint_list'][args["current_cvg_lvl"]]
         c_coeffs = args['last_all_coeffs'].view(dtype=np.complex128)[...,0]
-        args['last_all_pos'] = np.fft.irfft(c_coeffs,n=nint,axis=2)*nint
+        # ~ args['last_all_pos'] = np.fft.irfft(c_coeffs,n=nint,axis=2)*nint
+        args['last_all_pos'] =the_irfft(c_coeffs,n=nint,axis=2)*nint
     
     HessJdx =  Compute_action_hess_mul_Cython(
         args['nloop']           ,
@@ -1103,7 +1112,8 @@ def Compute_action(x,callfun):
         
         nint = args['nint_list'][args["current_cvg_lvl"]]
         c_coeffs = args['last_all_coeffs'].view(dtype=np.complex128)[...,0]
-        args['last_all_pos'] = np.fft.irfft(c_coeffs,n=nint,axis=2)*nint
+        # ~ args['last_all_pos'] = np.fft.irfft(c_coeffs,n=nint,axis=2)*nint
+        args['last_all_pos'] = the_irfft(c_coeffs,n=nint,axis=2)*nint
     
     J,GradJ =  Compute_action_Cython(
         args['nloop']           ,
