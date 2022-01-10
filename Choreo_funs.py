@@ -464,7 +464,7 @@ def Compute_action_hess_mul(x,dx,callfun):
         args['last_all_coeffs'] = y.reshape(args['nloop'],ndim,args['ncoeff_list'][args["current_cvg_lvl"]],2)
         
         nint = args['nint_list'][args["current_cvg_lvl"]]
-        c_coeffs = all_coeffs.view(dtype=np.complex128)[...,0]
+        c_coeffs = args['last_all_coeffs'].view(dtype=np.complex128)[...,0]
         args['last_all_pos'] = np.fft.irfft(c_coeffs,n=nint,axis=2)*nint
     
     HessJdx =  Compute_action_hess_mul_Cython(
@@ -1102,13 +1102,13 @@ def Compute_action(x,callfun):
         args['last_all_coeffs'] = y.reshape(args['nloop'],ndim,args['ncoeff_list'][args["current_cvg_lvl"]],2)
         
         nint = args['nint_list'][args["current_cvg_lvl"]]
-        c_coeffs = all_coeffs.view(dtype=np.complex128)[...,0]
+        c_coeffs = args['last_all_coeffs'].view(dtype=np.complex128)[...,0]
         args['last_all_pos'] = np.fft.irfft(c_coeffs,n=nint,axis=2)*nint
     
     J,GradJ =  Compute_action_Cython(
         args['nloop']           ,
         args['ncoeff_list'][args["current_cvg_lvl"]]          ,
-        nint                    ,
+        args['nint_list'][args["current_cvg_lvl"]]            ,
         args['mass']            ,
         args['loopnb']          ,
         args['Targets']         ,
