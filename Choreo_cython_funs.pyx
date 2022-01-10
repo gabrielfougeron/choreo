@@ -119,7 +119,8 @@ def Compute_action_Cython(
     np.ndarray[long  , ndim=2, mode="c"] TimeRevsBin not None ,
     np.ndarray[long  , ndim=2, mode="c"] TimeShiftNumBin not None ,
     np.ndarray[long  , ndim=2, mode="c"] TimeShiftDenBin not None ,
-    np.ndarray[double, ndim=4, mode="c"] all_coeffs  not None
+    np.ndarray[double, ndim=4, mode="c"] all_coeffs  not None,
+    np.ndarray[double, ndim=3, mode="c"] all_pos not None
     ):
     # This function is probably the most important one.
     # Computes the action and its gradient with respect to the Fourier coefficients of the generator in each loop.
@@ -160,10 +161,6 @@ def Compute_action_Cython(
                 Action_grad[il,idim,k,1] += b*all_coeffs[il,idim,k,1]
         
     cdef double Pot_en = 0.
-
-    c_coeffs = all_coeffs.view(dtype=np.complex128)[...,0]
-    
-    cdef np.ndarray[double, ndim=3, mode="c"] all_pos = np.fft.irfft(c_coeffs,n=nint,axis=2)*nint
 
     cdef np.ndarray[long, ndim=2, mode="c"]  all_shiftsUn = np.zeros((nloop,maxloopnb),dtype=np.int_)
     cdef np.ndarray[long, ndim=2, mode="c"]  all_shiftsBin = np.zeros((nloop,maxloopnbi),dtype=np.int_)
@@ -272,7 +269,6 @@ def Compute_action_Cython(
                 all_shiftsBin[il,ibi] = (all_shiftsBin[il,ibi]+TimeRevsBin[il,ibi]) % nint
 
     cdef np.ndarray[doublecomplex , ndim=3, mode="c"]  grad_pot_fft = np.fft.ihfft(grad_pot_all,nint)
-
 
     for il in range(nloop):
         for idim in range(cndim):
@@ -761,7 +757,8 @@ def Compute_action_hess_mul_Cython(
     np.ndarray[long  , ndim=2, mode="c"] TimeShiftNumBin not None   ,
     np.ndarray[long  , ndim=2, mode="c"] TimeShiftDenBin not None   ,
     np.ndarray[double, ndim=4, mode="c"] all_coeffs  not None       ,
-    np.ndarray[double, ndim=4, mode="c"] all_coeffs_d  not None
+    np.ndarray[double, ndim=4, mode="c"] all_coeffs_d  not None     ,
+    np.ndarray[double, ndim=3, mode="c"] all_pos  not None     ,
     ):
     # Computes the matrix vector product H*dx where H is the Hessian of the action.
     # Useful to guide the root finding / optimisation process and to better understand the topography of the action (critical points / Morse theory).
@@ -799,10 +796,7 @@ def Compute_action_hess_mul_Cython(
                 
                 Action_hess_dx[il,idim,k,0] += b*all_coeffs_d[il,idim,k,0]
                 Action_hess_dx[il,idim,k,1] += b*all_coeffs_d[il,idim,k,1]
-                
-    c_coeffs = all_coeffs.view(dtype=np.complex128)[...,0]
-    cdef np.ndarray[double, ndim=3, mode="c"] all_pos = np.fft.irfft(c_coeffs,n=nint,axis=2)*nint
-    
+
     c_coeffs_d = all_coeffs_d.view(dtype=np.complex128)[...,0]
     cdef np.ndarray[double, ndim=3, mode="c"]  all_pos_d = np.fft.irfft(c_coeffs_d,n=nint,axis=2)*nint
 
@@ -897,7 +891,6 @@ def Compute_action_hess_mul_Cython(
                 
                 a = (2*ProdMassSumAll[il,ibi]*potp)
                 b = (4*ProdMassSumAll[il,ibi]*potpp*dxtddx)
-                
         
                 for idim in range(cndim):
                     ddf[idim] = b*dx[idim]+a*ddx[idim]
@@ -921,7 +914,6 @@ def Compute_action_hess_mul_Cython(
                 all_shiftsBin[il,ibi] = (all_shiftsBin[il,ibi]+TimeRevsBin[il,ibi]) % nint
 
     cdef np.ndarray[doublecomplex , ndim=3, mode="c"]  hess_dx_pot_fft = np.fft.ihfft(hess_pot_all_d,nint)
-
 
     for il in range(nloop):
         for idim in range(cndim):
