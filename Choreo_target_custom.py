@@ -41,24 +41,24 @@ def main(preprint_msg=''):
     # ~ slow_base_filename = './data/3_heart.npy'
 
     # ~ fast_base_filename = './data/2_cercle.npy'
-    # ~ fast_base_filename = './data/3_cercle.npy'
-    fast_base_filename = './data/3_huit.npy'
+    fast_base_filename = './data/3_cercle.npy'
+    # ~ fast_base_filename = './data/3_huit.npy'
     # ~ fast_base_filename = './data/3_heart.npy'
     # ~ fast_base_filename = './data/3_dbl_heart.npy'
 
-    # ~ nTf = 101
-    nTf = 37
+    nTf = 101
+    # ~ nTf = 37
     nbs = 3
     nbf = 3
 
     # ~ Rotate_fast_with_slow = True
     Rotate_fast_with_slow = False
 
-    Optimize_Init = True
-    # ~ Optimize_Init = False
+    # ~ Optimize_Init = True
+    Optimize_Init = False
 
-    Randomize_Fast_Init = True
-    # ~ Randomize_Fast_Init = False
+    # ~ Randomize_Fast_Init = True
+    Randomize_Fast_Init = False
 
 
     all_coeffs_slow_load = np.load(slow_base_filename)
@@ -104,8 +104,8 @@ def main(preprint_msg=''):
     if not(os.path.isdir(store_folder)):
         os.makedirs(store_folder)
 
-    Use_exact_Jacobian = True
-    # ~ Use_exact_Jacobian = False
+    # ~ Use_exact_Jacobian = True
+    Use_exact_Jacobian = False
 
     # ~ Use_deflation = True
     Use_deflation = False
@@ -133,8 +133,8 @@ def main(preprint_msg=''):
 
     nint_plot_img = 10000
 
-    Save_anim = True
-    # ~ Save_anim = False
+    # ~ Save_anim = True
+    Save_anim = False
 
     vid_size = (8,8) # Image size in inches
     nint_plot_anim = 2*2*2*3*3*5 * 6 *3
@@ -158,16 +158,16 @@ def main(preprint_msg=''):
     Plot_trace_anim = True
     # ~ Plot_trace_anim = False
 
-    n_reconverge_it_max = 4
-    # ~ n_reconverge_it_max = 1
+    # ~ n_reconverge_it_max = 4
+    n_reconverge_it_max = 1
 
     # ~ ncoeff_init = 102
     # ~ ncoeff_init = 800
     # ~ ncoeff_init = 201   
     # ~ ncoeff_init = 300   
     # ~ ncoeff_init = 600
-    # ~ ncoeff_init = 900
-    ncoeff_init = 1800
+    ncoeff_init = 900
+    # ~ ncoeff_init = 1800
     # ~ ncoeff_init = 1206
     # ~ ncoeff_init = 90
 
@@ -483,12 +483,12 @@ def main(preprint_msg=''):
 
                 # Non-classical nonlin_solve with exact Krylov Jacobian
                 F = lambda x : Action_grad_mod(x,callfun)
-                # ~ FGrad = lambda x,dx : Compute_action_hess_mul(x,dx,callfun)
-                def FGrad(x,dx): 
-                    callfun[0]["Do_Pos_FFT"] = False
-                    res = Compute_action_hess_mul(x,dx,callfun)
-                    callfun[0]["Do_Pos_FFT"] = True
-                    return res
+                FGrad = lambda x,dx : Compute_action_hess_mul(x,dx,callfun)
+                # ~ def FGrad(x,dx): 
+                    # ~ callfun[0]["Do_Pos_FFT"] = False
+                    # ~ res = Compute_action_hess_mul(x,dx,callfun)
+                    # ~ callfun[0]["Do_Pos_FFT"] = True
+                    # ~ return res
 
                 jac_options = {'method':krylov_method,'rdiff':rdiff,'outer_k':outer_k }
                 jacobian = ExactKrylovJacobian(exactgrad=FGrad,**jac_options)
@@ -589,8 +589,8 @@ def main(preprint_msg=''):
                                     
 
                     # ~ maxiter = 50
-                    maxiter = 10000
-                    # ~ maxiter = 1000
+                    # ~ maxiter = 10000
+                    maxiter = 1000
                     gradtol = 1e-13
                     
                     outer_k = 5
@@ -606,12 +606,12 @@ def main(preprint_msg=''):
 
                             # Non-classical nonlin_solve with exact Krylov Jacobian
                             F = lambda x : Action_grad_mod(x,callfun)
-                            # ~ FGrad = lambda x,dx : Compute_action_hess_mul(x,dx,callfun)
-                            def FGrad(x,dx): 
-                                callfun[0]["Do_Pos_FFT"] = False
-                                res = Compute_action_hess_mul(x,dx,callfun)
-                                callfun[0]["Do_Pos_FFT"] = True
-                                return res
+                            FGrad = lambda x,dx : Compute_action_hess_mul(x,dx,callfun)
+                            # ~ def FGrad(x,dx): 
+                                # ~ callfun[0]["Do_Pos_FFT"] = False
+                                # ~ res = Compute_action_hess_mul(x,dx,callfun)
+                                # ~ callfun[0]["Do_Pos_FFT"] = True
+                                # ~ return res
 
                             jac_options = {'method':krylov_method,'rdiff':rdiff,'outer_k':outer_k }
                             jacobian = ExactKrylovJacobian(exactgrad=FGrad,**jac_options)
