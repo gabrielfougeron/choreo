@@ -11,8 +11,8 @@ import numpy
 # to buid, run the following command :
 # python setup.py build_ext --inlpace
 
-# ~ os.environ["CC"] = "gcc"
-os.environ["CC"] = "icc"
+os.environ["CC"] = "gcc"
+# ~ os.environ["CC"] = "icc"
 
 
 # ~ extra_compile_args = ["-O3", "-ffast-math", "-march=native", "-fopenmp" ]

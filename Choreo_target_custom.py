@@ -485,9 +485,9 @@ def main(preprint_msg=''):
                 F = lambda x : Action_grad_mod(x,callfun)
                 # ~ FGrad = lambda x,dx : Compute_action_hess_mul(x,dx,callfun)
                 def FGrad(x,dx): 
-                    callfun["Do_Pos_FFT"] = False
+                    callfun[0]["Do_Pos_FFT"] = False
                     res = Compute_action_hess_mul(x,dx,callfun)
-                    callfun["Do_Pos_FFT"] = True
+                    callfun[0]["Do_Pos_FFT"] = True
                     return res
 
                 jac_options = {'method':krylov_method,'rdiff':rdiff,'outer_k':outer_k }
@@ -512,6 +512,7 @@ def main(preprint_msg=''):
             print(exc)
             print("Value Error occured, skipping.")
             Go_On = False
+            raise(exc)
 
         if (Check_loop_dist and Go_On):
             
@@ -605,7 +606,12 @@ def main(preprint_msg=''):
 
                             # Non-classical nonlin_solve with exact Krylov Jacobian
                             F = lambda x : Action_grad_mod(x,callfun)
-                            FGrad = lambda x,dx : Compute_action_hess_mul(x,dx,callfun)
+                            # ~ FGrad = lambda x,dx : Compute_action_hess_mul(x,dx,callfun)
+                            def FGrad(x,dx): 
+                                callfun[0]["Do_Pos_FFT"] = False
+                                res = Compute_action_hess_mul(x,dx,callfun)
+                                callfun[0]["Do_Pos_FFT"] = True
+                                return res
 
                             jac_options = {'method':krylov_method,'rdiff':rdiff,'outer_k':outer_k }
                             jacobian = ExactKrylovJacobian(exactgrad=FGrad,**jac_options)

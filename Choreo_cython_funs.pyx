@@ -1093,7 +1093,7 @@ def Assemble_Cstr_Matrix(
     
     cdef double val,dt
     cdef double masstot=0
-    cdef double invmasstot
+    cdef double invmasstot = 0
     cdef np.ndarray[double, ndim=1, mode="c"] cs = np.zeros((2),dtype=np.float64)
     
     # Removes imaginary part of c_0

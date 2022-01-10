@@ -1,3 +1,11 @@
+import os
+
+os.environ['OMP_NUM_THREADS'] = '1'
+os.environ['NUMEXPR_NUM_THREADS'] = '1'
+os.environ['OPENBLAS_NUM_THREADS'] = '1'
+os.environ['MKL_NUM_THREADS'] = '1'
+
+import sys
 import numpy as np
 import math as m
 import scipy.optimize as opt
@@ -15,7 +23,7 @@ from Choreo_funs import *
 
 # ~ ncoeff = 3**10
 
-load_file = './save_tests/9/8.npy'
+load_file = './save_tests/9/9.npy'
 all_coeffs = np.load(load_file)
 ncoeff = all_coeffs.shape[2]
 
@@ -23,6 +31,8 @@ ncoeff = all_coeffs.shape[2]
 
 
 ncoeff_init = ncoeff
+
+print("ncoeffs : ",ncoeff_init)
 
 nTf = 101
 nbs = 3
@@ -86,50 +96,6 @@ Abs_difflist = []
 Rel_difflist = []
 
 
-# ~ for i in range(ncoeffs_args):
-# ~ for i in range(1):
-for i in range(0):
-    dx = np.zeros((ncoeffs_args))
-    dx[i] = 1
-    
-    dx = np.random.random((ncoeffs_args))
-    
-    
-    df_ex = np.dot(Actiongrado,dx)
-
-
-    for exponent_eps in [8]:
-    # ~ for exponent_eps in range(16):
-        
-        eps = 10**(-exponent_eps)
-
-
-        xp = np.copy(x0) + eps*dx
-        fp ,gfp = Compute_action(xp,callfun)
-        # ~ fp ,gfp = Compute_action_gradnormsq(xp,callfun)
-        # ~ fp ,gfp = sq_dist_transform_2d_noscal(nloop,ncoeff,all_coeffs,all_coeffs2,xp)
-        xm = np.copy(x0) - eps*dx
-        fm ,gfm = Compute_action(xm,callfun)
-        # ~ fm ,gfm = Compute_action_gradnormsq(xm,callfun)
-        # ~ fm ,gfm = sq_dist_transform_2d_noscal(nloop,ncoeff,all_coeffs,all_coeffs2,xm)
-
-        df_difffin = (fp-fm)/(2*eps)
-
-        print('')
-        epslist.appdn(eps)
-        print('eps : ',eps)
-        print('df : ',df_difffin,df_ex)
-        Abs_diff = abs(df_difffin-df_ex)
-        Abs_difflist.append(Abs_diff)
-        print('Abs_diff : ',Abs_diff)
-        Rel_diff = abs(df_difffin-df_ex)/((abs(df_ex)+abs(df_difffin))/2)
-        Rel_difflist.append(Rel_diff)
-        print('Rel_diff : ',Rel_diff)
-        
-        print(i,df_difffin,df_ex)
-
-
-
 dxa = np.random.random((ncoeffs_args))
 dxb =  np.random.random((ncoeffs_args))
 
@@ -147,9 +113,33 @@ dxb =  np.random.random((ncoeffs_args))
 # ~ j_nz = all_idx[0,0,1,0]
 # ~ dxb[j_nz] = 1.
 
-Hdxb = Compute_action_hess_mul(x0,dxb,callfun)
 
-    
+nperf = 1000
+
+tstart = time.perf_counter()
+for iperf in range(nperf):
+    Actiono, Actiongrado = Compute_action(x0,callfun)
+tstop = time.perf_counter()
+print("GRAD fft YES recompute time ",tstop-tstart)
+
+tstart = time.perf_counter()
+for iperf in range(nperf):
+    Hdxb = Compute_action_hess_mul(x0,dxb,callfun)
+tstop = time.perf_counter()
+print("HESS fft YES recompute time ",tstop-tstart)
+
+callfun[0]["Do_Pos_FFT"] = False
+tstart = time.perf_counter()
+for iperf in range(nperf):
+    Hdxb = Compute_action_hess_mul(x0,dxb,callfun)
+tstop = time.perf_counter()
+print("HESS fft NO recompute time ",tstop-tstart)
+
+callfun[0]["Do_Pos_FFT"] = True
+
+
+sys.exit(0)
+
 
 epslist = []
 Abs_difflist = []
