@@ -18,6 +18,7 @@ import scipy.linalg as la
 import scipy.sparse as sp
 import sparseqr
 import networkx as nx
+import random
 
 import logging
 logging.disable(logging.WARNING)
@@ -1514,7 +1515,7 @@ def Transform_Coeffs(SpaceRots, TimeRevs, TimeShiftNum, TimeShiftDen, all_coeffs
         
     return all_coeffs_new
 
-def Compose_Two_Paths(nTf,nbs,nbf,ncoeff,all_coeffs_slow,all_coeffs_fast,Rotate_fast_with_slow=True):
+def Compose_Two_Paths(nTf,nbs,nbf,ncoeff,all_coeffs_slow,all_coeffs_fast,Rotate_fast_with_slow=False):
     # Composes a "slow" with a "fast" path
     
     k_fac_slow = nbf
@@ -1580,7 +1581,6 @@ def Compose_Two_Paths(nTf,nbs,nbf,ncoeff,all_coeffs_slow,all_coeffs_fast,Rotate_
                 v = v / np.linalg.norm(v)
 
                 SpRotMat = np.array( [[v[0] , -v[1]] , [v[1],v[0]]])
-                # ~ SpRotMat = np.array( [[v[0] , v[1]] , [-v[1],v[0]]])
                 
                 all_pos_avg[il,:,iint] = all_pos_slow[il,:,iint] + SpRotMat.dot(all_pos_fast[il,:,iint])
 
@@ -1599,3 +1599,119 @@ def Compose_Two_Paths(nTf,nbs,nbf,ncoeff,all_coeffs_slow,all_coeffs_fast,Rotate_
         all_coeffs_composed = all_coeffs_fast_mod[:,:,0:ncoeff,:]  + all_coeffs_slow_mod[:,:,0:ncoeff,:] 
 
     return all_coeffs_composed
+
+
+def Gen_init_avg(nTf,nbs,nbf,ncoeff,all_coeffs_slow_load,all_coeffs_fast_load,Rotate_fast_with_slow=False,Optimize_Init=True,Randomize_Fast_Init=True):
+    
+
+    if Optimize_Init :
+                
+        if Randomize_Fast_Init :
+
+            init_SpaceRevscal = 1. if (np.random.random() > 1./2.) else -1.
+            init_TimeRevscal = 1. if (np.random.random() > 1./2.) else -1.
+            Act_Mul = 1. if (np.random.random() > 1./2.) else -1.
+            init_x = np.array([2 * np.pi * np.random.random(),np.random.random()])
+
+        else:
+
+            init_SpaceRevscal = 1.
+            init_TimeRevscal = 1.
+            Act_Mul = 1.
+            init_x = np.array([0,0])
+
+        def init_opt_fun(x):
+
+            theta = x[0]
+            SpaceRevscal = init_SpaceRevscal
+            TimeRevscal = init_TimeRevscal
+            TimeShiftNum = x[1]
+            TimeShiftDen = 1
+
+            RanRotMat = np.array( [[SpaceRevscal*np.cos(theta) , SpaceRevscal*np.sin(theta)] , [-np.sin(theta),np.cos(theta)]])
+
+            SpaceRots = np.reshape(RanRotMat,(1,ndim,ndim))
+            TimeRevs = np.array([TimeRevscal])
+            TimeShiftNum = np.array([TimeShiftNum])
+            TimeShiftDen = np.array([TimeShiftDen])
+
+            all_coeffs_fast = Transform_Coeffs(SpaceRots, TimeRevs, TimeShiftNum, TimeShiftDen, all_coeffs_fast_load)
+            all_coeffs_avg = Compose_Two_Paths(nTf,nbs,nbf,ncoeff,all_coeffs_slow_load,all_coeffs_fast,Rotate_fast_with_slow)
+            
+            x_avg = Package_all_coeffs(all_coeffs_avg,callfun)
+                
+            Act, GAct = Compute_action(x_avg,callfun)
+            
+            return Act_Mul * Act
+            
+
+        maxiter = 1000
+        tol = 1e-10
+
+        # ~ opt_result = opt.minimize(fun=init_opt_fun,x0=init_x,method='BFGS',options={'disp':True,'maxiter':maxiter,'gtol':tol},tol=tol)
+        opt_result = opt.minimize(fun=init_opt_fun,x0=init_x,method='CG',options={'disp':False,'maxiter':maxiter,'gtol':tol},tol=tol)
+
+        x_opt = opt_result['x']
+
+        theta = x_opt[0]
+        SpaceRevscal = init_SpaceRevscal
+        TimeRevscal = init_TimeRevscal
+        TimeShiftNum = x_opt[1]
+        TimeShiftDen = 1
+        
+
+    elif Randomize_Fast_Init :
+
+        theta = 2 * np.pi * np.random.random()
+        SpaceRevscal = 1. if (np.random.random() > 1./2.) else -1.
+        TimeRevscal = 1. if (np.random.random() > 1./2.) else -1.
+        TimeShiftNum = np.random.random()
+        TimeShiftDen = 1
+
+    else :
+            
+        theta = 0.
+        SpaceRevscal = 1.
+        TimeRevscal = 1.
+        TimeShiftNum = 0
+        TimeShiftDen = 1
+
+    RanRotMat = np.array( [[SpaceRevscal*np.cos(theta) , SpaceRevscal*np.sin(theta)] , [-np.sin(theta),np.cos(theta)]])
+
+    SpaceRots = np.reshape(RanRotMat,(1,ndim,ndim))
+    TimeRevs = np.array([TimeRevscal])
+    TimeShiftNum = np.array([TimeShiftNum])
+    TimeShiftDen = np.array([TimeShiftDen])
+
+    all_coeffs_fast = Transform_Coeffs(SpaceRots, TimeRevs, TimeShiftNum, TimeShiftDen, all_coeffs_fast_load)
+    all_coeffs_avg = Compose_Two_Paths(nTf,nbs,nbf,ncoeff,all_coeffs_slow_load,all_coeffs_fast,Rotate_fast_with_slow)
+
+    return all_coeffs_avg
+
+
+def Make_Init_bounds_coeffs(nloop,ncoeff,coeff_ampl_o=1e-1,k_infl=1,k_max=200,coeff_ampl_min=1e-16):
+
+    all_coeffs_min = np.zeros((nloop,ndim,ncoeff,2),dtype=np.float64)
+    all_coeffs_max = np.zeros((nloop,ndim,ncoeff,2),dtype=np.float64)
+
+    randlimfac = 0.1
+    # ~ randlimfac = 0.
+    
+    coeff_slope = m.log(coeff_ampl_o/coeff_ampl_min)/(k_max-k_infl)
+
+    for il in range(nloop):
+        for idim in range(ndim):
+            for k in range(1,ncoeff):
+
+                if (k <= k_infl):
+                    randampl = coeff_ampl_o
+                else:
+                    randampl = coeff_ampl_o * m.exp(-coeff_slope*(k-k_infl))
+
+                all_coeffs_min[il,idim,k,0] = -randampl* (1+random.random()*randlimfac)
+                all_coeffs_min[il,idim,k,1] = -randampl* (1+random.random()*randlimfac)
+                all_coeffs_max[il,idim,k,0] =  randampl* (1+random.random()*randlimfac)
+                all_coeffs_max[il,idim,k,1] =  randampl* (1+random.random()*randlimfac)
+    
+    return all_coeffs_min,all_coeffs_max
+

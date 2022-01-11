@@ -37,28 +37,29 @@ def main(preprint_msg=''):
 
     # ~ slow_base_filename = './data/2_cercle.npy'
     # ~ slow_base_filename = './data/3_cercle.npy'
-    # ~ slow_base_filename = './data/3_huit.npy'
-    slow_base_filename = './data/3_heart.npy'
+    slow_base_filename = './data/3_huit.npy'
+    # ~ slow_base_filename = './data/3_heart.npy'
 
-    # ~ fast_base_filename = './data/2_cercle.npy'
-    fast_base_filename = './data/3_cercle.npy'
+    # ~ fast_base_filename = './data/1_lone_wolf.npy'
+    fast_base_filename = './data/2_cercle.npy'
+    # ~ fast_base_filename = './data/3_cercle.npy'
     # ~ fast_base_filename = './data/3_huit.npy'
     # ~ fast_base_filename = './data/3_heart.npy'
     # ~ fast_base_filename = './data/3_dbl_heart.npy'
 
-    # ~ nTf = 101
-    nTf = 37
+    nTf = 101
+    # ~ nTf = 37
     nbs = 3
-    nbf = 3
+    nbf = 2
 
     # ~ Rotate_fast_with_slow = True
     Rotate_fast_with_slow = False
 
-    Optimize_Init = True
-    # ~ Optimize_Init = False
+    # ~ Optimize_Init = True
+    Optimize_Init = False
 
-    Randomize_Fast_Init = True
-    # ~ Randomize_Fast_Init = False
+    # ~ Randomize_Fast_Init = True
+    Randomize_Fast_Init = False
 
 
     all_coeffs_slow_load = np.load(slow_base_filename)
@@ -210,7 +211,6 @@ def main(preprint_msg=''):
     print('Searching periodic solutions of {:d} bodies'.format(nbody))
     # ~ print('Processing symmetries for {:d} convergence levels ...'.format(n_reconverge_it_max+1))
 
-
     print('Processing symmetries for {0:d} convergence levels'.format(n_reconverge_it_max+1))
     callfun = setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change)
 
@@ -277,119 +277,14 @@ def main(preprint_msg=''):
     ncoeff = callfun[0]["ncoeff_list"][callfun[0]["current_cvg_lvl"]]
     nint = callfun[0]["nint_list"][callfun[0]["current_cvg_lvl"]]
 
-    if Optimize_Init :
-                
-        if Randomize_Fast_Init :
+    all_coeffs_avg = Gen_init_avg(nTf,nbs,nbf,ncoeff,all_coeffs_slow_load,all_coeffs_fast_load,Rotate_fast_with_slow,Optimize_Init,Randomize_Fast_Init)
 
-            init_SpaceRevscal = 1. if (np.random.random() > 1./2.) else -1.
-            init_TimeRevscal = 1. if (np.random.random() > 1./2.) else -1.
-            Act_Mul = 1. if (np.random.random() > 1./2.) else -1.
-            init_x = np.array([2 * np.pi * np.random.random(),np.random.random()])
+    coeff_ampl_o=1e-1
+    k_infl=1
+    k_max=200
+    coeff_ampl_min=1e-16
 
-        else:
-
-            init_SpaceRevscal = 1.
-            init_TimeRevscal = 1.
-            Act_Mul = 1.
-            init_x = np.array([0,0])
-
-        def init_opt_fun(x):
-
-            theta = x[0]
-            SpaceRevscal = init_SpaceRevscal
-            TimeRevscal = init_TimeRevscal
-            TimeShiftNum = x[1]
-            TimeShiftDen = 1
-
-            RanRotMat = np.array( [[SpaceRevscal*np.cos(theta) , SpaceRevscal*np.sin(theta)] , [-np.sin(theta),np.cos(theta)]])
-
-            SpaceRots = np.reshape(RanRotMat,(1,ndim,ndim))
-            TimeRevs = np.array([TimeRevscal])
-            TimeShiftNum = np.array([TimeShiftNum])
-            TimeShiftDen = np.array([TimeShiftDen])
-
-            all_coeffs_fast = Transform_Coeffs(SpaceRots, TimeRevs, TimeShiftNum, TimeShiftDen, all_coeffs_fast_load)
-            all_coeffs_avg = Compose_Two_Paths(nTf,nbs,nbf,ncoeff,all_coeffs_slow_load,all_coeffs_fast,Rotate_fast_with_slow)
-            
-            x_avg = Package_all_coeffs(all_coeffs_avg,callfun)
-                
-            Act, GAct = Compute_action(x_avg,callfun)
-            
-            return Act_Mul * Act
-            
-
-        maxiter = 1000
-        tol = 1e-10
-
-        # ~ opt_result = opt.minimize(fun=init_opt_fun,x0=init_x,method='BFGS',options={'disp':True,'maxiter':maxiter,'gtol':tol},tol=tol)
-        opt_result = opt.minimize(fun=init_opt_fun,x0=init_x,method='CG',options={'disp':False,'maxiter':maxiter,'gtol':tol},tol=tol)
-
-        x_opt = opt_result['x']
-
-        theta = x_opt[0]
-        SpaceRevscal = init_SpaceRevscal
-        TimeRevscal = init_TimeRevscal
-        TimeShiftNum = x_opt[1]
-        TimeShiftDen = 1
-        
-
-    elif Randomize_Fast_Init :
-
-        theta = 2 * np.pi * np.random.random()
-        SpaceRevscal = 1. if (np.random.random() > 1./2.) else -1.
-        TimeRevscal = 1. if (np.random.random() > 1./2.) else -1.
-        TimeShiftNum = np.random.random()
-        TimeShiftDen = 1
-
-    else :
-            
-        theta = 0.
-        SpaceRevscal = 1.
-        TimeRevscal = 1.
-        TimeShiftNum = 0
-        TimeShiftDen = 1
-
-    RanRotMat = np.array( [[SpaceRevscal*np.cos(theta) , SpaceRevscal*np.sin(theta)] , [-np.sin(theta),np.cos(theta)]])
-
-    SpaceRots = np.reshape(RanRotMat,(1,ndim,ndim))
-    TimeRevs = np.array([TimeRevscal])
-    TimeShiftNum = np.array([TimeShiftNum])
-    TimeShiftDen = np.array([TimeShiftDen])
-
-    all_coeffs_fast = Transform_Coeffs(SpaceRots, TimeRevs, TimeShiftNum, TimeShiftDen, all_coeffs_fast_load)
-    all_coeffs_avg = Compose_Two_Paths(nTf,nbs,nbf,ncoeff,all_coeffs_slow_load,all_coeffs_fast,Rotate_fast_with_slow)
-
-
-    all_coeffs_min = np.zeros((nloop,ndim,ncoeff,2),dtype=np.float64)
-    all_coeffs_max = np.zeros((nloop,ndim,ncoeff,2),dtype=np.float64)
-
-    randlimfac = 0.1
-    # ~ randlimfac = 0.
-
-    for il in range(nloop):
-        for idim in range(ndim):
-            for k in range(1,ncoeff):
-
-                ko = 0
-                k1 = 50
-                k2= 0
-
-                if (k <= ko):
-                    randampl = 0.005
-                elif (k <= k1):
-                    
-                    # ~ randampl = 0.00001
-                    randampl = 0.0000001
-                elif (k <= k2):
-                    randampl = 0.005
-                else:
-                    randampl = 0.
-
-                all_coeffs_min[il,idim,k,0] = -randampl* (1+random.random()*randlimfac)
-                all_coeffs_min[il,idim,k,1] = -randampl* (1+random.random()*randlimfac)
-                all_coeffs_max[il,idim,k,0] =  randampl* (1+random.random()*randlimfac)
-                all_coeffs_max[il,idim,k,1] =  randampl* (1+random.random()*randlimfac)
-
+    all_coeffs_min,all_coeffs_max = Make_Init_bounds_coeffs(nloop,ncoeff,coeff_ampl_o,k_infl,k_max,coeff_ampl_min)
 
     x_min = Package_all_coeffs(all_coeffs_min,callfun)
     x_max = Package_all_coeffs(all_coeffs_max,callfun)
@@ -474,7 +369,8 @@ def main(preprint_msg=''):
             rdiff = None
             # ~ rdiff = 1e-1
             
-            outer_k = 3
+            outer_k = 5
+            # ~ outer_k = 0
             
             # Classical root
             # ~ opt_result = opt.root(fun=Action_grad_mod,x0=x0,args=callfun,method='krylov', options={'line_search':line_search,'disp':disp_scipy_opt,'maxiter':maxiter,'fatol':gradtol,'jac_options':{'method':krylov_method,'rdiff':rdiff }},callback=best_sol.update)
@@ -590,11 +486,11 @@ def main(preprint_msg=''):
 
                     # ~ maxiter = 50
                     # ~ maxiter = 10000
-                    maxiter = 1000
+                    maxiter = 2000
                     gradtol = 1e-13
                     
-                    outer_k = 5
-                    # ~ outer_k = 10
+                    # ~ outer_k = 0
+                    outer_k = 10
                     # ~ outer_k = 100
 
                     try : 
@@ -781,6 +677,8 @@ def main(preprint_msg=''):
 
 if __name__ == "__main__":
     
+    tstart = time.perf_counter()
+    
     parser = argparse.ArgumentParser(description='Welcome to the targeted choreography finder')
     parser.add_argument('-pp','--preprint_msg',nargs=1,type=None,required=False,default=None,help='Adds a systematic message before every print')
     
@@ -794,3 +692,7 @@ if __name__ == "__main__":
         
         preprint_msg = args.preprint_msg[0].strip() + ' : '
         main(preprint_msg = preprint_msg)
+        
+    tstop = time.perf_counter()
+    
+    print('Total time in seconds : ',tstop-tstart)

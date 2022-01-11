@@ -53,7 +53,7 @@ from Choreo_funs import *
 
 # ~ nbpl = [3,2,5]
 # ~ nbpl = [1,2,3,4,5]
-nbpl = [3]
+nbpl = [5]
 # ~ nbpl = [3,2]
 # ~ nbpl = [2,3]
 # ~ nbpl = [i+1 for i in range(4)]
@@ -61,8 +61,8 @@ nbpl = [3]
 # ~ nbpl = [5]
 the_lcm = m.lcm(*nbpl)
 
-SymName = ['D' ]
-# ~ SymName = None
+# ~ SymName = ['D' ]
+SymName = None
 Sym_list,nbody = Make2DChoreoSymManyLoops(nbpl=nbpl,SymName=SymName)
 
 # ~ nbpl = [1,1,1,1,1]
@@ -152,8 +152,8 @@ Check_loop_dist = True
 # ~ Penalize_Escape = True
 Penalize_Escape = False
 
-save_init = False
-# ~ save_init = True
+# ~ save_init = False
+save_init = True
 
 save_approx = False
 # ~ save_approx = True
@@ -194,7 +194,7 @@ Plot_trace_anim = True
 n_reconverge_it_max = 4
 # ~ n_reconverge_it_max = 1
 
-# ~ ncoeff_init = 102
+# ~ ncoeff_init = 20
 # ~ ncoeff_init = 800
 # ~ ncoeff_init = 201   
 # ~ ncoeff_init = 300   
@@ -311,36 +311,16 @@ callfun[0]["current_cvg_lvl"] = 0
 ncoeff = callfun[0]["ncoeff_list"][callfun[0]["current_cvg_lvl"]]
 nint = callfun[0]["nint_list"][callfun[0]["current_cvg_lvl"]]
 
-all_coeffs_min = np.zeros((nloop,ndim,ncoeff,2),dtype=np.float64)
-all_coeffs_max = np.zeros((nloop,ndim,ncoeff,2),dtype=np.float64)
+coeff_ampl_o=1e-1
+k_infl=1
+k_max=200
+coeff_ampl_min=1e-16
 
-randlimfac = 0.1
-# ~ randlimfac = 0.
-
-for il in range(nloop):
-    for idim in range(ndim):
-        for k in range(1,ncoeff):
-
-            ko = 0
-            k1 =10
-            k2= 20
-            if (k <= ko):
-                randampl = 0
-            elif (k <= k1):
-                # ~ randampl = 1.5
-                randampl = 0.5
-            elif (k <= k2):
-                randampl = 0.0005
-            else:
-                randampl = 0.
-
-            all_coeffs_min[il,idim,k,0] = -randampl* (1+random.random()*randlimfac)
-            all_coeffs_min[il,idim,k,1] = -randampl* (1+random.random()*randlimfac)
-            all_coeffs_max[il,idim,k,0] =  randampl* (1+random.random()*randlimfac)
-            all_coeffs_max[il,idim,k,1] =  randampl* (1+random.random()*randlimfac)
+all_coeffs_min,all_coeffs_max = Make_Init_bounds_coeffs(nloop,ncoeff,coeff_ampl_o,k_infl,k_max,coeff_ampl_min)
 
 x_min = Package_all_coeffs(all_coeffs_min,callfun)
 x_max = Package_all_coeffs(all_coeffs_max,callfun)
+
 
 # ~ for i in range(x_min.shape[0]):
     # ~ print(x_min[i],x_max[i])
