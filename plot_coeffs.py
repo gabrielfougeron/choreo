@@ -12,9 +12,10 @@ import time
 
 from Choreo_funs import *
 
-# ~ all_coeffs = np.load('./Sniff_all_sym/4/2.npy')
+all_coeffs = np.load('./Sniff_all_sym/5/6.npy')
 # ~ all_coeffs = np.load('./save_tests/9/8.npy')
-all_coeffs = np.load('./save_tests/9/8.npy')
+# ~ all_coeffs = np.load('./save_tests/9/8.npy')
+# ~ all_coeffs = np.load('./Sniff_all_sym/1/1.npy')
 # ~ all_coeffs = np.load('./init.npy')
 
 
