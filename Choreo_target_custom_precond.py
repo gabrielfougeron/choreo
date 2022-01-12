@@ -20,7 +20,7 @@ import shutil
 import time
 
 from Choreo_funs import *
-from scipy_root_plus import ExactKrylovJacobian,inv_op
+from scipy_root_plus import ExactKrylovJacobian
 
 
 
@@ -174,6 +174,7 @@ def main(preprint_msg=''):
     # ~ ncoeff_init = 90
     
     ncoeff_precond = 300
+    # ~ ncoeff_precond = 30
 
     # ~ disp_scipy_opt = False
     disp_scipy_opt = True
@@ -298,46 +299,46 @@ def main(preprint_msg=''):
     nparam_precond = x0_precond.shape[0]
     
 
-    # ~ ActHessPrecond_LinOpt = Compute_action_hess_LinOpt(x0_precond,callfun_precond)
-    ActHessPrecond_LinOpt = Compute_action_hess_LinOpt_precond(x0_precond,callfun,callfun_precond)
+    ActHessPrecond_LinOpt = Compute_action_hess_LinOpt(x0_precond,callfun_precond)
 
     print(nparam_precond)
-    
-    nparam = args['coeff_to_param_list'][i].shape[0]
 
-    ActHessPrecond_dense = ActHessPrecond_LinOpt * np.eye(nparam)
+    ActHessPrecond_dense = ActHessPrecond_LinOpt * np.eye(nparam_precond)
+    # ~ ActHessPrecond_dense =  np.eye(nparam_precond)
     # ~ print(dir(ActHessPrecond_dense))
     
-    atol_nnz = 1e-11
-    # ~ atol_nnz = 0
-    for i in range(nparam):
-        for j in range(nparam):
+    atol_nnz = 0
+    # ~ atol_nnz = 1e-11
+    # ~ atol_nnz = 1e-3
+    for i in range(nparam_precond):
+        for j in range(nparam_precond):
             if (abs(ActHessPrecond_dense[i,j]) < atol_nnz):
                 ActHessPrecond_dense[i,j] = 0.
     
-    ActHessPrecond_csr = scipy.sparse.csr_matrix(ActHessPrecond_dense)
+    ActHessPrecond_csc = scipy.sparse.csc_matrix(ActHessPrecond_dense)
     
-    print(ActHessPrecond_csr.nnz)
-    print(ActHessPrecond_csr.nnz/(nparam*nparam))
-    
-    tstart = time.perf_counter()
-    precond = scipy.sparse.linalg.spilu(ActHessPrecond_csr)
-    tstop = time.perf_counter()
-    print(tstop-tstart)
+    print(ActHessPrecond_csc.nnz)
+    print(ActHessPrecond_csc.nnz/(nparam_precond*nparam_precond))
     
     tstart = time.perf_counter()
-    precond = scipy.sparse.linalg.spilu(ActHessPrecond_LinOpt)
+    precond = scipy.sparse.linalg.spilu(ActHessPrecond_csc)
+    # ~ precond = scipy.sparse.linalg.splu(ActHessPrecond_csc)
     tstop = time.perf_counter()
-    print(tstop-tstart)
+    print("Precond factorization : ",tstop-tstart)
     
-    # ~ print(ActHessPrecond_csr)
     
-    sys.exit(0)
-    # ~ scipy.sparse.linalg.spilu(
+    xa = np.random.random((nparam_precond))
+    xb = precond.solve(ActHessPrecond_LinOpt * xa)
+    print(np.linalg.norm(xb-xa))
+    
+    xa = np.random.random((nparam_precond))
+    xb = ActHessPrecond_LinOpt * precond.solve( xa)
+    print(np.linalg.norm(xb-xa))
+    
+    
 
-    # ~ ActHessPrecond_csr = ActHessPrecond.tocsr()
 
-    # ~ print(ActHessPrecond_csr)
+    # ~ sys.exit(0)
 
 
     coeff_ampl_o=1e-16
@@ -447,17 +448,14 @@ def main(preprint_msg=''):
                     # ~ callfun[0]["Do_Pos_FFT"] = True
                     # ~ return res
                     
-                ActHessPrecond_LinOpt = Compute_action_hess_LinOpt_precond(x0_precond,callfun,callfun_precond)
-                
-                ActHessPrecond = inv_op(ActHessPrecond_LinOpt)
-                
-                
+                ActHessPrecond_LinOpt = Package_Precond_LinOpt(precond,callfun_precond,callfun)
+
                 # ~ inner_M = None
                 jac_options = {'method':krylov_method,'rdiff':rdiff,'outer_k':outer_k}
-                inner_M = ActHessPrecond
+                inner_M = ActHessPrecond_LinOpt
 
-                # ~ jac_options = {'method':krylov_method,'rdiff':rdiff,'outer_k':outer_k ,'inner_M':inner_M}
-                jac_options = {'method':krylov_method,'rdiff':rdiff,'outer_k':outer_k}
+                jac_options = {'method':krylov_method,'rdiff':rdiff,'outer_k':outer_k ,'inner_M':inner_M}
+                # ~ jac_options = {'method':krylov_method,'rdiff':rdiff,'outer_k':outer_k}
                 jacobian = ExactKrylovJacobian(exactgrad=FGrad,**jac_options)
 
                 opt_result = opt.nonlin.nonlin_solve(F=F,x0=x0,jacobian=jacobian,verbose=disp_scipy_opt,maxiter=maxiter,f_tol=gradtol,line_search=line_search,callback=best_sol.update,raise_exception=False)
