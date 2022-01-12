@@ -40,19 +40,19 @@ def main(preprint_msg=''):
     slow_base_filename = './data/3_huit.npy'
     # ~ slow_base_filename = './data/3_heart.npy'
 
-    fast_base_filename = './data/1_lone_wolf.npy'
-    # ~ fast_base_filename = './data/2_cercle.npy'
+    # ~ fast_base_filename = './data/1_lone_wolf.npy'
+    fast_base_filename = './data/2_cercle.npy'
     # ~ fast_base_filename = './data/3_cercle.npy'
     # ~ fast_base_filename = './data/3_huit.npy'
     # ~ fast_base_filename = './data/3_heart.npy'
     # ~ fast_base_filename = './data/3_dbl_heart.npy'
 
-    mass_mul = 2
-    # ~ mass_mul = 1
+    # ~ mass_mul = 2
+    mass_mul = 1
     nTf = 101
     # ~ nTf = 37
     nbs = 3
-    nbf = 1
+    nbf = 2
 
     # ~ Rotate_fast_with_slow = True
     Rotate_fast_with_slow = False
@@ -136,8 +136,8 @@ def main(preprint_msg=''):
 
     nint_plot_img = 10000
 
-    Save_anim = True
-    # ~ Save_anim = False
+    # ~ Save_anim = True
+    Save_anim = False
 
     vid_size = (8,8) # Image size in inches
     nint_plot_anim = 2*2*2*3*3*5 * 6 *3
@@ -161,8 +161,8 @@ def main(preprint_msg=''):
     Plot_trace_anim = True
     # ~ Plot_trace_anim = False
 
-    n_reconverge_it_max = 3
-    # ~ n_reconverge_it_max = 1
+    # ~ n_reconverge_it_max = 3
+    n_reconverge_it_max = 1
 
     # ~ ncoeff_init = 102
     # ~ ncoeff_init = 800
@@ -174,8 +174,8 @@ def main(preprint_msg=''):
     # ~ ncoeff_init = 1206
     # ~ ncoeff_init = 90
 
-    disp_scipy_opt = False
-    # ~ disp_scipy_opt = True
+    # ~ disp_scipy_opt = False
+    disp_scipy_opt = True
 
     Newt_err_norm_max = 1e-9
     Newt_err_norm_max_save = Newt_err_norm_max * 100
@@ -357,51 +357,36 @@ def main(preprint_msg=''):
 
         print('Initialization Action Grad Norm : ',best_sol.f_norm)
 
+        outer_k = 5
+        inner_maxiter = 30
+
         # ~ gradtol = 1e-1
         # ~ gradtol = 1e-2
+        # ~ gradtol = 1e-5
         gradtol = 1e-9
         # ~ gradtol = 1e-11
         # ~ maxiter = 500
         maxiter = 25000
+        
+        # ~ rdiff = 1e-7
+        # ~ rdiff = 0   
+        rdiff = None
+
+        F = lambda x : Action_grad_mod(x,callfun)
+        jac_options = {'method':krylov_method,'rdiff':rdiff,'outer_k':outer_k,'inner_inner_m':inner_maxiter }
+        # ~ jac_options = {'method':krylov_method,'rdiff':rdiff,'outer_k':outer_k}
+        
+        if (Use_exact_Jacobian):
+
+            FGrad = lambda x,dx : Compute_action_hess_mul(x,dx,callfun)
+            jacobian = ExactKrylovJacobian(exactgrad=FGrad,**jac_options)
+
+        else: 
+            jacobian = opt.nonlin.KrylovJacobian(**jac_options)
 
         try : 
-            
-            # ~ rdiff = 1e-7
-            # ~ rdiff = 0   
-            rdiff = None
-            # ~ rdiff = 1e-1
-            
-            outer_k = 5
-            # ~ outer_k = 0
-            
-            # Classical root
-            # ~ opt_result = opt.root(fun=Action_grad_mod,x0=x0,args=callfun,method='krylov', options={'line_search':line_search,'disp':disp_scipy_opt,'maxiter':maxiter,'fatol':gradtol,'jac_options':{'method':krylov_method,'rdiff':rdiff }},callback=best_sol.update)
-            
-            if (Use_exact_Jacobian):
 
-                # Non-classical nonlin_solve with exact Krylov Jacobian
-                F = lambda x : Action_grad_mod(x,callfun)
-                FGrad = lambda x,dx : Compute_action_hess_mul(x,dx,callfun)
-                # ~ def FGrad(x,dx): 
-                    # ~ callfun[0]["Do_Pos_FFT"] = False
-                    # ~ res = Compute_action_hess_mul(x,dx,callfun)
-                    # ~ callfun[0]["Do_Pos_FFT"] = True
-                    # ~ return res
-
-                jac_options = {'method':krylov_method,'rdiff':rdiff,'outer_k':outer_k }
-                jacobian = ExactKrylovJacobian(exactgrad=FGrad,**jac_options)
-
-                opt_result = opt.nonlin.nonlin_solve(F=F,x0=x0,jacobian=jacobian,verbose=disp_scipy_opt,maxiter=maxiter,f_tol=gradtol,line_search=line_search,callback=best_sol.update,raise_exception=False)
-            
-            else: 
-                
-                # Classical nonlin_solve with standard Krylov Jacobian
-                F = lambda x : Action_grad_mod(x,callfun)
-
-                jac_options = {'method':krylov_method,'rdiff':rdiff,'outer_k':outer_k }
-                jacobian = opt.nonlin.KrylovJacobian(**jac_options)
-
-                opt_result = opt.nonlin.nonlin_solve(F=F,x0=x0,jacobian=jacobian,verbose=disp_scipy_opt,maxiter=maxiter,f_tol=gradtol,line_search=line_search,callback=best_sol.update,raise_exception=False)
+            opt_result = opt.nonlin.nonlin_solve(F=F,x0=best_sol.x,jacobian=jacobian,verbose=disp_scipy_opt,maxiter=maxiter,f_tol=gradtol,line_search=line_search,callback=best_sol.update,raise_exception=False)
 
             Go_On = True
 
@@ -484,48 +469,41 @@ def main(preprint_msg=''):
                     
                     print('')
                     print('After Resize lvl '+str(callfun[0]["current_cvg_lvl"])+' : Action Grad Norm : ',best_sol.f_norm)
-                                    
+                                  
+                    outer_k = 5
+                    inner_maxiter = 40
 
-                    # ~ maxiter = 50
-                    # ~ maxiter = 10000
-                    maxiter = 2000
+                    # ~ gradtol = 1e-1
+                    # ~ gradtol = 1e-2
+                    # ~ gradtol = 1e-5
                     gradtol = 1e-13
+                    # ~ gradtol = 1e-11
+                    # ~ maxiter = 500
+                    maxiter = 2000
                     
-                    # ~ outer_k = 0
-                    outer_k = 10
-                    # ~ outer_k = 100
+                    # ~ rdiff = 1e-7
+                    # ~ rdiff = 0   
+                    rdiff = None
+                    
+                    store_outer_Av=True
+                    # ~ store_outer_Av=False
+
+                    F = lambda x : Action_grad_mod(x,callfun)
+                    jac_options = {'method':krylov_method,'rdiff':rdiff,'outer_k':outer_k,'inner_inner_m':inner_maxiter,'inner_store_outer_Av':store_outer_Av }
+                    # ~ jac_options = {'method':krylov_method,'rdiff':rdiff,'outer_k':outer_k}
+                    
+                    if (Use_exact_Jacobian):
+
+                        FGrad = lambda x,dx : Compute_action_hess_mul(x,dx,callfun)
+                        jacobian = ExactKrylovJacobian(exactgrad=FGrad,**jac_options)
+
+                    else: 
+                        jacobian = opt.nonlin.KrylovJacobian(**jac_options)
 
                     try : 
 
-                        # Classical root
-                        # ~ opt_result = opt.root(fun=Action_grad_mod,x0=x0,args=callfun,method='krylov', options={'line_search':line_search,'disp':disp_scipy_opt,'maxiter':maxiter,'fatol':gradtol,'jac_options':{'method':krylov_method,'rdiff':rdiff }},callback=best_sol.update)
-                        
-                        if (Use_exact_Jacobian):
+                        opt_result = opt.nonlin.nonlin_solve(F=F,x0=best_sol.x,jacobian=jacobian,verbose=disp_scipy_opt,maxiter=maxiter,f_tol=gradtol,line_search=line_search,callback=best_sol.update,raise_exception=False)
 
-                            # Non-classical nonlin_solve with exact Krylov Jacobian
-                            F = lambda x : Action_grad_mod(x,callfun)
-                            FGrad = lambda x,dx : Compute_action_hess_mul(x,dx,callfun)
-                            # ~ def FGrad(x,dx): 
-                                # ~ callfun[0]["Do_Pos_FFT"] = False
-                                # ~ res = Compute_action_hess_mul(x,dx,callfun)
-                                # ~ callfun[0]["Do_Pos_FFT"] = True
-                                # ~ return res
-
-                            jac_options = {'method':krylov_method,'rdiff':rdiff,'outer_k':outer_k }
-                            jacobian = ExactKrylovJacobian(exactgrad=FGrad,**jac_options)
-
-                            opt_result = opt.nonlin.nonlin_solve(F=F,x0=x0,jacobian=jacobian,verbose=disp_scipy_opt,maxiter=maxiter,f_tol=gradtol,line_search=line_search,callback=best_sol.update,raise_exception=False)
-                
-                        else:
-                            
-                            # Classical nonlin_solve with standard Krylov Jacobian
-                            F = lambda x : Action_grad_mod(x,callfun)
-
-                            jac_options = {'method':krylov_method,'rdiff':rdiff,'outer_k':outer_k }
-                            jacobian = opt.nonlin.KrylovJacobian(**jac_options)
-
-                            opt_result = opt.nonlin.nonlin_solve(F=F,x0=x0,jacobian=jacobian,verbose=disp_scipy_opt,maxiter=maxiter,f_tol=gradtol,line_search=line_search,callback=best_sol.update,raise_exception=False)
-            
                         all_coeffs = Unpackage_all_coeffs(best_sol.x,callfun)
                         
                         print('Opt Action Grad Norm : ',best_sol.f_norm)

@@ -514,7 +514,7 @@ def Compute_action_hess_LinOpt(x,callfun):
     return sp.linalg.LinearOperator((args['coeff_to_param_list'][args["current_cvg_lvl"]].shape[0],args['coeff_to_param_list'][args["current_cvg_lvl"]].shape[0]),
         matvec =  (lambda dx,xl=x,callfunl=callfun : Compute_action_hess_mul(xl,dx,callfunl)),
         rmatvec = (lambda dx,xl=x,callfunl=callfun : Compute_action_hess_mul(xl,dx,callfunl)))
-    
+
 def Compute_action_hess_LinOpt_precond(x_precond,callfun_source,callfun_precond):
     # Defines the Hessian of the action wrt parameters at a given point as a Scipy LinearOperator
 
@@ -1828,40 +1828,56 @@ def Param_to_Param_rev(Gx,callfun_source,callfun_target):
     res = Gz * args_target['param_to_coeff_list'][args_target["current_cvg_lvl"]]
     
     return res
+
 '''
-def Package_Precond_LinOpt(Precond,callfun_precond,callfun):
+# ~ def Package_Precond_LinOpt(Precond,callfun_precond,callfun):
     
-    args = callfun[0]
+    # ~ args = callfun[0]
     
-    def the_matvec(x):
+    # ~ def the_matvec(x):
         
-        y = Param_to_Param_rev(x,callfun,callfun_precond)
-        # ~ y = Param_to_Param_direct(x,callfun,callfun_precond)
-        z = Precond.solve(y)
-        # ~ z = y
+        # ~ y = Param_to_Param_rev(x,callfun,callfun_precond)
+        y = Param_to_Param_direct(x,callfun,callfun_precond)
+        z = Precond.solve(y)-y
+        # ~ z = -y
         # ~ res = Param_to_Param_direct(z,callfun_precond,callfun)
         res = Param_to_Param_rev(z,callfun_precond,callfun)
-        return res
         
-    return sp.linalg.LinearOperator((args['coeff_to_param_list'][args["current_cvg_lvl"]].shape[0],args['coeff_to_param_list'][args["current_cvg_lvl"]].shape[0]),
-        matvec =  the_matvec,
-        rmatvec = the_matvec)
+        # ~ return res+x
+        
+    # ~ return sp.linalg.LinearOperator((args['coeff_to_param_list'][args["current_cvg_lvl"]].shape[0],args['coeff_to_param_list'][args["current_cvg_lvl"]].shape[0]),
+        # ~ matvec =  the_matvec,
+        # ~ rmatvec = the_matvec)
 '''
 
-def Package_Precond_LinOpt(Precond,callfun_precond,callfun):
+
+def Package_Precond_LinOpt(Precond,v,callfun_precond,callfun):
     
     args = callfun[0]
-    
+
     def the_matvec(x):
+        
+        
         
         y = Param_to_Param_rev(x,callfun,callfun_precond)
         # ~ y = Param_to_Param_direct(x,callfun,callfun_precond)
-        z = Precond.solve(y)-y
-        # ~ z = y
+        
+        # ~ y = y - np.dot(v,np.dot(v.transpose(),y))
+        
+        # ~ z = Precond.solve(y)-y
+        z = Precond.solve(y)
+        
+        # ~ z = z - np.dot(v,np.dot(v.transpose(),z))
+        
         res = Param_to_Param_direct(z,callfun_precond,callfun)
         # ~ res = Param_to_Param_rev(z,callfun_precond,callfun)
         
         return res+x
+        # ~ return res
+        # ~ return x
+
+    # ~ def the_matvec(x):
+        # ~ return x
         
     return sp.linalg.LinearOperator((args['coeff_to_param_list'][args["current_cvg_lvl"]].shape[0],args['coeff_to_param_list'][args["current_cvg_lvl"]].shape[0]),
         matvec =  the_matvec,
