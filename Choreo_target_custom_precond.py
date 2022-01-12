@@ -301,15 +301,27 @@ def main(preprint_msg=''):
 
     ActHessPrecond_LinOpt = Compute_action_hess_LinOpt(x0_precond,callfun_precond)
 
+    w ,v = sp.linalg.eigsh(ActHessPrecond_LinOpt,k=10,which='SM')
+    
+    
+    nthresh = 2
+    v = v[:,0:nthresh]
+    
+    # ~ print(v.shape)
+    
+    
+
     print(nparam_precond)
 
-    ActHessPrecond_dense = ActHessPrecond_LinOpt * np.eye(nparam_precond)
+    # ~ ActHessPrecond_dense = ActHessPrecond_LinOpt * np.eye(nparam_precond)
+    # ~ ActHessPrecond_dense = ActHessPrecond_LinOpt * np.eye(nparam_precond) -np.dot(v,v.transpose())
+    ActHessPrecond_dense = ActHessPrecond_LinOpt * np.eye(nparam_precond) + w[2]* np.dot(v,v.transpose())
     # ~ ActHessPrecond_dense =  np.eye(nparam_precond)
     # ~ print(dir(ActHessPrecond_dense))
     
-    atol_nnz = 0
+    # ~ atol_nnz = 0
     # ~ atol_nnz = 1e-11
-    # ~ atol_nnz = 1e-3
+    atol_nnz = 1e-3
     for i in range(nparam_precond):
         for j in range(nparam_precond):
             if (abs(ActHessPrecond_dense[i,j]) < atol_nnz):
@@ -321,18 +333,18 @@ def main(preprint_msg=''):
     print(ActHessPrecond_csc.nnz/(nparam_precond*nparam_precond))
     
     tstart = time.perf_counter()
-    precond = scipy.sparse.linalg.spilu(ActHessPrecond_csc)
-    # ~ precond = scipy.sparse.linalg.splu(ActHessPrecond_csc)
+    # ~ precond = scipy.sparse.linalg.spilu(ActHessPrecond_csc)
+    precond = scipy.sparse.linalg.splu(ActHessPrecond_csc)
     tstop = time.perf_counter()
     print("Precond factorization : ",tstop-tstart)
     
     
     xa = np.random.random((nparam_precond))
-    xb = precond.solve(ActHessPrecond_LinOpt * xa)
+    xb = precond.solve(ActHessPrecond_csc * xa)
     print(np.linalg.norm(xb-xa))
     
     xa = np.random.random((nparam_precond))
-    xb = ActHessPrecond_LinOpt * precond.solve( xa)
+    xb = ActHessPrecond_csc * precond.solve( xa)
     print(np.linalg.norm(xb-xa))
     
     
@@ -433,6 +445,7 @@ def main(preprint_msg=''):
             
             outer_k = 5
             # ~ outer_k = 0
+            inner_maxiter = 20
             
             # Classical root
             # ~ opt_result = opt.root(fun=Action_grad_mod,x0=x0,args=callfun,method='krylov', options={'line_search':line_search,'disp':disp_scipy_opt,'maxiter':maxiter,'fatol':gradtol,'jac_options':{'method':krylov_method,'rdiff':rdiff }},callback=best_sol.update)
@@ -448,11 +461,19 @@ def main(preprint_msg=''):
                     # ~ callfun[0]["Do_Pos_FFT"] = True
                     # ~ return res
                     
-                ActHessPrecond_LinOpt = Package_Precond_LinOpt(precond,callfun_precond,callfun)
+                Precond_LinOpt = Package_Precond_LinOpt(precond,v,callfun_precond,callfun)
+                
+                
+                # ~ w ,v = sp.linalg.eigsh(Precond_LinOpt,k=10,which='SM')
+                # ~ w ,v = sp.linalg.eigsh(Precond_LinOpt,k=10,which='LM')
+                # ~ print(w)
+                
 
-                # ~ inner_M = None
-                jac_options = {'method':krylov_method,'rdiff':rdiff,'outer_k':outer_k}
-                inner_M = ActHessPrecond_LinOpt
+                inner_M = None
+                # ~ jac_options = {'method':krylov_method,'rdiff':rdiff,'outer_k':outer_k}
+                # ~ inner_M = Precond_LinOpt
+                # ~ inner_M = opt.nonlin.InverseJacobian(opt.nonlin.ExcitingMixing())
+                
 
                 jac_options = {'method':krylov_method,'rdiff':rdiff,'outer_k':outer_k ,'inner_M':inner_M}
                 # ~ jac_options = {'method':krylov_method,'rdiff':rdiff,'outer_k':outer_k}
