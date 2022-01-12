@@ -515,6 +515,68 @@ def Compute_action_hess_LinOpt(x,callfun):
         matvec =  (lambda dx,xl=x,callfunl=callfun : Compute_action_hess_mul(xl,dx,callfunl)),
         rmatvec = (lambda dx,xl=x,callfunl=callfun : Compute_action_hess_mul(xl,dx,callfunl)))
     
+def Compute_action_hess_LinOpt_precond(x_precond,callfun_source,callfun_precond):
+    # Defines the Hessian of the action wrt parameters at a given point as a Scipy LinearOperator
+
+    args_source=callfun_source[0]
+    args_precond=callfun_precond[0]
+    
+    def the_matvec(dx_source):
+        # ~ all_coeffs_dx = Unpackage_all_coeffs(dx_source,callfun_source)
+        # ~ dx_params_precond = Package_all_coeffs(all_coeffs_dx[:,:,0:args_precond['ncoeff_list'][args_precond["current_cvg_lvl"]],:],callfun_precond)
+        # ~ hess_mul = Compute_action_hess_mul(x_precond,dx_params_precond,callfun_precond)
+            
+
+        dy_source = args_source['param_to_coeff_list'][args_source["current_cvg_lvl"]] * dx_source
+        all_coeffs_d_source = dy_source.reshape(args_source['nloop'],ndim,args_source['ncoeff_list'][args_source["current_cvg_lvl"]],2)
+        all_coeffs_d_precond = np.copy(all_coeffs_d_source[:,:,0:args_precond['ncoeff_list'][args_precond["current_cvg_lvl"]],:])
+
+        if args_precond["Do_Pos_FFT"]:
+            
+            y_precond = args_precond['param_to_coeff_list'][args_precond["current_cvg_lvl"]] * x_precond
+            args_precond['last_all_coeffs'] = y_precond.reshape(args_precond['nloop'],ndim,args_precond['ncoeff_list'][args_precond["current_cvg_lvl"]],2)
+            
+            nint_precond = args_precond['nint_list'][args_precond["current_cvg_lvl"]]
+            c_coeffs_precond = args_precond['last_all_coeffs'].view(dtype=np.complex128)[...,0]
+            # ~ args_precond['last_all_pos'] = np.fft.irfft(c_coeffs_precond,n=nint_precond,axis=2)*nint_precond
+            args_precond['last_all_pos'] =the_irfft(c_coeffs_precond,n=nint_precond,axis=2)*nint_precond
+        
+        HessJdx_precond =  Compute_action_hess_mul_Cython(
+            args_precond['nloop']           ,
+            args_precond['ncoeff_list'][args_precond["current_cvg_lvl"]]          ,
+            args_precond['nint_list'][args_precond["current_cvg_lvl"]]            ,
+            args_precond['mass']            ,
+            args_precond['loopnb']          ,
+            args_precond['Targets']         ,
+            args_precond['MassSum']         ,
+            args_precond['SpaceRotsUn']     ,
+            args_precond['TimeRevsUn']      ,
+            args_precond['TimeShiftNumUn']  ,
+            args_precond['TimeShiftDenUn']  ,
+            args_precond['loopnbi']         ,
+            args_precond['ProdMassSumAll']  ,
+            args_precond['SpaceRotsBin']    ,
+            args_precond['TimeRevsBin']     ,
+            args_precond['TimeShiftNumBin'] ,
+            args_precond['TimeShiftDenBin'] ,
+            args_precond['last_all_coeffs'] ,
+            all_coeffs_d_precond            ,
+            args_precond['last_all_pos']    ,
+            )
+        
+        HessJdx_source = np.zeros((args_source['nloop'],ndim,args_source['ncoeff_list'][args_source["current_cvg_lvl"]],2))
+        HessJdx_source[:,:,0:args_precond['ncoeff_list'][args_precond["current_cvg_lvl"]],:] = HessJdx_precond
+        
+        HJdx_source = HessJdx_source.reshape(-1)
+        
+        z = HJdx_source * args_source['param_to_coeff_list'][args_source["current_cvg_lvl"]]
+        return z
+        
+
+    return sp.linalg.LinearOperator((args_source['coeff_to_param_list'][args_source["current_cvg_lvl"]].shape[0],args_source['coeff_to_param_list'][args_source["current_cvg_lvl"]].shape[0]),
+        matvec =  the_matvec,
+        rmatvec = the_matvec)
+    
 def null_space_sparseqr(AT):
     # Returns a basis of the null space of a matrix A.
     # AT must be in COO format
@@ -1515,10 +1577,10 @@ def Transform_Coeffs(SpaceRots, TimeRevs, TimeShiftNum, TimeShiftDen, all_coeffs
         
     return all_coeffs_new
 
-def Compose_Two_Paths(nTf,nbs,nbf,ncoeff,all_coeffs_slow,all_coeffs_fast,Rotate_fast_with_slow=False):
+def Compose_Two_Paths(nTf,nbs,nbf,mass_mul,ncoeff,all_coeffs_slow,all_coeffs_fast,Rotate_fast_with_slow=False):
     # Composes a "slow" with a "fast" path
     
-    k_fac_slow = nbf
+    k_fac_slow = nbf*mass_mul
     k_fac_fast = nTf
     
     phys_exp = 2*(1-n)
@@ -1600,8 +1662,7 @@ def Compose_Two_Paths(nTf,nbs,nbf,ncoeff,all_coeffs_slow,all_coeffs_fast,Rotate_
 
     return all_coeffs_composed
 
-
-def Gen_init_avg(nTf,nbs,nbf,ncoeff,all_coeffs_slow_load,all_coeffs_fast_load,Rotate_fast_with_slow=False,Optimize_Init=True,Randomize_Fast_Init=True):
+def Gen_init_avg(nTf,nbs,nbf,mass_mul,ncoeff,all_coeffs_slow_load,all_coeffs_fast_load,callfun,Rotate_fast_with_slow=False,Optimize_Init=True,Randomize_Fast_Init=True):
     
 
     if Optimize_Init :
@@ -1636,7 +1697,7 @@ def Gen_init_avg(nTf,nbs,nbf,ncoeff,all_coeffs_slow_load,all_coeffs_fast_load,Ro
             TimeShiftDen = np.array([TimeShiftDen])
 
             all_coeffs_fast = Transform_Coeffs(SpaceRots, TimeRevs, TimeShiftNum, TimeShiftDen, all_coeffs_fast_load)
-            all_coeffs_avg = Compose_Two_Paths(nTf,nbs,nbf,ncoeff,all_coeffs_slow_load,all_coeffs_fast,Rotate_fast_with_slow)
+            all_coeffs_avg = Compose_Two_Paths(nTf,nbs,nbf,mass_mul,ncoeff,all_coeffs_slow_load,all_coeffs_fast,Rotate_fast_with_slow)
             
             x_avg = Package_all_coeffs(all_coeffs_avg,callfun)
                 
@@ -1684,10 +1745,9 @@ def Gen_init_avg(nTf,nbs,nbf,ncoeff,all_coeffs_slow_load,all_coeffs_fast_load,Ro
     TimeShiftDen = np.array([TimeShiftDen])
 
     all_coeffs_fast = Transform_Coeffs(SpaceRots, TimeRevs, TimeShiftNum, TimeShiftDen, all_coeffs_fast_load)
-    all_coeffs_avg = Compose_Two_Paths(nTf,nbs,nbf,ncoeff,all_coeffs_slow_load,all_coeffs_fast,Rotate_fast_with_slow)
+    all_coeffs_avg = Compose_Two_Paths(nTf,nbs,nbf,mass_mul,ncoeff,all_coeffs_slow_load,all_coeffs_fast,Rotate_fast_with_slow)
 
     return all_coeffs_avg
-
 
 def Make_Init_bounds_coeffs(nloop,ncoeff,coeff_ampl_o=1e-1,k_infl=1,k_max=200,coeff_ampl_min=1e-16):
 
@@ -1715,3 +1775,29 @@ def Make_Init_bounds_coeffs(nloop,ncoeff,coeff_ampl_o=1e-1,k_infl=1,k_max=200,co
     
     return all_coeffs_min,all_coeffs_max
 
+def Param_to_Param_direct(x,callfun_source,callfun_target):
+
+    args_source=callfun_source[0]
+    args_target=callfun_target[0]
+
+    y = args_source['param_to_coeff_list'][args_source["current_cvg_lvl"]] * x
+    all_coeffs = y.reshape(args_source['nloop'],ndim,args_source['ncoeff_list'][args_source["current_cvg_lvl"]],2)
+    
+    
+    z = all_coeffs[:,:,0:args_target['ncoeff_list'][args_target["current_cvg_lvl"]],:].reshape(-1)
+    res = args_target['coeff_to_param_list'][args_target["current_cvg_lvl"]].dot(z)
+    
+    return res
+
+def Param_to_Param_rev(Gx,callfun_source,callfun_target):
+
+    args_source=callfun_source[0]
+    args_target=callfun_target[0]
+
+    Gy = Gx * args_source['coeff_to_param_list'][args_source["current_cvg_lvl"]]
+    all_coeffs = Gy.reshape(args_source['nloop'],ndim,args_source['ncoeff_list'][args_source["current_cvg_lvl"]],2)
+
+    Gz = all_coeffs[:,:,0:args_target['ncoeff_list'][args_target["current_cvg_lvl"]],:].reshape(-1)
+    res = Gz.reshape(-1) * callfun_target['param_to_coeff_list'][callfun_target["current_cvg_lvl"]]
+    
+    return res
