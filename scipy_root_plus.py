@@ -18,17 +18,3 @@ class ExactKrylovJacobian(scipy.optimize.nonlin.KrylovJacobian):
 
     def rmatvec(self, v):
         return self.exactgrad(self.x0,v)
- 
-def inv_op(op):
-    
-    def the_matvec(x):
-        
-        print('aaa',op.shape)
-    
-        # ~ v,_ = scipy.sparse.linalg.lgmres(op,x,atol=1e-3)
-        # ~ return v
-        v,_ = scipy.sparse.linalg.lgmres(op,x,atol=1e-1)
-        return v
-    
-    
-    return scipy.sparse.linalg.LinearOperator(op.shape,matvec = the_matvec)

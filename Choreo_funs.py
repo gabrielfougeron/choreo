@@ -1783,8 +1783,21 @@ def Param_to_Param_direct(x,callfun_source,callfun_target):
     y = args_source['param_to_coeff_list'][args_source["current_cvg_lvl"]] * x
     all_coeffs = y.reshape(args_source['nloop'],ndim,args_source['ncoeff_list'][args_source["current_cvg_lvl"]],2)
     
+    if (args_target['ncoeff_list'][args_target["current_cvg_lvl"]] < args_source['ncoeff_list'][args_source["current_cvg_lvl"]]):
+        z = all_coeffs[:,:,0:args_target['ncoeff_list'][args_target["current_cvg_lvl"]],:].reshape(-1)
+    else:
+        z = np.zeros((args_target['nloop'],ndim,args_target['ncoeff_list'][args_target["current_cvg_lvl"]],2))
+        z[:,:,0:args_source['ncoeff_list'][args_source["current_cvg_lvl"]],:] = all_coeffs
+        z = z.reshape(-1)
+
+    # ~ print('')
+    # ~ print('bbb')
+    # ~ print('source : ',args_source['ncoeff_list'][args_source["current_cvg_lvl"]])
+    # ~ print('target : ',args_target['ncoeff_list'][args_target["current_cvg_lvl"]])
+    # ~ print(args_target['coeff_to_param_list'][args_target["current_cvg_lvl"]].shape)
+    # ~ print(z.shape)
+    # ~ print('')
     
-    z = all_coeffs[:,:,0:args_target['ncoeff_list'][args_target["current_cvg_lvl"]],:].reshape(-1)
     res = args_target['coeff_to_param_list'][args_target["current_cvg_lvl"]].dot(z)
     
     return res
@@ -1797,7 +1810,60 @@ def Param_to_Param_rev(Gx,callfun_source,callfun_target):
     Gy = Gx * args_source['coeff_to_param_list'][args_source["current_cvg_lvl"]]
     all_coeffs = Gy.reshape(args_source['nloop'],ndim,args_source['ncoeff_list'][args_source["current_cvg_lvl"]],2)
 
-    Gz = all_coeffs[:,:,0:args_target['ncoeff_list'][args_target["current_cvg_lvl"]],:].reshape(-1)
-    res = Gz.reshape(-1) * callfun_target['param_to_coeff_list'][callfun_target["current_cvg_lvl"]]
+    if (args_target['ncoeff_list'][args_target["current_cvg_lvl"]] < args_source['ncoeff_list'][args_source["current_cvg_lvl"]]):
+        Gz = all_coeffs[:,:,0:args_target['ncoeff_list'][args_target["current_cvg_lvl"]],:].reshape(-1)
+    else:
+        Gz = np.zeros((args_target['nloop'],ndim,args_target['ncoeff_list'][args_target["current_cvg_lvl"]],2))
+        Gz[:,:,0:args_source['ncoeff_list'][args_source["current_cvg_lvl"]],:] = all_coeffs
+        Gz = Gz.reshape(-1)
+    
+    # ~ print('')
+    # ~ print('aaa')
+    # ~ print('source : ',args_source['ncoeff_list'][args_source["current_cvg_lvl"]])
+    # ~ print('target : ',args_target['ncoeff_list'][args_target["current_cvg_lvl"]])
+    # ~ print(args_target['param_to_coeff_list'][args_target["current_cvg_lvl"]].shape)
+    # ~ print(Gz.shape)
+    # ~ print('')
+    
+    res = Gz * args_target['param_to_coeff_list'][args_target["current_cvg_lvl"]]
     
     return res
+'''
+def Package_Precond_LinOpt(Precond,callfun_precond,callfun):
+    
+    args = callfun[0]
+    
+    def the_matvec(x):
+        
+        y = Param_to_Param_rev(x,callfun,callfun_precond)
+        # ~ y = Param_to_Param_direct(x,callfun,callfun_precond)
+        z = Precond.solve(y)
+        # ~ z = y
+        # ~ res = Param_to_Param_direct(z,callfun_precond,callfun)
+        res = Param_to_Param_rev(z,callfun_precond,callfun)
+        return res
+        
+    return sp.linalg.LinearOperator((args['coeff_to_param_list'][args["current_cvg_lvl"]].shape[0],args['coeff_to_param_list'][args["current_cvg_lvl"]].shape[0]),
+        matvec =  the_matvec,
+        rmatvec = the_matvec)
+'''
+
+def Package_Precond_LinOpt(Precond,callfun_precond,callfun):
+    
+    args = callfun[0]
+    
+    def the_matvec(x):
+        
+        y = Param_to_Param_rev(x,callfun,callfun_precond)
+        # ~ y = Param_to_Param_direct(x,callfun,callfun_precond)
+        z = Precond.solve(y)-y
+        # ~ z = y
+        res = Param_to_Param_direct(z,callfun_precond,callfun)
+        # ~ res = Param_to_Param_rev(z,callfun_precond,callfun)
+        
+        return res+x
+        
+    return sp.linalg.LinearOperator((args['coeff_to_param_list'][args["current_cvg_lvl"]].shape[0],args['coeff_to_param_list'][args["current_cvg_lvl"]].shape[0]),
+        matvec =  the_matvec,
+        rmatvec = the_matvec)
+
