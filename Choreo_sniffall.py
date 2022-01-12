@@ -376,6 +376,9 @@ while (n_opt < n_opt_max):
             
         # ~ if Save_anim :
             # ~ plot_all_2D_anim(x0,nint_plot_anim,callfun,'init.mp4',nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size)
+
+        all_coeffs = Unpackage_all_coeffs(x0,callfun)
+        np.save('init.npy',all_coeffs)
             
         print(1/0)
         

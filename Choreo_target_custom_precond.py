@@ -10,6 +10,7 @@ import random
 import numpy as np
 import math as m
 import scipy.optimize as opt
+import scipy.sparse.linalg
 from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.colors import cnames
@@ -19,7 +20,7 @@ import shutil
 import time
 
 from Choreo_funs import *
-from scipy_root_plus import ExactKrylovJacobian
+from scipy_root_plus import ExactKrylovJacobian,inv_op
 
 
 
@@ -40,19 +41,17 @@ def main(preprint_msg=''):
     slow_base_filename = './data/3_huit.npy'
     # ~ slow_base_filename = './data/3_heart.npy'
 
-    fast_base_filename = './data/1_lone_wolf.npy'
-    # ~ fast_base_filename = './data/2_cercle.npy'
+    # ~ fast_base_filename = './data/1_lone_wolf.npy'
+    fast_base_filename = './data/2_cercle.npy'
     # ~ fast_base_filename = './data/3_cercle.npy'
     # ~ fast_base_filename = './data/3_huit.npy'
     # ~ fast_base_filename = './data/3_heart.npy'
     # ~ fast_base_filename = './data/3_dbl_heart.npy'
 
-    mass_mul = 2
-    # ~ mass_mul = 1
     nTf = 101
     # ~ nTf = 37
     nbs = 3
-    nbf = 1
+    nbf = 2
 
     # ~ Rotate_fast_with_slow = True
     Rotate_fast_with_slow = False
@@ -63,9 +62,9 @@ def main(preprint_msg=''):
     # ~ Randomize_Fast_Init = True
     Randomize_Fast_Init = False
 
-
     all_coeffs_slow_load = np.load(slow_base_filename)
     all_coeffs_fast_load = np.load(fast_base_filename)
+    all_coeffs_lone_wolf = np.load('./data/1_lone_wolf.npy')
 
     if (all_coeffs_slow_load.shape[0] != 1):
         raise ValueError("Several loops in slow base")
@@ -78,7 +77,7 @@ def main(preprint_msg=''):
 
     nbody =  nbs * nbf
 
-    mass = np.ones((nbody))*mass_mul
+    mass = np.ones((nbody))
 
     Sym_list = []
 
@@ -173,9 +172,11 @@ def main(preprint_msg=''):
     # ~ ncoeff_init = 1800
     # ~ ncoeff_init = 1206
     # ~ ncoeff_init = 90
+    
+    ncoeff_precond = 300
 
-    disp_scipy_opt = False
-    # ~ disp_scipy_opt = True
+    # ~ disp_scipy_opt = False
+    disp_scipy_opt = True
 
     Newt_err_norm_max = 1e-9
     Newt_err_norm_max_save = Newt_err_norm_max * 100
@@ -215,6 +216,15 @@ def main(preprint_msg=''):
 
     print('Processing symmetries for {0:d} convergence levels'.format(n_reconverge_it_max+1))
     callfun = setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change)
+    
+    
+    nbody_precond =  nbs
+    mass_precond = np.ones((nbody_precond))*nbf
+    Sym_list_precond = []
+    nbpl_precond = [nbody_precond]
+    SymName_precond = None
+    Sym_list_precond,nbody_precond = Make2DChoreoSymManyLoops(nbpl=nbpl_precond,SymName=SymName_precond)
+    callfun_precond = setup_changevar(nbody_precond,ncoeff_precond,mass_precond,0,Sym_list=Sym_list_precond,MomCons=MomConsImposed,n_grad_change=n_grad_change)
 
     print('')
 
@@ -279,9 +289,58 @@ def main(preprint_msg=''):
     ncoeff = callfun[0]["ncoeff_list"][callfun[0]["current_cvg_lvl"]]
     nint = callfun[0]["nint_list"][callfun[0]["current_cvg_lvl"]]
 
-    all_coeffs_avg = Gen_init_avg(nTf,nbs,nbf,mass_mul,ncoeff,all_coeffs_slow_load,all_coeffs_fast_load,callfun,Rotate_fast_with_slow,Optimize_Init,Randomize_Fast_Init)
+    all_coeffs_avg = Gen_init_avg(nTf,nbs,nbf,1,ncoeff,all_coeffs_slow_load,all_coeffs_fast_load,callfun,Rotate_fast_with_slow,Optimize_Init,Randomize_Fast_Init)
+    all_coeffs_avg_precond = Gen_init_avg(nTf,nbs,1,nbf,ncoeff_precond,all_coeffs_slow_load,all_coeffs_lone_wolf,callfun_precond,Rotate_fast_with_slow=False,Optimize_Init=False,Randomize_Fast_Init=False)
+    
+    callfun_precond[0]["current_cvg_lvl"] = 0
+    ncoeff_precond = callfun_precond[0]["ncoeff_list"][callfun_precond[0]["current_cvg_lvl"]]
+    x0_precond = Package_all_coeffs(all_coeffs_avg_precond,callfun_precond)
+    nparam_precond = x0_precond.shape[0]
+    
 
-    coeff_ampl_o=1e-1
+    # ~ ActHessPrecond_LinOpt = Compute_action_hess_LinOpt(x0_precond,callfun_precond)
+    ActHessPrecond_LinOpt = Compute_action_hess_LinOpt_precond(x0_precond,callfun,callfun_precond)
+
+    print(nparam_precond)
+    
+    nparam = args['coeff_to_param_list'][i].shape[0]
+
+    ActHessPrecond_dense = ActHessPrecond_LinOpt * np.eye(nparam)
+    # ~ print(dir(ActHessPrecond_dense))
+    
+    atol_nnz = 1e-11
+    # ~ atol_nnz = 0
+    for i in range(nparam):
+        for j in range(nparam):
+            if (abs(ActHessPrecond_dense[i,j]) < atol_nnz):
+                ActHessPrecond_dense[i,j] = 0.
+    
+    ActHessPrecond_csr = scipy.sparse.csr_matrix(ActHessPrecond_dense)
+    
+    print(ActHessPrecond_csr.nnz)
+    print(ActHessPrecond_csr.nnz/(nparam*nparam))
+    
+    tstart = time.perf_counter()
+    precond = scipy.sparse.linalg.spilu(ActHessPrecond_csr)
+    tstop = time.perf_counter()
+    print(tstop-tstart)
+    
+    tstart = time.perf_counter()
+    precond = scipy.sparse.linalg.spilu(ActHessPrecond_LinOpt)
+    tstop = time.perf_counter()
+    print(tstop-tstart)
+    
+    # ~ print(ActHessPrecond_csr)
+    
+    sys.exit(0)
+    # ~ scipy.sparse.linalg.spilu(
+
+    # ~ ActHessPrecond_csr = ActHessPrecond.tocsr()
+
+    # ~ print(ActHessPrecond_csr)
+
+
+    coeff_ampl_o=1e-16
     k_infl=1
     k_max=200
     coeff_ampl_min=1e-16
@@ -387,8 +446,18 @@ def main(preprint_msg=''):
                     # ~ res = Compute_action_hess_mul(x,dx,callfun)
                     # ~ callfun[0]["Do_Pos_FFT"] = True
                     # ~ return res
+                    
+                ActHessPrecond_LinOpt = Compute_action_hess_LinOpt_precond(x0_precond,callfun,callfun_precond)
+                
+                ActHessPrecond = inv_op(ActHessPrecond_LinOpt)
+                
+                
+                # ~ inner_M = None
+                jac_options = {'method':krylov_method,'rdiff':rdiff,'outer_k':outer_k}
+                inner_M = ActHessPrecond
 
-                jac_options = {'method':krylov_method,'rdiff':rdiff,'outer_k':outer_k }
+                # ~ jac_options = {'method':krylov_method,'rdiff':rdiff,'outer_k':outer_k ,'inner_M':inner_M}
+                jac_options = {'method':krylov_method,'rdiff':rdiff,'outer_k':outer_k}
                 jacobian = ExactKrylovJacobian(exactgrad=FGrad,**jac_options)
 
                 opt_result = opt.nonlin.nonlin_solve(F=F,x0=x0,jacobian=jacobian,verbose=disp_scipy_opt,maxiter=maxiter,f_tol=gradtol,line_search=line_search,callback=best_sol.update,raise_exception=False)
