@@ -13,7 +13,9 @@ import time
 from Choreo_funs import *
 
 # ~ all_coeffs = np.load('./Target_res/3/4.npy')
-all_coeffs = np.load('./Target_res/6/1.npy')
+all_coeffs = np.load('./Target_res/9/2.npy')
+# ~ all_coeffs = np.load('./Target_res/6/2.npy')
+# ~ all_coeffs = np.load('./Target_res/6/3.npy')
 
 
 # ~ all_coeffs = np.load('./Sniff_all_sym/5/9.npy')
@@ -30,7 +32,8 @@ nloop = all_coeffs.shape[0]
 # ~ ndim1 = all_coeffs1.shape[1]
 ncoeff = all_coeffs.shape[2]
 
-ncoeff_cap = 4800
+# ~ ncoeff_cap = 4800
+ncoeff_cap = 1e10
 
 ncoeff_plot = min(ncoeff,ncoeff_cap)
 
