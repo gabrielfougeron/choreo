@@ -1660,7 +1660,6 @@ def Compose_Two_Paths(nTf,nbs,nbf,mass_mul,ncoeff,all_coeffs_slow,all_coeffs_fas
 
 def Gen_init_avg(nTf,nbs,nbf,mass_mul,ncoeff,all_coeffs_slow_load,all_coeffs_fast_load,callfun,Rotate_fast_with_slow=False,Optimize_Init=True,Randomize_Fast_Init=True):
     
-
     if Optimize_Init :
                 
         if Randomize_Fast_Init :
@@ -1701,7 +1700,6 @@ def Gen_init_avg(nTf,nbs,nbf,mass_mul,ncoeff,all_coeffs_slow_load,all_coeffs_fas
             
             return Act_Mul * Act
             
-
         maxiter = 1000
         tol = 1e-10
 
@@ -1715,7 +1713,6 @@ def Gen_init_avg(nTf,nbs,nbf,mass_mul,ncoeff,all_coeffs_slow_load,all_coeffs_fas
         TimeRevscal = init_TimeRevscal
         TimeShiftNum = x_opt[1]
         TimeShiftDen = 1
-        
 
     elif Randomize_Fast_Init :
 
