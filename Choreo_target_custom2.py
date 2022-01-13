@@ -194,10 +194,7 @@ def main(preprint_msg=''):
     outer_k_list = [5,5,7]
     store_outer_Av_list = [False,False,True]
     
-    
     n_optim_param = len(gradtol_list)
-    
-    
     
     gradtol_max = 100*gradtol_list[n_optim_param-1]
     foundsol_tol = 10*gradtol_list[0]
@@ -281,7 +278,7 @@ def main(preprint_msg=''):
 
     all_coeffs_avg = Gen_init_avg(nTf,nbs,nbf,mass_mul,ncoeff,all_coeffs_slow_load,all_coeffs_fast_load,callfun,Rotate_fast_with_slow,Optimize_Init,Randomize_Fast_Init)
 
-    coeff_ampl_o=1e-1
+    coeff_ampl_o=1e-16
     k_infl=1
     k_max=200
     coeff_ampl_min=1e-16
@@ -382,19 +379,19 @@ def main(preprint_msg=''):
                 
                 print(exc)
                 print("Value Error occured, skipping.")
-                Go_On = False
-                # ~ raise(exc)
+                GoOn = False
+                raise(exc)
             
-            if (Go_On and Check_Escape):
+            if (GoOn and Check_Escape):
                 
                 Escaped,_ = Detect_Escape(best_sol.x,callfun)
 
                 if Escaped:
                     print('One loop escaped. Starting over')    
                     
-                Go_On = Go_On and not(Escaped)
+                GoOn = GoOn and not(Escaped)
                 
-            if (Go_On and Look_for_duplicates):
+            if (GoOn and Look_for_duplicates):
 
                 Action,GradAction = Compute_action(best_sol.x,callfun)
                 
@@ -405,106 +402,113 @@ def main(preprint_msg=''):
                     print('Found Duplicate !')   
                     print('Path : ',file_path)
                     
-                Go_On = Go_On and not(Found_duplicate)
+                GoOn = GoOn and not(Found_duplicate)
                 
-            if (Go_On):
-            
-            ParamFoundSol = (best_sol.f_norm < foundsol_tol)
-            ParamPreciseEnough = (best_sol.f_norm < gradtol_max)
-            print('Opt Action Grad Norm : ',best_sol.f_norm)
-        
-            Newt_err = Compute_Newton_err(best_sol.x,callfun)
-            Newt_err_norm = np.linalg.norm(Newt_err)/nint
-            NewtonPreciseEnough = (Newt_err_norm < Newt_err_norm_max_save)
-            print('Newton Error : ',Newt_err_norm)
-            
-            CanChangeOptimParams = i_optim_param < (n_optim_param-1)
-            
-            CanRefine = (callfun[0]["current_cvg_lvl"] < n_reconverge_it_max)
-            
-            if CanRefine :
+            if (GoOn):
                 
-                all_coeffs_coarse = Unpackage_all_coeffs(best_sol.x,callfun)
-                ncoeff_coarse = callfun[0]["ncoeff_list"][callfun[0]["current_cvg_lvl"]]
+                ParamFoundSol = (best_sol.f_norm < foundsol_tol)
+                ParamPreciseEnough = (best_sol.f_norm < gradtol_max)
+                print('Opt Action Grad Norm : ',best_sol.f_norm)
+            
+                Newt_err = Compute_Newton_err(best_sol.x,callfun)
+                Newt_err_norm = np.linalg.norm(Newt_err)/nint
+                NewtonPreciseEnough = (Newt_err_norm < Newt_err_norm_max_save)
+                print('Newton Error : ',Newt_err_norm)
                 
-                callfun[0]["current_cvg_lvl"] += 1
-                ncoeff_fine = callfun[0]["ncoeff_list"][callfun[0]["current_cvg_lvl"]]
+                CanChangeOptimParams = i_optim_param < (n_optim_param-1)
+                
+                CanRefine = (callfun[0]["current_cvg_lvl"] < n_reconverge_it_max)
+                
+                if CanRefine :
+                    
+                    all_coeffs_coarse = Unpackage_all_coeffs(best_sol.x,callfun)
+                    ncoeff_coarse = callfun[0]["ncoeff_list"][callfun[0]["current_cvg_lvl"]]
+                    
+                    callfun[0]["current_cvg_lvl"] += 1
+                    ncoeff_fine = callfun[0]["ncoeff_list"][callfun[0]["current_cvg_lvl"]]
 
-                all_coeffs_fine = np.zeros((nloop,ndim,ncoeff_fine,2),dtype=np.float64)
-                all_coeffs_fine[:,:,0:ncoeff_coarse,:] = all_coeffs_coarse
-                x_fine = Package_all_coeffs(all_coeffs_fine,callfun)
-                f_fine = Action_grad_mod(x_fine,callfun)
-                f_fine_norm = np.linalg.norm(f_fine)
-                NeedsRefinement = f_fine_norm > 3*best_sol.f_norm
+                    all_coeffs_fine = np.zeros((nloop,ndim,ncoeff_fine,2),dtype=np.float64)
+                    all_coeffs_fine[:,:,0:ncoeff_coarse,:] = all_coeffs_coarse
+                    x_fine = Package_all_coeffs(all_coeffs_fine,callfun)
+                    f_fine = Action_grad_mod(x_fine,callfun)
+                    f_fine_norm = np.linalg.norm(f_fine)
+                    NeedsRefinement = f_fine_norm > 3*best_sol.f_norm
+                    
+                    callfun[0]["current_cvg_lvl"] += -1
                 
-                callfun[0]["current_cvg_lvl"] += -1
-            
-            else:
+                else:
+                    
+                    NeedsRefinement = False
+                    
+                NeedsChangeOptimParams = GoOn and CanChangeOptimParams and not(ParamPreciseEnough) and not(NeedsRefinement)
+                            
+                if GoOn and not(ParamFoundSol):
                 
-                NeedsRefinement = False
+                    GoOn = False
+                    print('Optimizer could not zero in on a solution')
+
+                if GoOn and not(ParamPreciseEnough) and not(NewtonPreciseEnough) and not(CanRefine) and not(CanChangeOptimParams):
                 
-            NeedsChangeOptimParams = GoOn and CanChangeOptimParams and not(ParamPreciseEnough) and not(NeedsRefinement)
+                    GoOn = False
+                    print('Newton Error too high, discarding solution')
+                
+                if GoOn and ParamPreciseEnough and not(NewtonPreciseEnough) and not(NeedsRefinement):
+
+                    GoOn=False
+                    print("Stopping Search : there might be something wrong with the constraints")
+
+                StopOptimSuccess = GoOn and NewtonPreciseEnough
+                
+                GoOn = GoOn or not(StopOptimSuccess)
+
+                SaveSol = not(GoOn) and NewtonPreciseEnough 
+                   
+                if SaveSol :
+                    
+                    GoOn  = False
+                    
+                    max_num_file = 0
+                    
+                    for filename in os.listdir(store_folder):
+                        file_path = os.path.join(store_folder, filename)
+                        file_root, file_ext = os.path.splitext(os.path.basename(file_path))
                         
-            if GoOn and not(ParamFoundSol):
-            
-                GoOn = False
-                print('Optimizer could not zero in on a solution')
-
-            if GoOn and not(ParamPreciseEnough) and not(NewtonPreciseEnough) and not(CanRefine) and not(CanChangeOptimParams):
-            
-                GoOn = False
-                print('Newton Error too high, discarding solution')
-            
-            if GoOn and ParamPreciseEnough and not(NewtonPreciseEnough) and not(NeedsRefinement):
-
-                GoOn=False
-                print("Stopping Search : there might be something wrong with the constraints" 
-
-            SaveSol = not(GoOn) and NewtonPreciseEnough 
-               
-            if SaveSol :
-                
-                GoOn  = False
-                
-                max_num_file = 0
-                
-                for filename in os.listdir(store_folder):
-                    file_path = os.path.join(store_folder, filename)
-                    file_root, file_ext = os.path.splitext(os.path.basename(file_path))
+                        if (file_ext == '.txt' ):
+                            try:
+                                max_num_file = max(max_num_file,int(file_root))
+                            except:
+                                pass
+                        
+                    max_num_file = max_num_file + 1
                     
-                    if (file_ext == '.txt' ):
-                        try:
-                            max_num_file = max(max_num_file,int(file_root))
-                        except:
-                            pass
-                    
-                max_num_file = max_num_file + 1
-                
-                filename_output = store_folder+'/'+str(max_num_file)
+                    filename_output = store_folder+'/'+str(max_num_file)
 
-                print('Saving solution as '+filename_output+'.*')
-         
-                Write_Descriptor(best_sol.x,callfun,filename_output+'.txt')
-                
-                if Save_img :
-                    plot_all_2D(best_sol.x,nint_plot_img,callfun,filename_output+'.png',fig_size=img_size,color=color)
+                    print('Saving solution as '+filename_output+'.*')
+             
+                    Write_Descriptor(best_sol.x,callfun,filename_output+'.txt')
                     
-                if Save_anim :
-                    plot_all_2D_anim(best_sol.x,nint_plot_anim,callfun,filename_output+'.mp4',nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size)
-                
-                all_coeffs = Unpackage_all_coeffs(best_sol.x,callfun)
-                np.save(filename_output+'.npy',all_coeffs)
+                    if Save_img :
+                        plot_all_2D(best_sol.x,nint_plot_img,callfun,filename_output+'.png',fig_size=img_size,color=color)
+                        
+                    if Save_anim :
+                        plot_all_2D_anim(best_sol.x,nint_plot_anim,callfun,filename_output+'.mp4',nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size)
+                    
+                    all_coeffs = Unpackage_all_coeffs(best_sol.x,callfun)
+                    np.save(filename_output+'.npy',all_coeffs)
 
-            
-            if GoOn and NeedsRefinement:
                 
-                best_sol.update(x_fine,f_fine)
-                callfun[0]["current_cvg_lvl"] += 1
-                
-            if GoOn and NeedsChangeOptimParams:
-                
-                i_optim_param += 1
-                
+                if GoOn and NeedsRefinement:
+                    
+                    best_sol = current_best(x_fine,f_fine)
+                    callfun[0]["current_cvg_lvl"] += 1
+                    
+                    ncoeff = callfun[0]["ncoeff_list"][callfun[0]["current_cvg_lvl"]]
+                    nint = callfun[0]["nint_list"][callfun[0]["current_cvg_lvl"]]
+                    
+                if GoOn and NeedsChangeOptimParams:
+                    
+                    i_optim_param += 1
+                    
                 
         print('')
         print('')
