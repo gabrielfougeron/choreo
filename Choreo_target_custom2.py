@@ -35,15 +35,15 @@ def main(preprint_msg=''):
         return __builtins__.print(*args, **kwargs)
     
 
-    # ~ slow_base_filename = './data/2_cercle.npy'
+    slow_base_filename = './data/2_cercle.npy'
     # ~ slow_base_filename = './data/3_cercle.npy'
-    slow_base_filename = './data/3_huit.npy'
+    # ~ slow_base_filename = './data/3_huit.npy'
     # ~ slow_base_filename = './data/3_heart.npy'
 
     # ~ fast_base_filename = './data/1_lone_wolf.npy'
-    fast_base_filename = './data/2_cercle.npy'
+    # ~ fast_base_filename = './data/2_cercle.npy'
     # ~ fast_base_filename = './data/3_cercle.npy'
-    # ~ fast_base_filename = './data/3_huit.npy'
+    fast_base_filename = './data/3_huit.npy'
     # ~ fast_base_filename = './data/3_heart.npy'
     # ~ fast_base_filename = './data/3_dbl_heart.npy'
 
@@ -51,17 +51,17 @@ def main(preprint_msg=''):
     mass_mul = 1
     nTf = 101
     # ~ nTf = 37
-    nbs = 3
-    nbf = 2
+    nbs = 2
+    nbf = 3
 
     # ~ Rotate_fast_with_slow = True
     Rotate_fast_with_slow = False
 
-    # ~ Optimize_Init = True
-    Optimize_Init = False
+    Optimize_Init = True
+    # ~ Optimize_Init = False
 
-    # ~ Randomize_Fast_Init = True
-    Randomize_Fast_Init = False
+    Randomize_Fast_Init = True
+    # ~ Randomize_Fast_Init = False
 
 
     all_coeffs_slow_load = np.load(slow_base_filename)
@@ -130,8 +130,8 @@ def main(preprint_msg=''):
 
     nint_plot_img = 10000
 
-    # ~ Save_anim = True
-    Save_anim = False
+    Save_anim = True
+    # ~ Save_anim = False
 
     vid_size = (8,8) # Image size in inches
     nint_plot_anim = 2*2*2*3*3*5 * 6 *3
@@ -155,8 +155,8 @@ def main(preprint_msg=''):
     Plot_trace_anim = True
     # ~ Plot_trace_anim = False
 
-    # ~ n_reconverge_it_max = 3
-    n_reconverge_it_max = 1
+    n_reconverge_it_max = 3
+    # ~ n_reconverge_it_max = 1
 
     # ~ ncoeff_init = 102
     # ~ ncoeff_init = 800
@@ -171,11 +171,7 @@ def main(preprint_msg=''):
     # ~ disp_scipy_opt = False
     disp_scipy_opt = True
 
-    Newt_err_norm_max = 1e-9
-    Newt_err_norm_max_save = Newt_err_norm_max * 100
-
-    # ~ Save_Bad_Sols = True
-    Save_Bad_Sols = False
+    Newt_err_norm_max_save = 1e-9
 
     duplicate_eps = 1e-8
 
@@ -188,11 +184,11 @@ def main(preprint_msg=''):
     # ~ line_search = 'armijo'
     line_search = 'wolfe'
     
-    gradtol_list = [1e-5,1e-9,1e-13]
-    inner_maxiter_list = [30,30,50]
-    maxiter_list = [1000,1000,1000]
-    outer_k_list = [5,5,7]
-    store_outer_Av_list = [False,False,True]
+    gradtol_list = [1e-5,1e-7,1e-9,1e-13]
+    inner_maxiter_list = [30,30,40,50]
+    maxiter_list = [25000,1000,1000,1000]
+    outer_k_list = [5,5,5,7]
+    store_outer_Av_list = [False,False,False,True]
     
     n_optim_param = len(gradtol_list)
     
@@ -255,7 +251,7 @@ def main(preprint_msg=''):
         print('')
         
 
-    x0 = np.random.random(callfun[0]['param_to_coeff_list'][i].shape[1])
+    x0 = np.random.random(callfun[0]['param_to_coeff_list'][0].shape[1])
     xmin = Compute_MinDist(x0,callfun)
     if (xmin < 1e-5):
         print(xmin)
@@ -276,8 +272,6 @@ def main(preprint_msg=''):
     ncoeff = callfun[0]["ncoeff_list"][callfun[0]["current_cvg_lvl"]]
     nint = callfun[0]["nint_list"][callfun[0]["current_cvg_lvl"]]
 
-    all_coeffs_avg = Gen_init_avg(nTf,nbs,nbf,mass_mul,ncoeff,all_coeffs_slow_load,all_coeffs_fast_load,callfun,Rotate_fast_with_slow,Optimize_Init,Randomize_Fast_Init)
-
     coeff_ampl_o=1e-16
     k_infl=1
     k_max=200
@@ -287,7 +281,6 @@ def main(preprint_msg=''):
 
     x_min = Package_all_coeffs(all_coeffs_min,callfun)
     x_max = Package_all_coeffs(all_coeffs_max,callfun)
-    x_avg = Package_all_coeffs(all_coeffs_avg,callfun)
 
     rand_eps = coeff_ampl_min
     rand_dim = 0
@@ -303,8 +296,8 @@ def main(preprint_msg=''):
     hash_dict = {}
 
     n_opt = 0
-    n_opt_max = 1
-    # ~ n_opt_max = 1e10
+    # ~ n_opt_max = 1
+    n_opt_max = 1e10
     while (n_opt < n_opt_max):
         
         if ((n_opt % freq_erase_dict) == 0):
@@ -317,17 +310,25 @@ def main(preprint_msg=''):
         print('Optimization attempt number : ',n_opt)
 
         callfun[0]["current_cvg_lvl"] = 0
+        ncoeff = callfun[0]["ncoeff_list"][callfun[0]["current_cvg_lvl"]]
+        nint = callfun[0]["nint_list"][callfun[0]["current_cvg_lvl"]]
+        
+        all_coeffs_avg = Gen_init_avg(nTf,nbs,nbf,mass_mul,ncoeff,all_coeffs_slow_load,all_coeffs_fast_load,callfun,Rotate_fast_with_slow,Optimize_Init,Randomize_Fast_Init)        
+        x_avg = Package_all_coeffs(all_coeffs_avg,callfun)
+        
         x0 = np.zeros((callfun[0]['coeff_to_param_list'][callfun[0]["current_cvg_lvl"]].shape[0]),dtype=np.float64)
+        
+        x0 = x_avg
         
         xrand = sampler.random()
         
-        rand_dim = 0
-        for i in range(callfun[0]['coeff_to_param_list'][callfun[0]["current_cvg_lvl"]].shape[0]):
-            if ((x_max[i] - x_min[i]) > rand_eps):
-                x0[i] = x_avg[i] + x_min[i] + (x_max[i] - x_min[i])*xrand[rand_dim]
-                rand_dim +=1
-            else:
-                x0[i] = x_avg[i]
+        # ~ rand_dim = 0
+        # ~ for i in range(callfun[0]['coeff_to_param_list'][callfun[0]["current_cvg_lvl"]].shape[0]):
+            # ~ if ((x_max[i] - x_min[i]) > rand_eps):
+                # ~ x0[i] = x_avg[i] + x_min[i] + (x_max[i] - x_min[i])*xrand[rand_dim]
+                # ~ rand_dim +=1
+            # ~ else:
+                # ~ x0[i] = x_avg[i]
 
         if save_init:
 
@@ -459,7 +460,7 @@ def main(preprint_msg=''):
 
                 StopOptimSuccess = GoOn and NewtonPreciseEnough
                 
-                GoOn = GoOn or not(StopOptimSuccess)
+                GoOn = GoOn and not(StopOptimSuccess)
 
                 SaveSol = not(GoOn) and NewtonPreciseEnough 
                    
@@ -510,7 +511,8 @@ def main(preprint_msg=''):
                     i_optim_param += 1
                     
                 
-        print('')
+                print('')
+                
         print('')
         print('')
 
