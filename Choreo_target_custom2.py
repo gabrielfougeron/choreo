@@ -110,23 +110,17 @@ def main(preprint_msg=''):
     Use_exact_Jacobian = True
     # ~ Use_exact_Jacobian = False
 
-    # ~ Use_deflation = True
-    Use_deflation = False
-
     Look_for_duplicates = True
     # ~ Look_for_duplicates = False
 
-    Check_loop_dist = True
-    # ~ Check_loop_dist = False
+    Check_Escape = True
+    # ~ Check_Escape = False
 
     # ~ Penalize_Escape = True
     Penalize_Escape = False
 
     save_init = False
     # ~ save_init = True
-
-    save_approx = False
-    # ~ save_approx = True
 
     Save_img = True
     # ~ Save_img = False
@@ -193,6 +187,20 @@ def main(preprint_msg=''):
 
     # ~ line_search = 'armijo'
     line_search = 'wolfe'
+    
+    gradtol_list = [1e-5,1e-9,1e-13]
+    inner_maxiter_list = [30,30,50]
+    maxiter_list = [1000,1000,1000]
+    outer_k_list = [5,5,7]
+    store_outer_Av_list = [False,False,True]
+    
+    
+    n_optim_param = len(gradtol_list)
+    
+    
+    
+    gradtol_max = 100*gradtol_list[n_optim_param-1]
+    foundsol_tol = 10*gradtol_list[0]
 
     escape_fac = 1e0
     # ~ escape_fac = 1e-1
@@ -263,14 +271,6 @@ def main(preprint_msg=''):
 
         Action_grad_mod = Compute_action_onlygrad_escape
 
-    elif (Use_deflation):
-        print('Loading previously saved sols as deflation vectors')
-        
-        Init_deflation(callfun)
-        Load_all_defl(store_folder,callfun)
-        
-        Action_grad_mod = Compute_action_defl
-        
     else:
         
         Action_grad_mod = Compute_action_onlygrad
@@ -320,27 +320,17 @@ def main(preprint_msg=''):
         print('Optimization attempt number : ',n_opt)
 
         callfun[0]["current_cvg_lvl"] = 0
-        ncoeff = callfun[0]["ncoeff_list"][callfun[0]["current_cvg_lvl"]]
-        nint = callfun[0]["nint_list"][callfun[0]["current_cvg_lvl"]]
-        
         x0 = np.zeros((callfun[0]['coeff_to_param_list'][callfun[0]["current_cvg_lvl"]].shape[0]),dtype=np.float64)
         
-        if (n_opt == 1) :
-                
-            for i in range(callfun[0]['coeff_to_param_list'][callfun[0]["current_cvg_lvl"]].shape[0]):
+        xrand = sampler.random()
+        
+        rand_dim = 0
+        for i in range(callfun[0]['coeff_to_param_list'][callfun[0]["current_cvg_lvl"]].shape[0]):
+            if ((x_max[i] - x_min[i]) > rand_eps):
+                x0[i] = x_avg[i] + x_min[i] + (x_max[i] - x_min[i])*xrand[rand_dim]
+                rand_dim +=1
+            else:
                 x0[i] = x_avg[i]
-            
-        else :
-            
-            xrand = sampler.random()
-            
-            rand_dim = 0
-            for i in range(callfun[0]['coeff_to_param_list'][callfun[0]["current_cvg_lvl"]].shape[0]):
-                if ((x_max[i] - x_min[i]) > rand_eps):
-                    x0[i] = x_avg[i] + x_min[i] + (x_max[i] - x_min[i])*xrand[rand_dim]
-                    rand_dim +=1
-                else:
-                    x0[i] = x_avg[i]
 
         if save_init:
 
@@ -355,298 +345,167 @@ def main(preprint_msg=''):
         f0 = Action_grad_mod(x0,callfun)
         best_sol = current_best(x0,f0)
 
-        print('Initialization Action Grad Norm : ',best_sol.f_norm)
-
-        outer_k = 5
-        inner_maxiter = 30
-
-        # ~ gradtol = 1e-1
-        # ~ gradtol = 1e-2
-        # ~ gradtol = 1e-5
-        gradtol = 1e-9
-        # ~ gradtol = 1e-11
-        # ~ maxiter = 500
-        maxiter = 25000
+        GoOn = True
         
-        # ~ rdiff = 1e-7
-        # ~ rdiff = 0   
-        rdiff = None
-
-        F = lambda x : Action_grad_mod(x,callfun)
-        jac_options = {'method':krylov_method,'rdiff':rdiff,'outer_k':outer_k,'inner_inner_m':inner_maxiter }
-        # ~ jac_options = {'method':krylov_method,'rdiff':rdiff,'outer_k':outer_k}
+        i_optim_param = 0
         
-        if (Use_exact_Jacobian):
-
-            FGrad = lambda x,dx : Compute_action_hess_mul(x,dx,callfun)
-            jacobian = ExactKrylovJacobian(exactgrad=FGrad,**jac_options)
-
-        else: 
-            jacobian = opt.nonlin.KrylovJacobian(**jac_options)
-
-        try : 
-
-            opt_result = opt.nonlin.nonlin_solve(F=F,x0=best_sol.x,jacobian=jacobian,verbose=disp_scipy_opt,maxiter=maxiter,f_tol=gradtol,line_search=line_search,callback=best_sol.update,raise_exception=False)
-
-            Go_On = True
-
-        except Exception as exc:
+        while GoOn:
+            # Set correct optim params
             
-            print(exc)
-            print("Value Error occured, skipping.")
-            Go_On = False
-            raise(exc)
-
-        if (Check_loop_dist and Go_On):
+            rdiff = None
+            gradtol = gradtol_list[i_optim_param]
+            inner_maxiter = inner_maxiter_list[i_optim_param]
+            maxiter = maxiter_list[i_optim_param]
+            outer_k = outer_k_list[i_optim_param]
+            store_outer_Av = store_outer_Av_list[i_optim_param]
             
-            Escaped,_ = Detect_Escape(best_sol.x,callfun)
-            Go_On = not(Escaped)
-
-            if not(Go_On):
-                print('One loop escaped. Starting over')    
-        
-        if (Go_On):
+            print('Action Grad Norm on entry : ',best_sol.f_norm)
+            print('Optim level : ',i_optim_param+1,' / ',n_optim_param)
+            print('Resize level : ',callfun[0]["current_cvg_lvl"]+1,' / ',n_reconverge_it_max+1)
             
-            print('Approximate solution found ! Action Grad Norm : ',best_sol.f_norm)
+            F = lambda x : Action_grad_mod(x,callfun)
+            jac_options = {'method':krylov_method,'rdiff':rdiff,'outer_k':outer_k,'inner_inner_m':inner_maxiter,'inner_store_outer_Av':store_outer_Av }
             
-            PreciseEnough = (best_sol.f_norm < (gradtol*100))
-            ErrorOccured = False
+            if (Use_exact_Jacobian):
 
-            Found_duplicate = False
+                FGrad = lambda x,dx : Compute_action_hess_mul(x,dx,callfun)
+                jacobian = ExactKrylovJacobian(exactgrad=FGrad,**jac_options)
 
-            if (Look_for_duplicates and PreciseEnough):
+            else: 
+                jacobian = opt.nonlin.KrylovJacobian(**jac_options)
+
+            try : 
+
+                opt_result = opt.nonlin.nonlin_solve(F=F,x0=best_sol.x,jacobian=jacobian,verbose=disp_scipy_opt,maxiter=maxiter,f_tol=gradtol,line_search=line_search,callback=best_sol.update,raise_exception=False)
                 
-                print('Checking Duplicates.')
+            except Exception as exc:
+                
+                print(exc)
+                print("Value Error occured, skipping.")
+                Go_On = False
+                # ~ raise(exc)
+            
+            if (Go_On and Check_Escape):
+                
+                Escaped,_ = Detect_Escape(best_sol.x,callfun)
+
+                if Escaped:
+                    print('One loop escaped. Starting over')    
+                    
+                Go_On = Go_On and not(Escaped)
+                
+            if (Go_On and Look_for_duplicates):
 
                 Action,GradAction = Compute_action(best_sol.x,callfun)
                 
                 Found_duplicate,file_path = Check_Duplicates(best_sol.x,callfun,hash_dict,store_folder,duplicate_eps)
                 
-            else:
+                if (Found_duplicate):
                 
-                Found_duplicate = False
+                    print('Found Duplicate !')   
+                    print('Path : ',file_path)
+                    
+                Go_On = Go_On and not(Found_duplicate)
                 
-            if (ErrorOccured):
-                
-                print("Value Error occured, skipping.")
-                
-            elif (not(PreciseEnough)):
+            if (Go_On):
             
-                print('Initial convergence not good enough')   
-                print('Restarting')   
-                
-                
-            elif (Found_duplicate):
-            
-                print('Found Duplicate !')   
-                print('Path : ',file_path)
-                
-            else:
-
-                print('Reconverging solution')
-                
-                Newt_err_norm = 1.
-                
-                while ((Newt_err_norm > Newt_err_norm_max) and (callfun[0]["current_cvg_lvl"] < n_reconverge_it_max) and Go_On):
-                            
-                    all_coeffs_old = Unpackage_all_coeffs(best_sol.x,callfun)
-                    
-                    ncoeff = callfun[0]["ncoeff_list"][callfun[0]["current_cvg_lvl"]]
-                    ncoeff_new = ncoeff * 2
-
-                    all_coeffs = np.zeros((nloop,ndim,ncoeff_new,2),dtype=np.float64)
-                    for k in range(ncoeff):
-                        all_coeffs[:,:,k,:] = all_coeffs_old[:,:,k,:]   
-                    
-                    callfun[0]["current_cvg_lvl"] += 1
-                    x0 = Package_all_coeffs(all_coeffs,callfun)
-                    
-                    ncoeff = callfun[0]["ncoeff_list"][callfun[0]["current_cvg_lvl"]]
-                    nint = callfun[0]["nint_list"][callfun[0]["current_cvg_lvl"]]
-                    
-                    f0 = Action_grad_mod(x0,callfun)
-                    best_sol = current_best(x0,f0)
-                    
-                    print('')
-                    print('After Resize lvl '+str(callfun[0]["current_cvg_lvl"])+' : Action Grad Norm : ',best_sol.f_norm)
-                                  
-                    outer_k = 5
-                    inner_maxiter = 40
-
-                    # ~ gradtol = 1e-1
-                    # ~ gradtol = 1e-2
-                    # ~ gradtol = 1e-5
-                    gradtol = 1e-13
-                    # ~ gradtol = 1e-11
-                    # ~ maxiter = 500
-                    maxiter = 2000
-                    
-                    # ~ rdiff = 1e-7
-                    # ~ rdiff = 0   
-                    rdiff = None
-                    
-                    store_outer_Av=True
-                    # ~ store_outer_Av=False
-
-                    F = lambda x : Action_grad_mod(x,callfun)
-                    jac_options = {'method':krylov_method,'rdiff':rdiff,'outer_k':outer_k,'inner_inner_m':inner_maxiter,'inner_store_outer_Av':store_outer_Av }
-                    # ~ jac_options = {'method':krylov_method,'rdiff':rdiff,'outer_k':outer_k}
-                    
-                    if (Use_exact_Jacobian):
-
-                        FGrad = lambda x,dx : Compute_action_hess_mul(x,dx,callfun)
-                        jacobian = ExactKrylovJacobian(exactgrad=FGrad,**jac_options)
-
-                    else: 
-                        jacobian = opt.nonlin.KrylovJacobian(**jac_options)
-
-                    try : 
-
-                        opt_result = opt.nonlin.nonlin_solve(F=F,x0=best_sol.x,jacobian=jacobian,verbose=disp_scipy_opt,maxiter=maxiter,f_tol=gradtol,line_search=line_search,callback=best_sol.update,raise_exception=False)
-
-                        all_coeffs = Unpackage_all_coeffs(best_sol.x,callfun)
-                        
-                        print('Opt Action Grad Norm : ',best_sol.f_norm)
-                    
-                        Newt_err = Compute_Newton_err(best_sol.x,callfun)
-                        Newt_err_norm = np.linalg.norm(Newt_err)/nint
-                        
-                        print('Newton Error : ',Newt_err_norm)
-                        
-                        if (save_approx):
-                            
-                            max_num_file = 0
-                            
-                            for filename in os.listdir(store_folder):
-                                file_path = os.path.join(store_folder, filename)
-                                file_root, file_ext = os.path.splitext(os.path.basename(file_path))
-                                
-                                if (file_ext == '.txt' ):
-                                    try:
-                                        max_num_file = max(max_num_file,int(file_root))
-                                    except:
-                                        pass
-                                
-                            max_num_file = max_num_file + 1
-
-                            filename_output = store_folder+'/'+str(max_num_file)+'_'+str(callfun[0]["current_cvg_lvl"])
-                            
-                            plot_all_2D(best_sol.x,nint_plot_img,callfun,filename_output+'.png',fig_size=img_size,color=color)
-                            
-                        SaveSol = (Newt_err_norm < Newt_err_norm_max_save)
-                                        
-                        if (Check_loop_dist):
-                            
-                            Escaped,_ = Detect_Escape(best_sol.x,callfun)
-                            Go_On = Go_On and not(Escaped)
-                            
-                            if not(Go_On):
-                                print('One loop escaped. Starting over')    
-                                        
-                        if (Look_for_duplicates):
-                            
-                            print('Checking Duplicates.')
-                            
-                            Action,GradAction = Compute_action(best_sol.x,callfun)
-                    
-                            Found_duplicate,file_path = Check_Duplicates(best_sol.x,callfun,hash_dict,store_folder,duplicate_eps)
-                            
-                            Go_On = Go_On and not(Found_duplicate)
-                            
-                            if (Found_duplicate):
-                            
-                                print('Found Duplicate !')  
-                                print('Path : ',file_path) 
-
-                    except Exception as exc:
-
-                        print(exc)
-                        print("Value Error occured, skipping.")
-                        Go_On = False
-                        SaveSol = False
-
-
-                if (not(SaveSol) and Go_On):
-                    print('Newton Error too high, discarding solution')
-            
-                if (((SaveSol) or (Save_Bad_Sols)) and Go_On):
-                            
-                    if (Look_for_duplicates):
-                        
-                        print('Checking Duplicates.')
-                        
-                        Action,GradAction = Compute_action(best_sol.x,callfun)
-                
-                        Found_duplicate,file_path = Check_Duplicates(best_sol.x,callfun,hash_dict,store_folder,duplicate_eps)
-                        
-                    else:
-                        Found_duplicate = False
-                    
-                    
-                    if (Found_duplicate):
-                    
-                        print('Found Duplicate !')  
-                        print('Path : ',file_path) 
-                    
-                    else:
-                        
-                        max_num_file = 0
-                        
-                        for filename in os.listdir(store_folder):
-                            file_path = os.path.join(store_folder, filename)
-                            file_root, file_ext = os.path.splitext(os.path.basename(file_path))
-                            
-                            if (file_ext == '.txt' ):
-                                try:
-                                    max_num_file = max(max_num_file,int(file_root))
-                                except:
-                                    pass
-                            
-                        max_num_file = max_num_file + 1
-                        
-                        filename_output = store_folder+'/'+str(max_num_file)
-                        
-                        if not(SaveSol):
-                            # ~ filename_output = filename_output + '_bad'
-                            filename_output = 'bad'
-                        
-                        print('Saving solution as '+filename_output+'.*')
-                 
-                        Write_Descriptor(best_sol.x,callfun,filename_output+'.txt')
-                        
-                        if Save_img :
-                            plot_all_2D(best_sol.x,nint_plot_img,callfun,filename_output+'.png',fig_size=img_size,color=color)
-                            
-                        if Save_anim :
-                            plot_all_2D_anim(best_sol.x,nint_plot_anim,callfun,filename_output+'.mp4',nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size)
-                        
-                        all_coeffs = Unpackage_all_coeffs(best_sol.x,callfun)
-                        np.save(filename_output+'.npy',all_coeffs)
-
-        if (Use_deflation):
-            
-            # ~ HessMat = Compute_action_hess_LinOpt(best_sol.x,callfun)
-            # ~ w ,v = sp.linalg.eigsh(HessMat,k=10,which='SA')
-            
-            # ~ print(w)
-            
+            ParamFoundSol = (best_sol.f_norm < foundsol_tol)
+            ParamPreciseEnough = (best_sol.f_norm < gradtol_max)
+            print('Opt Action Grad Norm : ',best_sol.f_norm)
+        
             Newt_err = Compute_Newton_err(best_sol.x,callfun)
             Newt_err_norm = np.linalg.norm(Newt_err)/nint
+            NewtonPreciseEnough = (Newt_err_norm < Newt_err_norm_max_save)
+            print('Newton Error : ',Newt_err_norm)
             
-            if(Newt_err_norm < Newt_err_norm_max_save):
+            CanChangeOptimParams = i_optim_param < (n_optim_param-1)
+            
+            CanRefine = (callfun[0]["current_cvg_lvl"] < n_reconverge_it_max)
+            
+            if CanRefine :
                 
-                print("Deflation coeff at sol : ",Compute_defl_fac(best_sol.x,callfun))
-                print("Modified Action Grad at sol : ",np.linalg.norm(Compute_action_defl(best_sol.x,callfun)))
+                all_coeffs_coarse = Unpackage_all_coeffs(best_sol.x,callfun)
+                ncoeff_coarse = callfun[0]["ncoeff_list"][callfun[0]["current_cvg_lvl"]]
+                
+                callfun[0]["current_cvg_lvl"] += 1
+                ncoeff_fine = callfun[0]["ncoeff_list"][callfun[0]["current_cvg_lvl"]]
+
+                all_coeffs_fine = np.zeros((nloop,ndim,ncoeff_fine,2),dtype=np.float64)
+                all_coeffs_fine[:,:,0:ncoeff_coarse,:] = all_coeffs_coarse
+                x_fine = Package_all_coeffs(all_coeffs_fine,callfun)
+                f_fine = Action_grad_mod(x_fine,callfun)
+                f_fine_norm = np.linalg.norm(f_fine)
+                NeedsRefinement = f_fine_norm > 3*best_sol.f_norm
+                
+                callfun[0]["current_cvg_lvl"] += -1
+            
+            else:
+                
+                NeedsRefinement = False
+                
+            NeedsChangeOptimParams = GoOn and CanChangeOptimParams and not(ParamPreciseEnough) and not(NeedsRefinement)
+                        
+            if GoOn and not(ParamFoundSol):
+            
+                GoOn = False
+                print('Optimizer could not zero in on a solution')
+
+            if GoOn and not(ParamPreciseEnough) and not(NewtonPreciseEnough) and not(CanRefine) and not(CanChangeOptimParams):
+            
+                GoOn = False
+                print('Newton Error too high, discarding solution')
+            
+            if GoOn and ParamPreciseEnough and not(NewtonPreciseEnough) and not(NeedsRefinement):
+
+                GoOn=False
+                print("Stopping Search : there might be something wrong with the constraints" 
+
+            SaveSol = not(GoOn) and NewtonPreciseEnough 
+               
+            if SaveSol :
+                
+                GoOn  = False
+                
+                max_num_file = 0
+                
+                for filename in os.listdir(store_folder):
+                    file_path = os.path.join(store_folder, filename)
+                    file_root, file_ext = os.path.splitext(os.path.basename(file_path))
+                    
+                    if (file_ext == '.txt' ):
+                        try:
+                            max_num_file = max(max_num_file,int(file_root))
+                        except:
+                            pass
+                    
+                max_num_file = max_num_file + 1
+                
+                filename_output = store_folder+'/'+str(max_num_file)
+
+                print('Saving solution as '+filename_output+'.*')
+         
+                Write_Descriptor(best_sol.x,callfun,filename_output+'.txt')
+                
+                if Save_img :
+                    plot_all_2D(best_sol.x,nint_plot_img,callfun,filename_output+'.png',fig_size=img_size,color=color)
+                    
+                if Save_anim :
+                    plot_all_2D_anim(best_sol.x,nint_plot_anim,callfun,filename_output+'.mp4',nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size)
                 
                 all_coeffs = Unpackage_all_coeffs(best_sol.x,callfun)
-                Add_deflation_coeffs(all_coeffs,callfun)            
-                
-                print("Added to deflation vects list")
-                print("Length of deflation vects list : ",len(callfun[0]['defl_vec_list']))
-        
-        # ~ print('Press Enter to continue ...')
-        # ~ pause = input()
+                np.save(filename_output+'.npy',all_coeffs)
 
+            
+            if GoOn and NeedsRefinement:
+                
+                best_sol.update(x_fine,f_fine)
+                callfun[0]["current_cvg_lvl"] += 1
+                
+            if GoOn and NeedsChangeOptimParams:
+                
+                i_optim_param += 1
+                
+                
         print('')
         print('')
         print('')

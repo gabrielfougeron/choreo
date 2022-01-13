@@ -78,7 +78,7 @@ def plot_all_2D_cpb(x,nint_plot,callfun,filename,fig_size=(10,10),color=None,col
     c_coeffs = all_coeffs.view(dtype=np.complex128)[...,0]
     
     all_pos = np.zeros((nloop,ndim,nint_plot+1),dtype=np.float64)
-    all_pos[:,:,0:nint_plot] = np.fft.irfft(c_coeffs,n=nint_plot,axis=2)*nint_plot
+    all_pos[:,:,0:nint_plot] = the_irfft(c_coeffs,n=nint_plot,axis=2)*nint_plot
     all_pos[:,:,nint_plot] = all_pos[:,:,0]
     
     all_pos_b = np.zeros((nbody,ndim,nint_plot+1),dtype=np.float64)
@@ -160,7 +160,7 @@ def plot_all_2D_cpv(x,nint_plot,callfun,filename,fig_size=(10,10)):
     c_coeffs = all_coeffs.view(dtype=np.complex128)[...,0]
     
     all_pos = np.zeros((nloop,ndim,nint_plot+1),dtype=np.float64)
-    all_pos[:,:,0:nint_plot] = np.fft.irfft(c_coeffs,n=nint_plot,axis=2)*nint_plot
+    all_pos[:,:,0:nint_plot] = the_irfft(c_coeffs,n=nint_plot,axis=2)*nint_plot
     all_pos[:,:,nint_plot] = all_pos[:,:,0]
     
     all_coeffs_v = np.zeros(all_coeffs.shape)
@@ -172,7 +172,7 @@ def plot_all_2D_cpv(x,nint_plot,callfun,filename,fig_size=(10,10)):
     c_coeffs_v = all_coeffs_v.view(dtype=np.complex128)[...,0]
     
     all_vel = np.zeros((nloop,nint_plot+1),dtype=np.float64)
-    all_vel[:,0:nint_plot] = np.linalg.norm(np.fft.irfft(c_coeffs_v,n=nint_plot,axis=2),axis=1)*nint_plot
+    all_vel[:,0:nint_plot] = np.linalg.norm(the_irfft(c_coeffs_v,n=nint_plot,axis=2),axis=1)*nint_plot
     all_vel[:,nint_plot] = all_vel[:,0]
     
     all_pos_b = np.zeros((nbody,ndim,nint_plot+1),dtype=np.float64)
@@ -256,7 +256,7 @@ def plot_all_2D_anim(x,nint_plot,callfun,filename,nperiod=1,Plot_trace=True,fig_
     c_coeffs = all_coeffs.view(dtype=np.complex128)[...,0]
     
     all_pos = np.zeros((nloop,ndim,nint_plot+1),dtype=np.float64)
-    all_pos[:,:,0:nint_plot] = np.fft.irfft(c_coeffs,n=nint_plot,axis=2)*nint_plot
+    all_pos[:,:,0:nint_plot] = the_irfft(c_coeffs,n=nint_plot,axis=2)*nint_plot
     all_pos[:,:,nint_plot] = all_pos[:,:,0]
     
     all_pos_b = np.zeros((nbody,ndim,nint_plot+1),dtype=np.float64)
@@ -429,7 +429,6 @@ def Compute_action_onlygrad_escape(x,callfun):
         
         nint = args['nint_list'][args["current_cvg_lvl"]]
         c_coeffs = args['last_all_coeffs'].view(dtype=np.complex128)[...,0]
-        # ~ args['last_all_pos'] = np.fft.irfft(c_coeffs,n=nint,axis=2)*nint
         args['last_all_pos'] = the_irfft(c_coeffs,n=nint,axis=2)*nint
 
     J,GradJ =  Compute_action_Cython(
@@ -474,7 +473,6 @@ def Compute_action_hess_mul(x,dx,callfun):
         
         nint = args['nint_list'][args["current_cvg_lvl"]]
         c_coeffs = args['last_all_coeffs'].view(dtype=np.complex128)[...,0]
-        # ~ args['last_all_pos'] = np.fft.irfft(c_coeffs,n=nint,axis=2)*nint
         args['last_all_pos'] =the_irfft(c_coeffs,n=nint,axis=2)*nint
     
     HessJdx =  Compute_action_hess_mul_Cython(
@@ -538,7 +536,6 @@ def Compute_action_hess_LinOpt_precond(x_precond,callfun_source,callfun_precond)
             
             nint_precond = args_precond['nint_list'][args_precond["current_cvg_lvl"]]
             c_coeffs_precond = args_precond['last_all_coeffs'].view(dtype=np.complex128)[...,0]
-            # ~ args_precond['last_all_pos'] = np.fft.irfft(c_coeffs_precond,n=nint_precond,axis=2)*nint_precond
             args_precond['last_all_pos'] =the_irfft(c_coeffs_precond,n=nint_precond,axis=2)*nint_precond
         
         HessJdx_precond =  Compute_action_hess_mul_Cython(
@@ -1175,7 +1172,6 @@ def Compute_action(x,callfun):
         
         nint = args['nint_list'][args["current_cvg_lvl"]]
         c_coeffs = args['last_all_coeffs'].view(dtype=np.complex128)[...,0]
-        # ~ args['last_all_pos'] = np.fft.irfft(c_coeffs,n=nint,axis=2)*nint
         args['last_all_pos'] = the_irfft(c_coeffs,n=nint,axis=2)*nint
     
     J,GradJ =  Compute_action_Cython(
@@ -1617,10 +1613,10 @@ def Compose_Two_Paths(nTf,nbs,nbf,mass_mul,ncoeff,all_coeffs_slow,all_coeffs_fas
         nint = 2*ncoeff
 
         c_coeffs_slow = all_coeffs_slow_mod.view(dtype=np.complex128)[...,0]
-        all_pos_slow = np.fft.irfft(c_coeffs_slow,n=nint,axis=2)
+        all_pos_slow = the_irfft(c_coeffs_slow,n=nint,axis=2)
 
         c_coeffs_fast = all_coeffs_fast_mod.view(dtype=np.complex128)[...,0]
-        all_pos_fast = np.fft.irfft(c_coeffs_fast,n=nint,axis=2)
+        all_pos_fast = the_irfft(c_coeffs_fast,n=nint,axis=2)
 
         all_coeffs_slow_mod_speed = np.zeros((nloop,ndim,ncoeff,2),dtype=np.float64)
 
@@ -1632,7 +1628,7 @@ def Compose_Two_Paths(nTf,nbs,nbf,mass_mul,ncoeff,all_coeffs_slow,all_coeffs_fas
                     all_coeffs_slow_mod_speed[il,idim,k,1] = -k * all_coeffs_slow_mod[il,idim,k,0] 
                 
         c_coeffs_slow_mod_speed = all_coeffs_slow_mod_speed.view(dtype=np.complex128)[...,0]
-        all_pos_slow_mod_speed = np.fft.irfft(c_coeffs_slow_mod_speed,n=nint,axis=2)
+        all_pos_slow_mod_speed = the_irfft(c_coeffs_slow_mod_speed,n=nint,axis=2)
         
         all_pos_avg = np.zeros((nloop,ndim,nint),dtype=np.float64)
 

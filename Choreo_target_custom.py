@@ -470,8 +470,8 @@ def main(preprint_msg=''):
                     print('')
                     print('After Resize lvl '+str(callfun[0]["current_cvg_lvl"])+' : Action Grad Norm : ',best_sol.f_norm)
                                   
-                    outer_k = 5
-                    inner_maxiter = 40
+                    outer_k = 10
+                    inner_maxiter = 30
 
                     # ~ gradtol = 1e-1
                     # ~ gradtol = 1e-2
