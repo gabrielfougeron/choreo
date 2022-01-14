@@ -13,7 +13,7 @@ import pickle
 import numpy as np
 import math as m
 import scipy.fft
-import scipy.optimize as opt
+import scipy.optimize
 import scipy.linalg as la
 import scipy.sparse as sp
 import sparseqr
@@ -32,6 +32,31 @@ from matplotlib.collections import LineCollection
 from matplotlib import animation
 
 from Choreo_cython_funs import *
+
+def plot_Newton_Error(x,callfun,filename,fig_size=(8,5),color_list = plt.rcParams['axes.prop_cycle'].by_key()['color']):
+    
+    Newt_err = Compute_Newton_err(x,callfun)
+    Newt_err = np.linalg.norm(Newt_err,axis=(1))
+    
+    fig = plt.figure()
+    fig.set_size_inches(fig_size)
+    ax = plt.gca()
+    
+    ncol = len(color_list)
+    nbody = callfun[0]['nbody']
+    cb = []
+    for ib in range(nbody):
+        cb.append(color_list[ib%ncol])
+    
+    for ib in range(nbody):
+        ax.plot(Newt_err[ib,:],c=cb[ib])
+        
+    ax.set_yscale('log')
+        
+    plt.tight_layout()
+    plt.savefig(filename)
+    plt.close()
+        
 
 def plot_all_2D(x,nint_plot,callfun,filename,fig_size=(10,10),color=None,color_list = plt.rcParams['axes.prop_cycle'].by_key()['color']):
     # Plots 2D trajectories and saves image under filename
@@ -1392,7 +1417,7 @@ def Write_Descriptor(x,callfun,filename):
         filename_write.write('Value of the Norm of the Gradient of the Action : {:.10E}\n'.format(np.linalg.norm(Gradaction)))
 
         Newt_err = Compute_Newton_err(x,callfun)
-        Newt_err_norm = np.linalg.norm(Newt_err)/args['nint_list'][args["current_cvg_lvl"]]
+        Newt_err_norm = np.linalg.norm(Newt_err)/(args['nint_list'][args["current_cvg_lvl"]]*args['nbody'])
         filename_write.write('Sum of Newton Errors : {:.10E}\n'.format(Newt_err_norm))
         
         dxmin = Compute_MinDist(x,callfun)
@@ -1844,21 +1869,19 @@ def Param_to_Param_rev(Gx,callfun_source,callfun_target):
 '''
 
 
-def Package_Precond_LinOpt(Precond,v,callfun_precond,callfun):
+def Package_Precond_LinOpt(Precond,callfun_precond,callfun):
     
     args = callfun[0]
 
     def the_matvec(x):
-        
-        
-        
+
         y = Param_to_Param_rev(x,callfun,callfun_precond)
         # ~ y = Param_to_Param_direct(x,callfun,callfun_precond)
         
         # ~ y = y - np.dot(v,np.dot(v.transpose(),y))
         
-        # ~ z = Precond.solve(y)-y
-        z = Precond.solve(y)
+        z = Precond.solve(y)-y
+        # ~ z = Precond.solve(y)
         
         # ~ z = z - np.dot(v,np.dot(v.transpose(),z))
         
@@ -1876,3 +1899,20 @@ def Package_Precond_LinOpt(Precond,v,callfun_precond,callfun):
         matvec =  the_matvec,
         rmatvec = the_matvec)
 
+
+class ExactKrylovJacobian(scipy.optimize.nonlin.KrylovJacobian):
+
+    def __init__(self,exactgrad, rdiff=None, method='lgmres', inner_maxiter=20,inner_M=None, outer_k=10, **kw):
+
+        scipy.optimize.nonlin.KrylovJacobian.__init__(self, rdiff, method, inner_maxiter,inner_M, outer_k, **kw)
+        self.exactgrad = exactgrad
+
+    def matvec(self, v):
+        return self.exactgrad(self.x0,v)
+
+    def rmatvec(self, v):
+        return self.exactgrad(self.x0,v)
+        
+    
+        
+    

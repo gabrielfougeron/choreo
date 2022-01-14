@@ -20,7 +20,6 @@ import shutil
 import time
 
 from Choreo_funs import *
-from scipy_root_plus import ExactKrylovJacobian
 
 
 
@@ -302,8 +301,6 @@ def main(preprint_msg=''):
     ActHessPrecond_LinOpt = Compute_action_hess_LinOpt(x0_precond,callfun_precond)
 
     w ,v = sp.linalg.eigsh(ActHessPrecond_LinOpt,k=10,which='SM')
-    
-    
     nthresh = 2
     v = v[:,0:nthresh]
     
@@ -461,7 +458,7 @@ def main(preprint_msg=''):
                     # ~ callfun[0]["Do_Pos_FFT"] = True
                     # ~ return res
                     
-                Precond_LinOpt = Package_Precond_LinOpt(precond,v,callfun_precond,callfun)
+                Precond_LinOpt = Package_Precond_LinOpt(precond,callfun_precond,callfun)
                 
                 
                 # ~ w ,v = sp.linalg.eigsh(Precond_LinOpt,k=10,which='SM')
@@ -619,7 +616,7 @@ def main(preprint_msg=''):
                         print('Opt Action Grad Norm : ',best_sol.f_norm)
                     
                         Newt_err = Compute_Newton_err(best_sol.x,callfun)
-                        Newt_err_norm = np.linalg.norm(Newt_err)/nint
+                        Newt_err_norm = np.linalg.norm(Newt_err)/(nint*nbody)
                         
                         print('Newton Error : ',Newt_err_norm)
                         
@@ -741,7 +738,7 @@ def main(preprint_msg=''):
             # ~ print(w)
             
             Newt_err = Compute_Newton_err(best_sol.x,callfun)
-            Newt_err_norm = np.linalg.norm(Newt_err)/nint
+            Newt_err_norm = np.linalg.norm(Newt_err)/(nint*nbody)
             
             if(Newt_err_norm < Newt_err_norm_max_save):
                 
