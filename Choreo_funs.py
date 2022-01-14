@@ -35,7 +35,11 @@ from Choreo_cython_funs import *
 
 def plot_Newton_Error(x,callfun,filename,fig_size=(8,5),color_list = plt.rcParams['axes.prop_cycle'].by_key()['color']):
     
+    nbody = callfun[0]['nbody']
+    
     Newt_err = Compute_Newton_err(x,callfun)
+    # ~ print(np.linalg.norm(Newt_err)/(callfun[0]['nint_list'][callfun[0]['current_cvg_lvl']]*nbody))
+    
     Newt_err = np.linalg.norm(Newt_err,axis=(1))
     
     fig = plt.figure()
@@ -43,12 +47,13 @@ def plot_Newton_Error(x,callfun,filename,fig_size=(8,5),color_list = plt.rcParam
     ax = plt.gca()
     
     ncol = len(color_list)
-    nbody = callfun[0]['nbody']
+
     cb = []
     for ib in range(nbody):
         cb.append(color_list[ib%ncol])
     
-    for ib in range(nbody):
+    # ~ for ib in range(nbody):
+    for ib in range(1):
         ax.plot(Newt_err[ib,:],c=cb[ib])
         
     ax.set_yscale('log')
@@ -1728,8 +1733,8 @@ def Gen_init_avg(nTf,nbs,nbf,mass_mul,ncoeff,all_coeffs_slow_load,all_coeffs_fas
         maxiter = 1000
         tol = 1e-10
 
-        # ~ opt_result = opt.minimize(fun=init_opt_fun,x0=init_x,method='BFGS',options={'disp':True,'maxiter':maxiter,'gtol':tol},tol=tol)
-        opt_result = opt.minimize(fun=init_opt_fun,x0=init_x,method='CG',options={'disp':False,'maxiter':maxiter,'gtol':tol},tol=tol)
+        # ~ opt_result = scipy.optimize.minimize(fun=init_opt_fun,x0=init_x,method='BFGS',options={'disp':True,'maxiter':maxiter,'gtol':tol},tol=tol)
+        opt_result = scipy.optimize.minimize(fun=init_opt_fun,x0=init_x,method='CG',options={'disp':False,'maxiter':maxiter,'gtol':tol},tol=tol)
 
         x_opt = opt_result['x']
 
@@ -1876,24 +1881,13 @@ def Package_Precond_LinOpt(Precond,callfun_precond,callfun):
     def the_matvec(x):
 
         y = Param_to_Param_rev(x,callfun,callfun_precond)
-        # ~ y = Param_to_Param_direct(x,callfun,callfun_precond)
-        
-        # ~ y = y - np.dot(v,np.dot(v.transpose(),y))
-        
-        z = Precond.solve(y)-y
-        # ~ z = Precond.solve(y)
-        
-        # ~ z = z - np.dot(v,np.dot(v.transpose(),z))
-        
-        res = Param_to_Param_direct(z,callfun_precond,callfun)
-        # ~ res = Param_to_Param_rev(z,callfun_precond,callfun)
-        
-        return res+x
-        # ~ return res
-        # ~ return x
 
-    # ~ def the_matvec(x):
-        # ~ return x
+        z = Precond.solve(y)-y
+
+        res = Param_to_Param_direct(z,callfun_precond,callfun)
+
+        return res+x
+
         
     return sp.linalg.LinearOperator((args['coeff_to_param_list'][args["current_cvg_lvl"]].shape[0],args['coeff_to_param_list'][args["current_cvg_lvl"]].shape[0]),
         matvec =  the_matvec,

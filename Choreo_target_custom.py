@@ -36,13 +36,13 @@ def main(preprint_msg=''):
 
     # ~ slow_base_filename = './data/2_cercle.npy'
     # ~ slow_base_filename = './data/3_cercle.npy'
-    # ~ slow_base_filename = './data/3_huit.npy'
-    slow_base_filename = './data/3_heart.npy'
+    slow_base_filename = './data/3_huit.npy'
+    # ~ slow_base_filename = './data/3_heart.npy'
 
     # ~ fast_base_filename = './data/1_lone_wolf.npy'
-    # ~ fast_base_filename = './data/2_cercle.npy'
+    fast_base_filename = './data/2_cercle.npy'
     # ~ fast_base_filename = './data/3_cercle.npy'
-    fast_base_filename = './data/3_huit.npy'
+    # ~ fast_base_filename = './data/3_huit.npy'
     # ~ fast_base_filename = './data/3_heart.npy'
     # ~ fast_base_filename = './data/3_dbl_heart.npy'
 
@@ -51,11 +51,11 @@ def main(preprint_msg=''):
     # ~ nTf = 38
     # ~ nTf = 13
     nbs = 3
-    nbf = 3
+    nbf = 2
 
     # ~ Rotate_fast_with_slow = True
-    # ~ Rotate_fast_with_slow = False
-    Rotate_fast_with_slow = (np.random.random() > 1./2.)
+    Rotate_fast_with_slow = False
+    # ~ Rotate_fast_with_slow = (np.random.random() > 1./2.)
 
     Optimize_Init = True
     # ~ Optimize_Init = False
@@ -112,8 +112,8 @@ def main(preprint_msg=''):
     Look_for_duplicates = True
     # ~ Look_for_duplicates = False
 
-    Check_Escape = True
-    # ~ Check_Escape = False
+    # ~ Check_Escape = True
+    Check_Escape = False
 
     # ~ Penalize_Escape = True
     Penalize_Escape = False
@@ -166,8 +166,8 @@ def main(preprint_msg=''):
     # ~ ncoeff_init = 1206
     # ~ ncoeff_init = 90
 
-    disp_scipy_opt = False
-    # ~ disp_scipy_opt = True
+    # ~ disp_scipy_opt = False
+    disp_scipy_opt = True
 
     Newt_err_norm_max = 1e-10
     # ~ Newt_err_norm_max_save = Newt_err_norm_max*1000
@@ -184,11 +184,11 @@ def main(preprint_msg=''):
     # ~ line_search = 'armijo'
     line_search = 'wolfe'
     
-    gradtol_list =          [1e-3   ,1e-5   ,1e-7   ,1e-9   ,1e-11  ,1e-13]
-    inner_maxiter_list =    [30     ,50     ,60     ,70     ,80     ,100]
-    maxiter_list =          [1000   ,1000   ,1000   ,500   ,500    ,500]
-    outer_k_list =          [5      ,5      ,5      ,5      ,7      ,7]
-    store_outer_Av_list =   [False  ,False  ,False  ,False  ,True   ,True]
+    gradtol_list =          [1e-3   ,1e-5   ,1e-7   ,1e-9   ,1e-11  ,1e-13  ]
+    inner_maxiter_list =    [30     ,50     ,60     ,70     ,80     ,100    ]
+    maxiter_list =          [1000   ,1000   ,1000   ,500   ,500     ,500    ]
+    outer_k_list =          [5      ,5      ,5      ,5      ,7      ,7      ]
+    store_outer_Av_list =   [False  ,False  ,False  ,False  ,True   ,True   ]
     
     n_optim_param = len(gradtol_list)
     
@@ -374,12 +374,12 @@ def main(preprint_msg=''):
                 jacobian = ExactKrylovJacobian(exactgrad=FGrad,**jac_options)
 
             else: 
-                jacobian = opt.nonlin.KrylovJacobian(**jac_options)
+                jacobian = scipy.optimize.nonlin.KrylovJacobian(**jac_options)
 
             try : 
                 
                 x0 = np.copy(best_sol.x)
-                opt_result = opt.nonlin.nonlin_solve(F=F,x0=x0,jacobian=jacobian,verbose=disp_scipy_opt,maxiter=maxiter,f_tol=gradtol,line_search=line_search,callback=best_sol.update,raise_exception=False)
+                opt_result = scipy.optimize.nonlin.nonlin_solve(F=F,x0=x0,jacobian=jacobian,verbose=disp_scipy_opt,maxiter=maxiter,f_tol=gradtol,line_search=line_search,callback=best_sol.update,raise_exception=False)
                 
             except Exception as exc:
                 
