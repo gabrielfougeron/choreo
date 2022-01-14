@@ -35,50 +35,14 @@ def main(preprint_msg=''):
         return __builtins__.print(*args, **kwargs)
     
 
-    # ~ slow_base_filename = './data/2_cercle.npy'
-    # ~ slow_base_filename = './data/3_cercle.npy'
-    # ~ slow_base_filename = './data/3_huit.npy'
-    slow_base_filename = './data/3_heart.npy'
+    basename = './Reconverge_tries/9/15'
+    base_filename = basename+'.npy'
 
-    # ~ fast_base_filename = './data/1_lone_wolf.npy'
-    # ~ fast_base_filename = './data/2_cercle.npy'
-    # ~ fast_base_filename = './data/3_cercle.npy'
-    fast_base_filename = './data/3_huit.npy'
-    # ~ fast_base_filename = './data/3_heart.npy'
-    # ~ fast_base_filename = './data/3_dbl_heart.npy'
+    all_coeffs_base = np.load(base_filename)
 
-    mass_mul = 1
-    nTf = 101
-    # ~ nTf = 38
-    # ~ nTf = 13
-    nbs = 3
-    nbf = 3
+    nbody =  9
 
-    # ~ Rotate_fast_with_slow = True
-    # ~ Rotate_fast_with_slow = False
-    Rotate_fast_with_slow = (np.random.random() > 1./2.)
-
-    Optimize_Init = True
-    # ~ Optimize_Init = False
-
-    Randomize_Fast_Init = True
-    # ~ Randomize_Fast_Init = False
-
-    all_coeffs_slow_load = np.load(slow_base_filename)
-    all_coeffs_fast_load = np.load(fast_base_filename)
-
-    if (all_coeffs_slow_load.shape[0] != 1):
-        raise ValueError("Several loops in slow base")
-
-    if (all_coeffs_fast_load.shape[0] != 1):
-        raise ValueError("Several loops in fast base")
-
-    if (all_coeffs_slow_load.shape[0] != all_coeffs_fast_load.shape[0] ):
-        raise ValueError("Fast and slow have different number of loops")
-
-    nbody =  nbs * nbf
-
-    mass = np.ones((nbody))*mass_mul
+    mass = np.ones((nbody))
 
     Sym_list = []
 
@@ -87,22 +51,10 @@ def main(preprint_msg=''):
     SymName = None
     Sym_list,nbody = Make2DChoreoSymManyLoops(nbpl=nbpl,SymName=SymName)
 
-    # ~ rot_angle = twopi * nbf /  nTf
-    # ~ s = 1
-
-    # ~ Sym_list.append(ChoreoSym(
-        # ~ LoopTarget=0,
-        # ~ LoopSource=0,
-        # ~ SpaceRot = np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64),
-        # ~ TimeRev=1,
-        # ~ TimeShift=fractions.Fraction(numerator=1,denominator=nTf)
-        # ~ ))
-
-
     MomConsImposed = True
     # ~ MomConsImposed = False
 
-    store_folder = './Target_res/'
+    store_folder = './Reconverge_tries/'
     store_folder = store_folder+str(nbody)
     if not(os.path.isdir(store_folder)):
         os.makedirs(store_folder)
@@ -110,11 +62,11 @@ def main(preprint_msg=''):
     Use_exact_Jacobian = True
     # ~ Use_exact_Jacobian = False
 
-    Look_for_duplicates = True
-    # ~ Look_for_duplicates = False
+    # ~ Look_for_duplicates = True
+    Look_for_duplicates = False
 
-    Check_Escape = True
-    # ~ Check_Escape = False
+    # ~ Check_Escape = True
+    Check_Escape = False
 
     # ~ Penalize_Escape = True
     Penalize_Escape = False
@@ -154,18 +106,9 @@ def main(preprint_msg=''):
     Plot_trace_anim = True
     # ~ Plot_trace_anim = False
 
-    n_reconverge_it_max = 4
-    # ~ n_reconverge_it_max = 1
+    n_reconverge_it_max = 1
 
-    # ~ ncoeff_init = 102
-    # ~ ncoeff_init = 800
-    # ~ ncoeff_init = 201   
-    # ~ ncoeff_init = 300   
-    # ~ ncoeff_init = 600
-    # ~ ncoeff_init = 900
-    ncoeff_init = 1800
-    # ~ ncoeff_init = 1206
-    # ~ ncoeff_init = 90
+    ncoeff_init = all_coeffs_base.shape[2]
 
     disp_scipy_opt = False
     # ~ disp_scipy_opt = True
@@ -274,26 +217,6 @@ def main(preprint_msg=''):
     ncoeff = callfun[0]["ncoeff_list"][callfun[0]["current_cvg_lvl"]]
     nint = callfun[0]["nint_list"][callfun[0]["current_cvg_lvl"]]
 
-    coeff_ampl_o=1e-16
-    k_infl=1
-    k_max=200
-    coeff_ampl_min=1e-16
-
-    all_coeffs_min,all_coeffs_max = Make_Init_bounds_coeffs(nloop,ncoeff,coeff_ampl_o,k_infl,k_max,coeff_ampl_min)
-
-    x_min = Package_all_coeffs(all_coeffs_min,callfun)
-    x_max = Package_all_coeffs(all_coeffs_max,callfun)
-
-    rand_eps = coeff_ampl_min
-    rand_dim = 0
-    for i in range(callfun[0]['coeff_to_param_list'][0].shape[0]):
-        if ((x_max[i] - x_min[i]) > rand_eps):
-            rand_dim +=1
-
-    print('Number of initialization dimensions : ',rand_dim)
-
-    sampler = UniformRandom(d=rand_dim)
-
     freq_erase_dict = 1000
     hash_dict = {}
 
@@ -316,21 +239,8 @@ def main(preprint_msg=''):
         ncoeff = callfun[0]["ncoeff_list"][callfun[0]["current_cvg_lvl"]]
         nint = callfun[0]["nint_list"][callfun[0]["current_cvg_lvl"]]
         
-        all_coeffs_avg = Gen_init_avg(nTf,nbs,nbf,mass_mul,ncoeff,all_coeffs_slow_load,all_coeffs_fast_load,callfun,Rotate_fast_with_slow,Optimize_Init,Randomize_Fast_Init)        
-        x_avg = Package_all_coeffs(all_coeffs_avg,callfun)
+        x0 = Package_all_coeffs(all_coeffs_base,callfun)
         
-        x0 = np.zeros((callfun[0]['coeff_to_param_list'][callfun[0]["current_cvg_lvl"]].shape[0]),dtype=np.float64)
-        
-        xrand = sampler.random()
-        
-        rand_dim = 0
-        for i in range(callfun[0]['coeff_to_param_list'][callfun[0]["current_cvg_lvl"]].shape[0]):
-            if ((x_max[i] - x_min[i]) > rand_eps):
-                x0[i] = x_avg[i] + x_min[i] + (x_max[i] - x_min[i])*xrand[rand_dim]
-                rand_dim +=1
-            else:
-                x0[i] = x_avg[i]
-
         if save_init:
             
             print('Saving init state')
@@ -438,7 +348,6 @@ def main(preprint_msg=''):
                     ncoeff_fine = callfun[0]["ncoeff_list"][callfun[0]["current_cvg_lvl"]]
 
                     all_coeffs_fine = np.zeros((nloop,ndim,ncoeff_fine,2),dtype=np.float64)
-                    # ~ all_coeffs_fine[:,:,0:ncoeff_coarse,:] = np.copy(all_coeffs_coarse)
                     for k in range(ncoeff_coarse):
                         all_coeffs_fine[:,:,k,:] = all_coeffs_coarse[:,:,k,:]
                         
@@ -487,21 +396,7 @@ def main(preprint_msg=''):
                     
                     GoOn  = False
                     
-                    max_num_file = 0
-                    
-                    for filename in os.listdir(store_folder):
-                        file_path = os.path.join(store_folder, filename)
-                        file_root, file_ext = os.path.splitext(os.path.basename(file_path))
-                        
-                        if (file_ext == '.txt' ):
-                            try:
-                                max_num_file = max(max_num_file,int(file_root))
-                            except:
-                                pass
-                        
-                    max_num_file = max_num_file + 1
-                    
-                    filename_output = store_folder+'/'+str(max_num_file)
+                    filename_output = basename+'_recvg'
 
                     print('Saving solution as '+filename_output+'.*')
              

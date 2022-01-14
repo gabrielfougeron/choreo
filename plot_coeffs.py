@@ -13,15 +13,13 @@ import time
 from Choreo_funs import *
 
 # ~ all_coeffs = np.load('./Target_res/3/4.npy')
-all_coeffs = np.load('./Target_res/9/2.npy')
+# ~ all_coeffs = np.load('./Target_res/9/8.npy')
+all_coeffs = np.load('./Target_res/9/4.npy')
 # ~ all_coeffs = np.load('./Target_res/6/2.npy')
 # ~ all_coeffs = np.load('./Target_res/6/3.npy')
 
 
-# ~ all_coeffs = np.load('./Sniff_all_sym/5/9.npy')
-# ~ all_coeffs = np.load('./save_tests/9/8.npy')
-# ~ all_coeffs = np.load('./save_tests/9/8.npy')
-# ~ all_coeffs = np.load('./Sniff_all_sym/1/1.npy')
+# ~ all_coeffs = np.load('./Sniff_all_sym/3/4.npy')
 # ~ all_coeffs = np.load('./init.npy')
 
 
