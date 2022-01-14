@@ -34,13 +34,13 @@ def main(preprint_msg=''):
     
 
     # ~ basename = './Reconverge_tries/9/15'
-    basename = './Reconverge_tries/9/1'
+    basename = './Reconverge_tries/6/4'
     # ~ basename = './Reconverge_tries/9/1_recvg'
     base_filename = basename+'.npy'
 
     all_coeffs_base = np.load(base_filename)
 
-    nbody =  9
+    nbody =  6
 
     mass = np.ones((nbody))
 
@@ -59,8 +59,8 @@ def main(preprint_msg=''):
     if not(os.path.isdir(store_folder)):
         os.makedirs(store_folder)
 
-    # ~ Use_exact_Jacobian = True
-    Use_exact_Jacobian = False
+    Use_exact_Jacobian = True
+    # ~ Use_exact_Jacobian = False
 
     # ~ Look_for_duplicates = True
     Look_for_duplicates = False
@@ -113,8 +113,8 @@ def main(preprint_msg=''):
     # ~ disp_scipy_opt = False
     disp_scipy_opt = True
 
-    # ~ UsePrecond = True
-    UsePrecond = False
+    UsePrecond = True
+    # ~ UsePrecond = False
 
     # ~ Newt_err_norm_max = 1e-13
     Newt_err_norm_max = 1e-15
@@ -123,20 +123,20 @@ def main(preprint_msg=''):
 
     duplicate_eps = 1e-8
 
-    # ~ krylov_method = 'lgmres'
+    krylov_method = 'lgmres'
     # ~ krylov_method = 'gmres'
     # ~ krylov_method = 'bicgstab'
-    krylov_method = 'cgs'
+    # ~ krylov_method = 'cgs'
     # ~ krylov_method = 'minres'
 
     # ~ line_search = 'armijo'
     line_search = 'wolfe'
     
-    gradtol_list =          [1e-3   ,1e-5   ,1e-7   ,1e-9   ,1e-11  ,1e-13  ]
-    inner_maxiter_list =    [30     ,50     ,60     ,70     ,80     ,100    ]
-    maxiter_list =          [1000   ,1000   ,1000   ,500    ,500    ,100    ]
-    outer_k_list =          [5      ,5      ,5      ,5      ,7      ,7      ]
-    store_outer_Av_list =   [False  ,False  ,False  ,False  ,True   ,True   ]
+    gradtol_list =          [1e-3   ,1e-5   ,1e-7   ,1e-9   ,1e-11  ,1e-13  ,1e-15  ]
+    inner_maxiter_list =    [90     ,90     ,90     ,90     ,90     ,90     ,90     ]
+    maxiter_list =          [100    ,100    ,100    ,100    ,100    ,100    ,100    ]
+    outer_k_list =          [5      ,5      ,5      ,5      ,7      ,7      ,7      ]
+    store_outer_Av_list =   [False  ,False  ,False  ,False  ,True   ,True   ,True   ]
     
 
     n_optim_param = len(gradtol_list)
@@ -225,7 +225,9 @@ def main(preprint_msg=''):
 
 
     if UsePrecond:
-        ncoeff_precond = 900
+        # ~ ncoeff_precond = 900
+        ncoeff_precond = 1800
+        # ~ ncoeff_precond = 2700
         callfun_precond = setup_changevar(nbody,ncoeff_precond,mass,1,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change)
         x0 = Package_all_coeffs(all_coeffs_base,callfun)
         x0_precond = Param_to_Param_direct(x0,callfun,callfun_precond)
@@ -236,26 +238,26 @@ def main(preprint_msg=''):
         nparam_precond = x0_precond.shape[0]
         ActHessPrecond_LinOpt = Compute_action_hess_LinOpt(x0_precond,callfun_precond)
         
-        # ~ print('Computing eigenvalues')
-        # ~ w ,v = sp.linalg.eigsh(ActHessPrecond_LinOpt,k=3,which='SM')
-        # ~ print(w)
-        # ~ nthresh = 2
-        # ~ v = v[:,0:nthresh]
+        print('Computing eigenvalues')
+        w ,v = sp.linalg.eigsh(ActHessPrecond_LinOpt,k=3,which='SM')
+        print(w)
+        nthresh = 2
+        v = v[:,0:nthresh]
         
         print("Computing dense Hessian")
-        ActHessPrecond_dense = ActHessPrecond_LinOpt * np.eye(nparam_precond)
+        # ~ ActHessPrecond_dense = ActHessPrecond_LinOpt * np.eye(nparam_precond)
         # ~ ActHessPrecond_dense = ActHessPrecond_LinOpt * np.eye(nparam_precond) -np.dot(v,v.transpose())
-        # ~ ActHessPrecond_dense = ActHessPrecond_LinOpt * np.eye(nparam_precond) + w[2]* np.dot(v,v.transpose())
+        ActHessPrecond_dense = ActHessPrecond_LinOpt * np.eye(nparam_precond) + w[2]* np.dot(v,v.transpose())
         
             
-        print("Sparsifying Hessian")
-        atol_nnz = 0
+        # ~ print("Sparsifying Hessian")
+        # ~ atol_nnz = 0
         # ~ atol_nnz = 1e-11
         # ~ atol_nnz = 1e-3
-        for i in range(nparam_precond):
-            for j in range(nparam_precond):
-                if (abs(ActHessPrecond_dense[i,j]) < atol_nnz):
-                    ActHessPrecond_dense[i,j] = 0.
+        # ~ for i in range(nparam_precond):
+            # ~ for j in range(nparam_precond):
+                # ~ if (abs(ActHessPrecond_dense[i,j]) < atol_nnz):
+                    # ~ ActHessPrecond_dense[i,j] = 0.
         
         ActHessPrecond_csc = scipy.sparse.csc_matrix(ActHessPrecond_dense)
 
@@ -263,10 +265,16 @@ def main(preprint_msg=''):
         print(ActHessPrecond_csc.nnz/(nparam_precond*nparam_precond))
         
         
+        # ~ drop_tol = 1e-4
+        # ~ fill_factor = 10.
+        
+        drop_tol = 1e-6
+        fill_factor = 30.
+        
         print("Precond Factoring Hessian")
         tstart = time.perf_counter()
-        precond = scipy.sparse.linalg.spilu(ActHessPrecond_csc)
-        # ~ precond = scipy.sparse.linalg.splu(ActHessPrecond_csc)
+        # ~ precond = scipy.sparse.linalg.spilu(ActHessPrecond_csc,drop_tol=drop_tol,fill_factor=fill_factor)
+        precond = scipy.sparse.linalg.splu(ActHessPrecond_csc)
         tstop = time.perf_counter()
         print("Precond factorization : ",tstop-tstart)
 
@@ -442,13 +450,7 @@ def main(preprint_msg=''):
                 else:
                     
                     NeedsRefinement = False
-                    
-                print("GoOn",GoOn)   
-                print("CanChangeOptimParams",CanChangeOptimParams)   
-                print("ParamPreciseEnough",ParamPreciseEnough)   
-                print("NeedsRefinement",NeedsRefinement)   
 
-                
                 NeedsChangeOptimParams = GoOn and CanChangeOptimParams and not(NeedsRefinement)
                 
                 if GoOn and not(ParamFoundSol):
