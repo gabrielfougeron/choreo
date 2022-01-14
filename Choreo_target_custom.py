@@ -19,7 +19,6 @@ import shutil
 import time
 
 from Choreo_funs import *
-from scipy_root_plus import ExactKrylovJacobian
 
 
 
@@ -420,7 +419,7 @@ def main(preprint_msg=''):
                 print('Opt Action Grad Norm : ',best_sol.f_norm)
             
                 Newt_err = Compute_Newton_err(best_sol.x,callfun)
-                Newt_err_norm = np.linalg.norm(Newt_err)/nint
+                Newt_err_norm = np.linalg.norm(Newt_err)/(nint*nbody)
                 NewtonPreciseGood = (Newt_err_norm < Newt_err_norm_max)
                 NewtonPreciseEnough = (Newt_err_norm < Newt_err_norm_max_save)
                 print('Newton Error : ',Newt_err_norm)

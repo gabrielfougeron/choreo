@@ -17,11 +17,9 @@ from matplotlib import animation
 import copy
 import shutil
 import time
+import copy
 
 from Choreo_funs import *
-from scipy_root_plus import ExactKrylovJacobian
-
-
 
 def main(preprint_msg=''):
     
@@ -35,7 +33,9 @@ def main(preprint_msg=''):
         return __builtins__.print(*args, **kwargs)
     
 
-    basename = './Reconverge_tries/9/15'
+    # ~ basename = './Reconverge_tries/9/15'
+    basename = './Reconverge_tries/9/1'
+    # ~ basename = './Reconverge_tries/9/1_recvg'
     base_filename = basename+'.npy'
 
     all_coeffs_base = np.load(base_filename)
@@ -59,8 +59,8 @@ def main(preprint_msg=''):
     if not(os.path.isdir(store_folder)):
         os.makedirs(store_folder)
 
-    Use_exact_Jacobian = True
-    # ~ Use_exact_Jacobian = False
+    # ~ Use_exact_Jacobian = True
+    Use_exact_Jacobian = False
 
     # ~ Look_for_duplicates = True
     Look_for_duplicates = False
@@ -71,8 +71,8 @@ def main(preprint_msg=''):
     # ~ Penalize_Escape = True
     Penalize_Escape = False
 
-    save_init = False
-    # ~ save_init = True
+    # ~ save_init = False
+    save_init = True
 
     Save_img = True
     # ~ Save_img = False
@@ -82,8 +82,8 @@ def main(preprint_msg=''):
 
     nint_plot_img = 10000
 
-    Save_anim = True
-    # ~ Save_anim = False
+    # ~ Save_anim = True
+    Save_anim = False
 
     vid_size = (8,8) # Image size in inches
     nint_plot_anim = 2*2*2*3*3*5 * 6 *3
@@ -110,33 +110,39 @@ def main(preprint_msg=''):
 
     ncoeff_init = all_coeffs_base.shape[2]
 
-    disp_scipy_opt = False
-    # ~ disp_scipy_opt = True
+    # ~ disp_scipy_opt = False
+    disp_scipy_opt = True
 
-    Newt_err_norm_max = 1e-10
+    # ~ UsePrecond = True
+    UsePrecond = False
+
+    # ~ Newt_err_norm_max = 1e-13
+    Newt_err_norm_max = 1e-15
     # ~ Newt_err_norm_max_save = Newt_err_norm_max*1000
     Newt_err_norm_max_save = 1e-1
 
     duplicate_eps = 1e-8
 
-    krylov_method = 'lgmres'
+    # ~ krylov_method = 'lgmres'
     # ~ krylov_method = 'gmres'
     # ~ krylov_method = 'bicgstab'
-    # ~ krylov_method = 'cgs'
+    krylov_method = 'cgs'
     # ~ krylov_method = 'minres'
 
     # ~ line_search = 'armijo'
     line_search = 'wolfe'
     
-    gradtol_list =          [1e-3   ,1e-5   ,1e-7   ,1e-9   ,1e-11  ,1e-13]
-    inner_maxiter_list =    [30     ,50     ,60     ,70     ,80     ,100]
-    maxiter_list =          [1000   ,1000   ,1000   ,500   ,500    ,500]
-    outer_k_list =          [5      ,5      ,5      ,5      ,7      ,7]
-    store_outer_Av_list =   [False  ,False  ,False  ,False  ,True   ,True]
+    gradtol_list =          [1e-3   ,1e-5   ,1e-7   ,1e-9   ,1e-11  ,1e-13  ]
+    inner_maxiter_list =    [30     ,50     ,60     ,70     ,80     ,100    ]
+    maxiter_list =          [1000   ,1000   ,1000   ,500    ,500    ,100    ]
+    outer_k_list =          [5      ,5      ,5      ,5      ,7      ,7      ]
+    store_outer_Av_list =   [False  ,False  ,False  ,False  ,True   ,True   ]
     
+
     n_optim_param = len(gradtol_list)
     
-    gradtol_max = 100*gradtol_list[n_optim_param-1]
+    # ~ gradtol_max = 100*gradtol_list[n_optim_param-1]
+    gradtol_max = gradtol_list[n_optim_param-1]
     # ~ foundsol_tol = 1000*gradtol_list[0]
     foundsol_tol = 1e10
 
@@ -217,12 +223,70 @@ def main(preprint_msg=''):
     ncoeff = callfun[0]["ncoeff_list"][callfun[0]["current_cvg_lvl"]]
     nint = callfun[0]["nint_list"][callfun[0]["current_cvg_lvl"]]
 
+
+    if UsePrecond:
+        ncoeff_precond = 900
+        callfun_precond = setup_changevar(nbody,ncoeff_precond,mass,1,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change)
+        x0 = Package_all_coeffs(all_coeffs_base,callfun)
+        x0_precond = Param_to_Param_direct(x0,callfun,callfun_precond)
+
+                        
+        plot_all_2D(x0_precond,nint_plot_img,callfun_precond,'precond.png',fig_size=img_size,color=color)
+
+        nparam_precond = x0_precond.shape[0]
+        ActHessPrecond_LinOpt = Compute_action_hess_LinOpt(x0_precond,callfun_precond)
+        
+        # ~ print('Computing eigenvalues')
+        # ~ w ,v = sp.linalg.eigsh(ActHessPrecond_LinOpt,k=3,which='SM')
+        # ~ print(w)
+        # ~ nthresh = 2
+        # ~ v = v[:,0:nthresh]
+        
+        print("Computing dense Hessian")
+        ActHessPrecond_dense = ActHessPrecond_LinOpt * np.eye(nparam_precond)
+        # ~ ActHessPrecond_dense = ActHessPrecond_LinOpt * np.eye(nparam_precond) -np.dot(v,v.transpose())
+        # ~ ActHessPrecond_dense = ActHessPrecond_LinOpt * np.eye(nparam_precond) + w[2]* np.dot(v,v.transpose())
+        
+            
+        print("Sparsifying Hessian")
+        atol_nnz = 0
+        # ~ atol_nnz = 1e-11
+        # ~ atol_nnz = 1e-3
+        for i in range(nparam_precond):
+            for j in range(nparam_precond):
+                if (abs(ActHessPrecond_dense[i,j]) < atol_nnz):
+                    ActHessPrecond_dense[i,j] = 0.
+        
+        ActHessPrecond_csc = scipy.sparse.csc_matrix(ActHessPrecond_dense)
+
+        print(ActHessPrecond_csc.nnz)
+        print(ActHessPrecond_csc.nnz/(nparam_precond*nparam_precond))
+        
+        
+        print("Precond Factoring Hessian")
+        tstart = time.perf_counter()
+        precond = scipy.sparse.linalg.spilu(ActHessPrecond_csc)
+        # ~ precond = scipy.sparse.linalg.splu(ActHessPrecond_csc)
+        tstop = time.perf_counter()
+        print("Precond factorization : ",tstop-tstart)
+
+
+
+
+
+
+
+
+
+
+
+
     freq_erase_dict = 1000
     hash_dict = {}
 
     n_opt = 0
-    # ~ n_opt_max = 1
-    n_opt_max = 5
+    n_opt_max = 1
+    # ~ n_opt_max = 5
     # ~ n_opt_max = 1e10
     while (n_opt < n_opt_max):
         
@@ -244,6 +308,8 @@ def main(preprint_msg=''):
         if save_init:
             
             print('Saving init state')
+
+            plot_Newton_Error(x0,callfun,'init_newton_error.png')
 
             if Save_img :
                 plot_all_2D(x0,nint_plot_img,callfun,'init.png',fig_size=img_size,color=color)        
@@ -275,10 +341,24 @@ def main(preprint_msg=''):
             print('Action Grad Norm on entry : ',best_sol.f_norm)
             print('Optim level : ',i_optim_param+1,' / ',n_optim_param , 'Resize level : ',callfun[0]["current_cvg_lvl"]+1,' / ',n_reconverge_it_max+1)
 
+            if UsePrecond:
+                            
+                Precond_LinOpt = Package_Precond_LinOpt(precond,callfun_precond,callfun)
+                inner_M = Precond_LinOpt
+            
+            else:
+                
+                inner_M = None
             
             F = lambda x : Action_grad_mod(x,callfun)
-            jac_options = {'method':krylov_method,'rdiff':rdiff,'outer_k':outer_k,'inner_inner_m':inner_maxiter,'inner_store_outer_Av':store_outer_Av,'inner_tol':inner_tol }
             
+            if (krylov_method == 'lgmres'):
+                jac_options = {'method':krylov_method,'rdiff':rdiff,'outer_k':outer_k,'inner_inner_m':inner_maxiter,'inner_store_outer_Av':store_outer_Av,'inner_tol':inner_tol,'inner_M':inner_M }
+            elif (krylov_method == 'gmres'):
+                jac_options = {'method':krylov_method,'rdiff':rdiff,'outer_k':outer_k,'inner_tol':inner_tol,'inner_M':inner_M }
+            else:
+                jac_options = {'method':krylov_method,'rdiff':rdiff,'outer_k':outer_k,'inner_tol':inner_tol,'inner_M':inner_M }
+                
             if (Use_exact_Jacobian):
 
                 FGrad = lambda x,dx : Compute_action_hess_mul(x,dx,callfun)
@@ -330,7 +410,7 @@ def main(preprint_msg=''):
                 print('Opt Action Grad Norm : ',best_sol.f_norm)
             
                 Newt_err = Compute_Newton_err(best_sol.x,callfun)
-                Newt_err_norm = np.linalg.norm(Newt_err)/nint
+                Newt_err_norm = np.linalg.norm(Newt_err)/(nint*nbody)
                 NewtonPreciseGood = (Newt_err_norm < Newt_err_norm_max)
                 NewtonPreciseEnough = (Newt_err_norm < Newt_err_norm_max_save)
                 print('Newton Error : ',Newt_err_norm)
@@ -363,7 +443,13 @@ def main(preprint_msg=''):
                     
                     NeedsRefinement = False
                     
-                NeedsChangeOptimParams = GoOn and CanChangeOptimParams and not(ParamPreciseEnough) and not(NeedsRefinement)
+                print("GoOn",GoOn)   
+                print("CanChangeOptimParams",CanChangeOptimParams)   
+                print("ParamPreciseEnough",ParamPreciseEnough)   
+                print("NeedsRefinement",NeedsRefinement)   
+
+                
+                NeedsChangeOptimParams = GoOn and CanChangeOptimParams and not(NeedsRefinement)
                 
                 if GoOn and not(ParamFoundSol):
                 
@@ -427,6 +513,16 @@ def main(preprint_msg=''):
                     print('Changing Optimizer Parameters')
                     
                     i_optim_param += 1
+                    
+                if GoOn and not(NeedsRefinement) and not(NeedsChangeOptimParams):
+                    
+                    print("NeedsRefinement",NeedsRefinement)
+                    print("NeedsChangeOptimParams",NeedsChangeOptimParams)
+                    print("NewtonPreciseEnough",NewtonPreciseEnough)
+                    print("NewtonPreciseGood",NewtonPreciseGood)
+                    
+                    print("The optimizer is stuck. Restarting")
+                    GoOn=False
                     
                 
                 print('')
