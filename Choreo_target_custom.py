@@ -36,13 +36,13 @@ def main(preprint_msg=''):
 
     # ~ slow_base_filename = './data/2_cercle.npy'
     # ~ slow_base_filename = './data/3_cercle.npy'
-    slow_base_filename = './data/3_huit.npy'
-    # ~ slow_base_filename = './data/3_heart.npy'
+    # ~ slow_base_filename = './data/3_huit.npy'
+    slow_base_filename = './data/3_heart.npy'
 
     # ~ fast_base_filename = './data/1_lone_wolf.npy'
-    fast_base_filename = './data/2_cercle.npy'
+    # ~ fast_base_filename = './data/2_cercle.npy'
     # ~ fast_base_filename = './data/3_cercle.npy'
-    # ~ fast_base_filename = './data/3_huit.npy'
+    fast_base_filename = './data/3_huit.npy'
     # ~ fast_base_filename = './data/3_heart.npy'
     # ~ fast_base_filename = './data/3_dbl_heart.npy'
 
@@ -51,11 +51,11 @@ def main(preprint_msg=''):
     # ~ nTf = 38
     # ~ nTf = 13
     nbs = 3
-    nbf = 2
+    nbf = 3
 
     # ~ Rotate_fast_with_slow = True
-    Rotate_fast_with_slow = False
-    # ~ Rotate_fast_with_slow = (np.random.random() > 1./2.)
+    # ~ Rotate_fast_with_slow = False
+    Rotate_fast_with_slow = (np.random.random() > 1./2.)
 
     Optimize_Init = True
     # ~ Optimize_Init = False
@@ -162,12 +162,13 @@ def main(preprint_msg=''):
     # ~ ncoeff_init = 300   
     # ~ ncoeff_init = 600
     # ~ ncoeff_init = 900
-    ncoeff_init = 1800
+    # ~ ncoeff_init = 1800
+    ncoeff_init = 2700
     # ~ ncoeff_init = 1206
     # ~ ncoeff_init = 90
 
-    # ~ disp_scipy_opt = False
-    disp_scipy_opt = True
+    disp_scipy_opt = False
+    # ~ disp_scipy_opt = True
 
     Newt_err_norm_max = 1e-10
     # ~ Newt_err_norm_max_save = Newt_err_norm_max*1000
@@ -184,11 +185,11 @@ def main(preprint_msg=''):
     # ~ line_search = 'armijo'
     line_search = 'wolfe'
     
-    gradtol_list =          [1e-3   ,1e-5   ,1e-7   ,1e-9   ,1e-11  ,1e-13  ]
-    inner_maxiter_list =    [30     ,50     ,60     ,70     ,80     ,100    ]
-    maxiter_list =          [1000   ,1000   ,1000   ,500   ,500     ,500    ]
-    outer_k_list =          [5      ,5      ,5      ,5      ,7      ,7      ]
-    store_outer_Av_list =   [False  ,False  ,False  ,False  ,True   ,True   ]
+    gradtol_list =          [1e-3   ,1e-5   ,1e-7   ,1e-9   ,1e-11  ,1e-13  ,1e-15  ]
+    inner_maxiter_list =    [30     ,50     ,60     ,70     ,80     ,100    ,100    ]
+    maxiter_list =          [1000   ,1000   ,1000   ,500   ,500     ,300    ,100    ]
+    outer_k_list =          [5      ,5      ,5      ,5      ,7      ,7      ,7      ]
+    store_outer_Av_list =   [False  ,False  ,False  ,False  ,True   ,True   ,True   ]
     
     n_optim_param = len(gradtol_list)
     
@@ -362,7 +363,7 @@ def main(preprint_msg=''):
             store_outer_Av = store_outer_Av_list[i_optim_param]
             
             print('Action Grad Norm on entry : ',best_sol.f_norm)
-            print('Optim level : ',i_optim_param+1,' / ',n_optim_param , 'Resize level : ',callfun[0]["current_cvg_lvl"]+1,' / ',n_reconverge_it_max+1)
+            print('Optim level : ',i_optim_param+1,' / ',n_optim_param , '    Resize level : ',callfun[0]["current_cvg_lvl"]+1,' / ',n_reconverge_it_max+1)
 
             
             F = lambda x : Action_grad_mod(x,callfun)
@@ -453,7 +454,7 @@ def main(preprint_msg=''):
                     
                     NeedsRefinement = False
                     
-                NeedsChangeOptimParams = GoOn and CanChangeOptimParams and not(ParamPreciseEnough) and not(NeedsRefinement)
+                NeedsChangeOptimParams = GoOn and CanChangeOptimParams and not(ParamPreciseEnough) and not(NewtonPreciseGood) and not(NeedsRefinement)
                 
                 if GoOn and not(ParamFoundSol):
                 

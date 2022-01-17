@@ -34,13 +34,13 @@ def main(preprint_msg=''):
     
 
     # ~ basename = './Reconverge_tries/9/15'
-    basename = './Reconverge_tries/6/4'
+    basename = './Reconverge_tries/9_save/8'
     # ~ basename = './Reconverge_tries/9/1_recvg'
     base_filename = basename+'.npy'
 
     all_coeffs_base = np.load(base_filename)
 
-    nbody =  6
+    nbody =  9
 
     mass = np.ones((nbody))
 
@@ -133,8 +133,8 @@ def main(preprint_msg=''):
     line_search = 'wolfe'
     
     gradtol_list =          [1e-3   ,1e-5   ,1e-7   ,1e-9   ,1e-11  ,1e-13  ,1e-15  ]
-    inner_maxiter_list =    [90     ,90     ,90     ,90     ,90     ,90     ,90     ]
-    maxiter_list =          [100    ,100    ,100    ,100    ,100    ,100    ,100    ]
+    inner_maxiter_list =    [90     ,90     ,90     ,90     ,150    ,90     ,90     ]
+    maxiter_list =          [100    ,100    ,100    ,100    ,100    ,1      ,1      ]
     outer_k_list =          [5      ,5      ,5      ,5      ,7      ,7      ,7      ]
     store_outer_Av_list =   [False  ,False  ,False  ,False  ,True   ,True   ,True   ]
     
@@ -160,6 +160,7 @@ def main(preprint_msg=''):
     # ~ escape_pow = 0.5
 
     n_grad_change = 1.
+    # ~ n_grad_change = 0.
     # ~ n_grad_change = 1.5
 
     print('Searching periodic solutions of {:d} bodies'.format(nbody))
@@ -225,8 +226,9 @@ def main(preprint_msg=''):
 
 
     if UsePrecond:
-        # ~ ncoeff_precond = 900
-        ncoeff_precond = 1800
+        ncoeff_precond = 900
+        # ~ ncoeff_precond = 108
+        # ~ ncoeff_precond = 1800
         # ~ ncoeff_precond = 2700
         callfun_precond = setup_changevar(nbody,ncoeff_precond,mass,1,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change)
         x0 = Package_all_coeffs(all_coeffs_base,callfun)
@@ -238,16 +240,26 @@ def main(preprint_msg=''):
         nparam_precond = x0_precond.shape[0]
         ActHessPrecond_LinOpt = Compute_action_hess_LinOpt(x0_precond,callfun_precond)
         
+        
+        # ~ x0 = np.random.random((nparam_precond))        
+        # ~ print("dev id ",np.linalg.norm(ActHessPrecond_LinOpt*x0 - x0))
+        
+        
         print('Computing eigenvalues')
         w ,v = sp.linalg.eigsh(ActHessPrecond_LinOpt,k=3,which='SM')
         print(w)
         nthresh = 2
         v = v[:,0:nthresh]
         
+        
+
+
+        print(2/0)
+        
         print("Computing dense Hessian")
-        # ~ ActHessPrecond_dense = ActHessPrecond_LinOpt * np.eye(nparam_precond)
+        ActHessPrecond_dense = ActHessPrecond_LinOpt * np.eye(nparam_precond)
         # ~ ActHessPrecond_dense = ActHessPrecond_LinOpt * np.eye(nparam_precond) -np.dot(v,v.transpose())
-        ActHessPrecond_dense = ActHessPrecond_LinOpt * np.eye(nparam_precond) + w[2]* np.dot(v,v.transpose())
+        # ~ ActHessPrecond_dense = ActHessPrecond_LinOpt * np.eye(nparam_precond) + w[2]* np.dot(v,v.transpose())
         
             
         # ~ print("Sparsifying Hessian")
@@ -265,21 +277,23 @@ def main(preprint_msg=''):
         print(ActHessPrecond_csc.nnz/(nparam_precond*nparam_precond))
         
         
+        drop_tol = None
+        fill_factor = None
+        
+        
         # ~ drop_tol = 1e-4
         # ~ fill_factor = 10.
         
-        drop_tol = 1e-6
-        fill_factor = 30.
+        # ~ drop_tol = 1e-6
+        # ~ fill_factor = 30.
+        
         
         print("Precond Factoring Hessian")
         tstart = time.perf_counter()
-        # ~ precond = scipy.sparse.linalg.spilu(ActHessPrecond_csc,drop_tol=drop_tol,fill_factor=fill_factor)
-        precond = scipy.sparse.linalg.splu(ActHessPrecond_csc)
+        precond = scipy.sparse.linalg.spilu(ActHessPrecond_csc,drop_tol=drop_tol,fill_factor=fill_factor)
+        # ~ precond = scipy.sparse.linalg.splu(ActHessPrecond_csc)
         tstop = time.perf_counter()
         print("Precond factorization : ",tstop-tstart)
-
-
-
 
 
 
@@ -444,6 +458,7 @@ def main(preprint_msg=''):
                     f_fine_norm = np.linalg.norm(f_fine)
                     
                     NeedsRefinement = (f_fine_norm > 3*best_sol.f_norm)
+                    # ~ NeedsRefinement = True
                     
                     callfun[0]["current_cvg_lvl"] += -1
                 
