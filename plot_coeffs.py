@@ -14,12 +14,14 @@ from Choreo_funs import *
 
 # ~ all_coeffs = np.load('./Target_res/3/4.npy')
 # ~ all_coeffs = np.load('./Target_res/9/8.npy')
-all_coeffs = np.load('./Target_res/9/2.npy')
+# ~ all_coeffs = np.load('./Target_res/9/2.npy')
 # ~ all_coeffs = np.load('./Target_res/6/2.npy')
 # ~ all_coeffs = np.load('./Target_res/6/3.npy')
 
 
-# ~ all_coeffs = np.load('./Sniff_all_sym/3/4.npy')
+
+
+all_coeffs = np.load('./Reconverge_tries/9_save/8.npy')
 # ~ all_coeffs = np.load('./init.npy')
 
 

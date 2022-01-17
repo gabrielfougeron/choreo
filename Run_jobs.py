@@ -13,15 +13,14 @@ os.environ['MKL_NUM_THREADS'] = '1'
 
 
 # ~ job = 'python Choreo_sniffall.py' 
-# ~ job = 'python Choreo_target_custom.py' 
-# ~ job = 'python Choreo_target_custom.py' 
-job = 'python Choreo_reconverge.py' 
+job = 'python Choreo_target_custom.py' 
+# ~ job = 'python Choreo_reconverge.py' 
 # ~ job = 'python FD_test.py' 
 
 
 # ~ n=40
 # ~ n=12
-n=3
+n=6
 # ~ n=8
 # ~ n=1
 
