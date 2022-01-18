@@ -61,7 +61,6 @@ def plot_Newton_Error(x,callfun,filename,fig_size=(8,5),color_list = plt.rcParam
     plt.tight_layout()
     plt.savefig(filename)
     plt.close()
-        
 
 def plot_all_2D(x,nint_plot,callfun,filename,fig_size=(10,10),color=None,color_list = plt.rcParams['axes.prop_cycle'].by_key()['color']):
     # Plots 2D trajectories and saves image under filename
@@ -1606,12 +1605,12 @@ def Transform_Coeffs(SpaceRots, TimeRevs, TimeShiftNum, TimeShiftDen, all_coeffs
 def Compose_Two_Paths(nTf,nbs,nbf,mass_mul,ncoeff,all_coeffs_slow,all_coeffs_fast,Rotate_fast_with_slow=False):
     # Composes a "slow" with a "fast" path
     
-    k_fac_slow = nbf*mass_mul
+    k_fac_slow = nbf
     k_fac_fast = nTf
     
     phys_exp = 2*(1-n)
 
-    rfac_slow = (k_fac_slow)**(-1./phys_exp)
+    rfac_slow = (k_fac_slow*mass_mul)**(-1./phys_exp)
     rfac_fast = (k_fac_fast)**(-2./phys_exp)
     
     ncoeff_slow = all_coeffs_slow.shape[2]
@@ -1772,6 +1771,103 @@ def Gen_init_avg(nTf,nbs,nbf,mass_mul,ncoeff,all_coeffs_slow_load,all_coeffs_fas
 
     return all_coeffs_avg
 
+def Gen_init_avg_mul_loops(nTf,nbs,nbf,mass_mul,ncoeff,all_coeffs_slow_load,all_coeffs_fast_load,callfun,Rotate_fast_with_slow=False,Optimize_Init=True,Randomize_Fast_Init=True):
+    
+    if Optimize_Init :
+        print(1/0)
+                
+        # ~ if Randomize_Fast_Init :
+
+            # ~ init_SpaceRevscal = 1. if (np.random.random() > 1./2.) else -1.
+            # ~ init_TimeRevscal = 1. if (np.random.random() > 1./2.) else -1.
+            # ~ Act_Mul = 1. if (np.random.random() > 1./2.) else -1.
+            # ~ init_x = np.array([2 * np.pi * np.random.random(),np.random.random()])
+
+        # ~ else:
+
+            # ~ init_SpaceRevscal = 1.
+            # ~ init_TimeRevscal = 1.
+            # ~ Act_Mul = 1.
+            # ~ init_x = np.array([0,0])
+
+        # ~ def init_opt_fun(x):
+
+            # ~ theta = x[0]
+            # ~ SpaceRevscal = init_SpaceRevscal
+            # ~ TimeRevscal = init_TimeRevscal
+            # ~ TimeShiftNum = x[1]
+            # ~ TimeShiftDen = 1
+
+            # ~ RanRotMat = np.array( [[SpaceRevscal*np.cos(theta) , SpaceRevscal*np.sin(theta)] , [-np.sin(theta),np.cos(theta)]])
+
+            # ~ SpaceRots = np.reshape(RanRotMat,(1,ndim,ndim))
+            # ~ TimeRevs = np.array([TimeRevscal])
+            # ~ TimeShiftNum = np.array([TimeShiftNum])
+            # ~ TimeShiftDen = np.array([TimeShiftDen])
+
+            # ~ all_coeffs_fast = Transform_Coeffs(SpaceRots, TimeRevs, TimeShiftNum, TimeShiftDen, all_coeffs_fast_load)
+            # ~ all_coeffs_avg = Compose_Two_Paths(nTf,nbs,nbf,mass_mul,ncoeff,all_coeffs_slow_load,all_coeffs_fast,Rotate_fast_with_slow)
+            
+            # ~ x_avg = Package_all_coeffs(all_coeffs_avg,callfun)
+                
+            # ~ Act, GAct = Compute_action(x_avg,callfun)
+            
+            # ~ return Act_Mul * Act
+            
+        # ~ maxiter = 1000
+        # ~ tol = 1e-10
+
+        # ~ opt_result = scipy.optimize.minimize(fun=init_opt_fun,x0=init_x,method='CG',options={'disp':False,'maxiter':maxiter,'gtol':tol},tol=tol)
+
+        # ~ x_opt = opt_result['x']
+
+        # ~ theta = x_opt[0]
+        # ~ SpaceRevscal = init_SpaceRevscal
+        # ~ TimeRevscal = init_TimeRevscal
+        # ~ TimeShiftNum = x_opt[1]
+        # ~ TimeShiftDen = 1
+
+    elif Randomize_Fast_Init :
+
+        theta_init = 2 * np.pi * np.random.random()
+        SpaceRevscal_init = 1. if (np.random.random() > 1./2.) else -1.
+        TimeRevscal_init = 1. if (np.random.random() > 1./2.) else -1.
+        TimeShiftNum_init = np.random.random()
+        TimeShiftDen_init = 1
+
+    else :
+            
+        theta_init = 0.
+        SpaceRevscal_init = 1.
+        TimeRevscal_init = 1.
+        TimeShiftNum_init = 0
+        TimeShiftDen_init = 1
+          
+
+    all_coeffs = np.zeros((nbf,ndim,ncoeff,2))  
+
+    for i in range(nbf):
+
+        theta = theta_init
+        SpaceRevscal = SpaceRevscal_init
+        TimeRevscal = TimeRevscal_init
+        TimeShiftNum = TimeShiftNum_init + (i*1.)/nbf
+        TimeShiftDen = TimeShiftDen_init
+
+        RanRotMat = np.array( [[SpaceRevscal*np.cos(theta) , SpaceRevscal*np.sin(theta)] , [-np.sin(theta),np.cos(theta)]])
+
+        SpaceRots = np.reshape(RanRotMat,(1,ndim,ndim))
+        TimeRevs = np.array([TimeRevscal])
+        TimeShiftNum = np.array([TimeShiftNum])
+        TimeShiftDen = np.array([TimeShiftDen])
+        
+        all_coeffs_fast = Transform_Coeffs(SpaceRots, TimeRevs, TimeShiftNum, TimeShiftDen, all_coeffs_fast_load)
+        # ~ all_coeffs[i:(i+1),:,:,:] = Compose_Two_Paths(nTf,nbs,1,nbf*mass_mul,ncoeff,all_coeffs_slow_load,all_coeffs_fast,Rotate_fast_with_slow)
+        all_coeffs[i:(i+1),:,:,:] = Compose_Two_Paths(nTf,nbs,1,mass_mul/nbf,ncoeff,all_coeffs_slow_load,all_coeffs_fast,Rotate_fast_with_slow)
+
+    return all_coeffs
+
+
 def Make_Init_bounds_coeffs(nloop,ncoeff,coeff_ampl_o=1e-1,k_infl=1,k_max=200,coeff_ampl_min=1e-16):
 
     all_coeffs_min = np.zeros((nloop,ndim,ncoeff,2),dtype=np.float64)
@@ -1852,28 +1948,6 @@ def Param_to_Param_rev(Gx,callfun_source,callfun_target):
     
     return res
 
-'''
-# ~ def Package_Precond_LinOpt(Precond,callfun_precond,callfun):
-    
-    # ~ args = callfun[0]
-    
-    # ~ def the_matvec(x):
-        
-        # ~ y = Param_to_Param_rev(x,callfun,callfun_precond)
-        y = Param_to_Param_direct(x,callfun,callfun_precond)
-        z = Precond.solve(y)-y
-        # ~ z = -y
-        # ~ res = Param_to_Param_direct(z,callfun_precond,callfun)
-        res = Param_to_Param_rev(z,callfun_precond,callfun)
-        
-        # ~ return res+x
-        
-    # ~ return sp.linalg.LinearOperator((args['coeff_to_param_list'][args["current_cvg_lvl"]].shape[0],args['coeff_to_param_list'][args["current_cvg_lvl"]].shape[0]),
-        # ~ matvec =  the_matvec,
-        # ~ rmatvec = the_matvec)
-'''
-
-
 def Package_Precond_LinOpt(Precond,callfun_precond,callfun):
     
     args = callfun[0]
@@ -1892,7 +1966,6 @@ def Package_Precond_LinOpt(Precond,callfun_precond,callfun):
     return sp.linalg.LinearOperator((args['coeff_to_param_list'][args["current_cvg_lvl"]].shape[0],args['coeff_to_param_list'][args["current_cvg_lvl"]].shape[0]),
         matvec =  the_matvec,
         rmatvec = the_matvec)
-
 
 class ExactKrylovJacobian(scipy.optimize.nonlin.KrylovJacobian):
 
