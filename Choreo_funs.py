@@ -1602,17 +1602,29 @@ def Transform_Coeffs(SpaceRots, TimeRevs, TimeShiftNum, TimeShiftDen, all_coeffs
         
     return all_coeffs_new
 
-def Compose_Two_Paths(nTf,nbs,nbf,mass_mul,ncoeff,all_coeffs_slow,all_coeffs_fast,Rotate_fast_with_slow=False):
+def Compose_Two_Paths(nTf,nbs,nbf,mass_mul,ncoeff,all_coeffs_slow,all_coeffs_fast,Rotate_fast_with_slow=False,mul_loops=False):
     # Composes a "slow" with a "fast" path
     
-    k_fac_slow = nbf
-    k_fac_fast = nTf
-    
-    phys_exp = 2*(1-n)
+    if (mul_loops):
 
-    rfac_slow = (k_fac_slow*mass_mul)**(-1./phys_exp)
-    rfac_fast = (k_fac_fast)**(-2./phys_exp)
+        k_fac_slow = 1
+        k_fac_fast = nTf
+        
+        phys_exp = 2*(1-n)
+
+        rfac_slow = (k_fac_slow/(mass_mul*nbf))**(-1./phys_exp)
+        rfac_fast = (k_fac_fast)**(-2./phys_exp)
     
+    else:
+
+        k_fac_slow = nbf
+        k_fac_fast = nTf
+        
+        phys_exp = 2*(1-n)
+
+        rfac_slow = (k_fac_slow/mass_mul)**(-1./phys_exp)
+        rfac_fast = (k_fac_fast/m.sqrt(mass_mul))**(-2./phys_exp)
+
     ncoeff_slow = all_coeffs_slow.shape[2]
     ncoeff_fast = all_coeffs_fast.shape[2]
     
@@ -1721,7 +1733,7 @@ def Gen_init_avg(nTf,nbs,nbf,mass_mul,ncoeff,all_coeffs_slow_load,all_coeffs_fas
             TimeShiftDen = np.array([TimeShiftDen])
 
             all_coeffs_fast = Transform_Coeffs(SpaceRots, TimeRevs, TimeShiftNum, TimeShiftDen, all_coeffs_fast_load)
-            all_coeffs_avg = Compose_Two_Paths(nTf,nbs,nbf,mass_mul,ncoeff,all_coeffs_slow_load,all_coeffs_fast,Rotate_fast_with_slow)
+            all_coeffs_avg = Compose_Two_Paths(nTf,nbs,nbf,mass_mul,ncoeff,all_coeffs_slow_load,all_coeffs_fast,Rotate_fast_with_slow,mul_loops=False)
             
             x_avg = Package_all_coeffs(all_coeffs_avg,callfun)
                 
@@ -1767,7 +1779,7 @@ def Gen_init_avg(nTf,nbs,nbf,mass_mul,ncoeff,all_coeffs_slow_load,all_coeffs_fas
     TimeShiftDen = np.array([TimeShiftDen])
 
     all_coeffs_fast = Transform_Coeffs(SpaceRots, TimeRevs, TimeShiftNum, TimeShiftDen, all_coeffs_fast_load)
-    all_coeffs_avg = Compose_Two_Paths(nTf,nbs,nbf,mass_mul,ncoeff,all_coeffs_slow_load,all_coeffs_fast,Rotate_fast_with_slow)
+    all_coeffs_avg = Compose_Two_Paths(nTf,nbs,nbf,mass_mul,ncoeff,all_coeffs_slow_load,all_coeffs_fast,Rotate_fast_with_slow,mul_loops=False)
 
     return all_coeffs_avg
 
@@ -1861,9 +1873,8 @@ def Gen_init_avg_mul_loops(nTf,nbs,nbf,mass_mul,ncoeff,all_coeffs_slow_load,all_
         TimeShiftNum = np.array([TimeShiftNum])
         TimeShiftDen = np.array([TimeShiftDen])
         
-        all_coeffs_fast = Transform_Coeffs(SpaceRots, TimeRevs, TimeShiftNum, TimeShiftDen, all_coeffs_fast_load)
-        # ~ all_coeffs[i:(i+1),:,:,:] = Compose_Two_Paths(nTf,nbs,1,nbf*mass_mul,ncoeff,all_coeffs_slow_load,all_coeffs_fast,Rotate_fast_with_slow)
-        all_coeffs[i:(i+1),:,:,:] = Compose_Two_Paths(nTf,nbs,1,mass_mul/nbf,ncoeff,all_coeffs_slow_load,all_coeffs_fast,Rotate_fast_with_slow)
+        all_coeffs_fast = Transform_Coeffs(SpaceRots, TimeRevs, TimeShiftNum, TimeShiftDen, all_coeffs_fast_load)   
+        all_coeffs[i:(i+1),:,:,:] = Compose_Two_Paths(nTf,nbs,nbf,mass_mul,ncoeff,all_coeffs_slow_load,all_coeffs_fast,Rotate_fast_with_slow,mul_loops=True)
 
     return all_coeffs
 
