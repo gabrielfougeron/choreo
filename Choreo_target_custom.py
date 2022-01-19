@@ -33,35 +33,38 @@ def main(preprint_msg=''):
         __builtins__.print(preprint_msg,end='')
         return __builtins__.print(*args, **kwargs)
     
-
-    # ~ slow_base_filename = './data/2_cercle.npy'
+    
+    # ~ slow_base_filename = './data/1_lone_wolf.npy'
+    slow_base_filename = './data/2_cercle.npy'
     # ~ slow_base_filename = './data/3_cercle.npy'
     # ~ slow_base_filename = './data/3_huit.npy'
-    slow_base_filename = './data/3_heart.npy'
+    # ~ slow_base_filename = './data/3_heart.npy'
+
 
     # ~ fast_base_filename = './data/1_lone_wolf.npy'
     # ~ fast_base_filename = './data/2_cercle.npy'
     # ~ fast_base_filename = './data/3_cercle.npy'
-    fast_base_filename = './data/3_huit.npy'
+    # ~ fast_base_filename = './data/3_huit.npy'
     # ~ fast_base_filename = './data/3_heart.npy'
     # ~ fast_base_filename = './data/3_dbl_heart.npy'
+    fast_base_filename = './data/4_13_2_2_cercle.npy'
 
     mass_mul = 1
-    nTf = 101
+    nTf = 13
     # ~ nTf = 38
     # ~ nTf = 13
-    nbs = 3
-    nbf = 3
+    nbs = 2
+    nbf = 4
 
     # ~ Rotate_fast_with_slow = True
-    # ~ Rotate_fast_with_slow = False
-    Rotate_fast_with_slow = (np.random.random() > 1./2.)
+    Rotate_fast_with_slow = False
+    # ~ Rotate_fast_with_slow = (np.random.random() > 1./2.)
 
-    Optimize_Init = True
-    # ~ Optimize_Init = False
+    # ~ Optimize_Init = True
+    Optimize_Init = False
 
-    Randomize_Fast_Init = True
-    # ~ Randomize_Fast_Init = False
+    # ~ Randomize_Fast_Init = True
+    Randomize_Fast_Init = False
 
     all_coeffs_slow_load = np.load(slow_base_filename)
     all_coeffs_fast_load = np.load(fast_base_filename)
@@ -118,8 +121,8 @@ def main(preprint_msg=''):
     # ~ Penalize_Escape = True
     Penalize_Escape = False
 
-    save_init = False
-    # ~ save_init = True
+    # ~ save_init = False
+    save_init = True
 
     Save_img = True
     # ~ Save_img = False
@@ -298,8 +301,8 @@ def main(preprint_msg=''):
     hash_dict = {}
 
     n_opt = 0
-    # ~ n_opt_max = 1
-    n_opt_max = 5
+    n_opt_max = 1
+    # ~ n_opt_max = 5
     # ~ n_opt_max = 1e10
     while (n_opt < n_opt_max):
         
@@ -335,6 +338,8 @@ def main(preprint_msg=''):
             
             print('Saving init state')
 
+            Write_Descriptor(x0,callfun,'init.txt')
+
             if Save_img :
                 plot_all_2D(x0,nint_plot_img,callfun,'init.png',fig_size=img_size,color=color)        
                 
@@ -364,7 +369,6 @@ def main(preprint_msg=''):
             
             print('Action Grad Norm on entry : ',best_sol.f_norm)
             print('Optim level : ',i_optim_param+1,' / ',n_optim_param , '    Resize level : ',callfun[0]["current_cvg_lvl"]+1,' / ',n_reconverge_it_max+1)
-
             
             F = lambda x : Action_grad_mod(x,callfun)
             jac_options = {'method':krylov_method,'rdiff':rdiff,'outer_k':outer_k,'inner_inner_m':inner_maxiter,'inner_store_outer_Av':store_outer_Av,'inner_tol':inner_tol }
