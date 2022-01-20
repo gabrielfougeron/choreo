@@ -31,7 +31,12 @@ from matplotlib.colors import cnames
 from matplotlib.collections import LineCollection
 from matplotlib import animation
 
-from Choreo_cython_funs import *
+from Choreo_cython_funs import ndim,twopi,nhash,n
+from Choreo_cython_funs import Compute_action_Cython,Compute_action_hess_mul_Cython,Compute_hash_action_Cython,Compute_Newton_err_Cython
+from Choreo_cython_funs import Assemble_Cstr_Matrix,diag_changevar
+from Choreo_cython_funs import Compute_MinDist_Cython,Compute_Loop_Dist_btw_avg_Cython,Compute_square_dist,Compute_Loop_Size_Dist_Cython,RemoveSym_Cython
+from Choreo_cython_funs import the_irfft,the_rfft,the_ihfft
+# from Choreo_cython_funs import *
 
 def plot_Newton_Error(x,callfun,filename,fig_size=(8,5),color_list = plt.rcParams['axes.prop_cycle'].by_key()['color']):
     
@@ -389,6 +394,44 @@ def Unpackage_all_coeffs(x,callfun):
     
     return all_coeffs
 
+def RemoveSym(x,callfun):
+    # Removes symmetries and gives coeffs for all bodies
+
+    args=callfun[0]
+    
+    if args["Do_Pos_FFT"]:
+        
+        y = args['param_to_coeff_list'][args["current_cvg_lvl"]] * x
+        args['last_all_coeffs'] = y.reshape(args['nloop'],ndim,args['ncoeff_list'][args["current_cvg_lvl"]],2)
+        
+        nint = args['nint_list'][args["current_cvg_lvl"]]
+        c_coeffs = args['last_all_coeffs'].view(dtype=np.complex128)[...,0]
+        args['last_all_pos'] = the_irfft(c_coeffs,n=nint,axis=2)*nint
+    
+    all_coeffs_nosym =  RemoveSym_Cython(
+        args['nloop']           ,
+        args['ncoeff_list'][args["current_cvg_lvl"]]          ,
+        args['nint_list'][args["current_cvg_lvl"]]            ,
+        args['mass']            ,
+        args['loopnb']          ,
+        args['Targets']         ,
+        args['MassSum']         ,
+        args['SpaceRotsUn']     ,
+        args['TimeRevsUn']      ,
+        args['TimeShiftNumUn']  ,
+        args['TimeShiftDenUn']  ,
+        args['loopnbi']         ,
+        args['ProdMassSumAll']  ,
+        args['SpaceRotsBin']    ,
+        args['TimeRevsBin']     ,
+        args['TimeShiftNumBin'] ,
+        args['TimeShiftDenBin'] ,
+        args['last_all_coeffs'] ,
+        args['last_all_pos'] 
+        )
+
+    return all_coeffs_nosym
+
 def Compute_action_onlygrad(x,callfun):
     # Wrapper function that returns ONLY the gradient of the action with respect to the parameters 
     
@@ -403,27 +446,6 @@ def Compute_action_onlygrad_escape(x,callfun):
     
     y = args['param_to_coeff_list'][args["current_cvg_lvl"]] * x
     all_coeffs = y.reshape(args['nloop'],ndim,args['ncoeff_list'][args["current_cvg_lvl"]],2)
-
-    # ~ rms_dist = Compute_Loop_Dist_Cython(
-        # ~ args['nloop']           ,
-        # ~ args['ncoeff_list'][args["current_cvg_lvl"]]          ,
-        # ~ args['nint_list'][args["current_cvg_lvl"]]            ,
-        # ~ args['mass']            ,
-        # ~ args['loopnb']          ,
-        # ~ args['Targets']         ,
-        # ~ args['MassSum']         ,
-        # ~ args['SpaceRotsUn']     ,
-        # ~ args['TimeRevsUn']      ,
-        # ~ args['TimeShiftNumUn']  ,
-        # ~ args['TimeShiftDenUn']  ,
-        # ~ args['loopnbi']         ,
-        # ~ args['ProdMassSumAll']  ,
-        # ~ args['SpaceRotsBin']    ,
-        # ~ args['TimeRevsBin']     ,
-        # ~ args['TimeShiftNumBin'] ,
-        # ~ args['TimeShiftDenBin'] ,
-        # ~ all_coeffs
-        # ~ )
 
     rms_dist = Compute_Loop_Dist_btw_avg_Cython(
         args['nloop']           ,
@@ -549,10 +571,6 @@ def Compute_action_hess_LinOpt_precond(x_precond,callfun_source,callfun_precond)
     args_precond=callfun_precond[0]
     
     def the_matvec(dx_source):
-        # ~ all_coeffs_dx = Unpackage_all_coeffs(dx_source,callfun_source)
-        # ~ dx_params_precond = Package_all_coeffs(all_coeffs_dx[:,:,0:args_precond['ncoeff_list'][args_precond["current_cvg_lvl"]],:],callfun_precond)
-        # ~ hess_mul = Compute_action_hess_mul(x_precond,dx_params_precond,callfun_precond)
-            
 
         dy_source = args_source['param_to_coeff_list'][args_source["current_cvg_lvl"]] * dx_source
         all_coeffs_d_source = dy_source.reshape(args_source['nloop'],ndim,args_source['ncoeff_list'][args_source["current_cvg_lvl"]],2)
@@ -1190,7 +1208,7 @@ def setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max=6,MomCons=True,n_
     return callfun
     
 def Compute_action(x,callfun):
-    # Cumputes the action and its gradient with respect to the parameters at a given value of the parameters
+    # Computes the action and its gradient with respect to the parameters at a given value of the parameters
 
     args=callfun[0]
     
@@ -1683,7 +1701,7 @@ def Compose_Two_Paths(nTf,nbs,nbf,mass_mul,ncoeff,all_coeffs_slow,all_coeffs_fas
                 
                 all_pos_avg[il,:,iint] = all_pos_slow[il,:,iint] + SpRotMat.dot(all_pos_fast[il,:,iint])
 
-        c_coeffs_avg = np.fft.rfft(all_pos_avg,n=nint,axis=2)
+        c_coeffs_avg = the_rfft(all_pos_avg,n=nint,axis=2)
         all_coeffs_composed = np.zeros((nloop,ndim,ncoeff,2),dtype=np.float64)
 
         for il in range(nloop):
@@ -1699,8 +1717,109 @@ def Compose_Two_Paths(nTf,nbs,nbf,mass_mul,ncoeff,all_coeffs_slow,all_coeffs_fas
 
     return all_coeffs_composed
 
-def Gen_init_avg(nTf,nbs,nbf,mass_mul,ncoeff,all_coeffs_slow_load,all_coeffs_fast_load,callfun,Rotate_fast_with_slow=False,Optimize_Init=True,Randomize_Fast_Init=True):
+def Gen_init_avg_choreo(nTf,nbs,nbf,mass_mul,ncoeff,all_coeffs_slow_load,all_coeffs_fast_load,callfun,Rotate_fast_with_slow=False,Optimize_Init=True,Randomize_Fast_Init=True):
     
+    if Optimize_Init :
+                
+        if Randomize_Fast_Init :
+
+            init_SpaceRevscal = 1. if (np.random.random() > 1./2.) else -1.
+            init_TimeRevscal = 1. if (np.random.random() > 1./2.) else -1.
+            Act_Mul = 1. if (np.random.random() > 1./2.) else -1.
+            init_x = np.array([2 * np.pi * np.random.random(),np.random.random()])
+
+        else:
+
+            init_SpaceRevscal = 1.
+            init_TimeRevscal = 1.
+            Act_Mul = 1.
+            init_x = np.array([0,0])
+
+        def init_opt_fun(x):
+
+            theta = x[0]
+            SpaceRevscal = init_SpaceRevscal
+            TimeRevscal = init_TimeRevscal
+            TimeShiftNum = x[1]
+            TimeShiftDen = 1
+
+            RanRotMat = np.array( [[SpaceRevscal*np.cos(theta) , SpaceRevscal*np.sin(theta)] , [-np.sin(theta),np.cos(theta)]])
+
+            SpaceRots = np.reshape(RanRotMat,(1,ndim,ndim))
+            TimeRevs = np.array([TimeRevscal])
+            TimeShiftNum = np.array([TimeShiftNum])
+            TimeShiftDen = np.array([TimeShiftDen])
+
+            all_coeffs_fast = Transform_Coeffs(SpaceRots, TimeRevs, TimeShiftNum, TimeShiftDen, all_coeffs_fast_load)
+            all_coeffs_avg = Compose_Two_Paths(nTf,nbs,nbf,mass_mul,ncoeff,all_coeffs_slow_load,all_coeffs_fast,Rotate_fast_with_slow,mul_loops=False)
+            
+            x_avg = Package_all_coeffs(all_coeffs_avg,callfun)
+                
+            Act, GAct = Compute_action(x_avg,callfun)
+            
+            return Act_Mul * Act
+            
+        maxiter = 1000
+        tol = 1e-10
+
+        opt_result = scipy.optimize.minimize(fun=init_opt_fun,x0=init_x,method='CG',options={'disp':False,'maxiter':maxiter,'gtol':tol},tol=tol)
+
+        x_opt = opt_result['x']
+
+        theta = x_opt[0]
+        SpaceRevscal = init_SpaceRevscal
+        TimeRevscal = init_TimeRevscal
+        TimeShiftNum = x_opt[1]
+        TimeShiftDen = 1
+
+    elif Randomize_Fast_Init :
+
+        theta = 2 * np.pi * np.random.random()
+        SpaceRevscal = 1. if (np.random.random() > 1./2.) else -1.
+        TimeRevscal = 1. if (np.random.random() > 1./2.) else -1.
+        TimeShiftNum = np.random.random()
+        TimeShiftDen = 1
+
+    else :
+            
+        theta = 0.
+        SpaceRevscal = 1.
+        TimeRevscal = 1.
+        TimeShiftNum = 0
+        TimeShiftDen = 1
+
+    RanRotMat = np.array( [[SpaceRevscal*np.cos(theta) , SpaceRevscal*np.sin(theta)] , [-np.sin(theta),np.cos(theta)]])
+
+    SpaceRots = np.reshape(RanRotMat,(1,ndim,ndim))
+    TimeRevs = np.array([TimeRevscal])
+    TimeShiftNum = np.array([TimeShiftNum])
+    TimeShiftDen = np.array([TimeShiftDen])
+
+    all_coeffs_fast = Transform_Coeffs(SpaceRots, TimeRevs, TimeShiftNum, TimeShiftDen, all_coeffs_fast_load)
+    all_coeffs_avg = Compose_Two_Paths(nTf,nbs,nbf,mass_mul,ncoeff,all_coeffs_slow_load,all_coeffs_fast,Rotate_fast_with_slow,mul_loops=False)
+ 
+    return all_coeffs_avg
+
+def Gen_init_avg(nTf,nbs,nbf,mass_mul,ncoeff,all_coeffs_slow_load,all_coeffs_fast_load=None,all_coeffs_fast_load_list=None,callfun=None,Rotate_fast_with_slow=False,Optimize_Init=True,Randomize_Fast_Init=True):
+
+    if (all_coeffs_fast_load_list is None):
+        if (all_coeffs_fast_load is None):
+            raise ValueError("all_coeffs fast not provided")
+        else:
+            all_coeffs_fast_load_list = [all_coeffs_fast_load]
+
+    nloop_slow = all_coeffs_slow_load.shape[0]
+    nloop_fast = len(all_coeffs_fast_load_list)
+
+
+
+
+
+
+
+
+
+
     if Optimize_Init :
                 
         if Randomize_Fast_Init :
