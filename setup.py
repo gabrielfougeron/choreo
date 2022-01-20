@@ -12,23 +12,23 @@ import numpy
 # python setup.py build_ext --inlpace
 
 os.environ["CC"] = "gcc"
-# ~ os.environ["CC"] = "icc"
+# os.environ["CC"] = "icc"
 
 
-# ~ extra_compile_args = ["-O3", "-ffast-math", "-march=native", "-fopenmp" ]
+# extra_compile_args = ["-O3", "-ffast-math", "-march=native", "-fopenmp" ]
 extra_compile_args = ["-O3"]
-# ~ extra_compile_args = ["-O2", "-march=native"]
-# ~ extra_compile_args = ["-O3", "-march=native", "-fopenmp" ]
-# ~ extra_compile_args = ["-Ofast"]
-# ~ extra_compile_args = ["-Ofast", "-march=native", "-fopenmp" ]
-# ~ extra_compile_args = ["-O0"]
+# extra_compile_args = ["-O2", "-march=native"]
+# extra_compile_args = ["-O3", "-march=native", "-fopenmp" ]
+# extra_compile_args = ["-Ofast"]
+# extra_compile_args = ["-Ofast", "-march=native", "-fopenmp" ]
+# extra_compile_args = ["-O0"]
 
 extra_link_args = []
-# ~ extra_link_args = ["-lm"]
+# extra_link_args = ["-lm"]
 
 
 
-# ~ os.utime('Choreo_cython_funs.pyx',None)
+# os.utime('Choreo_cython_funs.pyx',None)
 
 
 extension = Extension("Choreo_cython_funs", ["Choreo_cython_funs.pyx"],

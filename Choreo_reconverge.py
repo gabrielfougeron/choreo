@@ -33,9 +33,9 @@ def main(preprint_msg=''):
         return __builtins__.print(*args, **kwargs)
     
 
-    # ~ basename = './Reconverge_tries/9/15'
+    # basename = './Reconverge_tries/9/15'
     basename = './Reconverge_tries/9_save/8'
-    # ~ basename = './Reconverge_tries/9/1_recvg'
+    # basename = './Reconverge_tries/9/1_recvg'
     base_filename = basename+'.npy'
 
     all_coeffs_base = np.load(base_filename)
@@ -52,7 +52,7 @@ def main(preprint_msg=''):
     Sym_list,nbody = Make2DChoreoSymManyLoops(nbpl=nbpl,SymName=SymName)
 
     MomConsImposed = True
-    # ~ MomConsImposed = False
+    # MomConsImposed = False
 
     store_folder = './Reconverge_tries/'
     store_folder = store_folder+str(nbody)
@@ -60,39 +60,39 @@ def main(preprint_msg=''):
         os.makedirs(store_folder)
 
     Use_exact_Jacobian = True
-    # ~ Use_exact_Jacobian = False
+    # Use_exact_Jacobian = False
 
-    # ~ Look_for_duplicates = True
+    # Look_for_duplicates = True
     Look_for_duplicates = False
 
-    # ~ Check_Escape = True
+    # Check_Escape = True
     Check_Escape = False
 
-    # ~ Penalize_Escape = True
+    # Penalize_Escape = True
     Penalize_Escape = False
 
-    # ~ save_init = False
+    # save_init = False
     save_init = True
 
     Save_img = True
-    # ~ Save_img = False
+    # Save_img = False
 
-    # ~ img_size = (12,12) # Image size in inches
+    # img_size = (12,12) # Image size in inches
     img_size = (8,8) # Image size in inches
 
     nint_plot_img = 10000
 
-    # ~ Save_anim = True
+    # Save_anim = True
     Save_anim = False
 
     vid_size = (8,8) # Image size in inches
     nint_plot_anim = 2*2*2*3*3*5 * 6 *3
-    # ~ nperiod_anim = 1./nbody
+    # nperiod_anim = 1./nbody
 
     color = "body"
-    # ~ color = "loop"
-    # ~ color = "velocity"
-    # ~ color = "all"
+    # color = "loop"
+    # color = "velocity"
+    # color = "all"
 
     try:
         the_lcm
@@ -104,32 +104,32 @@ def main(preprint_msg=''):
     nperiod_anim = 1./period_div
 
     Plot_trace_anim = True
-    # ~ Plot_trace_anim = False
+    # Plot_trace_anim = False
 
     n_reconverge_it_max = 1
 
     ncoeff_init = all_coeffs_base.shape[2]
 
-    # ~ disp_scipy_opt = False
+    # disp_scipy_opt = False
     disp_scipy_opt = True
 
     UsePrecond = True
-    # ~ UsePrecond = False
+    # UsePrecond = False
 
-    # ~ Newt_err_norm_max = 1e-13
+    # Newt_err_norm_max = 1e-13
     Newt_err_norm_max = 1e-15
-    # ~ Newt_err_norm_max_save = Newt_err_norm_max*1000
+    # Newt_err_norm_max_save = Newt_err_norm_max*1000
     Newt_err_norm_max_save = 1e-1
 
     duplicate_eps = 1e-8
 
     krylov_method = 'lgmres'
-    # ~ krylov_method = 'gmres'
-    # ~ krylov_method = 'bicgstab'
-    # ~ krylov_method = 'cgs'
-    # ~ krylov_method = 'minres'
+    # krylov_method = 'gmres'
+    # krylov_method = 'bicgstab'
+    # krylov_method = 'cgs'
+    # krylov_method = 'minres'
 
-    # ~ line_search = 'armijo'
+    # line_search = 'armijo'
     line_search = 'wolfe'
     
     gradtol_list =          [1e-3   ,1e-5   ,1e-7   ,1e-9   ,1e-11  ,1e-13  ,1e-15  ]
@@ -141,30 +141,30 @@ def main(preprint_msg=''):
 
     n_optim_param = len(gradtol_list)
     
-    # ~ gradtol_max = 100*gradtol_list[n_optim_param-1]
+    # gradtol_max = 100*gradtol_list[n_optim_param-1]
     gradtol_max = gradtol_list[n_optim_param-1]
-    # ~ foundsol_tol = 1000*gradtol_list[0]
+    # foundsol_tol = 1000*gradtol_list[0]
     foundsol_tol = 1e10
 
     escape_fac = 1e0
-    # ~ escape_fac = 1e-1
-    # ~ escape_fac = 1e-2
-    # ~ escape_fac = 1e-3
-    # ~ escape_fac = 1e-4
-    # ~ escape_fac = 1e-5
-    # ~ escape_fac = 0
+    # escape_fac = 1e-1
+    # escape_fac = 1e-2
+    # escape_fac = 1e-3
+    # escape_fac = 1e-4
+    # escape_fac = 1e-5
+    # escape_fac = 0
     escape_min_dist = 1
     escape_pow = 2.0
-    # ~ escape_pow = 2.5
-    # ~ escape_pow = 1.5
-    # ~ escape_pow = 0.5
+    # escape_pow = 2.5
+    # escape_pow = 1.5
+    # escape_pow = 0.5
 
     n_grad_change = 1.
-    # ~ n_grad_change = 0.
-    # ~ n_grad_change = 1.5
+    # n_grad_change = 0.
+    # n_grad_change = 1.5
 
     print('Searching periodic solutions of {:d} bodies'.format(nbody))
-    # ~ print('Processing symmetries for {:d} convergence levels ...'.format(n_reconverge_it_max+1))
+    # print('Processing symmetries for {:d} convergence levels ...'.format(n_reconverge_it_max+1))
 
     print('Processing symmetries for {0:d} convergence levels'.format(n_reconverge_it_max+1))
     callfun = setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change)
@@ -192,7 +192,7 @@ def main(preprint_msg=''):
     print('    ==> reduction of {0:f} % wrt the {1:d} naive binary iteractions'.format(100*(1-nbi_tot/nbi_naive),nbi_naive))
     print('')
 
-    # ~ for i in range(n_reconverge_it_max+1):
+    # for i in range(n_reconverge_it_max+1):
     for i in [0]:
         
         args = callfun[0]
@@ -209,8 +209,8 @@ def main(preprint_msg=''):
         print(xmin)
         raise ValueError("Init inter body distance too low. There is something wrong with constraints")
 
-    # ~ filehandler = open(store_folder+'/callfun_list.pkl',"wb")
-    # ~ pickle.dump(callfun_list,filehandler)
+    # filehandler = open(store_folder+'/callfun_list.pkl',"wb")
+    # pickle.dump(callfun_list,filehandler)
 
     if (Penalize_Escape):
 
@@ -227,9 +227,9 @@ def main(preprint_msg=''):
 
     if UsePrecond:
         ncoeff_precond = 900
-        # ~ ncoeff_precond = 108
-        # ~ ncoeff_precond = 1800
-        # ~ ncoeff_precond = 2700
+        # ncoeff_precond = 108
+        # ncoeff_precond = 1800
+        # ncoeff_precond = 2700
         callfun_precond = setup_changevar(nbody,ncoeff_precond,mass,1,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change)
         x0 = Package_all_coeffs(all_coeffs_base,callfun)
         x0_precond = Param_to_Param_direct(x0,callfun,callfun_precond)
@@ -241,8 +241,8 @@ def main(preprint_msg=''):
         ActHessPrecond_LinOpt = Compute_action_hess_LinOpt(x0_precond,callfun_precond)
         
         
-        # ~ x0 = np.random.random((nparam_precond))        
-        # ~ print("dev id ",np.linalg.norm(ActHessPrecond_LinOpt*x0 - x0))
+        # x0 = np.random.random((nparam_precond))        
+        # print("dev id ",np.linalg.norm(ActHessPrecond_LinOpt*x0 - x0))
         
         
         print('Computing eigenvalues')
@@ -258,18 +258,18 @@ def main(preprint_msg=''):
         
         print("Computing dense Hessian")
         ActHessPrecond_dense = ActHessPrecond_LinOpt * np.eye(nparam_precond)
-        # ~ ActHessPrecond_dense = ActHessPrecond_LinOpt * np.eye(nparam_precond) -np.dot(v,v.transpose())
-        # ~ ActHessPrecond_dense = ActHessPrecond_LinOpt * np.eye(nparam_precond) + w[2]* np.dot(v,v.transpose())
+        # ActHessPrecond_dense = ActHessPrecond_LinOpt * np.eye(nparam_precond) -np.dot(v,v.transpose())
+        # ActHessPrecond_dense = ActHessPrecond_LinOpt * np.eye(nparam_precond) + w[2]* np.dot(v,v.transpose())
         
             
-        # ~ print("Sparsifying Hessian")
-        # ~ atol_nnz = 0
-        # ~ atol_nnz = 1e-11
-        # ~ atol_nnz = 1e-3
-        # ~ for i in range(nparam_precond):
-            # ~ for j in range(nparam_precond):
-                # ~ if (abs(ActHessPrecond_dense[i,j]) < atol_nnz):
-                    # ~ ActHessPrecond_dense[i,j] = 0.
+        # print("Sparsifying Hessian")
+        # atol_nnz = 0
+        # atol_nnz = 1e-11
+        # atol_nnz = 1e-3
+        # for i in range(nparam_precond):
+            # for j in range(nparam_precond):
+                # if (abs(ActHessPrecond_dense[i,j]) < atol_nnz):
+                    # ActHessPrecond_dense[i,j] = 0.
         
         ActHessPrecond_csc = scipy.sparse.csc_matrix(ActHessPrecond_dense)
 
@@ -281,17 +281,17 @@ def main(preprint_msg=''):
         fill_factor = None
         
         
-        # ~ drop_tol = 1e-4
-        # ~ fill_factor = 10.
+        # drop_tol = 1e-4
+        # fill_factor = 10.
         
-        # ~ drop_tol = 1e-6
-        # ~ fill_factor = 30.
+        # drop_tol = 1e-6
+        # fill_factor = 30.
         
         
         print("Precond Factoring Hessian")
         tstart = time.perf_counter()
         precond = scipy.sparse.linalg.spilu(ActHessPrecond_csc,drop_tol=drop_tol,fill_factor=fill_factor)
-        # ~ precond = scipy.sparse.linalg.splu(ActHessPrecond_csc)
+        # precond = scipy.sparse.linalg.splu(ActHessPrecond_csc)
         tstop = time.perf_counter()
         print("Precond factorization : ",tstop-tstart)
 
@@ -308,8 +308,8 @@ def main(preprint_msg=''):
 
     n_opt = 0
     n_opt_max = 1
-    # ~ n_opt_max = 5
-    # ~ n_opt_max = 1e10
+    # n_opt_max = 5
+    # n_opt_max = 1e10
     while (n_opt < n_opt_max):
         
         if ((n_opt % freq_erase_dict) == 0):
@@ -336,10 +336,10 @@ def main(preprint_msg=''):
             if Save_img :
                 plot_all_2D(x0,nint_plot_img,callfun,'init.png',fig_size=img_size,color=color)        
                 
-            # ~ if Save_anim :
-                # ~ plot_all_2D_anim(x0,nint_plot_anim,callfun,'init.mp4',nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size)
+            # if Save_anim :
+                # plot_all_2D_anim(x0,nint_plot_anim,callfun,'init.mp4',nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size)
                 
-            # ~ print(1/0)
+            # print(1/0)
             
         f0 = Action_grad_mod(x0,callfun)
         best_sol = current_best(x0,f0)
@@ -458,7 +458,7 @@ def main(preprint_msg=''):
                     f_fine_norm = np.linalg.norm(f_fine)
                     
                     NeedsRefinement = (f_fine_norm > 3*best_sol.f_norm)
-                    # ~ NeedsRefinement = True
+                    # NeedsRefinement = True
                     
                     callfun[0]["current_cvg_lvl"] += -1
                 
