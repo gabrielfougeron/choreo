@@ -33,35 +33,35 @@ def main(preprint_msg=''):
         __builtins__.print(preprint_msg,end='')
         return __builtins__.print(*args, **kwargs)
     
-    # ~ slow_base_filename = './data/1_lone_wolf.npy'
+    # slow_base_filename = './data/1_lone_wolf.npy'
     slow_base_filename = './data/2_cercle.npy'
-    # ~ slow_base_filename = './data/3_cercle.npy'
-    # ~ slow_base_filename = './data/3_huit.npy'
-    # ~ slow_base_filename = './data/3_heart.npy'
+    # slow_base_filename = './data/3_cercle.npy'
+    # slow_base_filename = './data/3_huit.npy'
+    # slow_base_filename = './data/3_heart.npy'
 
-    # ~ fast_base_filename = './data/1_lone_wolf.npy'
-    # ~ fast_base_filename = './data/2_cercle.npy'
+    # fast_base_filename = './data/1_lone_wolf.npy'
+    # fast_base_filename = './data/2_cercle.npy'
     fast_base_filename = './data/3_cercle.npy'
-    # ~ fast_base_filename = './data/3_huit.npy'
-    # ~ fast_base_filename = './data/3_heart.npy'
-    # ~ fast_base_filename = './data/3_dbl_heart.npy'
+    # fast_base_filename = './data/3_huit.npy'
+    # fast_base_filename = './data/3_heart.npy'
+    # fast_base_filename = './data/3_dbl_heart.npy'
 
     mass_mul = 1
-    # ~ nTf = 101
+    # nTf = 101
     nTf = 7
-    # ~ nTf = 38
-    # ~ nTf = 13
+    # nTf = 38
+    # nTf = 13
     nbs = 2
     nbf = 3
 
-    # ~ Rotate_fast_with_slow = True
+    # Rotate_fast_with_slow = True
     Rotate_fast_with_slow = False
-    # ~ Rotate_fast_with_slow = (np.random.random() > 1./2.)
+    # Rotate_fast_with_slow = (np.random.random() > 1./2.)
 
-    # ~ Optimize_Init = True
+    # Optimize_Init = True
     Optimize_Init = False
 
-    # ~ Randomize_Fast_Init = True
+    # Randomize_Fast_Init = True
     Randomize_Fast_Init = False
 
     all_coeffs_slow_load = np.load(slow_base_filename)
@@ -82,25 +82,25 @@ def main(preprint_msg=''):
 
     Sym_list = []
 
-    # ~ nbpl = [nbody]
+    # nbpl = [nbody]
     nbpl = [nbs for i in range(nbf) ]
     the_lcm = m.lcm(*nbpl)
     SymName = None
     Sym_list,nbody = Make2DChoreoSymManyLoops(nbpl=nbpl,SymName=SymName)
 
-    # ~ rot_angle = twopi * nbf /  nTf
-    # ~ s = 1
+    # rot_angle = twopi * nbf /  nTf
+    # s = 1
 
-    # ~ Sym_list.append(ChoreoSym(
-        # ~ LoopTarget=0,
-        # ~ LoopSource=0,
-        # ~ SpaceRot = np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64),
-        # ~ TimeRev=1,
-        # ~ TimeShift=fractions.Fraction(numerator=1,denominator=nTf)
-        # ~ ))
+    # Sym_list.append(ChoreoSym(
+        # LoopTarget=0,
+        # LoopSource=0,
+        # SpaceRot = np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64),
+        # TimeRev=1,
+        # TimeShift=fractions.Fraction(numerator=1,denominator=nTf)
+        # ))
 
 
-    # ~ MomConsImposed = True
+    # MomConsImposed = True
     MomConsImposed = False
 
     store_folder = './Target_res/'
@@ -109,39 +109,39 @@ def main(preprint_msg=''):
         os.makedirs(store_folder)
 
     Use_exact_Jacobian = True
-    # ~ Use_exact_Jacobian = False
+    # Use_exact_Jacobian = False
 
     Look_for_duplicates = True
-    # ~ Look_for_duplicates = False
+    # Look_for_duplicates = False
 
     Check_Escape = True
-    # ~ Check_Escape = False
+    # Check_Escape = False
 
-    # ~ Penalize_Escape = True
+    # Penalize_Escape = True
     Penalize_Escape = False
 
-    # ~ save_init = False
+    # save_init = False
     save_init = True
 
     Save_img = True
-    # ~ Save_img = False
+    # Save_img = False
 
-    # ~ img_size = (12,12) # Image size in inches
+    # img_size = (12,12) # Image size in inches
     img_size = (8,8) # Image size in inches
 
     nint_plot_img = 10000
 
     Save_anim = True
-    # ~ Save_anim = False
+    # Save_anim = False
 
     vid_size = (8,8) # Image size in inches
     nint_plot_anim = 2*2*2*3*3*5 * 6 *3
-    # ~ nperiod_anim = 1./nbody
+    # nperiod_anim = 1./nbody
 
     color = "body"
-    # ~ color = "loop"
-    # ~ color = "velocity"
-    # ~ color = "all"
+    # color = "loop"
+    # color = "velocity"
+    # color = "all"
 
     try:
         the_lcm
@@ -153,38 +153,38 @@ def main(preprint_msg=''):
     nperiod_anim = 1./period_div
 
     Plot_trace_anim = True
-    # ~ Plot_trace_anim = False
+    # Plot_trace_anim = False
 
     n_reconverge_it_max = 4
-    # ~ n_reconverge_it_max = 1
+    # n_reconverge_it_max = 1
 
-    # ~ ncoeff_init = 102
-    # ~ ncoeff_init = 800
-    # ~ ncoeff_init = 201   
-    # ~ ncoeff_init = 300   
-    # ~ ncoeff_init = 600
-    # ~ ncoeff_init = 900
-    # ~ ncoeff_init = 1800
+    # ncoeff_init = 102
+    # ncoeff_init = 800
+    # ncoeff_init = 201   
+    # ncoeff_init = 300   
+    # ncoeff_init = 600
+    # ncoeff_init = 900
+    # ncoeff_init = 1800
     ncoeff_init = 2700
-    # ~ ncoeff_init = 1206
-    # ~ ncoeff_init = 90
+    # ncoeff_init = 1206
+    # ncoeff_init = 90
 
     disp_scipy_opt = False
-    # ~ disp_scipy_opt = True
+    # disp_scipy_opt = True
 
     Newt_err_norm_max = 1e-10
-    # ~ Newt_err_norm_max_save = Newt_err_norm_max*1000
+    # Newt_err_norm_max_save = Newt_err_norm_max*1000
     Newt_err_norm_max_save = 1e-1
 
     duplicate_eps = 1e-8
 
     krylov_method = 'lgmres'
-    # ~ krylov_method = 'gmres'
-    # ~ krylov_method = 'bicgstab'
-    # ~ krylov_method = 'cgs'
-    # ~ krylov_method = 'minres'
+    # krylov_method = 'gmres'
+    # krylov_method = 'bicgstab'
+    # krylov_method = 'cgs'
+    # krylov_method = 'minres'
 
-    # ~ line_search = 'armijo'
+    # line_search = 'armijo'
     line_search = 'wolfe'
     
     gradtol_list =          [1e-3   ,1e-5   ,1e-7   ,1e-9   ,1e-11  ,1e-13  ,1e-15  ]
@@ -196,27 +196,27 @@ def main(preprint_msg=''):
     n_optim_param = len(gradtol_list)
     
     gradtol_max = 100*gradtol_list[n_optim_param-1]
-    # ~ foundsol_tol = 1000*gradtol_list[0]
+    # foundsol_tol = 1000*gradtol_list[0]
     foundsol_tol = 1e10
 
     escape_fac = 1e0
-    # ~ escape_fac = 1e-1
-    # ~ escape_fac = 1e-2
-    # ~ escape_fac = 1e-3
-    # ~ escape_fac = 1e-4
-    # ~ escape_fac = 1e-5
-    # ~ escape_fac = 0
+    # escape_fac = 1e-1
+    # escape_fac = 1e-2
+    # escape_fac = 1e-3
+    # escape_fac = 1e-4
+    # escape_fac = 1e-5
+    # escape_fac = 0
     escape_min_dist = 1
     escape_pow = 2.0
-    # ~ escape_pow = 2.5
-    # ~ escape_pow = 1.5
-    # ~ escape_pow = 0.5
+    # escape_pow = 2.5
+    # escape_pow = 1.5
+    # escape_pow = 0.5
 
     n_grad_change = 1.
-    # ~ n_grad_change = 1.5
+    # n_grad_change = 1.5
 
     print('Searching periodic solutions of {:d} bodies'.format(nbody))
-    # ~ print('Processing symmetries for {:d} convergence levels ...'.format(n_reconverge_it_max+1))
+    # print('Processing symmetries for {:d} convergence levels ...'.format(n_reconverge_it_max+1))
 
     print('Processing symmetries for {0:d} convergence levels'.format(n_reconverge_it_max+1))
     callfun = setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change)
@@ -244,7 +244,7 @@ def main(preprint_msg=''):
     print('    ==> reduction of {0:f} % wrt the {1:d} naive binary iteractions'.format(100*(1-nbi_tot/nbi_naive),nbi_naive))
     print('')
 
-    # ~ for i in range(n_reconverge_it_max+1):
+    # for i in range(n_reconverge_it_max+1):
     for i in [0]:
         
         args = callfun[0]
@@ -261,8 +261,8 @@ def main(preprint_msg=''):
         print(xmin)
         raise ValueError("Init inter body distance too low. There is something wrong with constraints")
 
-    # ~ filehandler = open(store_folder+'/callfun_list.pkl',"wb")
-    # ~ pickle.dump(callfun_list,filehandler)
+    # filehandler = open(store_folder+'/callfun_list.pkl',"wb")
+    # pickle.dump(callfun_list,filehandler)
 
     if (Penalize_Escape):
 
@@ -300,9 +300,9 @@ def main(preprint_msg=''):
     hash_dict = {}
 
     n_opt = 0
-    # ~ n_opt_max = 1
+    # n_opt_max = 1
     n_opt_max = 5
-    # ~ n_opt_max = 1e10
+    # n_opt_max = 1e10
     while (n_opt < n_opt_max):
         
         if ((n_opt % freq_erase_dict) == 0):
@@ -342,10 +342,10 @@ def main(preprint_msg=''):
             if Save_img :
                 plot_all_2D(x0,nint_plot_img,callfun,'init.png',fig_size=img_size,color=color)        
                 
-            # ~ if Save_anim :
-                # ~ plot_all_2D_anim(x0,nint_plot_anim,callfun,'init.mp4',nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size)
+            # if Save_anim :
+                # plot_all_2D_anim(x0,nint_plot_anim,callfun,'init.mp4',nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size)
                 
-            # ~ print(1/0)
+            # print(1/0)
             
         f0 = Action_grad_mod(x0,callfun)
         best_sol = current_best(x0,f0)
@@ -442,7 +442,7 @@ def main(preprint_msg=''):
                     ncoeff_fine = callfun[0]["ncoeff_list"][callfun[0]["current_cvg_lvl"]]
 
                     all_coeffs_fine = np.zeros((nloop,ndim,ncoeff_fine,2),dtype=np.float64)
-                    # ~ all_coeffs_fine[:,:,0:ncoeff_coarse,:] = np.copy(all_coeffs_coarse)
+                    # all_coeffs_fine[:,:,0:ncoeff_coarse,:] = np.copy(all_coeffs_coarse)
                     for k in range(ncoeff_coarse):
                         all_coeffs_fine[:,:,k,:] = all_coeffs_coarse[:,:,k,:]
                         

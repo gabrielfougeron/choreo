@@ -22,7 +22,7 @@ ex_int = 1/3
 
 
 sampler = UniformRandom(d=d)
-# ~ sampler = Halton(d=d)
+# sampler = Halton(d=d)
 
 
 approx_int = 0

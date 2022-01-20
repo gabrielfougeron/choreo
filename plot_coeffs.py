@@ -12,33 +12,33 @@ import time
 
 from Choreo_funs import *
 
-# ~ all_coeffs = np.load('./Target_res/3/4.npy')
-# ~ all_coeffs = np.load('./Target_res/9/8.npy')
-# ~ all_coeffs = np.load('./Target_res/9/2.npy')
-# ~ all_coeffs = np.load('./Target_res/6/2.npy')
-# ~ all_coeffs = np.load('./Target_res/6/3.npy')
+# all_coeffs = np.load('./Target_res/3/4.npy')
+# all_coeffs = np.load('./Target_res/9/8.npy')
+# all_coeffs = np.load('./Target_res/9/2.npy')
+# all_coeffs = np.load('./Target_res/6/2.npy')
+# all_coeffs = np.load('./Target_res/6/3.npy')
 
 
 
 
 all_coeffs = np.load('./Reconverge_tries/9_save/8.npy')
-# ~ all_coeffs = np.load('./init.npy')
+# all_coeffs = np.load('./init.npy')
 
 
 k_plot_max = 20
 
 
 nloop = all_coeffs.shape[0]
-# ~ ndim1 = all_coeffs1.shape[1]
+# ndim1 = all_coeffs1.shape[1]
 ncoeff = all_coeffs.shape[2]
 
-# ~ ncoeff_cap = 4800
+# ncoeff_cap = 4800
 ncoeff_cap = 1e10
 
 ncoeff_plot = min(ncoeff,ncoeff_cap)
 
 
-# ~ eps = 1e-18
+# eps = 1e-18
 eps = 0.
 
 ampl = np.zeros((nloop,ncoeff_plot),dtype=np.float64)

@@ -31,15 +31,15 @@ from libc.math cimport isnan as cisnan
 from libc.math cimport isinf as cisinf
 import time
 
-# ~ the_irfft = np.fft.irfft
+# the_irfft = np.fft.irfft
 the_irfft = scipy.fft.irfft
-# ~ the_irfft = pyfftw.interfaces.numpy_fft.irfft
+# the_irfft = pyfftw.interfaces.numpy_fft.irfft
  
-# ~ the_ihfft = np.fft.ihfft
+# the_ihfft = np.fft.ihfft
 the_ihfft = scipy.fft.ihfft
-# ~ the_ihfft = pyfftw.interfaces.numpy_fft.ihfft 
+# the_ihfft = pyfftw.interfaces.numpy_fft.ihfft 
 
-# ~ the_rfft = np.fft.rfft
+# the_rfft = np.fft.rfft
 the_rfft = scipy.fft.rfft
  
  
@@ -1165,7 +1165,7 @@ def Assemble_Cstr_Matrix(
     ):
     # Assembles the matrix of constraints used to select constraint satisfying parameters
 
-    # ~ cdef double eps_zero = 1e-14
+    # cdef double eps_zero = 1e-14
     cdef double eps_zero = 1e-10
     
     # il,idim,k,ift => ift + 2*(k + ncoeff*(idim + ndim*il))

@@ -13,9 +13,9 @@ from Choreo_funs import *
 
 
 nbody = np.array([8])
-# ~ nbody = np.array([4])
-# ~ nbody = np.array([1,1,1,1,1])
-# ~ nbody = np.array([3,3,3,3,3])
+# nbody = np.array([4])
+# nbody = np.array([1,1,1,1,1])
+# nbody = np.array([3,3,3,3,3])
 
 
 nloop=nbody.size
