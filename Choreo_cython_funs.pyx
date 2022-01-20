@@ -8,7 +8,7 @@ They will be cythonized (i.e. processed by Cython into a C code, which will be c
 
 Hence, in this file, performance is favored against readability or ease of use.
 
-This file also defines global constants in both C and Python format like the nuber of space dimensions (ndim), the potential law, ect ...
+This file also defines global constants in both C and Python format like the nuber of space dimensions (ndim), the potential law, etc ...
 
 '''
 
@@ -37,7 +37,10 @@ the_irfft = scipy.fft.irfft
  
 # ~ the_ihfft = np.fft.ihfft
 the_ihfft = scipy.fft.ihfft
-# ~ the_ihfft = pyfftw.interfaces.numpy_fft.ihfft
+# ~ the_ihfft = pyfftw.interfaces.numpy_fft.ihfft 
+
+# ~ the_rfft = np.fft.rfft
+the_rfft = scipy.fft.rfft
  
  
 cdef long cndim = 2 # Number of space dimensions
@@ -78,7 +81,6 @@ fourpi = cfourpi
 fourpisq = cfourpisq
 
 nnm1 = cnnm1
-
 mn = cmn
 mnnm1 = cmnnm1
 
@@ -295,12 +297,84 @@ def Compute_action_Cython(
     
     Action = Kin_en-Pot_en
     
-#~     if cisnan(Action):
-#~         print("Action is NaN.")
-#~     if cisinf(Action):
-#~         print("Action is Infinity. Likely explaination : two body positions might have been identical")
-    
     return Action,Action_grad
+
+def RemoveSym_Cython(
+    long nloop,
+    long ncoeff,
+    long nint,
+    np.ndarray[double, ndim=1, mode="c"] mass not None ,
+    np.ndarray[long  , ndim=1, mode="c"] loopnb not None ,
+    np.ndarray[long  , ndim=2, mode="c"] Targets not None ,
+    np.ndarray[double, ndim=1, mode="c"] MassSum not None ,
+    np.ndarray[double, ndim=4, mode="c"] SpaceRotsUn not None ,
+    np.ndarray[long  , ndim=2, mode="c"] TimeRevsUn not None ,
+    np.ndarray[long  , ndim=2, mode="c"] TimeShiftNumUn not None ,
+    np.ndarray[long  , ndim=2, mode="c"] TimeShiftDenUn not None ,
+    np.ndarray[long  , ndim=1, mode="c"] loopnbi not None ,
+    np.ndarray[double, ndim=2, mode="c"] ProdMassSumAll not None ,
+    np.ndarray[double, ndim=4, mode="c"] SpaceRotsBin not None ,
+    np.ndarray[long  , ndim=2, mode="c"] TimeRevsBin not None ,
+    np.ndarray[long  , ndim=2, mode="c"] TimeShiftNumBin not None ,
+    np.ndarray[long  , ndim=2, mode="c"] TimeShiftDenBin not None ,
+    np.ndarray[double, ndim=4, mode="c"] all_coeffs  not None,
+    np.ndarray[double, ndim=3, mode="c"] all_pos not None
+    ):
+    # This function is probably the most important one.
+    # Computes the action and its gradient with respect to the Fourier coefficients of the generator in each loop.
+    
+    cdef long il,i
+    cdef long idim
+    cdef long ibi
+    cdef long ib
+    cdef long iint
+    cdef long nbody,ibody
+
+    cdef long maxloopnb = loopnb.max()
+    cdef long maxloopnbi = loopnbi.max()
+    
+    cdef double Kin_en = 0
+
+    cdef np.ndarray[long, ndim=2, mode="c"]  all_shiftsUn = np.zeros((nloop,maxloopnb),dtype=np.int_)
+    
+    nbody = 0
+    for il in range(nloop):
+        nbody += loopnb[il]
+
+    for il in range(nloop):
+        for ib in range(loopnb[il]):
+                
+            if not(((-TimeRevsUn[il,ib]*nint*TimeShiftNumUn[il,ib]) % TimeShiftDenUn[il,ib]) == 0):
+                print("WARNING : remainder in integer division")
+                
+            all_shiftsUn[il,ib] = ((-TimeRevsUn[il,ib]*nint*TimeShiftNumUn[il,ib]) // TimeShiftDenUn[il,ib] ) % nint
+        
+    
+    cdef np.ndarray[double, ndim=3, mode="c"] all_pos_b = np.zeros((nbody,cndim,nint),dtype=np.float64)
+
+    for iint in range(nint):
+
+        ibody = -1
+        # Different loops
+        for il in range(nloop):
+
+            for ib in range(loopnb[il]):
+
+                ibody += 1
+
+                for idim in range(cndim):
+                    all_pos_b[ibody,idim,iint] = SpaceRotsUn[il,ib,idim,0]*all_pos[il,0,all_shiftsUn[il,ib]]
+                    for jdim in range(1,cndim):
+                        all_pos_b[ibody,idim,iint] += SpaceRotsUn[il,ib,idim,jdim]*all_pos[il,jdim,all_shiftsUn[il,ib]]
+
+        # Increments time at the end
+        for il in range(nloop):
+            for ib in range(loopnb[il]):
+                all_shiftsUn[il,ib] = (all_shiftsUn[il,ib]+TimeRevsUn[il,ib]) % nint
+
+    cdef np.ndarray[doublecomplex , ndim=3, mode="c"]  all_coeffs_b = the_rfft(all_pos_b,n=nint,axis=2)
+
+    return all_coeffs_b
     
 def Compute_hash_action_Cython(
     long nloop,
@@ -462,7 +536,6 @@ def Compute_MinDist_Cython(
     cdef double pot,potp,potpp
     cdef double prod_mass,a,b,dx2,prod_fac
     cdef np.ndarray[double, ndim=1, mode="c"]  dx = np.zeros((cndim),dtype=np.float64)
-#~     cdef np.ndarray[double, ndim=1, mode="c"]  df = np.zeros((cndim),dtype=np.float64)
         
     cdef long maxloopnb = loopnb.max()
     cdef long maxloopnbi = loopnbi.max()
@@ -1092,7 +1165,7 @@ def Assemble_Cstr_Matrix(
     ):
     # Assembles the matrix of constraints used to select constraint satisfying parameters
 
-#~     cdef double eps_zero = 1e-14
+    # ~ cdef double eps_zero = 1e-14
     cdef double eps_zero = 1e-10
     
     # il,idim,k,ift => ift + 2*(k + ncoeff*(idim + ndim*il))
@@ -1134,14 +1207,12 @@ def Assemble_Cstr_Matrix(
                         
                         for jdim in range(cndim):
 
-# ~                             val = SpaceRotsUn[il,ib,idim,jdim]*cs[0]*mass[Targets[il,ib]]
                             val = SpaceRotsUn[il,ib,idim,jdim]*cs[0]*mass[Targets[il,ib]]*invmasstot
 
                             if (cfabs(val) > eps_zero):
                             
                                 nnz +=1
 
-# ~                             val = -TimeRevsUn[il,ib]*SpaceRotsUn[il,ib,idim,jdim]*cs[1]*mass[Targets[il,ib]]
                             val = -TimeRevsUn[il,ib]*SpaceRotsUn[il,ib,idim,jdim]*cs[1]*mass[Targets[il,ib]]*invmasstot
 
                             if (cfabs(val) > eps_zero):
@@ -1157,14 +1228,12 @@ def Assemble_Cstr_Matrix(
                         
                         for jdim in range(cndim):
                                 
-# ~                             val = SpaceRotsUn[il,ib,idim,jdim]*cs[1]*mass[Targets[il,ib]]
                             val = SpaceRotsUn[il,ib,idim,jdim]*cs[1]*mass[Targets[il,ib]]*invmasstot
 
                             if (cfabs(val) > eps_zero):
                             
                                 nnz +=1
 
-# ~                             val = TimeRevsUn[il,ib]*SpaceRotsUn[il,ib,idim,jdim]*cs[0]*mass[Targets[il,ib]]
                             val = TimeRevsUn[il,ib]*SpaceRotsUn[il,ib,idim,jdim]*cs[0]*mass[Targets[il,ib]]*invmasstot
 
                             if (cfabs(val) > eps_zero):
@@ -1303,7 +1372,6 @@ def Assemble_Cstr_Matrix(
                                 
                             i =  0 + 2*(k + ncoeff*(jdim + cndim*il))
 
-# ~                             val = SpaceRotsUn[il,ib,idim,jdim]*cs[0]*mass[Targets[il,ib]]
                             val = SpaceRotsUn[il,ib,idim,jdim]*cs[0]*mass[Targets[il,ib]]*invmasstot
 
                             if (cfabs(val) > eps_zero):
@@ -1316,7 +1384,6 @@ def Assemble_Cstr_Matrix(
                                 
                             i =  1 + 2*(k + ncoeff*(jdim + cndim*il))
 
-# ~                             val = -TimeRevsUn[il,ib]*SpaceRotsUn[il,ib,idim,jdim]*cs[1]*mass[Targets[il,ib]]
                             val = -TimeRevsUn[il,ib]*SpaceRotsUn[il,ib,idim,jdim]*cs[1]*mass[Targets[il,ib]]*invmasstot
 
                             if (cfabs(val) > eps_zero):
@@ -1340,7 +1407,6 @@ def Assemble_Cstr_Matrix(
                                 
                             i =  0 + 2*(k + ncoeff*(jdim + cndim*il))
 
-# ~                             val = SpaceRotsUn[il,ib,idim,jdim]*cs[1]*mass[Targets[il,ib]]
                             val = SpaceRotsUn[il,ib,idim,jdim]*cs[1]*mass[Targets[il,ib]]*invmasstot
 
                             if (cfabs(val) > eps_zero):
@@ -1353,7 +1419,6 @@ def Assemble_Cstr_Matrix(
                                 
                             i =  1 + 2*(k + ncoeff*(jdim + cndim*il))
 
-# ~                             val = TimeRevsUn[il,ib]*SpaceRotsUn[il,ib,idim,jdim]*cs[0]*mass[Targets[il,ib]]
                             val = TimeRevsUn[il,ib]*SpaceRotsUn[il,ib,idim,jdim]*cs[0]*mass[Targets[il,ib]]*invmasstot
 
                             if (cfabs(val) > eps_zero):
@@ -1546,10 +1611,7 @@ def diag_changevar(
         il = res / cndim
 
         if (k >=1):
-# ~             kd = k*cpow(MassSum[il],0.5)
-# ~             kd = k*MassSum[il]
             kd = k*ctwopi*cpow(2.*MassSum[il],0.5)
-# ~             kd = 1
             kfac = cpow(kd,n_grad_change)
         else:
             kfac = 1.

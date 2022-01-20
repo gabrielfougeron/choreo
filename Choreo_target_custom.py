@@ -24,6 +24,7 @@ from Choreo_funs import *
 
 def main(preprint_msg=''):
     
+
     def print(*args, **kwargs):
         """My custom print() function."""
         # Adding new arguments to the print function signature 
@@ -33,7 +34,7 @@ def main(preprint_msg=''):
         __builtins__.print(preprint_msg,end='')
         return __builtins__.print(*args, **kwargs)
     
-    
+
     # ~ slow_base_filename = './data/1_lone_wolf.npy'
     slow_base_filename = './data/2_cercle.npy'
     # ~ slow_base_filename = './data/3_cercle.npy'
@@ -50,7 +51,7 @@ def main(preprint_msg=''):
     fast_base_filename = './data/4_13_2_2_cercle.npy'
 
     mass_mul = 1
-    nTf = 13
+    nTf = 7 + 10*10
     # ~ nTf = 38
     # ~ nTf = 13
     nbs = 2
