@@ -13,8 +13,8 @@ os.environ['MKL_NUM_THREADS'] = '1'
 
 
 # job = 'python Choreo_sniffall.py' 
-# job = 'python Choreo_target_custom.py' 
-job = 'python Choreo_target_custom2.py' 
+job = 'python Choreo_target_custom.py' 
+# job = 'python Choreo_target_custom2.py' 
 # job = 'python Choreo_reconverge.py' 
 # job = 'python FD_test.py' 
 
