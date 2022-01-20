@@ -21,7 +21,6 @@ import time
 from Choreo_funs import *
 
 
-
 def main(preprint_msg=''):
     
 
@@ -35,8 +34,8 @@ def main(preprint_msg=''):
         return __builtins__.print(*args, **kwargs)
     
 
-    # slow_base_filename = './data/1_lone_wolf.npy'
-    slow_base_filename = './data/2_cercle.npy'
+    slow_base_filename = './data/1_lone_wolf.npy'
+    # slow_base_filename = './data/2_cercle.npy'
     # slow_base_filename = './data/3_cercle.npy'
     # slow_base_filename = './data/3_huit.npy'
     # slow_base_filename = './data/3_heart.npy'
@@ -46,16 +45,19 @@ def main(preprint_msg=''):
     # fast_base_filename = './data/2_cercle.npy'
     # fast_base_filename = './data/3_cercle.npy'
     # fast_base_filename = './data/3_huit.npy'
-    # fast_base_filename = './data/3_heart.npy'
+    fast_base_filename = './data/3_heart.npy'
     # fast_base_filename = './data/3_dbl_heart.npy'
-    fast_base_filename = './data/4_13_2_2_cercle.npy'
+    # fast_base_filename = './data/4_13_2_2_cercle.npy'
 
     mass_mul = 1
     nTf = 37
     # nTf = 38
     # nTf = 13
-    nbs = 2
-    nbf = 4
+    nbs = 1
+    nbf = 3
+
+    # mul_loops = True
+    mul_loops = False
 
     # Rotate_fast_with_slow = True
     Rotate_fast_with_slow = False
@@ -85,7 +87,11 @@ def main(preprint_msg=''):
 
     Sym_list = []
 
-    nbpl = [nbody]
+    if mul_loops:
+        nbpl = [nbs for i in range(nbf) ]
+    else:
+        nbpl = [nbody]
+
     the_lcm = m.lcm(*nbpl)
     SymName = None
     Sym_list,nbody = Make2DChoreoSymManyLoops(nbpl=nbpl,SymName=SymName)
@@ -320,7 +326,8 @@ def main(preprint_msg=''):
         ncoeff = callfun[0]["ncoeff_list"][callfun[0]["current_cvg_lvl"]]
         nint = callfun[0]["nint_list"][callfun[0]["current_cvg_lvl"]]
         
-        all_coeffs_avg = Gen_init_avg(nTf,nbs,nbf,mass_mul,ncoeff,all_coeffs_slow_load,all_coeffs_fast_load,callfun,Rotate_fast_with_slow,Optimize_Init,Randomize_Fast_Init)        
+        all_coeffs_avg = Gen_init_avg(nTf,nbs,nbf,mass_mul,ncoeff,all_coeffs_slow_load,all_coeffs_fast_load=all_coeffs_fast_load,callfun=callfun,Rotate_fast_with_slow=Rotate_fast_with_slow,Optimize_Init=Optimize_Init,Randomize_Fast_Init=Randomize_Fast_Init,mul_loops=mul_loops)        
+
         x_avg = Package_all_coeffs(all_coeffs_avg,callfun)
         
         x0 = np.zeros((callfun[0]['coeff_to_param_list'][callfun[0]["current_cvg_lvl"]].shape[0]),dtype=np.float64)
