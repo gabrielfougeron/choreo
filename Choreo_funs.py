@@ -1596,7 +1596,7 @@ class UniformRandom():
     def random(self):
         return np.random.random((self.d))
 
-def Transform_Coeffs(SpaceRots, TimeRevs, TimeShiftNum, TimeShiftDen, all_coeffs):
+def Transform_Coeffs(SpaceRot, TimeRev, TimeShiftNum, TimeShiftDen, all_coeffs):
     # Transforms coeffs defining a path and returns updated coeffs
     
     nloop = all_coeffs.shape[0]
@@ -1612,15 +1612,15 @@ def Transform_Coeffs(SpaceRots, TimeRevs, TimeShiftNum, TimeShiftDen, all_coeffs
             cs[0] = m.cos( - twopi * k*dt)
             cs[1] = m.sin( - twopi * k*dt)  
                 
-            v = all_coeffs[il,:,k,0] * cs[0] - TimeRevs * all_coeffs[il,:,k,1] * cs[1]
-            w = all_coeffs[il,:,k,0] * cs[1] + TimeRevs * all_coeffs[il,:,k,1] * cs[0]
+            v = all_coeffs[il,:,k,0] * cs[0] - TimeRev * all_coeffs[il,:,k,1] * cs[1]
+            w = all_coeffs[il,:,k,0] * cs[1] + TimeRev * all_coeffs[il,:,k,1] * cs[0]
                 
-            all_coeffs_new[il,:,k,0] = SpaceRots[:,:].dot(v)
-            all_coeffs_new[il,:,k,1] = SpaceRots[:,:].dot(w)
+            all_coeffs_new[il,:,k,0] = SpaceRot[:,:].dot(v)
+            all_coeffs_new[il,:,k,1] = SpaceRot[:,:].dot(w)
         
     return all_coeffs_new
 
-def Compose_Two_Paths(nTf,nbs,nbf,mass_mul,ncoeff,all_coeffs_slow,all_coeffs_fast_list,Rotate_fast_with_slow=False,mul_loops=False):
+def Compose_Two_Paths(nTf,nbs,nbf,mass_mul,ncoeff,all_coeffs_slow,all_coeffs_fast_list,Rotate_fast_with_slow=False,mul_loops=True):
     # Composes a "slow" with a "fast" path
 
     nloop_slow = all_coeffs_slow.shape[0]
@@ -1631,7 +1631,7 @@ def Compose_Two_Paths(nTf,nbs,nbf,mass_mul,ncoeff,all_coeffs_slow,all_coeffs_fas
 
     nloop = nloop_slow
 
-    all_loops_composed_list = []
+    all_coeffs_composed_list = []
 
     for ils in range(nloop):
 
@@ -1712,7 +1712,7 @@ def Compose_Two_Paths(nTf,nbs,nbf,mass_mul,ncoeff,all_coeffs_slow,all_coeffs_fas
             c_coeffs_avg = the_rfft(all_pos_avg,n=nint,axis=2)
             all_coeffs_composed = np.zeros((nloop_fast,ndim,ncoeff,2),dtype=np.float64)
 
-            for ilf in range(nloop):
+            for ilf in range(nloop_fast):
                 for idim in range(ndim):
                     for k in range(min(ncoeff,ncoeff_slow)):
                         all_coeffs_composed[ilf,idim,k,0] = c_coeffs_avg[ilf,idim,k].real
@@ -1723,13 +1723,17 @@ def Compose_Two_Paths(nTf,nbs,nbf,mass_mul,ncoeff,all_coeffs_slow,all_coeffs_fas
             
             all_coeffs_composed = np.zeros((nloop_fast,ndim,ncoeff,2),dtype=np.float64)
 
-            for ilf in range(nloop):
+            for ilf in range(nloop_fast):
 
                 all_coeffs_composed[ilf,:,:,:] = all_coeffs_fast_mod[ilf,:,:,:]  + all_coeffs_slow_mod[0,:,:,:] 
 
-    return all_coeffs_composed
+        all_coeffs_composed_list.append(all_coeffs_composed)
 
-def Gen_init_avg(nTf,nbs,nbf,mass_mul,ncoeff,all_coeffs_slow_load,all_coeffs_fast_load=None,all_coeffs_fast_load_list=None,callfun=None,Rotate_fast_with_slow=False,Optimize_Init=True,Randomize_Fast_Init=True,mul_loops=False):
+    all_coeffs = np.concatenate(all_coeffs_composed_list,axis=0)
+
+    return all_coeffs
+
+def Gen_init_avg(nTf,nbs,nbf,mass_mul,ncoeff,all_coeffs_slow_load,all_coeffs_fast_load=None,all_coeffs_fast_load_list=None,callfun=None,Rotate_fast_with_slow=False,Optimize_Init=True,Randomize_Fast_Init=True,mul_loops=True):
 
     if (all_coeffs_fast_load_list is None):
         if (all_coeffs_fast_load is None):

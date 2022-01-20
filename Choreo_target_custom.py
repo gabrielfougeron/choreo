@@ -1,4 +1,5 @@
 import os
+from re import T
 
 os.environ['OMP_NUM_THREADS'] = '1'
 os.environ['NUMEXPR_NUM_THREADS'] = '1'
@@ -42,22 +43,20 @@ def main(preprint_msg=''):
 
 
     # fast_base_filename = './data/1_lone_wolf.npy'
-    # fast_base_filename = './data/2_cercle.npy'
+    fast_base_filename = './data/2_cercle.npy'
     # fast_base_filename = './data/3_cercle.npy'
     # fast_base_filename = './data/3_huit.npy'
-    fast_base_filename = './data/3_heart.npy'
+    # fast_base_filename = './data/3_heart.npy'
     # fast_base_filename = './data/3_dbl_heart.npy'
     # fast_base_filename = './data/4_13_2_2_cercle.npy'
 
-    mass_mul = 1
-    nTf = 37
-    # nTf = 38
-    # nTf = 13
-    nbs = 1
-    nbf = 3
+    mass_mul = [1]
+    nTf = [7]
+    nbs = [1]
+    nbf = [2]
 
-    # mul_loops = True
-    mul_loops = False
+    mul_loops = True
+    # mul_loops = False
 
     # Rotate_fast_with_slow = True
     Rotate_fast_with_slow = False
@@ -72,29 +71,35 @@ def main(preprint_msg=''):
     all_coeffs_slow_load = np.load(slow_base_filename)
     all_coeffs_fast_load = np.load(fast_base_filename)
 
-    if (all_coeffs_slow_load.shape[0] != 1):
-        raise ValueError("Several loops in slow base")
+    if mul_loops:
+        
+        all_coeffs_fast_load_list = []
 
-    if (all_coeffs_fast_load.shape[0] != 1):
-        raise ValueError("Several loops in fast base")
+        for ib in range(nbf[0]):
+            
+            tshift = (ib*1.0)/nbf[0]
 
-    if (all_coeffs_slow_load.shape[0] != all_coeffs_fast_load.shape[0] ):
-        raise ValueError("Fast and slow have different number of loops")
+            all_coeffs_fast_load_list.append(Transform_Coeffs(np.identity(ndim), 1, tshift, 1, all_coeffs_fast_load))
 
-    nbody =  nbs * nbf
+        all_coeffs_fast_load_list = [np.concatenate(all_coeffs_fast_load_list,axis=0)]
 
-    mass = np.ones((nbody))*mass_mul
+    else:
+        all_coeffs_fast_load_list = [all_coeffs_fast_load]
+
+
 
     Sym_list = []
 
     if mul_loops:
-        nbpl = [nbs for i in range(nbf) ]
+        nbpl = [nbs[0] for i in range(nbf[0]) ]
     else:
-        nbpl = [nbody]
+        nbpl = [nbs[0] * nbf[0]]
 
     the_lcm = m.lcm(*nbpl)
     SymName = None
     Sym_list,nbody = Make2DChoreoSymManyLoops(nbpl=nbpl,SymName=SymName)
+
+    mass = np.ones((nbody))*mass_mul
 
     # rot_angle = twopi * nbf /  nTf
     # s = 1
@@ -143,7 +148,7 @@ def main(preprint_msg=''):
     # Save_anim = False
 
     vid_size = (8,8) # Image size in inches
-    nint_plot_anim = 2*2*2*3*3*5 * 6 *3
+    nint_plot_anim = 2*2*2*3*3*5 
     # nperiod_anim = 1./nbody
 
     color = "body"
@@ -326,7 +331,7 @@ def main(preprint_msg=''):
         ncoeff = callfun[0]["ncoeff_list"][callfun[0]["current_cvg_lvl"]]
         nint = callfun[0]["nint_list"][callfun[0]["current_cvg_lvl"]]
         
-        all_coeffs_avg = Gen_init_avg(nTf,nbs,nbf,mass_mul,ncoeff,all_coeffs_slow_load,all_coeffs_fast_load=all_coeffs_fast_load,callfun=callfun,Rotate_fast_with_slow=Rotate_fast_with_slow,Optimize_Init=Optimize_Init,Randomize_Fast_Init=Randomize_Fast_Init,mul_loops=mul_loops)        
+        all_coeffs_avg = Gen_init_avg(nTf,nbs,nbf,mass_mul,ncoeff,all_coeffs_slow_load,all_coeffs_fast_load_list=all_coeffs_fast_load_list,callfun=callfun,Rotate_fast_with_slow=Rotate_fast_with_slow,Optimize_Init=Optimize_Init,Randomize_Fast_Init=Randomize_Fast_Init,mul_loops=mul_loops)        
 
         x_avg = Package_all_coeffs(all_coeffs_avg,callfun)
         
@@ -352,7 +357,7 @@ def main(preprint_msg=''):
                 plot_all_2D(x0,nint_plot_img,callfun,'init.png',fig_size=img_size,color=color)        
                 
             # if Save_anim :
-                # plot_all_2D_anim(x0,nint_plot_anim,callfun,'init.mp4',nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size)
+            #     plot_all_2D_anim(x0,nint_plot_anim,callfun,'init.mp4',nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size)
                 
             # print(1/0)
             
