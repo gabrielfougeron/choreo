@@ -35,38 +35,39 @@ def main(preprint_msg=''):
         return __builtins__.print(*args, **kwargs)
     
 
-    slow_base_filename = './data/1_lone_wolf.npy'
-    # slow_base_filename = './data/2_cercle.npy'
+    # slow_base_filename = './data/1_lone_wolf.npy'
+    slow_base_filename = './data/2_cercle.npy'
     # slow_base_filename = './data/3_cercle.npy'
     # slow_base_filename = './data/3_huit.npy'
     # slow_base_filename = './data/3_heart.npy'
 
 
     # fast_base_filename = './data/1_lone_wolf.npy'
-    fast_base_filename = './data/2_cercle.npy'
+    # fast_base_filename = './data/2_cercle.npy'
     # fast_base_filename = './data/3_cercle.npy'
-    # fast_base_filename = './data/3_huit.npy'
+    fast_base_filename = './data/3_huit.npy'
     # fast_base_filename = './data/3_heart.npy'
     # fast_base_filename = './data/3_dbl_heart.npy'
-    # fast_base_filename = './data/4_13_2_2_cercle.npy'
+    # fast_base_filename = './data/4_13_2_2_cercle.npy' 
 
     mass_mul = [1]
-    nTf = [7]
-    nbs = [1]
-    nbf = [2]
+    nTf = [37]
+    nbs = [2]
+    nbf = [3]
 
-    mul_loops = True
+    # mul_loops = True
     # mul_loops = False
+    mul_loops = (np.random.random() > 1./2.)
 
     # Rotate_fast_with_slow = True
-    Rotate_fast_with_slow = False
-    # Rotate_fast_with_slow = (np.random.random() > 1./2.)
+    # Rotate_fast_with_slow = False
+    Rotate_fast_with_slow = (np.random.random() > 1./2.)
 
-    # Optimize_Init = True
-    Optimize_Init = False
+    Optimize_Init = True
+    # Optimize_Init = False
 
-    # Randomize_Fast_Init = True
-    Randomize_Fast_Init = False
+    Randomize_Fast_Init = True
+    # Randomize_Fast_Init = False
 
     all_coeffs_slow_load = np.load(slow_base_filename)
     all_coeffs_fast_load = np.load(fast_base_filename)
@@ -127,14 +128,14 @@ def main(preprint_msg=''):
     Look_for_duplicates = True
     # Look_for_duplicates = False
 
-    # Check_Escape = True
-    Check_Escape = False
+    Check_Escape = True
+    # Check_Escape = False
 
     # Penalize_Escape = True
     Penalize_Escape = False
 
-    # save_init = False
-    save_init = True
+    save_init = False
+    # save_init = True
 
     Save_img = True
     # Save_img = False
@@ -148,7 +149,7 @@ def main(preprint_msg=''):
     # Save_anim = False
 
     vid_size = (8,8) # Image size in inches
-    nint_plot_anim = 2*2*2*3*3*5 
+    nint_plot_anim = 2*2*2*3*3*5 *6
     # nperiod_anim = 1./nbody
 
     color = "body"
@@ -176,9 +177,9 @@ def main(preprint_msg=''):
     # ncoeff_init = 201   
     # ncoeff_init = 300   
     # ncoeff_init = 600
-    # ncoeff_init = 900
+    ncoeff_init = 900
     # ncoeff_init = 1800
-    ncoeff_init = 2700
+    # ncoeff_init = 2700
     # ncoeff_init = 1206
     # ncoeff_init = 90
 
@@ -313,8 +314,8 @@ def main(preprint_msg=''):
     hash_dict = {}
 
     n_opt = 0
-    n_opt_max = 1
-    # n_opt_max = 5
+    # n_opt_max = 1
+    n_opt_max = 5
     # n_opt_max = 1e10
     while (n_opt < n_opt_max):
         
@@ -580,4 +581,4 @@ if __name__ == "__main__":
         
     tstop = time.perf_counter()
     
-    print('Total time in seconds : ',tstop-tstart)
+    print(preprint_msg+'Total time in seconds : ',tstop-tstart)
