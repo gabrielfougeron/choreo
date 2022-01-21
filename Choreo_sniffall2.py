@@ -34,8 +34,6 @@ def main(preprint_msg=''):
         __builtins__.print(preprint_msg,end='')
         return __builtins__.print(*args, **kwargs)
     
-    
-
 
     # nbody =     3
 
@@ -77,7 +75,7 @@ def main(preprint_msg=''):
 
     # nbpl = [3,2,5]
     # nbpl = [1,2,3,4,5]
-    nbpl = [3]
+    nbpl = [1,1]
     # nbpl = [3,2]
     # nbpl = [2,3]
     # nbpl = [i+1 for i in range(4)]
@@ -155,8 +153,8 @@ def main(preprint_msg=''):
     Search_Min_Only = False
     # Search_Min_Only = True
 
-    # MomConsImposed = True
-    MomConsImposed = False
+    MomConsImposed = True
+    # MomConsImposed = False
 
     store_folder = './Sniff_all_sym/'
     store_folder = store_folder+str(nbody)
