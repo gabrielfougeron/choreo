@@ -1611,7 +1611,8 @@ def diag_changevar(
         il = res / cndim
 
         if (k >=1):
-            kd = k*ctwopi*cpow(2.*MassSum[il],0.5)
+            kd = k
+            # ~ kd = k*ctwopi*cpow(2.*MassSum[il],0.5) # The jury is still out
             kfac = cpow(kd,n_grad_change)
         else:
             kfac = 1.
