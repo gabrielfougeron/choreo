@@ -36,71 +36,92 @@ def main(preprint_msg=''):
     
 
     # slow_base_filename = './data/1_lone_wolf.npy'
-    slow_base_filename = './data/2_cercle.npy'
+    # slow_base_filename = './data/1_1_short_ellipse.npy'
+    slow_base_filename = './data/1_1_long_ellipse.npy'
+    # slow_base_filename = './data/2_cercle.npy'
     # slow_base_filename = './data/3_cercle.npy'
     # slow_base_filename = './data/3_huit.npy'
     # slow_base_filename = './data/3_heart.npy'
 
 
-    # fast_base_filename = './data/1_lone_wolf.npy'
-    # fast_base_filename = './data/2_cercle.npy'
-    # fast_base_filename = './data/3_cercle.npy'
-    fast_base_filename = './data/3_huit.npy'
-    # fast_base_filename = './data/3_heart.npy'
-    # fast_base_filename = './data/3_dbl_heart.npy'
-    # fast_base_filename = './data/4_13_2_2_cercle.npy' 
+    # fast_base_filename_list = ['./data/1_lone_wolf.npy'    ] 
+    # fast_base_filename_list = ['./data/2_cercle.npy'       ]
+    # fast_base_filename_list = ['./data/3_cercle.npy'       ]
+    # fast_base_filename_list = ['./data/3_huit.npy'         ]
+    # fast_base_filename_list = ['./data/3_heart.npy'        ]
+    # fast_base_filename_list = ['./data/3_dbl_heart.npy'    ]
+    # fast_base_filename_list = ['./data/4_13_2_2_cercle.npy'] 
 
-    mass_mul = [1]
-    nTf = [37]
-    nbs = [2]
-    nbf = [3]
+    # fast_base_filename_list = ['./data/2_cercle.npy','./data/2_cercle.npy'    ] 
+    # fast_base_filename_list = ['./data/1_lone_wolf.npy','./data/2_cercle.npy'    ] 
+    fast_base_filename_list = ['./data/1_lone_wolf.npy','./data/1_lone_wolf.npy'    ] 
+
+    # mass_mul = [1]
+    # nTf = [37]
+    # nbs = [2]
+    # nbf = [2]
+
+    mass_mul = [1,1]
+    nTf = [1,1]
+    nbs = [1,1]
+    nbf = [1,1]
 
     # mul_loops = True
-    # mul_loops = False
-    mul_loops = (np.random.random() > 1./2.)
+    # mul_loops = [True,True]
+    mul_loops = [False,False]
+    # mul_loops = (np.random.random() > 1./2.)
+
+    # Remove_Choreo_Sym = [mul_loops]
+    # Remove_Choreo_Sym = [False,False]
+    Remove_Choreo_Sym = [False,False]
 
     # Rotate_fast_with_slow = True
-    # Rotate_fast_with_slow = False
-    Rotate_fast_with_slow = (np.random.random() > 1./2.)
+    Rotate_fast_with_slow = False
+    # Rotate_fast_with_slow = (np.random.random() > 1./2.)
 
-    Optimize_Init = True
-    # Optimize_Init = False
+    # Optimize_Init = True
+    Optimize_Init = False
 
-    Randomize_Fast_Init = True
-    # Randomize_Fast_Init = False
+    # Randomize_Fast_Init = True
+    Randomize_Fast_Init = False
 
     all_coeffs_slow_load = np.load(slow_base_filename)
-    all_coeffs_fast_load = np.load(fast_base_filename)
+    all_coeffs_fast_load_list = []
 
-    if mul_loops:
-        
-        all_coeffs_fast_load_list = []
+    nbpl=[]
+    mass = []
+    for i in range(len(fast_base_filename_list)):
+        fast_base_filename = fast_base_filename_list[i]
+        all_coeffs_fast_load = np.load(fast_base_filename)
 
-        for ib in range(nbf[0]):
+        if Remove_Choreo_Sym[i]:
             
-            tshift = (ib*1.0)/nbf[0]
+            all_coeffs_fast_load_list_temp = []
 
-            all_coeffs_fast_load_list.append(Transform_Coeffs(np.identity(ndim), 1, tshift, 1, all_coeffs_fast_load))
+            for ib in range(nbf[i]):
+                
+                tshift = (ib*1.0)/nbf[i]
 
-        all_coeffs_fast_load_list = [np.concatenate(all_coeffs_fast_load_list,axis=0)]
+                all_coeffs_fast_load_list_temp.append(Transform_Coeffs(np.identity(ndim), 1, tshift, 1, all_coeffs_fast_load))
 
-    else:
-        all_coeffs_fast_load_list = [all_coeffs_fast_load]
+                nbpl.append(nbs[i])
+                mass.extend([mass_mul[i] for j in range(nbs[i])])
 
+            all_coeffs_fast_load_list.append(np.concatenate(all_coeffs_fast_load_list_temp,axis=0))
 
+        else:
+            all_coeffs_fast_load_list.append( all_coeffs_fast_load)
+            nbpl.append(nbs[i]*nbf[i])
+            mass.extend([mass_mul[i] for j in range(nbs[i]*nbf[i])])
+
+    mass = np.array(mass,dtype=np.float64)
 
     Sym_list = []
-
-    if mul_loops:
-        nbpl = [nbs[0] for i in range(nbf[0]) ]
-    else:
-        nbpl = [nbs[0] * nbf[0]]
-
     the_lcm = m.lcm(*nbpl)
     SymName = None
     Sym_list,nbody = Make2DChoreoSymManyLoops(nbpl=nbpl,SymName=SymName)
 
-    mass = np.ones((nbody))*mass_mul
+    # mass = np.ones((nbody))*mass_mul
 
     # rot_angle = twopi * nbf /  nTf
     # s = 1
@@ -114,8 +135,8 @@ def main(preprint_msg=''):
         # ))
 
 
-    MomConsImposed = True
-    # MomConsImposed = False
+    # MomConsImposed = True
+    MomConsImposed = False
 
     store_folder = './Target_res/'
     store_folder = store_folder+str(nbody)
@@ -134,8 +155,8 @@ def main(preprint_msg=''):
     # Penalize_Escape = True
     Penalize_Escape = False
 
-    save_init = False
-    # save_init = True
+    # save_init = False
+    save_init = True
 
     Save_img = True
     # Save_img = False
@@ -177,9 +198,9 @@ def main(preprint_msg=''):
     # ncoeff_init = 201   
     # ncoeff_init = 300   
     # ncoeff_init = 600
-    ncoeff_init = 900
+    # ncoeff_init = 900
     # ncoeff_init = 1800
-    # ncoeff_init = 2700
+    ncoeff_init = 2400
     # ncoeff_init = 1206
     # ncoeff_init = 90
 
@@ -314,8 +335,8 @@ def main(preprint_msg=''):
     hash_dict = {}
 
     n_opt = 0
-    # n_opt_max = 1
-    n_opt_max = 5
+    n_opt_max = 1
+    # n_opt_max = 5
     # n_opt_max = 1e10
     while (n_opt < n_opt_max):
         
@@ -357,8 +378,8 @@ def main(preprint_msg=''):
             if Save_img :
                 plot_all_2D(x0,nint_plot_img,callfun,'init.png',fig_size=img_size,color=color)        
                 
-            # if Save_anim :
-            #     plot_all_2D_anim(x0,nint_plot_anim,callfun,'init.mp4',nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size)
+            if Save_anim :
+                plot_all_2D_anim(x0,nint_plot_anim,callfun,'init.mp4',nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size)
                 
             # print(1/0)
             
@@ -562,9 +583,7 @@ def main(preprint_msg=''):
 
 
 if __name__ == "__main__":
-    
-    tstart = time.perf_counter()
-    
+
     parser = argparse.ArgumentParser(description='Welcome to the targeted choreography finder')
     parser.add_argument('-pp','--preprint_msg',nargs=1,type=None,required=False,default=None,help='Adds a systematic message before every print')
     
@@ -572,13 +591,14 @@ if __name__ == "__main__":
     
     if args.preprint_msg is None:
         
-        main()
-        
+        preprint_msg = ''
+
     else:    
         
         preprint_msg = args.preprint_msg[0].strip() + ' : '
-        main(preprint_msg = preprint_msg)
-        
+
+    tstart = time.perf_counter()
+    main(preprint_msg = preprint_msg)
     tstop = time.perf_counter()
     
     print(preprint_msg+'Total time in seconds : ',tstop-tstart)
