@@ -135,7 +135,8 @@ def main(preprint_msg=''):
 
 
 
-    mass = np.ones((nbody))
+    mass = np.array([2,1],dtype=np.float64)
+    # mass = np.ones((nbody))
 
     # mass[0]=2
 
@@ -146,12 +147,6 @@ def main(preprint_msg=''):
     # mass[5:10] = 2*3
 
 
-
-
-
-
-    Search_Min_Only = False
-    # Search_Min_Only = True
 
     MomConsImposed = True
     # MomConsImposed = False
@@ -176,8 +171,8 @@ def main(preprint_msg=''):
     # Penalize_Escape = True
     Penalize_Escape = False
 
-    # save_init = False
-    save_init = True
+    save_init = False
+    # save_init = True
 
     save_approx = False
     # save_approx = True
@@ -212,8 +207,8 @@ def main(preprint_msg=''):
 
     nperiod_anim = 1./period_div
 
-    Plot_trace_anim = True
-    # Plot_trace_anim = False
+    # Plot_trace_anim = True
+    Plot_trace_anim = False
 
     n_reconverge_it_max = 4
     # n_reconverge_it_max = 1
@@ -238,10 +233,10 @@ def main(preprint_msg=''):
 
     duplicate_eps = 1e-9
 
-    krylov_method = 'lgmres'
+    # krylov_method = 'lgmres'
     # krylov_method = 'gmres'
     # krylov_method = 'bicgstab'
-    # krylov_method = 'cgs'
+    krylov_method = 'cgs'
     # krylov_method = 'minres'
 
     # line_search = 'armijo'
@@ -423,14 +418,24 @@ def main(preprint_msg=''):
             maxiter = maxiter_list[i_optim_param]
             outer_k = outer_k_list[i_optim_param]
             store_outer_Av = store_outer_Av_list[i_optim_param]
+
+            inner_M = None
             
             print('Action Grad Norm on entry : ',best_sol.f_norm)
             print('Optim level : ',i_optim_param+1,' / ',n_optim_param , 'Resize level : ',callfun[0]["current_cvg_lvl"]+1,' / ',n_reconverge_it_max+1)
 
             
             F = lambda x : Action_grad_mod(x,callfun)
-            jac_options = {'method':krylov_method,'rdiff':rdiff,'outer_k':outer_k,'inner_inner_m':inner_maxiter,'inner_store_outer_Av':store_outer_Av,'inner_tol':inner_tol }
+            # jac_options = {'method':krylov_method,'rdiff':rdiff,'outer_k':outer_k,'inner_inner_m':inner_maxiter,'inner_store_outer_Av':store_outer_Av,'inner_tol':inner_tol }
             
+            if (krylov_method == 'lgmres'):
+                jac_options = {'method':krylov_method,'rdiff':rdiff,'outer_k':outer_k,'inner_inner_m':inner_maxiter,'inner_store_outer_Av':store_outer_Av,'inner_tol':inner_tol,'inner_M':inner_M }
+            elif (krylov_method == 'gmres'):
+                jac_options = {'method':krylov_method,'rdiff':rdiff,'outer_k':outer_k,'inner_tol':inner_tol,'inner_M':inner_M }
+            else:
+                jac_options = {'method':krylov_method,'rdiff':rdiff,'outer_k':outer_k,'inner_tol':inner_tol,'inner_M':inner_M }
+
+
             if (Use_exact_Jacobian):
 
                 FGrad = lambda x,dx : Compute_action_hess_mul(x,dx,callfun)

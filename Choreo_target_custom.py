@@ -61,6 +61,7 @@ def main(preprint_msg=''):
     # nbs = [2]
     # nbf = [2]
 
+    # # mass_mul = [2,2]
     mass_mul = [1,1]
     nTf = [1,1]
     nbs = [1,1]
@@ -135,8 +136,8 @@ def main(preprint_msg=''):
         # ))
 
 
-    # MomConsImposed = True
-    MomConsImposed = False
+    MomConsImposed = True
+#     MomConsImposed = False
 
     store_folder = './Target_res/'
     store_folder = store_folder+str(nbody)
@@ -165,6 +166,11 @@ def main(preprint_msg=''):
     img_size = (8,8) # Image size in inches
 
     nint_plot_img = 10000
+    
+    color = "body"
+    # color = "loop"
+    # color = "velocity"
+    # color = "all"
 
     Save_anim = True
     # Save_anim = False
@@ -172,11 +178,6 @@ def main(preprint_msg=''):
     vid_size = (8,8) # Image size in inches
     nint_plot_anim = 2*2*2*3*3*5 *6
     # nperiod_anim = 1./nbody
-
-    color = "body"
-    # color = "loop"
-    # color = "velocity"
-    # color = "all"
 
     try:
         the_lcm
@@ -190,6 +191,9 @@ def main(preprint_msg=''):
     Plot_trace_anim = True
     # Plot_trace_anim = False
 
+    Save_Newton_Error = True
+    # Save_Newton_Error = False
+
     n_reconverge_it_max = 4
     # n_reconverge_it_max = 1
 
@@ -198,9 +202,9 @@ def main(preprint_msg=''):
     # ncoeff_init = 201   
     # ncoeff_init = 300   
     # ncoeff_init = 600
-    # ncoeff_init = 900
+    ncoeff_init = 900
     # ncoeff_init = 1800
-    ncoeff_init = 2400
+    # ncoeff_init = 2400
     # ncoeff_init = 1206
     # ncoeff_init = 90
 
@@ -380,7 +384,10 @@ def main(preprint_msg=''):
                 
             if Save_anim :
                 plot_all_2D_anim(x0,nint_plot_anim,callfun,'init.mp4',nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size)
-                
+            
+            if Save_Newton_Error :
+                plot_Newton_Error(x0,callfun,'init_newton.png')
+
             # print(1/0)
             
         f0 = Action_grad_mod(x0,callfun)
@@ -406,8 +413,18 @@ def main(preprint_msg=''):
             print('Optim level : ',i_optim_param+1,' / ',n_optim_param , '    Resize level : ',callfun[0]["current_cvg_lvl"]+1,' / ',n_reconverge_it_max+1)
             
             F = lambda x : Action_grad_mod(x,callfun)
-            jac_options = {'method':krylov_method,'rdiff':rdiff,'outer_k':outer_k,'inner_inner_m':inner_maxiter,'inner_store_outer_Av':store_outer_Av,'inner_tol':inner_tol }
+
+
+            # jac_options = {'method':krylov_method,'rdiff':rdiff,'outer_k':outer_k,'inner_inner_m':inner_maxiter,'inner_store_outer_Av':store_outer_Av,'inner_tol':inner_tol }
             
+            if (krylov_method == 'lgmres'):
+                jac_options = {'method':krylov_method,'rdiff':rdiff,'outer_k':outer_k,'inner_inner_m':inner_maxiter,'inner_store_outer_Av':store_outer_Av,'inner_tol':inner_tol,'inner_M':inner_M }
+            elif (krylov_method == 'gmres'):
+                jac_options = {'method':krylov_method,'rdiff':rdiff,'outer_k':outer_k,'inner_tol':inner_tol,'inner_M':inner_M }
+            else:
+                jac_options = {'method':krylov_method,'rdiff':rdiff,'outer_k':outer_k,'inner_tol':inner_tol,'inner_M':inner_M }
+
+
             if (Use_exact_Jacobian):
 
                 FGrad = lambda x,dx : Compute_action_hess_mul(x,dx,callfun)
@@ -509,6 +526,7 @@ def main(preprint_msg=''):
 
                     GoOn=False
                     print("Stopping Search : there might be something wrong with the constraints")
+                    SaveSol = True
                 
                 if GoOn and NewtonPreciseGood :
 
@@ -551,6 +569,9 @@ def main(preprint_msg=''):
                         
                     if Save_anim :
                         plot_all_2D_anim(best_sol.x,nint_plot_anim,callfun,filename_output+'.mp4',nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size)
+
+                    if Save_Newton_Error :
+                        plot_Newton_Error(best_sol.x,callfun,filename_output+'_newton.png')
                     
                     all_coeffs = Unpackage_all_coeffs(best_sol.x,callfun)
                     np.save(filename_output+'.npy',all_coeffs)
