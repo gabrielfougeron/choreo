@@ -20,6 +20,8 @@ import sparseqr
 import networkx as nx
 import random
 
+import inspect
+
 import logging
 logging.disable(logging.WARNING)
 
@@ -36,7 +38,14 @@ from Choreo_cython_funs import Compute_action_Cython,Compute_action_hess_mul_Cyt
 from Choreo_cython_funs import Assemble_Cstr_Matrix,diag_changevar
 from Choreo_cython_funs import Compute_MinDist_Cython,Compute_Loop_Dist_btw_avg_Cython,Compute_square_dist,Compute_Loop_Size_Dist_Cython,RemoveSym_Cython
 from Choreo_cython_funs import the_irfft,the_rfft,the_ihfft
-# from Choreo_cython_funs import *
+
+
+def Pick_Named_Args_From_Dict(fun,the_dict):
+    
+    list_of_args = inspect.getargspec(fun).args
+    all_kwargs = {k:the_dict[k] for k in list_of_args}
+        
+    return all_kwargs
 
 def plot_Newton_Error(x,callfun,filename,fig_size=(8,5),color_list = plt.rcParams['axes.prop_cycle'].by_key()['color']):
     

@@ -20,6 +20,8 @@ import shutil
 import time
 import builtins
 
+import inspect
+
 from Choreo_funs import *
 
 
@@ -278,12 +280,8 @@ def main(preprint_msg=''):
     # n_grad_change = 1.5
     
     
-    
-    all_kwargs = {
-        'nbody'     : nbody,
-        }
-    
-    
+    all_kwargs = Pick_Named_Args_From_Dict(Find_Choreo,dict(globals(),**locals()))
+
     return all_kwargs
     
     
@@ -291,7 +289,49 @@ def main(preprint_msg=''):
     
     
 
-def Find_Choreo(nbody):
+def Find_Choreo(
+    nbody,
+    n_reconverge_it_max,
+    ncoeff_init,
+    mass,
+    Sym_list,
+    MomConsImposed,
+    n_grad_change,
+    escape_fac,
+    escape_min_dist,
+    escape_pow,
+    Penalize_Escape,
+    store_folder,
+    nTf,
+    nbs,
+    nbf,
+    mass_mul,
+    all_coeffs_slow_load,
+    all_coeffs_fast_load_list,
+    Rotate_fast_with_slow,
+    Optimize_Init,
+    Randomize_Fast_Init,
+    mul_loops,
+    save_init,
+    Save_img,
+    nint_plot_img,
+    img_size,
+    color,
+    Save_Newton_Error,
+    gradtol_list,
+    inner_maxiter_list,
+    maxiter_list,
+    outer_k_list,
+    store_outer_Av_list,
+    n_optim_param,
+    krylov_method,
+    Use_exact_Jacobian,
+    disp_scipy_opt,
+    line_search,
+    Check_Escape,
+    Look_for_duplicates,
+    duplicate_eps,
+    ):
     
 
 
