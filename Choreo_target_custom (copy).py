@@ -18,6 +18,7 @@ from matplotlib import animation
 import copy
 import shutil
 import time
+import builtins
 
 from Choreo_funs import *
 
@@ -31,17 +32,20 @@ def main(preprint_msg=''):
         # is probably a bad idea.
         # Instead consider testing if custom argument keywords
         # are present in kwargs
-        __builtins__.print(preprint_msg,end='')
-        return __builtins__.print(*args, **kwargs)
+        builtins.print(preprint_msg,end='')
+        return builtins.print(*args, **kwargs)
     
 
     # slow_base_filename = './data/1_lone_wolf.npy'
     # slow_base_filename = './data/1_1_short_ellipse.npy'
-    slow_base_filename = './data/1_1_long_ellipse.npy'
+    # ~ slow_base_filename = './data/1_1_long_ellipse.npy'
+    # slow_base_filename = './data/1_1_cercle.npy'
     # slow_base_filename = './data/2_cercle.npy'
     # slow_base_filename = './data/3_cercle.npy'
     # slow_base_filename = './data/3_huit.npy'
     # slow_base_filename = './data/3_heart.npy'
+    # slow_base_filename = './data/4_trefoil.npy'
+    slow_base_filename = './data/1x4_trefoil.npy'
 
 
     # fast_base_filename_list = ['./data/1_lone_wolf.npy'    ] 
@@ -51,30 +55,48 @@ def main(preprint_msg=''):
     # fast_base_filename_list = ['./data/3_heart.npy'        ]
     # fast_base_filename_list = ['./data/3_dbl_heart.npy'    ]
     # fast_base_filename_list = ['./data/4_13_2_2_cercle.npy'] 
+    # fast_base_filename_list = ['./data/4_trefoil.npy'] 
 
-    # fast_base_filename_list = ['./data/2_cercle.npy','./data/2_cercle.npy'    ] 
+    # fast_base_filename_list = ['./data/2_cercle.npy','./data/3_huit.npy'    ] 
     # fast_base_filename_list = ['./data/1_lone_wolf.npy','./data/2_cercle.npy'    ] 
-    fast_base_filename_list = ['./data/1_lone_wolf.npy','./data/1_lone_wolf.npy'    ] 
+    # ~ fast_base_filename_list = ['./data/1_lone_wolf.npy','./data/1_lone_wolf.npy'    ] 
+    
+    
+    fast_base_filename_list = ['./data/1_lone_wolf.npy','./data/1_lone_wolf.npy'    ,'./data/1_lone_wolf.npy','./data/1_lone_wolf.npy'    ] 
+    # fast_base_filename_list = ['./data/1_lone_wolf.npy','./data/2_cercle.npy'    ,'./data/1_lone_wolf.npy','./data/2_cercle.npy'    ] 
+    # fast_base_filename_list = ['./data/1_lone_wolf.npy','./data/1_lone_wolf.npy'    ,'./data/1_lone_wolf.npy','./data/3_huit.npy'    ] 
+
+    nfl = len(fast_base_filename_list)
 
     # mass_mul = [1]
-    # nTf = [37]
-    # nbs = [2]
-    # nbf = [2]
+    # nTf = [1]
+    # nbs = [1]
+    # nbf = [4]
 
-    # # mass_mul = [2,2]
-    mass_mul = [1,1]
-    nTf = [1,1]
-    nbs = [1,1]
-    nbf = [1,1]
+    epsmul = 0.
 
-    # mul_loops = True
-    # mul_loops = [True,True]
-    mul_loops = [False,False]
-    # mul_loops = (np.random.random() > 1./2.)
+    # mass_mul = [1,1,1,1]
+    mass_mul = [1.,1.+epsmul,1.+2*epsmul,1.+3*epsmul]
+    nTf = [1,1,1,1]
+    nbs = [1,1,1,1]
+    nbf = [1,1,1,1]
 
-    # Remove_Choreo_Sym = [mul_loops]
+    # mass_mul = [1,1]
+    # mass_mul = [3,2]
+    # nTf = [37,37]
+    # nbs = [1,1]
+    # nbf = [2,3]
+
+    mul_loops_ini = True
+    # mul_loops_ini = False
+    # mul_loops_ini = np.random.random() > 1./2.
+    
+    mul_loops = [mul_loops_ini for _ in range(nfl)]
+
+
+    Remove_Choreo_Sym = mul_loops
     # Remove_Choreo_Sym = [False,False]
-    Remove_Choreo_Sym = [False,False]
+    # Remove_Choreo_Sym = [False,False]
 
     # Rotate_fast_with_slow = True
     Rotate_fast_with_slow = False
@@ -91,7 +113,7 @@ def main(preprint_msg=''):
 
     nbpl=[]
     mass = []
-    for i in range(len(fast_base_filename_list)):
+    for i in range(nfl):
         fast_base_filename = fast_base_filename_list[i]
         all_coeffs_fast_load = np.load(fast_base_filename)
 
@@ -124,16 +146,18 @@ def main(preprint_msg=''):
 
     # mass = np.ones((nbody))*mass_mul
 
-    # rot_angle = twopi * nbf /  nTf
-    # s = 1
+    ibody = 0
+    rot_angle = 0.
+    s = -1
+    st = -1
 
-    # Sym_list.append(ChoreoSym(
-        # LoopTarget=0,
-        # LoopSource=0,
-        # SpaceRot = np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64),
-        # TimeRev=1,
-        # TimeShift=fractions.Fraction(numerator=1,denominator=nTf)
-        # ))
+    Sym_list.append(ChoreoSym(
+        LoopTarget=ibody,
+        LoopSource=ibody,
+        SpaceRot = np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64),
+        TimeRev=st,
+        TimeShift=fractions.Fraction(numerator=0,denominator=1)
+        ))
 
 
     MomConsImposed = True
@@ -176,7 +200,7 @@ def main(preprint_msg=''):
     # Save_anim = False
 
     vid_size = (8,8) # Image size in inches
-    nint_plot_anim = 2*2*2*3*3*5 *6
+    nint_plot_anim = 2*2*2*3*3*5 
     # nperiod_anim = 1./nbody
 
     try:
@@ -191,8 +215,8 @@ def main(preprint_msg=''):
     Plot_trace_anim = True
     # Plot_trace_anim = False
 
-    Save_Newton_Error = True
-    # Save_Newton_Error = False
+    # Save_Newton_Error = True
+    Save_Newton_Error = False
 
     n_reconverge_it_max = 4
     # n_reconverge_it_max = 1
@@ -339,8 +363,8 @@ def main(preprint_msg=''):
     hash_dict = {}
 
     n_opt = 0
-    n_opt_max = 1
-    # n_opt_max = 5
+    # n_opt_max = 1
+    n_opt_max = 5
     # n_opt_max = 1e10
     while (n_opt < n_opt_max):
         
@@ -382,8 +406,8 @@ def main(preprint_msg=''):
             if Save_img :
                 plot_all_2D(x0,nint_plot_img,callfun,'init.png',fig_size=img_size,color=color)        
                 
-            if Save_anim :
-                plot_all_2D_anim(x0,nint_plot_anim,callfun,'init.mp4',nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size)
+            # if Save_anim :
+                # plot_all_2D_anim(x0,nint_plot_anim,callfun,'init.mp4',nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size)
             
             if Save_Newton_Error :
                 plot_Newton_Error(x0,callfun,'init_newton.png')
@@ -413,7 +437,8 @@ def main(preprint_msg=''):
             print('Optim level : ',i_optim_param+1,' / ',n_optim_param , '    Resize level : ',callfun[0]["current_cvg_lvl"]+1,' / ',n_reconverge_it_max+1)
             
             F = lambda x : Action_grad_mod(x,callfun)
-
+            
+            inner_M = None
 
             # jac_options = {'method':krylov_method,'rdiff':rdiff,'outer_k':outer_k,'inner_inner_m':inner_maxiter,'inner_store_outer_Av':store_outer_Av,'inner_tol':inner_tol }
             
