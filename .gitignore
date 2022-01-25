@@ -14,3 +14,4 @@ Sniff_all/
 Sniff_all_sym/
 __pycache__/
 .vscode/
+*.7z

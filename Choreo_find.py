@@ -1,5 +1,5 @@
-
 import os
+from re import T
 
 os.environ['OMP_NUM_THREADS'] = '1'
 os.environ['NUMEXPR_NUM_THREADS'] = '1'
@@ -18,9 +18,9 @@ from matplotlib import animation
 import copy
 import shutil
 import time
+import builtins
 
 from Choreo_funs import *
-
 
 
 def main(preprint_msg=''):
@@ -31,136 +31,144 @@ def main(preprint_msg=''):
         # is probably a bad idea.
         # Instead consider testing if custom argument keywords
         # are present in kwargs
-        __builtins__.print(preprint_msg,end='')
-        return __builtins__.print(*args, **kwargs)
+        builtins.print(preprint_msg,end='')
+        return builtins.print(*args, **kwargs)
     
 
-    # nbody =     3
-
-    # Sym_list = []
-    # the_lcm = 3
-
-
-    # SymType = {
-        # 'name'  : 'C',
-        # 'n'     : nbody,
-        # 'k'     : 1,
-        # 'l'     : 0 ,
-        # 'p'     : 0 ,
-        # 'q'     : 1 ,
-    # }
-    # istart = 0
-    # Sym_list.extend(Make2DChoreoSym(SymType,[i+istart for i in range(nbody)]))
+    # slow_base_filename = './data/1_lone_wolf.npy'
+    # slow_base_filename = './data/1_1_short_ellipse.npy'
+    # ~ slow_base_filename = './data/1_1_long_ellipse.npy'
+    # slow_base_filename = './data/1_1_cercle.npy'
+    # slow_base_filename = './data/2_cercle.npy'
+    # slow_base_filename = './data/3_cercle.npy'
+    # slow_base_filename = './data/3_huit.npy'
+    # slow_base_filename = './data/3_heart.npy'
+    # slow_base_filename = './data/4_trefoil.npy'
+    slow_base_filename = './data/1x4_trefoil.npy'
 
 
+    # fast_base_filename_list = ['./data/1_lone_wolf.npy'    ] 
+    # fast_base_filename_list = ['./data/2_cercle.npy'       ]
+    # fast_base_filename_list = ['./data/3_cercle.npy'       ]
+    # fast_base_filename_list = ['./data/3_huit.npy'         ]
+    # fast_base_filename_list = ['./data/3_heart.npy'        ]
+    # fast_base_filename_list = ['./data/3_dbl_heart.npy'    ]
+    # fast_base_filename_list = ['./data/4_13_2_2_cercle.npy'] 
+    # fast_base_filename_list = ['./data/4_trefoil.npy'] 
 
-    # SymType = {
-        # 'name'  : 'C',
-        # 'n'     : -15,
-        # 'k'     : 1,
-        # 'l'     : 1 ,
-        # 'p'     : 0 ,
-        # 'q'     : 1 ,
-    # }
+    # fast_base_filename_list = ['./data/2_cercle.npy','./data/3_huit.npy'    ] 
+    # fast_base_filename_list = ['./data/1_lone_wolf.npy','./data/2_cercle.npy'    ] 
+    # ~ fast_base_filename_list = ['./data/1_lone_wolf.npy','./data/1_lone_wolf.npy'    ] 
+    
+    
+    fast_base_filename_list = ['./data/1_lone_wolf.npy','./data/1_lone_wolf.npy'    ,'./data/1_lone_wolf.npy','./data/1_lone_wolf.npy'    ] 
+    # fast_base_filename_list = ['./data/1_lone_wolf.npy','./data/2_cercle.npy'    ,'./data/1_lone_wolf.npy','./data/2_cercle.npy'    ] 
+    # fast_base_filename_list = ['./data/1_lone_wolf.npy','./data/1_lone_wolf.npy'    ,'./data/1_lone_wolf.npy','./data/3_huit.npy'    ] 
 
-    # istart = 5
-    # Sym_list.extend(Make2DChoreoSym(SymType,[i+istart for i in range(3)]))
-    # Sym_list.append(ChoreoSym(
-                    # LoopTarget=istart,
-                    # LoopSource=istart,
-                    # SpaceRot = np.identity(ndim,dtype=np.float64),
-                    # TimeRev=1,
-                    # TimeShift=fractions.Fraction(numerator=1,denominator=5)
-                    # ))
+    nfl = len(fast_base_filename_list)
 
-    # nbpl = [3,2,5]
-    # nbpl = [1,2,3,4,5]
-    # nbpl = [1,1]
-    nbpl = [4]
-    # nbpl = [2,3]
-    # nbpl = [i+1 for i in range(4)]
-    # nbpl = [1 for i in range(10)]
-    # nbpl = [5]
+    # mass_mul = [1]
+    # nTf = [1]
+    # nbs = [1]
+    # nbf = [4]
+
+    epsmul = 0.
+
+    # mass_mul = [1,1,1,1]
+    mass_mul = [1.,1.+epsmul,1.+2*epsmul,1.+3*epsmul]
+    nTf = [1,1,1,1]
+    nbs = [1,1,1,1]
+    nbf = [1,1,1,1]
+
+    # mass_mul = [1,1]
+    # mass_mul = [3,2]
+    # nTf = [37,37]
+    # nbs = [1,1]
+    # nbf = [2,3]
+
+    mul_loops_ini = True
+    # mul_loops_ini = False
+    # mul_loops_ini = np.random.random() > 1./2.
+    
+    mul_loops = [mul_loops_ini for _ in range(nfl)]
+
+
+    Remove_Choreo_Sym = mul_loops
+    # Remove_Choreo_Sym = [False,False]
+    # Remove_Choreo_Sym = [False,False]
+
+    # Rotate_fast_with_slow = True
+    Rotate_fast_with_slow = False
+    # Rotate_fast_with_slow = (np.random.random() > 1./2.)
+
+    # Optimize_Init = True
+    Optimize_Init = False
+
+    # Randomize_Fast_Init = True
+    Randomize_Fast_Init = False
+
+    all_coeffs_slow_load = np.load(slow_base_filename)
+    all_coeffs_fast_load_list = []
+
+    nbpl=[]
+    mass = []
+    for i in range(nfl):
+        fast_base_filename = fast_base_filename_list[i]
+        all_coeffs_fast_load = np.load(fast_base_filename)
+
+        if Remove_Choreo_Sym[i]:
+            
+            all_coeffs_fast_load_list_temp = []
+
+            for ib in range(nbf[i]):
+                
+                tshift = (ib*1.0)/nbf[i]
+
+                all_coeffs_fast_load_list_temp.append(Transform_Coeffs(np.identity(ndim), 1, tshift, 1, all_coeffs_fast_load))
+
+                nbpl.append(nbs[i])
+                mass.extend([mass_mul[i] for j in range(nbs[i])])
+
+            all_coeffs_fast_load_list.append(np.concatenate(all_coeffs_fast_load_list_temp,axis=0))
+
+        else:
+            all_coeffs_fast_load_list.append( all_coeffs_fast_load)
+            nbpl.append(nbs[i]*nbf[i])
+            mass.extend([mass_mul[i] for j in range(nbs[i]*nbf[i])])
+
+    mass = np.array(mass,dtype=np.float64)
+
+    Sym_list = []
     the_lcm = m.lcm(*nbpl)
-
-    SymName = ['D' ]
-    # SymName = None
+    SymName = None
     Sym_list,nbody = Make2DChoreoSymManyLoops(nbpl=nbpl,SymName=SymName)
 
-    # nbpl = [1,1,1,1,1]
-    # nbpl = [4,3,2]
-    # nbpl = [1,2]
+    # mass = np.ones((nbody))*mass_mul
 
-    # the_lcm = m.lcm(*nbpl)
-    # SymName = None
-    # Sym_list,nbody = Make2DChoreoSymManyLoops(nbpl=nbpl,SymName=SymName)
+    ibody = 0
+    rot_angle = 0.
+    s = -1
+    st = -1
 
-
-
-    # rot_angle =  twopi * 1 /  2
-    # s = 1
-
-    # Sym_list.append(ChoreoSym(
-        # LoopTarget=2,
-        # LoopSource=3,
-        # SpaceRot = np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64),
-        # TimeRev=1,
-        # TimeShift=fractions.Fraction(numerator=0,denominator=2)
-        # ))
-
-    # Sym_list.append(ChoreoSym(
-        # LoopTarget=2,
-        # LoopSource=3,
-        # SpaceRot = np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64),
-        # TimeRev=1,
-        # TimeShift=fractions.Fraction(numerator=-1,denominator=2)
-        # ))
-
-
-
-    # rot_angle = 0
-    # s = -1
-
-    # Sym_list.append(ChoreoSym(
-        # LoopTarget=4,
-        # LoopSource=4,
-        # SpaceRot = np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64),
-        # TimeRev=-1,
-        # TimeShift=fractions.Fraction(numerator=0,denominator=1)
-        # ))
-
-
-
-
-
-
-
-    # mass = np.array([2,1],dtype=np.float64)
-    mass = np.ones((nbody))
-
-    # mass[0]=2
-
-    # mass = np.array([1.,1.5])
-
-    # mass[0:3]  = 2*5
-    # mass[3:5]  = 3*5
-    # mass[5:10] = 2*3
-
+    Sym_list.append(ChoreoSym(
+        LoopTarget=ibody,
+        LoopSource=ibody,
+        SpaceRot = np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64),
+        TimeRev=st,
+        TimeShift=fractions.Fraction(numerator=0,denominator=1)
+        ))
 
 
     MomConsImposed = True
-    # MomConsImposed = False
+#     MomConsImposed = False
 
-    store_folder = './Sniff_all_sym/'
+    store_folder = './Target_res/'
     store_folder = store_folder+str(nbody)
     if not(os.path.isdir(store_folder)):
         os.makedirs(store_folder)
 
     Use_exact_Jacobian = True
     # Use_exact_Jacobian = False
-
-    # Use_deflation = True
-    Use_deflation = False
 
     Look_for_duplicates = True
     # Look_for_duplicates = False
@@ -171,11 +179,8 @@ def main(preprint_msg=''):
     # Penalize_Escape = True
     Penalize_Escape = False
 
-    save_init = False
-    # save_init = True
-
-    save_approx = False
-    # save_approx = True
+    # save_init = False
+    save_init = True
 
     Save_img = True
     # Save_img = False
@@ -184,18 +189,18 @@ def main(preprint_msg=''):
     img_size = (8,8) # Image size in inches
 
     nint_plot_img = 10000
+    
+    color = "body"
+    # color = "loop"
+    # color = "velocity"
+    # color = "all"
 
     Save_anim = True
     # Save_anim = False
 
     vid_size = (8,8) # Image size in inches
-    nint_plot_anim = 2*2*2*3*3*5 * 6
+    nint_plot_anim = 2*2*2*3*3*5 
     # nperiod_anim = 1./nbody
-
-    color = "body"
-    # color = "loop"
-    # color = "velocity"
-    # color = "all"
 
     try:
         the_lcm
@@ -204,54 +209,57 @@ def main(preprint_msg=''):
     else:
         period_div = the_lcm
 
-
     nperiod_anim = 1./period_div
 
-    # Plot_trace_anim = True
-    Plot_trace_anim = False
+    Plot_trace_anim = True
+    # Plot_trace_anim = False
+
+    # Save_Newton_Error = True
+    Save_Newton_Error = False
 
     n_reconverge_it_max = 4
     # n_reconverge_it_max = 1
 
-    # ncoeff_init = 20
+    # ncoeff_init = 102
     # ncoeff_init = 800
     # ncoeff_init = 201   
     # ncoeff_init = 300   
-    ncoeff_init = 600
-    # ncoeff_init = 990
-    # ncoeff_init = 1200
+    # ncoeff_init = 600
+    ncoeff_init = 900
+    # ncoeff_init = 1800
+    # ncoeff_init = 2400
+    # ncoeff_init = 1206
     # ncoeff_init = 90
 
     disp_scipy_opt = False
     # disp_scipy_opt = True
 
-    Newt_err_norm_max = 1e-9
-    Newt_err_norm_max_save = Newt_err_norm_max * 100
+    Newt_err_norm_max = 1e-10
+    # Newt_err_norm_max_save = Newt_err_norm_max*1000
+    Newt_err_norm_max_save = 1e-1
 
-    # Save_Bad_Sols = True
-    Save_Bad_Sols = False
+    duplicate_eps = 1e-8
 
-    duplicate_eps = 1e-9
-
-    # krylov_method = 'lgmres'
+    krylov_method = 'lgmres'
     # krylov_method = 'gmres'
     # krylov_method = 'bicgstab'
-    krylov_method = 'cgs'
+    # krylov_method = 'cgs'
     # krylov_method = 'minres'
 
     # line_search = 'armijo'
     line_search = 'wolfe'
     
-    gradtol_list =          [1e-3   ,1e-5   ,1e-7   ,1e-9   ,1e-11  ,1e-13]
-    inner_maxiter_list =    [30     ,50     ,60     ,70     ,80     ,100]
-    maxiter_list =          [1000   ,1000   ,1000   ,500   ,500    ,500]
-    outer_k_list =          [5      ,5      ,5      ,5      ,7      ,7]
-    store_outer_Av_list =   [False  ,False  ,False  ,False  ,True   ,True]
+    gradtol_list =          [1e-3   ,1e-5   ,1e-7   ,1e-9   ,1e-11  ,1e-13  ,1e-15  ]
+    inner_maxiter_list =    [30     ,50     ,60     ,70     ,80     ,100    ,100    ]
+    maxiter_list =          [1000   ,1000   ,1000   ,500   ,500     ,300    ,100    ]
+    outer_k_list =          [5      ,5      ,5      ,5      ,7      ,7      ,7      ]
+    store_outer_Av_list =   [False  ,False  ,False  ,False  ,True   ,True   ,True   ]
     
     n_optim_param = len(gradtol_list)
     
     gradtol_max = 100*gradtol_list[n_optim_param-1]
-    foundsol_tol = 1000*gradtol_list[0]
+    # foundsol_tol = 1000*gradtol_list[0]
+    foundsol_tol = 1e10
 
     escape_fac = 1e0
     # escape_fac = 1e-1
@@ -268,6 +276,24 @@ def main(preprint_msg=''):
 
     n_grad_change = 1.
     # n_grad_change = 1.5
+    
+    
+    
+    all_kwargs = {
+        'nbody'     : nbody,
+        }
+    
+    
+    return all_kwargs
+    
+    
+    
+    
+    
+
+def Find_Choreo(nbody):
+    
+
 
     print('Searching periodic solutions of {:d} bodies'.format(nbody))
     # print('Processing symmetries for {:d} convergence levels ...'.format(n_reconverge_it_max+1))
@@ -330,9 +356,9 @@ def main(preprint_msg=''):
     ncoeff = callfun[0]["ncoeff_list"][callfun[0]["current_cvg_lvl"]]
     nint = callfun[0]["nint_list"][callfun[0]["current_cvg_lvl"]]
 
-    coeff_ampl_o=1e-1
+    coeff_ampl_o=1e-16
     k_infl=1
-    k_max=600
+    k_max=200
     coeff_ampl_min=1e-16
 
     all_coeffs_min,all_coeffs_max = Make_Init_bounds_coeffs(nloop,ncoeff,coeff_ampl_o,k_infl,k_max,coeff_ampl_min)
@@ -355,8 +381,8 @@ def main(preprint_msg=''):
 
     n_opt = 0
     # n_opt_max = 1
-    # n_opt_max = 5
-    n_opt_max = 1e10
+    n_opt_max = 5
+    # n_opt_max = 1e10
     while (n_opt < n_opt_max):
         
         if ((n_opt % freq_erase_dict) == 0):
@@ -372,6 +398,10 @@ def main(preprint_msg=''):
         ncoeff = callfun[0]["ncoeff_list"][callfun[0]["current_cvg_lvl"]]
         nint = callfun[0]["nint_list"][callfun[0]["current_cvg_lvl"]]
         
+        all_coeffs_avg = Gen_init_avg(nTf,nbs,nbf,mass_mul,ncoeff,all_coeffs_slow_load,all_coeffs_fast_load_list=all_coeffs_fast_load_list,callfun=callfun,Rotate_fast_with_slow=Rotate_fast_with_slow,Optimize_Init=Optimize_Init,Randomize_Fast_Init=Randomize_Fast_Init,mul_loops=mul_loops)        
+
+        x_avg = Package_all_coeffs(all_coeffs_avg,callfun)
+        
         x0 = np.zeros((callfun[0]['coeff_to_param_list'][callfun[0]["current_cvg_lvl"]].shape[0]),dtype=np.float64)
         
         xrand = sampler.random()
@@ -379,25 +409,26 @@ def main(preprint_msg=''):
         rand_dim = 0
         for i in range(callfun[0]['coeff_to_param_list'][callfun[0]["current_cvg_lvl"]].shape[0]):
             if ((x_max[i] - x_min[i]) > rand_eps):
-                x0[i] = x_min[i] + (x_max[i] - x_min[i])*xrand[rand_dim]
+                x0[i] = x_avg[i] + x_min[i] + (x_max[i] - x_min[i])*xrand[rand_dim]
                 rand_dim +=1
             else:
-                x0[i] = 0.
+                x0[i] = x_avg[i]
 
         if save_init:
             
             print('Saving init state')
+
+            Write_Descriptor(x0,callfun,'init.txt')
 
             if Save_img :
                 plot_all_2D(x0,nint_plot_img,callfun,'init.png',fig_size=img_size,color=color)        
                 
             # if Save_anim :
                 # plot_all_2D_anim(x0,nint_plot_anim,callfun,'init.mp4',nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size)
-                
+            
+            if Save_Newton_Error :
+                plot_Newton_Error(x0,callfun,'init_newton.png')
 
-                all_coeffs = Unpackage_all_coeffs(x0,callfun)
-                np.save('init.npy',all_coeffs)
-                
             # print(1/0)
             
         f0 = Action_grad_mod(x0,callfun)
@@ -418,14 +449,14 @@ def main(preprint_msg=''):
             maxiter = maxiter_list[i_optim_param]
             outer_k = outer_k_list[i_optim_param]
             store_outer_Av = store_outer_Av_list[i_optim_param]
-
-            inner_M = None
             
             print('Action Grad Norm on entry : ',best_sol.f_norm)
-            print('Optim level : ',i_optim_param+1,' / ',n_optim_param , 'Resize level : ',callfun[0]["current_cvg_lvl"]+1,' / ',n_reconverge_it_max+1)
-
+            print('Optim level : ',i_optim_param+1,' / ',n_optim_param , '    Resize level : ',callfun[0]["current_cvg_lvl"]+1,' / ',n_reconverge_it_max+1)
             
             F = lambda x : Action_grad_mod(x,callfun)
+            
+            inner_M = None
+
             # jac_options = {'method':krylov_method,'rdiff':rdiff,'outer_k':outer_k,'inner_inner_m':inner_maxiter,'inner_store_outer_Av':store_outer_Av,'inner_tol':inner_tol }
             
             if (krylov_method == 'lgmres'):
@@ -442,19 +473,19 @@ def main(preprint_msg=''):
                 jacobian = ExactKrylovJacobian(exactgrad=FGrad,**jac_options)
 
             else: 
-                jacobian = opt.nonlin.KrylovJacobian(**jac_options)
+                jacobian = scipy.optimize.nonlin.KrylovJacobian(**jac_options)
 
             try : 
                 
                 x0 = np.copy(best_sol.x)
-                opt_result = opt.nonlin.nonlin_solve(F=F,x0=x0,jacobian=jacobian,verbose=disp_scipy_opt,maxiter=maxiter,f_tol=gradtol,line_search=line_search,callback=best_sol.update,raise_exception=False)
+                opt_result = scipy.optimize.nonlin.nonlin_solve(F=F,x0=x0,jacobian=jacobian,verbose=disp_scipy_opt,maxiter=maxiter,f_tol=gradtol,line_search=line_search,callback=best_sol.update,raise_exception=False)
                 
             except Exception as exc:
                 
                 print(exc)
                 print("Value Error occured, skipping.")
                 GoOn = False
-                # raise(exc)
+                raise(exc)
                 
             SaveSol = False
             
@@ -521,7 +552,7 @@ def main(preprint_msg=''):
                     
                     NeedsRefinement = False
                     
-                NeedsChangeOptimParams = GoOn and CanChangeOptimParams and not(ParamPreciseEnough) and not(NeedsRefinement)
+                NeedsChangeOptimParams = GoOn and CanChangeOptimParams and not(ParamPreciseEnough) and not(NewtonPreciseGood) and not(NeedsRefinement)
                 
                 if GoOn and not(ParamFoundSol):
                 
@@ -533,10 +564,11 @@ def main(preprint_msg=''):
                     GoOn = False
                     print('Newton Error too high, discarding solution')
                 
-                if GoOn and ParamPreciseEnough and not(NewtonPreciseGood) and not(NeedsRefinement):
+                if GoOn and ParamPreciseEnough and not(NewtonPreciseEnough) and not(NeedsRefinement):
 
                     GoOn=False
                     print("Stopping Search : there might be something wrong with the constraints")
+                    SaveSol = True
                 
                 if GoOn and NewtonPreciseGood :
 
@@ -579,12 +611,17 @@ def main(preprint_msg=''):
                         
                     if Save_anim :
                         plot_all_2D_anim(best_sol.x,nint_plot_anim,callfun,filename_output+'.mp4',nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size)
+
+                    if Save_Newton_Error :
+                        plot_Newton_Error(best_sol.x,callfun,filename_output+'_newton.png')
                     
                     all_coeffs = Unpackage_all_coeffs(best_sol.x,callfun)
                     np.save(filename_output+'.npy',all_coeffs)
 
                 
                 if GoOn and NeedsRefinement:
+                    
+                    print('Resizing')
                     
                     best_sol = current_best(x_fine,f_fine)
                     callfun[0]["current_cvg_lvl"] += 1
@@ -593,6 +630,8 @@ def main(preprint_msg=''):
                     nint = callfun[0]["nint_list"][callfun[0]["current_cvg_lvl"]]
                     
                 if GoOn and NeedsChangeOptimParams:
+                    
+                    print('Changing Optimizer Parameters')
                     
                     i_optim_param += 1
                     
@@ -606,24 +645,23 @@ def main(preprint_msg=''):
     print('Done !')
 
 
-if __name__ == "__main__":
+# if __name__ == "__main__":
+
+    # parser = argparse.ArgumentParser(description='Welcome to the targeted choreography finder')
+    # parser.add_argument('-pp','--preprint_msg',nargs=1,type=None,required=False,default=None,help='Adds a systematic message before every print')
     
-    tstart = time.perf_counter()
+    # args = parser.parse_args(sys.argv[1:])
     
-    parser = argparse.ArgumentParser(description='Welcome to the targeted choreography finder')
-    parser.add_argument('-pp','--preprint_msg',nargs=1,type=None,required=False,default=None,help='Adds a systematic message before every print')
-    
-    args = parser.parse_args(sys.argv[1:])
-    
-    if args.preprint_msg is None:
+    # if args.preprint_msg is None:
         
-        main()
+        # preprint_msg = ''
+
+    # else:    
         
-    else:    
-        
-        preprint_msg = args.preprint_msg[0].strip() + ' : '
-        main(preprint_msg = preprint_msg)
-        
-    tstop = time.perf_counter()
+        # preprint_msg = args.preprint_msg[0].strip() + ' : '
+
+    # tstart = time.perf_counter()
+    # main(preprint_msg = preprint_msg)
+    # tstop = time.perf_counter()
     
-    print('Total time in seconds : ',tstop-tstart)
+    # print(preprint_msg+'Total time in seconds : ',tstop-tstart)
