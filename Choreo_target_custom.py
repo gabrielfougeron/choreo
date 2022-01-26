@@ -40,16 +40,16 @@ def main(preprint_msg=''):
     # slow_base_filename = './data/1_1_short_ellipse.npy'
     # ~ slow_base_filename = './data/1_1_long_ellipse.npy'
     # slow_base_filename = './data/1_1_cercle.npy'
-    # slow_base_filename = './data/2_cercle.npy'
+    slow_base_filename = './data/2_cercle.npy'
     # slow_base_filename = './data/3_cercle.npy'
     # slow_base_filename = './data/3_huit.npy'
     # slow_base_filename = './data/3_heart.npy'
     # slow_base_filename = './data/4_trefoil.npy'
-    slow_base_filename = './data/1x4_trefoil.npy'
+    # slow_base_filename = './data/1x4_trefoil.npy'
 
 
     # fast_base_filename_list = ['./data/1_lone_wolf.npy'    ] 
-    # fast_base_filename_list = ['./data/2_cercle.npy'       ]
+    fast_base_filename_list = ['./data/2_cercle.npy'       ]
     # fast_base_filename_list = ['./data/3_cercle.npy'       ]
     # fast_base_filename_list = ['./data/3_huit.npy'         ]
     # fast_base_filename_list = ['./data/3_heart.npy'        ]
@@ -62,24 +62,24 @@ def main(preprint_msg=''):
     # ~ fast_base_filename_list = ['./data/1_lone_wolf.npy','./data/1_lone_wolf.npy'    ] 
     
     
-    fast_base_filename_list = ['./data/1_lone_wolf.npy','./data/1_lone_wolf.npy'    ,'./data/1_lone_wolf.npy','./data/1_lone_wolf.npy'    ] 
+    # fast_base_filename_list = ['./data/1_lone_wolf.npy','./data/1_lone_wolf.npy'    ,'./data/1_lone_wolf.npy','./data/1_lone_wolf.npy'    ] 
     # fast_base_filename_list = ['./data/1_lone_wolf.npy','./data/2_cercle.npy'    ,'./data/1_lone_wolf.npy','./data/2_cercle.npy'    ] 
     # fast_base_filename_list = ['./data/1_lone_wolf.npy','./data/1_lone_wolf.npy'    ,'./data/1_lone_wolf.npy','./data/3_huit.npy'    ] 
 
     nfl = len(fast_base_filename_list)
 
-    # mass_mul = [1]
-    # nTf = [1]
-    # nbs = [1]
-    # nbf = [4]
+    mass_mul = [1]
+    nTf = [13]
+    nbs = [2]
+    nbf = [2]
 
     epsmul = 0.
 
     # mass_mul = [1,1,1,1]
-    mass_mul = [1.,1.+epsmul,1.+2*epsmul,1.+3*epsmul]
-    nTf = [1,1,1,1]
-    nbs = [1,1,1,1]
-    nbf = [1,1,1,1]
+    # mass_mul = [1.,1.+epsmul,1.+2*epsmul,1.+3*epsmul]
+    # nTf = [1,1,1,1]
+    # nbs = [1,1,1,1]
+    # nbf = [1,1,1,1]
 
     # mass_mul = [1,1]
     # mass_mul = [3,2]
@@ -87,8 +87,8 @@ def main(preprint_msg=''):
     # nbs = [1,1]
     # nbf = [2,3]
 
-    mul_loops_ini = True
-    # mul_loops_ini = False
+    # mul_loops_ini = True
+    mul_loops_ini = False
     # mul_loops_ini = np.random.random() > 1./2.
     
     mul_loops = [mul_loops_ini for _ in range(nfl)]
@@ -102,11 +102,11 @@ def main(preprint_msg=''):
     Rotate_fast_with_slow = False
     # Rotate_fast_with_slow = (np.random.random() > 1./2.)
 
-    # Optimize_Init = True
-    Optimize_Init = False
+    Optimize_Init = True
+    # Optimize_Init = False
 
-    # Randomize_Fast_Init = True
-    Randomize_Fast_Init = False
+    Randomize_Fast_Init = True
+    # Randomize_Fast_Init = False
 
     all_coeffs_slow_load = np.load(slow_base_filename)
     all_coeffs_fast_load_list = []
