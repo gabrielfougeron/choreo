@@ -1,0 +1,14 @@
+name: choreo
+channels:
+  - defaults
+dependencies:
+  - python=3.10
+  - matplotlib
+  - scipy
+  - h5py
+  - networkx
+  - cython
+  - ffmpeg
+  - pyfftw
+  - suitesparse
+prefix: /home/gabrielfougeron/anaconda3/envs/choreo
