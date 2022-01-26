@@ -1,21 +1,11 @@
 # Choreographies2
 Finds periodic solutions to the N-body problem
 
-
-
 ## List of dependencies :
-
-  - Python packages :
-    - numpy 
-    - cython
-    - scipy
-    - matplotlib
-    - sparseqr
-    - networkx
+  
+  - The required conda environment is described in the file environment.yml
 
   - A C compiler (tested with gcc)
-  
-  - LibSuiteSparse => apt-get install libsuitesparse-dev
   
   
 ## Compilation of Cython code
