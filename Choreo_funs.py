@@ -20,6 +20,8 @@ import sparseqr
 import networkx as nx
 import random
 
+import ffmpeg
+
 import inspect
 
 import logging
@@ -279,7 +281,7 @@ def plot_all_2D_cpv(x,nint_plot,callfun,filename,fig_size=(10,10)):
     plt.close()
  
 def plot_all_2D_anim(x,nint_plot,callfun,filename,nperiod=1,Plot_trace=True,fig_size=(5,5)):
-    # Creates a vide of the bodies moving along their trajectories, and saves the file under filename
+    # Creates a video of the bodies moving along their trajectories, and saves the file under filename
     
     args = callfun[0]
     
@@ -381,7 +383,52 @@ def plot_all_2D_anim(x,nint_plot,callfun,filename,nperiod=1,Plot_trace=True,fig_
     anim.save(filename, fps=30)
     
     plt.close()
- 
+    
+def Images_to_video(input_folder,output_filename):
+    # Expects images files in *.png format named 1.png, ---- 756.png --- n.png
+    
+    list_files = os.listdir(input_folder)
+    
+    n_png = 0
+    
+    for the_file in list_files:
+        
+        the_file = input_folder+the_file
+        
+        if os.path.isfile(the_file):
+            
+            file_base , file_ext = os.path.splitext(the_file)
+            
+            if file_ext == '.png' :
+                
+                n_png += 1
+                
+    img_list = []
+
+    for i in range(n_png):
+        img_list.append(input_folder+str(i+1)+'.png')
+        
+    frames_filename = 'frames.txt'
+    
+    f = open(frames_filename,"w")
+    for img_name in img_list:
+        f.write('file \''+os.path.abspath(img_name)+'\'\n')
+        f.write('duration 0.0333333 \n')
+    
+    f.close()
+    (
+        ffmpeg
+        .input(frames_filename,f='concat',safe='0')
+        .output(output_filename,vcodec='h264',pix_fmt='yuv420p')
+        .global_args('-y')
+        .global_args('-loglevel','error')
+        .run()
+    )
+    
+    os.remove(frames_filename)
+    
+    
+     
 def Package_all_coeffs(all_coeffs,callfun):
     # Transfers the Fourier coefficients of the generators to a single vector of parameters.
     # The packaging process projects the trajectory onto the space of constrraint satisfying trajectories.

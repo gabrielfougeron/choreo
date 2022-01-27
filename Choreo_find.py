@@ -33,10 +33,6 @@ def Find_Choreo(
     Sym_list,
     MomConsImposed,
     n_grad_change,
-    escape_fac,
-    escape_min_dist,
-    escape_pow,
-    Penalize_Escape,
     store_folder,
     nTf,
     nbs,
@@ -68,12 +64,23 @@ def Find_Choreo(
     Look_for_duplicates,
     duplicate_eps,
     foundsol_tol,
+    gradtol_max,
+    Newt_err_norm_max,
+    Newt_err_norm_max_save,
+    Save_anim,
+    nint_plot_anim,
+    nperiod_anim,
+    Plot_trace_anim,
+    vid_size,
+    n_opt_max,
+    freq_erase_dict,
+    coeff_ampl_o,
+    k_infl,
+    k_max,
+    coeff_ampl_min,
     ):
     
-
-
     print('Searching periodic solutions of {:d} bodies'.format(nbody))
-    # print('Processing symmetries for {:d} convergence levels ...'.format(n_reconverge_it_max+1))
 
     print('Processing symmetries for {0:d} convergence levels'.format(n_reconverge_it_max+1))
     callfun = setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change)
@@ -81,9 +88,6 @@ def Find_Choreo(
     print('')
 
     args = callfun[0]
-    args['escape_fac'] = escape_fac
-    args['escape_min_dist'] = escape_min_dist
-    args['escape_pow'] = escape_pow
 
     nloop = args['nloop']
     loopnb = args['loopnb']
@@ -121,22 +125,9 @@ def Find_Choreo(
     # filehandler = open(store_folder+'/callfun_list.pkl',"wb")
     # pickle.dump(callfun_list,filehandler)
 
-    if (Penalize_Escape):
-
-        Action_grad_mod = Compute_action_onlygrad_escape
-
-    else:
-        
-        Action_grad_mod = Compute_action_onlygrad
-
     callfun[0]["current_cvg_lvl"] = 0
     ncoeff = callfun[0]["ncoeff_list"][callfun[0]["current_cvg_lvl"]]
     nint = callfun[0]["nint_list"][callfun[0]["current_cvg_lvl"]]
-
-    coeff_ampl_o=1e-16
-    k_infl=1
-    k_max=200
-    coeff_ampl_min=1e-16
 
     all_coeffs_min,all_coeffs_max = Make_Init_bounds_coeffs(nloop,ncoeff,coeff_ampl_o,k_infl,k_max,coeff_ampl_min)
 
@@ -153,13 +144,8 @@ def Find_Choreo(
 
     sampler = UniformRandom(d=rand_dim)
 
-    freq_erase_dict = 1000
-    hash_dict = {}
-
     n_opt = 0
-    # n_opt_max = 1
-    n_opt_max = 5
-    # n_opt_max = 1e10
+
     while (n_opt < n_opt_max):
         
         if ((n_opt % freq_erase_dict) == 0):
@@ -208,7 +194,7 @@ def Find_Choreo(
 
             # print(1/0)
             
-        f0 = Action_grad_mod(x0,callfun)
+        f0 = Compute_action_onlygrad(x0,callfun)
         best_sol = current_best(x0,f0)
 
         GoOn = True
@@ -230,19 +216,16 @@ def Find_Choreo(
             print('Action Grad Norm on entry : ',best_sol.f_norm)
             print('Optim level : ',i_optim_param+1,' / ',n_optim_param , '    Resize level : ',callfun[0]["current_cvg_lvl"]+1,' / ',n_reconverge_it_max+1)
             
-            F = lambda x : Action_grad_mod(x,callfun)
+            F = lambda x : Compute_action_onlygrad(x,callfun)
             
             inner_M = None
 
-            # jac_options = {'method':krylov_method,'rdiff':rdiff,'outer_k':outer_k,'inner_inner_m':inner_maxiter,'inner_store_outer_Av':store_outer_Av,'inner_tol':inner_tol }
-            
             if (krylov_method == 'lgmres'):
                 jac_options = {'method':krylov_method,'rdiff':rdiff,'outer_k':outer_k,'inner_inner_m':inner_maxiter,'inner_store_outer_Av':store_outer_Av,'inner_tol':inner_tol,'inner_M':inner_M }
             elif (krylov_method == 'gmres'):
                 jac_options = {'method':krylov_method,'rdiff':rdiff,'outer_k':outer_k,'inner_tol':inner_tol,'inner_M':inner_M }
             else:
                 jac_options = {'method':krylov_method,'rdiff':rdiff,'outer_k':outer_k,'inner_tol':inner_tol,'inner_M':inner_M }
-
 
             if (Use_exact_Jacobian):
 
@@ -318,7 +301,7 @@ def Find_Choreo(
                         all_coeffs_fine[:,:,k,:] = all_coeffs_coarse[:,:,k,:]
                         
                     x_fine = Package_all_coeffs(all_coeffs_fine,callfun)
-                    f_fine = Action_grad_mod(x_fine,callfun)
+                    f_fine = Compute_action_onlygrad(x_fine,callfun)
                     f_fine_norm = np.linalg.norm(f_fine)
                     
                     NeedsRefinement = (f_fine_norm > 3*best_sol.f_norm)
@@ -346,7 +329,7 @@ def Find_Choreo(
 
                     GoOn=False
                     print("Stopping Search : there might be something wrong with the constraints")
-                    SaveSol = True
+                    # SaveSol = True
                 
                 if GoOn and NewtonPreciseGood :
 
