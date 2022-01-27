@@ -21,7 +21,7 @@ from  Choreo_find import *
 #     return builtins.print(*args, **kwargs)
 
 
-slow_base_filename = './data/1_lone_wolf.npy'
+# slow_base_filename = './data/1_lone_wolf.npy'
 # slow_base_filename = './data/1_1_short_ellipse.npy'
 # ~ slow_base_filename = './data/1_1_long_ellipse.npy'
 # slow_base_filename = './data/1_1_cercle.npy'
@@ -30,11 +30,11 @@ slow_base_filename = './data/1_lone_wolf.npy'
 # slow_base_filename = './data/3_huit.npy'
 # slow_base_filename = './data/3_heart.npy'
 # slow_base_filename = './data/4_trefoil.npy'
-# slow_base_filename = './data/1x4_trefoil.npy'
+slow_base_filename = './data/1x4_trefoil.npy'
 
 
 # fast_base_filename_list = ['./data/1_lone_wolf.npy'    ] 
-fast_base_filename_list = ['./data/2_cercle.npy'       ]
+# fast_base_filename_list = ['./data/2_cercle.npy'       ]
 # fast_base_filename_list = ['./data/3_cercle.npy'       ]
 # fast_base_filename_list = ['./data/3_huit.npy'         ]
 # fast_base_filename_list = ['./data/3_heart.npy'        ]
@@ -47,24 +47,24 @@ fast_base_filename_list = ['./data/2_cercle.npy'       ]
 # ~ fast_base_filename_list = ['./data/1_lone_wolf.npy','./data/1_lone_wolf.npy'    ] 
 
 
-# fast_base_filename_list = ['./data/1_lone_wolf.npy','./data/1_lone_wolf.npy'    ,'./data/1_lone_wolf.npy','./data/1_lone_wolf.npy'    ] 
+fast_base_filename_list = ['./data/1_lone_wolf.npy','./data/1_lone_wolf.npy'    ,'./data/1_lone_wolf.npy','./data/1_lone_wolf.npy'    ] 
 # fast_base_filename_list = ['./data/1_lone_wolf.npy','./data/2_cercle.npy'    ,'./data/1_lone_wolf.npy','./data/2_cercle.npy'    ] 
 # fast_base_filename_list = ['./data/1_lone_wolf.npy','./data/1_lone_wolf.npy'    ,'./data/1_lone_wolf.npy','./data/3_huit.npy'    ] 
 
 nfl = len(fast_base_filename_list)
 
-mass_mul = [1]
-nTf = [1]
-nbs = [2]
-nbf = [1]
+# mass_mul = [1]
+# nTf = [13]
+# nbs = [2]
+# nbf = [2]
 
 # epsmul = 0.
 
-# mass_mul = [1,1,1,1]
+mass_mul = [1,2,3,4]
 # mass_mul = [1.,1.+epsmul,1.+2*epsmul,1.+3*epsmul]
-# nTf = [1,1,1,1]
-# nbs = [1,1,1,1]
-# nbf = [1,1,1,1]
+nTf = [1,1,1,1]
+nbs = [1,1,1,1]
+nbf = [1,1,1,1]
 
 # mass_mul = [1,1]
 # mass_mul = [3,2]
@@ -72,8 +72,8 @@ nbf = [1]
 # nbs = [1,1]
 # nbf = [2,3]
 
-mul_loops_ini = True
-# mul_loops_ini = False
+# mul_loops_ini = True
+mul_loops_ini = False
 # mul_loops_ini = np.random.random() > 1./2.
 
 mul_loops = [mul_loops_ini for _ in range(nfl)]
@@ -87,11 +87,11 @@ Remove_Choreo_Sym = mul_loops
 Rotate_fast_with_slow = False
 # Rotate_fast_with_slow = (np.random.random() > 1./2.)
 
-# Optimize_Init = True
-Optimize_Init = False
+Optimize_Init = True
+# Optimize_Init = False
 
-# Randomize_Fast_Init = True
-Randomize_Fast_Init = False
+Randomize_Fast_Init = True
+# Randomize_Fast_Init = False
 
 all_coeffs_slow_load = np.load(slow_base_filename)
 all_coeffs_fast_load_list = []
@@ -123,6 +123,7 @@ for i in range(nfl):
         mass.extend([mass_mul[i] for j in range(nbs[i]*nbf[i])])
 
 mass = np.array(mass,dtype=np.float64)
+# mass = np.array([1,2,3,4],dtype=np.float64)
 
 Sym_list = []
 the_lcm = m.lcm(*nbpl)
@@ -161,9 +162,6 @@ Look_for_duplicates = True
 
 Check_Escape = True
 # Check_Escape = False
-
-# Penalize_Escape = True
-Penalize_Escape = False
 
 # save_init = False
 save_init = True
@@ -222,7 +220,7 @@ disp_scipy_opt = False
 
 Newt_err_norm_max = 1e-10
 # Newt_err_norm_max_save = Newt_err_norm_max*1000
-Newt_err_norm_max_save = 1e-1
+Newt_err_norm_max_save = 1e-5
 
 duplicate_eps = 1e-8
 
@@ -245,24 +243,26 @@ n_optim_param = len(gradtol_list)
 
 gradtol_max = 100*gradtol_list[n_optim_param-1]
 # foundsol_tol = 1000*gradtol_list[0]
-foundsol_tol = 1e10
+foundsol_tol = 1e0
 
-escape_fac = 1e0
-# escape_fac = 1e-1
-# escape_fac = 1e-2
-# escape_fac = 1e-3
-# escape_fac = 1e-4
-# escape_fac = 1e-5
-# escape_fac = 0
-escape_min_dist = 1
-escape_pow = 2.0
-# escape_pow = 2.5
-# escape_pow = 1.5
-# escape_pow = 0.5
+
 
 n_grad_change = 1.
 # n_grad_change = 1.5
 
+
+coeff_ampl_o=1e-16
+k_infl=1
+k_max=200
+coeff_ampl_min=1e-16
+
+
+
+# n_opt_max = 1
+n_opt_max = 5
+# n_opt_max = 1e10
+
+freq_erase_dict = 1000
 
 all_kwargs = Pick_Named_Args_From_Dict(Find_Choreo,dict(globals(),**locals()))
 

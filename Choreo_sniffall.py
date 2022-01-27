@@ -380,7 +380,7 @@ while (n_opt < n_opt_max):
         all_coeffs = Unpackage_all_coeffs(x0,callfun)
         np.save('init.npy',all_coeffs)
             
-        print(1/0)
+        # print(1/0)
         
     f0 = Action_grad_mod(x0,callfun)
     best_sol = current_best(x0,f0)
