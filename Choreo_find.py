@@ -105,16 +105,20 @@ def Find_Choreo(
     print('    ==> reduction of {0:f} % wrt the {1:d} naive binary iteractions'.format(100*(1-nbi_tot/nbi_naive),nbi_naive))
     print('')
 
+            
+    
+
     # for i in range(n_reconverge_it_max+1):
     for i in [0]:
         
         args = callfun[0]
         print('Convergence attempt number : ',i+1)
+        print('    Number of Fourier coeffs : ',args['ncoeff_list'][i])
         print('    Number of scalar parameters before constraints : ',args['coeff_to_param_list'][i].shape[1])
         print('    Number of scalar parameters after  constraints : ',args['coeff_to_param_list'][i].shape[0])
         print('    Reduction of ',100*(1-args['coeff_to_param_list'][i].shape[0]/args['coeff_to_param_list'][i].shape[1]),' %')
         print('')
-        
+
 
     x0 = np.random.random(callfun[0]['param_to_coeff_list'][0].shape[1])
     xmin = Compute_MinDist(x0,callfun)
@@ -312,15 +316,23 @@ def Find_Choreo(
                     
                     NeedsRefinement = False
 
-                    
                 NeedsChangeOptimParams = GoOn and CanChangeOptimParams and not(ParamPreciseEnough) and not(NewtonPreciseGood) and not(NeedsRefinement)
+                
+                # print("ParamFoundSol ",ParamFoundSol)
+                # print("ParamPreciseEnough ",ParamPreciseEnough)
+                # print("NewtonPreciseEnough ",NewtonPreciseEnough)
+                # print("NewtonPreciseGood ",NewtonPreciseGood)
+                # print("NeedsChangeOptimParams ",NeedsChangeOptimParams)
+                # print("CanChangeOptimParams ",CanChangeOptimParams)
+                # print("NeedsRefinement ",NeedsRefinement)
+                # print("CanRefine ",CanRefine)
                 
                 if GoOn and not(ParamFoundSol):
                 
                     GoOn = False
                     print('Optimizer could not zero in on a solution')
 
-                if GoOn and not(ParamPreciseEnough) and not(NewtonPreciseEnough) and not(CanChangeOptimParams):
+                if GoOn and not(ParamPreciseEnough) and not(NewtonPreciseEnough) and (not(CanChangeOptimParams) or not(CanRefine)):
                 
                     GoOn = False
                     print('Newton Error too high, discarding solution')
@@ -342,6 +354,11 @@ def Find_Choreo(
                     GoOn = False
                     print("Stopping Search : Found approximate solution")
                     SaveSol = True
+
+                if GoOn and  not(NeedsRefinement) and not(NeedsChangeOptimParams):
+                
+                    GoOn = False
+                    print('Could not converge within prescibed optimizer and refinement parameters')
 
                 if SaveSol :
                     

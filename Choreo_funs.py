@@ -384,7 +384,7 @@ def plot_all_2D_anim(x,nint_plot,callfun,filename,nperiod=1,Plot_trace=True,fig_
     
     plt.close()
     
-def Images_to_video(input_folder,output_filename):
+def Images_to_video(input_folder,output_filename,ReverseEnd=False):
     # Expects images files in *.png format named 1.png, ---- 756.png --- n.png
     
     list_files = os.listdir(input_folder)
@@ -415,6 +415,11 @@ def Images_to_video(input_folder,output_filename):
         f.write('file \''+os.path.abspath(img_name)+'\'\n')
         f.write('duration 0.0333333 \n')
     
+    if ReverseEnd:
+        for img_name in reversed(img_list):
+            f.write('file \''+os.path.abspath(img_name)+'\'\n')
+            f.write('duration 0.0333333 \n')
+        
     f.close()
     (
         ffmpeg

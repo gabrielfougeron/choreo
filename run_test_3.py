@@ -21,10 +21,9 @@ from  Choreo_find import *
 #     return builtins.print(*args, **kwargs)
 
 
-nbody = 4
 
-store_folder = './Target_res/'
-store_folder = store_folder+str(nbody)
+store_folder = './Target_res/mul_bod'
+# store_folder = store_folder+str(nbody)
 
 
 if not(os.path.isdir(store_folder)):
@@ -34,34 +33,48 @@ else:
     os.makedirs(store_folder)
 
 n_eps_min = 0
-n_eps_max = 251
+n_eps_max = 500
 # n_eps_max = 501
 # n_eps_max = 101
 
-freq_vid = 25
+freq_vid = 1
 
 # ~ ReverseEnd = False
 ReverseEnd = True
 
 for i_eps in range(n_eps_min,n_eps_max):
 
+    
+    # nbody = 4 + 2*i_eps
+    nbody = 3 + 2*i_eps
+
     if (i_eps == 0):
         # slow_base_filename = './data/1x4_trefoil.npy'
-        slow_base_filename = './data/1x4_knot.npy'
+        # slow_base_filename = './data/1x4_knot.npy'
         # slow_base_filename = './data/1x4_bite.npy'
+        slow_base_filename = './data/3_huit.npy'
+        # slow_base_filename = './data/4_trefoil.npy'
+        # slow_base_filename = './data/4_bite.npy'
+        # slow_base_filename = './data/4_knot.npy'
     else:
         slow_base_filename = store_folder+'/'+str(i_eps)+'.npy'
 
 
-    fast_base_filename_list = ['./data/1_lone_wolf.npy','./data/1_lone_wolf.npy'    ,'./data/1_lone_wolf.npy','./data/1_lone_wolf.npy'    ] 
+    # fast_base_filename_list = ['./data/1_lone_wolf.npy','./data/1_lone_wolf.npy'    ,'./data/1_lone_wolf.npy','./data/1_lone_wolf.npy'    ] 
+    fast_base_filename_list = ['./data/1_lone_wolf.npy'] 
 
 
     nfl = len(fast_base_filename_list)
 
-    mass_mul = [1.,1.,1.,1.]
-    nTf = [1,1,1,1]
-    nbs = [1,1,1,1]
-    nbf = [1,1,1,1]
+    # mass_mul = [1.,1.,1.,1.]
+    # nTf = [1,1,1,1]
+    # nbs = [1,1,1,1]
+    # nbf = [1,1,1,1]
+
+    mass_mul = [1.]
+    nTf = [1]
+    nbs = [1]
+    nbf = [1]
 
     # mul_loops_ini = True
     mul_loops_ini = False
@@ -115,42 +128,48 @@ for i_eps in range(n_eps_min,n_eps_max):
             
             
     
-    epsmul = (m.cos(m.pi * (i_eps*1./(2*n_eps_max))))**2
-    # ~ epsmul = (m.cos(m.pi * (i_eps*1./(n_eps_max-1))))**2
+    # epsmul = (m.cos(m.pi * (i_eps*1./(2*n_eps_max))))**2
 
     mass_a = np.ones(nbody)
     # mass_b = np.array([1.,1.,100.,1.],dtype=np.float64)
     # mass_b = np.array([1.,1.,1e3,1.],dtype=np.float64)
-    mass_b = np.array([1.,1.2,1.5,1.2],dtype=np.float64)
+    # mass_b = np.array([1.,1.2,1.5,1.2],dtype=np.float64)
 
-    mass_a = mass_a * (nbody / mass_a.sum())
-    mass_b = mass_b * (nbody / mass_b.sum())
+    # mass_a = mass_a * (nbody / mass_a.sum())
+    # mass_b = mass_b * (nbody / mass_b.sum())
 
-    mass = (epsmul)*mass_a + (1.-epsmul)*mass_b
+    # mass = (epsmul)*mass_a + (1.-epsmul)*mass_b
 
 
     # mass = mass / mass.sum()
-
+        
+        
+    mass = np.ones((nbody))
+    
+    
+    nbpl = [nbody]
 
     Sym_list = []
     the_lcm = m.lcm(*nbpl)
-    SymName = None
+    # SymName = None
+    SymName = ['D']
+    # SymName = ['Dp']
     Sym_list,nbody = Make2DChoreoSymManyLoops(nbpl=nbpl,SymName=SymName)
 
     # mass = np.ones((nbody))*mass_mul
 
-    ibody = 0
-    rot_angle = 0.
-    s = -1
-    st = -1
+    # ibody = 0
+    # rot_angle = 0.
+    # s = -1
+    # st = -1
 
-    Sym_list.append(ChoreoSym(
-        LoopTarget=ibody,
-        LoopSource=ibody,
-        SpaceRot = np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64),
-        TimeRev=st,
-        TimeShift=fractions.Fraction(numerator=0,denominator=1)
-        ))
+    # Sym_list.append(ChoreoSym(
+        # LoopTarget=ibody,
+        # LoopSource=ibody,
+        # SpaceRot = np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64),
+        # TimeRev=st,
+        # TimeShift=fractions.Fraction(numerator=0,denominator=1)
+        # ))
 
     MomConsImposed = True
     #     MomConsImposed = False
@@ -173,7 +192,6 @@ for i_eps in range(n_eps_min,n_eps_max):
     # img_size = (12,12) # Image size in inches
     img_size = (8,8) # Image size in inches
 
-    nint_plot_img = 10000
 
     color = "body"
     # color = "loop"
@@ -188,12 +206,16 @@ for i_eps in range(n_eps_min,n_eps_max):
     nint_plot_anim = 2*2*2*3*3*5 
     # nperiod_anim = 1./nbody
 
-    try:
-        the_lcm
-    except NameError:
-        period_div = 1.
-    else:
-        period_div = the_lcm
+
+    # try:
+        # the_lcm
+    # except NameError:
+        # period_div = 1.
+    # else:
+        # period_div = the_lcm
+
+    # period_div = 3.
+    period_div = 1.
 
     nperiod_anim = 1./period_div
 
@@ -203,7 +225,7 @@ for i_eps in range(n_eps_min,n_eps_max):
     # Save_Newton_Error = True
     Save_Newton_Error = False
 
-    n_reconverge_it_max = 1
+    n_reconverge_it_max = 3
     # n_reconverge_it_max = 1
 
 
@@ -211,7 +233,11 @@ for i_eps in range(n_eps_min,n_eps_max):
     # ncoeff_init = 900
     # ncoeff_init = 1800
     
-    ncoeff_init = all_coeffs_slow_load.shape[2]
+    # ncoeff_init = all_coeffs_slow_load.shape[2]
+    ncoeff_base = 900
+    ncoeff_init = (ncoeff_base+nbody) - (ncoeff_base % nbody)
+    
+    nint_plot_img = ncoeff_init * 8
 
     disp_scipy_opt = False
     # disp_scipy_opt = True
