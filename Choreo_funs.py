@@ -42,11 +42,18 @@ from Choreo_cython_funs import Compute_MinDist_Cython,Compute_Loop_Dist_btw_avg_
 from Choreo_cython_funs import the_irfft,the_rfft,the_ihfft
 
 
-def Pick_Named_Args_From_Dict(fun,the_dict):
+def Pick_Named_Args_From_Dict(fun,the_dict,MissingArgsAreNone = True):
     
     list_of_args = inspect.getargspec(fun).args
-    all_kwargs = {k:the_dict[k] for k in list_of_args}
+    
+    if MissingArgsAreNone:
         
+        all_kwargs = {k:the_dict.get(k,None) for k in list_of_args}
+        
+    else:
+        
+        all_kwargs = {k:the_dict[k] for k in list_of_args}
+    
     return all_kwargs
 
 def plot_Newton_Error(x,callfun,filename,fig_size=(8,5),color_list = plt.rcParams['axes.prop_cycle'].by_key()['color']):
