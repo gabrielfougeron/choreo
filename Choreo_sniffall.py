@@ -75,7 +75,7 @@ def main(preprint_msg=''):
     img_size = (8,8) # Image size in inches
     thumb_size = (2,2) # Image size in inches
 
-    nint_plot_img = 10000
+
     
     color = "body"
     # color = "loop"
@@ -88,6 +88,10 @@ def main(preprint_msg=''):
     vid_size = (8,8) # Image size in inches
     nint_plot_anim = 2*2*2*3*3*5 
     # nperiod_anim = 1./nbody
+    dnint = 30
+
+    # nint_plot_img = nint_plot_anim * dnint
+    nint_plot_img = nint_plot_anim
 
     try:
         the_lcm
@@ -165,8 +169,8 @@ def main(preprint_msg=''):
     # n_grad_change = 1.5
 
     coeff_ampl_o=1e-1
-    k_infl=1
-    k_max=200
+    k_infl=20
+    k_max=600
     coeff_ampl_min=1e-16
 
     freq_erase_dict = 1000

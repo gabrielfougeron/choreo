@@ -289,7 +289,7 @@ def plot_all_2D_cpv(x,nint_plot,callfun,filename,fig_size=(10,10),dpi=100):
     
     plt.close()
  
-def plot_all_2D_anim(x,nint_plot,callfun,filename,nperiod=1,Plot_trace=True,fig_size=(5,5)):
+def plot_all_2D_anim(x,nint_plot,callfun,filename,nperiod=1,Plot_trace=True,fig_size=(5,5),dnint=1):
     # Creates a video of the bodies moving along their trajectories, and saves the file under filename
     
     args = callfun[0]
@@ -307,13 +307,16 @@ def plot_all_2D_anim(x,nint_plot,callfun,filename,nperiod=1,Plot_trace=True,fig_
     
     maxloopnb = loopnb.max()
     
+    nint_plot_img = nint_plot*dnint
+    nint_plot_vid = nint_plot
+    
     c_coeffs = all_coeffs.view(dtype=np.complex128)[...,0]
     
-    all_pos = np.zeros((nloop,ndim,nint_plot+1),dtype=np.float64)
-    all_pos[:,:,0:nint_plot] = the_irfft(c_coeffs,n=nint_plot,axis=2)*nint_plot
-    all_pos[:,:,nint_plot] = all_pos[:,:,0]
+    all_pos = np.zeros((nloop,ndim,nint_plot_img+1),dtype=np.float64)
+    all_pos[:,:,0:nint_plot_img] = the_irfft(c_coeffs,n=nint_plot_img,axis=2)*nint_plot_img
+    all_pos[:,:,nint_plot_img] = all_pos[:,:,0]
     
-    all_pos_b = np.zeros((nbody,ndim,nint_plot+1),dtype=np.float64)
+    all_pos_b = np.zeros((nbody,ndim,nint_plot_img+1),dtype=np.float64)
     all_shiftsUn = np.zeros((nloop,maxloopnb),dtype=np.int_)
     
     xmin = all_coeffs[0,0,0,0]
@@ -324,18 +327,15 @@ def plot_all_2D_anim(x,nint_plot,callfun,filename,nperiod=1,Plot_trace=True,fig_
     for il in range(nloop):
         for ib in range(loopnb[il]):
                 
-            # if not(((-TimeRevsUn[il,ib]*nint_plot*TimeShiftNumUn[il,ib]) % TimeShiftDenUn[il,ib]) == 0):
-                # print("WARNING : remainder in integer division")
-                
-            all_shiftsUn[il,ib] = ((-TimeRevsUn[il,ib]*nint_plot*TimeShiftNumUn[il,ib]) // TimeShiftDenUn[il,ib] ) % nint_plot
+            all_shiftsUn[il,ib] = ((-TimeRevsUn[il,ib]*nint_plot_img*TimeShiftNumUn[il,ib]) // TimeShiftDenUn[il,ib] ) % nint_plot_img
 
-    for iint in range(nint_plot+1):    
+    for iint in range(nint_plot_img+1):    
         for il in range(nloop):
             for ib in range(loopnb[il]):
 
                 all_pos_b[Targets[il,ib],:,iint] = np.dot(SpaceRotsUn[il,ib,:,:],all_pos[il,:,all_shiftsUn[il,ib]])
 
-                all_shiftsUn[il,ib] = (all_shiftsUn[il,ib]+TimeRevsUn[il,ib]) % nint_plot
+                all_shiftsUn[il,ib] = (all_shiftsUn[il,ib]+TimeRevsUn[il,ib]) % nint_plot_img
                 
                 xmin = min(xmin,all_pos_b[Targets[il,ib],0,iint])
                 xmax = max(xmax,all_pos_b[Targets[il,ib],0,iint])
@@ -381,11 +381,11 @@ def plot_all_2D_anim(x,nint_plot,callfun,filename,nperiod=1,Plot_trace=True,fig_
         for ib in range(nbody):
             points[ib].set_data(all_pos_b[ib,0,iint[0]], all_pos_b[ib,1,iint[0]])
             
-        iint[0] = ((iint[0]+1) % nint_plot)
+        iint[0] = ((iint[0]+dnint) % nint_plot_img)
 
         return lines + points
     
-    anim = animation.FuncAnimation(fig, update, frames=int(nperiod*nint_plot),init_func=init, blit=True)
+    anim = animation.FuncAnimation(fig, update, frames=int(nperiod*nint_plot_vid),init_func=init, blit=True)
                         
     # Save as mp4. This requires mplayer or ffmpeg to be installed
     # anim.save(filename, fps=30, extra_args=['-vcodec', 'libx264'])
