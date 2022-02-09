@@ -78,7 +78,7 @@ def plot_Newton_Error(x,callfun,filename,fig_size=(8,5),color_list = plt.rcParam
     plt.savefig(filename)
     plt.close()
 
-def plot_all_2D(x,nint_plot,callfun,filename,fig_size=(10,10),color=None,color_list = plt.rcParams['axes.prop_cycle'].by_key()['color']):
+def plot_all_2D(x,nint_plot,callfun,filename,fig_size=(10,10),dpi=100,color=None,color_list = plt.rcParams['axes.prop_cycle'].by_key()['color']):
     # Plots 2D trajectories and saves image under filename
     
     if isinstance(color,list):
@@ -89,25 +89,25 @@ def plot_all_2D(x,nint_plot,callfun,filename,fig_size=(10,10),color=None,color_l
             
             the_filename = file_bas+'_'+the_color+file_ext
             
-            plot_all_2D(x=x,nint_plot=nint_plot,callfun=callfun,filename=the_filename,fig_size=fig_size,color=the_color,color_list=color_list)
+            plot_all_2D(x=x,nint_plot=nint_plot,callfun=callfun,filename=the_filename,fig_size=fig_size,dpi=dpi,color=the_color,color_list=color_list)
     
     elif (color is None) or (color == "body") or (color == "loop"):
         
-        plot_all_2D_cpb(x,nint_plot,callfun,filename,fig_size=(10,10),color=color,color_list=color_list)
+        plot_all_2D_cpb(x,nint_plot,callfun,filename,fig_size=fig_size,dpi=dpi,color=color,color_list=color_list)
         
     elif (color == "velocity"):
         
-        plot_all_2D_cpv(x,nint_plot,callfun,filename,fig_size=(10,10))
+        plot_all_2D_cpv(x,nint_plot,callfun,filename,fig_size=fig_size,dpi=dpi)
         
     elif (color == "all"):
         
-        plot_all_2D(x=x,nint_plot=nint_plot,callfun=callfun,filename=filename,fig_size=fig_size,color=["body","velocity"],color_list=color_list)
+        plot_all_2D(x=x,nint_plot=nint_plot,callfun=callfun,filename=filename,fig_size=fig_size,dpi=dpi,color=["body","velocity"],color_list=color_list)
 
     else:
         
         raise ValueError("Unknown color scheme")
 
-def plot_all_2D_cpb(x,nint_plot,callfun,filename,fig_size=(10,10),color=None,color_list = plt.rcParams['axes.prop_cycle'].by_key()['color']):
+def plot_all_2D_cpb(x,nint_plot,callfun,filename,fig_size=(10,10),dpi=100,color=None,color_list = plt.rcParams['axes.prop_cycle'].by_key()['color']):
     # Plots 2D trajectories with one color per body and saves image under filename
     
     args = callfun[0]
@@ -167,6 +167,7 @@ def plot_all_2D_cpb(x,nint_plot,callfun,filename,fig_size=(10,10),color=None,col
     # Plot-related
     fig = plt.figure()
     fig.set_size_inches(fig_size)
+    fig.set_dpi(dpi)
     ax = plt.gca()
     # lines = sum([ax.plot([], [],'b-', antialiased=True)  for ib in range(nbody)], [])
     lines = sum([ax.plot([], [],'-',color=cb[ib] ,antialiased=True,zorder=-ib)  for ib in range(nbody)], [])
@@ -189,7 +190,7 @@ def plot_all_2D_cpb(x,nint_plot,callfun,filename,fig_size=(10,10),color=None,col
     
     plt.close()
 
-def plot_all_2D_cpv(x,nint_plot,callfun,filename,fig_size=(10,10)):
+def plot_all_2D_cpv(x,nint_plot,callfun,filename,fig_size=(10,10),dpi=100):
     # Plots 2D trajectories with one color per body and saves image under filename
     
     args = callfun[0]
@@ -252,6 +253,7 @@ def plot_all_2D_cpv(x,nint_plot,callfun,filename,fig_size=(10,10)):
     # Plot-related
     fig = plt.figure()
     fig.set_size_inches(fig_size)
+    fig.set_dpi(dpi)
     ax = plt.gca()
 
     # cmap = None
