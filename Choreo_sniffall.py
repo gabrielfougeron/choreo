@@ -15,6 +15,8 @@ def main(preprint_msg=''):
         builtins.print(preprint_msg,end='')
         return builtins.print(*args, **kwargs)
     
+    file_basename = ''
+    
     LookForTarget = False
     
     nbody = 5
@@ -90,8 +92,7 @@ def main(preprint_msg=''):
     # nperiod_anim = 1./nbody
     dnint = 30
 
-    # nint_plot_img = nint_plot_anim * dnint
-    nint_plot_img = nint_plot_anim
+    nint_plot_img = nint_plot_anim * dnint
 
     try:
         the_lcm

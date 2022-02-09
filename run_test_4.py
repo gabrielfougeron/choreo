@@ -1,24 +1,16 @@
-
 import shutil
-    
 from  Choreo_find import *
 
-def main(preprint_msg=''):
-    
+import concurrent.futures
+import random
+import time
 
-    def print(*args, **kwargs):
-        """My custom print() function."""
-        # Adding new arguments to the print function signature 
-        # is probably a bad idea.
-        # Instead consider testing if custom argument keywords
-        # are present in kwargs
-        builtins.print(preprint_msg,end='')
-        return builtins.print(*args, **kwargs)
-    
-    file_basename = ''
-    
+def prepare_args(the_i):
+
+    file_basename = 'test_'+str(1+the_i)+'_'
+    # file_basename = ''
+
     LookForTarget = True
-    
 
     # slow_base_filename = './data/1_lone_wolf.npy'
     # slow_base_filename = './data/1_1_short_ellipse.npy'
@@ -53,7 +45,7 @@ def main(preprint_msg=''):
     nfl = len(fast_base_filename_list)
 
     mass_mul = [1]
-    nTf = [1]
+    nTf = [1+the_i]
     nbs = [2]
     nbf = [3]
 
@@ -279,34 +271,40 @@ def main(preprint_msg=''):
 
     n_opt = 0
     n_opt_max = 1
-    # n_opt_max = 5
+    # n_opt_max = 20
     # n_opt_max = 1e10
-
+    
+    max_norm_on_entry = 1e20
 
     all_kwargs = Pick_Named_Args_From_Dict(Find_Choreo,dict(globals(),**locals()))
+    
+    
+    return all_kwargs
+
+
+
+
+def function(i):
+    
+    all_kwargs = prepare_args(i)
     
     Find_Choreo(**all_kwargs)
 
 
 
+i_min = 3
+i_max = 200
 
-if __name__ == "__main__":
 
-    parser = argparse.ArgumentParser(description='Welcome to the targeted choreography finder')
-    parser.add_argument('-pp','--preprint_msg',nargs=1,type=None,required=False,default=None,help='Adds a systematic message before every print')
+start = time.perf_counter()
     
-    args = parser.parse_args(sys.argv[1:])
+with concurrent.futures.ProcessPoolExecutor(max_workers=None) as executor:
     
-    if args.preprint_msg is None:
+    res = [executor.submit(function,i) for i in range(i_min,i_max)]
         
-        preprint_msg = ''
 
-    else:    
-        
-        preprint_msg = args.preprint_msg[0].strip() + ' : '
+stop = time.perf_counter()
 
-    tstart = time.perf_counter()
-    main(preprint_msg = preprint_msg)
-    tstop = time.perf_counter()
-    
-    print(preprint_msg+'Total time in seconds : ',tstop-tstart)
+print('')
+print('')
+print(f'Total time : {stop-start}')

@@ -82,6 +82,8 @@ def Find_Choreo(
     coeff_ampl_min,
     LookForTarget,
     dnint,
+    file_basename,
+    max_norm_on_entry,
     ):
     
     print('Searching periodic solutions of {:d} bodies'.format(nbody))
@@ -215,7 +217,7 @@ def Find_Choreo(
         f0 = Compute_action_onlygrad(x0,callfun)
         best_sol = current_best(x0,f0)
 
-        GoOn = True
+        GoOn = (best_sol.f_norm < max_norm_on_entry)
         
         i_optim_param = 0
         
@@ -384,7 +386,10 @@ def Find_Choreo(
                         file_path = os.path.join(store_folder, filename)
                         file_root, file_ext = os.path.splitext(os.path.basename(file_path))
                         
-                        if (file_ext == '.txt' ):
+                        if (file_basename in file_root) and (file_ext == '.txt' ):
+
+                            file_root = file_root.replace(file_basename,"")
+
                             try:
                                 max_num_file = max(max_num_file,int(file_root))
                             except:
@@ -392,7 +397,7 @@ def Find_Choreo(
                         
                     max_num_file = max_num_file + 1
                     
-                    filename_output = store_folder+'/'+str(max_num_file)
+                    filename_output = store_folder+'/'+file_basename+str(max_num_file).zfill(5)
 
                     print('Saving solution as '+filename_output+'.*')
              
