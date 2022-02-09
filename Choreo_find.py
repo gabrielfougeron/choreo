@@ -81,6 +81,7 @@ def Find_Choreo(
     k_max,
     coeff_ampl_min,
     LookForTarget,
+    dnint,
     ):
     
     print('Searching periodic solutions of {:d} bodies'.format(nbody))
@@ -204,7 +205,7 @@ def Find_Choreo(
                 plot_all_2D(x0,nint_plot_img,callfun,'init_thumb.png',fig_size=thumb_size,color=color)        
                 
             # if Save_anim :
-                # plot_all_2D_anim(x0,nint_plot_anim,callfun,'init.mp4',nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size)
+                # plot_all_2D_anim(x0,nint_plot_anim,callfun,'init.mp4',nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size,dnint=dnint)
             
             if Save_Newton_Error :
                 plot_Newton_Error(x0,callfun,'init_newton.png')
@@ -404,7 +405,7 @@ def Find_Choreo(
                         plot_all_2D(best_sol.x,nint_plot_img,callfun,filename_output+'_thumb.png',fig_size=thumb_size,color=color)
                         
                     if Save_anim :
-                        plot_all_2D_anim(best_sol.x,nint_plot_anim,callfun,filename_output+'.mp4',nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size)
+                        plot_all_2D_anim(best_sol.x,nint_plot_anim,callfun,filename_output+'.mp4',nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size,dnint=dnint)
 
                     if Save_Newton_Error :
                         plot_Newton_Error(best_sol.x,callfun,filename_output+'_newton.png')

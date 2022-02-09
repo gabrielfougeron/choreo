@@ -21,7 +21,8 @@ job = 'python Choreo_sniffall.py'
 
 # n=40
 # n=12
-n=10
+# n=10
+n=6
 # n=8
 # n=1
 
