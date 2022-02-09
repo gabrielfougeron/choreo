@@ -1,10 +1,4 @@
-# import Choreo_target_custom_test as cho
 
-# nmul=500
-# for imul in range(nmul):
-    # epsmul = imul*1./100.
-    # cho.main(epsmul=epsmul)
-    
 import shutil
     
 from  Choreo_find import *

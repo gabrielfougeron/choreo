@@ -46,8 +46,10 @@ def Find_Choreo(
     mul_loops,
     save_init,
     Save_img,
+    Save_thumb,
     nint_plot_img,
     img_size,
+    thumb_size,
     color,
     Save_Newton_Error,
     gradtol_list,
@@ -189,6 +191,9 @@ def Find_Choreo(
 
             if Save_img :
                 plot_all_2D(x0,nint_plot_img,callfun,'init.png',fig_size=img_size,color=color)        
+
+            if Save_thumb :
+                plot_all_2D(x0,nint_plot_img,callfun,'init_thumb.png',fig_size=thumb_size,color=color)        
                 
             # if Save_anim :
                 # plot_all_2D_anim(x0,nint_plot_anim,callfun,'init.mp4',nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size)
@@ -386,6 +391,9 @@ def Find_Choreo(
                     
                     if Save_img :
                         plot_all_2D(best_sol.x,nint_plot_img,callfun,filename_output+'.png',fig_size=img_size,color=color)
+                    
+                    if Save_img :
+                        plot_all_2D(best_sol.x,nint_plot_img,callfun,filename_output+'_thumb.png',fig_size=thumb_size,color=color)
                         
                     if Save_anim :
                         plot_all_2D_anim(best_sol.x,nint_plot_anim,callfun,filename_output+'.mp4',nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size)
