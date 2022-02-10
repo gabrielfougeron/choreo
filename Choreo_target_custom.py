@@ -3,17 +3,16 @@ import shutil
     
 from  Choreo_find import *
 
-def main(preprint_msg=''):
+def main(the_i=0):
     
-
-    def print(*args, **kwargs):
-        """My custom print() function."""
-        # Adding new arguments to the print function signature 
-        # is probably a bad idea.
-        # Instead consider testing if custom argument keywords
-        # are present in kwargs
-        builtins.print(preprint_msg,end='')
-        return builtins.print(*args, **kwargs)
+    if (the_i != 0):
+        
+        preprint_msg = str(the_i).zfill(2)+' : '
+    
+        def print(*args, **kwargs):
+            """My custom print() function."""
+            builtins.print(preprint_msg,end='')
+            return builtins.print(*args, **kwargs)
     
     file_basename = ''
     
@@ -33,9 +32,9 @@ def main(preprint_msg=''):
 
 
     # fast_base_filename_list = ['./data/1_lone_wolf.npy'    ] 
-    # fast_base_filename_list = ['./data/2_cercle.npy'       ]
+    fast_base_filename_list = ['./data/2_cercle.npy'       ]
     # fast_base_filename_list = ['./data/3_cercle.npy'       ]
-    fast_base_filename_list = ['./data/3_huit.npy'         ]
+    # fast_base_filename_list = ['./data/3_huit.npy'         ]
     # fast_base_filename_list = ['./data/3_heart.npy'        ]
     # fast_base_filename_list = ['./data/3_dbl_heart.npy'    ]
     # fast_base_filename_list = ['./data/4_13_2_2_cercle.npy'] 
@@ -55,7 +54,7 @@ def main(preprint_msg=''):
     mass_mul = [1]
     nTf = [1]
     nbs = [2]
-    nbf = [3]
+    nbf = [2]
 
     epsmul = 0.
 
@@ -86,8 +85,8 @@ def main(preprint_msg=''):
     # Rotate_fast_with_slow = False
     # Rotate_fast_with_slow = (np.random.random() > 1./2.)
 
-    Optimize_Init = True
-    # Optimize_Init = False
+    # Optimize_Init = True
+    Optimize_Init = False
 
     # Randomize_Fast_Init = True
     Randomize_Fast_Init = False
@@ -225,6 +224,8 @@ def main(preprint_msg=''):
 
     disp_scipy_opt = False
     # disp_scipy_opt = True
+    
+    max_norm_on_entry = 1e20
 
     Newt_err_norm_max = 1e-10
     # Newt_err_norm_max_save = Newt_err_norm_max*1000
@@ -282,31 +283,19 @@ def main(preprint_msg=''):
     # n_opt_max = 5
     # n_opt_max = 1e10
 
-
     all_kwargs = Pick_Named_Args_From_Dict(Find_Choreo,dict(globals(),**locals()))
     
     Find_Choreo(**all_kwargs)
 
 
 
-
 if __name__ == "__main__":
 
-    parser = argparse.ArgumentParser(description='Welcome to the targeted choreography finder')
-    parser.add_argument('-pp','--preprint_msg',nargs=1,type=None,required=False,default=None,help='Adds a systematic message before every print')
+    n = 12
     
-    args = parser.parse_args(sys.argv[1:])
+    print(f"Executing with {n} workers")
     
-    if args.preprint_msg is None:
+    with concurrent.futures.ProcessPoolExecutor(max_workers=n) as executor:
         
-        preprint_msg = ''
-
-    else:    
-        
-        preprint_msg = args.preprint_msg[0].strip() + ' : '
-
-    tstart = time.perf_counter()
-    main(preprint_msg = preprint_msg)
-    tstop = time.perf_counter()
-    
-    print(preprint_msg+'Total time in seconds : ',tstop-tstart)
+        res = [executor.submit(main,i) for i in range(1,n+1)]
+            

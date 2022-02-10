@@ -394,12 +394,12 @@ def plot_all_2D_anim(x,nint_plot,callfun,filename,nperiod=1,Plot_trace=True,fig_
     
     plt.close()
     
-def Images_to_video(input_folder,output_filename,ReverseEnd=False):
-    # Expects images files in *.png format named 1.png, ---- 756.png --- n.png
+def Images_to_video(input_folder,output_filename,ReverseEnd=False,img_file_ext='.png'):
+    # Expects images files with consistent extension (default *.png).
     
     list_files = os.listdir(input_folder)
-    
-    n_png = 0
+
+    png_files = []
     
     for the_file in list_files:
         
@@ -409,14 +409,13 @@ def Images_to_video(input_folder,output_filename,ReverseEnd=False):
             
             file_base , file_ext = os.path.splitext(the_file)
             
-            if file_ext == '.png' :
+            if file_ext == img_file_ext :
                 
-                n_png += 1
-                
-    img_list = []
-
-    for i in range(n_png):
-        img_list.append(input_folder+str(i+1)+'.png')
+                png_files.append(the_file)
+        
+    # Sorting files by alphabetical order
+    png_files.sort()
+        
         
     frames_filename = 'frames.txt'
     

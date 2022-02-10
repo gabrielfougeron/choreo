@@ -81,8 +81,8 @@ def prepare_args(the_i):
     Optimize_Init = True
     # Optimize_Init = False
 
-    # Randomize_Fast_Init = True
-    Randomize_Fast_Init = False
+    Randomize_Fast_Init = True
+    # Randomize_Fast_Init = False
 
     all_coeffs_slow_load = np.load(slow_base_filename)
     all_coeffs_fast_load_list = []
@@ -270,8 +270,8 @@ def prepare_args(the_i):
     hash_dict = {}
 
     n_opt = 0
-    n_opt_max = 1
-    # n_opt_max = 20
+    # n_opt_max = 1
+    n_opt_max = 20
     # n_opt_max = 1e10
     
     max_norm_on_entry = 1e20
@@ -292,8 +292,8 @@ def function(i):
 
 
 
-i_min = 3
-i_max = 200
+i_min = 0
+i_max = 20
 
 
 start = time.perf_counter()
