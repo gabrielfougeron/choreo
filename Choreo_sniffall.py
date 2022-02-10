@@ -200,7 +200,7 @@ if __name__ == "__main__":
     n = multiprocessing.cpu_count()
     # n = 1
     
-    main(0)
+    # main(0)
     
     print(f"Executing with {n} workers")
     
