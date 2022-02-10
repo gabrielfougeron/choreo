@@ -9,16 +9,24 @@ from  Choreo_find import *
 
 def main(the_i=0):
     
-    random.seed(time.time() + the_i)
+    # a = time.time()
+    # print('a ',a,np.int64(a))
     
-    if (the_i != 0):
+    b = time.time_ns()
+    print('b ',b,np.int64(b))
+    
         
-        preprint_msg = str(the_i).zfill(2)+' : '
+    time.time_ns()
     
-        def print(*args, **kwargs):
-            """My custom print() function."""
-            builtins.print(preprint_msg,end='')
-            return builtins.print(*args, **kwargs)
+    
+    # if (the_i != 0):
+        
+        # preprint_msg = str(the_i).zfill(2)+' : '
+    
+        # def print(*args, **kwargs):
+            # """My custom print() function."""
+            # builtins.print(preprint_msg,end='')
+            # return builtins.print(*args, **kwargs)
         
     file_basename = ''
     
@@ -186,7 +194,8 @@ def main(the_i=0):
     n_opt = 0
     # n_opt_max = 1
     # n_opt_max = 5
-    n_opt_max = 1e10
+    # n_opt_max = 1e10
+    n_opt_max = 0
     
     all_kwargs = Pick_Named_Args_From_Dict(Find_Choreo,dict(globals(),**locals()))
     
