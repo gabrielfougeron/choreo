@@ -1662,9 +1662,10 @@ def Compute_defl_fac(x,callfun):
 class UniformRandom():
     def __init__(self, d):
         self.d = d
+        self.rdn = np.random.RandomState(np.int64(time.time()))
 
     def random(self):
-        return np.random.random((self.d))
+        return self.rdn.random_sample((self.d))
 
 def Transform_Coeffs(SpaceRot, TimeRev, TimeShiftNum, TimeShiftDen, all_coeffs):
     # Transforms coeffs defining a path and returns updated coeffs

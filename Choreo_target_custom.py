@@ -163,8 +163,8 @@ def main(the_i=0):
     # Penalize_Escape = True
     Penalize_Escape = False
 
-    save_init = False
-    # save_init = True
+    # save_init = False
+    save_init = True
 
     Save_img = True
     # Save_img = False
@@ -291,7 +291,8 @@ def main(the_i=0):
 
 if __name__ == "__main__":
 
-    n = 12
+    # n = 12
+    n = 1
     
     print(f"Executing with {n} workers")
     
