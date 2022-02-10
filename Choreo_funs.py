@@ -1662,7 +1662,7 @@ def Compute_defl_fac(x,callfun):
 class UniformRandom():
     def __init__(self, d):
         self.d = d
-        self.rdn = np.random.RandomState(np.int64(time.time()))
+        self.rdn = np.random.RandomState(np.int64(time.time_ns()))
 
     def random(self):
         return self.rdn.random_sample((self.d))
