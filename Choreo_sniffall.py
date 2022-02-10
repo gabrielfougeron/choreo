@@ -9,25 +9,16 @@ from  Choreo_find import *
 
 def main(the_i=0):
     
-    # a = time.time()
-    # print('a ',a,np.int64(a))
-    
-    b = time.time_ns()
-    print('b ',b,np.int64(b))
-    
+
+    if (the_i != 0):
         
-    time.time_ns()
-    
-    
-    # if (the_i != 0):
-        
-        # preprint_msg = str(the_i).zfill(2)+' : '
-    
-        # def print(*args, **kwargs):
-            # """My custom print() function."""
-            # builtins.print(preprint_msg,end='')
-            # return builtins.print(*args, **kwargs)
-        
+        preprint_msg = str(the_i).zfill(2)+' : '
+
+        def print(*args, **kwargs):
+            """My custom print() function."""
+            builtins.print(preprint_msg,end='')
+            return builtins.print(*args, **kwargs)
+            
     file_basename = ''
     
     LookForTarget = False
@@ -194,8 +185,8 @@ def main(the_i=0):
     n_opt = 0
     # n_opt_max = 1
     # n_opt_max = 5
-    # n_opt_max = 1e10
-    n_opt_max = 0
+    n_opt_max = 1e10
+    # n_opt_max = 0
     
     all_kwargs = Pick_Named_Args_From_Dict(Find_Choreo,dict(globals(),**locals()))
     
@@ -209,7 +200,7 @@ if __name__ == "__main__":
     n = multiprocessing.cpu_count()
     # n = 1
     
-    # main(0)
+    main(0)
     
     print(f"Executing with {n} workers")
     
