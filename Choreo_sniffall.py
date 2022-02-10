@@ -25,9 +25,8 @@ def main(the_i=0):
     
     nbpl=[2,3,5]
 
-    Sym_list = []
     the_lcm = m.lcm(*nbpl)
-    SymName = None
+    SymName = 'D'
     Sym_list,nbody = Make2DChoreoSymManyLoops(nbpl=nbpl,SymName=SymName)
 
     mass = np.ones((nbody),dtype=np.float64)
@@ -136,20 +135,20 @@ def main(the_i=0):
 
     duplicate_eps = 1e-8
 
-    krylov_method = 'lgmres'
+    # krylov_method = 'lgmres'
     # krylov_method = 'gmres'
     # krylov_method = 'bicgstab'
-    # krylov_method = 'cgs'
+    krylov_method = 'cgs'
     # krylov_method = 'minres'
 
     # line_search = 'armijo'
     line_search = 'wolfe'
     
-    gradtol_list =          [1e-3   ,1e-5   ,1e-7   ,1e-9   ,1e-11  ,1e-13  ,1e-15  ]
-    inner_maxiter_list =    [30     ,50     ,60     ,70     ,80     ,100    ,100    ]
-    maxiter_list =          [1000   ,1000   ,1000   ,500   ,500     ,300    ,100    ]
-    outer_k_list =          [5      ,5      ,5      ,5      ,7      ,7      ,7      ]
-    store_outer_Av_list =   [False  ,False  ,False  ,False  ,True   ,True   ,True   ]
+    gradtol_list =          [1e-1   ,1e-3   ,1e-5   ,1e-7   ,1e-9   ,1e-11  ,1e-13  ,1e-15  ]
+    inner_maxiter_list =    [30     ,30     ,50     ,60     ,70     ,80     ,100    ,100    ]
+    maxiter_list =          [100    ,1000   ,1000   ,1000   ,500   ,500     ,300    ,100    ]
+    outer_k_list =          [5      ,5      ,5      ,5      ,5      ,7      ,7      ,7      ]
+    store_outer_Av_list =   [False  ,False  ,False  ,False  ,False  ,True   ,True   ,True   ]
     
     n_optim_param = len(gradtol_list)
     
