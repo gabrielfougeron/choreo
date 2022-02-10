@@ -1,4 +1,5 @@
 import concurrent.futures
+import multiprocessing
 import shutil
 import time
     
@@ -132,10 +133,10 @@ def main(the_i=0):
 
     duplicate_eps = 1e-8
 
-    # krylov_method = 'lgmres'
+    krylov_method = 'lgmres'
     # krylov_method = 'gmres'
     # krylov_method = 'bicgstab'
-    krylov_method = 'cgs'
+    # krylov_method = 'cgs'
     # krylov_method = 'minres'
 
     # line_search = 'armijo'
@@ -172,7 +173,7 @@ def main(the_i=0):
     coeff_ampl_o=1e-1
     # coeff_ampl_o=1e0
     k_infl=20
-    k_max=600
+    k_max=200
     coeff_ampl_min=1e-16
 
     freq_erase_dict = 1000
@@ -192,7 +193,7 @@ def main(the_i=0):
 
 if __name__ == "__main__":
 
-    n = 12
+    n = multiprocessing.cpu_count()
     
     print(f"Executing with {n} workers")
     
