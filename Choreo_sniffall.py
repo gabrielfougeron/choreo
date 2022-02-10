@@ -1,47 +1,45 @@
-
+import concurrent.futures
 import shutil
+import time
     
 from  Choreo_find import *
 
-def main(preprint_msg=''):
+def main(the_i=0):
     
-
-    def print(*args, **kwargs):
-        """My custom print() function."""
-        # Adding new arguments to the print function signature 
-        # is probably a bad idea.
-        # Instead consider testing if custom argument keywords
-        # are present in kwargs
-        builtins.print(preprint_msg,end='')
-        return builtins.print(*args, **kwargs)
+    if (the_i != 0):
+        
+        preprint_msg = str(the_i).zfill(2)+' : '
     
+        def print(*args, **kwargs):
+            """My custom print() function."""
+            builtins.print(preprint_msg,end='')
+            return builtins.print(*args, **kwargs)
+        
     file_basename = ''
     
     LookForTarget = False
     
-    nbody = 5
-    
-    mass = np.ones((nbody),dtype=np.float64)
-    
-    nbpl=[nbody]
+    nbpl=[2,3,5]
 
     Sym_list = []
     the_lcm = m.lcm(*nbpl)
     SymName = None
     Sym_list,nbody = Make2DChoreoSymManyLoops(nbpl=nbpl,SymName=SymName)
 
-    ibody = 0
-    rot_angle = 0.
-    s = -1
-    st = -1
+    mass = np.ones((nbody),dtype=np.float64)
 
-    Sym_list.append(ChoreoSym(
-        LoopTarget=ibody,
-        LoopSource=ibody,
-        SpaceRot = np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64),
-        TimeRev=st,
-        TimeShift=fractions.Fraction(numerator=0,denominator=1)
-        ))
+    # ibody = 0
+    # rot_angle = 0.
+    # s = -1
+    # st = -1
+
+    # Sym_list.append(ChoreoSym(
+        # LoopTarget=ibody,
+        # LoopSource=ibody,
+        # SpaceRot = np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64),
+        # TimeRev=st,
+        # TimeShift=fractions.Fraction(numerator=0,denominator=1)
+        # ))
 
 
     MomConsImposed = True
@@ -125,6 +123,8 @@ def main(preprint_msg=''):
 
     disp_scipy_opt = False
     # disp_scipy_opt = True
+    
+    max_norm_on_entry = 1e20
 
     Newt_err_norm_max = 1e-10
     # Newt_err_norm_max_save = Newt_err_norm_max*1000
@@ -132,10 +132,10 @@ def main(preprint_msg=''):
 
     duplicate_eps = 1e-8
 
-    krylov_method = 'lgmres'
+    # krylov_method = 'lgmres'
     # krylov_method = 'gmres'
     # krylov_method = 'bicgstab'
-    # krylov_method = 'cgs'
+    krylov_method = 'cgs'
     # krylov_method = 'minres'
 
     # line_search = 'armijo'
@@ -170,6 +170,7 @@ def main(preprint_msg=''):
     # n_grad_change = 1.5
 
     coeff_ampl_o=1e-1
+    # coeff_ampl_o=1e0
     k_infl=20
     k_max=600
     coeff_ampl_min=1e-16
@@ -181,8 +182,7 @@ def main(preprint_msg=''):
     # n_opt_max = 1
     # n_opt_max = 5
     n_opt_max = 1e10
-
-
+    
     all_kwargs = Pick_Named_Args_From_Dict(Find_Choreo,dict(globals(),**locals()))
     
     Find_Choreo(**all_kwargs)
@@ -192,21 +192,11 @@ def main(preprint_msg=''):
 
 if __name__ == "__main__":
 
-    parser = argparse.ArgumentParser(description='Welcome to the targeted choreography finder')
-    parser.add_argument('-pp','--preprint_msg',nargs=1,type=None,required=False,default=None,help='Adds a systematic message before every print')
+    n = 12
     
-    args = parser.parse_args(sys.argv[1:])
+    print(f"Executing with {n} workers")
     
-    if args.preprint_msg is None:
+    with concurrent.futures.ProcessPoolExecutor(max_workers=n) as executor:
         
-        preprint_msg = ''
-
-    else:    
-        
-        preprint_msg = args.preprint_msg[0].strip() + ' : '
-
-    tstart = time.perf_counter()
-    main(preprint_msg = preprint_msg)
-    tstop = time.perf_counter()
-    
-    print(preprint_msg+'Total time in seconds : ',tstop-tstart)
+        res = [executor.submit(main,i) for i in range(1,n+1)]
+            
