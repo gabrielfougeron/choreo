@@ -1,11 +1,15 @@
 import concurrent.futures
 import multiprocessing
 import shutil
+import random
 import time
+
     
 from  Choreo_find import *
 
 def main(the_i=0):
+    
+    random.seed(time.time() + the_i)
     
     if (the_i != 0):
         
