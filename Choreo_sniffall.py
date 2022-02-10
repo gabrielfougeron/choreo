@@ -91,7 +91,7 @@ def main(the_i=0):
     # Save_anim = False
 
     vid_size = (8,8) # Image size in inches
-    nint_plot_anim = 2*2*2*3*3*5 
+    nint_plot_anim = 2*2*2*3*3*5  *5
     # nperiod_anim = 1./nbody
     dnint = 30
 
@@ -198,6 +198,9 @@ def main(the_i=0):
 if __name__ == "__main__":
 
     n = multiprocessing.cpu_count()
+    # n = 1
+    
+    # main(0)
     
     print(f"Executing with {n} workers")
     
