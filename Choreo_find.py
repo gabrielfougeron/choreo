@@ -219,6 +219,10 @@ def Find_Choreo(
 
         GoOn = (best_sol.f_norm < max_norm_on_entry)
         
+        if not(GoOn):
+            print(f"Norm on entry is {best_sol.f_norm} which is too big.")
+        
+        
         i_optim_param = 0
         
         while GoOn:
@@ -280,8 +284,6 @@ def Find_Choreo(
                 
             if (GoOn and Look_for_duplicates):
 
-                Action,GradAction = Compute_action(best_sol.x,callfun)
-                
                 Found_duplicate,file_path = Check_Duplicates(best_sol.x,callfun,hash_dict,store_folder,duplicate_eps)
                 
                 if (Found_duplicate):
