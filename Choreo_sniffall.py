@@ -10,20 +10,21 @@ from  Choreo_find import *
 def main(the_i=0):
     
 
-    if (the_i != 0):
+    # if (the_i != 0):
         
-        preprint_msg = str(the_i).zfill(2)+' : '
+        # preprint_msg = str(the_i).zfill(2)+' : '
 
-        def print(*args, **kwargs):
-            """My custom print() function."""
-            builtins.print(preprint_msg,end='')
-            return builtins.print(*args, **kwargs)
+        # def print(*args, **kwargs):
+            # """My custom print() function."""
+            # builtins.print(preprint_msg,end='')
+            # return builtins.print(*args, **kwargs)
             
     file_basename = ''
     
     LookForTarget = False
     
-    nbpl=[5]
+    # nbpl=[1,2,3,4,5,6]
+    nbpl=[1,1,1,1,1]
 
     the_lcm = m.lcm(*nbpl)
     SymName = 'C'
@@ -33,22 +34,9 @@ def main(the_i=0):
 
     # Sym_list = []
 
-    ibody = 0
-    rot_angle = 2*np.pi/7
-    s = 1
-    st = 1
 
-    Sym_list.append(ChoreoSym(
-        LoopTarget=ibody,
-        LoopSource=ibody,
-        SpaceRot = np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64),
-        TimeRev=st,
-        TimeShift=fractions.Fraction(numerator=1,denominator=7)
-        ))
-
-
-    MomConsImposed = True
-#     MomConsImposed = False
+    # MomConsImposed = True
+    MomConsImposed = False
 
     store_folder = './Sniff_all_sym/'
     store_folder = store_folder+str(nbody)
@@ -73,8 +61,8 @@ def main(the_i=0):
     Save_img = True
     # Save_img = False
 
-    Save_thumb = True
-    # Save_thumb = False
+    # Save_thumb = True
+    Save_thumb = False
 
     # img_size = (12,12) # Image size in inches
     img_size = (8,8) # Image size in inches
@@ -91,7 +79,7 @@ def main(the_i=0):
     # Save_anim = False
 
     vid_size = (8,8) # Image size in inches
-    nint_plot_anim = 2*2*2*3*3*5 *5
+    nint_plot_anim = 2*2*2*3*3*5
     # nperiod_anim = 1./nbody
     dnint = 30
 
@@ -124,7 +112,10 @@ def main(the_i=0):
     # ncoeff_init = 1800
     # ncoeff_init = 2400
     # ncoeff_init = 1206
-    # ncoeff_init = 90
+    # ncoeff_init = 9*8*7*5
+    # ncoeff_init = the_lcm
+    
+    # print(the_lcm)
 
     disp_scipy_opt = False
     # disp_scipy_opt = True
@@ -137,10 +128,10 @@ def main(the_i=0):
 
     duplicate_eps = 1e-8
 
-    # krylov_method = 'lgmres'
+    krylov_method = 'lgmres'
     # krylov_method = 'gmres'
     # krylov_method = 'bicgstab'
-    krylov_method = 'cgs'
+    # krylov_method = 'cgs'
     # krylov_method = 'minres'
 
     # line_search = 'armijo'
@@ -176,11 +167,13 @@ def main(the_i=0):
 
     coeff_ampl_o=1e-1
     # coeff_ampl_o=1e0
-    k_infl=20
-    k_max=200
+    k_infl=3
+    # k_max=600
+    # k_max=200
+    k_max=100
     coeff_ampl_min=1e-16
 
-    freq_erase_dict = 1000
+    freq_erase_dict = 100
     hash_dict = {}
 
     n_opt = 0
@@ -196,7 +189,21 @@ def main(the_i=0):
 
 
 
+# if __name__ == "__main__":
+    # main(0)
+    
 if __name__ == "__main__":
 
-    main(0)
-                
+    n = multiprocessing.cpu_count()
+    # n = 1
+    
+    print(f"Executing with {n} workers")
+    
+    with concurrent.futures.ProcessPoolExecutor(max_workers=n) as executor:
+        
+        res = []
+        for i in range(1,n+1):
+            res.append(executor.submit(main,i))
+            time.sleep(0.01)
+
+ 
