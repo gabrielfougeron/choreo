@@ -23,7 +23,7 @@ def main(the_i=0):
     
     LookForTarget = False
     
-    nbpl=[1,2]
+    nbpl=[5]
 
     the_lcm = m.lcm(*nbpl)
     SymName = 'C'
@@ -33,18 +33,18 @@ def main(the_i=0):
 
     # Sym_list = []
 
-    # ibody = 0
-    # rot_angle = 0.
-    # s = 1
-    # st = 1
+    ibody = 0
+    rot_angle = 2*np.pi/7
+    s = 1
+    st = 1
 
-    # Sym_list.append(ChoreoSym(
-        # LoopTarget=1,
-        # LoopSource=0,
-        # SpaceRot = np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64),
-        # TimeRev=st,
-        # TimeShift=fractions.Fraction(numerator=1,denominator=2)
-        # ))
+    Sym_list.append(ChoreoSym(
+        LoopTarget=ibody,
+        LoopSource=ibody,
+        SpaceRot = np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64),
+        TimeRev=st,
+        TimeShift=fractions.Fraction(numerator=1,denominator=7)
+        ))
 
 
     MomConsImposed = True
@@ -91,7 +91,7 @@ def main(the_i=0):
     # Save_anim = False
 
     vid_size = (8,8) # Image size in inches
-    nint_plot_anim = 2*2*2*3*3*5 
+    nint_plot_anim = 2*2*2*3*3*5 *5
     # nperiod_anim = 1./nbody
     dnint = 30
 
