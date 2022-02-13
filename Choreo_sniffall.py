@@ -23,25 +23,27 @@ def main(the_i=0):
     
     LookForTarget = False
     
-    nbpl=[2,3,5]
+    nbpl=[1,2]
 
     the_lcm = m.lcm(*nbpl)
-    SymName = 'D'
+    SymName = 'C'
     Sym_list,nbody = Make2DChoreoSymManyLoops(nbpl=nbpl,SymName=SymName)
 
     mass = np.ones((nbody),dtype=np.float64)
 
+    # Sym_list = []
+
     # ibody = 0
     # rot_angle = 0.
-    # s = -1
-    # st = -1
+    # s = 1
+    # st = 1
 
     # Sym_list.append(ChoreoSym(
-        # LoopTarget=ibody,
-        # LoopSource=ibody,
+        # LoopTarget=1,
+        # LoopSource=0,
         # SpaceRot = np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64),
         # TimeRev=st,
-        # TimeShift=fractions.Fraction(numerator=0,denominator=1)
+        # TimeShift=fractions.Fraction(numerator=1,denominator=2)
         # ))
 
 
@@ -89,7 +91,7 @@ def main(the_i=0):
     # Save_anim = False
 
     vid_size = (8,8) # Image size in inches
-    nint_plot_anim = 2*2*2*3*3*5  *5
+    nint_plot_anim = 2*2*2*3*3*5 
     # nperiod_anim = 1./nbody
     dnint = 30
 
@@ -116,9 +118,9 @@ def main(the_i=0):
     # ncoeff_init = 102
     # ncoeff_init = 800
     # ncoeff_init = 201   
-    # ncoeff_init = 300   
+    ncoeff_init = 300   
     # ncoeff_init = 600
-    ncoeff_init = 900
+    # ncoeff_init = 900
     # ncoeff_init = 1800
     # ncoeff_init = 2400
     # ncoeff_init = 1206
