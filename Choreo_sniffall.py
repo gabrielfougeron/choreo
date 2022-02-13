@@ -198,14 +198,5 @@ def main(the_i=0):
 
 if __name__ == "__main__":
 
-    n = multiprocessing.cpu_count()
-    # n = 1
-    
-    # main(0)
-    
-    print(f"Executing with {n} workers")
-    
-    with concurrent.futures.ProcessPoolExecutor(max_workers=n) as executor:
-        
-        res = [executor.submit(main,i) for i in range(1,n+1)]
-            
+    main(0)
+                

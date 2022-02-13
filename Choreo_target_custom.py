@@ -22,8 +22,8 @@ def main(the_i=0):
     # slow_base_filename = './data/1_lone_wolf.npy'
     # slow_base_filename = './data/1_1_short_ellipse.npy'
     # slow_base_filename = './data/1_1_long_ellipse.npy'
-    # slow_base_filename = './data/1_1_cercle.npy'
-    slow_base_filename = './data/2_cercle.npy'
+    slow_base_filename = './data/1_1_cercle.npy'
+    # slow_base_filename = './data/2_cercle.npy'
     # slow_base_filename = './data/3_cercle.npy'
     # slow_base_filename = './data/3_huit.npy'
     # slow_base_filename = './data/3_heart.npy'
@@ -32,7 +32,7 @@ def main(the_i=0):
 
 
     # fast_base_filename_list = ['./data/1_lone_wolf.npy'    ] 
-    fast_base_filename_list = ['./data/2_cercle.npy'       ]
+    # fast_base_filename_list = ['./data/2_cercle.npy'       ]
     # fast_base_filename_list = ['./data/3_cercle.npy'       ]
     # fast_base_filename_list = ['./data/3_huit.npy'         ]
     # fast_base_filename_list = ['./data/3_heart.npy'        ]
@@ -42,6 +42,7 @@ def main(the_i=0):
 
     # fast_base_filename_list = ['./data/2_cercle.npy','./data/3_huit.npy'    ] 
     # fast_base_filename_list = ['./data/1_lone_wolf.npy','./data/2_cercle.npy'    ] 
+    fast_base_filename_list = ['./data/2_cercle.npy','./data/2_cercle.npy'    ] 
     # fast_base_filename_list = ['./data/1_lone_wolf.npy','./data/1_lone_wolf.npy'    ] 
     
     
@@ -51,10 +52,10 @@ def main(the_i=0):
 
     nfl = len(fast_base_filename_list)
 
-    mass_mul = [1]
-    nTf = [1]
-    nbs = [2]
-    nbf = [2]
+    # mass_mul = [1]
+    # nTf = [13]
+    # nbs = [2]
+    # nbf = [2]
 
     epsmul = 0.
 
@@ -64,15 +65,15 @@ def main(the_i=0):
     # nbs = [1,1,1,1]
     # nbf = [1,1,1,1]
 
-    # mass_mul = [1,1]
+    mass_mul = [1,1]
     # mass_mul = [3,2]
-    # nTf = [37,37]
-    # nbs = [1,1]
-    # nbf = [2,3]
+    nTf = [13,13]
+    nbs = [1,1]
+    nbf = [2,2]
 
     # mul_loops_ini = True
-    mul_loops_ini = False
-    # mul_loops_ini = np.random.random() > 1./2.
+    # mul_loops_ini = False
+    mul_loops_ini = np.random.random() > 1./2.
     
     mul_loops = [mul_loops_ini for _ in range(nfl)]
 
@@ -85,11 +86,11 @@ def main(the_i=0):
     # Rotate_fast_with_slow = False
     # Rotate_fast_with_slow = (np.random.random() > 1./2.)
 
-    # Optimize_Init = True
-    Optimize_Init = False
+    Optimize_Init = True
+    # Optimize_Init = False
 
-    # Randomize_Fast_Init = True
-    Randomize_Fast_Init = False
+    Randomize_Fast_Init = True
+    # Randomize_Fast_Init = False
 
     all_coeffs_slow_load = np.load(slow_base_filename)
     all_coeffs_fast_load_list = []
@@ -279,8 +280,8 @@ def main(the_i=0):
     hash_dict = {}
 
     n_opt = 0
-    n_opt_max = 1
-    # n_opt_max = 5
+    # n_opt_max = 1
+    n_opt_max = 5
     # n_opt_max = 1e10
 
     all_kwargs = Pick_Named_Args_From_Dict(Find_Choreo,dict(globals(),**locals()))
@@ -291,12 +292,4 @@ def main(the_i=0):
 
 if __name__ == "__main__":
 
-    # n = 12
-    n = 1
-    
-    print(f"Executing with {n} workers")
-    
-    with concurrent.futures.ProcessPoolExecutor(max_workers=n) as executor:
-        
-        res = [executor.submit(main,i) for i in range(1,n+1)]
-            
+    main()
