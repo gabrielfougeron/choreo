@@ -71,8 +71,8 @@ def main(the_i=0):
     Save_img = True
     # Save_img = False
 
-    # Save_thumb = True
-    Save_thumb = False
+    Save_thumb = True
+    # Save_thumb = False
 
     # img_size = (12,12) # Image size in inches
     img_size = (8,8) # Image size in inches
