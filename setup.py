@@ -14,7 +14,7 @@ import numpy
 os.environ["CC"] = "gcc"
 # os.environ["CC"] = "icc"
 
-
+#test
 # extra_compile_args = ["-O3", "-ffast-math", "-march=native", "-fopenmp" ]
 extra_compile_args = ["-O3"]
 # extra_compile_args = ["-O2", "-march=native"]
