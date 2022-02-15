@@ -7,6 +7,7 @@ Finds periodic solutions to the N-body problem
   - To set up, run the following :
     
     conda env create -f choreo_env.yml
+    
     conda activate choreo
   
 ## Compilation of Cython code
