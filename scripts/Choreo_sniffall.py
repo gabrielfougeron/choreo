@@ -3,9 +3,15 @@ import multiprocessing
 import shutil
 import random
 import time
+import math as m
+import numpy as np
+import os
+import sys
 
-    
-from  Choreo_find import *
+__PROJECT_ROOT__ = os.path.abspath(os.path.join(os.path.dirname(__file__),os.pardir))
+sys.path.append(__PROJECT_ROOT__)
+
+import choreo 
 
 def main(the_i=0):
     
@@ -24,11 +30,12 @@ def main(the_i=0):
     LookForTarget = False
     
     # nbpl=[1,2,3,4,5,6]
-    nbpl=[2,2,2]
+    # nbpl=[2,2,2]
+    nbpl=[3]
 
     the_lcm = m.lcm(*nbpl)
     SymName = 'C'
-    Sym_list,nbody = Make2DChoreoSymManyLoops(nbpl=nbpl,SymName=SymName)
+    Sym_list,nbody = choreo.Make2DChoreoSymManyLoops(nbpl=nbpl,SymName=SymName)
 
     mass = np.ones((nbody),dtype=np.float64)
 
@@ -38,7 +45,7 @@ def main(the_i=0):
     # MomConsImposed = True
     MomConsImposed = False
 
-    store_folder = './Sniff_all_sym/'
+    store_folder = '../Sniff_all_sym/'
     store_folder = store_folder+str(nbody)
     if not(os.path.isdir(store_folder)):
         os.makedirs(store_folder)
@@ -182,16 +189,17 @@ def main(the_i=0):
     n_opt_max = 1e10
     # n_opt_max = 0
     
-    all_kwargs = Pick_Named_Args_From_Dict(Find_Choreo,dict(globals(),**locals()))
+    all_kwargs = choreo.Pick_Named_Args_From_Dict(choreo.Find_Choreo,dict(globals(),**locals()))
     
-    Find_Choreo(**all_kwargs)
+    choreo.Find_Choreo(**all_kwargs)
 
 
 
 
-# if __name__ == "__main__":
-    # main(0)
+if __name__ == "__main__":
+    main(0)
     
+'''    
 if __name__ == "__main__":
 
     n = multiprocessing.cpu_count()
@@ -205,5 +213,5 @@ if __name__ == "__main__":
         for i in range(1,n+1):
             res.append(executor.submit(main,i))
             time.sleep(0.01)
-
+'''
  

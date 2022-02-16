@@ -31,7 +31,7 @@ extra_link_args = []
 # os.utime('Choreo_cython_funs.pyx',None)
 
 
-extension = Extension("Choreo_cython_funs", ["Choreo_cython_funs.pyx"],
+extension = Extension("choreo.Choreo_cython_funs", ["./choreo/Choreo_cython_funs.pyx"],
                   include_dirs=[numpy.get_include()],
                   extra_compile_args = extra_compile_args,
                   extra_link_args = extra_link_args,
