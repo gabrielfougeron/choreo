@@ -24,7 +24,7 @@ def main(the_i=0):
     LookForTarget = False
     
     # nbpl=[1,2,3,4,5,6]
-    nbpl=[1,1,1,1,1]
+    nbpl=[2,2,2]
 
     the_lcm = m.lcm(*nbpl)
     SymName = 'C'
@@ -106,8 +106,8 @@ def main(the_i=0):
     # ncoeff_init = 102
     # ncoeff_init = 800
     # ncoeff_init = 201   
-    ncoeff_init = 300   
-    # ncoeff_init = 600
+    # ncoeff_init = 300   
+    ncoeff_init = 600
     # ncoeff_init = 900
     # ncoeff_init = 1800
     # ncoeff_init = 2400
@@ -139,7 +139,7 @@ def main(the_i=0):
     
     gradtol_list =          [1e-1   ,1e-3   ,1e-5   ,1e-7   ,1e-9   ,1e-11  ,1e-13  ,1e-15  ]
     inner_maxiter_list =    [30     ,30     ,50     ,60     ,70     ,80     ,100    ,100    ]
-    maxiter_list =          [100    ,1000   ,1000   ,1000   ,500   ,500     ,300    ,100    ]
+    maxiter_list =          [100    ,1000   ,1000   ,1000   ,500    ,500    ,300    ,100    ]
     outer_k_list =          [5      ,5      ,5      ,5      ,5      ,7      ,7      ,7      ]
     store_outer_Av_list =   [False  ,False  ,False  ,False  ,False  ,True   ,True   ,True   ]
     
@@ -170,7 +170,7 @@ def main(the_i=0):
     k_infl=3
     # k_max=600
     # k_max=200
-    k_max=100
+    k_max=600
     coeff_ampl_min=1e-16
 
     freq_erase_dict = 100
