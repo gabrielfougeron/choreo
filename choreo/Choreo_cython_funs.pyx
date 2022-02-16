@@ -12,13 +12,11 @@ This file also defines global constants in both C and Python format like the nub
 
 '''
 
-
 import os
 import numpy as np
 cimport numpy as np
 cimport cython
 
-import pyfftw
 import scipy.fft
 import scipy.sparse as sp
 
@@ -29,15 +27,12 @@ from libc.math cimport sin as csin
 from libc.math cimport sqrt as csqrt
 from libc.math cimport isnan as cisnan
 from libc.math cimport isinf as cisinf
-import time
 
 # the_irfft = np.fft.irfft
 the_irfft = scipy.fft.irfft
-# the_irfft = pyfftw.interfaces.numpy_fft.irfft
- 
+
 # the_ihfft = np.fft.ihfft
 the_ihfft = scipy.fft.ihfft
-# the_ihfft = pyfftw.interfaces.numpy_fft.ihfft 
 
 # the_rfft = np.fft.rfft
 the_rfft = scipy.fft.rfft
