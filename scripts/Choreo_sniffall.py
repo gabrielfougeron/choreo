@@ -185,8 +185,8 @@ def main(the_i=0):
 
     n_opt = 0
     # n_opt_max = 1
-    # n_opt_max = 5
-    n_opt_max = 1e10
+    n_opt_max = 5
+    # n_opt_max = 1e10
     # n_opt_max = 0
     
     all_kwargs = choreo.Pick_Named_Args_From_Dict(choreo.Find_Choreo,dict(globals(),**locals()))
@@ -199,7 +199,7 @@ def main(the_i=0):
 if __name__ == "__main__":
     main(0)
     
-'''    
+'''
 if __name__ == "__main__":
 
     n = multiprocessing.cpu_count()

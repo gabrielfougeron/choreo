@@ -16,7 +16,8 @@ os.environ["CC"] = "gcc"
 
 
 # extra_compile_args = ["-O3", "-ffast-math", "-march=native", "-fopenmp" ]
-extra_compile_args = ["-O3"]
+# extra_compile_args = ["-O3"]
+extra_compile_args = ["-O2"]
 # extra_compile_args = ["-O2", "-march=native"]
 # extra_compile_args = ["-O3", "-march=native", "-fopenmp" ]
 # extra_compile_args = ["-Ofast"]

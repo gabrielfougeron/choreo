@@ -10,7 +10,7 @@ dependencies:
   - cython
   - ffmpeg
   - pyfftw
+  - suitesparse
+  - tbb 
   - ffmpeg-python
   - cffi
-
-  
