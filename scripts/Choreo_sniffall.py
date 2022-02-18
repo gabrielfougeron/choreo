@@ -42,10 +42,10 @@ def main(the_i=0):
     # Sym_list = []
 
 
-    # MomConsImposed = True
-    MomConsImposed = False
+    MomConsImposed = True
+    # MomConsImposed = False
 
-    store_folder = '../Sniff_all_sym/'
+    store_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/')
     store_folder = store_folder+str(nbody)
     if not(os.path.isdir(store_folder)):
         os.makedirs(store_folder)
