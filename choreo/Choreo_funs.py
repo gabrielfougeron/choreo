@@ -319,12 +319,15 @@ def null_space_sparseqr(AT):
         return sp.coo_matrix(([],([],[])),shape=(nrow,0))
     
     else:
-        
+
+        mask = []
         iker = 0
-        while(Q.col[iker] < rank):
-            iker+=1
+        while (iker < Q.nnz):
+            if (Q.col[iker] >= rank):
+                mask.append(iker)
+            iker += 1
             
-        return sp.coo_matrix((Q.data[iker:],(Q.row[iker:],Q.col[iker:]-rank)),shape=(nrow,nrow-rank))
+        return sp.coo_matrix((Q.data[mask],(Q.row[mask],Q.col[mask]-rank)),shape=(nrow,nrow-rank))
 
 class current_best:
     # Class meant to store the best solution during scipy optimization / root finding

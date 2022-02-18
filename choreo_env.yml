@@ -9,7 +9,6 @@ dependencies:
   - networkx
   - cython
   - ffmpeg
-  - pyfftw
   - suitesparse
   - tbb 
   - ffmpeg-python
