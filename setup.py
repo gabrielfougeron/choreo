@@ -15,21 +15,9 @@ os.environ["CC"] = "gcc"
 # os.environ["CC"] = "icc"
 
 
-# extra_compile_args = ["-O3", "-ffast-math", "-march=native", "-fopenmp" ]
-# extra_compile_args = ["-O3"]
 extra_compile_args = ["-O2"]
-# extra_compile_args = ["-O2", "-march=native"]
-# extra_compile_args = ["-O3", "-march=native", "-fopenmp" ]
-# extra_compile_args = ["-Ofast"]
-# extra_compile_args = ["-Ofast", "-march=native", "-fopenmp" ]
-# extra_compile_args = ["-O0"]
 
 extra_link_args = []
-# extra_link_args = ["-lm"]
-
-
-
-# os.utime('Choreo_cython_funs.pyx',None)
 
 
 extension = Extension("choreo.Choreo_cython_funs", ["./choreo/Choreo_cython_funs.pyx"],
@@ -39,5 +27,6 @@ extension = Extension("choreo.Choreo_cython_funs", ["./choreo/Choreo_cython_funs
                   )
 
 setup(
-    ext_modules = cythonize(extension, language_level = "3",annotate=True)
+    ext_modules = cythonize(extension, language_level = "3",annotate=True),
+    zip_safe=False,
 )
