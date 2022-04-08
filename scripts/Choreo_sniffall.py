@@ -1,3 +1,10 @@
+import os
+
+os.environ['OMP_NUM_THREADS'] = '1'
+os.environ['NUMEXPR_NUM_THREADS'] = '1'
+os.environ['OPENBLAS_NUM_THREADS'] = '1'
+os.environ['MKL_NUM_THREADS'] = '1'
+
 import concurrent.futures
 import multiprocessing
 import shutil
@@ -5,8 +12,8 @@ import random
 import time
 import math as m
 import numpy as np
-import os
 import sys
+import fractions
 
 __PROJECT_ROOT__ = os.path.abspath(os.path.join(os.path.dirname(__file__),os.pardir))
 sys.path.append(__PROJECT_ROOT__)
@@ -31,19 +38,51 @@ def main(the_i=0):
     
     # nbpl=[1,2,3,4,5,6]
     # nbpl=[2,2,2]
-    nbpl=[3]
+    nbpl=[1,1,1,1]
+
+
 
     the_lcm = m.lcm(*nbpl)
     SymName = 'C'
+    # SymName = 'D'
     Sym_list,nbody = choreo.Make2DChoreoSymManyLoops(nbpl=nbpl,SymName=SymName)
 
     mass = np.ones((nbody),dtype=np.float64)
 
-    # Sym_list = []
+    rot_angle =  0
+    s = -1
+        
+    Sym_list.append(
+        choreo.ChoreoSym(
+            LoopTarget=0,
+            LoopSource=1,
+            SpaceRot= np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64),
+            TimeRev=-1,
+            TimeShift=fractions.Fraction(numerator=0,denominator=1)
+            )
+    )        
+    Sym_list.append(
+        choreo.ChoreoSym(
+            LoopTarget=2,
+            LoopSource=2,
+            SpaceRot= np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64),
+            TimeRev=-1,
+            TimeShift=fractions.Fraction(numerator=0,denominator=1)
+            )
+    )
+    Sym_list.append(
+        choreo.ChoreoSym(
+            LoopTarget=3,
+            LoopSource=3,
+            SpaceRot= np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64),
+            TimeRev=-1,
+            TimeShift=fractions.Fraction(numerator=0,denominator=1)
+            )
+    )
 
 
-    MomConsImposed = True
-    # MomConsImposed = False
+    # MomConsImposed = True
+    MomConsImposed = False
 
     store_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/')
     store_folder = store_folder+str(nbody)
@@ -196,10 +235,10 @@ def main(the_i=0):
 
 
 
-if __name__ == "__main__":
-    main(0)
+# if __name__ == "__main__":
+    # main(0)
     
-'''
+
 if __name__ == "__main__":
 
     n = multiprocessing.cpu_count()
@@ -213,5 +252,5 @@ if __name__ == "__main__":
         for i in range(1,n+1):
             res.append(executor.submit(main,i))
             time.sleep(0.01)
-'''
+
  
