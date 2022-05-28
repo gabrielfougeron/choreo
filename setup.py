@@ -11,18 +11,6 @@ from distutils.command.build import build as build_orig
 from Cython.Build import cythonize
 import numpy
 
-class build(build_orig):
-
-    def finalize_options(self):
-        super().finalize_options()
-        __builtins__.__NUMPY_SETUP__ = False
-        import numpy
-        for extension in self.distribution.ext_modules:
-            extension.include_dirs.append(numpy.get_include())
-        from Cython.Build import cythonize
-        self.distribution.ext_modules = cythonize(self.distribution.ext_modules,
-                                                  language_level=3)
-
 __version__ = "0.1.0"
 
 # To buid and use inplace, run the following command :
@@ -50,14 +38,16 @@ extension = Extension(
                   )
 
 setup(
+    name = "choreo",
+    author = "Gabriel Fougeron <gabriel.fougeron@hotmail.fr>",
+    url = "https://github.com/gabrielfougeron/Choreographies2",
     version = __version__,
     description='',
     license = "BSD 2-Clause License",
     platforms=['any'],
-    name = "choreo",
     packages = find_packages(),
     ext_modules = cythonize(extension, language_level = "3",annotate=True),
     zip_safe=False,
     package_data={"choreo": ["choreo.h"]},
-    cmdclass={"build": build},
+    provides=['choreo'],
 )
