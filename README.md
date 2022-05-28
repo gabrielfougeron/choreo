@@ -12,12 +12,20 @@ conda env create -f choreo_env.yml
 conda activate choreo
 ```
 
-## Compilation of Cython code
+## Inplace compilation of Cython code
 
 Run the following :
 
 ```
 python setup.py build_ext --inplace
+```
+
+## Build wheel package
+
+Run the following :
+
+```
+python setup.py bdist_wheel
 ```
 
 ## Want to start finding new solutions ?

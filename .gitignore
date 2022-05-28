@@ -16,3 +16,8 @@ Sniff_all_sym/
 __pycache__/
 .vscode/
 *.7z
+*.whl
+*.egg-info/
+dist/
+*.gz
+*.zip

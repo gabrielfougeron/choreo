@@ -4,9 +4,7 @@ Creates anc compiles C code from Cython file
 '''
 
 import os
-from setuptools import find_packages,setup
-# from distutils.core import setup, Extension
-from distutils.core import Extension
+from distutils.core import setup, Extension
 from Cython.Build import cythonize
 import numpy
 
@@ -29,9 +27,6 @@ extension = Extension("choreo.Choreo_cython_funs", ["./choreo/Choreo_cython_funs
                   )
 
 setup(
-    name = "choreo",
-    version = "0.1.0",
     ext_modules = cythonize(extension, language_level = "3",annotate=True),
     zip_safe=False,
-    packages = find_packages()
 )
