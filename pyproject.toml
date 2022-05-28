@@ -14,3 +14,13 @@ requires = [
     "sparseqr"      ,
     ]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "choreo"
+description = "A set of tools to compute periodic solution to the Newtonian N-body problem"
+readme = "README.md"
+license = {text = "BSD 2-Clause License"}
+classifiers = [
+    "Programming Language :: Python :: 3",
+]
+dynamic = ["version"]
