@@ -7,10 +7,6 @@ requires = [
     "matplotlib"    ,
     "scipy"         ,
     "networkx"      ,
-    "ffmpeg"        ,
-    "ffmpeg-python" ,
-    "cffi"          ,
-    "pycparser"     ,
     "sparseqr"      ,
     ]
 build-backend = "setuptools.build_meta"
