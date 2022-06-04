@@ -37,48 +37,56 @@ def main(the_i=0):
     LookForTarget = False
     
     # nbpl=[1,2,3,4,5,6]
-    # nbpl=[2,2,2]
-    nbpl=[1,1,1,1]
+    nbpl=[2,3]
+    # nbpl=[2,3,5]
 
 
 
     the_lcm = m.lcm(*nbpl)
-    SymName = 'C'
-    # SymName = 'D'
-    Sym_list,nbody = choreo.Make2DChoreoSymManyLoops(nbpl=nbpl,SymName=SymName)
+
+    SymType = {
+        'name'  : 'C',
+        'n'     : the_lcm,
+        'k'     : 5,
+        'l'     : 1 ,
+        'p'     : 0 ,
+        'q'     : 1,
+    }
+
+    Sym_list,nbody = choreo.Make2DChoreoSymManyLoopsNew(nbpl=nbpl,SymType=SymType)
 
     mass = np.ones((nbody),dtype=np.float64)
 
-    rot_angle =  0
-    s = -1
-        
-    Sym_list.append(
-        choreo.ChoreoSym(
-            LoopTarget=0,
-            LoopSource=1,
-            SpaceRot= np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64),
-            TimeRev=-1,
-            TimeShift=fractions.Fraction(numerator=0,denominator=1)
-            )
-    )        
-    Sym_list.append(
-        choreo.ChoreoSym(
-            LoopTarget=2,
-            LoopSource=2,
-            SpaceRot= np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64),
-            TimeRev=-1,
-            TimeShift=fractions.Fraction(numerator=0,denominator=1)
-            )
-    )
-    Sym_list.append(
-        choreo.ChoreoSym(
-            LoopTarget=3,
-            LoopSource=3,
-            SpaceRot= np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64),
-            TimeRev=-1,
-            TimeShift=fractions.Fraction(numerator=0,denominator=1)
-            )
-    )
+    # rot_angle =  0
+    # s = -1
+    #     
+    # Sym_list.append(
+    #     choreo.ChoreoSym(
+    #         LoopTarget=0,
+    #         LoopSource=1,
+    #         SpaceRot= np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64),
+    #         TimeRev=-1,
+    #         TimeShift=fractions.Fraction(numerator=0,denominator=1)
+    #         )
+    # )        
+    # Sym_list.append(
+    #     choreo.ChoreoSym(
+    #         LoopTarget=2,
+    #         LoopSource=2,
+    #         SpaceRot= np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64),
+    #         TimeRev=-1,
+    #         TimeShift=fractions.Fraction(numerator=0,denominator=1)
+    #         )
+    # )
+    # Sym_list.append(
+    #     choreo.ChoreoSym(
+    #         LoopTarget=3,
+    #         LoopSource=3,
+    #         SpaceRot= np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64),
+    #         TimeRev=-1,
+    #         TimeShift=fractions.Fraction(numerator=0,denominator=1)
+    #         )
+    # )
 
 
     # MomConsImposed = True
@@ -224,8 +232,8 @@ def main(the_i=0):
 
     n_opt = 0
     # n_opt_max = 1
-    n_opt_max = 5
-    # n_opt_max = 1e10
+    # n_opt_max = 5
+    n_opt_max = 1e10
     # n_opt_max = 0
     
     all_kwargs = choreo.Pick_Named_Args_From_Dict(choreo.Find_Choreo,dict(globals(),**locals()))
@@ -235,22 +243,22 @@ def main(the_i=0):
 
 
 
-# if __name__ == "__main__":
-    # main(0)
-    
-
 if __name__ == "__main__":
-
-    n = multiprocessing.cpu_count()
-    # n = 1
+    main(0)
     
-    print(f"Executing with {n} workers")
-    
-    with concurrent.futures.ProcessPoolExecutor(max_workers=n) as executor:
-        
-        res = []
-        for i in range(1,n+1):
-            res.append(executor.submit(main,i))
-            time.sleep(0.01)
+# 
+# if __name__ == "__main__":
+# 
+#     n = multiprocessing.cpu_count()
+#     # n = 1
+#     
+#     print(f"Executing with {n} workers")
+#     
+#     with concurrent.futures.ProcessPoolExecutor(max_workers=n) as executor:
+#         
+#         res = []
+#         for i in range(1,n+1):
+#             res.append(executor.submit(main,i))
+#             time.sleep(0.01)
 
  

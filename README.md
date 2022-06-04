@@ -30,7 +30,7 @@ python setup.py bdist_wheel
 
 ## Want to start finding new solutions ?
 
-Simply run the follwoing scipt :
+Simply run the following script :
 
 ```
 python Choreo_sniffall.py

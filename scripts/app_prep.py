@@ -274,8 +274,8 @@ def main():
     line_search = 'wolfe'
     
     gradtol_list =          [1e-3   ,1e-5   ,1e-7   ,1e-9   ,1e-11  ,1e-13  ,1e-15  ]
-    inner_maxiter_list =    [30     ,50     ,60     ,70     ,80     ,100    ,100    ]
     maxiter_list =          [1000   ,1000   ,1000   ,500   ,500     ,300    ,100    ]
+    inner_maxiter_list =    [30     ,50     ,60     ,70     ,80     ,100    ,100    ]
     outer_k_list =          [5      ,5      ,5      ,5      ,7      ,7      ,7      ]
     store_outer_Av_list =   [False  ,False  ,False  ,False  ,True   ,True   ,True   ]
     
