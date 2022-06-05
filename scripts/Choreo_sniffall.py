@@ -52,7 +52,7 @@ def main(the_i=0):
     SymType.append({
         'name'  : 'D',
         'n'     : 1,
-        'k'     : 1,
+        'k'     : 3,
         'l'     : 1 ,
         'p'     : 1 ,
         'q'     : 2,
@@ -60,7 +60,7 @@ def main(the_i=0):
     SymType.append({
         'name'  : 'D',
         'n'     : 1,
-        'k'     : 1,
+        'k'     : 6,
         'l'     : 1 ,
         'p'     : 1 ,
         'q'     : 2,
