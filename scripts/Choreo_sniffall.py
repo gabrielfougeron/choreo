@@ -37,23 +37,37 @@ def main(the_i=0):
     LookForTarget = False
     
     # nbpl=[1,2,3,4,5,6]
-    nbpl=[2,3]
+    # nbpl=[3]
+    nbpl=[2,4]
     # nbpl=[2,3,5]
 
 
 
     the_lcm = m.lcm(*nbpl)
 
-    SymType = {
-        'name'  : 'C',
-        'n'     : the_lcm,
-        'k'     : 5,
-        'l'     : 1 ,
-        'p'     : 0 ,
-        'q'     : 1,
-    }
+    SymName = 'C'
 
-    Sym_list,nbody = choreo.Make2DChoreoSymManyLoopsNew(nbpl=nbpl,SymType=SymType)
+    SymType = []
+
+    SymType.append({
+        'name'  : 'D',
+        'n'     : 1,
+        'k'     : 1,
+        'l'     : 1 ,
+        'p'     : 1 ,
+        'q'     : 2,
+    })
+    SymType.append({
+        'name'  : 'D',
+        'n'     : 1,
+        'k'     : 1,
+        'l'     : 1 ,
+        'p'     : 1 ,
+        'q'     : 2,
+    })
+
+    # Sym_list,nbody = choreo.Make2DChoreoSymManyLoops(nbpl=nbpl,SymName=SymName)
+    Sym_list,nbody = choreo.Make2DChoreoSymManyLoops(nbpl=nbpl,SymType=SymType)
 
     mass = np.ones((nbody),dtype=np.float64)
 
@@ -133,7 +147,7 @@ def main(the_i=0):
     # Save_anim = False
 
     vid_size = (8,8) # Image size in inches
-    nint_plot_anim = 2*2*2*3*3*5
+    nint_plot_anim = 2*2*2*3*3*5*6
     # nperiod_anim = 1./nbody
     dnint = 30
 
@@ -146,7 +160,8 @@ def main(the_i=0):
     else:
         period_div = the_lcm
 
-    nperiod_anim = 1./period_div
+    nperiod_anim = 1.
+    # nperiod_anim = 1./period_div
 
     Plot_trace_anim = True
     # Plot_trace_anim = False
@@ -160,8 +175,8 @@ def main(the_i=0):
     # ncoeff_init = 102
     # ncoeff_init = 800
     # ncoeff_init = 201   
-    # ncoeff_init = 300   
-    ncoeff_init = 600
+    ncoeff_init = 300   
+    # ncoeff_init = 600
     # ncoeff_init = 900
     # ncoeff_init = 1800
     # ncoeff_init = 2400
@@ -243,22 +258,22 @@ def main(the_i=0):
 
 
 
-if __name__ == "__main__":
-    main(0)
-    
-# 
 # if __name__ == "__main__":
+#     main(0)
+#     
 # 
-#     n = multiprocessing.cpu_count()
-#     # n = 1
-#     
-#     print(f"Executing with {n} workers")
-#     
-#     with concurrent.futures.ProcessPoolExecutor(max_workers=n) as executor:
-#         
-#         res = []
-#         for i in range(1,n+1):
-#             res.append(executor.submit(main,i))
-#             time.sleep(0.01)
+if __name__ == "__main__":
+
+    n = multiprocessing.cpu_count()
+    # n = 1
+    
+    print(f"Executing with {n} workers")
+    
+    with concurrent.futures.ProcessPoolExecutor(max_workers=n) as executor:
+        
+        res = []
+        for i in range(1,n+1):
+            res.append(executor.submit(main,i))
+            time.sleep(0.01)
 
  

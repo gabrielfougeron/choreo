@@ -469,7 +469,7 @@ def Make2DChoreoSym(SymType,ib_list):
                 SpaceRot = np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64),
                 TimeRev=1,
                 TimeShift=fractions.Fraction(numerator=-1,denominator=SymType['n'])
-                ))
+            ))
 
     if ((SymType['name'] == 'C') or (SymType['name'] == 'D')):
         
@@ -482,7 +482,7 @@ def Make2DChoreoSym(SymType,ib_list):
             SpaceRot = np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64),
             TimeRev=1,
             TimeShift=fractions.Fraction(numerator=1,denominator=SymType['k'])
-            ))
+        ))
 
     if (SymType['name'] == 'D'):
         
@@ -525,67 +525,7 @@ def Make2DChoreoSym(SymType,ib_list):
     
     return SymGens
 
-def Make2DChoreoSymManyLoops(nloop=None,nbpl=None,SymName=None):
-
-    if nloop is None :
-        if nbpl is None :
-            raise ValueError("1")
-        else:
-            if isinstance(nbpl,list):
-                nloop = len(nbpl)
-            else:
-                raise ValueError("2")
-                
-    else:
-        if nbpl is None :
-            raise ValueError("3")
-        else:
-            if isinstance(nbpl,int):
-                nloop = [ nbpl for il in range(nloop) ]
-            elif isinstance(nbpl,list):
-                    if nloop != len(nbpl):
-                        raise ValueError("4")
-            else:
-                raise ValueError("5")
-
-    if (SymName is None):
-        SymName = ['C' for il in range(nloop)]
-    elif isinstance(SymName,str):
-        SymName = [SymName for il in range(nloop)]
-
-    SymGens = []
-
-    the_lcm = m.lcm(*nbpl)
-
-    istart = 0
-    for il in range(nloop):
-
-        SymType = {
-            'name'  : SymName[il],
-            'n'     : -the_lcm,
-            'k'     : 1,
-            'l'     : 1 ,
-            'p'     : 0 ,
-            'q'     : 1 ,
-        }
-
-        SymGens.extend(Make2DChoreoSym(SymType,[(i+istart) for i in range(nbpl[il])]))
-                
-        SymGens.append(ChoreoSym(
-                        LoopTarget=istart,
-                        LoopSource=istart,
-                        SpaceRot = np.identity(ndim,dtype=np.float64),
-                        TimeRev=1,
-                        TimeShift=fractions.Fraction(numerator=1,denominator=the_lcm//nbpl[il])
-                        ))
-        
-        istart += nbpl[il]
-        
-    nbody = istart
-        
-    return SymGens,nbody
-
-def Make2DChoreoSymManyLoopsNew(nloop=None,nbpl=None,SymName=None,SymType=None):
+def Make2DChoreoSymManyLoops(nloop=None,nbpl=None,SymName=None,SymType=None):
 
     if nloop is None :
         if nbpl is None :
@@ -622,7 +562,7 @@ def Make2DChoreoSymManyLoopsNew(nloop=None,nbpl=None,SymName=None,SymType=None):
                     'name'  : 'C',
                     'n'     : the_lcm,
                     'k'     : 1,
-                    'l'     : 1 ,
+                    'l'     : 0 ,
                     'p'     : 0 ,
                     'q'     : 1 ,
                 })
@@ -635,11 +575,11 @@ def Make2DChoreoSymManyLoopsNew(nloop=None,nbpl=None,SymName=None,SymType=None):
                     'name'  : SymName,
                     'n'     : the_lcm,
                     'k'     : 1,
-                    'l'     : 1 ,
+                    'l'     : 0 ,
                     'p'     : 0 ,
                     'q'     : 1 ,
-                })
-            
+                })                    
+
         elif isinstance(SymName,list):
             
             for il in range(nloop):
@@ -648,7 +588,7 @@ def Make2DChoreoSymManyLoopsNew(nloop=None,nbpl=None,SymName=None,SymType=None):
                     'name'  : SymName[il],
                     'n'     : the_lcm,
                     'k'     : 1,
-                    'l'     : 1 ,
+                    'l'     : 0 ,
                     'p'     : 0 ,
                     'q'     : 1 ,
                 })
@@ -660,17 +600,18 @@ def Make2DChoreoSymManyLoopsNew(nloop=None,nbpl=None,SymName=None,SymType=None):
         SymType = [{
             'name'  : SymType['name'],
             'n'     : the_lcm,
-            'k'     : SymType['k']*the_lcm,
+            'k'     : SymType['k'],
             'l'     : SymType['l'] ,
             'p'     : SymType['p'] ,
-            'q'     : SymType['q']*the_lcm,
+            'q'     : SymType['q'],
         }
         for il in range(nloop)]
 
     elif (isinstance(SymType,list)):
         
-        pass
-    
+        for il in range(nloop):
+            SymType[il]['n'] = the_lcm
+            
     else:
         raise ValueError("7")
 
@@ -687,12 +628,12 @@ def Make2DChoreoSymManyLoopsNew(nloop=None,nbpl=None,SymName=None,SymType=None):
         SymGens.extend(Make2DChoreoSym(SymType[il],[(i+istart) for i in range(nbpl[il])]))
                 
         SymGens.append(ChoreoSym(
-                        LoopTarget=istart,
-                        LoopSource=istart,
-                        SpaceRot = np.identity(ndim,dtype=np.float64),
-                        TimeRev=1,
-                        TimeShift=fractions.Fraction(numerator=-1,denominator=the_lcm//nbpl[il])
-                        ))
+            LoopTarget=istart,
+            LoopSource=istart,
+            SpaceRot = np.identity(ndim,dtype=np.float64),
+            TimeRev=1,
+            TimeShift=fractions.Fraction(numerator=-1,denominator=the_lcm//nbpl[il])
+        ))
         
         istart += nbpl[il]
         
