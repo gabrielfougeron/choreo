@@ -437,24 +437,109 @@ def Find_Choreo(
 
     print('Done !')
 
-
-# if __name__ == "__main__":
-
-    # parser = argparse.ArgumentParser(description='Welcome to the targeted choreography finder')
-    # parser.add_argument('-pp','--preprint_msg',nargs=1,type=None,required=False,default=None,help='Adds a systematic message before every print')
+def GenSymExample(
+    nbody,
+    ncoeff_init,
+    mass,
+    Sym_list,
+    MomConsImposed,
+    n_grad_change,
+    coeff_ampl_o,
+    k_infl,
+    k_max,
+    coeff_ampl_min,
+    LookForTarget,
+    nTf,
+    nbs,
+    nbf,
+    mass_mul,
+    all_coeffs_slow_load,
+    all_coeffs_fast_load_list,
+    Rotate_fast_with_slow,
+    Optimize_Init,
+    Randomize_Fast_Init,
+    mul_loops,
+    Save_img,
+    nint_plot_img,
+    img_size,
+    color,
+    Save_anim,
+    nint_plot_anim,
+    nperiod_anim,
+    Plot_trace_anim,
+    vid_size,
+    dnint,
+):
     
-    # args = parser.parse_args(sys.argv[1:])
+    n_reconverge_it_max = 0
+    n_grad_change = 1
+
+    callfun = setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change)
+    args = callfun[0]
+
+    nloop = args['nloop']
+    loopnb = args['loopnb']
+    loopnbi = args['loopnbi']
+    nbi_tot = 0
+
+    x0 = np.random.random(callfun[0]['param_to_coeff_list'][0].shape[1])
+    xmin = Compute_MinDist(x0,callfun)
+    if (xmin < 1e-5):
+        print(xmin)
+        raise ValueError("Init inter body distance too low. There is something wrong with constraints")
+
+    # filehandler = open(store_folder+'/callfun_list.pkl',"wb")
+    # pickle.dump(callfun_list,filehandler)
+
+    callfun[0]["current_cvg_lvl"] = 0
+    ncoeff = callfun[0]["ncoeff_list"][callfun[0]["current_cvg_lvl"]]
+    nint = callfun[0]["nint_list"][callfun[0]["current_cvg_lvl"]]
+
+    all_coeffs_min,all_coeffs_max = Make_Init_bounds_coeffs(nloop,ncoeff,coeff_ampl_o,k_infl,k_max,coeff_ampl_min)
+
+    x_min = Package_all_coeffs(all_coeffs_min,callfun)
+    x_max = Package_all_coeffs(all_coeffs_max,callfun)
+
+    rand_eps = coeff_ampl_min
+    rand_dim = 0
+    for i in range(callfun[0]['coeff_to_param_list'][0].shape[0]):
+        if ((x_max[i] - x_min[i]) > rand_eps):
+            rand_dim +=1
+
+    sampler = UniformRandom(d=rand_dim)
+
+
+
+    callfun[0]["current_cvg_lvl"] = 0
+    ncoeff = callfun[0]["ncoeff_list"][callfun[0]["current_cvg_lvl"]]
+    nint = callfun[0]["nint_list"][callfun[0]["current_cvg_lvl"]]
     
-    # if args.preprint_msg is None:
+    if (LookForTarget):
         
-        # preprint_msg = ''
+        all_coeffs_avg = Gen_init_avg(nTf,nbs,nbf,mass_mul,ncoeff,all_coeffs_slow_load,all_coeffs_fast_load_list=all_coeffs_fast_load_list,callfun=callfun,Rotate_fast_with_slow=Rotate_fast_with_slow,Optimize_Init=Optimize_Init,Randomize_Fast_Init=Randomize_Fast_Init,mul_loops=mul_loops)        
 
-    # else:    
-        
-        # preprint_msg = args.preprint_msg[0].strip() + ' : '
-
-    # tstart = time.perf_counter()
-    # main(preprint_msg = preprint_msg)
-    # tstop = time.perf_counter()
+        x_avg = Package_all_coeffs(all_coeffs_avg,callfun)
     
-    # print(preprint_msg+'Total time in seconds : ',tstop-tstart)
+    else:
+        
+        x_avg = np.zeros((callfun[0]['coeff_to_param_list'][callfun[0]["current_cvg_lvl"]].shape[0]),dtype=np.float64)
+        
+    
+    x0 = np.zeros((callfun[0]['coeff_to_param_list'][callfun[0]["current_cvg_lvl"]].shape[0]),dtype=np.float64)
+    
+    xrand = sampler.random()
+    
+    rand_dim = 0
+    for i in range(callfun[0]['coeff_to_param_list'][callfun[0]["current_cvg_lvl"]].shape[0]):
+        if ((x_max[i] - x_min[i]) > rand_eps):
+            x0[i] = x_avg[i] + x_min[i] + (x_max[i] - x_min[i])*xrand[rand_dim]
+            rand_dim +=1
+        else:
+            x0[i] = x_avg[i]
+
+    if Save_img :
+        plot_all_2D(x0,nint_plot_img,callfun,'init.png',fig_size=img_size,color=color)        
+
+    if Save_anim :
+        plot_all_2D_anim(x0,nint_plot_anim,callfun,'init.mp4',nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size,dnint=dnint)
+            

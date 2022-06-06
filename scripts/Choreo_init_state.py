@@ -20,7 +20,7 @@ sys.path.append(__PROJECT_ROOT__)
 
 import choreo 
 
-def main(the_i=0):
+def main():
     
 
     # if (the_i != 0):
@@ -144,8 +144,8 @@ def main(the_i=0):
     # color = "velocity"
     # color = "all"
 
-    Save_anim = True
-    # Save_anim = False
+    # Save_anim = True
+    Save_anim = False
 
     vid_size = (8,8) # Image size in inches
     nint_plot_anim = 2*2*2*3*3*5*2
@@ -252,29 +252,13 @@ def main(the_i=0):
     n_opt_max = 1e10
     # n_opt_max = 0
     
-    all_kwargs = choreo.Pick_Named_Args_From_Dict(choreo.Find_Choreo,dict(globals(),**locals()))
+    all_kwargs = choreo.Pick_Named_Args_From_Dict(choreo.GenSymExample,dict(globals(),**locals()))
     
-    choreo.Find_Choreo(**all_kwargs)
+    choreo.GenSymExample(**all_kwargs)
 
 
 
 
-# if __name__ == "__main__":
-#     main(0)
-# #     
-# 
 if __name__ == "__main__":
+    main()
 
-    n = multiprocessing.cpu_count()
-    # n = 1
-    
-    print(f"Executing with {n} workers")
-    
-    with concurrent.futures.ProcessPoolExecutor(max_workers=n) as executor:
-        
-        res = []
-        for i in range(1,n+1):
-            res.append(executor.submit(main,i))
-            time.sleep(0.01)
-
- 
