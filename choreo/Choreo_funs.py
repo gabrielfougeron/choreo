@@ -615,12 +615,7 @@ def Make2DChoreoSymManyLoops(nloop=None,nbpl=None,SymName=None,SymType=None):
     else:
         raise ValueError("7")
 
-
     SymGens = []
-
-    for il in range(nloop):
-        print("il = ",il)
-        print("SymType = ",SymType[il])
 
     istart = 0
     for il in range(nloop):
