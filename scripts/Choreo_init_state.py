@@ -104,8 +104,8 @@ def main():
     # )
 
 
-    # MomConsImposed = True
-    MomConsImposed = False
+    MomConsImposed = True
+    # MomConsImposed = False
 
     store_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/')
     store_folder = store_folder+str(nbody)
@@ -144,8 +144,8 @@ def main():
     # color = "velocity"
     # color = "all"
 
-    # Save_anim = True
-    Save_anim = False
+    Save_anim = True
+    # Save_anim = False
 
     vid_size = (8,8) # Image size in inches
     nint_plot_anim = 2*2*2*3*3*5*2
