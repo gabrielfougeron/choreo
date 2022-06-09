@@ -34,6 +34,8 @@ def main(the_i=0):
     
     file_basename = ''
     
+    np.random.seed(int(time.time()*10000) % 5000)
+
     LookForTarget = True
     
 
