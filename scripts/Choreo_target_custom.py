@@ -41,9 +41,9 @@ def main(the_i=0):
     # slow_base_filename = './data/1_1_short_ellipse.npy'
     # slow_base_filename = './data/1_1_long_ellipse.npy'
     # slow_base_filename = './data/1_1_cercle.npy'
-    slow_base_filename = './data/2_cercle.npy'
+    # slow_base_filename = './data/2_cercle.npy'
     # slow_base_filename = './data/3_cercle.npy'
-    # slow_base_filename = './data/3_huit.npy'
+    slow_base_filename = './data/3_huit.npy'
     # slow_base_filename = './data/3_heart.npy'
     # slow_base_filename = './data/4_trefoil.npy'
     # slow_base_filename = './data/1x4_trefoil.npy'
@@ -51,8 +51,8 @@ def main(the_i=0):
 
     # fast_base_filename_list = ['./data/1_lone_wolf.npy'    ] 
     # fast_base_filename_list = ['./data/2_cercle.npy'       ]
-    fast_base_filename_list = ['./data/3_cercle.npy'       ]
-    # fast_base_filename_list = ['./data/3_huit.npy'         ]
+    # fast_base_filename_list = ['./data/3_cercle.npy'       ]
+    fast_base_filename_list = ['./data/3_huit.npy'         ]
     # fast_base_filename_list = ['./data/3_heart.npy'        ]
     # fast_base_filename_list = ['./data/3_dbl_heart.npy'    ]
     # fast_base_filename_list = ['./data/4_13_2_2_cercle.npy'] 
@@ -70,8 +70,8 @@ def main(the_i=0):
     nfl = len(fast_base_filename_list)
 
     mass_mul = [1]
-    nTf = [25]
-    nbs = [2]
+    nTf = [76]
+    nbs = [3]
     nbf = [3]
 
     epsmul = 0.
@@ -90,7 +90,7 @@ def main(the_i=0):
 
     # mul_loops_ini = True
     # mul_loops_ini = False
-    mul_loops_ini = np.random.random() > 1./2.
+    mul_loops_ini = (np.random.random() > 1./2.)
     
     mul_loops = [mul_loops_ini for _ in range(nfl)]
 
@@ -104,7 +104,7 @@ def main(the_i=0):
     Rotate_fast_with_slow = (np.random.random() > 1./2.)
 
     # Optimize_Init = True
-    Optimize_Init = False
+    Optimize_Init = (np.random.random() > 1./2.)
 
     Randomize_Fast_Init = True
     # Randomize_Fast_Init = False
@@ -205,7 +205,7 @@ def main(the_i=0):
     # Save_anim = False
 
     vid_size = (8,8) # Image size in inches
-    nint_plot_anim = 2*2*2*3*3*5 *3
+    nint_plot_anim = 2*2*2*3*3*5 *6*2
     # nperiod_anim = 1./nbody
     dnint = 30
 
@@ -288,7 +288,7 @@ def main(the_i=0):
     n_grad_change = 1.
     # n_grad_change = 1.5
 
-    coeff_ampl_o=1e-16
+    coeff_ampl_o=1e-5
     k_infl=1
     k_max=200
     coeff_ampl_min=1e-16
