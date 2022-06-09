@@ -1,7 +1,25 @@
 
+import os
+
+os.environ['OMP_NUM_THREADS'] = '1'
+os.environ['NUMEXPR_NUM_THREADS'] = '1'
+os.environ['OPENBLAS_NUM_THREADS'] = '1'
+os.environ['MKL_NUM_THREADS'] = '1'
+
+import concurrent.futures
+import multiprocessing
 import shutil
+import random
+import time
+import math as m
+import numpy as np
+import sys
+import fractions
+
+__PROJECT_ROOT__ = os.path.abspath(os.path.join(os.path.dirname(__file__),os.pardir))
+sys.path.append(__PROJECT_ROOT__)
     
-from  Choreo_find import *
+import choreo 
 
 def main(the_i=0):
     
@@ -32,8 +50,8 @@ def main(the_i=0):
 
 
     # fast_base_filename_list = ['./data/1_lone_wolf.npy'    ] 
-    fast_base_filename_list = ['./data/2_cercle.npy'       ]
-    # fast_base_filename_list = ['./data/3_cercle.npy'       ]
+    # fast_base_filename_list = ['./data/2_cercle.npy'       ]
+    fast_base_filename_list = ['./data/3_cercle.npy'       ]
     # fast_base_filename_list = ['./data/3_huit.npy'         ]
     # fast_base_filename_list = ['./data/3_heart.npy'        ]
     # fast_base_filename_list = ['./data/3_dbl_heart.npy'    ]
@@ -52,9 +70,9 @@ def main(the_i=0):
     nfl = len(fast_base_filename_list)
 
     mass_mul = [1]
-    nTf = [1]
+    nTf = [25]
     nbs = [2]
-    nbf = [2]
+    nbf = [3]
 
     epsmul = 0.
 
@@ -71,8 +89,8 @@ def main(the_i=0):
     # nbf = [2,3]
 
     # mul_loops_ini = True
-    mul_loops_ini = False
-    # mul_loops_ini = np.random.random() > 1./2.
+    # mul_loops_ini = False
+    mul_loops_ini = np.random.random() > 1./2.
     
     mul_loops = [mul_loops_ini for _ in range(nfl)]
 
@@ -81,15 +99,15 @@ def main(the_i=0):
     # Remove_Choreo_Sym = [False,False]
     # Remove_Choreo_Sym = [False,False]
 
-    Rotate_fast_with_slow = True
+    # Rotate_fast_with_slow = True
     # Rotate_fast_with_slow = False
-    # Rotate_fast_with_slow = (np.random.random() > 1./2.)
+    Rotate_fast_with_slow = (np.random.random() > 1./2.)
 
     # Optimize_Init = True
     Optimize_Init = False
 
-    # Randomize_Fast_Init = True
-    Randomize_Fast_Init = False
+    Randomize_Fast_Init = True
+    # Randomize_Fast_Init = False
 
     all_coeffs_slow_load = np.load(slow_base_filename)
     all_coeffs_fast_load_list = []
@@ -125,7 +143,7 @@ def main(the_i=0):
     Sym_list = []
     the_lcm = m.lcm(*nbpl)
     SymName = None
-    Sym_list,nbody = Make2DChoreoSymManyLoops(nbpl=nbpl,SymName=SymName)
+    Sym_list,nbody = choreo.Make2DChoreoSymManyLoops(nbpl=nbpl,SymName=SymName)
 
     # mass = np.ones((nbody))*mass_mul
 
@@ -143,8 +161,8 @@ def main(the_i=0):
         # ))
 
 
-    MomConsImposed = True
-#     MomConsImposed = False
+#     MomConsImposed = True
+    MomConsImposed = False
 
     store_folder = './Target_res/'
     store_folder = store_folder+str(nbody)
@@ -163,14 +181,14 @@ def main(the_i=0):
     # Penalize_Escape = True
     Penalize_Escape = False
 
-    # save_init = False
-    save_init = True
+    save_init = False
+    # save_init = True
 
     Save_img = True
     # Save_img = False
 
-    # Save_thumb = True
-    Save_thumb = False
+    Save_thumb = True
+    # Save_thumb = False
 
     # img_size = (12,12) # Image size in inches
     img_size = (8,8) # Image size in inches
@@ -187,7 +205,7 @@ def main(the_i=0):
     # Save_anim = False
 
     vid_size = (8,8) # Image size in inches
-    nint_plot_anim = 2*2*2*3*3*5 
+    nint_plot_anim = 2*2*2*3*3*5 *3
     # nperiod_anim = 1./nbody
     dnint = 30
 
@@ -279,24 +297,30 @@ def main(the_i=0):
     hash_dict = {}
 
     n_opt = 0
-    n_opt_max = 1
+    n_opt_max = 3
     # n_opt_max = 5
     # n_opt_max = 1e10
 
-    all_kwargs = Pick_Named_Args_From_Dict(Find_Choreo,dict(globals(),**locals()))
+    all_kwargs = choreo.Pick_Named_Args_From_Dict(choreo.Find_Choreo,dict(globals(),**locals()))
     
-    Find_Choreo(**all_kwargs)
+    choreo.Find_Choreo(**all_kwargs)
 
-
+# if __name__ == "__main__":
+#     main(0)
+# #     
 
 if __name__ == "__main__":
 
-    # n = 12
-    n = 1
+    n = multiprocessing.cpu_count()
+    # n = 1
     
     print(f"Executing with {n} workers")
     
     with concurrent.futures.ProcessPoolExecutor(max_workers=n) as executor:
         
-        res = [executor.submit(main,i) for i in range(1,n+1)]
-            
+        res = []
+        for i in range(1,n+1):
+            res.append(executor.submit(main,i))
+            time.sleep(0.01)
+
+ 
