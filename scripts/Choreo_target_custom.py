@@ -33,11 +33,8 @@ def main(the_i=0):
     #         return builtins.print(*args, **kwargs)
     # 
     file_basename = ''
-
-    # print(time.time())
-    # print(int(time.time()*10000) % 5000)
+    
     np.random.seed(int(time.time()*10000) % 5000)
-    # print(np.random.random())
 
     LookForTarget = True
     
@@ -75,7 +72,7 @@ def main(the_i=0):
     nfl = len(fast_base_filename_list)
 
     mass_mul = [1,1]
-    nTf = [13,1]
+    nTf = [1,13]
     nbs = [1,1]
     nbf = [1,2]
 
@@ -210,7 +207,7 @@ def main(the_i=0):
     # Save_anim = False
 
     vid_size = (8,8) # Image size in inches
-    nint_plot_anim = 2*2*2*3*3*5 *6*2
+    nint_plot_anim = 2*2*2*3*3*5 
     # nperiod_anim = 1./nbody
     dnint = 30
 

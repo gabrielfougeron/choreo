@@ -32,6 +32,8 @@ def main(the_i=0):
             # builtins.print(preprint_msg,end='')
             # return builtins.print(*args, **kwargs)
             
+    np.random.seed(int(time.time()*10000) % 5000)
+
     file_basename = ''
     
     LookForTarget = False
