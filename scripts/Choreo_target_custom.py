@@ -60,8 +60,8 @@ def main(the_i=0):
     # fast_base_filename_list = ['./data/4_13_2_2_cercle.npy'] 
     # fast_base_filename_list = ['./data/4_trefoil.npy'] 
 
+    fast_base_filename_list = ['./data/2_cercle.npy','./data/2_cercle.npy'    ] 
     # fast_base_filename_list = ['./data/2_cercle.npy','./data/3_huit.npy'    ] 
-    fast_base_filename_list = ['./data/1_lone_wolf.npy','./data/2_cercle.npy'    ] 
     # fast_base_filename_list = ['./data/1_lone_wolf.npy','./data/1_lone_wolf.npy'    ] 
     
     
@@ -72,9 +72,9 @@ def main(the_i=0):
     nfl = len(fast_base_filename_list)
 
     mass_mul = [1,1]
-    nTf = [1,13]
+    nTf = [13,13]
     nbs = [1,1]
-    nbf = [1,2]
+    nbf = [2,2]
 
     epsmul = 0.
 
@@ -101,12 +101,13 @@ def main(the_i=0):
     # Remove_Choreo_Sym = [False,False]
     # Remove_Choreo_Sym = [False,False]
 
-    # Rotate_fast_with_slow = True
+    Rotate_fast_with_slow = True
     # Rotate_fast_with_slow = False
-    Rotate_fast_with_slow = (np.random.random() > 1./2.)
+    # Rotate_fast_with_slow = (np.random.random() > 1./2.)
 
-    # Optimize_Init = True
-    Optimize_Init = (np.random.random() > 1./2.)
+    Optimize_Init = True
+    # Optimize_Init = False
+    # Optimize_Init = (np.random.random() > 1./2.)
 
     Randomize_Fast_Init = True
     # Randomize_Fast_Init = False
@@ -149,18 +150,24 @@ def main(the_i=0):
 
     # mass = np.ones((nbody))*mass_mul
 
-    # ibody = 0
-    # rot_angle = 0.
-    # s = -1
-    # st = -1
 
-    # Sym_list.append(ChoreoSym(
-        # LoopTarget=ibody,
-        # LoopSource=ibody,
-        # SpaceRot = np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64),
-        # TimeRev=st,
-        # TimeShift=fractions.Fraction(numerator=0,denominator=1)
-        # ))
+    for ibody in [0,1,2,3]:
+    # for ibody in [0,2]:
+    # for ibody in [0]:
+
+        l_rot = 11
+        k_rot = 13
+        rot_angle = 2* np.pi * l_rot / k_rot
+        s = 1
+        st = 1
+
+        Sym_list.append(choreo.ChoreoSym(
+                LoopTarget=ibody,
+                LoopSource=ibody,
+                SpaceRot = np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64),
+                TimeRev=st,
+                TimeShift=fractions.Fraction(numerator=1,denominator=k_rot)
+            ))
 
 
 #     MomConsImposed = True
@@ -182,9 +189,12 @@ def main(the_i=0):
 
     # Penalize_Escape = True
     Penalize_Escape = False
-
-    save_init = False
-    # save_init = True
+# 
+    save_first_init = False
+    # save_first_init = True
+# 
+    save_all_inits = False
+    # save_all_inits = True
 
     Save_img = True
     # Save_img = False
@@ -234,11 +244,11 @@ def main(the_i=0):
     # ncoeff_init = 102
     # ncoeff_init = 800
     # ncoeff_init = 201   
-    # ncoeff_init = 300   
+    ncoeff_init = 300   
     # ncoeff_init = 600
     # ncoeff_init = 900
     # ncoeff_init = 1800
-    ncoeff_init = 3600
+    # ncoeff_init = 3600
     # ncoeff_init = 1206
     # ncoeff_init = 90
 
@@ -299,31 +309,31 @@ def main(the_i=0):
     hash_dict = {}
 
     n_opt = 0
-    n_opt_max = 30
+    # n_opt_max = 1
     # n_opt_max = 5
-    # n_opt_max = 1e10
+    n_opt_max = 1e10
 
     all_kwargs = choreo.Pick_Named_Args_From_Dict(choreo.Find_Choreo,dict(globals(),**locals()))
     
     choreo.Find_Choreo(**all_kwargs)
-
-if __name__ == "__main__":
-    main(0)
+# 
+# if __name__ == "__main__":
+    # main(0)
 # #     
 
-# if __name__ == "__main__":
-# 
-#     n = multiprocessing.cpu_count()
-#     # n = 1
-#     
-#     print(f"Executing with {n} workers")
-#     
-#     
-#     with concurrent.futures.ProcessPoolExecutor(max_workers=n) as executor:
-#         
-#         res = []
-#         for i in range(1,n+1):
-#             res.append(executor.submit(main,i))
-#             time.sleep(0.01)
+if __name__ == "__main__":
+
+    n = multiprocessing.cpu_count()
+    # n = 1
+    
+    print(f"Executing with {n} workers")
+    
+    
+    with concurrent.futures.ProcessPoolExecutor(max_workers=n) as executor:
+        
+        res = []
+        for i in range(1,n+1):
+            res.append(executor.submit(main,i))
+            time.sleep(0.01)
 
  
