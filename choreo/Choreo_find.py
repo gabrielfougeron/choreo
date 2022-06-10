@@ -38,7 +38,8 @@ def Find_Choreo(
     Optimize_Init,
     Randomize_Fast_Init,
     mul_loops,
-    save_init,
+    save_all_inits,
+    save_first_init,
     Save_img,
     Save_thumb,
     nint_plot_img,
@@ -185,7 +186,7 @@ def Find_Choreo(
             else:
                 x0[i] = x_avg[i]
 
-        if save_init:
+        if save_all_inits or (save_first_init and n_opt == 1):
 
             Write_Descriptor(x0,callfun,'init.txt')
 
@@ -195,8 +196,8 @@ def Find_Choreo(
             if Save_thumb :
                 plot_all_2D(x0,nint_plot_img,callfun,'init_thumb.png',fig_size=thumb_size,color=color)        
                 
-            # if Save_anim :
-                # plot_all_2D_anim(x0,nint_plot_anim,callfun,'init.mp4',nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size,dnint=dnint)
+            if Save_anim :
+                plot_all_2D_anim(x0,nint_plot_anim,callfun,'init.mp4',nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size,dnint=dnint)
             
             if Save_Newton_Error :
                 plot_Newton_Error(x0,callfun,'init_newton.png')
@@ -224,8 +225,10 @@ def Find_Choreo(
             maxiter = maxiter_list[i_optim_param]
             outer_k = outer_k_list[i_optim_param]
             store_outer_Av = store_outer_Av_list[i_optim_param]
+
+            ActionGradNormEnterLoop = best_sol.f_norm
             
-            print('Action Grad Norm on entry : ',best_sol.f_norm)
+            print('Action Grad Norm on entry : ',ActionGradNormEnterLoop)
             print('Optim level : ',i_optim_param+1,' / ',n_optim_param , '    Resize level : ',callfun[0]["current_cvg_lvl"]+1,' / ',n_reconverge_it_max+1)
             
             F = lambda x : Compute_action_onlygrad(x,callfun)
@@ -285,7 +288,7 @@ def Find_Choreo(
                 
                 ParamFoundSol = (best_sol.f_norm < foundsol_tol)
                 ParamPreciseEnough = (best_sol.f_norm < gradtol_max)
-                print('Opt Action Grad Norm : ',best_sol.f_norm)
+                print(f'Opt Action Grad Norm : {best_sol.f_norm} from {ActionGradNormEnterLoop}')
             
                 Newt_err = Compute_Newton_err(best_sol.x,callfun)
                 Newt_err_norm = np.linalg.norm(Newt_err)/(nint*nbody)
