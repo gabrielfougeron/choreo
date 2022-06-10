@@ -186,8 +186,6 @@ def Find_Choreo(
                 x0[i] = x_avg[i]
 
         if save_init:
-            
-            print('Saving init state')
 
             Write_Descriptor(x0,callfun,'init.txt')
 
@@ -203,7 +201,6 @@ def Find_Choreo(
             if Save_Newton_Error :
                 plot_Newton_Error(x0,callfun,'init_newton.png')
 
-            # print(1/0)
             
         f0 = Compute_action_onlygrad(x0,callfun)
         best_sol = current_best(x0,f0)
