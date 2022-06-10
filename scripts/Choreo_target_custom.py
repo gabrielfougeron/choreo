@@ -23,27 +23,32 @@ import choreo
 
 def main(the_i=0):
     
-    if (the_i != 0):
-        
-        preprint_msg = str(the_i).zfill(2)+' : '
-    
-        def print(*args, **kwargs):
-            """My custom print() function."""
-            builtins.print(preprint_msg,end='')
-            return builtins.print(*args, **kwargs)
-    
+    # if (the_i != 0):
+    #     
+    #     preprint_msg = str(the_i).zfill(2)+' : '
+    # 
+    #     def print(*args, **kwargs):
+    #         """My custom print() function."""
+    #         builtins.print(preprint_msg,end='')
+    #         return builtins.print(*args, **kwargs)
+    # 
     file_basename = ''
-    
+
+    # print(time.time())
+    # print(int(time.time()*10000) % 5000)
+    np.random.seed(int(time.time()*10000) % 5000)
+    # print(np.random.random())
+
     LookForTarget = True
     
 
     # slow_base_filename = './data/1_lone_wolf.npy'
     # slow_base_filename = './data/1_1_short_ellipse.npy'
     # slow_base_filename = './data/1_1_long_ellipse.npy'
-    # slow_base_filename = './data/1_1_cercle.npy'
+    slow_base_filename = './data/1_1_cercle.npy'
     # slow_base_filename = './data/2_cercle.npy'
     # slow_base_filename = './data/3_cercle.npy'
-    slow_base_filename = './data/3_huit.npy'
+    # slow_base_filename = './data/3_huit.npy'
     # slow_base_filename = './data/3_heart.npy'
     # slow_base_filename = './data/4_trefoil.npy'
     # slow_base_filename = './data/1x4_trefoil.npy'
@@ -52,14 +57,14 @@ def main(the_i=0):
     # fast_base_filename_list = ['./data/1_lone_wolf.npy'    ] 
     # fast_base_filename_list = ['./data/2_cercle.npy'       ]
     # fast_base_filename_list = ['./data/3_cercle.npy'       ]
-    fast_base_filename_list = ['./data/3_huit.npy'         ]
+    # fast_base_filename_list = ['./data/3_huit.npy'         ]
     # fast_base_filename_list = ['./data/3_heart.npy'        ]
     # fast_base_filename_list = ['./data/3_dbl_heart.npy'    ]
     # fast_base_filename_list = ['./data/4_13_2_2_cercle.npy'] 
     # fast_base_filename_list = ['./data/4_trefoil.npy'] 
 
     # fast_base_filename_list = ['./data/2_cercle.npy','./data/3_huit.npy'    ] 
-    # fast_base_filename_list = ['./data/1_lone_wolf.npy','./data/2_cercle.npy'    ] 
+    fast_base_filename_list = ['./data/1_lone_wolf.npy','./data/2_cercle.npy'    ] 
     # fast_base_filename_list = ['./data/1_lone_wolf.npy','./data/1_lone_wolf.npy'    ] 
     
     
@@ -69,10 +74,10 @@ def main(the_i=0):
 
     nfl = len(fast_base_filename_list)
 
-    mass_mul = [1]
-    nTf = [76]
-    nbs = [3]
-    nbf = [3]
+    mass_mul = [1,1]
+    nTf = [13,1]
+    nbs = [1,1]
+    nbf = [1,2]
 
     epsmul = 0.
 
@@ -88,9 +93,9 @@ def main(the_i=0):
     # nbs = [1,1]
     # nbf = [2,3]
 
-    # mul_loops_ini = True
+    mul_loops_ini = True
     # mul_loops_ini = False
-    mul_loops_ini = (np.random.random() > 1./2.)
+    # mul_loops_ini = (np.random.random() > 1./2.)
     
     mul_loops = [mul_loops_ini for _ in range(nfl)]
 
@@ -126,7 +131,7 @@ def main(the_i=0):
                 
                 tshift = (ib*1.0)/nbf[i]
 
-                all_coeffs_fast_load_list_temp.append(Transform_Coeffs(np.identity(ndim), 1, tshift, 1, all_coeffs_fast_load))
+                all_coeffs_fast_load_list_temp.append(choreo.Transform_Coeffs(np.identity(2), 1, tshift, 1, all_coeffs_fast_load))
 
                 nbpl.append(nbs[i])
                 mass.extend([mass_mul[i] for j in range(nbs[i])])
@@ -226,7 +231,7 @@ def main(the_i=0):
     # Save_Newton_Error = True
     Save_Newton_Error = False
 
-    n_reconverge_it_max = 4
+    n_reconverge_it_max = 3
     # n_reconverge_it_max = 1
 
     # ncoeff_init = 102
@@ -234,9 +239,9 @@ def main(the_i=0):
     # ncoeff_init = 201   
     # ncoeff_init = 300   
     # ncoeff_init = 600
-    ncoeff_init = 900
+    # ncoeff_init = 900
     # ncoeff_init = 1800
-    # ncoeff_init = 2400
+    ncoeff_init = 3600
     # ncoeff_init = 1206
     # ncoeff_init = 90
 
@@ -288,16 +293,16 @@ def main(the_i=0):
     n_grad_change = 1.
     # n_grad_change = 1.5
 
-    coeff_ampl_o=1e-5
-    k_infl=1
-    k_max=200
+    coeff_ampl_o=1e-16
+    k_infl=200
+    k_max=800
     coeff_ampl_min=1e-16
 
     freq_erase_dict = 1000
     hash_dict = {}
 
     n_opt = 0
-    n_opt_max = 3
+    n_opt_max = 30
     # n_opt_max = 5
     # n_opt_max = 1e10
 
@@ -305,22 +310,23 @@ def main(the_i=0):
     
     choreo.Find_Choreo(**all_kwargs)
 
-# if __name__ == "__main__":
-#     main(0)
+if __name__ == "__main__":
+    main(0)
 # #     
 
-if __name__ == "__main__":
-
-    n = multiprocessing.cpu_count()
-    # n = 1
-    
-    print(f"Executing with {n} workers")
-    
-    with concurrent.futures.ProcessPoolExecutor(max_workers=n) as executor:
-        
-        res = []
-        for i in range(1,n+1):
-            res.append(executor.submit(main,i))
-            time.sleep(0.01)
+# if __name__ == "__main__":
+# 
+#     n = multiprocessing.cpu_count()
+#     # n = 1
+#     
+#     print(f"Executing with {n} workers")
+#     
+#     
+#     with concurrent.futures.ProcessPoolExecutor(max_workers=n) as executor:
+#         
+#         res = []
+#         for i in range(1,n+1):
+#             res.append(executor.submit(main,i))
+#             time.sleep(0.01)
 
  
