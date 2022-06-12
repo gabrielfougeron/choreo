@@ -39,8 +39,8 @@ def main(the_i=0):
     LookForTarget = False
     
     # nbpl=[1,2,3,4,5,6]
-    nbpl=[3]
-    # nbpl=[5]
+    # nbpl=[3]
+    nbpl=[4]
     # nbpl=[2,3,5]
 
 
@@ -49,25 +49,25 @@ def main(the_i=0):
 
     SymName = 'C'
 # 
-#     SymType = []
+    SymType = []
 # 
-#     SymType.append({
-#         'name'  : 'D',
-#         'n'     : 1,
-#         'k'     : 2,
-#         'l'     : 1 ,
-#         'p'     : 1 ,
-#         'q'     : 5,
-#     })
-
-    SymType = {
-        'name'  : 'D',
+    SymType.append({
+        'name'  : 'C',
         'n'     : 1,
         'k'     : 1,
-        'l'     : 1 ,
+        'l'     : 0 ,
         'p'     : 0 ,
         'q'     : 1,
-    }
+    })
+# 
+#     SymType = {
+#         'name'  : 'D',
+#         'n'     : 1,
+#         'k'     : 1,
+#         'l'     : 1 ,
+#         'p'     : 0 ,
+#         'q'     : 1,
+#     }
 
     # Sym_list,nbody = choreo.Make2DChoreoSymManyLoops(nbpl=nbpl,SymName=SymName)
     Sym_list,nbody = choreo.Make2DChoreoSymManyLoops(nbpl=nbpl,SymType=SymType)
@@ -126,18 +126,17 @@ def main(the_i=0):
     # Penalize_Escape = True
     Penalize_Escape = False
 
-# 
     save_first_init = False
     # save_first_init = True
-# 
+
     save_all_inits = False
     # save_all_inits = True
 
     Save_img = True
     # Save_img = False
 
-    # Save_thumb = True
-    Save_thumb = False
+    Save_thumb = True
+    # Save_thumb = False
 
     # img_size = (12,12) # Image size in inches
     img_size = (8,8) # Image size in inches
@@ -166,9 +165,9 @@ def main(the_i=0):
         period_div = 1.
     else:
         period_div = the_lcm
-
-    nperiod_anim = 1.
-    # nperiod_anim = 1./period_div
+# 
+#     nperiod_anim = 1.
+    nperiod_anim = 1./period_div
 
     Plot_trace_anim = True
     # Plot_trace_anim = False
@@ -198,9 +197,9 @@ def main(the_i=0):
     
     max_norm_on_entry = 1e20
 
-    Newt_err_norm_max = 1e-10
+    Newt_err_norm_max = 1e-14
     # Newt_err_norm_max_save = Newt_err_norm_max*1000
-    Newt_err_norm_max_save = 1e-8
+    Newt_err_norm_max_save = 1e-9
 
     duplicate_eps = 1e-8
 
@@ -264,11 +263,11 @@ def main(the_i=0):
 
 
 
-
+# 
 # if __name__ == "__main__":
 #     main(0)
-# #     
-# 
+#     
+# # 
 if __name__ == "__main__":
 
     n = multiprocessing.cpu_count()
