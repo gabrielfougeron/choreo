@@ -14,15 +14,14 @@ import numpy
 __version__ = "0.1.0"
 
 # To buid and use inplace, run the following command :
-# python setup.py build_ext --inlpace
+# python setup.py build_ext --inplace
 
 # To build for the current platform, run :
 # python setup.py bdist_wheel
 
 
-os.environ["CC"] = "gcc"
+# os.environ["CC"] = "gcc"
 # os.environ["CC"] = "icc"
-
 
 extra_compile_args = ["-O2"]
 
