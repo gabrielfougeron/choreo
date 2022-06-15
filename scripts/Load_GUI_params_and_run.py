@@ -37,11 +37,14 @@ def main():
     
     n_make_loops = len(params_dict["Geom_Bodies"]["SymType"])
 
-    nbpl = [params_dict["Geom_Bodies"]["SymType"][il]["n"] for il in range(n_make_loops)]
+    nbpl = params_dict["Geom_Bodies"]["nbpl"]
+    # nbpl = [params_dict["Geom_Bodies"]["SymType"][il]["n"] for il in range(n_make_loops)]
 
     the_lcm = m.lcm(*nbpl)
 
     SymType = params_dict["Geom_Bodies"]["SymType"]
+
+    print("nbpl = ",nbpl)
 
     Sym_list,nbody = choreo.Make2DChoreoSymManyLoops(nbpl=nbpl,SymType=SymType)
 
@@ -155,9 +158,8 @@ def main():
 
     ncoeff_init = params_dict["Solver_Discr"]["ncoeff_init"]   
 
-
-    disp_scipy_opt = False
-    # disp_scipy_opt = True
+    # disp_scipy_opt = False
+    disp_scipy_opt = True
     
     max_norm_on_entry = 1e20
 
@@ -176,6 +178,15 @@ def main():
     maxiter_list =          params_dict["Solver_Loop"]["maxiter_list"]
     outer_k_list =          params_dict["Solver_Loop"]["outer_k_list"]
     store_outer_Av_list =   params_dict["Solver_Loop"]["store_outer_Av_list"]
+
+    print(gradtol_list)
+    print(inner_maxiter_list)
+    print(maxiter_list)
+    print(outer_k_list)
+    print(store_outer_Av_list)
+
+
+
 
     n_optim_param = len(gradtol_list)
     
@@ -203,7 +214,7 @@ def main():
     n_opt_max = 1e10
     
     all_kwargs = choreo.Pick_Named_Args_From_Dict(choreo.Find_Choreo,dict(globals(),**locals()))
-    
+
     choreo.Find_Choreo(**all_kwargs)
 
 

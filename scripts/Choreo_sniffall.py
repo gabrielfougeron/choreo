@@ -40,19 +40,19 @@ def main(the_i=0):
     
     # nbpl=[1,2,3,4,5,6]
     # nbpl=[3]
-    nbpl=[4]
+    nbpl=[5]
     # nbpl=[2,3,5]
 
 
 
     the_lcm = m.lcm(*nbpl)
 
-    SymName = 'C'
+    SymName = 'D'
 # 
     SymType = []
 # 
     SymType.append({
-        'name'  : 'C',
+        'name'  : 'D',
         'n'     : 1,
         'k'     : 1,
         'l'     : 0 ,
@@ -264,22 +264,22 @@ def main(the_i=0):
 
 
 # 
-# if __name__ == "__main__":
-#     main(0)
-#     
-# # 
 if __name__ == "__main__":
-
-    n = multiprocessing.cpu_count()
-    # n = 1
-    
-    print(f"Executing with {n} workers")
-    
-    with concurrent.futures.ProcessPoolExecutor(max_workers=n) as executor:
-        
-        res = []
-        for i in range(1,n+1):
-            res.append(executor.submit(main,i))
-            time.sleep(0.01)
+    main(0)
+#     
+# # # 
+# if __name__ == "__main__":
+# 
+#     n = multiprocessing.cpu_count()
+#     # n = 1
+#     
+#     print(f"Executing with {n} workers")
+#     
+#     with concurrent.futures.ProcessPoolExecutor(max_workers=n) as executor:
+#         
+#         res = []
+#         for i in range(1,n+1):
+#             res.append(executor.submit(main,i))
+#             time.sleep(0.01)
 
  
