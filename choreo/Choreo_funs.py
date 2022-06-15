@@ -19,8 +19,6 @@ import sparseqr
 import networkx as nx
 import random
 
-import ffmpeg
-
 import inspect
 
 import fractions

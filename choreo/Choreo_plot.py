@@ -19,7 +19,8 @@ import sparseqr
 import networkx as nx
 import random
 
-import ffmpeg
+try:
+    import ffmpeg
 
 import inspect
 
@@ -411,14 +412,16 @@ def Images_to_video(input_folder,output_filename,ReverseEnd=False,img_file_ext='
             f.write('duration 0.0333333 \n')
         
     f.close()
-    (
-        ffmpeg
-        .input(frames_filename,f='concat',safe='0')
-        .output(output_filename,vcodec='h264',pix_fmt='yuv420p')
-        .global_args('-y')
-        .global_args('-loglevel','error')
-        .run()
-    )
+
+    try:
+        (
+            ffmpeg
+            .input(frames_filename,f='concat',safe='0')
+            .output(output_filename,vcodec='h264',pix_fmt='yuv420p')
+            .global_args('-y')
+            .global_args('-loglevel','error')
+            .run()
+        )
     
     os.remove(frames_filename)
  
