@@ -21,6 +21,8 @@ import random
 
 try:
     import ffmpeg
+except:
+    pass
 
 import inspect
 
@@ -422,6 +424,8 @@ def Images_to_video(input_folder,output_filename,ReverseEnd=False,img_file_ext='
             .global_args('-loglevel','error')
             .run()
         )
+    except:
+        raise ModuleNotFoundError('Error: ffmpeg not found')
     
     os.remove(frames_filename)
  
