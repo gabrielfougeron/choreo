@@ -112,6 +112,18 @@ def RemoveSym(x,callfun):
 
     return all_coeffs_nosym
 
+def ComputeAllPos(x,callfun,nint=None):
+    # Returns the positions of all bodies.
+
+    if nint is None:
+        args=callfun[0]
+        nint = args['nint_list'][args["current_cvg_lvl"]]
+
+    all_coeffs_nosym = RemoveSym(x,callfun)
+    all_pos_b = the_irfft(all_coeffs_nosym,n=nint,axis=2)*nint
+
+    return all_pos_b
+
 def Compute_action_onlygrad(x,callfun):
     # Wrapper function that returns ONLY the gradient of the action with respect to the parameters 
     
