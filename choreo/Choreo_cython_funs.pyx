@@ -315,8 +315,6 @@ def RemoveSym_Cython(
     np.ndarray[double, ndim=4, mode="c"] all_coeffs  not None,
     np.ndarray[double, ndim=3, mode="c"] all_pos not None
     ):
-    # This function is probably the most important one.
-    # Computes the action and its gradient with respect to the Fourier coefficients of the generator in each loop.
     
     cdef long il,i
     cdef long idim
@@ -349,13 +347,11 @@ def RemoveSym_Cython(
 
     for iint in range(nint):
 
-        ibody = -1
-        # Different loops
         for il in range(nloop):
-
+        
             for ib in range(loopnb[il]):
 
-                ibody += 1
+                ibody = Targets[il,ib]
 
                 for idim in range(cndim):
                     all_pos_b[ibody,idim,iint] = SpaceRotsUn[il,ib,idim,0]*all_pos[il,0,all_shiftsUn[il,ib]]

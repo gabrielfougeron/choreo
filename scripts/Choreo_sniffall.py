@@ -37,10 +37,9 @@ def main(the_i=0):
     file_basename = ''
     
     LookForTarget = False
-    
     # nbpl=[1,2,3,4,5,6]
-    # nbpl=[3]
-    nbpl=[4]
+    nbpl=[3]
+    # nbpl=[1,1,1,1]
     # nbpl=[2,3,5]
 
 
@@ -48,62 +47,13 @@ def main(the_i=0):
     the_lcm = m.lcm(*nbpl)
 
     SymName = 'C'
-# 
-    SymType = []
-# 
-    SymType.append({
-        'name'  : 'C',
-        'n'     : 1,
-        'k'     : 1,
-        'l'     : 0 ,
-        'p'     : 0 ,
-        'q'     : 1,
-    })
-# 
-#     SymType = {
-#         'name'  : 'D',
-#         'n'     : 1,
-#         'k'     : 1,
-#         'l'     : 1 ,
-#         'p'     : 0 ,
-#         'q'     : 1,
-#     }
+# # 
+    # SymType = []
 
-    # Sym_list,nbody = choreo.Make2DChoreoSymManyLoops(nbpl=nbpl,SymName=SymName)
-    Sym_list,nbody = choreo.Make2DChoreoSymManyLoops(nbpl=nbpl,SymType=SymType)
+    Sym_list,nbody = choreo.Make2DChoreoSymManyLoops(nbpl=nbpl,SymName=SymName)
+    # Sym_list,nbody = choreo.Make2DChoreoSymManyLoops(nbpl=nbpl,SymType=SymType)
 
     mass = np.ones((nbody),dtype=np.float64)
-
-    # rot_angle =  0
-    # s = -1
-    #     
-    # Sym_list.append(
-    #     choreo.ChoreoSym(
-    #         LoopTarget=0,
-    #         LoopSource=1,
-    #         SpaceRot= np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64),
-    #         TimeRev=-1,
-    #         TimeShift=fractions.Fraction(numerator=0,denominator=1)
-    #         )
-    # )        
-    # Sym_list.append(
-    #     choreo.ChoreoSym(
-    #         LoopTarget=2,
-    #         LoopSource=2,
-    #         SpaceRot= np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64),
-    #         TimeRev=-1,
-    #         TimeShift=fractions.Fraction(numerator=0,denominator=1)
-    #         )
-    # )
-    # Sym_list.append(
-    #     choreo.ChoreoSym(
-    #         LoopTarget=3,
-    #         LoopSource=3,
-    #         SpaceRot= np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64),
-    #         TimeRev=-1,
-    #         TimeShift=fractions.Fraction(numerator=0,denominator=1)
-    #         )
-    # )
 
 
     # MomConsImposed = True
@@ -166,8 +116,8 @@ def main(the_i=0):
     else:
         period_div = the_lcm
 # 
-#     nperiod_anim = 1.
-    nperiod_anim = 1./period_div
+    nperiod_anim = 1.
+    # nperiod_anim = 1./period_div
 
     Plot_trace_anim = True
     # Plot_trace_anim = False
@@ -180,10 +130,10 @@ def main(the_i=0):
 
     # ncoeff_init = 102
     # ncoeff_init = 800
-    # ncoeff_init = 201   
-    ncoeff_init = 300   
-    # ncoeff_init = 600
-    # ncoeff_init = 900
+    ncoeff_init = 201   
+    # ncoeff_init = 400   
+    # ncoeff_init = 660
+    # ncoeff_init = 700
     # ncoeff_init = 1800
     # ncoeff_init = 2400
     # ncoeff_init = 1206
@@ -203,11 +153,13 @@ def main(the_i=0):
 
     duplicate_eps = 1e-8
 
-    krylov_method = 'lgmres'
+    # krylov_method = 'lgmres'
     # krylov_method = 'gmres'
-    # krylov_method = 'bicgstab'
+    krylov_method = 'bicgstab'
     # krylov_method = 'cgs'
     # krylov_method = 'minres'
+    # krylov_method = 'tfqmr'
+
 
     # line_search = 'armijo'
     line_search = 'wolfe'
@@ -240,12 +192,12 @@ def main(the_i=0):
     n_grad_change = 1.
     # n_grad_change = 1.5
 
-    coeff_ampl_o=1e-1
+    coeff_ampl_o=3e-2
     # coeff_ampl_o=1e0
     k_infl=3
     # k_max=600
     # k_max=200
-    k_max=600
+    k_max=400
     coeff_ampl_min=1e-16
 
     freq_erase_dict = 100
@@ -257,29 +209,33 @@ def main(the_i=0):
     n_opt_max = 1e10
     # n_opt_max = 0
     
+    mul_coarse_to_fine = 3
+
+    n_save_pos = 'auto'
+    Save_All_Coeffs = True
+    Save_All_Pos = True
+
     all_kwargs = choreo.Pick_Named_Args_From_Dict(choreo.Find_Choreo,dict(globals(),**locals()))
-    
     choreo.Find_Choreo(**all_kwargs)
 
 
 
+if __name__ == "__main__":
+    main(0)
+#     
 # 
 # if __name__ == "__main__":
-#     main(0)
+# 
+#     # n = multiprocessing.cpu_count()
+#     # n = 1
 #     
-# # 
-if __name__ == "__main__":
-
-    n = multiprocessing.cpu_count()
-    # n = 1
-    
-    print(f"Executing with {n} workers")
-    
-    with concurrent.futures.ProcessPoolExecutor(max_workers=n) as executor:
-        
-        res = []
-        for i in range(1,n+1):
-            res.append(executor.submit(main,i))
-            time.sleep(0.01)
+#     print(f"Executing with {n} workers")
+#     
+#     with concurrent.futures.ProcessPoolExecutor(max_workers=n) as executor:
+#         
+#         res = []
+#         for i in range(1,n+1):
+#             res.append(executor.submit(main,i))
+#             time.sleep(0.01)
 
  
