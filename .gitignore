@@ -8,6 +8,12 @@
 *.html
 *.txt
 *.prof
+*.gz
+*.zip
+*.json
+*.7z
+*.whl
+*.egg-info/
 Saves/
 testplots/
 build/
@@ -15,9 +21,4 @@ Sniff_all/
 Sniff_all_sym/
 __pycache__/
 .vscode/
-*.7z
-*.whl
-*.egg-info/
 dist/
-*.gz
-*.zip
