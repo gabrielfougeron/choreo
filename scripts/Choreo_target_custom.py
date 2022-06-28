@@ -42,9 +42,9 @@ def main(the_i=0):
     # slow_base_filename = './data/1_lone_wolf.npy'
     # slow_base_filename = './data/1_1_short_ellipse.npy'
     # slow_base_filename = './data/1_1_long_ellipse.npy'
-    # slow_base_filename = './data/1_1_cercle.npy'
+    slow_base_filename = './data/1_1_cercle.npy'
     # slow_base_filename = './data/2_cercle.npy'
-    slow_base_filename = './data/3_cercle.npy'
+    # slow_base_filename = './data/3_cercle.npy'
     # slow_base_filename = './data/3_huit.npy'
     # slow_base_filename = './data/3_heart.npy'
     # slow_base_filename = './data/4_trefoil.npy'
@@ -53,7 +53,7 @@ def main(the_i=0):
 
     # fast_base_filename_list = ['./data/1_lone_wolf.npy'    ] 
     # fast_base_filename_list = ['./data/2_cercle.npy'       ]
-    fast_base_filename_list = ['./data/3_cercle.npy'       ]
+    # fast_base_filename_list = ['./data/3_cercle.npy'       ]
     # fast_base_filename_list = ['./data/3_huit.npy'         ]
     # fast_base_filename_list = ['./data/3_heart.npy'        ]
     # fast_base_filename_list = ['./data/3_dbl_heart.npy'    ]
@@ -62,7 +62,7 @@ def main(the_i=0):
 
     # fast_base_filename_list = ['./data/2_cercle.npy','./data/2_cercle.npy'    ] 
     # fast_base_filename_list = ['./data/3_cercle.npy' ,'./data/3_cercle.npy'     ] 
-    # fast_base_filename_list = ['./data/2_cercle.npy','./data/3_huit.npy'    ] 
+    fast_base_filename_list = ['./data/2_cercle.npy','./data/3_huit.npy'    ] 
     # fast_base_filename_list = ['./data/1_lone_wolf.npy','./data/1_lone_wolf.npy'    ] 
     
     
@@ -72,10 +72,10 @@ def main(the_i=0):
 
     nfl = len(fast_base_filename_list)
 
-    mass_mul = [1]
-    nTf = [13]
-    nbs = [3]
-    nbf = [3]
+    mass_mul = [3,2]
+    nTf = [13,13]
+    nbs = [1,1]
+    nbf = [2,3]
 
     epsmul = 0.
 
@@ -191,8 +191,8 @@ def main(the_i=0):
     # Penalize_Escape = True
     Penalize_Escape = False
 # 
-    save_first_init = False
-    # save_first_init = True
+    # save_first_init = False
+    save_first_init = True
 # 
     save_all_inits = False
     # save_all_inits = True
@@ -310,9 +310,9 @@ def main(the_i=0):
     hash_dict = {}
 
     n_opt = 0
-    # n_opt_max = 1
+    n_opt_max = 1
     # n_opt_max = 5
-    n_opt_max = 1e10
+    # n_opt_max = 0
 
     all_kwargs = choreo.Pick_Named_Args_From_Dict(choreo.Find_Choreo,dict(globals(),**locals()))
     
