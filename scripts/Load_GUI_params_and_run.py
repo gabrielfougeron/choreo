@@ -38,7 +38,6 @@ def main():
     n_make_loops = len(params_dict["Geom_Bodies"]["SymType"])
 
     nbpl = params_dict["Geom_Bodies"]["nbpl"]
-    # nbpl = [params_dict["Geom_Bodies"]["SymType"][il]["n"] for il in range(n_make_loops)]
 
     the_lcm = m.lcm(*nbpl)
 
