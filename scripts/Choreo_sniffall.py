@@ -36,22 +36,34 @@ def main(the_i=0):
 
     file_basename = ''
     
+
+    nc = 8
+
     LookForTarget = False
     # nbpl=[1,2,3,4,5,6]
-    nbpl=[3]
+    nbpl=[nc]
     # nbpl=[1,1,1,1]
     # nbpl=[2,3,5]
 
+    p_list = [1,3]
 
 
     the_lcm = m.lcm(*nbpl)
 
-    SymName = 'C'
+    # SymName = 'C'
 # # 
-    # SymType = []
+    SymType = []
+    SymType.append({
+        'name'  : 'D',
+        'n'     : nc,
+        'l'     : 0,
+        'k'     : 1,
+        'p'     : p_list[the_i%len(p_list)],
+        'q'     : nc,
+    })
 
-    Sym_list,nbody = choreo.Make2DChoreoSymManyLoops(nbpl=nbpl,SymName=SymName)
-    # Sym_list,nbody = choreo.Make2DChoreoSymManyLoops(nbpl=nbpl,SymType=SymType)
+    # Sym_list,nbody = choreo.Make2DChoreoSymManyLoops(nbpl=nbpl,SymName=SymName)
+    Sym_list,nbody = choreo.Make2DChoreoSymManyLoops(nbpl=nbpl,SymType=SymType)
 
     mass = np.ones((nbody),dtype=np.float64)
 
@@ -130,8 +142,8 @@ def main(the_i=0):
 
     # ncoeff_init = 102
     # ncoeff_init = 800
-    ncoeff_init = 201   
-    # ncoeff_init = 400   
+    # ncoeff_init = 201   
+    ncoeff_init = 400   
     # ncoeff_init = 660
     # ncoeff_init = 700
     # ncoeff_init = 1800
@@ -211,35 +223,35 @@ def main(the_i=0):
     
     mul_coarse_to_fine = 3
 
-    n_save_pos = 'auto'
     Save_All_Coeffs = True
-    Save_All_Pos = True
+    # Save_All_Coeffs = False
+
+
+    n_save_pos = 'auto'
+    # Save_All_Pos = True
+    Save_All_Pos = False
 
     all_kwargs = choreo.Pick_Named_Args_From_Dict(choreo.Find_Choreo,dict(globals(),**locals()))
     choreo.Find_Choreo(**all_kwargs)
 
 
 
-if __name__ == "__main__":
-    main(0)
-#     
-# 
-if __name__ == "__main__":
-    main(0)
-#     
-# # # 
 # if __name__ == "__main__":
-# 
-#     # n = multiprocessing.cpu_count()
-#     # n = 1
-#     
-#     print(f"Executing with {n} workers")
-#     
-#     with concurrent.futures.ProcessPoolExecutor(max_workers=n) as executor:
-#         
-#         res = []
-#         for i in range(1,n+1):
-#             res.append(executor.submit(main,i))
-#             time.sleep(0.01)
+#     main(0)
+# #    
+# # # 
+if __name__ == "__main__":
+
+    n = multiprocessing.cpu_count()
+    # n = 1
+    
+    print(f"Executing with {n} workers")
+    
+    with concurrent.futures.ProcessPoolExecutor(max_workers=n) as executor:
+        
+        res = []
+        for i in range(1,n+1):
+            res.append(executor.submit(main,i))
+            time.sleep(0.01)
 
  
