@@ -37,7 +37,15 @@ def main(the_i=0):
     file_basename = ''
     
 
-    nc = 8
+
+    p = the_i
+    # p = 2
+    # p_list = [1,2,5]
+    # p = p_list[the_i%len(p_list)]
+
+    nc = 7
+
+    mm = 2
 
     LookForTarget = False
     # nbpl=[1,2,3,4,5,6]
@@ -45,25 +53,33 @@ def main(the_i=0):
     # nbpl=[1,1,1,1]
     # nbpl=[2,3,5]
 
-    p_list = [1,3]
+    # the_lcm = m.lcm(*nbpl)
 
-
-    the_lcm = m.lcm(*nbpl)
-
-    # SymName = 'C'
-# # 
-    SymType = []
-    SymType.append({
-        'name'  : 'D',
-        'n'     : nc,
-        'l'     : 0,
-        'k'     : 1,
-        'p'     : p_list[the_i%len(p_list)],
-        'q'     : nc,
-    })
+    # SymType = []
+    # SymType.append({
+    #     'name'  : 'D',
+    #     'n'     : nc ,
+    #     'm'     : 1 ,
+    #     'l'     : 0,
+    #     'k'     : 1,
+    #     'p'     : p,
+    #     'q'     : nc,
+    # })
 
     # Sym_list,nbody = choreo.Make2DChoreoSymManyLoops(nbpl=nbpl,SymName=SymName)
-    Sym_list,nbody = choreo.Make2DChoreoSymManyLoops(nbpl=nbpl,SymType=SymType)
+    # Sym_list,nbody = choreo.Make2DChoreoSymManyLoops(nbpl=nbpl,SymType=SymType)
+
+    SymType = {
+        'name'  : 'D',
+        'n'     : nc,
+        'm'     : mm,
+        'l'     : 0,
+        'k'     : 1,
+        'p'     : p,
+        'q'     : nc,
+    }
+    Sym_list = choreo.Make2DChoreoSym(SymType,range(nc))
+    nbody = nc
 
     mass = np.ones((nbody),dtype=np.float64)
 
@@ -143,13 +159,7 @@ def main(the_i=0):
     # ncoeff_init = 102
     # ncoeff_init = 800
     # ncoeff_init = 201   
-    ncoeff_init = 400   
-    # ncoeff_init = 660
-    # ncoeff_init = 700
-    # ncoeff_init = 1800
-    # ncoeff_init = 2400
-    # ncoeff_init = 1206
-    # ncoeff_init = 9*8*7*5
+    ncoeff_init = nc*40
     # ncoeff_init = the_lcm
     
     # print(the_lcm)
@@ -238,7 +248,7 @@ def main(the_i=0):
 
 # if __name__ == "__main__":
 #     main(0)
-# #    
+#    
 # # # 
 if __name__ == "__main__":
 

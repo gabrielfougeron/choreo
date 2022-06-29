@@ -770,7 +770,10 @@ def Compute_Loop_Size_Dist_Cython(
             max_loop_size = loop_size
             
     res[0] = csqrt(max_loop_size)
-    
+
+
+    # TODO : The values computed for res[1] don't seem to be invariant. Why ? Is there a bug or is the definition crappy ?
+ 
     max_loop_dist = 0.
     for il in range(nloop-1):
         for ilp in range(il,nloop):
