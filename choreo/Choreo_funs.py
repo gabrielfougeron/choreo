@@ -455,15 +455,13 @@ def Make2DChoreoSym(SymType,ib_list):
     # SymType  => Dictionary containing the following keys :
         # 'name'
         # 'n'
+        # 'm'
         # 'l'
         # 'k'
         # 'p'
         # 'q'
         
     # [1] : https://arxiv.org/abs/1305.0470
-
-    # if (len(ib_list) != SymType['n']):
-        # print("Warning : SymType and LoopLength are inconsistent")
         
     SymGens = []
     
@@ -478,7 +476,7 @@ def Make2DChoreoSym(SymType,ib_list):
                 LoopSource=ib_list[ib_rel  ],
                 SpaceRot = np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64),
                 TimeRev=1,
-                TimeShift=fractions.Fraction(numerator=-1,denominator=SymType['n'])
+                TimeShift=fractions.Fraction(numerator=-SymType['m'],denominator=SymType['n'])
             ))
 
     if ((SymType['name'] == 'C') or (SymType['name'] == 'D')):
@@ -610,6 +608,7 @@ def Make2DChoreoSymManyLoops(nloop=None,nbpl=None,SymName=None,SymType=None):
         SymType = [{
             'name'  : SymType['name'],
             'n'     : the_lcm,
+            'm'     : SymType['m'],
             'k'     : SymType['k'],
             'l'     : SymType['l'] ,
             'p'     : SymType['p'] ,
