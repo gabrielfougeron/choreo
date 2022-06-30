@@ -40,12 +40,12 @@ def main(the_i=0):
 
     # p = 1
     # p = 2
-    p_list = [1,2,3]
+    p_list = [1]
     p = p_list[the_i%len(p_list)]
 
-    nc = 7
+    nc = 6
 
-    mm = 1
+    mm = 3
 
     LookForTarget = False
     # nbpl=[1,2,3,4,5,6]
@@ -112,9 +112,9 @@ def main(the_i=0):
 
     Save_img = True
     # Save_img = False
-# 
-    # Save_thumb = True
-    Save_thumb = False
+
+    Save_thumb = True
+    # Save_thumb = False
 
     # img_size = (12,12) # Image size in inches
     img_size = (8,8) # Image size in inches
@@ -127,8 +127,8 @@ def main(the_i=0):
     # color = "velocity"
     # color = "all"
 
-    # Save_anim = True
-    Save_anim = False
+    Save_anim = True
+    # Save_anim = False
 
     vid_size = (8,8) # Image size in inches
     nint_plot_anim = 2*2*2*3*3*5*2
@@ -159,7 +159,7 @@ def main(the_i=0):
     # ncoeff_init = 102
     # ncoeff_init = 800
     # ncoeff_init = 201   
-    ncoeff_init = nc*40
+    ncoeff_init = nc*200
     # ncoeff_init = the_lcm
     
     # print(the_lcm)
@@ -175,9 +175,9 @@ def main(the_i=0):
 
     duplicate_eps = 1e-8
 
-    krylov_method = 'lgmres'
+    # krylov_method = 'lgmres'
     # krylov_method = 'gmres'
-    # krylov_method = 'bicgstab'
+    krylov_method = 'bicgstab'
     # krylov_method = 'cgs'
     # krylov_method = 'minres'
     # krylov_method = 'tfqmr'
@@ -217,9 +217,9 @@ def main(the_i=0):
     coeff_ampl_o=3e-1
     # coeff_ampl_o=1e0
     k_infl=0
-    # k_max=600
+    k_max=600
     # k_max=200
-    k_max=200
+    # k_max=200
     coeff_ampl_min=1e-16
 
     freq_erase_dict = 100
