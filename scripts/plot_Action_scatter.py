@@ -28,11 +28,11 @@ def main():
     cmap = 'bwr'
     # cmap = 'Blues'
 
-    special_vals = [1,11]
+    special_vals = [5]
 
 
 
-    nbody = 5
+    nbody = 7
 
     store_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/')
     store_folder = store_folder+str(nbody)
