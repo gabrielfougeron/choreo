@@ -40,6 +40,12 @@ from choreo.Choreo_cython_funs import the_irfft,the_rfft,the_ihfft
 from choreo.Choreo_funs import Compute_action,Compute_hash_action,Compute_Newton_err
 from choreo.Choreo_funs import Compute_MinDist,Detect_Escape
 from choreo.Choreo_funs import Unpackage_all_coeffs
+    
+Action_msg = 'Value of the Action : '
+Action_msg_len = len(Action_msg)
+
+Action_Hash_msg = 'Hash Action for duplicate detection : '
+Action_Hash_msg_len = len(Action_Hash_msg)
 
 def plot_Newton_Error(x,callfun,filename,fig_size=(8,5),color_list = plt.rcParams['axes.prop_cycle'].by_key()['color']):
     
@@ -480,15 +486,26 @@ def Write_Descriptor(x,callfun,filename):
         
         filename_write.write('\n')
          
+def ReadActionFromFile(filename):
+    with open(filename,'r') as file_read:
+        file_readlines = file_read.readlines()
+        for iline in range(len(file_readlines)):
+            line = file_readlines[iline]
+
+            if (line[0:Action_msg_len] == Action_msg):
+                This_Action = float(line[Action_msg_len:])
+            
+            elif (line[0:Action_Hash_msg_len] == Action_Hash_msg):
+                split_nums = line[Action_Hash_msg_len:].split()
+                
+                This_Action_Hash = np.array([float(num_str) for num_str in split_nums])
+    
+    return This_Action,This_Action_Hash
+
+
 def SelectFiles_Action(store_folder,hash_dict,Action_val=0,Action_Hash_val=np.zeros((nhash)),rtol=1e-5):
     # Creates a list of possible duplicates based on value of the action and hashes
-    
-    Action_msg = 'Value of the Action : '
-    Action_msg_len = len(Action_msg)
-    
-    Action_Hash_msg = 'Hash Action for duplicate detection : '
-    Action_Hash_msg_len = len(Action_Hash_msg)
-    
+
     file_path_list = []
     for file_path in os.listdir(store_folder):
         file_path = os.path.join(store_folder, file_path)
