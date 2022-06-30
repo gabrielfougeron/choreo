@@ -38,14 +38,14 @@ def main(the_i=0):
     
 
 
-    p = the_i
+    # p = 1
     # p = 2
-    # p_list = [1,2,5]
-    # p = p_list[the_i%len(p_list)]
+    p_list = [1,2,3]
+    p = p_list[the_i%len(p_list)]
 
     nc = 7
 
-    mm = 2
+    mm = 1
 
     LookForTarget = False
     # nbpl=[1,2,3,4,5,6]
@@ -112,9 +112,9 @@ def main(the_i=0):
 
     Save_img = True
     # Save_img = False
-
-    Save_thumb = True
-    # Save_thumb = False
+# 
+    # Save_thumb = True
+    Save_thumb = False
 
     # img_size = (12,12) # Image size in inches
     img_size = (8,8) # Image size in inches
@@ -127,8 +127,8 @@ def main(the_i=0):
     # color = "velocity"
     # color = "all"
 
-    Save_anim = True
-    # Save_anim = False
+    # Save_anim = True
+    Save_anim = False
 
     vid_size = (8,8) # Image size in inches
     nint_plot_anim = 2*2*2*3*3*5*2
@@ -175,9 +175,9 @@ def main(the_i=0):
 
     duplicate_eps = 1e-8
 
-    # krylov_method = 'lgmres'
+    krylov_method = 'lgmres'
     # krylov_method = 'gmres'
-    krylov_method = 'bicgstab'
+    # krylov_method = 'bicgstab'
     # krylov_method = 'cgs'
     # krylov_method = 'minres'
     # krylov_method = 'tfqmr'
@@ -214,12 +214,12 @@ def main(the_i=0):
     n_grad_change = 1.
     # n_grad_change = 1.5
 
-    coeff_ampl_o=3e-2
+    coeff_ampl_o=3e-1
     # coeff_ampl_o=1e0
-    k_infl=3
+    k_infl=0
     # k_max=600
     # k_max=200
-    k_max=400
+    k_max=200
     coeff_ampl_min=1e-16
 
     freq_erase_dict = 100
@@ -248,8 +248,8 @@ def main(the_i=0):
 
 # if __name__ == "__main__":
 #     main(0)
-#    
-# # # 
+# #    
+# # 
 if __name__ == "__main__":
 
     n = multiprocessing.cpu_count()
