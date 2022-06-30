@@ -38,7 +38,7 @@ def main():
     duplicate_eps = 3e-1
     # duplicate_eps = 1e-8
 
-    input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/keep/5/')
+    input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/tests/')
 # 
     input_names_list = []
     for file_path in os.listdir(input_folder):

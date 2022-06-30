@@ -25,7 +25,12 @@ import matplotlib.pyplot as plt
 
 def main():
 
-    cmap = 'Blues'
+    cmap = 'bwr'
+    # cmap = 'Blues'
+
+    special_vals = [1,11]
+
+
 
     nbody = 5
 
@@ -43,19 +48,22 @@ def main():
     y = np.zeros(n_sols)
     c = np.zeros(n_sols)
 
+    isol = -1
+
     for key, value in hash_dict.items():
         
-        isol = int(key)-1
+        isol += 1
 
-#         x[isol] = value[0]
-#         y[isol] = value[1][0]
-# 
         x[isol] = value[1][0]
-        y[isol] = value[1][2]
+        y[isol] = value[1][3]
+# 
+        # x[isol] = value[1][0]
+        # y[isol] = value[1][2]
 
 
 
-        c[isol] = isol
+        # c[isol] = isol
+        c[isol] = int(int(key) in special_vals)
 
     plt.scatter(x, y, c=c, cmap=cmap)
     plt.savefig(os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/plot_Action_scatter.png'))
