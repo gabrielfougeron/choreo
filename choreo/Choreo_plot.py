@@ -456,7 +456,7 @@ def Write_Descriptor(x,callfun,filename):
         
         Action,Gradaction = Compute_action(x,callfun)
         
-        filename_write.write('Value of the Action : {:.10f}\n'.format(Action))
+        filename_write.write('Value of the Action : {:.16f}\n'.format(Action))
         filename_write.write('Value of the Norm of the Gradient of the Action : {:.10E}\n'.format(np.linalg.norm(Gradaction)))
 
         Newt_err = Compute_Newton_err(x,callfun)
@@ -541,7 +541,7 @@ def SelectFiles_Action(store_folder,hash_dict,Action_val=0,Action_Hash_val=np.ze
                         
             IsCandidate = (abs(This_Action-Action_val) < ((abs(This_Action)+abs(Action_val))*rtol))
             for ihash in range(nhash):
-                IsCandidate = (IsCandidate and (abs(This_Action_Hash[ihash]-Action_Hash_val[ihash]) < (abs(This_Action_Hash[ihash])+abs(Action_Hash_val[ihash]))*rtol))
+                IsCandidate = (IsCandidate and ((abs(This_Action_Hash[ihash]-Action_Hash_val[ihash])) < ((abs(This_Action_Hash[ihash])+abs(Action_Hash_val[ihash]))*rtol)))
             
             if IsCandidate:
                 
