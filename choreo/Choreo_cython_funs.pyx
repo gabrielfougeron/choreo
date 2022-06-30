@@ -57,11 +57,21 @@ cdef double cmnnm1 = -cnnm1
 # cdef long cnhash = hash_exps.size
 # Unfortunately, Cython does not allow that. Let's do it manually then
 
-cdef double hash_exp0 = 0.3
-cdef double hash_exp1 = 0.4
-cdef double hash_exp2 = 0.6
+cdef double hash_exp0 = -0.3
+cdef double hash_exp1 = -0.4
+cdef double hash_exp2 = -0.6
+cdef double hash_exp3 = -0.49
+cdef double hash_exp4 = -0.51
+cdef double hash_exp5 = -0.49
+cdef double hash_exp6 = -0.501
+cdef double hash_exp7 = -0.499
+cdef double hash_exp8 = -0.5001
+cdef double hash_exp9 = -0.4999
+cdef double hash_exp10 = -0.50001
+cdef double hash_exp11 = -0.49999
+cdef double hash_exp12 = -0.5
 
-cdef long cnhash = 3
+cdef long cnhash = 13
 
 # Python definition of the very same variables
 
@@ -82,7 +92,7 @@ mnnm1 = cmnnm1
 nhash = cnhash
 
 cdef inline (double, double, double) CCpt_interbody_pot(double xsq):  # xsq is the square of the distance between two bodies !
-    # Cython dedinition of the potential law
+    # Cython definition of the potential law
     
     cdef double a = cpow(xsq,cnm2)
     cdef double b = xsq*a
@@ -103,9 +113,19 @@ def CCpt_hash_pot(double xsq):  # xsq is the square of the distance between two 
     
     cdef np.ndarray[double, ndim=1, mode="c"] hash_pots = np.zeros((cnhash),dtype=np.float64)
 
-    hash_pots[0] = cpow(xsq,hash_exp0)
-    hash_pots[1] = cpow(xsq,hash_exp1)
-    hash_pots[2] = cpow(xsq,hash_exp2)
+    hash_pots[0] = -cpow(xsq,hash_exp0)
+    hash_pots[1] = -cpow(xsq,hash_exp1)
+    hash_pots[2] = -cpow(xsq,hash_exp2)
+    hash_pots[3] = -cpow(xsq,hash_exp3)
+    hash_pots[4] = -cpow(xsq,hash_exp4)
+    hash_pots[5] = -cpow(xsq,hash_exp5)
+    hash_pots[6] = -cpow(xsq,hash_exp6)
+    hash_pots[7] = -cpow(xsq,hash_exp7)
+    hash_pots[8] = -cpow(xsq,hash_exp8)
+    hash_pots[9] = -cpow(xsq,hash_exp9)
+    hash_pots[10] = -cpow(xsq,hash_exp10)
+    hash_pots[11] = -cpow(xsq,hash_exp11)
+    hash_pots[12] = -cpow(xsq,hash_exp12)
     
     return hash_pots
     
@@ -410,6 +430,20 @@ def Compute_hash_action_Cython(
     cdef np.ndarray[double, ndim=1, mode="c"]  Hash_En = np.zeros((cnhash),dtype=np.float64)
     cdef np.ndarray[double, ndim=1, mode="c"]  Hash_pot = np.zeros((cnhash),dtype=np.float64)
 
+    cdef double Kin_en = 0
+
+    for il in range(nloop):
+        
+        prod_fac = MassSum[il]*cfourpisq
+        
+        for idim in range(cndim):
+            for k in range(1,ncoeff):
+                
+                k2 = k*k
+                a = prod_fac*k2
+
+                Kin_en += a *((all_coeffs[il,idim,k,0]*all_coeffs[il,idim,k,0]) + (all_coeffs[il,idim,k,1]*all_coeffs[il,idim,k,1]))
+
     c_coeffs = all_coeffs.view(dtype=np.complex128)[...,0]
 
     cdef np.ndarray[double, ndim=3, mode="c"] all_pos = the_irfft(c_coeffs,n=nint,axis=2)*nint
@@ -490,7 +524,7 @@ def Compute_hash_action_Cython(
                 all_shiftsBin[il,ibi] = (all_shiftsBin[il,ibi]+TimeRevsBin[il,ibi]) % nint
 
     for ihash in range(cnhash):
-        Hash_En[ihash] /= nint
+        Hash_En[ihash] = Kin_en - Hash_En[ihash]/nint
 
     return Hash_En
     

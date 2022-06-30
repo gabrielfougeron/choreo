@@ -40,12 +40,14 @@ def main(the_i=0):
 
     # p = 1
     # p = 2
-    p_list = [1]
+    p_list = [1,2]
     p = p_list[the_i%len(p_list)]
 
-    nc = 6
+    nc = 5
 
-    mm = 3
+    mm = 1
+    # mm_list = [1,3]
+    # mm = mm_list[the_i%len(mm_list)]
 
     LookForTarget = False
     # nbpl=[1,2,3,4,5,6]
@@ -113,8 +115,8 @@ def main(the_i=0):
     Save_img = True
     # Save_img = False
 
-    Save_thumb = True
-    # Save_thumb = False
+    # Save_thumb = True
+    Save_thumb = False
 
     # img_size = (12,12) # Image size in inches
     img_size = (8,8) # Image size in inches
@@ -127,8 +129,8 @@ def main(the_i=0):
     # color = "velocity"
     # color = "all"
 
-    Save_anim = True
-    # Save_anim = False
+    # Save_anim = True
+    Save_anim = False
 
     vid_size = (8,8) # Image size in inches
     nint_plot_anim = 2*2*2*3*3*5*2
@@ -177,8 +179,8 @@ def main(the_i=0):
 
     # krylov_method = 'lgmres'
     # krylov_method = 'gmres'
-    krylov_method = 'bicgstab'
-    # krylov_method = 'cgs'
+    # krylov_method = 'bicgstab'
+    krylov_method = 'cgs'
     # krylov_method = 'minres'
     # krylov_method = 'tfqmr'
 
