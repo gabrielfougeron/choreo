@@ -20,11 +20,16 @@ sys.path.append(__PROJECT_ROOT__)
 
 import choreo 
 
+import datetime
+
+
 def main():
     
+    now = datetime.datetime.now()    
+    print("now =", now)
 
     input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/keep/7/')
-    input_filename = os.path.join(input_folder,'7_3')
+    input_filename = os.path.join(input_folder,'7_5')
     input_filename = input_filename + '.txt'
 
     input_action, input_hash = choreo.ReadActionFromFile(input_filename)
