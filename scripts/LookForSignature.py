@@ -28,7 +28,7 @@ def main():
     now = datetime.datetime.now()    
     print("now =", now)
 
-    nbody = 7
+    nbody = 5
 
     store_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/')
     store_folder = store_folder+str(nbody)
@@ -53,7 +53,7 @@ def main():
 
     input_folder = store_folder
 
-    input_names_list = ['00005']
+    input_names_list = ['00002']
     hash_dict = {}
     choreo.SelectFiles_Action(store_folder,hash_dict)
 
@@ -86,12 +86,12 @@ def main():
         for the_file in file_list:
             print('    ',the_file)
 
-        copy_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/copy/')
-
-        if os.path.isdir(copy_folder):
-            shutil.rmtree(copy_folder)
+        copy_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/'+str(nbody)+'_copy/')
+# 
+#         if os.path.isdir(copy_folder):
+#             shutil.rmtree(copy_folder)
         
-        os.makedirs(copy_folder)
+        # os.makedirs(copy_folder)
 
         for the_file in file_list:
 
