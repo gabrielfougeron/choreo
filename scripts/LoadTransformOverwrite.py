@@ -26,21 +26,36 @@ import datetime
 def main():
 
 
-    input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/keep/6/')
-# # 
+    input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/keep/13')
+
+#     ''' Include all files in tree '''
 #     input_names_list = []
-#     for file_path in os.listdir(input_folder):
-#         file_path = os.path.join(store_folder, file_path)
-#         file_root, file_ext = os.path.splitext(os.path.basename(file_path))
-#         
-#         if (file_ext == '.txt' ):
-#             input_names_list.append(file_root)
+#     for root, dirnames, filenames in os.walk(input_folder):
+# 
+#         for filename in filenames:
+#             file_path = os.path.join(root, filename)
+#             file_root, file_ext = os.path.splitext(os.path.basename(file_path))
+# 
+#             if (file_ext == '.txt' ):
+# 
+#                 file_path = os.path.join(root, file_root)
+#                 the_name = file_path[len(input_folder):]
+#                 input_names_list.append(the_name)
 
-    input_names_list = ['6_3']
+
+    ''' Include all files in folder '''
+    input_names_list = []
+    for file_path in os.listdir(input_folder):
+        file_path = os.path.join(input_folder, file_path)
+        file_root, file_ext = os.path.splitext(os.path.basename(file_path))
+        
+        if (file_ext == '.txt' ):
+            input_names_list.append(file_root)
+# 
+    # input_names_list = ['13/13_5']
 
 
-
-    store_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/keep/mod/')
+    store_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/mod')
     # store_folder = input_folder
 
     Save_All_Coeffs = True
@@ -64,8 +79,8 @@ def main():
     # color = "velocity"
     # color = "all"
 
-    Save_anim = True
-    # Save_anim = False
+    # Save_anim = True
+    Save_anim = False
 
     vid_size = (8,8) # Image size in inches
     nint_plot_anim = 2*2*2*3*3*5*2
@@ -97,12 +112,14 @@ def main():
         input_filename = os.path.join(input_folder,the_name)
         input_filename = input_filename + '.npy'
 
+        bare_name = the_name.split('/')[-1]
+
         all_coeffs = np.load(input_filename)
 
         theta = 2*np.pi * 0.
         SpaceRevscal = 1.
         SpaceRot = np.array( [[SpaceRevscal*np.cos(theta) , SpaceRevscal*np.sin(theta)] , [-np.sin(theta),np.cos(theta)]])
-        TimeRev = -1.
+        TimeRev = 1.
         TimeShiftNum = 0
         TimeShiftDen = 2
 
@@ -111,7 +128,7 @@ def main():
         ncoeff_init = all_coeffs.shape[2]
 
         the_i = -1
-        the_i_max = 10
+        the_i_max = 20
 
         Gradaction_OK = False
 
@@ -123,9 +140,9 @@ def main():
             # p_list = [3]
             p = p_list[the_i%len(p_list)]
 
-            nc = 6
+            nc = 13
 
-            mm = 2
+            mm = 1
 
             nbpl=[nc]
 
@@ -160,7 +177,7 @@ def main():
         if (the_i == the_i_max):
             raise(ValueError('Correct Symmetries not found'))
 
-        filename_output = os.path.join(store_folder,the_name)
+        filename_output = os.path.join(store_folder,bare_name)
 
         print('Saving solution as '+filename_output+'.*')
 
