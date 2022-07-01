@@ -8,6 +8,7 @@ import itertools
 import copy
 import time
 import pickle
+import warnings
 
 import numpy as np
 import math as m
@@ -645,7 +646,7 @@ def Make2DChoreoSymManyLoops(nloop=None,nbpl=None,SymName=None,SymType=None):
         
     return SymGens,nbody
 
-def setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max=6,MomCons=True,n_grad_change=1.,Sym_list=[]):
+def setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max=6,MomCons=True,n_grad_change=1.,Sym_list=[],CrashOnIdentity=True):
     # This function returns the callfun dictionnary to be given as input to virtually all other function.
     # It detects loops and constraints based on symmetries.
     # It defines parameters according to given constraints and diagonal change of variable
@@ -802,8 +803,11 @@ def setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max=6,MomCons=True,n_
                 Sym = (gen_to_target[ibp].Inverse()).ComposeLight(gen_to_target[ib])
                 
                 if Sym.IsIdentity():
-                    raise ValueError("Two bodies have identical trajectories")
-                
+                    if CrashOnIdentity:
+                        raise ValueError("Two bodies have identical trajectories")
+                    else:
+                        warnings.warn("Two bodies have identical trajectories", stacklevel=2)
+
                 IsUnique = True
                 for isym in range(len(UniqueSyms)):
 
