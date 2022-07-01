@@ -26,7 +26,7 @@ import datetime
 def main():
 
 
-    input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/keep/13/')
+    input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/keep/6/')
 # # 
 #     input_names_list = []
 #     for file_path in os.listdir(input_folder):
@@ -36,7 +36,7 @@ def main():
 #         if (file_ext == '.txt' ):
 #             input_names_list.append(file_root)
 
-    input_names_list = ['00067']
+    input_names_list = ['6_3']
 
 
 
@@ -99,57 +99,66 @@ def main():
 
         all_coeffs = np.load(input_filename)
 
-        theta = 2*np.pi * 1./2.
+        theta = 2*np.pi * 0.
         SpaceRevscal = 1.
         SpaceRot = np.array( [[SpaceRevscal*np.cos(theta) , SpaceRevscal*np.sin(theta)] , [-np.sin(theta),np.cos(theta)]])
-        TimeRev = 1.
+        TimeRev = -1.
         TimeShiftNum = 0
         TimeShiftDen = 2
 
         all_coeffs = choreo.Transform_Coeffs(SpaceRot, TimeRev, TimeShiftNum, TimeShiftDen, all_coeffs)
 
-
         ncoeff_init = all_coeffs.shape[2]
 
-        the_i = 5
+        the_i = -1
+        the_i_max = 10
 
-        p_list = [1,2,3,4,5,6]
-        p = p_list[the_i%len(p_list)]
+        Gradaction_OK = False
 
-        nc = 13
+        while (not(Gradaction_OK) and (the_i < the_i_max)):
 
-        mm = 1
+            the_i += 1
 
-        nbpl=[nc]
+            p_list = range(the_i_max)
+            # p_list = [3]
+            p = p_list[the_i%len(p_list)]
 
-        SymType = {
-            'name'  : 'D',
-            'n'     : nc,
-            'm'     : mm,
-            'l'     : 0,
-            'k'     : 1,
-            'p'     : p,
-            'q'     : nc,
-        }
-        Sym_list = choreo.Make2DChoreoSym(SymType,range(nc))
-        nbody = nc
+            nc = 6
 
-        mass = np.ones((nbody),dtype=np.float64)
+            mm = 2
 
-        # MomConsImposed = True
-        MomConsImposed = False
+            nbpl=[nc]
 
-        n_reconverge_it_max = 0
-        n_grad_change = 1.
+            SymType = {
+                'name'  : 'D',
+                'n'     : nc,
+                'm'     : mm,
+                'l'     : 0,
+                'k'     : 1,
+                'p'     : p,
+                'q'     : nc,
+            }
+            Sym_list = choreo.Make2DChoreoSym(SymType,range(nc))
+            nbody = nc
 
-        callfun = choreo.setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change)
+            mass = np.ones((nbody),dtype=np.float64)
 
-        x = choreo.Package_all_coeffs(all_coeffs,callfun)
+            # MomConsImposed = True
+            MomConsImposed = False
 
-        Action,Gradaction = choreo.Compute_action(x,callfun)
-        
-        if np.linalg.norm(Gradaction) > GradActionThresh:
-            raise(ValueError('Gradaction is too big. There is likely a problem with constraints.'))
+            n_reconverge_it_max = 0
+            n_grad_change = 1.
+
+            callfun = choreo.setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change,CrashOnIdentity=False)
+
+            x = choreo.Package_all_coeffs(all_coeffs,callfun)
+
+            Action,Gradaction = choreo.Compute_action(x,callfun)
+
+            Gradaction_OK = (np.linalg.norm(Gradaction) < GradActionThresh)
+
+        if (the_i == the_i_max):
+            raise(ValueError('Correct Symmetries not found'))
 
         filename_output = os.path.join(store_folder,the_name)
 
