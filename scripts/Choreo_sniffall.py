@@ -40,10 +40,10 @@ def main(the_i=0):
 
     # p = 1
     # p = 2
-    p_list = [1,2,3]
+    p_list = [1,2]
     p = p_list[the_i%len(p_list)]
 
-    nc = 7
+    nc = 5
 
     mm = 1
     # mm_list = [1,3]
@@ -254,8 +254,8 @@ def main(the_i=0):
 # # 
 if __name__ == "__main__":
 
-    # n = multiprocessing.cpu_count()
-    n = 3
+    n = multiprocessing.cpu_count()
+    # n = 3
     
     print(f"Executing with {n} workers")
     
