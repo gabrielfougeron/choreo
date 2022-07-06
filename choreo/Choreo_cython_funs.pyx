@@ -1664,3 +1664,44 @@ def Compute_square_dist(
         res+=diff*diff
     
     return res
+    
+def Compute_Forces_Cython(
+    np.ndarray[double, ndim=2, mode="c"] x not None,
+    np.ndarray[double, ndim=1, mode="c"] mass not None,
+    long nbody,
+    ):
+
+    cdef long ib, ibp
+    cdef long idim
+    cdef np.ndarray[double, ndim=2, mode="c"] f = np.zeros((nbody,cndim),dtype=np.float64)
+
+    cdef np.ndarray[double, ndim=1, mode="c"]  dx = np.zeros((cndim),dtype=np.float64)
+
+    cdef double dx2,a
+    cdef double b,bp
+
+    for ib in range(nbody-1):
+        for ibp in range(ib+1,nbody):
+
+            for idim in range(cndim):
+                dx[idim] = x[ib,idim]-x[ibp,idim]
+
+            dx2 = dx[0]*dx[0]
+            for idim in range(1,cndim):
+                dx2 += dx[idim]*dx[idim]
+
+            pot,potp,potpp = CCpt_interbody_pot(dx2)
+
+            a = 2*potp
+
+            b  = a*mass[ibp]
+            bp = a*mass[ib ]
+
+            for idim in range(cndim):
+
+                f[ib,idim] -= b*dx[idim]
+                f[ibp,idim] += bp*dx[idim]
+
+    return f
+
+

@@ -280,7 +280,7 @@ def plot_all_2D_cpv(x,nint_plot,callfun,filename,fig_size=(10,10),dpi=100):
     
     plt.close()
  
-def plot_all_2D_anim(x,nint_plot,callfun,filename,nperiod=1,Plot_trace=True,fig_size=(5,5),dnint=1):
+def plot_all_2D_anim(x,nint_plot,callfun,filename,nperiod=1,Plot_trace=True,fig_size=(5,5),dnint=1,all_pos_trace=None,all_pos_points=None):
     # Creates a video of the bodies moving along their trajectories, and saves the file under filename
     
     args = callfun[0]
@@ -327,12 +327,18 @@ def plot_all_2D_anim(x,nint_plot,callfun,filename,nperiod=1,Plot_trace=True,fig_
                 all_pos_b[Targets[il,ib],:,iint] = np.dot(SpaceRotsUn[il,ib,:,:],all_pos[il,:,all_shiftsUn[il,ib]])
 
                 all_shiftsUn[il,ib] = (all_shiftsUn[il,ib]+TimeRevsUn[il,ib]) % nint_plot_img
-                
-                xmin = min(xmin,all_pos_b[Targets[il,ib],0,iint])
-                xmax = max(xmax,all_pos_b[Targets[il,ib],0,iint])
-                ymin = min(ymin,all_pos_b[Targets[il,ib],1,iint])
-                ymax = max(ymax,all_pos_b[Targets[il,ib],1,iint])
-                              
+
+    if (all_pos_trace is None):
+        all_pos_trace = all_pos_b
+
+    if (all_pos_points is None):
+        all_pos_points = all_pos_b
+
+    xmin = all_pos_trace[:,0,:].min()
+    xmax = all_pos_trace[:,0,:].max()
+    ymin = all_pos_trace[:,1,:].min()
+    ymax = all_pos_trace[:,1,:].max()
+
     r = 0.03
     
     xinf = xmin - r*(xmax-xmin)
@@ -357,20 +363,22 @@ def plot_all_2D_anim(x,nint_plot,callfun,filename,nperiod=1,Plot_trace=True,fig_
     ax.set_aspect('equal', adjustable='box')
     plt.tight_layout()
     
+    # TODO: Understand why this is needed / how to rationalize this use. Is it even legal python ?
+
     iint = [0]
     
     def init():
         
         if (Plot_trace):
             for ib in range(nbody):
-                lines[ib].set_data(all_pos_b[ib,0,:], all_pos_b[ib,1,:])
+                lines[ib].set_data(all_pos_trace[ib,0,:], all_pos_trace[ib,1,:])
         
         return lines + points
 
     def update(i):
         
         for ib in range(nbody):
-            points[ib].set_data(all_pos_b[ib,0,iint[0]], all_pos_b[ib,1,iint[0]])
+            points[ib].set_data(all_pos_points[ib,0,iint[0]], all_pos_points[ib,1,iint[0]])
             
         iint[0] = ((iint[0]+dnint) % nint_plot_img)
 
