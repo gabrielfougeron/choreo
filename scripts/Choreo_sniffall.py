@@ -39,15 +39,15 @@ def main(the_i=0):
 
 
     # p = 1
-    # p = 2
-    p_list = [1,2]
-    p = p_list[the_i%len(p_list)]
+    p = 0
+    # p_list = [1,2,3,4]
+    # p = p_list[the_i%len(p_list)]
 
-    nc = 5
+    nc = 3
 
-    mm = 1
-    # mm_list = [1,3]
-    # mm = mm_list[the_i%len(mm_list)]
+    # mm = 2
+    mm_list = [1,2]
+    mm = mm_list[the_i%len(mm_list)]
 
     LookForTarget = False
     # nbpl=[1,2,3,4,5,6]
@@ -145,7 +145,7 @@ def main(the_i=0):
         period_div = 1.
     else:
         period_div = the_lcm
-# 
+
     nperiod_anim = 1.
     # nperiod_anim = 1./period_div
 
@@ -161,7 +161,7 @@ def main(the_i=0):
     # ncoeff_init = 102
     # ncoeff_init = 800
     # ncoeff_init = 201   
-    ncoeff_init = nc*200
+    ncoeff_init = nc*40
     # ncoeff_init = the_lcm
     
     # print(the_lcm)
@@ -238,6 +238,9 @@ def main(the_i=0):
     Save_All_Coeffs = True
     # Save_All_Coeffs = False
 
+    Save_Init_Pos_Vel_Sol = True
+    # Save_Init_Pos_Vel_Sol = False
+
 
     n_save_pos = 'auto'
     # Save_All_Pos = True
@@ -248,22 +251,22 @@ def main(the_i=0):
 
 
 
-# if __name__ == "__main__":
-#     main(0)
-# #    
-# # 
 if __name__ == "__main__":
-
-    n = multiprocessing.cpu_count()
-    # n = 3
-    
-    print(f"Executing with {n} workers")
-    
-    with concurrent.futures.ProcessPoolExecutor(max_workers=n) as executor:
-        
-        res = []
-        for i in range(1,n+1):
-            res.append(executor.submit(main,i))
-            time.sleep(0.01)
+    main(0)
+#    
+# # 
+# if __name__ == "__main__":
+# 
+#     n = multiprocessing.cpu_count()
+#     # n = 3
+#     
+#     print(f"Executing with {n} workers")
+#     
+#     with concurrent.futures.ProcessPoolExecutor(max_workers=n) as executor:
+#         
+#         res = []
+#         for i in range(1,n+1):
+#             res.append(executor.submit(main,i))
+#             time.sleep(0.01)
 
  
