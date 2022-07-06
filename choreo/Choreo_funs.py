@@ -34,6 +34,7 @@ from choreo.Choreo_cython_funs import ndim,twopi,nhash,n
 from choreo.Choreo_cython_funs import Compute_action_Cython,Compute_action_hess_mul_Cython,Compute_hash_action_Cython,Compute_Newton_err_Cython
 from choreo.Choreo_cython_funs import Assemble_Cstr_Matrix,diag_changevar
 from choreo.Choreo_cython_funs import Compute_MinDist_Cython,Compute_Loop_Dist_btw_avg_Cython,Compute_square_dist,Compute_Loop_Size_Dist_Cython,RemoveSym_Cython
+from choreo.Choreo_cython_funs import Compute_Forces_Cython
 from choreo.Choreo_cython_funs import the_irfft,the_rfft,the_ihfft
 
 
@@ -122,6 +123,24 @@ def ComputeAllPos(x,callfun,nint=None):
     all_pos_b = the_irfft(all_coeffs_nosym,n=nint,axis=2)*nint
 
     return all_pos_b
+
+def Compute_init_pos_vel(x,callfun):
+
+    args = callfun[0]
+    nint = args['nint_list'][args["current_cvg_lvl"]]
+
+    all_init = np.zeros((2,args["nbody"],ndim))
+
+    all_coeffs_nosym = RemoveSym(x,callfun)
+    all_init[0,:,:] = the_irfft(all_coeffs_nosym,n=nint,axis=2)[:,:,0] # ???????????
+
+    ncoeff = all_coeffs_nosym.shape[2]
+    for k in range(ncoeff):
+        all_coeffs_nosym[:,:,k] *= twopi*1j*k
+
+    all_init[1,:,:] = the_irfft(all_coeffs_nosym,n=nint,axis=2)[:,:,0] # ???????????
+
+    return all_init
 
 def Compute_action_onlygrad(x,callfun):
     # Wrapper function that returns ONLY the gradient of the action with respect to the parameters 
@@ -1550,6 +1569,20 @@ class ExactKrylovJacobian(scipy.optimize.nonlin.KrylovJacobian):
     def rmatvec(self, v):
         return self.exactgrad(self.x0,v)
         
+def Compute_ODE_RHS(t,x,callfun):
+
+    all_pos_vel = x.reshape(2,callfun['nbody'],ndim)
+#     all_pos = all_pos_vel(0,:,:)
+#     all_vel = all_pos_vel(1,:,:)
     
+    rhs = np.zeros((2,callfun['nbody'],ndim))
+
+    rhs[0,:,:] = all_pos_vel[1,:,:]
+    rhs[1,:,:] = Compute_Forces_Cython(
+        all_pos_vel[0,:,:],
+        callfun['mass'],
+        callfun['nbody'],
+        )
+
+    return rhs.reshape(2*callfun['nbody']*ndim)
         
-    
