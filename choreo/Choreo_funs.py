@@ -122,7 +122,6 @@ def Compute_init_pos_vel(x,callfun):
 
     all_coeffs_nosym = RemoveSym(x,callfun).view(dtype=np.complex128)[...,0]
     all_init[0,:,:] = the_irfft(all_coeffs_nosym,n=nint,axis=2)[:,:,0]*nint
-    # all_init[0,:,:] = the_irfft(all_coeffs_nosym,n=1,axis=2)[:,:,0]
 
     ncoeff = all_coeffs_nosym.shape[2]
     for k in range(ncoeff):
