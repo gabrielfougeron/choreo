@@ -33,7 +33,7 @@ from matplotlib import animation
 from choreo.Choreo_cython_funs import ndim,twopi,nhash,n
 from choreo.Choreo_cython_funs import Compute_action_Cython,Compute_action_hess_mul_Cython,Compute_hash_action_Cython,Compute_Newton_err_Cython
 from choreo.Choreo_cython_funs import Assemble_Cstr_Matrix,diag_changevar
-from choreo.Choreo_cython_funs import Compute_MinDist_Cython,Compute_Loop_Dist_btw_avg_Cython,Compute_square_dist,Compute_Loop_Size_Dist_Cython,RemoveSym_Cython
+from choreo.Choreo_cython_funs import Compute_MinDist_Cython,Compute_Loop_Dist_btw_avg_Cython,Compute_square_dist,Compute_Loop_Size_Dist_Cython
 from choreo.Choreo_cython_funs import Compute_Forces_Cython
 from choreo.Choreo_cython_funs import the_irfft,the_rfft,the_ihfft
 
@@ -77,38 +77,27 @@ def Unpackage_all_coeffs(x,callfun):
 def RemoveSym(x,callfun):
     # Removes symmetries and gives coeffs for all bodies
 
-    args=callfun[0]
-    
-    if args["Do_Pos_FFT"]:
-        
-        y = args['param_to_coeff_list'][args["current_cvg_lvl"]] * x
-        args['last_all_coeffs'] = y.reshape(args['nloop'],ndim,args['ncoeff_list'][args["current_cvg_lvl"]],2)
-        
-        nint = args['nint_list'][args["current_cvg_lvl"]]
-        c_coeffs = args['last_all_coeffs'].view(dtype=np.complex128)[...,0]
-        args['last_all_pos'] = the_irfft(c_coeffs,n=nint,axis=2)*nint
-    
-    all_coeffs_nosym =  RemoveSym_Cython(
-        args['nloop']           ,
-        args['ncoeff_list'][args["current_cvg_lvl"]]          ,
-        args['nint_list'][args["current_cvg_lvl"]]            ,
-        args['mass']            ,
-        args['loopnb']          ,
-        args['Targets']         ,
-        args['MassSum']         ,
-        args['SpaceRotsUn']     ,
-        args['TimeRevsUn']      ,
-        args['TimeShiftNumUn']  ,
-        args['TimeShiftDenUn']  ,
-        args['loopnbi']         ,
-        args['ProdMassSumAll']  ,
-        args['SpaceRotsBin']    ,
-        args['TimeRevsBin']     ,
-        args['TimeShiftNumBin'] ,
-        args['TimeShiftDenBin'] ,
-        args['last_all_coeffs'] ,
-        args['last_all_pos'] 
-        )
+    all_coeffs = Unpackage_all_coeffs(x,callfun)
+
+    args = callfun[0]
+    nbody = args['nbody']
+    nloop = args['nloop']
+    ncoeff = args['ncoeff_list'][args["current_cvg_lvl"]]
+    loopnb = args['loopnb']
+
+    all_coeffs_nosym = np.zeros((nbody,ndim,ncoeff,2),dtype=np.float64)
+
+    for il in range(nloop):
+        for ib in range(loopnb[il]):
+
+            ibody = args['Targets'][il,ib]
+
+            SpaceRot = args['SpaceRotsUn'][il,ib,:,:]
+            TimeRev = args['TimeRevsUn'][il,ib]
+            TimeShiftNum = args['TimeShiftNumUn'][il,ib]
+            TimeShiftDen = args['TimeShiftDenUn'][il,ib]
+
+            all_coeffs_nosym[ibody,:,:,:] = Transform_Coeffs_Single_Loop(SpaceRot, TimeRev, TimeShiftNum, TimeShiftDen, all_coeffs[il,:,:])
 
     return all_coeffs_nosym
 
@@ -119,7 +108,7 @@ def ComputeAllPos(x,callfun,nint=None):
         args=callfun[0]
         nint = args['nint_list'][args["current_cvg_lvl"]]
 
-    all_coeffs_nosym = RemoveSym(x,callfun)
+    all_coeffs_nosym = RemoveSym(x,callfun).view(dtype=np.complex128)[...,0]
     all_pos_b = the_irfft(all_coeffs_nosym,n=nint,axis=2)*nint
 
     return all_pos_b
@@ -131,14 +120,15 @@ def Compute_init_pos_vel(x,callfun):
 
     all_init = np.zeros((2,args["nbody"],ndim))
 
-    all_coeffs_nosym = RemoveSym(x,callfun)
-    all_init[0,:,:] = the_irfft(all_coeffs_nosym,n=nint,axis=2)[:,:,0] # ???????????
+    all_coeffs_nosym = RemoveSym(x,callfun).view(dtype=np.complex128)[...,0]
+    all_init[0,:,:] = the_irfft(all_coeffs_nosym,n=nint,axis=2)[:,:,0]*nint
+    # all_init[0,:,:] = the_irfft(all_coeffs_nosym,n=1,axis=2)[:,:,0]
 
     ncoeff = all_coeffs_nosym.shape[2]
     for k in range(ncoeff):
         all_coeffs_nosym[:,:,k] *= twopi*1j*k
 
-    all_init[1,:,:] = the_irfft(all_coeffs_nosym,n=nint,axis=2)[:,:,0] # ???????????
+    all_init[1,:,:] = the_irfft(all_coeffs_nosym,n=nint,axis=2)[:,:,0]*nint
 
     return all_init
 
@@ -1240,6 +1230,28 @@ class UniformRandom():
 
     def random(self):
         return self.rdn.random_sample((self.d))
+
+def Transform_Coeffs_Single_Loop(SpaceRot, TimeRev, TimeShiftNum, TimeShiftDen, one_loop_coeffs):
+    # Transforms coeffs defining a single loop and returns updated coeffs
+    
+    ncoeff = one_loop_coeffs.shape[1]
+        
+    cs = np.zeros((2))
+    all_coeffs_new = np.zeros(one_loop_coeffs.shape)
+
+    for k in range(ncoeff):
+        
+        dt = TimeShiftNum / TimeShiftDen
+        cs[0] = m.cos( - twopi * k*dt)
+        cs[1] = m.sin( - twopi * k*dt)  
+            
+        v = one_loop_coeffs[:,k,0] * cs[0] - TimeRev * one_loop_coeffs[:,k,1] * cs[1]
+        w = one_loop_coeffs[:,k,0] * cs[1] + TimeRev * one_loop_coeffs[:,k,1] * cs[0]
+            
+        all_coeffs_new[:,k,0] = SpaceRot[:,:].dot(v)
+        all_coeffs_new[:,k,1] = SpaceRot[:,:].dot(w)
+        
+    return all_coeffs_new
 
 def Transform_Coeffs(SpaceRot, TimeRev, TimeShiftNum, TimeShiftDen, all_coeffs):
     # Transforms coeffs defining a path and returns updated coeffs
