@@ -43,7 +43,7 @@ def main(the_i=0):
     # p_list = [1,2,3,4]
     # p = p_list[the_i%len(p_list)]
 
-    nc = 3
+    nc = 10
 
     # mm = 2
     mm_list = [1,2]

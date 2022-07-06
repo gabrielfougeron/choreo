@@ -1583,8 +1583,6 @@ class ExactKrylovJacobian(scipy.optimize.nonlin.KrylovJacobian):
 def Compute_ODE_RHS(t,x,callfun):
 
     all_pos_vel = x.reshape(2,callfun['nbody'],ndim)
-#     all_pos = all_pos_vel(0,:,:)
-#     all_vel = all_pos_vel(1,:,:)
     
     rhs = np.zeros((2,callfun['nbody'],ndim))
 
