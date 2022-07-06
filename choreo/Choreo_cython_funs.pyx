@@ -1597,6 +1597,7 @@ def Compute_Forces_Cython(
     np.ndarray[double, ndim=1, mode="c"] mass not None,
     long nbody,
     ):
+    # Does not actually computes the forces on every body, but rather the force divided by the mass.
 
     cdef long ib, ibp
     cdef long idim
