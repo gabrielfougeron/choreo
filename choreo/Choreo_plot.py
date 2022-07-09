@@ -510,7 +510,6 @@ def ReadActionFromFile(filename):
     
     return This_Action,This_Action_Hash
 
-
 def SelectFiles_Action(store_folder,hash_dict,Action_val=0,Action_Hash_val=np.zeros((nhash)),rtol=1e-5):
     # Creates a list of possible duplicates based on value of the action and hashes
 

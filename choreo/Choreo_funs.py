@@ -578,6 +578,7 @@ def Make2DChoreoSymManyLoops(nloop=None,nbpl=None,SymName=None,SymType=None):
                 SymType.append({
                     'name'  : 'C',
                     'n'     : the_lcm,
+                    'm'     : 1,
                     'k'     : 1,
                     'l'     : 0 ,
                     'p'     : 0 ,
@@ -591,6 +592,7 @@ def Make2DChoreoSymManyLoops(nloop=None,nbpl=None,SymName=None,SymType=None):
                 SymType.append({
                     'name'  : SymName,
                     'n'     : the_lcm,
+                    'm'     : 1,
                     'k'     : 1,
                     'l'     : 0 ,
                     'p'     : 0 ,
@@ -604,6 +606,7 @@ def Make2DChoreoSymManyLoops(nloop=None,nbpl=None,SymName=None,SymType=None):
                 SymType.append({
                     'name'  : SymName[il],
                     'n'     : the_lcm,
+                    'm'     : 1,
                     'k'     : 1,
                     'l'     : 0 ,
                     'p'     : 0 ,

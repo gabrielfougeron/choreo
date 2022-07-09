@@ -27,7 +27,7 @@ import datetime
 def main():
 
 
-    input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/10/')
+    input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/3/')
     # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/copy/')
     # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/keep/13')
 
@@ -45,23 +45,26 @@ def main():
 #                 the_name = file_path[len(input_folder):]
 #                 input_names_list.append(the_name)
 
-# 
-#     ''' Include all files in folder '''
-#     input_names_list = []
-#     for file_path in os.listdir(input_folder):
-#         file_path = os.path.join(input_folder, file_path)
-#         file_root, file_ext = os.path.splitext(os.path.basename(file_path))
-#         
-#         if (file_ext == '.txt' ):
-#             input_names_list.append(file_root)
 
-    input_names_list = ['00006']
+    ''' Include all files in folder '''
+    input_names_list = []
+    for file_path in os.listdir(input_folder):
+        file_path = os.path.join(input_folder, file_path)
+        file_root, file_ext = os.path.splitext(os.path.basename(file_path))
+        
+        if (file_ext == '.txt' ):
+            input_names_list.append(file_root)
+
+    # input_names_list = ['00006']
 
     store_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/mod')
     # store_folder = input_folder
 
     Save_All_Coeffs = True
     # Save_All_Coeffs = False
+
+    Save_All_Coeffs_No_Sym = True
+    # Save_All_Coeffs_No_Sym = False
 
     # Save_Newton_Error = True
     Save_Newton_Error = False
@@ -81,8 +84,8 @@ def main():
     # color = "velocity"
     # color = "all"
 
-    # Save_anim = True
-    Save_anim = False
+    Save_anim = True
+    # Save_anim = False
 
     Save_ODE_anim = True
     # Save_ODE_anim = False
@@ -98,7 +101,7 @@ def main():
 
     vid_size = (8,8) # Image size in inches
     # nint_plot_anim = 2*2*2*3*3
-    nint_plot_anim = 2*3*3*5
+    nint_plot_anim = 2*2*2*3*3*5
     dnint = 30
 
     nint_plot_img = nint_plot_anim * dnint
@@ -158,7 +161,7 @@ def main():
             # p_list = [3]
             p = p_list[the_i%len(p_list)]
 
-            nc = 10
+            nc = 3
 
             mm = 1
             # mm_list = [1]
@@ -194,7 +197,7 @@ def main():
 
             Gradaction_OK = (np.linalg.norm(Gradaction) < GradActionThresh)
 
-        if (the_i == the_i_max):
+        if not(Gradaction_OK):
             raise(ValueError('Correct Symmetries not found'))
 
         filename_output = os.path.join(store_folder,bare_name)
@@ -218,6 +221,12 @@ def main():
         if Save_All_Coeffs:
 
             np.save(filename_output+'.npy',all_coeffs)
+
+        if Save_All_Coeffs_No_Sym:
+            
+            all_coeffs_nosym = choreo.RemoveSym(x,callfun)
+
+            np.save(filename_output+'_nosym.npy',all_coeffs_nosym)
 
         if Save_ODE_anim:
             
