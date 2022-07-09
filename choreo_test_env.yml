@@ -1,0 +1,19 @@
+name: choreo_test
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - python=3.10
+  - matplotlib
+  - scipy
+  - networkx
+  - cython
+  - ffmpeg
+  - suitesparse
+  - tbb 
+  - ffmpeg-python
+  - pip
+  - pip:
+    - cffi==1.15.0
+    - pycparser==2.21
+    - sparseqr==1.1.2

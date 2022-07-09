@@ -1592,6 +1592,7 @@ def Compute_square_dist(
     
     return res
     
+
 def Compute_Forces_Cython(
     np.ndarray[double, ndim=2, mode="c"] x not None,
     np.ndarray[double, ndim=1, mode="c"] mass not None,
@@ -1632,4 +1633,113 @@ def Compute_Forces_Cython(
 
     return f
 
+
+def Compute_JacMat_Forces_Cython(
+    np.ndarray[double, ndim=2, mode="c"] x not None,
+    np.ndarray[double, ndim=1, mode="c"] mass not None,
+    long nbody,
+    ):
+    # Does not actually computes the forces on every body, but rather the force divided by the mass.
+
+    cdef long ib, ibp
+    cdef long idim,jdim
+    cdef np.ndarray[double, ndim=4, mode="c"] Jf = np.zeros((nbody,cndim,nbody,cndim),dtype=np.float64)
+
+    cdef np.ndarray[double, ndim=1, mode="c"]  dx = np.zeros((cndim),dtype=np.float64)
+
+    cdef double dx2
+    cdef double a,aa,aap
+    cdef double b,bb,bpp
+    cdef double c
+
+    for ib in range(nbody-1):
+        for ibp in range(ib+1,nbody):
+
+            for idim in range(cndim):
+                dx[idim] = x[ib,idim]-x[ibp,idim]
+
+            dx2 = dx[0]*dx[0]
+            for idim in range(1,cndim):
+                dx2 += dx[idim]*dx[idim]
+
+            pot,potp,potpp = CCpt_interbody_pot(dx2)
+
+            a = 2*potp
+            aa  = a*mass[ibp]
+            aap = a*mass[ib ]
+
+            b = (4*potpp)
+            bb  = b*mass[ibp]
+            bpp = b*mass[ib ]
+
+            for idim in range(cndim):
+
+                Jf[ib ,idim,ib ,idim] -= aa
+                Jf[ib ,idim,ibp,idim] += aa
+
+                Jf[ibp,idim,ib ,idim] += aap
+                Jf[ibp,idim,ibp,idim] -= aap
+
+                for jdim in range(cndim):
+
+                    dx2 = dx[idim]*dx[jdim]
+                    c =  bb*dx2
+                    Jf[ib ,idim,ib ,jdim] -= c
+                    Jf[ib ,idim,ibp,jdim] += c
+
+                    c = bpp*dx2
+                    Jf[ibp,idim,ib ,jdim] += c
+                    Jf[ibp,idim,ibp,jdim] -= c
+
+    return Jf
+
+def Compute_JacMul_Forces_Cython(
+    np.ndarray[double, ndim=2, mode="c"] x not None,
+    np.ndarray[double, ndim=2, mode="c"] x_d not None,
+    np.ndarray[double, ndim=1, mode="c"] mass not None,
+    long nbody,
+    ):
+    # Does not actually computes the forces on every body, but rather the force divided by the mass.
+
+    cdef long ib, ibp
+    cdef long idim,jdim
+    cdef np.ndarray[double, ndim=2, mode="c"] df = np.zeros((nbody,cndim),dtype=np.float64)
+
+    cdef np.ndarray[double, ndim=1, mode="c"]  dx = np.zeros((cndim),dtype=np.float64)
+    cdef np.ndarray[double, ndim=1, mode="c"]  ddx = np.zeros((cndim),dtype=np.float64)
+
+    cdef double dx2,dxtddx
+    cdef double a,aa,aap
+    cdef double b,bb,bbp
+    cdef double cc,ccp
+
+    for ib in range(nbody-1):
+        for ibp in range(ib+1,nbody):
+
+            for idim in range(cndim):
+                dx[idim] = x[ib,idim]-x[ibp,idim]
+                ddx[idim] = x_d[ib,idim]-x_d[ibp,idim]
+
+            dx2 = dx[0]*dx[0]
+            dxtddx = dx[0]*ddx[0]
+            for idim in range(1,cndim):
+                dx2 += dx[idim]*dx[idim]
+                dxtddx += dx[idim]*ddx[idim]
+
+            pot,potp,potpp = CCpt_interbody_pot(dx2)
+
+            a = 2*potp
+            aa  = a*mass[ibp]
+            aap = a*mass[ib ]
+
+            b = (4*potpp*dxtddx)
+            bb  = b*mass[ibp]
+            bbp = b*mass[ib ]
+
+            for idim in range(cndim):
+                df[ib ,idim] -= bb *dx[idim] + aa *ddx[idim]
+                df[ibp,idim] += bbp*dx[idim] + aap*ddx[idim]
+
+
+    return df
 

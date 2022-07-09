@@ -34,7 +34,7 @@ from choreo.Choreo_cython_funs import ndim,twopi,nhash,n
 from choreo.Choreo_cython_funs import Compute_action_Cython,Compute_action_hess_mul_Cython,Compute_hash_action_Cython,Compute_Newton_err_Cython
 from choreo.Choreo_cython_funs import Assemble_Cstr_Matrix,diag_changevar
 from choreo.Choreo_cython_funs import Compute_MinDist_Cython,Compute_Loop_Dist_btw_avg_Cython,Compute_square_dist,Compute_Loop_Size_Dist_Cython
-from choreo.Choreo_cython_funs import Compute_Forces_Cython
+from choreo.Choreo_cython_funs import Compute_Forces_Cython,Compute_JacMat_Forces_Cython,Compute_JacMul_Forces_Cython
 from choreo.Choreo_cython_funs import the_irfft,the_rfft,the_ihfft
 
 
@@ -1583,7 +1583,7 @@ class ExactKrylovJacobian(scipy.optimize.nonlin.KrylovJacobian):
     def rmatvec(self, v):
         return self.exactgrad(self.x0,v)
         
-def Compute_ODE_RHS(t,x,callfun):
+def Compute_Auto_ODE_RHS(x,callfun):
 
     all_pos_vel = x.reshape(2,callfun['nbody'],ndim)
     
@@ -1597,4 +1597,57 @@ def Compute_ODE_RHS(t,x,callfun):
         )
 
     return rhs.reshape(2*callfun['nbody']*ndim)
+
+Compute_ODE_RHS = lambda t,x,callfun : Compute_Auto_ODE_RHS(x,callfun)
+
+def Compute_Auto_JacMat_ODE_RHS(x,callfun):
+
+    nbody = callfun['nbody']
+
+    all_pos_vel = x.reshape(2,nbody,ndim)
+    
+    drhs = np.zeros((2,nbody,ndim,2,nbody,ndim))
+
+    for ib in range(nbody):
+        for idim in range(ndim):
+            drhs[0,ib,idim,1,ib,idim] = 1
+
+    drhs[1,:,:,0,:,:] = Compute_JacMat_Forces_Cython(
+        all_pos_vel[0,:,:],
+        callfun['mass'],
+        nbody,
+        )
+
+    return drhs.reshape(2*nbody*ndim,2*nbody*ndim)
         
+Compute_JacMat_ODE_RHS = lambda t,x,callfun : Compute_Auto_JacMat_ODE_RHS(x,callfun)
+
+def Compute_Auto_JacMul_ODE_RHS(x,dx,callfun):
+
+    nbody = callfun['nbody']
+
+    all_pos_vel = x.reshape(2,nbody,ndim)
+    all_pos_vel_d = dx.reshape(2,nbody,ndim)
+    
+    drhs = np.zeros((2,nbody,ndim))
+
+    drhs[0,:,:] = all_pos_vel_d[1,:,:]
+
+    drhs[1,:,:] = Compute_JacMul_Forces_Cython(
+        all_pos_vel[0,:,:],
+        all_pos_vel_d[0,:,:],
+        callfun['mass'],
+        nbody,
+        )
+
+    return drhs.reshape(2*nbody*ndim)
+
+Compute_JacMul_ODE_RHS = lambda t,x,dx,callfun : Compute_Auto_JacMul_ODE_RHS(x,dx,callfun)
+    
+def Compute_Auto_JacMul_ODE_RHS_LinOpt(x,callfun):
+
+    nbody = callfun['nbody']
+
+    return sp.linalg.LinearOperator((2*nbody*ndim,2*nbody*ndim),
+        matvec =  (lambda dx,xl=x,callfunl=callfun : Compute_Auto_JacMul_ODE_RHS(xl,dx,callfunl)),
+        rmatvec = (lambda dx,xl=x,callfunl=callfun : Compute_Auto_JacMul_ODE_RHS(xl,dx,callfunl)))
