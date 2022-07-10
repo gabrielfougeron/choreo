@@ -129,6 +129,7 @@ def ComputeAllPosVel(x,callfun,nint=None):
 
     all_vel_b = the_irfft(all_coeffs_nosym,n=nint,axis=2)*nint
 
+    # return np.ascontiguousarray(np.stack((all_pos_b,all_vel_b),axis=0))
     return np.stack((all_pos_b,all_vel_b),axis=0)
 
 def Compute_init_pos_vel(x,callfun):
@@ -1674,6 +1675,8 @@ def SymplecticEuler(fun,gun,t_span,x0,v0,nint):
     dx/dt = f(t,v)
     dv/dt = g(t,v)
     
+    2 version. cf Wikipedia : https://en.wikipedia.org/wiki/Semi-implicit_Euler_method
+
     '''
 
     t = t_span[0]
@@ -1684,13 +1687,48 @@ def SymplecticEuler(fun,gun,t_span,x0,v0,nint):
 
     for iint in range(nint):
 
-        x_next = x + dt * fun(t,v)
         v_next = v + dt * gun(t,x)
+        x_next = x + dt * fun(t,v_next)
         
+
+# 
+#         x_next = x + dt * fun(t,v)
+#         v_next = v + dt * gun(t,x_next)
+#         
         x = x_next
         v = v_next
 
         t += dt
 
     return x,v
+
+def GetTangentSystemDef(x,callfun,nint=None):
+
+        args = callfun[0]
+        nbody = args['nbody']
+        mass = args['mass']
+        if nint is None:
+            nint = args['nint_list'][args["current_cvg_lvl"]]
+
+        all_pos_vel = ComputeAllPosVel(x,callfun,nint=nint)
+
+        def fun(t,v):
+            return v
+
+        def gun(t,x):
+            i = int(t*nint)
+
+            cur_pos = np.ascontiguousarray(all_pos_vel[0,:,:,i])
+
+            J = Compute_JacMat_Forces_Cython(cur_pos,args['mass'],nbody).reshape(nbody*ndim,nbody*ndim)
+            
+            return J.dot(x.reshape(nbody*ndim,2*nbody*ndim)).reshape(-1)
+
+        return fun,gun
+
+
+
+
+
+
 
