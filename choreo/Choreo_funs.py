@@ -1592,24 +1592,28 @@ class ExactKrylovJacobian(scipy.optimize.nonlin.KrylovJacobian):
         
 def Compute_Auto_ODE_RHS(x,callfun):
 
-    all_pos_vel = x.reshape(2,callfun['nbody'],ndim)
+    args = callfun[0]
+
+    all_pos_vel = x.reshape(2,args['nbody'],ndim)
     
-    rhs = np.zeros((2,callfun['nbody'],ndim))
+    rhs = np.zeros((2,args['nbody'],ndim))
 
     rhs[0,:,:] = all_pos_vel[1,:,:]
     rhs[1,:,:] = Compute_Forces_Cython(
         all_pos_vel[0,:,:],
-        callfun['mass'],
-        callfun['nbody'],
+        args['mass'],
+        args['nbody'],
         )
 
-    return rhs.reshape(2*callfun['nbody']*ndim)
+    return rhs.reshape(2*args['nbody']*ndim)
 
 Compute_ODE_RHS = lambda t,x,callfun : Compute_Auto_ODE_RHS(x,callfun)
 
 def Compute_Auto_JacMat_ODE_RHS(x,callfun):
 
-    nbody = callfun['nbody']
+    args = callfun[0]
+
+    nbody = args['nbody']
 
     all_pos_vel = x.reshape(2,nbody,ndim)
     
@@ -1621,7 +1625,7 @@ def Compute_Auto_JacMat_ODE_RHS(x,callfun):
 
     drhs[1,:,:,0,:,:] = Compute_JacMat_Forces_Cython(
         all_pos_vel[0,:,:],
-        callfun['mass'],
+        args['mass'],
         nbody,
         )
 
@@ -1631,7 +1635,9 @@ Compute_JacMat_ODE_RHS = lambda t,x,callfun : Compute_Auto_JacMat_ODE_RHS(x,call
 
 def Compute_Auto_JacMul_ODE_RHS(x,dx,callfun):
 
-    nbody = callfun['nbody']
+    args = callfun[0]
+
+    nbody = args['nbody']
 
     all_pos_vel = x.reshape(2,nbody,ndim)
     all_pos_vel_d = dx.reshape(2,nbody,ndim)
@@ -1643,7 +1649,7 @@ def Compute_Auto_JacMul_ODE_RHS(x,dx,callfun):
     drhs[1,:,:] = Compute_JacMul_Forces_Cython(
         all_pos_vel[0,:,:],
         all_pos_vel_d[0,:,:],
-        callfun['mass'],
+        args['mass'],
         nbody,
         )
 
@@ -1653,8 +1659,38 @@ Compute_JacMul_ODE_RHS = lambda t,x,dx,callfun : Compute_Auto_JacMul_ODE_RHS(x,d
     
 def Compute_Auto_JacMul_ODE_RHS_LinOpt(x,callfun):
 
-    nbody = callfun['nbody']
+    args = callfun[0]
+
+    nbody = args['nbody']
 
     return sp.linalg.LinearOperator((2*nbody*ndim,2*nbody*ndim),
         matvec =  (lambda dx,xl=x,callfunl=callfun : Compute_Auto_JacMul_ODE_RHS(xl,dx,callfunl)),
         rmatvec = (lambda dx,xl=x,callfunl=callfun : Compute_Auto_JacMul_ODE_RHS(xl,dx,callfunl)))
+
+
+def SymplecticEuler(fun,gun,t_span,x0,v0,nint):
+
+    '''
+    dx/dt = f(t,v)
+    dv/dt = g(t,v)
+    
+    '''
+
+    t = t_span[0]
+    dt = (t_span[1] -t_span[0]) / nint
+
+    x = x0
+    v = v0
+
+    for iint in range(nint):
+
+        x_next = x + dt * fun(t,v)
+        v_next = v + dt * gun(t,x)
+        
+        x = x_next
+        v = v_next
+
+        t += dt
+
+    return x,v
+
