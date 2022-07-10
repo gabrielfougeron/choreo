@@ -113,23 +113,30 @@ def ComputeAllPos(x,callfun,nint=None):
 
     return all_pos_b
 
-def Compute_init_pos_vel(x,callfun):
+def ComputeAllPosVel(x,callfun,nint=None):
+    # Returns the positions and velocities of all bodies along the path.
 
-    args = callfun[0]
-    nint = args['nint_list'][args["current_cvg_lvl"]]
-
-    all_init = np.zeros((2,args["nbody"],ndim))
+    if nint is None:
+        args=callfun[0]
+        nint = args['nint_list'][args["current_cvg_lvl"]]
 
     all_coeffs_nosym = RemoveSym(x,callfun).view(dtype=np.complex128)[...,0]
-    all_init[0,:,:] = the_irfft(all_coeffs_nosym,n=nint,axis=2)[:,:,0]*nint
+    all_pos_b = the_irfft(all_coeffs_nosym,n=nint,axis=2)*nint
 
     ncoeff = all_coeffs_nosym.shape[2]
     for k in range(ncoeff):
         all_coeffs_nosym[:,:,k] *= twopi*1j*k
 
-    all_init[1,:,:] = the_irfft(all_coeffs_nosym,n=nint,axis=2)[:,:,0]*nint
+    all_vel_b = the_irfft(all_coeffs_nosym,n=nint,axis=2)*nint
 
-    return all_init
+    return np.stack((all_pos_b,all_vel_b),axis=0)
+
+def Compute_init_pos_vel(x,callfun):
+    # I litterally do not know of any more efficient way to compute the initial positions and velocities.
+
+    all_pos_vel = ComputeAllPosVel(x,callfun)
+
+    return all_pos_vel[:,:,:,0]
 
 def Compute_action_onlygrad(x,callfun):
     # Wrapper function that returns ONLY the gradient of the action with respect to the parameters 
