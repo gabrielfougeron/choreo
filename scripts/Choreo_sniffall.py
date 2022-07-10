@@ -238,8 +238,8 @@ def main(the_i=0):
     Save_All_Coeffs = True
     # Save_All_Coeffs = False
 
-    Save_Init_Pos_Vel_Sol = True
-    # Save_Init_Pos_Vel_Sol = False
+    # Save_Init_Pos_Vel_Sol = True
+    Save_Init_Pos_Vel_Sol = False
 
 
     n_save_pos = 'auto'
