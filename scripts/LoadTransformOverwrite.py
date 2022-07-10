@@ -12,6 +12,7 @@ import random
 import time
 import math as m
 import numpy as np
+import scipy.linalg
 import sys
 import fractions
 import scipy.integrate
@@ -27,7 +28,7 @@ import datetime
 def main():
 
 
-    input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/10/')
+    input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/2/')
     # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/copy/')
     # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/keep/13')
 
@@ -46,34 +47,34 @@ def main():
 #                 input_names_list.append(the_name)
 
 
-    ''' Include all files in folder '''
-    input_names_list = []
-    for file_path in os.listdir(input_folder):
-        file_path = os.path.join(input_folder, file_path)
-        file_root, file_ext = os.path.splitext(os.path.basename(file_path))
-        
-        if (file_ext == '.txt' ):
-            input_names_list.append(file_root)
+    # ''' Include all files in folder '''
+    # input_names_list = []
+    # for file_path in os.listdir(input_folder):
+    #     file_path = os.path.join(input_folder, file_path)
+    #     file_root, file_ext = os.path.splitext(os.path.basename(file_path))
+    #     
+    #     if (file_ext == '.txt' ):
+    #         input_names_list.append(file_root)
 
-    # input_names_list = ['00006']
+    input_names_list = ['00001']
 
     store_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/mod')
     # store_folder = input_folder
 
-    Save_All_Coeffs = True
-    # Save_All_Coeffs = False
+    # Save_All_Coeffs = True
+    Save_All_Coeffs = False
 
-    Save_All_Coeffs_No_Sym = True
-    # Save_All_Coeffs_No_Sym = False
+    # Save_All_Coeffs_No_Sym = True
+    Save_All_Coeffs_No_Sym = False
 
-    Save_Newton_Error = True
-    # Save_Newton_Error = False
+    # Save_Newton_Error = True
+    Save_Newton_Error = False
 
-    Save_img = True
-    # Save_img = False
+    # Save_img = True
+    Save_img = False
 # 
-    Save_thumb = True
-    # Save_thumb = False
+    # Save_thumb = True
+    Save_thumb = False
 
     # img_size = (12,12) # Image size in inches
     img_size = (8,8) # Image size in inches
@@ -84,11 +85,11 @@ def main():
     # color = "velocity"
     # color = "all"
 
-    Save_anim = True
-    # Save_anim = False
+    # Save_anim = True
+    Save_anim = False
 
-    Save_ODE_anim = True
-    # Save_ODE_anim = False
+    # Save_ODE_anim = True
+    Save_ODE_anim = False
 
     # ODE_method = 'RK23'
     # ODE_method = 'RK45'
@@ -220,7 +221,7 @@ def ExecName(
         # p_list = [3]
         p = p_list[the_i%len(p_list)]
 
-        nc = 10
+        nc = 2
 
         mm = 1
         # mm_list = [1]
@@ -302,12 +303,34 @@ def ExecName(
         
         choreo.plot_all_2D_anim(x,nint_plot_anim,callfun,filename_output+'_ode.mp4',nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size,dnint=dnint,all_pos_trace=all_pos_ode,all_pos_points=all_pos_ode)
 
-# 
-#     if InvestigateStability:
-# 
-#         fun = lambda t,v : v
-#         gun = lambda t,x : choreo.
-# 
+
+    if InvestigateStability:
+        
+        nint = callfun[0]['nint_list'][callfun[0]["current_cvg_lvl"]]*10
+
+        fun,gun = choreo.GetTangentSystemDef(x,callfun,nint)
+
+        ndof = nbody*choreo.ndim
+
+        x0 = np.ascontiguousarray(np.stack((np.eye(ndof),np.zeros((ndof,ndof))),axis=1).reshape(-1))
+        v0 = np.ascontiguousarray(np.stack((np.zeros((ndof,ndof)),np.eye(ndof)),axis=1).reshape(-1))
+
+        t_span = (0.,1.)
+
+        xf,vf = choreo.SymplecticEuler(fun,gun,t_span,x0,v0,nint)
+
+        all_pos_vel = np.ascontiguousarray(np.stack((xf,vf),axis=0).reshape(2*ndof,2*ndof))
+
+
+        eig_vals,eig_vects = scipy.linalg.eig(all_pos_vel)
+
+        print(abs(eig_vals))
+
+        # print(eig_vects
+
+
+
+
 
 # 
 #     '''
