@@ -124,8 +124,12 @@ def main():
 
     GradActionThresh = 1e-8
 
-    Exec_Mul_Proc = True
-    # Exec_Mul_Proc = False
+    InvestigateStability = True
+    # InvestigateStability = False
+
+    # Exec_Mul_Proc = True
+    Exec_Mul_Proc = False
+
 
     if Exec_Mul_Proc:
 
@@ -178,6 +182,7 @@ def ExecName(
     min_n_steps_ode,
     atol_ode,
     rtol_ode,
+    InvestigateStability,
     ):
 
     print('')
@@ -288,21 +293,27 @@ def ExecName(
 
         t_eval = np.array([i/nint_plot_img for i in range(nint_plot_img)])
 
-        ode_res = scipy.integrate.solve_ivp(fun=choreo.Compute_ODE_RHS, t_span=(0.,1.), y0=y0, method=ODE_method, t_eval=t_eval, dense_output=False, events=None, vectorized=False, args=callfun,max_step=1./min_n_steps_ode,atol=atol_ode,rtol=rtol_ode)
+        fun = lambda t,y: choreo.Compute_ODE_RHS(t,y,callfun)
+
+        ode_res = scipy.integrate.solve_ivp(fun=fun, t_span=(0.,1.), y0=y0, method=ODE_method, t_eval=t_eval, dense_output=False, events=None, vectorized=False,max_step=1./min_n_steps_ode,atol=atol_ode,rtol=rtol_ode)
 
         all_pos_vel = ode_res['y'].reshape(2,nbody,choreo.ndim,nint_plot_img)
         all_pos_ode = all_pos_vel[0,:,:,:]
         
         choreo.plot_all_2D_anim(x,nint_plot_anim,callfun,filename_output+'_ode.mp4',nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size,dnint=dnint,all_pos_trace=all_pos_ode,all_pos_points=all_pos_ode)
 
+# 
+#     if InvestigateStability:
+# 
+#         fun = lambda t,v : v
+#         gun = lambda t,x : choreo.
+# 
 
 # 
-#     y0 = choreo.Compute_init_pos_vel(x,callfun).reshape(-1)
-#     t_eval = np.array([0.,1.])
-#     ode_res = scipy.integrate.solve_ivp(fun=choreo.Compute_ODE_RHS, t_span=(0.,1.), y0=y0, method=ODE_method, t_eval=t_eval, dense_output=False, events=None, vectorized=False, args=callfun,max_step=1./min_n_steps_ode,atol=atol_ode,rtol=rtol_ode)
-#     all_pos_vel = ode_res['y'].reshape(2,nbody,choreo.ndim,2)
-#     all_pos_ode = all_pos_vel[0,:,:,:]
-#     print(np.linalg.norm(all_pos_ode[:,:,0]-all_pos_ode[:,:,1]))
+#     '''
+#     dx/dt = f(t,v)
+#     dv/dt = g(t,v)
+#     '''
 
 
 if __name__ == "__main__":

@@ -234,7 +234,9 @@ def main():
 
             t_eval = np.array([i/nint_plot_img for i in range(nint_plot_img)])
 
-            ode_res = scipy.integrate.solve_ivp(fun=choreo.Compute_ODE_RHS, t_span=(0.,1.), y0=y0, method=ODE_method, t_eval=t_eval, dense_output=False, events=None, vectorized=False, args=callfun,max_step=1./min_n_steps_ode,atol=atol_ode,rtol=rtol_ode)
+            fun = lambda t,y: choreo.Compute_ODE_RHS(t,y,callfun)
+
+            ode_res = scipy.integrate.solve_ivp(fun=fun, t_span=(0.,1.), y0=y0, method=ODE_method, t_eval=t_eval, dense_output=False, events=None, vectorized=False,max_step=1./min_n_steps_ode,atol=atol_ode,rtol=rtol_ode)
 
             all_pos_vel = ode_res['y'].reshape(2,nbody,choreo.ndim,nint_plot_img)
             all_pos_ode = all_pos_vel[0,:,:,:]
@@ -247,26 +249,26 @@ def main():
         dt_list = [10**(-i) for i in range(13)]
         dy = np.random.rand(n_ddl)
 
-        fo = choreo.Compute_Auto_ODE_RHS(yo,callfun[0])
+        fo = choreo.Compute_Auto_ODE_RHS(yo,callfun)
 
         for dt in dt_list:
 
             ya = yo + dt*dy
-            fa = choreo.Compute_Auto_ODE_RHS(ya,callfun[0])
+            fa = choreo.Compute_Auto_ODE_RHS(ya,callfun)
             yb = yo - dt*dy
-            fb = choreo.Compute_Auto_ODE_RHS(yb,callfun[0])
+            fb = choreo.Compute_Auto_ODE_RHS(yb,callfun)
 
             dfdy_difffin = (fa-fb)/(2*dt)
 
-            dfdy_exact = choreo.Compute_Auto_JacMul_ODE_RHS(yo,dy,callfun[0])
+            dfdy_exact = choreo.Compute_Auto_JacMul_ODE_RHS(yo,dy,callfun)
 
             print('dt = ',dt)
             print('error = ',np.linalg.norm(dfdy_difffin-dfdy_exact))
             print('error_rel = ',np.linalg.norm(dfdy_difffin-dfdy_exact)/np.linalg.norm(dfdy_exact))
             print('')
 
-        Jac_Linopt = choreo.Compute_Auto_JacMul_ODE_RHS_LinOpt(yo,callfun[0])
-        Jac_Mat = choreo.Compute_Auto_JacMat_ODE_RHS(yo,callfun[0])
+        Jac_Linopt = choreo.Compute_Auto_JacMul_ODE_RHS_LinOpt(yo,callfun)
+        Jac_Mat = choreo.Compute_Auto_JacMat_ODE_RHS(yo,callfun)
 
         df1 = Jac_Linopt.dot(dy)
         df2 = Jac_Mat.dot(dy)
