@@ -241,17 +241,6 @@ def main():
             
             choreo.plot_all_2D_anim(x,nint_plot_anim,callfun,filename_output+'_ode.mp4',nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size,dnint=dnint,all_pos_trace=all_pos_ode,all_pos_points=all_pos_ode)
 
-
-        y0 = choreo.Compute_init_pos_vel(x,callfun)
-        y1 = choreo.Compute_init_pos_vel_old(x,callfun)
-
-        print(y0.shape)
-        print(y1.shape)
-
-        print('error_pos_vel = ',np.linalg.norm(y0-y1))
-        return
-
-
         n_ddl = nbody*choreo.ndim*2
         yo = choreo.Compute_init_pos_vel(x,callfun).reshape(-1)
 

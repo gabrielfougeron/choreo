@@ -136,7 +136,7 @@ def Compute_init_pos_vel(x,callfun):
 
     all_pos_vel = ComputeAllPosVel(x,callfun)
 
-    return all_pos_vel[:,:,:,0]
+    return np.ascontiguousarray(all_pos_vel[:,:,:,0])
 
 def Compute_action_onlygrad(x,callfun):
     # Wrapper function that returns ONLY the gradient of the action with respect to the parameters 
