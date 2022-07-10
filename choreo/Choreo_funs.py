@@ -129,7 +129,6 @@ def ComputeAllPosVel(x,callfun,nint=None):
 
     all_vel_b = the_irfft(all_coeffs_nosym,n=nint,axis=2)*nint
 
-    # return np.ascontiguousarray(np.stack((all_pos_b,all_vel_b),axis=0))
     return np.stack((all_pos_b,all_vel_b),axis=0)
 
 def Compute_init_pos_vel(x,callfun):
@@ -1694,7 +1693,7 @@ def SymplecticEuler(fun,gun,t_span,x0,v0,nint):
 # 
 #         x_next = x + dt * fun(t,v)
 #         v_next = v + dt * gun(t,x_next)
-#         
+# #         
         x = x_next
         v = v_next
 
