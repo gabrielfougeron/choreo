@@ -28,7 +28,7 @@ import datetime
 def main():
 
 
-    input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/2/')
+    input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/3/')
     # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/copy/')
     # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/keep/13')
 
@@ -47,16 +47,16 @@ def main():
 #                 input_names_list.append(the_name)
 
 
-    # ''' Include all files in folder '''
-    # input_names_list = []
-    # for file_path in os.listdir(input_folder):
-    #     file_path = os.path.join(input_folder, file_path)
-    #     file_root, file_ext = os.path.splitext(os.path.basename(file_path))
-    #     
-    #     if (file_ext == '.txt' ):
-    #         input_names_list.append(file_root)
+    ''' Include all files in folder '''
+    input_names_list = []
+    for file_path in os.listdir(input_folder):
+        file_path = os.path.join(input_folder, file_path)
+        file_root, file_ext = os.path.splitext(os.path.basename(file_path))
+        
+        if (file_ext == '.txt' ):
+            input_names_list.append(file_root)
 
-    input_names_list = ['00001']
+    # input_names_list = ['00001']
 
     store_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/mod')
     # store_folder = input_folder
@@ -221,7 +221,7 @@ def ExecName(
         # p_list = [3]
         p = p_list[the_i%len(p_list)]
 
-        nc = 2
+        nc = 3
 
         mm = 1
         # mm_list = [1]
@@ -319,13 +319,17 @@ def ExecName(
 
         xf,vf = choreo.SymplecticEuler(fun,gun,t_span,x0,v0,nint)
 
-        all_pos_vel = np.ascontiguousarray(np.stack((xf,vf),axis=0).reshape(2*ndof,2*ndof))
+        all_pos_vel = np.ascontiguousarray(np.stack((xf,vf),axis=1).reshape(2*ndof,2*ndof))
+
+        yo = choreo.Compute_init_pos_vel(x,callfun).reshape(-1)
+        zo = choreo.Compute_Auto_ODE_RHS(yo,callfun)
+        print(np.linalg.norm(all_pos_vel.dot(zo)-zo))
 
 
         eig_vals,eig_vects = scipy.linalg.eig(all_pos_vel)
 
-        print(abs(eig_vals))
-
+        # print(abs(eig_vals))
+# 
         # print(eig_vects
 
 
