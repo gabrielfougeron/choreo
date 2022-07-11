@@ -1726,6 +1726,7 @@ def SymplecticEuler_Vfirst(fun,gun,t_span,x0,v0,nint):
 
 SymplecticEuler = SymplecticEuler_Xfirst
 
+
 def SymplecticStormerVerlet_XV(fun,gun,t_span,x0,v0,nint):
 
     t = t_span[0]
@@ -1738,54 +1739,32 @@ def SymplecticStormerVerlet_XV(fun,gun,t_span,x0,v0,nint):
     for iint in range(nint):
  
         v_half = v + dt_half * gun(t,x)
+        x_half = x + dt_half * fun(t,v_half)
 
         t += dt_half
 
-        x_next = x + dt * fun(t,v_half)
+        x_next = x_half + dt_half * fun(t,v_half)
+
+
+        t += dt_half
+
         v_next = v_half + dt_half * gun(t,x_next)
  
         x = x_next
         v = v_next
 
-        t += dt_half
-
     return x,v
 
-    
-# def SymplecticStormerVerlet_XV(fun,gun,t_span,x0,v0,nint):
-# 
-#     t = t_span[0]
-#     dt = (t_span[1] - t_span[0]) / nint
-#     dt_half = dt / 2
-# 
-#     x = x0
-#     v = v0
-# 
-#     for iint in range(nint):
-#  
-#         v_half = v + dt_half * gun(t,x)
-#         x_half = x + dt_half * fun(t,v_half)
-# 
-#         t += dt_half
-# 
-#         x_next = x_half + dt_half * fun(t,v_half)
-#         v_next = v_half + dt_half * gun(t,x_next)
-#  
-#         x = x_next
-#         v = v_next
-# 
-#         t += dt_half
-# 
-#     return x,v
 
 
 
 
-
+# 
+# 
 def SymplecticStormerVerlet_VX(fun,gun,t_span,x0,v0,nint):
 
     t = t_span[0]
-    dt = (t_span[1] - t_span[0]) / nint
+    dt = (t_span[1] -t_span[0]) / nint
     dt_half = dt / 2
 
     x = x0
@@ -1794,45 +1773,19 @@ def SymplecticStormerVerlet_VX(fun,gun,t_span,x0,v0,nint):
     for iint in range(nint):
 
         x_half = x + dt_half * fun(t,v)
- 
+
         t += dt_half
 
         v_next = v + dt * gun(t,x_half)
         x_next = x_half + dt_half * fun(t,v_next)
- 
-        x = x_next
-        v = v_next
 
         t += dt_half
 
+        x = x_next
+        v = v_next
+
+
     return x,v
-
-
-# def SymplecticStormerVerlet_VX(fun,gun,t_span,x0,v0,nint):
-# 
-#     t = t_span[0]
-#     dt = (t_span[1] -t_span[0]) / nint
-#     dt_half = dt / 2
-# 
-#     x = x0
-#     v = v0
-# 
-#     for iint in range(nint):
-# 
-#         x_half = x + dt_half * fun(t,v)
-#         v_half = v + dt_half * gun(t,x_half)
-#  
-#         t += dt_half
-# 
-#         v_next = v_half + dt_half * gun(t,x_half)
-#         x_next = x_half + dt_half * fun(t,v_next)
-#  
-#         x = x_next
-#         v = v_next
-# 
-#         t += dt_half
-# 
-#     return x,v
 
 
 
