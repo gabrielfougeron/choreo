@@ -47,16 +47,16 @@ def main():
 #                 input_names_list.append(the_name)
 
 
-    ''' Include all files in folder '''
-    input_names_list = []
-    for file_path in os.listdir(input_folder):
-        file_path = os.path.join(input_folder, file_path)
-        file_root, file_ext = os.path.splitext(os.path.basename(file_path))
-        
-        if (file_ext == '.txt' ):
-            input_names_list.append(file_root)
+    # ''' Include all files in folder '''
+    # input_names_list = []
+    # for file_path in os.listdir(input_folder):
+    #     file_path = os.path.join(input_folder, file_path)
+    #     file_root, file_ext = os.path.splitext(os.path.basename(file_path))
+    #     
+    #     if (file_ext == '.txt' ):
+    #         input_names_list.append(file_root)
 
-    # input_names_list = ['00001']
+    input_names_list = ['00001']
 
     store_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/mod')
     # store_folder = input_folder
@@ -305,42 +305,117 @@ def ExecName(
 
 
     if InvestigateStability:
-        
-        nint = callfun[0]['nint_list'][callfun[0]["current_cvg_lvl"]]*10
 
-        fun,gun = choreo.GetTangentSystemDef(x,callfun,nint)
+        # SymplecticMethod = 'SymplecticEuler'
+        # SymplecticMethod = 'SymplecticEuler_Xfirst'
+        # SymplecticMethod = 'SymplecticEuler_Vfirst'
+        # SymplecticMethod = 'SymplecticStormerVerlet'
+        # SymplecticMethod = 'SymplecticStormerVerlet_XV'
+        SymplecticMethod = 'SymplecticStormerVerlet_VX'
+        SymplecticIntegrator = choreo.GetSymplecticIntegrator(SymplecticMethod)
+
+        nint = callfun[0]['nint_list'][callfun[0]["current_cvg_lvl"]]*1
+
+        fun,gun = choreo.GetTangentSystemDef(x,callfun,nint,method=SymplecticMethod)
 
         ndof = nbody*choreo.ndim
 
-        x0 = np.ascontiguousarray(np.stack((np.eye(ndof),np.zeros((ndof,ndof))),axis=1).reshape(-1))
-        v0 = np.ascontiguousarray(np.stack((np.zeros((ndof,ndof)),np.eye(ndof)),axis=1).reshape(-1))
+        x0 = np.ascontiguousarray(np.concatenate((np.eye(ndof),np.zeros((ndof,ndof))),axis=1).reshape(-1))
+        v0 = np.ascontiguousarray(np.concatenate((np.zeros((ndof,ndof)),np.eye(ndof)),axis=1).reshape(-1))
 
         t_span = (0.,1.)
 
-        xf,vf = choreo.SymplecticEuler(fun,gun,t_span,x0,v0,nint)
+        xf,vf = SymplecticIntegrator(fun,gun,t_span,x0,v0,nint)
+        MonodromyMat = np.ascontiguousarray(np.concatenate((xf,vf),axis=0).reshape(2*ndof,2*ndof))
 
-        all_pos_vel = np.ascontiguousarray(np.stack((xf,vf),axis=1).reshape(2*ndof,2*ndof))
+        '''
+        # Checks whether the Monodromy matrix integration process (approximately) has the exponential property
+        
+        n_period = 5
+        t_span = (0.,1.*n_period)
+        xfp,vfp = SymplecticIntegrator(fun,gun,t_span,x0,v0,nint*n_period)
+        MonodromyMatp = np.ascontiguousarray(np.concatenate((xfp,vfp),axis=0).reshape(2*ndof,2*ndof))
+        Mono_p = np.eye(2*ndof)
+        for ip in range(n_period):
+            Mono_p = np.dot(Mono_p,MonodromyMat)
+        print(np.linalg.norm(Mono_p - MonodromyMatp))
+        print(np.linalg.norm(Mono_p - MonodromyMatp)/np.linalg.norm(Mono_p))
+
+        '''
+
+        # Evaluates the relative accuracy of the Monodromy matrix integration process
+        # zo should be an eigenvector of the Monodromy matrix, with eigenvalue 1
 
         yo = choreo.Compute_init_pos_vel(x,callfun).reshape(-1)
         zo = choreo.Compute_Auto_ODE_RHS(yo,callfun)
-        print(np.linalg.norm(all_pos_vel.dot(zo)-zo))
 
-
-        eig_vals,eig_vects = scipy.linalg.eig(all_pos_vel)
-
-        # print(abs(eig_vals))
-# 
-        # print(eig_vects
-
-
-
+        # print(np.linalg.norm(MonodromyMat.dot(zo)-zo))
+        # print(np.linalg.norm(MonodromyMat.dot(zo)-zo)/np.linalg.norm(zo))
 
 
 # 
-#     '''
-#     dx/dt = f(t,v)
-#     dv/dt = g(t,v)
-#     '''
+#         eig_vals,eig_vects = scipy.linalg.eig(MonodromyMat)
+# 
+#         print(abs(eig_vals))
+# # 
+#         print(eig_vects)
+
+
+
+
+
+#         nint = 1000
+# 
+#         fun = lambda t,y:  y
+#         gun = lambda t,x: -(4*np.pi*np.pi)*x
+# 
+#         x0 = np.array([1.,0.])
+#         v0 = np.array([0.,1.])
+# 
+#         t_span = (0.,1.)
+# 
+#         xf,vf = SymplecticIntegrator(fun,gun,t_span,x0,v0,nint)
+# 
+#         sol = np.ascontiguousarray(np.concatenate((xf,vf),axis=0).reshape(2,2))
+# 
+
+        '''
+            # WOLFRAM
+            y'' = - exp(y)
+            y(x) = - 2 * ln( cosh(t / sqrt(2) ))
+        '''
+
+
+        # SymplecticMethod = 'SymplecticEuler'
+        # SymplecticMethod = 'SymplecticEuler_Xfirst'
+        # SymplecticMethod = 'SymplecticEuler_Vfirst'
+        # SymplecticMethod = 'SymplecticStormerVerlet'
+        # SymplecticMethod = 'SymplecticStormerVerlet_XV'
+        SymplecticMethod = 'SymplecticStormerVerlet_VX'
+        SymplecticIntegrator = choreo.GetSymplecticIntegrator(SymplecticMethod)
+
+
+        invsqrt2 = 1./np.sqrt(2.)
+        sqrt2 = np.sqrt(2.)
+        ex_sol = lambda t : np.array( [ -2*np.log(np.cosh(invsqrt2*t)) , -sqrt2*np.tanh(invsqrt2*t) ]  )
+
+        fun = lambda t,y:  y
+        gun = lambda t,x: -np.exp(x)
+
+        x0 = np.array([ex_sol(0)[0]])
+        v0 = np.array([ex_sol(0)[1]])
+
+        t_span = (0.,1.)
+
+        for nint in [10,100,1000,10000,100000]:
+
+            xf,vf = SymplecticIntegrator(fun,gun,t_span,x0,v0,nint)
+
+            sol = np.ascontiguousarray(np.concatenate((xf,vf),axis=0).reshape(2))
+
+            print(f'{np.linalg.norm(sol-ex_sol(t_span[1])):e}')
+
+
 
 
 if __name__ == "__main__":
