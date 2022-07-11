@@ -1609,6 +1609,23 @@ def Compute_Auto_ODE_RHS(x,callfun):
 
 Compute_ODE_RHS = lambda t,x,callfun : Compute_Auto_ODE_RHS(x,callfun)
 
+def GetSymplecticODEDef(callfun):
+
+    args = callfun[0]
+
+    def fun(t,v):
+        return v
+
+    def gun(t,x):
+        return Compute_Forces_Cython(
+            x.reshape(args['nbody'],ndim),
+            args['mass'],
+            args['nbody'],
+            ).reshape(-1)
+
+    return fun,gun
+
+
 def Compute_Auto_JacMat_ODE_RHS(x,callfun):
 
     args = callfun[0]
@@ -1790,7 +1807,6 @@ def SymplecticStormerVerlet_VX(fun,gun,t_span,x0,v0,nint):
 
 
 SymplecticStormerVerlet = SymplecticStormerVerlet_VX
-# SymplecticStormerVerlet = SymplecticStormerVerlet_XV
 
 def GetSymplecticIntegrator(method):
 
@@ -1826,7 +1842,7 @@ def GetTangentSystemDef(x,callfun,nint=None,method = 'SymplecticEuler'):
             return v
 
         def gun(t,x):
-            i = int(t*nint) % nint
+            i = round(t*nint) % nint
 
             cur_pos = np.ascontiguousarray(all_pos_vel[0,:,:,i])
 
