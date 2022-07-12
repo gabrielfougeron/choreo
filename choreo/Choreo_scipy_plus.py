@@ -63,14 +63,14 @@ def SymplecticEuler_Xfirst(fun,gun,t_span,x0,v0,nint):
     for iint in range(nint):
  
         v_next = v + dt * gun(t,x)
+        t += dt
+
         x_next = x + dt * fun(t,v_next)
  
         x = x_next
         v = v_next
 
-        t += dt
-
-    return x,v
+    return x,v    
 
 def SymplecticEuler_Vfirst(fun,gun,t_span,x0,v0,nint):
 
@@ -102,7 +102,6 @@ def SymplecticEuler_Vfirst(fun,gun,t_span,x0,v0,nint):
 
 SymplecticEuler = SymplecticEuler_Xfirst
 
-
 def SymplecticStormerVerlet_XV(fun,gun,t_span,x0,v0,nint):
 
     t = t_span[0]
@@ -131,7 +130,6 @@ def SymplecticStormerVerlet_XV(fun,gun,t_span,x0,v0,nint):
 
     return x,v
 
-
 def SymplecticStormerVerlet_VX(fun,gun,t_span,x0,v0,nint):
 
     t = t_span[0]
@@ -155,7 +153,6 @@ def SymplecticStormerVerlet_VX(fun,gun,t_span,x0,v0,nint):
         x = x_next
         v = v_next
 
-
     return x,v
 
 SymplecticStormerVerlet = SymplecticStormerVerlet_VX
@@ -169,7 +166,7 @@ all_SymplecticIntegrators = {
     'SymplecticStormerVerlet_VX' : SymplecticStormerVerlet_VX,
     }
 
-all_unique_SymplecticIntegrators = {
+# all_unique_SymplecticIntegrators = {
     'SymplecticEuler_Xfirst' : SymplecticEuler_Xfirst,
     'SymplecticEuler_Vfirst' : SymplecticEuler_Vfirst,
     'SymplecticStormerVerlet_XV' : SymplecticStormerVerlet_XV,
