@@ -16,6 +16,7 @@ import shutil
 import time
 import builtins
 
+from choreo.Choreo_scipy_plus import *
 from choreo.Choreo_funs import *
 from choreo.Choreo_plot import *
 
