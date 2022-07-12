@@ -37,6 +37,7 @@ from choreo.Choreo_cython_funs import Compute_MinDist_Cython,Compute_Loop_Dist_b
 from choreo.Choreo_cython_funs import Compute_Forces_Cython,Compute_JacMat_Forces_Cython,Compute_JacMul_Forces_Cython
 from choreo.Choreo_cython_funs import the_irfft,the_rfft,the_ihfft
 
+from choreo.Choreo_scipy_plus import *
 
 def Pick_Named_Args_From_Dict(fun,the_dict,MissingArgsAreNone = True):
 # def Pick_Named_Args_From_Dict(fun,the_dict,MissingArgsAreNone = False):
@@ -354,29 +355,7 @@ def null_space_sparseqr(AT):
             iker += 1
             
         return sp.coo_matrix((Q.data[mask],(Q.row[mask],Q.col[mask]-rank)),shape=(nrow,nrow-rank))
-
-class current_best:
-    # Class meant to store the best solution during scipy optimization / root finding
-    # Useful since scipy does not return the best solution, but rathe the solution at the last iteration.
-    
-    def __init__(self,x,f):
-        
-        self.x = x
-        self.f = f
-        self.f_norm = np.linalg.norm(f)
-        
-    def update(self,x,f):
-        
-        f_norm = np.linalg.norm(f)
-        
-        if (f_norm < self.f_norm):
-            self.x = x
-            self.f = f
-            self.f_norm = f_norm
-
-    def get_best(self):
-        return self.x,self.f,self.f_norm
-        
+     
 class ChoreoSym():
     # This class defines the symmetries of the action
     # Useful to detect loops and constraints.
@@ -1625,7 +1604,6 @@ def GetSymplecticODEDef(callfun):
 
     return fun,gun
 
-
 def Compute_Auto_JacMat_ODE_RHS(x,callfun):
 
     args = callfun[0]
@@ -1683,143 +1661,6 @@ def Compute_Auto_JacMul_ODE_RHS_LinOpt(x,callfun):
     return sp.linalg.LinearOperator((2*nbody*ndim,2*nbody*ndim),
         matvec =  (lambda dx,xl=x,callfunl=callfun : Compute_Auto_JacMul_ODE_RHS(xl,dx,callfunl)),
         rmatvec = (lambda dx,xl=x,callfunl=callfun : Compute_Auto_JacMul_ODE_RHS(xl,dx,callfunl)))
-
-
-def SymplecticEuler_Xfirst(fun,gun,t_span,x0,v0,nint):
-
-    '''
-    dx/dt = f(t,v)
-    dv/dt = g(t,v)
-    
-    2 version. cf Wikipedia : https://en.wikipedia.org/wiki/Semi-implicit_Euler_method
-
-    '''
-
-    t = t_span[0]
-    dt = (t_span[1] - t_span[0]) / nint
-
-    x = x0
-    v = v0
-
-    for iint in range(nint):
- 
-        v_next = v + dt * gun(t,x)
-        x_next = x + dt * fun(t,v_next)
- 
-        x = x_next
-        v = v_next
-
-        t += dt
-
-    return x,v
-
-def SymplecticEuler_Vfirst(fun,gun,t_span,x0,v0,nint):
-
-    '''
-    dx/dt = f(t,v)
-    dv/dt = g(t,v)
-    
-    2 version. cf Wikipedia : https://en.wikipedia.org/wiki/Semi-implicit_Euler_method
-
-    '''
-
-    t = t_span[0]
-    dt = (t_span[1] - t_span[0]) / nint
-
-    x = x0
-    v = v0
-
-    for iint in range(nint):
-
-        x_next = x + dt * fun(t,v)
-        v_next = v + dt * gun(t,x_next)
-        
-        x = x_next
-        v = v_next
-
-        t += dt
-
-    return x,v
-
-SymplecticEuler = SymplecticEuler_Xfirst
-
-
-def SymplecticStormerVerlet_XV(fun,gun,t_span,x0,v0,nint):
-
-    t = t_span[0]
-    dt = (t_span[1] - t_span[0]) / nint
-    dt_half = dt / 2
-
-    x = x0
-    v = v0
-
-    for iint in range(nint):
- 
-        v_half = v + dt_half * gun(t,x)
-        x_half = x + dt_half * fun(t,v_half)
-
-        t += dt_half
-
-        x_next = x_half + dt_half * fun(t,v_half)
-
-
-        t += dt_half
-
-        v_next = v_half + dt_half * gun(t,x_next)
- 
-        x = x_next
-        v = v_next
-
-    return x,v
-
-
-
-
-
-# 
-# 
-def SymplecticStormerVerlet_VX(fun,gun,t_span,x0,v0,nint):
-
-    t = t_span[0]
-    dt = (t_span[1] -t_span[0]) / nint
-    dt_half = dt / 2
-
-    x = x0
-    v = v0
-
-    for iint in range(nint):
-
-        x_half = x + dt_half * fun(t,v)
-
-        t += dt_half
-
-        v_next = v + dt * gun(t,x_half)
-        x_next = x_half + dt_half * fun(t,v_next)
-
-        t += dt_half
-
-        x = x_next
-        v = v_next
-
-
-    return x,v
-
-
-
-SymplecticStormerVerlet = SymplecticStormerVerlet_VX
-
-def GetSymplecticIntegrator(method):
-
-    method_dict = {
-        'SymplecticEuler' : SymplecticEuler,
-        'SymplecticEuler_Xfirst' : SymplecticEuler_Xfirst,
-        'SymplecticEuler_Vfirst' : SymplecticEuler_Vfirst,
-        'SymplecticStormerVerlet' : SymplecticStormerVerlet,
-        'SymplecticStormerVerlet_XV' : SymplecticStormerVerlet_XV,
-        'SymplecticStormerVerlet_VX' : SymplecticStormerVerlet_VX,
-        }
-
-    return method_dict[method]
 
 def GetTangentSystemDef(x,callfun,nint=None,method = 'SymplecticEuler'):
 

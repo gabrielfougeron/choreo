@@ -29,9 +29,9 @@ import datetime
 def main():
 
 
-    input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/2/')
+    input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/3/')
     # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/copy/')
-    # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/keep/13')
+    # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/keep/10')
 
 #     ''' Include all files in tree '''
 #     input_names_list = []
@@ -47,15 +47,15 @@ def main():
 #                 the_name = file_path[len(input_folder):]
 #                 input_names_list.append(the_name)
 
-# 
-#     ''' Include all files in folder '''
-#     input_names_list = []
-#     for file_path in os.listdir(input_folder):
-#         file_path = os.path.join(input_folder, file_path)
-#         file_root, file_ext = os.path.splitext(os.path.basename(file_path))
-#         
-#         if (file_ext == '.txt' ):
-#             input_names_list.append(file_root)
+
+    # ''' Include all files in folder '''
+    # input_names_list = []
+    # for file_path in os.listdir(input_folder):
+    #     file_path = os.path.join(input_folder, file_path)
+    #     file_root, file_ext = os.path.splitext(os.path.basename(file_path))
+    #     
+    #     if (file_ext == '.txt' ):
+    #         input_names_list.append(file_root)
 
     input_names_list = ['00001']
 
@@ -126,11 +126,11 @@ def main():
 
     GradActionThresh = 1e-8
 
-    InvestigateStability = True
-    # InvestigateStability = False
+    # InvestigateStability = True
+    InvestigateStability = False
 
-    # InvestigateIntegration = True
-    InvestigateIntegration = False
+    InvestigateIntegration = True
+    # InvestigateIntegration = False
 
     # Exec_Mul_Proc = True
     Exec_Mul_Proc = False
@@ -226,7 +226,7 @@ def ExecName(
         # p_list = [3]
         p = p_list[the_i%len(p_list)]
 
-        nc = 2
+        nc = 3
 
         mm = 1
         # mm_list = [1]
@@ -316,13 +316,21 @@ def ExecName(
         print('')
         
 # 
-#         # SymplecticMethod = 'SymplecticEuler'
-        SymplecticMethod = 'SymplecticStormerVerlet'
+        SymplecticMethod = 'SymplecticEuler'
+        # SymplecticMethod = 'SymplecticStormerVerlet'
+
+
+        # SymplecticMethod = 'SymplecticEuler_Xfirst'
+        # SymplecticMethod = 'SymplecticEuler_Vfirst'
+        # SymplecticMethod = 'SymplecticStormerVerlet_XV'
+        # SymplecticMethod = 'SymplecticStormerVerlet_VX'
+
+
         SymplecticIntegrator = choreo.GetSymplecticIntegrator(SymplecticMethod)
 
 
-        for nint_mul in [1,10,100,1000,10000]:
-        # for nint_mul in [1,10,100,1000]:
+        # for nint_mul in [1,10,100,1000,10000]:
+        for nint_mul in [1,10,100,1000]:
         # for nint_mul in [1000]:
 
             nint = callfun[0]['nint_list'][callfun[0]["current_cvg_lvl"]]*nint_mul
@@ -371,6 +379,7 @@ def ExecName(
             idx_eig_vals = np.argsort(eig_vals_abs)
     
             print(eig_vals_abs[idx_eig_vals])
+            # print(eig_vals_abs[idx_eig_vals[-1]])
     # 
             # print(eig_vects)
 
@@ -382,43 +391,62 @@ def ExecName(
         print('')
         
         # SymplecticMethod = 'SymplecticEuler'
-        SymplecticMethod = 'SymplecticStormerVerlet'
-        SymplecticIntegrator = choreo.GetSymplecticIntegrator(SymplecticMethod)
+        # SymplecticMethod = 'SymplecticStormerVerlet'
 
 
-        for nint_mul in [1,10,100,1000]:
-        # for nint_mul in [10,100,1000]:
+        # SymplecticMethod = 'SymplecticEuler_Xfirst'
+        # SymplecticMethod = 'SymplecticEuler_Vfirst'
+        # SymplecticMethod = 'SymplecticStormerVerlet_XV'
+        # SymplecticMethod = 'SymplecticStormerVerlet_VX'
 
-            nint = callfun[0]['nint_list'][callfun[0]["current_cvg_lvl"]]*nint_mul
+        # the_integrators = {SymplecticMethod:choreo.GetSymplecticIntegrator(SymplecticMethod)}
 
-            ndim_ode = nbody*choreo.ndim
+        the_integrators = choreo.all_unique_SymplecticIntegrators
 
+        for SymplecticMethod,SymplecticIntegrator in the_integrators.items() :
 
-            all_pos_vel = choreo.ComputeAllPosVel(x,callfun)
+            print('')
+            print('SymplecticMethod : ',SymplecticMethod)
+            print('')
 
-            y0 = np.ascontiguousarray(all_pos_vel[:,:,:,0].reshape(-1))
+            for nint_mul in [1,10,100,1000]:
+            # for nint_mul in [10,100,1000]:
 
-# 
-# 
-#             t_span = (0.,0.5)
-#             nint = nint//2
-#             yf_exact = all_pos_vel[:,:,:,callfun[0]['nint_list'][callfun[0]["current_cvg_lvl"]]//2].reshape(-1)
-# # 
-            t_span = (0.,1.)
-            yf_exact = y0
+                nint = callfun[0]['nint_list'][callfun[0]["current_cvg_lvl"]]*nint_mul
 
+                ndim_ode = nbody*choreo.ndim
 
 
-            x0 = y0[0       :  ndim_ode]
-            v0 = y0[ndim_ode:2*ndim_ode]
+                all_pos_vel = choreo.ComputeAllPosVel(x,callfun)
 
-            xf_exact = yf_exact[0       :  ndim_ode]
-            vf_exact = yf_exact[ndim_ode:2*ndim_ode]
+                y0 = np.ascontiguousarray(all_pos_vel[:,:,:,0].reshape(-1))
 
-            fun,gun = choreo.GetSymplecticODEDef(callfun)
-            xf,vf = SymplecticIntegrator(fun,gun,t_span,x0,v0,nint)
+    # 
+    # 
+                t_span = (0.,0.5)
+                nint = nint//2
+                yf_exact = all_pos_vel[:,:,:,callfun[0]['nint_list'][callfun[0]["current_cvg_lvl"]]//2].reshape(-1)
+    # # # # 
+    #             t_span = (0.,1.)
+    #             yf_exact = y0
 
-            print(f'{np.linalg.norm(xf_exact-xf)/np.linalg.norm(xf_exact)+np.linalg.norm(vf_exact-vf)/np.linalg.norm(vf_exact):e}')
+
+
+                x0 = y0[0       :  ndim_ode]
+                v0 = y0[ndim_ode:2*ndim_ode]
+
+                xf_exact = yf_exact[0       :  ndim_ode]
+                vf_exact = yf_exact[ndim_ode:2*ndim_ode]
+
+                fun,gun = choreo.GetSymplecticODEDef(callfun)
+
+                t_beg= time.perf_counter_ns()
+                xf,vf = SymplecticIntegrator(fun,gun,t_span,x0,v0,nint)
+                t_end = time.perf_counter_ns()
+                One_sec = 1e9
+
+
+                print(f'error : {np.linalg.norm(xf_exact-xf)/np.linalg.norm(xf_exact)+np.linalg.norm(vf_exact-vf)/np.linalg.norm(vf_exact):e} time : {(t_end-t_beg)/One_sec:f}')
 
 
 
