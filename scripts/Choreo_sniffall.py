@@ -39,20 +39,21 @@ def main(the_i=0):
 
 
     # p = 1
-    p = 0
+    # p = 0
     # p_list = [1,2,3,4]
     # p = p_list[the_i%len(p_list)]
 
-    nc = 2
+    # nc = 2
 
     # mm = 2
-    mm_list = [1,2]
-    mm = mm_list[the_i%len(mm_list)]
+    # mm_list = [1,2]
+    # mm = mm_list[the_i%len(mm_list)]
 
+    SymName = None
     LookForTarget = False
     # nbpl=[1,2,3,4,5,6]
-    nbpl=[nc]
-    # nbpl=[1,1,1,1]
+    # nbpl=[nc]
+    nbpl=[1,1,1]
     # nbpl=[2,3,5]
 
     # the_lcm = m.lcm(*nbpl)
@@ -68,20 +69,20 @@ def main(the_i=0):
     #     'q'     : nc,
     # })
 
-    # Sym_list,nbody = choreo.Make2DChoreoSymManyLoops(nbpl=nbpl,SymName=SymName)
+    Sym_list,nbody = choreo.Make2DChoreoSymManyLoops(nbpl=nbpl,SymName=SymName)
     # Sym_list,nbody = choreo.Make2DChoreoSymManyLoops(nbpl=nbpl,SymType=SymType)
 
-    SymType = {
-        'name'  : 'D',
-        'n'     : nc,
-        'm'     : mm,
-        'l'     : 0,
-        'k'     : 1,
-        'p'     : p,
-        'q'     : nc,
-    }
-    Sym_list = choreo.Make2DChoreoSym(SymType,range(nc))
-    nbody = nc
+    # SymType = {
+    #     'name'  : 'D',
+    #     'n'     : nc,
+    #     'm'     : mm,
+    #     'l'     : 0,
+    #     'k'     : 1,
+    #     'p'     : p,
+    #     'q'     : nc,
+    # }
+    # Sym_list = choreo.Make2DChoreoSym(SymType,range(nc))
+    # nbody = nc
 
     mass = np.ones((nbody),dtype=np.float64)
 
@@ -161,7 +162,7 @@ def main(the_i=0):
     # ncoeff_init = 102
     # ncoeff_init = 800
     # ncoeff_init = 201   
-    ncoeff_init = nc*40
+    ncoeff_init = 512
     # ncoeff_init = the_lcm
     
     # print(the_lcm)
@@ -179,8 +180,8 @@ def main(the_i=0):
 
     # krylov_method = 'lgmres'
     # krylov_method = 'gmres'
-    # krylov_method = 'bicgstab'
-    krylov_method = 'cgs'
+    krylov_method = 'bicgstab'
+    # krylov_method = 'cgs'
     # krylov_method = 'minres'
     # krylov_method = 'tfqmr'
 
@@ -251,22 +252,22 @@ def main(the_i=0):
 
 
 
-if __name__ == "__main__":
-    main(0)
-#    
-# # 
 # if __name__ == "__main__":
+#     main(0)
+#    
 # 
-#     n = multiprocessing.cpu_count()
-#     # n = 3
-#     
-#     print(f"Executing with {n} workers")
-#     
-#     with concurrent.futures.ProcessPoolExecutor(max_workers=n) as executor:
-#         
-#         res = []
-#         for i in range(1,n+1):
-#             res.append(executor.submit(main,i))
-#             time.sleep(0.01)
+if __name__ == "__main__":
+
+    n = multiprocessing.cpu_count()
+    # n = 3
+    
+    print(f"Executing with {n} workers")
+    
+    with concurrent.futures.ProcessPoolExecutor(max_workers=n) as executor:
+        
+        res = []
+        for i in range(1,n+1):
+            res.append(executor.submit(main,i))
+            time.sleep(0.01)
 
  

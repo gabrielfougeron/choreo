@@ -166,7 +166,7 @@ all_SymplecticIntegrators = {
     'SymplecticStormerVerlet_VX' : SymplecticStormerVerlet_VX,
     }
 
-# all_unique_SymplecticIntegrators = {
+all_unique_SymplecticIntegrators = {
     'SymplecticEuler_Xfirst' : SymplecticEuler_Xfirst,
     'SymplecticEuler_Vfirst' : SymplecticEuler_Vfirst,
     'SymplecticStormerVerlet_XV' : SymplecticStormerVerlet_XV,
