@@ -1667,7 +1667,7 @@ def GetTangentSystemDef(x,callfun,nint=None,method = 'SymplecticEuler'):
         args = callfun[0]
         nbody = args['nbody']
         mass = args['mass']
-
+        ndof = nbody*ndim
 
         if nint is None:
             nint = args['nint_list'][args["current_cvg_lvl"]]
@@ -1687,11 +1687,14 @@ def GetTangentSystemDef(x,callfun,nint=None,method = 'SymplecticEuler'):
 
             cur_pos = np.ascontiguousarray(all_pos_vel[0,:,:,i])
 
-            J = Compute_JacMat_Forces_Cython(cur_pos,args['mass'],nbody).reshape(nbody*ndim,nbody*ndim)
+            J = Compute_JacMat_Forces_Cython(cur_pos,mass,nbody).reshape(nbody*ndim,nbody*ndim)
             
             return J.dot(x.reshape(nbody*ndim,2*nbody*ndim)).reshape(-1)
 
-        return fun,gun
+        x0 = np.ascontiguousarray(np.concatenate((np.eye(ndof),np.zeros((ndof,ndof))),axis=1).reshape(-1))
+        v0 = np.ascontiguousarray(np.concatenate((np.zeros((ndof,ndof)),np.eye(ndof)),axis=1).reshape(-1))
+
+        return fun,gun,x0,v0
 
 
 
