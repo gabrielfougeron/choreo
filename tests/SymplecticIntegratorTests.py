@@ -34,11 +34,11 @@ test_names = [
 ]
 
 # SymplecticMethod = 'SymplecticEuler'
-SymplecticMethod = 'SymplecticEuler_Xfirst'
+# SymplecticMethod = 'SymplecticEuler_Xfirst'
 # SymplecticMethod = 'SymplecticEuler_Vfirst'
 # SymplecticMethod = 'SymplecticStormerVerlet'
 # SymplecticMethod = 'SymplecticStormerVerlet_XV'   
-# SymplecticMethod = 'SymplecticStormerVerlet_VX'
+SymplecticMethod = 'SymplecticStormerVerlet_VX'
 SymplecticIntegrator = choreo.GetSymplecticIntegrator(SymplecticMethod)
 
 
