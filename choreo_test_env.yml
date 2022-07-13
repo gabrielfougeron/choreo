@@ -1,9 +1,11 @@
 name: choreo_test
 channels:
-  - defaults
   - conda-forge
+  - defaults
 dependencies:
   - python=3.10
+  - numpy = 1.21
+  - numba
   - matplotlib
   - scipy
   - networkx
