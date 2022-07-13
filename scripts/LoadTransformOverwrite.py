@@ -25,15 +25,12 @@ import choreo
 
 import datetime
 
-
 One_sec = 1e9
-
-
 
 def main():
 
 
-    input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/3/')
+    input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/4/')
     # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/copy/')
     # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/keep/10')
 
@@ -51,7 +48,7 @@ def main():
 #                 the_name = file_path[len(input_folder):]
 #                 input_names_list.append(the_name)
 
-
+# 
     ''' Include all files in folder '''
     input_names_list = []
     for file_path in os.listdir(input_folder):
@@ -59,9 +56,13 @@ def main():
         file_root, file_ext = os.path.splitext(os.path.basename(file_path))
         
         if (file_ext == '.txt' ):
+            # 
+            # if int(file_root) > 7:
+            #     input_names_list.append(file_root)
+
             input_names_list.append(file_root)
 
-    # input_names_list = ['00003']
+    # input_names_list = ['00002']
 
     store_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/mod')
     # store_folder = input_folder
@@ -75,8 +76,8 @@ def main():
     # Save_Newton_Error = True
     Save_Newton_Error = False
 
-    # Save_img = True
-    Save_img = False
+    Save_img = True
+    # Save_img = False
 # 
     # Save_thumb = True
     Save_thumb = False
@@ -105,8 +106,9 @@ def main():
     atol_ode = 1e-10
     rtol_ode = 1e-12
 
-    # vid_size = (8,8) # Image size in inches
-    vid_size = (3,3) # Image size in inches
+    vid_size = (8,8) # Image size in inches
+    # vid_size_perturb = (4,4) # Image size in inches
+    vid_size_perturb = (8,8) # Image size in inches
     # nint_plot_anim = 2*2*2*3*3
     nint_plot_anim = 2*2*2*3*3*5
     dnint = 30
@@ -137,7 +139,10 @@ def main():
     Save_Perturbed = True
     # Save_Perturbed = False
 
-    dy_perturb_mul = 1e0
+    dy_perturb_mul = 3e0
+
+    # Homogeneous_Perturb = False
+    Homogeneous_Perturb = True
 
     # InvestigateIntegration = True
     InvestigateIntegration = False
@@ -147,7 +152,9 @@ def main():
 
     if Exec_Mul_Proc:
 
-        n = multiprocessing.cpu_count()
+        # n = 1
+        n = 4
+        # n = multiprocessing.cpu_count()
         
         print(f"Executing with {n} workers")
         
@@ -161,7 +168,6 @@ def main():
                 res.append(executor.submit(ExecName,**all_kwargs))
                 time.sleep(0.01)
 
-# 
     else:
             
         for the_name in input_names_list:
@@ -187,6 +193,7 @@ def ExecName(
     nperiod_anim,
     Plot_trace_anim,
     vid_size,
+    vid_size_perturb,
     dnint,
     Save_Newton_Error,
     Save_All_Coeffs,
@@ -200,6 +207,7 @@ def ExecName(
     InvestigateIntegration,
     Save_Perturbed,
     dy_perturb_mul,
+    Homogeneous_Perturb,
     ):
 
     print('')
@@ -224,7 +232,7 @@ def ExecName(
     ncoeff_init = all_coeffs.shape[2]
 
     the_i = -1
-    the_i_max = 20
+    the_i_max = 0
 
     Gradaction_OK = False
 
@@ -260,7 +268,7 @@ def ExecName(
         '''
 
         SymName = None
-        nbpl=[1,1,1]
+        nbpl=[1,1,1,1]
         Sym_list,nbody = choreo.Make2DChoreoSymManyLoops(nbpl=nbpl,SymName=SymName)
 
 
@@ -329,15 +337,15 @@ def ExecName(
 
     if Save_Perturbed:
 
-        print('')
-        print('Symplectic integration of tangent system')
-        print('')
+        # print('')
+        # print('Symplectic integration of tangent system')
+        # print('')
 
         SymplecticMethod = 'SymplecticStormerVerlet'
         SymplecticIntegrator = choreo.GetSymplecticIntegrator(SymplecticMethod)
 
-        nint_mul = 1000
-        # nint_mul = 10000
+        # nint_mul = 1000
+        nint_mul = 100
 
         nint = callfun[0]['nint_list'][callfun[0]["current_cvg_lvl"]]*nint_mul
 
@@ -357,38 +365,43 @@ def ExecName(
         yo = choreo.Compute_init_pos_vel(x,callfun).reshape(-1)
         zo = choreo.Compute_Auto_ODE_RHS(yo,callfun)
         # print(np.linalg.norm(MonodromyMat.dot(zo)-zo))
-        print(f'error : {np.linalg.norm(MonodromyMat.dot(zo)-zo)/np.linalg.norm(zo):e} time : {(t_end-t_beg)/One_sec:f}')
+        # print(the_name+f' error : {np.linalg.norm(MonodromyMat.dot(zo)-zo)/np.linalg.norm(zo):e} time : {(t_end-t_beg)/One_sec:f}')
 
         U,s,Vh = scipy.linalg.svd(MonodromyMat, full_matrices=True, compute_uv=True, overwrite_a=False, check_finite=True, lapack_driver='gesdd')
 
-        # eig_vals,eig_vects = scipy.linalg.eig(MonodromyMat)
-        # eig_vals_abs = abs(eig_vals)
-        # idx_eig_vals = np.argsort(eig_vals_abs)
+        print(the_name+f' error : {np.linalg.norm(MonodromyMat.dot(zo)-zo)/np.linalg.norm(zo):e} time : {(t_end-t_beg)/One_sec:f}')
+        print(the_name+f' {s[:8]}')
 
-        # print(np.linalg.norm(eig_vals - eig_vals.real))
-        # print(np.linalg.norm(eig_vects - eig_vects.real))
-
-        print(s)
-        # print(eig_vals)
-
-        xlim = choreo.Compute_xlim(x,callfun)
-
-        y0 = choreo.Compute_init_pos_vel(x,callfun).reshape(-1)
-        t_eval = np.array([i/nint_plot_img for i in range(nint_plot_img)])
-        fun = lambda t,y: choreo.Compute_ODE_RHS(t,y,callfun)
-        ode_res = scipy.integrate.solve_ivp(fun=fun, t_span=(0.,1.), y0=y0, method=ODE_method, t_eval=t_eval, dense_output=False, events=None, vectorized=False,max_step=1./min_n_steps_ode,atol=atol_ode,rtol=rtol_ode)
-        all_pos_vel = ode_res['y'].reshape(2,nbody,choreo.ndim,nint_plot_img)
-        all_pos_ode = all_pos_vel[0,:,:,:]
-        choreo.plot_all_2D_anim(x,nint_plot_anim,callfun,filename_output+'_unperturbed.mp4',nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size,dnint=dnint,all_pos_trace=all_pos_ode,all_pos_points=all_pos_ode,xlim=xlim)
-        
         list_vid = []
-        list_vid = [filename_output+'_unperturbed.mp4']
 
-        # for irank in [0]:
-        for irank in range(3*3-1):
-        # for irank in range(2*ndof):
+        xlim = choreo.Compute_xlim(x,callfun,extend=0.2)
 
-            dy_perturb = dy_perturb_mul / s[0]
+        # y0 = choreo.Compute_init_pos_vel(x,callfun).reshape(-1)
+        # t_eval = np.array([i/nint_plot_img for i in range(nint_plot_img)])
+        # fun = lambda t,y: choreo.Compute_ODE_RHS(t,y,callfun)
+        # ode_res = scipy.integrate.solve_ivp(fun=fun, t_span=(0.,1.), y0=y0, method=ODE_method, t_eval=t_eval, dense_output=False, events=None, vectorized=False,max_step=1./min_n_steps_ode,atol=atol_ode,rtol=rtol_ode)
+        # all_pos_vel = ode_res['y'].reshape(2,nbody,choreo.ndim,nint_plot_img)
+        # all_pos_ode = all_pos_vel[0,:,:,:]
+        # choreo.plot_all_2D_anim(x,nint_plot_anim,callfun,filename_output+'_unperturbed.mp4',nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size_perturb,dnint=dnint,all_pos_trace=all_pos_ode,all_pos_points=all_pos_ode,xlim=xlim,extend=0.)
+        # 
+
+        # list_vid.append(filename_output+'_unperturbed.mp4')
+
+        # nvid = 8
+        # nx,ny = choreo.factor_squarest(nvid)
+
+        nx = 4
+        ny = 2
+        nvid = nx*ny
+
+        for irank in range(nvid):
+        # for irank in range(nvid-1):
+        # for irank in range(nvid-2):
+
+            if Homogeneous_Perturb:
+                dy_perturb = dy_perturb_mul / s[0]
+            else:
+                dy_perturb = dy_perturb_mul / s[irank]
 
             yo = choreo.Compute_init_pos_vel(x,callfun).reshape(-1) + dy_perturb * Vh[irank,:]
     
@@ -404,12 +417,37 @@ def ExecName(
             vid_filename = filename_output+'_perturbed_'+str(irank).zfill(3)+'.mp4'
             list_vid.append(vid_filename)
             
-            choreo.plot_all_2D_anim(x,nint_plot_anim,callfun,vid_filename,nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size,dnint=dnint,all_pos_trace=all_pos_ode,all_pos_points=all_pos_ode,xlim=xlim)
+            choreo.plot_all_2D_anim(x,nint_plot_anim,callfun,vid_filename,nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size_perturb,dnint=dnint,all_pos_trace=all_pos_ode,all_pos_points=all_pos_ode,xlim=xlim,extend=0.)
+
+# # 
+#         dy_perturb = dy_perturb_mul / s[0]
+#         yo = choreo.Compute_init_pos_vel(x,callfun).reshape(-1)
+#         dy = np.random.rand(*yo.shape)
+#         dy = dy / np.linalg.norm(dy)
+#         yo += dy_perturb*dy
+# 
+#         t_eval = np.array([i/nint_plot_img for i in range(nint_plot_img)])
+# 
+#         fun = lambda t,y: choreo.Compute_ODE_RHS(t,y,callfun)
+# 
+#         ode_res = scipy.integrate.solve_ivp(fun=fun, t_span=(0.,1.), y0=yo, method=ODE_method, t_eval=t_eval, dense_output=False, events=None, vectorized=False,max_step=1./min_n_steps_ode,atol=atol_ode,rtol=rtol_ode)
+# 
+#         all_pos_vel = ode_res['y'].reshape(2,nbody,choreo.ndim,nint_plot_img)
+#         all_pos_ode = all_pos_vel[0,:,:,:]
+# 
+#         vid_filename = filename_output+'_perturbed_random.mp4'
+#         list_vid.append(vid_filename)
+#         
+#         choreo.plot_all_2D_anim(x,nint_plot_anim,callfun,vid_filename,nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size_perturb,dnint=dnint,all_pos_trace=all_pos_ode,all_pos_points=all_pos_ode,xlim=xlim,extend=0.)
 
 
-        nx,ny = choreo.factor_squarest(len(list_vid))
+
+
+
+
+
+
         nxy = [nx,ny]
-        # nxy = [ny,nx]
         ordering = 'RowMajor'
         # ordering = 'ColMajor'
         choreo.VideoGrid(list_vid,filename_output+'_perturbed.mp4',nxy=nxy,ordering=ordering)

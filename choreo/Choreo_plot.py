@@ -106,7 +106,7 @@ def plot_all_2D(x,nint_plot,callfun,filename,fig_size=(10,10),dpi=100,color=None
         
         raise ValueError("Unknown color scheme")
 
-def plot_all_2D_cpb(x,nint_plot,callfun,filename,fig_size=(10,10),dpi=100,color=None,color_list = plt.rcParams['axes.prop_cycle'].by_key()['color'],xlim=None):
+def plot_all_2D_cpb(x,nint_plot,callfun,filename,fig_size=(10,10),dpi=100,color=None,color_list = plt.rcParams['axes.prop_cycle'].by_key()['color'],xlim=None,extend=0.03):
     # Plots 2D trajectories with one color per body and saves image under filename
     
     args = callfun[0]
@@ -162,13 +162,11 @@ def plot_all_2D_cpb(x,nint_plot,callfun,filename,fig_size=(10,10),dpi=100,color=
         ymin = xlim[2]
         ymax = xlim[3]
     
-    r = 0.03
+    xinf = xmin - extend*(xmax-xmin)
+    xsup = xmax + extend*(xmax-xmin)
     
-    xinf = xmin - r*(xmax-xmin)
-    xsup = xmax + r*(xmax-xmin)
-    
-    yinf = ymin - r*(ymax-ymin)
-    ysup = ymax + r*(ymax-ymin)
+    yinf = ymin - extend*(ymax-ymin)
+    ysup = ymax + extend*(ymax-ymin)
 
     # Plot-related
     fig = plt.figure()
@@ -196,7 +194,7 @@ def plot_all_2D_cpb(x,nint_plot,callfun,filename,fig_size=(10,10),dpi=100,color=
     
     plt.close()
 
-def plot_all_2D_cpv(x,nint_plot,callfun,filename,fig_size=(10,10),dpi=100,xlim=None):
+def plot_all_2D_cpv(x,nint_plot,callfun,filename,fig_size=(10,10),dpi=100,xlim=None,extend=0.03):
     # Plots 2D trajectories with one color per body and saves image under filename
     
     args = callfun[0]
@@ -257,14 +255,11 @@ def plot_all_2D_cpv(x,nint_plot,callfun,filename,fig_size=(10,10),dpi=100,xlim=N
         ymin = xlim[2]
         ymax = xlim[3]
 
+    xinf = xmin - extend*(xmax-xmin)
+    xsup = xmax + extend*(xmax-xmin)
     
-    r = 0.03
-    
-    xinf = xmin - r*(xmax-xmin)
-    xsup = xmax + r*(xmax-xmin)
-    
-    yinf = ymin - r*(ymax-ymin)
-    ysup = ymax + r*(ymax-ymin)
+    yinf = ymin - extend*(ymax-ymin)
+    ysup = ymax + extend*(ymax-ymin)
 
     # Plot-related
     fig = plt.figure()
@@ -298,7 +293,7 @@ def plot_all_2D_cpv(x,nint_plot,callfun,filename,fig_size=(10,10),dpi=100,xlim=N
     
     plt.close()
  
-def plot_all_2D_anim(x,nint_plot,callfun,filename,nperiod=1,Plot_trace=True,fig_size=(5,5),dnint=1,all_pos_trace=None,all_pos_points=None,xlim=None):
+def plot_all_2D_anim(x,nint_plot,callfun,filename,nperiod=1,Plot_trace=True,fig_size=(5,5),dnint=1,all_pos_trace=None,all_pos_points=None,xlim=None,extend=0.03):
     # Creates a video of the bodies moving along their trajectories, and saves the file under filename
     
     args = callfun[0]
@@ -346,13 +341,11 @@ def plot_all_2D_anim(x,nint_plot,callfun,filename,nperiod=1,Plot_trace=True,fig_
         ymin = xlim[2]
         ymax = xlim[3]
 
-    r = 0.03
+    xinf = xmin - extend*(xmax-xmin)
+    xsup = xmax + extend*(xmax-xmin)
     
-    xinf = xmin - r*(xmax-xmin)
-    xsup = xmax + r*(xmax-xmin)
-    
-    yinf = ymin - r*(ymax-ymin)
-    ysup = ymax + r*(ymax-ymin)
+    yinf = ymin - extend*(ymax-ymin)
+    ysup = ymax + extend*(ymax-ymin)
     
     # Plot-related
     fig = plt.figure()
@@ -468,7 +461,7 @@ def VideoGrid(input_list,output_filename,nxy = None,ordering='RowMajor'):
     else:
         nx,ny = nxy
         if (nx*ny != nvid):
-            raise(ValueError('The nummber of input video files is incorrect'))
+            raise(ValueError('The number of input video files is incorrect'))
 
     if ordering == 'RowMajor':
         layout_list = []
