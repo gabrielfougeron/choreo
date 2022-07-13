@@ -71,8 +71,7 @@ for SymplecticMethod,SymplecticIntegrator in the_integrators.items() :
             ex_sol = lambda t : np.array( [ np.cos(t) , np.sin(t),-np.sin(t),np.cos(t) ]  )
 
             fun = lambda t,y:  y
-            gun = lambda t,x: -x
-
+            gun = lambda t,x:  -x
 
         if the_test == "y'' = - exp(y)" :
                 # WOLFRAM
@@ -106,13 +105,16 @@ for SymplecticMethod,SymplecticIntegrator in the_integrators.items() :
             gun = lambda t,x: np.array([t*x[0],t*x[1]],dtype=np.float64)
 
 
-        t_span = (0.,1.)
+        t_span = (0.,np.pi)
 
         ex_init  = ex_sol(t_span[0])
         ex_final = ex_sol(t_span[1])
 
         x0 = ex_init[0          :  test_ndim]
         v0 = ex_init[test_ndim  :2*test_ndim]
+
+        # print(x0)
+        # print(v0)
 
         refinement_lvl = [1,2,4,8,16,32,64,128,256,512]
         # refinement_lvl = [1,10,100]
@@ -122,10 +124,12 @@ for SymplecticMethod,SymplecticIntegrator in the_integrators.items() :
 
             nint = refinement_lvl[iref]
 
+            x0 = np.copy(ex_init[0          :  test_ndim])
+            v0 = np.copy(ex_init[test_ndim  :2*test_ndim])
+
             xf,vf = SymplecticIntegrator(fun,gun,t_span,x0,v0,nint)
 
             sol = np.ascontiguousarray(np.concatenate((xf,vf),axis=0).reshape(2*test_ndim))
-
             error = np.linalg.norm(sol-ex_final)
 
             # print(f'error : {error:e} time : {(t_end-t_beg)/One_sec:f}')

@@ -56,13 +56,13 @@ def main():
 #         file_root, file_ext = os.path.splitext(os.path.basename(file_path))
 #         
 #         if (file_ext == '.txt' ):
-    #         
-    #         if int(file_root) > 8:
-    #             input_names_list.append(file_root)
+#             
+#             # if int(file_root) > 8:
+#             #     input_names_list.append(file_root)
 # 
-            # input_names_list.append(file_root)
+#             input_names_list.append(file_root)
 
-    input_names_list = ['00002']
+    input_names_list = ['00009']
 
     store_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/mod')
     # store_folder = input_folder
@@ -133,8 +133,8 @@ def main():
 
     GradActionThresh = 1e-8
 # 
-    InvestigateStability = True
-    # InvestigateStability = False
+    # InvestigateStability = True
+    InvestigateStability = False
 
     # Save_Perturbed = True
     Save_Perturbed = False
@@ -144,8 +144,8 @@ def main():
     # Homogeneous_Perturb = False
     Homogeneous_Perturb = True
 
-    # InvestigateIntegration = True
-    InvestigateIntegration = False
+    InvestigateIntegration = True
+    # InvestigateIntegration = False
 
     # Exec_Mul_Proc = True
     Exec_Mul_Proc = False
@@ -466,6 +466,7 @@ def ExecName(
 
         # SymplecticMethod = 'SymplecticEuler'
         # SymplecticMethod = 'SymplecticStormerVerlet'
+        # SymplecticMethod = 'SymplecticRuth3'
 
         # the_integrators = {SymplecticMethod:choreo.GetSymplecticIntegrator(SymplecticMethod)}
 
@@ -535,7 +536,7 @@ def ExecName(
         print('Symplectic integration of direct system')
         print('')
 
-        the_integrators = choreo.all_SymplecticIntegrators
+        the_integrators = choreo.all_unique_SymplecticIntegrators
 
         for SymplecticMethod,SymplecticIntegrator in the_integrators.items() :
 
@@ -543,7 +544,7 @@ def ExecName(
             print('SymplecticMethod : ',SymplecticMethod)
             print('')
 
-            refinement_lvl = [1,2,4,8,16,32,64,128,256,512]
+            refinement_lvl = [1,2,4,8,16,32,64,128]
             # refinement_lvl = [1,10,100]
 
             for imul in range(len(refinement_lvl)):
@@ -561,7 +562,6 @@ def ExecName(
     # 
     # 
                 t_span = (0.,0.5)
-                nint = nint//2
                 yf_exact = all_pos_vel[:,:,:,callfun[0]['nint_list'][callfun[0]["current_cvg_lvl"]]//2].reshape(-1)
     # # # # 
                 # t_span = (0.,1.)
