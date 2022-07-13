@@ -40,7 +40,12 @@ test_names = [
 # SymplecticMethod = 'SymplecticEuler_Xfirst'
 # SymplecticMethod = 'SymplecticEuler_Vfirst'
 # SymplecticMethod = 'SymplecticStormerVerlet_XV'
-SymplecticMethod = 'SymplecticStormerVerlet_VX'
+# SymplecticMethod = 'SymplecticStormerVerlet_VX'
+
+# SymplecticMethod = 'SymplecticEuler_Table_XV'
+SymplecticMethod = 'SymplecticEuler_Table_VX'
+
+
 
 the_integrators = {SymplecticMethod:choreo.GetSymplecticIntegrator(SymplecticMethod)}
 
