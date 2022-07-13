@@ -34,78 +34,87 @@ test_names = [
 ]
 
 # SymplecticMethod = 'SymplecticEuler'
+# SymplecticMethod = 'SymplecticStormerVerlet'
+
+# 
 # SymplecticMethod = 'SymplecticEuler_Xfirst'
 # SymplecticMethod = 'SymplecticEuler_Vfirst'
-# SymplecticMethod = 'SymplecticStormerVerlet'
-# SymplecticMethod = 'SymplecticStormerVerlet_XV'   
+# SymplecticMethod = 'SymplecticStormerVerlet_XV'
 SymplecticMethod = 'SymplecticStormerVerlet_VX'
-SymplecticIntegrator = choreo.GetSymplecticIntegrator(SymplecticMethod)
 
+the_integrators = {SymplecticMethod:choreo.GetSymplecticIntegrator(SymplecticMethod)}
 
-for the_test in test_names:
+# the_integrators = choreo.all_unique_SymplecticIntegrators
 
+for SymplecticMethod,SymplecticIntegrator in the_integrators.items() :
     print('')
-    print('test name : ',the_test)
-
-    if the_test == "y'' = -y" :
-            # WOLFRAM
-            # y'' = - y
-            # y(x) = A cos(x) + B sin(x)
-
-        test_ndim = 2
-
-        ex_sol = lambda t : np.array( [ np.cos(t) , np.sin(t),-np.sin(t),np.cos(t) ]  )
-
-        fun = lambda t,y:  y
-        gun = lambda t,x: -x
+    print('SymplecticMethod : ',SymplecticMethod)
 
 
-    if the_test == "y'' = - exp(y)" :
-            # WOLFRAM
-            # y'' = - exp(y)
-            # y(x) = - 2 * ln( cosh(t / sqrt(2) ))
+    for the_test in test_names:
 
-        test_ndim = 1
+        print('')
+        print('test name : ',the_test)
 
-        invsqrt2 = 1./np.sqrt(2.)
-        sqrt2 = np.sqrt(2.)
-        ex_sol = lambda t : np.array( [ -2*np.log(np.cosh(invsqrt2*t)) , -sqrt2*np.tanh(invsqrt2*t) ]  )
+        if the_test == "y'' = -y" :
+                # WOLFRAM
+                # y'' = - y
+                # y(x) = A cos(x) + B sin(x)
 
-        fun = lambda t,y:  y
-        gun = lambda t,x: -np.exp(x)
+            test_ndim = 2
 
-    if the_test == "y'' = xy" :
+            ex_sol = lambda t : np.array( [ np.cos(t) , np.sin(t),-np.sin(t),np.cos(t) ]  )
 
-        # Solutions: Airy functions
-        # Nonautonomous linear test case
-
-        test_ndim = 2
-
-        def ex_sol(t):
-
-            ai, aip, bi, bip = scipy.special.airy(t)
-
-            return np.array([ai,bi,aip,bip])
+            fun = lambda t,y:  y
+            gun = lambda t,x: -x
 
 
-        fun = lambda t,y:  y
-        gun = lambda t,x: np.array([t*x[0],t*x[1]],dtype=np.float64)
+        if the_test == "y'' = - exp(y)" :
+                # WOLFRAM
+                # y'' = - exp(y)
+                # y(x) = - 2 * ln( cosh(t / sqrt(2) ))
+
+            test_ndim = 1
+
+            invsqrt2 = 1./np.sqrt(2.)
+            sqrt2 = np.sqrt(2.)
+            ex_sol = lambda t : np.array( [ -2*np.log(np.cosh(invsqrt2*t)) , -sqrt2*np.tanh(invsqrt2*t) ]  )
+
+            fun = lambda t,y:  y
+            gun = lambda t,x: -np.exp(x)
+
+        if the_test == "y'' = xy" :
+
+            # Solutions: Airy functions
+            # Nonautonomous linear test case
+
+            test_ndim = 2
+
+            def ex_sol(t):
+
+                ai, aip, bi, bip = scipy.special.airy(t)
+
+                return np.array([ai,bi,aip,bip])
 
 
-    t_span = (0.,1.)
-
-    ex_init  = ex_sol(t_span[0])
-    ex_final = ex_sol(t_span[1])
-
-    x0 = ex_init[0          :  test_ndim]
-    v0 = ex_init[test_ndim  :2*test_ndim]
+            fun = lambda t,y:  y
+            gun = lambda t,x: np.array([t*x[0],t*x[1]],dtype=np.float64)
 
 
+        t_span = (0.,1.)
 
-    for nint in [10,100,1000,10000,100000]:
+        ex_init  = ex_sol(t_span[0])
+        ex_final = ex_sol(t_span[1])
 
-        xf,vf = SymplecticIntegrator(fun,gun,t_span,x0,v0,nint)
+        x0 = ex_init[0          :  test_ndim]
+        v0 = ex_init[test_ndim  :2*test_ndim]
 
-        sol = np.ascontiguousarray(np.concatenate((xf,vf),axis=0).reshape(2*test_ndim))
 
-        print(f'{np.linalg.norm(sol-ex_final):e}')
+
+        for nint in [10,100,1000,10000,100000]:
+
+            xf,vf = SymplecticIntegrator(fun,gun,t_span,x0,v0,nint)
+
+            sol = np.ascontiguousarray(np.concatenate((xf,vf),axis=0).reshape(2*test_ndim))
+
+            print(f'{np.linalg.norm(sol-ex_final):e}')
