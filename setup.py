@@ -23,7 +23,9 @@ __version__ = "0.1.0"
 # os.environ["CC"] = "gcc"
 # os.environ["CC"] = "icc"
 
-extra_compile_args = ["-O2"]
+# extra_compile_args = ["-O2"]
+extra_compile_args = ["-O3","-ffast-math"]
+# extra_compile_args = ["-O2","-ffast-math"]
 
 extra_link_args = []
 

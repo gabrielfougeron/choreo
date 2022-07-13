@@ -86,7 +86,18 @@ all_SymplecticIntegrators = {
     'SymplecticRuth4_VX'            : SymplecticRuth4_VX,
     }
 
-def GetSymplecticIntegrator(method):
+all_unique_SymplecticIntegrators = {
+    'SymplecticEuler_XV'            : SymplecticEuler_XV,
+    'SymplecticEuler_VX'            : SymplecticEuler_VX,
+    'SymplecticStormerVerlet_XV'    : SymplecticStormerVerlet_XV_cython,
+    'SymplecticStormerVerlet_VX'    : SymplecticStormerVerlet_VX_cython,
+    'SymplecticRuth3_XV'            : SymplecticRuth3_XV,
+    'SymplecticRuth3_VX'            : SymplecticRuth3_VX,
+    'SymplecticRuth4_XV'            : SymplecticRuth4_XV,
+    'SymplecticRuth4_VX'            : SymplecticRuth4_VX,
+    }
+
+def GetSymplecticIntegrator(method='SymplecticRuth3'):
 
     return all_SymplecticIntegrators[method]
 
