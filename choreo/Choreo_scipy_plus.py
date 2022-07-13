@@ -73,16 +73,17 @@ SymplecticRuth4_XV = functools.partial(SymplecticWithTable_XV_cython,c_table=c_t
 SymplecticRuth4_VX = functools.partial(SymplecticWithTable_VX_cython,c_table=c_table_Ruth4,d_table=d_table_Ruth4,nsteps=nsteps_Ruth4)
 
 all_SymplecticIntegrators = {
-    'SymplecticEuler' : SymplecticEuler_XV,
-    'SymplecticEuler_XV' : SymplecticEuler_XV,
-    'SymplecticEuler_VX' : SymplecticEuler_VX,
-    'SymplecticStormerVerlet' : SymplecticStormerVerlet_XV_cython,
-    'SymplecticStormerVerlet_XV' : SymplecticStormerVerlet_XV_cython,
-    'SymplecticStormerVerlet_VX' : SymplecticStormerVerlet_VX_cython,
-    'SymplecticRuth3_XV' : SymplecticRuth3_XV,
-    'SymplecticRuth3_VX' : SymplecticRuth3_VX,
-    'SymplecticRuth4_XV' : SymplecticRuth4_XV,
-    'SymplecticRuth4_VX' : SymplecticRuth4_VX,
+    'SymplecticEuler'               : SymplecticEuler_XV,
+    'SymplecticEuler_XV'            : SymplecticEuler_XV,
+    'SymplecticEuler_VX'            : SymplecticEuler_VX,
+    'SymplecticStormerVerlet'       : SymplecticStormerVerlet_XV_cython,
+    'SymplecticStormerVerlet_XV'    : SymplecticStormerVerlet_XV_cython,
+    'SymplecticStormerVerlet_VX'    : SymplecticStormerVerlet_VX_cython,
+    'SymplecticRuth3'               : SymplecticRuth3_XV,
+    'SymplecticRuth3_XV'            : SymplecticRuth3_XV,
+    'SymplecticRuth3_VX'            : SymplecticRuth3_VX,
+    'SymplecticRuth4_XV'            : SymplecticRuth4_XV,
+    'SymplecticRuth4_VX'            : SymplecticRuth4_VX,
     }
 
 def GetSymplecticIntegrator(method):

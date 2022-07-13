@@ -133,8 +133,8 @@ def main():
 
     GradActionThresh = 1e-8
 # 
-    # InvestigateStability = True
-    InvestigateStability = False
+    InvestigateStability = True
+    # InvestigateStability = False
 
     # Save_Perturbed = True
     Save_Perturbed = False
@@ -144,8 +144,8 @@ def main():
     # Homogeneous_Perturb = False
     Homogeneous_Perturb = True
 
-    InvestigateIntegration = True
-    # InvestigateIntegration = False
+    # InvestigateIntegration = True
+    InvestigateIntegration = False
 
     # Exec_Mul_Proc = True
     Exec_Mul_Proc = False
@@ -463,30 +463,13 @@ def ExecName(
         print('Symplectic integration of tangent system')
         print('')
         
-# 
-        SymplecticMethod = 'SymplecticEuler'
+
+        # SymplecticMethod = 'SymplecticEuler'
         # SymplecticMethod = 'SymplecticStormerVerlet'
 
+        # the_integrators = {SymplecticMethod:choreo.GetSymplecticIntegrator(SymplecticMethod)}
 
-        # SymplecticMethod = 'SymplecticEuler_XV'
-        # SymplecticMethod = 'SymplecticEuler_VX'
-        # SymplecticMethod = 'SymplecticStormerVerlet_XV'
-        # SymplecticMethod = 'SymplecticStormerVerlet_VX'
-
-
-        SymplecticIntegrator = choreo.GetSymplecticIntegrator(SymplecticMethod)
-
-        
-        # SymplecticMethod = 'SymplecticEuler'
-        SymplecticMethod = 'SymplecticStormerVerlet'
-
-
-        # SymplecticMethod = 'SymplecticEuler_XV'
-        # SymplecticMethod = 'SymplecticEuler_VX'
-        # SymplecticMethod = 'SymplecticStormerVerlet_XV'
-        # SymplecticMethod = 'SymplecticStormerVerlet_VX'
-
-        the_integrators = {SymplecticMethod:choreo.GetSymplecticIntegrator(SymplecticMethod)}
+        the_integrators = choreo.all_SymplecticIntegrators
 
         for SymplecticMethod,SymplecticIntegrator in the_integrators.items() :
 
@@ -494,8 +477,12 @@ def ExecName(
             print('SymplecticMethod : ',SymplecticMethod)
             print('')
 
-            # for nint_mul in [1,10,100,1000,10000]:
-            for nint_mul in [1000]:
+            refinement_lvl = [1,2,4,8,16,32,64,128]
+            # refinement_lvl = [1,10,100]
+
+            for imul in range(len(refinement_lvl)):
+
+                nint_mul = refinement_lvl[imul]
 
                 nint = callfun[0]['nint_list'][callfun[0]["current_cvg_lvl"]]*nint_mul
 
@@ -517,7 +504,20 @@ def ExecName(
                 zo = choreo.Compute_Auto_ODE_RHS(yo,callfun)
 
                 # print(np.linalg.norm(MonodromyMat.dot(zo)-zo))
-                print(f'error : {np.linalg.norm(MonodromyMat.dot(zo)-zo)/np.linalg.norm(zo):e} time : {(t_end-t_beg)/One_sec:f}')
+
+                error_rel = np.linalg.norm(MonodromyMat.dot(zo)-zo)/np.linalg.norm(zo)
+
+                # print(f'error : {error_rel:e} time : {(t_end-t_beg)/One_sec:f}')
+
+                if (imul > 0):
+                    error_mul = error_rel/error_rel_prev
+                    est_order = -m.log(error_mul)/m.log(refinement_lvl[imul]/refinement_lvl[imul-1])
+
+                    # print(f'error : {error_rel:e}     error mul : {error_rel/error_rel_prev:e}     estimated order : {est_order:e}     time : {(t_end-t_beg)/One_sec:f}')
+                    print(f'error : {error_rel:e}     estimated order : {est_order:.2f}     time : {(t_end-t_beg)/One_sec:f}')
+
+                error_rel_prev = error_rel
+
 
             eig_vals,eig_vects = scipy.linalg.eig(MonodromyMat)
 
@@ -534,17 +534,6 @@ def ExecName(
         print('')
         print('Symplectic integration of direct system')
         print('')
-        
-        # SymplecticMethod = 'SymplecticEuler'
-        # SymplecticMethod = 'SymplecticStormerVerlet'
-
-
-        # SymplecticMethod = 'SymplecticEuler_XV'
-        # SymplecticMethod = 'SymplecticEuler_VX'
-        # SymplecticMethod = 'SymplecticStormerVerlet_XV'
-        # SymplecticMethod = 'SymplecticStormerVerlet_VX'
-
-        # the_integrators = {SymplecticMethod:choreo.GetSymplecticIntegrator(SymplecticMethod)}
 
         the_integrators = choreo.all_SymplecticIntegrators
 
@@ -554,19 +543,16 @@ def ExecName(
             print('SymplecticMethod : ',SymplecticMethod)
             print('')
 
-            refinement_lvl = [1,2,4,8,16,32,64,128,256]
+            refinement_lvl = [1,2,4,8,16,32,64,128,256,512]
             # refinement_lvl = [1,10,100]
 
             for imul in range(len(refinement_lvl)):
-            # for nint_mul in [1,10,100]:
-            # for nint_mul in [10,100,1000]:
 
                 nint_mul = refinement_lvl[imul]
 
                 nint = callfun[0]['nint_list'][callfun[0]["current_cvg_lvl"]]*nint_mul
 
                 ndim_ode = nbody*choreo.ndim
-
 
                 all_pos_vel = choreo.ComputeAllPosVel(x,callfun)
 
