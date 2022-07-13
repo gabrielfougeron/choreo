@@ -40,6 +40,7 @@ from choreo.Choreo_cython_funs import the_irfft,the_rfft,the_ihfft
 from choreo.Choreo_funs import Compute_action,Compute_hash_action,Compute_Newton_err
 from choreo.Choreo_funs import Compute_MinDist,Detect_Escape
 from choreo.Choreo_funs import Unpackage_all_coeffs
+from choreo.Choreo_funs import ComputeAllPos
     
 Action_msg = 'Value of the Action : '
 Action_msg_len = len(Action_msg)
@@ -105,7 +106,7 @@ def plot_all_2D(x,nint_plot,callfun,filename,fig_size=(10,10),dpi=100,color=None
         
         raise ValueError("Unknown color scheme")
 
-def plot_all_2D_cpb(x,nint_plot,callfun,filename,fig_size=(10,10),dpi=100,color=None,color_list = plt.rcParams['axes.prop_cycle'].by_key()['color']):
+def plot_all_2D_cpb(x,nint_plot,callfun,filename,fig_size=(10,10),dpi=100,color=None,color_list = plt.rcParams['axes.prop_cycle'].by_key()['color'],xlim=None):
     # Plots 2D trajectories with one color per body and saves image under filename
     
     args = callfun[0]
@@ -147,12 +148,19 @@ def plot_all_2D_cpb(x,nint_plot,callfun,filename,fig_size=(10,10),dpi=100,color=
                 ibb = Targets[il,ib]
                 cb[ibb] = color_list[il%ncol]
 
+    if xlim is None:
 
+        xmin = all_pos_b[:,0,:].min()
+        xmax = all_pos_b[:,0,:].max()
+        ymin = all_pos_b[:,1,:].min()
+        ymax = all_pos_b[:,1,:].max()
 
-    xmin = all_pos_b[:,0,:].min()
-    xmax = all_pos_b[:,0,:].max()
-    ymin = all_pos_b[:,1,:].min()
-    ymax = all_pos_b[:,1,:].max()
+    else :
+
+        xmin = xlim[0]
+        xmax = xlim[1]
+        ymin = xlim[2]
+        ymax = xlim[3]
     
     r = 0.03
     
@@ -188,7 +196,7 @@ def plot_all_2D_cpb(x,nint_plot,callfun,filename,fig_size=(10,10),dpi=100,color=
     
     plt.close()
 
-def plot_all_2D_cpv(x,nint_plot,callfun,filename,fig_size=(10,10),dpi=100):
+def plot_all_2D_cpv(x,nint_plot,callfun,filename,fig_size=(10,10),dpi=100,xlim=None):
     # Plots 2D trajectories with one color per body and saves image under filename
     
     args = callfun[0]
@@ -235,10 +243,20 @@ def plot_all_2D_cpv(x,nint_plot,callfun,filename,fig_size=(10,10),dpi=100):
                 # exact time is irrelevant
                 all_vel_b[Targets[il,ib],iint] = all_vel[il,iint]
     
-    xmin = all_pos_b[:,0,:].min()
-    xmax = all_pos_b[:,0,:].max()
-    ymin = all_pos_b[:,1,:].min()
-    ymax = all_pos_b[:,1,:].max()
+    if xlim is None:
+
+        xmin = all_pos_b[:,0,:].min()
+        xmax = all_pos_b[:,0,:].max()
+        ymin = all_pos_b[:,1,:].min()
+        ymax = all_pos_b[:,1,:].max()
+
+    else :
+
+        xmin = xlim[0]
+        xmax = xlim[1]
+        ymin = xlim[2]
+        ymax = xlim[3]
+
     
     r = 0.03
     
@@ -280,7 +298,7 @@ def plot_all_2D_cpv(x,nint_plot,callfun,filename,fig_size=(10,10),dpi=100):
     
     plt.close()
  
-def plot_all_2D_anim(x,nint_plot,callfun,filename,nperiod=1,Plot_trace=True,fig_size=(5,5),dnint=1,all_pos_trace=None,all_pos_points=None):
+def plot_all_2D_anim(x,nint_plot,callfun,filename,nperiod=1,Plot_trace=True,fig_size=(5,5),dnint=1,all_pos_trace=None,all_pos_points=None,xlim=None):
     # Creates a video of the bodies moving along their trajectories, and saves the file under filename
     
     args = callfun[0]
@@ -300,33 +318,12 @@ def plot_all_2D_anim(x,nint_plot,callfun,filename,nperiod=1,Plot_trace=True,fig_
     
     nint_plot_img = nint_plot*dnint
     nint_plot_vid = nint_plot
-    
-    c_coeffs = all_coeffs.view(dtype=np.complex128)[...,0]
-    
-    all_pos = np.zeros((nloop,ndim,nint_plot_img+1),dtype=np.float64)
-    all_pos[:,:,0:nint_plot_img] = the_irfft(c_coeffs,n=nint_plot_img,axis=2)*nint_plot_img
-    all_pos[:,:,nint_plot_img] = all_pos[:,:,0]
-    
-    all_pos_b = np.zeros((nbody,ndim,nint_plot_img+1),dtype=np.float64)
-    all_shiftsUn = np.zeros((nloop,maxloopnb),dtype=np.int_)
-    
-    xmin = all_coeffs[0,0,0,0]
-    xmax = xmin
-    ymin = all_coeffs[0,1,0,0]
-    ymax = ymin
-    
-    for il in range(nloop):
-        for ib in range(loopnb[il]):
-                
-            all_shiftsUn[il,ib] = ((-TimeRevsUn[il,ib]*nint_plot_img*TimeShiftNumUn[il,ib]) // TimeShiftDenUn[il,ib] ) % nint_plot_img
 
-    for iint in range(nint_plot_img+1):    
-        for il in range(nloop):
-            for ib in range(loopnb[il]):
+    if (all_pos_trace is None) or (all_pos_points is None):
 
-                all_pos_b[Targets[il,ib],:,iint] = np.dot(SpaceRotsUn[il,ib,:,:],all_pos[il,:,all_shiftsUn[il,ib]])
-
-                all_shiftsUn[il,ib] = (all_shiftsUn[il,ib]+TimeRevsUn[il,ib]) % nint_plot_img
+        all_pos_b = np.zeros((nbody,ndim,nint_plot_img+1),dtype=np.float64)
+        all_pos_b = ComputeAllPos(x,callfun,nint=nint_plot_img)
+        all_pos_b[:,:,nint_plot_img] = all_pos_b[:,:,0]
 
     if (all_pos_trace is None):
         all_pos_trace = all_pos_b
@@ -334,10 +331,20 @@ def plot_all_2D_anim(x,nint_plot,callfun,filename,nperiod=1,Plot_trace=True,fig_
     if (all_pos_points is None):
         all_pos_points = all_pos_b
 
-    xmin = all_pos_trace[:,0,:].min()
-    xmax = all_pos_trace[:,0,:].max()
-    ymin = all_pos_trace[:,1,:].min()
-    ymax = all_pos_trace[:,1,:].max()
+
+    if xlim is None:
+
+        xmin = all_pos_trace[:,0,:].min()
+        xmax = all_pos_trace[:,0,:].max()
+        ymin = all_pos_trace[:,1,:].min()
+        ymax = all_pos_trace[:,1,:].max()
+
+    else :
+
+        xmin = xlim[0]
+        xmax = xlim[1]
+        ymin = xlim[2]
+        ymax = xlim[3]
 
     r = 0.03
     
@@ -414,7 +421,6 @@ def Images_to_video(input_folder,output_filename,ReverseEnd=False,img_file_ext='
     # Sorting files by alphabetical order
     png_files.sort()
         
-        
     frames_filename = 'frames.txt'
     
     f = open(frames_filename,"w")
@@ -443,6 +449,107 @@ def Images_to_video(input_folder,output_filename,ReverseEnd=False,img_file_ext='
     
     os.remove(frames_filename)
  
+
+def factor_squarest(n):
+    x = m.ceil(m.sqrt(n))
+    y = int(n/x)
+    while ( (y * x) != float(n) ):
+        x -= 1
+        y = int(n/x)
+    return max(x,y), min(x,y)
+
+def VideoGrid(input_list,output_filename,nxy = None,ordering='RowMajor'):
+
+    nvid = len(input_list)
+
+    if nxy is None:
+         nx,ny = factor_squarest(nvid)
+
+    else:
+        nx,ny = nxy
+        if (nx*ny != nvid):
+            raise(ValueError('The nummber of input video files is incorrect'))
+
+    if ordering == 'RowMajor':
+        layout_list = []
+        for iy in range(ny):
+            if iy == 0:
+                ylayout='0'
+            else:
+                ylayout = 'h0'
+                for iiy in range(1,iy):
+                    ylayout = ylayout + '+h'+str(iiy)
+
+            for ix in range(nx):
+                if ix == 0:
+                    xlayout='0'
+                else:
+                    xlayout = 'w0'
+                    for iix in range(1,ix):
+                        xlayout = xlayout + '+w'+str(iix)
+
+
+                layout_list.append(xlayout + '_' + ylayout)
+
+    elif ordering == 'ColMajor':
+        layout_list = []
+        for ix in range(nx):
+            if ix == 0:
+                xlayout='0'
+            else:
+                xlayout = 'w0'
+                for iix in range(1,ix):
+                    xlayout = xlayout + '+w'+str(iix)
+            for iy in range(ny):
+                if iy == 0:
+                    ylayout='0'
+                else:
+                    ylayout = 'h0'
+                    for iiy in range(1,iy):
+                        ylayout = ylayout + '+h'+str(iiy)
+
+                layout_list.append(xlayout + '_' + ylayout)
+    else:
+        raise(ValueError('Unknown ordering : '+ordering))
+
+    layout = layout_list[0]
+    for i in range(1,nvid):
+        layout = layout + '|' + layout_list[i]
+
+    try:
+        
+        ffmpeg_input_list = []
+        for the_input in input_list:
+            ffmpeg_input_list.append(ffmpeg.input(the_input))
+
+        # ffmpeg_out = ( ffmpeg
+        #     .filter(ffmpeg_input_list, 'hstack')
+        # )
+# 
+        ffmpeg_out = ( ffmpeg
+            .filter(
+                ffmpeg_input_list,
+                'xstack',
+                inputs=nvid,
+                layout=layout,
+            )
+        )
+
+        ffmpeg_out = ( ffmpeg_out
+            .output(output_filename,vcodec='h264',pix_fmt='yuv420p')
+            .global_args('-y')
+            .global_args('-loglevel','error')
+        )
+
+        ffmpeg_out.run()
+
+    # except:
+    #     raise ModuleNotFoundError('Error: ffmpeg not found')
+
+    except BaseException as err:
+        print(f"Unexpected {err=}, {type(err)=}")
+        raise
+
 def Write_Descriptor(x,callfun,filename):
     # Dumps a text file describing the current trajectories
     

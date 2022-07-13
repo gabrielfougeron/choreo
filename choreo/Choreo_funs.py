@@ -132,6 +132,15 @@ def ComputeAllPosVel(x,callfun,nint=None):
 
     return np.stack((all_pos_b,all_vel_b),axis=0)
 
+def Compute_xlim(x,callfun):
+
+    all_pos_b = ComputeAllPos(x,callfun)
+
+    xmin = np.amin(all_pos_b,axis=(0,2))
+    xmax = np.amax(all_pos_b,axis=(0,2))
+
+    return np.stack((xmin,xmax),axis=1).reshape(-1)
+
 def Compute_init_pos_vel(x,callfun):
     # I litterally do not know of any more efficient way to compute the initial positions and velocities.
 
