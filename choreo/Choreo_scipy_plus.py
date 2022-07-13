@@ -8,6 +8,7 @@ import math as m
 import scipy.optimize
 import scipy.linalg as la
 import scipy.sparse as sp
+import functools
 
 class current_best:
     # Class meant to store the best solution during scipy optimization / root finding
@@ -146,6 +147,56 @@ def SymplecticStormerVerlet_VX(fun,gun,t_span,x0,v0,nint):
 
 SymplecticStormerVerlet = SymplecticStormerVerlet_VX
 
+def SymplecticWithTable_XV(fun,gun,t_span,x0,v0,nint,c_table=None,d_table=None):
+
+    nsteps = c_table.size
+    assert c_table.size == d_table.size
+
+    t = t_span[0]
+    dt = (t_span[1] - t_span[0]) / nint
+
+    x = x0
+    v = v0
+
+    for iint in range(nint):
+
+        for istep in range(nsteps):
+
+            v = v + (d_table[istep]*dt) * gun(t,x)            
+            x = x + (c_table[istep]*dt) * fun(t,v)
+            t += c_table[istep]*dt
+
+    return x,v
+
+def SymplecticWithTable_VX(fun,gun,t_span,x0,v0,nint,c_table=None,d_table=None):
+
+    nsteps = c_table.size
+    assert c_table.size == d_table.size
+
+    t = t_span[0]
+    dt = (t_span[1] - t_span[0]) / nint
+
+    x = x0
+    v = v0
+
+    for iint in range(nint):
+
+        for istep in range(nsteps):
+            
+            x = x + (c_table[istep]*dt) * fun(t,v)
+            t += c_table[istep]*dt
+            v = v + (d_table[istep]*dt) * gun(t,x)
+
+    return x,v
+
+c_table_Euler = np.array([1])
+d_table_Euler = np.array([1])
+SymplecticEuler_Table_XV = functools.partial(SymplecticWithTable_XV,c_table=c_table_Euler,d_table=d_table_Euler)
+
+c_table_Euler = np.array([1])
+d_table_Euler = np.array([1])
+SymplecticEuler_Table_VX = functools.partial(SymplecticWithTable_XV,c_table=c_table_Euler,d_table=d_table_Euler)
+
 all_SymplecticIntegrators = {
     'SymplecticEuler' : SymplecticEuler,
     'SymplecticEuler_Xfirst' : SymplecticEuler_Xfirst,
@@ -153,6 +204,8 @@ all_SymplecticIntegrators = {
     'SymplecticStormerVerlet' : SymplecticStormerVerlet,
     'SymplecticStormerVerlet_XV' : SymplecticStormerVerlet_XV,
     'SymplecticStormerVerlet_VX' : SymplecticStormerVerlet_VX,
+    'SymplecticEuler_Table_XV' : SymplecticEuler_Table_XV,
+    'SymplecticEuler_Table_VX' : SymplecticEuler_Table_VX,
     }
 
 all_unique_SymplecticIntegrators = {
@@ -160,11 +213,14 @@ all_unique_SymplecticIntegrators = {
     'SymplecticEuler_Vfirst' : SymplecticEuler_Vfirst,
     'SymplecticStormerVerlet_XV' : SymplecticStormerVerlet_XV,
     'SymplecticStormerVerlet_VX' : SymplecticStormerVerlet_VX,
+    'SymplecticEuler_Table_XV' : SymplecticEuler_Table_XV,
+    'SymplecticEuler_Table_VX' : SymplecticEuler_Table_VX,
     }
 
 def GetSymplecticIntegrator(method):
 
     return all_SymplecticIntegrators[method]
+
 
 
 
