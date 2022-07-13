@@ -47,9 +47,9 @@ SymplecticMethod = 'SymplecticEuler_Table_VX'
 
 
 
-the_integrators = {SymplecticMethod:choreo.GetSymplecticIntegrator(SymplecticMethod)}
+# the_integrators = {SymplecticMethod:choreo.GetSymplecticIntegrator(SymplecticMethod)}
 
-# the_integrators = choreo.all_unique_SymplecticIntegrators
+the_integrators = choreo.all_unique_SymplecticIntegrators
 
 for SymplecticMethod,SymplecticIntegrator in the_integrators.items() :
     print('')
@@ -114,12 +114,27 @@ for SymplecticMethod,SymplecticIntegrator in the_integrators.items() :
         x0 = ex_init[0          :  test_ndim]
         v0 = ex_init[test_ndim  :2*test_ndim]
 
+        refinement_lvl = [1,2,4,8,16,32,64,128,256,512]
+        # refinement_lvl = [1,10,100]
 
 
-        for nint in [10,100,1000,10000,100000]:
+        for iref in range(len(refinement_lvl)):
+
+            nint = refinement_lvl[iref]
 
             xf,vf = SymplecticIntegrator(fun,gun,t_span,x0,v0,nint)
 
             sol = np.ascontiguousarray(np.concatenate((xf,vf),axis=0).reshape(2*test_ndim))
 
-            print(f'{np.linalg.norm(sol-ex_final):e}')
+            error = np.linalg.norm(sol-ex_final)
+
+            # print(f'error : {error:e} time : {(t_end-t_beg)/One_sec:f}')
+
+            if (iref > 0):
+                error_mul = error/error_prev
+                est_order = -m.log(error_mul)/m.log(refinement_lvl[iref]/refinement_lvl[iref-1])
+
+                # print(f'error : {error:e}     error mul : {error_mul:e}     estimated order : {est_order:e}     time : {(t_end-t_beg)/One_sec:f}')
+                print(f'error : {error:e}     estimated order : {est_order:.2f}')
+
+            error_prev = error

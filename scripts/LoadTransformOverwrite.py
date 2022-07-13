@@ -556,8 +556,14 @@ def ExecName(
             print('SymplecticMethod : ',SymplecticMethod)
             print('')
 
-            for nint_mul in [1,10,100]:
+            refinement_lvl = [1,2,4,8,16,32,64,128,256,512]
+            # refinement_lvl = [1,10,100]
+
+            for imul in range(len(refinement_lvl)):
+            # for nint_mul in [1,10,100]:
             # for nint_mul in [10,100,1000]:
+
+                nint_mul = refinement_lvl[imul]
 
                 nint = callfun[0]['nint_list'][callfun[0]["current_cvg_lvl"]]*nint_mul
 
@@ -591,7 +597,19 @@ def ExecName(
                 xf,vf = SymplecticIntegrator(fun,gun,t_span,x0,v0,nint)
                 t_end = time.perf_counter_ns()
 
-                print(f'error : {np.linalg.norm(xf_exact-xf)/np.linalg.norm(xf_exact)+np.linalg.norm(vf_exact-vf)/np.linalg.norm(vf_exact):e} time : {(t_end-t_beg)/One_sec:f}')
+                error_rel = np.linalg.norm(xf_exact-xf)/np.linalg.norm(xf_exact)+np.linalg.norm(vf_exact-vf)/np.linalg.norm(vf_exact)
+
+                # print(f'error : {error_rel:e} time : {(t_end-t_beg)/One_sec:f}')
+
+                if (imul > 0):
+                    error_mul = error_rel/error_rel_prev
+                    est_order = -m.log(error_mul)/m.log(refinement_lvl[imul]/refinement_lvl[imul-1])
+
+                    # print(f'error : {error_rel:e}     error mul : {error_rel/error_rel_prev:e}     estimated order : {est_order:e}     time : {(t_end-t_beg)/One_sec:f}')
+                    print(f'error : {error_rel:e}     estimated order : {est_order:.2f}     time : {(t_end-t_beg)/One_sec:f}')
+
+                error_rel_prev = error_rel
+
 
 
 
