@@ -48,21 +48,21 @@ def main():
 #                 the_name = file_path[len(input_folder):]
 #                 input_names_list.append(the_name)
 
+# # 
+#     ''' Include all files in folder '''
+#     input_names_list = []
+#     for file_path in os.listdir(input_folder):
+#         file_path = os.path.join(input_folder, file_path)
+#         file_root, file_ext = os.path.splitext(os.path.basename(file_path))
+#         
+#         if (file_ext == '.txt' ):
+    #         
+    #         if int(file_root) > 8:
+    #             input_names_list.append(file_root)
 # 
-    ''' Include all files in folder '''
-    input_names_list = []
-    for file_path in os.listdir(input_folder):
-        file_path = os.path.join(input_folder, file_path)
-        file_root, file_ext = os.path.splitext(os.path.basename(file_path))
-        
-        if (file_ext == '.txt' ):
-            # 
-            # if int(file_root) > 7:
-            #     input_names_list.append(file_root)
+            # input_names_list.append(file_root)
 
-            input_names_list.append(file_root)
-
-    # input_names_list = ['00002']
+    input_names_list = ['00002']
 
     store_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/mod')
     # store_folder = input_folder
@@ -107,8 +107,8 @@ def main():
     rtol_ode = 1e-12
 
     vid_size = (8,8) # Image size in inches
-    # vid_size_perturb = (4,4) # Image size in inches
-    vid_size_perturb = (8,8) # Image size in inches
+    vid_size_perturb = (4,4) # Image size in inches
+    # vid_size_perturb = (8,8) # Image size in inches
     # nint_plot_anim = 2*2*2*3*3
     nint_plot_anim = 2*2*2*3*3*5
     dnint = 30
@@ -136,19 +136,19 @@ def main():
     # InvestigateStability = True
     InvestigateStability = False
 
-    Save_Perturbed = True
-    # Save_Perturbed = False
+    # Save_Perturbed = True
+    Save_Perturbed = False
 
     dy_perturb_mul = 3e0
 
     # Homogeneous_Perturb = False
     Homogeneous_Perturb = True
 
-    # InvestigateIntegration = True
-    InvestigateIntegration = False
+    InvestigateIntegration = True
+    # InvestigateIntegration = False
 
-    Exec_Mul_Proc = True
-    # Exec_Mul_Proc = False
+    # Exec_Mul_Proc = True
+    Exec_Mul_Proc = False
 
     if Exec_Mul_Proc:
 
@@ -345,7 +345,7 @@ def ExecName(
         SymplecticIntegrator = choreo.GetSymplecticIntegrator(SymplecticMethod)
 
         # nint_mul = 1000
-        nint_mul = 100
+        nint_mul = 10
 
         nint = callfun[0]['nint_list'][callfun[0]["current_cvg_lvl"]]*nint_mul
 
@@ -369,8 +369,8 @@ def ExecName(
 
         U,s,Vh = scipy.linalg.svd(MonodromyMat, full_matrices=True, compute_uv=True, overwrite_a=False, check_finite=True, lapack_driver='gesdd')
 
-        print(the_name+f' error : {np.linalg.norm(MonodromyMat.dot(zo)-zo)/np.linalg.norm(zo):e} time : {(t_end-t_beg)/One_sec:f}')
-        print(the_name+f' {s[:8]}')
+        # print(the_name+f' error : {np.linalg.norm(MonodromyMat.dot(zo)-zo)/np.linalg.norm(zo):e} time : {(t_end-t_beg)/One_sec:f}')
+        # print(the_name+f' {s[:8]}')
 
         list_vid = []
 
@@ -556,7 +556,7 @@ def ExecName(
             print('SymplecticMethod : ',SymplecticMethod)
             print('')
 
-            for nint_mul in [1,10,100,1000]:
+            for nint_mul in [1,10,100]:
             # for nint_mul in [10,100,1000]:
 
                 nint = callfun[0]['nint_list'][callfun[0]["current_cvg_lvl"]]*nint_mul
@@ -570,12 +570,12 @@ def ExecName(
 
     # 
     # 
-                # t_span = (0.,0.5)
-                # nint = nint//2
-                # yf_exact = all_pos_vel[:,:,:,callfun[0]['nint_list'][callfun[0]["current_cvg_lvl"]]//2].reshape(-1)
+                t_span = (0.,0.5)
+                nint = nint//2
+                yf_exact = all_pos_vel[:,:,:,callfun[0]['nint_list'][callfun[0]["current_cvg_lvl"]]//2].reshape(-1)
     # # # # 
-                t_span = (0.,1.)
-                yf_exact = y0
+                # t_span = (0.,1.)
+                # yf_exact = y0
 
 
 

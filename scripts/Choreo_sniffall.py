@@ -163,7 +163,8 @@ def main(the_i=0):
     # ncoeff_init = 102
     # ncoeff_init = 800
     # ncoeff_init = 201   
-    ncoeff_init = 512
+    # ncoeff_init = 512
+    ncoeff_init = 600
     # ncoeff_init = the_lcm
     
     # print(the_lcm)
@@ -203,22 +204,13 @@ def main(the_i=0):
     foundsol_tol = 1e10
 
     escape_fac = 1e0
-    # escape_fac = 1e-1
-    # escape_fac = 1e-2
-    # escape_fac = 1e-3
-    # escape_fac = 1e-4
-    # escape_fac = 1e-5
-    # escape_fac = 0
     escape_min_dist = 1
     escape_pow = 2.0
-    # escape_pow = 2.5
-    # escape_pow = 1.5
-    # escape_pow = 0.5
 
     n_grad_change = 1.
     # n_grad_change = 1.5
 
-    coeff_ampl_o=3e-1
+    coeff_ampl_o=3e-2
     # coeff_ampl_o=1e0
     k_infl=0
     k_max=600
