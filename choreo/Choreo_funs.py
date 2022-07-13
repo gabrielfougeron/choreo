@@ -1688,6 +1688,8 @@ def GetTangentSystemDef(x,callfun,nint=None,method = 'SymplecticEuler'):
             pass
         elif method in ['SymplecticStormerVerlet','SymplecticStormerVerlet_XV','SymplecticStormerVerlet_VX']:
             nint = 2*nint
+        elif method in ['SymplecticRuth3','SymplecticRuth3_XV','SymplecticRuth3_VX']:
+            nint = 24*nint
 
         all_pos_vel = ComputeAllPosVel(x,callfun,nint=nint)
 
