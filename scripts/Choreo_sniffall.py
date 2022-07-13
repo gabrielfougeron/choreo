@@ -53,7 +53,8 @@ def main(the_i=0):
     LookForTarget = False
     # nbpl=[1,2,3,4,5,6]
     # nbpl=[nc]
-    nbpl=[1,1,1]
+    nbpl=[1,1,1,1]
+    # nbpl=[1,1,1]
     # nbpl=[2,3,5]
 
     # the_lcm = m.lcm(*nbpl)
@@ -259,6 +260,7 @@ def main(the_i=0):
 if __name__ == "__main__":
 
     n = multiprocessing.cpu_count()
+    # n = multiprocessing.cpu_count()//2-1
     # n = 3
     
     print(f"Executing with {n} workers")
