@@ -49,7 +49,7 @@ SymplecticMethod = 'SymplecticEuler_Table_VX'
 
 # the_integrators = {SymplecticMethod:choreo.GetSymplecticIntegrator(SymplecticMethod)}
 
-the_integrators = choreo.all_SymplecticIntegrators
+the_integrators = choreo.all_unique_SymplecticIntegrators
 
 for SymplecticMethod,SymplecticIntegrator in the_integrators.items() :
     print('')

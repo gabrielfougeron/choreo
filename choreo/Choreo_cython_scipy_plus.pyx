@@ -19,7 +19,6 @@ from libc.math cimport sqrt as csqrt
 from libc.math cimport isnan as cisnan
 from libc.math cimport isinf as cisinf
 
-
 def SymplecticWithTable_VX_cython(
     object fun,
     object gun,
@@ -34,7 +33,8 @@ def SymplecticWithTable_VX_cython(
 
     # Warning : x0 and v0 might get erased
 
-    cdef double t = t_span[0]
+    cdef double tx = t_span[0]
+    cdef double tv = t_span[0]
     cdef double dt = (t_span[1] - t_span[0]) / nint
 
     cdef np.ndarray[double, ndim=1, mode="c"] cdt = np.zeros((nsteps),dtype=np.float64)
@@ -55,15 +55,17 @@ def SymplecticWithTable_VX_cython(
 
         for istep in range(nsteps):
 
-            res = fun(t,v)  
+            res = fun(tv,v)  
             for idof in range(ndof):
                 x[idof] += cdt[istep] * res[idof]  
 
-            t += cdt[istep]
+            tx += cdt[istep]
 
-            res = gun(t,x)   
+            res = gun(tx,x)   
             for idof in range(ndof):
                 v[idof] += ddt[istep] * res[idof]  
+            tv += ddt[istep]
+
 
     return x,v
 
@@ -81,7 +83,8 @@ def SymplecticWithTable_XV_cython(
 
     # Warning : x0 and v0 might get erased
 
-    cdef double t = t_span[0]
+    cdef double tx = t_span[0]
+    cdef double tv = t_span[0]
     cdef double dt = (t_span[1] - t_span[0]) / nint
 
     cdef np.ndarray[double, ndim=1, mode="c"] cdt = np.zeros((nsteps),dtype=np.float64)
@@ -103,15 +106,16 @@ def SymplecticWithTable_XV_cython(
 
         for istep in range(nsteps):
 
-            res = gun(t,x)   
+            res = gun(tx,x)   
             for idof in range(ndof):
                 v[idof] += cdt[istep] * res[idof]  
+            tv += cdt[istep]
 
-            res = fun(t,v)  
+            res = fun(tv,v)  
             for idof in range(ndof):
                 x[idof] += ddt[istep] * res[idof]  
 
-            t += ddt[istep]
+            tx += ddt[istep]
 
     return x,v
 
@@ -176,7 +180,7 @@ def SymplecticStormerVerlet_VX_cython(
     ):
 
     # Warning : x0 and v0 might get erased
-    
+
     cdef double t = t_span[0]
     cdef double dt = (t_span[1] - t_span[0]) / nint
     cdef double dt_half = dt*0.5

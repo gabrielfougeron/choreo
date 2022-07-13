@@ -536,6 +536,13 @@ def ExecName(
         print('Symplectic integration of direct system')
         print('')
 
+
+        # SymplecticMethod = 'SymplecticEuler'
+        # SymplecticMethod = 'SymplecticStormerVerlet'
+        # SymplecticMethod = 'SymplecticRuth3'
+
+        # the_integrators = {SymplecticMethod:choreo.GetSymplecticIntegrator(SymplecticMethod)}
+
         the_integrators = choreo.all_unique_SymplecticIntegrators
 
         for SymplecticMethod,SymplecticIntegrator in the_integrators.items() :
@@ -544,7 +551,8 @@ def ExecName(
             print('SymplecticMethod : ',SymplecticMethod)
             print('')
 
-            refinement_lvl = [1,2,4,8,16,32,64,128]
+            # refinement_lvl = [1,2,4,8,16,32,64,128]
+            refinement_lvl = [16,32]
             # refinement_lvl = [1,10,100]
 
             for imul in range(len(refinement_lvl)):
