@@ -32,6 +32,8 @@ def SymplecticWithTable_VX_cython(
     long nsteps
     ):
 
+    # Warning : x0 and v0 might get erased
+
     cdef double t = t_span[0]
     cdef double dt = (t_span[1] - t_span[0]) / nint
 
@@ -44,8 +46,7 @@ def SymplecticWithTable_VX_cython(
     cdef long ndof = x0.size
     cdef np.ndarray[double, ndim=1, mode="c"] res
 
-    cdef long istep,idof
-
+    cdef long istep,id
     for istep in range(nsteps):
         cdt[istep] = c_table[istep]*dt
         ddt[istep] = d_table[istep]*dt
@@ -77,6 +78,8 @@ def SymplecticWithTable_XV_cython(
     np.ndarray[double, ndim=1, mode="c"] d_table,
     long nsteps
     ):
+
+    # Warning : x0 and v0 might get erased
 
     cdef double t = t_span[0]
     cdef double dt = (t_span[1] - t_span[0]) / nint
@@ -120,6 +123,8 @@ def SymplecticStormerVerlet_XV_cython(
     np.ndarray[double, ndim=1, mode="c"] v0,
     long nint,
     ):
+
+    # Warning : x0 and v0 might get erased
 
     cdef double t = t_span[0]
     cdef double dt = (t_span[1] - t_span[0]) / nint
@@ -170,6 +175,8 @@ def SymplecticStormerVerlet_VX_cython(
     long nint,
     ):
 
+    # Warning : x0 and v0 might get erased
+    
     cdef double t = t_span[0]
     cdef double dt = (t_span[1] - t_span[0]) / nint
     cdef double dt_half = dt*0.5
