@@ -147,31 +147,7 @@ def SymplecticStormerVerlet_VX(fun,gun,t_span,x0,v0,nint):
 
 SymplecticStormerVerlet = SymplecticStormerVerlet_VX
 
-def SymplecticWithTable_XV(fun,gun,t_span,x0,v0,nint,c_table=None,d_table=None):
-
-    nsteps = c_table.size
-    assert c_table.size == d_table.size
-
-    t = t_span[0]
-    dt = (t_span[1] - t_span[0]) / nint
-
-    x = x0
-    v = v0
-
-    for iint in range(nint):
-
-        for istep in range(nsteps):
-
-            v = v + (d_table[istep]*dt) * gun(t,x)            
-            x = x + (c_table[istep]*dt) * fun(t,v)
-            t += c_table[istep]*dt
-
-    return x,v
-
-def SymplecticWithTable_VX(fun,gun,t_span,x0,v0,nint,c_table=None,d_table=None):
-
-    nsteps = c_table.size
-    assert c_table.size == d_table.size
+def SymplecticWithTable_VX(fun,gun,t_span,x0,v0,nint,c_table=None,d_table=None,nsteps=None):
 
     t = t_span[0]
     dt = (t_span[1] - t_span[0]) / nint
@@ -189,13 +165,52 @@ def SymplecticWithTable_VX(fun,gun,t_span,x0,v0,nint,c_table=None,d_table=None):
 
     return x,v
 
-c_table_Euler = np.array([1])
-d_table_Euler = np.array([1])
-SymplecticEuler_Table_XV = functools.partial(SymplecticWithTable_XV,c_table=c_table_Euler,d_table=d_table_Euler)
+def SymplecticWithTable_XV(fun,gun,t_span,x0,v0,nint,c_table=None,d_table=None,nsteps=None):
+
+    t = t_span[0]
+    dt = (t_span[1] - t_span[0]) / nint
+
+    x = x0
+    v = v0
+
+    for iint in range(nint):
+
+        for istep in range(nsteps):
+
+            v = v + (c_table[istep]*dt) * gun(t,x)            
+            x = x + (d_table[istep]*dt) * fun(t,v)
+            t += d_table[istep]*dt
+
+    return x,v
 
 c_table_Euler = np.array([1])
 d_table_Euler = np.array([1])
-SymplecticEuler_Table_VX = functools.partial(SymplecticWithTable_XV,c_table=c_table_Euler,d_table=d_table_Euler)
+assert c_table_Euler.size == d_table_Euler.size
+nsteps_Euler = c_table_Euler.size
+SymplecticEuler_Table_XV = functools.partial(SymplecticWithTable_XV,c_table=c_table_Euler,d_table=d_table_Euler,nsteps=nsteps_Euler)
+SymplecticEuler_Table_VX = functools.partial(SymplecticWithTable_VX,c_table=c_table_Euler,d_table=d_table_Euler,nsteps=nsteps_Euler)
+
+c_table_StormerVerlet = np.array([0.    ,1.      ])
+d_table_StormerVerlet = np.array([1./2  ,1./2    ])
+assert c_table_StormerVerlet.size == d_table_StormerVerlet.size
+nsteps_StormerVerlet = c_table_StormerVerlet.size
+SymplecticStormerVerlet_Table_XV = functools.partial(SymplecticWithTable_XV,c_table=c_table_StormerVerlet,d_table=d_table_StormerVerlet,nsteps=nsteps_StormerVerlet)
+SymplecticStormerVerlet_Table_VX = functools.partial(SymplecticWithTable_VX,c_table=c_table_StormerVerlet,d_table=d_table_StormerVerlet,nsteps=nsteps_StormerVerlet)
+
+c_table_Ruth3 = np.array([1.        ,-2./3  ,2/3    ])
+d_table_Ruth3 = np.array([-1./24    , 3./4  ,7./24  ])
+assert c_table_Ruth3.size == d_table_Ruth3.size
+nsteps_Ruth3 = c_table_Ruth3.size
+SymplecticRuth3_Table_XV = functools.partial(SymplecticWithTable_XV,c_table=c_table_Ruth3,d_table=d_table_Ruth3,nsteps=nsteps_Ruth3)
+SymplecticRuth3_Table_VX = functools.partial(SymplecticWithTable_VX,c_table=c_table_Ruth3,d_table=d_table_Ruth3,nsteps=nsteps_Ruth3)
+
+curt2 = m.pow(2,1./3)
+c_table_Ruth4 = np.array([1./(2*(2-curt2))  ,(1-curt2)/(2*(2-curt2))    ,(1-curt2)/(2*(2-curt2))    ,1./(2*(2-curt2))   ])
+d_table_Ruth4 = np.array([1./(2-curt2)      ,-curt2/(2-curt2)           ,1./(2-curt2)               ,0.                 ])
+assert c_table_Ruth4.size == d_table_Ruth4.size
+nsteps_Ruth4 = c_table_Ruth4.size
+SymplecticRuth4_Table_XV = functools.partial(SymplecticWithTable_XV,c_table=c_table_Ruth4,d_table=d_table_Ruth4,nsteps=nsteps_Ruth4)
+SymplecticRuth4_Table_VX = functools.partial(SymplecticWithTable_VX,c_table=c_table_Ruth4,d_table=d_table_Ruth4,nsteps=nsteps_Ruth4)
 
 all_SymplecticIntegrators = {
     'SymplecticEuler' : SymplecticEuler,
@@ -206,6 +221,12 @@ all_SymplecticIntegrators = {
     'SymplecticStormerVerlet_VX' : SymplecticStormerVerlet_VX,
     'SymplecticEuler_Table_XV' : SymplecticEuler_Table_XV,
     'SymplecticEuler_Table_VX' : SymplecticEuler_Table_VX,
+    'SymplecticStormerVerlet_Table_XV' : SymplecticStormerVerlet_Table_XV,
+    'SymplecticStormerVerlet_Table_VX' : SymplecticStormerVerlet_Table_VX,
+    'SymplecticRuth3_Table_XV' : SymplecticRuth3_Table_XV,
+    'SymplecticRuth3_Table_VX' : SymplecticRuth3_Table_VX,
+    'SymplecticRuth4_Table_XV' : SymplecticRuth4_Table_XV,
+    'SymplecticRuth4_Table_VX' : SymplecticRuth4_Table_VX,
     }
 
 all_unique_SymplecticIntegrators = {
@@ -215,6 +236,12 @@ all_unique_SymplecticIntegrators = {
     'SymplecticStormerVerlet_VX' : SymplecticStormerVerlet_VX,
     'SymplecticEuler_Table_XV' : SymplecticEuler_Table_XV,
     'SymplecticEuler_Table_VX' : SymplecticEuler_Table_VX,
+    'SymplecticStormerVerlet_Table_XV' : SymplecticStormerVerlet_Table_XV,
+    'SymplecticStormerVerlet_Table_VX' : SymplecticStormerVerlet_Table_VX,
+    'SymplecticRuth3_Table_XV' : SymplecticRuth3_Table_XV,
+    'SymplecticRuth3_Table_VX' : SymplecticRuth3_Table_VX,
+    'SymplecticRuth4_Table_XV' : SymplecticRuth4_Table_XV,
+    'SymplecticRuth4_Table_VX' : SymplecticRuth4_Table_VX,
     }
 
 def GetSymplecticIntegrator(method):
