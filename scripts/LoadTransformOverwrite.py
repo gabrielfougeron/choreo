@@ -468,8 +468,8 @@ def ExecName(
         # SymplecticMethod = 'SymplecticStormerVerlet'
 
 
-        # SymplecticMethod = 'SymplecticEuler_Xfirst'
-        # SymplecticMethod = 'SymplecticEuler_Vfirst'
+        # SymplecticMethod = 'SymplecticEuler_XV'
+        # SymplecticMethod = 'SymplecticEuler_VX'
         # SymplecticMethod = 'SymplecticStormerVerlet_XV'
         # SymplecticMethod = 'SymplecticStormerVerlet_VX'
 
@@ -481,14 +481,12 @@ def ExecName(
         SymplecticMethod = 'SymplecticStormerVerlet'
 
 
-        # SymplecticMethod = 'SymplecticEuler_Xfirst'
-        # SymplecticMethod = 'SymplecticEuler_Vfirst'
+        # SymplecticMethod = 'SymplecticEuler_XV'
+        # SymplecticMethod = 'SymplecticEuler_VX'
         # SymplecticMethod = 'SymplecticStormerVerlet_XV'
         # SymplecticMethod = 'SymplecticStormerVerlet_VX'
 
         the_integrators = {SymplecticMethod:choreo.GetSymplecticIntegrator(SymplecticMethod)}
-
-        # the_integrators = choreo.all_unique_SymplecticIntegrators
 
         for SymplecticMethod,SymplecticIntegrator in the_integrators.items() :
 
@@ -541,14 +539,14 @@ def ExecName(
         # SymplecticMethod = 'SymplecticStormerVerlet'
 
 
-        # SymplecticMethod = 'SymplecticEuler_Xfirst'
-        # SymplecticMethod = 'SymplecticEuler_Vfirst'
+        # SymplecticMethod = 'SymplecticEuler_XV'
+        # SymplecticMethod = 'SymplecticEuler_VX'
         # SymplecticMethod = 'SymplecticStormerVerlet_XV'
         # SymplecticMethod = 'SymplecticStormerVerlet_VX'
 
         # the_integrators = {SymplecticMethod:choreo.GetSymplecticIntegrator(SymplecticMethod)}
 
-        the_integrators = choreo.all_unique_SymplecticIntegrators
+        the_integrators = choreo.all_SymplecticIntegrators
 
         for SymplecticMethod,SymplecticIntegrator in the_integrators.items() :
 
@@ -556,7 +554,7 @@ def ExecName(
             print('SymplecticMethod : ',SymplecticMethod)
             print('')
 
-            refinement_lvl = [1,2,4,8,16,32,64,128,256,512]
+            refinement_lvl = [1,2,4,8,16,32,64,128,256]
             # refinement_lvl = [1,10,100]
 
             for imul in range(len(refinement_lvl)):

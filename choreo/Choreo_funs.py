@@ -1684,7 +1684,7 @@ def GetTangentSystemDef(x,callfun,nint=None,method = 'SymplecticEuler'):
         if nint is None:
             nint = args['nint_list'][args["current_cvg_lvl"]]
 
-        if   method in ['SymplecticEuler','SymplecticEuler_Xfirst','SymplecticEuler_Vfirst']:
+        if   method in ['SymplecticEuler','SymplecticEuler_XV','SymplecticEuler_VX']:
             pass
         elif method in ['SymplecticStormerVerlet','SymplecticStormerVerlet_XV','SymplecticStormerVerlet_VX']:
             nint = 2*nint

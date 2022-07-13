@@ -37,8 +37,8 @@ test_names = [
 # SymplecticMethod = 'SymplecticStormerVerlet'
 
 # 
-# SymplecticMethod = 'SymplecticEuler_Xfirst'
-# SymplecticMethod = 'SymplecticEuler_Vfirst'
+# SymplecticMethod = 'SymplecticEuler_XV'
+# SymplecticMethod = 'SymplecticEuler_VX'
 # SymplecticMethod = 'SymplecticStormerVerlet_XV'
 # SymplecticMethod = 'SymplecticStormerVerlet_VX'
 
@@ -49,7 +49,7 @@ SymplecticMethod = 'SymplecticEuler_Table_VX'
 
 # the_integrators = {SymplecticMethod:choreo.GetSymplecticIntegrator(SymplecticMethod)}
 
-the_integrators = choreo.all_unique_SymplecticIntegrators
+the_integrators = choreo.all_SymplecticIntegrators
 
 for SymplecticMethod,SymplecticIntegrator in the_integrators.items() :
     print('')
