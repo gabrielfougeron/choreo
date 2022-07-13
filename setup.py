@@ -28,13 +28,22 @@ extra_compile_args = ["-O2"]
 extra_link_args = []
 
 
-extension = Extension(
+extension = [
+    Extension(
     name = "choreo.Choreo_cython_funs",
     sources =  ["choreo/Choreo_cython_funs.pyx"],
     include_dirs=[numpy.get_include()],
     extra_compile_args = extra_compile_args,
     extra_link_args = extra_link_args,
-                  )
+    ),
+    Extension(
+    name = "choreo.Choreo_cython_scipy_plus",
+    sources =  ["choreo/Choreo_cython_scipy_plus.pyx"],
+    include_dirs=[numpy.get_include()],
+    extra_compile_args = extra_compile_args,
+    extra_link_args = extra_link_args,
+    ),
+]
 
 setup(
     name = "choreo",
