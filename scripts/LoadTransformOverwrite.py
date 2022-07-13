@@ -29,6 +29,7 @@ import datetime
 One_sec = 1e9
 
 
+
 def main():
 
 
@@ -60,7 +61,7 @@ def main():
         if (file_ext == '.txt' ):
             input_names_list.append(file_root)
 
-    # input_names_list = ['00001']
+    # input_names_list = ['00003']
 
     store_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/mod')
     # store_folder = input_folder
@@ -92,8 +93,8 @@ def main():
     # Save_anim = True
     Save_anim = False
 
-    Save_ODE_anim = True
-    # Save_ODE_anim = False
+    # Save_ODE_anim = True
+    Save_ODE_anim = False
 
     # ODE_method = 'RK23'
     # ODE_method = 'RK45'
@@ -104,7 +105,8 @@ def main():
     atol_ode = 1e-10
     rtol_ode = 1e-12
 
-    vid_size = (8,8) # Image size in inches
+    # vid_size = (8,8) # Image size in inches
+    vid_size = (3,3) # Image size in inches
     # nint_plot_anim = 2*2*2*3*3
     nint_plot_anim = 2*2*2*3*3*5
     dnint = 30
@@ -134,6 +136,8 @@ def main():
 
     Save_Perturbed = True
     # Save_Perturbed = False
+
+    dy_perturb_mul = 1e0
 
     # InvestigateIntegration = True
     InvestigateIntegration = False
@@ -195,6 +199,7 @@ def ExecName(
     InvestigateStability,
     InvestigateIntegration,
     Save_Perturbed,
+    dy_perturb_mul,
     ):
 
     print('')
@@ -327,13 +332,12 @@ def ExecName(
         print('')
         print('Symplectic integration of tangent system')
         print('')
-        
 
         SymplecticMethod = 'SymplecticStormerVerlet'
         SymplecticIntegrator = choreo.GetSymplecticIntegrator(SymplecticMethod)
 
-        # nint_mul = 1000
-        nint_mul = 10000
+        nint_mul = 1000
+        # nint_mul = 10000
 
         nint = callfun[0]['nint_list'][callfun[0]["current_cvg_lvl"]]*nint_mul
 
@@ -366,13 +370,27 @@ def ExecName(
 
         print(s)
         # print(eig_vals)
-        
-        # for irank in [0]:
-        for irank in range(2*ndof):
 
-            dy_scal = 1e-2
-            
-            yo = choreo.Compute_init_pos_vel(x,callfun).reshape(-1) + dy_scal * Vh[irank,:]
+        xlim = choreo.Compute_xlim(x,callfun)
+
+        y0 = choreo.Compute_init_pos_vel(x,callfun).reshape(-1)
+        t_eval = np.array([i/nint_plot_img for i in range(nint_plot_img)])
+        fun = lambda t,y: choreo.Compute_ODE_RHS(t,y,callfun)
+        ode_res = scipy.integrate.solve_ivp(fun=fun, t_span=(0.,1.), y0=y0, method=ODE_method, t_eval=t_eval, dense_output=False, events=None, vectorized=False,max_step=1./min_n_steps_ode,atol=atol_ode,rtol=rtol_ode)
+        all_pos_vel = ode_res['y'].reshape(2,nbody,choreo.ndim,nint_plot_img)
+        all_pos_ode = all_pos_vel[0,:,:,:]
+        choreo.plot_all_2D_anim(x,nint_plot_anim,callfun,filename_output+'_unperturbed.mp4',nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size,dnint=dnint,all_pos_trace=all_pos_ode,all_pos_points=all_pos_ode,xlim=xlim)
+        
+        list_vid = []
+        list_vid = [filename_output+'_unperturbed.mp4']
+
+        # for irank in [0]:
+        for irank in range(3*3-1):
+        # for irank in range(2*ndof):
+
+            dy_perturb = dy_perturb_mul / s[0]
+
+            yo = choreo.Compute_init_pos_vel(x,callfun).reshape(-1) + dy_perturb * Vh[irank,:]
     
             t_eval = np.array([i/nint_plot_img for i in range(nint_plot_img)])
 
@@ -382,9 +400,22 @@ def ExecName(
 
             all_pos_vel = ode_res['y'].reshape(2,nbody,choreo.ndim,nint_plot_img)
             all_pos_ode = all_pos_vel[0,:,:,:]
-            
-            choreo.plot_all_2D_anim(x,nint_plot_anim,callfun,filename_output+'_perturbed_'+str(irank).zfill(3)+'.mp4',nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size,dnint=dnint,all_pos_trace=all_pos_ode,all_pos_points=all_pos_ode)
 
+            vid_filename = filename_output+'_perturbed_'+str(irank).zfill(3)+'.mp4'
+            list_vid.append(vid_filename)
+            
+            choreo.plot_all_2D_anim(x,nint_plot_anim,callfun,vid_filename,nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size,dnint=dnint,all_pos_trace=all_pos_ode,all_pos_points=all_pos_ode,xlim=xlim)
+
+
+        nx,ny = choreo.factor_squarest(len(list_vid))
+        nxy = [nx,ny]
+        # nxy = [ny,nx]
+        ordering = 'RowMajor'
+        # ordering = 'ColMajor'
+        choreo.VideoGrid(list_vid,filename_output+'_perturbed.mp4',nxy=nxy,ordering=ordering)
+
+        for the_file in list_vid:
+            os.remove(the_file)
 
 
 
