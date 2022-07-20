@@ -102,8 +102,51 @@ def GetSymplecticIntegrator(method='SymplecticRuth3'):
     return all_SymplecticIntegrators[method]
 
 
+def InstabilityDecomposition(Mat,eps=1e-12):
 
+    n,m = Mat.shape
+    assert n==m
 
+    eigvals,eigvects = scipy.linalg.eig(a=Mat, b=None, left=False, right=True, overwrite_a=False, overwrite_b=False, check_finite=True, homogeneous_eigvals=False)
+    idx_sort = np.argsort(-abs(eigvals))
+    Instability_magnitude = abs(eigvals)[idx_sort]
+    
+    Instability_directions = np.zeros((n,n))
+
+    i = 0
+    while (i < n):
+
+        is_real = (np.linalg.norm(eigvects[:,idx_sort[i]].imag) < eps) and (abs(eigvals[idx_sort[i  ]].imag) < eps)
+
+        # print("")
+        # print(i)
+
+        if is_real :
+
+            # print("real")
+
+            Instability_directions[i,:] = eigvects[:,idx_sort[i]].real
+
+            i += 1
+        else :
+
+            assert (i+1) < n
+
+            is_conj_couple = ((np.linalg.norm(eigvects[:,idx_sort[i]].imag + eigvects[:,idx_sort[i+1]].imag)) < eps) and (abs(eigvals[idx_sort[i  ]].imag + eigvals[idx_sort[i+1]].imag) < eps)    
+
+            assert is_conj_couple
+
+            # print("imag")
+            # print(eigvals[idx_sort[i  ]].imag,np.linalg.norm(eigvects[:,idx_sort[i]].imag))
+            # print(eigvals[idx_sort[i+1]].imag,np.linalg.norm(eigvects[:,idx_sort[i]].imag))
+            # print(is_conj_couple)
+
+            Instability_directions[i  ,:] = eigvects[:,idx_sort[i]].real
+            Instability_directions[i+1,:] = eigvects[:,idx_sort[i]].imag
+
+            i += 2
+            
+    return Instability_magnitude,Instability_directions
 
 
 

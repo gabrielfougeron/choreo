@@ -167,6 +167,17 @@ def plot_all_2D_cpb(x,nint_plot,callfun,filename,fig_size=(10,10),dpi=100,color=
     
     yinf = ymin - extend*(ymax-ymin)
     ysup = ymax + extend*(ymax-ymin)
+    
+    hside = max(xsup-xinf,ysup-yinf)/2
+
+    xmid = (xinf+xsup)/2
+    ymid = (yinf+ysup)/2
+
+    xinf = xmid - hside
+    xsup = xmid + hside
+
+    yinf = ymid - hside
+    ysup = ymid + hside
 
     # Plot-related
     fig = plt.figure()
@@ -260,6 +271,17 @@ def plot_all_2D_cpv(x,nint_plot,callfun,filename,fig_size=(10,10),dpi=100,xlim=N
     
     yinf = ymin - extend*(ymax-ymin)
     ysup = ymax + extend*(ymax-ymin)
+    
+    hside = max(xsup-xinf,ysup-yinf)/2
+
+    xmid = (xinf+xsup)/2
+    ymid = (yinf+ysup)/2
+
+    xinf = xmid - hside
+    xsup = xmid + hside
+
+    yinf = ymid - hside
+    ysup = ymid + hside
 
     # Plot-related
     fig = plt.figure()
@@ -326,6 +348,7 @@ def plot_all_2D_anim(x,nint_plot,callfun,filename,nperiod=1,Plot_trace=True,fig_
     if (all_pos_points is None):
         all_pos_points = all_pos_b
 
+    size_all_pos_points = all_pos_points.shape[2] - 1
 
     if xlim is None:
 
@@ -347,15 +370,23 @@ def plot_all_2D_anim(x,nint_plot,callfun,filename,nperiod=1,Plot_trace=True,fig_
     yinf = ymin - extend*(ymax-ymin)
     ysup = ymax + extend*(ymax-ymin)
     
+    hside = max(xsup-xinf,ysup-yinf)/2
+
+    xmid = (xinf+xsup)/2
+    ymid = (yinf+ysup)/2
+
+    xinf = xmid - hside
+    xsup = xmid + hside
+
+    yinf = ymid - hside
+    ysup = ymid + hside
+
     # Plot-related
     fig = plt.figure()
     fig.set_size_inches(fig_size)
     ax = plt.gca()
     lines = sum([ax.plot([], [],'-', antialiased=True,zorder=-ib)  for ib in range(nbody)], [])
     points = sum([ax.plot([], [],'ko', antialiased=True)for ib in range(nbody)], [])
-    
-    # print(xinf,xsup)
-    # print(yinf,ysup)
     
     ax.axis('off')
     ax.set_xlim([xinf, xsup])
@@ -380,7 +411,7 @@ def plot_all_2D_anim(x,nint_plot,callfun,filename,nperiod=1,Plot_trace=True,fig_
         for ib in range(nbody):
             points[ib].set_data(all_pos_points[ib,0,iint[0]], all_pos_points[ib,1,iint[0]])
             
-        iint[0] = ((iint[0]+dnint) % nint_plot_img)
+        iint[0] = ((iint[0]+dnint) % size_all_pos_points)
 
         return lines + points
     
@@ -442,7 +473,6 @@ def Images_to_video(input_folder,output_filename,ReverseEnd=False,img_file_ext='
     
     os.remove(frames_filename)
  
-
 def factor_squarest(n):
     x = m.ceil(m.sqrt(n))
     y = int(n/x)
