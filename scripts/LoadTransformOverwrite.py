@@ -30,10 +30,10 @@ One_sec = 1e9
 def main():
 
 
-    input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/4/')
+    input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/3/')
     # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/copy/')
-    # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/keep/10')
-
+    # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/Gallery_videos/C-4')
+# 
 #     ''' Include all files in tree '''
 #     input_names_list = []
 #     for root, dirnames, filenames in os.walk(input_folder):
@@ -47,22 +47,22 @@ def main():
 #                 file_path = os.path.join(root, file_root)
 #                 the_name = file_path[len(input_folder):]
 #                 input_names_list.append(the_name)
-
-# # 
-#     ''' Include all files in folder '''
-#     input_names_list = []
-#     for file_path in os.listdir(input_folder):
-#         file_path = os.path.join(input_folder, file_path)
-#         file_root, file_ext = os.path.splitext(os.path.basename(file_path))
-#         
-#         if (file_ext == '.txt' ):
-#             
-#             # if int(file_root) > 8:
-#             #     input_names_list.append(file_root)
 # 
-#             input_names_list.append(file_root)
+# # 
+    ''' Include all files in folder '''
+    input_names_list = []
+    for file_path in os.listdir(input_folder):
+        file_path = os.path.join(input_folder, file_path)
+        file_root, file_ext = os.path.splitext(os.path.basename(file_path))
+        
+        if (file_ext == '.txt' ):
+            # 
+            # if int(file_root) > 8:
+            #     input_names_list.append(file_root)
 
-    input_names_list = ['00009']
+            input_names_list.append(file_root)
+
+    # input_names_list = ['00134']
 
     store_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/mod')
     # store_folder = input_folder
@@ -73,8 +73,8 @@ def main():
     # Save_All_Coeffs_No_Sym = True
     Save_All_Coeffs_No_Sym = False
 
-    # Save_Newton_Error = True
-    Save_Newton_Error = False
+    Save_Newton_Error = True
+    # Save_Newton_Error = False
 
     Save_img = True
     # Save_img = False
@@ -91,11 +91,11 @@ def main():
     # color = "velocity"
     # color = "all"
 
-    # Save_anim = True
-    Save_anim = False
+    Save_anim = True
+    # Save_anim = False
 
-    # Save_ODE_anim = True
-    Save_ODE_anim = False
+    Save_ODE_anim = True
+    # Save_ODE_anim = False
 
     # ODE_method = 'RK23'
     # ODE_method = 'RK45'
@@ -114,7 +114,6 @@ def main():
     dnint = 30
 
     nint_plot_img = nint_plot_anim * dnint
-
 
     min_n_steps_ode = 1*nint_plot_anim
 
@@ -136,16 +135,16 @@ def main():
     # InvestigateStability = True
     InvestigateStability = False
 
-    # Save_Perturbed = True
-    Save_Perturbed = False
+    Save_Perturbed = True
+    # Save_Perturbed = False
 
     dy_perturb_mul = 3e0
 
     # Homogeneous_Perturb = False
     Homogeneous_Perturb = True
 
-    InvestigateIntegration = True
-    # InvestigateIntegration = False
+    # InvestigateIntegration = True
+    InvestigateIntegration = False
 
     # Exec_Mul_Proc = True
     Exec_Mul_Proc = False
@@ -153,8 +152,9 @@ def main():
     if Exec_Mul_Proc:
 
         # n = 1
-        n = 4
+        # n = 4
         # n = multiprocessing.cpu_count()
+        n = multiprocessing.cpu_count()//2
         
         print(f"Executing with {n} workers")
         
@@ -268,7 +268,7 @@ def ExecName(
         '''
 
         SymName = None
-        nbpl=[1,1,1,1]
+        nbpl=[3]
         Sym_list,nbody = choreo.Make2DChoreoSymManyLoops(nbpl=nbpl,SymName=SymName)
 
 
@@ -341,11 +341,12 @@ def ExecName(
         # print('Symplectic integration of tangent system')
         # print('')
 
-        SymplecticMethod = 'SymplecticStormerVerlet'
+        # SymplecticMethod = 'SymplecticEuler'
+        # SymplecticMethod = 'SymplecticStormerVerlet'
+        SymplecticMethod = 'SymplecticRuth3'
         SymplecticIntegrator = choreo.GetSymplecticIntegrator(SymplecticMethod)
 
-        # nint_mul = 1000
-        nint_mul = 10
+        nint_mul = 128
 
         nint = callfun[0]['nint_list'][callfun[0]["current_cvg_lvl"]]*nint_mul
 
@@ -360,6 +361,8 @@ def ExecName(
         t_end = time.perf_counter_ns()
         MonodromyMat = np.ascontiguousarray(np.concatenate((xf,vf),axis=0).reshape(2*ndof,2*ndof))
 
+        del fun,gun
+
         # Evaluates the relative accuracy of the Monodromy matrix integration process
         # zo should be an eigenvector of the Monodromy matrix, with eigenvalue 1
         yo = choreo.Compute_init_pos_vel(x,callfun).reshape(-1)
@@ -369,39 +372,46 @@ def ExecName(
 
         U,s,Vh = scipy.linalg.svd(MonodromyMat, full_matrices=True, compute_uv=True, overwrite_a=False, check_finite=True, lapack_driver='gesdd')
 
-        # print(the_name+f' error : {np.linalg.norm(MonodromyMat.dot(zo)-zo)/np.linalg.norm(zo):e} time : {(t_end-t_beg)/One_sec:f}')
+        print(the_name+f' error : {np.linalg.norm(MonodromyMat.dot(zo)-zo)/np.linalg.norm(zo):e} time : {(t_end-t_beg)/One_sec:f}')
         # print(the_name+f' {s[:8]}')
 
         list_vid = []
 
         xlim = choreo.Compute_xlim(x,callfun,extend=0.2)
 
-        # y0 = choreo.Compute_init_pos_vel(x,callfun).reshape(-1)
-        # t_eval = np.array([i/nint_plot_img for i in range(nint_plot_img)])
-        # fun = lambda t,y: choreo.Compute_ODE_RHS(t,y,callfun)
-        # ode_res = scipy.integrate.solve_ivp(fun=fun, t_span=(0.,1.), y0=y0, method=ODE_method, t_eval=t_eval, dense_output=False, events=None, vectorized=False,max_step=1./min_n_steps_ode,atol=atol_ode,rtol=rtol_ode)
-        # all_pos_vel = ode_res['y'].reshape(2,nbody,choreo.ndim,nint_plot_img)
-        # all_pos_ode = all_pos_vel[0,:,:,:]
-        # choreo.plot_all_2D_anim(x,nint_plot_anim,callfun,filename_output+'_unperturbed.mp4',nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size_perturb,dnint=dnint,all_pos_trace=all_pos_ode,all_pos_points=all_pos_ode,xlim=xlim,extend=0.)
-        # 
+        n_unperturbed = 0
+        n_perturbed = 12
+        n_random = 0
 
-        # list_vid.append(filename_output+'_unperturbed.mp4')
-
-        # nvid = 8
-        # nx,ny = choreo.factor_squarest(nvid)
+        nvid = n_unperturbed + n_perturbed + n_random
 
         nx = 4
-        ny = 2
-        nvid = nx*ny
+        ny = 3
 
-        for irank in range(nvid):
-        # for irank in range(nvid-1):
-        # for irank in range(nvid-2):
+        # nx,ny = choreo.factor_squarest(nvid)
+
+        assert nx*ny == nvid
+
+        for i in range(n_unperturbed):
+
+            y0 = choreo.Compute_init_pos_vel(x,callfun).reshape(-1)
+            t_eval = np.array([i/nint_plot_img for i in range(nint_plot_img)])
+            fun = lambda t,y: choreo.Compute_ODE_RHS(t,y,callfun)
+            ode_res = scipy.integrate.solve_ivp(fun=fun, t_span=(0.,1.), y0=y0, method=ODE_method, t_eval=t_eval, dense_output=False, events=None, vectorized=False,max_step=1./min_n_steps_ode,atol=atol_ode,rtol=rtol_ode)
+            all_pos_vel = ode_res['y'].reshape(2,nbody,choreo.ndim,nint_plot_img)
+            all_pos_ode = all_pos_vel[0,:,:,:]
+
+            vid_filename = filename_output+'_unperturbed_'+str(i).zfill(3)+'.mp4'
+            list_vid.append(vid_filename)
+
+            choreo.plot_all_2D_anim(x,nint_plot_anim,callfun,vid_filename,nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size_perturb,dnint=dnint,all_pos_trace=all_pos_ode,all_pos_points=all_pos_ode,xlim=xlim,extend=0.)
+
+        for irank in range(n_perturbed):
 
             if Homogeneous_Perturb:
                 dy_perturb = dy_perturb_mul / s[0]
             else:
-                dy_perturb = dy_perturb_mul / s[irank]
+                dy_perturb = max(dy_perturb_mul / s[irank],dy_perturb_mul)
 
             yo = choreo.Compute_init_pos_vel(x,callfun).reshape(-1) + dy_perturb * Vh[irank,:]
     
@@ -419,32 +429,28 @@ def ExecName(
             
             choreo.plot_all_2D_anim(x,nint_plot_anim,callfun,vid_filename,nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size_perturb,dnint=dnint,all_pos_trace=all_pos_ode,all_pos_points=all_pos_ode,xlim=xlim,extend=0.)
 
-# # 
-#         dy_perturb = dy_perturb_mul / s[0]
-#         yo = choreo.Compute_init_pos_vel(x,callfun).reshape(-1)
-#         dy = np.random.rand(*yo.shape)
-#         dy = dy / np.linalg.norm(dy)
-#         yo += dy_perturb*dy
-# 
-#         t_eval = np.array([i/nint_plot_img for i in range(nint_plot_img)])
-# 
-#         fun = lambda t,y: choreo.Compute_ODE_RHS(t,y,callfun)
-# 
-#         ode_res = scipy.integrate.solve_ivp(fun=fun, t_span=(0.,1.), y0=yo, method=ODE_method, t_eval=t_eval, dense_output=False, events=None, vectorized=False,max_step=1./min_n_steps_ode,atol=atol_ode,rtol=rtol_ode)
-# 
-#         all_pos_vel = ode_res['y'].reshape(2,nbody,choreo.ndim,nint_plot_img)
-#         all_pos_ode = all_pos_vel[0,:,:,:]
-# 
-#         vid_filename = filename_output+'_perturbed_random.mp4'
-#         list_vid.append(vid_filename)
-#         
-#         choreo.plot_all_2D_anim(x,nint_plot_anim,callfun,vid_filename,nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size_perturb,dnint=dnint,all_pos_trace=all_pos_ode,all_pos_points=all_pos_ode,xlim=xlim,extend=0.)
+        for irank in range(n_random):
 
+            dy_perturb = dy_perturb_mul / s[0]
 
+            yo = choreo.Compute_init_pos_vel(x,callfun).reshape(-1)
+            dy = np.random.rand(*yo.shape)
+            dy = dy / np.linalg.norm(dy)
+            yo += dy_perturb*dy
 
+            t_eval = np.array([i/nint_plot_img for i in range(nint_plot_img)])
 
+            fun = lambda t,y: choreo.Compute_ODE_RHS(t,y,callfun)
 
+            ode_res = scipy.integrate.solve_ivp(fun=fun, t_span=(0.,1.), y0=yo, method=ODE_method, t_eval=t_eval, dense_output=False, events=None, vectorized=False,max_step=1./min_n_steps_ode,atol=atol_ode,rtol=rtol_ode)
 
+            all_pos_vel = ode_res['y'].reshape(2,nbody,choreo.ndim,nint_plot_img)
+            all_pos_ode = all_pos_vel[0,:,:,:]
+
+            vid_filename = filename_output+'_random_'+str(irank).zfill(3)+'.mp4'
+            list_vid.append(vid_filename)
+            
+            choreo.plot_all_2D_anim(x,nint_plot_anim,callfun,vid_filename,nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size_perturb,dnint=dnint,all_pos_trace=all_pos_ode,all_pos_points=all_pos_ode,xlim=xlim,extend=0.)
 
 
         nxy = [nx,ny]
@@ -470,7 +476,17 @@ def ExecName(
 
         # the_integrators = {SymplecticMethod:choreo.GetSymplecticIntegrator(SymplecticMethod)}
 
-        the_integrators = choreo.all_SymplecticIntegrators
+        the_integrators = {
+            'SymplecticEuler_XV'            : choreo.SymplecticEuler_XV,
+            'SymplecticEuler_VX'            : choreo.SymplecticEuler_VX,
+            'SymplecticStormerVerlet_XV'    : choreo.SymplecticStormerVerlet_XV_cython,
+            'SymplecticStormerVerlet_VX'    : choreo.SymplecticStormerVerlet_VX_cython,
+            'SymplecticRuth3_XV'            : choreo.SymplecticRuth3_XV,
+            'SymplecticRuth3_VX'            : choreo.SymplecticRuth3_VX,
+            }
+
+
+        # the_integrators = choreo.all_unique_SymplecticIntegrators
 
         for SymplecticMethod,SymplecticIntegrator in the_integrators.items() :
 
@@ -551,8 +567,8 @@ def ExecName(
             print('SymplecticMethod : ',SymplecticMethod)
             print('')
 
-            # refinement_lvl = [1,2,4,8,16,32,64,128]
-            refinement_lvl = [16,32]
+            refinement_lvl = [1,2,4,8,16,32,64,128]
+            # refinement_lvl = [16,32]
             # refinement_lvl = [1,10,100]
 
             for imul in range(len(refinement_lvl)):
@@ -567,13 +583,13 @@ def ExecName(
 
                 y0 = np.ascontiguousarray(all_pos_vel[:,:,:,0].reshape(-1))
 
-    # 
-    # 
-                t_span = (0.,0.5)
-                yf_exact = all_pos_vel[:,:,:,callfun[0]['nint_list'][callfun[0]["current_cvg_lvl"]]//2].reshape(-1)
-    # # # # 
-                # t_span = (0.,1.)
-                # yf_exact = y0
+
+                # t_span = (0.,0.5)
+                # yf_exact =np.copy(all_pos_vel[:,:,:,callfun[0]['nint_list'][callfun[0]["current_cvg_lvl"]]//2].reshape(-1))
+    
+
+                t_span = (0.,1.)
+                yf_exact = np.copy(y0)
 
 
 

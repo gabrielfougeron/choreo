@@ -317,7 +317,7 @@ def plot_all_2D_anim(x,nint_plot,callfun,filename,nperiod=1,Plot_trace=True,fig_
     if (all_pos_trace is None) or (all_pos_points is None):
 
         all_pos_b = np.zeros((nbody,ndim,nint_plot_img+1),dtype=np.float64)
-        all_pos_b = ComputeAllPos(x,callfun,nint=nint_plot_img)
+        all_pos_b[:,:,:nint_plot_img] = ComputeAllPos(x,callfun,nint=nint_plot_img)
         all_pos_b[:,:,nint_plot_img] = all_pos_b[:,:,0]
 
     if (all_pos_trace is None):
