@@ -49,11 +49,12 @@ def main(the_i=0):
     # mm_list = [1,2]
     # mm = mm_list[the_i%len(mm_list)]
 
-    SymName = None
+    SymName = 'D'
+    # SymName = None
     LookForTarget = False
     # nbpl=[1,2,3,4,5,6]
     # nbpl=[nc]
-    nbpl=[1,1,1,1]
+    nbpl=[5]
     # nbpl=[1,1,1]
     # nbpl=[2,3,5]
 
@@ -246,7 +247,7 @@ def main(the_i=0):
 
 
 # if __name__ == "__main__":
-#     main(0)
+    # main(0)
 #    
 # 
 if __name__ == "__main__":
