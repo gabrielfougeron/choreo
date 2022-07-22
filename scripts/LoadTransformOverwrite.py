@@ -30,7 +30,7 @@ One_sec = 1e9
 def main():
 
 
-    input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/3/')
+    input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/5/')
     # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/copy/')
     # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/Gallery_videos/C-4')
 # 
@@ -49,20 +49,20 @@ def main():
 #                 input_names_list.append(the_name)
 # 
 # # 
-    ''' Include all files in folder '''
-    input_names_list = []
-    for file_path in os.listdir(input_folder):
-        file_path = os.path.join(input_folder, file_path)
-        file_root, file_ext = os.path.splitext(os.path.basename(file_path))
-        
-        if (file_ext == '.txt' ):
-            # 
-            # if int(file_root) > 8:
-            #     input_names_list.append(file_root)
+#     ''' Include all files in folder '''
+#     input_names_list = []
+#     for file_path in os.listdir(input_folder):
+#         file_path = os.path.join(input_folder, file_path)
+#         file_root, file_ext = os.path.splitext(os.path.basename(file_path))
+#         
+#         if (file_ext == '.txt' ):
+#             # 
+#             # if int(file_root) > 8:
+#             #     input_names_list.append(file_root)
+# 
+#             input_names_list.append(file_root)
 
-            input_names_list.append(file_root)
-
-    # input_names_list = ['00010']
+    input_names_list = ['00002']
 
     store_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/mod')
     # store_folder = input_folder
@@ -91,11 +91,11 @@ def main():
     # color = "velocity"
     # color = "all"
 
-    Save_anim = True
-    # Save_anim = False
+    # Save_anim = True
+    Save_anim = False
 
-    Save_ODE_anim = True
-    # Save_ODE_anim = False
+    # Save_ODE_anim = True
+    Save_ODE_anim = False
 
     # ODE_method = 'RK23'
     # ODE_method = 'RK45'
@@ -124,6 +124,7 @@ def main():
     else:
         period_div = the_lcm
 # 
+    # nperiod_anim = 1.
     nperiod_anim = 3.
     # nperiod_anim = 1./period_div
 
@@ -132,19 +133,22 @@ def main():
 
     GradActionThresh = 1e-8
 # 
-    # InvestigateStability = True
-    InvestigateStability = False
+    InvestigateStability = True
+    # InvestigateStability = False
 
-    Save_Perturbed = True
-    # Save_Perturbed = False
+    # Save_Perturbed = True
+    Save_Perturbed = False
 
-    dy_perturb_mul = 1e-3
+    dy_perturb_mul = 1e-8
 
-    # InvestigateIntegration = True
-    InvestigateIntegration = False
+    # Relative_Perturb = False
+    Relative_Perturb = True
 
-    Exec_Mul_Proc = True
-    # Exec_Mul_Proc = False
+    InvestigateIntegration = True
+    # InvestigateIntegration = False
+
+    # Exec_Mul_Proc = True
+    Exec_Mul_Proc = False
 
     if Exec_Mul_Proc:
 
@@ -204,6 +208,7 @@ def ExecName(
     InvestigateIntegration,
     Save_Perturbed,
     dy_perturb_mul,
+    Relative_Perturb,
     ):
 
     print('')
@@ -264,7 +269,7 @@ def ExecName(
         '''
 
         SymName = None
-        nbpl=[3]
+        nbpl=[5]
         Sym_list,nbody = choreo.Make2DChoreoSymManyLoops(nbpl=nbpl,SymName=SymName)
 
 
@@ -370,25 +375,33 @@ def ExecName(
         '''Eigendecomposition'''
         Instability_magnitude,Instability_directions = choreo.InstabilityDecomposition(MonodromyMat)
 
-        print(the_name+f' error : {np.linalg.norm(MonodromyMat.dot(zo)-zo)/np.linalg.norm(zo):e} time : {(t_end-t_beg)/One_sec:f}')
-        print(the_name+f' {Instability_magnitude[:]}')
+        # print(the_name+f' error : {np.linalg.norm(MonodromyMat.dot(zo)-zo)/np.linalg.norm(zo):e} time : {(t_end-t_beg)/One_sec:f}')
+        # print(the_name+f' {Instability_magnitude[:]}')
+        n_perriod_unstable = -np.log(np.finfo(float).eps)/np.log(Instability_magnitude[0])
+        print(the_name+f' Number of periods before expected unstable behavior {n_perriod_unstable}')
 
         list_vid = []
 
-        xlim = choreo.Compute_xlim(x,callfun,extend=0.2)
+        # xlim = choreo.Compute_xlim(x,callfun,extend=0.2)
+        xlim = choreo.Compute_xlim(x,callfun,extend=0.03)
 
         n_unperturbed = 1
-        n_perturbed = 3
+        n_perturbed = 11
         n_random = 0
 
         nvid = n_unperturbed + n_perturbed + n_random
 
-        nx = 2
-        ny = 2
+        nx = 4
+        ny = 3
 
         # nx,ny = choreo.factor_squarest(nvid)
 
         assert nx*ny == nvid
+
+        if Relative_Perturb:
+            dy_perturb = dy_perturb_mul / Instability_magnitude[0]
+        else:
+            dy_perturb = dy_perturb_mul
 
         for i in range(n_unperturbed):
 
@@ -406,8 +419,6 @@ def ExecName(
 
         for irank in range(n_perturbed):
 
-            dy_perturb = dy_perturb_mul / Instability_magnitude[0]
-
             yo = choreo.Compute_init_pos_vel(x,callfun).reshape(-1) + dy_perturb * Instability_directions[irank,:]
             t_eval = np.array([i/nint_plot_img for i in range(round(nperiod_anim*nint_plot_img))])
             fun = lambda t,y: choreo.Compute_ODE_RHS(t,y,callfun)
@@ -421,8 +432,6 @@ def ExecName(
             choreo.plot_all_2D_anim(x,nint_plot_anim,callfun,vid_filename,nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size_perturb,dnint=dnint,all_pos_trace=all_pos_ode,all_pos_points=all_pos_ode,xlim=xlim,extend=0.)
 
         for irank in range(n_random):
-
-            dy_perturb = dy_perturb_mul / Instability_magnitude[0]
 
             yo = choreo.Compute_init_pos_vel(x,callfun).reshape(-1)
             dy = np.random.rand(*yo.shape)
@@ -447,7 +456,8 @@ def ExecName(
         choreo.VideoGrid(list_vid,filename_output+'_perturbed.mp4',nxy=nxy,ordering=ordering)
 
         for the_file in list_vid:
-            os.remove(the_file)
+            if os.path.isfile(the_file):
+                os.remove(the_file)
 
 
 
@@ -465,10 +475,10 @@ def ExecName(
         # the_integrators = {SymplecticMethod:choreo.GetSymplecticIntegrator(SymplecticMethod)}
 
         the_integrators = {
-            'SymplecticEuler_XV'            : choreo.SymplecticEuler_XV,
-            'SymplecticEuler_VX'            : choreo.SymplecticEuler_VX,
-            'SymplecticStormerVerlet_XV'    : choreo.SymplecticStormerVerlet_XV_cython,
-            'SymplecticStormerVerlet_VX'    : choreo.SymplecticStormerVerlet_VX_cython,
+            # 'SymplecticEuler_XV'            : choreo.SymplecticEuler_XV,
+            # 'SymplecticEuler_VX'            : choreo.SymplecticEuler_VX,
+            # 'SymplecticStormerVerlet_XV'    : choreo.SymplecticStormerVerlet_XV_cython,
+            # 'SymplecticStormerVerlet_VX'    : choreo.SymplecticStormerVerlet_VX_cython,
             'SymplecticRuth3_XV'            : choreo.SymplecticRuth3_XV,
             'SymplecticRuth3_VX'            : choreo.SymplecticRuth3_VX,
             }
@@ -482,7 +492,8 @@ def ExecName(
             print('SymplecticMethod : ',SymplecticMethod)
             print('')
 
-            refinement_lvl = [1,2,4,8,16,32,64,128]
+            refinement_lvl = [64,128,256,512,1024]
+            # refinement_lvl = [1,2,4,8,16,32,64,128]
             # refinement_lvl = [1,10,100]
 
             for imul in range(len(refinement_lvl)):
@@ -524,14 +535,11 @@ def ExecName(
                 error_rel_prev = error_rel
 
 
-            eig_vals,eig_vects = scipy.linalg.eig(MonodromyMat)
 
-            eig_vals_abs = abs(eig_vals)
 
-            idx_eig_vals = np.argsort(eig_vals_abs)
+        Instability_magnitude,Instability_directions = choreo.InstabilityDecomposition(MonodromyMat)
+        print("Estimated min error ",np.finfo(float).eps * Instability_magnitude[0])
 
-            print(eig_vals_abs[idx_eig_vals[-1]])
-            # Q = scipy.linalg.logm(MonodromyMat) / (t_span[1]-t_span[0])
 
 
     if InvestigateIntegration:
@@ -555,7 +563,8 @@ def ExecName(
             print('SymplecticMethod : ',SymplecticMethod)
             print('')
 
-            refinement_lvl = [1,2,4,8,16,32,64,128]
+            # refinement_lvl = [1,2,4,8,16,32,64,128,256,512]
+            refinement_lvl = [128,256,512]
             # refinement_lvl = [16,32]
             # refinement_lvl = [1,10,100]
 
@@ -593,6 +602,7 @@ def ExecName(
                 xf,vf = SymplecticIntegrator(fun,gun,t_span,x0,v0,nint)
                 t_end = time.perf_counter_ns()
 
+                # error_rel = np.linalg.norm(xf_exact-xf)+np.linalg.norm(vf_exact-vf)
                 error_rel = np.linalg.norm(xf_exact-xf)/np.linalg.norm(xf_exact)+np.linalg.norm(vf_exact-vf)/np.linalg.norm(vf_exact)
 
                 # print(f'error : {error_rel:e} time : {(t_end-t_beg)/One_sec:f}')
