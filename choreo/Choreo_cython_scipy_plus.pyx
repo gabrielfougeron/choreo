@@ -1,4 +1,4 @@
-#cython: language_level=3, boundscheck=False, wraparound = False
+#cython: language_level=3, boundscheck=False, wraparound = False, nonecheck=False
 
 '''
 Choreo_cython_scipy_plus.pyx : Defines things I designed I feel ought to be in scipy ... but faster !
@@ -9,6 +9,8 @@ Choreo_cython_scipy_plus.pyx : Defines things I designed I feel ought to be in s
 import os
 import numpy as np
 cimport numpy as np
+np.import_array()
+
 cimport cython
 
 from libc.math cimport pow as cpow
@@ -23,11 +25,11 @@ def SymplecticWithTable_VX_cython(
     object fun,
     object gun,
     (double, double) t_span,
-    double [:] x0,
-    double [:] v0,
+    np.ndarray[double, ndim=1, mode="c"] x0,
+    np.ndarray[double, ndim=1, mode="c"] v0,
     long nint,
-    double [:] c_table,
-    double [:] d_table,
+    np.ndarray[double, ndim=1, mode="c"] c_table,
+    np.ndarray[double, ndim=1, mode="c"] d_table,
     long nsteps
     ):
 
@@ -37,14 +39,14 @@ def SymplecticWithTable_VX_cython(
     cdef double tv = t_span[0]
     cdef double dt = (t_span[1] - t_span[0]) / nint
 
-    cdef double [:] cdt = np.zeros((nsteps),dtype=np.float64)
-    cdef double [:] ddt = np.zeros((nsteps),dtype=np.float64)
+    cdef np.ndarray[double, ndim=1, mode="c"] cdt = np.zeros((nsteps),dtype=np.float64)
+    cdef np.ndarray[double, ndim=1, mode="c"] ddt = np.zeros((nsteps),dtype=np.float64)
 
-    cdef double [:] x = x0
-    cdef double [:] v = v0
+    cdef np.ndarray[double, ndim=1, mode="c"] x = x0
+    cdef np.ndarray[double, ndim=1, mode="c"] v = v0
 
     cdef long ndof = x0.size
-    cdef double [:] res
+    cdef np.ndarray[double, ndim=1, mode="c"] res
 
     cdef long istep,id
     for istep in range(nsteps):
@@ -55,29 +57,29 @@ def SymplecticWithTable_VX_cython(
 
         for istep in range(nsteps):
 
-            res = fun(tv,np.asarray(v))  
+            res = fun(tv,v)  
             for idof in range(ndof):
                 x[idof] += cdt[istep] * res[idof]  
 
             tx += cdt[istep]
 
-            res = gun(tx,np.asarray(x))   
+            res = gun(tx,x)   
             for idof in range(ndof):
                 v[idof] += ddt[istep] * res[idof]  
             tv += ddt[istep]
 
 
-    return np.asarray(x),np.asarray(v)
+    return x,v
 
 def SymplecticWithTable_XV_cython(
     object fun,
     object gun,
     (double, double) t_span,
-    double [:] x0,
-    double [:] v0,
+    np.ndarray[double, ndim=1, mode="c"] x0,
+    np.ndarray[double, ndim=1, mode="c"] v0,
     long nint,
-    double [:] c_table,
-    double [:] d_table,
+    np.ndarray[double, ndim=1, mode="c"] c_table,
+    np.ndarray[double, ndim=1, mode="c"] d_table,
     long nsteps
     ):
 
@@ -87,14 +89,14 @@ def SymplecticWithTable_XV_cython(
     cdef double tv = t_span[0]
     cdef double dt = (t_span[1] - t_span[0]) / nint
 
-    cdef double [:] cdt = np.zeros((nsteps),dtype=np.float64)
-    cdef double [:] ddt = np.zeros((nsteps),dtype=np.float64)
+    cdef np.ndarray[double, ndim=1, mode="c"] cdt = np.zeros((nsteps),dtype=np.float64)
+    cdef np.ndarray[double, ndim=1, mode="c"] ddt = np.zeros((nsteps),dtype=np.float64)
 
-    cdef double [:] x = x0
-    cdef double [:] v = v0
+    cdef np.ndarray[double, ndim=1, mode="c"] x = x0
+    cdef np.ndarray[double, ndim=1, mode="c"] v = v0
 
     cdef long ndof = x0.size
-    cdef double [:] res
+    cdef np.ndarray[double, ndim=1, mode="c"] res
 
     cdef long istep,idof
 
@@ -106,25 +108,25 @@ def SymplecticWithTable_XV_cython(
 
         for istep in range(nsteps):
 
-            res = gun(tx,np.asarray(x))   
+            res = gun(tx,x)   
             for idof in range(ndof):
                 v[idof] += cdt[istep] * res[idof]  
             tv += cdt[istep]
 
-            res = fun(tv,np.asarray(v))  
+            res = fun(tv,v)  
             for idof in range(ndof):
                 x[idof] += ddt[istep] * res[idof]  
 
             tx += ddt[istep]
 
-    return np.asarray(x),np.asarray(v)
+    return x,v
 
 def SymplecticStormerVerlet_XV_cython(
     object fun,
     object gun,
     (double, double) t_span,
-    double [:]  x0,
-    double [:]  v0,
+    np.ndarray[double, ndim=1, mode="c"] x0,
+    np.ndarray[double, ndim=1, mode="c"] v0,
     long nint,
     ):
 
@@ -134,11 +136,11 @@ def SymplecticStormerVerlet_XV_cython(
     cdef double dt = (t_span[1] - t_span[0]) / nint
     cdef double dt_half = dt*0.5
 
-    cdef double [:]  x = x0
-    cdef double [:]  v = v0
+    cdef np.ndarray[double, ndim=1, mode="c"] x = x0
+    cdef np.ndarray[double, ndim=1, mode="c"] v = v0
 
     cdef long ndof = x0.size
-    cdef double [:]  res
+    cdef np.ndarray[double, ndim=1, mode="c"] res
 
     cdef long idof
 
@@ -148,34 +150,34 @@ def SymplecticStormerVerlet_XV_cython(
 
     for iint in range(nint-1):
 
-        res = fun(t,np.asarray(v))  
+        res = fun(t,v)  
         for idof in range(ndof):
             x[idof] += dt* res[idof]  
 
         t += dt
 
-        res = gun(t,np.asarray(x))   
+        res = gun(t,x)   
         for idof in range(ndof):
             v[idof] += dt * res[idof]  
 
-    res = fun(t,np.asarray(v))  
+    res = fun(t,v)  
     for idof in range(ndof):
         x[idof] += dt * res[idof]  
 
     t += dt
 
-    res = gun(t,np.asarray(x))   
+    res = gun(t,x)   
     for idof in range(ndof):
         v[idof] += dt_half * res[idof]  
 
-    return np.asarray(x),np.asarray(v)
+    return x,v
 
 def SymplecticStormerVerlet_VX_cython(
     object fun,
     object gun,
     (double, double) t_span,
-    double [:] x0,
-    double [:] v0,
+    np.ndarray[double, ndim=1, mode="c"] x0,
+    np.ndarray[double, ndim=1, mode="c"] v0,
     long nint,
     ):
 
@@ -185,15 +187,15 @@ def SymplecticStormerVerlet_VX_cython(
     cdef double dt = (t_span[1] - t_span[0]) / nint
     cdef double dt_half = dt*0.5
 
-    cdef double [:] x = x0
-    cdef double [:]  v = v0
+    cdef np.ndarray[double, ndim=1, mode="c"] x = x0
+    cdef np.ndarray[double, ndim=1, mode="c"] v = v0
 
     cdef long ndof = x0.size
-    cdef double [:] res
+    cdef np.ndarray[double, ndim=1, mode="c"] res
 
     cdef long idof
 
-    res = fun(t,np.asarray(v))  
+    res = fun(t,v)  
     for idof in range(ndof):
         x[idof] += dt_half * res[idof]  
 
@@ -201,37 +203,28 @@ def SymplecticStormerVerlet_VX_cython(
     
     for iint in range(nint-1):
 
-        res = gun(t,np.asarray(x))   
+        res = gun(t,x)   
         for idof in range(ndof):
             v[idof] += dt * res[idof]  
 
-        res = fun(t,np.asarray(v))  
+        res = fun(t,v)  
         for idof in range(ndof):
             x[idof] += dt* res[idof]  
 
         t += dt
 
-    res = gun(t,np.asarray(x))   
+    res = gun(t,x)   
     for idof in range(ndof):
         v[idof] += dt * res[idof]  
 
-    res = fun(t,np.asarray(v))  
+    res = fun(t,v)  
     for idof in range(ndof):
         x[idof] += dt_half* res[idof]  
 
     t += dt_half
 
-    return np.asarray(x),np.asarray(v)
+    return x,v
 
 
-def ComputeSpectralODERes(
-    fun,
-    x_coeffs,
-    ncoeffs,
-    nint,
-    ):
 
-    pass
-
-    # Computes the residuals of the spectral solve of the ODE dx/dt = f(t,x)
 
