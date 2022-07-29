@@ -19,7 +19,10 @@ __version__ = "0.1.0"
 # To build for the current platform, run :
 # python setup.py bdist_wheel
 
-extra_compile_args = ["-O2"]
+# extra_compile_args = ["-O2"]
+# extra_compile_args = ["-O2","-march=native"]
+# extra_compile_args = ["-O3","-ffast-math","-march=native"]
+extra_compile_args = ["-O3","-march=native"]
 
 extra_link_args = []
 
