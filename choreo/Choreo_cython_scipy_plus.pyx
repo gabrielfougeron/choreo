@@ -55,19 +55,19 @@ def SymplecticWithTable_VX_cython(
 
         for istep in range(nsteps):
 
-            res = fun(tv,v)  
+            res = fun(tv,np.asarray(v))  
             for idof in range(ndof):
                 x[idof] += cdt[istep] * res[idof]  
 
             tx += cdt[istep]
 
-            res = gun(tx,x)   
+            res = gun(tx,np.asarray(x))   
             for idof in range(ndof):
                 v[idof] += ddt[istep] * res[idof]  
             tv += ddt[istep]
 
 
-    return x,v
+    return np.asarray(x),np.asarray(v)
 
 def SymplecticWithTable_XV_cython(
     object fun,
@@ -106,18 +106,18 @@ def SymplecticWithTable_XV_cython(
 
         for istep in range(nsteps):
 
-            res = gun(tx,x)   
+            res = gun(tx,np.asarray(x))   
             for idof in range(ndof):
                 v[idof] += cdt[istep] * res[idof]  
             tv += cdt[istep]
 
-            res = fun(tv,v)  
+            res = fun(tv,np.asarray(v))  
             for idof in range(ndof):
                 x[idof] += ddt[istep] * res[idof]  
 
             tx += ddt[istep]
 
-    return x,v
+    return np.asarray(x),np.asarray(v)
 
 def SymplecticStormerVerlet_XV_cython(
     object fun,
@@ -148,27 +148,27 @@ def SymplecticStormerVerlet_XV_cython(
 
     for iint in range(nint-1):
 
-        res = fun(t,v)  
+        res = fun(t,np.asarray(v))  
         for idof in range(ndof):
             x[idof] += dt* res[idof]  
 
         t += dt
 
-        res = gun(t,x)   
+        res = gun(t,np.asarray(x))   
         for idof in range(ndof):
             v[idof] += dt * res[idof]  
 
-    res = fun(t,v)  
+    res = fun(t,np.asarray(v))  
     for idof in range(ndof):
         x[idof] += dt * res[idof]  
 
     t += dt
 
-    res = gun(t,x)   
+    res = gun(t,np.asarray(x))   
     for idof in range(ndof):
         v[idof] += dt_half * res[idof]  
 
-    return x,v
+    return np.asarray(x),np.asarray(v)
 
 def SymplecticStormerVerlet_VX_cython(
     object fun,
@@ -193,7 +193,7 @@ def SymplecticStormerVerlet_VX_cython(
 
     cdef long idof
 
-    res = fun(t,v)  
+    res = fun(t,np.asarray(v))  
     for idof in range(ndof):
         x[idof] += dt_half * res[idof]  
 
@@ -201,27 +201,27 @@ def SymplecticStormerVerlet_VX_cython(
     
     for iint in range(nint-1):
 
-        res = gun(t,x)   
+        res = gun(t,np.asarray(x))   
         for idof in range(ndof):
             v[idof] += dt * res[idof]  
 
-        res = fun(t,v)  
+        res = fun(t,np.asarray(v))  
         for idof in range(ndof):
             x[idof] += dt* res[idof]  
 
         t += dt
 
-    res = gun(t,x)   
+    res = gun(t,np.asarray(x))   
     for idof in range(ndof):
         v[idof] += dt * res[idof]  
 
-    res = fun(t,v)  
+    res = fun(t,np.asarray(v))  
     for idof in range(ndof):
         x[idof] += dt_half* res[idof]  
 
     t += dt_half
 
-    return x,v
+    return np.asarray(x),np.asarray(v)
 
 
 def ComputeSpectralODERes(
