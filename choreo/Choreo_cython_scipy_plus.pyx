@@ -23,11 +23,11 @@ def SymplecticWithTable_VX_cython(
     object fun,
     object gun,
     (double, double) t_span,
-    np.ndarray[double, ndim=1, mode="c"] x0,
-    np.ndarray[double, ndim=1, mode="c"] v0,
+    double [:] x0,
+    double [:] v0,
     long nint,
-    np.ndarray[double, ndim=1, mode="c"] c_table,
-    np.ndarray[double, ndim=1, mode="c"] d_table,
+    double [:] c_table,
+    double [:] d_table,
     long nsteps
     ):
 
@@ -37,14 +37,14 @@ def SymplecticWithTable_VX_cython(
     cdef double tv = t_span[0]
     cdef double dt = (t_span[1] - t_span[0]) / nint
 
-    cdef np.ndarray[double, ndim=1, mode="c"] cdt = np.zeros((nsteps),dtype=np.float64)
-    cdef np.ndarray[double, ndim=1, mode="c"] ddt = np.zeros((nsteps),dtype=np.float64)
+    cdef double [:] cdt = np.zeros((nsteps),dtype=np.float64)
+    cdef double [:] ddt = np.zeros((nsteps),dtype=np.float64)
 
-    cdef np.ndarray[double, ndim=1, mode="c"] x = x0
-    cdef np.ndarray[double, ndim=1, mode="c"] v = v0
+    cdef double [:] x = x0
+    cdef double [:] v = v0
 
     cdef long ndof = x0.size
-    cdef np.ndarray[double, ndim=1, mode="c"] res
+    cdef double [:] res
 
     cdef long istep,id
     for istep in range(nsteps):
@@ -73,11 +73,11 @@ def SymplecticWithTable_XV_cython(
     object fun,
     object gun,
     (double, double) t_span,
-    np.ndarray[double, ndim=1, mode="c"] x0,
-    np.ndarray[double, ndim=1, mode="c"] v0,
+    double [:] x0,
+    double [:] v0,
     long nint,
-    np.ndarray[double, ndim=1, mode="c"] c_table,
-    np.ndarray[double, ndim=1, mode="c"] d_table,
+    double [:] c_table,
+    double [:] d_table,
     long nsteps
     ):
 
@@ -87,14 +87,14 @@ def SymplecticWithTable_XV_cython(
     cdef double tv = t_span[0]
     cdef double dt = (t_span[1] - t_span[0]) / nint
 
-    cdef np.ndarray[double, ndim=1, mode="c"] cdt = np.zeros((nsteps),dtype=np.float64)
-    cdef np.ndarray[double, ndim=1, mode="c"] ddt = np.zeros((nsteps),dtype=np.float64)
+    cdef double [:] cdt = np.zeros((nsteps),dtype=np.float64)
+    cdef double [:] ddt = np.zeros((nsteps),dtype=np.float64)
 
-    cdef np.ndarray[double, ndim=1, mode="c"] x = x0
-    cdef np.ndarray[double, ndim=1, mode="c"] v = v0
+    cdef double [:] x = x0
+    cdef double [:] v = v0
 
     cdef long ndof = x0.size
-    cdef np.ndarray[double, ndim=1, mode="c"] res
+    cdef double [:] res
 
     cdef long istep,idof
 
@@ -123,8 +123,8 @@ def SymplecticStormerVerlet_XV_cython(
     object fun,
     object gun,
     (double, double) t_span,
-    np.ndarray[double, ndim=1, mode="c"] x0,
-    np.ndarray[double, ndim=1, mode="c"] v0,
+    double [:]  x0,
+    double [:]  v0,
     long nint,
     ):
 
@@ -134,11 +134,11 @@ def SymplecticStormerVerlet_XV_cython(
     cdef double dt = (t_span[1] - t_span[0]) / nint
     cdef double dt_half = dt*0.5
 
-    cdef np.ndarray[double, ndim=1, mode="c"] x = x0
-    cdef np.ndarray[double, ndim=1, mode="c"] v = v0
+    cdef double [:]  x = x0
+    cdef double [:]  v = v0
 
     cdef long ndof = x0.size
-    cdef np.ndarray[double, ndim=1, mode="c"] res
+    cdef double [:]  res
 
     cdef long idof
 
@@ -174,8 +174,8 @@ def SymplecticStormerVerlet_VX_cython(
     object fun,
     object gun,
     (double, double) t_span,
-    np.ndarray[double, ndim=1, mode="c"] x0,
-    np.ndarray[double, ndim=1, mode="c"] v0,
+    double [:] x0,
+    double [:] v0,
     long nint,
     ):
 
@@ -185,11 +185,11 @@ def SymplecticStormerVerlet_VX_cython(
     cdef double dt = (t_span[1] - t_span[0]) / nint
     cdef double dt_half = dt*0.5
 
-    cdef np.ndarray[double, ndim=1, mode="c"] x = x0
-    cdef np.ndarray[double, ndim=1, mode="c"] v = v0
+    cdef double [:] x = x0
+    cdef double [:]  v = v0
 
     cdef long ndof = x0.size
-    cdef np.ndarray[double, ndim=1, mode="c"] res
+    cdef double [:] res
 
     cdef long idof
 
@@ -224,5 +224,14 @@ def SymplecticStormerVerlet_VX_cython(
     return x,v
 
 
+def ComputeSpectralODERes(
+    fun,
+    x_coeffs,
+    ncoeffs,
+    nint,
+    ):
 
+    pass
+
+    # Computes the residuals of the spectral solve of the ODE dx/dt = f(t,x)
 

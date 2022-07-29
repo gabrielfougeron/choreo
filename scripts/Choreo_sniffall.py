@@ -40,39 +40,39 @@ def main(the_i=0):
 
     # p = 1
     # p = 0
-    # p_list = [1,2,3,4]
-    # p = p_list[the_i%len(p_list)]
+    p_list = [1,2,3,4,5,6,7,8,9]
+    p = p_list[the_i%len(p_list)]
 
-    # nc = 2
+    nc = 10
 
     # mm = 2
     # mm_list = [1,2]
     # mm = mm_list[the_i%len(mm_list)]
 
-    SymName = 'D'
+    # SymName = 'D'
     # SymName = None
     LookForTarget = False
     # nbpl=[1,2,3,4,5,6]
-    # nbpl=[nc]
-    nbpl=[5]
+    nbpl=[nc]
+    # nbpl=[5]
     # nbpl=[1,1,1]
     # nbpl=[2,3,5]
 
     # the_lcm = m.lcm(*nbpl)
 
-    # SymType = []
-    # SymType.append({
-    #     'name'  : 'D',
-    #     'n'     : nc ,
-    #     'm'     : 1 ,
-    #     'l'     : 0,
-    #     'k'     : 1,
-    #     'p'     : p,
-    #     'q'     : nc,
-    # })
+    SymType = []
+    SymType.append({
+        'name'  : 'D',
+        'n'     : nc ,
+        'm'     : 1 ,
+        'l'     : 0,
+        'k'     : 1,
+        'p'     : p,
+        'q'     : nc,
+    })
 
-    Sym_list,nbody = choreo.Make2DChoreoSymManyLoops(nbpl=nbpl,SymName=SymName)
-    # Sym_list,nbody = choreo.Make2DChoreoSymManyLoops(nbpl=nbpl,SymType=SymType)
+    # Sym_list,nbody = choreo.Make2DChoreoSymManyLoops(nbpl=nbpl,SymName=SymName)
+    Sym_list,nbody = choreo.Make2DChoreoSymManyLoops(nbpl=nbpl,SymType=SymType)
 
     # SymType = {
     #     'name'  : 'D',
@@ -252,9 +252,9 @@ def main(the_i=0):
 # 
 if __name__ == "__main__":
 
-    n = multiprocessing.cpu_count()
+    # n = multiprocessing.cpu_count()
     # n = multiprocessing.cpu_count()//2-1
-    # n = 3
+    n = 10
     
     print(f"Executing with {n} workers")
     
