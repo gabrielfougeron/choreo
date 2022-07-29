@@ -28,7 +28,7 @@ def main():
     now = datetime.datetime.now()    
     print("now =", now)
 
-    nbody = 4
+    nbody = 10
 
     store_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/')
     store_folder = store_folder+str(nbody)

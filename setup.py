@@ -23,6 +23,8 @@ extra_compile_args = ["-O2"]
 
 extra_link_args = []
 
+define_macros = [("NPY_NO_DEPRECATED_API", "NPY_1_7_API_VERSION")]
+
 
 extension = [
     Extension(
@@ -31,6 +33,7 @@ extension = [
     include_dirs=[numpy.get_include()],
     extra_compile_args = extra_compile_args,
     extra_link_args = extra_link_args,
+    define_macros  = define_macros ,
     ),
     Extension(
     name = "choreo.Choreo_cython_scipy_plus",
@@ -38,6 +41,7 @@ extension = [
     include_dirs=[numpy.get_include()],
     extra_compile_args = extra_compile_args,
     extra_link_args = extra_link_args,
+    define_macros  = define_macros ,
     ),
 ]
 

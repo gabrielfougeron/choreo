@@ -144,8 +144,8 @@ def main():
     # Relative_Perturb = False
     Relative_Perturb = True
 
-    InvestigateIntegration = True
-    # InvestigateIntegration = False
+    # InvestigateIntegration = True
+    InvestigateIntegration = False
 
     # Exec_Mul_Proc = True
     Exec_Mul_Proc = False
@@ -375,10 +375,14 @@ def ExecName(
         '''Eigendecomposition'''
         Instability_magnitude,Instability_directions = choreo.InstabilityDecomposition(MonodromyMat)
 
-        # print(the_name+f' error : {np.linalg.norm(MonodromyMat.dot(zo)-zo)/np.linalg.norm(zo):e} time : {(t_end-t_beg)/One_sec:f}')
+        print(the_name+f' Relative error on flow eigenstate: {np.linalg.norm(MonodromyMat.dot(zo)-zo)/np.linalg.norm(zo):e} time : {(t_end-t_beg)/One_sec:f}')
         # print(the_name+f' {Instability_magnitude[:]}')
-        n_perriod_unstable = -np.log(np.finfo(float).eps)/np.log(Instability_magnitude[0])
-        print(the_name+f' Number of periods before expected unstable behavior {n_perriod_unstable}')
+        # print(the_name+f' {np.flip(1/Instability_magnitude[:])}')
+        print("Relative error on loxodromy ",np.linalg.norm(Instability_magnitude - np.flip(1/Instability_magnitude))/np.linalg.norm(Instability_magnitude))
+
+
+        # n_period_unstable = -np.log(np.finfo(float).eps)/np.log(Instability_magnitude[0])
+        # print(the_name+f' Number of periods before expected unstable behavior {n_period_unstable}')
 
         list_vid = []
 
@@ -518,10 +522,15 @@ def ExecName(
 
                 yo = choreo.Compute_init_pos_vel(x,callfun).reshape(-1)
                 zo = choreo.Compute_Auto_ODE_RHS(yo,callfun)
-
-                # print(np.linalg.norm(MonodromyMat.dot(zo)-zo))
-
                 error_rel = np.linalg.norm(MonodromyMat.dot(zo)-zo)/np.linalg.norm(zo)
+
+                
+                Instability_magnitude,Instability_directions = choreo.InstabilityDecomposition(MonodromyMat)
+                error_rel = np.linalg.norm(Instability_magnitude - np.flip(1/Instability_magnitude))/np.linalg.norm(Instability_magnitude)
+
+
+
+
 
                 # print(f'error : {error_rel:e} time : {(t_end-t_beg)/One_sec:f}')
 
