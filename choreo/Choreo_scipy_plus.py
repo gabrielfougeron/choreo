@@ -148,6 +148,13 @@ def InstabilityDecomposition(Mat,eps=1e-12):
             
     return Instability_magnitude,Instability_directions
 
-
+# 
+# def ComputeSpectralODERes(
+#     fun,
+#     x_coeffs
+#     ):
+# 
+#     # Computes the residuals of the spectral solve of the ODE dx/dt = f(t,x)
+# 
 
 

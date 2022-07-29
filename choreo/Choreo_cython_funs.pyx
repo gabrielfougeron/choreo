@@ -1,4 +1,4 @@
-#cython: language_level=3, boundscheck=False, wraparound = False
+#cython: language_level=3, boundscheck=False, wraparound = False, nonecheck=False
 
 '''
 Choreo_cython_funs.pyx : Defines useful compiled functions in the Choreographies2 project.
@@ -52,10 +52,6 @@ cdef double cnnm1 = cn*(cn-1)
 
 cdef double cmn = -cn
 cdef double cmnnm1 = -cnnm1
-
-# cdef  np.ndarray[double, ndim=1, mode="c"] hash_exps = np.array([0.3,0.4,0.6],dtype=np.float64)
-# cdef long cnhash = hash_exps.size
-# Unfortunately, Cython does not allow that. Let's do it manually then
 
 cdef double hash_exp0 = -0.2
 cdef double hash_exp1 = -0.4
@@ -112,7 +108,7 @@ def Cpt_interbody_pot(double xsq):
 def CCpt_hash_pot(double xsq):  # xsq is the square of the distance between two bodies !
     # C definition of the hashing potential. Allows easy detection of duplicates 
     
-    cdef np.ndarray[double, ndim=1, mode="c"] hash_pots = np.zeros((cnhash),dtype=np.float64)
+    cdef double [:] hash_pots = np.zeros((cnhash),dtype=np.float64)
 
     hash_pots[0] = -cpow(xsq,hash_exp0)
     hash_pots[1] = -cpow(xsq,hash_exp1)
@@ -131,25 +127,25 @@ def CCpt_hash_pot(double xsq):  # xsq is the square of the distance between two 
     return hash_pots
     
 def Compute_action_Cython(
-    long nloop,
-    long ncoeff,
-    long nint,
-    np.ndarray[double, ndim=1, mode="c"] mass not None ,
-    np.ndarray[long  , ndim=1, mode="c"] loopnb not None ,
-    np.ndarray[long  , ndim=2, mode="c"] Targets not None ,
-    np.ndarray[double, ndim=1, mode="c"] MassSum not None ,
-    np.ndarray[double, ndim=4, mode="c"] SpaceRotsUn not None ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeRevsUn not None ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeShiftNumUn not None ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeShiftDenUn not None ,
-    np.ndarray[long  , ndim=1, mode="c"] loopnbi not None ,
-    np.ndarray[double, ndim=2, mode="c"] ProdMassSumAll not None ,
-    np.ndarray[double, ndim=4, mode="c"] SpaceRotsBin not None ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeRevsBin not None ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeShiftNumBin not None ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeShiftDenBin not None ,
-    np.ndarray[double, ndim=4, mode="c"] all_coeffs  not None,
-    np.ndarray[double, ndim=3, mode="c"] all_pos not None
+    long                nloop           ,
+    long                ncoeff          ,
+    long                nint            ,
+    double  [:]         mass            ,
+    long    [:]         loopnb          ,
+    long    [:,:]       Targets         ,
+    double  [:]         MassSum         ,
+    double  [:,:,:,:]   SpaceRotsUn     ,
+    long    [:,:]       TimeRevsUn      ,
+    long    [:,:]       TimeShiftNumUn  ,
+    long    [:,:]       TimeShiftDenUn  ,
+    long    [:]         loopnbi         ,
+    double  [:,:]       ProdMassSumAll  ,
+    double  [:,:,:,:]   SpaceRotsBin    ,
+    long    [:,:]       TimeRevsBin     ,
+    long    [:,:]       TimeShiftNumBin ,
+    long    [:,:]       TimeShiftDenBin ,
+    double  [:,:,:,:]   all_coeffs      ,
+    double  [:,:,:]     all_pos 
     ):
     # This function is probably the most important one.
     # Computes the action and its gradient with respect to the Fourier coefficients of the generator in each loop.
@@ -163,15 +159,15 @@ def Compute_action_Cython(
     cdef long k,kp,k2
     cdef double pot,potp,potpp
     cdef double prod_mass,a,b,dx2,prod_fac
-    cdef np.ndarray[double, ndim=1, mode="c"]  dx = np.zeros((cndim),dtype=np.float64)
-    cdef np.ndarray[double, ndim=1, mode="c"]  df = np.zeros((cndim),dtype=np.float64)
+    cdef double [:] dx = np.zeros((cndim),dtype=np.float64)
+    cdef double [:] df = np.zeros((cndim),dtype=np.float64)
         
     cdef long maxloopnb = loopnb.max()
     cdef long maxloopnbi = loopnbi.max()
     
     cdef double Kin_en = 0
 
-    cdef np.ndarray[double, ndim=4, mode="c"] Action_grad = np.zeros((nloop,cndim,ncoeff,2),np.float64)
+    cdef double [:,:,:,:] Action_grad = np.zeros((nloop,cndim,ncoeff,2),np.float64)
 
     for il in range(nloop):
         
@@ -191,8 +187,8 @@ def Compute_action_Cython(
         
     cdef double Pot_en = 0.
 
-    cdef np.ndarray[long, ndim=2, mode="c"]  all_shiftsUn = np.zeros((nloop,maxloopnb),dtype=np.int_)
-    cdef np.ndarray[long, ndim=2, mode="c"]  all_shiftsBin = np.zeros((nloop,maxloopnbi),dtype=np.int_)
+    cdef long [:,:] all_shiftsUn = np.zeros((nloop,maxloopnb),dtype=np.int_)
+    cdef long [:,:]all_shiftsBin = np.zeros((nloop,maxloopnbi),dtype=np.int_)
     
     for il in range(nloop):
         for ib in range(loopnb[il]):
@@ -209,7 +205,7 @@ def Compute_action_Cython(
                 
             all_shiftsBin[il,ibi] = ((-TimeRevsBin[il,ibi]*nint*TimeShiftNumBin[il,ibi]) // TimeShiftDenBin[il,ibi]) % nint
     
-    cdef np.ndarray[double, ndim=3, mode="c"] grad_pot_all = np.zeros((nloop,cndim,nint),dtype=np.float64)
+    cdef double [:,:,:] grad_pot_all = np.zeros((nloop,cndim,nint),dtype=np.float64)
 
     for iint in range(nint):
 
@@ -297,7 +293,7 @@ def Compute_action_Cython(
             for ibi in range(loopnbi[il]):
                 all_shiftsBin[il,ibi] = (all_shiftsBin[il,ibi]+TimeRevsBin[il,ibi]) % nint
                 
-    cdef np.ndarray[doublecomplex , ndim=3, mode="c"]  grad_pot_fft = the_ihfft(grad_pot_all,nint)
+    cdef double complex [:,:,:,:] grad_pot_fft = the_ihfft(grad_pot_all,nint)
 
     for il in range(nloop):
         for idim in range(cndim):
@@ -316,25 +312,26 @@ def Compute_action_Cython(
     return Action,Action_grad
 
 def Compute_hash_action_Cython(
-    long nloop,
-    long ncoeff,
-    long nint,
-    np.ndarray[double, ndim=1, mode="c"] mass not None ,
-    np.ndarray[long  , ndim=1, mode="c"] loopnb not None ,
-    np.ndarray[long  , ndim=2, mode="c"] Targets not None ,
-    np.ndarray[double, ndim=1, mode="c"] MassSum not None ,
-    np.ndarray[double, ndim=4, mode="c"] SpaceRotsUn not None ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeRevsUn not None ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeShiftNumUn not None ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeShiftDenUn not None ,
-    np.ndarray[long  , ndim=1, mode="c"] loopnbi not None ,
-    np.ndarray[double, ndim=2, mode="c"] ProdMassSumAll not None ,
-    np.ndarray[double, ndim=4, mode="c"] SpaceRotsBin not None ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeRevsBin not None ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeShiftNumBin not None ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeShiftDenBin not None ,
-    np.ndarray[double, ndim=4, mode="c"] all_coeffs  not None
+    long                nloop           ,
+    long                ncoeff          ,
+    long                nint            ,
+    double  [:]         mass            ,
+    long    [:]         loopnb          ,
+    long    [:,:]       Targets         ,
+    double  [:]         MassSum         ,
+    double  [:,:,:,:]   SpaceRotsUn     ,
+    long    [:,:]       TimeRevsUn      ,
+    long    [:,:]       TimeShiftNumUn  ,
+    long    [:,:]       TimeShiftDenUn  ,
+    long    [:]         loopnbi         ,
+    double  [:,:]       ProdMassSumAll  ,
+    double  [:,:,:,:]   SpaceRotsBin    ,
+    long    [:,:]       TimeRevsBin     ,
+    long    [:,:]       TimeShiftNumBin ,
+    long    [:,:]       TimeShiftDenBin ,
+    double  [:,:,:,:]   all_coeffs      ,
     ):
+
     # Computes the hash of a set of trajectories.
     # The hash is meant to provide a likely unique short identification for duplicate detection.
     # It is hence engineered to be invariant wrt permutation of bodies, time shifts / reversals and space isometries.
@@ -348,15 +345,15 @@ def Compute_hash_action_Cython(
     cdef long k,kp,k2
     cdef double pot,potp,potpp
     cdef double prod_mass,a,b,dx2,prod_fac
-    cdef np.ndarray[double, ndim=1, mode="c"]  dx = np.zeros((cndim),dtype=np.float64)
+    cdef double [:] dx = np.zeros((cndim),dtype=np.float64)
         
     cdef long maxloopnb = loopnb.max()
     cdef long maxloopnbi = loopnbi.max()
     
     cdef long ihash
     
-    cdef np.ndarray[double, ndim=1, mode="c"]  Hash_En = np.zeros((cnhash),dtype=np.float64)
-    cdef np.ndarray[double, ndim=1, mode="c"]  Hash_pot = np.zeros((cnhash),dtype=np.float64)
+    cdef double [:]  Hash_En = np.zeros((cnhash),dtype=np.float64)
+    cdef double [:] Hash_pot = np.zeros((cnhash),dtype=np.float64)
 
     cdef double Kin_en = 0
 
@@ -374,10 +371,10 @@ def Compute_hash_action_Cython(
 
     c_coeffs = all_coeffs.view(dtype=np.complex128)[...,0]
 
-    cdef np.ndarray[double, ndim=3, mode="c"] all_pos = the_irfft(c_coeffs,n=nint,axis=2)*nint
+    cdef double [:,:,:] all_pos = the_irfft(c_coeffs,n=nint,axis=2)*nint
 
-    cdef np.ndarray[long, ndim=2, mode="c"]  all_shiftsUn = np.zeros((nloop,maxloopnb),dtype=np.int_)
-    cdef np.ndarray[long, ndim=2, mode="c"]  all_shiftsBin = np.zeros((nloop,maxloopnbi),dtype=np.int_)
+    cdef long [:,:] all_shiftsUn = np.zeros((nloop,maxloopnb),dtype=np.int_)
+    cdef long [:,:] all_shiftsBin = np.zeros((nloop,maxloopnbi),dtype=np.int_)
     
     for il in range(nloop):
         for ib in range(loopnb[il]):
@@ -394,7 +391,7 @@ def Compute_hash_action_Cython(
                 
             all_shiftsBin[il,ibi] = ((-TimeRevsBin[il,ibi]*nint*TimeShiftNumBin[il,ibi]) // TimeShiftDenBin[il,ibi]) % nint
     
-    cdef np.ndarray[double, ndim=3, mode="c"] grad_pot_all = np.zeros((nloop,cndim,nint),dtype=np.float64)
+    cdef double [:,:,:] grad_pot_all = np.zeros((nloop,cndim,nint),dtype=np.float64)
 
     for iint in range(nint):
 
@@ -457,25 +454,26 @@ def Compute_hash_action_Cython(
     return Hash_En
     
 def Compute_MinDist_Cython(
-    long nloop,
-    long ncoeff,
-    long nint,
-    np.ndarray[double, ndim=1, mode="c"] mass not None ,
-    np.ndarray[long  , ndim=1, mode="c"] loopnb not None ,
-    np.ndarray[long  , ndim=2, mode="c"] Targets not None ,
-    np.ndarray[double, ndim=1, mode="c"] MassSum not None ,
-    np.ndarray[double, ndim=4, mode="c"] SpaceRotsUn not None ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeRevsUn not None ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeShiftNumUn not None ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeShiftDenUn not None ,
-    np.ndarray[long  , ndim=1, mode="c"] loopnbi not None ,
-    np.ndarray[double, ndim=2, mode="c"] ProdMassSumAll not None ,
-    np.ndarray[double, ndim=4, mode="c"] SpaceRotsBin not None ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeRevsBin not None ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeShiftNumBin not None ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeShiftDenBin not None ,
-    np.ndarray[double, ndim=4, mode="c"]  all_coeffs  not None
+    long                nloop           ,
+    long                ncoeff          ,
+    long                nint            ,
+    double  [:]         mass            ,
+    long    [:]         loopnb          ,
+    long    [:,:]       Targets         ,
+    double  [:]         MassSum         ,
+    double  [:,:,:,:]   SpaceRotsUn     ,
+    long    [:,:]       TimeRevsUn      ,
+    long    [:,:]       TimeShiftNumUn  ,
+    long    [:,:]       TimeShiftDenUn  ,
+    long    [:]         loopnbi         ,
+    double  [:,:]       ProdMassSumAll  ,
+    double  [:,:,:,:]   SpaceRotsBin    ,
+    long    [:,:]       TimeRevsBin     ,
+    long    [:,:]       TimeShiftNumBin ,
+    long    [:,:]       TimeShiftDenBin ,
+    double  [:,:,:,:]   all_coeffs      ,
     ):
+
     # Computes the minimum inter-body distance along the trajectory.
     # A useful tool for collision detection.
 
@@ -488,7 +486,7 @@ def Compute_MinDist_Cython(
     cdef long k,kp,k2
     cdef double pot,potp,potpp
     cdef double prod_mass,a,b,dx2,prod_fac
-    cdef np.ndarray[double, ndim=1, mode="c"]  dx = np.zeros((cndim),dtype=np.float64)
+    cdef double [:] dx = np.zeros((cndim),dtype=np.float64)
         
     cdef long maxloopnb = loopnb.max()
     cdef long maxloopnbi = loopnbi.max()
@@ -497,10 +495,10 @@ def Compute_MinDist_Cython(
 
     c_coeffs = all_coeffs.view(dtype=np.complex128)[...,0]
 
-    cdef np.ndarray[double, ndim=3, mode="c"] all_pos = the_irfft(c_coeffs,n=nint,axis=2)*nint
+    cdef double [:,:,:] all_pos = the_irfft(c_coeffs,n=nint,axis=2)*nint
 
-    cdef np.ndarray[long, ndim=2, mode="c"]  all_shiftsUn = np.zeros((nloop,maxloopnb),dtype=np.int_)
-    cdef np.ndarray[long, ndim=2, mode="c"]  all_shiftsBin = np.zeros((nloop,maxloopnbi),dtype=np.int_)
+    cdef long [:,:] all_shiftsUn = np.zeros((nloop,maxloopnb),dtype=np.int_)
+    cdef long [:,:] all_shiftsBin = np.zeros((nloop,maxloopnbi),dtype=np.int_)
     
     for il in range(nloop):
         for ib in range(loopnb[il]):
@@ -568,24 +566,24 @@ def Compute_MinDist_Cython(
     return csqrt(dx2min)
    
 def Compute_Loop_Dist_Cython(
-    long nloop,
-    long ncoeff,
-    long nint,
-    np.ndarray[double, ndim=1, mode="c"] mass not None ,
-    np.ndarray[long  , ndim=1, mode="c"] loopnb not None ,
-    np.ndarray[long  , ndim=2, mode="c"] Targets not None ,
-    np.ndarray[double, ndim=1, mode="c"] MassSum not None ,
-    np.ndarray[double, ndim=4, mode="c"] SpaceRotsUn not None ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeRevsUn not None ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeShiftNumUn not None ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeShiftDenUn not None ,
-    np.ndarray[long  , ndim=1, mode="c"] loopnbi not None ,
-    np.ndarray[double, ndim=2, mode="c"] ProdMassSumAll not None ,
-    np.ndarray[double, ndim=4, mode="c"] SpaceRotsBin not None ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeRevsBin not None ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeShiftNumBin not None ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeShiftDenBin not None ,
-    np.ndarray[double, ndim=4, mode="c"]  all_coeffs  not None
+    long                nloop           ,
+    long                ncoeff          ,
+    long                nint            ,
+    double  [:]         mass            ,
+    long    [:]         loopnb          ,
+    long    [:,:]       Targets         ,
+    double  [:]         MassSum         ,
+    double  [:,:,:,:]   SpaceRotsUn     ,
+    long    [:,:]       TimeRevsUn      ,
+    long    [:,:]       TimeShiftNumUn  ,
+    long    [:,:]       TimeShiftDenUn  ,
+    long    [:]         loopnbi         ,
+    double  [:,:]       ProdMassSumAll  ,
+    double  [:,:,:,:]   SpaceRotsBin    ,
+    long    [:,:]       TimeRevsBin     ,
+    long    [:,:]       TimeShiftNumBin ,
+    long    [:,:]       TimeShiftDenBin ,
+    double  [:,:,:,:]   all_coeffs      ,
     ):
         
     cdef long il,ilp,i
@@ -597,7 +595,7 @@ def Compute_Loop_Dist_Cython(
     cdef long k,kp,k2
     cdef double sum_loop_dist2
     cdef double dx2
-    cdef np.ndarray[double, ndim=1, mode="c"]  dx = np.zeros((cndim),dtype=np.float64)
+    cdef double [:]dx = np.zeros((cndim),dtype=np.float64)
 
     sum_loop_dist2 = 0.
     for il in range(nloop-1):
@@ -639,24 +637,24 @@ def Compute_Loop_Dist_Cython(
     return csqrt(sum_loop_dist2)
    
 def Compute_Loop_Dist_btw_avg_Cython(
-    long nloop,
-    long ncoeff,
-    long nint,
-    np.ndarray[double, ndim=1, mode="c"] mass not None ,
-    np.ndarray[long  , ndim=1, mode="c"] loopnb not None ,
-    np.ndarray[long  , ndim=2, mode="c"] Targets not None ,
-    np.ndarray[double, ndim=1, mode="c"] MassSum not None ,
-    np.ndarray[double, ndim=4, mode="c"] SpaceRotsUn not None ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeRevsUn not None ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeShiftNumUn not None ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeShiftDenUn not None ,
-    np.ndarray[long  , ndim=1, mode="c"] loopnbi not None ,
-    np.ndarray[double, ndim=2, mode="c"] ProdMassSumAll not None ,
-    np.ndarray[double, ndim=4, mode="c"] SpaceRotsBin not None ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeRevsBin not None ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeShiftNumBin not None ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeShiftDenBin not None ,
-    np.ndarray[double, ndim=4, mode="c"]  all_coeffs  not None
+    long                nloop           ,
+    long                ncoeff          ,
+    long                nint            ,
+    double  [:]         mass            ,
+    long    [:]         loopnb          ,
+    long    [:,:]       Targets         ,
+    double  [:]         MassSum         ,
+    double  [:,:,:,:]   SpaceRotsUn     ,
+    long    [:,:]       TimeRevsUn      ,
+    long    [:,:]       TimeShiftNumUn  ,
+    long    [:,:]       TimeShiftDenUn  ,
+    long    [:]         loopnbi         ,
+    double  [:,:]       ProdMassSumAll  ,
+    double  [:,:,:,:]   SpaceRotsBin    ,
+    long    [:,:]       TimeRevsBin     ,
+    long    [:,:]       TimeShiftNumBin ,
+    long    [:,:]       TimeShiftDenBin ,
+    double  [:,:,:,:]   all_coeffs      ,
     ):
 
     cdef long il,ilp,i
@@ -668,7 +666,7 @@ def Compute_Loop_Dist_btw_avg_Cython(
     cdef long k,kp,k2
     cdef double sum_loop_dist2
     cdef double dx2
-    cdef np.ndarray[double, ndim=1, mode="c"]  dx = np.zeros((cndim),dtype=np.float64)
+    cdef double [:] dx = np.zeros((cndim),dtype=np.float64)
 
     sum_loop_dist2 = 0.
     for il in range(nloop-1):
@@ -683,24 +681,24 @@ def Compute_Loop_Dist_btw_avg_Cython(
     return csqrt(sum_loop_dist2)
    
 def Compute_Loop_Size_Dist_Cython(
-    long nloop,
-    long ncoeff,
-    long nint,
-    np.ndarray[double, ndim=1, mode="c"] mass not None ,
-    np.ndarray[long  , ndim=1, mode="c"] loopnb not None ,
-    np.ndarray[long  , ndim=2, mode="c"] Targets not None ,
-    np.ndarray[double, ndim=1, mode="c"] MassSum not None ,
-    np.ndarray[double, ndim=4, mode="c"] SpaceRotsUn not None ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeRevsUn not None ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeShiftNumUn not None ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeShiftDenUn not None ,
-    np.ndarray[long  , ndim=1, mode="c"] loopnbi not None ,
-    np.ndarray[double, ndim=2, mode="c"] ProdMassSumAll not None ,
-    np.ndarray[double, ndim=4, mode="c"] SpaceRotsBin not None ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeRevsBin not None ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeShiftNumBin not None ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeShiftDenBin not None ,
-    np.ndarray[double, ndim=4, mode="c"]  all_coeffs  not None
+    long                nloop           ,
+    long                ncoeff          ,
+    long                nint            ,
+    double  [:]         mass            ,
+    long    [:]         loopnb          ,
+    long    [:,:]       Targets         ,
+    double  [:]         MassSum         ,
+    double  [:,:,:,:]   SpaceRotsUn     ,
+    long    [:,:]       TimeRevsUn      ,
+    long    [:,:]       TimeShiftNumUn  ,
+    long    [:,:]       TimeShiftDenUn  ,
+    long    [:]         loopnbi         ,
+    double  [:,:]       ProdMassSumAll  ,
+    double  [:,:,:,:]   SpaceRotsBin    ,
+    long    [:,:]       TimeRevsBin     ,
+    long    [:,:]       TimeShiftNumBin ,
+    long    [:,:]       TimeShiftDenBin ,
+    double  [:,:,:,:]   all_coeffs      ,
     ):
 
     cdef long il,ilp,i
@@ -713,10 +711,9 @@ def Compute_Loop_Size_Dist_Cython(
     cdef double loop_size,max_loop_size
     cdef double loop_dist,max_loop_dist
     cdef double dx2
-    cdef np.ndarray[double, ndim=1, mode="c"]  dx = np.zeros((cndim),dtype=np.float64)
+    cdef double [:] dx = np.zeros((cndim),dtype=np.float64)
     
-    cdef np.ndarray[double, ndim=1, mode="c"]  res = np.zeros((2),dtype=np.float64)
-
+    cdef double [:]res = np.zeros((2),dtype=np.float64)
 
     max_loop_size = 0.
     for il in range(nloop):
@@ -779,26 +776,26 @@ def Compute_Loop_Size_Dist_Cython(
     return res
    
 def Compute_action_hess_mul_Cython(
-    long nloop,
-    long ncoeff,
-    long nint,
-    np.ndarray[double, ndim=1, mode="c"] mass not None              ,
-    np.ndarray[long  , ndim=1, mode="c"] loopnb not None            ,
-    np.ndarray[long  , ndim=2, mode="c"] Targets not None           ,
-    np.ndarray[double, ndim=1, mode="c"] MassSum not None           ,
-    np.ndarray[double, ndim=4, mode="c"] SpaceRotsUn not None       ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeRevsUn not None        ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeShiftNumUn not None    ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeShiftDenUn not None    ,
-    np.ndarray[long  , ndim=1, mode="c"] loopnbi not None           ,
-    np.ndarray[double, ndim=2, mode="c"] ProdMassSumAll not None    ,
-    np.ndarray[double, ndim=4, mode="c"] SpaceRotsBin not None      ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeRevsBin not None       ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeShiftNumBin not None   ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeShiftDenBin not None   ,
-    np.ndarray[double, ndim=4, mode="c"] all_coeffs  not None       ,
-    np.ndarray[double, ndim=4, mode="c"] all_coeffs_d  not None     ,
-    np.ndarray[double, ndim=3, mode="c"] all_pos  not None     ,
+    long                nloop           ,
+    long                ncoeff          ,
+    long                nint            ,
+    double  [:]         mass            ,
+    long    [:]         loopnb          ,
+    long    [:,:]       Targets         ,
+    double  [:]         MassSum         ,
+    double  [:,:,:,:]   SpaceRotsUn     ,
+    long    [:,:]       TimeRevsUn      ,
+    long    [:,:]       TimeShiftNumUn  ,
+    long    [:,:]       TimeShiftDenUn  ,
+    long    [:]         loopnbi         ,
+    double  [:,:]       ProdMassSumAll  ,
+    double  [:,:,:,:]   SpaceRotsBin    ,
+    long    [:,:]       TimeRevsBin     ,
+    long    [:,:]       TimeShiftNumBin ,
+    long    [:,:]       TimeShiftDenBin ,
+    double  [:,:,:,:]   all_coeffs      ,
+    double  [:,:,:,:]   all_coeffs_d    ,
+    double  [:,:,:]     all_pos         ,
     ):
     # Computes the matrix vector product H*dx where H is the Hessian of the action.
     # Useful to guide the root finding / optimisation process and to better understand the topography of the action (critical points / Morse theory).
@@ -812,16 +809,16 @@ def Compute_action_hess_mul_Cython(
     cdef long k,kp,k2
     cdef double pot,potp,potpp
     cdef double prod_mass,a,b,c,dx2,prod_fac,dxtddx
-    cdef np.ndarray[double, ndim=1, mode="c"]  dx = np.zeros((cndim),dtype=np.float64)
-    cdef np.ndarray[double, ndim=1, mode="c"]  ddx = np.zeros((cndim),dtype=np.float64)
-    cdef np.ndarray[double, ndim=1, mode="c"]  ddf = np.zeros((cndim),dtype=np.float64)
+    cdef double [:] dx = np.zeros((cndim),dtype=np.float64)
+    cdef double [:] ddx = np.zeros((cndim),dtype=np.float64)
+    cdef double [:] ddf = np.zeros((cndim),dtype=np.float64)
         
     cdef long maxloopnb = loopnb.max()
     cdef long maxloopnbi = loopnbi.max()
     
     cdef double Kin_en = 0
 
-    cdef np.ndarray[double, ndim=4, mode="c"] Action_hess_dx = np.zeros((nloop,cndim,ncoeff,2),np.float64)
+    cdef double [:,:,:,:] Action_hess_dx = np.zeros((nloop,cndim,ncoeff,2),np.float64)
 
     for il in range(nloop):
         
@@ -837,10 +834,10 @@ def Compute_action_hess_mul_Cython(
                 Action_hess_dx[il,idim,k,1] += a*all_coeffs_d[il,idim,k,1]
 
     c_coeffs_d = all_coeffs_d.view(dtype=np.complex128)[...,0]
-    cdef np.ndarray[double, ndim=3, mode="c"]  all_pos_d = the_irfft(c_coeffs_d,n=nint,axis=2)*nint
+    cdef double [:,:,:] all_pos_d = the_irfft(c_coeffs_d,n=nint,axis=2)*nint
 
-    cdef np.ndarray[long, ndim=2, mode="c"]  all_shiftsUn = np.zeros((nloop,maxloopnb),dtype=np.int_)
-    cdef np.ndarray[long, ndim=2, mode="c"]  all_shiftsBin = np.zeros((nloop,maxloopnbi),dtype=np.int_)
+    cdef long [:,:] all_shiftsUn = np.zeros((nloop,maxloopnb),dtype=np.int_)
+    cdef long [:,:] all_shiftsBin = np.zeros((nloop,maxloopnbi),dtype=np.int_)
     
     for il in range(nloop):
         for ib in range(loopnb[il]):
@@ -857,7 +854,7 @@ def Compute_action_hess_mul_Cython(
                 
             all_shiftsBin[il,ibi] = ((-TimeRevsBin[il,ibi]*nint*TimeShiftNumBin[il,ibi]) // TimeShiftDenBin[il,ibi]) % nint
     
-    cdef np.ndarray[double, ndim=3, mode="c"] hess_pot_all_d = np.zeros((nloop,cndim,nint),dtype=np.float64)
+    cdef double [:,:,:]   hess_pot_all_d = np.zeros((nloop,cndim,nint),dtype=np.float64)
 
     for iint in range(nint):
 
@@ -952,7 +949,7 @@ def Compute_action_hess_mul_Cython(
             for ibi in range(loopnbi[il]):
                 all_shiftsBin[il,ibi] = (all_shiftsBin[il,ibi]+TimeRevsBin[il,ibi]) % nint
 
-    cdef np.ndarray[doublecomplex , ndim=3, mode="c"]  hess_dx_pot_fft = the_ihfft(hess_pot_all_d,nint)
+    cdef double complex [:,:,:]    hess_dx_pot_fft = the_ihfft(hess_pot_all_d,nint)
 
     for il in range(nloop):
         for idim in range(cndim):
@@ -971,14 +968,14 @@ def Compute_Newton_err_Cython(
     long nloop,
     long ncoeff,
     long nint,
-    np.ndarray[double, ndim=1, mode="c"] mass not None ,
-    np.ndarray[long  , ndim=1, mode="c"] loopnb not None ,
-    np.ndarray[long  , ndim=2, mode="c"] Targets not None ,
-    np.ndarray[double, ndim=4, mode="c"] SpaceRotsUn not None ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeRevsUn not None ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeShiftNumUn not None ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeShiftDenUn not None ,
-    np.ndarray[double, ndim=4, mode="c"] all_coeffs  not None
+    double [:]          mass  ,
+    long [:]            loopnb  ,
+    long [:,:]          Targets  ,
+    double [:,:,:,:]    SpaceRotsUn  ,
+    long [:,:]          TimeRevsUn  ,
+    long [:,:]          TimeShiftNumUn  ,
+    long [:,:]          TimeShiftDenUn  ,
+    double [:,:,:,:]    all_coeffs 
     ):
     # Computes the "Newton error", i.e. the deviation wrt to the fundamental theorem of Newtonian dynamics m_i * a_i - \sum_j f_ij = 0
     # If the Newton error is zero, then the trajectory is physical.
@@ -994,11 +991,11 @@ def Compute_Newton_err_Cython(
     cdef long k,kp,k2
     cdef double pot,potp,potpp
     cdef double prod_mass,a,b,dx2,prod_fac
-    cdef np.ndarray[double, ndim=1, mode="c"]  dx = np.zeros((cndim),dtype=np.float64)
+    cdef double [:] dx = np.zeros((cndim),dtype=np.float64)
 
     cdef long maxloopnb = loopnb.max()
     
-    cdef np.ndarray[double, ndim=4, mode="c"] acc_coeff = np.zeros((nloop,cndim,ncoeff,2),dtype=np.float64)
+    cdef double [:,:,:,:]  acc_coeff = np.zeros((nloop,cndim,ncoeff,2),dtype=np.float64)
 
     for il in range(nloop):
         for idim in range(cndim):
@@ -1009,15 +1006,15 @@ def Compute_Newton_err_Cython(
                 acc_coeff[il,idim,k,1] = k2*cfourpisq*all_coeffs[il,idim,k,1]
                 
     c_acc_coeffs = acc_coeff.view(dtype=np.complex128)[...,0]
-    cdef np.ndarray[double, ndim=3, mode="c"] all_acc = the_irfft(c_acc_coeffs,n=nint,axis=2)*nint
+    cdef double [:,:,:] all_acc = the_irfft(c_acc_coeffs,n=nint,axis=2)*nint
     
-    cdef np.ndarray[double, ndim=3, mode="c"] all_Newt_err = np.zeros((nbody,cndim,nint),np.float64)
+    cdef double [:,:,:] all_Newt_err = np.zeros((nbody,cndim,nint),np.float64)
     
     c_coeffs = all_coeffs.view(dtype=np.complex128)[...,0]
     
-    cdef np.ndarray[double, ndim=3, mode="c"] all_pos = the_irfft(c_coeffs,n=nint,axis=2)*nint
+    cdef double [:,:,:]  all_pos = the_irfft(c_coeffs,n=nint,axis=2)*nint
 
-    cdef np.ndarray[long, ndim=2, mode="c"]  all_shiftsUn = np.zeros((nloop,maxloopnb),dtype=np.int_)
+    cdef long [:,:]   all_shiftsUn = np.zeros((nloop,maxloopnb),dtype=np.int_)
     
     for il in range(nloop):
         for ib in range(loopnb[il]):
@@ -1102,22 +1099,22 @@ def Compute_Newton_err_Cython(
     return all_Newt_err
 
 def Assemble_Cstr_Matrix(
-    long nloop,
-    long ncoeff,
-    bint MomCons,
-    np.ndarray[double, ndim=1, mode="c"] mass not None ,
-    np.ndarray[long  , ndim=1, mode="c"] loopnb not None ,
-    np.ndarray[long  , ndim=2, mode="c"] Targets not None ,
-    np.ndarray[double, ndim=1, mode="c"] MassSum not None ,
-    np.ndarray[double, ndim=4, mode="c"] SpaceRotsUn not None ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeRevsUn not None ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeShiftNumUn not None ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeShiftDenUn not None ,
-    np.ndarray[long  , ndim=1, mode="c"] loopncstr not None ,
-    np.ndarray[double, ndim=4, mode="c"] SpaceRotsCstr not None ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeRevsCstr not None ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeShiftNumCstr not None ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeShiftDenCstr not None
+    long                nloop,
+    long                ncoeff,
+    bint                MomCons,
+    double [:]          mass  ,
+    long [:]            loopnb  ,
+    long [:,:]          Targets  ,
+    double [:]          MassSum  ,
+    double [:,:,:,:]    SpaceRotsUn  ,
+    long [:,:]          TimeRevsUn  ,
+    long [:,:]          TimeShiftNumUn  ,
+    long [:,:]          TimeShiftDenUn  ,
+    long [:]            loopncstr  ,
+    double [:,:,:,:]    SpaceRotsCstr  ,
+    long [:,:]          TimeRevsCstr  ,
+    long [:,:]          TimeShiftNumCstr  ,
+    long [:,:]          TimeShiftDenCstr 
     ):
     # Assembles the matrix of constraints used to select constraint satisfying parameters
 
@@ -1133,7 +1130,7 @@ def Assemble_Cstr_Matrix(
     cdef double val,dt
     cdef double masstot=0
     cdef double invmasstot = 0
-    cdef np.ndarray[double, ndim=1, mode="c"] cs = np.zeros((2),dtype=np.float64)
+    cdef double [:] cs = np.zeros((2),dtype=np.float64)
     
     # Removes imaginary part of c_0
     for il in range(nloop):
@@ -1291,9 +1288,9 @@ def Assemble_Cstr_Matrix(
                     print(TimeRevsCstr[il,ilcstr])
                     raise ValueError("Invalid TimeRev")
     
-    cdef np.ndarray[long  , ndim=1, mode="c"] cstr_row  = np.zeros((nnz),dtype=np.int_   )
-    cdef np.ndarray[long  , ndim=1, mode="c"] cstr_col  = np.zeros((nnz),dtype=np.int_   )
-    cdef np.ndarray[double, ndim=1, mode="c"] cstr_data = np.zeros((nnz),dtype=np.float64)
+    cdef double [:] cstr_row  = np.zeros((nnz),dtype=np.int_   )
+    cdef double [:] cstr_col  = np.zeros((nnz),dtype=np.int_   )
+    cdef double [:] cstr_data = np.zeros((nnz),dtype=np.float64)
 
     cdef long icstr = 0
     nnz = 0
@@ -1544,12 +1541,12 @@ def Assemble_Cstr_Matrix(
     
 @cython.cdivision(True)
 def diag_changevar(
-    long nnz,
-    long ncoeff,
-    double n_grad_change,
-    int [:] idxarray not None,
-    double [:] data not None,
-    double [:] MassSum not None ,
+    long        nnz             ,
+    long        ncoeff          ,
+    double      n_grad_change   ,
+    int     [:] idxarray        ,
+    double  [:] data            ,
+    double  [:] MassSum         ,
     ):
     
     cdef long idx, res, ift, k , il, idim
@@ -1576,8 +1573,8 @@ def diag_changevar(
         data[idx] *= kfac
     
 def Compute_square_dist(
-    np.ndarray[double, ndim=1, mode="c"] x not None ,
-    np.ndarray[double, ndim=1, mode="c"] y not None ,
+    double [:] x  ,
+    double [:] y  ,
     long s
     ):
         
@@ -1594,17 +1591,17 @@ def Compute_square_dist(
     
 
 def Compute_Forces_Cython(
-    np.ndarray[double, ndim=2, mode="c"] x not None,
-    np.ndarray[double, ndim=1, mode="c"] mass not None,
-    long nbody,
+    double [:,:]    x ,
+    double [:]      mass ,
+    long            nbody,
     ):
     # Does not actually computes the forces on every body, but rather the force divided by the mass.
 
     cdef long ib, ibp
     cdef long idim
-    cdef np.ndarray[double, ndim=2, mode="c"] f = np.zeros((nbody,cndim),dtype=np.float64)
+    cdef double [:,:] f = np.zeros((nbody,cndim),dtype=np.float64)
 
-    cdef np.ndarray[double, ndim=1, mode="c"]  dx = np.zeros((cndim),dtype=np.float64)
+    cdef double [:] dx = np.zeros((cndim),dtype=np.float64)
 
     cdef double dx2,a
     cdef double b,bp
@@ -1635,17 +1632,17 @@ def Compute_Forces_Cython(
 
 
 def Compute_JacMat_Forces_Cython(
-    np.ndarray[double, ndim=2, mode="c"] x not None,
-    np.ndarray[double, ndim=1, mode="c"] mass not None,
-    long nbody,
+    double [:,:]    x ,
+    double [:]      mass ,
+    long            nbody,
     ):
     # Does not actually computes the forces on every body, but rather the force divided by the mass.
 
     cdef long ib, ibp
     cdef long idim,jdim
-    cdef np.ndarray[double, ndim=4, mode="c"] Jf = np.zeros((nbody,cndim,nbody,cndim),dtype=np.float64)
+    cdef double [:,:,:,:] Jf = np.zeros((nbody,cndim,nbody,cndim),dtype=np.float64)
 
-    cdef np.ndarray[double, ndim=1, mode="c"]  dx = np.zeros((cndim),dtype=np.float64)
+    cdef double [:] dx = np.zeros((cndim),dtype=np.float64)
 
     cdef double dx2
     cdef double a,aa,aap
@@ -1694,19 +1691,19 @@ def Compute_JacMat_Forces_Cython(
     return Jf
 
 def Compute_JacMul_Forces_Cython(
-    np.ndarray[double, ndim=2, mode="c"] x not None,
-    np.ndarray[double, ndim=2, mode="c"] x_d not None,
-    np.ndarray[double, ndim=1, mode="c"] mass not None,
-    long nbody,
+    double [:,:]    x       ,
+    double [:,:]    x_d     ,
+    double [:]      mass    ,
+    long            nbody   ,
     ):
     # Does not actually computes the forces on every body, but rather the force divided by the mass.
 
     cdef long ib, ibp
     cdef long idim,jdim
-    cdef np.ndarray[double, ndim=2, mode="c"] df = np.zeros((nbody,cndim),dtype=np.float64)
+    cdef double [:,:] df = np.zeros((nbody,cndim),dtype=np.float64)
 
-    cdef np.ndarray[double, ndim=1, mode="c"]  dx = np.zeros((cndim),dtype=np.float64)
-    cdef np.ndarray[double, ndim=1, mode="c"]  ddx = np.zeros((cndim),dtype=np.float64)
+    cdef double [:] dx = np.zeros((cndim),dtype=np.float64)
+    cdef double [:] ddx = np.zeros((cndim),dtype=np.float64)
 
     cdef double dx2,dxtddx
     cdef double a,aa,aap
