@@ -15,6 +15,8 @@ This file also defines global constants in both C and Python format like the nub
 import os
 import numpy as np
 cimport numpy as np
+np.import_array()
+
 cimport cython
 
 import scipy.fft
@@ -162,8 +164,8 @@ def Compute_action_Cython(
     cdef double [:] dx = np.zeros((cndim),dtype=np.float64)
     cdef double [:] df = np.zeros((cndim),dtype=np.float64)
         
-    cdef long maxloopnb = loopnb.max()
-    cdef long maxloopnbi = loopnbi.max()
+    cdef long maxloopnb = np.amax(loopnb)
+    cdef long maxloopnbi = np.amax(loopnbi)
     
     cdef double Kin_en = 0
 
@@ -293,7 +295,7 @@ def Compute_action_Cython(
             for ibi in range(loopnbi[il]):
                 all_shiftsBin[il,ibi] = (all_shiftsBin[il,ibi]+TimeRevsBin[il,ibi]) % nint
                 
-    cdef double complex [:,:,:,:] grad_pot_fft = the_ihfft(grad_pot_all,nint)
+    cdef double complex [:,:,:] grad_pot_fft = the_ihfft(grad_pot_all,nint)
 
     for il in range(nloop):
         for idim in range(cndim):
@@ -309,7 +311,7 @@ def Compute_action_Cython(
     
     Action = Kin_en-Pot_en
     
-    return Action,Action_grad
+    return Action,np.asarray(Action_grad)
 
 def Compute_hash_action_Cython(
     long                nloop           ,
@@ -347,8 +349,8 @@ def Compute_hash_action_Cython(
     cdef double prod_mass,a,b,dx2,prod_fac
     cdef double [:] dx = np.zeros((cndim),dtype=np.float64)
         
-    cdef long maxloopnb = loopnb.max()
-    cdef long maxloopnbi = loopnbi.max()
+    cdef long maxloopnb = np.amax(loopnb)
+    cdef long maxloopnbi = np.amax(loopnbi)
     
     cdef long ihash
     
@@ -369,7 +371,7 @@ def Compute_hash_action_Cython(
 
                 Kin_en += a *((all_coeffs[il,idim,k,0]*all_coeffs[il,idim,k,0]) + (all_coeffs[il,idim,k,1]*all_coeffs[il,idim,k,1]))
 
-    c_coeffs = all_coeffs.view(dtype=np.complex128)[...,0]
+    c_coeffs = np.asarray(all_coeffs).view(dtype=np.complex128)[...,0]
 
     cdef double [:,:,:] all_pos = the_irfft(c_coeffs,n=nint,axis=2)*nint
 
@@ -381,7 +383,7 @@ def Compute_hash_action_Cython(
                 
             if not(((-TimeRevsUn[il,ib]*nint*TimeShiftNumUn[il,ib]) % TimeShiftDenUn[il,ib]) == 0):
                 print("WARNING : remainder in integer division")
-                
+
             all_shiftsUn[il,ib] = ((-TimeRevsUn[il,ib]*nint*TimeShiftNumUn[il,ib]) // TimeShiftDenUn[il,ib] ) % nint
         
         for ibi in range(loopnbi[il]):
@@ -451,7 +453,7 @@ def Compute_hash_action_Cython(
     for ihash in range(cnhash):
         Hash_En[ihash] = Kin_en - Hash_En[ihash]/nint
 
-    return Hash_En
+    return np.asarray(Hash_En)
     
 def Compute_MinDist_Cython(
     long                nloop           ,
@@ -488,12 +490,12 @@ def Compute_MinDist_Cython(
     cdef double prod_mass,a,b,dx2,prod_fac
     cdef double [:] dx = np.zeros((cndim),dtype=np.float64)
         
-    cdef long maxloopnb = loopnb.max()
-    cdef long maxloopnbi = loopnbi.max()
+    cdef long maxloopnb = np.amax(loopnb)
+    cdef long maxloopnbi = np.amax(loopnbi)
     
     cdef double dx2min = 1e100
 
-    c_coeffs = all_coeffs.view(dtype=np.complex128)[...,0]
+    c_coeffs = np.asarray(all_coeffs).view(dtype=np.complex128)[...,0]
 
     cdef double [:,:,:] all_pos = the_irfft(c_coeffs,n=nint,axis=2)*nint
 
@@ -773,7 +775,7 @@ def Compute_Loop_Size_Dist_Cython(
 
     res[1] = csqrt(max_loop_dist)
     
-    return res
+    return np.asarray(res)
    
 def Compute_action_hess_mul_Cython(
     long                nloop           ,
@@ -813,8 +815,8 @@ def Compute_action_hess_mul_Cython(
     cdef double [:] ddx = np.zeros((cndim),dtype=np.float64)
     cdef double [:] ddf = np.zeros((cndim),dtype=np.float64)
         
-    cdef long maxloopnb = loopnb.max()
-    cdef long maxloopnbi = loopnbi.max()
+    cdef long maxloopnb = np.amax(loopnb)
+    cdef long maxloopnbi = np.amax(loopnbi)
     
     cdef double Kin_en = 0
 
@@ -833,7 +835,7 @@ def Compute_action_hess_mul_Cython(
                 Action_hess_dx[il,idim,k,0] += a*all_coeffs_d[il,idim,k,0]
                 Action_hess_dx[il,idim,k,1] += a*all_coeffs_d[il,idim,k,1]
 
-    c_coeffs_d = all_coeffs_d.view(dtype=np.complex128)[...,0]
+    c_coeffs_d = np.asarray(all_coeffs_d).view(dtype=np.complex128)[...,0]
     cdef double [:,:,:] all_pos_d = the_irfft(c_coeffs_d,n=nint,axis=2)*nint
 
     cdef long [:,:] all_shiftsUn = np.zeros((nloop,maxloopnb),dtype=np.int_)
@@ -961,7 +963,7 @@ def Compute_action_hess_mul_Cython(
                 Action_hess_dx[il,idim,k,0] -= 2*hess_dx_pot_fft[il,idim,k].real
                 Action_hess_dx[il,idim,k,1] += 2*hess_dx_pot_fft[il,idim,k].imag
 
-    return Action_hess_dx
+    return np.asarray(Action_hess_dx)
     
 def Compute_Newton_err_Cython(
     long nbody,
@@ -993,7 +995,7 @@ def Compute_Newton_err_Cython(
     cdef double prod_mass,a,b,dx2,prod_fac
     cdef double [:] dx = np.zeros((cndim),dtype=np.float64)
 
-    cdef long maxloopnb = loopnb.max()
+    cdef long maxloopnb = np.amax(loopnb)
     
     cdef double [:,:,:,:]  acc_coeff = np.zeros((nloop,cndim,ncoeff,2),dtype=np.float64)
 
@@ -1005,13 +1007,12 @@ def Compute_Newton_err_Cython(
                 acc_coeff[il,idim,k,0] = k2*cfourpisq*all_coeffs[il,idim,k,0]
                 acc_coeff[il,idim,k,1] = k2*cfourpisq*all_coeffs[il,idim,k,1]
                 
-    c_acc_coeffs = acc_coeff.view(dtype=np.complex128)[...,0]
+    c_acc_coeffs = np.asarray(acc_coeff).view(dtype=np.complex128)[...,0]
     cdef double [:,:,:] all_acc = the_irfft(c_acc_coeffs,n=nint,axis=2)*nint
     
     cdef double [:,:,:] all_Newt_err = np.zeros((nbody,cndim,nint),np.float64)
     
-    c_coeffs = all_coeffs.view(dtype=np.complex128)[...,0]
-    
+    c_coeffs = np.asarray(all_coeffs).view(dtype=np.complex128)[...,0]
     cdef double [:,:,:]  all_pos = the_irfft(c_coeffs,n=nint,axis=2)*nint
 
     cdef long [:,:]   all_shiftsUn = np.zeros((nloop,maxloopnb),dtype=np.int_)
@@ -1096,25 +1097,25 @@ def Compute_Newton_err_Cython(
             for ib in range(loopnb[il]):
                 all_shiftsUn[il,ib] = (all_shiftsUn[il,ib]+TimeRevsUn[il,ib]) % nint
                 
-    return all_Newt_err
+    return np.asarray(all_Newt_err)
 
 def Assemble_Cstr_Matrix(
-    long                nloop,
-    long                ncoeff,
-    bint                MomCons,
-    double [:]          mass  ,
-    long [:]            loopnb  ,
-    long [:,:]          Targets  ,
-    double [:]          MassSum  ,
-    double [:,:,:,:]    SpaceRotsUn  ,
-    long [:,:]          TimeRevsUn  ,
-    long [:,:]          TimeShiftNumUn  ,
-    long [:,:]          TimeShiftDenUn  ,
-    long [:]            loopncstr  ,
-    double [:,:,:,:]    SpaceRotsCstr  ,
-    long [:,:]          TimeRevsCstr  ,
-    long [:,:]          TimeShiftNumCstr  ,
-    long [:,:]          TimeShiftDenCstr 
+    long                nloop           ,
+    long                ncoeff          ,
+    bint                MomCons         ,
+    double  [:]         mass            ,
+    long    [:]         loopnb          ,
+    long    [:,:]       Targets         ,
+    double  [:]         MassSum         ,
+    double  [:,:,:,:]   SpaceRotsUn     ,
+    long    [:,:]       TimeRevsUn      ,
+    long    [:,:]       TimeShiftNumUn  ,
+    long    [:,:]       TimeShiftDenUn  ,
+    long    [:]         loopncstr       ,
+    double  [:,:,:,:]   SpaceRotsCstr   ,
+    long    [:,:]       TimeRevsCstr    ,
+    long    [:,:]       TimeShiftNumCstr,
+    long    [:,:]       TimeShiftDenCstr 
     ):
     # Assembles the matrix of constraints used to select constraint satisfying parameters
 
@@ -1288,8 +1289,8 @@ def Assemble_Cstr_Matrix(
                     print(TimeRevsCstr[il,ilcstr])
                     raise ValueError("Invalid TimeRev")
     
-    cdef double [:] cstr_row  = np.zeros((nnz),dtype=np.int_   )
-    cdef double [:] cstr_col  = np.zeros((nnz),dtype=np.int_   )
+    cdef long [:] cstr_row  = np.zeros((nnz),dtype=np.int_   )
+    cdef long [:] cstr_col  = np.zeros((nnz),dtype=np.int_   )
     cdef double [:] cstr_data = np.zeros((nnz),dtype=np.float64)
 
     cdef long icstr = 0
@@ -1572,7 +1573,7 @@ def diag_changevar(
         
         data[idx] *= kfac
     
-def Compute_square_dist(
+cdef inline double CCompute_square_dist(
     double [:] x  ,
     double [:] y  ,
     long s
@@ -1589,6 +1590,13 @@ def Compute_square_dist(
     
     return res
     
+def Compute_square_dist(
+    double [:] x  ,
+    double [:] y  ,
+    long s
+    ):
+
+    return CCompute_square_dist(x,y,s) 
 
 def Compute_Forces_Cython(
     double [:,:]    x ,
@@ -1628,7 +1636,7 @@ def Compute_Forces_Cython(
                 f[ib,idim] -= b*dx[idim]
                 f[ibp,idim] += bp*dx[idim]
 
-    return f
+    return np.asarray(f)
 
 
 def Compute_JacMat_Forces_Cython(
@@ -1688,7 +1696,7 @@ def Compute_JacMat_Forces_Cython(
                     Jf[ibp,idim,ib ,jdim] += c
                     Jf[ibp,idim,ibp,jdim] -= c
 
-    return Jf
+    return np.asarray(Jf)
 
 def Compute_JacMul_Forces_Cython(
     double [:,:]    x       ,
@@ -1738,5 +1746,5 @@ def Compute_JacMul_Forces_Cython(
                 df[ibp,idim] += bbp*dx[idim] + aap*ddx[idim]
 
 
-    return df
+    return np.asarray(df)
 
