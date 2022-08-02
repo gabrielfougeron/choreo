@@ -14,9 +14,6 @@ import sys
 import fractions
 import json
 
-__PROJECT_ROOT__ = os.path.abspath(os.path.join(os.path.dirname(__file__),os.pardir))
-sys.path.append(__PROJECT_ROOT__)
-
 import matplotlib
 import choreo 
 
@@ -25,20 +22,21 @@ import argparse
 def main(args):
 
     parser = argparse.ArgumentParser(description='CLI program that reads parameters in JSON file, builds and init state with coresponding symmetries and dumps it.')
-    parser.add_argument("-i","--input_filename", nargs=1, type=None, required=True,  
+    parser.add_argument("-i","--input_filename", nargs=1, type=None, required=False,  
                         help="JSON input file",default = "data.json")
     # parser.add_argument("-o","--output_file", nargs=1, type=None, required=True,  
                         # help="Name of output file")
 
     argv        = parser.parse_args(args)
     #
-    input_filename  = argv.input_filename[0]
-    # output_file     = argv.output_file[0]
+    input_filename  = argv.input_filename
+    # output_file     = argv.output_file
 
     # np.random.seed(int(time.time()*10000) % 5000)
     np.random.seed(0)
 
-    params_dict = json.load(input_filename)
+    with open(input_filename, 'r') as json_file:
+        params_dict = json.load(json_file)
 
     file_basename = ''
     
@@ -98,9 +96,9 @@ def main(args):
 
     store_folder = 'Sniff_all_sym/'
     # store_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/')
-    store_folder = store_folder+str(nbody)
-    if not(os.path.isdir(store_folder)):
-        os.makedirs(store_folder)
+    # store_folder = store_folder+str(nbody)
+    # if not(os.path.isdir(store_folder)):
+    #     os.makedirs(store_folder)
 
     # print("store_folder: ",store_folder)
     # print(os.path.isdir(store_folder))

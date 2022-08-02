@@ -24,3 +24,5 @@ Sniff_all_sym/
 __pycache__/
 .vscode/
 dist/
+GUI_scripts/dist/
+GUI_scripts/build/
