@@ -498,6 +498,9 @@ def GenSymExample(
     Plot_trace_anim,
     vid_size,
     dnint,
+    Save_All_Coeffs,
+    Save_All_Pos,
+    n_save_pos,
 ):
     
     n_reconverge_it_max = 0
