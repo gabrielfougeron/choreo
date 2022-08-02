@@ -13,6 +13,7 @@
 *.json
 *.7z
 *.whl
+*.spec
 *.egg-info/
 Saves/
 testplots/
