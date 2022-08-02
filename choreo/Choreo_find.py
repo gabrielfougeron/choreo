@@ -537,8 +537,6 @@ def GenSymExample(
 
     sampler = UniformRandom(d=rand_dim)
 
-
-
     callfun[0]["current_cvg_lvl"] = 0
     ncoeff = callfun[0]["ncoeff_list"][callfun[0]["current_cvg_lvl"]]
     nint = callfun[0]["nint_list"][callfun[0]["current_cvg_lvl"]]
@@ -571,4 +569,24 @@ def GenSymExample(
 
     if Save_anim :
         plot_all_2D_anim(x0,nint_plot_anim,callfun,'init.mp4',nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size,dnint=dnint)
-            
+
+    if Save_All_Coeffs:
+
+        all_coeffs = Unpackage_all_coeffs(best_sol.x,callfun)
+        np.save('init_coeffs.npy',all_coeffs)
+
+    if Save_All_Pos:
+
+        if n_save_pos is None:
+            all_pos_b = ComputeAllPos(best_sol.x,callfun)
+        elif n_save_pos == 'auto':
+            # TODO : implement auto
+            all_pos_b = ComputeAllPos(best_sol.x,callfun)
+        else:
+            all_pos_b = ComputeAllPos(best_sol.x,callfun,n_save_pos)
+
+        np.save('init_all_pos.npy',all_pos_b)
+        # print(all_pos_b.shape)
+        all_pos_b = all_pos_b.reshape(-1,all_pos_b.shape[2])
+
+        np.savetxt('init_all_pos.txt',all_pos_b)
