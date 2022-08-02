@@ -575,18 +575,18 @@ def GenSymExample(
 
     if Save_All_Coeffs:
 
-        all_coeffs = Unpackage_all_coeffs(best_sol.x,callfun)
+        all_coeffs = Unpackage_all_coeffs(x0,callfun)
         np.save('init_coeffs.npy',all_coeffs)
 
     if Save_All_Pos:
 
         if n_save_pos is None:
-            all_pos_b = ComputeAllPos(best_sol.x,callfun)
+            all_pos_b = ComputeAllPos(x0,callfun)
         elif n_save_pos == 'auto':
             # TODO : implement auto
-            all_pos_b = ComputeAllPos(best_sol.x,callfun)
+            all_pos_b = ComputeAllPos(x0,callfun)
         else:
-            all_pos_b = ComputeAllPos(best_sol.x,callfun,n_save_pos)
+            all_pos_b = ComputeAllPos(x0,callfun,n_save_pos)
 
         np.save('init_all_pos.npy',all_pos_b)
         # print(all_pos_b.shape)
