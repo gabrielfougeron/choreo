@@ -1,4 +1,5 @@
 *.pyc
+*.pyd
 *.c
 *.so
 *.png
@@ -26,3 +27,4 @@ __pycache__/
 dist/
 GUI_scripts/dist/
 GUI_scripts/build/
+sparseqr/
