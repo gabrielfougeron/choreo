@@ -18,15 +18,15 @@ jobs:
         sudo apt-get install libsuitesparse-dev    
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        python setup.py install
+        python setup.py build_ext --inplace    
+    - name: Generate Documentation
+      run: |
         cd docs
         make html
     - uses: actions/upload-artifact@v1
       with:
         name: DocumentationHTML
         path: docs/build/html/
-    # Publish built docs to gh-pages branch.
-    # ===============================
     - name: Commit documentation changes
       run: |
         git clone https://github.com/ammaraskar/sphinx-action-test.git --branch gh-pages --single-branch gh-pages
