@@ -54,6 +54,11 @@ extension = [
     ),
 ]
 
+ext_modules = cythonize(extension, language_level = "3",annotate=True)
+
+for e in ext_modules:
+    e.cython_directives = {"embedsignature": True}
+
 setup(
     name = "choreo",
     author = "Gabriel Fougeron <gabriel.fougeron@hotmail.fr>",
@@ -63,7 +68,7 @@ setup(
     license = "BSD 2-Clause License",
     platforms=['any'],
     packages = find_packages(),
-    ext_modules = cythonize(extension, language_level = "3",annotate=True),
+    ext_modules = ext_modules,
     zip_safe=False,
     package_data={"choreo": ["choreo.h"]},
     provides=['choreo'],
