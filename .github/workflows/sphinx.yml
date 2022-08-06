@@ -16,8 +16,9 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
+        cd docs
         ls -l
-        pip install -r ./docs/requirements.txt
+        pip install -r requirements.txt
     - uses: ammaraskar/sphinx-action@master
       with:
         docs-folder: "docs/"
