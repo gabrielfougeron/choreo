@@ -4,5 +4,5 @@ API
 .. autosummary::
    :toctree: generated
 
-   choreo
+..    choreo
    choreo.Find_Choreo
