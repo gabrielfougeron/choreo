@@ -28,3 +28,4 @@ dist/
 GUI_scripts/dist/
 GUI_scripts/build/
 sparseqr/
+!docs/requirements.txt
