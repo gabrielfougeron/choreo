@@ -10,6 +10,7 @@ from distutils.core import Extension
 from distutils.command.build import build as build_orig
 from Cython.Build import cythonize
 import numpy
+import platform
 
 __version__ = "0.1.0"
 
@@ -19,10 +20,15 @@ __version__ = "0.1.0"
 # To build for the current platform, run :
 # python setup.py bdist_wheel
 
-# extra_compile_args = ["-O2"]
-# extra_compile_args = ["-O2","-march=native"]
-# extra_compile_args = ["-O3","-ffast-math","-march=native"]
-extra_compile_args = ["-O3","-march=native"]
+if platform.system() == "Windows":
+
+    extra_compile_args = ["/O2"]
+
+else:
+    # extra_compile_args = ["-O2"]
+    # extra_compile_args = ["-O2","-march=native"]
+    # extra_compile_args = ["-O3","-ffast-math","-march=native"]
+    extra_compile_args = ["-O3","-march=native"]
 
 extra_link_args = []
 
