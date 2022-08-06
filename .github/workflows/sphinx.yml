@@ -18,7 +18,7 @@ jobs:
     # Standard drop-in approach that should work for most people.
     - name: install theme
       run: |
-      pip install sphinx_rtd_theme
+        pip install sphinx_rtd_theme
     - uses: ammaraskar/sphinx-action@master
       with:
         docs-folder: "docs/"
