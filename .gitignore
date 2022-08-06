@@ -18,7 +18,7 @@
 Saves/
 testplots/
 build/
-docs/
+docs/build/
 Sniff_all/
 Sniff_all_sym/
 __pycache__/
