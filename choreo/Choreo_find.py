@@ -86,6 +86,11 @@ def Find_Choreo(
     Save_Init_Pos_Vel_Sol,
     mul_coarse_to_fine,
     ):
+    """
+
+    Finds periodic solutions
+
+    """
     
     print('Searching periodic solutions of {:d} bodies'.format(nbody))
 
