@@ -1,54 +1,16 @@
-alabaster==0.7.12
-Babel @ file:///home/conda/feedstock_root/build_artifacts/babel_1655419414885/work
-brotlipy @ file:///home/conda/feedstock_root/build_artifacts/brotlipy_1648854167867/work
-certifi==2022.6.15
-cffi @ file:///home/conda/feedstock_root/build_artifacts/cffi_1656782834004/work
-charset-normalizer @ file:///home/conda/feedstock_root/build_artifacts/charset-normalizer_1655906222726/work
-colorama @ file:///home/conda/feedstock_root/build_artifacts/colorama_1655412516417/work
-cryptography @ file:///home/conda/feedstock_root/build_artifacts/cryptography_1657173997940/work
-cycler @ file:///home/conda/feedstock_root/build_artifacts/cycler_1635519461629/work
-Cython @ file:///home/conda/feedstock_root/build_artifacts/cython_1652809237949/work
-docutils==0.17.1
-ffmpeg-python==0.2.0
-fonttools @ file:///home/conda/feedstock_root/build_artifacts/fonttools_1657120692311/work
-future @ file:///home/conda/feedstock_root/build_artifacts/future_1649010148175/work
-idna @ file:///home/conda/feedstock_root/build_artifacts/idna_1642433548627/work
-imagesize @ file:///home/conda/feedstock_root/build_artifacts/imagesize_1656939531508/work
-importlib-metadata @ file:///home/conda/feedstock_root/build_artifacts/importlib-metadata_1653252803161/work
-Jinja2 @ file:///home/conda/feedstock_root/build_artifacts/jinja2_1654302431367/work
-kiwisolver @ file:///home/conda/feedstock_root/build_artifacts/kiwisolver_1655141594732/work
-MarkupSafe @ file:///home/conda/feedstock_root/build_artifacts/markupsafe_1648737547956/work
-matplotlib @ file:///home/conda/feedstock_root/build_artifacts/matplotlib-suite_1651609453931/work
-munkres==1.1.4
-networkx @ file:///home/conda/feedstock_root/build_artifacts/networkx_1655215393654/work
-numpy @ file:///home/conda/feedstock_root/build_artifacts/numpy_1655988925444/work
-packaging @ file:///home/conda/feedstock_root/build_artifacts/packaging_1637239678211/work
-Pillow @ file:///home/conda/feedstock_root/build_artifacts/pillow_1657007160045/work
-pycparser @ file:///home/conda/feedstock_root/build_artifacts/pycparser_1636257122734/work
-Pygments @ file:///home/conda/feedstock_root/build_artifacts/pygments_1650904496387/work
-pyOpenSSL @ file:///home/conda/feedstock_root/build_artifacts/pyopenssl_1643496850550/work
-pyparsing @ file:///home/conda/feedstock_root/build_artifacts/pyparsing_1652235407899/work
-PyQt5==5.15.4
-PyQt5-sip==12.9.0
-PySocks @ file:///home/conda/feedstock_root/build_artifacts/pysocks_1648857264958/work
-python-dateutil @ file:///home/conda/feedstock_root/build_artifacts/python-dateutil_1626286286081/work
-pytz @ file:///home/conda/feedstock_root/build_artifacts/pytz_1647961439546/work
-requests @ file:///home/conda/feedstock_root/build_artifacts/requests_1656534056640/work
-scipy @ file:///home/conda/feedstock_root/build_artifacts/scipy_1653073872310/work
-sip @ file:///home/conda/feedstock_root/build_artifacts/sip_1646101165171/work
-six @ file:///home/conda/feedstock_root/build_artifacts/six_1620240208055/work
-snowballstemmer @ file:///home/conda/feedstock_root/build_artifacts/snowballstemmer_1637143057757/work
-sparseqr==1.1.2
-Sphinx @ file:///home/conda/feedstock_root/build_artifacts/sphinx_1659457306093/work
-sphinx-rtd-theme==1.0.0
-sphinxcontrib-applehelp==1.0.2
-sphinxcontrib-devhelp==1.0.2
-sphinxcontrib-htmlhelp @ file:///home/conda/feedstock_root/build_artifacts/sphinxcontrib-htmlhelp_1621704829796/work
-sphinxcontrib-jsmath==1.0.1
-sphinxcontrib-qthelp==1.0.3
-sphinxcontrib-serializinghtml @ file:///home/conda/feedstock_root/build_artifacts/sphinxcontrib-serializinghtml_1649380998999/work
-toml @ file:///home/conda/feedstock_root/build_artifacts/toml_1604308577558/work
-tornado @ file:///home/conda/feedstock_root/build_artifacts/tornado_1656937830246/work
-unicodedata2 @ file:///home/conda/feedstock_root/build_artifacts/unicodedata2_1649111910890/work
-urllib3 @ file:///home/conda/feedstock_root/build_artifacts/urllib3_1658789158161/work
-zipp @ file:///home/conda/feedstock_root/build_artifacts/zipp_1659400682470/work
+cffi==1.15.1
+cycler==0.11.0
+Cython==0.29.32
+fonttools==4.34.4
+kiwisolver==1.4.4
+matplotlib==3.5.2
+networkx==2.8.5
+numpy==1.23.1
+packaging==21.3
+Pillow==9.2.0
+pycparser==2.21
+pyparsing==3.0.9
+python-dateutil==2.8.2
+scipy==1.9.0
+six==1.16.0
+sparseqr==1.2
