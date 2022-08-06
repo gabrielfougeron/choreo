@@ -19,12 +19,8 @@ jobs:
         pip install -r requirements.txt
         pip install -r ./docs/requirements.txt
         python setup.py install
-    - uses: gabrielfougeron/sphinx-action@master
-      with:
-        docs-folder: "docs/"
-        # pre-build-command: "python -m pip install --upgrade pip && pip install -r requirements.txt && python setup.py install &&"
-    # Great extra actions to compose with:
-    # Create an artifact of the html output.
+        cd docs
+        make html
     - uses: actions/upload-artifact@v1
       with:
         name: DocumentationHTML
