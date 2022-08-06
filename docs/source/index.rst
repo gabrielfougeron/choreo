@@ -16,6 +16,16 @@ At `this address <https://gabrielfougeron.github.io//choreo/>`_ !
 
 
 
+Contents
+--------
+
+.. toctree::
+
+   usage
+   api
+
+
+
 
 .. toctree::
    :maxdepth: 2
