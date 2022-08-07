@@ -45,5 +45,5 @@ jobs:
         branch: gh-pages
         directory: gh-pages
         github_token: ${{ secrets.GITHUB_TOKEN }}
-        repository: git@github.com:gabrielfougeron/choreo-docs.git
+        repository: gabrielfougeron/choreo-docs
         force: true
