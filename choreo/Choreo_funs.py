@@ -368,23 +368,30 @@ def null_space_sparseqr(AT):
         return sp.coo_matrix((Q.data[mask],(Q.row[mask],Q.col[mask]-rank)),shape=(nrow,nrow-rank))
      
 class ChoreoSym():
-    # This class defines the symmetries of the action
-    # Useful to detect loops and constraints.
-    #
-    # Syntax : Giving one ChoreoSym to setup_changevar prescrbes the following symmetry / constraint :
-    # x_LoopTarget(t) = SpaceRot * x_LoopSource (TimeRev * (t - TimeShift))
-    #
-    # Where SpaceRot is assumed orthogonal (never actually checked, so beware)
-    # and TimeShift is defined as a rational fraction.
-    
+    r"""
+    This class defines the symmetries of the action
+    Useful to detect loops and constraints.
+
+    Syntax : Giving one ChoreoSym to setup_changevar prescribes the following symmetry / constraint :
+
+    .. math::
+        x_{\text{LoopTarget}}(t) = \text{SpaceRot} \cdot x_{\text{LoopSource}} (\text{TimeRev} * (t - \text{TimeShift}))
+
+    Where SpaceRot is assumed orthogonal (never actually checked, so beware)
+    and TimeShift is defined as a rational fraction.
+    """
+
     def __init__(
-            self,
-            LoopTarget=0,
-            LoopSource=0,
-            SpaceRot=np.identity(ndim,dtype=np.float64),
-            TimeRev=1,
-            TimeShift=fractions.Fraction(numerator=0,denominator=1)
-            ):
+        self,
+        LoopTarget=0,
+        LoopSource=0,
+        SpaceRot=np.identity(ndim,dtype=np.float64),
+        TimeRev=1,
+        TimeShift=fractions.Fraction(numerator=0,denominator=1)
+        ):
+        r"""
+        Class constructor
+        """
 
         self.LoopTarget = LoopTarget
         self.LoopSource = LoopSource
@@ -393,7 +400,10 @@ class ChoreoSym():
         self.TimeShift = TimeShift
         
     def Inverse(self):
-        
+        r"""
+        Returns the inverse of a symmetry transformation
+        """
+
         return ChoreoSym(
             LoopTarget=self.LoopSource,
             LoopSource=self.LoopTarget,
@@ -403,6 +413,9 @@ class ChoreoSym():
             )
 
     def ComposeLight(B,A):
+        r"""
+        Returns the composition of two transformations ignoring sources and targets
+        """
         # Composition B o A, i.e. applies A then B, ignoring that target A might be different from source B
         
         tshift = B.TimeShift + fractions.Fraction(numerator=int(B.TimeRev)*A.TimeShift.numerator,denominator=A.TimeShift.denominator)
@@ -417,6 +430,9 @@ class ChoreoSym():
             )
 
     def Compose(B,A):
+        r"""
+        Returns the composition of two transformations.
+        """
         # Composition B o A, i.e. applies A then B
         
         if (A.LoopTarget == B.LoopSource):
@@ -430,7 +446,9 @@ class ChoreoSym():
             raise ValueError("Symmetries cannot be composed")
 
     def IsIdentity(self):
-        
+        r"""
+        Returns True if the transformation is close to identity.
+        """        
         atol = 1e-10
 
         if ((abs(self.TimeShift) < atol) and (self.TimeRev == 1) and (self.LoopTarget == self.LoopSource)):
@@ -442,33 +460,37 @@ class ChoreoSym():
             return False
             
     def IsSame(self,other):
-        
+        r"""
+        Returns True if the two transformations are almost identical.
+        """   
         return ((self.Inverse()).ComposeLight(other)).IsIdentity()
 
 def Make2DChoreoSym(SymType,ib_list):
-    # Defines symmetries of a 2-D system of bodies as classfied in [1] 
+    r"""
+    Defines symmetries of a 2-D system of bodies as classfied in [1] 
     
-    # Classification :
-    # C(n,k,l) with k and l relative primes
-    # D(n,k,l) with k and l relative primes
-    # Cp(n,2,#) 
-    # Dp(n,1,#) 
-    # Dp(n,2,#) 
-    # Those are exhaustive for 2-D purely choreographic symmetries (i.e. 1 loop with 1 path)
+    Classification :
+    C(n,k,l) with k and l relative primes
+    D(n,k,l) with k and l relative primes
+    Cp(n,2,#) 
+    Dp(n,1,#) 
+    Dp(n,2,#) 
+    Those are exhaustive for 2-D purely choreographic symmetries (i.e. 1 loop with 1 path)
     
-    # I also added p and q for space rotation. This might however not be exhaustive.
+    I also added p and q for space rotation. This might however not be exhaustive.
     
-    # SymType  => Dictionary containing the following keys :
-        # 'name'
-        # 'n'
-        # 'm'
-        # 'l'
-        # 'k'
-        # 'p'
-        # 'q'
+    SymType  => Dictionary containing the following keys :
+        'name'
+        'n'
+        'm'
+        'l'
+        'k'
+        'p'
+        'q'
         
-    # [1] : https://arxiv.org/abs/1305.0470
-        
+    [1] : https://arxiv.org/abs/1305.0470
+    """
+
     SymGens = []
     
     if (SymType['name'] in ['C','D','Cp','Dp']):
