@@ -32,8 +32,19 @@ def ExplicitSymplecticWithTable_VX_cython(
     np.ndarray[double, ndim=1, mode="c"] d_table,
     long nsteps
     ):
-    """
-    This function computes
+    r"""
+    
+    This function computes an approximate solution to the :ref:`partitioned Hamiltonian system<ode_PHS>` using an explicit Runge-Kutta method.
+    
+    :param fun: function 
+    :param gun: function 
+
+    :param t_span: initial and final time for simulation
+    :type t_span: (double, double)
+
+
+    :return: two np.ndarray[double, ndim=1, mode="c"] for the final 
+
 
     """
 

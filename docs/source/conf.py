@@ -26,7 +26,9 @@ extensions = [
     'sphinx.ext.duration',
     'sphinx.ext.doctest',
     'sphinx.ext.autodoc',
-   'sphinx.ext.autosummary',
+    'sphinx.ext.autosummary',
+    'sphinx.ext.mathjax',
+    # 'sphinx.ext.imgmath',
 ]
 
 templates_path = ['_templates']
