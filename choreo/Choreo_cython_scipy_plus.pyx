@@ -21,7 +21,7 @@ from libc.math cimport sqrt as csqrt
 from libc.math cimport isnan as cisnan
 from libc.math cimport isinf as cisinf
 
-def SymplecticWithTable_VX_cython(
+def ExplicitSymplecticWithTable_VX_cython(
     object fun,
     object gun,
     (double, double) t_span,
@@ -32,8 +32,10 @@ def SymplecticWithTable_VX_cython(
     np.ndarray[double, ndim=1, mode="c"] d_table,
     long nsteps
     ):
+    """
+    This function computes
 
-    # Warning : x0 and v0 might get erased
+    """
 
     cdef double tx = t_span[0]
     cdef double tv = t_span[0]
@@ -42,8 +44,8 @@ def SymplecticWithTable_VX_cython(
     cdef np.ndarray[double, ndim=1, mode="c"] cdt = np.zeros((nsteps),dtype=np.float64)
     cdef np.ndarray[double, ndim=1, mode="c"] ddt = np.zeros((nsteps),dtype=np.float64)
 
-    cdef np.ndarray[double, ndim=1, mode="c"] x = x0
-    cdef np.ndarray[double, ndim=1, mode="c"] v = v0
+    cdef np.ndarray[double, ndim=1, mode="c"] x = x0.copy()
+    cdef np.ndarray[double, ndim=1, mode="c"] v = v0.copy()
 
     cdef long ndof = x0.size
     cdef np.ndarray[double, ndim=1, mode="c"] res
@@ -68,10 +70,9 @@ def SymplecticWithTable_VX_cython(
                 v[idof] += ddt[istep] * res[idof]  
             tv += ddt[istep]
 
-
     return x,v
 
-def SymplecticWithTable_XV_cython(
+def ExplicitSymplecticWithTable_XV_cython(
     object fun,
     object gun,
     (double, double) t_span,
@@ -83,8 +84,6 @@ def SymplecticWithTable_XV_cython(
     long nsteps
     ):
 
-    # Warning : x0 and v0 might get erased
-
     cdef double tx = t_span[0]
     cdef double tv = t_span[0]
     cdef double dt = (t_span[1] - t_span[0]) / nint
@@ -92,8 +91,8 @@ def SymplecticWithTable_XV_cython(
     cdef np.ndarray[double, ndim=1, mode="c"] cdt = np.zeros((nsteps),dtype=np.float64)
     cdef np.ndarray[double, ndim=1, mode="c"] ddt = np.zeros((nsteps),dtype=np.float64)
 
-    cdef np.ndarray[double, ndim=1, mode="c"] x = x0
-    cdef np.ndarray[double, ndim=1, mode="c"] v = v0
+    cdef np.ndarray[double, ndim=1, mode="c"] x = x0.copy()
+    cdef np.ndarray[double, ndim=1, mode="c"] v = v0.copy()
 
     cdef long ndof = x0.size
     cdef np.ndarray[double, ndim=1, mode="c"] res
@@ -130,14 +129,12 @@ def SymplecticStormerVerlet_XV_cython(
     long nint,
     ):
 
-    # Warning : x0 and v0 might get erased
-
     cdef double t = t_span[0]
     cdef double dt = (t_span[1] - t_span[0]) / nint
     cdef double dt_half = dt*0.5
 
-    cdef np.ndarray[double, ndim=1, mode="c"] x = x0
-    cdef np.ndarray[double, ndim=1, mode="c"] v = v0
+    cdef np.ndarray[double, ndim=1, mode="c"] x = x0.copy()
+    cdef np.ndarray[double, ndim=1, mode="c"] v = v0.copy()
 
     cdef long ndof = x0.size
     cdef np.ndarray[double, ndim=1, mode="c"] res
@@ -181,14 +178,12 @@ def SymplecticStormerVerlet_VX_cython(
     long nint,
     ):
 
-    # Warning : x0 and v0 might get erased
-
     cdef double t = t_span[0]
     cdef double dt = (t_span[1] - t_span[0]) / nint
     cdef double dt_half = dt*0.5
 
-    cdef np.ndarray[double, ndim=1, mode="c"] x = x0
-    cdef np.ndarray[double, ndim=1, mode="c"] v = v0
+    cdef np.ndarray[double, ndim=1, mode="c"] x = x0.copy()
+    cdef np.ndarray[double, ndim=1, mode="c"] v = v0.copy()
 
     cdef long ndof = x0.size
     cdef np.ndarray[double, ndim=1, mode="c"] res
