@@ -34,7 +34,6 @@ extra_link_args = []
 
 define_macros = [("NPY_NO_DEPRECATED_API", "NPY_1_7_API_VERSION")]
 
-
 extension = [
     Extension(
     name = "choreo.Choreo_cython_funs",
@@ -55,9 +54,6 @@ extension = [
 ]
 
 ext_modules = cythonize(extension, language_level = "3",annotate=True)
-
-for e in ext_modules:
-    e.cython_directives = {"embedsignature": True}
 
 setup(
     name = "choreo",
