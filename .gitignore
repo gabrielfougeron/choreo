@@ -28,5 +28,9 @@ dist/
 GUI_scripts/dist/
 GUI_scripts/build/
 sparseqr/
-!requirements.txt
 /docs/source/generated/
+##########################################################
+#           To be included (with preceding !)
+##########################################################
+!requirements.txt
+!/choreo_GUI/*
