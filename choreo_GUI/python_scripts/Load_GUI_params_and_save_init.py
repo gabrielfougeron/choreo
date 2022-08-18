@@ -14,29 +14,41 @@ import sys
 import fractions
 import json
 
+
 import matplotlib
+matplotlib.use("module://matplotlib.backends.html5_canvas_backend")
+
 import choreo 
 
-import argparse
+import js
 
-def main(args):
 
-    parser = argparse.ArgumentParser(description='CLI program that reads parameters in JSON file, builds and init state with coresponding symmetries and dumps it.')
-    parser.add_argument("-i","--input_filename", nargs=1, type=None, required=False,  
-                        help="JSON input file",default = "data.json")
-    # parser.add_argument("-o","--output_file", nargs=1, type=None, required=True,  
-                        # help="Name of output file")
+    
+def DLSavedFiledJSNoPrompt(filename,readtype='rt'):
 
-    argv        = parser.parse_args(args)
-    #
-    input_filename  = argv.input_filename
-    # output_file     = argv.output_file
+    with open(filename, readtype) as fh:
+        thefile = fh.read()
+        
+    blob = js.Blob.new([thefile], {type : 'application/text'})
+    url = js.window.URL.createObjectURL(blob) 
+
+    downloadLink = js.document.createElement("a")
+    downloadLink.href = url
+    downloadLink.download = filename
+    js.document.body.appendChild(downloadLink)
+    downloadLink.click()
+    downloadLink.remove()
+
+
+
+
+
+def main():
 
     # np.random.seed(int(time.time()*10000) % 5000)
     np.random.seed(0)
 
-    with open(input_filename, 'r') as json_file:
-        params_dict = json.load(json_file)
+    params_dict = js.ToPython.to_py()
 
     file_basename = ''
     
@@ -96,9 +108,9 @@ def main(args):
 
     store_folder = 'Sniff_all_sym/'
     # store_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/')
-    # store_folder = store_folder+str(nbody)
-    # if not(os.path.isdir(store_folder)):
-    #     os.makedirs(store_folder)
+    store_folder = store_folder+str(nbody)
+    if not(os.path.isdir(store_folder)):
+        os.makedirs(store_folder)
 
     # print("store_folder: ",store_folder)
     # print(os.path.isdir(store_folder))
@@ -227,5 +239,8 @@ def main(args):
 
     choreo.GenSymExample(**all_kwargs)
 
+    DLSavedFiledJSNoPrompt('init_all_pos.txt')
+
+
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    main()
