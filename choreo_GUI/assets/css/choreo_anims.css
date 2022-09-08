@@ -33,9 +33,9 @@ a {
     font-size: 11px;
     margin-top: 0px;
 }
-#container {
+#AnimationBlock {
     width:943px;
-    margin:0px auto;
+    margin-left:130px;
 }
 #canvasContainer {
     float:left;
@@ -52,7 +52,7 @@ a {
     width:480px;
 }
 #panelContainer {
-    float:left;
+    /* float:left; */
     width:443px;
     margin-left: 10px;
 }

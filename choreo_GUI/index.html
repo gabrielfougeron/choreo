@@ -27,7 +27,7 @@
 window.addEventListener("load", windowLoadHandler, false);
 </script>
 
-
+<!-- <script> window.location.reload(true) </script> -->
 
 
 
@@ -48,78 +48,10 @@ let pyodideReadyPromise = loadPyodideAndPackages();
 let cache_behavior = {cache: "no-cache"}
 /* let cache_behavior = {cache: "no-cache"} */
 </script>
-
-
-
 </head>
 
+
 <body>
-
-<!-- 
-  <div id="container">
-    <div id="canvasContainer" >
-          <canvas id="displayCanvas" width="480px" height="480px" style="position: absolute; z-index: 0;">
-              Your browser does not support HTML5 canvas.
-          </canvas>
-          <canvas id="orbitLayerCanvas" width="480px" height="480px" style="position: absolute; z-index: 1;"></canvas>
-          <canvas id="particleLayerCanvas" width="480px" height="480px" style="position: absolute; z-index: 2;"></canvas>
-      </div>
-      <div id="panelContainer">
-        <div id="titleDoubleColumn">
-          <div id="titleText">n-Body Choreographies&nbsp;&nbsp;&nbsp;<span style="font-size:small">v. 1.0</span></div>
-        </div>
-          <div class="panelDoubleColumn">
-              <div class="panelColumn1">
-                  <form>
-                      <div class="panelGroup">
-                          <span style="color:#ccc">speed</span>
-                          <div id="speedSlider"></div>
-                      </div>
-                      <br/>
-                      <input type="button"  id="startStopButton" class="buttonType1" value="stop"/>
-                      <input type="button"  id="trajectoryButton" class="buttonType1" value="hide trajectories"/>
-                      
-                  </form>
-                  <div id="creditsText">
-                      <p style="//text-align:center">
-                      More information <a href="http://www.maths.manchester.ac.uk/~jm/Choreographies/about.html" target="_blank">here</a>.</p>
-                      <p style="//text-align:center">Mathematics by</br>
-                      <a href="http://www.maths.manchester.ac.uk/~jm/" target="_blank">James Montaldi</a> and <br/>
-                      <a href="http://www.katiesteckles.co.uk/" target="_blank">Katie Steckles</a></p>
-                      <p style="//text-align:center">Animation by Dan Gries,<br/>
-                      <a href="http://rectangleworld.com" target="_blank"> rectangleworld.com</a></p>
-                  </div>
-              </div>
-              <div class="panelColumn2">
-                  <div id="radioHeader">Choose a choreography:</div>
-                  <div id="radioContainer">
-                  <form id="radioForm">
-                      <div id="orbitRadio"></div>
-                  </form>
-                  </div>
-                  <div id="navButtons">
-                  <form>
-          <input type="button" id="btnPrevOrbit" class="buttonType2" value="&#9650; prev"/>
-          <input type="button" id="btnNextOrbit" class="buttonType2" value="&#9660; next"/>
-          </form>
-                  </div>
-              </div>
-              <div id="choreoInfoBox">
-                <div id="choreoText">
-            <span id="infoBoxHeader"></span><br/><br/>
-                <span id="infoBoxDescription"></span><br/><br/>
-                <span id="infoBoxComment"></span>
-                  </div>
-              </div>
-          </div>
-          
-    </div>
-  </div> -->
-  
-
-
-
-
 
 <div class="w3-bar w3-bar-block w3-light-grey open LeftTab" style="width:130px; position:absolute;">
   <button class="w3-bar-item w3-button" onclick="OpenCloseLeftTab()" style="text-align: center;">&#9776;</button>
@@ -154,63 +86,53 @@ let cache_behavior = {cache: "no-cache"}
   </div>
 </div>
 
-<div id="container">
+<div id="AnimationBlock">
   <div id="canvasContainer" >
-        <canvas id="displayCanvas" width="480px" height="480px" style="position: absolute; z-index: 0;">
-            Your browser does not support HTML5 canvas.
-        </canvas>
-        <canvas id="orbitLayerCanvas" width="480px" height="480px" style="position: absolute; z-index: 1;"></canvas>
-        <canvas id="particleLayerCanvas" width="480px" height="480px" style="position: absolute; z-index: 2;"></canvas>
+    <canvas id="displayCanvas" width="480px" height="480px" style="position: absolute; z-index: 0;">
+        Your browser does not support HTML5 canvas.
+    </canvas>
+    <canvas id="orbitLayerCanvas" width="480px" height="480px" style="position: absolute; z-index: 1;"></canvas>
+    <canvas id="particleLayerCanvas" width="480px" height="480px" style="position: absolute; z-index: 2;"></canvas>
+  </div>
+  <div id="panelContainer">
+    <div id="titleDoubleColumn">
+      <div id="titleText">n-Body Choreographies&nbsp;&nbsp;&nbsp;<span style="font-size:small">v. 1.0</span></div>
     </div>
-    <div id="panelContainer">
-      <div id="titleDoubleColumn">
-        <div id="titleText">n-Body Choreographies&nbsp;&nbsp;&nbsp;<span style="font-size:small">v. 1.0</span></div>
-      </div>
-        <div class="panelDoubleColumn">
-            <div class="panelColumn1">
-                <form>
-                    <div class="panelGroup">
-                        <span style="color:#ccc">speed</span>
-                        <div id="speedSlider"></div>
-                    </div>
-                    <br/>
-                    <input type="button"  id="startStopButton" class="buttonType1" value="stop"/>
-                    <input type="button"  id="trajectoryButton" class="buttonType1" value="hide trajectories"/>
-                    
-                </form>
-                <div id="creditsText">
-                    <p style="//text-align:center">
-                    More information <a href="http://www.maths.manchester.ac.uk/~jm/Choreographies/about.html" target="_blank">here</a>.</p>
-                    <p style="//text-align:center">Mathematics by</br>
-                    <a href="http://www.maths.manchester.ac.uk/~jm/" target="_blank">James Montaldi</a> and <br/>
-                    <a href="http://www.katiesteckles.co.uk/" target="_blank">Katie Steckles</a></p>
-                    <p style="//text-align:center">Animation by Dan Gries,<br/>
-                    <a href="http://rectangleworld.com" target="_blank"> rectangleworld.com</a></p>
+    <div class="panelDoubleColumn">
+        <div class="panelColumn1">
+            <form>
+                <div class="panelGroup">
+                    <span style="color:#ccc">speed</span>
+                    <div id="speedSlider"></div>
                 </div>
+                <br/>
+                <input type="button"  id="startStopButton" class="buttonType1" value="stop"/>
+                <input type="button"  id="trajectoryButton" class="buttonType1" value="hide trajectories"/>
+                
+            </form>
+        </div>
+        <div class="panelColumn2">
+            <div id="radioHeader">Choose a choreography:</div>
+            <div id="radioContainer">
+            <form id="radioForm">
+                <div id="orbitRadio"></div>
+            </form>
             </div>
-            <div class="panelColumn2">
-                <div id="radioHeader">Choose a choreography:</div>
-                <div id="radioContainer">
-                <form id="radioForm">
-                    <div id="orbitRadio"></div>
-                </form>
-                </div>
-                <div id="navButtons">
-                <form>
-        <input type="button" id="btnPrevOrbit" class="buttonType2" value="&#9650; prev"/>
-        <input type="button" id="btnNextOrbit" class="buttonType2" value="&#9660; next"/>
-        </form>
-                </div>
-            </div>
-            <div id="choreoInfoBox">
-              <div id="choreoText">
-          <span id="infoBoxHeader"></span><br/><br/>
-              <span id="infoBoxDescription"></span><br/><br/>
-              <span id="infoBoxComment"></span>
-                </div>
+            <div id="navButtons">
+            <form>
+    <input type="button" id="btnPrevOrbit" class="buttonType2" value="&#9650; prev"/>
+    <input type="button" id="btnNextOrbit" class="buttonType2" value="&#9660; next"/>
+    </form>
             </div>
         </div>
-        
+        <div id="choreoInfoBox">
+          <div id="choreoText">
+      <span id="infoBoxHeader"></span><br/><br/>
+          <span id="infoBoxDescription"></span><br/><br/>
+          <span id="infoBoxComment"></span>
+            </div>
+        </div>
+    </div>
   </div>
 </div>
   
