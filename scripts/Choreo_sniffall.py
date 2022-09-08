@@ -39,11 +39,11 @@ def main(the_i=0):
 
 
     # p = 1
-    # p = 0
-    p_list = [1,2,3,4,5,6,7,8,9]
-    p = p_list[the_i%len(p_list)]
+    p = 0
+    # p_list = [1,2,3,4,5,6,7,8,9]
+    # p = p_list[the_i%len(p_list)]
 
-    nc = 10
+    nc = 3
 
     # mm = 2
     # mm_list = [1,2]
@@ -62,7 +62,7 @@ def main(the_i=0):
 
     SymType = []
     SymType.append({
-        'name'  : 'D',
+        'name'  : 'C',
         'n'     : nc ,
         'm'     : 1 ,
         'l'     : 0,
@@ -73,6 +73,14 @@ def main(the_i=0):
 
     # Sym_list,nbody = choreo.Make2DChoreoSymManyLoops(nbpl=nbpl,SymName=SymName)
     Sym_list,nbody = choreo.Make2DChoreoSymManyLoops(nbpl=nbpl,SymType=SymType)
+
+    Sym_list.append(choreo.ChoreoSym(
+        LoopTarget=0,
+        LoopSource=0,
+        SpaceRot = np.array([[1,0],[0,-1]]),
+        TimeRev=-1,
+        TimeShift=fractions.Fraction(numerator=0,denominator=1)
+    ))
 
     # SymType = {
     #     'name'  : 'D',
@@ -118,12 +126,13 @@ def main(the_i=0):
     Save_img = True
     # Save_img = False
 
-    # Save_thumb = True
-    Save_thumb = False
+    Save_thumb = True
+    # Save_thumb = False
 
     # img_size = (12,12) # Image size in inches
     img_size = (8,8) # Image size in inches
-    thumb_size = (2,2) # Image size in inches
+    # thumb_size = (2,2) # Image size in inches
+    thumb_size = (1,1) # Image size in inches
 
 
     
