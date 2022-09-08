@@ -14,7 +14,11 @@
 <script type="text/javascript">
 async function loadPyodideAndPackages() {
   self.pyodide = await loadPyodide();
-  await pyodide.loadPackage("choreo");
+  // await pyodide.loadPackage("numpy");
+  await pyodide.loadPackage("matplotlib");
+  await pyodide.loadPackage("sparseqr");
+  await pyodide.loadPackage("./python_dist/choreo-0.1.0-cp310-cp310-emscripten_3_1_14_wasm32.whl");
+
 }
 let pyodideReadyPromise = loadPyodideAndPackages();
 

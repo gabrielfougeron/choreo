@@ -1,4 +1,4 @@
-name: Sphinx_Build_Docs
+name: Build_All_And_Deploy
 
 on:
   push:
@@ -21,32 +21,55 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+    # 
     - name: Checkout repository
       uses: actions/checkout@v3
+    # 
     - name: Setup Python
       uses: actions/setup-python@v4
       with:
         python-version: 3.10.2
+    # 
+    - name: Setup Emscripten
+      uses: mymindstorm/setup-emsdk@v11
+      with:
+        version: 3.1.14
+    # 
     - name: Install dependencies
       run: |
         sudo apt-get install libsuitesparse-dev    
         python -m pip install --upgrade pip
         pip install -r requirements.txt
+        pip install pyodide-build==0.21.0
+    # 
     - name: Build for Ubuntu
       run: |
         python setup.py build_ext --inplace    
-    - name: Setup Emscripten
-      uses: mymindstorm/setup-emsdk@v11
-      with:
-        version: 3.1.14
-    - name: Install pyodide-build
-      run: pip install pyodide-build
+    # 
     - name: Build for Pyodide
       run: pyodide build
+    #
+    - name: Copy generated Emscripten whl
+      run: |
+        cp ./dist/choreo-0.1.0-cp310-cp310-emscripten_3_1_14_wasm32.whl ./choreo_GUI/python_dist/choreo-0.1.0-cp310-cp310-emscripten_3_1_14_wasm32.whl
+    # 
+    - name: Setup Pages
+      uses: actions/configure-pages@v1
+    #
+    - name: Upload artifact
+      uses: actions/upload-pages-artifact@v1
+      with:
+        path: './choreo_GUI/'
+    #
+    - name: Deploy to GitHub Pages
+      id: deployment
+      uses: actions/deploy-pages@v1
+    #
     - name: Generate Documentation
       run: |
         cd docs
         make html
+    #
     - name: Commit documentation changes
       run: |
         git clone https://github.com/ammaraskar/sphinx-action-test.git --branch gh-pages --single-branch gh-pages
@@ -57,8 +80,7 @@ jobs:
         git config --local user.name "GitHub Action"
         git add .
         git commit -m "Update documentation" -a || true
-        # The above command will fail if no changes were present, so we ignore
-        # that.
+    #
     - name: Push documentation changes
       uses: ad-m/github-push-action@master
       with:
@@ -67,3 +89,4 @@ jobs:
         github_token: ${{ secrets.CHOREO_DOCS_TOKEN }} 
         repository: gabrielfougeron/choreo-docs
         force: true
+
