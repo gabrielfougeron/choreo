@@ -109,8 +109,8 @@ def main():
     save_all_inits = False
     # save_all_inits = True
 
-    # Save_img = True
-    Save_img = False
+    Save_img = True
+    # Save_img = False
 
     # Save_thumb = True
     Save_thumb = False
@@ -126,8 +126,8 @@ def main():
     # color = "velocity"
     # color = "all"
 
-    Save_anim = True
-    # Save_anim = False
+    # Save_anim = True
+    Save_anim = False
 
     vid_size = (8,8) # Image size in inches
     nint_plot_anim = 2*2*2*3*3*5*2
