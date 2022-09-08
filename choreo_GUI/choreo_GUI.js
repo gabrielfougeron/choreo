@@ -335,9 +335,7 @@ function SlideNReconvergeItMax() {
 function OpenCloseLeftTab() {
     var i;
     var AllLeftTabs = document.getElementsByClassName("LeftTab");
-    for (i = 0; i < AllLeftTabs.length     ; i++) {
-        if (AllLeftTabs[i].classList.contains("open")) {CloseLeftTab();} else {OpenLeftTab();}
-    }
+    if (AllLeftTabs[0].classList.contains("open")) {CloseLeftTab();} else {OpenLeftTab();}
 }
 
 function CloseLeftTab() {
@@ -346,19 +344,23 @@ function CloseLeftTab() {
     var AllMarginLeftTops  = document.getElementsByClassName("MarginLeftTop");
     var AllMarginLeftBodys = document.getElementsByClassName("MarginLeftBody");
     var AllLeftTabBtns     = document.getElementsByClassName("LeftTabBtn");
+    var AnimationBlock          = document.getElementById("AnimationBlock");
     for (i = 0; i < AllLeftTabs.length     ; i++) {
         AllLeftTabs[i].classList.remove("open");
         AllLeftTabs[i].classList.add("closed");
-        AllLeftTabs[i].style.width     = "43px"     ;}
+        AllLeftTabs[i].style.width     = "43px"     ;
+    }
     for (i = 0; i < AllMarginLeftTops.length     ; i++) {
         AllMarginLeftTops[i].style.marginLeft      = "43px"     ;
-        }
+    }
     for (i = 0; i < AllMarginLeftBodys.length     ; i++) {
         AllMarginLeftBodys[i].style.marginLeft      = "0px"     ;
-        }
+    }
     for (i = 0; i < AllLeftTabBtns.length; i++) {
         AllLeftTabBtns[i].style.display     = "none";
-        }
+    }
+    AnimationBlock.style.marginLeft      = "0px"     ;
+    
 }
 
 function OpenLeftTab() {
@@ -367,20 +369,22 @@ function OpenLeftTab() {
     var AllMarginLeftTops  = document.getElementsByClassName("MarginLeftTop");
     var AllMarginLeftBodys = document.getElementsByClassName("MarginLeftBody");
     var AllLeftTabBtns     = document.getElementsByClassName("LeftTabBtn");
+    var AnimationBlock          = document.getElementById("AnimationBlock");
     for (i = 0; i < AllLeftTabs.length     ; i++) {
         AllLeftTabs[i].classList.add("open");
         AllLeftTabs[i].classList.remove("closed");;
         AllLeftTabs[i].style.width     = "130px"     ;
-        }
+    }
     for (i = 0; i < AllMarginLeftTops.length     ; i++) {
         AllMarginLeftTops[i].style.marginLeft      = "130px"     ;
-        }
+    }
     for (i = 0; i < AllMarginLeftBodys.length     ; i++) {
         AllMarginLeftBodys[i].style.marginLeft      = "130px"     ;
-        }
+    }
     for (i = 0; i < AllLeftTabBtns.length; i++) {
         AllLeftTabBtns[i].style.display     = "";
-        }
+    }
+    AnimationBlock.style.marginLeft      = "130px"     ;
 }
 
 function deleteColumn(tableID, colnum) {
