@@ -77,7 +77,7 @@ def plot_Newton_Error(x,callfun,filename,fig_size=(8,5),color_list = plt.rcParam
     plt.savefig(filename)
     plt.close()
 
-def plot_all_2D(x,nint_plot,callfun,filename,fig_size=(10,10),dpi=100,color=None,color_list = plt.rcParams['axes.prop_cycle'].by_key()['color']):
+def plot_all_2D(x,nint_plot,callfun,filename,fig_size=(10,10),dpi=100,color=None,color_list = plt.rcParams['axes.prop_cycle'].by_key()['color'],xlim=None,extend=0.03):
     # Plots 2D trajectories and saves image under filename
     
     if isinstance(color,list):
@@ -92,15 +92,15 @@ def plot_all_2D(x,nint_plot,callfun,filename,fig_size=(10,10),dpi=100,color=None
     
     elif (color is None) or (color == "body") or (color == "loop"):
         
-        plot_all_2D_cpb(x,nint_plot,callfun,filename,fig_size=fig_size,dpi=dpi,color=color,color_list=color_list)
+        plot_all_2D_cpb(x,nint_plot,callfun,filename,fig_size=fig_size,dpi=dpi,color=color,color_list=color_list,xlim=xlim,extend=extend)
         
     elif (color == "velocity"):
         
-        plot_all_2D_cpv(x,nint_plot,callfun,filename,fig_size=fig_size,dpi=dpi)
+        plot_all_2D_cpv(x,nint_plot,callfun,filename,fig_size=fig_size,dpi=dpi,xlim=xlim,extend=extend)
         
     elif (color == "all"):
         
-        plot_all_2D(x=x,nint_plot=nint_plot,callfun=callfun,filename=filename,fig_size=fig_size,dpi=dpi,color=["body","velocity"],color_list=color_list)
+        plot_all_2D(x=x,nint_plot=nint_plot,callfun=callfun,filename=filename,fig_size=fig_size,dpi=dpi,color=["body","velocity"],color_list=color_list,xlim=xlim,extend=extend)
 
     else:
         

@@ -35,3 +35,4 @@ sparseqr/
 ##########################################################
 !requirements.txt
 !/choreo_GUI/*
+!/choreo_GUI/img/*
