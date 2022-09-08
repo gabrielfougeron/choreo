@@ -330,21 +330,21 @@ function ExecutePythonFile(filename) {
 function SaveConfigFile(){
 
   GatherForPython();
-  ExecutePythonFile("/python_scripts/SaveConfigFileJSON.py");
+  ExecutePythonFile("./python_scripts/SaveConfigFileJSON.py");
 
 }
 
 function ChoreoExecuteClick() {
 
   GatherForPython();
-  ExecutePythonFile("/python_scripts/Load_GUI_params_and_run.py");
+  ExecutePythonFile("./python_scripts/Load_GUI_params_and_run.py");
 
 }
 
 function ChoreoSaveInitStateClick() {
 
   GatherForPython();
-  ExecutePythonFile("/python_scripts/Load_GUI_params_and_save_init.py");
+  ExecutePythonFile("./python_scripts/Load_GUI_params_and_save_init.py");
 
 }
 
