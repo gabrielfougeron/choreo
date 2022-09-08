@@ -14,9 +14,9 @@ import sys
 import fractions
 import json
 
-
-import matplotlib
-matplotlib.use("module://matplotlib.backends.html5_canvas_backend")
+# 
+# import matplotlib
+# matplotlib.use("module://matplotlib.backends.html5_canvas_backend")
 
 import choreo 
 
@@ -109,8 +109,8 @@ def main():
     save_all_inits = False
     # save_all_inits = True
 
-    Save_img = True
-    # Save_img = False
+    # Save_img = True
+    Save_img = False
 
     # Save_thumb = True
     Save_thumb = False
