@@ -50,13 +50,13 @@ a {
     width:443px;
 }
 .panelColumn1 {
-    float:left;
-    width:158px;
-    padding:10px 10px 10px 10px;
+    /* float:left; */
+    /* width:158px; */
+    /* padding:10px 10px 10px 10px; */
 }
 .panelColumn2 {
-    float:right;
-    width:220px;
+    /* float:right; */
+    /* width:220px; */
 }
 .panelGroup {
     margin-top:5px;
@@ -69,18 +69,11 @@ a {
     font-size:11px;
     margin-top:10px;
     width:150px;
+    display:inline-block;
 }
 .buttonType2 {
     font-size:11px;
     width:70px;
-}
-#radioHeader {
-    font-family: sans-serif;
-    color:#ccc;
-    font-size: 11px;
-    margin-top: 0px;
-    width:211px;
-    text-align:center;
 }
 #navButtons {
     width:195px;

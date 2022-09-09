@@ -1,9 +1,17 @@
-// if window.innerWidth > 
-
 function OnWindowResize(){
-    console.log(window.innerWidth);
-    console.log(window.innerHeight);
-    console.log("");
+
+    var CommandBody = document.getElementById("CommandBody");
+    
+    if (window.innerWidth > 1220){
+        // Horizontal mode
+        CommandBody.style.position = "absolute";
+        CommandBody.style.marginLeft = "610px";
+
+    } else {
+        CommandBody.style.position = "";
+        CommandBody.style.marginLeft = "0px";
+    }
+
 }
 
 function ClickTopTabBtn(TabId) {
@@ -359,26 +367,22 @@ canvas_items_list= ["canvasContainer","displayCanvas","particleLayerCanvas","orb
 function CloseLeftTab() {
     var i;
     var AllLeftTabs        = document.getElementsByClassName("LeftTab");
-    var AllMarginLeftTops  = document.getElementsByClassName("MarginLeftTop");
-    var AllMarginLeftBodys = document.getElementsByClassName("MarginLeftBody");
+    var MarginLeftTop      = document.getElementById("MarginLeftTop");
     var AllLeftTabBtns     = document.getElementsByClassName("LeftTabBtn");
     var AnimationBlock     = document.getElementById("AnimationBlock");
+    var PlayCommands       = document.getElementById("PlayCommands");
     var AllTopTabs         = document.getElementsByClassName("TopTab");
     for (i = 0; i < AllLeftTabs.length     ; i++) {
         AllLeftTabs[i].classList.remove("open");
         AllLeftTabs[i].classList.add("closed");
         AllLeftTabs[i].style.width     = "43px"     ;
     }
-    for (i = 0; i < AllMarginLeftTops.length     ; i++) {
-        AllMarginLeftTops[i].style.marginLeft      = "43px"     ;
-    }
-    // for (i = 0; i < AllMarginLeftBodys.length     ; i++) {
-    //     AllMarginLeftBodys[i].style.marginLeft      = "0px"     ;
-    // }
+    MarginLeftTop.style.marginLeft      = "43px"     ;
     for (i = 0; i < AllLeftTabBtns.length; i++) {
         AllLeftTabBtns[i].style.display     = "none";
     }
     AnimationBlock.style.marginLeft      = "0px"     ;
+    PlayCommands.style.marginTop      = "610px"     ;
     for (i = 0; i < AllTopTabs.length; i++) {
         AllTopTabs[i].style.width     = "567px";
     }
@@ -393,26 +397,22 @@ function CloseLeftTab() {
 function OpenLeftTab() {
     var i;
     var AllLeftTabs        = document.getElementsByClassName("LeftTab");
-    var AllMarginLeftTops  = document.getElementsByClassName("MarginLeftTop");
-    var AllMarginLeftBodys = document.getElementsByClassName("MarginLeftBody");
+    var MarginLeftTop      = document.getElementById("MarginLeftTop");
     var AllLeftTabBtns     = document.getElementsByClassName("LeftTabBtn");
     var AnimationBlock     = document.getElementById("AnimationBlock");
+    var PlayCommands       = document.getElementById("PlayCommands");
     var AllTopTabs         = document.getElementsByClassName("TopTab");
     for (i = 0; i < AllLeftTabs.length     ; i++) {
         AllLeftTabs[i].classList.add("open");
         AllLeftTabs[i].classList.remove("closed");
         AllLeftTabs[i].style.width     = "130px"     ;
     }
-    for (i = 0; i < AllMarginLeftTops.length     ; i++) {
-        AllMarginLeftTops[i].style.marginLeft      = "130px"     ;
-    }
-    // for (i = 0; i < AllMarginLeftBodys.length     ; i++) {
-    //     AllMarginLeftBodys[i].style.marginLeft      = "130px"     ;
-    // }
+    MarginLeftTop.style.marginLeft      = "130px"     ;
     for (i = 0; i < AllLeftTabBtns.length; i++) {
         AllLeftTabBtns[i].style.display     = "";
     }
     AnimationBlock.style.marginLeft      = "130px"     ;
+    PlayCommands.style.marginTop      = "480px"     ;
     for (i = 0; i < AllTopTabs.length; i++) {
         AllTopTabs[i].style.width     = "480px";
     }
