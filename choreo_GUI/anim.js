@@ -115,10 +115,13 @@ function canvasApp() {
 	function init() {
 		particleRad = 5.5;
 		trailWidth = 2;
-		bgColor = "#000000";
-		fadeScreenColor = "rgba(0,0,0,0.02)";
+		// bgColor = "#000000";
+		bgColor = "#F1F1F1";
+		fadeScreenColor = "rgba(255,255,255,0.02)";
+		// fadeScreenColor = "rgba(0,0,0,0)";
+		// staticOrbitColor = "rgba(130,180,270,0.3)";
 		staticOrbitColor = "rgba(130,180,270,0.3)";
-		//staticOrbitColor = "rgba(255,0,255,0.8)"; //TESTING
+		// staticOrbitColor = "rgba(255,0,255,0.8)"; //TESTING
 		staticOrbitWidth = trailWidth;
 		defaultParticleColor = "#ee6600";
 		defaultTrailColor = "#dd5500";
@@ -542,7 +545,7 @@ function canvasApp() {
 		
 		setPlotWindow(orbitObject.plotWindow);
 		
-		setInfoText(orbitObject.info);
+		// setInfoText(orbitObject.info);
 		
 		numParticles = orbitObject.numParticles;
 		
@@ -627,12 +630,12 @@ function canvasApp() {
 		var infoHeader = windowObject.header;
 		var infoDescription = windowObject.description;
 		var infoComment = windowObject.comment;
-		var headerSpan = document.getElementById("infoBoxHeader");
-		var descriptionSpan = document.getElementById("infoBoxDescription");
-		var commentSpan = document.getElementById("infoBoxComment");
-		headerSpan.innerHTML = infoHeader;
-		descriptionSpan.innerHTML = infoDescription;
-		commentSpan.innerHTML = infoComment;
+		// var headerSpan = document.getElementById("infoBoxHeader");
+		// var descriptionSpan = document.getElementById("infoBoxDescription");
+		// var commentSpan = document.getElementById("infoBoxComment");
+		// headerSpan.innerHTML = infoHeader;
+		// descriptionSpan.innerHTML = infoDescription;
+		// commentSpan.innerHTML = infoComment;
 	}
 	
 	//function to split arrays
