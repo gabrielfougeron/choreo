@@ -10,6 +10,7 @@
 <link rel="stylesheet" href="./assets/css/style.css">
 <link rel="stylesheet" href="./assets/css/main.css">
 <link rel="stylesheet" href="./assets/css/w3.css">
+<link rel="stylesheet" href="./assets/css/choreo_GUI.css">
 
 <style>
   html, body {
@@ -21,8 +22,7 @@
       /* background-color: #F1F1F1; */
   }
   .content {
-    /* max-width: 960px; */
-    max-width: 740px;
+    max-width: 610px;
     margin: auto;
   }
 </style>
@@ -64,8 +64,6 @@ async function loadPyodideAndPackages() {
 }
 let pyodideReadyPromise = loadPyodideAndPackages();
 
-let cache_behavior = {cache: "no-cache"}
-/* let cache_behavior = {cache: "no-cache"} */
 </script>
 </head>
 
@@ -81,24 +79,24 @@ let cache_behavior = {cache: "no-cache"}
   <button class="w3-bar-item w3-button w3-hover-pale-red LeftTabBtn Solver"       style="text-align: center" onclick="ClickLeftTabBtn('Solver')"      >Solver</button>
 </div>
 <div class="MarginLeftTop" style="margin-left:130px">
-  <div class="w3-bar w3-light-grey TopTab Launch"  style="display:none">
+  <div class="w3-bar w3-light-grey TopTab Launch">
     <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Launch_Main"     onclick="ClickTopTabBtn('Launch_Main')"     >Main</button>
     <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Launch_Gallery"  onclick="ClickTopTabBtn('Launch_Gallery')"  >Gallery</button>
     <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Launch_Test"     onclick="ClickTopTabBtn('Launch_Test')"     >Test</button>
     <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Launch_Help"     onclick="ClickTopTabBtn('Launch_Help')"     >Help</button>
     <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Launch_About"    onclick="ClickTopTabBtn('Launch_About')"    >About</button>
   </div>
-  <div class="w3-bar w3-light-grey TopTab Geom"  style="display:none">
+  <div class="w3-bar w3-light-grey TopTab Geom">
       <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Geom_Bodies"   onclick="ClickTopTabBtn('Geom_Bodies')">Bodies</button>
       <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Geom_Target"   onclick="ClickTopTabBtn('Geom_Target')">Target</button>
       <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Geom_Random"   onclick="ClickTopTabBtn('Geom_Random')">Random</button>
       <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Geom_Custom"   onclick="ClickTopTabBtn('Geom_Custom')">Custom</button>
   </div>
-  <div class="w3-bar w3-light-grey TopTab IO" style="display:none">
+  <div class="w3-bar w3-light-grey TopTab IO">
       <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn IO_Image"   onclick="ClickTopTabBtn('IO_Image')">Image</button>
       <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn IO_Video"   onclick="ClickTopTabBtn('IO_Video')">Video</button>
   </div>
-  <div class="w3-bar w3-light-grey TopTab Solver" style="display:none">
+  <div class="w3-bar w3-light-grey TopTab Solver">
       <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Solver_Discr"  onclick="ClickTopTabBtn('Solver_Discr')" >Discretization</button>
       <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Solver_Optim"  onclick="ClickTopTabBtn('Solver_Optim')" >Optimizer</button>
       <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Solver_Loop"  onclick="ClickTopTabBtn('Solver_Loop')" >Loop</button>
