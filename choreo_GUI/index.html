@@ -6,7 +6,7 @@
 <link rel="shortcut icon" href="./img/eight_icon.png" type="image/x-icon">
 
 <head>
-<meta name="viewport" content="width=610px">
+<meta name="viewport" content="width=610">
 <link rel="stylesheet" href="./assets/css/style.css">
 <link rel="stylesheet" href="./assets/css/main.css">
 <link rel="stylesheet" href="./assets/css/w3.css">
@@ -27,9 +27,6 @@
 <script type="text/javascript">
 window.addEventListener("load", windowLoadHandler, false);
 </script>
-
-<!-- <script> window.location.reload(true) </script> -->
-
 
 
 <meta http-equiv="cleartype" content="on">
@@ -56,78 +53,63 @@ let pyodideReadyPromise = loadPyodideAndPackages();
 <body onresize="OnWindowResize()">
 
 <div class="content">
-<div class="w3-bar w3-bar-block w3-light-grey open LeftTab" style="width:130px; position:absolute;">
-  <button class="w3-bar-item w3-button" onclick="OpenCloseLeftTab()" style="text-align: center;">&#9776;</button>
-  <button class="w3-bar-item w3-button w3-hover-pale-red LeftTabBtn Launch"       style="text-align: center" onclick="ClickLeftTabBtn('Launch')"      >Launch</button>
-  <button class="w3-bar-item w3-button w3-hover-pale-red LeftTabBtn Geom"         style="text-align: center" onclick="ClickLeftTabBtn('Geom')"        >Geometry</button>
-  <button class="w3-bar-item w3-button w3-hover-pale-red LeftTabBtn IO"           style="text-align: center" onclick="ClickLeftTabBtn('IO')"          >I/O</button>
-  <button class="w3-bar-item w3-button w3-hover-pale-red LeftTabBtn Solver"       style="text-align: center" onclick="ClickLeftTabBtn('Solver')"      >Solver</button>
-</div>
-<div class="MarginLeftTop" style="margin-left:130px">
-  <div class="w3-bar w3-light-grey TopTab Launch">
-    <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Launch_Main"     onclick="ClickTopTabBtn('Launch_Main')"     >Main</button>
-    <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Launch_Gallery"  onclick="ClickTopTabBtn('Launch_Gallery')"  >Gallery</button>
-    <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Launch_Test"     onclick="ClickTopTabBtn('Launch_Test')"     >Test</button>
-    <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Launch_Help"     onclick="ClickTopTabBtn('Launch_Help')"     >Help</button>
-    <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Launch_About"    onclick="ClickTopTabBtn('Launch_About')"    >About</button>
+<div id="AnimationAndMenuBlock">
+  <div class="w3-bar w3-bar-block w3-light-grey open LeftTab" style="width:130px; position:absolute;">
+    <button class="w3-bar-item w3-button" onclick="OpenCloseLeftTab()" style="text-align: center;">&#9776;</button>
+    <button class="w3-bar-item w3-button w3-hover-pale-red LeftTabBtn Launch"       style="text-align: center" onclick="ClickLeftTabBtn('Launch')"      >Launch</button>
+    <button class="w3-bar-item w3-button w3-hover-pale-red LeftTabBtn Geom"         style="text-align: center" onclick="ClickLeftTabBtn('Geom')"        >Geometry</button>
+    <button class="w3-bar-item w3-button w3-hover-pale-red LeftTabBtn IO"           style="text-align: center" onclick="ClickLeftTabBtn('IO')"          >I/O</button>
+    <button class="w3-bar-item w3-button w3-hover-pale-red LeftTabBtn Solver"       style="text-align: center" onclick="ClickLeftTabBtn('Solver')"      >Solver</button>
   </div>
-  <div class="w3-bar w3-light-grey TopTab Geom">
-      <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Geom_Bodies"   onclick="ClickTopTabBtn('Geom_Bodies')">Bodies</button>
-      <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Geom_Target"   onclick="ClickTopTabBtn('Geom_Target')">Target</button>
-      <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Geom_Random"   onclick="ClickTopTabBtn('Geom_Random')">Random</button>
-      <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Geom_Custom"   onclick="ClickTopTabBtn('Geom_Custom')">Custom</button>
-  </div>
-  <div class="w3-bar w3-light-grey TopTab IO">
-      <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn IO_Image"   onclick="ClickTopTabBtn('IO_Image')">Image</button>
-      <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn IO_Video"   onclick="ClickTopTabBtn('IO_Video')">Video</button>
-  </div>
-  <div class="w3-bar w3-light-grey TopTab Solver">
-      <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Solver_Discr"  onclick="ClickTopTabBtn('Solver_Discr')" >Discretization</button>
-      <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Solver_Optim"  onclick="ClickTopTabBtn('Solver_Optim')" >Optimizer</button>
-      <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Solver_Loop"  onclick="ClickTopTabBtn('Solver_Loop')" >Loop</button>
-      <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Solver_Checks" onclick="ClickTopTabBtn('Solver_Checks')">Checks</button>
-  </div>
-</div>
-<div id="AnimationBlock">
-  <div id="canvasContainer" >
-    <canvas id="displayCanvas" width="480px" height="480px" style="position: absolute; z-index: 0;">
-        Your browser does not support HTML5 canvas.
-    </canvas>
-    <canvas id="orbitLayerCanvas" width="480px" height="480px" style="position: absolute; z-index: 1;"></canvas>
-    <canvas id="particleLayerCanvas" width="480px" height="480px" style="position: absolute; z-index: 2;"></canvas>
-  </div>
-  <div id="panelContainer">
-    <div class="panelDoubleColumn">
-        <div class="panelColumn1">
-            <form>
-                <div class="panelGroup">
-                    <span style="color:#ccc">speed</span>
-                    <div id="speedSlider"></div>
-                </div>
-                <br/>
-                <input type="button"  id="startStopButton" class="buttonType1" value="stop"/>
-                <input type="button"  id="trajectoryButton" class="buttonType1" value="hide trajectories"/>
-                
-            </form>
-        </div>
-        <div class="panelColumn2">
-            <div id="radioHeader">Choose a choreography:</div>
-            <div id="radioContainer">
-            <form id="radioForm">
-                <div id="orbitRadio"></div>
-            </form>
-            </div>
-            <div id="navButtons">
-            <form>
-    <input type="button" id="btnPrevOrbit" class="buttonType2" value="&#9650; prev"/>
-    <input type="button" id="btnNextOrbit" class="buttonType2" value="&#9660; next"/>
-    </form>
-            </div>
-        </div>
+  <div id="MarginLeftTop" style="margin-left:130px;">
+    <div class="w3-bar w3-light-grey TopTab Launch">
+      <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Launch_Main"     onclick="ClickTopTabBtn('Launch_Main')"     >Main</button>
+      <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Launch_Gallery"  onclick="ClickTopTabBtn('Launch_Gallery')"  >Gallery</button>
+      <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Launch_Test"     onclick="ClickTopTabBtn('Launch_Test')"     >Test</button>
+      <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Launch_Help"     onclick="ClickTopTabBtn('Launch_Help')"     >Help</button>
+      <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Launch_About"    onclick="ClickTopTabBtn('Launch_About')"    >About</button>
+    </div>
+    <div class="w3-bar w3-light-grey TopTab Geom">
+        <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Geom_Bodies"   onclick="ClickTopTabBtn('Geom_Bodies')">Bodies</button>
+        <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Geom_Target"   onclick="ClickTopTabBtn('Geom_Target')">Target</button>
+        <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Geom_Random"   onclick="ClickTopTabBtn('Geom_Random')">Random</button>
+        <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Geom_Custom"   onclick="ClickTopTabBtn('Geom_Custom')">Custom</button>
+    </div>
+    <div class="w3-bar w3-light-grey TopTab IO">
+        <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn IO_Image"   onclick="ClickTopTabBtn('IO_Image')">Image</button>
+        <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn IO_Video"   onclick="ClickTopTabBtn('IO_Video')">Video</button>
+    </div>
+    <div class="w3-bar w3-light-grey TopTab Solver">
+        <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Solver_Discr"  onclick="ClickTopTabBtn('Solver_Discr')" >Discretization</button>
+        <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Solver_Optim"  onclick="ClickTopTabBtn('Solver_Optim')" >Optimizer</button>
+        <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Solver_Loop"  onclick="ClickTopTabBtn('Solver_Loop')" >Loop</button>
+        <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Solver_Checks" onclick="ClickTopTabBtn('Solver_Checks')">Checks</button>
     </div>
   </div>
-</div>
-<div class="MarginLeftBody">
+  <div id="AnimationBlock">
+    <div id="canvasContainer" >
+      <canvas id="displayCanvas" width="480px" height="480px" style="position: absolute; z-index: 0;">
+          Your browser does not support HTML5 canvas.
+      </canvas>
+      <canvas id="orbitLayerCanvas" width="480px" height="480px" style="position: absolute; z-index: 1;"></canvas>
+      <canvas id="particleLayerCanvas" width="480px" height="480px" style="position: absolute; z-index: 2;"></canvas>
+      <div id="PlayCommands" style="margin-top:480px;">
+        <span>speed</span>
+        <div id="speedSlider"></div>
+        <input type="button"  id="startStopButton"  class="buttonType1" value="stop">
+        <input type="button"  id="trajectoryButton" class="buttonType1" value="hide trajectories">
+      </div>
+    </div>
+  </div>
+    
+  <!-- <div style="margin-left:130px;">
+    <span>speed</span>
+    <div id="speedSlider"></div>
+    <input type="button"  id="startStopButton"  class="buttonType1" value="stop">
+    <input type="button"  id="trajectoryButton" class="buttonType1" value="hide trajectories">
+  </div>
+</div> -->
+<div id="CommandBody">
   <div  id="LoadConfigFileDropArea" class="w3-container MainTab Launch_Main" style="display:none">
     <button class="w3-button w3-hover-pale-red w3-light-grey" onclick="SaveConfigFile()">Save Config File</button>
     <button class="w3-button w3-hover-pale-red w3-light-grey" for="LoadConfigFileBtn">Load Config File
@@ -138,6 +120,17 @@ let pyodideReadyPromise = loadPyodideAndPackages();
   </div>
   <div class="w3-container MainTab Launch_Gallery" style="display:none">
     <h2>Gallery</h2>
+    <div id="radioContainer">
+      <form id="radioForm">
+        <div id="orbitRadio"></div>
+      </form>
+    </div>
+    <div id="navButtons">
+      <form>
+        <input type="button" id="btnPrevOrbit" class="buttonType2" value="&#9650; prev"/>
+        <input type="button" id="btnNextOrbit" class="buttonType2" value="&#9660; next"/>
+      </form>
+    </div>
   </div>
   <div class="w3-container MainTab Launch_Test" style="display:none">
     <h2>Test</h2>
