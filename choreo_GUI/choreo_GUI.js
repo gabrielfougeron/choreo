@@ -29,14 +29,27 @@ function ClickLeftTabBtn(TabId) {
     var AllLeftTabBtns = document.getElementsByClassName("LeftTabBtn");
     var AllTopTab = document.getElementsByClassName("TopTab");
 
-    for (i = 0; i < AllLeftTabBtns.length; i++) { if (AllLeftTabBtns[i].classList.contains(TabId)) {AllLeftTabBtns[i].classList.add("w3-red");} else {AllLeftTabBtns[i].classList.remove("w3-red");}}
-    for (i = 0; i < AllTopTab.length     ; i++) { if (AllTopTab[i].classList.contains(TabId))      {AllTopTab[i].style.display     = "block" ;} else {AllTopTab[i].style.display     = "none"     ;}}
-
+    for (i = 0; i < AllLeftTabBtns.length; i++) {
+         if (AllLeftTabBtns[i].classList.contains(TabId)){
+            AllLeftTabBtns[i].classList.add("w3-red");
+        } else {
+            AllLeftTabBtns[i].classList.remove("w3-red");
+        }
+    }
+    for (i = 0; i < AllTopTab.length     ; i++) {
+        if (AllTopTab[i].classList.contains(TabId)){
+            AllTopTab[i].style.display     = "block" ;
+        } else {
+            AllTopTab[i].style.display     = "none"     ;
+        }
+    }
     GeomTopTabBtn(TabId);
 }
 
+python_cache_behavior = {cache: "no-cache"}
+
 function ExecutePythonFile(filename) {
-    let load_txt = fetch(filename,cache_behavior) ; 
+    let load_txt = fetch(filename,python_cache_behavior) ; 
     load_txt.then(function(response) {
         return response.text();
     }).then(async function(text) {  
@@ -108,10 +121,7 @@ function GatherForPython() {
 
     ToPython['Geom_Target'] = {};
 
-
-
     ToPython['Geom_Random'] = {};
-
     ToPython['Geom_Random'] ['coeff_ampl_o']    = parseFloat(document.getElementById('input_coeff_ampl_o'   ).value   );
     ToPython['Geom_Random'] ['coeff_ampl_min']  = parseFloat(document.getElementById('input_coeff_ampl_min' ).value   );
     ToPython['Geom_Random'] ['k_infl']          = parseInt(  document.getElementById('input_k_infl'         ).value,10);
@@ -157,8 +167,6 @@ function GatherForPython() {
     ToPython['Solver_Optim'] ['line_search']    = document.getElementById('linesearch_method').value;
 
     ToPython['Solver_Optim'] ['Newt_err_norm_max'] = parseFloat(document.getElementById('input_Newt_err_norm_max').value);
-
-
 
     ToPython['Solver_Loop'] = {};
 
@@ -338,13 +346,16 @@ function OpenCloseLeftTab() {
     if (AllLeftTabs[0].classList.contains("open")) {CloseLeftTab();} else {OpenLeftTab();}
 }
 
+canvas_items_list= ["canvasContainer","displayCanvas","particleLayerCanvas","orbitLayerCanvas"]
+
 function CloseLeftTab() {
     var i;
     var AllLeftTabs        = document.getElementsByClassName("LeftTab");
     var AllMarginLeftTops  = document.getElementsByClassName("MarginLeftTop");
     var AllMarginLeftBodys = document.getElementsByClassName("MarginLeftBody");
     var AllLeftTabBtns     = document.getElementsByClassName("LeftTabBtn");
-    var AnimationBlock          = document.getElementById("AnimationBlock");
+    var AnimationBlock     = document.getElementById("AnimationBlock");
+    var AllTopTabs         = document.getElementsByClassName("TopTab");
     for (i = 0; i < AllLeftTabs.length     ; i++) {
         AllLeftTabs[i].classList.remove("open");
         AllLeftTabs[i].classList.add("closed");
@@ -360,6 +371,14 @@ function CloseLeftTab() {
         AllLeftTabBtns[i].style.display     = "none";
     }
     AnimationBlock.style.marginLeft      = "0px"     ;
+    for (i = 0; i < AllTopTabs.length; i++) {
+        AllTopTabs[i].style.width     = "567px";
+    }
+    for (i = 0; i < canvas_items_list.length; i++) {
+        var canvas_item = document.getElementById(canvas_items_list[i]);
+        canvas_item.style.width     = "610px"     ;
+        canvas_item.style.height     = "610px"     ;
+    }
     
 }
 
@@ -370,9 +389,10 @@ function OpenLeftTab() {
     var AllMarginLeftBodys = document.getElementsByClassName("MarginLeftBody");
     var AllLeftTabBtns     = document.getElementsByClassName("LeftTabBtn");
     var AnimationBlock          = document.getElementById("AnimationBlock");
+    var AllTopTabs         = document.getElementsByClassName("TopTab");
     for (i = 0; i < AllLeftTabs.length     ; i++) {
         AllLeftTabs[i].classList.add("open");
-        AllLeftTabs[i].classList.remove("closed");;
+        AllLeftTabs[i].classList.remove("closed");
         AllLeftTabs[i].style.width     = "130px"     ;
     }
     for (i = 0; i < AllMarginLeftTops.length     ; i++) {
@@ -385,7 +405,15 @@ function OpenLeftTab() {
         AllLeftTabBtns[i].style.display     = "";
     }
     AnimationBlock.style.marginLeft      = "130px"     ;
-}
+    for (i = 0; i < AllTopTabs.length; i++) {
+        AllTopTabs[i].style.width     = "480px";
+    }
+    for (i = 0; i < canvas_items_list.length; i++) {
+        var canvas_item = document.getElementById(canvas_items_list[i]);
+        canvas_item.style.width     = "480px"     ;
+        canvas_item.style.height     = "480px"     ;
+    }
+}    
 
 function deleteColumn(tableID, colnum) {
     var table = document.getElementById(tableID);
@@ -393,7 +421,7 @@ function deleteColumn(tableID, colnum) {
 
     if (colnum < table.rows[0].cells.length) {
         for (i = 0; i < table.rows.length; i++) {
-        table.rows[i].deleteCell(colnum);
+            table.rows[i].deleteCell(colnum);
         }
     }
 }
@@ -412,10 +440,10 @@ function RedistributeClicksTableBodyLoop(tableid,mincol,fun_exec_end=function(){
         div.button_number = icol;
         
         div.onclick = function () {
-        if (table.rows[0].cells.length > (mincol+1)) {
-            deleteColumn(tableid, this.button_number);
-            RedistributeClicksTableBodyLoop(tableid,mincol,fun_exec_end);
-        }
+            if (table.rows[0].cells.length > (mincol+1)) {
+                deleteColumn(tableid, this.button_number);
+                RedistributeClicksTableBodyLoop(tableid,mincol,fun_exec_end);
+            }
         };
 
     }
