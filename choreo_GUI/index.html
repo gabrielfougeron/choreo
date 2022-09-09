@@ -6,26 +6,11 @@
 <link rel="shortcut icon" href="./img/eight_icon.png" type="image/x-icon">
 
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=610px">
 <link rel="stylesheet" href="./assets/css/style.css">
 <link rel="stylesheet" href="./assets/css/main.css">
 <link rel="stylesheet" href="./assets/css/w3.css">
 <link rel="stylesheet" href="./assets/css/choreo_GUI.css">
-
-<style>
-  html, body {
-      width: 100%;
-      height: 100%;
-      margin: 0;
-      padding: 0;
-      /* background-color: #F1F1F1; */
-      /* background-color: #F1F1F1; */
-  }
-  .content {
-    max-width: 610px;
-    margin: auto;
-  }
-</style>
 
 <!-- Animation related -->
 <link rel="stylesheet" href="assets/css/jquery-ui-1.10.2.custom.min.css">
@@ -68,7 +53,7 @@ let pyodideReadyPromise = loadPyodideAndPackages();
 </head>
 
 
-<body>
+<body onresize="OnWindowResize()">
 
 <div class="content">
 <div class="w3-bar w3-bar-block w3-light-grey open LeftTab" style="width:130px; position:absolute;">
@@ -142,14 +127,12 @@ let pyodideReadyPromise = loadPyodideAndPackages();
     </div>
   </div>
 </div>
-<div class="MarginLeftBody" style="margin-left:130px">
-  <div class="w3-container MainTab Launch_Main" style="display:none">
+<div class="MarginLeftBody">
+  <div  id="LoadConfigFileDropArea" class="w3-container MainTab Launch_Main" style="display:none">
     <button class="w3-button w3-hover-pale-red w3-light-grey" onclick="SaveConfigFile()">Save Config File</button>
-    <div id="LoadConfigFileDropArea">
-        <label class="w3-button w3-hover-pale-red w3-light-grey" for="LoadConfigFileBtn">Load Config File
-          <input type="file" id="LoadConfigFileBtn" accept=".json" onchange="ClickLoadConfigFile(this.files); this.value=null ;" hidden>
-        </label>
-    </div>
+    <button class="w3-button w3-hover-pale-red w3-light-grey" for="LoadConfigFileBtn">Load Config File
+      <input type="file" id="LoadConfigFileBtn" accept=".json" onchange="ClickLoadConfigFile(this.files); this.value=null ;" hidden>
+    </button>
     <button class="w3-button w3-hover-pale-red w3-light-grey" onclick="ChoreoExecuteClick()">Choreo Execute!</button>
     <button class="w3-button w3-hover-pale-red w3-light-grey" onclick="ChoreoSaveInitStateClick()">Save Init state</button>
   </div>
@@ -356,6 +339,8 @@ let pyodideReadyPromise = loadPyodideAndPackages();
 <script src="./choreo_GUI.js"></script>
 
 <script>
+
+OnWindowResize()
 
 ClickLeftTabBtn('Launch');
 

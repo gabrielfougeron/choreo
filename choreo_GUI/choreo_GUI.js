@@ -1,3 +1,11 @@
+// if window.innerWidth > 
+
+function OnWindowResize(){
+    console.log(window.innerWidth);
+    console.log(window.innerHeight);
+    console.log("");
+}
+
 function ClickTopTabBtn(TabId) {
     var i;
     var AllTopTabBtns = document.getElementsByClassName("TopTabBtn");
@@ -223,7 +231,7 @@ function previewFile(file) {
 
 async function LoadConfigFile(the_file) {
 
-    txt = await the_file.text();
+    var txt = await the_file.text();
 
     FromPython = JSON.parse(txt);
 
@@ -364,9 +372,9 @@ function CloseLeftTab() {
     for (i = 0; i < AllMarginLeftTops.length     ; i++) {
         AllMarginLeftTops[i].style.marginLeft      = "43px"     ;
     }
-    for (i = 0; i < AllMarginLeftBodys.length     ; i++) {
-        AllMarginLeftBodys[i].style.marginLeft      = "0px"     ;
-    }
+    // for (i = 0; i < AllMarginLeftBodys.length     ; i++) {
+    //     AllMarginLeftBodys[i].style.marginLeft      = "0px"     ;
+    // }
     for (i = 0; i < AllLeftTabBtns.length; i++) {
         AllLeftTabBtns[i].style.display     = "none";
     }
@@ -388,7 +396,7 @@ function OpenLeftTab() {
     var AllMarginLeftTops  = document.getElementsByClassName("MarginLeftTop");
     var AllMarginLeftBodys = document.getElementsByClassName("MarginLeftBody");
     var AllLeftTabBtns     = document.getElementsByClassName("LeftTabBtn");
-    var AnimationBlock          = document.getElementById("AnimationBlock");
+    var AnimationBlock     = document.getElementById("AnimationBlock");
     var AllTopTabs         = document.getElementsByClassName("TopTab");
     for (i = 0; i < AllLeftTabs.length     ; i++) {
         AllLeftTabs[i].classList.add("open");
@@ -398,9 +406,9 @@ function OpenLeftTab() {
     for (i = 0; i < AllMarginLeftTops.length     ; i++) {
         AllMarginLeftTops[i].style.marginLeft      = "130px"     ;
     }
-    for (i = 0; i < AllMarginLeftBodys.length     ; i++) {
-        AllMarginLeftBodys[i].style.marginLeft      = "130px"     ;
-    }
+    // for (i = 0; i < AllMarginLeftBodys.length     ; i++) {
+    //     AllMarginLeftBodys[i].style.marginLeft      = "130px"     ;
+    // }
     for (i = 0; i < AllLeftTabBtns.length; i++) {
         AllLeftTabBtns[i].style.display     = "";
     }
