@@ -11,6 +11,20 @@
 <link rel="stylesheet" href="./assets/css/main.css">
 <link rel="stylesheet" href="./assets/css/w3.css">
 
+<style>
+  html, body {
+      /* width: 100%; */
+      /* height: 100%; */
+      /* margin: 0; */
+      /* padding: 0; */
+      background-color: #F1F1F1;
+  }
+  .content {
+    max-width: 960px;
+    margin: auto;
+  }
+</style>
+
 <!-- Animation related -->
 <link rel="stylesheet" href="assets/css/jquery-ui-1.10.2.custom.min.css">
 <link href="assets/css/choreo_anims.css" rel="stylesheet" type="text/css">
@@ -35,13 +49,16 @@ window.addEventListener("load", windowLoadHandler, false);
 <!-- <script src="./pyodide_dist/pyodide.js"></script> -->
 <script src="https://cdn.jsdelivr.net/pyodide/v0.21.2/full/pyodide.js"></script>
 
+
 <script type="text/javascript">
 async function loadPyodideAndPackages() {
   self.pyodide = await loadPyodide();
-  await pyodide.loadPackage("matplotlib");
-  await pyodide.loadPackage("sparseqr");
-  await pyodide.loadPackage("networkx");
-  await pyodide.loadPackage("./python_dist/choreo-0.1.0-cp310-cp310-emscripten_3_1_14_wasm32.whl");
+  await pyodide.loadPackage([
+    "matplotlib",
+    "sparseqr",
+    "networkx",
+    "./python_dist/choreo-0.1.0-cp310-cp310-emscripten_3_1_14_wasm32.whl"
+  ]);
 }
 let pyodideReadyPromise = loadPyodideAndPackages();
 
@@ -53,6 +70,7 @@ let cache_behavior = {cache: "no-cache"}
 
 <body>
 
+<div class="content">
 <div class="w3-bar w3-bar-block w3-light-grey open LeftTab" style="width:130px; position:absolute;">
   <button class="w3-bar-item w3-button" onclick="OpenCloseLeftTab()" style="text-align: center;">&#9776;</button>
   <button class="w3-bar-item w3-button w3-hover-pale-red LeftTabBtn Launch"       style="text-align: center" onclick="ClickLeftTabBtn('Launch')"      >Launch</button>
@@ -85,7 +103,6 @@ let cache_behavior = {cache: "no-cache"}
       <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Solver_Checks" onclick="ClickTopTabBtn('Solver_Checks')">Checks</button>
   </div>
 </div>
-
 <div id="AnimationBlock">
   <div id="canvasContainer" >
     <canvas id="displayCanvas" width="480px" height="480px" style="position: absolute; z-index: 0;">
@@ -95,9 +112,6 @@ let cache_behavior = {cache: "no-cache"}
     <canvas id="particleLayerCanvas" width="480px" height="480px" style="position: absolute; z-index: 2;"></canvas>
   </div>
   <div id="panelContainer">
-    <div id="titleDoubleColumn">
-      <div id="titleText">n-Body Choreographies&nbsp;&nbsp;&nbsp;<span style="font-size:small">v. 1.0</span></div>
-    </div>
     <div class="panelDoubleColumn">
         <div class="panelColumn1">
             <form>
@@ -125,18 +139,9 @@ let cache_behavior = {cache: "no-cache"}
     </form>
             </div>
         </div>
-        <div id="choreoInfoBox">
-          <div id="choreoText">
-      <span id="infoBoxHeader"></span><br/><br/>
-          <span id="infoBoxDescription"></span><br/><br/>
-          <span id="infoBoxComment"></span>
-            </div>
-        </div>
     </div>
   </div>
 </div>
-  
-
 <div class="MarginLeftBody" style="margin-left:130px">
   <div class="w3-container MainTab Launch_Main" style="display:none">
     <button class="w3-button w3-hover-pale-red w3-light-grey" onclick="SaveConfigFile()">Save Config File</button>
@@ -345,6 +350,7 @@ let cache_behavior = {cache: "no-cache"}
       </table>
     </div>
   </div>
+</div>
 </div>
 
 <script src="./choreo_GUI.js"></script>
