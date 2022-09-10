@@ -1,15 +1,23 @@
 function OnWindowResize(){
 
     var CommandBody = document.getElementById("CommandBody");
+    var AllLeftTabs = document.getElementsByClassName("LeftTab");
     
     if (window.innerWidth > 1220){
         // Horizontal mode
-        CommandBody.style.position = "absolute";
+        CommandBody.style.position = "relative";
         CommandBody.style.marginLeft = "610px";
+
+        if (AllLeftTabs[0].classList.contains("open")) {
+            CommandBody.style.bottom = "580px";
+        } else {
+            CommandBody.style.bottom = "710px";
+        }
 
     } else {
         CommandBody.style.position = "";
         CommandBody.style.marginLeft = "0px";
+        CommandBody.style.bottom = "0px";
     }
 
 }
@@ -370,8 +378,8 @@ function CloseLeftTab() {
     var MarginLeftTop      = document.getElementById("MarginLeftTop");
     var AllLeftTabBtns     = document.getElementsByClassName("LeftTabBtn");
     var AnimationBlock     = document.getElementById("AnimationBlock");
-    var PlayCommands       = document.getElementById("PlayCommands");
     var AllTopTabs         = document.getElementsByClassName("TopTab");
+    var CommandBody        = document.getElementById("CommandBody");
     for (i = 0; i < AllLeftTabs.length     ; i++) {
         AllLeftTabs[i].classList.remove("open");
         AllLeftTabs[i].classList.add("closed");
@@ -382,7 +390,6 @@ function CloseLeftTab() {
         AllLeftTabBtns[i].style.display     = "none";
     }
     AnimationBlock.style.marginLeft      = "0px"     ;
-    PlayCommands.style.marginTop      = "610px"     ;
     for (i = 0; i < AllTopTabs.length; i++) {
         AllTopTabs[i].style.width     = "567px";
     }
@@ -391,6 +398,9 @@ function CloseLeftTab() {
         canvas_item.style.width     = "610px"     ;
         canvas_item.style.height     = "610px"     ;
     }
+    if (window.innerWidth > 1220){
+        CommandBody.style.bottom = "710px";
+    } 
     
 }
 
@@ -400,8 +410,8 @@ function OpenLeftTab() {
     var MarginLeftTop      = document.getElementById("MarginLeftTop");
     var AllLeftTabBtns     = document.getElementsByClassName("LeftTabBtn");
     var AnimationBlock     = document.getElementById("AnimationBlock");
-    var PlayCommands       = document.getElementById("PlayCommands");
     var AllTopTabs         = document.getElementsByClassName("TopTab");
+    var CommandBody        = document.getElementById("CommandBody");
     for (i = 0; i < AllLeftTabs.length     ; i++) {
         AllLeftTabs[i].classList.add("open");
         AllLeftTabs[i].classList.remove("closed");
@@ -412,7 +422,6 @@ function OpenLeftTab() {
         AllLeftTabBtns[i].style.display     = "";
     }
     AnimationBlock.style.marginLeft      = "130px"     ;
-    PlayCommands.style.marginTop      = "480px"     ;
     for (i = 0; i < AllTopTabs.length; i++) {
         AllTopTabs[i].style.width     = "480px";
     }
@@ -421,6 +430,9 @@ function OpenLeftTab() {
         canvas_item.style.width     = "480px"     ;
         canvas_item.style.height     = "480px"     ;
     }
+    if (window.innerWidth > 1220){
+        CommandBody.style.bottom = "580px";
+    } 
 }    
 
 function deleteColumn(tableID, colnum) {
