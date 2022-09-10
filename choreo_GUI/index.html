@@ -86,29 +86,24 @@ let pyodideReadyPromise = loadPyodideAndPackages();
         <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Solver_Checks" onclick="ClickTopTabBtn('Solver_Checks')">Checks</button>
     </div>
   </div>
-  <div id="AnimationBlock">
-    <div id="canvasContainer" >
-      <canvas id="displayCanvas" width="480px" height="480px" style="position: absolute; z-index: 0;">
-          Your browser does not support HTML5 canvas.
-      </canvas>
-      <canvas id="orbitLayerCanvas" width="480px" height="480px" style="position: absolute; z-index: 1;"></canvas>
-      <canvas id="particleLayerCanvas" width="480px" height="480px" style="position: absolute; z-index: 2;"></canvas>
-      <div id="PlayCommands" style="margin-top:480px;">
-        <span>speed</span>
-        <div id="speedSlider"></div>
-        <input type="button"  id="startStopButton"  class="buttonType1" value="stop">
-        <input type="button"  id="trajectoryButton" class="buttonType1" value="hide trajectories">
+  <div id="AnimationAndControlBlock">
+    <div id="AnimationBlock">
+      <div id="canvasContainer" >
+        <canvas id="displayCanvas" width="480px" height="480px" style="position: absolute; z-index: 0;">
+            Your browser does not support HTML5 canvas.
+        </canvas>
+        <canvas id="orbitLayerCanvas" width="480px" height="480px" style="position: absolute; z-index: 1;"></canvas>
+        <canvas id="particleLayerCanvas" width="480px" height="480px" style="position: absolute; z-index: 2;"></canvas>
       </div>
     </div>
+    <div id="PlayCommands" position="absolute">
+      <span>speed</span>
+      <div id="speedSlider"></div>
+      <input type="button"  id="startStopButton"  class="buttonType1" value="stop">
+      <input type="button"  id="trajectoryButton" class="buttonType1" value="hide trajectories">
+    </div>
   </div>
-    
-  <!-- <div style="margin-left:130px;">
-    <span>speed</span>
-    <div id="speedSlider"></div>
-    <input type="button"  id="startStopButton"  class="buttonType1" value="stop">
-    <input type="button"  id="trajectoryButton" class="buttonType1" value="hide trajectories">
-  </div>
-</div> -->
+</div>
 <div id="CommandBody">
   <div  id="LoadConfigFileDropArea" class="w3-container MainTab Launch_Main" style="display:none">
     <button class="w3-button w3-hover-pale-red w3-light-grey" onclick="SaveConfigFile()">Save Config File</button>
@@ -328,6 +323,7 @@ let pyodideReadyPromise = loadPyodideAndPackages();
   </div>
 </div>
 </div>
+
 
 <script src="./choreo_GUI.js"></script>
 

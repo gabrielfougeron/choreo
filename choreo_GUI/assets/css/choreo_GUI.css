@@ -23,5 +23,9 @@ body {
     margin-left: 610px; */
 }
 #AnimationAndMenuBlock{ 
-    /* max-width: 610px; */
+    max-width: 610px;
+}
+#PlayCommands{
+    /* position:absolute;
+    margin-top:480px; */
 }
