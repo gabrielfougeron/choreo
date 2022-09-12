@@ -30,23 +30,7 @@ window.addEventListener("load", windowLoadHandler, false);
 
 
 <meta http-equiv="cleartype" content="on">
-<!-- <script src="./pyodide_dist/pyodide.js"></script> -->
-<script src="https://cdn.jsdelivr.net/pyodide/v0.21.2/full/pyodide.js"></script>
 
-
-<script type="text/javascript">
-async function loadPyodideAndPackages() {
-  self.pyodide = await loadPyodide();
-  await pyodide.loadPackage([
-    "matplotlib",
-    "sparseqr",
-    "networkx",
-    "./python_dist/choreo-0.1.0-cp310-cp310-emscripten_3_1_14_wasm32.whl"
-  ]);
-}
-let pyodideReadyPromise = loadPyodideAndPackages();
-
-</script>
 </head>
 
 
@@ -342,6 +326,12 @@ for (var i = 0; i < 8; i++) {
 }
 
 ClickAddBodyLoop();
+
+
+
+const worker = new Worker("./Pyodide_worker.js");
+
+
 
 </script>
 
