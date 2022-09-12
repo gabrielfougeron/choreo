@@ -26,13 +26,17 @@
 <script src="anim.js" type="text/javascript"></script>
 <script type="text/javascript">
 window.addEventListener("load", windowLoadHandler, false);
+window.addEventListener("dragover",function(e){
+  e = e || event;
+  e.preventDefault();
+},false);
+window.addEventListener("drop",function(e){
+  e = e || event;
+  e.preventDefault();
+},false);
 </script>
 
-
-<meta http-equiv="cleartype" content="on">
-
 </head>
-
 
 <body onresize="OnWindowResize()">
 
@@ -80,7 +84,7 @@ window.addEventListener("load", windowLoadHandler, false);
         <canvas id="particleLayerCanvas" width="480px" height="480px" style="position: absolute; z-index: 2;"></canvas>
       </div>
     </div>
-    <div id="PlayCommands" position="absolute">
+    <div id="PlayCommands" position="absolute" >
       <span>speed</span>
       <div id="speedSlider"></div>
       <input type="button"  id="startStopButton"  class="buttonType1" value="stop">
@@ -89,13 +93,15 @@ window.addEventListener("load", windowLoadHandler, false);
   </div>
 </div>
 <div id="CommandBody">
-  <div  id="LoadConfigFileDropArea" class="w3-container MainTab Launch_Main" style="display:none">
-    <button class="w3-button w3-hover-pale-red w3-light-grey" onclick="SaveConfigFile()">Save Config File</button>
-    <button class="w3-button w3-hover-pale-red w3-light-grey" for="LoadConfigFileBtn">Load Config File
-      <input type="file" id="LoadConfigFileBtn" accept=".json" onchange="ClickLoadConfigFile(this.files); this.value=null ;" hidden>
-    </button>
-    <button class="w3-button w3-hover-pale-red w3-light-grey" onclick="ChoreoExecuteClick()">Choreo Execute!</button>
-    <button class="w3-button w3-hover-pale-red w3-light-grey" onclick="ChoreoSaveInitStateClick()">Save Init state</button>
+  <div  id="LoadConfigFileDropArea" ondrop="DropConfigFile(event)" ondragover="PreventDefaultDragOver(event);">
+  <button class="w3-button w3-hover-pale-red w3-light-grey" onclick="SaveConfigFile()">Save Config File</button>
+  <input type="file" id="LoadConfigFileBtn" accept=".json" onchange="ClickLoadConfigFile(this.files); this.value=null ;" style="display:none">
+  <label class="w3-button w3-hover-pale-red w3-light-grey"  for="LoadConfigFileBtn">
+    Load Config File
+  </label>
+
+  <button class="w3-button w3-hover-pale-red w3-light-grey" onclick="ChoreoExecuteClick()">Choreo Execute!</button>
+  <button class="w3-button w3-hover-pale-red w3-light-grey" onclick="ChoreoSaveInitStateClick()">Save Init state</button>
   </div>
   <div class="w3-container MainTab Launch_Gallery" style="display:none">
     <h2>Gallery</h2>
@@ -317,7 +323,7 @@ OnWindowResize()
 
 ClickLeftTabBtn('Launch');
 
-document.getElementById("LoadConfigFileDropArea").addEventListener('drop', DropConfigFile, false);
+// document.getElementById("LoadConfigFileDropArea").addEventListener('drop', DropConfigFile, false);
 
 SlideNReconvergeItMax();
 
@@ -326,12 +332,6 @@ for (var i = 0; i < 8; i++) {
 }
 
 ClickAddBodyLoop();
-
-
-
-const worker = new Worker("./Pyodide_worker.js");
-
-
 
 </script>
 

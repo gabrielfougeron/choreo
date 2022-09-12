@@ -1,3 +1,11 @@
+const pyodide_worker = new Worker("./Pyodide_worker.js");
+
+// function handleMessageFromWorker(msg) {
+//     console.log('incoming message from worker, msg:', msg);
+// }
+// 
+// pyodide_worker.addEventListener('message', handleMessageFromWorker);
+
 function OnWindowResize(){
 
     var CommandBody = document.getElementById("CommandBody");
@@ -70,22 +78,25 @@ function ClickLeftTabBtn(TabId) {
     GeomTopTabBtn(TabId);
 }
 
-python_cache_behavior = {cache: "no-cache"}
-
-function ExecutePythonFile(filename) {
-    let load_txt = fetch(filename,python_cache_behavior) ; 
-    load_txt.then(function(response) {
-        return response.text();
-    }).then(async function(text) {  
-        await pyodideReadyPromise; 
-        txt = pyodide.runPython(text);
-    });
-}
+var saveJSONData = (function () {
+    var a = document.createElement("a");
+    document.body.appendChild(a);
+    a.style = "display: none";
+    return function (data, fileName) {
+        var json = JSON.stringify(data,null,2),
+            blob = new Blob([json], {type: "octet/stream"}),
+            url = window.URL.createObjectURL(blob);
+        a.href = url;
+        a.download = fileName;
+        a.click();
+        window.URL.revokeObjectURL(url);
+    };
+}());
 
 function SaveConfigFile(){
 
-    GatherForPython();
-    ExecutePythonFile("./python_scripts/SaveConfigFileJSON.py");
+    ConfigDict = GatherConfigDict();
+    saveJSONData(ConfigDict, "choreo_config.json");
 
 }
 
@@ -103,24 +114,24 @@ function ChoreoSaveInitStateClick() {
 
 }
 
-function GatherForPython() {
+function GatherConfigDict() {
     /* Gathers all relevent input in the page and puts it in a dictionary */
 
-    var ToPython = {};
+    var ConfigDict = {};
 
-    ToPython['Launch_Main'] = {};
+    ConfigDict['Launch_Main'] = {};
 
-    ToPython['Geom_Bodies'] = {};
+    ConfigDict['Geom_Bodies'] = {};
 
     table = document.getElementById('table_body_loop');
     var ncols = table.rows[0].cells.length;
 
-    ToPython['Geom_Bodies'] ['n_loops'] = ncols - 1;
+    ConfigDict['Geom_Bodies'] ['n_loops'] = ncols - 1;
 
-    ToPython['Geom_Bodies'] ['mass'] = [];
-    ToPython['Geom_Bodies'] ['nbpl'] = [];
+    ConfigDict['Geom_Bodies'] ['mass'] = [];
+    ConfigDict['Geom_Bodies'] ['nbpl'] = [];
 
-    ToPython['Geom_Bodies'] ['SymType'] = [];
+    ConfigDict['Geom_Bodies'] ['SymType'] = [];
 
     for (var icol=1; icol < ncols; icol++) {
 
@@ -128,8 +139,8 @@ function GatherForPython() {
         
         the_sym['n'] =  parseInt(  table.rows[1].cells[icol].children[0].value,10);
 
-        ToPython['Geom_Bodies'] ['nbpl'] . push( parseInt(  table.rows[1].cells[icol].children[0].value,10));
-        ToPython['Geom_Bodies'] ['mass'] . push( parseFloat(table.rows[2].cells[icol].children[0].value)   );
+        ConfigDict['Geom_Bodies'] ['nbpl'] . push( parseInt(  table.rows[1].cells[icol].children[0].value,10));
+        ConfigDict['Geom_Bodies'] ['mass'] . push( parseFloat(table.rows[2].cells[icol].children[0].value)   );
         
         the_sym['name'] = table.rows[3].cells[icol].children[0].value;
         the_sym['k'] = parseInt(table.rows[4].cells[icol].children[0].value,10);
@@ -138,26 +149,26 @@ function GatherForPython() {
         the_sym['p'] = parseInt(table.rows[7].cells[icol].children[0].value,10);
         the_sym['q'] = parseInt(table.rows[8].cells[icol].children[0].value,10);
 
-        ToPython['Geom_Bodies'] ['SymType'].push(the_sym);
+        ConfigDict['Geom_Bodies'] ['SymType'].push(the_sym);
 
     }
 
 
-    ToPython['Geom_Target'] = {};
+    ConfigDict['Geom_Target'] = {};
 
-    ToPython['Geom_Random'] = {};
-    ToPython['Geom_Random'] ['coeff_ampl_o']    = parseFloat(document.getElementById('input_coeff_ampl_o'   ).value   );
-    ToPython['Geom_Random'] ['coeff_ampl_min']  = parseFloat(document.getElementById('input_coeff_ampl_min' ).value   );
-    ToPython['Geom_Random'] ['k_infl']          = parseInt(  document.getElementById('input_k_infl'         ).value,10);
-    ToPython['Geom_Random'] ['k_max']           = parseInt(  document.getElementById('input_k_max'          ).value,10);
+    ConfigDict['Geom_Random'] = {};
+    ConfigDict['Geom_Random'] ['coeff_ampl_o']    = parseFloat(document.getElementById('input_coeff_ampl_o'   ).value   );
+    ConfigDict['Geom_Random'] ['coeff_ampl_min']  = parseFloat(document.getElementById('input_coeff_ampl_min' ).value   );
+    ConfigDict['Geom_Random'] ['k_infl']          = parseInt(  document.getElementById('input_k_infl'         ).value,10);
+    ConfigDict['Geom_Random'] ['k_max']           = parseInt(  document.getElementById('input_k_max'          ).value,10);
 
-    ToPython['Geom_Custom'] = {};
+    ConfigDict['Geom_Custom'] = {};
 
     table = document.getElementById('table_custom_sym');
     var ncols = table.rows[0].cells.length;
 
-    ToPython['Geom_Custom'] ['n_custom_sym'] = ncols - 1;
-    ToPython['Geom_Custom'] ['CustomSyms'] = [];
+    ConfigDict['Geom_Custom'] ['n_custom_sym'] = ncols - 1;
+    ConfigDict['Geom_Custom'] ['CustomSyms'] = [];
 
     for (var icol=1; icol < ncols; icol++) {
 
@@ -172,59 +183,62 @@ function GatherForPython() {
         the_sym['TimeShiftNum'] = parseInt( table.rows[7].cells[icol].children[0].value,10);
         the_sym['TimeShiftDen'] = parseInt( table.rows[8].cells[icol].children[0].value,10);
 
-        ToPython['Geom_Custom'] ['CustomSyms'].push(the_sym);
+        ConfigDict['Geom_Custom'] ['CustomSyms'].push(the_sym);
 
     }
 
-    ToPython['IO_Image'] = {};
-    ToPython['IO_Video'] = {};
+    ConfigDict['IO_Image'] = {};
+    ConfigDict['IO_Video'] = {};
 
-    ToPython['Solver_Discr'] = {};
+    ConfigDict['Solver_Discr'] = {};
 
-    ToPython['Solver_Discr'] ['Use_exact_Jacobian']  =          document.getElementById('checkbox_exactJ').checked            ;
-    ToPython['Solver_Discr'] ['ncoeff_init']         = parseInt(document.getElementById('input_ncoeff_init').value,10)        ;
-    ToPython['Solver_Discr'] ['n_reconverge_it_max'] = parseInt(document.getElementById('input_n_reconverge_it_max').value,10);
+    ConfigDict['Solver_Discr'] ['Use_exact_Jacobian']  =          document.getElementById('checkbox_exactJ').checked            ;
+    ConfigDict['Solver_Discr'] ['ncoeff_init']         = parseInt(document.getElementById('input_ncoeff_init').value,10)        ;
+    ConfigDict['Solver_Discr'] ['n_reconverge_it_max'] = parseInt(document.getElementById('input_n_reconverge_it_max').value,10);
 
-    ToPython['Solver_Optim'] = {};
+    ConfigDict['Solver_Optim'] = {};
 
-    ToPython['Solver_Optim'] ['krylov_method']  = document.getElementById('krylov_method').value;
-    ToPython['Solver_Optim'] ['line_search']    = document.getElementById('linesearch_method').value;
+    ConfigDict['Solver_Optim'] ['krylov_method']  = document.getElementById('krylov_method').value;
+    ConfigDict['Solver_Optim'] ['line_search']    = document.getElementById('linesearch_method').value;
 
-    ToPython['Solver_Optim'] ['Newt_err_norm_max'] = parseFloat(document.getElementById('input_Newt_err_norm_max').value);
+    ConfigDict['Solver_Optim'] ['Newt_err_norm_max'] = parseFloat(document.getElementById('input_Newt_err_norm_max').value);
 
-    ToPython['Solver_Loop'] = {};
+    ConfigDict['Solver_Loop'] = {};
 
     table = document.getElementById('table_cvg_loop');
     var ncols = table.rows[0].cells.length;
 
-    ToPython['Solver_Loop'] ['n_optim_param'] = ncols - 1;
-    ToPython['Solver_Loop'] ['gradtol_list'] = [];
-    ToPython['Solver_Loop'] ['inner_maxiter_list'] = [];
-    ToPython['Solver_Loop'] ['maxiter_list'] = [];
-    ToPython['Solver_Loop'] ['outer_k_list'] = [];
-    ToPython['Solver_Loop'] ['store_outer_Av_list'] = [];
+    ConfigDict['Solver_Loop'] ['n_optim_param'] = ncols - 1;
+    ConfigDict['Solver_Loop'] ['gradtol_list'] = [];
+    ConfigDict['Solver_Loop'] ['inner_maxiter_list'] = [];
+    ConfigDict['Solver_Loop'] ['maxiter_list'] = [];
+    ConfigDict['Solver_Loop'] ['outer_k_list'] = [];
+    ConfigDict['Solver_Loop'] ['store_outer_Av_list'] = [];
 
     for (var icol=1; icol < ncols; icol++) {
 
-        ToPython['Solver_Loop'] ['gradtol_list']       . push( parseFloat(table.rows[1].cells[icol].children[0].value   ));
-        ToPython['Solver_Loop'] ['maxiter_list']       . push( parseInt(  table.rows[2].cells[icol].children[0].value,10));
-        ToPython['Solver_Loop'] ['inner_maxiter_list'] . push( parseInt(  table.rows[3].cells[icol].children[0].value,10));
-        ToPython['Solver_Loop'] ['outer_k_list']       . push( parseInt(  table.rows[4].cells[icol].children[0].value,10));
+        ConfigDict['Solver_Loop'] ['gradtol_list']       . push( parseFloat(table.rows[1].cells[icol].children[0].value   ));
+        ConfigDict['Solver_Loop'] ['maxiter_list']       . push( parseInt(  table.rows[2].cells[icol].children[0].value,10));
+        ConfigDict['Solver_Loop'] ['inner_maxiter_list'] . push( parseInt(  table.rows[3].cells[icol].children[0].value,10));
+        ConfigDict['Solver_Loop'] ['outer_k_list']       . push( parseInt(  table.rows[4].cells[icol].children[0].value,10));
         
-        ToPython['Solver_Loop'] ['store_outer_Av_list']. push( table.rows[5].cells[icol].children[0].value == "True");
+        ConfigDict['Solver_Loop'] ['store_outer_Av_list']. push( table.rows[5].cells[icol].children[0].value == "True");
 
     }
 
-    ToPython['Solver_Checks'] = {};
+    ConfigDict['Solver_Checks'] = {};
 
-    ToPython['Solver_Checks'] ['Look_for_duplicates'] = document.getElementById('checkbox_duplicates').checked;
-    ToPython['Solver_Checks'] ['duplicate_eps']       = parseFloat(document.getElementById('input_duplicate_eps').value);
-    ToPython['Solver_Checks'] ['Check_Escape']        = document.getElementById('checkbox_escape').checked;
+    ConfigDict['Solver_Checks'] ['Look_for_duplicates'] = document.getElementById('checkbox_duplicates').checked;
+    ConfigDict['Solver_Checks'] ['duplicate_eps']       = parseFloat(document.getElementById('input_duplicate_eps').value);
+    ConfigDict['Solver_Checks'] ['Check_Escape']        = document.getElementById('checkbox_escape').checked;
 
-    window.ToPython = ToPython;
+    return ConfigDict;
 }
 
 function ClickLoadConfigFile(files) {
+
+    console.log(files)
+
     files = [...files];
     files.forEach(LoadConfigFile);
 }
@@ -232,7 +246,11 @@ function ClickLoadConfigFile(files) {
 function DropConfigFile(e) {
     var dt = e.dataTransfer;
     var files = dt.files;
-    LoadConfigFile(files);
+    ClickLoadConfigFile(files);
+}
+
+function PreventDefaultDragOver(event) {
+    event.preventDefault();
 }
 
 function previewFile(file) {
@@ -247,9 +265,11 @@ function previewFile(file) {
 
 async function LoadConfigFile(the_file) {
 
+    console.log(the_file)
+
     var txt = await the_file.text();
 
-    FromPython = JSON.parse(txt);
+    ConfigDict = JSON.parse(txt);
 
     var table = document.getElementById('table_body_loop');
     var ncols = table.rows[0].cells.length;
@@ -258,7 +278,7 @@ async function LoadConfigFile(the_file) {
         deleteColumn('table_body_loop',icol);
     };
 
-    var n_loops = FromPython['Geom_Bodies'] ['n_loops'];
+    var n_loops = ConfigDict['Geom_Bodies'] ['n_loops'];
 
     for (var il=0; il < n_loops; il++) {
 
@@ -266,23 +286,23 @@ async function LoadConfigFile(the_file) {
 
         var icol = il+1;
 
-        table.rows[1].cells[icol].children[0].value = FromPython['Geom_Bodies'] ['nbpl'] [il];
-        table.rows[2].cells[icol].children[0].value = FromPython['Geom_Bodies'] ['mass'] [il] . toString();
-        table.rows[3].cells[icol].children[0].value = FromPython['Geom_Bodies'] ['SymType'] [il] ['name'];
-        table.rows[4].cells[icol].children[0].value = FromPython['Geom_Bodies'] ['SymType'] [il] ['k'];
-        table.rows[5].cells[icol].children[0].value = FromPython['Geom_Bodies'] ['SymType'] [il] ['l'];
-        table.rows[6].cells[icol].children[0].value = FromPython['Geom_Bodies'] ['SymType'] [il] ['m'];
-        table.rows[7].cells[icol].children[0].value = FromPython['Geom_Bodies'] ['SymType'] [il] ['p'];
-        table.rows[8].cells[icol].children[0].value = FromPython['Geom_Bodies'] ['SymType'] [il] ['q'];
+        table.rows[1].cells[icol].children[0].value = ConfigDict['Geom_Bodies'] ['nbpl'] [il];
+        table.rows[2].cells[icol].children[0].value = ConfigDict['Geom_Bodies'] ['mass'] [il] . toString();
+        table.rows[3].cells[icol].children[0].value = ConfigDict['Geom_Bodies'] ['SymType'] [il] ['name'];
+        table.rows[4].cells[icol].children[0].value = ConfigDict['Geom_Bodies'] ['SymType'] [il] ['k'];
+        table.rows[5].cells[icol].children[0].value = ConfigDict['Geom_Bodies'] ['SymType'] [il] ['l'];
+        table.rows[6].cells[icol].children[0].value = ConfigDict['Geom_Bodies'] ['SymType'] [il] ['m'];
+        table.rows[7].cells[icol].children[0].value = ConfigDict['Geom_Bodies'] ['SymType'] [il] ['p'];
+        table.rows[8].cells[icol].children[0].value = ConfigDict['Geom_Bodies'] ['SymType'] [il] ['q'];
         
     }
 
     RedistributeClicksTableBodyLoop('table_body_loop',1,RedistributeBodyCount);
 
-    document.getElementById('input_coeff_ampl_o'   ).value = FromPython['Geom_Random'] ['coeff_ampl_o']   ;
-    document.getElementById('input_coeff_ampl_min' ).value = FromPython['Geom_Random'] ['coeff_ampl_min'] ;
-    document.getElementById('input_k_infl'         ).value = FromPython['Geom_Random'] ['k_infl']         ;
-    document.getElementById('input_k_max'          ).value = FromPython['Geom_Random'] ['k_max']          ;
+    document.getElementById('input_coeff_ampl_o'   ).value = ConfigDict['Geom_Random'] ['coeff_ampl_o']   ;
+    document.getElementById('input_coeff_ampl_min' ).value = ConfigDict['Geom_Random'] ['coeff_ampl_min'] ;
+    document.getElementById('input_k_infl'         ).value = ConfigDict['Geom_Random'] ['k_infl']         ;
+    document.getElementById('input_k_max'          ).value = ConfigDict['Geom_Random'] ['k_max']          ;
 
     var table = document.getElementById('table_custom_sym');
     var ncols = table.rows[0].cells.length;
@@ -291,7 +311,7 @@ async function LoadConfigFile(the_file) {
         deleteColumn('table_custom_sym',icol);
     };
 
-    var nsym = FromPython['Geom_Custom'] ['n_custom_sym'];
+    var nsym = ConfigDict['Geom_Custom'] ['n_custom_sym'];
 
     for (var isym=0; isym < nsym; isym++) {
 
@@ -299,28 +319,28 @@ async function LoadConfigFile(the_file) {
 
         var icol = isym+1;
 
-        table.rows[1].cells[icol].children[0].value = FromPython['Geom_Custom'] ['CustomSyms'] [isym] ['LoopTarget']   ;
-        table.rows[2].cells[icol].children[0].value = FromPython['Geom_Custom'] ['CustomSyms'] [isym] ['LoopSource']   ;
-        table.rows[3].cells[icol].children[0].value = FromPython['Geom_Custom'] ['CustomSyms'] [isym] ['Reflexion']    ;
-        table.rows[4].cells[icol].children[0].value = FromPython['Geom_Custom'] ['CustomSyms'] [isym] ['RotAngleNum']  ;
-        table.rows[5].cells[icol].children[0].value = FromPython['Geom_Custom'] ['CustomSyms'] [isym] ['RotAngleDen']  ;
-        table.rows[6].cells[icol].children[0].value = FromPython['Geom_Custom'] ['CustomSyms'] [isym] ['TimeRev']      ;
-        table.rows[7].cells[icol].children[0].value = FromPython['Geom_Custom'] ['CustomSyms'] [isym] ['TimeShiftNum'] ;
-        table.rows[8].cells[icol].children[0].value = FromPython['Geom_Custom'] ['CustomSyms'] [isym] ['TimeShiftDen'] ;
+        table.rows[1].cells[icol].children[0].value = ConfigDict['Geom_Custom'] ['CustomSyms'] [isym] ['LoopTarget']   ;
+        table.rows[2].cells[icol].children[0].value = ConfigDict['Geom_Custom'] ['CustomSyms'] [isym] ['LoopSource']   ;
+        table.rows[3].cells[icol].children[0].value = ConfigDict['Geom_Custom'] ['CustomSyms'] [isym] ['Reflexion']    ;
+        table.rows[4].cells[icol].children[0].value = ConfigDict['Geom_Custom'] ['CustomSyms'] [isym] ['RotAngleNum']  ;
+        table.rows[5].cells[icol].children[0].value = ConfigDict['Geom_Custom'] ['CustomSyms'] [isym] ['RotAngleDen']  ;
+        table.rows[6].cells[icol].children[0].value = ConfigDict['Geom_Custom'] ['CustomSyms'] [isym] ['TimeRev']      ;
+        table.rows[7].cells[icol].children[0].value = ConfigDict['Geom_Custom'] ['CustomSyms'] [isym] ['TimeShiftNum'] ;
+        table.rows[8].cells[icol].children[0].value = ConfigDict['Geom_Custom'] ['CustomSyms'] [isym] ['TimeShiftDen'] ;
 
     }
 
     RedistributeClicksTableBodyLoop('table_custom_sym',0);
 
-    document.getElementById('checkbox_exactJ').checked         = FromPython['Solver_Discr'] ['Use_exact_Jacobian']  ;
-    document.getElementById('input_ncoeff_init').value         = FromPython['Solver_Discr'] ['ncoeff_init']         ;
-    document.getElementById('input_n_reconverge_it_max').value = FromPython['Solver_Discr'] ['n_reconverge_it_max'] ;
+    document.getElementById('checkbox_exactJ').checked         = ConfigDict['Solver_Discr'] ['Use_exact_Jacobian']  ;
+    document.getElementById('input_ncoeff_init').value         = ConfigDict['Solver_Discr'] ['ncoeff_init']         ;
+    document.getElementById('input_n_reconverge_it_max').value = ConfigDict['Solver_Discr'] ['n_reconverge_it_max'] ;
 
     SlideNReconvergeItMax();
 
-    document.getElementById('krylov_method').value           = FromPython['Solver_Optim'] ['krylov_method']     ;
-    document.getElementById('linesearch_method').value       = FromPython['Solver_Optim'] ['line_search']       ;
-    document.getElementById('input_Newt_err_norm_max').value = FromPython['Solver_Optim'] ['Newt_err_norm_max'] ;
+    document.getElementById('krylov_method').value           = ConfigDict['Solver_Optim'] ['krylov_method']     ;
+    document.getElementById('linesearch_method').value       = ConfigDict['Solver_Optim'] ['line_search']       ;
+    document.getElementById('input_Newt_err_norm_max').value = ConfigDict['Solver_Optim'] ['Newt_err_norm_max'] ;
 
     var table = document.getElementById('table_cvg_loop');
     var ncols = table.rows[0].cells.length;
@@ -329,7 +349,7 @@ async function LoadConfigFile(the_file) {
         deleteColumn('table_cvg_loop',icol);
     };
 
-    var n_loops = FromPython['Solver_Loop'] ['n_optim_param'];
+    var n_loops = ConfigDict['Solver_Loop'] ['n_optim_param'];
 
     for (var il=0; il < n_loops; il++) {
 
@@ -337,12 +357,12 @@ async function LoadConfigFile(the_file) {
 
         var icol = il+1;
 
-        table.rows[1].cells[icol].children[0].value = FromPython['Solver_Loop'] ['gradtol_list'] [il] ;
-        table.rows[2].cells[icol].children[0].value = FromPython['Solver_Loop'] ['maxiter_list'] [il] ;
-        table.rows[3].cells[icol].children[0].value = FromPython['Solver_Loop'] ['inner_maxiter_list'] [il] ;
-        table.rows[4].cells[icol].children[0].value = FromPython['Solver_Loop'] ['outer_k_list'] [il] ;
+        table.rows[1].cells[icol].children[0].value = ConfigDict['Solver_Loop'] ['gradtol_list'] [il] ;
+        table.rows[2].cells[icol].children[0].value = ConfigDict['Solver_Loop'] ['maxiter_list'] [il] ;
+        table.rows[3].cells[icol].children[0].value = ConfigDict['Solver_Loop'] ['inner_maxiter_list'] [il] ;
+        table.rows[4].cells[icol].children[0].value = ConfigDict['Solver_Loop'] ['outer_k_list'] [il] ;
 
-        if (FromPython['Solver_Loop'] ['store_outer_Av_list'] [il]) {
+        if (ConfigDict['Solver_Loop'] ['store_outer_Av_list'] [il]) {
         table.rows[5].cells[icol].children[0].value = "True" ;
         } else {
         table.rows[5].cells[icol].children[0].value = "False" ;
@@ -352,9 +372,9 @@ async function LoadConfigFile(the_file) {
 
     RedistributeClicksTableBodyLoop('table_cvg_loop',1);
 
-    document.getElementById('checkbox_duplicates').checked = FromPython['Solver_Checks'] ['Look_for_duplicates'] ;
-    document.getElementById('input_duplicate_eps').value   = FromPython['Solver_Checks'] ['duplicate_eps']       ;
-    document.getElementById('checkbox_escape').checked     = FromPython['Solver_Checks'] ['Check_Escape']        ;
+    document.getElementById('checkbox_duplicates').checked = ConfigDict['Solver_Checks'] ['Look_for_duplicates'] ;
+    document.getElementById('input_duplicate_eps').value   = ConfigDict['Solver_Checks'] ['duplicate_eps']       ;
+    document.getElementById('checkbox_escape').checked     = ConfigDict['Solver_Checks'] ['Check_Escape']        ;
 
 }
 
