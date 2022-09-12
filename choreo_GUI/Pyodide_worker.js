@@ -1,7 +1,5 @@
 // load pyodide.js
 importScripts("https://cdn.jsdelivr.net/pyodide/v0.21.2/full/pyodide.js");
-importScripts("https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.0/FileSaver.min.js")
-
 
 async function loadPyodideAndPackages() {
   self.pyodide = await loadPyodide();

@@ -1,8 +1,36 @@
 const pyodide_worker = new Worker("./Pyodide_worker.js");
 
-function handleMessageFromWorker(msg) {
-    console.log('incoming message from worker, msg:', msg);
+function handleMessageFromWorker(message) {
+
+    if ((typeof message.data.funname != "undefined") && (typeof message.data.args != "undefined")) {
+
+        console.log("Attempting to execute function",message.data.funname,"with arguments",message.data.args);
+
+        window[message.data.funname](message.data.args);
+
+    } else {
+
+        console.log('Main thread could not resolve message from worker :',message);
+        console.log(message.data);
+
+    }
+
 }
+
+var DownloadTxtFile = (function () {
+    var a = document.createElement("a");
+    document.body.appendChild(a);
+    a.style = "display: none";
+    return function (args) {
+        blob = new Blob([args.data],{type : 'application/text'})
+        url = window.URL.createObjectURL(blob);
+        a.href = url;
+        a.download = args.filename;
+        a.click();
+        window.URL.revokeObjectURL(url);
+    };
+}());
+
 
 pyodide_worker.addEventListener('message', handleMessageFromWorker);
 
