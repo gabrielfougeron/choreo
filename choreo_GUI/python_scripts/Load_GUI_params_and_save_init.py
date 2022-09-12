@@ -21,24 +21,24 @@ import json
 import choreo 
 
 import js
-
+import pyodide
 
     
 def DLSavedFiledJSNoPrompt(filename,readtype='rt'):
-
-    print(filename)
 
     with open(filename, readtype) as fh:
         thefile = fh.read()
         
     blob = js.Blob.new([thefile], {type : 'application/text'})
-
-    print("bbb")
-    js.saveAs(blob,"toto.json")
     
-    print("ccc")
-    # print(dir(js))
-    # print(dir(js.FileSaver))
+    js.postMessage( 
+        funname = "DownloadTxtFile",
+        args    = pyodide.ffi.to_js(
+            {"filename":filename,"data":blob},
+            dict_converter=js.Object.fromEntries
+        )
+    )
+
 
 
 
@@ -239,9 +239,7 @@ def main():
 
     choreo.GenSymExample(**all_kwargs)
 
-    print("aaa")
-
-    DLSavedFiledJSNoPrompt('./init_all_pos.txt')
+    DLSavedFiledJSNoPrompt('init_all_pos.txt')
 
 
 if __name__ == "__main__":
