@@ -14,9 +14,9 @@ import sys
 import fractions
 import json
 
-
-import matplotlib
-matplotlib.use("module://matplotlib.backends.html5_canvas_backend")
+# 
+# import matplotlib
+# matplotlib.use("module://matplotlib.backends.html5_canvas_backend")
 
 import choreo 
 
@@ -26,18 +26,20 @@ import js
     
 def DLSavedFiledJSNoPrompt(filename,readtype='rt'):
 
+    print(filename)
+
     with open(filename, readtype) as fh:
         thefile = fh.read()
         
     blob = js.Blob.new([thefile], {type : 'application/text'})
-    url = js.window.URL.createObjectURL(blob) 
 
-    downloadLink = js.document.createElement("a")
-    downloadLink.href = url
-    downloadLink.download = filename
-    js.document.body.appendChild(downloadLink)
-    downloadLink.click()
-    downloadLink.remove()
+    print("bbb")
+    js.saveAs(blob,"toto.json")
+    
+    print("ccc")
+    # print(dir(js))
+    # print(dir(js.FileSaver))
+
 
 
 
@@ -48,7 +50,7 @@ def main():
     # np.random.seed(int(time.time()*10000) % 5000)
     np.random.seed(0)
 
-    params_dict = js.ToPython.to_py()
+    params_dict = js.ConfigDict.to_py()
 
     file_basename = ''
     
@@ -139,8 +141,6 @@ def main():
     # img_size = (12,12) # Image size in inches
     img_size = (8,8) # Image size in inches
     thumb_size = (2,2) # Image size in inches
-
-
     
     color = "body"
     # color = "loop"
@@ -239,7 +239,9 @@ def main():
 
     choreo.GenSymExample(**all_kwargs)
 
-    DLSavedFiledJSNoPrompt('init_all_pos.txt')
+    print("aaa")
+
+    DLSavedFiledJSNoPrompt('./init_all_pos.txt')
 
 
 if __name__ == "__main__":
