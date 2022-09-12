@@ -93,15 +93,16 @@ window.addEventListener("drop",function(e){
   </div>
 </div>
 <div id="CommandBody">
-  <div  id="LoadConfigFileDropArea" ondrop="DropConfigFile(event)" ondragover="PreventDefaultDragOver(event);">
-  <button class="w3-button w3-hover-pale-red w3-light-grey" onclick="SaveConfigFile()">Save Config File</button>
-  <input type="file" id="LoadConfigFileBtn" accept=".json" onchange="ClickLoadConfigFile(this.files); this.value=null ;" style="display:none">
-  <label class="w3-button w3-hover-pale-red w3-light-grey"  for="LoadConfigFileBtn">
-    Load Config File
-  </label>
-
-  <button class="w3-button w3-hover-pale-red w3-light-grey" onclick="ChoreoExecuteClick()">Choreo Execute!</button>
-  <button class="w3-button w3-hover-pale-red w3-light-grey" onclick="ChoreoSaveInitStateClick()">Save Init state</button>
+  <div class="w3-container MainTab Launch_Main" style="display:none">
+    <div  id="LoadConfigFileDropArea" ondrop="DropConfigFile(event)" ondragover="PreventDefaultDragOver(event);">
+    <button class="w3-button w3-hover-pale-red w3-light-grey" onclick="SaveConfigFile()">Save Config File</button>
+    <input type="file" id="LoadConfigFileBtn" accept=".json" onchange="ClickLoadConfigFile(this.files); this.value=null ;" style="display:none">
+    <label class="w3-button w3-hover-pale-red w3-light-grey"  for="LoadConfigFileBtn">
+      Load Config File
+    </label>
+    <button class="w3-button w3-hover-pale-red w3-light-grey" onclick="ChoreoExecuteClick()">Choreo Execute!</button>
+    <button class="w3-button w3-hover-pale-red w3-light-grey" onclick="ChoreoSaveInitStateClick()">Save Init state</button>
+    </div>
   </div>
   <div class="w3-container MainTab Launch_Gallery" style="display:none">
     <h2>Gallery</h2>

@@ -1,10 +1,10 @@
 const pyodide_worker = new Worker("./Pyodide_worker.js");
 
-// function handleMessageFromWorker(msg) {
-//     console.log('incoming message from worker, msg:', msg);
-// }
-// 
-// pyodide_worker.addEventListener('message', handleMessageFromWorker);
+function handleMessageFromWorker(msg) {
+    console.log('incoming message from worker, msg:', msg);
+}
+
+pyodide_worker.addEventListener('message', handleMessageFromWorker);
 
 function OnWindowResize(){
 
@@ -102,15 +102,20 @@ function SaveConfigFile(){
 
 function ChoreoExecuteClick() {
 
-    GatherForPython();
-    ExecutePythonFile("./python_scripts/Load_GUI_params_and_run.py");
+    // GatherForPython();
+    // ExecutePythonFile("./python_scripts/Load_GUI_params_and_run.py");
 
 }
 
 function ChoreoSaveInitStateClick() {
 
-    GatherForPython();
-    ExecutePythonFile("./python_scripts/Load_GUI_params_and_save_init.py");
+    ConfigDict = GatherConfigDict();
+    // pyodide_worker.ExecutePythonFile("./python_scripts/Load_GUI_params_and_save_init.py");
+
+    pyodide_worker.postMessage({funname:"LoadDataInWorker",args:{ConfigDict:ConfigDict}});
+    pyodide_worker.postMessage({funname:"ExecutePythonFile",args:"./python_scripts/Load_GUI_params_and_save_init.py"});
+
+    'init_all_pos.txt'
 
 }
 
@@ -237,7 +242,7 @@ function GatherConfigDict() {
 
 function ClickLoadConfigFile(files) {
 
-    console.log(files)
+    // console.log(files)
 
     files = [...files];
     files.forEach(LoadConfigFile);
@@ -265,7 +270,7 @@ function previewFile(file) {
 
 async function LoadConfigFile(the_file) {
 
-    console.log(the_file)
+    // console.log(the_file)
 
     var txt = await the_file.text();
 
