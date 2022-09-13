@@ -84,11 +84,13 @@ window.addEventListener("drop",function(e){
         <canvas id="particleLayerCanvas" width="480px" height="480px" style="position: absolute; z-index: 2;"></canvas>
       </div>
     </div>
-    <div id="PlayCommands" position="absolute" >
-      <span>speed</span>
+    <div id="PlayCommands" position="absolute" style="margin-left:223px;">
+      <div id="speedTxt">Speed</div>
       <div id="speedSlider"></div>
-      <input type="button"  id="startStopButton"  class="buttonType1" value="stop">
-      <input type="button"  id="trajectoryButton" class="buttonType1" value="hide trajectories">
+      <!-- <input type="button"  id="startStopButton"  class="buttonType1" value="Stop"> -->
+      <!-- <input type="button"  id="trajectoryButton" class="buttonType1" value="Hide trajectories"> -->
+      <button  id="startStopButton"  class="w3-button w3-hover-pale-red w3-light-grey">Stop</button>
+      <button type="button"  id="trajectoryButton" class="w3-button w3-hover-pale-red w3-light-grey">Hide trajectories</button>
     </div>
   </div>
 </div>
@@ -127,6 +129,7 @@ window.addEventListener("drop",function(e){
   </div>
   <div class="w3-container MainTab Launch_About" style="display:none">
     <h2>About</h2>
+    
   </div>
   <div class="w3-container MainTab Geom_Bodies" style="display:none">
     <h2>Bodies definition</h2>

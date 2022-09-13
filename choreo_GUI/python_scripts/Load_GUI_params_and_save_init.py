@@ -40,11 +40,6 @@ def DLSavedFiledJSNoPrompt(filename,readtype='rt'):
     )
 
 
-
-
-
-
-
 def main():
 
     # np.random.seed(int(time.time()*10000) % 5000)
