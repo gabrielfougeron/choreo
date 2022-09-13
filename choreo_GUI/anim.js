@@ -251,11 +251,13 @@ function canvasApp() {
 				input.checked = "checked";
 			}
 			input.name = "orbitGroup";
-			
+
 			//label for the button
 			var label = document.createElement('label');
+			label.id = "label"+i;
 			label.setAttribute("for",input.id);
-			label.className = "radioLabel w3-button w3-hover-pale-red w3-light-grey";
+			input.setAttribute("mylabel",label.id)
+			label.className = "radioLabel w3-button w3-hover-pale-red w3-light-grey ";
 			label.innerHTML = dataObject.orbits[i].name;
 			
 			//add to DOM
@@ -266,17 +268,29 @@ function canvasApp() {
 		
 		//jQuery: convert radio button group to buttonset.
 		$("#orbitRadio").buttonset();
-		
-		//must attach listener via jQuery to make more responsive
-		$("input[name='orbitGroup']").change(
+
+		$("input[name='orbitGroup']").on('change',
         	function() {
-				setOrbit($("input[name='orbitGroup']:checked").val());
+
+				$("label").filter(".w3-red").each(function(i, obj) {
+					obj.classList.remove('w3-red');
+					obj.classList.add('w3-light-grey');
+				});
+
+				mylabel = this.getAttribute("mylabel")
+				thelabel=$("label[id="+mylabel+"]")["0"];			
+				thelabel.classList.add('w3-red');
+				thelabel.classList.remove('w3-light-grey');
+
+				setOrbit(this.value);
         	}
     	);	
-			
+
+		$('label:first', "#orbitRadio").removeClass('w3-light-grey').addClass('w3-red');
 		//changes button rounded corner style to fit vertical alignment style
-		$('label:first', "#orbitRadio").removeClass('ui-corner-left').addClass('ui-corner-top');
+		$('label:first', "#orbitRadio").removeClass('ui-corner-left').addClass('ui-corner-top').addClass('w3-red');
 		$('label:last', "#orbitRadio").removeClass('ui-corner-right').addClass('ui-corner-bottom');
+
 	}
 	
 	function startAnimation() {
@@ -634,23 +648,10 @@ function canvasApp() {
 		return returnObj;
 	}	
 	
-	
 	function setData(dataObject) {
 		jsonData = dataObject;
 		numOrbits = jsonData.orbits.length;
 		populateOrbitRadioButtons(dataObject);
 	}
 	
-	/*
-	function getJSON(url, callback) {
-		var request = new XMLHttpRequest();
-		request.open("GET", url);
-		request.onreadystatechange = function() {
-			if (request.readyState === 4 && request.status === 200) {
-				callback(JSON.parse(request.responseText));
-			}
-		};
-		request.send(null);
-	}
-	*/	
 }

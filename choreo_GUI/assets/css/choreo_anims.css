@@ -12,11 +12,12 @@ a {
 #caption {position:absolute; width:480px; text-align:center; top:480px; z-index:1}
 .radioLabel {
     /* font-family:Arial, Helvetica, sans-serif; */
-    background-color:#ddd;
-    color:black;
+    /* background-color:#ddd; */
+    /* color:black; */
     /* font-size:11px; */
-    width:450px;
+    width:445px;
     text-align:left;
+    border:1px solid black
 }
 #controlHeader {
     font-family: sans-serif;
@@ -110,3 +111,4 @@ a {
     position:relative;
     overflow:auto;
 }
+
