@@ -299,12 +299,12 @@ function canvasApp() {
 		if (running) {
 			stopAnimation();
 			running = false;
-			startStopButton.value = "go";
+			startStopButton.textContent = "Start";
 		}
 		else {
 			startAnimation();
 			running = true;
-			startStopButton.value = "stop";
+			startStopButton.textContent = "Stop";
 		}
 	}
 	
@@ -312,7 +312,7 @@ function canvasApp() {
 		if (trajectoriesOn) {
 			trajectoriesOn = false;
 			drawingStaticOrbit = false;
-			trajectoryButton.value = "show trajectories";
+			trajectoryButton.textContent ="Show trajectories";
 			clearScreen();
 		}
 		else {
@@ -320,7 +320,7 @@ function canvasApp() {
 			drawingStaticOrbit = true;
 			setStartPositions();
 			trajectoriesOn = true;
-			trajectoryButton.value = "hide trajectories";
+			trajectoryButton.textContent = "Hide trajectories";
 		}
 	}
 
