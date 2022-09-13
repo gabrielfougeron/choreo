@@ -87,10 +87,8 @@ window.addEventListener("drop",function(e){
     <div id="PlayCommands" position="absolute" style="margin-left:223px;">
       <div id="speedTxt">Speed</div>
       <div id="speedSlider"></div>
-      <!-- <input type="button"  id="startStopButton"  class="buttonType1" value="Stop"> -->
-      <!-- <input type="button"  id="trajectoryButton" class="buttonType1" value="Hide trajectories"> -->
-      <button  id="startStopButton"  class="w3-button w3-hover-pale-red w3-light-grey">Stop</button>
-      <button type="button"  id="trajectoryButton" class="w3-button w3-hover-pale-red w3-light-grey">Hide trajectories</button>
+      <button id="startStopButton"  class="w3-button w3-hover-pale-red w3-light-grey">Stop</button>
+      <button id="trajectoryButton" class="w3-button w3-hover-pale-red w3-light-grey">Hide trajectories</button>
     </div>
   </div>
 </div>
@@ -115,8 +113,8 @@ window.addEventListener("drop",function(e){
     </div>
     <div id="navButtons">
       <form>
-        <input type="button" id="btnPrevOrbit" class="buttonType2" value="&#9650; prev"/>
-        <input type="button" id="btnNextOrbit" class="buttonType2" value="&#9660; next"/>
+        <button type="button"  id="btnPrevOrbit" class="w3-button w3-hover-pale-red w3-light-grey">&#9650; Previous</button>
+        <button type="button"  id="btnNextOrbit" class="w3-button w3-hover-pale-red w3-light-grey">&#9660; Next</button>
       </form>
     </div>
   </div>
@@ -129,7 +127,12 @@ window.addEventListener("drop",function(e){
   </div>
   <div class="w3-container MainTab Launch_About" style="display:none">
     <h2>About</h2>
-    
+    &nbsp &nbsp This WebApp and the associated python package <b>choreo</b> were created by Gabriel Fougeron.<br><br>
+    Many thanks to:<br>
+    &nbsp - <a href="https://dangries.com/">Dan Gries</a> for his authorization to build upon his animation design.<br>
+    &nbsp - Gregory Minton for his <a href="http://gminton.org/#choreo"><b>choreo.2.3.js</b></a> WebApp which inspired this work, and for his patience in answering my naive questions.<br>
+    &nbsp - The <a href="https://pyodide.org/en/stable/"><b>Pyodide</b></a> team, and especially Hood Chatham and Gyeongjae Choi for their help in getting the in-browser version of <b>choreo</b> up and running.<br>
+    &nbsp - Beta testers #TODO <br>
   </div>
   <div class="w3-container MainTab Geom_Bodies" style="display:none">
     <h2>Bodies definition</h2>

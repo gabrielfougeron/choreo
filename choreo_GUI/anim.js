@@ -151,10 +151,6 @@ function canvasApp() {
 		  animate: true
 		});
 		
-		//style existing buttons
-		$(".buttonType1").button();
-		$(".buttonType2").button();
-		
 		tIncMin = 0.001;
 		tIncMax = 0.07;
 
@@ -259,7 +255,7 @@ function canvasApp() {
 			//label for the button
 			var label = document.createElement('label');
 			label.setAttribute("for",input.id);
-			label.className = "radioLabel";
+			label.className = "radioLabel w3-button w3-hover-pale-red w3-light-grey";
 			label.innerHTML = dataObject.orbits[i].name;
 			
 			//add to DOM
@@ -624,18 +620,6 @@ function canvasApp() {
 		}
 		setTInc();
 		
-	}
-	
-	function setInfoText(windowObject) {
-		var infoHeader = windowObject.header;
-		var infoDescription = windowObject.description;
-		var infoComment = windowObject.comment;
-		// var headerSpan = document.getElementById("infoBoxHeader");
-		// var descriptionSpan = document.getElementById("infoBoxDescription");
-		// var commentSpan = document.getElementById("infoBoxComment");
-		// headerSpan.innerHTML = infoHeader;
-		// descriptionSpan.innerHTML = infoDescription;
-		// commentSpan.innerHTML = infoComment;
 	}
 	
 	//function to split arrays
