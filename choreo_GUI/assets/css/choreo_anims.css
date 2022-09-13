@@ -61,15 +61,29 @@ a {
 .panelGroup {
     margin-top:5px;
 }
+#speedTxt {
+    /* background-color:"black" ; */
+    color:black ;
+    display:inline-block ;
+    width:245px;
+    text-align:center;
+}
 #speedSlider {
     margin-top:5px;
-    width:150px;
+    margin-bottom:5px;
+    width:245px;
 }
 .buttonType1 {
-    font-size:11px;
+    /* font-size:11px; */
     margin-top:10px;
-    width:150px;
+    /* width:150px; */
     display:inline-block;
+}
+#startStopButton {
+    min-width:70px;
+}
+#trajectoryButton {
+    min-width:170px;
 }
 .buttonType2 {
     font-size:11px;
@@ -81,7 +95,7 @@ a {
 }
 #orbitSelect {
     width:150px;
-    margin-bottom:10px;
+    margin-bottom:130px;
 }
 #radioContainer {
     width:211px;
