@@ -10,7 +10,14 @@ a {
     text-decoration:none;
 } */
 #caption {position:absolute; width:480px; text-align:center; top:480px; z-index:1}
-.radioLabel {font-family:Arial, Helvetica, sans-serif; color:#ddd; font-size:11px; width:190px; text-align:left;}
+.radioLabel {
+    /* font-family:Arial, Helvetica, sans-serif; */
+    background-color:#ddd;
+    color:black;
+    /* font-size:11px; */
+    width:450px;
+    text-align:left;
+}
 #controlHeader {
     font-family: sans-serif;
     color:#ccc;
@@ -73,35 +80,33 @@ a {
     margin-bottom:5px;
     width:245px;
 }
-.buttonType1 {
-    /* font-size:11px; */
-    margin-top:10px;
-    /* width:150px; */
-    display:inline-block;
-}
 #startStopButton {
     min-width:70px;
 }
 #trajectoryButton {
     min-width:170px;
 }
-.buttonType2 {
-    font-size:11px;
-    width:70px;
+#btnPrevOrbit {
+    min-width:120px;
+    display:inline-block;
+}
+#btnNextOrbit {
+    min-width:120px;
+    display:inline-block;
 }
 #navButtons {
-    width:195px;
-    margin: 10px 0px 0px 30px;
+    width:480px;
+    text-align:center;
 }
 #orbitSelect {
     width:150px;
     margin-bottom:130px;
 }
 #radioContainer {
-    width:211px;
+    width:480px;
     margin-top:5px;
     padding: 0px 0px 0px 9px;
-    height:230px;
+    height:480px;
     position:relative;
     overflow:auto;
 }

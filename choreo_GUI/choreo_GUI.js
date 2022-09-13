@@ -52,7 +52,7 @@ function OnWindowResize(){
 
     } else {
         CommandBody.style.position = "";
-        CommandBody.style.marginLeft = "0px";
+        CommandBody.style.marginLeft = "10px";
         CommandBody.style.bottom = "0px";
     }
 
