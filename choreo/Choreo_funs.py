@@ -113,6 +113,18 @@ def ComputeAllPos(x,callfun,nint=None):
 
     return all_pos_b
 
+def ComputeAllLoopPos(x,callfun,nint=None):
+    # Returns the positions of all bodies.
+
+    if nint is None:
+        args=callfun[0]
+        nint = args['nint_list'][args["current_cvg_lvl"]]
+
+    all_coeffs_c = Unpackage_all_coeffs(x,callfun).view(dtype=np.complex128)[...,0]
+    all_pos = the_irfft(all_coeffs_c,n=nint,axis=2)*nint
+
+    return all_pos
+
 def ComputeAllPosVel(x,callfun,nint=None):
     # Returns the positions and velocities of all bodies along the path.
 

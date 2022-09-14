@@ -41,6 +41,8 @@ from choreo.Choreo_funs import Compute_action,Compute_hash_action,Compute_Newton
 from choreo.Choreo_funs import Compute_MinDist,Detect_Escape
 from choreo.Choreo_funs import Unpackage_all_coeffs
 from choreo.Choreo_funs import ComputeAllPos
+
+import json
     
 Action_msg = 'Value of the Action : '
 Action_msg_len = len(Action_msg)
@@ -711,7 +713,8 @@ def Check_Duplicates(x,callfun,hash_dict,store_folder,duplicate_eps):
     
     return Found_duplicate,file_path
 
-def Write_PlotInfo(callfun,filename):
+def Write_PlotInfo(x,callfun,filename,extend=0.03):
+
     args = callfun[0]
 
     nloop = args['nloop']
@@ -720,22 +723,25 @@ def Write_PlotInfo(callfun,filename):
     Targets = args['Targets']
     SpaceRotsUn = args['SpaceRotsUn']
     
+    c_coeffs = Unpackage_all_coeffs(x,callfun).view(dtype=np.complex128)[...,0]
+    
+    nint = args['nint_list'][args["current_cvg_lvl"]]
 
-    c_coeffs = all_coeffs.view(dtype=np.complex128)[...,0]
+    all_pos = np.zeros((nloop,ndim,nint),dtype=np.float64)
+    all_pos = the_irfft(c_coeffs,n=nint,axis=2)*nint
     
-    all_pos = np.zeros((nloop,ndim,nint_plot+1),dtype=np.float64)
-    all_pos[:,:,0:nint_plot] = the_irfft(c_coeffs,n=nint_plot,axis=2)*nint_plot
-    all_pos[:,:,nint_plot] = all_pos[:,:,0]
-    
-    all_pos_b = np.zeros((nbody,ndim,nint_plot+1),dtype=np.float64)
+    all_pos_b = np.zeros((nbody,ndim,nint),dtype=np.float64)
     
     for il in range(nloop):
         for ib in range(loopnb[il]):
-            for iint in range(nint_plot+1):
+            for iint in range(nint):
                 # exact time is irrelevant
                 all_pos_b[Targets[il,ib],:,iint] = np.dot(SpaceRotsUn[il,ib,:,:],all_pos[il,:,iint])
 
-
+    xmin = all_pos_b[:,0,:].min()
+    xmax = all_pos_b[:,0,:].max()
+    ymin = all_pos_b[:,1,:].min()
+    ymax = all_pos_b[:,1,:].max()
 
     xinf = xmin - extend*(xmax-xmin)
     xsup = xmax + extend*(xmax-xmin)
@@ -754,15 +760,22 @@ def Write_PlotInfo(callfun,filename):
     yinf = ymid - hside
     ysup = ymid + hside
 
-    # Plot-related
-    fig = plt.figure()
-    fig.set_size_inches(fig_size)
-    fig.set_dpi(dpi)
-    ax = plt.gca()
+    PlotInfo_dict = {}
+
+    PlotInfo_dict["xinf"] = xinf
+    PlotInfo_dict["xsup"] = xsup
+    PlotInfo_dict["yinf"] = yinf
+    PlotInfo_dict["ysup"] = ysup
     
-    ax.axis('off')
-    ax.set_xlim([xinf, xsup])
-    ax.set_ylim([yinf, ysup ])
-    ax.set_aspect('equal', adjustable='box')
-    plt.tight_layout()
+    PlotInfo_dict["nloop"] = nloop
+    PlotInfo_dict["nbody"] = nbody
+    PlotInfo_dict["loopnb"] = loopnb.tolist()
+    PlotInfo_dict["Targets"] = Targets.tolist()
+    PlotInfo_dict["SpaceRotsUn"] = SpaceRotsUn.tolist()
+    PlotInfo_dict["mass"] = args["mass"].tolist()
+
+    with open(filename, "w") as jsonFile:
+        jsonString = json.dumps(PlotInfo_dict, indent=4, sort_keys=False)
+        jsonFile.write(jsonString)
+    
     

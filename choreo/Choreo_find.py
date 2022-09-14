@@ -83,7 +83,9 @@ def Find_Choreo(
     n_save_pos,
     Save_All_Coeffs,
     Save_All_Pos,
+    Save_All_Loop_Pos,
     Save_Init_Pos_Vel_Sol,
+    Save_PlotInfo,
     mul_coarse_to_fine,
     ):
     """
@@ -435,16 +437,27 @@ def Find_Choreo(
                             all_pos_b = ComputeAllPos(best_sol.x,callfun,n_save_pos)
 
                         np.save(filename_output+'_pos_'+str(n_save_pos)+'.npy',all_pos_b)
-                        # print(all_pos_b.shape)
-                        all_pos_b = all_pos_b.reshape(-1,all_pos_b.shape[2])
 
-                        np.savetxt(filename_output+'_pos_'+str(n_save_pos)+'.txt',all_pos_b)
+                    if Save_All_Loop_Pos:
+
+                        if n_save_pos is None:
+                            all_pos = ComputeAllLoopPos(best_sol.x,callfun)
+                        elif n_save_pos == 'auto':
+                            # TODO : implement auto
+                            all_pos = ComputeAllLoopPos(best_sol.x,callfun)
+                        else:
+                            all_pos = ComputeAllLoopPos(best_sol.x,callfun,n_save_pos)
+
+                        np.save(filename_output+'_loop_pos_'+str(n_save_pos)+'.npy',all_pos)
 
                     if Save_Init_Pos_Vel_Sol:
                         
                         all_pos_b = Compute_init_pos_vel(best_sol.x,callfun)
                         np.save(filename_output+'_init.npy',all_coeffs)
 
+                    if Save_PlotInfo:
+
+                        Write_PlotInfo(best_sol.x,callfun,filename_output+"_plotinfo.json")
                 
                 if GoOn and NeedsRefinement:
                     

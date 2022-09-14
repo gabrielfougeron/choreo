@@ -1,10 +1,37 @@
 
 let npyjs_obj = new npyjs();
 
-npyjs_obj.load("choreo-gallery/eight.npy").then((res) => {
-    console.log(res.data);
-});
+// npyjs_obj.load("choreo-gallery/eight.npy").then((res) => {
+    // console.log(res.data);
+// });
 
+function GetFileBaseExt(filename) {
+
+	var dotidx = filename.lastIndexOf('.')+1;
+
+	var base = filename.substring(0,dotidx-1);
+	var ext = filename.substring(dotidx-1, filename.length);
+
+	return [base,ext]
+
+}
+
+async function ListFilesInFolder(folder){
+
+	var FilesArray = [];
+
+	$.ajax({
+		url: folder,
+		success: function(data){
+			$(data).find("li > a").each(function(){
+				FilesArray.push(folder+this.innerHTML);
+			})
+		}           
+	});
+
+	return FilesArray;
+
+}
 
 
 function trace(message) {
@@ -140,9 +167,6 @@ function canvasApp() {
 		staticOrbitMinDrawDistance = 2;
 		
 		setColorLookupList();
-		
-		//The line below is commented out because I decided to keep it simple and load the JSON within a separate JavaScript file.
-		//getJSON("test.json", setData);
 		
 		setData(testData);
 		
@@ -702,5 +726,34 @@ function canvasApp() {
 		numOrbits = jsonData.orbits.length;
 		populateOrbitRadioButtons(dataObject);
 	}
-	
+
+	async function LoadGallery() {
+			
+		var gallery_folder = '/choreo-gallery/'
+
+		// Populates AllPosFilenames and AllPlotInfoFilenames based on the *.npy present in gallery_folder WITH NO CONSISTENCY CHECK
+		var AllPosFilenames = [];
+		var AllPlotInfoFilenames = [];
+
+		$.ajax({
+			url: gallery_folder,
+			success: function(data){
+				$(data).find("li > a").each(function(){
+
+					[base,ext] = GetFileBaseExt(this.innerHTML);
+
+					if (ext == ".npy") {
+						AllPosFilenames.push(gallery_folder+this.innerHTML);
+						AllPlotInfoFilenames.push(gallery_folder+base+'.json');
+					}
+				})
+			}           
+		});
+
+
+
+	}
+
+	LoadGallery() ;
+
 }
