@@ -1,4 +1,12 @@
 
+let npyjs_obj = new npyjs();
+
+npyjs_obj.load("choreo-gallery/eight.npy").then((res) => {
+    console.log(res.data);
+});
+
+
+
 function trace(message) {
 	try {
 		console.log(message);
@@ -473,9 +481,6 @@ function canvasApp() {
 			orbitLayerContext.lineTo(staticOrbitDrawPointsX[i], staticOrbitDrawPointsY[i]);
 			orbitLayerContext.stroke();
 
-			// staticOrbitDrawPointsX[i] = pixX;
-			// staticOrbitDrawPointsY[i] = pixY;
-			// 
 			staticOrbitDrawPointsX[i] = pixX;
 			staticOrbitDrawPointsY[i] = pixY;
 		}
@@ -483,6 +488,7 @@ function canvasApp() {
 
 	function drawAllSegments() {
 		
+		clearScreen();
 		setStartPositions();
 		
 		n_strokes = Math.floor((2*Math.PI / tInc)) + 1 ;
