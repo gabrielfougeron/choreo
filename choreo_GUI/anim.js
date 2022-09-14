@@ -75,6 +75,9 @@ function canvasApp() {
 	
 	var trajectoryButton = document.getElementById("trajectoryButton");
 	trajectoryButton.addEventListener("click", trajectoryButtonHandler, true);
+
+	var drawTrajButton = document.getElementById("drawTrajButton");
+	drawTrajButton.addEventListener("click", drawTrajButtonHandler, true);
 	
 	var btnNextOrbit = document.getElementById("btnNextOrbit");
 	btnNextOrbit.addEventListener("click", nextOrbit, true);
@@ -84,7 +87,7 @@ function canvasApp() {
 	
 	//requestAnimationFrame shim for multiple browser compatibility by Eric Möller,
 	//http://my.opera.com/emoller/blog/2011/12/20/requestanimationframe-for-smart-er-animating
-	//For an alternate version, also see http://www.paulirish.com/2011/requestanimationframe-for-smart-animating/ 
+	//For an alternate version, also see http://www.paulirish.com/2011/requestanimationframe-for-smart-animating/.checked 
 	(function() {
 		var lastTime = 0;
 		var vendors = ['ms', 'moz', 'webkit', 'o'];
@@ -227,7 +230,7 @@ function canvasApp() {
 		//animate scroll:
 		$('#radioContainer').animate({scrollTop:scrollAmount + "px"});
 		
-		
+
 		//set orbit
 		setOrbit(currentIndex);
 	}
@@ -346,8 +349,12 @@ function canvasApp() {
 		}
 	}
 
-	
+	function drawTrajButtonHandler(e) {
+		drawAllSegments();
+	}
+
 	function onTimer() {
+
 		if (trajectoriesOn) {
 			//fade
 			context.fillStyle = fadeScreenColor;
@@ -461,10 +468,34 @@ function canvasApp() {
 			pixY = yPixRate*(p.y - yMax);
 			
 			orbitLayerContext.beginPath();
-			orbitLayerContext.moveTo(endPixX[i],endPixY[i]);
+			// orbitLayerContext.moveTo(endPixX[i],endPixY[i]);
+			orbitLayerContext.moveTo(pixX,pixY);
 			orbitLayerContext.lineTo(staticOrbitDrawPointsX[i], staticOrbitDrawPointsY[i]);
 			orbitLayerContext.stroke();
+
+			// staticOrbitDrawPointsX[i] = pixX;
+			// staticOrbitDrawPointsY[i] = pixY;
+			// 
+			staticOrbitDrawPointsX[i] = pixX;
+			staticOrbitDrawPointsY[i] = pixY;
 		}
+	}
+
+	function drawAllSegments() {
+		
+		setStartPositions();
+		
+		n_strokes = Math.floor((2*Math.PI / tInc)) + 1 ;
+
+		for (i_stroke = 0; i_stroke < n_strokes; i_stroke++) {
+
+			time = (time + tInc) % (2*Math.PI);
+
+			drawLastSegments();
+			setParticlePositions(time);
+		
+		}
+
 	}
 	
 	function drawParticles() {
