@@ -196,13 +196,25 @@ function canvasApp() {
 	
 	function incrementOrbit(inc) {
 		//find out what is checked
-		currentIndex = $('input[name=orbitGroup]:checked').index('input[name=orbitGroup]');
-		currentIndex = (currentIndex + inc + numOrbits) % numOrbits;
+		oldIndex = $('input[name=orbitGroup]:checked').index('input[name=orbitGroup]');
+		currentIndex = (oldIndex + inc + numOrbits) % numOrbits;
 		
+		orbitGroups = $('input[name=orbitGroup]')
+		// make old grey
+		mylabel = orbitGroups[oldIndex].getAttribute("mylabel")
+		thelabel=$("label[id="+mylabel+"]")["0"];			
+		thelabel.classList.remove('w3-red');
+		thelabel.classList.add('w3-light-grey');
+		// make new red
+		mylabel = orbitGroups[currentIndex].getAttribute("mylabel")
+		thelabel=$("label[id="+mylabel+"]")["0"];			
+		thelabel.classList.add('w3-red');
+		thelabel.classList.remove('w3-light-grey');
+
 		//make new selection
-		$('input[name=orbitGroup]')[currentIndex].checked = true;
+		orbitGroups[currentIndex].checked = true;
 		$("#orbitRadio").buttonset('refresh');
-		
+
 		//scroll
 		//how much is currently scrolled:
 		var currentScroll = $('#radioContainer').scrollTop();
