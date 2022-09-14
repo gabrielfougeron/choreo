@@ -269,9 +269,6 @@ function GatherConfigDict() {
 }
 
 function ClickLoadConfigFile(files) {
-
-    // console.log(files)
-
     files = [...files];
     files.forEach(LoadConfigFile);
 }
@@ -298,7 +295,7 @@ function previewFile(file) {
 
 async function LoadConfigFile(the_file) {
 
-    // console.log(the_file)
+    console.log(the_file)
 
     var txt = await the_file.text();
 
