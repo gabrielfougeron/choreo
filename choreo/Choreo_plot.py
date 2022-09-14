@@ -711,4 +711,58 @@ def Check_Duplicates(x,callfun,hash_dict,store_folder,duplicate_eps):
     
     return Found_duplicate,file_path
 
+def Write_PlotInfo(callfun,filename):
+    args = callfun[0]
+
+    nloop = args['nloop']
+    nbody = args['nbody']
+    loopnb = args['loopnb']
+    Targets = args['Targets']
+    SpaceRotsUn = args['SpaceRotsUn']
+    
+
+    c_coeffs = all_coeffs.view(dtype=np.complex128)[...,0]
+    
+    all_pos = np.zeros((nloop,ndim,nint_plot+1),dtype=np.float64)
+    all_pos[:,:,0:nint_plot] = the_irfft(c_coeffs,n=nint_plot,axis=2)*nint_plot
+    all_pos[:,:,nint_plot] = all_pos[:,:,0]
+    
+    all_pos_b = np.zeros((nbody,ndim,nint_plot+1),dtype=np.float64)
+    
+    for il in range(nloop):
+        for ib in range(loopnb[il]):
+            for iint in range(nint_plot+1):
+                # exact time is irrelevant
+                all_pos_b[Targets[il,ib],:,iint] = np.dot(SpaceRotsUn[il,ib,:,:],all_pos[il,:,iint])
+
+
+
+    xinf = xmin - extend*(xmax-xmin)
+    xsup = xmax + extend*(xmax-xmin)
+    
+    yinf = ymin - extend*(ymax-ymin)
+    ysup = ymax + extend*(ymax-ymin)
+    
+    hside = max(xsup-xinf,ysup-yinf)/2
+
+    xmid = (xinf+xsup)/2
+    ymid = (yinf+ysup)/2
+
+    xinf = xmid - hside
+    xsup = xmid + hside
+
+    yinf = ymid - hside
+    ysup = ymid + hside
+
+    # Plot-related
+    fig = plt.figure()
+    fig.set_size_inches(fig_size)
+    fig.set_dpi(dpi)
+    ax = plt.gca()
+    
+    ax.axis('off')
+    ax.set_xlim([xinf, xsup])
+    ax.set_ylim([yinf, ysup ])
+    ax.set_aspect('equal', adjustable='box')
+    plt.tight_layout()
     
