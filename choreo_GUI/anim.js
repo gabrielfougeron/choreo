@@ -269,9 +269,6 @@ function canvasApp() {
 
 		//make new selection
 		orbitGroups[currentIndex].checked = true;
-		$("#orbitRadio").buttonset('refresh');
-
-		//scroll
 		//how much is currently scrolled:
 		var currentScroll = $('#radioContainer').scrollTop();
 		//the current position of the selected radio button:
@@ -283,7 +280,6 @@ function canvasApp() {
 		//animate scroll:
 		$('#radioContainer').animate({scrollTop:scrollAmount + "px"});
 		
-
 		//set orbit
 		setOrbit(currentIndex);
 	}
@@ -306,6 +302,8 @@ function canvasApp() {
 
 	function AddNewOrbit(orbitRadio,dataObject,i) {
 
+
+		console.log(i)
 		numOrbits = numOrbits + 1;
 
 		//radio button
@@ -347,7 +345,7 @@ function canvasApp() {
 		orbitRadio.appendChild(input);
 		orbitRadio.appendChild(label);
 		orbitRadio.appendChild(document.createElement('br'));
-
+		
 	}
 
 	function populateOrbitRadioButtons(dataObject) {
@@ -363,7 +361,6 @@ function canvasApp() {
 			AddNewOrbit(orbitRadio,dataObject,i)
 
 		}
-
 
 		$('label:first', "#orbitRadio").removeClass('w3-light-grey').addClass('w3-red');
 		//changes button rounded corner style to fit vertical alignment style
