@@ -13,7 +13,7 @@
 <link rel="stylesheet" href="./assets/css/choreo_GUI.css">
 
 
-<!-- <script type="module" src="assets/js/npy.js"></script> -->
+
 <script src="assets/js/npy.js"></script>
 
 
@@ -29,6 +29,7 @@
 
 
 <script src="orbit_data.js"></script>
+<!-- <script src="orbit_data_small.js"></script> -->
 <script src="anim.js" type="text/javascript"></script>
 <script type="text/javascript">
 window.addEventListener("load", windowLoadHandler, false);
@@ -96,6 +97,7 @@ window.addEventListener("drop",function(e){
       <button id="startStopButton"  class="w3-button w3-hover-pale-red w3-light-grey">Stop</button>
       <button id="trajectoryButton" class="w3-button w3-hover-pale-red w3-light-grey">Hide trajectories</button>
       <button id="drawTrajButton" class="w3-button w3-hover-pale-red w3-light-grey">Draw trajectories</button>
+      <button id="AddOrbitButton" class="w3-button w3-hover-pale-red w3-light-grey">Add Orbit</button>
     </div>
   </div>
 </div>
@@ -342,8 +344,6 @@ window.addEventListener("drop",function(e){
 OnWindowResize()
 
 ClickLeftTabBtn('Launch');
-
-// document.getElementById("LoadConfigFileDropArea").addEventListener('drop', DropConfigFile, false);
 
 SlideNReconvergeItMax();
 
