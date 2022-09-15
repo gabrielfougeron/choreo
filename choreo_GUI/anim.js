@@ -1,4 +1,7 @@
 
+
+function AjaxGet(foldername){ return $.ajax({ url: foldername})}
+
 let npyjs_obj = new npyjs();
 
 // npyjs_obj.load("choreo-gallery/eight.npy").then((res) => {
@@ -313,11 +316,12 @@ function canvasApp() {
 			
 			if (i_remove == Checked_idx) {
 
-				if (i_remove == 0) {
-					incrementOrbit(1);
-				}else{	
+				if (i_remove == (numOrbits-1)) {
 					incrementOrbit(-1);
+				} else {	
+					incrementOrbit(1);
 				}
+
 			}
 
 			$('input[name=orbitGroup]:eq('+i_remove+')').remove();
@@ -383,9 +387,7 @@ function canvasApp() {
 		var orbitRadio = document.getElementById("orbitRadio");
 
 		for (i = 0; i < n_orbits_add; i++) {
-
-			AddNewOrbit(orbitRadio,dataObject,i)
-
+			AddNewOrbit(orbitRadio,dataObject,i);
 		}
 
 		$('label:first', "#orbitRadio").removeClass('w3-light-grey').addClass('w3-red');
@@ -799,24 +801,61 @@ function canvasApp() {
 		// Populates AllPosFilenames and AllPlotInfoFilenames based on the *.npy present in gallery_folder WITH NO CONSISTENCY CHECK
 		var AllPosFilenames = [];
 		var AllPlotInfoFilenames = [];
+		var AllPos = [];
+		var AllPlotInfo = [];
 
-		$.ajax({
-			url: gallery_folder,
-			success: function(data){
-				$(data).find("li > a").each(function(){
+		
+		await AjaxGet(gallery_folder)
+		.then((res)=>$(res)
+		.find("li > a")
+		.each(function(){
 
-					[base,ext] = GetFileBaseExt(this.innerHTML);
+			[base,ext] = GetFileBaseExt(this.innerHTML);
 
-					if (ext == ".npy") {
-						AllPosFilenames.push(gallery_folder+this.innerHTML);
-						AllPlotInfoFilenames.push(gallery_folder+base+'.json');
-					}
+			if (ext == ".npy") {
+									
+				var npy_filename = gallery_folder+this.innerHTML;
+				var json_filename = gallery_folder+base+'.json';
+
+				AllPosFilenames.push(npy_filename);
+				AllPlotInfoFilenames.push(json_filename);
+			}
+
+		}));
+
+		console.log(AllPosFilenames);
+
+		finished = []
+
+		for (var i = 0; i < AllPosFilenames.length; i++) {
+		
+			npy_filename = AllPosFilenames[i]
+		
+			finished.push(
+				npyjs_obj.load(npy_filename)
+				.then((res) => {
+					AllPos.push(res.data);
 				})
-			}           
-		});
+			);
+		}
 
+		for (var i = 0; i < AllPlotInfoFilenames.length; i++) {
+	
+			json_filename = AllPlotInfoFilenames[i]
 
+			finished.push(
+				fetch(json_filename)
+				.then(response => response.text())
+				.then(data => {
+					AllPlotInfo.push(JSON.parse(data));
+				})
+			);
+		}
 
+		await Promise.all(finished);
+		console.log(AllPos);
+
+		
 	}
 
 	LoadGallery() ;
