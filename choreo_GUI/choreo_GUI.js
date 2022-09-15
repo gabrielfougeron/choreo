@@ -642,7 +642,7 @@ function ClickAddBodyLoop() {
         {
         "elem_class":"input", 
         "type":"number", 
-        "value":"5",
+        "value":"3",
         "min":"1",
         "oninput":"RedistributeBodyCount",
         },

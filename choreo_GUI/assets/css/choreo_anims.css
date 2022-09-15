@@ -48,27 +48,6 @@ a {
     width:443px;
     margin-left: 10px;
 }
-   
-#titleDoubleColumn {
-    float:left;
-    width:443px;
-    height:40px;
-}
-.panelDoubleColumn {
-    width:443px;
-}
-.panelColumn1 {
-    /* float:left; */
-    /* width:158px; */
-    /* padding:10px 10px 10px 10px; */
-}
-.panelColumn2 {
-    /* float:right; */
-    /* width:220px; */
-}
-.panelGroup {
-    margin-top:5px;
-}
 #speedTxt {
     /* background-color:"black" ; */
     color:black ;
@@ -110,5 +89,8 @@ a {
     height:480px;
     position:relative;
     overflow:auto;
+}
+.radioInvisible {
+    display:none;
 }
 
