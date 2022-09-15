@@ -118,6 +118,9 @@ function canvasApp() {
 	var AddOrbitButton = document.getElementById("AddOrbitButton");
 	AddOrbitButton.addEventListener("click", AddOrbitButtonHandler, true);
 	
+	var RemoveOrbitButton = document.getElementById("RemoveOrbitButton");
+	RemoveOrbitButton.addEventListener("click", RemoveOrbitButtonHandler, true);
+	
 	var btnNextOrbit = document.getElementById("btnNextOrbit");
 	btnNextOrbit.addEventListener("click", nextOrbit, true);
 	
@@ -253,7 +256,7 @@ function canvasApp() {
 	function incrementOrbit(inc) {
 		//find out what is checked
 		oldIndex = $('input[name=orbitGroup]:checked').index('input[name=orbitGroup]');
-		currentIndex = (oldIndex + inc + numOrbits) % numOrbits;
+		currentIndex = (oldIndex + inc + numOrbits) % numOrbits; // negative number handling
 		
 		orbitGroups = $('input[name=orbitGroup]')
 		// make old grey
@@ -280,8 +283,10 @@ function canvasApp() {
 		//animate scroll:
 		$('#radioContainer').animate({scrollTop:scrollAmount + "px"});
 		
+		current_value = orbitGroups[currentIndex].getAttribute("value")
+
 		//set orbit
-		setOrbit(currentIndex);
+		setOrbit(current_value);
 	}
 	
 	function nextOrbit(evt) {
@@ -300,10 +305,32 @@ function canvasApp() {
 		yPixRate = displayHeight/(yMin - yMax);
 	}
 
+	function RemoveOrbit(i_remove) {
+
+		if (numOrbits > 1) {
+
+			Checked_idx = $('input[name=orbitGroup]:checked').index('input[name=orbitGroup]');
+			
+			if (i_remove == Checked_idx) {
+
+				if (i_remove == 0) {
+					incrementOrbit(1);
+				}else{	
+					incrementOrbit(-1);
+				}
+			}
+
+			$('input[name=orbitGroup]:eq('+i_remove+')').remove();
+			$('.radioLabel:eq('+i_remove+')').remove();
+			
+			numOrbits = numOrbits - 1
+
+		}
+	
+	}
+
 	function AddNewOrbit(orbitRadio,dataObject,i) {
 
-
-		console.log(i)
 		numOrbits = numOrbits + 1;
 
 		//radio button
@@ -327,7 +354,7 @@ function canvasApp() {
 
 		input.addEventListener("change",function() {
 
-			$("label").filter(".w3-red").each(function(i, obj) {
+			$("label").filter(".w3-red").each(function(j, obj) {
 				obj.classList.remove('w3-red');
 				obj.classList.add('w3-light-grey');
 			});
@@ -344,7 +371,6 @@ function canvasApp() {
 		//add to DOM
 		orbitRadio.appendChild(input);
 		orbitRadio.appendChild(label);
-		orbitRadio.appendChild(document.createElement('br'));
 		
 	}
 
@@ -363,10 +389,6 @@ function canvasApp() {
 		}
 
 		$('label:first', "#orbitRadio").removeClass('w3-light-grey').addClass('w3-red');
-		//changes button rounded corner style to fit vertical alignment style
-		// $('label:first', "#orbitRadio").removeClass('ui-corner-left').addClass('ui-corner-top')
-		// $('label:last', "#orbitRadio").removeClass('ui-corner-right').addClass('ui-corner-bottom');
-
 		$('label:first', "#orbitRadio").removeClass('ui-corner-left')
 		$('label:last', "#orbitRadio").removeClass('ui-corner-right')
 
@@ -421,6 +443,13 @@ function canvasApp() {
 		i = numOrbits;
 		var orbitRadio = document.getElementById("orbitRadio");
 		AddNewOrbit(orbitRadio,jsonData,i)
+	}
+
+	function RemoveOrbitButtonHandler(e) {
+
+		i_remove = $('input[name=orbitGroup]:checked').index('input[name=orbitGroup]');
+
+		RemoveOrbit(i_remove)
 	}
 
 	function onTimer() {
