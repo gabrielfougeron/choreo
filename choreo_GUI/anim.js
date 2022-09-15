@@ -100,6 +100,7 @@ function canvasApp() {
 	var particleLayerContext = particleLayerCanvas.getContext("2d");
 	
 	var orbitLayerCanvas = document.getElementById("orbitLayerCanvas");
+	particleLayerCanvas.addEventListener("click", startStopButtonHandler, true);
 	var orbitLayerContext = orbitLayerCanvas.getContext("2d");
 	
 	var displayWidth = displayCanvas.width;
@@ -113,6 +114,9 @@ function canvasApp() {
 
 	var drawTrajButton = document.getElementById("drawTrajButton");
 	drawTrajButton.addEventListener("click", drawTrajButtonHandler, true);
+	
+	var AddOrbitButton = document.getElementById("AddOrbitButton");
+	AddOrbitButton.addEventListener("click", AddOrbitButtonHandler, true);
 	
 	var btnNextOrbit = document.getElementById("btnNextOrbit");
 	btnNextOrbit.addEventListener("click", nextOrbit, true);
@@ -151,23 +155,40 @@ function canvasApp() {
 	init();
 	
 	function init() {
+		// Particle radius
 		particleRad = 5.5;
+		// particleRad = 10;
+
+		// with of particle trail
 		trailWidth = 2;
-		// bgColor = "#000000";
+
+
+		// Background color
 		bgColor = "#F1F1F1";
-		fadeScreenColor = "rgba(255,255,255,0.02)";
+
+		// Speed of fade inversly prop to alpha channel here
+		fadeScreenColor = "rgba(255,255,255,0.01)";
 		// fadeScreenColor = "rgba(0,0,0,0)";
+
+		// Color of orbits below
 		// staticOrbitColor = "rgba(130,180,270,0.3)";
 		staticOrbitColor = "rgba(130,180,270,0.3)";
 		// staticOrbitColor = "rgba(255,0,255,0.8)"; //TESTING
+
+		// Width of orbits below
 		staticOrbitWidth = trailWidth;
+
+		// defaults when colors are not defined
 		defaultParticleColor = "#ee6600";
 		defaultTrailColor = "#dd5500";
 		
+
 		staticOrbitMinDrawDistance = 2;
+		// staticOrbitMinDrawDistance = .2;
 		
 		setColorLookupList();
-		
+
+		// Loads everything from the fake JSON
 		setData(testData);
 		
 		trajectoriesOn = true;
@@ -282,61 +303,75 @@ function canvasApp() {
 		xPixRate = displayWidth/(xMax - xMin);
 		yPixRate = displayHeight/(yMin - yMax);
 	}
-	
+
+	function AddNewOrbit(orbitRadio,dataObject,i) {
+
+		numOrbits = numOrbits + 1;
+
+		//radio button
+		var input = document.createElement('input');
+		input.type = "radio";
+		input.value = i;
+		input.id = "radio"+i;
+		if (i == 0) {
+			input.checked = "checked";
+		}
+		input.name = "orbitGroup";
+		input.className = "radioInvisible";
+
+		//label for the button
+		var label = document.createElement('label');
+		label.id = "label"+i;
+		label.setAttribute("for",input.id);
+		input.setAttribute("mylabel",label.id)
+		label.className = "radioLabel w3-button w3-hover-pale-red w3-light-grey ";
+		label.innerHTML = dataObject.orbits[i].name;
+
+		input.addEventListener("change",function() {
+
+			$("label").filter(".w3-red").each(function(i, obj) {
+				obj.classList.remove('w3-red');
+				obj.classList.add('w3-light-grey');
+			});
+
+			mylabel = this.getAttribute("mylabel");
+			thelabel=$("label[id="+mylabel+"]")["0"];			
+			thelabel.classList.add('w3-red');
+			thelabel.classList.remove('w3-light-grey');
+
+			setOrbit(this.value);
+
+		});
+		
+		//add to DOM
+		orbitRadio.appendChild(input);
+		orbitRadio.appendChild(label);
+		orbitRadio.appendChild(document.createElement('br'));
+
+	}
+
 	function populateOrbitRadioButtons(dataObject) {
 		var i;
-		numOrbits = dataObject.orbits.length;
+		numOrbits = 0;
+		// numOrbits = dataObject.orbits.length;
+		var n_orbits_add = 3
+
 		var orbitRadio = document.getElementById("orbitRadio");
-		for (i = 0; i < numOrbits; i++) {
-			
-			//radio button
-			var input = document.createElement('input');
-			input.type = "radio";
-    		input.value = i;
-			input.id = "radio"+i;
-			if (i == 0) {
-				input.checked = "checked";
-			}
-			input.name = "orbitGroup";
 
-			//label for the button
-			var label = document.createElement('label');
-			label.id = "label"+i;
-			label.setAttribute("for",input.id);
-			input.setAttribute("mylabel",label.id)
-			label.className = "radioLabel w3-button w3-hover-pale-red w3-light-grey ";
-			label.innerHTML = dataObject.orbits[i].name;
-			
-			//add to DOM
-			orbitRadio.appendChild(input);
-    		orbitRadio.appendChild(label);
-			orbitRadio.appendChild(document.createElement('br'));
+		for (i = 0; i < n_orbits_add; i++) {
+
+			AddNewOrbit(orbitRadio,dataObject,i)
+
 		}
-		
-		//jQuery: convert radio button group to buttonset.
-		$("#orbitRadio").buttonset();
 
-		$("input[name='orbitGroup']").on('change',
-        	function() {
-
-				$("label").filter(".w3-red").each(function(i, obj) {
-					obj.classList.remove('w3-red');
-					obj.classList.add('w3-light-grey');
-				});
-
-				mylabel = this.getAttribute("mylabel")
-				thelabel=$("label[id="+mylabel+"]")["0"];			
-				thelabel.classList.add('w3-red');
-				thelabel.classList.remove('w3-light-grey');
-
-				setOrbit(this.value);
-        	}
-    	);	
 
 		$('label:first', "#orbitRadio").removeClass('w3-light-grey').addClass('w3-red');
 		//changes button rounded corner style to fit vertical alignment style
-		$('label:first', "#orbitRadio").removeClass('ui-corner-left').addClass('ui-corner-top').addClass('w3-red');
-		$('label:last', "#orbitRadio").removeClass('ui-corner-right').addClass('ui-corner-bottom');
+		// $('label:first', "#orbitRadio").removeClass('ui-corner-left').addClass('ui-corner-top')
+		// $('label:last', "#orbitRadio").removeClass('ui-corner-right').addClass('ui-corner-bottom');
+
+		$('label:first', "#orbitRadio").removeClass('ui-corner-left')
+		$('label:last', "#orbitRadio").removeClass('ui-corner-right')
 
 	}
 	
@@ -383,6 +418,12 @@ function canvasApp() {
 
 	function drawTrajButtonHandler(e) {
 		drawAllSegments();
+	}
+
+	function AddOrbitButtonHandler(e) {
+		i = numOrbits;
+		var orbitRadio = document.getElementById("orbitRadio");
+		AddNewOrbit(orbitRadio,jsonData,i)
 	}
 
 	function onTimer() {
@@ -627,8 +668,6 @@ function canvasApp() {
 		var orbitObject = jsonData.orbits[orbitIndex];
 		
 		setPlotWindow(orbitObject.plotWindow);
-		
-		// setInfoText(orbitObject.info);
 		
 		numParticles = orbitObject.numParticles;
 		
