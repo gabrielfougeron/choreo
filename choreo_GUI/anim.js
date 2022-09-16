@@ -99,15 +99,15 @@ function canvasApp() {
 	
 	var trajectoryButton = document.getElementById("trajectoryButton");
 	trajectoryButton.addEventListener("click", trajectoryButtonHandler, true);
-
-	var drawTrajButton = document.getElementById("drawTrajButton");
-	drawTrajButton.addEventListener("click", drawTrajButtonHandler, true);
+// 
+// 	var drawTrajButton = document.getElementById("drawTrajButton");
+// 	drawTrajButton.addEventListener("click", drawTrajButtonHandler, true);
 	
-	var AddOrbitButton = document.getElementById("AddOrbitButton");
-	AddOrbitButton.addEventListener("click", AddOrbitButtonHandler, true);
-	
-	var RemoveOrbitButton = document.getElementById("RemoveOrbitButton");
-	RemoveOrbitButton.addEventListener("click", RemoveOrbitButtonHandler, true);
+	// var AddOrbitButton = document.getElementById("AddOrbitButton");
+	// AddOrbitButton.addEventListener("click", AddOrbitButtonHandler, true);
+	// 
+	// var RemoveOrbitButton = document.getElementById("RemoveOrbitButton");
+	// RemoveOrbitButton.addEventListener("click", RemoveOrbitButtonHandler, true);
 	
 	var btnNextOrbit = document.getElementById("btnNextOrbit");
 	btnNextOrbit.addEventListener("click", nextOrbit, true);
@@ -209,7 +209,7 @@ function canvasApp() {
 		});
 		
 		tIncMin = 0.0001;
-		tIncMax = 0.007;
+		tIncMax = 0.001;
 
 		time = 0
 
@@ -788,6 +788,8 @@ function canvasApp() {
 
 		var Gallery_description;
 
+		console.log(gallery_filename)
+
 		await fetch(gallery_filename)
 			.then(response => response.text())
 			.then(data => {
@@ -803,6 +805,8 @@ function canvasApp() {
 		}
 
 		n_init_gallery_orbits = AllPosFilenames.length;
+
+		console.log(AllPlotInfoFilenames)
 
 		// Load all files asynchronously, keeping promises
 
