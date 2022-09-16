@@ -1,19 +1,6 @@
-function GetPos(Array,np,il,ip) {
-	// Probably the ugliest code I've ever written
-	
-	var ix = ip +  2*il    * np;
-	var iy = ip + (2*il+1) * np;
-
-	return [Array[ix],Array[iy]];
-}
-
 function AjaxGet(foldername){ return $.ajax({ url: foldername})}
 
 let npyjs_obj = new npyjs();
-
-// npyjs_obj.load("choreo-gallery/eight.npy").then((res) => {
-    // console.log(res.data);
-// });
 
 function GetFileBaseExt(filename) {
 
@@ -221,8 +208,8 @@ function canvasApp() {
 		  animate: true
 		});
 		
-		tIncMin = 0.001;
-		tIncMax = 0.07;
+		tIncMin = 0.0001;
+		tIncMax = 0.007;
 
 		time = 0
 
@@ -233,7 +220,7 @@ function canvasApp() {
 		
 		orbitDrawStartTime = orbitDrawTime = time = 0;
 		
-		// startAnimation();
+		startAnimation();
 	}
 	
 	function setColorLookupList() {
@@ -508,7 +495,7 @@ function canvasApp() {
 		particleLayerContext.clearRect(0,0,displayWidth+1,displayHeight+1);
 	}
 	
-	async function makeParticles(colors) {
+	function makeParticles(colors) {
 		var i;
 		
 		particles = [];
@@ -536,16 +523,13 @@ function canvasApp() {
 			particles.push(p);
 		}
 
-		await Promise.all(particles);
-		console.log("toto",particles);
-
 		setParticlePositions(time);
 		resetLastPositions();
 	}
 	
 	function resetLastPositions() {
 		//set initial last positions
-		for (i = 0; i<numParticles; i++) {
+		for (i = 0; i<PlotInfo["nbody"]; i++) {
 			particles[i].lastX = particles[i].x;
 			particles[i].lastY = particles[i].y;
 		}
@@ -559,8 +543,8 @@ function canvasApp() {
 		endPixY = [];
 		staticOrbitDrawPointsX = [];
 		staticOrbitDrawPointsY = [];
-		for (i = 0; i<numParticles; i++) {
-			j = (i + 1) % numParticles;
+		for (i = 0; i<PlotInfo["nbody"]; i++) {
+			j = (i + 1) % PlotInfo["nbody"];
 			pixX = xPixRate*(particles[j].x - xMin);
 			pixY = yPixRate*(particles[j].y - yMax);
 			endPixX.push(pixX);
@@ -578,7 +562,7 @@ function canvasApp() {
 		orbitLayerContext.strokeStyle = staticOrbitColor;
 		orbitLayerContext.lineWidth = staticOrbitWidth;
 
-		for (i = 0; i < numParticles; i++) {
+		for (i = 0; i < PlotInfo["nbody"]; i++) {
 			p = particles[i];
 			pixX = xPixRate*(p.x - xMin);
 			pixY = yPixRate*(p.y - yMax);
@@ -685,10 +669,11 @@ function canvasApp() {
 
 		var n_pos = Pos.shape[2]
 
-		var xlm,xlp,ylm,ylp;
+		var xlm=0,xlp=0,ylm=0,ylp=0;
 		var xmid,ymid;
 		var xrot,yrot;
 
+		var ix,iy;
 		var il,ib,ilb,nlb;
 		var tb;
 
@@ -703,26 +688,25 @@ function canvasApp() {
 			
 			for (ilb = 0 ; ilb < nlb ; ilb++){
 
-				ib = PlotInfo['Targets'][il,ilb];
+				ib = PlotInfo['Targets'][il][ilb];
 
-				tb = PlotInfo['TimeRevsUn'][il,ilb] * (t - PlotInfo['TimeShiftNumUn'][il,ilb] / PlotInfo['TimeShiftDenUn'][il,ilb]);
+				tb = ( PlotInfo['TimeRevsUn'][il][ilb] * (t - PlotInfo['TimeShiftNumUn'][il][ilb] / PlotInfo['TimeShiftDenUn'][il][ilb]) +1) % 1;
 
 				tbn = tb*n_pos;
 				im = Math.floor(tbn);
-				trem = im - tbn;
+				trem = tbn - im;
 				ip = (im+1) % n_pos;
-				
-				[xlm,ylm] = GetPos(Pos.data,n_pos,il,im)
-				[xlp,ylp] = GetPos(Pos.data,n_pos,il,ip)
 
+				xlm = Pos.data[ im +  2*il    * n_pos] ;
+				ylm = Pos.data[ im + (2*il+1) * n_pos] ;
+				xlp = Pos.data[ ip +  2*il    * n_pos] ;
+				ylp = Pos.data[ ip + (2*il+1) * n_pos] ;
+			
 				xmid = (1-trem) * xlm + trem * xlp;
 				ymid = (1-trem) * ylm + trem * ylp;
 
-				xrot = PlotInfo['SpaceRotsUn'][il,ilb,0,0] * xmid + PlotInfo['SpaceRotsUn'][il,ilb,0,1] * ymid 
-				yrot = PlotInfo['SpaceRotsUn'][il,ilb,1,0] * xmid + PlotInfo['SpaceRotsUn'][il,ilb,1,1] * ymid 
-
-				console.log(particles[ib].x);
-				console.log(particles[ib].y);
+				xrot = PlotInfo['SpaceRotsUn'][il][ilb][0][0] * xmid + PlotInfo['SpaceRotsUn'][il][ilb][0][1] * ymid 
+				yrot = PlotInfo['SpaceRotsUn'][il][ilb][1][0] * xmid + PlotInfo['SpaceRotsUn'][il][ilb][1][1] * ymid 
 				
 				particles[ib].lastX = particles[ib].x;
 				particles[ib].lastY = particles[ib].y;
@@ -747,9 +731,6 @@ function canvasApp() {
 		
 		Pos = AllPos[orbitIndex];
 		PlotInfo = AllPlotInfo[orbitIndex];
-		
-		console.log(orbitIndex);
-		console.log(PlotInfo);
 
 		plotWindow = {
 			xMin : PlotInfo["xinf"],
@@ -798,24 +779,6 @@ function canvasApp() {
 		}
 		setTInc();
 		
-	}
-	
-	//function to split arrays
-	function separateArray(array) {
-		var returnObj = {even: [], odd: []};
-		var i;
-		var len = array.length;
-		for (i = 0; i < len; i = i + 2) {
-			returnObj.even.push(array[i]);
-			returnObj.odd.push(array[i+1]);
-		}
-		return returnObj;
-	}	
-	
-	function setData(dataObject) {
-		jsonData = dataObject;
-		numOrbits = jsonData.orbits.length;
-		populateOrbitRadioButtons(dataObject);
 	}
 
 	async function LoadGallery() {

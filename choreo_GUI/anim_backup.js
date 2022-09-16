@@ -523,6 +523,9 @@ function canvasApp() {
 			}
 			particles.push(p);
 		}
+
+		console.log("particles");
+		console.log(particles);
 		
 		setParticlePositions(time);
 		resetLastPositions();
