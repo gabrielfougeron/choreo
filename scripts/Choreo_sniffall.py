@@ -65,7 +65,7 @@ def main(the_i=0):
         'name'  : 'C',
         'n'     : nc ,
         'm'     : 1 ,
-        'l'     : 0,
+        'l'     : 1,
         'k'     : 1,
         'p'     : p,
         'q'     : nc,
@@ -268,9 +268,9 @@ if __name__ == "__main__":
 
 # if __name__ == "__main__":
 # 
-#     # n = multiprocessing.cpu_count()
+#     n = multiprocessing.cpu_count()
 #     # n = multiprocessing.cpu_count()//2-1
-#     n = 10
+#     # n = 10
 #     
 #     print(f"Executing with {n} workers")
 #     

@@ -114,7 +114,7 @@ def ComputeAllPos(x,callfun,nint=None):
     return all_pos_b
 
 def ComputeAllLoopPos(x,callfun,nint=None):
-    # Returns the positions of all bodies.
+    # Returns the positions of all loops, not bodies.
 
     if nint is None:
         args=callfun[0]
