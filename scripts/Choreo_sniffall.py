@@ -57,7 +57,7 @@ def main(the_i=0):
     # nbpl=[5]
     # nbpl=[1,1,1]
     # nbpl=[2,3,5]
-    nbpl=[5]
+    nbpl=[3,2]
 
     # the_lcm = m.lcm(*nbpl)
 
@@ -71,18 +71,18 @@ def main(the_i=0):
     #     'p'     : 1,
     #     'q'     : 2,
     # })
-    SymType.append({
-        'name'  : 'D',
-        'n'     : nc ,
-        'm'     : 1 ,
-        'l'     : 1,
-        'k'     : 1,
-        'p'     : 1,
-        'q'     : 5,
-    })
+    # SymType.append({
+    #     'name'  : 'D',
+    #     'n'     : nc ,
+    #     'm'     : 1 ,
+    #     'l'     : 1,
+    #     'k'     : 1,
+    #     'p'     : 1,
+    #     'q'     : 5,
+    # })
 
-    # Sym_list,nbody = choreo.Make2DChoreoSymManyLoops(nbpl=nbpl,SymName=SymName)
-    Sym_list,nbody = choreo.Make2DChoreoSymManyLoops(nbpl=nbpl,SymType=SymType)
+    Sym_list,nbody = choreo.Make2DChoreoSymManyLoops(nbpl=nbpl,SymName=SymName)
+    # Sym_list,nbody = choreo.Make2DChoreoSymManyLoops(nbpl=nbpl,SymType=SymType)
 # 
 #     Sym_list.append(choreo.ChoreoSym(
 #         LoopTarget=0,
