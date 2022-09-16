@@ -1,4 +1,11 @@
+function GetPos(Array,np,il,ip) {
+	// Probably the ugliest code I've ever written
+	
+	var ix = ip +  2*il    * np;
+	var iy = ip + (2*il+1) * np;
 
+	return [Array[ix],Array[iy]];
+}
 
 function AjaxGet(foldername){ return $.ajax({ url: foldername})}
 
@@ -53,18 +60,10 @@ function windowLoadHandler() {
 function canvasApp() {
 		
 	var particles;
-	var numParticles;
-	var orbitName;
-	var jsonData;
+
 	var numOrbits;
-	var xSinFreq;
-	var xCosFreq;
-	var ySinFreq;
-	var yCosFreq;
-	var xSinCoeff;
-	var xCosCoeff;
-	var ySinCoeff;
-	var yCosCoeff;
+
+
 	var tInc;
 	var tIncMin, tIncMax;
 	var xMin, xMax, yMin, yMax;
@@ -79,7 +78,6 @@ function canvasApp() {
 	var trajectoriesOn;
 	var colorLookup;
 	var defaultParticleColor;
-	var timeFactor;
 	var staticOrbitColor;
 	var staticOrbitWidth;
 	var trailColorLookup;
@@ -129,6 +127,14 @@ function canvasApp() {
 	
 	var btnPrevOrbit = document.getElementById("btnPrevOrbit");
 	btnPrevOrbit.addEventListener("click", prevOrbit, true);
+
+	var AllPosFilenames = [];
+	var AllPlotInfoFilenames = [];
+	var AllPos = [];
+	var AllPlotInfo = [];
+
+	var Pos;
+	var PlotInfo;
 	
 	//requestAnimationFrame shim for multiple browser compatibility by Eric Möller,
 	//http://my.opera.com/emoller/blog/2011/12/20/requestanimationframe-for-smart-er-animating
@@ -160,14 +166,13 @@ function canvasApp() {
 	
 	init();
 	
-	function init() {
+	async function init() {
 		// Particle radius
 		particleRad = 5.5;
 		// particleRad = 10;
 
 		// with of particle trail
 		trailWidth = 2;
-
 
 		// Background color
 		bgColor = "#F1F1F1";
@@ -188,14 +193,17 @@ function canvasApp() {
 		defaultParticleColor = "#ee6600";
 		defaultTrailColor = "#dd5500";
 		
-
 		staticOrbitMinDrawDistance = 2;
 		// staticOrbitMinDrawDistance = .2;
 		
 		setColorLookupList();
 
 		// Loads everything from the fake JSON
-		setData(testData);
+		// setData(testData);
+
+		// Load the static gallery
+		// # TODO : understand promises here better.
+		await LoadGallery();
 		
 		trajectoriesOn = true;
 		drawingStaticOrbit = true;
@@ -216,12 +224,16 @@ function canvasApp() {
 		tIncMin = 0.001;
 		tIncMax = 0.07;
 
+		time = 0
+
 		//set first orbit (includes makeParticles)
+		// console.log(PromiseGalleryLoaded[0])
+		// await PromiseGalleryLoaded[0];
 		setOrbit(0);
 		
 		orbitDrawStartTime = orbitDrawTime = time = 0;
 		
-		startAnimation();
+		// startAnimation();
 	}
 	
 	function setColorLookupList() {
@@ -333,7 +345,8 @@ function canvasApp() {
 	
 	}
 
-	function AddNewOrbit(orbitRadio,dataObject,i) {
+	// function AddNewOrbit(orbitRadio,dataObject,i) {
+	function AddNewOrbit(orbitRadio,orbit_name,i) {
 
 		numOrbits = numOrbits + 1;
 
@@ -354,7 +367,7 @@ function canvasApp() {
 		label.setAttribute("for",input.id);
 		input.setAttribute("mylabel",label.id)
 		label.className = "radioLabel w3-button w3-hover-pale-red w3-light-grey ";
-		label.innerHTML = dataObject.orbits[i].name;
+		label.innerHTML = orbit_name;
 
 		input.addEventListener("change",function() {
 
@@ -395,6 +408,7 @@ function canvasApp() {
 		$('label:last', "#orbitRadio").removeClass('ui-corner-right')
 
 	}
+	
 	
 	function startAnimation() {
 		running = true;
@@ -467,7 +481,7 @@ function canvasApp() {
 		
 		if (drawingStaticOrbit) {
 			orbitDrawTime += tInc;
-			if (orbitDrawTime > orbitDrawStartTime + 2*Math.PI/numParticles) {
+			if (orbitDrawTime > orbitDrawStartTime + 1) {
 				//stop drawing orbit
 				drawingStaticOrbit = false;
 				//draw last segments
@@ -475,7 +489,7 @@ function canvasApp() {
 			}
 		}		
 		
-		time = (time + tInc) % (2*Math.PI);
+		time = (time + tInc) % (1);
 		
 		//update particles
 		setParticlePositions(time);
@@ -494,13 +508,12 @@ function canvasApp() {
 		particleLayerContext.clearRect(0,0,displayWidth+1,displayHeight+1);
 	}
 	
-	function makeParticles(colors) {
+	async function makeParticles(colors) {
 		var i;
 		
 		particles = [];
 		
-		for (i = 0; i<numParticles; i++) {
-			var phase = Math.PI*2*i/numParticles;
+		for (i = 0; i<PlotInfo['nbody']; i++) {
 			var color;
 			var trailColor;
 			if (i<colors.length) {
@@ -517,13 +530,15 @@ function canvasApp() {
 					y: 0,
 					lastX: 0,
 					lastY: 0,
-					phase: phase,
 					color: color,
 					trailColor: trailColor
 			}
 			particles.push(p);
 		}
-		
+
+		await Promise.all(particles);
+		console.log("toto",particles);
+
 		setParticlePositions(time);
 		resetLastPositions();
 	}
@@ -584,11 +599,11 @@ function canvasApp() {
 		clearScreen();
 		setStartPositions();
 		
-		n_strokes = Math.floor((2*Math.PI / tInc)) + 1 ;
+		n_strokes = Math.floor((1 / tInc)) + 1 ;
 
 		for (i_stroke = 0; i_stroke < n_strokes; i_stroke++) {
 
-			time = (time + tInc) % (2*Math.PI);
+			time = (time + tInc) % (1);
 
 			drawLastSegments();
 			setParticlePositions(time);
@@ -658,101 +673,110 @@ function canvasApp() {
 	}
 	
 	function setParticlePositions(t) {
-		var i;
-		var len;
-		len = particles.length;
-		for (i = 0; i < len; i++) {
-			particles[i].lastX = particles[i].x;
-			particles[i].lastY = particles[i].y;
-			particles[i].x = fourierSum(t,xSinFreq, xSinCoeff, xCosFreq, xCosCoeff, particles[i].phase);
-			particles[i].y = fourierSum(t,ySinFreq, ySinCoeff, yCosFreq, yCosCoeff, particles[i].phase);
-		}
-	}
-	
-	function fourierSum(t,sinFreqs,sinCoeffs,cosFreqs,cosCoeffs,phaseShift) {
-		var i, len;
-		var sum = 0;
-		len = sinCoeffs.length;
-		for (i = 0; i < len; i++) {
-			sum += sinCoeffs[i]*Math.sin(sinFreqs[i]*(t + phaseShift));
-		}
-		len = cosCoeffs.length;
-		for (i = 0; i < len; i++) {
-			sum += cosCoeffs[i]*Math.cos(cosFreqs[i]*(t + phaseShift));
-		}
-		return sum;
-	}
+		// var i;
+		// var len;
+		// len = particles.length;
+		// for (i = 0; i < len; i++) {
+		// 	particles[i].lastX = particles[i].x;
+		// 	particles[i].lastY = particles[i].y;
+		// 	particles[i].x = fourierSum(t,xSinFreq, xSinCoeff, xCosFreq, xCosCoeff, particles[i].phase);
+		// 	particles[i].y = fourierSum(t,ySinFreq, ySinCoeff, yCosFreq, yCosCoeff, particles[i].phase);
+		// }
+
+		var n_pos = Pos.shape[2]
+
+		var xlm,xlp,ylm,ylp;
+		var xmid,ymid;
+		var xrot,yrot;
+
+		var il,ib,ilb,nlb;
+		var tb;
+
+		var im,ip,tbn,trem;
 		
+		im = Math.floor(t*n_pos)
+		ip = (im+1) % n_pos
+
+        for ( il = 0 ; il < PlotInfo['nloop'] ; il++){
+
+			nlb =  PlotInfo['loopnb'][il];
+			
+			for (ilb = 0 ; ilb < nlb ; ilb++){
+
+				ib = PlotInfo['Targets'][il,ilb];
+
+				tb = PlotInfo['TimeRevsUn'][il,ilb] * (t - PlotInfo['TimeShiftNumUn'][il,ilb] / PlotInfo['TimeShiftDenUn'][il,ilb]);
+
+				tbn = tb*n_pos;
+				im = Math.floor(tbn);
+				trem = im - tbn;
+				ip = (im+1) % n_pos;
+				
+				[xlm,ylm] = GetPos(Pos.data,n_pos,il,im)
+				[xlp,ylp] = GetPos(Pos.data,n_pos,il,ip)
+
+				xmid = (1-trem) * xlm + trem * xlp;
+				ymid = (1-trem) * ylm + trem * ylp;
+
+				xrot = PlotInfo['SpaceRotsUn'][il,ilb,0,0] * xmid + PlotInfo['SpaceRotsUn'][il,ilb,0,1] * ymid 
+				yrot = PlotInfo['SpaceRotsUn'][il,ilb,1,0] * xmid + PlotInfo['SpaceRotsUn'][il,ilb,1,1] * ymid 
+
+				console.log(particles[ib].x);
+				console.log(particles[ib].y);
+				
+				particles[ib].lastX = particles[ib].x;
+				particles[ib].lastY = particles[ib].y;
+				particles[ib].x = xrot;
+				particles[ib].y = yrot;
+				
+			}
+		
+		}
+
+	}
+
 	function speedSliderHandler() {
 		setTInc();	
 	}
 	
 	function setTInc() {
-		tInc = timeFactor*(tIncMin + (tIncMax - tIncMin)*$("#speedSlider").slider("value"));
+		tInc = (tIncMin + (tIncMax - tIncMin)*$("#speedSlider").slider("value"));
 	}
 	
 	function setOrbit(orbitIndex) {
 		
-		var orbitObject = jsonData.orbits[orbitIndex];
+		Pos = AllPos[orbitIndex];
+		PlotInfo = AllPlotInfo[orbitIndex];
 		
-		setPlotWindow(orbitObject.plotWindow);
-		
-		numParticles = orbitObject.numParticles;
-		
-		xSinFreq = [];
-		xCosFreq = [];
-		ySinFreq = [];
-		yCosFreq = [];
-		xSinCoeff = [];
-		xCosCoeff = [];
-		ySinCoeff = [];
-		yCosCoeff = [];
-		
-		var arrays;
-		
-		arrays = separateArray(orbitObject.x.sin);
-		xSinFreq = arrays.even.slice(0);
-		xSinCoeff = arrays.odd.slice(0);
-		
-		arrays = separateArray(orbitObject.x.cos);
-		xCosFreq = arrays.even.slice(0);
-		xCosCoeff = arrays.odd.slice(0);
-		
-		arrays = separateArray(orbitObject.y.sin);
-		ySinFreq = arrays.even.slice(0);
-		ySinCoeff = arrays.odd.slice(0);
-		
-		arrays = separateArray(orbitObject.y.cos);
-		yCosFreq = arrays.even.slice(0);
-		yCosCoeff = arrays.odd.slice(0);
+		console.log(orbitIndex);
+		console.log(PlotInfo);
+
+		plotWindow = {
+			xMin : PlotInfo["xinf"],
+			xMax : PlotInfo["xsup"],
+			yMin : PlotInfo["yinf"],
+			yMax : PlotInfo["ysup"],
+		}
+
+		setPlotWindow(plotWindow);
 		
 		var colors;
-		if (!orbitObject.colors) {
-			if (numParticles < colorLookup.length) {
-				//if fewer than color list, default will be to do different colors.
-				colors = [];
-				for (var i = 0; i < numParticles; i++) {
-					colors.push(i);
-				}
-			}
-			else {
-				//if more than color list, set to empty array,then default will be to make all same color.
-				colors = [];
+
+		if (PlotInfo['nbody'] < colorLookup.length) {
+			//if fewer than color list, default will be to do different colors.
+			colors = [];
+			for (var i = 0; i < PlotInfo['nbody']; i++) {
+				colors.push(i);
 			}
 		}
 		else {
-			colors = orbitObject.colors;
+			//if more than color list, set to empty array,then default will be to make all same color.
+			colors = [];
 		}
+
 		makeParticles(colors);
 		clearScreen();
 				
-		if (!orbitObject.length) {
-			timeFactor = 1;	
-		}
-		else {
-			timeFactor = (orbitObject.plotWindow.xMax - orbitObject.plotWindow.xMin)/orbitObject.length;
-		}
-		
 		time = 0;
 		
 		if (trajectoriesOn) {
@@ -799,10 +823,8 @@ function canvasApp() {
 		var gallery_folder = '/choreo-gallery/'
 
 		// Populates AllPosFilenames and AllPlotInfoFilenames based on the *.npy present in gallery_folder WITH NO CONSISTENCY CHECK
-		var AllPosFilenames = [];
-		var AllPlotInfoFilenames = [];
-		var AllPos = [];
-		var AllPlotInfo = [];
+
+		var AllInitGalleryNames = []
 
 		// Create list of available files in static gallery
 		await AjaxGet(gallery_folder)
@@ -819,16 +841,19 @@ function canvasApp() {
 
 				AllPosFilenames.push(npy_filename);
 				AllPlotInfoFilenames.push(json_filename);
+				AllInitGalleryNames.push(base.replace('_',' '));
 			}
 
 		}));
 
-		// Load all files asynchronously
+		n_init_gallery_orbits = AllPosFilenames.length;
+
+		// Load all files asynchronously, keeping promises
 
 		finished_npy = []
 		finished_json = []
 
-		for (var i = 0; i < AllPosFilenames.length; i++) {
+		for (var i = 0; i < n_init_gallery_orbits; i++) {
 		
 			npy_filename = AllPosFilenames[i]
 		
@@ -840,7 +865,7 @@ function canvasApp() {
 			);
 		}
 
-		for (var i = 0; i < AllPlotInfoFilenames.length; i++) {
+		for (var i = 0; i < n_init_gallery_orbits; i++) {
 	
 			json_filename = AllPlotInfoFilenames[i]
 
@@ -853,17 +878,31 @@ function canvasApp() {
 			);
 		}
 
-		// Wait only for the first one to be finished
-		await Promise.all([finished_npy[0],finished_json[0]]);
-		
-		console.log(AllPos[0]);
+		numOrbits = 0;
 
+		var orbitRadio = document.getElementById("orbitRadio");
 
-		
+		var FinalPromises = []
 
+		for (var i = 0; i < n_init_gallery_orbits; i++) {
+
+			PromiseDone = Promise.all([finished_npy[i],finished_json[i]]);
+
+			FinalPromises.push(PromiseDone);
+
+			// wait for files to be loaded
+			await PromiseDone ;
+
+			AddNewOrbit(orbitRadio,AllInitGalleryNames[i],i);
+		}
+
+		$('label:first', "#orbitRadio").removeClass('w3-light-grey').addClass('w3-red');
+		$('label:first', "#orbitRadio").removeClass('ui-corner-left')
+		$('label:last', "#orbitRadio").removeClass('ui-corner-right')
+
+		// return FinalPromises;
+		return FinalPromises[0];
 		
 	}
-
-	LoadGallery() ;
 
 }
