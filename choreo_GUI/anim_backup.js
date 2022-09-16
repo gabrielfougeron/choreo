@@ -695,6 +695,8 @@ function canvasApp() {
 		
 		var orbitObject = jsonData.orbits[orbitIndex];
 		
+		console.log(orbitObject.plotWindow);
+
 		setPlotWindow(orbitObject.plotWindow);
 		
 		numParticles = orbitObject.numParticles;
