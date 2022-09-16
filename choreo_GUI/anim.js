@@ -1,7 +1,5 @@
 function AjaxGet(foldername){ return $.ajax({ url: foldername})}
 
-let npyjs_obj = new npyjs();
-
 function GetFileBaseExt(filename) {
 
 	var dotidx = filename.lastIndexOf('.')+1;
@@ -119,9 +117,11 @@ function canvasApp() {
 	var AllPlotInfoFilenames = [];
 	var AllPos = [];
 	var AllPlotInfo = [];
+	var AllGalleryNames = [];
 
 	var Pos;
 	var PlotInfo;
+
 	
 	//requestAnimationFrame shim for multiple browser compatibility by Eric Möller,
 	//http://my.opera.com/emoller/blog/2011/12/20/requestanimationframe-for-smart-er-animating
@@ -191,6 +191,10 @@ function canvasApp() {
 		// Load the static gallery
 		// # TODO : understand promises here better.
 		await LoadGallery();
+
+		console.log("Finished loading Gallery")
+		console.log(AllPos)
+		// console.log(AllPlotInfo)
 		
 		trajectoriesOn = true;
 		drawingStaticOrbit = true;
@@ -333,7 +337,7 @@ function canvasApp() {
 	}
 
 	// function AddNewOrbit(orbitRadio,dataObject,i) {
-	function AddNewOrbit(orbitRadio,orbit_name,i) {
+	function AddNewOrbit(orbitRadio,i) {
 
 		numOrbits = numOrbits + 1;
 
@@ -354,7 +358,7 @@ function canvasApp() {
 		label.setAttribute("for",input.id);
 		input.setAttribute("mylabel",label.id)
 		label.className = "radioLabel w3-button w3-hover-pale-red w3-light-grey ";
-		label.innerHTML = orbit_name;
+		label.innerHTML = AllGalleryNames[i];
 
 		input.addEventListener("change",function() {
 
@@ -756,39 +760,9 @@ function canvasApp() {
 
 	async function LoadGallery() {
 			
-		var gallery_folder = '/choreo-gallery/'
 		var gallery_filename = "gallery_descriptor.json"
 
-		// Populates AllPosFilenames and AllPlotInfoFilenames based on the *.npy present in gallery_folder WITH NO CONSISTENCY CHECK
-
-		var AllInitGalleryNames = []
-
-		
-		// Create list of available files in static gallery
-
-		// Ajax version (not working online)
-// 		await AjaxGet(gallery_folder)
-// 		.then((res)=>$(res)
-// 		.find("li > a")
-// 		.each(function(){
-// 
-// 			[base,ext] = GetFileBaseExt(this.innerHTML);
-// 
-// 			if (ext == ".npy") {
-// 									
-// 				var npy_filename = gallery_folder+this.innerHTML;
-// 				var json_filename = gallery_folder+base+'.json';
-// 
-// 				AllPosFilenames.push(npy_filename);
-// 				AllPlotInfoFilenames.push(json_filename);
-// 				AllInitGalleryNames.push(base.replace('_',' '));
-// 			}
-// 
-// 		}));
-
 		var Gallery_description;
-
-		console.log(gallery_filename)
 
 		await fetch(gallery_filename)
 			.then(response => response.text())
@@ -800,68 +774,75 @@ function canvasApp() {
 
 				AllPosFilenames.push(path+'.npy');
 				AllPlotInfoFilenames.push(path+'.json');
-				AllInitGalleryNames.push(name);
+				AllGalleryNames.push(name);
 
 		}
 
 		n_init_gallery_orbits = AllPosFilenames.length;
 
-		console.log(AllPlotInfoFilenames)
-
 		// Load all files asynchronously, keeping promises
 
-		finished_npy = []
-		finished_json = []
+		console.log("reading ",n_init_gallery_orbits," orbits")
+
+		AllPos = new Array(n_init_gallery_orbits);
+		AllPlotInfo = new Array(n_init_gallery_orbits);
+
+		finished_npy = new Array(n_init_gallery_orbits);
+		finished_json = new Array(n_init_gallery_orbits);
 
 		for (var i = 0; i < n_init_gallery_orbits; i++) {
-		
+			
+			let npyjs_obj = new npyjs();
+
 			npy_filename = AllPosFilenames[i]
 		
-			finished_npy.push(
+			finished_npy[i] = 
 				npyjs_obj.load(npy_filename)
 				.then((res) => {
-					AllPos.push(res);
-				})
-			);
+					AllPos[i] = res;
+				});
+
+			await finished_npy[i];
 		}
 
 		for (var i = 0; i < n_init_gallery_orbits; i++) {
 	
 			json_filename = AllPlotInfoFilenames[i]
 
-			finished_json.push(
+			finished_json[i] = 
 				fetch(json_filename)
 				.then(response => response.text())
 				.then(data => {
-					AllPlotInfo.push(JSON.parse(data));
-				})
-			);
+					AllPlotInfo[i] = JSON.parse(data);
+				});
+
+			await finished_json[i];
 		}
 
 		numOrbits = 0;
 
 		var orbitRadio = document.getElementById("orbitRadio");
 
-		var FinalPromises = []
+		var FinalPromises = new Array(n_init_gallery_orbits);
 
 		for (var i = 0; i < n_init_gallery_orbits; i++) {
 
 			PromiseDone = Promise.all([finished_npy[i],finished_json[i]]);
 
-			FinalPromises.push(PromiseDone);
+			FinalPromises[i] = PromiseDone ;
 
 			// wait for files to be loaded
 			await PromiseDone ;
 
-			AddNewOrbit(orbitRadio,AllInitGalleryNames[i],i);
+			AddNewOrbit(orbitRadio,i);
 		}
 
 		$('label:first', "#orbitRadio").removeClass('w3-light-grey').addClass('w3-red');
 		$('label:first', "#orbitRadio").removeClass('ui-corner-left')
 		$('label:last', "#orbitRadio").removeClass('ui-corner-right')
 
-		// return FinalPromises;
-		return FinalPromises[0];
+		return Promise.all(FinalPromises);
+		// return FinalPromises[0];
 		
 	}
 
