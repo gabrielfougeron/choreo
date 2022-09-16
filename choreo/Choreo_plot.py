@@ -770,8 +770,13 @@ def Write_PlotInfo(x,callfun,filename,extend=0.03):
     PlotInfo_dict["nloop"] = nloop
     PlotInfo_dict["nbody"] = nbody
     PlotInfo_dict["loopnb"] = loopnb.tolist()
+
     PlotInfo_dict["Targets"] = Targets.tolist()
     PlotInfo_dict["SpaceRotsUn"] = SpaceRotsUn.tolist()
+    PlotInfo_dict["TimeRevsUn"] = args['TimeRevsUn'].tolist()
+    PlotInfo_dict["TimeShiftNumUn"] = args['TimeShiftNumUn'].tolist()
+    PlotInfo_dict["TimeShiftDenUn"] = args['TimeShiftDenUn'].tolist()
+
     PlotInfo_dict["mass"] = args["mass"].tolist()
 
     with open(filename, "w") as jsonFile:
