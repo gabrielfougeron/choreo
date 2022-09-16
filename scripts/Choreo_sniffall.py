@@ -49,38 +49,48 @@ def main(the_i=0):
     # mm_list = [1,2]
     # mm = mm_list[the_i%len(mm_list)]
 
-    # SymName = 'D'
+    SymName = 'C'
     # SymName = None
     LookForTarget = False
     # nbpl=[1,2,3,4,5,6]
-    nbpl=[nc]
+    # nbpl=[nc]
     # nbpl=[5]
     # nbpl=[1,1,1]
     # nbpl=[2,3,5]
+    nbpl=[5]
 
     # the_lcm = m.lcm(*nbpl)
 
     SymType = []
+    # SymType.append({
+    #     'name'  : 'C',
+    #     'n'     : nc ,
+    #     'm'     : 1 ,
+    #     'l'     : 1,
+    #     'k'     : 1,
+    #     'p'     : 1,
+    #     'q'     : 2,
+    # })
     SymType.append({
-        'name'  : 'C',
+        'name'  : 'D',
         'n'     : nc ,
         'm'     : 1 ,
         'l'     : 1,
         'k'     : 1,
-        'p'     : p,
-        'q'     : nc,
+        'p'     : 1,
+        'q'     : 5,
     })
 
     # Sym_list,nbody = choreo.Make2DChoreoSymManyLoops(nbpl=nbpl,SymName=SymName)
     Sym_list,nbody = choreo.Make2DChoreoSymManyLoops(nbpl=nbpl,SymType=SymType)
-
-    Sym_list.append(choreo.ChoreoSym(
-        LoopTarget=0,
-        LoopSource=0,
-        SpaceRot = np.array([[1,0],[0,-1]]),
-        TimeRev=-1,
-        TimeShift=fractions.Fraction(numerator=0,denominator=1)
-    ))
+# 
+#     Sym_list.append(choreo.ChoreoSym(
+#         LoopTarget=0,
+#         LoopSource=0,
+#         SpaceRot = np.array([[1,0],[0,-1]]),
+#         TimeRev=-1,
+#         TimeShift=fractions.Fraction(numerator=0,denominator=1)
+#     ))
 
     # SymType = {
     #     'name'  : 'D',
@@ -262,23 +272,23 @@ def main(the_i=0):
 
 
 # 
-if __name__ == "__main__":
-    main(0)
+# if __name__ == "__main__":
+    # main(0)
    
 
-# if __name__ == "__main__":
-# 
-#     n = multiprocessing.cpu_count()
-#     # n = multiprocessing.cpu_count()//2-1
-#     # n = 10
-#     
-#     print(f"Executing with {n} workers")
-#     
-#     with concurrent.futures.ProcessPoolExecutor(max_workers=n) as executor:
-#         
-#         res = []
-#         for i in range(1,n+1):
-#             res.append(executor.submit(main,i))
-#             time.sleep(0.01)
+if __name__ == "__main__":
+
+    n = multiprocessing.cpu_count()
+    # n = multiprocessing.cpu_count()//2-1
+    # n = 10
+    
+    print(f"Executing with {n} workers")
+    
+    with concurrent.futures.ProcessPoolExecutor(max_workers=n) as executor:
+        
+        res = []
+        for i in range(1,n+1):
+            res.append(executor.submit(main,i))
+            time.sleep(0.01)
 
  
