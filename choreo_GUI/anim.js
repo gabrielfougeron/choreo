@@ -1,3 +1,6 @@
+// Gallery_cache_behavior = {cache: "no-cache"}
+Gallery_cache_behavior = {}
+
 function AjaxGet(foldername){ return $.ajax({ url: foldername})}
 
 function GetFileBaseExt(filename) {
@@ -54,7 +57,7 @@ function canvasApp() {
 	var xMin, xMax, yMin, yMax;
 	var xPixRate, yPixRate;
 	var time;
-	var particleRad;
+	var particleRad_mul;
 	var bgColor;
 	var request;
 	var running;
@@ -155,8 +158,7 @@ function canvasApp() {
 	
 	async function init() {
 		// Particle radius
-		particleRad = 5.5;
-		// particleRad = 10;
+		particleRad_mul = 5.5;
 
 		// with of particle trail
 		trailWidth = 2;
@@ -170,7 +172,7 @@ function canvasApp() {
 
 		// Color of orbits below
 		// staticOrbitColor = "rgba(130,180,270,0.3)";
-		staticOrbitColor = "rgba(130,180,270,0.3)";
+		staticOrbitColor = "rgba(130,180,270,0.2)";
 		// staticOrbitColor = "rgba(255,0,255,0.8)"; //TESTING
 
 		// Width of orbits below
@@ -192,8 +194,8 @@ function canvasApp() {
 		// # TODO : understand promises here better.
 		await LoadGallery();
 
-		console.log("Finished loading Gallery")
-		console.log(AllPos)
+		// console.log("Finished loading Gallery")
+		// console.log(AllPos)
 		// console.log(AllPlotInfo)
 		
 		trajectoriesOn = true;
@@ -213,7 +215,7 @@ function canvasApp() {
 		});
 		
 		tIncMin = 0.0001;
-		tIncMax = 0.001;
+		tIncMax = 0.01;
 
 		time = 0
 
@@ -453,6 +455,8 @@ function canvasApp() {
 		
 		if (drawingStaticOrbit) {
 			orbitDrawTime += tInc;
+			// console.log(orbitDrawTime);
+
 			if (orbitDrawTime > orbitDrawStartTime + 1) {
 				//stop drawing orbit
 				drawingStaticOrbit = false;
@@ -482,7 +486,7 @@ function canvasApp() {
 	
 	function makeParticles(colors) {
 		var i;
-		
+
 		particles = [];
 		
 		for (i = 0; i<PlotInfo['nbody']; i++) {
@@ -503,7 +507,8 @@ function canvasApp() {
 					lastX: 0,
 					lastY: 0,
 					color: color,
-					trailColor: trailColor
+					trailColor: trailColor,
+					particleRad: Math.sqrt(PlotInfo["mass"][i]) * particleRad_mul
 			}
 			particles.push(p);
 		}
@@ -607,7 +612,7 @@ function canvasApp() {
 			particleLayerContext.lineWidth = 2;
 			particleLayerContext.fillStyle = p.color;
 			particleLayerContext.beginPath();
-			particleLayerContext.arc(pixX,pixY,particleRad+1,0,Math.PI*2,false);
+			particleLayerContext.arc(pixX,pixY,p.particleRad,0,Math.PI*2,false);
 			particleLayerContext.closePath();
 			particleLayerContext.fill();
 			particleLayerContext.stroke();
@@ -701,7 +706,11 @@ function canvasApp() {
 	}
 	
 	function setTInc() {
-		tInc = (tIncMin + (tIncMax - tIncMin)*$("#speedSlider").slider("value"));
+
+		var slider_value = $("#speedSlider").slider("value");
+		var alpha = slider_value*slider_value;
+
+		tInc = tIncMin + (tIncMax - tIncMin)*alpha;
 	}
 	
 	function setOrbit(orbitIndex) {
@@ -764,7 +773,7 @@ function canvasApp() {
 
 		var Gallery_description;
 
-		await fetch(gallery_filename)
+		await fetch(gallery_filename,Gallery_cache_behavior)
 			.then(response => response.text())
 			.then(data => {
 				Gallery_description = JSON.parse(data);
@@ -782,7 +791,7 @@ function canvasApp() {
 
 		// Load all files asynchronously, keeping promises
 
-		console.log("reading ",n_init_gallery_orbits," orbits")
+		// console.log("reading ",n_init_gallery_orbits," orbits")
 
 		AllPos = new Array(n_init_gallery_orbits);
 		AllPlotInfo = new Array(n_init_gallery_orbits);
@@ -810,7 +819,7 @@ function canvasApp() {
 			json_filename = AllPlotInfoFilenames[i]
 
 			finished_json[i] = 
-				fetch(json_filename)
+				fetch(json_filename,Gallery_cache_behavior)
 				.then(response => response.text())
 				.then(data => {
 					AllPlotInfo[i] = JSON.parse(data);
