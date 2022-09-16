@@ -377,25 +377,6 @@ function canvasApp() {
 		orbitRadio.appendChild(label);
 		
 	}
-
-	function populateOrbitRadioButtons(dataObject) {
-		var i;
-		numOrbits = 0;
-		// numOrbits = dataObject.orbits.length;
-		var n_orbits_add = 3
-
-		var orbitRadio = document.getElementById("orbitRadio");
-
-		for (i = 0; i < n_orbits_add; i++) {
-			AddNewOrbit(orbitRadio,dataObject,i);
-		}
-
-		$('label:first', "#orbitRadio").removeClass('w3-light-grey').addClass('w3-red');
-		$('label:first', "#orbitRadio").removeClass('ui-corner-left')
-		$('label:last', "#orbitRadio").removeClass('ui-corner-right')
-
-	}
-	
 	
 	function startAnimation() {
 		running = true;
@@ -476,7 +457,7 @@ function canvasApp() {
 			}
 		}		
 		
-		time = (time + tInc) % (1);
+		time = (time + tInc) % 1;
 		
 		//update particles
 		setParticlePositions(time);
@@ -657,15 +638,6 @@ function canvasApp() {
 	}
 	
 	function setParticlePositions(t) {
-		// var i;
-		// var len;
-		// len = particles.length;
-		// for (i = 0; i < len; i++) {
-		// 	particles[i].lastX = particles[i].x;
-		// 	particles[i].lastY = particles[i].y;
-		// 	particles[i].x = fourierSum(t,xSinFreq, xSinCoeff, xCosFreq, xCosCoeff, particles[i].phase);
-		// 	particles[i].y = fourierSum(t,ySinFreq, ySinCoeff, yCosFreq, yCosCoeff, particles[i].phase);
-		// }
 
 		var n_pos = Pos.shape[2]
 
@@ -696,7 +668,8 @@ function canvasApp() {
 				im = Math.floor(tbn);
 				trem = tbn - im;
 				ip = (im+1) % n_pos;
-
+				
+				// Super ugly
 				xlm = Pos.data[ im +  2*il    * n_pos] ;
 				ylm = Pos.data[ im + (2*il+1) * n_pos] ;
 				xlp = Pos.data[ ip +  2*il    * n_pos] ;
@@ -784,30 +757,50 @@ function canvasApp() {
 	async function LoadGallery() {
 			
 		var gallery_folder = '/choreo-gallery/'
+		var gallery_filename = "gallery_descriptor.json"
 
 		// Populates AllPosFilenames and AllPlotInfoFilenames based on the *.npy present in gallery_folder WITH NO CONSISTENCY CHECK
 
 		var AllInitGalleryNames = []
 
+		
 		// Create list of available files in static gallery
-		await AjaxGet(gallery_folder)
-		.then((res)=>$(res)
-		.find("li > a")
-		.each(function(){
 
-			[base,ext] = GetFileBaseExt(this.innerHTML);
+		// Ajax version (not working online)
+// 		await AjaxGet(gallery_folder)
+// 		.then((res)=>$(res)
+// 		.find("li > a")
+// 		.each(function(){
+// 
+// 			[base,ext] = GetFileBaseExt(this.innerHTML);
+// 
+// 			if (ext == ".npy") {
+// 									
+// 				var npy_filename = gallery_folder+this.innerHTML;
+// 				var json_filename = gallery_folder+base+'.json';
+// 
+// 				AllPosFilenames.push(npy_filename);
+// 				AllPlotInfoFilenames.push(json_filename);
+// 				AllInitGalleryNames.push(base.replace('_',' '));
+// 			}
+// 
+// 		}));
 
-			if (ext == ".npy") {
-									
-				var npy_filename = gallery_folder+this.innerHTML;
-				var json_filename = gallery_folder+base+'.json';
+		var Gallery_description;
 
-				AllPosFilenames.push(npy_filename);
-				AllPlotInfoFilenames.push(json_filename);
-				AllInitGalleryNames.push(base.replace('_',' '));
-			}
+		await fetch(gallery_filename)
+			.then(response => response.text())
+			.then(data => {
+				Gallery_description = JSON.parse(data);
+			})
 
-		}));
+		for (const [name, path] of Object.entries(Gallery_description)) {
+
+				AllPosFilenames.push(path+'.npy');
+				AllPlotInfoFilenames.push(path+'.json');
+				AllInitGalleryNames.push(name);
+
+		}
 
 		n_init_gallery_orbits = AllPosFilenames.length;
 
