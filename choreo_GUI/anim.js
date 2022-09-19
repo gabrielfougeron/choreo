@@ -187,17 +187,6 @@ function canvasApp() {
 		
 		setColorLookupList();
 
-		// Loads everything from the fake JSON
-		// setData(testData);
-
-		// Load the static gallery
-		// # TODO : understand promises here better.
-		await LoadGallery();
-
-		// console.log("Finished loading Gallery")
-		// console.log(AllPos)
-		// console.log(AllPlotInfo)
-		
 		trajectoriesOn = true;
 		drawingStaticOrbit = true;
 		
@@ -217,14 +206,10 @@ function canvasApp() {
 		tIncMin = 0.0001;
 		tIncMax = 0.01;
 
-		time = 0
-
-		//set first orbit (includes makeParticles)
-		// console.log(PromiseGalleryLoaded[0])
-		// await PromiseGalleryLoaded[0];
-		setOrbit(0);
-		
 		orbitDrawStartTime = orbitDrawTime = time = 0;
+
+		// Load the static gallery
+		LoadGallery();
 		
 		startAnimation();
 	}
@@ -338,10 +323,11 @@ function canvasApp() {
 	
 	}
 
-	// function AddNewOrbit(orbitRadio,dataObject,i) {
 	function AddNewOrbit(orbitRadio,i) {
 
 		numOrbits = numOrbits + 1;
+
+		console.log("Total number of orbits : ",numOrbits)
 
 		//radio button
 		var input = document.createElement('input');
@@ -485,11 +471,10 @@ function canvasApp() {
 	}
 	
 	function makeParticles(colors) {
-		var i;
 
 		particles = [];
 		
-		for (i = 0; i<PlotInfo['nbody']; i++) {
+		for (var i = 0; i<PlotInfo['nbody']; i++) {
 			var color;
 			var trailColor;
 			if (i<colors.length) {
@@ -654,7 +639,6 @@ function canvasApp() {
 		var xmid,ymid;
 		var xrot,yrot;
 
-		var ix,iy;
 		var il,ib,ilb,nlb;
 		var tb;
 
@@ -717,6 +701,8 @@ function canvasApp() {
 		
 		Pos = AllPos[orbitIndex];
 		PlotInfo = AllPlotInfo[orbitIndex];
+
+		console.log(PlotInfo);
 
 		plotWindow = {
 			xMin : PlotInfo["xinf"],
@@ -788,70 +774,47 @@ function canvasApp() {
 		}
 
 		n_init_gallery_orbits = AllPosFilenames.length;
+		numOrbits = 0;
+		var orbitRadio = document.getElementById("orbitRadio");
 
 		// Load all files asynchronously, keeping promises
 
-		// console.log("reading ",n_init_gallery_orbits," orbits")
-
 		AllPos = new Array(n_init_gallery_orbits);
 		AllPlotInfo = new Array(n_init_gallery_orbits);
-
-		finished_npy = new Array(n_init_gallery_orbits);
-		finished_json = new Array(n_init_gallery_orbits);
+		var finished_npy = new Array(n_init_gallery_orbits);
+		var finished_json = new Array(n_init_gallery_orbits);
 
 		for (var i = 0; i < n_init_gallery_orbits; i++) {
 			
 			let npyjs_obj = new npyjs();
 
-			npy_filename = AllPosFilenames[i]
-		
 			finished_npy[i] = 
-				npyjs_obj.load(npy_filename)
+				npyjs_obj.load(AllPosFilenames[i])
 				.then((res) => {
 					AllPos[i] = res;
 				});
 
-			await finished_npy[i];
-		}
-
-		for (var i = 0; i < n_init_gallery_orbits; i++) {
-	
-			json_filename = AllPlotInfoFilenames[i]
-
 			finished_json[i] = 
-				fetch(json_filename,Gallery_cache_behavior)
+				fetch(AllPlotInfoFilenames[i],Gallery_cache_behavior)
 				.then(response => response.text())
 				.then(data => {
 					AllPlotInfo[i] = JSON.parse(data);
 				});
 
+			// FinalPromises[i] = Promise.all([finished_npy[i],finished_json[i]]) ;
+
 			await finished_json[i];
-		}
-
-		numOrbits = 0;
-
-		var orbitRadio = document.getElementById("orbitRadio");
-
-		var FinalPromises = new Array(n_init_gallery_orbits);
-
-		for (var i = 0; i < n_init_gallery_orbits; i++) {
-
-			PromiseDone = Promise.all([finished_npy[i],finished_json[i]]);
-
-			FinalPromises[i] = PromiseDone ;
-
-			// wait for files to be loaded
-			await PromiseDone ;
+			await finished_npy[i];
 
 			AddNewOrbit(orbitRadio,i);
+			if (i==0){setOrbit(i);}
+
 		}
 
-		$('label:first', "#orbitRadio").removeClass('w3-light-grey').addClass('w3-red');
-		$('label:first', "#orbitRadio").removeClass('ui-corner-left')
-		$('label:last', "#orbitRadio").removeClass('ui-corner-right')
+		console.log('toto');
 
-		return Promise.all(FinalPromises);
-		// return FinalPromises[0];
+		$('label:first', "#orbitRadio").removeClass('w3-light-grey').addClass('w3-red');
+
 		
 	}
 
