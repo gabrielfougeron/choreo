@@ -775,22 +775,22 @@ function canvasApp() {
 		numOrbits = 0;
 		var orbitRadio = document.getElementById("orbitRadio");
 
-		// Load all files asynchronously, keeping promises
-
-		AllPos = []
-		AllPlotInfo = []
-
 		for (var i = 0; i < n_init_gallery_orbits; i++) {
 
 			AddNewOrbit(orbitRadio,i);
 
 		}
 
+		AllPos = new Array(n_init_gallery_orbits);
+		AllPlotInfo = new Array(n_init_gallery_orbits);
+
+		// Load all files asynchronously, keeping promises
+
 		for (var i = 0; i < n_init_gallery_orbits; i++) {
 			
 			let npyjs_obj = new npyjs();
 // 
-			let finished_npy= 
+			let finished_npy = 
 				npyjs_obj.load(AllPosFilenames[i])
 				.then((res) => {
 					AllPos[i] = res;
@@ -806,6 +806,8 @@ function canvasApp() {
 			await Promise.all([finished_npy ,finished_json ])
 
 			if (i==0) {
+
+				// await Promise.all([finished_npy ,finished_json ])
 
 				$('label:first', "#orbitRadio").removeClass('w3-light-grey').addClass('w3-red');
 				setOrbit(0);
