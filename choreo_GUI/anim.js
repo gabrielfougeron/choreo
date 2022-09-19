@@ -210,8 +210,9 @@ function canvasApp() {
 
 		// Load the static gallery
 		LoadGallery();
-		
-		startAnimation();
+
+		// startAnimation();
+
 	}
 	
 	function setColorLookupList() {
@@ -326,8 +327,6 @@ function canvasApp() {
 	function AddNewOrbit(orbitRadio,i) {
 
 		numOrbits = numOrbits + 1;
-
-		console.log("Total number of orbits : ",numOrbits)
 
 		//radio button
 		var input = document.createElement('input');
@@ -702,8 +701,6 @@ function canvasApp() {
 		Pos = AllPos[orbitIndex];
 		PlotInfo = AllPlotInfo[orbitIndex];
 
-		console.log(PlotInfo);
-
 		plotWindow = {
 			xMin : PlotInfo["xinf"],
 			xMax : PlotInfo["xsup"],
@@ -773,49 +770,49 @@ function canvasApp() {
 
 		}
 
+
 		n_init_gallery_orbits = AllPosFilenames.length;
 		numOrbits = 0;
 		var orbitRadio = document.getElementById("orbitRadio");
 
 		// Load all files asynchronously, keeping promises
 
-		AllPos = new Array(n_init_gallery_orbits);
-		AllPlotInfo = new Array(n_init_gallery_orbits);
-		var finished_npy = new Array(n_init_gallery_orbits);
-		var finished_json = new Array(n_init_gallery_orbits);
+		AllPos = []
+		AllPlotInfo = []
+
+		for (var i = 0; i < n_init_gallery_orbits; i++) {
+
+			AddNewOrbit(orbitRadio,i);
+
+		}
 
 		for (var i = 0; i < n_init_gallery_orbits; i++) {
 			
 			let npyjs_obj = new npyjs();
-
-			finished_npy[i] = 
+// 
+			let finished_npy= 
 				npyjs_obj.load(AllPosFilenames[i])
 				.then((res) => {
 					AllPos[i] = res;
 				});
 
-			finished_json[i] = 
+			let finished_json = 
 				fetch(AllPlotInfoFilenames[i],Gallery_cache_behavior)
 				.then(response => response.text())
 				.then(data => {
 					AllPlotInfo[i] = JSON.parse(data);
 				});
 
-			// FinalPromises[i] = Promise.all([finished_npy[i],finished_json[i]]) ;
+			await Promise.all([finished_npy ,finished_json ])
 
-			await finished_json[i];
-			await finished_npy[i];
+			if (i==0) {
 
-			AddNewOrbit(orbitRadio,i);
-			if (i==0){setOrbit(i);}
+				$('label:first', "#orbitRadio").removeClass('w3-light-grey').addClass('w3-red');
+				setOrbit(0);
+				
+				startAnimation();
 
+			}
 		}
-
-		console.log('toto');
-
-		$('label:first', "#orbitRadio").removeClass('w3-light-grey').addClass('w3-red');
-
-		
 	}
-
 }
