@@ -79,10 +79,10 @@ window.addEventListener("drop",function(e){
   <div id="AnimationAndControlBlock">
     <div id="AnimationBlock">
       <div id="canvasContainer" >
-        <canvas id="displayCanvas" width="480px" height="480px" style="position: absolute; z-index: 0;">
+        <canvas id="displayCanvas" width="480px" height="480px" style="position: absolute; z-index: 1;">
             Your browser does not support HTML5 canvas.
         </canvas>
-        <canvas id="orbitLayerCanvas" width="480px" height="480px" style="position: absolute; z-index: 1;"></canvas>
+        <canvas id="orbitLayerCanvas" width="480px" height="480px" style="position: absolute; z-index: 0;"></canvas>
         <canvas id="particleLayerCanvas" width="480px" height="480px" style="position: absolute; z-index: 2;"></canvas>
       </div>
     </div>
@@ -91,8 +91,8 @@ window.addEventListener("drop",function(e){
       <div id="speedSlider"></div>
       <button id="startStopButton"  class="w3-button w3-hover-pale-red w3-light-grey">Stop</button>
       <button id="trajectoryButton" class="w3-button w3-hover-pale-red w3-light-grey">Hide trajectories</button>
-      <!-- <button id="drawTrajButton" class="w3-button w3-hover-pale-red w3-light-grey">Draw trajectories</button>
-      <button id="AddOrbitButton" class="w3-button w3-hover-pale-red w3-light-grey">Add Orbit</button>
+      <button id="drawTrajButton" class="w3-button w3-hover-pale-red w3-light-grey">Draw trajectories</button>
+      <!-- <button id="AddOrbitButton" class="w3-button w3-hover-pale-red w3-light-grey">Add Orbit</button>
       <button id="RemoveOrbitButton" class="w3-button w3-hover-pale-red w3-light-grey">Remove Orbit</button> -->
     </div>
   </div>
