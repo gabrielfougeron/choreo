@@ -98,9 +98,9 @@ function canvasApp() {
 	
 	var trajectoryButton = document.getElementById("trajectoryButton");
 	trajectoryButton.addEventListener("click", trajectoryButtonHandler, true);
-// 
-// 	var drawTrajButton = document.getElementById("drawTrajButton");
-// 	drawTrajButton.addEventListener("click", drawTrajButtonHandler, true);
+
+	var drawTrajButton = document.getElementById("drawTrajButton");
+	drawTrajButton.addEventListener("click", drawTrajButtonHandler, true);
 	
 	// var AddOrbitButton = document.getElementById("AddOrbitButton");
 	// AddOrbitButton.addEventListener("click", AddOrbitButtonHandler, true);
@@ -172,9 +172,9 @@ function canvasApp() {
 		// Color of orbits below
 		// staticOrbitColor = "rgba(130,180,270,0.3)";
 		// staticOrbitColor = "rgba(130,180,270,0.2)";
-		// staticOrbitColor = "rgba(200,200,200,0.2)";
-		staticOrbitColor = "rgba(200,200,200,0.2)";
-		// staticOrbitColor = "rgba(255,0,255,0.8)"; //TESTING
+		// staticOrbitColor = "rgba(200,200,200,0.5)";
+		// staticOrbitColor = "rgba(200,200,200,0.0)";
+		staticOrbitColor = "rgba(255,0,255,0.8)"; //TESTING
 
 		// Width of orbits below
 		staticOrbitWidth = trailWidth;
@@ -607,19 +607,20 @@ function canvasApp() {
 				context.moveTo(lastPixX,lastPixY);
 				context.lineTo(pixX, pixY);
 				context.stroke();
+
 				
-				if (drawingStaticOrbit) {
-					orbitLayerContext.strokeStyle = staticOrbitColor;
-					orbitLayerContext.lineWidth = staticOrbitWidth;
-
-					orbitLayerContext.beginPath();
-					orbitLayerContext.moveTo(staticOrbitDrawPointsX[i],staticOrbitDrawPointsY[i]);
-					orbitLayerContext.lineTo(pixX, pixY);
-					orbitLayerContext.stroke();
-					staticOrbitDrawPointsX[i] = pixX;
-					staticOrbitDrawPointsY[i] = pixY;
-
-				}
+// 				if (drawingStaticOrbit) {
+// 					orbitLayerContext.strokeStyle = staticOrbitColor;
+// 					orbitLayerContext.lineWidth = staticOrbitWidth;
+// 
+// 					orbitLayerContext.beginPath();
+// 					orbitLayerContext.moveTo(staticOrbitDrawPointsX[i],staticOrbitDrawPointsY[i]);
+// 					orbitLayerContext.lineTo(pixX, pixY);
+// 					orbitLayerContext.stroke();
+// 					staticOrbitDrawPointsX[i] = pixX;
+// 					staticOrbitDrawPointsY[i] = pixY;
+// 
+// 				}
 			}
 		}
 
