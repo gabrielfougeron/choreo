@@ -77,8 +77,6 @@ function canvasApp() {
 	var staticOrbitDrawPointsX;
 	var staticOrbitDrawPointsY;
 	
-	var staticOrbitMinDrawDistance;
-	
 	var endPixX;
 	var endPixY;
 	
@@ -164,7 +162,8 @@ function canvasApp() {
 		trailWidth = 2;
 
 		// Background color
-		bgColor = "#F1F1F1";
+		// bgColor = "#F1F1F1";
+		bgColor = "rgb(241,241,241)";
 
 		// Speed of fade inversly prop to alpha channel here
 		fadeScreenColor = "rgba(255,255,255,0.01)";
@@ -172,7 +171,9 @@ function canvasApp() {
 
 		// Color of orbits below
 		// staticOrbitColor = "rgba(130,180,270,0.3)";
-		staticOrbitColor = "rgba(130,180,270,0.2)";
+		// staticOrbitColor = "rgba(130,180,270,0.2)";
+		// staticOrbitColor = "rgba(200,200,200,0.2)";
+		staticOrbitColor = "rgba(241,241,241,0.2)";
 		// staticOrbitColor = "rgba(255,0,255,0.8)"; //TESTING
 
 		// Width of orbits below
@@ -181,9 +182,6 @@ function canvasApp() {
 		// defaults when colors are not defined
 		defaultParticleColor = "#ee6600";
 		defaultTrailColor = "#dd5500";
-		
-		staticOrbitMinDrawDistance = 2;
-		// staticOrbitMinDrawDistance = .2;
 		
 		setColorLookupList();
 
@@ -613,17 +611,14 @@ function canvasApp() {
 				if (drawingStaticOrbit) {
 					orbitLayerContext.strokeStyle = staticOrbitColor;
 					orbitLayerContext.lineWidth = staticOrbitWidth;
-					
-					dx = staticOrbitDrawPointsX[i] - pixX;
-					dy = staticOrbitDrawPointsY[i] - pixY;
-					if (dx*dx + dy*dy > staticOrbitMinDrawDistance*staticOrbitMinDrawDistance) {				
-						orbitLayerContext.beginPath();
-						orbitLayerContext.moveTo(staticOrbitDrawPointsX[i],staticOrbitDrawPointsY[i]);
-						orbitLayerContext.lineTo(pixX, pixY);
-						orbitLayerContext.stroke();
-						staticOrbitDrawPointsX[i] = pixX;
-						staticOrbitDrawPointsY[i] = pixY;
-					}
+
+					orbitLayerContext.beginPath();
+					orbitLayerContext.moveTo(staticOrbitDrawPointsX[i],staticOrbitDrawPointsY[i]);
+					orbitLayerContext.lineTo(pixX, pixY);
+					orbitLayerContext.stroke();
+					staticOrbitDrawPointsX[i] = pixX;
+					staticOrbitDrawPointsY[i] = pixY;
+
 				}
 			}
 		}
