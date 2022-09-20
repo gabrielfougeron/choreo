@@ -173,7 +173,7 @@ function canvasApp() {
 		// staticOrbitColor = "rgba(130,180,270,0.3)";
 		// staticOrbitColor = "rgba(130,180,270,0.2)";
 		// staticOrbitColor = "rgba(200,200,200,0.2)";
-		staticOrbitColor = "rgba(241,241,241,0.2)";
+		staticOrbitColor = "rgba(200,200,200,0.2)";
 		// staticOrbitColor = "rgba(255,0,255,0.8)"; //TESTING
 
 		// Width of orbits below
