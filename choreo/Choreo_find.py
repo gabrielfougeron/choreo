@@ -600,12 +600,12 @@ def GenSymExample(
     if Save_All_Pos:
 
         if n_save_pos is None:
-            all_pos_b = ComputeAllPos(x0,callfun)
+            all_pos_b = ComputeAllLoopPos(x0,callfun)
         elif n_save_pos == 'auto':
             # TODO : implement auto
-            all_pos_b = ComputeAllPos(x0,callfun)
+            all_pos_b = ComputeAllLoopPos(x0,callfun)
         else:
-            all_pos_b = ComputeAllPos(x0,callfun,n_save_pos)
+            all_pos_b = ComputeAllLoopPos(x0,callfun,n_save_pos)
 
         np.save('init_all_pos.npy',all_pos_b)
 
