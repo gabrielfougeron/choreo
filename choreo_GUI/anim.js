@@ -172,9 +172,9 @@ function canvasApp() {
 		// Color of orbits below
 		// staticOrbitColor = "rgba(130,180,270,0.3)";
 		// staticOrbitColor = "rgba(130,180,270,0.2)";
-		// staticOrbitColor = "rgba(200,200,200,0.5)";
+		staticOrbitColor = "rgba(200,200,200,0.5)";
 		// staticOrbitColor = "rgba(200,200,200,0.0)";
-		staticOrbitColor = "rgba(255,0,255,0.8)"; //TESTING
+		// staticOrbitColor = "rgba(255,0,255,0.8)"; //TESTING
 
 		// Width of orbits below
 		staticOrbitWidth = trailWidth;
@@ -444,7 +444,7 @@ function canvasApp() {
 				//stop drawing orbit
 				drawingStaticOrbit = false;
 				//draw last segments
-				drawLastSegments();
+				// drawLastSegments();
 			}
 		}		
 		
@@ -531,23 +531,25 @@ function canvasApp() {
 		var p;
 		var pixX;
 		var pixY;
-		orbitLayerContext.strokeStyle = staticOrbitColor;
-		orbitLayerContext.lineWidth = staticOrbitWidth;
 
 		for (i = 0; i < PlotInfo["nbody"]; i++) {
 			p = particles[i];
 			pixX = xPixRate*(p.x - xMin);
 			pixY = yPixRate*(p.y - yMax);
-			
-			orbitLayerContext.beginPath();
-			// orbitLayerContext.moveTo(endPixX[i],endPixY[i]);
-			orbitLayerContext.moveTo(pixX,pixY);
-			orbitLayerContext.lineTo(staticOrbitDrawPointsX[i], staticOrbitDrawPointsY[i]);
-			orbitLayerContext.stroke();
+
+			//trail
+			context.strokeStyle = staticOrbitColor;
+			context.lineWidth = staticOrbitWidth;
+			context.beginPath();
+			context.moveTo(staticOrbitDrawPointsX[i],staticOrbitDrawPointsY[i]);
+			context.lineTo(pixX, pixY);
+			context.stroke();
 
 			staticOrbitDrawPointsX[i] = pixX;
 			staticOrbitDrawPointsY[i] = pixY;
+
 		}
+
 	}
 
 	function drawAllSegments() {
@@ -556,6 +558,16 @@ function canvasApp() {
 		setStartPositions();
 		
 		n_strokes = Math.floor((1 / tInc)) + 1 ;
+
+		// Setup
+		for (i = 0; i < PlotInfo["nbody"]; i++) {
+			p = particles[i];
+			pixX = xPixRate*(p.x - xMin);
+			pixY = yPixRate*(p.y - yMax);
+
+			staticOrbitDrawPointsX[i] = pixX;
+			staticOrbitDrawPointsY[i] = pixY;
+		}
 
 		for (i_stroke = 0; i_stroke < n_strokes; i_stroke++) {
 
