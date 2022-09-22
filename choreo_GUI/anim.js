@@ -1,6 +1,9 @@
 // Gallery_cache_behavior = {cache: "no-cache"}
 Gallery_cache_behavior = {}
 
+var Pos ;
+var PlotInfo;
+
 function AjaxGet(foldername){ return $.ajax({ url: foldername})}
 
 function GetFileBaseExt(filename) {
@@ -51,7 +54,6 @@ function canvasApp() {
 
 	var numOrbits;
 
-
 	var tInc;
 	var tIncMin, tIncMax;
 	var xMin, xMax, yMin, yMax;
@@ -61,7 +63,6 @@ function canvasApp() {
 	var bgColor;
 	var request;
 	var running;
-	var fadeAlpha;
 	var trailWidth;
 	var trajectoriesOn;
 	var colorLookup;
@@ -82,6 +83,9 @@ function canvasApp() {
 	
 	var displayCanvas = document.getElementById("displayCanvas");
 	var context = displayCanvas.getContext("2d");
+	displayCanvas.addEventListener("FinalizeSetOrbitFromOutsideCanvas", FinalizeSetOrbitFromOutsideCanvasHandler, true);
+	displayCanvas.addEventListener("StopAnimationFromOutsideCanvas", StopAnimationFromOutsideCanvasHandler, true);
+	displayCanvas.addEventListener("StartAnimationFromOutsideCanvas", StartAnimationFromOutsideCanvasHandler, true);
 	
 	var particleLayerCanvas = document.getElementById("particleLayerCanvas");
 	var particleLayerContext = particleLayerCanvas.getContext("2d");
@@ -117,10 +121,7 @@ function canvasApp() {
 	var AllPlotInfo = [];
 	var AllGalleryNames = [];
 
-	var Pos;
-	var PlotInfo;
 
-	
 	//requestAnimationFrame shim for multiple browser compatibility by Eric Möller,
 	//http://my.opera.com/emoller/blog/2011/12/20/requestanimationframe-for-smart-er-animating
 	//For an alternate version, also see http://www.paulirish.com/2011/requestanimationframe-for-smart-animating/.checked 
@@ -242,6 +243,17 @@ function canvasApp() {
 		}
 	}
 	
+	function UnselectOrbit(){
+		Index = $('input[name=orbitGroup]:checked').index('input[name=orbitGroup]');
+		orbitGroups = $('input[name=orbitGroup]')
+		mylabel = orbitGroups[Index].getAttribute("mylabel")
+		thelabel=$("label[id="+mylabel+"]")["0"];			
+		thelabel.classList.remove('w3-red');
+		thelabel.classList.add('w3-light-grey');
+
+		orbitGroups[Index].checked = false;
+	}
+
 	function incrementOrbit(inc) {
 		//find out what is checked
 		oldIndex = $('input[name=orbitGroup]:checked').index('input[name=orbitGroup]');
@@ -371,6 +383,7 @@ function canvasApp() {
 		  onTimer();
 		})();
 	}
+
 	function stopAnimation() {
 		running = false;
 		cancelAnimationFrame(request);
@@ -407,6 +420,21 @@ function canvasApp() {
 
 	function drawTrajButtonHandler(e) {
 		drawAllSegments();
+	}
+
+	function StopAnimationFromOutsideCanvasHandler(e) {
+		stopAnimation();
+		running = false;
+	}
+
+	function StartAnimationFromOutsideCanvasHandler(e) {
+		startAnimation();
+		running = true;
+	}
+
+	function FinalizeSetOrbitFromOutsideCanvasHandler(e) {
+		UnselectOrbit();
+		FinalizeSetOrbit() ;
 	}
 
 	function AddOrbitButtonHandler(e) {
@@ -648,10 +676,12 @@ function canvasApp() {
 				tb = ( PlotInfo['TimeRevsUn'][il][ilb] * (t - PlotInfo['TimeShiftNumUn'][il][ilb] / PlotInfo['TimeShiftDenUn'][il][ilb]) +1) % 1;
 
 				tbn = tb*n_pos;
+				
 				im = Math.floor(tbn);
-				trem = tbn - im;
 				ip = (im+1) % n_pos;
 				
+				trem = tbn - im;
+
 				// Super ugly
 				xlm = Pos.data[ im +  2*il    * n_pos] ;
 				ylm = Pos.data[ im + (2*il+1) * n_pos] ;
@@ -686,12 +716,9 @@ function canvasApp() {
 
 		tInc = tIncMin + (tIncMax - tIncMin)*alpha;
 	}
-	
-	function setOrbit(orbitIndex) {
-		
-		Pos = AllPos[orbitIndex];
-		PlotInfo = AllPlotInfo[orbitIndex];
 
+	function FinalizeSetOrbit() {
+		
 		plotWindow = {
 			xMin : PlotInfo["xinf"],
 			xMax : PlotInfo["xsup"],
@@ -739,6 +766,15 @@ function canvasApp() {
 		}
 		setTInc();
 		
+	}
+
+	function setOrbit(orbitIndex) {
+		
+		Pos = AllPos[orbitIndex];
+		PlotInfo = AllPlotInfo[orbitIndex];
+
+		FinalizeSetOrbit();
+
 	}
 
 	async function LoadGallery() {

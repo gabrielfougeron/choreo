@@ -519,6 +519,7 @@ def GenSymExample(
     Save_All_Coeffs,
     Save_All_Pos,
     n_save_pos,
+    Save_PlotInfo,
 ):
     
     n_reconverge_it_max = 0
@@ -607,7 +608,7 @@ def GenSymExample(
             all_pos_b = ComputeAllPos(x0,callfun,n_save_pos)
 
         np.save('init_all_pos.npy',all_pos_b)
-        # print(all_pos_b.shape)
-        all_pos_b = all_pos_b.reshape(-1,all_pos_b.shape[2])
 
-        np.savetxt('init_all_pos.txt',all_pos_b)
+    if Save_PlotInfo:
+
+        Write_PlotInfo(x0,callfun,"init_plotinfo.json")

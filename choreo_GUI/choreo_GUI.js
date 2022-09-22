@@ -1,17 +1,16 @@
-// const pyodide_worker = new Worker("./Pyodide_worker.js");
 
 function handleMessageFromWorker(message) {
 
     if ((typeof message.data.funname != "undefined") && (typeof message.data.args != "undefined")) {
 
-        console.log("Attempting to execute function",message.data.funname,"with arguments",message.data.args);
+        // console.log("Attempting to execute function",message.data.funname,"with arguments",message.data.args);
 
         window[message.data.funname](message.data.args);
 
     } else {
 
-        console.log('Main thread could not resolve message from worker :',message);
-        console.log(message.data);
+        // console.log('Main thread could not resolve message from worker :',message);
+        // console.log(message.data);
 
     }
 
@@ -30,6 +29,29 @@ var DownloadTxtFile = (function () {
         window.URL.revokeObjectURL(url);
     };
 }());
+
+
+async function Set_Python_path(args){
+
+	var displayCanvas = document.getElementById("displayCanvas");
+
+    var txt = await args.JSON_data.text();
+    var JSONinfo = JSON.parse(txt);
+
+    POS_data = {"data":args.NPY_data,"shape":args.NPY_shape};
+    
+    var event = new Event('StopAnimationFromOutsideCanvas');
+    displayCanvas.dispatchEvent(event);
+
+    PlotInfo = JSONinfo;
+    Pos = POS_data;
+
+    var event = new Event('FinalizeSetOrbitFromOutsideCanvas');
+    displayCanvas.dispatchEvent(event);
+
+    var event = new Event('StartAnimationFromOutsideCanvas');
+    displayCanvas.dispatchEvent(event);
+}
 
 
 pyodide_worker.addEventListener('message', handleMessageFromWorker);
@@ -143,7 +165,14 @@ function ChoreoSaveInitStateClick() {
     pyodide_worker.postMessage({funname:"LoadDataInWorker",args:{ConfigDict:ConfigDict}});
     pyodide_worker.postMessage({funname:"ExecutePythonFile",args:"./python_scripts/Load_GUI_params_and_save_init.py"});
 
-    'init_all_pos.txt'
+}
+
+function ChoreoDispInitStateClick() {
+
+    ConfigDict = GatherConfigDict();
+
+    pyodide_worker.postMessage({funname:"LoadDataInWorker",args:{ConfigDict:ConfigDict}});
+    pyodide_worker.postMessage({funname:"ExecutePythonFile",args:"./python_scripts/Save_init_state.py"});
 
 }
 

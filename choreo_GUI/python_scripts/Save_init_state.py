@@ -39,7 +39,6 @@ def DLSavedFiledJSNoPrompt(filename,readtype='rt'):
         )
     )
 
-
 def main():
 
     # np.random.seed(int(time.time()*10000) % 5000)
@@ -229,13 +228,35 @@ def main():
     n_save_pos = 'auto'
     Save_All_Pos = True
     # Save_All_Pos = False
+
+    Save_PlotInfo = True
     
     all_kwargs = choreo.Pick_Named_Args_From_Dict(choreo.GenSymExample,dict(globals(),**locals()))
 
     choreo.GenSymExample(**all_kwargs)
 
-    # DLSavedFiledJSNoPrompt('init_all_pos.npy')
+    filename = 'init_plotinfo.json'
+    with open(filename, 'rt') as fh:
+        thefile = fh.read()
+        
+    blob = js.Blob.new([thefile], {type : 'application/text'})
+
+    filename = 'init_all_pos.npy'
+    all_pos = np.load(filename)
+
+    js.postMessage(
+        funname = "Set_Python_path",
+        args    = pyodide.ffi.to_js(
+            {
+                "JSON_data":blob,
+                "NPY_data":all_pos.reshape(-1),
+                "NPY_shape":all_pos.shape,
+            },
+            dict_converter=js.Object.fromEntries
+        )
+    )
 
 
+        
 if __name__ == "__main__":
     main()
