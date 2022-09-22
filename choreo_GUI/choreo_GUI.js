@@ -36,15 +36,12 @@ async function Set_Python_path(args){
 	var displayCanvas = document.getElementById("displayCanvas");
 
     var txt = await args.JSON_data.text();
-    var JSONinfo = JSON.parse(txt);
-
-    POS_data = {"data":args.NPY_data,"shape":args.NPY_shape};
     
     var event = new Event('StopAnimationFromOutsideCanvas');
     displayCanvas.dispatchEvent(event);
 
-    PlotInfo = JSONinfo;
-    Pos = POS_data;
+    PlotInfo = JSON.parse(txt);
+    Pos = {"data":args.NPY_data,"shape":args.NPY_shape};
 
     var event = new Event('FinalizeSetOrbitFromOutsideCanvas');
     displayCanvas.dispatchEvent(event);
