@@ -10,6 +10,7 @@ async function loadPyodideAndPackages() {
     "./python_dist/choreo-0.1.0-cp310-cp310-emscripten_3_1_14_wasm32.whl"
   ]);
 }
+
 let pyodideReadyPromise = loadPyodideAndPackages();
 
 self.onmessage = function(message) {

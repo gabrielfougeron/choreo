@@ -1,4 +1,4 @@
-const pyodide_worker = new Worker("./Pyodide_worker.js");
+// const pyodide_worker = new Worker("./Pyodide_worker.js");
 
 function handleMessageFromWorker(message) {
 
@@ -420,7 +420,7 @@ function OpenCloseLeftTab() {
     if (AllLeftTabs[0].classList.contains("open")) {CloseLeftTab();} else {OpenLeftTab();}
 }
 
-canvas_items_list= ["canvasContainer","displayCanvas","particleLayerCanvas","orbitLayerCanvas"]
+canvas_items_list= ["canvasContainer","displayCanvas","particleLayerCanvas"]
 
 function CloseLeftTab() {
     var i;
