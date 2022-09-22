@@ -245,13 +245,15 @@ function canvasApp() {
 	
 	function UnselectOrbit(){
 		Index = $('input[name=orbitGroup]:checked').index('input[name=orbitGroup]');
-		orbitGroups = $('input[name=orbitGroup]')
-		mylabel = orbitGroups[Index].getAttribute("mylabel")
-		thelabel=$("label[id="+mylabel+"]")["0"];			
-		thelabel.classList.remove('w3-red');
-		thelabel.classList.add('w3-light-grey');
+		if (Index > -1) {
+			orbitGroups = $('input[name=orbitGroup]')
+			mylabel = orbitGroups[Index].getAttribute("mylabel")
+			thelabel=$("label[id="+mylabel+"]")["0"];			
+			thelabel.classList.remove('w3-red');
+			thelabel.classList.add('w3-light-grey');
 
-		orbitGroups[Index].checked = false;
+			orbitGroups[Index].checked = false;
+		}
 	}
 
 	function incrementOrbit(inc) {
@@ -434,6 +436,7 @@ function canvasApp() {
 
 	function FinalizeSetOrbitFromOutsideCanvasHandler(e) {
 		UnselectOrbit();
+		clearScreen();
 		FinalizeSetOrbit() ;
 	}
 
