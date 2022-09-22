@@ -85,10 +85,7 @@ function canvasApp() {
 	
 	var particleLayerCanvas = document.getElementById("particleLayerCanvas");
 	var particleLayerContext = particleLayerCanvas.getContext("2d");
-	
-	var orbitLayerCanvas = document.getElementById("orbitLayerCanvas");
 	particleLayerCanvas.addEventListener("click", startStopButtonHandler, true);
-	var orbitLayerContext = orbitLayerCanvas.getContext("2d");
 	
 	var displayWidth = displayCanvas.width;
 	var displayHeight = displayCanvas.height;
@@ -460,7 +457,6 @@ function canvasApp() {
 	function clearScreen() {
 		context.fillStyle = bgColor;
 		context.fillRect(0,0,displayWidth,displayHeight);
-		orbitLayerContext.clearRect(0,0,displayWidth+1,displayHeight+1);
 	}
 	
 	function clearParticleLayer() {
@@ -620,19 +616,6 @@ function canvasApp() {
 				context.lineTo(pixX, pixY);
 				context.stroke();
 
-				
-// 				if (drawingStaticOrbit) {
-// 					orbitLayerContext.strokeStyle = staticOrbitColor;
-// 					orbitLayerContext.lineWidth = staticOrbitWidth;
-// 
-// 					orbitLayerContext.beginPath();
-// 					orbitLayerContext.moveTo(staticOrbitDrawPointsX[i],staticOrbitDrawPointsY[i]);
-// 					orbitLayerContext.lineTo(pixX, pixY);
-// 					orbitLayerContext.stroke();
-// 					staticOrbitDrawPointsX[i] = pixX;
-// 					staticOrbitDrawPointsY[i] = pixY;
-// 
-// 				}
 			}
 		}
 
