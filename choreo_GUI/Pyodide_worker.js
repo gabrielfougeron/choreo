@@ -17,13 +17,13 @@ self.onmessage = function(message) {
   
     if ((typeof message.data.funname != "undefined") && (typeof message.data.args != "undefined")) {
 
-        console.log("Attempting to execute function",message.data.funname,"with arguments",message.data.args);
+        // console.log("Attempting to execute function",message.data.funname,"with arguments",message.data.args);
 
         self[message.data.funname](message.data.args);
 
     } else {
 
-        console.log('WebWorker could not resolve message :',message);
+        // console.log('WebWorker could not resolve message :',message);
 
     }
   }
