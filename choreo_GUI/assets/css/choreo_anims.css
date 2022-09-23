@@ -60,6 +60,11 @@ a {
     margin-bottom:5px;
     width:245px;
 }
+/* #RotSlider {
+    margin-top:5px;
+    margin-bottom:5px;
+    width:245px;
+} */
 #startStopButton {
     min-width:70px;
 }
@@ -93,4 +98,20 @@ a {
 .radioInvisible {
     display:none;
 }
-
+/* .rs-control .rs-range-color {
+    background-color: #54BBE0;
+} */
+.rs-control .rs-path-color {
+    background-color: #F1F1F1;
+}
+.rs-control .rs-handle {
+    background-color: #222222;
+}
+.rs-control .rs-bg-color {
+    background-color: #F1F1F1;
+}
+.InTableControls {
+    font-family:Verdana,sans-serif;
+    font-size:15px;
+    line-height:1.5;
+}

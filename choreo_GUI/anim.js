@@ -99,9 +99,9 @@ function canvasApp() {
 	
 	var trajectoryButton = document.getElementById("trajectoryButton");
 	trajectoryButton.addEventListener("click", trajectoryButtonHandler, true);
-
-	var drawTrajButton = document.getElementById("drawTrajButton");
-	drawTrajButton.addEventListener("click", drawTrajButtonHandler, true);
+// 
+// 	var drawTrajButton = document.getElementById("drawTrajButton");
+// 	drawTrajButton.addEventListener("click", drawTrajButtonHandler, true);
 	
 	// var AddOrbitButton = document.getElementById("AddOrbitButton");
 	// AddOrbitButton.addEventListener("click", AddOrbitButtonHandler, true);
@@ -197,7 +197,21 @@ function canvasApp() {
 		  slide: speedSliderHandler,
 		  change: speedSliderHandler,
 		  animate: true
-		});
+		});		
+
+		//Rtation slider
+		$("#RotSlider").roundSlider({
+				width: 15,
+				radius: 50,
+				value: 0,
+				keyboardAction: false,
+				lineCap: "square",
+				startAngle: 90,
+				max: 360,
+				mouseScrollAction: true,
+				step: 5,
+				editableTooltip: false,
+			});
 		
 		tIncMin = 0.0001;
 		tIncMax = 0.01;
@@ -212,7 +226,19 @@ function canvasApp() {
 	}
 	
 	function setColorLookupList() {
-		colorLookup = ["#ff7006","#50ce4d","#a253c4","#ef1010","#25b5bc","#E86A96","#edc832","#ad6530","#00773f","#d6d6d6"];
+
+		colorLookup = [
+			"#ff7006", // Vivid Orange
+			"#50ce4d", // Moderate Lime Green
+			"#a253c4", // Moderate Violet
+			"#ef1010", // Vivid Red
+			"#25b5bc", // Strong Cyan
+			"#E86A96", // Soft Pink
+			"#edc832", // Bright Yellow
+			"#ad6530", // Dark Orange [Brown tone]
+			"#00773f", // Dark cyan - lime green 
+			"#d6d6d6", // Light gray
+		];
 		
 		trailColorLookup = [];
 		
@@ -454,6 +480,18 @@ function canvasApp() {
 	}
 
 	function onTimer() {
+
+		// context.rotate(-Math.PI/360);
+
+		// displayCanvas.translate(
+		// 	displayCanvas.canvas.width * 0.5,
+		// 	displayCanvas.canvas.height * 0.5
+		// );    // center
+		// displayCanvas.rotate(Math.PI *1. /360);
+		// displayCanvas.translate(
+		// 	-displayCanvas.canvas.width * 0.5,
+		// 	-displayCanvas.canvas.height * 0.5
+		// );
 
 		if (trajectoriesOn) {
 			//fade
