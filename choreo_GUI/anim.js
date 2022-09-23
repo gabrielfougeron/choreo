@@ -715,7 +715,8 @@ function canvasApp() {
 	function setTInc() {
 
 		var slider_value = $("#speedSlider").slider("value");
-		var alpha = slider_value*slider_value;
+		var sliderpow = 2;
+		var alpha = Math.pow(slider_value,sliderpow);
 
 		tInc = tIncMin + (tIncMax - tIncMin)*alpha;
 	}

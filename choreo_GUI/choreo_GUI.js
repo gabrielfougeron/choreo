@@ -50,6 +50,25 @@ async function Set_Python_path(args){
     displayCanvas.dispatchEvent(event);
 }
 
+async function Python_Imports_Done(args){
+
+    console.log("Python Imports Done");
+
+    var Python_Ready_Div = document.getElementById("Python_Ready_Div");
+
+    Python_Ready_Div.innerHTML = "Python is ready";
+    Python_Ready_Div.classList.remove('w3-orange');
+    Python_Ready_Div.classList.add('w3-green');
+
+    wait =  new Promise(r => setTimeout(r, 3000));
+    wait.then( r => {
+        Python_Ready_Div.style.display   = "none";
+    });
+
+}
+
+
+
 
 pyodide_worker.addEventListener('message', handleMessageFromWorker);
 
@@ -149,8 +168,10 @@ function SaveConfigFile(){
 
 function ChoreoExecuteClick() {
 
-    // GatherForPython();
-    // ExecutePythonFile("./python_scripts/Load_GUI_params_and_run.py");
+    ConfigDict = GatherConfigDict();
+
+    pyodide_worker.postMessage({funname:"LoadDataInWorker",args:{ConfigDict:ConfigDict}});
+    pyodide_worker.postMessage({funname:"ExecutePythonFile",args:"./python_scripts/RunOnce.py"});
 
 }
 

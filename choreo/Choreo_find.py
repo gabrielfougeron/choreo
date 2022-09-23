@@ -83,7 +83,6 @@ def Find_Choreo(
     n_save_pos,
     Save_All_Coeffs,
     Save_All_Pos,
-    Save_All_Loop_Pos,
     Save_Init_Pos_Vel_Sol,
     Save_PlotInfo,
     mul_coarse_to_fine,
@@ -427,18 +426,6 @@ def Find_Choreo(
                         np.save(filename_output+'.npy',all_coeffs)
 
                     if Save_All_Pos:
-
-                        if n_save_pos is None:
-                            all_pos_b = ComputeAllPos(best_sol.x,callfun)
-                        elif n_save_pos == 'auto':
-                            # TODO : implement auto
-                            all_pos_b = ComputeAllPos(best_sol.x,callfun)
-                        else:
-                            all_pos_b = ComputeAllPos(best_sol.x,callfun,n_save_pos)
-
-                        np.save(filename_output+'_pos_'+str(n_save_pos)+'.npy',all_pos_b)
-
-                    if Save_All_Loop_Pos:
 
                         if n_save_pos is None:
                             all_pos = ComputeAllLoopPos(best_sol.x,callfun)
