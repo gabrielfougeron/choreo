@@ -202,7 +202,8 @@ def main():
     hash_dict = {}
 
     n_opt = 0
-    n_opt_max = 1
+    n_opt_max = 1000
+    n_find_max = 1
 
     mul_coarse_to_fine = 3
 
