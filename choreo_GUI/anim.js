@@ -338,12 +338,12 @@ function canvasApp() {
 		xMax = windowObject.xMax;
 		yMin = windowObject.yMin;
 		yMax = windowObject.yMax;
+		
 		xPixRate = displayWidth/(xMax - xMin);
 		yPixRate = displayHeight/(yMin - yMax);
-		// center_x = (xMax - xMin)/2;
-		// center_y = (yMin - yMax)/2;
-		center_x = 0;
-		center_y = 0;
+
+		center_x = (xMax + xMin)/2;
+		center_y = (yMin + yMax)/2;
 	}
 
 	function RemoveOrbit(i_remove) {
