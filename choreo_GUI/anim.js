@@ -105,15 +105,9 @@ function canvasApp() {
 	
 	var trajectoryButton = document.getElementById("trajectoryButton");
 	trajectoryButton.addEventListener("click", trajectoryButtonHandler, true);
-// 
-// 	var drawTrajButton = document.getElementById("drawTrajButton");
-// 	drawTrajButton.addEventListener("click", drawTrajButtonHandler, true);
-	
-	// var AddOrbitButton = document.getElementById("AddOrbitButton");
-	// AddOrbitButton.addEventListener("click", AddOrbitButtonHandler, true);
-	// 
-	// var RemoveOrbitButton = document.getElementById("RemoveOrbitButton");
-	// RemoveOrbitButton.addEventListener("click", RemoveOrbitButtonHandler, true);
+
+	var drawTrajButton = document.getElementById("ClearButton");
+	drawTrajButton.addEventListener("click", clearScreen, true);
 	
 	var btnNextOrbit = document.getElementById("btnNextOrbit");
 	btnNextOrbit.addEventListener("click", nextOrbit, true);
@@ -338,7 +332,7 @@ function canvasApp() {
 		xMax = windowObject.xMax;
 		yMin = windowObject.yMin;
 		yMax = windowObject.yMax;
-		
+
 		xPixRate = displayWidth/(xMax - xMin);
 		yPixRate = displayHeight/(yMin - yMax);
 
@@ -446,7 +440,7 @@ function canvasApp() {
 		if (trajectoriesOn) {
 			trajectoriesOn = false;
 			drawingStaticOrbit = false;
-			trajectoryButton.textContent ="Show trajectories";
+			trajectoryButton.textContent ="Draw";
 			clearScreen();
 		}
 		else {
@@ -454,12 +448,8 @@ function canvasApp() {
 			drawingStaticOrbit = true;
 			setStartPositions();
 			trajectoriesOn = true;
-			trajectoryButton.textContent = "Hide trajectories";
+			trajectoryButton.textContent = "Hide";
 		}
-	}
-
-	function drawTrajButtonHandler(e) {
-		drawAllSegments();
 	}
 
 	function StopAnimationFromOutsideCanvasHandler(e) {

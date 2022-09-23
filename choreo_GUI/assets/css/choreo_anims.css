@@ -69,7 +69,7 @@ a {
     min-width:70px;
 }
 #trajectoryButton {
-    min-width:170px;
+    min-width:70px;
 }
 #btnPrevOrbit {
     min-width:120px;
@@ -98,9 +98,6 @@ a {
 .radioInvisible {
     display:none;
 }
-/* .rs-control .rs-range-color {
-    background-color: #54BBE0;
-} */
 .rs-control .rs-path-color {
     background-color: #F1F1F1;
 }
