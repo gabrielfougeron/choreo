@@ -52,7 +52,6 @@ window.addEventListener("drop",function(e){
 
 <div class="content">
 <div id="AnimationAndMenuBlock">
-  <!-- <div class="w3-bar w3-bar-block w3-light-grey open LeftTab" style="width:130px; position:absolute;"> -->
   <div class="w3-bar-block w3-light-grey open LeftTab" style="width:130px; position:absolute;">
     <button class="w3-bar-item w3-button" onclick="OpenCloseLeftTab()" style="text-align: center;">&#9776;</button>
     <button class="w3-bar-item w3-button w3-hover-pale-red LeftTabBtn Launch"       style="text-align: center" onclick="ClickLeftTabBtn('Launch')"      >Launch</button>
@@ -100,7 +99,7 @@ window.addEventListener("drop",function(e){
     <div id="PlayCommands" position="absolute" style="margin-left:223px;">
       <table style="border:0">
         <tr>
-          <td colspan="2" style="border:0">
+          <td colspan="3" style="border:0">
             <div id="speedTxt" class="InTableControls">Speed</div>
             <div id="speedSlider"></div>
           </td>
@@ -113,7 +112,10 @@ window.addEventListener("drop",function(e){
             <button id="startStopButton"  class="w3-button w3-hover-pale-red w3-light-grey InTableControls">Stop</button>
           </td>
           <td style="border:0">
-            <button id="trajectoryButton" class="w3-button w3-hover-pale-red w3-light-grey InTableControls">Hide trajectories</button>
+            <button id="ClearButton" class="w3-button w3-hover-pale-red w3-light-grey InTableControls">Clear</button>
+          </td>
+          <td style="border:0">
+            <button id="trajectoryButton" class="w3-button w3-hover-pale-red w3-light-grey InTableControls">Hide</button>
           </td>
         </tr>
       </table>
