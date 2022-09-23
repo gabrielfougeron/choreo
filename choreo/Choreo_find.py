@@ -86,6 +86,7 @@ def Find_Choreo(
     Save_Init_Pos_Vel_Sol,
     Save_PlotInfo,
     mul_coarse_to_fine,
+    n_find_max,
     ):
     """
 
@@ -159,8 +160,9 @@ def Find_Choreo(
     sampler = UniformRandom(d=rand_dim)
 
     n_opt = 0
+    n_find = 0
 
-    while (n_opt < n_opt_max):
+    while ((n_opt < n_opt_max) and (n_find < n_find_max)):
         
         if ((n_opt % freq_erase_dict) == 0):
             
@@ -401,6 +403,8 @@ def Find_Choreo(
                                 pass
                         
                     max_num_file = max_num_file + 1
+
+                    n_find = max_num_file
                     
                     filename_output = store_folder+'/'+file_basename+str(max_num_file).zfill(5)
 
