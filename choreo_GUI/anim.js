@@ -80,6 +80,9 @@ function canvasApp() {
 	
 	var endPixX;
 	var endPixY;
+
+	var GlobalRot_angle = 0.;
+	var GlobalRot = [[1.,0.],[0.,1.]];
 	
 	var displayCanvas = document.getElementById("displayCanvas");
 	var context = displayCanvas.getContext("2d");
@@ -93,6 +96,9 @@ function canvasApp() {
 	
 	var displayWidth = displayCanvas.width;
 	var displayHeight = displayCanvas.height;
+
+	var center_x;
+	var center_y;
 	
 	var startStopButton = document.getElementById("startStopButton");
 	startStopButton.addEventListener("click", startStopButtonHandler, true);
@@ -160,8 +166,8 @@ function canvasApp() {
 		trailWidth = 2;
 
 		// Background color
-		// bgColor = "#F1F1F1";
-		bgColor = "rgb(241,241,241)";
+		bgColor = "#F1F1F1";
+		// bgColor = "rgb(241,241,241)";
 
 		// Speed of fade inversly prop to alpha channel here
 		fadeScreenColor = "rgba(255,255,255,0.01)";
@@ -211,6 +217,7 @@ function canvasApp() {
 				mouseScrollAction: true,
 				step: 5,
 				editableTooltip: false,
+				change:onRotationChange,
 			});
 		
 		tIncMin = 0.0001;
@@ -321,6 +328,7 @@ function canvasApp() {
 	function nextOrbit(evt) {
 		incrementOrbit(1);
 	}
+
 	function prevOrbit(evt) {
 		incrementOrbit(-1);
 	}
@@ -332,6 +340,10 @@ function canvasApp() {
 		yMax = windowObject.yMax;
 		xPixRate = displayWidth/(xMax - xMin);
 		yPixRate = displayHeight/(yMin - yMax);
+		// center_x = (xMax - xMin)/2;
+		// center_y = (yMin - yMax)/2;
+		center_x = 0;
+		center_y = 0;
 	}
 
 	function RemoveOrbit(i_remove) {
@@ -479,19 +491,53 @@ function canvasApp() {
 		RemoveOrbit(i_remove)
 	}
 
+	function onRotationChange(e){
+
+		GlobalRot_angle = e.value * 2* Math.PI / 360.;
+		GlobalRot = [
+			[ Math.cos(GlobalRot_angle), Math.sin(GlobalRot_angle)],
+			[-Math.sin(GlobalRot_angle), Math.cos(GlobalRot_angle)]
+		]
+
+		var delta_angle = (e.value - e.preValue)* 2* Math.PI / 360.;
+		
+		RotateCanvas(displayCanvas,context,delta_angle);
+		
+		setParticlePositions(time);
+		setParticlePositions(time); // dirty hack
+		clearParticleLayer();
+		drawParticles();
+
+	}
+
+	function RotateCanvas(canvas,ctx,angle){
+
+		var tempCanvas = document.createElement("canvas");
+		var tempCtx = tempCanvas.getContext("2d");
+
+		tempCanvas.width = canvas.width;
+		tempCanvas.height = canvas.height;
+		tempCtx.drawImage(canvas, 0, 0, canvas.width, canvas.height);
+
+		ctx.save(); //saves the state of canvas
+		ctx.fillStyle = bgColor;
+		ctx.fillRect(0,0,canvas.width,canvas.height);
+
+		ctx.translate(
+			canvas.width * 0.5,
+			canvas.height * 0.5
+		);
+		ctx.rotate(angle);
+		ctx.translate(
+			-canvas.width * 0.5,
+			-canvas.height * 0.5
+		);
+		ctx.drawImage(tempCanvas,  0, 0, canvas.width, canvas.height);
+		ctx.restore();
+
+	};
+
 	function onTimer() {
-
-		// context.rotate(-Math.PI/360);
-
-		// displayCanvas.translate(
-		// 	displayCanvas.canvas.width * 0.5,
-		// 	displayCanvas.canvas.height * 0.5
-		// );    // center
-		// displayCanvas.rotate(Math.PI *1. /360);
-		// displayCanvas.translate(
-		// 	-displayCanvas.canvas.width * 0.5,
-		// 	-displayCanvas.canvas.height * 0.5
-		// );
 
 		if (trajectoriesOn) {
 			//fade
@@ -697,6 +743,7 @@ function canvasApp() {
 		var xlm=0,xlp=0,ylm=0,ylp=0;
 		var xmid,ymid;
 		var xrot,yrot;
+		var xrot_glob,yrot_glob;
 
 		var il,ib,ilb,nlb;
 		var tb;
@@ -732,13 +779,19 @@ function canvasApp() {
 				xmid = (1-trem) * xlm + trem * xlp;
 				ymid = (1-trem) * ylm + trem * ylp;
 
-				xrot = PlotInfo['SpaceRotsUn'][il][ilb][0][0] * xmid + PlotInfo['SpaceRotsUn'][il][ilb][0][1] * ymid 
-				yrot = PlotInfo['SpaceRotsUn'][il][ilb][1][0] * xmid + PlotInfo['SpaceRotsUn'][il][ilb][1][1] * ymid 
+				xrot = PlotInfo['SpaceRotsUn'][il][ilb][0][0] * xmid + PlotInfo['SpaceRotsUn'][il][ilb][0][1] * ymid ;
+				yrot = PlotInfo['SpaceRotsUn'][il][ilb][1][0] * xmid + PlotInfo['SpaceRotsUn'][il][ilb][1][1] * ymid ;
+
+				xrot = xrot - center_x;
+				yrot = yrot - center_y;
+
+				xrot_glob = center_x + GlobalRot[0][0] * xrot + GlobalRot[0][1] * yrot
+				yrot_glob = center_y + GlobalRot[1][0] * xrot + GlobalRot[1][1] * yrot
 				
 				particles[ib].lastX = particles[ib].x;
 				particles[ib].lastY = particles[ib].y;
-				particles[ib].x = xrot;
-				particles[ib].y = yrot;
+				particles[ib].x = xrot_glob;
+				particles[ib].y = yrot_glob;
 				
 			}
 		
