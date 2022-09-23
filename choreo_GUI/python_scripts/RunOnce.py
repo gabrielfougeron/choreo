@@ -21,13 +21,12 @@ import json
 import choreo 
 
 import js
+import pyodide
+
 
 def main():
 
-    # np.random.seed(int(time.time()*10000) % 5000)
-    np.random.seed(0)
-
-    params_dict = js.ToPython.to_py()
+    params_dict = js.ConfigDict.to_py()
 
     file_basename = ''
     
@@ -88,7 +87,10 @@ def main():
     store_folder = 'Sniff_all_sym/'
     # store_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/')
     store_folder = store_folder+str(nbody)
-    if not(os.path.isdir(store_folder)):
+    if os.path.isdir(store_folder):
+        shutil.rmtree(store_folder)
+        os.makedirs(store_folder)
+    else:
         os.makedirs(store_folder)
 
     # print("store_folder: ",store_folder)
@@ -204,8 +206,8 @@ def main():
 
     mul_coarse_to_fine = 3
 
-    Save_All_Coeffs = True
-    # Save_All_Coeffs = False
+    # Save_All_Coeffs = True
+    Save_All_Coeffs = False
 
     # Save_Init_Pos_Vel_Sol = True
     Save_Init_Pos_Vel_Sol = False
@@ -213,10 +215,37 @@ def main():
     n_save_pos = 'auto'
     Save_All_Pos = True
     # Save_All_Pos = False
+
+    Save_PlotInfo = True
     
     all_kwargs = choreo.Pick_Named_Args_From_Dict(choreo.Find_Choreo,dict(globals(),**locals()))
 
     choreo.Find_Choreo(**all_kwargs)
+
+    i_sol = 1
+
+    filename_output = store_folder+'/'+file_basename+str(i_sol).zfill(5)
+    filename = filename_output+"_plotinfo.json"
+    with open(filename, 'rt') as fh:
+        thefile = fh.read()
+        
+    blob = js.Blob.new([thefile], {type : 'application/text'})
+
+    filename = filename_output+'_loop_pos_'+str(n_save_pos)+'.npy'
+    all_pos = np.load(filename)
+
+    js.postMessage(
+        funname = "Set_Python_path",
+        args    = pyodide.ffi.to_js(
+            {
+                "JSON_data":blob,
+                "NPY_data":all_pos.reshape(-1),
+                "NPY_shape":all_pos.shape,
+            },
+            dict_converter=js.Object.fromEntries
+        )
+    )
+
 
 
 if __name__ == "__main__":

@@ -23,26 +23,8 @@ import choreo
 import js
 import pyodide
 
-    
-def DLSavedFiledJSNoPrompt(filename,readtype='rt'):
-
-    with open(filename, readtype) as fh:
-        thefile = fh.read()
-        
-    blob = js.Blob.new([thefile], {type : 'application/text'})
-    
-    js.postMessage( 
-        funname = "DownloadTxtFile",
-        args    = pyodide.ffi.to_js(
-            {"filename":filename,"data":blob},
-            dict_converter=js.Object.fromEntries
-        )
-    )
 
 def main():
-
-    # np.random.seed(int(time.time()*10000) % 5000)
-    np.random.seed(0)
 
     params_dict = js.ConfigDict.to_py()
 
@@ -219,8 +201,8 @@ def main():
 
     mul_coarse_to_fine = 3
 
-    Save_All_Coeffs = True
-    # Save_All_Coeffs = False
+    # Save_All_Coeffs = True
+    Save_All_Coeffs = False
 
     # Save_Init_Pos_Vel_Sol = True
     Save_Init_Pos_Vel_Sol = False
