@@ -11,6 +11,8 @@
 <link rel="stylesheet" href="./assets/css/main.css">
 <link rel="stylesheet" href="./assets/css/w3.css">
 <link rel="stylesheet" href="./assets/css/choreo_GUI.css">
+<link rel="stylesheet" href="./assets/css/roundslider.min.css">
+
 
 
 <script src="assets/js/npy.js"></script>
@@ -23,6 +25,7 @@
 <script src="assets/js/jquery-ui.js"></script>
 <script src="assets/js/ultbuttons1.1.min.js">//fixes an issue with unreponsive button clicks</script>
 <script src="assets/js/jquery.ui.touch-punch.min.js">//makes ui elements touch enabled</script>
+<script src="assets/js/roundslider.min.js"></script>
 
 <script>
 const pyodide_worker = new Worker("./Pyodide_worker.js");
@@ -93,14 +96,27 @@ window.addEventListener("drop",function(e){
         <canvas id="particleLayerCanvas" width="480px" height="480px" style="position: absolute; z-index: 2;"></canvas>
       </div>
     </div>
+
     <div id="PlayCommands" position="absolute" style="margin-left:223px;">
-      <div id="speedTxt">Speed</div>
-      <div id="speedSlider"></div>
-      <button id="startStopButton"  class="w3-button w3-hover-pale-red w3-light-grey">Stop</button>
-      <button id="trajectoryButton" class="w3-button w3-hover-pale-red w3-light-grey">Hide trajectories</button>
-      <button id="drawTrajButton" class="w3-button w3-hover-pale-red w3-light-grey">Draw trajectories</button>
-      <!-- <button id="AddOrbitButton" class="w3-button w3-hover-pale-red w3-light-grey">Add Orbit</button>
-      <button id="RemoveOrbitButton" class="w3-button w3-hover-pale-red w3-light-grey">Remove Orbit</button> -->
+      <table style="border:0">
+        <tr>
+          <td colspan="2" style="border:0">
+            <div id="speedTxt" class="InTableControls">Speed</div>
+            <div id="speedSlider"></div>
+          </td>
+          <td rowspan="2" style="border:0">
+            <div id="RotSlider" class="InTableControls"></div>
+          </td>
+        </tr>
+        <tr>
+          <td style="border:0">
+            <button id="startStopButton"  class="w3-button w3-hover-pale-red w3-light-grey InTableControls">Stop</button>
+          </td>
+          <td style="border:0">
+            <button id="trajectoryButton" class="w3-button w3-hover-pale-red w3-light-grey InTableControls">Hide trajectories</button>
+          </td>
+        </tr>
+      </table>
     </div>
   </div>
 </div>
@@ -286,7 +302,7 @@ window.addEventListener("drop",function(e){
             <label for="input_Newt_err_norm_max">Max Newton Error:</label>
           </td>
            <td style="border:none; max-width:90px; ">
-            <input type="text" id="input_Newt_err_norm_max" value="1e-14" >
+            <input type="text" id="input_Newt_err_norm_max" value="1e-12" >
           </td>
         </tr>
       </table>
