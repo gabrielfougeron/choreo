@@ -48,26 +48,30 @@ async function Set_Python_path(args){
 
     var event = new Event('StartAnimationFromOutsideCanvas');
     displayCanvas.dispatchEvent(event);
+
+    var Python_State_Div = document.getElementById("Python_State_Div");
+    Python_State_Div.innerHTML = "Ready";
+    Python_State_Div.classList.add('w3-green');
+    Python_State_Div.classList.remove('w3-orange');
+
 }
 
 async function Python_Imports_Done(args){
 
     console.log("Python Imports Done");
 
-    var Python_Ready_Div = document.getElementById("Python_Ready_Div");
+    var Python_State_Div = document.getElementById("Python_State_Div");
 
-    Python_Ready_Div.innerHTML = "Python is ready";
-    Python_Ready_Div.classList.remove('w3-orange');
-    Python_Ready_Div.classList.add('w3-green');
-
-    wait =  new Promise(r => setTimeout(r, 3000));
-    wait.then( r => {
-        Python_Ready_Div.style.display   = "none";
-    });
+    Python_State_Div.innerHTML = "Ready";
+    Python_State_Div.classList.remove('w3-orange');
+    Python_State_Div.classList.add('w3-green');
+// 
+//     wait =  new Promise(r => setTimeout(r, 3000));
+//     wait.then( r => {
+//         Python_State_Div.style.display   = "none";
+//     });
 
 }
-
-
 
 
 pyodide_worker.addEventListener('message', handleMessageFromWorker);
@@ -167,6 +171,12 @@ function SaveConfigFile(){
 }
 
 function ChoreoExecuteClick() {
+
+    var Python_State_Div = document.getElementById("Python_State_Div");
+
+    Python_State_Div.innerHTML = "Working";
+    Python_State_Div.classList.add('w3-orange');
+    Python_State_Div.classList.remove('w3-green');
 
     ConfigDict = GatherConfigDict();
 

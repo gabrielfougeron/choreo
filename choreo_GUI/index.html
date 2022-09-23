@@ -49,14 +49,15 @@ window.addEventListener("drop",function(e){
 
 <div class="content">
 <div id="AnimationAndMenuBlock">
-  <div class="w3-bar w3-bar-block w3-light-grey open LeftTab" style="width:130px; position:absolute;">
+  <!-- <div class="w3-bar w3-bar-block w3-light-grey open LeftTab" style="width:130px; position:absolute;"> -->
+  <div class="w3-bar-block w3-light-grey open LeftTab" style="width:130px; position:absolute;">
     <button class="w3-bar-item w3-button" onclick="OpenCloseLeftTab()" style="text-align: center;">&#9776;</button>
     <button class="w3-bar-item w3-button w3-hover-pale-red LeftTabBtn Launch"       style="text-align: center" onclick="ClickLeftTabBtn('Launch')"      >Launch</button>
     <button class="w3-bar-item w3-button w3-hover-pale-red LeftTabBtn Geom"         style="text-align: center" onclick="ClickLeftTabBtn('Geom')"        >Geometry</button>
     <button class="w3-bar-item w3-button w3-hover-pale-red LeftTabBtn IO"           style="text-align: center" onclick="ClickLeftTabBtn('IO')"          >I/O</button>
     <button class="w3-bar-item w3-button w3-hover-pale-red LeftTabBtn Solver"       style="text-align: center" onclick="ClickLeftTabBtn('Solver')"      >Solver</button>
-    <button class="w3-bar-item" style="height:200px ; text-align: center" ></button>
-    <button class="w3-bar-item w3-orange" id="Python_Ready_Div"  style="text-align: center" >Python is loading</button>
+    <div class="w3-bar-item w3-light-grey" style="height:200px ; text-align: center" >  </div>
+    <div class="w3-bar-item w3-orange" id="Python_State_Div"  style="text-align: center" >Loading</div>
   </div>
   <div id="MarginLeftTop" style="margin-left:130px;">
     <div class="w3-bar w3-light-grey TopTab Launch">
