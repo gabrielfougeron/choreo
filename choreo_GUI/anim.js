@@ -49,7 +49,6 @@ async function ListFilesInFolder(folder){
 
 }
 
-
 function trace(message) {
 	try {
 		console.log(message);
@@ -70,8 +69,7 @@ function canvasApp() {
 	var numOrbits;
 
 	var tInc;
-	var tIncMin = 0.0001;
-	var tIncMax = 0.01;
+
 	var xMin, xMax, yMin, yMax;
 	var xPixRate, yPixRate;
 	var time;
@@ -120,8 +118,8 @@ function canvasApp() {
 	var n_valid_dt_animation = 0;
 	var dt_outlier_ms = 1000;
 	var FPS_estimation = 30;
-	var slider_value_init = .33333;
-	var Time_One_Period_init = 25;
+	var slider_value_init = .5;
+	var Time_One_Period_init = 17;
 
 
 	
@@ -218,6 +216,7 @@ function canvasApp() {
 		  orientation: "horizontal",
 		  range: "min",
 		  max: 1,
+		  min: 0.2,
 		  step: 0.005,
 		  slide: speedSliderHandler,
 		  change: speedSliderHandler,
@@ -444,7 +443,8 @@ function canvasApp() {
 	function startAnimation() {
 		running = true;
 		(function animloop(Time_since_origin){
-			Estimate_FPS(Time_since_origin)
+			Estimate_FPS(Time_since_origin);
+			setPeriodTime();
 			request = requestAnimationFrame(animloop);
 			onTimer();
 		})();
@@ -828,17 +828,12 @@ function canvasApp() {
 	function setPeriodTime() {
 
 		var slider_value_rel = $("#speedSlider").slider("value")/slider_value_init;
-		var sliderpow = 2;
+		var sliderpow = 3;
 		var alpha = Math.pow(slider_value_rel,sliderpow);
 
 		Time_One_Period = Time_One_Period_init / alpha;
 
 		tInc = 1/(Time_One_Period*FPS_estimation) ;
-
-		console.log("slider_value_rel ",slider_value_rel)
-		console.log("tInc ",tInc)
-		console.log("Time_One_Period ",Time_One_Period)
-		console.log("FPS_estimation ",FPS_estimation)
 	}
 
 	function FinalizeSetOrbit() {
