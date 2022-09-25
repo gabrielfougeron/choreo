@@ -202,7 +202,7 @@ def main():
     hash_dict = {}
 
     n_opt = 0
-    n_opt_max = 1000
+    n_opt_max = 100
     n_find_max = 1
 
     mul_coarse_to_fine = 3
@@ -222,6 +222,13 @@ def main():
     all_kwargs = choreo.Pick_Named_Args_From_Dict(choreo.Find_Choreo,dict(globals(),**locals()))
 
     choreo.Find_Choreo(**all_kwargs)
+
+# 
+#     for root, dirs, files in os.walk(".", topdown=False):
+#         for name in files:
+#             print(os.path.join(root, name))
+#         for name in dirs:
+#             print(os.path.join(root, name))
 
     i_sol = 1
 
