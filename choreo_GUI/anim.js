@@ -4,6 +4,21 @@ Gallery_cache_behavior = {}
 var Pos ;
 var PlotInfo;
 
+var colorLookup_init = [
+	"#ff7006", // Vivid Orange
+	"#50ce4d", // Moderate Lime Green
+	"#a253c4", // Moderate Violet
+	"#ef1010", // Vivid Red
+	"#25b5bc", // Strong Cyan
+	"#E86A96", // Soft Pink
+	"#edc832", // Bright Yellow
+	"#ad6530", // Dark Orange [Brown tone]
+	"#00773f", // Dark cyan - lime green 
+	"#d6d6d6", // Light gray
+];
+
+var	colorLookup = colorLookup_init
+
 function AjaxGet(foldername){ return $.ajax({ url: foldername})}
 
 function GetFileBaseExt(filename) {
@@ -55,7 +70,8 @@ function canvasApp() {
 	var numOrbits;
 
 	var tInc;
-	var tIncMin, tIncMax;
+	var tIncMin = 0.0001;
+	var tIncMax = 0.01;
 	var xMin, xMax, yMin, yMax;
 	var xPixRate, yPixRate;
 	var time;
@@ -65,7 +81,6 @@ function canvasApp() {
 	var running;
 	var trailWidth;
 	var trajectoriesOn;
-	var colorLookup;
 	var defaultParticleColor;
 	var staticOrbitColor;
 	var staticOrbitWidth;
@@ -99,6 +114,16 @@ function canvasApp() {
 
 	var center_x;
 	var center_y;
+
+	var Last_Time_since_origin;
+	var Elapsed_Time_During_Animation = 0;
+	var n_valid_dt_animation = 0;
+	var dt_outlier_ms = 1000;
+	var FPS_estimation = 30;
+	var slider_value_init = .33333;
+	var Time_One_Period_init = 25;
+
+
 	
 	var startStopButton = document.getElementById("startStopButton");
 	startStopButton.addEventListener("click", startStopButtonHandler, true);
@@ -189,7 +214,7 @@ function canvasApp() {
 		//jquery ui elements
 		//speed slider
 		$("#speedSlider").slider({
-		  value: 0.33,
+		  value: slider_value_init,
 		  orientation: "horizontal",
 		  range: "min",
 		  max: 1,
@@ -214,8 +239,6 @@ function canvasApp() {
 				change:onRotationChange,
 			});
 		
-		tIncMin = 0.0001;
-		tIncMax = 0.01;
 
 		orbitDrawStartTime = orbitDrawTime = time = 0;
 
@@ -227,19 +250,6 @@ function canvasApp() {
 	}
 	
 	function setColorLookupList() {
-
-		colorLookup = [
-			"#ff7006", // Vivid Orange
-			"#50ce4d", // Moderate Lime Green
-			"#a253c4", // Moderate Violet
-			"#ef1010", // Vivid Red
-			"#25b5bc", // Strong Cyan
-			"#E86A96", // Soft Pink
-			"#edc832", // Bright Yellow
-			"#ad6530", // Dark Orange [Brown tone]
-			"#00773f", // Dark cyan - lime green 
-			"#d6d6d6", // Light gray
-		];
 		
 		trailColorLookup = [];
 		
@@ -409,12 +419,34 @@ function canvasApp() {
 		orbitRadio.appendChild(label);
 		
 	}
+
+	function Estimate_FPS(Time_since_origin){
+
+		if (Last_Time_since_origin && Time_since_origin)
+		{
+			var dt_ms = Time_since_origin - Last_Time_since_origin;
+
+			if ( dt_ms < dt_outlier_ms)
+			{
+				Elapsed_Time_During_Animation += dt_ms/1000;
+				n_valid_dt_animation +=1;
+
+				FPS_estimation = n_valid_dt_animation/Elapsed_Time_During_Animation;
+				// console.log(FPS_estimation);
+			}
+		
+		}
+	
+		Last_Time_since_origin = Time_since_origin;	
+
+	}
 	
 	function startAnimation() {
 		running = true;
-		(function animloop(){
-		  request = requestAnimationFrame(animloop);
-		  onTimer();
+		(function animloop(Time_since_origin){
+			Estimate_FPS(Time_since_origin)
+			request = requestAnimationFrame(animloop);
+			onTimer();
 		})();
 	}
 
@@ -568,16 +600,16 @@ function canvasApp() {
 		particleLayerContext.clearRect(0,0,displayWidth+1,displayHeight+1);
 	}
 	
-	function makeParticles(colors) {
+	function makeParticles(colors_list) {
 
 		particles = [];
 		
 		for (var i = 0; i<PlotInfo['nbody']; i++) {
 			var color;
 			var trailColor;
-			if (i<colors.length) {
-				color = colorLookup[colors[i]];
-				trailColor = trailColorLookup[colors[i]];
+			if (i<colors_list.length) {
+				color = colorLookup[colors_list[i]];
+				trailColor = trailColorLookup[colors_list[i]];
 			}
 			else {
 				color = defaultParticleColor;
@@ -790,16 +822,23 @@ function canvasApp() {
 	}
 
 	function speedSliderHandler() {
-		setTInc();	
+		setPeriodTime();	
 	}
 	
-	function setTInc() {
+	function setPeriodTime() {
 
-		var slider_value = $("#speedSlider").slider("value");
+		var slider_value_rel = $("#speedSlider").slider("value")/slider_value_init;
 		var sliderpow = 2;
-		var alpha = Math.pow(slider_value,sliderpow);
+		var alpha = Math.pow(slider_value_rel,sliderpow);
 
-		tInc = tIncMin + (tIncMax - tIncMin)*alpha;
+		Time_One_Period = Time_One_Period_init / alpha;
+
+		tInc = 1/(Time_One_Period*FPS_estimation) ;
+
+		console.log("slider_value_rel ",slider_value_rel)
+		console.log("tInc ",tInc)
+		console.log("Time_One_Period ",Time_One_Period)
+		console.log("FPS_estimation ",FPS_estimation)
 	}
 
 	function FinalizeSetOrbit() {
@@ -813,21 +852,21 @@ function canvasApp() {
 
 		setPlotWindow(plotWindow);
 		
-		var colors;
+		var colors_list;
 
 		if (PlotInfo['nbody'] < colorLookup.length) {
 			//if fewer than color list, default will be to do different colors.
-			colors = [];
+			colors_list = [];
 			for (var i = 0; i < PlotInfo['nbody']; i++) {
-				colors.push(i);
+				colors_list.push(i);
 			}
 		}
 		else {
 			//if more than color list, set to empty array,then default will be to make all same color.
-			colors = [];
+			colors_list = [];
 		}
 
-		makeParticles(colors);
+		makeParticles(colors_list);
 		clearScreen();
 				
 		time = 0;
@@ -849,7 +888,7 @@ function canvasApp() {
 			clearParticleLayer();
 			drawParticles();	
 		}
-		setTInc();
+		setPeriodTime();
 		
 	}
 

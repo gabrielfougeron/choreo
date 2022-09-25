@@ -117,8 +117,8 @@ function  GeomTopTabBtn(TabId) {
         case 'Geom': {
         ClickTopTabBtn('Geom_Bodies');
         break;}
-        case 'IO': {
-        ClickTopTabBtn('IO_Image');
+        case 'Animation': {
+        ClickTopTabBtn('Animation_Colors');
         break;}
         case 'Solver': {
         ClickTopTabBtn('Solver_Discr');
@@ -277,8 +277,8 @@ function GatherConfigDict() {
 
     }
 
-    ConfigDict['IO_Image'] = {};
-    ConfigDict['IO_Video'] = {};
+    ConfigDict['Animation_Image'] = {};
+    ConfigDict['Animation_Video'] = {};
 
     ConfigDict['Solver_Discr'] = {};
 
@@ -881,3 +881,32 @@ function ClickAddCustomSym() {
 
 }
   
+function ClickAddColor() {
+    var table = document.getElementById('table_pick_color');
+//     var newcell;
+//     var div,input;
+//     var irow, ival;
+//     var icol = table.rows[0].cells.length;
+// 
+//     n_fields = input_dict.length;
+//     n_default_values = input_dict[0]['value'].length;
+// 
+//     irow = 0;
+//     newcell = table.rows[irow].insertCell(icol);
+//     newcell.style.borderLeftStyle = 'hidden';
+//     newcell.style.fontSize = '16px';
+//     newcell.style.width = '65px';
+//     newcell.style.textAlign = 'center';
+// 
+//     div = document.createElement('button'); 
+//     div.classList.add("w3-button");
+//     div.classList.add("w3-light-grey");
+//     div.style.textAlign = "center";
+//     div.style.fontSize ="16px";
+//     div.style.fontWeight ="bold";
+//     div.innerHTML = "-";
+// 
+//     newcell.appendChild(div);
+// 
+
+}
