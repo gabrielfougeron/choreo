@@ -25,7 +25,7 @@
 <script src="assets/js/jquery-ui.js"></script>
 <script src="assets/js/ultbuttons1.1.min.js">//fixes an issue with unreponsive button clicks</script>
 <script src="assets/js/jquery.ui.touch-punch.min.js">//makes ui elements touch enabled</script>
-<script src="assets/js/roundslider.min.js"></script>
+<script src="assets/js/roundslider.min.js">// Enables rotation slider</script>
 
 <script>
 const pyodide_worker = new Worker("./Pyodide_worker.js");
@@ -56,7 +56,7 @@ window.addEventListener("drop",function(e){
     <button class="w3-bar-item w3-button" onclick="OpenCloseLeftTab()" style="text-align: center;">&#9776;</button>
     <button class="w3-bar-item w3-button w3-hover-pale-red LeftTabBtn Launch"       style="text-align: center" onclick="ClickLeftTabBtn('Launch')"      >Launch</button>
     <button class="w3-bar-item w3-button w3-hover-pale-red LeftTabBtn Geom"         style="text-align: center" onclick="ClickLeftTabBtn('Geom')"        >Geometry</button>
-    <button class="w3-bar-item w3-button w3-hover-pale-red LeftTabBtn IO"           style="text-align: center" onclick="ClickLeftTabBtn('IO')"          >I/O</button>
+    <button class="w3-bar-item w3-button w3-hover-pale-red LeftTabBtn Animation"    style="text-align: center" onclick="ClickLeftTabBtn('Animation')"   >Animation</button>
     <button class="w3-bar-item w3-button w3-hover-pale-red LeftTabBtn Solver"       style="text-align: center" onclick="ClickLeftTabBtn('Solver')"      >Solver</button>
     <div class="w3-bar-item w3-light-grey" style="height:200px ; text-align: center" >  </div>
     <div class="w3-bar-item w3-orange" id="Python_State_Div"  style="text-align: center" >Loading</div>
@@ -65,7 +65,7 @@ window.addEventListener("drop",function(e){
     <div class="w3-bar w3-light-grey TopTab Launch">
       <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Launch_Main"     onclick="ClickTopTabBtn('Launch_Main')"     >Main</button>
       <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Launch_Gallery"  onclick="ClickTopTabBtn('Launch_Gallery')"  >Gallery</button>
-      <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Launch_Test"     onclick="ClickTopTabBtn('Launch_Test')"     >Test</button>
+      <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Launch_Save_Config"     onclick="ClickTopTabBtn('Launch_Save_Config')"     >Save Config</button>
       <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Launch_Help"     onclick="ClickTopTabBtn('Launch_Help')"     >Help</button>
       <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Launch_About"    onclick="ClickTopTabBtn('Launch_About')"    >About</button>
     </div>
@@ -75,14 +75,14 @@ window.addEventListener("drop",function(e){
         <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Geom_Random"   onclick="ClickTopTabBtn('Geom_Random')">Random</button>
         <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Geom_Custom"   onclick="ClickTopTabBtn('Geom_Custom')">Custom</button>
     </div>
-    <div class="w3-bar w3-light-grey TopTab IO">
-        <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn IO_Image"   onclick="ClickTopTabBtn('IO_Image')">Image</button>
-        <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn IO_Video"   onclick="ClickTopTabBtn('IO_Video')">Video</button>
+    <div class="w3-bar w3-light-grey TopTab Animation">
+        <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Animation_Colors"  onclick="ClickTopTabBtn('Animation_Colors')">Colors</button>
+        <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Animation_Video"   onclick="ClickTopTabBtn('Animation_Video')">Video</button>
     </div>
     <div class="w3-bar w3-light-grey TopTab Solver">
         <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Solver_Discr"  onclick="ClickTopTabBtn('Solver_Discr')" >Discretization</button>
         <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Solver_Optim"  onclick="ClickTopTabBtn('Solver_Optim')" >Optimizer</button>
-        <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Solver_Loop"  onclick="ClickTopTabBtn('Solver_Loop')" >Loop</button>
+        <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Solver_Loop"   onclick="ClickTopTabBtn('Solver_Loop')" >Loop</button>
         <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Solver_Checks" onclick="ClickTopTabBtn('Solver_Checks')">Checks</button>
     </div>
   </div>
@@ -96,7 +96,7 @@ window.addEventListener("drop",function(e){
       </div>
     </div>
 
-    <div id="PlayCommands" position="absolute" style="margin-left:223px;">
+    <div id="PlayCommands" position="absolute" style="margin-left:180px;">
       <table style="border:0">
         <tr>
           <td colspan="3" style="border:0">
@@ -125,13 +125,7 @@ window.addEventListener("drop",function(e){
 <div id="CommandBody">
   <div class="w3-container MainTab Launch_Main" style="display:none">
     <div  id="LoadConfigFileDropArea" ondrop="DropConfigFile(event)" ondragover="PreventDefaultDragOver(event);">
-    <button class="w3-button w3-hover-pale-red w3-light-grey" onclick="SaveConfigFile()">Save Config File</button>
-    <input type="file" id="LoadConfigFileBtn" accept=".json" onchange="ClickLoadConfigFile(this.files); this.value=null ;" style="display:none">
-    <label class="w3-button w3-hover-pale-red w3-light-grey"  for="LoadConfigFileBtn">
-      Load Config File
-    </label>
     <button class="w3-button w3-hover-pale-red w3-light-grey" onclick="ChoreoExecuteClick()">Choreo Execute!</button>
-    <button class="w3-button w3-hover-pale-red w3-light-grey" onclick="ChoreoSaveInitStateClick()">Save Init state</button>
     <button class="w3-button w3-hover-pale-red w3-light-grey" onclick="ChoreoDispInitStateClick()">Display Init State</button>
     </div>
   </div>
@@ -149,9 +143,14 @@ window.addEventListener("drop",function(e){
       </form>
     </div>
   </div>
-  <div class="w3-container MainTab Launch_Test" style="display:none">
-    <h2>Test</h2>
-    <button class="w3-button w3-hover-pale-red w3-light-grey" onclick="TestClick()">Test</button>
+  <div class="w3-container MainTab Launch_Save_Config" style="display:none">
+    <h2>Save Config</h2>
+    <button class="w3-button w3-hover-pale-red w3-light-grey" onclick="SaveConfigFile()">Save Config File</button>
+    <input type="file" id="LoadConfigFileBtn" accept=".json" onchange="ClickLoadConfigFile(this.files); this.value=null ;" style="display:none">
+    <label class="w3-button w3-hover-pale-red w3-light-grey"  for="LoadConfigFileBtn">
+      Load Config File
+    </label>
+    <button class="w3-button w3-hover-pale-red w3-light-grey" onclick="ChoreoSaveInitStateClick()">Save Init state</button>
   </div>
   <div class="w3-container MainTab Launch_Help" style="display:none">
     <h2>Help</h2>
@@ -246,10 +245,20 @@ window.addEventListener("drop",function(e){
       <tr><td style="width:120px;min-height:40px;"><b>Time Shift den</b></td></tr>
     </table>
   </div>
-  <div class="w3-container MainTab IO_Image" style="display:none">
+  <div class="w3-container MainTab Animation_Colors" style="display:none">
     <h2>I/0 Image</h2>
+    <table id = "table_pick_color" style="table-layout: fixed;">
+      <tr style="border-left-style:hidden;border-right-style:hidden;border-top-style:hidden;"><td style="width:120px;"><b>
+        <button class="w3-button w3-light-grey" style="text-align: center; font-size:16px" onclick="ClickAddColor()">Add +</button>
+      </b></td></tr>
+      <!-- <tr><td style="width:120px;"><b>Gradient tolerance</b></td></tr>
+      <tr><td style="width:120px;"><b>Max iterations</b></td></tr>
+      <tr><td style="width:120px;"><b>Max inner iterations</b></td></tr>
+      <tr><td style="width:120px;"><b>Outer k</b></td></tr>
+      <tr><td style="width:120px;"><b>Store outer Av</b></td></tr> -->
+    </table>
   </div>
-  <div class="w3-container MainTab IO_Video" style="display:none">
+  <div class="w3-container MainTab Animation_Video" style="display:none">
     <h2>I/0 Video</h2>
   </div>
   <div class="w3-container MainTab Solver_Discr" style="display:none">
@@ -378,6 +387,15 @@ for (var i = 0; i < 8; i++) {
 }
 
 ClickAddBodyLoop();
+
+
+
+for (var i = 0; i < colorLookup_init.length; i++) {
+    ClickAddColor();
+}
+
+colorLookup
+
 
 </script>
 
