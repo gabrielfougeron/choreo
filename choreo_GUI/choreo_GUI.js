@@ -53,6 +53,7 @@ async function Set_Python_path(args){
     Python_State_Div.innerHTML = "Ready";
     Python_State_Div.classList.add('w3-green');
     Python_State_Div.classList.remove('w3-orange');
+    Python_State_Div.classList.remove('w3-red');
 
 }
 
@@ -63,6 +64,7 @@ async function Python_Imports_Done(args){
     var Python_State_Div = document.getElementById("Python_State_Div");
 
     Python_State_Div.innerHTML = "Ready";
+    Python_State_Div.classList.remove('w3-red');
     Python_State_Div.classList.remove('w3-orange');
     Python_State_Div.classList.add('w3-green');
 // 
@@ -177,6 +179,7 @@ function ChoreoExecuteClick() {
     Python_State_Div.innerHTML = "Working";
     Python_State_Div.classList.add('w3-orange');
     Python_State_Div.classList.remove('w3-green');
+    Python_State_Div.classList.remove('w3-red');
 
     ConfigDict = GatherConfigDict();
 
@@ -723,7 +726,7 @@ function ClickAddBodyLoop() {
         "elem_class":"input", 
         "type":"number", 
         "min":"0",
-        "value":"0",
+        "value":"1",
         },
         {
         "elem_class":"input", 
@@ -735,7 +738,7 @@ function ClickAddBodyLoop() {
         "elem_class":"input", 
         "type":"number", 
         "min":"0",
-        "value":"0",
+        "value":"1",
         },
         {
         "elem_class":"input", 
@@ -916,8 +919,23 @@ function ClickTopTabBtn_Animation_Video() {
     ClickTopTabBtn('Animation_Video');
 }
 
-
 function UpdateFPSDisplay() {
     var txt_disp = document.getElementById('Estimate_FPS_txt');
     txt_disp.innerHTML=Math.ceil(FPS_estimation).toString();
+}
+
+
+function KillAndReloadWorker() {
+    pyodide_worker.terminate();
+
+    var Python_State_Div = document.getElementById("Python_State_Div");
+
+    Python_State_Div.innerHTML = "Killed";
+    Python_State_Div.classList.add('w3-red');
+    Python_State_Div.classList.remove('w3-orange');
+    Python_State_Div.classList.remove('w3-green');
+
+    pyodide_worker = new Worker("./Pyodide_worker.js");
+    pyodide_worker.addEventListener('message', handleMessageFromWorker);
+    pyodide_worker.postMessage({funname:"ExecutePythonFile",args:"./python_scripts/Python_imports.py"});
 }
