@@ -136,12 +136,17 @@ function canvasApp() {
 	var btnPrevOrbit = document.getElementById("btnPrevOrbit");
 	btnPrevOrbit.addEventListener("click", prevOrbit, true);
 
+	var speedPlusBtn = document.getElementById("speedPlusBtn");
+	speedPlusBtn.addEventListener("click", SpeedPlusClick, true);
+	
+	var speedMinusBtn = document.getElementById("speedMinusBtn");
+	speedMinusBtn.addEventListener("click", SpeedMinusClick, true);
+
 	var AllPosFilenames = [];
 	var AllPlotInfoFilenames = [];
 	var AllPos = [];
 	var AllPlotInfo = [];
 	var AllGalleryNames = [];
-
 
 	//requestAnimationFrame shim for multiple browser compatibility by Eric Möller,
 	//http://my.opera.com/emoller/blog/2011/12/20/requestanimationframe-for-smart-er-animating
@@ -218,7 +223,7 @@ function canvasApp() {
 		  step: 0.005,
 		  slide: speedSliderHandler,
 		  change: speedSliderHandler,
-		  animate: true
+		  animate: false,
 		});		
 
 		//Rtation slider
@@ -823,6 +828,36 @@ function canvasApp() {
 		setPeriodTime();	
 	}
 	
+	function SpeedMinusClick() {
+		var speedSlider = $("#speedSlider");
+		var cur_val = speedSlider.slider("value");
+		var min_val = speedSlider.slider("option", "min");
+		var max_val = speedSlider.slider("option", "max");
+		var step_val = speedSlider.slider("option", "step");
+
+		target_val = cur_val - step_val;
+
+		if (target_val > min_val ) {
+			speedSlider.slider("value",target_val);
+		}
+
+	}
+
+	function SpeedPlusClick() {
+		var speedSlider = $("#speedSlider");
+		var cur_val = speedSlider.slider("value");
+		var min_val = speedSlider.slider("option", "min");
+		var max_val = speedSlider.slider("option", "max");
+		var step_val = speedSlider.slider("option", "step");
+
+		target_val = cur_val + step_val;
+
+		if (target_val < max_val ) {
+			speedSlider.slider("value",target_val);
+		}
+
+	}
+
 	function setPeriodTime() {
 
 		var slider_value_rel = $("#speedSlider").slider("value")/slider_value_init;
