@@ -142,6 +142,8 @@ function canvasApp() {
 	var speedMinusBtn = document.getElementById("speedMinusBtn");
 	speedMinusBtn.addEventListener("click", SpeedMinusClick, true);
 
+	var speedTxt = document.getElementById("speedTxt");
+
 	var AllPosFilenames = [];
 	var AllPlotInfoFilenames = [];
 	var AllPos = [];
@@ -434,7 +436,6 @@ function canvasApp() {
 				n_valid_dt_animation +=1;
 
 				FPS_estimation = n_valid_dt_animation/Elapsed_Time_During_Animation;
-				// console.log(FPS_estimation);
 			}
 		
 		}
@@ -575,7 +576,6 @@ function canvasApp() {
 		
 		if (drawingStaticOrbit) {
 			orbitDrawTime += tInc;
-			// console.log(orbitDrawTime);
 
 			if (orbitDrawTime > orbitDrawStartTime + 1) {
 				//stop drawing orbit
@@ -860,13 +860,18 @@ function canvasApp() {
 
 	function setPeriodTime() {
 
-		var slider_value_rel = $("#speedSlider").slider("value")/slider_value_init;
+		var slider_value = $("#speedSlider").slider("value");
+		var slider_value_rel = slider_value/slider_value_init;
 		var sliderpow = 3;
 		var alpha = Math.pow(slider_value_rel,sliderpow);
 
-		Time_One_Period = Time_One_Period_init / alpha;
+		var Time_One_Period = Time_One_Period_init / alpha;
 
 		tInc = 1/(Time_One_Period*FPS_estimation) ;
+
+		var speedTxt_val = Math.round(100*Math.pow(slider_value,sliderpow));
+		speedTxt.innerHTML = "Speed: "+speedTxt_val.toString();
+
 	}
 
 	function FinalizeSetOrbit() {
