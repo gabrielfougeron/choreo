@@ -226,7 +226,7 @@ function canvasApp() {
 		  animate: false,
 		});		
 
-		//Rtation slider
+		//Rotation slider
 		$("#RotSlider").roundSlider({
 				width: 15,
 				radius: 50,
