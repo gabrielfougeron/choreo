@@ -52,7 +52,8 @@ a {
     /* background-color:"black" ; */
     color:black ;
     display:inline-block ;
-    width:245px;
+    /* width:245px; */
+    width:100px;
     text-align:center;
 }
 #speedSlider {
