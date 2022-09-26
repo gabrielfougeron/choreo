@@ -28,7 +28,7 @@
 <script src="assets/js/roundslider.min.js">// Enables rotation slider</script>
 
 <script>
-const pyodide_worker = new Worker("./Pyodide_worker.js");
+pyodide_worker = new Worker("./Pyodide_worker.js");
 pyodide_worker.postMessage({funname:"ExecutePythonFile",args:"./python_scripts/Python_imports.py"});
 </script>
 
@@ -129,6 +129,7 @@ window.addEventListener("drop",function(e){
     <div  id="LoadConfigFileDropArea" ondrop="DropConfigFile(event)" ondragover="PreventDefaultDragOver(event);">
     <button class="w3-button w3-hover-pale-red w3-light-grey" onclick="ChoreoExecuteClick()">Choreo Execute!</button>
     <button class="w3-button w3-hover-pale-red w3-light-grey" onclick="ChoreoDispInitStateClick()">Display Init State</button>
+    <button class="w3-button w3-hover-pale-red w3-light-grey" onclick="KillAndReloadWorker()">Kill Worker</button>
     </div>
   </div>
   <div class="w3-container MainTab Launch_Gallery" style="display:none">
