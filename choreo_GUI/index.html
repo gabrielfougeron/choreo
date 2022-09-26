@@ -77,7 +77,7 @@ window.addEventListener("drop",function(e){
     </div>
     <div class="w3-bar w3-light-grey TopTab Animation">
         <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Animation_Colors"  onclick="ClickTopTabBtn('Animation_Colors')">Colors</button>
-        <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Animation_Video"   onclick="ClickTopTabBtn('Animation_Video')">Video</button>
+        <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Animation_Video"   onclick="ClickTopTabBtn_Animation_Video()">Video</button>
     </div>
     <div class="w3-bar w3-light-grey TopTab Solver">
         <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Solver_Discr"  onclick="ClickTopTabBtn('Solver_Discr')" >Discretization</button>
@@ -260,6 +260,8 @@ window.addEventListener("drop",function(e){
   </div>
   <div class="w3-container MainTab Animation_Video" style="display:none">
     <h2>I/0 Video</h2>
+    Estimate average FPS of animation: <div id="Estimate_FPS_txt" style="display:inline">30</div> 
+    <!-- <button class="w3-button w3-light-grey" style="text-align: center; font-size:16px ;display:inline" onclick="UpdateFPSDisplay()">Update</button> -->
   </div>
   <div class="w3-container MainTab Solver_Discr" style="display:none">
     <h2>Solver Discretization</h2>
