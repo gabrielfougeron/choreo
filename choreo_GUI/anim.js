@@ -3,6 +3,7 @@ Gallery_cache_behavior = {}
 
 var Pos ;
 var PlotInfo;
+var FPS_estimation = 30;
 
 var colorLookup_init = [
 	"#ff7006", // Vivid Orange
@@ -117,11 +118,8 @@ function canvasApp() {
 	var Elapsed_Time_During_Animation = 0;
 	var n_valid_dt_animation = 0;
 	var dt_outlier_ms = 1000;
-	var FPS_estimation = 30;
 	var slider_value_init = .5;
 	var Time_One_Period_init = 17;
-
-
 	
 	var startStopButton = document.getElementById("startStopButton");
 	startStopButton.addEventListener("click", startStopButtonHandler, true);
