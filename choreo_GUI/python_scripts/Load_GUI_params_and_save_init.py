@@ -168,8 +168,7 @@ def main():
     # Save_Newton_Error = True
     Save_Newton_Error = False
 
-    n_reconverge_it_max = 4
-    # n_reconverge_it_max = 1
+    n_reconverge_it_max = params_dict["Solver_Discr"] ['n_reconverge_it_max'] 
 
     ncoeff_init = params_dict["Solver_Discr"]["ncoeff_init"]   
 
