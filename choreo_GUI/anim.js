@@ -4,6 +4,14 @@ Gallery_cache_behavior = {}
 var Pos ;
 var PlotInfo;
 var FPS_estimation = 30;
+var Do_Limit_FPS = false;
+var FPS_limit = 120;
+var Elapsed_Time_During_Animation = 0;
+var n_valid_dt_animation = 0;
+
+var Last_UpdateFPSDisplay = 0;
+var UpdateFPSDisplay_freq = 5;
+
 
 var colorLookup_init = [
 	"#ff7006", // Vivid Orange
@@ -115,9 +123,7 @@ function canvasApp() {
 	var center_y;
 
 	var Last_Time_since_origin;
-	var Elapsed_Time_During_Animation = 0;
-	var n_valid_dt_animation = 0;
-	var dt_outlier_ms = 1000;
+	var dt_outlier_ms = 300;
 	var slider_value_init = .5;
 	var Time_One_Period_init = 17;
 	
@@ -443,16 +449,56 @@ function canvasApp() {
 		Last_Time_since_origin = Time_since_origin;	
 
 	}
+
+	function anim() {
+		UpdateFPSDisplay();
+		setPeriodTime();
+		onTimer();
+	}
 	
 	function startAnimation() {
 		running = true;
+		input_Limit_FPS_Handler();
 		(function animloop(Time_since_origin){
-			Estimate_FPS(Time_since_origin);
-			setPeriodTime();
+
 			request = requestAnimationFrame(animloop);
-			onTimer();
+
+			if (Do_Limit_FPS) {
+
+				if (anim_schedule_time < Time_since_origin) {
+					anim_schedule_time += 1000/FPS_limit ;
+					Estimate_FPS(Time_since_origin);
+					anim();
+				}
+			} else {
+				Estimate_FPS(Time_since_origin);
+				anim();
+			}
+
 		})();
 	}
+// 
+// 	function startAnimation() {
+// 		running = true;
+// 		(async function animloop(Time_since_origin){
+// 
+// 			wait_time = Math.ceil(1000 / FPS_limit);
+// 			delay = new Promise(r => setTimeout(r, wait_time));
+// 
+// 			Estimate_FPS(Time_since_origin);
+// 
+// 			setPeriodTime();
+// 			
+// 			request = requestAnimationFrame(animloop);
+// 			onTimer();
+// 
+// 			if (Do_Limit_FPS) {
+// 				UpdateFPSDisplay();
+// 				await delay;
+// 			}
+// 
+// 		})();
+// 	}
 
 	function stopAnimation() {
 		running = false;

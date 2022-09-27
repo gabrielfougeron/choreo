@@ -263,7 +263,21 @@ window.addEventListener("drop",function(e){
   </div>
   <div class="w3-container MainTab Animation_Video" style="display:none">
     <h2>I/0 Video</h2>
-    Estimate average FPS of animation: <div id="Estimate_FPS_txt" style="display:inline">30</div> 
+    <table style="font-size:16px; border:none; display:table">
+      <tr>
+        <td style="border:none;" >Estimate average FPS of animation: </td>
+        <td style="border:none;"> <div id="Estimate_FPS_txt" style="display:inline">30</div> </td>
+      </tr>
+      <tr>
+        <td style="border:none;" ><label for="checkbox_Limit_FPS">Limit FPS</label></td>
+        <td style="border:none;"><input id ="checkbox_Limit_FPS" class="w3-check" type="checkbox" style="vertical-align: super" unchecked></td>
+      </tr>
+      <tr>
+        <td style="border:none" ><label for="input_Limit_FPS" disabled="disabled">Max FPS:</label></td>
+        <td style="border:none; max-width:100px; "><input type="number" id="input_Limit_FPS" value="120" disabled="disabled" min="5"></td>
+      </tr>
+    </table>
+    
     <!-- <button class="w3-button w3-light-grey" style="text-align: center; font-size:16px ;display:inline" onclick="UpdateFPSDisplay()">Update</button> -->
   </div>
   <div class="w3-container MainTab Solver_Discr" style="display:none">

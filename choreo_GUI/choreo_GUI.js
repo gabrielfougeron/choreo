@@ -920,10 +920,18 @@ function ClickTopTabBtn_Animation_Video() {
 }
 
 function UpdateFPSDisplay() {
-    var txt_disp = document.getElementById('Estimate_FPS_txt');
-    txt_disp.innerHTML=Math.ceil(FPS_estimation).toString();
-}
 
+    var the_time = performance.now();
+
+    if (the_time > (Last_UpdateFPSDisplay + 1000/UpdateFPSDisplay_freq)) {
+
+        Last_UpdateFPSDisplay = the_time;
+
+        var txt_disp = document.getElementById('Estimate_FPS_txt');
+        txt_disp.innerHTML=Math.ceil(FPS_estimation).toString();
+    }
+
+}
 
 function KillAndReloadWorker() {
     pyodide_worker.terminate();
@@ -939,3 +947,37 @@ function KillAndReloadWorker() {
     pyodide_worker.addEventListener('message', handleMessageFromWorker);
     pyodide_worker.postMessage({funname:"ExecutePythonFile",args:"./python_scripts/Python_imports.py"});
 }
+
+function input_Limit_FPS_Handler() {
+
+    Elapsed_Time_During_Animation = 0;
+    n_valid_dt_animation = 0;
+
+    var input_Limit_FPS = document.getElementById("input_Limit_FPS");    
+    FPS_limit = input_Limit_FPS.value;
+
+    anim_schedule_time = performance.now()
+
+}
+
+function checkbox_Limit_FPS_Handler(event) {
+
+    var input_Limit_FPS = document.getElementById("input_Limit_FPS");
+    
+    if (event.currentTarget.checked) {
+        input_Limit_FPS.disabled = "";
+        Do_Limit_FPS = true;
+    } else {
+        input_Limit_FPS.disabled = "disabled";
+        Do_Limit_FPS = false;
+    }
+
+    input_Limit_FPS_Handler();
+
+}
+
+var checkbox_Limit_FPS = document.getElementById('checkbox_Limit_FPS');
+checkbox_Limit_FPS.addEventListener("change", checkbox_Limit_FPS_Handler, true);
+
+var input_Limit_FPS = document.getElementById("input_Limit_FPS");
+input_Limit_FPS.addEventListener("change", input_Limit_FPS_Handler, true);
