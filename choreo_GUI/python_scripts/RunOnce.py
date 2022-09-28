@@ -216,7 +216,9 @@ def main():
     # Save_All_Pos = False
 
     Save_PlotInfo = True
-    
+
+    plot_extend = 0.
+
     all_kwargs = choreo.Pick_Named_Args_From_Dict(choreo.Find_Choreo,dict(globals(),**locals()))
 
     choreo.Find_Choreo(**all_kwargs)

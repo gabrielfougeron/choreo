@@ -929,6 +929,7 @@ function UpdateFPSDisplay() {
 
         var txt_disp = document.getElementById('Estimate_FPS_txt');
         txt_disp.innerHTML=Math.ceil(FPS_estimation).toString();
+        
     }
 
 }

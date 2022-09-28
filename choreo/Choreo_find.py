@@ -87,6 +87,7 @@ def Find_Choreo(
     Save_PlotInfo,
     mul_coarse_to_fine,
     n_find_max,
+    plot_extend,
     ):
     """
 
@@ -448,7 +449,7 @@ def Find_Choreo(
 
                     if Save_PlotInfo:
 
-                        Write_PlotInfo(best_sol.x,callfun,filename_output+"_plotinfo.json")
+                        Write_PlotInfo(best_sol.x,callfun,filename_output+"_plotinfo.json",extend=plot_extend)
                 
                 if GoOn and NeedsRefinement:
                     
@@ -511,6 +512,7 @@ def GenSymExample(
     Save_All_Pos,
     n_save_pos,
     Save_PlotInfo,
+    plot_extend,
 ):
     
     n_reconverge_it_max = 0
@@ -602,4 +604,4 @@ def GenSymExample(
 
     if Save_PlotInfo:
 
-        Write_PlotInfo(x0,callfun,"init_plotinfo.json")
+        Write_PlotInfo(x0,callfun,"init_plotinfo.json",extend=plot_extend)

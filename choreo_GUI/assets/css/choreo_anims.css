@@ -59,13 +59,16 @@ a {
 #speedSlider {
     margin-top:5px;
     margin-bottom:5px;
-    width:245px;
+    margin-left:0px;
+    margin-right:0px;
+    /* width:245px; */
 }
-/* #RotSlider {
-    margin-top:5px;
-    margin-bottom:5px;
-    width:245px;
-} */
+#RotSlider {
+    /* margin-top:5px; */
+    /* margin-bottom:5px; */
+    margin-left:30px;
+    margin-right:30px;
+}
 #startStopButton {
     min-width:70px;
 }
