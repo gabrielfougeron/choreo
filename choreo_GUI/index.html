@@ -76,8 +76,9 @@ window.addEventListener("drop",function(e){
         <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Geom_Custom"   onclick="ClickTopTabBtn('Geom_Custom')">Custom</button>
     </div>
     <div class="w3-bar w3-light-grey TopTab Animation">
+        <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Animation_Size"  onclick="ClickTopTabBtn('Animation_Size')">Size</button>
         <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Animation_Colors"  onclick="ClickTopTabBtn('Animation_Colors')">Colors</button>
-        <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Animation_Video"   onclick="ClickTopTabBtn_Animation_Video()">Video</button>
+        <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Animation_Framerate"   onclick="ClickTopTabBtn_Animation_Framerate()">Framerate</button>
     </div>
     <div class="w3-bar w3-light-grey TopTab Solver">
         <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Solver_Discr"  onclick="ClickTopTabBtn('Solver_Discr')" >Discretization</button>
@@ -249,6 +250,23 @@ window.addEventListener("drop",function(e){
       <tr><td style="width:120px;min-height:40px;"><b>Time Shift den</b></td></tr>
     </table>
   </div>
+  <div class="w3-container MainTab Animation_Size" style="display:none">
+    <h2>Size</h2>
+    <table style="font-size:16px; border:none; display:table">
+      <tr>
+        <td style="border:none">Body radius:</td>
+        <td style="border:none; max-width:100px; "><input type="range" id="input_body_radius"></td>
+      </tr>
+      <tr>
+        <td style="border:none">Trail width:</td>
+        <td style="border:none; max-width:100px; "><input type="range" id="input_trail_width"></td>
+      </tr>
+      <tr>
+        <td style="border:none">Trail vanish speed:</td>
+        <td style="border:none; max-width:100px; "><input type="range" id="input_trail_vanish_speed"></td>
+      </tr>
+    </table>
+  </div>
   <div class="w3-container MainTab Animation_Colors" style="display:none">
     <h2>Colors</h2>
     <div style = "max-width:200px; ">
@@ -279,8 +297,8 @@ window.addEventListener("drop",function(e){
       </tr> 
     </table>
   </div>
-  <div class="w3-container MainTab Animation_Video" style="display:none">
-    <h2>I/0 Video</h2>
+  <div class="w3-container MainTab Animation_Framerate" style="display:none">
+    <h2>Framerate options</h2>
     <table style="font-size:16px; border:none; display:table">
       <tr>
         <td style="border:none;" >Estimate average FPS of animation: </td>
@@ -295,8 +313,6 @@ window.addEventListener("drop",function(e){
         <td style="border:none; max-width:100px; "><input type="number" id="input_Limit_FPS" value="120" disabled="disabled" min="5"></td>
       </tr>
     </table>
-    
-    <!-- <button class="w3-button w3-light-grey" style="text-align: center; font-size:16px ;display:inline" onclick="UpdateFPSDisplay()">Update</button> -->
   </div>
   <div class="w3-container MainTab Solver_Discr" style="display:none">
     <h2>Solver Discretization</h2>
@@ -417,6 +433,8 @@ ClickLeftTabBtn('Animation');
 
 // ClickTopTabBtn('Launch_Gallery')
 // ClickTopTabBtn('Launch_Main')
+
+ClickTopTabBtn('Animation_Size')
 
 SlideNReconvergeItMax();
 
