@@ -191,6 +191,7 @@ window.addEventListener("drop",function(e){
   </div>
   <div class="w3-container MainTab Geom_Target" style="display:none">
     <h2>Initial state Target</h2>
+    Feature to be added later.
   </div>
   <div class="w3-container MainTab Geom_Random" style="display:none">
     <h2>Initial state Random</h2>
@@ -203,7 +204,7 @@ window.addEventListener("drop",function(e){
             <label for="input_coeff_ampl_o">Max amplitude</label>
           </td>
           <td style="border:none; max-width:90px; ">
-            <input id ="input_coeff_ampl_o" type="text" value="1e-1">
+            <input id ="input_coeff_ampl_o" type="text" value="1e-1" style="text-align: center;">
           </td>
         </tr>
         <tr>
@@ -211,7 +212,7 @@ window.addEventListener("drop",function(e){
             <label for="input_coeff_ampl_min">Min amplitude</label>
           </td>
           <td style="border:none; max-width:90px; ">
-            <input id ="input_coeff_ampl_min" type="text" value="1e-16">
+            <input id ="input_coeff_ampl_min" type="text" value="1e-16" style="text-align: center;">
           </td>
         </tr>
         <tr>
@@ -219,7 +220,7 @@ window.addEventListener("drop",function(e){
             <label for="input_k_infl">Bend index</label>
           </td>
           <td style="border:none; max-width:90px; ">
-            <input id ="input_k_infl" type="number" value="3">
+            <input id ="input_k_infl" type="number" value="3" style="text-align: center;">
           </td>
         </tr>
         <tr>
@@ -227,7 +228,7 @@ window.addEventListener("drop",function(e){
             <label for="input_k_max">Vanishing index</label>
           </td>
           <td style="border:none; max-width:90px; ">
-            <input id ="input_k_max" type="number" value="600">
+            <input id ="input_k_max" type="number" value="600" style="text-align: center;">
           </td>
         </tr>
       </table>
@@ -249,16 +250,33 @@ window.addEventListener("drop",function(e){
     </table>
   </div>
   <div class="w3-container MainTab Animation_Colors" style="display:none">
-    <h2>I/0 Image</h2>
+    <h2>Colors</h2>
+    <div style = "max-width:200px; ">
+      <table style="font-size:16px; border:none; display:table">
+        <tr>
+          <td style="border:none;" >
+            <label for="color_method">Color by </label>
+          </td>
+          <td style="border:none; max-width:90px;text-align: center; ">
+            <select class="w3-select" id="color_method"  name="color_method" style="text-align: center;"> 
+              <option value="loop">Body</option>
+              <option value="loop">Loop</option>
+              <option value="loop">None</option>
+            </select>
+          </td>
+        </tr> 
+      </table>
+    </div>
+    <td style="width:120px;">
+      <b><button class="w3-button w3-light-grey" style="text-align: center; font-size:16px" onclick="ClickAddColor()">Add +</button></b>
+    </td>
     <table id = "table_pick_color" style="table-layout: fixed;">
-      <tr style="border-left-style:hidden;border-right-style:hidden;border-top-style:hidden;"><td style="width:120px;"><b>
-        <button class="w3-button w3-light-grey" style="text-align: center; font-size:16px" onclick="ClickAddColor()">Add +</button>
-      </b></td></tr>
-      <!-- <tr><td style="width:120px;"><b>Gradient tolerance</b></td></tr>
-      <tr><td style="width:120px;"><b>Max iterations</b></td></tr>
-      <tr><td style="width:120px;"><b>Max inner iterations</b></td></tr>
-      <tr><td style="width:120px;"><b>Outer k</b></td></tr>
-      <tr><td style="width:120px;"><b>Store outer Av</b></td></tr> -->
+      <tr style="border-left-style:hidden;border-right-style:hidden;border-top-style:hidden;">
+        <td style="border-style:hidden"></td>
+        <td style="border-style:hidden"></td>
+        <td style="border-style:hidden"></td>
+        <td style="border-style:hidden"></td>
+      </tr> 
     </table>
   </div>
   <div class="w3-container MainTab Animation_Video" style="display:none">
@@ -290,7 +308,7 @@ window.addEventListener("drop",function(e){
         </tr>
         <tr>
           <td style="border:none"><h>Number of coefficients for level 1: </h></td>
-          <td style="border:none; max-width:100px; "><input type="number" id="input_ncoeff_init" value="300" ></td>
+          <td style="border:none; max-width:100px; "><input type="number" id="input_ncoeff_init" value="300" style="text-align: center;"></td>
         </tr>
         <tr>
           <td style="border:none"><h>Max refinement levels: </h><span id="display_n_reconverge_it_max"></span></td>
@@ -308,7 +326,7 @@ window.addEventListener("drop",function(e){
             <label for="krylov_method">Krylov method:</label>
           </td>
           <td style="border:none; max-width:90px; ">
-            <select class="w3-select" id="krylov_method"  name="krylov_method"> 
+            <select class="w3-select" id="krylov_method"  name="krylov_method" style="text-align: center;"> 
               <option value="lgmres">LGMRES</option>
               <option value="gmres">GMRES</option>
               <option value="bicgstab" selected>BiCGSTAB</option>
@@ -322,7 +340,7 @@ window.addEventListener("drop",function(e){
             <label for="linesearch_method">Line search method:</label>
           </td>
            <td style="border:none; max-width:90px; ">
-            <select class="w3-select" id="linesearch_method" name="linesearch_method"> 
+            <select class="w3-select" id="linesearch_method" name="linesearch_method" style="text-align: center;"> 
               <option value="wolfe" selected>Wolfe</option>
               <option value="armijo">Armijo</option>
             </select>
@@ -332,7 +350,7 @@ window.addEventListener("drop",function(e){
             <label for="input_Newt_err_norm_max">Max Newton Error:</label>
           </td>
            <td style="border:none; max-width:90px; ">
-            <input type="text" id="input_Newt_err_norm_max" value="1e-12" >
+            <input type="text" id="input_Newt_err_norm_max" value="1e-12" style="text-align: center;" >
           </td>
         </tr>
       </table>
@@ -369,7 +387,7 @@ window.addEventListener("drop",function(e){
             <label for="input_duplicate_eps">Duplicate hash min difference</label>
           </td>
           <td style="border:none; max-width:90px; ">
-            <input id ="input_duplicate_eps" type="text" value="1e-8">
+            <input id ="input_duplicate_eps" type="text" value="1e-8" style="text-align: center;">
           </td>
         </tr>
         <tr>
@@ -393,11 +411,12 @@ window.addEventListener("drop",function(e){
 
 OnWindowResize()
 
-ClickLeftTabBtn('Launch');
+// ClickLeftTabBtn('Launch');
+ClickLeftTabBtn('Animation');
 
 
 // ClickTopTabBtn('Launch_Gallery')
-ClickTopTabBtn('Launch_Main')
+// ClickTopTabBtn('Launch_Main')
 
 SlideNReconvergeItMax();
 
@@ -413,7 +432,6 @@ for (var i = 0; i < colorLookup_init.length; i++) {
     ClickAddColor();
 }
 
-colorLookup
 
 
 </script>

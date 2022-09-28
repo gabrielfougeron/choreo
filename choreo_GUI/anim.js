@@ -12,7 +12,7 @@ var n_valid_dt_animation = 0;
 var Last_UpdateFPSDisplay = 0;
 var UpdateFPSDisplay_freq = 5;
 
-
+var n_color = 0;
 var colorLookup_init = [
 	"#ff7006", // Vivid Orange
 	"#50ce4d", // Moderate Lime Green
@@ -25,6 +25,9 @@ var colorLookup_init = [
 	"#00773f", // Dark cyan - lime green 
 	"#d6d6d6", // Light gray
 ];
+
+var defaultParticleColor = "#ee6600";
+var defaultTrailColor = "#dd5500";
 
 var	colorLookup = colorLookup_init
 
@@ -87,7 +90,7 @@ function canvasApp() {
 	var base_particle_size = 5.5;
 	// with of particle trail
 	// var base_trailWidth = 2;
-	var base_trailWidth = 4;
+	var base_trailWidth = 3;
 
 	var Min_PartRelSize = 0.5;
 	var Max_PartRelSize = 7.;
@@ -97,7 +100,6 @@ function canvasApp() {
 	var request;
 	var running;
 	var trajectoriesOn;
-	var defaultParticleColor;
 	var staticOrbitColor;
 	var trailColorLookup;
 	
@@ -206,10 +208,6 @@ function canvasApp() {
 		staticOrbitColor = "rgba(200,200,200,0.5)";
 		// staticOrbitColor = "rgba(200,200,200,0.0)";
 		// staticOrbitColor = "rgba(255,0,255,0.8)"; //TESTING
-
-		// defaults when colors are not defined
-		defaultParticleColor = "#ee6600";
-		defaultTrailColor = "#dd5500";
 		
 		setColorLookupList();
 

@@ -883,34 +883,126 @@ function ClickAddCustomSym() {
     RedistributeClicksTableBodyLoop('table_custom_sym',0);
 
 }
+
+function ResetColorTable() {
+
+    var table = document.getElementById('table_pick_color');
+
+    var nrow_cur = table.rows.length;
+
+    for (var irow = 1 ; irow < nrow_cur; irow++) {
+
+        table.deleteRow(irow);
+
+    }
+
+}
   
 function ClickAddColor() {
     var table = document.getElementById('table_pick_color');
-//     var newcell;
-//     var div,input;
-//     var irow, ival;
-//     var icol = table.rows[0].cells.length;
-// 
-//     n_fields = input_dict.length;
-//     n_default_values = input_dict[0]['value'].length;
-// 
-//     irow = 0;
-//     newcell = table.rows[irow].insertCell(icol);
-//     newcell.style.borderLeftStyle = 'hidden';
-//     newcell.style.fontSize = '16px';
-//     newcell.style.width = '65px';
-//     newcell.style.textAlign = 'center';
-// 
-//     div = document.createElement('button'); 
-//     div.classList.add("w3-button");
-//     div.classList.add("w3-light-grey");
-//     div.style.textAlign = "center";
-//     div.style.fontSize ="16px";
-//     div.style.fontWeight ="bold";
-//     div.innerHTML = "-";
-// 
-//     newcell.appendChild(div);
-// 
+    var newcell;
+    var div,input;
+    var ival;
+
+    var nrow_cur = table.rows.length;
+    var ncol_cur = table.rows[0].cells.length;
+
+    var ncol_per_row = 4;
+
+    n_color += 1;
+
+    var icol = ((n_color -1) % ncol_per_row) ;
+    var irow = Math.floor((n_color-1) / ncol_per_row) +1;
+
+    // console.log(nrow_cur,ncol_cur,n_color);
+    // console.log(irow,nrow_cur,n_color);
+    
+
+    if (irow >= nrow_cur) {
+        table.insertRow();
+        table.rows[irow].style.borderStyle = 'hidden';
+        // newcell = table.rows[irow].insertCell(0); // Fake col under the "Add +" button
+        // newcell.style.borderStyle = 'hidden';
+    }
+
+    // console.log(n_color,icol,irow);
+
+    // console.log(table.rows.length,table.rows[irow].cells.length)
+
+
+    newcell = table.rows[irow].insertCell(icol);
+    newcell.style.borderStyle = 'hidden';
+    newcell.style.fontSize = '16px';
+    newcell.style.width = '65px';
+    newcell.style.textAlign = 'center';
+
+    // div = document.createElement('button'); 
+    // div.classList.add("w3-button");
+    // div.classList.add("w3-light-grey");
+    // div.style.textAlign = "center";
+    // div.style.fontSize ="16px";
+    // div.style.fontWeight ="bold";
+    // div.innerHTML = "-";
+
+    /* Color number text */
+    div = document.createElement('div'); 
+    // div.classList.add("w3-button");
+    // div.classList.add("w3-light-grey");
+    // div.style.textAlign = "center";
+    div.style.fontSize ="16px";
+    // div.style.fontWeight ="bold";
+    div.style.display ="inline-block";
+    div.style.width ="35px";
+    div.innerHTML = n_color.toString()+": ";
+    newcell.appendChild(div);
+
+    /* Color input  */
+    div = document.createElement('input'); 
+    div.type = "color";
+    div.style.display ="inline-block";
+    div.style.width ="55px";
+
+    if (n_color <= colorLookup_init.length) {
+        color = colorLookup_init[n_color-1]
+    } else {
+        color = defaultParticleColor;
+    }
+
+    div.value = color;
+    newcell.appendChild(div);
+    
+    /* "-" Button */
+    div = document.createElement('div'); 
+    div.classList.add("w3-button");
+    div.classList.add("w3-light-grey");
+    div.style.textAlign = "center";
+    div.style.fontSize ="16px";
+    div.style.fontWeight ="bold";
+    div.style.display ="inline-block";
+    div.innerHTML = "-";
+    newcell.appendChild(div);
+
+
+
+
+    // for (ival = 0; ival < n_fields; ival++) {
+    //     irow = ival + 1;
+    //     newcell = table.rows[irow].insertCell(icol);
+    //     newcell.style.width = '65px';
+    //     newcell.style.textAlign = 'center';   
+    //     input = document.createElement(input_dict[ival]["elem_class"]);
+    //     for (var [key, val] of Object.entries(input_dict[ival])){
+    //     if (key != "elem_class"){
+    //         input[key] = val;
+    //     }
+    //     input.style = "width: 53px; text-align: center;"
+    //     }
+    //     newcell.appendChild(input);
+    // }
+
+    // RedistributeClicksTableBodyLoop('table_custom_sym',0);
+
+
 
 }
 
