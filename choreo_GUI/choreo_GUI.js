@@ -281,7 +281,7 @@ function GatherConfigDict() {
     }
 
     ConfigDict['Animation_Image'] = {};
-    ConfigDict['Animation_Video'] = {};
+    ConfigDict['Animation_Framerate'] = {};
 
     ConfigDict['Solver_Discr'] = {};
 
@@ -1006,9 +1006,9 @@ function ClickAddColor() {
 
 }
 
-function ClickTopTabBtn_Animation_Video() {
+function ClickTopTabBtn_Animation_Framerate() {
     UpdateFPSDisplay();
-    ClickTopTabBtn('Animation_Video');
+    ClickTopTabBtn('Animation_Framerate');
 }
 
 function UpdateFPSDisplay() {
@@ -1074,3 +1074,42 @@ checkbox_Limit_FPS.addEventListener("change", checkbox_Limit_FPS_Handler, true);
 
 var input_Limit_FPS = document.getElementById("input_Limit_FPS");
 input_Limit_FPS.addEventListener("change", input_Limit_FPS_Handler, true);
+s
+var input_body_radius = document.getElementById("input_body_radius");
+input_body_radius.addEventListener("input" , SlideBodyRadius, true);
+input_body_radius.value = base_particle_size ;
+input_body_radius.min   = min_base_particle_size ;
+input_body_radius.max   = max_base_particle_size ;
+input_body_radius.step  = 0.05 ;
+
+var input_trail_width = document.getElementById("input_trail_width");
+input_trail_width.addEventListener("input" , SlideTrailWidth, true);
+input_trail_width.value = base_trailWidth ;
+input_trail_width.min   = min_base_trailWidth ;
+input_trail_width.max   = max_base_trailWidth ;
+input_trail_width.step  = 0.05 ;
+
+var input_trail_vanish_speed = document.getElementById("input_trail_vanish_speed");
+input_trail_vanish_speed.addEventListener("input" , SlideTrailTime, true);
+input_trail_vanish_speed.value = base_trail_vanish_speed ;
+input_trail_vanish_speed.min   = min_base_trail_vanish_speed ;
+input_trail_vanish_speed.max   = max_base_trail_vanish_speed ;
+input_trail_vanish_speed.step  = 0.05 ;
+
+SlideTrailTime();
+
+function SlideBodyRadius(event) {
+    // console.log(input_body_radius.value);
+    base_particle_size = input_body_radius.value;
+}
+
+function SlideTrailWidth(event) {
+    // console.log(input_trail_width.value);
+    base_trailWidth = input_trail_width.value;
+}
+
+function SlideTrailTime(event) {
+    // console.log(input_trail_vanish_speed.value);
+    base_trail_vanish_speed = input_trail_vanish_speed.value;
+    FadeInvFrequency = 1/(100*base_trail_vanish_speed);
+}

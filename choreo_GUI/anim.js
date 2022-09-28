@@ -29,6 +29,24 @@ var colorLookup_init = [
 var defaultParticleColor = "#ee6600";
 var defaultTrailColor = "#dd5500";
 
+
+// Particle radius
+var min_base_particle_size = 3.;
+var max_base_particle_size = 15.;
+var base_particle_size = 6.;
+
+// with of particle trail
+var min_base_trailWidth = 0.2;
+var max_base_trailWidth = 16.;
+var base_trailWidth = 2;
+
+// Vanish speed
+var min_base_trail_vanish_speed = 1.;
+var max_base_trail_vanish_speed = 30.;
+var base_trail_vanish_speed = 10.;
+
+var FadeInvFrequency;
+
 var	colorLookup = colorLookup_init
 
 function AjaxGet(foldername){ return $.ajax({ url: foldername})}
@@ -86,26 +104,16 @@ function canvasApp() {
 	var xPixRate, yPixRate;
 	var time;
 
-	// Particle radius
-	var base_particle_size = 5.5;
-	// with of particle trail
-	// var base_trailWidth = 2;
-	var base_trailWidth = 3;
-
-	var Min_PartRelSize = 0.5;
-	var Max_PartRelSize = 7.;
-	var CurrentMax_PartRelSize = 1.;
-
 	var bgColor = "#F1F1F1";
 	var request;
 	var running;
 	var trajectoriesOn;
-	var staticOrbitColor;
+
+	var fadeScreenColor = "rgba(241,241,241,0.01)";
+	staticOrbitColor = "rgba(200,200,200,1)";
+	// staticOrbitColor = "rgba(255,0,255,0.8)"; //TESTING
+
 	var trailColorLookup;
-	
-	var orbitDrawStartTime;
-	var orbitDrawTime;
-	var drawingStaticOrbit;
 	
 	var staticOrbitDrawPointsX;
 	var staticOrbitDrawPointsY;
@@ -132,10 +140,15 @@ function canvasApp() {
 	var center_x;
 	var center_y;
 
+	var Min_PartRelSize = 0.5;
+	var Max_PartRelSize = 7.;
+	var CurrentMax_PartRelSize = 1.;
+	
 	var Last_Time_since_origin;
 	var dt_outlier_ms = 300;
-	var slider_value_init = .5;
+	var speed_slider_value_init = .5;
 	var Time_One_Period_init = 17;
+	var LastFadeTime = 0;
 	
 	var startStopButton = document.getElementById("startStopButton");
 	startStopButton.addEventListener("click", startStopButtonHandler, true);
@@ -166,28 +179,31 @@ function canvasApp() {
 	var AllPlotInfo = [];
 	var AllGalleryNames = [];
 
-	//requestAnimationFrame shim for multiple browser compatibility by Eric Möller,
-	//http://my.opera.com/emoller/blog/2011/12/20/requestanimationframe-for-smart-er-animating
-	//For an alternate version, also see http://www.paulirish.com/2011/requestanimationframe-for-smart-animating/.checked 
+	// http://paulirish.com/2011/requestanimationframe-for-smart-animating/
+	// http://my.opera.com/emoller/blog/2011/12/20/requestanimationframe-for-smart-er-animating
+	
+	// requestAnimationFrame polyfill by Erik Möller
+	// fixes from Paul Irish and Tino Zijdel
+	
 	(function() {
 		var lastTime = 0;
 		var vendors = ['ms', 'moz', 'webkit', 'o'];
 		for(var x = 0; x < vendors.length && !window.requestAnimationFrame; ++x) {
 			window.requestAnimationFrame = window[vendors[x]+'RequestAnimationFrame'];
-			window.cancelAnimationFrame = window[vendors[x]+'CancelAnimationFrame'] 
-									   || window[vendors[x]+'CancelRequestAnimationFrame'];
+			window.cancelAnimationFrame = window[vendors[x]+'CancelAnimationFrame']
+									|| window[vendors[x]+'CancelRequestAnimationFrame'];
 		}
-	 
+	
 		if (!window.requestAnimationFrame)
 			window.requestAnimationFrame = function(callback, element) {
 				var currTime = new Date().getTime();
 				var timeToCall = Math.max(0, 16 - (currTime - lastTime));
-				var id = window.setTimeout(function() { callback(currTime + timeToCall); }, 
-				  timeToCall);
+				var id = window.setTimeout(function() { callback(currTime + timeToCall); },
+				timeToCall);
 				lastTime = currTime + timeToCall;
 				return id;
 			};
-	 
+	
 		if (!window.cancelAnimationFrame)
 			window.cancelAnimationFrame = function(id) {
 				clearTimeout(id);
@@ -197,34 +213,21 @@ function canvasApp() {
 	init();
 	
 	async function init() {
-
-		// Speed of fade inversly prop to alpha channel here
-		fadeScreenColor = "rgba(255,255,255,0.01)";
-		// fadeScreenColor = "rgba(0,0,0,0)";
-
-		// Color of orbits below
-		// staticOrbitColor = "rgba(130,180,270,0.3)";
-		// staticOrbitColor = "rgba(130,180,270,0.2)";
-		staticOrbitColor = "rgba(200,200,200,0.5)";
-		// staticOrbitColor = "rgba(200,200,200,0.0)";
-		// staticOrbitColor = "rgba(255,0,255,0.8)"; //TESTING
 		
 		setColorLookupList();
 
 		trajectoriesOn = true;
-		drawingStaticOrbit = true;
 		
 		//jquery ui elements
 		//speed slider
 		$("#speedSlider").slider({
-		  value: slider_value_init,
+		  value: speed_slider_value_init,
 		  orientation: "horizontal",
 		  range: "min",
 		  max: 1,
 		  min: 0.2,
 		  step: 0.005,
-		  slide: speedSliderHandler,
-		  change: speedSliderHandler,
+		  input:speedSliderHandler,
 		  animate: false,
 		});		
 
@@ -243,9 +246,6 @@ function canvasApp() {
 				change:onRotationChange,
 			});
 		
-
-		orbitDrawStartTime = orbitDrawTime = time = 0;
-
 		// Load the static gallery
 		LoadGallery();
 
@@ -484,28 +484,6 @@ function canvasApp() {
 
 		})();
 	}
-// 
-// 	function startAnimation() {
-// 		running = true;
-// 		(async function animloop(Time_since_origin){
-// 
-// 			wait_time = Math.ceil(1000 / FPS_limit);
-// 			delay = new Promise(r => setTimeout(r, wait_time));
-// 
-// 			Estimate_FPS(Time_since_origin);
-// 
-// 			setPeriodTime();
-// 			
-// 			request = requestAnimationFrame(animloop);
-// 			onTimer();
-// 
-// 			if (Do_Limit_FPS) {
-// 				UpdateFPSDisplay();
-// 				await delay;
-// 			}
-// 
-// 		})();
-// 	}
 
 	function stopAnimation() {
 		running = false;
@@ -528,13 +506,10 @@ function canvasApp() {
 	function trajectoryButtonHandler(e) {
 		if (trajectoriesOn) {
 			trajectoriesOn = false;
-			drawingStaticOrbit = false;
 			trajectoryButton.textContent ="Draw";
 			clearScreen();
 		}
 		else {
-			orbitDrawStartTime = orbitDrawTime = time;
-			drawingStaticOrbit = true;
 			setStartPositions();
 			trajectoriesOn = true;
 			trajectoryButton.textContent = "Hide";
@@ -619,24 +594,21 @@ function canvasApp() {
 	function onTimer() {
 
 		if (trajectoriesOn) {
+			
 			//fade
 			context.fillStyle = fadeScreenColor;
-			context.fillRect(0,0,displayWidth,displayHeight);
+			
+			var nfade = Math.floor(LastFadeTime/FadeInvFrequency)
+			for (var ifade=0; ifade<nfade; ifade++){
+				context.fillRect(0,0,displayWidth,displayHeight);
+			}
+
+			LastFadeTime = LastFadeTime + tInc - nfade*FadeInvFrequency
+
 		}
 		
 		//clear particle layer
 		clearParticleLayer();
-		
-		if (drawingStaticOrbit) {
-			orbitDrawTime += tInc;
-
-			if (orbitDrawTime > orbitDrawStartTime + 1) {
-				//stop drawing orbit
-				drawingStaticOrbit = false;
-				//draw last segments
-				// drawLastSegments();
-			}
-		}		
 		
 		time = (time + tInc) % 1;
 		
@@ -689,8 +661,7 @@ function canvasApp() {
 					lastY: 0,
 					color: color,
 					trailColor: trailColor,
-					trailWidth: PartRelSize * base_trailWidth,
-					particleRad: PartRelSize * base_particle_size
+					PartRelSize: PartRelSize,
 			}
 			particles.push(p);
 		}
@@ -739,7 +710,7 @@ function canvasApp() {
 
 			//trail
 			context.strokeStyle = staticOrbitColor;
-			context.lineWidth = p.trailWidth;
+			context.lineWidth = p.PartRelSize * base_trailWidth ;
 			context.beginPath();
 			context.moveTo(staticOrbitDrawPointsX[i],staticOrbitDrawPointsY[i]);
 			context.lineTo(pixX, pixY);
@@ -801,12 +772,14 @@ function canvasApp() {
 			lastPixX = xPixRate*(p.lastX - xMin);
 			lastPixY = yPixRate*(p.lastY - yMax);
 						
+			var size = p.PartRelSize * base_particle_size
+
 			//particle
 			particleLayerContext.strokeStyle = "rgba(0,0,0,0.5)"
 			particleLayerContext.lineWidth = 2;
 			particleLayerContext.fillStyle = p.color;
 			particleLayerContext.beginPath();
-			particleLayerContext.arc(pixX,pixY,p.particleRad,0,Math.PI*2,false);
+			particleLayerContext.arc(pixX,pixY,size,0,Math.PI*2,false);
 			particleLayerContext.closePath();
 			particleLayerContext.fill();
 			particleLayerContext.stroke();
@@ -814,7 +787,7 @@ function canvasApp() {
 			if (trajectoriesOn) {
 				//trail
 				context.strokeStyle = p.trailColor;
-				context.lineWidth = p.trailWidth;
+				context.lineWidth = p.PartRelSize * base_trailWidth ;
 				context.beginPath();
 				context.moveTo(lastPixX,lastPixY);
 				context.lineTo(pixX, pixY);
@@ -925,7 +898,7 @@ function canvasApp() {
 	function setPeriodTime() {
 
 		var slider_value = $("#speedSlider").slider("value");
-		var slider_value_rel = slider_value/slider_value_init;
+		var slider_value_rel = slider_value/speed_slider_value_init;
 		var sliderpow = 3;
 		var alpha = Math.pow(slider_value_rel,sliderpow);
 
@@ -968,15 +941,7 @@ function canvasApp() {
 		clearScreen();
 				
 		time = 0;
-		
-		if (trajectoriesOn) {
-			drawingStaticOrbit = true;
-			orbitDrawStartTime = orbitDrawTime = time;
-		}
-		else {
-			drawingStaticOrbit = false;
-		}
-		
+
 		setParticlePositions(0);
 		resetLastPositions();
 		setStartPositions();
