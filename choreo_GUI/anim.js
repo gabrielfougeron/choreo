@@ -82,15 +82,23 @@ function canvasApp() {
 	var xMin, xMax, yMin, yMax;
 	var xPixRate, yPixRate;
 	var time;
-	var particleRad_mul;
-	var bgColor;
+
+	// Particle radius
+	var base_particle_size = 5.5;
+	// with of particle trail
+	// var base_trailWidth = 2;
+	var base_trailWidth = 4;
+
+	var Min_PartRelSize = 0.5;
+	var Max_PartRelSize = 7.;
+	var CurrentMax_PartRelSize = 1.;
+
+	var bgColor = "#F1F1F1";
 	var request;
 	var running;
-	var trailWidth;
 	var trajectoriesOn;
 	var defaultParticleColor;
 	var staticOrbitColor;
-	var staticOrbitWidth;
 	var trailColorLookup;
 	
 	var orbitDrawStartTime;
@@ -187,15 +195,6 @@ function canvasApp() {
 	init();
 	
 	async function init() {
-		// Particle radius
-		particleRad_mul = 5.5;
-
-		// with of particle trail
-		trailWidth = 2;
-
-		// Background color
-		bgColor = "#F1F1F1";
-		// bgColor = "rgb(241,241,241)";
 
 		// Speed of fade inversly prop to alpha channel here
 		fadeScreenColor = "rgba(255,255,255,0.01)";
@@ -207,9 +206,6 @@ function canvasApp() {
 		staticOrbitColor = "rgba(200,200,200,0.5)";
 		// staticOrbitColor = "rgba(200,200,200,0.0)";
 		// staticOrbitColor = "rgba(255,0,255,0.8)"; //TESTING
-
-		// Width of orbits below
-		staticOrbitWidth = trailWidth;
 
 		// defaults when colors are not defined
 		defaultParticleColor = "#ee6600";
@@ -348,16 +344,29 @@ function canvasApp() {
 	}
 	
 	function setPlotWindow(windowObject) {
-		xMin = windowObject.xMin;
-		xMax = windowObject.xMax;
-		yMin = windowObject.yMin;
-		yMax = windowObject.yMax;
+
+		var extend = 0.02 + (CurrentMax_PartRelSize-1.)*0.0155 ; // Magic numbers
+
+		xinf = windowObject.xMin - extend*(windowObject.xMax-windowObject.xMin);
+		xsup = windowObject.xMax + extend*(windowObject.xMax-windowObject.xMin);
+		
+		yinf = windowObject.yMin - extend*(windowObject.yMax-windowObject.yMin);
+		ysup = windowObject.yMax + extend*(windowObject.yMax-windowObject.yMin);
+		
+		var hside = Math.max(xsup-xinf,ysup-yinf)/2
+	
+		center_x = (xinf+xsup)/2
+		center_y = (yinf+ysup)/2
+	
+		xMin = center_x - hside
+		xMax = center_x + hside
+	
+		yMin = center_y - hside
+		yMax = center_y + hside
 
 		xPixRate = displayWidth/(xMax - xMin);
 		yPixRate = displayHeight/(yMin - yMax);
 
-		center_x = (xMax + xMin)/2;
-		center_y = (yMin + yMax)/2;
 	}
 
 	function RemoveOrbit(i_remove) {
@@ -652,6 +661,8 @@ function canvasApp() {
 	function makeParticles(colors_list) {
 
 		particles = [];
+
+		CurrentMax_PartRelSize = 0;
 		
 		for (var i = 0; i<PlotInfo['nbody']; i++) {
 			var color;
@@ -664,6 +675,14 @@ function canvasApp() {
 				color = defaultParticleColor;
 				trailColor = defaultTrailColor;
 			}
+
+			var PartRelSize = Math.sqrt(PlotInfo["mass"][i]);
+
+			PartRelSize = Math.min(PartRelSize,Max_PartRelSize);
+			PartRelSize = Math.max(PartRelSize,Min_PartRelSize);
+			// Min/max ?
+
+			CurrentMax_PartRelSize = Math.max(CurrentMax_PartRelSize,PartRelSize);
 					
 			var p = {
 					x: 0,
@@ -672,7 +691,8 @@ function canvasApp() {
 					lastY: 0,
 					color: color,
 					trailColor: trailColor,
-					particleRad: Math.sqrt(PlotInfo["mass"][i]) * particleRad_mul
+					trailWidth: PartRelSize * base_trailWidth,
+					particleRad: PartRelSize * base_particle_size
 			}
 			particles.push(p);
 		}
@@ -721,7 +741,7 @@ function canvasApp() {
 
 			//trail
 			context.strokeStyle = staticOrbitColor;
-			context.lineWidth = staticOrbitWidth;
+			context.lineWidth = p.trailWidth;
 			context.beginPath();
 			context.moveTo(staticOrbitDrawPointsX[i],staticOrbitDrawPointsY[i]);
 			context.lineTo(pixX, pixY);
@@ -796,7 +816,7 @@ function canvasApp() {
 			if (trajectoriesOn) {
 				//trail
 				context.strokeStyle = p.trailColor;
-				context.lineWidth = trailWidth;
+				context.lineWidth = p.trailWidth;
 				context.beginPath();
 				context.moveTo(lastPixX,lastPixY);
 				context.lineTo(pixX, pixY);
@@ -922,15 +942,6 @@ function canvasApp() {
 
 	function FinalizeSetOrbit() {
 		
-		plotWindow = {
-			xMin : PlotInfo["xinf"],
-			xMax : PlotInfo["xsup"],
-			yMin : PlotInfo["yinf"],
-			yMax : PlotInfo["ysup"],
-		}
-
-		setPlotWindow(plotWindow);
-		
 		var colors_list;
 
 		if (PlotInfo['nbody'] < colorLookup.length) {
@@ -946,6 +957,16 @@ function canvasApp() {
 		}
 
 		makeParticles(colors_list);
+
+		plotWindow = {
+			xMin : PlotInfo["xinf"],
+			xMax : PlotInfo["xsup"],
+			yMin : PlotInfo["yinf"],
+			yMax : PlotInfo["ysup"],
+		}
+
+		setPlotWindow(plotWindow);
+
 		clearScreen();
 				
 		time = 0;
