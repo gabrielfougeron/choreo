@@ -1074,7 +1074,7 @@ checkbox_Limit_FPS.addEventListener("change", checkbox_Limit_FPS_Handler, true);
 
 var input_Limit_FPS = document.getElementById("input_Limit_FPS");
 input_Limit_FPS.addEventListener("change", input_Limit_FPS_Handler, true);
-s
+
 var input_body_radius = document.getElementById("input_body_radius");
 input_body_radius.addEventListener("input" , SlideBodyRadius, true);
 input_body_radius.value = base_particle_size ;
