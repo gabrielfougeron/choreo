@@ -211,6 +211,7 @@ def main():
     # Save_All_Pos = False
 
     Save_PlotInfo = True
+    plot_extend = 0.0
     
     all_kwargs = choreo.Pick_Named_Args_From_Dict(choreo.GenSymExample,dict(globals(),**locals()))
 
@@ -241,3 +242,7 @@ def main():
         
 if __name__ == "__main__":
     main()
+
+
+# extend = 0.03 for length_fac = 1.
+# extend = 0.15 for length_fac = 10.
