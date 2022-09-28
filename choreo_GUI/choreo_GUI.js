@@ -1111,5 +1111,5 @@ function SlideTrailWidth(event) {
 function SlideTrailTime(event) {
     // console.log(input_trail_vanish_speed.value);
     base_trail_vanish_speed = input_trail_vanish_speed.value;
-    FadeInvFrequency = 1/(100*base_trail_vanish_speed);
+    FadeInvFrequency = 1/(1000*(base_trail_vanish_speed*base_trail_vanish_speed));
 }

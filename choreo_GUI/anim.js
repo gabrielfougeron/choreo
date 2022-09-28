@@ -41,9 +41,9 @@ var max_base_trailWidth = 16.;
 var base_trailWidth = 2;
 
 // Vanish speed
-var min_base_trail_vanish_speed = 1.;
-var max_base_trail_vanish_speed = 30.;
-var base_trail_vanish_speed = 10.;
+var min_base_trail_vanish_speed = 0.2;
+var max_base_trail_vanish_speed = 3.;
+var base_trail_vanish_speed = 1.;
 
 var FadeInvFrequency;
 
