@@ -174,7 +174,7 @@ function ChoreoExecuteClick() {
     Python_State_Div.classList.remove('w3-green');
     Python_State_Div.classList.remove('w3-red');
 
-    ConfigDict = GatherConfigDict();
+    var ConfigDict = GatherConfigDict();
 
     pyodide_worker.postMessage({funname:"LoadDataInWorker",args:{ConfigDict:ConfigDict}});
     pyodide_worker.postMessage({funname:"ExecutePythonFile",args:"./python_scripts/RunOnce.py"});
@@ -206,6 +206,9 @@ function GatherConfigDict() {
     var ConfigDict = {};
 
     ConfigDict['Main_Launch'] = {};
+
+    var speedSlider = $("#speedSlider");
+    ConfigDict['Main_Launch'] ['SpeedSlider_value'] = speedSlider.slider("value");
 
     ConfigDict['Geom_Bodies'] = {};
 
@@ -273,12 +276,27 @@ function GatherConfigDict() {
 
     }
 
-    ConfigDict['Animation_Image'] = {};
+
+    ConfigDict['Animation_Colors'] = {};
+    ConfigDict['Animation_Colors'] ["color_method_input"] = document.getElementById("color_method_input").value;
+
+    ConfigDict['Animation_Colors'] ["n_color"] = n_color;
+    ConfigDict['Animation_Colors'] ["colorLookup"] = colorLookup;
+
+    ConfigDict['Animation_Size'] = {};
+    ConfigDict['Animation_Size'] ['checkbox_Mass_Scale']  = document.getElementById('checkbox_Mass_Scale').checked ;
+    ConfigDict['Animation_Size'] ['input_body_radius']  = document.getElementById('input_body_radius').value ;
+    ConfigDict['Animation_Size'] ['input_trail_width']  = document.getElementById('input_trail_width').value ;  
+    ConfigDict['Animation_Size'] ['input_trail_vanish_speed']  = document.getElementById('input_trail_vanish_speed').value;
+
     ConfigDict['Animation_Framerate'] = {};
+    ConfigDict['Animation_Framerate'] ['checkbox_Limit_FPS']  = document.getElementById('checkbox_Limit_FPS').checked  ;
+    ConfigDict['Animation_Framerate'] ['input_Limit_FPS']  = parseInt(document.getElementById('input_Limit_FPS').value,10)        ;
+
+
 
     ConfigDict['Solver_Discr'] = {};
-
-    ConfigDict['Solver_Discr'] ['Use_exact_Jacobian']  =          document.getElementById('checkbox_exactJ').checked            ;
+    ConfigDict['Solver_Discr'] ['Use_exact_Jacobian']  = document.getElementById('checkbox_exactJ').checked            ;
     ConfigDict['Solver_Discr'] ['ncoeff_init']         = parseInt(document.getElementById('input_ncoeff_init').value,10)        ;
     ConfigDict['Solver_Discr'] ['n_reconverge_it_max'] = parseInt(document.getElementById('input_n_reconverge_it_max').value,10);
 
@@ -348,11 +366,15 @@ function previewFile(file) {
 
 async function LoadConfigFile(the_file) {
 
-    console.log(the_file)
-
     var txt = await the_file.text();
 
     ConfigDict = JSON.parse(txt);
+
+    LoadConfigDict(ConfigDict);
+
+}
+
+function LoadConfigDict(ConfigDict) {
 
     var table = document.getElementById('table_body_loop');
     var ncols = table.rows[0].cells.length;
@@ -414,6 +436,40 @@ async function LoadConfigFile(the_file) {
     }
 
     RedistributeClicksTableBodyLoop('table_custom_sym',0);
+
+    document.getElementById("color_method_input").value = ConfigDict['Animation_Colors'] ["color_method_input"]
+    
+    var n_color_old = n_color;
+    for (var i_color=0;i_color<n_color_old; i_color++) {
+        RemoveColor();
+    }
+
+    var n_color_new = ConfigDict['Animation_Colors'] ["n_color"];
+    for (var i_color=0;i_color<n_color_new; i_color++) {
+        AddColor(ConfigDict['Animation_Colors'] ["colorLookup"][i_color] );
+    }
+
+    document.getElementById('checkbox_Mass_Scale').checked  = ConfigDict['Animation_Size'] ['checkbox_Mass_Scale'];
+    DoScaleSizeWithMass = ConfigDict['Animation_Size'] ['checkbox_Mass_Scale'];
+    document.getElementById('input_body_radius').value = ConfigDict['Animation_Size'] ['input_body_radius'] ;
+    SlideBodyRadius();
+    document.getElementById('input_trail_width').value = ConfigDict['Animation_Size'] ['input_trail_width'];
+    SlideTrailWidth();
+    document.getElementById('input_trail_vanish_speed').value = ConfigDict['Animation_Size'] ['input_trail_vanish_speed'];
+    SlideTrailTime();
+    
+
+    ExportColors();
+    var send_event = new Event('ChangeColorsFromOutsideCanvas');
+    displayCanvas.dispatchEvent(send_event);
+
+
+    
+    document.getElementById('checkbox_Limit_FPS').checked = ConfigDict['Animation_Framerate']['checkbox_Limit_FPS'] ;
+    document.getElementById('input_Limit_FPS').value = ConfigDict['Animation_Framerate'] ['input_Limit_FPS'] 
+
+
+
 
     document.getElementById('checkbox_exactJ').checked         = ConfigDict['Solver_Discr'] ['Use_exact_Jacobian']  ;
     document.getElementById('input_ncoeff_init').value         = ConfigDict['Solver_Discr'] ['ncoeff_init']         ;
@@ -880,36 +936,36 @@ function ClickAddCustomSym() {
 var ncol_per_row_colortable = 4;
 
 function ClickRemoveColor() {
-    RemoveColor();
-    ExportColors();
 
-    var send_event = new Event('ChangeColorsFromOutsideCanvas');
-    displayCanvas.dispatchEvent(send_event);
+    if (n_color > 1) {
+
+        RemoveColor();
+        ExportColors();
+
+        var send_event = new Event('ChangeColorsFromOutsideCanvas');
+        displayCanvas.dispatchEvent(send_event);
+
+    }
 
 }
   
 function RemoveColor() {
 
-    if (n_color > 1) {
+    var table = document.getElementById('table_pick_color');
 
+    var nrow_cur = table.rows.length;
 
-        var table = document.getElementById('table_pick_color');
-    
-        var nrow_cur = table.rows.length;
-    
-        var icol = ((n_color -1) % ncol_per_row_colortable) ;
-        var irow = Math.floor((n_color-1) / ncol_per_row_colortable) +1;
+    var icol = ((n_color -1) % ncol_per_row_colortable) ;
+    var irow = Math.floor((n_color-1) / ncol_per_row_colortable) +1;
 
-        table.rows[irow].deleteCell(icol);
+    table.rows[irow].deleteCell(icol);
 
-        if (icol == 0) {
-            table.deleteRow(irow);
-        }
-
-        n_color -= 1;
-
+    if (icol == 0) {
+        table.deleteRow(irow);
     }
-    
+
+    n_color -= 1;
+
 }
   
 function ClickAddColor() {
@@ -920,11 +976,12 @@ function ClickAddColor() {
     displayCanvas.dispatchEvent(send_event);
 }
 
-function AddColor() {
+function AddColor(the_color) {
     var table = document.getElementById('table_pick_color');
     var newcell;
     var div,input;
     var ival;
+    var color;
 
     var nrow_cur = table.rows.length;
 
@@ -959,10 +1016,18 @@ function AddColor() {
     div.style.width ="80px";
     div.classList.add("particle_color_picker");
 
-    if (n_color <= colorLookup_init.length) {
-        color = colorLookup_init[n_color-1]
+    if (the_color !== undefined) {
+
+        color = the_color
+
     } else {
-        color = defaultParticleColor;
+
+        if (n_color <= colorLookup_init.length) {
+            color = colorLookup_init[n_color-1]
+        } else {
+            color = defaultParticleColor;
+        }
+    
     }
 
     div.value = color;
