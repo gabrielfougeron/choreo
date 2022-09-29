@@ -19,8 +19,6 @@ body {
 }
 #CommandBody{ 
     max-width: 610px;
-    /* position: absolute;
-    margin-left: 610px; */
 }
 #AnimationAndMenuBlock{ 
     max-width: 610px;
@@ -29,6 +27,8 @@ body {
     resize: vertical;
     font-family: Consolas,monaco,monospace;     
     font-size: 14px;     
+    line-height:1.0;
     background-color: #F1F1F1;
     color : #000000!important;
+    /* height:480px; */
   }
