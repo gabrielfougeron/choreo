@@ -1206,13 +1206,27 @@ var cookie_name = "choreo_GUI"
 function checkbox_Cookie_Handler(event) {
 
     if (event.currentTarget.checked) {
+
         Save_Cookie_Btn.disabled = "";
         Load_Cookie_Btn.disabled = "";
+
     } else {
+
         Save_Cookie_Btn.disabled = "disabled";
         Load_Cookie_Btn.disabled = "disabled";
-        DeleteCookie(cookie_name);
-        IssueCookieMessage("Cookie deleted !");
+
+        txt = LoadCookie(cookie_name);
+
+        if (txt == "") {
+
+            IssueCookieMessage("There is no cookie on your device.");
+
+        } else {
+
+            DeleteCookie(cookie_name);
+            IssueCookieMessage("Cookie deleted !");
+
+        }
     }
 
 }
