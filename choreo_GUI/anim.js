@@ -653,7 +653,7 @@ function canvasApp() {
 
 		CurrentMax_PartRelSize = 0;
 		
-		color_method_input = document.getElementById("color_method_input");
+		var color_method_input = document.getElementById("color_method_input");
 
         for ( var il = 0 ; il < PlotInfo['nloop'] ; il++){
 
