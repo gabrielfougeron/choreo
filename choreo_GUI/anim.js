@@ -29,8 +29,6 @@ var colorLookup_init = [
 var defaultParticleColor = "#ee6600";
 var defaultTrailColor = "#dd5500";
 
-var colors_list;
-
 // Particle radius
 var min_base_particle_size = 3.;
 var max_base_particle_size = 15.;
@@ -133,6 +131,7 @@ function canvasApp() {
 	displayCanvas.addEventListener("StopAnimationFromOutsideCanvas", StopAnimationFromOutsideCanvasHandler, true);
 	displayCanvas.addEventListener("StartAnimationFromOutsideCanvas", StartAnimationFromOutsideCanvasHandler, true);
 	displayCanvas.addEventListener("RemakeParticlesFromOutsideCanvas", RemakeParticlesFromOutsideCanvasHandler, true);
+	displayCanvas.addEventListener("ChangeColorsFromOutsideCanvas", ChangeColorsFromOutsideCanvasHandler, true);
 	
 	var particleLayerCanvas = document.getElementById("particleLayerCanvas");
 	var particleLayerContext = particleLayerCanvas.getContext("2d");
@@ -535,7 +534,17 @@ function canvasApp() {
 		clearScreen();
 		FinalizeSetOrbit() ;
 	}
+
 	function RemakeParticlesFromOutsideCanvasHandler(e) {
+		makeParticles();
+		clearScreen();
+		clearParticleLayer();
+		drawParticles();
+	}
+
+	function ChangeColorsFromOutsideCanvasHandler(e) {
+		
+		setColorLookupList()
 		makeParticles();
 		clearScreen();
 		clearParticleLayer();
@@ -640,44 +649,61 @@ function canvasApp() {
 	
 	function makeParticles() {
 
-		particles = [];
+		particles = new Array(PlotInfo['nbody']);
 
 		CurrentMax_PartRelSize = 0;
 		
-		for (var i = 0; i<PlotInfo['nbody']; i++) {
-			var color;
-			var trailColor;
-			if (i<colors_list.length) {
-				color = colorLookup[colors_list[i]];
-				trailColor = trailColorLookup[colors_list[i]];
-			}
-			else {
-				color = defaultParticleColor;
-				trailColor = defaultTrailColor;
-			}
+		color_method_input = document.getElementById("color_method_input");
 
-			if (DoScaleSizeWithMass) {
-				var PartRelSize = Math.sqrt(PlotInfo["mass"][i]);
-			} else {
-				var PartRelSize = 1.;
-			}
+        for ( var il = 0 ; il < PlotInfo['nloop'] ; il++){
 
-			PartRelSize = Math.min(PartRelSize,Max_PartRelSize);
-			PartRelSize = Math.max(PartRelSize,Min_PartRelSize);
-			// Min/max ?
+			var nlb =  PlotInfo['loopnb'][il];
 			
-			CurrentMax_PartRelSize = Math.max(CurrentMax_PartRelSize,PartRelSize);
-					
-			var p = {
-					x: 0,
-					y: 0,
-					lastX: 0,
-					lastY: 0,
-					color: color,
-					trailColor: trailColor,
-					PartRelSize: PartRelSize,
+			for (var ilb = 0 ; ilb < nlb ; ilb++){
+
+				var ib = PlotInfo['Targets'][il][ilb];
+
+				var color;
+				var trailColor;
+
+				var color_id;
+
+				if (color_method_input.value == "body") {
+					color_id = ib;
+				} else if (color_method_input.value == "loop") {
+					color_id = il;
+				} else if (color_method_input.value == "loop_id") {
+					color_id = ilb;
+				} else {
+					color_id = 0;
+				}
+				
+				color = colorLookup[color_id % colorLookup.length];
+				trailColor = trailColorLookup[color_id % colorLookup.length];
+
+				if (DoScaleSizeWithMass) {
+					var PartRelSize = Math.sqrt(PlotInfo["mass"][ib]);
+				} else {
+					var PartRelSize = 1.;
+				}
+
+				PartRelSize = Math.min(PartRelSize,Max_PartRelSize);
+				PartRelSize = Math.max(PartRelSize,Min_PartRelSize);
+				// Min/max ?
+				
+				CurrentMax_PartRelSize = Math.max(CurrentMax_PartRelSize,PartRelSize);
+						
+				particles[ib] = {
+						x: 0,
+						y: 0,
+						lastX: 0,
+						lastY: 0,
+						color: color,
+						trailColor: trailColor,
+						PartRelSize: PartRelSize,
+				}
+
 			}
-			particles.push(p);
 		}
 
 		setParticlePositions(time);
@@ -926,18 +952,6 @@ function canvasApp() {
 	}
 
 	function FinalizeSetOrbit() {
-
-		if (PlotInfo['nbody'] < colorLookup.length) {
-			//if fewer than color list, default will be to do different colors.
-			colors_list = [];
-			for (var i = 0; i < PlotInfo['nbody']; i++) {
-				colors_list.push(i);
-			}
-		}
-		else {
-			//if more than color list, set to empty array,then default will be to make all same color.
-			colors_list = [];
-		}
 
 		makeParticles();
 
