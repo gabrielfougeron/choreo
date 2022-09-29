@@ -30,7 +30,6 @@ var DownloadTxtFile = (function () {
     };
 }());
 
-
 async function Set_Python_path(args){
 
 	var displayCanvas = document.getElementById("displayCanvas");
@@ -67,14 +66,8 @@ async function Python_Imports_Done(args){
     Python_State_Div.classList.remove('w3-red');
     Python_State_Div.classList.remove('w3-orange');
     Python_State_Div.classList.add('w3-green');
-// 
-//     wait =  new Promise(r => setTimeout(r, 3000));
-//     wait.then( r => {
-//         Python_State_Div.style.display   = "none";
-//     });
 
 }
-
 
 pyodide_worker.addEventListener('message', handleMessageFromWorker);
 
@@ -792,7 +785,7 @@ function ClickAddBodyLoop() {
 
     RedistributeClicksTableBodyLoop('table_body_loop',1,RedistributeBodyCount);
 
-    }
+}
 
 function ClickAddCustomSym() {
     var table = document.getElementById('table_custom_sym');
@@ -884,51 +877,66 @@ function ClickAddCustomSym() {
 
 }
 
-function ResetColorTable() {
+var ncol_per_row_colortable = 4;
 
-    var table = document.getElementById('table_pick_color');
+function ClickRemoveColor() {
+    RemoveColor();
+    ExportColors();
 
-    var nrow_cur = table.rows.length;
-
-    for (var irow = 1 ; irow < nrow_cur; irow++) {
-
-        table.deleteRow(irow);
-
-    }
+    var send_event = new Event('ChangeColorsFromOutsideCanvas');
+    displayCanvas.dispatchEvent(send_event);
 
 }
   
+function RemoveColor() {
+
+    if (n_color > 1) {
+
+
+        var table = document.getElementById('table_pick_color');
+    
+        var nrow_cur = table.rows.length;
+    
+        var icol = ((n_color -1) % ncol_per_row_colortable) ;
+        var irow = Math.floor((n_color-1) / ncol_per_row_colortable) +1;
+
+        table.rows[irow].deleteCell(icol);
+
+        if (icol == 0) {
+            table.deleteRow(irow);
+        }
+
+        n_color -= 1;
+
+    }
+    
+}
+  
 function ClickAddColor() {
+    AddColor();
+    ExportColors();
+
+    var send_event = new Event('ChangeColorsFromOutsideCanvas');
+    displayCanvas.dispatchEvent(send_event);
+}
+
+function AddColor() {
     var table = document.getElementById('table_pick_color');
     var newcell;
     var div,input;
     var ival;
 
     var nrow_cur = table.rows.length;
-    var ncol_cur = table.rows[0].cells.length;
-
-    var ncol_per_row = 4;
 
     n_color += 1;
 
-    var icol = ((n_color -1) % ncol_per_row) ;
-    var irow = Math.floor((n_color-1) / ncol_per_row) +1;
-
-    // console.log(nrow_cur,ncol_cur,n_color);
-    // console.log(irow,nrow_cur,n_color);
-    
+    var icol = ((n_color -1) % ncol_per_row_colortable) ;
+    var irow = Math.floor((n_color-1) / ncol_per_row_colortable) +1;
 
     if (irow >= nrow_cur) {
         table.insertRow();
         table.rows[irow].style.borderStyle = 'hidden';
-        // newcell = table.rows[irow].insertCell(0); // Fake col under the "Add +" button
-        // newcell.style.borderStyle = 'hidden';
     }
-
-    // console.log(n_color,icol,irow);
-
-    // console.log(table.rows.length,table.rows[irow].cells.length)
-
 
     newcell = table.rows[irow].insertCell(icol);
     newcell.style.borderStyle = 'hidden';
@@ -936,21 +944,9 @@ function ClickAddColor() {
     newcell.style.width = '65px';
     newcell.style.textAlign = 'center';
 
-    // div = document.createElement('button'); 
-    // div.classList.add("w3-button");
-    // div.classList.add("w3-light-grey");
-    // div.style.textAlign = "center";
-    // div.style.fontSize ="16px";
-    // div.style.fontWeight ="bold";
-    // div.innerHTML = "-";
-
     /* Color number text */
     div = document.createElement('div'); 
-    // div.classList.add("w3-button");
-    // div.classList.add("w3-light-grey");
-    // div.style.textAlign = "center";
     div.style.fontSize ="16px";
-    // div.style.fontWeight ="bold";
     div.style.display ="inline-block";
     div.style.width ="35px";
     div.innerHTML = n_color.toString()+": ";
@@ -960,7 +956,8 @@ function ClickAddColor() {
     div = document.createElement('input'); 
     div.type = "color";
     div.style.display ="inline-block";
-    div.style.width ="65px";
+    div.style.width ="80px";
+    div.classList.add("particle_color_picker");
 
     if (n_color <= colorLookup_init.length) {
         color = colorLookup_init[n_color-1]
@@ -969,40 +966,48 @@ function ClickAddColor() {
     }
 
     div.value = color;
+    div.targetid = n_color-1;
+    div.addEventListener("input", ChangeColor_Handler, true);
     newcell.appendChild(div);
+
+}
+
+function ExportColors() {
+
+    colorLookup = new Array(n_color);
+
+    var AllColorPickers = document.getElementsByClassName("particle_color_picker");
+
+    for (var ipick=0; ipick < AllColorPickers.length ; ipick++) {
+
+        var targetid = AllColorPickers[ipick].targetid;
+        var color = AllColorPickers[ipick].value;    
+        
+        colorLookup[targetid] = color;
+
+    }
+
+}
+
+color_method_input = document.getElementById("color_method_input");
+color_method_input.addEventListener("input", color_method_input_Handler, true);
+
+function color_method_input_Handler(event) {
+
+    var send_event = new Event('ChangeColorsFromOutsideCanvas');
+    displayCanvas.dispatchEvent(send_event);
+
+}
+
+function ChangeColor_Handler(event) {
+
+    var targetid = event.path[0].targetid;
+    var color = event.path[0].value;
+
+    colorLookup[targetid] = color;
     
-    /* "-" Button */
-    // div = document.createElement('div'); 
-    // div.classList.add("w3-button");
-    // div.classList.add("w3-light-grey");
-    // div.style.textAlign = "center";
-    // div.style.fontSize ="16px";
-    // div.style.fontWeight ="bold";
-    // div.style.display ="inline-block";
-    // div.innerHTML = "-";
-    // newcell.appendChild(div);
-
-
-
-
-    // for (ival = 0; ival < n_fields; ival++) {
-    //     irow = ival + 1;
-    //     newcell = table.rows[irow].insertCell(icol);
-    //     newcell.style.width = '65px';
-    //     newcell.style.textAlign = 'center';   
-    //     input = document.createElement(input_dict[ival]["elem_class"]);
-    //     for (var [key, val] of Object.entries(input_dict[ival])){
-    //     if (key != "elem_class"){
-    //         input[key] = val;
-    //     }
-    //     input.style = "width: 53px; text-align: center;"
-    //     }
-    //     newcell.appendChild(input);
-    // }
-
-    // RedistributeClicksTableBodyLoop('table_custom_sym',0);
-
-
+    var send_event = new Event('ChangeColorsFromOutsideCanvas');
+    displayCanvas.dispatchEvent(send_event);
 
 }
 
