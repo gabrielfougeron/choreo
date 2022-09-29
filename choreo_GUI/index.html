@@ -65,7 +65,7 @@ window.addEventListener("drop",function(e){
     <div class="w3-bar w3-light-grey TopTab Main">
       <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Main_Launch"     onclick="ClickTopTabBtn('Main_Launch')"     >Launch</button>
       <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Main_Gallery"  onclick="ClickTopTabBtn('Main_Gallery')"  >Gallery</button>
-      <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Main_Save_Config"     onclick="ClickTopTabBtn('Main_Save_Config')"     >Save Config</button>
+      <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Main_Save_Config"     onclick="ClickTopTabBtn('Main_Save_Config')"     >Save Settings</button>
       <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Main_Help"     onclick="ClickTopTabBtn('Main_Help')"     >Help</button>
       <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Main_About"    onclick="ClickTopTabBtn('Main_About')"    >About</button>
     </div>
@@ -127,11 +127,9 @@ window.addEventListener("drop",function(e){
 </div>
 <div id="CommandBody">
   <div class="w3-container MainTab Main_Launch" style="display:none">
-    <div  id="LoadConfigFileDropArea" ondrop="DropConfigFile(event)" ondragover="PreventDefaultDragOver(event);">
     <button class="w3-button w3-hover-pale-red w3-light-grey" onclick="ChoreoExecuteClick()">Choreo Execute!</button>
     <button class="w3-button w3-hover-pale-red w3-light-grey" onclick="ChoreoDispInitStateClick()">Display Init State</button>
     <button class="w3-button w3-hover-pale-red w3-light-grey" onclick="KillAndReloadWorker()">Kill Worker</button>
-    </div>
   </div>
   <div class="w3-container MainTab Main_Gallery" style="display:none">
     <h2>Gallery</h2>
@@ -148,13 +146,40 @@ window.addEventListener("drop",function(e){
     </div>
   </div>
   <div class="w3-container MainTab Main_Save_Config" style="display:none">
-    <h2>Save Config</h2>
-    <button class="w3-button w3-hover-pale-red w3-light-grey" onclick="SaveConfigFile()">Save Config File</button>
-    <input type="file" id="LoadConfigFileBtn" accept=".json" onchange="ClickLoadConfigFile(this.files); this.value=null ;" style="display:none">
-    <label class="w3-button w3-hover-pale-red w3-light-grey"  for="LoadConfigFileBtn">
-      Load Config File
-    </label>
-    <button class="w3-button w3-hover-pale-red w3-light-grey" onclick="ChoreoSaveInitStateClick()">Save Init state</button>
+    <h2>Save Settings</h2>
+    <table style="font-size:16px; border:none; display:table">
+      <tr>
+        <td style="border:none;" ><button class="w3-button w3-hover-pale-red w3-light-grey" onclick="SaveConfigFile()">Save current settings as file</button></td>
+      </tr>
+      <tr>
+        <td style="border:none;" >
+          <div  id="LoadConfigFileDropArea" ondrop="DropConfigFile(event)" ondragover="PreventDefaultDragOver(event);">
+            <input type="file" id="LoadConfigFileBtn" accept=".json" onchange="ClickLoadConfigFile(this.files); this.value=null ;" style="display:none">
+            <label class="w3-button w3-hover-pale-red w3-light-grey"  for="LoadConfigFileBtn">
+              Load settings from file
+            </label>
+          </div>
+        </td>
+      </tr>
+      <tr>
+        <td style="border:none;" >
+        A cookie containig the configuration file can optinally be saved in your browser's profile data.
+        </td>
+      </tr>
+      <tr>
+        <td style="border:none;" ><label for="checkbox_Cookie">I understand the legal implications and I want enable this feature.</label></td>
+        <td style="border:none;"><input id ="checkbox_Cookie" class="w3-check" type="checkbox" style="vertical-align: super" unchecked></td>
+      </tr>
+      <tr>
+        <td style="border:none;" ><button class="w3-button w3-hover-pale-red w3-light-grey" onclick="SaveCookieClick()" disabled="disabled"  id ="Save_Cookie_Btn" >Save current settings as cookie</button></td>
+      </tr>
+      <tr>
+        <td style="border:none;" ><button class="w3-button w3-hover-pale-red w3-light-grey" onclick="LoadCookieClick()" disabled="disabled"  id ="Load_Cookie_Btn" >Load settings from cookie</button></td>
+      </tr>
+      <tr>
+        <td style="border:none;" ><div id ="Cookie_Message" ></div></td>
+      </tr>
+    </table>
   </div>
   <div class="w3-container MainTab Main_Help" style="display:none">
     <h2>Help</h2>
@@ -453,6 +478,8 @@ ClickAddBodyLoop();
 for (var i = 0; i < colorLookup_init.length; i++) {
     AddColor();
 }
+
+DealWithCookie();
 
 </script>
 
