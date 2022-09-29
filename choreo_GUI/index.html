@@ -10,9 +10,8 @@
 <link rel="stylesheet" href="./assets/css/style.css">
 <link rel="stylesheet" href="./assets/css/main.css">
 <link rel="stylesheet" href="./assets/css/w3.css">
-<link rel="stylesheet" href="./assets/css/choreo_GUI.css">
 <link rel="stylesheet" href="./assets/css/roundslider.min.css">
-
+<link rel="stylesheet" href="./assets/css/choreo_GUI.css">
 
 
 <script src="assets/js/npy.js"></script>
@@ -96,7 +95,6 @@ window.addEventListener("drop",function(e){
         <canvas id="particleLayerCanvas" width="480px" height="480px" style="position: absolute; z-index: 2;"></canvas>
       </div>
     </div>
-
     <div id="PlayCommands" position="absolute" style="margin-left:130px;">
       <table style="border:0">
         <tr>
@@ -127,9 +125,14 @@ window.addEventListener("drop",function(e){
 </div>
 <div id="CommandBody">
   <div class="w3-container MainTab Main_Launch" style="display:none">
-    <button class="w3-button w3-hover-pale-red w3-light-grey" onclick="ChoreoExecuteClick()">Choreo Execute!</button>
-    <button class="w3-button w3-hover-pale-red w3-light-grey" onclick="ChoreoDispInitStateClick()">Display Init State</button>
-    <button class="w3-button w3-hover-pale-red w3-light-grey" onclick="KillAndReloadWorker()">Kill Worker</button>
+    <table style="border:0;margin-bottom:10px;">
+      <tr>
+        <td style="border:0"><button class="w3-button w3-hover-pale-red w3-light-grey InTableControls" onclick="ChoreoExecuteClick()">Choreo Execute!</button></td>
+        <td style="border:0"><button class="w3-button w3-hover-pale-red w3-light-grey InTableControls" onclick="ChoreoDispInitStateClick()">Display Init State</button></td>
+        <td style="border:0"><button class="w3-button w3-hover-pale-red w3-light-grey InTableControls" onclick="KillAndReloadWorker()">Kill Worker</button></td>
+      </tr>
+    </table>
+    <textarea id ="Python_textarea" rows="20" cols="50" readonly>Loading Python ...&#10;</textarea>
   </div>
   <div class="w3-container MainTab Main_Gallery" style="display:none">
     <h2>Gallery</h2>
@@ -163,11 +166,11 @@ window.addEventListener("drop",function(e){
       </tr>
       <tr>
         <td style="border:none;" >
-        A cookie containig the configuration file can optinally be saved in your browser's profile data.
+          A cookie containig the configuration file can optionally be saved in your browser's profile data. It will then be automatically loaded on startup.
         </td>
       </tr>
       <tr>
-        <td style="border:none;" ><label for="checkbox_Cookie">I understand the legal implications and I want enable this feature.</label></td>
+        <td style="border:none;" ><label for="checkbox_Cookie">I understand the legal implications and I want to enable cookies on this site.</label></td>
         <td style="border:none;"><input id ="checkbox_Cookie" class="w3-check" type="checkbox" style="vertical-align: super" unchecked></td>
       </tr>
       <tr>
@@ -456,7 +459,7 @@ window.addEventListener("drop",function(e){
 
 <script>
 
-OnWindowResize()
+OnWindowResize();
 
 ClickLeftTabBtn('Main');
 // ClickLeftTabBtn('Animation');
