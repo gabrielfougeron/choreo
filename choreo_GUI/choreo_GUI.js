@@ -106,8 +106,8 @@ function ClickTopTabBtn(TabId) {
 
 function  GeomTopTabBtn(TabId) {
     switch (TabId) {
-        case 'Launch': {
-        ClickTopTabBtn('Launch_Main');
+        case 'Main': {
+        ClickTopTabBtn('Main_Launch');
         break;}    
         case 'Geom': {
         ClickTopTabBtn('Geom_Bodies');
@@ -205,7 +205,7 @@ function GatherConfigDict() {
 
     var ConfigDict = {};
 
-    ConfigDict['Launch_Main'] = {};
+    ConfigDict['Main_Launch'] = {};
 
     ConfigDict['Geom_Bodies'] = {};
 

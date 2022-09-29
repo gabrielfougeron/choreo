@@ -54,7 +54,7 @@ window.addEventListener("drop",function(e){
 <div id="AnimationAndMenuBlock">
   <div class="w3-bar-block w3-light-grey open LeftTab" style="width:130px; position:absolute;">
     <button class="w3-bar-item w3-button" onclick="OpenCloseLeftTab()" style="text-align: center;">&#9776;</button>
-    <button class="w3-bar-item w3-button w3-hover-pale-red LeftTabBtn Launch"       style="text-align: center" onclick="ClickLeftTabBtn('Launch')"      >Launch</button>
+    <button class="w3-bar-item w3-button w3-hover-pale-red LeftTabBtn Main"       style="text-align: center" onclick="ClickLeftTabBtn('Main')"      >Main</button>
     <button class="w3-bar-item w3-button w3-hover-pale-red LeftTabBtn Geom"         style="text-align: center" onclick="ClickLeftTabBtn('Geom')"        >Geometry</button>
     <button class="w3-bar-item w3-button w3-hover-pale-red LeftTabBtn Animation"    style="text-align: center" onclick="ClickLeftTabBtn('Animation')"   >Animation</button>
     <button class="w3-bar-item w3-button w3-hover-pale-red LeftTabBtn Solver"       style="text-align: center" onclick="ClickLeftTabBtn('Solver')"      >Solver</button>
@@ -62,12 +62,12 @@ window.addEventListener("drop",function(e){
     <div class="w3-bar-item w3-orange" id="Python_State_Div"  style="text-align: center" >Loading</div>
   </div>
   <div id="MarginLeftTop" style="margin-left:130px;">
-    <div class="w3-bar w3-light-grey TopTab Launch">
-      <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Launch_Main"     onclick="ClickTopTabBtn('Launch_Main')"     >Main</button>
-      <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Launch_Gallery"  onclick="ClickTopTabBtn('Launch_Gallery')"  >Gallery</button>
-      <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Launch_Save_Config"     onclick="ClickTopTabBtn('Launch_Save_Config')"     >Save Config</button>
-      <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Launch_Help"     onclick="ClickTopTabBtn('Launch_Help')"     >Help</button>
-      <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Launch_About"    onclick="ClickTopTabBtn('Launch_About')"    >About</button>
+    <div class="w3-bar w3-light-grey TopTab Main">
+      <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Main_Launch"     onclick="ClickTopTabBtn('Main_Launch')"     >Launch</button>
+      <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Main_Gallery"  onclick="ClickTopTabBtn('Main_Gallery')"  >Gallery</button>
+      <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Main_Save_Config"     onclick="ClickTopTabBtn('Main_Save_Config')"     >Save Config</button>
+      <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Main_Help"     onclick="ClickTopTabBtn('Main_Help')"     >Help</button>
+      <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Main_About"    onclick="ClickTopTabBtn('Main_About')"    >About</button>
     </div>
     <div class="w3-bar w3-light-grey TopTab Geom">
         <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Geom_Bodies"   onclick="ClickTopTabBtn('Geom_Bodies')">Bodies</button>
@@ -76,8 +76,8 @@ window.addEventListener("drop",function(e){
         <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Geom_Custom"   onclick="ClickTopTabBtn('Geom_Custom')">Custom</button>
     </div>
     <div class="w3-bar w3-light-grey TopTab Animation">
-        <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Animation_Size"  onclick="ClickTopTabBtn('Animation_Size')">Size</button>
         <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Animation_Colors"  onclick="ClickTopTabBtn('Animation_Colors')">Colors</button>
+        <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Animation_Size"  onclick="ClickTopTabBtn('Animation_Size')">Size</button>
         <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Animation_Framerate"   onclick="ClickTopTabBtn_Animation_Framerate()">Framerate</button>
     </div>
     <div class="w3-bar w3-light-grey TopTab Solver">
@@ -126,14 +126,14 @@ window.addEventListener("drop",function(e){
   </div>
 </div>
 <div id="CommandBody">
-  <div class="w3-container MainTab Launch_Main" style="display:none">
+  <div class="w3-container MainTab Main_Launch" style="display:none">
     <div  id="LoadConfigFileDropArea" ondrop="DropConfigFile(event)" ondragover="PreventDefaultDragOver(event);">
     <button class="w3-button w3-hover-pale-red w3-light-grey" onclick="ChoreoExecuteClick()">Choreo Execute!</button>
     <button class="w3-button w3-hover-pale-red w3-light-grey" onclick="ChoreoDispInitStateClick()">Display Init State</button>
     <button class="w3-button w3-hover-pale-red w3-light-grey" onclick="KillAndReloadWorker()">Kill Worker</button>
     </div>
   </div>
-  <div class="w3-container MainTab Launch_Gallery" style="display:none">
+  <div class="w3-container MainTab Main_Gallery" style="display:none">
     <h2>Gallery</h2>
     <div id="radioContainer">
       <form id="radioForm">
@@ -147,7 +147,7 @@ window.addEventListener("drop",function(e){
       </form>
     </div>
   </div>
-  <div class="w3-container MainTab Launch_Save_Config" style="display:none">
+  <div class="w3-container MainTab Main_Save_Config" style="display:none">
     <h2>Save Config</h2>
     <button class="w3-button w3-hover-pale-red w3-light-grey" onclick="SaveConfigFile()">Save Config File</button>
     <input type="file" id="LoadConfigFileBtn" accept=".json" onchange="ClickLoadConfigFile(this.files); this.value=null ;" style="display:none">
@@ -156,7 +156,7 @@ window.addEventListener("drop",function(e){
     </label>
     <button class="w3-button w3-hover-pale-red w3-light-grey" onclick="ChoreoSaveInitStateClick()">Save Init state</button>
   </div>
-  <div class="w3-container MainTab Launch_Help" style="display:none">
+  <div class="w3-container MainTab Main_Help" style="display:none">
     <h2>Help</h2>
     <h3>Getting started</h3>
     #Todo
@@ -165,7 +165,7 @@ window.addEventListener("drop",function(e){
     <h3>Going further</h3>
     For more thorough information about the meaning of the different settings and parameters, see the <a href="https://gabrielfougeron.github.io/choreo-docs/">online help</a> for the python package <b>choreo</b>.
   </div>
-  <div class="w3-container MainTab Launch_About" style="display:none">
+  <div class="w3-container MainTab Main_About" style="display:none">
     <h2>About</h2>
     &nbsp &nbsp This WebApp and the associated python package <b>choreo</b> were created by Gabriel Fougeron.<br><br>
     Many thanks to:<br>
@@ -284,7 +284,7 @@ window.addEventListener("drop",function(e){
               <option value="body" selected>Body</option>
               <option value="loop">Loop</option>
               <option value="loop_id">Loop ID</option>
-              <option value="none">None</option>
+              <option value="none">N° 1</option>
             </select>
           </td>
         </tr> 
@@ -433,14 +433,14 @@ window.addEventListener("drop",function(e){
 
 OnWindowResize()
 
-// ClickLeftTabBtn('Launch');
-ClickLeftTabBtn('Animation');
+ClickLeftTabBtn('Main');
+// ClickLeftTabBtn('Animation');
 
 
-// ClickTopTabBtn('Launch_Gallery')
-// ClickTopTabBtn('Launch_Main')
+// ClickTopTabBtn('Main_Gallery')
+ClickTopTabBtn('Main_Launch')
 
-ClickTopTabBtn('Animation_Size')
+// ClickTopTabBtn('Animation_Size')
 
 SlideNReconvergeItMax();
 
@@ -453,8 +453,6 @@ ClickAddBodyLoop();
 for (var i = 0; i < colorLookup_init.length; i++) {
     AddColor();
 }
-
-
 
 </script>
 
