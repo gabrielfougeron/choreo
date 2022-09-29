@@ -472,7 +472,6 @@ def Find_Choreo(
                 print('')
                 
         print('')
-        print('')
 
 
     print('Done !')
