@@ -960,7 +960,7 @@ function ClickAddColor() {
     div = document.createElement('input'); 
     div.type = "color";
     div.style.display ="inline-block";
-    div.style.width ="55px";
+    div.style.width ="65px";
 
     if (n_color <= colorLookup_init.length) {
         color = colorLookup_init[n_color-1]
@@ -972,15 +972,15 @@ function ClickAddColor() {
     newcell.appendChild(div);
     
     /* "-" Button */
-    div = document.createElement('div'); 
-    div.classList.add("w3-button");
-    div.classList.add("w3-light-grey");
-    div.style.textAlign = "center";
-    div.style.fontSize ="16px";
-    div.style.fontWeight ="bold";
-    div.style.display ="inline-block";
-    div.innerHTML = "-";
-    newcell.appendChild(div);
+    // div = document.createElement('div'); 
+    // div.classList.add("w3-button");
+    // div.classList.add("w3-light-grey");
+    // div.style.textAlign = "center";
+    // div.style.fontSize ="16px";
+    // div.style.fontWeight ="bold";
+    // div.style.display ="inline-block";
+    // div.innerHTML = "-";
+    // newcell.appendChild(div);
 
 
 
@@ -1041,39 +1041,14 @@ function KillAndReloadWorker() {
     pyodide_worker.postMessage({funname:"ExecutePythonFile",args:"./python_scripts/Python_imports.py"});
 }
 
-function input_Limit_FPS_Handler() {
-
-    Elapsed_Time_During_Animation = 0;
-    n_valid_dt_animation = 0;
-
-    var input_Limit_FPS = document.getElementById("input_Limit_FPS");    
-    FPS_limit = input_Limit_FPS.value;
-
-    anim_schedule_time = performance.now()
-
-}
-
-function checkbox_Limit_FPS_Handler(event) {
-
-    var input_Limit_FPS = document.getElementById("input_Limit_FPS");
-    
-    if (event.currentTarget.checked) {
-        input_Limit_FPS.disabled = "";
-        Do_Limit_FPS = true;
-    } else {
-        input_Limit_FPS.disabled = "disabled";
-        Do_Limit_FPS = false;
-    }
-
-    input_Limit_FPS_Handler();
-
-}
-
 var checkbox_Limit_FPS = document.getElementById('checkbox_Limit_FPS');
 checkbox_Limit_FPS.addEventListener("change", checkbox_Limit_FPS_Handler, true);
 
 var input_Limit_FPS = document.getElementById("input_Limit_FPS");
 input_Limit_FPS.addEventListener("change", input_Limit_FPS_Handler, true);
+
+var checkbox_Mass_Scale = document.getElementById('checkbox_Mass_Scale');
+checkbox_Mass_Scale.addEventListener("change", checkbox_Mass_Scale_Handler, true);
 
 var input_body_radius = document.getElementById("input_body_radius");
 input_body_radius.addEventListener("input" , SlideBodyRadius, true);
@@ -1112,4 +1087,37 @@ function SlideTrailTime(event) {
     // console.log(input_trail_vanish_speed.value);
     base_trail_vanish_speed = input_trail_vanish_speed.value;
     FadeInvFrequency = 1/(1000*(base_trail_vanish_speed*base_trail_vanish_speed));
+}
+
+function checkbox_Mass_Scale_Handler(event) {
+    DoScaleSizeWithMass = event.currentTarget.checked;
+    
+    var event = new Event('RemakeParticlesFromOutsideCanvas');
+    displayCanvas.dispatchEvent(event);
+
+}
+
+function input_Limit_FPS_Handler() {
+
+    Elapsed_Time_During_Animation = 0;
+    n_valid_dt_animation = 0;
+
+    FPS_limit = input_Limit_FPS.value;
+
+    anim_schedule_time = performance.now()
+
+}
+
+function checkbox_Limit_FPS_Handler(event) {
+    
+    if (event.currentTarget.checked) {
+        input_Limit_FPS.disabled = "";
+        Do_Limit_FPS = true;
+    } else {
+        input_Limit_FPS.disabled = "disabled";
+        Do_Limit_FPS = false;
+    }
+
+    input_Limit_FPS_Handler();
+
 }
