@@ -58,7 +58,7 @@ async function Set_Python_path(args){
 
 async function Python_Imports_Done(args){
 
-    PythonPrint({txt:"Python Imports Done."});
+    PythonPrint({txt:"Python Imports Done.&#10;"});
 
     var Python_State_Div = document.getElementById("Python_State_Div");
 
@@ -166,6 +166,8 @@ function SaveConfigFile(){
 }
 
 function ChoreoExecuteClick() {
+
+    PythonClearPrints();
 
     var Python_State_Div = document.getElementById("Python_State_Div");
 
@@ -1101,6 +1103,7 @@ function KillAndReloadWorker() {
 
     var Python_State_Div = document.getElementById("Python_State_Div");
 
+    PythonClearPrints();
     PythonPrint({txt:"Python Killed. Reloading ..."});
 
     Python_State_Div.innerHTML = "Killed";
@@ -1323,8 +1326,21 @@ function DeleteCookie(name) {
 }
 
 Python_textarea = document.getElementById("Python_textarea");
+// Python_textarea.style.height = "0px";
+
+function PythonClearPrints() {
+    Python_textarea.innerHTML = "";
+}
 
 function PythonPrint(args) {
+
+    var the_height = parseInt(Python_textarea.style.height, 10);
+    var is_at_bottom = (Python_textarea.scrollHeight - Python_textarea.scrollTop < (the_height + 10));
+
     Python_textarea.innerHTML += args.txt + "&#10;";
-    Python_textarea.scrollTop = Python_textarea.scrollHeight;
+
+    if (is_at_bottom) {
+        Python_textarea.scrollTop = Python_textarea.scrollHeight;
+    }
+
 }

@@ -132,7 +132,7 @@ window.addEventListener("drop",function(e){
         <td style="border:0"><button class="w3-button w3-hover-pale-red w3-light-grey InTableControls" onclick="KillAndReloadWorker()">Kill Worker</button></td>
       </tr>
     </table>
-    <textarea id ="Python_textarea" rows="20" cols="50" readonly>Loading Python ...&#10;</textarea>
+    <textarea id ="Python_textarea" readonly>Loading Python ...&#10;</textarea>
   </div>
   <div class="w3-container MainTab Main_Gallery" style="display:none">
     <h2>Gallery</h2>
@@ -481,6 +481,8 @@ ClickAddBodyLoop();
 for (var i = 0; i < colorLookup_init.length; i++) {
     AddColor();
 }
+
+Python_textarea.style.height = "400px";
 
 DealWithCookie();
 
