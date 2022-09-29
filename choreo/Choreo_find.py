@@ -95,6 +95,7 @@ def Find_Choreo(
 
     """
     
+    print('')
     print('Searching periodic solutions of {:d} bodies'.format(nbody))
 
     print('Processing symmetries for {0:d} convergence levels'.format(n_reconverge_it_max+1))
