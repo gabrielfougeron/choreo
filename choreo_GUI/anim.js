@@ -29,6 +29,7 @@ var colorLookup_init = [
 var defaultParticleColor = "#ee6600";
 var defaultTrailColor = "#dd5500";
 
+var colors_list;
 
 // Particle radius
 var min_base_particle_size = 3.;
@@ -44,6 +45,8 @@ var base_trailWidth = 2;
 var min_base_trail_vanish_speed = 0.2;
 var max_base_trail_vanish_speed = 3.;
 var base_trail_vanish_speed = 1.;
+
+var DoScaleSizeWithMass = true;
 
 var FadeInvFrequency;
 
@@ -129,6 +132,7 @@ function canvasApp() {
 	displayCanvas.addEventListener("FinalizeSetOrbitFromOutsideCanvas", FinalizeSetOrbitFromOutsideCanvasHandler, true);
 	displayCanvas.addEventListener("StopAnimationFromOutsideCanvas", StopAnimationFromOutsideCanvasHandler, true);
 	displayCanvas.addEventListener("StartAnimationFromOutsideCanvas", StartAnimationFromOutsideCanvasHandler, true);
+	displayCanvas.addEventListener("RemakeParticlesFromOutsideCanvas", RemakeParticlesFromOutsideCanvasHandler, true);
 	
 	var particleLayerCanvas = document.getElementById("particleLayerCanvas");
 	var particleLayerContext = particleLayerCanvas.getContext("2d");
@@ -531,6 +535,12 @@ function canvasApp() {
 		clearScreen();
 		FinalizeSetOrbit() ;
 	}
+	function RemakeParticlesFromOutsideCanvasHandler(e) {
+		makeParticles();
+		clearScreen();
+		clearParticleLayer();
+		drawParticles();
+	}
 
 	function AddOrbitButtonHandler(e) {
 		i = numOrbits;
@@ -628,7 +638,7 @@ function canvasApp() {
 		particleLayerContext.clearRect(0,0,displayWidth+1,displayHeight+1);
 	}
 	
-	function makeParticles(colors_list) {
+	function makeParticles() {
 
 		particles = [];
 
@@ -646,12 +656,16 @@ function canvasApp() {
 				trailColor = defaultTrailColor;
 			}
 
-			var PartRelSize = Math.sqrt(PlotInfo["mass"][i]);
+			if (DoScaleSizeWithMass) {
+				var PartRelSize = Math.sqrt(PlotInfo["mass"][i]);
+			} else {
+				var PartRelSize = 1.;
+			}
 
 			PartRelSize = Math.min(PartRelSize,Max_PartRelSize);
 			PartRelSize = Math.max(PartRelSize,Min_PartRelSize);
 			// Min/max ?
-
+			
 			CurrentMax_PartRelSize = Math.max(CurrentMax_PartRelSize,PartRelSize);
 					
 			var p = {
@@ -912,8 +926,6 @@ function canvasApp() {
 	}
 
 	function FinalizeSetOrbit() {
-		
-		var colors_list;
 
 		if (PlotInfo['nbody'] < colorLookup.length) {
 			//if fewer than color list, default will be to do different colors.
@@ -927,7 +939,7 @@ function canvasApp() {
 			colors_list = [];
 		}
 
-		makeParticles(colors_list);
+		makeParticles();
 
 		plotWindow = {
 			xMin : PlotInfo["xinf"],
