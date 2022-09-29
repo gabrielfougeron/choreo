@@ -25,7 +25,9 @@ body {
 #AnimationAndMenuBlock{ 
     max-width: 610px;
 }
-#PlayCommands{
-    /* position:absolute;
-    margin-top:480px; */
-}
+#Python_textarea {
+    resize: none;
+    font-family: Consolas,monaco,monospace;     
+    background-color: #F1F1F1;
+    color : #000000!important;
+  }
