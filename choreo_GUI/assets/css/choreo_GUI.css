@@ -26,8 +26,9 @@ body {
     max-width: 610px;
 }
 #Python_textarea {
-    resize: none;
+    resize: vertical;
     font-family: Consolas,monaco,monospace;     
+    font-size: 14px;     
     background-color: #F1F1F1;
     color : #000000!important;
   }
