@@ -160,7 +160,7 @@ var saveJSONData = (function () {
 
 function SaveConfigFile(){
 
-    ConfigDict = GatherConfigDict();
+    var ConfigDict = GatherConfigDict();
     saveJSONData(ConfigDict, "choreo_config.json");
 
 }
@@ -183,7 +183,7 @@ function ChoreoExecuteClick() {
 
 function ChoreoSaveInitStateClick() {
 
-    ConfigDict = GatherConfigDict();
+    var ConfigDict = GatherConfigDict();
     // pyodide_worker.ExecutePythonFile("./python_scripts/Load_GUI_params_and_save_init.py");
 
     pyodide_worker.postMessage({funname:"LoadDataInWorker",args:{ConfigDict:ConfigDict}});
@@ -193,7 +193,7 @@ function ChoreoSaveInitStateClick() {
 
 function ChoreoDispInitStateClick() {
 
-    ConfigDict = GatherConfigDict();
+    var ConfigDict = GatherConfigDict();
 
     pyodide_worker.postMessage({funname:"LoadDataInWorker",args:{ConfigDict:ConfigDict}});
     pyodide_worker.postMessage({funname:"ExecutePythonFile",args:"./python_scripts/Save_init_state.py"});
@@ -368,7 +368,7 @@ async function LoadConfigFile(the_file) {
 
     var txt = await the_file.text();
 
-    ConfigDict = JSON.parse(txt);
+    var ConfigDict = JSON.parse(txt);
 
     LoadConfigDict(ConfigDict);
 
@@ -1190,4 +1190,118 @@ function checkbox_Limit_FPS_Handler(event) {
 
     input_Limit_FPS_Handler();
 
+}
+
+
+var checkbox_Cookie = document.getElementById('checkbox_Cookie');
+checkbox_Cookie.addEventListener("change", checkbox_Cookie_Handler, true);
+
+var Save_Cookie_Btn = document.getElementById('Save_Cookie_Btn');
+var Load_Cookie_Btn = document.getElementById('Load_Cookie_Btn');
+
+var Cookie_Message = document.getElementById('Cookie_Message');
+
+var cookie_name = "choreo_GUI"
+
+function checkbox_Cookie_Handler(event) {
+
+    if (event.currentTarget.checked) {
+        Save_Cookie_Btn.disabled = "";
+        Load_Cookie_Btn.disabled = "";
+    } else {
+        Save_Cookie_Btn.disabled = "disabled";
+        Load_Cookie_Btn.disabled = "disabled";
+        DeleteCookie(cookie_name);
+        IssueCookieMessage("Cookie deleted !");
+    }
+
+}
+
+async function IssueCookieMessage(message,keep_up) {
+
+    Cookie_Message.innerHTML = message;
+
+    if (keep_up !== undefined) {
+    } else {
+        setTimeout(function(){IssueCookieMessage("",true)}, 3000);
+    }
+
+}
+
+function SaveCookieClick(event) {
+
+    var ConfigDict = GatherConfigDict();
+
+    var cookie_value = JSON.stringify(ConfigDict,null,0)
+    var cookie_lifetime = 365;
+
+    SaveCookie(cookie_name, cookie_value, cookie_lifetime);
+
+    IssueCookieMessage("Cookie saved !");
+}
+
+function LoadCookieClick(event) {
+
+    success = DealWithCookie();
+    if (success) {
+        IssueCookieMessage("Cookie loaded !");
+    } else {
+        IssueCookieMessage("Cookie not found !");
+    }
+
+}
+
+function SaveCookie(name, value, time_expires_days) {
+    var d = new Date();
+    d.setTime(d.getTime() + (time_expires_days*24*60*60*1000));
+    var expires = "expires="+ d.toUTCString();
+    document.cookie = name + "=" + value + ";" + expires + ";path=/";
+}
+
+function DealWithCookie() {
+
+    var txt = LoadCookie(cookie_name);
+
+    if (txt == "") {
+    
+        return false;
+
+    } else {
+
+        checkbox_Cookie.checked = true;
+        Save_Cookie_Btn.disabled = "";
+        Load_Cookie_Btn.disabled = "";    
+
+        var ConfigDict = JSON.parse(txt);
+
+        LoadConfigDict(ConfigDict);
+
+        return true;
+
+    }
+
+}
+
+function LoadCookie(name) {
+let head = name + "=";
+let decodedCookie = decodeURIComponent(document.cookie);
+let ca = decodedCookie.split(';');
+for(let i = 0; i <ca.length; i++) {
+    let c = ca[i];
+    while (c.charAt(0) == ' ') {
+    c = c.substring(1);
+    }
+    if (c.indexOf(head) == 0) {
+    return c.substring(head.length, c.length);
+    }
+}
+return "";
+}
+
+function DeleteCookie(name) {
+    if( LoadCookie( name ) ) {
+        document.cookie = name + "=" +
+            ";path=/"+
+            ";expires=Thu, 01 Jan 1970 00:00:01 GMT";
+    }
 }
