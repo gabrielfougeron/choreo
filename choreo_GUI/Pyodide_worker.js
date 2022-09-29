@@ -2,7 +2,10 @@
 importScripts("https://cdn.jsdelivr.net/pyodide/v0.21.2/full/pyodide.js");
 
 async function loadPyodideAndPackages() {
-  self.pyodide = await loadPyodide();
+  self.pyodide = await loadPyodide({
+    stdout: RedirectPythonPrint,
+    stderr: RedirectPythonPrint,
+  });
   await pyodide.loadPackage([
     "matplotlib",
     "sparseqr",
@@ -47,4 +50,16 @@ self.ExecutePythonFile = function(filename) {
         await pyodideReadyPromise; 
         txt = pyodide.runPython(text);
     });
+}
+
+function RedirectPythonPrint(txt) {
+
+    self.postMessage({
+        funname : "PythonPrint",
+        args    : {
+                "txt":txt,
+            }
+        }
+    )
+
 }

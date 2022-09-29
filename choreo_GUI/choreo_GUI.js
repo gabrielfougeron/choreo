@@ -58,7 +58,7 @@ async function Set_Python_path(args){
 
 async function Python_Imports_Done(args){
 
-    console.log("Python Imports Done");
+    PythonPrint({txt:"Python Imports Done."});
 
     var Python_State_Div = document.getElementById("Python_State_Div");
 
@@ -1101,6 +1101,8 @@ function KillAndReloadWorker() {
 
     var Python_State_Div = document.getElementById("Python_State_Div");
 
+    PythonPrint({txt:"Python Killed. Reloading ..."});
+
     Python_State_Div.innerHTML = "Killed";
     Python_State_Div.classList.add('w3-red');
     Python_State_Div.classList.remove('w3-orange');
@@ -1318,4 +1320,11 @@ function DeleteCookie(name) {
             ";path=/"+
             ";expires=Thu, 01 Jan 1970 00:00:01 GMT";
     }
+}
+
+Python_textarea = document.getElementById("Python_textarea");
+
+function PythonPrint(args) {
+    Python_textarea.innerHTML += args.txt + "&#10;";
+    Python_textarea.scrollTop = Python_textarea.scrollHeight;
 }
