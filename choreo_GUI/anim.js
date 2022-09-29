@@ -14,8 +14,8 @@ var UpdateFPSDisplay_freq = 5;
 
 var n_color = 0;
 var colorLookup_init = [
-	"#ff7006", // Vivid Orange
 	"#50ce4d", // Moderate Lime Green
+	"#ff7006", // Vivid Orange
 	"#a253c4", // Moderate Violet
 	"#ef1010", // Vivid Red
 	"#25b5bc", // Strong Cyan
