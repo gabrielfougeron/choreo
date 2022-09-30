@@ -696,6 +696,8 @@ def setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max=6,MomCons=True,n_
     #  - Exhaustive list of unary transformation for generator to body
     #  - Exhaustive list of binary transformations from generator within each loop.
     
+    Identity_detected = False
+
     SymGraph = nx.Graph()
     for i in range(nbody):
         SymGraph.add_node(i,Constraint_list=[])
@@ -845,10 +847,15 @@ def setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max=6,MomCons=True,n_
                 Sym = (gen_to_target[ibp].Inverse()).ComposeLight(gen_to_target[ib])
                 
                 if Sym.IsIdentity():
+                    
                     if CrashOnIdentity:
                         raise ValueError("Two bodies have identical trajectories")
                     else:
-                        warnings.warn("Two bodies have identical trajectories", stacklevel=2)
+                        if not(Identity_detected):
+                            print("Two bodies have identical trajectories")
+                            # warnings.warn("Two bodies have identical trajectories", stacklevel=2)
+                        
+                    Identity_detected = True
 
                 IsUnique = True
                 for isym in range(len(UniqueSyms)):
