@@ -58,7 +58,7 @@ async function Set_Python_path(args){
 
 async function Python_Imports_Done(args){
 
-    PythonPrint({txt:"Python Imports Done.&#10;"});
+    PythonPrint({txt:"&#10;Python Imports Done."});
 
     var ChoreoExecuteBtn = document.getElementById("ChoreoExecuteBtn");
     ChoreoExecuteBtn.disabled = "";
@@ -205,7 +205,6 @@ function ChoreoDispInitStateClick() {
 
     pyodide_worker.postMessage({funname:"LoadDataInWorker",args:{ConfigDict:ConfigDict}});
     pyodide_worker.postMessage({funname:"ExecutePythonFile",args:"./python_scripts/Save_init_state.py"});
-
 
 }
 
@@ -363,16 +362,6 @@ function DropConfigFile(e) {
 
 function PreventDefaultDragOver(event) {
     event.preventDefault();
-}
-
-function previewFile(file) {
-    let reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onloadend = function() {
-        let img = document.createElement('img');
-        img.src = reader.result;
-        document.getElementById('gallery').appendChild(img);
-    }
 }
 
 async function LoadConfigFile(the_file) {
