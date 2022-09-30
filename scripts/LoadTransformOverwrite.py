@@ -305,7 +305,7 @@ def ExecName(
         choreo.plot_all_2D(x,nint_plot_img,callfun,filename_output+'_thumb.png',fig_size=thumb_size,color=color)
         
     if Save_anim :
-        choreo.plot_all_2D_anim(x,nint_plot_anim,callfun,filename_output+'.mp4',nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size,dnint=dnint)
+        choreo.plot_all_2D_anim(x,nint_plot_anim,callfun,filename_output+'.mp4',nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size,dnint=dnint,color_list=color_list,color=color)
 
     if Save_Newton_Error :
         choreo.plot_Newton_Error(x,callfun,filename_output+'_newton.png')
@@ -333,7 +333,7 @@ def ExecName(
         all_pos_vel = ode_res['y'].reshape(2,nbody,choreo.ndim,round(nint_plot_img*nperiod_anim))
         all_pos_ode = all_pos_vel[0,:,:,:]
         
-        choreo.plot_all_2D_anim(x,nint_plot_anim,callfun,filename_output+'_ode.mp4',nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size,dnint=dnint,all_pos_trace=all_pos_ode,all_pos_points=all_pos_ode)
+        choreo.plot_all_2D_anim(x,nint_plot_anim,callfun,filename_output+'_ode.mp4',nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size,dnint=dnint,all_pos_trace=all_pos_ode,all_pos_points=all_pos_ode,color_list=color_list,color=color)
 
 
     if Save_Perturbed:
@@ -419,7 +419,7 @@ def ExecName(
             vid_filename = filename_output+'_unperturbed_'+str(i).zfill(3)+'.mp4'
             list_vid.append(vid_filename)
 
-            choreo.plot_all_2D_anim(x,nint_plot_anim,callfun,vid_filename,nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size_perturb,dnint=dnint,all_pos_trace=all_pos_ode,all_pos_points=all_pos_ode,xlim=xlim,extend=0.)
+            choreo.plot_all_2D_anim(x,nint_plot_anim,callfun,vid_filename,nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size_perturb,dnint=dnint,all_pos_trace=all_pos_ode,all_pos_points=all_pos_ode,xlim=xlim,extend=0.,color_list=color_list,color=color)
 
         for irank in range(n_perturbed):
 
@@ -433,7 +433,7 @@ def ExecName(
             vid_filename = filename_output+'_perturbed_'+str(irank).zfill(3)+'.mp4'
             list_vid.append(vid_filename)
             
-            choreo.plot_all_2D_anim(x,nint_plot_anim,callfun,vid_filename,nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size_perturb,dnint=dnint,all_pos_trace=all_pos_ode,all_pos_points=all_pos_ode,xlim=xlim,extend=0.)
+            choreo.plot_all_2D_anim(x,nint_plot_anim,callfun,vid_filename,nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size_perturb,dnint=dnint,all_pos_trace=all_pos_ode,all_pos_points=all_pos_ode,xlim=xlim,extend=0.,color_list=color_list,color=color)
 
         for irank in range(n_random):
 
@@ -451,7 +451,7 @@ def ExecName(
             vid_filename = filename_output+'_random_'+str(irank).zfill(3)+'.mp4'
             list_vid.append(vid_filename)
             
-            choreo.plot_all_2D_anim(x,nint_plot_anim,callfun,vid_filename,nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size_perturb,dnint=dnint,all_pos_trace=all_pos_ode,all_pos_points=all_pos_ode,xlim=xlim,extend=0.)
+            choreo.plot_all_2D_anim(x,nint_plot_anim,callfun,vid_filename,nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size_perturb,dnint=dnint,all_pos_trace=all_pos_ode,all_pos_points=all_pos_ode,xlim=xlim,extend=0.,color_list=color_list,color=color)
 
 
         nxy = [nx,ny]

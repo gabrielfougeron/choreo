@@ -26,8 +26,8 @@ var colorLookup_init = [
 	"#d6d6d6", // Light gray
 ];
 
-var defaultParticleColor = "#ee6600";
-var defaultTrailColor = "#dd5500";
+var defaultParticleColor = "#50ce4d";
+var defaultTrailColor = "#3c9a39";
 
 // Particle radius
 var min_base_particle_size = 3.;
@@ -285,6 +285,7 @@ function canvasApp() {
 			newColorString = "#" + newColorString;
 			trailColorLookup.push(newColorString);
 		}
+
 	}
 	
 	function UnselectOrbit(){

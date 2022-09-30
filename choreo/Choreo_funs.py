@@ -847,7 +847,7 @@ def setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max=6,MomCons=True,n_
                 Sym = (gen_to_target[ibp].Inverse()).ComposeLight(gen_to_target[ib])
                 
                 if Sym.IsIdentity():
-                    
+
                     if CrashOnIdentity:
                         raise ValueError("Two bodies have identical trajectories")
                     else:
@@ -1138,8 +1138,6 @@ def Compute_Loop_Size_Dist(x,callfun):
 def Detect_Escape(x,callfun):
     # Returns True if the trajectories are so far that they are likely to never interact again
     
-    # max_loop_size,max_loop_dist = Compute_Loop_Size_Dist(x,callfun)
-    
     args=callfun[0]
     
     y = args['param_to_coeff_list'][args["current_cvg_lvl"]] * x
@@ -1165,16 +1163,6 @@ def Detect_Escape(x,callfun):
         args['TimeShiftDenBin'] ,
         all_coeffs
         )
-    
-    # print("Compare SIZES in ESCAPE")
-    # print(abs(max_loop_size-res[0])/max_loop_size , abs(max_loop_dist-res[1])/max_loop_dist )
-    
-    # print(max_loop_size,max_loop_dist)
-    # print(res)
-    
-    # print("")
-    # print("")
-    # print("")
     
     # return (max_loop_dist > (4.5 * callfun[0]['nbody'] * max_loop_size))
     return (res[1] > (4.5 * callfun[0]['nbody'] * res[0])),res
