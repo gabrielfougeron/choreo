@@ -188,6 +188,12 @@ function ChoreoExecuteClick() {
 
 }
 
+function TestClick() {
+
+    pyodide_worker.postMessage({funname:"ExecutePythonFile",args:"./python_scripts/test.py"});
+
+}
+
 function ChoreoSaveInitStateClick() {
 
     var ConfigDict = GatherConfigDict();
@@ -1110,7 +1116,7 @@ function KillAndReloadWorker() {
     var Python_State_Div = document.getElementById("Python_State_Div");
 
     PythonClearPrints();
-    PythonPrint({txt:"Python Killed. Reloading ..."});
+    PythonPrint({txt:"Python Killed. Reloading ...&#10;"});
 
     Python_State_Div.innerHTML = "Killed";
     Python_State_Div.classList.add('w3-red');
