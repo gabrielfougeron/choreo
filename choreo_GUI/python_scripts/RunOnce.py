@@ -30,6 +30,8 @@ def main():
 
     file_basename = ''
     
+    CrashOnError_changevar = False
+
     LookForTarget = False
     
     n_make_loops = len(params_dict["Geom_Bodies"]["SymType"])
@@ -49,24 +51,25 @@ def main():
     mass = np.array(mass,dtype=np.float64)
 
     n_custom_sym = params_dict["Geom_Custom"]["n_custom_sym"]
-
+    
     for isym in range(n_custom_sym):
         
         if (params_dict["Geom_Custom"]["CustomSyms"][isym]["Reflexion"] == "True"):
-            s = 1
+            s = -1
         elif (params_dict["Geom_Custom"]["CustomSyms"][isym]["Reflexion"] == "False"):
-            s=-1
+            s = 1
         else:
             raise ValueError("Reflexion must be True or False")
             
         rot_angle = (2*np.pi * params_dict["Geom_Custom"]["CustomSyms"][isym]["RotAngleNum"]) / params_dict["Geom_Custom"]["CustomSyms"][isym]["RotAngleDen"]
 
         if (params_dict["Geom_Custom"]["CustomSyms"][isym]["TimeRev"] == "True"):
-            TimeRev = 1
+            TimeRev = -1
         elif (params_dict["Geom_Custom"]["CustomSyms"][isym]["TimeRev"] == "False"):
-            TimeRev=-1
+            TimeRev = 1
         else:
             raise ValueError("TimeRev must be True or False")
+        
         
         Sym_list.append(
             choreo.ChoreoSym(
@@ -81,8 +84,7 @@ def main():
 
 
 
-    # MomConsImposed = True
-    MomConsImposed = False
+    MomConsImposed = params_dict['Geom_Bodies'] ['MomConsImposed']
 
     store_folder = 'Sniff_all_sym/'
     # store_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/')
@@ -120,8 +122,6 @@ def main():
     # img_size = (12,12) # Image size in inches
     img_size = (8,8) # Image size in inches
     thumb_size = (2,2) # Image size in inches
-
-
     
     color = "body"
     # color = "loop"
@@ -230,31 +230,38 @@ def main():
 #         for name in dirs:
 #             print(os.path.join(root, name))
 
+
+
     i_sol = 1
 
     filename_output = store_folder+'/'+file_basename+str(i_sol).zfill(5)
     filename = filename_output+"_plotinfo.json"
-    with open(filename, 'rt') as fh:
-        thefile = fh.read()
-        
-    blob = js.Blob.new([thefile], {type : 'application/text'})
 
-    filename = filename_output+'_loop_pos_'+str(n_save_pos)+'.npy'
-    all_pos = np.load(filename)
+    if os.path.isfile(filename):
 
-    js.postMessage(
-        funname = "Set_Python_path",
-        args    = pyodide.ffi.to_js(
-            {
-                "JSON_data":blob,
-                "NPY_data":all_pos.reshape(-1),
-                "NPY_shape":all_pos.shape,
-            },
-            dict_converter=js.Object.fromEntries
+        with open(filename, 'rt') as fh:
+            thefile = fh.read()
+            
+        blob = js.Blob.new([thefile], {type : 'application/text'})
+
+        filename = filename_output+'_loop_pos_'+str(n_save_pos)+'.npy'
+        all_pos = np.load(filename)
+
+        js.postMessage(
+            funname = "Set_Python_path",
+            args    = pyodide.ffi.to_js(
+                {
+                    "JSON_data":blob,
+                    "NPY_data":all_pos.reshape(-1),
+                    "NPY_shape":all_pos.shape,
+                },
+                dict_converter=js.Object.fromEntries
+            )
         )
-    )
 
+    else:
 
+        print("Solver did not find a solution.")
 
 if __name__ == "__main__":
     main()

@@ -88,6 +88,7 @@ def Find_Choreo(
     mul_coarse_to_fine,
     n_find_max,
     plot_extend,
+    CrashOnError_changevar,
     ):
     """
 
@@ -99,7 +100,7 @@ def Find_Choreo(
     print('Searching periodic solutions of {:d} bodies'.format(nbody))
 
     print('Processing symmetries for {0:d} convergence levels'.format(n_reconverge_it_max+1))
-    callfun = setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change)
+    callfun = setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change,CrashOnIdentity=CrashOnError_changevar)
 
     print('')
 
@@ -133,15 +134,6 @@ def Find_Choreo(
         print('')
 
 
-    x0 = np.random.random(callfun[0]['param_to_coeff_list'][0].shape[1])
-    xmin = Compute_MinDist(x0,callfun)
-    if (xmin < 1e-5):
-        print(xmin)
-        raise ValueError("Init inter body distance too low. There is something wrong with constraints")
-
-    # filehandler = open(store_folder+'/callfun_list.pkl',"wb")
-    # pickle.dump(callfun_list,filehandler)
-
     callfun[0]["current_cvg_lvl"] = 0
     ncoeff = callfun[0]["ncoeff_list"][callfun[0]["current_cvg_lvl"]]
     nint = callfun[0]["nint_list"][callfun[0]["current_cvg_lvl"]]
@@ -160,6 +152,18 @@ def Find_Choreo(
     print('Number of initialization dimensions : ',rand_dim)
 
     sampler = UniformRandom(d=rand_dim)
+
+    x0 = np.random.random(callfun[0]['param_to_coeff_list'][0].shape[1])
+    xmin = Compute_MinDist(x0,callfun)
+    if (xmin < 1e-5):
+        # print(xmin)
+        # raise ValueError("Init inter body distance too low. There is something wrong with constraints")
+        print("")
+        print(f"Init minimum inter body distance too low : {xmin}.")
+        print("There is likely something wrong with constraints")
+        print("")
+
+        n_opt_max = -1
 
     n_opt = 0
     n_find = 0
@@ -513,12 +517,14 @@ def GenSymExample(
     n_save_pos,
     Save_PlotInfo,
     plot_extend,
+    CrashOnError_changevar,
 ):
     
     n_reconverge_it_max = 0
     n_grad_change = 1
 
-    callfun = setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change)
+    callfun = setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change,CrashOnIdentity=CrashOnError_changevar)
+
     args = callfun[0]
 
     nloop = args['nloop']
@@ -529,11 +535,12 @@ def GenSymExample(
     x0 = np.random.random(callfun[0]['param_to_coeff_list'][0].shape[1])
     xmin = Compute_MinDist(x0,callfun)
     if (xmin < 1e-5):
-        print(xmin)
-        raise ValueError("Init inter body distance too low. There is something wrong with constraints")
-
-    # filehandler = open(store_folder+'/callfun_list.pkl',"wb")
-    # pickle.dump(callfun_list,filehandler)
+        # print(xmin)
+        # raise ValueError("Init inter body distance too low. There is something wrong with constraints")
+        print("")
+        print(f"Init minimum inter body distance too low : {xmin}.")
+        print("There is likely something wrong with constraints")
+        print("")
 
     callfun[0]["current_cvg_lvl"] = 0
     ncoeff = callfun[0]["ncoeff_list"][callfun[0]["current_cvg_lvl"]]

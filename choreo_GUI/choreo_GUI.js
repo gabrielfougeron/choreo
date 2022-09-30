@@ -60,6 +60,11 @@ async function Python_Imports_Done(args){
 
     PythonPrint({txt:"Python Imports Done.&#10;"});
 
+    var ChoreoExecuteBtn = document.getElementById("ChoreoExecuteBtn");
+    ChoreoExecuteBtn.disabled = "";
+    var ChoreoDispInitStateBtn = document.getElementById("ChoreoDispInitStateBtn");
+    ChoreoDispInitStateBtn.disabled = "";
+    
     var Python_State_Div = document.getElementById("Python_State_Div");
 
     Python_State_Div.innerHTML = "Ready";
@@ -186,7 +191,6 @@ function ChoreoExecuteClick() {
 function ChoreoSaveInitStateClick() {
 
     var ConfigDict = GatherConfigDict();
-    // pyodide_worker.ExecutePythonFile("./python_scripts/Load_GUI_params_and_save_init.py");
 
     pyodide_worker.postMessage({funname:"LoadDataInWorker",args:{ConfigDict:ConfigDict}});
     pyodide_worker.postMessage({funname:"ExecutePythonFile",args:"./python_scripts/Load_GUI_params_and_save_init.py"});
@@ -195,10 +199,13 @@ function ChoreoSaveInitStateClick() {
 
 function ChoreoDispInitStateClick() {
 
+    PythonClearPrints();
+
     var ConfigDict = GatherConfigDict();
 
     pyodide_worker.postMessage({funname:"LoadDataInWorker",args:{ConfigDict:ConfigDict}});
     pyodide_worker.postMessage({funname:"ExecutePythonFile",args:"./python_scripts/Save_init_state.py"});
+
 
 }
 
@@ -213,6 +220,8 @@ function GatherConfigDict() {
     ConfigDict['Main_Launch'] ['SpeedSlider_value'] = speedSlider.slider("value");
 
     ConfigDict['Geom_Bodies'] = {};
+
+    ConfigDict['Geom_Bodies'] ['MomConsImposed'] = document.getElementById('checkbox_MomCons').checked ;
 
     table = document.getElementById('table_body_loop');
     var ncols = table.rows[0].cells.length;
@@ -384,6 +393,8 @@ function LoadConfigDict(ConfigDict) {
     for (var icol=ncols-1; icol > 0; icol-- ) {
         deleteColumn('table_body_loop',icol);
     };
+
+    document.getElementById('checkbox_MomCons').checked  = ConfigDict['Geom_Bodies'] ['MomConsImposed'] ;
 
     var n_loops = ConfigDict['Geom_Bodies'] ['n_loops'];
 
@@ -1008,7 +1019,7 @@ function AddColor(the_color) {
     div.style.fontSize ="16px";
     div.style.display ="inline-block";
     div.style.width ="35px";
-    div.innerHTML = n_color.toString()+": ";
+    div.innerHTML = (n_color -1).toString()+": ";
     newcell.appendChild(div);
 
     /* Color input  */
@@ -1099,7 +1110,13 @@ function UpdateFPSDisplay() {
 }
 
 function KillAndReloadWorker() {
+    
     pyodide_worker.terminate();
+
+    var ChoreoExecuteBtn = document.getElementById("ChoreoExecuteBtn");
+    ChoreoExecuteBtn.disabled = "disabled";
+    var ChoreoDispInitStateBtn = document.getElementById("ChoreoDispInitStateBtn");
+    ChoreoDispInitStateBtn.disabled = "disabled";
 
     var Python_State_Div = document.getElementById("Python_State_Div");
 
@@ -1196,7 +1213,6 @@ function checkbox_Limit_FPS_Handler(event) {
     input_Limit_FPS_Handler();
 
 }
-
 
 var checkbox_Cookie = document.getElementById('checkbox_Cookie');
 checkbox_Cookie.addEventListener("change", checkbox_Cookie_Handler, true);

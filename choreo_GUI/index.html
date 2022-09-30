@@ -127,9 +127,9 @@ window.addEventListener("drop",function(e){
   <div class="w3-container MainTab Main_Launch" style="display:none">
     <table style="border:0;margin-bottom:10px;">
       <tr>
-        <td style="border:0"><button class="w3-button w3-hover-pale-red w3-light-grey InTableControls" onclick="ChoreoExecuteClick()">Choreo Execute!</button></td>
-        <td style="border:0"><button class="w3-button w3-hover-pale-red w3-light-grey InTableControls" onclick="ChoreoDispInitStateClick()">Display Init State</button></td>
-        <td style="border:0"><button class="w3-button w3-hover-pale-red w3-light-grey InTableControls" onclick="KillAndReloadWorker()">Kill Worker</button></td>
+        <td style="border:0"><button id="ChoreoExecuteBtn"        class="w3-button w3-hover-pale-red w3-light-grey InTableControls" disabled="disabled" onclick="ChoreoExecuteClick()"      >Choreo Execute!</button></td>
+        <td style="border:0"><button id="ChoreoDispInitStateBtn"  class="w3-button w3-hover-pale-red w3-light-grey InTableControls" disabled="disabled" onclick="ChoreoDispInitStateClick()">Display Init State</button></td>
+        <td style="border:0"><button id="KillAndReloadWorkerBtn"  class="w3-button w3-hover-pale-red w3-light-grey InTableControls"                     onclick="KillAndReloadWorker()"     >Kill Worker</button></td>
       </tr>
     </table>
     <textarea id ="Python_textarea" readonly>Loading Python ...&#10;</textarea>
@@ -204,6 +204,16 @@ window.addEventListener("drop",function(e){
   </div>
   <div class="w3-container MainTab Geom_Bodies" style="display:none">
     <h2>Bodies definition</h2>
+    <table style="font-size:16px; border:none; display:table; max-width:400px">
+      <tr>
+      <td style="border:none;" ><label for="checkbox_MomCons">Treat momentum conservation as a constraint:</label></td>
+      <td style="border:none;"><input id ="checkbox_MomCons" class="w3-check" type="checkbox" style="vertical-align: super" unchecked></td>
+    </tr>
+    </table>
+    <!-- <div>
+      <label for="checkbox_MomCons">Treat momentum conservation as a constraint:&nbsp&nbsp</label>
+      <input id ="checkbox_MomCons" class="w3-check" type="checkbox" style="vertical-align: super" unchecked>
+    </div> -->
     <br>
     <table id = "table_body_loop" style="table-layout: fixed;">
       <tr style="border-left-style:hidden;border-right-style:hidden;border-top-style:hidden;"><td style="width:120px;"><b><button class="w3-button w3-light-grey" style="text-align: center; font-size:16px" onclick="ClickAddBodyLoop()">Add Loop +</button></b></td></tr>
