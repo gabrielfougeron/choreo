@@ -59,21 +59,21 @@ cdef double cmnnm1 = -cnnm1
 # cdef long cnhash = hash_exps.size
 # Unfortunately, Cython does not allow that. Let's do it manually then
 
-cdef double hash_exp0 = -0.2
-cdef double hash_exp1 = -0.4
-cdef double hash_exp2 = -0.6
-cdef double hash_exp3 = -0.8
-# cdef double hash_exp4 = -0.51
-# cdef double hash_exp5 = -0.49
-# cdef double hash_exp6 = -0.501
-# cdef double hash_exp7 = -0.499
-# cdef double hash_exp8 = -0.5001
-# cdef double hash_exp9 = -0.4999
-# cdef double hash_exp10 = -0.50001
-# cdef double hash_exp11 = -0.49999
-# cdef double hash_exp12 = -0.5
+cdef double hash_exp0 = -0.5
+cdef double hash_exp1 = -0.2
+cdef double hash_exp2 = -0.4
+cdef double hash_exp3 = -0.6
+cdef double hash_exp4 = -0.8
+# ~ cdef double hash_exp5 = -0.49
+# ~ cdef double hash_exp6 = -0.501
+# ~ cdef double hash_exp7 = -0.499
+# ~ cdef double hash_exp8 = -0.5001
+# ~ cdef double hash_exp9 = -0.4999
+# ~ cdef double hash_exp10 = -0.50001
+# ~ cdef double hash_exp11 = -0.49999
+# ~ cdef double hash_exp12 = -0.5
 
-cdef long cnhash = 4
+cdef long cnhash = 3
 # cdef long cnhash = 13
 
 # Python definition of the very same variables
@@ -120,7 +120,7 @@ def CCpt_hash_pot(double xsq):  # xsq is the square of the distance between two 
     hash_pots[1] = -cpow(xsq,hash_exp1)
     hash_pots[2] = -cpow(xsq,hash_exp2)
     hash_pots[3] = -cpow(xsq,hash_exp3)
-    # hash_pots[4] = -cpow(xsq,hash_exp4)
+    hash_pots[4] = -cpow(xsq,hash_exp4)
     # hash_pots[5] = -cpow(xsq,hash_exp5)
     # hash_pots[6] = -cpow(xsq,hash_exp6)
     # hash_pots[7] = -cpow(xsq,hash_exp7)

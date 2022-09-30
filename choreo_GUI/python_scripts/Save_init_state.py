@@ -213,14 +213,13 @@ def main():
     Save_All_Pos = True
     # Save_All_Pos = False
 
-    Save_PlotInfo = True
     plot_extend = 0.0
     
     all_kwargs = choreo.Pick_Named_Args_From_Dict(choreo.GenSymExample,dict(globals(),**locals()))
 
     choreo.GenSymExample(**all_kwargs)
 
-    filename = 'init_plotinfo.json'
+    filename = 'init.json'
     with open(filename, 'rt') as fh:
         thefile = fh.read()
         

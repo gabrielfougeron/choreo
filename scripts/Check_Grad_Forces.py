@@ -213,7 +213,7 @@ def main():
             choreo.plot_all_2D(x,nint_plot_img,callfun,filename_output+'_thumb.png',fig_size=thumb_size,color=color)
             
         if Save_anim :
-            choreo.plot_all_2D_anim(x,nint_plot_anim,callfun,filename_output+'.mp4',nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size,dnint=dnint)
+            choreo.plot_all_2D_anim(x,nint_plot_anim,callfun,filename_output+'.mp4',nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size,dnint=dnint,color_list=color_list,color=color)
 
         if Save_Newton_Error :
             choreo.plot_Newton_Error(x,callfun,filename_output+'_newton.png')
@@ -241,7 +241,7 @@ def main():
             all_pos_vel = ode_res['y'].reshape(2,nbody,choreo.ndim,nint_plot_img)
             all_pos_ode = all_pos_vel[0,:,:,:]
             
-            choreo.plot_all_2D_anim(x,nint_plot_anim,callfun,filename_output+'_ode.mp4',nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size,dnint=dnint,all_pos_trace=all_pos_ode,all_pos_points=all_pos_ode)
+            choreo.plot_all_2D_anim(x,nint_plot_anim,callfun,filename_output+'_ode.mp4',nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size,dnint=dnint,all_pos_trace=all_pos_ode,all_pos_points=all_pos_ode,color_list=color_list,color=color)
 
         n_ddl = nbody*choreo.ndim*2
         yo = choreo.Compute_init_pos_vel(x,callfun).reshape(-1)

@@ -43,15 +43,12 @@ from choreo.Choreo_funs import Unpackage_all_coeffs
 from choreo.Choreo_funs import ComputeAllPos
 
 import json
-    
-Action_msg = 'Value of the Action : '
-Action_msg_len = len(Action_msg)
 
-Action_Hash_msg = 'Hash Action for duplicate detection : '
-Action_Hash_msg_len = len(Action_Hash_msg)
-
-def plot_Newton_Error(x,callfun,filename,fig_size=(8,5),color_list = plt.rcParams['axes.prop_cycle'].by_key()['color']):
+def plot_Newton_Error(x,callfun,filename,fig_size=(8,5),color_list = None):
     
+    if color_list is None:
+        color_list = plt.rcParams['axes.prop_cycle'].by_key()['color']
+
     nbody = callfun[0]['nbody']
     
     Newt_err = Compute_Newton_err(x,callfun)
@@ -79,9 +76,12 @@ def plot_Newton_Error(x,callfun,filename,fig_size=(8,5),color_list = plt.rcParam
     plt.savefig(filename)
     plt.close()
 
-def plot_all_2D(x,nint_plot,callfun,filename,fig_size=(10,10),dpi=100,color=None,color_list = plt.rcParams['axes.prop_cycle'].by_key()['color'],xlim=None,extend=0.03):
+def plot_all_2D(x,nint_plot,callfun,filename,fig_size=(10,10),dpi=100,color=None,color_list = None,xlim=None,extend=0.03):
     # Plots 2D trajectories and saves image under filename
     
+    if color_list is None:
+        color_list = plt.rcParams['axes.prop_cycle'].by_key()['color']
+
     if isinstance(color,list):
         
         for the_color in color :
@@ -92,7 +92,7 @@ def plot_all_2D(x,nint_plot,callfun,filename,fig_size=(10,10),dpi=100,color=None
             
             plot_all_2D(x=x,nint_plot=nint_plot,callfun=callfun,filename=the_filename,fig_size=fig_size,dpi=dpi,color=the_color,color_list=color_list)
     
-    elif (color is None) or (color == "body") or (color == "loop"):
+    elif (color is None) or (color == "body") or (color == "loop") or (color == "loop_id") or (color == "none"):
         
         plot_all_2D_cpb(x,nint_plot,callfun,filename,fig_size=fig_size,dpi=dpi,color=color,color_list=color_list,xlim=xlim,extend=extend)
         
@@ -108,9 +108,12 @@ def plot_all_2D(x,nint_plot,callfun,filename,fig_size=(10,10),dpi=100,color=None
         
         raise ValueError("Unknown color scheme")
 
-def plot_all_2D_cpb(x,nint_plot,callfun,filename,fig_size=(10,10),dpi=100,color=None,color_list = plt.rcParams['axes.prop_cycle'].by_key()['color'],xlim=None,extend=0.03):
+def plot_all_2D_cpb(x,nint_plot,callfun,filename,fig_size=(10,10),dpi=100,color=None,color_list=None,xlim=None,extend=0.03):
     # Plots 2D trajectories with one color per body and saves image under filename
     
+    if color_list is None:
+        color_list = plt.rcParams['axes.prop_cycle'].by_key()['color']
+
     args = callfun[0]
     
     all_coeffs = Unpackage_all_coeffs(x,callfun)
@@ -139,16 +142,29 @@ def plot_all_2D_cpb(x,nint_plot,callfun,filename,fig_size=(10,10),dpi=100,color=
     
     cb = ['b' for ib in range(nbody)]
 
-    if (color is None) or (color == "body"):
+    if (color is None) or (color == "none"):
+        for ib in range(nbody):
+            cb[ib] = color_list[0]
+
+    elif (color == "body"):
         for ib in range(nbody):
             cb[ib] = color_list[ib%ncol]
         
     elif (color == "loop"):
-        
         for il in range(nloop):
             for ib in range(loopnb[il]):
                 ibb = Targets[il,ib]
                 cb[ibb] = color_list[il%ncol]
+
+    elif (color == "loop_id"):
+        for il in range(nloop):
+            for ib in range(loopnb[il]):
+                ibb = Targets[il,ib]
+                cb[ibb] = color_list[ib%ncol]
+
+    else:
+        raise ValueError(f'Unknown color scheme "{color}"')
+
 
     if xlim is None:
 
@@ -317,9 +333,12 @@ def plot_all_2D_cpv(x,nint_plot,callfun,filename,fig_size=(10,10),dpi=100,xlim=N
     
     plt.close()
  
-def plot_all_2D_anim(x,nint_plot,callfun,filename,nperiod=1,Plot_trace=True,fig_size=(5,5),dnint=1,all_pos_trace=None,all_pos_points=None,xlim=None,extend=0.03):
+def plot_all_2D_anim(x,nint_plot,callfun,filename,nperiod=1,Plot_trace=True,fig_size=(5,5),dnint=1,all_pos_trace=None,all_pos_points=None,xlim=None,extend=0.03,color_list=None,color=None):
     # Creates a video of the bodies moving along their trajectories, and saves the file under filename
     
+    if color_list is None:
+        color_list = plt.rcParams['axes.prop_cycle'].by_key()['color']
+
     args = callfun[0]
     
     all_coeffs = Unpackage_all_coeffs(x,callfun)
@@ -382,6 +401,33 @@ def plot_all_2D_anim(x,nint_plot,callfun,filename,nperiod=1,Plot_trace=True,fig_
 
     yinf = ymid - hside
     ysup = ymid + hside
+
+    ncol = len(color_list)
+    
+    cb = ['b' for ib in range(nbody)]
+
+    if (color is None) or (color == "none"):
+        for ib in range(nbody):
+            cb[ib] = color_list[0]
+
+    elif (color == "body"):
+        for ib in range(nbody):
+            cb[ib] = color_list[ib%ncol]
+        
+    elif (color == "loop"):
+        for il in range(nloop):
+            for ib in range(loopnb[il]):
+                ibb = Targets[il,ib]
+                cb[ibb] = color_list[il%ncol]
+
+    elif (color == "loop_id"):
+        for il in range(nloop):
+            for ib in range(loopnb[il]):
+                ibb = Targets[il,ib]
+                cb[ibb] = color_list[ib%ncol]
+
+    else:
+        raise ValueError(f'Unknown color scheme "{color}"')
 
     # Plot-related
     fig = plt.figure()
@@ -581,144 +627,30 @@ def VideoGrid(input_list,output_filename,nxy = None,ordering='RowMajor'):
             print(f"Unexpected {err=}, {type(err)=}")
             raise
 
-def Write_Descriptor(x,callfun,filename):
+def Write_Descriptor(x,callfun,filename,Action=None,Gradaction=None,Newt_err_norm=None,dxmin=None,Hash_Action=None,extend=0.03):
     # Dumps a text file describing the current trajectories
-    
+
     args = callfun[0]
-    
-    with open(filename,'w') as filename_write:
-        
-        filename_write.write('Number of bodies : {:d}\n'.format(args['nbody']))
-        
-        # filename_write.write('Number of loops : {:d}\n'.format(args['nloop']))
-        
-        filename_write.write('Mass of those bodies : ')
-        for il in range(args['nbody']):
-            filename_write.write(' {:f}'.format(args['mass'][il]))
-        filename_write.write('\n')
-        
-        filename_write.write('Number of Fourier coefficients in each loop : {:d}\n'.format(args['ncoeff_list'][args["current_cvg_lvl"]]))
-        filename_write.write('Number of integration points for the action : {:d}\n'.format(args['nint_list'][args["current_cvg_lvl"]]))
-        
-        Action,Gradaction = Compute_action(x,callfun)
-        
-        filename_write.write('Value of the Action : {:.16f}\n'.format(Action))
-        filename_write.write('Value of the Norm of the Gradient of the Action : {:.10E}\n'.format(np.linalg.norm(Gradaction)))
+
+    if ((Action is None) or (Gradaction is None) ):
+        Action,Gradaction_vect = Compute_action(x,callfun)
+        Gradaction = np.linalg.norm(Gradaction_vect)
+
+    if Newt_err_norm is None :
 
         Newt_err = Compute_Newton_err(x,callfun)
         Newt_err_norm = np.linalg.norm(Newt_err)/(args['nint_list'][args["current_cvg_lvl"]]*args['nbody'])
-        filename_write.write('Sum of Newton Errors : {:.10E}\n'.format(Newt_err_norm))
+
+    if dxmin is None:
         
         dxmin = Compute_MinDist(x,callfun)
-        filename_write.write('Minimum inter-body distance : {:.10E}\n'.format(dxmin))
+
+    if Hash_Action is None:
         
-        Hash_Action = Compute_hash_action(x,callfun)
-        filename_write.write('Hash Action for duplicate detection : ')
-        for ihash in range(nhash):
-            filename_write.write(' {:.16f}'.format(Hash_Action[ihash]))
-        filename_write.write('\n')
-        
-        Escaped,dists = Detect_Escape(x,callfun)
-        
-        filename_write.write('Escaped detection : ')
-        if Escaped:
-            filename_write.write(' True ')
-        else:
-            filename_write.write(' False ')
-            
-        for i in range(2):
-            filename_write.write(' {:.10f}'.format(dists[i]))
-        filename_write.write(' {:.10f}'.format(dists[1]/(args['nbody']*dists[0])))    
-        
-        filename_write.write('\n')
-         
-def ReadActionFromFile(filename):
-    with open(filename,'r') as file_read:
-        file_readlines = file_read.readlines()
-        for iline in range(len(file_readlines)):
-            line = file_readlines[iline]
+         Hash_Action = Compute_hash_action(x,callfun)
 
-            if (line[0:Action_msg_len] == Action_msg):
-                This_Action = float(line[Action_msg_len:])
-            
-            elif (line[0:Action_Hash_msg_len] == Action_Hash_msg):
-                split_nums = line[Action_Hash_msg_len:].split()
-                
-                This_Action_Hash = np.array([float(num_str) for num_str in split_nums])
-    
-    return This_Action,This_Action_Hash
-
-def SelectFiles_Action(store_folder,hash_dict,Action_val=0,Action_Hash_val=np.zeros((nhash)),rtol=1e-5):
-    # Creates a list of possible duplicates based on value of the action and hashes
-
-    file_path_list = []
-    for file_path in os.listdir(store_folder):
-        file_path = os.path.join(store_folder, file_path)
-        file_root, file_ext = os.path.splitext(os.path.basename(file_path))
-        
-        if (file_ext == '.txt' ):
-            
-            Saved_Action = hash_dict.get(file_root)
-            
-            if (Saved_Action is None) :
-            
-                # print(file_path)
-                with open(file_path,'r') as file_read:
-                    file_readlines = file_read.readlines()
-                    for iline in range(len(file_readlines)):
-                        line = file_readlines[iline]
-
-                        if (line[0:Action_msg_len] == Action_msg):
-                            This_Action = float(line[Action_msg_len:])
-                        
-                        elif (line[0:Action_Hash_msg_len] == Action_Hash_msg):
-                            split_nums = line[Action_Hash_msg_len:].split()
-                            
-                            This_Action_Hash = np.array([float(num_str) for num_str in split_nums])
-                            
-                    
-                    hash_dict[file_root] = [This_Action,This_Action_Hash]
-                    
-            else:
-                
-                 This_Action = Saved_Action[0]
-                 This_Action_Hash = Saved_Action[1]
-                        
-            IsCandidate = (abs(This_Action-Action_val) < ((abs(This_Action)+abs(Action_val))*rtol))
-            for ihash in range(nhash):
-                IsCandidate = (IsCandidate and ((abs(This_Action_Hash[ihash]-Action_Hash_val[ihash])) < ((abs(This_Action_Hash[ihash])+abs(Action_Hash_val[ihash]))*rtol)))
-            
-            if IsCandidate:
-                
-                file_path_list.append(store_folder+'/'+file_root)
-                    
-    return file_path_list
-
-def Check_Duplicates(x,callfun,hash_dict,store_folder,duplicate_eps):
-    # Checks whether there is a duplicate of a given trajecory in the provided folder
-
-    Action,Gradaction = Compute_action(x,callfun)
-    Hash_Action = Compute_hash_action(x,callfun)
-
-    file_path_list = SelectFiles_Action(store_folder,hash_dict,Action,Hash_Action,duplicate_eps)
-    
-    if (len(file_path_list) == 0):
-        
-        Found_duplicate = False
-        file_path = ''
-    
-    else:
-        Found_duplicate = True
-        file_path = file_path_list[0]
-    
-    return Found_duplicate,file_path
-
-def Write_PlotInfo(x,callfun,filename,extend=0.03):
-
-    args = callfun[0]
-
-    nloop = args['nloop']
     nbody = args['nbody']
+    nloop = args['nloop']
     loopnb = args['loopnb']
     Targets = args['Targets']
     SpaceRotsUn = args['SpaceRotsUn']
@@ -760,27 +692,100 @@ def Write_PlotInfo(x,callfun,filename,extend=0.03):
     yinf = ymid - hside
     ysup = ymid + hside
 
-    PlotInfo_dict = {}
+    Info_dict = {}
 
-    PlotInfo_dict["xinf"] = xinf
-    PlotInfo_dict["xsup"] = xsup
-    PlotInfo_dict["yinf"] = yinf
-    PlotInfo_dict["ysup"] = ysup
-    
-    PlotInfo_dict["nloop"] = nloop
-    PlotInfo_dict["nbody"] = nbody
-    PlotInfo_dict["loopnb"] = loopnb.tolist()
+    Info_dict["mass"] = args["mass"].tolist()
 
-    PlotInfo_dict["Targets"] = Targets.tolist()
-    PlotInfo_dict["SpaceRotsUn"] = SpaceRotsUn.tolist()
-    PlotInfo_dict["TimeRevsUn"] = args['TimeRevsUn'].tolist()
-    PlotInfo_dict["TimeShiftNumUn"] = args['TimeShiftNumUn'].tolist()
-    PlotInfo_dict["TimeShiftDenUn"] = args['TimeShiftDenUn'].tolist()
+    Info_dict["nbody"] = nbody
+    Info_dict["nloop"] = nloop
 
-    PlotInfo_dict["mass"] = args["mass"].tolist()
+    Info_dict["n_Fourier"] = args['ncoeff_list'][args["current_cvg_lvl"]]
+    Info_dict["n_int"] = args['nint_list'][args["current_cvg_lvl"]]
+
+    Info_dict["Action"] = Action
+    Info_dict["Grad_Action"] = Gradaction
+    Info_dict["Newton_Error"] = Newt_err_norm
+    Info_dict["Min_Distance"] = dxmin
+
+    Info_dict["Hash"] = Hash_Action.tolist()
+
+    Info_dict["xinf"] = xinf
+    Info_dict["xsup"] = xsup
+    Info_dict["yinf"] = yinf
+    Info_dict["ysup"] = ysup
+
+    Info_dict["loopnb"] = loopnb.tolist()
+    Info_dict["Targets"] = Targets.tolist()
+    Info_dict["SpaceRotsUn"] = SpaceRotsUn.tolist()
+    Info_dict["TimeRevsUn"] = args['TimeRevsUn'].tolist()
+    Info_dict["TimeShiftNumUn"] = args['TimeShiftNumUn'].tolist()
+    Info_dict["TimeShiftDenUn"] = args['TimeShiftDenUn'].tolist()
 
     with open(filename, "w") as jsonFile:
-        jsonString = json.dumps(PlotInfo_dict, indent=4, sort_keys=False)
+        jsonString = json.dumps(Info_dict, indent=4, sort_keys=False)
         jsonFile.write(jsonString)
+
+def ReadActionFromFile(filename):
+
+    with open(filename,'r') as jsonFile:
+        Info_dict = json.load(jsonFile)
+
+    This_Action = Info_dict["Action"]
+    This_Action_Hash = np.array(Info_dict["Hash"])
+
+    return This_Action,This_Action_Hash
+
+def SelectFiles_Action(store_folder,hash_dict,Action_val=0,Action_Hash_val=np.zeros((nhash)),rtol=1e-5):
+    # Creates a list of possible duplicates based on value of the action and hashes
+
+    file_path_list = []
+    for file_path in os.listdir(store_folder):
+        file_path = os.path.join(store_folder, file_path)
+        file_root, file_ext = os.path.splitext(os.path.basename(file_path))
+        
+        if (file_ext == '.json' ):
+            
+            Saved_Action = hash_dict.get(file_root)
+            
+            if (Saved_Action is None) :
+
+                This_Action,This_Action_Hash = ReadActionFromFile(file_path) 
+
+                hash_dict[file_root] = [This_Action,This_Action_Hash]
+                    
+            else:
+                
+                 This_Action = Saved_Action[0]
+                 This_Action_Hash = Saved_Action[1]
+                        
+            IsCandidate = (abs(This_Action-Action_val) < ((abs(This_Action)+abs(Action_val))*rtol))
+            for ihash in range(nhash):
+                IsCandidate = (IsCandidate and ((abs(This_Action_Hash[ihash]-Action_Hash_val[ihash])) < ((abs(This_Action_Hash[ihash])+abs(Action_Hash_val[ihash]))*rtol)))
+            
+            if IsCandidate:
+                
+                file_path_list.append(store_folder+'/'+file_root)
+                    
+    return file_path_list
+
+def Check_Duplicates(x,callfun,hash_dict,store_folder,duplicate_eps,Action=None,Gradaction=None,Hash_Action=None):
+    # Checks whether there is a duplicate of a given trajecory in the provided folder
+
+    if ((Action is None) or (Gradaction is None) ):
+        Action,Gradaction = Compute_action(x,callfun)
+
+    if Hash_Action is None:
+         Hash_Action = Compute_hash_action(x,callfun)
+
+    file_path_list = SelectFiles_Action(store_folder,hash_dict,Action,Hash_Action,duplicate_eps)
     
+    if (len(file_path_list) == 0):
+        
+        Found_duplicate = False
+        file_path = ''
     
+    else:
+        Found_duplicate = True
+        file_path = file_path_list[0]
+    
+    return Found_duplicate,file_path
