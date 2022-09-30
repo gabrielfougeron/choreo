@@ -5,8 +5,8 @@ os.environ['NUMEXPR_NUM_THREADS'] = '1'
 os.environ['OPENBLAS_NUM_THREADS'] = '1'
 os.environ['MKL_NUM_THREADS'] = '1'
 
-import concurrent.futures
-import multiprocessing
+# import concurrent.futures
+# import multiprocessing
 import shutil
 import random
 import time
@@ -15,8 +15,8 @@ import numpy as np
 import scipy.linalg
 import sys
 import fractions
-import scipy.integrate
-import scipy.special
+# import scipy.integrate
+# import scipy.special
 
 import choreo 
 
@@ -28,9 +28,9 @@ One_sec = 1e9
 
 
 test_names = [
-# "y'' = -y",
+"y'' = -y",
 # "y'' = - exp(y)",
-"y'' = xy",
+# "y'' = xy",
 ]
 
 # SymplecticMethod = 'SymplecticEuler'
