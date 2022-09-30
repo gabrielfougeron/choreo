@@ -18,14 +18,14 @@ import fractions
 import scipy.integrate
 import scipy.special
 
-__PROJECT_ROOT__ = os.path.abspath(os.path.join(os.path.dirname(__file__),os.pardir))
-sys.path.append(__PROJECT_ROOT__)
-
 import choreo 
 
 import datetime
 
+
 One_sec = 1e9
+
+
 
 test_names = [
 # "y'' = -y",
@@ -117,6 +117,7 @@ for SymplecticMethod,SymplecticIntegrator in the_integrators.items() :
         # print(v0)
 
         refinement_lvl = [1,2,4,8,16,32,64,128,256,512,1024,2048]
+        # refinement_lvl = [1,2,4,8,16,32,64,128,256,512]
         # refinement_lvl = [1,10,100]
 
 
