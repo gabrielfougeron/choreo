@@ -30,6 +30,8 @@ def main():
 
     file_basename = ''
     
+    CrashOnError_changevar = False
+
     LookForTarget = False
     
     n_make_loops = len(params_dict["Geom_Bodies"]["SymType"])
@@ -53,18 +55,18 @@ def main():
     for isym in range(n_custom_sym):
         
         if (params_dict["Geom_Custom"]["CustomSyms"][isym]["Reflexion"] == "True"):
-            s = 1
+            s = -1
         elif (params_dict["Geom_Custom"]["CustomSyms"][isym]["Reflexion"] == "False"):
-            s=-1
+            s = 1
         else:
             raise ValueError("Reflexion must be True or False")
             
         rot_angle = (2*np.pi * params_dict["Geom_Custom"]["CustomSyms"][isym]["RotAngleNum"]) / params_dict["Geom_Custom"]["CustomSyms"][isym]["RotAngleDen"]
 
         if (params_dict["Geom_Custom"]["CustomSyms"][isym]["TimeRev"] == "True"):
-            TimeRev = 1
+            TimeRev = -1
         elif (params_dict["Geom_Custom"]["CustomSyms"][isym]["TimeRev"] == "False"):
-            TimeRev=-1
+            TimeRev = 1
         else:
             raise ValueError("TimeRev must be True or False")
         
@@ -81,15 +83,16 @@ def main():
 
 
 
-    # MomConsImposed = True
-    MomConsImposed = False
+    MomConsImposed = params_dict['Geom_Bodies'] ['MomConsImposed']
 
     store_folder = 'Sniff_all_sym/'
     # store_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/')
     store_folder = store_folder+str(nbody)
-    if not(os.path.isdir(store_folder)):
+    if os.path.isdir(store_folder):
+        shutil.rmtree(store_folder)
         os.makedirs(store_folder)
-
+    else:
+        os.makedirs(store_folder)
     # print("store_folder: ",store_folder)
     # print(os.path.isdir(store_folder))
 
@@ -237,6 +240,9 @@ def main():
             dict_converter=js.Object.fromEntries
         )
     )
+
+    print("Non-solution init state playing.\n")
+    
 
 
         
