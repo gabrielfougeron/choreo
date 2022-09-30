@@ -982,6 +982,10 @@ function canvasApp() {
 	}
 
 	function setOrbit(orbitIndex) {
+
+		PythonClearPrints();
+
+		PythonPrint({txt:"Playing solution from the gallery: "+AllGalleryNames[orbitIndex]+"&#10;"});
 		
 		Pos = AllPos[orbitIndex];
 		PlotInfo = AllPlotInfo[orbitIndex];
@@ -1052,6 +1056,10 @@ function canvasApp() {
 				$('label:first', "#orbitRadio").removeClass('w3-light-grey').addClass('w3-red');
 				setOrbit(0);
 				
+				
+				PythonPrint({txt:"Loading Python ...&#10;"});
+
+
 				startAnimation();
 
 			}
