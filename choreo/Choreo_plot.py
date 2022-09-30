@@ -433,7 +433,7 @@ def plot_all_2D_anim(x,nint_plot,callfun,filename,nperiod=1,Plot_trace=True,fig_
     fig = plt.figure()
     fig.set_size_inches(fig_size)
     ax = plt.gca()
-    lines = sum([ax.plot([], [],'-', antialiased=True,zorder=-ib)  for ib in range(nbody)], [])
+    lines = sum([ax.plot([], [],'-',color=cb[ib], antialiased=True,zorder=-ib)  for ib in range(nbody)], [])
     points = sum([ax.plot([], [],'ko', antialiased=True)for ib in range(nbody)], [])
     
     ax.axis('off')
