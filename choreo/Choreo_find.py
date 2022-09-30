@@ -84,11 +84,11 @@ def Find_Choreo(
     Save_All_Coeffs,
     Save_All_Pos,
     Save_Init_Pos_Vel_Sol,
-    Save_PlotInfo,
     mul_coarse_to_fine,
     n_find_max,
     plot_extend,
     CrashOnError_changevar,
+    color_list
     ):
     """
 
@@ -207,16 +207,16 @@ def Find_Choreo(
 
         if save_all_inits or (save_first_init and n_opt == 1):
 
-            Write_Descriptor(x0,callfun,'init.txt')
+            Write_Descriptor(x0,callfun,'init.json')
 
             if Save_img :
-                plot_all_2D(x0,nint_plot_img,callfun,'init.png',fig_size=img_size,color=color)        
+                plot_all_2D(x0,nint_plot_img,callfun,'init.png',fig_size=img_size,color=color,color_list=color_list)        
 
             if Save_thumb :
-                plot_all_2D(x0,nint_plot_img,callfun,'init_thumb.png',fig_size=thumb_size,color=color)        
+                plot_all_2D(x0,nint_plot_img,callfun,'init_thumb.png',fig_size=thumb_size,color=color,color_list=color_list)        
                 
             if Save_anim :
-                plot_all_2D_anim(x0,nint_plot_anim,callfun,'init.mp4',nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size,dnint=dnint)
+                plot_all_2D_anim(x0,nint_plot_anim,callfun,'init.mp4',nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size,dnint=dnint,color_list=color_list,color=color)
             
             if Save_Newton_Error :
                 plot_Newton_Error(x0,callfun,'init_newton.png')
@@ -282,6 +282,10 @@ def Find_Choreo(
                 # raise(exc)
                 
             SaveSol = False
+
+            Gradaction = best_sol.f_norm
+
+            Hash_Action = None
             
             if (GoOn and Check_Escape):
                 
@@ -294,7 +298,10 @@ def Find_Choreo(
                 
             if (GoOn and Look_for_duplicates):
 
-                Found_duplicate,file_path = Check_Duplicates(best_sol.x,callfun,hash_dict,store_folder,duplicate_eps)
+                Hash_Action = Compute_hash_action(best_sol.x,callfun)
+                Action = Hash_Action[0]
+
+                Found_duplicate,file_path = Check_Duplicates(best_sol.x,callfun,hash_dict,store_folder,duplicate_eps,Action=Action,Gradaction=Gradaction,Hash_Action=Hash_Action)
                 
                 if (Found_duplicate):
                 
@@ -307,7 +314,8 @@ def Find_Choreo(
                 
                 ParamFoundSol = (best_sol.f_norm < foundsol_tol)
                 ParamPreciseEnough = (best_sol.f_norm < gradtol_max)
-                print(f'Opt Action Grad Norm : {best_sol.f_norm} from {ActionGradNormEnterLoop}')
+                # print(f'Opt Action Grad Norm : {best_sol.f_norm} from {ActionGradNormEnterLoop}')
+                print(f'Opt Action Grad Norm : {best_sol.f_norm}')
             
                 Newt_err = Compute_Newton_err(best_sol.x,callfun)
                 Newt_err_norm = np.linalg.norm(Newt_err)/(nint*nbody)
@@ -398,7 +406,7 @@ def Find_Choreo(
                         file_path = os.path.join(store_folder, filename)
                         file_root, file_ext = os.path.splitext(os.path.basename(file_path))
                         
-                        if (file_basename in file_root) and (file_ext == '.txt' ):
+                        if (file_basename in file_root) and (file_ext == '.json' ):
 
                             file_root = file_root.replace(file_basename,"")
 
@@ -415,16 +423,16 @@ def Find_Choreo(
 
                     print('Saving solution as '+filename_output+'.*')
              
-                    Write_Descriptor(best_sol.x,callfun,filename_output+'.txt')
-                    
+                    Write_Descriptor(best_sol.x,callfun,filename_output+'.json',Action=Action,Gradaction=Gradaction,Newt_err_norm=Newt_err_norm,Hash_Action=Hash_Action,extend=plot_extend)
+
                     if Save_img :
-                        plot_all_2D(best_sol.x,nint_plot_img,callfun,filename_output+'.png',fig_size=img_size,color=color)
+                        plot_all_2D(best_sol.x,nint_plot_img,callfun,filename_output+'.png',fig_size=img_size,color=color,color_list=color_list)
                     
                     if Save_thumb :
-                        plot_all_2D(best_sol.x,nint_plot_img,callfun,filename_output+'_thumb.png',fig_size=thumb_size,color=color)
+                        plot_all_2D(best_sol.x,nint_plot_img,callfun,filename_output+'_thumb.png',fig_size=thumb_size,color=color,color_list=color_list)
                         
                     if Save_anim :
-                        plot_all_2D_anim(best_sol.x,nint_plot_anim,callfun,filename_output+'.mp4',nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size,dnint=dnint)
+                        plot_all_2D_anim(best_sol.x,nint_plot_anim,callfun,filename_output+'.mp4',nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size,dnint=dnint,color_list=color_list,color=color)
 
                     if Save_Newton_Error :
                         plot_Newton_Error(best_sol.x,callfun,filename_output+'_newton.png')
@@ -432,7 +440,7 @@ def Find_Choreo(
                     if Save_All_Coeffs:
 
                         all_coeffs = Unpackage_all_coeffs(best_sol.x,callfun)
-                        np.save(filename_output+'.npy',all_coeffs)
+                        np.save(filename_output+'_coeffs.npy',all_coeffs)
 
                     if Save_All_Pos:
 
@@ -444,16 +452,13 @@ def Find_Choreo(
                         else:
                             all_pos = ComputeAllLoopPos(best_sol.x,callfun,n_save_pos)
 
-                        np.save(filename_output+'_loop_pos_'+str(n_save_pos)+'.npy',all_pos)
+                        np.save(filename_output+'.npy',all_pos)
 
                     if Save_Init_Pos_Vel_Sol:
                         
                         all_pos_b = Compute_init_pos_vel(best_sol.x,callfun)
                         np.save(filename_output+'_init.npy',all_coeffs)
 
-                    if Save_PlotInfo:
-
-                        Write_PlotInfo(best_sol.x,callfun,filename_output+"_plotinfo.json",extend=plot_extend)
                 
                 if GoOn and NeedsRefinement:
                     
@@ -514,7 +519,6 @@ def GenSymExample(
     Save_All_Coeffs,
     Save_All_Pos,
     n_save_pos,
-    Save_PlotInfo,
     plot_extend,
     CrashOnError_changevar,
 ):
@@ -607,11 +611,13 @@ def GenSymExample(
         else:
             x0[i] = x_avg[i]
 
+    Write_Descriptor(x0,callfun,'init.json',extend=plot_extend)
+
     if Save_img :
-        plot_all_2D(x0,nint_plot_img,callfun,'init.png',fig_size=img_size,color=color)        
+        plot_all_2D(x0,nint_plot_img,callfun,'init.png',fig_size=img_size,color=color,color_list=color_list)        
 
     if Save_anim :
-        plot_all_2D_anim(x0,nint_plot_anim,callfun,'init.mp4',nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size,dnint=dnint)
+        plot_all_2D_anim(x0,nint_plot_anim,callfun,'init.mp4',nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size,dnint=dnint,color_list=color_list,color=color)
 
     if Save_All_Coeffs:
 
@@ -629,7 +635,3 @@ def GenSymExample(
             all_pos_b = ComputeAllLoopPos(x0,callfun,n_save_pos)
 
         np.save('init_all_pos.npy',all_pos_b)
-
-    if Save_PlotInfo:
-
-        Write_PlotInfo(x0,callfun,"init_plotinfo.json",extend=plot_extend)

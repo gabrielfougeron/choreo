@@ -25,14 +25,15 @@ def main():
 
     np.random.seed(int(time.time()*10000) % 5000)
     
-    params_filename = os.path.join(__PROJECT_ROOT__,"test.json")
+    params_filename = os.path.join(__PROJECT_ROOT__,"choreo_config.json")
 
     with open(params_filename) as jsonFile:
         params_dict = json.load(jsonFile)
 
-
     file_basename = ''
     
+    CrashOnError_changevar = False
+
     LookForTarget = False
     
     n_make_loops = len(params_dict["Geom_Bodies"]["SymType"])
@@ -43,8 +44,6 @@ def main():
 
     SymType = params_dict["Geom_Bodies"]["SymType"]
 
-    print("nbpl = ",nbpl)
-
     Sym_list,nbody = choreo.Make2DChoreoSymManyLoops(nbpl=nbpl,SymType=SymType)
 
     mass = []
@@ -54,24 +53,25 @@ def main():
     mass = np.array(mass,dtype=np.float64)
 
     n_custom_sym = params_dict["Geom_Custom"]["n_custom_sym"]
-
+    
     for isym in range(n_custom_sym):
         
         if (params_dict["Geom_Custom"]["CustomSyms"][isym]["Reflexion"] == "True"):
-            s = 1
+            s = -1
         elif (params_dict["Geom_Custom"]["CustomSyms"][isym]["Reflexion"] == "False"):
-            s=-1
+            s = 1
         else:
             raise ValueError("Reflexion must be True or False")
             
         rot_angle = (2*np.pi * params_dict["Geom_Custom"]["CustomSyms"][isym]["RotAngleNum"]) / params_dict["Geom_Custom"]["CustomSyms"][isym]["RotAngleDen"]
 
         if (params_dict["Geom_Custom"]["CustomSyms"][isym]["TimeRev"] == "True"):
-            TimeRev = 1
+            TimeRev = -1
         elif (params_dict["Geom_Custom"]["CustomSyms"][isym]["TimeRev"] == "False"):
-            TimeRev=-1
+            TimeRev = 1
         else:
             raise ValueError("TimeRev must be True or False")
+        
         
         Sym_list.append(
             choreo.ChoreoSym(
@@ -86,13 +86,17 @@ def main():
 
 
 
-    # MomConsImposed = True
-    MomConsImposed = False
+    MomConsImposed = params_dict['Geom_Bodies'] ['MomConsImposed']
 
-    store_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/')
+    store_folder = 'Sniff_all_sym/'
+    # store_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/')
     store_folder = store_folder+str(nbody)
     if not(os.path.isdir(store_folder)):
+
         os.makedirs(store_folder)
+
+    # print("store_folder: ",store_folder)
+    # print(os.path.isdir(store_folder))
 
     Use_exact_Jacobian = params_dict["Solver_Discr"]["Use_exact_Jacobian"]
 
@@ -112,17 +116,21 @@ def main():
     Save_img = True
     # Save_img = False
 
-    Save_thumb = True
-    # Save_thumb = False
+    # Save_thumb = True
+    Save_thumb = False
 
     # img_size = (12,12) # Image size in inches
     img_size = (8,8) # Image size in inches
     thumb_size = (2,2) # Image size in inches
-
-
     
-    color = "body"
-    # color = "loop"
+    color = params_dict["Animation_Colors"]["color_method_input"]
+
+    color_list = params_dict["Animation_Colors"]["colorLookup"]
+
+    # <option value="body" selected>Body</option>
+    # <option value="loop">Loop</option>
+    # <option value="loop_id">Loop ID</option>
+    # <option value="none">N° 1</option>
     # color = "velocity"
     # color = "all"
 
@@ -152,13 +160,11 @@ def main():
     # Save_Newton_Error = True
     Save_Newton_Error = False
 
-    n_reconverge_it_max = 4
-    # n_reconverge_it_max = 1
-
+    n_reconverge_it_max = params_dict["Solver_Discr"] ['n_reconverge_it_max'] 
     ncoeff_init = params_dict["Solver_Discr"]["ncoeff_init"]   
 
-    # disp_scipy_opt = False
-    disp_scipy_opt = True
+    disp_scipy_opt = False
+    # disp_scipy_opt = True
     
     max_norm_on_entry = 1e20
 
@@ -178,15 +184,6 @@ def main():
     outer_k_list =          params_dict["Solver_Loop"]["outer_k_list"]
     store_outer_Av_list =   params_dict["Solver_Loop"]["store_outer_Av_list"]
 
-    print(gradtol_list)
-    print(inner_maxiter_list)
-    print(maxiter_list)
-    print(outer_k_list)
-    print(store_outer_Av_list)
-
-
-
-
     n_optim_param = len(gradtol_list)
     
     gradtol_max = 100*gradtol_list[n_optim_param-1]
@@ -205,12 +202,30 @@ def main():
     k_infl          = params_dict["Geom_Random"]["k_infl"]
     k_max           = params_dict["Geom_Random"]["k_max"]
 
-
     freq_erase_dict = 100
     hash_dict = {}
 
     n_opt = 0
+    n_opt_max = 100
+    n_find_max = 1
+
+    mul_coarse_to_fine = 3
+
+    # Save_All_Coeffs = True
+    Save_All_Coeffs = False
+
+    # Save_Init_Pos_Vel_Sol = True
+    Save_Init_Pos_Vel_Sol = False
+
+    n_save_pos = 'auto'
+    Save_All_Pos = True
+    # Save_All_Pos = False
+
+    plot_extend = 0.
+
+    n_opt = 0
     n_opt_max = 1e10
+    n_find_max = 1e4
     
     all_kwargs = choreo.Pick_Named_Args_From_Dict(choreo.Find_Choreo,dict(globals(),**locals()))
 
@@ -222,10 +237,11 @@ def main():
 if __name__ == "__main__":
     main()
 #     
-# 
+
 # if __name__ == "__main__":
 # 
-#     n = multiprocessing.cpu_count()
+#     n = 5
+#     # n = multiprocessing.cpu_count()
 #     # n = 1
 #     
 #     print(f"Executing with {n} workers")
@@ -236,5 +252,5 @@ if __name__ == "__main__":
 #         for i in range(n):
 #             res.append(executor.submit(main))
 #             time.sleep(0.01)
-# 
+
 #  

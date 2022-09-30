@@ -879,7 +879,7 @@ function ClickAddCustomSym() {
         {
         "elem_class":"input", 
         "type":"number", 
-        "value":"0",
+        "value":"1",
         },
         {
         "elem_class":"input", 
@@ -894,7 +894,7 @@ function ClickAddCustomSym() {
         {
         "elem_class":"input", 
         "type":"number", 
-        "value":"0",
+        "value":"1",
         },
         {
         "elem_class":"input", 

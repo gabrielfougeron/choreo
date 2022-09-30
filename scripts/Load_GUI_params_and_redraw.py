@@ -5,6 +5,8 @@ os.environ['NUMEXPR_NUM_THREADS'] = '1'
 os.environ['OPENBLAS_NUM_THREADS'] = '1'
 os.environ['MKL_NUM_THREADS'] = '1'
 
+import concurrent.futures
+import multiprocessing
 import shutil
 import random
 import time
@@ -14,19 +16,19 @@ import sys
 import fractions
 import json
 
-# 
-# import matplotlib
-# matplotlib.use("module://matplotlib.backends.html5_canvas_backend")
+__PROJECT_ROOT__ = os.path.abspath(os.path.join(os.path.dirname(__file__),os.pardir))
+sys.path.append(__PROJECT_ROOT__)
 
 import choreo 
 
-import js
-import pyodide
-
-
 def main():
 
-    params_dict = js.ConfigDict.to_py()
+    np.random.seed(int(time.time()*10000) % 5000)
+    
+    params_filename = os.path.join(__PROJECT_ROOT__,"choreo_config.json")
+
+    with open(params_filename) as jsonFile:
+        params_dict = json.load(jsonFile)
 
     file_basename = ''
     
@@ -86,17 +88,60 @@ def main():
 
     MomConsImposed = params_dict['Geom_Bodies'] ['MomConsImposed']
 
-    store_folder = 'Sniff_all_sym/'
-    # store_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/')
-    store_folder = store_folder+str(nbody)
-    if os.path.isdir(store_folder):
-        shutil.rmtree(store_folder)
-        os.makedirs(store_folder)
-    else:
-        os.makedirs(store_folder)
 
-    # print("store_folder: ",store_folder)
-    # print(os.path.isdir(store_folder))
+    input_folder = 'Sniff_all_sym/'
+    input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym',str(nbody))
+    # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/copy/')
+    # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/Gallery_videos/C-4')
+# 
+#     ''' Include all files in tree '''
+#     input_names_list = []
+#     for root, dirnames, filenames in os.walk(input_folder):
+# 
+#         for filename in filenames:
+#             file_path = os.path.join(root, filename)
+#             file_root, file_ext = os.path.splitext(os.path.basename(file_path))
+# 
+#             if (file_ext == '.txt' ):
+# 
+#                 file_path = os.path.join(root, file_root)
+#                 the_name = file_path[len(input_folder):]
+#                 input_names_list.append(the_name)
+# 
+# # 
+#     ''' Include all files in folder '''
+#     input_names_list = []
+#     for file_path in os.listdir(input_folder):
+#         file_path = os.path.join(input_folder, file_path)
+#         file_root, file_ext = os.path.splitext(os.path.basename(file_path))
+#         
+#         if (file_ext == '.txt' ):
+#             # 
+#             # if int(file_root) > 8:
+#             #     input_names_list.append(file_root)
+# 
+#             input_names_list.append(file_root)
+
+    input_names_list = ['00002']
+
+    store_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/mod')
+    # store_folder = input_folder
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     Use_exact_Jacobian = params_dict["Solver_Discr"]["Use_exact_Jacobian"]
 
@@ -113,8 +158,8 @@ def main():
     save_all_inits = False
     # save_all_inits = True
 
-    # Save_img = True
-    Save_img = False
+    Save_img = True
+    # Save_img = False
 
     # Save_thumb = True
     Save_thumb = False
@@ -123,13 +168,11 @@ def main():
     img_size = (8,8) # Image size in inches
     thumb_size = (2,2) # Image size in inches
     
-    color = "body"
-    # color = "loop"
-    # color = "velocity"
-    # color = "all"
+    color = params_dict["Animation_Colors"]["color_method_input"]
+    color_list = params_dict["Animation_Colors"]["colorLookup"]
 
-    # Save_anim = True
-    Save_anim = False
+    Save_anim = True
+    # Save_anim = False
 
     vid_size = (8,8) # Image size in inches
     nint_plot_anim = 2*2*2*3*3*5*2
@@ -211,54 +254,82 @@ def main():
     # Save_Init_Pos_Vel_Sol = True
     Save_Init_Pos_Vel_Sol = False
 
+    n_save_pos = 'auto'
     Save_All_Pos = True
     # Save_All_Pos = False
 
     plot_extend = 0.
 
-    all_kwargs = choreo.Pick_Named_Args_From_Dict(choreo.Find_Choreo,dict(globals(),**locals()))
+    n_opt = 0
+    n_opt_max = 1e10
+    n_find_max = 1e4
+    
 
-    choreo.Find_Choreo(**all_kwargs)
-
-# 
-#     for root, dirs, files in os.walk(".", topdown=False):
-#         for name in files:
-#             print(os.path.join(root, name))
-#         for name in dirs:
-#             print(os.path.join(root, name))
+    # Exec_Mul_Proc = True
+    Exec_Mul_Proc = False
 
 
 
-    i_sol = 1
+    if Exec_Mul_Proc:
 
-    filename_output = store_folder+'/'+file_basename+str(i_sol).zfill(5)
-    filename = filename_output+".json"
-
-    if os.path.isfile(filename):
-
-        with open(filename, 'rt') as fh:
-            thefile = fh.read()
+        # n = 1
+        # n = 4
+        # n = multiprocessing.cpu_count()
+        n = multiprocessing.cpu_count()//2
+        
+        print(f"Executing with {n} workers")
+        
+        with concurrent.futures.ProcessPoolExecutor(max_workers=n) as executor:
             
-        blob = js.Blob.new([thefile], {type : 'application/text'})
+            res = []
+            
+            for the_name in input_names_list:
 
-        filename = filename_output+'.npy'
-        all_pos = np.load(filename)
-
-        js.postMessage(
-            funname = "Set_Python_path",
-            args    = pyodide.ffi.to_js(
-                {
-                    "JSON_data":blob,
-                    "NPY_data":all_pos.reshape(-1),
-                    "NPY_shape":all_pos.shape,
-                },
-                dict_converter=js.Object.fromEntries
-            )
-        )
+                all_kwargs = choreo.Pick_Named_Args_From_Dict(ExecName,dict(globals(),**locals()))
+                res.append(executor.submit(ExecName,**all_kwargs))
+                time.sleep(0.01)
 
     else:
+            
+        for the_name in input_names_list:
 
-        print("Solver did not find a solution.")
+            all_kwargs = choreo.Pick_Named_Args_From_Dict(ExecName,dict(globals(),**locals()))
+            ExecName(**all_kwargs)
 
-if __name__ == "__main__":
-    main()
+
+
+def ExecName(
+    the_name,
+    # input_folder,
+    # GradActionThresh,
+    # store_folder,
+    # Save_img,
+    # nint_plot_img,
+    # img_size,
+    # thumb_size,
+    # color,
+    # Save_thumb,
+    # Save_anim,
+    # nint_plot_anim,
+    # nperiod_anim,
+    # Plot_trace_anim,
+    # vid_size,
+    # vid_size_perturb,
+    # dnint,
+    # Save_Newton_Error,
+    # Save_All_Coeffs,
+    # Save_All_Coeffs_No_Sym,
+    # Save_ODE_anim,
+    # ODE_method,
+    # min_n_steps_ode,
+    # atol_ode,
+    # rtol_ode,
+    # InvestigateStability,
+    # InvestigateIntegration,
+    # Save_Perturbed,
+    # dy_perturb_mul,
+    # Relative_Perturb,
+    ):
+
+    print('')
+    print(the_name)

@@ -44,5 +44,5 @@ for file_path in os.listdir(store_folder):
                 print('Saving no trace video in '+new_vid_filename)
                 nint_plot = 4000
                 nperiod = 1/2
-                plot_all_2D_anim(nloop,nbody,nint_plot,nperiod,all_coeffs,new_vid_filename,Plot_trace=False)
+                plot_all_2D_anim(nloop,nbody,nint_plot,nperiod,all_coeffs,new_vid_filename,Plot_trace=False,color_list=color_list,color=color)
                 
