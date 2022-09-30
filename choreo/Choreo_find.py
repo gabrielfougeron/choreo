@@ -96,7 +96,6 @@ def Find_Choreo(
 
     """
     
-    print('')
     print('Searching periodic solutions of {:d} bodies'.format(nbody))
 
     print('Processing symmetries for {0:d} convergence levels'.format(n_reconverge_it_max+1))
@@ -531,6 +530,28 @@ def GenSymExample(
     loopnb = args['loopnb']
     loopnbi = args['loopnbi']
     nbi_tot = 0
+    for il in range(nloop):
+        for ilp in range(il+1,nloop):
+            nbi_tot += loopnb[il]*loopnb[ilp]
+        nbi_tot += loopnbi[il]
+    nbi_naive = (nbody*(nbody-1))//2
+
+    print('Imposed constraints lead to the detection of :')
+    print('    {:d} independant loops'.format(nloop))
+    print('    {0:d} binary interactions'.format(nbi_tot))
+    print('    ==> reduction of {0:f} % wrt the {1:d} naive binary iteractions'.format(100*(1-nbi_tot/nbi_naive),nbi_naive))
+    print('')
+
+    # for i in range(n_reconverge_it_max+1):
+    for i in [0]:
+        
+        args = callfun[0]
+        print('Convergence attempt number : ',i+1)
+        print('    Number of Fourier coeffs : ',args['ncoeff_list'][i])
+        print('    Number of scalar parameters before constraints : ',args['coeff_to_param_list'][i].shape[1])
+        print('    Number of scalar parameters after  constraints : ',args['coeff_to_param_list'][i].shape[0])
+        print('    Reduction of ',100*(1-args['coeff_to_param_list'][i].shape[0]/args['coeff_to_param_list'][i].shape[1]),' %')
+        print('')
 
     x0 = np.random.random(callfun[0]['param_to_coeff_list'][0].shape[1])
     xmin = Compute_MinDist(x0,callfun)
