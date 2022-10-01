@@ -289,7 +289,7 @@ def Find_Choreo(
 
                 for i in range(n_optim_callback_list):
 
-                    optim_callback_list[i](x,f,callfun[0]['last_all_pos'])
+                    optim_callback_list[i](x,f,callfun)
 
             try : 
                 
