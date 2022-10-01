@@ -56,7 +56,8 @@ def Plot_Loops_During_Optim(x,f,callfun):
     all_pos = args['last_all_pos']
 
     xyminmaxl = np.zeros((2,2))
-    xyminmax = np.zeros((2,2))
+    xyminmax = np.zeros((2))
+    xy = np.zeros((2))
 
     xmin = all_pos[0,0,0]
     xmax = all_pos[0,0,0]
@@ -72,19 +73,20 @@ def Plot_Loops_During_Optim(x,f,callfun):
 
         for ib in range(loopnb[il]):
 
-            xy = np.dot(SpaceRotsUn[il,ib,:,:],xyminmaxl[:,0])
+            for i in range(2):
 
-            xmin = min(xmin,xy[0])
-            xmax = max(xmax,xy[0])
-            ymin = min(ymin,xy[1])
-            ymax = max(ymax,xy[1])
+                for j in range(2):
 
-            xy = np.dot(SpaceRotsUn[il,ib,:,:],xyminmaxl[:,1])
+                    xyminmax[0] = xyminmaxl[0,i]
+                    xyminmax[1] = xyminmaxl[1,j]
 
-            xmin = min(xmin,xy[0])
-            xmax = max(xmax,xy[0])
-            ymin = min(ymin,xy[1])
-            ymax = max(ymax,xy[1])
+                    xy = np.dot(SpaceRotsUn[il,ib,:,:],xyminmax)
+
+                    xmin = min(xmin,xy[0])
+                    xmax = max(xmax,xy[0])
+                    ymin = min(ymin,xy[1])
+                    ymax = max(ymax,xy[1])
+
 
     hside = max(xmax-xmin,ymax-ymin)/2
 
