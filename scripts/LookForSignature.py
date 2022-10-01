@@ -66,18 +66,13 @@ def main():
         input_filename = os.path.join(input_folder,the_name)
         input_filename = input_filename + '.txt'
 
-        input_action, input_hash = choreo.ReadActionFromFile(input_filename)
+        input_hash = choreo.ReadHashFromFile(input_filename)
+
+        input_action = input_hash[0]
 
 
         file_list = []
         for key, value in hash_dict.items():
-
-            IsCandidate = (abs(input_action-value[0]) < ((abs(input_action)+abs(value[0]))*duplicate_eps))
-            for ihash in range(choreo.nhash):
-                IsCandidate = (IsCandidate and ((abs(input_hash[ihash]-value[1][ihash])) < ((abs(value[1][ihash])+abs(input_hash[ihash]))*duplicate_eps)))
-
-            # if (IsCandidate):
-            #     file_list.append(key)
 
             if (value[0] < (input_action + d_S)):
                 file_list.append(key)

@@ -229,7 +229,7 @@ def main():
     all_pos = np.load(filename)
 
     js.postMessage(
-        funname = "Set_Python_path",
+        funname = "Play_Loop_From_Python",
         args    = pyodide.ffi.to_js(
             {
                 "JSON_data":blob,

@@ -30,29 +30,63 @@ var DownloadTxtFile = (function () {
     };
 }());
 
-async function Set_Python_path(args){
+async function Play_Loop_From_Python(args){
+
+    console.log("a")
 
 	var displayCanvas = document.getElementById("displayCanvas");
 
     var txt = await args.JSON_data.text();
-    
-    var event = new Event('StopAnimationFromOutsideCanvas');
-    displayCanvas.dispatchEvent(event);
-
     PlotInfo = JSON.parse(txt);
     Pos = {"data":args.NPY_data,"shape":args.NPY_shape};
+
+    console.log("b")
 
     var event = new Event('FinalizeSetOrbitFromOutsideCanvas');
     displayCanvas.dispatchEvent(event);
 
+    console.log("c")
+
     var event = new Event('StartAnimationFromOutsideCanvas');
     displayCanvas.dispatchEvent(event);
+
+
+    console.log("d")
 
     var Python_State_Div = document.getElementById("Python_State_Div");
     Python_State_Div.innerHTML = "Ready";
     Python_State_Div.classList.add('w3-green');
     Python_State_Div.classList.remove('w3-orange');
     Python_State_Div.classList.remove('w3-red');
+
+    console.log("e")
+
+}
+
+async function Set_PlotInfo_From_Python(args){
+
+    var txt = await args.JSON_data.text();
+    PlotInfo = JSON.parse(txt);
+
+}
+
+async function Plot_Loops_During_Optim_From_Python(args){
+
+	var displayCanvas = document.getElementById("displayCanvas");
+
+    Pos = {"data":args.NPY_data,"shape":args.NPY_shape};
+
+    plotWindow = {
+        xMin : PlotInfo["xinf"],
+        xMax : PlotInfo["xsup"],
+        yMin : PlotInfo["yinf"],
+        yMax : PlotInfo["ysup"],
+    }
+
+    setPlotWindow(args.Current_PlotWindow);
+
+    var send_event = new Event('DrawAllPathsFromOutsideCanvas');
+    displayCanvas.dispatchEvent(send_event);
 
 }
 
@@ -172,6 +206,8 @@ function SaveConfigFile(){
 
 function ChoreoExecuteClick() {
 
+    var displayCanvas = document.getElementById("displayCanvas");
+
     PythonClearPrints();
 
     var Python_State_Div = document.getElementById("Python_State_Div");
@@ -180,6 +216,13 @@ function ChoreoExecuteClick() {
     Python_State_Div.classList.add('w3-orange');
     Python_State_Div.classList.remove('w3-green');
     Python_State_Div.classList.remove('w3-red');
+
+    if (document.getElementById('checkbox_DisplayLoopsDuringSearch').checked) {
+
+        var event = new Event('StopAnimationFromOutsideCanvas');
+        displayCanvas.dispatchEvent(event);
+
+    }
 
     var ConfigDict = GatherConfigDict();
 
@@ -190,7 +233,13 @@ function ChoreoExecuteClick() {
 
 function TestClick() {
 
-    pyodide_worker.postMessage({funname:"ExecutePythonFile",args:"./python_scripts/test.py"});
+    var displayCanvas = document.getElementById("displayCanvas");
+
+    // pyodide_worker.postMessage({funname:"ExecutePythonFile",args:"./python_scripts/test.py"});
+
+    var send_event = new Event('DrawAllPathsFromOutsideCanvas');
+    displayCanvas.dispatchEvent(send_event);
+
 
 }
 
@@ -309,7 +358,8 @@ function GatherConfigDict() {
     ConfigDict['Animation_Framerate'] ['checkbox_Limit_FPS']  = document.getElementById('checkbox_Limit_FPS').checked  ;
     ConfigDict['Animation_Framerate'] ['input_Limit_FPS']  = parseInt(document.getElementById('input_Limit_FPS').value,10)        ;
 
-
+    ConfigDict['Animation_Search'] = {};
+    ConfigDict['Animation_Search'] ['DisplayLoopsDuringSearch']  = document.getElementById('checkbox_DisplayLoopsDuringSearch').checked  ;
 
     ConfigDict['Solver_Discr'] = {};
     ConfigDict['Solver_Discr'] ['Use_exact_Jacobian']  = document.getElementById('checkbox_exactJ').checked            ;
@@ -381,6 +431,8 @@ async function LoadConfigFile(the_file) {
 }
 
 function LoadConfigDict(ConfigDict) {
+
+    var displayCanvas = document.getElementById("displayCanvas");
 
     var table = document.getElementById('table_body_loop');
     var ncols = table.rows[0].cells.length;
@@ -466,18 +518,14 @@ function LoadConfigDict(ConfigDict) {
     document.getElementById('input_trail_vanish_speed').value = ConfigDict['Animation_Size'] ['input_trail_vanish_speed'];
     SlideTrailTime();
     
-
     ExportColors();
     var send_event = new Event('ChangeColorsFromOutsideCanvas');
     displayCanvas.dispatchEvent(send_event);
 
-
-    
     document.getElementById('checkbox_Limit_FPS').checked = ConfigDict['Animation_Framerate']['checkbox_Limit_FPS'] ;
     document.getElementById('input_Limit_FPS').value = ConfigDict['Animation_Framerate'] ['input_Limit_FPS'] 
 
-
-
+    document.getElementById('checkbox_DisplayLoopsDuringSearch').checked = ConfigDict['Animation_Search'] ['DisplayLoopsDuringSearch'];
 
     document.getElementById('checkbox_exactJ').checked         = ConfigDict['Solver_Discr'] ['Use_exact_Jacobian']  ;
     document.getElementById('input_ncoeff_init').value         = ConfigDict['Solver_Discr'] ['ncoeff_init']         ;
@@ -947,6 +995,8 @@ function ClickRemoveColor() {
 
     if (n_color > 1) {
 
+        var displayCanvas = document.getElementById("displayCanvas");
+
         RemoveColor();
         ExportColors();
 
@@ -977,6 +1027,9 @@ function RemoveColor() {
 }
   
 function ClickAddColor() {
+
+    var displayCanvas = document.getElementById("displayCanvas");
+
     AddColor();
     ExportColors();
 
@@ -1067,12 +1120,16 @@ color_method_input.addEventListener("input", color_method_input_Handler, true);
 
 function color_method_input_Handler(event) {
 
+    var displayCanvas = document.getElementById("displayCanvas");
+
     var send_event = new Event('ChangeColorsFromOutsideCanvas');
     displayCanvas.dispatchEvent(send_event);
 
 }
 
 function ChangeColor_Handler(event) {
+
+    var displayCanvas = document.getElementById("displayCanvas");
 
     var targetid = event.path[0].targetid;
     var color = event.path[0].value;
@@ -1177,6 +1234,9 @@ function SlideTrailTime(event) {
 }
 
 function checkbox_Mass_Scale_Handler(event) {
+
+    var displayCanvas = document.getElementById("displayCanvas");
+
     DoScaleSizeWithMass = event.currentTarget.checked;
     
     var event = new Event('RemakeParticlesFromOutsideCanvas');
@@ -1353,5 +1413,13 @@ function PythonPrint(args) {
     if (is_at_bottom) {
         Python_textarea.scrollTop = Python_textarea.scrollHeight;
     }
+
+}
+
+var checkbox_DisplayLoopsDuringSearch = document.getElementById('checkbox_DisplayLoopsDuringSearch');
+checkbox_DisplayLoopsDuringSearch.addEventListener("change", checkbox_DisplayLoopsDuringSearchHandler, true);
+
+
+function checkbox_DisplayLoopsDuringSearchHandler(event) {
 
 }

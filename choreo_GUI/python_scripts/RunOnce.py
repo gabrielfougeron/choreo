@@ -23,6 +23,64 @@ import choreo
 import js
 import pyodide
 
+def print_norms(x,f,all_pos):
+
+    print(np.linalg.norm(all_pos))
+
+
+def Send_init_PlotInfo():
+
+    filename = "init.json"
+
+    if os.path.isfile(filename):
+
+        with open(filename, 'rt') as fh:
+            thefile = fh.read()
+            
+        blob = js.Blob.new([thefile], {type : 'application/text'})
+
+        js.postMessage(
+            funname = "Set_PlotInfo_From_Python",
+            args    = pyodide.ffi.to_js(
+                {
+                    "JSON_data":blob,
+                },
+                dict_converter=js.Object.fromEntries
+            )
+        )
+
+
+def Plot_Loops_During_Optim(x,f,all_pos):
+
+    windowObject = {}
+
+    xmin = all_pos[:,0,:].min()
+    xmax = all_pos[:,0,:].max()
+    ymin = all_pos[:,1,:].min()
+    ymax = all_pos[:,1,:].max()
+    
+    hside = max(xmax-xmin,ymax-ymin)/2
+
+    xmid = (xmin+xmax)/2
+    ymid = (ymin+ymax)/2
+
+    windowObject["xMin"] = xmid - hside
+    windowObject["xMax"] = xmid + hside
+
+    windowObject["yMin"] = ymid - hside
+    windowObject["yMax"] = ymid + hside
+
+    js.postMessage(
+        funname = "Plot_Loops_During_Optim_From_Python",
+        args    = pyodide.ffi.to_js(
+            {
+                "NPY_data":all_pos.reshape(-1),
+                "NPY_shape":all_pos.shape,
+                "Current_PlotWindow":windowObject
+            },
+            dict_converter=js.Object.fromEntries
+        )
+    )
 
 def main():
 
@@ -107,8 +165,8 @@ def main():
     # Penalize_Escape = True
     Penalize_Escape = False
 
-    save_first_init = False
-    # save_first_init = True
+    # save_first_init = False
+    save_first_init = True
 
     save_all_inits = False
     # save_all_inits = True
@@ -216,6 +274,23 @@ def main():
 
     plot_extend = 0.
 
+
+    callback_after_init_list = []
+
+    if params_dict['Animation_Search']['DisplayLoopsDuringSearch']:
+        callback_after_init_list.append(Send_init_PlotInfo)
+
+    optim_callback_list = []
+
+    if params_dict['Animation_Search']['DisplayLoopsDuringSearch']:
+            
+        # optim_callback_list.append(print_norms)
+        optim_callback_list.append(Plot_Loops_During_Optim)
+
+
+
+
+
     all_kwargs = choreo.Pick_Named_Args_From_Dict(choreo.Find_Choreo,dict(globals(),**locals()))
 
     choreo.Find_Choreo(**all_kwargs)
@@ -245,7 +320,7 @@ def main():
         all_pos = np.load(filename)
 
         js.postMessage(
-            funname = "Set_Python_path",
+            funname = "Play_Loop_From_Python",
             args    = pyodide.ffi.to_js(
                 {
                     "JSON_data":blob,

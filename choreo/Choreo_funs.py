@@ -254,7 +254,7 @@ def Compute_action_hess_mul(x,dx,callfun):
         
         nint = args['nint_list'][args["current_cvg_lvl"]]
         c_coeffs = args['last_all_coeffs'].view(dtype=np.complex128)[...,0]
-        args['last_all_pos'] =the_irfft(c_coeffs,n=nint,axis=2)*nint
+        args['last_all_pos'] = the_irfft(c_coeffs,n=nint,axis=2)*nint
     
     HessJdx =  Compute_action_hess_mul_Cython(
         args['nloop']           ,
@@ -899,6 +899,21 @@ def setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max=6,MomCons=True,n_
             TimeShiftNumBin[il,ibi] = UniqueSymsAll_list[il][ibi].TimeShift.numerator
             TimeShiftDenBin[il,ibi] = UniqueSymsAll_list[il][ibi].TimeShift.denominator
 
+
+    # Count how many unique paths need to be displayed
+    RequiresLoopDispUn = np.zeros((nloop,maxlooplen),dtype=bool)
+
+    eps_rot = 1e-10
+    for il in range(nloop):
+
+        RequiresLoopDispUn[il,0] = True # Loop 0 is always displayed.
+
+        for ib in range(1,loopnb[il]): 
+
+            dist_ij = np.linalg.norm(SpaceRotsUn[il,ib,:,:] - np.identity(ndim,dtype=np.float64))
+
+            RequiresLoopDispUn[il,ib] = (dist_ij > eps_rot)
+
     # Count constraints
     
     loopncstr = np.zeros((nloop),dtype=int)
@@ -955,6 +970,8 @@ def setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max=6,MomCons=True,n_
         param_to_coeff_list.append(null_space_sparseqr(cstrmat_sp))
         coeff_to_param_list.append(param_to_coeff_list[i].transpose(copy=True))
 
+        # TODO : THIS IS PROBABLY WHY I HAVE CONDITIONNING ISSUES FOR DIFFERENT MASSES !!!
+
         diag_changevar(
             param_to_coeff_list[i].nnz,
             ncoeff_list[i],
@@ -985,6 +1002,7 @@ def setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max=6,MomCons=True,n_
     "TimeRevsUn"            :   TimeRevsUn          ,
     "TimeShiftNumUn"        :   TimeShiftNumUn      ,
     "TimeShiftDenUn"        :   TimeShiftDenUn      ,
+    "RequiresLoopDispUn"    :   RequiresLoopDispUn  ,
     "loopnbi"               :   loopnbi             ,
     "ProdMassSumAll"        :   ProdMassSumAll      ,
     "SpaceRotsBin"          :   SpaceRotsBin        ,
@@ -1737,9 +1755,6 @@ def GetTangentSystemDef(x,callfun,nint=None,method = 'SymplecticEuler'):
         v0 = np.ascontiguousarray(np.concatenate((np.zeros((ndof,ndof)),np.eye(ndof)),axis=1).reshape(-1))
 
         return fun,gun,x0,v0
-
-
-
 
 
 
