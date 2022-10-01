@@ -23,11 +23,6 @@ import choreo
 import js
 import pyodide
 
-def print_norms(x,f,all_pos):
-
-    print(np.linalg.norm(all_pos))
-
-
 def Send_init_PlotInfo():
 
     filename = "init.json"
@@ -50,19 +45,53 @@ def Send_init_PlotInfo():
         )
 
 
-def Plot_Loops_During_Optim(x,f,all_pos):
+def Plot_Loops_During_Optim(x,f,callfun):
 
-    windowObject = {}
+    args = callfun[0]
+    nbody = args['nbody']
+    nloop = args['nloop']
+    loopnb = args['loopnb']
+    Targets = args['Targets']
+    SpaceRotsUn = args['SpaceRotsUn']
+    all_pos = args['last_all_pos']
 
-    xmin = all_pos[:,0,:].min()
-    xmax = all_pos[:,0,:].max()
-    ymin = all_pos[:,1,:].min()
-    ymax = all_pos[:,1,:].max()
-    
+    xyminmaxl = np.zeros((2,2))
+    xyminmax = np.zeros((2,2))
+
+    xmin = all_pos[0,0,0]
+    xmax = all_pos[0,0,0]
+    ymin = all_pos[0,1,0]
+    ymax = all_pos[0,1,0]
+
+    for il in range(nloop):
+
+        xyminmaxl[0,0] = all_pos[il,0,:].min()
+        xyminmaxl[1,0] = all_pos[il,0,:].max()
+        xyminmaxl[0,1] = all_pos[il,1,:].min()
+        xyminmaxl[1,1] = all_pos[il,1,:].max()
+
+        for ib in range(loopnb[il]):
+
+            xy = np.dot(SpaceRotsUn[il,ib,:,:],xyminmaxl[:,0])
+
+            xmin = min(xmin,xy[0])
+            xmax = max(xmax,xy[0])
+            ymin = min(ymin,xy[1])
+            ymax = max(ymax,xy[1])
+
+            xy = np.dot(SpaceRotsUn[il,ib,:,:],xyminmaxl[:,1])
+
+            xmin = min(xmin,xy[0])
+            xmax = max(xmax,xy[0])
+            ymin = min(ymin,xy[1])
+            ymax = max(ymax,xy[1])
+
     hside = max(xmax-xmin,ymax-ymin)/2
 
     xmid = (xmin+xmax)/2
     ymid = (ymin+ymax)/2
+
+    windowObject = {}
 
     windowObject["xMin"] = xmid - hside
     windowObject["xMax"] = xmid + hside
@@ -71,6 +100,7 @@ def Plot_Loops_During_Optim(x,f,all_pos):
     windowObject["yMax"] = ymid + hside
 
     js.postMessage(
+
         funname = "Plot_Loops_During_Optim_From_Python",
         args    = pyodide.ffi.to_js(
             {
@@ -283,8 +313,7 @@ def main():
     optim_callback_list = []
 
     if params_dict['Animation_Search']['DisplayLoopsDuringSearch']:
-            
-        # optim_callback_list.append(print_norms)
+
         optim_callback_list.append(Plot_Loops_During_Optim)
 
 
