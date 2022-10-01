@@ -649,6 +649,13 @@ def Write_Descriptor(x,callfun,filename,Action=None,Gradaction=None,Newt_err_nor
         
          Hash_Action = Compute_hash_action(x,callfun)
 
+
+    print(Action)
+    print(Gradaction)
+    print(Newt_err_norm)
+    print(Hash_Action)
+
+
     nbody = args['nbody']
     nloop = args['nloop']
     loopnb = args['loopnb']
@@ -717,25 +724,25 @@ def Write_Descriptor(x,callfun,filename,Action=None,Gradaction=None,Newt_err_nor
     Info_dict["loopnb"] = loopnb.tolist()
     Info_dict["Targets"] = Targets.tolist()
     Info_dict["SpaceRotsUn"] = SpaceRotsUn.tolist()
-    Info_dict["TimeRevsUn"] = args['TimeRevsUn'].tolist()
-    Info_dict["TimeShiftNumUn"] = args['TimeShiftNumUn'].tolist()
-    Info_dict["TimeShiftDenUn"] = args['TimeShiftDenUn'].tolist()
+    Info_dict["TimeRevsUn"] = args["TimeRevsUn"].tolist()
+    Info_dict["TimeShiftNumUn"] = args["TimeShiftNumUn"].tolist()
+    Info_dict["TimeShiftDenUn"] = args["TimeShiftDenUn"].tolist()
+    Info_dict["RequiresLoopDispUn"] = args["RequiresLoopDispUn"].tolist()
 
     with open(filename, "w") as jsonFile:
         jsonString = json.dumps(Info_dict, indent=4, sort_keys=False)
         jsonFile.write(jsonString)
 
-def ReadActionFromFile(filename):
+def ReadHashFromFile(filename):
 
     with open(filename,'r') as jsonFile:
         Info_dict = json.load(jsonFile)
 
-    This_Action = Info_dict["Action"]
     This_Action_Hash = np.array(Info_dict["Hash"])
 
-    return This_Action,This_Action_Hash
+    return This_Action_Hash
 
-def SelectFiles_Action(store_folder,hash_dict,Action_val=0,Action_Hash_val=np.zeros((nhash)),rtol=1e-5):
+def SelectFiles_Action(store_folder,hash_dict,Action_Hash_val=np.zeros((nhash)),rtol=1e-5):
     # Creates a list of possible duplicates based on value of the action and hashes
 
     file_path_list = []
@@ -745,20 +752,14 @@ def SelectFiles_Action(store_folder,hash_dict,Action_val=0,Action_Hash_val=np.ze
         
         if (file_ext == '.json' ):
             
-            Saved_Action = hash_dict.get(file_root)
+            This_Action_Hash = hash_dict.get(file_root)
             
-            if (Saved_Action is None) :
+            if (This_Action_Hash is None) :
 
-                This_Action,This_Action_Hash = ReadActionFromFile(file_path) 
-
-                hash_dict[file_root] = [This_Action,This_Action_Hash]
+                This_Action_Hash = ReadHashFromFile(file_path) 
+                hash_dict[file_root] = This_Action_Hash
                     
-            else:
-                
-                 This_Action = Saved_Action[0]
-                 This_Action_Hash = Saved_Action[1]
-                        
-            IsCandidate = (abs(This_Action-Action_val) < ((abs(This_Action)+abs(Action_val))*rtol))
+            IsCandidate = True
             for ihash in range(nhash):
                 IsCandidate = (IsCandidate and ((abs(This_Action_Hash[ihash]-Action_Hash_val[ihash])) < ((abs(This_Action_Hash[ihash])+abs(Action_Hash_val[ihash]))*rtol)))
             
@@ -777,7 +778,7 @@ def Check_Duplicates(x,callfun,hash_dict,store_folder,duplicate_eps,Action=None,
     if Hash_Action is None:
          Hash_Action = Compute_hash_action(x,callfun)
 
-    file_path_list = SelectFiles_Action(store_folder,hash_dict,Action,Hash_Action,duplicate_eps)
+    file_path_list = SelectFiles_Action(store_folder,hash_dict,Hash_Action,duplicate_eps)
     
     if (len(file_path_list) == 0):
         

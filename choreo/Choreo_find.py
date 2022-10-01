@@ -88,7 +88,9 @@ def Find_Choreo(
     n_find_max,
     plot_extend,
     CrashOnError_changevar,
-    color_list
+    color_list,
+    optim_callback_list,
+    callback_after_init_list,
     ):
     """
 
@@ -166,6 +168,16 @@ def Find_Choreo(
 
     n_opt = 0
     n_find = 0
+    
+    if optim_callback_list is None:
+        optim_callback_list = []
+    
+    n_optim_callback_list = len(optim_callback_list)    
+
+    if callback_after_init_list is None:
+        callback_after_init_list = []
+    
+    n_callback_after_init_list = len(callback_after_init_list)
 
     while ((n_opt < n_opt_max) and (n_find < n_find_max)):
         
@@ -220,7 +232,9 @@ def Find_Choreo(
             
             if Save_Newton_Error :
                 plot_Newton_Error(x0,callfun,'init_newton.png')
-
+    
+            for i in range(n_callback_after_init_list):
+                callback_after_init_list[i]()
             
         f0 = Compute_action_onlygrad(x0,callfun)
         best_sol = current_best(x0,f0)
@@ -230,9 +244,8 @@ def Find_Choreo(
         if not(GoOn):
             print(f"Norm on entry is {best_sol.f_norm} which is too big.")
         
-        
         i_optim_param = 0
-        
+
         while GoOn:
             # Set correct optim params
             
@@ -269,10 +282,19 @@ def Find_Choreo(
             else: 
                 jacobian = scipy.optimize.nonlin.KrylovJacobian(**jac_options)
 
+
+            def optim_callback(x,f):
+                
+                best_sol.update(x,f)
+
+                for i in range(n_optim_callback_list):
+
+                    optim_callback_list[i](x,f,callfun[0]['last_all_pos'])
+
             try : 
                 
                 x0 = np.copy(best_sol.x)
-                opt_result = scipy.optimize.nonlin.nonlin_solve(F=F,x0=x0,jacobian=jacobian,verbose=disp_scipy_opt,maxiter=maxiter,f_tol=gradtol,line_search=line_search,callback=best_sol.update,raise_exception=False)
+                opt_result = scipy.optimize.nonlin.nonlin_solve(F=F,x0=x0,jacobian=jacobian,verbose=disp_scipy_opt,maxiter=maxiter,f_tol=gradtol,line_search=line_search,callback=optim_callback,raise_exception=False)
                 
             except Exception as exc:
                 
@@ -475,12 +497,10 @@ def Find_Choreo(
                     print('Changing Optimizer Parameters')
                     
                     i_optim_param += 1
-                    
                 
                 print('')
                 
         print('')
-
 
     print('Done !')
 
