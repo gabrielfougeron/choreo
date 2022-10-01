@@ -163,6 +163,8 @@ function canvasApp() {
 	displayCanvas.addEventListener("FinalizeSetOrbitFromOutsideCanvas", FinalizeSetOrbitFromOutsideCanvasHandler, true);
 	displayCanvas.addEventListener("FinalizeAndPlayFromOutsideCanvas", FinalizeAndPlayFromOutsideCanvasHandler, true);
 	displayCanvas.addEventListener("StopAnimationFromOutsideCanvas", StopAnimationFromOutsideCanvasHandler, true);
+	displayCanvas.addEventListener("DisableAnimationFromOutsideCanvas", DisableAnimationFromOutsideCanvasHandler, true);
+	displayCanvas.addEventListener("EnableAnimationFromOutsideCanvas", EnableAnimationFromOutsideCanvasHandler, true);
 	displayCanvas.addEventListener("StartAnimationFromOutsideCanvas", StartAnimationFromOutsideCanvasHandler, true);
 	displayCanvas.addEventListener("RemakeParticlesFromOutsideCanvas", RemakeParticlesFromOutsideCanvasHandler, true);
 	displayCanvas.addEventListener("ChangeColorsFromOutsideCanvas", ChangeColorsFromOutsideCanvasHandler, true);
@@ -502,11 +504,14 @@ function canvasApp() {
 	}
 	
 	function startStopButtonHandler(e) {
-		if (running) {
-			stopAnimation();
-		}
-		else {
-			startAnimation();
+
+		if (!document.getElementById("startStopButton").disabled) {
+			if (running) {
+				stopAnimation();
+			}
+			else {
+				startAnimation();
+			}
 		}
 	}
 	
@@ -525,6 +530,32 @@ function canvasApp() {
 
 	function StopAnimationFromOutsideCanvasHandler(e) {
 		stopAnimation();
+	}
+
+	function DisableAnimationFromOutsideCanvasHandler(e) {
+
+		DisableAnimation();
+
+	}
+
+	function DisableAnimation() {
+
+		stopAnimation();
+		document.getElementById("startStopButton").disabled = "disabled";
+
+	}
+
+	function EnableAnimationFromOutsideCanvasHandler(e) {
+		
+		EnableAnimation();
+
+
+	}
+
+	function EnableAnimation() {
+
+		document.getElementById("startStopButton").disabled = "";
+
 	}
 
 	function StartAnimationFromOutsideCanvasHandler(e) {
@@ -774,13 +805,15 @@ function canvasApp() {
 
 	function DrawAllPathsFromOutsideCanvasHandler() {
 
-		stopAnimation();
-		clearScreen();
-		clearParticleLayer();
+		request = requestAnimationFrame(
+			function animloop(Time_since_origin){
 
-		DrawAllPaths();
-		// drawAllSegments();
-		// print(np.linalg.norm(callfun[0]['last_all_pos']))
+				clearScreen();
+				clearParticleLayer();
+				DrawAllPaths();
+		
+			}
+		);
 
 	}
 

@@ -43,9 +43,9 @@ async function Play_Loop_From_Python(args){
 
     var event = new Event('FinalizeAndPlayFromOutsideCanvas');
     displayCanvas.dispatchEvent(event);
-// 
-//     var event = new Event('StartAnimationFromOutsideCanvas');
-//     displayCanvas.dispatchEvent(event);
+
+    var event = new Event('EnableAnimationFromOutsideCanvas');
+    displayCanvas.dispatchEvent(event);
 
     var Python_State_Div = document.getElementById("Python_State_Div");
     Python_State_Div.innerHTML = "Ready";
@@ -213,13 +213,8 @@ function ChoreoExecuteClick() {
 
     if (document.getElementById('checkbox_DisplayLoopsDuringSearch').checked) {
 
-        var event = new Event('StopAnimationFromOutsideCanvas');
+        var event = new Event('DisableAnimationFromOutsideCanvas');
         displayCanvas.dispatchEvent(event);
-
-
-
-
-
 
 
 
