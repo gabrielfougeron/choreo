@@ -140,7 +140,7 @@ function canvasApp() {
 
 	var bgColor = "#F1F1F1";
 	var request;
-	var running;
+	var running = false;
 	var trajectoriesOn;
 
 	var fadeScreenColor = "rgba(241,241,241,0.01)";
@@ -161,6 +161,7 @@ function canvasApp() {
 	var displayCanvas = document.getElementById("displayCanvas");
 	var context = displayCanvas.getContext("2d");
 	displayCanvas.addEventListener("FinalizeSetOrbitFromOutsideCanvas", FinalizeSetOrbitFromOutsideCanvasHandler, true);
+	displayCanvas.addEventListener("FinalizeAndPlayFromOutsideCanvas", FinalizeAndPlayFromOutsideCanvasHandler, true);
 	displayCanvas.addEventListener("StopAnimationFromOutsideCanvas", StopAnimationFromOutsideCanvasHandler, true);
 	displayCanvas.addEventListener("StartAnimationFromOutsideCanvas", StartAnimationFromOutsideCanvasHandler, true);
 	displayCanvas.addEventListener("RemakeParticlesFromOutsideCanvas", RemakeParticlesFromOutsideCanvasHandler, true);
@@ -524,18 +525,23 @@ function canvasApp() {
 
 	function StopAnimationFromOutsideCanvasHandler(e) {
 		stopAnimation();
-		running = false;
 	}
 
 	function StartAnimationFromOutsideCanvasHandler(e) {
 		startAnimation();
-		running = true;
 	}
 
 	function FinalizeSetOrbitFromOutsideCanvasHandler(e) {
 		UnselectOrbit();
 		clearScreen();
 		FinalizeSetOrbit() ;
+	}
+
+	function FinalizeAndPlayFromOutsideCanvasHandler(e) {
+		UnselectOrbit();
+		clearScreen();
+		FinalizeSetOrbit() ;
+		startAnimation();
 	}
 
 	function RemakeParticlesFromOutsideCanvasHandler(e) {

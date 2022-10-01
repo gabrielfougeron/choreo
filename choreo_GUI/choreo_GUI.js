@@ -32,41 +32,35 @@ var DownloadTxtFile = (function () {
 
 async function Play_Loop_From_Python(args){
 
-    console.log("a")
-
 	var displayCanvas = document.getElementById("displayCanvas");
+
+    var event = new Event('StopAnimationFromOutsideCanvas');
+    displayCanvas.dispatchEvent(event);
 
     var txt = await args.JSON_data.text();
     PlotInfo = JSON.parse(txt);
     Pos = {"data":args.NPY_data,"shape":args.NPY_shape};
 
-    console.log("b")
-
-    var event = new Event('FinalizeSetOrbitFromOutsideCanvas');
+    var event = new Event('FinalizeAndPlayFromOutsideCanvas');
     displayCanvas.dispatchEvent(event);
-
-    console.log("c")
-
-    var event = new Event('StartAnimationFromOutsideCanvas');
-    displayCanvas.dispatchEvent(event);
-
-
-    console.log("d")
+// 
+//     var event = new Event('StartAnimationFromOutsideCanvas');
+//     displayCanvas.dispatchEvent(event);
 
     var Python_State_Div = document.getElementById("Python_State_Div");
     Python_State_Div.innerHTML = "Ready";
     Python_State_Div.classList.add('w3-green');
     Python_State_Div.classList.remove('w3-orange');
     Python_State_Div.classList.remove('w3-red');
-
-    console.log("e")
-
 }
 
 async function Set_PlotInfo_From_Python(args){
 
     var txt = await args.JSON_data.text();
     PlotInfo = JSON.parse(txt);
+
+    var event = new Event('FinalizeSetOrbitFromOutsideCanvas');
+    displayCanvas.dispatchEvent(event);
 
 }
 
@@ -221,6 +215,14 @@ function ChoreoExecuteClick() {
 
         var event = new Event('StopAnimationFromOutsideCanvas');
         displayCanvas.dispatchEvent(event);
+
+
+
+
+
+
+
+
 
     }
 
@@ -1415,11 +1417,11 @@ function PythonPrint(args) {
     }
 
 }
-
-var checkbox_DisplayLoopsDuringSearch = document.getElementById('checkbox_DisplayLoopsDuringSearch');
-checkbox_DisplayLoopsDuringSearch.addEventListener("change", checkbox_DisplayLoopsDuringSearchHandler, true);
-
-
-function checkbox_DisplayLoopsDuringSearchHandler(event) {
-
-}
+// 
+// var checkbox_DisplayLoopsDuringSearch = document.getElementById('checkbox_DisplayLoopsDuringSearch');
+// checkbox_DisplayLoopsDuringSearch.addEventListener("change", checkbox_DisplayLoopsDuringSearchHandler, true);
+// 
+// 
+// function checkbox_DisplayLoopsDuringSearchHandler(event) {
+// 
+// }
