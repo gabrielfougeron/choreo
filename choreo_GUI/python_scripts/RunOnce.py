@@ -47,46 +47,7 @@ def Send_init_PlotInfo():
 
 def Plot_Loops_During_Optim(x,f,callfun):
 
-    args = callfun[0]
-    nbody = args['nbody']
-    nloop = args['nloop']
-    loopnb = args['loopnb']
-    Targets = args['Targets']
-    SpaceRotsUn = args['SpaceRotsUn']
-    all_pos = args['last_all_pos']
-
-    xyminmaxl = np.zeros((2,2))
-    xyminmax = np.zeros((2))
-    xy = np.zeros((2))
-
-    xmin = all_pos[0,0,0]
-    xmax = all_pos[0,0,0]
-    ymin = all_pos[0,1,0]
-    ymax = all_pos[0,1,0]
-
-    for il in range(nloop):
-
-        xyminmaxl[0,0] = all_pos[il,0,:].min()
-        xyminmaxl[1,0] = all_pos[il,0,:].max()
-        xyminmaxl[0,1] = all_pos[il,1,:].min()
-        xyminmaxl[1,1] = all_pos[il,1,:].max()
-
-        for ib in range(loopnb[il]):
-
-            for i in range(2):
-
-                for j in range(2):
-
-                    xyminmax[0] = xyminmaxl[0,i]
-                    xyminmax[1] = xyminmaxl[1,j]
-
-                    xy = np.dot(SpaceRotsUn[il,ib,:,:],xyminmax)
-
-                    xmin = min(xmin,xy[0])
-                    xmax = max(xmax,xy[0])
-                    ymin = min(ymin,xy[1])
-                    ymax = max(ymax,xy[1])
-
+    xmin,xmax,ymin,ymax = choreo.HeuristicMinMax(callfun)
 
     hside = max(xmax-xmin,ymax-ymin)/2
 
@@ -106,8 +67,8 @@ def Plot_Loops_During_Optim(x,f,callfun):
         funname = "Plot_Loops_During_Optim_From_Python",
         args    = pyodide.ffi.to_js(
             {
-                "NPY_data":all_pos.reshape(-1),
-                "NPY_shape":all_pos.shape,
+                "NPY_data":callfun[0]['last_all_pos'].reshape(-1),
+                "NPY_shape":callfun[0]['last_all_pos'].shape,
                 "Current_PlotWindow":windowObject
             },
             dict_converter=js.Object.fromEntries

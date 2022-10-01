@@ -1053,6 +1053,8 @@ function canvasApp() {
 			speedSlider.slider("value",target_val);
 		}
 
+		setPeriodTime();
+
 	}
 
 	function SpeedPlusClick() {
@@ -1067,6 +1069,8 @@ function canvasApp() {
 		if (target_val < max_val ) {
 			speedSlider.slider("value",target_val);
 		}
+
+		setPeriodTime();
 
 	}
 
@@ -1167,7 +1171,7 @@ function canvasApp() {
 		for (var i = 0; i < n_init_gallery_orbits; i++) {
 			
 			let npyjs_obj = new npyjs();
-// 
+
 			let finished_npy = 
 				npyjs_obj.load(AllPosFilenames[i])
 				.then((res) => {
@@ -1199,4 +1203,25 @@ function canvasApp() {
 			}
 		}
 	}
+
+	document.onkeyup = function (event) {
+
+		switch (event.code) {
+			case 'Space':
+				startStopButtonHandler();
+				break;
+			case 'Enter':
+				ChoreoExecuteClick();
+				break;
+			case 'ArrowRight':
+				SpeedPlusClick();
+				break;
+			case 'ArrowDown':
+				SpeedMinusClick();
+				break;
+
+		  }
+
+	}
+
 }

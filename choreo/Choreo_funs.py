@@ -899,7 +899,6 @@ def setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max=6,MomCons=True,n_
             TimeShiftNumBin[il,ibi] = UniqueSymsAll_list[il][ibi].TimeShift.numerator
             TimeShiftDenBin[il,ibi] = UniqueSymsAll_list[il][ibi].TimeShift.denominator
 
-
     # Count how many unique paths need to be displayed
     RequiresLoopDispUn = np.zeros((nloop,maxlooplen),dtype=bool)
 
@@ -1756,6 +1755,49 @@ def GetTangentSystemDef(x,callfun,nint=None,method = 'SymplecticEuler'):
 
         return fun,gun,x0,v0
 
+def HeuristicMinMax(callfun):
 
+    args = callfun[0]
+    nbody = args['nbody']
+    nloop = args['nloop']
+    loopnb = args['loopnb']
+    Targets = args['Targets']
+    SpaceRotsUn = args['SpaceRotsUn']
+    all_pos = args['last_all_pos']
 
+    xyminmaxl = np.zeros((2,2))
+    xyminmax = np.zeros((2))
+    xy = np.zeros((2))
+
+    xmin = all_pos[0,0,0]
+    xmax = all_pos[0,0,0]
+    ymin = all_pos[0,1,0]
+    ymax = all_pos[0,1,0]
+
+    for il in range(nloop):
+
+        xyminmaxl[0,0] = all_pos[il,0,:].min()
+        xyminmaxl[1,0] = all_pos[il,0,:].max()
+        xyminmaxl[0,1] = all_pos[il,1,:].min()
+        xyminmaxl[1,1] = all_pos[il,1,:].max()
+
+        for ib in range(loopnb[il]):
+
+            if (args["RequiresLoopDispUn"][il,ib]):
+
+                for i in range(2):
+
+                    for j in range(2):
+
+                        xyminmax[0] = xyminmaxl[i,0]
+                        xyminmax[1] = xyminmaxl[j,1]
+
+                        xy = np.dot(SpaceRotsUn[il,ib,:,:],xyminmax)
+
+                        xmin = min(xmin,xy[0])
+                        xmax = max(xmax,xy[0])
+                        ymin = min(ymin,xy[1])
+                        ymax = max(ymax,xy[1])
+
+    return xmin,xmax,ymin,ymax
 
