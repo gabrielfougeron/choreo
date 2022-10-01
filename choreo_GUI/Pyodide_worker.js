@@ -39,8 +39,8 @@ self.LoadDataInWorker = function(datadict) {
 
 }
   
-// python_cache_behavior = {}
-python_cache_behavior = {cache: "no-cache"}
+// var python_cache_behavior = {}
+var python_cache_behavior = {cache: "no-cache"}
   
 self.ExecutePythonFile = function(filename) {
     let load_txt = fetch(filename,python_cache_behavior) ; 

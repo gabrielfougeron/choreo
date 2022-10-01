@@ -649,13 +649,6 @@ def Write_Descriptor(x,callfun,filename,Action=None,Gradaction=None,Newt_err_nor
         
          Hash_Action = Compute_hash_action(x,callfun)
 
-
-    print(Action)
-    print(Gradaction)
-    print(Newt_err_norm)
-    print(Hash_Action)
-
-
     nbody = args['nbody']
     nloop = args['nloop']
     loopnb = args['loopnb']
