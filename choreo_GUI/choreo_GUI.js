@@ -200,31 +200,32 @@ function SaveConfigFile(){
 
 function ChoreoExecuteClick() {
 
-    var displayCanvas = document.getElementById("displayCanvas");
+    if (!document.getElementById("ChoreoExecuteBtn").disabled) {
 
-    PythonClearPrints();
+        var displayCanvas = document.getElementById("displayCanvas");
 
-    var Python_State_Div = document.getElementById("Python_State_Div");
+        PythonClearPrints();
 
-    Python_State_Div.innerHTML = "Working";
-    Python_State_Div.classList.add('w3-orange');
-    Python_State_Div.classList.remove('w3-green');
-    Python_State_Div.classList.remove('w3-red');
+        var Python_State_Div = document.getElementById("Python_State_Div");
 
-    if (document.getElementById('checkbox_DisplayLoopsDuringSearch').checked) {
+        Python_State_Div.innerHTML = "Working";
+        Python_State_Div.classList.add('w3-orange');
+        Python_State_Div.classList.remove('w3-green');
+        Python_State_Div.classList.remove('w3-red');
 
-        var event = new Event('DisableAnimationFromOutsideCanvas');
-        displayCanvas.dispatchEvent(event);
+        if (document.getElementById('checkbox_DisplayLoopsDuringSearch').checked) {
 
+            var event = new Event('DisableAnimationFromOutsideCanvas');
+            displayCanvas.dispatchEvent(event);
 
+        }
 
+        var ConfigDict = GatherConfigDict();
+
+        pyodide_worker.postMessage({funname:"LoadDataInWorker",args:{ConfigDict:ConfigDict}});
+        pyodide_worker.postMessage({funname:"ExecutePythonFile",args:"./python_scripts/RunOnce.py"});
 
     }
-
-    var ConfigDict = GatherConfigDict();
-
-    pyodide_worker.postMessage({funname:"LoadDataInWorker",args:{ConfigDict:ConfigDict}});
-    pyodide_worker.postMessage({funname:"ExecutePythonFile",args:"./python_scripts/RunOnce.py"});
 
 }
 
@@ -1394,7 +1395,6 @@ function DeleteCookie(name) {
 }
 
 Python_textarea = document.getElementById("Python_textarea");
-// Python_textarea.style.height = "0px";
 
 function PythonClearPrints() {
     Python_textarea.innerHTML = "";
@@ -1412,11 +1412,3 @@ function PythonPrint(args) {
     }
 
 }
-// 
-// var checkbox_DisplayLoopsDuringSearch = document.getElementById('checkbox_DisplayLoopsDuringSearch');
-// checkbox_DisplayLoopsDuringSearch.addEventListener("change", checkbox_DisplayLoopsDuringSearchHandler, true);
-// 
-// 
-// function checkbox_DisplayLoopsDuringSearchHandler(event) {
-// 
-// }
