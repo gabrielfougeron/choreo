@@ -1,8 +1,17 @@
-// Gallery_cache_behavior = {cache: "no-cache"}
-Gallery_cache_behavior = {}
+// var Gallery_cache_behavior = {cache: "no-cache"}
+var Gallery_cache_behavior = {}
 
 var Pos ;
 var PlotInfo;
+
+var xMin, xMax, yMin, yMax;
+var xPixRate, yPixRate;
+var center_x,center_y;
+var CurrentMax_PartRelSize = 1.;
+
+var displayWidth, displayHeight;
+
+
 var FPS_estimation = 30;
 var Do_Limit_FPS = false;
 var FPS_limit = 120;
@@ -93,6 +102,32 @@ function windowLoadHandler() {
 	canvasApp();
 }
 
+function setPlotWindow(windowObject) {
+
+	var extend = 0.02 + (CurrentMax_PartRelSize-1.)*0.0155 ; // Magic numbers
+
+	var xinf = windowObject.xMin - extend*(windowObject.xMax-windowObject.xMin);
+	var xsup = windowObject.xMax + extend*(windowObject.xMax-windowObject.xMin);
+	
+	var yinf = windowObject.yMin - extend*(windowObject.yMax-windowObject.yMin);
+	var ysup = windowObject.yMax + extend*(windowObject.yMax-windowObject.yMin);
+	
+	var hside = Math.max(xsup-xinf,ysup-yinf)/2
+
+	center_x = (xinf+xsup)/2
+	center_y = (yinf+ysup)/2
+
+	xMin = center_x - hside
+	xMax = center_x + hside
+
+	yMin = center_y - hside
+	yMax = center_y + hside
+
+	xPixRate = displayWidth/(xMax - xMin);
+	yPixRate = displayHeight/(yMin - yMax);
+
+}
+
 function canvasApp() {
 		
 	var particles;
@@ -101,8 +136,6 @@ function canvasApp() {
 
 	var tInc;
 
-	var xMin, xMax, yMin, yMax;
-	var xPixRate, yPixRate;
 	var time;
 
 	var bgColor = "#F1F1F1";
@@ -132,20 +165,17 @@ function canvasApp() {
 	displayCanvas.addEventListener("StartAnimationFromOutsideCanvas", StartAnimationFromOutsideCanvasHandler, true);
 	displayCanvas.addEventListener("RemakeParticlesFromOutsideCanvas", RemakeParticlesFromOutsideCanvasHandler, true);
 	displayCanvas.addEventListener("ChangeColorsFromOutsideCanvas", ChangeColorsFromOutsideCanvasHandler, true);
+	displayCanvas.addEventListener("DrawAllPathsFromOutsideCanvas", DrawAllPathsFromOutsideCanvasHandler, true);
 	
 	var particleLayerCanvas = document.getElementById("particleLayerCanvas");
 	var particleLayerContext = particleLayerCanvas.getContext("2d");
 	particleLayerCanvas.addEventListener("click", startStopButtonHandler, true);
 	
-	var displayWidth = displayCanvas.width;
-	var displayHeight = displayCanvas.height;
-
-	var center_x;
-	var center_y;
+	displayWidth = displayCanvas.width;
+	displayHeight = displayCanvas.height;	
 
 	var Min_PartRelSize = 0.5;
 	var Max_PartRelSize = 7.;
-	var CurrentMax_PartRelSize = 1.;
 	
 	var Last_Time_since_origin;
 	var dt_outlier_ms = 300;
@@ -344,32 +374,6 @@ function canvasApp() {
 	function prevOrbit(evt) {
 		incrementOrbit(-1);
 	}
-	
-	function setPlotWindow(windowObject) {
-
-		var extend = 0.02 + (CurrentMax_PartRelSize-1.)*0.0155 ; // Magic numbers
-
-		xinf = windowObject.xMin - extend*(windowObject.xMax-windowObject.xMin);
-		xsup = windowObject.xMax + extend*(windowObject.xMax-windowObject.xMin);
-		
-		yinf = windowObject.yMin - extend*(windowObject.yMax-windowObject.yMin);
-		ysup = windowObject.yMax + extend*(windowObject.yMax-windowObject.yMin);
-		
-		var hside = Math.max(xsup-xinf,ysup-yinf)/2
-	
-		center_x = (xinf+xsup)/2
-		center_y = (yinf+ysup)/2
-	
-		xMin = center_x - hside
-		xMax = center_x + hside
-	
-		yMin = center_y - hside
-		yMax = center_y + hside
-
-		xPixRate = displayWidth/(xMax - xMin);
-		yPixRate = displayHeight/(yMin - yMax);
-
-	}
 
 	function RemoveOrbit(i_remove) {
 
@@ -469,6 +473,7 @@ function canvasApp() {
 	
 	function startAnimation() {
 		running = true;
+		startStopButton.textContent = "Stop";
 		input_Limit_FPS_Handler();
 		(function animloop(Time_since_origin){
 
@@ -492,18 +497,15 @@ function canvasApp() {
 	function stopAnimation() {
 		running = false;
 		cancelAnimationFrame(request);
+		startStopButton.textContent = "Start";
 	}
 	
 	function startStopButtonHandler(e) {
 		if (running) {
 			stopAnimation();
-			running = false;
-			startStopButton.textContent = "Start";
 		}
 		else {
 			startAnimation();
-			running = true;
-			startStopButton.textContent = "Stop";
 		}
 	}
 	
@@ -737,7 +739,7 @@ function canvasApp() {
 			staticOrbitDrawPointsY.push(yPixRate*(particles[i].y - yMax));
 		}
 	}
-	
+
 	function drawLastSegments() {
 		var i;
 		var p;
@@ -764,12 +766,108 @@ function canvasApp() {
 
 	}
 
+	function DrawAllPathsFromOutsideCanvasHandler() {
+
+		stopAnimation();
+		clearScreen();
+		clearParticleLayer();
+
+		DrawAllPaths();
+		// drawAllSegments();
+		// print(np.linalg.norm(callfun[0]['last_all_pos']))
+
+	}
+
+	function DrawAllPaths() {
+
+		var n_pos = Pos.shape[2];
+
+		var xl,yl;
+		var x,y;
+		var Pixx,Pixy;
+		var PixxPrev,PixyPrev;
+
+		var il,ib,ilb,nlb;
+		var p;
+
+        for ( il = 0 ; il < PlotInfo['nloop'] ; il++){
+
+			nlb =  PlotInfo['loopnb'][il];
+			
+			for (ilb = 0 ; ilb < nlb ; ilb++){
+
+				if (PlotInfo['RequiresLoopDispUn'][il][ilb]) {
+
+					ib = PlotInfo['Targets'][il][ilb];
+					p = particles[ib];
+					context.lineWidth = p.PartRelSize * base_trailWidth ;
+					// context.strokeStyle = staticOrbitColor;
+					context.strokeStyle = p.trailColor;
+
+
+					// Super ugly
+					xl = Pos.data[  2*il    * n_pos] ;
+					yl = Pos.data[ (2*il+1) * n_pos] ;
+
+					x = PlotInfo['SpaceRotsUn'][il][ilb][0][0] * xl + PlotInfo['SpaceRotsUn'][il][ilb][0][1] * yl ;
+					y = PlotInfo['SpaceRotsUn'][il][ilb][1][0] * xl + PlotInfo['SpaceRotsUn'][il][ilb][1][1] * yl ;
+
+					PixxPrev = xPixRate*(x - xMin) ;
+					PixyPrev = yPixRate*(y - yMax) ;
+
+					for (i_pos = 1 ; i_pos < n_pos ; i_pos++){
+
+						// Super ugly
+						xl = Pos.data[ i_pos +  2*il    * n_pos] ;
+						yl = Pos.data[ i_pos + (2*il+1) * n_pos] ;
+
+						x = PlotInfo['SpaceRotsUn'][il][ilb][0][0] * xl + PlotInfo['SpaceRotsUn'][il][ilb][0][1] * yl ;
+						y = PlotInfo['SpaceRotsUn'][il][ilb][1][0] * xl + PlotInfo['SpaceRotsUn'][il][ilb][1][1] * yl ;
+		
+						Pixx = xPixRate*(x - xMin) ;
+						Pixy = yPixRate*(y - yMax) ;
+
+						//trail
+						context.beginPath();
+						context.moveTo(PixxPrev,PixyPrev);
+						context.lineTo(Pixx, Pixy);
+						context.stroke();
+
+						PixxPrev = Pixx ;
+						PixyPrev = Pixy ;
+
+					}
+
+					// Super ugly
+					xl = Pos.data[  2*il    * n_pos] ;
+					yl = Pos.data[ (2*il+1) * n_pos] ;
+
+					x = PlotInfo['SpaceRotsUn'][il][ilb][0][0] * xl + PlotInfo['SpaceRotsUn'][il][ilb][0][1] * yl ;
+					y = PlotInfo['SpaceRotsUn'][il][ilb][1][0] * xl + PlotInfo['SpaceRotsUn'][il][ilb][1][1] * yl ;
+
+					Pixx = xPixRate*(x - xMin) ;
+					Pixy = yPixRate*(y - yMax) ;
+
+					//trail
+					context.beginPath();
+					context.moveTo(PixxPrev,PixyPrev);
+					context.lineTo(Pixx, Pixy);
+					context.stroke();
+
+				}
+
+			}
+
+		}
+
+	}
+
 	function drawAllSegments() {
 		
 		clearScreen();
 		setStartPositions();
 		
-		n_strokes = Math.floor((1 / tInc)) + 1 ;
+		var n_strokes = Math.floor((1 / tInc)) + 1 ;
 
 		// Setup
 		for (i = 0; i < PlotInfo["nbody"]; i++) {
@@ -781,7 +879,7 @@ function canvasApp() {
 			staticOrbitDrawPointsY[i] = pixY;
 		}
 
-		for (i_stroke = 0; i_stroke < n_strokes; i_stroke++) {
+		for (var i_stroke = 0; i_stroke < n_strokes; i_stroke++) {
 
 			time = (time + tInc) % (1);
 
@@ -841,7 +939,7 @@ function canvasApp() {
 	
 	function setParticlePositions(t) {
 
-		var n_pos = Pos.shape[2]
+		var n_pos = Pos.shape[2];
 
 		var xlm=0,xlp=0,ylm=0,ylp=0;
 		var xmid,ymid;
@@ -852,9 +950,6 @@ function canvasApp() {
 		var tb;
 
 		var im,ip,tbn,trem;
-		
-		im = Math.floor(t*n_pos)
-		ip = (im+1) % n_pos
 
         for ( il = 0 ; il < PlotInfo['nloop'] ; il++){
 
@@ -1014,7 +1109,6 @@ function canvasApp() {
 				AllGalleryNames.push(name);
 
 		}
-
 
 		n_init_gallery_orbits = AllPosFilenames.length;
 		numOrbits = 0;
