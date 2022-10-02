@@ -10,7 +10,7 @@ var center_x,center_y;
 var CurrentMax_PartRelSize = 1.;
 
 var displayWidth, displayHeight;
-
+var trajectoriesOn;
 
 var FPS_estimation = 30;
 var Do_Limit_FPS = false;
@@ -141,7 +141,6 @@ function canvasApp() {
 	var bgColor = "#F1F1F1";
 	var request;
 	var running = false;
-	var trajectoriesOn;
 
 	var fadeScreenColor = "rgba(241,241,241,0.01)";
 	staticOrbitColor = "rgba(200,200,200,1)";
@@ -489,6 +488,7 @@ function canvasApp() {
 					Estimate_FPS(Time_since_origin);
 					anim();
 				}
+
 			} else {
 				Estimate_FPS(Time_since_origin);
 				anim();
@@ -524,7 +524,7 @@ function canvasApp() {
 		else {
 			setStartPositions();
 			trajectoriesOn = true;
-			trajectoryButton.textContent = "Hide";
+			trajectoryButton.textContent = "Hide trails";
 		}
 	}
 
@@ -533,14 +533,13 @@ function canvasApp() {
 	}
 
 	function DisableAnimationFromOutsideCanvasHandler(e) {
-
 		DisableAnimation();
-
+		clearScreen();
+		clearParticleLayer();
 	}
 
 	function DisableAnimation() {
 
-		stopAnimation();
 		document.getElementById("startStopButton").disabled = "disabled";
 
 	}
@@ -548,7 +547,6 @@ function canvasApp() {
 	function EnableAnimationFromOutsideCanvasHandler(e) {
 		
 		EnableAnimation();
-
 
 	}
 
@@ -563,9 +561,19 @@ function canvasApp() {
 	}
 
 	function FinalizeSetOrbitFromOutsideCanvasHandler(e) {
+
 		UnselectOrbit();
 		clearScreen();
-		FinalizeSetOrbit() ;
+		clearParticleLayer();
+		FinalizeSetOrbit(DoDrawParticles=false) ;
+
+		if (document.getElementById('checkbox_DisplayBodiesDuringSearch').checked) {
+
+			startAnimation();
+	
+		}
+
+
 	}
 
 	function FinalizeAndPlayFromOutsideCanvasHandler(e) {
@@ -805,11 +813,12 @@ function canvasApp() {
 
 	function DrawAllPathsFromOutsideCanvasHandler() {
 
+		trajectoriesOn = false
+
 		request = requestAnimationFrame(
 			function animloop(Time_since_origin){
 
 				clearScreen();
-				clearParticleLayer();
 				DrawAllPaths();
 		
 			}
@@ -840,9 +849,7 @@ function canvasApp() {
 					ib = PlotInfo['Targets'][il][ilb];
 					p = particles[ib];
 					context.lineWidth = p.PartRelSize * base_trailWidth ;
-					// context.strokeStyle = staticOrbitColor;
 					context.strokeStyle = p.trailColor;
-
 
 					// Super ugly
 					xl = Pos.data[  2*il    * n_pos] ;
@@ -1090,7 +1097,7 @@ function canvasApp() {
 
 	}
 
-	function FinalizeSetOrbit() {
+	function FinalizeSetOrbit(DoDrawParticles=true) {
 
 		makeParticles();
 
@@ -1114,7 +1121,9 @@ function canvasApp() {
 		//if stopped, draw particles in correct place
 		if (!running) {
 			clearParticleLayer();
-			drawParticles();	
+			if (DoDrawParticles) {
+				drawParticles();	
+			}
 		}
 		setPeriodTime();
 		
@@ -1211,6 +1220,7 @@ function canvasApp() {
 				startStopButtonHandler();
 				break;
 			case 'Enter':
+			case 'NumpadEnter':
 				ChoreoExecuteClick();
 				break;
 			case 'ArrowRight':

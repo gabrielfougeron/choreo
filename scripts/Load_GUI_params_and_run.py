@@ -72,7 +72,6 @@ def main():
         else:
             raise ValueError("TimeRev must be True or False")
         
-        
         Sym_list.append(
             choreo.ChoreoSym(
                 LoopTarget=params_dict["Geom_Custom"]["CustomSyms"][isym]["LoopTarget"],
@@ -83,8 +82,6 @@ def main():
                     numerator=params_dict["Geom_Custom"]["CustomSyms"][isym]["TimeShiftNum"],
                     denominator=params_dict["Geom_Custom"]["CustomSyms"][isym]["TimeShiftDen"])
                 ))
-
-
 
     MomConsImposed = params_dict['Geom_Bodies'] ['MomConsImposed']
 
