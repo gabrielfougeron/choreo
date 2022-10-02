@@ -93,6 +93,8 @@ async function Plot_Loops_During_Optim_From_Python(args){
 
 async function Python_Imports_Done(args){
 
+	var displayCanvas = document.getElementById("displayCanvas");
+
     PythonPrint({txt:"&#10;Python Imports Done."});
 
     var ChoreoExecuteBtn = document.getElementById("ChoreoExecuteBtn");
@@ -106,6 +108,9 @@ async function Python_Imports_Done(args){
     Python_State_Div.classList.remove('w3-red');
     Python_State_Div.classList.remove('w3-orange');
     Python_State_Div.classList.add('w3-green');
+
+    var event = new Event('EnableAnimationFromOutsideCanvas');
+    displayCanvas.dispatchEvent(event);
 
 }
 
@@ -1445,7 +1450,6 @@ function checkbox_DisplayLoopsDuringSearchHandler(event) {
     if (event.currentTarget.checked) {
 
         checkbox_DisplayBodiesDuringSearch.disabled = "";
-
 
     } else {
 
