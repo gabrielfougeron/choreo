@@ -10,6 +10,7 @@ Hence, in this file, performance is favored against readability or ease of use.
 
 This file also defines global constants in both C and Python format like the nuber of space dimensions (ndim), the potential law, etc ...
 
+
 '''
 
 import os
@@ -73,7 +74,8 @@ cdef double hash_exp4 = -0.8
 # ~ cdef double hash_exp11 = -0.49999
 # ~ cdef double hash_exp12 = -0.5
 
-cdef long cnhash = 3
+# ~ cdef long cnhash = 3
+cdef long cnhash = 5
 # cdef long cnhash = 13
 
 # Python definition of the very same variables

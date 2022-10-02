@@ -25,10 +25,12 @@ if platform.system() == "Windows":
     extra_compile_args = ["/O2"]
 
 else:
+    # extra_compile_args = ["-O0"]
     # extra_compile_args = ["-O2"]
     # extra_compile_args = ["-O2","-march=native"]
     # extra_compile_args = ["-O3","-ffast-math","-march=native"]
-    extra_compile_args = ["-O3","-march=native"]
+    extra_compile_args = ["-O3"]
+    # extra_compile_args = ["-O3","-march=native"]
 
 extra_link_args = []
 
