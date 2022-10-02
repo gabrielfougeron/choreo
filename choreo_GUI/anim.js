@@ -277,8 +277,10 @@ function canvasApp() {
 				max: 360,
 				mouseScrollAction: true,
 				step: 5,
-				editableTooltip: false,
-				change:onRotationChange,
+				// editableTooltip: false,
+				// change:onRotationChange,
+				valueChange:onRotationValueChange,
+				disabled:false,
 			});
 		
 		// Load the static gallery
@@ -518,7 +520,7 @@ function canvasApp() {
 	function trajectoryButtonHandler(e) {
 		if (trajectoriesOn) {
 			trajectoriesOn = false;
-			trajectoryButton.textContent ="Draw";
+			trajectoryButton.textContent ="Draw trails";
 			clearScreen();
 		}
 		else {
@@ -612,23 +614,46 @@ function canvasApp() {
 		RemoveOrbit(i_remove)
 	}
 
-	function onRotationChange(e){
+// 	function onRotationChange(e){
+// 
+// 		GlobalRot_angle = e.value * 2* Math.PI / 360.;
+// 		GlobalRot = [
+// 			[ Math.cos(GlobalRot_angle), Math.sin(GlobalRot_angle)],
+// 			[-Math.sin(GlobalRot_angle), Math.cos(GlobalRot_angle)]
+// 		]
+// 
+// 		var delta_angle = (e.value - e.preValue)* 2* Math.PI / 360.;
+// 		
+// 		RotateCanvas(displayCanvas,context,delta_angle);
+// 		
+// 		setParticlePositions(time);
+// 		setParticlePositions(time); // dirty hack
+// 		clearParticleLayer();
+// 		drawParticles();
+// 
+// 	}
 
-		GlobalRot_angle = e.value * 2* Math.PI / 360.;
-		GlobalRot = [
-			[ Math.cos(GlobalRot_angle), Math.sin(GlobalRot_angle)],
-			[-Math.sin(GlobalRot_angle), Math.cos(GlobalRot_angle)]
-		]
+	function onRotationValueChange(e){
 
-		var delta_angle = (e.value - e.preValue)* 2* Math.PI / 360.;
-		
-		RotateCanvas(displayCanvas,context,delta_angle);
-		
-		setParticlePositions(time);
-		setParticlePositions(time); // dirty hack
-		clearParticleLayer();
-		drawParticles();
+		if ((e.action == 'code') || (e.action == 'change')) {
 
+			GlobalRot_angle = e.value * 2* Math.PI / 360.;
+			GlobalRot = [
+				[ Math.cos(GlobalRot_angle), Math.sin(GlobalRot_angle)],
+				[-Math.sin(GlobalRot_angle), Math.cos(GlobalRot_angle)]
+			]
+
+			var delta_angle = (e.value - e.preValue)* 2* Math.PI / 360.;
+			
+			RotateCanvas(displayCanvas,context,delta_angle);
+			
+			setParticlePositions(time);
+			setParticlePositions(time); // dirty hack
+			clearParticleLayer();
+			drawParticles();
+
+
+		}
 	}
 
 	function RotateCanvas(canvas,ctx,angle){

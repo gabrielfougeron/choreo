@@ -58,6 +58,9 @@ async function Play_Loop_From_Python(args){
     var ChoreoDispInitStateBtn = document.getElementById("ChoreoDispInitStateBtn");
     ChoreoDispInitStateBtn.disabled = "";
 
+    var RotSlider = $("#RotSlider").data("roundSlider");
+    RotSlider.enable();
+
     var Python_State_Div = document.getElementById("Python_State_Div");
     Python_State_Div.innerHTML = "Ready";
     Python_State_Div.classList.add('w3-green');
@@ -223,6 +226,10 @@ function ChoreoExecuteClick() {
         Python_State_Div.classList.remove('w3-red');
 
         if (document.getElementById('checkbox_DisplayLoopsDuringSearch').checked) {
+
+            var RotSlider = $("#RotSlider").data("roundSlider");
+            RotSlider.setValue(0);
+            RotSlider.disable();
 
             var event = new Event('StopAnimationFromOutsideCanvas');
             displayCanvas.dispatchEvent(event);
@@ -1442,6 +1449,7 @@ function checkbox_DisplayLoopsDuringSearchHandler(event) {
 
     } else {
 
+        checkbox_DisplayBodiesDuringSearch.checked = false;
         checkbox_DisplayBodiesDuringSearch.disabled = "disabled";
         
     }
