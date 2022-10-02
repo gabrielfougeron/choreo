@@ -41,11 +41,22 @@ async function Play_Loop_From_Python(args){
     PlotInfo = JSON.parse(txt);
     Pos = {"data":args.NPY_data,"shape":args.NPY_shape};
 
-    var event = new Event('FinalizeAndPlayFromOutsideCanvas');
-    displayCanvas.dispatchEvent(event);
+    if (document.getElementById('checkbox_DisplayLoopsDuringSearch').checked) {
+
+        trajectoriesOn = true;
+
+    }
 
     var event = new Event('EnableAnimationFromOutsideCanvas');
     displayCanvas.dispatchEvent(event);
+
+    var event = new Event('FinalizeAndPlayFromOutsideCanvas');
+    displayCanvas.dispatchEvent(event);
+
+    var ChoreoExecuteBtn = document.getElementById("ChoreoExecuteBtn");
+    ChoreoExecuteBtn.disabled = "";
+    var ChoreoDispInitStateBtn = document.getElementById("ChoreoDispInitStateBtn");
+    ChoreoDispInitStateBtn.disabled = "";
 
     var Python_State_Div = document.getElementById("Python_State_Div");
     Python_State_Div.innerHTML = "Ready";
@@ -69,13 +80,6 @@ async function Plot_Loops_During_Optim_From_Python(args){
 	var displayCanvas = document.getElementById("displayCanvas");
 
     Pos = {"data":args.NPY_data,"shape":args.NPY_shape};
-
-    plotWindow = {
-        xMin : PlotInfo["xinf"],
-        xMax : PlotInfo["xsup"],
-        yMin : PlotInfo["yinf"],
-        yMax : PlotInfo["ysup"],
-    }
 
     setPlotWindow(args.Current_PlotWindow);
 
@@ -202,6 +206,11 @@ function ChoreoExecuteClick() {
 
     if (!document.getElementById("ChoreoExecuteBtn").disabled) {
 
+        var ChoreoExecuteBtn = document.getElementById("ChoreoExecuteBtn");
+        ChoreoExecuteBtn.disabled = "disabled";
+        var ChoreoDispInitStateBtn = document.getElementById("ChoreoDispInitStateBtn");
+        ChoreoDispInitStateBtn.disabled = "disabled";
+
         var displayCanvas = document.getElementById("displayCanvas");
 
         PythonClearPrints();
@@ -215,8 +224,13 @@ function ChoreoExecuteClick() {
 
         if (document.getElementById('checkbox_DisplayLoopsDuringSearch').checked) {
 
-            var event = new Event('DisableAnimationFromOutsideCanvas');
+            var event = new Event('StopAnimationFromOutsideCanvas');
             displayCanvas.dispatchEvent(event);
+
+            var event = new Event('DisableAnimationFromOutsideCanvas');
+            displayCanvas.dispatchEvent(event);  
+
+            trajectoriesOn = false;
 
         }
 
@@ -230,14 +244,6 @@ function ChoreoExecuteClick() {
 }
 
 function TestClick() {
-
-    var displayCanvas = document.getElementById("displayCanvas");
-
-    // pyodide_worker.postMessage({funname:"ExecutePythonFile",args:"./python_scripts/test.py"});
-
-    var send_event = new Event('DrawAllPathsFromOutsideCanvas');
-    displayCanvas.dispatchEvent(send_event);
-
 
 }
 
@@ -358,6 +364,7 @@ function GatherConfigDict() {
 
     ConfigDict['Animation_Search'] = {};
     ConfigDict['Animation_Search'] ['DisplayLoopsDuringSearch']  = document.getElementById('checkbox_DisplayLoopsDuringSearch').checked  ;
+    ConfigDict['Animation_Search'] ['DisplayBodiesDuringSearch']  = document.getElementById('checkbox_DisplayBodiesDuringSearch').checked  ;
 
     ConfigDict['Solver_Discr'] = {};
     ConfigDict['Solver_Discr'] ['Use_exact_Jacobian']  = document.getElementById('checkbox_exactJ').checked            ;
@@ -524,6 +531,13 @@ function LoadConfigDict(ConfigDict) {
     document.getElementById('input_Limit_FPS').value = ConfigDict['Animation_Framerate'] ['input_Limit_FPS'] 
 
     document.getElementById('checkbox_DisplayLoopsDuringSearch').checked = ConfigDict['Animation_Search'] ['DisplayLoopsDuringSearch'];
+    if (document.getElementById('checkbox_DisplayLoopsDuringSearch').checked) {
+        document.getElementById('checkbox_DisplayBodiesDuringSearch').disabled = "";
+    } else {
+        document.getElementById('checkbox_DisplayBodiesDuringSearch').disabled = "disabled";
+    }
+
+    document.getElementById('checkbox_DisplayBodiesDuringSearch').checked = ConfigDict['Animation_Search'] ['DisplayBodiesDuringSearch'];
 
     document.getElementById('checkbox_exactJ').checked         = ConfigDict['Solver_Discr'] ['Use_exact_Jacobian']  ;
     document.getElementById('input_ncoeff_init').value         = ConfigDict['Solver_Discr'] ['ncoeff_init']         ;
@@ -1412,3 +1426,30 @@ function PythonPrint(args) {
     }
 
 }
+
+var checkbox_DisplayLoopsDuringSearch = document.getElementById('checkbox_DisplayLoopsDuringSearch');
+checkbox_DisplayLoopsDuringSearch.addEventListener("change", checkbox_DisplayLoopsDuringSearchHandler, true);
+
+var checkbox_DisplayBodiesDuringSearch = document.getElementById('checkbox_DisplayBodiesDuringSearch');
+checkbox_DisplayBodiesDuringSearch.addEventListener("change", checkbox_DisplayBodiesDuringSearchHandler, true);
+
+function checkbox_DisplayLoopsDuringSearchHandler(event) {
+
+    if (event.currentTarget.checked) {
+
+        checkbox_DisplayBodiesDuringSearch.disabled = "";
+
+
+    } else {
+
+        checkbox_DisplayBodiesDuringSearch.disabled = "disabled";
+        
+    }
+
+}
+
+function checkbox_DisplayBodiesDuringSearchHandler(event) {
+
+}
+
+
