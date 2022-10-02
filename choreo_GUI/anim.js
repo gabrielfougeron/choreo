@@ -136,7 +136,7 @@ function canvasApp() {
 
 	var tInc;
 
-	var time;
+	var time = 0;
 
 	var bgColor = "#F1F1F1";
 	var request;
@@ -579,8 +579,11 @@ function canvasApp() {
 	}
 
 	function FinalizeAndPlayFromOutsideCanvasHandler(e) {
+
 		UnselectOrbit();
-		clearScreen();
+		if (e.DoClearScreen) {
+			clearScreen();
+		}
 		FinalizeSetOrbit() ;
 		startAnimation();
 	}
@@ -1135,11 +1138,9 @@ function canvasApp() {
 
 		setPlotWindow(plotWindow);
 
-		clearScreen();
-				
-		time = 0;
+		// time = 0;
 
-		setParticlePositions(0);
+		setParticlePositions(time);
 		resetLastPositions();
 		setStartPositions();
 		
@@ -1163,7 +1164,9 @@ function canvasApp() {
 		Pos = AllPos[orbitIndex];
 		PlotInfo = AllPlotInfo[orbitIndex];
 
+		clearScreen();
 		FinalizeSetOrbit();
+		
 
 	}
 

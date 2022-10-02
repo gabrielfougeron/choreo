@@ -51,6 +51,8 @@ async function Play_Loop_From_Python(args){
     displayCanvas.dispatchEvent(event);
 
     var event = new Event('FinalizeAndPlayFromOutsideCanvas');
+    event.DoClearScreen = true; // TODO: Set this to false and fix xminmax !!!!
+    // event.DoClearScreen = false;
     displayCanvas.dispatchEvent(event);
 
     var ChoreoExecuteBtn = document.getElementById("ChoreoExecuteBtn");
