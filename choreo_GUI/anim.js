@@ -277,8 +277,6 @@ function canvasApp() {
 		// Load the static gallery
 		LoadGallery();
 
-		// startAnimation();
-
 	}
 	
 	function setColorLookupList() {
@@ -462,6 +460,7 @@ function canvasApp() {
 	}
 
 	function anim_particles() {
+		
 		UpdateFPSDisplay();
 		setPeriodTime();
 		onTimer();
@@ -661,8 +660,11 @@ function canvasApp() {
 
 	function onTimer() {
 
+
 		if (trajectoriesOn) {
 			
+
+			// console.log(fadeScreenColor);
 			//fade
 			context.fillStyle = fadeScreenColor;
 			
@@ -837,6 +839,8 @@ function canvasApp() {
 
 		var il,ib,ilb,nlb;
 		var p;
+
+		// context.reset();
 
         for ( il = 0 ; il < PlotInfo['nloop'] ; il++){
 
