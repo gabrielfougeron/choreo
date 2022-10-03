@@ -1200,7 +1200,7 @@ function canvasApp() {
 				setOrbit(0);
 				
 				
-				PythonPrint({txt:"Loading Python ...&#10;"});
+				PythonPrint({txt:"Loading python ...&#10;"});
 
 
 				startAnimation();

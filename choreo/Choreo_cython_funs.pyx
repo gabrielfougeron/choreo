@@ -202,14 +202,14 @@ def Compute_action_Cython(
         for ib in range(loopnb[il]):
                 
             if not(((-TimeRevsUn[il,ib]*nint*TimeShiftNumUn[il,ib]) % TimeShiftDenUn[il,ib]) == 0):
-                print("WARNING : remainder in integer division")
+                print("WARNING: remainder in integer division. Gradient computation will fail.")
                 
             all_shiftsUn[il,ib] = ((-TimeRevsUn[il,ib]*nint*TimeShiftNumUn[il,ib]) // TimeShiftDenUn[il,ib] ) % nint
         
         for ibi in range(loopnbi[il]):
 
             if not(((-TimeRevsBin[il,ibi]*nint*TimeShiftNumBin[il,ibi]) % TimeShiftDenBin[il,ibi]) == 0):
-                print("WARNING : remainder in integer division")
+                print("WARNING: remainder in integer division. Gradient computation will fail.")
                 
             all_shiftsBin[il,ibi] = ((-TimeRevsBin[il,ibi]*nint*TimeShiftNumBin[il,ibi]) // TimeShiftDenBin[il,ibi]) % nint
     
@@ -387,14 +387,14 @@ def Compute_hash_action_Cython(
         for ib in range(loopnb[il]):
                 
             if not(((-TimeRevsUn[il,ib]*nint*TimeShiftNumUn[il,ib]) % TimeShiftDenUn[il,ib]) == 0):
-                print("WARNING : remainder in integer division")
+                print("WARNING: remainder in integer division. Gradient computation will fail.")
                 
             all_shiftsUn[il,ib] = ((-TimeRevsUn[il,ib]*nint*TimeShiftNumUn[il,ib]) // TimeShiftDenUn[il,ib] ) % nint
         
         for ibi in range(loopnbi[il]):
 
             if not(((-TimeRevsBin[il,ibi]*nint*TimeShiftNumBin[il,ibi]) % TimeShiftDenBin[il,ibi]) == 0):
-                print("WARNING : remainder in integer division")
+                print("WARNING: remainder in integer division. Gradient computation will fail.")
                 
             all_shiftsBin[il,ibi] = ((-TimeRevsBin[il,ibi]*nint*TimeShiftNumBin[il,ibi]) // TimeShiftDenBin[il,ibi]) % nint
     
@@ -510,14 +510,14 @@ def Compute_MinDist_Cython(
         for ib in range(loopnb[il]):
                 
             if not(((-TimeRevsUn[il,ib]*nint*TimeShiftNumUn[il,ib]) % TimeShiftDenUn[il,ib]) == 0):
-                print("WARNING : remainder in integer division")
+                print("WARNING: remainder in integer division. Gradient computation will fail.")
                 
             all_shiftsUn[il,ib] = ((-TimeRevsUn[il,ib]*nint*TimeShiftNumUn[il,ib]) // TimeShiftDenUn[il,ib] ) % nint
         
         for ibi in range(loopnbi[il]):
 
             if not(((-TimeRevsBin[il,ibi]*nint*TimeShiftNumBin[il,ibi]) % TimeShiftDenBin[il,ibi]) == 0):
-                print("WARNING : remainder in integer division")
+                print("WARNING: remainder in integer division. Gradient computation will fail.")
                 
             all_shiftsBin[il,ibi] = ((-TimeRevsBin[il,ibi]*nint*TimeShiftNumBin[il,ibi]) // TimeShiftDenBin[il,ibi]) % nint
 
@@ -850,14 +850,14 @@ def Compute_action_hess_mul_Cython(
         for ib in range(loopnb[il]):
                 
             if not(((-TimeRevsUn[il,ib]*nint*TimeShiftNumUn[il,ib]) % TimeShiftDenUn[il,ib]) == 0):
-                print("WARNING : remainder in integer division")
+                print("WARNING: remainder in integer division. Gradient computation will fail.")
                 
             all_shiftsUn[il,ib] = ((-TimeRevsUn[il,ib]*nint*TimeShiftNumUn[il,ib]) // TimeShiftDenUn[il,ib] ) % nint
         
         for ibi in range(loopnbi[il]):
 
             if not(((-TimeRevsBin[il,ibi]*nint*TimeShiftNumBin[il,ibi]) % TimeShiftDenBin[il,ibi]) == 0):
-                print("WARNING : remainder in integer division")
+                print("WARNING: remainder in integer division. Gradient computation will fail.")
                 
             all_shiftsBin[il,ibi] = ((-TimeRevsBin[il,ibi]*nint*TimeShiftNumBin[il,ibi]) // TimeShiftDenBin[il,ibi]) % nint
     
@@ -1027,7 +1027,7 @@ def Compute_Newton_err_Cython(
         for ib in range(loopnb[il]):
                 
             if not(((-TimeRevsUn[il,ib]*nint*TimeShiftNumUn[il,ib]) % TimeShiftDenUn[il,ib]) == 0):
-                print("WARNING : remainder in integer division")
+                print("WARNING: remainder in integer division. Gradient computation will fail.")
                 
             all_shiftsUn[il,ib] = ((-TimeRevsUn[il,ib]*nint*TimeShiftNumUn[il,ib]) // TimeShiftDenUn[il,ib] ) % nint
         
@@ -1572,10 +1572,14 @@ def diag_changevar(
 
         if (k >=1):
             kd = k
-            # ~ kd = k*ctwopi*cpow(2.*MassSum[il],0.5) # The jury is still out
+            # kd = k*ctwopi*cpow(2.*MassSum[il],0.5) # The jury is still out
+            # kd = k*MassSum[il] # The jury is still out
+            
+            
             kfac = cpow(kd,n_grad_change)
         else:
             kfac = 1.
+            # kfac = MassSum[il]
         
         data[idx] *= kfac
     
