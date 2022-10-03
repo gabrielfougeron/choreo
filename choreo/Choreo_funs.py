@@ -1522,23 +1522,32 @@ def Make_Init_bounds_coeffs(nloop,ncoeff,coeff_ampl_o=1e-1,k_infl=1,k_max=200,co
     randlimfac = 0.1
     # randlimfac = 0.
     
-    coeff_slope = m.log(coeff_ampl_o/coeff_ampl_min)/(k_max-k_infl)
+    try:
 
-    for il in range(nloop):
-        for idim in range(ndim):
-            for k in range(1,ncoeff):
+        coeff_slope = m.log(coeff_ampl_o/coeff_ampl_min)/(k_max-k_infl)
 
-                if (k <= k_infl):
-                    randampl = coeff_ampl_o
-                else:
-                    randampl = coeff_ampl_o * m.exp(-coeff_slope*(k-k_infl))
+        for il in range(nloop):
+            for idim in range(ndim):
+                for k in range(1,ncoeff):
 
-                all_coeffs_min[il,idim,k,0] = -randampl* (1+random.random()*randlimfac)
-                all_coeffs_min[il,idim,k,1] = -randampl* (1+random.random()*randlimfac)
-                all_coeffs_max[il,idim,k,0] =  randampl* (1+random.random()*randlimfac)
-                all_coeffs_max[il,idim,k,1] =  randampl* (1+random.random()*randlimfac)
-    
+                    if (k <= k_infl):
+                        randampl = coeff_ampl_o
+                    else:
+                        randampl = coeff_ampl_o * m.exp(-coeff_slope*(k-k_infl))
+
+                    all_coeffs_min[il,idim,k,0] = -randampl* (1+random.random()*randlimfac)
+                    all_coeffs_min[il,idim,k,1] = -randampl* (1+random.random()*randlimfac)
+                    all_coeffs_max[il,idim,k,0] =  randampl* (1+random.random()*randlimfac)
+                    all_coeffs_max[il,idim,k,1] =  randampl* (1+random.random()*randlimfac)
+        
+    except:
+
+        print("An error occured during initial random coefficient bounds initialization.")
+        print("Please check your Random parameters for consistency.")
+
     return all_coeffs_min,all_coeffs_max
+
+
 
 def Param_to_Param_direct(x,callfun_source,callfun_target):
 
