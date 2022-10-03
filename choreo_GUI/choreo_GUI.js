@@ -41,18 +41,23 @@ async function Play_Loop_From_Python(args){
     PlotInfo = JSON.parse(txt);
     Pos = {"data":args.NPY_data,"shape":args.NPY_shape};
 
-    if (document.getElementById('checkbox_DisplayLoopsDuringSearch').checked) {
-
-        trajectoriesOn = true;
-
-    }
-
     var event = new Event('EnableAnimationFromOutsideCanvas');
     displayCanvas.dispatchEvent(event);
 
     var event = new Event('FinalizeAndPlayFromOutsideCanvas');
-    event.DoClearScreen = true; // TODO: Set this to false and fix xminmax !!!!
-    // event.DoClearScreen = false;
+    if (document.getElementById('checkbox_DisplayLoopsDuringSearch').checked) {
+
+        trajectoriesOn = true;
+
+        event.DoClearScreen = args.DoClearScreen;
+        event.DoXMinMax = args.DoXMinMax;
+
+    } else {
+
+        event.DoClearScreen = true;
+        event.DoXMinMax = true;
+    }
+
     displayCanvas.dispatchEvent(event);
 
     var ChoreoExecuteBtn = document.getElementById("ChoreoExecuteBtn");

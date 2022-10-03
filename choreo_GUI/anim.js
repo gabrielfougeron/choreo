@@ -575,7 +575,6 @@ function canvasApp() {
 	
 		}
 
-
 	}
 
 	function FinalizeAndPlayFromOutsideCanvasHandler(e) {
@@ -584,7 +583,7 @@ function canvasApp() {
 		if (e.DoClearScreen) {
 			clearScreen();
 		}
-		FinalizeSetOrbit() ;
+		FinalizeSetOrbit(DoDrawParticles=true,DoXMinMax = e.DoXMinMax ) ;
 		startAnimation();
 	}
 
@@ -1124,18 +1123,20 @@ function canvasApp() {
 
 	}
 
-	function FinalizeSetOrbit(DoDrawParticles=true) {
+	function FinalizeSetOrbit(DoDrawParticles=true,DoXMinMax=true) {
 
 		makeParticles();
 
-		plotWindow = {
-			xMin : PlotInfo["xinf"],
-			xMax : PlotInfo["xsup"],
-			yMin : PlotInfo["yinf"],
-			yMax : PlotInfo["ysup"],
-		}
+		if(DoXMinMax) {
+			plotWindow = {
+				xMin : PlotInfo["xinf"],
+				xMax : PlotInfo["xsup"],
+				yMin : PlotInfo["yinf"],
+				yMax : PlotInfo["ysup"],
+			}
 
-		setPlotWindow(plotWindow);
+			setPlotWindow(plotWindow);
+		}
 
 		// time = 0;
 
