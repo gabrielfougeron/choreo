@@ -835,12 +835,9 @@ function canvasApp() {
 		var xl,yl;
 		var x,y;
 		var Pixx,Pixy;
-		var PixxPrev,PixyPrev;
 
 		var il,ib,ilb,nlb;
 		var p;
-
-		// context.reset();
 
         for ( il = 0 ; il < PlotInfo['nloop'] ; il++){
 
@@ -862,8 +859,11 @@ function canvasApp() {
 					x = PlotInfo['SpaceRotsUn'][il][ilb][0][0] * xl + PlotInfo['SpaceRotsUn'][il][ilb][0][1] * yl ;
 					y = PlotInfo['SpaceRotsUn'][il][ilb][1][0] * xl + PlotInfo['SpaceRotsUn'][il][ilb][1][1] * yl ;
 
-					PixxPrev = xPixRate*(x - xMin) ;
-					PixyPrev = yPixRate*(y - yMax) ;
+					Pixx = xPixRate*(x - xMin) ;
+					Pixy = yPixRate*(y - yMax) ;
+
+					context.beginPath();
+					context.moveTo(Pixx, Pixy);
 
 					for (i_pos = 1 ; i_pos < n_pos ; i_pos++){
 
@@ -877,14 +877,7 @@ function canvasApp() {
 						Pixx = xPixRate*(x - xMin) ;
 						Pixy = yPixRate*(y - yMax) ;
 
-						//trail
-						context.beginPath();
-						context.moveTo(PixxPrev,PixyPrev);
 						context.lineTo(Pixx, Pixy);
-						context.stroke();
-
-						PixxPrev = Pixx ;
-						PixyPrev = Pixy ;
 
 					}
 
@@ -898,9 +891,6 @@ function canvasApp() {
 					Pixx = xPixRate*(x - xMin) ;
 					Pixy = yPixRate*(y - yMax) ;
 
-					//trail
-					context.beginPath();
-					context.moveTo(PixxPrev,PixyPrev);
 					context.lineTo(Pixx, Pixy);
 					context.stroke();
 
