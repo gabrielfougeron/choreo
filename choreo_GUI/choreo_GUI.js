@@ -103,6 +103,9 @@ async function Python_Imports_Done(args){
     ChoreoExecuteBtn.disabled = "";
     var ChoreoDispInitStateBtn = document.getElementById("ChoreoDispInitStateBtn");
     ChoreoDispInitStateBtn.disabled = "";
+
+    var RotSlider = $("#RotSlider").data("roundSlider");
+    RotSlider.enable();
     
     var Python_State_Div = document.getElementById("Python_State_Div");
 

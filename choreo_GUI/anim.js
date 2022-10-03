@@ -638,7 +638,9 @@ function canvasApp() {
 
 	function onRotationValueChange(e){
 
-		if ((e.action == 'code') || (e.action == 'change')) {
+		console.log(e.action);
+
+		if ((e.action == 'code') || (e.action == 'change') || (e.action == 'drag')) {
 
 			GlobalRot_angle = e.value * 2* Math.PI / 360.;
 			GlobalRot = [
