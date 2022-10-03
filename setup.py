@@ -60,7 +60,7 @@ ext_modules = cythonize(extension, language_level = "3",annotate=True)
 setup(
     name = "choreo",
     author = "Gabriel Fougeron <gabriel.fougeron@hotmail.fr>",
-    url = "https://github.com/gabrielfougeron/Choreographies2",
+    url = "https://github.com/gabrielfougeron/choreo",
     version = __version__,
     description='',
     license = "BSD 2-Clause License",

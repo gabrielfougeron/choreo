@@ -44,19 +44,18 @@ async function Play_Loop_From_Python(args){
     var event = new Event('EnableAnimationFromOutsideCanvas');
     displayCanvas.dispatchEvent(event);
 
-    var event = new Event('FinalizeAndPlayFromOutsideCanvas');
+
     if (document.getElementById('checkbox_DisplayLoopsDuringSearch').checked) {
 
         trajectoriesOn = true;
+	
+        document.getElementById("trajectoryButton").textContent ="Hide trails"
 
-        event.DoClearScreen = args.DoClearScreen;
-        event.DoXMinMax = args.DoXMinMax;
+    } 
 
-    } else {
-
-        event.DoClearScreen = true;
-        event.DoXMinMax = true;
-    }
+    var event = new Event('FinalizeAndPlayFromOutsideCanvas');
+    event.DoClearScreen = args.DoClearScreen;
+    event.DoXMinMax = args.DoXMinMax;
 
     displayCanvas.dispatchEvent(event);
 

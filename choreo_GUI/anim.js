@@ -89,15 +89,6 @@ async function ListFilesInFolder(folder){
 
 }
 
-function trace(message) {
-	try {
-		console.log(message);
-	}
-	catch (exception) {
-		return;
-	}
-}
-
 function windowLoadHandler() {
 	canvasApp();
 }
@@ -461,6 +452,7 @@ function canvasApp() {
 				n_valid_dt_animation +=1;
 
 				FPS_estimation = n_valid_dt_animation/Elapsed_Time_During_Animation;
+
 			}
 		
 		}
@@ -469,34 +461,36 @@ function canvasApp() {
 
 	}
 
-	function anim() {
+	function anim_particles() {
 		UpdateFPSDisplay();
 		setPeriodTime();
 		onTimer();
+	}
+
+	function anim_particles_loop(Time_since_origin){
+
+		request = requestAnimationFrame(anim_particles_loop);
+
+		if (Do_Limit_FPS) {
+
+			if (anim_schedule_time < Time_since_origin) {
+				anim_schedule_time += 1000/FPS_limit ;
+				Estimate_FPS(Time_since_origin);
+				anim_particles();
+			}
+
+		} else {
+			Estimate_FPS(Time_since_origin);
+			anim_particles();
+		}
+
 	}
 	
 	function startAnimation() {
 		running = true;
 		startStopButton.textContent = "Stop";
 		input_Limit_FPS_Handler();
-		(function animloop(Time_since_origin){
-
-			request = requestAnimationFrame(animloop);
-
-			if (Do_Limit_FPS) {
-
-				if (anim_schedule_time < Time_since_origin) {
-					anim_schedule_time += 1000/FPS_limit ;
-					Estimate_FPS(Time_since_origin);
-					anim();
-				}
-
-			} else {
-				Estimate_FPS(Time_since_origin);
-				anim();
-			}
-
-		})();
+		anim_particles_loop();
 	}
 
 	function stopAnimation() {
@@ -516,7 +510,7 @@ function canvasApp() {
 			}
 		}
 	}
-	
+
 	function trajectoryButtonHandler(e) {
 		if (trajectoriesOn) {
 			trajectoriesOn = false;
@@ -567,7 +561,7 @@ function canvasApp() {
 		UnselectOrbit();
 		clearScreen();
 		clearParticleLayer();
-		FinalizeSetOrbit(DoDrawParticles=false) ;
+		FinalizeSetOrbit(DoDrawParticles=false,DoXMinMax=true) ;
 
 		if (document.getElementById('checkbox_DisplayBodiesDuringSearch').checked) {
 
@@ -615,25 +609,6 @@ function canvasApp() {
 
 		RemoveOrbit(i_remove)
 	}
-
-// 	function onRotationChange(e){
-// 
-// 		GlobalRot_angle = e.value * 2* Math.PI / 360.;
-// 		GlobalRot = [
-// 			[ Math.cos(GlobalRot_angle), Math.sin(GlobalRot_angle)],
-// 			[-Math.sin(GlobalRot_angle), Math.cos(GlobalRot_angle)]
-// 		]
-// 
-// 		var delta_angle = (e.value - e.preValue)* 2* Math.PI / 360.;
-// 		
-// 		RotateCanvas(displayCanvas,context,delta_angle);
-// 		
-// 		setParticlePositions(time);
-// 		setParticlePositions(time); // dirty hack
-// 		clearParticleLayer();
-// 		drawParticles();
-// 
-// 	}
 
 	function onRotationValueChange(e){
 
@@ -837,18 +812,17 @@ function canvasApp() {
 
 	}
 
+	function anim_path(Time_since_origin){
+
+		clearScreen();
+		DrawAllPaths();
+
+	}
+
+
 	function DrawAllPathsFromOutsideCanvasHandler() {
 
-		trajectoriesOn = false
-
-		request = requestAnimationFrame(
-			function animloop(Time_since_origin){
-
-				clearScreen();
-				DrawAllPaths();
-		
-			}
-		);
+		request = requestAnimationFrame(anim_path);
 
 	}
 

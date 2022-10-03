@@ -318,8 +318,8 @@ def main():
                     "JSON_data":blob,
                     "NPY_data":all_pos.reshape(-1),
                     "NPY_shape":all_pos.shape,
-                    "DoClearScreen":False,
-                    "DoXMinMax":False,
+                    "DoClearScreen":not(params_dict['Animation_Search']['DisplayLoopsDuringSearch']),
+                    "DoXMinMax":not(params_dict['Animation_Search']['DisplayLoopsDuringSearch']),
                 },
                 dict_converter=js.Object.fromEntries
             )
