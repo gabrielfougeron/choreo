@@ -273,7 +273,7 @@ def Find_Choreo(
                 jac_options = {'method':krylov_method,'rdiff':rdiff,'outer_k':outer_k,'inner_tol':inner_tol,'inner_M':inner_M }
             else:
                 jac_options = {'method':krylov_method,'rdiff':rdiff,'outer_k':outer_k,'inner_tol':inner_tol,'inner_M':inner_M }
-
+ 
             if (Use_exact_Jacobian):
 
                 FGrad = lambda x,dx : Compute_action_hess_mul(x,dx,callfun)

@@ -64,7 +64,7 @@ window.addEventListener("drop",function(e){
     <div class="w3-bar w3-light-grey TopTab Main">
       <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Main_Launch"     onclick="ClickTopTabBtn('Main_Launch')"     >Launch</button>
       <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Main_Gallery"  onclick="ClickTopTabBtn('Main_Gallery')"  >Gallery</button>
-      <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Main_Save_Config"     onclick="ClickTopTabBtn('Main_Save_Config')"     >Save Settings</button>
+      <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Main_Save_Config"     onclick="ClickTopTabBtn('Main_Save_Config')"     >Save settings</button>
       <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Main_Help"     onclick="ClickTopTabBtn('Main_Help')"     >Help</button>
       <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Main_About"    onclick="ClickTopTabBtn('Main_About')"    >About</button>
     </div>
@@ -128,9 +128,9 @@ window.addEventListener("drop",function(e){
   <div class="w3-container MainTab Main_Launch" style="display:none">
     <table style="border:0;margin-bottom:10px;">
       <tr>
-        <td style="border:0"><button id="ChoreoExecuteBtn"        class="w3-button w3-hover-pale-red w3-light-grey InTableControls" disabled="disabled" onclick="ChoreoExecuteClick()"      >Choreo Execute!</button></td>
-        <td style="border:0"><button id="ChoreoDispInitStateBtn"  class="w3-button w3-hover-pale-red w3-light-grey InTableControls" disabled="disabled" onclick="ChoreoDispInitStateClick()">Display Init State</button></td>
-        <td style="border:0"><button id="KillAndReloadWorkerBtn"  class="w3-button w3-hover-pale-red w3-light-grey InTableControls"                     onclick="KillAndReloadWorker()"     >Kill Worker</button></td>
+        <td style="border:0"><button id="ChoreoExecuteBtn"        class="w3-button w3-hover-pale-red w3-light-grey InTableControls" disabled="disabled" onclick="ChoreoExecuteClick()" ><b>Find periodic solution!</b></button></td>
+        <td style="border:0"><button id="ChoreoDispInitStateBtn"  class="w3-button w3-hover-pale-red w3-light-grey InTableControls" disabled="disabled" onclick="GenerateInitStateClick()">Generate init state</button></td>
+        <td style="border:0"><button id="KillAndReloadWorkerBtn"  class="w3-button w3-hover-pale-red w3-light-grey InTableControls"                     onclick="KillAndReloadWorker()"     >Reload worker</button></td>
       </tr>
     </table>
     <textarea id ="Python_textarea" readonly></textarea>
@@ -151,7 +151,7 @@ window.addEventListener("drop",function(e){
     </div>
   </div>
   <div class="w3-container MainTab Main_Save_Config" style="display:none">
-    <h2>Save Settings</h2>
+    <h2>Save settings</h2>
     <table style="font-size:16px; border:none; display:table">
       <tr>
         <td style="border:none;" ><button class="w3-button w3-hover-pale-red w3-light-grey" onclick="SaveConfigFile()">Save current settings as file</button></td>
@@ -208,11 +208,10 @@ window.addEventListener("drop",function(e){
     <h2>Bodies definition</h2>
     <table style="font-size:16px; border:none; display:table; max-width:400px">
       <tr>
-      <td style="border:none;" ><label for="checkbox_MomCons">Treat momentum conservation as a constraint:</label></td>
+      <td style="border:none;" ><label for="checkbox_MomCons">Treat momentum conservation as a constraint</label></td>
       <td style="border:none;"><input id ="checkbox_MomCons" class="w3-check" type="checkbox" style="vertical-align: super" unchecked></td>
     </tr>
     </table>
-    <br>
     <table id = "table_body_loop" style="table-layout: fixed;">
       <tr style="border-left-style:hidden;border-right-style:hidden;border-top-style:hidden;"><td style="width:120px;"><b><button class="w3-button w3-light-grey" style="text-align: center; font-size:16px" onclick="ClickAddBodyLoop()">Add Loop +</button></b></td></tr>
       <tr><td style="width:120px;"><b>Number of bodies</b></td></tr>
@@ -223,15 +222,15 @@ window.addEventListener("drop",function(e){
       <tr><td style="width:120px;"><b>Symmetry m</b></td></tr>
       <tr><td style="width:120px;"><b>Symmetry p</b></td></tr>
       <tr><td style="width:120px;"><b>Symmetry q</b></td></tr>
-      <tr><td style="width:120px;"><b>id range</b></td></tr>
+      <tr><td style="width:120px;"><b>Id range</b></td></tr>
     </table>
   </div>
   <div class="w3-container MainTab Geom_Target" style="display:none">
-    <h2>Initial state Target</h2>
+    <h2>Initial state target</h2>
     Feature to be added later.
   </div>
   <div class="w3-container MainTab Geom_Random" style="display:none">
-    <h2>Initial state Random</h2>
+    <h2>Initial state randomization </h2>
     <img src="img/Random_init_description.svg" alt="Description of the random initial state" height="360px" width="480px">
     <br>
     <div style = "max-width:350px; ">
@@ -320,22 +319,22 @@ window.addEventListener("drop",function(e){
   </div>
   <div class="w3-container MainTab Animation_Size" style="display:none">
     <h2>Size</h2>
-    <table style="font-size:16px; border:none; display:table">
+    <table style="font-size:16px; border:none; display:table; max-width:450px">
       <tr>
-      <td style="border:none;" ><label for="checkbox_Mass_Scale">Size scales with mass:</label></td>
+      <td style="border:none; max-width:100px;" ><label for="checkbox_Mass_Scale">Size scales with mass</label></td>
       <td style="border:none;"><input id ="checkbox_Mass_Scale" class="w3-check" type="checkbox" style="vertical-align: super" checked></td>
     </tr>
       <tr>
-        <td style="border:none">Body radius:</td>
-        <td style="border:none; max-width:100px; "><input type="range" id="input_body_radius"></td>
+        <td style="border:none; max-width:100px;">Body radius</td>
+        <td style="border:none;"><input type="range" id="input_body_radius"></td>
       </tr>
       <tr>
-        <td style="border:none">Trail width:</td>
-        <td style="border:none; max-width:100px; "><input type="range" id="input_trail_width"></td>
+        <td style="border:none; max-width:100px;">Trail width</td>
+        <td style="border:none;"><input type="range" id="input_trail_width"></td>
       </tr>
       <tr>
-        <td style="border:none">Trail vanish speed:</td>
-        <td style="border:none; max-width:100px; "><input type="range" id="input_trail_vanish_speed"></td>
+        <td style="border:none; max-width:100px;">Trail vanish speed</td>
+        <td style="border:none;"><input type="range" id="input_trail_vanish_speed"></td>
       </tr>
     </table>
   </div>
@@ -357,31 +356,32 @@ window.addEventListener("drop",function(e){
     </table>
   </div>
   <div class="w3-container MainTab Animation_Search" style="display:none">
-    <table style="font-size:16px; border:none; display:table">
+    <h2>Animations during search</h2>
+    <table style="font-size:16px; border:none; display:table; max-width:300px"">
       <tr>
         <td style="border:none;" ><label for="checkbox_DisplayLoopsDuringSearch">Display loops during search</label></td>
-        <td style="border:none;"><input id ="checkbox_DisplayLoopsDuringSearch" class="w3-check" type="checkbox" style="vertical-align: super" unchecked></td>
+        <td style="border:none;"><input id ="checkbox_DisplayLoopsDuringSearch" class="w3-check" type="checkbox" style="vertical-align: super" checked></td>
       </tr>
       <tr>
         <td style="border:none;" ><label for="checkbox_DisplayBodiesDuringSearch">Display bodies during search</label></td>
-        <td style="border:none;"><input id ="checkbox_DisplayBodiesDuringSearch" class="w3-check" type="checkbox" style="vertical-align: super" unchecked disabled="disabled"></td>
+        <td style="border:none;"><input id ="checkbox_DisplayBodiesDuringSearch" class="w3-check" type="checkbox" style="vertical-align: super" unchecked></td>
       </tr>
     </table>
   </div>
   <div class="w3-container MainTab Solver_Discr" style="display:none">
-    <h2>Solver Discretization</h2>
+    <h2>Problem discretization</h2>
     <div style = "max-width:400px; ">
       <table style="font-size:16px; border:none; display:table">
         <tr>
-          <td style="border:none;" ><label for="checkbox_exactJ">Use exact Jacobian</label></td>
+          <td style="border:none;" ><label for="checkbox_exactJ">Use exact jacobian</label></td>
           <td style="border:none;"><input id ="checkbox_exactJ" class="w3-check" type="checkbox" style="vertical-align: super" checked></td>
         </tr>
         <tr>
-          <td style="border:none"><h>Number of coefficients for level 1: </h></td>
+          <td style="border:none"><h>Number of coefficients for first level</h></td>
           <td style="border:none; max-width:100px; "><input type="number" id="input_ncoeff_init" value="300" style="text-align: center;"></td>
         </tr>
         <tr>
-          <td style="border:none"><h>Max refinement levels: </h><span id="display_n_reconverge_it_max"></span></td>
+          <td style="border:none"><h>Max refinement levels:&nbsp&nbsp&nbsp</h><span id="display_n_reconverge_it_max"></span></td>
           <td style="border:none; max-width:100px; "><input type="range" id="input_n_reconverge_it_max" value="4" min="1" max="5" oninput="SlideNReconvergeItMax()"></td>
         </tr>
       </table>
@@ -402,12 +402,13 @@ window.addEventListener("drop",function(e){
               <option value="bicgstab" selected>BiCGSTAB</option>
               <option value="cgs">CGS</option>
               <option value="minres">MINRES</option>
+              <!-- <option value="tfqmr">TFQMR</option> -->
             </select>
           </td>
         </tr>
         <tr>
           <td style="border:none;" >
-            <label for="linesearch_method">Line search method:</label>
+            <label for="linesearch_method">Line search method</label>
           </td>
            <td style="border:none; max-width:90px; ">
             <select class="w3-select" id="linesearch_method" name="linesearch_method" style="text-align: center;"> 
@@ -417,7 +418,7 @@ window.addEventListener("drop",function(e){
           </td>
         </tr>        <tr>
           <td style="border:none;" >
-            <label for="input_Newt_err_norm_max">Max Newton Error:</label>
+            <label for="input_Newt_err_norm_max">Max Newton error</label>
           </td>
            <td style="border:none; max-width:90px; ">
             <input type="text" id="input_Newt_err_norm_max" value="1e-12" style="text-align: center;" >
@@ -427,7 +428,7 @@ window.addEventListener("drop",function(e){
     </div>
   </div>
   <div class="w3-container MainTab Solver_Loop" style="display:none">
-    <h2>Structure of the convergence loop:</h2>
+    <h2>Convergence loop structure</h2>
     <br>
     <table id = "table_cvg_loop" style="table-layout: fixed;">
       <tr style="border-left-style:hidden;border-right-style:hidden;border-top-style:hidden;"><td style="width:120px;"><b>
@@ -441,7 +442,7 @@ window.addEventListener("drop",function(e){
     </table>
   </div>
   <div class="w3-container MainTab Solver_Checks" style="display:none">
-    <h2>Solver Checks</h2>
+    <h2>Solver checks</h2>
     <div style = "max-width:350px; ">
       <table style="font-size:16px; border:none; display:table">
         <tr>
@@ -449,20 +450,20 @@ window.addEventListener("drop",function(e){
             <label for="checkbox_duplicates">Look for duplicates</label>
           </td>
           <td style="border:none; max-width:90px; ">
-            <input id ="checkbox_duplicates" class="w3-check" type="checkbox" style="vertical-align: super" checked>
+            <input id ="checkbox_duplicates" class="w3-check" type="checkbox" style="vertical-align: super" checked disabled="disabled">
           </td>
         </tr>
         <tr>
           <td style="border:none;" >
-            <label for="input_duplicate_eps">Duplicate hash min difference</label>
+            <label for="input_duplicate_eps">Duplicate hash threshold</label>
           </td>
           <td style="border:none; max-width:90px; ">
-            <input id ="input_duplicate_eps" type="text" value="1e-8" style="text-align: center;">
+            <input id ="input_duplicate_eps" type="text" value="1e-8" style="text-align: center;" disabled="disabled">
           </td>
         </tr>
         <tr>
           <td style="border:none;" >
-            <label for="checkbox_escape">Look for loop escape</label>
+            <label for="checkbox_escape">Check for loop escape</label>
           </td>
           <td style="border:none; max-width:90px; ">
             <input id ="checkbox_escape" class="w3-check" type="checkbox" style="vertical-align: super" checked>

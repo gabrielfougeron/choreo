@@ -638,8 +638,6 @@ function canvasApp() {
 
 	function onRotationValueChange(e){
 
-		console.log(e.action);
-
 		if ((e.action == 'code') || (e.action == 'change') || (e.action == 'drag')) {
 
 			GlobalRot_angle = e.value * 2* Math.PI / 360.;
@@ -656,7 +654,6 @@ function canvasApp() {
 			setParticlePositions(time); // dirty hack
 			clearParticleLayer();
 			drawParticles();
-
 
 		}
 	}
@@ -1242,26 +1239,26 @@ function canvasApp() {
 			}
 		}
 	}
-
-	document.onkeyup = function (event) {
-
-		switch (event.code) {
-			case 'Space':
-				startStopButtonHandler();
-				break;
-			case 'Enter':
-			case 'NumpadEnter':
-				ChoreoExecuteClick();
-				break;
-			case 'ArrowRight':
-				SpeedPlusClick();
-				break;
-			case 'ArrowDown':
-				SpeedMinusClick();
-				break;
-
-		  }
-
-	}
+// 
+// 	document.onkeyup = function (event) {
+// 
+// 		switch (event.code) {
+// 			case 'Space':
+// 				startStopButtonHandler();
+// 				break;
+// 			case 'Enter':
+// 			case 'NumpadEnter':
+// 				ChoreoExecuteClick();
+// 				break;
+// 			case 'ArrowRight':
+// 				SpeedPlusClick();
+// 				break;
+// 			case 'ArrowDown':
+// 				SpeedMinusClick();
+// 				break;
+// 
+// 		  }
+// 
+// 	}
 
 }
