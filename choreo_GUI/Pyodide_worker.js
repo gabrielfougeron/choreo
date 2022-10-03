@@ -26,7 +26,7 @@ self.onmessage = function(message) {
 
     } else {
 
-        // console.log('WebWorker could not resolve message :',message);
+        console.log('WebWorker could not resolve message :',message);
 
     }
   }

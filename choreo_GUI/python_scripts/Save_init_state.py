@@ -235,6 +235,8 @@ def main():
                 "JSON_data":blob,
                 "NPY_data":all_pos.reshape(-1),
                 "NPY_shape":all_pos.shape,
+                "DoClearScreen":True,
+                "DoXMinMax":True,
             },
             dict_converter=js.Object.fromEntries
         )
