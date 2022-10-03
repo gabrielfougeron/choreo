@@ -157,17 +157,17 @@ function ClickTopTabBtn(TabId) {
 function  GeomTopTabBtn(TabId) {
     switch (TabId) {
         case 'Main': {
-        ClickTopTabBtn('Main_Launch');
-        break;}    
+            ClickTopTabBtn('Main_Launch');
+            break;}    
         case 'Geom': {
-        ClickTopTabBtn('Geom_Bodies');
-        break;}
+            ClickTopTabBtn('Geom_Bodies');
+            break;}
         case 'Animation': {
-        ClickTopTabBtn('Animation_Colors');
-        break;}
+            ClickTopTabBtn('Animation_Colors');
+            break;}
         case 'Solver': {
-        ClickTopTabBtn('Solver_Discr');
-        break;}
+            ClickTopTabBtn('Solver_Discr');
+            break;}
     }
 }
 
@@ -273,7 +273,7 @@ function ChoreoSaveInitStateClick() {
 
 }
 
-function ChoreoDispInitStateClick() {
+function GenerateInitStateClick() {
 
     PythonClearPrints();
 
