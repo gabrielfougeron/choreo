@@ -98,9 +98,9 @@ def Find_Choreo(
 
     """
     
-    print('Searching periodic solutions of {:d} bodies'.format(nbody))
+    print(f'Searching periodic solutions of {nbody:d} bodies.')
 
-    print('Processing symmetries for {0:d} convergence levels'.format(n_reconverge_it_max+1))
+    print(f'Processing symmetries for {(n_reconverge_it_max+1):d} convergence levels.')
     callfun = setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change,CrashOnIdentity=CrashOnError_changevar)
 
     print('')
@@ -117,21 +117,21 @@ def Find_Choreo(
         nbi_tot += loopnbi[il]
     nbi_naive = (nbody*(nbody-1))//2
 
-    print('Imposed constraints lead to the detection of :')
-    print('    {:d} independant loops'.format(nloop))
-    print('    {0:d} binary interactions'.format(nbi_tot))
-    print('    ==> reduction of {0:f} % wrt the {1:d} naive binary iteractions'.format(100*(1-nbi_tot/nbi_naive),nbi_naive))
+    print('Imposed constraints lead to the detection of:')
+    print(f'    {nloop:d} independant loops')
+    print(f'    {nbi_tot:d} binary interactions')
+    print(f'    ==> Reduction of {100*(1-nbi_tot/nbi_naive):.2f} % wrt the {nbi_naive:d} naive binary iteractions')
     print('')
 
     # for i in range(n_reconverge_it_max+1):
     for i in [0]:
         
         args = callfun[0]
-        print('Convergence attempt number : ',i+1)
-        print('    Number of Fourier coeffs : ',args['ncoeff_list'][i])
-        print('    Number of scalar parameters before constraints : ',args['coeff_to_param_list'][i].shape[1])
-        print('    Number of scalar parameters after  constraints : ',args['coeff_to_param_list'][i].shape[0])
-        print('    Reduction of ',100*(1-args['coeff_to_param_list'][i].shape[0]/args['coeff_to_param_list'][i].shape[1]),' %')
+        print(f'Convergence attempt number: {i+1}')
+        print(f"    Number of Fourier coeffs: {args['ncoeff_list'][i]}")
+        print(f"    Number of scalar parameters before constraints: {args['coeff_to_param_list'][i].shape[1]}")
+        print(f"    Number of scalar parameters after  constraints: {args['coeff_to_param_list'][i].shape[0]}")
+        print(f"    ==> Reduction of {100*(1-args['coeff_to_param_list'][i].shape[0]/args['coeff_to_param_list'][i].shape[1]):.2f} %")
         print('')
 
 
@@ -150,7 +150,7 @@ def Find_Choreo(
         if ((x_max[i] - x_min[i]) > rand_eps):
             rand_dim +=1
 
-    print('Number of initialization dimensions : ',rand_dim)
+    print(f'Number of initialization dimensions: {rand_dim}')
 
     sampler = UniformRandom(d=rand_dim)
 
@@ -160,8 +160,8 @@ def Find_Choreo(
         # print(xmin)
         # raise ValueError("Init inter body distance too low. There is something wrong with constraints")
         print("")
-        print(f"Init minimum inter body distance too low : {xmin}.")
-        print("There is likely something wrong with constraints")
+        print(f"Init minimum inter body distance too low: {xmin}")
+        print("There is likely something wrong with constraints.")
         print("")
 
         n_opt_max = -1
@@ -188,7 +188,7 @@ def Find_Choreo(
 
         n_opt += 1
         
-        print('Optimization attempt number : ',n_opt)
+        print(f'Optimization attempt number: {n_opt}')
 
         callfun[0]["current_cvg_lvl"] = 0
         ncoeff = callfun[0]["ncoeff_list"][callfun[0]["current_cvg_lvl"]]
@@ -242,7 +242,7 @@ def Find_Choreo(
         GoOn = (best_sol.f_norm < max_norm_on_entry)
         
         if not(GoOn):
-            print(f"Norm on entry is {best_sol.f_norm} which is too big.")
+            print(f"Norm on entry is {best_sol.f_norm:.2e} which is too big.")
         
         i_optim_param = 0
 
@@ -260,8 +260,8 @@ def Find_Choreo(
 
             ActionGradNormEnterLoop = best_sol.f_norm
             
-            print('Action Grad Norm on entry : ',ActionGradNormEnterLoop)
-            print('Optim level : ',i_optim_param+1,' / ',n_optim_param , '    Resize level : ',callfun[0]["current_cvg_lvl"]+1,' / ',n_reconverge_it_max+1)
+            print(f'Action Grad Norm on entry: {ActionGradNormEnterLoop:.2e}')
+            print(f'Optim level: {i_optim_param+1} / {n_optim_param}    Resize level: {callfun[0]["current_cvg_lvl"]+1} / {n_reconverge_it_max+1}')
             
             F = lambda x : Compute_action_onlygrad(x,callfun)
             
@@ -314,7 +314,7 @@ def Find_Choreo(
                 Escaped,_ = Detect_Escape(best_sol.x,callfun)
 
                 if Escaped:
-                    print('One loop escaped. Starting over')    
+                    print('One loop escaped. Starting over.')    
                     
                 GoOn = GoOn and not(Escaped)
                 
@@ -327,8 +327,8 @@ def Find_Choreo(
                 
                 if (Found_duplicate):
                 
-                    print('Found Duplicate !')   
-                    print('Path : ',file_path)
+                    print('Found Duplicate!')   
+                    print('Path: ',file_path)
                     
                 GoOn = GoOn and not(Found_duplicate)
                 
@@ -337,13 +337,13 @@ def Find_Choreo(
                 ParamFoundSol = (best_sol.f_norm < foundsol_tol)
                 ParamPreciseEnough = (best_sol.f_norm < gradtol_max)
                 # print(f'Opt Action Grad Norm : {best_sol.f_norm} from {ActionGradNormEnterLoop}')
-                print(f'Opt Action Grad Norm : {best_sol.f_norm}')
+                print(f'Opt Action Grad Norm: {best_sol.f_norm:.2e}')
             
                 Newt_err = Compute_Newton_err(best_sol.x,callfun)
                 Newt_err_norm = np.linalg.norm(Newt_err)/(nint*nbody)
                 NewtonPreciseGood = (Newt_err_norm < Newt_err_norm_max)
                 NewtonPreciseEnough = (Newt_err_norm < Newt_err_norm_max_save)
-                print('Newton Error : ',Newt_err_norm)
+                print(f'Newton Error: {Newt_err_norm:.2e}')
                 
                 CanChangeOptimParams = i_optim_param < (n_optim_param-1)
                 
@@ -388,35 +388,35 @@ def Find_Choreo(
                 if GoOn and not(ParamFoundSol):
                 
                     GoOn = False
-                    print('Optimizer could not zero in on a solution')
+                    print('Optimizer could not zero in on a solution.')
 
                 if GoOn and not(ParamPreciseEnough) and not(NewtonPreciseEnough) and (not(CanChangeOptimParams) or not(CanRefine)):
                 
                     GoOn = False
-                    print('Newton Error too high, discarding solution')
+                    print('Newton Error too high, discarding solution.')
                 
                 if GoOn and ParamPreciseEnough and not(NewtonPreciseEnough) and not(NeedsRefinement):
 
                     GoOn=False
-                    print("Stopping Search : there might be something wrong with the constraints")
+                    print("Stopping search: there might be something wrong with the constraints.")
                     # SaveSol = True
                 
                 if GoOn and NewtonPreciseGood :
 
                     GoOn = False
-                    print("Stopping Search : Found solution")
+                    print("Stopping search: found solution.")
                     SaveSol = True
                     
                 if GoOn and NewtonPreciseEnough and not(CanChangeOptimParams) :
 
                     GoOn = False
-                    print("Stopping Search : Found approximate solution")
+                    print("Stopping search: found approximate solution.")
                     SaveSol = True
 
                 if GoOn and  not(NeedsRefinement) and not(NeedsChangeOptimParams):
                 
                     GoOn = False
-                    print('Could not converge within prescibed optimizer and refinement parameters')
+                    print('Could not converge within prescibed optimizer and refinement parameters.')
 
                 if SaveSol :
                     
@@ -443,7 +443,7 @@ def Find_Choreo(
                     
                     filename_output = store_folder+'/'+file_basename+str(max_num_file).zfill(5)
 
-                    print('Saving solution as '+filename_output+'.*')
+                    print(f'Saving solution as {filename_output}.*.')
              
                     Write_Descriptor(best_sol.x,callfun,filename_output+'.json',Action=Action,Gradaction=Gradaction,Newt_err_norm=Newt_err_norm,Hash_Action=Hash_Action,extend=plot_extend)
 
@@ -484,7 +484,7 @@ def Find_Choreo(
                 
                 if GoOn and NeedsRefinement:
                     
-                    print('Resizing')
+                    print('Resizing.')
                     
                     best_sol = current_best(x_fine,f_fine)
                     callfun[0]["current_cvg_lvl"] += 1
@@ -494,7 +494,7 @@ def Find_Choreo(
                     
                 if GoOn and NeedsChangeOptimParams:
                     
-                    print('Changing Optimizer Parameters')
+                    print('Changing optimizer parameters.')
                     
                     i_optim_param += 1
                 
@@ -502,7 +502,7 @@ def Find_Choreo(
                 
         print('')
 
-    print('Done !')
+    print('Done!')
 
 def GenSymExample(
     nbody,
@@ -560,21 +560,21 @@ def GenSymExample(
         nbi_tot += loopnbi[il]
     nbi_naive = (nbody*(nbody-1))//2
 
-    print('Imposed constraints lead to the detection of :')
-    print('    {:d} independant loops'.format(nloop))
-    print('    {0:d} binary interactions'.format(nbi_tot))
-    print('    ==> reduction of {0:f} % wrt the {1:d} naive binary iteractions'.format(100*(1-nbi_tot/nbi_naive),nbi_naive))
+    print('Imposed constraints lead to the detection of:')
+    print(f'    {nloop:d} independant loops')
+    print(f'    {nbi_tot:d} binary interactions')
+    print(f'    ==> Reduction of {100*(1-nbi_tot/nbi_naive):.2f} % wrt the {nbi_naive:d} naive binary iteractions')
     print('')
 
     # for i in range(n_reconverge_it_max+1):
     for i in [0]:
         
         args = callfun[0]
-        print('Convergence attempt number : ',i+1)
-        print('    Number of Fourier coeffs : ',args['ncoeff_list'][i])
-        print('    Number of scalar parameters before constraints : ',args['coeff_to_param_list'][i].shape[1])
-        print('    Number of scalar parameters after  constraints : ',args['coeff_to_param_list'][i].shape[0])
-        print('    Reduction of ',100*(1-args['coeff_to_param_list'][i].shape[0]/args['coeff_to_param_list'][i].shape[1]),' %')
+        print(f'Convergence attempt number: {i+1}')
+        print(f"    Number of Fourier coeffs: {args['ncoeff_list'][i]}")
+        print(f"    Number of scalar parameters before constraints: {args['coeff_to_param_list'][i].shape[1]}")
+        print(f"    Number of scalar parameters after  constraints: {args['coeff_to_param_list'][i].shape[0]}")
+        print(f"    ==> Reduction of {100*(1-args['coeff_to_param_list'][i].shape[0]/args['coeff_to_param_list'][i].shape[1]):.2f} %")
         print('')
 
     x0 = np.random.random(callfun[0]['param_to_coeff_list'][0].shape[1])
@@ -583,8 +583,8 @@ def GenSymExample(
         # print(xmin)
         # raise ValueError("Init inter body distance too low. There is something wrong with constraints")
         print("")
-        print(f"Init minimum inter body distance too low : {xmin}.")
-        print("There is likely something wrong with constraints")
+        print(f"Init minimum inter body distance too low : {xmin:.2e}.")
+        print("There is likely something wrong with constraints.")
         print("")
 
     callfun[0]["current_cvg_lvl"] = 0

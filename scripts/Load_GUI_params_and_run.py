@@ -131,8 +131,8 @@ def main():
     # color = "velocity"
     # color = "all"
 
-    Save_anim = True
-    # Save_anim = False
+    # Save_anim = True
+    Save_anim = False
 
     vid_size = (8,8) # Image size in inches
     nint_plot_anim = 2*2*2*3*3*5*2
@@ -231,23 +231,23 @@ def main():
 
 
 # 
-if __name__ == "__main__":
-    main()
-#     
-
 # if __name__ == "__main__":
-# 
-#     # n = 5
-#     n = multiprocessing.cpu_count()
-#     # n = 1
+#     main()
 #     
-#     print(f"Executing with {n} workers")
-#     
-#     with concurrent.futures.ProcessPoolExecutor(max_workers=n) as executor:
-#         
-#         res = []
-#         for i in range(n):
-#             res.append(executor.submit(main))
-#             time.sleep(0.01)
 
-#  
+if __name__ == "__main__":
+
+    # n = 5
+    n = multiprocessing.cpu_count()
+    # n = 1
+    
+    print(f"Executing with {n} workers")
+    
+    with concurrent.futures.ProcessPoolExecutor(max_workers=n) as executor:
+        
+        res = []
+        for i in range(n):
+            res.append(executor.submit(main))
+            time.sleep(0.01)
+
+ 
