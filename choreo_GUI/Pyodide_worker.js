@@ -1,3 +1,5 @@
+RedirectPythonPrint({txt:"\nImporting packages ..."});								
+
 // load pyodide.js
 importScripts("https://cdn.jsdelivr.net/pyodide/v0.21.2/full/pyodide.js");
 
@@ -6,6 +8,9 @@ async function loadPyodideAndPackages() {
     stdout: RedirectPythonPrint,
     stderr: RedirectPythonPrint,
   });
+
+  RedirectPythonPrint("\nImporting packages ...");
+
   await pyodide.loadPackage([
     "matplotlib",
     "sparseqr",

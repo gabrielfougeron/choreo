@@ -542,7 +542,9 @@ def GenSymExample(
     plot_extend,
     CrashOnError_changevar,
 ):
-    
+
+    success = True
+
     n_reconverge_it_max = 0
     n_grad_change = 1
 
@@ -586,6 +588,7 @@ def GenSymExample(
         print(f"Init minimum inter body distance too low : {xmin:.2e}.")
         print("There is likely something wrong with constraints.")
         print("")
+        success = False
 
     callfun[0]["current_cvg_lvl"] = 0
     ncoeff = callfun[0]["ncoeff_list"][callfun[0]["current_cvg_lvl"]]
@@ -654,4 +657,6 @@ def GenSymExample(
         else:
             all_pos_b = ComputeAllLoopPos(x0,callfun,n_save_pos)
 
-        np.save('init_all_pos.npy',all_pos_b)
+        np.save('init.npy',all_pos_b)
+
+    return success
