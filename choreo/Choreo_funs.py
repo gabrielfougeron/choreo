@@ -1548,8 +1548,6 @@ def Make_Init_bounds_coeffs(nloop,ncoeff,coeff_ampl_o=1e-1,k_infl=1,k_max=200,co
 
     return all_coeffs_min,all_coeffs_max
 
-
-
 def Param_to_Param_direct(x,callfun_source,callfun_target):
 
     args_source=callfun_source[0]

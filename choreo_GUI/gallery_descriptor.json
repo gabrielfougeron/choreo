@@ -1,13 +1,16 @@
 {
     "Figure eight":		    "choreo-gallery/Figure_eight",
-    "Four-fold symmetry":   "choreo-gallery/4sym",
+    "Celtic knot":		    "choreo-gallery/Celtic_knot",
     "Trefoil":		        "choreo-gallery/Trefoil",
     "Three petal flower":   "choreo-gallery/Three_petal_flower",
     "Spirograph":		    "choreo-gallery/Spirograph",
-    "3x2 Circles":		    "choreo-gallery/3x2_Circles",
-    "2x3 Circles":		    "choreo-gallery/2x3_Circles",
+    "3x2 circles":		    "choreo-gallery/3x2_Circles",
+    "2x3 circles":		    "choreo-gallery/2x3_Circles",
     "5-chain":		        "choreo-gallery/5chain",
+    "Resonating loops":		"choreo-gallery/Resonating_loops",
+    "No symmetry":	        "choreo-gallery/No_symmetry",
     "Complex symmetry":	    "choreo-gallery/Complex_symmetry",
     "Small mass gap":		"choreo-gallery/Small_mass_gap",
-    "Big mass gap":			"choreo-gallery/Big_mass_gap"
+    "Big mass gap":			"choreo-gallery/Big_mass_gap",
+    "100 bodies":			"choreo-gallery/100_bodies"
 }

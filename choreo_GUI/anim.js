@@ -38,15 +38,20 @@ var colorLookup_init = [
 var defaultParticleColor = "#50ce4d";
 var defaultTrailColor = "#3c9a39";
 
+const dpr = window.devicePixelRatio
+// const dpr = 1.
+
+// console.log(dpr)
+
 // Particle radius
-var min_base_particle_size = 3.;
-var max_base_particle_size = 15.;
-var base_particle_size = 6.;
+var min_base_particle_size = 3.*dpr;
+var max_base_particle_size = 15.*dpr;
+var base_particle_size = 6.*dpr;
 
 // with of particle trail
-var min_base_trailWidth = 0.2;
-var max_base_trailWidth = 16.;
-var base_trailWidth = 2;
+var min_base_trailWidth = 0.2*dpr;
+var max_base_trailWidth = 16.*dpr;
+var base_trailWidth = 2*dpr;
 
 // Vanish speed
 var min_base_trail_vanish_speed = 0.;
@@ -164,8 +169,13 @@ function canvasApp() {
 	var particleLayerContext = particleLayerCanvas.getContext("2d");
 	particleLayerCanvas.addEventListener("click", startStopButtonHandler, true);
 	
-	displayWidth = displayCanvas.width;
-	displayHeight = displayCanvas.height;	
+	displayWidth = displayCanvas.width * dpr;
+	displayHeight = displayCanvas.height * dpr;	
+
+	// ensure all drawing operations are scaled
+	context.scale(1/dpr,1/dpr);
+	particleLayerContext.scale(1/dpr,1/dpr);
+
 
 	var Min_PartRelSize = 0.5;
 	var Max_PartRelSize = 7.;
