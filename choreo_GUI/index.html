@@ -16,6 +16,9 @@
 
 <script src="assets/js/npy.js"></script>
 
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3.0.1/es5/tex-mml-chtml.js"></script>
+
 <!-- Animation related -->
 <link rel="stylesheet" href="assets/css/jquery-ui-1.10.2.custom.min.css">
 <link href="assets/css/choreo_anims.css" rel="stylesheet" type="text/css">
@@ -53,7 +56,7 @@ window.addEventListener("drop",function(e){
 <div id="AnimationAndMenuBlock">
   <div class="w3-bar-block w3-light-grey open LeftTab" style="width:130px; position:absolute;">
     <button class="w3-bar-item w3-button" onclick="OpenCloseLeftTab()" style="text-align: center;">&#9776;</button>
-    <button class="w3-bar-item w3-button w3-hover-pale-red LeftTabBtn Main"       style="text-align: center" onclick="ClickLeftTabBtn('Main')"      >Main</button>
+    <button class="w3-bar-item w3-button w3-hover-pale-red LeftTabBtn Main"         style="text-align: center" onclick="ClickLeftTabBtn('Main')"        >Main</button>
     <button class="w3-bar-item w3-button w3-hover-pale-red LeftTabBtn Geom"         style="text-align: center" onclick="ClickLeftTabBtn('Geom')"        >Geometry</button>
     <button class="w3-bar-item w3-button w3-hover-pale-red LeftTabBtn Animation"    style="text-align: center" onclick="ClickLeftTabBtn('Animation')"   >Animation</button>
     <button class="w3-bar-item w3-button w3-hover-pale-red LeftTabBtn Solver"       style="text-align: center" onclick="ClickLeftTabBtn('Solver')"      >Solver</button>
@@ -62,11 +65,11 @@ window.addEventListener("drop",function(e){
   </div>
   <div id="MarginLeftTop" style="margin-left:130px;">
     <div class="w3-bar w3-light-grey TopTab Main">
-      <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Main_Launch"     onclick="ClickTopTabBtn('Main_Launch')"     >Launch</button>
-      <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Main_Gallery"  onclick="ClickTopTabBtn('Main_Gallery')"  >Gallery</button>
-      <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Main_Save_Config"     onclick="ClickTopTabBtn('Main_Save_Config')"     >Save settings</button>
-      <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Main_Help"     onclick="ClickTopTabBtn('Main_Help')"     >Help</button>
-      <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Main_About"    onclick="ClickTopTabBtn('Main_About')"    >About</button>
+      <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Main_Launch"       onclick="ClickTopTabBtn('Main_Launch')"       >Launch</button>
+      <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Main_Gallery"      onclick="ClickTopTabBtn('Main_Gallery')"      >Gallery</button>
+      <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Main_Save_Config"  onclick="ClickTopTabBtn('Main_Save_Config')"  >Save settings</button>
+      <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Main_Help"         onclick="ClickTopTabBtn('Main_Help')"         >Help</button>
+      <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Main_About"        onclick="ClickTopTabBtn('Main_About')"        >About</button>
     </div>
     <div class="w3-bar w3-light-grey TopTab Geom">
         <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Geom_Bodies"   onclick="ClickTopTabBtn('Geom_Bodies')">Bodies</button>
@@ -75,10 +78,10 @@ window.addEventListener("drop",function(e){
         <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Geom_Custom"   onclick="ClickTopTabBtn('Geom_Custom')">Custom</button>
     </div>
     <div class="w3-bar w3-light-grey TopTab Animation">
-        <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Animation_Colors"  onclick="ClickTopTabBtn('Animation_Colors')">Colors</button>
-        <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Animation_Size"  onclick="ClickTopTabBtn('Animation_Size')">Size</button>
-        <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Animation_Framerate"   onclick="ClickTopTabBtn_Animation_Framerate()">Framerate</button>
-        <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Animation_Search"   onclick="ClickTopTabBtn('Animation_Search')">Search</button>
+        <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Animation_Colors"    onclick="ClickTopTabBtn('Animation_Colors')"      >Colors</button>
+        <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Animation_Size"      onclick="ClickTopTabBtn('Animation_Size')"        >Size</button>
+        <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Animation_Framerate" onclick="ClickTopTabBtn_Animation_Framerate()"    >Framerate</button>
+        <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Animation_Search"    onclick="ClickTopTabBtn('Animation_Search')"      >Search</button>
     </div>
     <div class="w3-bar w3-light-grey TopTab Solver">
         <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Solver_Discr"  onclick="ClickTopTabBtn('Solver_Discr')" >Discretization</button>
@@ -87,7 +90,7 @@ window.addEventListener("drop",function(e){
         <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Solver_Checks" onclick="ClickTopTabBtn('Solver_Checks')">Checks</button>
     </div>
   </div>
-  <div id="AnimationAndControlBlock">
+  <div id="AnimationAndControlBlock"  style="margin-bottom:-20px">
     <div id="AnimationBlock">
       <div id="canvasContainer" >
         <canvas id="displayCanvas" width="480px" height="480px" style="position: absolute; z-index: 1;">
@@ -150,7 +153,7 @@ window.addEventListener("drop",function(e){
       </form>
     </div>
   </div>
-  <div class="w3-container MainTab Main_Save_Config" style="display:none">
+  <div class="w3-container MainTab Main_Save_Config" style="display:none; max-width:480px">
     <h2>Save settings</h2>
     <table style="font-size:16px; border:none; display:table">
       <tr>
@@ -167,12 +170,12 @@ window.addEventListener("drop",function(e){
         </td>
       </tr>
       <tr>
-        <td style="border:none;" >
+        <td style="border:none;">
           A cookie containig the configuration file can optionally be saved in your browser's profile data. It will then be automatically loaded on startup.
         </td>
       </tr>
       <tr>
-        <td style="border:none;" ><label for="checkbox_Cookie">I understand the legal implications and I want to enable cookies on this site. I retain my right to change my mind and to have the cookies saved/deleted in the future.</label></td>
+        <td style="border:none;"><label for="checkbox_Cookie">I understand the legal implications and I want to enable cookies on this site. I retain my right to change my mind and to have the cookies saved/deleted in the future.</label></td>
         <td style="border:none;"><input id ="checkbox_Cookie" class="w3-check" type="checkbox" style="vertical-align: super" unchecked></td>
       </tr>
       <tr>
@@ -186,35 +189,50 @@ window.addEventListener("drop",function(e){
       </tr>
     </table>
   </div>
-  <div class="w3-container MainTab Main_Help" style="display:none">
+  <div class="w3-container MainTab Main_Help" style="display:none; text-align: justify;">
     <h2>Help</h2>
+    <br>
+    &nbsp &nbsp Welcome to the web version of <b>choreo</b>, a python package designed to compute periodic solutions to ordinary differential equations, applied to the newtonian n-body gravitational problem.
+    In this context, "periodic" means that the search is restricted to motions that loop back after some time, and then repeat <i>ad infinitum</i>.
+    <b>Choreographies</b> are such periodic motions giving their name to this package, where all bodies follow the same trajectory separated by a constant time lag.
+    <br>
+    &nbsp &nbsp Check out the<button class="in_text_btn" onclick="ClickTopTabBtn('Main_Gallery')"><b>Gallery</b>,</button>which has several pre-computed solutions ready to play, highlighting the range of possibilities.
+    Even better, this web interface will allow you to compute your own solutions, no installation required!
+    <br>&nbsp 
+    <h3>Overview of the solving process</h3>
+    &nbsp &nbsp The first step of the solution process is to analyse the symmetry constraints in order to:<br>
+    <ul style="margin-left:2em">
+      <li>Prune the redondant binary body-body interactions, so that computations can be re-used.</li>
+      <li>Detect independant loops. The motion of every body in a loop can be deduced from that of a single representative.</li>
+      <li>Reformulate the symmetries so that they are understood <i>a priori</i> through parametrization. The shapes of all independant loops are constrained accordingly.</li>
+    </ul>
+    Then, <b>choreo</b> implements a <a href="https://en.wikipedia.org/wiki/Spectral_method">Fourier spectral method</a> to solve the equations of motion. Starting from an initial random set of parameters, the solver forms better and better guesses until convergence. This process can be witnessed as it happens if the corresponding box is checked in the<button class="in_text_btn" onclick="ClickLeftTabBtn('Animation');ClickTopTabBtn('Animation_Search');"><b>Animation</b></button>tab.
+    <br>&nbsp 
     <h3>Getting started</h3>
-    #Todo
+    &nbsp &nbsp The first step to compute your own periodic solution is to specify how many bodies will be interacting. The<button class="in_text_btn" onclick="ClickLeftTabBtn('Geom');ClickTopTabBtn('Geom_Bodies');"><b>Geometry</b></button>tab lets you create new bodies, specify their masses, and arrange them in choreographic loops with pre-defined symmetry constraints.
+    <br>&nbsp 
     <h3>Expert options</h3>
-    #Todo<br>
+    &nbsp &nbsp More complex symmetries can be specified under the<button class="in_text_btn" onclick="ClickLeftTabBtn('Geom');ClickTopTabBtn('Geom_Custom');"><b>Custom</b></button>tab. Don't hesitate to play arround with the parameters of the<button class="in_text_btn" onclick="ClickLeftTabBtn('Geom');ClickTopTabBtn('Geom_Random');"><b>Random</b></button>initialization, as well as all of the<button class="in_text_btn" onclick="ClickLeftTabBtn('Solver');"><b>Solver</b></button>options.
+    <br>&nbsp 
     <h3>Going further</h3>
-    For more thorough information about the meaning of the different settings and parameters, see the <a href="https://gabrielfougeron.github.io/choreo-docs/">online help</a> for the python package <b>choreo</b>.
+    For more thorough information about the meaning of the different settings and parameters, see the <a href="https://gabrielfougeron.github.io/choreo-docs/">online help for the python package <b>choreo</b>.</a>
   </div>
-  <div class="w3-container MainTab Main_About" style="display:none">
+  <div class="w3-container MainTab Main_About" style="display:none;">
     <h2>About</h2>
     &nbsp &nbsp This WebApp and the associated python package <b>choreo</b> were created by Gabriel Fougeron.<br><br>
-    Many thanks to:<br>
-    &nbsp - <a href="https://dangries.com/">Dan Gries</a> for his authorization to build upon his animation design.<br>
-    &nbsp - Gregory Minton for his <a href="http://gminton.org/#choreo"><b>choreo.2.3.js</b></a> WebApp which inspired this work, and for his patience in answering my naive questions.<br>
-    &nbsp - The <a href="https://pyodide.org/en/stable/"><b>Pyodide</b></a> team, and especially Hood Chatham and Gyeongjae Choi for their help in getting the in-browser version of <b>choreo</b> up and running.<br>
-    &nbsp - Beta testers #TODO <br>
+    Many thanks to:
+    <ul style="margin-left:2em">
+      <li><a href="https://dangries.com/">Dan Gries</a> for his authorization to build upon his animation design.</li>
+      <li>Gregory Minton for his <a href="http://gminton.org/#choreo"><b>choreo.2.3.js</b></a> WebApp which inspired this work, and for his patience in answering my naive questions.</li>
+      <li>The <a href="https://pyodide.org/en/stable/"><b>Pyodide</b></a> team, and especially Hood Chatham and Gyeongjae Choi for their help in getting the in-browser version of <b>choreo</b> up and running.</li>
+      <li>Beta testers #TODO </li>
+    </ul>
   </div>
   <div class="w3-container MainTab Geom_Bodies" style="display:none">
     <h2>Bodies definition</h2>
-    <table style="font-size:16px; border:none; display:table; max-width:400px">
-      <tr>
-      <td style="border:none;" ><label for="checkbox_MomCons">Treat momentum conservation as a constraint</label></td>
-      <td style="border:none;"><input id ="checkbox_MomCons" class="w3-check" type="checkbox" style="vertical-align: super" unchecked></td>
-    </tr>
-    </table>
     <table id = "table_body_loop" style="table-layout: fixed;">
       <tr style="border-left-style:hidden;border-right-style:hidden;border-top-style:hidden;"><td style="width:120px;"><b><button class="w3-button w3-light-grey" style="text-align: center; font-size:16px" onclick="ClickAddBodyLoop()">Add Loop +</button></b></td></tr>
-      <tr><td style="width:120px;"><b>Number of bodies</b></td></tr>
+      <tr><td style="width:120px;"><b>Number of bodies n</b></td></tr>
       <tr><td style="width:120px;"><b>Mass of bodies</b></td></tr>
       <tr><td style="width:120px;"><b>Symmetry name</b></td></tr>
       <tr><td style="width:120px;"><b>Symmetry k</b></td></tr>
@@ -224,6 +242,13 @@ window.addEventListener("drop",function(e){
       <tr><td style="width:120px;"><b>Symmetry q</b></td></tr>
       <tr><td style="width:120px;"><b>Id range</b></td></tr>
     </table>
+    <br>
+    &nbsp &nbsp The constant time lag between two bodies is \({m / n}\) of a total period.
+    Each body is the image of the previous one by a rotation of angle \(2\pi {p / q}\).
+    Each loop is invariant by a rotation of angle \(2\pi {l / k}\), with an added reflection of vertical axis if the symmetry name is D.
+    <br>
+    <br>
+    &nbsp &nbsp For more explanation, and a definition of the symmetry names Cp and Dp, <a href="https://arxiv.org/abs/1305.0470">see the following article: Montaldi, J., & Steckles, K. (2013). Classification of symmetry groups for planar-body choreographies.</a>
   </div>
   <div class="w3-container MainTab Geom_Target" style="display:none">
     <h2>Initial state target</h2>
@@ -271,19 +296,30 @@ window.addEventListener("drop",function(e){
     </div>
   </div>
   <div class="w3-container MainTab Geom_Custom" style="display:none">
-    <h2>Custom Symmetry definition</h2>
-    <br>
+    <h2>Custom symmetry definition</h2>
+    <table style="display:block; font-size:16px; border:none; display:table; max-width:400px; margin-bottom:-20px">
+      <tr>
+        <td style="border:none;" ><label for="checkbox_MomCons">Treat momentum conservation as a constraint</label></td>
+        <td style="border:none;"><input id ="checkbox_MomCons" class="w3-check" type="checkbox" style="vertical-align: super" unchecked></td>
+      </tr>
+    </table>
     <table id = "table_custom_sym" style="table-layout: fixed;">
       <tr style="border-left-style:hidden;border-right-style:hidden;border-top-style:hidden;"><td style="width:120px;"><b><button class="w3-button w3-light-grey" style="text-align: center; font-size:16px" onclick="ClickAddCustomSym()">Add Sym +</button></b></td></tr>
       <tr><td style="width:120px;min-height:40px;"><b>Loop target</b></td></tr>
       <tr><td style="width:120px;min-height:40px;"><b>Loop source</b></td></tr>
       <tr><td style="width:120px;min-height:40px;"><b>Reflection</b></td></tr>
-      <tr><td style="width:120px;min-height:40px;"><b>Rot angle num</b></td></tr>
-      <tr><td style="width:120px;min-height:40px;"><b>Rot angle den</b></td></tr>
-      <tr><td style="width:120px;min-height:40px;"><b>Time Rev</b></td></tr>
-      <tr><td style="width:120px;min-height:40px;"><b>Time Shift num</b></td></tr>
-      <tr><td style="width:120px;min-height:40px;"><b>Time Shift den</b></td></tr>
+      <tr><td style="width:120px;min-height:40px;"><b>Rotation \(\alpha_p\)</b></td></tr>
+      <tr><td style="width:120px;min-height:40px;"><b>Rotation \(\alpha_q\)</b></td></tr>
+      <tr><td style="width:120px;min-height:40px;"><b>Time reversal</b></td></tr>
+      <tr><td style="width:120px;min-height:40px;"><b>Time lag \(\beta_p\)</b></td></tr>
+      <tr><td style="width:120px;min-height:40px;"><b>Time lag \(\beta_q\)</b></td></tr>
     </table>
+    <br>
+    Loop target is the image of Loop source under:<br>
+    &nbsp - A possible reflection of vertical axis.<br>
+    &nbsp - A rotation of angle \(2 \pi \alpha_p / \alpha_q\).<br>
+    &nbsp - A possible time reversal.<br>
+    &nbsp - A time lag of \(\beta_p / \beta_q\) of a total period.<br>
   </div>
   <div class="w3-container MainTab Animation_Colors" style="display:none">
     <h2>Colors</h2>

@@ -32,3 +32,8 @@ body {
     color : #000000!important;
     /* height:480px; */
   }
+  .in_text_btn{
+    background:none;
+    border:none;
+    color:#494E52;
+  }
