@@ -217,39 +217,49 @@ def main():
     
     all_kwargs = choreo.Pick_Named_Args_From_Dict(choreo.GenSymExample,dict(globals(),**locals()))
 
-    choreo.GenSymExample(**all_kwargs)
+    success = choreo.GenSymExample(**all_kwargs)
 
     filename = 'init.json'
-    with open(filename, 'rt') as fh:
-        thefile = fh.read()
-        
-    blob = js.Blob.new([thefile], {type : 'application/text'})
 
-    filename = 'init_all_pos.npy'
-    all_pos = np.load(filename)
+    if (success and os.path.isfile(filename)):
 
-    js.postMessage(
-        funname = "Play_Loop_From_Python",
-        args    = pyodide.ffi.to_js(
-            {
-                "JSON_data":blob,
-                "NPY_data":all_pos.reshape(-1),
-                "NPY_shape":all_pos.shape,
-                "DoClearScreen":True,
-                "DoXMinMax":True,
-            },
-            dict_converter=js.Object.fromEntries
+        with open(filename, 'rt') as fh:
+            thefile = fh.read()
+            
+        blob = js.Blob.new([thefile], {type : 'application/text'})
+
+        filename = 'init.npy'
+        all_pos = np.load(filename)
+
+        js.postMessage(
+            funname = "Play_Loop_From_Python",
+            args    = pyodide.ffi.to_js(
+                {
+                    "JSON_data":blob,
+                    "NPY_data":all_pos.reshape(-1),
+                    "NPY_shape":all_pos.shape,
+                    "DoClearScreen":True,
+                    "DoXMinMax":True,
+                },
+                dict_converter=js.Object.fromEntries
+            )
         )
-    )
 
-    print("Non-solution init state playing.\n")
-    
+        print("Non-solution initial state playing.\n")
+        
+    else :
 
+        print("No valid initial state generated.\n")
+
+        js.postMessage(
+            funname = "Python_no_sol_found",
+            args    = pyodide.ffi.to_js(
+                {
+                },
+                dict_converter=js.Object.fromEntries
+            )
+        )
 
         
 if __name__ == "__main__":
     main()
-
-
-# extend = 0.03 for length_fac = 1.
-# extend = 0.15 for length_fac = 10.

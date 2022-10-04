@@ -329,5 +329,15 @@ def main():
 
         print("Solver did not find a solution.")
 
+
+        js.postMessage(
+            funname = "Python_no_sol_found",
+            args    = pyodide.ffi.to_js(
+                {
+                },
+                dict_converter=js.Object.fromEntries
+            )
+        )
+
 if __name__ == "__main__":
     main()
