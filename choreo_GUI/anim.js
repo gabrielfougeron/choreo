@@ -1198,10 +1198,6 @@ function canvasApp() {
 
 				$('label:first', "#orbitRadio").removeClass('w3-light-grey').addClass('w3-red');
 				setOrbit(0);
-				
-				
-				PythonPrint({txt:"Loading python ...&#10;"});
-
 
 				startAnimation();
 

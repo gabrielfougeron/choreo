@@ -25,7 +25,7 @@ var DownloadTxtFile = (function () {
         url = window.URL.createObjectURL(blob);
         a.href = url;
         a.download = args.filename;
-        a.click();
+ +       a.click();
         window.URL.revokeObjectURL(url);
     };
 }());
@@ -74,6 +74,39 @@ async function Play_Loop_From_Python(args){
     Python_State_Div.classList.remove('w3-red');
 }
 
+
+function Python_no_sol_found(args) {
+
+	var displayCanvas = document.getElementById("displayCanvas");
+
+    var event = new Event('EnableAnimationFromOutsideCanvas');
+    displayCanvas.dispatchEvent(event);
+
+    if (document.getElementById('checkbox_DisplayLoopsDuringSearch').checked) {
+
+        trajectoriesOn = true;
+	
+        document.getElementById("trajectoryButton").textContent ="Hide trails"
+
+    } 
+
+    var ChoreoExecuteBtn = document.getElementById("ChoreoExecuteBtn");
+    ChoreoExecuteBtn.disabled = "";
+    var ChoreoDispInitStateBtn = document.getElementById("ChoreoDispInitStateBtn");
+    ChoreoDispInitStateBtn.disabled = "";
+
+    var RotSlider = $("#RotSlider").data("roundSlider");
+    RotSlider.enable();
+
+    var Python_State_Div = document.getElementById("Python_State_Div");
+    Python_State_Div.innerHTML = "Ready";
+    Python_State_Div.classList.add('w3-green');
+    Python_State_Div.classList.remove('w3-orange');
+    Python_State_Div.classList.remove('w3-red');
+
+}
+
+
 async function Set_PlotInfo_From_Python(args){
 
     var txt = await args.JSON_data.text();
@@ -101,7 +134,7 @@ async function Python_Imports_Done(args){
 
 	var displayCanvas = document.getElementById("displayCanvas");
 
-    PythonPrint({txt:"&#10;Python Imports Done."});
+    PythonPrint({txt:"&#10;All python packages imported."});
 
     var ChoreoExecuteBtn = document.getElementById("ChoreoExecuteBtn");
     ChoreoExecuteBtn.disabled = "";
