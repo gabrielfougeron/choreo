@@ -1125,7 +1125,7 @@ function canvasApp() {
 
 	function setOrbit(orbitIndex) {
 
-		PythonClearPrints();
+		// PythonClearPrints();
 
 		PythonPrint({txt:"Playing solution from the gallery: "+AllGalleryNames[orbitIndex]+"&#10;"});
 		
