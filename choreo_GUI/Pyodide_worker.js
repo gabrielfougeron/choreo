@@ -1,7 +1,7 @@
 
 function RedirectPythonPrint(txt) {
 
-    console.log(txt);
+    // console.log(txt);
 
     self.postMessage({
         funname : "PythonPrint",
