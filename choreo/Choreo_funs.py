@@ -905,13 +905,24 @@ def setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max=6,MomCons=True,n_
     eps_rot = 1e-10
     for il in range(nloop):
 
-        RequiresLoopDispUn[il,0] = True # Loop 0 is always displayed.
+        loop_rots = []
 
-        for ib in range(1,loopnb[il]): 
+        for ib in range(loopnb[il]): 
 
-            dist_ij = np.linalg.norm(SpaceRotsUn[il,ib,:,:] - np.identity(ndim,dtype=np.float64))
+            Add_to_loop_rots = True
 
-            RequiresLoopDispUn[il,ib] = (dist_ij > eps_rot)
+            for irot in range(len(loop_rots)):
+                    
+                dist_ij = np.linalg.norm(SpaceRotsUn[il,ib,:,:] - loop_rots[irot])
+
+                Add_to_loop_rots = (Add_to_loop_rots and (dist_ij > eps_rot))
+
+            RequiresLoopDispUn[il,ib] = Add_to_loop_rots
+
+            if Add_to_loop_rots:
+
+                loop_rots.append(SpaceRotsUn[il,ib,:,:])
+
 
     # Count constraints
     
