@@ -1,22 +1,38 @@
-RedirectPythonPrint({txt:"\nImporting packages ..."});								
+
+function RedirectPythonPrint(txt) {
+
+    console.log(txt);
+
+    self.postMessage({
+        funname : "PythonPrint",
+        args    : {
+                "txt":txt,
+            }
+        }
+    )
+
+}
 
 // load pyodide.js
 importScripts("https://cdn.jsdelivr.net/pyodide/v0.21.2/full/pyodide.js");
 
 async function loadPyodideAndPackages() {
-  self.pyodide = await loadPyodide({
-    stdout: RedirectPythonPrint,
-    stderr: RedirectPythonPrint,
-  });
 
-  RedirectPythonPrint("\nImporting packages ...");
+    RedirectPythonPrint("Starting python initialization ...\n");								
 
-  await pyodide.loadPackage([
-    "matplotlib",
-    "sparseqr",
-    "networkx",
-    "./python_dist/choreo-0.1.0-cp310-cp310-emscripten_3_1_14_wasm32.whl"
-  ]);
+    self.pyodide = await loadPyodide({
+        stdout: RedirectPythonPrint,
+        stderr: RedirectPythonPrint,
+    });
+
+    RedirectPythonPrint("\nImporting packages ...");
+
+    await pyodide.loadPackage([
+        "matplotlib",
+        "sparseqr",
+        "networkx",
+        "./python_dist/choreo-0.1.0-cp310-cp310-emscripten_3_1_14_wasm32.whl"
+    ]);
 }
 
 let pyodideReadyPromise = loadPyodideAndPackages();
@@ -55,16 +71,4 @@ self.ExecutePythonFile = function(filename) {
         await pyodideReadyPromise; 
         txt = pyodide.runPython(text);
     });
-}
-
-function RedirectPythonPrint(txt) {
-
-    self.postMessage({
-        funname : "PythonPrint",
-        args    : {
-                "txt":txt,
-            }
-        }
-    )
-
 }
