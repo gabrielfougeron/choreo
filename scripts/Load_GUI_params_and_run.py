@@ -124,13 +124,6 @@ def main():
 
     color_list = params_dict["Animation_Colors"]["colorLookup"]
 
-    # <option value="body" selected>Body</option>
-    # <option value="loop">Loop</option>
-    # <option value="loop_id">Loop ID</option>
-    # <option value="none">N° 1</option>
-    # color = "velocity"
-    # color = "all"
-
     # Save_anim = True
     Save_anim = False
 
@@ -231,23 +224,23 @@ def main():
 
 
 
-# if __name__ == "__main__":
-#     main()
-    
-
 if __name__ == "__main__":
-
-    # n = 5
-    n = multiprocessing.cpu_count()
-    # n = 1
-    
-    print(f"Executing with {n} workers")
-    
-    with concurrent.futures.ProcessPoolExecutor(max_workers=n) as executor:
-        
-        res = []
-        for i in range(n):
-            res.append(executor.submit(main))
-            time.sleep(0.01)
+    main()
+#     
+# 
+# if __name__ == "__main__":
+# 
+#     # n = 5
+#     n = multiprocessing.cpu_count()
+#     # n = 1
+#     
+#     print(f"Executing with {n} workers")
+#     
+#     with concurrent.futures.ProcessPoolExecutor(max_workers=n) as executor:
+#         
+#         res = []
+#         for i in range(n):
+#             res.append(executor.submit(main))
+#             time.sleep(0.01)
 
  
