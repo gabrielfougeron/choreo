@@ -925,7 +925,6 @@ def setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max=6,MomCons=True,n_
 
 
     # Count constraints
-    
     loopncstr = np.zeros((nloop),dtype=int)
     
     for il in range(nloop):
@@ -1035,7 +1034,7 @@ def Compute_action(x,callfun):
     # Computes the action and its gradient with respect to the parameters at a given value of the parameters
 
     args=callfun[0]
-    
+
     if args["Do_Pos_FFT"]:
         
         y = args['param_to_coeff_list'][args["current_cvg_lvl"]] * x
@@ -1044,7 +1043,7 @@ def Compute_action(x,callfun):
         nint = args['nint_list'][args["current_cvg_lvl"]]
         c_coeffs = args['last_all_coeffs'].view(dtype=np.complex128)[...,0]
         args['last_all_pos'] = the_irfft(c_coeffs,n=nint,axis=2)*nint
-    
+
     J,GradJ =  Compute_action_Cython(
         args['nloop']           ,
         args['ncoeff_list'][args["current_cvg_lvl"]]          ,

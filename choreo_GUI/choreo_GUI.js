@@ -134,7 +134,7 @@ async function Python_Imports_Done(args){
 
 	var displayCanvas = document.getElementById("displayCanvas");
 
-    PythonPrint({txt:"&#10;All python packages imported"});
+    PythonPrint({txt:"&#10;All python packages imported&#10;"});
 
     var ChoreoExecuteBtn = document.getElementById("ChoreoExecuteBtn");
     ChoreoExecuteBtn.disabled = "";
