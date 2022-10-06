@@ -147,7 +147,8 @@ def Find_Choreo(
     rand_eps = coeff_ampl_min
     rand_dim = 0
     for i in range(callfun[0]['coeff_to_param_list'][0].shape[0]):
-        if ((x_max[i] - x_min[i]) > rand_eps):
+
+        if (abs(x_max[i] - x_min[i]) > rand_eps):
             rand_dim +=1
 
     print(f'Number of initialization dimensions: {rand_dim}')
@@ -156,6 +157,7 @@ def Find_Choreo(
 
     x0 = np.random.random(callfun[0]['param_to_coeff_list'][0].shape[1])
     xmin = Compute_MinDist(x0,callfun)
+
     if (xmin < 1e-5):
         # print(xmin)
         # raise ValueError("Init inter body distance too low. There is something wrong with constraints")
@@ -211,7 +213,7 @@ def Find_Choreo(
         
         rand_dim = 0
         for i in range(callfun[0]['coeff_to_param_list'][callfun[0]["current_cvg_lvl"]].shape[0]):
-            if ((x_max[i] - x_min[i]) > rand_eps):
+            if (abs(x_max[i] - x_min[i]) > rand_eps):
                 x0[i] = x_avg[i] + x_min[i] + (x_max[i] - x_min[i])*xrand[rand_dim]
                 rand_dim +=1
             else:
@@ -602,7 +604,7 @@ def GenSymExample(
     rand_eps = coeff_ampl_min
     rand_dim = 0
     for i in range(callfun[0]['coeff_to_param_list'][0].shape[0]):
-        if ((x_max[i] - x_min[i]) > rand_eps):
+        if (abs(x_max[i] - x_min[i]) > rand_eps):
             rand_dim +=1
 
     sampler = UniformRandom(d=rand_dim)
@@ -628,7 +630,7 @@ def GenSymExample(
     
     rand_dim = 0
     for i in range(callfun[0]['coeff_to_param_list'][callfun[0]["current_cvg_lvl"]].shape[0]):
-        if ((x_max[i] - x_min[i]) > rand_eps):
+        if (abs(x_max[i] - x_min[i]) > rand_eps):
             x0[i] = x_avg[i] + x_min[i] + (x_max[i] - x_min[i])*xrand[rand_dim]
             rand_dim +=1
         else:
