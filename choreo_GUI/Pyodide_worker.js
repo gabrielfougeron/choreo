@@ -1,7 +1,7 @@
 
 function RedirectPythonPrint(txt) {
 
-    // console.log(txt);
+    console.log(txt);
 
     self.postMessage({
         funname : "PythonPrint",
@@ -14,7 +14,8 @@ function RedirectPythonPrint(txt) {
 }
 
 // load pyodide.js
-importScripts("https://cdn.jsdelivr.net/pyodide/v0.21.2/full/pyodide.js");
+// importScripts("https://cdn.jsdelivr.net/pyodide/v0.21.2/full/pyodide.js");
+importScripts("https://cdn.jsdelivr.net/pyodide/v0.21.3/full/pyodide.js");
 
 async function loadPyodideAndPackages() {
 
