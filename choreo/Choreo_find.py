@@ -456,14 +456,8 @@ def Find_Choreo(
                         plot_all_2D(best_sol.x,nint_plot_img,callfun,filename_output+'_thumb.png',fig_size=thumb_size,color=color,color_list=color_list)
                         
                     if Save_anim :
-
-                        tbeg = time.perf_counter()
                         
                         plot_all_2D_anim(best_sol.x,nint_plot_anim,callfun,filename_output+'.mp4',nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size,dnint=dnint,color_list=color_list,color=color)
-
-                        tend = time.perf_counter()
-
-                        print(f'Video export took {tend-tbeg:0.2f} seconds.')
 
                     if Save_Newton_Error :
                         plot_Newton_Error(best_sol.x,callfun,filename_output+'_newton.png')

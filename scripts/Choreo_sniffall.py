@@ -257,12 +257,8 @@ def main(the_i=0):
 
 
     n_save_pos = 'auto'
-    # Save_All_Pos = True
-    Save_All_Pos = False
-
-    Save_All_Loop_Pos = True
-    # Save_All_Loop_Pos = False
-    
+    Save_All_Pos = True
+    # Save_All_Pos = False
 
     all_kwargs = choreo.Pick_Named_Args_From_Dict(choreo.Find_Choreo,dict(globals(),**locals()))
     choreo.Find_Choreo(**all_kwargs)
