@@ -544,6 +544,7 @@ def GenSymExample(
     n_save_pos,
     plot_extend,
     CrashOnError_changevar,
+    color_list,
 ):
 
     success = True
