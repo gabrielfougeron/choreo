@@ -426,9 +426,10 @@ class ChoreoSym():
 
     def ComposeLight(B,A):
         r"""
-        Returns the composition of two transformations ignoring sources and targets
+        Returns the composition of two transformations ignoring sources and targets.
+
+        B.ComposeLight(A) returens the composition B o A, i.e. applies A then B, ignoring that target A might be different from source B.
         """
-        # Composition B o A, i.e. applies A then B, ignoring that target A might be different from source B
         
         tshift = B.TimeShift + fractions.Fraction(numerator=int(B.TimeRev)*A.TimeShift.numerator,denominator=A.TimeShift.denominator)
         tshiftmod = fractions.Fraction(numerator=tshift.numerator % tshift.denominator,denominator =tshift.denominator)
@@ -457,13 +458,12 @@ class ChoreoSym():
             
             raise ValueError("Symmetries cannot be composed")
 
-    def IsIdentity(self):
+    def IsIdentity(self,atol = 1e-10):
         r"""
         Returns True if the transformation is close to identity.
         """        
-        atol = 1e-10
 
-        if ((abs(self.TimeShift) < atol) and (self.TimeRev == 1) and (self.LoopTarget == self.LoopSource)):
+        if ((abs(self.TimeShift % 1) < atol) and (self.TimeRev == 1) and (self.LoopTarget == self.LoopSource)):
             
             return np.allclose(self.SpaceRot,np.identity(ndim,dtype=np.float64),rtol=0.,atol=atol)
             
@@ -687,6 +687,28 @@ def Make2DChoreoSymManyLoops(nloop=None,nbpl=None,SymName=None,SymType=None):
     nbody = istart
         
     return SymGens,nbody
+
+def MakeSymFromGlobalTransform(Transform_list,Permutation_list):
+
+    assert (len(Transform_list) == len(Permutation_list))
+
+    SymGens = []
+
+    for i_transform in range(len(Transform_list)):
+
+        for ibody in range(len(Permutation_list[i_transform])):
+            
+            SymGens.append(
+                ChoreoSym(       
+                    LoopTarget=Permutation_list[i_transform][ibody],
+                    LoopSource=ibody,
+                    SpaceRot = Transform_list[i_transform].SpaceRot,
+                    TimeRev=Transform_list[i_transform].TimeRev,
+                    TimeShift=Transform_list[i_transform].TimeShift
+                )
+            )
+
+    return SymGens
 
 def setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max=6,MomCons=True,n_grad_change=1.,Sym_list=[],CrashOnIdentity=True):
     # This function returns the callfun dictionnary to be given as input to virtually all other function.
