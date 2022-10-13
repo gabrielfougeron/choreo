@@ -688,15 +688,22 @@ def Make2DChoreoSymManyLoops(nloop=None,nbpl=None,SymName=None,SymType=None):
         
     return SymGens,nbody
 
-def MakeSymFromGlobalTransform(Transform_list,Permutation_list):
+def MakeSymFromGlobalTransform(Transform_list,Permutation_list,mass = None):
 
     assert (len(Transform_list) == len(Permutation_list))
+    
+    if mass is None:
+        mass = np.ones((len(Transform_list)),dtype=np.float64)
 
     SymGens = []
 
     for i_transform in range(len(Transform_list)):
 
         for ibody in range(len(Permutation_list[i_transform])):
+
+            if (mass[Permutation_list[i_transform][ibody]] != mass[ibody]):
+
+                print("Warning: Mass is not uniform within loop")
             
             SymGens.append(
                 ChoreoSym(       
