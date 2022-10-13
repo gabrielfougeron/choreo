@@ -39,31 +39,73 @@ def main(the_i=0):
     Permutation_list = []
     Transform_list = []
 
-    nbody = 5
 
-#     perm = np.zeros((nbody),dtype=int)
-#     for ibody in range(nbody):
-#         perm[ibody] = ( (ibody + 1) % nbody) 
-# 
-#     Permutation_list.append(perm)
-# 
-#     rot_angle = 2*np.pi * 0 / 5
-#     s = 1
-#     SpaceRot = np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64)
-#     TimeRev = 1
-#     TimeShift=fractions.Fraction(numerator=1,denominator=nbody)
-# 
-#     Transform_list.append(
-#         choreo.ChoreoSym(
-#             SpaceRot=SpaceRot,
-#             TimeRev=TimeRev,
-#             TimeShift=TimeShift
-#         )
-#     )
+    n_main_loop = 5
+    n_ears = 3
+
+    nbody = n_main_loop* (1 + n_ears)
+
+    m_main_loop = 10.
+    m_ears = 1.
+
+    mass = np.array( [ (m_main_loop if i < n_main_loop else m_ears) for i in range(nbody)] , dtype=np.float64 )
+
+
+
+    the_lcm = m.lcm(n_main_loop,n_ears)
+    delta_i_main_loop = the_lcm//n_ears
+    delta_i_ears = the_lcm//n_main_loop
+
 
     perm = np.zeros((nbody),dtype=int)
-    for ibody in range(nbody):
-        perm[ibody] = ( (nbody - ibody) % nbody) 
+    for ibody in range(n_main_loop):
+        perm[ibody] = ( (ibody+1) % n_main_loop) 
+
+    for il in range(n_main_loop):
+        for iear in range(n_ears):
+
+            ibody = n_main_loop + il*n_ears +   iear
+            jbody = n_main_loop + il*n_ears + ((iear + 1 ) % n_ears)
+
+            perm[ibody] = jbody
+
+
+    Permutation_list.append(perm)
+
+    rot_angle = 2*np.pi * 0
+    s = 1
+
+    SpaceRot = np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64)
+    TimeRev = 1
+    TimeShift=fractions.Fraction(numerator=1,denominator=the_lcm)
+
+    Transform_list.append(
+        choreo.ChoreoSym(
+            SpaceRot=SpaceRot,
+            TimeRev=TimeRev,
+            TimeShift=TimeShift
+        )
+    )
+
+    db = 1
+
+    perm = np.zeros((nbody),dtype=int)
+    for ibody in range(n_main_loop):
+        perm[ibody] = ( (n_main_loop + db - ibody) % n_main_loop) 
+
+    for il in range(n_main_loop):
+        for iear in range(n_ears):
+
+            ibody = n_main_loop + il*n_ears + iear
+          
+            jl = (n_main_loop + db - il) % n_main_loop
+            jear = ( (n_ears     - iear) % n_ears)
+
+
+            jbody = n_main_loop + jl*n_ears + jear
+
+            perm[ibody] = jbody
+
 
     Permutation_list.append(perm)
 
@@ -72,7 +114,7 @@ def main(the_i=0):
 
     SpaceRot = np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64)
     TimeRev = -1
-    TimeShift=fractions.Fraction(numerator=0,denominator=nbody)
+    TimeShift=fractions.Fraction(numerator=0,denominator=1)
 
     Transform_list.append(
         choreo.ChoreoSym(
@@ -83,19 +125,31 @@ def main(the_i=0):
     )
 
 
+
+
+
+
     perm = np.zeros((nbody),dtype=int)
-    for ibody in range(nbody):
-        perm[ibody] = ( (ibody) % nbody) 
+    for ibody in range(n_main_loop):
+        perm[ibody] = ( (ibody+1) % n_main_loop) 
+
+    for il in range(n_main_loop):
+        for iear in range(n_ears):
+
+            ibody = n_main_loop + il*n_ears + iear
+            jbody = n_main_loop + ( (il+1) % n_main_loop) * n_ears + iear
+
+            perm[ibody] = jbody
+
 
     Permutation_list.append(perm)
 
-    k = 3
-    rot_angle = 2*np.pi * 1 / k
+    rot_angle = 2*np.pi * 1./ n_main_loop
     s = 1
 
     SpaceRot = np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64)
     TimeRev = 1
-    TimeShift=fractions.Fraction(numerator=1,denominator=k)
+    TimeShift=fractions.Fraction(numerator=0,denominator=1)
 
     Transform_list.append(
         choreo.ChoreoSym(
@@ -107,9 +161,17 @@ def main(the_i=0):
 
 
 
-    mass = np.ones((nbody),dtype=np.float64)
 
-    Sym_list = choreo.MakeSymFromGlobalTransform(Transform_list,Permutation_list)
+
+
+
+
+
+
+
+    # mass = np.ones((nbody),dtype=np.float64)
+
+    Sym_list = choreo.MakeSymFromGlobalTransform(Transform_list,Permutation_list,mass=mass)
 
 
 
@@ -163,7 +225,7 @@ def main(the_i=0):
 
     vid_size = (8,8) # Image size in inches
     # nint_plot_anim = 2*2*2*3*3*5*2
-    nint_plot_anim = 600
+    nint_plot_anim = 600 * 4
     # nperiod_anim = 1./nbody
     # dnint = 32
     dnint = 4
@@ -177,8 +239,8 @@ def main(the_i=0):
     else:
         period_div = the_lcm
 
-    nperiod_anim = 1.
-    # nperiod_anim = 1./period_div
+    # nperiod_anim = 1.
+    nperiod_anim = 1./period_div
 
     Plot_trace_anim = True
     # Plot_trace_anim = False
@@ -193,17 +255,15 @@ def main(the_i=0):
     # ncoeff_init = 800
     # ncoeff_init = 201   
     # ncoeff_init = 512
-    ncoeff_init = 600
+    ncoeff_init = 1200
     # ncoeff_init = the_lcm
     
-    # print(the_lcm)
-
     disp_scipy_opt = False
     # disp_scipy_opt = True
     
     max_norm_on_entry = 1e20
 
-    Newt_err_norm_max = 1e-14
+    Newt_err_norm_max = 1e-12
     # Newt_err_norm_max_save = Newt_err_norm_max*1000
     Newt_err_norm_max_save = 1e-9
 
@@ -242,8 +302,8 @@ def main(the_i=0):
     coeff_ampl_o=3e-2
     # coeff_ampl_o=1e0
     k_infl=0
-    k_max=600
-    # k_max=200
+    # k_max=600
+    k_max=200
     # k_max=200
     coeff_ampl_min=1e-16
 
@@ -273,19 +333,22 @@ def main(the_i=0):
 
     plot_extend = 0.03
 
-    all_kwargs = choreo.Pick_Named_Args_From_Dict(choreo.Find_Choreo,dict(globals(),**locals()))
-    choreo.Find_Choreo(**all_kwargs)
+    # all_kwargs = choreo.Pick_Named_Args_From_Dict(choreo.Find_Choreo,dict(globals(),**locals()))
+    # choreo.Find_Choreo(**all_kwargs)
+
+    all_kwargs = choreo.Pick_Named_Args_From_Dict(choreo.GenSymExample,dict(globals(),**locals()))
+    choreo.GenSymExample(**all_kwargs)
 
 
-# 
+
 # if __name__ == "__main__":
 #     main(0)
-#    
+   
 
 if __name__ == "__main__":
 
     n = multiprocessing.cpu_count()
-    # n = multiprocessing.cpu_count()//2-1
+    # n = multiprocessing.cpu_count()//2
     # n = 10
     
     print(f"Executing with {n} workers")
@@ -296,5 +359,5 @@ if __name__ == "__main__":
         for i in range(1,n+1):
             res.append(executor.submit(main,i))
             time.sleep(0.01)
-
+# 
  

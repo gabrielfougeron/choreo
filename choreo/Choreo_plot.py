@@ -156,8 +156,7 @@ def plot_all_2D_cpb(x,nint_plot,callfun,filename,fig_size=(10,10),dpi=100,color=
 
                     cb[i_loop_plot] = color_list[0]
 
-                i_loop_plot +=1
-
+                    i_loop_plot +=1
 
     elif (color == "body"):
         for il in range(nloop):
@@ -166,7 +165,7 @@ def plot_all_2D_cpb(x,nint_plot,callfun,filename,fig_size=(10,10),dpi=100,color=
 
                     cb[i_loop_plot] = color_list[Targets[il,ib]%ncol]
 
-                i_loop_plot +=1
+                    i_loop_plot +=1
 
     elif (color == "loop"):
         for il in range(nloop):
@@ -175,7 +174,7 @@ def plot_all_2D_cpb(x,nint_plot,callfun,filename,fig_size=(10,10),dpi=100,color=
 
                     cb[i_loop_plot] = color_list[il%ncol]
 
-                i_loop_plot +=1
+                    i_loop_plot +=1
 
     elif (color == "loop_id"):
         for il in range(nloop):
@@ -184,7 +183,7 @@ def plot_all_2D_cpb(x,nint_plot,callfun,filename,fig_size=(10,10),dpi=100,color=
 
                     cb[i_loop_plot] = color_list[ib%ncol]
 
-                i_loop_plot +=1
+                    i_loop_plot +=1
 
     else:
         raise ValueError(f'Unknown color scheme "{color}"')
@@ -397,7 +396,7 @@ def plot_all_2D_anim(x,nint_plot,callfun,filename,nperiod=1,Plot_trace=True,fig_
 
                         cb[i_loop_plot] = color_list[0]
 
-                    i_loop_plot +=1
+                        i_loop_plot +=1
 
 
         elif (color == "body"):
@@ -407,7 +406,7 @@ def plot_all_2D_anim(x,nint_plot,callfun,filename,nperiod=1,Plot_trace=True,fig_
 
                         cb[i_loop_plot] = color_list[Targets[il,ib]%ncol]
 
-                    i_loop_plot +=1
+                        i_loop_plot +=1
 
         elif (color == "loop"):
             for il in range(nloop):
@@ -416,7 +415,7 @@ def plot_all_2D_anim(x,nint_plot,callfun,filename,nperiod=1,Plot_trace=True,fig_
 
                         cb[i_loop_plot] = color_list[il%ncol]
 
-                    i_loop_plot +=1
+                        i_loop_plot +=1
 
         elif (color == "loop_id"):
             for il in range(nloop):
@@ -425,7 +424,7 @@ def plot_all_2D_anim(x,nint_plot,callfun,filename,nperiod=1,Plot_trace=True,fig_
 
                         cb[i_loop_plot] = color_list[ib%ncol]
 
-                    i_loop_plot +=1
+                        i_loop_plot +=1
 
         else:
             raise ValueError(f'Unknown color scheme "{color}"')
@@ -541,9 +540,10 @@ def plot_all_2D_anim(x,nint_plot,callfun,filename,nperiod=1,Plot_trace=True,fig_
                         
     # Save as mp4. This requires mplayer or ffmpeg to be installed
     # anim.save(filename, fps=60, codec='hevc')
-    # anim.save(filename, fps=60, codec='h264')
+    anim.save(filename, fps=60, codec='h264')
     # anim.save(filename, fps=60, codec='webm')
-    anim.save(filename, fps=60)
+    # anim.save(filename, fps=60,extra_args=['-vcodec ', 'h264_amf'])
+    # anim.save(filename, fps=60,extra_args=['-hwaccel ', 'cuda'])
     
     plt.close()
     
