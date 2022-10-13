@@ -35,23 +35,77 @@ def main(the_i=0):
     np.random.seed(int(time.time()*10000) % 5000)
 
     file_basename = ''
-    
-    nbody = 5
-    perm = np.zeros((nbody),dtype=int)
 
-    for ibody in range(nbody):
-
-        perm[ibody] = ( (ibody + 1) % nbody) 
-
-    Permutation_list = [perm]
-
+    Permutation_list = []
     Transform_list = []
+
+    nbody = 5
+
+#     perm = np.zeros((nbody),dtype=int)
+#     for ibody in range(nbody):
+#         perm[ibody] = ( (ibody + 1) % nbody) 
+# 
+#     Permutation_list.append(perm)
+# 
+#     rot_angle = 2*np.pi * 0 / 5
+#     s = 1
+#     SpaceRot = np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64)
+#     TimeRev = 1
+#     TimeShift=fractions.Fraction(numerator=1,denominator=nbody)
+# 
+#     Transform_list.append(
+#         choreo.ChoreoSym(
+#             SpaceRot=SpaceRot,
+#             TimeRev=TimeRev,
+#             TimeShift=TimeShift
+#         )
+#     )
+
+    perm = np.zeros((nbody),dtype=int)
+    for ibody in range(nbody):
+        perm[ibody] = ( (nbody - ibody) % nbody) 
+
+    Permutation_list.append(perm)
+
+    rot_angle = 2*np.pi * 0
+    s = -1
+
+    SpaceRot = np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64)
+    TimeRev = -1
+    TimeShift=fractions.Fraction(numerator=0,denominator=nbody)
 
     Transform_list.append(
         choreo.ChoreoSym(
-            TimeShift=fractions.Fraction(numerator=1,denominator=nbody)
+            SpaceRot=SpaceRot,
+            TimeRev=TimeRev,
+            TimeShift=TimeShift
         )
     )
+
+
+    perm = np.zeros((nbody),dtype=int)
+    for ibody in range(nbody):
+        perm[ibody] = ( (ibody) % nbody) 
+
+    Permutation_list.append(perm)
+
+    k = 3
+    rot_angle = 2*np.pi * 1 / k
+    s = 1
+
+    SpaceRot = np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64)
+    TimeRev = 1
+    TimeShift=fractions.Fraction(numerator=1,denominator=k)
+
+    Transform_list.append(
+        choreo.ChoreoSym(
+            SpaceRot=SpaceRot,
+            TimeRev=TimeRev,
+            TimeShift=TimeShift
+        )
+    )
+
+
 
     mass = np.ones((nbody),dtype=np.float64)
 
@@ -99,8 +153,8 @@ def main(the_i=0):
 
 
     
-    color = "body"
-    # color = "loop"
+    # color = "body"
+    color = "loop"
     # color = "velocity"
     # color = "all"
 
@@ -108,9 +162,11 @@ def main(the_i=0):
     # Save_anim = False
 
     vid_size = (8,8) # Image size in inches
-    nint_plot_anim = 2*2*2*3*3*5*2
+    # nint_plot_anim = 2*2*2*3*3*5*2
+    nint_plot_anim = 600
     # nperiod_anim = 1./nbody
-    dnint = 30
+    # dnint = 32
+    dnint = 4
 
     nint_plot_img = nint_plot_anim * dnint
 
@@ -200,49 +256,45 @@ def main(the_i=0):
     n_opt_max = 1e10
     # n_opt_max = 0
 
-    n_find_max = 5
+    # n_find_max = 1
+    n_find_max = 1e10
     
     mul_coarse_to_fine = 3
 
-    Save_All_Coeffs = True
-    # Save_All_Coeffs = False
+    # Save_All_Coeffs = True
+    Save_All_Coeffs = False
 
     # Save_Init_Pos_Vel_Sol = True
     Save_Init_Pos_Vel_Sol = False
 
-
     n_save_pos = 'auto'
-    # Save_All_Pos = True
-    Save_All_Pos = False
+    Save_All_Pos = True
+    # Save_All_Pos = False
 
-    Save_All_Loop_Pos = True
-    # Save_All_Loop_Pos = False
-    
     plot_extend = 0.03
-
 
     all_kwargs = choreo.Pick_Named_Args_From_Dict(choreo.Find_Choreo,dict(globals(),**locals()))
     choreo.Find_Choreo(**all_kwargs)
 
 
 # 
-if __name__ == "__main__":
-    main(0)
-#    
-# 
 # if __name__ == "__main__":
-# 
-#     n = multiprocessing.cpu_count()
-#     # n = multiprocessing.cpu_count()//2-1
-#     # n = 10
-#     
-#     print(f"Executing with {n} workers")
-#     
-#     with concurrent.futures.ProcessPoolExecutor(max_workers=n) as executor:
-#         
-#         res = []
-#         for i in range(1,n+1):
-#             res.append(executor.submit(main,i))
-#             time.sleep(0.01)
+#     main(0)
+#    
+
+if __name__ == "__main__":
+
+    n = multiprocessing.cpu_count()
+    # n = multiprocessing.cpu_count()//2-1
+    # n = 10
+    
+    print(f"Executing with {n} workers")
+    
+    with concurrent.futures.ProcessPoolExecutor(max_workers=n) as executor:
+        
+        res = []
+        for i in range(1,n+1):
+            res.append(executor.submit(main,i))
+            time.sleep(0.01)
 
  
