@@ -130,37 +130,61 @@ def plot_all_2D_cpb(x,nint_plot,callfun,filename,fig_size=(10,10),dpi=100,color=
     all_pos[:,:,0:nint_plot] = the_irfft(c_coeffs,n=nint_plot,axis=2)*nint_plot
     all_pos[:,:,nint_plot] = all_pos[:,:,0]
     
-    all_pos_b = np.zeros((nbody,ndim,nint_plot+1),dtype=np.float64)
-    
+    n_loop_plot = np.count_nonzero((args["RequiresLoopDispUn"]))
+    i_loop_plot = 0
+
+    all_pos_b = np.zeros((n_loop_plot,ndim,nint_plot+1),dtype=np.float64)
+
     for il in range(nloop):
         for ib in range(loopnb[il]):
-            for iint in range(nint_plot+1):
-                # exact time is irrelevant
-                all_pos_b[Targets[il,ib],:,iint] = np.dot(SpaceRotsUn[il,ib,:,:],all_pos[il,:,iint])
+            if (args["RequiresLoopDispUn"][il,ib]) :
+                for iint in range(nint_plot+1):
+                    # exact time is irrelevant
+                    all_pos_b[i_loop_plot,:,iint] = np.dot(SpaceRotsUn[il,ib,:,:],all_pos[il,:,iint])
+
+                i_loop_plot +=1
     
     ncol = len(color_list)
     
-    cb = ['b' for ib in range(nbody)]
+    cb = ['b' for ib in range(n_loop_plot)]
+    i_loop_plot = 0
 
     if (color is None) or (color == "none"):
-        for ib in range(nbody):
-            cb[ib] = color_list[0]
+        for il in range(nloop):
+            for ib in range(loopnb[il]):
+                if (args["RequiresLoopDispUn"][il,ib]) :
+
+                    cb[i_loop_plot] = color_list[0]
+
+                i_loop_plot +=1
+
 
     elif (color == "body"):
-        for ib in range(nbody):
-            cb[ib] = color_list[ib%ncol]
-        
+        for il in range(nloop):
+            for ib in range(loopnb[il]):
+                if (args["RequiresLoopDispUn"][il,ib]) :
+
+                    cb[i_loop_plot] = color_list[Targets[il,ib]%ncol]
+
+                i_loop_plot +=1
+
     elif (color == "loop"):
         for il in range(nloop):
             for ib in range(loopnb[il]):
-                ibb = Targets[il,ib]
-                cb[ibb] = color_list[il%ncol]
+                if (args["RequiresLoopDispUn"][il,ib]) :
+
+                    cb[i_loop_plot] = color_list[il%ncol]
+
+                i_loop_plot +=1
 
     elif (color == "loop_id"):
         for il in range(nloop):
             for ib in range(loopnb[il]):
-                ibb = Targets[il,ib]
-                cb[ibb] = color_list[ib%ncol]
+                if (args["RequiresLoopDispUn"][il,ib]) :
+
+                    cb[i_loop_plot] = color_list[ib%ncol]
+
+                i_loop_plot +=1
 
     else:
         raise ValueError(f'Unknown color scheme "{color}"')
@@ -203,8 +227,8 @@ def plot_all_2D_cpb(x,nint_plot,callfun,filename,fig_size=(10,10),dpi=100,color=
     fig.set_dpi(dpi)
     ax = plt.gca()
     # lines = sum([ax.plot([], [],'b-', antialiased=True)  for ib in range(nbody)], [])
-    lines = sum([ax.plot([], [],'-',color=cb[ib] ,antialiased=True,zorder=-ib)  for ib in range(nbody)], [])
-    points = sum([ax.plot([], [],'ko', antialiased=True)for ib in range(nbody)], [])
+    lines = sum([ax.plot([], [],'-',color=cb[ib] ,antialiased=True,zorder=-ib)  for ib in range(n_loop_plot)], [])
+    points = sum([ax.plot([], [],'ko', antialiased=True)for ib in range(n_loop_plot)], [])
     
     # print(xinf,xsup)
     # print(yinf,ysup)
@@ -215,9 +239,9 @@ def plot_all_2D_cpb(x,nint_plot,callfun,filename,fig_size=(10,10),dpi=100,color=
     ax.set_aspect('equal', adjustable='box')
     plt.tight_layout()
     
-    for ib in range(nbody):
+    for i_loop_plot in range(n_loop_plot):
 
-        lines[ib].set_data(all_pos_b[ib,0,:], all_pos_b[ib,1,:])
+        lines[i_loop_plot].set_data(all_pos_b[i_loop_plot,0,:], all_pos_b[i_loop_plot,1,:])
 
     plt.savefig(filename)
     
@@ -333,7 +357,7 @@ def plot_all_2D_cpv(x,nint_plot,callfun,filename,fig_size=(10,10),dpi=100,xlim=N
     
     plt.close()
  
-def plot_all_2D_anim(x,nint_plot,callfun,filename,nperiod=1,Plot_trace=True,fig_size=(5,5),dnint=1,all_pos_trace=None,all_pos_points=None,xlim=None,extend=0.03,color_list=None,color=None):
+def plot_all_2D_anim_old(x,nint_plot,callfun,filename,nperiod=1,Plot_trace=True,fig_size=(5,5),dnint=1,all_pos_trace=None,all_pos_points=None,xlim=None,extend=0.03,color_list=None,color=None):
     # Creates a video of the bodies moving along their trajectories, and saves the file under filename
     
     if color_list is None:
@@ -467,6 +491,159 @@ def plot_all_2D_anim(x,nint_plot,callfun,filename,nperiod=1,Plot_trace=True,fig_
                         
     # Save as mp4. This requires mplayer or ffmpeg to be installed
     # anim.save(filename, fps=30, extra_args=['-vcodec', 'libx264'])
+    anim.save(filename, fps=30)
+    
+    plt.close()
+    
+def plot_all_2D_anim(x,nint_plot,callfun,filename,nperiod=1,Plot_trace=True,fig_size=(5,5),dnint=1,all_pos_trace=None,all_pos_points=None,xlim=None,extend=0.03,color_list=None,color=None):
+    # Creates a video of the bodies moving along their trajectories, and saves the file under filename
+    
+    if color_list is None:
+        color_list = plt.rcParams['axes.prop_cycle'].by_key()['color']
+
+    args = callfun[0]
+    
+    all_coeffs = Unpackage_all_coeffs(x,callfun)
+    
+    nloop = args['nloop']
+    nbody = args['nbody']
+    loopnb = args['loopnb']
+    Targets = args['Targets']
+    SpaceRotsUn = args['SpaceRotsUn']
+    TimeRevsUn = args['TimeRevsUn']
+    TimeShiftNumUn = args['TimeShiftNumUn']
+    TimeShiftDenUn = args['TimeShiftDenUn']
+    
+    maxloopnb = loopnb.max()
+    
+    nint_plot_img = nint_plot*dnint
+    nint_plot_vid = nint_plot
+
+    if (all_pos_trace is None) or (all_pos_points is None):
+
+        all_pos_b = np.zeros((nbody,ndim,nint_plot_img+1),dtype=np.float64)
+        all_pos_b[:,:,:nint_plot_img] = ComputeAllPos(x,callfun,nint=nint_plot_img)
+        all_pos_b[:,:,nint_plot_img] = all_pos_b[:,:,0]
+
+    if (all_pos_trace is None):
+
+        n_loop_plot = np.count_nonzero((args["RequiresLoopDispUn"]))
+        i_loop_plot = 0
+
+        all_pos_trace = np.zeros((n_loop_plot,ndim,nint_plot_img+1),dtype=np.float64)
+
+        for il in range(nloop):
+            for ib in range(loopnb[il]):
+                if (args["RequiresLoopDispUn"][il,ib]) :
+                    for iint in range(nint_plot+1):
+                        # exact time is irrelevant
+                        all_pos_trace[i_loop_plot,:,:] = all_pos_b[Targets[il,ib],:,:]
+
+                    i_loop_plot +=1
+
+    if (all_pos_points is None):
+        all_pos_points = all_pos_b
+
+    size_all_pos_points = all_pos_points.shape[2] - 1
+
+    if xlim is None:
+
+        xmin = all_pos_trace[:,0,:].min()
+        xmax = all_pos_trace[:,0,:].max()
+        ymin = all_pos_trace[:,1,:].min()
+        ymax = all_pos_trace[:,1,:].max()
+
+    else :
+
+        xmin = xlim[0]
+        xmax = xlim[1]
+        ymin = xlim[2]
+        ymax = xlim[3]
+
+    xinf = xmin - extend*(xmax-xmin)
+    xsup = xmax + extend*(xmax-xmin)
+    
+    yinf = ymin - extend*(ymax-ymin)
+    ysup = ymax + extend*(ymax-ymin)
+    
+    hside = max(xsup-xinf,ysup-yinf)/2
+
+    xmid = (xinf+xsup)/2
+    ymid = (yinf+ysup)/2
+
+    xinf = xmid - hside
+    xsup = xmid + hside
+
+    yinf = ymid - hside
+    ysup = ymid + hside
+
+    ncol = len(color_list)
+    
+    cb = ['b' for ib in range(nbody)]
+
+    if (color is None) or (color == "none"):
+        for ib in range(nbody):
+            cb[ib] = color_list[0]
+
+    elif (color == "body"):
+        for ib in range(nbody):
+            cb[ib] = color_list[ib%ncol]
+        
+    elif (color == "loop"):
+        for il in range(nloop):
+            for ib in range(loopnb[il]):
+                ibb = Targets[il,ib]
+                cb[ibb] = color_list[il%ncol]
+
+    elif (color == "loop_id"):
+        for il in range(nloop):
+            for ib in range(loopnb[il]):
+                ibb = Targets[il,ib]
+                cb[ibb] = color_list[ib%ncol]
+
+    else:
+        raise ValueError(f'Unknown color scheme "{color}"')
+
+    # Plot-related
+    fig = plt.figure()
+    fig.set_size_inches(fig_size)
+    ax = plt.gca()
+    lines = sum([ax.plot([], [],'-',color=cb[ib], antialiased=True,zorder=-ib)  for ib in range(len(all_pos_trace))], [])
+    points = sum([ax.plot([], [],'ko', antialiased=True)for ib in range(len(all_pos_points))], [])
+    
+    ax.axis('off')
+    ax.set_xlim([xinf, xsup])
+    ax.set_ylim([yinf, ysup ])
+    ax.set_aspect('equal', adjustable='box')
+    plt.tight_layout()
+    
+    # TODO: Understand why this is needed / how to rationalize this use. Is it even legal python ?
+
+    iint = [0]
+    
+    def init():
+        
+        if (Plot_trace):
+            for ib in range(len(all_pos_trace)):
+                lines[ib].set_data(all_pos_trace[ib,0,:], all_pos_trace[ib,1,:])
+        
+        return lines + points
+
+    def update(i):
+        
+        for ib in range(len(all_pos_points)):
+            points[ib].set_data(all_pos_points[ib,0,iint[0]], all_pos_points[ib,1,iint[0]])
+            
+        iint[0] = ((iint[0]+dnint) % size_all_pos_points)
+
+        return lines + points
+    
+    anim = animation.FuncAnimation(fig, update, frames=int(nperiod*nint_plot_vid),init_func=init, blit=True)
+                        
+    # Save as mp4. This requires mplayer or ffmpeg to be installed
+    # anim.save(filename, fps=30, codec='hevc')
+    # anim.save(filename, fps=30, codec='h264')
+    # anim.save(filename, fps=30, codec='webm')
     anim.save(filename, fps=30)
     
     plt.close()
