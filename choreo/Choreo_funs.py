@@ -1567,7 +1567,7 @@ def Make_Init_bounds_coeffs(nloop,ncoeff,coeff_ampl_o=1e-1,k_infl=1,k_max=200,co
 
         for il in range(nloop):
             for idim in range(ndim):
-                for k in range(1,ncoeff):
+                for k in range(ncoeff):
 
                     if (k <= k_infl):
                         randampl = coeff_ampl_o
