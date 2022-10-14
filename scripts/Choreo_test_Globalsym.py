@@ -41,12 +41,12 @@ def main(the_i=0):
 
 
     n_main_loop = 5
-    n_ears = 3
+    n_ears = 1
 
     nbody = n_main_loop* (1 + n_ears)
 
-    m_main_loop = 10.
-    m_ears = 1.
+    m_main_loop = 1.
+    m_ears = 10.
 
     mass = np.array( [ (m_main_loop if i < n_main_loop else m_ears) for i in range(nbody)] , dtype=np.float64 )
 
@@ -271,8 +271,8 @@ def main(the_i=0):
 
     # krylov_method = 'lgmres'
     # krylov_method = 'gmres'
-    krylov_method = 'bicgstab'
-    # krylov_method = 'cgs'
+    # krylov_method = 'bicgstab'
+    krylov_method = 'cgs'
     # krylov_method = 'minres'
     # krylov_method = 'tfqmr'
 
@@ -333,11 +333,11 @@ def main(the_i=0):
 
     plot_extend = 0.03
 
-    # all_kwargs = choreo.Pick_Named_Args_From_Dict(choreo.Find_Choreo,dict(globals(),**locals()))
-    # choreo.Find_Choreo(**all_kwargs)
+    all_kwargs = choreo.Pick_Named_Args_From_Dict(choreo.Find_Choreo,dict(globals(),**locals()))
+    choreo.Find_Choreo(**all_kwargs)
 
-    all_kwargs = choreo.Pick_Named_Args_From_Dict(choreo.GenSymExample,dict(globals(),**locals()))
-    choreo.GenSymExample(**all_kwargs)
+    # all_kwargs = choreo.Pick_Named_Args_From_Dict(choreo.GenSymExample,dict(globals(),**locals()))
+    # choreo.GenSymExample(**all_kwargs)
 
 
 

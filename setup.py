@@ -1,14 +1,12 @@
 '''
-Creates anc compiles C code from Cython file
+Creates and compiles C code from Cython file
 
 '''
 
 import os
-from setuptools import find_packages,setup
-# from distutils.core import setup, Extension
-from distutils.core import Extension
-from distutils.command.build import build as build_orig
-from Cython.Build import cythonize
+import setuptools
+import distutils
+import Cython.Build
 import numpy
 import platform
 
@@ -29,43 +27,47 @@ else:
     # extra_compile_args = ["-O2"]
     # extra_compile_args = ["-O2","-march=native"]
     # extra_compile_args = ["-O3","-ffast-math","-march=native"]
-    extra_compile_args = ["-O3"]
-    # extra_compile_args = ["-O3","-march=native"]
+    # extra_compile_args = ["-O3"]
+    extra_compile_args = ["-O3","-march=native"]
 
 extra_link_args = []
 
 define_macros = [("NPY_NO_DEPRECATED_API", "NPY_1_7_API_VERSION")]
 
-extension = [
-    Extension(
-    name = "choreo.Choreo_cython_funs",
-    sources =  ["choreo/Choreo_cython_funs.pyx"],
-    include_dirs=[numpy.get_include()],
-    extra_compile_args = extra_compile_args,
-    extra_link_args = extra_link_args,
-    define_macros  = define_macros ,
-    ),
-    Extension(
-    name = "choreo.Choreo_cython_scipy_plus",
-    sources =  ["choreo/Choreo_cython_scipy_plus.pyx"],
-    include_dirs=[numpy.get_include()],
-    extra_compile_args = extra_compile_args,
-    extra_link_args = extra_link_args,
-    define_macros  = define_macros ,
-    ),
+
+cython_extnames = [
+    "choreo.Choreo_cython_funs",
+    "choreo.Choreo_cython_scipy_plus",
 ]
 
-ext_modules = cythonize(extension, language_level = "3",annotate=True)
+cython_filenames = [
+    "choreo/Choreo_cython_funs.pyx",
+    "choreo/Choreo_cython_scipy_plus.pyx",
+]
 
-setup(
+extensions = [
+    distutils.core.Extension(
+    name = name,
+    sources =  [source],
+    include_dirs=[numpy.get_include()],
+    extra_compile_args = extra_compile_args,
+    extra_link_args = extra_link_args,
+    define_macros  = define_macros ,
+    )
+    for (name,source) in zip(cython_extnames,cython_filenames)
+]
+
+ext_modules = Cython.Build.cythonize(extensions, language_level = "3",annotate=True)
+
+setuptools.setup(
     name = "choreo",
     author = "Gabriel Fougeron <gabriel.fougeron@hotmail.fr>",
     url = "https://github.com/gabrielfougeron/choreo",
     version = __version__,
-    description='',
+    description="A set of tools to compute periodic solution to the Newtonian N-body problem",
     license = "BSD 2-Clause License",
     platforms=['any'],
-    packages = find_packages(),
+    packages = setuptools.find_packages(),
     ext_modules = ext_modules,
     zip_safe=False,
     package_data={"choreo": ["choreo.h"]},
