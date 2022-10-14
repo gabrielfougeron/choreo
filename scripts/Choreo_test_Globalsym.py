@@ -36,145 +36,13 @@ def main(the_i=0):
 
     file_basename = ''
 
-    Permutation_list = []
-    Transform_list = []
-
-
     n_main_loop = 5
     n_ears = 1
 
-    nbody = n_main_loop* (1 + n_ears)
-
     m_main_loop = 1.
-    m_ears = 10.
+    m_ears = 1.
 
-    mass = np.array( [ (m_main_loop if i < n_main_loop else m_ears) for i in range(nbody)] , dtype=np.float64 )
-
-
-
-    the_lcm = m.lcm(n_main_loop,n_ears)
-    delta_i_main_loop = the_lcm//n_ears
-    delta_i_ears = the_lcm//n_main_loop
-
-
-    perm = np.zeros((nbody),dtype=int)
-    for ibody in range(n_main_loop):
-        perm[ibody] = ( (ibody+1) % n_main_loop) 
-
-    for il in range(n_main_loop):
-        for iear in range(n_ears):
-
-            ibody = n_main_loop + il*n_ears +   iear
-            jbody = n_main_loop + il*n_ears + ((iear + 1 ) % n_ears)
-
-            perm[ibody] = jbody
-
-
-    Permutation_list.append(perm)
-
-    rot_angle = 2*np.pi * 0
-    s = 1
-
-    SpaceRot = np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64)
-    TimeRev = 1
-    TimeShift=fractions.Fraction(numerator=1,denominator=the_lcm)
-
-    Transform_list.append(
-        choreo.ChoreoSym(
-            SpaceRot=SpaceRot,
-            TimeRev=TimeRev,
-            TimeShift=TimeShift
-        )
-    )
-
-    db = 1
-
-    perm = np.zeros((nbody),dtype=int)
-    for ibody in range(n_main_loop):
-        perm[ibody] = ( (n_main_loop + db - ibody) % n_main_loop) 
-
-    for il in range(n_main_loop):
-        for iear in range(n_ears):
-
-            ibody = n_main_loop + il*n_ears + iear
-          
-            jl = (n_main_loop + db - il) % n_main_loop
-            jear = ( (n_ears     - iear) % n_ears)
-
-
-            jbody = n_main_loop + jl*n_ears + jear
-
-            perm[ibody] = jbody
-
-
-    Permutation_list.append(perm)
-
-    rot_angle = 2*np.pi * 0
-    s = -1
-
-    SpaceRot = np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64)
-    TimeRev = -1
-    TimeShift=fractions.Fraction(numerator=0,denominator=1)
-
-    Transform_list.append(
-        choreo.ChoreoSym(
-            SpaceRot=SpaceRot,
-            TimeRev=TimeRev,
-            TimeShift=TimeShift
-        )
-    )
-
-
-
-
-
-
-    perm = np.zeros((nbody),dtype=int)
-    for ibody in range(n_main_loop):
-        perm[ibody] = ( (ibody+1) % n_main_loop) 
-
-    for il in range(n_main_loop):
-        for iear in range(n_ears):
-
-            ibody = n_main_loop + il*n_ears + iear
-            jbody = n_main_loop + ( (il+1) % n_main_loop) * n_ears + iear
-
-            perm[ibody] = jbody
-
-
-    Permutation_list.append(perm)
-
-    rot_angle = 2*np.pi * 1./ n_main_loop
-    s = 1
-
-    SpaceRot = np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64)
-    TimeRev = 1
-    TimeShift=fractions.Fraction(numerator=0,denominator=1)
-
-    Transform_list.append(
-        choreo.ChoreoSym(
-            SpaceRot=SpaceRot,
-            TimeRev=TimeRev,
-            TimeShift=TimeShift
-        )
-    )
-
-
-
-
-
-
-
-
-
-
-
-    # mass = np.ones((nbody),dtype=np.float64)
-
-    Sym_list = choreo.MakeSymFromGlobalTransform(Transform_list,Permutation_list,mass=mass)
-
-
-
+    Sym_list,nbody,mass = choreo.MakeLoopEarSymList(n_main_loop,n_ears,m_main_loop,m_ears)
 
     # MomConsImposed = True
     MomConsImposed = False
@@ -272,9 +140,9 @@ def main(the_i=0):
     # krylov_method = 'lgmres'
     # krylov_method = 'gmres'
     # krylov_method = 'bicgstab'
-    krylov_method = 'cgs'
+    # krylov_method = 'cgs'
     # krylov_method = 'minres'
-    # krylov_method = 'tfqmr'
+    krylov_method = 'tfqmr'
 
 
     # line_search = 'armijo'
@@ -359,5 +227,5 @@ if __name__ == "__main__":
         for i in range(1,n+1):
             res.append(executor.submit(main,i))
             time.sleep(0.01)
-# 
+
  
