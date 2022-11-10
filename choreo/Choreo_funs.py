@@ -35,7 +35,7 @@ from choreo.Choreo_cython_funs import Compute_action_Cython,Compute_action_hess_
 from choreo.Choreo_cython_funs import Assemble_Cstr_Matrix,diag_changevar
 from choreo.Choreo_cython_funs import Compute_MinDist_Cython,Compute_Loop_Dist_btw_avg_Cython,Compute_square_dist,Compute_Loop_Size_Dist_Cython
 from choreo.Choreo_cython_funs import Compute_Forces_Cython,Compute_JacMat_Forces_Cython,Compute_JacMul_Forces_Cython
-from choreo.Choreo_cython_funs import the_irfft,the_rfft,the_ihfft
+from choreo.Choreo_cython_funs import the_irfft,the_rfft
 
 from choreo.Choreo_scipy_plus import *
 
@@ -109,7 +109,7 @@ def ComputeAllPos(x,callfun,nint=None):
         nint = args['nint_list'][args["current_cvg_lvl"]]
 
     all_coeffs_nosym = RemoveSym(x,callfun).view(dtype=np.complex128)[...,0]
-    all_pos_b = the_irfft(all_coeffs_nosym,n=nint,axis=2)*nint
+    all_pos_b = the_irfft(all_coeffs_nosym,n=nint,axis=2,norm="forward")
 
     return all_pos_b
 
@@ -121,7 +121,7 @@ def ComputeAllLoopPos(x,callfun,nint=None):
         nint = args['nint_list'][args["current_cvg_lvl"]]
 
     all_coeffs_c = Unpackage_all_coeffs(x,callfun).view(dtype=np.complex128)[...,0]
-    all_pos = the_irfft(all_coeffs_c,n=nint,axis=2)*nint
+    all_pos = the_irfft(all_coeffs_c,n=nint,axis=2,norm="forward")
 
     return all_pos
 
@@ -133,13 +133,13 @@ def ComputeAllPosVel(x,callfun,nint=None):
         nint = args['nint_list'][args["current_cvg_lvl"]]
 
     all_coeffs_nosym = RemoveSym(x,callfun).view(dtype=np.complex128)[...,0]
-    all_pos_b = the_irfft(all_coeffs_nosym,n=nint,axis=2)*nint
+    all_pos_b = the_irfft(all_coeffs_nosym,n=nint,axis=2,norm="forward")
 
     ncoeff = all_coeffs_nosym.shape[2]
     for k in range(ncoeff):
         all_coeffs_nosym[:,:,k] *= twopi*1j*k
 
-    all_vel_b = the_irfft(all_coeffs_nosym,n=nint,axis=2)*nint
+    all_vel_b = the_irfft(all_coeffs_nosym,n=nint,axis=2,norm="forward")
 
     return np.stack((all_pos_b,all_vel_b),axis=0)
 
@@ -210,7 +210,7 @@ def Compute_action_onlygrad_escape(x,callfun):
         
         nint = args['nint_list'][args["current_cvg_lvl"]]
         c_coeffs = args['last_all_coeffs'].view(dtype=np.complex128)[...,0]
-        args['last_all_pos'] = the_irfft(c_coeffs,n=nint,axis=2)*nint
+        args['last_all_pos'] = the_irfft(c_coeffs,n=nint,axis=2,norm="forward")
 
     J,GradJ =  Compute_action_Cython(
         args['nloop']           ,
@@ -254,7 +254,7 @@ def Compute_action_hess_mul(x,dx,callfun):
         
         nint = args['nint_list'][args["current_cvg_lvl"]]
         c_coeffs = args['last_all_coeffs'].view(dtype=np.complex128)[...,0]
-        args['last_all_pos'] = the_irfft(c_coeffs,n=nint,axis=2)*nint
+        args['last_all_pos'] = the_irfft(c_coeffs,n=nint,axis=2,norm="forward")
     
     HessJdx =  Compute_action_hess_mul_Cython(
         args['nloop']           ,
@@ -774,7 +774,7 @@ def Compute_action(x,callfun):
         
         nint = args['nint_list'][args["current_cvg_lvl"]]
         c_coeffs = args['last_all_coeffs'].view(dtype=np.complex128)[...,0]
-        args['last_all_pos'] = the_irfft(c_coeffs,n=nint,axis=2)*nint
+        args['last_all_pos'] = the_irfft(c_coeffs,n=nint,axis=2,norm="forward")
 
     J,GradJ =  Compute_action_Cython(
         args['nloop']           ,

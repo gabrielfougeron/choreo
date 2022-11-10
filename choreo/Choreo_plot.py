@@ -35,7 +35,7 @@ from matplotlib.collections import LineCollection
 from matplotlib import animation
 
 from choreo.Choreo_cython_funs import ndim,twopi,nhash,n
-from choreo.Choreo_cython_funs import the_irfft,the_rfft,the_ihfft
+from choreo.Choreo_cython_funs import the_irfft,the_rfft
 
 from choreo.Choreo_funs import Compute_action,Compute_hash_action,Compute_Newton_err
 from choreo.Choreo_funs import Compute_MinDist,Detect_Escape
@@ -127,7 +127,7 @@ def plot_all_2D_cpb(x,nint_plot,callfun,filename,fig_size=(10,10),dpi=100,color=
     c_coeffs = all_coeffs.view(dtype=np.complex128)[...,0]
     
     all_pos = np.zeros((nloop,ndim,nint_plot+1),dtype=np.float64)
-    all_pos[:,:,0:nint_plot] = the_irfft(c_coeffs,n=nint_plot,axis=2)*nint_plot
+    all_pos[:,:,0:nint_plot] = the_irfft(c_coeffs,n=nint_plot,axis=2,norm="forward")
     all_pos[:,:,nint_plot] = all_pos[:,:,0]
     
     n_loop_plot = np.count_nonzero((args["RequiresLoopDispUn"]))
@@ -262,7 +262,7 @@ def plot_all_2D_cpv(x,nint_plot,callfun,filename,fig_size=(10,10),dpi=100,xlim=N
     c_coeffs = all_coeffs.view(dtype=np.complex128)[...,0]
     
     all_pos = np.zeros((nloop,ndim,nint_plot+1),dtype=np.float64)
-    all_pos[:,:,0:nint_plot] = the_irfft(c_coeffs,n=nint_plot,axis=2)*nint_plot
+    all_pos[:,:,0:nint_plot] = the_irfft(c_coeffs,n=nint_plot,axis=2,norm="forward")
     all_pos[:,:,nint_plot] = all_pos[:,:,0]
     
     all_coeffs_v = np.zeros(all_coeffs.shape)
@@ -274,7 +274,7 @@ def plot_all_2D_cpv(x,nint_plot,callfun,filename,fig_size=(10,10),dpi=100,xlim=N
     c_coeffs_v = all_coeffs_v.view(dtype=np.complex128)[...,0]
     
     all_vel = np.zeros((nloop,nint_plot+1),dtype=np.float64)
-    all_vel[:,0:nint_plot] = np.linalg.norm(the_irfft(c_coeffs_v,n=nint_plot,axis=2),axis=1)*nint_plot
+    all_vel[:,0:nint_plot] = np.linalg.norm(the_irfft(c_coeffs_v,n=nint_plot,axis=2,norm="forward"),axis=1)
     all_vel[:,nint_plot] = all_vel[:,0]
     
     all_pos_b = np.zeros((nbody,ndim,nint_plot+1),dtype=np.float64)
@@ -736,7 +736,7 @@ def Write_Descriptor(x,callfun,filename,Action=None,Gradaction=None,Newt_err_nor
     nint = args['nint_list'][args["current_cvg_lvl"]]
 
     all_pos = np.zeros((nloop,ndim,nint),dtype=np.float64)
-    all_pos = the_irfft(c_coeffs,n=nint,axis=2)*nint
+    all_pos = the_irfft(c_coeffs,n=nint,axis=2,norm="forward")
     
     all_pos_b = np.zeros((nbody,ndim,nint),dtype=np.float64)
     
