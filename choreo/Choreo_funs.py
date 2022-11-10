@@ -294,63 +294,6 @@ def Compute_action_hess_LinOpt(x,callfun):
         matvec =  (lambda dx,xl=x,callfunl=callfun : Compute_action_hess_mul(xl,dx,callfunl)),
         rmatvec = (lambda dx,xl=x,callfunl=callfun : Compute_action_hess_mul(xl,dx,callfunl)))
 
-def Compute_action_hess_LinOpt_precond(x_precond,callfun_source,callfun_precond):
-    # Defines the Hessian of the action wrt parameters at a given point as a Scipy LinearOperator
-
-    args_source=callfun_source[0]
-    args_precond=callfun_precond[0]
-    
-    def the_matvec(dx_source):
-
-        dy_source = args_source['param_to_coeff_list'][args_source["current_cvg_lvl"]] * dx_source
-        all_coeffs_d_source = dy_source.reshape(args_source['nloop'],ndim,args_source['ncoeff_list'][args_source["current_cvg_lvl"]],2)
-        all_coeffs_d_precond = np.copy(all_coeffs_d_source[:,:,0:args_precond['ncoeff_list'][args_precond["current_cvg_lvl"]],:])
-
-        if args_precond["Do_Pos_FFT"]:
-            
-            y_precond = args_precond['param_to_coeff_list'][args_precond["current_cvg_lvl"]] * x_precond
-            args_precond['last_all_coeffs'] = y_precond.reshape(args_precond['nloop'],ndim,args_precond['ncoeff_list'][args_precond["current_cvg_lvl"]],2)
-            
-            nint_precond = args_precond['nint_list'][args_precond["current_cvg_lvl"]]
-            c_coeffs_precond = args_precond['last_all_coeffs'].view(dtype=np.complex128)[...,0]
-            args_precond['last_all_pos'] =the_irfft(c_coeffs_precond,n=nint_precond,axis=2)*nint_precond
-        
-        HessJdx_precond =  Compute_action_hess_mul_Cython(
-            args_precond['nloop']           ,
-            args_precond['ncoeff_list'][args_precond["current_cvg_lvl"]]          ,
-            args_precond['nint_list'][args_precond["current_cvg_lvl"]]            ,
-            args_precond['mass']            ,
-            args_precond['loopnb']          ,
-            args_precond['Targets']         ,
-            args_precond['MassSum']         ,
-            args_precond['SpaceRotsUn']     ,
-            args_precond['TimeRevsUn']      ,
-            args_precond['TimeShiftNumUn']  ,
-            args_precond['TimeShiftDenUn']  ,
-            args_precond['loopnbi']         ,
-            args_precond['ProdMassSumAll']  ,
-            args_precond['SpaceRotsBin']    ,
-            args_precond['TimeRevsBin']     ,
-            args_precond['TimeShiftNumBin'] ,
-            args_precond['TimeShiftDenBin'] ,
-            args_precond['last_all_coeffs'] ,
-            all_coeffs_d_precond            ,
-            args_precond['last_all_pos']    ,
-            )
-        
-        HessJdx_source = np.zeros((args_source['nloop'],ndim,args_source['ncoeff_list'][args_source["current_cvg_lvl"]],2))
-        HessJdx_source[:,:,0:args_precond['ncoeff_list'][args_precond["current_cvg_lvl"]],:] = HessJdx_precond
-        
-        HJdx_source = HessJdx_source.reshape(-1)
-        
-        z = HJdx_source * args_source['param_to_coeff_list'][args_source["current_cvg_lvl"]]
-        return z
-        
-
-    return sp.linalg.LinearOperator((args_source['coeff_to_param_list'][args_source["current_cvg_lvl"]].shape[0],args_source['coeff_to_param_list'][args_source["current_cvg_lvl"]].shape[0]),
-        matvec =  the_matvec,
-        rmatvec = the_matvec)
-    
 def null_space_sparseqr(AT):
     # Returns a basis of the null space of a matrix A.
     # AT must be in COO format
