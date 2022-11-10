@@ -55,8 +55,8 @@ def int_fun_grad(f_base_grad,x):
 def int_fun_grad_c(f_base_grad,x):
 
     f_all = int_fun_grad(f_base_grad,x)
-    f_all_fft = np.fft.ihfft(f_all)
-    # f_all_fft = np.fft.rfft(f_all) / nint
+    # f_all_fft = np.fft.ihfft(f_all)
+    f_all_fft = np.fft.rfft(f_all) / nint
 
     ncoeffs = f_all_fft.shape[0]
 
@@ -64,8 +64,8 @@ def int_fun_grad_c(f_base_grad,x):
 
     f_all_fft_real[0,0] = f_all_fft[0].real
     for k in range(1,ncoeffs):
-        f_all_fft_real[k,0] =  f_all_fft[k].real
-        f_all_fft_real[k,1] = f_all_fft[k].imag
+        f_all_fft_real[k,0] = 2*f_all_fft[k].real
+        f_all_fft_real[k,1] = -2*f_all_fft[k].imag
 
     return f_all_fft_real
 
