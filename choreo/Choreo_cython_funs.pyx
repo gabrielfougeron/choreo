@@ -31,13 +31,23 @@ from libc.math cimport sqrt as csqrt
 from libc.math cimport isnan as cisnan
 from libc.math cimport isinf as cisinf
 
-# the_irfft = np.fft.irfft
-the_irfft = scipy.fft.irfft
+try:
 
-# the_rfft = np.fft.rfft
-the_rfft = scipy.fft.rfft
- 
- 
+    import mkl_fft._numpy_fft
+
+    the_rfft  = mkl_fft._numpy_fft.rfft
+    the_irfft = mkl_fft._numpy_fft.irfft
+
+
+except:
+
+    # the_rfft = np.fft.rfft
+    the_rfft = scipy.fft.rfft
+
+    # the_irfft = np.fft.irfft
+    the_irfft = scipy.fft.irfft
+
+    
 cdef long cndim = 2 # Number of space dimensions
 
 cdef double cn = -0.5  #coeff of x^2 in the potential power law
