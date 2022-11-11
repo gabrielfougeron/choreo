@@ -1,5 +1,3 @@
-#cython: language_level=3, boundscheck=False, wraparound = False, nonecheck=False
-
 '''
 Choreo_cython_funs.pyx : Defines useful compiled functions in the Choreographies2 project.
 
@@ -20,7 +18,7 @@ np.import_array()
 
 cimport cython
 
-import scipy.fft
+
 import scipy.sparse as sp
 
 from libc.math cimport pow as cpow
@@ -30,22 +28,40 @@ from libc.math cimport sin as csin
 from libc.math cimport sqrt as csqrt
 from libc.math cimport isnan as cisnan
 from libc.math cimport isinf as cisinf
+# ~ 
+# ~ try:
+# ~ 
+# ~     import mkl_fft._numpy_fft
+# ~ 
+# ~     the_rfft  = mkl_fft._numpy_fft.rfft
+# ~     the_irfft = mkl_fft._numpy_fft.irfft
+# ~ 
+# ~ except:
+# ~ 
+# ~     try:
+# ~ 
+# ~         import scipy.fft
+# ~ 
+# ~         the_rfft = scipy.fft.rfft
+# ~         the_irfft = scipy.fft.irfft
+# ~ 
+# ~     except:
+# ~ 
+# ~         the_rfft = np.fft.rfft
+# ~         the_irfft = np.fft.irfft
+# ~ # ~ 
+# ~ import mkl_fft._numpy_fft
+# ~ 
+# ~ the_rfft  = mkl_fft._numpy_fft.rfft
+# ~ the_irfft = mkl_fft._numpy_fft.irfft
+# ~ # ~ 
+import scipy.fft
 
-try:
+the_rfft = scipy.fft.rfft
+the_irfft = scipy.fft.irfft
 
-    import mkl_fft._numpy_fft
-
-    the_rfft  = mkl_fft._numpy_fft.rfft
-    the_irfft = mkl_fft._numpy_fft.irfft
-
-
-except:
-
-    # the_rfft = np.fft.rfft
-    the_rfft = scipy.fft.rfft
-
-    # the_irfft = np.fft.irfft
-    the_irfft = scipy.fft.irfft
+# ~ the_rfft = np.fft.rfft
+# ~ the_irfft = np.fft.irfft
 
     
 cdef long cndim = 2 # Number of space dimensions
@@ -307,19 +323,7 @@ def Compute_action_Cython(
                 
             for ibi in range(loopnbi[il]):
                 all_shiftsBin[il,ibi] = (all_shiftsBin[il,ibi]+TimeRevsBin[il,ibi]) % nint
-                
-# ~     cdef np.ndarray[doublecomplex , ndim=3, mode="c"]  grad_pot_fft = the_ihfft(grad_pot_all,nint)
-# ~ 
-# ~     for il in range(nloop):
-# ~         for idim in range(cndim):
-# ~             
-# ~             Action_grad[il,idim,0,0] -= grad_pot_fft[il,idim,0].real
-# ~             
-# ~             for k in range(1,ncoeff):
-# ~             
-# ~                 Action_grad[il,idim,k,0] -= 2*grad_pot_fft[il,idim,k].real
-# ~                 Action_grad[il,idim,k,1] += 2*grad_pot_fft[il,idim,k].imag
-                
+
     cdef np.ndarray[doublecomplex , ndim=3, mode="c"]  grad_pot_fft = the_rfft(grad_pot_all,norm="forward")
 
     for il in range(nloop):
@@ -974,18 +978,6 @@ def Compute_action_hess_mul_Cython(
                 
             for ibi in range(loopnbi[il]):
                 all_shiftsBin[il,ibi] = (all_shiftsBin[il,ibi]+TimeRevsBin[il,ibi]) % nint
-
-# ~     cdef np.ndarray[doublecomplex , ndim=3, mode="c"]  hess_dx_pot_fft = the_ihfft(hess_pot_all_d,nint)
-# ~ 
-# ~     for il in range(nloop):
-# ~         for idim in range(cndim):
-# ~             
-# ~             Action_hess_dx[il,idim,0,0] -= hess_dx_pot_fft[il,idim,0].real
-# ~             
-# ~             for k in range(1,ncoeff):
-# ~             
-# ~                 Action_hess_dx[il,idim,k,0] -= 2*hess_dx_pot_fft[il,idim,k].real
-# ~                 Action_hess_dx[il,idim,k,1] += 2*hess_dx_pot_fft[il,idim,k].imag
 
     cdef np.ndarray[doublecomplex , ndim=3, mode="c"]  hess_dx_pot_fft = the_rfft(hess_pot_all_d,norm="forward")
 
