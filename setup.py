@@ -4,15 +4,11 @@ Creates and compiles C code from Cython file
 '''
 
 import os
-import multiprocessing
 import setuptools
 import distutils
 import Cython.Build
 import numpy
 import platform
-from distutils.spawn import find_executable
-
-clang_executable = find_executable('clang')
 
 __version__ = "0.1.0"
 
@@ -28,7 +24,11 @@ if platform.system() == "Windows":
 
 else:
 
-    if not(distutils.spawn.find_executable('clang') is None):
+    if ("PYODIDE" in os.environ): # Building for Pyodide
+
+        extra_compile_args = ["-O2"]
+
+    elif not(distutils.spawn.find_executable('clang') is None):
 
         os.environ['CC'] = 'clang'
         os.environ['LDSHARED'] = 'clang -shared'
@@ -38,6 +38,8 @@ else:
     else:
 
         extra_compile_args = ["-O3","-march=native"]
+    
+
 
 extra_link_args = []
 
@@ -81,7 +83,6 @@ ext_modules = Cython.Build.cythonize(
     annotate = True,
     force = True,
     compiler_directives = compiler_directives,
-    nthreads = multiprocessing.cpu_count(),
 )
 
 setuptools.setup(
