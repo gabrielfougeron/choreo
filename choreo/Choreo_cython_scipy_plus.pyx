@@ -1,5 +1,3 @@
-#cython: language_level=3, boundscheck=False, wraparound = False, nonecheck=False
-
 '''
 Choreo_cython_scipy_plus.pyx : Defines things I designed I feel ought to be in scipy ... but faster !
 

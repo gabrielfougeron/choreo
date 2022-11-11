@@ -35,7 +35,7 @@ from choreo.Choreo_cython_funs import Compute_action_Cython,Compute_action_hess_
 from choreo.Choreo_cython_funs import Assemble_Cstr_Matrix,diag_changevar
 from choreo.Choreo_cython_funs import Compute_MinDist_Cython,Compute_Loop_Dist_btw_avg_Cython,Compute_square_dist,Compute_Loop_Size_Dist_Cython
 from choreo.Choreo_cython_funs import Compute_Forces_Cython,Compute_JacMat_Forces_Cython,Compute_JacMul_Forces_Cython
-from choreo.Choreo_cython_funs import the_irfft,the_rfft,the_ihfft
+from choreo.Choreo_cython_funs import the_irfft,the_rfft
 
 from choreo.Choreo_scipy_plus import *
 
@@ -109,7 +109,7 @@ def ComputeAllPos(x,callfun,nint=None):
         nint = args['nint_list'][args["current_cvg_lvl"]]
 
     all_coeffs_nosym = RemoveSym(x,callfun).view(dtype=np.complex128)[...,0]
-    all_pos_b = the_irfft(all_coeffs_nosym,n=nint,axis=2)*nint
+    all_pos_b = the_irfft(all_coeffs_nosym,n=nint,axis=2,norm="forward")
 
     return all_pos_b
 
@@ -121,7 +121,7 @@ def ComputeAllLoopPos(x,callfun,nint=None):
         nint = args['nint_list'][args["current_cvg_lvl"]]
 
     all_coeffs_c = Unpackage_all_coeffs(x,callfun).view(dtype=np.complex128)[...,0]
-    all_pos = the_irfft(all_coeffs_c,n=nint,axis=2)*nint
+    all_pos = the_irfft(all_coeffs_c,n=nint,axis=2,norm="forward")
 
     return all_pos
 
@@ -133,13 +133,13 @@ def ComputeAllPosVel(x,callfun,nint=None):
         nint = args['nint_list'][args["current_cvg_lvl"]]
 
     all_coeffs_nosym = RemoveSym(x,callfun).view(dtype=np.complex128)[...,0]
-    all_pos_b = the_irfft(all_coeffs_nosym,n=nint,axis=2)*nint
+    all_pos_b = the_irfft(all_coeffs_nosym,n=nint,axis=2,norm="forward")
 
     ncoeff = all_coeffs_nosym.shape[2]
     for k in range(ncoeff):
         all_coeffs_nosym[:,:,k] *= twopi*1j*k
 
-    all_vel_b = the_irfft(all_coeffs_nosym,n=nint,axis=2)*nint
+    all_vel_b = the_irfft(all_coeffs_nosym,n=nint,axis=2,norm="forward")
 
     return np.stack((all_pos_b,all_vel_b),axis=0)
 
@@ -210,7 +210,7 @@ def Compute_action_onlygrad_escape(x,callfun):
         
         nint = args['nint_list'][args["current_cvg_lvl"]]
         c_coeffs = args['last_all_coeffs'].view(dtype=np.complex128)[...,0]
-        args['last_all_pos'] = the_irfft(c_coeffs,n=nint,axis=2)*nint
+        args['last_all_pos'] = the_irfft(c_coeffs,n=nint,axis=2,norm="forward")
 
     J,GradJ =  Compute_action_Cython(
         args['nloop']           ,
@@ -254,8 +254,8 @@ def Compute_action_hess_mul(x,dx,callfun):
         
         nint = args['nint_list'][args["current_cvg_lvl"]]
         c_coeffs = args['last_all_coeffs'].view(dtype=np.complex128)[...,0]
-        args['last_all_pos'] = the_irfft(c_coeffs,n=nint,axis=2)*nint
-    
+        args['last_all_pos'] = the_irfft(c_coeffs,n=nint,axis=2,norm="forward")
+
     HessJdx =  Compute_action_hess_mul_Cython(
         args['nloop']           ,
         args['ncoeff_list'][args["current_cvg_lvl"]]          ,
@@ -294,63 +294,6 @@ def Compute_action_hess_LinOpt(x,callfun):
         matvec =  (lambda dx,xl=x,callfunl=callfun : Compute_action_hess_mul(xl,dx,callfunl)),
         rmatvec = (lambda dx,xl=x,callfunl=callfun : Compute_action_hess_mul(xl,dx,callfunl)))
 
-def Compute_action_hess_LinOpt_precond(x_precond,callfun_source,callfun_precond):
-    # Defines the Hessian of the action wrt parameters at a given point as a Scipy LinearOperator
-
-    args_source=callfun_source[0]
-    args_precond=callfun_precond[0]
-    
-    def the_matvec(dx_source):
-
-        dy_source = args_source['param_to_coeff_list'][args_source["current_cvg_lvl"]] * dx_source
-        all_coeffs_d_source = dy_source.reshape(args_source['nloop'],ndim,args_source['ncoeff_list'][args_source["current_cvg_lvl"]],2)
-        all_coeffs_d_precond = np.copy(all_coeffs_d_source[:,:,0:args_precond['ncoeff_list'][args_precond["current_cvg_lvl"]],:])
-
-        if args_precond["Do_Pos_FFT"]:
-            
-            y_precond = args_precond['param_to_coeff_list'][args_precond["current_cvg_lvl"]] * x_precond
-            args_precond['last_all_coeffs'] = y_precond.reshape(args_precond['nloop'],ndim,args_precond['ncoeff_list'][args_precond["current_cvg_lvl"]],2)
-            
-            nint_precond = args_precond['nint_list'][args_precond["current_cvg_lvl"]]
-            c_coeffs_precond = args_precond['last_all_coeffs'].view(dtype=np.complex128)[...,0]
-            args_precond['last_all_pos'] =the_irfft(c_coeffs_precond,n=nint_precond,axis=2)*nint_precond
-        
-        HessJdx_precond =  Compute_action_hess_mul_Cython(
-            args_precond['nloop']           ,
-            args_precond['ncoeff_list'][args_precond["current_cvg_lvl"]]          ,
-            args_precond['nint_list'][args_precond["current_cvg_lvl"]]            ,
-            args_precond['mass']            ,
-            args_precond['loopnb']          ,
-            args_precond['Targets']         ,
-            args_precond['MassSum']         ,
-            args_precond['SpaceRotsUn']     ,
-            args_precond['TimeRevsUn']      ,
-            args_precond['TimeShiftNumUn']  ,
-            args_precond['TimeShiftDenUn']  ,
-            args_precond['loopnbi']         ,
-            args_precond['ProdMassSumAll']  ,
-            args_precond['SpaceRotsBin']    ,
-            args_precond['TimeRevsBin']     ,
-            args_precond['TimeShiftNumBin'] ,
-            args_precond['TimeShiftDenBin'] ,
-            args_precond['last_all_coeffs'] ,
-            all_coeffs_d_precond            ,
-            args_precond['last_all_pos']    ,
-            )
-        
-        HessJdx_source = np.zeros((args_source['nloop'],ndim,args_source['ncoeff_list'][args_source["current_cvg_lvl"]],2))
-        HessJdx_source[:,:,0:args_precond['ncoeff_list'][args_precond["current_cvg_lvl"]],:] = HessJdx_precond
-        
-        HJdx_source = HessJdx_source.reshape(-1)
-        
-        z = HJdx_source * args_source['param_to_coeff_list'][args_source["current_cvg_lvl"]]
-        return z
-        
-
-    return sp.linalg.LinearOperator((args_source['coeff_to_param_list'][args_source["current_cvg_lvl"]].shape[0],args_source['coeff_to_param_list'][args_source["current_cvg_lvl"]].shape[0]),
-        matvec =  the_matvec,
-        rmatvec = the_matvec)
-    
 def null_space_sparseqr(AT):
     # Returns a basis of the null space of a matrix A.
     # AT must be in COO format
@@ -831,7 +774,7 @@ def Compute_action(x,callfun):
         
         nint = args['nint_list'][args["current_cvg_lvl"]]
         c_coeffs = args['last_all_coeffs'].view(dtype=np.complex128)[...,0]
-        args['last_all_pos'] = the_irfft(c_coeffs,n=nint,axis=2)*nint
+        args['last_all_pos'] = the_irfft(c_coeffs,n=nint,axis=2,norm="forward")
 
     J,GradJ =  Compute_action_Cython(
         args['nloop']           ,
@@ -1367,19 +1310,6 @@ def Package_Precond_LinOpt(Precond,callfun_precond,callfun):
         matvec =  the_matvec,
         rmatvec = the_matvec)
 
-class ExactKrylovJacobian(scipy.optimize.nonlin.KrylovJacobian):
-
-    def __init__(self,exactgrad, rdiff=None, method='lgmres', inner_maxiter=20,inner_M=None, outer_k=10, **kw):
-
-        scipy.optimize.nonlin.KrylovJacobian.__init__(self, rdiff, method, inner_maxiter,inner_M, outer_k, **kw)
-        self.exactgrad = exactgrad
-
-    def matvec(self, v):
-        return self.exactgrad(self.x0,v)
-
-    def rmatvec(self, v):
-        return self.exactgrad(self.x0,v)
-        
 def Compute_Auto_ODE_RHS(x,callfun):
 
     args = callfun[0]
