@@ -1,6 +1,5 @@
-name: choreo
+name: choreo-intel
 channels:
-  - intel
   - conda-forge
   - defaults
 dependencies:

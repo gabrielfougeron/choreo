@@ -664,3 +664,124 @@ def GenSymExample(
         np.save('init.npy',all_pos_b)
 
     return success
+
+def Speed_test(
+    nbody,
+    n_reconverge_it_max,
+    ncoeff_init,
+    mass,
+    Sym_list,
+    MomConsImposed,
+    n_grad_change,
+    coeff_ampl_o,
+    k_infl,
+    k_max,
+    coeff_ampl_min,
+    CrashOnError_changevar,
+    n_test,
+    ):
+    """
+
+    Finds periodic solutions
+
+    """
+    
+    print(f'Searching periodic solutions of {nbody:d} bodies.')
+
+    print(f'Processing symmetries for {(n_reconverge_it_max+1):d} convergence levels.')
+    callfun = setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change,CrashOnIdentity=CrashOnError_changevar)
+
+    print('')
+
+    args = callfun[0]
+
+    nloop = args['nloop']
+    loopnb = args['loopnb']
+    loopnbi = args['loopnbi']
+    nbi_tot = 0
+    for il in range(nloop):
+        for ilp in range(il+1,nloop):
+            nbi_tot += loopnb[il]*loopnb[ilp]
+        nbi_tot += loopnbi[il]
+    nbi_naive = (nbody*(nbody-1))//2
+
+    print('Imposed constraints lead to the detection of:')
+    print(f'    {nloop:d} independant loops')
+    print(f'    {nbi_tot:d} binary interactions')
+    print(f'    ==> Reduction of {100*(1-nbi_tot/nbi_naive):.2f} % wrt the {nbi_naive:d} naive binary iteractions')
+    print('')
+
+    # for i in range(n_reconverge_it_max+1):
+    for i in [0]:
+        
+        args = callfun[0]
+        print(f'Convergence attempt number: {i+1}')
+        print(f"    Number of Fourier coeffs: {args['ncoeff_list'][i]}")
+        print(f"    Number of scalar parameters before constraints: {args['coeff_to_param_list'][i].shape[1]}")
+        print(f"    Number of scalar parameters after  constraints: {args['coeff_to_param_list'][i].shape[0]}")
+        print(f"    ==> Reduction of {100*(1-args['coeff_to_param_list'][i].shape[0]/args['coeff_to_param_list'][i].shape[1]):.2f} %")
+        print('')
+
+
+    callfun[0]["current_cvg_lvl"] = 0
+    ncoeff = callfun[0]["ncoeff_list"][callfun[0]["current_cvg_lvl"]]
+    nint = callfun[0]["nint_list"][callfun[0]["current_cvg_lvl"]]
+
+    all_coeffs_min,all_coeffs_max = Make_Init_bounds_coeffs(nloop,ncoeff,coeff_ampl_o,k_infl,k_max,coeff_ampl_min)
+
+    x_min = Package_all_coeffs(all_coeffs_min,callfun)
+    x_max = Package_all_coeffs(all_coeffs_max,callfun)
+
+    rand_eps = coeff_ampl_min
+    rand_dim = 0
+    for i in range(callfun[0]['coeff_to_param_list'][0].shape[0]):
+
+        if (abs(x_max[i] - x_min[i]) > rand_eps):
+            rand_dim +=1
+
+    print(f'Number of initialization dimensions: {rand_dim}')
+
+    sampler = UniformRandom(d=rand_dim)
+
+    x0 = np.random.random(callfun[0]['param_to_coeff_list'][0].shape[1])
+    xmin = Compute_MinDist(x0,callfun)
+
+    if (xmin < 1e-5):
+        # print(xmin)
+        # raise ValueError("Init inter body distance too low. There is something wrong with constraints")
+        print("")
+        print(f"Init minimum inter body distance too low: {xmin}")
+        print("There is likely something wrong with constraints.")
+        print("")
+    
+    tot_time = 0.
+
+    x_avg = np.zeros((callfun[0]['coeff_to_param_list'][callfun[0]["current_cvg_lvl"]].shape[0]),dtype=np.float64)
+        
+    x0 = np.zeros((callfun[0]['coeff_to_param_list'][callfun[0]["current_cvg_lvl"]].shape[0]),dtype=np.float64)
+    
+    xrand = sampler.random()
+    
+    rand_dim = 0
+    for i in range(callfun[0]['coeff_to_param_list'][callfun[0]["current_cvg_lvl"]].shape[0]):
+        if (abs(x_max[i] - x_min[i]) > rand_eps):
+            x0[i] = x_avg[i] + x_min[i] + (x_max[i] - x_min[i])*xrand[rand_dim]
+            rand_dim +=1
+        else:
+            x0[i] = x_avg[i]
+
+
+    dx = np.random.random(x0.shape)
+
+    beg = time.perf_counter()
+    for itest in range(n_test):
+
+        f0 = Compute_action_onlygrad(x0,callfun)
+        hess = Compute_action_hess_mul(x0,dx,callfun)
+        toto = Unpackage_all_coeffs(x0,callfun) 
+
+    end = time.perf_counter()
+    tot_time += (end-beg)
+
+    print(f'Total time s : {tot_time}')
+        
