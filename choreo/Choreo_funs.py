@@ -255,7 +255,7 @@ def Compute_action_hess_mul(x,dx,callfun):
         nint = args['nint_list'][args["current_cvg_lvl"]]
         c_coeffs = args['last_all_coeffs'].view(dtype=np.complex128)[...,0]
         args['last_all_pos'] = the_irfft(c_coeffs,n=nint,axis=2,norm="forward")
-    
+
     HessJdx =  Compute_action_hess_mul_Cython(
         args['nloop']           ,
         args['ncoeff_list'][args["current_cvg_lvl"]]          ,
@@ -1310,19 +1310,6 @@ def Package_Precond_LinOpt(Precond,callfun_precond,callfun):
         matvec =  the_matvec,
         rmatvec = the_matvec)
 
-class ExactKrylovJacobian(scipy.optimize.nonlin.KrylovJacobian):
-
-    def __init__(self,exactgrad, rdiff=None, method='lgmres', inner_maxiter=20,inner_M=None, outer_k=10, **kw):
-
-        scipy.optimize.nonlin.KrylovJacobian.__init__(self, rdiff, method, inner_maxiter,inner_M, outer_k, **kw)
-        self.exactgrad = exactgrad
-
-    def matvec(self, v):
-        return self.exactgrad(self.x0,v)
-
-    def rmatvec(self, v):
-        return self.exactgrad(self.x0,v)
-        
 def Compute_Auto_ODE_RHS(x,callfun):
 
     args = callfun[0]

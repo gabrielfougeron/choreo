@@ -217,9 +217,11 @@ def main():
     n_opt_max = 1e10
     n_find_max = 1e4
     
-    all_kwargs = choreo.Pick_Named_Args_From_Dict(choreo.Find_Choreo,dict(globals(),**locals()))
+    n_test = 10000
 
-    choreo.Find_Choreo(**all_kwargs)
+    all_kwargs = choreo.Pick_Named_Args_From_Dict(choreo.Speed_test,dict(globals(),**locals()))
+
+    choreo.Speed_test(**all_kwargs)
 
 
 

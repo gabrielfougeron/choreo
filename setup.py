@@ -4,11 +4,15 @@ Creates and compiles C code from Cython file
 '''
 
 import os
+import multiprocessing
 import setuptools
 import distutils
 import Cython.Build
 import numpy
 import platform
+from distutils.spawn import find_executable
+
+clang_executable = find_executable('clang')
 
 __version__ = "0.1.0"
 
@@ -23,12 +27,17 @@ if platform.system() == "Windows":
     extra_compile_args = ["/O2"]
 
 else:
-    # extra_compile_args = ["-O0"]
-    # extra_compile_args = ["-O2"]
-    # extra_compile_args = ["-O2","-march=native"]
-    # extra_compile_args = ["-O3","-ffast-math","-march=native"]
-    # extra_compile_args = ["-O3"]
-    extra_compile_args = ["-O3","-march=native"]
+
+    if not(distutils.spawn.find_executable('clang') is None):
+
+        os.environ['CC'] = 'clang'
+        os.environ['LDSHARED'] = 'clang -shared'
+
+        extra_compile_args = ["-O3","-ffast-math","-march=native"]
+
+    else:
+
+        extra_compile_args = ["-O3","-march=native"]
 
 extra_link_args = []
 
@@ -45,6 +54,15 @@ cython_filenames = [
     "choreo/Choreo_cython_scipy_plus.pyx",
 ]
 
+compiler_directives = {
+    'wraparound': False,
+    'boundscheck': False,
+    'nonecheck': False,
+    'initializedcheck': False,
+    'overflowcheck': False,
+    'overflowcheck.fold': False,
+}
+
 extensions = [
     distutils.core.Extension(
     name = name,
@@ -57,7 +75,14 @@ extensions = [
     for (name,source) in zip(cython_extnames,cython_filenames)
 ]
 
-ext_modules = Cython.Build.cythonize(extensions, language_level = "3",annotate=True)
+ext_modules = Cython.Build.cythonize(
+    extensions,
+    language_level = "3",
+    annotate = True,
+    force = True,
+    compiler_directives = compiler_directives,
+    nthreads = multiprocessing.cpu_count(),
+)
 
 setuptools.setup(
     name = "choreo",
