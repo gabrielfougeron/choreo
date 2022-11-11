@@ -1,4 +1,4 @@
-name: choreo
+name: choreo-intel
 channels:
   - conda-forge
   - defaults

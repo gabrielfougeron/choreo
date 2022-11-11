@@ -1,5 +1,3 @@
-#cython: language_level=3, boundscheck=False, wraparound = False, nonecheck=False
-
 '''
 Choreo_cython_funs.pyx : Defines useful compiled functions in the Choreographies2 project.
 
@@ -20,7 +18,7 @@ np.import_array()
 
 cimport cython
 
-import scipy.fft
+
 import scipy.sparse as sp
 
 from libc.math cimport pow as cpow
@@ -30,17 +28,42 @@ from libc.math cimport sin as csin
 from libc.math cimport sqrt as csqrt
 from libc.math cimport isnan as cisnan
 from libc.math cimport isinf as cisinf
+# ~ 
+# ~ try:
+# ~ 
+# ~     import mkl_fft._numpy_fft
+# ~ 
+# ~     the_rfft  = mkl_fft._numpy_fft.rfft
+# ~     the_irfft = mkl_fft._numpy_fft.irfft
+# ~ 
+# ~ except:
+# ~ 
+# ~     try:
+# ~ 
+# ~         import scipy.fft
+# ~ 
+# ~         the_rfft = scipy.fft.rfft
+# ~         the_irfft = scipy.fft.irfft
+# ~ 
+# ~     except:
+# ~ 
+# ~         the_rfft = np.fft.rfft
+# ~         the_irfft = np.fft.irfft
+# ~ # ~ 
+# ~ import mkl_fft._numpy_fft
+# ~ 
+# ~ the_rfft  = mkl_fft._numpy_fft.rfft
+# ~ the_irfft = mkl_fft._numpy_fft.irfft
+# ~ # ~ 
+import scipy.fft
 
-# the_irfft = np.fft.irfft
+the_rfft = scipy.fft.rfft
 the_irfft = scipy.fft.irfft
 
-# the_ihfft = np.fft.ihfft
-the_ihfft = scipy.fft.ihfft
+# ~ the_rfft = np.fft.rfft
+# ~ the_irfft = np.fft.irfft
 
-# the_rfft = np.fft.rfft
-the_rfft = scipy.fft.rfft
- 
- 
+    
 cdef long cndim = 2 # Number of space dimensions
 
 cdef double cn = -0.5  #coeff of x^2 in the potential power law
@@ -300,8 +323,8 @@ def Compute_action_Cython(
                 
             for ibi in range(loopnbi[il]):
                 all_shiftsBin[il,ibi] = (all_shiftsBin[il,ibi]+TimeRevsBin[il,ibi]) % nint
-                
-    cdef np.ndarray[doublecomplex , ndim=3, mode="c"]  grad_pot_fft = the_ihfft(grad_pot_all,nint)
+
+    cdef np.ndarray[doublecomplex , ndim=3, mode="c"]  grad_pot_fft = the_rfft(grad_pot_all,norm="forward")
 
     for il in range(nloop):
         for idim in range(cndim):
@@ -311,7 +334,7 @@ def Compute_action_Cython(
             for k in range(1,ncoeff):
             
                 Action_grad[il,idim,k,0] -= 2*grad_pot_fft[il,idim,k].real
-                Action_grad[il,idim,k,1] += 2*grad_pot_fft[il,idim,k].imag
+                Action_grad[il,idim,k,1] -= 2*grad_pot_fft[il,idim,k].imag
 
     Pot_en = Pot_en / nint
     
@@ -378,7 +401,7 @@ def Compute_hash_action_Cython(
 
     c_coeffs = all_coeffs.view(dtype=np.complex128)[...,0]
 
-    cdef np.ndarray[double, ndim=3, mode="c"] all_pos = the_irfft(c_coeffs,n=nint,axis=2)*nint
+    cdef np.ndarray[double, ndim=3, mode="c"] all_pos = the_irfft(c_coeffs,n=nint,axis=2,norm="forward")
 
     cdef np.ndarray[long, ndim=2, mode="c"]  all_shiftsUn = np.zeros((nloop,maxloopnb),dtype=np.int_)
     cdef np.ndarray[long, ndim=2, mode="c"]  all_shiftsBin = np.zeros((nloop,maxloopnbi),dtype=np.int_)
@@ -501,7 +524,7 @@ def Compute_MinDist_Cython(
 
     c_coeffs = all_coeffs.view(dtype=np.complex128)[...,0]
 
-    cdef np.ndarray[double, ndim=3, mode="c"] all_pos = the_irfft(c_coeffs,n=nint,axis=2)*nint
+    cdef np.ndarray[double, ndim=3, mode="c"] all_pos = the_irfft(c_coeffs,n=nint,axis=2,norm="forward")
 
     cdef np.ndarray[long, ndim=2, mode="c"]  all_shiftsUn = np.zeros((nloop,maxloopnb),dtype=np.int_)
     cdef np.ndarray[long, ndim=2, mode="c"]  all_shiftsBin = np.zeros((nloop,maxloopnbi),dtype=np.int_)
@@ -841,7 +864,7 @@ def Compute_action_hess_mul_Cython(
                 Action_hess_dx[il,idim,k,1] += a*all_coeffs_d[il,idim,k,1]
 
     c_coeffs_d = all_coeffs_d.view(dtype=np.complex128)[...,0]
-    cdef np.ndarray[double, ndim=3, mode="c"]  all_pos_d = the_irfft(c_coeffs_d,n=nint,axis=2)*nint
+    cdef np.ndarray[double, ndim=3, mode="c"]  all_pos_d = the_irfft(c_coeffs_d,n=nint,axis=2,norm="forward")
 
     cdef np.ndarray[long, ndim=2, mode="c"]  all_shiftsUn = np.zeros((nloop,maxloopnb),dtype=np.int_)
     cdef np.ndarray[long, ndim=2, mode="c"]  all_shiftsBin = np.zeros((nloop,maxloopnbi),dtype=np.int_)
@@ -956,7 +979,7 @@ def Compute_action_hess_mul_Cython(
             for ibi in range(loopnbi[il]):
                 all_shiftsBin[il,ibi] = (all_shiftsBin[il,ibi]+TimeRevsBin[il,ibi]) % nint
 
-    cdef np.ndarray[doublecomplex , ndim=3, mode="c"]  hess_dx_pot_fft = the_ihfft(hess_pot_all_d,nint)
+    cdef np.ndarray[doublecomplex , ndim=3, mode="c"]  hess_dx_pot_fft = the_rfft(hess_pot_all_d,norm="forward")
 
     for il in range(nloop):
         for idim in range(cndim):
@@ -966,7 +989,7 @@ def Compute_action_hess_mul_Cython(
             for k in range(1,ncoeff):
             
                 Action_hess_dx[il,idim,k,0] -= 2*hess_dx_pot_fft[il,idim,k].real
-                Action_hess_dx[il,idim,k,1] += 2*hess_dx_pot_fft[il,idim,k].imag
+                Action_hess_dx[il,idim,k,1] -= 2*hess_dx_pot_fft[il,idim,k].imag
 
     return Action_hess_dx
     
@@ -1013,13 +1036,13 @@ def Compute_Newton_err_Cython(
                 acc_coeff[il,idim,k,1] = k2*cfourpisq*all_coeffs[il,idim,k,1]
                 
     c_acc_coeffs = acc_coeff.view(dtype=np.complex128)[...,0]
-    cdef np.ndarray[double, ndim=3, mode="c"] all_acc = the_irfft(c_acc_coeffs,n=nint,axis=2)*nint
+    cdef np.ndarray[double, ndim=3, mode="c"] all_acc = the_irfft(c_acc_coeffs,n=nint,axis=2,norm="forward")
     
     cdef np.ndarray[double, ndim=3, mode="c"] all_Newt_err = np.zeros((nbody,cndim,nint),np.float64)
     
     c_coeffs = all_coeffs.view(dtype=np.complex128)[...,0]
     
-    cdef np.ndarray[double, ndim=3, mode="c"] all_pos = the_irfft(c_coeffs,n=nint,axis=2)*nint
+    cdef np.ndarray[double, ndim=3, mode="c"] all_pos = the_irfft(c_coeffs,n=nint,axis=2,norm="forward")
 
     cdef np.ndarray[long, ndim=2, mode="c"]  all_shiftsUn = np.zeros((nloop,maxloopnb),dtype=np.int_)
     

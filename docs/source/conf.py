@@ -6,6 +6,8 @@ sys.path.insert(0, pathlib.Path(__file__).parents[2].resolve().as_posix())
 import sphinx_rtd_theme
 import choreo
 
+from sphinx_gallery.sorting import FileNameSortKey
+
 # Configuration file for the Sphinx documentation builder.
 #
 # For the full list of built-in configuration values, see the documentation:
@@ -28,7 +30,7 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.autosummary',
     'sphinx.ext.mathjax',
-    # 'sphinx.ext.imgmath',
+    'sphinx_gallery.gen_gallery',
 ]
 
 templates_path = ['_templates']
@@ -41,3 +43,20 @@ exclude_patterns = []
 html_theme = 'sphinx_rtd_theme'
 
 html_static_path = ['_static']
+
+
+
+# sphinx-gallery configuration
+sphinx_gallery_conf = {
+    # path to your example scripts
+    'examples_dirs': ['../sample-gallery-1', '../sample-gallery-2'],
+    # path to where to save gallery generated output
+    'gallery_dirs': ['auto_gallery-1', 'auto_gallery-2'],
+    # specify that examples should be ordered according to filename
+    'within_subsection_order': FileNameSortKey,
+    # directory where function granular galleries are stored
+    'backreferences_dir': 'gen_modules/backreferences',
+    # Modules for which function level galleries are created.  In
+    # this case sphinx_gallery and numpy in a tuple of strings.
+    'doc_module': ('choreo'),
+}   
