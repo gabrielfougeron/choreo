@@ -49,16 +49,16 @@ from libc.math cimport isinf as cisinf
 # ~ 
 # ~         the_rfft = np.fft.rfft
 # ~         the_irfft = np.fft.irfft
-# ~ # ~ 
-# ~ import mkl_fft._numpy_fft
 # ~ 
-# ~ the_rfft  = mkl_fft._numpy_fft.rfft
-# ~ the_irfft = mkl_fft._numpy_fft.irfft
-# ~ # ~ 
-import scipy.fft
+import mkl_fft._numpy_fft
 
-the_rfft = scipy.fft.rfft
-the_irfft = scipy.fft.irfft
+the_rfft  = mkl_fft._numpy_fft.rfft
+the_irfft = mkl_fft._numpy_fft.irfft
+# ~ # ~ 
+# ~ import scipy.fft
+# ~ 
+# ~ the_rfft = scipy.fft.rfft
+# ~ the_irfft = scipy.fft.irfft
 
 # ~ the_rfft = np.fft.rfft
 # ~ the_irfft = np.fft.irfft

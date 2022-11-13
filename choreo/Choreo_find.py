@@ -723,7 +723,7 @@ def Speed_test(
         print('')
 
 
-    callfun[0]["current_cvg_lvl"] = 0
+    callfun[0]["current_cvg_lvl"] = n_reconverge_it_max
     ncoeff = callfun[0]["ncoeff_list"][callfun[0]["current_cvg_lvl"]]
     nint = callfun[0]["nint_list"][callfun[0]["current_cvg_lvl"]]
 
@@ -734,7 +734,7 @@ def Speed_test(
 
     rand_eps = coeff_ampl_min
     rand_dim = 0
-    for i in range(callfun[0]['coeff_to_param_list'][0].shape[0]):
+    for i in range(callfun[0]['coeff_to_param_list'][callfun[0]["current_cvg_lvl"]].shape[0]):
 
         if (abs(x_max[i] - x_min[i]) > rand_eps):
             rand_dim +=1
@@ -743,7 +743,7 @@ def Speed_test(
 
     sampler = UniformRandom(d=rand_dim)
 
-    x0 = np.random.random(callfun[0]['param_to_coeff_list'][0].shape[1])
+    x0 = np.random.random(callfun[0]['param_to_coeff_list'][callfun[0]["current_cvg_lvl"]].shape[1])
     xmin = Compute_MinDist(x0,callfun)
 
     if (xmin < 1e-5):

@@ -69,7 +69,7 @@ def Unpackage_all_coeffs(x,callfun):
     
     args=callfun[0]
     
-    y = args['param_to_coeff_list'][args["current_cvg_lvl"]] * x
+    y = args['param_to_coeff_list'][args["current_cvg_lvl"]].dot(x)
     all_coeffs = y.reshape(args['nloop'],ndim,args['ncoeff_list'][args["current_cvg_lvl"]],2)
     
     return all_coeffs
@@ -174,7 +174,7 @@ def Compute_action_onlygrad_escape(x,callfun):
 
     args=callfun[0]
     
-    y = args['param_to_coeff_list'][args["current_cvg_lvl"]] * x
+    y = args['param_to_coeff_list'][args["current_cvg_lvl"]].dot(x)
     all_coeffs = y.reshape(args['nloop'],ndim,args['ncoeff_list'][args["current_cvg_lvl"]],2)
 
     rms_dist = Compute_Loop_Dist_btw_avg_Cython(
@@ -205,7 +205,7 @@ def Compute_action_onlygrad_escape(x,callfun):
     
     if args["Do_Pos_FFT"]:
         
-        y = args['param_to_coeff_list'][args["current_cvg_lvl"]] * x
+        y = args['param_to_coeff_list'][args["current_cvg_lvl"]].dot(x)
         args['last_all_coeffs'] = y.reshape(args['nloop'],ndim,args['ncoeff_list'][args["current_cvg_lvl"]],2)
         
         nint = args['nint_list'][args["current_cvg_lvl"]]
@@ -235,7 +235,7 @@ def Compute_action_onlygrad_escape(x,callfun):
         )
 
     GJ = GradJ.reshape(-1)
-    GJparam = (GJ * args['param_to_coeff_list'][args["current_cvg_lvl"]]) * escape_pen
+    GJparam = (args['param_to_coeff_T_list'][args["current_cvg_lvl"]].dot(GJ)) * escape_pen
     
     return GJparam
     
@@ -244,12 +244,12 @@ def Compute_action_hess_mul(x,dx,callfun):
     
     args=callfun[0]
 
-    dy = args['param_to_coeff_list'][args["current_cvg_lvl"]] * dx
+    dy = args['param_to_coeff_list'][args["current_cvg_lvl"]].dot(dx)
     all_coeffs_d = dy.reshape(args['nloop'],ndim,args['ncoeff_list'][args["current_cvg_lvl"]],2)
     
     if args["Do_Pos_FFT"]:
         
-        y = args['param_to_coeff_list'][args["current_cvg_lvl"]] * x
+        y = args['param_to_coeff_list'][args["current_cvg_lvl"]].dot(x)
         args['last_all_coeffs'] = y.reshape(args['nloop'],ndim,args['ncoeff_list'][args["current_cvg_lvl"]],2)
         
         nint = args['nint_list'][args["current_cvg_lvl"]]
@@ -281,7 +281,7 @@ def Compute_action_hess_mul(x,dx,callfun):
 
     HJdx = HessJdx.reshape(-1)
     
-    z = HJdx * args['param_to_coeff_list'][args["current_cvg_lvl"]]
+    z =  args['param_to_coeff_T_list'][args["current_cvg_lvl"]].dot(HJdx)
     
     return z
     
@@ -684,6 +684,9 @@ def setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max=6,MomCons=True,n_
     param_to_coeff_list = []
     coeff_to_param_list = []
 
+    param_to_coeff_T_list = []
+    coeff_to_param_T_list = []
+
     for i in range(n_reconverge_it_max+1):
         
         ncoeff_list.append(ncoeff_init * (2**i))
@@ -731,33 +734,39 @@ def setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max=6,MomCons=True,n_
             MassSum
             )
 
+        param_to_coeff_T_list.append(param_to_coeff_list[i].transpose(copy=True))
+        coeff_to_param_T_list.append(coeff_to_param_list[i].transpose(copy=True))
+
+
     callfun = [{
-    "nbody"                 :   nbody               ,
-    "nloop"                 :   nloop               ,
-    "mass"                  :   mass                ,
-    "loopnb"                :   loopnb              ,
-    "loopgen"               :   loopgen             ,
-    "Targets"               :   Targets             ,
-    "MassSum"               :   MassSum             ,
-    "SpaceRotsUn"           :   SpaceRotsUn         ,
-    "TimeRevsUn"            :   TimeRevsUn          ,
-    "TimeShiftNumUn"        :   TimeShiftNumUn      ,
-    "TimeShiftDenUn"        :   TimeShiftDenUn      ,
-    "RequiresLoopDispUn"    :   RequiresLoopDispUn  ,
-    "loopnbi"               :   loopnbi             ,
-    "ProdMassSumAll"        :   ProdMassSumAll      ,
-    "SpaceRotsBin"          :   SpaceRotsBin        ,
-    "TimeRevsBin"           :   TimeRevsBin         ,
-    "TimeShiftNumBin"       :   TimeShiftNumBin     ,
-    "TimeShiftDenBin"       :   TimeShiftDenBin     ,
-    "ncoeff_list"           :   ncoeff_list         ,
-    "nint_list"             :   nint_list           ,
-    "param_to_coeff_list"   :   param_to_coeff_list ,
-    "coeff_to_param_list"   :   coeff_to_param_list ,
-    "current_cvg_lvl"       :   0                   ,
-    "last_all_coeffs"       :   None                ,
-    "last_all_pos"          :   None                ,
-    "Do_Pos_FFT"            :   True                ,
+    "nbody"                 :   nbody                   ,
+    "nloop"                 :   nloop                   ,
+    "mass"                  :   mass                    ,
+    "loopnb"                :   loopnb                  ,
+    "loopgen"               :   loopgen                 ,
+    "Targets"               :   Targets                 ,
+    "MassSum"               :   MassSum                 ,
+    "SpaceRotsUn"           :   SpaceRotsUn             ,
+    "TimeRevsUn"            :   TimeRevsUn              ,
+    "TimeShiftNumUn"        :   TimeShiftNumUn          ,
+    "TimeShiftDenUn"        :   TimeShiftDenUn          ,
+    "RequiresLoopDispUn"    :   RequiresLoopDispUn      ,
+    "loopnbi"               :   loopnbi                 ,
+    "ProdMassSumAll"        :   ProdMassSumAll          ,
+    "SpaceRotsBin"          :   SpaceRotsBin            ,
+    "TimeRevsBin"           :   TimeRevsBin             ,
+    "TimeShiftNumBin"       :   TimeShiftNumBin         ,
+    "TimeShiftDenBin"       :   TimeShiftDenBin         ,
+    "ncoeff_list"           :   ncoeff_list             ,
+    "nint_list"             :   nint_list               ,
+    "param_to_coeff_list"   :   param_to_coeff_list     ,
+    "coeff_to_param_list"   :   coeff_to_param_list     ,
+    "param_to_coeff_T_list" :   param_to_coeff_T_list   ,
+    "coeff_to_param_T_list" :   coeff_to_param_T_list   ,
+    "current_cvg_lvl"       :   0                       ,
+    "last_all_coeffs"       :   None                    ,
+    "last_all_pos"          :   None                    ,
+    "Do_Pos_FFT"            :   True                    ,
     }]
 
     return callfun
@@ -769,7 +778,7 @@ def Compute_action(x,callfun):
 
     if args["Do_Pos_FFT"]:
         
-        y = args['param_to_coeff_list'][args["current_cvg_lvl"]] * x
+        y = args['param_to_coeff_list'][args["current_cvg_lvl"]].dot(x)
         args['last_all_coeffs'] = y.reshape(args['nloop'],ndim,args['ncoeff_list'][args["current_cvg_lvl"]],2)
         
         nint = args['nint_list'][args["current_cvg_lvl"]]
@@ -799,7 +808,7 @@ def Compute_action(x,callfun):
         )
 
     GJ = GradJ.reshape(-1)
-    y = GJ * args['param_to_coeff_list'][args["current_cvg_lvl"]]
+    y = args['param_to_coeff_T_list'][args["current_cvg_lvl"]].dot(GJ)
     
     return J,y
 
@@ -841,7 +850,7 @@ def Compute_Newton_err(x,callfun):
 
     args=callfun[0]
     
-    y = args['param_to_coeff_list'][args["current_cvg_lvl"]] * x
+    y = args['param_to_coeff_list'][args["current_cvg_lvl"]].dot(x)
     all_coeffs = y.reshape(args['nloop'],ndim,args['ncoeff_list'][args["current_cvg_lvl"]],2)
     
     all_Newt_err =  Compute_Newton_err_Cython(
@@ -899,7 +908,7 @@ def Detect_Escape(x,callfun):
     
     args=callfun[0]
     
-    y = args['param_to_coeff_list'][args["current_cvg_lvl"]] * x
+    y = args['param_to_coeff_list'][args["current_cvg_lvl"]].dot(x)
     all_coeffs = y.reshape(args['nloop'],ndim,args['ncoeff_list'][args["current_cvg_lvl"]],2)
     
     res = Compute_Loop_Size_Dist_Cython(
@@ -931,7 +940,7 @@ def Compute_MinDist(x,callfun):
     
     args=callfun[0]
     
-    y = args['param_to_coeff_list'][args["current_cvg_lvl"]] * x
+    y = args['param_to_coeff_list'][args["current_cvg_lvl"]].dot(x)
     all_coeffs = y.reshape(args['nloop'],ndim,args['ncoeff_list'][args["current_cvg_lvl"]],2)
     
     MinDist =  Compute_MinDist_Cython(
@@ -1242,7 +1251,7 @@ def Param_to_Param_direct(x,callfun_source,callfun_target):
     args_source=callfun_source[0]
     args_target=callfun_target[0]
 
-    y = args_source['param_to_coeff_list'][args_source["current_cvg_lvl"]] * x
+    y = args_source['param_to_coeff_list'][args_source["current_cvg_lvl"]].dot(x)
     all_coeffs = y.reshape(args_source['nloop'],ndim,args_source['ncoeff_list'][args_source["current_cvg_lvl"]],2)
     
     if (args_target['ncoeff_list'][args_target["current_cvg_lvl"]] < args_source['ncoeff_list'][args_source["current_cvg_lvl"]]):
@@ -1252,14 +1261,6 @@ def Param_to_Param_direct(x,callfun_source,callfun_target):
         z[:,:,0:args_source['ncoeff_list'][args_source["current_cvg_lvl"]],:] = all_coeffs
         z = z.reshape(-1)
 
-    # print('')
-    # print('bbb')
-    # print('source : ',args_source['ncoeff_list'][args_source["current_cvg_lvl"]])
-    # print('target : ',args_target['ncoeff_list'][args_target["current_cvg_lvl"]])
-    # print(args_target['coeff_to_param_list'][args_target["current_cvg_lvl"]].shape)
-    # print(z.shape)
-    # print('')
-    
     res = args_target['coeff_to_param_list'][args_target["current_cvg_lvl"]].dot(z)
     
     return res
@@ -1269,7 +1270,7 @@ def Param_to_Param_rev(Gx,callfun_source,callfun_target):
     args_source=callfun_source[0]
     args_target=callfun_target[0]
 
-    Gy = Gx * args_source['coeff_to_param_list'][args_source["current_cvg_lvl"]]
+    Gy = args_source['coeff_to_param_T_list'][args_source["current_cvg_lvl"]].dot(Gx)
     all_coeffs = Gy.reshape(args_source['nloop'],ndim,args_source['ncoeff_list'][args_source["current_cvg_lvl"]],2)
 
     if (args_target['ncoeff_list'][args_target["current_cvg_lvl"]] < args_source['ncoeff_list'][args_source["current_cvg_lvl"]]):
@@ -1279,15 +1280,8 @@ def Param_to_Param_rev(Gx,callfun_source,callfun_target):
         Gz[:,:,0:args_source['ncoeff_list'][args_source["current_cvg_lvl"]],:] = all_coeffs
         Gz = Gz.reshape(-1)
     
-    # print('')
-    # print('aaa')
-    # print('source : ',args_source['ncoeff_list'][args_source["current_cvg_lvl"]])
-    # print('target : ',args_target['ncoeff_list'][args_target["current_cvg_lvl"]])
-    # print(args_target['param_to_coeff_list'][args_target["current_cvg_lvl"]].shape)
-    # print(Gz.shape)
-    # print('')
     
-    res = Gz * args_target['param_to_coeff_list'][args_target["current_cvg_lvl"]]
+    res = args_target['param_to_coeff_T_list'][args_target["current_cvg_lvl"]].dot(Gz)
     
     return res
 
