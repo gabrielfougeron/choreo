@@ -41,7 +41,8 @@ from choreo.Choreo_scipy_plus import *
 
 def Pick_Named_Args_From_Dict(fun,the_dict,MissingArgsAreNone = True):
     
-    list_of_args = inspect.getargspec(fun).args
+    # list_of_args = inspect.getargspec(fun).args
+    list_of_args = inspect.getfullargspec(fun).args
     
     if MissingArgsAreNone:
         
