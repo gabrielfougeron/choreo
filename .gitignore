@@ -29,7 +29,9 @@ GUI_scripts/dist/
 GUI_scripts/build/
 sparseqr/
 /docs/source/generated/
+/docs/source/_galleries/
 .pyodide-xbuildenv/
+*.examples
 ##########################################################
 #           To be included (with preceding !)
 ##########################################################
