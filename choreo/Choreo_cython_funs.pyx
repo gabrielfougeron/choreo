@@ -28,40 +28,27 @@ from libc.math cimport sin as csin
 from libc.math cimport sqrt as csqrt
 from libc.math cimport isnan as cisnan
 from libc.math cimport isinf as cisinf
-# ~ 
-# ~ try:
-# ~ 
-# ~     import mkl_fft._numpy_fft
-# ~ 
-# ~     the_rfft  = mkl_fft._numpy_fft.rfft
-# ~     the_irfft = mkl_fft._numpy_fft.irfft
-# ~ 
-# ~ except:
-# ~ 
-# ~     try:
-# ~ 
-# ~         import scipy.fft
-# ~ 
-# ~         the_rfft = scipy.fft.rfft
-# ~         the_irfft = scipy.fft.irfft
-# ~ 
-# ~     except:
-# ~ 
-# ~         the_rfft = np.fft.rfft
-# ~         the_irfft = np.fft.irfft
-# ~ 
-import mkl_fft._numpy_fft
 
-the_rfft  = mkl_fft._numpy_fft.rfft
-the_irfft = mkl_fft._numpy_fft.irfft
-# ~ # ~ 
-# ~ import scipy.fft
-# ~ 
-# ~ the_rfft = scipy.fft.rfft
-# ~ the_irfft = scipy.fft.irfft
+try:
 
-# ~ the_rfft = np.fft.rfft
-# ~ the_irfft = np.fft.irfft
+    import mkl_fft._numpy_fft
+
+    the_rfft  = mkl_fft._numpy_fft.rfft
+    the_irfft = mkl_fft._numpy_fft.irfft
+
+except:
+
+    try:
+
+        import scipy.fft
+
+        the_rfft = scipy.fft.rfft
+        the_irfft = scipy.fft.irfft
+
+    except:
+
+        the_rfft = np.fft.rfft
+        the_irfft = np.fft.irfft
 
     
 cdef long cndim = 2 # Number of space dimensions
