@@ -255,7 +255,7 @@ def MakeSymFromGlobalTransform(Transform_list,Permutation_list,mass = None):
 
     return SymGens
 
-def MakeLoopEarSymList(n_main_loop,n_ears,m_main_loop=1,m_ears=1):
+def MakeLoopEarSymList(n_main_loop,n_ears,m_main_loop=1,m_ears=1,SelfReflMain=False,SelfReflEar=False):
 
 
     Permutation_list = []
@@ -305,25 +305,32 @@ def MakeLoopEarSymList(n_main_loop,n_ears,m_main_loop=1,m_ears=1):
     # --------------------------------------------
     # Reflexion symmetry
 
-    db = 1
+    if SelfReflMain:
+        db_main = 0
+    else:
+        db_main = 1
+
+    if SelfReflEar:
+        db_ear = 0
+    else:
+        db_ear = 1        
 
     perm = np.zeros((nbody),dtype=int)
     for ibody in range(n_main_loop):
-        perm[ibody] = ( (n_main_loop + db - ibody) % n_main_loop) 
+        perm[ibody] = ( (n_main_loop + db_main - ibody) % n_main_loop) 
 
     for il in range(n_main_loop):
         for iear in range(n_ears):
 
             ibody = n_main_loop + il*n_ears + iear
           
-            jl = (n_main_loop + db - il) % n_main_loop
-            jear = ( (n_ears     - iear) % n_ears)
+            jl   = ( n_main_loop + db_main - il  ) % n_main_loop
+            jear = ( n_ears      + db_ear  - iear) % n_ears      
 
 
             jbody = n_main_loop + jl*n_ears + jear
 
             perm[ibody] = jbody
-
 
     Permutation_list.append(perm)
 
