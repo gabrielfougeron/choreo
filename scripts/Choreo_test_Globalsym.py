@@ -36,13 +36,16 @@ def main(the_i=0):
 
     file_basename = ''
 
-    n_main_loop = 5
-    n_ears = 1
+    n_main_loop = 4
+    n_ears = 4
 
     m_main_loop = 1.
     m_ears = 1.
 
-    Sym_list,nbody,mass = choreo.MakeLoopEarSymList(n_main_loop,n_ears,m_main_loop,m_ears)
+    SelfReflMain = True
+    SelfReflEar = True
+
+    Sym_list,nbody,mass = choreo.MakeLoopEarSymList(n_main_loop,n_ears,m_main_loop,m_ears,SelfReflMain,SelfReflEar)
 
     # MomConsImposed = True
     MomConsImposed = False
@@ -93,7 +96,7 @@ def main(the_i=0):
 
     vid_size = (8,8) # Image size in inches
     # nint_plot_anim = 2*2*2*3*3*5*2
-    nint_plot_anim = 600 * 4
+    nint_plot_anim = 600 
     # nperiod_anim = 1./nbody
     # dnint = 32
     dnint = 4
@@ -140,9 +143,9 @@ def main(the_i=0):
     # krylov_method = 'lgmres'
     # krylov_method = 'gmres'
     # krylov_method = 'bicgstab'
-    # krylov_method = 'cgs'
+    krylov_method = 'cgs'
     # krylov_method = 'minres'
-    krylov_method = 'tfqmr'
+    # krylov_method = 'tfqmr'
 
 
     # line_search = 'armijo'
@@ -215,9 +218,9 @@ def main(the_i=0):
 
 if __name__ == "__main__":
 
-    n = multiprocessing.cpu_count()
+    # n = multiprocessing.cpu_count()
     # n = multiprocessing.cpu_count()//2
-    # n = 10
+    n = 2
     
     print(f"Executing with {n} workers")
     

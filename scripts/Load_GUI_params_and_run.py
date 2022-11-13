@@ -225,7 +225,10 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+
+    # n = 5
+    n = multiprocessing.cpu_count()
+    # n = 1
     
 # 
 # if __name__ == "__main__":

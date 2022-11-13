@@ -49,9 +49,9 @@ html_static_path = ['_static']
 # sphinx-gallery configuration
 sphinx_gallery_conf = {
     # path to your example scripts
-    'examples_dirs': ['../sample-gallery-1', '../sample-gallery-2'],
+    'examples_dirs': ['../gallery/sample-gallery-1', '../gallery/sample-gallery-2'],
     # path to where to save gallery generated output
-    'gallery_dirs': ['auto_gallery-1', 'auto_gallery-2'],
+    'gallery_dirs': ['_galleries/sample-gallery-1', '_galleries/sample-gallery-2'],
     # specify that examples should be ordered according to filename
     'within_subsection_order': FileNameSortKey,
     # directory where function granular galleries are stored
