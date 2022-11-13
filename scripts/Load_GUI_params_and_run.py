@@ -226,11 +226,10 @@ def main():
 
 if __name__ == "__main__":
 
-    # n = 5
-    n = multiprocessing.cpu_count()
-    # n = 1
-    
+    main()
 # 
+# 
+# # 
 # if __name__ == "__main__":
 # 
 #     # n = 5
@@ -245,5 +244,5 @@ if __name__ == "__main__":
 #         for i in range(n):
 #             res.append(executor.submit(main))
 #             time.sleep(0.01)
-
- 
+# 
+#  
