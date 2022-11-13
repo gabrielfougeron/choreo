@@ -214,7 +214,7 @@ def main():
     plot_extend = 0.
 
     n_opt = 0
-    n_opt_max = 1e10
+    n_opt_max = 50
     n_find_max = 1e4
     
     all_kwargs = choreo.Pick_Named_Args_From_Dict(choreo.Find_Choreo,dict(globals(),**locals()))
@@ -223,11 +223,11 @@ def main():
 
 
 
-# 
+
 if __name__ == "__main__":
     main()
     
-
+# 
 # if __name__ == "__main__":
 # 
 #     # n = 5
