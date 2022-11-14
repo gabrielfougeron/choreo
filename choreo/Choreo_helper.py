@@ -256,8 +256,7 @@ def MakeSymFromGlobalTransform(Transform_list,Permutation_list,mass = None):
     return SymGens
 
 def MakeLoopEarSymList(n_main_loop,n_ears,m_main_loop=1,m_ears=1,SelfReflMain=False,SelfReflEar=False):
-
-
+    
     Permutation_list = []
     Transform_list = []
 
@@ -385,3 +384,31 @@ def MakeLoopEarSymList(n_main_loop,n_ears,m_main_loop=1,m_ears=1,SelfReflMain=Fa
     Sym_list = MakeSymFromGlobalTransform(Transform_list,Permutation_list,mass=mass)
 
     return Sym_list,nbody,mass
+
+def Make_SymList_From_InfoDict(InfoDict):
+
+    SymList = []
+
+    for il in range(InfoDict['nloop']):
+
+        Sym_ref = ChoreoSym(
+            LoopTarget = InfoDict["Targets"][il][0],
+            LoopSource = -1,
+            SpaceRot = np.array(InfoDict["SpaceRotsUn"][il][0]),
+            TimeRev = InfoDict["TimeRevsUn"][il][0],
+            TimeShift=fractions.Fraction(numerator=InfoDict["TimeShiftNumUn"][il][0],denominator=InfoDict["TimeShiftDenUn"][il][0])
+        ).Inverse()
+
+        for ibl in range(InfoDict["loopnb"][il]):
+            
+            Sym_rel = ChoreoSym(
+                LoopTarget = InfoDict["Targets"][il][ibl],
+                LoopSource = -1,
+                SpaceRot = np.array(InfoDict["SpaceRotsUn"][il][ibl]),
+                TimeRev = InfoDict["TimeRevsUn"][il][ibl],
+                TimeShift=fractions.Fraction(numerator=InfoDict["TimeShiftNumUn"][il][ibl],denominator=InfoDict["TimeShiftDenUn"][il][ibl])
+            )
+
+            SymList.append(Sym_rel.Compose(Sym_ref))
+
+    return SymList
