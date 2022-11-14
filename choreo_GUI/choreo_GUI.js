@@ -575,7 +575,7 @@ function LoadConfigDict(ConfigDict) {
     document.getElementById('input_trail_width').value = ConfigDict['Animation_Size'] ['input_trail_width'];
     SlideTrailWidth();
     document.getElementById('input_trail_vanish_speed').value = ConfigDict['Animation_Size'] ['input_trail_vanish_speed'];
-    SlideTrailTime();
+    // SlideTrailTime();
     
     ExportColors();
     var send_event = new Event('ChangeColorsFromOutsideCanvas');
@@ -1281,7 +1281,7 @@ input_trail_vanish_speed.min   = min_base_trail_vanish_speed ;
 input_trail_vanish_speed.max   = max_base_trail_vanish_speed ;
 input_trail_vanish_speed.step  = 0.05 ;
 
-SlideTrailTime();
+// SlideTrailTime();
 
 function SlideBodyRadius(event) {
     // console.log(input_body_radius.value);
@@ -1295,8 +1295,16 @@ function SlideTrailWidth(event) {
 
 function SlideTrailTime(event) {
     // console.log(input_trail_vanish_speed.value);
-    base_trail_vanish_speed = input_trail_vanish_speed.value;
-    FadeInvFrequency = 1/(1000*(base_trail_vanish_speed*base_trail_vanish_speed));
+    trail_vanish_speed = input_trail_vanish_speed.value;
+    // FadeInvFrequency = 1/(1000*(base_trail_vanish_speed*base_trail_vanish_speed));
+
+    var dx = xMax - xMin
+    var dy = yMax - yMin
+    var distance_ref = Math.sqrt(dx*dx + dy*dy)
+    var distance_rel = Max_PathLength / distance_ref
+
+    FadeInvFrequency = 1 / (trail_vanish_speed_mul*(trail_vanish_speed*trail_vanish_speed) * distance_rel);
+
 }
 
 function checkbox_Mass_Scale_Handler(event) {
