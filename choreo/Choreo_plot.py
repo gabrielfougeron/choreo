@@ -38,7 +38,7 @@ from choreo.Choreo_cython_funs import ndim,twopi,nhash,n
 from choreo.Choreo_cython_funs import the_irfft,the_rfft
 
 from choreo.Choreo_funs import Compute_action,Compute_hash_action,Compute_Newton_err
-from choreo.Choreo_funs import Compute_MinDist,Detect_Escape
+from choreo.Choreo_funs import Compute_MinDist,Detect_Escape,Compute_MaxPathLength
 from choreo.Choreo_funs import Unpackage_all_coeffs
 from choreo.Choreo_funs import ComputeAllPos
 
@@ -703,7 +703,7 @@ def VideoGrid(input_list,output_filename,nxy = None,ordering='RowMajor'):
             print(f"Unexpected {err=}, {type(err)=}")
             raise
 
-def Write_Descriptor(x,callfun,filename,Action=None,Gradaction=None,Newt_err_norm=None,dxmin=None,Hash_Action=None,extend=0.03):
+def Write_Descriptor(x,callfun,filename,Action=None,Gradaction=None,Newt_err_norm=None,dxmin=None,Hash_Action=None,max_path_length=None,extend=0.03):
     # Dumps a text file describing the current trajectories
 
     args = callfun[0]
@@ -724,6 +724,10 @@ def Write_Descriptor(x,callfun,filename,Action=None,Gradaction=None,Newt_err_nor
     if Hash_Action is None:
         
          Hash_Action = Compute_hash_action(x,callfun)
+
+    if max_path_length is None:
+
+        max_path_length = Compute_MaxPathLength(x,callfun)
 
     nbody = args['nbody']
     nloop = args['nloop']
@@ -770,18 +774,20 @@ def Write_Descriptor(x,callfun,filename,Action=None,Gradaction=None,Newt_err_nor
 
     Info_dict = {}
 
-    Info_dict["mass"] = args["mass"].tolist()
+    max_path_length
 
     Info_dict["nbody"] = nbody
-    Info_dict["nloop"] = nloop
-
     Info_dict["n_Fourier"] = args['ncoeff_list'][args["current_cvg_lvl"]]
     Info_dict["n_int"] = args['nint_list'][args["current_cvg_lvl"]]
+
+    Info_dict["mass"] = args["mass"].tolist()
+    Info_dict["nloop"] = nloop
 
     Info_dict["Action"] = Action
     Info_dict["Grad_Action"] = Gradaction
     Info_dict["Newton_Error"] = Newt_err_norm
     Info_dict["Min_Distance"] = dxmin
+    Info_dict["Max_PathLength"] = max_path_length
 
     Info_dict["Hash"] = Hash_Action.tolist()
 

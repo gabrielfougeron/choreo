@@ -966,6 +966,30 @@ def Compute_MinDist(x,callfun):
         )
     
     return MinDist
+
+def Compute_MaxPathLength(x,callfun):
+    # Computes the maximum path length for speed sync
+
+    args=callfun[0]
+
+    nint = args['nint_list'][args["current_cvg_lvl"]]
+
+    if args["Do_Pos_FFT"]:
+        
+        y = args['param_to_coeff_list'][args["current_cvg_lvl"]].dot(x)
+        args['last_all_coeffs'] = y.reshape(args['nloop'],ndim,args['ncoeff_list'][args["current_cvg_lvl"]],2)
+        
+        c_coeffs = args['last_all_coeffs'].view(dtype=np.complex128)[...,0]
+        args['last_all_pos'] = the_irfft(c_coeffs,n=nint,axis=2,norm="forward")
+
+    dx = args['last_all_pos'].copy()
+    dx[:,:,0:(nint-1)] -= args['last_all_pos'][:,:,1:nint]
+    dx[:,:,nint-1] -= args['last_all_pos'][:,:,0]
+    
+    max_path_length = np.linalg.norm(dx,axis=1).sum(axis=1).max(axis=0)
+
+    return max_path_length
+
 class UniformRandom():
     def __init__(self, d):
         self.d = d
