@@ -26,7 +26,7 @@ else:
 
     if ("PYODIDE" in os.environ): # Building for Pyodide
 
-        extra_compile_args = ["-O2"]
+        extra_compile_args = ["-O3"]
 
     elif not(distutils.spawn.find_executable('clang') is None):
 
