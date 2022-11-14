@@ -1523,13 +1523,13 @@ function viewport_custom_select_Handler(event) {
 
     switch (viewport_custom_select.value) {
         case 'portrait': {
-            myViewport.setAttribute('content','width=610, initial-scale=1.0, maximum-scale=1.0, user-scalable=0')
+            myViewport.setAttribute('content','width=610,user-scalable=0')
             break;}    
         case 'landscape': {
-            myViewport.setAttribute('content','width=1250, initial-scale=1.0, maximum-scale=1.0, user-scalable=0')
+            myViewport.setAttribute('content','width=1250, user-scalable=0')
             break;}
         case 'disable': {
-            myViewport.setAttribute('content','width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0')
+            myViewport.setAttribute('content','width=device-width,user-scalable=0')
             break;}
     }
 
