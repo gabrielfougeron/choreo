@@ -7,6 +7,7 @@ os.environ['MKL_NUM_THREADS'] = '1'
 
 import concurrent.futures
 import multiprocessing
+import json
 import shutil
 import random
 import time
@@ -42,30 +43,33 @@ def main():
 #             file_path = os.path.join(root, filename)
 #             file_root, file_ext = os.path.splitext(os.path.basename(file_path))
 # 
-#             if (file_ext == '.txt' ):
+#             if (file_ext == '.json' ):
 # 
 #                 file_path = os.path.join(root, file_root)
 #                 the_name = file_path[len(input_folder):]
 #                 input_names_list.append(the_name)
 # 
 # # 
-#     ''' Include all files in folder '''
-#     input_names_list = []
-#     for file_path in os.listdir(input_folder):
-#         file_path = os.path.join(input_folder, file_path)
-#         file_root, file_ext = os.path.splitext(os.path.basename(file_path))
-#         
-#         if (file_ext == '.txt' ):
-#             # 
-#             # if int(file_root) > 8:
-#             #     input_names_list.append(file_root)
-# 
-#             input_names_list.append(file_root)
+    ''' Include all files in folder '''
+    input_names_list = []
+    for file_path in os.listdir(input_folder):
+        file_path = os.path.join(input_folder, file_path)
+        file_root, file_ext = os.path.splitext(os.path.basename(file_path))
+        
+        if (file_ext == '.json' ):
+            # 
+            # if int(file_root) > 8:
+            #     input_names_list.append(file_root)
 
-    input_names_list = ['00004']
+            input_names_list.append(file_root)
+
+    # input_names_list = ['00004']
 
     store_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/mod')
     # store_folder = input_folder
+
+    Save_All_Pos = True
+    # Save_All_Pos = False
 
     # Save_All_Coeffs = True
     Save_All_Coeffs = False
@@ -91,8 +95,8 @@ def main():
     # color = "velocity"
     # color = "all"
 
-    # Save_anim = True
-    Save_anim = False
+    Save_anim = True
+    # Save_anim = False
 
     # Save_ODE_anim = True
     Save_ODE_anim = False
@@ -124,8 +128,8 @@ def main():
     else:
         period_div = the_lcm
 # 
-    # nperiod_anim = 1.
-    nperiod_anim = 3.
+    nperiod_anim = 1.
+    # nperiod_anim = 3.
     # nperiod_anim = 1./period_div
 
     Plot_trace_anim = True
@@ -133,8 +137,8 @@ def main():
 
     GradActionThresh = 1e-8
 # 
-    InvestigateStability = True
-    # InvestigateStability = False
+    # InvestigateStability = True
+    InvestigateStability = False
 
     # Save_Perturbed = True
     Save_Perturbed = False
@@ -147,8 +151,8 @@ def main():
     # InvestigateIntegration = True
     InvestigateIntegration = False
 
-    # Exec_Mul_Proc = True
-    Exec_Mul_Proc = False
+    Exec_Mul_Proc = True
+    # Exec_Mul_Proc = False
 
     if Exec_Mul_Proc:
 
@@ -188,6 +192,7 @@ def ExecName(
     img_size,
     thumb_size,
     color,
+    color_list,
     Save_thumb,
     Save_anim,
     nint_plot_anim,
@@ -197,6 +202,7 @@ def ExecName(
     vid_size_perturb,
     dnint,
     Save_Newton_Error,
+    Save_All_Pos,
     Save_All_Coeffs,
     Save_All_Coeffs_No_Sym,
     Save_ODE_anim,
@@ -214,12 +220,28 @@ def ExecName(
     print('')
     print(the_name)
 
+
+    
+
+    Info_filename = os.path.join(input_folder,the_name)
+    Info_filename = Info_filename + '.json'
+
+    with open(Info_filename,'r') as jsonFile:
+        Info_dict = json.load(jsonFile)
+
+
     input_filename = os.path.join(input_folder,the_name)
     input_filename = input_filename + '.npy'
 
     bare_name = the_name.split('/')[-1]
 
-    all_coeffs = np.load(input_filename)
+    all_pos = np.load(input_filename)
+    nint = Info_dict["n_int"]
+
+    c_coeffs = choreo.the_rfft(all_pos,n=nint,axis=2,norm="forward")
+    all_coeffs = np.zeros((Info_dict["nloop"],choreo.ndim,Info_dict["n_Fourier"],2),dtype=np.float64)
+    all_coeffs[:,:,:,0] = c_coeffs[:,:,0:Info_dict["n_Fourier"]].real
+    all_coeffs[:,:,:,1] = c_coeffs[:,:,0:Info_dict["n_Fourier"]].imag
 
     theta = 2*np.pi *0.
     SpaceRevscal = 1.
@@ -232,71 +254,34 @@ def ExecName(
 
     ncoeff_init = all_coeffs.shape[2]
 
-    the_i = -1
-    the_i_max = 0
 
-    Gradaction_OK = False
+    nbody = Info_dict['nbody']
+    mass = np.array(Info_dict['mass'])
+    Sym_list = choreo.Make_SymList_From_InfoDict(Info_dict)
 
-    while (not(Gradaction_OK) and (the_i < the_i_max)):
+    # MomConsImposed = True
+    MomConsImposed = False
 
-        the_i += 1
-        '''
-        # p = 1
-        p_list = range(the_i_max)
-        # p_list = [3]
-        p = p_list[the_i%len(p_list)]
+    n_reconverge_it_max = 0
+    n_grad_change = 1.
 
-        nc = 3
+    callfun = choreo.setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change,CrashOnIdentity=False)
 
-        mm = 1
-        # mm_list = [1]
-        # mm = mm_list[the_i%len(mm_list)]
+    x = choreo.Package_all_coeffs(all_coeffs,callfun)
 
-        nbpl=[nc]
+    Action,Gradaction = choreo.Compute_action(x,callfun)
 
-        SymType = {
-            'name'  : 'D',
-            'n'     : nc,
-            'm'     : mm,
-            'l'     : 0,
-            'k'     : 1,
-            'p'     : p,
-            'q'     : nc,
-        }
-        Sym_list = choreo.Make2DChoreoSym(SymType,range(nc))
-        nbody = nc
-
-        '''
-
-        SymName = None
-        nbpl=[5]
-        Sym_list,nbody = choreo.Make2DChoreoSymManyLoops(nbpl=nbpl,SymName=SymName)
-
-
-        mass = np.ones((nbody),dtype=np.float64)
-
-        # MomConsImposed = True
-        MomConsImposed = False
-
-        n_reconverge_it_max = 0
-        n_grad_change = 1.
-
-        callfun = choreo.setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change,CrashOnIdentity=False)
-
-        x = choreo.Package_all_coeffs(all_coeffs,callfun)
-
-        Action,Gradaction = choreo.Compute_action(x,callfun)
-
-        Gradaction_OK = (np.linalg.norm(Gradaction) < GradActionThresh)
+    Gradaction_OK = (np.linalg.norm(Gradaction) < GradActionThresh)
 
     if not(Gradaction_OK):
-        raise(ValueError('Correct Symmetries not found'))
+        raise(ValueError('Solution is poorly converged'))
+
 
     filename_output = os.path.join(store_folder,bare_name)
 
     print('Saving solution as '+filename_output+'.*')
 
-    choreo.Write_Descriptor(x,callfun,filename_output+'.txt')
+    choreo.Write_Descriptor(x,callfun,filename_output+'.json')
     
     if Save_img :
         choreo.plot_all_2D(x,nint_plot_img,callfun,filename_output+'.png',fig_size=img_size,color=color)
@@ -312,7 +297,11 @@ def ExecName(
     
     if Save_All_Coeffs:
 
-        np.save(filename_output+'.npy',all_coeffs)
+        np.save(filename_output+'_coeffs.npy',all_coeffs)
+
+    if Save_All_Pos:
+
+        np.save(filename_output+'.npy',all_pos)
 
     if Save_All_Coeffs_No_Sym:
         

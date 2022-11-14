@@ -1135,6 +1135,7 @@ def Compose_Two_Paths(nTf,nbs,nbf,mass_mul,ncoeff,all_coeffs_slow,all_coeffs_fas
                     
                     all_pos_avg[ilf,:,iint] = all_pos_slow[0,:,iint] + SpRotMat.dot(all_pos_fast[ilf,:,iint])
 
+            ## TODO Check norm of FFT !! Might be wrong now after fft change
             c_coeffs_avg = the_rfft(all_pos_avg,n=nint,axis=2)
             all_coeffs_composed = np.zeros((nloop_fast,ndim,ncoeff,2),dtype=np.float64)
 
