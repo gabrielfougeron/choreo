@@ -62,7 +62,7 @@ def main():
 # 
 #             input_names_list.append(file_root)
 
-    input_names_list = ['00004']
+    input_names_list = ['00002']
 
     store_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/mod')
     # store_folder = input_folder

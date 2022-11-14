@@ -214,7 +214,8 @@ def main():
     plot_extend = 0.
 
     n_opt = 0
-    n_opt_max = 50
+    # n_opt_max = 50
+    n_opt_max = 1e6
     n_find_max = 1e4
     
     all_kwargs = choreo.Pick_Named_Args_From_Dict(choreo.Find_Choreo,dict(globals(),**locals()))
@@ -224,25 +225,25 @@ def main():
 
 
 
+# if __name__ == "__main__":
+
+    # main()
+# 
+
+# 
 if __name__ == "__main__":
 
-    main()
-# 
-# 
-# # 
-# if __name__ == "__main__":
-# 
-#     # n = 5
-#     n = multiprocessing.cpu_count()
-#     # n = 1
-#     
-#     print(f"Executing with {n} workers")
-#     
-#     with concurrent.futures.ProcessPoolExecutor(max_workers=n) as executor:
-#         
-#         res = []
-#         for i in range(n):
-#             res.append(executor.submit(main))
-#             time.sleep(0.01)
-# 
-#  
+    # n = 5
+    n = multiprocessing.cpu_count()
+    # n = 1
+    
+    print(f"Executing with {n} workers")
+    
+    with concurrent.futures.ProcessPoolExecutor(max_workers=n) as executor:
+        
+        res = []
+        for i in range(n):
+            res.append(executor.submit(main))
+            time.sleep(0.01)
+
+ 
