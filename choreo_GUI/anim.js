@@ -173,7 +173,7 @@ function canvasApp() {
 	var Last_Time_since_origin;
 	var dt_outlier_ms = 300;
 	var speed_slider_value_init = .5;
-	var Time_One_Period_init = 17;
+	var Time_One_Period_init = 5;
 	var LastFadeTime = 0;
 	
 	var startStopButton = document.getElementById("startStopButton");
@@ -660,12 +660,8 @@ function canvasApp() {
 
 	function onTimer() {
 
-
 		if (trajectoriesOn) {
 			
-
-			// console.log(fadeScreenColor);
-			//fade
 			context.fillStyle = fadeScreenColor;
 			
 			var nfade = Math.floor(LastFadeTime/FadeInvFrequency)
@@ -1076,19 +1072,26 @@ function canvasApp() {
 
 	function setPeriodTime() {
 
-		var slider_value = $("#speedSlider").slider("value");
-		var slider_value_rel = slider_value/speed_slider_value_init;
-		var sliderpow = 3;
-		var alpha = Math.pow(slider_value_rel,sliderpow);
+		var slider_value = $("#speedSlider").slider("value")
+		var slider_value_rel = slider_value/speed_slider_value_init
+		var sliderpow = 3
+		var alpha = Math.pow(slider_value_rel,sliderpow)
 
-		var Time_One_Period = Time_One_Period_init / alpha;
+		var Time_One_Period = Time_One_Period_init / alpha
 
-		tInc = 1/(Time_One_Period*FPS_estimation) ;
+		var dx = xMax - xMin
+		var dy = yMax - yMin
+		var distance_ref = Math.sqrt(dx*dx + dy*dy)
+		var distance_rel = PlotInfo["Max_PathLength"] / distance_ref
 
-		var speedTxt_val = Math.round(100*Math.pow(slider_value,sliderpow));
-		speedTxt.innerHTML = "Speed: "+speedTxt_val.toString();
+
+		tInc = 1/(Time_One_Period*FPS_estimation*distance_rel) 
+
+		var speedTxt_val = Math.round(100*Math.pow(slider_value,sliderpow))
+		speedTxt.innerHTML = "Speed: "+speedTxt_val.toString()
 
 	}
+
 
 	function FinalizeSetOrbit(DoDrawParticles=true,DoXMinMax=true) {
 
@@ -1105,6 +1108,8 @@ function canvasApp() {
 			setPlotWindow(plotWindow);
 		}
 
+
+
 		// time = 0;
 
 		setParticlePositions(time);
@@ -1119,6 +1124,7 @@ function canvasApp() {
 			}
 		}
 		setPeriodTime();
+		SlideTrailTime();
 		
 	}
 
