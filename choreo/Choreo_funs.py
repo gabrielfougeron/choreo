@@ -966,7 +966,6 @@ def Compute_MinDist(x,callfun):
         )
     
     return MinDist
-    
 class UniformRandom():
     def __init__(self, d):
         self.d = d
@@ -1285,25 +1284,6 @@ def Param_to_Param_rev(Gx,callfun_source,callfun_target):
     res = args_target['param_to_coeff_T_list'][args_target["current_cvg_lvl"]].dot(Gz)
     
     return res
-
-def Package_Precond_LinOpt(Precond,callfun_precond,callfun):
-    
-    args = callfun[0]
-
-    def the_matvec(x):
-
-        y = Param_to_Param_rev(x,callfun,callfun_precond)
-
-        z = Precond.solve(y)-y
-
-        res = Param_to_Param_direct(z,callfun_precond,callfun)
-
-        return res+x
-
-        
-    return sp.linalg.LinearOperator((args['coeff_to_param_list'][args["current_cvg_lvl"]].shape[0],args['coeff_to_param_list'][args["current_cvg_lvl"]].shape[0]),
-        matvec =  the_matvec,
-        rmatvec = the_matvec)
 
 def Compute_Auto_ODE_RHS(x,callfun):
 

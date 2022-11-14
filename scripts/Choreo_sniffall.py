@@ -136,8 +136,8 @@ def main(the_i=0):
     Save_img = True
     # Save_img = False
 
-    Save_thumb = True
-    # Save_thumb = False
+    # Save_thumb = True
+    Save_thumb = False
 
     # img_size = (12,12) # Image size in inches
     img_size = (8,8) # Image size in inches
@@ -151,8 +151,8 @@ def main(the_i=0):
     # color = "velocity"
     # color = "all"
 
-    # Save_anim = True
-    Save_anim = False
+    Save_anim = True
+    # Save_anim = False
 
     vid_size = (8,8) # Image size in inches
     nint_plot_anim = 2*2*2*3*3*5*2
