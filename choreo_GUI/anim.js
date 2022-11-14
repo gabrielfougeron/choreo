@@ -4,7 +4,9 @@ var Gallery_cache_behavior = {}
 var Pos ;
 var PlotInfo;
 
-var xMin, xMax, yMin, yMax;
+var xMin=0., xMax=1., yMin=0., yMax=1.;
+var Max_PathLength = 1.;
+
 var xPixRate, yPixRate;
 var center_x,center_y;
 var CurrentMax_PartRelSize = 1.;
@@ -38,6 +40,8 @@ var colorLookup_init = [
 var defaultParticleColor = "#50ce4d";
 var defaultTrailColor = "#3c9a39";
 
+var FallbackTrailColor = "#d5d5d5";
+
 // Particle radius
 var min_base_particle_size = 3.;
 var max_base_particle_size = 15.;
@@ -51,7 +55,8 @@ var base_trailWidth = 2;
 // Vanish speed
 var min_base_trail_vanish_speed = 0.;
 var max_base_trail_vanish_speed = 3.;
-var base_trail_vanish_speed = 1.;
+var base_trail_vanish_speed = 2.;
+var trail_vanish_speed_mul = 125.;
 
 var DoScaleSizeWithMass = true;
 
@@ -173,7 +178,7 @@ function canvasApp() {
 	var Last_Time_since_origin;
 	var dt_outlier_ms = 300;
 	var speed_slider_value_init = .5;
-	var Time_One_Period_init = 17;
+	var Time_One_Period_init = 5;
 	var LastFadeTime = 0;
 	
 	var startStopButton = document.getElementById("startStopButton");
@@ -663,10 +668,9 @@ function canvasApp() {
 
 		if (trajectoriesOn) {
 			
-
-			// console.log(fadeScreenColor);
 			//fade
 			context.fillStyle = fadeScreenColor;
+
 			
 			var nfade = Math.floor(LastFadeTime/FadeInvFrequency)
 			for (var ifade=0; ifade<nfade; ifade++){
@@ -900,6 +904,87 @@ function canvasApp() {
 		}
 
 	}
+	
+	function anim_path_grey(Time_since_origin){
+
+		clearScreen();
+		DrawAllPaths_Grey();
+
+	}
+
+	function DrawAllPaths_Grey() {
+
+		var n_pos = Pos.shape[2];
+
+		var xl,yl;
+		var x,y;
+		var Pixx,Pixy;
+
+		var il,ib,ilb,nlb;
+		var p;
+
+        for ( il = 0 ; il < PlotInfo['nloop'] ; il++){
+
+			nlb =  PlotInfo['loopnb'][il];
+			
+			for (ilb = 0 ; ilb < nlb ; ilb++){
+
+				if (PlotInfo['RequiresLoopDispUn'][il][ilb]) {
+
+					ib = PlotInfo['Targets'][il][ilb];
+					p = particles[ib];
+					context.lineWidth = p.PartRelSize * base_trailWidth ;
+					context.strokeStyle = FallbackTrailColor;
+
+					// Super ugly
+					xl = Pos.data[  2*il    * n_pos] ;
+					yl = Pos.data[ (2*il+1) * n_pos] ;
+
+					x = PlotInfo['SpaceRotsUn'][il][ilb][0][0] * xl + PlotInfo['SpaceRotsUn'][il][ilb][0][1] * yl ;
+					y = PlotInfo['SpaceRotsUn'][il][ilb][1][0] * xl + PlotInfo['SpaceRotsUn'][il][ilb][1][1] * yl ;
+
+					Pixx = xPixRate*(x - xMin) ;
+					Pixy = yPixRate*(y - yMax) ;
+
+					context.beginPath();
+					context.moveTo(Pixx, Pixy);
+
+					for (i_pos = 1 ; i_pos < n_pos ; i_pos++){
+
+						// Super ugly
+						xl = Pos.data[ i_pos +  2*il    * n_pos] ;
+						yl = Pos.data[ i_pos + (2*il+1) * n_pos] ;
+
+						x = PlotInfo['SpaceRotsUn'][il][ilb][0][0] * xl + PlotInfo['SpaceRotsUn'][il][ilb][0][1] * yl ;
+						y = PlotInfo['SpaceRotsUn'][il][ilb][1][0] * xl + PlotInfo['SpaceRotsUn'][il][ilb][1][1] * yl ;
+		
+						Pixx = xPixRate*(x - xMin) ;
+						Pixy = yPixRate*(y - yMax) ;
+
+						context.lineTo(Pixx, Pixy);
+
+					}
+
+					// Super ugly
+					xl = Pos.data[  2*il    * n_pos] ;
+					yl = Pos.data[ (2*il+1) * n_pos] ;
+
+					x = PlotInfo['SpaceRotsUn'][il][ilb][0][0] * xl + PlotInfo['SpaceRotsUn'][il][ilb][0][1] * yl ;
+					y = PlotInfo['SpaceRotsUn'][il][ilb][1][0] * xl + PlotInfo['SpaceRotsUn'][il][ilb][1][1] * yl ;
+
+					Pixx = xPixRate*(x - xMin) ;
+					Pixy = yPixRate*(y - yMax) ;
+
+					context.lineTo(Pixx, Pixy);
+					context.stroke();
+
+				}
+
+			}
+
+		}
+
+	}
 
 	function drawAllSegments() {
 		
@@ -1083,7 +1168,12 @@ function canvasApp() {
 
 		var Time_One_Period = Time_One_Period_init / alpha;
 
-		tInc = 1/(Time_One_Period*FPS_estimation) ;
+		var dx = xMax - xMin
+		var dy = yMax - yMin
+		var distance_ref = Math.sqrt(dx*dx + dy*dy)
+		var distance_rel = Max_PathLength / distance_ref
+
+		tInc = 1/(Time_One_Period*FPS_estimation * distance_rel) ;
 
 		var speedTxt_val = Math.round(100*Math.pow(slider_value,sliderpow));
 		speedTxt.innerHTML = "Speed: "+speedTxt_val.toString();
@@ -1091,8 +1181,6 @@ function canvasApp() {
 	}
 
 	function FinalizeSetOrbit(DoDrawParticles=true,DoXMinMax=true) {
-
-		makeParticles();
 
 		if(DoXMinMax) {
 			plotWindow = {
@@ -1105,7 +1193,8 @@ function canvasApp() {
 			setPlotWindow(plotWindow);
 		}
 
-		// time = 0;
+		SlideTrailTime();
+		makeParticles();
 
 		setParticlePositions(time);
 		resetLastPositions();
@@ -1131,10 +1220,12 @@ function canvasApp() {
 		Pos = AllPos[orbitIndex];
 		PlotInfo = AllPlotInfo[orbitIndex];
 
+		Max_PathLength = PlotInfo["Max_PathLength"]
+
 		clearScreen();
 		FinalizeSetOrbit();
+		request = requestAnimationFrame(anim_path_grey);
 		
-
 	}
 
 	async function LoadGallery() {
