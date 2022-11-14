@@ -1514,4 +1514,23 @@ function checkbox_DisplayBodiesDuringSearchHandler(event) {
 
 }
 
+viewport_custom_select = document.getElementById("viewport_custom_select");
+viewport_custom_select.addEventListener("input", viewport_custom_select_Handler, true);
 
+function viewport_custom_select_Handler(event) {
+
+    myViewport = document.getElementById("myViewport");
+
+    switch (viewport_custom_select.value) {
+        case 'portrait': {
+            myViewport.setAttribute('content','width=610')
+            break;}    
+        case 'landscape': {
+            myViewport.setAttribute('content','width=1250')
+            break;}
+        case 'disable': {
+            myViewport.setAttribute('content','width=device-width, initial-scale=1')
+            break;}
+    }
+
+}
