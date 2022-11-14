@@ -31,7 +31,9 @@ One_sec = 1e9
 def main():
 
 
-    input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/5/')
+    input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/5 - Copy/')
+    # input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery/')
+    # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/5/')
     # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/copy/')
     # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/Gallery_videos/C-4')
 # 
@@ -95,8 +97,8 @@ def main():
     # color = "velocity"
     # color = "all"
 
-    Save_anim = True
-    # Save_anim = False
+    # Save_anim = True
+    Save_anim = False
 
     # Save_ODE_anim = True
     Save_ODE_anim = False
@@ -275,6 +277,10 @@ def ExecName(
 
     if not(Gradaction_OK):
         raise(ValueError('Solution is poorly converged'))
+
+    # print(f'Input Gradaction : {Info_dict["Grad_Action"]}')
+    # print(f'Output Gradaction : {np.linalg.norm(Gradaction)}')
+    print(f'Gradaction mul :  {np.linalg.norm(Gradaction)/Info_dict["Grad_Action"]}')
 
 
     filename_output = os.path.join(store_folder,bare_name)

@@ -1296,7 +1296,14 @@ function SlideTrailWidth(event) {
 function SlideTrailTime(event) {
     // console.log(input_trail_vanish_speed.value);
     base_trail_vanish_speed = input_trail_vanish_speed.value;
+
+    // var dx = xMax - xMin
+    // var dy = yMax - yMin
+    // var distance_ref = Math.sqrt(dx*dx + dy*dy)
+    // var distance_rel = PlotInfo["Max_PathLength"] / distance_ref
+
     FadeInvFrequency = 1/(1000*(base_trail_vanish_speed*base_trail_vanish_speed));
+    // FadeInvFrequency = distance_rel /(1000*(base_trail_vanish_speed*base_trail_vanish_speed));
 }
 
 function checkbox_Mass_Scale_Handler(event) {
