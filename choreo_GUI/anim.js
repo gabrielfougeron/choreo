@@ -1224,7 +1224,9 @@ function canvasApp() {
 
 		clearScreen();
 		FinalizeSetOrbit();
-		request = requestAnimationFrame(anim_path_grey);
+		if (trajectoriesOn){
+			request = requestAnimationFrame(anim_path_grey);
+		}
 		
 	}
 
