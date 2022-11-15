@@ -467,6 +467,7 @@ window.addEventListener("drop",function(e){
           </td>
            <td style="border:none; max-width:90px; ">
             <select class="w3-select" id="linesearch_method" name="linesearch_method" style="text-align: center;"> 
+              <option value="none">None</option>
               <option value="wolfe" selected>Wolfe</option>
               <option value="armijo">Armijo</option>
             </select>
@@ -477,6 +478,17 @@ window.addEventListener("drop",function(e){
           </td>
            <td style="border:none; max-width:90px; ">
             <input type="text" id="input_Newt_err_norm_max" value="1e-12" style="text-align: center;" >
+          </td>
+        </tr>
+        <tr>
+          <td style="border:none;" >
+            <label for="optim_verbose_lvl">Optimizer verbose level</label>
+          </td>
+          <td style="border:none; max-width:90px; ">
+            <select class="w3-select" id="optim_verbose_lvl"  name="optim_verbose_lvl" style="text-align: center;"> 
+              <option value="full">Full</option>
+              <option value="some" selected>Default</option>
+            </select>
           </td>
         </tr>
       </table>
