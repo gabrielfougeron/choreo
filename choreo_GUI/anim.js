@@ -1199,7 +1199,8 @@ function canvasApp() {
 
 		clearScreen();
 		FinalizeSetOrbit();
-		if (trajectoriesOn){
+
+		if (trajectoriesOn && document.getElementById('checkbox_DisplayLoopOnGalleryLoad').checked){
 			request = requestAnimationFrame(anim_path_grey);
 		}
 		

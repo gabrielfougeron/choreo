@@ -418,6 +418,7 @@ function GatherConfigDict() {
     ConfigDict['Animation_Search'] = {};
     ConfigDict['Animation_Search'] ['DisplayLoopsDuringSearch']  = document.getElementById('checkbox_DisplayLoopsDuringSearch').checked  ;
     ConfigDict['Animation_Search'] ['DisplayBodiesDuringSearch']  = document.getElementById('checkbox_DisplayBodiesDuringSearch').checked  ;
+    ConfigDict['Animation_Search'] ['DisplayLoopOnGalleryLoad']  = document.getElementById('checkbox_DisplayLoopOnGalleryLoad').checked  ;
 
     ConfigDict['Solver_Discr'] = {};
     ConfigDict['Solver_Discr'] ['Use_exact_Jacobian']  = document.getElementById('checkbox_exactJ').checked            ;
@@ -591,6 +592,7 @@ function LoadConfigDict(ConfigDict) {
     }
 
     document.getElementById('checkbox_DisplayBodiesDuringSearch').checked = ConfigDict['Animation_Search'] ['DisplayBodiesDuringSearch'];
+    document.getElementById('checkbox_DisplayLoopOnGalleryLoad').checked  = ConfigDict['Animation_Search'] ['DisplayLoopOnGalleryLoad'];
 
     document.getElementById('checkbox_exactJ').checked         = ConfigDict['Solver_Discr'] ['Use_exact_Jacobian']  ;
     document.getElementById('input_ncoeff_init').value         = ConfigDict['Solver_Discr'] ['ncoeff_init']         ;
