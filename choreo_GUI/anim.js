@@ -259,6 +259,7 @@ function canvasApp() {
 		  min: 0.2,
 		  step: 0.005,
 		  input:speedSliderHandler,
+		  change:speedSliderHandler,
 		  animate: false,
 		});		
 
@@ -467,7 +468,7 @@ function canvasApp() {
 	function anim_particles() {
 		
 		UpdateFPSDisplay();
-		setPeriodTime();
+		// setPeriodTime();
 		onTimer();
 	}
 
@@ -565,7 +566,7 @@ function canvasApp() {
 		UnselectOrbit();
 		clearScreen();
 		clearParticleLayer();
-		FinalizeSetOrbit(DoDrawParticles=false,DoXMinMax=true) ;
+		FinalizeSetOrbit(DoDrawParticles=false,DoXMinMax=true,setTinc=false) ;
 
 		if (document.getElementById('checkbox_DisplayBodiesDuringSearch').checked) {
 
@@ -581,7 +582,7 @@ function canvasApp() {
 		if (e.DoClearScreen) {
 			clearScreen();
 		}
-		FinalizeSetOrbit(DoDrawParticles=true,DoXMinMax = e.DoXMinMax ) ;
+		FinalizeSetOrbit(DoDrawParticles=true,DoXMinMax = e.DoXMinMax,setTinc=e.setTinc ) ;
 		startAnimation();
 	}
 
@@ -986,34 +987,6 @@ function canvasApp() {
 
 	}
 
-	function drawAllSegments() {
-		
-		clearScreen();
-		setStartPositions();
-		
-		var n_strokes = Math.floor((1 / tInc)) + 1 ;
-
-		// Setup
-		for (i = 0; i < PlotInfo["nbody"]; i++) {
-			p = particles[i];
-			pixX = xPixRate*(p.x - xMin);
-			pixY = yPixRate*(p.y - yMax);
-
-			staticOrbitDrawPointsX[i] = pixX;
-			staticOrbitDrawPointsY[i] = pixY;
-		}
-
-		for (var i_stroke = 0; i_stroke < n_strokes; i_stroke++) {
-
-			time = (time + tInc) % (1);
-
-			drawLastSegments();
-			setParticlePositions(time);
-		
-		}
-
-	}
-	
 	function drawParticles() {
 		var i;
 		var len;
@@ -1180,7 +1153,7 @@ function canvasApp() {
 
 	}
 
-	function FinalizeSetOrbit(DoDrawParticles=true,DoXMinMax=true) {
+	function FinalizeSetOrbit(DoDrawParticles=true,DoXMinMax=true,setTinc=true) {
 
 		if(DoXMinMax) {
 			plotWindow = {
@@ -1207,7 +1180,9 @@ function canvasApp() {
 				drawParticles();	
 			}
 		}
-		setPeriodTime();
+		if (setTinc) {
+			setPeriodTime();
+		}
 		
 	}
 

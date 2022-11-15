@@ -56,6 +56,7 @@ async function Play_Loop_From_Python(args){
     var event = new Event('FinalizeAndPlayFromOutsideCanvas');
     event.DoClearScreen = args.DoClearScreen;
     event.DoXMinMax = args.DoXMinMax;
+    event.setTinc = false
 
     displayCanvas.dispatchEvent(event);
 
@@ -322,14 +323,12 @@ function GenerateInitStateClick() {
 }
 
 function GatherConfigDict() {
-    /* Gathers all relevent input in the page and puts it in a dictionary */
+    /* Gathers all relevant input in the page and puts it in a dictionary */
 
     var ConfigDict = {};
 
     ConfigDict['Main_Launch'] = {};
-
-    var speedSlider = $("#speedSlider");
-    ConfigDict['Main_Launch'] ['SpeedSlider_value'] = speedSlider.slider("value");
+    // Too difficult to include speed in ConfigDict rn.
 
     ConfigDict['Geom_Bodies'] = {};
 
