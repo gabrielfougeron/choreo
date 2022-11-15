@@ -64,6 +64,8 @@ async function Play_Loop_From_Python(args){
     ChoreoExecuteBtn.disabled = "";
     var ChoreoDispInitStateBtn = document.getElementById("ChoreoDispInitStateBtn");
     ChoreoDispInitStateBtn.disabled = "";
+    var ChoreoSearchNext = document.getElementById("ChoreoSearchNext");
+    ChoreoSearchNext.disabled = "disabled";
 
     var RotSlider = $("#RotSlider").data("roundSlider");
     RotSlider.enable();
@@ -95,6 +97,8 @@ function Python_no_sol_found(args) {
     ChoreoExecuteBtn.disabled = "";
     var ChoreoDispInitStateBtn = document.getElementById("ChoreoDispInitStateBtn");
     ChoreoDispInitStateBtn.disabled = "";
+    var ChoreoSearchNext = document.getElementById("ChoreoSearchNext");
+    ChoreoSearchNext.disabled = "disabled";
 
     var RotSlider = $("#RotSlider").data("roundSlider");
     RotSlider.enable();
@@ -141,6 +145,8 @@ async function Python_Imports_Done(args){
     ChoreoExecuteBtn.disabled = "";
     var ChoreoDispInitStateBtn = document.getElementById("ChoreoDispInitStateBtn");
     ChoreoDispInitStateBtn.disabled = "";
+    var ChoreoSearchNext = document.getElementById("ChoreoSearchNext");
+    ChoreoSearchNext.disabled = "disabled";
 
     var RotSlider = $("#RotSlider").data("roundSlider");
     RotSlider.enable();
@@ -260,7 +266,9 @@ function ChoreoExecuteClick() {
         var ChoreoExecuteBtn = document.getElementById("ChoreoExecuteBtn");
         ChoreoExecuteBtn.disabled = "disabled";
         var ChoreoDispInitStateBtn = document.getElementById("ChoreoDispInitStateBtn");
-        ChoreoDispInitStateBtn.disabled = "disabled";
+        ChoreoDispInitStateBtn.disabled = "disabled";        
+        var ChoreoSearchNext = document.getElementById("ChoreoSearchNext");
+        ChoreoSearchNext.disabled = "";
 
         var displayCanvas = document.getElementById("displayCanvas");
 
@@ -1236,6 +1244,8 @@ function KillAndReloadWorker() {
     ChoreoExecuteBtn.disabled = "disabled";
     var ChoreoDispInitStateBtn = document.getElementById("ChoreoDispInitStateBtn");
     ChoreoDispInitStateBtn.disabled = "disabled";
+    var ChoreoSearchNext = document.getElementById("ChoreoSearchNext");
+    ChoreoSearchNext.disabled = "disabled";
 
     var Python_State_Div = document.getElementById("Python_State_Div");
 
@@ -1250,6 +1260,14 @@ function KillAndReloadWorker() {
     pyodide_worker = new Worker("./Pyodide_worker.js");
     pyodide_worker.addEventListener('message', handleMessageFromWorker);
     pyodide_worker.postMessage({funname:"ExecutePythonFile",args:"./python_scripts/Python_imports.py"});
+}
+
+function ChoreoSearchNextClick(){
+
+    console.log("In ChoreoSearchNextClick")
+
+    pyodide_worker.postMessage({funname:"LoadDataInWorker",args:{AskedForNext:true}});
+
 }
 
 var checkbox_Limit_FPS = document.getElementById('checkbox_Limit_FPS');
