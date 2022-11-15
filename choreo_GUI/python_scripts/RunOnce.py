@@ -75,6 +75,45 @@ def Plot_Loops_During_Optim(x,f,callfun):
         )
     )
 
+    # js.console.log(dir(js))
+
+def ListenToNextFromGUI(x,f,callfun):
+
+
+    
+
+    if (js.AskedForNext) :
+        
+        print("Next detected from python")
+
+        exit()
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 def main():
 
     params_dict = js.ConfigDict.to_py()
@@ -273,7 +312,7 @@ def main():
     if params_dict['Animation_Search']['DisplayLoopsDuringSearch']:
         callback_after_init_list.append(Send_init_PlotInfo)
 
-    optim_callback_list = []
+    optim_callback_list = [ListenToNextFromGUI]
 
     if params_dict['Animation_Search']['DisplayLoopsDuringSearch']:
 
