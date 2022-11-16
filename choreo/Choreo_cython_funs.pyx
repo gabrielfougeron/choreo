@@ -1584,14 +1584,14 @@ def diag_changevar(
 
         if (k >=1):
             kd = k
-            # kd = k*ctwopi*cpow(2.*MassSum[il],0.5) # The jury is still out
-            # kd = k*MassSum[il] # The jury is still out
-            
+            #kd = k*ctwopi*cpow(2.*MassSum[il],0.5) # The jury is still out
+            #kd = k*MassSum[il] # The jury is still out
             
             kfac = cpow(kd,n_grad_change)
+            
         else:
             kfac = 1.
-            # kfac = MassSum[il]
+            #kfac = MassSum[il]
         
         data[idx] *= kfac
     

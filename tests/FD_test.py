@@ -25,14 +25,25 @@ sys.path.append(__PROJECT_ROOT__)
 from choreo import *
 
 
-ncoeff = 12
-# ncoeff = 900
+# ncoeff = 12
+ncoeff = 900
 
 # load_file = './save_tests/9/9.npy'
 # all_coeffs = np.load(load_file)
 # ncoeff = all_coeffs.shape[2]
 
 
+do_perf = False
+# do_perf = True
+
+# Compare_FD_grad = False
+Compare_FD_grad = True
+
+# Compare_FD_hess = False
+Compare_FD_hess = True
+
+# exponent_eps_list = range(16)
+exponent_eps_list = [8]
 
 
 ncoeff_init = ncoeff
@@ -48,7 +59,7 @@ nbody = 3
 
 # mass = np.ones((nbody))
 # mass = np.array([1.+x for x in range(nbody)])
-mass = np.array([1.,1.,2000.])
+mass = np.array([1.,1.,2.])
 
 Sym_list = []
 
@@ -75,23 +86,6 @@ x0 = np.random.random((ncoeffs_args))
 
 
 
-# not_disp_list = []
-# not_disp_list = ['coeff_to_param','param_to_coeff']
-
-
-# for key,value in callfun[0].items():
-    # if key not in not_disp_list:
-        # print(key)
-        # print(value)
-        # print('')
-    # else:
-        # print(key)
-        # print(value.shape)
-        # print('')
-
-
-# print(callfun)
-
 Actiono, Actiongrado = Compute_action(x0,callfun)
 
 # print('Action 0 : ',Actiono)
@@ -99,168 +93,192 @@ print(np.linalg.norm(Actiongrado))
 
 
 
-epslist = []
-Abs_difflist = []
-Rel_difflist = []
+
+if do_perf:
+    nperf = 100
+
+    tstart = time.perf_counter()
+    for iperf in range(nperf):
+        Actiono, Actiongrado = Compute_action(x0,callfun)
+    tstop = time.perf_counter()
+    print("GRAD fft YES recompute time ",tstop-tstart)
+
+    tstart = time.perf_counter()
+    for iperf in range(nperf):
+        Hdxb = Compute_action_hess_mul(x0,dxb,callfun)
+    tstop = time.perf_counter()
+    print("HESS fft YES recompute time ",tstop-tstart)
+
+    callfun[0]["Do_Pos_FFT"] = False
+    tstart = time.perf_counter()
+    for iperf in range(nperf):
+        Hdxb = Compute_action_hess_mul(x0,dxb,callfun)
+    tstop = time.perf_counter()
+    print("HESS fft NO recompute time ",tstop-tstart)
+
+    callfun[0]["Do_Pos_FFT"] = True
+
+    tstart = time.perf_counter()
+    HessMat = Compute_action_hess_LinOpt(x0,callfun)
+    w ,v = sp.linalg.eigsh(HessMat,k=45,which='SA')
+    tstop = time.perf_counter()
+    print("EIG fft YES recompute time ",tstop-tstart)
+
+    callfun[0]["Do_Pos_FFT"] = False
+
+    tstart = time.perf_counter()
+    HessMat = Compute_action_hess_LinOpt(x0,callfun)
+    w ,v = sp.linalg.eigsh(HessMat,k=10,which='SA')
+    tstop = time.perf_counter()
+    print("EIG fft NO recompute time ",tstop-tstart)
+
+    callfun[0]["Do_Pos_FFT"] = True
+
 
 
 dxa = np.random.random((ncoeffs_args))
 dxb =  np.random.random((ncoeffs_args))
 
-
+dfdxa = np.dot(Actiongrado,dxa)
 Hdxb = Compute_action_hess_mul(x0,dxb,callfun)
 
 
+    
+if Compare_FD_grad:
 
-# dxa = np.zeros((ncoeffs_args))
-# dxb =  np.zeros((ncoeffs_args))
+    epslist = []
+    Abs_difflist = []
+    Rel_difflist = []
 
-# i_nz =  all_idx[0,0,2,0]
-# j_nz =  all_idx[1,1,1,0]
-# dxa[i_nz] = 1.
-# dxb[j_nz] = 1.
+    for exponent_eps in exponent_eps_list:
+        
+        eps = 10**(-exponent_eps)
+        
+        # Second order approx
+        # xp = np.copy(x0) + eps*dxa
+        # fp, gfp = Compute_action(xp,callfun)
+        
+        # xm = np.copy(x0) - eps*dxa
+        # fm, gfm = Compute_action(xm,callfun)
+        
+        # df_difffin = (fp-fm)/(2*eps)
+        
+        # First order scipy_like approx
+        xp = np.copy(x0) + eps*dxa
+        fp, gfp = Compute_action(xp,callfun)
+        
+        xm = np.copy(x0)
+        fm, gfm = Compute_action(xm,callfun)
+        
+        df_difffin = (fp-fm)/(eps)
+        
+        print('')
+        epslist.append(eps)
+        print('eps : ',eps)
+        err_vect = df_difffin-dfdxa
+        print('DF : ',np.linalg.norm(df_difffin))
+        print('EX : ',np.linalg.norm(dfdxa))
 
-# dxa = np.random.random((ncoeffs_args))
-# dxb =  np.zeros((ncoeffs_args))
+        Abs_diff = np.linalg.norm(err_vect)
+        Abs_difflist.append(Abs_diff)
+        print('Abs_diff : ',Abs_diff)
+        Rel_diff = abs(err_vect)/(abs(df_difffin)+abs(dfdxa))
+        Rel_difflist.append(Rel_diff)
+        print('Rel_diff : ',Rel_diff)
 
-# j_nz = all_idx[0,0,1,0]
-# dxb[j_nz] = 1.
+        
+    fig = plt.figure()
+    fig.set_size_inches(10, 8)
+    ax = fig.add_subplot(111)
+    
+    plt.plot(epslist,Rel_difflist)
+    
+    ax.invert_xaxis()
+    plt.yscale('log')
+    plt.xscale('log')
+    
+    plt.tight_layout()
+    
+    filename = './FD_cvgence_grad.png'
+    
+    plt.savefig(filename)
+    
+    plt.close()
 
-
-# nperf = 100
-
-# tstart = time.perf_counter()
-# for iperf in range(nperf):
-    # Actiono, Actiongrado = Compute_action(x0,callfun)
-# tstop = time.perf_counter()
-# print("GRAD fft YES recompute time ",tstop-tstart)
-
-# tstart = time.perf_counter()
-# for iperf in range(nperf):
-    # Hdxb = Compute_action_hess_mul(x0,dxb,callfun)
-# tstop = time.perf_counter()
-# print("HESS fft YES recompute time ",tstop-tstart)
-
-# callfun[0]["Do_Pos_FFT"] = False
-# tstart = time.perf_counter()
-# for iperf in range(nperf):
-    # Hdxb = Compute_action_hess_mul(x0,dxb,callfun)
-# tstop = time.perf_counter()
-# print("HESS fft NO recompute time ",tstop-tstart)
-
-callfun[0]["Do_Pos_FFT"] = True
-
+    
+if Compare_FD_hess:
 
 
-tstart = time.perf_counter()
-HessMat = Compute_action_hess_LinOpt(x0,callfun)
-w ,v = sp.linalg.eigsh(HessMat,k=45,which='SA')
-tstop = time.perf_counter()
-print("EIG fft YES recompute time ",tstop-tstart)
-
-# callfun[0]["Do_Pos_FFT"] = False
-
-# tstart = time.perf_counter()
-# HessMat = Compute_action_hess_LinOpt(x0,callfun)
-# w ,v = sp.linalg.eigsh(HessMat,k=10,which='SA')
-# tstop = time.perf_counter()
-# print("EIG fft NO recompute time ",tstop-tstart)
+    epslist = []
+    Abs_difflist = []
+    Rel_difflist = []
 
 
-# callfun[0]["Do_Pos_FFT"] = True
+    for exponent_eps in exponent_eps_list:
+        
+        eps = 10**(-exponent_eps)
+        
+        # Second order approx
+        # xp = np.copy(x0) + eps*dxb
+        # fp, gfp = Compute_action(xp,callfun)
+        # dfp = np.dot(gfp,dxa)
+        
+        # xm = np.copy(x0) - eps*dxb
+        # fm, gfm = Compute_action(xm,callfun)
+        # dfm = np.dot(gfm,dxa)
+        
+        # dgf_difffin = (gfp-gfm)/(2*eps)
+        
+        # First order scipy_like approx
+        xp = np.copy(x0) + eps*dxb
+        fp, gfp = Compute_action(xp,callfun)
+        dfp = np.dot(gfp,dxa)
+        
+        xm = np.copy(x0)
+        fm, gfm = Compute_action(xm,callfun)
+        dfm = np.dot(gfm,dxa)
+        
+        dgf_difffin = (gfp-gfm)/(eps)
+        
+        
+        
+        print('')
+        epslist.append(eps)
+        print('eps : ',eps)
+        err_vect = dgf_difffin-Hdxb
+        print('DF : ',np.linalg.norm(dgf_difffin))
+        print('EX : ',np.linalg.norm(Hdxb))
 
+        Abs_diff = np.linalg.norm(err_vect)
+        Abs_difflist.append(Abs_diff)
+        print('Abs_diff : ',Abs_diff)
+        Rel_diff = np.linalg.norm(err_vect)/(np.linalg.norm(dgf_difffin)+np.linalg.norm(Hdxb))
+        Rel_difflist.append(Rel_diff)
+        print('Rel_diff : ',Rel_diff)
 
-
-
-print(w)
-
-# print(v.shape)
-# for i in range(v.shape[1]):
-    #for j in range(v.shape[0]):
-    # for j in range(4):
-        # if (abs(v[j,i]) > 1e-9):
-            # print(i,j)
+        ddf_difffin = (dfp-dfm)/(2*eps)
+        
+        # print('')
+        # print('eps : ',eps)
+        # print('df vals : ',ddf_difffin,ddf_fft_d)
+        # print('Abs_diff : ',abs(ddf_difffin-ddf_fft_d))
+        # print('Rel_diff : ',abs(ddf_difffin-ddf_fft_d)/((abs(ddf_fft_d)+abs(ddf_difffin))/2))
         
 
-# print(v)
-
-
-
-
-# sys.exit(0)
-
-
-epslist = []
-Abs_difflist = []
-Rel_difflist = []
-
-
-# for exponent_eps in [8]:
-for exponent_eps in range(16):
+    fig = plt.figure()
+    fig.set_size_inches(10, 8)
+    ax = fig.add_subplot(111)
     
-    eps = 10**(-exponent_eps)
+    plt.plot(epslist,Rel_difflist)
     
-    # Second order approx
-    # xp = np.copy(x0) + eps*dxb
-    # fp, gfp = Compute_action(xp,callfun)
-    # dfp = np.dot(gfp,dxa)
+    ax.invert_xaxis()
+    plt.yscale('log')
+    plt.xscale('log')
     
-    # xm = np.copy(x0) - eps*dxb
-    # fm, gfm = Compute_action(xm,callfun)
-    # dfm = np.dot(gfm,dxa)
+    plt.tight_layout()
     
-    # dgf_difffin = (gfp-gfm)/(2*eps)
+    filename = './FD_cvgence_hess.png'
     
-    # First order scipy_like approx
-    xp = np.copy(x0) + eps*dxb
-    fp, gfp = Compute_action(xp,callfun)
-    dfp = np.dot(gfp,dxa)
+    plt.savefig(filename)
     
-    xm = np.copy(x0)
-    fm, gfm = Compute_action(xm,callfun)
-    dfm = np.dot(gfm,dxa)
-    
-    dgf_difffin = (gfp-gfm)/(eps)
-    
-    
-    
-    print('')
-    epslist.append(eps)
-    print('eps : ',eps)
-    err_vect = dgf_difffin-Hdxb
-    print('DF : ',np.linalg.norm(dgf_difffin))
-    print('EX : ',np.linalg.norm(Hdxb))
-
-    Abs_diff = np.linalg.norm(err_vect)
-    Abs_difflist.append(Abs_diff)
-    print('Abs_diff : ',Abs_diff)
-    Rel_diff = np.linalg.norm(err_vect)/(np.linalg.norm(dgf_difffin)+np.linalg.norm(Hdxb))
-    Rel_difflist.append(Rel_diff)
-    print('Rel_diff : ',Rel_diff)
-
-    ddf_difffin = (dfp-dfm)/(2*eps)
-    
-    # print('')
-    # print('eps : ',eps)
-    # print('df vals : ',ddf_difffin,ddf_fft_d)
-    # print('Abs_diff : ',abs(ddf_difffin-ddf_fft_d))
-    # print('Rel_diff : ',abs(ddf_difffin-ddf_fft_d)/((abs(ddf_fft_d)+abs(ddf_difffin))/2))
-    
-
-fig = plt.figure()
-fig.set_size_inches(10, 8)
-ax = fig.add_subplot(111)
-
-plt.plot(epslist,Rel_difflist)
-
-ax.invert_xaxis()
-plt.yscale('log')
-plt.xscale('log')
-
-plt.tight_layout()
-
-filename = './FD_cvgence.png'
-
-plt.savefig(filename)
-
-plt.close()
+    plt.close()
