@@ -18,7 +18,11 @@ import copy
 import time
 
 
-from Choreo_funs import *
+__PROJECT_ROOT__ = os.path.abspath(os.path.join(os.path.dirname(__file__),os.pardir))
+sys.path.append(__PROJECT_ROOT__)
+
+
+from choreo import *
 
 
 ncoeff = 12
@@ -44,7 +48,7 @@ nbody = 3
 
 # mass = np.ones((nbody))
 # mass = np.array([1.+x for x in range(nbody)])
-mass = np.array([1.,1,2])
+mass = np.array([1.,1.,2000.])
 
 Sym_list = []
 
