@@ -187,14 +187,14 @@ def Compute_action_Cython(
     
     cdef double Kin_en = 0
 
-    cdef np.ndarray[double, ndim=4, mode="c"] Action_grad = np.zeros((nloop,cndim,ncoeff,2),np.float64)
+    cdef np.ndarray[double, ndim=4, mode="c"] Action_grad = np.empty((nloop,cndim,ncoeff,2),np.float64)
 
     for il in range(nloop):
         
         prod_fac = MassSum[il]*cfourpisq
         
         for idim in range(cndim):
-            for k in range(1,ncoeff):
+            for k in range(ncoeff):
                 
                 k2 = k*k
                 a = prod_fac*k2
@@ -202,8 +202,8 @@ def Compute_action_Cython(
 
                 Kin_en += a *((all_coeffs[il,idim,k,0]*all_coeffs[il,idim,k,0]) + (all_coeffs[il,idim,k,1]*all_coeffs[il,idim,k,1]))
                 
-                Action_grad[il,idim,k,0] += b*all_coeffs[il,idim,k,0]
-                Action_grad[il,idim,k,1] += b*all_coeffs[il,idim,k,1]
+                Action_grad[il,idim,k,0] = b*all_coeffs[il,idim,k,0]
+                Action_grad[il,idim,k,1] = b*all_coeffs[il,idim,k,1]
         
     cdef double Pot_en = 0.
 
@@ -837,20 +837,20 @@ def Compute_action_hess_mul_Cython(
     
     cdef double Kin_en = 0
 
-    cdef np.ndarray[double, ndim=4, mode="c"] Action_hess_dx = np.zeros((nloop,cndim,ncoeff,2),np.float64)
+    cdef np.ndarray[double, ndim=4, mode="c"] Action_hess_dx = np.empty((nloop,cndim,ncoeff,2),np.float64)
 
     for il in range(nloop):
         
         prod_fac = MassSum[il]*cfourpisq
         
         for idim in range(cndim):
-            for k in range(1,ncoeff):
+            for k in range(ncoeff):
                 
                 k2 = k*k
                 a = 2*prod_fac*k2
                 
-                Action_hess_dx[il,idim,k,0] += a*all_coeffs_d[il,idim,k,0]
-                Action_hess_dx[il,idim,k,1] += a*all_coeffs_d[il,idim,k,1]
+                Action_hess_dx[il,idim,k,0] = a*all_coeffs_d[il,idim,k,0]
+                Action_hess_dx[il,idim,k,1] = a*all_coeffs_d[il,idim,k,1]
 
     c_coeffs_d = all_coeffs_d.view(dtype=np.complex128)[...,0]
     cdef np.ndarray[double, ndim=3, mode="c"]  all_pos_d = the_irfft(c_coeffs_d,n=nint,axis=2,norm="forward")

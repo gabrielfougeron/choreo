@@ -218,7 +218,7 @@ def main():
     n_find_max = 1e4
     
     # n_test = 100000
-    n_test = 100
+    n_test = 1000
 # 
     all_kwargs = choreo.Pick_Named_Args_From_Dict(choreo.Speed_test,dict(globals(),**locals()))
 
