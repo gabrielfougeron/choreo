@@ -1,5 +1,8 @@
 import Speed_test
 
+import pyximport
+pyximport.install()
+
 import pstats, cProfile
  
 cProfile.runctx("Speed_test.main()", globals(), locals(), "Profile.prof")
