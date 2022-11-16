@@ -106,6 +106,8 @@ mnnm1 = cmnnm1
 
 nhash = cnhash
 
+@cython.profile(False)
+@cython.linetrace(False)
 cdef inline (double, double, double) CCpt_interbody_pot(double xsq):  # xsq is the square of the distance between two bodies !
     # Cython definition of the potential law
     

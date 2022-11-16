@@ -37,7 +37,7 @@ else:
         extra_compile_args = ["-Ofast","-march=native"]
 
     else:
-# 
+
         extra_compile_args = ["-O3","-march=native"]
     
 
@@ -65,6 +65,20 @@ compiler_directives = {
     'overflowcheck': False,
     'overflowcheck.fold': False,
 }
+
+# #### Profiler only ####
+# profile_compiler_directives = {
+#     'profile': True,
+#     'linetrace': True,
+#     'binding': True,
+# }
+# compiler_directives.update(profile_compiler_directives)
+# 
+# profile_define_macros = [('CYTHON_TRACE', '1')]
+# define_macros.extend(profile_define_macros)
+
+
+
 
 extensions = [
     distutils.core.Extension(
