@@ -147,7 +147,7 @@ def CCpt_hash_pot(double xsq):  # xsq is the square of the distance between two 
     return hash_pots
     
 @cython.cdivision(True)
-def  Compute_action_Cython(
+def Compute_action_Cython(
     long nloop                          ,
     long ncoeff                         ,
     long nint                           ,

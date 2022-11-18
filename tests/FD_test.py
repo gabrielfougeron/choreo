@@ -94,6 +94,16 @@ print(np.linalg.norm(Actiongrado))
 
 
 
+dxa = np.random.random((ncoeffs_args))
+dxb =  np.random.random((ncoeffs_args))
+
+dfdxa = np.dot(Actiongrado,dxa)
+Hdxb = Compute_action_hess_mul(x0,dxb,callfun)
+
+
+
+
+
 if do_perf:
     nperf = 100
 
@@ -133,14 +143,6 @@ if do_perf:
     print("EIG fft NO recompute time ",tstop-tstart)
 
     callfun[0]["Do_Pos_FFT"] = True
-
-
-
-dxa = np.random.random((ncoeffs_args))
-dxb =  np.random.random((ncoeffs_args))
-
-dfdxa = np.dot(Actiongrado,dxa)
-Hdxb = Compute_action_hess_mul(x0,dxb,callfun)
 
 
     
@@ -208,11 +210,9 @@ if Compare_FD_grad:
     
 if Compare_FD_hess:
 
-
     epslist = []
     Abs_difflist = []
     Rel_difflist = []
-
 
     for exponent_eps in exponent_eps_list:
         

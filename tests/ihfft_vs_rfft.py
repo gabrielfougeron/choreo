@@ -23,7 +23,7 @@ ncoeff = nint // 2 + 1
 
 x = np.random.random((nint))
 c = np.fft.rfft(x)
-x_inv = np.fft.irfft(c)
+x_inv = np.fft.irfft(c,n=nint)
 print(np.linalg.norm(x-x_inv))
 
 
