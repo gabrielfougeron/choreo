@@ -752,7 +752,7 @@ def Speed_test(
     for itest in range(n_test):
 
         f0 = Compute_action_onlygrad(x0,callfun)
-        # hess = Compute_action_hess_mul(x0,dx,callfun)
+        hess = Compute_action_hess_mul(x0,dx,callfun)
         # toto = Unpackage_all_coeffs(x0,callfun) 
 
     end = time.perf_counter()
