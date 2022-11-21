@@ -36,6 +36,13 @@ else:
         # extra_compile_args = ["-O3","-march=native"]
         extra_compile_args = ["-Ofast","-march=native"]
 
+#     elif not(distutils.spawn.find_executable('icc') is None):
+# 
+#         os.environ['CC'] = 'icc'
+#         os.environ['LDSHARED'] = 'icc -shared'
+# 
+#         extra_compile_args = ["-Ofast","-march=native","-w","-no-multibyte-chars"]
+
     else:
 
         extra_compile_args = ["-O3","-march=native"]
