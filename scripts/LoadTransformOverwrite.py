@@ -31,7 +31,7 @@ One_sec = 1e9
 def main():
 
 
-    input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/5 - Copy/')
+    input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/3/')
     # input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery/')
     # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/5/')
     # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/copy/')
@@ -97,8 +97,8 @@ def main():
     # color = "velocity"
     # color = "all"
 
-    # Save_anim = True
-    Save_anim = False
+    Save_anim = True
+    # Save_anim = False
 
     # Save_ODE_anim = True
     Save_ODE_anim = False
@@ -245,7 +245,7 @@ def ExecName(
     all_coeffs[:,:,:,0] = c_coeffs[:,:,0:Info_dict["n_Fourier"]].real
     all_coeffs[:,:,:,1] = c_coeffs[:,:,0:Info_dict["n_Fourier"]].imag
 
-    theta = 2*np.pi *0.
+    theta = 2*np.pi * 0.
     SpaceRevscal = 1.
     SpaceRot = np.array( [[SpaceRevscal*np.cos(theta) , SpaceRevscal*np.sin(theta)] , [-np.sin(theta),np.cos(theta)]])
     TimeRev = 1.
@@ -280,7 +280,7 @@ def ExecName(
 
     # print(f'Input Gradaction : {Info_dict["Grad_Action"]}')
     # print(f'Output Gradaction : {np.linalg.norm(Gradaction)}')
-    print(f'Gradaction mul :  {np.linalg.norm(Gradaction)/Info_dict["Grad_Action"]}')
+    # print(f'Gradaction mul :  {np.linalg.norm(Gradaction)/Info_dict["Grad_Action"]}')
 
 
     filename_output = os.path.join(store_folder,bare_name)
