@@ -369,11 +369,11 @@ window.addEventListener("drop",function(e){
       </td>
       </tr>
       <tr>
-      <td style="border:none; max-width:100px;" ><label for="checkbox_Mass_Scale">Body radius scales with mass</label></td>
+      <td style="border:none; max-width:100px;" ><label for="checkbox_Mass_Scale">Size scales with mass</label></td>
       <td style="border:none;text-align: center;"><input id ="checkbox_Mass_Scale" class="w3-check" type="checkbox" style="vertical-align: super" checked></td>
       </tr>
       <tr>
-        <td style="border:none; max-width:100px;">Body radius</td>
+        <td style="border:none; max-width:100px;">Body size</td>
         <td style="border:none;"><input type="range" id="input_body_radius"></td>
       </tr>
       <tr>
@@ -381,8 +381,8 @@ window.addEventListener("drop",function(e){
         <td style="border:none;"><input type="range" id="input_trail_width"></td>
       </tr>
       <tr>
-        <td style="border:none; max-width:100px;">Trail vanish speed</td>
-        <td style="border:none;"><input type="range" id="input_trail_vanish_speed"></td>
+        <td style="border:none; max-width:100px;">Trail length</td>
+        <td style="border:none;"><input type="range" id="input_trail_vanish_length"></td>
       </tr>
     </table>
   </div>
@@ -573,6 +573,8 @@ for (var i = 0; i < colorLookup_init.length; i++) {
 Python_textarea.style.height = "400px";
 
 DealWithCookie();
+
+// setPeriodTime
 
 </script>
 
