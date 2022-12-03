@@ -13,7 +13,7 @@ function RedirectPythonPrint(txt) {
 
 }
 
-var AskedForNext = false;
+var AskForNextBuffer;
 
 // load pyodide.js
 importScripts("https://cdn.jsdelivr.net/pyodide/v0.21.2/full/pyodide.js");
@@ -78,3 +78,4 @@ self.ExecutePythonFile = function(filename) {
         txt = pyodide.runPython(text);
     });
 }
+
