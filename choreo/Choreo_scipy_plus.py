@@ -15,6 +15,8 @@ from choreo.Choreo_cython_scipy_plus import ExplicitSymplecticWithTable_VX_cytho
 from choreo.Choreo_cython_scipy_plus import SymplecticStormerVerlet_XV_cython
 from choreo.Choreo_cython_scipy_plus import SymplecticStormerVerlet_VX_cython
 
+from choreo.Choreo_scipy_plus_nonlin import nonlin_solve_pp
+
 class current_best:
     # Class meant to store the best solution during scipy optimization / root finding
     # Useful since scipy does not return the best solution, but rather the solution at the last iteration.
@@ -156,5 +158,3 @@ def InstabilityDecomposition(Mat,eps=1e-12):
 # 
 #     # Computes the residuals of the spectral solve of the ODE dx/dt = f(t,x)
 # 
-
-
