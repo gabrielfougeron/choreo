@@ -31,9 +31,16 @@
 <script src="assets/js/jquery.ui.touch-punch.min.js">//makes ui elements touch enabled</script>
 <script src="assets/js/roundslider.min.js">// Enables rotation slider</script>
 
+<!-- Setting up Worker -->
 <script>
 pyodide_worker = new Worker("./Pyodide_worker.js");
 pyodide_worker.postMessage({funname:"ExecutePythonFile",args:"./python_scripts/Python_imports.py"});
+
+let AskForNextBuffer = new Uint8Array(new SharedArrayBuffer(1));
+pyodide_worker.postMessage({ cmd: "setInterruptBuffer", interruptBuffer });
+
+AskForNextBuffer[0] = 0;
+
 </script>
 
 <script src="anim.js" type="text/javascript"></script>
@@ -133,8 +140,9 @@ window.addEventListener("drop",function(e){
   <div class="w3-container MainTab Main_Launch" style="display:none">
     <table style="border:0;margin-bottom:10px;">
       <tr>
-        <td style="border:0"><button id="ChoreoExecuteBtn"        class="w3-button w3-hover-pale-red w3-light-grey InTableControls" disabled="disabled" onclick="ChoreoExecuteClick()" ><b>Find periodic solution!</b></button></td>
+        <td style="border:0"><button id="ChoreoExecuteBtn"        class="w3-button w3-hover-pale-red w3-light-grey InTableControls" disabled="disabled" onclick="ChoreoExecuteClick()" ><b>Find solution!</b></button></td>
         <td style="border:0"><button id="ChoreoDispInitStateBtn"  class="w3-button w3-hover-pale-red w3-light-grey InTableControls" disabled="disabled" onclick="GenerateInitStateClick()">Generate init state</button></td>
+        <td style="border:0"><button id="ChoreoSearchNext"        class="w3-button w3-hover-pale-red w3-light-grey InTableControls" disabled="disabled" onclick="ChoreoSearchNextClick()">Next</button></td>
         <td style="border:0"><button id="KillAndReloadWorkerBtn"  class="w3-button w3-hover-pale-red w3-light-grey InTableControls"                     onclick="KillAndReloadWorker()"     >Kill worker</button></td>
       </tr>
     </table>

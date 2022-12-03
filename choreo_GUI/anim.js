@@ -1148,8 +1148,6 @@ function canvasApp() {
 
 		tInc = 1/(Time_One_Period*FPS_estimation * distance_rel) 
 
-		console.log(FPS_estimation)
-
 		var speedTxt_val = Math.round(100*Math.pow(slider_value,sliderpow));
 		speedTxt.innerHTML = "Speed: "+speedTxt_val.toString();
 

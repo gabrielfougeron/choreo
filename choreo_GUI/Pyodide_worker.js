@@ -13,6 +13,8 @@ function RedirectPythonPrint(txt) {
 
 }
 
+var AskForNextBuffer;
+
 // load pyodide.js
 importScripts("https://cdn.jsdelivr.net/pyodide/v0.21.2/full/pyodide.js");
 // importScripts("https://cdn.jsdelivr.net/pyodide/v0.21.3/full/pyodide.js");
@@ -58,6 +60,8 @@ self.LoadDataInWorker = function(datadict) {
     
     for (const [key, value] of Object.entries(datadict)) {
         self[key] = value;
+        console.log(key,value)
+
     }
 
 }
@@ -74,3 +78,4 @@ self.ExecutePythonFile = function(filename) {
         txt = pyodide.runPython(text);
     });
 }
+

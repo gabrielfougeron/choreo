@@ -5,7 +5,7 @@ Creates and compiles C code from Cython file
 
 import os
 import setuptools
-import distutils
+import distutils # Deprecation of distutils. See  https://peps.python.org/pep-0632/
 import Cython.Build
 import numpy
 import platform
