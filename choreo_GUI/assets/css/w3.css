@@ -145,7 +145,7 @@ hr{border:0;border-top:1px solid #eee;margin:20px 0}
 .w3-padding-top-64{padding-top:64px!important}.w3-padding-top-48{padding-top:48px!important}
 .w3-padding-top-32{padding-top:32px!important}.w3-padding-top-24{padding-top:24px!important}
 .w3-left{float:left!important}.w3-right{float:right!important}
-.w3-button:hover{color:#000!important;background-color:#ccc!important}
+/* .w3-button:hover{color:#000!important;background-color:#ccc!important} */
 .w3-transparent,.w3-hover-none:hover{background-color:transparent!important}
 .w3-hover-none:hover{box-shadow:none!important}
 /* Colors */

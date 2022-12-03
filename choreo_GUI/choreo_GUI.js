@@ -71,8 +71,9 @@ async function Play_Loop_From_Python(args){
     RotSlider.enable();
 
     var Python_State_Div = document.getElementById("Python_State_Div");
-    Python_State_Div.innerHTML = "Ready";
+    Python_State_Div.innerHTML = "Find solution!";
     Python_State_Div.classList.add('w3-green');
+    Python_State_Div.classList.add('w3-hover-pale-green');
     Python_State_Div.classList.remove('w3-orange');
     Python_State_Div.classList.remove('w3-red');
 }
@@ -104,8 +105,9 @@ function Python_no_sol_found(args) {
     RotSlider.enable();
 
     var Python_State_Div = document.getElementById("Python_State_Div");
-    Python_State_Div.innerHTML = "Ready";
+    Python_State_Div.innerHTML = "Find solution!";
     Python_State_Div.classList.add('w3-green');
+    Python_State_Div.classList.add('w3-hover-pale-green');
     Python_State_Div.classList.remove('w3-orange');
     Python_State_Div.classList.remove('w3-red');
 
@@ -153,10 +155,11 @@ async function Python_Imports_Done(args){
     
     var Python_State_Div = document.getElementById("Python_State_Div");
 
-    Python_State_Div.innerHTML = "Ready";
+    Python_State_Div.innerHTML = "Find solution!";
     Python_State_Div.classList.remove('w3-red');
     Python_State_Div.classList.remove('w3-orange');
     Python_State_Div.classList.add('w3-green');
+    Python_State_Div.classList.add('w3-hover-pale-green');
 
     var event = new Event('EnableAnimationFromOutsideCanvas');
     displayCanvas.dispatchEvent(event);
@@ -201,7 +204,7 @@ function ClickTopTabBtn(TabId) {
 function  GeomTopTabBtn(TabId) {
     switch (TabId) {
         case 'Main': {
-            ClickTopTabBtn('Main_Launch');
+            ClickTopTabBtn('Main_Gallery');
             break;}    
         case 'Geom': {
             ClickTopTabBtn('Geom_Bodies');
@@ -210,7 +213,7 @@ function  GeomTopTabBtn(TabId) {
             ClickTopTabBtn('Animation_Colors');
             break;}
         case 'Solver': {
-            ClickTopTabBtn('Solver_Discr');
+            ClickTopTabBtn('Solver_Output');
             break;}
     }
 }
@@ -279,6 +282,7 @@ function ChoreoExecuteClick() {
         Python_State_Div.innerHTML = "Working";
         Python_State_Div.classList.add('w3-orange');
         Python_State_Div.classList.remove('w3-green');
+        Python_State_Div.classList.remove('w3-hover-pale-green');
         Python_State_Div.classList.remove('w3-red');
 
         if (document.getElementById('checkbox_DisplayLoopsDuringSearch').checked) {
@@ -337,9 +341,6 @@ function GatherConfigDict() {
     /* Gathers all relevant input in the page and puts it in a dictionary */
 
     var ConfigDict = {};
-
-    ConfigDict['Main_Launch'] = {};
-    // Too difficult to include speed in ConfigDict rn.
 
     ConfigDict['Geom_Bodies'] = {};
 
@@ -1261,6 +1262,7 @@ function KillAndReloadWorker() {
     Python_State_Div.classList.add('w3-red');
     Python_State_Div.classList.remove('w3-orange');
     Python_State_Div.classList.remove('w3-green');
+    Python_State_Div.classList.remove('w3-hover-pale-green');
 
     pyodide_worker = new Worker("./Pyodide_worker.js");
     pyodide_worker.addEventListener('message', handleMessageFromWorker);
@@ -1557,4 +1559,8 @@ function viewport_custom_select_Handler(event) {
             break;}
     }
 
+}
+
+function ClickStateDiv() {
+    ChoreoExecuteClick()
 }
