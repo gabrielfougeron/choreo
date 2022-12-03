@@ -13,7 +13,8 @@ function RedirectPythonPrint(txt) {
 
 }
 
-var AskForNextBuffer;
+// var AskForNextBuffer;
+var AskedForNext = false;
 
 // load pyodide.js
 importScripts("https://cdn.jsdelivr.net/pyodide/v0.21.2/full/pyodide.js");
@@ -60,7 +61,7 @@ self.LoadDataInWorker = function(datadict) {
     
     for (const [key, value] of Object.entries(datadict)) {
         self[key] = value;
-        console.log(key,value)
+        // console.log(key,value)
 
     }
 
