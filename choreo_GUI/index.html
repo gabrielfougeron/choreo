@@ -63,17 +63,16 @@ window.addEventListener("drop",function(e){
 <div class="content">
 <div id="AnimationAndMenuBlock">
   <div class="w3-bar-block w3-light-grey open LeftTab" style="width:130px; position:absolute;">
-    <button class="w3-bar-item w3-button" onclick="OpenCloseLeftTab()" style="text-align: center;">&#9776;</button>
+    <button class="w3-bar-item w3-button w3-hover-grey"                             style="text-align: center" onclick="OpenCloseLeftTab()" >&#9776;</button>
     <button class="w3-bar-item w3-button w3-hover-pale-red LeftTabBtn Main"         style="text-align: center" onclick="ClickLeftTabBtn('Main')"        >Main</button>
     <button class="w3-bar-item w3-button w3-hover-pale-red LeftTabBtn Geom"         style="text-align: center" onclick="ClickLeftTabBtn('Geom')"        >Geometry</button>
     <button class="w3-bar-item w3-button w3-hover-pale-red LeftTabBtn Animation"    style="text-align: center" onclick="ClickLeftTabBtn('Animation')"   >Animation</button>
     <button class="w3-bar-item w3-button w3-hover-pale-red LeftTabBtn Solver"       style="text-align: center" onclick="ClickLeftTabBtn('Solver')"      >Solver</button>
     <div class="w3-bar-item w3-light-grey" style="height:200px ; text-align: center" >  </div>
-    <div class="w3-bar-item w3-orange" id="Python_State_Div"  style="text-align: center" >Loading</div>
+    <div class="w3-bar-item w3-button w3-orange" id="Python_State_Div"  style="text-align: center" onclick="ClickStateDiv()" >Loading</div>
   </div>
   <div id="MarginLeftTop" style="margin-left:130px;">
     <div class="w3-bar w3-light-grey TopTab Main">
-      <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Main_Launch"       onclick="ClickTopTabBtn('Main_Launch')"       >Launch</button>
       <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Main_Gallery"      onclick="ClickTopTabBtn('Main_Gallery')"      >Gallery</button>
       <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Main_Save_Config"  onclick="ClickTopTabBtn('Main_Save_Config')"  >Save settings</button>
       <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Main_Help"         onclick="ClickTopTabBtn('Main_Help')"         >Help</button>
@@ -92,6 +91,7 @@ window.addEventListener("drop",function(e){
         <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Animation_Search"    onclick="ClickTopTabBtn('Animation_Search')"      >Search</button>
     </div>
     <div class="w3-bar w3-light-grey TopTab Solver">
+        <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Solver_Output" onclick="ClickTopTabBtn('Solver_Output')">Output</button>
         <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Solver_Discr"  onclick="ClickTopTabBtn('Solver_Discr')" >Discretization</button>
         <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Solver_Optim"  onclick="ClickTopTabBtn('Solver_Optim')" >Optimizer</button>
         <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Solver_Loop"   onclick="ClickTopTabBtn('Solver_Loop')" >Loop</button>
@@ -136,18 +136,6 @@ window.addEventListener("drop",function(e){
   </div>
 </div>
 <div id="CommandBody">
-  <div class="w3-container MainTab Main_Launch" style="display:none">
-    <table style="border:0;margin-bottom:10px;">
-      <tr>
-        <td style="border:0"><button id="ChoreoExecuteBtn"        class="w3-button w3-hover-pale-red w3-light-grey InTableControls" disabled="disabled" onclick="ChoreoExecuteClick()" ><b>Find solution!</b></button></td>
-        <td style="border:0"><button id="ChoreoDispInitStateBtn"  class="w3-button w3-hover-pale-red w3-light-grey InTableControls" disabled="disabled" onclick="GenerateInitStateClick()">Generate init state</button></td>
-        <td style="border:0"><button id="ChoreoSearchNext"        class="w3-button w3-hover-pale-red w3-light-grey InTableControls" disabled="disabled" onclick="ChoreoSearchNextClick()">Next</button></td>
-        <td style="border:0"><button id="KillAndReloadWorkerBtn"  class="w3-button w3-hover-pale-red w3-light-grey InTableControls"                     onclick="KillAndReloadWorker()"     >Kill worker</button></td>
-      </tr>
-    </table>
-    <textarea id ="Python_textarea" readonly></textarea>
-    <!-- <button id="TestBtn"  class="w3-button w3-hover-pale-red w3-light-grey InTableControls" onclick="TestClick()"      >Test</button> -->
-  </div>
   <div class="w3-container MainTab Main_Gallery" style="display:none">
     <h2>Gallery</h2>
     <div id="radioContainer">
@@ -236,6 +224,13 @@ window.addEventListener("drop",function(e){
       <li>The <a href="https://pyodide.org/en/stable/"><b>Pyodide</b></a> team, and especially Hood Chatham and Gyeongjae Choi for their help in getting the in-browser version of <b>choreo</b> up and running.</li>
       <li>Beta testers #TODO </li>
     </ul>
+  </div>
+  <div class="w3-container MainTab Geom_Bodies Geom_Target Geom_Random Geom_Custom" style="display:none; text-align: justify;">
+    <table style="border:0;margin-bottom:10px;">
+      <tr>
+        <td style="border:0"><button id="ChoreoDispInitStateBtn"  class="w3-button w3-hover-pale-red w3-light-grey InTableControls" disabled="disabled" onclick="GenerateInitStateClick()">Generate init state</button></td>
+      </tr>
+    </table>
   </div>
   <div class="w3-container MainTab Geom_Bodies" style="display:none; text-align: justify;">
     <h2>Bodies definition</h2>
@@ -430,6 +425,17 @@ window.addEventListener("drop",function(e){
       </tr>
     </table>
   </div>
+  <div class="w3-container MainTab Solver_Output" style="display:none">
+    <table style="border:0;margin-bottom:10px;">
+      <tr>
+        <td style="border:0"><button id="ChoreoExecuteBtn"        class="w3-button w3-hover-pale-red w3-light-grey InTableControls" disabled="disabled" style="display:none"  onclick="ChoreoExecuteClick()" ><b>Find solution!</b></button></td>
+        <td style="border:0"><button id="ChoreoSearchNext"        class="w3-button w3-hover-pale-red w3-light-grey InTableControls" disabled="disabled" style="display:none" onclick="ChoreoSearchNextClick()">Next</button></td>
+        <td style="border:0"><button id="KillAndReloadWorkerBtn"  class="w3-button w3-hover-pale-red w3-light-grey InTableControls"                     onclick="KillAndReloadWorker()"     >Kill worker</button></td>
+      </tr>
+    </table>
+    <textarea id ="Python_textarea" readonly></textarea>
+    <!-- <button id="TestBtn"  class="w3-button w3-hover-pale-red w3-light-grey InTableControls" onclick="TestClick()"      >Test</button> -->
+  </div>
   <div class="w3-container MainTab Solver_Discr" style="display:none">
     <h2>Problem discretization</h2>
     <div style = "max-width:400px; ">
@@ -557,13 +563,10 @@ window.addEventListener("drop",function(e){
 OnWindowResize();
 
 ClickLeftTabBtn('Main');
-// ClickLeftTabBtn('Animation');
 
 
-// ClickTopTabBtn('Main_Gallery')
-ClickTopTabBtn('Main_Launch')
+ClickTopTabBtn('Main_Gallery')
 
-// ClickTopTabBtn('Animation_Size')
 
 SlideNReconvergeItMax();
 
