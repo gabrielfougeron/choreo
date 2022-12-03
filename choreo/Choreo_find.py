@@ -682,16 +682,11 @@ def Speed_test(
     ):
     """
 
-    Finds periodic solutions
+    Helper function to profile code
 
     """
     
-    print(f'Searching periodic solutions of {nbody:d} bodies.')
-
-    print(f'Processing symmetries for {(n_reconverge_it_max+1):d} convergence levels.')
     callfun = setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change,CrashOnIdentity=CrashOnError_changevar)
-
-    print('')
 
     args = callfun[0]
 
@@ -704,24 +699,6 @@ def Speed_test(
             nbi_tot += loopnb[il]*loopnb[ilp]
         nbi_tot += loopnbi[il]
     nbi_naive = (nbody*(nbody-1))//2
-
-    print('Imposed constraints lead to the detection of:')
-    print(f'    {nloop:d} independant loops')
-    print(f'    {nbi_tot:d} binary interactions')
-    print(f'    ==> Reduction of {100*(1-nbi_tot/nbi_naive):.2f} % wrt the {nbi_naive:d} naive binary iteractions')
-    print('')
-
-    # for i in range(n_reconverge_it_max+1):
-    for i in [0]:
-        
-        args = callfun[0]
-        print(f'Convergence attempt number: {i+1}')
-        print(f"    Number of Fourier coeffs: {args['ncoeff_list'][i]}")
-        print(f"    Number of scalar parameters before constraints: {args['coeff_to_param_list'][i].shape[1]}")
-        print(f"    Number of scalar parameters after  constraints: {args['coeff_to_param_list'][i].shape[0]}")
-        print(f"    ==> Reduction of {100*(1-args['coeff_to_param_list'][i].shape[0]/args['coeff_to_param_list'][i].shape[1]):.2f} %")
-        print('')
-
 
     callfun[0]["current_cvg_lvl"] = n_reconverge_it_max
     ncoeff = callfun[0]["ncoeff_list"][callfun[0]["current_cvg_lvl"]]
@@ -738,8 +715,6 @@ def Speed_test(
 
         if (abs(x_max[i] - x_min[i]) > rand_eps):
             rand_dim +=1
-
-    print(f'Number of initialization dimensions: {rand_dim}')
 
     sampler = UniformRandom(d=rand_dim)
 
@@ -775,10 +750,10 @@ def Speed_test(
 
     beg = time.perf_counter()
     for itest in range(n_test):
-# 
+
         f0 = Compute_action_onlygrad(x0,callfun)
         hess = Compute_action_hess_mul(x0,dx,callfun)
-        toto = Unpackage_all_coeffs(x0,callfun) 
+        # toto = Unpackage_all_coeffs(x0,callfun) 
 
     end = time.perf_counter()
     tot_time += (end-beg)

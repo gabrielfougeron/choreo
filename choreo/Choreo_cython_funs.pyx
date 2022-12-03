@@ -106,6 +106,8 @@ mnnm1 = cmnnm1
 
 nhash = cnhash
 
+@cython.profile(False)
+@cython.linetrace(False)
 cdef inline (double, double, double) CCpt_interbody_pot(double xsq):  # xsq is the square of the distance between two bodies !
     # Cython definition of the potential law
     
@@ -144,86 +146,74 @@ def CCpt_hash_pot(double xsq):  # xsq is the square of the distance between two 
     
     return hash_pots
     
+@cython.cdivision(True)
 def Compute_action_Cython(
-    long nloop,
-    long ncoeff,
-    long nint,
-    np.ndarray[double, ndim=1, mode="c"] mass  ,
-    np.ndarray[long  , ndim=1, mode="c"] loopnb  ,
-    np.ndarray[long  , ndim=2, mode="c"] Targets  ,
-    np.ndarray[double, ndim=1, mode="c"] MassSum  ,
-    np.ndarray[double, ndim=4, mode="c"] SpaceRotsUn  ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeRevsUn  ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeShiftNumUn  ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeShiftDenUn  ,
-    np.ndarray[long  , ndim=1, mode="c"] loopnbi  ,
-    np.ndarray[double, ndim=2, mode="c"] ProdMassSumAll  ,
-    np.ndarray[double, ndim=4, mode="c"] SpaceRotsBin  ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeRevsBin  ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeShiftNumBin  ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeShiftDenBin  ,
-    np.ndarray[double, ndim=4, mode="c"] all_coeffs  ,
-    np.ndarray[double, ndim=3, mode="c"] all_pos 
+    long nloop                          ,
+    long ncoeff                         ,
+    long nint                           ,
+    double[::1]       mass              ,
+    long[::1]         loopnb            ,
+    long[:,::1]       Targets           ,
+    double[::1]       MassSum           ,
+    double[:,:,:,::1] SpaceRotsUn       ,
+    long[:,::1]       TimeRevsUn        ,
+    long[:,::1]       TimeShiftNumUn    ,
+    long[:,::1]       TimeShiftDenUn    ,
+    long[::1]         loopnbi           ,
+    double[:,::1]     ProdMassSumAll    ,
+    double[:,:,:,::1] SpaceRotsBin      ,
+    long[:,::1]       TimeRevsBin       ,
+    long[:,::1]       TimeShiftNumBin   ,
+    long[:,::1]       TimeShiftDenBin   ,
+    double[:,:,:,::1] all_coeffs        ,
+    double[:,:,::1]   all_pos 
     ):
     # This function is probably the most important one.
     # Computes the action and its gradient with respect to the Fourier coefficients of the generator in each loop.
     
-    cdef long il,ilp,i
-    cdef long idim,idimp
-    cdef long ibi
-    cdef long ib,ibp
-    cdef long iint
-    cdef long div
-    cdef long k,kp,k2
+    cdef Py_ssize_t il,ilp,i
+    cdef Py_ssize_t idim,idimp
+    cdef Py_ssize_t ibi
+    cdef Py_ssize_t ib,ibp
+    cdef Py_ssize_t iint
+    cdef Py_ssize_t k
+    cdef long k2
     cdef double pot,potp,potpp
     cdef double prod_mass,a,b,dx2,prod_fac
-    cdef np.ndarray[double, ndim=1, mode="c"]  dx = np.zeros((cndim),dtype=np.float64)
-    cdef np.ndarray[double, ndim=1, mode="c"]  df = np.zeros((cndim),dtype=np.float64)
-        
-    cdef long maxloopnb = loopnb.max()
-    cdef long maxloopnbi = loopnbi.max()
-    
-    cdef double Kin_en = 0
 
-    cdef np.ndarray[double, ndim=4, mode="c"] Action_grad = np.zeros((nloop,cndim,ncoeff,2),np.float64)
+    cdef double[::1] dx = np.zeros((cndim),dtype=np.float64)
+    cdef double[::1] df = np.zeros((cndim),dtype=np.float64)
+
+    cdef long maxloopnb = 0
+    cdef long maxloopnbi = 0
 
     for il in range(nloop):
-        
-        prod_fac = MassSum[il]*cfourpisq
-        
-        for idim in range(cndim):
-            for k in range(1,ncoeff):
-                
-                k2 = k*k
-                a = prod_fac*k2
-                b=2*a
+        if (maxloopnb < loopnb[il]):
+            maxloopnb = loopnb[il]
+        if (maxloopnbi < loopnbi[il]):
+            maxloopnbi = loopnbi[il]
 
-                Kin_en += a *((all_coeffs[il,idim,k,0]*all_coeffs[il,idim,k,0]) + (all_coeffs[il,idim,k,1]*all_coeffs[il,idim,k,1]))
-                
-                Action_grad[il,idim,k,0] += b*all_coeffs[il,idim,k,0]
-                Action_grad[il,idim,k,1] += b*all_coeffs[il,idim,k,1]
-        
     cdef double Pot_en = 0.
 
-    cdef np.ndarray[long, ndim=2, mode="c"]  all_shiftsUn = np.zeros((nloop,maxloopnb),dtype=np.int_)
-    cdef np.ndarray[long, ndim=2, mode="c"]  all_shiftsBin = np.zeros((nloop,maxloopnbi),dtype=np.int_)
-    
+    cdef Py_ssize_t[:,::1] all_shiftsUn = np.zeros((nloop,maxloopnb),dtype=np.intp)
+    cdef Py_ssize_t[:,::1] all_shiftsBin = np.zeros((nloop,maxloopnbi),dtype=np.intp)
+
     for il in range(nloop):
         for ib in range(loopnb[il]):
                 
-            if not(((-TimeRevsUn[il,ib]*nint*TimeShiftNumUn[il,ib]) % TimeShiftDenUn[il,ib]) == 0):
+            if not(((TimeRevsUn[il,ib]*nint*TimeShiftNumUn[il,ib]) % TimeShiftDenUn[il,ib]) == 0):
                 print("WARNING: remainder in integer division. Gradient computation will fail.")
                 
-            all_shiftsUn[il,ib] = ((-TimeRevsUn[il,ib]*nint*TimeShiftNumUn[il,ib]) // TimeShiftDenUn[il,ib] ) % nint
+            all_shiftsUn[il,ib] = (nint + (-TimeRevsUn[il,ib]*nint*TimeShiftNumUn[il,ib]) // TimeShiftDenUn[il,ib] ) % nint
         
         for ibi in range(loopnbi[il]):
 
-            if not(((-TimeRevsBin[il,ibi]*nint*TimeShiftNumBin[il,ibi]) % TimeShiftDenBin[il,ibi]) == 0):
+            if not(((TimeRevsBin[il,ibi]*nint*TimeShiftNumBin[il,ibi]) % TimeShiftDenBin[il,ibi]) == 0):
                 print("WARNING: remainder in integer division. Gradient computation will fail.")
                 
-            all_shiftsBin[il,ibi] = ((-TimeRevsBin[il,ibi]*nint*TimeShiftNumBin[il,ibi]) // TimeShiftDenBin[il,ibi]) % nint
+            all_shiftsBin[il,ibi] = (nint + (-TimeRevsBin[il,ibi]*nint*TimeShiftNumBin[il,ibi]) // TimeShiftDenBin[il,ibi]) % nint
     
-    cdef np.ndarray[double, ndim=3, mode="c"] grad_pot_all = np.zeros((nloop,cndim,nint),dtype=np.float64)
+    cdef double[:,:,::1] grad_pot_all = np.zeros((nloop,cndim,nint),dtype=np.float64)
 
     for iint in range(nint):
 
@@ -311,23 +301,31 @@ def Compute_action_Cython(
             for ibi in range(loopnbi[il]):
                 all_shiftsBin[il,ibi] = (all_shiftsBin[il,ibi]+TimeRevsBin[il,ibi]) % nint
 
-    cdef np.ndarray[doublecomplex , ndim=3, mode="c"]  grad_pot_fft = the_rfft(grad_pot_all,norm="forward")
-
-    for il in range(nloop):
-        for idim in range(cndim):
-            
-            Action_grad[il,idim,0,0] -= grad_pot_fft[il,idim,0].real
-            
-            for k in range(1,ncoeff):
-            
-                Action_grad[il,idim,k,0] -= 2*grad_pot_fft[il,idim,k].real
-                Action_grad[il,idim,k,1] -= 2*grad_pot_fft[il,idim,k].imag
-
     Pot_en = Pot_en / nint
-    
+    cdef double complex[:,:,::1]  grad_pot_fft = the_rfft(grad_pot_all,norm="forward")  #
+    cdef double Kin_en = 0  #
+    cdef np.ndarray[double, ndim=4, mode="c"] Action_grad_np = np.empty((nloop,cndim,ncoeff,2),np.float64)
+    cdef double[:,:,:,::1] Action_grad = Action_grad_np #
+    for il in range(nloop):
+        
+        prod_fac = MassSum[il]*cfourpisq
+        
+        for idim in range(cndim):   #
+            Action_grad[il,idim,0,0] = -grad_pot_fft[il,idim,0].real
+            Action_grad[il,idim,0,1] = 0    #
+            for k in range(1,ncoeff):
+                
+                k2 = k*k
+                a = prod_fac*k2
+                b=2*a   #
+                Kin_en += a *((all_coeffs[il,idim,k,0]*all_coeffs[il,idim,k,0]) + (all_coeffs[il,idim,k,1]*all_coeffs[il,idim,k,1]))
+                
+                Action_grad[il,idim,k,0] = b*all_coeffs[il,idim,k,0] - 2*grad_pot_fft[il,idim,k].real
+                Action_grad[il,idim,k,1] = b*all_coeffs[il,idim,k,1] - 2*grad_pot_fft[il,idim,k].imag
+            
     Action = Kin_en-Pot_en
     
-    return Action,Action_grad
+    return Action,Action_grad_np
 
 def Compute_hash_action_Cython(
     long nloop,
@@ -358,8 +356,7 @@ def Compute_hash_action_Cython(
     cdef long ibi
     cdef long ib,ibp
     cdef long iint
-    cdef long div
-    cdef long k,kp,k2
+    cdef long k,k2
     cdef double pot,potp,potpp
     cdef double prod_mass,a,b,dx2,prod_fac
     cdef np.ndarray[double, ndim=1, mode="c"]  dx = np.zeros((cndim),dtype=np.float64)
@@ -498,8 +495,7 @@ def Compute_MinDist_Cython(
     cdef long ibi
     cdef long ib,ibp
     cdef long iint
-    cdef long div
-    cdef long k,kp,k2
+    cdef long k,k2
     cdef double pot,potp,potpp
     cdef double prod_mass,a,b,dx2,prod_fac
     cdef np.ndarray[double, ndim=1, mode="c"]  dx = np.zeros((cndim),dtype=np.float64)
@@ -607,8 +603,7 @@ def Compute_Loop_Dist_Cython(
     cdef long ibi
     cdef long ib,ibp
     cdef long iint
-    cdef long div
-    cdef long k,kp,k2
+    cdef long k,k2
     cdef double sum_loop_dist2
     cdef double dx2
     cdef np.ndarray[double, ndim=1, mode="c"]  dx = np.zeros((cndim),dtype=np.float64)
@@ -678,8 +673,7 @@ def Compute_Loop_Dist_btw_avg_Cython(
     cdef long ibi
     cdef long ib,ibp
     cdef long iint
-    cdef long div
-    cdef long k,kp,k2
+    cdef long k,k2
     cdef double sum_loop_dist2
     cdef double dx2
     cdef np.ndarray[double, ndim=1, mode="c"]  dx = np.zeros((cndim),dtype=np.float64)
@@ -722,8 +716,7 @@ def Compute_Loop_Size_Dist_Cython(
     cdef long ibi
     cdef long ib,ibp
     cdef long iint
-    cdef long div
-    cdef long k,kp,k2
+    cdef long k,k2
     cdef double loop_size,max_loop_size
     cdef double loop_dist,max_loop_dist
     cdef double dx2
@@ -792,86 +785,77 @@ def Compute_Loop_Size_Dist_Cython(
     
     return res
    
+
+@cython.cdivision(True)
 def Compute_action_hess_mul_Cython(
-    long nloop,
-    long ncoeff,
-    long nint,
-    np.ndarray[double, ndim=1, mode="c"] mass               ,
-    np.ndarray[long  , ndim=1, mode="c"] loopnb             ,
-    np.ndarray[long  , ndim=2, mode="c"] Targets            ,
-    np.ndarray[double, ndim=1, mode="c"] MassSum            ,
-    np.ndarray[double, ndim=4, mode="c"] SpaceRotsUn        ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeRevsUn         ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeShiftNumUn     ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeShiftDenUn     ,
-    np.ndarray[long  , ndim=1, mode="c"] loopnbi            ,
-    np.ndarray[double, ndim=2, mode="c"] ProdMassSumAll     ,
-    np.ndarray[double, ndim=4, mode="c"] SpaceRotsBin       ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeRevsBin        ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeShiftNumBin    ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeShiftDenBin    ,
-    np.ndarray[double, ndim=4, mode="c"] all_coeffs         ,
-    np.ndarray[double, ndim=4, mode="c"] all_coeffs_d       ,
-    np.ndarray[double, ndim=3, mode="c"] all_pos       ,
+    long nloop                          ,
+    long ncoeff                         ,
+    long nint                           ,
+    double[::1]       mass              ,
+    long[::1]         loopnb            ,
+    long[:,::1]       Targets           ,
+    double[::1]       MassSum           ,
+    double[:,:,:,::1] SpaceRotsUn       ,
+    long[:,::1]       TimeRevsUn        ,
+    long[:,::1]       TimeShiftNumUn    ,
+    long[:,::1]       TimeShiftDenUn    ,
+    long[::1]         loopnbi           ,
+    double[:,::1]     ProdMassSumAll    ,
+    double[:,:,:,::1] SpaceRotsBin      ,
+    long[:,::1]       TimeRevsBin       ,
+    long[:,::1]       TimeShiftNumBin   ,
+    long[:,::1]       TimeShiftDenBin   ,
+    double[:,:,:,::1] all_coeffs        ,
+    np.ndarray[double, ndim=4, mode="c"]  all_coeffs_d  , # required
+    double[:,:,::1]   all_pos 
     ):
     # Computes the matrix vector product H*dx where H is the Hessian of the action.
     # Useful to guide the root finding / optimisation process and to better understand the topography of the action (critical points / Morse theory).
 
-    cdef long il,ilp,i
-    cdef long idim,idimp
-    cdef long ibi
-    cdef long ib,ibp
-    cdef long iint
-    cdef long div
-    cdef long k,kp,k2
+    cdef Py_ssize_t il,ilp,i
+    cdef Py_ssize_t idim,idimp
+    cdef Py_ssize_t ibi
+    cdef Py_ssize_t ib,ibp
+    cdef Py_ssize_t iint
+    cdef Py_ssize_t k
+    cdef long k2
     cdef double pot,potp,potpp
     cdef double prod_mass,a,b,c,dx2,prod_fac,dxtddx
-    cdef np.ndarray[double, ndim=1, mode="c"]  dx = np.zeros((cndim),dtype=np.float64)
-    cdef np.ndarray[double, ndim=1, mode="c"]  ddx = np.zeros((cndim),dtype=np.float64)
-    cdef np.ndarray[double, ndim=1, mode="c"]  ddf = np.zeros((cndim),dtype=np.float64)
+    cdef double[::1] dx  = np.zeros((cndim),dtype=np.float64)
+    cdef double[::1] ddx = np.zeros((cndim),dtype=np.float64)
+    cdef double[::1] ddf = np.zeros((cndim),dtype=np.float64)
         
-    cdef long maxloopnb = loopnb.max()
-    cdef long maxloopnbi = loopnbi.max()
-    
-    cdef double Kin_en = 0
-
-    cdef np.ndarray[double, ndim=4, mode="c"] Action_hess_dx = np.zeros((nloop,cndim,ncoeff,2),np.float64)
+    cdef Py_ssize_t maxloopnb = 0
+    cdef Py_ssize_t maxloopnbi = 0
 
     for il in range(nloop):
-        
-        prod_fac = MassSum[il]*cfourpisq
-        
-        for idim in range(cndim):
-            for k in range(1,ncoeff):
-                
-                k2 = k*k
-                a = 2*prod_fac*k2
-                
-                Action_hess_dx[il,idim,k,0] += a*all_coeffs_d[il,idim,k,0]
-                Action_hess_dx[il,idim,k,1] += a*all_coeffs_d[il,idim,k,1]
+        if (maxloopnb < loopnb[il]):
+            maxloopnb = loopnb[il]
+        if (maxloopnbi < loopnbi[il]):
+            maxloopnbi = loopnbi[il]
 
     c_coeffs_d = all_coeffs_d.view(dtype=np.complex128)[...,0]
-    cdef np.ndarray[double, ndim=3, mode="c"]  all_pos_d = the_irfft(c_coeffs_d,n=nint,axis=2,norm="forward")
+    cdef double[:,:,::1]  all_pos_d = the_irfft(c_coeffs_d,n=nint,axis=2,norm="forward")
 
-    cdef np.ndarray[long, ndim=2, mode="c"]  all_shiftsUn = np.zeros((nloop,maxloopnb),dtype=np.int_)
-    cdef np.ndarray[long, ndim=2, mode="c"]  all_shiftsBin = np.zeros((nloop,maxloopnbi),dtype=np.int_)
+    cdef Py_ssize_t[:,::1] all_shiftsUn = np.zeros((nloop,maxloopnb),dtype=np.intp)
+    cdef Py_ssize_t[:,::1] all_shiftsBin = np.zeros((nloop,maxloopnbi),dtype=np.intp)
     
     for il in range(nloop):
         for ib in range(loopnb[il]):
                 
-            if not(((-TimeRevsUn[il,ib]*nint*TimeShiftNumUn[il,ib]) % TimeShiftDenUn[il,ib]) == 0):
+            if not(((TimeRevsUn[il,ib]*nint*TimeShiftNumUn[il,ib]) % TimeShiftDenUn[il,ib]) == 0):
                 print("WARNING: remainder in integer division. Gradient computation will fail.")
                 
-            all_shiftsUn[il,ib] = ((-TimeRevsUn[il,ib]*nint*TimeShiftNumUn[il,ib]) // TimeShiftDenUn[il,ib] ) % nint
+            all_shiftsUn[il,ib] = (nint + (-TimeRevsUn[il,ib]*nint*TimeShiftNumUn[il,ib]) // TimeShiftDenUn[il,ib] ) % nint
         
         for ibi in range(loopnbi[il]):
 
-            if not(((-TimeRevsBin[il,ibi]*nint*TimeShiftNumBin[il,ibi]) % TimeShiftDenBin[il,ibi]) == 0):
+            if not(((TimeRevsBin[il,ibi]*nint*TimeShiftNumBin[il,ibi]) % TimeShiftDenBin[il,ibi]) == 0):
                 print("WARNING: remainder in integer division. Gradient computation will fail.")
                 
-            all_shiftsBin[il,ibi] = ((-TimeRevsBin[il,ibi]*nint*TimeShiftNumBin[il,ibi]) // TimeShiftDenBin[il,ibi]) % nint
+            all_shiftsBin[il,ibi] = (nint + (-TimeRevsBin[il,ibi]*nint*TimeShiftNumBin[il,ibi]) // TimeShiftDenBin[il,ibi]) % nint
     
-    cdef np.ndarray[double, ndim=3, mode="c"] hess_pot_all_d = np.zeros((nloop,cndim,nint),dtype=np.float64)
+    cdef double[:,:,::1] hess_pot_all_d = np.zeros((nloop,cndim,nint),dtype=np.float64)
 
     for iint in range(nint):
 
@@ -966,19 +950,30 @@ def Compute_action_hess_mul_Cython(
             for ibi in range(loopnbi[il]):
                 all_shiftsBin[il,ibi] = (all_shiftsBin[il,ibi]+TimeRevsBin[il,ibi]) % nint
 
-    cdef np.ndarray[doublecomplex , ndim=3, mode="c"]  hess_dx_pot_fft = the_rfft(hess_pot_all_d,norm="forward")
+    cdef double complex[:,:,::1]  hess_dx_pot_fft = the_rfft(hess_pot_all_d,norm="forward")
+
+    cdef np.ndarray[double, ndim=4, mode="c"] Action_hess_dx_np = np.empty((nloop,cndim,ncoeff,2),np.float64)
+    cdef double[:,:,:,::1] Action_hess_dx = Action_hess_dx_np
 
     for il in range(nloop):
+        
+        prod_fac = MassSum[il]*cfourpisq
+        
         for idim in range(cndim):
             
-            Action_hess_dx[il,idim,0,0] -= hess_dx_pot_fft[il,idim,0].real
-            
-            for k in range(1,ncoeff):
-            
-                Action_hess_dx[il,idim,k,0] -= 2*hess_dx_pot_fft[il,idim,k].real
-                Action_hess_dx[il,idim,k,1] -= 2*hess_dx_pot_fft[il,idim,k].imag
+            Action_hess_dx[il,idim,0,0] = -hess_dx_pot_fft[il,idim,0].real
+            Action_hess_dx[il,idim,0,1] = 0 
 
-    return Action_hess_dx
+            for k in range(1,ncoeff):
+                
+                k2 = k*k
+                a = 2*prod_fac*k2
+                
+                Action_hess_dx[il,idim,k,0] = a*all_coeffs_d[il,idim,k,0] - 2*hess_dx_pot_fft[il,idim,k].real
+                Action_hess_dx[il,idim,k,1] = a*all_coeffs_d[il,idim,k,1] - 2*hess_dx_pot_fft[il,idim,k].imag
+
+
+    return Action_hess_dx_np
     
 def Compute_Newton_err_Cython(
     long nbody,
@@ -1004,8 +999,7 @@ def Compute_Newton_err_Cython(
     cdef long ibi
     cdef long ib,ibp
     cdef long iint
-    cdef long div
-    cdef long k,kp,k2
+    cdef long k,k2
     cdef double pot,potp,potpp
     cdef double prod_mass,a,b,dx2,prod_fac
     cdef np.ndarray[double, ndim=1, mode="c"]  dx = np.zeros((cndim),dtype=np.float64)
@@ -1561,9 +1555,9 @@ def diag_changevar(
     long nnz,
     long ncoeff,
     double n_grad_change,
-    int [:] idxarray ,
-    double [:] data ,
-    double [:] MassSum  ,
+    int [::1] idxarray ,
+    double [::1] data ,
+    double [::1] MassSum  ,
     ):
     
     cdef long idx, res, ift, k , il, idim
@@ -1582,14 +1576,14 @@ def diag_changevar(
 
         if (k >=1):
             kd = k
-            # kd = k*ctwopi*cpow(2.*MassSum[il],0.5) # The jury is still out
-            # kd = k*MassSum[il] # The jury is still out
-            
+            #kd = k*ctwopi*cpow(2.*MassSum[il],0.5) # The jury is still out
+            #kd = k*MassSum[il] # The jury is still out
             
             kfac = cpow(kd,n_grad_change)
+            
         else:
             kfac = 1.
-            # kfac = MassSum[il]
+            #kfac = MassSum[il]
         
         data[idx] *= kfac
     

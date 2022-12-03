@@ -21,12 +21,12 @@ import time
 def f_base(xj):
 
     # return xj*xj/2
-    return np.sin(np.sum(xj))
+    return np.cos(xj)
 
 def f_base_grad(xj):
 
     # return xj
-    return np.cos( xj )
+    return -np.sin( xj )
 
 
 def int_fun(f_base,x):
@@ -56,16 +56,17 @@ def int_fun_grad_c(f_base_grad,x):
 
     f_all = int_fun_grad(f_base_grad,x)
     # f_all_fft = np.fft.ihfft(f_all)
-    f_all_fft = np.fft.rfft(f_all) / nint
+    f_all_fft = np.fft.rfft(f_all,norm="forward")
+    # f_all_fft = np.fft.rfft(f_all) / nint
 
     ncoeffs = f_all_fft.shape[0]
 
-    f_all_fft_real = np.zeros((ncoeffs,2))
+    f_all_fft_real = np.zeros((ncoeffs-1,2))
 
     f_all_fft_real[0,0] = f_all_fft[0].real
-    for k in range(1,ncoeffs):
+    for k in range(1,ncoeffs-1):
         f_all_fft_real[k,0] = 2*f_all_fft[k].real
-        f_all_fft_real[k,1] = -2*f_all_fft[k].imag
+        f_all_fft_real[k,1] = 2*f_all_fft[k].imag
 
     return f_all_fft_real
 
@@ -74,7 +75,7 @@ def int_fun_grad_c(f_base_grad,x):
 
 
 # ncoeffs = 12
-nint = 20
+nint = 900
 
 eps_list = [ 10**(-i) for i in range(10) ]
 # eps_list = [ 10**(-i) for i in [5] ]
@@ -84,8 +85,19 @@ x = np.random.random((nint))
 # x = np.zeros((nint))
 # x[0] = 1.
 
+ncoeffs = nint //2 +1
 
-dx = np.random.random((nint))
+
+dc_init = np.zeros((ncoeffs,2))
+dc_init[:,0] = np.random.random((ncoeffs))
+dc_init[:,1] = np.random.random((ncoeffs))
+dc_init[ncoeffs-1,:] = 0
+dc_init_c = dc_init.view(dtype=np.complex128)[...,0]
+
+
+
+dx = np.fft.irfft(dc_init_c)
+# dx = np.random.random((nint))
 # dx = np.zeros((nint))
 # dx[1] = 1.
 
@@ -95,12 +107,12 @@ ncoeffs = dc.shape[0]
 
 assert ncoeffs == nint//2 + 1
 
-dc_real = np.zeros((ncoeffs,2))
+dc_real = np.zeros((ncoeffs-1,2))
 # dc_real[:,0] = dc.real
 # dc_real[:,1] = dc.imag
 
 dc_real[0,0] = dc[0].real
-for k in range(1,ncoeffs):
+for k in range(1,ncoeffs-1):
     dc_real[k,0] = dc[k].real
     dc_real[k,1] = dc[k].imag
 
@@ -144,16 +156,13 @@ f_grad_c = int_fun_grad_c(f_base_grad,x)
 df_grad_c = np.dot(dc_real.reshape(-1),f_grad_c.reshape(-1))
 
 
-print(f_grad_c)
-print(dc_real)
-
-
-
+# print(f_grad_c)
+# print(dc_real)
 
 
 # print("f_grad : ",f_grad.sum(axis=1))
 # print("f_grad_c :",f_grad_c*nint)
-print("mean val : ",f_grad.sum() - f_grad_c[0,0]*nint)
+# print("mean val : ",f_grad.sum() - f_grad_c[0,0]*nint)
 # print("f_grad_c :",f_grad_c*nint)
 
 # print(df_grad)

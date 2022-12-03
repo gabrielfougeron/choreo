@@ -205,7 +205,7 @@ window.addEventListener("drop",function(e){
     <h3>Overview of the solving process</h3>
     &nbsp &nbsp The first step of the solution process is to analyse the symmetry constraints in order to:<br>
     <ul style="margin-left:2em">
-      <li>Prune the redondant binary body-body interactions, so that computations can be re-used.</li>
+      <li>Prune the redundant binary body-body interactions, so that computations can be re-used.</li>
       <li>Detect independant loops. The motion of every body in a loop can be deduced from that of a single representative.</li>
       <li>Reformulate the symmetries so that they are understood <i>a priori</i> through parametrization. The shapes of all independant loops are constrained accordingly.</li>
     </ul>
@@ -370,11 +370,11 @@ window.addEventListener("drop",function(e){
       </td>
       </tr>
       <tr>
-      <td style="border:none; max-width:100px;" ><label for="checkbox_Mass_Scale">Body radius scales with mass</label></td>
+      <td style="border:none; max-width:100px;" ><label for="checkbox_Mass_Scale">Size scales with mass</label></td>
       <td style="border:none;text-align: center;"><input id ="checkbox_Mass_Scale" class="w3-check" type="checkbox" style="vertical-align: super" checked></td>
       </tr>
       <tr>
-        <td style="border:none; max-width:100px;">Body radius</td>
+        <td style="border:none; max-width:100px;">Body size</td>
         <td style="border:none;"><input type="range" id="input_body_radius"></td>
       </tr>
       <tr>
@@ -382,8 +382,8 @@ window.addEventListener("drop",function(e){
         <td style="border:none;"><input type="range" id="input_trail_width"></td>
       </tr>
       <tr>
-        <td style="border:none; max-width:100px;">Trail vanish speed</td>
-        <td style="border:none;"><input type="range" id="input_trail_vanish_speed"></td>
+        <td style="border:none; max-width:100px;">Trail length</td>
+        <td style="border:none;"><input type="range" id="input_trail_vanish_length"></td>
       </tr>
     </table>
   </div>
@@ -468,6 +468,7 @@ window.addEventListener("drop",function(e){
           </td>
            <td style="border:none; max-width:90px; ">
             <select class="w3-select" id="linesearch_method" name="linesearch_method" style="text-align: center;"> 
+              <option value="none">None</option>
               <option value="wolfe" selected>Wolfe</option>
               <option value="armijo">Armijo</option>
             </select>
@@ -478,6 +479,17 @@ window.addEventListener("drop",function(e){
           </td>
            <td style="border:none; max-width:90px; ">
             <input type="text" id="input_Newt_err_norm_max" value="1e-12" style="text-align: center;" >
+          </td>
+        </tr>
+        <tr>
+          <td style="border:none;" >
+            <label for="optim_verbose_lvl">Optimizer verbose level</label>
+          </td>
+          <td style="border:none; max-width:90px; ">
+            <select class="w3-select" id="optim_verbose_lvl"  name="optim_verbose_lvl" style="text-align: center;"> 
+              <option value="full">Full</option>
+              <option value="some" selected>Default</option>
+            </select>
           </td>
         </tr>
       </table>
@@ -562,6 +574,8 @@ for (var i = 0; i < colorLookup_init.length; i++) {
 Python_textarea.style.height = "400px";
 
 DealWithCookie();
+
+// setPeriodTime
 
 </script>
 
