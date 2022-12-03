@@ -296,7 +296,7 @@ def Find_Choreo(
             try : 
                 
                 x0 = np.copy(best_sol.x)
-                opt_result = scipy.optimize.nonlin.nonlin_solve(F=F,x0=x0,jacobian=jacobian,verbose=disp_scipy_opt,maxiter=maxiter,f_tol=gradtol,line_search=line_search,callback=optim_callback,raise_exception=False)
+                opt_result = nonlin_solve_pp(F=F,x0=x0,jacobian=jacobian,verbose=disp_scipy_opt,maxiter=maxiter,f_tol=gradtol,line_search=line_search,callback=optim_callback,raise_exception=False)
                 
             except Exception as exc:
                 
