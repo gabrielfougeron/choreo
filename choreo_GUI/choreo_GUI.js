@@ -297,9 +297,12 @@ function ChoreoExecuteClick() {
 
         }
 
-        var ConfigDict = GatherConfigDict();
+        AskForNextBuffer[0] = 0;
+        pyodide_worker.postMessage({funname:"LoadDataInWorker",args:{AskForNextBuffer:AskForNextBuffer}});
 
+        var ConfigDict = GatherConfigDict();
         pyodide_worker.postMessage({funname:"LoadDataInWorker",args:{ConfigDict:ConfigDict}});
+        
         pyodide_worker.postMessage({funname:"ExecutePythonFile",args:"./python_scripts/RunOnce.py"});
 
     }
@@ -1269,6 +1272,9 @@ function ChoreoSearchNextClick(){
     console.log("In ChoreoSearchNextClick")
 
     pyodide_worker.postMessage({funname:"LoadDataInWorker",args:{AskedForNext:true}});
+
+
+    
 
 }
 
