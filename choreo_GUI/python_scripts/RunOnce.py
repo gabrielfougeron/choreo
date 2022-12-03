@@ -247,8 +247,7 @@ def main():
     n_reconverge_it_max = params_dict["Solver_Discr"] ['n_reconverge_it_max'] 
     ncoeff_init = params_dict["Solver_Discr"]["ncoeff_init"]   
 
-    disp_scipy_opt = False
-    # disp_scipy_opt = True
+    disp_scipy_opt = (params_dict['Solver_Optim'] ['optim_verbose_lvl'] == "full")
     
     max_norm_on_entry = 1e20
 
@@ -256,11 +255,14 @@ def main():
     # Newt_err_norm_max_save = Newt_err_norm_max*1000
     Newt_err_norm_max_save = 1e-9
 
-    duplicate_eps = 1e-8
+    duplicate_eps = params_dict['Solver_Checks'] ['duplicate_eps'] 
 
     krylov_method = params_dict["Solver_Optim"]["krylov_method"]  
 
-    line_search = params_dict["Solver_Optim"]["line_search"]  
+    if (params_dict["Solver_Optim"]["line_search"]  == "none" ):
+        line_search = None
+    else:
+        line_search = params_dict["Solver_Optim"]["line_search"]  
 
     gradtol_list =          params_dict["Solver_Loop"]["gradtol_list"]
     inner_maxiter_list =    params_dict["Solver_Loop"]["inner_maxiter_list"]

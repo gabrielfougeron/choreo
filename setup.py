@@ -5,7 +5,7 @@ Creates and compiles C code from Cython file
 
 import os
 import setuptools
-import distutils
+import distutils # Deprecation of distutils. See  https://peps.python.org/pep-0632/
 import Cython.Build
 import numpy
 import platform
@@ -36,8 +36,15 @@ else:
         # extra_compile_args = ["-O3","-march=native"]
         extra_compile_args = ["-Ofast","-march=native"]
 
-    else:
+#     elif not(distutils.spawn.find_executable('icc') is None):
 # 
+#         os.environ['CC'] = 'icc'
+#         os.environ['LDSHARED'] = 'icc -shared'
+# 
+#         extra_compile_args = ["-Ofast","-march=native","-w","-no-multibyte-chars"]
+
+    else:
+
         extra_compile_args = ["-O3","-march=native"]
     
 
@@ -64,7 +71,23 @@ compiler_directives = {
     'initializedcheck': False,
     'overflowcheck': False,
     'overflowcheck.fold': False,
+    'infer_types': True,
+
 }
+
+# #### Profiler only ####
+# profile_compiler_directives = {
+#     'profile': True,
+#     'linetrace': True,
+#     'binding': True,
+# }
+# compiler_directives.update(profile_compiler_directives)
+# 
+# profile_define_macros = [('CYTHON_TRACE', '1')]
+# define_macros.extend(profile_define_macros)
+
+
+
 
 extensions = [
     distutils.core.Extension(

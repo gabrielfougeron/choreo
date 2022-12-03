@@ -417,7 +417,7 @@ function GatherConfigDict() {
     ConfigDict['Animation_Size'] ['checkbox_Mass_Scale']  = document.getElementById('checkbox_Mass_Scale').checked ;
     ConfigDict['Animation_Size'] ['input_body_radius']  = document.getElementById('input_body_radius').value ;
     ConfigDict['Animation_Size'] ['input_trail_width']  = document.getElementById('input_trail_width').value ;  
-    ConfigDict['Animation_Size'] ['input_trail_vanish_speed']  = document.getElementById('input_trail_vanish_speed').value;
+    ConfigDict['Animation_Size'] ['input_trail_vanish_length']  = document.getElementById('input_trail_vanish_length').value;
 
     ConfigDict['Animation_Framerate'] = {};
     ConfigDict['Animation_Framerate'] ['checkbox_Limit_FPS']  = document.getElementById('checkbox_Limit_FPS').checked  ;
@@ -439,6 +439,7 @@ function GatherConfigDict() {
     ConfigDict['Solver_Optim'] ['line_search']    = document.getElementById('linesearch_method').value;
 
     ConfigDict['Solver_Optim'] ['Newt_err_norm_max'] = parseFloat(document.getElementById('input_Newt_err_norm_max').value);
+    ConfigDict['Solver_Optim'] ['optim_verbose_lvl'] = document.getElementById('optim_verbose_lvl').value;
 
     ConfigDict['Solver_Loop'] = {};
 
@@ -582,7 +583,7 @@ function LoadConfigDict(ConfigDict) {
     SlideBodyRadius();
     document.getElementById('input_trail_width').value = ConfigDict['Animation_Size'] ['input_trail_width'];
     SlideTrailWidth();
-    document.getElementById('input_trail_vanish_speed').value = ConfigDict['Animation_Size'] ['input_trail_vanish_speed'];
+    document.getElementById('input_trail_vanish_length').value = ConfigDict['Animation_Size'] ['input_trail_vanish_length'];
     // SlideTrailTime();
     
     ExportColors();
@@ -611,6 +612,7 @@ function LoadConfigDict(ConfigDict) {
     document.getElementById('krylov_method').value           = ConfigDict['Solver_Optim'] ['krylov_method']     ;
     document.getElementById('linesearch_method').value       = ConfigDict['Solver_Optim'] ['line_search']       ;
     document.getElementById('input_Newt_err_norm_max').value = ConfigDict['Solver_Optim'] ['Newt_err_norm_max'] ;
+    document.getElementById('optim_verbose_lvl').value       = ConfigDict['Solver_Optim'] ['optim_verbose_lvl'] ;
 
     var table = document.getElementById('table_cvg_loop');
     var ncols = table.rows[0].cells.length;
@@ -1293,12 +1295,12 @@ input_trail_width.min   = min_base_trailWidth ;
 input_trail_width.max   = max_base_trailWidth ;
 input_trail_width.step  = 0.05 ;
 
-var input_trail_vanish_speed = document.getElementById("input_trail_vanish_speed");
-input_trail_vanish_speed.addEventListener("input" , SlideTrailTime, true);
-input_trail_vanish_speed.value = base_trail_vanish_speed ;
-input_trail_vanish_speed.min   = min_base_trail_vanish_speed ;
-input_trail_vanish_speed.max   = max_base_trail_vanish_speed ;
-input_trail_vanish_speed.step  = 0.05 ;
+var input_trail_vanish_length = document.getElementById("input_trail_vanish_length");
+input_trail_vanish_length.addEventListener("input" , SlideTrailTime, true);
+input_trail_vanish_length.value = base_trail_vanish_length ;
+input_trail_vanish_length.min   = min_base_trail_vanish_length ;
+input_trail_vanish_length.max   = max_base_trail_vanish_length ;
+input_trail_vanish_length.step  = 0.05 ;
 
 // SlideTrailTime();
 
@@ -1313,16 +1315,16 @@ function SlideTrailWidth(event) {
 }
 
 function SlideTrailTime(event) {
-    // console.log(input_trail_vanish_speed.value);
-    trail_vanish_speed = input_trail_vanish_speed.value;
-    // FadeInvFrequency = 1/(1000*(base_trail_vanish_speed*base_trail_vanish_speed));
+    // console.log(input_trail_vanish_length.value);
+    trail_vanish_length = input_trail_vanish_length.value;
+    // FadeInvFrequency = 1/(1000*(base_trail_vanish_length*base_trail_vanish_length));
 
     var dx = xMax - xMin
     var dy = yMax - yMin
     var distance_ref = Math.sqrt(dx*dx + dy*dy)
     var distance_rel = Max_PathLength / distance_ref
 
-    FadeInvFrequency = 1 / (trail_vanish_speed_mul*(trail_vanish_speed*trail_vanish_speed) * distance_rel);
+    FadeInvFrequency = (trail_vanish_length_mul * trail_vanish_length) / distance_rel ;
 
 }
 
