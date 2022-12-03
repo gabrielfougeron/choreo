@@ -35,11 +35,10 @@
 <script>
 pyodide_worker = new Worker("./Pyodide_worker.js");
 pyodide_worker.postMessage({funname:"ExecutePythonFile",args:"./python_scripts/Python_imports.py"});
-
-let AskForNextBuffer = new Uint8Array(new SharedArrayBuffer(1));
-pyodide_worker.postMessage({ cmd: "setInterruptBuffer", interruptBuffer });
-
-AskForNextBuffer[0] = 0;
+// 
+// let AskForNextBuffer = new Uint8Array(new SharedArrayBuffer(1));
+// pyodide_worker.postMessage({ cmd: "setInterruptBuffer", interruptBuffer });
+// AskForNextBuffer[0] = 0;
 
 </script>
 
