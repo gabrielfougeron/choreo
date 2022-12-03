@@ -14,7 +14,7 @@ var CurrentMax_PartRelSize = 1.;
 var displayWidth, displayHeight;
 var trajectoriesOn;
 
-var FPS_estimation = 30;
+var FPS_estimation = 60;
 var Do_Limit_FPS = false;
 var FPS_limit = 120;
 var Elapsed_Time_During_Animation = 0;
@@ -43,20 +43,20 @@ var defaultTrailColor = "#3c9a39";
 var FallbackTrailColor = "#d5d5d5";
 
 // Particle radius
-var min_base_particle_size = 3.;
-var max_base_particle_size = 15.;
+var min_base_particle_size = 1.;
+var max_base_particle_size = 10.;
 var base_particle_size = 6.;
 
 // with of particle trail
 var min_base_trailWidth = 0.2;
-var max_base_trailWidth = 16.;
+var max_base_trailWidth = 5.;
 var base_trailWidth = 2;
 
 // Vanish speed
-var min_base_trail_vanish_speed = 0.;
-var max_base_trail_vanish_speed = 3.;
-var base_trail_vanish_speed = 2.;
-var trail_vanish_speed_mul = 125.;
+var min_base_trail_vanish_length = 0.1;
+var max_base_trail_vanish_length = 10.;
+var base_trail_vanish_length = 1.;
+var trail_vanish_length_mul = 0.002;
 
 var DoScaleSizeWithMass = true;
 
@@ -1134,19 +1134,19 @@ function canvasApp() {
 
 	function setPeriodTime() {
 
-		var slider_value = $("#speedSlider").slider("value");
-		var slider_value_rel = slider_value/speed_slider_value_init;
-		var sliderpow = 3;
-		var alpha = Math.pow(slider_value_rel,sliderpow);
+		var slider_value = $("#speedSlider").slider("value")
+		var slider_value_rel = slider_value/speed_slider_value_init
+		var sliderpow = 3
+		var alpha = Math.pow(slider_value_rel,sliderpow)
 
-		var Time_One_Period = Time_One_Period_init / alpha;
+		var Time_One_Period = Time_One_Period_init / alpha
 
 		var dx = xMax - xMin
 		var dy = yMax - yMin
 		var distance_ref = Math.sqrt(dx*dx + dy*dy)
 		var distance_rel = Max_PathLength / distance_ref
 
-		tInc = 1/(Time_One_Period*FPS_estimation * distance_rel) ;
+		tInc = 1/(Time_One_Period*FPS_estimation * distance_rel) 
 
 		var speedTxt_val = Math.round(100*Math.pow(slider_value,sliderpow));
 		speedTxt.innerHTML = "Speed: "+speedTxt_val.toString();
@@ -1187,8 +1187,6 @@ function canvasApp() {
 	}
 
 	function setOrbit(orbitIndex) {
-
-		// PythonClearPrints();
 
 		PythonPrint({txt:"Playing solution from the gallery: "+AllGalleryNames[orbitIndex]+"&#10;"});
 		
