@@ -64,6 +64,12 @@ var FadeInvFrequency;
 
 var	colorLookup = colorLookup_init
 
+var AllPosFilenames = [];
+var AllPlotInfoFilenames = [];
+var AllPos = [];
+var AllPlotInfo = [];
+var AllGalleryNames = [];
+
 function AjaxGet(foldername){ return $.ajax({ url: foldername})}
 
 function GetFileBaseExt(filename) {
@@ -203,12 +209,6 @@ function canvasApp() {
 	speedMinusBtn.addEventListener("click", SpeedMinusClick, true);
 
 	var speedTxt = document.getElementById("speedTxt");
-
-	var AllPosFilenames = [];
-	var AllPlotInfoFilenames = [];
-	var AllPos = [];
-	var AllPlotInfo = [];
-	var AllGalleryNames = [];
 
 	// http://paulirish.com/2011/requestanimationframe-for-smart-animating/
 	// http://my.opera.com/emoller/blog/2011/12/20/requestanimationframe-for-smart-er-animating
