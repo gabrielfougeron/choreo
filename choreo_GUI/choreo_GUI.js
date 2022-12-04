@@ -453,6 +453,7 @@ function GatherConfigDict() {
 
     ConfigDict['Solver_Optim'] ['krylov_method']  = document.getElementById('krylov_method').value;
     ConfigDict['Solver_Optim'] ['line_search']    = document.getElementById('linesearch_method').value;
+    ConfigDict['Solver_Optim'] ['line_search_smin']    = parseFloat(document.getElementById('linesearch_smin').value);
 
     ConfigDict['Solver_Optim'] ['Newt_err_norm_max'] = parseFloat(document.getElementById('input_Newt_err_norm_max').value);
     ConfigDict['Solver_Optim'] ['optim_verbose_lvl'] = document.getElementById('optim_verbose_lvl').value;
@@ -625,10 +626,11 @@ function LoadConfigDict(ConfigDict) {
 
     SlideNReconvergeItMax();
 
-    document.getElementById('krylov_method').value           = ConfigDict['Solver_Optim'] ['krylov_method']     ;
-    document.getElementById('linesearch_method').value       = ConfigDict['Solver_Optim'] ['line_search']       ;
-    document.getElementById('input_Newt_err_norm_max').value = ConfigDict['Solver_Optim'] ['Newt_err_norm_max'] ;
-    document.getElementById('optim_verbose_lvl').value       = ConfigDict['Solver_Optim'] ['optim_verbose_lvl'] ;
+    document.getElementById('krylov_method').value           = ConfigDict['Solver_Optim'] ['krylov_method']     
+    document.getElementById('linesearch_method').value       = ConfigDict['Solver_Optim'] ['line_search']       
+    document.getElementById('linesearch_smin').value         = ConfigDict['Solver_Optim'] ['line_search_smin']  
+    document.getElementById('input_Newt_err_norm_max').value = ConfigDict['Solver_Optim'] ['Newt_err_norm_max'] 
+    document.getElementById('optim_verbose_lvl').value       = ConfigDict['Solver_Optim'] ['optim_verbose_lvl'] 
 
     var table = document.getElementById('table_cvg_loop');
     var ncols = table.rows[0].cells.length;
