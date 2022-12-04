@@ -27,10 +27,8 @@ class current_best:
         self.f = f
         self.f_norm = np.linalg.norm(f)
         
-    def update(self,x,f):
-        
-        f_norm = np.linalg.norm(f)
-        
+    def update(self,x,f,f_norm):
+
         if (f_norm < self.f_norm):
             self.x = x
             self.f = f

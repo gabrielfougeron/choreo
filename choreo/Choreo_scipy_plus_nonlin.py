@@ -26,7 +26,8 @@ def nonlin_solve_pp(
         line_search='armijo',
         callback=None,
         full_output=False,
-        raise_exception=True
+        raise_exception=True,
+        smin = 1e-2,
     ):
     """
     Patched version of scipy's nonlin_solve.
@@ -59,9 +60,6 @@ def nonlin_solve_pp(
     elif line_search is False:
         line_search = None
 
-    if line_search not in (None, 'armijo', 'wolfe'):
-        raise ValueError("Invalid line search")
-
     # Solver tolerance selection ===> ???? What are those ?
     gamma = 0.9
     eta_max = 0.9999
@@ -83,18 +81,18 @@ def nonlin_solve_pp(
                              "approximation.")
 
         # Line search, or Newton step
-        if line_search:
-            s, x, Fx, Fx_norm_new = _nonlin_line_search_pp(func, x, Fx, dx,line_search)
+        if line_search in (None, 'armijo', 'wolfe'):
+            s, x, Fx, Fx_norm_new = _nonlin_line_search_pp(func, x, Fx, dx,line_search,smin=smin)
         else:
-            s = 1.0
-            x = x + dx
+            s = smin
+            x = x + s*dx
             Fx = func(x)
             Fx_norm_new = np.linalg.norm(Fx)
 
         jacobian.update(x.copy(), Fx)
 
         if callback:
-            callback(x, Fx)
+            callback(x, Fx, Fx_norm_new)
 
         # Adjust forcing parameters for inexact methods
         eta_A = gamma * Fx_norm_new**2 / Fx_norm**2
@@ -107,9 +105,8 @@ def nonlin_solve_pp(
 
         # Print status
         if verbose:
-            sys.stdout.write("%d:  |F(x)| = %g; step %g\n" % (
-                n, tol_norm(Fx), s))
-            sys.stdout.flush()
+            print(f"{n}:  |F(x)| = {Fx_norm_new}; step {s}")
+
     else:
         if raise_exception:
             raise NoConvergence(_array_like_pp(x, x0))
@@ -130,9 +127,6 @@ def nonlin_solve_pp(
         return _array_like_pp(x, x0), info
     else:
         return _array_like_pp(x, x0)
-
-
-
 
 def _as_inexact_pp(x):
     """Return `x` as an array, of either floats or complex floats"""
@@ -182,9 +176,7 @@ def _nonlin_line_search_pp(func, x, Fx, dx, search_type='armijo', rdiff=1e-8, sm
         s, phi1 = scipy.optimize.nonlin.scalar_search_armijo(phi, tmp_phi[0], -tmp_phi[0], amin=smin)
 
     if s is None:
-        # XXX: No suitable step length found. Take the full Newton step,
-        #      and hope for the best.
-        s = 1.0
+        s = smin
 
     x = x + s*dx
     if s == tmp_s[0]:
