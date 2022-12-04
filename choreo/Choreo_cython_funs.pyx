@@ -1108,7 +1108,7 @@ def Compute_Newton_err_Cython(
                 all_shiftsUn[il,ib] = (all_shiftsUn[il,ib]+TimeRevsUn[il,ib]) % nint
                 
     return all_Newt_err
-
+                                                                                                                                                                
 def Assemble_Cstr_Matrix(
     long nloop,
     long ncoeff,
