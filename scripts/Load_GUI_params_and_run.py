@@ -25,7 +25,8 @@ def main():
 
     np.random.seed(int(time.time()*10000) % 5000)
     
-    params_filename = os.path.join(__PROJECT_ROOT__,"choreo_config.json")
+    # params_filename = os.path.join(__PROJECT_ROOT__,"choreo_config.json")
+    params_filename = "/mnt/c/Users/gabri/OneDrive/Documents/Choreo_GUI_DIR/choreo_config.json"
 
     with open(params_filename) as jsonFile:
         params_dict = json.load(jsonFile)
@@ -167,6 +168,7 @@ def main():
     krylov_method = params_dict["Solver_Optim"]["krylov_method"]  
 
     line_search = params_dict["Solver_Optim"]["line_search"]  
+    linesearch_smin = params_dict["Solver_Optim"]["line_search_smin"]  
 
     gradtol_list =          params_dict["Solver_Loop"]["gradtol_list"]
     inner_maxiter_list =    params_dict["Solver_Loop"]["inner_maxiter_list"]

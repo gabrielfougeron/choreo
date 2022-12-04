@@ -91,6 +91,7 @@ def Find_Choreo(
     color_list,
     optim_callback_list,
     callback_after_init_list,
+    linesearch_smin,
     ):
     """
 
@@ -285,25 +286,26 @@ def Find_Choreo(
                 jacobian = scipy.optimize.nonlin.KrylovJacobian(**jac_options)
 
 
-            def optim_callback(x,f):
+            def optim_callback(x,f,f_norm):
                 
-                best_sol.update(x,f)
+                best_sol.update(x,f,f_norm)
 
                 for i in range(n_optim_callback_list):
 
-                    optim_callback_list[i](x,f,callfun)
+                    optim_callback_list[i](x,f,f_norm,callfun)
 
             try : 
                 
                 x0 = np.copy(best_sol.x)
-                opt_result = nonlin_solve_pp(F=F,x0=x0,jacobian=jacobian,verbose=disp_scipy_opt,maxiter=maxiter,f_tol=gradtol,line_search=line_search,callback=optim_callback,raise_exception=False)
+                print("aaa",linesearch_smin)
+                opt_result = nonlin_solve_pp(F=F,x0=x0,jacobian=jacobian,verbose=disp_scipy_opt,maxiter=maxiter,f_tol=gradtol,line_search=line_search,callback=optim_callback,raise_exception=False,smin=linesearch_smin)
                 
             except Exception as exc:
                 
                 print(exc)
                 print("Value Error occured, skipping.")
                 GoOn = False
-                # raise(exc)
+                raise(exc)
                 
             SaveSol = False
 
