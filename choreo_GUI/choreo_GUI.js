@@ -255,10 +255,22 @@ var saveJSONData = (function () {
     };
 }());
 
-function SaveConfigFile(){
+async function SaveConfigFile(UserDir=false){
 
-    var ConfigDict = GatherConfigDict();
-    saveJSONData(ConfigDict, "choreo_config.json");
+    var ConfigDict = GatherConfigDict()
+
+    filename = 'choreo_config.json'
+
+    if (UserDir){
+            
+        ConfigFile = await UserDir.getFileHandle(filename, { create: true })
+        const writable = await ConfigFile.createWritable()
+        await writable.write(JSON.stringify(ConfigDict,null,2))
+        await writable.close()
+
+    } else {
+        saveJSONData(ConfigDict, filename)
+    }
 
 }
 
@@ -1563,4 +1575,24 @@ function viewport_custom_select_Handler(event) {
 
 function ClickStateDiv() {
     ChoreoExecuteClick()
+}
+
+let UserDir;
+
+async function ClickSelectFile() {
+
+    try {
+        UserDir = await window.showDirectoryPicker({
+            id : 'ChoreoUserDir',
+            mode: 'readwrite' ,
+            startIn: 'documents'
+        });
+
+    } catch(e) { // User aborted for instance
+        console.log(e);
+        return
+    }
+
+    SaveConfigFile(UserDir)
+
 }

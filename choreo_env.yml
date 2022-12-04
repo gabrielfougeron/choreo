@@ -3,8 +3,9 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-  - python
+  - python=3.10
   - matplotlib
+  - numpy=1.22.4
   - scipy
   - networkx
   - cython
