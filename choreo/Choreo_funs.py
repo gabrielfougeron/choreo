@@ -694,22 +694,22 @@ def setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max=6,MomCons=True,n_
         nint_list.append(2*ncoeff_list[i])
 
         cstrmat_sp = Assemble_Cstr_Matrix(
-        nloop               ,
-        ncoeff_list[i]      ,
-        MomCons             ,
-        mass                ,
-        loopnb              ,
-        Targets             ,
-        MassSum             ,
-        SpaceRotsUn         ,
-        TimeRevsUn          ,
-        TimeShiftNumUn      ,
-        TimeShiftDenUn      ,
-        loopncstr           ,
-        SpaceRotsCstr       ,
-        TimeRevsCstr        ,
-        TimeShiftNumCstr    ,
-        TimeShiftDenCstr    
+            nloop               ,
+            ncoeff_list[i]      ,
+            MomCons             ,
+            mass                ,
+            loopnb              ,
+            Targets             ,
+            MassSum             ,
+            SpaceRotsUn         ,
+            TimeRevsUn          ,
+            TimeShiftNumUn      ,
+            TimeShiftDenUn      ,
+            loopncstr           ,
+            SpaceRotsCstr       ,
+            TimeRevsCstr        ,
+            TimeShiftNumCstr    ,
+            TimeShiftDenCstr    
         )
 
         param_to_coeff_list.append(null_space_sparseqr(cstrmat_sp))
