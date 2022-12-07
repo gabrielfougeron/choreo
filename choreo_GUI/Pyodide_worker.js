@@ -13,8 +13,7 @@ function RedirectPythonPrint(txt) {
 
 }
 
-// var AskForNextBuffer;
-var AskedForNext = false;
+var AskForNext;
 
 // load pyodide.js
 importScripts("https://cdn.jsdelivr.net/pyodide/v0.21.2/full/pyodide.js");
@@ -80,3 +79,19 @@ self.ExecutePythonFile = function(filename) {
     });
 }
 
+  
+self.ExecutePythonFile = function(filename) {
+    let load_txt = fetch(filename,python_cache_behavior) ; 
+    load_txt.then(function(response) {
+        return response.text();
+    }).then(async function(text) {  
+        await pyodideReadyPromise; 
+        txt = pyodide.runPython(text);
+    });
+}
+
+self.setAskForNextBuffer = function(Buffer) {
+
+    AskForNext = new Uint8Array(Buffer);
+
+}
