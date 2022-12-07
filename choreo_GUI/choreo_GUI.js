@@ -60,6 +60,7 @@ async function Play_Loop_From_Python(args){
 
     displayCanvas.dispatchEvent(event);
 
+    SearchIsOnGoing = false
     var ChoreoExecuteBtn = document.getElementById("ChoreoExecuteBtn");
     ChoreoExecuteBtn.disabled = "";
     var ChoreoDispInitStateBtn = document.getElementById("ChoreoDispInitStateBtn");
@@ -96,6 +97,7 @@ function Python_no_sol_found(args) {
 
     } 
 
+    SearchIsOnGoing = false
     var ChoreoExecuteBtn = document.getElementById("ChoreoExecuteBtn");
     ChoreoExecuteBtn.disabled = "";
     var ChoreoDispInitStateBtn = document.getElementById("ChoreoDispInitStateBtn");
@@ -146,6 +148,7 @@ async function Python_Imports_Done(args){
 
     PythonPrint({txt:"&#10;All python packages imported&#10;"});
 
+    SearchIsOnGoing = false
     var ChoreoExecuteBtn = document.getElementById("ChoreoExecuteBtn");
     ChoreoExecuteBtn.disabled = "";
     var ChoreoDispInitStateBtn = document.getElementById("ChoreoDispInitStateBtn");
@@ -280,8 +283,13 @@ async function SaveConfigFile(UserDir=false){
 
 function ChoreoExecuteClick() {
 
-    if (!document.getElementById("ChoreoExecuteBtn").disabled) {
+    var ChoreoExecuteBtn = document.getElementById("ChoreoExecuteBtn");
 
+    console.log("in ChoreoExecuteClick",!ChoreoExecuteBtn.disabled)
+
+    if (!ChoreoExecuteBtn.disabled) {
+        
+        SearchIsOnGoing = true
         var ChoreoExecuteBtn = document.getElementById("ChoreoExecuteBtn");
         ChoreoExecuteBtn.disabled = "disabled";
         var ChoreoDispInitStateBtn = document.getElementById("ChoreoDispInitStateBtn");
@@ -296,7 +304,7 @@ function ChoreoExecuteClick() {
 
         var Python_State_Div = document.getElementById("Python_State_Div");
 
-        Python_State_Div.innerHTML = "Working";
+        Python_State_Div.innerHTML = "Next";
         Python_State_Div.classList.add('w3-orange');
         Python_State_Div.classList.remove('w3-green');
         Python_State_Div.classList.remove('w3-hover-pale-green');
@@ -1262,6 +1270,7 @@ function KillAndReloadWorker() {
     
     pyodide_worker.terminate();
 
+    SearchIsOnGoing = false
     var ChoreoExecuteBtn = document.getElementById("ChoreoExecuteBtn");
     ChoreoExecuteBtn.disabled = "disabled";
     var ChoreoDispInitStateBtn = document.getElementById("ChoreoDispInitStateBtn");
@@ -1289,8 +1298,6 @@ function KillAndReloadWorker() {
 }
 
 function ChoreoSearchNextClick(){
-
-    console.log("In ChoreoSearchNextClick")
 
     AskForNext[0] = 1
 
@@ -1581,7 +1588,15 @@ function viewport_custom_select_Handler(event) {
 }
 
 function ClickStateDiv() {
-    ChoreoExecuteClick()
+
+    console.log("SearchIsOnGoing ",SearchIsOnGoing)
+
+    if (!SearchIsOnGoing) {
+        ChoreoExecuteClick()
+    } else {
+        ChoreoSearchNextClick()
+    }
+
 }
 
 let UserDir;
