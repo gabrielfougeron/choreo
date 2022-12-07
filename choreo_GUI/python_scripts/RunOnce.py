@@ -84,7 +84,6 @@ def ListenToNextFromGUI(x,f,f_norm,callfun):
     return AskForNext
 
 
-
 def main():
 
     params_dict = js.ConfigDict.to_py()
