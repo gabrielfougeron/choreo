@@ -262,22 +262,10 @@ var saveJSONData = (function () {
     };
 }());
 
-async function SaveConfigFile(UserDir=false){
+function SaveConfigFile(){
 
-    var ConfigDict = GatherConfigDict()
-
-    filename = 'choreo_config.json'
-
-    if (UserDir){
-            
-        ConfigFile = await UserDir.getFileHandle(filename, { create: true })
-        const writable = await ConfigFile.createWritable()
-        await writable.write(JSON.stringify(ConfigDict,null,2))
-        await writable.close()
-
-    } else {
-        saveJSONData(ConfigDict, filename)
-    }
+    var ConfigDict = GatherConfigDict();
+    saveJSONData(ConfigDict, "choreo_config.json");
 
 }
 
@@ -1711,3 +1699,7 @@ async function WalkDirectory(directory) {
 //     }
 // 
 // }
+
+    ChoreoExecuteClick()
+}
+
