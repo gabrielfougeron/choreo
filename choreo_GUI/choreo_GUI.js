@@ -60,12 +60,15 @@ async function Play_Loop_From_Python(args){
 
     displayCanvas.dispatchEvent(event);
 
+    SearchIsOnGoing = false
     var ChoreoExecuteBtn = document.getElementById("ChoreoExecuteBtn");
     ChoreoExecuteBtn.disabled = "";
     var ChoreoDispInitStateBtn = document.getElementById("ChoreoDispInitStateBtn");
     ChoreoDispInitStateBtn.disabled = "";
     var ChoreoSearchNext = document.getElementById("ChoreoSearchNext");
     ChoreoSearchNext.disabled = "disabled";
+    AskForNext[0] = 0
+
 
     var RotSlider = $("#RotSlider").data("roundSlider");
     RotSlider.enable();
@@ -94,12 +97,14 @@ function Python_no_sol_found(args) {
 
     } 
 
+    SearchIsOnGoing = false
     var ChoreoExecuteBtn = document.getElementById("ChoreoExecuteBtn");
     ChoreoExecuteBtn.disabled = "";
     var ChoreoDispInitStateBtn = document.getElementById("ChoreoDispInitStateBtn");
     ChoreoDispInitStateBtn.disabled = "";
     var ChoreoSearchNext = document.getElementById("ChoreoSearchNext");
     ChoreoSearchNext.disabled = "disabled";
+    AskForNext[0] = 0
 
     var RotSlider = $("#RotSlider").data("roundSlider");
     RotSlider.enable();
@@ -143,12 +148,14 @@ async function Python_Imports_Done(args){
 
     PythonPrint({txt:"&#10;All python packages imported&#10;"});
 
+    SearchIsOnGoing = false
     var ChoreoExecuteBtn = document.getElementById("ChoreoExecuteBtn");
     ChoreoExecuteBtn.disabled = "";
     var ChoreoDispInitStateBtn = document.getElementById("ChoreoDispInitStateBtn");
     ChoreoDispInitStateBtn.disabled = "";
     var ChoreoSearchNext = document.getElementById("ChoreoSearchNext");
     ChoreoSearchNext.disabled = "disabled";
+    AskForNext[0] = 0
 
     var RotSlider = $("#RotSlider").data("roundSlider");
     RotSlider.enable();
@@ -264,14 +271,20 @@ function SaveConfigFile(){
 
 function ChoreoExecuteClick() {
 
-    if (!document.getElementById("ChoreoExecuteBtn").disabled) {
+    var ChoreoExecuteBtn = document.getElementById("ChoreoExecuteBtn");
 
+    console.log("in ChoreoExecuteClick",!ChoreoExecuteBtn.disabled)
+
+    if (!ChoreoExecuteBtn.disabled) {
+        
+        SearchIsOnGoing = true
         var ChoreoExecuteBtn = document.getElementById("ChoreoExecuteBtn");
         ChoreoExecuteBtn.disabled = "disabled";
         var ChoreoDispInitStateBtn = document.getElementById("ChoreoDispInitStateBtn");
         ChoreoDispInitStateBtn.disabled = "disabled";        
         var ChoreoSearchNext = document.getElementById("ChoreoSearchNext");
         ChoreoSearchNext.disabled = "";
+        AskForNext[0] = 0
 
         var displayCanvas = document.getElementById("displayCanvas");
 
@@ -279,7 +292,7 @@ function ChoreoExecuteClick() {
 
         var Python_State_Div = document.getElementById("Python_State_Div");
 
-        Python_State_Div.innerHTML = "Working";
+        Python_State_Div.innerHTML = "Next";
         Python_State_Div.classList.add('w3-orange');
         Python_State_Div.classList.remove('w3-green');
         Python_State_Div.classList.remove('w3-hover-pale-green');
@@ -300,9 +313,6 @@ function ChoreoExecuteClick() {
             trajectoriesOn = false;
 
         }
-
-        // AskForNextBuffer[0] = 0;
-        // pyodide_worker.postMessage({funname:"LoadDataInWorker",args:{AskForNextBuffer:AskForNextBuffer}});
 
         var ConfigDict = GatherConfigDict();
         pyodide_worker.postMessage({funname:"LoadDataInWorker",args:{ConfigDict:ConfigDict}});
@@ -441,6 +451,7 @@ function GatherConfigDict() {
 
     ConfigDict['Solver_Optim'] ['krylov_method']  = document.getElementById('krylov_method').value;
     ConfigDict['Solver_Optim'] ['line_search']    = document.getElementById('linesearch_method').value;
+    ConfigDict['Solver_Optim'] ['line_search_smin']    = parseFloat(document.getElementById('linesearch_smin').value);
 
     ConfigDict['Solver_Optim'] ['Newt_err_norm_max'] = parseFloat(document.getElementById('input_Newt_err_norm_max').value);
     ConfigDict['Solver_Optim'] ['optim_verbose_lvl'] = document.getElementById('optim_verbose_lvl').value;
@@ -613,10 +624,11 @@ function LoadConfigDict(ConfigDict) {
 
     SlideNReconvergeItMax();
 
-    document.getElementById('krylov_method').value           = ConfigDict['Solver_Optim'] ['krylov_method']     ;
-    document.getElementById('linesearch_method').value       = ConfigDict['Solver_Optim'] ['line_search']       ;
-    document.getElementById('input_Newt_err_norm_max').value = ConfigDict['Solver_Optim'] ['Newt_err_norm_max'] ;
-    document.getElementById('optim_verbose_lvl').value       = ConfigDict['Solver_Optim'] ['optim_verbose_lvl'] ;
+    document.getElementById('krylov_method').value           = ConfigDict['Solver_Optim'] ['krylov_method']     
+    document.getElementById('linesearch_method').value       = ConfigDict['Solver_Optim'] ['line_search']       
+    document.getElementById('linesearch_smin').value         = ConfigDict['Solver_Optim'] ['line_search_smin']  
+    document.getElementById('input_Newt_err_norm_max').value = ConfigDict['Solver_Optim'] ['Newt_err_norm_max'] 
+    document.getElementById('optim_verbose_lvl').value       = ConfigDict['Solver_Optim'] ['optim_verbose_lvl'] 
 
     var table = document.getElementById('table_cvg_loop');
     var ncols = table.rows[0].cells.length;
@@ -1246,12 +1258,14 @@ function KillAndReloadWorker() {
     
     pyodide_worker.terminate();
 
+    SearchIsOnGoing = false
     var ChoreoExecuteBtn = document.getElementById("ChoreoExecuteBtn");
     ChoreoExecuteBtn.disabled = "disabled";
     var ChoreoDispInitStateBtn = document.getElementById("ChoreoDispInitStateBtn");
     ChoreoDispInitStateBtn.disabled = "disabled";
     var ChoreoSearchNext = document.getElementById("ChoreoSearchNext");
     ChoreoSearchNext.disabled = "disabled";
+    AskForNext[0] = 0
 
     var Python_State_Div = document.getElementById("Python_State_Div");
 
@@ -1267,13 +1281,13 @@ function KillAndReloadWorker() {
     pyodide_worker = new Worker("./Pyodide_worker.js");
     pyodide_worker.addEventListener('message', handleMessageFromWorker);
     pyodide_worker.postMessage({funname:"ExecutePythonFile",args:"./python_scripts/Python_imports.py"});
+    pyodide_worker.postMessage({funname: "setAskForNextBuffer",args:AskForNextBuffer });
+
 }
 
 function ChoreoSearchNextClick(){
 
-    console.log("In ChoreoSearchNextClick")
-
-    pyodide_worker.postMessage({funname:"LoadDataInWorker",args:{AskedForNext:true}});
+    AskForNext[0] = 1
 
 }
 
@@ -1562,5 +1576,130 @@ function viewport_custom_select_Handler(event) {
 }
 
 function ClickStateDiv() {
+
+    console.log("SearchIsOnGoing ",SearchIsOnGoing)
+
+    if (!SearchIsOnGoing) {
+        ChoreoExecuteClick()
+    } else {
+        ChoreoSearchNextClick()
+    }
+
+}
+
+let UserDir;
+
+async function ClickSelectFile() {
+
+    try {
+        UserDir = await window.showDirectoryPicker({
+            id : 'ChoreoUserDir',
+            mode: 'readwrite' ,
+            startIn: 'documents'
+        });
+
+    } catch(e) { // User aborted for instance
+        console.log(e);
+        return
+    }
+
+    SaveConfigFile(UserDir)
+
+
+    GalleryDir = await UserDir.getDirectoryHandle("Gallery", {create: true});
+    DefaultGalleryDir = await GalleryDir.getDirectoryHandle("Default_Gallery", {create: true});
+
+    n_default_gallery = AllGalleryNames.length
+    for (var i = 0; i< n_default_gallery;i++) {
+
+        filename = AllGalleryNames[i]+'.json'
+        JSONFile = await DefaultGalleryDir.getFileHandle(filename, { create: true })
+        writable = await JSONFile.createWritable()
+        await writable.write(JSON.stringify(AllPlotInfo[i],null,2))
+        await writable.close()
+
+        filename = AllGalleryNames[i]+'.npy'
+        NPYFile = await DefaultGalleryDir.getFileHandle(filename, { create: true })
+        writable = await NPYFile.createWritable()
+        buf = await ndarray_tobuffer(AllPos[i])
+        await writable.write(buf)
+        await writable.close()
+    }
+
+
+
+    // AllPos = new Array(n_init_gallery_orbits);
+    // AllPlotInfo = new Array(n_init_gallery_orbits);
+
+
+// 	function setOrbit(orbitIndex) {
+// 
+// 		PythonPrint({txt:"Playing solution from the gallery: "+AllGalleryNames[orbitIndex]+"&#10;"});
+// 		
+// 		Pos = AllPos[orbitIndex];
+// 		PlotInfo = AllPlotInfo[orbitIndex];
+// 
+// 		Max_PathLength = PlotInfo["Max_PathLength"]
+// 
+// 		clearScreen();
+// 		FinalizeSetOrbit();
+// 
+// 		if (trajectoriesOn && document.getElementById('checkbox_DisplayLoopOnGalleryLoad').checked){
+// 			request = requestAnimationFrame(anim_path_grey);
+// 		}
+// 		
+// 	}
+
+
+
+
+    
+
+}
+
+
+async function WalkDirectory(directory) {
+
+    for await (const entry of directory.values()) {
+        console.log(entry);
+    }
+
+}
+
+
+
+
+// 
+// function SaveDefaultGallery(UserDir) {
+// 
+// 
+//     try {
+//         directory = await window.showDirectoryPicker({
+//             startIn: 'desktop'
+//         });
+// 
+//         document.getElementById('folder-info').innerHTML = '<h3>We found these files..<?h3>'
+//         for await (const entry of directory.values()) {
+//             let newEl = document.createElement('div');
+//             newEl.innerHTML = `<strong>${entry.name}</strong> - ${entry.kind}`;
+//             document.getElementById('folder-info').append(newEl);
+//         }
+//         document.getElementById('folder-info-add-new').classList.remove('hidden');
+//     } catch(e) {
+//         console.log(e);
+//     }
+// });
+// 
+// document.getElementById('addAFile').addEventListener('click', async () => {
+//     if(typeof directory !== "undefined") {
+//         if ((await directory.queryPermission()) === 'granted') {
+//             let newFile = await directory.getFileHandle('myFile.html', { create: true });
+//             document.getElementById('file-message').textContent = 'File "myFile.html" has been created!';
+//         }
+//     }
+// 
+// }
+
     ChoreoExecuteClick()
 }
+

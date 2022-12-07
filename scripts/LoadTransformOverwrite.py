@@ -31,8 +31,8 @@ One_sec = 1e9
 def main():
 
 
-    input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/3/')
-    # input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery/')
+    # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/3/')
+    input_folder = os.path.join(__PROJECT_ROOT__,'Default_Gallery')
     # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/5/')
     # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/copy/')
     # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/Gallery_videos/C-4')
@@ -258,7 +258,7 @@ def ExecName(
 
 
     nbody = Info_dict['nbody']
-    mass = np.array(Info_dict['mass'])
+    mass = np.array(Info_dict['mass']).astype(np.float64)
     Sym_list = choreo.Make_SymList_From_InfoDict(Info_dict)
 
     # MomConsImposed = True

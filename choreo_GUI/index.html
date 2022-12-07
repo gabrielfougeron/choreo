@@ -18,8 +18,10 @@
 
 <script src="assets/js/npy.js"></script>
 
-<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
-<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3.0.1/es5/tex-mml-chtml.js"></script>
+<!-- Whai is this again ? -->
+ <!-- <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script> ??? -->
+
+ <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3.0.1/es5/tex-mml-chtml.js"></script>
 
 <!-- Animation related -->
 <link rel="stylesheet" href="assets/css/jquery-ui-1.10.2.custom.min.css">
@@ -35,10 +37,12 @@
 <script>
 pyodide_worker = new Worker("./Pyodide_worker.js");
 pyodide_worker.postMessage({funname:"ExecutePythonFile",args:"./python_scripts/Python_imports.py"});
-// 
-// let AskForNextBuffer = new Uint8Array(new SharedArrayBuffer(1));
-// pyodide_worker.postMessage({ cmd: "setInterruptBuffer", interruptBuffer });
-// AskForNextBuffer[0] = 0;
+
+
+var AskForNextBuffer = new SharedArrayBuffer(1)
+var AskForNext = new Uint8Array(AskForNextBuffer);
+pyodide_worker.postMessage({ funname: "setAskForNextBuffer",args:AskForNextBuffer });
+AskForNext[0] = 0;
 
 </script>
 
@@ -429,7 +433,7 @@ window.addEventListener("drop",function(e){
     <table style="border:0;margin-bottom:10px;">
       <tr>
         <td style="border:0"><button id="ChoreoExecuteBtn"        class="w3-button w3-hover-pale-red w3-light-grey InTableControls" disabled="disabled" style="display:none"  onclick="ChoreoExecuteClick()" ><b>Find solution!</b></button></td>
-        <td style="border:0"><button id="ChoreoSearchNext"        class="w3-button w3-hover-pale-red w3-light-grey InTableControls" disabled="disabled" style="display:none" onclick="ChoreoSearchNextClick()">Next</button></td>
+        <td style="border:0"><button id="ChoreoSearchNext"        class="w3-button w3-hover-pale-red w3-light-grey InTableControls" disabled="disabled" style="display:none"  onclick="ChoreoSearchNextClick()">Next</button></td>
         <td style="border:0"><button id="KillAndReloadWorkerBtn"  class="w3-button w3-hover-pale-red w3-light-grey InTableControls"                     onclick="KillAndReloadWorker()"     >Kill worker</button></td>
       </tr>
     </table>
@@ -463,7 +467,7 @@ window.addEventListener("drop",function(e){
           <td style="border:none;" >
             <label for="krylov_method">Krylov method</label>
           </td>
-          <td style="border:none; max-width:90px; ">
+          <td style="border:none; max-width:100px; ">
             <select class="w3-select" id="krylov_method"  name="krylov_method" style="text-align: center;"> 
               <option value="lgmres">LGMRES</option>
               <option value="gmres">GMRES</option>
@@ -478,18 +482,27 @@ window.addEventListener("drop",function(e){
           <td style="border:none;" >
             <label for="linesearch_method">Line search method</label>
           </td>
-           <td style="border:none; max-width:90px; ">
+           <td style="border:none; max-width:100px; ">
             <select class="w3-select" id="linesearch_method" name="linesearch_method" style="text-align: center;"> 
-              <option value="none">None</option>
+              <option value="cst">Constant</option>
               <option value="wolfe" selected>Wolfe</option>
               <option value="armijo">Armijo</option>
             </select>
           </td>
-        </tr>        <tr>
+        </tr>
+        <tr>
+          <td style="border:none;" >
+            <label for="linesearch_smin">Minimum line step</label>
+          </td>
+           <td style="border:none; max-width:100px; ">
+            <input type="text" id="linesearch_smin" value="1e-2" style="text-align: center;" >
+          </td>
+        </tr>
+        <tr>
           <td style="border:none;" >
             <label for="input_Newt_err_norm_max">Max Newton error</label>
           </td>
-           <td style="border:none; max-width:90px; ">
+           <td style="border:none; max-width:100px; ">
             <input type="text" id="input_Newt_err_norm_max" value="1e-12" style="text-align: center;" >
           </td>
         </tr>
@@ -497,7 +510,7 @@ window.addEventListener("drop",function(e){
           <td style="border:none;" >
             <label for="optim_verbose_lvl">Optimizer verbose level</label>
           </td>
-          <td style="border:none; max-width:90px; ">
+          <td style="border:none; max-width:100px; ">
             <select class="w3-select" id="optim_verbose_lvl"  name="optim_verbose_lvl" style="text-align: center;"> 
               <option value="full">Full</option>
               <option value="some" selected>Default</option>
