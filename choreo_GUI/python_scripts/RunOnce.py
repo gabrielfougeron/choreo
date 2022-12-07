@@ -45,7 +45,7 @@ def Send_init_PlotInfo():
         )
 
 
-def Plot_Loops_During_Optim(x,f,callfun):
+def Plot_Loops_During_Optim(x,f,f_norm,callfun):
 
     xmin,xmax,ymin,ymax = choreo.HeuristicMinMax(callfun)
 
@@ -75,43 +75,13 @@ def Plot_Loops_During_Optim(x,f,callfun):
         )
     )
 
-    # js.console.log(dir(js))
+def ListenToNextFromGUI(x,f,f_norm,callfun):
 
-def ListenToNextFromGUI(x,f,callfun):
+    AskForNext =  (js.AskForNext.to_py()[0] == 1)
 
+    js.AskForNext[0] = 0
 
-    
-
-    if (js.AskedForNext) :
-        
-        print("Next detected from python")
-
-        exit()
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    return AskForNext
 
 
 def main():
@@ -259,10 +229,8 @@ def main():
 
     krylov_method = params_dict["Solver_Optim"]["krylov_method"]  
 
-    if (params_dict["Solver_Optim"]["line_search"]  == "none" ):
-        line_search = None
-    else:
-        line_search = params_dict["Solver_Optim"]["line_search"]  
+    line_search = params_dict["Solver_Optim"]["line_search"]  
+    linesearch_smin = float(params_dict["Solver_Optim"]["line_search_smin"]  )
 
     gradtol_list =          params_dict["Solver_Loop"]["gradtol_list"]
     inner_maxiter_list =    params_dict["Solver_Loop"]["inner_maxiter_list"]

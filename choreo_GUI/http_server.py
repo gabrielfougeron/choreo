@@ -6,8 +6,13 @@ from http.server import SimpleHTTPRequestHandler
 class Handler(SimpleHTTPRequestHandler):
 
     def end_headers(self):
+
         # Enable Cross-Origin Resource Sharing (CORS)
         self.send_header('Access-Control-Allow-Origin', '*')
+
+        self.send_header('Cross-Origin-Embedder-Policy', 'require-corp')
+        self.send_header('Cross-Origin-Opener-Policy', 'same-origin')
+
         super().end_headers()
 
 
