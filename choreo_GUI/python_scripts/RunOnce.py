@@ -75,42 +75,13 @@ def Plot_Loops_During_Optim(x,f,f_norm,callfun):
         )
     )
 
-    # js.console.log(dir(js))
-
 def ListenToNextFromGUI(x,f,f_norm,callfun):
 
+    AskForNext =  (js.AskForNext.to_py()[0] == 1)
 
-    
+    js.AskForNext[0] = 0
 
-    if (js.AskedForNext) :
-        
-        print("Next detected from python")
-
-        exit()
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    return AskForNext
 
 
 

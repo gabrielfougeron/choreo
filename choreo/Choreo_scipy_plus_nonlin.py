@@ -92,7 +92,10 @@ def nonlin_solve_pp(
         jacobian.update(x.copy(), Fx)
 
         if callback:
-            callback(x, Fx, Fx_norm_new)
+            AskedForBreak = callback(x, Fx, Fx_norm_new)
+
+        if AskedForBreak:
+            break
 
         # Adjust forcing parameters for inexact methods
         eta_A = gamma * Fx_norm_new**2 / Fx_norm**2
@@ -118,11 +121,13 @@ def nonlin_solve_pp(
                 'fun': Fx,
                 'status': status,
                 'success': status == 1,
-                'message': {1: 'A solution was found at the specified '
-                               'tolerance.',
-                            2: 'The maximum number of iterations allowed '
-                               'has been reached.'
-                            }[status]
+                'message': {
+                    0: "Solver terminated early at user's request",
+                    1: 'A solution was found at the specified '
+                            'tolerance.',
+                    2: 'The maximum number of iterations allowed '
+                        'has been reached.'
+                    }[status]
                 }
         return _array_like_pp(x, x0), info
     else:

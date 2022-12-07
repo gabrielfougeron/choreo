@@ -66,6 +66,8 @@ async function Play_Loop_From_Python(args){
     ChoreoDispInitStateBtn.disabled = "";
     var ChoreoSearchNext = document.getElementById("ChoreoSearchNext");
     ChoreoSearchNext.disabled = "disabled";
+    AskForNext[0] = 0
+
 
     var RotSlider = $("#RotSlider").data("roundSlider");
     RotSlider.enable();
@@ -100,6 +102,7 @@ function Python_no_sol_found(args) {
     ChoreoDispInitStateBtn.disabled = "";
     var ChoreoSearchNext = document.getElementById("ChoreoSearchNext");
     ChoreoSearchNext.disabled = "disabled";
+    AskForNext[0] = 0
 
     var RotSlider = $("#RotSlider").data("roundSlider");
     RotSlider.enable();
@@ -149,6 +152,7 @@ async function Python_Imports_Done(args){
     ChoreoDispInitStateBtn.disabled = "";
     var ChoreoSearchNext = document.getElementById("ChoreoSearchNext");
     ChoreoSearchNext.disabled = "disabled";
+    AskForNext[0] = 0
 
     var RotSlider = $("#RotSlider").data("roundSlider");
     RotSlider.enable();
@@ -284,6 +288,7 @@ function ChoreoExecuteClick() {
         ChoreoDispInitStateBtn.disabled = "disabled";        
         var ChoreoSearchNext = document.getElementById("ChoreoSearchNext");
         ChoreoSearchNext.disabled = "";
+        AskForNext[0] = 0
 
         var displayCanvas = document.getElementById("displayCanvas");
 
@@ -312,9 +317,6 @@ function ChoreoExecuteClick() {
             trajectoriesOn = false;
 
         }
-
-        // AskForNextBuffer[0] = 0;
-        // pyodide_worker.postMessage({funname:"LoadDataInWorker",args:{AskForNextBuffer:AskForNextBuffer}});
 
         var ConfigDict = GatherConfigDict();
         pyodide_worker.postMessage({funname:"LoadDataInWorker",args:{ConfigDict:ConfigDict}});
@@ -1266,6 +1268,7 @@ function KillAndReloadWorker() {
     ChoreoDispInitStateBtn.disabled = "disabled";
     var ChoreoSearchNext = document.getElementById("ChoreoSearchNext");
     ChoreoSearchNext.disabled = "disabled";
+    AskForNext[0] = 0
 
     var Python_State_Div = document.getElementById("Python_State_Div");
 
@@ -1281,13 +1284,15 @@ function KillAndReloadWorker() {
     pyodide_worker = new Worker("./Pyodide_worker.js");
     pyodide_worker.addEventListener('message', handleMessageFromWorker);
     pyodide_worker.postMessage({funname:"ExecutePythonFile",args:"./python_scripts/Python_imports.py"});
+    pyodide_worker.postMessage({funname: "setAskForNextBuffer",args:AskForNextBuffer });
+
 }
 
 function ChoreoSearchNextClick(){
 
     console.log("In ChoreoSearchNextClick")
 
-    pyodide_worker.postMessage({funname:"LoadDataInWorker",args:{AskedForNext:true}});
+    AskForNext[0] = 1
 
 }
 
