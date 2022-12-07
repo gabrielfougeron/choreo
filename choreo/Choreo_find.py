@@ -183,6 +183,8 @@ def Find_Choreo(
     n_callback_after_init_list = len(callback_after_init_list)
 
     while ((n_opt < n_opt_max) and (n_find < n_find_max)):
+
+        AskedForNext = False
         
         if ((n_opt % freq_erase_dict) == 0):
             
@@ -287,18 +289,24 @@ def Find_Choreo(
 
 
             def optim_callback(x,f,f_norm):
+
+                AskedForNext = False
                 
                 best_sol.update(x,f,f_norm)
 
                 for i in range(n_optim_callback_list):
 
-                    optim_callback_list[i](x,f,f_norm,callfun)
+                    AskedForNext = (AskedForNext or optim_callback_list[i](x,f,f_norm,callfun))
+
+                return AskedForNext
 
             try : 
                 
                 x0 = np.copy(best_sol.x)
-                print("aaa",linesearch_smin)
-                opt_result = nonlin_solve_pp(F=F,x0=x0,jacobian=jacobian,verbose=disp_scipy_opt,maxiter=maxiter,f_tol=gradtol,line_search=line_search,callback=optim_callback,raise_exception=False,smin=linesearch_smin)
+                opt_result , info = nonlin_solve_pp(F=F,x0=x0,jacobian=jacobian,verbose=disp_scipy_opt,maxiter=maxiter,f_tol=gradtol,line_search=line_search,callback=optim_callback,raise_exception=False,smin=linesearch_smin,full_output=True)
+
+                AskedForNext = (info['status'] == 0)
+
                 
             except Exception as exc:
                 
@@ -307,6 +315,10 @@ def Find_Choreo(
                 GoOn = False
                 raise(exc)
                 
+            if (AskedForNext):
+                print("Skipping at user's request")
+                GoOn = False
+
             SaveSol = False
 
             Gradaction = best_sol.f_norm
