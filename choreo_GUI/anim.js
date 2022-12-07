@@ -1,27 +1,27 @@
 // var Gallery_cache_behavior = {cache: "no-cache"}
 var Gallery_cache_behavior = {}
 
-var Pos ;
-var PlotInfo;
+var Pos 
+var PlotInfo
 
-var xMin=0., xMax=1., yMin=0., yMax=1.;
-var Max_PathLength = 1.;
+var xMin=0., xMax=1., yMin=0., yMax=1.
+var Max_PathLength = 1.
 
-var xPixRate, yPixRate;
-var center_x,center_y;
-var CurrentMax_PartRelSize = 1.;
+var xPixRate, yPixRate
+var center_x,center_y
+var CurrentMax_PartRelSize = 1.
 
-var displayWidth, displayHeight;
-var trajectoriesOn;
+var displayWidth, displayHeight
+var trajectoriesOn
 
-var FPS_estimation = 60;
-var Do_Limit_FPS = false;
-var FPS_limit = 120;
-var Elapsed_Time_During_Animation = 0;
-var n_valid_dt_animation = 0;
+var FPS_estimation = 60
+var Do_Limit_FPS = false
+var FPS_limit = 120
+var Elapsed_Time_During_Animation = 0
+var n_valid_dt_animation = 0
 
-var Last_UpdateFPSDisplay = 0;
-var UpdateFPSDisplay_freq = 5;
+var Last_UpdateFPSDisplay = 0
+var UpdateFPSDisplay_freq = 5
 
 var n_color = 0;
 var colorLookup_init = [
@@ -35,40 +35,41 @@ var colorLookup_init = [
 	"#ad6530", // Dark Orange [Brown tone]
 	"#00773f", // Dark cyan - lime green 
 	"#d6d6d6", // Light gray
-];
+]
 
-var defaultParticleColor = "#50ce4d";
-var defaultTrailColor = "#3c9a39";
-
-var FallbackTrailColor = "#d5d5d5";
+var defaultParticleColor = "#50ce4d"
+var defaultTrailColor = "#3c9a39"
+var FallbackTrailColor = "#d5d5d5"
 
 // Particle radius
-var min_base_particle_size = 1.;
-var max_base_particle_size = 10.;
-var base_particle_size = 6.;
+var min_base_particle_size = 1.
+var max_base_particle_size = 10.
+var base_particle_size = 6.
 
 // with of particle trail
-var min_base_trailWidth = 0.2;
-var max_base_trailWidth = 5.;
-var base_trailWidth = 2;
+var min_base_trailWidth = 0.2
+var max_base_trailWidth = 5.
+var base_trailWidth = 2
 
 // Vanish speed
-var min_base_trail_vanish_length = 0.1;
-var max_base_trail_vanish_length = 10.;
-var base_trail_vanish_length = 1.;
-var trail_vanish_length_mul = 0.002;
+var min_base_trail_vanish_length = 0.1
+var max_base_trail_vanish_length = 10.
+var base_trail_vanish_length = 1.
+var trail_vanish_length_mul = 0.002
 
-var DoScaleSizeWithMass = true;
+var DoScaleSizeWithMass = true
 
-var FadeInvFrequency;
+var SearchIsOnGoing = false
+
+var FadeInvFrequency
 
 var	colorLookup = colorLookup_init
 
-var AllPosFilenames = [];
-var AllPlotInfoFilenames = [];
-var AllPos = [];
-var AllPlotInfo = [];
-var AllGalleryNames = [];
+var AllPosFilenames = []
+var AllPlotInfoFilenames = []
+var AllPos = []
+var AllPlotInfo = []
+var AllGalleryNames = []
 
 function AjaxGet(foldername){ return $.ajax({ url: foldername})}
 
