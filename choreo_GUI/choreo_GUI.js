@@ -273,8 +273,6 @@ function ChoreoExecuteClick() {
 
     var ChoreoExecuteBtn = document.getElementById("ChoreoExecuteBtn");
 
-    console.log("in ChoreoExecuteClick",!ChoreoExecuteBtn.disabled)
-
     if (!ChoreoExecuteBtn.disabled) {
         
         SearchIsOnGoing = true
@@ -1577,8 +1575,6 @@ function viewport_custom_select_Handler(event) {
 
 function ClickStateDiv() {
 
-    console.log("SearchIsOnGoing ",SearchIsOnGoing)
-
     if (!SearchIsOnGoing) {
         ChoreoExecuteClick()
     } else {
@@ -1699,7 +1695,4 @@ async function WalkDirectory(directory) {
 //     }
 // 
 // }
-
-    ChoreoExecuteClick()
-}
 
