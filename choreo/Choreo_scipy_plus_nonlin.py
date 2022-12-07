@@ -3,7 +3,6 @@ Choreo_scipy_plus.py : Define things I designed I feel ought to be in scipy.
 
 '''
 
-import sys
 import numpy as np
 import math as m
 import scipy.optimize
