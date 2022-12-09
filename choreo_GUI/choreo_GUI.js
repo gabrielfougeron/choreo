@@ -1614,45 +1614,29 @@ async function ClickSetupWorkspace() {
 
     WorkspaceIsSetUp = true
 
-    SaveConfigFile(UserWorkspace)
+//     SaveConfigFile(UserWorkspace)
+// 
+//     GalleryDir = await UserWorkspace.getDirectoryHandle("Gallery", {create: true});
+//     DefaultGalleryDir = await GalleryDir.getDirectoryHandle("Default_Gallery", {create: true});
+// 
+//     n_default_gallery = AllGalleryNames.length
+//     for (var i = 0; i< n_default_gallery;i++) {
+// 
+//         filename = AllGalleryNames[i]+'.json'
+//         JSONFile = await DefaultGalleryDir.getFileHandle(filename, { create: true })
+//         writable = await JSONFile.createWritable()
+//         await writable.write(JSON.stringify(AllPlotInfo[i],null,2))
+//         await writable.close()
+// 
+//         filename = AllGalleryNames[i]+'.npy'
+//         NPYFile = await DefaultGalleryDir.getFileHandle(filename, { create: true })
+//         writable = await NPYFile.createWritable()
+//         buf = await ndarray_tobuffer(AllPos[i])
+//         await writable.write(buf)
+//         await writable.close()
+//     }
 
-    GalleryDir = await UserWorkspace.getDirectoryHandle("Gallery", {create: true});
-    DefaultGalleryDir = await GalleryDir.getDirectoryHandle("Default_Gallery", {create: true});
-
-    n_default_gallery = AllGalleryNames.length
-    for (var i = 0; i< n_default_gallery;i++) {
-
-        filename = AllGalleryNames[i]+'.json'
-        JSONFile = await DefaultGalleryDir.getFileHandle(filename, { create: true })
-        writable = await JSONFile.createWritable()
-        await writable.write(JSON.stringify(AllPlotInfo[i],null,2))
-        await writable.close()
-
-        filename = AllGalleryNames[i]+'.npy'
-        NPYFile = await DefaultGalleryDir.getFileHandle(filename, { create: true })
-        writable = await NPYFile.createWritable()
-        buf = await ndarray_tobuffer(AllPos[i])
-        await writable.write(buf)
-        await writable.close()
-    }
-
-}
-
-async function WalkDirectory(directory,dir_callable,file_callable) {
-
-    for await (const entry of directory.values()) {
-        if (entry.kind == "directory") {
-
-            dir_callable(entry)
-
-            WalkDirectory(await directory.getDirectoryHandle(entry.name),dir_callable,file_callable)
-            
-        } else if (entry.kind == "file") {
-
-            file_callable(entry)
-
-        }
-    }
+    ClickReloadWorkspaceGallery()
 
 }
 
@@ -1673,40 +1657,100 @@ async function WalkDirectory(directory,dir_callable,file_callable) {
     }
 
 }
+// 
+// async function WalkDirectory(directory,dir_callable,file_callable) {
+// 
+//     for await (const entry of directory.values()) {
+//         if (entry.kind == "directory") {
+// 
+//             dir_callable(entry)
+// 
+//             WalkDirectory(await directory.getDirectoryHandle(entry.name),dir_callable,file_callable)
+//             
+//         } else if (entry.kind == "file") {
+// 
+//             file_callable(entry)
+// 
+//         }
+//     }
+// 
+// }
+// 
+function print_toto(e,node) { console.log("toto") }
+// 
+// function treat_dir(parent,dir) { 
+// 
+// }
+// 
+// function treat_file(parent,file) {  
+//     if (file.name.endsWith(".npy")) {
+//         console.log(file.name)
+//     }
+// }
+// 
 
-function print_name(arg) { console.log(arg.name) }
-
-function treat_dir(parent,dir) { 
+function PlayFileFromDisk(file) {
 
 }
 
-function treat_file(parent,file) {  
-    if (file.name.endsWith(".npy")) {
-        console.log(file.name)
-    }
-}
 
 async function MakeDirectoryTree(cur_directory,cur_treenode) {
 
     for await (const entry of cur_directory.values()) {
+
+        var files_here = {}
+
         if (entry.kind == "directory") {
             
-            var new_node = new TreeNode(entry.name)
+            var new_node = new TreeNode(entry.name,{expanded:false})
             cur_treenode.addChild(new_node)
 
             await MakeDirectoryTree(await cur_directory.getDirectoryHandle(entry.name),new_node)
             
         } else if (entry.kind == "file") {
 
-            if (entry.name.endsWith(".npy")) {
-                
-                basename = entry.name.replace(".npy","")
+//             if (entry.name.endsWith(".npy")) {
+//                 
+//                 basename = entry.name.replace(".npy","")
+// 
+//                 // Locate corresponding *.npy
+//                 
+// 
+// 
+//                 var new_node = new TreeNode(basename)
+//                 
+//                 // new_node.on("click", (e,n) => console.log(entry));
+//                 new_node.on("click", (e,n) => console.log(cur_directory.values()));
+//                 
+//                 cur_treenode.addChild(new_node)
+//             }
 
-                var new_node = new TreeNode(basename)
-                cur_treenode.addChild(new_node)
-            }
+
+            for (const ext of [".npy",".json"]) {
+
+                if (entry.name.endsWith(ext)) {
+                    
+                    basename = entry.name.replace(ext,"")
+
+                    if (!(basename in files_here)) {
+                        files_here[basename] = {}
+                    }
+
+                    files_here[basename][ext] = entry
+                    
+                } 
+
+            } 
 
         }
+
+        for (const basename in files_here) {
+
+
+
+            
+        }
+
     }
 
 }
@@ -1715,13 +1759,11 @@ async function ClickReloadWorkspaceGallery() {
 
     if (WorkspaceIsSetUp) {
         
-        var WorkspaceTree = new TreeNode(UserWorkspace.name)
-        // WalkDirectory(UserWorkspace,print_name,print_name)
+        var WorkspaceTree = new TreeNode(UserWorkspace.name,{expanded:true})
+        // WorkspaceTree.setExpanded(true)
         await MakeDirectoryTree(UserWorkspace,WorkspaceTree)
 
-
-
-        var WorkspaceView = new TreeView(WorkspaceTree, "#WorkspaceGalleryContainer")
+        var WorkspaceView = new TreeView(WorkspaceTree, "#WorkspaceGalleryContainer",{leaf_icon:" ",parent_icon:" ",show_root:false})
 
     }
 
