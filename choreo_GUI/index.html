@@ -72,6 +72,7 @@ window.addEventListener("drop",function(e){
     <button class="w3-bar-item w3-button w3-hover-pale-red LeftTabBtn Geom"         style="text-align: center" onclick="ClickLeftTabBtn('Geom')"        >Geometry</button>
     <button class="w3-bar-item w3-button w3-hover-pale-red LeftTabBtn Animation"    style="text-align: center" onclick="ClickLeftTabBtn('Animation')"   >Animation</button>
     <button class="w3-bar-item w3-button w3-hover-pale-red LeftTabBtn Solver"       style="text-align: center" onclick="ClickLeftTabBtn('Solver')"      >Solver</button>
+    <button class="w3-bar-item w3-button w3-hover-pale-red LeftTabBtn Solver"       style="text-align: center" onclick="ClickLeftTabBtn('Workspace')"   >Workspace</button>
     <div class="w3-bar-item w3-light-grey" style="height:200px ; text-align: center" >  </div>
     <div class="w3-bar-item w3-button w3-orange" id="Python_State_Div"  style="text-align: center" onclick="ClickStateDiv()" >Loading</div>
   </div>
@@ -100,6 +101,9 @@ window.addEventListener("drop",function(e){
         <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Solver_Optim"  onclick="ClickTopTabBtn('Solver_Optim')" >Optimizer</button>
         <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Solver_Loop"   onclick="ClickTopTabBtn('Solver_Loop')" >Loop</button>
         <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Solver_Checks" onclick="ClickTopTabBtn('Solver_Checks')">Checks</button>
+    </div>
+    <div class="w3-bar w3-light-grey TopTab Workspace">
+        <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Workspace_Setup" onclick="ClickTopTabBtn('Workspace_Setup')">Setup</button>
     </div>
   </div>
   <div id="AnimationAndControlBlock"  style="margin-bottom:-20px">
@@ -564,6 +568,10 @@ window.addEventListener("drop",function(e){
         </tr>
       </table>
     </div>
+  </div>
+  <div class="w3-container MainTab Workspace_Setup" style="display:none">
+    <h2>Setup Workspace</h2>
+    <button id="KillAndReloadWorkerBtn"  class="w3-button w3-hover-pale-red w3-light-grey InTableControls"                     onclick="ClickSetupWorkspace()"     >Setup Workspace</button>
   </div>
 </div>
 </div>
