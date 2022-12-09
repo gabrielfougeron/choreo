@@ -606,19 +606,6 @@ function canvasApp() {
 		drawParticles();
 	}
 
-	function AddOrbitButtonHandler(e) {
-		i = numOrbits;
-		var orbitRadio = document.getElementById("orbitRadio");
-		AddNewOrbit(orbitRadio,jsonData,i)
-	}
-
-	function RemoveOrbitButtonHandler(e) {
-
-		i_remove = $('input[name=orbitGroup]:checked').index('input[name=orbitGroup]');
-
-		RemoveOrbit(i_remove)
-	}
-
 	function onRotationValueChange(e){
 
 		if ((e.action == 'code') || (e.action == 'change') || (e.action == 'drag')) {
