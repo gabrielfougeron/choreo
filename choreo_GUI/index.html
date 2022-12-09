@@ -15,7 +15,6 @@
 <link rel="stylesheet" href="./assets/css/w3.css">
 <link rel="stylesheet" href="./assets/css/roundslider.min.css">
 <link rel="stylesheet" href="./assets/css/treejs.css" id="treejs_styles">
-<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.13/css/all.css" integrity="sha384-DNOHZ68U8hZfKXOrtjWvjxusGo9WQnrNx2sqG0tfsghAvtVlRW3tvkXWZh58N9jp" crossorigin="anonymous">
 <link rel="stylesheet" href="./assets/css/choreo_GUI.css">
 
 
@@ -80,7 +79,7 @@ window.addEventListener("drop",function(e){
     <div class="w3-bar w3-light-grey TopTab Main">
       <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Main_Gallery"      onclick="ClickTopTabBtn('Main_Gallery')"      >Gallery</button>
       <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Main_Save_Config"  onclick="ClickTopTabBtn('Main_Save_Config')"  >Save settings</button>
-      <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Main_Help"         onclick="ClickTopTabBtn('Main_Help')"         >Help</button>
+      <button class="w3-bar-item w3-button w3-hover-pale- TopTabBtn Main_Help"         onclick="ClickTopTabBtn('Main_Help')"         >Help</button>
       <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Main_About"        onclick="ClickTopTabBtn('Main_About')"        >About</button>
     </div>
     <div class="w3-bar w3-light-grey TopTab Geom">
@@ -573,11 +572,11 @@ window.addEventListener("drop",function(e){
   <div class="w3-container MainTab Workspace_Setup" style="display:none">
     <h2>Setup Workspace</h2>
     <button id="SetupWorkspaceBtn"  class="w3-button w3-hover-pale-red w3-light-grey InTableControls" onclick="ClickSetupWorkspace()"     >Setup Workspace</button>
+    <div id="WorkspaceGalleryContainer"></div>
   </div>
   <div class="w3-container MainTab Workspace_Gallery" style="display:none">
     <h2>Workspace Gallery</h2>
     <button id="ReloadWorkspaceGalleryBtn"  class="w3-button w3-hover-pale-red w3-light-grey InTableControls" onclick="ClickReloadWorkspaceGallery()"     >Reload Structure</button>
-		<div id="WorkspaceGalleryContainer"></div>
   </div>
 </div>
 </div>
