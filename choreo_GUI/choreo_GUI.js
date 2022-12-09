@@ -25,7 +25,7 @@ var DownloadTxtFile = (function () {
         url = window.URL.createObjectURL(blob);
         a.href = url;
         a.download = args.filename;
- +       a.click();
+        a.click();
         window.URL.revokeObjectURL(url);
     };
 }());
@@ -1598,12 +1598,10 @@ function ClickStateDiv() {
 
 }
 
-var UserDir;
-
 async function ClickSetupWorkspace() {
 
     try {
-        UserDir = await window.showDirectoryPicker({
+        UserWorkspace = await window.showDirectoryPicker({
             id : 'ChoreoUserDir',
             mode: 'readwrite' ,
             startIn: 'documents'
@@ -1614,10 +1612,11 @@ async function ClickSetupWorkspace() {
         return
     }
 
-    SaveConfigFile(UserDir)
+    WorkspaceIsSetUp = true
 
+    SaveConfigFile(UserWorkspace)
 
-    GalleryDir = await UserDir.getDirectoryHandle("Gallery", {create: true});
+    GalleryDir = await UserWorkspace.getDirectoryHandle("Gallery", {create: true});
     DefaultGalleryDir = await GalleryDir.getDirectoryHandle("Default_Gallery", {create: true});
 
     n_default_gallery = AllGalleryNames.length
@@ -1637,45 +1636,98 @@ async function ClickSetupWorkspace() {
         await writable.close()
     }
 
-
-
-    // AllPos = new Array(n_init_gallery_orbits);
-    // AllPlotInfo = new Array(n_init_gallery_orbits);
-
-
-// 	function setOrbit(orbitIndex) {
-// 
-// 		PythonPrint({txt:"Playing solution from the gallery: "+AllGalleryNames[orbitIndex]+"&#10;"});
-// 		
-// 		Pos = AllPos[orbitIndex];
-// 		PlotInfo = AllPlotInfo[orbitIndex];
-// 
-// 		Max_PathLength = PlotInfo["Max_PathLength"]
-// 
-// 		clearScreen();
-// 		FinalizeSetOrbit();
-// 
-// 		if (trajectoriesOn && document.getElementById('checkbox_DisplayLoopOnGalleryLoad').checked){
-// 			request = requestAnimationFrame(anim_path_grey);
-// 		}
-// 		
-// 	}
-
-
-
-
-    
-
 }
 
-
-async function WalkDirectory(directory) {
+async function WalkDirectory(directory,dir_callable,file_callable) {
 
     for await (const entry of directory.values()) {
-        console.log(entry);
+        if (entry.kind == "directory") {
+
+            dir_callable(entry)
+
+            WalkDirectory(await directory.getDirectoryHandle(entry.name),dir_callable,file_callable)
+            
+        } else if (entry.kind == "file") {
+
+            file_callable(entry)
+
+        }
     }
 
 }
+
+async function WalkDirectory(directory,dir_callable,file_callable) {
+
+    for await (const entry of directory.values()) {
+        if (entry.kind == "directory") {
+
+            dir_callable(entry)
+
+            WalkDirectory(await directory.getDirectoryHandle(entry.name),dir_callable,file_callable)
+            
+        } else if (entry.kind == "file") {
+
+            file_callable(entry)
+
+        }
+    }
+
+}
+
+function print_name(arg) { console.log(arg.name) }
+
+function treat_dir(parent,dir) { 
+
+}
+
+function treat_file(parent,file) {  
+    if (file.name.endsWith(".npy")) {
+        console.log(file.name)
+    }
+}
+
+async function MakeDirectoryTree(cur_directory,cur_treenode) {
+
+    for await (const entry of cur_directory.values()) {
+        if (entry.kind == "directory") {
+            
+            var new_node = new TreeNode(entry.name)
+            cur_treenode.addChild(new_node)
+
+            await MakeDirectoryTree(await cur_directory.getDirectoryHandle(entry.name),new_node)
+            
+        } else if (entry.kind == "file") {
+
+            if (entry.name.endsWith(".npy")) {
+                
+                basename = entry.name.replace(".npy","")
+
+                var new_node = new TreeNode(basename)
+                cur_treenode.addChild(new_node)
+            }
+
+        }
+    }
+
+}
+
+async function ClickReloadWorkspaceGallery() {
+
+    if (WorkspaceIsSetUp) {
+        
+        var WorkspaceTree = new TreeNode(UserWorkspace.name)
+        // WalkDirectory(UserWorkspace,print_name,print_name)
+        await MakeDirectoryTree(UserWorkspace,WorkspaceTree)
+
+
+
+        var WorkspaceView = new TreeView(WorkspaceTree, "#WorkspaceGalleryContainer")
+
+    }
+
+}
+
+
 
 
 

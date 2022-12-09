@@ -8,20 +8,20 @@
 <head>
 <meta name="viewport" content="width=610, user-scalable=0" id="myViewport">
 
-<!-- Does not wor :'( -->
 <script src="coi-serviceworker.min.js"></script>
 
 <link rel="stylesheet" href="./assets/css/style.css">
 <link rel="stylesheet" href="./assets/css/main.css">
 <link rel="stylesheet" href="./assets/css/w3.css">
 <link rel="stylesheet" href="./assets/css/roundslider.min.css">
+<link rel="stylesheet" href="./assets/css/treejs.css" id="treejs_styles">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.13/css/all.css" integrity="sha384-DNOHZ68U8hZfKXOrtjWvjxusGo9WQnrNx2sqG0tfsghAvtVlRW3tvkXWZh58N9jp" crossorigin="anonymous">
 <link rel="stylesheet" href="./assets/css/choreo_GUI.css">
 
 
 <script src="assets/js/npy.js"></script>
-
-
- <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3.0.1/es5/tex-mml-chtml.js"></script>
+<script src="assets/js/tree.js"></script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3.0.1/es5/tex-mml-chtml.js"></script>
 
 <!-- Animation related -->
 <link rel="stylesheet" href="assets/css/jquery-ui-1.10.2.custom.min.css">
@@ -72,7 +72,7 @@ window.addEventListener("drop",function(e){
     <button class="w3-bar-item w3-button w3-hover-pale-red LeftTabBtn Geom"         style="text-align: center" onclick="ClickLeftTabBtn('Geom')"        >Geometry</button>
     <button class="w3-bar-item w3-button w3-hover-pale-red LeftTabBtn Animation"    style="text-align: center" onclick="ClickLeftTabBtn('Animation')"   >Animation</button>
     <button class="w3-bar-item w3-button w3-hover-pale-red LeftTabBtn Solver"       style="text-align: center" onclick="ClickLeftTabBtn('Solver')"      >Solver</button>
-    <button class="w3-bar-item w3-button w3-hover-pale-red LeftTabBtn Solver"       style="text-align: center" onclick="ClickLeftTabBtn('Workspace')"   >Workspace</button>
+    <button class="w3-bar-item w3-button w3-hover-pale-red LeftTabBtn Workspace"    style="text-align: center" onclick="ClickLeftTabBtn('Workspace')"   >Workspace</button>
     <div class="w3-bar-item w3-light-grey" style="height:200px ; text-align: center" >  </div>
     <div class="w3-bar-item w3-button w3-orange" id="Python_State_Div"  style="text-align: center" onclick="ClickStateDiv()" >Loading</div>
   </div>
@@ -99,11 +99,12 @@ window.addEventListener("drop",function(e){
         <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Solver_Output" onclick="ClickTopTabBtn('Solver_Output')">Output</button>
         <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Solver_Discr"  onclick="ClickTopTabBtn('Solver_Discr')" >Discretization</button>
         <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Solver_Optim"  onclick="ClickTopTabBtn('Solver_Optim')" >Optimizer</button>
-        <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Solver_Loop"   onclick="ClickTopTabBtn('Solver_Loop')" >Loop</button>
+        <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Solver_Loop"   onclick="ClickTopTabBtn('Solver_Loop')"  >Loop</button>
         <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Solver_Checks" onclick="ClickTopTabBtn('Solver_Checks')">Checks</button>
     </div>
     <div class="w3-bar w3-light-grey TopTab Workspace">
-        <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Workspace_Setup" onclick="ClickTopTabBtn('Workspace_Setup')">Setup</button>
+        <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Workspace_Setup"   onclick="ClickTopTabBtn('Workspace_Setup')"  >Setup</button>
+        <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Workspace_Gallery" onclick="ClickTopTabBtn('Workspace_Gallery')">Gallery</button>
     </div>
   </div>
   <div id="AnimationAndControlBlock"  style="margin-bottom:-20px">
@@ -499,7 +500,7 @@ window.addEventListener("drop",function(e){
             <label for="linesearch_smin">Minimum line step</label>
           </td>
            <td style="border:none; max-width:100px; ">
-            <input type="text" id="linesearch_smin" value="1e-2" style="text-align: center;" >
+            <input type="text" id="linesearch_smin" value="1e-1" style="text-align: center;" >
           </td>
         </tr>
         <tr>
@@ -507,7 +508,7 @@ window.addEventListener("drop",function(e){
             <label for="input_Newt_err_norm_max">Max Newton error</label>
           </td>
            <td style="border:none; max-width:100px; ">
-            <input type="text" id="input_Newt_err_norm_max" value="1e-12" style="text-align: center;" >
+            <input type="text" id="input_Newt_err_norm_max" value="1e-9" style="text-align: center;" >
           </td>
         </tr>
         <tr>
@@ -571,7 +572,12 @@ window.addEventListener("drop",function(e){
   </div>
   <div class="w3-container MainTab Workspace_Setup" style="display:none">
     <h2>Setup Workspace</h2>
-    <button id="KillAndReloadWorkerBtn"  class="w3-button w3-hover-pale-red w3-light-grey InTableControls"                     onclick="ClickSetupWorkspace()"     >Setup Workspace</button>
+    <button id="SetupWorkspaceBtn"  class="w3-button w3-hover-pale-red w3-light-grey InTableControls" onclick="ClickSetupWorkspace()"     >Setup Workspace</button>
+  </div>
+  <div class="w3-container MainTab Workspace_Gallery" style="display:none">
+    <h2>Workspace Gallery</h2>
+    <button id="ReloadWorkspaceGalleryBtn"  class="w3-button w3-hover-pale-red w3-light-grey InTableControls" onclick="ClickReloadWorkspaceGallery()"     >Reload Structure</button>
+		<div id="WorkspaceGalleryContainer"></div>
   </div>
 </div>
 </div>
@@ -584,8 +590,6 @@ window.addEventListener("drop",function(e){
 OnWindowResize();
 
 ClickLeftTabBtn('Main');
-
-
 ClickTopTabBtn('Main_Gallery')
 
 
