@@ -81,7 +81,6 @@ async function Play_Loop_From_Python(args){
     Python_State_Div.classList.remove('w3-red');
 }
 
-
 function Python_no_sol_found(args) {
 
 	var displayCanvas = document.getElementById("displayCanvas");
@@ -117,7 +116,6 @@ function Python_no_sol_found(args) {
     Python_State_Div.classList.remove('w3-red');
 
 }
-
 
 async function Set_PlotInfo_From_Python(args){
 
@@ -333,10 +331,6 @@ function ChoreoExecuteClick() {
         pyodide_worker.postMessage({funname:"ExecutePythonFile",args:"./python_scripts/RunOnce.py"});
 
     }
-
-}
-
-function TestClick() {
 
 }
 
