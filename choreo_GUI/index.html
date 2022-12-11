@@ -507,7 +507,7 @@ window.addEventListener("drop",function(e){
             <label for="input_Newt_err_norm_max">Max Newton error</label>
           </td>
            <td style="border:none; max-width:100px; ">
-            <input type="text" id="input_Newt_err_norm_max" value="1e-9" style="text-align: center;" >
+            <input type="text" id="input_Newt_err_norm_max" value="1e-8" style="text-align: center;" >
           </td>
         </tr>
         <tr>
@@ -594,7 +594,7 @@ ClickTopTabBtn('Main_Gallery')
 
 SlideNReconvergeItMax();
 
-for (var i = 0; i < 8; i++) {
+for (var i = 0; i < 6; i++) {
     ClickAddColLoopKrylov();
 }
 
@@ -608,7 +608,6 @@ Python_textarea.style.height = "400px";
 
 DealWithCookie();
 
-// setPeriodTime
 
 </script>
 
