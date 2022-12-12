@@ -1566,18 +1566,18 @@ viewport_custom_select.addEventListener("input", viewport_custom_select_Handler,
 
 function viewport_custom_select_Handler(event) {
 
-    myViewport = document.getElementById("myViewport");
+    myViewport = document.getElementById("myViewport")
 
     switch (viewport_custom_select.value) {
         case 'portrait': {
             myViewport.setAttribute('content','width=610')
-            break;}    
+            break}    
         case 'landscape': {
             myViewport.setAttribute('content','width=1250')
-            break;}
+            break}
         case 'disable': {
             myViewport.setAttribute('content','width=device-width')
-            break;}
+            break}
     }
 
 }
@@ -1588,6 +1588,22 @@ function ClickStateDiv() {
         ChoreoExecuteClick()
     } else {
         ChoreoSearchNextClick()
+    }
+
+}
+
+function InitWorkspaceClick() {
+
+    var SetupWorkspaceBtn = document.getElementById("SetupWorkspaceBtn")
+
+    if (FileSystemAccessSupported) {
+
+    } else {
+
+        SetupWorkspaceBtn.disabled = "disabled"
+        var WorkspaceGalleryContainer = document.getElementById("WorkspaceGalleryContainer")
+        WorkspaceGalleryContainer.innerHTML = "The workspace feature is not compatible with your browser."
+
     }
 
 }
@@ -1630,7 +1646,7 @@ async function ClickSetupWorkspace() {
 //         await writable.close()
 //     }
 
-    ClickReloadWorkspaceGallery()
+    LoadWorkspaceGallery()
 
 }
 
@@ -1683,16 +1699,12 @@ function print_toto(e,node) { console.log("toto") }
 // }
 // 
 
-function PlayFileFromDisk(file) {
-
-}
-
 
 async function MakeDirectoryTree(cur_directory,cur_treenode) {
 
-    for await (const entry of cur_directory.values()) {
+    var files_here = {}
 
-        var files_here = {}
+    for await (const entry of cur_directory.values()) {
 
         if (entry.kind == "directory") {
             
@@ -1703,30 +1715,13 @@ async function MakeDirectoryTree(cur_directory,cur_treenode) {
             
         } else if (entry.kind == "file") {
 
-//             if (entry.name.endsWith(".npy")) {
-//                 
-//                 basename = entry.name.replace(".npy","")
-// 
-//                 // Locate corresponding *.npy
-//                 
-// 
-// 
-//                 var new_node = new TreeNode(basename)
-//                 
-//                 // new_node.on("click", (e,n) => console.log(entry));
-//                 new_node.on("click", (e,n) => console.log(cur_directory.values()));
-//                 
-//                 cur_treenode.addChild(new_node)
-//             }
-
-
             for (const ext of [".npy",".json"]) {
 
                 if (entry.name.endsWith(ext)) {
                     
                     basename = entry.name.replace(ext,"")
 
-                    if (!(basename in files_here)) {
+                    if (files_here[basename] === undefined) {
                         files_here[basename] = {}
                     }
 
@@ -1738,18 +1733,29 @@ async function MakeDirectoryTree(cur_directory,cur_treenode) {
 
         }
 
-        for (const basename in files_here) {
+    }
 
+    for (const basename in files_here) {
 
+        if ((!(files_here[basename]['.npy'] === undefined)) && (!(files_here[basename]['.json'] === undefined))) {
 
-            
+            var new_node = new TreeNode(basename,{expanded:false})
+
+            new_node.on("click", (e,node)  => PlayFileFromDisk(basename,files_here[basename]['.npy'],files_here[basename]['.json']));
+
+            cur_treenode.addChild(new_node)
+
         }
-
+        
     }
 
 }
 
-async function ClickReloadWorkspaceGallery() {
+
+function test() {}
+
+
+async function LoadWorkspaceGallery() {
 
     if (WorkspaceIsSetUp) {
         
@@ -1762,6 +1768,66 @@ async function ClickReloadWorkspaceGallery() {
     }
 
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+function readFileAsText(file) {
+    return new Promise((resolve, reject) => {
+        const fr = new FileReader();
+        fr.onerror = reject;
+        fr.onload = () => {
+            resolve(fr.result);
+        }
+        fr.readAsText(file);
+    });
+}
+
+
+function readFileAsArrayBuffer(file) {
+    return new Promise((resolve, reject) => {
+        const fr = new FileReader();
+        fr.onerror = reject;
+        fr.onload = () => {
+            resolve(fr.result);
+        }
+        fr.readAsArrayBuffer(file);
+    });
+}
+
+
+
+
+
+async function PlayFileFromDisk(name,npy_file,json_file) {
+
+    var displayCanvas = document.getElementById("displayCanvas")
+    
+    const PlotInfoFile = await json_file.getFile()
+    PlotInfo = JSON.parse(await readFileAsText(PlotInfoFile))
+
+    let npyjs_obj = new npyjs()
+    const PosFile = await npy_file.getFile()
+    Pos = npyjs_obj.parse( await readFileAsArrayBuffer(PosFile))
+
+    Max_PathLength = PlotInfo["Max_PathLength"]
+        
+    var event = new Event("CompleteSetOrbitFromOutsideCanvas")
+    displayCanvas.dispatchEvent(event)
+
+}
+
+
 
 
 
