@@ -1,6 +1,9 @@
 // var Gallery_cache_behavior = {cache: "no-cache"}
 var Gallery_cache_behavior = {}
 
+var UserWorkspace
+var WorkspaceIsSetUp = false
+
 var Pos 
 var PlotInfo
 
@@ -140,6 +143,7 @@ function canvasApp() {
 	var tInc;
 
 	var time = 0;
+	var Lasttime = time;
 
 	var bgColor = "#F1F1F1";
 	var request;
@@ -162,6 +166,7 @@ function canvasApp() {
 	
 	var displayCanvas = document.getElementById("displayCanvas");
 	var context = displayCanvas.getContext("2d");
+	context.lineCap = "round";
 	displayCanvas.addEventListener("FinalizeSetOrbitFromOutsideCanvas", FinalizeSetOrbitFromOutsideCanvasHandler, true);
 	displayCanvas.addEventListener("FinalizeAndPlayFromOutsideCanvas", FinalizeAndPlayFromOutsideCanvasHandler, true);
 	displayCanvas.addEventListener("StopAnimationFromOutsideCanvas", StopAnimationFromOutsideCanvasHandler, true);
@@ -183,7 +188,7 @@ function canvasApp() {
 	var Max_PartRelSize = 7.;
 	
 	var Last_Time_since_origin;
-	var dt_outlier_ms = 300;
+	var dt_outlier_ms = 1200;
 	var speed_slider_value_init = .5;
 	var Time_One_Period_init = 5;
 	var LastFadeTime = 0;
@@ -218,7 +223,7 @@ function canvasApp() {
 	// fixes from Paul Irish and Tino Zijdel
 	
 	(function() {
-		var lastTime = 0;
+		var the_lastTime = 0;
 		var vendors = ['ms', 'moz', 'webkit', 'o'];
 		for(var x = 0; x < vendors.length && !window.requestAnimationFrame; ++x) {
 			window.requestAnimationFrame = window[vendors[x]+'RequestAnimationFrame'];
@@ -229,10 +234,10 @@ function canvasApp() {
 		if (!window.requestAnimationFrame)
 			window.requestAnimationFrame = function(callback, element) {
 				var currTime = new Date().getTime();
-				var timeToCall = Math.max(0, 16 - (currTime - lastTime));
+				var timeToCall = Math.max(0, 16 - (currTime - the_lastTime));
 				var id = window.setTimeout(function() { callback(currTime + timeToCall); },
 				timeToCall);
-				lastTime = currTime + timeToCall;
+				the_lastTime = currTime + timeToCall;
 				return id;
 			};
 	
@@ -375,31 +380,6 @@ function canvasApp() {
 		incrementOrbit(-1);
 	}
 
-	function RemoveOrbit(i_remove) {
-
-		if (numOrbits > 1) {
-
-			Checked_idx = $('input[name=orbitGroup]:checked').index('input[name=orbitGroup]');
-			
-			if (i_remove == Checked_idx) {
-
-				if (i_remove == (numOrbits-1)) {
-					incrementOrbit(-1);
-				} else {	
-					incrementOrbit(1);
-				}
-
-			}
-
-			$('input[name=orbitGroup]:eq('+i_remove+')').remove();
-			$('.radioLabel:eq('+i_remove+')').remove();
-			
-			numOrbits = numOrbits - 1
-
-		}
-	
-	}
-
 	function AddNewOrbit(orbitRadio,i) {
 
 		numOrbits = numOrbits + 1;
@@ -447,6 +427,8 @@ function canvasApp() {
 
 	function Estimate_FPS(Time_since_origin){
 
+		// console.log(FPS_estimation)
+
 		if (Last_Time_since_origin && Time_since_origin)
 		{
 			var dt_ms = Time_since_origin - Last_Time_since_origin;
@@ -464,12 +446,13 @@ function canvasApp() {
 	
 		Last_Time_since_origin = Time_since_origin;	
 
+		setPeriodTime()
+
 	}
 
 	function anim_particles() {
 		
 		UpdateFPSDisplay();
-		// setPeriodTime();
 		onTimer();
 	}
 
@@ -603,19 +586,6 @@ function canvasApp() {
 		drawParticles();
 	}
 
-	function AddOrbitButtonHandler(e) {
-		i = numOrbits;
-		var orbitRadio = document.getElementById("orbitRadio");
-		AddNewOrbit(orbitRadio,jsonData,i)
-	}
-
-	function RemoveOrbitButtonHandler(e) {
-
-		i_remove = $('input[name=orbitGroup]:checked').index('input[name=orbitGroup]');
-
-		RemoveOrbit(i_remove)
-	}
-
 	function onRotationValueChange(e){
 
 		if ((e.action == 'code') || (e.action == 'change') || (e.action == 'drag')) {
@@ -667,16 +637,15 @@ function canvasApp() {
 
 	function onTimer() {
 
-
 		if (trajectoriesOn) {
 			
 			//fade
-			context.fillStyle = fadeScreenColor;
+			context.fillStyle = fadeScreenColor
 
 			
 			var nfade = Math.floor(LastFadeTime/FadeInvFrequency)
 			for (var ifade=0; ifade<nfade; ifade++){
-				context.fillRect(0,0,displayWidth,displayHeight);
+				context.fillRect(0,0,displayWidth,displayHeight)
 			}
 
 			LastFadeTime = LastFadeTime + tInc - nfade*FadeInvFrequency
@@ -684,15 +653,22 @@ function canvasApp() {
 		}
 		
 		//clear particle layer
-		clearParticleLayer();
+		clearParticleLayer()
 		
-		time = (time + tInc) % 1;
+		Lasttime = time
+		time = (time + tInc) % 1
 		
 		//update particles
-		setParticlePositions(time);
+		setParticlePositions(time)
 		
 		//draw particles
-		drawParticles();
+		drawParticles()
+
+		if (trajectoriesOn) {
+			if (Pos !== undefined) {
+				drawPathPortion(Lasttime,tInc) 
+			}
+		}
 	}
 	
 	function clearScreen() {
@@ -792,32 +768,6 @@ function canvasApp() {
 			staticOrbitDrawPointsX.push(xPixRate*(particles[i].x - xMin));
 			staticOrbitDrawPointsY.push(yPixRate*(particles[i].y - yMax));
 		}
-	}
-
-	function drawLastSegments() {
-		var i;
-		var p;
-		var pixX;
-		var pixY;
-
-		for (i = 0; i < PlotInfo["nbody"]; i++) {
-			p = particles[i];
-			pixX = xPixRate*(p.x - xMin);
-			pixY = yPixRate*(p.y - yMax);
-
-			//trail
-			context.strokeStyle = staticOrbitColor;
-			context.lineWidth = p.PartRelSize * base_trailWidth ;
-			context.beginPath();
-			context.moveTo(staticOrbitDrawPointsX[i],staticOrbitDrawPointsY[i]);
-			context.lineTo(pixX, pixY);
-			context.stroke();
-
-			staticOrbitDrawPointsX[i] = pixX;
-			staticOrbitDrawPointsY[i] = pixY;
-
-		}
-
 	}
 
 	function anim_path(Time_since_origin){
@@ -993,13 +943,7 @@ function canvasApp() {
 		var len;
 		var pixX;
 		var pixY;
-		var lastPixX;
-		var lastPixY;
 		var p;
-		var dx;
-		var dy;
-		
-		context.lineCap = "round";
 		
 		len = particles.length;
 		for (i = 0; i < len; i++) {
@@ -1020,17 +964,97 @@ function canvasApp() {
 			particleLayerContext.closePath();
 			particleLayerContext.fill();
 			particleLayerContext.stroke();
+// 			
+// 			if (trajectoriesOn) {
+// 				//trail
+// 				context.strokeStyle = p.trailColor;
+// 				context.lineWidth = p.PartRelSize * base_trailWidth ;
+// 				context.beginPath();
+// 				context.moveTo(lastPixX,lastPixY);
+// 				context.lineTo(pixX, pixY);
+// 				context.stroke();
+// 
+// 			}
+		}
+
+	}
+
+	function drawPathPortion(lasttime,tInc) {
+
+		var n_pos = Pos.shape[2]
+
+		var xi=0,yi=0
+		var xmid,ymid
+		var xrot,yrot
+		var xrot_glob,yrot_glob
+		var p
+
+		var il,ib,ilb,nlb
+		var tb_beg, tb_end
+
+		var i
+		var ip,ip_beg,ip_end
+
+        for ( il = 0 ; il < PlotInfo['nloop'] ; il++){
+
+			nlb =  PlotInfo['loopnb'][il]
 			
-			if (trajectoriesOn) {
-				//trail
-				context.strokeStyle = p.trailColor;
-				context.lineWidth = p.PartRelSize * base_trailWidth ;
-				context.beginPath();
-				context.moveTo(lastPixX,lastPixY);
-				context.lineTo(pixX, pixY);
-				context.stroke();
+			for (ilb = 0 ; ilb < nlb ; ilb++){
+
+				ib = PlotInfo['Targets'][il][ilb]
+				p = particles[ib]
+				context.strokeStyle = p.trailColor
+				context.lineWidth = p.PartRelSize * base_trailWidth 
+				lastPixX = xPixRate*(p.lastX - xMin)
+				lastPixY = yPixRate*(p.lastY - yMax)
+				context.beginPath()
+				context.moveTo(lastPixX,lastPixY)
+
+				tb_beg = ( PlotInfo['TimeRevsUn'][il][ilb] * (lasttime - PlotInfo['TimeShiftNumUn'][il][ilb] / PlotInfo['TimeShiftDenUn'][il][ilb]) +1)
+				ip_beg = (Math.floor(tb_beg*n_pos)+1)%n_pos
+
+				tb_end = ( PlotInfo['TimeRevsUn'][il][ilb] * ((lasttime+tInc) - PlotInfo['TimeShiftNumUn'][il][ilb] / PlotInfo['TimeShiftDenUn'][il][ilb]) +1)
+				ip_end = (Math.floor(tb_end*n_pos)+1)%n_pos
+
+				if (ip_end < ip_beg) {
+
+					ip_end += n_pos
+
+				}
+
+				for (i = ip_beg ; i < ip_end ; i++){ 
+
+					ip = i%n_pos
+
+					// Super ugly
+					xi = Pos.data[ ip +  2*il    * n_pos] 
+					yi = Pos.data[ ip + (2*il+1) * n_pos] 
+
+					xrot = PlotInfo['SpaceRotsUn'][il][ilb][0][0] * xi + PlotInfo['SpaceRotsUn'][il][ilb][0][1] * yi - center_x
+					yrot = PlotInfo['SpaceRotsUn'][il][ilb][1][0] * xi + PlotInfo['SpaceRotsUn'][il][ilb][1][1] * yi - center_y
+
+					xrot_glob = center_x + GlobalRot[0][0] * xrot + GlobalRot[0][1] * yrot
+					yrot_glob = center_y + GlobalRot[1][0] * xrot + GlobalRot[1][1] * yrot
+
+					PixX = xPixRate*(xrot_glob - xMin)
+					PixY = yPixRate*(yrot_glob - yMax)
+
+					context.lineTo(PixX, PixY)
+
+					lastPixX = PixX
+					lastPixY = PixY
+
+				}
+
+				PixX = xPixRate*(p.x - xMin);
+				PixY = yPixRate*(p.y - yMax);
+
+				context.lineTo(PixX, PixY)
+				context.stroke()
+
 
 			}
+		
 		}
 
 	}
@@ -1202,6 +1226,7 @@ function canvasApp() {
 		if (trajectoriesOn && document.getElementById('checkbox_DisplayLoopOnGalleryLoad').checked){
 			request = requestAnimationFrame(anim_path_grey);
 		}
+
 		
 	}
 
@@ -1271,6 +1296,8 @@ function canvasApp() {
 			}
 		}
 	}
+
+
 // 
 // 	document.onkeyup = function (event) {
 // 
