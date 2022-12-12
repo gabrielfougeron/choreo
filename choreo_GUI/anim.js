@@ -1,6 +1,8 @@
 // var Gallery_cache_behavior = {cache: "no-cache"}
 var Gallery_cache_behavior = {}
 
+var DefaultGallery_description
+
 var UserWorkspace
 var WorkspaceIsSetUp = false
 
@@ -310,7 +312,8 @@ function canvasApp() {
 			});
 		
 		// Load the static gallery
-		LoadGallery();
+		await LoadGallery()
+		startAnimation()
 
 	}
 
