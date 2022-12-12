@@ -1806,10 +1806,9 @@ function readFileAsArrayBuffer(file) {
 }
 
 
-
-
-
 async function PlayFileFromDisk(name,npy_file,json_file) {
+
+    PythonPrint({txt:"Playing solution from the gallery: "+name+"&#10;"});
 
     var displayCanvas = document.getElementById("displayCanvas")
     
