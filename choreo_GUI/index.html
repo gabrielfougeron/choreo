@@ -576,7 +576,7 @@ window.addEventListener("drop",function(e){
   </div>
   <div class="w3-container MainTab Workspace_Gallery" style="display:none">
     <h2>Workspace Gallery</h2>
-    <button id="ReloadWorkspaceGalleryBtn"  class="w3-button w3-hover-pale-red w3-light-grey InTableControls" onclick="ClickReloadWorkspaceGallery()"     >Reload Structure</button>
+    <button id="ReloadWorkspaceGalleryBtn"  class="w3-button w3-hover-pale-red w3-light-grey InTableControls" onclick="test()"     >Reload Structure</button>
   </div>
 </div>
 </div>
@@ -586,28 +586,28 @@ window.addEventListener("drop",function(e){
 
 <script>
 
-OnWindowResize();
+OnWindowResize()
 
-ClickLeftTabBtn('Main');
+ClickLeftTabBtn('Main')
 ClickTopTabBtn('Main_Gallery')
 
-
-SlideNReconvergeItMax();
+SlideNReconvergeItMax()
 
 for (var i = 0; i < 6; i++) {
-    ClickAddColLoopKrylov();
+    ClickAddColLoopKrylov()
 }
 
-ClickAddBodyLoop();
+ClickAddBodyLoop()
 
 for (var i = 0; i < colorLookup_init.length; i++) {
-    AddColor();
+    AddColor()
 }
 
-Python_textarea.style.height = "400px";
+Python_textarea.style.height = "400px"
 
-DealWithCookie();
+InitWorkspaceClick()
 
+DealWithCookie()
 
 </script>
 
