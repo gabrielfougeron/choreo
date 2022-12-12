@@ -406,9 +406,10 @@ def Find_Choreo(
                     GoOn = False
                     print('Optimizer could not zero in on a solution.')
 
-                if GoOn and not(ParamPreciseEnough) and not(NewtonPreciseEnough) and (not(CanChangeOptimParams) or not(CanRefine)):
+                if GoOn and not(ParamPreciseEnough) and not(NewtonPreciseEnough) and not(CanChangeOptimParams):
                 
                     GoOn = False
+
                     print('Newton Error too high, discarding solution.')
                 
                 if GoOn and ParamPreciseEnough and not(NewtonPreciseEnough) and not(NeedsRefinement):
