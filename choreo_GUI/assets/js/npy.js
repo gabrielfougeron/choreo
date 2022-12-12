@@ -112,6 +112,26 @@ class npyjs {
         return result;
     }
 
+// 
+//     loadFile(the_file, callback) {
+//         /*
+//         Loads an array from a File.
+//         */
+//         const reader = new FileReader()
+//         var result
+//         var parse = this.parse
+//         reader.onload = function() {
+//             console.log("aaa",reader.result)
+//             result = reader.result
+//         }
+//         if (callback) {
+//             return callback(result)
+//         }
+//         reader.readAsArrayBuffer(the_file)
+//         return  this.parse(result)
+// 
+//     }
+
 };
 
 const descrToConstructor = {

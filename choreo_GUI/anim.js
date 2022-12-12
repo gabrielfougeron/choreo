@@ -1,6 +1,8 @@
 // var Gallery_cache_behavior = {cache: "no-cache"}
 var Gallery_cache_behavior = {}
 
+var DefaultGallery_description
+
 var UserWorkspace
 var WorkspaceIsSetUp = false
 
@@ -70,9 +72,11 @@ var	colorLookup = colorLookup_init
 
 var AllPosFilenames = []
 var AllPlotInfoFilenames = []
-var AllPos = []
-var AllPlotInfo = []
 var AllGalleryNames = []
+
+var trailColorLookup
+
+FileSystemAccessSupported = ('showOpenFilePicker' in window)
 
 function AjaxGet(foldername){ return $.ajax({ url: foldername})}
 
@@ -134,11 +138,41 @@ function setPlotWindow(windowObject) {
 
 }
 
+function setColorLookupList() {
+		
+	trailColorLookup = [];
+	
+	//darkening colors for trails
+	var i,r,g,b,colorString,c, newColor,newColorString;
+	var len = colorLookup.length;
+	var darkenFactor = 0.75;
+	for (i = 0; i < len; i++) {
+		colorString = colorLookup[i];
+		colorString = colorString.replace("#", "");
+		c = parseInt(colorString,16);
+		r = (c & (255 << 16)) >> 16;
+		g = (c & (255 << 8)) >> 8;
+		b = (c & 255); 
+		
+		r = Math.floor(r*darkenFactor);
+		g = Math.floor(g*darkenFactor);
+		b = Math.floor(b*darkenFactor);
+					
+		newColor = (r << 16) | (g << 8) | b;
+		
+		newColorString = newColor.toString(16);
+		while (newColorString.length < 6) {
+			newColorString = "0" + newColorString;
+		}
+		newColorString = "#" + newColorString;
+		trailColorLookup.push(newColorString);
+	}
+
+}
+
 function canvasApp() {
 		
 	var particles;
-
-	var numOrbits;
 
 	var tInc;
 
@@ -150,10 +184,6 @@ function canvasApp() {
 	var running = false;
 
 	var fadeScreenColor = "rgba(241,241,241,0.01)";
-	staticOrbitColor = "rgba(200,200,200,1)";
-	// staticOrbitColor = "rgba(255,0,255,0.8)"; //TESTING
-
-	var trailColorLookup;
 	
 	var staticOrbitDrawPointsX;
 	var staticOrbitDrawPointsY;
@@ -176,6 +206,7 @@ function canvasApp() {
 	displayCanvas.addEventListener("RemakeParticlesFromOutsideCanvas", RemakeParticlesFromOutsideCanvasHandler, true);
 	displayCanvas.addEventListener("ChangeColorsFromOutsideCanvas", ChangeColorsFromOutsideCanvasHandler, true);
 	displayCanvas.addEventListener("DrawAllPathsFromOutsideCanvas", DrawAllPathsFromOutsideCanvasHandler, true);
+	displayCanvas.addEventListener("CompleteSetOrbitFromOutsideCanvas", CompleteSetOrbitFromOutsideCanvasHandler, true);
 	
 	var particleLayerCanvas = document.getElementById("particleLayerCanvas");
 	var particleLayerContext = particleLayerCanvas.getContext("2d");
@@ -201,12 +232,6 @@ function canvasApp() {
 
 	var drawTrajButton = document.getElementById("ClearButton");
 	drawTrajButton.addEventListener("click", clearScreen, true);
-	
-	var btnNextOrbit = document.getElementById("btnNextOrbit");
-	btnNextOrbit.addEventListener("click", nextOrbit, true);
-	
-	var btnPrevOrbit = document.getElementById("btnPrevOrbit");
-	btnPrevOrbit.addEventListener("click", prevOrbit, true);
 
 	var speedPlusBtn = document.getElementById("speedPlusBtn");
 	speedPlusBtn.addEventListener("click", SpeedPlusClick, true);
@@ -251,7 +276,7 @@ function canvasApp() {
 	
 	async function init() {
 		
-		setColorLookupList();
+		setColorLookupList()
 
 		trajectoriesOn = true;
 		
@@ -287,142 +312,9 @@ function canvasApp() {
 			});
 		
 		// Load the static gallery
-		LoadGallery();
+		await LoadGallery()
+		startAnimation()
 
-	}
-	
-	function setColorLookupList() {
-		
-		trailColorLookup = [];
-		
-		//darkening colors for trails
-		var i,r,g,b,colorString,c, newColor,newColorString;
-		var len = colorLookup.length;
-		var darkenFactor = 0.75;
-		for (i = 0; i < len; i++) {
-			colorString = colorLookup[i];
-			colorString = colorString.replace("#", "");
-			c = parseInt(colorString,16);
-			r = (c & (255 << 16)) >> 16;
-			g = (c & (255 << 8)) >> 8;
-			b = (c & 255); 
-			
-			r = Math.floor(r*darkenFactor);
-			g = Math.floor(g*darkenFactor);
-			b = Math.floor(b*darkenFactor);
-						
-			newColor = (r << 16) | (g << 8) | b;
-			
-			newColorString = newColor.toString(16);
-			while (newColorString.length < 6) {
-				newColorString = "0" + newColorString;
-			}
-			newColorString = "#" + newColorString;
-			trailColorLookup.push(newColorString);
-		}
-
-	}
-	
-	function UnselectOrbit(){
-		Index = $('input[name=orbitGroup]:checked').index('input[name=orbitGroup]');
-		if (Index > -1) {
-			orbitGroups = $('input[name=orbitGroup]')
-			mylabel = orbitGroups[Index].getAttribute("mylabel")
-			thelabel=$("label[id="+mylabel+"]")["0"];			
-			thelabel.classList.remove('w3-red');
-			thelabel.classList.add('w3-light-grey');
-
-			orbitGroups[Index].checked = false;
-		}
-	}
-
-	function incrementOrbit(inc) {
-		//find out what is checked
-		oldIndex = $('input[name=orbitGroup]:checked').index('input[name=orbitGroup]');
-		currentIndex = (oldIndex + inc + numOrbits) % numOrbits; // negative number handling
-		
-		orbitGroups = $('input[name=orbitGroup]')
-		// make old grey
-		mylabel = orbitGroups[oldIndex].getAttribute("mylabel")
-		thelabel=$("label[id="+mylabel+"]")["0"];			
-		thelabel.classList.remove('w3-red');
-		thelabel.classList.add('w3-light-grey');
-		// make new red
-		mylabel = orbitGroups[currentIndex].getAttribute("mylabel")
-		thelabel=$("label[id="+mylabel+"]")["0"];			
-		thelabel.classList.add('w3-red');
-		thelabel.classList.remove('w3-light-grey');
-
-		//make new selection
-		orbitGroups[currentIndex].checked = true;
-		//how much is currently scrolled:
-		var currentScroll = $('#radioContainer').scrollTop();
-		//the current position of the selected radio button:
-		var rowPos = $('input[name=orbitGroup]:checked').position();
-		//rollTop sets how many pixels of area to be above viewable area:
-		var scrollAmount = currentScroll + rowPos.top;
-		//stop any currently running animations:
-		$('#radioContainer').stop();
-		//animate scroll:
-		$('#radioContainer').animate({scrollTop:scrollAmount + "px"});
-		
-		current_value = orbitGroups[currentIndex].getAttribute("value")
-
-		//set orbit
-		setOrbit(current_value);
-	}
-	
-	function nextOrbit(evt) {
-		incrementOrbit(1);
-	}
-
-	function prevOrbit(evt) {
-		incrementOrbit(-1);
-	}
-
-	function AddNewOrbit(orbitRadio,i) {
-
-		numOrbits = numOrbits + 1;
-
-		//radio button
-		var input = document.createElement('input');
-		input.type = "radio";
-		input.value = i;
-		input.id = "radio"+i;
-		if (i == 0) {
-			input.checked = "checked";
-		}
-		input.name = "orbitGroup";
-		input.className = "radioInvisible";
-
-		//label for the button
-		var label = document.createElement('label');
-		label.id = "label"+i;
-		label.setAttribute("for",input.id);
-		input.setAttribute("mylabel",label.id)
-		label.className = "radioLabel w3-button w3-hover-pale-red w3-light-grey ";
-		label.innerHTML = AllGalleryNames[i];
-
-		input.addEventListener("change",function() {
-
-			$("label").filter(".w3-red").each(function(j, obj) {
-				obj.classList.remove('w3-red');
-				obj.classList.add('w3-light-grey');
-			});
-
-			mylabel = this.getAttribute("mylabel");
-			thelabel=$("label[id="+mylabel+"]")["0"];			
-			thelabel.classList.add('w3-red');
-			thelabel.classList.remove('w3-light-grey');
-
-			setOrbit(this.value);
-
-		});
-		
-		//add to DOM
-		orbitRadio.appendChild(input);
-		orbitRadio.appendChild(label);
-		
 	}
 
 	function Estimate_FPS(Time_since_origin){
@@ -560,6 +452,10 @@ function canvasApp() {
 
 	}
 
+	function CompleteSetOrbitFromOutsideCanvasHandler(e) {
+		CompleteSetOrbit()
+	}
+
 	function FinalizeAndPlayFromOutsideCanvasHandler(e) {
 
 		UnselectOrbit();
@@ -682,15 +578,15 @@ function canvasApp() {
 	
 	function makeParticles() {
 
-		particles = new Array(PlotInfo['nbody']);
+		particles = new Array(PlotInfo['nbody'])
 
-		CurrentMax_PartRelSize = 0;
+		CurrentMax_PartRelSize = 0
 		
-		var color_method_input = document.getElementById("color_method_input");
+		var color_method_input = document.getElementById("color_method_input")
 
         for ( var il = 0 ; il < PlotInfo['nloop'] ; il++){
 
-			var nlb =  PlotInfo['loopnb'][il];
+			var nlb =  PlotInfo['loopnb'][il]
 			
 			for (var ilb = 0 ; ilb < nlb ; ilb++){
 
@@ -964,17 +860,7 @@ function canvasApp() {
 			particleLayerContext.closePath();
 			particleLayerContext.fill();
 			particleLayerContext.stroke();
-// 			
-// 			if (trajectoriesOn) {
-// 				//trail
-// 				context.strokeStyle = p.trailColor;
-// 				context.lineWidth = p.PartRelSize * base_trailWidth ;
-// 				context.beginPath();
-// 				context.moveTo(lastPixX,lastPixY);
-// 				context.lineTo(pixX, pixY);
-// 				context.stroke();
-// 
-// 			}
+
 		}
 
 	}
@@ -1011,18 +897,12 @@ function canvasApp() {
 				context.moveTo(lastPixX,lastPixY)
 
 				tb_beg = ( PlotInfo['TimeRevsUn'][il][ilb] * (lasttime - PlotInfo['TimeShiftNumUn'][il][ilb] / PlotInfo['TimeShiftDenUn'][il][ilb]) +1)
-				ip_beg = (Math.floor(tb_beg*n_pos)+1)%n_pos
+				ip_beg = (Math.floor(tb_beg*n_pos)+1)
 
 				tb_end = ( PlotInfo['TimeRevsUn'][il][ilb] * ((lasttime+tInc) - PlotInfo['TimeShiftNumUn'][il][ilb] / PlotInfo['TimeShiftDenUn'][il][ilb]) +1)
-				ip_end = (Math.floor(tb_end*n_pos)+1)%n_pos
+				ip_end = (Math.floor(tb_end*n_pos)+1)
 
-				if (ip_end < ip_beg) {
-
-					ip_end += n_pos
-
-				}
-
-				for (i = ip_beg ; i < ip_end ; i++){ 
+				for (i = ip_beg ; i != ip_end ; i = i + PlotInfo['TimeRevsUn'][il][ilb]){ 
 
 					ip = i%n_pos
 
@@ -1211,15 +1091,8 @@ function canvasApp() {
 		
 	}
 
-	function setOrbit(orbitIndex) {
-
-		PythonPrint({txt:"Playing solution from the gallery: "+AllGalleryNames[orbitIndex]+"&#10;"});
+	function CompleteSetOrbit() {
 		
-		Pos = AllPos[orbitIndex];
-		PlotInfo = AllPlotInfo[orbitIndex];
-
-		Max_PathLength = PlotInfo["Max_PathLength"]
-
 		clearScreen();
 		FinalizeSetOrbit();
 
@@ -1227,76 +1100,9 @@ function canvasApp() {
 			request = requestAnimationFrame(anim_path_grey);
 		}
 
-		
 	}
 
-	async function LoadGallery() {
-			
-		var gallery_filename = "gallery_descriptor.json"
-
-		var Gallery_description;
-
-		await fetch(gallery_filename,Gallery_cache_behavior)
-			.then(response => response.text())
-			.then(data => {
-				Gallery_description = JSON.parse(data);
-			})
-
-		for (const [name, path] of Object.entries(Gallery_description)) {
-
-				AllPosFilenames.push(path+'.npy');
-				AllPlotInfoFilenames.push(path+'.json');
-				AllGalleryNames.push(name);
-
-		}
-
-		n_init_gallery_orbits = AllPosFilenames.length;
-		numOrbits = 0;
-		var orbitRadio = document.getElementById("orbitRadio");
-
-		for (var i = 0; i < n_init_gallery_orbits; i++) {
-
-			AddNewOrbit(orbitRadio,i);
-
-		}
-
-		AllPos = new Array(n_init_gallery_orbits);
-		AllPlotInfo = new Array(n_init_gallery_orbits);
-
-		// Load all files asynchronously, keeping promises
-
-		for (var i = 0; i < n_init_gallery_orbits; i++) {
-			
-			let npyjs_obj = new npyjs();
-
-			let finished_npy = 
-				npyjs_obj.load(AllPosFilenames[i])
-				.then((res) => {
-					AllPos[i] = res;
-				});
-
-			let finished_json = 
-				fetch(AllPlotInfoFilenames[i],Gallery_cache_behavior)
-				.then(response => response.text())
-				.then(data => {
-					AllPlotInfo[i] = JSON.parse(data);
-				});
-
-			await Promise.all([finished_npy ,finished_json ])
-
-			if (i==0) {
-
-				// await Promise.all([finished_npy ,finished_json ])
-
-				$('label:first', "#orbitRadio").removeClass('w3-light-grey').addClass('w3-red');
-				setOrbit(0);
-
-				startAnimation();
-
-			}
-		}
-	}
-
+	
 
 // 
 // 	document.onkeyup = function (event) {
