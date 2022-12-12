@@ -1,17 +1,86 @@
 {
-    "Figure eight":		    "choreo-gallery/Figure_eight",
-    "Celtic knot":		    "choreo-gallery/Celtic_knot",
-    "Trefoil":		        "choreo-gallery/Trefoil",
-    "Three petal flower":   "choreo-gallery/Three_petal_flower",
-    "Five-pointed star":    "choreo-gallery/5-pointed_star",
-    "Spirograph":		    "choreo-gallery/Spirograph",
-    "3x2 circles":		    "choreo-gallery/3x2_Circles",
-    "2x3 circles":		    "choreo-gallery/2x3_Circles",
-    "5-chain":		        "choreo-gallery/5chain",
-    "Resonating loops":		"choreo-gallery/Resonating_loops",
-    "No symmetry":	        "choreo-gallery/No_symmetry",
-    "Complex symmetry":	    "choreo-gallery/Complex_symmetry",
-    "Small mass gap":		"choreo-gallery/Small_mass_gap",
-    "Big mass gap":			"choreo-gallery/Big_mass_gap",
-    "100 bodies":			"choreo-gallery/100_bodies"
+    "name": "choreo-gallery",
+    "dirs": [
+        {
+            "name": "Other Choreos",
+            "dirs": [],
+            "files": {
+                "100_bodies": {
+                    ".json": "choreo-gallery/Other Choreos/100_bodies.json",
+                    ".npy": "choreo-gallery/Other Choreos/100_bodies.npy"
+                },
+                "Big_mass_gap": {
+                    ".json": "choreo-gallery/Other Choreos/Big_mass_gap.json",
+                    ".npy": "choreo-gallery/Other Choreos/Big_mass_gap.npy"
+                },
+                "Celtic_knot": {
+                    ".json": "choreo-gallery/Other Choreos/Celtic_knot.json",
+                    ".npy": "choreo-gallery/Other Choreos/Celtic_knot.npy"
+                }
+            }
+        },
+        {
+            "name": "Some Choreos",
+            "dirs": [
+                {
+                    "name": "Yet another",
+                    "dirs": [],
+                    "files": {
+                        "Complex_symmetry": {
+                            ".json": "choreo-gallery/Some Choreos/Yet another/Complex_symmetry.json",
+                            ".npy": "choreo-gallery/Some Choreos/Yet another/Complex_symmetry.npy"
+                        },
+                        "Figure_eight": {
+                            ".json": "choreo-gallery/Some Choreos/Yet another/Figure_eight.json",
+                            ".npy": "choreo-gallery/Some Choreos/Yet another/Figure_eight.npy"
+                        }
+                    }
+                }
+            ],
+            "files": {
+                "2x3_Circles": {
+                    ".json": "choreo-gallery/Some Choreos/2x3_Circles.json",
+                    ".npy": "choreo-gallery/Some Choreos/2x3_Circles.npy"
+                },
+                "3x2_Circles": {
+                    ".json": "choreo-gallery/Some Choreos/3x2_Circles.json",
+                    ".npy": "choreo-gallery/Some Choreos/3x2_Circles.npy"
+                },
+                "5-pointed_star": {
+                    ".json": "choreo-gallery/Some Choreos/5-pointed_star.json",
+                    ".npy": "choreo-gallery/Some Choreos/5-pointed_star.npy"
+                },
+                "5chain": {
+                    ".json": "choreo-gallery/Some Choreos/5chain.json",
+                    ".npy": "choreo-gallery/Some Choreos/5chain.npy"
+                }
+            }
+        }
+    ],
+    "files": {
+        "No_symmetry": {
+            ".json": "choreo-gallery/No_symmetry.json",
+            ".npy": "choreo-gallery/No_symmetry.npy"
+        },
+        "Resonating_loops": {
+            ".json": "choreo-gallery/Resonating_loops.json",
+            ".npy": "choreo-gallery/Resonating_loops.npy"
+        },
+        "Small_mass_gap": {
+            ".json": "choreo-gallery/Small_mass_gap.json",
+            ".npy": "choreo-gallery/Small_mass_gap.npy"
+        },
+        "Spirograph": {
+            ".json": "choreo-gallery/Spirograph.json",
+            ".npy": "choreo-gallery/Spirograph.npy"
+        },
+        "Three_petal_flower": {
+            ".json": "choreo-gallery/Three_petal_flower.json",
+            ".npy": "choreo-gallery/Three_petal_flower.npy"
+        },
+        "Trefoil": {
+            ".json": "choreo-gallery/Trefoil.json",
+            ".npy": "choreo-gallery/Trefoil.npy"
+        }
+    }
 }

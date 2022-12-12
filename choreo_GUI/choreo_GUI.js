@@ -1864,3 +1864,70 @@ async function PlayFileFromDisk(name,npy_file,json_file) {
 // 
 // }
 
+
+
+
+async function LoadGallery() {
+			
+    var gallery_filename = "gallery_descriptor.json"
+
+    var Gallery_description;
+
+    await fetch(gallery_filename,Gallery_cache_behavior)
+        .then(response => response.text())
+        .then(data => {
+            Gallery_description = JSON.parse(data);
+        })
+
+    for (const [name, path] of Object.entries(Gallery_description)) {
+
+            AllPosFilenames.push(path+'.npy');
+            AllPlotInfoFilenames.push(path+'.json');
+            AllGalleryNames.push(name);
+
+    }
+
+
+    console.log(AllPosFilenames)
+
+
+
+    // Load all files asynchronously, keeping promises
+
+    for (var i = 0; i < n_init_gallery_orbits; i++) {
+        
+        let npyjs_obj = new npyjs();
+
+        let finished_npy = 
+            npyjs_obj.load(AllPosFilenames[i])
+            .then((res) => {
+                AllPos[i] = res;
+            });
+
+        let finished_json = 
+            fetch(AllPlotInfoFilenames[i],Gallery_cache_behavior)
+            .then(response => response.text())
+            .then(data => {
+                AllPlotInfo[i] = JSON.parse(data);
+            });
+
+        await Promise.all([finished_npy ,finished_json ])
+
+        if (i==0) {
+
+            // await Promise.all([finished_npy ,finished_json ])
+
+            $('label:first', "#orbitRadio").removeClass('w3-light-grey').addClass('w3-red');
+            setOrbit(0);
+
+            startAnimation();
+
+        }
+    }
+}
+
+
+
+
+
+
