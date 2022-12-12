@@ -1008,18 +1008,12 @@ function canvasApp() {
 				context.moveTo(lastPixX,lastPixY)
 
 				tb_beg = ( PlotInfo['TimeRevsUn'][il][ilb] * (lasttime - PlotInfo['TimeShiftNumUn'][il][ilb] / PlotInfo['TimeShiftDenUn'][il][ilb]) +1)
-				ip_beg = (Math.floor(tb_beg*n_pos)+1)%n_pos
+				ip_beg = (Math.floor(tb_beg*n_pos)+1)
 
 				tb_end = ( PlotInfo['TimeRevsUn'][il][ilb] * ((lasttime+tInc) - PlotInfo['TimeShiftNumUn'][il][ilb] / PlotInfo['TimeShiftDenUn'][il][ilb]) +1)
-				ip_end = (Math.floor(tb_end*n_pos)+1)%n_pos
+				ip_end = (Math.floor(tb_end*n_pos)+1)
 
-				if (ip_end < ip_beg) {
-
-					ip_end += n_pos
-
-				}
-
-				for (i = ip_beg ; i < ip_end ; i++){ 
+				for (i = ip_beg ; i != ip_end ; i = i + PlotInfo['TimeRevsUn'][il][ilb]){ 
 
 					ip = i%n_pos
 
@@ -1231,7 +1225,6 @@ function canvasApp() {
 		}
 
 	}
-
 
 	async function LoadGallery() {
 			
