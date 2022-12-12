@@ -74,6 +74,8 @@ var AllPos = []
 var AllPlotInfo = []
 var AllGalleryNames = []
 
+FileSystemAccessSupported = ('showOpenFilePicker' in window)
+
 function AjaxGet(foldername){ return $.ajax({ url: foldername})}
 
 function GetFileBaseExt(filename) {
@@ -176,6 +178,7 @@ function canvasApp() {
 	displayCanvas.addEventListener("RemakeParticlesFromOutsideCanvas", RemakeParticlesFromOutsideCanvasHandler, true);
 	displayCanvas.addEventListener("ChangeColorsFromOutsideCanvas", ChangeColorsFromOutsideCanvasHandler, true);
 	displayCanvas.addEventListener("DrawAllPathsFromOutsideCanvas", DrawAllPathsFromOutsideCanvasHandler, true);
+	displayCanvas.addEventListener("CompleteSetOrbitFromOutsideCanvas", CompleteSetOrbitFromOutsideCanvasHandler, true);
 	
 	var particleLayerCanvas = document.getElementById("particleLayerCanvas");
 	var particleLayerContext = particleLayerCanvas.getContext("2d");
@@ -560,6 +563,10 @@ function canvasApp() {
 
 	}
 
+	function CompleteSetOrbitFromOutsideCanvasHandler(e) {
+		CompleteSetOrbit()
+	}
+
 	function FinalizeAndPlayFromOutsideCanvasHandler(e) {
 
 		UnselectOrbit();
@@ -682,15 +689,15 @@ function canvasApp() {
 	
 	function makeParticles() {
 
-		particles = new Array(PlotInfo['nbody']);
+		particles = new Array(PlotInfo['nbody'])
 
-		CurrentMax_PartRelSize = 0;
+		CurrentMax_PartRelSize = 0
 		
-		var color_method_input = document.getElementById("color_method_input");
+		var color_method_input = document.getElementById("color_method_input")
 
         for ( var il = 0 ; il < PlotInfo['nloop'] ; il++){
 
-			var nlb =  PlotInfo['loopnb'][il];
+			var nlb =  PlotInfo['loopnb'][il]
 			
 			for (var ilb = 0 ; ilb < nlb ; ilb++){
 
@@ -964,17 +971,7 @@ function canvasApp() {
 			particleLayerContext.closePath();
 			particleLayerContext.fill();
 			particleLayerContext.stroke();
-// 			
-// 			if (trajectoriesOn) {
-// 				//trail
-// 				context.strokeStyle = p.trailColor;
-// 				context.lineWidth = p.PartRelSize * base_trailWidth ;
-// 				context.beginPath();
-// 				context.moveTo(lastPixX,lastPixY);
-// 				context.lineTo(pixX, pixY);
-// 				context.stroke();
-// 
-// 			}
+
 		}
 
 	}
@@ -1220,6 +1217,12 @@ function canvasApp() {
 
 		Max_PathLength = PlotInfo["Max_PathLength"]
 
+		CompleteSetOrbit()
+		
+	}
+
+	function CompleteSetOrbit() {
+		
 		clearScreen();
 		FinalizeSetOrbit();
 
@@ -1227,8 +1230,8 @@ function canvasApp() {
 			request = requestAnimationFrame(anim_path_grey);
 		}
 
-		
 	}
+
 
 	async function LoadGallery() {
 			
@@ -1296,7 +1299,7 @@ function canvasApp() {
 			}
 		}
 	}
-
+	
 
 // 
 // 	document.onkeyup = function (event) {
