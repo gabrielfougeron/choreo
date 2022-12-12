@@ -1779,9 +1779,6 @@ async function LoadWorkspaceGallery() {
 
 
 
-
-
-
 function readFileAsText(file) {
     return new Promise((resolve, reject) => {
         const fr = new FileReader();
@@ -1826,104 +1823,82 @@ async function PlayFileFromDisk(name,npy_file,json_file) {
 
 }
 
+async function PlayFileFromRemote(name,npy_file,json_file) {
 
+    PythonPrint({txt:"Playing solution from the gallery: "+name+"&#10;"});
 
+    var displayCanvas = document.getElementById("displayCanvas")
 
+    npyjs_obj = new npyjs()
 
+    let finished_json = fetch(json_file,Gallery_cache_behavior)
+        .then(response => response.text())
+        .then(data => {
+            PlotInfo = JSON.parse(data)
+        })
 
+    let finished_npy = 
+        npyjs_obj.load(npy_file)
+        .then((res) => {
+            Pos = res
+        });
 
+    await Promise.all([finished_npy ,finished_json ])
 
-// 
-// function SaveDefaultGallery(UserDir) {
-// 
-// 
-//     try {
-//         directory = await window.showDirectoryPicker({
-//             startIn: 'desktop'
-//         });
-// 
-//         document.getElementById('folder-info').innerHTML = '<h3>We found these files..<?h3>'
-//         for await (const entry of directory.values()) {
-//             let newEl = document.createElement('div');
-//             newEl.innerHTML = `<strong>${entry.name}</strong> - ${entry.kind}`;
-//             document.getElementById('folder-info').append(newEl);
-//         }
-//         document.getElementById('folder-info-add-new').classList.remove('hidden');
-//     } catch(e) {
-//         console.log(e);
-//     }
-// });
-// 
-// document.getElementById('addAFile').addEventListener('click', async () => {
-//     if(typeof directory !== "undefined") {
-//         if ((await directory.queryPermission()) === 'granted') {
-//             let newFile = await directory.getFileHandle('myFile.html', { create: true });
-//             document.getElementById('file-message').textContent = 'File "myFile.html" has been created!';
-//         }
-//     }
-// 
-// }
+    Max_PathLength = PlotInfo["Max_PathLength"]
+        
+    var event = new Event("CompleteSetOrbitFromOutsideCanvas")
+    displayCanvas.dispatchEvent(event)
 
+}
 
+function MakeDirectoryTree_DefaultGallery(cur_directory,cur_treenode) {
 
+    for (const the_dir of cur_directory.dirs) { 
+
+        var new_node = new TreeNode(the_dir.name,{expanded:false})
+        cur_treenode.addChild(new_node)
+
+        MakeDirectoryTree_DefaultGallery(the_dir,new_node)
+
+    }
+
+    for (const basename in cur_directory.files) {
+
+        var new_node = new TreeNode(basename,{expanded:false})
+        cur_treenode.addChild(new_node)
+
+        new_node.on("click", (e,node)  => PlayFileFromRemote(basename,cur_directory.files[basename]['.npy'],cur_directory.files[basename]['.json']));
+
+    }
+
+}
 
 async function LoadGallery() {
 			
     var gallery_filename = "gallery_descriptor.json"
 
-    var Gallery_description;
-
     await fetch(gallery_filename,Gallery_cache_behavior)
         .then(response => response.text())
         .then(data => {
-            Gallery_description = JSON.parse(data);
+            DefaultGallery_description = JSON.parse(data);
         })
-
-    for (const [name, path] of Object.entries(Gallery_description)) {
-
-            AllPosFilenames.push(path+'.npy');
-            AllPlotInfoFilenames.push(path+'.json');
-            AllGalleryNames.push(name);
-
-    }
-
-
-    console.log(AllPosFilenames)
-
-
-
-    // Load all files asynchronously, keeping promises
-
-    for (var i = 0; i < n_init_gallery_orbits; i++) {
         
-        let npyjs_obj = new npyjs();
+    var DefaultTree = new TreeNode(DefaultGallery_description.name,{expanded:true})
+    MakeDirectoryTree_DefaultGallery(DefaultGallery_description,DefaultTree)
 
-        let finished_npy = 
-            npyjs_obj.load(AllPosFilenames[i])
-            .then((res) => {
-                AllPos[i] = res;
-            });
-
-        let finished_json = 
-            fetch(AllPlotInfoFilenames[i],Gallery_cache_behavior)
-            .then(response => response.text())
-            .then(data => {
-                AllPlotInfo[i] = JSON.parse(data);
-            });
-
-        await Promise.all([finished_npy ,finished_json ])
-
-        if (i==0) {
-
-            // await Promise.all([finished_npy ,finished_json ])
-
-            $('label:first', "#orbitRadio").removeClass('w3-light-grey').addClass('w3-red');
-            setOrbit(0);
-
-            startAnimation();
-
-        }
+    var search_leaf = DefaultTree
+    while (!search_leaf.isLeaf()) {
+        search_leaf.setExpanded(true)
+        search_leaf = search_leaf.getChildren()[0]
     }
+    search_leaf.setEnabled(true)
+    search_leaf.setSelected(true)
+
+    var WorkspaceView = new TreeView(DefaultTree, "#DefaultGalleryContainer",{leaf_icon:" ",parent_icon:" ",show_root:false})
+
+    await search_leaf.getListener("click")()
+
 }
 
 

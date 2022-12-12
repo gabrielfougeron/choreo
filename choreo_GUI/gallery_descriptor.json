@@ -5,6 +5,10 @@
             "name": "Other Choreos",
             "dirs": [],
             "files": {
+                " Figure_eight": {
+                    ".json": "choreo-gallery/Other Choreos/ Figure_eight.json",
+                    ".npy": "choreo-gallery/Other Choreos/ Figure_eight.npy"
+                },
                 "100_bodies": {
                     ".json": "choreo-gallery/Other Choreos/100_bodies.json",
                     ".npy": "choreo-gallery/Other Choreos/100_bodies.npy"
@@ -29,10 +33,6 @@
                         "Complex_symmetry": {
                             ".json": "choreo-gallery/Some Choreos/Yet another/Complex_symmetry.json",
                             ".npy": "choreo-gallery/Some Choreos/Yet another/Complex_symmetry.npy"
-                        },
-                        "Figure_eight": {
-                            ".json": "choreo-gallery/Some Choreos/Yet another/Figure_eight.json",
-                            ".npy": "choreo-gallery/Some Choreos/Yet another/Figure_eight.npy"
                         }
                     }
                 }
