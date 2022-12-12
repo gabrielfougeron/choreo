@@ -239,9 +239,8 @@ def main():
 
     n_optim_param = len(gradtol_list)
     
-    gradtol_max = 100*gradtol_list[n_optim_param-1]
-    # foundsol_tol = 1000*gradtol_list[0]
-    foundsol_tol = 1e10
+    gradtol_max = gradtol_list[n_optim_param-1]
+    foundsol_tol = 1e5
 
     escape_fac = 1e0
 
