@@ -25,7 +25,7 @@ var DownloadTxtFile = (function () {
         url = window.URL.createObjectURL(blob);
         a.href = url;
         a.download = args.filename;
- +       a.click();
+        a.click();
         window.URL.revokeObjectURL(url);
     };
 }());
@@ -81,7 +81,6 @@ async function Play_Loop_From_Python(args){
     Python_State_Div.classList.remove('w3-red');
 }
 
-
 function Python_no_sol_found(args) {
 
 	var displayCanvas = document.getElementById("displayCanvas");
@@ -117,7 +116,6 @@ function Python_no_sol_found(args) {
     Python_State_Div.classList.remove('w3-red');
 
 }
-
 
 async function Set_PlotInfo_From_Python(args){
 
@@ -222,6 +220,9 @@ function  GeomTopTabBtn(TabId) {
         case 'Solver': {
             ClickTopTabBtn('Solver_Output');
             break;}
+        case 'Workspace': {
+            ClickTopTabBtn('Workspace_Setup');
+            break;}
     }
 }
 
@@ -262,10 +263,22 @@ var saveJSONData = (function () {
     };
 }());
 
-function SaveConfigFile(){
+async function SaveConfigFile(UserDir=false){
 
-    var ConfigDict = GatherConfigDict();
-    saveJSONData(ConfigDict, "choreo_config.json");
+    var ConfigDict = GatherConfigDict()
+
+    filename = 'choreo_config.json'
+
+    if (UserDir){
+            
+        ConfigFile = await UserDir.getFileHandle(filename, { create: true })
+        const writable = await ConfigFile.createWritable()
+        await writable.write(JSON.stringify(ConfigDict,null,2))
+        await writable.close()
+
+    } else {
+        saveJSONData(ConfigDict, filename)
+    }
 
 }
 
@@ -318,10 +331,6 @@ function ChoreoExecuteClick() {
         pyodide_worker.postMessage({funname:"ExecutePythonFile",args:"./python_scripts/RunOnce.py"});
 
     }
-
-}
-
-function TestClick() {
 
 }
 
@@ -1583,12 +1592,10 @@ function ClickStateDiv() {
 
 }
 
-let UserDir;
-
-async function ClickSelectFile() {
+async function ClickSetupWorkspace() {
 
     try {
-        UserDir = await window.showDirectoryPicker({
+        UserWorkspace = await window.showDirectoryPicker({
             id : 'ChoreoUserDir',
             mode: 'readwrite' ,
             startIn: 'documents'
@@ -1599,68 +1606,164 @@ async function ClickSelectFile() {
         return
     }
 
-    SaveConfigFile(UserDir)
+    WorkspaceIsSetUp = true
 
-
-    GalleryDir = await UserDir.getDirectoryHandle("Gallery", {create: true});
-    DefaultGalleryDir = await GalleryDir.getDirectoryHandle("Default_Gallery", {create: true});
-
-    n_default_gallery = AllGalleryNames.length
-    for (var i = 0; i< n_default_gallery;i++) {
-
-        filename = AllGalleryNames[i]+'.json'
-        JSONFile = await DefaultGalleryDir.getFileHandle(filename, { create: true })
-        writable = await JSONFile.createWritable()
-        await writable.write(JSON.stringify(AllPlotInfo[i],null,2))
-        await writable.close()
-
-        filename = AllGalleryNames[i]+'.npy'
-        NPYFile = await DefaultGalleryDir.getFileHandle(filename, { create: true })
-        writable = await NPYFile.createWritable()
-        buf = await ndarray_tobuffer(AllPos[i])
-        await writable.write(buf)
-        await writable.close()
-    }
-
-
-
-    // AllPos = new Array(n_init_gallery_orbits);
-    // AllPlotInfo = new Array(n_init_gallery_orbits);
-
-
-// 	function setOrbit(orbitIndex) {
+//     SaveConfigFile(UserWorkspace)
 // 
-// 		PythonPrint({txt:"Playing solution from the gallery: "+AllGalleryNames[orbitIndex]+"&#10;"});
-// 		
-// 		Pos = AllPos[orbitIndex];
-// 		PlotInfo = AllPlotInfo[orbitIndex];
+//     GalleryDir = await UserWorkspace.getDirectoryHandle("Gallery", {create: true});
+//     DefaultGalleryDir = await GalleryDir.getDirectoryHandle("Default_Gallery", {create: true});
 // 
-// 		Max_PathLength = PlotInfo["Max_PathLength"]
+//     n_default_gallery = AllGalleryNames.length
+//     for (var i = 0; i< n_default_gallery;i++) {
 // 
-// 		clearScreen();
-// 		FinalizeSetOrbit();
+//         filename = AllGalleryNames[i]+'.json'
+//         JSONFile = await DefaultGalleryDir.getFileHandle(filename, { create: true })
+//         writable = await JSONFile.createWritable()
+//         await writable.write(JSON.stringify(AllPlotInfo[i],null,2))
+//         await writable.close()
 // 
-// 		if (trajectoriesOn && document.getElementById('checkbox_DisplayLoopOnGalleryLoad').checked){
-// 			request = requestAnimationFrame(anim_path_grey);
-// 		}
-// 		
-// 	}
+//         filename = AllGalleryNames[i]+'.npy'
+//         NPYFile = await DefaultGalleryDir.getFileHandle(filename, { create: true })
+//         writable = await NPYFile.createWritable()
+//         buf = await ndarray_tobuffer(AllPos[i])
+//         await writable.write(buf)
+//         await writable.close()
+//     }
 
-
-
-
-    
+    ClickReloadWorkspaceGallery()
 
 }
 
-
-async function WalkDirectory(directory) {
+async function WalkDirectory(directory,dir_callable,file_callable) {
 
     for await (const entry of directory.values()) {
-        console.log(entry);
+        if (entry.kind == "directory") {
+
+            dir_callable(entry)
+
+            WalkDirectory(await directory.getDirectoryHandle(entry.name),dir_callable,file_callable)
+            
+        } else if (entry.kind == "file") {
+
+            file_callable(entry)
+
+        }
     }
 
 }
+// 
+// async function WalkDirectory(directory,dir_callable,file_callable) {
+// 
+//     for await (const entry of directory.values()) {
+//         if (entry.kind == "directory") {
+// 
+//             dir_callable(entry)
+// 
+//             WalkDirectory(await directory.getDirectoryHandle(entry.name),dir_callable,file_callable)
+//             
+//         } else if (entry.kind == "file") {
+// 
+//             file_callable(entry)
+// 
+//         }
+//     }
+// 
+// }
+// 
+function print_toto(e,node) { console.log("toto") }
+// 
+// function treat_dir(parent,dir) { 
+// 
+// }
+// 
+// function treat_file(parent,file) {  
+//     if (file.name.endsWith(".npy")) {
+//         console.log(file.name)
+//     }
+// }
+// 
+
+function PlayFileFromDisk(file) {
+
+}
+
+
+async function MakeDirectoryTree(cur_directory,cur_treenode) {
+
+    for await (const entry of cur_directory.values()) {
+
+        var files_here = {}
+
+        if (entry.kind == "directory") {
+            
+            var new_node = new TreeNode(entry.name,{expanded:false})
+            cur_treenode.addChild(new_node)
+
+            await MakeDirectoryTree(await cur_directory.getDirectoryHandle(entry.name),new_node)
+            
+        } else if (entry.kind == "file") {
+
+//             if (entry.name.endsWith(".npy")) {
+//                 
+//                 basename = entry.name.replace(".npy","")
+// 
+//                 // Locate corresponding *.npy
+//                 
+// 
+// 
+//                 var new_node = new TreeNode(basename)
+//                 
+//                 // new_node.on("click", (e,n) => console.log(entry));
+//                 new_node.on("click", (e,n) => console.log(cur_directory.values()));
+//                 
+//                 cur_treenode.addChild(new_node)
+//             }
+
+
+            for (const ext of [".npy",".json"]) {
+
+                if (entry.name.endsWith(ext)) {
+                    
+                    basename = entry.name.replace(ext,"")
+
+                    if (!(basename in files_here)) {
+                        files_here[basename] = {}
+                    }
+
+                    files_here[basename][ext] = entry
+                    
+                } 
+
+            } 
+
+        }
+
+        for (const basename in files_here) {
+
+
+
+            
+        }
+
+    }
+
+}
+
+async function ClickReloadWorkspaceGallery() {
+
+    if (WorkspaceIsSetUp) {
+        
+        var WorkspaceTree = new TreeNode(UserWorkspace.name,{expanded:true})
+        // WorkspaceTree.setExpanded(true)
+        await MakeDirectoryTree(UserWorkspace,WorkspaceTree)
+
+        var WorkspaceView = new TreeView(WorkspaceTree, "#WorkspaceGalleryContainer",{leaf_icon:" ",parent_icon:" ",show_root:false})
+
+    }
+
+}
+
+
 
 
 
