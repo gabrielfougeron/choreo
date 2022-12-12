@@ -44,6 +44,12 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install pyodide-build==0.21.0
+    #
+    - name: Make Gallery Descriptor 
+      run: |
+        cd choreo_GUI
+        python MakeGalleryDescriptor.py
+        cd ..
     # 
     - name: Build for Ubuntu
       run: |
