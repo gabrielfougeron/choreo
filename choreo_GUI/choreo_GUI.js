@@ -37,6 +37,7 @@ async function Play_Loop_From_Python(args){
     var event = new Event('StopAnimationFromOutsideCanvas')
     displayCanvas.dispatchEvent(event)
 
+    SolName = "User generated solution"
     var txt = await args.JSON_data.text()
     PlotInfo = JSON.parse(txt)
     UpdateNowPlaying()
@@ -122,6 +123,7 @@ function Python_no_sol_found(args) {
 async function Set_PlotInfo_From_Python(args){
 
     var txt = await args.JSON_data.text()
+    SolName = "Search in progress"
     PlotInfo = JSON.parse(txt)
     UpdateNowPlaying(SearchOnGoing=true)
 
@@ -223,8 +225,8 @@ function  GeomTopTabBtn(TabId) {
         case 'Solver': {
             ClickTopTabBtn('Solver_Output');
             break;}
-        case 'Workspace': {
-            ClickTopTabBtn('Workspace_Setup');
+        case 'Misc': {
+            ClickTopTabBtn('Misc_Save_Config');
             break;}
     }
 }
@@ -1741,9 +1743,9 @@ function readFileAsArrayBuffer(file) {
 
 async function PlayFileFromDisk(name,npy_file,json_file) {
 
-    PythonPrint({txt:"Playing solution from the gallery: "+name+"&#10;"});
-
     var displayCanvas = document.getElementById("displayCanvas")
+
+    SolName = name
     
     const PlotInfoFile = await json_file.getFile()
     PlotInfo = JSON.parse(await readFileAsText(PlotInfoFile))
@@ -1762,10 +1764,6 @@ async function PlayFileFromDisk(name,npy_file,json_file) {
 
 async function PlayFileFromRemote(name,npy_file,json_file) {
 
-    PythonPrint({txt:"Playing solution from the gallery: "+name+"&#10;"});
-
-    var displayCanvas = document.getElementById("displayCanvas")
-
     npyjs_obj = new npyjs()
 
     let finished_json = fetch(json_file,Gallery_cache_behavior)
@@ -1779,6 +1777,9 @@ async function PlayFileFromRemote(name,npy_file,json_file) {
         .then((res) => {
             Pos = res
         });
+
+    var displayCanvas = document.getElementById("displayCanvas")
+    SolName = name
 
     await Promise.all([finished_npy ,finished_json ])
 
@@ -1841,11 +1842,13 @@ async function LoadDefaultGallery() {
 
 function UpdateNowPlaying(SearchOnGoing=false) {
 
+    var NP_name = document.getElementById("NP_name")
     var NP_nbody = document.getElementById("NP_nbody")
     var NP_nloop = document.getElementById("NP_nloop")
     var NP_mass = document.getElementById("NP_mass")
 
     var NP_Newton_Error = document.getElementById("NP_Newton_Error")
+    var NP_n_Fourier = document.getElementById("NP_n_Fourier")
     
     nloop = PlotInfo["nloop"]
     loop_mass = PlotInfo["mass"][PlotInfo["Targets"][0][0]].toString()
@@ -1853,6 +1856,7 @@ function UpdateNowPlaying(SearchOnGoing=false) {
         loop_mass = loop_mass + ", " + PlotInfo["mass"][PlotInfo["Targets"][il][0]].toString()
     }
 
+    NP_name.innerHTML = SolName
     NP_nbody.innerHTML = PlotInfo["nbody"].toString()
     NP_nloop.innerHTML = nloop.toString()
     NP_mass.innerHTML = loop_mass
@@ -1860,11 +1864,12 @@ function UpdateNowPlaying(SearchOnGoing=false) {
     if (SearchOnGoing) {
 
         NP_Newton_Error.innerHTML = "Search in progress"
+        NP_n_Fourier.innerHTML = "Search in progress"
 
     } else {
 
-
         NP_Newton_Error.innerHTML = PlotInfo["Newton_Error"].toString()
+        NP_n_Fourier.innerHTML = PlotInfo["n_Fourier"].toString()
 
     }
 
