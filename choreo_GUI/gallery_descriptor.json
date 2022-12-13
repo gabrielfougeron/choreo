@@ -1,62 +1,100 @@
 {
-    "name": "choreo-gallery",
-    "dirs": [],
-    "files": {
-        "01 - Figure eight": {
-            ".json": "choreo-gallery/01 - Figure eight.json",
-            ".npy": "choreo-gallery/01 - Figure eight.npy"
+    "dirs": [
+        {
+            "dirs": [],
+            "files": {
+                "01 - Figure eight": {
+                    ".json": "choreo-gallery/01 - Classic gallery/01 - Figure eight.json",
+                    ".npy": "choreo-gallery/01 - Classic gallery/01 - Figure eight.npy"
+                },
+                "02 - Celtic knot": {
+                    ".json": "choreo-gallery/01 - Classic gallery/02 - Celtic knot.json",
+                    ".npy": "choreo-gallery/01 - Classic gallery/02 - Celtic knot.npy"
+                },
+                "03 - Trefoil": {
+                    ".json": "choreo-gallery/01 - Classic gallery/03 - Trefoil.json",
+                    ".npy": "choreo-gallery/01 - Classic gallery/03 - Trefoil.npy"
+                },
+                "04 - 5 pointed star": {
+                    ".json": "choreo-gallery/01 - Classic gallery/04 - 5 pointed star.json",
+                    ".npy": "choreo-gallery/01 - Classic gallery/04 - 5 pointed star.npy"
+                },
+                "05 - Three petal flower": {
+                    ".json": "choreo-gallery/01 - Classic gallery/05 - Three petal flower.json",
+                    ".npy": "choreo-gallery/01 - Classic gallery/05 - Three petal flower.npy"
+                },
+                "06 - 5-chain": {
+                    ".json": "choreo-gallery/01 - Classic gallery/06 - 5-chain.json",
+                    ".npy": "choreo-gallery/01 - Classic gallery/06 - 5-chain.npy"
+                },
+                "07 - No symmetry": {
+                    ".json": "choreo-gallery/01 - Classic gallery/07 - No symmetry.json",
+                    ".npy": "choreo-gallery/01 - Classic gallery/07 - No symmetry.npy"
+                },
+                "08 - 2x3 Circles": {
+                    ".json": "choreo-gallery/01 - Classic gallery/08 - 2x3 Circles.json",
+                    ".npy": "choreo-gallery/01 - Classic gallery/08 - 2x3 Circles.npy"
+                },
+                "09 - 3x2 Circles": {
+                    ".json": "choreo-gallery/01 - Classic gallery/09 - 3x2 Circles.json",
+                    ".npy": "choreo-gallery/01 - Classic gallery/09 - 3x2 Circles.npy"
+                },
+                "10 - Complex symmetry": {
+                    ".json": "choreo-gallery/01 - Classic gallery/10 - Complex symmetry.json",
+                    ".npy": "choreo-gallery/01 - Classic gallery/10 - Complex symmetry.npy"
+                },
+                "11 - Resonating loops": {
+                    ".json": "choreo-gallery/01 - Classic gallery/11 - Resonating loops.json",
+                    ".npy": "choreo-gallery/01 - Classic gallery/11 - Resonating loops.npy"
+                },
+                "12 - Big mass gap": {
+                    ".json": "choreo-gallery/01 - Classic gallery/12 - Big mass gap.json",
+                    ".npy": "choreo-gallery/01 - Classic gallery/12 - Big mass gap.npy"
+                },
+                "13 - 100 bodies": {
+                    ".json": "choreo-gallery/01 - Classic gallery/13 - 100 bodies.json",
+                    ".npy": "choreo-gallery/01 - Classic gallery/13 - 100 bodies.npy"
+                },
+                "14 - Small mass gap": {
+                    ".json": "choreo-gallery/01 - Classic gallery/14 - Small mass gap.json",
+                    ".npy": "choreo-gallery/01 - Classic gallery/14 - Small mass gap.npy"
+                }
+            },
+            "name": "01 - Classic gallery"
         },
-        "02 - Celtic knot": {
-            ".json": "choreo-gallery/02 - Celtic knot.json",
-            ".npy": "choreo-gallery/02 - Celtic knot.npy"
-        },
-        "03 - Trefoil": {
-            ".json": "choreo-gallery/03 - Trefoil.json",
-            ".npy": "choreo-gallery/03 - Trefoil.npy"
-        },
-        "04 - 5 pointed star": {
-            ".json": "choreo-gallery/04 - 5 pointed star.json",
-            ".npy": "choreo-gallery/04 - 5 pointed star.npy"
-        },
-        "05 - Three petal flower": {
-            ".json": "choreo-gallery/05 - Three petal flower.json",
-            ".npy": "choreo-gallery/05 - Three petal flower.npy"
-        },
-        "06 - 5-chain": {
-            ".json": "choreo-gallery/06 - 5-chain.json",
-            ".npy": "choreo-gallery/06 - 5-chain.npy"
-        },
-        "07 - No symmetry": {
-            ".json": "choreo-gallery/07 - No symmetry.json",
-            ".npy": "choreo-gallery/07 - No symmetry.npy"
-        },
-        "08 - 2x3 Circles": {
-            ".json": "choreo-gallery/08 - 2x3 Circles.json",
-            ".npy": "choreo-gallery/08 - 2x3 Circles.npy"
-        },
-        "09 - 3x2 Circles": {
-            ".json": "choreo-gallery/09 - 3x2 Circles.json",
-            ".npy": "choreo-gallery/09 - 3x2 Circles.npy"
-        },
-        "10 - Complex symmetry": {
-            ".json": "choreo-gallery/10 - Complex symmetry.json",
-            ".npy": "choreo-gallery/10 - Complex symmetry.npy"
-        },
-        "11 - Resonating loops": {
-            ".json": "choreo-gallery/11 - Resonating loops.json",
-            ".npy": "choreo-gallery/11 - Resonating loops.npy"
-        },
-        "12 - Big mass gap": {
-            ".json": "choreo-gallery/12 - Big mass gap.json",
-            ".npy": "choreo-gallery/12 - Big mass gap.npy"
-        },
-        "13 - 100 bodies": {
-            ".json": "choreo-gallery/13 - 100 bodies.json",
-            ".npy": "choreo-gallery/13 - 100 bodies.npy"
-        },
-        "14 - Small mass gap": {
-            ".json": "choreo-gallery/14 - Small mass gap.json",
-            ".npy": "choreo-gallery/14 - Small mass gap.npy"
+        {
+            "dirs": [
+                {
+                    "dirs": [],
+                    "files": {
+                        "01": {
+                            ".json": "choreo-gallery/02 - Helpers/01 - Circles/01.json",
+                            ".npy": "choreo-gallery/02 - Helpers/01 - Circles/01.npy"
+                        },
+                        "02": {
+                            ".json": "choreo-gallery/02 - Helpers/01 - Circles/02.json",
+                            ".npy": "choreo-gallery/02 - Helpers/01 - Circles/02.npy"
+                        },
+                        "03": {
+                            ".json": "choreo-gallery/02 - Helpers/01 - Circles/03.json",
+                            ".npy": "choreo-gallery/02 - Helpers/01 - Circles/03.npy"
+                        },
+                        "04": {
+                            ".json": "choreo-gallery/02 - Helpers/01 - Circles/04.json",
+                            ".npy": "choreo-gallery/02 - Helpers/01 - Circles/04.npy"
+                        },
+                        "05": {
+                            ".json": "choreo-gallery/02 - Helpers/01 - Circles/05.json",
+                            ".npy": "choreo-gallery/02 - Helpers/01 - Circles/05.npy"
+                        }
+                    },
+                    "name": "01 - Circles"
+                }
+            ],
+            "files": {},
+            "name": "02 - Helpers"
         }
-    }
+    ],
+    "files": {},
+    "name": "choreo-gallery"
 }
