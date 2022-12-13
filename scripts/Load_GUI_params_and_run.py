@@ -26,7 +26,8 @@ def main():
     np.random.seed(int(time.time()*10000) % 5000)
     
     # params_filename = os.path.join(__PROJECT_ROOT__,"choreo_config.json")
-    params_filename = "/mnt/c/Users/gabri/OneDrive/Documents/Choreo_GUI_DIR/choreo_config.json"
+    # params_filename = "/mnt/c/Users/gabri/OneDrive/Documents/Choreo_GUI_DIR/choreo_config.json"
+    params_filename = "Sniff_all_sym/choreo_config.json"
 
     with open(params_filename) as jsonFile:
         params_dict = json.load(jsonFile)

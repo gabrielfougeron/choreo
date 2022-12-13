@@ -1498,19 +1498,19 @@ function DealWithCookie() {
 }
 
 function LoadCookie(name) {
-let head = name + "=";
-let decodedCookie = decodeURIComponent(document.cookie);
-let ca = decodedCookie.split(';');
-for(let i = 0; i <ca.length; i++) {
-    let c = ca[i];
-    while (c.charAt(0) == ' ') {
-    c = c.substring(1);
+    let head = name + "="
+    let decodedCookie = decodeURIComponent(document.cookie)
+    let ca = decodedCookie.split(';')
+    for(let i = 0; i <ca.length; i++) {
+        let c = ca[i]
+        while (c.charAt(0) == ' ') {
+        c = c.substring(1)
+        }
+        if (c.indexOf(head) == 0) {
+        return c.substring(head.length, c.length)
+        }
     }
-    if (c.indexOf(head) == 0) {
-    return c.substring(head.length, c.length);
-    }
-}
-return "";
+    return ""
 }
 
 function DeleteCookie(name) {
@@ -1521,7 +1521,7 @@ function DeleteCookie(name) {
     }
 }
 
-Python_textarea = document.getElementById("Python_textarea");
+Python_textarea = document.getElementById("Python_textarea")
 
 function PythonClearPrints() {
     Python_textarea.innerHTML = "";
@@ -1543,10 +1543,9 @@ function PythonPrint(args) {
 var checkbox_DisplayLoopsDuringSearch = document.getElementById('checkbox_DisplayLoopsDuringSearch');
 checkbox_DisplayLoopsDuringSearch.addEventListener("change", checkbox_DisplayLoopsDuringSearchHandler, true);
 
-var checkbox_DisplayBodiesDuringSearch = document.getElementById('checkbox_DisplayBodiesDuringSearch');
-checkbox_DisplayBodiesDuringSearch.addEventListener("change", checkbox_DisplayBodiesDuringSearchHandler, true);
-
 function checkbox_DisplayLoopsDuringSearchHandler(event) {
+
+    var checkbox_DisplayBodiesDuringSearch = document.getElementById('checkbox_DisplayBodiesDuringSearch');
 
     if (event.currentTarget.checked) {
 
@@ -1558,10 +1557,6 @@ function checkbox_DisplayLoopsDuringSearchHandler(event) {
         checkbox_DisplayBodiesDuringSearch.disabled = "disabled";
         
     }
-
-}
-
-function checkbox_DisplayBodiesDuringSearchHandler(event) {
 
 }
 
@@ -1628,28 +1623,8 @@ async function ClickSetupWorkspace() {
 
     WorkspaceIsSetUp = true
 
-    //     SaveConfigFile(UserWorkspace)
-    // 
-    //     GalleryDir = await UserWorkspace.getDirectoryHandle("Gallery", {create: true});
-    //     DefaultGalleryDir = await GalleryDir.getDirectoryHandle("Default_Gallery", {create: true});
-    // 
-    //     n_default_gallery = AllGalleryNames.length
-    //     for (var i = 0; i< n_default_gallery;i++) {
-    // 
-    //         filename = AllGalleryNames[i]+'.json'
-    //         JSONFile = await DefaultGalleryDir.getFileHandle(filename, { create: true })
-    //         writable = await JSONFile.createWritable()
-    //         await writable.write(JSON.stringify(AllPlotInfo[i],null,2))
-    //         await writable.close()
-    // 
-    //         filename = AllGalleryNames[i]+'.npy'
-    //         NPYFile = await DefaultGalleryDir.getFileHandle(filename, { create: true })
-    //         writable = await NPYFile.createWritable()
-    //         buf = await ndarray_tobuffer(AllPos[i])
-    //         await writable.write(buf)
-    //         await writable.close()
-    //     }
-
+    SaveConfigFile(UserWorkspace)
+    
     LoadWorkspaceGallery()
 
 }
