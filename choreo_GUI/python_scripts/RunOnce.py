@@ -322,6 +322,7 @@ def main():
             funname = "Play_Loop_From_Python",
             args    = pyodide.ffi.to_js(
                 {
+                    "solname":"User generated solution",
                     "JSON_data":blob,
                     "NPY_data":all_pos.reshape(-1),
                     "NPY_shape":all_pos.shape,
@@ -335,7 +336,6 @@ def main():
     else:
 
         print("Solver did not find a solution.")
-
 
         js.postMessage(
             funname = "Python_no_sol_found",
