@@ -15,6 +15,7 @@ import math as m
 import numpy as np
 import sys
 import fractions
+import json
 
 __PROJECT_ROOT__ = os.path.abspath(os.path.join(os.path.dirname(__file__),os.pardir))
 sys.path.append(__PROJECT_ROOT__)
@@ -30,22 +31,72 @@ def main(the_i=0):
     LookForTarget = True
     
 
-    slow_base_filename = './choreo-gallery/02 - Helpers/01 - Circles/02.npy'
+    slow_base_filename = './choreo_GUI/choreo-gallery/02 - Helpers/01 - Circles/01'
+    # slow_base_filename = './choreo_GUI/choreo-gallery/02 - Helpers/01 - Circles/02'
 
 
-    fast_base_filename_list = ['./choreo-gallery/02 - Helpers/01 - Circles/02.npy'   ] 
+    # fast_base_filename_list = ['./choreo_GUI/choreo-gallery/02 - Helpers/01 - Circles/02'   ] 
 
-    # fast_base_filename_list = ['./data/2_cercle.npy','./data/2_cercle.npy'    ] 
-    # fast_base_filename_list = ['./data/3_cercle.npy' ,'./data/3_cercle.npy'     ] 
-    # fast_base_filename_list = ['./data/2_cercle.npy','./data/3_huit.npy'    ] 
-    # fast_base_filename_list = ['./data/1_lone_wolf.npy','./data/1_lone_wolf.npy'    ] 
+    fast_base_filename_list = [
+        # './choreo_GUI/choreo-gallery/02 - Helpers/01 - Circles/01',
+        './choreo_GUI/choreo-gallery/02 - Helpers/01 - Circles/02',
+        ] 
+
     
+
+
+
+    Info_slow_filename = slow_base_filename + '.json'
+
+    with open(Info_slow_filename,'r') as jsonFile:
+        Info_dict_slow = json.load(jsonFile)
+
+    input_slow_filename = slow_base_filename + '.npy'
+
+    all_pos_slow = np.load(input_slow_filename)
+    nint_slow = Info_dict_slow["n_int"]
+
+    c_coeffs_slow = choreo.the_rfft(all_pos_slow,n=nint_slow,axis=2,norm="forward")
+    all_coeffs_slow_load = np.zeros((Info_dict_slow["nloop"],choreo.ndim,Info_dict_slow["n_Fourier"],2),dtype=np.float64)
+    all_coeffs_slow_load[:,:,:,0] = c_coeffs_slow[:,:,0:Info_dict_slow["n_Fourier"]].real
+    all_coeffs_slow_load[:,:,:,1] = c_coeffs_slow[:,:,0:Info_dict_slow["n_Fourier"]].imag
+
+    all_coeffs_fast_list = []
+    for fast_base_filename in fast_base_filename_list :
+
+        Info_fast_filename = fast_base_filename + '.json'
+
+        with open(Info_fast_filename,'r') as jsonFile:
+            Info_dict_fast = json.load(jsonFile)
+
+        input_fast_filename = fast_base_filename + '.npy'
+
+        all_pos_fast = np.load(input_fast_filename)
+
+        nint_fast = Info_dict_fast["n_int"]
+
+        c_coeffs_fast = choreo.the_rfft(all_pos_fast,n=nint_fast,axis=2,norm="forward")
+        all_coeffs_fast = np.zeros((Info_dict_fast["nloop"],choreo.ndim,Info_dict_fast["n_Fourier"],2),dtype=np.float64)
+        all_coeffs_fast[:,:,:,0] = c_coeffs_fast[:,:,0:Info_dict_fast["n_Fourier"]].real
+        all_coeffs_fast[:,:,:,1] = c_coeffs_fast[:,:,0:Info_dict_fast["n_Fourier"]].imag
+
+        all_coeffs_fast_list.append(all_coeffs_fast)
+
+
+
+
+
+
+
+
+
+
     nfl = len(fast_base_filename_list)
 
-    mass_mul = [2]
-    nTf = [13]
-    nbs = [2]
-    nbf = [3]
+    mass_mul = [1]
+    nTf = [1]
+    nbs = [1]
+    nbf = [2]
 
     epsmul = 0.
 
@@ -72,8 +123,8 @@ def main(the_i=0):
     # Remove_Choreo_Sym = [False,False]
     # Remove_Choreo_Sym = [False,False]
 
-    Rotate_fast_with_slow = True
-    # Rotate_fast_with_slow = False
+    # Rotate_fast_with_slow = True
+    Rotate_fast_with_slow = False
     # Rotate_fast_with_slow = (np.random.random() > 1./2.)
 
     # Optimize_Init = True
@@ -83,14 +134,15 @@ def main(the_i=0):
     Randomize_Fast_Init = True
     # Randomize_Fast_Init = False
 
-    all_coeffs_slow_load = np.load(slow_base_filename)
+    
+
+
     all_coeffs_fast_load_list = []
 
     nbpl=[]
     mass = []
     for i in range(nfl):
-        fast_base_filename = fast_base_filename_list[i]
-        all_coeffs_fast_load = np.load(fast_base_filename)
+        all_coeffs_fast_load = all_coeffs_fast_list[i]
 
         if Remove_Choreo_Sym[i]:
             
@@ -170,8 +222,8 @@ def main(the_i=0):
     Save_img = True
     # Save_img = False
 
-    Save_thumb = True
-    # Save_thumb = False
+    # Save_thumb = True
+    Save_thumb = False
 
     # img_size = (12,12) # Image size in inches
     img_size = (8,8) # Image size in inches
@@ -186,6 +238,9 @@ def main(the_i=0):
 
     Save_anim = True
     # Save_anim = False
+
+    Save_All_Coeffs = False
+    Save_All_Pos = True
 
     vid_size = (8,8) # Image size in inches
     nint_plot_anim = 2*2*2*3*3*5 
@@ -242,6 +297,8 @@ def main(the_i=0):
 
     # line_search = 'armijo'
     line_search = 'wolfe'
+ 
+    linesearch_smin = 1e-1
     
     gradtol_list =          [1e-3   ,1e-5   ,1e-7   ,1e-9   ,1e-11  ,1e-13  ,1e-15  ]
     inner_maxiter_list =    [30     ,50     ,60     ,70     ,80     ,100    ,100    ]
@@ -280,9 +337,14 @@ def main(the_i=0):
     hash_dict = {}
 
     n_opt = 0
-    n_opt_max = 1
-    # n_opt_max = 5
+    # n_opt_max = 1
+    n_opt_max = 5
     # n_opt_max = 0
+    n_find_max = 1
+
+    mul_coarse_to_fine = 3
+
+    plot_extend = 0.
 
     all_kwargs = choreo.Pick_Named_Args_From_Dict(choreo.Find_Choreo,dict(globals(),**locals()))
     
@@ -291,7 +353,7 @@ def main(the_i=0):
 if __name__ == "__main__":
     main(0)
   
-
+# 
 # if __name__ == "__main__":
 # 
 #     n = multiprocessing.cpu_count()
