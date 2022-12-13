@@ -37,7 +37,7 @@ for (dirpath, dirnames, filenames) in os.walk(gallery_root):
     else:
         Gallery_dict = folder_dict
 
-jsonString = json.dumps(Gallery_dict, indent=4, sort_keys=False)
+jsonString = json.dumps(Gallery_dict, indent=4, sort_keys=True)
 
 
 with open(out_filename, "w") as jsonFile:
