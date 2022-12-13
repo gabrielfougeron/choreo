@@ -307,7 +307,6 @@ def Find_Choreo(
 
                 AskedForNext = (info['status'] == 0)
 
-                
             except Exception as exc:
                 
                 print(exc)
