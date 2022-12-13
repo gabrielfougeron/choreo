@@ -31,15 +31,17 @@ def main(the_i=0):
     LookForTarget = True
     
 
-    slow_base_filename = './choreo_GUI/choreo-gallery/02 - Helpers/01 - Circles/01'
+    # slow_base_filename = './choreo_GUI/choreo-gallery/02 - Helpers/01 - Circles/01'
     # slow_base_filename = './choreo_GUI/choreo-gallery/02 - Helpers/01 - Circles/02'
-
+    slow_base_filename = './choreo_GUI/choreo-gallery/01 - Classic gallery/01 - Figure eight'
 
     # fast_base_filename_list = ['./choreo_GUI/choreo-gallery/02 - Helpers/01 - Circles/02'   ] 
 
     fast_base_filename_list = [
         # './choreo_GUI/choreo-gallery/02 - Helpers/01 - Circles/01',
-        './choreo_GUI/choreo-gallery/02 - Helpers/01 - Circles/02',
+        # './choreo_GUI/choreo-gallery/02 - Helpers/01 - Circles/02',
+        # './choreo_GUI/choreo-gallery/02 - Helpers/01 - Circles/03',
+        './choreo_GUI/choreo-gallery/01 - Classic gallery/01 - Figure eight'
         ] 
 
     
@@ -87,16 +89,12 @@ def main(the_i=0):
 
 
 
-
-
-
-
     nfl = len(fast_base_filename_list)
 
     mass_mul = [1]
-    nTf = [1]
-    nbs = [1]
-    nbf = [2]
+    nTf = [37]
+    nbs = [3]
+    nbf = [3]
 
     epsmul = 0.
 
@@ -112,12 +110,11 @@ def main(the_i=0):
     # nbs = [1,1]
     # nbf = [2,3]
 
-    mul_loops_ini = True
-    # mul_loops_ini = False
+    # mul_loops_ini = True
+    mul_loops_ini = False
     # mul_loops_ini = (np.random.random() > 1./2.)
     
     mul_loops = [mul_loops_ini for _ in range(nfl)]
-
 
     Remove_Choreo_Sym = mul_loops
     # Remove_Choreo_Sym = [False,False]
@@ -193,7 +190,7 @@ def main(the_i=0):
 #             ))
 # 
 
-#     MomConsImposed = True
+    # MomConsImposed = True
     MomConsImposed = False
 
     store_folder = './Target_res/'
@@ -272,9 +269,10 @@ def main(the_i=0):
     # ncoeff_init = 201   
     # ncoeff_init = 300   
     # ncoeff_init = 600
-    ncoeff_init = 900
+    # ncoeff_init = 900
     # ncoeff_init = 1800
     # ncoeff_init = 3600
+    ncoeff_init = 7200
     # ncoeff_init = 1206
     # ncoeff_init = 90
 
@@ -283,7 +281,7 @@ def main(the_i=0):
     
     max_norm_on_entry = 1e20
 
-    Newt_err_norm_max = 1e-10
+    Newt_err_norm_max = 1e-11
     # Newt_err_norm_max_save = Newt_err_norm_max*1000
     Newt_err_norm_max_save = 1e-1
 
@@ -297,8 +295,10 @@ def main(the_i=0):
 
     # line_search = 'armijo'
     line_search = 'wolfe'
+    # line_search = 'none'
  
     linesearch_smin = 1e-1
+    # linesearch_smin = 1.
     
     gradtol_list =          [1e-3   ,1e-5   ,1e-7   ,1e-9   ,1e-11  ,1e-13  ,1e-15  ]
     inner_maxiter_list =    [30     ,50     ,60     ,70     ,80     ,100    ,100    ]
@@ -349,24 +349,24 @@ def main(the_i=0):
     all_kwargs = choreo.Pick_Named_Args_From_Dict(choreo.Find_Choreo,dict(globals(),**locals()))
     
     choreo.Find_Choreo(**all_kwargs)
+# # 
+# if __name__ == "__main__":
+#     main(0)
+#   
 # 
 if __name__ == "__main__":
-    main(0)
-  
-# 
-# if __name__ == "__main__":
-# 
-#     n = multiprocessing.cpu_count()
-#     # n = 2
-#     
-#     print(f"Executing with {n} workers")
-#     
-#     
-#     with concurrent.futures.ProcessPoolExecutor(max_workers=n) as executor:
-#         
-#         res = []
-#         for i in range(1,n+1):
-#             res.append(executor.submit(main,i))
-#             time.sleep(0.01)
+
+    # n = multiprocessing.cpu_count()
+    n = 4
+    
+    print(f"Executing with {n} workers")
+    
+    
+    with concurrent.futures.ProcessPoolExecutor(max_workers=n) as executor:
+        
+        res = []
+        for i in range(1,n+1):
+            res.append(executor.submit(main,i))
+            time.sleep(0.01)
 # 
 #  
