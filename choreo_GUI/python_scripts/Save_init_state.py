@@ -235,6 +235,7 @@ def main():
             funname = "Play_Loop_From_Python",
             args    = pyodide.ffi.to_js(
                 {
+                    "solname":"Non-solution initial state",
                     "JSON_data":blob,
                     "NPY_data":all_pos.reshape(-1),
                     "NPY_shape":all_pos.shape,
@@ -244,8 +245,6 @@ def main():
                 dict_converter=js.Object.fromEntries
             )
         )
-
-        print("Non-solution initial state playing.\n")
         
     else :
 

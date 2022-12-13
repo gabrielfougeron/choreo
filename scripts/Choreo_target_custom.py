@@ -22,16 +22,7 @@ sys.path.append(__PROJECT_ROOT__)
 import choreo 
 
 def main(the_i=0):
-    
-    # if (the_i != 0):
-    #     
-    #     preprint_msg = str(the_i).zfill(2)+' : '
-    # 
-    #     def print(*args, **kwargs):
-    #         """My custom print() function."""
-    #         builtins.print(preprint_msg,end='')
-    #         return builtins.print(*args, **kwargs)
-    # 
+
     file_basename = ''
     
     np.random.seed(int(time.time()*10000) % 5000)
@@ -39,43 +30,22 @@ def main(the_i=0):
     LookForTarget = True
     
 
-    # slow_base_filename = './data/1_lone_wolf.npy'
-    # slow_base_filename = './data/1_1_short_ellipse.npy'
-    # slow_base_filename = './data/1_1_long_ellipse.npy'
-    slow_base_filename = './data/1_1_cercle.npy'
-    # slow_base_filename = './data/2_cercle.npy'
-    # slow_base_filename = './data/3_cercle.npy'
-    # slow_base_filename = './data/3_huit.npy'
-    # slow_base_filename = './data/3_heart.npy'
-    # slow_base_filename = './data/4_trefoil.npy'
-    # slow_base_filename = './data/1x4_trefoil.npy'
+    slow_base_filename = './choreo-gallery/02 - Helpers/01 - Circles/02.npy'
 
 
-    # fast_base_filename_list = ['./data/1_lone_wolf.npy'    ] 
-    # fast_base_filename_list = ['./data/2_cercle.npy'       ]
-    # fast_base_filename_list = ['./data/3_cercle.npy'       ]
-    # fast_base_filename_list = ['./data/3_huit.npy'         ]
-    # fast_base_filename_list = ['./data/3_heart.npy'        ]
-    # fast_base_filename_list = ['./data/3_dbl_heart.npy'    ]
-    # fast_base_filename_list = ['./data/4_13_2_2_cercle.npy'] 
-    # fast_base_filename_list = ['./data/4_trefoil.npy'] 
+    fast_base_filename_list = ['./choreo-gallery/02 - Helpers/01 - Circles/02.npy'   ] 
 
     # fast_base_filename_list = ['./data/2_cercle.npy','./data/2_cercle.npy'    ] 
     # fast_base_filename_list = ['./data/3_cercle.npy' ,'./data/3_cercle.npy'     ] 
-    fast_base_filename_list = ['./data/2_cercle.npy','./data/3_huit.npy'    ] 
+    # fast_base_filename_list = ['./data/2_cercle.npy','./data/3_huit.npy'    ] 
     # fast_base_filename_list = ['./data/1_lone_wolf.npy','./data/1_lone_wolf.npy'    ] 
     
-    
-    # fast_base_filename_list = ['./data/1_lone_wolf.npy','./data/1_lone_wolf.npy'    ,'./data/1_lone_wolf.npy','./data/1_lone_wolf.npy'    ] 
-    # fast_base_filename_list = ['./data/1_lone_wolf.npy','./data/2_cercle.npy'    ,'./data/1_lone_wolf.npy','./data/2_cercle.npy'    ] 
-    # fast_base_filename_list = ['./data/1_lone_wolf.npy','./data/1_lone_wolf.npy'    ,'./data/1_lone_wolf.npy','./data/3_huit.npy'    ] 
-
     nfl = len(fast_base_filename_list)
 
-    mass_mul = [3,2]
-    nTf = [13,13]
-    nbs = [1,1]
-    nbf = [2,3]
+    mass_mul = [2]
+    nTf = [13]
+    nbs = [2]
+    nbf = [3]
 
     epsmul = 0.
 
