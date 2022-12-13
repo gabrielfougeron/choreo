@@ -439,7 +439,6 @@ function canvasApp() {
 
 	function FinalizeSetOrbitFromOutsideCanvasHandler(e) {
 
-		UnselectOrbit();
 		clearScreen();
 		clearParticleLayer();
 		FinalizeSetOrbit(DoDrawParticles=false,DoXMinMax=true,setTinc=false) ;
@@ -458,7 +457,6 @@ function canvasApp() {
 
 	function FinalizeAndPlayFromOutsideCanvasHandler(e) {
 
-		UnselectOrbit();
 		if (e.DoClearScreen) {
 			clearScreen();
 		}

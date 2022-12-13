@@ -327,7 +327,6 @@ function ChoreoExecuteClick() {
 
         var ConfigDict = GatherConfigDict();
         pyodide_worker.postMessage({funname:"LoadDataInWorker",args:{ConfigDict:ConfigDict}});
-        
         pyodide_worker.postMessage({funname:"ExecutePythonFile",args:"./python_scripts/RunOnce.py"});
 
     }
