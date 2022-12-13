@@ -6,6 +6,7 @@ var DefaultGallery_description
 var UserWorkspace
 var WorkspaceIsSetUp = false
 
+var SolName 
 var Pos 
 var PlotInfo
 

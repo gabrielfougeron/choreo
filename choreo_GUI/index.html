@@ -149,6 +149,10 @@ window.addEventListener("drop",function(e){
     <div style = "max-width:600px; ">
       <table style="font-size:16px; border:none; display:table">
         <tr>
+          <td style="border:none;" >Name</td>
+          <td style="border:none; max-width:400px; " id="NP_name"></td>
+        </tr>
+        <tr>
           <td style="border:none;" >Number of bodies</td>
           <td style="border:none; max-width:400px; " id="NP_nbody"></td>
         </tr>
@@ -157,12 +161,16 @@ window.addEventListener("drop",function(e){
           <td style="border:none; max-width:400px; " id="NP_nloop"></td>
         </tr>
         <tr>
-          <td style="border:none;" >Mass of loops</td>
+          <td style="border:none;" >Masses of bodies in loops</td>
           <td style="border:none; max-width:400px; " id="NP_mass"></td>
         </tr>
         <tr>
-          <td style="border:none;" >Newton Error</td>
+          <td style="border:none;" >Newton error</td>
           <td style="border:none; max-width:400px;" id="NP_Newton_Error"></td>
+        </tr>
+        <tr>
+          <td style="border:none;" >Number of Fourier coefficients</td>
+          <td style="border:none; max-width:400px;" id="NP_n_Fourier"></td>
         </tr>
       </table>
     </div>
