@@ -1736,6 +1736,9 @@ async function PlayFileFromDisk(name,npy_file,json_file) {
 
     SolName = name
     
+    var RotSlider = $("#RotSlider").data("roundSlider");
+    RotSlider.setValue(0);
+
     const PlotInfoFile = await json_file.getFile()
     PlotInfo = JSON.parse(await readFileAsText(PlotInfoFile))
     UpdateNowPlaying()
@@ -1781,6 +1784,9 @@ async function PlayFileFromRemote(name,npy_file,json_file) {
         });
 
     SolName = name
+
+    var RotSlider = $("#RotSlider").data("roundSlider")
+    RotSlider.setValue(0)
 
     await Promise.all([finished_npy ,finished_json ])
 
