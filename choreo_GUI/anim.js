@@ -10,6 +10,8 @@ var SolName
 var Pos 
 var PlotInfo
 
+var running = false;
+
 var xMin=0., xMax=1., yMin=0., yMax=1.
 var Max_PathLength = 1.
 
@@ -182,7 +184,6 @@ function canvasApp() {
 
 	var bgColor = "#F1F1F1";
 	var request;
-	var running = false;
 
 	var fadeScreenColor = "rgba(241,241,241,0.01)";
 	

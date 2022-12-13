@@ -37,7 +37,7 @@ async function Play_Loop_From_Python(args){
     var event = new Event('StopAnimationFromOutsideCanvas')
     displayCanvas.dispatchEvent(event)
 
-    SolName = "User generated solution"
+    SolName = args.solname
     var txt = await args.JSON_data.text()
     PlotInfo = JSON.parse(txt)
     UpdateNowPlaying()
@@ -1623,6 +1623,15 @@ async function ClickSetupWorkspace() {
 
     WorkspaceIsSetUp = true
 
+    var ReloadWorkspaceBtn = document.getElementById("ReloadWorkspaceBtn")
+    ReloadWorkspaceBtn.disabled = ""
+
+    ClickReloadWorkspace()
+
+}
+
+function ClickReloadWorkspace() {
+
     SaveConfigFile(UserWorkspace)
     
     LoadWorkspaceGallery()
@@ -1719,6 +1728,11 @@ function readFileAsArrayBuffer(file) {
 async function PlayFileFromDisk(name,npy_file,json_file) {
 
     var displayCanvas = document.getElementById("displayCanvas")
+    var wasrunning = running
+    if (running) {
+        var event = new Event('StopAnimationFromOutsideCanvas')
+        displayCanvas.dispatchEvent(event)
+    }
 
     SolName = name
     
@@ -1731,13 +1745,26 @@ async function PlayFileFromDisk(name,npy_file,json_file) {
     Pos = npyjs_obj.parse( await readFileAsArrayBuffer(PosFile))
 
     Max_PathLength = PlotInfo["Max_PathLength"]
-        
+    
     var event = new Event("CompleteSetOrbitFromOutsideCanvas")
     displayCanvas.dispatchEvent(event)
+    
+    if (wasrunning) {
+        var event = new Event('StartAnimationFromOutsideCanvas')
+        displayCanvas.dispatchEvent(event)
+    }
+
 
 }
 
 async function PlayFileFromRemote(name,npy_file,json_file) {
+
+    var displayCanvas = document.getElementById("displayCanvas")
+    var wasrunning = running
+    if (running) {
+        var event = new Event('StopAnimationFromOutsideCanvas')
+        displayCanvas.dispatchEvent(event)
+    }
 
     npyjs_obj = new npyjs()
 
@@ -1753,16 +1780,20 @@ async function PlayFileFromRemote(name,npy_file,json_file) {
             Pos = res
         });
 
-    var displayCanvas = document.getElementById("displayCanvas")
     SolName = name
 
     await Promise.all([finished_npy ,finished_json ])
 
     UpdateNowPlaying()
     Max_PathLength = PlotInfo["Max_PathLength"]
-        
+
     var event = new Event("CompleteSetOrbitFromOutsideCanvas")
     displayCanvas.dispatchEvent(event)
+
+    if (wasrunning) {
+        var event = new Event('StartAnimationFromOutsideCanvas')
+        displayCanvas.dispatchEvent(event)
+    }
 
 }
 
