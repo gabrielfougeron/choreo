@@ -32,17 +32,18 @@ var DownloadTxtFile = (function () {
 
 async function Play_Loop_From_Python(args){
 
-	var displayCanvas = document.getElementById("displayCanvas");
+	var displayCanvas = document.getElementById("displayCanvas")
 
-    var event = new Event('StopAnimationFromOutsideCanvas');
-    displayCanvas.dispatchEvent(event);
+    var event = new Event('StopAnimationFromOutsideCanvas')
+    displayCanvas.dispatchEvent(event)
 
-    var txt = await args.JSON_data.text();
-    PlotInfo = JSON.parse(txt);
-    Pos = {"data":args.NPY_data,"shape":args.NPY_shape};
+    var txt = await args.JSON_data.text()
+    PlotInfo = JSON.parse(txt)
+    UpdateNowPlaying()
+    Pos = {"data":args.NPY_data,"shape":args.NPY_shape}
 
-    var event = new Event('EnableAnimationFromOutsideCanvas');
-    displayCanvas.dispatchEvent(event);
+    var event = new Event('EnableAnimationFromOutsideCanvas')
+    displayCanvas.dispatchEvent(event)
 
 
     if (document.getElementById('checkbox_DisplayLoopsDuringSearch').checked) {
@@ -53,32 +54,33 @@ async function Play_Loop_From_Python(args){
 
     } 
 
-    var event = new Event('FinalizeAndPlayFromOutsideCanvas');
-    event.DoClearScreen = args.DoClearScreen;
-    event.DoXMinMax = args.DoXMinMax;
+    var event = new Event('FinalizeAndPlayFromOutsideCanvas')
+    event.DoClearScreen = args.DoClearScreen
+    event.DoXMinMax = args.DoXMinMax
     event.setTinc = false
 
-    displayCanvas.dispatchEvent(event);
+    displayCanvas.dispatchEvent(event)
 
     SearchIsOnGoing = false
-    var ChoreoExecuteBtn = document.getElementById("ChoreoExecuteBtn");
-    ChoreoExecuteBtn.disabled = "";
-    var ChoreoDispInitStateBtn = document.getElementById("ChoreoDispInitStateBtn");
-    ChoreoDispInitStateBtn.disabled = "";
-    var ChoreoSearchNext = document.getElementById("ChoreoSearchNext");
-    ChoreoSearchNext.disabled = "disabled";
+    var ChoreoExecuteBtn = document.getElementById("ChoreoExecuteBtn")
+    ChoreoExecuteBtn.disabled = ""
+    var ChoreoDispInitStateBtn = document.getElementById("ChoreoDispInitStateBtn")
+    ChoreoDispInitStateBtn.disabled = ""
+    var ChoreoSearchNext = document.getElementById("ChoreoSearchNext")
+    ChoreoSearchNext.disabled = "disabled"
     AskForNext[0] = 0
 
 
-    var RotSlider = $("#RotSlider").data("roundSlider");
-    RotSlider.enable();
+    var RotSlider = $("#RotSlider").data("roundSlider")
+    RotSlider.enable()
 
-    var Python_State_Div = document.getElementById("Python_State_Div");
-    Python_State_Div.innerHTML = "Find solution!";
-    Python_State_Div.classList.add('w3-green');
-    Python_State_Div.classList.add('w3-hover-pale-green');
-    Python_State_Div.classList.remove('w3-orange');
-    Python_State_Div.classList.remove('w3-red');
+    var Python_State_Div = document.getElementById("Python_State_Div")
+    Python_State_Div.innerHTML = "Find solution!"
+    Python_State_Div.classList.add('w3-green')
+    Python_State_Div.classList.add('w3-hover-pale-green')
+    Python_State_Div.classList.remove('w3-orange')
+    Python_State_Div.classList.remove('w3-red')
+
 }
 
 function Python_no_sol_found(args) {
@@ -119,11 +121,12 @@ function Python_no_sol_found(args) {
 
 async function Set_PlotInfo_From_Python(args){
 
-    var txt = await args.JSON_data.text();
-    PlotInfo = JSON.parse(txt);
+    var txt = await args.JSON_data.text()
+    PlotInfo = JSON.parse(txt)
+    UpdateNowPlaying(SearchOnGoing=true)
 
-    var event = new Event('FinalizeSetOrbitFromOutsideCanvas');
-    displayCanvas.dispatchEvent(event);
+    var event = new Event('FinalizeSetOrbitFromOutsideCanvas')
+    displayCanvas.dispatchEvent(event)
 
 }
 
@@ -209,7 +212,7 @@ function ClickTopTabBtn(TabId) {
 function  GeomTopTabBtn(TabId) {
     switch (TabId) {
         case 'Main': {
-            ClickTopTabBtn('Main_Gallery');
+            ClickTopTabBtn('Main_NowPlaying');
             break;}    
         case 'Geom': {
             ClickTopTabBtn('Geom_Bodies');
@@ -1623,81 +1626,31 @@ async function ClickSetupWorkspace() {
 
     WorkspaceIsSetUp = true
 
-//     SaveConfigFile(UserWorkspace)
-// 
-//     GalleryDir = await UserWorkspace.getDirectoryHandle("Gallery", {create: true});
-//     DefaultGalleryDir = await GalleryDir.getDirectoryHandle("Default_Gallery", {create: true});
-// 
-//     n_default_gallery = AllGalleryNames.length
-//     for (var i = 0; i< n_default_gallery;i++) {
-// 
-//         filename = AllGalleryNames[i]+'.json'
-//         JSONFile = await DefaultGalleryDir.getFileHandle(filename, { create: true })
-//         writable = await JSONFile.createWritable()
-//         await writable.write(JSON.stringify(AllPlotInfo[i],null,2))
-//         await writable.close()
-// 
-//         filename = AllGalleryNames[i]+'.npy'
-//         NPYFile = await DefaultGalleryDir.getFileHandle(filename, { create: true })
-//         writable = await NPYFile.createWritable()
-//         buf = await ndarray_tobuffer(AllPos[i])
-//         await writable.write(buf)
-//         await writable.close()
-//     }
+    //     SaveConfigFile(UserWorkspace)
+    // 
+    //     GalleryDir = await UserWorkspace.getDirectoryHandle("Gallery", {create: true});
+    //     DefaultGalleryDir = await GalleryDir.getDirectoryHandle("Default_Gallery", {create: true});
+    // 
+    //     n_default_gallery = AllGalleryNames.length
+    //     for (var i = 0; i< n_default_gallery;i++) {
+    // 
+    //         filename = AllGalleryNames[i]+'.json'
+    //         JSONFile = await DefaultGalleryDir.getFileHandle(filename, { create: true })
+    //         writable = await JSONFile.createWritable()
+    //         await writable.write(JSON.stringify(AllPlotInfo[i],null,2))
+    //         await writable.close()
+    // 
+    //         filename = AllGalleryNames[i]+'.npy'
+    //         NPYFile = await DefaultGalleryDir.getFileHandle(filename, { create: true })
+    //         writable = await NPYFile.createWritable()
+    //         buf = await ndarray_tobuffer(AllPos[i])
+    //         await writable.write(buf)
+    //         await writable.close()
+    //     }
 
     LoadWorkspaceGallery()
 
 }
-
-async function WalkDirectory(directory,dir_callable,file_callable) {
-
-    for await (const entry of directory.values()) {
-        if (entry.kind == "directory") {
-
-            dir_callable(entry)
-
-            WalkDirectory(await directory.getDirectoryHandle(entry.name),dir_callable,file_callable)
-            
-        } else if (entry.kind == "file") {
-
-            file_callable(entry)
-
-        }
-    }
-
-}
-// 
-// async function WalkDirectory(directory,dir_callable,file_callable) {
-// 
-//     for await (const entry of directory.values()) {
-//         if (entry.kind == "directory") {
-// 
-//             dir_callable(entry)
-// 
-//             WalkDirectory(await directory.getDirectoryHandle(entry.name),dir_callable,file_callable)
-//             
-//         } else if (entry.kind == "file") {
-// 
-//             file_callable(entry)
-// 
-//         }
-//     }
-// 
-// }
-// 
-function print_toto(e,node) { console.log("toto") }
-// 
-// function treat_dir(parent,dir) { 
-// 
-// }
-// 
-// function treat_file(parent,file) {  
-//     if (file.name.endsWith(".npy")) {
-//         console.log(file.name)
-//     }
-// }
-// 
-
 
 async function MakeDirectoryTree(cur_directory,cur_treenode) {
 
@@ -1750,10 +1703,6 @@ async function MakeDirectoryTree(cur_directory,cur_treenode) {
 
 }
 
-
-function test() {}
-
-
 async function LoadWorkspaceGallery() {
 
     if (WorkspaceIsSetUp) {
@@ -1768,16 +1717,6 @@ async function LoadWorkspaceGallery() {
 
 }
 
-
-
-
-
-
-
-
-
-
-
 function readFileAsText(file) {
     return new Promise((resolve, reject) => {
         const fr = new FileReader();
@@ -1788,7 +1727,6 @@ function readFileAsText(file) {
         fr.readAsText(file);
     });
 }
-
 
 function readFileAsArrayBuffer(file) {
     return new Promise((resolve, reject) => {
@@ -1801,7 +1739,6 @@ function readFileAsArrayBuffer(file) {
     });
 }
 
-
 async function PlayFileFromDisk(name,npy_file,json_file) {
 
     PythonPrint({txt:"Playing solution from the gallery: "+name+"&#10;"});
@@ -1810,6 +1747,7 @@ async function PlayFileFromDisk(name,npy_file,json_file) {
     
     const PlotInfoFile = await json_file.getFile()
     PlotInfo = JSON.parse(await readFileAsText(PlotInfoFile))
+    UpdateNowPlaying()
 
     let npyjs_obj = new npyjs()
     const PosFile = await npy_file.getFile()
@@ -1844,6 +1782,7 @@ async function PlayFileFromRemote(name,npy_file,json_file) {
 
     await Promise.all([finished_npy ,finished_json ])
 
+    UpdateNowPlaying()
     Max_PathLength = PlotInfo["Max_PathLength"]
         
     var event = new Event("CompleteSetOrbitFromOutsideCanvas")
@@ -1873,7 +1812,7 @@ function MakeDirectoryTree_DefaultGallery(cur_directory,cur_treenode) {
 
 }
 
-async function LoadGallery() {
+async function LoadDefaultGallery() {
 			
     var gallery_filename = "gallery_descriptor.json"
 
@@ -1900,7 +1839,36 @@ async function LoadGallery() {
 
 }
 
+function UpdateNowPlaying(SearchOnGoing=false) {
 
+    var NP_nbody = document.getElementById("NP_nbody")
+    var NP_nloop = document.getElementById("NP_nloop")
+    var NP_mass = document.getElementById("NP_mass")
+
+    var NP_Newton_Error = document.getElementById("NP_Newton_Error")
+    
+    nloop = PlotInfo["nloop"]
+    loop_mass = PlotInfo["mass"][PlotInfo["Targets"][0][0]].toString()
+    for (var il = 1 ; il < nloop; il++) {
+        loop_mass = loop_mass + ", " + PlotInfo["mass"][PlotInfo["Targets"][il][0]].toString()
+    }
+
+    NP_nbody.innerHTML = PlotInfo["nbody"].toString()
+    NP_nloop.innerHTML = nloop.toString()
+    NP_mass.innerHTML = loop_mass
+
+    if (SearchOnGoing) {
+
+        NP_Newton_Error.innerHTML = "Search in progress"
+
+    } else {
+
+
+        NP_Newton_Error.innerHTML = PlotInfo["Newton_Error"].toString()
+
+    }
+
+}
 
 
 

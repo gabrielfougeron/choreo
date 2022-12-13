@@ -312,7 +312,7 @@ function canvasApp() {
 			});
 		
 		// Load the static gallery
-		await LoadGallery()
+		await LoadDefaultGallery()
 		startAnimation()
 
 	}
