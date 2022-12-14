@@ -1757,7 +1757,6 @@ async function PlayFileFromDisk(name,npy_file,json_file) {
         displayCanvas.dispatchEvent(event)
     }
 
-
 }
 
 async function PlayFileFromRemote(name,npy_file,json_file) {

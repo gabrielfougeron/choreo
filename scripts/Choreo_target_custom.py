@@ -39,9 +39,9 @@ def main(the_i=0):
 
     fast_base_filename_list = [
         # './choreo_GUI/choreo-gallery/02 - Helpers/01 - Circles/01',
-        # './choreo_GUI/choreo-gallery/02 - Helpers/01 - Circles/02',
+        './choreo_GUI/choreo-gallery/02 - Helpers/01 - Circles/02',
         # './choreo_GUI/choreo-gallery/02 - Helpers/01 - Circles/03',
-        './choreo_GUI/choreo-gallery/01 - Classic gallery/01 - Figure eight'
+        # './choreo_GUI/choreo-gallery/01 - Classic gallery/01 - Figure eight'
         ] 
 
     
@@ -94,7 +94,7 @@ def main(the_i=0):
     mass_mul = [1]
     nTf = [37]
     nbs = [3]
-    nbf = [3]
+    nbf = [2]
 
     epsmul = 0.
 
@@ -110,8 +110,8 @@ def main(the_i=0):
     # nbs = [1,1]
     # nbf = [2,3]
 
-    # mul_loops_ini = True
-    mul_loops_ini = False
+    mul_loops_ini = True
+    # mul_loops_ini = False
     # mul_loops_ini = (np.random.random() > 1./2.)
     
     mul_loops = [mul_loops_ini for _ in range(nfl)]
@@ -120,12 +120,12 @@ def main(the_i=0):
     # Remove_Choreo_Sym = [False,False]
     # Remove_Choreo_Sym = [False,False]
 
-    # Rotate_fast_with_slow = True
-    Rotate_fast_with_slow = False
+    Rotate_fast_with_slow = True
+    # Rotate_fast_with_slow = False
     # Rotate_fast_with_slow = (np.random.random() > 1./2.)
 
-    # Optimize_Init = True
-    Optimize_Init = False
+    Optimize_Init = True
+    # Optimize_Init = False
     # Optimize_Init = (np.random.random() > 1./2.)
 
     Randomize_Fast_Init = True
@@ -270,14 +270,14 @@ def main(the_i=0):
     # ncoeff_init = 300   
     # ncoeff_init = 600
     # ncoeff_init = 900
-    # ncoeff_init = 1800
+    ncoeff_init = 1800
     # ncoeff_init = 3600
-    ncoeff_init = 7200
+    # ncoeff_init = 7200
     # ncoeff_init = 1206
     # ncoeff_init = 90
 
-    disp_scipy_opt = False
-    # disp_scipy_opt = True
+    # disp_scipy_opt = False
+    disp_scipy_opt = True
     
     max_norm_on_entry = 1e20
 
@@ -297,8 +297,9 @@ def main(the_i=0):
     line_search = 'wolfe'
     # line_search = 'none'
  
-    linesearch_smin = 1e-1
+    # linesearch_smin = 1e-2
     # linesearch_smin = 1.
+    linesearch_smin = 0.01
     
     gradtol_list =          [1e-3   ,1e-5   ,1e-7   ,1e-9   ,1e-11  ,1e-13  ,1e-15  ]
     inner_maxiter_list =    [30     ,50     ,60     ,70     ,80     ,100    ,100    ]
@@ -325,8 +326,9 @@ def main(the_i=0):
     # escape_pow = 1.5
     # escape_pow = 0.5
 
-    n_grad_change = 1.
-    # n_grad_change = 1.5
+    # n_grad_change = 1.
+    n_grad_change = 2.
+    # n_grad_change = 0.7
 
     coeff_ampl_o=1e-16
     k_infl=200
@@ -337,10 +339,12 @@ def main(the_i=0):
     hash_dict = {}
 
     n_opt = 0
-    # n_opt_max = 1
-    n_opt_max = 5
-    # n_opt_max = 0
-    n_find_max = 1
+
+    # n_opt_max = 5
+    # n_find_max = 1
+    
+    n_opt_max = 5000
+    n_find_max = 100
 
     mul_coarse_to_fine = 3
 
@@ -350,23 +354,24 @@ def main(the_i=0):
     
     choreo.Find_Choreo(**all_kwargs)
 # # 
-# if __name__ == "__main__":
-#     main(0)
-#   
-# 
 if __name__ == "__main__":
-
-    # n = multiprocessing.cpu_count()
-    n = 4
-    
-    print(f"Executing with {n} workers")
-    
-    
-    with concurrent.futures.ProcessPoolExecutor(max_workers=n) as executor:
-        
-        res = []
-        for i in range(1,n+1):
-            res.append(executor.submit(main,i))
-            time.sleep(0.01)
+    main(0)
+#   
+# # 
+# if __name__ == "__main__":
+# 
+#     # n = multiprocessing.cpu_count()
+#     n = multiprocessing.cpu_count()//2
+#     # n = 4
+#     
+#     print(f"Executing with {n} workers")
+#     
+#     
+#     with concurrent.futures.ProcessPoolExecutor(max_workers=n) as executor:
+#         
+#         res = []
+#         for i in range(1,n+1):
+#             res.append(executor.submit(main,i))
+#             time.sleep(0.01)
 # 
 #  
