@@ -32,8 +32,8 @@ def main():
 
 
     # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/3/')
-    input_folder = os.path.join(__PROJECT_ROOT__,'Default_Gallery')
-    # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/5/')
+    # input_folder = os.path.join(__PROJECT_ROOT__,'Default_Gallery')
+    input_folder = os.path.join(__PROJECT_ROOT__,'Target_res/9/')
     # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/copy/')
     # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/Gallery_videos/C-4')
 # 
@@ -97,8 +97,8 @@ def main():
     # color = "velocity"
     # color = "all"
 
-    Save_anim = True
-    # Save_anim = False
+    # Save_anim = True
+    Save_anim = False
 
     # Save_ODE_anim = True
     Save_ODE_anim = False
@@ -153,8 +153,8 @@ def main():
     # InvestigateIntegration = True
     InvestigateIntegration = False
 
-    Exec_Mul_Proc = True
-    # Exec_Mul_Proc = False
+    # Exec_Mul_Proc = True
+    Exec_Mul_Proc = False
 
     if Exec_Mul_Proc:
 
@@ -276,7 +276,9 @@ def ExecName(
     Gradaction_OK = (np.linalg.norm(Gradaction) < GradActionThresh)
 
     if not(Gradaction_OK):
-        raise(ValueError('Solution is poorly converged'))
+        print(f'Poorly converged solution : {bare_name}')
+        # raise(ValueError('Solution is poorly converged'))
+        return
 
     # print(f'Input Gradaction : {Info_dict["Grad_Action"]}')
     # print(f'Output Gradaction : {np.linalg.norm(Gradaction)}')
