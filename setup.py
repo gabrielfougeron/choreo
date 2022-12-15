@@ -32,7 +32,8 @@ else:
 
         os.environ['CC'] = 'clang'
         os.environ['LDSHARED'] = 'clang -shared'
-
+# 
+#         extra_compile_args = ["-O2","-march=native"]
         # extra_compile_args = ["-O3","-march=native"]
         extra_compile_args = ["-Ofast","-march=native"]
 
@@ -55,11 +56,13 @@ define_macros = [("NPY_NO_DEPRECATED_API", "NPY_1_7_API_VERSION")]
 
 
 cython_extnames = [
+    "choreo.Choreo_cython_funs_2D",
     "choreo.Choreo_cython_funs",
     "choreo.Choreo_cython_scipy_plus",
 ]
 
 cython_filenames = [
+    "choreo/Choreo_cython_funs_2D.pyx",
     "choreo/Choreo_cython_funs.pyx",
     "choreo/Choreo_cython_scipy_plus.pyx",
 ]
@@ -72,7 +75,6 @@ compiler_directives = {
     'overflowcheck': False,
     'overflowcheck.fold': False,
     'infer_types': True,
-
 }
 
 # #### Profiler only ####
