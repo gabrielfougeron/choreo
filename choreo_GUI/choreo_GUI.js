@@ -340,6 +340,14 @@ function ChoreoExecuteClick() {
 
 }
 
+function Speed_Test_Click() {
+
+    var ConfigDict = GatherConfigDict();
+    pyodide_worker.postMessage({funname:"LoadDataInWorker",args:{ConfigDict:ConfigDict}});
+    pyodide_worker.postMessage({funname:"ExecutePythonFile",args:"./python_scripts/Speed_Test.py"});
+
+}
+
 function ChoreoSaveInitStateClick() {
 
     var ConfigDict = GatherConfigDict();
@@ -1536,7 +1544,7 @@ function PythonPrint(args) {
 
     var the_height = parseInt(Python_textarea.style.height, 10);
     var is_at_bottom = (Python_textarea.scrollHeight - Python_textarea.scrollTop < (the_height + 10));
-    
+
     Python_textarea.innerHTML += args.txt + "&#10;";    
 
     if (is_at_bottom) {
