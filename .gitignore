@@ -15,6 +15,7 @@
 *.7z
 *.whl
 *.spec
+*.log
 *.egg-info/
 Saves/
 testplots/
