@@ -178,6 +178,8 @@ async function Python_Imports_Done(args){
 
 pyodide_worker.addEventListener('message', handleMessageFromWorker);
 
+Python_textarea = document.getElementById("Python_textarea")
+
 function OnWindowResize(){
 
     var CommandBody = document.getElementById("CommandBody");
@@ -223,7 +225,7 @@ function  GeomTopTabBtn(TabId) {
             ClickTopTabBtn('Animation_Colors');
             break;}
         case 'Solver': {
-            ClickTopTabBtn('Solver_Output');
+            ClickTopTabBtn_Solver_Output();
             break;}
         case 'Misc': {
             ClickTopTabBtn('Misc_Save_Config');
@@ -1250,6 +1252,14 @@ function ClickTopTabBtn_Animation_Framerate() {
     ClickTopTabBtn('Animation_Framerate');
 }
 
+function ClickTopTabBtn_Solver_Output() {
+
+    ClickTopTabBtn('Solver_Output')
+
+    Python_textarea.scrollTop = Python_textarea.scrollHeight
+
+}
+
 function UpdateFPSDisplay() {
 
     var the_time = performance.now();
@@ -1332,22 +1342,19 @@ input_trail_vanish_length.min   = min_base_trail_vanish_length ;
 input_trail_vanish_length.max   = max_base_trail_vanish_length ;
 input_trail_vanish_length.step  = 0.05 ;
 
-// SlideTrailTime();
-
 function SlideBodyRadius(event) {
-    // console.log(input_body_radius.value);
     base_particle_size = input_body_radius.value;
 }
 
 function SlideTrailWidth(event) {
-    // console.log(input_trail_width.value);
+    
     base_trailWidth = input_trail_width.value;
 }
 
 function SlideTrailTime(event) {
-    // console.log(input_trail_vanish_length.value);
+    
     trail_vanish_length = input_trail_vanish_length.value;
-    // FadeInvFrequency = 1/(1000*(base_trail_vanish_length*base_trail_vanish_length));
+    
 
     var dx = xMax - xMin
     var dy = yMax - yMin
@@ -1521,8 +1528,6 @@ function DeleteCookie(name) {
     }
 }
 
-Python_textarea = document.getElementById("Python_textarea")
-
 function PythonClearPrints() {
     Python_textarea.innerHTML = "";
 }
@@ -1531,8 +1536,8 @@ function PythonPrint(args) {
 
     var the_height = parseInt(Python_textarea.style.height, 10);
     var is_at_bottom = (Python_textarea.scrollHeight - Python_textarea.scrollTop < (the_height + 10));
-
-    Python_textarea.innerHTML += args.txt + "&#10;";
+    
+    Python_textarea.innerHTML += args.txt + "&#10;";    
 
     if (is_at_bottom) {
         Python_textarea.scrollTop = Python_textarea.scrollHeight;
