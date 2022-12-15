@@ -92,7 +92,7 @@ def Find_Choreo(
     optim_callback_list,
     callback_after_init_list,
     linesearch_smin,
-    ):
+):
     """
 
     Finds periodic solutions
@@ -693,7 +693,7 @@ def Speed_test(
     coeff_ampl_min,
     CrashOnError_changevar,
     n_test,
-    ):
+):
     """
 
     Helper function to profile code
