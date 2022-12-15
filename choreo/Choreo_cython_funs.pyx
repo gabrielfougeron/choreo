@@ -18,7 +18,6 @@ np.import_array()
 
 cimport cython
 
-
 import scipy.sparse as sp
 
 from libc.math cimport pow as cpow
@@ -146,6 +145,8 @@ def CCpt_hash_pot(double xsq):  # xsq is the square of the distance between two 
     
     return hash_pots
     
+
+    
 @cython.cdivision(True)
 def Compute_action_Cython(
     long nloop                          ,
@@ -172,7 +173,7 @@ def Compute_action_Cython(
     # Computes the action and its gradient with respect to the Fourier coefficients of the generator in each loop.
     
     cdef Py_ssize_t il,ilp,i
-    cdef Py_ssize_t idim,idimp
+    cdef Py_ssize_t idim,jdim
     cdef Py_ssize_t ibi
     cdef Py_ssize_t ib,ibp
     cdef Py_ssize_t iint
@@ -242,7 +243,7 @@ def Compute_action_Cython(
                         a = (2*prod_mass*potp)
 
                         for idim in range(cndim):
-                            dx[idim] = a*dx[idim]
+                            dx[idim] *= a
 
                         for idim in range(cndim):
                             
@@ -281,7 +282,7 @@ def Compute_action_Cython(
                 a = (2*ProdMassSumAll[il,ibi]*potp)
 
                 for idim in range(cndim):
-                    dx[idim] = a*dx[idim]
+                    dx[idim] *= a
 
                 for idim in range(cndim):
                     
@@ -326,7 +327,7 @@ def Compute_action_Cython(
     Action = Kin_en-Pot_en
     
     return Action,Action_grad_np
-
+    
 def Compute_hash_action_Cython(
     long nloop,
     long ncoeff,
@@ -813,7 +814,7 @@ def Compute_action_hess_mul_Cython(
     # Useful to guide the root finding / optimisation process and to better understand the topography of the action (critical points / Morse theory).
 
     cdef Py_ssize_t il,ilp,i
-    cdef Py_ssize_t idim,idimp
+    cdef Py_ssize_t idim,jdim
     cdef Py_ssize_t ibi
     cdef Py_ssize_t ib,ibp
     cdef Py_ssize_t iint
@@ -824,7 +825,7 @@ def Compute_action_hess_mul_Cython(
     cdef double[::1] dx  = np.zeros((cndim),dtype=np.float64)
     cdef double[::1] ddx = np.zeros((cndim),dtype=np.float64)
     cdef double[::1] ddf = np.zeros((cndim),dtype=np.float64)
-        
+
     cdef Py_ssize_t maxloopnb = 0
     cdef Py_ssize_t maxloopnbi = 0
 
@@ -1754,4 +1755,3 @@ def Compute_JacMul_Forces_Cython(
 
 
     return df
-
