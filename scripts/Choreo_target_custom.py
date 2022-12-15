@@ -32,8 +32,8 @@ def main(the_i=0):
     
 
     # slow_base_filename = './choreo_GUI/choreo-gallery/02 - Helpers/01 - Circles/01'
-    slow_base_filename = './choreo_GUI/choreo-gallery/02 - Helpers/01 - Circles/02'
-    # slow_base_filename = './choreo_GUI/choreo-gallery/01 - Classic gallery/01 - Figure eight'
+    # slow_base_filename = './choreo_GUI/choreo-gallery/02 - Helpers/01 - Circles/02'
+    slow_base_filename = './choreo_GUI/choreo-gallery/01 - Classic gallery/01 - Figure eight'
     # slow_base_filename = './choreo_GUI/choreo-gallery/01 - Classic gallery/06 - 5-chain'
 
     # fast_base_filename_list = ['./choreo_GUI/choreo-gallery/02 - Helpers/01 - Circles/02'   ] 
@@ -42,8 +42,8 @@ def main(the_i=0):
         # './choreo_GUI/choreo-gallery/02 - Helpers/01 - Circles/01',
         # './choreo_GUI/choreo-gallery/02 - Helpers/01 - Circles/02',
         # './choreo_GUI/choreo-gallery/02 - Helpers/01 - Circles/03',
-        # './choreo_GUI/choreo-gallery/01 - Classic gallery/01 - Figure eight'
-        './choreo_GUI/choreo-gallery/01 - Classic gallery/06 - 5-chain'
+        './choreo_GUI/choreo-gallery/01 - Classic gallery/01 - Figure eight'
+        # './choreo_GUI/choreo-gallery/01 - Classic gallery/06 - 5-chain'
         ] 
 
     
@@ -95,8 +95,8 @@ def main(the_i=0):
 
     mass_mul = [1]
     nTf = [37]
-    nbs = [2]
-    nbf = [5]
+    nbs = [3]
+    nbf = [3]
 
     epsmul = 0.
 
@@ -272,9 +272,9 @@ def main(the_i=0):
     # ncoeff_init = 300   
     # ncoeff_init = 600
     # ncoeff_init = 900
-    ncoeff_init = 1800
+    # ncoeff_init = 1800
     # ncoeff_init = 3600
-    # ncoeff_init = 7200
+    ncoeff_init = 7200
     # ncoeff_init = 1206
     # ncoeff_init = 90
 

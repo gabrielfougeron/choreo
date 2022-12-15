@@ -37,6 +37,9 @@ from choreo.Choreo_cython_funs import Compute_MinDist_Cython,Compute_Loop_Dist_b
 from choreo.Choreo_cython_funs import Compute_Forces_Cython,Compute_JacMat_Forces_Cython,Compute_JacMul_Forces_Cython
 from choreo.Choreo_cython_funs import the_irfft,the_rfft
 
+from choreo.Choreo_cython_funs_2D import Compute_action_Cython_2D,Compute_action_hess_mul_Cython_2D
+# from choreo.Choreo_cython_funs import Compute_action_Cython as Compute_action_Cython_2D, Compute_action_hess_mul_Cython as Compute_action_hess_mul_Cython_2D
+
 from choreo.Choreo_scipy_plus import *
 
 def Pick_Named_Args_From_Dict(fun,the_dict,MissingArgsAreNone = True):
@@ -257,7 +260,8 @@ def Compute_action_hess_mul(x,dx,callfun):
         c_coeffs = args['last_all_coeffs'].view(dtype=np.complex128)[...,0]
         args['last_all_pos'] = the_irfft(c_coeffs,n=nint,axis=2,norm="forward")
 
-    HessJdx =  Compute_action_hess_mul_Cython(
+    # HessJdx =  Compute_action_hess_mul_Cython(
+    HessJdx =  Compute_action_hess_mul_Cython_2D(
         args['nloop']           ,
         args['ncoeff_list'][args["current_cvg_lvl"]]          ,
         args['nint_list'][args["current_cvg_lvl"]]            ,
@@ -786,7 +790,8 @@ def Compute_action(x,callfun):
         c_coeffs = args['last_all_coeffs'].view(dtype=np.complex128)[...,0]
         args['last_all_pos'] = the_irfft(c_coeffs,n=nint,axis=2,norm="forward")
 
-    J,GradJ =  Compute_action_Cython(
+    # J,GradJ =  Compute_action_Cython(
+    J,GradJ =  Compute_action_Cython_2D(
         args['nloop']           ,
         args['ncoeff_list'][args["current_cvg_lvl"]]          ,
         args['nint_list'][args["current_cvg_lvl"]]            ,
