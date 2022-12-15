@@ -37,18 +37,6 @@ def main(the_i=0):
     file_basename = ''
     
 
-
-    # p = 1
-    p = 0
-    # p_list = [1,2,3,4,5,6,7,8,9]
-    # p = p_list[the_i%len(p_list)]
-
-    nc = 3
-
-    # mm = 2
-    # mm_list = [1,2]
-    # mm = mm_list[the_i%len(mm_list)]
-
     SymName = 'C'
     # SymName = None
     LookForTarget = False
@@ -57,52 +45,14 @@ def main(the_i=0):
     # nbpl=[5]
     # nbpl=[1,1,1]
     # nbpl=[2,3,5]
-    nbpl=[3,2]
+    nbpl=[5]
 
     # the_lcm = m.lcm(*nbpl)
 
     SymType = []
-    # SymType.append({
-    #     'name'  : 'C',
-    #     'n'     : nc ,
-    #     'm'     : 1 ,
-    #     'l'     : 1,
-    #     'k'     : 1,
-    #     'p'     : 1,
-    #     'q'     : 2,
-    # })
-    # SymType.append({
-    #     'name'  : 'D',
-    #     'n'     : nc ,
-    #     'm'     : 1 ,
-    #     'l'     : 1,
-    #     'k'     : 1,
-    #     'p'     : 1,
-    #     'q'     : 5,
-    # })
 
     Sym_list,nbody = choreo.Make2DChoreoSymManyLoops(nbpl=nbpl,SymName=SymName)
-    # Sym_list,nbody = choreo.Make2DChoreoSymManyLoops(nbpl=nbpl,SymType=SymType)
-# 
-#     Sym_list.append(choreo.ChoreoSym(
-#         LoopTarget=0,
-#         LoopSource=0,
-#         SpaceRot = np.array([[1,0],[0,-1]]),
-#         TimeRev=-1,
-#         TimeShift=fractions.Fraction(numerator=0,denominator=1)
-#     ))
 
-    # SymType = {
-    #     'name'  : 'D',
-    #     'n'     : nc,
-    #     'm'     : mm,
-    #     'l'     : 0,
-    #     'k'     : 1,
-    #     'p'     : p,
-    #     'q'     : nc,
-    # }
-    # Sym_list = choreo.Make2DChoreoSym(SymType,range(nc))
-    # nbody = nc
 
     mass = np.ones((nbody),dtype=np.float64)
 
@@ -210,6 +160,8 @@ def main(the_i=0):
 
     # line_search = 'armijo'
     line_search = 'wolfe'
+
+    linesearch_smin = 0.01
     
     gradtol_list =          [1e-1   ,1e-3   ,1e-5   ,1e-7   ,1e-9   ,1e-11  ,1e-13  ,1e-15  ]
     inner_maxiter_list =    [30     ,30     ,50     ,60     ,70     ,80     ,100    ,100    ]
@@ -233,7 +185,7 @@ def main(the_i=0):
     coeff_ampl_o=3e-2
     # coeff_ampl_o=1e0
     k_infl=0
-    k_max=600
+    k_max=10
     # k_max=200
     # k_max=200
     coeff_ampl_min=1e-16
@@ -243,8 +195,8 @@ def main(the_i=0):
 
     n_opt = 0
     # n_opt_max = 1
-    # n_opt_max = 5
-    n_opt_max = 1e10
+    n_opt_max = 5
+    # n_opt_max = 1e10
     # n_opt_max = 0
     
     n_find_max = 1e10
@@ -257,12 +209,9 @@ def main(the_i=0):
     # Save_Init_Pos_Vel_Sol = True
     Save_Init_Pos_Vel_Sol = False
 
-
     n_save_pos = 'auto'
     Save_All_Pos = True
     # Save_All_Pos = False
-
-    plot_extend = 0.
 
     all_kwargs = choreo.Pick_Named_Args_From_Dict(choreo.Find_Choreo,dict(globals(),**locals()))
     choreo.Find_Choreo(**all_kwargs)
