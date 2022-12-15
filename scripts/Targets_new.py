@@ -32,8 +32,8 @@ def main(the_i=0):
     
 
     # slow_base_filename = './choreo_GUI/choreo-gallery/02 - Helpers/01 - Circles/01'
-    slow_base_filename = './choreo_GUI/choreo-gallery/02 - Helpers/01 - Circles/02'
-    # slow_base_filename = './choreo_GUI/choreo-gallery/01 - Classic gallery/01 - Figure eight'
+    # slow_base_filename = './choreo_GUI/choreo-gallery/02 - Helpers/01 - Circles/02'
+    slow_base_filename = './choreo_GUI/choreo-gallery/01 - Classic gallery/01 - Figure eight'
     # slow_base_filename = './choreo_GUI/choreo-gallery/01 - Classic gallery/06 - 5-chain'
 
     # fast_base_filename_list = ['./choreo_GUI/choreo-gallery/02 - Helpers/01 - Circles/02'   ] 
@@ -42,8 +42,7 @@ def main(the_i=0):
         # './choreo_GUI/choreo-gallery/02 - Helpers/01 - Circles/01',
         # './choreo_GUI/choreo-gallery/02 - Helpers/01 - Circles/02',
         # './choreo_GUI/choreo-gallery/02 - Helpers/01 - Circles/03',
-        # './choreo_GUI/choreo-gallery/01 - Classic gallery/01 - Figure eight'
-        './choreo_GUI/choreo-gallery/01 - Classic gallery/06 - 5-chain'
+        './choreo_GUI/choreo-gallery/01 - Classic gallery/01 - Figure eight'
         ] 
 
     
@@ -59,13 +58,16 @@ def main(the_i=0):
 
     all_pos_slow = np.load(input_slow_filename)
     nint_slow = Info_dict_slow["n_int"]
+    ncoeffs_slow = Info_dict_slow["n_Fourier"]
+    nloop_slow = Info_dict_slow["nloop"]
 
     c_coeffs_slow = choreo.the_rfft(all_pos_slow,n=nint_slow,axis=2,norm="forward")
-    all_coeffs_slow_load = np.zeros((Info_dict_slow["nloop"],choreo.ndim,Info_dict_slow["n_Fourier"],2),dtype=np.float64)
-    all_coeffs_slow_load[:,:,:,0] = c_coeffs_slow[:,:,0:Info_dict_slow["n_Fourier"]].real
-    all_coeffs_slow_load[:,:,:,1] = c_coeffs_slow[:,:,0:Info_dict_slow["n_Fourier"]].imag
+    all_coeffs_slow_load = np.zeros((nloop_slow,choreo.ndim,ncoeffs_slow,2),dtype=np.float64)
+    all_coeffs_slow_load[:,:,:,0] = c_coeffs_slow[:,:,0:ncoeffs_slow].real
+    all_coeffs_slow_load[:,:,:,1] = c_coeffs_slow[:,:,0:ncoeffs_slow].imag
 
     all_coeffs_fast_list = []
+    Info_dict_fast_list = []
     for fast_base_filename in fast_base_filename_list :
 
         Info_fast_filename = fast_base_filename + '.json'
@@ -85,6 +87,7 @@ def main(the_i=0):
         all_coeffs_fast[:,:,:,1] = c_coeffs_fast[:,:,0:Info_dict_fast["n_Fourier"]].imag
 
         all_coeffs_fast_list.append(all_coeffs_fast)
+        Info_dict_fast_list.append(Info_dict_fast)
 
 
 
@@ -95,8 +98,8 @@ def main(the_i=0):
 
     mass_mul = [1]
     nTf = [37]
-    nbs = [2]
-    nbf = [5]
+    nbs = [3]
+    nbf = [3]
 
     epsmul = 0.
 
@@ -112,8 +115,8 @@ def main(the_i=0):
     # nbs = [1,1]
     # nbf = [2,3]
 
-    # mul_loops_ini = True
-    mul_loops_ini = False
+    mul_loops_ini = True
+    # mul_loops_ini = False
     # mul_loops_ini = (np.random.random() > 1./2.)
     
     mul_loops = [mul_loops_ini for _ in range(nfl)]
