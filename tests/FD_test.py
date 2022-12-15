@@ -42,8 +42,8 @@ Compare_FD_grad = True
 # Compare_FD_hess = False
 Compare_FD_hess = True
 
-# exponent_eps_list = range(16)
-exponent_eps_list = [8]
+exponent_eps_list = range(16)
+# exponent_eps_list = [8]
 
 
 ncoeff_init = ncoeff
