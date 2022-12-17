@@ -41,7 +41,6 @@ from choreo.Choreo_cython_funs import the_irfft,the_rfft
 if ndim == 2:
     from choreo.Choreo_cython_funs_2D import Compute_action_Cython_2D as Compute_action_Cython ,Compute_action_hess_mul_Cython_2D as Compute_action_hess_mul_Cython
 
-
 from choreo.Choreo_scipy_plus import *
 
 def Pick_Named_Args_From_Dict(fun,the_dict,MissingArgsAreNone = True):
@@ -82,7 +81,6 @@ def Unpackage_all_coeffs(x,callfun):
 
 def RemoveSym(x,callfun):
     # Removes symmetries and gives coeffs for all bodies
-
     all_coeffs = Unpackage_all_coeffs(x,callfun)
 
     args = callfun[0]
@@ -91,17 +89,38 @@ def RemoveSym(x,callfun):
     ncoeff = args['ncoeff_list'][args["current_cvg_lvl"]]
     loopnb = args['loopnb']
 
+    SpaceRot = args['SpaceRotsUn'][il,ib,:,:]
+    TimeRev = args['TimeRevsUn'][il,ib]
+    TimeShiftNum = args['TimeShiftNumUn'][il,ib]
+    TimeShiftDen = args['TimeShiftDenUn'][il,ib]
+
+    return RemoveSym_ann(
+        all_coeffs,
+        nbody,
+        nloop,
+        ncoeff,
+        loopnb,
+        args['Targets'],
+        args['SpaceRotsUn'],
+        args['TimeRevsUn'],
+        args['TimeShiftNumUn'],
+        args['TimeShiftDenUn']
+    )
+
+def RemoveSym_ann(all_coeffs,nbody,nloop,ncoeff,loopnb,Targets,SpaceRotsUn,TimeRevsUn,TimeShiftNumUn,TimeShiftDenUn):
+    # Removes symmetries and gives coeffs for all bodies
+
     all_coeffs_nosym = np.zeros((nbody,ndim,ncoeff,2),dtype=np.float64)
 
     for il in range(nloop):
         for ib in range(loopnb[il]):
 
-            ibody = args['Targets'][il,ib]
+            ibody = Targets[il,ib]
 
-            SpaceRot = args['SpaceRotsUn'][il,ib,:,:]
-            TimeRev = args['TimeRevsUn'][il,ib]
-            TimeShiftNum = args['TimeShiftNumUn'][il,ib]
-            TimeShiftDen = args['TimeShiftDenUn'][il,ib]
+            SpaceRot = SpaceRotsUn[il,ib,:,:]
+            TimeRev = TimeRevsUn[il,ib]
+            TimeShiftNum = TimeShiftNumUn[il,ib]
+            TimeShiftDen = TimeShiftDenUn[il,ib]
 
             all_coeffs_nosym[ibody,:,:,:] = Transform_Coeffs_Single_Loop(SpaceRot, TimeRev, TimeShiftNum, TimeShiftDen, all_coeffs[il,:,:])
 
@@ -505,21 +524,21 @@ def setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max=6,MomCons=True,n_
         if (looplen > maxlooplen):
             maxlooplen = looplen
 
-    loopgen = np.zeros((nloop),dtype=int)
-    loopnb = np.zeros((nloop),dtype=int)
-    loopnbi = np.zeros((nloop),dtype=int)
+    loopgen = np.zeros((nloop),dtype=np.intp)
+    loopnb = np.zeros((nloop),dtype=np.intp)
+    loopnbi = np.zeros((nloop),dtype=np.intp)
     
     loop_gen_to_target = []
     
-    Targets = np.zeros((nloop,maxlooplen),dtype=int)
+    Targets = np.zeros((nloop,maxlooplen),dtype=np.intp)
     MassSum = np.zeros((nloop),dtype=np.float64)
     ProdMassSumAll_list = []
     UniqueSymsAll_list = []
     
     SpaceRotsUn = np.zeros((nloop,maxlooplen,ndim,ndim),dtype=np.float64)
-    TimeRevsUn = np.zeros((nloop,maxlooplen),dtype=int)
-    TimeShiftNumUn = np.zeros((nloop,maxlooplen),dtype=int)
-    TimeShiftDenUn = np.zeros((nloop,maxlooplen),dtype=int)
+    TimeRevsUn = np.zeros((nloop,maxlooplen),dtype=np.intp)
+    TimeShiftNumUn = np.zeros((nloop,maxlooplen),dtype=np.intp)
+    TimeShiftDenUn = np.zeros((nloop,maxlooplen),dtype=np.intp)
 
     for il in range(len(ConnectedComponents)):
         
@@ -623,9 +642,9 @@ def setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max=6,MomCons=True,n_
     
     ProdMassSumAll = np.zeros((nloop,maxloopnbi),dtype=np.float64)
     SpaceRotsBin = np.zeros((nloop,maxloopnbi,ndim,ndim),dtype=np.float64)
-    TimeRevsBin = np.zeros((nloop,maxloopnbi),dtype=int)
-    TimeShiftNumBin = np.zeros((nloop,maxloopnbi),dtype=int)
-    TimeShiftDenBin = np.zeros((nloop,maxloopnbi),dtype=int)
+    TimeRevsBin = np.zeros((nloop,maxloopnbi),dtype=np.intp)
+    TimeShiftNumBin = np.zeros((nloop,maxloopnbi),dtype=np.intp)
+    TimeShiftDenBin = np.zeros((nloop,maxloopnbi),dtype=np.intp)
 
     for il in range(nloop):
         for ibi in range(loopnbi[il]):
@@ -663,7 +682,7 @@ def setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max=6,MomCons=True,n_
 
 
     # Count constraints
-    loopncstr = np.zeros((nloop),dtype=int)
+    loopncstr = np.zeros((nloop),dtype=np.intp)
     
     for il in range(nloop):
         loopncstr[il] = len(SymGraph.nodes[loopgen[il]]["Constraint_list"])
@@ -671,9 +690,9 @@ def setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max=6,MomCons=True,n_
     maxloopncstr = loopncstr.max()
     
     SpaceRotsCstr = np.zeros((nloop,maxloopncstr,ndim,ndim),dtype=np.float64)
-    TimeRevsCstr = np.zeros((nloop,maxloopncstr),dtype=int)
-    TimeShiftNumCstr = np.zeros((nloop,maxloopncstr),dtype=int)
-    TimeShiftDenCstr = np.zeros((nloop,maxloopncstr),dtype=int)
+    TimeRevsCstr = np.zeros((nloop,maxloopncstr),dtype=np.intp)
+    TimeShiftNumCstr = np.zeros((nloop,maxloopncstr),dtype=np.intp)
+    TimeShiftDenCstr = np.zeros((nloop,maxloopncstr),dtype=np.intp)
     
     for il in range(nloop):
         for i in range(loopncstr[il]):
@@ -1003,6 +1022,17 @@ class UniformRandom():
     def random(self):
         return self.rdn.random_sample((self.d))
 
+def AllPosToAllCoeffs(all_pos,nint,ncoeffs):
+
+    nloop = all_pos.shape[0]
+
+    c_coeffs = the_rfft(all_pos,n=nint,axis=2,norm="forward")
+    all_coeffs = np.empty((nloop_slow,choreo.ndim,ncoeffs,2),dtype=np.float64)
+    all_coeffs[:,:,:,0] = c_coeffs[:,:,0:ncoeffs].real
+    all_coeffs[:,:,:,1] = c_coeffs[:,:,0:ncoeffs].imag
+
+    return all_coeffs
+
 def Transform_Coeffs_Single_Loop(SpaceRot, TimeRev, TimeShiftNum, TimeShiftDen, one_loop_coeffs):
     # Transforms coeffs defining a single loop and returns updated coeffs
     
@@ -1049,7 +1079,97 @@ def Transform_Coeffs(SpaceRot, TimeRev, TimeShiftNum, TimeShiftDen, all_coeffs):
         
     return all_coeffs_new
 
-def Compose_Two_Paths(nTf,nbs,nbf,mass_mul,ncoeff,all_coeffs_slow,all_coeffs_fast_list,Rotate_fast_with_slow=False,mul_loops=None):
+def Compose_Two_Paths(callfun,Info_dict_slow,Info_dict_fast_list,il_slow_source,ibl_slow_source,il_fast_source,ibl_fast_source,nTf,ncoeff,all_coeffs_slow,all_coeffs_fast_list,Rotate_fast_with_slow=False,mul_loops=None):
+    # Composes a "slow" with a "fast" path
+
+    ncoeff = callfun[0]["ncoeff"]
+    nloop = callfun[0]["nloop"]
+    Targets = callfun[0]["Targets"]
+
+    all_coeffs = np.zeros((nloop,ndim,ncoeff,2),dtype=np.float64)
+
+    for il in range(nloop):
+
+        ib = Targets[il,0]
+        il_slow = il_slow_source[ib]
+        ibl_slow = ibl_slow_source[ib]
+        il_fast = il_fast_source[ib]
+        ibl_fast = ibl_fast_source[ib]
+
+        # TODO: ????????????????????????????????????????????????
+        k_fac_slow = 1
+        k_fac_fast = nTf[ils]
+        
+        phys_exp = 2*(1-n)
+
+        rfac_slow = (k_fac_slow/(mass_mul[ils]*nbf[ils]))**(-1./phys_exp)
+        rfac_fast = (k_fac_fast)**(-2./phys_exp)
+
+        ########################################################
+
+        ncoeff_slow = all_coeffs_slow.shape[2]
+        all_coeffs_fast = all_coeffs_fast_list[il_slow]
+        ncoeff_fast = all_coeffs_fast.shape[2]
+        
+        all_coeffs_slow_mod = np.zeros((ndim,ncoeff,2),dtype=np.float64)
+        all_coeffs_fast_mod = np.zeros((ndim,ncoeff,2),dtype=np.float64)
+        
+        for idim in range(ndim):
+            for k in range(min(ncoeff//k_fac_slow,ncoeff_slow)):
+                
+                all_coeffs_slow_mod[idim,k*k_fac_slow,:]  = rfac_slow * all_coeffs_slow[il_slow,idim,k,:]
+
+        for idim in range(ndim):
+            for k in range(1,min(ncoeff//k_fac_fast,ncoeff_fast)):
+                
+                all_coeffs_fast_mod[idim,k*k_fac_fast,:]  = rfac_fast * all_coeffs_fast[il_fast,idim,k,:]
+        
+        if Rotate_fast_with_slow :
+            
+            nint = 2*ncoeff
+
+            c_coeffs_slow = all_coeffs_slow_mod.view(dtype=np.complex128)[...,0]
+            all_pos_slow = the_irfft(c_coeffs_slow,n=nint,axis=1)
+
+            c_coeffs_fast = all_coeffs_fast_mod.view(dtype=np.complex128)[...,0]
+            all_pos_fast = the_irfft(c_coeffs_fast,n=nint,axis=1)
+
+            all_coeffs_slow_mod_speed = np.zeros((ndim,ncoeff,2),dtype=np.float64)
+
+            for idim in range(ndim):
+                for k in range(ncoeff):
+
+                    all_coeffs_slow_mod_speed[idim,k,0] =  k * all_coeffs_slow_mod[idim,k,1] 
+                    all_coeffs_slow_mod_speed[idim,k,1] = -k * all_coeffs_slow_mod[idim,k,0] 
+                    
+            c_coeffs_slow_mod_speed = all_coeffs_slow_mod_speed.view(dtype=np.complex128)[...,0]
+            all_pos_slow_mod_speed = the_irfft(c_coeffs_slow_mod_speed,n=nint,axis=1)
+            
+            all_pos_avg = np.zeros((ndim,nint),dtype=np.float64)
+
+            for iint in range(nint):
+                
+                v = all_pos_slow_mod_speed[:,iint]
+                v = v / np.linalg.norm(v)
+
+                SpRotMat = np.array( [[v[0] , -v[1]] , [v[1],v[0]]])
+                
+                all_pos_avg[:,iint] = all_pos_slow[:,iint] + SpRotMat.dot(all_pos_fast[il_fast,:,iint])
+
+            c_coeffs_avg = the_rfft(all_pos_avg,n=nint,axis=1)
+
+            for idim in range(ndim):
+                for k in range(min(ncoeff,ncoeff_slow)):
+                    all_coeffs[il,idim,k,0] = c_coeffs_avg[idim,k].real
+                    all_coeffs[il,idim,k,1] = c_coeffs_avg[idim,k].imag     
+                        
+        else :
+       
+            all_coeffs[il,:,:,:] = all_coeffs_fast_mod + all_coeffs_slow_mod
+
+    return all_coeffs
+
+def Compose_Two_Paths_old(nTf,nbs,nbf,mass_mul,ncoeff,all_coeffs_slow,all_coeffs_fast_list,Rotate_fast_with_slow=False,mul_loops=None):
     # Composes a "slow" with a "fast" path
 
     nloop_slow = all_coeffs_slow.shape[0]
@@ -1165,7 +1285,71 @@ def Compose_Two_Paths(nTf,nbs,nbf,mass_mul,ncoeff,all_coeffs_slow,all_coeffs_fas
 
     return all_coeffs
 
-def Gen_init_avg_2D(nTf,nbs,nbf,mass_mul,ncoeff,all_coeffs_slow_load,all_coeffs_fast_load=None,all_coeffs_fast_load_list=None,callfun=None,Rotate_fast_with_slow=False,Optimize_Init=True,Randomize_Fast_Init=True,mul_loops=None):
+def Gen_init_avg_2D(nTf,ncoeff,Info_dict_slow,all_coeffs_slow,Info_dict_fast_list,all_coeffs_fast_list,callfun,Rotate_fast_with_slow,Optimize_Init,Randomize_Fast_Init):
+
+    nloop = callfun[0]["nloop"]
+
+    if Randomize_Fast_Init :
+
+        init_SpaceRevscal = np.array([1. if (np.random.random() > 1./2.) else -1. for ils in range(nloop)])
+        init_TimeRevscal = np.array([1. if (np.random.random() > 1./2.) else -1. for ils in range(nloop)])
+        Act_Mul = 1. if (np.random.random() > 1./2.) else -1.
+        init_x = np.array([ np.random.random() for iparam in range(2*nloop)])
+
+    else:
+
+        init_SpaceRevscal = np.array([1. for ils in range(nloop)])
+        init_TimeRevscal = np.array([1. for ils in range(nloop)])
+        Act_Mul = 1.
+        init_x = np.zeros((2*nloop))
+
+    def params_to_coeffs(x):
+
+        all_coeffs_fast_list_mod = []
+
+        for ils in range(nloop):
+
+            theta = twopi * x[2*ils]
+            SpaceRevscal = init_SpaceRevscal[ils]
+            SpaceRots = np.array( [[SpaceRevscal*np.cos(theta) , SpaceRevscal*np.sin(theta)] , [-np.sin(theta),np.cos(theta)]])
+            TimeRevs = init_TimeRevscal[ils]
+            TimeShiftNum = x[2*ils+1]
+            TimeShiftDen = 1
+
+            all_coeffs_fast_list_mod.append(Transform_Coeffs(SpaceRots, TimeRevs, TimeShiftNum, TimeShiftDen, all_coeffs_fast_list[ils]))
+
+        all_coeffs_avg = Compose_Two_Paths(nTf,nbs,nbf,mass_mul,ncoeff,all_coeffs_slow_load,all_coeffs_fast_list_mod,Rotate_fast_with_slow,mul_loops)
+
+        return all_coeffs_avg
+
+    if Optimize_Init :
+
+        def params_to_Action(x):
+
+            all_coeffs_avg = params_to_coeffs(x)
+
+            x_avg = Package_all_coeffs(all_coeffs_avg,callfun)
+            Act, GAct = Compute_action(x_avg,callfun)
+            
+            return Act_Mul * Act
+
+        maxiter = 1000
+        tol = 1e-10
+
+        opt_result = scipy.optimize.minimize(fun=params_to_Action,x0=init_x,method='CG',options={'disp':False,'maxiter':maxiter,'gtol':tol},tol=tol)
+
+        x_opt = opt_result['x']
+
+        all_coeffs_avg = params_to_coeffs(x_opt)
+
+    else:
+        all_coeffs_avg = params_to_coeffs(init_x)
+
+
+    return all_coeffs_avg
+
+
+def Gen_init_avg_2D_old(nTf,nbs,nbf,mass_mul,ncoeff,all_coeffs_slow_load,all_coeffs_fast_load=None,all_coeffs_fast_load_list=None,callfun=None,Rotate_fast_with_slow=False,Optimize_Init=True,Randomize_Fast_Init=True,mul_loops=None):
 
     if (all_coeffs_fast_load_list is None):
         if (all_coeffs_fast_load is None):
