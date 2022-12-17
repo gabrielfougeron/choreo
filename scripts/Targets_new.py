@@ -57,14 +57,7 @@ def main(the_i=0):
     input_slow_filename = slow_base_filename + '.npy'
 
     all_pos_slow = np.load(input_slow_filename)
-    nint_slow = Info_dict_slow["n_int"]
-    ncoeffs_slow = Info_dict_slow["n_Fourier"]
-    nloop_slow = Info_dict_slow["nloop"]
-
-    c_coeffs_slow = choreo.the_rfft(all_pos_slow,n=nint_slow,axis=2,norm="forward")
-    all_coeffs_slow_load = np.zeros((nloop_slow,choreo.ndim,ncoeffs_slow,2),dtype=np.float64)
-    all_coeffs_slow_load[:,:,:,0] = c_coeffs_slow[:,:,0:ncoeffs_slow].real
-    all_coeffs_slow_load[:,:,:,1] = c_coeffs_slow[:,:,0:ncoeffs_slow].imag
+    all_coeffs_slow = AllPosToAllCoeffs(all_pos_slow,Info_dict_slow["n_int"],Info_dict_slow["n_Fourier"])
 
     all_coeffs_fast_list = []
     Info_dict_fast_list = []
@@ -78,52 +71,16 @@ def main(the_i=0):
         input_fast_filename = fast_base_filename + '.npy'
 
         all_pos_fast = np.load(input_fast_filename)
-
-        nint_fast = Info_dict_fast["n_int"]
-
-        c_coeffs_fast = choreo.the_rfft(all_pos_fast,n=nint_fast,axis=2,norm="forward")
-        all_coeffs_fast = np.zeros((Info_dict_fast["nloop"],choreo.ndim,Info_dict_fast["n_Fourier"],2),dtype=np.float64)
-        all_coeffs_fast[:,:,:,0] = c_coeffs_fast[:,:,0:Info_dict_fast["n_Fourier"]].real
-        all_coeffs_fast[:,:,:,1] = c_coeffs_fast[:,:,0:Info_dict_fast["n_Fourier"]].imag
+        all_coeffs_fast = AllPosToAllCoeffs(all_pos_slow,Info_dict_slow["n_int"],Info_dict_slow["n_Fourier"])
 
         all_coeffs_fast_list.append(all_coeffs_fast)
         Info_dict_fast_list.append(Info_dict_fast)
 
 
 
+    SymList_Target, mass_Target,il_slow_source,ibl_slow_source,il_fast_source,ibl_fast_source = MakeTargetsSyms(Info_dict_slow,Info_dict_fast_list)
 
-
-
-    nfl = len(fast_base_filename_list)
-
-    mass_mul = [1]
     nTf = [37]
-    nbs = [3]
-    nbf = [3]
-
-    epsmul = 0.
-
-    # mass_mul = [1,1,1,1]
-    # mass_mul = [1.,1.+epsmul,1.+2*epsmul,1.+3*epsmul]
-    # nTf = [1,1,1,1]
-    # nbs = [1,1,1,1]
-    # nbf = [1,1,1,1]
-
-    # mass_mul = [1,1]
-    # mass_mul = [3,2]
-    # nTf = [37,37]
-    # nbs = [1,1]
-    # nbf = [2,3]
-
-    mul_loops_ini = True
-    # mul_loops_ini = False
-    # mul_loops_ini = (np.random.random() > 1./2.)
-    
-    mul_loops = [mul_loops_ini for _ in range(nfl)]
-
-    Remove_Choreo_Sym = mul_loops
-    # Remove_Choreo_Sym = [False,False]
-    # Remove_Choreo_Sym = [False,False]
 
     Rotate_fast_with_slow = True
     # Rotate_fast_with_slow = False
@@ -138,62 +95,13 @@ def main(the_i=0):
 
     
 
-
-    all_coeffs_fast_load_list = []
-
-    nbpl=[]
-    mass = []
-    for i in range(nfl):
-        all_coeffs_fast_load = all_coeffs_fast_list[i]
-
-        if Remove_Choreo_Sym[i]:
-            
-            all_coeffs_fast_load_list_temp = []
-
-            for ib in range(nbf[i]):
-                
-                tshift = (ib*1.0)/nbf[i]
-
-                all_coeffs_fast_load_list_temp.append(choreo.Transform_Coeffs(np.identity(2), 1, tshift, 1, all_coeffs_fast_load))
-
-                nbpl.append(nbs[i])
-                mass.extend([mass_mul[i] for j in range(nbs[i])])
-
-            all_coeffs_fast_load_list.append(np.concatenate(all_coeffs_fast_load_list_temp,axis=0))
-
-        else:
-            all_coeffs_fast_load_list.append( all_coeffs_fast_load)
-            nbpl.append(nbs[i]*nbf[i])
-            mass.extend([mass_mul[i] for j in range(nbs[i]*nbf[i])])
-
-    mass = np.array(mass,dtype=np.float64)
-
-    Sym_list = []
-    the_lcm = m.lcm(*nbpl)
-    SymName = None
-    Sym_list,nbody = choreo.Make2DChoreoSymManyLoops(nbpl=nbpl,SymName=SymName)
-
-    # mass = np.ones((nbody))*mass_mul
+# Gen_init_avg_2D(nTf,ncoeff,Info_dict_slow,all_coeffs_slow,Info_dict_fast_list,all_coeffs_fast_load_list=all_coeffs_fast_load_list,callfun=callfun,Rotate_fast_with_slow=Rotate_fast_with_slow,Optimize_Init=Optimize_Init,Randomize_Fast_Init=Randomize_Fast_Init,mul_loops=mul_loops) 
 
 
-#     for ibody in range(6):
-#     # for ibody in [0,2]:
-#     # for ibody in [0]:
-# 
-#         l_rot = 11
-#         k_rot = 13
-#         rot_angle = 2* np.pi * l_rot / k_rot
-#         s = 1
-#         st = 1
-# 
-#         Sym_list.append(choreo.ChoreoSym(
-#                 LoopTarget=ibody,
-#                 LoopSource=ibody,
-#                 SpaceRot = np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64),
-#                 TimeRev=st,
-#                 TimeShift=fractions.Fraction(numerator=1,denominator=k_rot)
-#             ))
-# 
+
+
+
+
 
     # MomConsImposed = True
     MomConsImposed = False

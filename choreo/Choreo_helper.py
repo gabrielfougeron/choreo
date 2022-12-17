@@ -14,7 +14,6 @@ from choreo.Choreo_scipy_plus import *
 from choreo.Choreo_funs import *
 from choreo.Choreo_plot import *
 
-
 def Make2DChoreoSym(SymType,ib_list):
     r"""
     Defines symmetries of a 2-D system of bodies as classfied in [1] 
@@ -271,7 +270,7 @@ def MakeLoopEarSymList(n_main_loop,n_ears,m_main_loop=1,m_ears=1,SelfReflMain=Fa
     delta_i_main_loop = the_lcm//n_ears
     delta_i_ears = the_lcm//n_main_loop
 
-    perm = np.zeros((nbody),dtype=int)
+    perm = np.zeros((nbody),dtype=np.intp)
     for ibody in range(n_main_loop):
         perm[ibody] = ( (ibody+1) % n_main_loop) 
 
@@ -314,7 +313,7 @@ def MakeLoopEarSymList(n_main_loop,n_ears,m_main_loop=1,m_ears=1,SelfReflMain=Fa
     else:
         db_ear = 1        
 
-    perm = np.zeros((nbody),dtype=int)
+    perm = np.zeros((nbody),dtype=np.intp)
     for ibody in range(n_main_loop):
         perm[ibody] = ( (n_main_loop + db_main - ibody) % n_main_loop) 
 
@@ -351,7 +350,7 @@ def MakeLoopEarSymList(n_main_loop,n_ears,m_main_loop=1,m_ears=1,SelfReflMain=Fa
     # --------------------------------------------
     # Rotational symmetry
 
-    perm = np.zeros((nbody),dtype=int)
+    perm = np.zeros((nbody),dtype=np.intp)
     for ibody in range(n_main_loop):
         perm[ibody] = ( (ibody+1) % n_main_loop) 
 
@@ -412,3 +411,102 @@ def Make_SymList_From_InfoDict(InfoDict):
             SymList.append(Sym_rel.Compose(Sym_ref))
 
     return SymList
+
+def MakeTargetsSyms(Info_dict_slow,Info_dict_fast_list):
+    # In targets, a loop is created for each slow loop and fast body in it
+
+    assert Info_dict_slow['nloop'] == len(Info_dict_fast_list)
+
+    SymList_slow = Make_SymList_From_InfoDict(Info_dict_slow)
+
+    SymList_Target = []
+    mass_Target = []
+
+    ibody_targ = 0
+
+    il_slow_source = []
+    ibl_slow_source = []
+    il_fast_source = []
+    ibl_fast_source = []
+
+    for il_slow in range(Info_dict_slow['nloop']):
+
+        Info_dict_fast = Info_dict_fast_list[il_slow]
+        SymList_fast = Make_SymList_From_InfoDict(Info_dict_fast)
+
+        ibody_targ_ref = ibody_targ
+
+        for ibl_slow in range(Info_dict_slow["loopnb"][il_slow]):
+
+            ib_slow = Info_dict_slow["Targets"][il_slow][ibl_slow]
+            Sym_Slow = SymList_slow[ib_slow]
+
+            mass_slow = Info_dict_slow["Targets"][ib_slow]
+
+            mass_fast_list = []
+            
+            for il_fast in range(Info_dict_fast['nloop']):
+
+                for ibl_fast in range(Info_dict_fast["loopnb"][il_fast]):
+
+                    ib_fast = Info_dict_fast["Targets"][il_fast][ibl_fast]
+                    mass_fast = Info_dict_fast["Targets"][ib_slow]
+                    mass_fast_list.append(mass_fast)
+
+                    Sym_targ = ChoreoSym(
+                        LoopTarget = ibody_targ ,
+                        LoopSource = ibody_targ_ref,
+                        SpaceRot = Sym_Slow.SpaceRot,
+                        TimeRev = Sym_Slow.TimeRev,
+                        TimeShift = Sym_Slow.TimeShift,
+                    )
+
+                    SymList_Target.append(Sym_targ)
+                    
+                    il_slow_source.append(il_slow)
+                    ibl_slow_source.append(ibl_slow)
+                    il_fast_source.append(il_fast)
+                    ibl_fast_source.append(ibl_fast)
+
+                    ibody_targ += 1
+
+            mass_fast_tot = sum(mass_fast_list)
+            for ib_fast in range(mass_fast_list):
+                mass_fast_list[ib_fast] =  mass_fast_list[ib_fast] * mass_slow / mass_fast_tot
+
+            mass_Target.extend(mass_fast_list)
+
+    mass_Target = np.array(mass_Target)
+    il_slow_source = np.array(il_slow_source)
+    ibl_slow_source = np.array(ibl_slow_source)
+    il_fast_source = np.array(il_fast_source)
+    ibl_fast_source = np.array(ibl_fast_source)
+
+    return SymList_Target, mass_Target,il_slow_source,ibl_slow_source,il_fast_source,ibl_fast_source
+
+# 
+# def MakeSourceTargets(Info_dict_slow,Info_dict_fast_list,callfun):
+#     # In targets, a loop is created for each slow loop and fast body in it
+# 
+#     slow_loop_source = np.zeros((callfun[0]["nloop"]),dtype=np.intp)
+# 
+# 
+#     ibody_targ = 0
+# 
+#     for il_slow in range(Info_dict_slow['nloop']):
+# 
+#         Info_dict_fast = Info_dict_fast_list[il_slow]
+# 
+#         ibody_targ_ref = ibody_targ
+# 
+#         for ibl_slow in range(Info_dict_slow["loopnb"][il_slow]):
+# 
+#             ib_slow = Info_dict_slow["Targets"][il_slow][ibl_slow]
+# 
+#             for il_fast in range(Info_dict_fast['nloop']):
+# 
+#                 for ibl_fast in range(Info_dict_fast["loopnb"][il_fast]):
+# 
+#                     ib_fast = Info_dict_fast["Targets"][il_fast][ibl_fast]
+# 
+#                     ibody_targ += 1
