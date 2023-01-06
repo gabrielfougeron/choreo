@@ -457,7 +457,7 @@ def MakeTargetsSyms(Info_dict_slow,Info_dict_fast_list):
 
                     Sym_targ = ChoreoSym(
                         LoopTarget = ibody_targ ,
-                        LoopSource = ibody_targ_ref,
+                        LoopSource = ibody_targ_ref + ib_fast,
                         SpaceRot = Sym_Slow.SpaceRot,
                         TimeRev = Sym_Slow.TimeRev,
                         TimeShift = Sym_Slow.TimeShift,
@@ -475,7 +475,7 @@ def MakeTargetsSyms(Info_dict_slow,Info_dict_fast_list):
             mass_fast_tot = sum(mass_fast_list)
 
             for ib_fast in range(nbody_fast):
-                mass_fast_list[ib_fast] =  mass_fast_list[ib_fast] * mass_slow / mass_fast_tot
+                mass_fast_list[ib_fast] = mass_fast_list[ib_fast] * (mass_slow / mass_fast_tot)
 
             mass_Target.extend(mass_fast_list)
 
@@ -486,30 +486,3 @@ def MakeTargetsSyms(Info_dict_slow,Info_dict_fast_list):
     ibl_fast_source = np.array(ibl_fast_source)
 
     return SymList_Target, mass_Target,il_slow_source,ibl_slow_source,il_fast_source,ibl_fast_source
-
-# 
-# def MakeSourceTargets(Info_dict_slow,Info_dict_fast_list,callfun):
-#     # In targets, a loop is created for each slow loop and fast body in it
-# 
-#     slow_loop_source = np.zeros((callfun[0]["nloop"]),dtype=np.intp)
-# 
-# 
-#     ibody_targ = 0
-# 
-#     for il_slow in range(Info_dict_slow['nloop']):
-# 
-#         Info_dict_fast = Info_dict_fast_list[il_slow]
-# 
-#         ibody_targ_ref = ibody_targ
-# 
-#         for ibl_slow in range(Info_dict_slow["loopnb"][il_slow]):
-# 
-#             ib_slow = Info_dict_slow["Targets"][il_slow][ibl_slow]
-# 
-#             for il_fast in range(Info_dict_fast['nloop']):
-# 
-#                 for ibl_fast in range(Info_dict_fast["loopnb"][il_fast]):
-# 
-#                     ib_fast = Info_dict_fast["Targets"][il_fast][ibl_fast]
-# 
-#                     ibody_targ += 1

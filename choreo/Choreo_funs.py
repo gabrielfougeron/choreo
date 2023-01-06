@@ -60,7 +60,7 @@ def Pick_Named_Args_From_Dict(fun,the_dict,MissingArgsAreNone = True):
 
 def Package_all_coeffs(all_coeffs,callfun):
     # Transfers the Fourier coefficients of the generators to a single vector of parameters.
-    # The packaging process projects the trajectory onto the space of constrraint satisfying trajectories.
+    # The packaging process projects the trajectory onto the space of constraint satisfying trajectories.
     
     args = callfun[0]
 
@@ -72,29 +72,51 @@ def Package_all_coeffs(all_coeffs,callfun):
 def Unpackage_all_coeffs(x,callfun):
     # Computes the Fourier coefficients of the generator given the parameters.
     
-    args=callfun[0]
+    args = callfun[0]
     
     y = args['param_to_coeff_list'][args["current_cvg_lvl"]].dot(x)
     all_coeffs = y.reshape(args['nloop'],ndim,args['ncoeff_list'][args["current_cvg_lvl"]],2)
     
     return all_coeffs
 
+def Compute_bar(all_coeffs,nloop,mass,loopnb,Targets,SpaceRotsUn):
+
+    xbar = np.zeros((ndim))
+    tot_mass = 0.
+
+    for il in range(nloop):
+        for ib in range(loopnb[il]):
+
+            ibody = Targets[il,ib]
+
+            tot_mass += mass[ibody]
+            xbar += mass[ibody] * np.dot(SpaceRotsUn[il,ib,:,:],all_coeffs[il,:,0,0] )
+
+            
+    xbar /= tot_mass
+
+    return xbar
+
+def Center_all_coeffs(all_coeffs,nloop,mass,loopnb,Targets,SpaceRotsUn):
+
+    xbar = Compute_bar(all_coeffs,nloop,mass,loopnb,Targets,SpaceRotsUn)
+
+    for il in range(nloop):
+
+        all_coeffs[il,:,0,0] -= xbar
+
 def RemoveSym(x,callfun):
     # Removes symmetries and gives coeffs for all bodies
     all_coeffs = Unpackage_all_coeffs(x,callfun)
 
-    args = callfun[0]
-    nbody = args['nbody']
-    nloop = args['nloop']
-    ncoeff = args['ncoeff_list'][args["current_cvg_lvl"]]
-    loopnb = args['loopnb']
+    args=callfun[0]
 
     return RemoveSym_ann(
         all_coeffs,
-        nbody,
-        nloop,
-        ncoeff,
-        loopnb,
+        args['nbody'],
+        args['nloop'],
+        args['ncoeff_list'][args["current_cvg_lvl"]],
+        args['loopnb'],
         args['Targets'],
         args['SpaceRotsUn'],
         args['TimeRevsUn'],
@@ -373,6 +395,17 @@ class ChoreoSym():
         self.SpaceRot = SpaceRot
         self.TimeRev = TimeRev
         self.TimeShift = TimeShift
+
+    def __str__(self):
+
+        out  = ""
+        out += f"Loop Target: {self.LoopTarget}\n"
+        out += f"Loop Source: {self.LoopSource}\n"
+        out += f"SpaceRot: {self.SpaceRot}\n"
+        out += f"TimeRev: {self.TimeRev}\n"
+        out += f"TimeShift: {self.TimeShift}"
+
+        return out
         
     def Inverse(self):
         r"""
@@ -391,7 +424,7 @@ class ChoreoSym():
         r"""
         Returns the composition of two transformations ignoring sources and targets.
 
-        B.ComposeLight(A) returens the composition B o A, i.e. applies A then B, ignoring that target A might be different from source B.
+        B.ComposeLight(A) returns the composition B o A, i.e. applies A then B, ignoring that target A might be different from source B.
         """
         
         tshift = B.TimeShift + fractions.Fraction(numerator=int(B.TimeRev)*A.TimeShift.numerator,denominator=A.TimeShift.denominator)
@@ -1022,7 +1055,7 @@ def AllPosToAllCoeffs(all_pos,nint,ncoeffs):
     nloop = all_pos.shape[0]
 
     c_coeffs = the_rfft(all_pos,n=nint,axis=2,norm="forward")
-    all_coeffs = np.empty((nloop,ndim,ncoeffs,2),dtype=np.float64)
+    all_coeffs = np.zeros((nloop,ndim,ncoeffs,2),dtype=np.float64)
     all_coeffs[:,:,:,0] = c_coeffs[:,:,0:ncoeffs].real
     all_coeffs[:,:,:,1] = c_coeffs[:,:,0:ncoeffs].imag
 
@@ -1074,7 +1107,7 @@ def Transform_Coeffs(SpaceRot, TimeRev, TimeShiftNum, TimeShiftDen, all_coeffs):
         
     return all_coeffs_new
 
-def Compose_Two_Paths(callfun,Info_dict_slow,Info_dict_fast_list,il_slow_source,ibl_slow_source,il_fast_source,ibl_fast_source,nTf,ncoeff,all_coeffs_slow,all_coeffs_fast_list,Rotate_fast_with_slow=False,mul_loops=None):
+def Compose_Two_Paths(callfun,Info_dict_slow,Info_dict_fast_list,il_slow_source,ibl_slow_source,il_fast_source,ibl_fast_source,nTf,ncoeff,all_coeffs_slow,all_coeffs_fast_list,Rotate_fast_with_slow=False):
     # Composes a "slow" with a "fast" path
 
     ncoeff = callfun[0]["ncoeff_list"][0]
@@ -1091,20 +1124,41 @@ def Compose_Two_Paths(callfun,Info_dict_slow,Info_dict_fast_list,il_slow_source,
         il_fast = il_fast_source[ib]
         ibl_fast = ibl_fast_source[ib]
 
-        # TODO: ????????????????????????????????????????????????
+        mass_fast_tot = 0.
+        
+        for il_fast_p in range(Info_dict_fast_list[il_slow]['nloop']):
+
+            for ibl_fast_p in range(Info_dict_fast_list[il_slow]["loopnb"][il_fast]):
+
+                ib_fast_p = Info_dict_fast_list[il_slow]["Targets"][il_fast_p][ibl_fast_p]
+                mass_fast_tot += Info_dict_fast_list[il_slow]["mass"][ib_fast_p]
+
+        mass_fac = mass_fast_tot / Info_dict_slow["mass"][Info_dict_slow["Targets"][il_slow][ibl_slow]]
+
         k_fac_slow = 1
         k_fac_fast = nTf[il_slow]
         
         phys_exp = 2*(1-n)
+# 
+#         print(1/(-2./phys_exp))
+#         print(1/(-2./phys_exp))
 
-        # rfac_slow = (k_fac_slow/(mass_mul[il_slow]*nbf[il_slow]))**(-1./phys_exp)
         rfac_slow = (k_fac_slow)**(-1./phys_exp)
-        rfac_fast = (k_fac_fast)**(-2./phys_exp)
+        rfac_fast = (k_fac_fast*m.sqrt(mass_fac))**(-2./phys_exp)
+
+        # rfac_slow = (k_fac_slow)**(-1./phys_exp)
+        # rfac_fast = (k_fac_fast)**(-2./phys_exp)
 
         ########################################################
 
+        SpaceRot = np.array(Info_dict_fast_list[il_slow]["SpaceRotsUn"][il_fast][ibl_fast])
+        TimeRev = Info_dict_fast_list[il_slow]["TimeRevsUn"][il_fast][ibl_fast]
+        TimeShiftNum = Info_dict_fast_list[il_slow]["TimeShiftNumUn"][il_fast][ibl_fast]
+        TimeShiftDen = Info_dict_fast_list[il_slow]["TimeShiftDenUn"][il_fast][ibl_fast]
+
         ncoeff_slow = all_coeffs_slow.shape[2]
-        all_coeffs_fast = all_coeffs_fast_list[il_slow]
+        all_coeffs_fast = Transform_Coeffs_Single_Loop(SpaceRot, TimeRev, TimeShiftNum, TimeShiftDen, all_coeffs_fast_list[il_slow][il_fast,:,:,:])
+        
         ncoeff_fast = all_coeffs_fast.shape[2]
         
         all_coeffs_slow_mod = np.zeros((ndim,ncoeff,2),dtype=np.float64)
@@ -1118,7 +1172,7 @@ def Compose_Two_Paths(callfun,Info_dict_slow,Info_dict_fast_list,il_slow_source,
         for idim in range(ndim):
             for k in range(1,min(ncoeff//k_fac_fast,ncoeff_fast)):
                 
-                all_coeffs_fast_mod[idim,k*k_fac_fast,:]  = rfac_fast * all_coeffs_fast[il_fast,idim,k,:]
+                all_coeffs_fast_mod[idim,k*k_fac_fast,:]  = rfac_fast * all_coeffs_fast[idim,k,:]
         
         if Rotate_fast_with_slow :
             
@@ -1283,27 +1337,27 @@ def Compose_Two_Paths_old(nTf,nbs,nbf,mass_mul,ncoeff,all_coeffs_slow,all_coeffs
 
 def Gen_init_avg_2D(nTf,ncoeff,Info_dict_slow,all_coeffs_slow,Info_dict_fast_list,all_coeffs_fast_list,il_slow_source,ibl_slow_source,il_fast_source,ibl_fast_source,callfun,Rotate_fast_with_slow,Optimize_Init,Randomize_Fast_Init):
 
-    nloop = callfun[0]["nloop"]
+    nloop_slow = len(all_coeffs_fast_list)
 
     if Randomize_Fast_Init :
 
-        init_SpaceRevscal = np.array([1. if (np.random.random() > 1./2.) else -1. for ils in range(nloop)])
-        init_TimeRevscal = np.array([1. if (np.random.random() > 1./2.) else -1. for ils in range(nloop)])
+        init_SpaceRevscal = np.array([1. if (np.random.random() > 1./2.) else -1. for ils in range(nloop_slow)])
+        init_TimeRevscal = np.array([1. if (np.random.random() > 1./2.) else -1. for ils in range(nloop_slow)])
         Act_Mul = 1. if (np.random.random() > 1./2.) else -1.
-        init_x = np.array([ np.random.random() for iparam in range(2*nloop)])
+        init_x = np.array([ np.random.random() for iparam in range(2*nloop_slow)])
 
     else:
 
-        init_SpaceRevscal = np.array([1. for ils in range(nloop)])
-        init_TimeRevscal = np.array([1. for ils in range(nloop)])
+        init_SpaceRevscal = np.array([1. for ils in range(nloop_slow)])
+        init_TimeRevscal = np.array([1. for ils in range(nloop_slow)])
         Act_Mul = 1.
-        init_x = np.zeros((2*nloop))
+        init_x = np.zeros((2*nloop_slow))
 
     def params_to_coeffs(x):
 
         all_coeffs_fast_list_mod = []
 
-        for ils in range(nloop):
+        for ils in range(nloop_slow):
 
             theta = twopi * x[2*ils]
             SpaceRevscal = init_SpaceRevscal[ils]
@@ -1314,7 +1368,7 @@ def Gen_init_avg_2D(nTf,ncoeff,Info_dict_slow,all_coeffs_slow,Info_dict_fast_lis
 
             all_coeffs_fast_list_mod.append(Transform_Coeffs(SpaceRots, TimeRevs, TimeShiftNum, TimeShiftDen, all_coeffs_fast_list[ils]))
 
-            all_coeffs_avg = Compose_Two_Paths(callfun,Info_dict_slow,Info_dict_fast_list,il_slow_source,ibl_slow_source,il_fast_source,ibl_fast_source,nTf,ncoeff,all_coeffs_slow,all_coeffs_fast_list,Rotate_fast_with_slow=False,mul_loops=None)
+            all_coeffs_avg = Compose_Two_Paths(callfun,Info_dict_slow,Info_dict_fast_list,il_slow_source,ibl_slow_source,il_fast_source,ibl_fast_source,nTf,ncoeff,all_coeffs_slow,all_coeffs_fast_list,Rotate_fast_with_slow = Rotate_fast_with_slow)
 
         return all_coeffs_avg
 
@@ -1342,7 +1396,6 @@ def Gen_init_avg_2D(nTf,ncoeff,Info_dict_slow,all_coeffs_slow,Info_dict_fast_lis
         all_coeffs_avg = params_to_coeffs(init_x)
 
     return all_coeffs_avg
-
 
 def Gen_init_avg_2D_old(nTf,nbs,nbf,mass_mul,ncoeff,all_coeffs_slow_load,all_coeffs_fast_load=None,all_coeffs_fast_load_list=None,callfun=None,Rotate_fast_with_slow=False,Optimize_Init=True,Randomize_Fast_Init=True,mul_loops=None):
 
