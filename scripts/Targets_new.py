@@ -31,18 +31,21 @@ def main(the_i=0):
     LookForTarget = True
     
 
-    # slow_base_filename = './choreo_GUI/choreo-gallery/02 - Helpers/01 - Circles/01'
+    slow_base_filename = './choreo_GUI/choreo-gallery/02 - Helpers/01 - Circles/01'
     # slow_base_filename = './choreo_GUI/choreo-gallery/02 - Helpers/01 - Circles/02'
-    slow_base_filename = './choreo_GUI/choreo-gallery/01 - Classic gallery/01 - Figure eight'
+    # slow_base_filename = './choreo_GUI/choreo-gallery/02 - Helpers/01 - Circles/03'
+    # slow_base_filename = './choreo_GUI/choreo-gallery/01 - Classic gallery/01 - Figure eight'
     # slow_base_filename = './choreo_GUI/choreo-gallery/01 - Classic gallery/06 - 5-chain'
+    # slow_base_filename = './choreo_GUI/choreo-gallery/01 - Classic gallery/05 - Three petal flower'
 
     # fast_base_filename_list = ['./choreo_GUI/choreo-gallery/02 - Helpers/01 - Circles/02'   ] 
 
     fast_base_filename_list = [
         # './choreo_GUI/choreo-gallery/02 - Helpers/01 - Circles/01',
-        './choreo_GUI/choreo-gallery/02 - Helpers/01 - Circles/02',
+        # './choreo_GUI/choreo-gallery/02 - Helpers/01 - Circles/02', 
         # './choreo_GUI/choreo-gallery/02 - Helpers/01 - Circles/03',
-        # './choreo_GUI/choreo-gallery/01 - Classic gallery/01 - Figure eight'
+        # './choreo_GUI/choreo-gallery/02 - Helpers/01 - Circles/05',
+        './choreo_GUI/choreo-gallery/01 - Classic gallery/05 - Three petal flower'
         ] 
 
     
@@ -80,7 +83,10 @@ def main(the_i=0):
 
     Sym_list, mass,il_slow_source,ibl_slow_source,il_fast_source,ibl_fast_source = choreo.MakeTargetsSyms(Info_dict_slow,Info_dict_fast_list)
 
-    nTf = [37]
+    for k in range(30):
+        print(all_coeffs_fast_list[0][0,:,k,0])
+
+    nTf = [7]
 
     # Rotate_fast_with_slow = True
     Rotate_fast_with_slow = False
@@ -90,11 +96,11 @@ def main(the_i=0):
     Optimize_Init = False
     # Optimize_Init = (np.random.random() > 1./2.)
 
-    # Randomize_Fast_Init = True
-    Randomize_Fast_Init = False
+    Randomize_Fast_Init = True
+    # Randomize_Fast_Init = False
 
 
-
+    print('aaa',all_coeffs_fast_list)
 
     # MomConsImposed = True
     MomConsImposed = False
@@ -251,7 +257,7 @@ def main(the_i=0):
     n_opt_max = 1
     n_find_max = 1
     # 
-    # n_opt_max = 5000
+    # n_opt_max = 50
     # n_find_max = 100
 
     mul_coarse_to_fine = 3

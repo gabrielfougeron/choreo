@@ -1087,23 +1087,11 @@ def Transform_Coeffs(SpaceRot, TimeRev, TimeShiftNum, TimeShiftDen, all_coeffs):
     # Transforms coeffs defining a path and returns updated coeffs
     
     nloop = all_coeffs.shape[0]
-    ncoeff = all_coeffs.shape[2]
-        
-    cs = np.zeros((2))
     all_coeffs_new = np.zeros(all_coeffs.shape)
 
     for il in range(nloop):
-        for k in range(ncoeff):
-            
-            dt = TimeShiftNum / TimeShiftDen
-            cs[0] = m.cos( - twopi * k*dt)
-            cs[1] = m.sin( - twopi * k*dt)  
-                
-            v = all_coeffs[il,:,k,0] * cs[0] - TimeRev * all_coeffs[il,:,k,1] * cs[1]
-            w = all_coeffs[il,:,k,0] * cs[1] + TimeRev * all_coeffs[il,:,k,1] * cs[0]
-                
-            all_coeffs_new[il,:,k,0] = SpaceRot[:,:].dot(v)
-            all_coeffs_new[il,:,k,1] = SpaceRot[:,:].dot(w)
+
+            all_coeffs_new[il,:,:,:] = Transform_Coeffs_Single_Loop(SpaceRot, TimeRev, TimeShiftNum, TimeShiftDen, all_coeffs[il,:,:,:])
         
     return all_coeffs_new
 
@@ -1139,15 +1127,9 @@ def Compose_Two_Paths(callfun,Info_dict_slow,Info_dict_fast_list,il_slow_source,
         k_fac_fast = nTf[il_slow]
         
         phys_exp = 2*(1-n)
-# 
-#         print(1/(-2./phys_exp))
-#         print(1/(-2./phys_exp))
 
-        rfac_slow = (k_fac_slow)**(-1./phys_exp)
+        rfac_slow = 1.
         rfac_fast = (k_fac_fast*m.sqrt(mass_fac))**(-2./phys_exp)
-
-        # rfac_slow = (k_fac_slow)**(-1./phys_exp)
-        # rfac_fast = (k_fac_fast)**(-2./phys_exp)
 
         ########################################################
 
@@ -1156,10 +1138,12 @@ def Compose_Two_Paths(callfun,Info_dict_slow,Info_dict_fast_list,il_slow_source,
         TimeShiftNum = Info_dict_fast_list[il_slow]["TimeShiftNumUn"][il_fast][ibl_fast]
         TimeShiftDen = Info_dict_fast_list[il_slow]["TimeShiftDenUn"][il_fast][ibl_fast]
 
-        ncoeff_slow = all_coeffs_slow.shape[2]
+        print(il_fast,ibl_fast)
+
+        ncoeff_slow = all_coeffs_slow.shape[1]
         all_coeffs_fast = Transform_Coeffs_Single_Loop(SpaceRot, TimeRev, TimeShiftNum, TimeShiftDen, all_coeffs_fast_list[il_slow][il_fast,:,:,:])
         
-        ncoeff_fast = all_coeffs_fast.shape[2]
+        ncoeff_fast = all_coeffs_fast.shape[1]
         
         all_coeffs_slow_mod = np.zeros((ndim,ncoeff,2),dtype=np.float64)
         all_coeffs_fast_mod = np.zeros((ndim,ncoeff,2),dtype=np.float64)
@@ -1170,8 +1154,8 @@ def Compose_Two_Paths(callfun,Info_dict_slow,Info_dict_fast_list,il_slow_source,
                 all_coeffs_slow_mod[idim,k*k_fac_slow,:]  = rfac_slow * all_coeffs_slow[il_slow,idim,k,:]
 
         for idim in range(ndim):
-            for k in range(1,min(ncoeff//k_fac_fast,ncoeff_fast)):
-                
+            for k in range(min(ncoeff//k_fac_fast,ncoeff_fast)):
+
                 all_coeffs_fast_mod[idim,k*k_fac_fast,:]  = rfac_fast * all_coeffs_fast[idim,k,:]
         
         if Rotate_fast_with_slow :
@@ -1214,7 +1198,11 @@ def Compose_Two_Paths(callfun,Info_dict_slow,Info_dict_fast_list,il_slow_source,
                     all_coeffs[il,idim,k,1] = c_coeffs_avg[idim,k].imag     
                         
         else :
-       
+            # 
+            # for idim in range(ndim):
+            #     for k in range(ncoeff):
+            #         print(all_coeffs_fast_mod[idim,k,:])
+
             all_coeffs[il,:,:,:] = all_coeffs_fast_mod + all_coeffs_slow_mod
 
     return all_coeffs
@@ -1368,7 +1356,7 @@ def Gen_init_avg_2D(nTf,ncoeff,Info_dict_slow,all_coeffs_slow,Info_dict_fast_lis
 
             all_coeffs_fast_list_mod.append(Transform_Coeffs(SpaceRots, TimeRevs, TimeShiftNum, TimeShiftDen, all_coeffs_fast_list[ils]))
 
-            all_coeffs_avg = Compose_Two_Paths(callfun,Info_dict_slow,Info_dict_fast_list,il_slow_source,ibl_slow_source,il_fast_source,ibl_fast_source,nTf,ncoeff,all_coeffs_slow,all_coeffs_fast_list,Rotate_fast_with_slow = Rotate_fast_with_slow)
+        all_coeffs_avg = Compose_Two_Paths(callfun,Info_dict_slow,Info_dict_fast_list,il_slow_source,ibl_slow_source,il_fast_source,ibl_fast_source,nTf,ncoeff,all_coeffs_slow,all_coeffs_fast_list_mod,Rotate_fast_with_slow)
 
         return all_coeffs_avg
 
