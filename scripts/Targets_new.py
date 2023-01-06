@@ -77,6 +77,10 @@ def main(the_i=0):
         Info_dict_fast_list.append(Info_dict_fast)
 
 
+    print(all_coeffs_slow[0,:,:10])
+    # print(all_coeffs_fast_list)
+
+
 
     Sym_list, mass,il_slow_source,ibl_slow_source,il_fast_source,ibl_fast_source = choreo.MakeTargetsSyms(Info_dict_slow,Info_dict_fast_list)
 
