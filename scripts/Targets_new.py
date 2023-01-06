@@ -32,15 +32,15 @@ def main(the_i=0):
     
 
     # slow_base_filename = './choreo_GUI/choreo-gallery/02 - Helpers/01 - Circles/01'
-    slow_base_filename = './choreo_GUI/choreo-gallery/02 - Helpers/01 - Circles/02'
-    # slow_base_filename = './choreo_GUI/choreo-gallery/01 - Classic gallery/01 - Figure eight'
+    # slow_base_filename = './choreo_GUI/choreo-gallery/02 - Helpers/01 - Circles/02'
+    slow_base_filename = './choreo_GUI/choreo-gallery/01 - Classic gallery/01 - Figure eight'
     # slow_base_filename = './choreo_GUI/choreo-gallery/01 - Classic gallery/06 - 5-chain'
 
     # fast_base_filename_list = ['./choreo_GUI/choreo-gallery/02 - Helpers/01 - Circles/02'   ] 
 
     fast_base_filename_list = [
-        './choreo_GUI/choreo-gallery/02 - Helpers/01 - Circles/01',
-        # './choreo_GUI/choreo-gallery/02 - Helpers/01 - Circles/02',
+        # './choreo_GUI/choreo-gallery/02 - Helpers/01 - Circles/01',
+        './choreo_GUI/choreo-gallery/02 - Helpers/01 - Circles/02',
         # './choreo_GUI/choreo-gallery/02 - Helpers/01 - Circles/03',
         # './choreo_GUI/choreo-gallery/01 - Classic gallery/01 - Figure eight'
         ] 
@@ -58,6 +58,7 @@ def main(the_i=0):
 
     all_pos_slow = np.load(input_slow_filename)
     all_coeffs_slow = choreo.AllPosToAllCoeffs(all_pos_slow,Info_dict_slow["n_int"],Info_dict_slow["n_Fourier"])
+    choreo.Center_all_coeffs(all_coeffs_slow,Info_dict_slow["nloop"],Info_dict_slow["mass"],Info_dict_slow["loopnb"],np.array(Info_dict_slow["Targets"]),np.array(Info_dict_slow["SpaceRotsUn"]))
 
     all_coeffs_fast_list = []
     Info_dict_fast_list = []
@@ -71,37 +72,26 @@ def main(the_i=0):
         input_fast_filename = fast_base_filename + '.npy'
 
         all_pos_fast = np.load(input_fast_filename)
-        all_coeffs_fast = choreo.AllPosToAllCoeffs(all_pos_slow,Info_dict_slow["n_int"],Info_dict_slow["n_Fourier"])
+        all_coeffs_fast = choreo.AllPosToAllCoeffs(all_pos_fast,Info_dict_fast["n_int"],Info_dict_fast["n_Fourier"])
+        choreo.Center_all_coeffs(all_coeffs_fast,Info_dict_fast["nloop"],Info_dict_fast["mass"],Info_dict_fast["loopnb"],np.array(Info_dict_fast["Targets"]),np.array(Info_dict_fast["SpaceRotsUn"]))
 
         all_coeffs_fast_list.append(all_coeffs_fast)
         Info_dict_fast_list.append(Info_dict_fast)
-
-
-    print(all_coeffs_slow[0,:,:10])
-    # print(all_coeffs_fast_list)
-
-
 
     Sym_list, mass,il_slow_source,ibl_slow_source,il_fast_source,ibl_fast_source = choreo.MakeTargetsSyms(Info_dict_slow,Info_dict_fast_list)
 
     nTf = [37]
 
-    Rotate_fast_with_slow = True
-    # Rotate_fast_with_slow = False
+    # Rotate_fast_with_slow = True
+    Rotate_fast_with_slow = False
     # Rotate_fast_with_slow = (np.random.random() > 1./2.)
 
-    Optimize_Init = True
-    # Optimize_Init = False
+    # Optimize_Init = True
+    Optimize_Init = False
     # Optimize_Init = (np.random.random() > 1./2.)
 
-    Randomize_Fast_Init = True
-    # Randomize_Fast_Init = False
-
-    
-
-# Gen_init_avg_2D(nTf,ncoeff,Info_dict_slow,all_coeffs_slow,Info_dict_fast_list,all_coeffs_fast_load_list=all_coeffs_fast_load_list,callfun=callfun,Rotate_fast_with_slow=Rotate_fast_with_slow,Optimize_Init=Optimize_Init,Randomize_Fast_Init=Randomize_Fast_Init,mul_loops=mul_loops) 
-
-
+    # Randomize_Fast_Init = True
+    Randomize_Fast_Init = False
 
 
 
@@ -212,12 +202,12 @@ def main(the_i=0):
     # krylov_method = 'minres'
 
     # line_search = 'armijo'
-    line_search = 'wolfe'
-    # line_search = 'none'
+    # line_search = 'wolfe'
+    line_search = 'none'
  
     # linesearch_smin = 1e-2
-    # linesearch_smin = 1.
-    linesearch_smin = 0.01
+    linesearch_smin = 1.
+    # linesearch_smin = 0.01
     
     gradtol_list =          [1e-3   ,1e-5   ,1e-7   ,1e-9   ,1e-11  ,1e-13  ,1e-15  ]
     inner_maxiter_list =    [30     ,50     ,60     ,70     ,80     ,100    ,100    ]
@@ -258,7 +248,7 @@ def main(the_i=0):
 
     n_opt = 0
 
-    n_opt_max = 5
+    n_opt_max = 1
     n_find_max = 1
     # 
     # n_opt_max = 5000
