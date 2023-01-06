@@ -26,8 +26,9 @@ def main():
     np.random.seed(int(time.time()*10000) % 5000)
     
     # params_filename = os.path.join(__PROJECT_ROOT__,"choreo_config.json")
-    # params_filename = "/mnt/c/Users/gabri/OneDrive/Documents/Choreo_GUI_DIR/choreo_config.json"
-    params_filename = "Sniff_all_sym/choreo_config.json"
+    params_filename = "/mnt/c/Users/gfo/Personnel/choreo/Montaldi_gallery/choreo_config.json"
+
+    # params_filename = "Sniff_all_sym/choreo_config.json"
 
     with open(params_filename) as jsonFile:
         params_dict = json.load(jsonFile)
@@ -87,9 +88,10 @@ def main():
 
     MomConsImposed = params_dict['Geom_Bodies'] ['MomConsImposed']
 
-    store_folder = 'Sniff_all_sym/'
+    store_folder = os.path.dirname(params_filename)
+    # store_folder = 'Sniff_all_sym/'
     # store_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/')
-    store_folder = store_folder+str(nbody)
+    store_folder = os.path.join(store_folder,str(nbody))
     if not(os.path.isdir(store_folder)):
 
         os.makedirs(store_folder)
@@ -227,13 +229,13 @@ def main():
 
 
 
-
+# 
 # if __name__ == "__main__":
 # 
 #     main()
 
 
-
+# 
 if __name__ == "__main__":
 
     # n = 5

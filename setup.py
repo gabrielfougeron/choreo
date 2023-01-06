@@ -32,8 +32,8 @@ else:
 
         os.environ['CC'] = 'clang'
         os.environ['LDSHARED'] = 'clang -shared'
-# 
-#         extra_compile_args = ["-O2","-march=native"]
+
+        # extra_compile_args = ["-O2","-march=native"]
         # extra_compile_args = ["-O3","-march=native"]
         extra_compile_args = ["-Ofast","-march=native"]
         # extra_compile_args = []
