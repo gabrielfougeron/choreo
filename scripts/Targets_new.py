@@ -32,17 +32,17 @@ def main(the_i=0):
     
 
     # slow_base_filename = './choreo_GUI/choreo-gallery/02 - Helpers/01 - Circles/01'
-    # slow_base_filename = './choreo_GUI/choreo-gallery/02 - Helpers/01 - Circles/02'
-    slow_base_filename = './choreo_GUI/choreo-gallery/01 - Classic gallery/01 - Figure eight'
+    slow_base_filename = './choreo_GUI/choreo-gallery/02 - Helpers/01 - Circles/02'
+    # slow_base_filename = './choreo_GUI/choreo-gallery/01 - Classic gallery/01 - Figure eight'
     # slow_base_filename = './choreo_GUI/choreo-gallery/01 - Classic gallery/06 - 5-chain'
 
     # fast_base_filename_list = ['./choreo_GUI/choreo-gallery/02 - Helpers/01 - Circles/02'   ] 
 
     fast_base_filename_list = [
-        # './choreo_GUI/choreo-gallery/02 - Helpers/01 - Circles/01',
+        './choreo_GUI/choreo-gallery/02 - Helpers/01 - Circles/01',
         # './choreo_GUI/choreo-gallery/02 - Helpers/01 - Circles/02',
         # './choreo_GUI/choreo-gallery/02 - Helpers/01 - Circles/03',
-        './choreo_GUI/choreo-gallery/01 - Classic gallery/01 - Figure eight'
+        # './choreo_GUI/choreo-gallery/01 - Classic gallery/01 - Figure eight'
         ] 
 
     
@@ -57,7 +57,7 @@ def main(the_i=0):
     input_slow_filename = slow_base_filename + '.npy'
 
     all_pos_slow = np.load(input_slow_filename)
-    all_coeffs_slow = AllPosToAllCoeffs(all_pos_slow,Info_dict_slow["n_int"],Info_dict_slow["n_Fourier"])
+    all_coeffs_slow = choreo.AllPosToAllCoeffs(all_pos_slow,Info_dict_slow["n_int"],Info_dict_slow["n_Fourier"])
 
     all_coeffs_fast_list = []
     Info_dict_fast_list = []
@@ -71,14 +71,14 @@ def main(the_i=0):
         input_fast_filename = fast_base_filename + '.npy'
 
         all_pos_fast = np.load(input_fast_filename)
-        all_coeffs_fast = AllPosToAllCoeffs(all_pos_slow,Info_dict_slow["n_int"],Info_dict_slow["n_Fourier"])
+        all_coeffs_fast = choreo.AllPosToAllCoeffs(all_pos_slow,Info_dict_slow["n_int"],Info_dict_slow["n_Fourier"])
 
         all_coeffs_fast_list.append(all_coeffs_fast)
         Info_dict_fast_list.append(Info_dict_fast)
 
 
 
-    SymList_Target, mass_Target,il_slow_source,ibl_slow_source,il_fast_source,ibl_fast_source = MakeTargetsSyms(Info_dict_slow,Info_dict_fast_list)
+    Sym_list, mass,il_slow_source,ibl_slow_source,il_fast_source,ibl_fast_source = choreo.MakeTargetsSyms(Info_dict_slow,Info_dict_fast_list)
 
     nTf = [37]
 
@@ -102,9 +102,10 @@ def main(the_i=0):
 
 
 
-
     # MomConsImposed = True
     MomConsImposed = False
+
+    nbody = len(mass)
 
     store_folder = './Target_res/'
     store_folder = store_folder+str(nbody)
@@ -253,11 +254,11 @@ def main(the_i=0):
 
     n_opt = 0
 
-    # n_opt_max = 5
-    # n_find_max = 1
-    
-    n_opt_max = 5000
-    n_find_max = 100
+    n_opt_max = 5
+    n_find_max = 1
+    # 
+    # n_opt_max = 5000
+    # n_find_max = 100
 
     mul_coarse_to_fine = 3
 
