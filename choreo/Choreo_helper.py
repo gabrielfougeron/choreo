@@ -433,6 +433,7 @@ def MakeTargetsSyms(Info_dict_slow,Info_dict_fast_list):
 
         Info_dict_fast = Info_dict_fast_list[il_slow]
         SymList_fast = Make_SymList_From_InfoDict(Info_dict_fast)
+        nbody_fast = Info_dict_fast['nbody']
 
         ibody_targ_ref = ibody_targ
 
@@ -441,7 +442,7 @@ def MakeTargetsSyms(Info_dict_slow,Info_dict_fast_list):
             ib_slow = Info_dict_slow["Targets"][il_slow][ibl_slow]
             Sym_Slow = SymList_slow[ib_slow]
 
-            mass_slow = Info_dict_slow["Targets"][ib_slow]
+            mass_slow = Info_dict_slow["mass"][ib_slow]
 
             mass_fast_list = []
             
@@ -450,7 +451,8 @@ def MakeTargetsSyms(Info_dict_slow,Info_dict_fast_list):
                 for ibl_fast in range(Info_dict_fast["loopnb"][il_fast]):
 
                     ib_fast = Info_dict_fast["Targets"][il_fast][ibl_fast]
-                    mass_fast = Info_dict_fast["Targets"][ib_slow]
+                    mass_fast = Info_dict_fast["mass"][ib_fast]
+
                     mass_fast_list.append(mass_fast)
 
                     Sym_targ = ChoreoSym(
@@ -471,7 +473,8 @@ def MakeTargetsSyms(Info_dict_slow,Info_dict_fast_list):
                     ibody_targ += 1
 
             mass_fast_tot = sum(mass_fast_list)
-            for ib_fast in range(mass_fast_list):
+
+            for ib_fast in range(nbody_fast):
                 mass_fast_list[ib_fast] =  mass_fast_list[ib_fast] * mass_slow / mass_fast_tot
 
             mass_Target.extend(mass_fast_list)
