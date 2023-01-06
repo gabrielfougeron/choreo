@@ -205,8 +205,6 @@ def Find_Choreo(
         
         if (LookForTarget):
             
-            # all_coeffs_avg = Gen_init_avg_2D(nTf,nbs,nbf,mass_mul,ncoeff,all_coeffs_slow_load,all_coeffs_fast_load_list=all_coeffs_fast_load_list,callfun=callfun,Rotate_fast_with_slow=Rotate_fast_with_slow,Optimize_Init=Optimize_Init,Randomize_Fast_Init=Randomize_Fast_Init,mul_loops=mul_loops)       
-
             all_coeffs_avg = Gen_init_avg_2D(nTf,ncoeff,Info_dict_slow,all_coeffs_slow,Info_dict_fast_list,all_coeffs_fast_list,il_slow_source,ibl_slow_source,il_fast_source,ibl_fast_source,callfun,Rotate_fast_with_slow,Optimize_Init,Randomize_Fast_Init)
 
             x_avg = Package_all_coeffs(all_coeffs_avg,callfun)
