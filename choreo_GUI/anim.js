@@ -79,6 +79,11 @@ var AllPosFilenames = []
 var AllPlotInfoFilenames = []
 var AllGalleryNames = []
 
+var DefaultTree_Target
+var Target_Tree
+var Target_TreeView
+var Target_current_name
+
 var trailColorLookup
 
 FileSystemAccessSupported = ('showOpenFilePicker' in window)
