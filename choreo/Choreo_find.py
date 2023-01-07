@@ -29,7 +29,8 @@ def Find_Choreo(
     MomConsImposed,
     n_grad_change,
     store_folder,
-    nTf,
+    nT_slow,
+    nT_fast,
     mass_mul,
     Info_dict_slow,
     all_coeffs_slow,
@@ -205,7 +206,7 @@ def Find_Choreo(
         
         if (LookForTarget):
             
-            all_coeffs_avg = Gen_init_avg_2D(nTf,ncoeff,Info_dict_slow,all_coeffs_slow,Info_dict_fast_list,all_coeffs_fast_list,il_slow_source,ibl_slow_source,il_fast_source,ibl_fast_source,callfun,Rotate_fast_with_slow,Optimize_Init,Randomize_Fast_Init)
+            all_coeffs_avg = Gen_init_avg_2D(nT_slow,nT_fast,ncoeff,Info_dict_slow,all_coeffs_slow,Info_dict_fast_list,all_coeffs_fast_list,il_slow_source,ibl_slow_source,il_fast_source,ibl_fast_source,callfun,Rotate_fast_with_slow,Optimize_Init,Randomize_Fast_Init)
 
             x_avg = Package_all_coeffs(all_coeffs_avg,callfun)
         
