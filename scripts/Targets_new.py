@@ -45,8 +45,9 @@ def main(the_i=0):
         # './choreo_GUI/choreo-gallery/02 - Helpers/01 - Circles/02', 
         # './choreo_GUI/choreo-gallery/02 - Helpers/01 - Circles/03',
         # './choreo_GUI/choreo-gallery/02 - Helpers/01 - Circles/05',
-        './choreo_GUI/choreo-gallery/01 - Classic gallery/06 - 5-chain'
-        # './choreo_GUI/choreo-gallery/01 - Classic gallery/05 - Three petal flower'
+        # './choreo_GUI/choreo-gallery/01 - Classic gallery/01 - Figure eight'
+        # './choreo_GUI/choreo-gallery/01 - Classic gallery/06 - 5-chain'
+        './choreo_GUI/choreo-gallery/01 - Classic gallery/05 - Three petal flower'
         ] 
 
     
