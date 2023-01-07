@@ -1100,7 +1100,13 @@ function canvasApp() {
 		FinalizeSetOrbit();
 
 		if (trajectoriesOn && document.getElementById('checkbox_DisplayLoopOnGalleryLoad').checked){
-			request = requestAnimationFrame(anim_path_grey);
+
+			if (DoTrailVanish) {
+				request = requestAnimationFrame(anim_path_grey)
+			} else {
+				request = requestAnimationFrame(anim_path)
+			}
+			
 		}
 
 	}
