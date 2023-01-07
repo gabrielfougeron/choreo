@@ -1095,7 +1095,7 @@ def Transform_Coeffs(SpaceRot, TimeRev, TimeShiftNum, TimeShiftDen, all_coeffs):
         
     return all_coeffs_new
 
-def Compose_Two_Paths(callfun,Info_dict_slow,Info_dict_fast_list,il_slow_source,ibl_slow_source,il_fast_source,ibl_fast_source,nTf,ncoeff,all_coeffs_slow,all_coeffs_fast_list,Rotate_fast_with_slow=False):
+def Compose_Two_Paths(callfun,Info_dict_slow,Info_dict_fast_list,il_slow_source,ibl_slow_source,il_fast_source,ibl_fast_source,nT_slow,nT_fast,ncoeff,all_coeffs_slow,all_coeffs_fast_list,Rotate_fast_with_slow=False):
     # Composes a "slow" with a "fast" path
 
     ncoeff = callfun[0]["ncoeff_list"][0]
@@ -1123,13 +1123,15 @@ def Compose_Two_Paths(callfun,Info_dict_slow,Info_dict_fast_list,il_slow_source,
 
         mass_fac = mass_fast_tot / Info_dict_slow["mass"][Info_dict_slow["Targets"][il_slow][ibl_slow]]
 
-        k_fac_slow = 1
-        k_fac_fast = nTf[il_slow]
-        
-        phys_exp = 2*(1-n)
+        ########################################################
 
-        rfac_slow = 1.
-        rfac_fast = (k_fac_fast*m.sqrt(mass_fac))**(-2./phys_exp)
+        k_fac_slow = nT_slow
+        k_fac_fast = nT_fast[il_slow]
+        
+        phys_exp = 1/(n-1)
+
+        rfac_slow = (k_fac_slow) ** phys_exp
+        rfac_fast = (k_fac_fast*m.sqrt(mass_fac)) ** phys_exp
 
         ########################################################
 
@@ -1201,123 +1203,7 @@ def Compose_Two_Paths(callfun,Info_dict_slow,Info_dict_fast_list,il_slow_source,
 
     return all_coeffs
 
-def Compose_Two_Paths_old(nTf,nbs,nbf,mass_mul,ncoeff,all_coeffs_slow,all_coeffs_fast_list,Rotate_fast_with_slow=False,mul_loops=None):
-    # Composes a "slow" with a "fast" path
-
-    nloop_slow = all_coeffs_slow.shape[0]
-    nloop_fast = len(all_coeffs_fast_list)
-
-    if (nloop_slow != nloop_fast):
-        raise ValueError("Fast and slow have different number of loops")
-
-    nloop = nloop_slow
-
-    all_coeffs_composed_list = []
-
-    for ils in range(nloop):
-
-        all_coeffs_fast = all_coeffs_fast_list[ils]
-
-        nloop_fast = all_coeffs_fast.shape[0]
-
-        if (mul_loops[ils]):
-
-            k_fac_slow = 1
-            k_fac_fast = nTf[ils]
-            
-            phys_exp = 2*(1-n)
-
-            rfac_slow = (k_fac_slow/(mass_mul[ils]*nbf[ils]))**(-1./phys_exp)
-            rfac_fast = (k_fac_fast)**(-2./phys_exp)
-        
-        else:
-
-            k_fac_slow = nbf[ils]
-            k_fac_fast = nTf[ils]
-            
-            phys_exp = 2*(1-n)
-
-            rfac_slow = (k_fac_slow/mass_mul[ils])**(-1./phys_exp)
-            rfac_fast = (k_fac_fast/m.sqrt(mass_mul[ils]))**(-2./phys_exp)
-
-        # print(k_fac_slow,k_fac_fast,rfac_slow,rfac_fast)
-
-        ncoeff_slow = all_coeffs_slow.shape[2]
-        ncoeff_fast = all_coeffs_fast.shape[2]
-        
-        all_coeffs_slow_mod = np.zeros((1         ,ndim,ncoeff,2),dtype=np.float64)
-        all_coeffs_fast_mod = np.zeros((nloop_fast,ndim,ncoeff,2),dtype=np.float64)
-        
-        for idim in range(ndim):
-            for k in range(min(ncoeff//k_fac_slow,ncoeff_slow)):
-                
-                all_coeffs_slow_mod[0,idim,k*k_fac_slow,:]  = rfac_slow * all_coeffs_slow[ils,idim,k,:]
-
-        for ilf in range(nloop_fast):
-            for idim in range(ndim):
-                for k in range(1,min(ncoeff//k_fac_fast,ncoeff_fast)):
-                    
-                    all_coeffs_fast_mod[ilf,idim,k*k_fac_fast,:]  = rfac_fast * all_coeffs_fast[ilf,idim,k,:]
-        
-        if Rotate_fast_with_slow :
-            
-            nint = 2*ncoeff
-
-            c_coeffs_slow = all_coeffs_slow_mod.view(dtype=np.complex128)[...,0]
-            all_pos_slow = the_irfft(c_coeffs_slow,n=nint,axis=2)
-
-            c_coeffs_fast = all_coeffs_fast_mod.view(dtype=np.complex128)[...,0]
-            all_pos_fast = the_irfft(c_coeffs_fast,n=nint,axis=2)
-
-            all_coeffs_slow_mod_speed = np.zeros((1,ndim,ncoeff,2),dtype=np.float64)
-
-            for idim in range(ndim):
-                for k in range(ncoeff):
-
-                    all_coeffs_slow_mod_speed[0,idim,k,0] = k * all_coeffs_slow_mod[0,idim,k,1] 
-                    all_coeffs_slow_mod_speed[0,idim,k,1] = -k * all_coeffs_slow_mod[0,idim,k,0] 
-                    
-            c_coeffs_slow_mod_speed = all_coeffs_slow_mod_speed.view(dtype=np.complex128)[...,0]
-            all_pos_slow_mod_speed = the_irfft(c_coeffs_slow_mod_speed,n=nint,axis=2)
-            
-            all_pos_avg = np.zeros((nloop_fast,ndim,nint),dtype=np.float64)
-
-            for ilf in range(nloop_fast):
-                for iint in range(nint):
-                    
-                    v = all_pos_slow_mod_speed[0,:,iint]
-                    v = v / np.linalg.norm(v)
-
-                    SpRotMat = np.array( [[v[0] , -v[1]] , [v[1],v[0]]])
-                    
-                    all_pos_avg[ilf,:,iint] = all_pos_slow[0,:,iint] + SpRotMat.dot(all_pos_fast[ilf,:,iint])
-
-            ## TODO Check norm of FFT !! Might be wrong now after fft change
-            c_coeffs_avg = the_rfft(all_pos_avg,n=nint,axis=2)
-            all_coeffs_composed = np.zeros((nloop_fast,ndim,ncoeff,2),dtype=np.float64)
-
-            for ilf in range(nloop_fast):
-                for idim in range(ndim):
-                    for k in range(min(ncoeff,ncoeff_slow)):
-                        all_coeffs_composed[ilf,idim,k,0] = c_coeffs_avg[ilf,idim,k].real
-                        all_coeffs_composed[ilf,idim,k,1] = c_coeffs_avg[ilf,idim,k].imag
-                        
-                        
-        else :
-            
-            all_coeffs_composed = np.zeros((nloop_fast,ndim,ncoeff,2),dtype=np.float64)
-
-            for ilf in range(nloop_fast):
-
-                all_coeffs_composed[ilf,:,:,:] = all_coeffs_fast_mod[ilf,:,:,:]  + all_coeffs_slow_mod[0,:,:,:] 
-
-        all_coeffs_composed_list.append(all_coeffs_composed)
-
-    all_coeffs = np.concatenate(all_coeffs_composed_list,axis=0)
-
-    return all_coeffs
-
-def Gen_init_avg_2D(nTf,ncoeff,Info_dict_slow,all_coeffs_slow,Info_dict_fast_list,all_coeffs_fast_list,il_slow_source,ibl_slow_source,il_fast_source,ibl_fast_source,callfun,Rotate_fast_with_slow,Optimize_Init,Randomize_Fast_Init):
+def Gen_init_avg_2D(nT_slow,nT_fast,ncoeff,Info_dict_slow,all_coeffs_slow,Info_dict_fast_list,all_coeffs_fast_list,il_slow_source,ibl_slow_source,il_fast_source,ibl_fast_source,callfun,Rotate_fast_with_slow,Optimize_Init,Randomize_Fast_Init):
 
     nloop_slow = len(all_coeffs_fast_list)
 
@@ -1350,7 +1236,7 @@ def Gen_init_avg_2D(nTf,ncoeff,Info_dict_slow,all_coeffs_slow,Info_dict_fast_lis
 
             all_coeffs_fast_list_mod.append(Transform_Coeffs(SpaceRots, TimeRevs, TimeShiftNum, TimeShiftDen, all_coeffs_fast_list[ils]))
 
-        all_coeffs_avg = Compose_Two_Paths(callfun,Info_dict_slow,Info_dict_fast_list,il_slow_source,ibl_slow_source,il_fast_source,ibl_fast_source,nTf,ncoeff,all_coeffs_slow,all_coeffs_fast_list_mod,Rotate_fast_with_slow)
+        all_coeffs_avg = Compose_Two_Paths(callfun,Info_dict_slow,Info_dict_fast_list,il_slow_source,ibl_slow_source,il_fast_source,ibl_fast_source,nT_slow,nT_fast,ncoeff,all_coeffs_slow,all_coeffs_fast_list_mod,Rotate_fast_with_slow)
 
         return all_coeffs_avg
 
@@ -1376,83 +1262,6 @@ def Gen_init_avg_2D(nTf,ncoeff,Info_dict_slow,all_coeffs_slow,Info_dict_fast_lis
 
     else:
         all_coeffs_avg = params_to_coeffs(init_x)
-
-    return all_coeffs_avg
-
-def Gen_init_avg_2D_old(nTf,nbs,nbf,mass_mul,ncoeff,all_coeffs_slow_load,all_coeffs_fast_load=None,all_coeffs_fast_load_list=None,callfun=None,Rotate_fast_with_slow=False,Optimize_Init=True,Randomize_Fast_Init=True,mul_loops=None):
-
-    if (all_coeffs_fast_load_list is None):
-        if (all_coeffs_fast_load is None):
-            raise ValueError("all_coeffs fast not provided")
-        else:
-            all_coeffs_fast_load_list = [all_coeffs_fast_load]
-
-    nloop_slow = all_coeffs_slow_load.shape[0]
-    nloop_fast = len(all_coeffs_fast_load_list)
-
-    if (nloop_slow != nloop_fast):
-        raise ValueError("There should be the same number of slow and fast loops")
-
-    nloop = nloop_slow
-
-
-    if Randomize_Fast_Init :
-
-        init_SpaceRevscal = np.array([1. if (np.random.random() > 1./2.) else -1. for ils in range(nloop)])
-        init_TimeRevscal = np.array([1. if (np.random.random() > 1./2.) else -1. for ils in range(nloop)])
-        Act_Mul = 1. if (np.random.random() > 1./2.) else -1.
-        init_x = np.array([ np.random.random() for iparam in range(2*nloop)])
-
-    else:
-
-        init_SpaceRevscal = np.array([1. for ils in range(nloop)])
-        init_TimeRevscal = np.array([1. for ils in range(nloop)])
-        Act_Mul = 1.
-        init_x = np.zeros((2*nloop))
-
-    def params_to_coeffs(x):
-
-        all_coeffs_fast_list = []
-
-        for ils in range(nloop):
-
-            theta = twopi * x[2*ils]
-            SpaceRevscal = init_SpaceRevscal[ils]
-            SpaceRots = np.array( [[SpaceRevscal*np.cos(theta) , SpaceRevscal*np.sin(theta)] , [-np.sin(theta),np.cos(theta)]])
-            TimeRevs = init_TimeRevscal[ils]
-            TimeShiftNum = x[2*ils+1]
-            TimeShiftDen = 1
-
-            all_coeffs_fast_list.append(Transform_Coeffs(SpaceRots, TimeRevs, TimeShiftNum, TimeShiftDen, all_coeffs_fast_load_list[ils]))
-            # all_coeffs_fast_list.append(np.copy(all_coeffs_fast_load_list[ils]))
-
-        all_coeffs_avg = Compose_Two_Paths(nTf,nbs,nbf,mass_mul,ncoeff,all_coeffs_slow_load,all_coeffs_fast_list,Rotate_fast_with_slow,mul_loops)
-
-        return all_coeffs_avg
-
-    if Optimize_Init :
-
-        def params_to_Action(x):
-
-            all_coeffs_avg = params_to_coeffs(x)
-
-            x_avg = Package_all_coeffs(all_coeffs_avg,callfun)
-            Act, GAct = Compute_action(x_avg,callfun)
-            
-            return Act_Mul * Act
-
-        maxiter = 1000
-        tol = 1e-10
-
-        opt_result = scipy.optimize.minimize(fun=params_to_Action,x0=init_x,method='CG',options={'disp':False,'maxiter':maxiter,'gtol':tol},tol=tol)
-
-        x_opt = opt_result['x']
-
-        all_coeffs_avg = params_to_coeffs(x_opt)
-
-    else:
-        all_coeffs_avg = params_to_coeffs(init_x)
-
 
     return all_coeffs_avg
 

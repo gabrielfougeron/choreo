@@ -32,23 +32,37 @@ def main(the_i=0):
     
 
     # slow_base_filename = './choreo_GUI/choreo-gallery/02 - Helpers/01 - Circles/01'
-    slow_base_filename = './choreo_GUI/choreo-gallery/02 - Helpers/01 - Circles/02'
-    # slow_base_filename = './choreo_GUI/choreo-gallery/02 - Helpers/01 - Circles/03'
+    # slow_base_filename = './choreo_GUI/choreo-gallery/02 - Helpers/01 - Circles/02'
+    slow_base_filename = './choreo_GUI/choreo-gallery/02 - Helpers/01 - Circles/03'
     # slow_base_filename = './choreo_GUI/choreo-gallery/01 - Classic gallery/01 - Figure eight'
     # slow_base_filename = './choreo_GUI/choreo-gallery/01 - Classic gallery/06 - 5-chain'
     # slow_base_filename = './choreo_GUI/choreo-gallery/01 - Classic gallery/05 - Three petal flower'
-
+    # slow_base_filename = './Keep/00001'
+ 
     # fast_base_filename_list = ['./choreo_GUI/choreo-gallery/02 - Helpers/01 - Circles/02'   ] 
-
+# 
     fast_base_filename_list = [
         # './choreo_GUI/choreo-gallery/02 - Helpers/01 - Circles/01',
-        # './choreo_GUI/choreo-gallery/02 - Helpers/01 - Circles/02', 
+        './choreo_GUI/choreo-gallery/02 - Helpers/01 - Circles/02', 
         # './choreo_GUI/choreo-gallery/02 - Helpers/01 - Circles/03',
         # './choreo_GUI/choreo-gallery/02 - Helpers/01 - Circles/05',
         # './choreo_GUI/choreo-gallery/01 - Classic gallery/01 - Figure eight'
         # './choreo_GUI/choreo-gallery/01 - Classic gallery/06 - 5-chain'
-        './choreo_GUI/choreo-gallery/01 - Classic gallery/05 - Three petal flower'
+        # './choreo_GUI/choreo-gallery/01 - Classic gallery/05 - Three petal flower'
+        # './Keep/00001'
         ] 
+# 
+    # fast_base_filename_list = [
+    #     './choreo_GUI/choreo-gallery/02 - Helpers/01 - Circles/02',
+    #     './choreo_GUI/choreo-gallery/02 - Helpers/01 - Circles/03',
+    #     './choreo_GUI/choreo-gallery/02 - Helpers/01 - Circles/04',
+    #     ]
+#     
+#     fast_base_filename_list = [
+#         './choreo_GUI/choreo-gallery/02 - Helpers/01 - Circles/01',
+#         './choreo_GUI/choreo-gallery/02 - Helpers/01 - Circles/01',
+#         './choreo_GUI/choreo-gallery/02 - Helpers/01 - Circles/01',
+#         ] 
 
     
 
@@ -85,15 +99,17 @@ def main(the_i=0):
 
     Sym_list, mass,il_slow_source,ibl_slow_source,il_fast_source,ibl_fast_source = choreo.MakeTargetsSyms(Info_dict_slow,Info_dict_fast_list)
 
-
-    nTf = [13]
+    nT_slow = 13
+    nT_fast = [
+        1,
+    ]
 
     Rotate_fast_with_slow = True
     # Rotate_fast_with_slow = False
     # Rotate_fast_with_slow = (np.random.random() > 1./2.)
 
-    # Optimize_Init = True
-    Optimize_Init = False
+    Optimize_Init = True
+    # Optimize_Init = False
     # Optimize_Init = (np.random.random() > 1./2.)
 
     Randomize_Fast_Init = True
@@ -121,8 +137,8 @@ def main(the_i=0):
     # Penalize_Escape = True
     Penalize_Escape = False
 # 
-    save_first_init = False
-    # save_first_init = True
+    # save_first_init = False
+    save_first_init = True
 # 
     save_all_inits = False
     # save_all_inits = True
@@ -144,8 +160,8 @@ def main(the_i=0):
     # color = "velocity"
     # color = "all"
 
-    # Save_anim = True
-    Save_anim = False
+    Save_anim = True
+    # Save_anim = False
 
     Save_All_Coeffs = False
     Save_All_Pos = True
@@ -187,12 +203,12 @@ def main(the_i=0):
     # ncoeff_init = 1206
     # ncoeff_init = 90
 
-    disp_scipy_opt = False
-    # disp_scipy_opt = True
+    # disp_scipy_opt = False
+    disp_scipy_opt = True
     
     max_norm_on_entry = 1e20
 
-    Newt_err_norm_max = 1e-11
+    Newt_err_norm_max = 1e-14
     # Newt_err_norm_max_save = Newt_err_norm_max*1000
     Newt_err_norm_max_save = 1e-1
 
@@ -265,24 +281,24 @@ def main(the_i=0):
     
     choreo.Find_Choreo(**all_kwargs)
 # # 
-# if __name__ == "__main__":
-#     main(0)
-#   
-# # 
 if __name__ == "__main__":
-
-    # n = multiprocessing.cpu_count()
-    n = multiprocessing.cpu_count()//2 -1
-    # n = 4
-    
-    print(f"Executing with {n} workers")
-    
-    
-    with concurrent.futures.ProcessPoolExecutor(max_workers=n) as executor:
-        
-        res = []
-        for i in range(1,n+1):
-            res.append(executor.submit(main,i))
-            time.sleep(0.01)
-
- 
+    main(0)
+# # #   
+# # 
+# if __name__ == "__main__":
+# 
+#     # n = multiprocessing.cpu_count()
+#     n = multiprocessing.cpu_count()//2 -1
+#     # n = 4
+#     
+#     print(f"Executing with {n} workers")
+#     
+#     
+#     with concurrent.futures.ProcessPoolExecutor(max_workers=n) as executor:
+#         
+#         res = []
+#         for i in range(1,n+1):
+#             res.append(executor.submit(main,i))
+#             time.sleep(0.01)
+# # 
+# #  
