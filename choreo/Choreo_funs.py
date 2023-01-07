@@ -1138,16 +1138,14 @@ def Compose_Two_Paths(callfun,Info_dict_slow,Info_dict_fast_list,il_slow_source,
         TimeShiftNum = Info_dict_fast_list[il_slow]["TimeShiftNumUn"][il_fast][ibl_fast]
         TimeShiftDen = Info_dict_fast_list[il_slow]["TimeShiftDenUn"][il_fast][ibl_fast]
 
-        print(il_fast,ibl_fast)
-
-        ncoeff_slow = all_coeffs_slow.shape[1]
+        ncoeff_slow = all_coeffs_slow.shape[2]
         all_coeffs_fast = Transform_Coeffs_Single_Loop(SpaceRot, TimeRev, TimeShiftNum, TimeShiftDen, all_coeffs_fast_list[il_slow][il_fast,:,:,:])
         
         ncoeff_fast = all_coeffs_fast.shape[1]
         
         all_coeffs_slow_mod = np.zeros((ndim,ncoeff,2),dtype=np.float64)
         all_coeffs_fast_mod = np.zeros((ndim,ncoeff,2),dtype=np.float64)
-        
+
         for idim in range(ndim):
             for k in range(min(ncoeff//k_fac_slow,ncoeff_slow)):
                 
@@ -1188,7 +1186,7 @@ def Compose_Two_Paths(callfun,Info_dict_slow,Info_dict_fast_list,il_slow_source,
 
                 SpRotMat = np.array( [[v[0] , -v[1]] , [v[1],v[0]]])
                 
-                all_pos_avg[:,iint] = all_pos_slow[:,iint] + SpRotMat.dot(all_pos_fast[il_fast,:,iint])
+                all_pos_avg[:,iint] = all_pos_slow[:,iint] + SpRotMat.dot(all_pos_fast[:,iint])
 
             c_coeffs_avg = the_rfft(all_pos_avg,n=nint,axis=1)
 
@@ -1198,10 +1196,6 @@ def Compose_Two_Paths(callfun,Info_dict_slow,Info_dict_fast_list,il_slow_source,
                     all_coeffs[il,idim,k,1] = c_coeffs_avg[idim,k].imag     
                         
         else :
-            # 
-            # for idim in range(ndim):
-            #     for k in range(ncoeff):
-            #         print(all_coeffs_fast_mod[idim,k,:])
 
             all_coeffs[il,:,:,:] = all_coeffs_fast_mod + all_coeffs_slow_mod
 

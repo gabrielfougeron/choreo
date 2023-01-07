@@ -31,8 +31,8 @@ def main(the_i=0):
     LookForTarget = True
     
 
-    slow_base_filename = './choreo_GUI/choreo-gallery/02 - Helpers/01 - Circles/01'
-    # slow_base_filename = './choreo_GUI/choreo-gallery/02 - Helpers/01 - Circles/02'
+    # slow_base_filename = './choreo_GUI/choreo-gallery/02 - Helpers/01 - Circles/01'
+    slow_base_filename = './choreo_GUI/choreo-gallery/02 - Helpers/01 - Circles/02'
     # slow_base_filename = './choreo_GUI/choreo-gallery/02 - Helpers/01 - Circles/03'
     # slow_base_filename = './choreo_GUI/choreo-gallery/01 - Classic gallery/01 - Figure eight'
     # slow_base_filename = './choreo_GUI/choreo-gallery/01 - Classic gallery/06 - 5-chain'
@@ -45,7 +45,8 @@ def main(the_i=0):
         # './choreo_GUI/choreo-gallery/02 - Helpers/01 - Circles/02', 
         # './choreo_GUI/choreo-gallery/02 - Helpers/01 - Circles/03',
         # './choreo_GUI/choreo-gallery/02 - Helpers/01 - Circles/05',
-        './choreo_GUI/choreo-gallery/01 - Classic gallery/05 - Three petal flower'
+        './choreo_GUI/choreo-gallery/01 - Classic gallery/06 - 5-chain'
+        # './choreo_GUI/choreo-gallery/01 - Classic gallery/05 - Three petal flower'
         ] 
 
     
@@ -83,13 +84,11 @@ def main(the_i=0):
 
     Sym_list, mass,il_slow_source,ibl_slow_source,il_fast_source,ibl_fast_source = choreo.MakeTargetsSyms(Info_dict_slow,Info_dict_fast_list)
 
-    for k in range(30):
-        print(all_coeffs_fast_list[0][0,:,k,0])
 
-    nTf = [7]
+    nTf = [13]
 
-    # Rotate_fast_with_slow = True
-    Rotate_fast_with_slow = False
+    Rotate_fast_with_slow = True
+    # Rotate_fast_with_slow = False
     # Rotate_fast_with_slow = (np.random.random() > 1./2.)
 
     # Optimize_Init = True
@@ -98,9 +97,6 @@ def main(the_i=0):
 
     Randomize_Fast_Init = True
     # Randomize_Fast_Init = False
-
-
-    print('aaa',all_coeffs_fast_list)
 
     # MomConsImposed = True
     MomConsImposed = False
@@ -124,8 +120,8 @@ def main(the_i=0):
     # Penalize_Escape = True
     Penalize_Escape = False
 # 
-    # save_first_init = False
-    save_first_init = True
+    save_first_init = False
+    # save_first_init = True
 # 
     save_all_inits = False
     # save_all_inits = True
@@ -147,8 +143,8 @@ def main(the_i=0):
     # color = "velocity"
     # color = "all"
 
-    Save_anim = True
-    # Save_anim = False
+    # Save_anim = True
+    Save_anim = False
 
     Save_All_Coeffs = False
     Save_All_Pos = True
@@ -190,8 +186,8 @@ def main(the_i=0):
     # ncoeff_init = 1206
     # ncoeff_init = 90
 
-    # disp_scipy_opt = False
-    disp_scipy_opt = True
+    disp_scipy_opt = False
+    # disp_scipy_opt = True
     
     max_norm_on_entry = 1e20
 
@@ -208,12 +204,12 @@ def main(the_i=0):
     # krylov_method = 'minres'
 
     # line_search = 'armijo'
-    # line_search = 'wolfe'
-    line_search = 'none'
+    line_search = 'wolfe'
+    # line_search = 'none'
  
     # linesearch_smin = 1e-2
-    linesearch_smin = 1.
-    # linesearch_smin = 0.01
+    # linesearch_smin = 1.
+    linesearch_smin = 0.1
     
     gradtol_list =          [1e-3   ,1e-5   ,1e-7   ,1e-9   ,1e-11  ,1e-13  ,1e-15  ]
     inner_maxiter_list =    [30     ,50     ,60     ,70     ,80     ,100    ,100    ]
@@ -254,10 +250,10 @@ def main(the_i=0):
 
     n_opt = 0
 
-    n_opt_max = 1
+    # n_opt_max = 1
     n_find_max = 1
     # 
-    # n_opt_max = 50
+    n_opt_max = 50
     # n_find_max = 100
 
     mul_coarse_to_fine = 3
@@ -268,24 +264,24 @@ def main(the_i=0):
     
     choreo.Find_Choreo(**all_kwargs)
 # # 
-if __name__ == "__main__":
-    main(0)
+# if __name__ == "__main__":
+#     main(0)
 #   
 # # 
-# if __name__ == "__main__":
-# 
-#     # n = multiprocessing.cpu_count()
-#     n = multiprocessing.cpu_count()//2
-#     # n = 4
-#     
-#     print(f"Executing with {n} workers")
-#     
-#     
-#     with concurrent.futures.ProcessPoolExecutor(max_workers=n) as executor:
-#         
-#         res = []
-#         for i in range(1,n+1):
-#             res.append(executor.submit(main,i))
-#             time.sleep(0.01)
-# 
-#  
+if __name__ == "__main__":
+
+    # n = multiprocessing.cpu_count()
+    n = multiprocessing.cpu_count()//2 -1
+    # n = 4
+    
+    print(f"Executing with {n} workers")
+    
+    
+    with concurrent.futures.ProcessPoolExecutor(max_workers=n) as executor:
+        
+        res = []
+        for i in range(1,n+1):
+            res.append(executor.submit(main,i))
+            time.sleep(0.01)
+
+ 
