@@ -452,6 +452,7 @@ function GatherConfigDict() {
     ConfigDict['Animation_Size'] ['checkbox_Mass_Scale']  = document.getElementById('checkbox_Mass_Scale').checked ;
     ConfigDict['Animation_Size'] ['input_body_radius']  = document.getElementById('input_body_radius').value ;
     ConfigDict['Animation_Size'] ['input_trail_width']  = document.getElementById('input_trail_width').value ;  
+    ConfigDict['Animation_Size'] ['checkbox_Trail_vanish']  = document.getElementById('checkbox_Trail_vanish').checked ;
     ConfigDict['Animation_Size'] ['input_trail_vanish_length']  = document.getElementById('input_trail_vanish_length').value;
 
     ConfigDict['Animation_Framerate'] = {};
@@ -536,112 +537,114 @@ async function LoadConfigFile(the_file) {
 
 function LoadConfigDict(ConfigDict) {
 
-    var displayCanvas = document.getElementById("displayCanvas");
+    var displayCanvas = document.getElementById("displayCanvas")
 
-    var table = document.getElementById('table_body_loop');
-    var ncols = table.rows[0].cells.length;
+    var table = document.getElementById('table_body_loop')
+    var ncols = table.rows[0].cells.length
 
     for (var icol=ncols-1; icol > 0; icol-- ) {
-        deleteColumn('table_body_loop',icol);
+        deleteColumn('table_body_loop',icol)
     };
 
-    document.getElementById('checkbox_MomCons').checked  = ConfigDict['Geom_Bodies'] ['MomConsImposed'] ;
+    document.getElementById('checkbox_MomCons').checked  = ConfigDict['Geom_Bodies'] ['MomConsImposed'] 
 
-    var n_loops = ConfigDict['Geom_Bodies'] ['n_loops'];
+    var n_loops = ConfigDict['Geom_Bodies'] ['n_loops']
 
     for (var il=0; il < n_loops; il++) {
 
-        ClickAddBodyLoop();
+        ClickAddBodyLoop()
 
-        var icol = il+1;
+        var icol = il+1
 
-        table.rows[1].cells[icol].children[0].value = ConfigDict['Geom_Bodies'] ['nbpl'] [il];
-        table.rows[2].cells[icol].children[0].value = ConfigDict['Geom_Bodies'] ['mass'] [il] . toString();
-        table.rows[3].cells[icol].children[0].value = ConfigDict['Geom_Bodies'] ['SymType'] [il] ['name'];
-        table.rows[4].cells[icol].children[0].value = ConfigDict['Geom_Bodies'] ['SymType'] [il] ['k'];
-        table.rows[5].cells[icol].children[0].value = ConfigDict['Geom_Bodies'] ['SymType'] [il] ['l'];
-        table.rows[6].cells[icol].children[0].value = ConfigDict['Geom_Bodies'] ['SymType'] [il] ['m'];
-        table.rows[7].cells[icol].children[0].value = ConfigDict['Geom_Bodies'] ['SymType'] [il] ['p'];
-        table.rows[8].cells[icol].children[0].value = ConfigDict['Geom_Bodies'] ['SymType'] [il] ['q'];
+        table.rows[1].cells[icol].children[0].value = ConfigDict['Geom_Bodies'] ['nbpl'] [il]
+        table.rows[2].cells[icol].children[0].value = ConfigDict['Geom_Bodies'] ['mass'] [il] . toString()
+        table.rows[3].cells[icol].children[0].value = ConfigDict['Geom_Bodies'] ['SymType'] [il] ['name']
+        table.rows[4].cells[icol].children[0].value = ConfigDict['Geom_Bodies'] ['SymType'] [il] ['k']
+        table.rows[5].cells[icol].children[0].value = ConfigDict['Geom_Bodies'] ['SymType'] [il] ['l']
+        table.rows[6].cells[icol].children[0].value = ConfigDict['Geom_Bodies'] ['SymType'] [il] ['m']
+        table.rows[7].cells[icol].children[0].value = ConfigDict['Geom_Bodies'] ['SymType'] [il] ['p']
+        table.rows[8].cells[icol].children[0].value = ConfigDict['Geom_Bodies'] ['SymType'] [il] ['q']
         
     }
 
-    RedistributeClicksTableBodyLoop('table_body_loop',1,RedistributeBodyCount);
+    RedistributeClicksTableBodyLoop('table_body_loop',1,RedistributeBodyCount)
 
-    document.getElementById('input_coeff_ampl_o'   ).value = ConfigDict['Geom_Random'] ['coeff_ampl_o']   ;
-    document.getElementById('input_coeff_ampl_min' ).value = ConfigDict['Geom_Random'] ['coeff_ampl_min'] ;
-    document.getElementById('input_k_infl'         ).value = ConfigDict['Geom_Random'] ['k_infl']         ;
-    document.getElementById('input_k_max'          ).value = ConfigDict['Geom_Random'] ['k_max']          ;
+    document.getElementById('input_coeff_ampl_o'   ).value = ConfigDict['Geom_Random'] ['coeff_ampl_o']   
+    document.getElementById('input_coeff_ampl_min' ).value = ConfigDict['Geom_Random'] ['coeff_ampl_min'] 
+    document.getElementById('input_k_infl'         ).value = ConfigDict['Geom_Random'] ['k_infl']         
+    document.getElementById('input_k_max'          ).value = ConfigDict['Geom_Random'] ['k_max']          
 
-    var table = document.getElementById('table_custom_sym');
-    var ncols = table.rows[0].cells.length;
+    var table = document.getElementById('table_custom_sym')
+    var ncols = table.rows[0].cells.length
 
     for (var icol=ncols-1; icol > 0; icol-- ) {
-        deleteColumn('table_custom_sym',icol);
+        deleteColumn('table_custom_sym',icol)
     };
 
-    var nsym = ConfigDict['Geom_Custom'] ['n_custom_sym'];
+    var nsym = ConfigDict['Geom_Custom'] ['n_custom_sym']
 
     for (var isym=0; isym < nsym; isym++) {
 
-        ClickAddCustomSym();
+        ClickAddCustomSym()
 
-        var icol = isym+1;
+        var icol = isym+1
 
-        table.rows[1].cells[icol].children[0].value = ConfigDict['Geom_Custom'] ['CustomSyms'] [isym] ['LoopTarget']   ;
-        table.rows[2].cells[icol].children[0].value = ConfigDict['Geom_Custom'] ['CustomSyms'] [isym] ['LoopSource']   ;
-        table.rows[3].cells[icol].children[0].value = ConfigDict['Geom_Custom'] ['CustomSyms'] [isym] ['Reflexion']    ;
-        table.rows[4].cells[icol].children[0].value = ConfigDict['Geom_Custom'] ['CustomSyms'] [isym] ['RotAngleNum']  ;
-        table.rows[5].cells[icol].children[0].value = ConfigDict['Geom_Custom'] ['CustomSyms'] [isym] ['RotAngleDen']  ;
-        table.rows[6].cells[icol].children[0].value = ConfigDict['Geom_Custom'] ['CustomSyms'] [isym] ['TimeRev']      ;
-        table.rows[7].cells[icol].children[0].value = ConfigDict['Geom_Custom'] ['CustomSyms'] [isym] ['TimeShiftNum'] ;
-        table.rows[8].cells[icol].children[0].value = ConfigDict['Geom_Custom'] ['CustomSyms'] [isym] ['TimeShiftDen'] ;
+        table.rows[1].cells[icol].children[0].value = ConfigDict['Geom_Custom'] ['CustomSyms'] [isym] ['LoopTarget']   
+        table.rows[2].cells[icol].children[0].value = ConfigDict['Geom_Custom'] ['CustomSyms'] [isym] ['LoopSource']   
+        table.rows[3].cells[icol].children[0].value = ConfigDict['Geom_Custom'] ['CustomSyms'] [isym] ['Reflexion']    
+        table.rows[4].cells[icol].children[0].value = ConfigDict['Geom_Custom'] ['CustomSyms'] [isym] ['RotAngleNum']  
+        table.rows[5].cells[icol].children[0].value = ConfigDict['Geom_Custom'] ['CustomSyms'] [isym] ['RotAngleDen']  
+        table.rows[6].cells[icol].children[0].value = ConfigDict['Geom_Custom'] ['CustomSyms'] [isym] ['TimeRev']      
+        table.rows[7].cells[icol].children[0].value = ConfigDict['Geom_Custom'] ['CustomSyms'] [isym] ['TimeShiftNum'] 
+        table.rows[8].cells[icol].children[0].value = ConfigDict['Geom_Custom'] ['CustomSyms'] [isym] ['TimeShiftDen'] 
 
     }
 
-    RedistributeClicksTableBodyLoop('table_custom_sym',0);
+    RedistributeClicksTableBodyLoop('table_custom_sym',0)
 
     document.getElementById("color_method_input").value = ConfigDict['Animation_Colors'] ["color_method_input"]
     
-    var n_color_old = n_color;
+    var n_color_old = n_color
     for (var i_color=0;i_color<n_color_old; i_color++) {
-        RemoveColor();
+        RemoveColor()
     }
 
-    var n_color_new = ConfigDict['Animation_Colors'] ["n_color"];
+    var n_color_new = ConfigDict['Animation_Colors'] ["n_color"]
     for (var i_color=0;i_color<n_color_new; i_color++) {
-        AddColor(ConfigDict['Animation_Colors'] ["colorLookup"][i_color] );
+        AddColor(ConfigDict['Animation_Colors'] ["colorLookup"][i_color] )
     }
 
-    document.getElementById('checkbox_Mass_Scale').checked  = ConfigDict['Animation_Size'] ['checkbox_Mass_Scale'];
-    DoScaleSizeWithMass = ConfigDict['Animation_Size'] ['checkbox_Mass_Scale'];
-    document.getElementById('input_body_radius').value = ConfigDict['Animation_Size'] ['input_body_radius'] ;
-    SlideBodyRadius();
-    document.getElementById('input_trail_width').value = ConfigDict['Animation_Size'] ['input_trail_width'];
-    SlideTrailWidth();
-    document.getElementById('input_trail_vanish_length').value = ConfigDict['Animation_Size'] ['input_trail_vanish_length'];
-    // SlideTrailTime();
+    document.getElementById('checkbox_Mass_Scale').checked  = ConfigDict['Animation_Size'] ['checkbox_Mass_Scale']
+    DoScaleSizeWithMass = ConfigDict['Animation_Size'] ['checkbox_Mass_Scale']
+    document.getElementById('input_body_radius').value = ConfigDict['Animation_Size'] ['input_body_radius'] 
+    SlideBodyRadius()
+    document.getElementById('input_trail_width').value = ConfigDict['Animation_Size'] ['input_trail_width']
+    SlideTrailWidth()
+    document.getElementById('checkbox_Trail_vanish').checked  = ConfigDict['Animation_Size'] ['checkbox_Trail_vanish']
+    DoTrailVanish = ConfigDict['Animation_Size'] ['checkbox_Trail_vanish']
+    document.getElementById('input_trail_vanish_length').value = ConfigDict['Animation_Size'] ['input_trail_vanish_length']
+    // SlideTrailTime()
     
-    ExportColors();
-    var send_event = new Event('ChangeColorsFromOutsideCanvas');
-    displayCanvas.dispatchEvent(send_event);
+    ExportColors()
+    var send_event = new Event('ChangeColorsFromOutsideCanvas')
+    displayCanvas.dispatchEvent(send_event)
 
-    document.getElementById('checkbox_Limit_FPS').checked = ConfigDict['Animation_Framerate']['checkbox_Limit_FPS'] ;
+    document.getElementById('checkbox_Limit_FPS').checked = ConfigDict['Animation_Framerate']['checkbox_Limit_FPS'] 
     document.getElementById('input_Limit_FPS').value = ConfigDict['Animation_Framerate'] ['input_Limit_FPS'] 
 
-    document.getElementById('checkbox_DisplayLoopsDuringSearch').checked = ConfigDict['Animation_Search'] ['DisplayLoopsDuringSearch'];
+    document.getElementById('checkbox_DisplayLoopsDuringSearch').checked = ConfigDict['Animation_Search'] ['DisplayLoopsDuringSearch']
     if (document.getElementById('checkbox_DisplayLoopsDuringSearch').checked) {
-        document.getElementById('checkbox_DisplayBodiesDuringSearch').disabled = "";
+        document.getElementById('checkbox_DisplayBodiesDuringSearch').disabled = ""
     } else {
-        document.getElementById('checkbox_DisplayBodiesDuringSearch').disabled = "disabled";
+        document.getElementById('checkbox_DisplayBodiesDuringSearch').disabled = "disabled"
     }
 
-    document.getElementById('checkbox_DisplayBodiesDuringSearch').checked = ConfigDict['Animation_Search'] ['DisplayBodiesDuringSearch'];
-    document.getElementById('checkbox_DisplayLoopOnGalleryLoad').checked  = ConfigDict['Animation_Search'] ['DisplayLoopOnGalleryLoad'];
+    document.getElementById('checkbox_DisplayBodiesDuringSearch').checked = ConfigDict['Animation_Search'] ['DisplayBodiesDuringSearch']
+    document.getElementById('checkbox_DisplayLoopOnGalleryLoad').checked  = ConfigDict['Animation_Search'] ['DisplayLoopOnGalleryLoad']
 
-    document.getElementById('checkbox_exactJ').checked         = ConfigDict['Solver_Discr'] ['Use_exact_Jacobian']  ;
-    document.getElementById('input_ncoeff_init').value         = ConfigDict['Solver_Discr'] ['ncoeff_init']         ;
-    document.getElementById('input_n_reconverge_it_max').value = ConfigDict['Solver_Discr'] ['n_reconverge_it_max'] ;
+    document.getElementById('checkbox_exactJ').checked         = ConfigDict['Solver_Discr'] ['Use_exact_Jacobian']  
+    document.getElementById('input_ncoeff_init').value         = ConfigDict['Solver_Discr'] ['ncoeff_init']         
+    document.getElementById('input_n_reconverge_it_max').value = ConfigDict['Solver_Discr'] ['n_reconverge_it_max'] 
 
     SlideNReconvergeItMax();
 
@@ -651,39 +654,39 @@ function LoadConfigDict(ConfigDict) {
     document.getElementById('input_Newt_err_norm_max').value = ConfigDict['Solver_Optim'] ['Newt_err_norm_max'] 
     document.getElementById('optim_verbose_lvl').value       = ConfigDict['Solver_Optim'] ['optim_verbose_lvl'] 
 
-    var table = document.getElementById('table_cvg_loop');
-    var ncols = table.rows[0].cells.length;
+    var table = document.getElementById('table_cvg_loop')
+    var ncols = table.rows[0].cells.length
 
     for (var icol=ncols-1; icol > 0; icol-- ) {
-        deleteColumn('table_cvg_loop',icol);
+        deleteColumn('table_cvg_loop',icol)
     };
 
-    var n_loops = ConfigDict['Solver_Loop'] ['n_optim_param'];
+    var n_loops = ConfigDict['Solver_Loop'] ['n_optim_param']
 
     for (var il=0; il < n_loops; il++) {
 
-        ClickAddColLoopKrylov();
+        ClickAddColLoopKrylov()
 
-        var icol = il+1;
+        var icol = il+1
 
-        table.rows[1].cells[icol].children[0].value = ConfigDict['Solver_Loop'] ['gradtol_list'] [il] ;
-        table.rows[2].cells[icol].children[0].value = ConfigDict['Solver_Loop'] ['maxiter_list'] [il] ;
-        table.rows[3].cells[icol].children[0].value = ConfigDict['Solver_Loop'] ['inner_maxiter_list'] [il] ;
-        table.rows[4].cells[icol].children[0].value = ConfigDict['Solver_Loop'] ['outer_k_list'] [il] ;
+        table.rows[1].cells[icol].children[0].value = ConfigDict['Solver_Loop'] ['gradtol_list'] [il] 
+        table.rows[2].cells[icol].children[0].value = ConfigDict['Solver_Loop'] ['maxiter_list'] [il] 
+        table.rows[3].cells[icol].children[0].value = ConfigDict['Solver_Loop'] ['inner_maxiter_list'] [il] 
+        table.rows[4].cells[icol].children[0].value = ConfigDict['Solver_Loop'] ['outer_k_list'] [il] 
 
         if (ConfigDict['Solver_Loop'] ['store_outer_Av_list'] [il]) {
-        table.rows[5].cells[icol].children[0].value = "True" ;
+        table.rows[5].cells[icol].children[0].value = "True" 
         } else {
-        table.rows[5].cells[icol].children[0].value = "False" ;
+        table.rows[5].cells[icol].children[0].value = "False" 
         }
 
     }
 
-    RedistributeClicksTableBodyLoop('table_cvg_loop',1);
+    RedistributeClicksTableBodyLoop('table_cvg_loop',1)
 
-    document.getElementById('checkbox_duplicates').checked = ConfigDict['Solver_Checks'] ['Look_for_duplicates'] ;
-    document.getElementById('input_duplicate_eps').value   = ConfigDict['Solver_Checks'] ['duplicate_eps']       ;
-    document.getElementById('checkbox_escape').checked     = ConfigDict['Solver_Checks'] ['Check_Escape']        ;
+    document.getElementById('checkbox_duplicates').checked = ConfigDict['Solver_Checks'] ['Look_for_duplicates'] 
+    document.getElementById('input_duplicate_eps').value   = ConfigDict['Solver_Checks'] ['duplicate_eps']       
+    document.getElementById('checkbox_escape').checked     = ConfigDict['Solver_Checks'] ['Check_Escape']        
 
 }
 
@@ -1343,6 +1346,9 @@ input_trail_width.min   = min_base_trailWidth ;
 input_trail_width.max   = max_base_trailWidth ;
 input_trail_width.step  = 0.05 ;
 
+var checkbox_Trail_vanish = document.getElementById('checkbox_Trail_vanish');
+checkbox_Trail_vanish.addEventListener("change", checkbox_Trail_vanish_Handler, true);
+
 var input_trail_vanish_length = document.getElementById("input_trail_vanish_length");
 input_trail_vanish_length.addEventListener("input" , SlideTrailTime, true);
 input_trail_vanish_length.value = base_trail_vanish_length ;
@@ -1375,21 +1381,28 @@ function SlideTrailTime(event) {
 
 function checkbox_Mass_Scale_Handler(event) {
 
-    var displayCanvas = document.getElementById("displayCanvas");
+    var displayCanvas = document.getElementById("displayCanvas")
 
-    DoScaleSizeWithMass = event.currentTarget.checked;
+    DoScaleSizeWithMass = event.currentTarget.checked
     
-    var event = new Event('RemakeParticlesFromOutsideCanvas');
-    displayCanvas.dispatchEvent(event);
+    var event = new Event('RemakeParticlesFromOutsideCanvas')
+    displayCanvas.dispatchEvent(event)
 
+}
+
+function checkbox_Trail_vanish_Handler(event) {
+
+    DoTrailVanish = event.currentTarget.checked;
+    LastFadeTime = 0
+    
 }
 
 function input_Limit_FPS_Handler() {
 
-    Elapsed_Time_During_Animation = 0;
-    n_valid_dt_animation = 0;
+    Elapsed_Time_During_Animation = 0
+    n_valid_dt_animation = 0
 
-    FPS_limit = input_Limit_FPS.value;
+    FPS_limit = input_Limit_FPS.value
 
     anim_schedule_time = performance.now()
 
@@ -1398,14 +1411,14 @@ function input_Limit_FPS_Handler() {
 function checkbox_Limit_FPS_Handler(event) {
     
     if (event.currentTarget.checked) {
-        input_Limit_FPS.disabled = "";
-        Do_Limit_FPS = true;
+        input_Limit_FPS.disabled = ""
+        Do_Limit_FPS = true
     } else {
-        input_Limit_FPS.disabled = "disabled";
-        Do_Limit_FPS = false;
+        input_Limit_FPS.disabled = "disabled"
+        Do_Limit_FPS = false
     }
 
-    input_Limit_FPS_Handler();
+    input_Limit_FPS_Handler()
 
 }
 
@@ -1864,7 +1877,6 @@ async function LoadDefaultGallery() {
 
 }
 
-// function FormatMasses(the_mass){ return the_mass.toFixed(3).parseFloat().toString() }
 function FormatMasses(the_mass){ return parseFloat(the_mass.toPrecision(3)).toString() }
 
 function UpdateNowPlaying(SearchOnGoing=false) {

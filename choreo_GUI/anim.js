@@ -66,6 +66,8 @@ var base_trail_vanish_length = 1.
 var trail_vanish_length_mul = 0.002
 
 var DoScaleSizeWithMass = true
+var DoTrailVanish = true
+var LastFadeTime = 0
 
 var SearchIsOnGoing = false
 
@@ -224,7 +226,6 @@ function canvasApp() {
 	var dt_outlier_ms = 1200;
 	var speed_slider_value_init = .5;
 	var Time_One_Period_init = 5;
-	var LastFadeTime = 0;
 	
 	var startStopButton = document.getElementById("startStopButton");
 	startStopButton.addEventListener("click", startStopButtonHandler, true);
@@ -540,6 +541,8 @@ function canvasApp() {
 
 			
 			var nfade = Math.floor(LastFadeTime/FadeInvFrequency)
+			if (!DoTrailVanish) {nfade = 0}
+
 			for (var ifade=0; ifade<nfade; ifade++){
 				context.fillRect(0,0,displayWidth,displayHeight)
 			}
