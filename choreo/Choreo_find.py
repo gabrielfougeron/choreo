@@ -242,7 +242,25 @@ def Find_Choreo(
             
             if Save_Newton_Error :
                 plot_Newton_Error(x0,callfun,'init_newton.png')
-    
+
+            if Save_All_Coeffs:
+
+                all_coeffs = Unpackage_all_coeffs(x0,callfun)
+                np.save('init_coeffs.npy',all_coeffs)
+
+            if Save_All_Pos:
+
+                if n_save_pos is None:
+                    all_pos = ComputeAllLoopPos(x0,callfun)
+                elif n_save_pos == 'auto':
+                    # TODO : implement auto
+                    all_pos = ComputeAllLoopPos(x0,callfun)
+                else:
+                    all_pos = ComputeAllLoopPos(x0,callfun,n_save_pos)
+
+                np.save('init.npy',all_pos)
+
+
             for i in range(n_callback_after_init_list):
                 callback_after_init_list[i]()
             

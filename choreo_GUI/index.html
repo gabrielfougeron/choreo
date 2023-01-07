@@ -181,8 +181,8 @@ window.addEventListener("drop",function(e){
   </div>
   <div class="w3-container MainTab Main_Workspace" style="display:none">
     <h2>Setup Workspace</h2>
-    <button id="SetupWorkspaceBtn"  class="w3-button w3-hover-pale-red w3-light-grey InTableControls" onclick="ClickSetupWorkspace()"     >Setup Workspace</button>
-    <button id="ReloadWorkspaceBtn"  class="w3-button w3-hover-pale-red w3-light-grey InTableControls" onclick="ClickReloadWorkspace()"     disabled="disabled">Reload Workspace</button>
+    <button id="SetupWorkspaceBtn"   class="w3-button w3-hover-pale-red w3-light-grey InTableControls" onclick="ClickSetupWorkspace()" >Setup Workspace</button>
+    <button id="ReloadWorkspaceBtn"  class="w3-button w3-hover-pale-red w3-light-grey InTableControls" onclick="ClickReloadWorkspace()" disabled="disabled">Reload Workspace</button>
     <div id="WorkspaceGalleryContainer"></div>
   </div>
   <div class="w3-container MainTab Geom_Bodies Geom_Target Geom_Random Geom_Custom" style="display:none; text-align: justify;">
@@ -195,7 +195,7 @@ window.addEventListener("drop",function(e){
   <div class="w3-container MainTab Geom_Bodies" style="display:none; text-align: justify;">
     <h2>Bodies definition</h2>
     <table id = "table_body_loop" style="table-layout: fixed;">
-      <tr style="border-left-style:hidden;border-right-style:hidden;border-top-style:hidden;"><td style="width:120px;"><b><button class="w3-button w3-light-grey" style="text-align: center; font-size:16px" onclick="ClickAddBodyLoop()">Add Loop +</button></b></td></tr>
+      <tr style="border-left-style:hidden;border-right-style:hidden;border-top-style:hidden;"><td style="width:120px;"><b><button class="w3-button w3-light-grey w3-hover-pale-red" style="text-align: center; font-size:16px" onclick="ClickAddBodyLoop()">Add Loop +</button></b></td></tr>
       <tr><td style="width:120px;"><b>Number of bodies n</b></td></tr>
       <tr><td style="width:120px;"><b>Mass of bodies</b></td></tr>
       <tr><td style="width:120px;"><b>Symmetry name</b></td></tr>
@@ -216,7 +216,31 @@ window.addEventListener("drop",function(e){
   </div>
   <div class="w3-container MainTab Geom_Target" style="display:none">
     <h2>Initial state target</h2>
-    Feature to be added later.
+    <table style="display:block; font-size:16px; border:none; display:table; max-width:600px; margin-bottom:-20px">
+      <tr>
+        <td style="border:none;" ><label for="checkbox_Target">Seed solver with target</label></td>
+        <td style="border:none; max-width:50px;"><input id ="checkbox_Target" class="w3-check" type="checkbox" style="vertical-align: super" unchecked></td>
+      </tr>
+      <tr>
+        <td style="border:none;" ><label for="checkbox_RotateFastWithSlow">Rotate fast with slow</label></td>
+        <td style="border:none; max-width:50px;"><input id ="checkbox_RotateFastWithSlow" class="w3-check" type="checkbox" style="vertical-align: super" unchecked></td>
+      </tr>
+      <tr>
+        <td style="border:none;" ><label for="checkbox_OptimizeRelative">Optimize relative fast starts</label></td>
+        <td style="border:none; max-width:50px;"><input id ="checkbox_OptimizeRelative" class="w3-check" type="checkbox" style="vertical-align: super" unchecked></td>
+      </tr>
+      <tr>
+        <td style="border:none; ">
+          <b><button class="w3-button w3-light-grey w3-hover-pale-red dropdown_btn" style="text-align: center; font-size:16px" onclick="ClickChooseSlowSolution()">Choose slow solution</button></b>
+          <div class="dropdown-content" id="TreeSlowContainer"></div>
+        </td>
+        <td style="border:none; max-width:400px; " id="SlowSolution_name"></td>
+      </tr>
+      <tr>
+        <td style="border:none;" ><label for="input_nT_slow">Slow period multiplier</label></td>
+        <td style="border:none;" ><input id ="input_nT_slow" type="number" value="1" min="1" style="width:50px;"></td>
+      </tr>
+    </table>
   </div>
   <div class="w3-container MainTab Geom_Random" style="display:none">
     <h2>Initial state randomization </h2>
@@ -245,7 +269,7 @@ window.addEventListener("drop",function(e){
             <label for="input_k_infl">Bend index</label>
           </td>
           <td style="border:none; max-width:90px; ">
-            <input id ="input_k_infl" type="number" value="3" style="text-align: center;">
+            <input id ="input_k_infl" type="number" value="3" min="1" style="text-align: center;">
           </td>
         </tr>
         <tr>
@@ -253,7 +277,7 @@ window.addEventListener("drop",function(e){
             <label for="input_k_max">Vanishing index</label>
           </td>
           <td style="border:none; max-width:90px; ">
-            <input id ="input_k_max" type="number" value="50" style="text-align: center;">
+            <input id ="input_k_max" type="number" value="50" min="1" style="text-align: center;">
           </td>
         </tr>
       </table>
@@ -268,7 +292,7 @@ window.addEventListener("drop",function(e){
       </tr>
     </table>
     <table id = "table_custom_sym" style="table-layout: fixed;">
-      <tr style="border-left-style:hidden;border-right-style:hidden;border-top-style:hidden;"><td style="width:120px;"><b><button class="w3-button w3-light-grey" style="text-align: center; font-size:16px" onclick="ClickAddCustomSym()">Add Sym +</button></b></td></tr>
+      <tr style="border-left-style:hidden;border-right-style:hidden;border-top-style:hidden;"><td style="width:120px;"><b><button class="w3-button w3-light-grey w3-hover-pale-red" style="text-align: center; font-size:16px" onclick="ClickAddCustomSym()">Add Sym +</button></b></td></tr>
       <tr><td style="width:120px;min-height:40px;"><b>Loop target</b></td></tr>
       <tr><td style="width:120px;min-height:40px;"><b>Loop source</b></td></tr>
       <tr><td style="width:120px;min-height:40px;"><b>Reflection</b></td></tr>
@@ -305,8 +329,8 @@ window.addEventListener("drop",function(e){
       </table>
     </div>
     <td style="width:120px;">
-      <b><button class="w3-button w3-light-grey" style="text-align: center; font-size:16px" onclick="ClickAddColor()">Add +</button></b>
-      <b><button class="w3-button w3-light-grey" style="text-align: center; font-size:16px" onclick="ClickRemoveColor()">Remove -</button></b>
+      <b><button class="w3-button w3-light-grey w3-hover-pale-red" style="text-align: center; font-size:16px" onclick="ClickAddColor()">Add +</button></b>
+      <b><button class="w3-button w3-light-grey w3-hover-pale-red" style="text-align: center; font-size:16px" onclick="ClickRemoveColor()">Remove -</button></b>
     </td>
     <table id = "table_pick_color" style="table-layout: fixed;">
       <tr style="border-left-style:hidden;border-right-style:hidden;border-top-style:hidden;">
@@ -486,7 +510,7 @@ window.addEventListener("drop",function(e){
     <br>
     <table id = "table_cvg_loop" style="table-layout: fixed;">
       <tr style="border-left-style:hidden;border-right-style:hidden;border-top-style:hidden;"><td style="width:120px;"><b>
-        <button class="w3-button w3-light-grey" style="text-align: center; font-size:16px" onclick="ClickAddColLoopKrylov()">Add +</button>
+        <button class="w3-button w3-light-grey w3-hover-pale-red" style="text-align: center; font-size:16px" onclick="ClickAddColLoopKrylov()">Add +</button>
       </b></td></tr>
       <tr><td style="width:120px;"><b>Gradient tolerance</b></td></tr>
       <tr><td style="width:120px;"><b>Max iterations</b></td></tr>
