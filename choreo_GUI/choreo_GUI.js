@@ -881,6 +881,7 @@ function ClickAddColLoopKrylov() {
     div = document.createElement('button'); 
     div.classList.add("w3-button");
     div.classList.add("w3-light-grey");
+    div.classList.add("w3-hover-pale-red");
     div.style.textAlign = "center";
     div.style.fontSize ="16px";
     div.style.fontWeight ="bold";
@@ -987,6 +988,7 @@ function ClickAddBodyLoop() {
     div = document.createElement('button'); 
     div.classList.add("w3-button");
     div.classList.add("w3-light-grey");
+    div.classList.add("w3-hover-pale-red");
     div.style.textAlign = "center";
     div.style.fontSize ="16px";
     div.style.fontWeight ="bold";
@@ -1080,6 +1082,7 @@ function ClickAddCustomSym() {
     div = document.createElement('button'); 
     div.classList.add("w3-button");
     div.classList.add("w3-light-grey");
+    div.classList.add("w3-hover-pale-red");
     div.style.textAlign = "center";
     div.style.fontSize ="16px";
     div.style.fontWeight ="bold";
@@ -1664,7 +1667,7 @@ function ClickReloadWorkspace() {
 
 }
 
-async function MakeDirectoryTree(cur_directory,cur_treenode) {
+async function MakeDirectoryTree_Workspace(cur_directory,cur_treenode,click_callback) {
 
     var files_here = {}
 
@@ -1675,7 +1678,7 @@ async function MakeDirectoryTree(cur_directory,cur_treenode) {
             var new_node = new TreeNode(entry.name,{expanded:false})
             cur_treenode.addChild(new_node)
 
-            await MakeDirectoryTree(await cur_directory.getDirectoryHandle(entry.name),new_node)
+            await MakeDirectoryTree_Workspace(await cur_directory.getDirectoryHandle(entry.name),new_node,click_callback)
             
         } else if (entry.kind == "file") {
 
@@ -1705,7 +1708,7 @@ async function MakeDirectoryTree(cur_directory,cur_treenode) {
 
             var new_node = new TreeNode(basename,{expanded:false})
 
-            new_node.on("click", (e,node)  => PlayFileFromDisk(basename,files_here[basename]['.npy'],files_here[basename]['.json']));
+            new_node.on("click", (e,node)  => click_callback(basename,files_here[basename]['.npy'],files_here[basename]['.json']));
 
             cur_treenode.addChild(new_node)
 
@@ -1720,10 +1723,21 @@ async function LoadWorkspaceGallery() {
     if (WorkspaceIsSetUp) {
         
         var WorkspaceTree = new TreeNode(UserWorkspace.name,{expanded:true})
-        // WorkspaceTree.setExpanded(true)
-        await MakeDirectoryTree(UserWorkspace,WorkspaceTree)
+        await MakeDirectoryTree_Workspace(UserWorkspace,WorkspaceTree,PlayFileFromDisk)
 
         var WorkspaceView = new TreeView(WorkspaceTree, "#WorkspaceGalleryContainer",{leaf_icon:" ",parent_icon:" ",show_root:false})
+
+        var WorkspaceTree_Target = new TreeNode("Workspace",{expanded:true})
+        await MakeDirectoryTree_Workspace(UserWorkspace,WorkspaceTree_Target,LoadTargetFileFromDisk)
+
+        Target_Tree = new TreeNode("Target_Tree",{expanded:true})
+        Target_Tree.addChild(DefaultTree_Target)
+        Target_Tree.addChild(WorkspaceTree_Target)
+
+    
+        Target_TreeView = new TreeView(Target_Tree, "#TreeSlowContainer",{leaf_icon:" ",parent_icon:" ",show_root:false})
+
+        Target_TreeView.reload()
 
     }
 
@@ -1785,6 +1799,13 @@ async function PlayFileFromDisk(name,npy_file,json_file) {
 
 }
 
+function LoadTargetFileFromDisk(name,npy_file,json_file) {
+
+    Target_current_name.innerHTML = name
+    Target_current_TreeContainer.classList.remove('show')
+
+}
+
 async function PlayFileFromRemote(name,npy_file,json_file) {
 
     var displayCanvas = document.getElementById("displayCanvas")
@@ -1828,14 +1849,21 @@ async function PlayFileFromRemote(name,npy_file,json_file) {
 
 }
 
-function MakeDirectoryTree_DefaultGallery(cur_directory,cur_treenode) {
+function LoadTargetFileFromRemote(name,npy_file,json_file) {
+
+    Target_current_name.innerHTML = name
+    Target_current_TreeContainer.classList.remove('show')
+
+}
+
+function MakeDirectoryTree_DefaultGallery(cur_directory,cur_treenode,click_callback) {
 
     for (const the_dir of cur_directory.dirs) { 
 
         var new_node = new TreeNode(the_dir.name,{expanded:false})
         cur_treenode.addChild(new_node)
 
-        MakeDirectoryTree_DefaultGallery(the_dir,new_node)
+        MakeDirectoryTree_DefaultGallery(the_dir,new_node,click_callback)
 
     }
 
@@ -1844,7 +1872,7 @@ function MakeDirectoryTree_DefaultGallery(cur_directory,cur_treenode) {
         var new_node = new TreeNode(basename,{expanded:false})
         cur_treenode.addChild(new_node)
 
-        new_node.on("click", (e,node)  => PlayFileFromRemote(basename,cur_directory.files[basename]['.npy'],cur_directory.files[basename]['.json']));
+        new_node.on("click", (e,node)  => click_callback(basename,cur_directory.files[basename]['.npy'],cur_directory.files[basename]['.json']));
 
     }
 
@@ -1861,7 +1889,7 @@ async function LoadDefaultGallery() {
         })
         
     var DefaultTree = new TreeNode(DefaultGallery_description.name,{expanded:true})
-    MakeDirectoryTree_DefaultGallery(DefaultGallery_description,DefaultTree)
+    MakeDirectoryTree_DefaultGallery(DefaultGallery_description,DefaultTree,PlayFileFromRemote)
 
     var search_leaf = DefaultTree
     while (!search_leaf.isLeaf()) {
@@ -1871,9 +1899,17 @@ async function LoadDefaultGallery() {
     search_leaf.setEnabled(true)
     search_leaf.setSelected(true)
 
-    var WorkspaceView = new TreeView(DefaultTree, "#DefaultGalleryContainer",{leaf_icon:" ",parent_icon:" ",show_root:false})
-
+    var DefaultTreeView = new TreeView(DefaultTree, "#DefaultGalleryContainer",{leaf_icon:" ",parent_icon:" ",show_root:false})
+    
     await search_leaf.getListener("click")()
+
+    DefaultTree_Target = new TreeNode("Gallery",{expanded:true})
+    MakeDirectoryTree_DefaultGallery(DefaultGallery_description,DefaultTree_Target,LoadTargetFileFromRemote)
+
+    Target_Tree = new TreeNode("Target_Tree",{expanded:true})
+    Target_Tree.addChild(DefaultTree_Target)
+
+    Target_TreeView = new TreeView(Target_Tree, "#TreeSlowContainer",{leaf_icon:" ",parent_icon:" ",show_root:false})
 
 }
 
@@ -1914,6 +1950,24 @@ function UpdateNowPlaying(SearchOnGoing=false) {
 
 }
 
+function ClickChooseSlowSolution() {
 
 
+    Target_current_name = document.getElementById("SlowSolution_name")
 
+    Target_current_TreeContainer = document.getElementById("TreeSlowContainer")
+
+    ClickChooseTargetSolution()
+
+}
+
+function ClickChooseTargetSolution() {
+
+    if (Target_current_TreeContainer.classList.contains('show')) {
+        Target_current_TreeContainer.classList.remove('show')
+    } else {
+        Target_current_TreeContainer.classList.add('show')
+    }
+
+
+}

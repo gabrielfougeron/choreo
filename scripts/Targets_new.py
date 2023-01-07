@@ -108,8 +108,8 @@ def main(the_i=0):
     # Rotate_fast_with_slow = False
     # Rotate_fast_with_slow = (np.random.random() > 1./2.)
 
-    Optimize_Init = True
-    # Optimize_Init = False
+    # Optimize_Init = True
+    Optimize_Init = False
     # Optimize_Init = (np.random.random() > 1./2.)
 
     Randomize_Fast_Init = True
@@ -160,8 +160,8 @@ def main(the_i=0):
     # color = "velocity"
     # color = "all"
 
-    Save_anim = True
-    # Save_anim = False
+    # Save_anim = True
+    Save_anim = False
 
     Save_All_Coeffs = False
     Save_All_Pos = True
@@ -281,24 +281,24 @@ def main(the_i=0):
     
     choreo.Find_Choreo(**all_kwargs)
 # # 
-if __name__ == "__main__":
-    main(0)
+# if __name__ == "__main__":
+#     main(0)
 # # #   
 # # 
-# if __name__ == "__main__":
-# 
-#     # n = multiprocessing.cpu_count()
-#     n = multiprocessing.cpu_count()//2 -1
-#     # n = 4
-#     
-#     print(f"Executing with {n} workers")
-#     
-#     
-#     with concurrent.futures.ProcessPoolExecutor(max_workers=n) as executor:
-#         
-#         res = []
-#         for i in range(1,n+1):
-#             res.append(executor.submit(main,i))
-#             time.sleep(0.01)
+if __name__ == "__main__":
+
+    # n = multiprocessing.cpu_count()
+    n = multiprocessing.cpu_count()//2 -1
+    # n = 4
+    
+    print(f"Executing with {n} workers")
+    
+    
+    with concurrent.futures.ProcessPoolExecutor(max_workers=n) as executor:
+        
+        res = []
+        for i in range(1,n+1):
+            res.append(executor.submit(main,i))
+            time.sleep(0.01)
 # # 
 # #  
