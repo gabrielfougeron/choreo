@@ -1864,6 +1864,9 @@ async function LoadDefaultGallery() {
 
 }
 
+// function FormatMasses(the_mass){ return the_mass.toFixed(3).parseFloat().toString() }
+function FormatMasses(the_mass){ return parseFloat(the_mass.toPrecision(3)).toString() }
+
 function UpdateNowPlaying(SearchOnGoing=false) {
 
     var NP_name = document.getElementById("NP_name")
@@ -1875,9 +1878,9 @@ function UpdateNowPlaying(SearchOnGoing=false) {
     var NP_n_Fourier = document.getElementById("NP_n_Fourier")
     
     nloop = PlotInfo["nloop"]
-    loop_mass = PlotInfo["mass"][PlotInfo["Targets"][0][0]].toString()
+    loop_mass = FormatMasses(PlotInfo["mass"][PlotInfo["Targets"][0][0]])
     for (var il = 1 ; il < nloop; il++) {
-        loop_mass = loop_mass + ", " + PlotInfo["mass"][PlotInfo["Targets"][il][0]].toString()
+        loop_mass = loop_mass + ", " + FormatMasses(PlotInfo["mass"][PlotInfo["Targets"][il][0]])
     }
 
     NP_name.innerHTML = SolName
@@ -1892,7 +1895,7 @@ function UpdateNowPlaying(SearchOnGoing=false) {
 
     } else {
 
-        NP_Newton_Error.innerHTML = PlotInfo["Newton_Error"].toString()
+        NP_Newton_Error.innerHTML = PlotInfo["Newton_Error"].toExponential(2)
         NP_n_Fourier.innerHTML = PlotInfo["n_Fourier"].toString()
 
     }
