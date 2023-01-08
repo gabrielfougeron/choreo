@@ -784,33 +784,33 @@ function deleteLastColumn(tableId) {
 }
 
 function RedistributeClicksTableBodyLoop(tableid,mincol,fun_exec_end=function(){}){
-    var table = document.getElementById(tableid);
+    var table = document.getElementById(tableid)
 
     for (var icol=1; icol < table.rows[0].cells.length; icol++) {
         
-        var div = table.rows[0].cells[icol].children[0];
-        div.button_number = icol;
+        var div = table.rows[0].cells[icol].children[0]
+        div.button_number = icol
         
         div.onclick = function () {
             if (table.rows[0].cells.length > (mincol+1)) {
-                deleteColumn(tableid, this.button_number);
-                RedistributeClicksTableBodyLoop(tableid,mincol,fun_exec_end);
+                deleteColumn(tableid, this.button_number)
+                RedistributeClicksTableBodyLoop(tableid,mincol,fun_exec_end)
             }
-        };
+        }
 
     }
 
-    fun_exec_end();
+    fun_exec_end()
 
 }
 
 function RedistributeBodyCount() {
-    var table = document.getElementById('table_body_loop');
+    var table = document.getElementById('table_body_loop')
 
-    var irow_n_body = 1;
-    var irow_body_range = 9;
-    var ibody_low = 0;
-    var ibody_high = 0;                                   
+    var irow_n_body = 1
+    var irow_body_range = 9
+    var ibody_low = 0
+    var ibody_high = 0                                   
 
     for (var icol=1; icol < table.rows[0].cells.length; icol++) {
         
@@ -825,11 +825,11 @@ function RedistributeBodyCount() {
 }
 
 function ClickAddColLoopKrylov() {
-    var table = document.getElementById('table_cvg_loop');
-    var newcell;
-    var div,input;
-    var irow, ival;
-    var icol = table.rows[0].cells.length;
+    var table = document.getElementById('table_cvg_loop')
+    var newcell
+    var div,input
+    var irow, ival
+    var icol = table.rows[0].cells.length
 
     var input_dict = [
         {
@@ -866,51 +866,49 @@ function ClickAddColLoopKrylov() {
             "<option value='True'>True</option><option value='False' selected>False</option>",
         ]
         },
-    ];
+    ]
 
-    n_fields = input_dict.length;
-    n_default_values = input_dict[0]['value'].length;
+    n_fields = input_dict.length
+    n_default_values = input_dict[0]['value'].length
 
-    irow = 0;
-    newcell = table.rows[irow].insertCell(icol);
-    newcell.style.borderLeftStyle = 'hidden';
-    newcell.style.fontSize = '16px';
-    newcell.style.width = '65px';
-    newcell.style.textAlign = 'center';
+    irow = 0
+    newcell = table.rows[irow].insertCell(icol)
+    newcell.style.borderLeftStyle = 'hidden'
+    newcell.style.fontSize = '16px'
+    newcell.style.width = '65px'
+    newcell.style.textAlign = 'center'
 
-    div = document.createElement('button'); 
-    div.classList.add("w3-button");
-    div.classList.add("w3-light-grey");
-    div.classList.add("w3-hover-pale-red");
-    div.style.textAlign = "center";
-    div.style.fontSize ="16px";
-    div.style.fontWeight ="bold";
-    div.innerHTML = "-";
+    div = document.createElement('button')
+    div.classList.add("w3-button","w3-light-grey","w3-hover-pale-red")
+    div.style.textAlign = "center"
+    div.style.fontSize ="16px"
+    div.style.fontWeight ="bold"
+    div.innerHTML = "-"
 
-    newcell.appendChild(div);
+    newcell.appendChild(div)
 
     for (ival = 0; ival < n_fields; ival++) {
-        irow = ival + 1;
-        newcell = table.rows[irow].insertCell(icol);
-        newcell.style.width = '65px';
-        newcell.style.textAlign = 'center';
-        var idx = Math.min(icol-1,n_default_values-1);
-        input = document.createElement(input_dict[ival]["elem_class"]);
+        irow = ival + 1
+        newcell = table.rows[irow].insertCell(icol)
+        newcell.style.width = '65px'
+        newcell.style.textAlign = 'center'
+        var idx = Math.min(icol-1,n_default_values-1)
+        input = document.createElement(input_dict[ival]["elem_class"])
         for (var [key, val] of Object.entries(input_dict[ival])){
-        if (key != "elem_class"){
-            if (Array.isArray(val)){
-            input[key] = val[idx];
+            if (key != "elem_class"){
+                if (Array.isArray(val)){
+                    input[key] = val[idx]
+                }
+                else{
+                    input[key] = val
+                }
             }
-            else{
-            input[key] = val;
-            }
+            input.style = "width: 53px; text-align: center;"
         }
-        input.style = "width: 53px; text-align: center;"
-        }
-        newcell.appendChild(input);
+        newcell.appendChild(input)
     }
 
-    RedistributeClicksTableBodyLoop('table_cvg_loop',1);
+    RedistributeClicksTableBodyLoop('table_cvg_loop',1)
 
 }
 
@@ -1329,6 +1327,9 @@ function ChoreoSearchNextClick(){
 var checkbox_Limit_FPS = document.getElementById('checkbox_Limit_FPS');
 checkbox_Limit_FPS.addEventListener("change", checkbox_Limit_FPS_Handler, true);
 
+var checkbox_Target = document.getElementById('checkbox_Target');
+checkbox_Target.addEventListener("change", checkbox_EnableTargets_Handler, true);
+
 var input_Limit_FPS = document.getElementById("input_Limit_FPS");
 input_Limit_FPS.addEventListener("change", input_Limit_FPS_Handler, true);
 
@@ -1734,10 +1735,7 @@ async function LoadWorkspaceGallery() {
         Target_Tree.addChild(DefaultTree_Target)
         Target_Tree.addChild(WorkspaceTree_Target)
 
-    
-        Target_TreeView = new TreeView(Target_Tree, "#TreeSlowContainer",{leaf_icon:" ",parent_icon:" ",show_root:false})
-
-        Target_TreeView.reload()
+        var Target_TreeView = new TreeView(Target_Tree, "#TreeSlowContainer",{leaf_icon:" ",parent_icon:" ",show_root:false})
 
     }
 
@@ -1801,8 +1799,9 @@ async function PlayFileFromDisk(name,npy_file,json_file) {
 
 function LoadTargetFileFromDisk(name,npy_file,json_file) {
 
-    Target_current_name.innerHTML = name
-    Target_current_TreeContainer.classList.remove('show')
+    UpdateCurrentTarget(name,3)
+
+
 
 }
 
@@ -1849,12 +1848,92 @@ async function PlayFileFromRemote(name,npy_file,json_file) {
 
 }
 
-function LoadTargetFileFromRemote(name,npy_file,json_file) {
+async function LoadTargetFileFromRemote(name,npy_file,json_file) {
+
+    let finished_json = fetch(json_file,Gallery_cache_behavior)
+        .then(response => response.text())
+        .then(data => {
+            TargetSlow_PlotInfo = JSON.parse(data)
+        })
+
+    let finished_npy = 
+        npyjs_obj.load(npy_file)
+        .then((res) => {
+            TargetSlow_Pos = res
+        });
+
+    await finished_json
+
+    UpdateCurrentTarget(name,TargetSlow_PlotInfo["nloop"])
+
+}
+
+function UpdateCurrentTarget(name,nfast) {
+
+    [Target_current_name , Target_current_TreeContainer ] =  ReturnCurrentNameAndTreeContainer()
 
     Target_current_name.innerHTML = name
     Target_current_TreeContainer.classList.remove('show')
 
+    if (Target_current_type == "slow") {
+
+        var AllTargetFast = document.getElementsByClassName("TargetFast")
+
+        for (var i = 0; i < AllTargetFast.length; i++) {
+            AllTargetFast[i].remove()
+        }
+
+        var table = document.getElementById('table_targets')
+
+        var i_start_fast = 5
+        var i_end = table.rows.length
+
+        for (var i = i_start_fast; i < i_end; i++) {
+            table.rows[i_start_fast].remove()
+        }
+
+        for (var i = 0; i < nfast; i++) {
+
+            var row = table.insertRow(i + i_start_fast)
+
+            var newcell = row.insertCell(0)
+            newcell.style.borderStyle = 'none'
+
+            var div = document.createElement('div')
+            div.classList.add("TargetFast","TargetToggle","button","w3-button","w3-light-grey","w3-hover-pale-red","dropdown_btn")
+            div.innerHTML = "<b>Choose fast solution "+i.toString()+"</b>"
+            div.id = "ChooseFastSolutionBtn"+i.toString()
+            div.disabled = ""
+            div.onclick = ((j) => ( () => ClickChooseFastSolution(j) ))(i)
+            newcell.appendChild(div)
+            
+            var div = document.createElement('div')
+            div.classList.add("TargetFast","dropdown-content")
+            div.id = "TreeFastContainer"+i.toString()
+            var Target_TreeView = new TreeView(Target_Tree, div,{leaf_icon:" ",parent_icon:" ",show_root:false})
+
+
+            newcell.appendChild(div)
+
+
+
+            var newcell = row.insertCell(1)
+            newcell.style.borderStyle = 'none'
+
+            var div = document.createElement('div')
+            div.classList.add("TargetFast","TargetToggle")
+            div.id = "FastSolution_name"+i.toString()
+            newcell.appendChild(div)
+
+
+
+        }
+
+    }
+
+
 }
+
 
 function MakeDirectoryTree_DefaultGallery(cur_directory,cur_treenode,click_callback) {
 
@@ -1909,7 +1988,7 @@ async function LoadDefaultGallery() {
     Target_Tree = new TreeNode("Target_Tree",{expanded:true})
     Target_Tree.addChild(DefaultTree_Target)
 
-    Target_TreeView = new TreeView(Target_Tree, "#TreeSlowContainer",{leaf_icon:" ",parent_icon:" ",show_root:false})
+    var Target_TreeView = new TreeView(Target_Tree, "#TreeSlowContainer",{leaf_icon:" ",parent_icon:" ",show_root:false})
 
 }
 
@@ -1952,22 +2031,82 @@ function UpdateNowPlaying(SearchOnGoing=false) {
 
 function ClickChooseSlowSolution() {
 
-
-    Target_current_name = document.getElementById("SlowSolution_name")
-
-    Target_current_TreeContainer = document.getElementById("TreeSlowContainer")
+    Target_current_type = "slow"
+    Target_current_id = 0
 
     ClickChooseTargetSolution()
 
 }
 
+function ClickChooseFastSolution(i) {
+
+    Target_current_type = "fast"
+    Target_current_id = i
+
+    ClickChooseTargetSolution()
+
+}
+
+function ReturnCurrentNameAndTreeContainer() {
+
+    var Target_current_name_id
+    var Target_current_TreeContainer_id
+    if (Target_current_type == "slow") {
+        Target_current_name_id = "SlowSolution_name"
+        Target_current_TreeContainer_id = "TreeSlowContainer"
+    } else if (Target_current_type == "fast") {
+        Target_current_name_id = "FastSolution_name"+Target_current_id.toString()
+        Target_current_TreeContainer_id = "TreeFastContainer"+Target_current_id.toString()
+    }
+
+    var Target_current_name = document.getElementById(Target_current_name_id)
+    var Target_current_TreeContainer = document.getElementById(Target_current_TreeContainer_id)
+
+    return [Target_current_name , Target_current_TreeContainer ]
+
+}
+
 function ClickChooseTargetSolution() {
 
-    if (Target_current_TreeContainer.classList.contains('show')) {
-        Target_current_TreeContainer.classList.remove('show')
-    } else {
+    [Target_current_name , Target_current_TreeContainer ] =  ReturnCurrentNameAndTreeContainer()
+
+    OpenMe = !Target_current_TreeContainer.classList.contains('show')
+
+    var AllDropdowns = document.getElementsByClassName("dropdown-content");
+
+    for (var i = 0; i < AllDropdowns.length; i++) {
+        if (AllDropdowns[i].classList.contains('show')) {
+            AllDropdowns[i].classList.remove('show')
+        }
+    }
+
+    if (OpenMe) {
         Target_current_TreeContainer.classList.add('show')
     }
 
+}
+
+function checkbox_EnableTargets_Handler(event) {
+
+    var AllDropdowns = document.getElementsByClassName("dropdown-content");
+
+    for (var i = 0; i < AllDropdowns.length; i++) {
+        if (AllDropdowns[i].classList.contains('show')) {
+            AllDropdowns[i].classList.remove('show')
+        }
+    }
+
+    var disable_str = ""
+    if (!event.currentTarget.checked) {
+        disable_str = "disabled"
+    }
+
+    var AllTargetToggle = document.getElementsByClassName("TargetToggle");
+
+    // console.log("Setting disabled status as ",disable_str)
+    for (var i = 0; i < AllTargetToggle.length; i++) {
+        // console.log(i, AllTargetToggle[i].id)
+        AllTargetToggle[i].disabled = disable_str
+    }
 
 }

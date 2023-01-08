@@ -214,31 +214,31 @@ window.addEventListener("drop",function(e){
     <br>
     &nbsp &nbsp For more explanation, and a definition of the symmetry names Cp and Dp, <a href="https://arxiv.org/abs/1305.0470">see the following article: Montaldi, J., & Steckles, K. (2013). Classification of symmetry groups for planar-body choreographies.</a>
   </div>
-  <div class="w3-container MainTab Geom_Target" style="display:none">
+  <div class="w3-container MainTab Geom_Target" style="display:none">    
     <h2>Initial state target</h2>
-    <table style="display:block; font-size:16px; border:none; display:table; max-width:600px; margin-bottom:-20px">
+    <table style="display:block; font-size:16px; border:none; display:table; table-layout: fixed; width:600px; margin-bottom:-20px" id="table_targets">
       <tr>
         <td style="border:none;" ><label for="checkbox_Target">Seed solver with target</label></td>
         <td style="border:none; max-width:50px;"><input id ="checkbox_Target" class="w3-check" type="checkbox" style="vertical-align: super" unchecked></td>
       </tr>
       <tr>
         <td style="border:none;" ><label for="checkbox_RotateFastWithSlow">Rotate fast with slow</label></td>
-        <td style="border:none; max-width:50px;"><input id ="checkbox_RotateFastWithSlow" class="w3-check" type="checkbox" style="vertical-align: super" unchecked></td>
+        <td style="border:none; max-width:50px;"><input id ="checkbox_RotateFastWithSlow" class="w3-check TargetToggle" type="checkbox" style="vertical-align: super" disabled="disabled" unchecked></td>
       </tr>
       <tr>
         <td style="border:none;" ><label for="checkbox_OptimizeRelative">Optimize relative fast starts</label></td>
-        <td style="border:none; max-width:50px;"><input id ="checkbox_OptimizeRelative" class="w3-check" type="checkbox" style="vertical-align: super" unchecked></td>
+        <td style="border:none; max-width:50px;"><input id ="checkbox_OptimizeRelative" class="w3-check TargetToggle" type="checkbox" style="vertical-align: super" disabled="disabled" unchecked></td>
       </tr>
       <tr>
         <td style="border:none; ">
-          <b><button class="w3-button w3-light-grey w3-hover-pale-red dropdown_btn" style="text-align: center; font-size:16px" onclick="ClickChooseSlowSolution()">Choose slow solution</button></b>
+          <b><button class="w3-button w3-light-grey w3-hover-pale-red dropdown_btn TargetToggle" id="ChooseSlowSolutionBtn" disabled="disabled" style="text-align: center; font-size:16px" onclick="ClickChooseSlowSolution()">Choose slow solution</button></b>
           <div class="dropdown-content" id="TreeSlowContainer"></div>
         </td>
         <td style="border:none; max-width:400px; " id="SlowSolution_name"></td>
       </tr>
       <tr>
         <td style="border:none;" ><label for="input_nT_slow">Slow period multiplier</label></td>
-        <td style="border:none;" ><input id ="input_nT_slow" type="number" value="1" min="1" style="width:50px;"></td>
+        <td style="border:none;" ><input id ="input_nT_slow" type="number" value="1" min="1" style="width:50px;" class="TargetToggle" disabled="disabled"></td>
       </tr>
     </table>
   </div>
