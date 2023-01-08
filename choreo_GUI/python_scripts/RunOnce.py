@@ -99,6 +99,7 @@ def main():
 
     LookForTarget = params_dict['Geom_Target'] ['LookForTarget']
 
+
     if (LookForTarget) :
 
 
@@ -116,21 +117,21 @@ def main():
         choreo.Center_all_coeffs(all_coeffs_slow,Info_dict_slow["nloop"],Info_dict_slow["mass"],Info_dict_slow["loopnb"],np.array(Info_dict_slow["Targets"]),np.array(Info_dict_slow["SpaceRotsUn"]))
 
         Info_dict_fast_list = js.TargetFast_PlotInfoList.to_py()
-        all_pos_fast_js_list = js.TargetSlow_Pos.to_py()
+        all_pos_fast_js_list = js.TargetFast_PosList.to_py()
         all_coeffs_fast_list = []
 
 
         for (i,all_pos_fast_js) in enumerate(all_pos_fast_js_list) :
 
             all_pos_fast = NPY_JS_to_py(all_pos_fast_js)
-            all_coeffs_fast = choreo.AllPosToAllCoeffs(all_pos_fast,Info_dict_fast_list[i]["n_int"],Info_dict_fast["n_Fourier"])
+            all_coeffs_fast = choreo.AllPosToAllCoeffs(all_pos_fast,Info_dict_fast_list[i]["n_int"],Info_dict_fast_list[i]["n_Fourier"])
             choreo.Center_all_coeffs(all_coeffs_fast,Info_dict_fast_list[i]["nloop"],Info_dict_fast_list[i]["mass"],Info_dict_fast_list[i]["loopnb"],np.array(Info_dict_fast_list[i]["Targets"]),np.array(Info_dict_fast_list[i]["SpaceRotsUn"]))
 
             all_coeffs_fast_list.append(all_coeffs_fast)
 
-
-
         Sym_list, mass,il_slow_source,ibl_slow_source,il_fast_source,ibl_fast_source = choreo.MakeTargetsSyms(Info_dict_slow,Info_dict_fast_list)
+        
+        nbody = len(mass)
 
 
 

@@ -341,6 +341,8 @@ function ChoreoExecuteClick() {
 
             ReadyToRun = TargetSlow_Loaded
 
+            console.log("TargetSlow_Loaded:",TargetSlow_Loaded)
+
             if (TargetSlow_Loaded) {
 
                 pyodide_worker.postMessage({funname:"LoadDataInWorker",args:{TargetSlow_PlotInfo:TargetSlow_PlotInfo}});
@@ -349,6 +351,8 @@ function ChoreoExecuteClick() {
                 var nfast = TargetSlow_PlotInfo["nloop"]
 
                 for (var i=0; i < nfast; i++) {
+
+                    console.log("TargetFast_LoadedList[i]",i,TargetFast_LoadedList[i])
 
                     ReadyToRun = ReadyToRun && TargetFast_LoadedList[i]
 
@@ -364,6 +368,8 @@ function ChoreoExecuteClick() {
             }
 
         }
+
+        console.log("Ready to run:",ReadyToRun)
 
         pyodide_worker.postMessage({funname:"ExecutePythonFile",args:"./python_scripts/RunOnce.py"});
 
@@ -1936,6 +1942,8 @@ async function LoadTargetFileFromRemote(name,npy_file,json_file) {
         
         await finished_npy
         TargetFast_PosList[Target_current_id] = The_Pos
+
+        TargetFast_LoadedList[Target_current_id] = true
     }
 
 }
