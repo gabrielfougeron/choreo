@@ -81,8 +81,15 @@ var AllGalleryNames = []
 
 var DefaultTree_Target
 var Target_Tree
-var Target_TreeView
-var Target_current_name
+
+var Target_current_type
+var Target_current_id
+
+
+var TargetSlow_PlotInfo
+var TargetSlow_Pos
+var TargetFast_PlotInfoList
+var TargetFast_PosList
 
 var trailColorLookup
 
