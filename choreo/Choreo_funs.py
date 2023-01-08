@@ -1251,7 +1251,7 @@ def Gen_init_avg_2D(nT_slow,nT_fast,ncoeff,Info_dict_slow,all_coeffs_slow,Info_d
             
             return Act_Mul * Act
 
-        maxiter = 1000
+        maxiter = 100
         tol = 1e-10
 
         opt_result = scipy.optimize.minimize(fun=params_to_Action,x0=init_x,method='CG',options={'disp':False,'maxiter':maxiter,'gtol':tol},tol=tol)

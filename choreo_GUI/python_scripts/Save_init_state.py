@@ -279,7 +279,9 @@ def main():
                 dict_converter=js.Object.fromEntries
             )
         )
-        
+
+        print("Non solution initial state playing.\n")
+
     else :
 
         print("No valid initial state generated.\n")
