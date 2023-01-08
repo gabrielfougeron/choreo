@@ -88,8 +88,11 @@ var Target_current_id
 
 var TargetSlow_PlotInfo
 var TargetSlow_Pos
+var TargetSlow_Loaded = false
+
 var TargetFast_PlotInfoList
 var TargetFast_PosList
+var	TargetFast_LoadedList
 
 var trailColorLookup
 

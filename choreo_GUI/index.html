@@ -195,7 +195,7 @@ window.addEventListener("drop",function(e){
   <div class="w3-container MainTab Geom_Bodies" style="display:none; text-align: justify;">
     <h2>Bodies definition</h2>
     <table id = "table_body_loop" style="table-layout: fixed;">
-      <tr style="border-left-style:hidden;border-right-style:hidden;border-top-style:hidden;"><td style="width:120px;"><b><button class="w3-button w3-light-grey w3-hover-pale-red" style="text-align: center; font-size:16px" onclick="ClickAddBodyLoop()">Add Loop +</button></b></td></tr>
+      <tr style="border-left-style:hidden;border-right-style:hidden;border-top-style:hidden;"><td style="width:120px;"><b><button class="w3-button w3-light-grey w3-hover-pale-red TargetToggle" style="text-align: center; font-size:16px" onclick="ClickAddBodyLoop()">Add Loop +</button></b></td></tr>
       <tr><td style="width:120px;"><b>Number of bodies n</b></td></tr>
       <tr><td style="width:120px;"><b>Mass of bodies</b></td></tr>
       <tr><td style="width:120px;"><b>Symmetry name</b></td></tr>
@@ -224,6 +224,10 @@ window.addEventListener("drop",function(e){
       <tr>
         <td style="border:none;" ><label for="checkbox_RotateFastWithSlow">Rotate fast with slow</label></td>
         <td style="border:none; max-width:50px;"><input id ="checkbox_RotateFastWithSlow" class="w3-check TargetToggle" type="checkbox" style="vertical-align: super" disabled="disabled" unchecked></td>
+      </tr>
+      <tr>
+        <td style="border:none;" ><label for="checkbox_RandomizeFastInit">Randomize initialization of fast loops</label></td>
+        <td style="border:none; max-width:50px;"><input id ="checkbox_RandomizeFastInit" class="w3-check TargetToggle" type="checkbox" style="vertical-align: super" disabled="disabled" unchecked></td>
       </tr>
       <tr>
         <td style="border:none;" ><label for="checkbox_OptimizeRelative">Optimize relative fast starts</label></td>
