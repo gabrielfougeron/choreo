@@ -477,6 +477,16 @@ function canvasApp() {
 
 		if (e.DoClearScreen) {
 			clearScreen();
+			
+			if (trajectoriesOn && document.getElementById('checkbox_DisplayLoopOnGalleryLoad').checked){
+
+				if (DoTrailVanish) {
+					request = requestAnimationFrame(anim_path_grey)
+				} else {
+					request = requestAnimationFrame(anim_path)
+				}
+				
+			}
 		}
 		FinalizeSetOrbit(DoDrawParticles=true,DoXMinMax = e.DoXMinMax,setTinc=e.setTinc ) ;
 		startAnimation();

@@ -474,14 +474,18 @@ function GatherConfigDict() {
         ConfigDict['Geom_Target'] ['nT_slow'] =  parseInt(document.getElementById('input_nT_slow').value,10)  
         ConfigDict['Geom_Target'] ['nT_fast'] = []
 
-        var nfast = TargetSlow_PlotInfo["nloop"]
+        if (TargetSlow_Loaded) {
 
-        for (var i=0; i < nfast; i++) {
+            var nfast = TargetSlow_PlotInfo["nloop"]
 
-            var id_fast = "input_nT_fast"+i.toString()
+            for (var i=0; i < nfast; i++) {
 
-            ConfigDict['Geom_Target'] ['nT_fast'].push( parseInt(document.getElementById(id_fast).value,10)  )
+                var id_fast = "input_nT_fast"+i.toString()
 
+                ConfigDict['Geom_Target'] ['nT_fast'].push( parseInt(document.getElementById(id_fast).value,10)  )
+
+            }
+            
         }
 
     }
@@ -649,7 +653,10 @@ function LoadConfigDict(ConfigDict) {
 
     RedistributeClicksTableBodyLoop('table_body_loop',1,RedistributeBodyCount)
 
-
+    if (document.getElementById('checkbox_Target').checked ^ ConfigDict['Geom_Target'] ['LookForTarget']) {
+        checkbox_EnableTargets_Handler()
+    }
+    
     document.getElementById('checkbox_Target'            ).checked = ConfigDict['Geom_Target'] ['LookForTarget']
     document.getElementById('checkbox_RotateFastWithSlow').checked = ConfigDict['Geom_Target'] ['Rotate_fast_with_slow']
     document.getElementById('checkbox_RandomizeFastInit' ).checked = ConfigDict['Geom_Target'] ['Randomize_Fast_Init']
