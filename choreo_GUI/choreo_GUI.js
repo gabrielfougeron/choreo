@@ -334,6 +334,37 @@ function ChoreoExecuteClick() {
 
         var ConfigDict = GatherConfigDict();
         pyodide_worker.postMessage({funname:"LoadDataInWorker",args:{ConfigDict:ConfigDict}});
+
+        ReadyToRun = true
+
+        if (ConfigDict['Geom_Target'] ['LookForTarget']) {
+
+            ReadyToRun = TargetSlow_Loaded
+
+            if (TargetSlow_Loaded) {
+
+                pyodide_worker.postMessage({funname:"LoadDataInWorker",args:{TargetSlow_PlotInfo:TargetSlow_PlotInfo}});
+                pyodide_worker.postMessage({funname:"LoadDataInWorker",args:{TargetSlow_Pos:TargetSlow_Pos}});
+
+                var nfast = TargetSlow_PlotInfo["nloop"]
+
+                for (var i=0; i < nfast; i++) {
+
+                    ReadyToRun = ReadyToRun && TargetFast_LoadedList[i]
+
+                }
+
+            }
+
+            if (ReadyToRun) {
+
+                pyodide_worker.postMessage({funname:"LoadDataInWorker",args:{TargetFast_PlotInfoList:TargetFast_PlotInfoList}});
+                pyodide_worker.postMessage({funname:"LoadDataInWorker",args:{TargetFast_PosList:TargetFast_PosList}});
+
+            }
+
+        }
+
         pyodide_worker.postMessage({funname:"ExecutePythonFile",args:"./python_scripts/RunOnce.py"});
 
     }
@@ -407,8 +438,29 @@ function GatherConfigDict() {
 
     }
 
-
     ConfigDict['Geom_Target'] = {};
+    LookForTarget = document.getElementById('checkbox_Target').checked
+    ConfigDict['Geom_Target'] ['LookForTarget'] = LookForTarget
+    if (LookForTarget) {
+
+        ConfigDict['Geom_Target'] ['nT_slow'] =  parseInt(document.getElementById('input_nT_slow').value,10)  
+        ConfigDict['Geom_Target'] ['nT_fast'] = []
+
+        var nfast = TargetSlow_PlotInfo["nloop"]
+
+        for (var i=0; i < nfast; i++) {
+
+            var id_fast = "input_nT_fast"+i.toString()
+
+            ConfigDict['Geom_Target'] ['nT_fast'].push( parseInt(document.getElementById(id_fast).value,10)  )
+
+        }
+
+    }
+
+    ConfigDict['Geom_Target'] ['Rotate_fast_with_slow'] = document.getElementById('checkbox_RotateFastWithSlow').checked
+    ConfigDict['Geom_Target'] ['Randomize_Fast_Init'] = document.getElementById('checkbox_RandomizeFastInit').checked
+    ConfigDict['Geom_Target'] ['Optimize_Init'] = document.getElementById('checkbox_OptimizeRelative').checked
 
     ConfigDict['Geom_Random'] = {};
     ConfigDict['Geom_Random'] ['coeff_ampl_o']    = parseFloat(document.getElementById('input_coeff_ampl_o'   ).value   );
@@ -568,6 +620,12 @@ function LoadConfigDict(ConfigDict) {
     }
 
     RedistributeClicksTableBodyLoop('table_body_loop',1,RedistributeBodyCount)
+
+
+    document.getElementById('checkbox_Target'            ).checked = ConfigDict['Geom_Target'] ['LookForTarget']
+    document.getElementById('checkbox_RotateFastWithSlow').checked = ConfigDict['Geom_Target'] ['Rotate_fast_with_slow']
+    document.getElementById('checkbox_RandomizeFastInit' ).checked = ConfigDict['Geom_Target'] ['Randomize_Fast_Init']
+    document.getElementById('checkbox_OptimizeRelative'  ).checked = ConfigDict['Geom_Target'] ['Optimize_Init']
 
     document.getElementById('input_coeff_ampl_o'   ).value = ConfigDict['Geom_Random'] ['coeff_ampl_o']   
     document.getElementById('input_coeff_ampl_min' ).value = ConfigDict['Geom_Random'] ['coeff_ampl_min'] 
@@ -913,106 +971,105 @@ function ClickAddColLoopKrylov() {
 }
 
 function ClickAddBodyLoop() {
-    var table = document.getElementById('table_body_loop');
-    var newcell;
-    var div,input;
-    var irow, ival, jcol;
-    var icol = table.rows[0].cells.length;
+    var table = document.getElementById('table_body_loop')
+    var newcell
+    var div,input
+    var irow, ival, jcol
+    var icol = table.rows[0].cells.length
 
     var input_dict = [
         {
-        "elem_class":"input", 
-        "type":"number", 
-        "value":"3",
-        "min":"1",
-        "oninput":"RedistributeBodyCount",
+            "elem_class":"input", 
+            "type":"number", 
+            "value":"3",
+            "min":"1",
+            "oninput":"RedistributeBodyCount",
         },
         {
-        "elem_class":"input", 
-        "type":"text", 
-        "value":"1.",
+            "elem_class":"input", 
+            "type":"text", 
+            "value":"1.",
         },
         {
-        "elem_class":"select", 
-        "class":"w3-select",  
-        "innerHTML":"<option value='C' selected>C</option><option value='D'>D</option><option value='Cp'>Cp</option><option value='Dp'>Dp</option>",
+            "elem_class":"select", 
+            "class":"w3-select",  
+            "innerHTML":"<option value='C' selected>C</option><option value='D'>D</option><option value='Cp'>Cp</option><option value='Dp'>Dp</option>",
         },
         {
-        "elem_class":"input", 
-        "type":"number", 
-        "min":"1",
-        "value":"1",
+            "elem_class":"input", 
+            "type":"number", 
+            "min":"1",
+            "value":"1",
         },
         {
-        "elem_class":"input", 
-        "type":"number", 
-        "min":"0",
-        "value":"1",
+            "elem_class":"input", 
+            "type":"number", 
+            "min":"0",
+            "value":"1",
         },
         {
-        "elem_class":"input", 
-        "type":"number", 
-        "min":"0",
-        "value":"1",
+            "elem_class":"input", 
+            "type":"number", 
+            "min":"0",
+            "value":"1",
         },
         {
-        "elem_class":"input", 
-        "type":"number", 
-        "min":"0",
-        "value":"1",
+            "elem_class":"input", 
+            "type":"number", 
+            "min":"0",
+            "value":"1",
         },
         {
-        "elem_class":"input", 
-        "type":"number", 
-        "min":"1",
-        "value":"1",
+            "elem_class":"input", 
+            "type":"number", 
+            "min":"1",
+            "value":"1",
         },
         {
-        "elem_class":"text",
-        "max-width":"60px",
-        "innerHTML":"",
+            "elem_class":"text",
+            "max-width":"60px",
+            "innerHTML":"",
         },
-    ];
+    ]
 
-    n_fields = input_dict.length;
+    n_fields = input_dict.length
 
-    irow = 0;
-    newcell = table.rows[irow].insertCell(icol);
-    newcell.style.borderLeftStyle = 'hidden';
-    newcell.style.fontSize = '16px';
-    newcell.style.width = '60px';
-    newcell.style.textAlign = 'center';
+    irow = 0
+    newcell = table.rows[irow].insertCell(icol)
+    newcell.style.borderLeftStyle = 'hidden'
+    newcell.style.fontSize = '16px'
+    newcell.style.width = '60px'
+    newcell.style.textAlign = 'center'
 
-    div = document.createElement('button'); 
-    div.classList.add("w3-button");
-    div.classList.add("w3-light-grey");
-    div.classList.add("w3-hover-pale-red");
-    div.style.textAlign = "center";
-    div.style.fontSize ="16px";
-    div.style.fontWeight ="bold";
-    div.innerHTML = "-";
+    div = document.createElement('button')
+    div.classList.add("w3-button","w3-light-grey","w3-hover-pale-red","TargetToggle")
+    div.style.textAlign = "center"
+    div.style.fontSize ="16px"
+    div.style.fontWeight ="bold"
+    div.innerHTML = "-"
 
     newcell.appendChild(div);
 
     for (ival = 0; ival < n_fields; ival++) {
-        irow = ival + 1;
-        newcell = table.rows[irow].insertCell(icol);
-        newcell.style.width = '60px';
-        newcell.style.textAlign = 'center';   
-        input = document.createElement(input_dict[ival]["elem_class"]);
+        irow = ival + 1
+        newcell = table.rows[irow].insertCell(icol)
+        newcell.style.width = '60px'
+        newcell.style.textAlign = 'center';  
+        input = document.createElement(input_dict[ival]["elem_class"])
+        input.classList.add("TargetToggle")
         for (var [key, val] of Object.entries(input_dict[ival])){
-        if (key != "elem_class"){
-            input[key] = val;
+            if (key != "elem_class"){
+                input[key] = val
+            }
+            if (key == "oninput"){
+                input[key] = window[val]
+            }
+            input.style = "width: 45px; text-align: center;"
         }
-        if (key == "oninput"){
-            input[key] = window[val];
-        }
-        input.style = "width: 45px; text-align: center;"
-        }
-        newcell.appendChild(input);
+        newcell.appendChild(input)
     }
 
-    RedistributeClicksTableBodyLoop('table_body_loop',1,RedistributeBodyCount);
+    RedistributeClicksTableBodyLoop('table_body_loop',1,RedistributeBodyCount)
 
 }
 
@@ -1625,9 +1682,7 @@ function InitWorkspaceClick() {
 
     var SetupWorkspaceBtn = document.getElementById("SetupWorkspaceBtn")
 
-    if (FileSystemAccessSupported) {
-
-    } else {
+    if (!FileSystemAccessSupported) {
 
         SetupWorkspaceBtn.disabled = "disabled"
         var WorkspaceGalleryContainer = document.getElementById("WorkspaceGalleryContainer")
@@ -1850,21 +1905,38 @@ async function PlayFileFromRemote(name,npy_file,json_file) {
 
 async function LoadTargetFileFromRemote(name,npy_file,json_file) {
 
+    var The_PlotInfo,The_Pos
+
     let finished_json = fetch(json_file,Gallery_cache_behavior)
         .then(response => response.text())
         .then(data => {
-            TargetSlow_PlotInfo = JSON.parse(data)
+            The_PlotInfo = JSON.parse(data)
         })
 
     let finished_npy = 
         npyjs_obj.load(npy_file)
         .then((res) => {
-            TargetSlow_Pos = res
+            The_Pos = res
         });
 
     await finished_json
 
-    UpdateCurrentTarget(name,TargetSlow_PlotInfo["nloop"])
+    UpdateCurrentTarget(name,The_PlotInfo["nloop"])
+
+    if (Target_current_type == "slow") {
+
+        TargetSlow_PlotInfo = The_PlotInfo
+        
+        await finished_npy
+        TargetSlow_Pos = The_Pos
+
+    } else if (Target_current_type == "fast") {
+
+        TargetFast_PlotInfoList[Target_current_id] = The_PlotInfo
+        
+        await finished_npy
+        TargetFast_PosList[Target_current_id] = The_Pos
+    }
 
 }
 
@@ -1885,7 +1957,7 @@ function UpdateCurrentTarget(name,nfast) {
 
         var table = document.getElementById('table_targets')
 
-        var i_start_fast = 5
+        var i_start_fast = 6
         var i_end = table.rows.length
 
         for (var i = i_start_fast; i < i_end; i++) {
@@ -1894,13 +1966,13 @@ function UpdateCurrentTarget(name,nfast) {
 
         for (var i = 0; i < nfast; i++) {
 
-            var row = table.insertRow(i + i_start_fast)
+            var row = table.insertRow(2*i + i_start_fast)
 
             var newcell = row.insertCell(0)
             newcell.style.borderStyle = 'none'
 
-            var div = document.createElement('div')
-            div.classList.add("TargetFast","TargetToggle","button","w3-button","w3-light-grey","w3-hover-pale-red","dropdown_btn")
+            var div = document.createElement('button')
+            div.classList.add("TargetFast","TargetToggle","w3-button","w3-light-grey","w3-hover-pale-red","dropdown_btn")
             div.innerHTML = "<b>Choose fast solution "+i.toString()+"</b>"
             div.id = "ChooseFastSolutionBtn"+i.toString()
             div.disabled = ""
@@ -1912,10 +1984,7 @@ function UpdateCurrentTarget(name,nfast) {
             div.id = "TreeFastContainer"+i.toString()
             var Target_TreeView = new TreeView(Target_Tree, div,{leaf_icon:" ",parent_icon:" ",show_root:false})
 
-
             newcell.appendChild(div)
-
-
 
             var newcell = row.insertCell(1)
             newcell.style.borderStyle = 'none'
@@ -1926,14 +1995,46 @@ function UpdateCurrentTarget(name,nfast) {
             newcell.appendChild(div)
 
 
+            var row = table.insertRow(2*i+1 + i_start_fast)
+
+            var newcell = row.insertCell(0)
+            newcell.style.borderStyle = 'none'
+            var div = document.createElement('label')
+            div.classList.add("TargetFast","TargetToggle")
+            div.innerHTML = "Fast period multiplier "+i.toString()
+            div.for = "input_nT_fast"+i.toString()
+            newcell.appendChild(div)
+
+
+            var newcell = row.insertCell(1)
+            newcell.style.borderStyle = 'none'
+            var div = document.createElement('input')
+            div.classList.add("TargetFast","TargetToggle")
+            div.id = "input_nT_fast"+i.toString()
+            div.type = "number"
+            div.value = 1
+            div.min = 1
+            div.style.width="50px"
+
+            newcell.appendChild(div)
+
+        }
+
+        TargetSlow_Loaded = true
+
+        TargetFast_PlotInfoList = new Array(nfast)
+        TargetFast_PosList = new Array(nfast)
+        TargetFast_LoadedList = []
+
+        for (var i = 0; i < nfast; i++) {
+
+            TargetFast_LoadedList.push(false)
 
         }
 
     }
 
-
 }
-
 
 function MakeDirectoryTree_DefaultGallery(cur_directory,cur_treenode,click_callback) {
 
@@ -1985,8 +2086,7 @@ async function LoadDefaultGallery() {
     DefaultTree_Target = new TreeNode("Gallery",{expanded:true})
     MakeDirectoryTree_DefaultGallery(DefaultGallery_description,DefaultTree_Target,LoadTargetFileFromRemote)
 
-    Target_Tree = new TreeNode("Target_Tree",{expanded:true})
-    Target_Tree.addChild(DefaultTree_Target)
+    Target_Tree = DefaultTree_Target
 
     var Target_TreeView = new TreeView(Target_Tree, "#TreeSlowContainer",{leaf_icon:" ",parent_icon:" ",show_root:false})
 
@@ -2096,17 +2196,10 @@ function checkbox_EnableTargets_Handler(event) {
         }
     }
 
-    var disable_str = ""
-    if (!event.currentTarget.checked) {
-        disable_str = "disabled"
-    }
-
     var AllTargetToggle = document.getElementsByClassName("TargetToggle");
 
-    // console.log("Setting disabled status as ",disable_str)
     for (var i = 0; i < AllTargetToggle.length; i++) {
-        // console.log(i, AllTargetToggle[i].id)
-        AllTargetToggle[i].disabled = disable_str
+        AllTargetToggle[i].disabled = ! AllTargetToggle[i].disabled // Toggling
     }
 
 }
