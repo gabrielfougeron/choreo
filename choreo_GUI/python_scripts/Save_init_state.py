@@ -24,6 +24,12 @@ import js
 import pyodide
 
 
+def NPY_JS_to_py(npy_js):
+
+    return np.asarray(npy_js["data"]).reshape(npy_js["shape"])
+
+
+
 def main():
 
     params_dict = js.ConfigDict.to_py()
@@ -32,23 +38,59 @@ def main():
     
     CrashOnError_changevar = False
 
-    LookForTarget = False
-    
-    n_make_loops = len(params_dict["Geom_Bodies"]["SymType"])
+    LookForTarget = params_dict['Geom_Target'] ['LookForTarget']
 
-    nbpl = params_dict["Geom_Bodies"]["nbpl"]
 
-    the_lcm = m.lcm(*nbpl)
+    if (LookForTarget) :
 
-    SymType = params_dict["Geom_Bodies"]["SymType"]
 
-    Sym_list,nbody = choreo.Make2DChoreoSymManyLoops(nbpl=nbpl,SymType=SymType)
+        Rotate_fast_with_slow = params_dict['Geom_Target'] ['Rotate_fast_with_slow']
+        Optimize_Init = params_dict['Geom_Target'] ['Optimize_Init']
+        Randomize_Fast_Init =  params_dict['Geom_Target'] ['Randomize_Fast_Init']
+            
+        nT_slow = params_dict['Geom_Target'] ['nT_slow']
+        nT_fast = params_dict['Geom_Target'] ['nT_fast']
 
-    mass = []
-    for il in range(n_make_loops):
-        mass.extend([params_dict["Geom_Bodies"]["mass"][il] for ib in range(nbpl[il])])
+        Info_dict_slow = js.TargetSlow_PlotInfo.to_py()
 
-    mass = np.array(mass,dtype=np.float64)
+        all_pos_slow = NPY_JS_to_py(js.TargetSlow_Pos.to_py())
+        all_coeffs_slow = choreo.AllPosToAllCoeffs(all_pos_slow,Info_dict_slow["n_int"],Info_dict_slow["n_Fourier"])
+        choreo.Center_all_coeffs(all_coeffs_slow,Info_dict_slow["nloop"],Info_dict_slow["mass"],Info_dict_slow["loopnb"],np.array(Info_dict_slow["Targets"]),np.array(Info_dict_slow["SpaceRotsUn"]))
+
+        Info_dict_fast_list = js.TargetFast_PlotInfoList.to_py()
+        all_pos_fast_js_list = js.TargetFast_PosList.to_py()
+        all_coeffs_fast_list = []
+
+
+        for (i,all_pos_fast_js) in enumerate(all_pos_fast_js_list) :
+
+            all_pos_fast = NPY_JS_to_py(all_pos_fast_js)
+            all_coeffs_fast = choreo.AllPosToAllCoeffs(all_pos_fast,Info_dict_fast_list[i]["n_int"],Info_dict_fast_list[i]["n_Fourier"])
+            choreo.Center_all_coeffs(all_coeffs_fast,Info_dict_fast_list[i]["nloop"],Info_dict_fast_list[i]["mass"],Info_dict_fast_list[i]["loopnb"],np.array(Info_dict_fast_list[i]["Targets"]),np.array(Info_dict_fast_list[i]["SpaceRotsUn"]))
+
+            all_coeffs_fast_list.append(all_coeffs_fast)
+
+        Sym_list, mass,il_slow_source,ibl_slow_source,il_fast_source,ibl_fast_source = choreo.MakeTargetsSyms(Info_dict_slow,Info_dict_fast_list)
+        
+        nbody = len(mass)
+
+    else:
+
+        n_make_loops = len(params_dict["Geom_Bodies"]["SymType"])
+
+        nbpl = params_dict["Geom_Bodies"]["nbpl"]
+
+        SymType = params_dict["Geom_Bodies"]["SymType"]
+
+        Sym_list,nbody = choreo.Make2DChoreoSymManyLoops(nbpl=nbpl,SymType=SymType)
+
+        mass = []
+        for il in range(n_make_loops):
+            mass.extend([params_dict["Geom_Bodies"]["mass"][il] for ib in range(nbpl[il])])
+
+        mass = np.array(mass,dtype=np.float64)
+
+
 
     n_custom_sym = params_dict["Geom_Custom"]["n_custom_sym"]
 
@@ -136,15 +178,7 @@ def main():
 
     nint_plot_img = nint_plot_anim * dnint
 
-    try:
-        the_lcm
-    except NameError:
-        period_div = 1.
-    else:
-        period_div = the_lcm
-# 
-#     nperiod_anim = 1.
-    nperiod_anim = 1./period_div
+    nperiod_anim = 1.
 
     Plot_trace_anim = True
     # Plot_trace_anim = False
