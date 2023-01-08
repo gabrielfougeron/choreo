@@ -341,8 +341,6 @@ function ChoreoExecuteClick() {
 
             ReadyToRun = TargetSlow_Loaded
 
-            console.log("TargetSlow_Loaded:",TargetSlow_Loaded)
-
             if (TargetSlow_Loaded) {
 
                 pyodide_worker.postMessage({funname:"LoadDataInWorker",args:{TargetSlow_PlotInfo:TargetSlow_PlotInfo}});
@@ -351,8 +349,6 @@ function ChoreoExecuteClick() {
                 var nfast = TargetSlow_PlotInfo["nloop"]
 
                 for (var i=0; i < nfast; i++) {
-
-                    console.log("TargetFast_LoadedList[i]",i,TargetFast_LoadedList[i])
 
                     ReadyToRun = ReadyToRun && TargetFast_LoadedList[i]
 
@@ -369,9 +365,13 @@ function ChoreoExecuteClick() {
 
         }
 
-        console.log("Ready to run:",ReadyToRun)
+        if (ReadyToRun) {
+            pyodide_worker.postMessage({funname:"ExecutePythonFile",args:"./python_scripts/RunOnce.py"});
+        } else {
 
-        pyodide_worker.postMessage({funname:"ExecutePythonFile",args:"./python_scripts/RunOnce.py"});
+            console.log("Not ready to run")
+
+        }
 
     }
 
@@ -385,15 +385,6 @@ function Speed_Test_Click() {
 
 }
 
-function ChoreoSaveInitStateClick() {
-
-    var ConfigDict = GatherConfigDict();
-
-    pyodide_worker.postMessage({funname:"LoadDataInWorker",args:{ConfigDict:ConfigDict}});
-    pyodide_worker.postMessage({funname:"ExecutePythonFile",args:"./python_scripts/Load_GUI_params_and_save_init.py"});
-
-}
-
 function GenerateInitStateClick() {
 
     PythonClearPrints();
@@ -401,6 +392,37 @@ function GenerateInitStateClick() {
     var ConfigDict = GatherConfigDict();
 
     pyodide_worker.postMessage({funname:"LoadDataInWorker",args:{ConfigDict:ConfigDict}});
+
+    ReadyToRun = true
+
+    if (ConfigDict['Geom_Target'] ['LookForTarget']) {
+
+        ReadyToRun = TargetSlow_Loaded
+
+        if (TargetSlow_Loaded) {
+
+            pyodide_worker.postMessage({funname:"LoadDataInWorker",args:{TargetSlow_PlotInfo:TargetSlow_PlotInfo}});
+            pyodide_worker.postMessage({funname:"LoadDataInWorker",args:{TargetSlow_Pos:TargetSlow_Pos}});
+
+            var nfast = TargetSlow_PlotInfo["nloop"]
+
+            for (var i=0; i < nfast; i++) {
+
+                ReadyToRun = ReadyToRun && TargetFast_LoadedList[i]
+
+            }
+
+        }
+
+        if (ReadyToRun) {
+
+            pyodide_worker.postMessage({funname:"LoadDataInWorker",args:{TargetFast_PlotInfoList:TargetFast_PlotInfoList}});
+            pyodide_worker.postMessage({funname:"LoadDataInWorker",args:{TargetFast_PosList:TargetFast_PosList}});
+
+        }
+
+    }
+
     pyodide_worker.postMessage({funname:"ExecutePythonFile",args:"./python_scripts/Save_init_state.py"});
 
 }
@@ -1798,6 +1820,18 @@ async function LoadWorkspaceGallery() {
 
         var Target_TreeView = new TreeView(Target_Tree, "#TreeSlowContainer",{leaf_icon:" ",parent_icon:" ",show_root:false})
 
+        if (TargetSlow_Loaded) {
+
+            nfast = TargetFast_LoadedList.length
+
+            for (var i = 0; i < nfast; i++) {
+
+                var Target_TreeView = new TreeView(Target_Tree, document.getElementById("TreeFastContainer"+i.toString()),{leaf_icon:" ",parent_icon:" ",show_root:false})
+
+            }
+
+        }
+
     }
 
 }
@@ -1858,11 +1892,28 @@ async function PlayFileFromDisk(name,npy_file,json_file) {
 
 }
 
-function LoadTargetFileFromDisk(name,npy_file,json_file) {
+async function LoadTargetFileFromDisk(name,npy_file,json_file) {
 
-    UpdateCurrentTarget(name,3)
+    const PlotInfoFile = await json_file.getFile()
+    var The_PlotInfo = JSON.parse(await readFileAsText(PlotInfoFile))
 
+    let npyjs_obj = new npyjs()
+    const PosFile = await npy_file.getFile()
+    var The_Pos = npyjs_obj.parse( await readFileAsArrayBuffer(PosFile))
 
+    UpdateCurrentTarget(name,The_PlotInfo["nloop"])
+
+    if (Target_current_type == "slow") {
+
+        TargetSlow_PlotInfo = The_PlotInfo
+        TargetSlow_Pos = The_Pos
+
+    } else if (Target_current_type == "fast") {
+
+        TargetFast_PlotInfoList[Target_current_id] = The_PlotInfo
+        TargetFast_PosList[Target_current_id] = The_Pos
+        TargetFast_LoadedList[Target_current_id] = true
+    }
 
 }
 
