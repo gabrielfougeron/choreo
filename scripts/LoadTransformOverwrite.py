@@ -33,7 +33,7 @@ def main():
 
     # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/3/')
     # input_folder = os.path.join(__PROJECT_ROOT__,'Default_Gallery')
-    input_folder = os.path.join(__PROJECT_ROOT__,'Target_res/9/')
+    input_folder = os.path.join(__PROJECT_ROOT__,'Chain_Gallery/Keep/4/')
     # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/copy/')
     # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/Gallery_videos/C-4')
 # 

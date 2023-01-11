@@ -24,11 +24,11 @@ import choreo
 def main():
 
     np.random.seed(int(time.time()*10000) % 5000)
-    
-    # params_filename = os.path.join(__PROJECT_ROOT__,"choreo_config.json")
-    # params_filename = "/mnt/c/Users/gfo/Personnel/choreo/Montaldi_gallery/choreo_config.json"
 
-    params_filename = "Sniff_all_sym/choreo_config.json"
+
+    Workspace_folder = "Chain_Gallery/"
+
+    params_filename = os.path.join(Workspace_folder,"choreo_config.json")
 
     with open(params_filename) as jsonFile:
         params_dict = json.load(jsonFile)
@@ -88,10 +88,7 @@ def main():
 
     MomConsImposed = params_dict['Geom_Bodies'] ['MomConsImposed']
 
-    store_folder = os.path.dirname(params_filename)
-    # store_folder = 'Sniff_all_sym/'
-    # store_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/')
-    store_folder = os.path.join(store_folder,str(nbody))
+    store_folder = os.path.join(Workspace_folder,str(nbody))
     if not(os.path.isdir(store_folder)):
 
         os.makedirs(store_folder)
@@ -128,8 +125,8 @@ def main():
 
     color_list = params_dict["Animation_Colors"]["colorLookup"]
 
-    Save_anim = True
-    # Save_anim = False
+    # Save_anim = True
+    Save_anim = False
 
     vid_size = (8,8) # Image size in inches
     nint_plot_anim = 2*2*2*3*3*5*2
@@ -231,8 +228,7 @@ def main():
 
 # 
 # if __name__ == "__main__":
-# 
-#     main()
+    # main()
 
 
 # 
