@@ -89,6 +89,86 @@
                         }
                     },
                     "name": "01 - Circles"
+                },
+                {
+                    "dirs": [
+                        {
+                            "dirs": [],
+                            "files": {
+                                "1-chain": {
+                                    ".json": "choreo-gallery/02 - Helpers/02 - Chains/4/1-chain.json",
+                                    ".npy": "choreo-gallery/02 - Helpers/02 - Chains/4/1-chain.npy"
+                                }
+                            },
+                            "name": "4"
+                        },
+                        {
+                            "dirs": [],
+                            "files": {
+                                "1-chain": {
+                                    ".json": "choreo-gallery/02 - Helpers/02 - Chains/5/1-chain.json",
+                                    ".npy": "choreo-gallery/02 - Helpers/02 - Chains/5/1-chain.npy"
+                                },
+                                "2-chain": {
+                                    ".json": "choreo-gallery/02 - Helpers/02 - Chains/5/2-chain.json",
+                                    ".npy": "choreo-gallery/02 - Helpers/02 - Chains/5/2-chain.npy"
+                                }
+                            },
+                            "name": "5"
+                        },
+                        {
+                            "dirs": [],
+                            "files": {
+                                "1-chain": {
+                                    ".json": "choreo-gallery/02 - Helpers/02 - Chains/6/1-chain.json",
+                                    ".npy": "choreo-gallery/02 - Helpers/02 - Chains/6/1-chain.npy"
+                                },
+                                "2-chain": {
+                                    ".json": "choreo-gallery/02 - Helpers/02 - Chains/6/2-chain.json",
+                                    ".npy": "choreo-gallery/02 - Helpers/02 - Chains/6/2-chain.npy"
+                                }
+                            },
+                            "name": "6"
+                        },
+                        {
+                            "dirs": [],
+                            "files": {
+                                "1-chain": {
+                                    ".json": "choreo-gallery/02 - Helpers/02 - Chains/7/1-chain.json",
+                                    ".npy": "choreo-gallery/02 - Helpers/02 - Chains/7/1-chain.npy"
+                                },
+                                "2-chain": {
+                                    ".json": "choreo-gallery/02 - Helpers/02 - Chains/7/2-chain.json",
+                                    ".npy": "choreo-gallery/02 - Helpers/02 - Chains/7/2-chain.npy"
+                                },
+                                "3-chain": {
+                                    ".json": "choreo-gallery/02 - Helpers/02 - Chains/7/3-chain.json",
+                                    ".npy": "choreo-gallery/02 - Helpers/02 - Chains/7/3-chain.npy"
+                                }
+                            },
+                            "name": "7"
+                        },
+                        {
+                            "dirs": [],
+                            "files": {
+                                "1-chain": {
+                                    ".json": "choreo-gallery/02 - Helpers/02 - Chains/8/1-chain.json",
+                                    ".npy": "choreo-gallery/02 - Helpers/02 - Chains/8/1-chain.npy"
+                                },
+                                "2-chain": {
+                                    ".json": "choreo-gallery/02 - Helpers/02 - Chains/8/2-chain.json",
+                                    ".npy": "choreo-gallery/02 - Helpers/02 - Chains/8/2-chain.npy"
+                                },
+                                "3-chain": {
+                                    ".json": "choreo-gallery/02 - Helpers/02 - Chains/8/3-chain.json",
+                                    ".npy": "choreo-gallery/02 - Helpers/02 - Chains/8/3-chain.npy"
+                                }
+                            },
+                            "name": "8"
+                        }
+                    ],
+                    "files": {},
+                    "name": "02 - Chains"
                 }
             ],
             "files": {},
