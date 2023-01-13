@@ -493,6 +493,7 @@ function GatherConfigDict() {
     ConfigDict['Geom_Target'] ['Rotate_fast_with_slow'] = document.getElementById('checkbox_RotateFastWithSlow').checked
     ConfigDict['Geom_Target'] ['Randomize_Fast_Init'] = document.getElementById('checkbox_RandomizeFastInit').checked
     ConfigDict['Geom_Target'] ['Optimize_Init'] = document.getElementById('checkbox_OptimizeRelative').checked
+    ConfigDict['Geom_Target'] ['RandomJitterTarget'] = document.getElementById('checkbox_RandomJitterTarget').checked
 
     ConfigDict['Geom_Random'] = {};
     ConfigDict['Geom_Random'] ['coeff_ampl_o']    = parseFloat(document.getElementById('input_coeff_ampl_o'   ).value   );
@@ -661,6 +662,7 @@ function LoadConfigDict(ConfigDict) {
     document.getElementById('checkbox_RotateFastWithSlow').checked = ConfigDict['Geom_Target'] ['Rotate_fast_with_slow']
     document.getElementById('checkbox_RandomizeFastInit' ).checked = ConfigDict['Geom_Target'] ['Randomize_Fast_Init']
     document.getElementById('checkbox_OptimizeRelative'  ).checked = ConfigDict['Geom_Target'] ['Optimize_Init']
+    document.getElementById('checkbox_RandomJitterTarget').checked = ConfigDict['Geom_Target'] ['RandomJitterTarget']
 
     document.getElementById('input_coeff_ampl_o'   ).value = ConfigDict['Geom_Random'] ['coeff_ampl_o']   
     document.getElementById('input_coeff_ampl_min' ).value = ConfigDict['Geom_Random'] ['coeff_ampl_min'] 
@@ -1767,6 +1769,7 @@ async function MakeDirectoryTree_Workspace(cur_directory,cur_treenode,click_call
         if (entry.kind == "directory") {
             
             var new_node = new TreeNode(entry.name,{expanded:false})
+            new_node.path_str = cur_treenode.path_str + entry.name + "/"
             cur_treenode.addChild(new_node)
 
             await MakeDirectoryTree_Workspace(await cur_directory.getDirectoryHandle(entry.name),new_node,click_callback)
@@ -1799,7 +1802,7 @@ async function MakeDirectoryTree_Workspace(cur_directory,cur_treenode,click_call
 
             var new_node = new TreeNode(basename,{expanded:false})
 
-            new_node.on("click", (e,node)  => click_callback(basename,files_here[basename]['.npy'],files_here[basename]['.json']));
+            new_node.on("click", (e,node)  => click_callback(cur_treenode.path_str + basename,files_here[basename]['.npy'],files_here[basename]['.json']));
 
             cur_treenode.addChild(new_node)
 
@@ -1814,11 +1817,13 @@ async function LoadWorkspaceGallery() {
     if (WorkspaceIsSetUp) {
         
         var WorkspaceTree = new TreeNode(UserWorkspace.name,{expanded:true})
+        WorkspaceTree.path_str = "Workspace/"
         await MakeDirectoryTree_Workspace(UserWorkspace,WorkspaceTree,PlayFileFromDisk)
 
         var WorkspaceView = new TreeView(WorkspaceTree, "#WorkspaceGalleryContainer",{leaf_icon:" ",parent_icon:" ",show_root:false})
 
         var WorkspaceTree_Target = new TreeNode("Workspace",{expanded:true})
+        WorkspaceTree_Target.path_str = "Workspace/"
         await MakeDirectoryTree_Workspace(UserWorkspace,WorkspaceTree_Target,LoadTargetFileFromDisk)
 
         Target_Tree = new TreeNode("Target_Tree",{expanded:true})
@@ -2023,7 +2028,7 @@ function UpdateCurrentTarget(name,nfast) {
 
         var table = document.getElementById('table_targets')
 
-        var i_start_fast = 6
+        var i_start_fast = 7
         var i_end = table.rows.length
 
         for (var i = i_start_fast; i < i_end; i++) {
@@ -2107,6 +2112,8 @@ function MakeDirectoryTree_DefaultGallery(cur_directory,cur_treenode,click_callb
     for (const the_dir of cur_directory.dirs) { 
 
         var new_node = new TreeNode(the_dir.name,{expanded:false})
+        new_node.path_str = cur_treenode.path_str + the_dir.name + "/"
+
         cur_treenode.addChild(new_node)
 
         MakeDirectoryTree_DefaultGallery(the_dir,new_node,click_callback)
@@ -2116,9 +2123,10 @@ function MakeDirectoryTree_DefaultGallery(cur_directory,cur_treenode,click_callb
     for (const basename in cur_directory.files) {
 
         var new_node = new TreeNode(basename,{expanded:false})
+
         cur_treenode.addChild(new_node)
 
-        new_node.on("click", (e,node)  => click_callback(basename,cur_directory.files[basename]['.npy'],cur_directory.files[basename]['.json']));
+        new_node.on("click", (e,node)  => click_callback(cur_treenode.path_str + basename,cur_directory.files[basename]['.npy'],cur_directory.files[basename]['.json']));
 
     }
 
@@ -2135,6 +2143,7 @@ async function LoadDefaultGallery() {
         })
         
     var DefaultTree = new TreeNode(DefaultGallery_description.name,{expanded:true})
+    DefaultTree.path_str = "Gallery/"
     MakeDirectoryTree_DefaultGallery(DefaultGallery_description,DefaultTree,PlayFileFromRemote)
 
     var search_leaf = DefaultTree
@@ -2150,6 +2159,7 @@ async function LoadDefaultGallery() {
     await search_leaf.getListener("click")()
 
     DefaultTree_Target = new TreeNode("Gallery",{expanded:true})
+    DefaultTree_Target.path_str = "Gallery/"
     MakeDirectoryTree_DefaultGallery(DefaultGallery_description,DefaultTree_Target,LoadTargetFileFromRemote)
 
     Target_Tree = DefaultTree_Target

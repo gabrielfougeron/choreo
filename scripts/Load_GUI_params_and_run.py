@@ -26,7 +26,7 @@ def main():
     np.random.seed(int(time.time()*10000) % 5000)
 
 
-    Workspace_folder = "Chain_Gallery/"
+    Workspace_folder = "Sniff_all_sym/"
 
     params_filename = os.path.join(Workspace_folder,"choreo_config.json")
 
@@ -142,8 +142,8 @@ def main():
     else:
         period_div = the_lcm
 # 
-#     nperiod_anim = 1.
-    nperiod_anim = 1./period_div
+    nperiod_anim = 1.
+    # nperiod_anim = 1./period_div
 
     Plot_trace_anim = True
     # Plot_trace_anim = False
@@ -219,6 +219,9 @@ def main():
     # n_opt_max = 50
     n_opt_max = 1e6
     n_find_max = 1e4
+
+    ReconvergeSol = False
+    AddNumberToOutputName = True
     
     all_kwargs = choreo.Pick_Named_Args_From_Dict(choreo.Find_Choreo,dict(globals(),**locals()))
 
@@ -226,25 +229,30 @@ def main():
 
 
 
-# 
-# if __name__ == "__main__":
-    # main()
-
-
-# 
 if __name__ == "__main__":
+
+    Exec_Mul_Proc = True
+    # Exec_Mul_Proc = False
 
     # n = 5
     n = multiprocessing.cpu_count()
     # n = 1
     
-    print(f"Executing with {n} workers")
-    
-    with concurrent.futures.ProcessPoolExecutor(max_workers=n) as executor:
+
+    if Exec_Mul_Proc:
+
+
+        main()
+
+
+    else :
+
+
+        print(f"Executing with {n} workers")
         
-        res = []
-        for i in range(n):
-            res.append(executor.submit(main))
-            time.sleep(0.01)
-# 
-#  
+        with concurrent.futures.ProcessPoolExecutor(max_workers=n) as executor:
+            
+            res = []
+            for i in range(n):
+                res.append(executor.submit(main))
+                time.sleep(0.01)

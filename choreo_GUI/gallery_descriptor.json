@@ -86,6 +86,10 @@
                         "05": {
                             ".json": "choreo-gallery/02 - Helpers/01 - Circles/05.json",
                             ".npy": "choreo-gallery/02 - Helpers/01 - Circles/05.npy"
+                        },
+                        "06": {
+                            ".json": "choreo-gallery/02 - Helpers/01 - Circles/06.json",
+                            ".npy": "choreo-gallery/02 - Helpers/01 - Circles/06.npy"
                         }
                     },
                     "name": "01 - Circles"
