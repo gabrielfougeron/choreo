@@ -82,6 +82,43 @@ async function Play_Loop_From_Python(args){
     Python_State_Div.classList.remove('w3-orange')
     Python_State_Div.classList.remove('w3-red')
 
+    if ((args.is_sol) && (WorkspaceIsSetUp)) {
+
+        const d = new Date(Date.now())
+
+        // toLocaleString() without arguments depends on the
+        // implementation, the default locale, and the default time zone
+
+        // const locale = "en-US"
+        // const options = {
+        //     // weekday: "long",
+        //     year: "numeric",
+        //     month: "long",
+        //     day: "numeric",
+        //     hour: "2-digit",
+        //     minute: "2-digit",
+        //     second: "2-digit",
+        //   };
+        
+        const filename = d.toLocaleString().replaceAll("/","-").replaceAll(":","-")
+
+        const GUI_Sols_Dir = await UserWorkspace.getDirectoryHandle("GUI solutions", {create: true})
+            
+        const PlotInfoFile = await GUI_Sols_Dir.getFileHandle(filename+".json", { create: true })
+        const writable_Info = await PlotInfoFile.createWritable()
+        await writable_Info.write(JSON.stringify(PlotInfo,null,2))
+        await writable_Info.close()
+
+        const PosFile = await GUI_Sols_Dir.getFileHandle(filename+".npy", { create: true })
+        const writable_Pos = await PosFile.createWritable()
+        await writable_Pos.write(await ndarray_tobuffer(Pos))
+        await writable_Pos.close()
+
+        
+        ClickReloadWorkspace()
+
+    }
+
 }
 
 function Python_no_sol_found(args) {
@@ -1728,13 +1765,10 @@ function ClickStateDiv() {
 
 function InitWorkspaceClick() {
 
-    var SetupWorkspaceBtn = document.getElementById("SetupWorkspaceBtn")
-
     if (!FileSystemAccessSupported) {
 
-        SetupWorkspaceBtn.disabled = "disabled"
-        var WorkspaceGalleryContainer = document.getElementById("WorkspaceGalleryContainer")
-        WorkspaceGalleryContainer.innerHTML = "The workspace feature is not compatible with your browser."
+        document.getElementById("SetupWorkspaceBtn").disabled = "disabled"
+        document.getElementById("WorkspaceGalleryTxt").innerHTML = "The workspace feature is not compatible with your browser."
 
     }
 
@@ -1755,6 +1789,8 @@ async function ClickSetupWorkspace() {
     }
 
     WorkspaceIsSetUp = true
+
+    document.getElementById("WorkspaceGalleryTxt").innerHTML = ""
 
     var ReloadWorkspaceBtn = document.getElementById("ReloadWorkspaceBtn")
     ReloadWorkspaceBtn.disabled = ""
