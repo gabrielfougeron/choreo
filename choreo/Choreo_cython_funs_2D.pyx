@@ -29,26 +29,7 @@ from libc.math cimport isnan as cisnan
 from libc.math cimport isinf as cisinf
 
 
-try:
-
-    import mkl_fft._numpy_fft
-
-    the_rfft  = mkl_fft._numpy_fft.rfft
-    the_irfft = mkl_fft._numpy_fft.irfft
-
-except:
-
-    try:
-
-        import scipy.fft
-
-        the_rfft = scipy.fft.rfft
-        the_irfft = scipy.fft.irfft
-
-    except:
-
-        the_rfft = np.fft.rfft
-        the_irfft = np.fft.irfft
+from choreo.Choreo_cython_funs import the_rfft,the_irfft
 
 
 cdef double cn = -0.5  #coeff of x^2 in the potential power law
@@ -103,7 +84,7 @@ def Compute_action_Cython_2D(
     ):
     # This function is probably the most important one.
     # Computes the action and its gradient with respect to the Fourier coefficients of the generator in each loop.
-    
+
     cdef Py_ssize_t il,ilp,i
     cdef Py_ssize_t idim
     cdef Py_ssize_t ibi

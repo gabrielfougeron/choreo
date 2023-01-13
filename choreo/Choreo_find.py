@@ -95,6 +95,9 @@ def Find_Choreo(
     optim_callback_list,
     callback_after_init_list,
     linesearch_smin,
+    ReconvergeSol,
+    all_coeffs_init,
+    AddNumberToOutputName,
 ):
     """
 
@@ -201,8 +204,12 @@ def Find_Choreo(
         callfun[0]["current_cvg_lvl"] = 0
         ncoeff = callfun[0]["ncoeff_list"][callfun[0]["current_cvg_lvl"]]
         nint = callfun[0]["nint_list"][callfun[0]["current_cvg_lvl"]]
+
+        if (ReconvergeSol):
+
+            x_avg = Package_all_coeffs(all_coeffs_init,callfun)
         
-        if (LookForTarget):
+        elif (LookForTarget):
             
             all_coeffs_avg = Gen_init_avg_2D(nT_slow,nT_fast,ncoeff,Info_dict_slow,all_coeffs_slow,Info_dict_fast_list,all_coeffs_fast_list,il_slow_source,ibl_slow_source,il_fast_source,ibl_fast_source,callfun,Rotate_fast_with_slow,Optimize_Init,Randomize_Fast_Init)
 
@@ -344,6 +351,7 @@ def Find_Choreo(
             Gradaction = best_sol.f_norm
 
             Hash_Action = None
+            Action = None
             
             if (GoOn and Check_Escape):
                 
@@ -473,12 +481,18 @@ def Find_Choreo(
                                 max_num_file = max(max_num_file,int(file_root))
                             except:
                                 pass
-                        
-                    max_num_file = max_num_file + 1
 
-                    n_find = max_num_file
-                    
-                    filename_output = store_folder+'/'+file_basename+str(max_num_file).zfill(5)
+
+                    if (AddNumberToOutputName):   
+
+                        max_num_file = max_num_file + 1
+                        n_find = max_num_file
+                        filename_output = os.path.join(store_folder,file_basename+str(max_num_file).zfill(5))
+
+                    else:
+
+                        filename_output = os.path.join(store_folder,file_basename)
+
 
                     print(f'Saving solution as {filename_output}.*.')
              
