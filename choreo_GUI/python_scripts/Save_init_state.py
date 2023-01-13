@@ -278,6 +278,7 @@ def main():
             funname = "Play_Loop_From_Python",
             args    = pyodide.ffi.to_js(
                 {
+                    "is_sol":False,
                     "solname":"Non-solution initial state",
                     "JSON_data":blob,
                     "NPY_data":all_pos.reshape(-1),
