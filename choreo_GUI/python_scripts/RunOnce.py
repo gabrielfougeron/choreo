@@ -153,6 +153,19 @@ def main():
         mass = np.array(mass,dtype=np.float64)
 
 
+    if ((LookForTarget) and not(params_dict['Geom_Target'] ['RandomJitterTarget'])) :
+
+        coeff_ampl_min  = 1e-17
+        coeff_ampl_o    = 1e-17
+        k_infl          = 2
+        k_max           = 3
+
+    else:
+
+        coeff_ampl_min  = params_dict["Geom_Random"]["coeff_ampl_min"]
+        coeff_ampl_o    = params_dict["Geom_Random"]["coeff_ampl_o"]
+        k_infl          = params_dict["Geom_Random"]["k_infl"]
+        k_max           = params_dict["Geom_Random"]["k_max"]
 
     n_custom_sym = params_dict["Geom_Custom"]["n_custom_sym"]
 
@@ -284,11 +297,6 @@ def main():
 
     n_grad_change = 1.
 
-    coeff_ampl_min  = params_dict["Geom_Random"]["coeff_ampl_min"]
-    coeff_ampl_o    = params_dict["Geom_Random"]["coeff_ampl_o"]
-    k_infl          = params_dict["Geom_Random"]["k_infl"]
-    k_max           = params_dict["Geom_Random"]["k_max"]
-
     freq_erase_dict = 100
     hash_dict = {}
 
@@ -309,7 +317,9 @@ def main():
 
     plot_extend = 0.
 
-
+    ReconvergeSol = False
+    AddNumberToOutputName = True
+    
     callback_after_init_list = []
 
     if params_dict['Animation_Search']['DisplayLoopsDuringSearch']:
