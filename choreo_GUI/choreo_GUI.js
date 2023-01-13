@@ -274,11 +274,11 @@ async function SaveConfigFile(UserDir=false){
 
     var ConfigDict = GatherConfigDict()
 
-    filename = 'choreo_config.json'
+    const filename = 'choreo_config.json'
 
     if (UserDir){
             
-        ConfigFile = await UserDir.getFileHandle(filename, { create: true })
+        const ConfigFile = await UserDir.getFileHandle(filename, { create: true })
         const writable = await ConfigFile.createWritable()
         await writable.write(JSON.stringify(ConfigDict,null,2))
         await writable.close()
@@ -474,18 +474,30 @@ function GatherConfigDict() {
         ConfigDict['Geom_Target'] ['nT_slow'] =  parseInt(document.getElementById('input_nT_slow').value,10)  
         ConfigDict['Geom_Target'] ['nT_fast'] = []
 
+        ConfigDict['Geom_Target'] ['fast_filenames'] = []
+
         if (TargetSlow_Loaded) {
 
             var nfast = TargetSlow_PlotInfo["nloop"]
 
+            ConfigDict['Geom_Target'] ['slow_filename'] = document.getElementById("SlowSolution_name").innerHTML
+
             for (var i=0; i < nfast; i++) {
 
-                var id_fast = "input_nT_fast"+i.toString()
+                ConfigDict['Geom_Target'] ['nT_fast'].push( parseInt(document.getElementById("input_nT_fast"+i.toString()).value,10))
 
-                ConfigDict['Geom_Target'] ['nT_fast'].push( parseInt(document.getElementById(id_fast).value,10)  )
+                if (TargetFast_LoadedList[i]) {
+                    ConfigDict['Geom_Target'] ['fast_filenames'].push(document.getElementById("FastSolution_name"+i.toString()).innerHTML)
+                } else {
+                    ConfigDict['Geom_Target'] ['fast_filenames'].push("no file")
+                }
 
             }
             
+        } else {
+
+            ConfigDict['Geom_Target'] ['slow_filename'] = "no file"
+
         }
 
     }
@@ -525,7 +537,6 @@ function GatherConfigDict() {
         ConfigDict['Geom_Custom'] ['CustomSyms'].push(the_sym);
 
     }
-
 
     ConfigDict['Animation_Colors'] = {};
     ConfigDict['Animation_Colors'] ["color_method_input"] = document.getElementById("color_method_input").value;
@@ -1546,7 +1557,7 @@ function checkbox_Cookie_Handler(event) {
 
         if (txt == "") {
 
-            IssueCookieMessage("There is no cookie on your device.");
+            IssueCookieMessage("There are no cookies on your device.");
 
         } else {
 
@@ -1758,6 +1769,96 @@ function ClickReloadWorkspace() {
     
     LoadWorkspaceGallery()
 
+    SaveAllTargetFiles()
+
+}
+
+
+
+
+// TargetSlow_PlotInfo = The_PlotInfo
+// TargetSlow_Pos = The_Pos
+// 
+// } else if (Target_current_type == "fast") {
+// 
+// TargetFast_PlotInfoList[Target_current_id] = The_PlotInfo
+// TargetFast_PosList[Target_current_id] = The_Pos
+// TargetFast_LoadedList[Target_current_id] = true
+
+
+// 
+// 
+// ConfigDict['Geom_Target'] ['slow_filename'] = document.getElementById("SlowSolution_name").innerHTML
+// 
+// for (var i=0; i < nfast; i++) {
+// 
+//     ConfigDict['Geom_Target'] ['nT_fast'].push( parseInt(document.getElementById("input_nT_fast"+i.toString()).value,10))
+// 
+//     if (TargetFast_LoadedList[i]) {
+//         ConfigDict['Geom_Target'] ['fast_filenames'].push(document.getElementById("FastSolution_name"+i.toString()).innerHTML)
+//     }
+
+// 
+// var TargetSlow_PlotInfo
+// var TargetSlow_Pos
+// var TargetSlow_Loaded = false
+// 
+// var TargetFast_PlotInfoList
+// var TargetFast_PosList
+// var	TargetFast_LoadedList
+
+async function SaveAllTargetFiles(ConfigDict) {
+
+    LookForTarget = document.getElementById('checkbox_Target').checked
+    
+    if (LookForTarget) {
+
+        if (TargetSlow_Loaded) {
+
+            SaveOneTargetFile(document.getElementById("SlowSolution_name").innerHTML,"slow", TargetSlow_PlotInfo, TargetSlow_Pos)
+
+            var nfast = TargetSlow_PlotInfo["nloop"]
+
+            for (var i=0; i < nfast; i++) {
+
+                if (TargetFast_LoadedList[i]) {
+
+                    SaveOneTargetFile(document.getElementById("FastSolution_name"+i.toString()).innerHTML,"fast"+i.toString(), TargetFast_PlotInfoList[i], TargetFast_PosList[i])
+
+                }
+
+            }
+            
+        }
+
+    }
+
+}
+
+async function SaveOneTargetFile(basename,filename,The_PlotInfo,The_Pos) {
+
+    if (basename != "no file") {
+
+        const filepath_array = basename.split("/")
+
+        if (filepath_array[0] == "Gallery") {
+
+            const TmpDir = await UserWorkspace.getDirectoryHandle("Temp", {create: true})
+            
+            const PlotInfoFile = await TmpDir.getFileHandle(filename+".json", { create: true })
+            const writable_Info = await PlotInfoFile.createWritable()
+            await writable_Info.write(JSON.stringify(The_PlotInfo,null,2))
+            await writable_Info.close()
+
+            const PosFile = await TmpDir.getFileHandle(filename+".npy", { create: true })
+            const writable_Pos = await PosFile.createWritable()
+            await writable_Pos.write(await ndarray_tobuffer(The_Pos))
+            await writable_Pos.close()
+
+        }
+
+    }
+
 }
 
 async function MakeDirectoryTree_Workspace(cur_directory,cur_treenode,click_callback) {
@@ -1814,33 +1915,29 @@ async function MakeDirectoryTree_Workspace(cur_directory,cur_treenode,click_call
 
 async function LoadWorkspaceGallery() {
 
-    if (WorkspaceIsSetUp) {
-        
-        var WorkspaceTree = new TreeNode(UserWorkspace.name,{expanded:true})
-        WorkspaceTree.path_str = "Workspace/"
-        await MakeDirectoryTree_Workspace(UserWorkspace,WorkspaceTree,PlayFileFromDisk)
+    var WorkspaceTree = new TreeNode(UserWorkspace.name,{expanded:true})
+    WorkspaceTree.path_str = "Workspace/"
+    await MakeDirectoryTree_Workspace(UserWorkspace,WorkspaceTree,PlayFileFromDisk)
 
-        var WorkspaceView = new TreeView(WorkspaceTree, "#WorkspaceGalleryContainer",{leaf_icon:" ",parent_icon:" ",show_root:false})
+    var WorkspaceView = new TreeView(WorkspaceTree, "#WorkspaceGalleryContainer",{leaf_icon:" ",parent_icon:" ",show_root:false})
 
-        var WorkspaceTree_Target = new TreeNode("Workspace",{expanded:true})
-        WorkspaceTree_Target.path_str = "Workspace/"
-        await MakeDirectoryTree_Workspace(UserWorkspace,WorkspaceTree_Target,LoadTargetFileFromDisk)
+    var WorkspaceTree_Target = new TreeNode("Workspace",{expanded:true})
+    WorkspaceTree_Target.path_str = "Workspace/"
+    await MakeDirectoryTree_Workspace(UserWorkspace,WorkspaceTree_Target,LoadTargetFileFromDisk)
 
-        Target_Tree = new TreeNode("Target_Tree",{expanded:true})
-        Target_Tree.addChild(DefaultTree_Target)
-        Target_Tree.addChild(WorkspaceTree_Target)
+    Target_Tree = new TreeNode("Target_Tree",{expanded:true})
+    Target_Tree.addChild(DefaultTree_Target)
+    Target_Tree.addChild(WorkspaceTree_Target)
 
-        var Target_TreeView = new TreeView(Target_Tree, "#TreeSlowContainer",{leaf_icon:" ",parent_icon:" ",show_root:false})
+    var Target_TreeView = new TreeView(Target_Tree, "#TreeSlowContainer",{leaf_icon:" ",parent_icon:" ",show_root:false})
 
-        if (TargetSlow_Loaded) {
+    if (TargetSlow_Loaded) {
 
-            nfast = TargetFast_LoadedList.length
+        nfast = TargetFast_LoadedList.length
 
-            for (var i = 0; i < nfast; i++) {
+        for (var i = 0; i < nfast; i++) {
 
-                var Target_TreeView = new TreeView(Target_Tree, document.getElementById("TreeFastContainer"+i.toString()),{leaf_icon:" ",parent_icon:" ",show_root:false})
-
-            }
+            var Target_TreeView = new TreeView(Target_Tree, document.getElementById("TreeFastContainer"+i.toString()),{leaf_icon:" ",parent_icon:" ",show_root:false})
 
         }
 
