@@ -1,0 +1,348 @@
+import os
+
+os.environ['OMP_NUM_THREADS'] = '1'
+os.environ['NUMEXPR_NUM_THREADS'] = '1'
+os.environ['OPENBLAS_NUM_THREADS'] = '1'
+os.environ['MKL_NUM_THREADS'] = '1'
+
+import concurrent.futures
+import multiprocessing
+import json
+import shutil
+import random
+import time
+import math as m
+import numpy as np
+import scipy.linalg
+import sys
+import fractions
+import scipy.integrate
+import scipy.special
+
+__PROJECT_ROOT__ = os.path.abspath(os.path.join(os.path.dirname(__file__),os.pardir))
+sys.path.append(__PROJECT_ROOT__)
+
+import choreo 
+
+import datetime
+
+One_sec = 1e9
+
+def main():
+
+
+
+    # input_folder = os.path.join(__PROJECT_ROOT__,'Keep/02 - Helpers/02 - Chains/4')
+    input_folder = os.path.join(__PROJECT_ROOT__,'Keep/tests')
+    
+    ''' Include all files in tree '''
+    input_names_list = []
+    for root, dirnames, filenames in os.walk(input_folder):
+
+        for filename in filenames:
+            file_path = os.path.join(root, filename)
+            file_root, file_ext = os.path.splitext(os.path.basename(file_path))
+
+            if (file_ext == '.json' ):
+
+                file_path = os.path.join(root, file_root)
+                the_name = file_path[len(input_folder):]
+                input_names_list.append(the_name)
+# 
+# # # 
+#     ''' Include all files in folder '''
+#     input_names_list = []
+#     for file_path in os.listdir(input_folder):
+#         file_path = os.path.join(input_folder, file_path)
+#         file_root, file_ext = os.path.splitext(os.path.basename(file_path))
+#         
+#         if (file_ext == '.json' ):
+#             # 
+#             # if int(file_root) > 8:
+#             #     input_names_list.append(file_root)
+# 
+#             input_names_list.append(file_root)
+
+    input_names_list = ['1-chain']
+
+    store_folder = os.path.join(__PROJECT_ROOT__,'Reconverged_sols')
+    # store_folder = input_folder
+
+    Save_All_Pos = True
+    # Save_All_Pos = False
+
+    # Save_All_Coeffs = True
+    Save_All_Coeffs = False
+
+    # Save_All_Coeffs_No_Sym = True
+    Save_All_Coeffs_No_Sym = False
+
+    # Save_Newton_Error = True
+    Save_Newton_Error = False
+
+    Save_img = True
+    # Save_img = False
+# 
+    # Save_thumb = True
+    Save_thumb = False
+
+    # img_size = (12,12) # Image size in inches
+    img_size = (8,8) # Image size in inches
+    thumb_size = (2,2) # Image size in inches
+    
+    color = "body"
+    # color = "loop"
+    # color = "velocity"
+    # color = "all"
+
+    Save_anim = True
+    # Save_anim = False
+
+    # Save_ODE_anim = True
+    Save_ODE_anim = False
+
+
+    vid_size = (8,8) # Image size in inches
+    # nint_plot_anim = 2*2*2*3*3
+    nint_plot_anim = 2*2*2*3*3*5
+    dnint = 30
+
+    nint_plot_img = nint_plot_anim * dnint
+
+    min_n_steps_ode = 1*nint_plot_anim
+
+    try:
+        the_lcm
+    except NameError:
+        period_div = 1.
+    else:
+        period_div = the_lcm
+# 
+    nperiod_anim = 1.
+    # nperiod_anim = 3.
+    # nperiod_anim = 1./period_div
+
+    Plot_trace_anim = True
+    # Plot_trace_anim = False
+# 
+    # InvestigateStability = True
+    InvestigateStability = False
+
+    # Save_Perturbed = True
+    Save_Perturbed = False
+
+    # Exec_Mul_Proc = True
+    Exec_Mul_Proc = False
+
+    if Exec_Mul_Proc:
+
+        # n = 1
+        # n = 4
+        # n = multiprocessing.cpu_count()
+        n = multiprocessing.cpu_count()//2
+        
+        print(f"Executing with {n} workers")
+        
+        with concurrent.futures.ProcessPoolExecutor(max_workers=n) as executor:
+            
+            res = []
+            
+            for the_name in input_names_list:
+
+                all_kwargs = choreo.Pick_Named_Args_From_Dict(ExecName,dict(globals(),**locals()))
+                res.append(executor.submit(ExecName,**all_kwargs))
+                time.sleep(0.01)
+
+    else:
+            
+        for the_name in input_names_list:
+
+            all_kwargs = choreo.Pick_Named_Args_From_Dict(ExecName,dict(globals(),**locals()))
+            ExecName(**all_kwargs)
+
+
+def ExecName(
+        the_name,
+        input_folder,
+        store_folder,
+        Save_img,
+        nint_plot_img,
+        img_size,
+        thumb_size,
+        color,
+        color_list,
+        Save_thumb,
+        Save_anim,
+        nint_plot_anim,
+        nperiod_anim,
+        Plot_trace_anim,
+        vid_size,
+        vid_size_perturb,
+        dnint,
+        Save_Newton_Error,
+        Save_All_Pos,
+        Save_All_Coeffs,
+        Save_All_Coeffs_No_Sym,
+    ):
+
+    print('')
+    print(the_name)
+
+    file_basename = the_name
+    
+
+    Info_filename = os.path.join(input_folder,the_name)
+    Info_filename = Info_filename + '.json'
+
+    with open(Info_filename,'r') as jsonFile:
+        Info_dict = json.load(jsonFile)
+
+
+    input_filename = os.path.join(input_folder,the_name)
+    input_filename = input_filename + '.npy'
+
+    bare_name = the_name.split('/')[-1]
+
+    all_pos = np.load(input_filename)
+    nint = Info_dict["n_int"]
+
+    c_coeffs = choreo.the_rfft(all_pos,n=nint,axis=2,norm="forward")
+    all_coeffs = np.zeros((Info_dict["nloop"],choreo.ndim,Info_dict["n_Fourier"],2),dtype=np.float64)
+    all_coeffs[:,:,:,0] = c_coeffs[:,:,0:Info_dict["n_Fourier"]].real
+    all_coeffs[:,:,:,1] = c_coeffs[:,:,0:Info_dict["n_Fourier"]].imag
+
+
+
+    # theta = 2*np.pi * 0.
+    # SpaceRevscal = 1.
+    # SpaceRot = np.array( [[SpaceRevscal*np.cos(theta) , SpaceRevscal*np.sin(theta)] , [-np.sin(theta),np.cos(theta)]])
+    # TimeRev = 1.
+    # TimeShiftNum = 0
+    # TimeShiftDen = 1
+
+
+    theta = 2*np.pi * 0/2
+    SpaceRevscal = 1.
+    SpaceRot = np.array( [[SpaceRevscal*np.cos(theta) , SpaceRevscal*np.sin(theta)] , [-np.sin(theta),np.cos(theta)]])
+    TimeRev = -1.
+    TimeShiftNum = 0
+    TimeShiftDen = 1
+
+
+
+
+    all_coeffs_init = choreo.Transform_Coeffs(SpaceRot, TimeRev, TimeShiftNum, TimeShiftDen, all_coeffs)
+
+    # perm = None
+    # perm = np.array([0,1,2,3])
+
+    ReconvergeSol = True
+
+    ncoeff_init = all_coeffs.shape[2]
+
+
+    nbody = Info_dict['nbody']
+    mass = np.array(Info_dict['mass']).astype(np.float64)
+    Sym_list = choreo.Make_SymList_From_InfoDict(Info_dict)
+
+    rot_angle = 0
+    s = -1
+
+    Sym_list.append(choreo.ChoreoSym(
+        LoopTarget=0,
+        LoopSource=0,
+        SpaceRot = np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64),
+        TimeRev=-1,
+        TimeShift=fractions.Fraction(numerator=0,denominator=1)
+        ))
+
+
+
+    # MomConsImposed = True
+    MomConsImposed = False
+
+    Use_exact_Jacobian = True
+    # Use_exact_Jacobian = False
+
+    # Look_for_duplicates = True
+    Look_for_duplicates = False
+
+    Check_Escape = True
+    # Check_Escape = False
+
+    # Penalize_Escape = True
+    Penalize_Escape = False
+
+    # save_first_init = False
+    save_first_init = True
+
+    save_all_inits = False
+    # save_all_inits = True
+
+    max_norm_on_entry = 1e-8
+
+    n_reconverge_it_max = 0
+    n_grad_change = 1.
+
+    coeff_ampl_min  = 1e-16
+    coeff_ampl_o    = 1e-16
+    k_infl          = 2
+    k_max           = 3
+
+
+    duplicate_eps = 1e-8
+    freq_erase_dict = 100
+    hash_dict = {}
+
+    n_opt = 0
+    n_opt_max = 1
+    n_find_max = 1
+
+
+    Newt_err_norm_max = 1e-14
+    Newt_err_norm_max_save = 1e-9
+
+    # krylov_method = 'lgmres'
+    # krylov_method = 'gmres'
+    # krylov_method = 'bicgstab'
+    krylov_method = 'cgs'
+    # krylov_method = 'minres'
+    # krylov_method = 'tfqmr'
+
+
+    # line_search = 'armijo'
+    # line_search = 'wolfe'
+    line_search = 'none'
+
+    # disp_scipy_opt = False
+    disp_scipy_opt = True
+
+    # linesearch_smin = 0.01
+    linesearch_smin = 1
+    
+    gradtol_list =          [1e-1   ,1e-3   ,1e-5   ,1e-7   ,1e-9   ,1e-11  ,1e-13  ,1e-15  ]
+    inner_maxiter_list =    [30     ,30     ,50     ,60     ,70     ,80     ,100    ,100    ]
+    maxiter_list =          [100    ,1000   ,1000   ,1000   ,500    ,500    ,300    ,100    ]
+    outer_k_list =          [5      ,5      ,5      ,5      ,5      ,7      ,7      ,7      ]
+    store_outer_Av_list =   [False  ,False  ,False  ,False  ,False  ,True   ,True   ,True   ]
+    
+    n_optim_param = len(gradtol_list)
+    
+    gradtol_max = 100*gradtol_list[n_optim_param-1]
+    # foundsol_tol = 1000*gradtol_list[0]
+    foundsol_tol = 1e10
+    plot_extend = 0.
+
+    AddNumberToOutputName = False
+
+    all_kwargs = choreo.Pick_Named_Args_From_Dict(choreo.Find_Choreo,dict(**locals()))
+    choreo.Find_Choreo(**all_kwargs)
+
+
+
+
+
+
+
+if __name__ == "__main__":
+    main()    
