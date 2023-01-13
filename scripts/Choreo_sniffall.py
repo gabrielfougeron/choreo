@@ -203,6 +203,8 @@ def main(the_i=0):
 
     mul_coarse_to_fine = 3
 
+    plot_extend = 0.
+
     Save_All_Coeffs = True
     # Save_All_Coeffs = False
 
