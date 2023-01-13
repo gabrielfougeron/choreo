@@ -418,7 +418,8 @@ def Find_Choreo(
                     
                     NeedsRefinement = False
 
-                NeedsChangeOptimParams = GoOn and CanChangeOptimParams and not(ParamPreciseEnough) and not(NewtonPreciseGood) and not(NeedsRefinement)
+                # NeedsChangeOptimParams = GoOn and CanChangeOptimParams and not(ParamPreciseEnough) and not(NewtonPreciseGood) and not(NeedsRefinement)
+                NeedsChangeOptimParams = GoOn and CanChangeOptimParams and not(NewtonPreciseGood) and not(NeedsRefinement)
                 
                 # print("ParamFoundSol ",ParamFoundSol)
                 # print("ParamPreciseEnough ",ParamPreciseEnough)
@@ -428,7 +429,7 @@ def Find_Choreo(
                 # print("CanChangeOptimParams ",CanChangeOptimParams)
                 # print("NeedsRefinement ",NeedsRefinement)
                 # print("CanRefine ",CanRefine)
-                
+                # 
                 if GoOn and not(ParamFoundSol):
                 
                     GoOn = False
@@ -458,7 +459,7 @@ def Find_Choreo(
                     print("Stopping search: found approximate solution.")
                     SaveSol = True
 
-                if GoOn and  not(NeedsRefinement) and not(NeedsChangeOptimParams):
+                if GoOn and not(NeedsRefinement) and not(NeedsChangeOptimParams):
                 
                     GoOn = False
                     print('Could not converge within prescibed optimizer and refinement parameters.')
@@ -599,6 +600,8 @@ def GenSymExample(
     color_list,
 ):
 
+    print(f'Building an initial state with {nbody:d} bodies.')
+    print('')
 
     success = True
 
