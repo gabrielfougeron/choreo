@@ -23,9 +23,9 @@
                     ".json": "choreo-gallery/01 - Classic gallery/05 - Three petal flower.json",
                     ".npy": "choreo-gallery/01 - Classic gallery/05 - Three petal flower.npy"
                 },
-                "06 - 5-chain": {
-                    ".json": "choreo-gallery/01 - Classic gallery/06 - 5-chain.json",
-                    ".npy": "choreo-gallery/01 - Classic gallery/06 - 5-chain.npy"
+                "06 - Ten petal flower": {
+                    ".json": "choreo-gallery/01 - Classic gallery/06 - Ten petal flower.json",
+                    ".npy": "choreo-gallery/01 - Classic gallery/06 - Ten petal flower.npy"
                 },
                 "07 - No symmetry": {
                     ".json": "choreo-gallery/01 - Classic gallery/07 - No symmetry.json",
@@ -90,6 +90,22 @@
                         "06": {
                             ".json": "choreo-gallery/02 - Helpers/01 - Circles/06.json",
                             ".npy": "choreo-gallery/02 - Helpers/01 - Circles/06.npy"
+                        },
+                        "07": {
+                            ".json": "choreo-gallery/02 - Helpers/01 - Circles/07.json",
+                            ".npy": "choreo-gallery/02 - Helpers/01 - Circles/07.npy"
+                        },
+                        "08": {
+                            ".json": "choreo-gallery/02 - Helpers/01 - Circles/08.json",
+                            ".npy": "choreo-gallery/02 - Helpers/01 - Circles/08.npy"
+                        },
+                        "09": {
+                            ".json": "choreo-gallery/02 - Helpers/01 - Circles/09.json",
+                            ".npy": "choreo-gallery/02 - Helpers/01 - Circles/09.npy"
+                        },
+                        "10": {
+                            ".json": "choreo-gallery/02 - Helpers/01 - Circles/10.json",
+                            ".npy": "choreo-gallery/02 - Helpers/01 - Circles/10.npy"
                         }
                     },
                     "name": "01 - Circles"
@@ -201,113 +217,113 @@
         {
             "dirs": [],
             "files": {
-                "C'(7,2) - Seven on a butterfly": {
-                    ".json": "choreo-gallery/04 - Montaldi-Steckles-Gries/C'(7,2) - Seven on a butterfly.json",
-                    ".npy": "choreo-gallery/04 - Montaldi-Steckles-Gries/C'(7,2) - Seven on a butterfly.npy"
+                "01 - D(3,4) - Three on a Celtic knot": {
+                    ".json": "choreo-gallery/04 - Montaldi-Steckles-Gries/01 - D(3,4) - Three on a Celtic knot.json",
+                    ".npy": "choreo-gallery/04 - Montaldi-Steckles-Gries/01 - D(3,4) - Three on a Celtic knot.npy"
                 },
-                "C(6,1) - No symmetry": {
-                    ".json": "choreo-gallery/04 - Montaldi-Steckles-Gries/C(6,1) - No symmetry.json",
-                    ".npy": "choreo-gallery/04 - Montaldi-Steckles-Gries/C(6,1) - No symmetry.npy"
+                "02 - D'(3,2) - The figure-8": {
+                    ".json": "choreo-gallery/04 - Montaldi-Steckles-Gries/02 - D'(3,2) - The figure-8.json",
+                    ".npy": "choreo-gallery/04 - Montaldi-Steckles-Gries/02 - D'(3,2) - The figure-8.npy"
                 },
-                "D'(3,2) - The figure-8": {
-                    ".json": "choreo-gallery/04 - Montaldi-Steckles-Gries/D'(3,2) - The figure-8.json",
-                    ".npy": "choreo-gallery/04 - Montaldi-Steckles-Gries/D'(3,2) - The figure-8.npy"
+                "03 - D(4,2) - The super-eight": {
+                    ".json": "choreo-gallery/04 - Montaldi-Steckles-Gries/03 - D(4,2) - The super-eight.json",
+                    ".npy": "choreo-gallery/04 - Montaldi-Steckles-Gries/03 - D(4,2) - The super-eight.npy"
                 },
-                "D'(7,2) - Bowtie": {
-                    ".json": "choreo-gallery/04 - Montaldi-Steckles-Gries/D'(7,2) - Bowtie.json",
-                    ".npy": "choreo-gallery/04 - Montaldi-Steckles-Gries/D'(7,2) - Bowtie.npy"
+                "04 - D(4,6) - Four on a 6-chain": {
+                    ".json": "choreo-gallery/04 - Montaldi-Steckles-Gries/04 - D(4,6) - Four on a 6-chain.json",
+                    ".npy": "choreo-gallery/04 - Montaldi-Steckles-Gries/04 - D(4,6) - Four on a 6-chain.npy"
                 },
-                "D'(7,2) - Figure 8": {
-                    ".json": "choreo-gallery/04 - Montaldi-Steckles-Gries/D'(7,2) - Figure 8.json",
-                    ".npy": "choreo-gallery/04 - Montaldi-Steckles-Gries/D'(7,2) - Figure 8.npy"
+                "05 - D(5,8) - Five on an 8-chain": {
+                    ".json": "choreo-gallery/04 - Montaldi-Steckles-Gries/05 - D(5,8) - Five on an 8-chain.json",
+                    ".npy": "choreo-gallery/04 - Montaldi-Steckles-Gries/05 - D(5,8) - Five on an 8-chain.npy"
                 },
-                "D'(9,1) - Nine on a piece of ginger": {
-                    ".json": "choreo-gallery/04 - Montaldi-Steckles-Gries/D'(9,1) - Nine on a piece of ginger.json",
-                    ".npy": "choreo-gallery/04 - Montaldi-Steckles-Gries/D'(9,1) - Nine on a piece of ginger.npy"
+                "06 - C(6,1) - No symmetry": {
+                    ".json": "choreo-gallery/04 - Montaldi-Steckles-Gries/06 - C(6,1) - No symmetry.json",
+                    ".npy": "choreo-gallery/04 - Montaldi-Steckles-Gries/06 - C(6,1) - No symmetry.npy"
                 },
-                "D(10,5-2) - 10 on a pentagram": {
-                    ".json": "choreo-gallery/04 - Montaldi-Steckles-Gries/D(10,5-2) - 10 on a pentagram.json",
-                    ".npy": "choreo-gallery/04 - Montaldi-Steckles-Gries/D(10,5-2) - 10 on a pentagram.npy"
+                "07 - D(6,4) - Six on a square": {
+                    ".json": "choreo-gallery/04 - Montaldi-Steckles-Gries/07 - D(6,4) - Six on a square.json",
+                    ".npy": "choreo-gallery/04 - Montaldi-Steckles-Gries/07 - D(6,4) - Six on a square.npy"
                 },
-                "D(10,8-3) - 10 on an octagram": {
-                    ".json": "choreo-gallery/04 - Montaldi-Steckles-Gries/D(10,8-3) - 10 on an octagram.json",
-                    ".npy": "choreo-gallery/04 - Montaldi-Steckles-Gries/D(10,8-3) - 10 on an octagram.npy"
+                "10 - D(6,5) - Six on a 5-daisy": {
+                    ".json": "choreo-gallery/04 - Montaldi-Steckles-Gries/10 - D(6,5) - Six on a 5-daisy.json",
+                    ".npy": "choreo-gallery/04 - Montaldi-Steckles-Gries/10 - D(6,5) - Six on a 5-daisy.npy"
                 },
-                "D(3,4) - Three on a Celtic knot": {
-                    ".json": "choreo-gallery/04 - Montaldi-Steckles-Gries/D(3,4) - Three on a Celtic knot.json",
-                    ".npy": "choreo-gallery/04 - Montaldi-Steckles-Gries/D(3,4) - Three on a Celtic knot.npy"
+                "11 - D(6,5-2) - Six on a pentagram": {
+                    ".json": "choreo-gallery/04 - Montaldi-Steckles-Gries/11 - D(6,5-2) - Six on a pentagram.json",
+                    ".npy": "choreo-gallery/04 - Montaldi-Steckles-Gries/11 - D(6,5-2) - Six on a pentagram.npy"
                 },
-                "D(4,2) - The super-eight": {
-                    ".json": "choreo-gallery/04 - Montaldi-Steckles-Gries/D(4,2) - The super-eight.json",
-                    ".npy": "choreo-gallery/04 - Montaldi-Steckles-Gries/D(4,2) - The super-eight.npy"
+                "12 - D(6,5-2) - Six on a 5-flower": {
+                    ".json": "choreo-gallery/04 - Montaldi-Steckles-Gries/12 - D(6,5-2) - Six on a 5-flower.json",
+                    ".npy": "choreo-gallery/04 - Montaldi-Steckles-Gries/12 - D(6,5-2) - Six on a 5-flower.npy"
                 },
-                "D(4,6) - Four on a 6-chain": {
-                    ".json": "choreo-gallery/04 - Montaldi-Steckles-Gries/D(4,6) - Four on a 6-chain.json",
-                    ".npy": "choreo-gallery/04 - Montaldi-Steckles-Gries/D(4,6) - Four on a 6-chain.npy"
+                "13 - D(6,7-2) - Six on a heptagram": {
+                    ".json": "choreo-gallery/04 - Montaldi-Steckles-Gries/13 - D(6,7-2) - Six on a heptagram.json",
+                    ".npy": "choreo-gallery/04 - Montaldi-Steckles-Gries/13 - D(6,7-2) - Six on a heptagram.npy"
                 },
-                "D(5,8) - Five on an 8-chain": {
-                    ".json": "choreo-gallery/04 - Montaldi-Steckles-Gries/D(5,8) - Five on an 8-chain.json",
-                    ".npy": "choreo-gallery/04 - Montaldi-Steckles-Gries/D(5,8) - Five on an 8-chain.npy"
+                "14 - D(6,7-2) - Six on a 7 petal flower": {
+                    ".json": "choreo-gallery/04 - Montaldi-Steckles-Gries/14 - D(6,7-2) - Six on a 7 petal flower.json",
+                    ".npy": "choreo-gallery/04 - Montaldi-Steckles-Gries/14 - D(6,7-2) - Six on a 7 petal flower.npy"
                 },
-                "D(6,4) - Six on a square": {
-                    ".json": "choreo-gallery/04 - Montaldi-Steckles-Gries/D(6,4) - Six on a square.json",
-                    ".npy": "choreo-gallery/04 - Montaldi-Steckles-Gries/D(6,4) - Six on a square.npy"
+                "15 - C'(7,2) - Seven on a butterfly": {
+                    ".json": "choreo-gallery/04 - Montaldi-Steckles-Gries/15 - C'(7,2) - Seven on a butterfly.json",
+                    ".npy": "choreo-gallery/04 - Montaldi-Steckles-Gries/15 - C'(7,2) - Seven on a butterfly.npy"
                 },
-                "D(6,5) - Six on a 5-daisy": {
-                    ".json": "choreo-gallery/04 - Montaldi-Steckles-Gries/D(6,5) - Six on a 5-daisy.json",
-                    ".npy": "choreo-gallery/04 - Montaldi-Steckles-Gries/D(6,5) - Six on a 5-daisy.npy"
+                "16 - D'(7,2) - Figure 8": {
+                    ".json": "choreo-gallery/04 - Montaldi-Steckles-Gries/16 - D'(7,2) - Figure 8.json",
+                    ".npy": "choreo-gallery/04 - Montaldi-Steckles-Gries/16 - D'(7,2) - Figure 8.npy"
                 },
-                "D(6,5-2) - Six on a 5-flower": {
-                    ".json": "choreo-gallery/04 - Montaldi-Steckles-Gries/D(6,5-2) - Six on a 5-flower.json",
-                    ".npy": "choreo-gallery/04 - Montaldi-Steckles-Gries/D(6,5-2) - Six on a 5-flower.npy"
+                "17 - D'(7,2) - Bowtie": {
+                    ".json": "choreo-gallery/04 - Montaldi-Steckles-Gries/17 - D'(7,2) - Bowtie.json",
+                    ".npy": "choreo-gallery/04 - Montaldi-Steckles-Gries/17 - D'(7,2) - Bowtie.npy"
                 },
-                "D(6,5-2) - Six on a pentagram": {
-                    ".json": "choreo-gallery/04 - Montaldi-Steckles-Gries/D(6,5-2) - Six on a pentagram.json",
-                    ".npy": "choreo-gallery/04 - Montaldi-Steckles-Gries/D(6,5-2) - Six on a pentagram.npy"
+                "18 - D(6,7-3) - Six on an atom": {
+                    ".json": "choreo-gallery/04 - Montaldi-Steckles-Gries/18 - D(6,7-3) - Six on an atom.json",
+                    ".npy": "choreo-gallery/04 - Montaldi-Steckles-Gries/18 - D(6,7-3) - Six on an atom.npy"
                 },
-                "D(6,7-2) - Six on a 7 petal flower": {
-                    ".json": "choreo-gallery/04 - Montaldi-Steckles-Gries/D(6,7-2) - Six on a 7 petal flower.json",
-                    ".npy": "choreo-gallery/04 - Montaldi-Steckles-Gries/D(6,7-2) - Six on a 7 petal flower.npy"
+                "19 - D(8,3) - Moustache": {
+                    ".json": "choreo-gallery/04 - Montaldi-Steckles-Gries/19 - D(8,3) - Moustache.json",
+                    ".npy": "choreo-gallery/04 - Montaldi-Steckles-Gries/19 - D(8,3) - Moustache.npy"
                 },
-                "D(6,7-2) - Six on a heptagram": {
-                    ".json": "choreo-gallery/04 - Montaldi-Steckles-Gries/D(6,7-2) - Six on a heptagram.json",
-                    ".npy": "choreo-gallery/04 - Montaldi-Steckles-Gries/D(6,7-2) - Six on a heptagram.npy"
+                "20 - D(8,3) - Eight on a 3 petal flower": {
+                    ".json": "choreo-gallery/04 - Montaldi-Steckles-Gries/20 - D(8,3) - Eight on a 3 petal flower.json",
+                    ".npy": "choreo-gallery/04 - Montaldi-Steckles-Gries/20 - D(8,3) - Eight on a 3 petal flower.npy"
                 },
-                "D(6,7-3) - Six on an atom": {
-                    ".json": "choreo-gallery/04 - Montaldi-Steckles-Gries/D(6,7-3) - Six on an atom.json",
-                    ".npy": "choreo-gallery/04 - Montaldi-Steckles-Gries/D(6,7-3) - Six on an atom.npy"
+                "21 - D(8,3) - Eight on 3-foil": {
+                    ".json": "choreo-gallery/04 - Montaldi-Steckles-Gries/21 - D(8,3) - Eight on 3-foil.json",
+                    ".npy": "choreo-gallery/04 - Montaldi-Steckles-Gries/21 - D(8,3) - Eight on 3-foil.npy"
                 },
-                "D(8,3) - Eight on 3-foil": {
-                    ".json": "choreo-gallery/04 - Montaldi-Steckles-Gries/D(8,3) - Eight on 3-foil.json",
-                    ".npy": "choreo-gallery/04 - Montaldi-Steckles-Gries/D(8,3) - Eight on 3-foil.npy"
+                "22 - D(8,3) - Eight on trefoil": {
+                    ".json": "choreo-gallery/04 - Montaldi-Steckles-Gries/22 - D(8,3) - Eight on trefoil.json",
+                    ".npy": "choreo-gallery/04 - Montaldi-Steckles-Gries/22 - D(8,3) - Eight on trefoil.npy"
                 },
-                "D(8,3) - Eight on a 3 petal flower": {
-                    ".json": "choreo-gallery/04 - Montaldi-Steckles-Gries/D(8,3) - Eight on a 3 petal flower.json",
-                    ".npy": "choreo-gallery/04 - Montaldi-Steckles-Gries/D(8,3) - Eight on a 3 petal flower.npy"
+                "23 - D(8,9-2) - Eight on a {9-2} enneagram": {
+                    ".json": "choreo-gallery/04 - Montaldi-Steckles-Gries/23 - D(8,9-2) - Eight on a {9-2} enneagram.json",
+                    ".npy": "choreo-gallery/04 - Montaldi-Steckles-Gries/23 - D(8,9-2) - Eight on a {9-2} enneagram.npy"
                 },
-                "D(8,3) - Eight on trefoil": {
-                    ".json": "choreo-gallery/04 - Montaldi-Steckles-Gries/D(8,3) - Eight on trefoil.json",
-                    ".npy": "choreo-gallery/04 - Montaldi-Steckles-Gries/D(8,3) - Eight on trefoil.npy"
+                "24 - D(8,9-4) - Eight on a {9-4} enneagram": {
+                    ".json": "choreo-gallery/04 - Montaldi-Steckles-Gries/24 - D(8,9-4) - Eight on a {9-4} enneagram.json",
+                    ".npy": "choreo-gallery/04 - Montaldi-Steckles-Gries/24 - D(8,9-4) - Eight on a {9-4} enneagram.npy"
                 },
-                "D(8,3) - Moustache": {
-                    ".json": "choreo-gallery/04 - Montaldi-Steckles-Gries/D(8,3) - Moustache.json",
-                    ".npy": "choreo-gallery/04 - Montaldi-Steckles-Gries/D(8,3) - Moustache.npy"
+                "25 - D'(9,1) - Nine on a piece of ginger": {
+                    ".json": "choreo-gallery/04 - Montaldi-Steckles-Gries/25 - D'(9,1) - Nine on a piece of ginger.json",
+                    ".npy": "choreo-gallery/04 - Montaldi-Steckles-Gries/25 - D'(9,1) - Nine on a piece of ginger.npy"
                 },
-                "D(8,9-2) - Eight on a {9-2} enneagram": {
-                    ".json": "choreo-gallery/04 - Montaldi-Steckles-Gries/D(8,9-2) - Eight on a {9-2} enneagram.json",
-                    ".npy": "choreo-gallery/04 - Montaldi-Steckles-Gries/D(8,9-2) - Eight on a {9-2} enneagram.npy"
+                "26 - D(9,4) - Nine on a bear": {
+                    ".json": "choreo-gallery/04 - Montaldi-Steckles-Gries/26 - D(9,4) - Nine on a bear.json",
+                    ".npy": "choreo-gallery/04 - Montaldi-Steckles-Gries/26 - D(9,4) - Nine on a bear.npy"
                 },
-                "D(8,9-4) - Eight on a {9-4} enneagram": {
-                    ".json": "choreo-gallery/04 - Montaldi-Steckles-Gries/D(8,9-4) - Eight on a {9-4} enneagram.json",
-                    ".npy": "choreo-gallery/04 - Montaldi-Steckles-Gries/D(8,9-4) - Eight on a {9-4} enneagram.npy"
+                "27 - D(9,4) - Nine on a doily": {
+                    ".json": "choreo-gallery/04 - Montaldi-Steckles-Gries/27 - D(9,4) - Nine on a doily.json",
+                    ".npy": "choreo-gallery/04 - Montaldi-Steckles-Gries/27 - D(9,4) - Nine on a doily.npy"
                 },
-                "D(9,4) - Nine on a bear": {
-                    ".json": "choreo-gallery/04 - Montaldi-Steckles-Gries/D(9,4) - Nine on a bear.json",
-                    ".npy": "choreo-gallery/04 - Montaldi-Steckles-Gries/D(9,4) - Nine on a bear.npy"
+                "28 - D(10,5-2) - 10 on a pentagram": {
+                    ".json": "choreo-gallery/04 - Montaldi-Steckles-Gries/28 - D(10,5-2) - 10 on a pentagram.json",
+                    ".npy": "choreo-gallery/04 - Montaldi-Steckles-Gries/28 - D(10,5-2) - 10 on a pentagram.npy"
                 },
-                "D(9,4) - Nine on a doily": {
-                    ".json": "choreo-gallery/04 - Montaldi-Steckles-Gries/D(9,4) - Nine on a doily.json",
-                    ".npy": "choreo-gallery/04 - Montaldi-Steckles-Gries/D(9,4) - Nine on a doily.npy"
+                "29 - D(10,8-3) - 10 on an octagram": {
+                    ".json": "choreo-gallery/04 - Montaldi-Steckles-Gries/29 - D(10,8-3) - 10 on an octagram.json",
+                    ".npy": "choreo-gallery/04 - Montaldi-Steckles-Gries/29 - D(10,8-3) - 10 on an octagram.npy"
                 }
             },
             "name": "04 - Montaldi-Steckles-Gries"
