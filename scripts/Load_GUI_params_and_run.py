@@ -294,8 +294,8 @@ def main():
     plot_extend = 0.
 
     n_opt = 0
-    # n_opt_max = 50
-    n_opt_max = 1e6
+    n_opt_max = 1
+    # n_opt_max = 1e6
     n_find_max = 1e4
 
     ReconvergeSol = False
@@ -309,8 +309,8 @@ def main():
 
 if __name__ == "__main__":
 
-    Exec_Mul_Proc = True
-    # Exec_Mul_Proc = False
+    # Exec_Mul_Proc = True
+    Exec_Mul_Proc = False
 
     # n = 5
     # n = multiprocessing.cpu_count()
