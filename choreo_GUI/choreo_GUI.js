@@ -1779,11 +1779,17 @@ async function ClickSetupWorkspace() {
 
 function ClickReloadWorkspace() {
 
+    DoReloadWorkspace()
+
     try {
         pyodide_worker.postMessage({funname:"SetupWorkspaceInWorker",args:UserWorkspace})
     } catch(e) { // if pyodide_worker is not ready maybe ?
-        console.log(e);
+        // console.log(e)
     }
+
+}
+
+function DoReloadWorkspace(args) {
 
     SaveConfigFile(UserWorkspace)
     

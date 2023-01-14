@@ -115,6 +115,12 @@ self.SetupWorkspaceInWorker = async function(dirHandle) {
 
         await NativeFS.syncfs()
 
+        self.postMessage({
+            funname : "DoReloadWorkspace",
+            args : {},
+            }
+        )    
+
     } else {
 
         await pyodideReadyPromise
