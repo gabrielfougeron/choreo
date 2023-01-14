@@ -453,3 +453,33 @@ def Compute_action_hess_mul_Cython_2D(
 
     return Action_hess_dx_np
     
+@cython.cdivision(True)
+def RotateFastWithSlow_2D(
+    double[:,::1] all_pos_slow,
+    double[:,::1] all_pos_slow_speed,
+    double[:,::1] all_pos_fast,
+    long nint
+):
+
+    cdef long iint
+
+    cdef double vx,vy
+    cdef double vnorminv, vnormsq
+
+    cdef np.ndarray[double, ndim=2, mode="c"] all_pos_avg_np = np.zeros((2,nint),dtype=np.float64)
+    cdef double[:,::1] all_pos_avg = all_pos_avg_np
+
+    for iint in range(nint):
+        
+        vnormsq = all_pos_slow_speed[0,iint]**2 + all_pos_slow_speed[1,iint]**2
+        vnorminv = 1./csqrt(vnormsq)
+
+        vx = all_pos_slow_speed[0,iint] * vnorminv
+        vy = all_pos_slow_speed[1,iint] * vnorminv
+
+        all_pos_avg[0,iint] = all_pos_slow[0,iint] + vx * all_pos_fast[0,iint] - vy * all_pos_fast[1,iint] 
+        all_pos_avg[1,iint] = all_pos_slow[1,iint] + vy * all_pos_fast[0,iint] + vx * all_pos_fast[1,iint] 
+
+    return all_pos_avg_np
+
+
