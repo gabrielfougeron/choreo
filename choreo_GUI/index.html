@@ -62,7 +62,6 @@ window.addEventListener("drop",function(e){
 </head>
 
 <body onresize="OnWindowResize()">
-
 <div class="content">
 <div id="AnimationAndMenuBlock">
   <div class="w3-bar-block w3-light-grey open LeftTab" style="width:130px; position:absolute;">
@@ -72,8 +71,10 @@ window.addEventListener("drop",function(e){
     <button class="w3-bar-item w3-button w3-hover-pale-red LeftTabBtn Geom"         style="text-align: center" onclick="ClickLeftTabBtn('Geom')"        >Geometry</button>
     <button class="w3-bar-item w3-button w3-hover-pale-red LeftTabBtn Animation"    style="text-align: center" onclick="ClickLeftTabBtn('Animation')"   >Animation</button>
     <button class="w3-bar-item w3-button w3-hover-pale-red LeftTabBtn Solver"       style="text-align: center" onclick="ClickLeftTabBtn('Solver')"      >Solver</button>
-    <div class="w3-bar-item w3-light-grey" style="height:160px ; text-align: center" >  </div>
+    <div class="w3-bar-item w3-light-grey" style="height:100px ; text-align: center" >  </div>
     <div class="w3-bar-item w3-button w3-orange" id="Python_State_Div"  style="text-align: center" onclick="ClickStateDiv()" >Loading</div>
+    <button id="ChoreoDispInitStateBtn"  class="w3-bar-item w3-button w3-hover-pale-red w3-light-grey LeftTabBtn" style="text-align: center"  disabled="disabled" onclick="GenerateInitStateClick()">Generate initial state</button>
+    <button id="KillAndReloadWorkerBtn"  class="w3-bar-item w3-button w3-hover-pale-red w3-light-grey LeftTabBtn" style="text-align: center"                      onclick="KillAndReloadWorker()"                        >Kill worker</button>
   </div>
   <div id="MarginLeftTop" style="margin-left:130px;">
     <div class="w3-bar w3-light-grey TopTab Main">
@@ -192,13 +193,13 @@ window.addEventListener("drop",function(e){
       Click "Setup Workspace" to save solutions to your disk, browse previously computed solutions and use the (much faster) <a href="https://github.com/gabrielfougeron/choreo"><b>CLI python solver</b></a>.
     </div>
   </div>
-  <div class="w3-container MainTab Geom_Bodies Geom_Target Geom_Random Geom_Custom" style="display:none; text-align: justify;">
+  <!-- <div class="w3-container MainTab Geom_Bodies Geom_Target Geom_Random Geom_Custom" style="display:none; text-align: justify;">
     <table style="border:0;margin-bottom:10px;">
       <tr>
         <td style="border:0"><button id="ChoreoDispInitStateBtn"  class="w3-button w3-hover-pale-red w3-light-grey InTableControls" disabled="disabled" onclick="GenerateInitStateClick()">Generate init state</button></td>
       </tr>
     </table>
-  </div>
+  </div> -->
   <div class="w3-container MainTab Geom_Bodies" style="display:none; text-align: justify;">
     <h2>Bodies definition</h2>
     <table id = "table_body_loop" style="table-layout: fixed;">
@@ -429,11 +430,11 @@ window.addEventListener("drop",function(e){
     </table>
   </div>
   <div class="w3-container MainTab Solver_Output" style="display:none">
-    <table style="border:0;margin-bottom:10px;">
+    <table style="border:0;margin-bottom:10px;display:none">
       <tr>
         <td style="border:0"><button id="ChoreoExecuteBtn"        class="w3-button w3-hover-pale-red w3-light-grey InTableControls" disabled="disabled" style="display:none"  onclick="ChoreoExecuteClick()"   ><b>Find solution!</b></button></td>
         <td style="border:0"><button id="ChoreoSearchNext"        class="w3-button w3-hover-pale-red w3-light-grey InTableControls" disabled="disabled" style="display:none"  onclick="ChoreoSearchNextClick()">Next</button></td>
-        <td style="border:0"><button id="KillAndReloadWorkerBtn"  class="w3-button w3-hover-pale-red w3-light-grey InTableControls"                     onclick="KillAndReloadWorker()"                        >Kill worker</button></td>
+        <!-- <td style="border:0"><button id="KillAndReloadWorkerBtn"  class="w3-button w3-hover-pale-red w3-light-grey InTableControls"                     onclick="KillAndReloadWorker()"                        >Kill worker</button></td> -->
         <td style="border:0"><button id="Speed_TestBtn"           class="w3-button w3-hover-pale-red w3-light-grey InTableControls"                     style="display:none"  onclick="Speed_Test_Click()"     >Speed Test</button></td>
       </tr>
     </table>
