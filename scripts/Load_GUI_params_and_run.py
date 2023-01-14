@@ -273,7 +273,6 @@ def main():
     n_grad_change = 1.
 
     freq_erase_dict = 100
-    hash_dict = {}
 
     n_opt = 0
     n_opt_max = 100

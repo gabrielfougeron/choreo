@@ -467,7 +467,7 @@ def Find_Choreo(
                 if SaveSol :
                     
                     GoOn  = False
-                    
+
                     max_num_file = 0
                     
                     for filename in os.listdir(store_folder):
@@ -483,11 +483,11 @@ def Find_Choreo(
                             except:
                                 pass
 
+                    max_num_file = max_num_file + 1
+                    n_find = max_num_file
 
                     if (AddNumberToOutputName):   
 
-                        max_num_file = max_num_file + 1
-                        n_find = max_num_file
                         filename_output = os.path.join(store_folder,file_basename+str(max_num_file).zfill(5))
 
                     else:
@@ -533,8 +533,7 @@ def Find_Choreo(
                         
                         all_pos_b = Compute_init_pos_vel(best_sol.x,callfun)
                         np.save(filename_output+'_init.npy',all_coeffs)
-
-                
+               
                 if GoOn and NeedsRefinement:
                     
                     print('Resizing.')
@@ -550,8 +549,6 @@ def Find_Choreo(
                     print('Changing optimizer parameters.')
                     
                     i_optim_param += 1
-                
-                print('')
                 
         print('')
 
