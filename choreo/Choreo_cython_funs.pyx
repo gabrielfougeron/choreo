@@ -168,7 +168,7 @@ def Compute_action_Cython(
     long[:,::1]       TimeShiftDenBin   ,
     double[:,:,:,::1] all_coeffs        ,
     double[:,:,::1]   all_pos 
-    ):
+):
     # This function is probably the most important one.
     # Computes the action and its gradient with respect to the Fourier coefficients of the generator in each loop.
     
@@ -1755,3 +1755,96 @@ def Compute_JacMul_Forces_Cython(
 
 
     return df
+
+
+def Transform_Coeffs_Single_Loop(
+        double[:,::1] SpaceRot,
+        double TimeRev, 
+        double TimeShiftNum,
+        double TimeShiftDen,
+        double[:,:,::1] one_loop_coeffs,
+        long ncoeff
+    ):
+    # Transforms coeffs defining a single loop and returns updated coeffs
+    
+    cdef long  k,i,j
+    cdef double c,s,dt,dphi
+
+    cdef double x,y
+
+    cdef np.ndarray[double, ndim=3, mode="c"] all_coeffs_new_np = np.empty((cndim,ncoeff,2),dtype=np.float64)
+    cdef double[:,:,::1] all_coeffs_new = all_coeffs_new_np
+
+    cdef double[::1] v = np.empty((cndim),dtype=np.float64)
+    cdef double[::1] w = np.empty((cndim),dtype=np.float64)
+
+    for k in range(ncoeff):
+        
+        dt = TimeShiftNum / TimeShiftDen
+        dphi = - ctwopi * k*dt
+
+        c = ccos(dphi)
+        s = csin(dphi)  
+
+        for i in range(cndim):
+            v[i] = one_loop_coeffs[i,k,0] * c - TimeRev * one_loop_coeffs[i,k,1] * s
+            w[i] = one_loop_coeffs[i,k,0] * s + TimeRev * one_loop_coeffs[i,k,1] * c
+        
+        for i in range(cndim):
+            x = SpaceRot[i,0] * v[0]
+            y = SpaceRot[i,0] * w[0]
+            for j in range(1,cndim): 
+                x += SpaceRot[i,j] * v[j]
+                y += SpaceRot[i,j] * w[j]
+
+            all_coeffs_new[i,k,0] = x
+            all_coeffs_new[i,k,1] = y
+        
+    return all_coeffs_new_np
+
+
+def SparseScaleCoeffs(
+    double[:,:,::1] one_loop_coeffs_in,
+    long ncoeff_out,
+    long ncoeff_in,
+    long k_fac,
+    double rfac
+):
+
+    cdef long idim
+    cdef long k
+    cdef long kmax = min(ncoeff_out//k_fac,ncoeff_in)
+
+    cdef np.ndarray[double, ndim=3, mode="c"] all_coeffs_scale_np = np.zeros((cndim,ncoeff_out,2),dtype=np.float64)
+    cdef double[:,:,::1] all_coeffs_scale = all_coeffs_scale_np
+
+    for idim in range(cndim):
+        for k in range(kmax):
+            
+            all_coeffs_scale[idim,k*k_fac,0]  = rfac * one_loop_coeffs_in[idim,k,0]
+            all_coeffs_scale[idim,k*k_fac,1]  = rfac * one_loop_coeffs_in[idim,k,1]
+
+    
+    return all_coeffs_scale_np
+
+
+
+def ComputeSpeedCoeffs(
+    double[:,:,::1] one_loop_coeffs,
+    long ncoeff
+):
+
+    cdef long idim
+    cdef long k
+
+    cdef np.ndarray[double, ndim=3, mode="c"] one_loop_coeffs_speed_np = np.zeros((cndim,ncoeff,2),dtype=np.float64)
+    cdef double[:,:,::1] one_loop_coeffs_speed = one_loop_coeffs_speed_np
+
+    for idim in range(cndim):
+        for k in range(ncoeff):
+
+            one_loop_coeffs_speed[idim,k,0] =  k * one_loop_coeffs[idim,k,1] 
+            one_loop_coeffs_speed[idim,k,1] = -k * one_loop_coeffs[idim,k,0] 
+
+    return one_loop_coeffs_speed_np
+

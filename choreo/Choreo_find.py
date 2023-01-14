@@ -210,11 +210,11 @@ def Find_Choreo(
             x_avg = Package_all_coeffs(all_coeffs_init,callfun)
         
         elif (LookForTarget):
-            
+
             all_coeffs_avg = Gen_init_avg_2D(nT_slow,nT_fast,ncoeff,Info_dict_slow,all_coeffs_slow,Info_dict_fast_list,all_coeffs_fast_list,il_slow_source,ibl_slow_source,il_fast_source,ibl_fast_source,callfun,Rotate_fast_with_slow,Optimize_Init,Randomize_Fast_Init)
 
             x_avg = Package_all_coeffs(all_coeffs_avg,callfun)
-        
+
         else:
             
             x_avg = np.zeros((callfun[0]['coeff_to_param_list'][callfun[0]["current_cvg_lvl"]].shape[0]),dtype=np.float64)
@@ -735,7 +735,23 @@ def Speed_test(
     coeff_ampl_min,
     CrashOnError_changevar,
     n_test,
+    LookForTarget,
+    nT_slow,
+    nT_fast,
+    Info_dict_slow,
+    all_coeffs_slow,
+    Info_dict_fast_list,
+    all_coeffs_fast_list,
+    il_slow_source,
+    ibl_slow_source,
+    il_fast_source,
+    ibl_fast_source,
+    Rotate_fast_with_slow,
+    Optimize_Init,
+    Randomize_Fast_Init
 ):
+
+
     """
 
     Helper function to profile code
@@ -787,7 +803,16 @@ def Speed_test(
     
     tot_time = 0.
 
-    x_avg = np.zeros((callfun[0]['coeff_to_param_list'][callfun[0]["current_cvg_lvl"]].shape[0]),dtype=np.float64)
+    if (LookForTarget):
+        
+        all_coeffs_avg = Gen_init_avg_2D(nT_slow,nT_fast,ncoeff,Info_dict_slow,all_coeffs_slow,Info_dict_fast_list,all_coeffs_fast_list,il_slow_source,ibl_slow_source,il_fast_source,ibl_fast_source,callfun,Rotate_fast_with_slow,Optimize_Init,Randomize_Fast_Init)    
+
+        x_avg = Package_all_coeffs(all_coeffs_avg,callfun)
+    
+    else:
+        
+        x_avg = np.zeros((callfun[0]['coeff_to_param_list'][callfun[0]["current_cvg_lvl"]].shape[0]),dtype=np.float64)
+
         
     x0 = np.zeros((callfun[0]['coeff_to_param_list'][callfun[0]["current_cvg_lvl"]].shape[0]),dtype=np.float64)
     

@@ -1809,40 +1809,6 @@ function ClickReloadWorkspace() {
 
 }
 
-
-
-
-// TargetSlow_PlotInfo = The_PlotInfo
-// TargetSlow_Pos = The_Pos
-// 
-// } else if (Target_current_type == "fast") {
-// 
-// TargetFast_PlotInfoList[Target_current_id] = The_PlotInfo
-// TargetFast_PosList[Target_current_id] = The_Pos
-// TargetFast_LoadedList[Target_current_id] = true
-
-
-// 
-// 
-// ConfigDict['Geom_Target'] ['slow_filename'] = document.getElementById("SlowSolution_name").innerHTML
-// 
-// for (var i=0; i < nfast; i++) {
-// 
-//     ConfigDict['Geom_Target'] ['nT_fast'].push( parseInt(document.getElementById("input_nT_fast"+i.toString()).value,10))
-// 
-//     if (TargetFast_LoadedList[i]) {
-//         ConfigDict['Geom_Target'] ['fast_filenames'].push(document.getElementById("FastSolution_name"+i.toString()).innerHTML)
-//     }
-
-// 
-// var TargetSlow_PlotInfo
-// var TargetSlow_Pos
-// var TargetSlow_Loaded = false
-// 
-// var TargetFast_PlotInfoList
-// var TargetFast_PosList
-// var	TargetFast_LoadedList
-
 async function SaveAllTargetFiles(ConfigDict) {
 
     LookForTarget = document.getElementById('checkbox_Target').checked

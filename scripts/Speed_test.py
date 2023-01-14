@@ -21,11 +21,48 @@ sys.path.append(__PROJECT_ROOT__)
 
 import choreo 
 
+def load_target_files(filename,Workspace_folder,target_speed):
+
+    if (filename == "no file"):
+
+        raise ValueError("A target file is missing")
+
+    else:
+
+        path_list = filename.split("/")
+
+        path_beg = path_list.pop(0)
+        path_end = path_list.pop( )
+
+        if (path_beg == "Gallery"):
+
+            json_filename = os.path.join(Workspace_folder,'Temp',target_speed+'.json')
+            npy_filename  = os.path.join(Workspace_folder,'Temp',target_speed+'.npy' )
+
+        elif (path_beg == "Workspace"):
+
+            json_filename = os.path.join(Workspace_folder,*path_list,path_end+'.json')
+            npy_filename  = os.path.join(Workspace_folder,*path_list,path_end+'.npy' )
+
+        else:
+
+             raise ValueError("Unknown path")
+
+    with open(json_filename) as jsonFile:
+        Info_dict = json.load(jsonFile)
+
+    all_pos = np.load(npy_filename)
+
+    return Info_dict, all_pos
+
+
 def main():
 
     np.random.seed(int(time.time()*10000) % 5000)
-    
-    params_filename = os.path.join(__PROJECT_ROOT__,"choreo_config.json")
+
+    Workspace_folder = "Sniff_all_sym/"
+
+    params_filename = os.path.join(Workspace_folder,"choreo_config.json")
 
     with open(params_filename) as jsonFile:
         params_dict = json.load(jsonFile)
@@ -34,23 +71,71 @@ def main():
     
     CrashOnError_changevar = False
 
-    LookForTarget = False
-    
-    n_make_loops = len(params_dict["Geom_Bodies"]["SymType"])
+    LookForTarget = params_dict['Geom_Target'] ['LookForTarget']
 
-    nbpl = params_dict["Geom_Bodies"]["nbpl"]
+    if (LookForTarget) :
 
-    the_lcm = m.lcm(*nbpl)
+        Rotate_fast_with_slow = params_dict['Geom_Target'] ['Rotate_fast_with_slow']
+        Optimize_Init = params_dict['Geom_Target'] ['Optimize_Init']
+        Randomize_Fast_Init =  params_dict['Geom_Target'] ['Randomize_Fast_Init']
+            
+        nT_slow = params_dict['Geom_Target'] ['nT_slow']
+        nT_fast = params_dict['Geom_Target'] ['nT_fast']
 
-    SymType = params_dict["Geom_Bodies"]["SymType"]
+        Info_dict_slow_filename = params_dict['Geom_Target'] ["slow_filename"]
+        Info_dict_slow, all_pos_slow = load_target_files(Info_dict_slow_filename,Workspace_folder,"slow")
 
-    Sym_list,nbody = choreo.Make2DChoreoSymManyLoops(nbpl=nbpl,SymType=SymType)
+        all_coeffs_slow = choreo.AllPosToAllCoeffs(all_pos_slow,Info_dict_slow["n_int"],Info_dict_slow["n_Fourier"])
+        choreo.Center_all_coeffs(all_coeffs_slow,Info_dict_slow["nloop"],Info_dict_slow["mass"],Info_dict_slow["loopnb"],np.array(Info_dict_slow["Targets"]),np.array(Info_dict_slow["SpaceRotsUn"]))
 
-    mass = []
-    for il in range(n_make_loops):
-        mass.extend([params_dict["Geom_Bodies"]["mass"][il] for ib in range(nbpl[il])])
+        Info_dict_fast_list = []
+        all_coeffs_fast_list = []
 
-    mass = np.array(mass,dtype=np.float64)
+        for i in range(len(nT_fast)) :
+
+            Info_dict_fast_filename = params_dict['Geom_Target'] ["fast_filenames"] [i]
+            Info_dict_fast, all_pos_fast = load_target_files(Info_dict_fast_filename,Workspace_folder,"fast"+str(i))
+            Info_dict_fast_list.append(Info_dict_fast)
+
+            all_coeffs_fast = choreo.AllPosToAllCoeffs(all_pos_fast,Info_dict_fast_list[i]["n_int"],Info_dict_fast_list[i]["n_Fourier"])
+            choreo.Center_all_coeffs(all_coeffs_fast,Info_dict_fast_list[i]["nloop"],Info_dict_fast_list[i]["mass"],Info_dict_fast_list[i]["loopnb"],np.array(Info_dict_fast_list[i]["Targets"]),np.array(Info_dict_fast_list[i]["SpaceRotsUn"]))
+
+            all_coeffs_fast_list.append(all_coeffs_fast)
+
+        Sym_list, mass,il_slow_source,ibl_slow_source,il_fast_source,ibl_fast_source = choreo.MakeTargetsSyms(Info_dict_slow,Info_dict_fast_list)
+        
+        nbody = len(mass)
+
+    else:
+
+        n_make_loops = len(params_dict["Geom_Bodies"]["SymType"])
+
+        nbpl = params_dict["Geom_Bodies"]["nbpl"]
+
+        SymType = params_dict["Geom_Bodies"]["SymType"]
+
+        Sym_list,nbody = choreo.Make2DChoreoSymManyLoops(nbpl=nbpl,SymType=SymType)
+
+        mass = []
+        for il in range(n_make_loops):
+            mass.extend([params_dict["Geom_Bodies"]["mass"][il] for ib in range(nbpl[il])])
+
+        mass = np.array(mass,dtype=np.float64)
+
+
+    if ((LookForTarget) and not(params_dict['Geom_Target'] ['RandomJitterTarget'])) :
+
+        coeff_ampl_min  = 1e-17
+        coeff_ampl_o    = 1e-17
+        k_infl          = 2
+        k_max           = 3
+
+    else:
+
+        coeff_ampl_min  = params_dict["Geom_Random"]["coeff_ampl_min"]
+        coeff_ampl_o    = params_dict["Geom_Random"]["coeff_ampl_o"]
+        k_infl          = params_dict["Geom_Random"]["k_infl"]
+        k_max           = params_dict["Geom_Random"]["k_max"]
 
     n_custom_sym = params_dict["Geom_Custom"]["n_custom_sym"]
     
@@ -85,9 +170,7 @@ def main():
 
     MomConsImposed = params_dict['Geom_Bodies'] ['MomConsImposed']
 
-    store_folder = 'Sniff_all_sym/'
-    # store_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/')
-    store_folder = store_folder+str(nbody)
+    store_folder = os.path.join(Workspace_folder,str(nbody))
     if not(os.path.isdir(store_folder)):
 
         os.makedirs(store_folder)
@@ -124,8 +207,8 @@ def main():
 
     color_list = params_dict["Animation_Colors"]["colorLookup"]
 
-    Save_anim = True
-    # Save_anim = False
+    # Save_anim = True
+    Save_anim = False
 
     vid_size = (8,8) # Image size in inches
     nint_plot_anim = 2*2*2*3*3*5*2
@@ -140,9 +223,9 @@ def main():
         period_div = 1.
     else:
         period_div = the_lcm
-# 
-#     nperiod_anim = 1.
-    nperiod_anim = 1./period_div
+
+    nperiod_anim = 1.
+    # nperiod_anim = 1./period_div
 
     Plot_trace_anim = True
     # Plot_trace_anim = False
@@ -153,7 +236,8 @@ def main():
     n_reconverge_it_max = params_dict["Solver_Discr"] ['n_reconverge_it_max'] 
     ncoeff_init = params_dict["Solver_Discr"]["ncoeff_init"]   
 
-    disp_scipy_opt = False
+    disp_scipy_opt =  (params_dict['Solver_Optim'] ['optim_verbose_lvl'] == "full")
+    # disp_scipy_opt = False
     # disp_scipy_opt = True
     
     max_norm_on_entry = 1e20
@@ -167,6 +251,7 @@ def main():
     krylov_method = params_dict["Solver_Optim"]["krylov_method"]  
 
     line_search = params_dict["Solver_Optim"]["line_search"]  
+    linesearch_smin = params_dict["Solver_Optim"]["line_search_smin"]  
 
     gradtol_list =          params_dict["Solver_Loop"]["gradtol_list"]
     inner_maxiter_list =    params_dict["Solver_Loop"]["inner_maxiter_list"]
@@ -186,11 +271,6 @@ def main():
     escape_pow = 2.0
 
     n_grad_change = 1.
-
-    coeff_ampl_min  = params_dict["Geom_Random"]["coeff_ampl_min"]
-    coeff_ampl_o    = params_dict["Geom_Random"]["coeff_ampl_o"]
-    k_infl          = params_dict["Geom_Random"]["k_infl"]
-    k_max           = params_dict["Geom_Random"]["k_max"]
 
     freq_erase_dict = 100
     hash_dict = {}
@@ -214,8 +294,12 @@ def main():
     plot_extend = 0.
 
     n_opt = 0
-    n_opt_max = 1e10
+    # n_opt_max = 50
+    n_opt_max = 1e6
     n_find_max = 1e4
+
+    ReconvergeSol = False
+    AddNumberToOutputName = True
     
     # n_test = 100000
     n_test = 200
