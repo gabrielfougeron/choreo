@@ -253,20 +253,20 @@ function ClickTopTabBtn(TabId) {
 function  GeomTopTabBtn(TabId) {
     switch (TabId) {
         case 'Main': {
-            ClickTopTabBtn('Main_NowPlaying');
-            break;}    
+            ClickTopTabBtn('Main_About')
+            break}    
+        case 'Play': {
+            ClickTopTabBtn('Play_NowPlaying')
+            break}
         case 'Geom': {
-            ClickTopTabBtn('Geom_Bodies');
-            break;}
+            ClickTopTabBtn('Geom_Bodies')
+            break}
         case 'Animation': {
-            ClickTopTabBtn('Animation_Colors');
-            break;}
+            ClickTopTabBtn('Animation_Colors')
+            break}
         case 'Solver': {
-            ClickTopTabBtn_Solver_Output();
-            break;}
-        case 'Misc': {
-            ClickTopTabBtn('Misc_Save_Config');
-            break;}
+            ClickTopTabBtn_Solver_Output()
+            break}
     }
 }
 
