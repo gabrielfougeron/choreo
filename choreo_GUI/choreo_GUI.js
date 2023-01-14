@@ -84,37 +84,6 @@ async function Play_Loop_From_Python(args){
 
     if ((args.is_sol) && (WorkspaceIsSetUp)) {
 
-        const d = new Date(Date.now())
-
-        // toLocaleString() without arguments depends on the
-        // implementation, the default locale, and the default time zone
-
-        // const locale = "en-US"
-        // const options = {
-        //     // weekday: "long",
-        //     year: "numeric",
-        //     month: "long",
-        //     day: "numeric",
-        //     hour: "2-digit",
-        //     minute: "2-digit",
-        //     second: "2-digit",
-        //   };
-        
-        const filename = d.toLocaleString().replaceAll("/","-").replaceAll(":","-")
-
-        const GUI_Sols_Dir = await UserWorkspace.getDirectoryHandle("GUI solutions", {create: true})
-            
-        const PlotInfoFile = await GUI_Sols_Dir.getFileHandle(filename+".json", { create: true })
-        const writable_Info = await PlotInfoFile.createWritable()
-        await writable_Info.write(JSON.stringify(PlotInfo,null,2))
-        await writable_Info.close()
-
-        const PosFile = await GUI_Sols_Dir.getFileHandle(filename+".npy", { create: true })
-        const writable_Pos = await PosFile.createWritable()
-        await writable_Pos.write(await ndarray_tobuffer(Pos))
-        await writable_Pos.close()
-
-        
         ClickReloadWorkspace()
 
     }
@@ -326,7 +295,7 @@ async function SaveConfigFile(UserDir=false){
 
 }
 
-function ChoreoExecuteClick() {
+async function ChoreoExecuteClick() {
 
     var ChoreoExecuteBtn = document.getElementById("ChoreoExecuteBtn");
 
@@ -371,6 +340,11 @@ function ChoreoExecuteClick() {
 
         var ConfigDict = GatherConfigDict();
         pyodide_worker.postMessage({funname:"LoadDataInWorker",args:{ConfigDict:ConfigDict}});
+
+
+
+
+
 
         ReadyToRun = true
 
@@ -1431,32 +1405,36 @@ function UpdateFPSDisplay() {
 
 function KillAndReloadWorker() {
     
-    pyodide_worker.terminate();
+    pyodide_worker.terminate()
 
     SearchIsOnGoing = false
-    var ChoreoExecuteBtn = document.getElementById("ChoreoExecuteBtn");
-    ChoreoExecuteBtn.disabled = "disabled";
-    var ChoreoDispInitStateBtn = document.getElementById("ChoreoDispInitStateBtn");
-    ChoreoDispInitStateBtn.disabled = "disabled";
-    var ChoreoSearchNext = document.getElementById("ChoreoSearchNext");
-    ChoreoSearchNext.disabled = "disabled";
+    var ChoreoExecuteBtn = document.getElementById("ChoreoExecuteBtn")
+    ChoreoExecuteBtn.disabled = "disabled"
+    var ChoreoDispInitStateBtn = document.getElementById("ChoreoDispInitStateBtn")
+    ChoreoDispInitStateBtn.disabled = "disabled"
+    var ChoreoSearchNext = document.getElementById("ChoreoSearchNext")
+    ChoreoSearchNext.disabled = "disabled"
     AskForNext[0] = 0
 
-    var Python_State_Div = document.getElementById("Python_State_Div");
+    var Python_State_Div = document.getElementById("Python_State_Div")
 
-    PythonClearPrints();
-    PythonPrint({txt:"Python Killed. Reloading ...&#10;"});
+    PythonClearPrints()
+    PythonPrint({txt:"Python Killed. Reloading ...&#10;"})
 
-    Python_State_Div.innerHTML = "Killed";
-    Python_State_Div.classList.add('w3-red');
-    Python_State_Div.classList.remove('w3-orange');
-    Python_State_Div.classList.remove('w3-green');
-    Python_State_Div.classList.remove('w3-hover-pale-green');
+    Python_State_Div.innerHTML = "Killed"
+    Python_State_Div.classList.add('w3-red')
+    Python_State_Div.classList.remove('w3-orange')
+    Python_State_Div.classList.remove('w3-green')
+    Python_State_Div.classList.remove('w3-hover-pale-green')
 
-    pyodide_worker = new Worker("./Pyodide_worker.js");
-    pyodide_worker.addEventListener('message', handleMessageFromWorker);
-    pyodide_worker.postMessage({funname:"ExecutePythonFile",args:"./python_scripts/Python_imports.py"});
-    pyodide_worker.postMessage({funname: "setAskForNextBuffer",args:AskForNextBuffer });
+    pyodide_worker = new Worker("./Pyodide_worker.js")
+    pyodide_worker.addEventListener('message', handleMessageFromWorker)
+    pyodide_worker.postMessage({funname:"ExecutePythonFile",args:"./python_scripts/Python_imports.py"})
+    pyodide_worker.postMessage({funname: "setAskForNextBuffer",args:AskForNextBuffer })
+
+    if (WorkspaceIsSetUp) {
+        pyodide_worker.postMessage({funname:"SetupWorkspaceInWorker",args:UserWorkspace})
+    }
 
 }
 
@@ -1800,6 +1778,12 @@ async function ClickSetupWorkspace() {
 }
 
 function ClickReloadWorkspace() {
+
+    try {
+        pyodide_worker.postMessage({funname:"SetupWorkspaceInWorker",args:UserWorkspace})
+    } catch(e) { // if pyodide_worker is not ready maybe ?
+        console.log(e);
+    }
 
     SaveConfigFile(UserWorkspace)
     
@@ -2294,11 +2278,13 @@ function UpdateNowPlaying(SearchOnGoing=false) {
 
         NP_Newton_Error.innerHTML = "Search in progress"
         NP_n_Fourier.innerHTML = "Search in progress"
+        NP_n_Action.innerHTML = "Search in progress"
 
     } else {
 
         NP_Newton_Error.innerHTML = PlotInfo["Newton_Error"].toExponential(2)
         NP_n_Fourier.innerHTML = PlotInfo["n_Fourier"].toString()
+        NP_n_Action.innerHTML = PlotInfo["Action"].toExponential(2)
 
     }
 
