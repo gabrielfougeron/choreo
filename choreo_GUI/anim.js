@@ -703,7 +703,15 @@ function canvasApp() {
 
 	function DrawAllPathsFromOutsideCanvasHandler() {
 
-		request = requestAnimationFrame(anim_path);
+		if (running) {
+			cancelAnimationFrame(request)
+		}
+
+		request = requestAnimationFrame(anim_path)
+
+		if (running) {
+			request = requestAnimationFrame(anim_particles_loop)
+		}
 
 	}
 

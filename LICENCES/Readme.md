@@ -1,0 +1,1 @@
+This folder contains licence files to redistributed packages in choreo.
