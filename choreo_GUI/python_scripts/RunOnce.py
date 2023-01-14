@@ -92,8 +92,6 @@ def NPY_JS_to_py(npy_js):
 def main():
 
     params_dict = js.ConfigDict.to_py()
-
-    file_basename = ''
     
     CrashOnError_changevar = False
 
@@ -203,17 +201,18 @@ def main():
 
     MomConsImposed = params_dict['Geom_Bodies'] ['MomConsImposed']
 
-    store_folder = 'Sniff_all_sym/'
-    # store_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/')
-    store_folder = store_folder+str(nbody)
-    if os.path.isdir(store_folder):
-        shutil.rmtree(store_folder)
-        os.makedirs(store_folder)
-    else:
-        os.makedirs(store_folder)
 
-    # print("store_folder: ",store_folder)
-    # print(os.path.isdir(store_folder))
+    store_folder = '/mount_dir/GUI solutions'
+
+    if not(os.path.isdir(store_folder)):
+
+        store_folder = 'Sniff_all_sym/'
+
+        if os.path.isdir(store_folder):
+            shutil.rmtree(store_folder)
+            os.makedirs(store_folder)
+        else:
+            os.makedirs(store_folder)
 
     Use_exact_Jacobian = params_dict["Solver_Discr"]["Use_exact_Jacobian"]
 
@@ -318,7 +317,7 @@ def main():
     plot_extend = 0.
 
     ReconvergeSol = False
-    AddNumberToOutputName = True
+    AddNumberToOutputName = False
     
     callback_after_init_list = []
 
@@ -332,14 +331,34 @@ def main():
         optim_callback_list.append(Plot_Loops_During_Optim)
 
 
+
+
+    file_basename = ''
+
+    max_num_file = 0
+    
+    for filename in os.listdir(store_folder):
+        file_path = os.path.join(store_folder, filename)
+        file_root, file_ext = os.path.splitext(os.path.basename(file_path))
+        
+        if (file_basename in file_root) and (file_ext == '.json' ):
+
+            file_root = file_root.replace(file_basename,"")
+
+            try:
+                max_num_file = max(max_num_file,int(file_root))
+            except:
+                pass
+
+    max_num_file = max_num_file + 1
+
+    file_basename = file_basename+str(max_num_file).zfill(5)
+
     all_kwargs = choreo.Pick_Named_Args_From_Dict(choreo.Find_Choreo,dict(globals(),**locals()))
 
     choreo.Find_Choreo(**all_kwargs)
 
-
-    i_sol = 1
-
-    filename_output = store_folder+'/'+file_basename+str(i_sol).zfill(5)
+    filename_output = store_folder+'/'+file_basename
     filename = filename_output+".json"
 
     if os.path.isfile(filename):
