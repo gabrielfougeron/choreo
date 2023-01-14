@@ -14,5 +14,4 @@ Usage
 .. ----------------
 
 
-
-.. autofunction:: choreo.Find_Choreo
+.. .. autofunction:: choreo.Find_Choreo
