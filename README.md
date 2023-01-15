@@ -41,7 +41,10 @@ pyodide build && cp ./dist/choreo-0.1.0-cp310-cp310-emscripten_3_1_14_wasm32.whl
 Check out the online in-browser GUI: https://gabrielfougeron.github.io/choreo/
 
 ## Power up the GUI solver with the CLI backend
-Using clang or gcc as a C compiler, the single-threaded CLI solver is about 3 times faster that the wasm in-browser GUI solver. Several independant single-threaded solvers can be launched simultaneously using a single command.
+Using clang or gcc as a C compiler, the single-threaded CLI solver is about 3 times faster that the wasm in-browser GUI solver. In addition, 
+several independant single-threaded solvers can be launched simultaneously using a single command.
+
+To do so, follow these steps:
 
 - Clone this repository.
 - Create and activate the correct conda environment.

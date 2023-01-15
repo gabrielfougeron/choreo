@@ -61,7 +61,7 @@ def main():
 # 
 #             input_names_list.append(file_root)
 
-    input_names_list = ['00171']
+    input_names_list = ['01 - Figure eight']
 
 
     store_folder = os.path.join(__PROJECT_ROOT__,'Reconverged_sols')
@@ -99,28 +99,30 @@ def main():
 
 def ExecName(the_name, input_folder, store_folder):
 
+    print('--------------------------------------------')
     print('')
     print(the_name)
+    print('')
+    print('--------------------------------------------')
+    print('')
 
     file_basename = the_name
     
-    Info_filename = os.path.join(input_folder,the_name)
-    Info_filename = Info_filename + '.json'
+    Info_filename = os.path.join(input_folder,the_name + '.json')
 
     with open(Info_filename,'r') as jsonFile:
         Info_dict = json.load(jsonFile)
 
 
-    input_filename = os.path.join(input_folder,the_name)
-    input_filename = input_filename + '.npy'
+    input_filename = os.path.join(input_folder,the_name + '.npy')
 
     bare_name = the_name.split('/')[-1]
 
     all_pos = np.load(input_filename)
     nint = Info_dict["n_int"]
-    ncoeff_init = Info_dict["n_Fourier"] // 2
+    ncoeff_init = Info_dict["n_Fourier"] 
 
-    c_coeffs = choreo.the_rfft(all_pos,n=Info_dict["n_int"],axis=2,norm="forward")
+    c_coeffs = choreo.the_rfft(all_pos,axis=2,norm="forward")
     all_coeffs = np.zeros((Info_dict["nloop"],choreo.ndim,ncoeff_init,2),dtype=np.float64)
     all_coeffs[:,:,0:ncoeff_init,0] = c_coeffs[:,:,0:ncoeff_init].real
     all_coeffs[:,:,0:ncoeff_init,1] = c_coeffs[:,:,0:ncoeff_init].imag
@@ -137,7 +139,7 @@ def ExecName(the_name, input_folder, store_folder):
     theta = 2*np.pi * 0/2
     SpaceRevscal = 1.
     SpaceRot = np.array( [[SpaceRevscal*np.cos(theta) , SpaceRevscal*np.sin(theta)] , [-np.sin(theta),np.cos(theta)]])
-    TimeRev = -1.
+    TimeRev = 1.
     TimeShiftNum = 0
     TimeShiftDen = 2
 
@@ -145,6 +147,8 @@ def ExecName(the_name, input_folder, store_folder):
 
     all_coeffs_init = choreo.Transform_Coeffs(SpaceRot, TimeRev, TimeShiftNum, TimeShiftDen, all_coeffs)
     Transform_Sym = choreo.ChoreoSym(SpaceRot=SpaceRot, TimeRev=TimeRev, TimeShift = fractions.Fraction(numerator=TimeShiftNum,denominator=TimeShiftDen))
+
+    Transform_Sym = None
 
     ReconvergeSol = True
 
@@ -156,17 +160,17 @@ def ExecName(the_name, input_folder, store_folder):
 
     MomConsImposed = True
     # MomConsImposed = False
-
-    rot_angle = 0
-    s = -1
-
-    Sym_list.append(choreo.ChoreoSym(
-        LoopTarget=0,
-        LoopSource=0,
-        SpaceRot = np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64),
-        TimeRev=-1,
-        TimeShift=fractions.Fraction(numerator=0,denominator=1)
-    ))
+# 
+#     rot_angle = 0
+#     s = -1
+# 
+#     Sym_list.append(choreo.ChoreoSym(
+#         LoopTarget=0,
+#         LoopSource=0,
+#         SpaceRot = np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64),
+#         TimeRev=-1,
+#         TimeShift=fractions.Fraction(numerator=0,denominator=1)
+#     ))
 
 
     n_reconverge_it_max = 2
@@ -310,12 +314,6 @@ def ExecName(the_name, input_folder, store_folder):
 
     all_kwargs = choreo.Pick_Named_Args_From_Dict(choreo.Find_Choreo,dict(**locals()))
     choreo.Find_Choreo(**all_kwargs)
-
-
-
-
-
-
 
 if __name__ == "__main__":
     main()    
