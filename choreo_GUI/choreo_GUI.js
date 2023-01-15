@@ -71,7 +71,6 @@ async function Play_Loop_From_Python(args){
     ChoreoSearchNext.disabled = "disabled"
     AskForNext[0] = 0
 
-
     var RotSlider = $("#RotSlider").data("roundSlider")
     RotSlider.enable()
 
@@ -377,7 +376,7 @@ async function ChoreoExecuteClick() {
         }
 
         if (ReadyToRun) {
-            pyodide_worker.postMessage({funname:"ExecutePythonFile",args:"./python_scripts/RunOnce.py"});
+            pyodide_worker.postMessage({funname:"ExecutePythonFile",args:"./python_scripts/RunOnce.py"})
         } else {
 
             console.log("Not ready to run")
@@ -1779,17 +1778,11 @@ async function ClickSetupWorkspace() {
 
 function ClickReloadWorkspace() {
 
-    DoReloadWorkspace()
-
     try {
         pyodide_worker.postMessage({funname:"SetupWorkspaceInWorker",args:UserWorkspace})
     } catch(e) { // if pyodide_worker is not ready maybe ?
         // console.log(e)
     }
-
-}
-
-function DoReloadWorkspace(args) {
 
     SaveConfigFile(UserWorkspace)
     

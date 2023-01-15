@@ -6,6 +6,7 @@ os.environ['OPENBLAS_NUM_THREADS'] = '1'
 os.environ['MKL_NUM_THREADS'] = '1'
 
 import shutil
+import asyncio
 import random
 import time
 import math as m
@@ -13,10 +14,6 @@ import numpy as np
 import sys
 import fractions
 import json
-
-# 
-# import matplotlib
-# matplotlib.use("module://matplotlib.backends.html5_canvas_backend")
 
 import choreo 
 
@@ -89,7 +86,7 @@ def NPY_JS_to_py(npy_js):
 
 
 
-def main():
+async def main():
 
     params_dict = js.ConfigDict.to_py()
     
@@ -200,7 +197,6 @@ def main():
 
 
     MomConsImposed = params_dict['Geom_Bodies'] ['MomConsImposed']
-
 
     store_folder = '/mount_dir/GUI solutions'
 
@@ -363,6 +359,9 @@ def main():
 
     if os.path.isfile(filename):
 
+        if js.NativeFSIsSetUp :
+            await js.NativeFS.syncfs()
+
         with open(filename, 'rt') as fh:
             thefile = fh.read()
             
@@ -401,4 +400,4 @@ def main():
         )
 
 if __name__ == "__main__":
-    main()
+    asyncio.create_task(main())
