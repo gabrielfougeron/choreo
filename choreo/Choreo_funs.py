@@ -711,7 +711,6 @@ def setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max=6,MomCons=True,n_
 
                 loop_rots.append(SpaceRotsUn[il,ib,:,:])
 
-
     # Count constraints
     loopncstr = np.zeros((nloop),dtype=np.intp)
     
@@ -779,7 +778,7 @@ def setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max=6,MomCons=True,n_
             param_to_coeff_list[i].row,
             param_to_coeff_list[i].data,
             MassSum
-            )
+        )
         
         diag_changevar(
             coeff_to_param_list[i].nnz,
@@ -788,11 +787,10 @@ def setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max=6,MomCons=True,n_
             coeff_to_param_list[i].col,
             coeff_to_param_list[i].data,
             MassSum
-            )
+        )
 
         param_to_coeff_T_list.append(param_to_coeff_list[i].transpose(copy=True))
         coeff_to_param_T_list.append(coeff_to_param_list[i].transpose(copy=True))
-
 
     callfun = [{
         "nbody"                 :   nbody                   ,
@@ -836,10 +834,9 @@ def Compute_action(x,callfun):
         
         y = args['param_to_coeff_list'][args["current_cvg_lvl"]].dot(x)
         args['last_all_coeffs'] = y.reshape(args['nloop'],ndim,args['ncoeff_list'][args["current_cvg_lvl"]],2)
-        
-        nint = args['nint_list'][args["current_cvg_lvl"]]
+
         c_coeffs = args['last_all_coeffs'].view(dtype=np.complex128)[...,0]
-        args['last_all_pos'] = the_irfft(c_coeffs,n=nint,axis=2,norm="forward")
+        args['last_all_pos'] = the_irfft(c_coeffs,n=args['nint_list'][args["current_cvg_lvl"]],axis=2,norm="forward")
 
     J,GradJ =  Compute_action_Cython(
         args['nloop']           ,
@@ -861,7 +858,7 @@ def Compute_action(x,callfun):
         args['TimeShiftDenBin'] ,
         args['last_all_coeffs'] ,
         args['last_all_pos'] 
-        )
+    )
 
     GJ = GradJ.reshape(-1)
     y = args['param_to_coeff_T_list'][args["current_cvg_lvl"]].dot(GJ)
