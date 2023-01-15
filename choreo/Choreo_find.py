@@ -494,7 +494,6 @@ def Find_Choreo(
 
                         filename_output = os.path.join(store_folder,file_basename)
 
-
                     print(f'Saving solution as {filename_output}.*.')
              
                     Write_Descriptor(best_sol.x,callfun,filename_output+'.json',Action=Action,Gradaction=Gradaction,Newt_err_norm=Newt_err_norm,Hash_Action=Hash_Action,extend=plot_extend)
@@ -747,7 +746,6 @@ def Speed_test(
     Optimize_Init,
     Randomize_Fast_Init
 ):
-
 
     """
 
