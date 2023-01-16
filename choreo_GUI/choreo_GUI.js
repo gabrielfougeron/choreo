@@ -46,7 +46,6 @@ async function Play_Loop_From_Python(args){
     var event = new Event('EnableAnimationFromOutsideCanvas')
     displayCanvas.dispatchEvent(event)
 
-
     if (document.getElementById('checkbox_DisplayLoopsDuringSearch').checked) {
 
         trajectoriesOn = true;
@@ -82,6 +81,20 @@ async function Play_Loop_From_Python(args){
     Python_State_Div.classList.remove('w3-red')
 
     if ((args.is_sol) && (WorkspaceIsSetUp)) {
+        
+        [junk,basename] = args.solname.split(': ')
+
+        const GUISolDir = await UserWorkspace.getDirectoryHandle("GUI solutions", {create: true})
+        
+        const PlotInfoFile = await GUISolDir.getFileHandle(basename+".json", { create: true })
+        const writable_Info = await PlotInfoFile.createWritable()
+        await writable_Info.write(JSON.stringify(PlotInfo,null,2))
+        await writable_Info.close()
+
+        const PosFile = await GUISolDir.getFileHandle(basename+".npy", { create: true })
+        const writable_Pos = await PosFile.createWritable()
+        await writable_Pos.write(await ndarray_tobuffer(Pos))
+        await writable_Pos.close()
 
         ClickReloadWorkspace()
 
@@ -339,11 +352,6 @@ async function ChoreoExecuteClick() {
 
         var ConfigDict = GatherConfigDict();
         pyodide_worker.postMessage({funname:"LoadDataInWorker",args:{ConfigDict:ConfigDict}});
-
-
-
-
-
 
         ReadyToRun = true
 
@@ -1431,9 +1439,9 @@ function KillAndReloadWorker() {
     pyodide_worker.postMessage({funname:"ExecutePythonFile",args:"./python_scripts/Python_imports.py"})
     pyodide_worker.postMessage({funname: "setAskForNextBuffer",args:AskForNextBuffer })
 
-    if (WorkspaceIsSetUp) {
-        pyodide_worker.postMessage({funname:"SetupWorkspaceInWorker",args:UserWorkspace})
-    }
+    // if (WorkspaceIsSetUp) {
+    //     pyodide_worker.postMessage({funname:"SetupWorkspaceInWorker",args:UserWorkspace})
+    // }
 
 }
 
@@ -1778,11 +1786,11 @@ async function ClickSetupWorkspace() {
 
 function ClickReloadWorkspace() {
 
-    try {
-        pyodide_worker.postMessage({funname:"SetupWorkspaceInWorker",args:UserWorkspace})
-    } catch(e) { // if pyodide_worker is not ready maybe ?
-        // console.log(e)
-    }
+    // try {
+    //     pyodide_worker.postMessage({funname:"SetupWorkspaceInWorker",args:UserWorkspace})
+    // } catch(e) { // if pyodide_worker is not ready maybe ?
+    //     // console.log(e)
+    // }
 
     SaveConfigFile(UserWorkspace)
     

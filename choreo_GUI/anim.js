@@ -235,7 +235,7 @@ function canvasApp() {
 	displayHeight = displayCanvas.height;	
 
 	var Min_PartRelSize = 0.5;
-	var Max_PartRelSize = 7.;
+	var Max_PartRelSize = 70.;
 	
 	var Last_Time_since_origin;
 	var dt_outlier_ms = 1200;
