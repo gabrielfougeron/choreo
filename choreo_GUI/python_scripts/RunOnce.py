@@ -94,9 +94,7 @@ async def main():
 
     LookForTarget = params_dict['Geom_Target'] ['LookForTarget']
 
-
     if (LookForTarget) :
-
 
         Rotate_fast_with_slow = params_dict['Geom_Target'] ['Rotate_fast_with_slow']
         Optimize_Init = params_dict['Geom_Target'] ['Optimize_Init']
@@ -127,9 +125,6 @@ async def main():
         Sym_list, mass,il_slow_source,ibl_slow_source,il_fast_source,ibl_fast_source = choreo.MakeTargetsSyms(Info_dict_slow,Info_dict_fast_list)
         
         nbody = len(mass)
-
-
-
 
     else:
 
@@ -197,6 +192,8 @@ async def main():
 
 
     MomConsImposed = params_dict['Geom_Bodies'] ['MomConsImposed']
+
+    # await js.NativeFS.syncfs(True)
 
     store_folder = '/mount_dir/GUI solutions'
 
@@ -361,11 +358,15 @@ async def main():
 
         with open(filename, 'rt') as fh:
             thefile = fh.read()
+
+        os.remove(filename)
             
         blob = js.Blob.new([thefile], {type : 'application/text'})
 
         filename = filename_output+'.npy'
         all_pos = np.load(filename)
+
+        os.remove(filename)
 
         js.postMessage(
             funname = "Play_Loop_From_Python",
