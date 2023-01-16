@@ -46,7 +46,7 @@ self.onmessage = async function(message) {
   
     if ((typeof message.data.funname != "undefined") && (typeof message.data.args != "undefined")) {
 
-        console.log("Attempting to execute function",message.data.funname,"with arguments",message.data.args)
+        // console.log("Attempting to execute function",message.data.funname,"with arguments",message.data.args)
 
         const the_fun = self[message.data.funname]
 
@@ -113,7 +113,7 @@ self.SetupWorkspaceInWorker = async function(dirHandle) {
 
     if (NativeFSIsSetUp) {
 
-        // await NativeFS.syncfs()
+        await NativeFS.syncfs(populate = false)
 
     } else {
 
