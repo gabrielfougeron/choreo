@@ -1,16 +1,25 @@
 
-function handleMessageFromWorker(message) {
+async function handleMessageFromWorker(message) {
 
     if ((typeof message.data.funname != "undefined") && (typeof message.data.args != "undefined")) {
 
         // console.log("Attempting to execute function",message.data.funname,"with arguments",message.data.args);
 
-        window[message.data.funname](message.data.args);
+        const the_fun = window[message.data.funname]
+
+        const isAsync = the_fun.constructor.name === "AsyncFunction"
+
+        if (isAsync) {
+            await the_fun(message.data.args)
+        } else {
+            the_fun(message.data.args)
+        }
+        
 
     } else {
 
-        // console.log('Main thread could not resolve message from worker :',message);
-        // console.log(message.data);
+        console.log('Main thread could not resolve message from worker :',message);
+        console.log(message.data);
 
     }
 
@@ -81,7 +90,7 @@ async function Play_Loop_From_Python(args){
     Python_State_Div.classList.remove('w3-red')
 
     if ((args.is_sol) && (WorkspaceIsSetUp)) {
-        
+
         [junk,basename] = args.solname.split(': ')
 
         const GUISolDir = await UserWorkspace.getDirectoryHandle("GUI solutions", {create: true})
@@ -1439,9 +1448,9 @@ function KillAndReloadWorker() {
     pyodide_worker.postMessage({funname:"ExecutePythonFile",args:"./python_scripts/Python_imports.py"})
     pyodide_worker.postMessage({funname: "setAskForNextBuffer",args:AskForNextBuffer })
 
-    // if (WorkspaceIsSetUp) {
-    //     pyodide_worker.postMessage({funname:"SetupWorkspaceInWorker",args:UserWorkspace})
-    // }
+    if (WorkspaceIsSetUp) {
+        pyodide_worker.postMessage({funname:"SetupWorkspaceInWorker",args:UserWorkspace})
+    }
 
 }
 
@@ -1786,11 +1795,11 @@ async function ClickSetupWorkspace() {
 
 function ClickReloadWorkspace() {
 
-    // try {
-    //     pyodide_worker.postMessage({funname:"SetupWorkspaceInWorker",args:UserWorkspace})
-    // } catch(e) { // if pyodide_worker is not ready maybe ?
-    //     // console.log(e)
-    // }
+    try {
+        pyodide_worker.postMessage({funname:"SetupWorkspaceInWorker",args:UserWorkspace})
+    } catch(e) { // if pyodide_worker is not ready maybe ?
+        console.log(e)
+    }
 
     SaveConfigFile(UserWorkspace)
     

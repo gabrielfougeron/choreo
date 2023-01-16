@@ -192,7 +192,7 @@ def Find_Choreo(
 
         AskedForNext = False
         
-        if ((n_opt % freq_erase_dict) == 0):
+        if (Look_for_duplicates and ((n_opt % freq_erase_dict) == 0)):
             
             hash_dict = {}
             _ = SelectFiles_Action(store_folder,hash_dict)
@@ -218,8 +218,7 @@ def Find_Choreo(
         else:
             
             x_avg = np.zeros((callfun[0]['coeff_to_param_list'][callfun[0]["current_cvg_lvl"]].shape[0]),dtype=np.float64)
-            
-        
+
         x0 = np.zeros((callfun[0]['coeff_to_param_list'][callfun[0]["current_cvg_lvl"]].shape[0]),dtype=np.float64)
         
         xrand = sampler.random()
@@ -264,7 +263,6 @@ def Find_Choreo(
                     all_pos = ComputeAllLoopPos(x0,callfun,n_save_pos)
 
                 np.save('init.npy',all_pos)
-
 
             for i in range(n_callback_after_init_list):
                 callback_after_init_list[i]()
