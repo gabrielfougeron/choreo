@@ -359,9 +359,6 @@ async def main():
 
     if os.path.isfile(filename):
 
-        if js.NativeFSIsSetUp :
-            await js.NativeFS.syncfs()
-
         with open(filename, 'rt') as fh:
             thefile = fh.read()
             
@@ -375,7 +372,7 @@ async def main():
             args    = pyodide.ffi.to_js(
                 {
                     "is_sol":True,
-                    "solname":"User generated solution",
+                    "solname":"User generated solution: "+file_basename,
                     "JSON_data":blob,
                     "NPY_data":all_pos.reshape(-1),
                     "NPY_shape":all_pos.shape,
