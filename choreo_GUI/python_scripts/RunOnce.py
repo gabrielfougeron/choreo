@@ -88,7 +88,8 @@ def NPY_JS_to_py(npy_js):
 
 async def main():
 
-    SyncDiskPromise = js.syncFromDisk()
+    if js.NativeFSIsSetUp:
+        await js.syncFromDisk()
 
     params_dict = js.ConfigDict.to_py()
     
@@ -198,6 +199,8 @@ async def main():
     Use_exact_Jacobian = params_dict["Solver_Discr"]["Use_exact_Jacobian"]
 
     Look_for_duplicates = params_dict["Solver_Checks"]["Look_for_duplicates"]
+
+    print(f"Look_for_duplicates : {Look_for_duplicates}")
 
     Check_Escape = params_dict["Solver_Checks"]["Check_Escape"]
 
@@ -311,7 +314,7 @@ async def main():
 
         optim_callback_list.append(Plot_Loops_During_Optim)
 
-    await SyncDiskPromise
+    # await SyncDiskPromise
 
     store_folder = '/mount_dir/GUI solutions'
 
@@ -358,14 +361,14 @@ async def main():
         with open(filename, 'rt') as fh:
             thefile = fh.read()
 
-        os.remove(filename)
+        # os.remove(filename)
             
         blob = js.Blob.new([thefile], {type : 'application/text'})
 
         filename = filename_output+'.npy'
         all_pos = np.load(filename)
 
-        os.remove(filename)
+        # os.remove(filename)
 
         js.postMessage(
             funname = "Play_Loop_From_Python",
