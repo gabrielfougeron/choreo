@@ -106,6 +106,10 @@ self.setAskForNextBuffer = function(Buffer) {
 
 }
 
+async function syncFromDisk() {
+    return await new Promise((resolve, _) => pyodide.FS.syncfs(true, resolve));
+ }
+
 var NativeFS
 var NativeFSIsSetUp = false
 
@@ -113,7 +117,7 @@ self.SetupWorkspaceInWorker = async function(dirHandle) {
 
     if (NativeFSIsSetUp) {
 
-        await NativeFS.syncfs(populate = false)
+        syncFromDisk()
 
     } else {
 
