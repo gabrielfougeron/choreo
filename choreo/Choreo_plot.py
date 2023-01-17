@@ -813,9 +813,13 @@ def ReadHashFromFile(filename):
     with open(filename,'r') as jsonFile:
         Info_dict = json.load(jsonFile)
 
-    This_Action_Hash = np.array(Info_dict["Hash"])
+    the_hash = Info_dict.get("Hash")
 
-    return This_Action_Hash
+    if the_hash is None:
+        return None
+
+    else:
+        return np.array(the_hash)
 
 def SelectFiles_Action(store_folder,hash_dict,Action_Hash_val=np.zeros((nhash)),rtol=1e-5):
     # Creates a list of possible duplicates based on value of the action and hashes
@@ -832,29 +836,31 @@ def SelectFiles_Action(store_folder,hash_dict,Action_Hash_val=np.zeros((nhash)),
             if (This_Action_Hash is None) :
 
                 This_Action_Hash = ReadHashFromFile(file_path) 
-                hash_dict[file_root] = This_Action_Hash
-                    
-            IsCandidate = True
-            for ihash in range(nhash):
-                IsCandidate = (IsCandidate and ((abs(This_Action_Hash[ihash]-Action_Hash_val[ihash])) < ((abs(This_Action_Hash[ihash])+abs(Action_Hash_val[ihash]))*rtol)))
-            
-            if IsCandidate:
-                
-                file_path_list.append(store_folder+'/'+file_root)
-                    
+
+                if not(This_Action_Hash is None):
+
+                    hash_dict[file_root] = This_Action_Hash
+
+            if not(This_Action_Hash is None):
+
+                IsCandidate = True
+                for ihash in range(nhash):
+
+                    IsCandidate = (IsCandidate and ((abs(This_Action_Hash[ihash]-Action_Hash_val[ihash])) < ((abs(This_Action_Hash[ihash])+abs(Action_Hash_val[ihash]))*rtol)))
+
+                if IsCandidate:
+                    file_path_list.append(store_folder+'/'+file_root)
+                        
     return file_path_list
 
-def Check_Duplicates(x,callfun,hash_dict,store_folder,duplicate_eps,Action=None,Gradaction=None,Hash_Action=None):
+def Check_Duplicates(x,callfun,hash_dict,store_folder,duplicate_eps,Hash_Action=None):
     # Checks whether there is a duplicate of a given trajecory in the provided folder
-
-    if ((Action is None) or (Gradaction is None) ):
-        Action,Gradaction = Compute_action(x,callfun)
 
     if Hash_Action is None:
          Hash_Action = Compute_hash_action(x,callfun)
 
     file_path_list = SelectFiles_Action(store_folder,hash_dict,Hash_Action,duplicate_eps)
-    
+
     if (len(file_path_list) == 0):
         
         Found_duplicate = False

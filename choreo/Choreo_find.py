@@ -191,7 +191,7 @@ def Find_Choreo(
     while ((n_opt < n_opt_max) and (n_find < n_find_max)):
 
         AskedForNext = False
-        
+
         if (Look_for_duplicates and ((n_opt % freq_erase_dict) == 0)):
             
             hash_dict = {}
@@ -362,10 +362,7 @@ def Find_Choreo(
                 
             if (GoOn and Look_for_duplicates):
 
-                Hash_Action = Compute_hash_action(best_sol.x,callfun)
-                Action = Hash_Action[0]
-
-                Found_duplicate,file_path = Check_Duplicates(best_sol.x,callfun,hash_dict,store_folder,duplicate_eps,Action=Action,Gradaction=Gradaction,Hash_Action=Hash_Action)
+                Found_duplicate,file_path = Check_Duplicates(best_sol.x,callfun,hash_dict,store_folder,duplicate_eps)
                 
                 if (Found_duplicate):
                 
@@ -547,6 +544,8 @@ def Find_Choreo(
                     
                     i_optim_param += 1
                 
+            print('')
+        
         print('')
 
     print('Done!')
