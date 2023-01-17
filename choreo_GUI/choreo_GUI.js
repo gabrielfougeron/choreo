@@ -1749,10 +1749,10 @@ function viewport_custom_select_Handler(event) {
 
 function ClickStateDiv() {
 
-    if (!SearchIsOnGoing) {
-        ChoreoExecuteClick()
-    } else {
+    if (SearchIsOnGoing) {
         ChoreoSearchNextClick()
+    } else {
+        ChoreoExecuteClick()   
     }
 
 }
@@ -1971,34 +1971,38 @@ function readFileAsArrayBuffer(file) {
 
 async function PlayFileFromDisk(name,npy_file,json_file) {
 
-    var displayCanvas = document.getElementById("displayCanvas")
-    var wasrunning = running
-    if (running) {
-        var event = new Event('StopAnimationFromOutsideCanvas')
+    if (!SearchIsOnGoing) {
+
+        var displayCanvas = document.getElementById("displayCanvas")
+        var wasrunning = running
+        if (running) {
+            var event = new Event('StopAnimationFromOutsideCanvas')
+            displayCanvas.dispatchEvent(event)
+        }
+
+        SolName = name
+        
+        var RotSlider = $("#RotSlider").data("roundSlider");
+        RotSlider.setValue(0);
+
+        const PlotInfoFile = await json_file.getFile()
+        PlotInfo = JSON.parse(await readFileAsText(PlotInfoFile))
+        UpdateNowPlaying()
+
+        let npyjs_obj = new npyjs()
+        const PosFile = await npy_file.getFile()
+        Pos = npyjs_obj.parse( await readFileAsArrayBuffer(PosFile))
+
+        Max_PathLength = PlotInfo["Max_PathLength"]
+        
+        var event = new Event("CompleteSetOrbitFromOutsideCanvas")
         displayCanvas.dispatchEvent(event)
-    }
+        
+        if (wasrunning) {
+            var event = new Event('StartAnimationFromOutsideCanvas')
+            displayCanvas.dispatchEvent(event)
+        }
 
-    SolName = name
-    
-    var RotSlider = $("#RotSlider").data("roundSlider");
-    RotSlider.setValue(0);
-
-    const PlotInfoFile = await json_file.getFile()
-    PlotInfo = JSON.parse(await readFileAsText(PlotInfoFile))
-    UpdateNowPlaying()
-
-    let npyjs_obj = new npyjs()
-    const PosFile = await npy_file.getFile()
-    Pos = npyjs_obj.parse( await readFileAsArrayBuffer(PosFile))
-
-    Max_PathLength = PlotInfo["Max_PathLength"]
-    
-    var event = new Event("CompleteSetOrbitFromOutsideCanvas")
-    displayCanvas.dispatchEvent(event)
-    
-    if (wasrunning) {
-        var event = new Event('StartAnimationFromOutsideCanvas')
-        displayCanvas.dispatchEvent(event)
     }
 
 }
@@ -2030,43 +2034,47 @@ async function LoadTargetFileFromDisk(name,npy_file,json_file) {
 
 async function PlayFileFromRemote(name,npy_file,json_file) {
 
-    var displayCanvas = document.getElementById("displayCanvas")
-    var wasrunning = running
-    if (running) {
-        var event = new Event('StopAnimationFromOutsideCanvas')
+    if (!SearchIsOnGoing) {
+
+        var displayCanvas = document.getElementById("displayCanvas")
+        var wasrunning = running
+        if (running) {
+            var event = new Event('StopAnimationFromOutsideCanvas')
+            displayCanvas.dispatchEvent(event)
+        }
+
+        npyjs_obj = new npyjs()
+
+        let finished_json = fetch(json_file,Gallery_cache_behavior)
+            .then(response => response.text())
+            .then(data => {
+                PlotInfo = JSON.parse(data)
+            })
+
+        let finished_npy = 
+            npyjs_obj.load(npy_file)
+            .then((res) => {
+                Pos = res
+            });
+
+        SolName = name
+
+        var RotSlider = $("#RotSlider").data("roundSlider")
+        RotSlider.setValue(0)
+
+        await Promise.all([finished_npy ,finished_json ])
+
+        UpdateNowPlaying()
+        Max_PathLength = PlotInfo["Max_PathLength"]
+
+        var event = new Event("CompleteSetOrbitFromOutsideCanvas")
         displayCanvas.dispatchEvent(event)
-    }
 
-    npyjs_obj = new npyjs()
+        if (wasrunning) {
+            var event = new Event('StartAnimationFromOutsideCanvas')
+            displayCanvas.dispatchEvent(event)
+        }
 
-    let finished_json = fetch(json_file,Gallery_cache_behavior)
-        .then(response => response.text())
-        .then(data => {
-            PlotInfo = JSON.parse(data)
-        })
-
-    let finished_npy = 
-        npyjs_obj.load(npy_file)
-        .then((res) => {
-            Pos = res
-        });
-
-    SolName = name
-
-    var RotSlider = $("#RotSlider").data("roundSlider")
-    RotSlider.setValue(0)
-
-    await Promise.all([finished_npy ,finished_json ])
-
-    UpdateNowPlaying()
-    Max_PathLength = PlotInfo["Max_PathLength"]
-
-    var event = new Event("CompleteSetOrbitFromOutsideCanvas")
-    displayCanvas.dispatchEvent(event)
-
-    if (wasrunning) {
-        var event = new Event('StartAnimationFromOutsideCanvas')
-        displayCanvas.dispatchEvent(event)
     }
 
 }

@@ -28,7 +28,7 @@ async function loadPyodideAndPackages() {
     self.pyodide = await loadPyodide({
         stdout: RedirectPythonPrint,
         stderr: RedirectPythonPrint,
-    });
+    })
 
     RedirectPythonPrint("\nImporting packages ...")
 
@@ -38,9 +38,10 @@ async function loadPyodideAndPackages() {
         "networkx",
         "./python_dist/choreo-0.1.0-cp310-cp310-emscripten_3_1_14_wasm32.whl"
     ])
+
 }
 
-let pyodideReadyPromise = loadPyodideAndPackages();
+let pyodideReadyPromise = loadPyodideAndPackages()
 
 self.onmessage = async function(message) {
   
@@ -76,19 +77,8 @@ self.LoadDataInWorker = function(datadict) {
 
 }
   
-// var python_cache_behavior = {}
-var python_cache_behavior = {cache: "no-cache"}
-  
-self.ExecutePythonFile = function(filename) {
-    let load_txt = fetch(filename,python_cache_behavior) ; 
-    load_txt.then(function(response) {
-        return response.text();
-    }).then(async function(text) {  
-        await pyodideReadyPromise; 
-        txt = pyodide.runPython(text);
-    });
-}
-
+var python_cache_behavior = {}
+// var python_cache_behavior = {cache: "no-cache"}
   
 self.ExecutePythonFile = function(filename) {
     let load_txt = fetch(filename,python_cache_behavior) ; 
