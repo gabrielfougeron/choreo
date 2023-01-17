@@ -193,7 +193,7 @@ async def main():
 
     MomConsImposed = params_dict['Geom_Bodies'] ['MomConsImposed']
 
-    # await js.NativeFS.syncfs(True)
+    await js.syncFromDisk()
 
     store_folder = '/mount_dir/GUI solutions'
 
