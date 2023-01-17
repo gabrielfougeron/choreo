@@ -88,6 +88,8 @@ def NPY_JS_to_py(npy_js):
 
 async def main():
 
+    SyncDiskPromise = js.syncFromDisk()
+
     params_dict = js.ConfigDict.to_py()
     
     CrashOnError_changevar = False
@@ -192,20 +194,6 @@ async def main():
 
 
     MomConsImposed = params_dict['Geom_Bodies'] ['MomConsImposed']
-
-    await js.syncFromDisk()
-
-    store_folder = '/mount_dir/GUI solutions'
-
-    if not(os.path.isdir(store_folder)):
-
-        store_folder = 'Sniff_all_sym/'
-
-        if os.path.isdir(store_folder):
-            shutil.rmtree(store_folder)
-            os.makedirs(store_folder)
-        else:
-            os.makedirs(store_folder)
 
     Use_exact_Jacobian = params_dict["Solver_Discr"]["Use_exact_Jacobian"]
 
@@ -323,8 +311,19 @@ async def main():
 
         optim_callback_list.append(Plot_Loops_During_Optim)
 
+    await SyncDiskPromise
 
+    store_folder = '/mount_dir/GUI solutions'
 
+    if not(os.path.isdir(store_folder)):
+
+        store_folder = 'Sniff_all_sym/'
+
+        if os.path.isdir(store_folder):
+            shutil.rmtree(store_folder)
+            os.makedirs(store_folder)
+        else:
+            os.makedirs(store_folder)
 
     file_basename = ''
 
