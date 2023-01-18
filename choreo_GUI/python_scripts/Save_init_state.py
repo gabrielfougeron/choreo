@@ -210,8 +210,7 @@ def main():
     max_norm_on_entry = 1e20
 
     Newt_err_norm_max = params_dict["Solver_Optim"]["Newt_err_norm_max"]  
-    # Newt_err_norm_max_save = Newt_err_norm_max*1000
-    Newt_err_norm_max_save = 1e-9
+    Newt_err_norm_max_save = params_dict["Solver_Optim"]["Newt_err_norm_safe"]  
 
     duplicate_eps = 1e-8
 

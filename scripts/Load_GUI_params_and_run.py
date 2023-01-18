@@ -122,7 +122,6 @@ def main():
 
         mass = np.array(mass,dtype=np.float64)
 
-
     if ((LookForTarget) and not(params_dict['Geom_Target'] ['RandomJitterTarget'])) :
 
         coeff_ampl_min  = 1e-17
@@ -243,8 +242,7 @@ def main():
     max_norm_on_entry = 1e20
 
     Newt_err_norm_max = params_dict["Solver_Optim"]["Newt_err_norm_max"]  
-    # Newt_err_norm_max_save = Newt_err_norm_max*1000
-    Newt_err_norm_max_save = 1e-9
+    Newt_err_norm_max_save = params_dict["Solver_Optim"]["Newt_err_norm_safe"]  
 
     duplicate_eps = 1e-8
 
@@ -293,8 +291,8 @@ def main():
     plot_extend = 0.
 
     n_opt = 0
-    # n_opt_max = 1
-    n_opt_max = 1e6
+    n_opt_max = 1
+    # n_opt_max = 1e6
     n_find_max = 1e4
 
     ReconvergeSol = False
@@ -308,8 +306,8 @@ def main():
 
 if __name__ == "__main__":
 # 
-    Exec_Mul_Proc = True
-    # Exec_Mul_Proc = False
+    # Exec_Mul_Proc = True
+    Exec_Mul_Proc = False
 
     # n = 5
     # n = multiprocessing.cpu_count()

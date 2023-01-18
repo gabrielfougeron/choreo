@@ -598,6 +598,7 @@ function GatherConfigDict() {
     ConfigDict['Solver_Optim'] ['line_search']    = document.getElementById('linesearch_method').value;
     ConfigDict['Solver_Optim'] ['line_search_smin']    = parseFloat(document.getElementById('linesearch_smin').value);
 
+    ConfigDict['Solver_Optim'] ['Newt_err_norm_safe'] = parseFloat(document.getElementById('input_Newt_err_norm_safe').value);
     ConfigDict['Solver_Optim'] ['Newt_err_norm_max'] = parseFloat(document.getElementById('input_Newt_err_norm_max').value);
     ConfigDict['Solver_Optim'] ['optim_verbose_lvl'] = document.getElementById('optim_verbose_lvl').value;
 
@@ -784,6 +785,7 @@ function LoadConfigDict(ConfigDict) {
     document.getElementById('krylov_method').value           = ConfigDict['Solver_Optim'] ['krylov_method']     
     document.getElementById('linesearch_method').value       = ConfigDict['Solver_Optim'] ['line_search']       
     document.getElementById('linesearch_smin').value         = ConfigDict['Solver_Optim'] ['line_search_smin']  
+    document.getElementById('input_Newt_err_norm_safe').value = ConfigDict['Solver_Optim'] ['Newt_err_norm_safe'] 
     document.getElementById('input_Newt_err_norm_max').value = ConfigDict['Solver_Optim'] ['Newt_err_norm_max'] 
     document.getElementById('optim_verbose_lvl').value       = ConfigDict['Solver_Optim'] ['optim_verbose_lvl'] 
 

@@ -596,8 +596,6 @@ def GenSymExample(
     print(f'Building an initial state with {nbody:d} bodies.')
     print('')
 
-    success = True
-
     n_reconverge_it_max = 0
     n_grad_change = 1
 
@@ -641,7 +639,8 @@ def GenSymExample(
         print(f"Init minimum inter body distance too low : {xmin:.2e}.")
         print("There is likely something wrong with constraints.")
         print("")
-        success = False
+
+        return False
 
     callfun[0]["current_cvg_lvl"] = 0
     ncoeff = callfun[0]["ncoeff_list"][callfun[0]["current_cvg_lvl"]]
@@ -712,7 +711,7 @@ def GenSymExample(
 
         np.save('init.npy',all_pos_b)
 
-    return success
+    return True
 
 def Speed_test(
     nbody,
