@@ -200,8 +200,6 @@ async def main():
 
     Look_for_duplicates = params_dict["Solver_Checks"]["Look_for_duplicates"]
 
-    print(f"Look_for_duplicates : {Look_for_duplicates}")
-
     Check_Escape = params_dict["Solver_Checks"]["Check_Escape"]
 
     # Penalize_Escape = True
