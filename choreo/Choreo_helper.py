@@ -60,14 +60,17 @@ def Make2DChoreoSym(SymType,ib_list):
         
         rot_angle = twopi * SymType['l'] /  SymType['k']
         s = 1
-        
-        SymGens.append(ChoreoSym(
+
+        Sym = ChoreoSym(
             LoopTarget=ib_list[0],
             LoopSource=ib_list[0],
             SpaceRot = np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64),
             TimeRev=1,
             TimeShift=fractions.Fraction(numerator=1,denominator=SymType['k'])
-        ))
+        )
+
+        if not(Sym.IsIdentity()):
+            SymGens.append(Sym)
 
     if (SymType['name'] == 'D'):
         
@@ -210,17 +213,19 @@ def Make2DChoreoSymManyLoops(nloop=None,nbpl=None,SymName=None,SymType=None):
     for il in range(nloop):
 
         SymGens.extend(Make2DChoreoSym(SymType[il],[(i+istart) for i in range(nbpl[il])]))
-                
-        SymGens.append(ChoreoSym(
-            LoopTarget=istart,
-            LoopSource=istart,
-            SpaceRot = np.identity(ndim,dtype=np.float64),
-            TimeRev=1,
-            TimeShift=fractions.Fraction(numerator=-1,denominator=the_lcm//nbpl[il])
-        ))
-        
+
+        if (the_lcm//nbpl[il] != 1):
+
+            SymGens.append(ChoreoSym(
+                LoopTarget=istart,
+                LoopSource=istart,
+                SpaceRot = np.identity(ndim,dtype=np.float64),
+                TimeRev=1,
+                TimeShift=fractions.Fraction(numerator=-1,denominator=the_lcm//nbpl[il])
+            ))
+            
         istart += nbpl[il]
-        
+
     nbody = istart
         
     return SymGens,nbody

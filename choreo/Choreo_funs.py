@@ -489,12 +489,12 @@ def setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max=6,MomCons=True,n_
     SymGraph = nx.Graph()
     for i in range(nbody):
         SymGraph.add_node(i,Constraint_list=[])
-    
+
     for Sym in Sym_list:
-        
+
         if (Sym.LoopTarget > Sym.LoopSource):
             Sym=Sym.Inverse()
-        
+
         if (Sym.LoopTarget == Sym.LoopSource):
             # Add constraint
             if not(Sym.IsIdentity()):
@@ -574,7 +574,7 @@ def setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max=6,MomCons=True,n_
     for il in range(len(ConnectedComponents)):
         
         loopgen[il] = ConnectedComponents[il].pop()
-        
+
         paths_to_gen = nx.shortest_path(SymGraph, target=loopgen[il])
         
         ib = 0
@@ -601,7 +601,7 @@ def setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max=6,MomCons=True,n_
                 else:
                     
                     Sym = Sym.Compose(SymGraph.edges[(iend,ibeg)]["Sym"].Inverse())
-            
+
             Targets[il,ib] = istart
                     
             SpaceRotsUn[il,ib,:,:] = Sym.SpaceRot
@@ -631,8 +631,8 @@ def setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max=6,MomCons=True,n_
         # Count unique pair transformations
         for ib in range(loopnb[il]-1):
             for ibp in range(ib+1,loopnb[il]):                
-                
-                Sym = (gen_to_target[ibp].Inverse()).ComposeLight(gen_to_target[ib])
+
+                Sym = (gen_to_target[ibp]).Compose(gen_to_target[ib].Inverse())
                 
                 if Sym.IsIdentity():
 
