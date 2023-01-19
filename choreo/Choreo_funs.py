@@ -617,8 +617,17 @@ def setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max=6,MomCons=True,n_
                     
             SpaceRotsUn[il,ib,:,:] = Sym.SpaceRot
             TimeRevsUn[il,ib] = Sym.TimeRev
-            TimeShiftNumUn[il,ib] = Sym.TimeShift.numerator
-            TimeShiftDenUn[il,ib] = Sym.TimeShift.denominator
+
+            if (Sym.TimeShift.denominator > 0):
+
+                TimeShiftNumUn[il,ib] = Sym.TimeShift.numerator % Sym.TimeShift.denominator
+                TimeShiftDenUn[il,ib] = Sym.TimeShift.denominator
+
+            else:
+
+                TimeShiftNumUn[il,ib] = -Sym.TimeShift.numerator % (-Sym.TimeShift.denominator)
+                TimeShiftDenUn[il,ib] = -Sym.TimeShift.denominator
+
             
             if (Sym.LoopTarget != loopgen[il]):
                 
@@ -641,7 +650,11 @@ def setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max=6,MomCons=True,n_
         ProdMassSum = []
         # Count unique pair transformations
         for ib in range(loopnb[il]-1):
-            for ibp in range(ib+1,loopnb[il]):                
+            for ibp in range(ib+1,loopnb[il]):   
+
+                print(ib,ibp)             
+                print(Sym)             
+                print("")             
 
                 Sym = (gen_to_target[ibp]).Compose(gen_to_target[ib].Inverse())
 
@@ -695,8 +708,12 @@ def setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max=6,MomCons=True,n_
 
             SpaceRotsBin[il,ibi,:,:] = UniqueSymsAll_list[il][ibi].SpaceRot
             TimeRevsBin[il,ibi] = UniqueSymsAll_list[il][ibi].TimeRev
-            TimeShiftNumBin[il,ibi] = UniqueSymsAll_list[il][ibi].TimeShift.numerator
-            TimeShiftDenBin[il,ibi] = UniqueSymsAll_list[il][ibi].TimeShift.denominator
+            if (UniqueSymsAll_list[il][ibi].TimeShift.denominator > 0):
+                TimeShiftNumBin[il,ibi] = UniqueSymsAll_list[il][ibi].TimeShift.numerator % UniqueSymsAll_list[il][ibi].TimeShift.denominator
+                TimeShiftDenBin[il,ibi] = UniqueSymsAll_list[il][ibi].TimeShift.denominator
+            else:
+                TimeShiftNumBin[il,ibi] = (- UniqueSymsAll_list[il][ibi].TimeShift.numerator) % (- UniqueSymsAll_list[il][ibi].TimeShift.denominator)
+                TimeShiftDenBin[il,ibi] = - UniqueSymsAll_list[il][ibi].TimeShift.denominator
 
     # Count how many unique paths need to be displayed
     RequiresLoopDispUn = np.zeros((nloop,maxlooplen),dtype=bool)
