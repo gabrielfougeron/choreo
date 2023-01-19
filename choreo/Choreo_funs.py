@@ -652,10 +652,6 @@ def setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max=6,MomCons=True,n_
         for ib in range(loopnb[il]-1):
             for ibp in range(ib+1,loopnb[il]):   
 
-                print(ib,ibp)             
-                print(Sym)             
-                print("")             
-
                 Sym = (gen_to_target[ibp]).Compose(gen_to_target[ib].Inverse())
 
                 if Sym.IsIdentity():
