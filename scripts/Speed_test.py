@@ -302,7 +302,7 @@ def main():
     AddNumberToOutputName = True
     
     # n_test = 100000
-    n_test = 200
+    n_test = 2000
 # 
     all_kwargs = choreo.Pick_Named_Args_From_Dict(choreo.Speed_test,dict(globals(),**locals()))
 
