@@ -85,14 +85,15 @@ def Compute_action_Cython_2D(
     # This function is probably the most important one.
     # Computes the action and its gradient with respect to the Fourier coefficients of the generator in each loop.
 
-    cdef Py_ssize_t il,ilp,i
+    cdef Py_ssize_t il,ilp
     cdef Py_ssize_t idim
     cdef Py_ssize_t ibi
     cdef Py_ssize_t ib,ibp
     cdef Py_ssize_t iint
     cdef Py_ssize_t k
-    cdef Py_ssize_t shift_i,shift_ip
+    cdef Py_ssize_t shift_i, shift_ip
     cdef long k2
+    cdef long rem, ddiv
     cdef double pot,potp,potpp
     cdef double prod_mass,a,b,dx2,prod_fac
 
@@ -115,18 +116,28 @@ def Compute_action_Cython_2D(
 
     for il in range(nloop):
         for ib in range(loopnb[il]):
-                
-            if not(((TimeRevsUn[il,ib]*nint*TimeShiftNumUn[il,ib]) % TimeShiftDenUn[il,ib]) == 0):
+
+            k = (TimeRevsUn[il,ib]*nint*TimeShiftNumUn[il,ib])
+
+            ddiv = - k // TimeShiftDenUn[il,ib]
+            rem = k + ddiv * TimeShiftDenUn[il,ib]
+
+            if (rem != 0):
                 print("WARNING: remainder in integer division. Gradient computation will fail.")
-                
-            all_shiftsUn[il,ib] = (nint + (-TimeRevsUn[il,ib]*nint*TimeShiftNumUn[il,ib]) // TimeShiftDenUn[il,ib] ) % nint
+
+            all_shiftsUn[il,ib] = (((ddiv) % nint) + nint) % nint
         
         for ibi in range(loopnbi[il]):
 
-            if not(((TimeRevsBin[il,ibi]*nint*TimeShiftNumBin[il,ibi]) % TimeShiftDenBin[il,ibi]) == 0):
+            k = (TimeRevsBin[il,ibi]*nint*TimeShiftNumBin[il,ibi])
+
+            ddiv = - k // TimeShiftDenBin[il,ibi]
+            rem = k + ddiv * TimeShiftDenBin[il,ibi]
+
+            if (rem != 0):
                 print("WARNING: remainder in integer division. Gradient computation will fail.")
-                
-            all_shiftsBin[il,ibi] = (nint + (-TimeRevsBin[il,ibi]*nint*TimeShiftNumBin[il,ibi]) // TimeShiftDenBin[il,ibi]) % nint
+
+            all_shiftsBin[il,ibi] = ((ddiv % nint) + nint) % nint
     
     cdef double[:,:,::1] grad_pot_all = np.zeros((nloop,2,nint),dtype=np.float64)
 
@@ -175,13 +186,14 @@ def Compute_action_Cython_2D(
                         grad_pot_all[ilp,1,shift_ip] -= SpaceRotsUn[ilp,ibp,0,1]*dx[0]
                         grad_pot_all[ilp,1,shift_ip] -= SpaceRotsUn[ilp,ibp,1,1]*dx[1]
 
-
         # Same loop + symmetry
         for il in range(nloop):
 
             for ibi in range(loopnbi[il]):
 
                 shift_i  = all_shiftsBin[il,ibi]
+
+                # print(iint,ibi,shift_i)
 
                 dx[0]  = SpaceRotsBin[il,ibi,0,0]*all_pos[il,0,shift_i]
                 dx[0] += SpaceRotsBin[il,ibi,0,1]*all_pos[il,1,shift_i]
@@ -216,28 +228,30 @@ def Compute_action_Cython_2D(
         # Increments time at the end
         for il in range(nloop):
             for ib in range(loopnb[il]):
-                all_shiftsUn[il,ib] = (all_shiftsUn[il,ib]+TimeRevsUn[il,ib]) % nint
+                all_shiftsUn[il,ib] = ((((all_shiftsUn[il,ib]+TimeRevsUn[il,ib]) % nint) + nint) % nint)
                 
             for ibi in range(loopnbi[il]):
-                all_shiftsBin[il,ibi] = (all_shiftsBin[il,ibi]+TimeRevsBin[il,ibi]) % nint
+
+                all_shiftsBin[il,ibi] = ((((all_shiftsBin[il,ibi]+TimeRevsBin[il,ibi]) % nint) + nint) % nint)
+
 
     Pot_en = Pot_en / nint
     cdef double complex[:,:,::1]  grad_pot_fft = the_rfft(grad_pot_all,norm="forward")  #
-    cdef double Kin_en = 0  #
+    cdef double Kin_en = 0 
     cdef np.ndarray[double, ndim=4, mode="c"] Action_grad_np = np.empty((nloop,2,ncoeff,2),np.float64)
     cdef double[:,:,:,::1] Action_grad = Action_grad_np #
     for il in range(nloop):
         
         prod_fac = MassSum[il]*cfourpisq
         
-        for idim in range(2):   #
+        for idim in range(2): 
             Action_grad[il,idim,0,0] = -grad_pot_fft[il,idim,0].real
-            Action_grad[il,idim,0,1] = 0    #
+            Action_grad[il,idim,0,1] = 0  
             for k in range(1,ncoeff):
                 
                 k2 = k*k
                 a = prod_fac*k2
-                b=2*a   #
+                b=2*a  
                 Kin_en += a *((all_coeffs[il,idim,k,0]*all_coeffs[il,idim,k,0]) + (all_coeffs[il,idim,k,1]*all_coeffs[il,idim,k,1]))
                 
                 Action_grad[il,idim,k,0] = b*all_coeffs[il,idim,k,0] - 2*grad_pot_fft[il,idim,k].real
@@ -273,7 +287,7 @@ def Compute_action_hess_mul_Cython_2D(
     # Computes the matrix vector product H*dx where H is the Hessian of the action.
     # Useful to guide the root finding / optimisation process and to better understand the topography of the action (critical points / Morse theory).
 
-    cdef Py_ssize_t il,ilp,i
+    cdef Py_ssize_t il,ilp
     cdef Py_ssize_t idim,jdim
     cdef Py_ssize_t ibi
     cdef Py_ssize_t ib,ibp
@@ -305,18 +319,28 @@ def Compute_action_hess_mul_Cython_2D(
     
     for il in range(nloop):
         for ib in range(loopnb[il]):
-                
-            if not(((TimeRevsUn[il,ib]*nint*TimeShiftNumUn[il,ib]) % TimeShiftDenUn[il,ib]) == 0):
+
+            k = (TimeRevsUn[il,ib]*nint*TimeShiftNumUn[il,ib])
+
+            ddiv = - k // TimeShiftDenUn[il,ib]
+            rem = k + ddiv * TimeShiftDenUn[il,ib]
+
+            if (rem != 0):
                 print("WARNING: remainder in integer division. Gradient computation will fail.")
-                
-            all_shiftsUn[il,ib] = (nint + (-TimeRevsUn[il,ib]*nint*TimeShiftNumUn[il,ib]) // TimeShiftDenUn[il,ib] ) % nint
+
+            all_shiftsUn[il,ib] = (((ddiv) % nint) + nint) % nint
         
         for ibi in range(loopnbi[il]):
 
-            if not(((TimeRevsBin[il,ibi]*nint*TimeShiftNumBin[il,ibi]) % TimeShiftDenBin[il,ibi]) == 0):
+            k = (TimeRevsBin[il,ibi]*nint*TimeShiftNumBin[il,ibi])
+
+            ddiv = - k // TimeShiftDenBin[il,ibi]
+            rem = k + ddiv * TimeShiftDenBin[il,ibi]
+
+            if (rem != 0):
                 print("WARNING: remainder in integer division. Gradient computation will fail.")
-                
-            all_shiftsBin[il,ibi] = (nint + (-TimeRevsBin[il,ibi]*nint*TimeShiftNumBin[il,ibi]) // TimeShiftDenBin[il,ibi]) % nint
+
+            all_shiftsBin[il,ibi] = (((ddiv) % nint) + nint) % nint
     
     cdef double[:,:,::1] hess_pot_all_d = np.zeros((nloop,2,nint),dtype=np.float64)
 
@@ -423,10 +447,10 @@ def Compute_action_hess_mul_Cython_2D(
         # Increments time at the end
         for il in range(nloop):
             for ib in range(loopnb[il]):
-                all_shiftsUn[il,ib] = (all_shiftsUn[il,ib]+TimeRevsUn[il,ib]) % nint
+                all_shiftsUn[il,ib] = ((((all_shiftsUn[il,ib]+TimeRevsUn[il,ib]) % nint) + nint) % nint)
                 
             for ibi in range(loopnbi[il]):
-                all_shiftsBin[il,ibi] = (all_shiftsBin[il,ibi]+TimeRevsBin[il,ibi]) % nint
+                all_shiftsBin[il,ibi] = ((((all_shiftsBin[il,ibi]+TimeRevsBin[il,ibi]) % nint) + nint) % nint)
 
     cdef double complex[:,:,::1]  hess_dx_pot_fft = the_rfft(hess_pot_all_d,norm="forward")
 

@@ -179,6 +179,7 @@ def Compute_action_Cython(
     cdef Py_ssize_t iint
     cdef Py_ssize_t k
     cdef long k2
+    cdef long ddiv,rem
     cdef double pot,potp,potpp
     cdef double prod_mass,a,b,dx2,prod_fac
 
@@ -201,18 +202,28 @@ def Compute_action_Cython(
 
     for il in range(nloop):
         for ib in range(loopnb[il]):
-                
-            if not(((TimeRevsUn[il,ib]*nint*TimeShiftNumUn[il,ib]) % TimeShiftDenUn[il,ib]) == 0):
+
+            k = (TimeRevsUn[il,ib]*nint*TimeShiftNumUn[il,ib])
+
+            ddiv = - k // TimeShiftDenUn[il,ib]
+            rem = k + ddiv * TimeShiftDenUn[il,ib]
+
+            if (rem != 0):
                 print("WARNING: remainder in integer division. Gradient computation will fail.")
-                
-            all_shiftsUn[il,ib] = (nint + (-TimeRevsUn[il,ib]*nint*TimeShiftNumUn[il,ib]) // TimeShiftDenUn[il,ib] ) % nint
+
+            all_shiftsUn[il,ib] = (((ddiv) % nint) + nint) % nint
         
         for ibi in range(loopnbi[il]):
 
-            if not(((TimeRevsBin[il,ibi]*nint*TimeShiftNumBin[il,ibi]) % TimeShiftDenBin[il,ibi]) == 0):
+            k = (TimeRevsBin[il,ibi]*nint*TimeShiftNumBin[il,ibi])
+
+            ddiv = - k // TimeShiftDenBin[il,ibi]
+            rem = k + ddiv * TimeShiftDenBin[il,ibi]
+
+            if (rem != 0):
                 print("WARNING: remainder in integer division. Gradient computation will fail.")
-                
-            all_shiftsBin[il,ibi] = (nint + (-TimeRevsBin[il,ibi]*nint*TimeShiftNumBin[il,ibi]) // TimeShiftDenBin[il,ibi]) % nint
+
+            all_shiftsBin[il,ibi] = (((ddiv) % nint) + nint) % nint
     
     cdef double[:,:,::1] grad_pot_all = np.zeros((nloop,cndim,nint),dtype=np.float64)
 
@@ -297,10 +308,10 @@ def Compute_action_Cython(
         # Increments time at the end
         for il in range(nloop):
             for ib in range(loopnb[il]):
-                all_shiftsUn[il,ib] = (all_shiftsUn[il,ib]+TimeRevsUn[il,ib]) % nint
+                all_shiftsUn[il,ib] = (((all_shiftsUn[il,ib]+TimeRevsUn[il,ib]) ) + nint) % nint
                 
             for ibi in range(loopnbi[il]):
-                all_shiftsBin[il,ibi] = (all_shiftsBin[il,ibi]+TimeRevsBin[il,ibi]) % nint
+                all_shiftsBin[il,ibi] = (((all_shiftsBin[il,ibi]+TimeRevsBin[il,ibi]) ) + nint) % nint
 
     Pot_en = Pot_en / nint
     cdef double complex[:,:,::1]  grad_pot_fft = the_rfft(grad_pot_all,norm="forward")  #
@@ -358,6 +369,7 @@ def Compute_hash_action_Cython(
     cdef long ib,ibp
     cdef long iint
     cdef long k,k2
+    cdef long ddiv,rem
     cdef double pot,potp,potpp
     cdef double prod_mass,a,b,dx2,prod_fac
     cdef np.ndarray[double, ndim=1, mode="c"]  dx = np.zeros((cndim),dtype=np.float64)
@@ -393,18 +405,28 @@ def Compute_hash_action_Cython(
     
     for il in range(nloop):
         for ib in range(loopnb[il]):
-                
-            if not(((-TimeRevsUn[il,ib]*nint*TimeShiftNumUn[il,ib]) % TimeShiftDenUn[il,ib]) == 0):
+
+            k = (TimeRevsUn[il,ib]*nint*TimeShiftNumUn[il,ib])
+
+            ddiv = - k // TimeShiftDenUn[il,ib]
+            rem = k + ddiv * TimeShiftDenUn[il,ib]
+
+            if (rem != 0):
                 print("WARNING: remainder in integer division. Gradient computation will fail.")
-                
-            all_shiftsUn[il,ib] = ((-TimeRevsUn[il,ib]*nint*TimeShiftNumUn[il,ib]) // TimeShiftDenUn[il,ib] ) % nint
+
+            all_shiftsUn[il,ib] = (((ddiv) % nint) + nint) % nint
         
         for ibi in range(loopnbi[il]):
 
-            if not(((-TimeRevsBin[il,ibi]*nint*TimeShiftNumBin[il,ibi]) % TimeShiftDenBin[il,ibi]) == 0):
+            k = (TimeRevsBin[il,ibi]*nint*TimeShiftNumBin[il,ibi])
+
+            ddiv = - k // TimeShiftDenBin[il,ibi]
+            rem = k + ddiv * TimeShiftDenBin[il,ibi]
+
+            if (rem != 0):
                 print("WARNING: remainder in integer division. Gradient computation will fail.")
-                
-            all_shiftsBin[il,ibi] = ((-TimeRevsBin[il,ibi]*nint*TimeShiftNumBin[il,ibi]) // TimeShiftDenBin[il,ibi]) % nint
+
+            all_shiftsBin[il,ibi] = (((ddiv) % nint) + nint) % nint
     
     cdef np.ndarray[double, ndim=3, mode="c"] grad_pot_all = np.zeros((nloop,cndim,nint),dtype=np.float64)
 
@@ -458,10 +480,10 @@ def Compute_hash_action_Cython(
         # Increments time at the end
         for il in range(nloop):
             for ib in range(loopnb[il]):
-                all_shiftsUn[il,ib] = (all_shiftsUn[il,ib]+TimeRevsUn[il,ib]) % nint
+                all_shiftsUn[il,ib] = (((all_shiftsUn[il,ib]+TimeRevsUn[il,ib]) % nint ) + nint) % nint
                 
             for ibi in range(loopnbi[il]):
-                all_shiftsBin[il,ibi] = (all_shiftsBin[il,ibi]+TimeRevsBin[il,ibi]) % nint
+                all_shiftsBin[il,ibi] = (((all_shiftsBin[il,ibi]+TimeRevsBin[il,ibi]) % nint ) + nint) % nint
 
     for ihash in range(cnhash):
         Hash_En[ihash] = Kin_en - Hash_En[ihash]/nint
@@ -497,6 +519,7 @@ def Compute_MinDist_Cython(
     cdef long ib,ibp
     cdef long iint
     cdef long k,k2
+    cdef long ddiv,rem
     cdef double pot,potp,potpp
     cdef double prod_mass,a,b,dx2,prod_fac
     cdef np.ndarray[double, ndim=1, mode="c"]  dx = np.zeros((cndim),dtype=np.float64)
@@ -515,18 +538,28 @@ def Compute_MinDist_Cython(
     
     for il in range(nloop):
         for ib in range(loopnb[il]):
-                
-            if not(((-TimeRevsUn[il,ib]*nint*TimeShiftNumUn[il,ib]) % TimeShiftDenUn[il,ib]) == 0):
+
+            k = (TimeRevsUn[il,ib]*nint*TimeShiftNumUn[il,ib])
+
+            ddiv = - k // TimeShiftDenUn[il,ib]
+            rem = k + ddiv * TimeShiftDenUn[il,ib]
+
+            if (rem != 0):
                 print("WARNING: remainder in integer division. Gradient computation will fail.")
-                
-            all_shiftsUn[il,ib] = ((-TimeRevsUn[il,ib]*nint*TimeShiftNumUn[il,ib]) // TimeShiftDenUn[il,ib] ) % nint
+
+            all_shiftsUn[il,ib] = (((ddiv) % nint) + nint) % nint
         
         for ibi in range(loopnbi[il]):
 
-            if not(((-TimeRevsBin[il,ibi]*nint*TimeShiftNumBin[il,ibi]) % TimeShiftDenBin[il,ibi]) == 0):
+            k = (TimeRevsBin[il,ibi]*nint*TimeShiftNumBin[il,ibi])
+
+            ddiv = - k // TimeShiftDenBin[il,ibi]
+            rem = k + ddiv * TimeShiftDenBin[il,ibi]
+
+            if (rem != 0):
                 print("WARNING: remainder in integer division. Gradient computation will fail.")
-                
-            all_shiftsBin[il,ibi] = ((-TimeRevsBin[il,ibi]*nint*TimeShiftNumBin[il,ibi]) // TimeShiftDenBin[il,ibi]) % nint
+
+            all_shiftsBin[il,ibi] = (((ddiv) % nint) + nint) % nint
 
     for iint in range(nint):
 
@@ -571,10 +604,10 @@ def Compute_MinDist_Cython(
         # Increments time at the end
         for il in range(nloop):
             for ib in range(loopnb[il]):
-                all_shiftsUn[il,ib] = (all_shiftsUn[il,ib]+TimeRevsUn[il,ib]) % nint
+                all_shiftsUn[il,ib] = (((all_shiftsUn[il,ib]+TimeRevsUn[il,ib]) % nint ) + nint) % nint
                 
             for ibi in range(loopnbi[il]):
-                all_shiftsBin[il,ibi] = (all_shiftsBin[il,ibi]+TimeRevsBin[il,ibi]) % nint
+                all_shiftsBin[il,ibi] = (((all_shiftsBin[il,ibi]+TimeRevsBin[il,ibi]) % nint ) + nint) % nint
 
     return csqrt(dx2min)
    
@@ -627,7 +660,6 @@ def Compute_Loop_Dist_Cython(
                         dx2 += dx[idim]*dx[idim]
 
                     sum_loop_dist2 += dx2
-
 
     for il in range(nloop):
         for ibi in range(loopnbi[il]):
@@ -820,6 +852,7 @@ def Compute_action_hess_mul_Cython(
     cdef Py_ssize_t iint
     cdef Py_ssize_t k
     cdef long k2
+    cdef long ddiv,rem
     cdef double pot,potp,potpp
     cdef double prod_mass,a,b,c,dx2,prod_fac,dxtddx
     cdef double[::1] dx  = np.zeros((cndim),dtype=np.float64)
@@ -843,18 +876,28 @@ def Compute_action_hess_mul_Cython(
     
     for il in range(nloop):
         for ib in range(loopnb[il]):
-                
-            if not(((TimeRevsUn[il,ib]*nint*TimeShiftNumUn[il,ib]) % TimeShiftDenUn[il,ib]) == 0):
+
+            k = (TimeRevsUn[il,ib]*nint*TimeShiftNumUn[il,ib])
+
+            ddiv = - k // TimeShiftDenUn[il,ib]
+            rem = k + ddiv * TimeShiftDenUn[il,ib]
+
+            if (rem != 0):
                 print("WARNING: remainder in integer division. Gradient computation will fail.")
-                
-            all_shiftsUn[il,ib] = (nint + (-TimeRevsUn[il,ib]*nint*TimeShiftNumUn[il,ib]) // TimeShiftDenUn[il,ib] ) % nint
+
+            all_shiftsUn[il,ib] = (((ddiv) % nint) + nint) % nint
         
         for ibi in range(loopnbi[il]):
 
-            if not(((TimeRevsBin[il,ibi]*nint*TimeShiftNumBin[il,ibi]) % TimeShiftDenBin[il,ibi]) == 0):
+            k = (TimeRevsBin[il,ibi]*nint*TimeShiftNumBin[il,ibi])
+
+            ddiv = - k // TimeShiftDenBin[il,ibi]
+            rem = k + ddiv * TimeShiftDenBin[il,ibi]
+
+            if (rem != 0):
                 print("WARNING: remainder in integer division. Gradient computation will fail.")
-                
-            all_shiftsBin[il,ibi] = (nint + (-TimeRevsBin[il,ibi]*nint*TimeShiftNumBin[il,ibi]) // TimeShiftDenBin[il,ibi]) % nint
+
+            all_shiftsBin[il,ibi] = (((ddiv) % nint) + nint) % nint
     
     cdef double[:,:,::1] hess_pot_all_d = np.zeros((nloop,cndim,nint),dtype=np.float64)
 
@@ -946,10 +989,10 @@ def Compute_action_hess_mul_Cython(
         # Increments time at the end
         for il in range(nloop):
             for ib in range(loopnb[il]):
-                all_shiftsUn[il,ib] = (all_shiftsUn[il,ib]+TimeRevsUn[il,ib]) % nint
+                all_shiftsUn[il,ib] = (((all_shiftsUn[il,ib]+TimeRevsUn[il,ib]) % nint ) + nint) % nint
                 
             for ibi in range(loopnbi[il]):
-                all_shiftsBin[il,ibi] = (all_shiftsBin[il,ibi]+TimeRevsBin[il,ibi]) % nint
+                all_shiftsBin[il,ibi] = (((all_shiftsBin[il,ibi]+TimeRevsBin[il,ibi]) % nint ) + nint) % nint
 
     cdef double complex[:,:,::1]  hess_dx_pot_fft = the_rfft(hess_pot_all_d,norm="forward")
 
@@ -1001,6 +1044,7 @@ def Compute_Newton_err_Cython(
     cdef long ib,ibp
     cdef long iint
     cdef long k,k2
+    cdef long ddiv,rem
     cdef double pot,potp,potpp
     cdef double prod_mass,a,b,dx2,prod_fac
     cdef np.ndarray[double, ndim=1, mode="c"]  dx = np.zeros((cndim),dtype=np.float64)
@@ -1030,11 +1074,17 @@ def Compute_Newton_err_Cython(
     
     for il in range(nloop):
         for ib in range(loopnb[il]):
-                
-            if not(((-TimeRevsUn[il,ib]*nint*TimeShiftNumUn[il,ib]) % TimeShiftDenUn[il,ib]) == 0):
+
+            k = (TimeRevsUn[il,ib]*nint*TimeShiftNumUn[il,ib])
+
+            ddiv = - k // TimeShiftDenUn[il,ib]
+            rem = k + ddiv * TimeShiftDenUn[il,ib]
+
+            if (rem != 0):
                 print("WARNING: remainder in integer division. Gradient computation will fail.")
-                
-            all_shiftsUn[il,ib] = ((-TimeRevsUn[il,ib]*nint*TimeShiftNumUn[il,ib]) // TimeShiftDenUn[il,ib] ) % nint
+
+            all_shiftsUn[il,ib] = (((ddiv) % nint) + nint) % nint
+        
         
     for iint in range(nint):
 
@@ -1106,7 +1156,7 @@ def Compute_Newton_err_Cython(
         # Increments time at the end
         for il in range(nloop):
             for ib in range(loopnb[il]):
-                all_shiftsUn[il,ib] = (all_shiftsUn[il,ib]+TimeRevsUn[il,ib]) % nint
+                all_shiftsUn[il,ib] = (((all_shiftsUn[il,ib]+TimeRevsUn[il,ib]) % nint ) + nint) % nint
                 
     return all_Newt_err
                                                                                                                                                                 
