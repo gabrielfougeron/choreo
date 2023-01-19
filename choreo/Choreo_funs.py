@@ -470,11 +470,22 @@ class ChoreoSym():
         
             return False
             
+    def IsSameLight(self,other):
+        r"""
+        Returns True if the two transformations are almost identical, ignoring source and target
+        """   
+
+        RoundTrip = (self.Inverse()).ComposeLight(other)
+        RoundTrip.LoopSource = 0
+        RoundTrip.LoopTarget = 0
+
+        return RoundTrip.IsIdentity()
+        
     def IsSame(self,other):
         r"""
         Returns True if the two transformations are almost identical.
         """   
-        return ((self.Inverse()).ComposeLight(other)).IsIdentity()
+        return ((self.Inverse()).Compose(other)).IsIdentity()
 
 def setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max=6,MomCons=True,n_grad_change=1.,Sym_list=[],CrashOnIdentity=True):
     # This function returns the callfun dictionnary to be given as input to virtually all other function.
@@ -633,7 +644,7 @@ def setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max=6,MomCons=True,n_
             for ibp in range(ib+1,loopnb[il]):                
 
                 Sym = (gen_to_target[ibp]).Compose(gen_to_target[ib].Inverse())
-                
+
                 if Sym.IsIdentity():
 
                     if CrashOnIdentity:
@@ -648,13 +659,13 @@ def setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max=6,MomCons=True,n_
                 IsUnique = True
                 for isym in range(len(UniqueSyms)):
 
-                    IsUnique = not(Sym.IsSame(UniqueSyms[isym]))
+                    IsUnique = not(Sym.IsSameLight(UniqueSyms[isym]))
 
                     if not(IsUnique):
                         break
 
-                    Sym = Sym.Inverse()
-                    IsUnique = not(Sym.IsSame(UniqueSyms[isym]))
+                    SymInv = Sym.Inverse()
+                    IsUnique = not(SymInv.IsSameLight(UniqueSyms[isym]))
 
                     if not(IsUnique):
                         break

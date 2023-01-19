@@ -30,7 +30,9 @@ async function loadPyodideAndPackages() {
         stderr: RedirectPythonPrint,
     })
 
-    RedirectPythonPrint("\nImporting packages ...")
+    RedirectPythonPrint("Python initialized\n")		
+
+    RedirectPythonPrint("Importing packages ...")
 
     await pyodide.loadPackage([
         "matplotlib",
