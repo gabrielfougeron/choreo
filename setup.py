@@ -117,7 +117,7 @@ setuptools.setup(
     author = "Gabriel Fougeron <gabriel.fougeron@hotmail.fr>",
     url = "https://github.com/gabrielfougeron/choreo",
     version = __version__,
-    description="A set of tools to compute periodic solution to the Newtonian N-body problem",
+    description="A set of tools to compute periodic solutions to the Newtonian N-body problem",
     license = "BSD 2-Clause License",
     platforms=['any'],
     packages = setuptools.find_packages(),
