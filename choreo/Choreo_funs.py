@@ -19,9 +19,7 @@ import scipy.sparse as sp
 import sparseqr
 import networkx as nx
 import random
-
 import inspect
-
 import fractions
 
 from matplotlib import pyplot as plt
@@ -38,7 +36,6 @@ from choreo.Choreo_cython_funs import Compute_MinDist_Cython,Compute_Loop_Dist_b
 from choreo.Choreo_cython_funs import Compute_Forces_Cython,Compute_JacMat_Forces_Cython,Compute_JacMul_Forces_Cython
 from choreo.Choreo_cython_funs import Transform_Coeffs_Single_Loop,SparseScaleCoeffs,ComputeSpeedCoeffs
 from choreo.Choreo_cython_funs import the_irfft,the_rfft
-
 
 if ndim == 2:
     from choreo.Choreo_cython_funs_2D import Compute_action_Cython_2D as Compute_action_Cython ,Compute_action_hess_mul_Cython_2D as Compute_action_hess_mul_Cython
@@ -219,8 +216,7 @@ def Compute_action_onlygrad_escape(x,callfun):
 
     args=callfun[0]
     
-    y = args['param_to_coeff_list'][args["current_cvg_lvl"]].dot(x)
-    all_coeffs = y.reshape(args['nloop'],ndim,args['ncoeff_list'][args["current_cvg_lvl"]],2)
+    all_coeffs = Unpackage_all_coeffs(x,callfun)
 
     rms_dist = Compute_Loop_Dist_btw_avg_Cython(
         args['nloop']           ,
@@ -250,8 +246,7 @@ def Compute_action_onlygrad_escape(x,callfun):
     
     if args["Do_Pos_FFT"]:
         
-        y = args['param_to_coeff_list'][args["current_cvg_lvl"]].dot(x)
-        args['last_all_coeffs'] = y.reshape(args['nloop'],ndim,args['ncoeff_list'][args["current_cvg_lvl"]],2)
+        args['last_all_coeffs'] = Unpackage_all_coeffs(x,callfun)
         
         nint = args['nint_list'][args["current_cvg_lvl"]]
         c_coeffs = args['last_all_coeffs'].view(dtype=np.complex128)[...,0]
@@ -289,13 +284,11 @@ def Compute_action_hess_mul(x,dx,callfun):
     
     args=callfun[0]
 
-    dy = args['param_to_coeff_list'][args["current_cvg_lvl"]].dot(dx)
-    all_coeffs_d = dy.reshape(args['nloop'],ndim,args['ncoeff_list'][args["current_cvg_lvl"]],2)
+    all_coeffs_d = Unpackage_all_coeffs(dx,callfun)
     
     if args["Do_Pos_FFT"]:
         
-        y = args['param_to_coeff_list'][args["current_cvg_lvl"]].dot(x)
-        args['last_all_coeffs'] = y.reshape(args['nloop'],ndim,args['ncoeff_list'][args["current_cvg_lvl"]],2)
+        args['last_all_coeffs'] = Unpackage_all_coeffs(x,callfun)
         
         nint = args['nint_list'][args["current_cvg_lvl"]]
         c_coeffs = args['last_all_coeffs'].view(dtype=np.complex128)[...,0]
@@ -856,8 +849,7 @@ def Compute_action(x,callfun):
 
     if args["Do_Pos_FFT"]:
         
-        y = args['param_to_coeff_list'][args["current_cvg_lvl"]].dot(x)
-        args['last_all_coeffs'] = y.reshape(args['nloop'],ndim,args['ncoeff_list'][args["current_cvg_lvl"]],2)
+        args['last_all_coeffs'] = Unpackage_all_coeffs(x,callfun)
 
         c_coeffs = args['last_all_coeffs'].view(dtype=np.complex128)[...,0]
         args['last_all_pos'] = the_irfft(c_coeffs,n=args['nint_list'][args["current_cvg_lvl"]],axis=2,norm="forward")
@@ -895,8 +887,7 @@ def Compute_hash_action(x,callfun):
 
     args=callfun[0]
     
-    y = args['param_to_coeff_list'][args["current_cvg_lvl"]] * x
-    all_coeffs = y.reshape(args['nloop'],ndim,args['ncoeff_list'][args["current_cvg_lvl"]],2)
+    all_coeffs = Unpackage_all_coeffs(x,callfun)
     
     Hash_Action =  Compute_hash_action_Cython(
         args['nloop']           ,
@@ -927,8 +918,7 @@ def Compute_Newton_err(x,callfun):
 
     args=callfun[0]
     
-    y = args['param_to_coeff_list'][args["current_cvg_lvl"]].dot(x)
-    all_coeffs = y.reshape(args['nloop'],ndim,args['ncoeff_list'][args["current_cvg_lvl"]],2)
+    all_coeffs = Unpackage_all_coeffs(x,callfun)
     
     all_Newt_err =  Compute_Newton_err_Cython(
         args['nbody']           ,
@@ -985,8 +975,7 @@ def Detect_Escape(x,callfun):
     
     args=callfun[0]
     
-    y = args['param_to_coeff_list'][args["current_cvg_lvl"]].dot(x)
-    all_coeffs = y.reshape(args['nloop'],ndim,args['ncoeff_list'][args["current_cvg_lvl"]],2)
+    all_coeffs = Unpackage_all_coeffs(x,callfun)
     
     res = Compute_Loop_Size_Dist_Cython(
         args['nloop']           ,
@@ -1017,8 +1006,7 @@ def Compute_MinDist(x,callfun):
     
     args=callfun[0]
     
-    y = args['param_to_coeff_list'][args["current_cvg_lvl"]].dot(x)
-    all_coeffs = y.reshape(args['nloop'],ndim,args['ncoeff_list'][args["current_cvg_lvl"]],2)
+    all_coeffs = Unpackage_all_coeffs(x,callfun)
     
     MinDist =  Compute_MinDist_Cython(
         args['nloop']           ,
@@ -1052,8 +1040,7 @@ def Compute_MaxPathLength(x,callfun):
 
     if args["Do_Pos_FFT"]:
         
-        y = args['param_to_coeff_list'][args["current_cvg_lvl"]].dot(x)
-        args['last_all_coeffs'] = y.reshape(args['nloop'],ndim,args['ncoeff_list'][args["current_cvg_lvl"]],2)
+        args['last_all_coeffs'] = Unpackage_all_coeffs(x,callfun)
         
         c_coeffs = args['last_all_coeffs'].view(dtype=np.complex128)[...,0]
         args['last_all_pos'] = the_irfft(c_coeffs,n=nint,axis=2,norm="forward")
@@ -1284,8 +1271,7 @@ def Param_to_Param_direct(x,callfun_source,callfun_target):
     args_source=callfun_source[0]
     args_target=callfun_target[0]
 
-    y = args_source['param_to_coeff_list'][args_source["current_cvg_lvl"]].dot(x)
-    all_coeffs = y.reshape(args_source['nloop'],ndim,args_source['ncoeff_list'][args_source["current_cvg_lvl"]],2)
+    all_coeffs = Unpackage_all_coeffs(x,callfun)
     
     if (args_target['ncoeff_list'][args_target["current_cvg_lvl"]] < args_source['ncoeff_list'][args_source["current_cvg_lvl"]]):
         z = all_coeffs[:,:,0:args_target['ncoeff_list'][args_target["current_cvg_lvl"]],:].reshape(-1)
