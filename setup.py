@@ -10,7 +10,7 @@ import Cython.Build
 import numpy
 import platform
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 # To buid and use inplace, run the following command :
 # python setup.py build_ext --inplace
