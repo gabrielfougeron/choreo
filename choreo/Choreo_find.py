@@ -18,7 +18,6 @@ import builtins
 
 from choreo.Choreo_scipy_plus import *
 from choreo.Choreo_funs import *
-from choreo.Choreo_plot import *
 
 def Find_Choreo(
     nbody,
@@ -130,7 +129,6 @@ def Find_Choreo(
     print(f'    ==> Reduction of {100*(1-nbi_tot/nbi_naive):.2f} % wrt the {nbi_naive:d} naive binary iteractions')
     print('')
 
-    # for i in range(n_reconverge_it_max+1):
     for i in [0]:
         
         args = callfun[0]
