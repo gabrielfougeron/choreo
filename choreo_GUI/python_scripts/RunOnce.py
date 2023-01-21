@@ -42,9 +42,9 @@ def Send_init_PlotInfo():
         )
 
 
-def Plot_Loops_During_Optim(x,f,f_norm,callfun):
+def Plot_Loops_During_Optim(x,f,f_norm,ActionSyst):
 
-    xmin,xmax,ymin,ymax = choreo.HeuristicMinMax(callfun)
+    xmin,xmax,ymin,ymax = ActionSyst.HeuristicMinMax()
 
     hside = max(xmax-xmin,ymax-ymin)/2
 
@@ -64,15 +64,15 @@ def Plot_Loops_During_Optim(x,f,f_norm,callfun):
         funname = "Plot_Loops_During_Optim_From_Python",
         args    = pyodide.ffi.to_js(
             {
-                "NPY_data":callfun[0]['last_all_pos'].reshape(-1),
-                "NPY_shape":callfun[0]['last_all_pos'].shape,
+                "NPY_data":ActionSyst.last_all_pos.reshape(-1),
+                "NPY_shape":ActionSyst.last_all_pos.shape,
                 "Current_PlotWindow":windowObject
             },
             dict_converter=js.Object.fromEntries
         )
     )
 
-def ListenToNextFromGUI(x,f,f_norm,callfun):
+def ListenToNextFromGUI(x,f,f_norm,ActionSyst):
 
     AskForNext =  (js.AskForNext.to_py()[0] == 1)
 
