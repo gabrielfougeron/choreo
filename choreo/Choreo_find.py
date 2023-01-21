@@ -127,14 +127,14 @@ def Find_Choreo(
     ncoeff = ActionSyst.ncoeff()
     nint = ActionSyst.nint()
 
-    print(f'Convergence attempt number: {i+1}')
+    print(f'Convergence attempt number: 1')
     print(f"    Number of Fourier coeffs: {ncoeff}")
     print(f"    Number of scalar parameters before constraints: {ActionSyst.coeff_to_param().shape[1]}")
     print(f"    Number of scalar parameters after  constraints: {ActionSyst.coeff_to_param().shape[0]}")
     print(f"    ==> Reduction of {100*(1-ActionSyst.coeff_to_param().shape[0]/ActionSyst.coeff_to_param().shape[1]):.2f} %")
     print('')
 
-    all_coeffs_min,all_coeffs_max = Make_Init_bounds_coeffs(nloop,ncoeff,coeff_ampl_o,k_infl,k_max,coeff_ampl_min)
+    all_coeffs_min,all_coeffs_max = Make_Init_bounds_coeffs(ActionSyst.nloop,ncoeff,coeff_ampl_o,k_infl,k_max,coeff_ampl_min)
 
     x_min = ActionSyst.Package_all_coeffs(all_coeffs_min)
     x_max = ActionSyst.Package_all_coeffs(all_coeffs_max)
@@ -150,7 +150,7 @@ def Find_Choreo(
 
     sampler = UniformRandom(d=rand_dim)
 
-    x0 = np.random.random(ActionSyst.param_to_coeff()[0].shape[1])
+    x0 = np.random.random(ActionSyst.param_to_coeff().shape[1])
     xmin = ActionSyst.Compute_MinDist(x0)
 
     if (xmin < 1e-5):
@@ -600,7 +600,7 @@ def GenSymExample(
     ncoeff = ActionSyst.ncoeff()
     nint = ActionSyst.nint()
 
-    print(f'Convergence attempt number: {i+1}')
+    print(f'Convergence attempt number: 1')
     print(f"    Number of Fourier coeffs: {ncoeff}")
     print(f"    Number of scalar parameters before constraints: {ActionSyst.coeff_to_param().shape[1]}")
     print(f"    Number of scalar parameters after  constraints: {ActionSyst.coeff_to_param().shape[0]}")

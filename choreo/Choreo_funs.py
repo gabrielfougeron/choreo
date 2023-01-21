@@ -312,7 +312,7 @@ class ChoreoAction():
         )
 
         HJdx = HessJdx.reshape(-1)
-        z = param_to_coeff_T().dot(HJdx)
+        z = self.param_to_coeff_T().dot(HJdx)
         
         return z
             
