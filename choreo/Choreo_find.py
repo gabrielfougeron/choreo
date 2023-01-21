@@ -211,7 +211,7 @@ def Find_Choreo(
         
         elif (LookForTarget):
 
-            all_coeffs_avg = Gen_init_avg_2D(nT_slow,nT_fast,ncoeff,Info_dict_slow,all_coeffs_slow,Info_dict_fast_list,all_coeffs_fast_list,il_slow_source,ibl_slow_source,il_fast_source,ibl_fast_source,callfun,Rotate_fast_with_slow,Optimize_Init,Randomize_Fast_Init)
+            all_coeffs_avg = Gen_init_avg_2D(callfun,nT_slow,nT_fast,Info_dict_slow,all_coeffs_slow,Info_dict_fast_list,all_coeffs_fast_list,il_slow_source,ibl_slow_source,il_fast_source,ibl_fast_source,Rotate_fast_with_slow,Optimize_Init,Randomize_Fast_Init)
 
             x_avg = Package_all_coeffs(all_coeffs_avg,callfun)
 
@@ -665,7 +665,7 @@ def GenSymExample(
     
     if (LookForTarget):
         
-        all_coeffs_avg = Gen_init_avg_2D(nT_slow,nT_fast,ncoeff,Info_dict_slow,all_coeffs_slow,Info_dict_fast_list,all_coeffs_fast_list,il_slow_source,ibl_slow_source,il_fast_source,ibl_fast_source,callfun,Rotate_fast_with_slow,Optimize_Init,Randomize_Fast_Init)    
+        all_coeffs_avg = Gen_init_avg_2D(callfun,nT_slow,nT_fast,Info_dict_slow,all_coeffs_slow,Info_dict_fast_list,all_coeffs_fast_list,il_slow_source,ibl_slow_source,il_fast_source,ibl_fast_source,callfun,Rotate_fast_with_slow,Optimize_Init,Randomize_Fast_Init)    
 
         x_avg = Package_all_coeffs(all_coeffs_avg,callfun)
     
@@ -796,7 +796,7 @@ def Speed_test(
 
     if (LookForTarget):
         
-        all_coeffs_avg = Gen_init_avg_2D(nT_slow,nT_fast,ncoeff,Info_dict_slow,all_coeffs_slow,Info_dict_fast_list,all_coeffs_fast_list,il_slow_source,ibl_slow_source,il_fast_source,ibl_fast_source,callfun,Rotate_fast_with_slow,Optimize_Init,Randomize_Fast_Init)    
+        all_coeffs_avg = Gen_init_avg_2D(callfun,nT_slow,nT_fast,Info_dict_slow,all_coeffs_slow,Info_dict_fast_list,all_coeffs_fast_list,il_slow_source,ibl_slow_source,il_fast_source,ibl_fast_source,callfun,Rotate_fast_with_slow,Optimize_Init,Randomize_Fast_Init)    
 
         x_avg = Package_all_coeffs(all_coeffs_avg,callfun)
     
