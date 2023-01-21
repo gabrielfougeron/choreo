@@ -1,6 +1,5 @@
 '''
 Choreo_funs.py : Defines useful functions in the Choreographies2 project.
-
 '''
 
 import os
@@ -10,6 +9,7 @@ import time
 import pickle
 import warnings
 import functools
+import json
 
 import numpy as np
 import math as m
@@ -18,7 +18,7 @@ import scipy.optimize
 import scipy.linalg as la
 import scipy.sparse as sp
 import sparseqr
-import networkx as nx
+import networkx
 import random
 import inspect
 import fractions
@@ -28,6 +28,11 @@ from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.colors import cnames
 from matplotlib.collections import LineCollection
 from matplotlib import animation
+
+try:
+    import ffmpeg
+except:
+    pass
 
 from choreo.Choreo_cython_funs import ndim,twopi,nhash,n
 from choreo.Choreo_cython_funs import Compute_action_Cython,Compute_action_hess_mul_Cython
@@ -46,7 +51,6 @@ from choreo.Choreo_scipy_plus import *
 
 def Pick_Named_Args_From_Dict(fun,the_dict,MissingArgsAreNone = True):
     
-    # list_of_args = inspect.getargspec(fun).args
     list_of_args = inspect.getfullargspec(fun).args
     
     if MissingArgsAreNone:
@@ -770,7 +774,155 @@ class ChoreoAction():
 
         return all_coeffs
 
+    def plot_Newton_Error(self,x,filename,fig_size=(8,5),color_list = None):
+        
+        if color_list is None:
+            color_list = plt.rcParams['axes.prop_cycle'].by_key()['color']
+
+        Newt_err = self.Compute_Newton_err(x)
+        
+        Newt_err = np.linalg.norm(Newt_err,axis=(1))
+        
+        fig = plt.figure()
+        fig.set_size_inches(fig_size)
+        ax = plt.gca()
+        
+        ncol = len(color_list)
+
+        cb = []
+        for ib in range(self.nbody):
+            cb.append(color_list[ib%ncol])
+        
+        # for ib in range(self.nbody):
+        for ib in range(1):
+            ax.plot(Newt_err[ib,:],c=cb[ib])
+            
+        ax.set_yscale('log')
+            
+        plt.tight_layout()
+        plt.savefig(filename)
+        plt.close()
+
+    def Write_Descriptor(self,x,filename,Action=None,Gradaction=None,Newt_err_norm=None,dxmin=None,Hash_Action=None,max_path_length=None,extend=0.03):
+        r"""
+        Dumps a json file describing the current trajectories
+        """
+
+        nint = self.nint()
+
+        if ((Action is None) or (Gradaction is None) ):
+            Action,Gradaction_vect = self.Compute_action(x)
+            Gradaction = np.linalg.norm(Gradaction_vect)
+
+        if Newt_err_norm is None :
+
+            Newt_err = self.Compute_Newton_err(x)
+            Newt_err_norm = np.linalg.norm(Newt_err)/(nint*self.nbody)
+
+        if dxmin is None:
+            
+            dxmin = self.Compute_MinDist(x)
+
+        if Hash_Action is None:
+            
+            Hash_Action = self.Compute_hash_action(x)
+
+        if max_path_length is None:
+
+            max_path_length = self.Compute_MaxPathLength(x)
+        
+        c_coeffs = self.Unpackage_all_coeffs(x).view(dtype=np.complex128)[...,0]
+
+        all_pos = the_irfft(c_coeffs,n=nint,axis=2,norm="forward")        
+        all_pos_b = np.zeros((self.nbody,ndim,nint),dtype=np.float64)
+        
+        for il in range(self.nloop):
+            for ib in range(self.loopnb[il]):
+                for iint in range(nint):
+                    # exact time is irrelevant
+                    all_pos_b[self.Targets[il,ib],:,iint] = np.dot(self.SpaceRotsUn[il,ib,:,:],all_pos[il,:,iint])
+
+        xmin = all_pos_b[:,0,:].min()
+        xmax = all_pos_b[:,0,:].max()
+        ymin = all_pos_b[:,1,:].min()
+        ymax = all_pos_b[:,1,:].max()
+
+        xinf = xmin - extend*(xmax-xmin)
+        xsup = xmax + extend*(xmax-xmin)
+        
+        yinf = ymin - extend*(ymax-ymin)
+        ysup = ymax + extend*(ymax-ymin)
+        
+        hside = max(xsup-xinf,ysup-yinf)/2
+
+        xmid = (xinf+xsup)/2
+        ymid = (yinf+ysup)/2
+
+        xinf = xmid - hside
+        xsup = xmid + hside
+
+        yinf = ymid - hside
+        ysup = ymid + hside
+
+        Info_dict = {}
+
+        max_path_length
+
+        Info_dict["nbody"] = self.nbody
+        Info_dict["n_Fourier"] = self.ncoeff()
+        Info_dict["n_int"] = nint
+
+        Info_dict["mass"] = self.mass.tolist()
+        Info_dict["nloop"] = self.nloop
+
+        Info_dict["Action"] = Action
+        Info_dict["Grad_Action"] = Gradaction
+        Info_dict["Newton_Error"] = Newt_err_norm
+        Info_dict["Min_Distance"] = dxmin
+        Info_dict["Max_PathLength"] = max_path_length
+
+        Info_dict["Hash"] = Hash_Action.tolist()
+
+        Info_dict["xinf"] = xinf
+        Info_dict["xsup"] = xsup
+        Info_dict["yinf"] = yinf
+        Info_dict["ysup"] = ysup
+
+        Info_dict["loopnb"] = self.loopnb.tolist()
+        Info_dict["Targets"] = self.Targets.tolist()
+        Info_dict["SpaceRotsUn"] = self.SpaceRotsUn.tolist()
+        Info_dict["TimeRevsUn"] = self.TimeRevsUn.tolist()
+        Info_dict["TimeShiftNumUn"] = self.TimeShiftNumUn.tolist()
+        Info_dict["TimeShiftDenUn"] = self.TimeShiftDenUn.tolist()
+        Info_dict["RequiresLoopDispUn"] = self.RequiresLoopDispUn.tolist()
+
+        with open(filename, "w") as jsonFile:
+            jsonString = json.dumps(Info_dict, indent=4, sort_keys=False)
+            jsonFile.write(jsonString)
+
+    def Check_Duplicates(self,x,hash_dict,store_folder,duplicate_eps,Hash_Action=None):
+        r"""
+        Checks whether there is a duplicate of a given trajecory in the provided folder
+        """
+
+        if Hash_Action is None:
+            Hash_Action = self.Compute_hash_action(x)
+
+        file_path_list = SelectFiles_Action(store_folder,hash_dict,Hash_Action,duplicate_eps)
+
+        if (len(file_path_list) == 0):
+            
+            Found_duplicate = False
+            file_path = ''
+        
+        else:
+            Found_duplicate = True
+            file_path = file_path_list[0]
+        
+        return Found_duplicate,file_path
+
     if ndim == 2:
+
         def Gen_init_avg_2D(self,nT_slow,nT_fast,Info_dict_slow,all_coeffs_slow,Info_dict_fast_list,all_coeffs_fast_list,il_slow_source,ibl_slow_source,il_fast_source,ibl_fast_source,Rotate_fast_with_slow,Optimize_Init,Randomize_Fast_Init):
 
             nloop_slow = len(all_coeffs_fast_list)
@@ -833,6 +985,451 @@ class ChoreoAction():
 
             return all_coeffs_avg
 
+        def plot_all_2D(self,x,nint_plot,filename,fig_size=(10,10),dpi=100,color=None,color_list = None,xlim=None,extend=0.03):
+            r"""
+            Plots 2D trajectories and saves image in file
+            """
+
+            if color_list is None:
+                color_list = plt.rcParams['axes.prop_cycle'].by_key()['color']
+
+            if isinstance(color,list):
+                
+                for the_color in color :
+                    
+                    file_bas,file_ext = os.path.splitext(filename)
+                    
+                    the_filename = file_bas+'_'+the_color+file_ext
+                    
+                    self.plot_all_2D(x=x,nint_plot=nint_plot,filename=the_filename,fig_size=fig_size,dpi=dpi,color=the_color,color_list=color_list)
+            
+            elif (color is None) or (color == "body") or (color == "loop") or (color == "loop_id") or (color == "none"):
+                
+                self.plot_all_2D_cpb(x,nint_plot,filename,fig_size=fig_size,dpi=dpi,color=color,color_list=color_list,xlim=xlim,extend=extend)
+                
+            elif (color == "velocity"):
+                
+                self.plot_all_2D_cpv(x,nint_plot,filename,fig_size=fig_size,dpi=dpi,xlim=xlim,extend=extend)
+                
+            elif (color == "all"):
+                
+                self.plot_all_2D(x=x,nint_plot=nint_plot,filename=filename,fig_size=fig_size,dpi=dpi,color=["body","velocity"],color_list=color_list,xlim=xlim,extend=extend)
+
+            else:
+                
+                raise ValueError("Unknown color scheme")
+
+        def plot_all_2D_cpb(self,x,nint_plot,filename,fig_size=(10,10),dpi=100,color=None,color_list=None,xlim=None,extend=0.03):
+            r"""
+            Plots 2D trajectories with one color per body and saves image in file
+            """
+            
+            if color_list is None:
+                color_list = plt.rcParams['axes.prop_cycle'].by_key()['color']
+
+            all_coeffs = self.Unpackage_all_coeffs(x)
+            
+            c_coeffs = all_coeffs.view(dtype=np.complex128)[...,0]
+            
+            all_pos = np.zeros((self.nloop,ndim,nint_plot+1),dtype=np.float64)
+            all_pos[:,:,0:nint_plot] = the_irfft(c_coeffs,n=nint_plot,axis=2,norm="forward")
+            all_pos[:,:,nint_plot] = all_pos[:,:,0]
+            
+            n_loop_plot = np.count_nonzero((self.RequiresLoopDispUn))
+            i_loop_plot = 0
+
+            all_pos_b = np.zeros((n_loop_plot,ndim,nint_plot+1),dtype=np.float64)
+
+            for il in range(self.nloop):
+                for ib in range(self.loopnb[il]):
+                    if (self.RequiresLoopDispUn[il,ib]) :
+                        for iint in range(nint_plot+1):
+                            # exact time is irrelevant
+                            all_pos_b[i_loop_plot,:,iint] = np.dot(self.SpaceRotsUn[il,ib,:,:],all_pos[il,:,iint])
+
+                        i_loop_plot +=1
+            
+            ncol = len(color_list)
+            
+            cb = ['b' for ib in range(n_loop_plot)]
+            i_loop_plot = 0
+
+            if (color is None) or (color == "none"):
+                for il in range(self.nloop):
+                    for ib in range(self.loopnb[il]):
+                        if (self.RequiresLoopDispUn[il,ib]) :
+
+                            cb[i_loop_plot] = color_list[0]
+
+                            i_loop_plot +=1
+
+            elif (color == "body"):
+                for il in range(self.nloop):
+                    for ib in range(self.loopnb[il]):
+                        if (self.RequiresLoopDispUn[il,ib]) :
+
+                            cb[i_loop_plot] = color_list[self.Targets[il,ib]%ncol]
+
+                            i_loop_plot +=1
+
+            elif (color == "loop"):
+                for il in range(self.nloop):
+                    for ib in range(self.loopnb[il]):
+                        if (self.RequiresLoopDispUn[il,ib]) :
+
+                            cb[i_loop_plot] = color_list[il%ncol]
+
+                            i_loop_plot +=1
+
+            elif (color == "loop_id"):
+                for il in range(self.nloop):
+                    for ib in range(self.loopnb[il]):
+                        if (self.RequiresLoopDispUn[il,ib]) :
+
+                            cb[i_loop_plot] = color_list[ib%ncol]
+
+                            i_loop_plot +=1
+
+            else:
+                raise ValueError(f'Unknown color scheme "{color}"')
+
+            if xlim is None:
+
+                xmin = all_pos_b[:,0,:].min()
+                xmax = all_pos_b[:,0,:].max()
+                ymin = all_pos_b[:,1,:].min()
+                ymax = all_pos_b[:,1,:].max()
+
+            else :
+
+                xmin = xlim[0]
+                xmax = xlim[1]
+                ymin = xlim[2]
+                ymax = xlim[3]
+            
+            xinf = xmin - extend*(xmax-xmin)
+            xsup = xmax + extend*(xmax-xmin)
+            
+            yinf = ymin - extend*(ymax-ymin)
+            ysup = ymax + extend*(ymax-ymin)
+            
+            hside = max(xsup-xinf,ysup-yinf)/2
+
+            xmid = (xinf+xsup)/2
+            ymid = (yinf+ysup)/2
+
+            xinf = xmid - hside
+            xsup = xmid + hside
+
+            yinf = ymid - hside
+            ysup = ymid + hside
+
+            # Plot-related
+            fig = plt.figure()
+            fig.set_size_inches(fig_size)
+            fig.set_dpi(dpi)
+            ax = plt.gca()
+
+            lines = sum([ax.plot([], [],'-',color=cb[ib] ,antialiased=True,zorder=-ib)  for ib in range(n_loop_plot)], [])
+            points = sum([ax.plot([], [],'ko', antialiased=True)for ib in range(n_loop_plot)], [])
+
+            ax.axis('off')
+            ax.set_xlim([xinf, xsup])
+            ax.set_ylim([yinf, ysup ])
+            ax.set_aspect('equal', adjustable='box')
+            plt.tight_layout()
+            
+            for i_loop_plot in range(n_loop_plot):
+
+                lines[i_loop_plot].set_data(all_pos_b[i_loop_plot,0,:], all_pos_b[i_loop_plot,1,:])
+
+            plt.savefig(filename)
+            
+            plt.close()
+
+        def plot_all_2D_cpv(self,x,nint_plot,filename,fig_size=(10,10),dpi=100,xlim=None,extend=0.03):
+            r"""
+            Plots 2D trajectories colored according to velocity and saves image in file
+            """
+            
+            all_coeffs = self.Unpackage_all_coeffs(x)            
+            c_coeffs = all_coeffs.view(dtype=np.complex128)[...,0]
+            
+            all_pos = np.zeros((self.nloop,ndim,nint_plot+1),dtype=np.float64)
+            all_pos[:,:,0:nint_plot] = the_irfft(c_coeffs,n=nint_plot,axis=2,norm="forward")
+            all_pos[:,:,nint_plot] = all_pos[:,:,0]
+            
+            all_coeffs_v = np.zeros(all_coeffs.shape)
+            
+            for k in range(self.ncoeff()):
+                all_coeffs_v[:,:,k,0] = -k * all_coeffs[:,:,k,1]
+                all_coeffs_v[:,:,k,1] =  k * all_coeffs[:,:,k,0]
+            
+            c_coeffs_v = all_coeffs_v.view(dtype=np.complex128)[...,0]
+            
+            all_vel = np.zeros((self.nloop,nint_plot+1),dtype=np.float64)
+            all_vel[:,0:nint_plot] = np.linalg.norm(the_irfft(c_coeffs_v,n=nint_plot,axis=2,norm="forward"),axis=1)
+            all_vel[:,nint_plot] = all_vel[:,0]
+            
+            all_pos_b = np.zeros((self.nbody,ndim,nint_plot+1),dtype=np.float64)
+            
+            for il in range(self.nloop):
+                for ib in range(self.loopnb[il]):
+                    for iint in range(nint_plot+1):
+                        # exact time is irrelevant
+                        all_pos_b[self.Targets[il,ib],:,iint] = np.dot(self.SpaceRotsUn[il,ib,:,:],all_pos[il,:,iint])
+            
+            all_vel_b = np.zeros((self.nbody,nint_plot+1),dtype=np.float64)
+            
+            for il in range(nloself.nloopop):
+                for ib in range(self.loopnb[il]):
+                    for iint in range(nint_plot+1):
+                        # exact time is irrelevant
+                        all_vel_b[self.Targets[il,ib],iint] = all_vel[il,iint]
+            
+            if xlim is None:
+
+                xmin = all_pos_b[:,0,:].min()
+                xmax = all_pos_b[:,0,:].max()
+                ymin = all_pos_b[:,1,:].min()
+                ymax = all_pos_b[:,1,:].max()
+
+            else :
+
+                xmin = xlim[0]
+                xmax = xlim[1]
+                ymin = xlim[2]
+                ymax = xlim[3]
+
+            xinf = xmin - extend*(xmax-xmin)
+            xsup = xmax + extend*(xmax-xmin)
+            
+            yinf = ymin - extend*(ymax-ymin)
+            ysup = ymax + extend*(ymax-ymin)
+            
+            hside = max(xsup-xinf,ysup-yinf)/2
+
+            xmid = (xinf+xsup)/2
+            ymid = (yinf+ysup)/2
+
+            xinf = xmid - hside
+            xsup = xmid + hside
+
+            yinf = ymid - hside
+            ysup = ymid + hside
+
+            # Plot-related
+            fig = plt.figure()
+            fig.set_size_inches(fig_size)
+            fig.set_dpi(dpi)
+            ax = plt.gca()
+
+            # cmap = None
+            cmap = 'turbo'
+            # cmap = 'rainbow'
+            
+            norm = plt.Normalize(0,all_vel_b.max())
+            
+            for ib in range(self.nbody-1,-1,-1):
+                        
+                points = all_pos_b[ib,:,:].T.reshape(-1,1,2)
+                segments = np.concatenate([points[:-1],points[1:]],axis=1)
+                
+                lc = LineCollection(segments,cmap=cmap,norm=norm)
+                lc.set_array(all_vel_b[ib,:])
+                
+                ax.add_collection(lc)
+
+            ax.axis('off')
+            ax.set_xlim([xinf, xsup])
+            ax.set_ylim([yinf, ysup ])
+            ax.set_aspect('equal', adjustable='box')
+            plt.tight_layout()
+
+            plt.savefig(filename)
+            
+            plt.close()
+
+        def plot_all_2D_anim(self,x,nint_plot,filename,nperiod=1,Plot_trace=True,fig_size=(5,5),dnint=1,all_pos_trace=None,all_pos_points=None,xlim=None,extend=0.03,color_list=None,color=None):
+            r"""
+            Creates a video of the bodies moving along their trajectories, and saves the file
+            """
+
+            if color_list is None:
+                color_list = plt.rcParams['axes.prop_cycle'].by_key()['color']
+
+            all_coeffs = self.Unpackage_all_coeffs(x)
+
+            maxloopnb = loopnb.max()
+            
+            ncol = len(color_list)
+
+            if (all_pos_trace is None):
+
+                n_loop_plot = np.count_nonzero((self.RequiresLoopDispUn))
+                i_loop_plot = 0
+
+                cb = ['b' for ib in range(n_loop_plot)]
+
+                i_loop_plot = 0
+
+                if (color is None) or (color == "none"):
+                    for il in range(self.nloop):
+                        for ib in range(self.loopnb[il]):
+                            if (self.RequiresLoopDispUn[il,ib]) :
+
+                                cb[i_loop_plot] = color_list[0]
+
+                                i_loop_plot +=1
+
+                elif (color == "body"):
+                    for il in range(self.nloop):
+                        for ib in range(self.loopnb[il]):
+                            if (self.RequiresLoopDispUn[il,ib]) :
+
+                                cb[i_loop_plot] = color_list[self.Targets[il,ib]%ncol]
+
+                                i_loop_plot +=1
+
+                elif (color == "loop"):
+                    for il in range(self.nloop):
+                        for ib in range(self.loopnb[il]):
+                            if (self.RequiresLoopDispUn[il,ib]) :
+
+                                cb[i_loop_plot] = color_list[il%ncol]
+
+                                i_loop_plot +=1
+
+                elif (color == "loop_id"):
+                    for il in range(self.nloop):
+                        for ib in range(self.loopnb[il]):
+                            if (self.RequiresLoopDispUn[il,ib]) :
+
+                                cb[i_loop_plot] = color_list[ib%ncol]
+
+                                i_loop_plot +=1
+
+                else:
+                    raise ValueError(f'Unknown color scheme "{color}"')
+
+            else:
+                
+                cb = ['b' for ib in range(len(all_pos_trace))]
+
+                if (color == "body"):
+                    for ib in range(len(all_pos_trace)):
+                        cb[ib] = color_list[ib%ncol]
+
+                else:
+                    for ib in range(len(all_pos_trace)):
+                        cb[ib] = color_list[0]
+
+            nint_plot_img = nint_plot*dnint
+            nint_plot_vid = nint_plot
+
+            if (all_pos_trace is None) or (all_pos_points is None):
+
+                all_pos_b = np.zeros((self.nbody,ndim,nint_plot_img+1),dtype=np.float64)
+                all_pos_b[:,:,:nint_plot_img] = self.ComputeAllPos(x,nint=nint_plot_img)
+                all_pos_b[:,:,nint_plot_img] = all_pos_b[:,:,0]
+
+            if (all_pos_trace is None):
+
+                i_loop_plot = 0
+
+                all_pos_trace = np.zeros((n_loop_plot,ndim,nint_plot_img+1),dtype=np.float64)
+
+                for il in range(self.nloop):
+                    for ib in range(self.loopnb[il]):
+                        if (self.RequiresLoopDispUn[il,ib]) :
+                            for iint in range(nint_plot+1):
+                                # exact time is irrelevant
+                                all_pos_trace[i_loop_plot,:,:] = all_pos_b[self.Targets[il,ib],:,:]
+
+                            i_loop_plot +=1
+
+            if (all_pos_points is None):
+                all_pos_points = all_pos_b
+
+            size_all_pos_points = all_pos_points.shape[2] - 1
+
+            if xlim is None:
+
+                xmin = all_pos_trace[:,0,:].min()
+                xmax = all_pos_trace[:,0,:].max()
+                ymin = all_pos_trace[:,1,:].min()
+                ymax = all_pos_trace[:,1,:].max()
+
+            else :
+
+                xmin = xlim[0]
+                xmax = xlim[1]
+                ymin = xlim[2]
+                ymax = xlim[3]
+
+            xinf = xmin - extend*(xmax-xmin)
+            xsup = xmax + extend*(xmax-xmin)
+            
+            yinf = ymin - extend*(ymax-ymin)
+            ysup = ymax + extend*(ymax-ymin)
+            
+            hside = max(xsup-xinf,ysup-yinf)/2
+
+            xmid = (xinf+xsup)/2
+            ymid = (yinf+ysup)/2
+
+            xinf = xmid - hside
+            xsup = xmid + hside
+
+            yinf = ymid - hside
+            ysup = ymid + hside
+
+
+            # Plot-related
+            fig = plt.figure()
+            fig.set_size_inches(fig_size)
+            ax = plt.gca()
+            lines = sum([ax.plot([], [],'-',color=cb[ib], antialiased=True,zorder=-ib)  for ib in range(len(all_pos_trace))], [])
+            points = sum([ax.plot([], [],'ko', antialiased=True)for ib in range(len(all_pos_points))], [])
+            
+            ax.axis('off')
+            ax.set_xlim([xinf, xsup])
+            ax.set_ylim([yinf, ysup ])
+            ax.set_aspect('equal', adjustable='box')
+            plt.tight_layout()
+            
+            # TODO: Understand why this is needed / how to rationalize this use. Is it even legal python ?
+
+            iint = [0]
+            
+            def init():
+                
+                if (Plot_trace):
+                    for ib in range(len(all_pos_trace)):
+                        lines[ib].set_data(all_pos_trace[ib,0,:], all_pos_trace[ib,1,:])
+                
+                return lines + points
+
+            def update(i):
+                
+                for ib in range(len(all_pos_points)):
+                    points[ib].set_data(all_pos_points[ib,0,iint[0]], all_pos_points[ib,1,iint[0]])
+                    
+                iint[0] = ((iint[0]+dnint) % size_all_pos_points)
+
+                return lines + points
+            
+            anim = animation.FuncAnimation(fig, update, frames=int(nperiod*nint_plot_vid),init_func=init, blit=True)
+                                
+            # Save as mp4. This requires mplayer or ffmpeg to be installed
+            # anim.save(filename, fps=60, codec='hevc')
+            anim.save(filename, fps=60, codec='h264')
+            # anim.save(filename, fps=60, codec='webm')
+            # anim.save(filename, fps=60,extra_args=['-vcodec ', 'h264_amf'])
+            # anim.save(filename, fps=60,extra_args=['-hwaccel ', 'cuda'])
+            
+            plt.close()
+            
 class ChoreoSym():
     r"""
     This class defines the symmetries of the action
@@ -965,7 +1562,7 @@ def setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max=6,MomCons=True,n_
     
     Identity_detected = False
 
-    SymGraph = nx.Graph()
+    SymGraph = networkx.Graph()
     for i in range(nbody):
         SymGraph.add_node(i,Constraint_list=[])
 
@@ -994,7 +1591,7 @@ def setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max=6,MomCons=True,n_
                 
                 SymGraph.add_edge(*edge,Sym=Sym)
             
-    Cycles = list(nx.cycle_basis(SymGraph))    
+    Cycles = list(networkx.cycle_basis(SymGraph))    
     # Aggregate cycles symmetries into constraints
     
     for Cycle in Cycles:
@@ -1024,7 +1621,7 @@ def setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max=6,MomCons=True,n_
     # And aggregate path from the representative to each node of cycle
     # Then bring all constraints back to this node, and aggregate constraints
     
-    ConnectedComponents = list(nx.connected_components(SymGraph))    
+    ConnectedComponents = list(networkx.connected_components(SymGraph))    
 
     nloop = len(ConnectedComponents)
 
@@ -1054,7 +1651,7 @@ def setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max=6,MomCons=True,n_
         
         loopgen[il] = ConnectedComponents[il].pop()
 
-        paths_to_gen = nx.shortest_path(SymGraph, target=loopgen[il])
+        paths_to_gen = networkx.shortest_path(SymGraph, target=loopgen[il])
         
         ib = 0
         
@@ -1454,3 +2051,204 @@ def RemoveSym_ann(all_coeffs,nbody,nloop,ncoeff,loopnb,Targets,SpaceRotsUn,TimeR
             all_coeffs_nosym[ibody,:,:,:] = Transform_Coeffs_Single_Loop(SpaceRot, TimeRev, TimeShiftNum, TimeShiftDen, all_coeffs[il,:,:],ncoeff)
 
     return all_coeffs_nosym
+
+def Images_to_video(input_folder,output_filename,ReverseEnd=False,img_file_ext='.png'):
+    # Expects images files with consistent extension (default *.png).
+    
+    list_files = os.listdir(input_folder)
+
+    png_files = []
+    
+    for the_file in list_files:
+        
+        the_file = input_folder+the_file
+        
+        if os.path.isfile(the_file):
+            
+            file_base , file_ext = os.path.splitext(the_file)
+            
+            if file_ext == img_file_ext :
+                
+                png_files.append(the_file)
+        
+    # Sorting files by alphabetical order
+    png_files.sort()
+        
+    frames_filename = 'frames.txt'
+    
+    f = open(frames_filename,"w")
+    for img_name in img_list:
+        f.write('file \''+os.path.abspath(img_name)+'\'\n')
+        f.write('duration 0.0333333 \n')
+    
+    if ReverseEnd:
+        for img_name in reversed(img_list):
+            f.write('file \''+os.path.abspath(img_name)+'\'\n')
+            f.write('duration 0.0333333 \n')
+        
+    f.close()
+
+    try:
+        (
+            ffmpeg
+            .input(frames_filename,f='concat',safe='0')
+            .output(output_filename,vcodec='h264',pix_fmt='yuv420p')
+            .global_args('-y')
+            .global_args('-loglevel','error')
+            .run()
+        )
+    except:
+        raise ModuleNotFoundError('Error: ffmpeg not found')
+    
+    os.remove(frames_filename)
+ 
+def factor_squarest(n):
+    x = m.ceil(m.sqrt(n))
+    y = int(n/x)
+    while ( (y * x) != float(n) ):
+        x -= 1
+        y = int(n/x)
+    return max(x,y), min(x,y)
+
+def VideoGrid(input_list,output_filename,nxy = None,ordering='RowMajor'):
+
+    nvid = len(input_list)
+
+    if nxy is None:
+         nx,ny = factor_squarest(nvid)
+
+    else:
+        nx,ny = nxy
+        if (nx*ny != nvid):
+            raise(ValueError('The number of input video files is incorrect'))
+
+    if nvid == 1:
+        
+        os.rename(input_list[0], output_filename)
+
+    else:
+        
+        if ordering == 'RowMajor':
+            layout_list = []
+            for iy in range(ny):
+                if iy == 0:
+                    ylayout='0'
+                else:
+                    ylayout = 'h0'
+                    for iiy in range(1,iy):
+                        ylayout = ylayout + '+h'+str(iiy)
+
+                for ix in range(nx):
+                    if ix == 0:
+                        xlayout='0'
+                    else:
+                        xlayout = 'w0'
+                        for iix in range(1,ix):
+                            xlayout = xlayout + '+w'+str(iix)
+
+
+                    layout_list.append(xlayout + '_' + ylayout)
+
+        elif ordering == 'ColMajor':
+            layout_list = []
+            for ix in range(nx):
+                if ix == 0:
+                    xlayout='0'
+                else:
+                    xlayout = 'w0'
+                    for iix in range(1,ix):
+                        xlayout = xlayout + '+w'+str(iix)
+                for iy in range(ny):
+                    if iy == 0:
+                        ylayout='0'
+                    else:
+                        ylayout = 'h0'
+                        for iiy in range(1,iy):
+                            ylayout = ylayout + '+h'+str(iiy)
+
+                    layout_list.append(xlayout + '_' + ylayout)
+        else:
+            raise(ValueError('Unknown ordering : '+ordering))
+
+        layout = layout_list[0]
+        for i in range(1,nvid):
+            layout = layout + '|' + layout_list[i]
+
+        try:
+            
+            ffmpeg_input_list = []
+            for the_input in input_list:
+                ffmpeg_input_list.append(ffmpeg.input(the_input))
+
+            # ffmpeg_out = ( ffmpeg
+            #     .filter(ffmpeg_input_list, 'hstack')
+            # )
+    # 
+            ffmpeg_out = ( ffmpeg
+                .filter(
+                    ffmpeg_input_list,
+                    'xstack',
+                    inputs=nvid,
+                    layout=layout,
+                )
+            )
+
+            ffmpeg_out = ( ffmpeg_out
+                .output(output_filename,vcodec='h264',pix_fmt='yuv420p')
+                .global_args('-y')
+                .global_args('-loglevel','error')
+            )
+
+            ffmpeg_out.run()
+
+        # except:
+        #     raise ModuleNotFoundError('Error: ffmpeg not found')
+
+        except BaseException as err:
+            print(f"Unexpected {err=}, {type(err)=}")
+            raise
+
+def ReadHashFromFile(filename):
+
+    with open(filename,'r') as jsonFile:
+        Info_dict = json.load(jsonFile)
+
+    the_hash = Info_dict.get("Hash")
+
+    if the_hash is None:
+        return None
+
+    else:
+        return np.array(the_hash)
+
+def SelectFiles_Action(store_folder,hash_dict,Action_Hash_val=np.zeros((nhash)),rtol=1e-5):
+    # Creates a list of possible duplicates based on value of the action and hashes
+
+    file_path_list = []
+    for file_path in os.listdir(store_folder):
+        file_path = os.path.join(store_folder, file_path)
+        file_root, file_ext = os.path.splitext(os.path.basename(file_path))
+        
+        if (file_ext == '.json' ):
+            
+            This_Action_Hash = hash_dict.get(file_root)
+            
+            if (This_Action_Hash is None) :
+
+                This_Action_Hash = ReadHashFromFile(file_path) 
+
+                if not(This_Action_Hash is None):
+
+                    hash_dict[file_root] = This_Action_Hash
+
+            if not(This_Action_Hash is None):
+
+                IsCandidate = True
+                for ihash in range(nhash):
+
+                    IsCandidate = (IsCandidate and ((abs(This_Action_Hash[ihash]-Action_Hash_val[ihash])) < ((abs(This_Action_Hash[ihash])+abs(Action_Hash_val[ihash]))*rtol)))
+
+                if IsCandidate:
+                    file_path_list.append(store_folder+'/'+file_root)
+                        
+    return file_path_list
