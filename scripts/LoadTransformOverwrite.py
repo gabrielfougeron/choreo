@@ -267,11 +267,11 @@ def ExecName(
     n_reconverge_it_max = 0
     n_grad_change = 1.
 
-    callfun = choreo.setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change,CrashOnIdentity=False)
+    ActionSyst = choreo.setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change,CrashOnIdentity=False)
 
-    x = choreo.Package_all_coeffs(all_coeffs,callfun)
+    x = ActionSyst.Package_all_coeffs(all_coeffs)
 
-    Action,Gradaction = choreo.Compute_action(x,callfun)
+    Action,Gradaction = ActionSyst.Compute_action(x)
 
     Gradaction_OK = (np.linalg.norm(Gradaction) < GradActionThresh)
 
@@ -289,19 +289,19 @@ def ExecName(
 
     print('Saving solution as '+filename_output+'.*')
 
-    choreo.Write_Descriptor(x,callfun,filename_output+'.json')
+    ActionSyst.Write_Descriptor(x,filename_output+'.json')
     
     if Save_img :
-        choreo.plot_all_2D(x,nint_plot_img,callfun,filename_output+'.png',fig_size=img_size,color=color)
+        ActionSyst.plot_all_2D(x,nint_plot_img,filename_output+'.png',fig_size=img_size,color=color)
     
     if Save_thumb :
-        choreo.plot_all_2D(x,nint_plot_img,callfun,filename_output+'_thumb.png',fig_size=thumb_size,color=color)
+        ActionSyst.plot_all_2D(x,nint_plot_img,filename_output+'_thumb.png',fig_size=thumb_size,color=color)
         
     if Save_anim :
-        choreo.plot_all_2D_anim(x,nint_plot_anim,callfun,filename_output+'.mp4',nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size,dnint=dnint,color_list=color_list,color=color)
+        ActionSyst.plot_all_2D_anim(x,nint_plot_anim,filename_output+'.mp4',nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size,dnint=dnint,color_list=color_list,color=color)
 
     if Save_Newton_Error :
-        choreo.plot_Newton_Error(x,callfun,filename_output+'_newton.png')
+        ActionSyst.plot_Newton_Error(x,filename_output+'_newton.png')
     
     if Save_All_Coeffs:
 
@@ -313,24 +313,24 @@ def ExecName(
 
     if Save_All_Coeffs_No_Sym:
         
-        all_coeffs_nosym = choreo.RemoveSym(x,callfun)
+        all_coeffs_nosym = ActionSyst.RemoveSym(x)
 
         np.save(filename_output+'_nosym.npy',all_coeffs_nosym)
 
     if Save_ODE_anim:
         
-        yo = choreo.Compute_init_pos_vel(x,callfun).reshape(-1)
+        yo = ActionSyst.Compute_init_pos_vel(x).reshape(-1)
 
         t_eval = np.array([i/nint_plot_img for i in range(round(nperiod_anim*nint_plot_img))])
 
-        fun = lambda t,y: choreo.Compute_ODE_RHS(t,y,callfun)
+        fun = lambda t,y: ActionSyst.Compute_ODE_RHS(t,y)
 
         ode_res = scipy.integrate.solve_ivp(fun=fun, t_span=(0.,nperiod_anim), y0=yo, method=ODE_method, t_eval=t_eval, dense_output=False, events=None, vectorized=False,max_step=1./min_n_steps_ode,atol=atol_ode,rtol=rtol_ode)
 
         all_pos_vel = ode_res['y'].reshape(2,nbody,choreo.ndim,round(nint_plot_img*nperiod_anim))
         all_pos_ode = all_pos_vel[0,:,:,:]
         
-        choreo.plot_all_2D_anim(x,nint_plot_anim,callfun,filename_output+'_ode.mp4',nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size,dnint=dnint,all_pos_trace=all_pos_ode,all_pos_points=all_pos_ode,color_list=color_list,color=color)
+        ActionSyst.plot_all_2D_anim(x,nint_plot_anim,filename_output+'_ode.mp4',nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size,dnint=dnint,all_pos_trace=all_pos_ode,all_pos_points=all_pos_ode,color_list=color_list,color=color)
 
 
     if Save_Perturbed:
@@ -346,9 +346,9 @@ def ExecName(
 
         nint_mul = 128
 
-        nint = callfun[0]['nint_list'][callfun[0]["current_cvg_lvl"]]*nint_mul
+        nint = ActionSyst.nint()*nint_mul
 
-        fun,gun,x0,v0 = choreo.GetTangentSystemDef(x,callfun,nint,method=SymplecticMethod)
+        fun,gun,x0,v0 = ActionSyst.GetTangentSystemDef(x,nint,method=SymplecticMethod)
 
         ndof = nbody*choreo.ndim
 
@@ -363,8 +363,8 @@ def ExecName(
 
         # Evaluates the relative accuracy of the Monodromy matrix integration process
         # zo should be an eigenvector of the Monodromy matrix, with eigenvalue 1
-        yo = choreo.Compute_init_pos_vel(x,callfun).reshape(-1)
-        zo = choreo.Compute_Auto_ODE_RHS(yo,callfun)
+        yo = ActionSyst.Compute_init_pos_vel(x).reshape(-1)
+        zo = ActionSyst.Compute_Auto_ODE_RHS(yo)
 
         # '''SVD'''
         # U,Instability_magnitude,Instability_directions = scipy.linalg.svd(MonodromyMat, full_matrices=True, compute_uv=True, overwrite_a=False, check_finite=True, lapack_driver='gesdd')
@@ -383,8 +383,8 @@ def ExecName(
 
         list_vid = []
 
-        # xlim = choreo.Compute_xlim(x,callfun,extend=0.2)
-        xlim = choreo.Compute_xlim(x,callfun,extend=0.03)
+        # xlim = ActionSyst.Compute_xlim(x,extend=0.2)
+        xlim = ActionSyst.Compute_xlim(x,extend=0.03)
 
         n_unperturbed = 1
         n_perturbed = 11
@@ -406,9 +406,9 @@ def ExecName(
 
         for i in range(n_unperturbed):
 
-            yo = choreo.Compute_init_pos_vel(x,callfun).reshape(-1)
+            yo = ActionSyst.Compute_init_pos_vel(x).reshape(-1)
             t_eval = np.array([i/nint_plot_img for i in range(round(nperiod_anim*nint_plot_img))])
-            fun = lambda t,y: choreo.Compute_ODE_RHS(t,y,callfun)
+            fun = lambda t,y: ActionSyst.Compute_ODE_RHS(t,y)
             ode_res = scipy.integrate.solve_ivp(fun=fun, t_span=(0.,nperiod_anim), y0=yo, method=ODE_method, t_eval=t_eval, dense_output=False, events=None, vectorized=False,max_step=1./min_n_steps_ode,atol=atol_ode,rtol=rtol_ode)
             all_pos_vel = ode_res['y'].reshape(2,nbody,choreo.ndim,round(nint_plot_img*nperiod_anim))
             all_pos_ode = all_pos_vel[0,:,:,:]
@@ -416,13 +416,13 @@ def ExecName(
             vid_filename = filename_output+'_unperturbed_'+str(i).zfill(3)+'.mp4'
             list_vid.append(vid_filename)
 
-            choreo.plot_all_2D_anim(x,nint_plot_anim,callfun,vid_filename,nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size_perturb,dnint=dnint,all_pos_trace=all_pos_ode,all_pos_points=all_pos_ode,xlim=xlim,extend=0.,color_list=color_list,color=color)
+            ActionSyst.plot_all_2D_anim(x,nint_plot_anim,vid_filename,nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size_perturb,dnint=dnint,all_pos_trace=all_pos_ode,all_pos_points=all_pos_ode,xlim=xlim,extend=0.,color_list=color_list,color=color)
 
         for irank in range(n_perturbed):
 
-            yo = choreo.Compute_init_pos_vel(x,callfun).reshape(-1) + dy_perturb * Instability_directions[irank,:]
+            yo = ActionSyst.Compute_init_pos_vel(x).reshape(-1) + dy_perturb * Instability_directions[irank,:]
             t_eval = np.array([i/nint_plot_img for i in range(round(nperiod_anim*nint_plot_img))])
-            fun = lambda t,y: choreo.Compute_ODE_RHS(t,y,callfun)
+            fun = lambda t,y: ActionSyst.Compute_ODE_RHS(t,y)
             ode_res = scipy.integrate.solve_ivp(fun=fun, t_span=(0.,nperiod_anim), y0=yo, method=ODE_method, t_eval=t_eval, dense_output=False, events=None, vectorized=False,max_step=1./min_n_steps_ode,atol=atol_ode,rtol=rtol_ode)
             all_pos_vel = ode_res['y'].reshape(2,nbody,choreo.ndim,round(nint_plot_img*nperiod_anim))
             all_pos_ode = all_pos_vel[0,:,:,:]
@@ -430,17 +430,17 @@ def ExecName(
             vid_filename = filename_output+'_perturbed_'+str(irank).zfill(3)+'.mp4'
             list_vid.append(vid_filename)
             
-            choreo.plot_all_2D_anim(x,nint_plot_anim,callfun,vid_filename,nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size_perturb,dnint=dnint,all_pos_trace=all_pos_ode,all_pos_points=all_pos_ode,xlim=xlim,extend=0.,color_list=color_list,color=color)
+            ActionSyst.plot_all_2D_anim(x,nint_plot_anim,vid_filename,nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size_perturb,dnint=dnint,all_pos_trace=all_pos_ode,all_pos_points=all_pos_ode,xlim=xlim,extend=0.,color_list=color_list,color=color)
 
         for irank in range(n_random):
 
-            yo = choreo.Compute_init_pos_vel(x,callfun).reshape(-1)
+            yo = ActionSyst.Compute_init_pos_vel(x).reshape(-1)
             dy = np.random.rand(*yo.shape)
             dy = dy / np.linalg.norm(dy)
             yo += dy_perturb*dy
 
             t_eval = np.array([i/nint_plot_img for i in range(round(nperiod_anim*nint_plot_img))])
-            fun = lambda t,y: choreo.Compute_ODE_RHS(t,y,callfun)
+            fun = lambda t,y: ActionSyst.Compute_ODE_RHS(t,y)
             ode_res = scipy.integrate.solve_ivp(fun=fun, t_span=(0.,nperiod_anim), y0=yo, method=ODE_method, t_eval=t_eval, dense_output=False, events=None, vectorized=False,max_step=1./min_n_steps_ode,atol=atol_ode,rtol=rtol_ode)
             all_pos_vel = ode_res['y'].reshape(2,nbody,choreo.ndim,round(nint_plot_img*nperiod_anim))
             all_pos_ode = all_pos_vel[0,:,:,:]
@@ -448,7 +448,7 @@ def ExecName(
             vid_filename = filename_output+'_random_'+str(irank).zfill(3)+'.mp4'
             list_vid.append(vid_filename)
             
-            choreo.plot_all_2D_anim(x,nint_plot_anim,callfun,vid_filename,nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size_perturb,dnint=dnint,all_pos_trace=all_pos_ode,all_pos_points=all_pos_ode,xlim=xlim,extend=0.,color_list=color_list,color=color)
+            ActionSyst.plot_all_2D_anim(x,nint_plot_anim,vid_filename,nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size_perturb,dnint=dnint,all_pos_trace=all_pos_ode,all_pos_points=all_pos_ode,xlim=xlim,extend=0.,color_list=color_list,color=color)
 
 
         nxy = [nx,ny]
@@ -501,9 +501,9 @@ def ExecName(
 
                 nint_mul = refinement_lvl[imul]
 
-                nint = callfun[0]['nint_list'][callfun[0]["current_cvg_lvl"]]*nint_mul
+                nint = ActionSyst.nint()*nint_mul
 
-                fun,gun,x0,v0 = choreo.GetTangentSystemDef(x,callfun,nint,method=SymplecticMethod)
+                fun,gun,x0,v0 = ActionSyst.GetTangentSystemDef(x,nint,method=SymplecticMethod)
 
                 ndof = nbody*choreo.ndim
 
@@ -517,8 +517,8 @@ def ExecName(
                 # Evaluates the relative accuracy of the Monodromy matrix integration process
                 # zo should be an eigenvector of the Monodromy matrix, with eigenvalue 1
 
-                yo = choreo.Compute_init_pos_vel(x,callfun).reshape(-1)
-                zo = choreo.Compute_Auto_ODE_RHS(yo,callfun)
+                yo = ActionSyst.Compute_init_pos_vel(x).reshape(-1)
+                zo = ActionSyst.Compute_Auto_ODE_RHS(yo)
                 error_rel = np.linalg.norm(MonodromyMat.dot(zo)-zo)/np.linalg.norm(zo)
 
                 
@@ -578,17 +578,17 @@ def ExecName(
 
                 nint_mul = refinement_lvl[imul]
 
-                nint = callfun[0]['nint_list'][callfun[0]["current_cvg_lvl"]]*nint_mul
+                nint = ActionSyst.nint()*nint_mul
 
                 ndim_ode = nbody*choreo.ndim
 
-                all_pos_vel = choreo.ComputeAllPosVel(x,callfun)
+                all_pos_vel = ActionSyst.ComputeAllPosVel(x)
 
                 y0 = np.ascontiguousarray(all_pos_vel[:,:,:,0].reshape(-1))
 
 
                 # t_span = (0.,0.5)
-                # yf_exact =np.copy(all_pos_vel[:,:,:,callfun[0]['nint_list'][callfun[0]["current_cvg_lvl"]]//2].reshape(-1))
+                # yf_exact =np.copy(all_pos_vel[:,:,:,ActionSyst.nint()//2].reshape(-1))
     
 
                 t_span = (0.,1.)
@@ -602,7 +602,7 @@ def ExecName(
                 xf_exact = yf_exact[0       :  ndim_ode]
                 vf_exact = yf_exact[ndim_ode:2*ndim_ode]
 
-                fun,gun = choreo.GetSymplecticODEDef(callfun)
+                fun,gun = ActionSyst.GetSymplecticODEDef()
 
                 t_beg= time.perf_counter_ns()
                 xf,vf = SymplecticIntegrator(fun,gun,t_span,x0,v0,nint)
