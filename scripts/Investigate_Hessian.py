@@ -131,11 +131,11 @@ def main():
             n_reconverge_it_max = 0
             n_grad_change = 1.
 
-            callfun = choreo.setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change,CrashOnIdentity=False)
+            ActionSyst = choreo.setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change,CrashOnIdentity=False)
 
-            x = choreo.Package_all_coeffs(all_coeffs,callfun)
+            x = ActionSyst.Package_all_coeffs(all_coeffs)
 
-            Action,Gradaction = choreo.Compute_action(x,callfun)
+            Action,Gradaction = ActionSyst.Compute_action(x)
 
             Gradaction_OK = (np.linalg.norm(Gradaction) < GradActionThresh)
 
@@ -144,7 +144,7 @@ def main():
 
         n_eig = 10
 
-        HessMat = choreo.Compute_action_hess_LinOpt(x,callfun)
+        HessMat = ActionSyst.Compute_action_hess_LinOpt(x)
         w ,v = scipy.sparse.linalg.eigsh(HessMat,k=n_eig,which='SA')
         print(w)
 
