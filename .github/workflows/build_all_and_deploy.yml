@@ -36,14 +36,14 @@ jobs:
     - name: Setup Emscripten
       uses: mymindstorm/setup-emsdk@v11
       with:
-        version: 3.1.14
+        version: 3.1.27
     # 
     - name: Install dependencies
       run: |
         sudo apt-get install libsuitesparse-dev    
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        pip install pyodide-build==0.21.0
+        pip install pyodide-build==0.22.0
     #
     - name: Make Gallery Descriptor 
       run: |
@@ -60,7 +60,7 @@ jobs:
     #
     - name: Copy generated Emscripten whl
       run: |
-        cp ./dist/choreo-0.1.0-cp310-cp310-emscripten_3_1_14_wasm32.whl ./choreo_GUI/python_dist/choreo-0.1.0-cp310-cp310-emscripten_3_1_14_wasm32.whl
+        cp ./dist/choreo-0.2.0-cp310-cp310-emscripten_3_1_27_wasm32.whl ./choreo_GUI/python_dist/choreo-0.2.0-cp310-cp310-emscripten_3_1_27_wasm32.whl
     # 
     - name: Setup Pages
       uses: actions/configure-pages@v1
