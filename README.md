@@ -33,7 +33,7 @@ python setup.py bdist_wheel
 After sourcing emsdk environment, run the following:
 
 ```
-pyodide build && cp ./dist/choreo-0.1.0-cp310-cp310-emscripten_3_1_14_wasm32.whl ./choreo_GUI/python_dist/choreo-0.1.0-cp310-cp310-emscripten_3_1_14_wasm32.whl 
+pyodide build && cp ./dist/choreo-0.2.0-cp310-cp310-emscripten_3_1_27_wasm32.whl ./choreo_GUI/python_dist/choreo-0.2.0-cp310-cp310-emscripten_3_1_27_wasm32.whl 
 ```
 
 ## Want to start finding new solutions, no installation needed?
