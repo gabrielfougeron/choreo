@@ -495,46 +495,6 @@ class ChoreoAction():
 
         return max_path_length
 
-    """
-    def Param_to_Param_direct(x,callfun_source,callfun_target):
-
-        args_source=callfun_source[0]
-        args_target=callfun_target[0]
-
-        all_coeffs = Unpackage_all_coeffs(x,callfun)
-        
-        if (args_target['ncoeff_list'][args_target["current_cvg_lvl"]] < args_source['ncoeff_list'][args_source["current_cvg_lvl"]]):
-            z = all_coeffs[:,:,0:args_target['ncoeff_list'][args_target["current_cvg_lvl"]],:].reshape(-1)
-        else:
-            z = np.zeros((args_target['nloop'],ndim,args_target['ncoeff_list'][args_target["current_cvg_lvl"]],2))
-            z[:,:,0:args_source['ncoeff_list'][args_source["current_cvg_lvl"]],:] = all_coeffs
-            z = z.reshape(-1)
-
-        res = args_target['coeff_to_param_cvg_lvl_list'][args_target["current_cvg_lvl"]].dot(z)
-        
-        return res
-
-    def Param_to_Param_rev(Gx,callfun_source,callfun_target):
-
-        args_source=callfun_source[0]
-        args_target=callfun_target[0]
-
-        Gy = args_source['coeff_to_param_T_cvg_lvl_list'][args_source["current_cvg_lvl"]].dot(Gx)
-        all_coeffs = Gy.reshape(args_source['nloop'],ndim,args_source['ncoeff_list'][args_source["current_cvg_lvl"]],2)
-
-        if (args_target['ncoeff_list'][args_target["current_cvg_lvl"]] < args_source['ncoeff_list'][args_source["current_cvg_lvl"]]):
-            Gz = all_coeffs[:,:,0:args_target['ncoeff_list'][args_target["current_cvg_lvl"]],:].reshape(-1)
-        else:
-            Gz = np.zeros((args_target['nloop'],ndim,args_target['ncoeff_list'][args_target["current_cvg_lvl"]],2))
-            Gz[:,:,0:args_source['ncoeff_list'][args_source["current_cvg_lvl"]],:] = all_coeffs
-            Gz = Gz.reshape(-1)
-        
-        
-        res = args_target['param_to_coeff_T_cvg_lvl_list'][args_target["current_cvg_lvl"]].dot(Gz)
-        
-        return res
-    """
-
     def Compute_Auto_ODE_RHS(self,x):
 
         all_pos_vel = x.reshape(2,self.nbody,ndim)
@@ -1823,7 +1783,7 @@ def setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max=6,MomCons=True,n_
 
     # Now detect parameters and build change of variables
 
-    ncoeff_list = []
+    ncoeff_cvg_lvl_list = []
     nint_cvg_lvl_list = []
     param_to_coeff_cvg_lvl_list = []
     coeff_to_param_cvg_lvl_list = []
@@ -1833,12 +1793,12 @@ def setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max=6,MomCons=True,n_
 
     for i in range(n_reconverge_it_max+1):
         
-        ncoeff_list.append(ncoeff_init * (2**i))
-        nint_cvg_lvl_list.append(2*ncoeff_list[i])
+        ncoeff_cvg_lvl_list.append(ncoeff_init * (2**i))
+        nint_cvg_lvl_list.append(2*ncoeff_cvg_lvl_list[i])
 
         cstrmat_sp = Assemble_Cstr_Matrix(
             nloop               ,
-            ncoeff_list[i]      ,
+            ncoeff_cvg_lvl_list[i]      ,
             MomCons             ,
             mass                ,
             loopnb              ,
@@ -1862,7 +1822,7 @@ def setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max=6,MomCons=True,n_
 
         diag_changevar(
             param_to_coeff_cvg_lvl_list[i].nnz,
-            ncoeff_list[i],
+            ncoeff_cvg_lvl_list[i],
             -n_grad_change,
             param_to_coeff_cvg_lvl_list[i].row,
             param_to_coeff_cvg_lvl_list[i].data,
@@ -1871,7 +1831,7 @@ def setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max=6,MomCons=True,n_
         
         diag_changevar(
             coeff_to_param_cvg_lvl_list[i].nnz,
-            ncoeff_list[i],
+            ncoeff_cvg_lvl_list[i],
             n_grad_change,
             coeff_to_param_cvg_lvl_list[i].col,
             coeff_to_param_cvg_lvl_list[i].data,
@@ -1900,7 +1860,7 @@ def setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max=6,MomCons=True,n_
         "TimeRevsBin"                   :   TimeRevsBin                     ,
         "TimeShiftNumBin"               :   TimeShiftNumBin                 ,
         "TimeShiftDenBin"               :   TimeShiftDenBin                 ,
-        "ncoeff_list"                   :   ncoeff_list                     ,
+        "ncoeff_cvg_lvl_list"           :   ncoeff_cvg_lvl_list             ,
         "nint_cvg_lvl_list"             :   nint_cvg_lvl_list               ,
         "param_to_coeff_cvg_lvl_list"   :   param_to_coeff_cvg_lvl_list     ,
         "coeff_to_param_cvg_lvl_list"   :   coeff_to_param_cvg_lvl_list     ,
@@ -2252,3 +2212,41 @@ def SelectFiles_Action(store_folder,hash_dict,Action_Hash_val=np.zeros((nhash)),
                     file_path_list.append(store_folder+'/'+file_root)
                         
     return file_path_list
+
+def Param_to_Param_direct(x,ActionSyst_source,ActionSyst_target):
+
+    all_coeffs_source = ActionSyst_source.Unpackage_all_coeffs(x)
+
+    ncoeffs_source = ActionSyst_source.ncoeff()
+    ncoeffs_target = ActionSyst_target.ncoeff()
+    
+    if (ncoeffs_target < ncoeffs_source):
+        z = all_coeffs_source[:,:,0:ncoeffs_target,:].reshape(-1)
+    else:
+        z = np.zeros((ActionSyst_target.nloop,ndim,ncoeffs_target,2))
+        z[:,:,0:ncoeffs_source,:] = all_coeffs_source
+        z = z.reshape(-1)
+
+    res = ActionSyst_target.coeff_to_param().dot(z)
+    
+    return res
+
+def Param_to_Param_rev(Gx,ActionSyst_source,ActionSyst_target):
+
+    ncoeffs_source = ActionSyst_source.ncoeff()
+    ncoeffs_target = ActionSyst_target.ncoeff()
+
+    Gy = ActionSyst_source.coeff_to_param_T().dot(Gx)
+    all_coeffs = Gy.reshape(ActionSyst_source.nloop,ndim,ncoeffs_source,2)
+
+    if (ncoeffs_target < ncoeffs_source):
+        Gz = all_coeffs[:,:,0:ncoeffs_target,:].reshape(-1)
+    else:
+        Gz = np.zeros((ActionSyst_target.nloop,ndim,ncoeffs_target,2))
+        Gz[:,:,0:ncoeffs_source,:] = all_coeffs
+        Gz = Gz.reshape(-1)
+    
+    
+    res = ActionSyst_target.param_to_coeff_T().dot(Gz)
+    
+    return res
