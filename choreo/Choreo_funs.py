@@ -77,7 +77,7 @@ class ChoreoAction():
 
         for key in kwargs.keys():
             
-            if key.endswith('_list'):
+            if key.endswith('_cvg_lvl_list'):
                 self.DefGetCurrentListAttribute(key)
 
     def __str__(self):
@@ -99,7 +99,7 @@ class ChoreoAction():
         if not(isinstance(getattr(self, key, None), list)):
             raise ValueError(f"{key} is not a list.")
 
-        fun_name = key.removesuffix('_list')
+        fun_name = key.removesuffix('_cvg_lvl_list')
 
         setattr(self, fun_name, functools.partial(self.GetCurrentListAttribute,key=key))
 
@@ -510,7 +510,7 @@ class ChoreoAction():
             z[:,:,0:args_source['ncoeff_list'][args_source["current_cvg_lvl"]],:] = all_coeffs
             z = z.reshape(-1)
 
-        res = args_target['coeff_to_param_list'][args_target["current_cvg_lvl"]].dot(z)
+        res = args_target['coeff_to_param_cvg_lvl_list'][args_target["current_cvg_lvl"]].dot(z)
         
         return res
 
@@ -519,7 +519,7 @@ class ChoreoAction():
         args_source=callfun_source[0]
         args_target=callfun_target[0]
 
-        Gy = args_source['coeff_to_param_T_list'][args_source["current_cvg_lvl"]].dot(Gx)
+        Gy = args_source['coeff_to_param_T_cvg_lvl_list'][args_source["current_cvg_lvl"]].dot(Gx)
         all_coeffs = Gy.reshape(args_source['nloop'],ndim,args_source['ncoeff_list'][args_source["current_cvg_lvl"]],2)
 
         if (args_target['ncoeff_list'][args_target["current_cvg_lvl"]] < args_source['ncoeff_list'][args_source["current_cvg_lvl"]]):
@@ -530,7 +530,7 @@ class ChoreoAction():
             Gz = Gz.reshape(-1)
         
         
-        res = args_target['param_to_coeff_T_list'][args_target["current_cvg_lvl"]].dot(Gz)
+        res = args_target['param_to_coeff_T_cvg_lvl_list'][args_target["current_cvg_lvl"]].dot(Gz)
         
         return res
     """
@@ -1824,17 +1824,17 @@ def setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max=6,MomCons=True,n_
     # Now detect parameters and build change of variables
 
     ncoeff_list = []
-    nint_list = []
-    param_to_coeff_list = []
-    coeff_to_param_list = []
+    nint_cvg_lvl_list = []
+    param_to_coeff_cvg_lvl_list = []
+    coeff_to_param_cvg_lvl_list = []
 
-    param_to_coeff_T_list = []
-    coeff_to_param_T_list = []
+    param_to_coeff_T_cvg_lvl_list = []
+    coeff_to_param_T_cvg_lvl_list = []
 
     for i in range(n_reconverge_it_max+1):
         
         ncoeff_list.append(ncoeff_init * (2**i))
-        nint_list.append(2*ncoeff_list[i])
+        nint_cvg_lvl_list.append(2*ncoeff_list[i])
 
         cstrmat_sp = Assemble_Cstr_Matrix(
             nloop               ,
@@ -1855,61 +1855,61 @@ def setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max=6,MomCons=True,n_
             TimeShiftDenCstr    
         )
 
-        param_to_coeff_list.append(null_space_sparseqr(cstrmat_sp))
-        coeff_to_param_list.append(param_to_coeff_list[i].transpose(copy=True))
+        param_to_coeff_cvg_lvl_list.append(null_space_sparseqr(cstrmat_sp))
+        coeff_to_param_cvg_lvl_list.append(param_to_coeff_cvg_lvl_list[i].transpose(copy=True))
 
         # TODO : THIS IS PROBABLY WHY I HAVE CONDITIONNING ISSUES FOR DIFFERENT MASSES !!!
 
         diag_changevar(
-            param_to_coeff_list[i].nnz,
+            param_to_coeff_cvg_lvl_list[i].nnz,
             ncoeff_list[i],
             -n_grad_change,
-            param_to_coeff_list[i].row,
-            param_to_coeff_list[i].data,
+            param_to_coeff_cvg_lvl_list[i].row,
+            param_to_coeff_cvg_lvl_list[i].data,
             MassSum
         )
         
         diag_changevar(
-            coeff_to_param_list[i].nnz,
+            coeff_to_param_cvg_lvl_list[i].nnz,
             ncoeff_list[i],
             n_grad_change,
-            coeff_to_param_list[i].col,
-            coeff_to_param_list[i].data,
+            coeff_to_param_cvg_lvl_list[i].col,
+            coeff_to_param_cvg_lvl_list[i].data,
             MassSum
         )
 
-        param_to_coeff_T_list.append(param_to_coeff_list[i].transpose(copy=True))
-        coeff_to_param_T_list.append(coeff_to_param_list[i].transpose(copy=True))
+        param_to_coeff_T_cvg_lvl_list.append(param_to_coeff_cvg_lvl_list[i].transpose(copy=True))
+        coeff_to_param_T_cvg_lvl_list.append(coeff_to_param_cvg_lvl_list[i].transpose(copy=True))
 
     kwargs = {
-        "nbody"                 :   nbody                   ,
-        "nloop"                 :   nloop                   ,
-        "mass"                  :   mass                    ,
-        "loopnb"                :   loopnb                  ,
-        "loopgen"               :   loopgen                 ,
-        "Targets"               :   Targets                 ,
-        "MassSum"               :   MassSum                 ,
-        "SpaceRotsUn"           :   SpaceRotsUn             ,
-        "TimeRevsUn"            :   TimeRevsUn              ,
-        "TimeShiftNumUn"        :   TimeShiftNumUn          ,
-        "TimeShiftDenUn"        :   TimeShiftDenUn          ,
-        "RequiresLoopDispUn"    :   RequiresLoopDispUn      ,
-        "loopnbi"               :   loopnbi                 ,
-        "ProdMassSumAll"        :   ProdMassSumAll          ,
-        "SpaceRotsBin"          :   SpaceRotsBin            ,
-        "TimeRevsBin"           :   TimeRevsBin             ,
-        "TimeShiftNumBin"       :   TimeShiftNumBin         ,
-        "TimeShiftDenBin"       :   TimeShiftDenBin         ,
-        "ncoeff_list"           :   ncoeff_list             ,
-        "nint_list"             :   nint_list               ,
-        "param_to_coeff_list"   :   param_to_coeff_list     ,
-        "coeff_to_param_list"   :   coeff_to_param_list     ,
-        "param_to_coeff_T_list" :   param_to_coeff_T_list   ,
-        "coeff_to_param_T_list" :   coeff_to_param_T_list   ,
-        "current_cvg_lvl"       :   0                       ,
-        "last_all_coeffs"       :   None                    ,
-        "last_all_pos"          :   None                    ,
-        "Do_Pos_FFT"            :   True                    ,
+        "nbody"                         :   nbody                           ,
+        "nloop"                         :   nloop                           ,
+        "mass"                          :   mass                            ,
+        "loopnb"                        :   loopnb                          ,
+        "loopgen"                       :   loopgen                         ,
+        "Targets"                       :   Targets                         ,
+        "MassSum"                       :   MassSum                         ,
+        "SpaceRotsUn"                   :   SpaceRotsUn                     ,
+        "TimeRevsUn"                    :   TimeRevsUn                      ,
+        "TimeShiftNumUn"                :   TimeShiftNumUn                  ,
+        "TimeShiftDenUn"                :   TimeShiftDenUn                  ,
+        "RequiresLoopDispUn"            :   RequiresLoopDispUn              ,
+        "loopnbi"                       :   loopnbi                         ,
+        "ProdMassSumAll"                :   ProdMassSumAll                  ,
+        "SpaceRotsBin"                  :   SpaceRotsBin                    ,
+        "TimeRevsBin"                   :   TimeRevsBin                     ,
+        "TimeShiftNumBin"               :   TimeShiftNumBin                 ,
+        "TimeShiftDenBin"               :   TimeShiftDenBin                 ,
+        "ncoeff_list"                   :   ncoeff_list                     ,
+        "nint_cvg_lvl_list"             :   nint_cvg_lvl_list               ,
+        "param_to_coeff_cvg_lvl_list"   :   param_to_coeff_cvg_lvl_list     ,
+        "coeff_to_param_cvg_lvl_list"   :   coeff_to_param_cvg_lvl_list     ,
+        "param_to_coeff_T_cvg_lvl_list" :   param_to_coeff_T_cvg_lvl_list   ,
+        "coeff_to_param_T_cvg_lvl_list" :   coeff_to_param_T_cvg_lvl_list   ,
+        "current_cvg_lvl"               :   0                               ,
+        "last_all_coeffs"               :   None                            ,
+        "last_all_pos"                  :   None                            ,
+        "Do_Pos_FFT"                    :   True                            ,
     }
 
     return ChoreoAction(**kwargs)

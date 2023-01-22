@@ -189,11 +189,11 @@ def main():
             n_reconverge_it_max = 0
             n_grad_change = 1.
 
-            callfun = choreo.setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change,CrashOnIdentity=False)
+            ActionSyst = choreo.setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change,CrashOnIdentity=False)
 
-            x = choreo.Package_all_coeffs(all_coeffs,callfun)
+            x = ActionSyst.Package_all_coeffs(all_coeffs)
 
-            Action,Gradaction = choreo.Compute_action(x,callfun)
+            Action,Gradaction = ActionSyst.Compute_action(x)
 
             Gradaction_OK = (np.linalg.norm(Gradaction) < GradActionThresh)
 
@@ -204,19 +204,19 @@ def main():
 
         print('Saving solution as '+filename_output+'.*')
 
-        choreo.Write_Descriptor(x,callfun,filename_output+'.txt')
+        ActionSyst.Write_Descriptor(x,filename_output+'.txt')
         
         if Save_img :
-            choreo.plot_all_2D(x,nint_plot_img,callfun,filename_output+'.png',fig_size=img_size,color=color)
+            ActionSyst.plot_all_2D(x,nint_plot_img,filename_output+'.png',fig_size=img_size,color=color)
         
         if Save_thumb :
-            choreo.plot_all_2D(x,nint_plot_img,callfun,filename_output+'_thumb.png',fig_size=thumb_size,color=color)
+            ActionSyst.plot_all_2D(x,nint_plot_img,filename_output+'_thumb.png',fig_size=thumb_size,color=color)
             
         if Save_anim :
-            choreo.plot_all_2D_anim(x,nint_plot_anim,callfun,filename_output+'.mp4',nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size,dnint=dnint,color_list=color_list,color=color)
+            ActionSyst.plot_all_2D_anim(x,nint_plot_anim,filename_output+'.mp4',nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size,dnint=dnint,color_list=color_list,color=color)
 
         if Save_Newton_Error :
-            choreo.plot_Newton_Error(x,callfun,filename_output+'_newton.png')
+            ActionSyst.plot_Newton_Error(x,filename_output+'_newton.png')
         
         if Save_All_Coeffs:
 
@@ -224,51 +224,51 @@ def main():
 
         if Save_All_Coeffs_No_Sym:
             
-            all_coeffs_nosym = choreo.RemoveSym(x,callfun)
+            all_coeffs_nosym = ActionSyst.RemoveSym(x)
 
             np.save(filename_output+'_nosym.npy',all_coeffs_nosym)
 
         if Save_ODE_anim:
             
-            y0 = choreo.Compute_init_pos_vel(x,callfun).reshape(-1)
+            y0 = ActionSyst.Compute_init_pos_vel(x).reshape(-1)
 
             t_eval = np.array([i/nint_plot_img for i in range(nint_plot_img)])
 
-            fun = lambda t,y: choreo.Compute_ODE_RHS(t,y,callfun)
+            fun = lambda t,y: ActionSyst.Compute_ODE_RHS(t,y)
 
             ode_res = scipy.integrate.solve_ivp(fun=fun, t_span=(0.,1.), y0=y0, method=ODE_method, t_eval=t_eval, dense_output=False, events=None, vectorized=False,max_step=1./min_n_steps_ode,atol=atol_ode,rtol=rtol_ode)
 
             all_pos_vel = ode_res['y'].reshape(2,nbody,choreo.ndim,nint_plot_img)
             all_pos_ode = all_pos_vel[0,:,:,:]
             
-            choreo.plot_all_2D_anim(x,nint_plot_anim,callfun,filename_output+'_ode.mp4',nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size,dnint=dnint,all_pos_trace=all_pos_ode,all_pos_points=all_pos_ode,color_list=color_list,color=color)
+            ActionSyst.plot_all_2D_anim(x,nint_plot_anim,filename_output+'_ode.mp4',nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size,dnint=dnint,all_pos_trace=all_pos_ode,all_pos_points=all_pos_ode,color_list=color_list,color=color)
 
         n_ddl = nbody*choreo.ndim*2
-        yo = choreo.Compute_init_pos_vel(x,callfun).reshape(-1)
+        yo = ActionSyst.Compute_init_pos_vel(x).reshape(-1)
 
         dt_list = [10**(-i) for i in range(13)]
         dy = np.random.rand(n_ddl)
 
-        fo = choreo.Compute_Auto_ODE_RHS(yo,callfun)
+        fo = ActionSyst.Compute_Auto_ODE_RHS(yo)
 
         for dt in dt_list:
 
             ya = yo + dt*dy
-            fa = choreo.Compute_Auto_ODE_RHS(ya,callfun)
+            fa = ActionSyst.Compute_Auto_ODE_RHS(ya)
             yb = yo - dt*dy
-            fb = choreo.Compute_Auto_ODE_RHS(yb,callfun)
+            fb = ActionSyst.Compute_Auto_ODE_RHS(yb)
 
             dfdy_difffin = (fa-fb)/(2*dt)
 
-            dfdy_exact = choreo.Compute_Auto_JacMul_ODE_RHS(yo,dy,callfun)
+            dfdy_exact = ActionSyst.Compute_Auto_JacMul_ODE_RHS(yo,dy)
 
             print('dt = ',dt)
             print('error = ',np.linalg.norm(dfdy_difffin-dfdy_exact))
             print('error_rel = ',np.linalg.norm(dfdy_difffin-dfdy_exact)/np.linalg.norm(dfdy_exact))
             print('')
 
-        Jac_Linopt = choreo.Compute_Auto_JacMul_ODE_RHS_LinOpt(yo,callfun)
-        Jac_Mat = choreo.Compute_Auto_JacMat_ODE_RHS(yo,callfun)
+        Jac_Linopt = ActionSyst.Compute_Auto_JacMul_ODE_RHS_LinOpt(yo)
+        Jac_Mat = ActionSyst.Compute_Auto_JacMat_ODE_RHS(yo)
 
         df1 = Jac_Linopt.dot(dy)
         df2 = Jac_Mat.dot(dy)
