@@ -1,6 +1,5 @@
 '''
 Choreo_funs.py : Defines useful functions in the Choreographies2 project.
-
 '''
 
 import os
@@ -9,6 +8,8 @@ import copy
 import time
 import pickle
 import warnings
+import functools
+import json
 
 import numpy as np
 import math as m
@@ -17,11 +18,9 @@ import scipy.optimize
 import scipy.linalg as la
 import scipy.sparse as sp
 import sparseqr
-import networkx as nx
+import networkx
 import random
-
 import inspect
-
 import fractions
 
 from matplotlib import pyplot as plt
@@ -29,6 +28,11 @@ from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.colors import cnames
 from matplotlib.collections import LineCollection
 from matplotlib import animation
+
+try:
+    import ffmpeg
+except:
+    pass
 
 from choreo.Choreo_cython_funs import ndim,twopi,nhash,n
 from choreo.Choreo_cython_funs import Compute_action_Cython,Compute_action_hess_mul_Cython
@@ -39,7 +43,6 @@ from choreo.Choreo_cython_funs import Compute_Forces_Cython,Compute_JacMat_Force
 from choreo.Choreo_cython_funs import Transform_Coeffs_Single_Loop,SparseScaleCoeffs,ComputeSpeedCoeffs
 from choreo.Choreo_cython_funs import the_irfft,the_rfft
 
-
 if ndim == 2:
     from choreo.Choreo_cython_funs_2D import Compute_action_Cython_2D as Compute_action_Cython ,Compute_action_hess_mul_Cython_2D as Compute_action_hess_mul_Cython
     from choreo.Choreo_cython_funs_2D import RotateFastWithSlow_2D
@@ -48,7 +51,6 @@ from choreo.Choreo_scipy_plus import *
 
 def Pick_Named_Args_From_Dict(fun,the_dict,MissingArgsAreNone = True):
     
-    # list_of_args = inspect.getargspec(fun).args
     list_of_args = inspect.getfullargspec(fun).args
     
     if MissingArgsAreNone:
@@ -61,312 +63,1333 @@ def Pick_Named_Args_From_Dict(fun,the_dict,MissingArgsAreNone = True):
     
     return all_kwargs
 
-def Package_all_coeffs(all_coeffs,callfun):
-    # Transfers the Fourier coefficients of the generators to a single vector of parameters.
-    # The packaging process projects the trajectory onto the space of constraint satisfying trajectories.
-    
-    args = callfun[0]
+class ChoreoAction():
+    r"""
+    This class defines everything needed to compute the action.
+    """
+    def __init__(self, **kwargs):
+        r"""
+        Class constructor. Just shove everything in there.
+        """
 
-    y = all_coeffs.reshape(-1)
-    x = args['coeff_to_param_list'][args["current_cvg_lvl"]].dot(y)
-    
-    return x
-    
-def Unpackage_all_coeffs(x,callfun):
-    # Computes the Fourier coefficients of the generator given the parameters.
-    
-    args = callfun[0]
-    
-    y = args['param_to_coeff_list'][args["current_cvg_lvl"]].dot(x)
-    all_coeffs = y.reshape(args['nloop'],ndim,args['ncoeff_list'][args["current_cvg_lvl"]],2)
-    
-    return all_coeffs
+        for key, value in kwargs.items():
+            setattr(self, key, value)
 
-def Compute_bar(all_coeffs,nloop,mass,loopnb,Targets,SpaceRotsUn):
-
-    xbar = np.zeros((ndim))
-    tot_mass = 0.
-
-    for il in range(nloop):
-        for ib in range(loopnb[il]):
-
-            ibody = Targets[il,ib]
-
-            tot_mass += mass[ibody]
-            xbar += mass[ibody] * np.dot(SpaceRotsUn[il,ib,:,:],all_coeffs[il,:,0,0] )
-
+        for key in kwargs.keys():
             
-    xbar /= tot_mass
+            if key.endswith('_cvg_lvl_list'):
+                self.DefGetCurrentListAttribute(key)
 
-    return xbar
+    def __str__(self):
 
-def Center_all_coeffs(all_coeffs,nloop,mass,loopnb,Targets,SpaceRotsUn):
+        res = 'ChoreoAction object:\n'
 
-    xbar = Compute_bar(all_coeffs,nloop,mass,loopnb,Targets,SpaceRotsUn)
+        for key,val in self.__dict__.items():
 
-    for il in range(nloop):
+            res += f'{key} : {val}\n'
 
-        all_coeffs[il,:,0,0] -= xbar
+        return res
 
-def RemoveSym(x,callfun):
-    # Removes symmetries and gives coeffs for all bodies
-    all_coeffs = Unpackage_all_coeffs(x,callfun)
+    def GetCurrentListAttribute(self,key):
 
-    args=callfun[0]
+        return getattr(self, key)[ getattr(self,'current_cvg_lvl') ]
 
-    return RemoveSym_ann(
-        all_coeffs,
-        args['nbody'],
-        args['nloop'],
-        args['ncoeff_list'][args["current_cvg_lvl"]],
-        args['loopnb'],
-        args['Targets'],
-        args['SpaceRotsUn'],
-        args['TimeRevsUn'],
-        args['TimeShiftNumUn'],
-        args['TimeShiftDenUn']
-    )
+    def DefGetCurrentListAttribute(self,key):
+        
+        if not(isinstance(getattr(self, key, None), list)):
+            raise ValueError(f"{key} is not a list.")
 
-def RemoveSym_ann(all_coeffs,nbody,nloop,ncoeff,loopnb,Targets,SpaceRotsUn,TimeRevsUn,TimeShiftNumUn,TimeShiftDenUn):
-    # Removes symmetries and gives coeffs for all bodies
+        fun_name = key.removesuffix('_cvg_lvl_list')
 
-    all_coeffs_nosym = np.zeros((nbody,ndim,ncoeff,2),dtype=np.float64)
+        setattr(self, fun_name, functools.partial(self.GetCurrentListAttribute,key=key))
 
-    for il in range(nloop):
-        for ib in range(loopnb[il]):
+    def Package_all_coeffs(self,all_coeffs):
+        r"""
+        Transfers the Fourier coefficients of the generators to a single vector of parameters for search.
+        The packaging process projects the trajectory onto the space of constraint satisfying trajectories.
+        """
 
-            ibody = Targets[il,ib]
+        return self.coeff_to_param().dot(all_coeffs.reshape(-1))
+        
+    def Unpackage_all_coeffs(self,x):
+        r"""
+        Computes the Fourier coefficients of the generator given the parameters.
+        """
+        
+        y = self.param_to_coeff().dot(x)
+        all_coeffs = y.reshape(self.nloop,ndim,self.ncoeff(),2)
+        
+        return all_coeffs
 
-            SpaceRot = SpaceRotsUn[il,ib,:,:]
-            TimeRev = TimeRevsUn[il,ib]
-            TimeShiftNum = float(TimeShiftNumUn[il,ib])
-            TimeShiftDen = float(TimeShiftDenUn[il,ib])
+    def RemoveSym(self,x):
+        r"""
+        Removes symmetries and returns coeffs for all bodies.
+        """
 
-            all_coeffs_nosym[ibody,:,:,:] = Transform_Coeffs_Single_Loop(SpaceRot, TimeRev, TimeShiftNum, TimeShiftDen, all_coeffs[il,:,:],ncoeff)
-
-    return all_coeffs_nosym
-
-def ComputeAllPos(x,callfun,nint=None):
-    # Returns the positions of all bodies.
-
-    if nint is None:
-        args=callfun[0]
-        nint = args['nint_list'][args["current_cvg_lvl"]]
-
-    all_coeffs_nosym = RemoveSym(x,callfun).view(dtype=np.complex128)[...,0]
-    all_pos_b = the_irfft(all_coeffs_nosym,n=nint,axis=2,norm="forward")
-
-    return all_pos_b
-
-def ComputeAllLoopPos(x,callfun,nint=None):
-    # Returns the positions of all loops, not bodies.
-
-    if nint is None:
-        args=callfun[0]
-        nint = args['nint_list'][args["current_cvg_lvl"]]
-
-    all_coeffs_c = Unpackage_all_coeffs(x,callfun).view(dtype=np.complex128)[...,0]
-    all_pos = the_irfft(all_coeffs_c,n=nint,axis=2,norm="forward")
-
-    return all_pos
-
-def ComputeAllPosVel(x,callfun,nint=None):
-    # Returns the positions and velocities of all bodies along the path.
-
-    if nint is None:
-        args=callfun[0]
-        nint = args['nint_list'][args["current_cvg_lvl"]]
-
-    all_coeffs_nosym = RemoveSym(x,callfun).view(dtype=np.complex128)[...,0]
-    all_pos_b = the_irfft(all_coeffs_nosym,n=nint,axis=2,norm="forward")
-
-    ncoeff = all_coeffs_nosym.shape[2]
-    for k in range(ncoeff):
-        all_coeffs_nosym[:,:,k] *= twopi*1j*k
-
-    all_vel_b = the_irfft(all_coeffs_nosym,n=nint,axis=2,norm="forward")
-
-    return np.stack((all_pos_b,all_vel_b),axis=0)
-
-def Compute_xlim(x,callfun,extend=0.):
-
-    all_pos_b = ComputeAllPos(x,callfun)
-
-    xmin = np.amin(all_pos_b,axis=(0,2))
-    xmax = np.amax(all_pos_b,axis=(0,2))
-
-    xmin -= extend*(xmax-xmin)
-    xmax += extend*(xmax-xmin)
-
-    return np.stack((xmin,xmax),axis=1).reshape(-1)
-
-def Compute_init_pos_vel(x,callfun):
-    # I litterally do not know of any more efficient way to compute the initial positions and velocities.
-
-    all_pos_vel = ComputeAllPosVel(x,callfun)
-
-    return np.ascontiguousarray(all_pos_vel[:,:,:,0])
-
-def Compute_action_onlygrad(x,callfun):
-    # Wrapper function that returns ONLY the gradient of the action with respect to the parameters 
-    
-    J,y = Compute_action(x,callfun)
-    
-    return y
-    
-def Compute_action_onlygrad_escape(x,callfun):
-    # Cumputes the action and its gradient with respect to the parameters at a given value of the parameters
-
-    args=callfun[0]
-    
-    y = args['param_to_coeff_list'][args["current_cvg_lvl"]].dot(x)
-    all_coeffs = y.reshape(args['nloop'],ndim,args['ncoeff_list'][args["current_cvg_lvl"]],2)
-
-    rms_dist = Compute_Loop_Dist_btw_avg_Cython(
-        args['nloop']           ,
-        args['ncoeff_list'][args["current_cvg_lvl"]]          ,
-        args['nint_list'][args["current_cvg_lvl"]]            ,
-        args['mass']            ,
-        args['loopnb']          ,
-        args['Targets']         ,
-        args['MassSum']         ,
-        args['SpaceRotsUn']     ,
-        args['TimeRevsUn']      ,
-        args['TimeShiftNumUn']  ,
-        args['TimeShiftDenUn']  ,
-        args['loopnbi']         ,
-        args['ProdMassSumAll']  ,
-        args['SpaceRotsBin']    ,
-        args['TimeRevsBin']     ,
-        args['TimeShiftNumBin'] ,
-        args['TimeShiftDenBin'] ,
-        all_coeffs
+        return RemoveSym_ann(
+            self.Unpackage_all_coeffs(x),
+            self.nbody,
+            self.nloop,
+            self.ncoeff(),
+            self.loopnb,
+            self.Targets,
+            self.SpaceRotsUn,
+            self.TimeRevsUn,
+            self.TimeShiftNumUn,
+            self.TimeShiftDenUn
         )
 
-    escape_pen = 1 + args['escape_fac'] * abs(rms_dist)**args['escape_pow']
-    
-    # print("escape_pen = ",escape_pen)
+    def ComputeAllPos(self,x,nint=None):
+        r"""
+        Returns the positions of all bodies.
+        """
 
-    
-    if args["Do_Pos_FFT"]:
-        
-        y = args['param_to_coeff_list'][args["current_cvg_lvl"]].dot(x)
-        args['last_all_coeffs'] = y.reshape(args['nloop'],ndim,args['ncoeff_list'][args["current_cvg_lvl"]],2)
-        
-        nint = args['nint_list'][args["current_cvg_lvl"]]
-        c_coeffs = args['last_all_coeffs'].view(dtype=np.complex128)[...,0]
-        args['last_all_pos'] = the_irfft(c_coeffs,n=nint,axis=2,norm="forward")
+        if nint is None:
+            nint = self.nint()
 
-    J,GradJ =  Compute_action_Cython(
-        args['nloop']           ,
-        args['ncoeff_list'][args["current_cvg_lvl"]]          ,
-        args['nint_list'][args["current_cvg_lvl"]]            ,
-        args['mass']            ,
-        args['loopnb']          ,
-        args['Targets']         ,
-        args['MassSum']         ,
-        args['SpaceRotsUn']     ,
-        args['TimeRevsUn']      ,
-        args['TimeShiftNumUn']  ,
-        args['TimeShiftDenUn']  ,
-        args['loopnbi']         ,
-        args['ProdMassSumAll']  ,
-        args['SpaceRotsBin']    ,
-        args['TimeRevsBin']     ,
-        args['TimeShiftNumBin'] ,
-        args['TimeShiftDenBin'] ,
-        args['last_all_coeffs'] ,
-        args['last_all_pos'] 
+        all_coeffs_nosym = self.RemoveSym(x).view(dtype=np.complex128)[...,0]
+        all_pos_b = the_irfft(all_coeffs_nosym,n=nint,axis=2,norm="forward")
+
+        return all_pos_b
+
+    def ComputeAllLoopPos(self,x,nint=None):
+        r"""
+        Returns the positions of all loops, not bodies.
+        """
+
+        if nint is None:
+            nint = self.nint()
+
+        all_coeffs_c = self.Unpackage_all_coeffs(x).view(dtype=np.complex128)[...,0]
+        all_pos = the_irfft(all_coeffs_c,n=nint,axis=2,norm="forward")
+
+        return all_pos
+
+    def ComputeAllPosVel(self,x,nint=None):
+        r"""
+        Returns the positions and velocities of all bodies along the path.
+        """
+
+        if nint is None:
+            nint = self.nint()
+
+        all_coeffs_nosym = self.RemoveSym(x).view(dtype=np.complex128)[...,0]
+        all_pos_b = the_irfft(all_coeffs_nosym,n=nint,axis=2,norm="forward")
+
+        ncoeff = all_coeffs_nosym.shape[2]
+        for k in range(ncoeff):
+            all_coeffs_nosym[:,:,k] *= twopi*1j*k
+
+        all_vel_b = the_irfft(all_coeffs_nosym,n=nint,axis=2,norm="forward")
+
+        return np.stack((all_pos_b,all_vel_b),axis=0)
+
+    def Compute_xlim(self,x,extend=0.):
+
+        all_pos_b = self.ComputeAllPos(x)
+
+        xmin = np.amin(all_pos_b,axis=(0,2))
+        xmax = np.amax(all_pos_b,axis=(0,2))
+
+        xmin -= extend*(xmax-xmin)
+        xmax += extend*(xmax-xmin)
+
+        return np.stack((xmin,xmax),axis=1).reshape(-1)
+
+    def Compute_init_pos_vel(self,x):
+        r"""
+        Returns the initial positions and velocities of all bodies.
+        """
+        # I litterally do not know of any more efficient way to compute the initial positions and velocities.
+
+        all_pos_vel = self.ComputeAllPosVel(x)
+
+        return np.ascontiguousarray(all_pos_vel[:,:,:,0])
+
+    def Compute_action_onlygrad(self,x):
+        r"""
+        Wrapper function that returns ONLY the gradient of the action with respect to the parameters.
+        """
+        
+        _,y = self.Compute_action(x)
+        
+        return y
+        
+    def Compute_action_onlygrad_escape(self,x):
+
+        rms_dist = Compute_Loop_Dist_btw_avg_Cython(
+            self.nloop          ,
+            self.ncoeff()       ,
+            self.nint()         ,
+            self.mass           ,
+            self.loopnb         ,
+            self.Targets        ,
+            self.MassSum        ,
+            self.SpaceRotsUn    ,
+            self.TimeRevsUn     ,
+            self.TimeShiftNumUn ,
+            self.TimeShiftDenUn ,
+            self.loopnbi        ,
+            self.ProdMassSumAll ,
+            self.SpaceRotsBin   ,
+            self.TimeRevsBin    ,
+            self.TimeShiftNumBin,
+            self.TimeShiftDenBin,
+            self.Unpackage_all_coeffs(x)
         )
 
-    GJ = GradJ.reshape(-1)
-    GJparam = (args['param_to_coeff_T_list'][args["current_cvg_lvl"]].dot(GJ)) * escape_pen
-    
-    return GJparam
-    
-def Compute_action_hess_mul(x,dx,callfun):
-    # Returns the Hessian of the action (computed wrt the parameters) times a test vector of parameter deviations.
-    
-    args=callfun[0]
-
-    dy = args['param_to_coeff_list'][args["current_cvg_lvl"]].dot(dx)
-    all_coeffs_d = dy.reshape(args['nloop'],ndim,args['ncoeff_list'][args["current_cvg_lvl"]],2)
-    
-    if args["Do_Pos_FFT"]:
+        escape_pen = 1 + self.escape_fac * abs(rms_dist)**self.escape_pow
         
-        y = args['param_to_coeff_list'][args["current_cvg_lvl"]].dot(x)
-        args['last_all_coeffs'] = y.reshape(args['nloop'],ndim,args['ncoeff_list'][args["current_cvg_lvl"]],2)
-        
-        nint = args['nint_list'][args["current_cvg_lvl"]]
-        c_coeffs = args['last_all_coeffs'].view(dtype=np.complex128)[...,0]
-        args['last_all_pos'] = the_irfft(c_coeffs,n=nint,axis=2,norm="forward")
+        # print("escape_pen = ",escape_pen)
 
-    HessJdx =  Compute_action_hess_mul_Cython(
-        args['nloop']           ,
-        args['ncoeff_list'][args["current_cvg_lvl"]]          ,
-        args['nint_list'][args["current_cvg_lvl"]]            ,
-        args['mass']            ,
-        args['loopnb']          ,
-        args['Targets']         ,
-        args['MassSum']         ,
-        args['SpaceRotsUn']     ,
-        args['TimeRevsUn']      ,
-        args['TimeShiftNumUn']  ,
-        args['TimeShiftDenUn']  ,
-        args['loopnbi']         ,
-        args['ProdMassSumAll']  ,
-        args['SpaceRotsBin']    ,
-        args['TimeRevsBin']     ,
-        args['TimeShiftNumBin'] ,
-        args['TimeShiftDenBin'] ,
-        args['last_all_coeffs'] ,
-        all_coeffs_d            ,
-        args['last_all_pos']    ,
-        )
-
-    HJdx = HessJdx.reshape(-1)
-    
-    z =  args['param_to_coeff_T_list'][args["current_cvg_lvl"]].dot(HJdx)
-    
-    return z
-    
-def Compute_action_hess_LinOpt(x,callfun):
-    # Defines the Hessian of the action wrt parameters at a given point as a Scipy LinearOperator
-
-    args=callfun[0]
-
-    return sp.linalg.LinearOperator((args['coeff_to_param_list'][args["current_cvg_lvl"]].shape[0],args['coeff_to_param_list'][args["current_cvg_lvl"]].shape[0]),
-        matvec =  (lambda dx,xl=x,callfunl=callfun : Compute_action_hess_mul(xl,dx,callfunl)),
-        rmatvec = (lambda dx,xl=x,callfunl=callfun : Compute_action_hess_mul(xl,dx,callfunl)))
-
-def null_space_sparseqr(AT):
-    # Returns a basis of the null space of a matrix A.
-    # AT must be in COO format
-    # The nullspace of the TRANSPOSE of AT will be returned
-
-    # tolerance = 1e-5
-    tolerance = None
-
-    Q, R, E, rank = sparseqr.qr( AT, tolerance=tolerance )
-
-    nrow = AT.shape[0]
-    
-    if (nrow <= rank):
-        # raise ValueError("Kernel is empty")
-        
-        return sp.coo_matrix(([],([],[])),shape=(nrow,0))
-    
-    else:
-
-        mask = []
-        iker = 0
-        while (iker < Q.nnz):
-            if (Q.col[iker] >= rank):
-                mask.append(iker)
-            iker += 1
+        if self.Do_Pos_FFT:
             
-        return sp.coo_matrix((Q.data[mask],(Q.row[mask],Q.col[mask]-rank)),shape=(nrow,nrow-rank))
-     
+            self.last_all_coeffs = self.Unpackage_all_coeffs(x)
+            
+            c_coeffs = self.last_all_coeffs.view(dtype=np.complex128)[...,0]
+            self.last_all_pos = the_irfft(c_coeffs,n=self.nint(),axis=2,norm="forward")
+
+        J,GradJ =  Compute_action_Cython(
+            self.nloop          ,
+            self.ncoeff()       ,
+            self.nint()         ,
+            self.mass           ,
+            self.loopnb         ,
+            self.Targets        ,
+            self.MassSum        ,
+            self.SpaceRotsUn    ,
+            self.TimeRevsUn     ,
+            self.TimeShiftNumUn ,
+            self.TimeShiftDenUn ,
+            self.loopnbi        ,
+            self.ProdMassSumAll ,
+            self.SpaceRotsBin   ,
+            self.TimeRevsBin    ,
+            self.TimeShiftNumBin,
+            self.TimeShiftDenBin,
+            self.last_all_coeffs,
+            self.last_all_pos
+        )
+
+        GJ = GradJ.reshape(-1)
+        GJparam = (self.param_to_coeff_T().dot(GJ)) * escape_pen
+        
+        return GJparam
+            
+    def Compute_action_hess_mul(self,x,dx):
+        r"""
+        Returns the Hessian of the action (computed wrt the parameters) times a test vector of parameter deviations.
+        """
+    
+        if self.Do_Pos_FFT:
+            
+            self.last_all_coeffs = self.Unpackage_all_coeffs(x)
+            
+            c_coeffs = self.last_all_coeffs.view(dtype=np.complex128)[...,0]
+            self.last_all_pos = the_irfft(c_coeffs,n=self.nint(),axis=2,norm="forward")
+
+        HessJdx = Compute_action_hess_mul_Cython(
+            self.nloop                      ,
+            self.ncoeff()                   ,
+            self.nint()                     ,
+            self.mass                       ,
+            self.loopnb                     ,
+            self.Targets                    ,
+            self.MassSum                    ,
+            self.SpaceRotsUn                ,
+            self.TimeRevsUn                 ,
+            self.TimeShiftNumUn             ,
+            self.TimeShiftDenUn             ,
+            self.loopnbi                    ,
+            self.ProdMassSumAll             ,
+            self.SpaceRotsBin               ,
+            self.TimeRevsBin                ,
+            self.TimeShiftNumBin            ,
+            self.TimeShiftDenBin            ,
+            self.last_all_coeffs            ,
+            self.Unpackage_all_coeffs(dx)   ,
+            self.last_all_pos               
+        )
+
+        HJdx = HessJdx.reshape(-1)
+        z = self.param_to_coeff_T().dot(HJdx)
+        
+        return z
+            
+    def Compute_action_hess_LinOpt(self,x):
+        r"""
+        Returns the Hessian of the action wrt parameters at a given point as a Scipy LinearOperator.
+        """
+
+        return sp.linalg.LinearOperator((self.coeff_to_param().shape[0],self.coeff_to_param().shape[0]),
+            matvec =  (lambda dx, xl=x, selfl=self : selfl.Compute_action_hess_mul(xl,dx)),
+            rmatvec = (lambda dx, xl=x, selfl=self : selfl.Compute_action_hess_mul(xl,dx)))
+
+    def Compute_action(self,x):
+        r"""
+        Computes the action and its gradient with respect to the parameters at a given value of the parameters.
+        """
+    
+        if self.Do_Pos_FFT:
+            
+            self.last_all_coeffs = self.Unpackage_all_coeffs(x)
+            
+            c_coeffs = self.last_all_coeffs.view(dtype=np.complex128)[...,0]
+            self.last_all_pos = the_irfft(c_coeffs,n=self.nint(),axis=2,norm="forward")
+
+        J,GradJ =  Compute_action_Cython(
+            self.nloop          ,
+            self.ncoeff()       ,
+            self.nint()         ,
+            self.mass           ,
+            self.loopnb         ,
+            self.Targets        ,
+            self.MassSum        ,
+            self.SpaceRotsUn    ,
+            self.TimeRevsUn     ,
+            self.TimeShiftNumUn ,
+            self.TimeShiftDenUn ,
+            self.loopnbi        ,
+            self.ProdMassSumAll ,
+            self.SpaceRotsBin   ,
+            self.TimeRevsBin    ,
+            self.TimeShiftNumBin,
+            self.TimeShiftDenBin,
+            self.last_all_coeffs,
+            self.last_all_pos
+        )
+
+        GJ = GradJ.reshape(-1)
+        y = self.param_to_coeff_T().dot(GJ)
+        
+        return J,y
+
+    def Compute_hash_action(self,x):
+        r"""
+        Returns an invariant hash of the trajectories.
+        Useful for duplicate detection
+        """
+
+        Hash_Action =  Compute_hash_action_Cython(
+            self.nloop                      ,
+            self.ncoeff()                   ,
+            self.nint()                     ,
+            self.mass                       ,
+            self.loopnb                     ,
+            self.Targets                    ,
+            self.MassSum                    ,
+            self.SpaceRotsUn                ,
+            self.TimeRevsUn                 ,
+            self.TimeShiftNumUn             ,
+            self.TimeShiftDenUn             ,
+            self.loopnbi                    ,
+            self.ProdMassSumAll             ,
+            self.SpaceRotsBin               ,
+            self.TimeRevsBin                ,
+            self.TimeShiftNumBin            ,
+            self.TimeShiftDenBin            ,
+            self.Unpackage_all_coeffs(x)
+        )
+
+        return Hash_Action
+                
+    def Compute_Newton_err(self,x):
+        r"""
+        Computes the Newton error at a certain value of parameters
+        WARNING : DOUBLING NUMBER OF INTEGRATION POINTS
+        """
+
+        all_Newt_err =  Compute_Newton_err_Cython(
+            self.nbody                  ,
+            self.nloop                  ,
+            self.ncoeff()               ,
+            self.nint()                 ,
+            self.mass                   ,
+            self.loopnb                 ,
+            self.Targets                ,
+            self.SpaceRotsUn            ,
+            self.TimeRevsUn             ,
+            self.TimeShiftNumUn         ,
+            self.TimeShiftDenUn         ,
+            self.Unpackage_all_coeffs(x)
+        )
+
+        return all_Newt_err
+                
+    def Detect_Escape(self,x):
+        r"""
+        Returns True if the trajectories are so far that they are likely to never interact again
+        """
+
+        res = Compute_Loop_Size_Dist_Cython(
+            self.nloop                  ,
+            self.ncoeff()               ,
+            self.nint()                 ,
+            self.mass                   ,
+            self.loopnb                 ,
+            self.Targets                ,
+            self.MassSum                ,
+            self.SpaceRotsUn            ,
+            self.TimeRevsUn             ,
+            self.TimeShiftNumUn         ,
+            self.TimeShiftDenUn         ,
+            self.loopnbi                ,
+            self.ProdMassSumAll         ,
+            self.SpaceRotsBin           ,
+            self.TimeRevsBin            ,
+            self.TimeShiftNumBin        ,
+            self.TimeShiftDenBin        ,
+            self.Unpackage_all_coeffs(x)
+        )
+        
+        # return (max_loop_dist > (4.5 * self.nbody * max_loop_size))
+        return (res[1] > (4.5 * self.nbody * res[0])),res
+            
+    def Compute_MinDist(self,x):
+        r"""
+        Returns the minimum inter-body distance along a set of trajectories
+        """
+        
+        MinDist =  Compute_MinDist_Cython(
+            self.nloop                  ,
+            self.ncoeff()               ,
+            self.nint()                 ,
+            self.mass                   ,
+            self.loopnb                 ,
+            self.Targets                ,
+            self.MassSum                ,
+            self.SpaceRotsUn            ,
+            self.TimeRevsUn             ,
+            self.TimeShiftNumUn         ,
+            self.TimeShiftDenUn         ,
+            self.loopnbi                ,
+            self.ProdMassSumAll         ,
+            self.SpaceRotsBin           ,
+            self.TimeRevsBin            ,
+            self.TimeShiftNumBin        ,
+            self.TimeShiftDenBin        ,
+            self.Unpackage_all_coeffs(x) 
+        )
+        
+        return MinDist
+
+    def Compute_MaxPathLength(self,x):
+        r"""
+        Computes the maximum path length for speed sync
+        """
+
+        nint = self.nint()
+
+        if self.Do_Pos_FFT:
+            
+            self.last_all_coeffs = self.Unpackage_all_coeffs(x)
+            
+            c_coeffs = self.last_all_coeffs.view(dtype=np.complex128)[...,0]
+            self.last_all_pos = the_irfft(c_coeffs,n=self.nint(),axis=2,norm="forward")
+
+        dx = self.last_all_pos.copy()
+        dx[:,:,0:(nint-1)] -= self.last_all_pos[:,:,1:nint]
+        dx[:,:,nint-1] -= self.last_all_pos[:,:,0]
+        
+        max_path_length = np.linalg.norm(dx,axis=1).sum(axis=1).max(axis=0)
+
+        return max_path_length
+
+    def Compute_Auto_ODE_RHS(self,x):
+
+        all_pos_vel = x.reshape(2,self.nbody,ndim)
+        
+        rhs = np.zeros((2,self.nbody,ndim))
+
+        rhs[0,:,:] = all_pos_vel[1,:,:]
+        rhs[1,:,:] = Compute_Forces_Cython(
+            all_pos_vel[0,:,:]  ,
+            self.mass           ,
+            self.nbody          
+        )
+
+        return rhs.reshape(2*self.nbody*ndim)
+
+    def Compute_ODE_RHS(self,t,x):
+        return self.Compute_Auto_ODE_RHS(x)
+
+    def GetSymplecticODEDef(self):
+
+        def fun(t,v):
+            return v
+
+        def gun(t,x):
+            return Compute_Forces_Cython(
+                x.reshape(self.nbody,ndim)  ,
+                self.mass                   ,
+                self.nbody                  ,
+            ).reshape(-1)
+
+        return fun,gun
+
+    def Compute_Auto_JacMat_ODE_RHS(self,x):
+
+        all_pos_vel = x.reshape(2,self.nbody,ndim)
+        
+        drhs = np.zeros((2,self.nbody,ndim,2,self.nbody,ndim))
+
+        for ib in range(v):
+            for idim in range(ndim):
+                drhs[0,ib,idim,1,ib,idim] = 1
+
+        drhs[1,:,:,0,:,:] = Compute_JacMat_Forces_Cython(
+            all_pos_vel[0,:,:]  ,
+            self.mass           ,
+            self.nbody          ,
+        )
+
+        return drhs.reshape(2*self.nbody*ndim,2*self.nbody*ndim)
+
+    def Compute_JacMat_ODE_RHS(self,t,x):
+        return self.Compute_Auto_JacMat_ODE_RHS(x)
+            
+    def Compute_Auto_JacMul_ODE_RHS(self,x,dx):
+
+        all_pos_vel   =  x.reshape(2,self.nbody,ndim)
+        all_pos_vel_d = dx.reshape(2,self.nbody,ndim)
+        
+        drhs = np.zeros((2,self.nbody,ndim))
+
+        drhs[0,:,:] = all_pos_vel_d[1,:,:]
+
+        drhs[1,:,:] = Compute_JacMul_Forces_Cython(
+            all_pos_vel[0,:,:]  ,
+            all_pos_vel_d[0,:,:],
+            self.mass           ,
+            self.nbody          ,
+        )
+
+        return drhs.reshape(2*self.nbody*ndim)
+
+    def Compute_JacMul_ODE_RHS(self,t,x,dx):
+        return self.Compute_Auto_JacMul_ODE_RHS(x,dx)
+
+    def Compute_Auto_JacMul_ODE_RHS_LinOpt(self,x):
+
+        return sp.linalg.LinearOperator((2*self.nbody*ndim,2*self.nbody*ndim),
+            matvec =  (lambda dx, xl=x, selfl=self : selfl.Compute_Auto_JacMul_ODE_RHS(xl,dx)),
+            rmatvec = (lambda dx, xl=x, selfl=self : selfl.Compute_Auto_JacMul_ODE_RHS(xl,dx)))
+
+    def GetTangentSystemDef(self,x,nint=None,method = 'SymplecticEuler'):
+
+            if nint is None:
+                nint = self.nint()
+
+            ndof = self.nbody*ndim
+
+            if nint is None:
+                nint = self.nint()
+
+            if   method in ['SymplecticEuler','SymplecticEuler_XV','SymplecticEuler_VX']:
+                pass
+            elif method in ['SymplecticStormerVerlet','SymplecticStormerVerlet_XV','SymplecticStormerVerlet_VX']:
+                nint = 2*nint
+            elif method in ['SymplecticRuth3','SymplecticRuth3_XV','SymplecticRuth3_VX']:
+                nint = 24*nint
+
+            all_pos_vel = self.ComputeAllPosVel(x,nint=nint)
+
+            def fun(t,v):
+                return v
+
+            def gun(t,x):
+                i = round(t*nint) % nint
+
+                cur_pos = np.ascontiguousarray(all_pos_vel[0,:,:,i])
+
+                J = Compute_JacMat_Forces_Cython(cur_pos,self.mass,self.nbody).reshape(self.nbody*ndim,self.nbody*ndim)
+                
+                return J.dot(x.reshape(self.nbody*ndim,2*self.nbody*ndim)).reshape(-1)
+
+            x0 = np.ascontiguousarray(np.concatenate((np.eye(ndof),np.zeros((ndof,ndof))),axis=1).reshape(-1))
+            v0 = np.ascontiguousarray(np.concatenate((np.zeros((ndof,ndof)),np.eye(ndof)),axis=1).reshape(-1))
+
+            return fun,gun,x0,v0
+
+    def HeuristicMinMax(self):
+        r"""
+        Computes an approximate quickly computed min max for canvas adjusting
+        """
+
+        xyminmaxl = np.zeros((2,2))
+        xyminmax = np.zeros((2))
+        xy = np.zeros((2))
+
+        xmin = self.last_all_pos[0,0,0]
+        xmax = self.last_all_pos[0,0,0]
+        ymin = self.last_all_pos[0,1,0]
+        ymax = self.last_all_pos[0,1,0]
+
+        for il in range(self.nloop):
+
+            xyminmaxl[0,0] = self.last_all_pos[il,0,:].min()
+            xyminmaxl[1,0] = self.last_all_pos[il,0,:].max()
+            xyminmaxl[0,1] = self.last_all_pos[il,1,:].min()
+            xyminmaxl[1,1] = self.last_all_pos[il,1,:].max()
+
+            for ib in range(self.loopnb[il]):
+
+                if (self.RequiresLoopDispUn[il,ib]):
+
+                    for i in range(2):
+
+                        for j in range(2):
+
+                            xyminmax[0] = xyminmaxl[i,0]
+                            xyminmax[1] = xyminmaxl[j,1]
+
+                            xy = np.dot(self.SpaceRotsUn[il,ib,:,:],xyminmax)
+
+                            xmin = min(xmin,xy[0])
+                            xmax = max(xmax,xy[0])
+                            ymin = min(ymin,xy[1])
+                            ymax = max(ymax,xy[1])
+
+        return xmin,xmax,ymin,ymax
+
+    def Compose_Two_Paths(self,Info_dict_slow,Info_dict_fast_list,il_slow_source,ibl_slow_source,il_fast_source,ibl_fast_source,nT_slow,nT_fast,all_coeffs_slow,all_coeffs_fast_list,Rotate_fast_with_slow=False):
+        r"""
+        Composes a **slow** with a **fast** path
+        """
+
+        ncoeff = self.ncoeff()
+        all_coeffs = np.zeros((self.nloop,ndim,ncoeff,2),dtype=np.float64)
+
+        for il in range(self.nloop):
+
+            ib = self.Targets[il,0]
+            il_slow = il_slow_source[ib]
+            ibl_slow = ibl_slow_source[ib]
+            il_fast = il_fast_source[ib]
+            ibl_fast = ibl_fast_source[ib]
+
+            mass_fast_tot = 0.
+            
+            for il_fast_p in range(Info_dict_fast_list[il_slow]['nloop']):
+
+                for ibl_fast_p in range(Info_dict_fast_list[il_slow]["loopnb"][il_fast]):
+
+                    ib_fast_p = Info_dict_fast_list[il_slow]["Targets"][il_fast_p][ibl_fast_p]
+                    mass_fast_tot += Info_dict_fast_list[il_slow]["mass"][ib_fast_p]
+
+            mass_fac = mass_fast_tot / Info_dict_slow["mass"][Info_dict_slow["Targets"][il_slow][ibl_slow]]
+
+            ########################################################
+
+            k_fac_slow = nT_slow
+            k_fac_fast = nT_fast[il_slow]
+            
+            phys_exp = 1/(n-1)
+
+            rfac_slow = (k_fac_slow) ** phys_exp
+            rfac_fast = (k_fac_fast*m.sqrt(mass_fac)) ** phys_exp
+
+            ########################################################
+
+            SpaceRot = np.array(Info_dict_fast_list[il_slow]["SpaceRotsUn"][il_fast][ibl_fast],dtype=np.float64)
+            TimeRev = float(Info_dict_fast_list[il_slow]["TimeRevsUn"][il_fast][ibl_fast])
+            TimeShiftNum = float(Info_dict_fast_list[il_slow]["TimeShiftNumUn"][il_fast][ibl_fast])
+            TimeShiftDen = float(Info_dict_fast_list[il_slow]["TimeShiftDenUn"][il_fast][ibl_fast])
+
+            ncoeff_slow = all_coeffs_slow.shape[2]
+
+            all_coeffs_fast = Transform_Coeffs_Single_Loop(SpaceRot, TimeRev, TimeShiftNum, TimeShiftDen, all_coeffs_fast_list[il_slow][il_fast,:,:,:],all_coeffs_fast_list[il_slow].shape[2])
+            
+            ncoeff_fast = all_coeffs_fast.shape[1]
+            
+            all_coeffs_slow_mod = SparseScaleCoeffs(all_coeffs_slow[il_slow,:,:,:],ncoeff,ncoeff_slow,k_fac_slow,rfac_slow)
+            all_coeffs_fast_mod = SparseScaleCoeffs(all_coeffs_fast               ,ncoeff,ncoeff_fast,k_fac_fast,rfac_fast)
+
+            if Rotate_fast_with_slow :
+                
+                nint = 2*ncoeff
+
+                c_coeffs_slow = all_coeffs_slow_mod.view(dtype=np.complex128)[...,0]
+                all_pos_slow = the_irfft(c_coeffs_slow,n=nint,axis=1)
+
+                c_coeffs_fast = all_coeffs_fast_mod.view(dtype=np.complex128)[...,0]
+                all_pos_fast = the_irfft(c_coeffs_fast,n=nint,axis=1)
+
+                all_coeffs_slow_mod_speed = ComputeSpeedCoeffs(all_coeffs_slow_mod,ncoeff)
+                c_coeffs_slow_mod_speed = all_coeffs_slow_mod_speed.view(dtype=np.complex128)[...,0]
+                all_pos_slow_mod_speed = the_irfft(c_coeffs_slow_mod_speed,n=nint,axis=1)
+
+                all_pos_avg = RotateFastWithSlow_2D(all_pos_slow,all_pos_slow_mod_speed,all_pos_fast,nint)
+
+                c_coeffs_avg = the_rfft(all_pos_avg,n=nint,axis=1)
+
+                kmax = min(ncoeff,ncoeff_slow)
+
+                all_coeffs[il,:,0:kmax,0] = c_coeffs_avg[:,0:kmax].real
+                all_coeffs[il,:,0:kmax,1] = c_coeffs_avg[:,0:kmax].imag    
+
+            else :
+
+                all_coeffs[il,:,:,:] = all_coeffs_fast_mod + all_coeffs_slow_mod
+
+        return all_coeffs
+
+    def plot_Newton_Error(self,x,filename,fig_size=(8,5),color_list = None):
+        
+        if color_list is None:
+            color_list = plt.rcParams['axes.prop_cycle'].by_key()['color']
+
+        Newt_err = self.Compute_Newton_err(x)
+        
+        Newt_err = np.linalg.norm(Newt_err,axis=(1))
+        
+        fig = plt.figure()
+        fig.set_size_inches(fig_size)
+        ax = plt.gca()
+        
+        ncol = len(color_list)
+
+        cb = []
+        for ib in range(self.nbody):
+            cb.append(color_list[ib%ncol])
+        
+        # for ib in range(self.nbody):
+        for ib in range(1):
+            ax.plot(Newt_err[ib,:],c=cb[ib])
+            
+        ax.set_yscale('log')
+            
+        plt.tight_layout()
+        plt.savefig(filename)
+        plt.close()
+
+    def Write_Descriptor(self,x,filename,Action=None,Gradaction=None,Newt_err_norm=None,dxmin=None,Hash_Action=None,max_path_length=None,extend=0.03):
+        r"""
+        Dumps a json file describing the current trajectories
+        """
+
+        nint = self.nint()
+
+        if ((Action is None) or (Gradaction is None) ):
+            Action,Gradaction_vect = self.Compute_action(x)
+            Gradaction = np.linalg.norm(Gradaction_vect)
+
+        if Newt_err_norm is None :
+
+            Newt_err = self.Compute_Newton_err(x)
+            Newt_err_norm = np.linalg.norm(Newt_err)/(nint*self.nbody)
+
+        if dxmin is None:
+            
+            dxmin = self.Compute_MinDist(x)
+
+        if Hash_Action is None:
+            
+            Hash_Action = self.Compute_hash_action(x)
+
+        if max_path_length is None:
+
+            max_path_length = self.Compute_MaxPathLength(x)
+        
+        c_coeffs = self.Unpackage_all_coeffs(x).view(dtype=np.complex128)[...,0]
+
+        all_pos = the_irfft(c_coeffs,n=nint,axis=2,norm="forward")        
+        all_pos_b = np.zeros((self.nbody,ndim,nint),dtype=np.float64)
+        
+        for il in range(self.nloop):
+            for ib in range(self.loopnb[il]):
+                for iint in range(nint):
+                    # exact time is irrelevant
+                    all_pos_b[self.Targets[il,ib],:,iint] = np.dot(self.SpaceRotsUn[il,ib,:,:],all_pos[il,:,iint])
+
+        xmin = all_pos_b[:,0,:].min()
+        xmax = all_pos_b[:,0,:].max()
+        ymin = all_pos_b[:,1,:].min()
+        ymax = all_pos_b[:,1,:].max()
+
+        xinf = xmin - extend*(xmax-xmin)
+        xsup = xmax + extend*(xmax-xmin)
+        
+        yinf = ymin - extend*(ymax-ymin)
+        ysup = ymax + extend*(ymax-ymin)
+        
+        hside = max(xsup-xinf,ysup-yinf)/2
+
+        xmid = (xinf+xsup)/2
+        ymid = (yinf+ysup)/2
+
+        xinf = xmid - hside
+        xsup = xmid + hside
+
+        yinf = ymid - hside
+        ysup = ymid + hside
+
+        Info_dict = {}
+
+        max_path_length
+
+        Info_dict["nbody"] = self.nbody
+        Info_dict["n_Fourier"] = self.ncoeff()
+        Info_dict["n_int"] = nint
+
+        Info_dict["mass"] = self.mass.tolist()
+        Info_dict["nloop"] = self.nloop
+
+        Info_dict["Action"] = Action
+        Info_dict["Grad_Action"] = Gradaction
+        Info_dict["Newton_Error"] = Newt_err_norm
+        Info_dict["Min_Distance"] = dxmin
+        Info_dict["Max_PathLength"] = max_path_length
+
+        Info_dict["Hash"] = Hash_Action.tolist()
+
+        Info_dict["xinf"] = xinf
+        Info_dict["xsup"] = xsup
+        Info_dict["yinf"] = yinf
+        Info_dict["ysup"] = ysup
+
+        Info_dict["loopnb"] = self.loopnb.tolist()
+        Info_dict["Targets"] = self.Targets.tolist()
+        Info_dict["SpaceRotsUn"] = self.SpaceRotsUn.tolist()
+        Info_dict["TimeRevsUn"] = self.TimeRevsUn.tolist()
+        Info_dict["TimeShiftNumUn"] = self.TimeShiftNumUn.tolist()
+        Info_dict["TimeShiftDenUn"] = self.TimeShiftDenUn.tolist()
+        Info_dict["RequiresLoopDispUn"] = self.RequiresLoopDispUn.tolist()
+
+        with open(filename, "w") as jsonFile:
+            jsonString = json.dumps(Info_dict, indent=4, sort_keys=False)
+            jsonFile.write(jsonString)
+
+    def Check_Duplicates(self,x,hash_dict,store_folder,duplicate_eps,Hash_Action=None):
+        r"""
+        Checks whether there is a duplicate of a given trajecory in the provided folder
+        """
+
+        if Hash_Action is None:
+            Hash_Action = self.Compute_hash_action(x)
+
+        file_path_list = SelectFiles_Action(store_folder,hash_dict,Hash_Action,duplicate_eps)
+
+        if (len(file_path_list) == 0):
+            
+            Found_duplicate = False
+            file_path = ''
+        
+        else:
+            Found_duplicate = True
+            file_path = file_path_list[0]
+        
+        return Found_duplicate,file_path
+
+    if ndim == 2:
+
+        def Gen_init_avg_2D(self,nT_slow,nT_fast,Info_dict_slow,all_coeffs_slow,Info_dict_fast_list,all_coeffs_fast_list,il_slow_source,ibl_slow_source,il_fast_source,ibl_fast_source,Rotate_fast_with_slow,Optimize_Init,Randomize_Fast_Init):
+
+            nloop_slow = len(all_coeffs_fast_list)
+
+            if Randomize_Fast_Init :
+
+                init_SpaceRevscal = np.array([1. if (np.random.random() > 1./2.) else -1. for ils in range(nloop_slow)],dtype=np.float64)
+                init_TimeRevscal = np.array([1. if (np.random.random() > 1./2.) else -1. for ils in range(nloop_slow)],dtype=np.float64)
+                Act_Mul = 1. if (np.random.random() > 1./2.) else -1.
+                init_x = np.array([ np.random.random() for iparam in range(2*nloop_slow)],dtype=np.float64)
+
+            else:
+
+                init_SpaceRevscal = np.array([1. for ils in range(nloop_slow)],dtype=np.float64)
+                init_TimeRevscal = np.array([1. for ils in range(nloop_slow)],dtype=np.float64)
+                Act_Mul = 1.
+                init_x = np.zeros((2*nloop_slow),dtype=np.float64)
+
+            def params_to_coeffs(x):
+
+                all_coeffs_fast_list_mod = []
+
+                for ils in range(nloop_slow):
+
+                    theta = twopi * x[2*ils]
+                    SpaceRevscal = init_SpaceRevscal[ils]
+                    SpaceRots = np.array( [[SpaceRevscal*np.cos(theta) , SpaceRevscal*np.sin(theta)] , [-np.sin(theta),np.cos(theta)]],dtype=np.float64)
+                    TimeRevs = init_TimeRevscal[ils]
+                    TimeShiftNum = x[2*ils+1]
+                    TimeShiftDen = 1
+
+                    all_coeffs_fast_list_mod.append(Transform_Coeffs(SpaceRots, TimeRevs, TimeShiftNum, TimeShiftDen, all_coeffs_fast_list[ils]))
+
+                all_coeffs_avg = self.Compose_Two_Paths(Info_dict_slow,Info_dict_fast_list,il_slow_source,ibl_slow_source,il_fast_source,ibl_fast_source,nT_slow,nT_fast,all_coeffs_slow,all_coeffs_fast_list_mod,Rotate_fast_with_slow)
+
+                return all_coeffs_avg
+
+            if Optimize_Init :
+
+                def params_to_Action(x):
+
+                    all_coeffs_avg = params_to_coeffs(x)
+
+                    x_avg = self.Package_all_coeffs(all_coeffs_avg)
+                    Act, GAct = self.Compute_action(x_avg)
+                    
+                    return Act_Mul * Act
+
+                maxiter = 100
+                tol = 1e-10
+
+                opt_result = scipy.optimize.minimize(fun=params_to_Action,x0=init_x,method='CG',options={'disp':False,'maxiter':maxiter,'gtol':tol},tol=tol)
+
+                x_opt = opt_result['x']
+
+                all_coeffs_avg = params_to_coeffs(x_opt)
+
+            else:
+                all_coeffs_avg = params_to_coeffs(init_x)
+
+            return all_coeffs_avg
+
+        def plot_all_2D(self,x,nint_plot,filename,fig_size=(10,10),dpi=100,color=None,color_list = None,xlim=None,extend=0.03):
+            r"""
+            Plots 2D trajectories and saves image in file
+            """
+
+            if color_list is None:
+                color_list = plt.rcParams['axes.prop_cycle'].by_key()['color']
+
+            if isinstance(color,list):
+                
+                for the_color in color :
+                    
+                    file_bas,file_ext = os.path.splitext(filename)
+                    
+                    the_filename = file_bas+'_'+the_color+file_ext
+                    
+                    self.plot_all_2D(x=x,nint_plot=nint_plot,filename=the_filename,fig_size=fig_size,dpi=dpi,color=the_color,color_list=color_list)
+            
+            elif (color is None) or (color == "body") or (color == "loop") or (color == "loop_id") or (color == "none"):
+                
+                self.plot_all_2D_cpb(x,nint_plot,filename,fig_size=fig_size,dpi=dpi,color=color,color_list=color_list,xlim=xlim,extend=extend)
+                
+            elif (color == "velocity"):
+                
+                self.plot_all_2D_cpv(x,nint_plot,filename,fig_size=fig_size,dpi=dpi,xlim=xlim,extend=extend)
+                
+            elif (color == "all"):
+                
+                self.plot_all_2D(x=x,nint_plot=nint_plot,filename=filename,fig_size=fig_size,dpi=dpi,color=["body","velocity"],color_list=color_list,xlim=xlim,extend=extend)
+
+            else:
+                
+                raise ValueError("Unknown color scheme")
+
+        def plot_all_2D_cpb(self,x,nint_plot,filename,fig_size=(10,10),dpi=100,color=None,color_list=None,xlim=None,extend=0.03):
+            r"""
+            Plots 2D trajectories with one color per body and saves image in file
+            """
+            
+            if color_list is None:
+                color_list = plt.rcParams['axes.prop_cycle'].by_key()['color']
+
+            all_coeffs = self.Unpackage_all_coeffs(x)
+            
+            c_coeffs = all_coeffs.view(dtype=np.complex128)[...,0]
+            
+            all_pos = np.zeros((self.nloop,ndim,nint_plot+1),dtype=np.float64)
+            all_pos[:,:,0:nint_plot] = the_irfft(c_coeffs,n=nint_plot,axis=2,norm="forward")
+            all_pos[:,:,nint_plot] = all_pos[:,:,0]
+            
+            n_loop_plot = np.count_nonzero((self.RequiresLoopDispUn))
+            i_loop_plot = 0
+
+            all_pos_b = np.zeros((n_loop_plot,ndim,nint_plot+1),dtype=np.float64)
+
+            for il in range(self.nloop):
+                for ib in range(self.loopnb[il]):
+                    if (self.RequiresLoopDispUn[il,ib]) :
+                        for iint in range(nint_plot+1):
+                            # exact time is irrelevant
+                            all_pos_b[i_loop_plot,:,iint] = np.dot(self.SpaceRotsUn[il,ib,:,:],all_pos[il,:,iint])
+
+                        i_loop_plot +=1
+            
+            ncol = len(color_list)
+            
+            cb = ['b' for ib in range(n_loop_plot)]
+            i_loop_plot = 0
+
+            if (color is None) or (color == "none"):
+                for il in range(self.nloop):
+                    for ib in range(self.loopnb[il]):
+                        if (self.RequiresLoopDispUn[il,ib]) :
+
+                            cb[i_loop_plot] = color_list[0]
+
+                            i_loop_plot +=1
+
+            elif (color == "body"):
+                for il in range(self.nloop):
+                    for ib in range(self.loopnb[il]):
+                        if (self.RequiresLoopDispUn[il,ib]) :
+
+                            cb[i_loop_plot] = color_list[self.Targets[il,ib]%ncol]
+
+                            i_loop_plot +=1
+
+            elif (color == "loop"):
+                for il in range(self.nloop):
+                    for ib in range(self.loopnb[il]):
+                        if (self.RequiresLoopDispUn[il,ib]) :
+
+                            cb[i_loop_plot] = color_list[il%ncol]
+
+                            i_loop_plot +=1
+
+            elif (color == "loop_id"):
+                for il in range(self.nloop):
+                    for ib in range(self.loopnb[il]):
+                        if (self.RequiresLoopDispUn[il,ib]) :
+
+                            cb[i_loop_plot] = color_list[ib%ncol]
+
+                            i_loop_plot +=1
+
+            else:
+                raise ValueError(f'Unknown color scheme "{color}"')
+
+            if xlim is None:
+
+                xmin = all_pos_b[:,0,:].min()
+                xmax = all_pos_b[:,0,:].max()
+                ymin = all_pos_b[:,1,:].min()
+                ymax = all_pos_b[:,1,:].max()
+
+            else :
+
+                xmin = xlim[0]
+                xmax = xlim[1]
+                ymin = xlim[2]
+                ymax = xlim[3]
+            
+            xinf = xmin - extend*(xmax-xmin)
+            xsup = xmax + extend*(xmax-xmin)
+            
+            yinf = ymin - extend*(ymax-ymin)
+            ysup = ymax + extend*(ymax-ymin)
+            
+            hside = max(xsup-xinf,ysup-yinf)/2
+
+            xmid = (xinf+xsup)/2
+            ymid = (yinf+ysup)/2
+
+            xinf = xmid - hside
+            xsup = xmid + hside
+
+            yinf = ymid - hside
+            ysup = ymid + hside
+
+            # Plot-related
+            fig = plt.figure()
+            fig.set_size_inches(fig_size)
+            fig.set_dpi(dpi)
+            ax = plt.gca()
+
+            lines = sum([ax.plot([], [],'-',color=cb[ib] ,antialiased=True,zorder=-ib)  for ib in range(n_loop_plot)], [])
+            points = sum([ax.plot([], [],'ko', antialiased=True)for ib in range(n_loop_plot)], [])
+
+            ax.axis('off')
+            ax.set_xlim([xinf, xsup])
+            ax.set_ylim([yinf, ysup ])
+            ax.set_aspect('equal', adjustable='box')
+            plt.tight_layout()
+            
+            for i_loop_plot in range(n_loop_plot):
+
+                lines[i_loop_plot].set_data(all_pos_b[i_loop_plot,0,:], all_pos_b[i_loop_plot,1,:])
+
+            plt.savefig(filename)
+            
+            plt.close()
+
+        def plot_all_2D_cpv(self,x,nint_plot,filename,fig_size=(10,10),dpi=100,xlim=None,extend=0.03):
+            r"""
+            Plots 2D trajectories colored according to velocity and saves image in file
+            """
+            
+            all_coeffs = self.Unpackage_all_coeffs(x)            
+            c_coeffs = all_coeffs.view(dtype=np.complex128)[...,0]
+            
+            all_pos = np.zeros((self.nloop,ndim,nint_plot+1),dtype=np.float64)
+            all_pos[:,:,0:nint_plot] = the_irfft(c_coeffs,n=nint_plot,axis=2,norm="forward")
+            all_pos[:,:,nint_plot] = all_pos[:,:,0]
+            
+            all_coeffs_v = np.zeros(all_coeffs.shape)
+            
+            for k in range(self.ncoeff()):
+                all_coeffs_v[:,:,k,0] = -k * all_coeffs[:,:,k,1]
+                all_coeffs_v[:,:,k,1] =  k * all_coeffs[:,:,k,0]
+            
+            c_coeffs_v = all_coeffs_v.view(dtype=np.complex128)[...,0]
+            
+            all_vel = np.zeros((self.nloop,nint_plot+1),dtype=np.float64)
+            all_vel[:,0:nint_plot] = np.linalg.norm(the_irfft(c_coeffs_v,n=nint_plot,axis=2,norm="forward"),axis=1)
+            all_vel[:,nint_plot] = all_vel[:,0]
+            
+            all_pos_b = np.zeros((self.nbody,ndim,nint_plot+1),dtype=np.float64)
+            
+            for il in range(self.nloop):
+                for ib in range(self.loopnb[il]):
+                    for iint in range(nint_plot+1):
+                        # exact time is irrelevant
+                        all_pos_b[self.Targets[il,ib],:,iint] = np.dot(self.SpaceRotsUn[il,ib,:,:],all_pos[il,:,iint])
+            
+            all_vel_b = np.zeros((self.nbody,nint_plot+1),dtype=np.float64)
+            
+            for il in range(nloself.nloopop):
+                for ib in range(self.loopnb[il]):
+                    for iint in range(nint_plot+1):
+                        # exact time is irrelevant
+                        all_vel_b[self.Targets[il,ib],iint] = all_vel[il,iint]
+            
+            if xlim is None:
+
+                xmin = all_pos_b[:,0,:].min()
+                xmax = all_pos_b[:,0,:].max()
+                ymin = all_pos_b[:,1,:].min()
+                ymax = all_pos_b[:,1,:].max()
+
+            else :
+
+                xmin = xlim[0]
+                xmax = xlim[1]
+                ymin = xlim[2]
+                ymax = xlim[3]
+
+            xinf = xmin - extend*(xmax-xmin)
+            xsup = xmax + extend*(xmax-xmin)
+            
+            yinf = ymin - extend*(ymax-ymin)
+            ysup = ymax + extend*(ymax-ymin)
+            
+            hside = max(xsup-xinf,ysup-yinf)/2
+
+            xmid = (xinf+xsup)/2
+            ymid = (yinf+ysup)/2
+
+            xinf = xmid - hside
+            xsup = xmid + hside
+
+            yinf = ymid - hside
+            ysup = ymid + hside
+
+            # Plot-related
+            fig = plt.figure()
+            fig.set_size_inches(fig_size)
+            fig.set_dpi(dpi)
+            ax = plt.gca()
+
+            # cmap = None
+            cmap = 'turbo'
+            # cmap = 'rainbow'
+            
+            norm = plt.Normalize(0,all_vel_b.max())
+            
+            for ib in range(self.nbody-1,-1,-1):
+                        
+                points = all_pos_b[ib,:,:].T.reshape(-1,1,2)
+                segments = np.concatenate([points[:-1],points[1:]],axis=1)
+                
+                lc = LineCollection(segments,cmap=cmap,norm=norm)
+                lc.set_array(all_vel_b[ib,:])
+                
+                ax.add_collection(lc)
+
+            ax.axis('off')
+            ax.set_xlim([xinf, xsup])
+            ax.set_ylim([yinf, ysup ])
+            ax.set_aspect('equal', adjustable='box')
+            plt.tight_layout()
+
+            plt.savefig(filename)
+            
+            plt.close()
+
+        def plot_all_2D_anim(self,x,nint_plot,filename,nperiod=1,Plot_trace=True,fig_size=(5,5),dnint=1,all_pos_trace=None,all_pos_points=None,xlim=None,extend=0.03,color_list=None,color=None):
+            r"""
+            Creates a video of the bodies moving along their trajectories, and saves the file
+            """
+
+            if color_list is None:
+                color_list = plt.rcParams['axes.prop_cycle'].by_key()['color']
+
+            all_coeffs = self.Unpackage_all_coeffs(x)
+
+            maxloopnb = loopnb.max()
+            
+            ncol = len(color_list)
+
+            if (all_pos_trace is None):
+
+                n_loop_plot = np.count_nonzero((self.RequiresLoopDispUn))
+                i_loop_plot = 0
+
+                cb = ['b' for ib in range(n_loop_plot)]
+
+                i_loop_plot = 0
+
+                if (color is None) or (color == "none"):
+                    for il in range(self.nloop):
+                        for ib in range(self.loopnb[il]):
+                            if (self.RequiresLoopDispUn[il,ib]) :
+
+                                cb[i_loop_plot] = color_list[0]
+
+                                i_loop_plot +=1
+
+                elif (color == "body"):
+                    for il in range(self.nloop):
+                        for ib in range(self.loopnb[il]):
+                            if (self.RequiresLoopDispUn[il,ib]) :
+
+                                cb[i_loop_plot] = color_list[self.Targets[il,ib]%ncol]
+
+                                i_loop_plot +=1
+
+                elif (color == "loop"):
+                    for il in range(self.nloop):
+                        for ib in range(self.loopnb[il]):
+                            if (self.RequiresLoopDispUn[il,ib]) :
+
+                                cb[i_loop_plot] = color_list[il%ncol]
+
+                                i_loop_plot +=1
+
+                elif (color == "loop_id"):
+                    for il in range(self.nloop):
+                        for ib in range(self.loopnb[il]):
+                            if (self.RequiresLoopDispUn[il,ib]) :
+
+                                cb[i_loop_plot] = color_list[ib%ncol]
+
+                                i_loop_plot +=1
+
+                else:
+                    raise ValueError(f'Unknown color scheme "{color}"')
+
+            else:
+                
+                cb = ['b' for ib in range(len(all_pos_trace))]
+
+                if (color == "body"):
+                    for ib in range(len(all_pos_trace)):
+                        cb[ib] = color_list[ib%ncol]
+
+                else:
+                    for ib in range(len(all_pos_trace)):
+                        cb[ib] = color_list[0]
+
+            nint_plot_img = nint_plot*dnint
+            nint_plot_vid = nint_plot
+
+            if (all_pos_trace is None) or (all_pos_points is None):
+
+                all_pos_b = np.zeros((self.nbody,ndim,nint_plot_img+1),dtype=np.float64)
+                all_pos_b[:,:,:nint_plot_img] = self.ComputeAllPos(x,nint=nint_plot_img)
+                all_pos_b[:,:,nint_plot_img] = all_pos_b[:,:,0]
+
+            if (all_pos_trace is None):
+
+                i_loop_plot = 0
+
+                all_pos_trace = np.zeros((n_loop_plot,ndim,nint_plot_img+1),dtype=np.float64)
+
+                for il in range(self.nloop):
+                    for ib in range(self.loopnb[il]):
+                        if (self.RequiresLoopDispUn[il,ib]) :
+                            for iint in range(nint_plot+1):
+                                # exact time is irrelevant
+                                all_pos_trace[i_loop_plot,:,:] = all_pos_b[self.Targets[il,ib],:,:]
+
+                            i_loop_plot +=1
+
+            if (all_pos_points is None):
+                all_pos_points = all_pos_b
+
+            size_all_pos_points = all_pos_points.shape[2] - 1
+
+            if xlim is None:
+
+                xmin = all_pos_trace[:,0,:].min()
+                xmax = all_pos_trace[:,0,:].max()
+                ymin = all_pos_trace[:,1,:].min()
+                ymax = all_pos_trace[:,1,:].max()
+
+            else :
+
+                xmin = xlim[0]
+                xmax = xlim[1]
+                ymin = xlim[2]
+                ymax = xlim[3]
+
+            xinf = xmin - extend*(xmax-xmin)
+            xsup = xmax + extend*(xmax-xmin)
+            
+            yinf = ymin - extend*(ymax-ymin)
+            ysup = ymax + extend*(ymax-ymin)
+            
+            hside = max(xsup-xinf,ysup-yinf)/2
+
+            xmid = (xinf+xsup)/2
+            ymid = (yinf+ysup)/2
+
+            xinf = xmid - hside
+            xsup = xmid + hside
+
+            yinf = ymid - hside
+            ysup = ymid + hside
+
+
+            # Plot-related
+            fig = plt.figure()
+            fig.set_size_inches(fig_size)
+            ax = plt.gca()
+            lines = sum([ax.plot([], [],'-',color=cb[ib], antialiased=True,zorder=-ib)  for ib in range(len(all_pos_trace))], [])
+            points = sum([ax.plot([], [],'ko', antialiased=True)for ib in range(len(all_pos_points))], [])
+            
+            ax.axis('off')
+            ax.set_xlim([xinf, xsup])
+            ax.set_ylim([yinf, ysup ])
+            ax.set_aspect('equal', adjustable='box')
+            plt.tight_layout()
+            
+            # TODO: Understand why this is needed / how to rationalize this use. Is it even legal python ?
+
+            iint = [0]
+            
+            def init():
+                
+                if (Plot_trace):
+                    for ib in range(len(all_pos_trace)):
+                        lines[ib].set_data(all_pos_trace[ib,0,:], all_pos_trace[ib,1,:])
+                
+                return lines + points
+
+            def update(i):
+                
+                for ib in range(len(all_pos_points)):
+                    points[ib].set_data(all_pos_points[ib,0,iint[0]], all_pos_points[ib,1,iint[0]])
+                    
+                iint[0] = ((iint[0]+dnint) % size_all_pos_points)
+
+                return lines + points
+            
+            anim = animation.FuncAnimation(fig, update, frames=int(nperiod*nint_plot_vid),init_func=init, blit=True)
+                                
+            # Save as mp4. This requires mplayer or ffmpeg to be installed
+            # anim.save(filename, fps=60, codec='hevc')
+            anim.save(filename, fps=60, codec='h264')
+            # anim.save(filename, fps=60, codec='webm')
+            # anim.save(filename, fps=60,extra_args=['-vcodec ', 'h264_amf'])
+            # anim.save(filename, fps=60,extra_args=['-hwaccel ', 'cuda'])
+            
+            plt.close()
+            
 class ChoreoSym():
     r"""
     This class defines the symmetries of the action
@@ -388,7 +1411,7 @@ class ChoreoSym():
         SpaceRot=np.identity(ndim,dtype=np.float64),
         TimeRev=1,
         TimeShift=fractions.Fraction(numerator=0,denominator=1)
-        ):
+    ):
         r"""
         Class constructor
         """
@@ -488,16 +1511,18 @@ class ChoreoSym():
         return ((self.Inverse()).Compose(other)).IsIdentity()
 
 def setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max=6,MomCons=True,n_grad_change=1.,Sym_list=[],CrashOnIdentity=True):
-    # This function returns the callfun dictionnary to be given as input to virtually all other function.
-    # It detects loops and constraints based on symmetries.
-    # It defines parameters according to given constraints and diagonal change of variable
-    # It computes useful objects to optimize the computation of the action :
-    #  - Exhaustive list of unary transformation for generator to body
-    #  - Exhaustive list of binary transformations from generator within each loop.
+    r"""
+    This function constructs a ChoreoAction
+    It detects loops and constraints based on symmetries.
+    It defines parameters according to given constraints and diagonal change of variable.
+    It computes useful objects to optimize the computation of the action :
+     - Exhaustive list of unary transformation for generator to body.
+     - Exhaustive list of binary transformations from generator within each loop.
+    """
     
     Identity_detected = False
 
-    SymGraph = nx.Graph()
+    SymGraph = networkx.Graph()
     for i in range(nbody):
         SymGraph.add_node(i,Constraint_list=[])
 
@@ -526,7 +1551,7 @@ def setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max=6,MomCons=True,n_
                 
                 SymGraph.add_edge(*edge,Sym=Sym)
             
-    Cycles = list(nx.cycle_basis(SymGraph))    
+    Cycles = list(networkx.cycle_basis(SymGraph))    
     # Aggregate cycles symmetries into constraints
     
     for Cycle in Cycles:
@@ -556,7 +1581,7 @@ def setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max=6,MomCons=True,n_
     # And aggregate path from the representative to each node of cycle
     # Then bring all constraints back to this node, and aggregate constraints
     
-    ConnectedComponents = list(nx.connected_components(SymGraph))    
+    ConnectedComponents = list(networkx.connected_components(SymGraph))    
 
     nloop = len(ConnectedComponents)
 
@@ -586,7 +1611,7 @@ def setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max=6,MomCons=True,n_
         
         loopgen[il] = ConnectedComponents[il].pop()
 
-        paths_to_gen = nx.shortest_path(SymGraph, target=loopgen[il])
+        paths_to_gen = networkx.shortest_path(SymGraph, target=loopgen[il])
         
         ib = 0
         
@@ -758,22 +1783,22 @@ def setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max=6,MomCons=True,n_
 
     # Now detect parameters and build change of variables
 
-    ncoeff_list = []
-    nint_list = []
-    param_to_coeff_list = []
-    coeff_to_param_list = []
+    ncoeff_cvg_lvl_list = []
+    nint_cvg_lvl_list = []
+    param_to_coeff_cvg_lvl_list = []
+    coeff_to_param_cvg_lvl_list = []
 
-    param_to_coeff_T_list = []
-    coeff_to_param_T_list = []
+    param_to_coeff_T_cvg_lvl_list = []
+    coeff_to_param_T_cvg_lvl_list = []
 
     for i in range(n_reconverge_it_max+1):
         
-        ncoeff_list.append(ncoeff_init * (2**i))
-        nint_list.append(2*ncoeff_list[i])
+        ncoeff_cvg_lvl_list.append(ncoeff_init * (2**i))
+        nint_cvg_lvl_list.append(2*ncoeff_cvg_lvl_list[i])
 
         cstrmat_sp = Assemble_Cstr_Matrix(
             nloop               ,
-            ncoeff_list[i]      ,
+            ncoeff_cvg_lvl_list[i]      ,
             MomCons             ,
             mass                ,
             loopnb              ,
@@ -790,281 +1815,64 @@ def setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max=6,MomCons=True,n_
             TimeShiftDenCstr    
         )
 
-        param_to_coeff_list.append(null_space_sparseqr(cstrmat_sp))
-        coeff_to_param_list.append(param_to_coeff_list[i].transpose(copy=True))
+        param_to_coeff_cvg_lvl_list.append(null_space_sparseqr(cstrmat_sp))
+        coeff_to_param_cvg_lvl_list.append(param_to_coeff_cvg_lvl_list[i].transpose(copy=True))
 
         # TODO : THIS IS PROBABLY WHY I HAVE CONDITIONNING ISSUES FOR DIFFERENT MASSES !!!
 
         diag_changevar(
-            param_to_coeff_list[i].nnz,
-            ncoeff_list[i],
+            param_to_coeff_cvg_lvl_list[i].nnz,
+            ncoeff_cvg_lvl_list[i],
             -n_grad_change,
-            param_to_coeff_list[i].row,
-            param_to_coeff_list[i].data,
+            param_to_coeff_cvg_lvl_list[i].row,
+            param_to_coeff_cvg_lvl_list[i].data,
             MassSum
         )
         
         diag_changevar(
-            coeff_to_param_list[i].nnz,
-            ncoeff_list[i],
+            coeff_to_param_cvg_lvl_list[i].nnz,
+            ncoeff_cvg_lvl_list[i],
             n_grad_change,
-            coeff_to_param_list[i].col,
-            coeff_to_param_list[i].data,
+            coeff_to_param_cvg_lvl_list[i].col,
+            coeff_to_param_cvg_lvl_list[i].data,
             MassSum
         )
 
-        param_to_coeff_T_list.append(param_to_coeff_list[i].transpose(copy=True))
-        coeff_to_param_T_list.append(coeff_to_param_list[i].transpose(copy=True))
+        param_to_coeff_T_cvg_lvl_list.append(param_to_coeff_cvg_lvl_list[i].transpose(copy=True))
+        coeff_to_param_T_cvg_lvl_list.append(coeff_to_param_cvg_lvl_list[i].transpose(copy=True))
 
-    callfun = [{
-        "nbody"                 :   nbody                   ,
-        "nloop"                 :   nloop                   ,
-        "mass"                  :   mass                    ,
-        "loopnb"                :   loopnb                  ,
-        "loopgen"               :   loopgen                 ,
-        "Targets"               :   Targets                 ,
-        "MassSum"               :   MassSum                 ,
-        "SpaceRotsUn"           :   SpaceRotsUn             ,
-        "TimeRevsUn"            :   TimeRevsUn              ,
-        "TimeShiftNumUn"        :   TimeShiftNumUn          ,
-        "TimeShiftDenUn"        :   TimeShiftDenUn          ,
-        "RequiresLoopDispUn"    :   RequiresLoopDispUn      ,
-        "loopnbi"               :   loopnbi                 ,
-        "ProdMassSumAll"        :   ProdMassSumAll          ,
-        "SpaceRotsBin"          :   SpaceRotsBin            ,
-        "TimeRevsBin"           :   TimeRevsBin             ,
-        "TimeShiftNumBin"       :   TimeShiftNumBin         ,
-        "TimeShiftDenBin"       :   TimeShiftDenBin         ,
-        "ncoeff_list"           :   ncoeff_list             ,
-        "nint_list"             :   nint_list               ,
-        "param_to_coeff_list"   :   param_to_coeff_list     ,
-        "coeff_to_param_list"   :   coeff_to_param_list     ,
-        "param_to_coeff_T_list" :   param_to_coeff_T_list   ,
-        "coeff_to_param_T_list" :   coeff_to_param_T_list   ,
-        "current_cvg_lvl"       :   0                       ,
-        "last_all_coeffs"       :   None                    ,
-        "last_all_pos"          :   None                    ,
-        "Do_Pos_FFT"            :   True                    ,
-    }]
+    kwargs = {
+        "nbody"                         :   nbody                           ,
+        "nloop"                         :   nloop                           ,
+        "mass"                          :   mass                            ,
+        "loopnb"                        :   loopnb                          ,
+        "loopgen"                       :   loopgen                         ,
+        "Targets"                       :   Targets                         ,
+        "MassSum"                       :   MassSum                         ,
+        "SpaceRotsUn"                   :   SpaceRotsUn                     ,
+        "TimeRevsUn"                    :   TimeRevsUn                      ,
+        "TimeShiftNumUn"                :   TimeShiftNumUn                  ,
+        "TimeShiftDenUn"                :   TimeShiftDenUn                  ,
+        "RequiresLoopDispUn"            :   RequiresLoopDispUn              ,
+        "loopnbi"                       :   loopnbi                         ,
+        "ProdMassSumAll"                :   ProdMassSumAll                  ,
+        "SpaceRotsBin"                  :   SpaceRotsBin                    ,
+        "TimeRevsBin"                   :   TimeRevsBin                     ,
+        "TimeShiftNumBin"               :   TimeShiftNumBin                 ,
+        "TimeShiftDenBin"               :   TimeShiftDenBin                 ,
+        "ncoeff_cvg_lvl_list"           :   ncoeff_cvg_lvl_list             ,
+        "nint_cvg_lvl_list"             :   nint_cvg_lvl_list               ,
+        "param_to_coeff_cvg_lvl_list"   :   param_to_coeff_cvg_lvl_list     ,
+        "coeff_to_param_cvg_lvl_list"   :   coeff_to_param_cvg_lvl_list     ,
+        "param_to_coeff_T_cvg_lvl_list" :   param_to_coeff_T_cvg_lvl_list   ,
+        "coeff_to_param_T_cvg_lvl_list" :   coeff_to_param_T_cvg_lvl_list   ,
+        "current_cvg_lvl"               :   0                               ,
+        "last_all_coeffs"               :   None                            ,
+        "last_all_pos"                  :   None                            ,
+        "Do_Pos_FFT"                    :   True                            ,
+    }
 
-    return callfun
-    
-def Compute_action(x,callfun):
-    # Computes the action and its gradient with respect to the parameters at a given value of the parameters
-
-    args=callfun[0]
-
-    if args["Do_Pos_FFT"]:
-        
-        y = args['param_to_coeff_list'][args["current_cvg_lvl"]].dot(x)
-        args['last_all_coeffs'] = y.reshape(args['nloop'],ndim,args['ncoeff_list'][args["current_cvg_lvl"]],2)
-
-        c_coeffs = args['last_all_coeffs'].view(dtype=np.complex128)[...,0]
-        args['last_all_pos'] = the_irfft(c_coeffs,n=args['nint_list'][args["current_cvg_lvl"]],axis=2,norm="forward")
-
-    J,GradJ =  Compute_action_Cython(
-        args['nloop']           ,
-        args['ncoeff_list'][args["current_cvg_lvl"]]          ,
-        args['nint_list'][args["current_cvg_lvl"]]            ,
-        args['mass']            ,
-        args['loopnb']          ,
-        args['Targets']         ,
-        args['MassSum']         ,
-        args['SpaceRotsUn']     ,
-        args['TimeRevsUn']      ,
-        args['TimeShiftNumUn']  ,
-        args['TimeShiftDenUn']  ,
-        args['loopnbi']         ,
-        args['ProdMassSumAll']  ,
-        args['SpaceRotsBin']    ,
-        args['TimeRevsBin']     ,
-        args['TimeShiftNumBin'] ,
-        args['TimeShiftDenBin'] ,
-        args['last_all_coeffs'] ,
-        args['last_all_pos'] 
-    )
-
-    GJ = GradJ.reshape(-1)
-    y = args['param_to_coeff_T_list'][args["current_cvg_lvl"]].dot(GJ)
-    
-    return J,y
-
-def Compute_hash_action(x,callfun):
-    # Returns an invariant hash of the trajectories.
-    # Useful for duplicate detection
-
-    args=callfun[0]
-    
-    y = args['param_to_coeff_list'][args["current_cvg_lvl"]] * x
-    all_coeffs = y.reshape(args['nloop'],ndim,args['ncoeff_list'][args["current_cvg_lvl"]],2)
-    
-    Hash_Action =  Compute_hash_action_Cython(
-        args['nloop']           ,
-        args['ncoeff_list'][args["current_cvg_lvl"]]          ,
-        args['nint_list'][args["current_cvg_lvl"]]            ,
-        args['mass']            ,
-        args['loopnb']          ,
-        args['Targets']         ,
-        args['MassSum']         ,
-        args['SpaceRotsUn']     ,
-        args['TimeRevsUn']      ,
-        args['TimeShiftNumUn']  ,
-        args['TimeShiftDenUn']  ,
-        args['loopnbi']         ,
-        args['ProdMassSumAll']  ,
-        args['SpaceRotsBin']    ,
-        args['TimeRevsBin']     ,
-        args['TimeShiftNumBin'] ,
-        args['TimeShiftDenBin'] ,
-        all_coeffs
-        )
-
-    return Hash_Action
-    
-def Compute_Newton_err(x,callfun):
-    # Computes the Newton error at a certain value of parameters
-    # WARNING : DOUBLING NUMBER OF INTEGRATION POINTS
-
-    args=callfun[0]
-    
-    y = args['param_to_coeff_list'][args["current_cvg_lvl"]].dot(x)
-    all_coeffs = y.reshape(args['nloop'],ndim,args['ncoeff_list'][args["current_cvg_lvl"]],2)
-    
-    all_Newt_err =  Compute_Newton_err_Cython(
-        args['nbody']           ,
-        args['nloop']           ,
-        args['ncoeff_list'][args["current_cvg_lvl"]]          ,
-        args['nint_list'][args["current_cvg_lvl"]]*2          ,
-        args['mass']            ,
-        args['loopnb']          ,
-        args['Targets']         ,
-        args['SpaceRotsUn']     ,
-        args['TimeRevsUn']      ,
-        args['TimeShiftNumUn']  ,
-        args['TimeShiftDenUn']  ,
-        all_coeffs
-        )
-
-    return all_Newt_err
-    
-def Compute_Loop_Size_Dist(x,callfun):
-    # Computes sizes of trajetories and distance between center of trajectories
-    # Useful to detect escape.
-    # For checks only. There is a Cython version now
-    
-    args = callfun[0]
-    
-    all_coeffs = Unpackage_all_coeffs(x,callfun)
-    
-    max_loop_size = 0.
-    for il in range(args['nloop']):
-        loop_size = np.linalg.norm(all_coeffs[il,:,1:args['ncoeff_list'][args["current_cvg_lvl"]],:])
-        max_loop_size = max(loop_size,max_loop_size)
-    
-    max_loop_dist = 0.
-    for il in range(args['nloop']-1):
-        for ilp in range(il,args['nloop']):
-            
-            for ib in range(args['loopnb'][il]):
-                for ibp in range(args['loopnb'][ilp]):
-
-                    loop_dist = np.linalg.norm(np.dot(args['SpaceRotsUn'][il,ib,:,:],all_coeffs[il,:,0,0]) - np.dot(args['SpaceRotsUn'][ilp,ibp,:,:],all_coeffs[ilp,:,0,0]))
-                    max_loop_dist = max(loop_dist,max_loop_dist)
-                    
-    for il in range(args['nloop']):
-        for ibi in range(args['loopnbi'][il]):
-                
-            loop_dist = np.linalg.norm(np.dot(args['SpaceRotsBin'][il,ibi,:,:],all_coeffs[il,:,0,0]) - all_coeffs[il,:,0,0])
-            max_loop_dist = max(loop_dist,max_loop_dist)
-    
-
-    return max_loop_size,max_loop_dist
-    
-def Detect_Escape(x,callfun):
-    # Returns True if the trajectories are so far that they are likely to never interact again
-    
-    args=callfun[0]
-    
-    y = args['param_to_coeff_list'][args["current_cvg_lvl"]].dot(x)
-    all_coeffs = y.reshape(args['nloop'],ndim,args['ncoeff_list'][args["current_cvg_lvl"]],2)
-    
-    res = Compute_Loop_Size_Dist_Cython(
-        args['nloop']           ,
-        args['ncoeff_list'][args["current_cvg_lvl"]]          ,
-        args['nint_list'][args["current_cvg_lvl"]]            ,
-        args['mass']            ,
-        args['loopnb']          ,
-        args['Targets']         ,
-        args['MassSum']         ,
-        args['SpaceRotsUn']     ,
-        args['TimeRevsUn']      ,
-        args['TimeShiftNumUn']  ,
-        args['TimeShiftDenUn']  ,
-        args['loopnbi']         ,
-        args['ProdMassSumAll']  ,
-        args['SpaceRotsBin']    ,
-        args['TimeRevsBin']     ,
-        args['TimeShiftNumBin'] ,
-        args['TimeShiftDenBin'] ,
-        all_coeffs
-        )
-    
-    # return (max_loop_dist > (4.5 * callfun[0]['nbody'] * max_loop_size))
-    return (res[1] > (4.5 * callfun[0]['nbody'] * res[0])),res
-    
-def Compute_MinDist(x,callfun):
-    # Returns the minimum inter-body distance along a set of trajectories
-    
-    args=callfun[0]
-    
-    y = args['param_to_coeff_list'][args["current_cvg_lvl"]].dot(x)
-    all_coeffs = y.reshape(args['nloop'],ndim,args['ncoeff_list'][args["current_cvg_lvl"]],2)
-    
-    MinDist =  Compute_MinDist_Cython(
-        args['nloop']           ,
-        args['ncoeff_list'][args["current_cvg_lvl"]]          ,
-        args['nint_list'][args["current_cvg_lvl"]]            ,
-        args['mass']            ,
-        args['loopnb']          ,
-        args['Targets']         ,
-        args['MassSum']         ,
-        args['SpaceRotsUn']     ,
-        args['TimeRevsUn']      ,
-        args['TimeShiftNumUn']  ,
-        args['TimeShiftDenUn']  ,
-        args['loopnbi']         ,
-        args['ProdMassSumAll']  ,
-        args['SpaceRotsBin']    ,
-        args['TimeRevsBin']     ,
-        args['TimeShiftNumBin'] ,
-        args['TimeShiftDenBin'] ,
-        all_coeffs
-        )
-    
-    return MinDist
-
-def Compute_MaxPathLength(x,callfun):
-    # Computes the maximum path length for speed sync
-
-    args=callfun[0]
-
-    nint = args['nint_list'][args["current_cvg_lvl"]]
-
-    if args["Do_Pos_FFT"]:
-        
-        y = args['param_to_coeff_list'][args["current_cvg_lvl"]].dot(x)
-        args['last_all_coeffs'] = y.reshape(args['nloop'],ndim,args['ncoeff_list'][args["current_cvg_lvl"]],2)
-        
-        c_coeffs = args['last_all_coeffs'].view(dtype=np.complex128)[...,0]
-        args['last_all_pos'] = the_irfft(c_coeffs,n=nint,axis=2,norm="forward")
-
-    dx = args['last_all_pos'].copy()
-    dx[:,:,0:(nint-1)] -= args['last_all_pos'][:,:,1:nint]
-    dx[:,:,nint-1] -= args['last_all_pos'][:,:,0]
-    
-    max_path_length = np.linalg.norm(dx,axis=1).sum(axis=1).max(axis=0)
-
-    return max_path_length
+    return ChoreoAction(**kwargs)
 
 class UniformRandom():
     def __init__(self, d):
@@ -1074,6 +1882,33 @@ class UniformRandom():
     def random(self):
         return self.rdn.random_sample((self.d))
 
+def null_space_sparseqr(AT):
+    # Returns a basis of the null space of a matrix A.
+    # AT must be in COO format
+    # The nullspace of the TRANSPOSE of AT will be returned
+
+    # tolerance = 1e-5
+    tolerance = None
+
+    Q, R, E, rank = sparseqr.qr( AT, tolerance=tolerance )
+
+    nrow = AT.shape[0]
+    
+    if (nrow <= rank):
+        
+        return sp.coo_matrix(([],([],[])),shape=(nrow,0))
+    
+    else:
+
+        mask = []
+        iker = 0
+        while (iker < Q.nnz):
+            if (Q.col[iker] >= rank):
+                mask.append(iker)
+            iker += 1
+            
+        return sp.coo_matrix((Q.data[mask],(Q.row[mask],Q.col[mask]-rank)),shape=(nrow,nrow-rank))
+     
 def AllPosToAllCoeffs(all_pos,nint,ncoeffs):
 
     nloop = all_pos.shape[0]
@@ -1097,153 +1932,6 @@ def Transform_Coeffs(SpaceRot, TimeRev, TimeShiftNum, TimeShiftDen, all_coeffs):
             all_coeffs_new[il,:,:,:] = Transform_Coeffs_Single_Loop(SpaceRot, float(TimeRev), float(TimeShiftNum), float(TimeShiftDen), all_coeffs[il,:,:,:],ncoeff)
         
     return all_coeffs_new
-
-def Compose_Two_Paths(callfun,Info_dict_slow,Info_dict_fast_list,il_slow_source,ibl_slow_source,il_fast_source,ibl_fast_source,nT_slow,nT_fast,ncoeff,all_coeffs_slow,all_coeffs_fast_list,Rotate_fast_with_slow=False):
-    # Composes a "slow" with a "fast" path
-
-    ncoeff = callfun[0]["ncoeff_list"][0]
-    nloop = callfun[0]["nloop"]
-    Targets = callfun[0]["Targets"]
-
-    all_coeffs = np.zeros((nloop,ndim,ncoeff,2),dtype=np.float64)
-
-    for il in range(nloop):
-
-        ib = Targets[il,0]
-        il_slow = il_slow_source[ib]
-        ibl_slow = ibl_slow_source[ib]
-        il_fast = il_fast_source[ib]
-        ibl_fast = ibl_fast_source[ib]
-
-        mass_fast_tot = 0.
-        
-        for il_fast_p in range(Info_dict_fast_list[il_slow]['nloop']):
-
-            for ibl_fast_p in range(Info_dict_fast_list[il_slow]["loopnb"][il_fast]):
-
-                ib_fast_p = Info_dict_fast_list[il_slow]["Targets"][il_fast_p][ibl_fast_p]
-                mass_fast_tot += Info_dict_fast_list[il_slow]["mass"][ib_fast_p]
-
-        mass_fac = mass_fast_tot / Info_dict_slow["mass"][Info_dict_slow["Targets"][il_slow][ibl_slow]]
-
-        ########################################################
-
-        k_fac_slow = nT_slow
-        k_fac_fast = nT_fast[il_slow]
-        
-        phys_exp = 1/(n-1)
-
-        rfac_slow = (k_fac_slow) ** phys_exp
-        rfac_fast = (k_fac_fast*m.sqrt(mass_fac)) ** phys_exp
-
-        ########################################################
-
-        SpaceRot = np.array(Info_dict_fast_list[il_slow]["SpaceRotsUn"][il_fast][ibl_fast],dtype=np.float64)
-        TimeRev = float(Info_dict_fast_list[il_slow]["TimeRevsUn"][il_fast][ibl_fast])
-        TimeShiftNum = float(Info_dict_fast_list[il_slow]["TimeShiftNumUn"][il_fast][ibl_fast])
-        TimeShiftDen = float(Info_dict_fast_list[il_slow]["TimeShiftDenUn"][il_fast][ibl_fast])
-
-        ncoeff_slow = all_coeffs_slow.shape[2]
-
-        all_coeffs_fast = Transform_Coeffs_Single_Loop(SpaceRot, TimeRev, TimeShiftNum, TimeShiftDen, all_coeffs_fast_list[il_slow][il_fast,:,:,:],all_coeffs_fast_list[il_slow].shape[2])
-        
-        ncoeff_fast = all_coeffs_fast.shape[1]
-        
-        all_coeffs_slow_mod = SparseScaleCoeffs(all_coeffs_slow[il_slow,:,:,:],ncoeff,ncoeff_slow,k_fac_slow,rfac_slow)
-        all_coeffs_fast_mod = SparseScaleCoeffs(all_coeffs_fast               ,ncoeff,ncoeff_fast,k_fac_fast,rfac_fast)
-
-
-
-        if Rotate_fast_with_slow :
-            
-            nint = 2*ncoeff
-
-            c_coeffs_slow = all_coeffs_slow_mod.view(dtype=np.complex128)[...,0]
-            all_pos_slow = the_irfft(c_coeffs_slow,n=nint,axis=1)
-
-            c_coeffs_fast = all_coeffs_fast_mod.view(dtype=np.complex128)[...,0]
-            all_pos_fast = the_irfft(c_coeffs_fast,n=nint,axis=1)
-
-            all_coeffs_slow_mod_speed = ComputeSpeedCoeffs(all_coeffs_slow_mod,ncoeff)
-            c_coeffs_slow_mod_speed = all_coeffs_slow_mod_speed.view(dtype=np.complex128)[...,0]
-            all_pos_slow_mod_speed = the_irfft(c_coeffs_slow_mod_speed,n=nint,axis=1)
-
-            all_pos_avg = RotateFastWithSlow_2D(all_pos_slow,all_pos_slow_mod_speed,all_pos_fast,nint)
-
-            c_coeffs_avg = the_rfft(all_pos_avg,n=nint,axis=1)
-
-            kmax = min(ncoeff,ncoeff_slow)
-
-            all_coeffs[il,:,0:kmax,0] = c_coeffs_avg[:,0:kmax].real
-            all_coeffs[il,:,0:kmax,1] = c_coeffs_avg[:,0:kmax].imag    
-
-        else :
-
-            all_coeffs[il,:,:,:] = all_coeffs_fast_mod + all_coeffs_slow_mod
-
-    return all_coeffs
-
-def Gen_init_avg_2D(nT_slow,nT_fast,ncoeff,Info_dict_slow,all_coeffs_slow,Info_dict_fast_list,all_coeffs_fast_list,il_slow_source,ibl_slow_source,il_fast_source,ibl_fast_source,callfun,Rotate_fast_with_slow,Optimize_Init,Randomize_Fast_Init):
-
-    nloop_slow = len(all_coeffs_fast_list)
-
-    if Randomize_Fast_Init :
-
-        init_SpaceRevscal = np.array([1. if (np.random.random() > 1./2.) else -1. for ils in range(nloop_slow)],dtype=np.float64)
-        init_TimeRevscal = np.array([1. if (np.random.random() > 1./2.) else -1. for ils in range(nloop_slow)],dtype=np.float64)
-        Act_Mul = 1. if (np.random.random() > 1./2.) else -1.
-        init_x = np.array([ np.random.random() for iparam in range(2*nloop_slow)],dtype=np.float64)
-
-    else:
-
-        init_SpaceRevscal = np.array([1. for ils in range(nloop_slow)],dtype=np.float64)
-        init_TimeRevscal = np.array([1. for ils in range(nloop_slow)],dtype=np.float64)
-        Act_Mul = 1.
-        init_x = np.zeros((2*nloop_slow),dtype=np.float64)
-
-    def params_to_coeffs(x):
-
-        all_coeffs_fast_list_mod = []
-
-        for ils in range(nloop_slow):
-
-            theta = twopi * x[2*ils]
-            SpaceRevscal = init_SpaceRevscal[ils]
-            SpaceRots = np.array( [[SpaceRevscal*np.cos(theta) , SpaceRevscal*np.sin(theta)] , [-np.sin(theta),np.cos(theta)]],dtype=np.float64)
-            TimeRevs = init_TimeRevscal[ils]
-            TimeShiftNum = x[2*ils+1]
-            TimeShiftDen = 1
-
-            all_coeffs_fast_list_mod.append(Transform_Coeffs(SpaceRots, TimeRevs, TimeShiftNum, TimeShiftDen, all_coeffs_fast_list[ils]))
-
-        all_coeffs_avg = Compose_Two_Paths(callfun,Info_dict_slow,Info_dict_fast_list,il_slow_source,ibl_slow_source,il_fast_source,ibl_fast_source,nT_slow,nT_fast,ncoeff,all_coeffs_slow,all_coeffs_fast_list_mod,Rotate_fast_with_slow)
-
-        return all_coeffs_avg
-
-    if Optimize_Init :
-
-        def params_to_Action(x):
-
-            all_coeffs_avg = params_to_coeffs(x)
-
-            x_avg = Package_all_coeffs(all_coeffs_avg,callfun)
-            Act, GAct = Compute_action(x_avg,callfun)
-            
-            return Act_Mul * Act
-
-        maxiter = 100
-        tol = 1e-10
-
-        opt_result = scipy.optimize.minimize(fun=params_to_Action,x0=init_x,method='CG',options={'disp':False,'maxiter':maxiter,'gtol':tol},tol=tol)
-
-        x_opt = opt_result['x']
-
-        all_coeffs_avg = params_to_coeffs(x_opt)
-
-    else:
-        all_coeffs_avg = params_to_coeffs(init_x)
-
-    return all_coeffs_avg
 
 def Make_Init_bounds_coeffs(nloop,ncoeff,coeff_ampl_o=1e-1,k_infl=1,k_max=200,coeff_ampl_min=1e-16):
 
@@ -1279,217 +1967,286 @@ def Make_Init_bounds_coeffs(nloop,ncoeff,coeff_ampl_o=1e-1,k_infl=1,k_max=200,co
 
     return all_coeffs_min,all_coeffs_max
 
-def Param_to_Param_direct(x,callfun_source,callfun_target):
+def Compute_bar(all_coeffs,nloop,mass,loopnb,Targets,SpaceRotsUn):
 
-    args_source=callfun_source[0]
-    args_target=callfun_target[0]
+    xbar = np.zeros((ndim))
+    tot_mass = 0.
 
-    y = args_source['param_to_coeff_list'][args_source["current_cvg_lvl"]].dot(x)
-    all_coeffs = y.reshape(args_source['nloop'],ndim,args_source['ncoeff_list'][args_source["current_cvg_lvl"]],2)
-    
-    if (args_target['ncoeff_list'][args_target["current_cvg_lvl"]] < args_source['ncoeff_list'][args_source["current_cvg_lvl"]]):
-        z = all_coeffs[:,:,0:args_target['ncoeff_list'][args_target["current_cvg_lvl"]],:].reshape(-1)
-    else:
-        z = np.zeros((args_target['nloop'],ndim,args_target['ncoeff_list'][args_target["current_cvg_lvl"]],2))
-        z[:,:,0:args_source['ncoeff_list'][args_source["current_cvg_lvl"]],:] = all_coeffs
-        z = z.reshape(-1)
+    for il in range(nloop):
+        for ib in range(loopnb[il]):
 
-    res = args_target['coeff_to_param_list'][args_target["current_cvg_lvl"]].dot(z)
-    
-    return res
+            ibody = Targets[il,ib]
 
-def Param_to_Param_rev(Gx,callfun_source,callfun_target):
+            tot_mass += mass[ibody]
+            xbar += mass[ibody] * np.dot(SpaceRotsUn[il,ib,:,:],all_coeffs[il,:,0,0] )
 
-    args_source=callfun_source[0]
-    args_target=callfun_target[0]
-
-    Gy = args_source['coeff_to_param_T_list'][args_source["current_cvg_lvl"]].dot(Gx)
-    all_coeffs = Gy.reshape(args_source['nloop'],ndim,args_source['ncoeff_list'][args_source["current_cvg_lvl"]],2)
-
-    if (args_target['ncoeff_list'][args_target["current_cvg_lvl"]] < args_source['ncoeff_list'][args_source["current_cvg_lvl"]]):
-        Gz = all_coeffs[:,:,0:args_target['ncoeff_list'][args_target["current_cvg_lvl"]],:].reshape(-1)
-    else:
-        Gz = np.zeros((args_target['nloop'],ndim,args_target['ncoeff_list'][args_target["current_cvg_lvl"]],2))
-        Gz[:,:,0:args_source['ncoeff_list'][args_source["current_cvg_lvl"]],:] = all_coeffs
-        Gz = Gz.reshape(-1)
-    
-    
-    res = args_target['param_to_coeff_T_list'][args_target["current_cvg_lvl"]].dot(Gz)
-    
-    return res
-
-def Compute_Auto_ODE_RHS(x,callfun):
-
-    args = callfun[0]
-
-    all_pos_vel = x.reshape(2,args['nbody'],ndim)
-    
-    rhs = np.zeros((2,args['nbody'],ndim))
-
-    rhs[0,:,:] = all_pos_vel[1,:,:]
-    rhs[1,:,:] = Compute_Forces_Cython(
-        all_pos_vel[0,:,:],
-        args['mass'],
-        args['nbody'],
-        )
-
-    return rhs.reshape(2*args['nbody']*ndim)
-
-Compute_ODE_RHS = lambda t,x,callfun : Compute_Auto_ODE_RHS(x,callfun)
-
-def GetSymplecticODEDef(callfun):
-
-    args = callfun[0]
-
-    def fun(t,v):
-        return v
-
-    def gun(t,x):
-        return Compute_Forces_Cython(
-            x.reshape(args['nbody'],ndim),
-            args['mass'],
-            args['nbody'],
-            ).reshape(-1)
-
-    return fun,gun
-
-def Compute_Auto_JacMat_ODE_RHS(x,callfun):
-
-    args = callfun[0]
-
-    nbody = args['nbody']
-
-    all_pos_vel = x.reshape(2,nbody,ndim)
-    
-    drhs = np.zeros((2,nbody,ndim,2,nbody,ndim))
-
-    for ib in range(nbody):
-        for idim in range(ndim):
-            drhs[0,ib,idim,1,ib,idim] = 1
-
-    drhs[1,:,:,0,:,:] = Compute_JacMat_Forces_Cython(
-        all_pos_vel[0,:,:],
-        args['mass'],
-        nbody,
-        )
-
-    return drhs.reshape(2*nbody*ndim,2*nbody*ndim)
-        
-Compute_JacMat_ODE_RHS = lambda t,x,callfun : Compute_Auto_JacMat_ODE_RHS(x,callfun)
-
-def Compute_Auto_JacMul_ODE_RHS(x,dx,callfun):
-
-    args = callfun[0]
-
-    nbody = args['nbody']
-
-    all_pos_vel = x.reshape(2,nbody,ndim)
-    all_pos_vel_d = dx.reshape(2,nbody,ndim)
-    
-    drhs = np.zeros((2,nbody,ndim))
-
-    drhs[0,:,:] = all_pos_vel_d[1,:,:]
-
-    drhs[1,:,:] = Compute_JacMul_Forces_Cython(
-        all_pos_vel[0,:,:],
-        all_pos_vel_d[0,:,:],
-        args['mass'],
-        nbody,
-        )
-
-    return drhs.reshape(2*nbody*ndim)
-
-Compute_JacMul_ODE_RHS = lambda t,x,dx,callfun : Compute_Auto_JacMul_ODE_RHS(x,dx,callfun)
-    
-def Compute_Auto_JacMul_ODE_RHS_LinOpt(x,callfun):
-
-    args = callfun[0]
-
-    nbody = args['nbody']
-
-    return sp.linalg.LinearOperator((2*nbody*ndim,2*nbody*ndim),
-        matvec =  (lambda dx,xl=x,callfunl=callfun : Compute_Auto_JacMul_ODE_RHS(xl,dx,callfunl)),
-        rmatvec = (lambda dx,xl=x,callfunl=callfun : Compute_Auto_JacMul_ODE_RHS(xl,dx,callfunl)))
-
-def GetTangentSystemDef(x,callfun,nint=None,method = 'SymplecticEuler'):
-
-        args = callfun[0]
-        nbody = args['nbody']
-        mass = args['mass']
-        ndof = nbody*ndim
-
-        if nint is None:
-            nint = args['nint_list'][args["current_cvg_lvl"]]
-
-        if   method in ['SymplecticEuler','SymplecticEuler_XV','SymplecticEuler_VX']:
-            pass
-        elif method in ['SymplecticStormerVerlet','SymplecticStormerVerlet_XV','SymplecticStormerVerlet_VX']:
-            nint = 2*nint
-        elif method in ['SymplecticRuth3','SymplecticRuth3_XV','SymplecticRuth3_VX']:
-            nint = 24*nint
-
-        all_pos_vel = ComputeAllPosVel(x,callfun,nint=nint)
-
-        def fun(t,v):
-            return v
-
-        def gun(t,x):
-            i = round(t*nint) % nint
-
-            cur_pos = np.ascontiguousarray(all_pos_vel[0,:,:,i])
-
-            J = Compute_JacMat_Forces_Cython(cur_pos,mass,nbody).reshape(nbody*ndim,nbody*ndim)
             
-            return J.dot(x.reshape(nbody*ndim,2*nbody*ndim)).reshape(-1)
+    xbar /= tot_mass
 
-        x0 = np.ascontiguousarray(np.concatenate((np.eye(ndof),np.zeros((ndof,ndof))),axis=1).reshape(-1))
-        v0 = np.ascontiguousarray(np.concatenate((np.zeros((ndof,ndof)),np.eye(ndof)),axis=1).reshape(-1))
+    return xbar
 
-        return fun,gun,x0,v0
+def Center_all_coeffs(all_coeffs,nloop,mass,loopnb,Targets,SpaceRotsUn):
 
-def HeuristicMinMax(callfun):
-
-    args = callfun[0]
-    nbody = args['nbody']
-    nloop = args['nloop']
-    loopnb = args['loopnb']
-    Targets = args['Targets']
-    SpaceRotsUn = args['SpaceRotsUn']
-    all_pos = args['last_all_pos']
-
-    xyminmaxl = np.zeros((2,2))
-    xyminmax = np.zeros((2))
-    xy = np.zeros((2))
-
-    xmin = all_pos[0,0,0]
-    xmax = all_pos[0,0,0]
-    ymin = all_pos[0,1,0]
-    ymax = all_pos[0,1,0]
+    xbar = Compute_bar(all_coeffs,nloop,mass,loopnb,Targets,SpaceRotsUn)
 
     for il in range(nloop):
 
-        xyminmaxl[0,0] = all_pos[il,0,:].min()
-        xyminmaxl[1,0] = all_pos[il,0,:].max()
-        xyminmaxl[0,1] = all_pos[il,1,:].min()
-        xyminmaxl[1,1] = all_pos[il,1,:].max()
+        all_coeffs[il,:,0,0] -= xbar
 
+def RemoveSym_ann(all_coeffs,nbody,nloop,ncoeff,loopnb,Targets,SpaceRotsUn,TimeRevsUn,TimeShiftNumUn,TimeShiftDenUn):
+    # Removes symmetries and gives coeffs for all bodies
+
+    all_coeffs_nosym = np.zeros((nbody,ndim,ncoeff,2),dtype=np.float64)
+
+    for il in range(nloop):
         for ib in range(loopnb[il]):
 
-            if (args["RequiresLoopDispUn"][il,ib]):
+            ibody = Targets[il,ib]
 
-                for i in range(2):
+            SpaceRot = SpaceRotsUn[il,ib,:,:]
+            TimeRev = TimeRevsUn[il,ib]
+            TimeShiftNum = float(TimeShiftNumUn[il,ib])
+            TimeShiftDen = float(TimeShiftDenUn[il,ib])
 
-                    for j in range(2):
+            all_coeffs_nosym[ibody,:,:,:] = Transform_Coeffs_Single_Loop(SpaceRot, TimeRev, TimeShiftNum, TimeShiftDen, all_coeffs[il,:,:],ncoeff)
 
-                        xyminmax[0] = xyminmaxl[i,0]
-                        xyminmax[1] = xyminmaxl[j,1]
+    return all_coeffs_nosym
 
-                        xy = np.dot(SpaceRotsUn[il,ib,:,:],xyminmax)
+def Images_to_video(input_folder,output_filename,ReverseEnd=False,img_file_ext='.png'):
+    # Expects images files with consistent extension (default *.png).
+    
+    list_files = os.listdir(input_folder)
 
-                        xmin = min(xmin,xy[0])
-                        xmax = max(xmax,xy[0])
-                        ymin = min(ymin,xy[1])
-                        ymax = max(ymax,xy[1])
+    png_files = []
+    
+    for the_file in list_files:
+        
+        the_file = input_folder+the_file
+        
+        if os.path.isfile(the_file):
+            
+            file_base , file_ext = os.path.splitext(the_file)
+            
+            if file_ext == img_file_ext :
+                
+                png_files.append(the_file)
+        
+    # Sorting files by alphabetical order
+    png_files.sort()
+        
+    frames_filename = 'frames.txt'
+    
+    f = open(frames_filename,"w")
+    for img_name in img_list:
+        f.write('file \''+os.path.abspath(img_name)+'\'\n')
+        f.write('duration 0.0333333 \n')
+    
+    if ReverseEnd:
+        for img_name in reversed(img_list):
+            f.write('file \''+os.path.abspath(img_name)+'\'\n')
+            f.write('duration 0.0333333 \n')
+        
+    f.close()
 
-    return xmin,xmax,ymin,ymax
+    try:
+        (
+            ffmpeg
+            .input(frames_filename,f='concat',safe='0')
+            .output(output_filename,vcodec='h264',pix_fmt='yuv420p')
+            .global_args('-y')
+            .global_args('-loglevel','error')
+            .run()
+        )
+    except:
+        raise ModuleNotFoundError('Error: ffmpeg not found')
+    
+    os.remove(frames_filename)
+ 
+def factor_squarest(n):
+    x = m.ceil(m.sqrt(n))
+    y = int(n/x)
+    while ( (y * x) != float(n) ):
+        x -= 1
+        y = int(n/x)
+    return max(x,y), min(x,y)
 
+def VideoGrid(input_list,output_filename,nxy = None,ordering='RowMajor'):
+
+    nvid = len(input_list)
+
+    if nxy is None:
+         nx,ny = factor_squarest(nvid)
+
+    else:
+        nx,ny = nxy
+        if (nx*ny != nvid):
+            raise(ValueError('The number of input video files is incorrect'))
+
+    if nvid == 1:
+        
+        os.rename(input_list[0], output_filename)
+
+    else:
+        
+        if ordering == 'RowMajor':
+            layout_list = []
+            for iy in range(ny):
+                if iy == 0:
+                    ylayout='0'
+                else:
+                    ylayout = 'h0'
+                    for iiy in range(1,iy):
+                        ylayout = ylayout + '+h'+str(iiy)
+
+                for ix in range(nx):
+                    if ix == 0:
+                        xlayout='0'
+                    else:
+                        xlayout = 'w0'
+                        for iix in range(1,ix):
+                            xlayout = xlayout + '+w'+str(iix)
+
+
+                    layout_list.append(xlayout + '_' + ylayout)
+
+        elif ordering == 'ColMajor':
+            layout_list = []
+            for ix in range(nx):
+                if ix == 0:
+                    xlayout='0'
+                else:
+                    xlayout = 'w0'
+                    for iix in range(1,ix):
+                        xlayout = xlayout + '+w'+str(iix)
+                for iy in range(ny):
+                    if iy == 0:
+                        ylayout='0'
+                    else:
+                        ylayout = 'h0'
+                        for iiy in range(1,iy):
+                            ylayout = ylayout + '+h'+str(iiy)
+
+                    layout_list.append(xlayout + '_' + ylayout)
+        else:
+            raise(ValueError('Unknown ordering : '+ordering))
+
+        layout = layout_list[0]
+        for i in range(1,nvid):
+            layout = layout + '|' + layout_list[i]
+
+        try:
+            
+            ffmpeg_input_list = []
+            for the_input in input_list:
+                ffmpeg_input_list.append(ffmpeg.input(the_input))
+
+            # ffmpeg_out = ( ffmpeg
+            #     .filter(ffmpeg_input_list, 'hstack')
+            # )
+    # 
+            ffmpeg_out = ( ffmpeg
+                .filter(
+                    ffmpeg_input_list,
+                    'xstack',
+                    inputs=nvid,
+                    layout=layout,
+                )
+            )
+
+            ffmpeg_out = ( ffmpeg_out
+                .output(output_filename,vcodec='h264',pix_fmt='yuv420p')
+                .global_args('-y')
+                .global_args('-loglevel','error')
+            )
+
+            ffmpeg_out.run()
+
+        # except:
+        #     raise ModuleNotFoundError('Error: ffmpeg not found')
+
+        except BaseException as err:
+            print(f"Unexpected {err=}, {type(err)=}")
+            raise
+
+def ReadHashFromFile(filename):
+
+    with open(filename,'r') as jsonFile:
+        Info_dict = json.load(jsonFile)
+
+    the_hash = Info_dict.get("Hash")
+
+    if the_hash is None:
+        return None
+
+    else:
+        return np.array(the_hash)
+
+def SelectFiles_Action(store_folder,hash_dict,Action_Hash_val=np.zeros((nhash)),rtol=1e-5):
+    # Creates a list of possible duplicates based on value of the action and hashes
+
+    file_path_list = []
+    for file_path in os.listdir(store_folder):
+        file_path = os.path.join(store_folder, file_path)
+        file_root, file_ext = os.path.splitext(os.path.basename(file_path))
+        
+        if (file_ext == '.json' ):
+            
+            This_Action_Hash = hash_dict.get(file_root)
+            
+            if (This_Action_Hash is None) :
+
+                This_Action_Hash = ReadHashFromFile(file_path) 
+
+                if not(This_Action_Hash is None):
+
+                    hash_dict[file_root] = This_Action_Hash
+
+            if not(This_Action_Hash is None):
+
+                IsCandidate = True
+                for ihash in range(nhash):
+
+                    IsCandidate = (IsCandidate and ((abs(This_Action_Hash[ihash]-Action_Hash_val[ihash])) < ((abs(This_Action_Hash[ihash])+abs(Action_Hash_val[ihash]))*rtol)))
+
+                if IsCandidate:
+                    file_path_list.append(store_folder+'/'+file_root)
+                        
+    return file_path_list
+
+def Param_to_Param_direct(x,ActionSyst_source,ActionSyst_target):
+
+    all_coeffs_source = ActionSyst_source.Unpackage_all_coeffs(x)
+
+    ncoeffs_source = ActionSyst_source.ncoeff()
+    ncoeffs_target = ActionSyst_target.ncoeff()
+    
+    if (ncoeffs_target < ncoeffs_source):
+        z = all_coeffs_source[:,:,0:ncoeffs_target,:].reshape(-1)
+    else:
+        z = np.zeros((ActionSyst_target.nloop,ndim,ncoeffs_target,2))
+        z[:,:,0:ncoeffs_source,:] = all_coeffs_source
+        z = z.reshape(-1)
+
+    res = ActionSyst_target.coeff_to_param().dot(z)
+    
+    return res
+
+def Param_to_Param_rev(Gx,ActionSyst_source,ActionSyst_target):
+
+    ncoeffs_source = ActionSyst_source.ncoeff()
+    ncoeffs_target = ActionSyst_target.ncoeff()
+
+    Gy = ActionSyst_source.coeff_to_param_T().dot(Gx)
+    all_coeffs = Gy.reshape(ActionSyst_source.nloop,ndim,ncoeffs_source,2)
+
+    if (ncoeffs_target < ncoeffs_source):
+        Gz = all_coeffs[:,:,0:ncoeffs_target,:].reshape(-1)
+    else:
+        Gz = np.zeros((ActionSyst_target.nloop,ndim,ncoeffs_target,2))
+        Gz[:,:,0:ncoeffs_source,:] = all_coeffs
+        Gz = Gz.reshape(-1)
+    
+    
+    res = ActionSyst_target.param_to_coeff_T().dot(Gz)
+    
+    return res

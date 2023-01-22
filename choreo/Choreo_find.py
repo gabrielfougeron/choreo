@@ -18,7 +18,6 @@ import builtins
 
 from choreo.Choreo_scipy_plus import *
 from choreo.Choreo_funs import *
-from choreo.Choreo_plot import *
 
 def Find_Choreo(
     nbody,
@@ -108,52 +107,41 @@ def Find_Choreo(
     print(f'Searching periodic solutions of {nbody:d} bodies.')
 
     print(f'Processing symmetries for {(n_reconverge_it_max+1):d} convergence levels.')
-    callfun = setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change,CrashOnIdentity=CrashOnError_changevar)
+    ActionSyst = setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change,CrashOnIdentity=CrashOnError_changevar)
 
     print('')
 
-    args = callfun[0]
-
-    nloop = args['nloop']
-    loopnb = args['loopnb']
-    loopnbi = args['loopnbi']
     nbi_tot = 0
-    for il in range(nloop):
-        for ilp in range(il+1,nloop):
-            nbi_tot += loopnb[il]*loopnb[ilp]
-        nbi_tot += loopnbi[il]
+    for il in range(ActionSyst.nloop):
+        for ilp in range(il+1,ActionSyst.nloop):
+            nbi_tot += ActionSyst.loopnb[il]*ActionSyst.loopnb[ilp]
+        nbi_tot += ActionSyst.loopnbi[il]
     nbi_naive = (nbody*(nbody-1))//2
 
     print('Imposed constraints lead to the detection of:')
-    print(f'    {nloop:d} independant loops')
+    print(f'    {ActionSyst.nloop:d} independant loops')
     print(f'    {nbi_tot:d} binary interactions')
     print(f'    ==> Reduction of {100*(1-nbi_tot/nbi_naive):.2f} % wrt the {nbi_naive:d} naive binary iteractions')
     print('')
 
-    # for i in range(n_reconverge_it_max+1):
-    for i in [0]:
-        
-        args = callfun[0]
-        print(f'Convergence attempt number: {i+1}')
-        print(f"    Number of Fourier coeffs: {args['ncoeff_list'][i]}")
-        print(f"    Number of scalar parameters before constraints: {args['coeff_to_param_list'][i].shape[1]}")
-        print(f"    Number of scalar parameters after  constraints: {args['coeff_to_param_list'][i].shape[0]}")
-        print(f"    ==> Reduction of {100*(1-args['coeff_to_param_list'][i].shape[0]/args['coeff_to_param_list'][i].shape[1]):.2f} %")
-        print('')
+    ncoeff = ActionSyst.ncoeff()
+    nint = ActionSyst.nint()
 
+    print(f'Convergence attempt number: 1')
+    print(f"    Number of Fourier coeffs: {ncoeff}")
+    print(f"    Number of scalar parameters before constraints: {ActionSyst.coeff_to_param().shape[1]}")
+    print(f"    Number of scalar parameters after  constraints: {ActionSyst.coeff_to_param().shape[0]}")
+    print(f"    ==> Reduction of {100*(1-ActionSyst.coeff_to_param().shape[0]/ActionSyst.coeff_to_param().shape[1]):.2f} %")
+    print('')
 
-    callfun[0]["current_cvg_lvl"] = 0
-    ncoeff = callfun[0]["ncoeff_list"][callfun[0]["current_cvg_lvl"]]
-    nint = callfun[0]["nint_list"][callfun[0]["current_cvg_lvl"]]
+    all_coeffs_min,all_coeffs_max = Make_Init_bounds_coeffs(ActionSyst.nloop,ncoeff,coeff_ampl_o,k_infl,k_max,coeff_ampl_min)
 
-    all_coeffs_min,all_coeffs_max = Make_Init_bounds_coeffs(nloop,ncoeff,coeff_ampl_o,k_infl,k_max,coeff_ampl_min)
-
-    x_min = Package_all_coeffs(all_coeffs_min,callfun)
-    x_max = Package_all_coeffs(all_coeffs_max,callfun)
+    x_min = ActionSyst.Package_all_coeffs(all_coeffs_min)
+    x_max = ActionSyst.Package_all_coeffs(all_coeffs_max)
 
     rand_eps = coeff_ampl_min
     rand_dim = 0
-    for i in range(callfun[0]['coeff_to_param_list'][0].shape[0]):
+    for i in range(ActionSyst.coeff_to_param().shape[0]):
 
         if (abs(x_max[i] - x_min[i]) > rand_eps):
             rand_dim +=1
@@ -162,8 +150,8 @@ def Find_Choreo(
 
     sampler = UniformRandom(d=rand_dim)
 
-    x0 = np.random.random(callfun[0]['param_to_coeff_list'][0].shape[1])
-    xmin = Compute_MinDist(x0,callfun)
+    x0 = np.random.random(ActionSyst.param_to_coeff().shape[1])
+    xmin = ActionSyst.Compute_MinDist(x0)
 
     if (xmin < 1e-5):
         # print(xmin)
@@ -201,30 +189,30 @@ def Find_Choreo(
         
         print(f'Optimization attempt number: {n_opt}')
 
-        callfun[0]["current_cvg_lvl"] = 0
-        ncoeff = callfun[0]["ncoeff_list"][callfun[0]["current_cvg_lvl"]]
-        nint = callfun[0]["nint_list"][callfun[0]["current_cvg_lvl"]]
+        ActionSyst.current_cvg_lvl = 0
+        ncoeff = ActionSyst.ncoeff()
+        nint = ActionSyst.nint()
 
         if (ReconvergeSol):
 
-            x_avg = Package_all_coeffs(all_coeffs_init,callfun)
+            x_avg = ActionSyst.Package_all_coeffs(all_coeffs_init)
         
         elif (LookForTarget):
 
-            all_coeffs_avg = Gen_init_avg_2D(nT_slow,nT_fast,ncoeff,Info_dict_slow,all_coeffs_slow,Info_dict_fast_list,all_coeffs_fast_list,il_slow_source,ibl_slow_source,il_fast_source,ibl_fast_source,callfun,Rotate_fast_with_slow,Optimize_Init,Randomize_Fast_Init)
+            all_coeffs_avg = ActionSyst.Gen_init_avg_2D(nT_slow,nT_fast,Info_dict_slow,all_coeffs_slow,Info_dict_fast_list,all_coeffs_fast_list,il_slow_source,ibl_slow_source,il_fast_source,ibl_fast_source,Rotate_fast_with_slow,Optimize_Init,Randomize_Fast_Init)
 
-            x_avg = Package_all_coeffs(all_coeffs_avg,callfun)
+            x_avg = ActionSyst.Package_all_coeffs(all_coeffs_avg)
 
         else:
             
-            x_avg = np.zeros((callfun[0]['coeff_to_param_list'][callfun[0]["current_cvg_lvl"]].shape[0]),dtype=np.float64)
+            x_avg = np.zeros((ActionSyst.coeff_to_param().shape[0]),dtype=np.float64)
 
-        x0 = np.zeros((callfun[0]['coeff_to_param_list'][callfun[0]["current_cvg_lvl"]].shape[0]),dtype=np.float64)
+        x0 = np.zeros((ActionSyst.coeff_to_param().shape[0]),dtype=np.float64)
         
         xrand = sampler.random()
         
         rand_dim = 0
-        for i in range(callfun[0]['coeff_to_param_list'][callfun[0]["current_cvg_lvl"]].shape[0]):
+        for i in range(ActionSyst.coeff_to_param().shape[0]):
             if (abs(x_max[i] - x_min[i]) > rand_eps):
                 x0[i] = x_avg[i] + x_min[i] + (x_max[i] - x_min[i])*xrand[rand_dim]
                 rand_dim +=1
@@ -233,41 +221,41 @@ def Find_Choreo(
 
         if save_all_inits or (save_first_init and n_opt == 1):
 
-            Write_Descriptor(x0,callfun,'init.json')
+            ActionSyst.Write_Descriptor(x0,'init.json')
 
             if Save_img :
-                plot_all_2D(x0,nint_plot_img,callfun,'init.png',fig_size=img_size,color=color,color_list=color_list)        
+                ActionSyst.plot_all_2D(x0,nint_plot_img,'init.png',fig_size=img_size,color=color,color_list=color_list)        
 
             if Save_thumb :
-                plot_all_2D(x0,nint_plot_img,callfun,'init_thumb.png',fig_size=thumb_size,color=color,color_list=color_list)        
+                ActionSyst.plot_all_2D(x0,nint_plot_img,'init_thumb.png',fig_size=thumb_size,color=color,color_list=color_list)        
                 
             if Save_anim :
-                plot_all_2D_anim(x0,nint_plot_anim,callfun,'init.mp4',nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size,dnint=dnint,color_list=color_list,color=color)
+                ActionSyst.plot_all_2D_anim(x0,nint_plot_anim,'init.mp4',nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size,dnint=dnint,color_list=color_list,color=color)
             
             if Save_Newton_Error :
-                plot_Newton_Error(x0,callfun,'init_newton.png')
+                ActionSyst.plot_Newton_Error(x0,'init_newton.png')
 
             if Save_All_Coeffs:
 
-                all_coeffs = Unpackage_all_coeffs(x0,callfun)
+                all_coeffs = ActionSyst.Unpackage_all_coeffs(x0)
                 np.save('init_coeffs.npy',all_coeffs)
 
             if Save_All_Pos:
 
                 if n_save_pos is None:
-                    all_pos = ComputeAllLoopPos(x0,callfun)
+                    all_pos = ActionSyst.ComputeAllLoopPos(x0)
                 elif n_save_pos == 'auto':
                     # TODO : implement auto
-                    all_pos = ComputeAllLoopPos(x0,callfun)
+                    all_pos = ActionSyst.ComputeAllLoopPos(x0)
                 else:
-                    all_pos = ComputeAllLoopPos(x0,callfun,n_save_pos)
+                    all_pos = ActionSyst.ComputeAllLoopPos(x0,n_save_pos)
 
                 np.save('init.npy',all_pos)
 
             for i in range(n_callback_after_init_list):
                 callback_after_init_list[i]()
             
-        f0 = Compute_action_onlygrad(x0,callfun)
+        f0 = ActionSyst.Compute_action_onlygrad(x0)
         best_sol = current_best(x0,f0)
 
         GoOn = (best_sol.f_norm < max_norm_on_entry)
@@ -292,9 +280,9 @@ def Find_Choreo(
             ActionGradNormEnterLoop = best_sol.f_norm
             
             print(f'Action Grad Norm on entry: {ActionGradNormEnterLoop:.2e}')
-            print(f'Optim level: {i_optim_param+1} / {n_optim_param}    Resize level: {callfun[0]["current_cvg_lvl"]+1} / {n_reconverge_it_max+1}')
+            print(f'Optim level: {i_optim_param+1} / {n_optim_param}    Resize level: {ActionSyst.current_cvg_lvl+1} / {n_reconverge_it_max+1}')
             
-            F = lambda x : Compute_action_onlygrad(x,callfun)
+            F = lambda x : ActionSyst.Compute_action_onlygrad(x)
             
             inner_M = None
 
@@ -307,7 +295,7 @@ def Find_Choreo(
  
             if (Use_exact_Jacobian):
 
-                FGrad = lambda x,dx : Compute_action_hess_mul(x,dx,callfun)
+                FGrad = lambda x,dx : ActionSyst.Compute_action_hess_mul(x,dx)
                 jacobian = ExactKrylovJacobian(exactgrad=FGrad,**jac_options)
 
             else: 
@@ -322,7 +310,7 @@ def Find_Choreo(
 
                 for i in range(n_optim_callback_list):
 
-                    AskedForNext = (AskedForNext or optim_callback_list[i](x,f,f_norm,callfun))
+                    AskedForNext = (AskedForNext or optim_callback_list[i](x,f,f_norm,ActionSyst))
 
                 return AskedForNext
 
@@ -353,7 +341,7 @@ def Find_Choreo(
             
             if (GoOn and Check_Escape):
                 
-                Escaped,_ = Detect_Escape(best_sol.x,callfun)
+                Escaped,_ = ActionSyst.Detect_Escape(best_sol.x)
 
                 if Escaped:
                     print('One loop escaped. Starting over.')    
@@ -362,7 +350,7 @@ def Find_Choreo(
                 
             if (GoOn and Look_for_duplicates):
 
-                Found_duplicate,file_path = Check_Duplicates(best_sol.x,callfun,hash_dict,store_folder,duplicate_eps)
+                Found_duplicate,file_path = ActionSyst.Check_Duplicates(best_sol.x,hash_dict,store_folder,duplicate_eps)
                 
                 if (Found_duplicate):
                 
@@ -378,7 +366,7 @@ def Find_Choreo(
                 # print(f'Opt Action Grad Norm : {best_sol.f_norm} from {ActionGradNormEnterLoop}')
                 print(f'Opt Action Grad Norm: {best_sol.f_norm:.2e}')
             
-                Newt_err = Compute_Newton_err(best_sol.x,callfun)
+                Newt_err = ActionSyst.Compute_Newton_err(best_sol.x)
                 Newt_err_norm = np.linalg.norm(Newt_err)/(nint*nbody)
                 NewtonPreciseGood = (Newt_err_norm < Newt_err_norm_max)
                 NewtonPreciseEnough = (Newt_err_norm < Newt_err_norm_max_save)
@@ -386,28 +374,27 @@ def Find_Choreo(
                 
                 CanChangeOptimParams = i_optim_param < (n_optim_param-1)
                 
-                CanRefine = (callfun[0]["current_cvg_lvl"] < n_reconverge_it_max)
+                CanRefine = (ActionSyst.current_cvg_lvl < n_reconverge_it_max)
                 
                 if CanRefine :
                     
-                    all_coeffs_coarse = Unpackage_all_coeffs(best_sol.x,callfun)
-                    ncoeff_coarse = callfun[0]["ncoeff_list"][callfun[0]["current_cvg_lvl"]]
+                    all_coeffs_coarse = ActionSyst.Unpackage_all_coeffs(best_sol.x)
+                    ncoeff_coarse = ActionSyst.ncoeff()
                     
-                    callfun[0]["current_cvg_lvl"] += 1
-                    ncoeff_fine = callfun[0]["ncoeff_list"][callfun[0]["current_cvg_lvl"]]
+                    ActionSyst.current_cvg_lvl += 1
+                    ncoeff_fine = ActionSyst.ncoeff()
 
-                    all_coeffs_fine = np.zeros((nloop,ndim,ncoeff_fine,2),dtype=np.float64)
-                    # all_coeffs_fine[:,:,0:ncoeff_coarse,:] = np.copy(all_coeffs_coarse)
+                    all_coeffs_fine = np.zeros((ActionSyst.nloop,ndim,ncoeff_fine,2),dtype=np.float64)
                     for k in range(ncoeff_coarse):
                         all_coeffs_fine[:,:,k,:] = all_coeffs_coarse[:,:,k,:]
                         
-                    x_fine = Package_all_coeffs(all_coeffs_fine,callfun)
-                    f_fine = Compute_action_onlygrad(x_fine,callfun)
+                    x_fine = ActionSyst.Package_all_coeffs(all_coeffs_fine)
+                    f_fine = ActionSyst.Compute_action_onlygrad(x_fine)
                     f_fine_norm = np.linalg.norm(f_fine)
                     
                     NeedsRefinement = (f_fine_norm > mul_coarse_to_fine*best_sol.f_norm)
                     
-                    callfun[0]["current_cvg_lvl"] += -1
+                    ActionSyst.current_cvg_lvl += -1
                 
                 else:
                     
@@ -491,41 +478,37 @@ def Find_Choreo(
 
                     print(f'Saving solution as {filename_output}.*.')
              
-                    Write_Descriptor(best_sol.x,callfun,filename_output+'.json',Action=Action,Gradaction=Gradaction,Newt_err_norm=Newt_err_norm,Hash_Action=Hash_Action,extend=plot_extend)
+                    ActionSyst.Write_Descriptor(best_sol.x,filename_output+'.json',Action=Action,Gradaction=Gradaction,Newt_err_norm=Newt_err_norm,Hash_Action=Hash_Action,extend=plot_extend)
 
                     if Save_img :
-                        plot_all_2D(best_sol.x,nint_plot_img,callfun,filename_output+'.png',fig_size=img_size,color=color,color_list=color_list)
+                        ActionSyst.plot_all_2D(best_sol.x,nint_plot_img,filename_output+'.png',fig_size=img_size,color=color,color_list=color_list)
                     
                     if Save_thumb :
-                        plot_all_2D(best_sol.x,nint_plot_img,callfun,filename_output+'_thumb.png',fig_size=thumb_size,color=color,color_list=color_list)
+                        ActionSyst.plot_all_2D(best_sol.x,nint_plot_img,filename_output+'_thumb.png',fig_size=thumb_size,color=color,color_list=color_list)
                         
                     if Save_anim :
-                        
-                        plot_all_2D_anim(best_sol.x,nint_plot_anim,callfun,filename_output+'.mp4',nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size,dnint=dnint,color_list=color_list,color=color)
+                        ActionSyst.plot_all_2D_anim(best_sol.x,nint_plot_anim,filename_output+'.mp4',nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size,dnint=dnint,color_list=color_list,color=color)
 
                     if Save_Newton_Error :
-                        plot_Newton_Error(best_sol.x,callfun,filename_output+'_newton.png')
+                        ActionSyst.plot_Newton_Error(best_sol.x,filename_output+'_newton.png')
                     
                     if Save_All_Coeffs:
-
-                        all_coeffs = Unpackage_all_coeffs(best_sol.x,callfun)
+                        all_coeffs = ActionSyst.Unpackage_all_coeffs(best_sol.x)
                         np.save(filename_output+'_coeffs.npy',all_coeffs)
 
                     if Save_All_Pos:
-
                         if n_save_pos is None:
-                            all_pos = ComputeAllLoopPos(best_sol.x,callfun)
+                            all_pos = ActionSyst.ComputeAllLoopPos(best_sol.x)
                         elif n_save_pos == 'auto':
                             # TODO : implement auto
-                            all_pos = ComputeAllLoopPos(best_sol.x,callfun)
+                            all_pos = ActionSyst.ComputeAllLoopPos(best_sol.x)
                         else:
-                            all_pos = ComputeAllLoopPos(best_sol.x,callfun,n_save_pos)
+                            all_pos = ActionSyst.ComputeAllLoopPos(best_sol.x,n_save_pos)
 
                         np.save(filename_output+'.npy',all_pos)
 
                     if Save_Init_Pos_Vel_Sol:
-                        
-                        all_pos_b = Compute_init_pos_vel(best_sol.x,callfun)
+                        all_pos_b = ActionSyst.Compute_init_pos_vel(best_sol.x)
                         np.save(filename_output+'_init.npy',all_coeffs)
                
                 if GoOn and NeedsRefinement:
@@ -533,10 +516,10 @@ def Find_Choreo(
                     print('Resizing.')
                     
                     best_sol = current_best(x_fine,f_fine)
-                    callfun[0]["current_cvg_lvl"] += 1
+                    ActionSyst.current_cvg_lvl += 1
                     
-                    ncoeff = callfun[0]["ncoeff_list"][callfun[0]["current_cvg_lvl"]]
-                    nint = callfun[0]["nint_list"][callfun[0]["current_cvg_lvl"]]
+                    ncoeff = ActionSyst.ncoeff()
+                    nint = ActionSyst.nint()    
                     
                 if GoOn and NeedsChangeOptimParams:
                     
@@ -599,39 +582,33 @@ def GenSymExample(
     n_reconverge_it_max = 0
     n_grad_change = 1
 
-    callfun = setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change,CrashOnIdentity=CrashOnError_changevar)
+    ActionSyst = setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change,CrashOnIdentity=CrashOnError_changevar)
 
-    args = callfun[0]
-
-    nloop = args['nloop']
-    loopnb = args['loopnb']
-    loopnbi = args['loopnbi']
     nbi_tot = 0
-    for il in range(nloop):
-        for ilp in range(il+1,nloop):
-            nbi_tot += loopnb[il]*loopnb[ilp]
-        nbi_tot += loopnbi[il]
+    for il in range(ActionSyst.nloop):
+        for ilp in range(il+1,ActionSyst.nloop):
+            nbi_tot += ActionSyst.loopnb[il]*ActionSyst.loopnb[ilp]
+        nbi_tot += ActionSyst.loopnbi[il]
     nbi_naive = (nbody*(nbody-1))//2
 
     print('Imposed constraints lead to the detection of:')
-    print(f'    {nloop:d} independant loops')
+    print(f'    {ActionSyst.nloop:d} independant loops')
     print(f'    {nbi_tot:d} binary interactions')
     print(f'    ==> Reduction of {100*(1-nbi_tot/nbi_naive):.2f} % wrt the {nbi_naive:d} naive binary iteractions')
     print('')
 
-    # for i in range(n_reconverge_it_max+1):
-    for i in [0]:
-        
-        args = callfun[0]
-        print(f'Convergence attempt number: {i+1}')
-        print(f"    Number of Fourier coeffs: {args['ncoeff_list'][i]}")
-        print(f"    Number of scalar parameters before constraints: {args['coeff_to_param_list'][i].shape[1]}")
-        print(f"    Number of scalar parameters after  constraints: {args['coeff_to_param_list'][i].shape[0]}")
-        print(f"    ==> Reduction of {100*(1-args['coeff_to_param_list'][i].shape[0]/args['coeff_to_param_list'][i].shape[1]):.2f} %")
-        print('')
+    ncoeff = ActionSyst.ncoeff()
+    nint = ActionSyst.nint()
 
-    x0 = np.random.random(callfun[0]['param_to_coeff_list'][0].shape[1])
-    xmin = Compute_MinDist(x0,callfun)
+    print(f'Convergence attempt number: 1')
+    print(f"    Number of Fourier coeffs: {ncoeff}")
+    print(f"    Number of scalar parameters before constraints: {ActionSyst.coeff_to_param().shape[1]}")
+    print(f"    Number of scalar parameters after  constraints: {ActionSyst.coeff_to_param().shape[0]}")
+    print(f"    ==> Reduction of {100*(1-ActionSyst.coeff_to_param().shape[0]/ActionSyst.coeff_to_param().shape[1]):.2f} %")
+    print('')
+
+    x0 = np.random.random(ActionSyst.param_to_coeff().shape[1])
+    xmin = ActionSyst.Compute_MinDist(x0)
     if (xmin < 1e-5):
         # print(xmin)
         # raise ValueError("Init inter body distance too low. There is something wrong with constraints")
@@ -642,72 +619,62 @@ def GenSymExample(
 
         return False
 
-    callfun[0]["current_cvg_lvl"] = 0
-    ncoeff = callfun[0]["ncoeff_list"][callfun[0]["current_cvg_lvl"]]
-    nint = callfun[0]["nint_list"][callfun[0]["current_cvg_lvl"]]
+    all_coeffs_min,all_coeffs_max = Make_Init_bounds_coeffs(ActionSyst.nloop,ncoeff,coeff_ampl_o,k_infl,k_max,coeff_ampl_min)
 
-    all_coeffs_min,all_coeffs_max = Make_Init_bounds_coeffs(nloop,ncoeff,coeff_ampl_o,k_infl,k_max,coeff_ampl_min)
-
-    x_min = Package_all_coeffs(all_coeffs_min,callfun)
-    x_max = Package_all_coeffs(all_coeffs_max,callfun)
+    x_min = ActionSyst.Package_all_coeffs(all_coeffs_min)
+    x_max = ActionSyst.Package_all_coeffs(all_coeffs_max)
 
     rand_eps = coeff_ampl_min
     rand_dim = 0
-    for i in range(callfun[0]['coeff_to_param_list'][0].shape[0]):
+    for i in range(ActionSyst.coeff_to_param().shape[0]):
         if (abs(x_max[i] - x_min[i]) > rand_eps):
             rand_dim +=1
 
     sampler = UniformRandom(d=rand_dim)
 
-    callfun[0]["current_cvg_lvl"] = 0
-    ncoeff = callfun[0]["ncoeff_list"][callfun[0]["current_cvg_lvl"]]
-    nint = callfun[0]["nint_list"][callfun[0]["current_cvg_lvl"]]
-    
     if (LookForTarget):
         
-        all_coeffs_avg = Gen_init_avg_2D(nT_slow,nT_fast,ncoeff,Info_dict_slow,all_coeffs_slow,Info_dict_fast_list,all_coeffs_fast_list,il_slow_source,ibl_slow_source,il_fast_source,ibl_fast_source,callfun,Rotate_fast_with_slow,Optimize_Init,Randomize_Fast_Init)    
+        all_coeffs_avg = ActionSyst.Gen_init_avg_2D(nT_slow,nT_fast,Info_dict_slow,all_coeffs_slow,Info_dict_fast_list,all_coeffs_fast_list,il_slow_source,ibl_slow_source,il_fast_source,ibl_fast_source,Rotate_fast_with_slow,Optimize_Init,Randomize_Fast_Init)    
 
-        x_avg = Package_all_coeffs(all_coeffs_avg,callfun)
+        x_avg = ActionSyst.Package_all_coeffs(all_coeffs_avg)
     
     else:
         
-        x_avg = np.zeros((callfun[0]['coeff_to_param_list'][callfun[0]["current_cvg_lvl"]].shape[0]),dtype=np.float64)
+        x_avg = np.zeros((ActionSyst.coeff_to_param().shape[0]),dtype=np.float64)
 
 
-    x0 = np.zeros((callfun[0]['coeff_to_param_list'][callfun[0]["current_cvg_lvl"]].shape[0]),dtype=np.float64)
+    x0 = np.zeros((ActionSyst.coeff_to_param().shape[0]),dtype=np.float64)
     
     xrand = sampler.random()
     
     rand_dim = 0
-    for i in range(callfun[0]['coeff_to_param_list'][callfun[0]["current_cvg_lvl"]].shape[0]):
+    for i in range(ActionSyst.coeff_to_param().shape[0]):
         if (abs(x_max[i] - x_min[i]) > rand_eps):
             x0[i] = x_avg[i] + x_min[i] + (x_max[i] - x_min[i])*xrand[rand_dim]
             rand_dim +=1
         else:
             x0[i] = x_avg[i]
 
-    Write_Descriptor(x0,callfun,'init.json',extend=plot_extend)
+    ActionSyst.Write_Descriptor(x0,'init.json',extend=plot_extend)
 
     if Save_img :
-        plot_all_2D(x0,nint_plot_img,callfun,'init.png',fig_size=img_size,color=color,color_list=color_list)        
+        ActionSyst.plot_all_2D(x0,nint_plot_img,'init.png',fig_size=img_size,color=color,color_list=color_list)        
 
     if Save_anim :
-        plot_all_2D_anim(x0,nint_plot_anim,callfun,'init.mp4',nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size,dnint=dnint,color_list=color_list,color=color)
+        ActionSyst.plot_all_2D_anim(x0,nint_plot_anim,'init.mp4',nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size,dnint=dnint,color_list=color_list,color=color)
 
     if Save_All_Coeffs:
-
-        all_coeffs = Unpackage_all_coeffs(x0,callfun)
+        ActionSyst.all_coeffs = Unpackage_all_coeffs(x0)
         np.save('init_coeffs.npy',all_coeffs)
 
     if Save_All_Pos:
-
         if n_save_pos is None:
-            all_pos_b = ComputeAllLoopPos(x0,callfun)
+            all_pos_b = ActionSyst.ComputeAllLoopPos(x0)
         elif n_save_pos == 'auto':
             # TODO : implement auto
-            all_pos_b = ComputeAllLoopPos(x0,callfun)
+            all_pos_b = ActionSyst.ComputeAllLoopPos(x0)
         else:
-            all_pos_b = ComputeAllLoopPos(x0,callfun,n_save_pos)
+            all_pos_b = ActionSyst.ComputeAllLoopPos(x0,n_save_pos)
 
         np.save('init.npy',all_pos_b)
 
@@ -749,40 +716,35 @@ def Speed_test(
 
     """
     
-    callfun = setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change,CrashOnIdentity=CrashOnError_changevar)
+    ActionSyst = setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change,CrashOnIdentity=CrashOnError_changevar)
 
-    args = callfun[0]
-
-    nloop = args['nloop']
-    loopnb = args['loopnb']
-    loopnbi = args['loopnbi']
     nbi_tot = 0
-    for il in range(nloop):
-        for ilp in range(il+1,nloop):
-            nbi_tot += loopnb[il]*loopnb[ilp]
-        nbi_tot += loopnbi[il]
+    for il in range(ActionSyst.nloop):
+        for ilp in range(il+1,ActionSyst.nloop):
+            nbi_tot += ActionSyst.loopnb[il]*ActionSyst.loopnb[ilp]
+        nbi_tot += ActionSyst.loopnbi[il]
     nbi_naive = (nbody*(nbody-1))//2
 
-    callfun[0]["current_cvg_lvl"] = n_reconverge_it_max
-    ncoeff = callfun[0]["ncoeff_list"][callfun[0]["current_cvg_lvl"]]
-    nint = callfun[0]["nint_list"][callfun[0]["current_cvg_lvl"]]
+    ActionSyst.current_cvg_lvl = n_reconverge_it_max
+    ncoeff = ActionSyst.ncoeff()
+    nint = ActionSyst.nint()
 
-    all_coeffs_min,all_coeffs_max = Make_Init_bounds_coeffs(nloop,ncoeff,coeff_ampl_o,k_infl,k_max,coeff_ampl_min)
+    all_coeffs_min,all_coeffs_max = Make_Init_bounds_coeffs(ActionSyst.nloop,ncoeff,coeff_ampl_o,k_infl,k_max,coeff_ampl_min)
 
-    x_min = Package_all_coeffs(all_coeffs_min,callfun)
-    x_max = Package_all_coeffs(all_coeffs_max,callfun)
+    x_min = ActionSyst.Package_all_coeffs(all_coeffs_min)
+    x_max = ActionSyst.Package_all_coeffs(all_coeffs_max)
 
     rand_eps = coeff_ampl_min
     rand_dim = 0
-    for i in range(callfun[0]['coeff_to_param_list'][callfun[0]["current_cvg_lvl"]].shape[0]):
+    for i in range(ActionSyst.coeff_to_param().shape[0]):
 
         if (abs(x_max[i] - x_min[i]) > rand_eps):
             rand_dim +=1
 
     sampler = UniformRandom(d=rand_dim)
 
-    x0 = np.random.random(callfun[0]['param_to_coeff_list'][callfun[0]["current_cvg_lvl"]].shape[1])
-    xmin = Compute_MinDist(x0,callfun)
+    x0 = np.random.random(ActionSyst.coeff_to_param().shape[1])
+    xmin = ActionSyst.Compute_MinDist(x0)
 
     if (xmin < 1e-5):
         # print(xmin)
@@ -796,21 +758,21 @@ def Speed_test(
 
     if (LookForTarget):
         
-        all_coeffs_avg = Gen_init_avg_2D(nT_slow,nT_fast,ncoeff,Info_dict_slow,all_coeffs_slow,Info_dict_fast_list,all_coeffs_fast_list,il_slow_source,ibl_slow_source,il_fast_source,ibl_fast_source,callfun,Rotate_fast_with_slow,Optimize_Init,Randomize_Fast_Init)    
+        all_coeffs_avg = ActionSyst.Gen_init_avg_2D(nT_slow,nT_fast,Info_dict_slow,all_coeffs_slow,Info_dict_fast_list,all_coeffs_fast_list,il_slow_source,ibl_slow_source,il_fast_source,ibl_fast_source,Rotate_fast_with_slow,Optimize_Init,Randomize_Fast_Init)    
 
-        x_avg = Package_all_coeffs(all_coeffs_avg,callfun)
+        x_avg = ActionSyst.Package_all_coeffs(all_coeffs_avg)
     
     else:
         
-        x_avg = np.zeros((callfun[0]['coeff_to_param_list'][callfun[0]["current_cvg_lvl"]].shape[0]),dtype=np.float64)
+        x_avg = np.zeros((ActionSyst.coeff_to_param().shape[0]),dtype=np.float64)
 
         
-    x0 = np.zeros((callfun[0]['coeff_to_param_list'][callfun[0]["current_cvg_lvl"]].shape[0]),dtype=np.float64)
+    x0 = np.zeros((ActionSyst.coeff_to_param().shape[0]),dtype=np.float64)
     
     xrand = sampler.random()
     
     rand_dim = 0
-    for i in range(callfun[0]['coeff_to_param_list'][callfun[0]["current_cvg_lvl"]].shape[0]):
+    for i in range(ActionSyst.coeff_to_param().shape[0]):
         if (abs(x_max[i] - x_min[i]) > rand_eps):
             x0[i] = x_avg[i] + x_min[i] + (x_max[i] - x_min[i])*xrand[rand_dim]
             rand_dim +=1
@@ -823,9 +785,9 @@ def Speed_test(
     beg = time.perf_counter()
     for itest in range(n_test):
 
-        f0 = Compute_action_onlygrad(x0,callfun)
-        # hess = Compute_action_hess_mul(x0,dx,callfun)
-        # toto = Unpackage_all_coeffs(x0,callfun) 
+        f0 = ActionSyst.Compute_action_onlygrad(x0)
+        hess = ActionSyst.Compute_action_hess_mul(x0,dx)
+        # toto = ActionSyst.Unpackage_all_coeffs(x0) 
 
     end = time.perf_counter()
     tot_time += (end-beg)

@@ -75,18 +75,18 @@ MomConsImposed = True
 
 n_reconverge_it_max = 1
 n_grad_change = 1.
-callfun = setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change)
-ncoeffs_args = callfun[0]['coeff_to_param_list'][0].shape[0]
+ActionSyst = setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change)
+ncoeffs_args = ActionSyst.coeff_to_param().shape[0]
 
 print('n params ',ncoeffs_args)
 
 x0 = np.random.random((ncoeffs_args))
-# x0 = Package_all_coeffs(all_coeffs,callfun)
+# x0 = ActionSyst.Package_all_coeffs(all_coeffs)
 
 
 
 
-Actiono, Actiongrado = Compute_action(x0,callfun)
+Actiono, Actiongrado = ActionSyst.Compute_action(x0)
 
 # print('Action 0 : ',Actiono)
 print(np.linalg.norm(Actiongrado))
@@ -98,7 +98,7 @@ dxa = np.random.random((ncoeffs_args))
 dxb =  np.random.random((ncoeffs_args))
 
 dfdxa = np.dot(Actiongrado,dxa)
-Hdxb = Compute_action_hess_mul(x0,dxb,callfun)
+Hdxb = ActionSyst.Compute_action_hess_mul(x0,dxb)
 
 
 
@@ -109,40 +109,40 @@ if do_perf:
 
     tstart = time.perf_counter()
     for iperf in range(nperf):
-        Actiono, Actiongrado = Compute_action(x0,callfun)
+        Actiono, Actiongrado = ActionSyst.Compute_action(x0)
     tstop = time.perf_counter()
     print("GRAD fft YES recompute time ",tstop-tstart)
 
     tstart = time.perf_counter()
     for iperf in range(nperf):
-        Hdxb = Compute_action_hess_mul(x0,dxb,callfun)
+        Hdxb = ActionSyst.Compute_action_hess_mul(x0,dxb)
     tstop = time.perf_counter()
     print("HESS fft YES recompute time ",tstop-tstart)
 
-    callfun[0]["Do_Pos_FFT"] = False
+    ActionSyst.Do_Pos_FFT = False
     tstart = time.perf_counter()
     for iperf in range(nperf):
-        Hdxb = Compute_action_hess_mul(x0,dxb,callfun)
+        Hdxb = ActionSyst.Compute_action_hess_mul(x0,dxb)
     tstop = time.perf_counter()
     print("HESS fft NO recompute time ",tstop-tstart)
 
-    callfun[0]["Do_Pos_FFT"] = True
+    ActionSyst.Do_Pos_FFT = True
 
     tstart = time.perf_counter()
-    HessMat = Compute_action_hess_LinOpt(x0,callfun)
+    HessMat = ActionSyst.Compute_action_hess_LinOpt(x0)
     w ,v = sp.linalg.eigsh(HessMat,k=45,which='SA')
     tstop = time.perf_counter()
     print("EIG fft YES recompute time ",tstop-tstart)
 
-    callfun[0]["Do_Pos_FFT"] = False
+    ActionSyst.Do_Pos_FFT = False
 
     tstart = time.perf_counter()
-    HessMat = Compute_action_hess_LinOpt(x0,callfun)
+    HessMat = ActionSyst.Compute_action_hess_LinOpt(x0)
     w ,v = sp.linalg.eigsh(HessMat,k=10,which='SA')
     tstop = time.perf_counter()
     print("EIG fft NO recompute time ",tstop-tstart)
 
-    callfun[0]["Do_Pos_FFT"] = True
+    ActionSyst.Do_Pos_FFT = True
 
 
     
@@ -158,19 +158,19 @@ if Compare_FD_grad:
         
         # Second order approx
         # xp = np.copy(x0) + eps*dxa
-        # fp, gfp = Compute_action(xp,callfun)
+        # fp, gfp = ActionSyst.Compute_action(xp)
         
         # xm = np.copy(x0) - eps*dxa
-        # fm, gfm = Compute_action(xm,callfun)
+        # fm, gfm = ActionSyst.Compute_action(xm)
         
         # df_difffin = (fp-fm)/(2*eps)
         
         # First order scipy_like approx
         xp = np.copy(x0) + eps*dxa
-        fp, gfp = Compute_action(xp,callfun)
+        fp, gfp = ActionSyst.Compute_action(xp)
         
         xm = np.copy(x0)
-        fm, gfm = Compute_action(xm,callfun)
+        fm, gfm = ActionSyst.Compute_action(xm)
         
         df_difffin = (fp-fm)/(eps)
         
@@ -220,22 +220,22 @@ if Compare_FD_hess:
         
         # Second order approx
         # xp = np.copy(x0) + eps*dxb
-        # fp, gfp = Compute_action(xp,callfun)
+        # fp, gfp = ActionSyst.Compute_action(xp)
         # dfp = np.dot(gfp,dxa)
         
         # xm = np.copy(x0) - eps*dxb
-        # fm, gfm = Compute_action(xm,callfun)
+        # fm, gfm = ActionSyst.Compute_action(xm)
         # dfm = np.dot(gfm,dxa)
         
         # dgf_difffin = (gfp-gfm)/(2*eps)
         
         # First order scipy_like approx
         xp = np.copy(x0) + eps*dxb
-        fp, gfp = Compute_action(xp,callfun)
+        fp, gfp = ActionSyst.Compute_action(xp)
         dfp = np.dot(gfp,dxa)
         
         xm = np.copy(x0)
-        fm, gfm = Compute_action(xm,callfun)
+        fm, gfm = ActionSyst.Compute_action(xm)
         dfm = np.dot(gfm,dxa)
         
         dgf_difffin = (gfp-gfm)/(eps)
