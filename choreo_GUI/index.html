@@ -103,8 +103,8 @@ window.addEventListener("drop",function(e){
         <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Solver_Output" onclick="ClickTopTabBtn_Solver_Output()" >Output</button>
         <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Solver_Discr"  onclick="ClickTopTabBtn('Solver_Discr')" >Discretization</button>
         <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Solver_Optim"  onclick="ClickTopTabBtn('Solver_Optim')" >Optimizer</button>
-        <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Solver_Loop"   onclick="ClickTopTabBtn('Solver_Loop')"  >Loop</button>
         <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Solver_Checks" onclick="ClickTopTabBtn('Solver_Checks')">Checks</button>
+        <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Solver_CLI"    onclick="ClickTopTabBtn('Solver_CLI')"   >CLI</button>
     </div>
   </div>
   <div id="AnimationAndControlBlock"  style="margin-bottom:-20px">
@@ -454,7 +454,7 @@ window.addEventListener("drop",function(e){
           <td style="border:none; max-width:100px; "><input type="number" id="input_ncoeff_init" value="300" style="text-align: center;"></td>
         </tr>
         <tr>
-          <td style="border:none"><h>Max refinement levels:&nbsp&nbsp&nbsp</h><span id="display_n_reconverge_it_max"></span></td>
+          <td style="border:none"><h>Maximum refinement levels:&nbsp&nbsp&nbsp</h><span id="display_n_reconverge_it_max"></span></td>
           <td style="border:none; max-width:100px; "><input type="range" id="input_n_reconverge_it_max" value="4" min="0" max="12" oninput="SlideNReconvergeItMax()"></td>
         </tr>
       </table>
@@ -501,7 +501,7 @@ window.addEventListener("drop",function(e){
         </tr>
         <tr>
           <td style="border:none;" >
-            <label for="input_Newt_err_norm_safe">Newton error safe</label>
+            <label for="input_Newt_err_norm_safe">Minimum Newton error</label>
           </td>
            <td style="border:none; max-width:100px; ">
             <input type="text" id="input_Newt_err_norm_safe" value="1e-8" style="text-align: center;" >
@@ -509,7 +509,7 @@ window.addEventListener("drop",function(e){
         </tr>
         <tr>
           <td style="border:none;" >
-            <label for="input_Newt_err_norm_max">Max Newton error</label>
+            <label for="input_Newt_err_norm_max">Maximum Newton error</label>
           </td>
            <td style="border:none; max-width:100px; ">
             <input type="text" id="input_Newt_err_norm_max" value="1e-11" style="text-align: center;" >
@@ -528,10 +528,8 @@ window.addEventListener("drop",function(e){
         </tr>
       </table>
     </div>
-  </div>
-  <div class="w3-container MainTab Solver_Loop" style="display:none">
-    <h2>Convergence loop</h2>
     <br>
+    <h2>Convergence loop</h2>
     <table id = "table_cvg_loop" style="table-layout: fixed;">
       <tr style="border-left-style:hidden;border-right-style:hidden;border-top-style:hidden;"><td style="width:120px;"><b>
         <button class="w3-button w3-light-grey w3-hover-pale-red" style="text-align: center; font-size:16px" onclick="ClickAddColLoopKrylov()">Add +</button>
@@ -545,11 +543,11 @@ window.addEventListener("drop",function(e){
   </div>
   <div class="w3-container MainTab Solver_Checks" style="display:none">
     <h2>Solver checks</h2>
-    <div style = "max-width:350px; ">
+    <div style = "max-width:400px; ">
       <table style="font-size:16px; border:none; display:table">
         <tr>
           <td style="border:none;" >
-            <label for="checkbox_duplicates">Look for duplicates</label>
+            <label for="checkbox_duplicates">Skip duplicates</label>
           </td>
           <td style="border:none; max-width:90px; text-align: center;">
             <input id ="checkbox_duplicates" class="w3-check" type="checkbox" style="vertical-align: super" checked>
@@ -557,7 +555,7 @@ window.addEventListener("drop",function(e){
         </tr>
         <tr>
           <td style="border:none;" >
-            <label for="input_duplicate_eps">Duplicate hash threshold</label>
+            <label for="input_duplicate_eps">Hash threshold for duplicate detection</label>
           </td>
           <td style="border:none; max-width:90px; ">
             <input id ="input_duplicate_eps" type="text" value="1e-8" style="text-align: center;" disabled="disabled">
@@ -571,6 +569,27 @@ window.addEventListener("drop",function(e){
             <input id ="checkbox_escape" class="w3-check" type="checkbox" style="vertical-align: super" checked>
           </td>
         </tr>
+      </table>
+    </div>
+  </div>
+  <div class="w3-container MainTab Solver_CLI" style="display:none">
+    <h2>Solver checks</h2>
+    <div style = "max-width:350px; ">
+      <table style="font-size:16px; border:none; display:table">
+        <tr>
+          <td style="border:none;" >
+            <label for="CLI_multiproc">Multiprocessing in CLI</label>
+          </td>
+          <td style="border:none; max-width:90px; text-align: center;">
+            <input id ="CLI_multiproc" class="w3-check" type="checkbox" style="vertical-align: super" checked>
+          </td>
+        </tr>
+        <td style="border:none;" >
+          <label for="CLI_nproc">Number of processes</label>
+        </td>
+        <td style="border:none; max-width:90px; ">
+          <input id ="CLI_nproc" type="number" value="2" min="2" style="text-align: center;">
+        </td>
       </table>
     </div>
   </div>
@@ -680,6 +699,8 @@ for (var i = 0; i < colorLookup_init.length; i++) {
 Python_textarea.style.height = "400px"
 
 InitWorkspaceClick()
+
+document.getElementById('CLI_nproc').value = navigator.hardwareConcurrency
 
 DealWithCookie()
 

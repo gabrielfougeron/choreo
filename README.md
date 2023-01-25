@@ -50,8 +50,8 @@ To do so, follow these steps:
 - Create and activate the correct conda environment.
 - Compile the Cython part of the library.
 - In the GUI, setup a Workspace on your computer.
-- In `./scripts/Load_GUI_params_and_run.py`, set the variable `Workspace_folder` to the path of your Workspace.
-- Execute the script : `python ./scripts/Load_GUI_params_and_run.py`
+- In `./scripts/GUI_in_CLI.py`, set the variable `Workspace_folder` to the path of your Workspace.
+- Execute the script : `python ./scripts/GUI_in_CLI.py`
 
 ## Online documentation
 

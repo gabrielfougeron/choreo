@@ -68,44 +68,44 @@
                     "dirs": [],
                     "files": {
                         "01": {
-                            ".json": "choreo-gallery/02 - Helpers/01 - Circles/01.json",
-                            ".npy": "choreo-gallery/02 - Helpers/01 - Circles/01.npy"
+                            ".json": "choreo-gallery/02 - Families/01 - Circles/01.json",
+                            ".npy": "choreo-gallery/02 - Families/01 - Circles/01.npy"
                         },
                         "02": {
-                            ".json": "choreo-gallery/02 - Helpers/01 - Circles/02.json",
-                            ".npy": "choreo-gallery/02 - Helpers/01 - Circles/02.npy"
+                            ".json": "choreo-gallery/02 - Families/01 - Circles/02.json",
+                            ".npy": "choreo-gallery/02 - Families/01 - Circles/02.npy"
                         },
                         "03": {
-                            ".json": "choreo-gallery/02 - Helpers/01 - Circles/03.json",
-                            ".npy": "choreo-gallery/02 - Helpers/01 - Circles/03.npy"
+                            ".json": "choreo-gallery/02 - Families/01 - Circles/03.json",
+                            ".npy": "choreo-gallery/02 - Families/01 - Circles/03.npy"
                         },
                         "04": {
-                            ".json": "choreo-gallery/02 - Helpers/01 - Circles/04.json",
-                            ".npy": "choreo-gallery/02 - Helpers/01 - Circles/04.npy"
+                            ".json": "choreo-gallery/02 - Families/01 - Circles/04.json",
+                            ".npy": "choreo-gallery/02 - Families/01 - Circles/04.npy"
                         },
                         "05": {
-                            ".json": "choreo-gallery/02 - Helpers/01 - Circles/05.json",
-                            ".npy": "choreo-gallery/02 - Helpers/01 - Circles/05.npy"
+                            ".json": "choreo-gallery/02 - Families/01 - Circles/05.json",
+                            ".npy": "choreo-gallery/02 - Families/01 - Circles/05.npy"
                         },
                         "06": {
-                            ".json": "choreo-gallery/02 - Helpers/01 - Circles/06.json",
-                            ".npy": "choreo-gallery/02 - Helpers/01 - Circles/06.npy"
+                            ".json": "choreo-gallery/02 - Families/01 - Circles/06.json",
+                            ".npy": "choreo-gallery/02 - Families/01 - Circles/06.npy"
                         },
                         "07": {
-                            ".json": "choreo-gallery/02 - Helpers/01 - Circles/07.json",
-                            ".npy": "choreo-gallery/02 - Helpers/01 - Circles/07.npy"
+                            ".json": "choreo-gallery/02 - Families/01 - Circles/07.json",
+                            ".npy": "choreo-gallery/02 - Families/01 - Circles/07.npy"
                         },
                         "08": {
-                            ".json": "choreo-gallery/02 - Helpers/01 - Circles/08.json",
-                            ".npy": "choreo-gallery/02 - Helpers/01 - Circles/08.npy"
+                            ".json": "choreo-gallery/02 - Families/01 - Circles/08.json",
+                            ".npy": "choreo-gallery/02 - Families/01 - Circles/08.npy"
                         },
                         "09": {
-                            ".json": "choreo-gallery/02 - Helpers/01 - Circles/09.json",
-                            ".npy": "choreo-gallery/02 - Helpers/01 - Circles/09.npy"
+                            ".json": "choreo-gallery/02 - Families/01 - Circles/09.json",
+                            ".npy": "choreo-gallery/02 - Families/01 - Circles/09.npy"
                         },
                         "10": {
-                            ".json": "choreo-gallery/02 - Helpers/01 - Circles/10.json",
-                            ".npy": "choreo-gallery/02 - Helpers/01 - Circles/10.npy"
+                            ".json": "choreo-gallery/02 - Families/01 - Circles/10.json",
+                            ".npy": "choreo-gallery/02 - Families/01 - Circles/10.npy"
                         }
                     },
                     "name": "01 - Circles"
@@ -116,8 +116,8 @@
                             "dirs": [],
                             "files": {
                                 "1-chain": {
-                                    ".json": "choreo-gallery/02 - Helpers/02 - Chains/04/1-chain.json",
-                                    ".npy": "choreo-gallery/02 - Helpers/02 - Chains/04/1-chain.npy"
+                                    ".json": "choreo-gallery/02 - Families/02 - Chains/04/1-chain.json",
+                                    ".npy": "choreo-gallery/02 - Families/02 - Chains/04/1-chain.npy"
                                 }
                             },
                             "name": "04"
@@ -126,12 +126,12 @@
                             "dirs": [],
                             "files": {
                                 "1-chain": {
-                                    ".json": "choreo-gallery/02 - Helpers/02 - Chains/05/1-chain.json",
-                                    ".npy": "choreo-gallery/02 - Helpers/02 - Chains/05/1-chain.npy"
+                                    ".json": "choreo-gallery/02 - Families/02 - Chains/05/1-chain.json",
+                                    ".npy": "choreo-gallery/02 - Families/02 - Chains/05/1-chain.npy"
                                 },
                                 "2-chain": {
-                                    ".json": "choreo-gallery/02 - Helpers/02 - Chains/05/2-chain.json",
-                                    ".npy": "choreo-gallery/02 - Helpers/02 - Chains/05/2-chain.npy"
+                                    ".json": "choreo-gallery/02 - Families/02 - Chains/05/2-chain.json",
+                                    ".npy": "choreo-gallery/02 - Families/02 - Chains/05/2-chain.npy"
                                 }
                             },
                             "name": "05"
@@ -140,12 +140,12 @@
                             "dirs": [],
                             "files": {
                                 "1-chain": {
-                                    ".json": "choreo-gallery/02 - Helpers/02 - Chains/06/1-chain.json",
-                                    ".npy": "choreo-gallery/02 - Helpers/02 - Chains/06/1-chain.npy"
+                                    ".json": "choreo-gallery/02 - Families/02 - Chains/06/1-chain.json",
+                                    ".npy": "choreo-gallery/02 - Families/02 - Chains/06/1-chain.npy"
                                 },
                                 "2-chain": {
-                                    ".json": "choreo-gallery/02 - Helpers/02 - Chains/06/2-chain.json",
-                                    ".npy": "choreo-gallery/02 - Helpers/02 - Chains/06/2-chain.npy"
+                                    ".json": "choreo-gallery/02 - Families/02 - Chains/06/2-chain.json",
+                                    ".npy": "choreo-gallery/02 - Families/02 - Chains/06/2-chain.npy"
                                 }
                             },
                             "name": "06"
@@ -154,16 +154,16 @@
                             "dirs": [],
                             "files": {
                                 "1-chain": {
-                                    ".json": "choreo-gallery/02 - Helpers/02 - Chains/07/1-chain.json",
-                                    ".npy": "choreo-gallery/02 - Helpers/02 - Chains/07/1-chain.npy"
+                                    ".json": "choreo-gallery/02 - Families/02 - Chains/07/1-chain.json",
+                                    ".npy": "choreo-gallery/02 - Families/02 - Chains/07/1-chain.npy"
                                 },
                                 "2-chain": {
-                                    ".json": "choreo-gallery/02 - Helpers/02 - Chains/07/2-chain.json",
-                                    ".npy": "choreo-gallery/02 - Helpers/02 - Chains/07/2-chain.npy"
+                                    ".json": "choreo-gallery/02 - Families/02 - Chains/07/2-chain.json",
+                                    ".npy": "choreo-gallery/02 - Families/02 - Chains/07/2-chain.npy"
                                 },
                                 "3-chain": {
-                                    ".json": "choreo-gallery/02 - Helpers/02 - Chains/07/3-chain.json",
-                                    ".npy": "choreo-gallery/02 - Helpers/02 - Chains/07/3-chain.npy"
+                                    ".json": "choreo-gallery/02 - Families/02 - Chains/07/3-chain.json",
+                                    ".npy": "choreo-gallery/02 - Families/02 - Chains/07/3-chain.npy"
                                 }
                             },
                             "name": "07"
@@ -172,16 +172,16 @@
                             "dirs": [],
                             "files": {
                                 "1-chain": {
-                                    ".json": "choreo-gallery/02 - Helpers/02 - Chains/08/1-chain.json",
-                                    ".npy": "choreo-gallery/02 - Helpers/02 - Chains/08/1-chain.npy"
+                                    ".json": "choreo-gallery/02 - Families/02 - Chains/08/1-chain.json",
+                                    ".npy": "choreo-gallery/02 - Families/02 - Chains/08/1-chain.npy"
                                 },
                                 "2-chain": {
-                                    ".json": "choreo-gallery/02 - Helpers/02 - Chains/08/2-chain.json",
-                                    ".npy": "choreo-gallery/02 - Helpers/02 - Chains/08/2-chain.npy"
+                                    ".json": "choreo-gallery/02 - Families/02 - Chains/08/2-chain.json",
+                                    ".npy": "choreo-gallery/02 - Families/02 - Chains/08/2-chain.npy"
                                 },
                                 "3-chain": {
-                                    ".json": "choreo-gallery/02 - Helpers/02 - Chains/08/3-chain.json",
-                                    ".npy": "choreo-gallery/02 - Helpers/02 - Chains/08/3-chain.npy"
+                                    ".json": "choreo-gallery/02 - Families/02 - Chains/08/3-chain.json",
+                                    ".npy": "choreo-gallery/02 - Families/02 - Chains/08/3-chain.npy"
                                 }
                             },
                             "name": "08"
@@ -190,20 +190,20 @@
                             "dirs": [],
                             "files": {
                                 "1-chain": {
-                                    ".json": "choreo-gallery/02 - Helpers/02 - Chains/09/1-chain.json",
-                                    ".npy": "choreo-gallery/02 - Helpers/02 - Chains/09/1-chain.npy"
+                                    ".json": "choreo-gallery/02 - Families/02 - Chains/09/1-chain.json",
+                                    ".npy": "choreo-gallery/02 - Families/02 - Chains/09/1-chain.npy"
                                 },
                                 "2-chain": {
-                                    ".json": "choreo-gallery/02 - Helpers/02 - Chains/09/2-chain.json",
-                                    ".npy": "choreo-gallery/02 - Helpers/02 - Chains/09/2-chain.npy"
+                                    ".json": "choreo-gallery/02 - Families/02 - Chains/09/2-chain.json",
+                                    ".npy": "choreo-gallery/02 - Families/02 - Chains/09/2-chain.npy"
                                 },
                                 "3-chain": {
-                                    ".json": "choreo-gallery/02 - Helpers/02 - Chains/09/3-chain.json",
-                                    ".npy": "choreo-gallery/02 - Helpers/02 - Chains/09/3-chain.npy"
+                                    ".json": "choreo-gallery/02 - Families/02 - Chains/09/3-chain.json",
+                                    ".npy": "choreo-gallery/02 - Families/02 - Chains/09/3-chain.npy"
                                 },
                                 "4-chain": {
-                                    ".json": "choreo-gallery/02 - Helpers/02 - Chains/09/4-chain.json",
-                                    ".npy": "choreo-gallery/02 - Helpers/02 - Chains/09/4-chain.npy"
+                                    ".json": "choreo-gallery/02 - Families/02 - Chains/09/4-chain.json",
+                                    ".npy": "choreo-gallery/02 - Families/02 - Chains/09/4-chain.npy"
                                 }
                             },
                             "name": "09"
@@ -212,20 +212,20 @@
                             "dirs": [],
                             "files": {
                                 "1-chain": {
-                                    ".json": "choreo-gallery/02 - Helpers/02 - Chains/10/1-chain.json",
-                                    ".npy": "choreo-gallery/02 - Helpers/02 - Chains/10/1-chain.npy"
+                                    ".json": "choreo-gallery/02 - Families/02 - Chains/10/1-chain.json",
+                                    ".npy": "choreo-gallery/02 - Families/02 - Chains/10/1-chain.npy"
                                 },
                                 "2-chain": {
-                                    ".json": "choreo-gallery/02 - Helpers/02 - Chains/10/2-chain.json",
-                                    ".npy": "choreo-gallery/02 - Helpers/02 - Chains/10/2-chain.npy"
+                                    ".json": "choreo-gallery/02 - Families/02 - Chains/10/2-chain.json",
+                                    ".npy": "choreo-gallery/02 - Families/02 - Chains/10/2-chain.npy"
                                 },
                                 "3-chain": {
-                                    ".json": "choreo-gallery/02 - Helpers/02 - Chains/10/3-chain.json",
-                                    ".npy": "choreo-gallery/02 - Helpers/02 - Chains/10/3-chain.npy"
+                                    ".json": "choreo-gallery/02 - Families/02 - Chains/10/3-chain.json",
+                                    ".npy": "choreo-gallery/02 - Families/02 - Chains/10/3-chain.npy"
                                 },
                                 "4-chain": {
-                                    ".json": "choreo-gallery/02 - Helpers/02 - Chains/10/4-chain.json",
-                                    ".npy": "choreo-gallery/02 - Helpers/02 - Chains/10/4-chain.npy"
+                                    ".json": "choreo-gallery/02 - Families/02 - Chains/10/4-chain.json",
+                                    ".npy": "choreo-gallery/02 - Families/02 - Chains/10/4-chain.npy"
                                 }
                             },
                             "name": "10"
@@ -234,24 +234,24 @@
                             "dirs": [],
                             "files": {
                                 "1-chain": {
-                                    ".json": "choreo-gallery/02 - Helpers/02 - Chains/11/1-chain.json",
-                                    ".npy": "choreo-gallery/02 - Helpers/02 - Chains/11/1-chain.npy"
+                                    ".json": "choreo-gallery/02 - Families/02 - Chains/11/1-chain.json",
+                                    ".npy": "choreo-gallery/02 - Families/02 - Chains/11/1-chain.npy"
                                 },
                                 "2-chain": {
-                                    ".json": "choreo-gallery/02 - Helpers/02 - Chains/11/2-chain.json",
-                                    ".npy": "choreo-gallery/02 - Helpers/02 - Chains/11/2-chain.npy"
+                                    ".json": "choreo-gallery/02 - Families/02 - Chains/11/2-chain.json",
+                                    ".npy": "choreo-gallery/02 - Families/02 - Chains/11/2-chain.npy"
                                 },
                                 "3-chain": {
-                                    ".json": "choreo-gallery/02 - Helpers/02 - Chains/11/3-chain.json",
-                                    ".npy": "choreo-gallery/02 - Helpers/02 - Chains/11/3-chain.npy"
+                                    ".json": "choreo-gallery/02 - Families/02 - Chains/11/3-chain.json",
+                                    ".npy": "choreo-gallery/02 - Families/02 - Chains/11/3-chain.npy"
                                 },
                                 "4-chain": {
-                                    ".json": "choreo-gallery/02 - Helpers/02 - Chains/11/4-chain.json",
-                                    ".npy": "choreo-gallery/02 - Helpers/02 - Chains/11/4-chain.npy"
+                                    ".json": "choreo-gallery/02 - Families/02 - Chains/11/4-chain.json",
+                                    ".npy": "choreo-gallery/02 - Families/02 - Chains/11/4-chain.npy"
                                 },
                                 "5-chain": {
-                                    ".json": "choreo-gallery/02 - Helpers/02 - Chains/11/5-chain.json",
-                                    ".npy": "choreo-gallery/02 - Helpers/02 - Chains/11/5-chain.npy"
+                                    ".json": "choreo-gallery/02 - Families/02 - Chains/11/5-chain.json",
+                                    ".npy": "choreo-gallery/02 - Families/02 - Chains/11/5-chain.npy"
                                 }
                             },
                             "name": "11"
@@ -259,10 +259,708 @@
                     ],
                     "files": {},
                     "name": "02 - Chains"
+                },
+                {
+                    "dirs": [
+                        {
+                            "dirs": [],
+                            "files": {
+                                "00001": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/03/00001.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/03/00001.npy"
+                                },
+                                "00002": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/03/00002.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/03/00002.npy"
+                                }
+                            },
+                            "name": "03"
+                        },
+                        {
+                            "dirs": [],
+                            "files": {
+                                "00001": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/04/00001.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/04/00001.npy"
+                                },
+                                "00002": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/04/00002.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/04/00002.npy"
+                                },
+                                "00003": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/04/00003.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/04/00003.npy"
+                                },
+                                "00004": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/04/00004.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/04/00004.npy"
+                                }
+                            },
+                            "name": "04"
+                        },
+                        {
+                            "dirs": [],
+                            "files": {
+                                "00001": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/05/00001.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/05/00001.npy"
+                                },
+                                "00002": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/05/00002.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/05/00002.npy"
+                                },
+                                "00003": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/05/00003.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/05/00003.npy"
+                                },
+                                "00004": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/05/00004.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/05/00004.npy"
+                                },
+                                "00005": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/05/00005.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/05/00005.npy"
+                                }
+                            },
+                            "name": "05"
+                        },
+                        {
+                            "dirs": [],
+                            "files": {
+                                "00001": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/06/00001.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/06/00001.npy"
+                                },
+                                "00002": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/06/00002.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/06/00002.npy"
+                                },
+                                "00003": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/06/00003.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/06/00003.npy"
+                                },
+                                "00004": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/06/00004.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/06/00004.npy"
+                                },
+                                "00005": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/06/00005.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/06/00005.npy"
+                                },
+                                "00006": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/06/00006.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/06/00006.npy"
+                                },
+                                "00007": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/06/00007.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/06/00007.npy"
+                                },
+                                "00008": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/06/00008.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/06/00008.npy"
+                                },
+                                "00009": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/06/00009.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/06/00009.npy"
+                                }
+                            },
+                            "name": "06"
+                        },
+                        {
+                            "dirs": [],
+                            "files": {
+                                "00001": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/07/00001.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/07/00001.npy"
+                                },
+                                "00002": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/07/00002.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/07/00002.npy"
+                                },
+                                "00003": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/07/00003.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/07/00003.npy"
+                                },
+                                "00004": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/07/00004.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/07/00004.npy"
+                                },
+                                "00005": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/07/00005.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/07/00005.npy"
+                                },
+                                "00006": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/07/00006.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/07/00006.npy"
+                                },
+                                "00007": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/07/00007.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/07/00007.npy"
+                                },
+                                "00008": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/07/00008.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/07/00008.npy"
+                                },
+                                "00009": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/07/00009.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/07/00009.npy"
+                                },
+                                "00010": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/07/00010.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/07/00010.npy"
+                                },
+                                "00011": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/07/00011.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/07/00011.npy"
+                                },
+                                "00012": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/07/00012.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/07/00012.npy"
+                                },
+                                "00013": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/07/00013.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/07/00013.npy"
+                                },
+                                "00014": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/07/00014.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/07/00014.npy"
+                                }
+                            },
+                            "name": "07"
+                        },
+                        {
+                            "dirs": [],
+                            "files": {
+                                "00001": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/08/00001.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/08/00001.npy"
+                                },
+                                "00002": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/08/00002.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/08/00002.npy"
+                                },
+                                "00003": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/08/00003.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/08/00003.npy"
+                                },
+                                "00004": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/08/00004.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/08/00004.npy"
+                                },
+                                "00005": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/08/00005.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/08/00005.npy"
+                                },
+                                "00006": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/08/00006.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/08/00006.npy"
+                                },
+                                "00007": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/08/00007.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/08/00007.npy"
+                                },
+                                "00008": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/08/00008.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/08/00008.npy"
+                                },
+                                "00009": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/08/00009.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/08/00009.npy"
+                                },
+                                "00010": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/08/00010.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/08/00010.npy"
+                                },
+                                "00011": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/08/00011.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/08/00011.npy"
+                                },
+                                "00012": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/08/00012.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/08/00012.npy"
+                                },
+                                "00013": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/08/00013.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/08/00013.npy"
+                                },
+                                "00014": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/08/00014.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/08/00014.npy"
+                                },
+                                "00015": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/08/00015.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/08/00015.npy"
+                                },
+                                "00016": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/08/00016.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/08/00016.npy"
+                                },
+                                "00017": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/08/00017.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/08/00017.npy"
+                                },
+                                "00018": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/08/00018.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/08/00018.npy"
+                                },
+                                "00019": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/08/00019.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/08/00019.npy"
+                                },
+                                "00020": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/08/00020.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/08/00020.npy"
+                                }
+                            },
+                            "name": "08"
+                        },
+                        {
+                            "dirs": [],
+                            "files": {
+                                "00001": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/09/00001.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/09/00001.npy"
+                                },
+                                "00002": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/09/00002.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/09/00002.npy"
+                                },
+                                "00003": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/09/00003.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/09/00003.npy"
+                                },
+                                "00004": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/09/00004.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/09/00004.npy"
+                                },
+                                "00005": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/09/00005.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/09/00005.npy"
+                                },
+                                "00006": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/09/00006.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/09/00006.npy"
+                                },
+                                "00007": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/09/00007.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/09/00007.npy"
+                                },
+                                "00008": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/09/00008.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/09/00008.npy"
+                                },
+                                "00009": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/09/00009.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/09/00009.npy"
+                                },
+                                "00010": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/09/00010.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/09/00010.npy"
+                                },
+                                "00011": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/09/00011.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/09/00011.npy"
+                                },
+                                "00012": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/09/00012.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/09/00012.npy"
+                                },
+                                "00013": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/09/00013.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/09/00013.npy"
+                                },
+                                "00014": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/09/00014.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/09/00014.npy"
+                                },
+                                "00015": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/09/00015.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/09/00015.npy"
+                                },
+                                "00016": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/09/00016.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/09/00016.npy"
+                                },
+                                "00017": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/09/00017.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/09/00017.npy"
+                                },
+                                "00018": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/09/00018.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/09/00018.npy"
+                                },
+                                "00019": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/09/00019.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/09/00019.npy"
+                                },
+                                "00020": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/09/00020.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/09/00020.npy"
+                                },
+                                "00021": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/09/00021.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/09/00021.npy"
+                                },
+                                "00022": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/09/00022.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/09/00022.npy"
+                                },
+                                "00023": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/09/00023.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/09/00023.npy"
+                                },
+                                "00024": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/09/00024.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/09/00024.npy"
+                                },
+                                "00025": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/09/00025.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/09/00025.npy"
+                                },
+                                "00026": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/09/00026.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/09/00026.npy"
+                                },
+                                "00027": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/09/00027.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/09/00027.npy"
+                                },
+                                "00028": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/09/00028.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/09/00028.npy"
+                                },
+                                "00029": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/09/00029.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/09/00029.npy"
+                                },
+                                "00030": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/09/00030.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/09/00030.npy"
+                                },
+                                "00031": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/09/00031.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/09/00031.npy"
+                                },
+                                "00032": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/09/00032.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/09/00032.npy"
+                                },
+                                "00033": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/09/00033.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/09/00033.npy"
+                                },
+                                "00034": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/09/00034.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/09/00034.npy"
+                                },
+                                "00035": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/09/00035.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/09/00035.npy"
+                                },
+                                "00036": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/09/00036.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/09/00036.npy"
+                                },
+                                "00037": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/09/00037.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/09/00037.npy"
+                                },
+                                "00038": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/09/00038.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/09/00038.npy"
+                                },
+                                "00039": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/09/00039.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/09/00039.npy"
+                                },
+                                "00040": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/09/00040.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/09/00040.npy"
+                                },
+                                "00041": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/09/00041.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/09/00041.npy"
+                                },
+                                "00042": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/09/00042.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/09/00042.npy"
+                                }
+                            },
+                            "name": "09"
+                        },
+                        {
+                            "dirs": [],
+                            "files": {
+                                "00001": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00001.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00001.npy"
+                                },
+                                "00002": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00002.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00002.npy"
+                                },
+                                "00003": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00003.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00003.npy"
+                                },
+                                "00004": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00004.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00004.npy"
+                                },
+                                "00005": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00005.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00005.npy"
+                                },
+                                "00006": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00006.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00006.npy"
+                                },
+                                "00007": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00007.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00007.npy"
+                                },
+                                "00008": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00008.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00008.npy"
+                                },
+                                "00009": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00009.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00009.npy"
+                                },
+                                "00010": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00010.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00010.npy"
+                                },
+                                "00011": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00011.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00011.npy"
+                                },
+                                "00012": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00012.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00012.npy"
+                                },
+                                "00013": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00013.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00013.npy"
+                                },
+                                "00014": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00014.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00014.npy"
+                                },
+                                "00015": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00015.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00015.npy"
+                                },
+                                "00016": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00016.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00016.npy"
+                                },
+                                "00017": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00017.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00017.npy"
+                                },
+                                "00018": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00018.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00018.npy"
+                                },
+                                "00019": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00019.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00019.npy"
+                                },
+                                "00020": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00020.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00020.npy"
+                                },
+                                "00021": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00021.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00021.npy"
+                                },
+                                "00022": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00022.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00022.npy"
+                                },
+                                "00023": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00023.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00023.npy"
+                                },
+                                "00024": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00024.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00024.npy"
+                                },
+                                "00025": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00025.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00025.npy"
+                                },
+                                "00026": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00026.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00026.npy"
+                                },
+                                "00027": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00027.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00027.npy"
+                                },
+                                "00028": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00028.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00028.npy"
+                                },
+                                "00029": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00029.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00029.npy"
+                                },
+                                "00030": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00030.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00030.npy"
+                                },
+                                "00031": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00031.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00031.npy"
+                                },
+                                "00032": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00032.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00032.npy"
+                                },
+                                "00033": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00033.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00033.npy"
+                                },
+                                "00034": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00034.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00034.npy"
+                                },
+                                "00035": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00035.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00035.npy"
+                                },
+                                "00036": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00036.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00036.npy"
+                                },
+                                "00037": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00037.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00037.npy"
+                                },
+                                "00038": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00038.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00038.npy"
+                                },
+                                "00039": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00039.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00039.npy"
+                                },
+                                "00040": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00040.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00040.npy"
+                                },
+                                "00041": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00041.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00041.npy"
+                                },
+                                "00042": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00042.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00042.npy"
+                                },
+                                "00043": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00043.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00043.npy"
+                                },
+                                "00044": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00044.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00044.npy"
+                                },
+                                "00045": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00045.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00045.npy"
+                                },
+                                "00046": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00046.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00046.npy"
+                                },
+                                "00047": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00047.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00047.npy"
+                                },
+                                "00048": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00048.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00048.npy"
+                                },
+                                "00049": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00049.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00049.npy"
+                                },
+                                "00050": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00050.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00050.npy"
+                                },
+                                "00051": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00051.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00051.npy"
+                                },
+                                "00052": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00052.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00052.npy"
+                                },
+                                "00053": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00053.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00053.npy"
+                                },
+                                "00054": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00054.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00054.npy"
+                                },
+                                "00055": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00055.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00055.npy"
+                                },
+                                "00056": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00056.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00056.npy"
+                                },
+                                "00057": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00057.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00057.npy"
+                                },
+                                "00058": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00058.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00058.npy"
+                                },
+                                "00059": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00059.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00059.npy"
+                                },
+                                "00060": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00060.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00060.npy"
+                                },
+                                "00061": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00061.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00061.npy"
+                                },
+                                "00062": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00062.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00062.npy"
+                                },
+                                "00063": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00063.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00063.npy"
+                                },
+                                "00064": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00064.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00064.npy"
+                                },
+                                "00065": {
+                                    ".json": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00065.json",
+                                    ".npy": "choreo-gallery/02 - Families/03 - Relative equilibria/10/00065.npy"
+                                }
+                            },
+                            "name": "10"
+                        }
+                    ],
+                    "files": {},
+                    "name": "03 - Relative equilibria"
                 }
             ],
             "files": {},
-            "name": "02 - Helpers"
+            "name": "02 - Families"
         },
         {
             "dirs": [
