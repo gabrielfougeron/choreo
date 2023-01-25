@@ -21,6 +21,11 @@ sys.path.append(__PROJECT_ROOT__)
 
 import choreo 
 
+
+Workspace_folder = "Sniff_all_sym/"
+
+
+
 def load_target_files(filename,Workspace_folder,target_speed):
 
     if (filename == "no file"):
@@ -56,16 +61,9 @@ def load_target_files(filename,Workspace_folder,target_speed):
     return Info_dict, all_pos
 
 
-def main():
+def main(params_dict):
 
     np.random.seed(int(time.time()*10000) % 5000)
-
-    Workspace_folder = "Sniff_all_sym/"
-
-    params_filename = os.path.join(Workspace_folder,"choreo_config.json")
-
-    with open(params_filename) as jsonFile:
-        params_dict = json.load(jsonFile)
 
     file_basename = ''
     
@@ -305,14 +303,16 @@ def main():
 
 
 if __name__ == "__main__":
-# 
-    Exec_Mul_Proc = True
-    # Exec_Mul_Proc = False
 
-    # n = 5
-    # n = multiprocessing.cpu_count()
-    n = multiprocessing.cpu_count() // 2
-    # n = 1
+    params_filename = os.path.join(Workspace_folder,"choreo_config.json")
+
+    with open(params_filename) as jsonFile:
+        params_dict = json.load(jsonFile)
+
+    Exec_Mul_Proc = params_dict['Solver_CLI']['Exec_Mul_Proc']
+
+    n = params_dict['Solver_CLI']['nproc']
+
     
     if Exec_Mul_Proc:
 
@@ -322,11 +322,11 @@ if __name__ == "__main__":
             
             res = []
             for i in range(n):
-                res.append(executor.submit(main))
+                res.append(executor.submit(main,params_dict))
                 time.sleep(0.01)
 
     else :
 
-        main()
+        main(params_dict)
 
 

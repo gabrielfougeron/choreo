@@ -406,19 +406,19 @@ async function ChoreoExecuteClick() {
 
 function Speed_Test_Click() {
 
-    var ConfigDict = GatherConfigDict();
-    pyodide_worker.postMessage({funname:"LoadDataInWorker",args:{ConfigDict:ConfigDict}});
-    pyodide_worker.postMessage({funname:"ExecutePythonFile",args:"./python_scripts/Speed_Test.py"});
+    var ConfigDict = GatherConfigDict()
+    pyodide_worker.postMessage({funname:"LoadDataInWorker",args:{ConfigDict:ConfigDict}})
+    pyodide_worker.postMessage({funname:"ExecutePythonFile",args:"./python_scripts/Speed_Test.py"})
 
 }
 
 function GenerateInitStateClick() {
 
-    PythonClearPrints();
+    PythonClearPrints()
 
-    var ConfigDict = GatherConfigDict();
+    var ConfigDict = GatherConfigDict()
 
-    pyodide_worker.postMessage({funname:"LoadDataInWorker",args:{ConfigDict:ConfigDict}});
+    pyodide_worker.postMessage({funname:"LoadDataInWorker",args:{ConfigDict:ConfigDict}})
 
     ReadyToRun = true
 
@@ -428,8 +428,8 @@ function GenerateInitStateClick() {
 
         if (TargetSlow_Loaded) {
 
-            pyodide_worker.postMessage({funname:"LoadDataInWorker",args:{TargetSlow_PlotInfo:TargetSlow_PlotInfo}});
-            pyodide_worker.postMessage({funname:"LoadDataInWorker",args:{TargetSlow_Pos:TargetSlow_Pos}});
+            pyodide_worker.postMessage({funname:"LoadDataInWorker",args:{TargetSlow_PlotInfo:TargetSlow_PlotInfo}})
+            pyodide_worker.postMessage({funname:"LoadDataInWorker",args:{TargetSlow_Pos:TargetSlow_Pos}})
 
             var nfast = TargetSlow_PlotInfo["nloop"]
 
@@ -443,44 +443,44 @@ function GenerateInitStateClick() {
 
         if (ReadyToRun) {
 
-            pyodide_worker.postMessage({funname:"LoadDataInWorker",args:{TargetFast_PlotInfoList:TargetFast_PlotInfoList}});
-            pyodide_worker.postMessage({funname:"LoadDataInWorker",args:{TargetFast_PosList:TargetFast_PosList}});
+            pyodide_worker.postMessage({funname:"LoadDataInWorker",args:{TargetFast_PlotInfoList:TargetFast_PlotInfoList}})
+            pyodide_worker.postMessage({funname:"LoadDataInWorker",args:{TargetFast_PosList:TargetFast_PosList}})
 
         }
 
     }
 
-    pyodide_worker.postMessage({funname:"ExecutePythonFile",args:"./python_scripts/Save_init_state.py"});
+    pyodide_worker.postMessage({funname:"ExecutePythonFile",args:"./python_scripts/Save_init_state.py"})
 
 }
 
 function GatherConfigDict() {
     /* Gathers all relevant input in the page and puts it in a dictionary */
 
-    var ConfigDict = {};
+    var ConfigDict = {}
 
-    ConfigDict['Geom_Bodies'] = {};
+    ConfigDict['Geom_Bodies'] = {}
 
-    ConfigDict['Geom_Bodies'] ['MomConsImposed'] = document.getElementById('checkbox_MomCons').checked ;
+    ConfigDict['Geom_Bodies'] ['MomConsImposed'] = document.getElementById('checkbox_MomCons').checked
 
-    table = document.getElementById('table_body_loop');
-    var ncols = table.rows[0].cells.length;
+    table = document.getElementById('table_body_loop')
+    var ncols = table.rows[0].cells.length
 
-    ConfigDict['Geom_Bodies'] ['n_loops'] = ncols - 1;
+    ConfigDict['Geom_Bodies'] ['n_loops'] = ncols - 1
 
-    ConfigDict['Geom_Bodies'] ['mass'] = [];
-    ConfigDict['Geom_Bodies'] ['nbpl'] = [];
+    ConfigDict['Geom_Bodies'] ['mass'] = []
+    ConfigDict['Geom_Bodies'] ['nbpl'] = []
 
-    ConfigDict['Geom_Bodies'] ['SymType'] = [];
+    ConfigDict['Geom_Bodies'] ['SymType'] = []
 
     for (var icol=1; icol < ncols; icol++) {
 
-        var the_sym = {};
+        var the_sym = {}
         
-        the_sym['n'] =  parseInt(  table.rows[1].cells[icol].children[0].value,10);
+        the_sym['n'] =  parseInt(  table.rows[1].cells[icol].children[0].value,10)
 
-        ConfigDict['Geom_Bodies'] ['nbpl'] . push( parseInt(  table.rows[1].cells[icol].children[0].value,10));
-        ConfigDict['Geom_Bodies'] ['mass'] . push( parseFloat(table.rows[2].cells[icol].children[0].value)   );
+        ConfigDict['Geom_Bodies'] ['nbpl'] . push( parseInt(  table.rows[1].cells[icol].children[0].value,10))
+        ConfigDict['Geom_Bodies'] ['mass'] . push( parseFloat(table.rows[2].cells[icol].children[0].value)   )
         
         the_sym['name'] = table.rows[3].cells[icol].children[0].value;
         the_sym['k'] = parseInt(table.rows[4].cells[icol].children[0].value,10);
@@ -534,128 +534,133 @@ function GatherConfigDict() {
     ConfigDict['Geom_Target'] ['Optimize_Init'] = document.getElementById('checkbox_OptimizeRelative').checked
     ConfigDict['Geom_Target'] ['RandomJitterTarget'] = document.getElementById('checkbox_RandomJitterTarget').checked
 
-    ConfigDict['Geom_Random'] = {};
-    ConfigDict['Geom_Random'] ['coeff_ampl_o']    = parseFloat(document.getElementById('input_coeff_ampl_o'   ).value   );
-    ConfigDict['Geom_Random'] ['coeff_ampl_min']  = parseFloat(document.getElementById('input_coeff_ampl_min' ).value   );
-    ConfigDict['Geom_Random'] ['k_infl']          = parseInt(  document.getElementById('input_k_infl'         ).value,10);
-    ConfigDict['Geom_Random'] ['k_max']           = parseInt(  document.getElementById('input_k_max'          ).value,10);
+    ConfigDict['Geom_Random'] = {}
+    ConfigDict['Geom_Random'] ['coeff_ampl_o']    = parseFloat(document.getElementById('input_coeff_ampl_o'   ).value   )
+    ConfigDict['Geom_Random'] ['coeff_ampl_min']  = parseFloat(document.getElementById('input_coeff_ampl_min' ).value   )
+    ConfigDict['Geom_Random'] ['k_infl']          = parseInt(  document.getElementById('input_k_infl'         ).value,10)
+    ConfigDict['Geom_Random'] ['k_max']           = parseInt(  document.getElementById('input_k_max'          ).value,10)
 
-    ConfigDict['Geom_Custom'] = {};
+    ConfigDict['Geom_Custom'] = {}
 
-    table = document.getElementById('table_custom_sym');
-    var ncols = table.rows[0].cells.length;
+    table = document.getElementById('table_custom_sym')
+    var ncols = table.rows[0].cells.length
 
-    ConfigDict['Geom_Custom'] ['n_custom_sym'] = ncols - 1;
-    ConfigDict['Geom_Custom'] ['CustomSyms'] = [];
-
-    for (var icol=1; icol < ncols; icol++) {
-
-        var the_sym = {};
-        
-        the_sym['LoopTarget']   = parseInt( table.rows[1].cells[icol].children[0].value,10);
-        the_sym['LoopSource']   = parseInt( table.rows[2].cells[icol].children[0].value,10);
-        the_sym['Reflexion']    =           table.rows[3].cells[icol].children[0].value    ;
-        the_sym['RotAngleNum']  = parseInt( table.rows[4].cells[icol].children[0].value,10);
-        the_sym['RotAngleDen']  = parseInt( table.rows[5].cells[icol].children[0].value,10);
-        the_sym['TimeRev']      =           table.rows[6].cells[icol].children[0].value    ;
-        the_sym['TimeShiftNum'] = parseInt( table.rows[7].cells[icol].children[0].value,10);
-        the_sym['TimeShiftDen'] = parseInt( table.rows[8].cells[icol].children[0].value,10);
-
-        ConfigDict['Geom_Custom'] ['CustomSyms'].push(the_sym);
-
-    }
-
-    ConfigDict['Animation_Colors'] = {};
-    ConfigDict['Animation_Colors'] ["color_method_input"] = document.getElementById("color_method_input").value;
-
-    ConfigDict['Animation_Colors'] ["n_color"] = n_color;
-    ConfigDict['Animation_Colors'] ["colorLookup"] = colorLookup;
-
-    ConfigDict['Animation_Size'] = {};
-    ConfigDict['Animation_Size'] ['checkbox_Mass_Scale']  = document.getElementById('checkbox_Mass_Scale').checked ;
-    ConfigDict['Animation_Size'] ['input_body_radius']  = document.getElementById('input_body_radius').value ;
-    ConfigDict['Animation_Size'] ['input_trail_width']  = document.getElementById('input_trail_width').value ;  
-    ConfigDict['Animation_Size'] ['checkbox_Trail_vanish']  = document.getElementById('checkbox_Trail_vanish').checked ;
-    ConfigDict['Animation_Size'] ['input_trail_vanish_length']  = document.getElementById('input_trail_vanish_length').value;
-
-    ConfigDict['Animation_Framerate'] = {};
-    ConfigDict['Animation_Framerate'] ['checkbox_Limit_FPS']  = document.getElementById('checkbox_Limit_FPS').checked  ;
-    ConfigDict['Animation_Framerate'] ['input_Limit_FPS']  = parseInt(document.getElementById('input_Limit_FPS').value,10)        ;
-
-    ConfigDict['Animation_Search'] = {};
-    ConfigDict['Animation_Search'] ['DisplayLoopsDuringSearch']  = document.getElementById('checkbox_DisplayLoopsDuringSearch').checked  ;
-    ConfigDict['Animation_Search'] ['DisplayBodiesDuringSearch']  = document.getElementById('checkbox_DisplayBodiesDuringSearch').checked  ;
-    ConfigDict['Animation_Search'] ['DisplayLoopOnGalleryLoad']  = document.getElementById('checkbox_DisplayLoopOnGalleryLoad').checked  ;
-
-    ConfigDict['Solver_Discr'] = {};
-    ConfigDict['Solver_Discr'] ['Use_exact_Jacobian']  = document.getElementById('checkbox_exactJ').checked            ;
-    ConfigDict['Solver_Discr'] ['ncoeff_init']         = parseInt(document.getElementById('input_ncoeff_init').value,10)        ;
-    ConfigDict['Solver_Discr'] ['n_reconverge_it_max'] = parseInt(document.getElementById('input_n_reconverge_it_max').value,10);
-
-    ConfigDict['Solver_Optim'] = {};
-
-    ConfigDict['Solver_Optim'] ['krylov_method']  = document.getElementById('krylov_method').value;
-    ConfigDict['Solver_Optim'] ['line_search']    = document.getElementById('linesearch_method').value;
-    ConfigDict['Solver_Optim'] ['line_search_smin']    = parseFloat(document.getElementById('linesearch_smin').value);
-
-    ConfigDict['Solver_Optim'] ['Newt_err_norm_safe'] = parseFloat(document.getElementById('input_Newt_err_norm_safe').value);
-    ConfigDict['Solver_Optim'] ['Newt_err_norm_max'] = parseFloat(document.getElementById('input_Newt_err_norm_max').value);
-    ConfigDict['Solver_Optim'] ['optim_verbose_lvl'] = document.getElementById('optim_verbose_lvl').value;
-
-    ConfigDict['Solver_Loop'] = {};
-
-    table = document.getElementById('table_cvg_loop');
-    var ncols = table.rows[0].cells.length;
-
-    ConfigDict['Solver_Loop'] ['n_optim_param'] = ncols - 1;
-    ConfigDict['Solver_Loop'] ['gradtol_list'] = [];
-    ConfigDict['Solver_Loop'] ['inner_maxiter_list'] = [];
-    ConfigDict['Solver_Loop'] ['maxiter_list'] = [];
-    ConfigDict['Solver_Loop'] ['outer_k_list'] = [];
-    ConfigDict['Solver_Loop'] ['store_outer_Av_list'] = [];
+    ConfigDict['Geom_Custom'] ['n_custom_sym'] = ncols - 1
+    ConfigDict['Geom_Custom'] ['CustomSyms'] = []
 
     for (var icol=1; icol < ncols; icol++) {
 
-        ConfigDict['Solver_Loop'] ['gradtol_list']       . push( parseFloat(table.rows[1].cells[icol].children[0].value   ));
-        ConfigDict['Solver_Loop'] ['maxiter_list']       . push( parseInt(  table.rows[2].cells[icol].children[0].value,10));
-        ConfigDict['Solver_Loop'] ['inner_maxiter_list'] . push( parseInt(  table.rows[3].cells[icol].children[0].value,10));
-        ConfigDict['Solver_Loop'] ['outer_k_list']       . push( parseInt(  table.rows[4].cells[icol].children[0].value,10));
+        var the_sym = {}
         
-        ConfigDict['Solver_Loop'] ['store_outer_Av_list']. push( table.rows[5].cells[icol].children[0].value == "True");
+        the_sym['LoopTarget']   = parseInt( table.rows[1].cells[icol].children[0].value,10)
+        the_sym['LoopSource']   = parseInt( table.rows[2].cells[icol].children[0].value,10)
+        the_sym['Reflexion']    =           table.rows[3].cells[icol].children[0].value
+        the_sym['RotAngleNum']  = parseInt( table.rows[4].cells[icol].children[0].value,10)
+        the_sym['RotAngleDen']  = parseInt( table.rows[5].cells[icol].children[0].value,10)
+        the_sym['TimeRev']      =           table.rows[6].cells[icol].children[0].value 
+        the_sym['TimeShiftNum'] = parseInt( table.rows[7].cells[icol].children[0].value,10)
+        the_sym['TimeShiftDen'] = parseInt( table.rows[8].cells[icol].children[0].value,10)
+
+        ConfigDict['Geom_Custom'] ['CustomSyms'].push(the_sym)
 
     }
 
-    ConfigDict['Solver_Checks'] = {};
+    ConfigDict['Animation_Colors'] = {}
+    ConfigDict['Animation_Colors'] ["color_method_input"] = document.getElementById("color_method_input").value
 
-    ConfigDict['Solver_Checks'] ['Look_for_duplicates'] = document.getElementById('checkbox_duplicates').checked;
-    ConfigDict['Solver_Checks'] ['duplicate_eps']       = parseFloat(document.getElementById('input_duplicate_eps').value);
-    ConfigDict['Solver_Checks'] ['Check_Escape']        = document.getElementById('checkbox_escape').checked;
+    ConfigDict['Animation_Colors'] ["n_color"] = n_color
+    ConfigDict['Animation_Colors'] ["colorLookup"] = colorLookup
 
-    return ConfigDict;
+    ConfigDict['Animation_Size'] = {}
+    ConfigDict['Animation_Size'] ['checkbox_Mass_Scale']  = document.getElementById('checkbox_Mass_Scale').checked
+    ConfigDict['Animation_Size'] ['input_body_radius']  = document.getElementById('input_body_radius').value
+    ConfigDict['Animation_Size'] ['input_trail_width']  = document.getElementById('input_trail_width').value 
+    ConfigDict['Animation_Size'] ['checkbox_Trail_vanish']  = document.getElementById('checkbox_Trail_vanish').checked
+    ConfigDict['Animation_Size'] ['input_trail_vanish_length']  = document.getElementById('input_trail_vanish_length').value
+
+    ConfigDict['Animation_Framerate'] = {}
+    ConfigDict['Animation_Framerate'] ['checkbox_Limit_FPS']  = document.getElementById('checkbox_Limit_FPS').checked
+    ConfigDict['Animation_Framerate'] ['input_Limit_FPS']  = parseInt(document.getElementById('input_Limit_FPS').value,10)
+
+    ConfigDict['Animation_Search'] = {}
+    ConfigDict['Animation_Search'] ['DisplayLoopsDuringSearch']  = document.getElementById('checkbox_DisplayLoopsDuringSearch').checked
+    ConfigDict['Animation_Search'] ['DisplayBodiesDuringSearch']  = document.getElementById('checkbox_DisplayBodiesDuringSearch').checked
+    ConfigDict['Animation_Search'] ['DisplayLoopOnGalleryLoad']  = document.getElementById('checkbox_DisplayLoopOnGalleryLoad').checked
+
+    ConfigDict['Solver_Discr'] = {}
+    ConfigDict['Solver_Discr'] ['Use_exact_Jacobian']  = document.getElementById('checkbox_exactJ').checked
+    ConfigDict['Solver_Discr'] ['ncoeff_init']         = parseInt(document.getElementById('input_ncoeff_init').value,10)
+    ConfigDict['Solver_Discr'] ['n_reconverge_it_max'] = parseInt(document.getElementById('input_n_reconverge_it_max').value,10)
+
+    ConfigDict['Solver_Optim'] = {}
+
+    ConfigDict['Solver_Optim'] ['krylov_method']  = document.getElementById('krylov_method').value
+    ConfigDict['Solver_Optim'] ['line_search']    = document.getElementById('linesearch_method').value
+    ConfigDict['Solver_Optim'] ['line_search_smin']    = parseFloat(document.getElementById('linesearch_smin').value)
+
+    ConfigDict['Solver_Optim'] ['Newt_err_norm_safe'] = parseFloat(document.getElementById('input_Newt_err_norm_safe').value)
+    ConfigDict['Solver_Optim'] ['Newt_err_norm_max'] = parseFloat(document.getElementById('input_Newt_err_norm_max').value)
+    ConfigDict['Solver_Optim'] ['optim_verbose_lvl'] = document.getElementById('optim_verbose_lvl').value
+
+    ConfigDict['Solver_Loop'] = {}
+
+    table = document.getElementById('table_cvg_loop')
+    var ncols = table.rows[0].cells.length
+
+    ConfigDict['Solver_Loop'] ['n_optim_param'] = ncols - 1
+    ConfigDict['Solver_Loop'] ['gradtol_list'] = []
+    ConfigDict['Solver_Loop'] ['inner_maxiter_list'] = []
+    ConfigDict['Solver_Loop'] ['maxiter_list'] = []
+    ConfigDict['Solver_Loop'] ['outer_k_list'] = []
+    ConfigDict['Solver_Loop'] ['store_outer_Av_list'] = []
+
+    for (var icol=1; icol < ncols; icol++) {
+
+        ConfigDict['Solver_Loop'] ['gradtol_list']       . push( parseFloat(table.rows[1].cells[icol].children[0].value   ))
+        ConfigDict['Solver_Loop'] ['maxiter_list']       . push( parseInt(  table.rows[2].cells[icol].children[0].value,10))
+        ConfigDict['Solver_Loop'] ['inner_maxiter_list'] . push( parseInt(  table.rows[3].cells[icol].children[0].value,10))
+        ConfigDict['Solver_Loop'] ['outer_k_list']       . push( parseInt(  table.rows[4].cells[icol].children[0].value,10))
+        
+        ConfigDict['Solver_Loop'] ['store_outer_Av_list']. push( table.rows[5].cells[icol].children[0].value == "True")
+
+    }
+
+    ConfigDict['Solver_Checks'] = {}
+
+    ConfigDict['Solver_Checks'] ['Look_for_duplicates'] = document.getElementById('checkbox_duplicates').checked
+    ConfigDict['Solver_Checks'] ['duplicate_eps']       = parseFloat(document.getElementById('input_duplicate_eps').value)
+    ConfigDict['Solver_Checks'] ['Check_Escape']        = document.getElementById('checkbox_escape').checked
+
+    ConfigDict['Solver_CLI'] = {}
+
+    ConfigDict['Solver_CLI'] ['Exec_Mul_Proc']          = document.getElementById('CLI_multiproc').checked     
+    ConfigDict['Solver_CLI'] ['nproc']                  = parseInt(document.getElementById('CLI_nproc').value ,10)
+
+    return ConfigDict
 }
 
 function ClickLoadConfigFile(files) {
-    files = [...files];
-    files.forEach(LoadConfigFile);
+    files = [...files]
+    files.forEach(LoadConfigFile)
 }
 
 function DropConfigFile(e) {
-    var dt = e.dataTransfer;
-    var files = dt.files;
-    ClickLoadConfigFile(files);
+    var dt = e.dataTransfer
+    var files = dt.files
+    ClickLoadConfigFile(files)
 }
 
 function PreventDefaultDragOver(event) {
-    event.preventDefault();
+    event.preventDefault()
 }
 
 async function LoadConfigFile(the_file) {
 
-    var txt = await the_file.text();
+    var txt = await the_file.text()
 
-    var ConfigDict = JSON.parse(txt);
+    var ConfigDict = JSON.parse(txt)
 
-    LoadConfigDict(ConfigDict);
+    LoadConfigDict(ConfigDict)
 
 }
 
@@ -819,10 +824,13 @@ function LoadConfigDict(ConfigDict) {
 
     RedistributeClicksTableBodyLoop('table_cvg_loop',1)
 
-    document.getElementById('checkbox_duplicates').checked = ConfigDict['Solver_Checks'] ['Look_for_duplicates'] 
-    document.getElementById('input_duplicate_eps').value   = ConfigDict['Solver_Checks'] ['duplicate_eps']       
-    document.getElementById('checkbox_escape').checked     = ConfigDict['Solver_Checks'] ['Check_Escape']        
+    document.getElementById('checkbox_duplicates').checked  = ConfigDict['Solver_Checks'] ['Look_for_duplicates'] 
+    document.getElementById('input_duplicate_eps').value    = ConfigDict['Solver_Checks'] ['duplicate_eps']       
+    document.getElementById('checkbox_escape').checked      = ConfigDict['Solver_Checks'] ['Check_Escape']        
 
+    document.getElementById('CLI_multiproc').checked        = ConfigDict['Solver_CLI'] ['Exec_Mul_Proc']        
+    document.getElementById('CLI_nproc').value              = ConfigDict['Solver_CLI'] ['nproc']     
+    
 }
 
 function SlideNReconvergeItMax() {
@@ -1615,53 +1623,53 @@ async function IssueCookieMessage(message,keep_up) {
 
 function SaveCookieClick(event) {
 
-    var ConfigDict = GatherConfigDict();
+    var ConfigDict = GatherConfigDict()
 
     var cookie_value = JSON.stringify(ConfigDict,null,0)
-    var cookie_lifetime = 365;
+    var cookie_lifetime = 365
 
-    SaveCookie(cookie_name, cookie_value, cookie_lifetime);
+    SaveCookie(cookie_name, cookie_value, cookie_lifetime)
 
-    IssueCookieMessage("Cookie saved !");
+    IssueCookieMessage("Cookie saved !")
 }
 
 function LoadCookieClick(event) {
 
-    success = DealWithCookie();
+    success = DealWithCookie()
     if (success) {
-        IssueCookieMessage("Cookie loaded !");
+        IssueCookieMessage("Cookie loaded !")
     } else {
-        IssueCookieMessage("Cookie not found !");
+        IssueCookieMessage("Cookie not found !")
     }
 
 }
 
 function SaveCookie(name, value, time_expires_days) {
-    var d = new Date();
-    d.setTime(d.getTime() + (time_expires_days*24*60*60*1000));
-    var expires = "expires="+ d.toUTCString();
-    document.cookie = name + "=" + value + ";" + expires + ";path=/";
+    var d = new Date()
+    d.setTime(d.getTime() + (time_expires_days*24*60*60*1000))
+    var expires = "expires="+ d.toUTCString()
+    document.cookie = name + "=" + value + ";" + expires + ";path=/"
 }
 
 function DealWithCookie() {
 
-    var txt = LoadCookie(cookie_name);
+    var txt = LoadCookie(cookie_name)
 
     if (txt == "") {
     
-        return false;
+        return false
 
     } else {
 
-        checkbox_Cookie.checked = true;
-        Save_Cookie_Btn.disabled = "";
-        Load_Cookie_Btn.disabled = "";    
+        checkbox_Cookie.checked = true
+        Save_Cookie_Btn.disabled = ""
+        Load_Cookie_Btn.disabled = ""
 
-        var ConfigDict = JSON.parse(txt);
+        var ConfigDict = JSON.parse(txt)
 
-        LoadConfigDict(ConfigDict);
+        LoadConfigDict(ConfigDict)
 
-        return true;
+        return true
 
     }
 
