@@ -7,14 +7,17 @@ os.environ['MKL_NUM_THREADS'] = '1'
 
 import concurrent.futures
 import multiprocessing
+import json
 import shutil
 import random
 import time
 import math as m
 import numpy as np
+import scipy.linalg
 import sys
 import fractions
 import scipy.integrate
+import scipy.special
 
 __PROJECT_ROOT__ = os.path.abspath(os.path.join(os.path.dirname(__file__),os.pardir))
 sys.path.append(__PROJECT_ROOT__)
@@ -23,14 +26,14 @@ import choreo
 
 import datetime
 
+One_sec = 1e9
 
 def main():
 
-    input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/mod')
-    # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/10/')
-    # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/copy/')
-    # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/keep/13')
-
+    # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/')
+    input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery/01 - Classic gallery')
+    # input_folder = os.path.join(__PROJECT_ROOT__,'Keep/tests')
+    
 #     ''' Include all files in tree '''
 #     input_names_list = []
 #     for root, dirnames, filenames in os.walk(input_folder):
@@ -39,114 +42,170 @@ def main():
 #             file_path = os.path.join(root, filename)
 #             file_root, file_ext = os.path.splitext(os.path.basename(file_path))
 # 
-#             if (file_ext == '.txt' ):
+#             if (file_ext == '.json' ):
 # 
 #                 file_path = os.path.join(root, file_root)
 #                 the_name = file_path[len(input_folder):]
 #                 input_names_list.append(the_name)
-
-
-    ''' Include all files in folder '''
-    input_names_list = []
-    for file_path in os.listdir(input_folder):
-        file_path = os.path.join(input_folder, file_path)
-        file_root, file_ext = os.path.splitext(os.path.basename(file_path))
-        
-        if (file_ext == '.txt' ):
-            # input_names_list.append(file_root)
-            input_names_list.append(file_root+'_nosym')
-
-    # input_names_list = ['00006']
-    # input_names_list = ['00006_nosym']
-
-    GradActionThresh = 1e-8
-
-    for the_name in input_names_list:
-
-        print('')
-        print(the_name)
-
-        input_filename = os.path.join(input_folder,the_name)
-        input_filename = input_filename + '.npy'
-
-        bare_name = the_name.split('/')[-1]
-
-        all_coeffs = np.load(input_filename)
-
-        theta = 2*np.pi * 0.5
-        SpaceRevscal = 1.
-        SpaceRot = np.array( [[SpaceRevscal*np.cos(theta) , SpaceRevscal*np.sin(theta)] , [-np.sin(theta),np.cos(theta)]])
-        TimeRev = 1.
-        TimeShiftNum = 0
-        TimeShiftDen = 2
-
-        all_coeffs = choreo.Transform_Coeffs(SpaceRot, TimeRev, TimeShiftNum, TimeShiftDen, all_coeffs)
-
-        ncoeff_init = all_coeffs.shape[2]
-
-        the_i = -1
-        the_i_max = 0
-
-        Gradaction_OK = False
-
-        while (not(Gradaction_OK) and (the_i < the_i_max)):
-
-            the_i += 1
-
-
-
-            p = 1
-            # p_list = range(the_i_max)
-            # p_list = [3]
-            # p = p_list[the_i%len(p_list)]
-
-            nc = 3
-
-            mm = 1
-            # mm_list = [1]
-            # mm = mm_list[the_i%len(mm_list)]
-
-            # nbpl=[nc]
-            nbpl=[1 for i in range(nc)]
 # 
-#             SymType = {
-#                 'name'  : 'D',
-#                 'n'     : nc,
-#                 'm'     : mm,
-#                 'l'     : 0,
-#                 'k'     : 1,
-#                 'p'     : p,
-#                 'q'     : nc,
-#             }
-#             Sym_list = choreo.Make2DChoreoSym(SymType,range(nc))
-#             nbody = nc
+# # # 
+#     ''' Include all files in folder '''
+#     input_names_list = []
+#     for file_path in os.listdir(input_folder):
+#         file_path = os.path.join(input_folder, file_path)
+#         file_root, file_ext = os.path.splitext(os.path.basename(file_path))
+#         
+#         if (file_ext == '.json' ):
+#             # 
+#             # if int(file_root) > 8:
+#             #     input_names_list.append(file_root)
+# 
+#             input_names_list.append(file_root)
 
-            Sym_list,nbody = choreo.Make2DChoreoSymManyLoops(nbpl=nbpl,SymName='C')
+    # input_names_list = ['01 - Figure eight']
+    # input_names_list = ['14 - Small mass gap']
+    input_names_list = ['04 - 5 pointed star']
 
-            mass = np.ones((nbody),dtype=np.float64)
 
-            # MomConsImposed = True
-            MomConsImposed = False
+    store_folder = os.path.join(__PROJECT_ROOT__,'Reconverged_sols')
+    # store_folder = input_folder
 
-            n_reconverge_it_max = 0
-            n_grad_change = 1.
+    # Exec_Mul_Proc = True
+    Exec_Mul_Proc = False
 
-            ActionSyst = choreo.setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change,CrashOnIdentity=False)
+    if Exec_Mul_Proc:
 
-            x = ActionSyst.Package_all_coeffs(all_coeffs)
+        # n = 1
+        # n = 4
+        # n = multiprocessing.cpu_count()
+        n = multiprocessing.cpu_count()//2
+        
+        print(f"Executing with {n} workers")
+        
+        with concurrent.futures.ProcessPoolExecutor(max_workers=n) as executor:
+            
+            res = []
+            
+            for the_name in input_names_list:
 
-            Action,Gradaction = ActionSyst.Compute_action(x)
+                all_kwargs = choreo.Pick_Named_Args_From_Dict(ExecName,dict(globals(),**locals()))
+                res.append(executor.submit(ExecName,**all_kwargs))
+                time.sleep(0.01)
 
-            Gradaction_OK = (np.linalg.norm(Gradaction) < GradActionThresh)
+    else:
+            
+        for the_name in input_names_list:
 
-        if not(Gradaction_OK):
-            raise(ValueError('Correct Symmetries not found'))
+            all_kwargs = choreo.Pick_Named_Args_From_Dict(ExecName,dict(globals(),**locals()))
+            ExecName(the_name, input_folder, store_folder)
 
-        n_eig = 10
 
-        HessMat = ActionSyst.Compute_action_hess_LinOpt(x)
-        w ,v = scipy.sparse.linalg.eigsh(HessMat,k=n_eig,which='SA')
-        print(w)
+def ExecName(the_name, input_folder, store_folder):
+
+    print('--------------------------------------------')
+    print('')
+    print(the_name)
+    print('')
+    print('--------------------------------------------')
+    print('')
+
+    file_basename = the_name
+    
+    Info_filename = os.path.join(input_folder,the_name + '.json')
+
+    with open(Info_filename,'r') as jsonFile:
+        Info_dict = json.load(jsonFile)
+
+
+    input_filename = os.path.join(input_folder,the_name + '.npy')
+
+    bare_name = the_name.split('/')[-1]
+
+    all_pos = np.load(input_filename)
+    nint = Info_dict["n_int"]
+    ncoeff_init = Info_dict["n_Fourier"] 
+
+    c_coeffs = choreo.the_rfft(all_pos,axis=2,norm="forward")
+    all_coeffs = np.zeros((Info_dict["nloop"],choreo.ndim,ncoeff_init,2),dtype=np.float64)
+    all_coeffs[:,:,0:ncoeff_init,0] = c_coeffs[:,:,0:ncoeff_init].real
+    all_coeffs[:,:,0:ncoeff_init,1] = c_coeffs[:,:,0:ncoeff_init].imag
+
+
+    # theta = 2*np.pi * 0.
+    # SpaceRevscal = 1.
+    # SpaceRot = np.array( [[SpaceRevscal*np.cos(theta) , SpaceRevscal*np.sin(theta)] , [-np.sin(theta),np.cos(theta)]])
+    # TimeRev = 1.
+    # TimeShiftNum = 0
+    # TimeShiftDen = 1
+
+
+    theta = 2*np.pi * 0/2
+    SpaceRevscal = 1.
+    SpaceRot = np.array( [[SpaceRevscal*np.cos(theta) , SpaceRevscal*np.sin(theta)] , [-np.sin(theta),np.cos(theta)]])
+    TimeRev = 1.
+    TimeShiftNum = 0
+    TimeShiftDen = 2
+
+
+
+    all_coeffs_init = choreo.Transform_Coeffs(SpaceRot, TimeRev, TimeShiftNum, TimeShiftDen, all_coeffs)
+    Transform_Sym = choreo.ChoreoSym(SpaceRot=SpaceRot, TimeRev=TimeRev, TimeShift = fractions.Fraction(numerator=TimeShiftNum,denominator=TimeShiftDen))
+
+    all_coeffs_init = np.copy(all_coeffs)
+
+
+    Transform_Sym = None
+
+
+    nbody = Info_dict['nbody']
+    mass = np.array(Info_dict['mass']).astype(np.float64)
+    Sym_list = choreo.Make_SymList_From_InfoDict(Info_dict,Transform_Sym)
+
+
+    MomConsImposed = True
+    # MomConsImposed = False
+# 
+    rot_angle = 0
+    s = -1
+
+    Sym_list.append(choreo.ChoreoSym(
+        LoopTarget=0,
+        LoopSource=0,
+        SpaceRot = np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64),
+        TimeRev=-1,
+        TimeShift=fractions.Fraction(numerator=0,denominator=1)
+    ))
+
+
+
+    n_reconverge_it_max = 0
+    n_grad_change = 1.
+
+    ActionSyst = choreo.setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change,CrashOnIdentity=False)
+
+    x = ActionSyst.Package_all_coeffs(all_coeffs_init)
+
+    ActionSyst.SavePosFFT(x)
+
+    Action,Gradaction = ActionSyst.Compute_action(x)
+    Newt_err = ActionSyst.Compute_Newton_err(x)
+
+    Newt_err_norm = np.linalg.norm(Newt_err)/(ActionSyst.nint()*ActionSyst.nbody)
+
+    print(f'Saved Newton Error : {Info_dict["Newton_Error"]}')
+    print(f'Init Newton Error : {Newt_err_norm}')
+
+    n_eig = 10
+
+    # which_eigs = 'LM' # Largest (in magnitude) eigenvalues.
+    which_eigs = 'SM' # Smallest (in magnitude) eigenvalues.
+    # which_eigs = 'LA' # Largest (algebraic) eigenvalues.
+    # which_eigs = 'SA' # Smallest (algebraic) eigenvalues.
+    # which_eigs = 'BE' # Half (k/2) from each end of the spectrum.
+
+    HessMat = ActionSyst.Compute_action_hess_LinOpt(x)
+    w ,v = scipy.sparse.linalg.eigsh(HessMat,k=n_eig,which=which_eigs)
+    print(w)
 
 
 if __name__ == "__main__":

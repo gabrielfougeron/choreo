@@ -30,8 +30,9 @@ One_sec = 1e9
 
 def main():
 
-    input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/Keep/')
-    # input_folder = os.path.join(__PROJECT_ROOT__,'Keep/tests')
+    input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery/01 - Classic gallery')
+    # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/Keep/')
+    # input_folder = os.path.join(__PROJECT_ROOT__,'Reconverged_sols')
     
 #     ''' Include all files in tree '''
 #     input_names_list = []
@@ -61,7 +62,9 @@ def main():
 # 
 #             input_names_list.append(file_root)
 
-    input_names_list = ['01 - Figure eight']
+    # input_names_list = ['01 - Figure eight']
+    input_names_list = ['04 - 5 pointed star']
+    # input_names_list = ['14 - Small mass gap']
 
 
     store_folder = os.path.join(__PROJECT_ROOT__,'Reconverged_sols')
@@ -161,16 +164,16 @@ def ExecName(the_name, input_folder, store_folder):
     MomConsImposed = True
     # MomConsImposed = False
 # 
-#     rot_angle = 0
-#     s = -1
-# 
-#     Sym_list.append(choreo.ChoreoSym(
-#         LoopTarget=0,
-#         LoopSource=0,
-#         SpaceRot = np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64),
-#         TimeRev=-1,
-#         TimeShift=fractions.Fraction(numerator=0,denominator=1)
-#     ))
+    rot_angle = 0
+    s = -1
+
+    Sym_list.append(choreo.ChoreoSym(
+        LoopTarget=0,
+        LoopSource=0,
+        SpaceRot = np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64),
+        TimeRev=-1,
+        TimeShift=fractions.Fraction(numerator=0,denominator=1)
+    ))
 
 
     n_reconverge_it_max = 2
@@ -215,16 +218,7 @@ def ExecName(the_name, input_folder, store_folder):
 
     min_n_steps_ode = 1*nint_plot_anim
 
-    try:
-        the_lcm
-    except NameError:
-        period_div = 1.
-    else:
-        period_div = the_lcm
-# 
     nperiod_anim = 1.
-    # nperiod_anim = 3.
-    # nperiod_anim = 1./period_div
 
     Plot_trace_anim = True
     # Plot_trace_anim = False
@@ -260,6 +254,7 @@ def ExecName(the_name, input_folder, store_folder):
     mul_coarse_to_fine = 3
 
     n_grad_change = 1.
+    # n_grad_change = 0.
 
     coeff_ampl_min  = 1e-16
     coeff_ampl_o    = 1e-16
@@ -281,8 +276,8 @@ def ExecName(the_name, input_folder, store_folder):
 
     # krylov_method = 'lgmres'
     # krylov_method = 'gmres'
-    # krylov_method = 'bicgstab'
-    krylov_method = 'cgs'
+    krylov_method = 'bicgstab'
+    # krylov_method = 'cgs'
     # krylov_method = 'minres'
     # krylov_method = 'tfqmr'
 
@@ -314,6 +309,31 @@ def ExecName(the_name, input_folder, store_folder):
 
     all_kwargs = choreo.Pick_Named_Args_From_Dict(choreo.Find_Choreo,dict(**locals()))
     choreo.Find_Choreo(**all_kwargs)
+
+#     filename_output = store_folder+'/'+file_basename
+#     filename = filename_output+'.npy'
+#     all_pos_post_reconverge = np.load(filename)
+# 
+#     print(np.linalg.norm(all_pos_post_reconverge - all_pos))
+# 
+# 
+# 
+#     c_coeffs = choreo.the_rfft(all_pos,axis=2,norm="forward")
+#     all_coeffs = np.zeros((Info_dict["nloop"],choreo.ndim,ncoeff_init,2),dtype=np.float64)
+#     all_coeffs[:,:,0:ncoeff_init,0] = c_coeffs[:,:,0:ncoeff_init].real
+#     all_coeffs[:,:,0:ncoeff_init,1] = c_coeffs[:,:,0:ncoeff_init].imag
+# 
+# 
+
+
+
+
+
+
+
+
+
+
 
 if __name__ == "__main__":
     main()    

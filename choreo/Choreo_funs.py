@@ -242,12 +242,7 @@ class ChoreoAction():
         
         # print("escape_pen = ",escape_pen)
 
-        if self.Do_Pos_FFT:
-            
-            self.last_all_coeffs = self.Unpackage_all_coeffs(x)
-            
-            c_coeffs = self.last_all_coeffs.view(dtype=np.complex128)[...,0]
-            self.last_all_pos = the_irfft(c_coeffs,n=self.nint(),axis=2,norm="forward")
+        self.SavePosFFT(x)
 
         J,GradJ =  Compute_action_Cython(
             self.nloop          ,
@@ -275,18 +270,22 @@ class ChoreoAction():
         GJparam = (self.param_to_coeff_T().dot(GJ)) * escape_pen
         
         return GJparam
-            
-    def Compute_action_hess_mul(self,x,dx):
-        r"""
-        Returns the Hessian of the action (computed wrt the parameters) times a test vector of parameter deviations.
-        """
-    
+
+    def SavePosFFT(self,x):
+
         if self.Do_Pos_FFT:
             
             self.last_all_coeffs = self.Unpackage_all_coeffs(x)
             
             c_coeffs = self.last_all_coeffs.view(dtype=np.complex128)[...,0]
             self.last_all_pos = the_irfft(c_coeffs,n=self.nint(),axis=2,norm="forward")
+        
+    def Compute_action_hess_mul(self,x,dx):
+        r"""
+        Returns the Hessian of the action (computed wrt the parameters) times a test vector of parameter deviations.
+        """
+
+        self.SavePosFFT(x)
 
         HessJdx = Compute_action_hess_mul_Cython(
             self.nloop                      ,
@@ -330,12 +329,7 @@ class ChoreoAction():
         Computes the action and its gradient with respect to the parameters at a given value of the parameters.
         """
     
-        if self.Do_Pos_FFT:
-            
-            self.last_all_coeffs = self.Unpackage_all_coeffs(x)
-            
-            c_coeffs = self.last_all_coeffs.view(dtype=np.complex128)[...,0]
-            self.last_all_pos = the_irfft(c_coeffs,n=self.nint(),axis=2,norm="forward")
+        self.SavePosFFT(x)
 
         J,GradJ =  Compute_action_Cython(
             self.nloop          ,
@@ -480,12 +474,7 @@ class ChoreoAction():
 
         nint = self.nint()
 
-        if self.Do_Pos_FFT:
-            
-            self.last_all_coeffs = self.Unpackage_all_coeffs(x)
-            
-            c_coeffs = self.last_all_coeffs.view(dtype=np.complex128)[...,0]
-            self.last_all_pos = the_irfft(c_coeffs,n=self.nint(),axis=2,norm="forward")
+        self.SavePosFFT(x)
 
         dx = self.last_all_pos.copy()
         dx[:,:,0:(nint-1)] -= self.last_all_pos[:,:,1:nint]
@@ -1220,7 +1209,7 @@ class ChoreoAction():
 
             all_coeffs = self.Unpackage_all_coeffs(x)
 
-            maxloopnb = loopnb.max()
+            maxloopnb = self.loopnb.max()
             
             ncol = len(color_list)
 
