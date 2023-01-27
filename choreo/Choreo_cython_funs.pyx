@@ -358,7 +358,7 @@ def Compute_hash_action_Cython(
     np.ndarray[long  , ndim=2, mode="c"] TimeShiftNumBin  ,
     np.ndarray[long  , ndim=2, mode="c"] TimeShiftDenBin  ,
     np.ndarray[double, ndim=4, mode="c"] all_coeffs  
-    ):
+):
     # Computes the hash of a set of trajectories.
     # The hash is meant to provide a likely unique short identification for duplicate detection.
     # It is hence engineered to be invariant wrt permutation of bodies, time shifts / reversals and space isometries.
@@ -509,7 +509,7 @@ def Compute_MinDist_Cython(
     np.ndarray[long  , ndim=2, mode="c"] TimeShiftNumBin  ,
     np.ndarray[long  , ndim=2, mode="c"] TimeShiftDenBin  ,
     np.ndarray[double, ndim=4, mode="c"]  all_coeffs  
-    ):
+):
     # Computes the minimum inter-body distance along the trajectory.
     # A useful tool for collision detection.
 
@@ -630,7 +630,7 @@ def Compute_Loop_Dist_Cython(
     np.ndarray[long  , ndim=2, mode="c"] TimeShiftNumBin  ,
     np.ndarray[long  , ndim=2, mode="c"] TimeShiftDenBin  ,
     np.ndarray[double, ndim=4, mode="c"]  all_coeffs  
-    ):
+):
         
     cdef long il,ilp,i
     cdef long idim,idimp
@@ -699,7 +699,7 @@ def Compute_Loop_Dist_btw_avg_Cython(
     np.ndarray[long  , ndim=2, mode="c"] TimeShiftNumBin  ,
     np.ndarray[long  , ndim=2, mode="c"] TimeShiftDenBin  ,
     np.ndarray[double, ndim=4, mode="c"]  all_coeffs  
-    ):
+):
 
     cdef long il,ilp,i
     cdef long idim,idimp
@@ -742,7 +742,7 @@ def Compute_Loop_Size_Dist_Cython(
     np.ndarray[long  , ndim=2, mode="c"] TimeShiftNumBin  ,
     np.ndarray[long  , ndim=2, mode="c"] TimeShiftDenBin  ,
     np.ndarray[double, ndim=4, mode="c"]  all_coeffs  
-    ):
+):
 
     cdef long il,ilp,i
     cdef long idim,idimp
@@ -841,7 +841,7 @@ def Compute_action_hess_mul_Cython(
     double[:,:,:,::1] all_coeffs        ,
     np.ndarray[double, ndim=4, mode="c"]  all_coeffs_d  , # required
     double[:,:,::1]   all_pos 
-    ):
+):
     # Computes the matrix vector product H*dx where H is the Hessian of the action.
     # Useful to guide the root finding / optimisation process and to better understand the topography of the action (critical points / Morse theory).
 
@@ -1032,7 +1032,7 @@ def Compute_Newton_err_Cython(
     np.ndarray[long  , ndim=2, mode="c"] TimeShiftNumUn  ,
     np.ndarray[long  , ndim=2, mode="c"] TimeShiftDenUn  ,
     np.ndarray[double, ndim=4, mode="c"] all_coeffs  
-    ):
+):
     # Computes the "Newton error", i.e. the deviation wrt to the fundamental theorem of Newtonian dynamics m_i * a_i - \sum_j f_ij = 0
     # If the Newton error is zero, then the trajectory is physical.
     # Under some symmetry hypotheses, this is the Fourier transform of the gradient of the action.
@@ -1177,7 +1177,7 @@ def Assemble_Cstr_Matrix(
     np.ndarray[long  , ndim=2, mode="c"] TimeRevsCstr  ,
     np.ndarray[long  , ndim=2, mode="c"] TimeShiftNumCstr  ,
     np.ndarray[long  , ndim=2, mode="c"] TimeShiftDenCstr 
-    ):
+):
     # Assembles the matrix of constraints used to select constraint satisfying parameters
 
     # cdef double eps_zero = 1e-14
@@ -1609,7 +1609,7 @@ def diag_changevar(
     int [::1] idxarray ,
     double [::1] data ,
     double [::1] MassSum  ,
-    ):
+):
     
     cdef long idx, res, ift, k , il, idim
     cdef double kfac,kd
@@ -1642,7 +1642,7 @@ def Compute_square_dist(
     np.ndarray[double, ndim=1, mode="c"] x  ,
     np.ndarray[double, ndim=1, mode="c"] y  ,
     long s
-    ):
+):
         
     cdef double diff
     cdef double res = 0.
@@ -1660,7 +1660,7 @@ def Compute_Forces_Cython(
     np.ndarray[double, ndim=2, mode="c"] x ,
     np.ndarray[double, ndim=1, mode="c"] mass ,
     long nbody,
-    ):
+):
     # Does not actually computes the forces on every body, but rather the force divided by the mass.
 
     cdef long ib, ibp
@@ -1701,7 +1701,7 @@ def Compute_JacMat_Forces_Cython(
     np.ndarray[double, ndim=2, mode="c"] x ,
     np.ndarray[double, ndim=1, mode="c"] mass ,
     long nbody,
-    ):
+):
     # Does not actually computes the forces on every body, but rather the force divided by the mass.
 
     cdef long ib, ibp
@@ -1761,7 +1761,7 @@ def Compute_JacMul_Forces_Cython(
     np.ndarray[double, ndim=2, mode="c"] x_d ,
     np.ndarray[double, ndim=1, mode="c"] mass ,
     long nbody,
-    ):
+):
     # Does not actually computes the forces on every body, but rather the force divided by the mass.
 
     cdef long ib, ibp
@@ -1814,7 +1814,7 @@ def Transform_Coeffs_Single_Loop(
         double TimeShiftDen,
         double[:,:,::1] one_loop_coeffs,
         long ncoeff
-    ):
+):
     # Transforms coeffs defining a single loop and returns updated coeffs
     
     cdef long  k,i,j
@@ -1898,3 +1898,180 @@ def ComputeSpeedCoeffs(
 
     return one_loop_coeffs_speed_np
 
+def Compute_action_hess_mul_Cython_nosym(
+    long nbody                          ,
+    long ncoeff                         ,
+    long nint                           ,
+    double[::1]       mass              ,
+    double[:,:,:,::1] all_coeffs        ,
+    np.ndarray[double, ndim=4, mode="c"]  all_coeffs_d  , # required
+    double[:,:,::1]   all_pos 
+):
+
+    cdef Py_ssize_t il,ilp,i
+    cdef Py_ssize_t idim,jdim
+    cdef Py_ssize_t ibi
+    cdef Py_ssize_t ib,ibp
+    cdef Py_ssize_t iint
+    cdef Py_ssize_t k
+    cdef long k2
+    cdef long ddiv,rem
+    cdef double pot,potp,potpp
+    cdef double prod_mass,a,b,c,dx2,prod_fac,dxtddx
+    cdef double[::1] dx  = np.zeros((cndim),dtype=np.float64)
+    cdef double[::1] ddx = np.zeros((cndim),dtype=np.float64)
+
+
+    c_coeffs_d = all_coeffs_d.view(dtype=np.complex128)[...,0]
+    cdef double[:,:,::1]  all_pos_d = the_irfft(c_coeffs_d,n=nint,axis=2,norm="forward")
+
+    cdef double[:,:,::1] hess_pot_all_d = np.zeros((nbody,cndim,nint),dtype=np.float64) # size ????
+
+    for iint in range(nint):
+
+        for ib in range(nbody):
+            for ibp in range(ib+1,nbody):
+
+                prod_mass = mass[ib]*mass[ibp]
+
+                for idim in range(cndim):
+                    dx[idim] = all_pos[ib,idim,iint] - all_pos[ibp,idim,iint] 
+                    ddx[idim] = all_pos_d[ib,idim,iint] - all_pos_d[ibp,idim,iint] 
+
+                dx2 = dx[0]*dx[0]
+                dxtddx = dx[0]*ddx[0]
+                for idim in range(1,cndim):
+                    dx2 += dx[idim]*dx[idim]
+                    dxtddx += dx[idim]*ddx[idim]
+
+                pot,potp,potpp = CCpt_interbody_pot(dx2)
+
+                a = (2*prod_mass*potp)
+                b = (4*prod_mass*potpp*dxtddx)
+
+                for idim in range(cndim):
+                    c = b*dx[idim]+a*ddx[idim]
+
+                    hess_pot_all_d[ib ,idim,iint] += c
+                    hess_pot_all_d[ibp,idim,iint] -= c
+                
+
+    cdef double complex[:,:,::1]  hess_dx_pot_fft = the_rfft(hess_pot_all_d,norm="forward")
+
+    cdef np.ndarray[double, ndim=4, mode="c"] Action_hess_dx_np = np.empty((nbody,cndim,ncoeff,2),np.float64)
+    cdef double[:,:,:,::1] Action_hess_dx = Action_hess_dx_np
+
+    for ib in range(nbody):
+        
+        prod_fac = mass[ib]*cfourpisq
+        
+        for idim in range(cndim):
+            
+            Action_hess_dx[ib,idim,0,0] = -hess_dx_pot_fft[ib,idim,0].real
+            Action_hess_dx[ib,idim,0,1] = 0 
+
+            for k in range(1,ncoeff):
+                
+                k2 = k*k
+                a = 2*prod_fac*k2
+                
+                Action_hess_dx[ib,idim,k,0] = a*all_coeffs_d[ib,idim,k,0] - 2*hess_dx_pot_fft[ib,idim,k].real
+                Action_hess_dx[ib,idim,k,1] = a*all_coeffs_d[ib,idim,k,1] - 2*hess_dx_pot_fft[ib,idim,k].imag
+
+
+    return Action_hess_dx_np
+    
+
+def Compute_action_hess_mul_Tan_Cython_nosym(
+    long nbody                          ,
+    long ncoeff                         ,
+    long nint                           ,
+    double[::1]       mass              ,
+    double[:,:,:,::1] all_coeffs        ,
+    np.ndarray[double, ndim=6, mode="c"]  all_coeffs_d  , # required
+    double[:,:,::1]   all_pos 
+):
+
+    cdef Py_ssize_t il,ilp,i
+    cdef Py_ssize_t idim,jdim
+    cdef Py_ssize_t ibi
+    cdef Py_ssize_t ib,ibp,ibq
+    cdef Py_ssize_t iint
+    cdef Py_ssize_t k
+    cdef long k2
+    cdef long ddiv,rem
+    cdef double pot,potp,potpp
+    cdef double prod_mass,a,b,c,dx2,prod_fac,dxtddx
+    cdef double[::1] dx  = np.zeros((cndim),dtype=np.float64)
+    cdef double[::1] ddx = np.zeros((cndim),dtype=np.float64)
+
+    c_coeffs_d = all_coeffs_d.view(dtype=np.complex128)[...,0]
+    cdef double[:,:,:,:,::1]  all_pos_d = the_irfft(c_coeffs_d,n=nint,axis=4,norm="forward")
+
+    cdef double[:,:,:,:,::1] hess_pot_all_d = np.zeros((nbody,cndim,nbody,cndim,nint),dtype=np.float64) # size ????
+
+    for iint in range(nint):
+
+        for ib in range(nbody):
+            for ibp in range(ib+1,nbody):
+
+                prod_mass = mass[ib]*mass[ibp]
+
+                for idim in range(cndim):
+                    dx[idim] = all_pos[ib,idim,iint] - all_pos[ibp,idim,iint] 
+
+                dx2 = dx[0]*dx[0]
+                dxtddx = dx[0]*ddx[0]
+                for idim in range(1,cndim):
+                    dx2 += dx[idim]*dx[idim]
+                    dxtddx += dx[idim]*ddx[idim]
+
+                pot,potp,potpp = CCpt_interbody_pot(dx2)
+
+                a = (2*prod_mass*potp)
+                b = (4*prod_mass*potpp)
+
+                for ibq in range(nbody):
+                    for jdim in range(nbody):
+
+                        for idim in range(cndim):
+                            ddx[idim] = all_pos_d[ib,idim,ibq,jdim,iint] - all_pos_d[ibp,idim,ibq,jdim,iint] 
+
+                        dxtddx = dx[0]*ddx[0]
+                        for idim in range(1,cndim):
+                            dxtddx += dx[idim]*ddx[idim]
+
+                        for idim in range(cndim):
+
+                            c = b*dxtddx*dx[idim]+a*ddx[idim]
+
+                            hess_pot_all_d[ib ,idim,ibq,jdim,iint] += c
+                            hess_pot_all_d[ibp,idim,ibq,jdim,iint] -= c
+
+    cdef double complex[:,:,:,:,::1]  hess_dx_pot_fft = the_rfft(hess_pot_all_d,norm="forward")
+
+    cdef np.ndarray[double, ndim=6, mode="c"] Action_hess_dx_np = np.empty((nbody,cndim,nbody,cndim,ncoeff,2),np.float64)
+    cdef double[:,:,:,:,:,::1] Action_hess_dx = Action_hess_dx_np
+
+    for ib in range(nbody):
+        
+        prod_fac = mass[ib]*cfourpisq
+        
+        for idim in range(cndim):
+
+            for ibq in range(nbody):
+                for jdim in range(nbody):
+
+                    Action_hess_dx[ib,idim,ibq,jdim,0,0] = -hess_dx_pot_fft[ib,idim,ibq,jdim,0].real
+                    Action_hess_dx[ib,idim,ibq,jdim,0,1] = 0 
+
+                    for k in range(1,ncoeff):
+                        
+                        k2 = k*k
+                        a = 2*prod_fac*k2
+                        
+                        Action_hess_dx[ib,idim,ibq,jdim,k,0] = a*all_coeffs_d[ib,idim,ibq,jdim,k,0] - 2*hess_dx_pot_fft[ib,idim,ibq,jdim,k].real
+                        Action_hess_dx[ib,idim,ibq,jdim,k,1] = a*all_coeffs_d[ib,idim,ibq,jdim,k,1] - 2*hess_dx_pot_fft[ib,idim,ibq,jdim,k].imag
+
+
+    return Action_hess_dx_np

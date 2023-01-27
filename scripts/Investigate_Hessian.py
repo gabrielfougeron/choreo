@@ -164,7 +164,7 @@ def ExecName(the_name, input_folder, store_folder):
 
     MomConsImposed = True
     # MomConsImposed = False
-# 
+
     rot_angle = 0
     s = -1
 

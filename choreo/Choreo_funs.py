@@ -1969,7 +1969,6 @@ def Compute_bar(all_coeffs,nloop,mass,loopnb,Targets,SpaceRotsUn):
             tot_mass += mass[ibody]
             xbar += mass[ibody] * np.dot(SpaceRotsUn[il,ib,:,:],all_coeffs[il,:,0,0] )
 
-            
     xbar /= tot_mass
 
     return xbar
