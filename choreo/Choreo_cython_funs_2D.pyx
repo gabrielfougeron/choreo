@@ -574,15 +574,6 @@ cdef void Compute_action_hess_mul_Cython_time_loop_2D(
             for ibi in range(loopnbi[il]):
                 all_shiftsBin[il,ibi] = ((((all_shiftsBin[il,ibi]+TimeRevsBin[il,ibi]) % nint) + nint) % nint)
 
-
-
-
-
-
-
-
-
-
 @cython.cdivision(True)
 def RotateFastWithSlow_2D(
     double[:,::1] all_pos_slow,
