@@ -2025,12 +2025,12 @@ def Images_to_video(input_folder,output_filename,ReverseEnd=False,img_file_ext='
     frames_filename = 'frames.txt'
     
     f = open(frames_filename,"w")
-    for img_name in img_list:
+    for img_name in png_files:
         f.write('file \''+os.path.abspath(img_name)+'\'\n')
         f.write('duration 0.0333333 \n')
     
     if ReverseEnd:
-        for img_name in reversed(img_list):
+        for img_name in reversed(png_files):
             f.write('file \''+os.path.abspath(img_name)+'\'\n')
             f.write('duration 0.0333333 \n')
         
@@ -2234,7 +2234,9 @@ def Param_to_Param_rev(Gx,ActionSyst_source,ActionSyst_target):
         Gz[:,:,0:ncoeffs_source,:] = all_coeffs
         Gz = Gz.reshape(-1)
     
-    
     res = ActionSyst_target.param_to_coeff_T().dot(Gz)
     
     return res
+
+def TangentLagrangeResidual():
+    pass
