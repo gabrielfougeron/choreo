@@ -1133,7 +1133,7 @@ function ClickAddBodyLoop() {
     div.style.fontWeight ="bold"
     div.innerHTML = "-"
 
-    newcell.appendChild(div);
+    newcell.appendChild(div)
 
     for (ival = 0; ival < n_fields; ival++) {
         irow = ival + 1
@@ -1159,109 +1159,109 @@ function ClickAddBodyLoop() {
 }
 
 function ClickAddCustomSym() {
-    var table = document.getElementById('table_custom_sym');
-    var newcell;
-    var div,input;
-    var irow, ival, jcol;
-    var icol = table.rows[0].cells.length;
+    var table = document.getElementById('table_custom_sym')
+    var newcell
+    var div,input
+    var irow, ival, jcol
+    var icol = table.rows[0].cells.length
 
     var input_dict = [
         {
-        "elem_class":"input", 
-        "type":"number", 
-        "value":"1",
-        "min":"0",
+            "elem_class":"input", 
+            "type":"number", 
+            "value":"1",
+            "min":"0",
         },
         {
-        "elem_class":"input", 
-        "type":"number", 
-        "value":"0",
-        "min":"0",
+            "elem_class":"input", 
+            "type":"number", 
+            "value":"0",
+            "min":"0",
         },
         {
-        "elem_class":"select", 
-        "class":"w3-select",  
-        "innerHTML":"<option value='True'>True</option><option value='False' selected>False</option>",
+            "elem_class":"select", 
+            "class":"w3-select",  
+            "innerHTML":"<option value='True'>True</option><option value='False' selected>False</option>",
         },
         {
-        "elem_class":"input", 
-        "type":"number", 
-        "value":"1",
+            "elem_class":"input", 
+            "type":"number", 
+            "value":"1",
         },
         {
-        "elem_class":"input", 
-        "type":"number", 
-        "value":"1",
+            "elem_class":"input", 
+            "type":"number", 
+            "value":"1",
         },
         {
-        "elem_class":"select", 
-        "class":"w3-select",  
-        "innerHTML":"<option value='True'>True</option><option value='False' selected>False</option>",
+            "elem_class":"select", 
+            "class":"w3-select",  
+            "innerHTML":"<option value='True'>True</option><option value='False' selected>False</option>",
         },
         {
-        "elem_class":"input", 
-        "type":"number", 
-        "value":"1",
+            "elem_class":"input", 
+            "type":"number", 
+            "value":"1",
         },
         {
-        "elem_class":"input", 
-        "type":"number", 
-        "value":"1",
+            "elem_class":"input", 
+            "type":"number", 
+            "value":"1",
         }
-    ];
+    ]
 
-    n_fields = input_dict.length;
+    n_fields = input_dict.length
 
-    irow = 0;
-    newcell = table.rows[irow].insertCell(icol);
-    newcell.style.borderLeftStyle = 'hidden';
-    newcell.style.fontSize = '16px';
-    newcell.style.width = '65px';
-    newcell.style.textAlign = 'center';
+    irow = 0
+    newcell = table.rows[irow].insertCell(icol)
+    newcell.style.borderLeftStyle = 'hidden'
+    newcell.style.fontSize = '16px'
+    newcell.style.width = '65px'
+    newcell.style.textAlign = 'center'
 
-    div = document.createElement('button'); 
-    div.classList.add("w3-button");
-    div.classList.add("w3-light-grey");
-    div.classList.add("w3-hover-pale-red");
-    div.style.textAlign = "center";
-    div.style.fontSize ="16px";
-    div.style.fontWeight ="bold";
-    div.innerHTML = "-";
+    div = document.createElement('button')
+    div.classList.add("w3-button")
+    div.classList.add("w3-light-grey")
+    div.classList.add("w3-hover-pale-red")
+    div.style.textAlign = "center"
+    div.style.fontSize ="16px"
+    div.style.fontWeight ="bold"
+    div.innerHTML = "-"
 
-    newcell.appendChild(div);
+    newcell.appendChild(div)
 
     for (ival = 0; ival < n_fields; ival++) {
-        irow = ival + 1;
-        newcell = table.rows[irow].insertCell(icol);
-        newcell.style.width = '65px';
-        newcell.style.textAlign = 'center';   
-        input = document.createElement(input_dict[ival]["elem_class"]);
+        irow = ival + 1
+        newcell = table.rows[irow].insertCell(icol)
+        newcell.style.width = '65px'
+        newcell.style.textAlign = 'center'
+        input = document.createElement(input_dict[ival]["elem_class"])
         for (var [key, val] of Object.entries(input_dict[ival])){
         if (key != "elem_class"){
-            input[key] = val;
+            input[key] = val
         }
         input.style = "width: 53px; text-align: center;"
         }
-        newcell.appendChild(input);
+        newcell.appendChild(input)
     }
 
-    RedistributeClicksTableBodyLoop('table_custom_sym',0);
+    RedistributeClicksTableBodyLoop('table_custom_sym',0)
 
 }
 
-var ncol_per_row_colortable = 4;
+var ncol_per_row_colortable = 4
 
 function ClickRemoveColor() {
 
     if (n_color > 1) {
 
-        var displayCanvas = document.getElementById("displayCanvas");
+        var displayCanvas = document.getElementById("displayCanvas")
 
-        RemoveColor();
-        ExportColors();
+        RemoveColor()
+        ExportColors()
 
-        var send_event = new Event('ChangeColorsFromOutsideCanvas');
-        displayCanvas.dispatchEvent(send_event);
+        var send_event = new Event('ChangeColorsFromOutsideCanvas')
+        displayCanvas.dispatchEvent(send_event)
 
     }
 
@@ -1288,54 +1288,55 @@ function RemoveColor() {
   
 function ClickAddColor() {
 
-    var displayCanvas = document.getElementById("displayCanvas");
+    var displayCanvas = document.getElementById("displayCanvas")
 
-    AddColor();
-    ExportColors();
+    AddColor()
+    ExportColors()
 
-    var send_event = new Event('ChangeColorsFromOutsideCanvas');
-    displayCanvas.dispatchEvent(send_event);
+    var send_event = new Event('ChangeColorsFromOutsideCanvas')
+    displayCanvas.dispatchEvent(send_event)
 }
 
 function AddColor(the_color) {
-    var table = document.getElementById('table_pick_color');
-    var newcell;
-    var div,input;
-    var ival;
-    var color;
+    var table = document.getElementById('table_pick_color')
+    var newcell
+    var div,input
+    var ival
+    var color
 
-    var nrow_cur = table.rows.length;
+    var nrow_cur = table.rows.length
 
-    n_color += 1;
+    n_color += 1
 
-    var icol = ((n_color -1) % ncol_per_row_colortable) ;
-    var irow = Math.floor((n_color-1) / ncol_per_row_colortable) +1;
+    var icol = ((n_color -1) % ncol_per_row_colortable) 
+    var irow = Math.floor((n_color-1) / ncol_per_row_colortable) +1
 
     if (irow >= nrow_cur) {
-        table.insertRow();
-        table.rows[irow].style.borderStyle = 'hidden';
+        table.insertRow()
+        table.rows[irow].style.borderStyle = 'hidden'
     }
 
-    newcell = table.rows[irow].insertCell(icol);
-    newcell.style.borderStyle = 'hidden';
-    newcell.style.fontSize = '16px';
-    newcell.style.width = '65px';
-    newcell.style.textAlign = 'center';
+    newcell = table.rows[irow].insertCell(icol)
+    newcell.style.borderStyle = 'hidden'
+    newcell.style.fontSize = '16px'
+    newcell.style.width = '65px'
+    newcell.style.textAlign = 'center'
 
     /* Color number text */
-    div = document.createElement('div'); 
-    div.style.fontSize ="16px";
-    div.style.display ="inline-block";
-    div.style.width ="35px";
-    div.innerHTML = (n_color -1).toString()+": ";
-    newcell.appendChild(div);
+    div = document.createElement('div')
+    div.style.fontSize ="16px"
+    div.style.display ="inline-block"
+    div.style.width ="35px"
+    div.innerHTML = (n_color -1).toString()+": "
+    newcell.appendChild(div)
 
     /* Color input  */
-    div = document.createElement('input'); 
-    div.type = "color";
-    div.style.display ="inline-block";
-    div.style.width ="80px";
-    div.classList.add("particle_color_picker");
+    div = document.createElement('input')
+    div.type = "color"
+    div.style.display ="inline-block"
+    div.style.width ="80px"
+    div.classList.add("particle_color_picker")
+    div.addEventListener("change", onChangeColor)
 
     if (the_color !== undefined) {
 
@@ -1346,15 +1347,23 @@ function AddColor(the_color) {
         if (n_color <= colorLookup_init.length) {
             color = colorLookup_init[n_color-1]
         } else {
-            color = defaultParticleColor;
+            color = defaultParticleColor
         }
     
     }
 
-    div.value = color;
-    div.targetid = n_color-1;
-    div.addEventListener("input", ChangeColor_Handler, true);
-    newcell.appendChild(div);
+    div.value = color
+    div.targetid = n_color-1
+    div.addEventListener("input", ChangeColor_Handler, true)
+    newcell.appendChild(div)
+
+}
+
+function onChangeColor(){
+    
+    ExportColors()
+    var send_event = new Event('ChangeColorsFromOutsideCanvas')
+    displayCanvas.dispatchEvent(send_event)
 
 }
 
