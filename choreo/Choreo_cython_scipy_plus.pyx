@@ -30,7 +30,7 @@ def ExplicitSymplecticWithTable_VX_cython(
     np.ndarray[double, ndim=1, mode="c"] c_table,
     np.ndarray[double, ndim=1, mode="c"] d_table,
     long nsteps
-    ):
+):
     r"""
     
     This function computes an approximate solution to the :ref:`partitioned Hamiltonian system<ode_PHS>` using an explicit Runge-Kutta method.
@@ -92,7 +92,7 @@ def ExplicitSymplecticWithTable_XV_cython(
     np.ndarray[double, ndim=1, mode="c"] c_table,
     np.ndarray[double, ndim=1, mode="c"] d_table,
     long nsteps
-    ):
+):
 
     cdef double tx = t_span[0]
     cdef double tv = t_span[0]
@@ -137,7 +137,7 @@ def SymplecticStormerVerlet_XV_cython(
     np.ndarray[double, ndim=1, mode="c"] x0,
     np.ndarray[double, ndim=1, mode="c"] v0,
     long nint,
-    ):
+):
 
     cdef double t = t_span[0]
     cdef double dt = (t_span[1] - t_span[0]) / nint
@@ -186,7 +186,7 @@ def SymplecticStormerVerlet_VX_cython(
     np.ndarray[double, ndim=1, mode="c"] x0,
     np.ndarray[double, ndim=1, mode="c"] v0,
     long nint,
-    ):
+):
 
     cdef double t = t_span[0]
     cdef double dt = (t_span[1] - t_span[0]) / nint
