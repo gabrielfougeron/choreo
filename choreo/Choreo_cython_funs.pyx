@@ -1983,13 +1983,14 @@ def Compute_action_hess_mul_Cython_nosym(
     
 
 def Compute_action_hess_mul_Tan_Cython_nosym(
-    long nbody                          ,
-    long ncoeff                         ,
-    long nint                           ,
-    double[::1]       mass              ,
-    double[:,:,:,::1] all_coeffs        ,
+    long nbody                              ,
+    long ncoeff                             ,
+    long nint                               ,
+    double[::1]       mass                  ,
+    double[:,:,:,::1] all_coeffs            ,
     np.ndarray[double, ndim=6, mode="c"]  all_coeffs_d  , # required
-    double[:,:,::1]   all_pos 
+    double[:,:,::1]   all_pos               ,
+    double[:,:,:,:,::1]   LagrangeMulInit   ,
 ):
 
     cdef Py_ssize_t il,ilp,i
@@ -2005,10 +2006,13 @@ def Compute_action_hess_mul_Tan_Cython_nosym(
     cdef double[::1] dx  = np.zeros((cndim),dtype=np.float64)
     cdef double[::1] ddx = np.zeros((cndim),dtype=np.float64)
 
-    c_coeffs_d = all_coeffs_d.view(dtype=np.complex128)[...,0]
+    cdef double complex cmplxprodfac 
+
+    cdef np.ndarray[double complex, ndim=5, mode="c"] c_coeffs_d = all_coeffs_d.view(dtype=np.complex128)[...,0]
     cdef double[:,:,:,:,::1]  all_pos_d = the_irfft(c_coeffs_d,n=nint,axis=4,norm="forward")
 
-    cdef double[:,:,:,:,::1] hess_pot_all_d = np.zeros((nbody,cndim,nbody,cndim,nint),dtype=np.float64) # size ????
+    cdef double[:,:,:,:,::1] hess_pot_all_d = np.zeros((nbody,cndim,nbody,cndim,nint),dtype=np.float64)
+    cdef double[:,:,:,:,::1] hess_vel_all_d = np.zeros((nbody,cndim,nbody,cndim,nint),dtype=np.float64)
 
     for iint in range(nint):
 
@@ -2048,6 +2052,54 @@ def Compute_action_hess_mul_Tan_Cython_nosym(
                             hess_pot_all_d[ib ,idim,ibq,jdim,iint] += c
                             hess_pot_all_d[ibp,idim,ibq,jdim,iint] -= c
 
+
+
+
+
+
+
+
+
+
+    # Initial condition
+
+    for ib in range(nbody):
+        for idim in range(cndim):
+            for ibp in range(nbody):
+                for jdim in range(cndim):
+
+                    for k in range(ncoeff):
+                        
+                        c_coeffs_d[ib,idim,ibp,jdim,k] = c_coeffs_d[ib,idim,ibp,jdim,k] * (1j * (ctwopi * k))
+
+    cdef double[:,:,:,:,::1]  all_vel_d = the_irfft(c_coeffs_d,n=nint,axis=4,norm="forward")
+
+    for ib in range(nbody):
+        for idim in range(cndim):
+            for ibq in range(nbody):
+                for jdim in range(cndim):
+
+
+                    hess_pot_all_d[ib,idim,ibq,jdim,0] += LagrangeMulInit[0,ib,idim,0,ibq,jdim]
+                    hess_pot_all_d[ib,idim,ibq,jdim,0] += LagrangeMulInit[0,ib,idim,1,ibq,jdim]
+
+                    hess_vel_all_d[ib,idim,ibq,jdim,0] += LagrangeMulInit[1,ib,idim,0,ibq,jdim]
+                    hess_vel_all_d[ib,idim,ibq,jdim,0] += LagrangeMulInit[1,ib,idim,1,ibq,jdim]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     cdef double complex[:,:,:,:,::1]  hess_dx_pot_fft = the_rfft(hess_pot_all_d,norm="forward")
 
     cdef np.ndarray[double, ndim=6, mode="c"] Action_hess_dx_np = np.empty((nbody,cndim,nbody,cndim,ncoeff,2),np.float64)
@@ -2062,7 +2114,7 @@ def Compute_action_hess_mul_Tan_Cython_nosym(
             for ibq in range(nbody):
                 for jdim in range(nbody):
 
-                    Action_hess_dx[ib,idim,ibq,jdim,0,0] = -hess_dx_pot_fft[ib,idim,ibq,jdim,0].real
+                    Action_hess_dx[ib,idim,ibq,jdim,0,0] = hess_dx_pot_fft[ib,idim,ibq,jdim,0].real
                     Action_hess_dx[ib,idim,ibq,jdim,0,1] = 0 
 
                     for k in range(1,ncoeff):
@@ -2070,8 +2122,16 @@ def Compute_action_hess_mul_Tan_Cython_nosym(
                         k2 = k*k
                         a = 2*prod_fac*k2
                         
-                        Action_hess_dx[ib,idim,ibq,jdim,k,0] = a*all_coeffs_d[ib,idim,ibq,jdim,k,0] - 2*hess_dx_pot_fft[ib,idim,ibq,jdim,k].real
-                        Action_hess_dx[ib,idim,ibq,jdim,k,1] = a*all_coeffs_d[ib,idim,ibq,jdim,k,1] - 2*hess_dx_pot_fft[ib,idim,ibq,jdim,k].imag
+                        Action_hess_dx[ib,idim,ibq,jdim,k,0] = a*all_coeffs_d[ib,idim,ibq,jdim,k,0] + 2*hess_dx_pot_fft[ib,idim,ibq,jdim,k].real
+                        Action_hess_dx[ib,idim,ibq,jdim,k,1] = a*all_coeffs_d[ib,idim,ibq,jdim,k,1] + 2*hess_dx_pot_fft[ib,idim,ibq,jdim,k].imag
+
+
+
+
+
+
+
+
 
 
     return Action_hess_dx_np
