@@ -636,6 +636,9 @@ function GatherConfigDict() {
     ConfigDict['Solver_CLI'] ['Exec_Mul_Proc']          = document.getElementById('CLI_multiproc').checked     
     ConfigDict['Solver_CLI'] ['nproc']                  = parseInt(document.getElementById('CLI_nproc').value ,10)
 
+    ConfigDict['Solver_CLI'] ['SaveImage']    = document.getElementById('CLI_SaveImage').checked   
+    ConfigDict['Solver_CLI'] ['SaveVideo']    = document.getElementById('CLI_SaveVideo').checked   
+
     return ConfigDict
 }
 
@@ -830,6 +833,9 @@ function LoadConfigDict(ConfigDict) {
 
     document.getElementById('CLI_multiproc').checked        = ConfigDict['Solver_CLI'] ['Exec_Mul_Proc']        
     document.getElementById('CLI_nproc').value              = ConfigDict['Solver_CLI'] ['nproc']     
+
+    document.getElementById('CLI_SaveImage').checked        = ConfigDict['Solver_CLI'] ['SaveImage']    
+    document.getElementById('CLI_SaveVideo').checked        = ConfigDict['Solver_CLI'] ['SaveVideo']    
     
 }
 
