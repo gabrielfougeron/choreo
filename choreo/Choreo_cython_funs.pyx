@@ -2050,7 +2050,7 @@ def Compute_action_hess_mul_Tan_Cython_nosym(
                 b = (4*prod_mass*potpp)
 
                 for ibq in range(nbody):
-                    for jdim in range(nbody):
+                    for jdim in range(cndim):
 
                         for idim in range(cndim):
                             ddx[idim] = all_pos_d[ib,idim,ibq,jdim,iint] - all_pos_d[ibp,idim,ibq,jdim,iint] 
@@ -2070,16 +2070,19 @@ def Compute_action_hess_mul_Tan_Cython_nosym(
 
     # Initial condition
 
+    # ~ cdef double dirac_mul = 1.
+    cdef double dirac_mul = nint
+
     for ib in range(nbody):
         for idim in range(cndim):
             for ibq in range(nbody):
                 for jdim in range(cndim):
 
-                    hess_pot_all_d[ib,idim,ibq,jdim,0] += LagrangeMulInit[0,ib,idim,0,ibq,jdim]*nint
-                    hess_pot_all_d[ib,idim,ibq,jdim,0] += LagrangeMulInit[0,ib,idim,1,ibq,jdim]*nint
+                    hess_pot_all_d[ib,idim,ibq,jdim,0] += LagrangeMulInit[0,ib,idim,0,ibq,jdim] * dirac_mul
+                    hess_pot_all_d[ib,idim,ibq,jdim,0] += LagrangeMulInit[0,ib,idim,1,ibq,jdim] * dirac_mul
 
-                    hess_vel_all_d[ib,idim,ibq,jdim,0] += LagrangeMulInit[1,ib,idim,0,ibq,jdim]*nint
-                    hess_vel_all_d[ib,idim,ibq,jdim,0] += LagrangeMulInit[1,ib,idim,1,ibq,jdim]*nint
+                    hess_vel_all_d[ib,idim,ibq,jdim,0] += LagrangeMulInit[1,ib,idim,0,ibq,jdim] * dirac_mul
+                    hess_vel_all_d[ib,idim,ibq,jdim,0] += LagrangeMulInit[1,ib,idim,1,ibq,jdim] * dirac_mul
 
 
 
@@ -2092,19 +2095,19 @@ def Compute_action_hess_mul_Tan_Cython_nosym(
             for ibq in range(nbody):
                 for jdim in range(cndim):
 
-                    LagrangeMulInit_der[0,ib,idim,0,ibq,jdim] = nint * all_pos_d[ib,idim,ibq,jdim,0]
-                    LagrangeMulInit_der[0,ib,idim,1,ibq,jdim] = nint * all_pos_d[ib,idim,ibq,jdim,0]
+                    LagrangeMulInit_der[0,ib,idim,0,ibq,jdim] = all_pos_d[ib,idim,ibq,jdim,0] * dirac_mul
+                    # ~ LagrangeMulInit_der[0,ib,idim,1,ibq,jdim] = all_pos_d[ib,idim,ibq,jdim,0] * dirac_mul
 
-                    LagrangeMulInit_der[1,ib,idim,0,ibq,jdim] = nint * all_vel_d[ib,idim,ibq,jdim,0]
-                    LagrangeMulInit_der[1,ib,idim,1,ibq,jdim] = nint * all_vel_d[ib,idim,ibq,jdim,0]
+                    # ~ LagrangeMulInit_der[1,ib,idim,0,ibq,jdim] = all_vel_d[ib,idim,ibq,jdim,0] * dirac_mul
+                    LagrangeMulInit_der[1,ib,idim,1,ibq,jdim] = all_vel_d[ib,idim,ibq,jdim,0] * dirac_mul
 
 
 
     for ib in range(nbody):
         for idim in range(cndim):
 
-            LagrangeMulInit_der[0,ib,idim,0,ib,idim] -= nint
-            LagrangeMulInit_der[1,ib,idim,1,ib,idim] -= nint
+            LagrangeMulInit_der[0,ib,idim,0,ib,idim] -= dirac_mul
+            LagrangeMulInit_der[1,ib,idim,1,ib,idim] -= dirac_mul
 
 
     cdef double complex[:,:,:,:,::1]  hess_dx_pot_fft = the_rfft(hess_pot_all_d,norm="forward")
@@ -2120,7 +2123,7 @@ def Compute_action_hess_mul_Tan_Cython_nosym(
         for idim in range(cndim):
 
             for ibq in range(nbody):
-                for jdim in range(nbody):
+                for jdim in range(cndim):
 
                     Action_hess_dx[ib,idim,ibq,jdim,0,0] = hess_dx_pot_fft[ib,idim,ibq,jdim,0].real
                     Action_hess_dx[ib,idim,ibq,jdim,0,1] = 0 
@@ -2135,9 +2138,34 @@ def Compute_action_hess_mul_Tan_Cython_nosym(
                         Action_hess_dx[ib,idim,ibq,jdim,k,1] = a*all_coeffs_d[ib,idim,ibq,jdim,k,1] + 2*(hess_dx_pot_fft[ib,idim,ibq,jdim,k].imag - b*hess_dx_vel_fft[ib,idim,ibq,jdim,k].real)
 
 
+    # ~ print('Action_hess_dx_np',np.linalg.norm(Action_hess_dx_np))
+    # ~ print('LagrangeMulInit_der_np',np.linalg.norm(LagrangeMulInit_der_np))
+
+    # ~ print(LagrangeMulInit_der_np)
+
+# ~ 
+# ~     for ib in range(nbody):
+# ~         for idim in range(cndim):
+# ~ 
+# ~             for ibq in range(nbody):
+# ~                 for jdim in range(cndim):
+# ~ 
+# ~                     print(ib,idim,ibq,jdim,LagrangeMulInit_der[0,ib,idim,0,ibq,jdim])
+# ~                     print(ib,idim,ibq,jdim,LagrangeMulInit_der[0,ib,idim,1,ibq,jdim])
+# ~                     print(ib,idim,ibq,jdim,LagrangeMulInit_der[1,ib,idim,0,ibq,jdim])
+# ~                     print(ib,idim,ibq,jdim,LagrangeMulInit_der[1,ib,idim,1,ibq,jdim])
+
+    # ~ for ib in range(nbody):
+    # ~     for idim in range(cndim):
+    # ~ 
+    # ~             print(ib,idim,LagrangeMulInit_der[0,ib,idim,0,ib,idim])
+    # ~             print(ib,idim,LagrangeMulInit_der[0,ib,idim,1,ib,idim])
+    # ~             print(ib,idim,LagrangeMulInit_der[1,ib,idim,0,ib,idim])
+    # ~             print(ib,idim,LagrangeMulInit_der[1,ib,idim,1,ib,idim])
 
 
-    return Action_hess_dx_np
+
+    return Action_hess_dx_np, LagrangeMulInit_der_np
 
 
 '''
