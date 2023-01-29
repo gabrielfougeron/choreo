@@ -42,6 +42,7 @@ from choreo.Choreo_cython_funs import Compute_MinDist_Cython,Compute_Loop_Dist_b
 from choreo.Choreo_cython_funs import Compute_Forces_Cython,Compute_JacMat_Forces_Cython,Compute_JacMul_Forces_Cython
 from choreo.Choreo_cython_funs import Transform_Coeffs_Single_Loop,SparseScaleCoeffs,ComputeSpeedCoeffs
 from choreo.Choreo_cython_funs import the_irfft,the_rfft
+from choreo.Choreo_cython_funs import Compute_action_hess_mul_Tan_Cython_nosym
 
 if ndim == 2:
     from choreo.Choreo_cython_funs_2D import Compute_action_Cython_2D as Compute_action_Cython ,Compute_action_hess_mul_Cython_2D as Compute_action_hess_mul_Cython
@@ -2238,5 +2239,37 @@ def Param_to_Param_rev(Gx,ActionSyst_source,ActionSyst_target):
     
     return res
 
-def TangentLagrangeResidual():
-    pass
+def TangentLagrangeResidual(
+        x,
+        nbody,
+        ncoeff,
+        nint,
+        mass,
+        all_coeffs,
+        all_pos
+    ):
+
+    x_1D = x.reshape(-1)
+    
+    ibeg = 0
+    iend = (nbody*ndim*nbody*ndim*ncoeff*2)
+    all_coeffs_d = x_1D[ibeg:iend].reshape((nbody,ndim,nbody,ndim,ncoeff,2))
+
+    ibeg = iend
+    iend = iend + (2*nbody*ndim*2*nbody*ndim)
+    LagrangeMulInit = x_1D[ibeg:iend].reshape((2,nbody,ndim,2,nbody,ndim))
+
+
+        
+    Action_hess_dx, LagrangeMulInit_der = Compute_action_hess_mul_Tan_Cython_nosym(
+        nbody           ,
+        ncoeff          ,
+        nint            ,
+        mass            ,
+        all_coeffs      ,
+        all_coeffs_d    ,
+        all_pos         ,
+        LagrangeMulInit ,
+    )
+
+    return np.concatenate((Action_hess_dx.reshape(-1),LagrangeMulInit_der.reshape(-1)))
