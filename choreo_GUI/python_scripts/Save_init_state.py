@@ -212,7 +212,7 @@ def main():
     Newt_err_norm_max = params_dict["Solver_Optim"]["Newt_err_norm_max"]  
     Newt_err_norm_max_save = params_dict["Solver_Optim"]["Newt_err_norm_safe"]  
 
-    duplicate_eps = 1e-8
+    duplicate_eps =  params_dict['Solver_Checks'] ['duplicate_eps'] 
 
     krylov_method = params_dict["Solver_Optim"]["krylov_method"]  
 

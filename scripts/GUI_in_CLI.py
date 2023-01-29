@@ -190,8 +190,7 @@ def main(params_dict):
     save_all_inits = False
     # save_all_inits = True
 
-    Save_img = True
-    # Save_img = False
+    Save_img = params_dict['Solver_CLI'] ['SaveImage']
 
     # Save_thumb = True
     Save_thumb = False
@@ -204,8 +203,7 @@ def main(params_dict):
 
     color_list = params_dict["Animation_Colors"]["colorLookup"]
 
-    # Save_anim = True
-    Save_anim = False
+    Save_anim =  params_dict['Solver_CLI'] ['SaveVideo']
 
     vid_size = (8,8) # Image size in inches
     nint_plot_anim = 2*2*2*3*3*5*2
@@ -214,15 +212,7 @@ def main(params_dict):
 
     nint_plot_img = nint_plot_anim * dnint
 
-    try:
-        the_lcm
-    except NameError:
-        period_div = 1.
-    else:
-        period_div = the_lcm
-
     nperiod_anim = 1.
-    # nperiod_anim = 1./period_div
 
     Plot_trace_anim = True
     # Plot_trace_anim = False
@@ -242,7 +232,7 @@ def main(params_dict):
     Newt_err_norm_max = params_dict["Solver_Optim"]["Newt_err_norm_max"]  
     Newt_err_norm_max_save = params_dict["Solver_Optim"]["Newt_err_norm_safe"]  
 
-    duplicate_eps = 1e-8
+    duplicate_eps =  params_dict['Solver_Checks'] ['duplicate_eps'] 
 
     krylov_method = params_dict["Solver_Optim"]["krylov_method"]  
 
@@ -283,9 +273,9 @@ def main(params_dict):
     Save_Init_Pos_Vel_Sol = False
 
     n_save_pos = 'auto'
-    Save_All_Pos = True
-    # Save_All_Pos = False
 
+    Save_All_Pos = True
+    
     plot_extend = 0.
 
     n_opt = 0
