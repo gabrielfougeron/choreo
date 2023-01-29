@@ -62,8 +62,8 @@ def main():
 # 
 #             input_names_list.append(file_root)
 
-    # input_names_list = ['01 - Figure eight']
-    input_names_list = ['04 - 5 pointed star']
+    input_names_list = ['01 - Figure eight']
+    # input_names_list = ['04 - 5 pointed star']
     # input_names_list = ['14 - Small mass gap']
 
 
@@ -164,16 +164,16 @@ def ExecName(the_name, input_folder, store_folder):
     MomConsImposed = True
     # MomConsImposed = False
 # 
-    rot_angle = 0
-    s = -1
-
-    Sym_list.append(choreo.ChoreoSym(
-        LoopTarget=0,
-        LoopSource=0,
-        SpaceRot = np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64),
-        TimeRev=-1,
-        TimeShift=fractions.Fraction(numerator=0,denominator=1)
-    ))
+#     rot_angle = 0
+#     s = -1
+# 
+#     Sym_list.append(choreo.ChoreoSym(
+#         LoopTarget=0,
+#         LoopSource=0,
+#         SpaceRot = np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64),
+#         TimeRev=-1,
+#         TimeShift=fractions.Fraction(numerator=0,denominator=1)
+#     ))
 
 
     n_reconverge_it_max = 2
