@@ -2011,7 +2011,8 @@ def Compute_action_hess_mul_Tan_Cython_nosym(
     cdef double complex cmplxprodfac 
 
     cdef np.ndarray[double complex, ndim=5, mode="c"] c_coeffs_d = all_coeffs_d.view(dtype=np.complex128)[...,0]
-    cdef double[:,:,:,:,::1]  all_pos_d = the_irfft(c_coeffs_d,n=nint,axis=4,norm="forward")
+    # cdef double[:,:,:,:,::1]  all_pos_d = the_irfft(c_coeffs_d,n=nint,axis=4,norm="forward")
+    cdef double[:,:,:,:,::1]  all_pos_d = the_irfft(c_coeffs_d,norm="forward")
 
     cdef np.ndarray[double complex, ndim=5, mode="c"] c_coeffs_vel_d = np.copy(c_coeffs_d)
     for ib in range(nbody):
@@ -2023,7 +2024,8 @@ def Compute_action_hess_mul_Tan_Cython_nosym(
                         
                         c_coeffs_vel_d[ib,idim,ibp,jdim,k] = c_coeffs_d[ib,idim,ibp,jdim,k] * (1j * (ctwopi * k))
 
-    cdef double[:,:,:,:,::1]  all_vel_d = the_irfft(c_coeffs_vel_d,n=nint,axis=4,norm="forward")
+    # cdef double[:,:,:,:,::1]  all_vel_d = the_irfft(c_coeffs_vel_d,n=nint,axis=4,norm="forward")
+    cdef double[:,:,:,:,::1]  all_vel_d = the_irfft(c_coeffs_vel_d,norm="forward")
 
     cdef double[:,:,:,:,::1] hess_pot_all_d = np.zeros((nbody,cndim,nbody,cndim,nint),dtype=np.float64)
     cdef double[:,:,:,:,::1] hess_vel_all_d = np.zeros((nbody,cndim,nbody,cndim,nint),dtype=np.float64)
@@ -2070,7 +2072,7 @@ def Compute_action_hess_mul_Tan_Cython_nosym(
 
     # Initial condition
 
-    # ~ cdef double dirac_mul = 1.
+    # cdef double dirac_mul = 1.
     cdef double dirac_mul = nint
 
     for ib in range(nbody):

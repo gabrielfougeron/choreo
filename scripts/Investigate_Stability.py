@@ -206,8 +206,158 @@ def ExecName(the_name, input_folder, store_folder):
     # which_eigs = 'BE' # Half (k/2) from each end of the spectrum.
 
     HessMat = ActionSyst.Compute_action_hess_LinOpt(x)
-    w ,v = scipy.sparse.linalg.eigsh(HessMat,k=n_eig,which=which_eigs)
-    print(w)
+    # w ,v = scipy.sparse.linalg.eigsh(HessMat,k=n_eig,which=which_eigs)
+    # print(w)
+
+
+    Seed_with_RK_solver = True
+    # Seed_with_RK_solver = False
+
+
+
+    ncoeff = ActionSyst.ncoeff()
+    nint = ActionSyst.nint()
+    
+    all_coeffs = ActionSyst.RemoveSym(x)
+    c_coeffs = all_coeffs.view(dtype=np.complex128)[...,0]
+    all_pos = choreo.the_irfft(c_coeffs,n=nint,axis=2,norm="forward")
+
+
+    if Seed_with_RK_solver:
+
+        all_pos_d_init = np.zeros((nbody,choreo.ndim,nbody,choreo.ndim,nint),dtype=np.float64)
+        LagrangeMulInit = np.zeros((2,nbody,choreo.ndim,2,nbody,choreo.ndim),dtype=np.float64)
+
+        # SymplecticMethod = 'SymplecticEuler'
+        # SymplecticMethod = 'SymplecticStormerVerlet'
+        SymplecticMethod = 'SymplecticRuth3'
+        SymplecticIntegrator = choreo.GetSymplecticIntegrator(SymplecticMethod)
+
+        nint_ODE_mul = 128
+        nint_ODE = nint_ODE_mul*nint
+
+        fun,gun,x0,v0 = ActionSyst.GetTangentSystemDef(x,nint_ODE,method=SymplecticMethod)
+
+        ndof = nbody*choreo.ndim
+
+        x00 = x0
+
+        xf = x0
+        vf = v0
+
+        for iint in range(nint):
+
+            x0 = xf
+            v0 = vf
+
+            # all_pos_d_init[:,:,:,:,iint] = (x0.reshape(nbody*choreo.ndim,2,nbody*choreo.ndim)[:,0,:]).reshape((nbody,choreo.ndim,nbody,choreo.ndim))
+            all_pos_d_init[:,:,:,:,iint] = (x00.reshape(nbody*choreo.ndim,2,nbody*choreo.ndim)[:,0,:]).reshape((nbody,choreo.ndim,nbody,choreo.ndim))
+
+            t_span = (iint / nint,(iint+1)/nint)
+
+            xf,vf = SymplecticIntegrator(fun,gun,t_span,x0,v0,nint_ODE_mul)
+
+        del fun,gun
+
+        MonodromyMat = np.ascontiguousarray(np.concatenate((xf,vf),axis=0).reshape(2*ndof,2*ndof))
+
+        MonodromyMat = np.dot(MonodromyMat,MonodromyMat)
+
+
+        print(MonodromyMat)
+
+        # Evaluates the relative accuracy of the Monodromy matrix integration process
+        # zo should be an eigenvector of the Monodromy matrix, with eigenvalue 1
+        yo = ActionSyst.Compute_init_pos_vel(x).reshape(-1)
+        zo = ActionSyst.Compute_Auto_ODE_RHS(yo)
+
+        # '''SVD'''
+        # U,Instability_magnitude,Instability_directions = scipy.linalg.svd(MonodromyMat, full_matrices=True, compute_uv=True, overwrite_a=False, check_finite=True, lapack_driver='gesdd')
+# 
+        '''Eigendecomposition'''
+        Instability_magnitude,Instability_directions = choreo.InstabilityDecomposition(MonodromyMat)
+
+        print(Instability_magnitude)
+
+        print(f'Relative error on flow eigenstate: {np.linalg.norm(MonodromyMat.dot(zo)-zo)/np.linalg.norm(zo):e}')
+        # print(the_name+f' {Instability_magnitude[:]}')
+        # print(the_name+f' {np.flip(1/Instability_magnitude[:])}')
+        print("Relative error on loxodromy ",np.linalg.norm(Instability_magnitude - np.flip(1/Instability_magnitude))/np.linalg.norm(Instability_magnitude))
+
+        all_coeffs_dc_init = choreo.the_rfft(all_pos_d_init,norm="forward")
+        all_coeffs_d_init = np.empty((nbody,choreo.ndim,nbody,choreo.ndim,ncoeff,2),np.float64)
+        all_coeffs_d_init[:,:,:,:,:,0] = all_coeffs_dc_init[:,:,:,:,:ncoeff].real
+        all_coeffs_d_init[:,:,:,:,:,1] = all_coeffs_dc_init[:,:,:,:,:ncoeff].imag
+
+
+        x0 = np.concatenate((all_coeffs_d_init.reshape(-1),LagrangeMulInit.reshape(-1)))
+
+    else:
+
+        all_coeffs_d_init = np.zeros((nbody,choreo.ndim,nbody,choreo.ndim,ncoeff,2),dtype=np.float64)
+        LagrangeMulInit = np.zeros((2,nbody,choreo.ndim,2,nbody,choreo.ndim),dtype=np.float64)
+
+
+        for ib in range(nbody):
+            for idim in range(choreo.ndim):
+                all_coeffs_d_init[ib,idim,ib,idim,0,0] = 1
+                all_coeffs_d_init[ib,idim,ib,idim,1,1] = -1./(2*twopi)
+
+
+        x0 = np.concatenate((all_coeffs_d_init.reshape(-1),LagrangeMulInit.reshape(-1)))
+
+
+
+    krylov_method = 'lgmres'
+    # krylov_method = 'gmres'
+    # krylov_method = 'bicgstab' 
+    # krylov_method = 'cgs'
+    # krylov_method = 'minres'
+    # krylov_method = 'tfqmr'
+
+
+    # line_search = 'armijo'
+    line_search = 'wolfe'
+
+    gradtol = 1e-13
+
+    disp_scipy_opt = True
+    # disp_scipy_opt = False
+
+    maxiter = 10000
+
+
+            
+    F = lambda x : choreo.TangentLagrangeResidual(
+        x,
+        nbody,
+        ncoeff,
+        nint,
+        ActionSyst.mass,
+        all_coeffs,
+        all_pos
+    )
+
+    res_1D = F(x0)
+    # print(np.linalg.norm(res_1D))
+
+    
+    ibeg = 0
+    iend = (nbody*choreo.ndim*nbody*choreo.ndim*ncoeff*2)
+    res_1D_all_coeffs = res_1D[ibeg:iend].reshape((nbody,choreo.ndim,nbody,choreo.ndim,ncoeff,2))
+
+    ibeg = iend
+    iend = iend + (2*nbody*choreo.ndim*2*nbody*choreo.ndim)
+    res_LagrangeMul = res_1D[ibeg:iend].reshape((2,nbody,choreo.ndim,2,nbody,choreo.ndim))
+
+
+    # print(res_LagrangeMul)
+
+
+#     jac_options = {'method':krylov_method}
+#     jacobian = scipy.optimize.KrylovJacobian(**jac_options)
+# 
+#     opt_result , info = scipy.optimize.nonlin.nonlin_solve(F=F,x0=x0,jacobian=jacobian,verbose=disp_scipy_opt,maxiter=maxiter,f_tol=gradtol,line_search=line_search,raise_exception=False,full_output=True)
 
 
 
