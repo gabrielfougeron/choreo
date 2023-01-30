@@ -2252,16 +2252,16 @@ def TangentLagrangeResidual(
     x_1D = x.reshape(-1)
     
     ibeg = 0
-    iend = (nbody*ndim*nbody*ndim*ncoeff*2)
-    all_coeffs_d = x_1D[ibeg:iend].reshape((nbody,ndim,nbody,ndim,ncoeff,2))
+    iend = (nbody*ndim*2*nbody*ndim*ncoeff*2)
+    all_coeffs_d = x_1D[ibeg:iend].reshape((nbody,ndim,2,nbody,ndim,ncoeff,2))
 
     ibeg = iend
     iend = iend + (2*nbody*ndim*2*nbody*ndim)
     LagrangeMulInit = x_1D[ibeg:iend].reshape((2,nbody,ndim,2,nbody,ndim))
 
     ibeg = iend
-    iend = iend + (nbody*ndim*nbody*ndim)
-    MonodromyMatLog = x_1D[ibeg:iend].reshape((nbody,ndim,nbody,ndim))
+    iend = iend + (2*nbody*ndim*2*nbody*ndim)
+    MonodromyMatLog = x_1D[ibeg:iend].reshape((2,nbody,ndim,2,nbody,ndim))
 
     Action_hess_dx, LagrangeMulInit_der, MonodromyMatLog_der = Compute_action_hess_mul_Tan_Cython_nosym(
         nbody           ,

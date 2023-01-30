@@ -252,15 +252,13 @@ def ExecName(the_name, input_folder, store_folder):
 
             all_xv[iint,:,:] = np.concatenate((x0,v0),axis=0).reshape(2*ndof,2*ndof)
 
-            # all_pos_d_init[:,:,:,:,iint] = (x0.reshape(nbody*choreo.ndim,2,nbody*choreo.ndim)[:,0,:]).reshape((nbody,choreo.ndim,nbody,choreo.ndim))
-
             t_span = (iint / nint,(iint+1)/nint)
 
             xf,vf = SymplecticIntegrator(fun,gun,t_span,x0,v0,nint_ODE_mul)
 
         del fun,gun
 
-        all_pos_d_init = np.zeros((nbody,choreo.ndim,nbody,choreo.ndim,nint),dtype=np.float64)
+        all_pos_d_init = np.zeros((nbody,choreo.ndim,2,nbody,choreo.ndim,nint),dtype=np.float64)
 
         MonodromyMat = np.ascontiguousarray(np.concatenate((xf,vf),axis=0).reshape(2*ndof,2*ndof))
 
@@ -273,11 +271,7 @@ def ExecName(the_name, input_folder, store_folder):
 
             PeriodicPart = np.dot(all_xv[iint,:,:],scipy.linalg.expm(-(iint / nint)*MonodromyMatLog))
 
-            all_pos_d_init[:,:,:,:,iint] = (PeriodicPart.reshape(2,nbody*choreo.ndim,2,nbody*choreo.ndim)[0,:,0,:]).reshape((nbody,choreo.ndim,nbody,choreo.ndim))
-
-
-
-        SmallMonodromyMatLog = (MonodromyMatLog.reshape(2,nbody*choreo.ndim,2,nbody*choreo.ndim)[0,:,0,:]).reshape((nbody,choreo.ndim,nbody,choreo.ndim)) # ???
+            all_pos_d_init[:,:,:,:,:,iint] = (PeriodicPart.reshape(2,nbody*choreo.ndim,2,nbody*choreo.ndim)[0,:,:,:]).reshape((nbody,choreo.ndim,2,nbody,choreo.ndim))
 
 
         # print(MonodromyMatLog)
@@ -302,24 +296,23 @@ def ExecName(the_name, input_folder, store_folder):
         print("Relative error on loxodromy ",np.linalg.norm(Instability_magnitude - np.flip(1/Instability_magnitude))/np.linalg.norm(Instability_magnitude))
 
         all_coeffs_dc_init = choreo.the_rfft(all_pos_d_init,norm="forward")
-        all_coeffs_d_init = np.empty((nbody,choreo.ndim,nbody,choreo.ndim,ncoeff,2),np.float64)
-        all_coeffs_d_init[:,:,:,:,:,0] = all_coeffs_dc_init[:,:,:,:,:ncoeff].real
-        all_coeffs_d_init[:,:,:,:,:,1] = all_coeffs_dc_init[:,:,:,:,:ncoeff].imag
+        all_coeffs_d_init = np.empty((nbody,choreo.ndim,2,nbody,choreo.ndim,ncoeff,2),np.float64)
+        all_coeffs_d_init[:,:,:,:,:,:,0] = all_coeffs_dc_init[:,:,:,:,:,:ncoeff].real
+        all_coeffs_d_init[:,:,:,:,:,:,1] = all_coeffs_dc_init[:,:,:,:,:,:ncoeff].imag
 
 
-        x0 = np.ascontiguousarray(np.concatenate((all_coeffs_d_init.reshape(-1),LagrangeMulInit.reshape(-1),SmallMonodromyMatLog.reshape(-1))))
+        x0 = np.ascontiguousarray(np.concatenate((all_coeffs_d_init.reshape(-1),LagrangeMulInit.reshape(-1),MonodromyMatLog.reshape(-1))))
 
     else:
 
-        all_coeffs_d_init = np.zeros((nbody,choreo.ndim,nbody,choreo.ndim,ncoeff,2),dtype=np.float64)
+        all_coeffs_d_init = np.zeros((nbody,choreo.ndim,2,nbody,choreo.ndim,ncoeff,2),dtype=np.float64)
         LagrangeMulInit = np.zeros((2,nbody,choreo.ndim,2,nbody,choreo.ndim),dtype=np.float64)
-        MonodromyMatLog = np.zeros((nbody,choreo.ndim,nbody,choreo.ndim),dtype=np.float64)
-
+        MonodromyMatLog = np.zeros((2,nbody,choreo.ndim,2,nbody,choreo.ndim),dtype=np.float64)
 
         for ib in range(nbody):
             for idim in range(choreo.ndim):
-                all_coeffs_d_init[ib,idim,ib,idim,0,0] = 1
-                all_coeffs_d_init[ib,idim,ib,idim,1,1] = -1./(2*twopi)
+                all_coeffs_d_init[ib,idim,0,ib,idim,0,0] = 1
+                all_coeffs_d_init[ib,idim,1,ib,idim,1,1] = -1./(2*twopi)
 
 
         x0 = np.ascontinuousarray(np.concatenate((all_coeffs_d_init.reshape(-1),LagrangeMulInit.reshape(-1),MonodromyMatLog.reshape(-1))))
@@ -361,16 +354,16 @@ def ExecName(the_name, input_folder, store_folder):
 
     
     ibeg = 0
-    iend = (nbody*choreo.ndim*nbody*choreo.ndim*ncoeff*2)
-    res_1D_all_coeffs = res_1D[ibeg:iend].reshape((nbody,choreo.ndim,nbody,choreo.ndim,ncoeff,2))
+    iend = (nbody*choreo.ndim*2*nbody*choreo.ndim*ncoeff*2)
+    res_1D_all_coeffs = res_1D[ibeg:iend].reshape((nbody,choreo.ndim,2,nbody,choreo.ndim,ncoeff,2))
 
     ibeg = iend
     iend = iend + (2*nbody*choreo.ndim*2*nbody*choreo.ndim)
     res_LagrangeMul = res_1D[ibeg:iend].reshape((2,nbody,choreo.ndim,2,nbody,choreo.ndim))
     
     ibeg = iend
-    iend = iend + (nbody*choreo.ndim*nbody*choreo.ndim)
-    res_MonodromyMatLog = res_1D[ibeg:iend].reshape((nbody,choreo.ndim,nbody,choreo.ndim))
+    iend = iend + (2*nbody*choreo.ndim*2*nbody*choreo.ndim)
+    res_MonodromyMatLog = res_1D[ibeg:iend].reshape((2,nbody,choreo.ndim,2,nbody,choreo.ndim))
 
 
     print(res_LagrangeMul)
