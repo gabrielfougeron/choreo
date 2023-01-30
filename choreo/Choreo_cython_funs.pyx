@@ -1992,11 +1992,12 @@ def Compute_action_hess_mul_Tan_Cython_nosym(
     double[:,:,:,::1] all_coeffs            ,
     np.ndarray[double, ndim=6, mode="c"]  all_coeffs_d  , # required
     double[:,:,::1]   all_pos               ,
-    double[:,:,:,:,:,::1]   LagrangeMulInit   ,
+    double[:,:,:,:,:,::1]   LagrangeMulInit ,
+    double[:,:,:,::1] MonodromyMatLog       ,
 ):
 
     cdef Py_ssize_t il,ilp,i
-    cdef Py_ssize_t idim,jdim
+    cdef Py_ssize_t idim,jdim,kdim
     cdef Py_ssize_t ibi
     cdef Py_ssize_t ib,ibp,ibq
     cdef Py_ssize_t iint
@@ -2094,14 +2095,16 @@ def Compute_action_hess_mul_Tan_Cython_nosym(
     for ib in range(nbody):
         for idim in range(cndim):
 
-            for ibq in range(nbody):
+            for ibp in range(nbody):
                 for jdim in range(cndim):
 
-                    LagrangeMulInit_der[0,ib,idim,0,ibq,jdim] = all_pos_d[ib,idim,ibq,jdim,0] * dirac_mul
-                    # ~ LagrangeMulInit_der[0,ib,idim,1,ibq,jdim] = all_pos_d[ib,idim,ibq,jdim,0] * dirac_mul
+                    LagrangeMulInit_der[0,ib,idim,0,ibp,jdim] += all_pos_d[ib,idim,ibp,jdim,0] * dirac_mul
+                    LagrangeMulInit_der[1,ib,idim,1,ibp,jdim] += all_vel_d[ib,idim,ibp,jdim,0] * dirac_mul
 
-                    # ~ LagrangeMulInit_der[1,ib,idim,0,ibq,jdim] = all_vel_d[ib,idim,ibq,jdim,0] * dirac_mul
-                    LagrangeMulInit_der[1,ib,idim,1,ibq,jdim] = all_vel_d[ib,idim,ibq,jdim,0] * dirac_mul
+                    for ibq in range(nbody):
+                        for kdim in range(cndim):
+
+                            LagrangeMulInit_der[1,ib,idim,1,ibp,jdim] += all_pos_d[ib,idim,ibq,kdim,0] * MonodromyMatLog[ibq,kdim,ibp,jdim] * dirac_mul
 
 
 
@@ -2115,7 +2118,7 @@ def Compute_action_hess_mul_Tan_Cython_nosym(
     cdef double complex[:,:,:,:,::1]  hess_dx_pot_fft = the_rfft(hess_pot_all_d,norm="forward")
     cdef double complex[:,:,:,:,::1]  hess_dx_vel_fft = the_rfft(hess_vel_all_d,norm="forward")
 
-    cdef np.ndarray[double, ndim=6, mode="c"] Action_hess_dx_np = np.empty((nbody,cndim,nbody,cndim,ncoeff,2),np.float64)
+    cdef np.ndarray[double, ndim=6, mode="c"] Action_hess_dx_np = np.zeros((nbody,cndim,nbody,cndim,ncoeff,2),np.float64)
     cdef double[:,:,:,:,:,::1] Action_hess_dx = Action_hess_dx_np
 
     for ib in range(nbody):
@@ -2167,7 +2170,12 @@ def Compute_action_hess_mul_Tan_Cython_nosym(
 
 
 
-    return Action_hess_dx_np, LagrangeMulInit_der_np
+    cdef np.ndarray[double, ndim=4, mode="c"] MonodromyMatLog_der_np = np.zeros((nbody,cndim,nbody,cndim),np.float64)
+    cdef double[:,:,:,::1] MonodromyMatLog_der = MonodromyMatLog_der_np
+
+
+
+    return Action_hess_dx_np, LagrangeMulInit_der_np, MonodromyMatLog_der_np
 
 
 '''
