@@ -1360,7 +1360,10 @@ function AddColor(the_color) {
 
     div.value = color
     div.targetid = n_color-1
-    div.addEventListener("input", ChangeColor_Handler, true)
+    div.addEventListener("onchange", ChangeColor_Handler, true)
+
+    div.setAttribute('list','presetColors') // WTF syntax
+
     newcell.appendChild(div)
 
 }
