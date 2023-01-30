@@ -356,6 +356,7 @@ window.addEventListener("drop",function(e){
         <td style="border-style:hidden"></td>
       </tr> 
     </table>
+    <datalist id="presetColors"></datalist>
   </div>
   <div class="w3-container MainTab Animation_Size" style="display:none">
     <h2>Size</h2>
@@ -584,30 +585,12 @@ window.addEventListener("drop",function(e){
             <input id ="CLI_multiproc" class="w3-check" type="checkbox" style="vertical-align: super" checked>
           </td>
         </tr>
-        <tr>
-          <td style="border:none;" >
-            <label for="CLI_nproc">Number of processes</label>
-          </td>
-          <td style="border:none; max-width:90px; ">
-            <input id ="CLI_nproc" type="number" value="2" min="2" style="text-align: center;">
-          </td>
-        </tr>
-        <tr>
-          <td style="border:none;" >
-            <label for="CLI_SaveImage">Save image of solutions</label>
-          </td>
-          <td style="border:none; max-width:90px; text-align: center;">
-            <input id ="CLI_SaveImage" class="w3-check" type="checkbox" style="vertical-align: super" checked>
-          </td>
-        </tr>
-        <tr>
-          <td style="border:none;" >
-            <label for="CLI_SaveVideo">Save video of solutions</label>
-          </td>
-          <td style="border:none; max-width:90px; text-align: center;">
-            <input id ="CLI_SaveVideo"  class="w3-check" type="checkbox" style="vertical-align: super" checked>
-          </td>
-        </tr>
+        <td style="border:none;" >
+          <label for="CLI_nproc">Number of processes</label>
+        </td>
+        <td style="border:none; max-width:90px; ">
+          <input id ="CLI_nproc" type="number" value="2" min="2" style="text-align: center;">
+        </td>
       </table>
     </div>
   </div>
@@ -709,6 +692,13 @@ for (var i = 0; i < 6; i++) {
 }
 
 ClickAddBodyLoop()
+
+color_datalist = document.getElementById('presetColors')
+for (var i = 0; i < colorLookup_init.length; i++) {
+  var div = document.createElement('option')
+  div.innerHTML = colorLookup_init[i]
+  color_datalist.appendChild(div)
+}
 
 for (var i = 0; i < colorLookup_init.length; i++) {
     AddColor()
