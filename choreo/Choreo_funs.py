@@ -2259,9 +2259,11 @@ def TangentLagrangeResidual(
     iend = iend + (2*nbody*ndim*2*nbody*ndim)
     LagrangeMulInit = x_1D[ibeg:iend].reshape((2,nbody,ndim,2,nbody,ndim))
 
+    ibeg = iend
+    iend = iend + (nbody*ndim*nbody*ndim)
+    MonodromyMatLog = x_1D[ibeg:iend].reshape((nbody,ndim,nbody,ndim))
 
-        
-    Action_hess_dx, LagrangeMulInit_der = Compute_action_hess_mul_Tan_Cython_nosym(
+    Action_hess_dx, LagrangeMulInit_der, MonodromyMatLog_der = Compute_action_hess_mul_Tan_Cython_nosym(
         nbody           ,
         ncoeff          ,
         nint            ,
@@ -2270,6 +2272,7 @@ def TangentLagrangeResidual(
         all_coeffs_d    ,
         all_pos         ,
         LagrangeMulInit ,
+        MonodromyMatLog ,
     )
 
-    return np.concatenate((Action_hess_dx.reshape(-1),LagrangeMulInit_der.reshape(-1)))
+    return np.concatenate((Action_hess_dx.reshape(-1), LagrangeMulInit_der.reshape(-1), MonodromyMatLog_der.reshape(-1)))
