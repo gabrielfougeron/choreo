@@ -120,16 +120,12 @@ def InstabilityDecomposition(Mat,eps=1e-12):
 
         is_real = (np.linalg.norm(eigvects[:,idx_sort[i]].imag) < eps) and (abs(eigvals[idx_sort[i  ]].imag) < eps)
 
-        # print("")
-        # print(i)
-
         if is_real :
-
-            # print("real")
 
             Instability_directions[i,:] = eigvects[:,idx_sort[i]].real
 
             i += 1
+            
         else :
 
             assert (i+1) < n
@@ -137,11 +133,6 @@ def InstabilityDecomposition(Mat,eps=1e-12):
             is_conj_couple = ((np.linalg.norm(eigvects[:,idx_sort[i]].imag + eigvects[:,idx_sort[i+1]].imag)) < eps) and (abs(eigvals[idx_sort[i  ]].imag + eigvals[idx_sort[i+1]].imag) < eps)    
 
             assert is_conj_couple
-
-            # print("imag")
-            # print(eigvals[idx_sort[i  ]].imag,np.linalg.norm(eigvects[:,idx_sort[i]].imag))
-            # print(eigvals[idx_sort[i+1]].imag,np.linalg.norm(eigvects[:,idx_sort[i]].imag))
-            # print(is_conj_couple)
 
             Instability_directions[i  ,:] = eigvects[:,idx_sort[i]].real
             Instability_directions[i+1,:] = eigvects[:,idx_sort[i]].imag

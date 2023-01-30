@@ -225,7 +225,7 @@ def ExecName(the_name, input_folder, store_folder):
 
     if Seed_with_RK_solver:
 
-        all_pos_d_init = np.zeros((nbody,choreo.ndim,nbody,choreo.ndim,nint),dtype=np.float64)
+
         LagrangeMulInit = np.zeros((2,nbody,choreo.ndim,2,nbody,choreo.ndim),dtype=np.float64)
 
         # SymplecticMethod = 'SymplecticEuler'
@@ -240,7 +240,7 @@ def ExecName(the_name, input_folder, store_folder):
 
         ndof = nbody*choreo.ndim
 
-        x00 = x0
+        all_xv = np.zeros((nint,2*ndof,2*ndof))
 
         xf = x0
         vf = v0
@@ -250,8 +250,9 @@ def ExecName(the_name, input_folder, store_folder):
             x0 = xf
             v0 = vf
 
+            all_xv[iint,:,:] = np.concatenate((x0,v0),axis=0).reshape(2*ndof,2*ndof)
+
             # all_pos_d_init[:,:,:,:,iint] = (x0.reshape(nbody*choreo.ndim,2,nbody*choreo.ndim)[:,0,:]).reshape((nbody,choreo.ndim,nbody,choreo.ndim))
-            all_pos_d_init[:,:,:,:,iint] = (x00.reshape(nbody*choreo.ndim,2,nbody*choreo.ndim)[:,0,:]).reshape((nbody,choreo.ndim,nbody,choreo.ndim))
 
             t_span = (iint / nint,(iint+1)/nint)
 
@@ -259,12 +260,28 @@ def ExecName(the_name, input_folder, store_folder):
 
         del fun,gun
 
+        all_pos_d_init = np.zeros((nbody,choreo.ndim,nbody,choreo.ndim,nint),dtype=np.float64)
+
         MonodromyMat = np.ascontiguousarray(np.concatenate((xf,vf),axis=0).reshape(2*ndof,2*ndof))
 
-        MonodromyMat = np.dot(MonodromyMat,MonodromyMat)
+        # MonodromyMat = np.dot(MonodromyMat,MonodromyMat)
+
+        MonodromyMatLog = scipy.linalg.logm(MonodromyMat)
 
 
-        print(MonodromyMat)
+        for iint in range(nint):
+
+            PeriodicPart = np.dot(all_xv[iint,:,:],scipy.linalg.expm(-(iint / nint)*MonodromyMatLog))
+
+            all_pos_d_init[:,:,:,:,iint] = (PeriodicPart.reshape(2,nbody*choreo.ndim,2,nbody*choreo.ndim)[0,:,0,:]).reshape((nbody,choreo.ndim,nbody,choreo.ndim))
+
+
+
+        SmallMonodromyMatLog = (MonodromyMatLog.reshape(2,nbody*choreo.ndim,2,nbody*choreo.ndim)[0,:,0,:]).reshape((nbody,choreo.ndim,nbody,choreo.ndim)) # ???
+
+
+        # print(MonodromyMatLog)
+        # print(MonodromyMat)
 
         # Evaluates the relative accuracy of the Monodromy matrix integration process
         # zo should be an eigenvector of the Monodromy matrix, with eigenvalue 1
@@ -290,12 +307,13 @@ def ExecName(the_name, input_folder, store_folder):
         all_coeffs_d_init[:,:,:,:,:,1] = all_coeffs_dc_init[:,:,:,:,:ncoeff].imag
 
 
-        x0 = np.concatenate((all_coeffs_d_init.reshape(-1),LagrangeMulInit.reshape(-1)))
+        x0 = np.ascontiguousarray(np.concatenate((all_coeffs_d_init.reshape(-1),LagrangeMulInit.reshape(-1),SmallMonodromyMatLog.reshape(-1))))
 
     else:
 
         all_coeffs_d_init = np.zeros((nbody,choreo.ndim,nbody,choreo.ndim,ncoeff,2),dtype=np.float64)
         LagrangeMulInit = np.zeros((2,nbody,choreo.ndim,2,nbody,choreo.ndim),dtype=np.float64)
+        MonodromyMatLog = np.zeros((nbody,choreo.ndim,nbody,choreo.ndim),dtype=np.float64)
 
 
         for ib in range(nbody):
@@ -304,7 +322,7 @@ def ExecName(the_name, input_folder, store_folder):
                 all_coeffs_d_init[ib,idim,ib,idim,1,1] = -1./(2*twopi)
 
 
-        x0 = np.concatenate((all_coeffs_d_init.reshape(-1),LagrangeMulInit.reshape(-1)))
+        x0 = np.ascontinuousarray(np.concatenate((all_coeffs_d_init.reshape(-1),LagrangeMulInit.reshape(-1),MonodromyMatLog.reshape(-1))))
 
 
 
@@ -349,9 +367,18 @@ def ExecName(the_name, input_folder, store_folder):
     ibeg = iend
     iend = iend + (2*nbody*choreo.ndim*2*nbody*choreo.ndim)
     res_LagrangeMul = res_1D[ibeg:iend].reshape((2,nbody,choreo.ndim,2,nbody,choreo.ndim))
+    
+    ibeg = iend
+    iend = iend + (nbody*choreo.ndim*nbody*choreo.ndim)
+    res_MonodromyMatLog = res_1D[ibeg:iend].reshape((nbody,choreo.ndim,nbody,choreo.ndim))
 
 
-    # print(res_LagrangeMul)
+    print(res_LagrangeMul)
+
+
+    print(np.linalg.norm(res_1D_all_coeffs))
+    print(np.linalg.norm(res_LagrangeMul))
+    print(np.linalg.norm(res_MonodromyMatLog))
 
 
 #     jac_options = {'method':krylov_method}
