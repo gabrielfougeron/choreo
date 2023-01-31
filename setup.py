@@ -29,7 +29,8 @@ else:
 
     if ("PYODIDE_ROOT" in os.environ): # Building for Pyodide
 
-        extra_compile_args = ["-O3"]
+        # extra_compile_args = ["-O3"]
+        extra_compile_args = []
 
     elif not(distutils.spawn.find_executable('clang') is None):
 
@@ -38,8 +39,8 @@ else:
 
         # extra_compile_args = ["-O2","-march=native"]
         # extra_compile_args = ["-O3","-march=native"]
-        extra_compile_args = ["-Ofast","-march=native"]
-        # extra_compile_args = []
+        # extra_compile_args = ["-Ofast","-march=native"]
+        extra_compile_args = []
 
 #     elif not(distutils.spawn.find_executable('icc') is None):
 # 
@@ -73,12 +74,12 @@ cython_filenames = [
 
 compiler_directives = {
     'wraparound': False,
-    'boundscheck': False,
-    'nonecheck': False,
-    'initializedcheck': False,
-    'overflowcheck': False,
-    'overflowcheck.fold': False,
-    'infer_types': True,
+    # 'boundscheck': False,
+    # 'nonecheck': False,
+    # 'initializedcheck': False,
+    # 'overflowcheck': False,
+    # 'overflowcheck.fold': False,
+    # 'infer_types': True,
 }
 
 # #### Profiler only ####
