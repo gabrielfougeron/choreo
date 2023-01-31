@@ -366,8 +366,8 @@ def ExecName(the_name, input_folder, store_folder):
     res_MonodromyMatLog = res_1D[ibeg:iend].reshape((2,nbody,choreo.ndim,2,nbody,choreo.ndim))
 
 
-    print(res_LagrangeMul)
 
+    print(res_1D_all_coeffs)
 
     print(np.linalg.norm(res_1D_all_coeffs))
     print(np.linalg.norm(res_LagrangeMul))

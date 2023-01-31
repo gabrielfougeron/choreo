@@ -2003,7 +2003,7 @@ def Compute_action_hess_mul_Tan_Cython_nosym(
     cdef Py_ssize_t iint
     cdef Py_ssize_t k
     cdef Py_ssize_t ivx,jvx
-    cdef long k2
+    cdef long k2,n_div
     cdef long ddiv,rem
     cdef double pot,potp,potpp
     cdef double prod_mass,a,b,c,dx2,prod_fac,dxtddx
@@ -2067,15 +2067,20 @@ def Compute_action_hess_mul_Tan_Cython_nosym(
 
                                 c = b*dxtddx*dx[idim]+a*ddx[idim]
 
-                                hess_pot_all_d[ib ,idim,ivx,ibq,jdim,iint] -= c
-                                hess_pot_all_d[ibp,idim,ivx,ibq,jdim,iint] += c
-
-
+                                hess_pot_all_d[ib ,idim,ivx,ibq,jdim,iint] += c
+                                hess_pot_all_d[ibp,idim,ivx,ibq,jdim,iint] -= c
 
     # Initial condition
 
+
+
+    cdef np.ndarray[double, ndim=6, mode="c"] LagrangeMulInit_der_np = np.zeros((2,nbody,cndim,2,nbody,cndim),np.float64)
+    cdef double[:,:,:,:,:,::1] LagrangeMulInit_der = LagrangeMulInit_der_np
+
+
     # cdef double dirac_mul = 1.
     cdef double dirac_mul = nint
+
 
     for ib in range(nbody):
         for idim in range(cndim):
@@ -2087,9 +2092,6 @@ def Compute_action_hess_mul_Tan_Cython_nosym(
                         hess_vel_all_d[ib,idim,ivx,ibq,jdim,0] += LagrangeMulInit[1,ib,idim,ivx,ibq,jdim] * dirac_mul
 
 
-
-    cdef np.ndarray[double, ndim=6, mode="c"] LagrangeMulInit_der_np = np.zeros((2,nbody,cndim,2,nbody,cndim),np.float64)
-    cdef double[:,:,:,:,:,::1] LagrangeMulInit_der = LagrangeMulInit_der_np
 
     for ib in range(nbody):
         for idim in range(cndim):
@@ -2115,12 +2117,80 @@ def Compute_action_hess_mul_Tan_Cython_nosym(
             LagrangeMulInit_der[1,ib,idim,1,ib,idim] -= dirac_mul
 
 
+
+
+
+
+
+
     cdef double complex[:,:,:,:,:,::1]  hess_dx_pot_fft = the_rfft(hess_pot_all_d,norm="forward")
     cdef double complex[:,:,:,:,:,::1]  hess_dx_vel_fft = the_rfft(hess_vel_all_d,norm="forward")
 
-    cdef np.ndarray[double, ndim=7, mode="c"] Action_hess_dx_np = np.zeros((nbody,cndim,2,nbody,cndim,ncoeff,2),np.float64)
+    cdef np.ndarray[double, ndim=7, mode="c"] Action_hess_dx_np = np.copy(all_coeffs_d)
     cdef double[:,:,:,:,:,:,::1] Action_hess_dx = Action_hess_dx_np
 
+    cdef double[:,:,:,:,:,:,::1] Action_hess_dx_ref
+
+
+    for n_div in range(2):
+
+        Action_hess_dx_ref = np.copy(Action_hess_dx_np)
+        
+        for ib in range(nbody):
+            for idim in range(cndim):
+
+                for ivx in range(2):
+                    for ibp in range(nbody):
+                        for jdim in range(cndim):
+
+                            for k in range(ncoeff):
+                                
+                                a = Action_hess_dx[ib,idim,ivx,ibp,jdim,k,0]
+                                b = Action_hess_dx[ib,idim,ivx,ibp,jdim,k,1]
+
+                                c = ctwopi*k
+
+                                Action_hess_dx[ib,idim,ivx,ibp,jdim,k,0] = - c * b
+                                Action_hess_dx[ib,idim,ivx,ibp,jdim,k,1] =   c * a
+
+
+        for ib in range(nbody):
+            for idim in range(cndim):
+            
+                for ivx in range(2):
+                    for ibp in range(nbody):
+                        for jdim in range(cndim):
+
+                            for jvx in range(2):
+                                for ibq in range(nbody):
+                                    for kdim in range(cndim):
+
+                                        for k in range(ncoeff):
+
+                                            Action_hess_dx[ib,idim,ivx,ibp,jdim,k,0] += Action_hess_dx_ref[ib,idim,jvx,ibq,kdim,k,0] * MonodromyMatLog[jvx,ibq,kdim,ivx,ibp,jdim]
+                                            Action_hess_dx[ib,idim,ivx,ibp,jdim,k,1] += Action_hess_dx_ref[ib,idim,jvx,ibq,kdim,k,1] * MonodromyMatLog[jvx,ibq,kdim,ivx,ibp,jdim]
+
+
+    for ib in range(nbody):
+        
+        prod_fac = mass[ib] *2
+        
+        for idim in range(cndim):
+            for ivx in range(2):
+                for ibq in range(nbody):
+                    for jdim in range(cndim):
+
+                        for k in range(ncoeff):
+
+                            
+                            Action_hess_dx[ib,idim,ivx,ibq,jdim,k,0] *= prod_fac
+                            Action_hess_dx[ib,idim,ivx,ibq,jdim,k,1] *= prod_fac
+
+
+
+
+
+    '''
     for ib in range(nbody):
         
         prod_fac = mass[ib]*cfourpisq
@@ -2130,10 +2200,7 @@ def Compute_action_hess_mul_Tan_Cython_nosym(
                 for ibq in range(nbody):
                     for jdim in range(cndim):
 
-                        Action_hess_dx[ib,idim,ivx,ibq,jdim,0,0] = hess_dx_pot_fft[ib,idim,ivx,ibq,jdim,0].real
-                        Action_hess_dx[ib,idim,ivx,ibq,jdim,0,1] = 0 
-
-                        for k in range(1,ncoeff):
+                        for k in range(ncoeff):
                             
                             k2 = k*k
                             a = 2*prod_fac*k2
@@ -2141,6 +2208,25 @@ def Compute_action_hess_mul_Tan_Cython_nosym(
                             
                             Action_hess_dx[ib,idim,ivx,ibq,jdim,k,0] = a*all_coeffs_d[ib,idim,ivx,ibq,jdim,k,0] + 2*(hess_dx_pot_fft[ib,idim,ivx,ibq,jdim,k].real + b*hess_dx_vel_fft[ib,idim,ivx,ibq,jdim,k].imag)
                             Action_hess_dx[ib,idim,ivx,ibq,jdim,k,1] = a*all_coeffs_d[ib,idim,ivx,ibq,jdim,k,1] + 2*(hess_dx_pot_fft[ib,idim,ivx,ibq,jdim,k].imag - b*hess_dx_vel_fft[ib,idim,ivx,ibq,jdim,k].real)
+    '''
+
+
+    for ib in range(nbody):
+        
+        for idim in range(cndim):
+            for ivx in range(2):
+                for ibq in range(nbody):
+                    for jdim in range(cndim):
+
+                        Action_hess_dx[ib,idim,ivx,ibq,jdim,0,0] += hess_dx_pot_fft[ib,idim,ivx,ibq,jdim,0].real
+
+                        for k in range(1,ncoeff):
+                            
+                            b = ctwopi*k
+                            
+                            Action_hess_dx[ib,idim,ivx,ibq,jdim,k,0] += 2*(hess_dx_pot_fft[ib,idim,ivx,ibq,jdim,k].real + b*hess_dx_vel_fft[ib,idim,ivx,ibq,jdim,k].imag)
+                            Action_hess_dx[ib,idim,ivx,ibq,jdim,k,1] += 2*(hess_dx_pot_fft[ib,idim,ivx,ibq,jdim,k].imag - b*hess_dx_vel_fft[ib,idim,ivx,ibq,jdim,k].real)
+
 
 
     # ~ print('Action_hess_dx_np',np.linalg.norm(Action_hess_dx_np))
