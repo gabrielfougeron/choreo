@@ -361,20 +361,16 @@ def ExecName(the_name, input_folder, store_folder):
     ibeg = iend
     iend = iend + (2*nbody*choreo.ndim*2*nbody*choreo.ndim)
     res_LagrangeMul = res_1D[ibeg:iend].reshape((2,nbody,choreo.ndim,2,nbody,choreo.ndim))
-    
-    ibeg = iend
-    iend = iend + (2*nbody*choreo.ndim*2*nbody*choreo.ndim)
-    res_MonodromyMatLog = res_1D[ibeg:iend].reshape((2,nbody,choreo.ndim,2,nbody,choreo.ndim))
 
 
-    print(res_1D_all_coeffs)
+    # print(res_1D_all_coeffs)
 
     print(np.linalg.norm(res_1D_all_coeffs))
     print(np.linalg.norm(res_LagrangeMul))
-    print(np.linalg.norm(res_MonodromyMatLog))
+
 
     res_1D_all_coeffs_c = res_1D_all_coeffs.view(dtype=np.complex128)[...,0]
-    res_1D_all_pos = choreo.the_irfft(res_1D_all_coeffs_c,norm="forward")
+    res_1D_all_pos = choreo.the_irfft(res_1D_all_coeffs_c,n=nint,norm="forward")
 
 #     plt.figure()
 # 

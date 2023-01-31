@@ -39,8 +39,8 @@ else:
 
         # extra_compile_args = ["-O2","-march=native"]
         # extra_compile_args = ["-O3","-march=native"]
-        # extra_compile_args = ["-Ofast","-march=native"]
-        extra_compile_args = []
+        extra_compile_args = ["-Ofast","-march=native"]
+        # extra_compile_args = []
 
 #     elif not(distutils.spawn.find_executable('icc') is None):
 # 
