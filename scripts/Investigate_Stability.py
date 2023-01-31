@@ -19,6 +19,7 @@ import sys
 import fractions
 import scipy.integrate
 import scipy.special
+import matplotlib.pyplot as plt
 
 __PROJECT_ROOT__ = os.path.abspath(os.path.join(os.path.dirname(__file__),os.pardir))
 sys.path.append(__PROJECT_ROOT__)
@@ -366,12 +367,28 @@ def ExecName(the_name, input_folder, store_folder):
     res_MonodromyMatLog = res_1D[ibeg:iend].reshape((2,nbody,choreo.ndim,2,nbody,choreo.ndim))
 
 
-
     print(res_1D_all_coeffs)
 
     print(np.linalg.norm(res_1D_all_coeffs))
     print(np.linalg.norm(res_LagrangeMul))
     print(np.linalg.norm(res_MonodromyMatLog))
+
+    res_1D_all_coeffs_c = res_1D_all_coeffs.view(dtype=np.complex128)[...,0]
+    res_1D_all_pos = choreo.the_irfft(res_1D_all_coeffs_c,norm="forward")
+
+#     plt.figure()
+# 
+#     for ib in range(nbody):
+#         for idim in range(choreo.ndim):
+#             for jvx in range(2):
+#                 for jb in range(nbody): 
+#                     for jdim in range(choreo.ndim):
+# 
+#                         # plt.plot(all_pos_d_init[ib,idim,jvx,jb,jdim,:])
+#                         plt.plot(res_1D_all_pos[ib,idim,jvx,jb,jdim,:])
+# 
+# 
+#     plt.savefig("out.png")
 
 
 #     jac_options = {'method':krylov_method}
