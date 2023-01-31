@@ -2070,10 +2070,9 @@ def Compute_action_hess_mul_Tan_Cython_nosym(
 
     # Initial condition
 
-
-
     cdef np.ndarray[double, ndim=6, mode="c"] LagrangeMulInit_der_np = np.zeros((2,nbody,cndim,2,nbody,cndim),np.float64)
     cdef double[:,:,:,:,:,::1] LagrangeMulInit_der = LagrangeMulInit_der_np
+
 
     # cdef double dirac_mul = 1.
     cdef double dirac_mul = nint
@@ -2112,8 +2111,6 @@ def Compute_action_hess_mul_Tan_Cython_nosym(
 
             LagrangeMulInit_der[0,ib,idim,0,ib,idim] -= dirac_mul
             LagrangeMulInit_der[1,ib,idim,1,ib,idim] -= dirac_mul
-
-
 
 
 
@@ -2159,7 +2156,7 @@ def Compute_action_hess_mul_Tan_Cython_nosym(
                                 for ibq in range(nbody):
                                     for kdim in range(cndim):
 
-                                        for k in range(1,ncoeff):
+                                        for k in range(ncoeff):
 
                                             Action_hess_dx[ib,idim,ivx,ibp,jdim,k,0] += Action_hess_dx_ref[ib,idim,jvx,ibq,kdim,k,0] * MonodromyMatLog[jvx,ibq,kdim,ivx,ibp,jdim]
                                             Action_hess_dx[ib,idim,ivx,ibp,jdim,k,1] += Action_hess_dx_ref[ib,idim,jvx,ibq,kdim,k,1] * MonodromyMatLog[jvx,ibq,kdim,ivx,ibp,jdim]
@@ -2181,40 +2178,14 @@ def Compute_action_hess_mul_Tan_Cython_nosym(
                             Action_hess_dx[ib,idim,ivx,ibq,jdim,k,1] *= prod_fac
 
 
-
-
-
-    '''
+ 
     for ib in range(nbody):
-        
-        prod_fac = mass[ib]*cfourpisq
         
         for idim in range(cndim):
             for ivx in range(2):
                 for ibq in range(nbody):
                     for jdim in range(cndim):
-
                         for k in range(ncoeff):
-                            
-                            k2 = k*k
-                            a = 2*prod_fac*k2
-                            b = ctwopi*k
-                            
-                            Action_hess_dx[ib,idim,ivx,ibq,jdim,k,0] = a*all_coeffs_d[ib,idim,ivx,ibq,jdim,k,0] + 2*(hess_dx_pot_fft[ib,idim,ivx,ibq,jdim,k].real + b*hess_dx_vel_fft[ib,idim,ivx,ibq,jdim,k].imag)
-                            Action_hess_dx[ib,idim,ivx,ibq,jdim,k,1] = a*all_coeffs_d[ib,idim,ivx,ibq,jdim,k,1] + 2*(hess_dx_pot_fft[ib,idim,ivx,ibq,jdim,k].imag - b*hess_dx_vel_fft[ib,idim,ivx,ibq,jdim,k].real)
-    '''
-
-
-    for ib in range(nbody):
-        
-        for idim in range(cndim):
-            for ivx in range(2):
-                for ibq in range(nbody):
-                    for jdim in range(cndim):
-
-                        Action_hess_dx[ib,idim,ivx,ibq,jdim,0,0] += hess_dx_pot_fft[ib,idim,ivx,ibq,jdim,0].real
-
-                        for k in range(1,ncoeff):
                             
                             b = ctwopi*k
                             
@@ -2250,244 +2221,4 @@ def Compute_action_hess_mul_Tan_Cython_nosym(
 
 
 
-    cdef np.ndarray[double, ndim=6, mode="c"] MonodromyMatLog_der_np = np.zeros((2,nbody,cndim,2,nbody,cndim),np.float64)
-    cdef double[:,:,:,:,:,::1] MonodromyMatLog_der = MonodromyMatLog_der_np
-
-
-
-    return Action_hess_dx_np, LagrangeMulInit_der_np, MonodromyMatLog_der_np
-
-
-'''
-def Compute_action_LagrangeInit_Cython(
-    long nloop                          ,
-    long ncoeff                         ,
-    long nint                           ,
-    double[::1]       mass              ,
-    long[::1]         loopnb            ,
-    long[:,::1]       Targets           ,
-    double[::1]       MassSum           ,
-    double[:,:,:,::1] SpaceRotsUn       ,
-    long[:,::1]       TimeRevsUn        ,
-    long[:,::1]       TimeShiftNumUn    ,
-    long[:,::1]       TimeShiftDenUn    ,
-    long[::1]         loopnbi           ,
-    double[:,::1]     ProdMassSumAll    ,
-    double[:,:,:,::1] SpaceRotsBin      ,
-    long[:,::1]       TimeRevsBin       ,
-    long[:,::1]       TimeShiftNumBin   ,
-    long[:,::1]       TimeShiftDenBin   ,
-    double[:,:,:,::1] all_coeffs        ,
-    double[:,:,::1]   all_pos           ,
-    double[:,:,::1]   all_vel           ,
-    double[:,:,:,:,::1]   LagrangeMulInit   ,
-):
-    
-    cdef Py_ssize_t il,ilp,i
-    cdef Py_ssize_t idim,jdim
-    cdef Py_ssize_t ibi
-    cdef Py_ssize_t ib,ibp
-    cdef Py_ssize_t iint
-    cdef Py_ssize_t k
-    cdef long k2
-    cdef long ddiv,rem
-    cdef double pot,potp,potpp
-    cdef double prod_mass,a,b,dx2,prod_fac
-
-    cdef double[::1] dx = np.zeros((cndim),dtype=np.float64)
-    cdef double[::1] df = np.zeros((cndim),dtype=np.float64)
-
-    cdef long maxloopnb = 0
-    cdef long maxloopnbi = 0
-
-    for il in range(nloop):
-        if (maxloopnb < loopnb[il]):
-            maxloopnb = loopnb[il]
-        if (maxloopnbi < loopnbi[il]):
-            maxloopnbi = loopnbi[il]
-
-    cdef double Pot_en = 0.
-
-    cdef Py_ssize_t[:,::1] all_shiftsUn = np.zeros((nloop,maxloopnb),dtype=np.intp)
-    cdef Py_ssize_t[:,::1] all_shiftsBin = np.zeros((nloop,maxloopnbi),dtype=np.intp)
-
-    for il in range(nloop):
-        for ib in range(loopnb[il]):
-
-            k = (TimeRevsUn[il,ib]*nint*TimeShiftNumUn[il,ib])
-
-            ddiv = - k // TimeShiftDenUn[il,ib]
-            rem = k + ddiv * TimeShiftDenUn[il,ib]
-
-            if (rem != 0):
-                print("WARNING: remainder in integer division. Gradient computation will fail.")
-
-            all_shiftsUn[il,ib] = (((ddiv) % nint) + nint) % nint
-        
-        for ibi in range(loopnbi[il]):
-
-            k = (TimeRevsBin[il,ibi]*nint*TimeShiftNumBin[il,ibi])
-
-            ddiv = - k // TimeShiftDenBin[il,ibi]
-            rem = k + ddiv * TimeShiftDenBin[il,ibi]
-
-            if (rem != 0):
-                print("WARNING: remainder in integer division. Gradient computation will fail.")
-
-            all_shiftsBin[il,ibi] = (((ddiv) % nint) + nint) % nint
-    
-    cdef double[:,:,::1] grad_pot_all = np.zeros((nloop,cndim,nint),dtype=np.float64)
-
-    for iint in range(nint):
-
-        # Different loops
-        for il in range(nloop):
-            for ilp in range(il+1,nloop):
-
-                for ib in range(loopnb[il]):
-                    for ibp in range(loopnb[ilp]):
-                        
-                        prod_mass = mass[Targets[il,ib]]*mass[Targets[ilp,ibp]]
-
-                        for idim in range(cndim):
-                            dx[idim] = SpaceRotsUn[il,ib,idim,0]*all_pos[il,0,all_shiftsUn[il,ib]] - SpaceRotsUn[ilp,ibp,idim,0]*all_pos[ilp,0,all_shiftsUn[ilp,ibp]]
-                            for jdim in range(1,cndim):
-                                dx[idim] += SpaceRotsUn[il,ib,idim,jdim]*all_pos[il,jdim,all_shiftsUn[il,ib]] - SpaceRotsUn[ilp,ibp,idim,jdim]*all_pos[ilp,jdim,all_shiftsUn[ilp,ibp]]
-
-                        dx2 = dx[0]*dx[0]
-                        for idim in range(1,cndim):
-                            dx2 += dx[idim]*dx[idim]
-                            
-                        pot,potp,potpp = CCpt_interbody_pot(dx2)
-                        
-                        Pot_en += pot*prod_mass
-
-                        a = (2*prod_mass*potp)
-
-                        for idim in range(cndim):
-                            dx[idim] *= a
-
-                        for idim in range(cndim):
-                            
-                            b = SpaceRotsUn[il,ib,0,idim]*dx[0]
-                            for jdim in range(1,cndim):
-                                b+=SpaceRotsUn[il,ib,jdim,idim]*dx[jdim]
-                            
-                            grad_pot_all[il ,idim,all_shiftsUn[il ,ib ]] += b
-                            
-                            b = SpaceRotsUn[ilp,ibp,0,idim]*dx[0]
-                            for jdim in range(1,cndim):
-                                b+=SpaceRotsUn[ilp,ibp,jdim,idim]*dx[jdim]
-                            
-                            grad_pot_all[ilp,idim,all_shiftsUn[ilp,ibp]] -= b
-
-        # Same loop + symmetry
-        for il in range(nloop):
-
-            for ibi in range(loopnbi[il]):
-                
-                for idim in range(cndim):
-                    dx[idim] = SpaceRotsBin[il,ibi,idim,0]*all_pos[il,0,all_shiftsBin[il,ibi]]
-                    for jdim in range(1,cndim):
-                        dx[idim] += SpaceRotsBin[il,ibi,idim,jdim]*all_pos[il,jdim,all_shiftsBin[il,ibi]]
-                    
-                    dx[idim] -= all_pos[il,idim,iint]
-                    
-                dx2 = dx[0]*dx[0]
-                for idim in range(1,cndim):
-                    dx2 += dx[idim]*dx[idim]
-
-                pot,potp,potpp = CCpt_interbody_pot(dx2)
-                
-                Pot_en += pot*ProdMassSumAll[il,ibi]
-                
-                a = (2*ProdMassSumAll[il,ibi]*potp)
-
-                for idim in range(cndim):
-                    dx[idim] *= a
-
-                for idim in range(cndim):
-                    
-                    b = SpaceRotsBin[il,ibi,0,idim]*dx[0]
-                    for jdim in range(1,cndim):
-                        b+=SpaceRotsBin[il,ibi,jdim,idim]*dx[jdim]
-                    
-                    grad_pot_all[il ,idim,all_shiftsBin[il,ibi]] += b
-                    
-                    grad_pot_all[il ,idim,iint] -= dx[idim]
-
-        # Increments time at the end
-        for il in range(nloop):
-            for ib in range(loopnb[il]):
-                all_shiftsUn[il,ib] = (((all_shiftsUn[il,ib]+TimeRevsUn[il,ib]) ) + nint) % nint
-                
-            for ibi in range(loopnbi[il]):
-                all_shiftsBin[il,ibi] = (((all_shiftsBin[il,ibi]+TimeRevsBin[il,ibi]) ) + nint) % nint
-
-    Pot_en = Pot_en / nint
-
-
-
-
-
-    # Initial condition
-
-    for ib in range(nbody):
-        for idim in range(cndim):
-            for ibp in range(nbody):
-                for jdim in range(cndim):
-
-                    for k in range(ncoeff):
-                        
-                        c_coeffs_d[ib,idim,ibp,jdim,k] = c_coeffs_d[ib,idim,ibp,jdim,k] * (1j * (ctwopi * k))
-
-    cdef double[:,:,:,:,::1]  all_vel_d = the_irfft(c_coeffs_d,n=nint,axis=4,norm="forward")
-
-    for ib in range(nbody):
-        for idim in range(cndim):
-            for ibq in range(nbody):
-                for jdim in range(cndim):
-
-
-                    hess_pot_all_d[ib,idim,ibq,jdim,0] += LagrangeMulInit[0,ib,idim,0,ibq,jdim]
-                    hess_pot_all_d[ib,idim,ibq,jdim,0] += LagrangeMulInit[0,ib,idim,1,ibq,jdim]
-
-                    hess_vel_all_d[ib,idim,ibq,jdim,0] += LagrangeMulInit[1,ib,idim,0,ibq,jdim]
-                    hess_vel_all_d[ib,idim,ibq,jdim,0] += LagrangeMulInit[1,ib,idim,1,ibq,jdim]
-
-
-
-
-
-
-
-
-
-
-    cdef double complex[:,:,::1]  grad_pot_fft = the_rfft(grad_pot_all,norm="forward")  #
-    cdef double Kin_en = 0  
-    cdef np.ndarray[double, ndim=4, mode="c"] Action_grad_np = np.empty((nloop,cndim,ncoeff,2),np.float64)
-    cdef double[:,:,:,::1] Action_grad = Action_grad_np 
-
-    for il in range(nloop):
-        
-        prod_fac = MassSum[il]*cfourpisq
-        
-        for idim in range(cndim):   #
-            Action_grad[il,idim,0,0] = -grad_pot_fft[il,idim,0].real
-            Action_grad[il,idim,0,1] = 0    #
-            for k in range(1,ncoeff):
-                
-                k2 = k*k
-                a = prod_fac*k2
-                b=2*a   #
-                Kin_en += a *((all_coeffs[il,idim,k,0]*all_coeffs[il,idim,k,0]) + (all_coeffs[il,idim,k,1]*all_coeffs[il,idim,k,1]))
-                
-                Action_grad[il,idim,k,0] = b*all_coeffs[il,idim,k,0] - 2*grad_pot_fft[il,idim,k].real
-                Action_grad[il,idim,k,1] = b*all_coeffs[il,idim,k,1] - 2*grad_pot_fft[il,idim,k].imag
-            
-    Action = Kin_en-Pot_en
-    
-    return Action,Action_grad_np
-    
-'''
+    return Action_hess_dx_np, LagrangeMulInit_der_np
