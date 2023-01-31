@@ -234,7 +234,7 @@ def ExecName(the_name, input_folder, store_folder):
         SymplecticMethod = 'SymplecticRuth3'
         SymplecticIntegrator = choreo.GetSymplecticIntegrator(SymplecticMethod)
 
-        nint_ODE_mul = 128
+        nint_ODE_mul = 8
         nint_ODE = nint_ODE_mul*nint
 
         fun,gun,x0,v0 = ActionSyst.GetTangentSystemDef(x,nint_ODE,method=SymplecticMethod)
@@ -297,12 +297,12 @@ def ExecName(the_name, input_folder, store_folder):
         print("Relative error on loxodromy ",np.linalg.norm(Instability_magnitude - np.flip(1/Instability_magnitude))/np.linalg.norm(Instability_magnitude))
 
         all_coeffs_dc_init = choreo.the_rfft(all_pos_d_init,norm="forward")
-        all_coeffs_d_init = np.empty((nbody,choreo.ndim,2,nbody,choreo.ndim,ncoeff,2),np.float64)
+        all_coeffs_d_init = np.zeros((nbody,choreo.ndim,2,nbody,choreo.ndim,ncoeff,2),np.float64)
         all_coeffs_d_init[:,:,:,:,:,:,0] = all_coeffs_dc_init[:,:,:,:,:,:ncoeff].real
         all_coeffs_d_init[:,:,:,:,:,:,1] = all_coeffs_dc_init[:,:,:,:,:,:ncoeff].imag
 
 
-        x0 = np.ascontiguousarray(np.concatenate((all_coeffs_d_init.reshape(-1),LagrangeMulInit.reshape(-1),MonodromyMatLog.reshape(-1))))
+        x0 = np.ascontiguousarray(np.concatenate((all_coeffs_d_init.reshape(-1),LagrangeMulInit.reshape(-1))))
 
     else:
 
@@ -316,9 +316,10 @@ def ExecName(the_name, input_folder, store_folder):
                 all_coeffs_d_init[ib,idim,1,ib,idim,1,1] = -1./(2*twopi)
 
 
-        x0 = np.ascontinuousarray(np.concatenate((all_coeffs_d_init.reshape(-1),LagrangeMulInit.reshape(-1),MonodromyMatLog.reshape(-1))))
+        x0 = np.ascontiguousarray(np.concatenate((all_coeffs_d_init.reshape(-1), LagrangeMulInit.reshape(-1))))
 
 
+    MonodromyMatLog = np.ascontiguousarray(MonodromyMatLog.reshape(2,nbody,choreo.ndim,2,nbody,choreo.ndim))
 
     krylov_method = 'lgmres'
     # krylov_method = 'gmres'
@@ -336,7 +337,7 @@ def ExecName(the_name, input_folder, store_folder):
     disp_scipy_opt = True
     # disp_scipy_opt = False
 
-    maxiter = 10000
+    maxiter = 100
 
 
             
@@ -347,7 +348,8 @@ def ExecName(the_name, input_folder, store_folder):
         nint,
         ActionSyst.mass,
         all_coeffs,
-        all_pos
+        all_pos,
+        MonodromyMatLog,
     )
 
     res_1D = F(x0)
@@ -387,10 +389,10 @@ def ExecName(the_name, input_folder, store_folder):
 #     plt.savefig("out.png")
 
 
-#     jac_options = {'method':krylov_method}
-#     jacobian = scipy.optimize.KrylovJacobian(**jac_options)
-# 
-#     opt_result , info = scipy.optimize.nonlin.nonlin_solve(F=F,x0=x0,jacobian=jacobian,verbose=disp_scipy_opt,maxiter=maxiter,f_tol=gradtol,line_search=line_search,raise_exception=False,full_output=True)
+    jac_options = {'method':krylov_method}
+    jacobian = scipy.optimize.KrylovJacobian(**jac_options)
+
+    opt_result , info = scipy.optimize.nonlin.nonlin_solve(F=F,x0=x0,jacobian=jacobian,verbose=disp_scipy_opt,maxiter=maxiter,f_tol=gradtol,line_search=line_search,raise_exception=False,full_output=True)
 
 
 

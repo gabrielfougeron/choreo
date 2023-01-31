@@ -75,6 +75,7 @@ def int_fun_grad_c(f_base_grad,x,v):
 
 
 ncoeffs = 12
+nint=ncoeffs*2
 # nint = 900
 
 
@@ -93,13 +94,14 @@ for k in range(ncoeffs):
     cv_init_c[k] *= twopi * 1J * k
 
 
-x = np.fft.irfft(c_init_c)
-v = np.fft.irfft(cv_init_c)
+x = np.fft.irfft(c_init_c,n=nint)
+v = np.fft.irfft(cv_init_c,n=nint)
 
 
 
-nint = x.shape[0]
 
+
+print(ncoeffs,nint)
 
 
 
@@ -107,7 +109,7 @@ nint = x.shape[0]
 # x = np.zeros((nint))
 # x[0] = 1.
 
-ncoeffs = nint //2 +1
+# ncoeffs = nint //2 +1
 
 
 dc = np.zeros((ncoeffs,2))
@@ -120,19 +122,14 @@ for k in range(ncoeffs):
     dcv_c[k] *= twopi * 1J * k
 
 
-dx = np.fft.irfft(dc_c)
-dv = np.fft.irfft(dcv_c)
+dx = np.fft.irfft(dc_c,n=nint)
+dv = np.fft.irfft(dcv_c,n=nint)
 
-dc_real = np.zeros((ncoeffs-1,2))
-# dc_real[:,0] = dc_c.real
-# dc_real[:,1] = dc_c.imag
+dc_real = np.zeros((ncoeffs,2))
+dc_real[:,0] = dc_c.real
+dc_real[:,1] = dc_c.imag
 
-dc_real[0,0] = dc_c[0].real
-for k in range(1,ncoeffs-1):
-    dc_real[k,0] = dc_c[k].real
-    dc_real[k,1] = dc_c[k].imag
-
-dx_inv = np.fft.irfft(dc_c)
+dx_inv = np.fft.irfft(dc_c,n=nint)
 print(np.linalg.norm(dx-dx_inv))
 
 
@@ -185,8 +182,8 @@ df_grad_c = np.dot(dc_real.reshape(-1),f_grad_c.reshape(-1))
 # print("f_grad_c :",f_grad_c*nint)
 
 # print(df_grad)
-print(df_grad)
-print(df_grad_c)
+# print(df_grad)
+# print(df_grad_c)
 
 
 abs_err = np.linalg.norm(df_grad-df_grad_c)
