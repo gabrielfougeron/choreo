@@ -229,12 +229,12 @@ def ExecName(the_name, input_folder, store_folder):
 
         LagrangeMulInit = np.zeros((2,nbody,choreo.ndim,2,nbody,choreo.ndim),dtype=np.float64)
 
-        # SymplecticMethod = 'SymplecticEuler'
+        SymplecticMethod = 'SymplecticEuler'
         # SymplecticMethod = 'SymplecticStormerVerlet'
-        SymplecticMethod = 'SymplecticRuth3'
+        # SymplecticMethod = 'SymplecticRuth3'
         SymplecticIntegrator = choreo.GetSymplecticIntegrator(SymplecticMethod)
 
-        nint_ODE_mul = 8
+        nint_ODE_mul = 1
         nint_ODE = nint_ODE_mul*nint
 
         fun,gun,x0,v0 = ActionSyst.GetTangentSystemDef(x,nint_ODE,method=SymplecticMethod)
@@ -263,9 +263,39 @@ def ExecName(the_name, input_folder, store_folder):
 
         MonodromyMat = np.ascontiguousarray(np.concatenate((xf,vf),axis=0).reshape(2*ndof,2*ndof))
 
+
+
         # MonodromyMat = np.dot(MonodromyMat,MonodromyMat)
 
         MonodromyMatLog = scipy.linalg.logm(MonodromyMat)
+
+
+        w = np.zeros((2*ndof,2*ndof),dtype=np.float64)
+        w[0:ndof,ndof:2*ndof] = np.identity(ndof)
+        w[ndof:2*ndof,0:ndof] = -np.identity(ndof)
+
+
+        
+        MonodromyMatLogsq = np.dot(MonodromyMatLog,MonodromyMatLog)
+
+        # MonodromyMatLog_ = scipy.linalg.sqrtm(MonodromyMatLogsq)
+                                              
+        # print(np.linalg.norm(MonodromyMatLog_-MonodromyMatLog))
+
+
+
+
+        skewsym = np.dot(w,MonodromyMatLogsq)
+        symmat = np.dot(w,MonodromyMatLog)
+
+        print('Symplecticity')
+        print(np.linalg.norm(w - np.dot(MonodromyMat.transpose(),np.dot(w,MonodromyMat))))
+        print(np.linalg.norm(np.dot(MonodromyMatLog.transpose(),w) + np.dot(w,MonodromyMatLog)))
+        print(np.linalg.norm(skewsym + skewsym.transpose()))
+        print(np.linalg.norm(symmat - symmat.transpose()))
+
+
+        # exit()
 
 
         for iint in range(nint):
@@ -389,10 +419,10 @@ def ExecName(the_name, input_folder, store_folder):
 #     plt.savefig("out.png")
 
 
-    jac_options = {'method':krylov_method}
-    jacobian = scipy.optimize.KrylovJacobian(**jac_options)
-
-    opt_result , info = scipy.optimize.nonlin.nonlin_solve(F=F,x0=x0,jacobian=jacobian,verbose=disp_scipy_opt,maxiter=maxiter,f_tol=gradtol,line_search=line_search,raise_exception=False,full_output=True)
+    # jac_options = {'method':krylov_method}
+#     jacobian = scipy.optimize.KrylovJacobian(**jac_options)
+# 
+#     opt_result , info = scipy.optimize.nonlin.nonlin_solve(F=F,x0=x0,jacobian=jacobian,verbose=disp_scipy_opt,maxiter=maxiter,f_tol=gradtol,line_search=line_search,raise_exception=False,full_output=True)
 
 
 
