@@ -1993,7 +1993,7 @@ def Compute_action_hess_mul_Tan_Cython_nosym(
     np.ndarray[double, ndim=7, mode="c"]  all_coeffs_d  , # required
     double[:,:,::1]   all_pos               ,
     double[:,:,:,:,:,::1] LagrangeMulInit   ,
-    double[:,:,:,:,:,::1] MonodromyMatLog   ,
+    np.ndarray[double, ndim=6, mode="c"] MonodromyMatLog_guess   ,
 ):
 
     cdef Py_ssize_t il,ilp,i
@@ -2068,6 +2068,19 @@ def Compute_action_hess_mul_Tan_Cython_nosym(
                                 hess_pot_all_d[ib ,idim,ivx,ibq,jdim,iint] += c
                                 hess_pot_all_d[ibp,idim,ivx,ibq,jdim,iint] -= c
 
+
+
+
+
+    # Refine Monodromy Log guess
+
+    cdef np.ndarray[double, ndim=5, mode="c"] Qint = np.copy(all_coeffs_d[:,:,:,:,:,0,0])
+    cdef np.ndarray[double, ndim=5, mode="c"] Fint = - np.copy(the_rfft(hess_pot_all_d,norm="forward")[:,:,:,:,:,0].real)
+
+    cdef np.ndarray[double, ndim=6, mode="c"] MonodromyMatLog = RefineMonodromy(Qint,Fint,MonodromyMatLog_guess,nbody)
+
+    #MonodromyMatLog = MonodromyMatLog_guess
+
     # Initial condition
 
     cdef np.ndarray[double, ndim=6, mode="c"] LagrangeMulInit_der_np = np.zeros((2,nbody,cndim,2,nbody,cndim),np.float64)
@@ -2126,7 +2139,7 @@ def Compute_action_hess_mul_Tan_Cython_nosym(
     cdef double[:,:,:,:,:,:,::1] Action_hess_dx_ref
 
 
-    for n_div in range(2):
+    for n_div in range(2): # Two time derivatives
 
         Action_hess_dx_ref = np.copy(Action_hess_dx_np)
         
@@ -2193,32 +2206,64 @@ def Compute_action_hess_mul_Tan_Cython_nosym(
                             Action_hess_dx[ib,idim,ivx,ibq,jdim,k,1] += 2*(hess_dx_pot_fft[ib,idim,ivx,ibq,jdim,k].imag - b*hess_dx_vel_fft[ib,idim,ivx,ibq,jdim,k].real)
 
 
-
-    # ~ print('Action_hess_dx_np',np.linalg.norm(Action_hess_dx_np))
-    # ~ print('LagrangeMulInit_der_np',np.linalg.norm(LagrangeMulInit_der_np))
-
-    # ~ print(LagrangeMulInit_der_np)
-
-# ~ 
-# ~     for ib in range(nbody):
-# ~         for idim in range(cndim):
-# ~ 
-# ~             for ibq in range(nbody):
-# ~                 for jdim in range(cndim):
-# ~ 
-# ~                     print(ib,idim,ibq,jdim,LagrangeMulInit_der[0,ib,idim,0,ibq,jdim])
-# ~                     print(ib,idim,ibq,jdim,LagrangeMulInit_der[0,ib,idim,1,ibq,jdim])
-# ~                     print(ib,idim,ibq,jdim,LagrangeMulInit_der[1,ib,idim,0,ibq,jdim])
-# ~                     print(ib,idim,ibq,jdim,LagrangeMulInit_der[1,ib,idim,1,ibq,jdim])
-
-    # ~ for ib in range(nbody):
-    # ~     for idim in range(cndim):
-    # ~ 
-    # ~             print(ib,idim,LagrangeMulInit_der[0,ib,idim,0,ib,idim])
-    # ~             print(ib,idim,LagrangeMulInit_der[0,ib,idim,1,ib,idim])
-    # ~             print(ib,idim,LagrangeMulInit_der[1,ib,idim,0,ib,idim])
-    # ~             print(ib,idim,LagrangeMulInit_der[1,ib,idim,1,ib,idim])
-
-
-
     return Action_hess_dx_np, LagrangeMulInit_der_np
+
+
+def RefineMonodromy(
+    np.ndarray[double, ndim=5, mode="c"] Qint_in ,
+    np.ndarray[double, ndim=5, mode="c"] Fint_in ,
+    np.ndarray[double, ndim=6, mode="c"] MonodromyMatLog_guess,
+    long nbody
+):
+
+    cdef long ndof = nbody * cndim
+    cdef long twondof = 2*ndof
+    
+    cdef long rank = 0
+    cdef long icvg, n_cvg
+
+    n_cvg = 3
+
+    cdef np.ndarray[double, ndim=2, mode="c"] MonodromyMatLog_cur = np.copy(MonodromyMatLog_guess.reshape(twondof,twondof))
+    cdef np.ndarray[double, ndim=2, mode="c"] MonodromyMatLog_new = np.copy(MonodromyMatLog_guess.reshape(twondof,twondof))
+    cdef np.ndarray[double, ndim=2, mode="c"] Mat = np.zeros((twondof,twondof))
+    cdef np.ndarray[double, ndim=2, mode="c"] RHS = np.zeros((twondof,twondof))
+    cdef np.ndarray[double, ndim=2, mode="c"] QRint = np.zeros((ndof,twondof))
+    cdef np.ndarray[double, ndim=2, mode="c"] Qint = Qint_in.reshape(ndof,twondof)
+
+    Mat[0:ndof,:] = Qint
+    RHS[ndof:twondof,:] = Fint_in.reshape(ndof,twondof)
+
+
+    cdef np.ndarray[double, ndim=2, mode="c"] w = np.zeros((2*ndof,2*ndof),dtype=np.float64)
+    w[0:ndof,ndof:2*ndof] = np.identity(ndof)
+    w[ndof:2*ndof,0:ndof] = -np.identity(ndof)
+
+
+    for i_cvg in range(n_cvg):
+
+        QRint[:,:] = np.dot(Qint,MonodromyMatLog_cur)
+
+        Mat[ndof:twondof,:] = QRint
+        RHS[0:ndof,:] = QRint
+
+        print(i_cvg)
+        print(np.linalg.norm(np.dot(Mat,MonodromyMatLog_cur)-RHS))
+        # print(np.dot(Mat,MonodromyMatLog_cur)-RHS)
+
+
+        print(np.linalg.norm(np.dot(MonodromyMatLog_cur.transpose(),w) + np.dot(w,MonodromyMatLog_cur)))
+
+
+        # MonodromyMatLog_new[:,:] = np.linalg.solve(Mat, RHS)
+        MonodromyMatLog_new[:,:],_,rank,_ = np.linalg.lstsq(Mat, RHS,rcond=None)
+
+
+        print(np.linalg.norm(MonodromyMatLog_cur-MonodromyMatLog_new))
+        print(rank)
+        print('')
+
+
+        MonodromyMatLog_cur[:,:] = MonodromyMatLog_new
+
+    return MonodromyMatLog_cur.reshape(2,nbody,cndim,2,nbody,cndim)
