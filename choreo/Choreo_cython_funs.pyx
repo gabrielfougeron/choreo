@@ -2209,6 +2209,8 @@ def Compute_action_hess_mul_Tan_Cython_nosym(
 
     return Action_hess_dx_np, LagrangeMulInit_der_np
 
+'''
+# VERSION SYMMETRIQUE
 
 def RefineMonodromy(
     np.ndarray[double, ndim=5, mode="c"] Qint_in ,
@@ -2234,34 +2236,39 @@ def RefineMonodromy(
 
     # Small system
     Mat = -np.dot(np.dot(Qint,R_in),w)
+    RHS = Fint_in.reshape(ndof,twondof)
+
+
 
 
 
     #Mat_pinv = np.linalg.pinv(Mat,rcond=1e-10)
     Mat_pinv,rank = scipy.linalg.pinv(Mat, return_rank=True)
-    
-    RHS = Fint_in.reshape(ndof,twondof)
 
     P_sol = np.dot(Mat_pinv,RHS)
 
 
-    P_sol = P_sol + P_sol.transpose() + np.dot(np.dot(Mat_pinv,Mat),P_sol.transpose())
+    P_sol = P_sol + np.dot(np.identity(twondof) - np.dot(Mat_pinv,Mat),P_sol.transpose())
 
 
-    print('rank :',np.trace(np.dot(Mat,Mat_pinv),rank))
+    print('rank :',rank)
+    print('rank :',np.trace(np.dot(Mat,Mat_pinv)))
+    print('rank :',np.trace(np.dot(Mat_pinv,Mat)))
+
+    print('Syst sym : ',np.linalg.norm(np.dot(Mat, RHS.transpose()) - np.dot(RHS, Mat.transpose())))
 
 
     # scipy.linalg.pinv(a, atol=None, rtol=None, return_rank=False, check_finite=True, cond=None, rcond=None)
 
 
-    print(np.linalg.norm(np.dot(Mat, np.dot(w,R_in)) - RHS))
-    print(np.linalg.norm(np.dot(Mat, P_sol) - RHS))
+    print('Sol : ',np.linalg.norm(np.dot(Mat, np.dot(w,R_in)) - RHS))
+    print('Sol : ',np.linalg.norm(np.dot(Mat, P_sol) - RHS))
 
-    print(np.linalg.norm(R_in))
-    print(np.linalg.norm(P_sol))
+    print('norm : ',np.linalg.norm(np.dot(w,R_in)))
+    print('norm : ',np.linalg.norm(P_sol))
 
-    print(np.linalg.norm(np.dot(w,R_in)-np.dot(w,R_in).transpose()))
-    print(np.linalg.norm(P_sol-P_sol.transpose()))
+    print('sym : ',np.linalg.norm(np.dot(w,R_in)-np.dot(w,R_in).transpose()))
+    print('sym : ',np.linalg.norm(P_sol-P_sol.transpose()))
 
     print('')
 
@@ -2269,3 +2276,78 @@ def RefineMonodromy(
 
     # ~ return MonodromyMatLog.reshape(2,nbody,cndim,2,nbody,cndim)
     return MonodromyMatLog_guess
+
+
+'''
+
+# VERSION ANTI-SYMMETRIQUE
+
+def RefineMonodromy(
+    np.ndarray[double, ndim=5, mode="c"] Qint_in ,
+    np.ndarray[double, ndim=5, mode="c"] Fint_in ,
+    np.ndarray[double, ndim=6, mode="c"] MonodromyMatLog_guess,
+    long nbody
+):
+
+    cdef long ndof = nbody * cndim
+    cdef long twondof = 2*ndof
+    
+    cdef long rank = 0
+    cdef long icvg, n_cvg
+
+
+    cdef np.ndarray[double, ndim=2, mode="c"] Qint = Qint_in.reshape(ndof,twondof)
+    cdef np.ndarray[double, ndim=2, mode="c"] R_in = MonodromyMatLog_guess.reshape(twondof,twondof)
+
+    R_in_sq = np.dot(R_in,R_in)
+
+    # For simplicity
+    cdef np.ndarray[double, ndim=2, mode="c"] w = np.zeros((twondof,twondof),dtype=np.float64)
+    w[0:ndof,ndof:twondof] = np.identity(ndof)
+    w[ndof:twondof,0:ndof] = -np.identity(ndof)
+
+    # Small system
+    Mat = -np.dot(Qint,w)
+    RHS = Fint_in.reshape(ndof,twondof)
+
+
+
+
+
+    #Mat_pinv = np.linalg.pinv(Mat,rcond=1e-10)
+    Mat_pinv,rank = scipy.linalg.pinv(Mat, return_rank=True)
+
+    P_sol = np.dot(Mat_pinv,RHS)
+
+    P_sol = P_sol - np.dot(np.identity(twondof) - np.dot(Mat_pinv,Mat),P_sol.transpose())
+
+
+    print('rank :',rank)
+    print('rank :',np.trace(np.dot(Mat_pinv,Mat)))
+    print('rank :',np.trace(np.dot(Mat,Mat_pinv)))
+
+    print('Syst skew : ',np.linalg.norm(np.dot(Mat, RHS.transpose()) + np.dot(RHS, Mat.transpose()))) ## MAT ET RHS SONT ILS EN RELATION ANTISYM ?
+
+
+    # scipy.linalg.pinv(a, atol=None, rtol=None, return_rank=False, check_finite=True, cond=None, rcond=None)
+
+
+    print("sol ",np.linalg.norm(np.dot(Mat, np.dot(w,R_in_sq)) - RHS))
+    print("sol ",np.linalg.norm(np.dot(Mat, P_sol) - RHS))
+
+    print(np.linalg.norm(R_in_sq))
+    print(np.linalg.norm(P_sol))
+
+    print("sksym ",np.linalg.norm(np.dot(w,R_in_sq)+np.dot(w,R_in_sq).transpose()))
+    print("sksym ",np.linalg.norm(P_sol+P_sol.transpose()))
+
+
+
+
+    print('')
+
+
+
+    # ~ return MonodromyMatLog.reshape(2,nbody,cndim,2,nbody,cndim)
+    return MonodromyMatLog_guess
+
