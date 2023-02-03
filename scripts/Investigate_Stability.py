@@ -234,7 +234,7 @@ def ExecName(the_name, input_folder, store_folder):
         SymplecticMethod = 'SymplecticRuth3'
         SymplecticIntegrator = choreo.GetSymplecticIntegrator(SymplecticMethod)
 
-        nint_ODE_mul = 64
+        nint_ODE_mul = 1
         nint_ODE = nint_ODE_mul*nint
 
         fun,gun,x0,v0 = ActionSyst.GetTangentSystemDef(x,nint_ODE,method=SymplecticMethod)
