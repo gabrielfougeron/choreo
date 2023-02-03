@@ -18,6 +18,7 @@ np.import_array()
 
 cimport cython
 
+import scipy
 import scipy.sparse as sp
 
 from libc.math cimport pow as cpow
@@ -2222,48 +2223,49 @@ def RefineMonodromy(
     cdef long rank = 0
     cdef long icvg, n_cvg
 
-    n_cvg = 3
+    cdef np.ndarray[double, ndim=2, mode="c"] AMat = np.zeros((twondof,twondof))
+    # cdef np.ndarray[double, ndim=2, mode="c"] BMat = np.zeros((twondof,twondof))
 
-    cdef np.ndarray[double, ndim=2, mode="c"] MonodromyMatLog_cur = np.copy(MonodromyMatLog_guess.reshape(twondof,twondof))
-    cdef np.ndarray[double, ndim=2, mode="c"] MonodromyMatLog_new = np.copy(MonodromyMatLog_guess.reshape(twondof,twondof))
-    cdef np.ndarray[double, ndim=2, mode="c"] Mat = np.zeros((twondof,twondof))
     cdef np.ndarray[double, ndim=2, mode="c"] RHS = np.zeros((twondof,twondof))
     cdef np.ndarray[double, ndim=2, mode="c"] QRint = np.zeros((ndof,twondof))
     cdef np.ndarray[double, ndim=2, mode="c"] Qint = Qint_in.reshape(ndof,twondof)
+    cdef np.ndarray[double, ndim=2, mode="c"] R_in = MonodromyMatLog_guess.reshape(twondof,twondof)
 
-    Mat[0:ndof,:] = Qint
-    RHS[ndof:twondof,:] = Fint_in.reshape(ndof,twondof)
-
-
+    # For simplicity
     cdef np.ndarray[double, ndim=2, mode="c"] w = np.zeros((2*ndof,2*ndof),dtype=np.float64)
     w[0:ndof,ndof:2*ndof] = np.identity(ndof)
     w[ndof:2*ndof,0:ndof] = -np.identity(ndof)
 
+    # Small system
+    AMat[0:ndof,:] = Qint
+    RHS[0:ndof,:] = Fint_in.reshape(ndof,twondof)
 
-    for i_cvg in range(n_cvg):
-
-        QRint[:,:] = np.dot(Qint,MonodromyMatLog_cur)
-
-        Mat[ndof:twondof,:] = QRint
-        RHS[0:ndof,:] = QRint
-
-        print(i_cvg)
-        print(np.linalg.norm(np.dot(Mat,MonodromyMatLog_cur)-RHS))
-        # print(np.dot(Mat,MonodromyMatLog_cur)-RHS)
+    cdef np.ndarray[double, ndim=2, mode="c"] R2 = np.dot(R_in,R_in)
+    print('R2 sol ',np.linalg.norm(np.dot(AMat,R2) -RHS))
 
 
-        print(np.linalg.norm(np.dot(MonodromyMatLog_cur.transpose(),w) + np.dot(w,MonodromyMatLog_cur)))
+    # Extended system
+    AMat[:,:] = - np.dot(AMat,w)
+
+    cdef np.ndarray[double, ndim=2, mode="c"] BMat = - np.ascontiguousarray(AMat.transpose())
 
 
-        # MonodromyMatLog_new[:,:] = np.linalg.solve(Mat, RHS)
-        MonodromyMatLog_new[:,:],_,rank,_ = np.linalg.lstsq(Mat, RHS,rcond=None)
+    RHS[:,:] = RHS + RHS.transpose()
+
+    # ~ cdef np.ndarray[double, ndim=2, mode="c"] wR2 = scipy.linalg.solve_sylvester(AMat, BMat, RHS)
+
+    cdef np.ndarray[double, ndim=2, mode="c"] wR2 = np.dot(w,np.dot(R_in,R_in))
+
+    # ~ wR2[:,:] = (wR2 - wR2.transpose())/2
 
 
-        print(np.linalg.norm(MonodromyMatLog_cur-MonodromyMatLog_new))
-        print(rank)
-        print('')
+    print('wR2 norm ',np.linalg.norm(wR2))
+    print('wR2 sol ',np.linalg.norm(np.dot(AMat,wR2)+np.dot(wR2,BMat)-RHS))
+    print('sksym',np.linalg.norm(wR2+wR2.transpose()))
 
 
-        MonodromyMatLog_cur[:,:] = MonodromyMatLog_new
 
-    return MonodromyMatLog_cur.reshape(2,nbody,cndim,2,nbody,cndim)
+
+
+    # ~ return MonodromyMatLog.reshape(2,nbody,cndim,2,nbody,cndim)
+    return MonodromyMatLog_guess
