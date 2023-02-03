@@ -2223,47 +2223,47 @@ def RefineMonodromy(
     cdef long rank = 0
     cdef long icvg, n_cvg
 
-    cdef np.ndarray[double, ndim=2, mode="c"] AMat = np.zeros((twondof,twondof))
-    # cdef np.ndarray[double, ndim=2, mode="c"] BMat = np.zeros((twondof,twondof))
 
-    cdef np.ndarray[double, ndim=2, mode="c"] RHS = np.zeros((twondof,twondof))
-    cdef np.ndarray[double, ndim=2, mode="c"] QRint = np.zeros((ndof,twondof))
     cdef np.ndarray[double, ndim=2, mode="c"] Qint = Qint_in.reshape(ndof,twondof)
     cdef np.ndarray[double, ndim=2, mode="c"] R_in = MonodromyMatLog_guess.reshape(twondof,twondof)
 
     # For simplicity
-    cdef np.ndarray[double, ndim=2, mode="c"] w = np.zeros((2*ndof,2*ndof),dtype=np.float64)
-    w[0:ndof,ndof:2*ndof] = np.identity(ndof)
-    w[ndof:2*ndof,0:ndof] = -np.identity(ndof)
+    cdef np.ndarray[double, ndim=2, mode="c"] w = np.zeros((twondof,twondof),dtype=np.float64)
+    w[0:ndof,ndof:twondof] = np.identity(ndof)
+    w[ndof:twondof,0:ndof] = -np.identity(ndof)
 
     # Small system
-    AMat[0:ndof,:] = Qint
-    RHS[0:ndof,:] = Fint_in.reshape(ndof,twondof)
-
-    cdef np.ndarray[double, ndim=2, mode="c"] R2 = np.dot(R_in,R_in)
-    print('R2 sol ',np.linalg.norm(np.dot(AMat,R2) -RHS))
+    Mat = -np.dot(np.dot(Qint,R_in),w)
 
 
-    # Extended system
-    AMat[:,:] = - np.dot(AMat,w)
 
-    cdef np.ndarray[double, ndim=2, mode="c"] BMat = - np.ascontiguousarray(AMat.transpose())
+    #Mat_pinv = np.linalg.pinv(Mat,rcond=1e-10)
+    Mat_pinv,rank = scipy.linalg.pinv(Mat, return_rank=True)
+    
+    RHS = Fint_in.reshape(ndof,twondof)
 
-
-    RHS[:,:] = RHS + RHS.transpose()
-
-    # ~ cdef np.ndarray[double, ndim=2, mode="c"] wR2 = scipy.linalg.solve_sylvester(AMat, BMat, RHS)
-
-    cdef np.ndarray[double, ndim=2, mode="c"] wR2 = np.dot(w,np.dot(R_in,R_in))
-
-    # ~ wR2[:,:] = (wR2 - wR2.transpose())/2
+    P_sol = np.dot(Mat_pinv,RHS)
 
 
-    print('wR2 norm ',np.linalg.norm(wR2))
-    print('wR2 sol ',np.linalg.norm(np.dot(AMat,wR2)+np.dot(wR2,BMat)-RHS))
-    print('sksym',np.linalg.norm(wR2+wR2.transpose()))
+    P_sol = P_sol + P_sol.transpose() + np.dot(np.dot(Mat_pinv,Mat),P_sol.transpose())
 
 
+    print('rank :',np.trace(np.dot(Mat,Mat_pinv),rank))
+
+
+    # scipy.linalg.pinv(a, atol=None, rtol=None, return_rank=False, check_finite=True, cond=None, rcond=None)
+
+
+    print(np.linalg.norm(np.dot(Mat, np.dot(w,R_in)) - RHS))
+    print(np.linalg.norm(np.dot(Mat, P_sol) - RHS))
+
+    print(np.linalg.norm(R_in))
+    print(np.linalg.norm(P_sol))
+
+    print(np.linalg.norm(np.dot(w,R_in)-np.dot(w,R_in).transpose()))
+    print(np.linalg.norm(P_sol-P_sol.transpose()))
+
+    print('')
 
 
 
