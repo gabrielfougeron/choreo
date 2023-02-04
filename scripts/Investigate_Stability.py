@@ -234,7 +234,7 @@ def ExecName(the_name, input_folder, store_folder):
         SymplecticMethod = 'SymplecticRuth3'
         SymplecticIntegrator = choreo.GetSymplecticIntegrator(SymplecticMethod)
 
-        nint_ODE_mul = 128
+        nint_ODE_mul = 1
         nint_ODE = nint_ODE_mul*nint
 
         fun,gun,x0,v0 = ActionSyst.GetTangentSystemDef(x,nint_ODE,method=SymplecticMethod)
@@ -286,6 +286,18 @@ def ExecName(the_name, input_folder, store_folder):
         print(np.linalg.norm(skewsym + skewsym.transpose()))
         print(np.linalg.norm(symmat - symmat.transpose()))
 
+
+
+        # eigvals,eigvects = scipy.linalg.eig(a=MonodromyMat)
+        eigvals,eigvects = scipy.linalg.eig(a=MonodromyMatLog)
+        # eigvals,eigvects = scipy.linalg.eig(a=MonodromyMatLogsq)
+
+        print(eigvals)
+        # print(eigvals.real)
+        # print(abs(eigvals))
+
+
+        # exit()
 
 
         for iint in range(nint):
