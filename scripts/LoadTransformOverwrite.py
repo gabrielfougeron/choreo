@@ -346,7 +346,7 @@ def ExecName(
 
         nint_mul = 128
 
-        nint = ActionSyst.nint()*nint_mul
+        nint = ActionSyst.nint*nint_mul
 
         fun,gun,x0,v0 = ActionSyst.GetTangentSystemDef(x,nint,method=SymplecticMethod)
 
@@ -501,7 +501,7 @@ def ExecName(
 
                 nint_mul = refinement_lvl[imul]
 
-                nint = ActionSyst.nint()*nint_mul
+                nint = ActionSyst.nint*nint_mul
 
                 fun,gun,x0,v0 = ActionSyst.GetTangentSystemDef(x,nint,method=SymplecticMethod)
 
@@ -578,7 +578,7 @@ def ExecName(
 
                 nint_mul = refinement_lvl[imul]
 
-                nint = ActionSyst.nint()*nint_mul
+                nint = ActionSyst.nint*nint_mul
 
                 ndim_ode = nbody*choreo.ndim
 
@@ -588,7 +588,7 @@ def ExecName(
 
 
                 # t_span = (0.,0.5)
-                # yf_exact =np.copy(all_pos_vel[:,:,:,ActionSyst.nint()//2].reshape(-1))
+                # yf_exact =np.copy(all_pos_vel[:,:,:,ActionSyst.nint//2].reshape(-1))
     
 
                 t_span = (0.,1.)
