@@ -76,7 +76,7 @@ MomConsImposed = True
 n_reconverge_it_max = 1
 n_grad_change = 1.
 ActionSyst = setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change)
-ncoeffs_args = ActionSyst.coeff_to_param().shape[0]
+ncoeffs_args = ActionSyst.coeff_to_param.shape[0]
 
 print('n params ',ncoeffs_args)
 
