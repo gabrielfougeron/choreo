@@ -2280,7 +2280,7 @@ def RefineMonodromy(
 
 '''
 
-'''
+
 # VERSION ANTI-SYMMETRIQUE
 
 def RefineMonodromy(
@@ -2313,14 +2313,12 @@ def RefineMonodromy(
 
 
 
-
-
     #Mat_pinv = np.linalg.pinv(Mat,rcond=1e-10)
     Mat_pinv,rank = scipy.linalg.pinv(Mat, return_rank=True)
 
     P_sol = np.dot(Mat_pinv,RHS)
 
-    P_sol = P_sol - np.dot(np.identity(twondof) - np.dot(Mat_pinv,Mat),P_sol.transpose())
+    P_sol = P_sol - np.dot(np.identity(twondof) - np.dot(Mat_pinv,Mat) ,P_sol.transpose())
 
 
     print('rank :',rank)
@@ -2328,10 +2326,6 @@ def RefineMonodromy(
     print('rank :',np.trace(np.dot(Mat,Mat_pinv)))
 
     print('Syst skew : ',np.linalg.norm(np.dot(Mat, RHS.transpose()) + np.dot(RHS, Mat.transpose()))) ## MAT ET RHS SONT ILS EN RELATION ANTISYM ?
-
-
-    # scipy.linalg.pinv(a, atol=None, rtol=None, return_rank=False, check_finite=True, cond=None, rcond=None)
-
 
     print("sol ",np.linalg.norm(np.dot(Mat, np.dot(w,R_in_sq)) - RHS))
     print("sol ",np.linalg.norm(np.dot(Mat, P_sol) - RHS))
@@ -2371,6 +2365,7 @@ def RefineMonodromy(
     cdef long icvg, n_cvg
 
 
+    cdef np.ndarray[double, ndim=2, mode="c"] P_shufl = np.zeros((twondof,twondof))
     cdef np.ndarray[double, ndim=2, mode="c"] Qint = Qint_in.reshape(ndof,twondof)
     cdef np.ndarray[double, ndim=2, mode="c"] R_in = MonodromyMatLog_guess.reshape(twondof,twondof)
 
@@ -2385,45 +2380,39 @@ def RefineMonodromy(
     Mat = np.copy(Qint)
     RHS = Fint_in.reshape(ndof,twondof)
 
-
-
-
-
-    #Mat_pinv = np.linalg.pinv(Mat,rcond=1e-10)
     Mat_pinv,rank = scipy.linalg.pinv(Mat, return_rank=True)
 
     P_sol = np.dot(Mat_pinv,RHS)
 
+    P_shufl[0:ndof      ,0:ndof      ] =   P_sol[ndof:twondof,ndof:twondof].transpose()
+    P_shufl[0:ndof      ,ndof:twondof] = - P_sol[0:ndof      ,ndof:twondof].transpose()
+    P_shufl[ndof:twondof,0:ndof      ] = - P_sol[ndof:twondof,0:ndof      ].transpose()
+    P_shufl[ndof:twondof,ndof:twondof] =   P_sol[0:ndof      ,0:ndof      ].transpose()
+
     Projection =  np.identity(twondof) - np.dot(Mat_pinv,Mat)
 
-    P_sol = P_sol - np.dot(Projection,np.dot(w,np.dot(P_sol.transpose(),w)))
+    P_sol = P_sol + np.dot(Projection, P_shufl )
 
-
+    """
     print('rank :',rank)
     print('rank :',np.trace(np.dot(Mat_pinv,Mat)))
     print('rank :',np.trace(np.dot(Mat,Mat_pinv)))
 
     print('Syst skew Hamil : ',np.linalg.norm(np.dot(np.dot(Mat,w), RHS.transpose()) + np.dot(RHS, np.dot(Mat,w).transpose()))) 
 
-
-    # scipy.linalg.pinv(a, atol=None, rtol=None, return_rank=False, check_finite=True, cond=None, rcond=None)
-
-
     print("sol ",np.linalg.norm(np.dot(Mat, R_in_sq) - RHS))
     print("sol ",np.linalg.norm(np.dot(Mat, P_sol) - RHS))
 
-    print(np.linalg.norm(R_in_sq))
-    print(np.linalg.norm(P_sol))
+    print("norm :",np.linalg.norm(R_in_sq))
+    print("norm :",np.linalg.norm(P_sol))
 
     print("sk Hamil", np.linalg.norm(np.dot(w,R_in_sq)+np.dot(w,R_in_sq).transpose()))
     print("sk Hamil", np.linalg.norm(np.dot(w,P_sol)+np.dot(w,P_sol).transpose()))
 
-
-
-
     print('')
+    """
 
 
-
-    # ~ return MonodromyMatLog.reshape(2,nbody,cndim,2,nbody,cndim)
+    # return P_sol.reshape(2,nbody,cndim,2,nbody,cndim)
     return MonodromyMatLog_guess
+'''
