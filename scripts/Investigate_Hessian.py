@@ -192,7 +192,7 @@ def ExecName(the_name, input_folder, store_folder):
     Action,Gradaction = ActionSyst.Compute_action(x)
     Newt_err = ActionSyst.Compute_Newton_err(x)
 
-    Newt_err_norm = np.linalg.norm(Newt_err)/(ActionSyst.nint()*ActionSyst.nbody)
+    Newt_err_norm = np.linalg.norm(Newt_err)/(ActionSyst.nint*ActionSyst.nbody)
 
     print(f'Saved Newton Error : {Info_dict["Newton_Error"]}')
     print(f'Init Newton Error : {Newt_err_norm}')
@@ -213,8 +213,8 @@ def ExecName(the_name, input_folder, store_folder):
 
 
 
-    ncoeff = ActionSyst.ncoeff()
-    nint = ActionSyst.nint()
+    ncoeff = ActionSyst.ncoeff
+    nint = ActionSyst.nint
     
     all_coeffs = ActionSyst.RemoveSym(x)
     c_coeffs = all_coeffs.view(dtype=np.complex128)[...,0]
