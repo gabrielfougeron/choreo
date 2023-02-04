@@ -102,8 +102,9 @@ class ChoreoAction():
 
         fun_name = key.removesuffix('_cvg_lvl_list')
 
-        # setattr(self, fun_name, functools.partial(self.GetCurrentListAttribute,key=key))
-        setattr(ChoreoAction, fun_name, property(functools.partial(ChoreoAction.GetCurrentListAttribute,key=key)))
+        if not(hasattr(ChoreoAction, fun_name)):
+
+            setattr(ChoreoAction, fun_name, property(functools.partial(ChoreoAction.GetCurrentListAttribute,key=key)))
 
     def Package_all_coeffs(self,all_coeffs):
         r"""
