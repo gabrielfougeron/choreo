@@ -34,7 +34,7 @@ twopi = 2*np.pi
 def main():
 
     # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/')
-    input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/3/')
+    input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/5/')
     # input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery/01 - Classic gallery')
     # input_folder = os.path.join(__PROJECT_ROOT__,'Keep/tests')
     
@@ -66,7 +66,7 @@ def main():
 # 
 #             input_names_list.append(file_root)
 
-    input_names_list = ['00005']
+    input_names_list = ['00010']
     # input_names_list = ['14 - Small mass gap']
     # input_names_list = ['04 - 5 pointed star']
 
@@ -188,6 +188,7 @@ def ExecName(the_name, input_folder, store_folder):
     x = ActionSyst.Package_all_coeffs(all_coeffs_init)
 
     ActionSyst.SavePosFFT(x)
+    ActionSyst.Do_Pos_FFT = False
 
     Action,Gradaction = ActionSyst.Compute_action(x)
     Newt_err = ActionSyst.Compute_Newton_err(x)
@@ -200,75 +201,15 @@ def ExecName(the_name, input_folder, store_folder):
     n_eig = 10
 
     # which_eigs = 'LM' # Largest (in magnitude) eigenvalues.
-    which_eigs = 'SM' # Smallest (in magnitude) eigenvalues.
+    # which_eigs = 'SM' # Smallest (in magnitude) eigenvalues.
     # which_eigs = 'LA' # Largest (algebraic) eigenvalues.
     # which_eigs = 'SA' # Smallest (algebraic) eigenvalues.
-    # which_eigs = 'BE' # Half (k/2) from each end of the spectrum.
+    which_eigs = 'BE' # Half (k/2) from each end of the spectrum.
 
     HessMat = ActionSyst.Compute_action_hess_LinOpt(x)
     w ,v = scipy.sparse.linalg.eigsh(HessMat,k=n_eig,which=which_eigs)
-    # print(w)
+    print(w)
 
-
-
-
-
-    ncoeff = ActionSyst.ncoeff
-    nint = ActionSyst.nint
-    
-    all_coeffs = ActionSyst.RemoveSym(x)
-    c_coeffs = all_coeffs.view(dtype=np.complex128)[...,0]
-    all_pos = choreo.the_irfft(c_coeffs,n=nint,axis=2,norm="forward")
-
-    all_coeffs_d = np.zeros((nbody,choreo.ndim,nbody,choreo.ndim,ncoeff,2),dtype=np.float64)
-    LagrangeMulInit = np.zeros((2,nbody,choreo.ndim,2,nbody,choreo.ndim),dtype=np.float64)
-
-    for ib in range(nbody):
-        for idim in range(choreo.ndim):
-            all_coeffs_d[ib,idim,ib,idim,0,0] = 1
-            all_coeffs_d[ib,idim,ib,idim,1,1] = -1./(2*twopi)
-
-
-    x0 = np.concatenate((all_coeffs_d.reshape(-1),LagrangeMulInit.reshape(-1)))
-
-
-
-    krylov_method = 'lgmres'
-    # krylov_method = 'gmres'
-    # krylov_method = 'bicgstab' 
-    # krylov_method = 'cgs'
-    # krylov_method = 'minres'
-    # krylov_method = 'tfqmr'
-
-
-    # line_search = 'armijo'
-    line_search = 'wolfe'
-
-    gradtol = 1e-13
-
-    disp_scipy_opt = True
-    # disp_scipy_opt = False
-
-    maxiter = 10000
-
-
-            
-    F = lambda x : choreo.TangentLagrangeResidual(
-        x,
-        nbody,
-        ncoeff,
-        nint,
-        ActionSyst.mass,
-        all_coeffs,
-        all_pos
-    )
-
-
-
-    jac_options = {'method':krylov_method}
-    jacobian = scipy.optimize.KrylovJacobian(**jac_options)
-
-    opt_result , info = scipy.optimize.nonlin.nonlin_solve(F=F,x0=x0,jacobian=jacobian,verbose=disp_scipy_opt,maxiter=maxiter,f_tol=gradtol,line_search=line_search,raise_exception=False,full_output=True)
 
 
 
