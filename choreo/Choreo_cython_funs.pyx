@@ -1628,11 +1628,8 @@ def diag_changevar(
         if (k == 0):
             k = 1
 
-        # ~ kd = k
-        kd = k*csqrt(MassSum[il]) # The jury is still out        
+        kd = k * csqrt(MassSum[il])
         kfac = cpow(kd,n_grad_change)
-            
-
         
         data[idx] *= kfac
     

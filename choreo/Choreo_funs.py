@@ -1775,6 +1775,8 @@ def setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max=6,MomCons=True,n_
 
     # Now detect parameters and build change of variables
 
+    MassPowSum = np.zeros((nloop),dtype=np.float64)
+
     ncoeff_cvg_lvl_list = []
     nint_cvg_lvl_list = []
     param_to_coeff_cvg_lvl_list = []
