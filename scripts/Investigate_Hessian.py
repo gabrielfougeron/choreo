@@ -66,7 +66,7 @@ def main():
 # 
 #             input_names_list.append(file_root)
 
-    input_names_list = ['00010']
+    input_names_list = ['00006']
     # input_names_list = ['14 - Small mass gap']
     # input_names_list = ['04 - 5 pointed star']
 
