@@ -1775,13 +1775,6 @@ def setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max=6,MomCons=True,n_
 
     # Now detect parameters and build change of variables
 
-    MassPowSum = np.zeros((nloop),dtype=np.float64)
-
-    for il in range(nloop):
-        for ib in range(loopnb[il]):
-
-            MassPowSum[il] += mass[Targets[il,ib]] ** (-n_grad_change)
-
     ncoeff_cvg_lvl_list = []
     nint_cvg_lvl_list = []
     param_to_coeff_cvg_lvl_list = []
@@ -1823,7 +1816,7 @@ def setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max=6,MomCons=True,n_
             -n_grad_change,
             param_to_coeff_cvg_lvl_list[i].row,
             param_to_coeff_cvg_lvl_list[i].data,
-            MassPowSum
+            MassSum
         )
         
         diag_changevar(
@@ -1832,7 +1825,7 @@ def setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max=6,MomCons=True,n_
             n_grad_change,
             coeff_to_param_cvg_lvl_list[i].col,
             coeff_to_param_cvg_lvl_list[i].data,
-            MassPowSum
+            MassSum
         )
 
         param_to_coeff_T_cvg_lvl_list.append(param_to_coeff_cvg_lvl_list[i].transpose(copy=True))

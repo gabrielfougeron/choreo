@@ -1608,7 +1608,7 @@ def diag_changevar(
     double n_grad_change,
     int [::1] idxarray ,
     double [::1] data ,
-    double [::1] MassPowSum  ,
+    double [::1] MassSum  ,
 ):
     
     cdef long idx, res, ift, k , il, idim
@@ -1628,8 +1628,8 @@ def diag_changevar(
         if (k == 0):
             k = 1
 
-        # ~ kd = k # The jury is still out        
-        kd = k*MassPowSum[il] # The jury is still out        
+        # ~ kd = k
+        kd = k*csqrt(MassSum[il]) # The jury is still out        
         kfac = cpow(kd,n_grad_change)
             
 
