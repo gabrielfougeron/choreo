@@ -326,7 +326,7 @@ def Find_Choreo(
                 print(exc)
                 print("Value Error occured, skipping.")
                 GoOn = False
-                raise(exc)
+                # raise(exc)
                 
             if (AskedForNext):
                 print("Skipping at user's request")
