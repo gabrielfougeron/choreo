@@ -297,9 +297,11 @@ var saveJSONData = (function () {
     };
 }());
 
-async function SaveConfigFile(UserDir=false){
+async function SaveConfigFile(UserDir=false,ConfigDict=undefined){
 
-    var ConfigDict = GatherConfigDict()
+    if (ConfigDict === undefined) {
+        ConfigDict = GatherConfigDict()
+    }
 
     const filename = 'choreo_config.json'
 
@@ -318,49 +320,54 @@ async function SaveConfigFile(UserDir=false){
 
 async function ChoreoExecuteClick() {
 
-    var ChoreoExecuteBtn = document.getElementById("ChoreoExecuteBtn");
+    var ChoreoExecuteBtn = document.getElementById("ChoreoExecuteBtn")
 
     if (!ChoreoExecuteBtn.disabled) {
         
         SearchIsOnGoing = true
-        var ChoreoExecuteBtn = document.getElementById("ChoreoExecuteBtn");
-        ChoreoExecuteBtn.disabled = "disabled";
-        var ChoreoDispInitStateBtn = document.getElementById("ChoreoDispInitStateBtn");
-        ChoreoDispInitStateBtn.disabled = "disabled";        
-        var ChoreoSearchNext = document.getElementById("ChoreoSearchNext");
-        ChoreoSearchNext.disabled = "";
+        var ChoreoExecuteBtn = document.getElementById("ChoreoExecuteBtn")
+        ChoreoExecuteBtn.disabled = "disabled"
+        var ChoreoDispInitStateBtn = document.getElementById("ChoreoDispInitStateBtn")
+        ChoreoDispInitStateBtn.disabled = "disabled"
+        var ChoreoSearchNext = document.getElementById("ChoreoSearchNext")
+        ChoreoSearchNext.disabled = ""
         AskForNext[0] = 0
 
-        var displayCanvas = document.getElementById("displayCanvas");
+        var displayCanvas = document.getElementById("displayCanvas")
 
-        PythonClearPrints();
+        PythonClearPrints()
 
-        var Python_State_Div = document.getElementById("Python_State_Div");
+        var Python_State_Div = document.getElementById("Python_State_Div")
 
-        Python_State_Div.innerHTML = "Next";
-        Python_State_Div.classList.add('w3-orange');
-        Python_State_Div.classList.remove('w3-green');
-        Python_State_Div.classList.remove('w3-hover-pale-green');
-        Python_State_Div.classList.remove('w3-red');
+        Python_State_Div.innerHTML = "Next"
+        Python_State_Div.classList.add('w3-orange')
+        Python_State_Div.classList.remove('w3-green')
+        Python_State_Div.classList.remove('w3-hover-pale-green')
+        Python_State_Div.classList.remove('w3-red')
 
         if (document.getElementById('checkbox_DisplayLoopsDuringSearch').checked) {
 
-            var RotSlider = $("#RotSlider").data("roundSlider");
-            RotSlider.setValue(0);
-            RotSlider.disable();
+            var RotSlider = $("#RotSlider").data("roundSlider")
+            RotSlider.setValue(0)
+            RotSlider.disable()
 
-            var event = new Event('StopAnimationFromOutsideCanvas');
-            displayCanvas.dispatchEvent(event);
+            var event = new Event('StopAnimationFromOutsideCanvas')
+            displayCanvas.dispatchEvent(event)
 
-            var event = new Event('DisableAnimationFromOutsideCanvas');
-            displayCanvas.dispatchEvent(event);  
+            var event = new Event('DisableAnimationFromOutsideCanvas')
+            displayCanvas.dispatchEvent(event)
 
-            trajectoriesOn = false;
+            trajectoriesOn = false
 
         }
 
-        var ConfigDict = GatherConfigDict();
-        pyodide_worker.postMessage({funname:"LoadDataInWorker",args:{ConfigDict:ConfigDict}});
+        var ConfigDict = GatherConfigDict()
+        pyodide_worker.postMessage({funname:"LoadDataInWorker",args:{ConfigDict:ConfigDict}})
+
+
+        if (WorkspaceIsSetUp) {
+            ClickReloadWorkspace(ConfigDict)
+        }
 
         ReadyToRun = true
 
@@ -370,8 +377,8 @@ async function ChoreoExecuteClick() {
 
             if (TargetSlow_Loaded) {
 
-                pyodide_worker.postMessage({funname:"LoadDataInWorker",args:{TargetSlow_PlotInfo:TargetSlow_PlotInfo}});
-                pyodide_worker.postMessage({funname:"LoadDataInWorker",args:{TargetSlow_Pos:TargetSlow_Pos}});
+                pyodide_worker.postMessage({funname:"LoadDataInWorker",args:{TargetSlow_PlotInfo:TargetSlow_PlotInfo}})
+                pyodide_worker.postMessage({funname:"LoadDataInWorker",args:{TargetSlow_Pos:TargetSlow_Pos}})
 
                 var nfast = TargetSlow_PlotInfo["nloop"]
 
@@ -385,8 +392,8 @@ async function ChoreoExecuteClick() {
 
             if (ReadyToRun) {
 
-                pyodide_worker.postMessage({funname:"LoadDataInWorker",args:{TargetFast_PlotInfoList:TargetFast_PlotInfoList}});
-                pyodide_worker.postMessage({funname:"LoadDataInWorker",args:{TargetFast_PosList:TargetFast_PosList}});
+                pyodide_worker.postMessage({funname:"LoadDataInWorker",args:{TargetFast_PlotInfoList:TargetFast_PlotInfoList}})
+                pyodide_worker.postMessage({funname:"LoadDataInWorker",args:{TargetFast_PosList:TargetFast_PosList}})
 
             }
 
@@ -417,6 +424,12 @@ function GenerateInitStateClick() {
     PythonClearPrints()
 
     var ConfigDict = GatherConfigDict()
+
+    if (WorkspaceIsSetUp) {
+
+        ClickReloadWorkspace(ConfigDict)
+
+    }
 
     pyodide_worker.postMessage({funname:"LoadDataInWorker",args:{ConfigDict:ConfigDict}})
 
@@ -591,6 +604,7 @@ function GatherConfigDict() {
     ConfigDict['Solver_Discr'] ['Use_exact_Jacobian']  = document.getElementById('checkbox_exactJ').checked
     ConfigDict['Solver_Discr'] ['ncoeff_init']         = parseInt(document.getElementById('input_ncoeff_init').value,10)
     ConfigDict['Solver_Discr'] ['n_reconverge_it_max'] = parseInt(document.getElementById('input_n_reconverge_it_max').value,10)
+    ConfigDict['Solver_Discr'] ['mul_coarse_to_fine']  = parseFloat(document.getElementById('input_mul_coarse_to_fine').value)
 
     ConfigDict['Solver_Optim'] = {}
 
@@ -787,15 +801,16 @@ function LoadConfigDict(ConfigDict) {
     document.getElementById('checkbox_exactJ').checked         = ConfigDict['Solver_Discr'] ['Use_exact_Jacobian']  
     document.getElementById('input_ncoeff_init').value         = ConfigDict['Solver_Discr'] ['ncoeff_init']         
     document.getElementById('input_n_reconverge_it_max').value = ConfigDict['Solver_Discr'] ['n_reconverge_it_max'] 
+    document.getElementById('input_mul_coarse_to_fine').value  = ConfigDict['Solver_Discr'] ['mul_coarse_to_fine']
 
     SlideNReconvergeItMax();
 
-    document.getElementById('krylov_method').value           = ConfigDict['Solver_Optim'] ['krylov_method']     
-    document.getElementById('linesearch_method').value       = ConfigDict['Solver_Optim'] ['line_search']       
-    document.getElementById('linesearch_smin').value         = ConfigDict['Solver_Optim'] ['line_search_smin']  
-    document.getElementById('input_Newt_err_norm_safe').value = ConfigDict['Solver_Optim'] ['Newt_err_norm_safe'] 
-    document.getElementById('input_Newt_err_norm_max').value = ConfigDict['Solver_Optim'] ['Newt_err_norm_max'] 
-    document.getElementById('optim_verbose_lvl').value       = ConfigDict['Solver_Optim'] ['optim_verbose_lvl'] 
+    document.getElementById('krylov_method').value              = ConfigDict['Solver_Optim'] ['krylov_method']     
+    document.getElementById('linesearch_method').value          = ConfigDict['Solver_Optim'] ['line_search']       
+    document.getElementById('linesearch_smin').value            = ConfigDict['Solver_Optim'] ['line_search_smin']  
+    document.getElementById('input_Newt_err_norm_safe').value   = ConfigDict['Solver_Optim'] ['Newt_err_norm_safe'] 
+    document.getElementById('input_Newt_err_norm_max').value    = ConfigDict['Solver_Optim'] ['Newt_err_norm_max'] 
+    document.getElementById('optim_verbose_lvl').value          = ConfigDict['Solver_Optim'] ['optim_verbose_lvl'] 
 
     var table = document.getElementById('table_cvg_loop')
     var ncols = table.rows[0].cells.length
@@ -1821,7 +1836,7 @@ async function ClickSetupWorkspace() {
 
 }
 
-function ClickReloadWorkspace() {
+function ClickReloadWorkspace(ConfigDict=undefined) {
 
     try {
         pyodide_worker.postMessage({funname:"SetupWorkspaceInWorker",args:UserWorkspace})
@@ -1829,7 +1844,7 @@ function ClickReloadWorkspace() {
         console.log(e)
     }
 
-    SaveConfigFile(UserWorkspace)
+    SaveConfigFile(UserWorkspace,ConfigDict)
     
     LoadWorkspaceGallery()
 
