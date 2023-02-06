@@ -1013,8 +1013,10 @@ def Compute_action_hess_mul_Cython(
                 k2 = k*k
                 a = 2*prod_fac*k2
                 
-                Action_hess_dx[il,idim,k,0] = a*all_coeffs_d[il,idim,k,0] - 2*hess_dx_pot_fft[il,idim,k].real
-                Action_hess_dx[il,idim,k,1] = a*all_coeffs_d[il,idim,k,1] - 2*hess_dx_pot_fft[il,idim,k].imag
+                Action_hess_dx[il,idim,k,0] = a*all_coeffs_d[il,idim,k,0]
+                Action_hess_dx[il,idim,k,1] = a*all_coeffs_d[il,idim,k,1]
+                # ~ Action_hess_dx[il,idim,k,0] = a*all_coeffs_d[il,idim,k,0] - 2*hess_dx_pot_fft[il,idim,k].real
+                # ~ Action_hess_dx[il,idim,k,1] = a*all_coeffs_d[il,idim,k,1] - 2*hess_dx_pot_fft[il,idim,k].imag
 
 
     return Action_hess_dx_np
@@ -1628,7 +1630,7 @@ def diag_changevar(
         if (k == 0):
             k = 1
 
-        kd = k * csqrt(MassSum[il])
+        kd = k * csqrt(2 * MassSum[il]) * ctwopi
         kfac = cpow(kd,n_grad_change)
         
         data[idx] *= kfac
