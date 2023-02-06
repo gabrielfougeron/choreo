@@ -198,7 +198,7 @@ def ExecName(the_name, input_folder, store_folder):
     print(f'Saved Newton Error : {Info_dict["Newton_Error"]}')
     print(f'Init Newton Error : {Newt_err_norm}')
 
-    n_eig = 10
+    n_eig = 20
 
     # which_eigs = 'LM' # Largest (in magnitude) eigenvalues.
     # which_eigs = 'SM' # Smallest (in magnitude) eigenvalues.
@@ -209,6 +209,8 @@ def ExecName(the_name, input_folder, store_folder):
     HessMat = ActionSyst.Compute_action_hess_LinOpt(x)
     w ,v = scipy.sparse.linalg.eigsh(HessMat,k=n_eig,which=which_eigs)
     print(w)
+
+    print(v[:,-1])
 
 
 

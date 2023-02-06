@@ -44,9 +44,9 @@ from choreo.Choreo_cython_funs import Transform_Coeffs_Single_Loop,SparseScaleCo
 from choreo.Choreo_cython_funs import the_irfft,the_rfft
 from choreo.Choreo_cython_funs import Compute_action_hess_mul_Tan_Cython_nosym
 
-if ndim == 2:
-    from choreo.Choreo_cython_funs_2D import Compute_action_Cython_2D as Compute_action_Cython ,Compute_action_hess_mul_Cython_2D as Compute_action_hess_mul_Cython
-    from choreo.Choreo_cython_funs_2D import RotateFastWithSlow_2D
+# if ndim == 2:
+#     from choreo.Choreo_cython_funs_2D import Compute_action_Cython_2D as Compute_action_Cython ,Compute_action_hess_mul_Cython_2D as Compute_action_hess_mul_Cython
+#     from choreo.Choreo_cython_funs_2D import RotateFastWithSlow_2D
 
 from choreo.Choreo_scipy_plus import *
 
