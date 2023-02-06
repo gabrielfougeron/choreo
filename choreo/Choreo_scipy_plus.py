@@ -138,7 +138,7 @@ def InstabilityDecomposition(Mat,eps=1e-12):
             Instability_directions[i+1,:] = eigvects[:,idx_sort[i]].imag
 
             i += 2
-            
+
     return Instability_magnitude,Instability_directions
 
 # 
