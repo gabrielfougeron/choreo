@@ -289,15 +289,15 @@ def ExecName(the_name, input_folder, store_folder):
 
 
         # eigvals,eigvects = scipy.linalg.eig(a=MonodromyMat)
-        eigvals,eigvects = scipy.linalg.eig(a=MonodromyMatLog)
-        # eigvals,eigvects = scipy.linalg.eig(a=MonodromyMatLogsq)
+        # eigvals,eigvects = scipy.linalg.eig(a=MonodromyMatLog)
+        eigvals,eigvects = scipy.linalg.eig(a=MonodromyMatLogsq)
 
-        print(eigvals)
-        # print(eigvals.real)
-        # print(abs(eigvals))
+        # print(eigvals)
+        print(eigvals.real)
+        print(eigvects)
 
 
-        # exit()
+        exit()
 
 
         for iint in range(nint):
