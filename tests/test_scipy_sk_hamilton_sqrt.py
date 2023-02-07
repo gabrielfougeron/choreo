@@ -1,8 +1,10 @@
 
 import numpy as np
+
+np.set_printoptions(precision=3)
 import scipy
 
-n = 20
+n = 3
 
 
 w = np.zeros((2*n,2*n))
@@ -175,7 +177,7 @@ print(ortho_err(Q))
 
 print(hamil_err(Delta))
 print(sk_sym_err(Delta))
-print(abs(Delta)> 1e-10)
+# print(abs(Delta)> 1e-10)
 # 
 print(np.linalg.norm(np.dot(w,skhmat) - np.dot(Q,np.dot(Delta,Q.transpose()))))
 
@@ -185,7 +187,7 @@ print(np.linalg.norm(np.dot(w,skhmat) - np.dot(Q,np.dot(Delta,Q.transpose()))))
 # print(np.dot(w,skhmat) - np.dot(Q,np.dot(Delta,Q.transpose())))
 
 D_vec = np.diag(Delta,n)
-print(D_vec > 0)
+print(np.all(D_vec > 0))
 d_vec = np.sqrt(D_vec)
 
 Beta = np.diag(np.append(d_vec,d_vec))
@@ -201,20 +203,21 @@ A = np.dot(Q,np.dot(w,Q.transpose()))
 np.linalg.norm(np.dot(A,sk_sym) - np.dot(sk_sym,A))
 
 # 
-# print('')
-# print('tests')
-# 
-# print('QwQT')
-# A = np.dot(Q,np.dot(w,Q.transpose()))
-# 
-# 
-# print(sym_err(A))
-# print(sk_sym_err(A))
-# print(hamil_err(A))
-# print(sk_hamil_err(A))
-# print(ortho_err(A))
-# print(symplect_err(A))
-# 
+print('')
+print('tests')
+
+print('QwQT')
+A = np.dot(Q,np.dot(w,Q.transpose()))
+
+
+
+print(sym_err(A))
+print(sk_sym_err(A))
+print(hamil_err(A))
+print(sk_hamil_err(A))
+print(ortho_err(A))
+print(symplect_err(A))
+
 # B = np.dot(A,sk_sym) - np.dot(sk_sym,A)
 # print(np.linalg.norm(B))
 
@@ -228,3 +231,15 @@ np.linalg.norm(np.dot(A,sk_sym) - np.dot(sk_sym,A))
 # print(sk_hamil_err(A))
 # print(ortho_err(A))
 # print(symplect_err(A))
+
+
+# lie = np.dot(skhmat,hmat) - np.dot(hmat,skhmat)
+
+# print(sym_err(lie))
+# print(sk_sym_err(lie))
+# print(hamil_err(lie))
+# print(sk_hamil_err(lie))
+# print(ortho_err(lie))
+# print(symplect_err(lie))
+
+# print(np.dot(A,sk_sym))
