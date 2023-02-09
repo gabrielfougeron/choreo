@@ -407,7 +407,12 @@ def Compute_action_hess_mul_Cython_2D(
         hess_pot_all_d    
     )
 
-    cdef double complex[:,:,::1]  hess_dx_pot_fft = the_rfft(hess_pot_all_d,norm="forward")
+    # cdef double complex[:,:,::1]  hess_dx_pot_fft = the_rfft(hess_pot_all_d,norm="forward")
+
+    hess_dx_pot_fft = the_rfft(hess_pot_all_d,norm="forward")
+
+    print(nint,ncoeff,hess_dx_pot_fft.shape)
+
 
     cdef np.ndarray[double, ndim=4, mode="c"] Action_hess_dx_np = np.empty((nloop,2,ncoeff,2),np.float64)
     cdef double[:,:,:,::1] Action_hess_dx = Action_hess_dx_np
@@ -426,8 +431,11 @@ def Compute_action_hess_mul_Cython_2D(
                 k2 = k*k
                 a = 2*prod_fac*k2
                 
-                Action_hess_dx[il,idim,k,0] = a*all_coeffs_d[il,idim,k,0] - 2*hess_dx_pot_fft[il,idim,k].real
-                Action_hess_dx[il,idim,k,1] = a*all_coeffs_d[il,idim,k,1] - 2*hess_dx_pot_fft[il,idim,k].imag
+                # Action_hess_dx[il,idim,k,0] = a*all_coeffs_d[il,idim,k,0] - 2*hess_dx_pot_fft[il,idim,k].real
+                # Action_hess_dx[il,idim,k,1] = a*all_coeffs_d[il,idim,k,1] - 2*hess_dx_pot_fft[il,idim,k].imag
+
+                Action_hess_dx[il,idim,k,0] = a*all_coeffs_d[il,idim,k,0]
+                Action_hess_dx[il,idim,k,1] = a*all_coeffs_d[il,idim,k,1]
 
 
     return Action_hess_dx_np
