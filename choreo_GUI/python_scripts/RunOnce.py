@@ -285,7 +285,7 @@ async def main():
     n_opt_max = 100
     n_find_max = 1
 
-    mul_coarse_to_fine = 3
+    mul_coarse_to_fine = params_dict["Solver_Discr"]["mul_coarse_to_fine"]
 
     # Save_All_Coeffs = True
     Save_All_Coeffs = False

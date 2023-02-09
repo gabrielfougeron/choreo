@@ -102,7 +102,9 @@ class ChoreoAction():
 
         fun_name = key.removesuffix('_cvg_lvl_list')
 
-        setattr(self, fun_name, functools.partial(self.GetCurrentListAttribute,key=key))
+        if not(hasattr(ChoreoAction, fun_name)):
+
+            setattr(ChoreoAction, fun_name, property(functools.partial(ChoreoAction.GetCurrentListAttribute,key=key)))
 
     def Package_all_coeffs(self,all_coeffs):
         r"""
@@ -110,15 +112,15 @@ class ChoreoAction():
         The packaging process projects the trajectory onto the space of constraint satisfying trajectories.
         """
 
-        return self.coeff_to_param().dot(all_coeffs.reshape(-1))
+        return self.coeff_to_param.dot(all_coeffs.reshape(-1))
         
     def Unpackage_all_coeffs(self,x):
         r"""
         Computes the Fourier coefficients of the generator given the parameters.
         """
         
-        y = self.param_to_coeff().dot(x)
-        all_coeffs = y.reshape(self.nloop,ndim,self.ncoeff(),2)
+        y = self.param_to_coeff.dot(x)
+        all_coeffs = y.reshape(self.nloop,ndim,self.ncoeff,2)
         
         return all_coeffs
 
@@ -131,7 +133,7 @@ class ChoreoAction():
             self.Unpackage_all_coeffs(x),
             self.nbody,
             self.nloop,
-            self.ncoeff(),
+            self.ncoeff,
             self.loopnb,
             self.Targets,
             self.SpaceRotsUn,
@@ -146,7 +148,7 @@ class ChoreoAction():
         """
 
         if nint is None:
-            nint = self.nint()
+            nint = self.nint
 
         all_coeffs_nosym = self.RemoveSym(x).view(dtype=np.complex128)[...,0]
         all_pos_b = the_irfft(all_coeffs_nosym,n=nint,axis=2,norm="forward")
@@ -159,7 +161,7 @@ class ChoreoAction():
         """
 
         if nint is None:
-            nint = self.nint()
+            nint = self.nint
 
         all_coeffs_c = self.Unpackage_all_coeffs(x).view(dtype=np.complex128)[...,0]
         all_pos = the_irfft(all_coeffs_c,n=nint,axis=2,norm="forward")
@@ -172,7 +174,7 @@ class ChoreoAction():
         """
 
         if nint is None:
-            nint = self.nint()
+            nint = self.nint
 
         all_coeffs_nosym = self.RemoveSym(x).view(dtype=np.complex128)[...,0]
         all_pos_b = the_irfft(all_coeffs_nosym,n=nint,axis=2,norm="forward")
@@ -220,8 +222,8 @@ class ChoreoAction():
 
         rms_dist = Compute_Loop_Dist_btw_avg_Cython(
             self.nloop          ,
-            self.ncoeff()       ,
-            self.nint()         ,
+            self.ncoeff       ,
+            self.nint         ,
             self.mass           ,
             self.loopnb         ,
             self.Targets        ,
@@ -247,8 +249,8 @@ class ChoreoAction():
 
         J,GradJ =  Compute_action_Cython(
             self.nloop          ,
-            self.ncoeff()       ,
-            self.nint()         ,
+            self.ncoeff       ,
+            self.nint         ,
             self.mass           ,
             self.loopnb         ,
             self.Targets        ,
@@ -268,7 +270,7 @@ class ChoreoAction():
         )
 
         GJ = GradJ.reshape(-1)
-        GJparam = (self.param_to_coeff_T().dot(GJ)) * escape_pen
+        GJparam = (self.param_to_coeff_T.dot(GJ)) * escape_pen
         
         return GJparam
 
@@ -279,7 +281,7 @@ class ChoreoAction():
             self.last_all_coeffs = self.Unpackage_all_coeffs(x)
             
             c_coeffs = self.last_all_coeffs.view(dtype=np.complex128)[...,0]
-            self.last_all_pos = the_irfft(c_coeffs,n=self.nint(),axis=2,norm="forward")
+            self.last_all_pos = the_irfft(c_coeffs,n=self.nint,axis=2,norm="forward")
         
     def Compute_action_hess_mul(self,x,dx):
         r"""
@@ -290,8 +292,8 @@ class ChoreoAction():
 
         HessJdx = Compute_action_hess_mul_Cython(
             self.nloop                      ,
-            self.ncoeff()                   ,
-            self.nint()                     ,
+            self.ncoeff                   ,
+            self.nint                     ,
             self.mass                       ,
             self.loopnb                     ,
             self.Targets                    ,
@@ -312,7 +314,7 @@ class ChoreoAction():
         )
 
         HJdx = HessJdx.reshape(-1)
-        z = self.param_to_coeff_T().dot(HJdx)
+        z = self.param_to_coeff_T.dot(HJdx)
         
         return z
             
@@ -321,7 +323,7 @@ class ChoreoAction():
         Returns the Hessian of the action wrt parameters at a given point as a Scipy LinearOperator.
         """
 
-        return sp.linalg.LinearOperator((self.coeff_to_param().shape[0],self.coeff_to_param().shape[0]),
+        return sp.linalg.LinearOperator((self.coeff_to_param.shape[0],self.coeff_to_param.shape[0]),
             matvec =  (lambda dx, xl=x, selfl=self : selfl.Compute_action_hess_mul(xl,dx)),
             rmatvec = (lambda dx, xl=x, selfl=self : selfl.Compute_action_hess_mul(xl,dx)))
 
@@ -334,8 +336,8 @@ class ChoreoAction():
 
         J,GradJ =  Compute_action_Cython(
             self.nloop          ,
-            self.ncoeff()       ,
-            self.nint()         ,
+            self.ncoeff       ,
+            self.nint         ,
             self.mass           ,
             self.loopnb         ,
             self.Targets        ,
@@ -355,7 +357,7 @@ class ChoreoAction():
         )
 
         GJ = GradJ.reshape(-1)
-        y = self.param_to_coeff_T().dot(GJ)
+        y = self.param_to_coeff_T.dot(GJ)
         
         return J,y
 
@@ -367,8 +369,8 @@ class ChoreoAction():
 
         Hash_Action =  Compute_hash_action_Cython(
             self.nloop                      ,
-            self.ncoeff()                   ,
-            self.nint()                     ,
+            self.ncoeff                   ,
+            self.nint                     ,
             self.mass                       ,
             self.loopnb                     ,
             self.Targets                    ,
@@ -397,8 +399,8 @@ class ChoreoAction():
         all_Newt_err =  Compute_Newton_err_Cython(
             self.nbody                  ,
             self.nloop                  ,
-            self.ncoeff()               ,
-            self.nint()                 ,
+            self.ncoeff               ,
+            self.nint                 ,
             self.mass                   ,
             self.loopnb                 ,
             self.Targets                ,
@@ -418,8 +420,8 @@ class ChoreoAction():
 
         res = Compute_Loop_Size_Dist_Cython(
             self.nloop                  ,
-            self.ncoeff()               ,
-            self.nint()                 ,
+            self.ncoeff               ,
+            self.nint                 ,
             self.mass                   ,
             self.loopnb                 ,
             self.Targets                ,
@@ -447,8 +449,8 @@ class ChoreoAction():
         
         MinDist =  Compute_MinDist_Cython(
             self.nloop                  ,
-            self.ncoeff()               ,
-            self.nint()                 ,
+            self.ncoeff               ,
+            self.nint                 ,
             self.mass                   ,
             self.loopnb                 ,
             self.Targets                ,
@@ -473,7 +475,7 @@ class ChoreoAction():
         Computes the maximum path length for speed sync
         """
 
-        nint = self.nint()
+        nint = self.nint
 
         self.SavePosFFT(x)
 
@@ -568,12 +570,12 @@ class ChoreoAction():
     def GetTangentSystemDef(self,x,nint=None,method = 'SymplecticEuler'):
 
             if nint is None:
-                nint = self.nint()
+                nint = self.nint
 
             ndof = self.nbody*ndim
 
             if nint is None:
-                nint = self.nint()
+                nint = self.nint
 
             if   method in ['SymplecticEuler','SymplecticEuler_XV','SymplecticEuler_VX']:
                 pass
@@ -647,7 +649,7 @@ class ChoreoAction():
         Composes a **slow** with a **fast** path
         """
 
-        ncoeff = self.ncoeff()
+        ncoeff = self.ncoeff
         all_coeffs = np.zeros((self.nloop,ndim,ncoeff,2),dtype=np.float64)
 
         for il in range(self.nloop):
@@ -758,7 +760,7 @@ class ChoreoAction():
         Dumps a json file describing the current trajectories
         """
 
-        nint = self.nint()
+        nint = self.nint
 
         if ((Action is None) or (Gradaction is None) ):
             Action,Gradaction_vect = self.Compute_action(x)
@@ -819,7 +821,7 @@ class ChoreoAction():
         max_path_length
 
         Info_dict["nbody"] = self.nbody
-        Info_dict["n_Fourier"] = self.ncoeff()
+        Info_dict["n_Fourier"] = self.ncoeff
         Info_dict["n_int"] = nint
 
         Info_dict["mass"] = self.mass.tolist()
@@ -1111,7 +1113,7 @@ class ChoreoAction():
             
             all_coeffs_v = np.zeros(all_coeffs.shape)
             
-            for k in range(self.ncoeff()):
+            for k in range(self.ncoeff):
                 all_coeffs_v[:,:,k,0] = -k * all_coeffs[:,:,k,1]
                 all_coeffs_v[:,:,k,1] =  k * all_coeffs[:,:,k,0]
             
@@ -1773,6 +1775,8 @@ def setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max=6,MomCons=True,n_
 
     # Now detect parameters and build change of variables
 
+    MassPowSum = np.zeros((nloop),dtype=np.float64)
+
     ncoeff_cvg_lvl_list = []
     nint_cvg_lvl_list = []
     param_to_coeff_cvg_lvl_list = []
@@ -1807,8 +1811,6 @@ def setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max=6,MomCons=True,n_
 
         param_to_coeff_cvg_lvl_list.append(null_space_sparseqr(cstrmat_sp))
         coeff_to_param_cvg_lvl_list.append(param_to_coeff_cvg_lvl_list[i].transpose(copy=True))
-
-        # TODO : THIS IS PROBABLY WHY I HAVE CONDITIONNING ISSUES FOR DIFFERENT MASSES !!!
 
         diag_changevar(
             param_to_coeff_cvg_lvl_list[i].nnz,
@@ -2206,8 +2208,8 @@ def Param_to_Param_direct(x,ActionSyst_source,ActionSyst_target):
 
     all_coeffs_source = ActionSyst_source.Unpackage_all_coeffs(x)
 
-    ncoeffs_source = ActionSyst_source.ncoeff()
-    ncoeffs_target = ActionSyst_target.ncoeff()
+    ncoeffs_source = ActionSyst_source.ncoeff
+    ncoeffs_target = ActionSyst_target.ncoeff
     
     if (ncoeffs_target < ncoeffs_source):
         z = all_coeffs_source[:,:,0:ncoeffs_target,:].reshape(-1)
@@ -2216,16 +2218,16 @@ def Param_to_Param_direct(x,ActionSyst_source,ActionSyst_target):
         z[:,:,0:ncoeffs_source,:] = all_coeffs_source
         z = z.reshape(-1)
 
-    res = ActionSyst_target.coeff_to_param().dot(z)
+    res = ActionSyst_target.coeff_to_param.dot(z)
     
     return res
 
 def Param_to_Param_rev(Gx,ActionSyst_source,ActionSyst_target):
 
-    ncoeffs_source = ActionSyst_source.ncoeff()
-    ncoeffs_target = ActionSyst_target.ncoeff()
+    ncoeffs_source = ActionSyst_source.ncoeff
+    ncoeffs_target = ActionSyst_target.ncoeff
 
-    Gy = ActionSyst_source.coeff_to_param_T().dot(Gx)
+    Gy = ActionSyst_source.coeff_to_param_T.dot(Gx)
     all_coeffs = Gy.reshape(ActionSyst_source.nloop,ndim,ncoeffs_source,2)
 
     if (ncoeffs_target < ncoeffs_source):
@@ -2235,7 +2237,7 @@ def Param_to_Param_rev(Gx,ActionSyst_source,ActionSyst_target):
         Gz[:,:,0:ncoeffs_source,:] = all_coeffs
         Gz = Gz.reshape(-1)
     
-    res = ActionSyst_target.param_to_coeff_T().dot(Gz)
+    res = ActionSyst_target.param_to_coeff_T.dot(Gz)
     
     return res
 
