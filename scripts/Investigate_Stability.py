@@ -234,7 +234,7 @@ def ExecName(the_name, input_folder, store_folder):
         SymplecticMethod = 'SymplecticRuth3'
         SymplecticIntegrator = choreo.GetSymplecticIntegrator(SymplecticMethod)
 
-        nint_ODE_mul = 1
+        nint_ODE_mul = 128
         nint_ODE = nint_ODE_mul*nint
 
         fun,gun,x0,v0 = ActionSyst.GetTangentSystemDef(x,nint_ODE,method=SymplecticMethod)
@@ -274,17 +274,16 @@ def ExecName(the_name, input_folder, store_folder):
         w[0:ndof,ndof:2*ndof] = np.identity(ndof)
         w[ndof:2*ndof,0:ndof] = -np.identity(ndof)
 
+        MonodromyMatLog = (MonodromyMatLog+ w @ MonodromyMatLog.T @ w ) / 2
 
         MonodromyMatLogsq = np.dot(MonodromyMatLog,MonodromyMatLog)
+        
 
-        skewsym = np.dot(w,MonodromyMatLogsq)
-        symmat = np.dot(w,MonodromyMatLog)
 
         print('Symplecticity')
         print(np.linalg.norm(w - np.dot(MonodromyMat.transpose(),np.dot(w,MonodromyMat))))
         print(np.linalg.norm(np.dot(MonodromyMatLog.transpose(),w) + np.dot(w,MonodromyMatLog)))
-        print(np.linalg.norm(skewsym + skewsym.transpose()))
-        print(np.linalg.norm(symmat - symmat.transpose()))
+
 
 
 
@@ -421,12 +420,12 @@ def ExecName(the_name, input_folder, store_folder):
 #     plt.savefig("out.png")
 
 
-    # jac_options = {'method':krylov_method}
-#     jacobian = scipy.optimize.KrylovJacobian(**jac_options)
-# 
-#     opt_result , info = scipy.optimize.nonlin.nonlin_solve(F=F,x0=x0,jacobian=jacobian,verbose=disp_scipy_opt,maxiter=maxiter,f_tol=gradtol,line_search=line_search,raise_exception=False,full_output=True)
+    jac_options = {'method':krylov_method}
+    jacobian = scipy.optimize.KrylovJacobian(**jac_options)
 
+    opt_result , info = scipy.optimize.nonlin.nonlin_solve(F=F,x0=x0,jacobian=jacobian,verbose=disp_scipy_opt,maxiter=maxiter,f_tol=gradtol,line_search=line_search,raise_exception=False,full_output=True)
 
+    print(opt_result)
 
 if __name__ == "__main__":
     main()    
