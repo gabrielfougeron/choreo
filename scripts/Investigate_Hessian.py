@@ -33,9 +33,11 @@ twopi = 2*np.pi
 
 def main():
 
+
     # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/')
     # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/3/')
     input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery/01 - Classic gallery')
+    # input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery/02 - Families/02 - Chains/04')
     # input_folder = os.path.join(__PROJECT_ROOT__,'Keep/tests')
     
 #     ''' Include all files in tree '''
@@ -66,9 +68,19 @@ def main():
 # 
 #             input_names_list.append(file_root)
 
-    input_names_list = ['01 - Figure eight']
+    # input_names_list = ['01 - Figure eight']
     # input_names_list = ['14 - Small mass gap']
-    # input_names_list = ['04 - 5 pointed star']
+    # input_names_list = ['09 - 3x2 Circles']
+    input_names_list = ['06 - Ten petal flower']
+    # input_names_list = ['13 - 100 bodies']
+    # input_names_list = ['02 - Celtic knot']
+    # input_names_list = ['07 - No symmetry']
+    # input_names_list = ['11 - Resonating loops']
+    # input_names_list = ['10 - Complex symmetry']
+    # input_names_list = ['12 - Big mass gap']
+    
+    # input_names_list = ['1-chain']
+
 
 
     store_folder = os.path.join(__PROJECT_ROOT__,'Reconverged_sols')
@@ -127,8 +139,9 @@ def ExecName(the_name, input_folder, store_folder):
 
     all_pos = np.load(input_filename)
     nint = Info_dict["n_int"]
-    ncoeff_init = Info_dict["n_Fourier"] 
-
+    # ncoeff_init = Info_dict["n_Fourier"] 
+    ncoeff_init = nint //2 
+    
     c_coeffs = choreo.the_rfft(all_pos,axis=2,norm="forward")
     all_coeffs = np.zeros((Info_dict["nloop"],choreo.ndim,ncoeff_init,2),dtype=np.float64)
     all_coeffs[:,:,0:ncoeff_init,0] = c_coeffs[:,:,0:ncoeff_init].real
@@ -209,6 +222,19 @@ def ExecName(the_name, input_folder, store_folder):
     HessMat = ActionSyst.Compute_action_hess_LinOpt(x)
     w ,v = scipy.sparse.linalg.eigsh(HessMat,k=n_eig,which=which_eigs)
     print(w)
+
+    n = v.shape[0]
+
+    print(v.shape)
+    # print(v[:,-1])
+    
+    i_eig = 9
+    eps = 1e-10
+# 
+#     for i in range(n):
+# 
+#         if abs(v[i,i_eig]) > eps:
+#             print(i,v[i,i_eig])
 
 
 
