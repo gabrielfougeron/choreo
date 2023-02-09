@@ -243,7 +243,7 @@ def main():
     n_opt = 0
     n_opt_max = 1
 
-    mul_coarse_to_fine = 3
+    mul_coarse_to_fine = params_dict["Solver_Discr"]["mul_coarse_to_fine"]
 
     # Save_All_Coeffs = True
     Save_All_Coeffs = False
