@@ -2513,7 +2513,6 @@ def RefineMonodromy(
 
 
 # VERSION CG
-# VERSION Skew-Hamiltonian
 
 def RefineMonodromy(
     np.ndarray[double, ndim=5, mode="c"] Qint_in ,
@@ -2524,26 +2523,24 @@ def RefineMonodromy(
 
     cdef long ndof = nbody * cndim
     cdef long twondof = 2*ndof
-    
-    cdef long rank = 0
-    cdef long icvg, n_cvg
 
+    w = np.zeros((twondof,twondof),dtype=np.float64)
+    w[0:ndof,ndof:twondof] = np.identity(ndof)
+    w[ndof:twondof,0:ndof] = -np.identity(ndof)
+  
 
-    cdef np.ndarray[double, ndim=2, mode="c"] P_shufl = np.zeros((twondof,twondof))
-    cdef np.ndarray[double, ndim=2, mode="c"] Qint = Qint_in.reshape(ndof,twondof)
-    cdef np.ndarray[double, ndim=2, mode="c"] R_in = MonodromyMatLog_guess.reshape(twondof,twondof)
+    Qint = Qint_in.reshape(ndof,twondof)
+    R_in = MonodromyMatLog_guess.reshape(twondof,twondof)
+
+    R_in = (np.dot(w,np.dot(R_in.transpose(),w)) + R_in) / 2
 
     R_in_sq = np.dot(R_in,R_in)
 
-    # For simplicity
-    cdef np.ndarray[double, ndim=2, mode="c"] w = np.zeros((twondof,twondof),dtype=np.float64)
-    w[0:ndof,ndof:twondof] = np.identity(ndof)
-    w[ndof:twondof,0:ndof] = -np.identity(ndof)
 
 
 
     A = Qint @ R_in
-    B = np.identity(2*n)
+    B = np.identity(twondof)
     C = np.copy(Qint)
     D = np.copy(R_in)
     E = Fint_in.reshape(ndof,twondof) - np.dot(Qint,R_in_sq)
@@ -2623,7 +2620,7 @@ def CG_mod_Sylvester_Gen(A,B,C,D,E,Xin,w):
 
 
 
-    nit = 10
+    nit = 100
     for it in range(nit):
 
         R_norm = np.linalg.norm(R)
