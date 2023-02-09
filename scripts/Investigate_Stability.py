@@ -290,14 +290,14 @@ def ExecName(the_name, input_folder, store_folder):
 
         # eigvals,eigvects = scipy.linalg.eig(a=MonodromyMat)
         # eigvals,eigvects = scipy.linalg.eig(a=MonodromyMatLog)
-        eigvals,eigvects = scipy.linalg.eig(a=MonodromyMatLogsq)
+        # eigvals,eigvects = scipy.linalg.eig(a=MonodromyMatLogsq)
 
         # print(eigvals)
-        print(eigvals.real)
-        print(eigvects)
+        # print(eigvals.real)
+        # print(eigvects)
 
 
-        exit()
+        # exit()
 
 
         for iint in range(nint):
@@ -321,12 +321,12 @@ def ExecName(the_name, input_folder, store_folder):
         '''Eigendecomposition'''
         Instability_magnitude,Instability_directions = choreo.InstabilityDecomposition(MonodromyMat)
 
-        print(Instability_magnitude)
+        # print(Instability_magnitude)
 
         print(f'Relative error on flow eigenstate: {np.linalg.norm(MonodromyMat.dot(zo)-zo)/np.linalg.norm(zo):e}')
         # print(the_name+f' {Instability_magnitude[:]}')
         # print(the_name+f' {np.flip(1/Instability_magnitude[:])}')
-        print("Relative error on loxodromy ",np.linalg.norm(Instability_magnitude - np.flip(1/Instability_magnitude))/np.linalg.norm(Instability_magnitude))
+        # print("Relative error on loxodromy ",np.linalg.norm(Instability_magnitude - np.flip(1/Instability_magnitude))/np.linalg.norm(Instability_magnitude))
 
         all_coeffs_dc_init = choreo.the_rfft(all_pos_d_init,norm="forward")
         all_coeffs_d_init = np.zeros((nbody,choreo.ndim,2,nbody,choreo.ndim,ncoeff,2),np.float64)
@@ -399,8 +399,8 @@ def ExecName(the_name, input_folder, store_folder):
 
     # print(res_1D_all_coeffs)
 
-    print(np.linalg.norm(res_1D_all_coeffs))
-    print(np.linalg.norm(res_LagrangeMul))
+    # print(np.linalg.norm(res_1D_all_coeffs))
+    # print(np.linalg.norm(res_LagrangeMul))
 
 
     res_1D_all_coeffs_c = res_1D_all_coeffs.view(dtype=np.complex128)[...,0]

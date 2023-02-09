@@ -2280,7 +2280,7 @@ def RefineMonodromy(
 
 '''
 
-
+"""
 # VERSION ANTI-SYMMETRIQUE
 
 def RefineMonodromy(
@@ -2345,10 +2345,9 @@ def RefineMonodromy(
 
     # ~ return MonodromyMatLog.reshape(2,nbody,cndim,2,nbody,cndim)
     return MonodromyMatLog_guess
+"""
 
-
-'''
-
+"""
 # VERSION Skew-Hamiltonian
 
 def RefineMonodromy(
@@ -2378,7 +2377,7 @@ def RefineMonodromy(
 
     # Small system
     Mat = np.copy(Qint)
-    RHS = Fint_in.reshape(ndof,twondof)
+    RHS = Fint_in.reshape(ndof,twondof) - np.dot(Mat,R_in_sq)
 
     Mat_pinv,rank = scipy.linalg.pinv(Mat, return_rank=True)
 
@@ -2391,9 +2390,103 @@ def RefineMonodromy(
 
     Projection =  np.identity(twondof) - np.dot(Mat_pinv,Mat)
 
-    P_sol = P_sol + np.dot(Projection, P_shufl )
+    P_sol = P_sol + np.dot(Projection, P_shufl)
 
-    """
+
+
+    # ~ P_sol =  (np.dot(w,np.dot(P_sol.transpose(),w)) - P_sol) / 2
+
+
+    print('rank :',rank)
+    print('rank :',np.trace(np.dot(Mat_pinv,Mat)))
+    print('rank :',np.trace(np.dot(Mat,Mat_pinv)))
+
+    print('Syst skew Hamil : ',np.linalg.norm(np.dot(np.dot(Mat,w), RHS.transpose()) + np.dot(RHS, np.dot(Mat,w).transpose()))) 
+
+    # ~ print("sol ",np.linalg.norm(np.dot(Mat, R_in_sq) - RHS))
+    print("sol ",np.linalg.norm(np.dot(Mat, P_sol) - RHS))
+
+    # ~ print("norm :",np.linalg.norm(R_in_sq))
+    print("norm :",np.linalg.norm(P_sol))
+
+    # ~ print("sk Hamil", np.linalg.norm(np.dot(w,R_in_sq)+np.dot(w,R_in_sq).transpose()))
+    print("sk Hamil", np.linalg.norm(np.dot(w,P_sol)+np.dot(w,P_sol).transpose()))
+
+    print('')
+
+    delta = scipy.linalg.solve_sylvester(R_in, R_in, P_sol)
+
+    print("norm :",np.linalg.norm(delta))
+    print("norm :",np.linalg.norm(np.dot(R_in,delta)+np.dot(delta,R_in) - P_sol))
+    print("norm :",np.linalg.norm(P_sol))
+
+
+    # return P_sol.reshape(2,nbody,cndim,2,nbody,cndim)
+    return MonodromyMatLog_guess
+
+"""
+
+"""
+# VERSION Hamiltonian
+
+def RefineMonodromy(
+    np.ndarray[double, ndim=5, mode="c"] Qint_in ,
+    np.ndarray[double, ndim=5, mode="c"] Fint_in ,
+    np.ndarray[double, ndim=6, mode="c"] MonodromyMatLog_guess,
+    long nbody
+):
+
+    cdef long ndof = nbody * cndim
+    cdef long twondof = 2*ndof
+    
+    cdef long rank = 0
+    cdef long icvg, n_cvg
+
+
+    cdef np.ndarray[double, ndim=2, mode="c"] P_shufl = np.zeros((twondof,twondof))
+    cdef np.ndarray[double, ndim=2, mode="c"] Qint = Qint_in.reshape(ndof,twondof)
+    cdef np.ndarray[double, ndim=2, mode="c"] R_in = MonodromyMatLog_guess.reshape(twondof,twondof)
+
+
+    # For simplicity
+    cdef np.ndarray[double, ndim=2, mode="c"] w = np.zeros((twondof,twondof),dtype=np.float64)
+    w[0:ndof,ndof:twondof] = np.identity(ndof)
+    w[ndof:twondof,0:ndof] = -np.identity(ndof)
+
+    nits = 1
+# ~ 
+# ~     print('aaa')
+
+
+    for i in range(nits):
+
+        # Small system
+        Mat = np.dot(Qint,R_in)
+        RHS = Fint_in.reshape(ndof,twondof) - np.dot(Qint,np.dot(R_in,R_in))
+
+        Mat_pinv,rank = scipy.linalg.pinv(Mat, return_rank=True)
+
+        P_sol = np.dot(Mat_pinv,RHS)
+
+        Projection =  np.identity(twondof) - np.dot(Mat_pinv,Mat)
+
+        P_sol = P_sol + np.dot(np.identity(twondof) - np.dot(Mat_pinv,Mat),P_sol.transpose())
+
+
+
+
+        P_sol_proj =  (np.dot(w,np.dot(P_sol.transpose(),w)) + P_sol) / 2
+
+
+        # ~ print(np.linalg.norm(P_sol_proj))
+
+        # ~ alpha = 1.
+        alpha = 0.5
+
+        R_in = R_in + alpha * P_sol_proj
+
+
+
     print('rank :',rank)
     print('rank :',np.trace(np.dot(Mat_pinv,Mat)))
     print('rank :',np.trace(np.dot(Mat,Mat_pinv)))
@@ -2410,9 +2503,148 @@ def RefineMonodromy(
     print("sk Hamil", np.linalg.norm(np.dot(w,P_sol)+np.dot(w,P_sol).transpose()))
 
     print('')
-    """
 
 
     # return P_sol.reshape(2,nbody,cndim,2,nbody,cndim)
     return MonodromyMatLog_guess
-'''
+"""
+
+
+
+
+# VERSION CG
+# VERSION Skew-Hamiltonian
+
+def RefineMonodromy(
+    np.ndarray[double, ndim=5, mode="c"] Qint_in ,
+    np.ndarray[double, ndim=5, mode="c"] Fint_in ,
+    np.ndarray[double, ndim=6, mode="c"] MonodromyMatLog_guess,
+    long nbody
+):
+
+    cdef long ndof = nbody * cndim
+    cdef long twondof = 2*ndof
+    
+    cdef long rank = 0
+    cdef long icvg, n_cvg
+
+
+    cdef np.ndarray[double, ndim=2, mode="c"] P_shufl = np.zeros((twondof,twondof))
+    cdef np.ndarray[double, ndim=2, mode="c"] Qint = Qint_in.reshape(ndof,twondof)
+    cdef np.ndarray[double, ndim=2, mode="c"] R_in = MonodromyMatLog_guess.reshape(twondof,twondof)
+
+    R_in_sq = np.dot(R_in,R_in)
+
+    # For simplicity
+    cdef np.ndarray[double, ndim=2, mode="c"] w = np.zeros((twondof,twondof),dtype=np.float64)
+    w[0:ndof,ndof:twondof] = np.identity(ndof)
+    w[ndof:twondof,0:ndof] = -np.identity(ndof)
+
+
+
+    A = Qint @ R_in
+    B = np.identity(2*n)
+    C = np.copy(Qint)
+    D = np.copy(R_in)
+    E = Fint_in.reshape(ndof,twondof) - np.dot(Qint,R_in_sq)
+    Xin = np.zeros((twondof,twondof),dtype=np.float64)
+
+
+    Xout = CG_mod_Sylvester_Gen(A ,B,C,D,E,Xin,w)
+
+
+
+
+# ~ 
+# ~     Mat_pinv,rank = scipy.linalg.pinv(Mat, return_rank=True)
+# ~ 
+# ~     P_sol = np.dot(Mat_pinv,RHS)
+# ~ 
+# ~     P_shufl[0:ndof      ,0:ndof      ] =   P_sol[ndof:twondof,ndof:twondof].transpose()
+# ~     P_shufl[0:ndof      ,ndof:twondof] = - P_sol[0:ndof      ,ndof:twondof].transpose()
+# ~     P_shufl[ndof:twondof,0:ndof      ] = - P_sol[ndof:twondof,0:ndof      ].transpose()
+# ~     P_shufl[ndof:twondof,ndof:twondof] =   P_sol[0:ndof      ,0:ndof      ].transpose()
+# ~ 
+# ~     Projection =  np.identity(twondof) - np.dot(Mat_pinv,Mat)
+# ~ 
+# ~     P_sol = P_sol + np.dot(Projection, P_shufl)
+# ~ 
+# ~ 
+# ~ 
+# ~     # ~ P_sol =  (np.dot(w,np.dot(P_sol.transpose(),w)) - P_sol) / 2
+# ~ 
+# ~ 
+# ~     print('rank :',rank)
+# ~     print('rank :',np.trace(np.dot(Mat_pinv,Mat)))
+# ~     print('rank :',np.trace(np.dot(Mat,Mat_pinv)))
+# ~ 
+# ~     print('Syst skew Hamil : ',np.linalg.norm(np.dot(np.dot(Mat,w), RHS.transpose()) + np.dot(RHS, np.dot(Mat,w).transpose()))) 
+# ~ 
+# ~     # ~ print("sol ",np.linalg.norm(np.dot(Mat, R_in_sq) - RHS))
+# ~     print("sol ",np.linalg.norm(np.dot(Mat, P_sol) - RHS))
+# ~ 
+# ~     # ~ print("norm :",np.linalg.norm(R_in_sq))
+# ~     print("norm :",np.linalg.norm(P_sol))
+# ~ 
+# ~     # ~ print("sk Hamil", np.linalg.norm(np.dot(w,R_in_sq)+np.dot(w,R_in_sq).transpose()))
+# ~     print("sk Hamil", np.linalg.norm(np.dot(w,P_sol)+np.dot(w,P_sol).transpose()))
+# ~ 
+# ~     print('')
+# ~ 
+# ~     delta = scipy.linalg.solve_sylvester(R_in, R_in, P_sol)
+# ~ 
+# ~     print("norm :",np.linalg.norm(delta))
+# ~     print("norm :",np.linalg.norm(np.dot(R_in,delta)+np.dot(delta,R_in) - P_sol))
+# ~     print("norm :",np.linalg.norm(P_sol))
+
+
+    # return P_sol.reshape(2,nbody,cndim,2,nbody,cndim)
+    return MonodromyMatLog_guess
+
+
+
+
+
+
+
+
+
+
+def CG_mod_Sylvester_Gen(A,B,C,D,E,Xin,w):
+    #  cf bMinimum-norm Hamiltonian solutions of a class of generalized Sylvester-conjugate matrix equations
+
+    # We solve AXB + CXD = E for minimum norm Hamiltonian X using CG
+
+    X = Xin
+
+    R = E - A @ X @ B - C @ X @ D
+    RR = A.T @ R @ B.T + C.T @ R @ D.T
+    P = (RR + w @ (RR.T) @ w ) / 2
+
+
+
+    nit = 10
+    for it in range(nit):
+
+        R_norm = np.linalg.norm(R)
+        P_norm = np.linalg.norm(P)
+
+        alpha = (R_norm/P_norm) ** 2
+
+        print('')
+        print(it)
+        print(np.linalg.norm(R_norm))
+        print(np.linalg.norm(P_norm))
+
+        X = X + alpha * P
+        R = R - alpha * (A @ P @ B + C @ P @ D)
+
+        beta = (np.linalg.norm(R) / R_norm) ** 2
+
+        RR = A.T @ R @ B.T + C.T @ R @ D.T
+        P = (RR + w @ (RR.T) @ w ) / 2 + beta * P
+
+    
+    X = X + alpha * P
+
+    return X
