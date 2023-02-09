@@ -1,10 +1,23 @@
 
 import numpy as np
 
-np.set_printoptions(precision=3)
 import scipy
+import slycot
+import sys
+import os
+import random
 
-n = 3
+
+# np.set_printoptions(precision=3,suppress=True,linewidth=np.nan,threshold=sys.maxsize)
+
+
+__PROJECT_ROOT__ = os.path.abspath(os.path.join(os.path.dirname(__file__),os.pardir))
+sys.path.append(__PROJECT_ROOT__)
+
+
+import choreo
+
+n = 10
 
 
 w = np.zeros((2*n,2*n))
@@ -102,6 +115,25 @@ def make_fit_perm(W):
     l.extend(top)
 
     return np.array(l)
+
+def OneItSqrt(InputMat,AutoMat,AutoMatInv):
+    
+    return (InputMat + np.dot(AutoMatInv,np.dot(InputMat,AutoMat))) / 2
+
+def OneHighamIt1(A,Yk,Zk):
+
+    Ykp = (Yk + scipy.linalg.solve(Yk,A)) / 2
+    Zkp = (Zk + scipy.linalg.solve(Zk.transpose(),A.transpose()).transpose()) / 2
+
+    return Ykp , Zkp
+
+def OneHighamIt2(Pk,Qk):
+
+    Pkp = (Pk + scipy.linalg.inv(Qk)) / 2
+    Qkp = (Qk + scipy.linalg.inv(Pk)) / 2
+
+    return Pkp , Qkp
+
 
 mat = np.random.random_sample((2*n,2*n))
 
@@ -243,3 +275,99 @@ print(symplect_err(A))
 # print(symplect_err(lie))
 
 # print(np.dot(A,sk_sym))
+# 
+
+# 
+print('')
+print('Iterative algo')
+
+
+nit = 20
+
+# sqrtmat = (np.identity(2*n) +  np.copy(mat))/2
+
+# A = skhmat
+A = hmat
+
+
+P = np.copy(A)
+Q = np.identity(2*n)
+
+
+for i in range(nit):
+
+
+    P,Q = OneHighamIt2(P,Q)
+
+
+
+print(np.linalg.norm(np.dot(P,P)-A))
+print(np.linalg.norm(np.dot(Q,Q)-scipy.linalg.inv(A)))
+print('')
+print(sym_err(P))
+print(sk_sym_err(P))
+print(hamil_err(P))
+print(sk_hamil_err(P))
+print(ortho_err(P))
+print(symplect_err(P))
+print('')
+print(sym_err(Q))
+print(sk_sym_err(Q))
+print(hamil_err(Q))
+print(sk_hamil_err(Q))
+print(ortho_err(Q))
+print(symplect_err(Q))
+
+# 
+# 
+# print('')
+# print('slycot')
+# 
+# routine_list = [
+#     'mb03xd']
+# 
+# for routine in routine_list:
+#     print(f'{routine} is in slycot : {routine in dir(slycot)}')
+
+
+
+choreo.SymplecticSchurOfSkewHamilton(skhmat)
+# choreo.Hamiltonian_sqrt_of_skew_Hamiltonian(np.dot(hmat,hmat))
+
+eps = 1e-12
+all_success = True
+ntests = 10000
+
+for i in range(ntests):
+
+    sign_a = 1 if (random.random() > 1/2) else -1
+    sign_b = 1 if (random.random() > 1/2) else -1
+
+    a =   sign_a * random.random()
+    b =   sign_b * random.random()
+    c = - sign_b * random.random()
+
+    mat = np.array([[a,b],[c,a]])
+
+    alpha, beta, gamma = choreo.sqrt_2x2_mat(a,b,c)
+
+    mat_sqrt = np.array([[alpha,beta],[gamma,alpha]])
+
+    err = np.linalg.norm(mat-np.dot(mat_sqrt,mat_sqrt))
+
+    success = (err < eps)
+
+    all_success = all_success and (err < eps)
+
+    if not(success):
+
+        print(err)
+# 
+#         print(mat)
+#         print(np.dot(mat_sqrt,mat_sqrt))
+
+
+
+
+
+print(all_success)
