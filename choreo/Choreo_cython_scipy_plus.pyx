@@ -267,114 +267,129 @@ def Hessenberg_skew_Hamiltonian(
     cdef double sqrt_wtw, wtw, two_ovr_wtw
     cdef double wtMw, Mp
     cdef double Mwi
+    cdef double cgiv,sgiv
 
     cdef double[::1] Hd = np.empty((n))
     cdef double[::1] Mw = np.empty((n))
 
 
-    # Algo H
+    
     for k in range(n-1):
 
-        # Compute H
-        wtw = C[k,k]*C[k,k]
-        for i in range(k+1,n):
-            wtw += C[i,k]*C[i,k]
-        
-        sqrt_wtw = csqrt(wtw)
-        two_ovr_wtw = 2/wtw
 
-        if C[k,k] > 0:
-            Hd[k] = C[i,i] + sqrt_wtw
-        else:
-            Hd[k] = C[i,i] - sqrt_wtw 
+        if (k < n-1):
+        # Algo   H
 
-
-
-        # Compute H A H and update A
-        # Compute A H
-        # i = k
-        Mwi = A[k,k] * Hd[k]
-        for j in range(k+1,n):
-            Mwi += A[k,j] * C[j,k]
-
-        Mw[k] = Mwi
-        wtMw = Mwi * Hd[k] 
-
-        # i > k
-        for i in range(k+1,n):
-            Mwi = A[i,k] * Hd[k]
+            # Compute H
+            wtw = C[k,k]*C[k,k]
+            for i in range(k+1,n):
+                wtw += C[i,k]*C[i,k]
             
+            sqrt_wtw = csqrt(wtw)
+            two_ovr_wtw = 2/wtw
+
+            if C[k,k] > 0:
+                Hd[k] = C[i,i] + sqrt_wtw
+            else:
+                Hd[k] = C[i,i] - sqrt_wtw 
+
+
+
+            # Compute H A H and update A
+            # Compute A H
+            # i = k
+            Mwi = A[k,k] * Hd[k]
             for j in range(k+1,n):
-                Mwi += A[i,j] * C[j,k]
+                Mwi += A[k,j] * C[j,k]
 
-            Mw[i] = Mwi
-            wtMw += Mwi * C[i,k]
+            Mw[k] = Mwi
+            wtMw = Mwi * Hd[k] 
 
-        wtMw *= two_ovr_wtw
+            # i > k
+            for i in range(k+1,n):
+                Mwi = A[i,k] * Hd[k]
+                
+                for j in range(k+1,n):
+                    Mwi += A[i,j] * C[j,k]
 
-        # Update A <- H A H
-        # i = k
-        A[k,k] += two_ovr_wtw * (wtMw * Hd[k] - 2 * Mw[k]) * Hd[k]
+                Mw[i] = Mwi
+                wtMw += Mwi * C[i,k]
 
-        for j in range(k+1,n):
-            
-            Mp = two_ovr_wtw * ( wtMw * Hd[k] * C[j,k]  - Hd[k] * Mw[j] - C[j,k] * Mw[k] )
+            wtMw *= two_ovr_wtw
 
-            A[k,j] += Mp
-            A[j,k] += Mp
+            # Update A <- H A H
+            # i = k
+            A[k,k] += two_ovr_wtw * (wtMw * Hd[k] - 2 * Mw[k]) * Hd[k]
 
-        # i > k
-        for i in range(k+1,n):
+            for j in range(k+1,n):
+                
+                Mp = two_ovr_wtw * ( wtMw * Hd[k] * C[j,k]  - Hd[k] * Mw[j] - C[j,k] * Mw[k] )
 
-            for j in range(i,n):
-
-                Mp = two_ovr_wtw * ( wtMw * C[i,k] * C[j,k]  - C[i,k] * Mw[j] - C[j,k] * Mw[i] )
-
-                A[k,j] += Mp
+                A[k,j] += Mp    
                 A[j,k] += Mp
 
+            # i > k
+            for i in range(k+1,n):
+
+                for j in range(i,n):
+
+                    Mp = two_ovr_wtw * ( wtMw * C[i,k] * C[j,k]  - C[i,k] * Mw[j] - C[j,k] * Mw[i] )
+
+                    A[k,j] += Mp
+                    A[j,k] += Mp
 
 
 
-        # Compute H B H and update B
-        # Compute B H
-        # i = k
-        Mwi = B[k,k] * Hd[k]
-        for j in range(k+1,n):
-            Mwi += B[k,j] * C[j,k]
 
-        Mw[k] = Mwi
-        wtMw = Mwi * Hd[k] 
-
-        # i > k
-        for i in range(k+1,n):
-            Mwi = B[i,k] * Hd[k]
-            
+            # Compute H B H and update B
+            # Compute B H
+            # i = k
+            Mwi = B[k,k] * Hd[k]
             for j in range(k+1,n):
-                Mwi += B[i,j] * C[j,k]
+                Mwi += B[k,j] * C[j,k]
 
-            Mw[i] = Mwi
-            wtMw += Mwi * C[i,k]
+            Mw[k] = Mwi
+            wtMw = Mwi * Hd[k] 
 
-        wtMw *= two_ovr_wtw
+            # i > k
+            for i in range(k+1,n):
+                Mwi = B[i,k] * Hd[k]
+                
+                for j in range(k+1,n):
+                    Mwi += B[i,j] * C[j,k]
 
-        # Update B <- H B H
-        # i = k
-        B[k,k] += two_ovr_wtw * (wtMw * Hd[k] - 2 * Mw[k]) * Hd[k]
+                Mw[i] = Mwi
+                wtMw += Mwi * C[i,k]
 
-        for j in range(k+1,n):
-            
-            Mp = two_ovr_wtw * ( wtMw * Hd[k] * C[j,k]  - Hd[k] * Mw[j] - C[j,k] * Mw[k] )
+            wtMw *= two_ovr_wtw
 
-            B[k,j] += Mp
-            B[j,k] += Mp
+            # Update B <- H B H
+            # i = k
+            B[k,k] += two_ovr_wtw * (wtMw * Hd[k] - 2 * Mw[k]) * Hd[k]
 
-        # i > k
-        for i in range(k+1,n):
-
-            for j in range(i,n):
-
-                Mp = two_ovr_wtw * ( wtMw * C[i,k] * C[j,k]  - C[i,k] * Mw[j] - C[j,k] * Mw[i] )
+            for j in range(k+1,n):
+                
+                Mp = two_ovr_wtw * ( wtMw * Hd[k] * C[j,k]  - Hd[k] * Mw[j] - C[j,k] * Mw[k] )
 
                 B[k,j] += Mp
                 B[j,k] += Mp
+
+            # i > k
+            for i in range(k+1,n):
+
+                for j in range(i,n):
+
+                    Mp = two_ovr_wtw * ( wtMw * C[i,k] * C[j,k]  - C[i,k] * Mw[j] - C[j,k] * Mw[i] )
+
+                    B[k,j] += Mp
+                    B[j,k] += Mp
+
+        # Algo J
+        # ~ sqrt_wtw = csqrt( A[k+1,k] * A[k+1,k] + 
+
+
+        # if k < n-1 :
+            # Algo H
+
+
+
