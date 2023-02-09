@@ -188,11 +188,12 @@ def ExecName(the_name, input_folder, store_folder):
     x = ActionSyst.Package_all_coeffs(all_coeffs_init)
 
     ActionSyst.SavePosFFT(x)
+    ActionSyst.Do_Pos_FFT = False
 
     Action,Gradaction = ActionSyst.Compute_action(x)
     Newt_err = ActionSyst.Compute_Newton_err(x)
 
-    Newt_err_norm = np.linalg.norm(Newt_err)/(ActionSyst.nint()*ActionSyst.nbody)
+    Newt_err_norm = np.linalg.norm(Newt_err)/(ActionSyst.nint*ActionSyst.nbody)
 
     print(f'Saved Newton Error : {Info_dict["Newton_Error"]}')
     print(f'Init Newton Error : {Newt_err_norm}')
@@ -200,10 +201,10 @@ def ExecName(the_name, input_folder, store_folder):
     n_eig = 10
 
     # which_eigs = 'LM' # Largest (in magnitude) eigenvalues.
-    which_eigs = 'SM' # Smallest (in magnitude) eigenvalues.
+    # which_eigs = 'SM' # Smallest (in magnitude) eigenvalues.
     # which_eigs = 'LA' # Largest (algebraic) eigenvalues.
     # which_eigs = 'SA' # Smallest (algebraic) eigenvalues.
-    # which_eigs = 'BE' # Half (k/2) from each end of the spectrum.
+    which_eigs = 'BE' # Half (k/2) from each end of the spectrum.
 
     HessMat = ActionSyst.Compute_action_hess_LinOpt(x)
     w ,v = scipy.sparse.linalg.eigsh(HessMat,k=n_eig,which=which_eigs)
