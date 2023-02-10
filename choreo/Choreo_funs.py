@@ -151,7 +151,7 @@ class ChoreoAction():
             nint = self.nint
 
         all_coeffs_nosym = self.RemoveSym(x).view(dtype=np.complex128)[...,0]
-        all_pos_b = the_irfft(all_coeffs_nosym,n=nint,axis=2,norm="forward")
+        all_pos_b = the_irfft(all_coeffs_nosym,norm="forward")
 
         return all_pos_b
 
@@ -164,7 +164,7 @@ class ChoreoAction():
             nint = self.nint
 
         all_coeffs_c = self.Unpackage_all_coeffs(x).view(dtype=np.complex128)[...,0]
-        all_pos = the_irfft(all_coeffs_c,n=nint,axis=2,norm="forward")
+        all_pos = the_irfft(all_coeffs_c,norm="forward")
 
         return all_pos
 
@@ -177,13 +177,13 @@ class ChoreoAction():
             nint = self.nint
 
         all_coeffs_nosym = self.RemoveSym(x).view(dtype=np.complex128)[...,0]
-        all_pos_b = the_irfft(all_coeffs_nosym,n=nint,axis=2,norm="forward")
+        all_pos_b = the_irfft(all_coeffs_nosym,norm="forward")
 
         ncoeff = all_coeffs_nosym.shape[2]
         for k in range(ncoeff):
             all_coeffs_nosym[:,:,k] *= twopi*1j*k
 
-        all_vel_b = the_irfft(all_coeffs_nosym,n=nint,axis=2,norm="forward")
+        all_vel_b = the_irfft(all_coeffs_nosym,norm="forward")
 
         return np.stack((all_pos_b,all_vel_b),axis=0)
 
@@ -281,7 +281,7 @@ class ChoreoAction():
             self.last_all_coeffs = self.Unpackage_all_coeffs(x)
             
             c_coeffs = self.last_all_coeffs.view(dtype=np.complex128)[...,0]
-            self.last_all_pos = the_irfft(c_coeffs,n=self.nint,axis=2,norm="forward")
+            self.last_all_pos = the_irfft(c_coeffs,norm="forward")
         
     def Compute_action_hess_mul(self,x,dx):
         r"""
@@ -785,7 +785,7 @@ class ChoreoAction():
         
         c_coeffs = self.Unpackage_all_coeffs(x).view(dtype=np.complex128)[...,0]
 
-        all_pos = the_irfft(c_coeffs,n=nint,axis=2,norm="forward")        
+        all_pos = the_irfft(c_coeffs,norm="forward")        
         all_pos_b = np.zeros((self.nbody,ndim,nint),dtype=np.float64)
         
         for il in range(self.nloop):
@@ -984,7 +984,7 @@ class ChoreoAction():
             c_coeffs = all_coeffs.view(dtype=np.complex128)[...,0]
             
             all_pos = np.zeros((self.nloop,ndim,nint_plot+1),dtype=np.float64)
-            all_pos[:,:,0:nint_plot] = the_irfft(c_coeffs,n=nint_plot,axis=2,norm="forward")
+            all_pos[:,:,0:nint_plot] = the_irfft(c_coeffs,n=nint_plot,norm="forward")
             all_pos[:,:,nint_plot] = all_pos[:,:,0]
             
             n_loop_plot = np.count_nonzero((self.RequiresLoopDispUn))
@@ -1108,7 +1108,7 @@ class ChoreoAction():
             c_coeffs = all_coeffs.view(dtype=np.complex128)[...,0]
             
             all_pos = np.zeros((self.nloop,ndim,nint_plot+1),dtype=np.float64)
-            all_pos[:,:,0:nint_plot] = the_irfft(c_coeffs,n=nint_plot,axis=2,norm="forward")
+            all_pos[:,:,0:nint_plot] = the_irfft(c_coeffs,n=nint_plot,norm="forward")
             all_pos[:,:,nint_plot] = all_pos[:,:,0]
             
             all_coeffs_v = np.zeros(all_coeffs.shape)
@@ -1120,7 +1120,7 @@ class ChoreoAction():
             c_coeffs_v = all_coeffs_v.view(dtype=np.complex128)[...,0]
             
             all_vel = np.zeros((self.nloop,nint_plot+1),dtype=np.float64)
-            all_vel[:,0:nint_plot] = np.linalg.norm(the_irfft(c_coeffs_v,n=nint_plot,axis=2,norm="forward"),axis=1)
+            all_vel[:,0:nint_plot] = np.linalg.norm(the_irfft(c_coeffs_v,n=nint_plot,norm="forward"),axis=1)
             all_vel[:,nint_plot] = all_vel[:,0]
             
             all_pos_b = np.zeros((self.nbody,ndim,nint_plot+1),dtype=np.float64)
