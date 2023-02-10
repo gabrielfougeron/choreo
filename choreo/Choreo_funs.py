@@ -225,8 +225,7 @@ class ChoreoAction():
 
     def Center_all_coeffs(self,all_coeffs):
 
-        x = self.Package_all_coeffs(all_coeffs)
-        xbar = self.Compute_bar_serious(x)
+        xbar = Compute_bar(all_coeffs,self.nloop,self.mass,self.loopnb,self.Targets,self.SpaceRotsUn)
 
         for il in range(self.nloop):
 
@@ -892,13 +891,14 @@ class ChoreoAction():
         all_pos_b = self.ComputeAllPos(x)
 
         xbar_mean = np.zeros((ndim))
-        tot_mass = 0.
+
         xbar_all = np.zeros((ndim,self.nint))
 
         for iint in range(self.nint):
 
             xbar = np.zeros((ndim))
-
+            
+            tot_mass = 0.
             for il in range(self.nloop):
                 for ib in range(self.loopnb[il]):
 
@@ -913,7 +913,8 @@ class ChoreoAction():
 
         xbar_std = np.std(xbar_all,axis=1)
 
-        print(xbar_std)
+        if np.linalg.norm(xbar_std) > 1e-10 :
+            print("aaa",np.linalg.norm(xbar_std))
 
         xbar_mean = np.mean(xbar_all,axis=1)
 
@@ -1919,24 +1920,24 @@ def setup_changevar(nbody,nint_init,mass,n_reconverge_it_max=6,MomCons=True,n_gr
         )
 
 
-# 
-#         diag_changevar_mass(
-#             param_to_coeff_cvg_lvl_list[i].nnz,
-#             ncoeff_cvg_lvl_list[i],
-#             -n_grad_change,
-#             param_to_coeff_cvg_lvl_list[i].row,
-#             param_to_coeff_cvg_lvl_list[i].data,
-#             MassSum
-#         )
-#         
-#         diag_changevar_mass(
-#             coeff_to_param_cvg_lvl_list[i].nnz,
-#             ncoeff_cvg_lvl_list[i],
-#             n_grad_change,
-#             coeff_to_param_cvg_lvl_list[i].col,
-#             coeff_to_param_cvg_lvl_list[i].data,
-#             MassSum
-#         )
+
+        # diag_changevar_mass(
+        #     param_to_coeff_cvg_lvl_list[i].nnz,
+        #     ncoeff_cvg_lvl_list[i],
+        #     -n_grad_change,
+        #     param_to_coeff_cvg_lvl_list[i].row,
+        #     param_to_coeff_cvg_lvl_list[i].data,
+        #     MassSum
+        # )
+        # 
+        # diag_changevar_mass(
+        #     coeff_to_param_cvg_lvl_list[i].nnz,
+        #     ncoeff_cvg_lvl_list[i],
+        #     n_grad_change,
+        #     coeff_to_param_cvg_lvl_list[i].col,
+        #     coeff_to_param_cvg_lvl_list[i].data,
+        #     MassSum
+        # )
 # 
 # 
 #         rand_vect = np.zeros((nloop,ndim,ncoeff_cvg_lvl_list[i] ,2))
