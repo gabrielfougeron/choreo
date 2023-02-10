@@ -1660,17 +1660,9 @@ def diag_changevar(
         if (k == 0):
             k = 1
 
-<<<<<<< HEAD
-        # kd = k
-        kd = k * csqrt(MassSum[il])
-        # kd = k * MassSum[il]
-=======
 
-        if idx == 3599 :
-            print(idx,ift,k,il)
-
-        kd = k * csqrt(MassSum[il]) * ctwopisqrt2
->>>>>>> ed9aeaa9adc211a3cde381da7dad7f9c7fbdfc14
+        kd = k * ctwopisqrt2
+        # kd = k * csqrt(MassSum[il]) * ctwopisqrt2
         kfac = cpow(kd,n_grad_change)
         
         data[idx] *= kfac
