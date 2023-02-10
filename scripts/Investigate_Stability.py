@@ -183,7 +183,7 @@ def ExecName(the_name, input_folder, store_folder):
     n_reconverge_it_max = 0
     n_grad_change = 1.
 
-    ActionSyst = choreo.setup_changevar(nbody,nint_init,mass,n_reconverge_it_max,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change,CrashOnIdentity=False)
+    ActionSyst = choreo.setup_changevar(nbody,nint,mass,n_reconverge_it_max,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change,CrashOnIdentity=False)
 
     x = ActionSyst.Package_all_coeffs(all_coeffs_init)
 

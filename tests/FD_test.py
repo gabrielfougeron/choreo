@@ -24,9 +24,9 @@ sys.path.append(__PROJECT_ROOT__)
 
 from choreo import *
 
+nint = 2400
 
-# ncoeff = 12
-ncoeff = 900
+ncoeff = nint//2 + 1
 
 # load_file = './save_tests/9/9.npy'
 # all_coeffs = np.load(load_file)
@@ -75,7 +75,7 @@ MomConsImposed = True
 
 n_reconverge_it_max = 1
 n_grad_change = 1.
-ActionSyst = setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change)
+ActionSyst = setup_changevar(nbody,nint,mass,n_reconverge_it_max,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change)
 ncoeffs_args = ActionSyst.coeff_to_param.shape[0]
 
 print('n params ',ncoeffs_args)
