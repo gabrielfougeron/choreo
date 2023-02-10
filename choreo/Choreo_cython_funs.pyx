@@ -1197,7 +1197,7 @@ def Assemble_Cstr_Matrix(
     cdef double invmasstot = 0
     cdef double c,s
     
-    # Removes imaginary part of c_0 and c_last
+    # Removes imaginary parts of c_0 and c_last
     for il in range(nloop):
         for idim in range(cndim):
              
@@ -1359,20 +1359,11 @@ def Assemble_Cstr_Matrix(
 
     cdef long icstr = 0
     nnz = 0
-
-    # Removes imaginary part of c_0 and c_last
+# 
+    # Removes imaginary parts of c_0 and c_last
     for il in range(nloop):
         for idim in range(cndim):
-#             
-#             i = 0 + 2*(0 + ncoeff*(idim + cndim*il))  
-#             
-#             cstr_row[nnz] = i
-#             cstr_col[nnz] = icstr
-#             cstr_data[nnz] = 1. 
-#               
-#             nnz +=1
-#             icstr +=1 
-# 
+            
             i = 1 + 2*(0 + ncoeff*(idim + cndim*il))  
             
             cstr_row[nnz] = i
@@ -1381,16 +1372,7 @@ def Assemble_Cstr_Matrix(
               
             nnz +=1
             icstr +=1 
-#             
-#             i = 0 + 2*(ncoeff-1 + ncoeff*(idim + cndim*il))  
-#             
-#             cstr_row[nnz] = i
-#             cstr_col[nnz] = icstr
-#             cstr_data[nnz] = 1. 
-#               
-#             nnz +=1
-#             icstr +=1     
-# 
+
             i = 1 + 2*(ncoeff-1 + ncoeff*(idim + cndim*il))  
             
             cstr_row[nnz] = i
@@ -1400,12 +1382,11 @@ def Assemble_Cstr_Matrix(
             nnz +=1
             icstr +=1 
 
-
-
     # Zero momentum constraint
     if MomCons :
         
         for k in range(ncoeff):
+
             for idim in range(cndim):
                                       
                 for il in range(nloop):
@@ -1657,12 +1638,17 @@ def diag_changevar(
         idim = res % cndim
         il = res / cndim
 
+        # print(idx,il,idim,k,ift)
+
         if (k == 0):
             k = 1
 
-
-        kd = k * ctwopisqrt2
+        # kd = k
         # kd = k * csqrt(MassSum[il]) * ctwopisqrt2
+        kd = k * ctwopisqrt2
+        # kd = (ift+1)*1.
+        # kd = ctwopisqrt2 * csqrt(MassSum[il])
+
         kfac = cpow(kd,n_grad_change)
         
         data[idx] *= kfac

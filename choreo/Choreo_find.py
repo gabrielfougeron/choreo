@@ -22,7 +22,7 @@ from choreo.Choreo_funs import *
 def Find_Choreo(
     nbody,
     n_reconverge_it_max,
-    ncoeff_init,
+    nint_init,
     mass,
     Sym_list,
     MomConsImposed,
@@ -107,7 +107,7 @@ def Find_Choreo(
     print(f'Searching periodic solutions of {nbody:d} bodies.')
 
     print(f'Processing symmetries for {(n_reconverge_it_max+1):d} convergence levels.')
-    ActionSyst = setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change,CrashOnIdentity=CrashOnError_changevar)
+    ActionSyst = setup_changevar(nbody,nint_init,mass,n_reconverge_it_max,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change,CrashOnIdentity=CrashOnError_changevar)
 
     print('')
 
@@ -535,7 +535,7 @@ def Find_Choreo(
 
 def GenSymExample(
     nbody,
-    ncoeff_init,
+    nint_init,
     mass,
     Sym_list,
     MomConsImposed,
@@ -582,7 +582,7 @@ def GenSymExample(
     n_reconverge_it_max = 0
     n_grad_change = 1
 
-    ActionSyst = setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change,CrashOnIdentity=CrashOnError_changevar)
+    ActionSyst = setup_changevar(nbody,nint_init,mass,n_reconverge_it_max,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change,CrashOnIdentity=CrashOnError_changevar)
 
     nbi_tot = 0
     for il in range(ActionSyst.nloop):
@@ -664,7 +664,7 @@ def GenSymExample(
         ActionSyst.plot_all_2D_anim(x0,nint_plot_anim,'init.mp4',nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size,dnint=dnint,color_list=color_list,color=color)
 
     if Save_All_Coeffs:
-        ActionSyst.all_coeffs = Unpackage_all_coeffs(x0)
+        all_coeffs = ActionSyst.Unpackage_all_coeffs(x0)
         np.save('init_coeffs.npy',all_coeffs)
 
     if Save_All_Pos:
@@ -683,7 +683,7 @@ def GenSymExample(
 def Speed_test(
     nbody,
     n_reconverge_it_max,
-    ncoeff_init,
+    nint_init,
     mass,
     Sym_list,
     MomConsImposed,
@@ -716,7 +716,7 @@ def Speed_test(
 
     """
     
-    ActionSyst = setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change,CrashOnIdentity=CrashOnError_changevar)
+    ActionSyst = setup_changevar(nbody,nint_init,mass,n_reconverge_it_max,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change,CrashOnIdentity=CrashOnError_changevar)
 
     nbi_tot = 0
     for il in range(ActionSyst.nloop):

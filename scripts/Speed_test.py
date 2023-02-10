@@ -216,15 +216,7 @@ def main():
 
     nint_plot_img = nint_plot_anim * dnint
 
-    try:
-        the_lcm
-    except NameError:
-        period_div = 1.
-    else:
-        period_div = the_lcm
-
     nperiod_anim = 1.
-    # nperiod_anim = 1./period_div
 
     Plot_trace_anim = True
     # Plot_trace_anim = False
@@ -233,7 +225,7 @@ def main():
     Save_Newton_Error = False
 
     n_reconverge_it_max = params_dict["Solver_Discr"] ['n_reconverge_it_max'] 
-    ncoeff_init = params_dict["Solver_Discr"]["ncoeff_init"]   
+    nint_init = params_dict["Solver_Discr"]["nint_init"]   
 
     disp_scipy_opt =  (params_dict['Solver_Optim'] ['optim_verbose_lvl'] == "full")
     # disp_scipy_opt = False

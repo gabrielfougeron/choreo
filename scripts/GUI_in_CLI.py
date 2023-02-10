@@ -221,7 +221,7 @@ def main(params_dict):
     # Save_Newton_Error = False
 
     n_reconverge_it_max = params_dict["Solver_Discr"] ['n_reconverge_it_max'] 
-    ncoeff_init = params_dict["Solver_Discr"]["ncoeff_init"]   
+    nint_init = params_dict["Solver_Discr"]["nint_init"]   
 
     disp_scipy_opt =  (params_dict['Solver_Optim'] ['optim_verbose_lvl'] == "full")
     # disp_scipy_opt = False
