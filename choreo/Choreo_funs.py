@@ -361,10 +361,13 @@ class ChoreoAction():
             self.last_all_pos
         )
 
+
         GJ = GradJ.reshape(-1)
         y = self.param_to_coeff_T.dot(GJ)
         
         return J,y
+        
+        # return J,self.Package_all_coeffs_T(GradJ)
 
     def Compute_hash_action(self,x):
         r"""
