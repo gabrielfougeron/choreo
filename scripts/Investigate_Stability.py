@@ -166,8 +166,8 @@ def ExecName(the_name, input_folder, store_folder):
     Sym_list = choreo.Make_SymList_From_InfoDict(Info_dict,Transform_Sym)
 
 
-    # MomConsImposed = True
-    MomConsImposed = False
+    MomConsImposed = True
+    # MomConsImposed = False
 # 
 #     rot_angle = 0
 #     s = -1

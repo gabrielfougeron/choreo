@@ -13,10 +13,9 @@ import json
 
 import numpy as np
 import math as m
+import scipy
 import scipy.fft
 import scipy.optimize
-import scipy.linalg as la
-import scipy.sparse as sp
 import sparseqr
 import networkx
 import random
@@ -37,7 +36,8 @@ except:
 from choreo.Choreo_cython_funs import ndim,twopi,nhash,n
 from choreo.Choreo_cython_funs import Compute_action_Cython,Compute_action_hess_mul_Cython
 from choreo.Choreo_cython_funs import Compute_hash_action_Cython,Compute_Newton_err_Cython
-from choreo.Choreo_cython_funs import Assemble_Cstr_Matrix,diag_changevar
+from choreo.Choreo_cython_funs import Assemble_Cstr_Matrix,diag_changevar_mass,diag_changevar_nomass
+from choreo.Choreo_cython_funs import diag_changevar_rand
 from choreo.Choreo_cython_funs import Compute_MinDist_Cython,Compute_Loop_Dist_btw_avg_Cython,Compute_square_dist,Compute_Loop_Size_Dist_Cython
 from choreo.Choreo_cython_funs import Compute_Forces_Cython,Compute_JacMat_Forces_Cython,Compute_JacMul_Forces_Cython
 from choreo.Choreo_cython_funs import Transform_Coeffs_Single_Loop,SparseScaleCoeffs,ComputeSpeedCoeffs
@@ -328,7 +328,7 @@ class ChoreoAction():
         Returns the Hessian of the action wrt parameters at a given point as a Scipy LinearOperator.
         """
 
-        return sp.linalg.LinearOperator((self.coeff_to_param.shape[0],self.coeff_to_param.shape[0]),
+        return scipy.sparse.linalg.LinearOperator((self.coeff_to_param.shape[0],self.coeff_to_param.shape[0]),
             matvec =  (lambda dx, xl=x, selfl=self : selfl.Compute_action_hess_mul(xl,dx)),
             rmatvec = (lambda dx, xl=x, selfl=self : selfl.Compute_action_hess_mul(xl,dx)))
 
@@ -571,7 +571,7 @@ class ChoreoAction():
 
     def Compute_Auto_JacMul_ODE_RHS_LinOpt(self,x):
 
-        return sp.linalg.LinearOperator((2*self.nbody*ndim,2*self.nbody*ndim),
+        return scipy.sparse.linalg.LinearOperator((2*self.nbody*ndim,2*self.nbody*ndim),
             matvec =  (lambda dx, xl=x, selfl=self : selfl.Compute_Auto_JacMul_ODE_RHS(xl,dx)),
             rmatvec = (lambda dx, xl=x, selfl=self : selfl.Compute_Auto_JacMul_ODE_RHS(xl,dx)))
 
@@ -1823,7 +1823,48 @@ def setup_changevar(nbody,nint_init,mass,n_reconverge_it_max=6,MomCons=True,n_gr
         param_to_coeff_cvg_lvl_list.append(null_space_sparseqr(cstrmat_sp))
         coeff_to_param_cvg_lvl_list.append(param_to_coeff_cvg_lvl_list[i].transpose(copy=True))
 
-        diag_changevar(
+#         if (MomCons):
+# 
+#             diag_changevar_nomass(
+#                 param_to_coeff_cvg_lvl_list[i].nnz,
+#                 ncoeff_cvg_lvl_list[i],
+#                 -n_grad_change,
+#                 param_to_coeff_cvg_lvl_list[i].row,
+#                 param_to_coeff_cvg_lvl_list[i].data,
+#             )
+#             
+#             diag_changevar_nomass(
+#                 coeff_to_param_cvg_lvl_list[i].nnz,
+#                 ncoeff_cvg_lvl_list[i],
+#                 n_grad_change,
+#                 coeff_to_param_cvg_lvl_list[i].col,
+#                 coeff_to_param_cvg_lvl_list[i].data,
+#             )
+# 
+#         else:
+# 
+#             diag_changevar_mass(
+#                 param_to_coeff_cvg_lvl_list[i].nnz,
+#                 ncoeff_cvg_lvl_list[i],
+#                 -n_grad_change,
+#                 param_to_coeff_cvg_lvl_list[i].row,
+#                 param_to_coeff_cvg_lvl_list[i].data,
+#                 MassSum
+#             )
+#             
+#             diag_changevar_mass(
+#                 coeff_to_param_cvg_lvl_list[i].nnz,
+#                 ncoeff_cvg_lvl_list[i],
+#                 n_grad_change,
+#                 coeff_to_param_cvg_lvl_list[i].col,
+#                 coeff_to_param_cvg_lvl_list[i].data,
+#                 MassSum
+#             )
+
+
+
+
+        diag_changevar_mass(
             param_to_coeff_cvg_lvl_list[i].nnz,
             ncoeff_cvg_lvl_list[i],
             -n_grad_change,
@@ -1832,7 +1873,7 @@ def setup_changevar(nbody,nint_init,mass,n_reconverge_it_max=6,MomCons=True,n_gr
             MassSum
         )
         
-        diag_changevar(
+        diag_changevar_mass(
             coeff_to_param_cvg_lvl_list[i].nnz,
             ncoeff_cvg_lvl_list[i],
             n_grad_change,
@@ -1840,6 +1881,36 @@ def setup_changevar(nbody,nint_init,mass,n_reconverge_it_max=6,MomCons=True,n_gr
             coeff_to_param_cvg_lvl_list[i].data,
             MassSum
         )
+# 
+# 
+#         rand_vect = np.zeros((nloop,ndim,ncoeff_cvg_lvl_list[i] ,2))
+# 
+#         for il in range(nloop):
+#             for idim in range(ndim):
+#                 for k in range(ncoeff_cvg_lvl_list[i]):
+#                     for ift in range(2):
+#                         rand_vect[il,idim,k,ift] = random.random()
+# 
+# 
+#         diag_changevar_rand(
+#             coeff_to_param_cvg_lvl_list[i].nnz,
+#             ncoeff_cvg_lvl_list[i],
+#             -n_grad_change,
+#             param_to_coeff_cvg_lvl_list[i].row,
+#             param_to_coeff_cvg_lvl_list[i].data,
+#             rand_vect
+#         )
+#         
+# 
+#         diag_changevar_rand(
+#             coeff_to_param_cvg_lvl_list[i].nnz,
+#             ncoeff_cvg_lvl_list[i],
+#             n_grad_change,
+#             coeff_to_param_cvg_lvl_list[i].col,
+#             coeff_to_param_cvg_lvl_list[i].data,
+#             rand_vect
+#         )
+
 
         param_to_coeff_T_cvg_lvl_list.append(param_to_coeff_cvg_lvl_list[i].transpose(copy=True))
         coeff_to_param_T_cvg_lvl_list.append(coeff_to_param_cvg_lvl_list[i].transpose(copy=True))
@@ -1899,7 +1970,7 @@ def null_space_sparseqr(AT):
     
     if (nrow <= rank):
         
-        return sp.coo_matrix(([],([],[])),shape=(nrow,0))
+        return scipy.sparse.coo_matrix(([],([],[])),shape=(nrow,0))
     
     else:
 
@@ -1910,7 +1981,7 @@ def null_space_sparseqr(AT):
                 mask.append(iker)
             iker += 1
             
-        return sp.coo_matrix((Q.data[mask],(Q.row[mask],Q.col[mask]-rank)),shape=(nrow,nrow-rank))
+        return scipy.sparse.coo_matrix((Q.data[mask],(Q.row[mask],Q.col[mask]-rank)),shape=(nrow,nrow-rank))
      
 def AllPosToAllCoeffs(all_pos,ncoeffs):
 
