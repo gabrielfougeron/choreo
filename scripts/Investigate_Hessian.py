@@ -138,14 +138,14 @@ def ExecName(the_name, input_folder, store_folder):
     bare_name = the_name.split('/')[-1]
 
     all_pos = np.load(input_filename)
-    nint = Info_dict["n_int"]
+    nint_init = Info_dict["n_int"]
     # ncoeff_init = Info_dict["n_Fourier"] 
-    ncoeff_init = nint //2 
-    
+    ncoeff_init = nint_init //2 + 1
+
     c_coeffs = choreo.the_rfft(all_pos,axis=2,norm="forward")
     all_coeffs = np.zeros((Info_dict["nloop"],choreo.ndim,ncoeff_init,2),dtype=np.float64)
-    all_coeffs[:,:,0:ncoeff_init,0] = c_coeffs[:,:,0:ncoeff_init].real
-    all_coeffs[:,:,0:ncoeff_init,1] = c_coeffs[:,:,0:ncoeff_init].imag
+    all_coeffs[:,:,:,0] = c_coeffs.real
+    all_coeffs[:,:,:,1] = c_coeffs.imag
 
 
     # theta = 2*np.pi * 0.
@@ -181,22 +181,22 @@ def ExecName(the_name, input_folder, store_folder):
 
     # MomConsImposed = True
     MomConsImposed = False
-# 
-#     rot_angle = 0
-#     s = -1
-# 
-#     Sym_list.append(choreo.ChoreoSym(
-#         LoopTarget=0,
-#         LoopSource=0,
-#         SpaceRot = np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64),
-#         TimeRev=-1,
-#         TimeShift=fractions.Fraction(numerator=0,denominator=1)
-#     ))
+
+    rot_angle = 0
+    s = -1
+
+    Sym_list.append(choreo.ChoreoSym(
+        LoopTarget=0,
+        LoopSource=0,
+        SpaceRot = np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64),
+        TimeRev=-1,
+        TimeShift=fractions.Fraction(numerator=0,denominator=1)
+    ))
 
     n_reconverge_it_max = 0
     n_grad_change = 1.
 
-    ActionSyst = choreo.setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change,CrashOnIdentity=False)
+    ActionSyst = choreo.setup_changevar(nbody,nint_init,mass,n_reconverge_it_max,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change,CrashOnIdentity=False)
 
     x = ActionSyst.Package_all_coeffs(all_coeffs_init)
 
@@ -231,10 +231,10 @@ def ExecName(the_name, input_folder, store_folder):
     i_eig = 9
     eps = 1e-10
 # 
-#     for i in range(n):
-# 
-#         if abs(v[i,i_eig]) > eps:
-#             print(i,v[i,i_eig])
+    for i in range(n):
+
+        if abs(v[i,i_eig]) > eps:
+            print(i,v[i,i_eig])
 
 
 
