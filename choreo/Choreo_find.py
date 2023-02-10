@@ -254,7 +254,7 @@ def Find_Choreo(
 
             for i in range(n_callback_after_init_list):
                 callback_after_init_list[i]()
-            
+  
         f0 = ActionSyst.Compute_action_onlygrad(x0)
         best_sol = current_best(x0,f0)
 
@@ -427,7 +427,7 @@ def Find_Choreo(
 
                     GoOn=False
                     print("Stopping search: there might be something wrong with the constraints.")
-                    # SaveSol = True
+                    SaveSol = True
                 
                 if GoOn and NewtonPreciseGood :
 
