@@ -151,7 +151,7 @@ class ChoreoAction():
             nint = self.nint
 
         all_coeffs_nosym = self.RemoveSym(x).view(dtype=np.complex128)[...,0]
-        all_pos_b = the_irfft(all_coeffs_nosym,n=nint,axis=2,norm="forward")
+        all_pos_b = the_irfft(all_coeffs_nosym,norm="forward")
 
         return all_pos_b
 
@@ -164,7 +164,7 @@ class ChoreoAction():
             nint = self.nint
 
         all_coeffs_c = self.Unpackage_all_coeffs(x).view(dtype=np.complex128)[...,0]
-        all_pos = the_irfft(all_coeffs_c,n=nint,axis=2,norm="forward")
+        all_pos = the_irfft(all_coeffs_c,norm="forward")
 
         return all_pos
 
@@ -177,13 +177,13 @@ class ChoreoAction():
             nint = self.nint
 
         all_coeffs_nosym = self.RemoveSym(x).view(dtype=np.complex128)[...,0]
-        all_pos_b = the_irfft(all_coeffs_nosym,n=nint,axis=2,norm="forward")
+        all_pos_b = the_irfft(all_coeffs_nosym,norm="forward")
 
         ncoeff = all_coeffs_nosym.shape[2]
         for k in range(ncoeff):
             all_coeffs_nosym[:,:,k] *= twopi*1j*k
 
-        all_vel_b = the_irfft(all_coeffs_nosym,n=nint,axis=2,norm="forward")
+        all_vel_b = the_irfft(all_coeffs_nosym,norm="forward")
 
         return np.stack((all_pos_b,all_vel_b),axis=0)
 
@@ -281,7 +281,7 @@ class ChoreoAction():
             self.last_all_coeffs = self.Unpackage_all_coeffs(x)
             
             c_coeffs = self.last_all_coeffs.view(dtype=np.complex128)[...,0]
-            self.last_all_pos = the_irfft(c_coeffs,n=self.nint,axis=2,norm="forward")
+            self.last_all_pos = the_irfft(c_coeffs,norm="forward")
         
     def Compute_action_hess_mul(self,x,dx):
         r"""
@@ -699,7 +699,7 @@ class ChoreoAction():
 
             if Rotate_fast_with_slow :
                 
-                nint = 2*ncoeff
+                nint = 2*(ncoeff-1)
 
                 c_coeffs_slow = all_coeffs_slow_mod.view(dtype=np.complex128)[...,0]
                 all_pos_slow = the_irfft(c_coeffs_slow,n=nint,axis=1)
@@ -713,7 +713,7 @@ class ChoreoAction():
 
                 all_pos_avg = RotateFastWithSlow_2D(all_pos_slow,all_pos_slow_mod_speed,all_pos_fast,nint)
 
-                c_coeffs_avg = the_rfft(all_pos_avg,n=nint,axis=1)
+                c_coeffs_avg = the_rfft(all_pos_avg,axis=1)
 
                 kmax = min(ncoeff,ncoeff_slow)
 
@@ -785,7 +785,7 @@ class ChoreoAction():
         
         c_coeffs = self.Unpackage_all_coeffs(x).view(dtype=np.complex128)[...,0]
 
-        all_pos = the_irfft(c_coeffs,n=nint,axis=2,norm="forward")        
+        all_pos = the_irfft(c_coeffs,norm="forward")        
         all_pos_b = np.zeros((self.nbody,ndim,nint),dtype=np.float64)
         
         for il in range(self.nloop):
@@ -984,7 +984,7 @@ class ChoreoAction():
             c_coeffs = all_coeffs.view(dtype=np.complex128)[...,0]
             
             all_pos = np.zeros((self.nloop,ndim,nint_plot+1),dtype=np.float64)
-            all_pos[:,:,0:nint_plot] = the_irfft(c_coeffs,n=nint_plot,axis=2,norm="forward")
+            all_pos[:,:,0:nint_plot] = the_irfft(c_coeffs,n=nint_plot,norm="forward")
             all_pos[:,:,nint_plot] = all_pos[:,:,0]
             
             n_loop_plot = np.count_nonzero((self.RequiresLoopDispUn))
@@ -1108,7 +1108,7 @@ class ChoreoAction():
             c_coeffs = all_coeffs.view(dtype=np.complex128)[...,0]
             
             all_pos = np.zeros((self.nloop,ndim,nint_plot+1),dtype=np.float64)
-            all_pos[:,:,0:nint_plot] = the_irfft(c_coeffs,n=nint_plot,axis=2,norm="forward")
+            all_pos[:,:,0:nint_plot] = the_irfft(c_coeffs,n=nint_plot,norm="forward")
             all_pos[:,:,nint_plot] = all_pos[:,:,0]
             
             all_coeffs_v = np.zeros(all_coeffs.shape)
@@ -1120,7 +1120,7 @@ class ChoreoAction():
             c_coeffs_v = all_coeffs_v.view(dtype=np.complex128)[...,0]
             
             all_vel = np.zeros((self.nloop,nint_plot+1),dtype=np.float64)
-            all_vel[:,0:nint_plot] = np.linalg.norm(the_irfft(c_coeffs_v,n=nint_plot,axis=2,norm="forward"),axis=1)
+            all_vel[:,0:nint_plot] = np.linalg.norm(the_irfft(c_coeffs_v,n=nint_plot,norm="forward"),axis=1)
             all_vel[:,nint_plot] = all_vel[:,0]
             
             all_pos_b = np.zeros((self.nbody,ndim,nint_plot+1),dtype=np.float64)
@@ -1502,7 +1502,7 @@ class ChoreoSym():
         """   
         return ((self.Inverse()).Compose(other)).IsIdentity()
 
-def setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max=6,MomCons=True,n_grad_change=1.,Sym_list=[],CrashOnIdentity=True):
+def setup_changevar(nbody,nint_init,mass,n_reconverge_it_max=6,MomCons=True,n_grad_change=1.,Sym_list=[],CrashOnIdentity=True):
     r"""
     This function constructs a ChoreoAction
     It detects loops and constraints based on symmetries.
@@ -1721,6 +1721,7 @@ def setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max=6,MomCons=True,n_
 
             SpaceRotsBin[il,ibi,:,:] = UniqueSymsAll_list[il][ibi].SpaceRot
             TimeRevsBin[il,ibi] = UniqueSymsAll_list[il][ibi].TimeRev
+
             if (UniqueSymsAll_list[il][ibi].TimeShift.denominator > 0):
                 TimeShiftNumBin[il,ibi] = UniqueSymsAll_list[il][ibi].TimeShift.numerator % UniqueSymsAll_list[il][ibi].TimeShift.denominator
                 TimeShiftDenBin[il,ibi] = UniqueSymsAll_list[il][ibi].TimeShift.denominator
@@ -1769,9 +1770,9 @@ def setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max=6,MomCons=True,n_
         for i in range(loopncstr[il]):
             
             SpaceRotsCstr[il,i,:,:] = SymGraph.nodes[loopgen[il]]["Constraint_list"][i].SpaceRot
-            TimeRevsCstr[il,i] = SymGraph.nodes[loopgen[il]]["Constraint_list"][i].TimeRev
-            TimeShiftNumCstr[il,i] = SymGraph.nodes[loopgen[il]]["Constraint_list"][i].TimeShift.numerator
-            TimeShiftDenCstr[il,i] = SymGraph.nodes[loopgen[il]]["Constraint_list"][i].TimeShift.denominator
+            TimeRevsCstr[il,i]      = SymGraph.nodes[loopgen[il]]["Constraint_list"][i].TimeRev
+            TimeShiftNumCstr[il,i]  = SymGraph.nodes[loopgen[il]]["Constraint_list"][i].TimeShift.numerator
+            TimeShiftDenCstr[il,i]  = SymGraph.nodes[loopgen[il]]["Constraint_list"][i].TimeShift.denominator
 
     # Now detect parameters and build change of variables
 
@@ -1786,9 +1787,11 @@ def setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max=6,MomCons=True,n_
     coeff_to_param_T_cvg_lvl_list = []
 
     for i in range(n_reconverge_it_max+1):
-        
-        ncoeff_cvg_lvl_list.append(ncoeff_init * (2**i))
-        nint_cvg_lvl_list.append(2*ncoeff_cvg_lvl_list[i])
+
+        assert (nint_init % 2) == 0
+
+        nint_cvg_lvl_list.append(nint_init * (2**i))
+        ncoeff_cvg_lvl_list.append(nint_cvg_lvl_list[i] // 2 + 1)
 
         cstrmat_sp = Assemble_Cstr_Matrix(
             nloop               ,
@@ -1901,14 +1904,14 @@ def null_space_sparseqr(AT):
             
         return sp.coo_matrix((Q.data[mask],(Q.row[mask],Q.col[mask]-rank)),shape=(nrow,nrow-rank))
      
-def AllPosToAllCoeffs(all_pos,nint,ncoeffs):
+def AllPosToAllCoeffs(all_pos,ncoeffs):
 
     nloop = all_pos.shape[0]
 
-    c_coeffs = the_rfft(all_pos,n=nint,axis=2,norm="forward")
+    c_coeffs = the_rfft(all_pos,axis=2,norm="forward")
     all_coeffs = np.zeros((nloop,ndim,ncoeffs,2),dtype=np.float64)
-    all_coeffs[:,:,:,0] = c_coeffs[:,:,0:ncoeffs].real
-    all_coeffs[:,:,:,1] = c_coeffs[:,:,0:ncoeffs].imag
+    all_coeffs[:,:,:,0] = c_coeffs.real
+    all_coeffs[:,:,:,1] = c_coeffs.imag
 
     return all_coeffs
 
