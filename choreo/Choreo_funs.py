@@ -217,6 +217,10 @@ class ChoreoAction():
         _,y = self.Compute_action(x)
         
         return y
+
+    def Center_all_coeffs(self,all_coeffs):
+
+        Center_all_coeffs(all_coeffs,self.nloop,self.mass,self.loopnb,self.Targets,self.SpaceRotsUn)
         
     def Compute_action_onlygrad_escape(self,x):
 
@@ -1814,6 +1818,10 @@ def setup_changevar(nbody,nint_init,mass,n_reconverge_it_max=6,MomCons=True,n_gr
 
         param_to_coeff_cvg_lvl_list.append(null_space_sparseqr(cstrmat_sp))
         coeff_to_param_cvg_lvl_list.append(param_to_coeff_cvg_lvl_list[i].transpose(copy=True))
+
+        print('aaa',param_to_coeff_cvg_lvl_list[i].shape)
+
+
 
         diag_changevar(
             param_to_coeff_cvg_lvl_list[i].nnz,

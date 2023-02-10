@@ -1,5 +1,5 @@
 import os
-
+# 
 os.environ['OMP_NUM_THREADS'] = '1'
 os.environ['NUMEXPR_NUM_THREADS'] = '1'
 os.environ['OPENBLAS_NUM_THREADS'] = '1'
@@ -35,9 +35,9 @@ def main():
 
 
     # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/')
-    # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/3/')
-    # input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery/01 - Classic gallery')
-    input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery/02 - Families/02 - Chains/04')
+    # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/2/')
+    input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery/01 - Classic gallery')
+    # input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery/02 - Families/02 - Chains/04')
     # input_folder = os.path.join(__PROJECT_ROOT__,'Keep/tests')
     
 #     ''' Include all files in tree '''
@@ -75,11 +75,19 @@ def main():
     # input_names_list = ['13 - 100 bodies']
     # input_names_list = ['02 - Celtic knot']
     # input_names_list = ['07 - No symmetry']
-    # input_names_list = ['11 - Resonating loops']
+    input_names_list = ['11 - Resonating loops']
     # input_names_list = ['10 - Complex symmetry']
     # input_names_list = ['12 - Big mass gap']
     
-    input_names_list = ['1-chain']
+    # input_names_list = ['1-chain']
+    # input_names_list = ['00001']
+    # input_names_list = ['00002']
+    # input_names_list = ['00003']
+    # input_names_list = ['00004']
+    # input_names_list = ['00005']
+    # input_names_list = ['00006']
+    # input_names_list = ['00007']  
+    # input_names_list = ['00008']  
 
 
 
@@ -139,7 +147,7 @@ def ExecName(the_name, input_folder, store_folder):
 
     all_pos = np.load(input_filename)
     nint_init = Info_dict["n_int"]
-    # ncoeff_init = Info_dict["n_Fourier"] 
+
     ncoeff_init = nint_init //2 + 1
 
     c_coeffs = choreo.the_rfft(all_pos,axis=2,norm="forward")
@@ -198,6 +206,11 @@ def ExecName(the_name, input_folder, store_folder):
 
     ActionSyst = choreo.setup_changevar(nbody,nint_init,mass,n_reconverge_it_max,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change,CrashOnIdentity=False)
 
+
+    ActionSyst.Center_all_coeffs(all_coeffs_init)
+
+    print('NNZ params to coeffs' ,ActionSyst.param_to_coeff.nnz)
+
     x = ActionSyst.Package_all_coeffs(all_coeffs_init)
 
     ActionSyst.SavePosFFT(x)
@@ -208,10 +221,13 @@ def ExecName(the_name, input_folder, store_folder):
 
     Newt_err_norm = np.linalg.norm(Newt_err)/(ActionSyst.nint*ActionSyst.nbody)
 
+    print(f'Saved Grad Action : {Info_dict["Grad_Action"]}')
+    print(f'Init Grad Action : {np.linalg.norm(Gradaction)}')
+
     print(f'Saved Newton Error : {Info_dict["Newton_Error"]}')
     print(f'Init Newton Error : {Newt_err_norm}')
 
-    n_eig = 20
+    n_eig = 30
 
     # which_eigs = 'LM' # Largest (in magnitude) eigenvalues.
     # which_eigs = 'SM' # Smallest (in magnitude) eigenvalues.
@@ -229,8 +245,16 @@ def ExecName(the_name, input_folder, store_folder):
     # print(v[:,-1])
     
     i_eig = -1
+
+    print(w[i_eig])
+
+    print(((ActionSyst.mass[0] + ActionSyst.mass[1])*ActionSyst.mass[0]*ActionSyst.mass[1])/(ActionSyst.mass[0]**2 + ActionSyst.mass[1]**2))
+
+
+    print(ActionSyst.mass)
+    print(fractions.Fraction(str(w[i_eig])).limit_denominator(1000))
     
-    eps = 1e-9
+    eps = 1e-5
 # 
 #     for i in range(n):
 # 
@@ -265,6 +289,9 @@ def ExecName(the_name, input_folder, store_folder):
 #                 if abs(val) > eps :
 #                     print(il,idim,iint,val)
 
+
+
+    # print(ActionSyst.param_to_coeff)
 
 
 if __name__ == "__main__":
