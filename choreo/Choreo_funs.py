@@ -119,11 +119,16 @@ class ChoreoAction():
         Computes the Fourier coefficients of the generator given the parameters.
         """
         
-        y = self.param_to_coeff.dot(x)
-        all_coeffs = y.reshape(self.nloop,ndim,self.ncoeff,2)
-        
-        return all_coeffs
+        return self.param_to_coeff.dot(x).reshape(self.nloop,ndim,self.ncoeff,2)
+    
+    def Package_all_coeffs_T(self,all_coeffs_grad):
 
+        return self.param_to_coeff_T.dot(all_coeffs_grad.reshape(-1))
+    
+    def Unpackage_all_coeffs_T(self,x):
+
+        return self.coeff_to_param_T.dot(x).reshape(self.nloop,ndim,self.ncoeff,2)
+        
     def RemoveSym(self,x):
         r"""
         Removes symmetries and returns coeffs for all bodies.
@@ -273,8 +278,7 @@ class ChoreoAction():
             self.last_all_pos
         )
 
-        GJ = GradJ.reshape(-1)
-        GJparam = (self.param_to_coeff_T.dot(GJ)) * escape_pen
+        GJparam = (self.Package_all_coeffs_T(GradJ)) * escape_pen
         
         return GJparam
 
@@ -317,10 +321,7 @@ class ChoreoAction():
             self.last_all_pos               
         )
 
-        HJdx = HessJdx.reshape(-1)
-        z = self.param_to_coeff_T.dot(HJdx)
-        
-        return z
+        return self.Package_all_coeffs_T(HessJdx)
             
     def Compute_action_hess_LinOpt(self,x):
         r"""
@@ -403,8 +404,8 @@ class ChoreoAction():
         all_Newt_err =  Compute_Newton_err_Cython(
             self.nbody                  ,
             self.nloop                  ,
-            self.ncoeff               ,
-            self.nint                 ,
+            self.ncoeff                 ,
+            self.nint * 2               ,
             self.mass                   ,
             self.loopnb                 ,
             self.Targets                ,
