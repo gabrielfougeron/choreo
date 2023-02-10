@@ -1649,7 +1649,6 @@ def diag_changevar(
         # kd = (ift+1)*1.
         # kd = ctwopisqrt2 * csqrt(MassSum[il])
 
-
         kfac = cpow(kd,n_grad_change)
         
         data[idx] *= kfac
