@@ -74,12 +74,12 @@ cython_filenames = [
 
 compiler_directives = {
     'wraparound': False,
-    # 'boundscheck': False,
-    # 'nonecheck': False,
-    # 'initializedcheck': False,
-    # 'overflowcheck': False,
-    # 'overflowcheck.fold': False,
-    # 'infer_types': True,
+    'boundscheck': False,
+    'nonecheck': False,
+    'initializedcheck': False,
+    'overflowcheck': False,
+    'overflowcheck.fold': False,
+    'infer_types': True,
 }
 
 # #### Profiler only ####
