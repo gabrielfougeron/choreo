@@ -1196,17 +1196,11 @@ def Assemble_Cstr_Matrix(
     cdef double invmasstot = 0
     cdef double c,s
     
-#     # Removes imaginary part of c_0
-#     for il in range(nloop):
-#         for idim in range(cndim):
-#              
-#             nnz +=1
-# 
-#     # Removes c_last
-#     for il in range(nloop):
-#         for idim in range(cndim):
-#              
-#             nnz +=2
+    # Removes imaginary part of c_0 and c_last
+    for il in range(nloop):
+        for idim in range(cndim):
+             
+            nnz += 2
     
     # Zero momentum constraint
     if MomCons :
@@ -1365,41 +1359,30 @@ def Assemble_Cstr_Matrix(
     cdef long icstr = 0
     nnz = 0
 
-#     # Removes imaginary part of c_0
-#     for il in range(nloop):
-#         for idim in range(cndim):
-#             
-#             i = 1 + 2*(0 + ncoeff*(idim + cndim*il))  
-#             
-#             cstr_row[nnz] = i
-#             cstr_col[nnz] = icstr
-#             cstr_data[nnz] = 1. 
-#               
-#             nnz +=1
-#             icstr +=1 
-#     
-#     # Removes imaginary part of c_0
-#     for il in range(nloop):
-#         for idim in range(cndim):
-#             
-#             i = 0 + 2*(ncoeff-1 + ncoeff*(idim + cndim*il))  
-#             
-#             cstr_row[nnz] = i
-#             cstr_col[nnz] = icstr
-#             cstr_data[nnz] = 1. 
-#               
-#             nnz +=1
-#             icstr +=1       
-# 
-#             i = 1 + 2*(ncoeff-1 + ncoeff*(idim + cndim*il))  
-#             
-#             cstr_row[nnz] = i
-#             cstr_col[nnz] = icstr
-#             cstr_data[nnz] = 1. 
-#               
-#             nnz +=1
-#             icstr +=1 
-    
+    # Removes imaginary part of c_0 and c_last
+    for il in range(nloop):
+        for idim in range(cndim):
+            
+            i = 1 + 2*(0 + ncoeff*(idim + cndim*il))  
+            
+            cstr_row[nnz] = i
+            cstr_col[nnz] = icstr
+            cstr_data[nnz] = 1. 
+              
+            nnz +=1
+            icstr +=1 
+            
+            i = 1 + 2*(ncoeff-1 + ncoeff*(idim + cndim*il))  
+            
+            cstr_row[nnz] = i
+            cstr_col[nnz] = icstr
+            cstr_data[nnz] = 1. 
+              
+            nnz +=1
+            icstr +=1 
+
+
+
     # Zero momentum constraint
     if MomCons :
         

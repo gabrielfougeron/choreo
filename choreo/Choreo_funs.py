@@ -699,7 +699,7 @@ class ChoreoAction():
 
             if Rotate_fast_with_slow :
                 
-                nint = 2*ncoeff
+                nint = 2*(ncoeff-1)
 
                 c_coeffs_slow = all_coeffs_slow_mod.view(dtype=np.complex128)[...,0]
                 all_pos_slow = the_irfft(c_coeffs_slow,n=nint,axis=1)
@@ -713,7 +713,7 @@ class ChoreoAction():
 
                 all_pos_avg = RotateFastWithSlow_2D(all_pos_slow,all_pos_slow_mod_speed,all_pos_fast,nint)
 
-                c_coeffs_avg = the_rfft(all_pos_avg,n=nint,axis=1)
+                c_coeffs_avg = the_rfft(all_pos_avg,axis=1)
 
                 kmax = min(ncoeff,ncoeff_slow)
 
@@ -1502,7 +1502,7 @@ class ChoreoSym():
         """   
         return ((self.Inverse()).Compose(other)).IsIdentity()
 
-def setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max=6,MomCons=True,n_grad_change=1.,Sym_list=[],CrashOnIdentity=True):
+def setup_changevar(nbody,nint_init,mass,n_reconverge_it_max=6,MomCons=True,n_grad_change=1.,Sym_list=[],CrashOnIdentity=True):
     r"""
     This function constructs a ChoreoAction
     It detects loops and constraints based on symmetries.
@@ -1787,9 +1787,11 @@ def setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max=6,MomCons=True,n_
     coeff_to_param_T_cvg_lvl_list = []
 
     for i in range(n_reconverge_it_max+1):
-        
-        ncoeff_cvg_lvl_list.append(ncoeff_init * (2**i))
-        nint_cvg_lvl_list.append(2*ncoeff_cvg_lvl_list[i])
+
+        assert (nint_init % 2) == 0
+
+        nint_cvg_lvl_list.append(nint_init * (2**i))
+        ncoeff_cvg_lvl_list.append(nint_cvg_lvl_list[i] // 2 + 1)
 
         cstrmat_sp = Assemble_Cstr_Matrix(
             nloop               ,
@@ -1902,14 +1904,14 @@ def null_space_sparseqr(AT):
             
         return sp.coo_matrix((Q.data[mask],(Q.row[mask],Q.col[mask]-rank)),shape=(nrow,nrow-rank))
      
-def AllPosToAllCoeffs(all_pos,nint,ncoeffs):
+def AllPosToAllCoeffs(all_pos,ncoeffs):
 
     nloop = all_pos.shape[0]
 
-    c_coeffs = the_rfft(all_pos,n=nint,axis=2,norm="forward")
+    c_coeffs = the_rfft(all_pos,axis=2,norm="forward")
     all_coeffs = np.zeros((nloop,ndim,ncoeffs,2),dtype=np.float64)
-    all_coeffs[:,:,:,0] = c_coeffs[:,:,0:ncoeffs].real
-    all_coeffs[:,:,:,1] = c_coeffs[:,:,0:ncoeffs].imag
+    all_coeffs[:,:,:,0] = c_coeffs.real
+    all_coeffs[:,:,:,1] = c_coeffs.imag
 
     return all_coeffs
 
