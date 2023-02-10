@@ -1862,25 +1862,41 @@ def setup_changevar(nbody,nint_init,mass,n_reconverge_it_max=6,MomCons=True,n_gr
 #             )
 
 
-
-
-        diag_changevar_mass(
+        diag_changevar_nomass(
             param_to_coeff_cvg_lvl_list[i].nnz,
             ncoeff_cvg_lvl_list[i],
             -n_grad_change,
             param_to_coeff_cvg_lvl_list[i].row,
             param_to_coeff_cvg_lvl_list[i].data,
-            MassSum
         )
         
-        diag_changevar_mass(
+        diag_changevar_nomass(
             coeff_to_param_cvg_lvl_list[i].nnz,
             ncoeff_cvg_lvl_list[i],
             n_grad_change,
             coeff_to_param_cvg_lvl_list[i].col,
             coeff_to_param_cvg_lvl_list[i].data,
-            MassSum
         )
+
+
+# 
+#         diag_changevar_mass(
+#             param_to_coeff_cvg_lvl_list[i].nnz,
+#             ncoeff_cvg_lvl_list[i],
+#             -n_grad_change,
+#             param_to_coeff_cvg_lvl_list[i].row,
+#             param_to_coeff_cvg_lvl_list[i].data,
+#             MassSum
+#         )
+#         
+#         diag_changevar_mass(
+#             coeff_to_param_cvg_lvl_list[i].nnz,
+#             ncoeff_cvg_lvl_list[i],
+#             n_grad_change,
+#             coeff_to_param_cvg_lvl_list[i].col,
+#             coeff_to_param_cvg_lvl_list[i].data,
+#             MassSum
+#         )
 # 
 # 
 #         rand_vect = np.zeros((nloop,ndim,ncoeff_cvg_lvl_list[i] ,2))
