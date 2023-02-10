@@ -1516,6 +1516,8 @@ def setup_changevar(nbody,nint_init,mass,n_reconverge_it_max=6,MomCons=True,n_gr
      - Exhaustive list of binary transformations from generator within each loop.
     """
     
+    assert (nint_init % 2) == 0
+
     Identity_detected = False
 
     SymGraph = networkx.Graph()
@@ -1792,8 +1794,6 @@ def setup_changevar(nbody,nint_init,mass,n_reconverge_it_max=6,MomCons=True,n_gr
 
     for i in range(n_reconverge_it_max+1):
 
-        assert (nint_init % 2) == 0
-
         nint_cvg_lvl_list.append(nint_init * (2**i))
         ncoeff_cvg_lvl_list.append(nint_cvg_lvl_list[i] // 2 + 1)
 
@@ -1818,10 +1818,6 @@ def setup_changevar(nbody,nint_init,mass,n_reconverge_it_max=6,MomCons=True,n_gr
 
         param_to_coeff_cvg_lvl_list.append(null_space_sparseqr(cstrmat_sp))
         coeff_to_param_cvg_lvl_list.append(param_to_coeff_cvg_lvl_list[i].transpose(copy=True))
-
-        print('aaa',param_to_coeff_cvg_lvl_list[i].shape)
-
-
 
         diag_changevar(
             param_to_coeff_cvg_lvl_list[i].nnz,

@@ -1643,8 +1643,8 @@ def diag_changevar(
             k = 1
 
         # kd = k
-        kd = k * csqrt(MassSum[il]) * ctwopisqrt2
-        # kd = k * ctwopisqrt2
+        # kd = k * csqrt(MassSum[il]) * ctwopisqrt2
+        kd = k * ctwopisqrt2
         # kd = (ift+1)*1.
         # kd = ctwopisqrt2 * csqrt(MassSum[il])
 
