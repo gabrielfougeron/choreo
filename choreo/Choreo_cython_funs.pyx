@@ -1638,21 +1638,19 @@ def diag_changevar(
         idim = res % cndim
         il = res / cndim
 
-        # print(idx,il,idim,k,ift)
-
         if (k == 0):
             k = 1
 
         # kd = k
-        # kd = k * csqrt(MassSum[il]) * ctwopisqrt2
-        kd = k * ctwopisqrt2
-        # kd = (ift+1)*1.
+        kd = k * csqrt(MassSum[il]) * ctwopisqrt2
+        # kd = k * ctwopisqrt2
         # kd = ctwopisqrt2 * csqrt(MassSum[il])
 
         kfac = cpow(kd,n_grad_change)
         
-        data[idx] *= kfac
-    
+        data[idx] *= kfac    
+
+        
 def Compute_square_dist(
     np.ndarray[double, ndim=1, mode="c"] x  ,
     np.ndarray[double, ndim=1, mode="c"] y  ,
