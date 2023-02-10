@@ -222,6 +222,10 @@ class ChoreoAction():
         _,y = self.Compute_action(x)
         
         return y
+
+    def Center_all_coeffs(self,all_coeffs):
+
+        Center_all_coeffs(all_coeffs,self.nloop,self.mass,self.loopnb,self.Targets,self.SpaceRotsUn)
         
     def Compute_action_onlygrad_escape(self,x):
 
@@ -1513,6 +1517,8 @@ def setup_changevar(nbody,nint_init,mass,n_reconverge_it_max=6,MomCons=True,n_gr
      - Exhaustive list of binary transformations from generator within each loop.
     """
     
+    assert (nint_init % 2) == 0
+
     Identity_detected = False
 
     SymGraph = networkx.Graph()
@@ -1788,8 +1794,6 @@ def setup_changevar(nbody,nint_init,mass,n_reconverge_it_max=6,MomCons=True,n_gr
     coeff_to_param_T_cvg_lvl_list = []
 
     for i in range(n_reconverge_it_max+1):
-
-        assert (nint_init % 2) == 0
 
         nint_cvg_lvl_list.append(nint_init * (2**i))
         ncoeff_cvg_lvl_list.append(nint_cvg_lvl_list[i] // 2 + 1)
