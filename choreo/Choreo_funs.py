@@ -225,7 +225,13 @@ class ChoreoAction():
 
     def Center_all_coeffs(self,all_coeffs):
 
-        Center_all_coeffs(all_coeffs,self.nloop,self.mass,self.loopnb,self.Targets,self.SpaceRotsUn)
+        x = self.Package_all_coeffs(all_coeffs)
+        xbar = self.Compute_bar_serious(x)
+
+        for il in range(self.nloop):
+
+            all_coeffs[il,:,0,0] -= xbar
+
         
     def Compute_action_onlygrad_escape(self,x):
 
@@ -880,6 +886,40 @@ class ChoreoAction():
             file_path = file_path_list[0]
         
         return Found_duplicate,file_path
+
+    def Compute_bar_serious(self,x):
+
+        all_pos_b = self.ComputeAllPos(x)
+
+        xbar_mean = np.zeros((ndim))
+        tot_mass = 0.
+        xbar_all = np.zeros((ndim,self.nint))
+
+        for iint in range(self.nint):
+
+            xbar = np.zeros((ndim))
+
+            for il in range(self.nloop):
+                for ib in range(self.loopnb[il]):
+
+                    ibody = self.Targets[il,ib]
+
+                    tot_mass += self.mass[ibody]
+                    xbar += self.mass[ibody] * all_pos_b[ibody,:,iint]
+
+            xbar /= tot_mass
+
+            xbar_all[:,iint] += xbar
+
+        xbar_std = np.std(xbar_all,axis=1)
+
+        print(xbar_std)
+
+        xbar_mean = np.mean(xbar_all,axis=1)
+
+        return xbar_mean
+
+
 
     if ndim == 2:
 
