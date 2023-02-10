@@ -76,7 +76,7 @@ def main(the_i=0):
     input_slow_filename = slow_base_filename + '.npy'
 
     all_pos_slow = np.load(input_slow_filename)
-    all_coeffs_slow = choreo.AllPosToAllCoeffs(all_pos_slow,Info_dict_slow["n_int"],Info_dict_slow["n_Fourier"])
+    all_coeffs_slow = choreo.AllPosToAllCoeffs(all_pos_slow,Info_dict_slow["n_Fourier"])
     choreo.Center_all_coeffs(all_coeffs_slow,Info_dict_slow["nloop"],Info_dict_slow["mass"],Info_dict_slow["loopnb"],np.array(Info_dict_slow["Targets"]),np.array(Info_dict_slow["SpaceRotsUn"]))
 
     all_coeffs_fast_list = []
@@ -91,7 +91,7 @@ def main(the_i=0):
         input_fast_filename = fast_base_filename + '.npy'
 
         all_pos_fast = np.load(input_fast_filename)
-        all_coeffs_fast = choreo.AllPosToAllCoeffs(all_pos_fast,Info_dict_fast["n_int"],Info_dict_fast["n_Fourier"])
+        all_coeffs_fast = choreo.AllPosToAllCoeffs(all_pos_fast,Info_dict_fast["n_Fourier"])
         choreo.Center_all_coeffs(all_coeffs_fast,Info_dict_fast["nloop"],Info_dict_fast["mass"],Info_dict_fast["loopnb"],np.array(Info_dict_fast["Targets"]),np.array(Info_dict_fast["SpaceRotsUn"]))
 
         all_coeffs_fast_list.append(all_coeffs_fast)
