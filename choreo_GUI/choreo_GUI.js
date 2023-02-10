@@ -602,7 +602,7 @@ function GatherConfigDict() {
 
     ConfigDict['Solver_Discr'] = {}
     ConfigDict['Solver_Discr'] ['Use_exact_Jacobian']  = document.getElementById('checkbox_exactJ').checked
-    ConfigDict['Solver_Discr'] ['ncoeff_init']         = parseInt(document.getElementById('input_ncoeff_init').value,10)
+    ConfigDict['Solver_Discr'] ['nint_init']           = parseInt(document.getElementById('input_nint_init').value,10)
     ConfigDict['Solver_Discr'] ['n_reconverge_it_max'] = parseInt(document.getElementById('input_n_reconverge_it_max').value,10)
     ConfigDict['Solver_Discr'] ['mul_coarse_to_fine']  = parseFloat(document.getElementById('input_mul_coarse_to_fine').value)
 
@@ -799,7 +799,7 @@ function LoadConfigDict(ConfigDict) {
     document.getElementById('checkbox_DisplayLoopOnGalleryLoad').checked  = ConfigDict['Animation_Search'] ['DisplayLoopOnGalleryLoad']
 
     document.getElementById('checkbox_exactJ').checked         = ConfigDict['Solver_Discr'] ['Use_exact_Jacobian']  
-    document.getElementById('input_ncoeff_init').value         = ConfigDict['Solver_Discr'] ['ncoeff_init']         
+    document.getElementById('input_nint_init').value           = ConfigDict['Solver_Discr'] ['nint_init']         
     document.getElementById('input_n_reconverge_it_max').value = ConfigDict['Solver_Discr'] ['n_reconverge_it_max'] 
     document.getElementById('input_mul_coarse_to_fine').value  = ConfigDict['Solver_Discr'] ['mul_coarse_to_fine']
 
@@ -2328,7 +2328,7 @@ function UpdateNowPlaying(SearchOnGoing=false) {
     var NP_mass = document.getElementById("NP_mass")
 
     var NP_Newton_Error = document.getElementById("NP_Newton_Error")
-    var NP_n_Fourier = document.getElementById("NP_n_Fourier")
+    var NP_nint = document.getElementById("NP_nint")
     
     nloop = PlotInfo["nloop"]
     loop_mass = FormatMasses(PlotInfo["mass"][PlotInfo["Targets"][0][0]])
@@ -2344,13 +2344,13 @@ function UpdateNowPlaying(SearchOnGoing=false) {
     if (SearchOnGoing) {
 
         NP_Newton_Error.innerHTML = "Search in progress"
-        NP_n_Fourier.innerHTML = "Search in progress"
+        NP_nint.innerHTML = "Search in progress"
         NP_n_Action.innerHTML = "Search in progress"
 
     } else {
 
         NP_Newton_Error.innerHTML = PlotInfo["Newton_Error"].toExponential(2)
-        NP_n_Fourier.innerHTML = PlotInfo["n_Fourier"].toString()
+        NP_nint.innerHTML = PlotInfo["n_int"].toString()
         NP_n_Action.innerHTML = PlotInfo["Action"].toExponential(2)
 
     }
