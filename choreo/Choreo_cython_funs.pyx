@@ -1615,7 +1615,39 @@ def Assemble_Cstr_Matrix(
     return  sp.coo_matrix((cstr_data,(cstr_row,cstr_col)),shape=(n_idx,icstr), dtype=np.float64)
     
 @cython.cdivision(True)
-def diag_changevar(
+def diag_changevar_nomass(
+    long nnz,
+    long ncoeff,
+    double n_grad_change,
+    int [::1] idxarray ,
+    double [::1] data ,
+):
+    
+    cdef long idx, res, ift, k , il, idim
+    cdef double kfac,kd
+        
+    for idx in range(nnz):
+
+        ift = idxarray[idx]%2
+        res = idxarray[idx]/2
+    
+        k = res % ncoeff
+        res = res / ncoeff
+                
+        idim = res % cndim
+        il = res / cndim
+
+        if (k == 0):
+            k = 1
+
+        kd = k * ctwopisqrt2
+
+        kfac = cpow(kd,n_grad_change)
+        
+        data[idx] *= kfac        
+
+@cython.cdivision(True)
+def diag_changevar_mass(
     long nnz,
     long ncoeff,
     double n_grad_change,
@@ -1638,21 +1670,53 @@ def diag_changevar(
         idim = res % cndim
         il = res / cndim
 
-        # print(idx,il,idim,k,ift)
-
         if (k == 0):
             k = 1
 
-        # kd = k
-        # kd = k * csqrt(MassSum[il]) * ctwopisqrt2
-        kd = k * ctwopisqrt2
-        # kd = (ift+1)*1.
-        # kd = ctwopisqrt2 * csqrt(MassSum[il])
+        kd = k * csqrt(MassSum[il]) * ctwopisqrt2
 
         kfac = cpow(kd,n_grad_change)
         
-        data[idx] *= kfac
+        data[idx] *= kfac       
+        
+@cython.cdivision(True)
+def diag_changevar_rand(
+    long nnz,
+    long ncoeff,
+    double n_grad_change,
+    int [::1] idxarray ,
+    double [::1] data ,
+    double [:,:,:,::1] Randvect  ,
+):
     
+    cdef long idx, res, ift, k , il, idim
+    cdef double kfac,kd
+        
+    for idx in range(nnz):
+
+        ift = idxarray[idx]%2
+        res = idxarray[idx]/2
+    
+        k = res % ncoeff
+        res = res / ncoeff
+                
+        idim = res % cndim
+        il = res / cndim
+
+        # kd = Randvect[il,idim,k,ift]
+        # kd = Randvect[0,idim,k,ift]
+        # kd = Randvect[il,0,k,ift]
+        # kd = Randvect[il,idim,0,ift]
+        # kd = Randvect[il,idim,k,0]
+        # kd = Randvect[0,idim,k,ift]
+        kd = Randvect[il,0,0,0]
+
+
+        kfac = cpow(kd,n_grad_change)
+        
+        data[idx] *= kfac    
+
+        
 def Compute_square_dist(
     np.ndarray[double, ndim=1, mode="c"] x  ,
     np.ndarray[double, ndim=1, mode="c"] y  ,
