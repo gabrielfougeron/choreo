@@ -427,7 +427,7 @@ def Find_Choreo(
 
                     GoOn=False
                     print("Stopping search: there might be something wrong with the constraints.")
-                    SaveSol = True
+                    # SaveSol = True
                 
                 if GoOn and NewtonPreciseGood :
 
