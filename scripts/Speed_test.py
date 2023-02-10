@@ -216,15 +216,7 @@ def main():
 
     nint_plot_img = nint_plot_anim * dnint
 
-    try:
-        the_lcm
-    except NameError:
-        period_div = 1.
-    else:
-        period_div = the_lcm
-
     nperiod_anim = 1.
-    # nperiod_anim = 1./period_div
 
     Plot_trace_anim = True
     # Plot_trace_anim = False
