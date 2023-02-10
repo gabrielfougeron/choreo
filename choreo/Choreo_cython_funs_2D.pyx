@@ -137,7 +137,7 @@ def Compute_action_Cython_2D(
     
     cdef double[:,:,::1] grad_pot_all = np.zeros((nloop,2,nint),dtype=np.float64)
 
-    Compute_action_Cython_time_loop_2D(
+    Pot_en = Compute_action_Cython_time_loop_2D(
         nloop             ,
         nint              ,
         mass              ,
@@ -153,7 +153,6 @@ def Compute_action_Cython_2D(
         all_shiftsUn      ,
         all_shiftsBin     ,
         grad_pot_all      ,
-        Pot_en
     )
 
     Pot_en = Pot_en / nint
@@ -183,7 +182,7 @@ def Compute_action_Cython_2D(
     return Action,Action_grad_np
 
 @cython.cdivision(True)
-cdef void Compute_action_Cython_time_loop_2D(
+cdef double Compute_action_Cython_time_loop_2D(
     long              nloop             ,
     long              nint              ,
     double[::1]       mass              ,
@@ -199,7 +198,6 @@ cdef void Compute_action_Cython_time_loop_2D(
     Py_ssize_t[:,::1] all_shiftsUn      ,
     Py_ssize_t[:,::1] all_shiftsBin     ,
     double[:,:,::1]   grad_pot_all      ,
-    double            Pot_en
 ):
 
     cdef Py_ssize_t il,ilp
@@ -211,6 +209,7 @@ cdef void Compute_action_Cython_time_loop_2D(
     cdef double dx0,dx1
     cdef double ddx0,ddx1
     cdef double prod_mass,a,b,dx2,prod_fac
+    cdef double Pot_en = 0.
 
     for iint in range(nint):
 
@@ -304,6 +303,8 @@ cdef void Compute_action_Cython_time_loop_2D(
             for ibi in range(loopnbi[il]):
 
                 all_shiftsBin[il,ibi] = ((((all_shiftsBin[il,ibi]+TimeRevsBin[il,ibi]) % nint) + nint) % nint)
+
+    return Pot_en
 
 @cython.cdivision(True)
 def Compute_action_hess_mul_Cython_2D(
@@ -420,8 +421,8 @@ def Compute_action_hess_mul_Cython_2D(
             Action_hess_dx[il,idim,0,1] = 0.            
 
 
-            # Action_hess_dx[il,idim,0,0] = 0.
-            # Action_hess_dx[il,idim,0,1] = 0.
+            # Action_hess_dx[il,idim,0,0] = 2 * prod_fac * all_coeffs_d[il,idim,0,0]
+            # Action_hess_dx[il,idim,0,1] = 2 * prod_fac * all_coeffs_d[il,idim,0,1]
 
             for k in range(1,ncoeff):
                 
