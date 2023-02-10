@@ -36,11 +36,12 @@ def main():
 
     # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/')
     # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/2/')
-    # input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery')
+    input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery')
     # input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery/03 - Targets/Figure eight/')
     # input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery/01 - Classic gallery')
-    input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery/unsafe')
+    # input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery/unsafe')
     # input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery/02 - Families/02 - Chains/04')
+    # input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery/04 - Montaldi-Steckles-Gries')
     # input_folder = os.path.join(__PROJECT_ROOT__,'Keep/tests')
 
 #     ''' Include all files in tree '''
@@ -105,8 +106,8 @@ def main():
             
             input_files_list.append(os.path.join(input_folder,the_name))
 
-    # Exec_Mul_Proc = True
-    Exec_Mul_Proc = False
+    Exec_Mul_Proc = True
+    # Exec_Mul_Proc = False
 
     if Exec_Mul_Proc:
 
@@ -138,8 +139,8 @@ def main():
 def ExecName(the_name, the_file):
 
     # print('--------------------------------------------')
-    print('')
-    print(the_name)
+    # print('')
+    # print(the_name)
     # print('')
     # print('--------------------------------------------')
     # print('')
@@ -199,8 +200,8 @@ def ExecName(the_name, the_file):
     Sym_list = choreo.Make_SymList_From_InfoDict(Info_dict,Transform_Sym)
 
 
-    MomConsImposed = True
-    # MomConsImposed = False
+    # MomConsImposed = True
+    MomConsImposed = False
 
 #     rot_angle = 0
 #     s = -1
@@ -236,8 +237,8 @@ def ExecName(the_name, the_file):
 
     if (Newt_err_norm > eps):
 
-        # print('')
-        # print(the_name)
+        print('')
+        print(the_name)
 
         print(f'Saved Grad Action : {Info_dict["Grad_Action"]}')
         print(f'Init Grad Action : {np.linalg.norm(Gradaction)}')
@@ -251,7 +252,7 @@ def ExecName(the_name, the_file):
 # 
 #     print(f'Saved Grad Action : {Info_dict["Grad_Action"]}')
 #     print(f'Init Grad Action : {np.linalg.norm(Gradaction)}')
-# 
+# # 
 #     print(f'Saved Newton Error : {Info_dict["Newton_Error"]}')
 #     print(f'Init Newton Error : {Newt_err_norm}')
 
