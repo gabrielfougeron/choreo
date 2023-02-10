@@ -1058,8 +1058,9 @@ def Compute_Newton_err_Cython(
             for k in range(ncoeff):
                 
                 k2 = k*k
-                acc_coeff[il,idim,k,0] = k2*cfourpisq*all_coeffs[il,idim,k,0]
-                acc_coeff[il,idim,k,1] = k2*cfourpisq*all_coeffs[il,idim,k,1]
+                a = k2 *cfourpisq
+                acc_coeff[il,idim,k,0] = a*all_coeffs[il,idim,k,0]
+                acc_coeff[il,idim,k,1] = a*all_coeffs[il,idim,k,1]
                 
     c_acc_coeffs = acc_coeff.view(dtype=np.complex128)[...,0]
     cdef np.ndarray[double, ndim=3, mode="c"] all_acc = the_irfft(c_acc_coeffs,n=nint,axis=2,norm="forward")
@@ -1628,7 +1629,9 @@ def diag_changevar(
         if (k == 0):
             k = 1
 
+        # kd = k
         kd = k * csqrt(MassSum[il])
+        # kd = k * MassSum[il]
         kfac = cpow(kd,n_grad_change)
         
         data[idx] *= kfac
