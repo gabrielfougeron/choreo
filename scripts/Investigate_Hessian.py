@@ -36,8 +36,8 @@ def main():
 
     # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/')
     # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/3/')
-    input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery/01 - Classic gallery')
-    # input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery/02 - Families/02 - Chains/04')
+    # input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery/01 - Classic gallery')
+    input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery/02 - Families/02 - Chains/04')
     # input_folder = os.path.join(__PROJECT_ROOT__,'Keep/tests')
     
 #     ''' Include all files in tree '''
@@ -71,7 +71,7 @@ def main():
     # input_names_list = ['01 - Figure eight']
     # input_names_list = ['14 - Small mass gap']
     # input_names_list = ['09 - 3x2 Circles']
-    input_names_list = ['06 - Ten petal flower']
+    # input_names_list = ['06 - Ten petal flower']
     # input_names_list = ['13 - 100 bodies']
     # input_names_list = ['02 - Celtic knot']
     # input_names_list = ['07 - No symmetry']
@@ -79,7 +79,7 @@ def main():
     # input_names_list = ['10 - Complex symmetry']
     # input_names_list = ['12 - Big mass gap']
     
-    # input_names_list = ['1-chain']
+    input_names_list = ['1-chain']
 
 
 
@@ -179,19 +179,19 @@ def ExecName(the_name, input_folder, store_folder):
     Sym_list = choreo.Make_SymList_From_InfoDict(Info_dict,Transform_Sym)
 
 
-    # MomConsImposed = True
-    MomConsImposed = False
+    MomConsImposed = True
+    # MomConsImposed = False
 
-    rot_angle = 0
-    s = -1
-
-    Sym_list.append(choreo.ChoreoSym(
-        LoopTarget=0,
-        LoopSource=0,
-        SpaceRot = np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64),
-        TimeRev=-1,
-        TimeShift=fractions.Fraction(numerator=0,denominator=1)
-    ))
+#     rot_angle = 0
+#     s = -1
+# 
+#     Sym_list.append(choreo.ChoreoSym(
+#         LoopTarget=0,
+#         LoopSource=0,
+#         SpaceRot = np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64),
+#         TimeRev=-1,
+#         TimeShift=fractions.Fraction(numerator=0,denominator=1)
+#     ))
 
     n_reconverge_it_max = 0
     n_grad_change = 1.
@@ -211,7 +211,7 @@ def ExecName(the_name, input_folder, store_folder):
     print(f'Saved Newton Error : {Info_dict["Newton_Error"]}')
     print(f'Init Newton Error : {Newt_err_norm}')
 
-    n_eig = 10
+    n_eig = 20
 
     # which_eigs = 'LM' # Largest (in magnitude) eigenvalues.
     # which_eigs = 'SM' # Smallest (in magnitude) eigenvalues.
@@ -228,13 +228,42 @@ def ExecName(the_name, input_folder, store_folder):
     print(v.shape)
     # print(v[:,-1])
     
-    i_eig = 9
-    eps = 1e-10
+    i_eig = -1
+    
+    eps = 1e-9
 # 
-    for i in range(n):
+#     for i in range(n):
+# 
+#         if abs(v[i,i_eig]) > eps:
+#             print(i,v[i,i_eig])
 
-        if abs(v[i,i_eig]) > eps:
-            print(i,v[i,i_eig])
+    vect = np.copy(v[:,i_eig])
+
+    the_coeffs = ActionSyst.Unpackage_all_coeffs(vect)
+
+    for k in range(ActionSyst.ncoeff):
+
+        for il in range(ActionSyst.nloop):
+            for idim in range(choreo.ndim):
+                for ift in range(2):
+
+                    val = the_coeffs[il,idim,k,ift]
+# 
+#                     if abs(val) > eps :
+#                         print(il,idim,k,ift,val)
+
+    the_coeffs_c = the_coeffs.view(dtype=np.complex128)[...,0]
+    the_pos = choreo.the_irfft(the_coeffs_c,norm="forward")
+
+    for iint in range(ActionSyst.nint):
+
+        for il in range(ActionSyst.nloop):
+            for idim in range(choreo.ndim):
+
+                val = the_pos[il,idim,iint]
+# 
+#                 if abs(val) > eps :
+#                     print(il,idim,iint,val)
 
 
 

@@ -1217,10 +1217,10 @@ def Assemble_Cstr_Matrix(
                                       
                 for il in range(nloop):
                     for ib in range(loopnb[il]):
-                        
-                        dt = TimeShiftNumUn[il,ib] / TimeShiftDenUn[il,ib]
-                        c = ccos( - ctwopi * k*dt)
-                        s = csin( - ctwopi * k*dt)  
+                          
+                        dt = - TimeRevsUn[il,ib] * TimeShiftNumUn[il,ib] / TimeShiftDenUn[il,ib]
+                        c = ccos(ctwopi * k * dt)
+                        s = csin(ctwopi * k * dt)  
                         
                         for jdim in range(cndim):
 
@@ -1230,7 +1230,7 @@ def Assemble_Cstr_Matrix(
                             
                                 nnz +=1
 
-                            val = -TimeRevsUn[il,ib]*SpaceRotsUn[il,ib,idim,jdim]*s*mass[Targets[il,ib]]*invmasstot
+                            val = - SpaceRotsUn[il,ib,idim,jdim]*s*mass[Targets[il,ib]]*invmasstot
 
                             if (cfabs(val) > eps_zero):
                             
@@ -1238,10 +1238,10 @@ def Assemble_Cstr_Matrix(
                     
                 for il in range(nloop):
                     for ib in range(loopnb[il]):
-                        
-                        dt = TimeShiftNumUn[il,ib] / TimeShiftDenUn[il,ib]
-                        c = ccos( - ctwopi * k*dt)
-                        s = csin( - ctwopi * k*dt)  
+                    
+                        dt = - TimeRevsUn[il,ib] * TimeShiftNumUn[il,ib] / TimeShiftDenUn[il,ib]
+                        c = ccos(ctwopi * k * dt)
+                        s = csin(ctwopi * k * dt)  
                         
                         for jdim in range(cndim):
                                 
@@ -1251,7 +1251,7 @@ def Assemble_Cstr_Matrix(
                             
                                 nnz +=1
 
-                            val = TimeRevsUn[il,ib]*SpaceRotsUn[il,ib,idim,jdim]*c*mass[Targets[il,ib]]*invmasstot
+                            val = SpaceRotsUn[il,ib,idim,jdim]*c*mass[Targets[il,ib]]*invmasstot
 
                             if (cfabs(val) > eps_zero):
                             
@@ -1362,7 +1362,16 @@ def Assemble_Cstr_Matrix(
     # Removes imaginary part of c_0 and c_last
     for il in range(nloop):
         for idim in range(cndim):
-            
+#             
+#             i = 0 + 2*(0 + ncoeff*(idim + cndim*il))  
+#             
+#             cstr_row[nnz] = i
+#             cstr_col[nnz] = icstr
+#             cstr_data[nnz] = 1. 
+#               
+#             nnz +=1
+#             icstr +=1 
+# 
             i = 1 + 2*(0 + ncoeff*(idim + cndim*il))  
             
             cstr_row[nnz] = i
@@ -1371,7 +1380,16 @@ def Assemble_Cstr_Matrix(
               
             nnz +=1
             icstr +=1 
-            
+#             
+#             i = 0 + 2*(ncoeff-1 + ncoeff*(idim + cndim*il))  
+#             
+#             cstr_row[nnz] = i
+#             cstr_col[nnz] = icstr
+#             cstr_data[nnz] = 1. 
+#               
+#             nnz +=1
+#             icstr +=1     
+# 
             i = 1 + 2*(ncoeff-1 + ncoeff*(idim + cndim*il))  
             
             cstr_row[nnz] = i
@@ -1392,9 +1410,9 @@ def Assemble_Cstr_Matrix(
                 for il in range(nloop):
                     for ib in range(loopnb[il]):
                         
-                        dt = TimeShiftNumUn[il,ib] / TimeShiftDenUn[il,ib]
-                        c = ccos( - ctwopi * k*dt)
-                        s = csin( - ctwopi * k*dt)  
+                        dt = - TimeRevsUn[il,ib] * TimeShiftNumUn[il,ib] / TimeShiftDenUn[il,ib]
+                        c = ccos(ctwopi * k * dt)
+                        s = csin(ctwopi * k * dt)  
                         
                         for jdim in range(cndim):
                                 
@@ -1412,7 +1430,7 @@ def Assemble_Cstr_Matrix(
                                 
                             i =  1 + 2*(k + ncoeff*(jdim + cndim*il))
 
-                            val = -TimeRevsUn[il,ib]*SpaceRotsUn[il,ib,idim,jdim]*s*mass[Targets[il,ib]]*invmasstot
+                            val = - SpaceRotsUn[il,ib,idim,jdim]*s*mass[Targets[il,ib]]*invmasstot
 
                             if (cfabs(val) > eps_zero):
                             
@@ -1427,9 +1445,9 @@ def Assemble_Cstr_Matrix(
                 for il in range(nloop):
                     for ib in range(loopnb[il]):
                         
-                        dt = TimeShiftNumUn[il,ib] / TimeShiftDenUn[il,ib]
-                        c = ccos( - ctwopi * k*dt)
-                        s = csin( - ctwopi * k*dt)  
+                        dt = - TimeRevsUn[il,ib] * TimeShiftNumUn[il,ib] / TimeShiftDenUn[il,ib]
+                        c = ccos(ctwopi * k * dt)
+                        s = csin(ctwopi * k * dt)  
                         
                         for jdim in range(cndim):
                                 
@@ -1447,7 +1465,7 @@ def Assemble_Cstr_Matrix(
                                 
                             i =  1 + 2*(k + ncoeff*(jdim + cndim*il))
 
-                            val = TimeRevsUn[il,ib]*SpaceRotsUn[il,ib,idim,jdim]*c*mass[Targets[il,ib]]*invmasstot
+                            val = SpaceRotsUn[il,ib,idim,jdim]*c*mass[Targets[il,ib]]*invmasstot
 
                             if (cfabs(val) > eps_zero):
                                                 
@@ -1640,6 +1658,10 @@ def diag_changevar(
 
         if (k == 0):
             k = 1
+
+
+        if idx == 3599 :
+            print(idx,ift,k,il)
 
         kd = k * csqrt(MassSum[il]) * ctwopisqrt2
         kfac = cpow(kd,n_grad_change)

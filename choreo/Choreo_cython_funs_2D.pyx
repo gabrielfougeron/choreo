@@ -356,7 +356,7 @@ def Compute_action_hess_mul_Cython_2D(
             maxloopnbi = loopnbi[il]
 
     c_coeffs_d = all_coeffs_d.view(dtype=np.complex128)[...,0]
-    cdef double[:,:,::1]  all_pos_d = the_irfft(c_coeffs_d,n=nint,axis=2,norm="forward")
+    cdef double[:,:,::1]  all_pos_d = the_irfft(c_coeffs_d,norm="forward")
 
     cdef Py_ssize_t[:,::1] all_shiftsUn = np.zeros((nloop,maxloopnb),dtype=np.intp)
     cdef Py_ssize_t[:,::1] all_shiftsBin = np.zeros((nloop,maxloopnbi),dtype=np.intp)
@@ -421,7 +421,7 @@ def Compute_action_hess_mul_Cython_2D(
             Action_hess_dx[il,idim,0,0] = -hess_dx_pot_fft[il,idim,0].real
             Action_hess_dx[il,idim,0,1] = 0.
 
-            for k in range(1,ncoeff-1):
+            for k in range(1,ncoeff):
                 
                 k2 = k*k
                 a = 2*prod_fac*k2
