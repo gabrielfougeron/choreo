@@ -36,23 +36,27 @@ def main():
 
     # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/')
     # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/2/')
-    input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery/01 - Classic gallery')
+    input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery')
+    # input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery/03 - Targets/Figure eight/')
+    # input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery/01 - Classic gallery')
     # input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery/02 - Families/02 - Chains/04')
     # input_folder = os.path.join(__PROJECT_ROOT__,'Keep/tests')
-    
-#     ''' Include all files in tree '''
-#     input_names_list = []
-#     for root, dirnames, filenames in os.walk(input_folder):
-# 
-#         for filename in filenames:
-#             file_path = os.path.join(root, filename)
-#             file_root, file_ext = os.path.splitext(os.path.basename(file_path))
-# 
-#             if (file_ext == '.json' ):
-# 
-#                 file_path = os.path.join(root, file_root)
-#                 the_name = file_path[len(input_folder):]
-#                 input_names_list.append(the_name)
+
+    ''' Include all files in tree '''
+    input_names_list = []
+    input_files_list = []
+    for root, dirnames, filenames in os.walk(input_folder):
+
+        for filename in filenames:
+            file_path = os.path.join(root, filename)
+            file_root, file_ext = os.path.splitext(os.path.basename(file_path))
+
+            if (file_ext == '.json' ):
+
+                file_path = os.path.join(root, file_root)
+                the_name = file_path[len(input_folder):]
+                input_names_list.append(the_name)
+                input_files_list.append(file_path)
 # 
 # # # 
 #     ''' Include all files in folder '''
@@ -75,7 +79,7 @@ def main():
     # input_names_list = ['13 - 100 bodies']
     # input_names_list = ['02 - Celtic knot']
     # input_names_list = ['07 - No symmetry']
-    input_names_list = ['11 - Resonating loops']
+    # input_names_list = ['11 - Resonating loops']
     # input_names_list = ['10 - Complex symmetry']
     # input_names_list = ['12 - Big mass gap']
     
@@ -110,7 +114,7 @@ def main():
             
             res = []
             
-            for the_name in input_names_list:
+            for the_name, the_file in zip(input_names_list,input_files_list):
 
                 all_kwargs = choreo.Pick_Named_Args_From_Dict(ExecName,dict(globals(),**locals()))
                 res.append(executor.submit(ExecName,**all_kwargs))
@@ -118,30 +122,31 @@ def main():
 
     else:
             
-        for the_name in input_names_list:
+        for the_name, the_file in zip(input_names_list,input_files_list):
 
             all_kwargs = choreo.Pick_Named_Args_From_Dict(ExecName,dict(globals(),**locals()))
-            ExecName(the_name, input_folder, store_folder)
+            ExecName(the_name, the_file)
 
 
-def ExecName(the_name, input_folder, store_folder):
+def ExecName(the_name, the_file):
 
-    print('--------------------------------------------')
-    print('')
-    print(the_name)
-    print('')
-    print('--------------------------------------------')
-    print('')
+    # print('--------------------------------------------')
+    # print('')
+    # print(the_name)
+    # print('')
+    # print('--------------------------------------------')
+    # print('')
 
     file_basename = the_name
-    
-    Info_filename = os.path.join(input_folder,the_name + '.json')
+
+
+    Info_filename = the_file + '.json'
 
     with open(Info_filename,'r') as jsonFile:
         Info_dict = json.load(jsonFile)
 
 
-    input_filename = os.path.join(input_folder,the_name + '.npy')
+    input_filename = the_file + '.npy'
 
     bare_name = the_name.split('/')[-1]
 
@@ -207,9 +212,10 @@ def ExecName(the_name, input_folder, store_folder):
     ActionSyst = choreo.setup_changevar(nbody,nint_init,mass,n_reconverge_it_max,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change,CrashOnIdentity=False)
 
 
-    ActionSyst.Center_all_coeffs(all_coeffs_init)
 
-    print('NNZ params to coeffs' ,ActionSyst.param_to_coeff.nnz)
+    eps = 1e-5
+
+    ActionSyst.Center_all_coeffs(all_coeffs_init)
 
     x = ActionSyst.Package_all_coeffs(all_coeffs_init)
 
@@ -221,11 +227,28 @@ def ExecName(the_name, input_folder, store_folder):
 
     Newt_err_norm = np.linalg.norm(Newt_err)/(ActionSyst.nint*ActionSyst.nbody)
 
-    print(f'Saved Grad Action : {Info_dict["Grad_Action"]}')
-    print(f'Init Grad Action : {np.linalg.norm(Gradaction)}')
+    if (Newt_err_norm > eps):
 
-    print(f'Saved Newton Error : {Info_dict["Newton_Error"]}')
-    print(f'Init Newton Error : {Newt_err_norm}')
+        print('')
+        print(the_name)
+
+        print(f'Saved Grad Action : {Info_dict["Grad_Action"]}')
+        print(f'Init Grad Action : {np.linalg.norm(Gradaction)}')
+
+        print(f'Saved Newton Error : {Info_dict["Newton_Error"]}')
+        print(f'Init Newton Error : {Newt_err_norm}')
+
+
+#     print('')
+#     print(the_name)
+# 
+#     print(f'Saved Grad Action : {Info_dict["Grad_Action"]}')
+#     print(f'Init Grad Action : {np.linalg.norm(Gradaction)}')
+# 
+#     print(f'Saved Newton Error : {Info_dict["Newton_Error"]}')
+#     print(f'Init Newton Error : {Newt_err_norm}')
+
+    return
 
     n_eig = 30
 
@@ -248,12 +271,6 @@ def ExecName(the_name, input_folder, store_folder):
 
     print(w[i_eig])
 
-    print(((ActionSyst.mass[0] + ActionSyst.mass[1])*ActionSyst.mass[0]*ActionSyst.mass[1])/(ActionSyst.mass[0]**2 + ActionSyst.mass[1]**2))
-
-
-    print(ActionSyst.mass)
-    print(fractions.Fraction(str(w[i_eig])).limit_denominator(1000))
-    
     eps = 1e-5
 # 
 #     for i in range(n):
