@@ -217,8 +217,8 @@ def main(params_dict):
     Plot_trace_anim = True
     # Plot_trace_anim = False
 
-    # Save_Newton_Error = True
-    Save_Newton_Error = False
+    Save_Newton_Error = True
+    # Save_Newton_Error = False
 
     n_reconverge_it_max = params_dict["Solver_Discr"] ['n_reconverge_it_max'] 
     nint_init = params_dict["Solver_Discr"]["nint_init"]   
