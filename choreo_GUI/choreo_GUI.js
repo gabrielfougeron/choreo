@@ -2204,7 +2204,7 @@ function UpdateCurrentTarget(name,nfast) {
             var div = document.createElement('div')
             div.classList.add("TargetFast","dropdown-content")
             div.id = "TreeFastContainer"+i.toString()
-            div.style.overflowY = "scroll"
+            div.style.overflowY = "auto"
             div.style.maxHeight = "400px"
             var Target_TreeView = new TreeView(Target_Tree, div,{leaf_icon:" ",parent_icon:" ",show_root:false})
 
