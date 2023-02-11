@@ -837,7 +837,6 @@ class ChoreoAction():
         max_path_length
 
         Info_dict["nbody"] = self.nbody
-        Info_dict["n_Fourier"] = self.ncoeff
         Info_dict["n_int"] = nint
 
         Info_dict["mass"] = self.mass.tolist()
