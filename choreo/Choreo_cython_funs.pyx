@@ -1650,7 +1650,64 @@ def Assemble_Cstr_Matrix(
 #         
 #         data[idx] *= kfac 
 # 
-# 
+#
+
+@cython.cdivision(True)
+def diagmat_changevar(
+    long ncoeff,
+    long nparam,
+    int [::1] param_to_coeff_csc_indptr,
+    int [::1] param_to_coeff_csc_indices,
+    double the_pow,
+    double [::1] MassSum
+):
+
+    cdef np.ndarray[double, ndim=1, mode="c"]  diag_vect = np.zeros((nparam),dtype=np.float64)
+
+    cdef double mass_sum
+    cdef double k_avg, mass_avg, mul
+    
+    cdef long k_sum
+    cdef long ift,idx,res,k,idim,il
+    cdef long n_idx,idx_beg,idx_end
+
+    for iparam in range(nparam):
+
+        mass_sum = 0.
+        k_sum = 0
+
+        idx_beg = param_to_coeff_csc_indptr[iparam]
+        idx_end = param_to_coeff_csc_indptr[iparam+1]
+        n_idx = idx_end - idx_beg
+
+        for idx in param_to_coeff_csc_indices[idx_beg:idx_end]:
+
+            ift = idx%2
+            res = idx/2
+        
+            k = res % ncoeff
+            res = res / ncoeff
+                    
+            idim = res % cndim
+            il = res / cndim
+
+            if (k == 0):
+                k = 1
+
+            mass_sum += MassSum[il]
+            k_sum += k
+
+        k_sumd = k_sum
+        k_avg = k_sumd / n_idx
+        mass_avg = mass_sum / n_idx
+
+        mul = k_avg * csqrt(mass_avg) *  ctwopisqrt2
+
+        diag_vect[iparam] = cpow(mul,the_pow)
+
+    cdef np.ndarray[long, ndim=1, mode="c"] diag_indices = np.array(range(nparam),dtype=np.int_)
+
+    return scipy.sparse.coo_matrix((diag_vect,(diag_indices,diag_indices)),shape=(nparam,nparam), dtype=np.float64)
 
 
 
