@@ -34,9 +34,9 @@ twopi = 2*np.pi
 def main():
 
 
-    # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/')
+    input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/01 - Classic gallery/')
     # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/5/')
-    input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/5_diff_mass/')
+    # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/5_diff_mass/')
     # input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery')
     # input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery/unsafe/')
     # input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery/03 - Targets/Figure eight/')
@@ -85,7 +85,7 @@ def main():
     # input_names_list = ['10 - Complex symmetry']
     # input_names_list = ['12 - Big mass gap']
     
-    input_names_list = ['00002']
+    # input_names_list = ['00002']
 
 
 

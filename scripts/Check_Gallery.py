@@ -34,10 +34,10 @@ twopi = 2*np.pi
 def main():
 
 
-    # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/')
-    input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/10/')
+    # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/01 - Classic gallery')
+    # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/10/')
     # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/5_diff_mass/')
-    # input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery')
+    input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery')
     # input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery/03 - Targets/Figure eight/')
     # input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery/01 - Classic gallery')
     # input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery/unsafe')
@@ -75,27 +75,8 @@ def main():
 # 
 #             input_names_list.append(file_root)
 
+    ''' Include specific files '''
     # input_names_list = ['01 - Figure eight']
-    # input_names_list = ['14 - Small mass gap']
-    # input_names_list = ['09 - 3x2 Circles']
-    # input_names_list = ['06 - Ten petal flower']
-    # input_names_list = ['13 - 100 bodies']
-    # input_names_list = ['02 - Celtic knot']
-    # input_names_list = ['07 - No symmetry']
-    # input_names_list = ['11 - Resonating loops']
-    # input_names_list = ['10 - Complex symmetry']
-    # input_names_list = ['12 - Big mass gap']
-    
-    # input_names_list = ['1-chain']
-    # input_names_list = ['00001']
-    # input_names_list = ['00002']
-    # input_names_list = ['00003']
-    # input_names_list = ['00004']
-    # input_names_list = ['00005']
-    # input_names_list = ['00006']
-    # input_names_list = ['00007']  
-    # input_names_list = ['00008']  
-
 
 
 
@@ -116,8 +97,8 @@ def main():
             input_files_list.append(os.path.join(input_folder,the_name))
 
 
-    # Exec_Mul_Proc = True
-    Exec_Mul_Proc = False
+    Exec_Mul_Proc = True
+    # Exec_Mul_Proc = False
 
     if Exec_Mul_Proc:
 
@@ -224,7 +205,7 @@ def ExecName(the_name, the_file):
 
     eps = 1e-5
 
-    ActionSyst.Center_all_coeffs(all_coeffs_init)
+    ActionSyst.Center_all_coeffs(all_coeffs_init)   
 
     x = ActionSyst.Package_all_coeffs(all_coeffs_init)
 

@@ -1308,9 +1308,6 @@ def Assemble_Cstr_Matrix(
                         
                             nnz +=1
                                              
-
-
-    
     cdef np.ndarray[long  , ndim=1, mode="c"] cstr_row  = np.zeros((nnz),dtype=np.int_   )
     cdef np.ndarray[long  , ndim=1, mode="c"] cstr_col  = np.zeros((nnz),dtype=np.int_   )
     cdef np.ndarray[double, ndim=1, mode="c"] cstr_data = np.zeros((nnz),dtype=np.float64)
@@ -1627,8 +1624,7 @@ def diagmat_changevar(
         k_avg = k_sumd / n_indptr
         mass_avg = mass_sum / n_indptr
 
-        # mul = k_avg * csqrt(mass_avg) *  ctwopisqrt2
-        mul = k_avg * ctwopisqrt2
+        mul = k_avg * csqrt(mass_avg) *  ctwopisqrt2
 
         diag_vect[iparam] = cpow(mul,the_pow)
 
