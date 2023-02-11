@@ -36,8 +36,7 @@ except:
 from choreo.Choreo_cython_funs import ndim,twopi,nhash,n
 from choreo.Choreo_cython_funs import Compute_action_Cython,Compute_action_hess_mul_Cython
 from choreo.Choreo_cython_funs import Compute_hash_action_Cython,Compute_Newton_err_Cython
-from choreo.Choreo_cython_funs import Assemble_Cstr_Matrix,diag_changevar_mass,diag_changevar_nomass
-from choreo.Choreo_cython_funs import diag_changevar_rand
+from choreo.Choreo_cython_funs import Assemble_Cstr_Matrix,diagmat_changevar
 from choreo.Choreo_cython_funs import Compute_MinDist_Cython,Compute_Loop_Dist_btw_avg_Cython,Compute_square_dist,Compute_Loop_Size_Dist_Cython
 from choreo.Choreo_cython_funs import Compute_Forces_Cython,Compute_JacMat_Forces_Cython,Compute_JacMul_Forces_Cython
 from choreo.Choreo_cython_funs import Transform_Coeffs_Single_Loop,SparseScaleCoeffs,ComputeSpeedCoeffs
@@ -156,7 +155,7 @@ class ChoreoAction():
             nint = self.nint
 
         all_coeffs_nosym = self.RemoveSym(x).view(dtype=np.complex128)[...,0]
-        all_pos_b = the_irfft(all_coeffs_nosym,norm="forward")
+        all_pos_b = the_irfft(all_coeffs_nosym,n=nint,norm="forward")
 
         return all_pos_b
 
@@ -169,7 +168,7 @@ class ChoreoAction():
             nint = self.nint
 
         all_coeffs_c = self.Unpackage_all_coeffs(x).view(dtype=np.complex128)[...,0]
-        all_pos = the_irfft(all_coeffs_c,norm="forward")
+        all_pos = the_irfft(all_coeffs_c,n=nint,norm="forward")
 
         return all_pos
 
@@ -182,7 +181,7 @@ class ChoreoAction():
             nint = self.nint
 
         all_coeffs_nosym = self.RemoveSym(x).view(dtype=np.complex128)[...,0]
-        all_pos_b = the_irfft(all_coeffs_nosym,norm="forward")
+        all_pos_b = the_irfft(all_coeffs_nosym,n=nint,norm="forward")
 
         ncoeff = all_coeffs_nosym.shape[2]
         for k in range(ncoeff):
@@ -223,9 +222,18 @@ class ChoreoAction():
         
         return y
 
+    def Compute_bar(self,all_coeffs):
+
+        return Compute_bar(all_coeffs,self.nloop,self.mass,self.loopnb,self.Targets,self.SpaceRotsUn)
+    
     def Center_all_coeffs(self,all_coeffs):
 
-        Center_all_coeffs(all_coeffs,self.nloop,self.mass,self.loopnb,self.Targets,self.SpaceRotsUn)
+        xbar = self.Compute_bar(all_coeffs)
+
+        for il in range(self.nloop):
+
+            all_coeffs[il,:,0,0] -= xbar
+
         
     def Compute_action_onlygrad_escape(self,x):
 
@@ -880,6 +888,42 @@ class ChoreoAction():
             file_path = file_path_list[0]
         
         return Found_duplicate,file_path
+
+    def Compute_bar_serious(self,x):
+
+        all_pos_b = self.ComputeAllPos(x)
+
+        xbar_mean = np.zeros((ndim))
+
+        xbar_all = np.zeros((ndim,self.nint))
+
+        for iint in range(self.nint):
+
+            xbar = np.zeros((ndim))
+            
+            tot_mass = 0.
+            for il in range(self.nloop):
+                for ib in range(self.loopnb[il]):
+
+                    ibody = self.Targets[il,ib]
+
+                    tot_mass += self.mass[ibody]
+                    xbar += self.mass[ibody] * all_pos_b[ibody,:,iint]
+
+            xbar /= tot_mass
+
+            xbar_all[:,iint] += xbar
+
+#         xbar_std = np.std(xbar_all,axis=1)
+# 
+#         if np.linalg.norm(xbar_std) > 1e-10 :
+#             print("aaa",np.linalg.norm(xbar_std))
+
+        xbar_mean = np.mean(xbar_all,axis=1)
+
+        return xbar_mean
+
+
 
     if ndim == 2:
 
@@ -1786,8 +1830,6 @@ def setup_changevar(nbody,nint_init,mass,n_reconverge_it_max=6,MomCons=True,n_gr
 
     # Now detect parameters and build change of variables
 
-    MassPowSum = np.zeros((nloop),dtype=np.float64)
-
     ncoeff_cvg_lvl_list = []
     nint_cvg_lvl_list = []
     param_to_coeff_cvg_lvl_list = []
@@ -1808,7 +1850,6 @@ def setup_changevar(nbody,nint_init,mass,n_reconverge_it_max=6,MomCons=True,n_gr
             mass                ,
             loopnb              ,
             Targets             ,
-            MassSum             ,
             SpaceRotsUn         ,
             TimeRevsUn          ,
             TimeShiftNumUn      ,
@@ -1823,110 +1864,20 @@ def setup_changevar(nbody,nint_init,mass,n_reconverge_it_max=6,MomCons=True,n_gr
         param_to_coeff_cvg_lvl_list.append(null_space_sparseqr(cstrmat_sp))
         coeff_to_param_cvg_lvl_list.append(param_to_coeff_cvg_lvl_list[i].transpose(copy=True))
 
-#         if (MomCons):
-# 
-#             diag_changevar_nomass(
-#                 param_to_coeff_cvg_lvl_list[i].nnz,
-#                 ncoeff_cvg_lvl_list[i],
-#                 -n_grad_change,
-#                 param_to_coeff_cvg_lvl_list[i].row,
-#                 param_to_coeff_cvg_lvl_list[i].data,
-#             )
-#             
-#             diag_changevar_nomass(
-#                 coeff_to_param_cvg_lvl_list[i].nnz,
-#                 ncoeff_cvg_lvl_list[i],
-#                 n_grad_change,
-#                 coeff_to_param_cvg_lvl_list[i].col,
-#                 coeff_to_param_cvg_lvl_list[i].data,
-#             )
-# 
-#         else:
-# 
-#             diag_changevar_mass(
-#                 param_to_coeff_cvg_lvl_list[i].nnz,
-#                 ncoeff_cvg_lvl_list[i],
-#                 -n_grad_change,
-#                 param_to_coeff_cvg_lvl_list[i].row,
-#                 param_to_coeff_cvg_lvl_list[i].data,
-#                 MassSum
-#             )
-#             
-#             diag_changevar_mass(
-#                 coeff_to_param_cvg_lvl_list[i].nnz,
-#                 ncoeff_cvg_lvl_list[i],
-#                 n_grad_change,
-#                 coeff_to_param_cvg_lvl_list[i].col,
-#                 coeff_to_param_cvg_lvl_list[i].data,
-#                 MassSum
-#             )
+        param_to_coeff_csc = param_to_coeff_cvg_lvl_list[i].tocsc()
 
-
-        diag_changevar_nomass(
-            param_to_coeff_cvg_lvl_list[i].nnz,
+        diagmat = diagmat_changevar(
             ncoeff_cvg_lvl_list[i],
+            param_to_coeff_cvg_lvl_list[i].shape[1],
+            param_to_coeff_csc.indptr,
+            param_to_coeff_csc.indices,
             -n_grad_change,
-            param_to_coeff_cvg_lvl_list[i].row,
-            param_to_coeff_cvg_lvl_list[i].data,
-        )
-        
-        diag_changevar_nomass(
-            coeff_to_param_cvg_lvl_list[i].nnz,
-            ncoeff_cvg_lvl_list[i],
-            n_grad_change,
-            coeff_to_param_cvg_lvl_list[i].col,
-            coeff_to_param_cvg_lvl_list[i].data,
+            MassSum
         )
 
-
-# 
-#         diag_changevar_mass(
-#             param_to_coeff_cvg_lvl_list[i].nnz,
-#             ncoeff_cvg_lvl_list[i],
-#             -n_grad_change,
-#             param_to_coeff_cvg_lvl_list[i].row,
-#             param_to_coeff_cvg_lvl_list[i].data,
-#             MassSum
-#         )
-#         
-#         diag_changevar_mass(
-#             coeff_to_param_cvg_lvl_list[i].nnz,
-#             ncoeff_cvg_lvl_list[i],
-#             n_grad_change,
-#             coeff_to_param_cvg_lvl_list[i].col,
-#             coeff_to_param_cvg_lvl_list[i].data,
-#             MassSum
-#         )
-# 
-# 
-#         rand_vect = np.zeros((nloop,ndim,ncoeff_cvg_lvl_list[i] ,2))
-# 
-#         for il in range(nloop):
-#             for idim in range(ndim):
-#                 for k in range(ncoeff_cvg_lvl_list[i]):
-#                     for ift in range(2):
-#                         rand_vect[il,idim,k,ift] = random.random()
-# 
-# 
-#         diag_changevar_rand(
-#             coeff_to_param_cvg_lvl_list[i].nnz,
-#             ncoeff_cvg_lvl_list[i],
-#             -n_grad_change,
-#             param_to_coeff_cvg_lvl_list[i].row,
-#             param_to_coeff_cvg_lvl_list[i].data,
-#             rand_vect
-#         )
-#         
-# 
-#         diag_changevar_rand(
-#             coeff_to_param_cvg_lvl_list[i].nnz,
-#             ncoeff_cvg_lvl_list[i],
-#             n_grad_change,
-#             coeff_to_param_cvg_lvl_list[i].col,
-#             coeff_to_param_cvg_lvl_list[i].data,
-#             rand_vect
-#         )
-
+        param_to_coeff_cvg_lvl_list[i] = param_to_coeff_cvg_lvl_list[i] @ diagmat
+        diagmat.data = np.reciprocal(diagmat.data)
+        coeff_to_param_cvg_lvl_list[i] =  diagmat @ coeff_to_param_cvg_lvl_list[i]
 
         param_to_coeff_T_cvg_lvl_list.append(param_to_coeff_cvg_lvl_list[i].transpose(copy=True))
         coeff_to_param_T_cvg_lvl_list.append(coeff_to_param_cvg_lvl_list[i].transpose(copy=True))
