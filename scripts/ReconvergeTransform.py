@@ -31,7 +31,7 @@ One_sec = 1e9
 def main():
 
     # input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery/01 - Classic gallery')
-    input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/toto')
+    input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/10')
     # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/Keep/')
     # input_folder = os.path.join(__PROJECT_ROOT__,'Reconverged_sols')
     
