@@ -35,8 +35,8 @@ def main():
 
 
     # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/')
-    input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/5/')
-    # input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery')
+    # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/5/')
+    input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery')
     # input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery/03 - Targets/Figure eight/')
     # input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery/01 - Classic gallery')
     # input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery/unsafe')
@@ -44,35 +44,35 @@ def main():
     # input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery/04 - Montaldi-Steckles-Gries')
     # input_folder = os.path.join(__PROJECT_ROOT__,'Keep/tests')
 
-#     ''' Include all files in tree '''
-#     input_names_list = []
-#     input_files_list = []
-#     for root, dirnames, filenames in os.walk(input_folder):
-# 
-#         for filename in filenames:
-#             file_path = os.path.join(root, filename)
-#             file_root, file_ext = os.path.splitext(os.path.basename(file_path))
-# 
-#             if (file_ext == '.json' ):
-# 
-#                 file_path = os.path.join(root, file_root)
-#                 the_name = file_path[len(input_folder):]
-#                 input_names_list.append(the_name)
-#                 input_files_list.append(file_path)
-# 
-# # # # 
-    ''' Include all files in folder '''
+    ''' Include all files in tree '''
     input_names_list = []
-    for file_path in os.listdir(input_folder):
-        file_path = os.path.join(input_folder, file_path)
-        file_root, file_ext = os.path.splitext(os.path.basename(file_path))
-        
-        if (file_ext == '.json' ):
-            # 
-            # if int(file_root) > 8:
-            #     input_names_list.append(file_root)
+    input_files_list = []
+    for root, dirnames, filenames in os.walk(input_folder):
 
-            input_names_list.append(file_root)
+        for filename in filenames:
+            file_path = os.path.join(root, filename)
+            file_root, file_ext = os.path.splitext(os.path.basename(file_path))
+
+            if (file_ext == '.json' ):
+
+                file_path = os.path.join(root, file_root)
+                the_name = file_path[len(input_folder):]
+                input_names_list.append(the_name)
+                input_files_list.append(file_path)
+
+# # # # 
+#     ''' Include all files in folder '''
+#     input_names_list = []
+#     for file_path in os.listdir(input_folder):
+#         file_path = os.path.join(input_folder, file_path)
+#         file_root, file_ext = os.path.splitext(os.path.basename(file_path))
+#         
+#         if (file_ext == '.json' ):
+#             # 
+#             # if int(file_root) > 8:
+#             #     input_names_list.append(file_root)
+# 
+#             input_names_list.append(file_root)
 
     # input_names_list = ['01 - Figure eight']
     # input_names_list = ['14 - Small mass gap']
@@ -96,18 +96,27 @@ def main():
     # input_names_list = ['00008']  
 
 
-    if not( 'input_files_list'in locals()):
+
+
+    if 'input_files_list'in locals():
+        Collect_files_list = not(len(input_files_list) == len(input_names_list))
+    else:
+        Collect_files_list = True
+    
+    if Collect_files_list:
         input_files_list = []
         for the_name in input_names_list:
 
             the_file = os.path.join(input_folder,the_name+'.json')
             if not(os.path.isfile(the_file)):
+                print(the_file)
                 raise ValueError('File does not exist')
             
             input_files_list.append(os.path.join(input_folder,the_name))
 
-    # Exec_Mul_Proc = True
-    Exec_Mul_Proc = False
+
+    Exec_Mul_Proc = True
+    # Exec_Mul_Proc = False
 
     if Exec_Mul_Proc:
 
@@ -140,7 +149,7 @@ def ExecName(the_name, the_file):
 
     # print('--------------------------------------------')
     # print('')
-    print(the_name)
+    # print(the_name)
     # print('')
     # print('--------------------------------------------')
     # print('')
@@ -223,7 +232,7 @@ def ExecName(the_name, the_file):
 
     eps = 1e-5
 
-    # ActionSyst.Center_all_coeffs(all_coeffs_init)
+    ActionSyst.Center_all_coeffs(all_coeffs_init)
 
     x = ActionSyst.Package_all_coeffs(all_coeffs_init)
 
