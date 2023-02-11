@@ -239,11 +239,12 @@ def ExecName(
 
     all_pos = np.load(input_filename)
     nint = Info_dict["n_int"]
+    ncoeff = nint // 2 + 1
 
     c_coeffs = choreo.the_rfft(all_pos,n=nint,axis=2,norm="forward")
-    all_coeffs = np.zeros((Info_dict["nloop"],choreo.ndim,Info_dict["n_Fourier"],2),dtype=np.float64)
-    all_coeffs[:,:,:,0] = c_coeffs[:,:,0:Info_dict["n_Fourier"]].real
-    all_coeffs[:,:,:,1] = c_coeffs[:,:,0:Info_dict["n_Fourier"]].imag
+    all_coeffs = np.zeros((Info_dict["nloop"],choreo.ndim,ncoeff,2),dtype=np.float64)
+    all_coeffs[:,:,:,0] = c_coeffs.real
+    all_coeffs[:,:,:,1] = c_coeffs.imag
 
     theta = 2*np.pi * 0.
     SpaceRevscal = 1.

@@ -43,7 +43,6 @@ def main():
 
     if (LookForTarget) :
 
-
         Rotate_fast_with_slow = params_dict['Geom_Target'] ['Rotate_fast_with_slow']
         Optimize_Init = params_dict['Geom_Target'] ['Optimize_Init']
         Randomize_Fast_Init =  params_dict['Geom_Target'] ['Randomize_Fast_Init']
@@ -53,8 +52,10 @@ def main():
 
         Info_dict_slow = js.TargetSlow_PlotInfo.to_py()
 
+        ncoeff_slow = Info_dict_slow["n_int"] // 2 + 1
+
         all_pos_slow = NPY_JS_to_py(js.TargetSlow_Pos.to_py())
-        all_coeffs_slow = choreo.AllPosToAllCoeffs(all_pos_slow,Info_dict_slow["n_Fourier"])
+        all_coeffs_slow = choreo.AllPosToAllCoeffs(all_pos_slow,ncoeff_slow)
         choreo.Center_all_coeffs(all_coeffs_slow,Info_dict_slow["nloop"],Info_dict_slow["mass"],Info_dict_slow["loopnb"],np.array(Info_dict_slow["Targets"]),np.array(Info_dict_slow["SpaceRotsUn"]))
 
         Info_dict_fast_list = js.TargetFast_PlotInfoList.to_py()
@@ -64,8 +65,10 @@ def main():
 
         for (i,all_pos_fast_js) in enumerate(all_pos_fast_js_list) :
 
+            ncoeff_fast = Info_dict_fast_list[i]["n_int"] // 2 + 1
+
             all_pos_fast = NPY_JS_to_py(all_pos_fast_js)
-            all_coeffs_fast = choreo.AllPosToAllCoeffs(all_pos_fast,Info_dict_fast_list[i]["n_Fourier"])
+            all_coeffs_fast = choreo.AllPosToAllCoeffs(all_pos_fast,ncoeff_fast)
             choreo.Center_all_coeffs(all_coeffs_fast,Info_dict_fast_list[i]["nloop"],Info_dict_fast_list[i]["mass"],Info_dict_fast_list[i]["loopnb"],np.array(Info_dict_fast_list[i]["Targets"]),np.array(Info_dict_fast_list[i]["SpaceRotsUn"]))
 
             all_coeffs_fast_list.append(all_coeffs_fast)

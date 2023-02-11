@@ -47,17 +47,21 @@
                     ".json": "choreo-gallery/01 - Classic gallery/11 - Resonating loops.json",
                     ".npy": "choreo-gallery/01 - Classic gallery/11 - Resonating loops.npy"
                 },
-                "12 - Big mass gap": {
-                    ".json": "choreo-gallery/01 - Classic gallery/12 - Big mass gap.json",
-                    ".npy": "choreo-gallery/01 - Classic gallery/12 - Big mass gap.npy"
+                "12 - 100 bodies": {
+                    ".json": "choreo-gallery/01 - Classic gallery/12 - 100 bodies.json",
+                    ".npy": "choreo-gallery/01 - Classic gallery/12 - 100 bodies.npy"
                 },
-                "13 - 100 bodies": {
-                    ".json": "choreo-gallery/01 - Classic gallery/13 - 100 bodies.json",
-                    ".npy": "choreo-gallery/01 - Classic gallery/13 - 100 bodies.npy"
+                "13 - Small mass gap": {
+                    ".json": "choreo-gallery/01 - Classic gallery/13 - Small mass gap.json",
+                    ".npy": "choreo-gallery/01 - Classic gallery/13 - Small mass gap.npy"
                 },
-                "14 - Small mass gap": {
-                    ".json": "choreo-gallery/01 - Classic gallery/14 - Small mass gap.json",
-                    ".npy": "choreo-gallery/01 - Classic gallery/14 - Small mass gap.npy"
+                "14 - Small mass gap and symmetry": {
+                    ".json": "choreo-gallery/01 - Classic gallery/14 - Small mass gap and symmetry.json",
+                    ".npy": "choreo-gallery/01 - Classic gallery/14 - Small mass gap and symmetry.npy"
+                },
+                "15 - Big mass gap": {
+                    ".json": "choreo-gallery/01 - Classic gallery/15 - Big mass gap.json",
+                    ".npy": "choreo-gallery/01 - Classic gallery/15 - Big mass gap.npy"
                 }
             },
             "name": "01 - Classic gallery"
@@ -974,6 +978,10 @@
                         "Forward figure eight": {
                             ".json": "choreo-gallery/03 - Targets/Figure eight/Forward figure eight.json",
                             ".npy": "choreo-gallery/03 - Targets/Figure eight/Forward figure eight.npy"
+                        },
+                        "Single loop of circles": {
+                            ".json": "choreo-gallery/03 - Targets/Figure eight/Single loop of circles.json",
+                            ".npy": "choreo-gallery/03 - Targets/Figure eight/Single loop of circles.npy"
                         }
                     },
                     "name": "Figure eight"
