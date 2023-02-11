@@ -18,7 +18,7 @@ np.import_array()
 
 cimport cython
 
-import scipy.sparse as sp
+import scipy.sparse
 
 from libc.math cimport pow as cpow
 from libc.math cimport fabs as cfabs
@@ -1170,7 +1170,6 @@ def Assemble_Cstr_Matrix(
     np.ndarray[double, ndim=1, mode="c"] mass  ,
     np.ndarray[long  , ndim=1, mode="c"] loopnb  ,
     np.ndarray[long  , ndim=2, mode="c"] Targets  ,
-    np.ndarray[double, ndim=1, mode="c"] MassSum  ,
     np.ndarray[double, ndim=4, mode="c"] SpaceRotsUn  ,
     np.ndarray[long  , ndim=2, mode="c"] TimeRevsUn  ,
     np.ndarray[long  , ndim=2, mode="c"] TimeShiftNumUn  ,
@@ -1193,7 +1192,7 @@ def Assemble_Cstr_Matrix(
     cdef long ilcstr
     
     cdef double val,dt
-    cdef double masstot=0
+    cdef double masstot = 0
     cdef double invmasstot = 0
     cdef double c,s
     
@@ -1212,6 +1211,7 @@ def Assemble_Cstr_Matrix(
                 masstot += mass[Targets[il,ib]]
                 
         invmasstot = cpow(masstot,-1)
+        # invmasstot = 1.
         
         for k in range(ncoeff):
             for idim in range(cndim):
@@ -1359,7 +1359,7 @@ def Assemble_Cstr_Matrix(
 
     cdef long icstr = 0
     nnz = 0
-# 
+
     # Removes imaginary parts of c_0 and c_last
     for il in range(nloop):
         for idim in range(cndim):
@@ -1395,7 +1395,7 @@ def Assemble_Cstr_Matrix(
                         dt = - TimeRevsUn[il,ib] * TimeShiftNumUn[il,ib] / TimeShiftDenUn[il,ib]
                         c = ccos(ctwopi * k * dt)
                         s = csin(ctwopi * k * dt)  
-                        
+
                         for jdim in range(cndim):
                                 
                             i =  0 + 2*(k + ncoeff*(jdim + cndim*il))
@@ -1612,109 +1612,47 @@ def Assemble_Cstr_Matrix(
 
     cdef long n_idx = nloop*cndim*ncoeff*2
 
-    return  sp.coo_matrix((cstr_data,(cstr_row,cstr_col)),shape=(n_idx,icstr), dtype=np.float64)
+    return scipy.sparse.coo_matrix((cstr_data,(cstr_row,cstr_col)),shape=(n_idx,icstr), dtype=np.float64)
     
-@cython.cdivision(True)
-def diag_changevar_nomass(
-    long nnz,
-    long ncoeff,
-    double n_grad_change,
-    int [::1] idxarray ,
-    double [::1] data ,
-):
-    
-    cdef long idx, res, ift, k , il, idim
-    cdef double kfac,kd
         
-    for idx in range(nnz):
-
-        ift = idxarray[idx]%2
-        res = idxarray[idx]/2
-    
-        k = res % ncoeff
-        res = res / ncoeff
-                
-        idim = res % cndim
-        il = res / cndim
-
-        if (k == 0):
-            k = 1
-
-        kd = k * ctwopisqrt2
-
-        kfac = cpow(kd,n_grad_change)
-        
-        data[idx] *= kfac        
-
-@cython.cdivision(True)
-def diag_changevar_mass(
-    long nnz,
-    long ncoeff,
-    double n_grad_change,
-    int [::1] idxarray ,
-    double [::1] data ,
-    double [::1] MassSum  ,
-):
-    
-    cdef long idx, res, ift, k , il, idim
-    cdef double kfac,kd
-        
-    for idx in range(nnz):
-
-        ift = idxarray[idx]%2
-        res = idxarray[idx]/2
-    
-        k = res % ncoeff
-        res = res / ncoeff
-                
-        idim = res % cndim
-        il = res / cndim
-
-        if (k == 0):
-            k = 1
-
-        kd = k * csqrt(MassSum[il]) * ctwopisqrt2
-
-        kfac = cpow(kd,n_grad_change)
-        
-        data[idx] *= kfac       
-        
-@cython.cdivision(True)
-def diag_changevar_rand(
-    long nnz,
-    long ncoeff,
-    double n_grad_change,
-    int [::1] idxarray ,
-    double [::1] data ,
-    double [:,:,:,::1] Randvect  ,
-):
-    
-    cdef long idx, res, ift, k , il, idim
-    cdef double kfac,kd
-        
-    for idx in range(nnz):
-
-        ift = idxarray[idx]%2
-        res = idxarray[idx]/2
-    
-        k = res % ncoeff
-        res = res / ncoeff
-                
-        idim = res % cndim
-        il = res / cndim
-
-        # kd = Randvect[il,idim,k,ift]
-        # kd = Randvect[0,idim,k,ift]
-        # kd = Randvect[il,0,k,ift]
-        # kd = Randvect[il,idim,0,ift]
-        # kd = Randvect[il,idim,k,0]
-        # kd = Randvect[0,idim,k,ift]
-        kd = Randvect[il,0,0,0]
+# @cython.cdivision(True)
+# def diag_changevar(
+#     long nnz,
+#     long ncoeff,
+#     double n_grad_change,
+#     int [::1] idxarray ,
+#     double [::1] data ,
+#     double [::1] MassSum  ,
+# ):
+#     
+#     cdef long idx, res, ift, k , il, idim
+#     cdef long iparam
+#     cdef double kfac,kd
+#         
+#     for idx in range(nnz):
+# 
+#         iparam = idxarray[idx]
+# 
+# 
+#         
+# 
+#         ift = idxarray[idx]%2
+#         res = idxarray[idx]/2
+#     
+#         k = res % ncoeff
+#         res = res / ncoeff
+#                 
+#         idim = res % cndim
+#         il = res / cndim
+# 
+# 
+#         kfac = cpow(kd,n_grad_change)
+#         
+#         data[idx] *= kfac 
+# 
+# 
 
 
-        kfac = cpow(kd,n_grad_change)
-        
-        data[idx] *= kfac    
 
         
 def Compute_square_dist(
