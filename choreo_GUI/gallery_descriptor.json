@@ -39,10 +39,6 @@
                     ".json": "choreo-gallery/01 - Classic gallery/09 - 3x2 Circles.json",
                     ".npy": "choreo-gallery/01 - Classic gallery/09 - 3x2 Circles.npy"
                 },
-                "10 - Complex symmetry": {
-                    ".json": "choreo-gallery/01 - Classic gallery/10 - Complex symmetry.json",
-                    ".npy": "choreo-gallery/01 - Classic gallery/10 - Complex symmetry.npy"
-                },
                 "11 - Resonating loops": {
                     ".json": "choreo-gallery/01 - Classic gallery/11 - Resonating loops.json",
                     ".npy": "choreo-gallery/01 - Classic gallery/11 - Resonating loops.npy"
@@ -54,10 +50,6 @@
                 "13 - 100 bodies": {
                     ".json": "choreo-gallery/01 - Classic gallery/13 - 100 bodies.json",
                     ".npy": "choreo-gallery/01 - Classic gallery/13 - 100 bodies.npy"
-                },
-                "14 - Small mass gap": {
-                    ".json": "choreo-gallery/01 - Classic gallery/14 - Small mass gap.json",
-                    ".npy": "choreo-gallery/01 - Classic gallery/14 - Small mass gap.npy"
                 }
             },
             "name": "01 - Classic gallery"
