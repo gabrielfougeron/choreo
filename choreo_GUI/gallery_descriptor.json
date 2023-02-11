@@ -39,6 +39,10 @@
                     ".json": "choreo-gallery/01 - Classic gallery/09 - 3x2 Circles.json",
                     ".npy": "choreo-gallery/01 - Classic gallery/09 - 3x2 Circles.npy"
                 },
+                "10 - Complex symmetry": {
+                    ".json": "choreo-gallery/01 - Classic gallery/10 - Complex symmetry.json",
+                    ".npy": "choreo-gallery/01 - Classic gallery/10 - Complex symmetry.npy"
+                },
                 "11 - Resonating loops": {
                     ".json": "choreo-gallery/01 - Classic gallery/11 - Resonating loops.json",
                     ".npy": "choreo-gallery/01 - Classic gallery/11 - Resonating loops.npy"
@@ -102,10 +106,6 @@
                         "09": {
                             ".json": "choreo-gallery/02 - Families/01 - Circles/09.json",
                             ".npy": "choreo-gallery/02 - Families/01 - Circles/09.npy"
-                        },
-                        "10": {
-                            ".json": "choreo-gallery/02 - Families/01 - Circles/10.json",
-                            ".npy": "choreo-gallery/02 - Families/01 - Circles/10.npy"
                         }
                     },
                     "name": "01 - Circles"
@@ -967,20 +967,46 @@
                 {
                     "dirs": [],
                     "files": {
-                        "Backward figure eight": {
-                            ".json": "choreo-gallery/03 - Targets/Figure eight/Backward figure eight.json",
-                            ".npy": "choreo-gallery/03 - Targets/Figure eight/Backward figure eight.npy"
+                        "01 - Figure eight": {
+                            ".json": "choreo-gallery/03 - Targets/01 - Circle/01 - Figure eight.json",
+                            ".npy": "choreo-gallery/03 - Targets/01 - Circle/01 - Figure eight.npy"
                         },
-                        "Forward figure eight": {
-                            ".json": "choreo-gallery/03 - Targets/Figure eight/Forward figure eight.json",
-                            ".npy": "choreo-gallery/03 - Targets/Figure eight/Forward figure eight.npy"
+                        "02 - Figure eight": {
+                            ".json": "choreo-gallery/03 - Targets/01 - Circle/02 - Figure eight.json",
+                            ".npy": "choreo-gallery/03 - Targets/01 - Circle/02 - Figure eight.npy"
                         },
-                        "Single loop of circles": {
-                            ".json": "choreo-gallery/03 - Targets/Figure eight/Single loop of circles.json",
-                            ".npy": "choreo-gallery/03 - Targets/Figure eight/Single loop of circles.npy"
+                        "03 - Figure eight": {
+                            ".json": "choreo-gallery/03 - Targets/01 - Circle/03 - Figure eight.json",
+                            ".npy": "choreo-gallery/03 - Targets/01 - Circle/03 - Figure eight.npy"
+                        },
+                        "04 - Four body chain": {
+                            ".json": "choreo-gallery/03 - Targets/01 - Circle/04 - Four body chain.json",
+                            ".npy": "choreo-gallery/03 - Targets/01 - Circle/04 - Four body chain.npy"
+                        },
+                        "05 - Four body chain": {
+                            ".json": "choreo-gallery/03 - Targets/01 - Circle/05 - Four body chain.json",
+                            ".npy": "choreo-gallery/03 - Targets/01 - Circle/05 - Four body chain.npy"
                         }
                     },
-                    "name": "Figure eight"
+                    "name": "01 - Circle"
+                },
+                {
+                    "dirs": [],
+                    "files": {
+                        "Backward figure eight": {
+                            ".json": "choreo-gallery/03 - Targets/02 - Figure eight/Backward figure eight.json",
+                            ".npy": "choreo-gallery/03 - Targets/02 - Figure eight/Backward figure eight.npy"
+                        },
+                        "Forward figure eight": {
+                            ".json": "choreo-gallery/03 - Targets/02 - Figure eight/Forward figure eight.json",
+                            ".npy": "choreo-gallery/03 - Targets/02 - Figure eight/Forward figure eight.npy"
+                        },
+                        "Single loop of circles": {
+                            ".json": "choreo-gallery/03 - Targets/02 - Figure eight/Single loop of circles.json",
+                            ".npy": "choreo-gallery/03 - Targets/02 - Figure eight/Single loop of circles.npy"
+                        }
+                    },
+                    "name": "02 - Figure eight"
                 }
             ],
             "files": {},

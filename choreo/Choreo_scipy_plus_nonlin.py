@@ -107,13 +107,10 @@ def nonlin_solve_pp(
 
         # Print status
         if verbose:
-            print(f"{n}:  |F(x)| = {Fx_norm_new}; step {s}")
+            print(f"{n}:  |F(x)| = {Fx_norm_new:.4e}; step {s:.3f}")
 
     else:
-        if raise_exception:
-            raise NoConvergence(_array_like_pp(x, x0))
-        else:
-            status = 2
+        status = 2
 
     if full_output:
         info = {'nit': condition.iteration,
