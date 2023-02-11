@@ -38,26 +38,27 @@ def main():
     # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/5/')
     input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/5_diff_mass/')
     # input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery')
+    # input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery/unsafe/')
     # input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery/03 - Targets/Figure eight/')
     # input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery/01 - Classic gallery')
     # input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery/02 - Families/02 - Chains/04')
     # input_folder = os.path.join(__PROJECT_ROOT__,'Keep/tests')
 # 
-#     ''' Include all files in tree '''
-#     input_names_list = []
-#     input_files_list = []
-#     for root, dirnames, filenames in os.walk(input_folder):
-# 
-#         for filename in filenames:
-#             file_path = os.path.join(root, filename)
-#             file_root, file_ext = os.path.splitext(os.path.basename(file_path))
-# 
-#             if (file_ext == '.json' ):
-# 
-#                 file_path = os.path.join(root, file_root)
-#                 the_name = file_path[len(input_folder):]
-#                 input_names_list.append(the_name)
-#                 input_files_list.append(file_path)
+    ''' Include all files in tree '''
+    input_names_list = []
+    input_files_list = []
+    for root, dirnames, filenames in os.walk(input_folder):
+
+        for filename in filenames:
+            file_path = os.path.join(root, filename)
+            file_root, file_ext = os.path.splitext(os.path.basename(file_path))
+
+            if (file_ext == '.json' ):
+
+                file_path = os.path.join(root, file_root)
+                the_name = file_path[len(input_folder):]
+                input_names_list.append(the_name)
+                input_files_list.append(file_path)
 
 # # # 
 #     ''' Include all files in folder '''
@@ -88,7 +89,13 @@ def main():
 
 
 
-    if not( 'input_files_list'in locals()):
+
+    if 'input_files_list'in locals():
+        Collect_files_list = not(len(input_files_list) == len(input_names_list))
+    else:
+        Collect_files_list = True
+    
+    if Collect_files_list:
         input_files_list = []
         for the_name in input_names_list:
 
@@ -103,8 +110,8 @@ def main():
     store_folder = os.path.join(__PROJECT_ROOT__,'Reconverged_sols')
     # store_folder = input_folder
 
-    # Exec_Mul_Proc = True
-    Exec_Mul_Proc = False
+    Exec_Mul_Proc = True
+    # Exec_Mul_Proc = False
 
     if Exec_Mul_Proc:
 
@@ -198,7 +205,7 @@ def ExecName(the_name, the_file):
     Sym_list = choreo.Make_SymList_From_InfoDict(Info_dict,Transform_Sym)
 
 # 
-    # MomConsImposed = True 
+    MomConsImposed = True 
     # MomConsImposed = False
 
 #     rot_angle = 0
@@ -260,8 +267,6 @@ def ExecName(the_name, the_file):
 
     
     print(f'Random Barycenter : {np.linalg.norm(rand_bar)}')
-
-
 
     print(f'Saved Grad Action : {Info_dict["Grad_Action"]}')
     print(f'Init Grad Action : {np.linalg.norm(Gradaction)}')
