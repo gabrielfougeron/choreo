@@ -610,14 +610,13 @@ def GenSymExample(
     x0 = np.random.random(ActionSyst.param_to_coeff.shape[1])
     xmin = ActionSyst.Compute_MinDist(x0)
     if (xmin < 1e-5):
-        # print(xmin)
-        # raise ValueError("Init inter body distance too low. There is something wrong with constraints")
+
         print("")
         print(f"Init minimum inter body distance too low : {xmin:.2e}.")
         print("There is likely something wrong with constraints.")
         print("")
 
-        return False
+        # return False
 
     all_coeffs_min,all_coeffs_max = Make_Init_bounds_coeffs(ActionSyst.nloop,ncoeff,coeff_ampl_o,k_infl,k_max,coeff_ampl_min)
 

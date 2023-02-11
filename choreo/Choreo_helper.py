@@ -229,12 +229,9 @@ def Make2DChoreoSymManyLoops(nloop=None,nbpl=None,SymName=None,SymType=None):
         
     return SymGens,nbody
 
-def MakeSymFromGlobalTransform(Transform_list,Permutation_list,mass = None):
+def MakeSymFromGlobalTransform(Transform_list,Permutation_list,mass):
 
     assert (len(Transform_list) == len(Permutation_list))
-    
-    if mass is None:
-        mass = np.ones((len(Transform_list)),dtype=np.float64)
 
     SymGens = []
 

@@ -165,16 +165,16 @@ def ExecName(the_name, input_folder, store_folder):
     MomConsImposed = True
     # MomConsImposed = False
 # 
-    rot_angle = 0
-    s = -1
-
-    Sym_list.append(choreo.ChoreoSym(
-        LoopTarget=0,
-        LoopSource=0,
-        SpaceRot = np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64),
-        TimeRev=-1,
-        TimeShift=fractions.Fraction(numerator=0,denominator=1)
-    ))
+#     rot_angle = 0
+#     s = -1
+# 
+#     Sym_list.append(choreo.ChoreoSym(
+#         LoopTarget=0,
+#         LoopSource=0,
+#         SpaceRot = np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64),
+#         TimeRev=-1,
+#         TimeShift=fractions.Fraction(numerator=0,denominator=1)
+#     ))
 
 
     n_reconverge_it_max = 2
@@ -206,8 +206,8 @@ def ExecName(the_name, input_folder, store_folder):
     # color = "velocity"
     # color = "all"
 
-    Save_anim = True
-    # Save_anim = False
+    # Save_anim = True
+    Save_anim = False
 
 
     vid_size = (8,8) # Image size in inches
@@ -275,9 +275,9 @@ def ExecName(the_name, input_folder, store_folder):
     Newt_err_norm_max = 1e-14
     Newt_err_norm_max_save = Info_dict['Newton_Error']*10
 
-    # krylov_method = 'lgmres'
+    krylov_method = 'lgmres'
     # krylov_method = 'gmres'
-    krylov_method = 'bicgstab'
+    # krylov_method = 'bicgstab'
     # krylov_method = 'cgs'
     # krylov_method = 'minres'
     # krylov_method = 'tfqmr'
