@@ -31,7 +31,7 @@ One_sec = 1e9
 def main():
 
     # input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery/01 - Classic gallery')
-    input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/candidates')
+    input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/toto')
     # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/Keep/')
     # input_folder = os.path.join(__PROJECT_ROOT__,'Reconverged_sols')
     
@@ -71,8 +71,8 @@ def main():
     store_folder = os.path.join(__PROJECT_ROOT__,'Reconverged_sols')
     # store_folder = input_folder
 
-    # Exec_Mul_Proc = True
-    Exec_Mul_Proc = False
+    Exec_Mul_Proc = True
+    # Exec_Mul_Proc = False
 
     if Exec_Mul_Proc:
 
@@ -295,7 +295,7 @@ def ExecName(the_name, input_folder, store_folder):
     
     gradtol_list =          [1e-1   ,1e-3   ,1e-5   ,1e-7   ,1e-9   ,1e-11  ,1e-13  ,1e-15  ]
     inner_maxiter_list =    [30     ,30     ,50     ,60     ,70     ,80     ,100    ,100    ]
-    maxiter_list =          [100    ,1000   ,1000   ,1000   ,500    ,50    ,30    ,10    ]
+    maxiter_list =          [100    ,1000   ,1000   ,1000   ,500    ,500    ,300    ,100    ]
     outer_k_list =          [5      ,5      ,5      ,5      ,5      ,7      ,7      ,7      ]
     store_outer_Av_list =   [False  ,False  ,False  ,False  ,False  ,True   ,True   ,True   ]
     
