@@ -36,7 +36,7 @@ except:
 from choreo.Choreo_cython_funs import ndim,twopi,nhash,n
 from choreo.Choreo_cython_funs import Compute_action_Cython,Compute_action_hess_mul_Cython
 from choreo.Choreo_cython_funs import Compute_hash_action_Cython,Compute_Newton_err_Cython
-from choreo.Choreo_cython_funs import Assemble_Cstr_Matrix
+from choreo.Choreo_cython_funs import Assemble_Cstr_Matrix,diagmat_changevar
 from choreo.Choreo_cython_funs import Compute_MinDist_Cython,Compute_Loop_Dist_btw_avg_Cython,Compute_square_dist,Compute_Loop_Size_Dist_Cython
 from choreo.Choreo_cython_funs import Compute_Forces_Cython,Compute_JacMat_Forces_Cython,Compute_JacMul_Forces_Cython
 from choreo.Choreo_cython_funs import Transform_Coeffs_Single_Loop,SparseScaleCoeffs,ComputeSpeedCoeffs
@@ -1830,8 +1830,6 @@ def setup_changevar(nbody,nint_init,mass,n_reconverge_it_max=6,MomCons=True,n_gr
 
     # Now detect parameters and build change of variables
 
-    MassPowSum = np.zeros((nloop),dtype=np.float64)
-
     ncoeff_cvg_lvl_list = []
     nint_cvg_lvl_list = []
     param_to_coeff_cvg_lvl_list = []
@@ -1866,23 +1864,20 @@ def setup_changevar(nbody,nint_init,mass,n_reconverge_it_max=6,MomCons=True,n_gr
         param_to_coeff_cvg_lvl_list.append(null_space_sparseqr(cstrmat_sp))
         coeff_to_param_cvg_lvl_list.append(param_to_coeff_cvg_lvl_list[i].transpose(copy=True))
 
-
         param_to_coeff_csc = param_to_coeff_cvg_lvl_list[i].tocsc()
 
         diagmat = diagmat_changevar(
             ncoeff_cvg_lvl_list[i],
-            param_to_coeff_csc,
+            param_to_coeff_cvg_lvl_list[i].shape[1],
+            param_to_coeff_csc.indptr,
+            param_to_coeff_csc.indices,
             -n_grad_change,
             MassSum
         )
 
         param_to_coeff_cvg_lvl_list[i] = param_to_coeff_cvg_lvl_list[i] @ diagmat
-
-        diagmat.data = 1. / diagmat.data
-
+        diagmat.data = np.reciprocal(diagmat.data)
         coeff_to_param_cvg_lvl_list[i] =  diagmat @ coeff_to_param_cvg_lvl_list[i]
-
-        
 
         param_to_coeff_T_cvg_lvl_list.append(param_to_coeff_cvg_lvl_list[i].transpose(copy=True))
         coeff_to_param_T_cvg_lvl_list.append(coeff_to_param_cvg_lvl_list[i].transpose(copy=True))
@@ -2329,58 +2324,3 @@ def TangentLagrangeResidual(
     )
 
     return np.concatenate((Action_hess_dx.reshape(-1),LagrangeMulInit_der.reshape(-1)))
-
-def diagmat_changevar(
-    ncoeff,
-    param_to_coeff_csc,
-    the_pow,
-    MassSum
-):
-    
-    # ncoeff_real = param_to_coeff_csc.shape[0]
-    nparam = param_to_coeff_csc.shape[1]
-# 
-#     print(ncoeff)
-#     print(nparam)
-#     print(param_to_coeff_csc.indices.shape)
-
-    diag_vect = np.zeros((nparam),dtype=np.float64)
-
-    for iparam in range(nparam):
-
-        mass_sum = 0.
-        k_sum = 0.
-
-        idx_beg = param_to_coeff_csc.indptr[iparam]
-        idx_end =param_to_coeff_csc.indptr[iparam+1]
-        n_idx = idx_end - idx_beg
-
-        for idx in param_to_coeff_csc.indices[param_to_coeff_csc.indptr[iparam]:param_to_coeff_csc.indptr[iparam+1]]:
-
-            ift = idx%2
-            res = idx//2
-        
-            k = res % ncoeff
-            res = res // ncoeff
-                    
-            idim = res % ndim
-            il = res // ndim
-
-            if (k == 0):
-                k = 1
-
-            mass_sum += MassSum[il]
-            k_sum += k
-
-        
-        k_avg = k_sum / n_idx
-        mass_avg = mass_sum / n_idx
-
-        mul = k_avg * m.sqrt(mass_avg) *  2* np.pi * m.sqrt(2)
-
-        diag_vect[iparam] = mul ** the_pow
-        diag_indices = np.array(range(nparam),dtype=np.int_)
-
-
-
-    return scipy.sparse.coo_matrix((diag_vect,(diag_indices,diag_indices)),shape=(nparam,nparam), dtype=np.float64)
