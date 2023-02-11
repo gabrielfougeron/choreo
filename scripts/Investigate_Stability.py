@@ -33,9 +33,9 @@ twopi = 2*np.pi
 
 def main():
 
-    # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/')
+    input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/01 - Classic gallery')
     # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/3/')
-    input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery/01 - Classic gallery')
+    # input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery/01 - Classic gallery')
     # input_folder = os.path.join(__PROJECT_ROOT__,'Keep/tests')
     
 #     ''' Include all files in tree '''
