@@ -416,24 +416,24 @@ def Compute_action_hess_mul_Cython_2D(
         prod_fac = MassSum[il]*cfourpisq
         
         for idim in range(2):
-            
-            Action_hess_dx[il,idim,0,0] = -hess_dx_pot_fft[il,idim,0].real
-            Action_hess_dx[il,idim,0,1] = 0.            
+            # 
+            # Action_hess_dx[il,idim,0,0] = -hess_dx_pot_fft[il,idim,0].real
+            # Action_hess_dx[il,idim,0,1] = 0.            
 
 
-            # Action_hess_dx[il,idim,0,0] = 2 * prod_fac * all_coeffs_d[il,idim,0,0]
-            # Action_hess_dx[il,idim,0,1] = 2 * prod_fac * all_coeffs_d[il,idim,0,1]
+            Action_hess_dx[il,idim,0,0] = 2 * prod_fac * all_coeffs_d[il,idim,0,0]
+            Action_hess_dx[il,idim,0,1] = 2 * prod_fac * all_coeffs_d[il,idim,0,1]
 
             for k in range(1,ncoeff):
                 
                 k2 = k*k
                 a = 2*prod_fac*k2
 
-                Action_hess_dx[il,idim,k,0] = a*all_coeffs_d[il,idim,k,0] - 2*hess_dx_pot_fft[il,idim,k].real
-                Action_hess_dx[il,idim,k,1] = a*all_coeffs_d[il,idim,k,1] - 2*hess_dx_pot_fft[il,idim,k].imag
+                # Action_hess_dx[il,idim,k,0] = a*all_coeffs_d[il,idim,k,0] - 2*hess_dx_pot_fft[il,idim,k].real
+                # Action_hess_dx[il,idim,k,1] = a*all_coeffs_d[il,idim,k,1] - 2*hess_dx_pot_fft[il,idim,k].imag
 
-                # Action_hess_dx[il,idim,k,0] = a*all_coeffs_d[il,idim,k,0]
-                # Action_hess_dx[il,idim,k,1] = a*all_coeffs_d[il,idim,k,1]
+                Action_hess_dx[il,idim,k,0] = a*all_coeffs_d[il,idim,k,0]
+                Action_hess_dx[il,idim,k,1] = a*all_coeffs_d[il,idim,k,1]
 
 
     return Action_hess_dx_np

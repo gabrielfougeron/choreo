@@ -280,7 +280,7 @@ def main(params_dict):
 
     n_opt = 0
     # n_opt_max = 1
-    n_opt_max = 100
+    n_opt_max = 1e6
     n_find_max = 1e4
 
     ReconvergeSol = False
