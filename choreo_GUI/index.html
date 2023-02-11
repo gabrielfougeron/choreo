@@ -182,13 +182,13 @@ window.addEventListener("drop",function(e){
   </div>
   <div class="w3-container MainTab Play_Gallery" style="display:none">
     <h2>Gallery</h2>
-    <div id="DefaultGalleryContainer"></div>
+    <div id="DefaultGalleryContainer" style="overflow-y: scroll; height:600px;" ></div>
   </div>
   <div class="w3-container MainTab Play_Workspace" style="display:none">
     <h2>Setup Workspace</h2>
     <button id="SetupWorkspaceBtn"   class="w3-button w3-hover-pale-red w3-light-grey InTableControls" onclick="ClickSetupWorkspace()" >Setup Workspace</button>
     <button id="ReloadWorkspaceBtn"  class="w3-button w3-hover-pale-red w3-light-grey InTableControls" onclick="ClickReloadWorkspace()" disabled="disabled">Reload Workspace</button>
-    <div id="WorkspaceGalleryContainer"></div>
+    <div id="WorkspaceGalleryContainer" style="overflow-y: scroll; height:600px;display:none"></div>
     <div id="WorkspaceGalleryTxt"><br>
       Click "Setup Workspace" to save solutions to your disk, browse previously computed solutions and use the (much faster) <a href="https://github.com/gabrielfougeron/choreo"><b>CLI python solver</b></a>.
     </div>
@@ -248,7 +248,7 @@ window.addEventListener("drop",function(e){
       <tr>
         <td style="border:none; ">
           <b><button class="w3-button w3-light-grey w3-hover-pale-red dropdown_btn TargetToggle" id="ChooseSlowSolutionBtn" disabled="disabled" style="text-align: center; font-size:16px" onclick="ClickChooseSlowSolution()">Choose slow solution</button></b>
-          <div class="dropdown-content" id="TreeSlowContainer"></div>
+          <div class="dropdown-content" id="TreeSlowContainer" style="overflow-y: scroll; max-height:400px;"></div>
         </td>
         <td style="border:none; max-width:400px; " id="SlowSolution_name"></td>
       </tr>

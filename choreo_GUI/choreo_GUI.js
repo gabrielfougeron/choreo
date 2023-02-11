@@ -1828,6 +1828,7 @@ async function ClickSetupWorkspace() {
     WorkspaceIsSetUp = true
 
     document.getElementById("WorkspaceGalleryTxt").innerHTML = ""
+    document.getElementById("WorkspaceGalleryContainer").style.display = ""
 
     var ReloadWorkspaceBtn = document.getElementById("ReloadWorkspaceBtn")
     ReloadWorkspaceBtn.disabled = ""
@@ -2203,6 +2204,8 @@ function UpdateCurrentTarget(name,nfast) {
             var div = document.createElement('div')
             div.classList.add("TargetFast","dropdown-content")
             div.id = "TreeFastContainer"+i.toString()
+            div.style.overflowY = "scroll"
+            div.style.maxHeight = "400px"
             var Target_TreeView = new TreeView(Target_Tree, div,{leaf_icon:" ",parent_icon:" ",show_root:false})
 
             newcell.appendChild(div)
