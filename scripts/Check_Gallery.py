@@ -34,8 +34,9 @@ twopi = 2*np.pi
 def main():
 
 
-    # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/')
-    # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/5/')
+    # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/01 - Classic gallery')
+    # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/10/')
+    # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/5_diff_mass/')
     input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery')
     # input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery/03 - Targets/Figure eight/')
     # input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery/01 - Classic gallery')
@@ -74,27 +75,8 @@ def main():
 # 
 #             input_names_list.append(file_root)
 
+    ''' Include specific files '''
     # input_names_list = ['01 - Figure eight']
-    # input_names_list = ['14 - Small mass gap']
-    # input_names_list = ['09 - 3x2 Circles']
-    # input_names_list = ['06 - Ten petal flower']
-    # input_names_list = ['13 - 100 bodies']
-    # input_names_list = ['02 - Celtic knot']
-    # input_names_list = ['07 - No symmetry']
-    # input_names_list = ['11 - Resonating loops']
-    # input_names_list = ['10 - Complex symmetry']
-    # input_names_list = ['12 - Big mass gap']
-    
-    # input_names_list = ['1-chain']
-    # input_names_list = ['00001']
-    # input_names_list = ['00002']
-    # input_names_list = ['00003']
-    # input_names_list = ['00004']
-    # input_names_list = ['00005']
-    # input_names_list = ['00006']
-    # input_names_list = ['00007']  
-    # input_names_list = ['00008']  
-
 
 
 
@@ -178,21 +160,12 @@ def ExecName(the_name, the_file):
     all_coeffs[:,:,:,1] = c_coeffs.imag
 
 
-    # theta = 2*np.pi * 0.
-    # SpaceRevscal = 1.
-    # SpaceRot = np.array( [[SpaceRevscal*np.cos(theta) , SpaceRevscal*np.sin(theta)] , [-np.sin(theta),np.cos(theta)]])
-    # TimeRev = 1.
-    # TimeShiftNum = 0
-    # TimeShiftDen = 1
-
-
-    theta = 2*np.pi * 0/2
+    theta = 2*np.pi * 0.
     SpaceRevscal = 1.
     SpaceRot = np.array( [[SpaceRevscal*np.cos(theta) , SpaceRevscal*np.sin(theta)] , [-np.sin(theta),np.cos(theta)]])
     TimeRev = 1.
     TimeShiftNum = 0
-    TimeShiftDen = 2
-
+    TimeShiftDen = 1
 
 
     all_coeffs_init = choreo.Transform_Coeffs(SpaceRot, TimeRev, TimeShiftNum, TimeShiftDen, all_coeffs)
@@ -209,8 +182,8 @@ def ExecName(the_name, the_file):
     Sym_list = choreo.Make_SymList_From_InfoDict(Info_dict,Transform_Sym)
 
 
-    # MomConsImposed = True
-    MomConsImposed = False
+    MomConsImposed = True
+    # MomConsImposed = False
 
 #     rot_angle = 0
 #     s = -1
@@ -232,9 +205,19 @@ def ExecName(the_name, the_file):
 
     eps = 1e-5
 
-    ActionSyst.Center_all_coeffs(all_coeffs_init)
+    ActionSyst.Center_all_coeffs(all_coeffs_init)   
 
     x = ActionSyst.Package_all_coeffs(all_coeffs_init)
+
+
+    # print(x.shape)
+
+    all_coeffs_round_trip = ActionSyst.Unpackage_all_coeffs(x)
+
+    # print(np.linalg.norm(all_coeffs_round_trip - all_coeffs_init))
+
+
+
 
     ActionSyst.SavePosFFT(x)
     ActionSyst.Do_Pos_FFT = False
