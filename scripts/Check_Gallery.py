@@ -35,8 +35,8 @@ def main():
 
 
     # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/')
-    # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/5/')
-    input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery')
+    input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/10/')
+    # input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery')
     # input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery/03 - Targets/Figure eight/')
     # input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery/01 - Classic gallery')
     # input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery/unsafe')
@@ -86,7 +86,7 @@ def main():
     # input_names_list = ['12 - Big mass gap']
     
     # input_names_list = ['1-chain']
-    # input_names_list = ['00001']
+    input_names_list = ['00001']
     # input_names_list = ['00002']
     # input_names_list = ['00003']
     # input_names_list = ['00004']
@@ -115,8 +115,8 @@ def main():
             input_files_list.append(os.path.join(input_folder,the_name))
 
 
-    Exec_Mul_Proc = True
-    # Exec_Mul_Proc = False
+    # Exec_Mul_Proc = True
+    Exec_Mul_Proc = False
 
     if Exec_Mul_Proc:
 
@@ -178,21 +178,12 @@ def ExecName(the_name, the_file):
     all_coeffs[:,:,:,1] = c_coeffs.imag
 
 
-    # theta = 2*np.pi * 0.
-    # SpaceRevscal = 1.
-    # SpaceRot = np.array( [[SpaceRevscal*np.cos(theta) , SpaceRevscal*np.sin(theta)] , [-np.sin(theta),np.cos(theta)]])
-    # TimeRev = 1.
-    # TimeShiftNum = 0
-    # TimeShiftDen = 1
-
-
-    theta = 2*np.pi * 0/2
+    theta = 2*np.pi * 0.
     SpaceRevscal = 1.
     SpaceRot = np.array( [[SpaceRevscal*np.cos(theta) , SpaceRevscal*np.sin(theta)] , [-np.sin(theta),np.cos(theta)]])
     TimeRev = 1.
     TimeShiftNum = 0
-    TimeShiftDen = 2
-
+    TimeShiftDen = 1
 
 
     all_coeffs_init = choreo.Transform_Coeffs(SpaceRot, TimeRev, TimeShiftNum, TimeShiftDen, all_coeffs)
@@ -209,8 +200,8 @@ def ExecName(the_name, the_file):
     Sym_list = choreo.Make_SymList_From_InfoDict(Info_dict,Transform_Sym)
 
 
-    # MomConsImposed = True
-    MomConsImposed = False
+    MomConsImposed = True
+    # MomConsImposed = False
 
 #     rot_angle = 0
 #     s = -1
@@ -231,10 +222,23 @@ def ExecName(the_name, the_file):
 
 
     eps = 1e-5
+    
+    xbar = ActionSyst.Compute_bar(all_coeffs_init)
+    print(xbar)
 
     ActionSyst.Center_all_coeffs(all_coeffs_init)
 
+    xbar = ActionSyst.Compute_bar(all_coeffs_init)
+    print(xbar)
+
     x = ActionSyst.Package_all_coeffs(all_coeffs_init)
+
+    all_coeffs_round_trip = ActionSyst.Unpackage_all_coeffs(x)
+
+    print(np.linalg.norm(all_coeffs_round_trip - all_coeffs_init))
+
+
+
 
     ActionSyst.SavePosFFT(x)
     ActionSyst.Do_Pos_FFT = False

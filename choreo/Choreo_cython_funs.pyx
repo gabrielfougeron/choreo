@@ -1614,44 +1614,6 @@ def Assemble_Cstr_Matrix(
 
     return scipy.sparse.coo_matrix((cstr_data,(cstr_row,cstr_col)),shape=(n_idx,icstr), dtype=np.float64)
     
-        
-# @cython.cdivision(True)
-# def diag_changevar(
-#     long nnz,
-#     long ncoeff,
-#     double n_grad_change,
-#     int [::1] idxarray ,
-#     double [::1] data ,
-#     double [::1] MassSum  ,
-# ):
-#     
-#     cdef long idx, res, ift, k , il, idim
-#     cdef long iparam
-#     cdef double kfac,kd
-#         
-#     for idx in range(nnz):
-# 
-#         iparam = idxarray[idx]
-# 
-# 
-#         
-# 
-#         ift = idxarray[idx]%2
-#         res = idxarray[idx]/2
-#     
-#         k = res % ncoeff
-#         res = res / ncoeff
-#                 
-#         idim = res % cndim
-#         il = res / cndim
-# 
-# 
-#         kfac = cpow(kd,n_grad_change)
-#         
-#         data[idx] *= kfac 
-# 
-#
-
 @cython.cdivision(True)
 def diagmat_changevar(
     long ncoeff,
@@ -1669,18 +1631,20 @@ def diagmat_changevar(
     
     cdef long k_sum
     cdef long ift,idx,res,k,idim,il
-    cdef long n_idx,idx_beg,idx_end
+    cdef long n_indptr,indptr_beg,indptr_end,i_shift
 
     for iparam in range(nparam):
 
         mass_sum = 0.
         k_sum = 0
 
-        idx_beg = param_to_coeff_csc_indptr[iparam]
-        idx_end = param_to_coeff_csc_indptr[iparam+1]
-        n_idx = idx_end - idx_beg
+        indptr_beg = param_to_coeff_csc_indptr[iparam]
+        indptr_end = param_to_coeff_csc_indptr[iparam+1]
+        n_indptr = indptr_end - indptr_beg
 
-        for idx in param_to_coeff_csc_indices[idx_beg:idx_end]:
+        for i_shift in range(n_indptr):
+        
+            idx = param_to_coeff_csc_indices[indptr_beg+i_shift]
 
             ift = idx%2
             res = idx/2
@@ -1698,20 +1662,18 @@ def diagmat_changevar(
             k_sum += k
 
         k_sumd = k_sum
-        k_avg = k_sumd / n_idx
-        mass_avg = mass_sum / n_idx
+        k_avg = k_sumd / n_indptr
+        mass_avg = mass_sum / n_indptr
 
-        mul = k_avg * csqrt(mass_avg) *  ctwopisqrt2
+        # mul = k_avg * csqrt(mass_avg) *  ctwopisqrt2
+        mul = k_avg * ctwopisqrt2
 
         diag_vect[iparam] = cpow(mul,the_pow)
 
     cdef np.ndarray[long, ndim=1, mode="c"] diag_indices = np.array(range(nparam),dtype=np.int_)
 
     return scipy.sparse.coo_matrix((diag_vect,(diag_indices,diag_indices)),shape=(nparam,nparam), dtype=np.float64)
-
-
-
-        
+ 
 def Compute_square_dist(
     np.ndarray[double, ndim=1, mode="c"] x  ,
     np.ndarray[double, ndim=1, mode="c"] y  ,
@@ -1729,7 +1691,6 @@ def Compute_square_dist(
     
     return res
     
-
 def Compute_Forces_Cython(
     np.ndarray[double, ndim=2, mode="c"] x ,
     np.ndarray[double, ndim=1, mode="c"] mass ,
@@ -1877,9 +1838,7 @@ def Compute_JacMul_Forces_Cython(
                 df[ib ,idim] -= bb *dx[idim] + aa *ddx[idim]
                 df[ibp,idim] += bbp*dx[idim] + aap*ddx[idim]
 
-
     return df
-
 
 def Transform_Coeffs_Single_Loop(
         double[:,::1] SpaceRot,
