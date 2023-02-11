@@ -36,6 +36,7 @@ def main():
 
     # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/')
     input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/10/')
+    # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/5_diff_mass/')
     # input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery')
     # input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery/03 - Targets/Figure eight/')
     # input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery/01 - Classic gallery')
@@ -86,7 +87,7 @@ def main():
     # input_names_list = ['12 - Big mass gap']
     
     # input_names_list = ['1-chain']
-    input_names_list = ['00001']
+    # input_names_list = ['00001']
     # input_names_list = ['00002']
     # input_names_list = ['00003']
     # input_names_list = ['00004']
@@ -222,20 +223,17 @@ def ExecName(the_name, the_file):
 
 
     eps = 1e-5
-    
-    xbar = ActionSyst.Compute_bar(all_coeffs_init)
-    print(xbar)
 
     ActionSyst.Center_all_coeffs(all_coeffs_init)
 
-    xbar = ActionSyst.Compute_bar(all_coeffs_init)
-    print(xbar)
-
     x = ActionSyst.Package_all_coeffs(all_coeffs_init)
+
+
+    # print(x.shape)
 
     all_coeffs_round_trip = ActionSyst.Unpackage_all_coeffs(x)
 
-    print(np.linalg.norm(all_coeffs_round_trip - all_coeffs_init))
+    # print(np.linalg.norm(all_coeffs_round_trip - all_coeffs_init))
 
 
 
