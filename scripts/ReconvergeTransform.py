@@ -30,7 +30,8 @@ One_sec = 1e9
 
 def main():
 
-    input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery/01 - Classic gallery')
+    # input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery/01 - Classic gallery')
+    input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/candidates')
     # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/Keep/')
     # input_folder = os.path.join(__PROJECT_ROOT__,'Reconverged_sols')
     
@@ -49,20 +50,20 @@ def main():
 #                 input_names_list.append(the_name)
 # 
 # # # 
-#     ''' Include all files in folder '''
-#     input_names_list = []
-#     for file_path in os.listdir(input_folder):
-#         file_path = os.path.join(input_folder, file_path)
-#         file_root, file_ext = os.path.splitext(os.path.basename(file_path))
-#         
-#         if (file_ext == '.json' ):
-#             # 
-#             # if int(file_root) > 8:
-#             #     input_names_list.append(file_root)
-# 
-#             input_names_list.append(file_root)
+    ''' Include all files in folder '''
+    input_names_list = []
+    for file_path in os.listdir(input_folder):
+        file_path = os.path.join(input_folder, file_path)
+        file_root, file_ext = os.path.splitext(os.path.basename(file_path))
+        
+        if (file_ext == '.json' ):
+            # 
+            # if int(file_root) > 8:
+            #     input_names_list.append(file_root)
 
-    input_names_list = ['01 - Figure eight']
+            input_names_list.append(file_root)
+
+    # input_names_list = ['01 - Figure eight']
     # input_names_list = ['04 - 5 pointed star']
     # input_names_list = ['14 - Small mass gap']
 
@@ -122,8 +123,8 @@ def ExecName(the_name, input_folder, store_folder):
     bare_name = the_name.split('/')[-1]
 
     all_pos = np.load(input_filename)
-    nint = Info_dict["n_int"]
-    ncoeff_init = nint // 2 +1
+    nint_init = Info_dict["n_int"]
+    ncoeff_init = nint_init // 2 +1
 
     c_coeffs = choreo.the_rfft(all_pos,axis=2,norm="forward")
     all_coeffs = np.zeros((Info_dict["nloop"],choreo.ndim,ncoeff_init,2),dtype=np.float64)
@@ -164,16 +165,16 @@ def ExecName(the_name, input_folder, store_folder):
     MomConsImposed = True
     # MomConsImposed = False
 # 
-#     rot_angle = 0
-#     s = -1
-# 
-#     Sym_list.append(choreo.ChoreoSym(
-#         LoopTarget=0,
-#         LoopSource=0,
-#         SpaceRot = np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64),
-#         TimeRev=-1,
-#         TimeShift=fractions.Fraction(numerator=0,denominator=1)
-#     ))
+    rot_angle = 0
+    s = -1
+
+    Sym_list.append(choreo.ChoreoSym(
+        LoopTarget=0,
+        LoopSource=0,
+        SpaceRot = np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64),
+        TimeRev=-1,
+        TimeShift=fractions.Fraction(numerator=0,denominator=1)
+    ))
 
 
     n_reconverge_it_max = 2
