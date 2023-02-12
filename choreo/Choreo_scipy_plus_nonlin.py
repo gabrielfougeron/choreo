@@ -25,6 +25,7 @@ def nonlin_solve_pp(
         line_search='armijo',
         callback=None,
         full_output=False,
+        raise_exception=True,
         smin = 1e-2,
     ):
     """
