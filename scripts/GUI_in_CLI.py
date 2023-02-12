@@ -6,9 +6,6 @@ os.environ['OPENBLAS_NUM_THREADS'] = '1'
 os.environ['MKL_NUM_THREADS'] = '1'
 
 import concurrent.futures
-import multiprocessing
-import shutil
-import random
 import time
 import math as m
 import numpy as np
