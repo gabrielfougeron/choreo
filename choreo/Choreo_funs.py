@@ -13,10 +13,9 @@ import json
 
 import numpy as np
 import math as m
+import scipy
 import scipy.fft
 import scipy.optimize
-import scipy.linalg as la
-import scipy.sparse as sp
 import sparseqr
 import networkx
 import random
@@ -37,7 +36,7 @@ except:
 from choreo.Choreo_cython_funs import ndim,twopi,nhash,n
 from choreo.Choreo_cython_funs import Compute_action_Cython,Compute_action_hess_mul_Cython
 from choreo.Choreo_cython_funs import Compute_hash_action_Cython,Compute_Newton_err_Cython
-from choreo.Choreo_cython_funs import Assemble_Cstr_Matrix,diag_changevar
+from choreo.Choreo_cython_funs import Assemble_Cstr_Matrix,diagmat_changevar
 from choreo.Choreo_cython_funs import Compute_MinDist_Cython,Compute_Loop_Dist_btw_avg_Cython,Compute_square_dist,Compute_Loop_Size_Dist_Cython
 from choreo.Choreo_cython_funs import Compute_Forces_Cython,Compute_JacMat_Forces_Cython,Compute_JacMul_Forces_Cython
 from choreo.Choreo_cython_funs import Transform_Coeffs_Single_Loop,SparseScaleCoeffs,ComputeSpeedCoeffs
@@ -119,11 +118,16 @@ class ChoreoAction():
         Computes the Fourier coefficients of the generator given the parameters.
         """
         
-        y = self.param_to_coeff.dot(x)
-        all_coeffs = y.reshape(self.nloop,ndim,self.ncoeff,2)
-        
-        return all_coeffs
+        return self.param_to_coeff.dot(x).reshape(self.nloop,ndim,self.ncoeff,2)
+    
+    def Package_all_coeffs_T(self,all_coeffs_grad):
 
+        return self.param_to_coeff_T.dot(all_coeffs_grad.reshape(-1))
+    
+    def Unpackage_all_coeffs_T(self,x):
+
+        return self.coeff_to_param_T.dot(x).reshape(self.nloop,ndim,self.ncoeff,2)
+        
     def RemoveSym(self,x):
         r"""
         Removes symmetries and returns coeffs for all bodies.
@@ -151,7 +155,7 @@ class ChoreoAction():
             nint = self.nint
 
         all_coeffs_nosym = self.RemoveSym(x).view(dtype=np.complex128)[...,0]
-        all_pos_b = the_irfft(all_coeffs_nosym,n=nint,axis=2,norm="forward")
+        all_pos_b = the_irfft(all_coeffs_nosym,n=nint,norm="forward")
 
         return all_pos_b
 
@@ -164,7 +168,7 @@ class ChoreoAction():
             nint = self.nint
 
         all_coeffs_c = self.Unpackage_all_coeffs(x).view(dtype=np.complex128)[...,0]
-        all_pos = the_irfft(all_coeffs_c,n=nint,axis=2,norm="forward")
+        all_pos = the_irfft(all_coeffs_c,n=nint,norm="forward")
 
         return all_pos
 
@@ -177,13 +181,13 @@ class ChoreoAction():
             nint = self.nint
 
         all_coeffs_nosym = self.RemoveSym(x).view(dtype=np.complex128)[...,0]
-        all_pos_b = the_irfft(all_coeffs_nosym,n=nint,axis=2,norm="forward")
+        all_pos_b = the_irfft(all_coeffs_nosym,n=nint,norm="forward")
 
         ncoeff = all_coeffs_nosym.shape[2]
         for k in range(ncoeff):
             all_coeffs_nosym[:,:,k] *= twopi*1j*k
 
-        all_vel_b = the_irfft(all_coeffs_nosym,n=nint,axis=2,norm="forward")
+        all_vel_b = the_irfft(all_coeffs_nosym,norm="forward")
 
         return np.stack((all_pos_b,all_vel_b),axis=0)
 
@@ -217,6 +221,19 @@ class ChoreoAction():
         _,y = self.Compute_action(x)
         
         return y
+
+    def Compute_bar(self,all_coeffs):
+
+        return Compute_bar(all_coeffs,self.nloop,self.mass,self.loopnb,self.Targets,self.SpaceRotsUn)
+    
+    def Center_all_coeffs(self,all_coeffs):
+
+        xbar = self.Compute_bar(all_coeffs)
+
+        for il in range(self.nloop):
+
+            all_coeffs[il,:,0,0] -= xbar
+
         
     def Compute_action_onlygrad_escape(self,x):
 
@@ -269,8 +286,7 @@ class ChoreoAction():
             self.last_all_pos
         )
 
-        GJ = GradJ.reshape(-1)
-        GJparam = (self.param_to_coeff_T.dot(GJ)) * escape_pen
+        GJparam = (self.Package_all_coeffs_T(GradJ)) * escape_pen
         
         return GJparam
 
@@ -281,7 +297,7 @@ class ChoreoAction():
             self.last_all_coeffs = self.Unpackage_all_coeffs(x)
             
             c_coeffs = self.last_all_coeffs.view(dtype=np.complex128)[...,0]
-            self.last_all_pos = the_irfft(c_coeffs,n=self.nint,axis=2,norm="forward")
+            self.last_all_pos = the_irfft(c_coeffs,norm="forward")
         
     def Compute_action_hess_mul(self,x,dx):
         r"""
@@ -313,17 +329,14 @@ class ChoreoAction():
             self.last_all_pos               
         )
 
-        HJdx = HessJdx.reshape(-1)
-        z = self.param_to_coeff_T.dot(HJdx)
-        
-        return z
+        return self.Package_all_coeffs_T(HessJdx)
             
     def Compute_action_hess_LinOpt(self,x):
         r"""
         Returns the Hessian of the action wrt parameters at a given point as a Scipy LinearOperator.
         """
 
-        return sp.linalg.LinearOperator((self.coeff_to_param.shape[0],self.coeff_to_param.shape[0]),
+        return scipy.sparse.linalg.LinearOperator((self.coeff_to_param.shape[0],self.coeff_to_param.shape[0]),
             matvec =  (lambda dx, xl=x, selfl=self : selfl.Compute_action_hess_mul(xl,dx)),
             rmatvec = (lambda dx, xl=x, selfl=self : selfl.Compute_action_hess_mul(xl,dx)))
 
@@ -356,10 +369,13 @@ class ChoreoAction():
             self.last_all_pos
         )
 
+
         GJ = GradJ.reshape(-1)
         y = self.param_to_coeff_T.dot(GJ)
         
         return J,y
+        
+        # return J,self.Package_all_coeffs_T(GradJ)
 
     def Compute_hash_action(self,x):
         r"""
@@ -399,8 +415,8 @@ class ChoreoAction():
         all_Newt_err =  Compute_Newton_err_Cython(
             self.nbody                  ,
             self.nloop                  ,
-            self.ncoeff               ,
-            self.nint                 ,
+            self.ncoeff                 ,
+            self.nint * 2               ,
             self.mass                   ,
             self.loopnb                 ,
             self.Targets                ,
@@ -563,7 +579,7 @@ class ChoreoAction():
 
     def Compute_Auto_JacMul_ODE_RHS_LinOpt(self,x):
 
-        return sp.linalg.LinearOperator((2*self.nbody*ndim,2*self.nbody*ndim),
+        return scipy.sparse.linalg.LinearOperator((2*self.nbody*ndim,2*self.nbody*ndim),
             matvec =  (lambda dx, xl=x, selfl=self : selfl.Compute_Auto_JacMul_ODE_RHS(xl,dx)),
             rmatvec = (lambda dx, xl=x, selfl=self : selfl.Compute_Auto_JacMul_ODE_RHS(xl,dx)))
 
@@ -699,7 +715,7 @@ class ChoreoAction():
 
             if Rotate_fast_with_slow :
                 
-                nint = 2*ncoeff
+                nint = 2*(ncoeff-1)
 
                 c_coeffs_slow = all_coeffs_slow_mod.view(dtype=np.complex128)[...,0]
                 all_pos_slow = the_irfft(c_coeffs_slow,n=nint,axis=1)
@@ -713,7 +729,7 @@ class ChoreoAction():
 
                 all_pos_avg = RotateFastWithSlow_2D(all_pos_slow,all_pos_slow_mod_speed,all_pos_fast,nint)
 
-                c_coeffs_avg = the_rfft(all_pos_avg,n=nint,axis=1)
+                c_coeffs_avg = the_rfft(all_pos_avg,axis=1)
 
                 kmax = min(ncoeff,ncoeff_slow)
 
@@ -785,7 +801,7 @@ class ChoreoAction():
         
         c_coeffs = self.Unpackage_all_coeffs(x).view(dtype=np.complex128)[...,0]
 
-        all_pos = the_irfft(c_coeffs,n=nint,axis=2,norm="forward")        
+        all_pos = the_irfft(c_coeffs,norm="forward")        
         all_pos_b = np.zeros((self.nbody,ndim,nint),dtype=np.float64)
         
         for il in range(self.nloop):
@@ -821,7 +837,6 @@ class ChoreoAction():
         max_path_length
 
         Info_dict["nbody"] = self.nbody
-        Info_dict["n_Fourier"] = self.ncoeff
         Info_dict["n_int"] = nint
 
         Info_dict["mass"] = self.mass.tolist()
@@ -872,6 +887,42 @@ class ChoreoAction():
             file_path = file_path_list[0]
         
         return Found_duplicate,file_path
+
+    def Compute_bar_serious(self,x):
+
+        all_pos_b = self.ComputeAllPos(x)
+
+        xbar_mean = np.zeros((ndim))
+
+        xbar_all = np.zeros((ndim,self.nint))
+
+        for iint in range(self.nint):
+
+            xbar = np.zeros((ndim))
+            
+            tot_mass = 0.
+            for il in range(self.nloop):
+                for ib in range(self.loopnb[il]):
+
+                    ibody = self.Targets[il,ib]
+
+                    tot_mass += self.mass[ibody]
+                    xbar += self.mass[ibody] * all_pos_b[ibody,:,iint]
+
+            xbar /= tot_mass
+
+            xbar_all[:,iint] += xbar
+
+#         xbar_std = np.std(xbar_all,axis=1)
+# 
+#         if np.linalg.norm(xbar_std) > 1e-10 :
+#             print("aaa",np.linalg.norm(xbar_std))
+
+        xbar_mean = np.mean(xbar_all,axis=1)
+
+        return xbar_mean
+
+
 
     if ndim == 2:
 
@@ -984,7 +1035,7 @@ class ChoreoAction():
             c_coeffs = all_coeffs.view(dtype=np.complex128)[...,0]
             
             all_pos = np.zeros((self.nloop,ndim,nint_plot+1),dtype=np.float64)
-            all_pos[:,:,0:nint_plot] = the_irfft(c_coeffs,n=nint_plot,axis=2,norm="forward")
+            all_pos[:,:,0:nint_plot] = the_irfft(c_coeffs,n=nint_plot,norm="forward")
             all_pos[:,:,nint_plot] = all_pos[:,:,0]
             
             n_loop_plot = np.count_nonzero((self.RequiresLoopDispUn))
@@ -1108,7 +1159,7 @@ class ChoreoAction():
             c_coeffs = all_coeffs.view(dtype=np.complex128)[...,0]
             
             all_pos = np.zeros((self.nloop,ndim,nint_plot+1),dtype=np.float64)
-            all_pos[:,:,0:nint_plot] = the_irfft(c_coeffs,n=nint_plot,axis=2,norm="forward")
+            all_pos[:,:,0:nint_plot] = the_irfft(c_coeffs,n=nint_plot,norm="forward")
             all_pos[:,:,nint_plot] = all_pos[:,:,0]
             
             all_coeffs_v = np.zeros(all_coeffs.shape)
@@ -1120,7 +1171,7 @@ class ChoreoAction():
             c_coeffs_v = all_coeffs_v.view(dtype=np.complex128)[...,0]
             
             all_vel = np.zeros((self.nloop,nint_plot+1),dtype=np.float64)
-            all_vel[:,0:nint_plot] = np.linalg.norm(the_irfft(c_coeffs_v,n=nint_plot,axis=2,norm="forward"),axis=1)
+            all_vel[:,0:nint_plot] = np.linalg.norm(the_irfft(c_coeffs_v,n=nint_plot,norm="forward"),axis=1)
             all_vel[:,nint_plot] = all_vel[:,0]
             
             all_pos_b = np.zeros((self.nbody,ndim,nint_plot+1),dtype=np.float64)
@@ -1502,7 +1553,7 @@ class ChoreoSym():
         """   
         return ((self.Inverse()).Compose(other)).IsIdentity()
 
-def setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max=6,MomCons=True,n_grad_change=1.,Sym_list=[],CrashOnIdentity=True):
+def setup_changevar(nbody,nint_init,mass,n_reconverge_it_max=6,MomCons=True,n_grad_change=1.,Sym_list=[],CrashOnIdentity=True):
     r"""
     This function constructs a ChoreoAction
     It detects loops and constraints based on symmetries.
@@ -1512,6 +1563,8 @@ def setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max=6,MomCons=True,n_
      - Exhaustive list of binary transformations from generator within each loop.
     """
     
+    assert (nint_init % 2) == 0
+
     Identity_detected = False
 
     SymGraph = networkx.Graph()
@@ -1721,6 +1774,7 @@ def setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max=6,MomCons=True,n_
 
             SpaceRotsBin[il,ibi,:,:] = UniqueSymsAll_list[il][ibi].SpaceRot
             TimeRevsBin[il,ibi] = UniqueSymsAll_list[il][ibi].TimeRev
+
             if (UniqueSymsAll_list[il][ibi].TimeShift.denominator > 0):
                 TimeShiftNumBin[il,ibi] = UniqueSymsAll_list[il][ibi].TimeShift.numerator % UniqueSymsAll_list[il][ibi].TimeShift.denominator
                 TimeShiftDenBin[il,ibi] = UniqueSymsAll_list[il][ibi].TimeShift.denominator
@@ -1769,13 +1823,11 @@ def setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max=6,MomCons=True,n_
         for i in range(loopncstr[il]):
             
             SpaceRotsCstr[il,i,:,:] = SymGraph.nodes[loopgen[il]]["Constraint_list"][i].SpaceRot
-            TimeRevsCstr[il,i] = SymGraph.nodes[loopgen[il]]["Constraint_list"][i].TimeRev
-            TimeShiftNumCstr[il,i] = SymGraph.nodes[loopgen[il]]["Constraint_list"][i].TimeShift.numerator
-            TimeShiftDenCstr[il,i] = SymGraph.nodes[loopgen[il]]["Constraint_list"][i].TimeShift.denominator
+            TimeRevsCstr[il,i]      = SymGraph.nodes[loopgen[il]]["Constraint_list"][i].TimeRev
+            TimeShiftNumCstr[il,i]  = SymGraph.nodes[loopgen[il]]["Constraint_list"][i].TimeShift.numerator
+            TimeShiftDenCstr[il,i]  = SymGraph.nodes[loopgen[il]]["Constraint_list"][i].TimeShift.denominator
 
     # Now detect parameters and build change of variables
-
-    MassPowSum = np.zeros((nloop),dtype=np.float64)
 
     ncoeff_cvg_lvl_list = []
     nint_cvg_lvl_list = []
@@ -1786,9 +1838,9 @@ def setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max=6,MomCons=True,n_
     coeff_to_param_T_cvg_lvl_list = []
 
     for i in range(n_reconverge_it_max+1):
-        
-        ncoeff_cvg_lvl_list.append(ncoeff_init * (2**i))
-        nint_cvg_lvl_list.append(2*ncoeff_cvg_lvl_list[i])
+
+        nint_cvg_lvl_list.append(nint_init * (2**i))
+        ncoeff_cvg_lvl_list.append(nint_cvg_lvl_list[i] // 2 + 1)
 
         cstrmat_sp = Assemble_Cstr_Matrix(
             nloop               ,
@@ -1797,7 +1849,6 @@ def setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max=6,MomCons=True,n_
             mass                ,
             loopnb              ,
             Targets             ,
-            MassSum             ,
             SpaceRotsUn         ,
             TimeRevsUn          ,
             TimeShiftNumUn      ,
@@ -1812,23 +1863,20 @@ def setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max=6,MomCons=True,n_
         param_to_coeff_cvg_lvl_list.append(null_space_sparseqr(cstrmat_sp))
         coeff_to_param_cvg_lvl_list.append(param_to_coeff_cvg_lvl_list[i].transpose(copy=True))
 
-        diag_changevar(
-            param_to_coeff_cvg_lvl_list[i].nnz,
+        param_to_coeff_csc = param_to_coeff_cvg_lvl_list[i].tocsc()
+
+        diagmat = diagmat_changevar(
             ncoeff_cvg_lvl_list[i],
+            param_to_coeff_cvg_lvl_list[i].shape[1],
+            param_to_coeff_csc.indptr,
+            param_to_coeff_csc.indices,
             -n_grad_change,
-            param_to_coeff_cvg_lvl_list[i].row,
-            param_to_coeff_cvg_lvl_list[i].data,
             MassSum
         )
-        
-        diag_changevar(
-            coeff_to_param_cvg_lvl_list[i].nnz,
-            ncoeff_cvg_lvl_list[i],
-            n_grad_change,
-            coeff_to_param_cvg_lvl_list[i].col,
-            coeff_to_param_cvg_lvl_list[i].data,
-            MassSum
-        )
+
+        param_to_coeff_cvg_lvl_list[i] = param_to_coeff_cvg_lvl_list[i] @ diagmat
+        diagmat.data = np.reciprocal(diagmat.data)
+        coeff_to_param_cvg_lvl_list[i] =  diagmat @ coeff_to_param_cvg_lvl_list[i]
 
         param_to_coeff_T_cvg_lvl_list.append(param_to_coeff_cvg_lvl_list[i].transpose(copy=True))
         coeff_to_param_T_cvg_lvl_list.append(coeff_to_param_cvg_lvl_list[i].transpose(copy=True))
@@ -1888,7 +1936,7 @@ def null_space_sparseqr(AT):
     
     if (nrow <= rank):
         
-        return sp.coo_matrix(([],([],[])),shape=(nrow,0))
+        return scipy.sparse.coo_matrix(([],([],[])),shape=(nrow,0))
     
     else:
 
@@ -1899,16 +1947,16 @@ def null_space_sparseqr(AT):
                 mask.append(iker)
             iker += 1
             
-        return sp.coo_matrix((Q.data[mask],(Q.row[mask],Q.col[mask]-rank)),shape=(nrow,nrow-rank))
+        return scipy.sparse.coo_matrix((Q.data[mask],(Q.row[mask],Q.col[mask]-rank)),shape=(nrow,nrow-rank))
      
-def AllPosToAllCoeffs(all_pos,nint,ncoeffs):
+def AllPosToAllCoeffs(all_pos,ncoeffs):
 
     nloop = all_pos.shape[0]
 
-    c_coeffs = the_rfft(all_pos,n=nint,axis=2,norm="forward")
+    c_coeffs = the_rfft(all_pos,axis=2,norm="forward")
     all_coeffs = np.zeros((nloop,ndim,ncoeffs,2),dtype=np.float64)
-    all_coeffs[:,:,:,0] = c_coeffs[:,:,0:ncoeffs].real
-    all_coeffs[:,:,:,1] = c_coeffs[:,:,0:ncoeffs].imag
+    all_coeffs[:,:,:,0] = c_coeffs.real
+    all_coeffs[:,:,:,1] = c_coeffs.imag
 
     return all_coeffs
 
