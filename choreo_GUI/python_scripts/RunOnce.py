@@ -383,6 +383,7 @@ async def main():
                     "NPY_shape":all_pos.shape,
                     "DoClearScreen":not(params_dict['Animation_Search']['DisplayLoopsDuringSearch']),
                     "DoXMinMax":not(params_dict['Animation_Search']['DisplayLoopsDuringSearch']),
+                    "ResetRot":False,
                 },
                 dict_converter=js.Object.fromEntries
             )

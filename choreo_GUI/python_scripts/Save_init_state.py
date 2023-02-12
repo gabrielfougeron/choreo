@@ -287,6 +287,7 @@ def main():
                     "NPY_shape":all_pos.shape,
                     "DoClearScreen":True,
                     "DoXMinMax":True,
+                    "ResetRot":True,
                 },
                 dict_converter=js.Object.fromEntries
             )

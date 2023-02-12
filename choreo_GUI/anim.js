@@ -477,6 +477,11 @@ function canvasApp() {
 
 		if (e.DoClearScreen) {
 			clearScreen();
+
+			if (e.ResetRot) {
+				var RotSlider = $("#RotSlider").data("roundSlider")
+				RotSlider.setValue(0)
+			}
 			
 			if (trajectoriesOn && document.getElementById('checkbox_DisplayLoopOnGalleryLoad').checked){
 
@@ -487,25 +492,28 @@ function canvasApp() {
 				}
 				
 			}
+
 		}
-		FinalizeSetOrbit(DoDrawParticles=true,DoXMinMax = e.DoXMinMax,setTinc=e.setTinc ) ;
-		startAnimation();
+		
+		FinalizeSetOrbit(DoDrawParticles=true,DoXMinMax = e.DoXMinMax,setTinc=e.setTinc )
+		startAnimation()
+		
 	}
 
 	function RemakeParticlesFromOutsideCanvasHandler(e) {
-		makeParticles();
-		clearScreen();
-		clearParticleLayer();
-		drawParticles();
+		makeParticles()
+		clearScreen()
+		clearParticleLayer()
+		drawParticles()
 	}
 
 	function ChangeColorsFromOutsideCanvasHandler(e) {
 		
 		setColorLookupList()
-		makeParticles();
-		clearScreen();
-		clearParticleLayer();
-		drawParticles();
+		makeParticles()
+		clearScreen()
+		clearParticleLayer()
+		drawParticles()
 	}
 
 	function onRotationValueChange(e){
