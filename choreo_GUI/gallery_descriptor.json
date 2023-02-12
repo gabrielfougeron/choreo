@@ -115,9 +115,9 @@
                         {
                             "dirs": [],
                             "files": {
-                                "1-chain": {
-                                    ".json": "choreo-gallery/02 - Families/02 - Chains/04/1-chain.json",
-                                    ".npy": "choreo-gallery/02 - Families/02 - Chains/04/1-chain.npy"
+                                "(4,1)-chain": {
+                                    ".json": "choreo-gallery/02 - Families/02 - Chains/04/(4,1)-chain.json",
+                                    ".npy": "choreo-gallery/02 - Families/02 - Chains/04/(4,1)-chain.npy"
                                 }
                             },
                             "name": "04"
@@ -125,13 +125,13 @@
                         {
                             "dirs": [],
                             "files": {
-                                "1-chain": {
-                                    ".json": "choreo-gallery/02 - Families/02 - Chains/05/1-chain.json",
-                                    ".npy": "choreo-gallery/02 - Families/02 - Chains/05/1-chain.npy"
+                                "(5,1)-chain": {
+                                    ".json": "choreo-gallery/02 - Families/02 - Chains/05/(5,1)-chain.json",
+                                    ".npy": "choreo-gallery/02 - Families/02 - Chains/05/(5,1)-chain.npy"
                                 },
-                                "2-chain": {
-                                    ".json": "choreo-gallery/02 - Families/02 - Chains/05/2-chain.json",
-                                    ".npy": "choreo-gallery/02 - Families/02 - Chains/05/2-chain.npy"
+                                "(5,2)-chain": {
+                                    ".json": "choreo-gallery/02 - Families/02 - Chains/05/(5,2)-chain.json",
+                                    ".npy": "choreo-gallery/02 - Families/02 - Chains/05/(5,2)-chain.npy"
                                 }
                             },
                             "name": "05"
@@ -139,13 +139,13 @@
                         {
                             "dirs": [],
                             "files": {
-                                "1-chain": {
-                                    ".json": "choreo-gallery/02 - Families/02 - Chains/06/1-chain.json",
-                                    ".npy": "choreo-gallery/02 - Families/02 - Chains/06/1-chain.npy"
+                                "(6,1)-chain": {
+                                    ".json": "choreo-gallery/02 - Families/02 - Chains/06/(6,1)-chain.json",
+                                    ".npy": "choreo-gallery/02 - Families/02 - Chains/06/(6,1)-chain.npy"
                                 },
-                                "2-chain": {
-                                    ".json": "choreo-gallery/02 - Families/02 - Chains/06/2-chain.json",
-                                    ".npy": "choreo-gallery/02 - Families/02 - Chains/06/2-chain.npy"
+                                "(6,2)-chain": {
+                                    ".json": "choreo-gallery/02 - Families/02 - Chains/06/(6,2)-chain.json",
+                                    ".npy": "choreo-gallery/02 - Families/02 - Chains/06/(6,2)-chain.npy"
                                 }
                             },
                             "name": "06"
@@ -153,17 +153,17 @@
                         {
                             "dirs": [],
                             "files": {
-                                "1-chain": {
-                                    ".json": "choreo-gallery/02 - Families/02 - Chains/07/1-chain.json",
-                                    ".npy": "choreo-gallery/02 - Families/02 - Chains/07/1-chain.npy"
+                                "(7,1)-chain": {
+                                    ".json": "choreo-gallery/02 - Families/02 - Chains/07/(7,1)-chain.json",
+                                    ".npy": "choreo-gallery/02 - Families/02 - Chains/07/(7,1)-chain.npy"
                                 },
-                                "2-chain": {
-                                    ".json": "choreo-gallery/02 - Families/02 - Chains/07/2-chain.json",
-                                    ".npy": "choreo-gallery/02 - Families/02 - Chains/07/2-chain.npy"
+                                "(7,2)-chain": {
+                                    ".json": "choreo-gallery/02 - Families/02 - Chains/07/(7,2)-chain.json",
+                                    ".npy": "choreo-gallery/02 - Families/02 - Chains/07/(7,2)-chain.npy"
                                 },
-                                "3-chain": {
-                                    ".json": "choreo-gallery/02 - Families/02 - Chains/07/3-chain.json",
-                                    ".npy": "choreo-gallery/02 - Families/02 - Chains/07/3-chain.npy"
+                                "(7,3)-chain": {
+                                    ".json": "choreo-gallery/02 - Families/02 - Chains/07/(7,3)-chain.json",
+                                    ".npy": "choreo-gallery/02 - Families/02 - Chains/07/(7,3)-chain.npy"
                                 }
                             },
                             "name": "07"
@@ -171,17 +171,17 @@
                         {
                             "dirs": [],
                             "files": {
-                                "1-chain": {
-                                    ".json": "choreo-gallery/02 - Families/02 - Chains/08/1-chain.json",
-                                    ".npy": "choreo-gallery/02 - Families/02 - Chains/08/1-chain.npy"
+                                "(8,1)-chain": {
+                                    ".json": "choreo-gallery/02 - Families/02 - Chains/08/(8,1)-chain.json",
+                                    ".npy": "choreo-gallery/02 - Families/02 - Chains/08/(8,1)-chain.npy"
                                 },
-                                "2-chain": {
-                                    ".json": "choreo-gallery/02 - Families/02 - Chains/08/2-chain.json",
-                                    ".npy": "choreo-gallery/02 - Families/02 - Chains/08/2-chain.npy"
+                                "(8,2)-chain": {
+                                    ".json": "choreo-gallery/02 - Families/02 - Chains/08/(8,2)-chain.json",
+                                    ".npy": "choreo-gallery/02 - Families/02 - Chains/08/(8,2)-chain.npy"
                                 },
-                                "3-chain": {
-                                    ".json": "choreo-gallery/02 - Families/02 - Chains/08/3-chain.json",
-                                    ".npy": "choreo-gallery/02 - Families/02 - Chains/08/3-chain.npy"
+                                "(8,3)-chain": {
+                                    ".json": "choreo-gallery/02 - Families/02 - Chains/08/(8,3)-chain.json",
+                                    ".npy": "choreo-gallery/02 - Families/02 - Chains/08/(8,3)-chain.npy"
                                 }
                             },
                             "name": "08"
@@ -189,21 +189,21 @@
                         {
                             "dirs": [],
                             "files": {
-                                "1-chain": {
-                                    ".json": "choreo-gallery/02 - Families/02 - Chains/09/1-chain.json",
-                                    ".npy": "choreo-gallery/02 - Families/02 - Chains/09/1-chain.npy"
+                                "(9,1)-chain": {
+                                    ".json": "choreo-gallery/02 - Families/02 - Chains/09/(9,1)-chain.json",
+                                    ".npy": "choreo-gallery/02 - Families/02 - Chains/09/(9,1)-chain.npy"
                                 },
-                                "2-chain": {
-                                    ".json": "choreo-gallery/02 - Families/02 - Chains/09/2-chain.json",
-                                    ".npy": "choreo-gallery/02 - Families/02 - Chains/09/2-chain.npy"
+                                "(9,2)-chain": {
+                                    ".json": "choreo-gallery/02 - Families/02 - Chains/09/(9,2)-chain.json",
+                                    ".npy": "choreo-gallery/02 - Families/02 - Chains/09/(9,2)-chain.npy"
                                 },
-                                "3-chain": {
-                                    ".json": "choreo-gallery/02 - Families/02 - Chains/09/3-chain.json",
-                                    ".npy": "choreo-gallery/02 - Families/02 - Chains/09/3-chain.npy"
+                                "(9,3)-chain": {
+                                    ".json": "choreo-gallery/02 - Families/02 - Chains/09/(9,3)-chain.json",
+                                    ".npy": "choreo-gallery/02 - Families/02 - Chains/09/(9,3)-chain.npy"
                                 },
-                                "4-chain": {
-                                    ".json": "choreo-gallery/02 - Families/02 - Chains/09/4-chain.json",
-                                    ".npy": "choreo-gallery/02 - Families/02 - Chains/09/4-chain.npy"
+                                "(9,4)-chain": {
+                                    ".json": "choreo-gallery/02 - Families/02 - Chains/09/(9,4)-chain.json",
+                                    ".npy": "choreo-gallery/02 - Families/02 - Chains/09/(9,4)-chain.npy"
                                 }
                             },
                             "name": "09"
@@ -211,21 +211,21 @@
                         {
                             "dirs": [],
                             "files": {
-                                "1-chain": {
-                                    ".json": "choreo-gallery/02 - Families/02 - Chains/10/1-chain.json",
-                                    ".npy": "choreo-gallery/02 - Families/02 - Chains/10/1-chain.npy"
+                                "(10,1)-chain": {
+                                    ".json": "choreo-gallery/02 - Families/02 - Chains/10/(10,1)-chain.json",
+                                    ".npy": "choreo-gallery/02 - Families/02 - Chains/10/(10,1)-chain.npy"
                                 },
-                                "2-chain": {
-                                    ".json": "choreo-gallery/02 - Families/02 - Chains/10/2-chain.json",
-                                    ".npy": "choreo-gallery/02 - Families/02 - Chains/10/2-chain.npy"
+                                "(10,2)-chain": {
+                                    ".json": "choreo-gallery/02 - Families/02 - Chains/10/(10,2)-chain.json",
+                                    ".npy": "choreo-gallery/02 - Families/02 - Chains/10/(10,2)-chain.npy"
                                 },
-                                "3-chain": {
-                                    ".json": "choreo-gallery/02 - Families/02 - Chains/10/3-chain.json",
-                                    ".npy": "choreo-gallery/02 - Families/02 - Chains/10/3-chain.npy"
+                                "(10,3)-chain": {
+                                    ".json": "choreo-gallery/02 - Families/02 - Chains/10/(10,3)-chain.json",
+                                    ".npy": "choreo-gallery/02 - Families/02 - Chains/10/(10,3)-chain.npy"
                                 },
-                                "4-chain": {
-                                    ".json": "choreo-gallery/02 - Families/02 - Chains/10/4-chain.json",
-                                    ".npy": "choreo-gallery/02 - Families/02 - Chains/10/4-chain.npy"
+                                "(10,4)-chain": {
+                                    ".json": "choreo-gallery/02 - Families/02 - Chains/10/(10,4)-chain.json",
+                                    ".npy": "choreo-gallery/02 - Families/02 - Chains/10/(10,4)-chain.npy"
                                 }
                             },
                             "name": "10"
@@ -233,25 +233,25 @@
                         {
                             "dirs": [],
                             "files": {
-                                "1-chain": {
-                                    ".json": "choreo-gallery/02 - Families/02 - Chains/11/1-chain.json",
-                                    ".npy": "choreo-gallery/02 - Families/02 - Chains/11/1-chain.npy"
+                                "(11,1)-chain": {
+                                    ".json": "choreo-gallery/02 - Families/02 - Chains/11/(11,1)-chain.json",
+                                    ".npy": "choreo-gallery/02 - Families/02 - Chains/11/(11,1)-chain.npy"
                                 },
-                                "2-chain": {
-                                    ".json": "choreo-gallery/02 - Families/02 - Chains/11/2-chain.json",
-                                    ".npy": "choreo-gallery/02 - Families/02 - Chains/11/2-chain.npy"
+                                "(11,2)-chain": {
+                                    ".json": "choreo-gallery/02 - Families/02 - Chains/11/(11,2)-chain.json",
+                                    ".npy": "choreo-gallery/02 - Families/02 - Chains/11/(11,2)-chain.npy"
                                 },
-                                "3-chain": {
-                                    ".json": "choreo-gallery/02 - Families/02 - Chains/11/3-chain.json",
-                                    ".npy": "choreo-gallery/02 - Families/02 - Chains/11/3-chain.npy"
+                                "(11,3)-chain": {
+                                    ".json": "choreo-gallery/02 - Families/02 - Chains/11/(11,3)-chain.json",
+                                    ".npy": "choreo-gallery/02 - Families/02 - Chains/11/(11,3)-chain.npy"
                                 },
-                                "4-chain": {
-                                    ".json": "choreo-gallery/02 - Families/02 - Chains/11/4-chain.json",
-                                    ".npy": "choreo-gallery/02 - Families/02 - Chains/11/4-chain.npy"
+                                "(11,4)-chain": {
+                                    ".json": "choreo-gallery/02 - Families/02 - Chains/11/(11,4)-chain.json",
+                                    ".npy": "choreo-gallery/02 - Families/02 - Chains/11/(11,4)-chain.npy"
                                 },
-                                "5-chain": {
-                                    ".json": "choreo-gallery/02 - Families/02 - Chains/11/5-chain.json",
-                                    ".npy": "choreo-gallery/02 - Families/02 - Chains/11/5-chain.npy"
+                                "(11,5)-chain": {
+                                    ".json": "choreo-gallery/02 - Families/02 - Chains/11/(11,5)-chain.json",
+                                    ".npy": "choreo-gallery/02 - Families/02 - Chains/11/(11,5)-chain.npy"
                                 }
                             },
                             "name": "11"
@@ -1054,6 +1054,10 @@
                         "05 - Circle in (5,2)-chain": {
                             ".json": "choreo-gallery/03 - Targets/03 - Chains/05 - Circle in (5,2)-chain.json",
                             ".npy": "choreo-gallery/03 - Targets/03 - Chains/05 - Circle in (5,2)-chain.npy"
+                        },
+                        "06 - Figure eight in (4,1)-chain": {
+                            ".json": "choreo-gallery/03 - Targets/03 - Chains/06 - Figure eight in (4,1)-chain.json",
+                            ".npy": "choreo-gallery/03 - Targets/03 - Chains/06 - Figure eight in (4,1)-chain.npy"
                         }
                     },
                     "name": "03 - Chains"

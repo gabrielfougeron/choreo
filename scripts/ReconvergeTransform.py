@@ -31,7 +31,7 @@ One_sec = 1e9
 def main():
 
     # input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery/01 - Classic gallery')
-    input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/10')
+    input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/9')
     # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/Keep/')
     # input_folder = os.path.join(__PROJECT_ROOT__,'Reconverged_sols')
     
@@ -177,7 +177,7 @@ def ExecName(the_name, input_folder, store_folder):
 #     ))
 
 
-    n_reconverge_it_max = 2
+    n_reconverge_it_max = 1
 
     Save_All_Pos = True
     # Save_All_Pos = False
@@ -272,7 +272,7 @@ def ExecName(the_name, input_folder, store_folder):
     n_find_max = 1
 
 
-    Newt_err_norm_max = 1e-14
+    Newt_err_norm_max = 1e-13
     Newt_err_norm_max_save = Info_dict['Newton_Error']*10
 
     krylov_method = 'lgmres'
@@ -292,12 +292,13 @@ def ExecName(the_name, input_folder, store_folder):
 
     # linesearch_smin = 0.01
     linesearch_smin = 1
-    
+    # 
     gradtol_list =          [1e-1   ,1e-3   ,1e-5   ,1e-7   ,1e-9   ,1e-11  ,1e-13  ,1e-15  ]
     inner_maxiter_list =    [30     ,30     ,50     ,60     ,70     ,80     ,100    ,100    ]
     maxiter_list =          [100    ,1000   ,1000   ,1000   ,500    ,500    ,300    ,100    ]
     outer_k_list =          [5      ,5      ,5      ,5      ,5      ,7      ,7      ,7      ]
     store_outer_Av_list =   [False  ,False  ,False  ,False  ,False  ,True   ,True   ,True   ]
+
     
     n_optim_param = len(gradtol_list)
     
