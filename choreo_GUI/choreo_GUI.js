@@ -66,6 +66,7 @@ async function Play_Loop_From_Python(args){
     var event = new Event('FinalizeAndPlayFromOutsideCanvas')
     event.DoClearScreen = args.DoClearScreen
     event.DoXMinMax = args.DoXMinMax
+    event.ResetRot = args.ResetRot
     event.setTinc = false
 
     displayCanvas.dispatchEvent(event)
