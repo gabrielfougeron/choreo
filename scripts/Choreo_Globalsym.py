@@ -21,31 +21,98 @@ sys.path.append(__PROJECT_ROOT__)
 import choreo 
 
 def main(the_i=0):
-    
 
-    # if (the_i != 0):
-        
-        # preprint_msg = str(the_i).zfill(2)+' : '
+    file_basename = ''
+    AddNumberToOutputName = True
 
-        # def print(*args, **kwargs):
-            # """My custom print() function."""
-            # builtins.print(preprint_msg,end='')
-            # return builtins.print(*args, **kwargs)
             
     np.random.seed(int(time.time()*10000) % 5000)
 
     file_basename = ''
 
-    n_main_loop = 4
-    n_ears = 4
+#     n_main_loop = 4
+#     n_ears = 4
+# 
+#     m_main_loop = 1.
+#     m_ears = 1.
+# 
+#     SelfReflMain = True
+#     SelfReflEar = True
+# 
+#     Sym_list,nbody,mass = choreo.MakeLoopEarSymList(n_main_loop,n_ears,m_main_loop,m_ears,SelfReflMain,SelfReflEar)
 
-    m_main_loop = 1.
-    m_ears = 1.
 
-    SelfReflMain = True
-    SelfReflEar = True
+#     nbody = 10
+#     mass = np.ones((nbody),dtype=np.float64)
+#     Permutation_list = [
+#         np.array([0,3,2,1,7,8,9,4,5,6]),
+#         np.array([1,2,3,0,5,6,4,8,9,7]),
+#     ]
+# 
+# 
+#     Transform_list = [
+#         choreo.ChoreoSym(
+#             LoopTarget=-1,
+#             LoopSource=-1,
+#             SpaceRot= np.array([[-1,0],[0,1]]),
+#             TimeRev=-1,
+#             TimeShift=fractions.Fraction(
+#                 numerator=0,
+#                 denominator=1)
+#             ),
+#         choreo.ChoreoSym(
+#             LoopTarget=-1,
+#             LoopSource=-1,
+#             SpaceRot= np.array([[1,0],[0,1]]),
+#             TimeRev=1,
+#             TimeShift=fractions.Fraction(
+#                 numerator=-1,
+#                 denominator=12)
+#             )
+#     ]
 
-    Sym_list,nbody,mass = choreo.MakeLoopEarSymList(n_main_loop,n_ears,m_main_loop,m_ears,SelfReflMain,SelfReflEar)
+
+
+    nbody = 9
+    mass = np.ones((nbody),dtype=np.float64)
+    Permutation_list = [
+        np.array([0,2,1,6,7,8,3,4,5]),
+        np.array([1,2,0,4,5,3,8,7,6]),
+    ]
+
+
+    Transform_list = [
+        choreo.ChoreoSym(
+            SpaceRot= np.array([[-1,0],[0,1]]),
+            TimeRev=-1,
+            TimeShift=fractions.Fraction(
+                numerator=0,
+                denominator=1)
+            ),
+        choreo.ChoreoSym(
+            SpaceRot= np.array([[1,0],[0,1]]),
+            TimeRev=1,
+            TimeShift=fractions.Fraction(
+                numerator=1,
+                denominator=3)
+            )
+    ]
+
+
+
+
+    Sym_list = choreo.MakeSymFromGlobalTransform(Transform_list,Permutation_list,mass)
+
+
+    Sym_list.append(
+        choreo.ChoreoSym(
+            SpaceRot= np.array([[-1,0],[0,1]]),
+            TimeRev=-1,
+            TimeShift=fractions.Fraction(
+                numerator=0,
+                denominator=1)
+            )
+    )
 
     # MomConsImposed = True
     MomConsImposed = False
@@ -67,8 +134,8 @@ def main(the_i=0):
     # Penalize_Escape = True
     Penalize_Escape = False
 
-    save_first_init = False
-    # save_first_init = True
+    # save_first_init = False
+    save_first_init = True
 
     save_all_inits = False
     # save_all_inits = True
@@ -103,15 +170,8 @@ def main(the_i=0):
 
     nint_plot_img = nint_plot_anim * dnint
 
-    try:
-        the_lcm
-    except NameError:
-        period_div = 1.
-    else:
-        period_div = the_lcm
 
-    # nperiod_anim = 1.
-    nperiod_anim = 1./period_div
+    nperiod_anim = 1.
 
     Plot_trace_anim = True
     # Plot_trace_anim = False
@@ -148,13 +208,13 @@ def main(the_i=0):
     # line_search = 'armijo'
     line_search = 'wolfe'
 
-    linesearch_smin = 0.01
+    linesearch_smin = 0.1
     
-    gradtol_list =          [1e-1   ,1e-3   ,1e-5   ,1e-7   ,1e-9   ,1e-11  ,1e-13  ,1e-15  ]
-    inner_maxiter_list =    [30     ,30     ,50     ,60     ,70     ,80     ,100    ,100    ]
-    maxiter_list =          [100    ,1000   ,1000   ,1000   ,500    ,500    ,300    ,100    ]
-    outer_k_list =          [5      ,5      ,5      ,5      ,5      ,7      ,7      ,7      ]
-    store_outer_Av_list =   [False  ,False  ,False  ,False  ,False  ,True   ,True   ,True   ]
+    gradtol_list =          [1e-1   ,1e-3   ,1e-5   ,1e-7   ,1e-9   ,1e-11  ]
+    inner_maxiter_list =    [30     ,30     ,50     ,60     ,70     ,80     ]
+    maxiter_list =          [100    ,1000   ,1000   ,1000   ,500    ,500    ]
+    outer_k_list =          [5      ,5      ,5      ,5      ,5      ,7      ]
+    store_outer_Av_list =   [False  ,False  ,False  ,False  ,False  ,True   ]
     
     n_optim_param = len(gradtol_list)
     
@@ -173,7 +233,7 @@ def main(the_i=0):
     # coeff_ampl_o=1e0
     k_infl=0
     # k_max=600
-    k_max=200
+    k_max=50
     # k_max=200
     coeff_ampl_min=1e-16
 
@@ -228,31 +288,34 @@ def main(the_i=0):
 
     ReconvergeSol = False
 
-    all_kwargs = choreo.Pick_Named_Args_From_Dict(choreo.Find_Choreo,dict(globals(),**locals()))
-    choreo.Find_Choreo(**all_kwargs)
+    # all_kwargs = choreo.Pick_Named_Args_From_Dict(choreo.Find_Choreo,dict(globals(),**locals()))
+    # choreo.Find_Choreo(**all_kwargs)
 
-    # all_kwargs = choreo.Pick_Named_Args_From_Dict(choreo.GenSymExample,dict(globals(),**locals()))
-    # choreo.GenSymExample(**all_kwargs)
+    all_kwargs = choreo.Pick_Named_Args_From_Dict(choreo.GenSymExample,dict(globals(),**locals()))
+    choreo.GenSymExample(**all_kwargs)
+
 
 
 
 if __name__ == "__main__":
-    main(0)
-   
 
-# if __name__ == "__main__":
-# 
-#     # n = multiprocessing.cpu_count()
-#     # n = multiprocessing.cpu_count()//2
-#     n = 2
-#     
-#     print(f"Executing with {n} workers")
-#     
-#     with concurrent.futures.ProcessPoolExecutor(max_workers=n) as executor:
-#         
-#         res = []
-#         for i in range(1,n+1):
-#             res.append(executor.submit(main,i))
-#             time.sleep(0.01)
 
- 
+    # Exec_Mul_Proc = True
+    Exec_Mul_Proc = False
+
+    n = multiprocessing.cpu_count()//2
+
+    if Exec_Mul_Proc:
+
+        print(f"Executing with {n} workers")
+        
+        with concurrent.futures.ProcessPoolExecutor(max_workers=n) as executor:
+            
+            res = []
+            for i in range(n):
+                res.append(executor.submit(main))
+                time.sleep(0.01)
+
+    else :
+
+        main()

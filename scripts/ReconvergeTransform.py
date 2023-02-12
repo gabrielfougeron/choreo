@@ -30,9 +30,12 @@ One_sec = 1e9
 
 def main():
 
-    input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery/01 - Classic gallery')
+
+
+    # input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery/04 - Montaldi-Steckles-Gries')
+    # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/9')
     # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/Keep/')
-    # input_folder = os.path.join(__PROJECT_ROOT__,'Reconverged_sols')
+    input_folder = os.path.join(__PROJECT_ROOT__,'Reconverged_sols')
     
 #     ''' Include all files in tree '''
 #     input_names_list = []
@@ -49,20 +52,20 @@ def main():
 #                 input_names_list.append(the_name)
 # 
 # # # 
-#     ''' Include all files in folder '''
-#     input_names_list = []
-#     for file_path in os.listdir(input_folder):
-#         file_path = os.path.join(input_folder, file_path)
-#         file_root, file_ext = os.path.splitext(os.path.basename(file_path))
-#         
-#         if (file_ext == '.json' ):
-#             # 
-#             # if int(file_root) > 8:
-#             #     input_names_list.append(file_root)
-# 
-#             input_names_list.append(file_root)
+    ''' Include all files in folder '''
+    input_names_list = []
+    for file_path in os.listdir(input_folder):
+        file_path = os.path.join(input_folder, file_path)
+        file_root, file_ext = os.path.splitext(os.path.basename(file_path))
+        
+        if (file_ext == '.json' ):
+            # 
+            # if int(file_root) > 8:
+            #     input_names_list.append(file_root)
 
-    input_names_list = ['01 - Figure eight']
+            input_names_list.append(file_root)
+
+    # input_names_list = ['01 - Figure eight']
     # input_names_list = ['04 - 5 pointed star']
     # input_names_list = ['14 - Small mass gap']
 
@@ -70,8 +73,8 @@ def main():
     store_folder = os.path.join(__PROJECT_ROOT__,'Reconverged_sols')
     # store_folder = input_folder
 
-    # Exec_Mul_Proc = True
-    Exec_Mul_Proc = False
+    Exec_Mul_Proc = True
+    # Exec_Mul_Proc = False
 
     if Exec_Mul_Proc:
 
@@ -122,13 +125,13 @@ def ExecName(the_name, input_folder, store_folder):
     bare_name = the_name.split('/')[-1]
 
     all_pos = np.load(input_filename)
-    nint = Info_dict["n_int"]
-    ncoeff_init = Info_dict["n_Fourier"] 
+    nint_init = Info_dict["n_int"]
+    ncoeff_init = nint_init // 2 +1
 
     c_coeffs = choreo.the_rfft(all_pos,axis=2,norm="forward")
     all_coeffs = np.zeros((Info_dict["nloop"],choreo.ndim,ncoeff_init,2),dtype=np.float64)
-    all_coeffs[:,:,0:ncoeff_init,0] = c_coeffs[:,:,0:ncoeff_init].real
-    all_coeffs[:,:,0:ncoeff_init,1] = c_coeffs[:,:,0:ncoeff_init].imag
+    all_coeffs[:,:,:,0] = c_coeffs.real
+    all_coeffs[:,:,:,1] = c_coeffs.imag
 
 
     # theta = 2*np.pi * 0.
@@ -176,8 +179,6 @@ def ExecName(the_name, input_folder, store_folder):
 #     ))
 
 
-    n_reconverge_it_max = 2
-
     Save_All_Pos = True
     # Save_All_Pos = False
 
@@ -205,8 +206,8 @@ def ExecName(the_name, input_folder, store_folder):
     # color = "velocity"
     # color = "all"
 
-    Save_anim = True
-    # Save_anim = False
+    # Save_anim = True
+    Save_anim = False
 
 
     vid_size = (8,8) # Image size in inches
@@ -271,12 +272,16 @@ def ExecName(the_name, input_folder, store_folder):
     n_find_max = 1
 
 
-    Newt_err_norm_max = 1e-14
-    Newt_err_norm_max_save = Info_dict['Newton_Error']*10
 
-    # krylov_method = 'lgmres'
+    n_reconverge_it_max = 1
+
+
+    Newt_err_norm_max = 1e-13
+    Newt_err_norm_max_save = Info_dict['Newton_Error']
+
+    krylov_method = 'lgmres'
     # krylov_method = 'gmres'
-    krylov_method = 'bicgstab'
+    # krylov_method = 'bicgstab'
     # krylov_method = 'cgs'
     # krylov_method = 'minres'
     # krylov_method = 'tfqmr'
@@ -289,14 +294,21 @@ def ExecName(the_name, input_folder, store_folder):
     # disp_scipy_opt = False
     disp_scipy_opt = True
 
-    # linesearch_smin = 0.01
+    # linesearch_smin = 0.1
     linesearch_smin = 1
     
     gradtol_list =          [1e-1   ,1e-3   ,1e-5   ,1e-7   ,1e-9   ,1e-11  ,1e-13  ,1e-15  ]
     inner_maxiter_list =    [30     ,30     ,50     ,60     ,70     ,80     ,100    ,100    ]
-    maxiter_list =          [100    ,1000   ,1000   ,1000   ,500    ,50    ,30    ,10    ]
+    maxiter_list =          [100    ,1000   ,1000   ,1000   ,500    ,500    ,300    ,100    ]
     outer_k_list =          [5      ,5      ,5      ,5      ,5      ,7      ,7      ,7      ]
     store_outer_Av_list =   [False  ,False  ,False  ,False  ,False  ,True   ,True   ,True   ]
+    # 
+    # gradtol_list =          [1e-1   ,1e-3  ,1e-5  ]
+    # inner_maxiter_list =    [30     ,30    ,50    ]
+    # maxiter_list =          [100    ,1000  ,1000  ]
+    # outer_k_list =          [5      ,5     ,5     ]
+    # store_outer_Av_list =   [False  ,False ,False ]
+
     
     n_optim_param = len(gradtol_list)
     
@@ -316,12 +328,6 @@ def ExecName(the_name, input_folder, store_folder):
 # 
 #     print(np.linalg.norm(all_pos_post_reconverge - all_pos))
 # 
-# 
-# 
-#     c_coeffs = choreo.the_rfft(all_pos,axis=2,norm="forward")
-#     all_coeffs = np.zeros((Info_dict["nloop"],choreo.ndim,ncoeff_init,2),dtype=np.float64)
-#     all_coeffs[:,:,0:ncoeff_init,0] = c_coeffs[:,:,0:ncoeff_init].real
-#     all_coeffs[:,:,0:ncoeff_init,1] = c_coeffs[:,:,0:ncoeff_init].imag
 # 
 # 
 

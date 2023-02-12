@@ -83,7 +83,7 @@ def Compute_action_Cython_2D(
 ):
     # This function is probably the most important one.
     # Computes the action and its gradient with respect to the Fourier coefficients of the generator in each loop.
-
+    
     cdef Py_ssize_t il,ilp
     cdef Py_ssize_t idim
     cdef Py_ssize_t ibi
@@ -96,9 +96,6 @@ def Compute_action_Cython_2D(
     cdef double pot,potp,potpp
     cdef double prod_mass,a,b,dx2,prod_fac
 
-    cdef double[::1] dx = np.zeros((2),dtype=np.float64)
-    cdef double[::1] df = np.zeros((2),dtype=np.float64)
-
     cdef long maxloopnb = 0
     cdef long maxloopnbi = 0
 
@@ -110,8 +107,8 @@ def Compute_action_Cython_2D(
 
     cdef double Pot_en = 0.
 
-    cdef Py_ssize_t[:,::1] all_shiftsUn = np.zeros((nloop,maxloopnb),dtype=np.intp)
-    cdef Py_ssize_t[:,::1] all_shiftsBin = np.zeros((nloop,maxloopnbi),dtype=np.intp)
+    cdef Py_ssize_t[:,::1] all_shiftsUn = np.empty((nloop,maxloopnb),dtype=np.intp)
+    cdef Py_ssize_t[:,::1] all_shiftsBin = np.empty((nloop,maxloopnbi),dtype=np.intp)
 
     for il in range(nloop):
         for ib in range(loopnb[il]):
@@ -140,7 +137,7 @@ def Compute_action_Cython_2D(
     
     cdef double[:,:,::1] grad_pot_all = np.zeros((nloop,2,nint),dtype=np.float64)
 
-    Compute_action_Cython_time_loop_2D(
+    Pot_en = Compute_action_Cython_time_loop_2D(
         nloop             ,
         nint              ,
         mass              ,
@@ -156,7 +153,6 @@ def Compute_action_Cython_2D(
         all_shiftsUn      ,
         all_shiftsBin     ,
         grad_pot_all      ,
-        Pot_en
     )
 
     Pot_en = Pot_en / nint
@@ -186,7 +182,7 @@ def Compute_action_Cython_2D(
     return Action,Action_grad_np
 
 @cython.cdivision(True)
-cdef void Compute_action_Cython_time_loop_2D(
+cdef double Compute_action_Cython_time_loop_2D(
     long              nloop             ,
     long              nint              ,
     double[::1]       mass              ,
@@ -202,7 +198,6 @@ cdef void Compute_action_Cython_time_loop_2D(
     Py_ssize_t[:,::1] all_shiftsUn      ,
     Py_ssize_t[:,::1] all_shiftsBin     ,
     double[:,:,::1]   grad_pot_all      ,
-    double            Pot_en
 ):
 
     cdef Py_ssize_t il,ilp
@@ -214,6 +209,7 @@ cdef void Compute_action_Cython_time_loop_2D(
     cdef double dx0,dx1
     cdef double ddx0,ddx1
     cdef double prod_mass,a,b,dx2,prod_fac
+    cdef double Pot_en = 0.
 
     for iint in range(nint):
 
@@ -308,6 +304,8 @@ cdef void Compute_action_Cython_time_loop_2D(
 
                 all_shiftsBin[il,ibi] = ((((all_shiftsBin[il,ibi]+TimeRevsBin[il,ibi]) % nint) + nint) % nint)
 
+    return Pot_en
+
 @cython.cdivision(True)
 def Compute_action_hess_mul_Cython_2D(
     long nloop                          ,
@@ -341,6 +339,7 @@ def Compute_action_hess_mul_Cython_2D(
     cdef Py_ssize_t iint
     cdef Py_ssize_t k
     cdef long k2
+    cdef long rem, ddiv
     cdef double pot,potp,potpp
     cdef double prod_mass,a,b,prod_fac
         
@@ -356,10 +355,10 @@ def Compute_action_hess_mul_Cython_2D(
             maxloopnbi = loopnbi[il]
 
     c_coeffs_d = all_coeffs_d.view(dtype=np.complex128)[...,0]
-    cdef double[:,:,::1]  all_pos_d = the_irfft(c_coeffs_d,n=nint,axis=2,norm="forward")
+    cdef double[:,:,::1]  all_pos_d = the_irfft(c_coeffs_d,norm="forward")
 
-    cdef Py_ssize_t[:,::1] all_shiftsUn = np.zeros((nloop,maxloopnb),dtype=np.intp)
-    cdef Py_ssize_t[:,::1] all_shiftsBin = np.zeros((nloop,maxloopnbi),dtype=np.intp)
+    cdef Py_ssize_t[:,::1] all_shiftsUn = np.empty((nloop,maxloopnb),dtype=np.intp)
+    cdef Py_ssize_t[:,::1] all_shiftsBin = np.empty((nloop,maxloopnbi),dtype=np.intp)
     
     for il in range(nloop):
         for ib in range(loopnb[il]):
@@ -419,16 +418,21 @@ def Compute_action_hess_mul_Cython_2D(
         for idim in range(2):
             
             Action_hess_dx[il,idim,0,0] = -hess_dx_pot_fft[il,idim,0].real
-            Action_hess_dx[il,idim,0,1] = 0 
+            Action_hess_dx[il,idim,0,1] = 0.            
+
+            # Action_hess_dx[il,idim,0,0] = 2 * prod_fac * all_coeffs_d[il,idim,0,0]
+            # Action_hess_dx[il,idim,0,1] = 2 * prod_fac * all_coeffs_d[il,idim,0,1]
 
             for k in range(1,ncoeff):
                 
                 k2 = k*k
                 a = 2*prod_fac*k2
-                
+
                 Action_hess_dx[il,idim,k,0] = a*all_coeffs_d[il,idim,k,0] - 2*hess_dx_pot_fft[il,idim,k].real
                 Action_hess_dx[il,idim,k,1] = a*all_coeffs_d[il,idim,k,1] - 2*hess_dx_pot_fft[il,idim,k].imag
 
+                # Action_hess_dx[il,idim,k,0] = a*all_coeffs_d[il,idim,k,0]
+                # Action_hess_dx[il,idim,k,1] = a*all_coeffs_d[il,idim,k,1]
 
     return Action_hess_dx_np
     
