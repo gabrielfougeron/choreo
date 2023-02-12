@@ -967,49 +967,49 @@
                 {
                     "dirs": [],
                     "files": {
-                        "01 - Figure eight": {
-                            ".json": "choreo-gallery/03 - Targets/01 - Circle/01 - Figure eight.json",
-                            ".npy": "choreo-gallery/03 - Targets/01 - Circle/01 - Figure eight.npy"
+                        "01 - Figure eight in circle": {
+                            ".json": "choreo-gallery/03 - Targets/01 - Circle/01 - Figure eight in circle.json",
+                            ".npy": "choreo-gallery/03 - Targets/01 - Circle/01 - Figure eight in circle.npy"
                         },
-                        "02 - Figure eight": {
-                            ".json": "choreo-gallery/03 - Targets/01 - Circle/02 - Figure eight.json",
-                            ".npy": "choreo-gallery/03 - Targets/01 - Circle/02 - Figure eight.npy"
+                        "02 - Figure eight in circle": {
+                            ".json": "choreo-gallery/03 - Targets/01 - Circle/02 - Figure eight in circle.json",
+                            ".npy": "choreo-gallery/03 - Targets/01 - Circle/02 - Figure eight in circle.npy"
                         },
-                        "03 - Figure eight": {
-                            ".json": "choreo-gallery/03 - Targets/01 - Circle/03 - Figure eight.json",
-                            ".npy": "choreo-gallery/03 - Targets/01 - Circle/03 - Figure eight.npy"
+                        "03 - Figure eight in circle": {
+                            ".json": "choreo-gallery/03 - Targets/01 - Circle/03 - Figure eight in circle.json",
+                            ".npy": "choreo-gallery/03 - Targets/01 - Circle/03 - Figure eight in circle.npy"
                         },
-                        "04 - Four body chain": {
-                            ".json": "choreo-gallery/03 - Targets/01 - Circle/04 - Four body chain.json",
-                            ".npy": "choreo-gallery/03 - Targets/01 - Circle/04 - Four body chain.npy"
+                        "04 - Four body chain in circle": {
+                            ".json": "choreo-gallery/03 - Targets/01 - Circle/04 - Four body chain in circle.json",
+                            ".npy": "choreo-gallery/03 - Targets/01 - Circle/04 - Four body chain in circle.npy"
                         },
-                        "05 - Four body chain": {
-                            ".json": "choreo-gallery/03 - Targets/01 - Circle/05 - Four body chain.json",
-                            ".npy": "choreo-gallery/03 - Targets/01 - Circle/05 - Four body chain.npy"
+                        "05 - Four body chain in circle": {
+                            ".json": "choreo-gallery/03 - Targets/01 - Circle/05 - Four body chain in circle.json",
+                            ".npy": "choreo-gallery/03 - Targets/01 - Circle/05 - Four body chain in circle.npy"
                         },
-                        "06 - Circle and eight": {
-                            ".json": "choreo-gallery/03 - Targets/01 - Circle/06 - Circle and eight.json",
-                            ".npy": "choreo-gallery/03 - Targets/01 - Circle/06 - Circle and eight.npy"
+                        "06 - Circle and eight in circle": {
+                            ".json": "choreo-gallery/03 - Targets/01 - Circle/06 - Circle and eight in circle.json",
+                            ".npy": "choreo-gallery/03 - Targets/01 - Circle/06 - Circle and eight in circle.npy"
                         },
-                        "07 - Circle and eight": {
-                            ".json": "choreo-gallery/03 - Targets/01 - Circle/07 - Circle and eight.json",
-                            ".npy": "choreo-gallery/03 - Targets/01 - Circle/07 - Circle and eight.npy"
+                        "07 - Circle and eight in circle": {
+                            ".json": "choreo-gallery/03 - Targets/01 - Circle/07 - Circle and eight in circle.json",
+                            ".npy": "choreo-gallery/03 - Targets/01 - Circle/07 - Circle and eight in circle.npy"
                         },
-                        "08 - Circle and eight": {
-                            ".json": "choreo-gallery/03 - Targets/01 - Circle/08 - Circle and eight.json",
-                            ".npy": "choreo-gallery/03 - Targets/01 - Circle/08 - Circle and eight.npy"
+                        "08 - Circle and eight in circle": {
+                            ".json": "choreo-gallery/03 - Targets/01 - Circle/08 - Circle and eight in circle.json",
+                            ".npy": "choreo-gallery/03 - Targets/01 - Circle/08 - Circle and eight in circle.npy"
                         },
-                        "09 - Circle and eight": {
-                            ".json": "choreo-gallery/03 - Targets/01 - Circle/09 - Circle and eight.json",
-                            ".npy": "choreo-gallery/03 - Targets/01 - Circle/09 - Circle and eight.npy"
+                        "09 - Circle and eight in circle": {
+                            ".json": "choreo-gallery/03 - Targets/01 - Circle/09 - Circle and eight in circle.json",
+                            ".npy": "choreo-gallery/03 - Targets/01 - Circle/09 - Circle and eight in circle.npy"
                         },
-                        "10 - Circle and eight": {
-                            ".json": "choreo-gallery/03 - Targets/01 - Circle/10 - Circle and eight.json",
-                            ".npy": "choreo-gallery/03 - Targets/01 - Circle/10 - Circle and eight.npy"
+                        "10 - Circle and eight in circle": {
+                            ".json": "choreo-gallery/03 - Targets/01 - Circle/10 - Circle and eight in circle.json",
+                            ".npy": "choreo-gallery/03 - Targets/01 - Circle/10 - Circle and eight in circle.npy"
                         },
-                        "11 - Circle and eight": {
-                            ".json": "choreo-gallery/03 - Targets/01 - Circle/11 - Circle and eight.json",
-                            ".npy": "choreo-gallery/03 - Targets/01 - Circle/11 - Circle and eight.npy"
+                        "11 - Circle and eight in circle": {
+                            ".json": "choreo-gallery/03 - Targets/01 - Circle/11 - Circle and eight in circle.json",
+                            ".npy": "choreo-gallery/03 - Targets/01 - Circle/11 - Circle and eight in circle.npy"
                         }
                     },
                     "name": "01 - Circle"
@@ -1017,17 +1017,33 @@
                 {
                     "dirs": [],
                     "files": {
-                        "Backward figure eight": {
-                            ".json": "choreo-gallery/03 - Targets/02 - Figure eight/Backward figure eight.json",
-                            ".npy": "choreo-gallery/03 - Targets/02 - Figure eight/Backward figure eight.npy"
+                        "01 - Circle in figure eight": {
+                            ".json": "choreo-gallery/03 - Targets/02 - Figure eight/01 - Circle in figure eight.json",
+                            ".npy": "choreo-gallery/03 - Targets/02 - Figure eight/01 - Circle in figure eight.npy"
                         },
-                        "Forward figure eight": {
-                            ".json": "choreo-gallery/03 - Targets/02 - Figure eight/Forward figure eight.json",
-                            ".npy": "choreo-gallery/03 - Targets/02 - Figure eight/Forward figure eight.npy"
+                        "02 - Coarse figure eight in figure eight": {
+                            ".json": "choreo-gallery/03 - Targets/02 - Figure eight/02 - Coarse figure eight in figure eight.json",
+                            ".npy": "choreo-gallery/03 - Targets/02 - Figure eight/02 - Coarse figure eight in figure eight.npy"
                         },
-                        "Single loop of circles": {
-                            ".json": "choreo-gallery/03 - Targets/02 - Figure eight/Single loop of circles.json",
-                            ".npy": "choreo-gallery/03 - Targets/02 - Figure eight/Single loop of circles.npy"
+                        "03 - Coarse figure eight in figure eight": {
+                            ".json": "choreo-gallery/03 - Targets/02 - Figure eight/03 - Coarse figure eight in figure eight.json",
+                            ".npy": "choreo-gallery/03 - Targets/02 - Figure eight/03 - Coarse figure eight in figure eight.npy"
+                        },
+                        "04 - Coarse figure eight in figure eight": {
+                            ".json": "choreo-gallery/03 - Targets/02 - Figure eight/04 - Coarse figure eight in figure eight.json",
+                            ".npy": "choreo-gallery/03 - Targets/02 - Figure eight/04 - Coarse figure eight in figure eight.npy"
+                        },
+                        "05 - Coarse figure eight in figure eight": {
+                            ".json": "choreo-gallery/03 - Targets/02 - Figure eight/05 - Coarse figure eight in figure eight.json",
+                            ".npy": "choreo-gallery/03 - Targets/02 - Figure eight/05 - Coarse figure eight in figure eight.npy"
+                        },
+                        "06 - Fine figure eight in figure eight": {
+                            ".json": "choreo-gallery/03 - Targets/02 - Figure eight/06 - Fine figure eight in figure eight.json",
+                            ".npy": "choreo-gallery/03 - Targets/02 - Figure eight/06 - Fine figure eight in figure eight.npy"
+                        },
+                        "07 - Fine figure eight in figure eight": {
+                            ".json": "choreo-gallery/03 - Targets/02 - Figure eight/07 - Fine figure eight in figure eight.json",
+                            ".npy": "choreo-gallery/03 - Targets/02 - Figure eight/07 - Fine figure eight in figure eight.npy"
                         }
                     },
                     "name": "02 - Figure eight"
