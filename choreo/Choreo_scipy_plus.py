@@ -82,6 +82,7 @@ all_SymplecticIntegrators = {
     'SymplecticRuth3'               : SymplecticRuth3_XV,
     'SymplecticRuth3_XV'            : SymplecticRuth3_XV,
     'SymplecticRuth3_VX'            : SymplecticRuth3_VX,
+    'SymplecticRuth4'               : SymplecticRuth4_XV,
     'SymplecticRuth4_XV'            : SymplecticRuth4_XV,
     'SymplecticRuth4_VX'            : SymplecticRuth4_VX,
     }
@@ -108,6 +109,7 @@ def InstabilityDecomposition(Mat,eps=1e-12):
     assert n==m
 
     eigvals,eigvects = scipy.linalg.eig(a=Mat, b=None, left=False, right=True, overwrite_a=False, overwrite_b=False, check_finite=True, homogeneous_eigvals=False)
+
     idx_sort = np.argsort(-abs(eigvals))
     Instability_magnitude = abs(eigvals)[idx_sort]
     

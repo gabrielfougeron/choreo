@@ -106,7 +106,7 @@ def nonlin_solve_pp(
 
         # Print status
         if verbose:
-            print(f"{n}:  |F(x)| = {Fx_norm_new:.4E}; step {s:.4f}")
+            print(f"{n}:  |F(x)| = {Fx_norm_new:.4e}; step {s:.3f}")
 
     else:
         status = 2

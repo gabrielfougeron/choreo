@@ -477,6 +477,11 @@ function canvasApp() {
 
 		if (e.DoClearScreen) {
 			clearScreen();
+
+			if (e.ResetRot) {
+				var RotSlider = $("#RotSlider").data("roundSlider")
+				RotSlider.setValue(0)
+			}
 			
 			if (trajectoriesOn && document.getElementById('checkbox_DisplayLoopOnGalleryLoad').checked){
 
@@ -487,25 +492,28 @@ function canvasApp() {
 				}
 				
 			}
+
 		}
-		FinalizeSetOrbit(DoDrawParticles=true,DoXMinMax = e.DoXMinMax,setTinc=e.setTinc ) ;
-		startAnimation();
+		
+		FinalizeSetOrbit(DoDrawParticles=true,DoXMinMax = e.DoXMinMax,setTinc=e.setTinc )
+		startAnimation()
+		
 	}
 
 	function RemakeParticlesFromOutsideCanvasHandler(e) {
-		makeParticles();
-		clearScreen();
-		clearParticleLayer();
-		drawParticles();
+		makeParticles()
+		clearScreen()
+		clearParticleLayer()
+		drawParticles()
 	}
 
 	function ChangeColorsFromOutsideCanvasHandler(e) {
 		
 		setColorLookupList()
-		makeParticles();
-		clearScreen();
-		clearParticleLayer();
-		drawParticles();
+		makeParticles()
+		clearScreen()
+		clearParticleLayer()
+		drawParticles()
 	}
 
 	function onRotationValueChange(e){
@@ -914,7 +922,7 @@ function canvasApp() {
 		var il,ib,ilb,nlb
 		var tb_beg, tb_end
 
-		var i
+		var i,di
 		var ip,ip_beg,ip_end
 
         for ( il = 0 ; il < PlotInfo['nloop'] ; il++){
@@ -938,9 +946,11 @@ function canvasApp() {
 				tb_end = ( PlotInfo['TimeRevsUn'][il][ilb] * ((lasttime+tInc) - PlotInfo['TimeShiftNumUn'][il][ilb] / PlotInfo['TimeShiftDenUn'][il][ilb]) +1)
 				ip_end = (Math.floor(tb_end*n_pos)+1)
 
-				for (i = ip_beg ; i != ip_end ; i = i + PlotInfo['TimeRevsUn'][il][ilb]){ 
+				di = PlotInfo['TimeRevsUn'][il][ilb]
 
-					ip = i%n_pos
+				for (i = ip_beg ; i != ip_end ; i += di){ 
+
+					ip = (((i%n_pos) + n_pos) % n_pos)
 
 					// Super ugly
 					xi = Pos.data[ ip +  2*il    * n_pos] 
@@ -956,7 +966,7 @@ function canvasApp() {
 					PixY = yPixRate*(yrot_glob - yMax)
 
 					context.lineTo(PixX, PixY)
-
+					
 					lastPixX = PixX
 					lastPixY = PixY
 
