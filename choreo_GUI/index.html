@@ -170,8 +170,8 @@ window.addEventListener("drop",function(e){
           <td style="border:none; max-width:400px;" id="NP_Newton_Error"></td>
         </tr>
         <tr>
-          <td style="border:none;" >Number of Fourier coefficients</td>
-          <td style="border:none; max-width:400px;" id="NP_n_Fourier"></td>
+          <td style="border:none;" >Number of integration points</td>
+          <td style="border:none; max-width:400px;" id="NP_nint"></td>
         </tr>
         <tr>
           <td style="border:none;" >Value of Action</td>
@@ -182,13 +182,13 @@ window.addEventListener("drop",function(e){
   </div>
   <div class="w3-container MainTab Play_Gallery" style="display:none">
     <h2>Gallery</h2>
-    <div id="DefaultGalleryContainer"></div>
+    <div id="DefaultGalleryContainer" style="overflow-y: auto; height:600px;" ></div>
   </div>
   <div class="w3-container MainTab Play_Workspace" style="display:none">
     <h2>Setup Workspace</h2>
     <button id="SetupWorkspaceBtn"   class="w3-button w3-hover-pale-red w3-light-grey InTableControls" onclick="ClickSetupWorkspace()" >Setup Workspace</button>
     <button id="ReloadWorkspaceBtn"  class="w3-button w3-hover-pale-red w3-light-grey InTableControls" onclick="ClickReloadWorkspace()" disabled="disabled">Reload Workspace</button>
-    <div id="WorkspaceGalleryContainer"></div>
+    <div id="WorkspaceGalleryContainer" style="overflow-y: auto; height:600px;display:none"></div>
     <div id="WorkspaceGalleryTxt"><br>
       Click "Setup Workspace" to save solutions to your disk, browse previously computed solutions and use the (much faster) <a href="https://github.com/gabrielfougeron/choreo"><b>CLI python solver</b></a>.
     </div>
@@ -248,7 +248,7 @@ window.addEventListener("drop",function(e){
       <tr>
         <td style="border:none; ">
           <b><button class="w3-button w3-light-grey w3-hover-pale-red dropdown_btn TargetToggle" id="ChooseSlowSolutionBtn" disabled="disabled" style="text-align: center; font-size:16px" onclick="ClickChooseSlowSolution()">Choose slow solution</button></b>
-          <div class="dropdown-content" id="TreeSlowContainer"></div>
+          <div class="dropdown-content" id="TreeSlowContainer" style="overflow-y: auto; max-height:400px;"></div>
         </td>
         <td style="border:none; max-width:400px; " id="SlowSolution_name"></td>
       </tr>
@@ -451,12 +451,16 @@ window.addEventListener("drop",function(e){
           <td style="border:none;text-align: center;"><input id ="checkbox_exactJ" class="w3-check" type="checkbox" style="vertical-align: super" checked></td>
         </tr>
         <tr>
-          <td style="border:none"><h>Number of coefficients for first level</h></td>
-          <td style="border:none; max-width:100px; "><input type="number" id="input_ncoeff_init" value="300" style="text-align: center;"></td>
+          <td style="border:none"><h>Initial number of integration points</h></td>
+          <td style="border:none; max-width:100px; "><input type="number" id="input_nint_init" value="600" style="text-align: center;"></td>
         </tr>
         <tr>
           <td style="border:none"><h>Maximum refinement levels:&nbsp&nbsp&nbsp</h><span id="display_n_reconverge_it_max"></span></td>
           <td style="border:none; max-width:100px; "><input type="range" id="input_n_reconverge_it_max" value="4" min="0" max="12" oninput="SlideNReconvergeItMax()"></td>
+        </tr>
+        <tr>
+          <td style="border:none"><h>Coarse to fine multiplier</h></td>
+          <td style="border:none; max-width:100px; "><input type="text" id="input_mul_coarse_to_fine" value="3" style="text-align: center;" ></td>
         </tr>
       </table>
     </div>
@@ -574,7 +578,7 @@ window.addEventListener("drop",function(e){
     </div>
   </div>
   <div class="w3-container MainTab Solver_CLI" style="display:none">
-    <h2>Solver checks</h2>
+    <h2>Command Line Interface</h2>
     <div style = "max-width:350px; ">
       <table style="font-size:16px; border:none; display:table">
         <tr>
@@ -606,7 +610,7 @@ window.addEventListener("drop",function(e){
             <label for="CLI_SaveVideo">Save video of solutions</label>
           </td>
           <td style="border:none; max-width:90px; text-align: center;">
-            <input id ="CLI_SaveVideo"  class="w3-check" type="checkbox" style="vertical-align: super" checked>
+            <input id ="CLI_SaveVideo"  class="w3-check" type="checkbox" style="vertical-align: super">
           </td>
         </tr>
       </table>
@@ -651,7 +655,7 @@ window.addEventListener("drop",function(e){
   <div class="w3-container MainTab Main_Help" style="display:none; text-align: justify;">
     <h2>Help</h2>
     <br>
-    &nbsp &nbsp Welcome to the web version of <b>choreo</b>, a python package designed to compute periodic solutions to ordinary differential equations, applied to the newtonian n-body gravitational problem.
+    &nbsp &nbsp This website provides a user interface to <b>choreo</b>, a python package designed to compute periodic solutions to ordinary differential equations, applied to the newtonian n-body gravitational problem.    
     In this context, "periodic" means that the search is restricted to motions that loop back after some time, and then repeat <i>ad infinitum</i>.
     <b>Choreographies</b> are such periodic motions giving their name to this package, where all bodies follow the same trajectory separated by a constant time lag.
     <br>
@@ -673,22 +677,30 @@ window.addEventListener("drop",function(e){
     <h3>Expert options</h3>
     &nbsp &nbsp More complex symmetries can be specified under the<button class="in_text_btn" onclick="ClickLeftTabBtn('Geom');ClickTopTabBtn('Geom_Custom');"><b>Custom</b></button>tab. Don't hesitate to play around with the parameters of the<button class="in_text_btn" onclick="ClickLeftTabBtn('Geom');ClickTopTabBtn('Geom_Random');"><b>Random</b></button>initialization, as well as all of the<button class="in_text_btn" onclick="ClickLeftTabBtn('Solver');"><b>Solver</b></button>options.
     <br>&nbsp 
-    <!-- <h3>Going further</h3>
-    For more thorough information about the meaning of the different settings and parameters, see the <a href="https://gabrielfougeron.github.io/choreo-docs/">online help for the python package <b>choreo</b>.</a> -->
+    <h3>Going further</h3>
+    &nbsp &nbsp For more thorough information about the meaning of the different settings and parameters, see the <a href="https://gabrielfougeron.github.io/choreo-docs/">online help for the python package <b>choreo</b>.</a>
   </div>
   <div class="w3-container MainTab Main_About" style="display:none; text-align: justify;">
-    <!-- <h2>About</h2>-->
-    <h2>Credits</h2>
+    <h2>About</h2>
+    <br>
+    &nbsp &nbsp Welcome to the web version of <b>choreo</b>, a python package designed to compute periodic solutions to ordinary differential equations, applied to the newtonian n-body gravitational problem.
+    <br>&nbsp 
+    <h3>Credits</h3>
     &nbsp &nbsp This website and the associated python package <b>choreo</b> were created by Gabriel Fougeron.<br><br>
-    Many thanks to:
+    Many thanks to the many people without whom this project could not have come that far, including:
     <ul style="margin-left:2em">
       <li><a href="https://dangries.com/">Dan Gries</a> for his authorization to build upon his animation design.</li>
       <li>Gregory Minton for his <a href="http://gminton.org/#choreo"><b>choreo.2.3.js</b></a> WebApp which inspired this work, and for his patience in answering my naive questions.</li>
       <li>The <a href="https://pyodide.org/en/stable/"><b>Pyodide</b></a> team, and especially Hood Chatham and Gyeongjae Choi for their help in getting the in-browser version of <b>choreo</b> up and running.</li>
       <li>Beta testers for their valuable feedback.</li>
     </ul>
-    <h2>License</h2>
-    This work is licenced under the <a href="https://github.com/gabrielfougeron/choreo/blob/main/LICENSE"><b>BSD 2-Clause License</b></a> and includes substantial parts of <a href="https://github.com/gabrielfougeron/choreo/tree/main/LICENCES"><b>other open-source projects</b></a>.
+    <br>
+    <h3>Providing Feedback</h3>
+    &nbsp &nbsp Please raise a <a href="https://github.com/gabrielfougeron/choreo/issues"><b>Github issue</b></a> to report bugs or suggest improvements.
+    <br>&nbsp 
+    <h3>License</h3>
+    &nbsp &nbsp This work is <a href="https://github.com/gabrielfougeron/choreo/blob/main/LICENSE"><b>open source</b></a> and includes substantial parts of <a href="https://github.com/gabrielfougeron/choreo/tree/main/LICENCES"><b>other open-source projects</b></a>.
+    <br>&nbsp 
   </div>
 </div>
 </div>
@@ -726,7 +738,7 @@ Python_textarea.style.height = "400px"
 
 InitWorkspaceClick()
 
-document.getElementById('CLI_nproc').value = navigator.hardwareConcurrency
+document.getElementById('CLI_nproc').value = (navigator.hardwareConcurrency / 2)
 
 DealWithCookie()
 

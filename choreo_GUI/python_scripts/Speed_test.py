@@ -149,7 +149,7 @@ def main():
     Save_Newton_Error = False
 
     n_reconverge_it_max = params_dict["Solver_Discr"] ['n_reconverge_it_max'] 
-    ncoeff_init = params_dict["Solver_Discr"]["ncoeff_init"]   
+    nint_init = params_dict["Solver_Discr"]["nint_init"]   
 
     disp_scipy_opt = (params_dict['Solver_Optim'] ['optim_verbose_lvl'] == "full")
     
@@ -195,7 +195,7 @@ def main():
     n_opt_max = 100
     n_find_max = 1
 
-    mul_coarse_to_fine = 3
+    mul_coarse_to_fine = params_dict["Solver_Discr"]["mul_coarse_to_fine"]
 
     # Save_All_Coeffs = True
     Save_All_Coeffs = False

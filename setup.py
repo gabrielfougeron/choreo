@@ -9,6 +9,7 @@ import distutils # Deprecation of distutils. See  https://peps.python.org/pep-06
 import Cython.Build
 import numpy
 import platform
+import multiprocessing
 
 __version__ = "0.2.0"
 
@@ -53,7 +54,7 @@ else:
 
         extra_compile_args = ["-O3","-march=native"]
     
-
+nthreads = multiprocessing.cpu_count()
 
 extra_link_args = []
 
@@ -114,6 +115,7 @@ ext_modules = Cython.Build.cythonize(
     annotate = True,
     force = True,
     compiler_directives = compiler_directives,
+    nthreads = nthreads,
 )
 
 setuptools.setup(
