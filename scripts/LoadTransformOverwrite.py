@@ -239,11 +239,12 @@ def ExecName(
 
     all_pos = np.load(input_filename)
     nint = Info_dict["n_int"]
+    ncoeff = nint // 2 + 1
 
     c_coeffs = choreo.the_rfft(all_pos,n=nint,axis=2,norm="forward")
-    all_coeffs = np.zeros((Info_dict["nloop"],choreo.ndim,Info_dict["n_Fourier"],2),dtype=np.float64)
-    all_coeffs[:,:,:,0] = c_coeffs[:,:,0:Info_dict["n_Fourier"]].real
-    all_coeffs[:,:,:,1] = c_coeffs[:,:,0:Info_dict["n_Fourier"]].imag
+    all_coeffs = np.zeros((Info_dict["nloop"],choreo.ndim,ncoeff,2),dtype=np.float64)
+    all_coeffs[:,:,:,0] = c_coeffs.real
+    all_coeffs[:,:,:,1] = c_coeffs.imag
 
     theta = 2*np.pi * 0.
     SpaceRevscal = 1.
@@ -267,7 +268,7 @@ def ExecName(
     n_reconverge_it_max = 0
     n_grad_change = 1.
 
-    ActionSyst = choreo.setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change,CrashOnIdentity=False)
+    ActionSyst = choreo.setup_changevar(nbody,nint,mass,n_reconverge_it_max,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change,CrashOnIdentity=False)
 
     x = ActionSyst.Package_all_coeffs(all_coeffs)
 
@@ -346,7 +347,7 @@ def ExecName(
 
         nint_mul = 128
 
-        nint = ActionSyst.nint()*nint_mul
+        nint = ActionSyst.nint*nint_mul
 
         fun,gun,x0,v0 = ActionSyst.GetTangentSystemDef(x,nint,method=SymplecticMethod)
 
@@ -501,7 +502,7 @@ def ExecName(
 
                 nint_mul = refinement_lvl[imul]
 
-                nint = ActionSyst.nint()*nint_mul
+                nint = ActionSyst.nint*nint_mul
 
                 fun,gun,x0,v0 = ActionSyst.GetTangentSystemDef(x,nint,method=SymplecticMethod)
 
@@ -578,7 +579,7 @@ def ExecName(
 
                 nint_mul = refinement_lvl[imul]
 
-                nint = ActionSyst.nint()*nint_mul
+                nint = ActionSyst.nint*nint_mul
 
                 ndim_ode = nbody*choreo.ndim
 
@@ -588,7 +589,7 @@ def ExecName(
 
 
                 # t_span = (0.,0.5)
-                # yf_exact =np.copy(all_pos_vel[:,:,:,ActionSyst.nint()//2].reshape(-1))
+                # yf_exact =np.copy(all_pos_vel[:,:,:,ActionSyst.nint//2].reshape(-1))
     
 
                 t_span = (0.,1.)

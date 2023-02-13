@@ -108,8 +108,10 @@ async def main():
 
         Info_dict_slow = js.TargetSlow_PlotInfo.to_py()
 
+        ncoeff_slow = Info_dict_slow["n_int"] // 2 + 1
+
         all_pos_slow = NPY_JS_to_py(js.TargetSlow_Pos.to_py())
-        all_coeffs_slow = choreo.AllPosToAllCoeffs(all_pos_slow,Info_dict_slow["n_int"],Info_dict_slow["n_Fourier"])
+        all_coeffs_slow = choreo.AllPosToAllCoeffs(all_pos_slow,ncoeff_slow)
         choreo.Center_all_coeffs(all_coeffs_slow,Info_dict_slow["nloop"],Info_dict_slow["mass"],Info_dict_slow["loopnb"],np.array(Info_dict_slow["Targets"]),np.array(Info_dict_slow["SpaceRotsUn"]))
 
         Info_dict_fast_list = js.TargetFast_PlotInfoList.to_py()
@@ -119,8 +121,10 @@ async def main():
 
         for (i,all_pos_fast_js) in enumerate(all_pos_fast_js_list) :
 
+            ncoeff_fast = Info_dict_fast_list[i]["n_int"] // 2 + 1
+
             all_pos_fast = NPY_JS_to_py(all_pos_fast_js)
-            all_coeffs_fast = choreo.AllPosToAllCoeffs(all_pos_fast,Info_dict_fast_list[i]["n_int"],Info_dict_fast_list[i]["n_Fourier"])
+            all_coeffs_fast = choreo.AllPosToAllCoeffs(all_pos_fast,ncoeff_fast)
             choreo.Center_all_coeffs(all_coeffs_fast,Info_dict_fast_list[i]["nloop"],Info_dict_fast_list[i]["mass"],Info_dict_fast_list[i]["loopnb"],np.array(Info_dict_fast_list[i]["Targets"]),np.array(Info_dict_fast_list[i]["SpaceRotsUn"]))
 
             all_coeffs_fast_list.append(all_coeffs_fast)
@@ -244,7 +248,7 @@ async def main():
     Save_Newton_Error = False
 
     n_reconverge_it_max = params_dict["Solver_Discr"] ['n_reconverge_it_max'] 
-    ncoeff_init = params_dict["Solver_Discr"]["ncoeff_init"]   
+    nint_init = params_dict["Solver_Discr"]["nint_init"]   
 
     disp_scipy_opt = (params_dict['Solver_Optim'] ['optim_verbose_lvl'] == "full")
     
@@ -285,7 +289,7 @@ async def main():
     n_opt_max = 100
     n_find_max = 1
 
-    mul_coarse_to_fine = 3
+    mul_coarse_to_fine = params_dict["Solver_Discr"]["mul_coarse_to_fine"]
 
     # Save_All_Coeffs = True
     Save_All_Coeffs = False
@@ -379,6 +383,7 @@ async def main():
                     "NPY_shape":all_pos.shape,
                     "DoClearScreen":not(params_dict['Animation_Search']['DisplayLoopsDuringSearch']),
                     "DoXMinMax":not(params_dict['Animation_Search']['DisplayLoopsDuringSearch']),
+                    "ResetRot":False,
                 },
                 dict_converter=js.Object.fromEntries
             )

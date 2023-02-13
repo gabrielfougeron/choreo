@@ -85,7 +85,9 @@ def main():
         Info_dict_slow_filename = params_dict['Geom_Target'] ["slow_filename"]
         Info_dict_slow, all_pos_slow = load_target_files(Info_dict_slow_filename,Workspace_folder,"slow")
 
-        all_coeffs_slow = choreo.AllPosToAllCoeffs(all_pos_slow,Info_dict_slow["n_int"],Info_dict_slow["n_Fourier"])
+        ncoeff_slow = Info_dict_slow["n_int"] // 2 + 1
+
+        all_coeffs_slow = choreo.AllPosToAllCoeffs(all_pos_slow,ncoeff_slow)
         choreo.Center_all_coeffs(all_coeffs_slow,Info_dict_slow["nloop"],Info_dict_slow["mass"],Info_dict_slow["loopnb"],np.array(Info_dict_slow["Targets"]),np.array(Info_dict_slow["SpaceRotsUn"]))
 
         Info_dict_fast_list = []
@@ -97,7 +99,9 @@ def main():
             Info_dict_fast, all_pos_fast = load_target_files(Info_dict_fast_filename,Workspace_folder,"fast"+str(i))
             Info_dict_fast_list.append(Info_dict_fast)
 
-            all_coeffs_fast = choreo.AllPosToAllCoeffs(all_pos_fast,Info_dict_fast_list[i]["n_int"],Info_dict_fast_list[i]["n_Fourier"])
+            ncoeff_fast = Info_dict_fast["n_int"] // 2 + 1
+
+            all_coeffs_fast = choreo.AllPosToAllCoeffs(all_pos_fast,ncoeff_fast)
             choreo.Center_all_coeffs(all_coeffs_fast,Info_dict_fast_list[i]["nloop"],Info_dict_fast_list[i]["mass"],Info_dict_fast_list[i]["loopnb"],np.array(Info_dict_fast_list[i]["Targets"]),np.array(Info_dict_fast_list[i]["SpaceRotsUn"]))
 
             all_coeffs_fast_list.append(all_coeffs_fast)
@@ -121,7 +125,6 @@ def main():
             mass.extend([params_dict["Geom_Bodies"]["mass"][il] for ib in range(nbpl[il])])
 
         mass = np.array(mass,dtype=np.float64)
-
 
     if ((LookForTarget) and not(params_dict['Geom_Target'] ['RandomJitterTarget'])) :
 
@@ -217,15 +220,7 @@ def main():
 
     nint_plot_img = nint_plot_anim * dnint
 
-    try:
-        the_lcm
-    except NameError:
-        period_div = 1.
-    else:
-        period_div = the_lcm
-
     nperiod_anim = 1.
-    # nperiod_anim = 1./period_div
 
     Plot_trace_anim = True
     # Plot_trace_anim = False
@@ -234,7 +229,7 @@ def main():
     Save_Newton_Error = False
 
     n_reconverge_it_max = params_dict["Solver_Discr"] ['n_reconverge_it_max'] 
-    ncoeff_init = params_dict["Solver_Discr"]["ncoeff_init"]   
+    nint_init = params_dict["Solver_Discr"]["nint_init"]   
 
     disp_scipy_opt =  (params_dict['Solver_Optim'] ['optim_verbose_lvl'] == "full")
     # disp_scipy_opt = False
@@ -279,7 +274,7 @@ def main():
     n_opt_max = 100
     n_find_max = 1
 
-    mul_coarse_to_fine = 3
+    mul_coarse_to_fine = params_dict["Solver_Discr"]["mul_coarse_to_fine"]
 
     # Save_All_Coeffs = True
     Save_All_Coeffs = False
