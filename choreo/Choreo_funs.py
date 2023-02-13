@@ -187,7 +187,7 @@ class ChoreoAction():
         for k in range(ncoeff):
             all_coeffs_nosym[:,:,k] *= twopi*1j*k
 
-        all_vel_b = the_irfft(all_coeffs_nosym,norm="forward")
+        all_vel_b = the_irfft(all_coeffs_nosym,n=nint,norm="forward")
 
         return np.stack((all_pos_b,all_vel_b),axis=0)
 
