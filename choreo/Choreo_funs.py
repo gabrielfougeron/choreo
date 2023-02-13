@@ -128,6 +128,14 @@ class ChoreoAction():
 
         return self.coeff_to_param_T.dot(x).reshape(self.nloop,ndim,self.ncoeff,2)
         
+    def ApplyConditionning(self,x):
+
+        return self.param_to_coeff_T.dot(self.param_to_coeff.dot(x))
+    
+    def ApplyInverseConditionning(self,x):
+
+        return self.coeff_to_param.dot(self.coeff_to_param_T.dot(x))
+
     def RemoveSym(self,x):
         r"""
         Removes symmetries and returns coeffs for all bodies.
@@ -234,7 +242,6 @@ class ChoreoAction():
 
             all_coeffs[il,:,0,0] -= xbar
 
-        
     def Compute_action_onlygrad_escape(self,x):
 
         rms_dist = Compute_Loop_Dist_btw_avg_Cython(
@@ -336,9 +343,30 @@ class ChoreoAction():
         Returns the Hessian of the action wrt parameters at a given point as a Scipy LinearOperator.
         """
 
-        return scipy.sparse.linalg.LinearOperator((self.coeff_to_param.shape[0],self.coeff_to_param.shape[0]),
+        return scipy.sparse.linalg.LinearOperator(
+            (self.coeff_to_param.shape[0],self.coeff_to_param.shape[0]),
             matvec =  (lambda dx, xl=x, selfl=self : selfl.Compute_action_hess_mul(xl,dx)),
-            rmatvec = (lambda dx, xl=x, selfl=self : selfl.Compute_action_hess_mul(xl,dx)))
+            rmatvec = (lambda dx, xl=x, selfl=self : selfl.Compute_action_hess_mul(xl,dx))
+        )
+
+    @property
+    def ConditionMatrix(self):
+
+        return scipy.sparse.linalg.LinearOperator(
+            (self.coeff_to_param.shape[0],self.coeff_to_param.shape[0]),
+            matvec =  self.ApplyConditionning,
+            rmatvec = self.ApplyConditionning
+        )
+    
+    @property
+    def InverseConditionMatrix(self):
+
+        return scipy.sparse.linalg.LinearOperator(
+            (self.coeff_to_param.shape[0],self.coeff_to_param.shape[0]),
+            matvec =  self.ApplyInverseConditionning,
+            rmatvec = self.ApplyInverseConditionning
+        )
+
 
     def Compute_action(self,x):
         r"""
@@ -369,13 +397,7 @@ class ChoreoAction():
             self.last_all_pos
         )
 
-
-        GJ = GradJ.reshape(-1)
-        y = self.param_to_coeff_T.dot(GJ)
-        
-        return J,y
-        
-        # return J,self.Package_all_coeffs_T(GradJ)
+        return J,self.Package_all_coeffs_T(GradJ)
 
     def Compute_hash_action(self,x):
         r"""

@@ -19,6 +19,7 @@ import sys
 import fractions
 import scipy.integrate
 import scipy.special
+import matplotlib.pyplot as plt
 
 __PROJECT_ROOT__ = os.path.abspath(os.path.join(os.path.dirname(__file__),os.pardir))
 sys.path.append(__PROJECT_ROOT__)
@@ -188,14 +189,38 @@ def ExecName(the_name, input_folder, store_folder):
     x = ActionSyst.Package_all_coeffs(all_coeffs_init)
 
     ActionSyst.SavePosFFT(x)
+    ActionSyst.Do_Pos_FFT = False
 
     Action,Gradaction = ActionSyst.Compute_action(x)
     Newt_err = ActionSyst.Compute_Newton_err(x)
-
     Newt_err_norm = np.linalg.norm(Newt_err)/(ActionSyst.nint*ActionSyst.nbody)
-
     print(f'Saved Newton Error : {Info_dict["Newton_Error"]}')
     print(f'Init Newton Error : {Newt_err_norm}')
+    print(f'Saved Grad Action : {Info_dict["Grad_Action"]}')
+    print(f'Init Grad Action : {np.linalg.norm(Gradaction)}')
+
+
+    all_coeffs_nosym = ActionSyst.RemoveSym(x)
+
+    ActionSyst_noSym = choreo.setup_changevar(nbody,nint,mass,n_reconverge_it_max,Sym_list=[],MomCons=False,n_grad_change=n_grad_change,CrashOnIdentity=False)
+
+    x_nosym = ActionSyst_noSym.Package_all_coeffs(all_coeffs_nosym)
+    ActionSyst_noSym.SavePosFFT(x_nosym)
+
+    Action,Gradaction = ActionSyst_noSym.Compute_action(x_nosym)
+    Newt_err = ActionSyst_noSym.Compute_Newton_err(x_nosym)
+    Newt_err_norm = np.linalg.norm(Newt_err)/(ActionSyst_noSym.nint*ActionSyst_noSym.nbody)
+    print(f'Saved Newton Error : {Info_dict["Newton_Error"]}')
+    print(f'Init Newton Error : {Newt_err_norm}')
+    print(f'Saved Grad Action : {Info_dict["Grad_Action"]}')
+    print(f'Init Grad Action : {np.linalg.norm(Gradaction)}')
+
+    ActionSyst_noSym.Do_Pos_FFT = False
+
+
+    # ncv = None
+    ncv = 200
+
 
     n_eig = 10
 
@@ -205,11 +230,33 @@ def ExecName(the_name, input_folder, store_folder):
     # which_eigs = 'SA' # Smallest (algebraic) eigenvalues.
     # which_eigs = 'BE' # Half (k/2) from each end of the spectrum.
 
+    maxiter = None
+    # maxiter = 100000
+
     HessMat = ActionSyst.Compute_action_hess_LinOpt(x)
-    w ,v = scipy.sparse.linalg.eigsh(HessMat,k=n_eig,which=which_eigs)
+    CondMat = ActionSyst.ConditionMatrix
+    InvCondMat = ActionSyst.InverseConditionMatrix
+
+
+
+
+    w ,v = scipy.sparse.linalg.eigsh(HessMat,k=n_eig,which=which_eigs,M = CondMat,Minv = InvCondMat,maxiter=maxiter, ncv=ncv)
+
     print(w)
 
 
+    HessMat = ActionSyst_noSym.Compute_action_hess_LinOpt(x_nosym)
+    CondMat = ActionSyst_noSym.ConditionMatrix
+    InvCondMat = ActionSyst_noSym.InverseConditionMatrix
+
+
+
+    w ,v = scipy.sparse.linalg.eigsh(HessMat,k=n_eig,which=which_eigs,M = CondMat,Minv = InvCondMat,maxiter=maxiter, ncv=ncv)
+
+    print(w)
+
+
+    # exit()
 
 
     ncoeff = ActionSyst.ncoeff
@@ -220,7 +267,6 @@ def ExecName(the_name, input_folder, store_folder):
     all_pos = choreo.the_irfft(c_coeffs,n=nint,axis=2,norm="forward")
 
 
-    all_pos_d_init = np.zeros((nbody,choreo.ndim,nbody,choreo.ndim,nint),dtype=np.float64)
     LagrangeMulInit = np.zeros((2,nbody,choreo.ndim,2,nbody,choreo.ndim),dtype=np.float64)
 
     # SymplecticMethod = 'SymplecticEuler'
@@ -235,7 +281,7 @@ def ExecName(the_name, input_folder, store_folder):
 
     ndof = nbody*choreo.ndim
 
-    x00 = x0
+    all_xv = np.zeros((nint,2*ndof,2*ndof))
 
     xf = x0
     vf = v0
@@ -245,8 +291,7 @@ def ExecName(the_name, input_folder, store_folder):
         x0 = xf
         v0 = vf
 
-        # all_pos_d_init[:,:,:,:,iint] = (x0.reshape(nbody*choreo.ndim,2,nbody*choreo.ndim)[:,0,:]).reshape((nbody,choreo.ndim,nbody,choreo.ndim))
-        all_pos_d_init[:,:,:,:,iint] = (x00.reshape(nbody*choreo.ndim,2,nbody*choreo.ndim)[:,0,:]).reshape((nbody,choreo.ndim,nbody,choreo.ndim))
+        all_xv[iint,:,:] = np.concatenate((x0,v0),axis=0).reshape(2*ndof,2*ndof)
 
         t_span = (iint / nint,(iint+1)/nint)
 
@@ -254,23 +299,74 @@ def ExecName(the_name, input_folder, store_folder):
 
     del fun,gun
 
+    all_pos_d_init = np.zeros((nbody,choreo.ndim,2,nbody,choreo.ndim,nint),dtype=np.float64)
+
     MonodromyMat = np.ascontiguousarray(np.concatenate((xf,vf),axis=0).reshape(2*ndof,2*ndof))
 
-    # MonodromyMat = np.dot(MonodromyMat,MonodromyMat)
 
 
-    print(MonodromyMat)
+    MonodromyMat = np.dot(MonodromyMat,MonodromyMat)
+
+    MonodromyMatLog = scipy.linalg.logm(MonodromyMat)
+
+
+    w = np.zeros((2*ndof,2*ndof),dtype=np.float64)
+    w[0:ndof,ndof:2*ndof] = np.identity(ndof)
+    w[ndof:2*ndof,0:ndof] = -np.identity(ndof)
+
+    MonodromyMatLog = (MonodromyMatLog+ w @ MonodromyMatLog.T @ w ) / 2
+
+    MonodromyMatLogsq = np.dot(MonodromyMatLog,MonodromyMatLog)
+    
+
+
+    # eigvals,eigvects = scipy.linalg.eig(a=MonodromyMat)
+    eigvals,eigvects = scipy.linalg.eig(a=MonodromyMatLog)
+
+
+
+    print(MonodromyMatLog.dtype)
+
+    # print(abs(eigvals))
+    
+    print(np.linalg.norm(eigvals.real))
+    print(np.linalg.norm(eigvals.imag))
+    # print(eigvects)
+
+
+
+    for iint in range(nint):
+
+        PeriodicPart = np.dot(all_xv[iint,:,:],scipy.linalg.expm(-(iint / nint)*MonodromyMatLog))
+
+        all_pos_d_init[:,:,:,:,:,iint] = (PeriodicPart.reshape(2,nbody*choreo.ndim,2,nbody*choreo.ndim)[0,:,:,:]).reshape((nbody,choreo.ndim,2,nbody,choreo.ndim))
+
+
+    # print(MonodromyMatLog)
+    # print(MonodromyMat)
 
     # Evaluates the relative accuracy of the Monodromy matrix integration process
     # zo should be an eigenvector of the Monodromy matrix, with eigenvalue 1
     yo = ActionSyst.Compute_init_pos_vel(x).reshape(-1)
     zo = ActionSyst.Compute_Auto_ODE_RHS(yo)
+
+    # '''SVD'''
+    # U,Instability_magnitude,Instability_directions = scipy.linalg.svd(MonodromyMat, full_matrices=True, compute_uv=True, overwrite_a=False, check_finite=True, lapack_driver='gesdd')
+# 
+    '''Eigendecomposition'''
+    Instability_magnitude,Instability_directions = choreo.InstabilityDecomposition(MonodromyMat)
+
+    # print(Instability_magnitude)
+
     print(f'Relative error on flow eigenstate: {np.linalg.norm(MonodromyMat.dot(zo)-zo)/np.linalg.norm(zo):e}')
+    # print(the_name+f' {Instability_magnitude[:]}')
+    # print(the_name+f' {np.flip(1/Instability_magnitude[:])}')
+    # print("Relative error on loxodromy ",np.linalg.norm(Instability_magnitude - np.flip(1/Instability_magnitude))/np.linalg.norm(Instability_magnitude))
 
-    eigvals,eigvects = scipy.linalg.eig(a=MonodromyMat, b=None, left=False, right=True, overwrite_a=False, overwrite_b=False, check_finite=True, homogeneous_eigvals=False)
-
-
-    print(eigvals)
+    all_coeffs_dc_init = choreo.the_rfft(all_pos_d_init,norm="forward")
+    all_coeffs_d_init = np.zeros((nbody,choreo.ndim,2,nbody,choreo.ndim,ncoeff,2),np.float64)
+    all_coeffs_d_init[:,:,:,:,:,:,0] = all_coeffs_dc_init[:,:,:,:,:,:ncoeff].real
+    all_coeffs_d_init[:,:,:,:,:,:,1] = all_coeffs_dc_init[:,:,:,:,:,:ncoeff].imag
 
 
 if __name__ == "__main__":
