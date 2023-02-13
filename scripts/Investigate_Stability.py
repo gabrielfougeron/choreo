@@ -34,9 +34,9 @@ twopi = 2*np.pi
 
 def main():
 
-    # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/')
+    input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/01 - Classic gallery')
     # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/3/')
-    input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery/01 - Classic gallery')
+    # input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery/01 - Classic gallery')
     # input_folder = os.path.join(__PROJECT_ROOT__,'Keep/tests')
     
 #     ''' Include all files in tree '''
@@ -128,12 +128,12 @@ def ExecName(the_name, input_folder, store_folder):
 
     all_pos = np.load(input_filename)
     nint = Info_dict["n_int"]
-    ncoeff_init = Info_dict["n_Fourier"] 
+    ncoeff_init = nint // 2 + 1
 
     c_coeffs = choreo.the_rfft(all_pos,axis=2,norm="forward")
     all_coeffs = np.zeros((Info_dict["nloop"],choreo.ndim,ncoeff_init,2),dtype=np.float64)
-    all_coeffs[:,:,0:ncoeff_init,0] = c_coeffs[:,:,0:ncoeff_init].real
-    all_coeffs[:,:,0:ncoeff_init,1] = c_coeffs[:,:,0:ncoeff_init].imag
+    all_coeffs[:,:,:,0] = c_coeffs.real
+    all_coeffs[:,:,:,1] = c_coeffs.imag
 
 
     # theta = 2*np.pi * 0.
@@ -167,8 +167,8 @@ def ExecName(the_name, input_folder, store_folder):
     Sym_list = choreo.Make_SymList_From_InfoDict(Info_dict,Transform_Sym)
 
 
-    # MomConsImposed = True
-    MomConsImposed = False
+    MomConsImposed = True
+    # MomConsImposed = False
 # 
 #     rot_angle = 0
 #     s = -1
@@ -184,7 +184,7 @@ def ExecName(the_name, input_folder, store_folder):
     n_reconverge_it_max = 0
     n_grad_change = 1.
 
-    ActionSyst = choreo.setup_changevar(nbody,ncoeff_init,mass,n_reconverge_it_max,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change,CrashOnIdentity=False)
+    ActionSyst = choreo.setup_changevar(nbody,nint,mass,n_reconverge_it_max,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change,CrashOnIdentity=False)
 
     x = ActionSyst.Package_all_coeffs(all_coeffs_init)
 
@@ -193,7 +193,7 @@ def ExecName(the_name, input_folder, store_folder):
     Action,Gradaction = ActionSyst.Compute_action(x)
     Newt_err = ActionSyst.Compute_Newton_err(x)
 
-    Newt_err_norm = np.linalg.norm(Newt_err)/(ActionSyst.nint()*ActionSyst.nbody)
+    Newt_err_norm = np.linalg.norm(Newt_err)/(ActionSyst.nint*ActionSyst.nbody)
 
     print(f'Saved Newton Error : {Info_dict["Newton_Error"]}')
     print(f'Init Newton Error : {Newt_err_norm}')
@@ -216,8 +216,8 @@ def ExecName(the_name, input_folder, store_folder):
 
 
 
-    ncoeff = ActionSyst.ncoeff()
-    nint = ActionSyst.nint()
+    ncoeff = ActionSyst.ncoeff
+    nint = ActionSyst.nint
     
     all_coeffs = ActionSyst.RemoveSym(x)
     c_coeffs = all_coeffs.view(dtype=np.complex128)[...,0]

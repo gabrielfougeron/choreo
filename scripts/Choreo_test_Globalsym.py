@@ -122,12 +122,9 @@ def main(the_i=0):
     n_reconverge_it_max = 4
     # n_reconverge_it_max = 1
 
-    # ncoeff_init = 102
-    # ncoeff_init = 800
-    # ncoeff_init = 201   
-    # ncoeff_init = 512
-    ncoeff_init = 1200
-    # ncoeff_init = the_lcm
+
+    nint_init = 1200
+
     
     disp_scipy_opt = False
     # disp_scipy_opt = True
@@ -142,14 +139,16 @@ def main(the_i=0):
 
     # krylov_method = 'lgmres'
     # krylov_method = 'gmres'
-    # krylov_method = 'bicgstab'
-    krylov_method = 'cgs'
+    krylov_method = 'bicgstab'
+    # krylov_method = 'cgs'
     # krylov_method = 'minres'
     # krylov_method = 'tfqmr'
 
 
     # line_search = 'armijo'
     line_search = 'wolfe'
+
+    linesearch_smin = 0.01
     
     gradtol_list =          [1e-1   ,1e-3   ,1e-5   ,1e-7   ,1e-9   ,1e-11  ,1e-13  ,1e-15  ]
     inner_maxiter_list =    [30     ,30     ,50     ,60     ,70     ,80     ,100    ,100    ]
@@ -204,6 +203,31 @@ def main(the_i=0):
 
     plot_extend = 0.03
 
+
+
+
+
+    nT_slow = None
+    nT_fast = None
+    Info_dict_slow = None
+    Info_dict_fast_list = None
+    all_coeffs_slow = None
+    all_coeffs_fast_list = None
+    il_slow_source = None
+    ibl_slow_source = None
+    il_fast_source = None
+    ibl_fast_source = None
+    Rotate_fast_with_slow = None
+    Optimize_Init = None
+    Randomize_Fast_Init = None
+    LookForTarget = False
+    CrashOnError_changevar = True
+    color_list = None
+    optim_callback_list = []
+    callback_after_init_list = []
+
+    ReconvergeSol = False
+
     all_kwargs = choreo.Pick_Named_Args_From_Dict(choreo.Find_Choreo,dict(globals(),**locals()))
     choreo.Find_Choreo(**all_kwargs)
 
@@ -212,23 +236,23 @@ def main(the_i=0):
 
 
 
-# if __name__ == "__main__":
-#     main(0)
+if __name__ == "__main__":
+    main(0)
    
 
-if __name__ == "__main__":
-
-    # n = multiprocessing.cpu_count()
-    # n = multiprocessing.cpu_count()//2
-    n = 2
-    
-    print(f"Executing with {n} workers")
-    
-    with concurrent.futures.ProcessPoolExecutor(max_workers=n) as executor:
-        
-        res = []
-        for i in range(1,n+1):
-            res.append(executor.submit(main,i))
-            time.sleep(0.01)
+# if __name__ == "__main__":
+# 
+#     # n = multiprocessing.cpu_count()
+#     # n = multiprocessing.cpu_count()//2
+#     n = 2
+#     
+#     print(f"Executing with {n} workers")
+#     
+#     with concurrent.futures.ProcessPoolExecutor(max_workers=n) as executor:
+#         
+#         res = []
+#         for i in range(1,n+1):
+#             res.append(executor.submit(main,i))
+#             time.sleep(0.01)
 
  
