@@ -15,6 +15,7 @@ import copy
 import shutil
 import time
 import builtins
+import pyamg
 
 from choreo.Choreo_scipy_plus import *
 from choreo.Choreo_funs import *
@@ -292,6 +293,14 @@ def Find_Choreo(
                 jac_options = {'method':krylov_method,'rdiff':rdiff,'outer_k':outer_k,'inner_tol':inner_tol,'inner_M':inner_M }
             else:
                 jac_options = {'method':krylov_method,'rdiff':rdiff,'outer_k':outer_k,'inner_tol':inner_tol,'inner_M':inner_M }
+
+
+            # jac_options = {'method':pyamg.krylov.bicgstab}
+            # jac_options = {'method':pyamg.krylov.cr}
+            # jac_options = {'method':pyamg.krylov.fgmres}
+            # jac_options = {'method':pyamg.krylov.gmres}
+            # jac_options = {'method':pyamg.krylov.gmres_householder}
+            # jac_options = {'method':pyamg.krylov.gmres_mgs}
  
             if (Use_exact_Jacobian):
 
