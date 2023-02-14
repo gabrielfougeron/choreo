@@ -318,7 +318,7 @@ async def main():
 
     # await SyncDiskPromise
 
-    store_folder = '/mount_dir/GUI solutions'
+    store_folder = '/Workspace/GUI solutions'
 
     if not(os.path.isdir(store_folder)):
 
