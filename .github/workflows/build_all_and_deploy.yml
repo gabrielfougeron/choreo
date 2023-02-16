@@ -3,7 +3,7 @@ name: Build_All_And_Deploy
 on:
   push:
     branches:    
-      - main
+      - GUI_deploy
 
 # Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
 permissions:
