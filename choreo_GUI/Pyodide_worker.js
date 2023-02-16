@@ -114,7 +114,7 @@ self.SetupWorkspaceInWorker = async function(dirHandle) {
     } else {
 
         await pyodideReadyPromise
-        NativeFS = await pyodide.mountNativeFS("/mount_dir", dirHandle)
+        NativeFS = await pyodide.mountNativeFS("/Workspace", dirHandle)
 
         NativeFSIsSetUp = true
 
