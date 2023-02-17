@@ -207,7 +207,8 @@ def ExecName(the_name, input_folder, store_folder):
     ActionSyst_nosym = choreo.setup_changevar(nbody,nint,mass,n_reconverge_it_max,Sym_list=[],MomCons=False,n_grad_change=n_grad_change,CrashOnIdentity=False)
 
     x_nosym = ActionSyst_nosym.Package_all_coeffs(all_coeffs)
-
+    ActionSyst.SavePosFFT(x_nosym)
+    ActionSyst.Do_Pos_FFT = False
 
 
 
@@ -300,6 +301,36 @@ def ExecName(the_name, input_folder, store_folder):
     Hx = Hx.reshape(Hx_sol.shape)
 
     print(f'Agreement between symplectic RK and spectral eigenvalue : {np.linalg.norm(Hx - Hx_sol)}')
+
+
+
+
+    RK_eigenvalues, RK_eigenvectors = scipy.linalg.eig(MonodromyMatLog)
+
+
+    print(RK_eigenvalues)
+
+    # n_eig = 2*ndof
+    n_eig = 10
+
+    OPinv = None
+
+# 
+    # OPinv = scipy.sparse.linalg.LinearOperator(
+    #         Hamil_LinOpt.shape,
+    #         matvec =  (lambda x, A=Hamil_LinOpt : scipy.sparse.linalg.gmres(A,x)),
+    #         dtype=np.float64
+    #     )
+
+    Sp_eigenvalues, Sp_eigenvectors = scipy.sparse.linalg.eigs(Hamil_LinOpt, k=n_eig, M=None, sigma=None, which='SM', v0=None, ncv=None, maxiter=None, tol=0, return_eigenvectors=True, Minv=None, OPinv=OPinv, OPpart=None)
+# 
+#     print(Sp_eigenvalues)
+
+
+
+
+
+
 
 
 
