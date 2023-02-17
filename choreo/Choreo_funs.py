@@ -41,7 +41,7 @@ from choreo.Choreo_cython_funs import Compute_MinDist_Cython,Compute_Loop_Dist_b
 from choreo.Choreo_cython_funs import Compute_Forces_Cython,Compute_JacMat_Forces_Cython,Compute_JacMul_Forces_Cython
 from choreo.Choreo_cython_funs import Transform_Coeffs_Single_Loop,SparseScaleCoeffs,ComputeSpeedCoeffs
 from choreo.Choreo_cython_funs import the_irfft,the_rfft
-from choreo.Choreo_cython_funs import Compute_action_hess_mul_Tan_Cython_nosym
+from choreo.Choreo_cython_funs import Compute_hamil_hess_mul_Cython_nosym
 
 if ndim == 2:
     from choreo.Choreo_cython_funs_2D import Compute_action_Cython_2D as Compute_action_Cython ,Compute_action_hess_mul_Cython_2D as Compute_action_hess_mul_Cython
@@ -366,7 +366,6 @@ class ChoreoAction():
             matvec =  self.ApplyInverseConditionning,
             rmatvec = self.ApplyInverseConditionning
         )
-
 
     def Compute_action(self,x):
         r"""
@@ -943,6 +942,35 @@ class ChoreoAction():
         xbar_mean = np.mean(xbar_all,axis=1)
 
         return xbar_mean
+
+    def Compute_hamil_hess_mul_nosym(self,x,all_coeffs_d_xv_vect):
+
+        all_coeffs_d_xv = all_coeffs_d_xv_vect.reshape(2,self.nbody,ndim,self.ncoeff,2)
+
+        self.SavePosFFT(x)
+
+        Hdxv = Compute_hamil_hess_mul_Cython_nosym(
+            self.nbody          ,
+            self.ncoeff         ,
+            self.nint           ,
+            self.mass           ,
+            self.last_all_pos   ,
+            all_coeffs_d_xv     ,
+        )
+
+        return Hdxv.reshape(-1)
+    
+    def Compute_hamil_hess_LinOpt(self,x):
+        r"""
+        Returns the Hessian of the hamiltonian at a given point as a Scipy LinearOperator.
+        """
+
+        the_shape = 2*self.nbody*ndim*self.ncoeff*2
+
+        return scipy.sparse.linalg.LinearOperator(
+            (the_shape,the_shape),
+            matvec =  (lambda dx, xl=x, selfl=self : selfl.Compute_hamil_hess_mul_nosym(xl,dx))
+        )
 
 
 
