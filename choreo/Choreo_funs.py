@@ -41,7 +41,9 @@ from choreo.Choreo_cython_funs import Compute_MinDist_Cython,Compute_Loop_Dist_b
 from choreo.Choreo_cython_funs import Compute_Forces_Cython,Compute_JacMat_Forces_Cython,Compute_JacMul_Forces_Cython
 from choreo.Choreo_cython_funs import Transform_Coeffs_Single_Loop,SparseScaleCoeffs,ComputeSpeedCoeffs
 from choreo.Choreo_cython_funs import the_irfft,the_rfft
-from choreo.Choreo_cython_funs import Compute_hamil_hess_mul_Cython_nosym
+from choreo.Choreo_cython_funs import Compute_hamil_hess_mul_Cython_nosym,Compute_hamil_hess_mul_xonly_Cython_nosym
+from choreo.Choreo_cython_funs import Compute_Derivative_precond_inv_Cython_nosym,Compute_Derivative_precond_Cython_nosym
+from choreo.Choreo_cython_funs import Compute_Derivative_Cython_nosym
 
 if ndim == 2:
     from choreo.Choreo_cython_funs_2D import Compute_action_Cython_2D as Compute_action_Cython ,Compute_action_hess_mul_Cython_2D as Compute_action_hess_mul_Cython
@@ -971,6 +973,102 @@ class ChoreoAction():
             (the_shape,the_shape),
             matvec =  (lambda dx, xl=x, selfl=self : selfl.Compute_hamil_hess_mul_nosym(xl,dx))
         )
+
+    def Compute_hamil_hess_xonly(self,x,all_coeffs_d_x_vect):
+
+        all_coeffs_d_x = all_coeffs_d_x_vect.reshape(self.nbody,ndim,self.ncoeff,2)
+
+        self.SavePosFFT(x)
+
+        res = Compute_hamil_hess_mul_xonly_Cython_nosym(
+            self.nbody          ,
+            self.ncoeff         ,
+            self.nint           ,
+            self.mass           ,
+            self.last_all_pos   ,
+            all_coeffs_d_x      ,
+        )
+
+        return res.reshape(-1)
+    
+    def Compute_hamil_hess_xonly_LinOpt(self,x):
+
+        the_shape = self.nbody*ndim*self.ncoeff*2
+
+        return scipy.sparse.linalg.LinearOperator(
+            (the_shape,the_shape),
+            matvec =  (lambda dx, xl=x, selfl=self : selfl.Compute_hamil_hess_xonly(xl,dx)),
+            rmatvec =  (lambda dx, xl=x, selfl=self : selfl.Compute_hamil_hess_xonly(xl,dx)), 
+        )
+    
+    def Compute_hamil_hess_xonly_precond(self,x,all_coeffs_d_x_vect):
+
+        all_coeffs_d_x = all_coeffs_d_x_vect.reshape(self.nbody,ndim,self.ncoeff,2)
+
+        all_coeffs_d_x_preco = Compute_Derivative_precond_inv_Cython_nosym(
+            self.nbody          ,
+            self.ncoeff         ,
+            all_coeffs_d_x      ,
+        )
+
+        self.SavePosFFT(x)
+
+        Ax = Compute_hamil_hess_mul_xonly_Cython_nosym(
+            self.nbody              ,
+            self.ncoeff             ,
+            self.nint               ,
+            self.mass               ,
+            self.last_all_pos       ,
+            all_coeffs_d_x_preco    ,
+        )
+
+        res = Compute_Derivative_precond_inv_Cython_nosym(
+            self.nbody          ,
+            self.ncoeff         ,
+            Ax      ,
+        )
+
+        return res.reshape(-1)
+    
+    def Compute_hamil_hess_xonly_precond_LinOpt(self,x):
+
+        the_shape = self.nbody*ndim*self.ncoeff*2
+
+        return scipy.sparse.linalg.LinearOperator(
+            (the_shape,the_shape),
+            matvec =  (lambda dx, xl=x, selfl=self : selfl.Compute_hamil_hess_xonly_precond(xl,dx)),
+            rmatvec =  (lambda dx, xl=x, selfl=self : selfl.Compute_hamil_hess_xonly_precond(xl,dx))
+        )
+    
+    def Compute_hamil_hess_xonly_precond_inv(self,all_coeffs_d_x_vect):
+
+        all_coeffs_d_x = all_coeffs_d_x_vect.reshape(self.nbody,ndim,self.ncoeff,2)
+
+        all_coeffs_d_x_preco = Compute_Derivative_precond_inv_Cython_nosym(
+            self.nbody          ,
+            self.ncoeff         ,
+            all_coeffs_d_x      ,
+        )
+
+        return all_coeffs_d_x_preco.reshape(-1)    
+    
+
+    def Compute_deriv(self,all_coeffs_d_x_vect):
+
+        all_coeffs_d_x = all_coeffs_d_x_vect.reshape(self.nbody,ndim,self.ncoeff,2)
+
+        all_coeffs_d_x_preco = Compute_Derivative_Cython_nosym(
+            self.nbody          ,
+            self.ncoeff         ,
+            all_coeffs_d_x      ,
+        )
+
+        return all_coeffs_d_x_preco.reshape(-1)
+
+
+
+
+
 
 
 

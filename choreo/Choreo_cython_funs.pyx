@@ -1589,7 +1589,7 @@ def diagmat_changevar(
     cdef double k_avg, mass_avg, mul
     
     cdef long k_sum
-    cdef long ift,idx,res,k,idim,il
+    cdef long ift,idx,res,k,idim,il,iparam
     cdef long n_indptr,indptr_beg,indptr_end,i_shift
 
     for iparam in range(nparam):
@@ -1877,6 +1877,7 @@ def ComputeSpeedCoeffs(
 
     cdef long idim
     cdef long k
+    cdef double prod_fac
 
     cdef np.ndarray[double, ndim=3, mode="c"] one_loop_coeffs_speed_np = np.zeros((cndim,ncoeff,2),dtype=np.float64)
     cdef double[:,:,::1] one_loop_coeffs_speed = one_loop_coeffs_speed_np
@@ -1884,8 +1885,10 @@ def ComputeSpeedCoeffs(
     for idim in range(cndim):
         for k in range(ncoeff):
 
-            one_loop_coeffs_speed[idim,k,0] =  k * one_loop_coeffs[idim,k,1] 
-            one_loop_coeffs_speed[idim,k,1] = -k * one_loop_coeffs[idim,k,0] 
+            prod_fac = ctwopi*k
+
+            one_loop_coeffs_speed[idim,k,0] = - prod_fac * one_loop_coeffs[idim,k,1] 
+            one_loop_coeffs_speed[idim,k,1] =   prod_fac * one_loop_coeffs[idim,k,0] 
 
     return one_loop_coeffs_speed_np
 
@@ -1930,20 +1933,6 @@ def Compute_hamil_hess_mul_Cython_nosym(
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     # 0 = -d/dt v + f/m
 
     c_coeffs_d_x = all_coeffs_d_xv[0,:,:,:,:].view(dtype=np.complex128)[...,0]
@@ -1977,7 +1966,6 @@ def Compute_hamil_hess_mul_Cython_nosym(
                 bbp = b*mass[ib ]
 
                 for idim in range(cndim):
-                    # Sign ?
 
                     hess_pot_all_d[ib ,idim,iint] += bb *dx[idim] + aa *ddx[idim]
                     hess_pot_all_d[ibp,idim,iint] -= bbp*dx[idim] + aap*ddx[idim]
@@ -2012,10 +2000,302 @@ def Compute_hamil_hess_mul_Cython_nosym(
 
 
 
-
-
-
-
     return Hamil_hess_dxv_np
 
+
+
+def Compute_hamil_hess_mul_Cython_nosym_split(
+    long nbody                          ,
+    long ncoeff                         ,
+    long nint                           ,
+    double[::1]       mass              ,
+    double[:,:,::1]   all_pos           ,
+    np.ndarray[double, ndim=4, mode="c"]  all_coeffs_d_x  ,
+    np.ndarray[double, ndim=4, mode="c"]  all_coeffs_d_v  
+):
+
+    cdef Py_ssize_t il,ilp,i
+    cdef Py_ssize_t idim,jdim
+    cdef Py_ssize_t ibi
+    cdef Py_ssize_t ib,ibp
+    cdef Py_ssize_t iint
+    cdef Py_ssize_t k
+    cdef long k2
+    cdef long ddiv,rem
+    cdef double pot,potp,potpp
+    cdef double prod_mass,a,b,c,dx2,prod_fac,dxtddx
+    cdef double aa,aap,bb,bbp
+    cdef double[::1] dx  = np.zeros((cndim),dtype=np.float64)
+    cdef double[::1] ddx = np.zeros((cndim),dtype=np.float64)
+
+
+    # 0 = -d/dt x + v
+    cdef np.ndarray[double, ndim=4, mode="c"] Hamil_hess_dx_np = np.zeros((nbody,cndim,ncoeff,2),dtype=np.float64)
+    cdef double[:,:,:,::1] Hamil_hess_dx = Hamil_hess_dx_np
+
+    for ib in range(nbody):
+        for idim in range(cndim):
+            for k in range(ncoeff):
+
+                prod_fac = ctwopi*k
+
+                Hamil_hess_dx[ib,idim,k,0] =   prod_fac * all_coeffs_d_x[ib,idim,k,1] + all_coeffs_d_v[ib,idim,k,0]
+                Hamil_hess_dx[ib,idim,k,1] = - prod_fac * all_coeffs_d_x[ib,idim,k,0] + all_coeffs_d_v[ib,idim,k,1]
+
+
+
+    # 0 = -d/dt v + f/m
+
+    c_coeffs_d_x = all_coeffs_d_x[:,:,:,:].view(dtype=np.complex128)[...,0]
+    cdef double[:,:,::1] all_pos_d_x = the_irfft(c_coeffs_d_x,norm="forward")
+
+    cdef double[:,:,::1] hess_pot_all_d = np.zeros((nbody,cndim,nint),dtype=np.float64) # size ????
+
+    for iint in range(nint):
+
+        for ib in range(nbody):
+            for ibp in range(ib+1,nbody):
+
+                for idim in range(cndim):
+                    dx[idim] = all_pos[ib,idim,iint] - all_pos[ibp,idim,iint] 
+                    ddx[idim] = all_pos_d_x[ib,idim,iint] - all_pos_d_x[ibp,idim,iint] 
+
+                dx2 = dx[0]*dx[0]
+                dxtddx = dx[0]*ddx[0]
+                for idim in range(1,cndim):
+                    dx2 += dx[idim]*dx[idim]
+                    dxtddx += dx[idim]*ddx[idim]
+
+                pot,potp,potpp = CCpt_interbody_pot(dx2)
+
+                a = 2*potp
+                aa  = a*mass[ibp]
+                aap = a*mass[ib ]
+
+                b = (4*potpp*dxtddx)
+                bb  = b*mass[ibp]
+                bbp = b*mass[ib ]
+
+                for idim in range(cndim):
+
+                    hess_pot_all_d[ib ,idim,iint] += bb *dx[idim] + aa *ddx[idim]
+                    hess_pot_all_d[ibp,idim,iint] -= bbp*dx[idim] + aap*ddx[idim]
+
+    cdef double complex[:,:,::1]  hess_dx_pot_fft = the_rfft(hess_pot_all_d,norm="forward")
+
+    cdef np.ndarray[double, ndim=4, mode="c"] Hamil_hess_dv_np = np.zeros((nbody,cndim,ncoeff,2),dtype=np.float64)
+    cdef double[:,:,:,::1] Hamil_hess_dv = Hamil_hess_dv_np
+
+    for ib in range(nbody):
+
+        for idim in range(cndim):
+            
+            Hamil_hess_dv[ib,idim,0,0] = -hess_dx_pot_fft[ib,idim,0].real
+            Hamil_hess_dv[ib,idim,0,1] = 0 
+
+            for k in range(1,ncoeff):
+                
+                prod_fac = ctwopi*k
+
+                Hamil_hess_dv[ib,idim,k,0] =   prod_fac * all_coeffs_d_v[ib,idim,k,1] - hess_dx_pot_fft[ib,idim,k].real
+                Hamil_hess_dv[ib,idim,k,1] = - prod_fac * all_coeffs_d_v[ib,idim,k,0] - hess_dx_pot_fft[ib,idim,k].imag
+
+
+
+    return Hamil_hess_dx_np, Hamil_hess_dv_np
+
+
+
+
+
+
+def Compute_Derivative_Cython_nosym(
+    long nbody                          ,
+    long ncoeff                         ,
+    np.ndarray[double, ndim=4, mode="c"]  all_coeffs
+):
+
+    cdef Py_ssize_t idim,jdim
+    cdef Py_ssize_t ib,ibp
+    cdef Py_ssize_t iint
+    cdef Py_ssize_t k
+    cdef double prod_fac
+
+    cdef np.ndarray[double, ndim=4, mode="c"] all_coeffs_d_np = np.zeros((nbody,cndim,ncoeff,2),dtype=np.float64)
+    cdef double[:,:,:,::1] all_coeffs_d = all_coeffs_d_np
+
+    for ib in range(nbody):
+        for idim in range(cndim):
+            for k in range(ncoeff):
+
+                prod_fac = ctwopi*k
+
+                all_coeffs_d[ib,idim,k,0] =   prod_fac * all_coeffs[ib,idim,k,1]
+                all_coeffs_d[ib,idim,k,1] = - prod_fac * all_coeffs[ib,idim,k,0]
+
+    return all_coeffs_d_np
+
+
+
+def Compute_Derivative_precond_Cython_nosym(
+    long nbody                          ,
+    long ncoeff                         ,
+    np.ndarray[double, ndim=4, mode="c"]  all_coeffs
+):
+
+    cdef Py_ssize_t idim,jdim
+    cdef Py_ssize_t ib,ibp
+    cdef Py_ssize_t iint
+    cdef Py_ssize_t k
+    cdef double prod_fac
+
+    cdef np.ndarray[double, ndim=4, mode="c"] all_coeffs_d_np = np.zeros((nbody,cndim,ncoeff,2),dtype=np.float64)
+    cdef double[:,:,:,::1] all_coeffs_d = all_coeffs_d_np
+
+    for ib in range(nbody):
+        for idim in range(cndim):
+
+            all_coeffs_d[ib,idim,0,0] = ctwopi * all_coeffs[ib,idim,0,0]
+            all_coeffs_d[ib,idim,0,1] = ctwopi * all_coeffs[ib,idim,0,1]
+
+            for k in range(1,ncoeff):
+
+                prod_fac = ctwopi*k
+
+                all_coeffs_d[ib,idim,k,0] = prod_fac * all_coeffs[ib,idim,k,0]
+                all_coeffs_d[ib,idim,k,1] = prod_fac * all_coeffs[ib,idim,k,1]
     
+    return all_coeffs_d_np
+
+def Compute_Derivative_precond_inv_Cython_nosym(
+    long nbody                          ,
+    long ncoeff                         ,
+    np.ndarray[double, ndim=4, mode="c"]  all_coeffs
+):
+
+    cdef Py_ssize_t idim,jdim
+    cdef Py_ssize_t ib,ibp
+    cdef Py_ssize_t iint
+    cdef Py_ssize_t k
+    cdef double prod_fac
+
+    cdef np.ndarray[double, ndim=4, mode="c"] all_coeffs_d_np = np.zeros((nbody,cndim,ncoeff,2),dtype=np.float64)
+    cdef double[:,:,:,::1] all_coeffs_d = all_coeffs_d_np
+
+    for ib in range(nbody):
+        for idim in range(cndim):
+
+            prod_fac = 1. / ctwopi
+
+            all_coeffs_d[ib,idim,0,0] = prod_fac * all_coeffs[ib,idim,0,0]
+            all_coeffs_d[ib,idim,0,1] = prod_fac * all_coeffs[ib,idim,0,1]
+
+            for k in range(1,ncoeff):
+
+                prod_fac = 1. / (ctwopi*k)
+
+                all_coeffs_d[ib,idim,k,0] = prod_fac * all_coeffs[ib,idim,k,0]
+                all_coeffs_d[ib,idim,k,1] = prod_fac * all_coeffs[ib,idim,k,1]
+    
+    return all_coeffs_d_np
+
+
+
+
+    
+
+
+def Compute_hamil_hess_mul_xonly_Cython_nosym(
+    long nbody                          ,
+    long ncoeff                         ,
+    long nint                           ,
+    double[::1]       mass              ,
+    double[:,:,::1]   all_pos           ,
+    np.ndarray[double, ndim=4, mode="c"]  all_coeffs_d_x 
+):
+
+    cdef Py_ssize_t il,ilp,i
+    cdef Py_ssize_t idim,jdim
+    cdef Py_ssize_t ibi
+    cdef Py_ssize_t ib,ibp
+    cdef Py_ssize_t iint
+    cdef Py_ssize_t k
+    cdef long k2
+    cdef long ddiv,rem
+    cdef double pot,potp,potpp
+    cdef double prod_mass,a,b,c,dx2,prod_fac,dxtddx
+    cdef double aa,aap,bb,bbp
+    cdef double[::1] dx  = np.zeros((cndim),dtype=np.float64)
+    cdef double[::1] ddx = np.zeros((cndim),dtype=np.float64)
+
+
+
+    cdef np.ndarray[double, ndim=4, mode="c"] Hamil_hess_dx_np = np.empty((nbody,cndim,ncoeff,2),dtype=np.float64)
+    cdef double[:,:,:,::1] Hamil_hess_dx = Hamil_hess_dx_np
+
+
+
+    # 0 = -d2/dt2 x + f/m
+
+    c_coeffs_d_x = all_coeffs_d_x[:,:,:,:].view(dtype=np.complex128)[...,0]
+    cdef double[:,:,::1] all_pos_d_x = the_irfft(c_coeffs_d_x,norm="forward")
+
+    cdef double[:,:,::1] hess_pot_all_d = np.zeros((nbody,cndim,nint),dtype=np.float64) # size ????
+
+    for iint in range(nint):
+
+        for ib in range(nbody):
+            for ibp in range(ib+1,nbody):
+
+                for idim in range(cndim):
+                    dx[idim] = all_pos[ib,idim,iint] - all_pos[ibp,idim,iint] 
+                    ddx[idim] = all_pos_d_x[ib,idim,iint] - all_pos_d_x[ibp,idim,iint] 
+
+                dx2 = dx[0]*dx[0]
+                dxtddx = dx[0]*ddx[0]
+                for idim in range(1,cndim):
+                    dx2 += dx[idim]*dx[idim]
+                    dxtddx += dx[idim]*ddx[idim]
+
+                pot,potp,potpp = CCpt_interbody_pot(dx2)
+
+                a = 2*potp
+                aa  = a*mass[ibp]
+                aap = a*mass[ib ]
+
+                b = (4*potpp*dxtddx)
+                bb  = b*mass[ibp]
+                bbp = b*mass[ib ]
+
+                for idim in range(cndim):
+
+                    hess_pot_all_d[ib ,idim,iint] += bb *dx[idim] + aa *ddx[idim]
+                    hess_pot_all_d[ibp,idim,iint] -= bbp*dx[idim] + aap*ddx[idim]
+
+
+
+
+    cdef double complex[:,:,::1]  hess_dx_pot_fft = the_rfft(hess_pot_all_d,norm="forward")
+
+
+    for ib in range(nbody):
+
+        for idim in range(cndim):
+            
+            Hamil_hess_dx[ib,idim,0,0] = -hess_dx_pot_fft[ib,idim,0].real
+            Hamil_hess_dx[ib,idim,0,1] = 0 
+
+            for k in range(1,ncoeff):
+                 
+                k2 = k*k
+                a = cfourpisq*k2
+                
+                Hamil_hess_dx[ib,idim,k,0] = a * all_coeffs_d_x[ib,idim,k,0] - hess_dx_pot_fft[ib,idim,k].real
+                Hamil_hess_dx[ib,idim,k,1] = a * all_coeffs_d_x[ib,idim,k,1] - hess_dx_pot_fft[ib,idim,k].imag
+
+
+
+
+
+    return Hamil_hess_dx_np
+

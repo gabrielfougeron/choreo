@@ -254,10 +254,10 @@ def ExecName(the_name, input_folder, store_folder):
     MonodromyMatLog = scipy.linalg.logm(MonodromyMat)
 
 
-    w = np.zeros((2*ndof,2*ndof),dtype=np.float64)
-    w[0:ndof,ndof:2*ndof] = np.identity(ndof)
-    w[ndof:2*ndof,0:ndof] = -np.identity(ndof)
-    MonodromyMatLog = (MonodromyMatLog+ w @ MonodromyMatLog.T @ w ) / 2
+    # w = np.zeros((2*ndof,2*ndof),dtype=np.float64)
+    # w[0:ndof,ndof:2*ndof] = np.identity(ndof)
+    # w[ndof:2*ndof,0:ndof] = -np.identity(ndof)
+    # MonodromyMatLog = (MonodromyMatLog+ w @ MonodromyMatLog.T @ w ) / 2
 
 
     all_pos_d_xv = np.zeros((2*ndof,2*ndof,nint),dtype=np.float64)
@@ -310,24 +310,87 @@ def ExecName(the_name, input_folder, store_folder):
 
     print(RK_eigenvalues)
 
-    # n_eig = 2*ndof
-    n_eig = 10
 
-    OPinv = None
+    solver = scipy.sparse.linalg.gmres
 
+
+    xsize = 2*ActionSyst_nosym.nbody*choreo.ndim*ActionSyst_nosym.ncoeff
 # 
-    # OPinv = scipy.sparse.linalg.LinearOperator(
-    #         Hamil_LinOpt.shape,
-    #         matvec =  (lambda x, A=Hamil_LinOpt : scipy.sparse.linalg.gmres(A,x)),
-    #         dtype=np.float64
-    #     )
-
-    Sp_eigenvalues, Sp_eigenvectors = scipy.sparse.linalg.eigs(Hamil_LinOpt, k=n_eig, M=None, sigma=None, which='SM', v0=None, ncv=None, maxiter=None, tol=0, return_eigenvectors=True, Minv=None, OPinv=OPinv, OPpart=None)
+#     x0 = np.random.random((xsize))
 # 
-#     print(Sp_eigenvalues)
+# 
+    Hamil_LinOpt_xonly = ActionSyst_nosym.Compute_hamil_hess_xonly_LinOpt(x_nosym)
+# 
+#     t_beg= time.perf_counter()
+#     sol,_ = solver(Hamil_LinOpt_xonly, x0)
+#     t_end= time.perf_counter()
+# 
+#     err = np.linalg.norm(Hamil_LinOpt_xonly.dot(sol) - x0)
+#     print(f'NO preco. time : {t_end-t_beg}.  err : {err}')
+# 
+# 
+# 
+# 
+# 
+#     y0 = ActionSyst_nosym.Compute_hamil_hess_xonly_precond_inv(x0)
+# 
+    Hamil_LinOpt_xonly_preco = ActionSyst_nosym.Compute_hamil_hess_xonly_precond_LinOpt(x_nosym)
+# 
+#     t_beg= time.perf_counter()
+#     sol,_ = solver(Hamil_LinOpt_xonly_preco, y0)
+#     t_end= time.perf_counter()
+# 
+#     sol = ActionSyst_nosym.Compute_hamil_hess_xonly_precond_inv(sol)
+# 
+#     err = np.linalg.norm(Hamil_LinOpt_xonly.dot(sol) - x0)
+# 
+#     print(f'YES preco. time : {t_end-t_beg}.  err : {err}')
 
 
 
+
+    def solve_process(qp,**kwargs):
+
+        q = qp[0:xsize]
+        p = qp[xsize:2*xsize]
+
+        pp = p + ActionSyst_nosym.Compute_deriv(q)
+
+        t_beg= time.perf_counter()
+
+        x,_ = solver(Hamil_LinOpt_xonly, pp,**kwargs)
+
+        # pp = ActionSyst_nosym.Compute_hamil_hess_xonly_precond_inv(pp)
+        # x,_ = solver(Hamil_LinOpt_xonly_preco, pp,**kwargs)
+        # x = ActionSyst_nosym.Compute_hamil_hess_xonly_precond_inv(x)
+
+        t_end= time.perf_counter()
+
+        v = q + ActionSyst_nosym.Compute_deriv(x)
+
+        print(t_end-t_beg)
+
+        return np.append(x,v)
+
+
+
+
+    n_eig = 2*ndof
+    # n_eig = 10
+
+    sigma=0.
+
+    ncv = 100
+
+    OPinv = scipy.sparse.linalg.LinearOperator(
+            Hamil_LinOpt.shape,
+            matvec =  (lambda x : solve_process(x)),
+            dtype=np.float64
+        )
+
+    Sp_eigenvalues, Sp_eigenvectors = scipy.sparse.linalg.eigs(Hamil_LinOpt, k=n_eig, M=None, sigma=sigma, which='SI', v0=None, ncv=ncv, maxiter=None, tol=0, return_eigenvectors=True, Minv=None, OPinv=OPinv, OPpart=None)
+
+    print(Sp_eigenvalues)
 
 
 
