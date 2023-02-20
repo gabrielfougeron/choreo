@@ -127,7 +127,36 @@ class ChoreoAction():
     def Unpackage_all_coeffs_T(self,x):
 
         return self.coeff_to_param_T.dot(x).reshape(self.nloop,ndim,self.ncoeff,2)
+
+    def TransferParamBtwRefinementLevels(self,xin,iin=None,iout=None):
+
+        cvg_lvl_in = self.current_cvg_lvl
+
+        if iin is None:
+            iin = cvg_lvl_in
+            
+        if iout is None:
+            iout = iin + 1
+
+        self.current_cvg_lvl = iin
+
+        all_coeffs_in = self.Unpackage_all_coeffs(xin)
+        ncoeff_in = self.ncoeff
+
+
+        self.current_cvg_lvl = iout
+        ncoeff_out = self.ncoeff
         
+        ncoeff_copy = min(ncoeff_in,ncoeff_out) 
+        all_coeffs_out = np.zeros((self.nloop,ndim,ncoeff_out,2),dtype=np.float64)
+        all_coeffs_out[:,:,:ncoeff_copy,:] = all_coeffs_in[:,:,:ncoeff_copy,:]
+
+        xout = self.Package_all_coeffs(all_coeffs_out)
+
+        self.current_cvg_lvl = cvg_lvl_in
+
+        return xout
+
     def RemoveSym(self,x):
         r"""
         Removes symmetries and returns coeffs for all bodies.
@@ -234,7 +263,6 @@ class ChoreoAction():
 
             all_coeffs[il,:,0,0] -= xbar
 
-        
     def Compute_action_onlygrad_escape(self,x):
 
         rms_dist = Compute_Loop_Dist_btw_avg_Cython(

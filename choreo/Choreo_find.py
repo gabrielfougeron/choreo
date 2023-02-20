@@ -386,18 +386,12 @@ def Find_Choreo(
                 CanRefine = (ActionSyst.current_cvg_lvl < n_reconverge_it_max)
                 
                 if CanRefine :
-                    
-                    all_coeffs_coarse = ActionSyst.Unpackage_all_coeffs(best_sol.x)
-                    ncoeff_coarse = ActionSyst.ncoeff
-                    
-                    ActionSyst.current_cvg_lvl += 1
-                    ncoeff_fine = ActionSyst.ncoeff
 
-                    all_coeffs_fine = np.zeros((ActionSyst.nloop,ndim,ncoeff_fine,2),dtype=np.float64)
-                    for k in range(ncoeff_coarse):
-                        all_coeffs_fine[:,:,k,:] = all_coeffs_coarse[:,:,k,:]
+                    x_fine = ActionSyst.TransferParamBtwRefinementLevels(best_sol.x)
+
+                    ActionSyst.current_cvg_lvl += 1
                         
-                    x_fine = ActionSyst.Package_all_coeffs(all_coeffs_fine)
+
                     f_fine = ActionSyst.Compute_action_onlygrad(x_fine)
                     f_fine_norm = np.linalg.norm(f_fine)
                     
