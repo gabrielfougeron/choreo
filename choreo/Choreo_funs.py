@@ -182,7 +182,8 @@ class ChoreoAction():
 
             levels.append(NonLinLevel(ActionSyst = self, cvg_lvl = ilvl, xo = xo, fo = fo)) 
 
-        ml = NonLinMultilevelSolver(levels=levels,coarse_solver=krylov_method)
+        # ml = NonLinMultilevelSolver(levels=levels,coarse_solver=krylov_method)
+        ml = NonLinMultilevelSolver(levels=levels,coarse_solver='pinv')
 
         return ml.aspreconditioner(cycle=cycle)
 
@@ -1638,6 +1639,7 @@ class NonLinLevel(pyamg.MultilevelSolver.Level):
             dtype = np.float64)
         
         self.A.nnz = -1
+        self.A.toarray = lambda selfl=self,ndof=my_ndof : selfl.A.dot(np.identity(ndof))
         
         if self.cvg_lvl > 0:
 
@@ -1668,7 +1670,10 @@ class NonLinLevel(pyamg.MultilevelSolver.Level):
 
         all_coeffs = self.ActionSyst.Unpackage_all_coeffs(x)
 
-        smooth_mul = (1e-8) ** (2. / self.ActionSyst.ncoeff)
+        smooth_mul_final = 1e-16
+
+        smooth_mul = (smooth_mul_final) ** (2. / self.ActionSyst.ncoeff)
+
 
         InplaceSmoothCoeffs(
             self.ActionSyst.nloop       ,
@@ -1681,7 +1686,6 @@ class NonLinLevel(pyamg.MultilevelSolver.Level):
         x[:] = self.ActionSyst.Package_all_coeffs(all_coeffs)
 
         self.ActionSyst.current_cvg_lvl = cvg_lvl_in
-
 
     def Compute_action_hess_mul(self,x,dx):
 
