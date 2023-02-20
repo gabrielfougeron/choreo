@@ -46,7 +46,7 @@ from choreo.Choreo_cython_funs import Transform_Coeffs_Single_Loop,SparseScaleCo
 from choreo.Choreo_cython_funs import the_irfft,the_rfft
 from choreo.Choreo_cython_funs import Compute_hamil_hess_mul_Cython_nosym,Compute_hamil_hess_mul_xonly_Cython_nosym
 from choreo.Choreo_cython_funs import Compute_Derivative_precond_inv_Cython_nosym,Compute_Derivative_precond_Cython_nosym
-from choreo.Choreo_cython_funs import Compute_Derivative_Cython_nosym
+from choreo.Choreo_cython_funs import Compute_Derivative_Cython_nosym,InplaceSmoothCoeffs
 
 if ndim == 2:
     from choreo.Choreo_cython_funs_2D import Compute_action_Cython_2D as Compute_action_Cython ,Compute_action_hess_mul_Cython_2D as Compute_action_hess_mul_Cython
@@ -185,8 +185,6 @@ class ChoreoAction():
         ml = NonLinMultilevelSolver(levels=levels,coarse_solver=krylov_method)
 
         return ml.aspreconditioner(cycle=cycle)
-
-
 
     def RemoveSym(self,x):
         r"""
@@ -1657,10 +1655,32 @@ class NonLinLevel(pyamg.MultilevelSolver.Level):
         self.ActionSyst.current_cvg_lvl = cvg_lvl_in
 
     def presmoother(self,A,x,b):
-        pass
+        self.smooth(x)
 
     def postsmoother(self,A,x,b):
-        pass
+        self.smooth(x)
+
+    def smooth(self,x):
+
+        cvg_lvl_in = self.ActionSyst.current_cvg_lvl
+
+        self.ActionSyst.current_cvg_lvl = self.cvg_lvl
+
+        all_coeffs = self.ActionSyst.Unpackage_all_coeffs(x)
+
+        smooth_mul = (1e-8) ** (2. / self.ActionSyst.ncoeff)
+
+        InplaceSmoothCoeffs(
+            self.ActionSyst.nloop       ,
+            self.ActionSyst.ncoeff      ,
+            self.ActionSyst.ncoeff // 2 ,
+            smooth_mul                  ,
+            all_coeffs 
+        )
+
+        x[:] = self.ActionSyst.Package_all_coeffs(all_coeffs)
+
+        self.ActionSyst.current_cvg_lvl = cvg_lvl_in
 
 
     def Compute_action_hess_mul(self,x,dx):

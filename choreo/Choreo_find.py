@@ -294,7 +294,7 @@ def Find_Choreo(
             
             # inner_M = None
 
-            inner_M = ActionSyst.GetAMGPreco(x0,krylov_method=krylov_method,cycle='V')
+            inner_M = ActionSyst.GetAMGPreco(x0,krylov_method=krylov_method,cycle='W')
 
 
             if (krylov_method == 'lgmres'):
