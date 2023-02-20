@@ -110,6 +110,10 @@ def Find_Choreo(
     print(f'Processing symmetries for {(n_reconverge_it_max+1):d} convergence levels.')
     ActionSyst = setup_changevar(nbody,nint_init,mass,n_reconverge_it_max,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change,CrashOnIdentity=CrashOnError_changevar)
 
+    # start_cvg_lvl = 0
+    start_cvg_lvl = 2
+    ActionSyst.current_cvg_lvl = start_cvg_lvl
+
     print('')
 
     nbi_tot = 0
@@ -190,7 +194,8 @@ def Find_Choreo(
         
         print(f'Optimization attempt number: {n_opt}')
 
-        ActionSyst.current_cvg_lvl = 0
+        ActionSyst.current_cvg_lvl = start_cvg_lvl
+
         ncoeff = ActionSyst.ncoeff
         nint = ActionSyst.nint
 
@@ -268,6 +273,8 @@ def Find_Choreo(
 
         while GoOn:
             # Set correct optim params
+
+            x0 = np.copy(best_sol.x)
             
             inner_tol = 0.
             
@@ -285,7 +292,10 @@ def Find_Choreo(
             
             F = lambda x : ActionSyst.Compute_action_onlygrad(x)
             
-            inner_M = None
+            # inner_M = None
+
+            inner_M = ActionSyst.GetAMGPreco(x0,krylov_method=krylov_method,cycle='V')
+
 
             if (krylov_method == 'lgmres'):
                 jac_options = {'method':krylov_method,'rdiff':rdiff,'outer_k':outer_k,'inner_inner_m':inner_maxiter,'inner_store_outer_Av':store_outer_Av,'inner_tol':inner_tol,'inner_M':inner_M }
@@ -301,7 +311,8 @@ def Find_Choreo(
             # jac_options = {'method':pyamg.krylov.gmres}
             # jac_options = {'method':pyamg.krylov.gmres_householder}
             # jac_options = {'method':pyamg.krylov.gmres_mgs}
- 
+
+
             if (Use_exact_Jacobian):
 
                 FGrad = lambda x,dx : ActionSyst.Compute_action_hess_mul(x,dx)
@@ -325,7 +336,6 @@ def Find_Choreo(
 
             try : 
                 
-                x0 = np.copy(best_sol.x)
                 opt_result , info = nonlin_solve_pp(F=F,x0=x0,jacobian=jacobian,verbose=disp_scipy_opt,maxiter=maxiter,f_tol=gradtol,line_search=line_search,callback=optim_callback,raise_exception=False,smin=linesearch_smin,full_output=True)
 
                 AskedForNext = (info['status'] == 0)
@@ -335,7 +345,7 @@ def Find_Choreo(
                 print(exc)
                 print("Value Error occured, skipping.")
                 GoOn = False
-                # raise(exc)
+                raise(exc)
                 
             if (AskedForNext):
                 print("Skipping at user's request")

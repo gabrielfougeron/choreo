@@ -10,6 +10,7 @@ import pickle
 import warnings
 import functools
 import json
+import types
 
 import numpy as np
 import math as m
@@ -21,6 +22,8 @@ import networkx
 import random
 import inspect
 import fractions
+
+import pyamg
 
 from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
@@ -156,6 +159,24 @@ class ChoreoAction():
         self.current_cvg_lvl = cvg_lvl_in
 
         return xout
+    
+    def GetAMGPreco(self,xo,fo=None,krylov_method='gmres',cycle='V'):
+        # cycle = 'V'
+        # cycle = 'W'
+        # cycle = 'F'
+        # cycle = 'AMLI'
+
+        levels = []
+        for ilvl in range (self.current_cvg_lvl,-1,-1):
+        # for ilvl in range (self.current_cvg_lvl,0,-1):
+
+            levels.append(NonLinLevel(ActionSyst = self, cvg_lvl = ilvl, xo = xo, fo = fo)) 
+
+        ml = NonLinMultilevelSolver(levels=levels,coarse_solver=krylov_method)
+
+        return ml.aspreconditioner(cycle=cycle)
+
+
 
     def RemoveSym(self,x):
         r"""
@@ -366,7 +387,8 @@ class ChoreoAction():
 
         return scipy.sparse.linalg.LinearOperator((self.coeff_to_param.shape[0],self.coeff_to_param.shape[0]),
             matvec =  (lambda dx, xl=x, selfl=self : selfl.Compute_action_hess_mul(xl,dx)),
-            rmatvec = (lambda dx, xl=x, selfl=self : selfl.Compute_action_hess_mul(xl,dx)))
+            rmatvec = (lambda dx, xl=x, selfl=self : selfl.Compute_action_hess_mul(xl,dx)),
+            dtype = np.float64)
 
     def Compute_action(self,x):
         r"""
@@ -609,7 +631,8 @@ class ChoreoAction():
 
         return scipy.sparse.linalg.LinearOperator((2*self.nbody*ndim,2*self.nbody*ndim),
             matvec =  (lambda dx, xl=x, selfl=self : selfl.Compute_Auto_JacMul_ODE_RHS(xl,dx)),
-            rmatvec = (lambda dx, xl=x, selfl=self : selfl.Compute_Auto_JacMul_ODE_RHS(xl,dx)))
+            rmatvec = (lambda dx, xl=x, selfl=self : selfl.Compute_Auto_JacMul_ODE_RHS(xl,dx)),
+            dtype = np.float64)
 
     def GetTangentSystemDef(self,x,nint=None,method = 'SymplecticEuler'):
 
@@ -1461,6 +1484,101 @@ class ChoreoAction():
             
             plt.close()
             
+class NonLinLevel(pyamg.MultilevelSolver.Level):
+
+    def __init__(self,ActionSyst,cvg_lvl,xo,fo,**kwargs):
+        super().__init__(**kwargs)
+
+        self.ActionSyst = ActionSyst
+        self.cvg_lvl = cvg_lvl
+
+        self.update(xo,fo)
+
+    def update(self,x,f):
+
+        cvg_lvl_in = self.ActionSyst.current_cvg_lvl
+
+        self._x = self.ActionSyst.TransferParamBtwRefinementLevels(x,iin=self.ActionSyst.current_cvg_lvl,iout=self.cvg_lvl)
+        self._f = f
+
+        self.ActionSyst.current_cvg_lvl = self.cvg_lvl 
+        my_ndof = self.ActionSyst.coeff_to_param.shape[0]
+        
+        self.A = scipy.sparse.linalg.LinearOperator((my_ndof,my_ndof),
+            matvec =  (lambda dx, xl=self._x, selfl=self : selfl.Compute_action_hess_mul(xl,dx)),
+            rmatvec = (lambda dx, xl=self._x, selfl=self : selfl.Compute_action_hess_mul(xl,dx)),
+            dtype = np.float64)
+        
+        self.A.nnz = -1
+        
+        if self.cvg_lvl > 0:
+
+            self.ActionSyst.current_cvg_lvl = self.cvg_lvl - 1
+            coarse_ndof = self.ActionSyst.coeff_to_param.shape[0]
+
+            self.P = scipy.sparse.linalg.LinearOperator((my_ndof,coarse_ndof),
+                matvec =  (lambda y, iinl = self.cvg_lvl - 1, ioutl = self.cvg_lvl, selfl=self : selfl.ActionSyst.TransferParamBtwRefinementLevels(y,iin=iinl,iout=ioutl)),
+                dtype = np.float64)
+            
+            self.R = scipy.sparse.linalg.LinearOperator((coarse_ndof,my_ndof),
+                matvec =  (lambda y, iinl = self.cvg_lvl,ioutl = self.cvg_lvl - 1, selfl=self : selfl.ActionSyst.TransferParamBtwRefinementLevels(y,iin=iinl,iout=ioutl)),
+                dtype = np.float64)
+
+        self.ActionSyst.current_cvg_lvl = cvg_lvl_in
+
+    def presmoother(self,A,x,b):
+        pass
+
+    def postsmoother(self,A,x,b):
+        pass
+
+
+    def Compute_action_hess_mul(self,x,dx):
+
+        cvg_lvl_in = self.ActionSyst.current_cvg_lvl
+        self.ActionSyst.current_cvg_lvl = self.cvg_lvl 
+        res = self.ActionSyst.Compute_action_hess_mul(x,dx)
+        self.ActionSyst.current_cvg_lvl = cvg_lvl_in
+
+        return res
+
+class NonLinMultilevelSolver(pyamg.MultilevelSolver):
+
+    def __init__(self,**kwargs):
+        super().__init__(**kwargs)
+
+    def update(self,x,f):
+        
+        for level in self.levels:
+            level.update(x,f)
+
+    def aspreconditioner(self, cycle='V'):
+
+        res = super(NonLinMultilevelSolver,self).aspreconditioner(cycle)
+        res.update = lambda x, f, selfl=self: selfl.update(x,f)
+
+        return res
+
+
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
 class ChoreoSym():
     r"""
     This class defines the symmetries of the action
@@ -1935,6 +2053,7 @@ def setup_changevar(nbody,nint_init,mass,n_reconverge_it_max=6,MomCons=True,n_gr
         "param_to_coeff_T_cvg_lvl_list" :   param_to_coeff_T_cvg_lvl_list   ,
         "coeff_to_param_T_cvg_lvl_list" :   coeff_to_param_T_cvg_lvl_list   ,
         "current_cvg_lvl"               :   0                               ,
+        "n_cvg_lvl"                     :   n_reconverge_it_max+1           ,
         "last_all_coeffs"               :   None                            ,
         "last_all_pos"                  :   None                            ,
         "Do_Pos_FFT"                    :   True                            ,
