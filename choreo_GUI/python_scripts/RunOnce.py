@@ -88,9 +88,6 @@ def NPY_JS_to_py(npy_js):
 
 async def main():
 
-    if js.NativeFSIsSetUp:
-        await js.syncFromDisk()
-
     params_dict = js.ConfigDict.to_py()
     
     CrashOnError_changevar = False

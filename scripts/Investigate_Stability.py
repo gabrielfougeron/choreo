@@ -19,6 +19,7 @@ import sys
 import fractions
 import scipy.integrate
 import scipy.special
+import matplotlib.pyplot as plt
 
 __PROJECT_ROOT__ = os.path.abspath(os.path.join(os.path.dirname(__file__),os.pardir))
 sys.path.append(__PROJECT_ROOT__)
@@ -225,7 +226,7 @@ def ExecName(the_name, input_folder, store_folder):
 
     if Seed_with_RK_solver:
 
-        all_pos_d_init = np.zeros((nbody,choreo.ndim,nbody,choreo.ndim,nint),dtype=np.float64)
+
         LagrangeMulInit = np.zeros((2,nbody,choreo.ndim,2,nbody,choreo.ndim),dtype=np.float64)
 
         # SymplecticMethod = 'SymplecticEuler'
@@ -240,7 +241,7 @@ def ExecName(the_name, input_folder, store_folder):
 
         ndof = nbody*choreo.ndim
 
-        x00 = x0
+        all_xv = np.zeros((nint,2*ndof,2*ndof))
 
         xf = x0
         vf = v0
@@ -250,8 +251,7 @@ def ExecName(the_name, input_folder, store_folder):
             x0 = xf
             v0 = vf
 
-            # all_pos_d_init[:,:,:,:,iint] = (x0.reshape(nbody*choreo.ndim,2,nbody*choreo.ndim)[:,0,:]).reshape((nbody,choreo.ndim,nbody,choreo.ndim))
-            all_pos_d_init[:,:,:,:,iint] = (x00.reshape(nbody*choreo.ndim,2,nbody*choreo.ndim)[:,0,:]).reshape((nbody,choreo.ndim,nbody,choreo.ndim))
+            all_xv[iint,:,:] = np.concatenate((x0,v0),axis=0).reshape(2*ndof,2*ndof)
 
             t_span = (iint / nint,(iint+1)/nint)
 
@@ -259,12 +259,55 @@ def ExecName(the_name, input_folder, store_folder):
 
         del fun,gun
 
+        all_pos_d_init = np.zeros((nbody,choreo.ndim,2,nbody,choreo.ndim,nint),dtype=np.float64)
+
         MonodromyMat = np.ascontiguousarray(np.concatenate((xf,vf),axis=0).reshape(2*ndof,2*ndof))
 
-        MonodromyMat = np.dot(MonodromyMat,MonodromyMat)
 
 
-        print(MonodromyMat)
+        # MonodromyMat = np.dot(MonodromyMat,MonodromyMat)
+
+        MonodromyMatLog = scipy.linalg.logm(MonodromyMat)
+
+
+        w = np.zeros((2*ndof,2*ndof),dtype=np.float64)
+        w[0:ndof,ndof:2*ndof] = np.identity(ndof)
+        w[ndof:2*ndof,0:ndof] = -np.identity(ndof)
+
+        MonodromyMatLog = (MonodromyMatLog+ w @ MonodromyMatLog.T @ w ) / 2
+
+        MonodromyMatLogsq = np.dot(MonodromyMatLog,MonodromyMatLog)
+        
+
+
+        print('Symplecticity')
+        print(np.linalg.norm(w - np.dot(MonodromyMat.transpose(),np.dot(w,MonodromyMat))))
+        print(np.linalg.norm(np.dot(MonodromyMatLog.transpose(),w) + np.dot(w,MonodromyMatLog)))
+
+
+
+
+        # eigvals,eigvects = scipy.linalg.eig(a=MonodromyMat)
+        # eigvals,eigvects = scipy.linalg.eig(a=MonodromyMatLog)
+        # eigvals,eigvects = scipy.linalg.eig(a=MonodromyMatLogsq)
+
+        # print(eigvals)
+        # print(eigvals.real)
+        # print(eigvects)
+
+
+        # exit()
+
+
+        for iint in range(nint):
+
+            PeriodicPart = np.dot(all_xv[iint,:,:],scipy.linalg.expm(-(iint / nint)*MonodromyMatLog))
+
+            all_pos_d_init[:,:,:,:,:,iint] = (PeriodicPart.reshape(2,nbody*choreo.ndim,2,nbody*choreo.ndim)[0,:,:,:]).reshape((nbody,choreo.ndim,2,nbody,choreo.ndim))
+
+
+        # print(MonodromyMatLog)
+        # print(MonodromyMat)
 
         # Evaluates the relative accuracy of the Monodromy matrix integration process
         # zo should be an eigenvector of the Monodromy matrix, with eigenvalue 1
@@ -277,36 +320,37 @@ def ExecName(the_name, input_folder, store_folder):
         '''Eigendecomposition'''
         Instability_magnitude,Instability_directions = choreo.InstabilityDecomposition(MonodromyMat)
 
-        print(Instability_magnitude)
+        # print(Instability_magnitude)
 
         print(f'Relative error on flow eigenstate: {np.linalg.norm(MonodromyMat.dot(zo)-zo)/np.linalg.norm(zo):e}')
         # print(the_name+f' {Instability_magnitude[:]}')
         # print(the_name+f' {np.flip(1/Instability_magnitude[:])}')
-        print("Relative error on loxodromy ",np.linalg.norm(Instability_magnitude - np.flip(1/Instability_magnitude))/np.linalg.norm(Instability_magnitude))
+        # print("Relative error on loxodromy ",np.linalg.norm(Instability_magnitude - np.flip(1/Instability_magnitude))/np.linalg.norm(Instability_magnitude))
 
         all_coeffs_dc_init = choreo.the_rfft(all_pos_d_init,norm="forward")
-        all_coeffs_d_init = np.empty((nbody,choreo.ndim,nbody,choreo.ndim,ncoeff,2),np.float64)
-        all_coeffs_d_init[:,:,:,:,:,0] = all_coeffs_dc_init[:,:,:,:,:ncoeff].real
-        all_coeffs_d_init[:,:,:,:,:,1] = all_coeffs_dc_init[:,:,:,:,:ncoeff].imag
+        all_coeffs_d_init = np.zeros((nbody,choreo.ndim,2,nbody,choreo.ndim,ncoeff,2),np.float64)
+        all_coeffs_d_init[:,:,:,:,:,:,0] = all_coeffs_dc_init[:,:,:,:,:,:ncoeff].real
+        all_coeffs_d_init[:,:,:,:,:,:,1] = all_coeffs_dc_init[:,:,:,:,:,:ncoeff].imag
 
 
-        x0 = np.concatenate((all_coeffs_d_init.reshape(-1),LagrangeMulInit.reshape(-1)))
+        x0 = np.ascontiguousarray(np.concatenate((all_coeffs_d_init.reshape(-1),LagrangeMulInit.reshape(-1))))
 
     else:
 
-        all_coeffs_d_init = np.zeros((nbody,choreo.ndim,nbody,choreo.ndim,ncoeff,2),dtype=np.float64)
+        all_coeffs_d_init = np.zeros((nbody,choreo.ndim,2,nbody,choreo.ndim,ncoeff,2),dtype=np.float64)
         LagrangeMulInit = np.zeros((2,nbody,choreo.ndim,2,nbody,choreo.ndim),dtype=np.float64)
-
+        MonodromyMatLog = np.zeros((2,nbody,choreo.ndim,2,nbody,choreo.ndim),dtype=np.float64)
 
         for ib in range(nbody):
             for idim in range(choreo.ndim):
-                all_coeffs_d_init[ib,idim,ib,idim,0,0] = 1
-                all_coeffs_d_init[ib,idim,ib,idim,1,1] = -1./(2*twopi)
+                all_coeffs_d_init[ib,idim,0,ib,idim,0,0] = 1
+                all_coeffs_d_init[ib,idim,1,ib,idim,1,1] = -1./(2*twopi)
 
 
-        x0 = np.concatenate((all_coeffs_d_init.reshape(-1),LagrangeMulInit.reshape(-1)))
+        x0 = np.ascontiguousarray(np.concatenate((all_coeffs_d_init.reshape(-1), LagrangeMulInit.reshape(-1))))
 
 
+    MonodromyMatLog = np.ascontiguousarray(MonodromyMatLog.reshape(2,nbody,choreo.ndim,2,nbody,choreo.ndim))
 
     krylov_method = 'lgmres'
     # krylov_method = 'gmres'
@@ -324,7 +368,7 @@ def ExecName(the_name, input_folder, store_folder):
     disp_scipy_opt = True
     # disp_scipy_opt = False
 
-    maxiter = 10000
+    maxiter = 100
 
 
             
@@ -335,7 +379,8 @@ def ExecName(the_name, input_folder, store_folder):
         nint,
         ActionSyst.mass,
         all_coeffs,
-        all_pos
+        all_pos,
+        MonodromyMatLog,
     )
 
     res_1D = F(x0)
@@ -343,23 +388,44 @@ def ExecName(the_name, input_folder, store_folder):
 
     
     ibeg = 0
-    iend = (nbody*choreo.ndim*nbody*choreo.ndim*ncoeff*2)
-    res_1D_all_coeffs = res_1D[ibeg:iend].reshape((nbody,choreo.ndim,nbody,choreo.ndim,ncoeff,2))
+    iend = (nbody*choreo.ndim*2*nbody*choreo.ndim*ncoeff*2)
+    res_1D_all_coeffs = res_1D[ibeg:iend].reshape((nbody,choreo.ndim,2,nbody,choreo.ndim,ncoeff,2))
 
     ibeg = iend
     iend = iend + (2*nbody*choreo.ndim*2*nbody*choreo.ndim)
     res_LagrangeMul = res_1D[ibeg:iend].reshape((2,nbody,choreo.ndim,2,nbody,choreo.ndim))
 
 
-    # print(res_LagrangeMul)
+    # print(res_1D_all_coeffs)
+
+    # print(np.linalg.norm(res_1D_all_coeffs))
+    # print(np.linalg.norm(res_LagrangeMul))
 
 
-#     jac_options = {'method':krylov_method}
-#     jacobian = scipy.optimize.KrylovJacobian(**jac_options)
+    res_1D_all_coeffs_c = res_1D_all_coeffs.view(dtype=np.complex128)[...,0]
+    res_1D_all_pos = choreo.the_irfft(res_1D_all_coeffs_c,n=nint,norm="forward")
+
+#     plt.figure()
 # 
-#     opt_result , info = scipy.optimize.nonlin.nonlin_solve(F=F,x0=x0,jacobian=jacobian,verbose=disp_scipy_opt,maxiter=maxiter,f_tol=gradtol,line_search=line_search,raise_exception=False,full_output=True)
+#     for ib in range(nbody):
+#         for idim in range(choreo.ndim):
+#             for jvx in range(2):
+#                 for jb in range(nbody): 
+#                     for jdim in range(choreo.ndim):
+# 
+#                         # plt.plot(all_pos_d_init[ib,idim,jvx,jb,jdim,:])
+#                         plt.plot(res_1D_all_pos[ib,idim,jvx,jb,jdim,:])
+# 
+# 
+#     plt.savefig("out.png")
 
 
+    jac_options = {'method':krylov_method}
+    jacobian = scipy.optimize.KrylovJacobian(**jac_options)
+
+    opt_result , info = scipy.optimize.nonlin.nonlin_solve(F=F,x0=x0,jacobian=jacobian,verbose=disp_scipy_opt,maxiter=maxiter,f_tol=gradtol,line_search=line_search,raise_exception=False,full_output=True)
+
+    print(opt_result)
 
 if __name__ == "__main__":
     main()    

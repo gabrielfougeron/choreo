@@ -184,10 +184,10 @@ def ExecName(the_name, input_folder, store_folder):
     n_grad_change = 1.
 
     ActionSyst = choreo.setup_changevar(nbody,nint,mass,n_reconverge_it_max,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change,CrashOnIdentity=False)
-
     x = ActionSyst.Package_all_coeffs(all_coeffs_init)
 
     ActionSyst.SavePosFFT(x)
+    ActionSyst.Do_Pos_FFT = False
 
     Action,Gradaction = ActionSyst.Compute_action(x)
     Newt_err = ActionSyst.Compute_Newton_err(x)
@@ -197,45 +197,37 @@ def ExecName(the_name, input_folder, store_folder):
     print(f'Saved Newton Error : {Info_dict["Newton_Error"]}')
     print(f'Init Newton Error : {Newt_err_norm}')
 
-    n_eig = 10
-
-    # which_eigs = 'LM' # Largest (in magnitude) eigenvalues.
-    which_eigs = 'SM' # Smallest (in magnitude) eigenvalues.
-    # which_eigs = 'LA' # Largest (algebraic) eigenvalues.
-    # which_eigs = 'SA' # Smallest (algebraic) eigenvalues.
-    # which_eigs = 'BE' # Half (k/2) from each end of the spectrum.
-
-    HessMat = ActionSyst.Compute_action_hess_LinOpt(x)
-    w ,v = scipy.sparse.linalg.eigsh(HessMat,k=n_eig,which=which_eigs)
-    print(w)
-
-
-
-
     ncoeff = ActionSyst.ncoeff
     nint = ActionSyst.nint
     
     all_coeffs = ActionSyst.RemoveSym(x)
     c_coeffs = all_coeffs.view(dtype=np.complex128)[...,0]
-    all_pos = choreo.the_irfft(c_coeffs,n=nint,axis=2,norm="forward")
+    # all_pos = choreo.the_irfft(c_coeffs,n=nint,axis=2,norm="forward")
+
+    ActionSyst_nosym = choreo.setup_changevar(nbody,nint,mass,n_reconverge_it_max,Sym_list=[],MomCons=False,n_grad_change=n_grad_change,CrashOnIdentity=False)
+
+    x_nosym = ActionSyst_nosym.Package_all_coeffs(all_coeffs)
+    ActionSyst.SavePosFFT(x_nosym)
+    ActionSyst.Do_Pos_FFT = False
 
 
-    all_pos_d_init = np.zeros((nbody,choreo.ndim,nbody,choreo.ndim,nint),dtype=np.float64)
-    LagrangeMulInit = np.zeros((2,nbody,choreo.ndim,2,nbody,choreo.ndim),dtype=np.float64)
+
+
+
 
     # SymplecticMethod = 'SymplecticEuler'
     # SymplecticMethod = 'SymplecticStormerVerlet'
     SymplecticMethod = 'SymplecticRuth3'
     SymplecticIntegrator = choreo.GetSymplecticIntegrator(SymplecticMethod)
 
-    nint_ODE_mul = 128
+    nint_ODE_mul = 64
     nint_ODE = nint_ODE_mul*nint
 
     fun,gun,x0,v0 = ActionSyst.GetTangentSystemDef(x,nint_ODE,method=SymplecticMethod)
 
     ndof = nbody*choreo.ndim
 
-    x00 = x0
+    all_xv = np.zeros((nint,2*ndof,2*ndof))
 
     xf = x0
     vf = v0
@@ -245,8 +237,7 @@ def ExecName(the_name, input_folder, store_folder):
         x0 = xf
         v0 = vf
 
-        # all_pos_d_init[:,:,:,:,iint] = (x0.reshape(nbody*choreo.ndim,2,nbody*choreo.ndim)[:,0,:]).reshape((nbody,choreo.ndim,nbody,choreo.ndim))
-        all_pos_d_init[:,:,:,:,iint] = (x00.reshape(nbody*choreo.ndim,2,nbody*choreo.ndim)[:,0,:]).reshape((nbody,choreo.ndim,nbody,choreo.ndim))
+        all_xv[iint,:,:] = np.concatenate((x0,v0),axis=0).reshape(2*ndof,2*ndof)
 
         t_span = (iint / nint,(iint+1)/nint)
 
@@ -256,21 +247,154 @@ def ExecName(the_name, input_folder, store_folder):
 
     MonodromyMat = np.ascontiguousarray(np.concatenate((xf,vf),axis=0).reshape(2*ndof,2*ndof))
 
+
+
     # MonodromyMat = np.dot(MonodromyMat,MonodromyMat)
 
+    MonodromyMatLog = scipy.linalg.logm(MonodromyMat)
 
-    print(MonodromyMat)
+
+    # w = np.zeros((2*ndof,2*ndof),dtype=np.float64)
+    # w[0:ndof,ndof:2*ndof] = np.identity(ndof)
+    # w[ndof:2*ndof,0:ndof] = -np.identity(ndof)
+    # MonodromyMatLog = (MonodromyMatLog+ w @ MonodromyMatLog.T @ w ) / 2
+
+
+    all_pos_d_xv = np.zeros((2*ndof,2*ndof,nint),dtype=np.float64)
+
+    for iint in range(nint):
+
+        all_pos_d_xv[:,:,iint] = np.dot(all_xv[iint,:,:],scipy.linalg.expm(-(iint / nint)*MonodromyMatLog)).transpose()
+
+
+    # print(MonodromyMatLog)
+    # print(MonodromyMat)
 
     # Evaluates the relative accuracy of the Monodromy matrix integration process
     # zo should be an eigenvector of the Monodromy matrix, with eigenvalue 1
     yo = ActionSyst.Compute_init_pos_vel(x).reshape(-1)
     zo = ActionSyst.Compute_Auto_ODE_RHS(yo)
+
+
+
+
+
     print(f'Relative error on flow eigenstate: {np.linalg.norm(MonodromyMat.dot(zo)-zo)/np.linalg.norm(zo):e}')
 
-    eigvals,eigvects = scipy.linalg.eig(a=MonodromyMat, b=None, left=False, right=True, overwrite_a=False, overwrite_b=False, check_finite=True, homogeneous_eigvals=False)
+
+    c_coeffs_d_xv = choreo.the_rfft(all_pos_d_xv,norm="forward")
+    all_coeffs = np.zeros((2*ndof,2*ndof,ncoeff,2),dtype=np.float64)
+    all_coeffs[:,:,:,0] = c_coeffs_d_xv.real
+    all_coeffs[:,:,:,1] = c_coeffs_d_xv.imag
+
+    all_coeffs_mat = all_coeffs.reshape(2*ndof,-1)
+    Hx = np.zeros(all_coeffs_mat.shape,dtype=np.float64)
 
 
-    print(eigvals)
+    Hamil_LinOpt = ActionSyst_nosym.Compute_hamil_hess_LinOpt(x_nosym)
+
+    for idof in range(2*ndof):
+        Hx[idof,:] = Hamil_LinOpt.dot(all_coeffs_mat[idof,:])
+
+    Hx_sol = np.einsum('ijkl,ip->pjkl',all_coeffs,MonodromyMatLog)
+
+    Hx = Hx.reshape(Hx_sol.shape)
+
+    print(f'Agreement between symplectic RK and spectral eigenvalue : {np.linalg.norm(Hx - Hx_sol)}')
+
+
+
+
+    RK_eigenvalues, RK_eigenvectors = scipy.linalg.eig(MonodromyMatLog)
+
+
+    print(RK_eigenvalues)
+
+
+    solver = scipy.sparse.linalg.gmres
+
+
+    xsize = 2*ActionSyst_nosym.nbody*choreo.ndim*ActionSyst_nosym.ncoeff
+# 
+#     x0 = np.random.random((xsize))
+# 
+# 
+    Hamil_LinOpt_xonly = ActionSyst_nosym.Compute_hamil_hess_xonly_LinOpt(x_nosym)
+# 
+#     t_beg= time.perf_counter()
+#     sol,_ = solver(Hamil_LinOpt_xonly, x0)
+#     t_end= time.perf_counter()
+# 
+#     err = np.linalg.norm(Hamil_LinOpt_xonly.dot(sol) - x0)
+#     print(f'NO preco. time : {t_end-t_beg}.  err : {err}')
+# 
+# 
+# 
+# 
+# 
+#     y0 = ActionSyst_nosym.Compute_hamil_hess_xonly_precond_inv(x0)
+# 
+    Hamil_LinOpt_xonly_preco = ActionSyst_nosym.Compute_hamil_hess_xonly_precond_LinOpt(x_nosym)
+# 
+#     t_beg= time.perf_counter()
+#     sol,_ = solver(Hamil_LinOpt_xonly_preco, y0)
+#     t_end= time.perf_counter()
+# 
+#     sol = ActionSyst_nosym.Compute_hamil_hess_xonly_precond_inv(sol)
+# 
+#     err = np.linalg.norm(Hamil_LinOpt_xonly.dot(sol) - x0)
+# 
+#     print(f'YES preco. time : {t_end-t_beg}.  err : {err}')
+
+
+
+
+    def solve_process(qp,**kwargs):
+
+        q = qp[0:xsize]
+        p = qp[xsize:2*xsize]
+
+        pp = p + ActionSyst_nosym.Compute_deriv(q)
+
+        t_beg= time.perf_counter()
+
+        x,_ = solver(Hamil_LinOpt_xonly, pp,**kwargs)
+
+        # pp = ActionSyst_nosym.Compute_hamil_hess_xonly_precond_inv(pp)
+        # x,_ = solver(Hamil_LinOpt_xonly_preco, pp,**kwargs)
+        # x = ActionSyst_nosym.Compute_hamil_hess_xonly_precond_inv(x)
+
+        t_end= time.perf_counter()
+
+        v = q + ActionSyst_nosym.Compute_deriv(x)
+
+        print(t_end-t_beg)
+
+        return np.append(x,v)
+
+
+
+
+    n_eig = 2*ndof
+    # n_eig = 10
+
+    sigma=0.
+
+    ncv = 100
+
+    OPinv = scipy.sparse.linalg.LinearOperator(
+            Hamil_LinOpt.shape,
+            matvec =  (lambda x : solve_process(x)),
+            dtype=np.float64
+        )
+
+    Sp_eigenvalues, Sp_eigenvectors = scipy.sparse.linalg.eigs(Hamil_LinOpt, k=n_eig, M=None, sigma=sigma, which='SI', v0=None, ncv=ncv, maxiter=None, tol=0, return_eigenvectors=True, Minv=None, OPinv=OPinv, OPpart=None)
+
+    print(Sp_eigenvalues)
+
+
+
+
 
 
 if __name__ == "__main__":
