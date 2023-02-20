@@ -97,7 +97,7 @@ def nonlin_solve_pp(
             break
 
         # Adjust forcing parameters for inexact methods
-        eta_A = gamma * Fx_norm_new**2 / Fx_norm**2
+        eta_A = gamma * (Fx_norm_new / Fx_norm)**2
         if gamma * eta**2 < eta_treshold:
             eta = min(eta_max, eta_A)
         else:

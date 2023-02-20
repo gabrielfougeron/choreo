@@ -110,8 +110,8 @@ def Find_Choreo(
     print(f'Processing symmetries for {(n_reconverge_it_max+1):d} convergence levels.')
     ActionSyst = setup_changevar(nbody,nint_init,mass,n_reconverge_it_max,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change,CrashOnIdentity=CrashOnError_changevar)
 
-    # start_cvg_lvl = 0
-    start_cvg_lvl = 2
+    start_cvg_lvl = 0
+    # start_cvg_lvl = 2
     ActionSyst.current_cvg_lvl = start_cvg_lvl
 
     print('')
@@ -292,9 +292,12 @@ def Find_Choreo(
             
             F = lambda x : ActionSyst.Compute_action_onlygrad(x)
             
-            # inner_M = None
+            inner_M = None
 
-            inner_M = ActionSyst.GetAMGPreco(x0,krylov_method=krylov_method,cycle='W')
+            inner_M = ActionSyst.GetAMGPreco(x0,krylov_method=krylov_method,cycle='V')
+            # inner_M = ActionSyst.GetAMGPreco(x0,krylov_method=krylov_method,cycle='W')
+            # inner_M = ActionSyst.GetAMGPreco(x0,krylov_method=krylov_method,cycle='F')
+            # inner_M = ActionSyst.GetAMGPreco(x0,krylov_method=krylov_method,cycle='AMLI')
 
 
             if (krylov_method == 'lgmres'):
