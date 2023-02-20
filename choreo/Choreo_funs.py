@@ -44,7 +44,9 @@ from choreo.Choreo_cython_funs import Compute_MinDist_Cython,Compute_Loop_Dist_b
 from choreo.Choreo_cython_funs import Compute_Forces_Cython,Compute_JacMat_Forces_Cython,Compute_JacMul_Forces_Cython
 from choreo.Choreo_cython_funs import Transform_Coeffs_Single_Loop,SparseScaleCoeffs,ComputeSpeedCoeffs
 from choreo.Choreo_cython_funs import the_irfft,the_rfft
-from choreo.Choreo_cython_funs import Compute_action_hess_mul_Tan_Cython_nosym
+from choreo.Choreo_cython_funs import Compute_hamil_hess_mul_Cython_nosym,Compute_hamil_hess_mul_xonly_Cython_nosym
+from choreo.Choreo_cython_funs import Compute_Derivative_precond_inv_Cython_nosym,Compute_Derivative_precond_Cython_nosym
+from choreo.Choreo_cython_funs import Compute_Derivative_Cython_nosym
 
 if ndim == 2:
     from choreo.Choreo_cython_funs_2D import Compute_action_Cython_2D as Compute_action_Cython ,Compute_action_hess_mul_Cython_2D as Compute_action_hess_mul_Cython
@@ -130,6 +132,14 @@ class ChoreoAction():
     def Unpackage_all_coeffs_T(self,x):
 
         return self.coeff_to_param_T.dot(x).reshape(self.nloop,ndim,self.ncoeff,2)
+
+    def ApplyConditionning(self,x):
+
+        return self.param_to_coeff_T.dot(self.param_to_coeff.dot(x))
+    
+    def ApplyInverseConditionning(self,x):
+
+        return self.coeff_to_param.dot(self.coeff_to_param_T.dot(x))
 
     def TransferParamBtwRefinementLevels(self,xin,iin=None,iout=None):
 
@@ -385,7 +395,8 @@ class ChoreoAction():
         Returns the Hessian of the action wrt parameters at a given point as a Scipy LinearOperator.
         """
 
-        return scipy.sparse.linalg.LinearOperator((self.coeff_to_param.shape[0],self.coeff_to_param.shape[0]),
+        return scipy.sparse.linalg.LinearOperator(
+            (self.coeff_to_param.shape[0],self.coeff_to_param.shape[0]),
             matvec =  (lambda dx, xl=x, selfl=self : selfl.Compute_action_hess_mul(xl,dx)),
             rmatvec = (lambda dx, xl=x, selfl=self : selfl.Compute_action_hess_mul(xl,dx)),
             dtype = np.float64)
@@ -419,13 +430,7 @@ class ChoreoAction():
             self.last_all_pos
         )
 
-
-        GJ = GradJ.reshape(-1)
-        y = self.param_to_coeff_T.dot(GJ)
-        
-        return J,y
-        
-        # return J,self.Package_all_coeffs_T(GradJ)
+        return J,self.Package_all_coeffs_T(GradJ)
 
     def Compute_hash_action(self,x):
         r"""
@@ -972,6 +977,131 @@ class ChoreoAction():
         xbar_mean = np.mean(xbar_all,axis=1)
 
         return xbar_mean
+
+    def Compute_hamil_hess_mul_nosym(self,x,all_coeffs_d_xv_vect):
+
+        all_coeffs_d_xv = all_coeffs_d_xv_vect.reshape(2,self.nbody,ndim,self.ncoeff,2)
+
+        self.SavePosFFT(x)
+
+        Hdxv = Compute_hamil_hess_mul_Cython_nosym(
+            self.nbody          ,
+            self.ncoeff         ,
+            self.nint           ,
+            self.mass           ,
+            self.last_all_pos   ,
+            all_coeffs_d_xv     ,
+        )
+
+        return Hdxv.reshape(-1)
+    
+    def Compute_hamil_hess_LinOpt(self,x):
+        r"""
+        Returns the Hessian of the hamiltonian at a given point as a Scipy LinearOperator.
+        """
+
+        the_shape = 2*self.nbody*ndim*self.ncoeff*2
+
+        return scipy.sparse.linalg.LinearOperator(
+            (the_shape,the_shape),
+            matvec =  (lambda dx, xl=x, selfl=self : selfl.Compute_hamil_hess_mul_nosym(xl,dx))
+        )
+
+    def Compute_hamil_hess_xonly(self,x,all_coeffs_d_x_vect):
+
+        all_coeffs_d_x = all_coeffs_d_x_vect.reshape(self.nbody,ndim,self.ncoeff,2)
+
+        self.SavePosFFT(x)
+
+        res = Compute_hamil_hess_mul_xonly_Cython_nosym(
+            self.nbody          ,
+            self.ncoeff         ,
+            self.nint           ,
+            self.mass           ,
+            self.last_all_pos   ,
+            all_coeffs_d_x      ,
+        )
+
+        return res.reshape(-1)
+    
+    def Compute_hamil_hess_xonly_LinOpt(self,x):
+
+        the_shape = self.nbody*ndim*self.ncoeff*2
+
+        return scipy.sparse.linalg.LinearOperator(
+            (the_shape,the_shape),
+            matvec =  (lambda dx, xl=x, selfl=self : selfl.Compute_hamil_hess_xonly(xl,dx)),
+            rmatvec =  (lambda dx, xl=x, selfl=self : selfl.Compute_hamil_hess_xonly(xl,dx)), 
+        )
+    
+    def Compute_hamil_hess_xonly_precond(self,x,all_coeffs_d_x_vect):
+
+        all_coeffs_d_x = all_coeffs_d_x_vect.reshape(self.nbody,ndim,self.ncoeff,2)
+
+        all_coeffs_d_x_preco = Compute_Derivative_precond_inv_Cython_nosym(
+            self.nbody          ,
+            self.ncoeff         ,
+            all_coeffs_d_x      ,
+        )
+
+        self.SavePosFFT(x)
+
+        Ax = Compute_hamil_hess_mul_xonly_Cython_nosym(
+            self.nbody              ,
+            self.ncoeff             ,
+            self.nint               ,
+            self.mass               ,
+            self.last_all_pos       ,
+            all_coeffs_d_x_preco    ,
+        )
+
+        res = Compute_Derivative_precond_inv_Cython_nosym(
+            self.nbody          ,
+            self.ncoeff         ,
+            Ax      ,
+        )
+
+        return res.reshape(-1)
+    
+    def Compute_hamil_hess_xonly_precond_LinOpt(self,x):
+
+        the_shape = self.nbody*ndim*self.ncoeff*2
+
+        return scipy.sparse.linalg.LinearOperator(
+            (the_shape,the_shape),
+            matvec =  (lambda dx, xl=x, selfl=self : selfl.Compute_hamil_hess_xonly_precond(xl,dx)),
+            rmatvec =  (lambda dx, xl=x, selfl=self : selfl.Compute_hamil_hess_xonly_precond(xl,dx))
+        )
+    
+    def Compute_hamil_hess_xonly_precond_inv(self,all_coeffs_d_x_vect):
+
+        all_coeffs_d_x = all_coeffs_d_x_vect.reshape(self.nbody,ndim,self.ncoeff,2)
+
+        all_coeffs_d_x_preco = Compute_Derivative_precond_inv_Cython_nosym(
+            self.nbody          ,
+            self.ncoeff         ,
+            all_coeffs_d_x      ,
+        )
+
+        return all_coeffs_d_x_preco.reshape(-1)    
+    
+
+    def Compute_deriv(self,all_coeffs_d_x_vect):
+
+        all_coeffs_d_x = all_coeffs_d_x_vect.reshape(self.nbody,ndim,self.ncoeff,2)
+
+        all_coeffs_d_x_preco = Compute_Derivative_Cython_nosym(
+            self.nbody          ,
+            self.ncoeff         ,
+            all_coeffs_d_x      ,
+        )
+
+        return all_coeffs_d_x_preco.reshape(-1)
+
+
+
+
+
 
 
 
@@ -2443,21 +2573,20 @@ def TangentLagrangeResidual(
         nint,
         mass,
         all_coeffs,
-        all_pos
+        all_pos,
+        MonodromyMatLog
     ):
 
     x_1D = x.reshape(-1)
     
     ibeg = 0
-    iend = (nbody*ndim*nbody*ndim*ncoeff*2)
-    all_coeffs_d = x_1D[ibeg:iend].reshape((nbody,ndim,nbody,ndim,ncoeff,2))
+    iend = (nbody*ndim*2*nbody*ndim*ncoeff*2)
+    all_coeffs_d = x_1D[ibeg:iend].reshape((nbody,ndim,2,nbody,ndim,ncoeff,2))
 
     ibeg = iend
     iend = iend + (2*nbody*ndim*2*nbody*ndim)
     LagrangeMulInit = x_1D[ibeg:iend].reshape((2,nbody,ndim,2,nbody,ndim))
 
-
-        
     Action_hess_dx, LagrangeMulInit_der = Compute_action_hess_mul_Tan_Cython_nosym(
         nbody           ,
         ncoeff          ,
@@ -2467,6 +2596,7 @@ def TangentLagrangeResidual(
         all_coeffs_d    ,
         all_pos         ,
         LagrangeMulInit ,
+        MonodromyMatLog ,
     )
 
     return np.concatenate((Action_hess_dx.reshape(-1),LagrangeMulInit_der.reshape(-1)))
