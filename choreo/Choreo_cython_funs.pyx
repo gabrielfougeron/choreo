@@ -1865,10 +1865,7 @@ def SparseScaleCoeffs(
             all_coeffs_scale[idim,k*k_fac,0]  = rfac * one_loop_coeffs_in[idim,k,0]
             all_coeffs_scale[idim,k*k_fac,1]  = rfac * one_loop_coeffs_in[idim,k,1]
 
-    
     return all_coeffs_scale_np
-
-
 
 def ComputeSpeedCoeffs(
     double[:,:,::1] one_loop_coeffs,
@@ -2298,4 +2295,26 @@ def Compute_hamil_hess_mul_xonly_Cython_nosym(
 
 
     return Hamil_hess_dx_np
+
+
+def InplaceSmoothCoeffs(
+    long nloop                          ,
+    long ncoeff                         ,
+    long ncoeff_smooth_init             ,
+    double smooth_mul                   ,
+    double[:,:,:,::1]  all_coeffs 
+):
+
+    cdef Py_ssize_t il,k,idim
+    cdef double prod_mul
+
+    for il in range(nloop):
+        for idim in range(cndim):
+            prod_mul = 1.
+            for k in range(ncoeff_smooth_init,ncoeff):
+
+                prod_mul *= smooth_mul
+
+                all_coeffs[il,idim,k,0] *= prod_mul
+                all_coeffs[il,idim,k,1] *= prod_mul
 
