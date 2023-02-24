@@ -109,33 +109,27 @@ def Compute_action_Cython_2D(
 
     cdef double Pot_en = 0.
 
-    cdef Py_ssize_t[:,::1] all_shiftsUn = np.empty((nloop,maxloopnb),dtype=np.intp)
-    cdef Py_ssize_t[:,::1] all_shiftsBin = np.empty((nloop,maxloopnbi),dtype=np.intp)
+#     for il in range(nloop):
+#         for ib in range(loopnb[il]):
+# 
+#             k = (TimeRevsUn[il,ib]*nint*TimeShiftNumUn[il,ib])
+# 
+#             ddiv = - k // TimeShiftDenUn[il,ib]
+#             rem = k + ddiv * TimeShiftDenUn[il,ib]
+# 
+#             if (rem != 0):
+#                 print("WARNING: remainder in integer division. Gradient computation will fail.")
+#         
+#         for ibi in range(loopnbi[il]):
+# 
+#             k = (TimeRevsBin[il,ibi]*nint*TimeShiftNumBin[il,ibi])
+# 
+#             ddiv = - k // TimeShiftDenBin[il,ibi]
+#             rem = k + ddiv * TimeShiftDenBin[il,ibi]
+# 
+#             if (rem != 0):
+#                 print("WARNING: remainder in integer division. Gradient computation will fail.")
 
-    for il in range(nloop):
-        for ib in range(loopnb[il]):
-
-            k = (TimeRevsUn[il,ib]*nint*TimeShiftNumUn[il,ib])
-
-            ddiv = - k // TimeShiftDenUn[il,ib]
-            rem = k + ddiv * TimeShiftDenUn[il,ib]
-
-            if (rem != 0):
-                print("WARNING: remainder in integer division. Gradient computation will fail.")
-
-            all_shiftsUn[il,ib] = (((ddiv) % nint) + nint) % nint
-        
-        for ibi in range(loopnbi[il]):
-
-            k = (TimeRevsBin[il,ibi]*nint*TimeShiftNumBin[il,ibi])
-
-            ddiv = - k // TimeShiftDenBin[il,ibi]
-            rem = k + ddiv * TimeShiftDenBin[il,ibi]
-
-            if (rem != 0):
-                print("WARNING: remainder in integer division. Gradient computation will fail.")
-
-            all_shiftsBin[il,ibi] = ((ddiv % nint) + nint) % nint
     
     cdef double[:,:,::1] grad_pot_all = np.zeros((nloop,2,nint),dtype=np.float64)
 
@@ -147,13 +141,15 @@ def Compute_action_Cython_2D(
         Targets           ,
         SpaceRotsUn       ,
         TimeRevsUn        ,
+        TimeShiftNumUn    ,
+        TimeShiftDenUn    ,
         loopnbi           ,
         ProdMassSumAll    ,
         SpaceRotsBin      ,
         TimeRevsBin       ,
+        TimeShiftNumBin   ,
+        TimeShiftDenBin   ,
         all_pos           ,
-        all_shiftsUn      ,
-        all_shiftsBin     ,
         grad_pot_all      ,
     )
 
@@ -192,13 +188,15 @@ cdef double Compute_action_Cython_time_loop_2D(
     long[:,::1]       Targets           ,
     double[:,:,:,::1] SpaceRotsUn       ,
     long[:,::1]       TimeRevsUn        ,
+    long[:,::1]       TimeShiftNumUn    ,
+    long[:,::1]       TimeShiftDenUn    ,
     long[::1]         loopnbi           ,
     double[:,::1]     ProdMassSumAll    ,
     double[:,:,:,::1] SpaceRotsBin      ,
     long[:,::1]       TimeRevsBin       ,
+    long[:,::1]       TimeShiftNumBin   ,
+    long[:,::1]       TimeShiftDenBin   ,
     double[:,:,::1]   all_pos           ,
-    Py_ssize_t[:,::1] all_shiftsUn      ,
-    Py_ssize_t[:,::1] all_shiftsBin     ,
     double[:,:,::1]   grad_pot_all      ,
 ) nogil :
 
@@ -214,6 +212,7 @@ cdef double Compute_action_Cython_time_loop_2D(
     cdef double Pot_en = 0.
 
     for iint in range(nint):
+    # for iint in prange(nint):
 
         # Different loops
         for il in range(nloop):
@@ -221,21 +220,21 @@ cdef double Compute_action_Cython_time_loop_2D(
 
                 for ib in range(loopnb[il]):
                     for ibp in range(loopnb[ilp]):
+
+                        shift_i  = (((((iint - ((nint*TimeShiftNumUn[il ,ib ]) // TimeShiftDenUn[il ,ib ])) * TimeRevsUn[il ,ib ]) % nint) + nint) % nint)
+                        shift_ip = (((((iint - ((nint*TimeShiftNumUn[ilp,ibp]) // TimeShiftDenUn[ilp,ibp])) * TimeRevsUn[ilp,ibp]) % nint) + nint) % nint)
                         
                         prod_mass = mass[Targets[il,ib]]*mass[Targets[ilp,ibp]]
 
-                        shift_i  = all_shiftsUn[il ,ib ]
-                        shift_ip = all_shiftsUn[ilp,ibp]
+                        dx0  = ( SpaceRotsUn[il ,ib ,0,0]*all_pos[il ,0,shift_i ]
+                               - SpaceRotsUn[ilp,ibp,0,0]*all_pos[ilp,0,shift_ip]
+                               + SpaceRotsUn[il ,ib ,0,1]*all_pos[il ,1,shift_i ]
+                               - SpaceRotsUn[ilp,ibp,0,1]*all_pos[ilp,1,shift_ip] )
 
-                        dx0  = SpaceRotsUn[il ,ib ,0,0]*all_pos[il ,0,shift_i ]
-                        dx0 -= SpaceRotsUn[ilp,ibp,0,0]*all_pos[ilp,0,shift_ip]
-                        dx0 += SpaceRotsUn[il ,ib ,0,1]*all_pos[il ,1,shift_i ]
-                        dx0 -= SpaceRotsUn[ilp,ibp,0,1]*all_pos[ilp,1,shift_ip]
-
-                        dx1  = SpaceRotsUn[il ,ib ,1,0]*all_pos[il ,0,shift_i ]
-                        dx1 -= SpaceRotsUn[ilp,ibp,1,0]*all_pos[ilp,0,shift_ip]
-                        dx1 += SpaceRotsUn[il ,ib ,1,1]*all_pos[il ,1,shift_i ]
-                        dx1 -= SpaceRotsUn[ilp,ibp,1,1]*all_pos[ilp,1,shift_ip]
+                        dx1  =  ( SpaceRotsUn[il ,ib ,1,0]*all_pos[il ,0,shift_i ]
+                                - SpaceRotsUn[ilp,ibp,1,0]*all_pos[ilp,0,shift_ip]
+                                + SpaceRotsUn[il ,ib ,1,1]*all_pos[il ,1,shift_i ]
+                                - SpaceRotsUn[ilp,ibp,1,1]*all_pos[ilp,1,shift_ip] )
 
                         dx2 = dx0*dx0+dx1*dx1
                             
@@ -263,17 +262,15 @@ cdef double Compute_action_Cython_time_loop_2D(
 
             for ibi in range(loopnbi[il]):
 
-                shift_i  = all_shiftsBin[il,ibi]
+                shift_i  = (((((iint - ((nint*TimeShiftNumBin[il ,ibi]) // TimeShiftDenBin[il ,ibi])) * TimeRevsBin[il ,ibi]) % nint) + nint) % nint)
 
-                # print(iint,ibi,shift_i)
+                dx0  = ( SpaceRotsBin[il,ibi,0,0]*all_pos[il,0,shift_i]
+                       + SpaceRotsBin[il,ibi,0,1]*all_pos[il,1,shift_i]
+                       - all_pos[il,0,iint] )
 
-                dx0  = SpaceRotsBin[il,ibi,0,0]*all_pos[il,0,shift_i]
-                dx0 += SpaceRotsBin[il,ibi,0,1]*all_pos[il,1,shift_i]
-                dx0 -= all_pos[il,0,iint]
-
-                dx1  = SpaceRotsBin[il,ibi,1,0]*all_pos[il,0,shift_i]
-                dx1 += SpaceRotsBin[il,ibi,1,1]*all_pos[il,1,shift_i]
-                dx1 -= all_pos[il,1,iint]
+                dx1  = ( SpaceRotsBin[il,ibi,1,0]*all_pos[il,0,shift_i]
+                       + SpaceRotsBin[il,ibi,1,1]*all_pos[il,1,shift_i]
+                       - all_pos[il,1,iint] )
 
                 dx2 = dx0*dx0 + dx1*dx1
 
@@ -283,28 +280,18 @@ cdef double Compute_action_Cython_time_loop_2D(
                 
                 a = (2*ProdMassSumAll[il,ibi]*potp)
 
-                dx0 *= a
-                dx1 *= a
+                dx0 = dx0*a
+                dx1 = dx1*a
 
-                b  = SpaceRotsBin[il,ibi,0,0]*dx0
-                b += SpaceRotsBin[il,ibi,1,0]*dx1
+                b = SpaceRotsBin[il,ibi,0,0]*dx0 + SpaceRotsBin[il,ibi,1,0]*dx1
 
                 grad_pot_all[il ,0,shift_i] += b
                 grad_pot_all[il ,0,iint   ] -= dx0
 
-                b  = SpaceRotsBin[il,ibi,0,1]*dx0
-                b += SpaceRotsBin[il,ibi,1,1]*dx1
+                b = SpaceRotsBin[il,ibi,0,1]*dx0 + SpaceRotsBin[il,ibi,1,1]*dx1
+
                 grad_pot_all[il ,1,shift_i] += b
                 grad_pot_all[il ,1,iint   ] -= dx1
-
-        # Increments time at the end
-        for il in range(nloop):
-            for ib in range(loopnb[il]):
-                all_shiftsUn[il,ib] = ((((all_shiftsUn[il,ib]+TimeRevsUn[il,ib]) % nint) + nint) % nint)
-                
-            for ibi in range(loopnbi[il]):
-
-                all_shiftsBin[il,ibi] = ((((all_shiftsBin[il,ibi]+TimeRevsBin[il,ibi]) % nint) + nint) % nint)
 
     return Pot_en
 
@@ -463,8 +450,8 @@ cdef void Compute_action_hess_mul_Cython_time_loop_2D(
     cdef double prod_mass,a,b,dx2,prod_fac,dxtddx
     cdef Py_ssize_t shift_i,shift_ip
 
-    # for iint in range(nint):
-    for iint in prange(nint):
+    for iint in range(nint):
+    # for iint in prange(nint):
 
         # Different loops
         for il in range(nloop):

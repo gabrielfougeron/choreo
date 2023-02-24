@@ -10,7 +10,11 @@ import copy
 import shutil
 import time
 import builtins
-import pyamg
+
+try:
+    import pyamg
+except:
+    pass
 
 from choreo.Choreo_scipy_plus import *
 from choreo.Choreo_funs import *
@@ -290,7 +294,7 @@ def Find_Choreo(
             
             inner_M = None
 
-            inner_M = ActionSyst.GetAMGPreco(x0,krylov_method=krylov_method,cycle='V')
+            # inner_M = ActionSyst.GetAMGPreco(x0,krylov_method=krylov_method,cycle='V')
             # inner_M = ActionSyst.GetAMGPreco(x0,krylov_method=krylov_method,cycle='W')
             # inner_M = ActionSyst.GetAMGPreco(x0,krylov_method=krylov_method,cycle='F')
             # inner_M = ActionSyst.GetAMGPreco(x0,krylov_method=krylov_method,cycle='AMLI')
