@@ -23,7 +23,6 @@ import random
 import inspect
 import fractions
 
-import pyamg
 
 from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
@@ -1613,107 +1612,114 @@ class ChoreoAction():
             
             plt.close()
             
-class NonLinLevel(pyamg.MultilevelSolver.Level):
 
-    def __init__(self,ActionSyst,cvg_lvl,xo,fo,**kwargs):
-        super().__init__(**kwargs)
 
-        self.ActionSyst = ActionSyst
-        self.cvg_lvl = cvg_lvl
 
-        self.update(xo,fo)
+try:
 
-    def update(self,x,f):
+    import pyamg
+    class NonLinLevel(pyamg.MultilevelSolver.Level):
 
-        cvg_lvl_in = self.ActionSyst.current_cvg_lvl
+        def __init__(self,ActionSyst,cvg_lvl,xo,fo,**kwargs):
+            super().__init__(**kwargs)
 
-        self._x = self.ActionSyst.TransferParamBtwRefinementLevels(x,iin=self.ActionSyst.current_cvg_lvl,iout=self.cvg_lvl)
-        self._f = f
+            self.ActionSyst = ActionSyst
+            self.cvg_lvl = cvg_lvl
 
-        self.ActionSyst.current_cvg_lvl = self.cvg_lvl 
-        my_ndof = self.ActionSyst.coeff_to_param.shape[0]
-        
-        self.A = scipy.sparse.linalg.LinearOperator((my_ndof,my_ndof),
-            matvec =  (lambda dx, xl=self._x, selfl=self : selfl.Compute_action_hess_mul(xl,dx)),
-            rmatvec = (lambda dx, xl=self._x, selfl=self : selfl.Compute_action_hess_mul(xl,dx)),
-            dtype = np.float64)
-        
-        self.A.nnz = -1
-        self.A.toarray = lambda selfl=self,ndof=my_ndof : selfl.A.dot(np.identity(ndof))
-        
-        if self.cvg_lvl > 0:
+            self.update(xo,fo)
 
-            self.ActionSyst.current_cvg_lvl = self.cvg_lvl - 1
-            coarse_ndof = self.ActionSyst.coeff_to_param.shape[0]
+        def update(self,x,f):
 
-            self.P = scipy.sparse.linalg.LinearOperator((my_ndof,coarse_ndof),
-                matvec =  (lambda y, iinl = self.cvg_lvl - 1, ioutl = self.cvg_lvl, selfl=self : selfl.ActionSyst.TransferParamBtwRefinementLevels(y,iin=iinl,iout=ioutl)),
+            cvg_lvl_in = self.ActionSyst.current_cvg_lvl
+
+            self._x = self.ActionSyst.TransferParamBtwRefinementLevels(x,iin=self.ActionSyst.current_cvg_lvl,iout=self.cvg_lvl)
+            self._f = f
+
+            self.ActionSyst.current_cvg_lvl = self.cvg_lvl 
+            my_ndof = self.ActionSyst.coeff_to_param.shape[0]
+            
+            self.A = scipy.sparse.linalg.LinearOperator((my_ndof,my_ndof),
+                matvec =  (lambda dx, xl=self._x, selfl=self : selfl.Compute_action_hess_mul(xl,dx)),
+                rmatvec = (lambda dx, xl=self._x, selfl=self : selfl.Compute_action_hess_mul(xl,dx)),
                 dtype = np.float64)
             
-            self.R = scipy.sparse.linalg.LinearOperator((coarse_ndof,my_ndof),
-                matvec =  (lambda y, iinl = self.cvg_lvl,ioutl = self.cvg_lvl - 1, selfl=self : selfl.ActionSyst.TransferParamBtwRefinementLevels(y,iin=iinl,iout=ioutl)),
-                dtype = np.float64)
+            self.A.nnz = -1
+            self.A.toarray = lambda selfl=self,ndof=my_ndof : selfl.A.dot(np.identity(ndof))
+            
+            if self.cvg_lvl > 0:
 
-        self.ActionSyst.current_cvg_lvl = cvg_lvl_in
+                self.ActionSyst.current_cvg_lvl = self.cvg_lvl - 1
+                coarse_ndof = self.ActionSyst.coeff_to_param.shape[0]
 
-    def presmoother(self,A,x,b):
-        self.smooth(x)
+                self.P = scipy.sparse.linalg.LinearOperator((my_ndof,coarse_ndof),
+                    matvec =  (lambda y, iinl = self.cvg_lvl - 1, ioutl = self.cvg_lvl, selfl=self : selfl.ActionSyst.TransferParamBtwRefinementLevels(y,iin=iinl,iout=ioutl)),
+                    dtype = np.float64)
+                
+                self.R = scipy.sparse.linalg.LinearOperator((coarse_ndof,my_ndof),
+                    matvec =  (lambda y, iinl = self.cvg_lvl,ioutl = self.cvg_lvl - 1, selfl=self : selfl.ActionSyst.TransferParamBtwRefinementLevels(y,iin=iinl,iout=ioutl)),
+                    dtype = np.float64)
 
-    def postsmoother(self,A,x,b):
-        self.smooth(x)
+            self.ActionSyst.current_cvg_lvl = cvg_lvl_in
 
-    def smooth(self,x):
+        def presmoother(self,A,x,b):
+            self.smooth(x)
 
-        cvg_lvl_in = self.ActionSyst.current_cvg_lvl
+        def postsmoother(self,A,x,b):
+            self.smooth(x)
 
-        self.ActionSyst.current_cvg_lvl = self.cvg_lvl
+        def smooth(self,x):
 
-        all_coeffs = self.ActionSyst.Unpackage_all_coeffs(x)
+            cvg_lvl_in = self.ActionSyst.current_cvg_lvl
 
-        smooth_mul_final = 1e-16
+            self.ActionSyst.current_cvg_lvl = self.cvg_lvl
 
-        smooth_mul = (smooth_mul_final) ** (2. / self.ActionSyst.ncoeff)
+            all_coeffs = self.ActionSyst.Unpackage_all_coeffs(x)
 
+            smooth_mul_final = 1e-16
 
-        InplaceSmoothCoeffs(
-            self.ActionSyst.nloop       ,
-            self.ActionSyst.ncoeff      ,
-            self.ActionSyst.ncoeff // 2 ,
-            smooth_mul                  ,
-            all_coeffs 
-        )
-
-        x[:] = self.ActionSyst.Package_all_coeffs(all_coeffs)
-
-        self.ActionSyst.current_cvg_lvl = cvg_lvl_in
-
-    def Compute_action_hess_mul(self,x,dx):
-
-        cvg_lvl_in = self.ActionSyst.current_cvg_lvl
-        self.ActionSyst.current_cvg_lvl = self.cvg_lvl 
-        res = self.ActionSyst.Compute_action_hess_mul(x,dx)
-        self.ActionSyst.current_cvg_lvl = cvg_lvl_in
-
-        return res
-
-class NonLinMultilevelSolver(pyamg.MultilevelSolver):
-
-    def __init__(self,**kwargs):
-        super().__init__(**kwargs)
-
-    def update(self,x,f):
-        
-        for level in self.levels:
-            level.update(x,f)
-
-    def aspreconditioner(self, cycle='V'):
-
-        res = super(NonLinMultilevelSolver,self).aspreconditioner(cycle)
-        res.update = lambda x, f, selfl=self: selfl.update(x,f)
-
-        return res
+            smooth_mul = (smooth_mul_final) ** (2. / self.ActionSyst.ncoeff)
 
 
+            InplaceSmoothCoeffs(
+                self.ActionSyst.nloop       ,
+                self.ActionSyst.ncoeff      ,
+                self.ActionSyst.ncoeff // 2 ,
+                smooth_mul                  ,
+                all_coeffs 
+            )
+
+            x[:] = self.ActionSyst.Package_all_coeffs(all_coeffs)
+
+            self.ActionSyst.current_cvg_lvl = cvg_lvl_in
+
+        def Compute_action_hess_mul(self,x,dx):
+
+            cvg_lvl_in = self.ActionSyst.current_cvg_lvl
+            self.ActionSyst.current_cvg_lvl = self.cvg_lvl 
+            res = self.ActionSyst.Compute_action_hess_mul(x,dx)
+            self.ActionSyst.current_cvg_lvl = cvg_lvl_in
+
+            return res
+
+    class NonLinMultilevelSolver(pyamg.MultilevelSolver):
+
+        def __init__(self,**kwargs):
+            super().__init__(**kwargs)
+
+        def update(self,x,f):
+            
+            for level in self.levels:
+                level.update(x,f)
+
+        def aspreconditioner(self, cycle='V'):
+
+            res = super(NonLinMultilevelSolver,self).aspreconditioner(cycle)
+            res.update = lambda x, f, selfl=self: selfl.update(x,f)
+
+            return res
+
+except:
+    pass
 
 
 

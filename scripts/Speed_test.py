@@ -18,12 +18,13 @@ sys.path.append(__PROJECT_ROOT__)
 import choreo 
 
 
-val = str(8)
+val = str(4)
+
 
 os.environ['OMP_NUM_THREADS'] = val
-os.environ['NUMEXPR_NUM_THREADS'] = val
-os.environ['OPENBLAS_NUM_THREADS'] = val
-os.environ['MKL_NUM_THREADS'] = val
+# os.environ['NUMEXPR_NUM_THREADS'] = val
+# os.environ['OPENBLAS_NUM_THREADS'] = val
+# os.environ['MKL_NUM_THREADS'] = val
 
 
 
