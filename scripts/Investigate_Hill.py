@@ -178,7 +178,7 @@ def ExecName(the_name, input_folder, store_folder):
     n_reconverge_it_max = 0
     n_grad_change = 1.
 
-    ActionSyst = choreo.setup_changevar(nbody,nint,mass,n_reconverge_it_max,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change,CrashOnIdentity=False)
+    ActionSyst = choreo.setup_changevar(2,nbody,nint,mass,n_reconverge_it_max,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change,CrashOnIdentity=False)
     x = ActionSyst.Package_all_coeffs(all_coeffs_init)
 
     ActionSyst.SavePosFFT(x)
@@ -199,7 +199,7 @@ def ExecName(the_name, input_folder, store_folder):
     c_coeffs = all_coeffs.view(dtype=np.complex128)[...,0]
     # all_pos = choreo.the_irfft(c_coeffs,n=nint,axis=2,norm="forward")
 
-    ActionSyst_nosym = choreo.setup_changevar(nbody,nint,mass,n_reconverge_it_max,Sym_list=[],MomCons=False,n_grad_change=n_grad_change,CrashOnIdentity=False)
+    ActionSyst_nosym = choreo.setup_changevar(2,nbody,nint,mass,n_reconverge_it_max,Sym_list=[],MomCons=False,n_grad_change=n_grad_change,CrashOnIdentity=False)
 
     x_nosym = ActionSyst_nosym.Package_all_coeffs(all_coeffs)
     ActionSyst.SavePosFFT(x_nosym)

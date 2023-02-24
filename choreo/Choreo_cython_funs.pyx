@@ -340,6 +340,7 @@ def Compute_action_Cython(
     return Action,Action_grad_np
     
 def Compute_hash_action_Cython(
+    long                geodim          ,
     long                nloop           ,
     long                ncoeff          ,
     long                nint            ,
@@ -357,13 +358,11 @@ def Compute_hash_action_Cython(
     long[:,::1]         TimeRevsBin     ,
     long[:,::1]         TimeShiftNumBin ,
     long[:,::1]         TimeShiftDenBin ,
-    double[:,:,:,::1]   all_coeffs  
+    np.ndarray[double, ndim=4, mode="c"]   all_coeffs  
 ):
     # Computes the hash of a set of trajectories.
     # The hash is meant to provide a likely unique short identification for duplicate detection.
     # It is hence engineered to be invariant wrt permutation of bodies, time shifts / reversals and space isometries.
-
-    cdef long geodim = all_coeffs.shape[1]
 
     cdef long il,ilp,i
     cdef long idim,idimp
@@ -376,8 +375,14 @@ def Compute_hash_action_Cython(
     cdef double prod_mass,a,b,dx2,prod_fac
     cdef double[::1] dx = np.zeros((geodim),dtype=np.float64)
         
-    cdef long maxloopnb = loopnb.max()
-    cdef long maxloopnbi = loopnbi.max()
+    cdef long maxloopnb = 0
+    cdef long maxloopnbi = 0
+
+    for il in range(nloop):
+        if (maxloopnb < loopnb[il]):
+            maxloopnb = loopnb[il]
+        if (maxloopnbi < loopnbi[il]):
+            maxloopnbi = loopnbi[il]
     
     cdef long ihash
     
@@ -399,7 +404,6 @@ def Compute_hash_action_Cython(
                 Kin_en += a *((all_coeffs[il,idim,k,0]*all_coeffs[il,idim,k,0]) + (all_coeffs[il,idim,k,1]*all_coeffs[il,idim,k,1]))
 
     c_coeffs = all_coeffs.view(dtype=np.complex128)[...,0]
-
     cdef np.ndarray[double, ndim=3, mode="c"] all_pos = the_irfft(c_coeffs,n=nint,axis=2,norm="forward")
 
     cdef np.ndarray[long, ndim=2, mode="c"]  all_shiftsUn = np.zeros((nloop,maxloopnb),dtype=np.int_)
@@ -528,8 +532,14 @@ def Compute_MinDist_Cython(
     cdef double prod_mass,a,b,dx2,prod_fac
     cdef np.ndarray[double, ndim=1, mode="c"]  dx = np.zeros((geodim),dtype=np.float64)
         
-    cdef long maxloopnb = loopnb.max()
-    cdef long maxloopnbi = loopnbi.max()
+    cdef long maxloopnb = 0
+    cdef long maxloopnbi = 0
+
+    for il in range(nloop):
+        if (maxloopnb < loopnb[il]):
+            maxloopnb = loopnb[il]
+        if (maxloopnbi < loopnbi[il]):
+            maxloopnbi = loopnbi[il]
     
     cdef double dx2min = 1e100
 
@@ -1063,7 +1073,11 @@ def Compute_Newton_err_Cython(
     cdef double prod_mass,a,b,dx2,prod_fac
     cdef double[::1] dx = np.zeros((geodim),dtype=np.float64)
 
-    cdef long maxloopnb = loopnb.max()
+    cdef long maxloopnb = 0
+
+    for il in range(nloop):
+        if (maxloopnb < loopnb[il]):
+            maxloopnb = loopnb[il]
     
     cdef np.ndarray[double, ndim=4, mode="c"] acc_coeff = np.zeros((nloop,geodim,ncoeff,2),dtype=np.float64)
 
@@ -2135,11 +2149,12 @@ def Compute_hamil_hess_mul_Cython_nosym_split(
 
 
 def Compute_Derivative_Cython_nosym(
-    long geodim                         ,
     long nbody                          ,
     long ncoeff                         ,
-    np.ndarray[double, ndim=4, mode="c"]  all_coeffs
+    double[:,:,:,::1]  all_coeffs
 ):
+
+    cdef long geodim = all_coeffs.shape[1]
 
     cdef Py_ssize_t idim,jdim
     cdef Py_ssize_t ib,ibp
@@ -2164,11 +2179,12 @@ def Compute_Derivative_Cython_nosym(
 
 
 def Compute_Derivative_precond_Cython_nosym(
-    long geodim                          ,
     long nbody                          ,
     long ncoeff                         ,
-    np.ndarray[double, ndim=4, mode="c"]  all_coeffs
+    double[:,:,:,::1]  all_coeffs
 ):
+
+    cdef long geodim = all_coeffs.shape[1]
 
     cdef Py_ssize_t idim,jdim
     cdef Py_ssize_t ib,ibp
@@ -2195,11 +2211,12 @@ def Compute_Derivative_precond_Cython_nosym(
     return all_coeffs_d_np
 
 def Compute_Derivative_precond_inv_Cython_nosym(
-    long geodim                         ,
     long nbody                          ,
     long ncoeff                         ,
-    np.ndarray[double, ndim=4, mode="c"]  all_coeffs
+    double[:,:,:,::1]  all_coeffs
 ):
+
+    cdef long geodim = all_coeffs.shape[1]
 
     cdef Py_ssize_t idim,jdim
     cdef Py_ssize_t ib,ibp
@@ -2234,7 +2251,6 @@ def Compute_Derivative_precond_inv_Cython_nosym(
 
 
 def Compute_hamil_hess_mul_xonly_Cython_nosym(
-    long geodim                         ,
     long nbody                          ,
     long ncoeff                         ,
     long nint                           ,
@@ -2242,6 +2258,8 @@ def Compute_hamil_hess_mul_xonly_Cython_nosym(
     double[:,:,::1]   all_pos           ,
     np.ndarray[double, ndim=4, mode="c"]  all_coeffs_d_x 
 ):
+
+    cdef long geodim = all_pos.shape[1]
 
     cdef Py_ssize_t il,ilp,i
     cdef Py_ssize_t idim,jdim

@@ -20,6 +20,7 @@ from choreo.Choreo_scipy_plus import *
 from choreo.Choreo_funs import *
 
 def Find_Choreo(
+    geodim,
     nbody,
     n_reconverge_it_max,
     nint_init,
@@ -107,7 +108,7 @@ def Find_Choreo(
     print(f'Searching periodic solutions of {nbody:d} bodies.')
 
     print(f'Processing symmetries for {(n_reconverge_it_max+1):d} convergence levels.')
-    ActionSyst = setup_changevar(nbody,nint_init,mass,n_reconverge_it_max,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change,CrashOnIdentity=CrashOnError_changevar)
+    ActionSyst = setup_changevar(geodim,nbody,nint_init,mass,n_reconverge_it_max,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change,CrashOnIdentity=CrashOnError_changevar)
 
     start_cvg_lvl = 0
     # start_cvg_lvl = 2
@@ -550,6 +551,7 @@ def Find_Choreo(
     print('Done!')
 
 def GenSymExample(
+    geodim,
     nbody,
     nint_init,
     mass,
@@ -598,7 +600,7 @@ def GenSymExample(
     n_reconverge_it_max = 0
     n_grad_change = 1
 
-    ActionSyst = setup_changevar(nbody,nint_init,mass,n_reconverge_it_max,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change,CrashOnIdentity=CrashOnError_changevar)
+    ActionSyst = setup_changevar(geodim,nbody,nint_init,mass,n_reconverge_it_max,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change,CrashOnIdentity=CrashOnError_changevar)
 
     nbi_tot = 0
     for il in range(ActionSyst.nloop):
@@ -696,6 +698,7 @@ def GenSymExample(
     return True
 
 def Speed_test(
+    geodim,
     nbody,
     n_reconverge_it_max,
     nint_init,
@@ -732,7 +735,7 @@ def Speed_test(
     """
     
 
-    ActionSyst = setup_changevar(nbody,nint_init,mass,n_reconverge_it_max,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change,CrashOnIdentity=CrashOnError_changevar)
+    ActionSyst = setup_changevar(geodim,nbody,nint_init,mass,n_reconverge_it_max,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change,CrashOnIdentity=CrashOnError_changevar)
 
     start_cvg_lvl = 0
     start_cvg_lvl = n_reconverge_it_max
