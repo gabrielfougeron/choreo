@@ -17,15 +17,13 @@ __PROJECT_ROOT__ = os.path.abspath(os.path.join(os.path.dirname(__file__),os.par
 sys.path.append(__PROJECT_ROOT__)
 
 
+# os.environ['OMP_NUM_THREADS'] = '1'
+
 from choreo import *
 
-nint = 2400
+nint = 24
 
 ncoeff = nint//2 + 1
-
-# load_file = './save_tests/9/9.npy'
-# all_coeffs = np.load(load_file)
-# ncoeff = all_coeffs.shape[2]
 
 
 do_perf = False
@@ -37,18 +35,14 @@ Compare_FD_grad = True
 # Compare_FD_hess = False
 Compare_FD_hess = True
 
-exponent_eps_list = range(16)
-# exponent_eps_list = [8]
+# exponent_eps_list = range(16)
+exponent_eps_list = [8]
 
 
 ncoeff_init = ncoeff
 
 print("ncoeffs : ",ncoeff_init)
 
-# nTf = 101
-# nbs = 3
-# nbf = 3
-# nbody =  nbs * nbf
 
 nbody = 3
 
@@ -63,8 +57,8 @@ the_lcm = m.lcm(*nbpl)
 SymName = None
 Sym_list,nbody = Make2DChoreoSymManyLoops(nbpl=nbpl,SymName=SymName)
 
-MomConsImposed = True
-# MomConsImposed = False
+# MomConsImposed = True
+MomConsImposed = False
 
 
 
@@ -83,9 +77,12 @@ x0 = np.random.random((ncoeffs_args))
 
 Actiono, Actiongrado = ActionSyst.Compute_action(x0)
 
-# print('Action 0 : ',Actiono)
-print(np.linalg.norm(Actiongrado))
+print('Action 0 : ',Actiono)
+# print(np.linalg.norm(Actiongrado))
 
+Hash = ActionSyst.Compute_hash_action(x0)
+
+print('Hash 0 : ',abs(Hash[0]-Actiono)/((abs(Actiono)+abs(Hash[0]))))
 
 
 
