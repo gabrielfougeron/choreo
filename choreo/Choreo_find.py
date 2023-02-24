@@ -140,6 +140,7 @@ def Find_Choreo(
     print('')
 
     all_coeffs_min,all_coeffs_max = Make_Init_bounds_coeffs(ActionSyst.nloop,ncoeff,coeff_ampl_o,k_infl,k_max,coeff_ampl_min)
+    
 
     x_min = ActionSyst.Package_all_coeffs(all_coeffs_min)
     x_max = ActionSyst.Package_all_coeffs(all_coeffs_max)
@@ -731,20 +732,20 @@ def Speed_test(
 
     """
     
+
     ActionSyst = setup_changevar(nbody,nint_init,mass,n_reconverge_it_max,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change,CrashOnIdentity=CrashOnError_changevar)
 
-    nbi_tot = 0
-    for il in range(ActionSyst.nloop):
-        for ilp in range(il+1,ActionSyst.nloop):
-            nbi_tot += ActionSyst.loopnb[il]*ActionSyst.loopnb[ilp]
-        nbi_tot += ActionSyst.loopnbi[il]
-    nbi_naive = (nbody*(nbody-1))//2
+    start_cvg_lvl = 0
+    start_cvg_lvl = n_reconverge_it_max
+    # start_cvg_lvl = 2
+    ActionSyst.current_cvg_lvl = start_cvg_lvl
 
-    ActionSyst.current_cvg_lvl = n_reconverge_it_max
+
     ncoeff = ActionSyst.ncoeff
     nint = ActionSyst.nint
 
     all_coeffs_min,all_coeffs_max = Make_Init_bounds_coeffs(ActionSyst.nloop,ncoeff,coeff_ampl_o,k_infl,k_max,coeff_ampl_min)
+    
 
     x_min = ActionSyst.Package_all_coeffs(all_coeffs_min)
     x_max = ActionSyst.Package_all_coeffs(all_coeffs_max)
@@ -758,7 +759,7 @@ def Speed_test(
 
     sampler = UniformRandom(d=rand_dim)
 
-    x0 = np.random.random(ActionSyst.coeff_to_param.shape[1])
+    x0 = np.random.random(ActionSyst.param_to_coeff.shape[1])
     xmin = ActionSyst.Compute_MinDist(x0)
 
     if (xmin < 1e-5):

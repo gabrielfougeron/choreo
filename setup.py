@@ -19,11 +19,14 @@ __version__ = "0.2.0"
 # To build for the current platform, run :
 # python setup.py bdist_wheel
 
+
 if platform.system() == "Windows":
 
-    extra_compile_args = ["/O2"]
+    extra_compile_args = ["/O2", "/openmp"]
+    extra_link_args = ["/openmp"]
 
 else:
+
 
     # print(platform.system())
     # print( os.environ)
@@ -32,31 +35,27 @@ else:
 
         # extra_compile_args = ["-O3"]
         extra_compile_args = []
+        extra_link_args = []
 
     elif not(distutils.spawn.find_executable('clang') is None):
 
         os.environ['CC'] = 'clang'
         os.environ['LDSHARED'] = 'clang -shared'
 
-        extra_compile_args = ["-O2","-march=native"]
-        # extra_compile_args = ["-O3","-march=native"]
-        # extra_compile_args = ["-Ofast","-march=native"]
-        # extra_compile_args = []
+        extra_compile_args = ["-O2","-march=native", "-fopenmp"]
+        # extra_compile_args = ["-O3","-march=native", "-fopenmp"]
+        # extra_compile_args = ["-Ofast","-march=native", "-fopenmp"]
+        # extra_compile_args = ["-fopenmp"]
 
-#     elif not(distutils.spawn.find_executable('icc') is None):
-# 
-#         os.environ['CC'] = 'icc'
-#         os.environ['LDSHARED'] = 'icc -shared'
-# 
-#         extra_compile_args = ["-Ofast","-march=native","-w","-no-multibyte-chars"]
+        extra_link_args = ["-fopenmp"]
 
     else:
 
-        extra_compile_args = ["-O3","-march=native"]
+        extra_compile_args = ["-O3","-march=native", "-fopenmp"]
+        extra_link_args = ["-fopenmp"]
     
 nthreads = multiprocessing.cpu_count()
 
-extra_link_args = []
 
 define_macros = [("NPY_NO_DEPRECATED_API", "NPY_1_7_API_VERSION")]
 
