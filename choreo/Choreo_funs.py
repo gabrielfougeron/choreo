@@ -47,7 +47,7 @@ from choreo.Choreo_cython_funs import Compute_hamil_hess_mul_Cython_nosym,Comput
 from choreo.Choreo_cython_funs import Compute_Derivative_precond_inv_Cython_nosym,Compute_Derivative_precond_Cython_nosym
 from choreo.Choreo_cython_funs import Compute_Derivative_Cython_nosym,InplaceSmoothCoeffs
 
-from choreo.Choreo_cython_funs_2D import Compute_action_Cython_2D as Compute_action_Cython ,Compute_action_hess_mul_Cython_2D as Compute_action_hess_mul_Cython
+from choreo.Choreo_cython_funs_2D import Compute_action_Cython_2D, Compute_action_hess_mul_Cython_2D
 from choreo.Choreo_cython_funs_2D import RotateFastWithSlow_2D
 
 from choreo.Choreo_scipy_plus import *
@@ -320,7 +320,7 @@ class ChoreoAction():
 
         self.SavePosFFT(x)
 
-        J,GradJ =  Compute_action_Cython(
+        J,GradJ =  self.ComputeGradBackend(
             self.nloop          ,
             self.ncoeff       ,
             self.nint         ,
@@ -362,7 +362,7 @@ class ChoreoAction():
 
         self.SavePosFFT(x)
 
-        HessJdx = Compute_action_hess_mul_Cython(
+        HessJdx = self.ComputeHessBackend(
             self.nloop                      ,
             self.ncoeff                   ,
             self.nint                     ,
@@ -405,7 +405,7 @@ class ChoreoAction():
     
         self.SavePosFFT(x)
 
-        J,GradJ =  Compute_action_Cython(
+        J,GradJ =  self.ComputeGradBackend(
             self.nloop          ,
             self.ncoeff       ,
             self.nint         ,
@@ -2187,6 +2187,14 @@ def setup_changevar(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCons=Tr
         param_to_coeff_T_cvg_lvl_list.append(param_to_coeff_cvg_lvl_list[i].transpose(copy=True))
         coeff_to_param_T_cvg_lvl_list.append(coeff_to_param_cvg_lvl_list[i].transpose(copy=True))
 
+    if geodim == 2:
+        ComputeGradBackend = Compute_action_Cython_2D
+        ComputeHessBackend = Compute_action_hess_mul_Cython_2D
+    else:
+        ComputeGradBackend = Compute_action_Cython
+        ComputeHessBackend = Compute_action_hess_mul_Cython
+
+
     kwargs = {
         "geodim"                        :   geodim                          ,
         "nbody"                         :   nbody                           ,
@@ -2218,6 +2226,8 @@ def setup_changevar(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCons=Tr
         "last_all_coeffs"               :   None                            ,
         "last_all_pos"                  :   None                            ,
         "Do_Pos_FFT"                    :   True                            ,
+        "ComputeGradBackend"            :   ComputeGradBackend              ,
+        "ComputeHessBackend"            :   ComputeHessBackend              ,
     }
 
     return ChoreoAction(**kwargs)
