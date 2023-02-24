@@ -17,9 +17,14 @@ __PROJECT_ROOT__ = os.path.abspath(os.path.join(os.path.dirname(__file__),os.par
 sys.path.append(__PROJECT_ROOT__)
 
 
-# os.environ['OMP_NUM_THREADS'] = '1'
+os.environ['OMP_NUM_THREADS'] = '8'
 
 from choreo import *
+
+
+test_cython_prange()
+
+# exit()
 
 nint = 24
 
@@ -67,6 +72,11 @@ n_grad_change = 1.
 ActionSyst = setup_changevar(2,nbody,nint,mass,n_reconverge_it_max,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change)
 ncoeffs_args = ActionSyst.coeff_to_param.shape[0]
 
+
+ActionSyst.ComputeGradBackend = Compute_action_Cython
+ActionSyst.ComputeHessBackend = Compute_action_hess_mul_Cython
+
+
 print('n params ',ncoeffs_args)
 
 x0 = np.random.random((ncoeffs_args))
@@ -88,6 +98,9 @@ ActionSyst.ComputeGradBackend = Compute_action_Cython
 ActionSyst.ComputeHessBackend = Compute_action_hess_mul_Cython
 
 
+ActionSyst.ComputeGradBackend = Compute_action_Cython_2D
+ActionSyst.ComputeHessBackend = Compute_action_hess_mul_Cython_2D
+
 
 
 Action1, Actiongrad1 = ActionSyst.Compute_action(x0)
@@ -102,9 +115,9 @@ print("Backend change grad error :",err)
 
 
 
-ActionSyst.ComputeGradBackend = Compute_action_Cython_2D
-ActionSyst.ComputeHessBackend = Compute_action_hess_mul_Cython_2D
 
+ActionSyst.ComputeGradBackend = Compute_action_Cython
+ActionSyst.ComputeHessBackend = Compute_action_hess_mul_Cython
 
 
 
