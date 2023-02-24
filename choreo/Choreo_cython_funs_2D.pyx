@@ -211,8 +211,8 @@ cdef double Compute_action_Cython_time_loop_2D(
     cdef double prod_mass,a,b,dx2,prod_fac
     cdef double Pot_en = 0.
 
-    for iint in range(nint):
-    # for iint in prange(nint):
+    # for iint in range(nint):
+    for iint in prange(nint):
 
         # Different loops
         for il in range(nloop):
@@ -450,8 +450,8 @@ cdef void Compute_action_hess_mul_Cython_time_loop_2D(
     cdef double prod_mass,a,b,dx2,prod_fac,dxtddx
     cdef Py_ssize_t shift_i,shift_ip
 
-    for iint in range(nint):
-    # for iint in prange(nint):
+    # for iint in range(nint):
+    for iint in prange(nint):
 
         # Different loops
         for il in range(nloop):

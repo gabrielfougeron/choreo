@@ -73,21 +73,40 @@ x0 = np.random.random((ncoeffs_args))
 # x0 = ActionSyst.Package_all_coeffs(all_coeffs)
 
 
+dxa = np.random.random((ncoeffs_args))
+dxb =  np.random.random((ncoeffs_args))
 
 
 Actiono, Actiongrado = ActionSyst.Compute_action(x0)
+Hesso = ActionSyst.Compute_action_hess_mul(x0,dxb)
 
-print('Action 0 : ',Actiono)
+# print('Action 0 : ',Actiono)
 # print(np.linalg.norm(Actiongrado))
 
-Hash = ActionSyst.Compute_hash_action(x0)
 
-print('Hash 0 : ',abs(Hash[0]-Actiono)/((abs(Actiono)+abs(Hash[0]))))
+ActionSyst.ComputeGradBackend = Compute_action_Cython
+ActionSyst.ComputeHessBackend = Compute_action_hess_mul_Cython
 
 
 
-dxa = np.random.random((ncoeffs_args))
-dxb =  np.random.random((ncoeffs_args))
+
+Action1, Actiongrad1 = ActionSyst.Compute_action(x0)
+Hess1 = ActionSyst.Compute_action_hess_mul(x0,dxb)
+
+err = abs(Actiono - Action1) / (abs(Actiono) + abs(Action1))
+print("Backend change action error :",err)
+err = np.linalg.norm(Actiongrado - Actiongrad1) / (np.linalg.norm(Actiongrado) + np.linalg.norm(Actiongrad1))
+print("Backend change grad error :",err)
+err = np.linalg.norm(Hesso - Hess1) / (np.linalg.norm(Hesso) + np.linalg.norm(Hess1))
+print("Backend change grad error :",err)
+
+
+
+ActionSyst.ComputeGradBackend = Compute_action_Cython_2D
+ActionSyst.ComputeHessBackend = Compute_action_hess_mul_Cython_2D
+
+
+
 
 dfdxa = np.dot(Actiongrado,dxa)
 Hdxb = ActionSyst.Compute_action_hess_mul(x0,dxb)
