@@ -212,7 +212,7 @@ cdef double Compute_action_Cython_time_loop_2D(
     cdef double Pot_en = 0.
 
     # for iint in range(nint):
-    for iint in prange(nint):
+    for iint in prange(nint,schedule='static'):
 
         # Different loops
         for il in range(nloop):
@@ -244,32 +244,28 @@ cdef double Compute_action_Cython_time_loop_2D(
 
                         a = (2*prod_mass*potp)
 
-                        dx0 *= a
-                        dx1 *= a
+                        dx0 = a * dx0
+                        dx1 = a * dx1
 
-                        grad_pot_all[il ,0,shift_i ] += SpaceRotsUn[il ,ib ,0,0]*dx0 
-                        grad_pot_all[il ,0,shift_i ] += SpaceRotsUn[il ,ib ,1,0]*dx1
-                        grad_pot_all[ilp,0,shift_ip] -= SpaceRotsUn[ilp,ibp,0,0]*dx0
-                        grad_pot_all[ilp,0,shift_ip] -= SpaceRotsUn[ilp,ibp,1,0]*dx1
-
-                        grad_pot_all[il ,1,shift_i ] += SpaceRotsUn[il ,ib ,0,1]*dx0
-                        grad_pot_all[il ,1,shift_i ] += SpaceRotsUn[il ,ib ,1,1]*dx1
-                        grad_pot_all[ilp,1,shift_ip] -= SpaceRotsUn[ilp,ibp,0,1]*dx0
-                        grad_pot_all[ilp,1,shift_ip] -= SpaceRotsUn[ilp,ibp,1,1]*dx1
+                        grad_pot_all[il ,0,shift_i ] += SpaceRotsUn[il ,ib ,0,0] * dx0 + SpaceRotsUn[il ,ib ,1,0] * dx1
+                        grad_pot_all[ilp,0,shift_ip] -= SpaceRotsUn[ilp,ibp,0,0] * dx0 + SpaceRotsUn[ilp,ibp,1,0] * dx1
+  
+                        grad_pot_all[il ,1,shift_i ] += SpaceRotsUn[il ,ib ,0,1] * dx0 + SpaceRotsUn[il ,ib ,1,1] * dx1
+                        grad_pot_all[ilp,1,shift_ip] -= SpaceRotsUn[ilp,ibp,0,1] * dx0 + SpaceRotsUn[ilp,ibp,1,1] * dx1
 
         # Same loop + symmetry
         for il in range(nloop):
 
             for ibi in range(loopnbi[il]):
 
-                shift_i  = (((((iint - ((nint*TimeShiftNumBin[il ,ibi]) // TimeShiftDenBin[il ,ibi])) * TimeRevsBin[il ,ibi]) % nint) + nint) % nint)
+                shift_i = (((((iint - ((nint*TimeShiftNumBin[il ,ibi]) // TimeShiftDenBin[il ,ibi])) * TimeRevsBin[il ,ibi]) % nint) + nint) % nint)
 
-                dx0  = ( SpaceRotsBin[il,ibi,0,0]*all_pos[il,0,shift_i]
-                       + SpaceRotsBin[il,ibi,0,1]*all_pos[il,1,shift_i]
+                dx0  = ( SpaceRotsBin[il,ibi,0,0] * all_pos[il,0,shift_i]
+                       + SpaceRotsBin[il,ibi,0,1] * all_pos[il,1,shift_i]
                        - all_pos[il,0,iint] )
 
-                dx1  = ( SpaceRotsBin[il,ibi,1,0]*all_pos[il,0,shift_i]
-                       + SpaceRotsBin[il,ibi,1,1]*all_pos[il,1,shift_i]
+                dx1  = ( SpaceRotsBin[il,ibi,1,0] * all_pos[il,0,shift_i]
+                       + SpaceRotsBin[il,ibi,1,1] * all_pos[il,1,shift_i]
                        - all_pos[il,1,iint] )
 
                 dx2 = dx0*dx0 + dx1*dx1
@@ -451,7 +447,7 @@ cdef void Compute_action_hess_mul_Cython_time_loop_2D(
     cdef Py_ssize_t shift_i,shift_ip
 
     # for iint in range(nint):
-    for iint in prange(nint):
+    for iint in prange(nint,schedule='static'):
 
         # Different loops
         for il in range(nloop):
@@ -496,17 +492,11 @@ cdef void Compute_action_hess_mul_Cython_time_loop_2D(
                         ddf0 = b*dx0+a*ddx0
                         ddf1 = b*dx1+a*ddx1
                             
-                        hess_pot_all_d[il ,0,shift_i] += SpaceRotsUn[il,ib,0,0]*ddf0
-                        hess_pot_all_d[il ,0,shift_i] += SpaceRotsUn[il,ib,1,0]*ddf1
+                        hess_pot_all_d[il ,0,shift_i ] += SpaceRotsUn[il ,ib ,0,0] * ddf0 + SpaceRotsUn[il ,ib ,1,0] * ddf1
+                        hess_pot_all_d[ilp,0,shift_ip] -= SpaceRotsUn[ilp,ibp,0,0] * ddf0 + SpaceRotsUn[ilp,ibp,1,0] * ddf1
 
-                        hess_pot_all_d[ilp,0,shift_ip] -= SpaceRotsUn[ilp,ibp,0,0]*ddf0
-                        hess_pot_all_d[ilp,0,shift_ip] -= SpaceRotsUn[ilp,ibp,1,0]*ddf1
-
-                        hess_pot_all_d[il ,1,shift_i] += SpaceRotsUn[il,ib,0,1]*ddf0
-                        hess_pot_all_d[il ,1,shift_i] += SpaceRotsUn[il,ib,1,1]*ddf1
-
-                        hess_pot_all_d[ilp,1,shift_ip] -= SpaceRotsUn[ilp,ibp,0,1]*ddf0
-                        hess_pot_all_d[ilp,1,shift_ip] -= SpaceRotsUn[ilp,ibp,1,1]*ddf1
+                        hess_pot_all_d[il ,1,shift_i ] += SpaceRotsUn[il ,ib ,0,1] * ddf0 + SpaceRotsUn[il ,ib ,1,1] * ddf1
+                        hess_pot_all_d[ilp,1,shift_ip] -= SpaceRotsUn[ilp,ibp,0,1] * ddf0 + SpaceRotsUn[ilp,ibp,1,1] * ddf1
 
 
         # Same loop + symmetry
@@ -543,12 +533,10 @@ cdef void Compute_action_hess_mul_Cython_time_loop_2D(
                 ddf0 = b*dx0+a*ddx0
                 ddf1 = b*dx1+a*ddx1
 
-                hess_pot_all_d[il ,0,shift_i] += SpaceRotsBin[il,ibi,0,0]*ddf0
-                hess_pot_all_d[il ,0,shift_i] += SpaceRotsBin[il,ibi,1,0]*ddf1
+                hess_pot_all_d[il ,0,shift_i] += SpaceRotsBin[il,ibi,0,0]*ddf0 + SpaceRotsBin[il,ibi,1,0]*ddf1
                 hess_pot_all_d[il ,0,iint   ] -= ddf0
 
-                hess_pot_all_d[il ,1,shift_i] += SpaceRotsBin[il,ibi,0,1]*ddf0
-                hess_pot_all_d[il ,1,shift_i] += SpaceRotsBin[il,ibi,1,1]*ddf1
+                hess_pot_all_d[il ,1,shift_i] += SpaceRotsBin[il,ibi,0,1]*ddf0 + SpaceRotsBin[il,ibi,1,1]*ddf1
                 hess_pot_all_d[il ,1,iint   ] -= ddf1
 
 
