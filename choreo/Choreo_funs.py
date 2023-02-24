@@ -388,7 +388,7 @@ class ChoreoAction():
         )
 
         return self.Package_all_coeffs_T(HessJdx)
-            
+
     def Compute_action_hess_LinOpt(self,x):
         r"""
         Returns the Hessian of the action wrt parameters at a given point as a Scipy LinearOperator.
