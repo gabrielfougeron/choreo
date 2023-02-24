@@ -50,7 +50,7 @@ except:
         the_rfft = np.fft.rfft
         the_irfft = np.fft.irfft
 
-    
+
 cdef long cndim = 2 # Number of space dimensions
 
 cdef double cn = -0.5  #coeff of x^2 in the potential power law

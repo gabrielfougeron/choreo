@@ -17,7 +17,7 @@ cimport numpy as np
 np.import_array()
 
 cimport cython
-from cython.parallel cimport prange
+from cython.parallel cimport parallel, prange
 
 import scipy.sparse as sp
 
@@ -359,26 +359,26 @@ def Compute_action_hess_mul_Cython_2D(
     c_coeffs_d = all_coeffs_d.view(dtype=np.complex128)[...,0]
     cdef double[:,:,::1]  all_pos_d = the_irfft(c_coeffs_d,norm="forward")
 
-    for il in range(nloop):
-        for ib in range(loopnb[il]):
-
-            k = (TimeRevsUn[il,ib]*nint*TimeShiftNumUn[il,ib])
-
-            ddiv = - k // TimeShiftDenUn[il,ib]
-            rem = k + ddiv * TimeShiftDenUn[il,ib]
-
-            if (rem != 0):
-                print("WARNING: remainder in integer division. Gradient computation will fail.")
-
-        for ibi in range(loopnbi[il]):
-
-            k = (TimeRevsBin[il,ibi]*nint*TimeShiftNumBin[il,ibi])
-
-            ddiv = - k // TimeShiftDenBin[il,ibi]
-            rem = k + ddiv * TimeShiftDenBin[il,ibi]
-
-            if (rem != 0):
-                print("WARNING: remainder in integer division. Gradient computation will fail.")
+#     for il in range(nloop):
+#         for ib in range(loopnb[il]):
+# 
+#             k = (TimeRevsUn[il,ib]*nint*TimeShiftNumUn[il,ib])
+# 
+#             ddiv = - k // TimeShiftDenUn[il,ib]
+#             rem = k + ddiv * TimeShiftDenUn[il,ib]
+# 
+#             if (rem != 0):
+#                 print("WARNING: remainder in integer division. Gradient computation will fail.")
+# 
+#         for ibi in range(loopnbi[il]):
+# 
+#             k = (TimeRevsBin[il,ibi]*nint*TimeShiftNumBin[il,ibi])
+# 
+#             ddiv = - k // TimeShiftDenBin[il,ibi]
+#             rem = k + ddiv * TimeShiftDenBin[il,ibi]
+# 
+#             if (rem != 0):
+#                 print("WARNING: remainder in integer division. Gradient computation will fail.")
 
     cdef double[:,:,::1] hess_pot_all_d = np.zeros((nloop,2,nint),dtype=np.float64)
 
@@ -463,8 +463,8 @@ cdef void Compute_action_hess_mul_Cython_time_loop_2D(
     cdef double prod_mass,a,b,dx2,prod_fac,dxtddx
     cdef Py_ssize_t shift_i,shift_ip
 
-
-    for iint in range(nint):
+    # for iint in range(nint):
+    for iint in prange(nint):
 
         # Different loops
         for il in range(nloop):
@@ -478,25 +478,25 @@ cdef void Compute_action_hess_mul_Cython_time_loop_2D(
 
                         prod_mass = mass[Targets[il,ib]]*mass[Targets[ilp,ibp]]
 
-                        dx0  = SpaceRotsUn[il ,ib ,0,0]*all_pos[il ,0,shift_i ] 
-                        dx0 -= SpaceRotsUn[ilp,ibp,0,0]*all_pos[ilp,0,shift_ip]
-                        dx0 += SpaceRotsUn[il ,ib ,0,1]*all_pos[il ,1,shift_i ]
-                        dx0 -= SpaceRotsUn[ilp,ibp,0,1]*all_pos[ilp,1,shift_ip]
+                        dx0  =  ( SpaceRotsUn[il ,ib ,0,0]*all_pos[il ,0,shift_i ]
+                                - SpaceRotsUn[ilp,ibp,0,0]*all_pos[ilp,0,shift_ip]
+                                + SpaceRotsUn[il ,ib ,0,1]*all_pos[il ,1,shift_i ]
+                                - SpaceRotsUn[ilp,ibp,0,1]*all_pos[ilp,1,shift_ip] )
 
-                        dx1  = SpaceRotsUn[il ,ib ,1,0]*all_pos[il ,0,shift_i ] 
-                        dx1 -= SpaceRotsUn[ilp,ibp,1,0]*all_pos[ilp,0,shift_ip]
-                        dx1 += SpaceRotsUn[il ,ib ,1,1]*all_pos[il ,1,shift_i ]
-                        dx1 -= SpaceRotsUn[ilp,ibp,1,1]*all_pos[ilp,1,shift_ip]
+                        dx1  =  ( SpaceRotsUn[il ,ib ,1,0]*all_pos[il ,0,shift_i ] 
+                                - SpaceRotsUn[ilp,ibp,1,0]*all_pos[ilp,0,shift_ip]
+                                + SpaceRotsUn[il ,ib ,1,1]*all_pos[il ,1,shift_i ]
+                                - SpaceRotsUn[ilp,ibp,1,1]*all_pos[ilp,1,shift_ip] )
                         
-                        ddx0  = SpaceRotsUn[il ,ib ,0,0]*all_pos_d[il ,0,shift_i ] 
-                        ddx0 -= SpaceRotsUn[ilp,ibp,0,0]*all_pos_d[ilp,0,shift_ip]
-                        ddx0 += SpaceRotsUn[il ,ib ,0,1]*all_pos_d[il ,1,shift_i ]
-                        ddx0 -= SpaceRotsUn[ilp,ibp,0,1]*all_pos_d[ilp,1,shift_ip]
+                        ddx0  = ( SpaceRotsUn[il ,ib ,0,0]*all_pos_d[il ,0,shift_i ] 
+                                - SpaceRotsUn[ilp,ibp,0,0]*all_pos_d[ilp,0,shift_ip]
+                                + SpaceRotsUn[il ,ib ,0,1]*all_pos_d[il ,1,shift_i ]
+                                - SpaceRotsUn[ilp,ibp,0,1]*all_pos_d[ilp,1,shift_ip] )
 
-                        ddx1  = SpaceRotsUn[il ,ib ,1,0]*all_pos_d[il ,0,shift_i ] 
-                        ddx1 -= SpaceRotsUn[ilp,ibp,1,0]*all_pos_d[ilp,0,shift_ip]
-                        ddx1 += SpaceRotsUn[il ,ib ,1,1]*all_pos_d[il ,1,shift_i ]
-                        ddx1 -= SpaceRotsUn[ilp,ibp,1,1]*all_pos_d[ilp,1,shift_ip]
+                        ddx1  = ( SpaceRotsUn[il ,ib ,1,0]*all_pos_d[il ,0,shift_i ] 
+                                - SpaceRotsUn[ilp,ibp,1,0]*all_pos_d[ilp,0,shift_ip]
+                                + SpaceRotsUn[il ,ib ,1,1]*all_pos_d[il ,1,shift_i ]
+                                - SpaceRotsUn[ilp,ibp,1,1]*all_pos_d[ilp,1,shift_ip] )
 
                         dx2 = dx0*dx0 + dx1*dx1
                         dxtddx = dx0*ddx0 + dx1*ddx1
@@ -529,21 +529,21 @@ cdef void Compute_action_hess_mul_Cython_time_loop_2D(
 
                 shift_i  = (((((iint - ((nint*TimeShiftNumBin[il ,ibi]) // TimeShiftDenBin[il ,ibi])) * TimeRevsBin[il ,ibi]) % nint) + nint) % nint)
 
-                dx0  = SpaceRotsBin[il,ibi,0,0]*all_pos[il,0,shift_i]
-                dx0 += SpaceRotsBin[il,ibi,0,1]*all_pos[il,1,shift_i]
-                dx0 -= all_pos[il,0,iint]
+                dx0  =  ( SpaceRotsBin[il,ibi,0,0]*all_pos[il,0,shift_i]
+                        + SpaceRotsBin[il,ibi,0,1]*all_pos[il,1,shift_i]
+                        - all_pos[il,0,iint] )
 
-                ddx0  = SpaceRotsBin[il,ibi,0,0]*all_pos_d[il,0,shift_i]
-                ddx0 += SpaceRotsBin[il,ibi,0,1]*all_pos_d[il,1,shift_i]
-                ddx0 -= all_pos_d[il,0,iint]
+                ddx0  = ( SpaceRotsBin[il,ibi,0,0]*all_pos_d[il,0,shift_i]
+                        + SpaceRotsBin[il,ibi,0,1]*all_pos_d[il,1,shift_i]
+                        - all_pos_d[il,0,iint] )
 
-                dx1  = SpaceRotsBin[il,ibi,1,0]*all_pos[il,0,shift_i]
-                dx1 += SpaceRotsBin[il,ibi,1,1]*all_pos[il,1,shift_i]
-                dx1 -= all_pos[il,1,iint]
+                dx1  = (  SpaceRotsBin[il,ibi,1,0]*all_pos[il,0,shift_i]
+                        + SpaceRotsBin[il,ibi,1,1]*all_pos[il,1,shift_i]
+                        - all_pos[il,1,iint] )
 
-                ddx1  = SpaceRotsBin[il,ibi,1,0]*all_pos_d[il,0,shift_i]
-                ddx1 += SpaceRotsBin[il,ibi,1,1]*all_pos_d[il,1,shift_i]
-                ddx1 -= all_pos_d[il,1,iint]
+                ddx1  = ( SpaceRotsBin[il,ibi,1,0]*all_pos_d[il,0,shift_i]
+                        + SpaceRotsBin[il,ibi,1,1]*all_pos_d[il,1,shift_i]
+                        - all_pos_d[il,1,iint] )
 
                 dx2 = dx0*dx0+dx1*dx1
                 dxtddx = dx0*ddx0+dx1*ddx1

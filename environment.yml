@@ -15,6 +15,7 @@ dependencies:
   - pip
   - mkl
   - mkl_fft
+  - pyamg
   - pip:
     - cffi==1.15.0
     - pycparser==2.21

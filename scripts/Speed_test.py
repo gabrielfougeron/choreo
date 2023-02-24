@@ -1,9 +1,5 @@
 import os
 
-os.environ['OMP_NUM_THREADS'] = '1'
-os.environ['NUMEXPR_NUM_THREADS'] = '1'
-os.environ['OPENBLAS_NUM_THREADS'] = '1'
-os.environ['MKL_NUM_THREADS'] = '1'
 
 import concurrent.futures
 import multiprocessing
@@ -20,6 +16,16 @@ __PROJECT_ROOT__ = os.path.abspath(os.path.join(os.path.dirname(__file__),os.par
 sys.path.append(__PROJECT_ROOT__)
 
 import choreo 
+
+
+val = str(4)
+
+os.environ['OMP_NUM_THREADS'] = val
+os.environ['NUMEXPR_NUM_THREADS'] = val
+os.environ['OPENBLAS_NUM_THREADS'] = val
+os.environ['MKL_NUM_THREADS'] = val
+
+
 
 Workspace_folder = "Sniff_all_sym/"
 
