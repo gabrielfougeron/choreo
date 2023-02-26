@@ -102,16 +102,7 @@ def Compute_action_Cython_2D(
     cdef double pot,potp,potpp
     cdef double prod_mass,a,b,dx2,prod_fac
 
-    cdef long maxloopnb = 0
-    cdef long maxloopnbi = 0
-
-    for il in range(nloop):
-        if (maxloopnb < loopnb[il]):
-            maxloopnb = loopnb[il]
-        if (maxloopnbi < loopnbi[il]):
-            maxloopnbi = loopnbi[il]
-
-    cdef double Pot_en = 0.
+    cdef double Pot_en
 
     Pot_en, grad_pot_all = Compute_action_Cython_time_loop_2D(
         nloop             ,
@@ -134,8 +125,10 @@ def Compute_action_Cython_2D(
 
     cdef double complex[:,:,::1]  grad_pot_fft = the_rfft(grad_pot_all,norm="forward")  #
     cdef double Kin_en = 0 
+    
     cdef np.ndarray[double, ndim=4, mode="c"] Action_grad_np = np.empty((nloop,2,ncoeff,2),np.float64)
-    cdef double[:,:,:,::1] Action_grad = Action_grad_np #
+    cdef double[:,:,:,::1] Action_grad = Action_grad_np
+
     for il in range(nloop):
         
         prod_fac = MassSum[il]*cfourpisq
@@ -193,17 +186,9 @@ def Compute_action_hess_mul_Cython_2D(
     cdef long rem, ddiv
     cdef double pot,potp,potpp
     cdef double prod_mass,a,b,prod_fac
-        
-    cdef Py_ssize_t maxloopnb = 0
-    cdef Py_ssize_t maxloopnbi = 0
 
     cdef Py_ssize_t shift_i,shift_ip
 
-    for il in range(nloop):
-        if (maxloopnb < loopnb[il]):
-            maxloopnb = loopnb[il]
-        if (maxloopnbi < loopnbi[il]):
-            maxloopnbi = loopnbi[il]
 
     c_coeffs_d = all_coeffs_d.view(dtype=np.complex128)[...,0]
     cdef double[:,:,::1]  all_pos_d = the_irfft(c_coeffs_d,norm="forward")
