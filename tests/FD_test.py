@@ -16,15 +16,11 @@ import time
 __PROJECT_ROOT__ = os.path.abspath(os.path.join(os.path.dirname(__file__),os.pardir))
 sys.path.append(__PROJECT_ROOT__)
 
-
-os.environ['OMP_NUM_THREADS'] = '8'
+os.environ['OMP_NUM_THREADS'] = '1'
 
 from choreo import *
 
 
-test_cython_prange()
-
-# exit()
 
 nint = 24
 
