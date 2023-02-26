@@ -19,7 +19,9 @@ sys.path.append(__PROJECT_ROOT__)
 import choreo 
 
 
-val = str(16)
+val = str(1)
+
+print(val)
 
 
 os.environ['OMP_NUM_THREADS'] = val
@@ -302,7 +304,7 @@ def main(params_dict):
 
 
     # n_test = 100000
-    n_test = 100
+    n_test = 1000
 # 
     all_kwargs = choreo.Pick_Named_Args_From_Dict(choreo.Speed_test,dict(globals(),**locals()))
 

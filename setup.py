@@ -20,45 +20,6 @@ __version__ = "0.2.0"
 # python setup.py bdist_wheel
 
 
-if platform.system() == "Windows":
-
-    extra_compile_args = ["/O2", "/openmp"]
-    extra_link_args = ["/openmp"]
-
-else:
-
-
-    # print(platform.system())
-    # print( os.environ)
-
-    if ("PYODIDE_ROOT" in os.environ): # Building for Pyodide
-
-        extra_compile_args = ["-O3"]
-        extra_link_args = []
-
-    elif not(distutils.spawn.find_executable('clang') is None):
-
-        os.environ['CC'] = 'clang'
-        os.environ['LDSHARED'] = 'clang -shared'
-
-        # extra_compile_args = ["-O2","-march=native", "-fopenmp"]
-        # extra_compile_args = ["-O3","-march=native", "-fopenmp"]
-        extra_compile_args = ["-Ofast","-march=native", "-fopenmp"]
-        # extra_compile_args = ["-fopenmp"]
-
-        extra_link_args = ["-fopenmp"]
-
-    else:
-
-        extra_compile_args = ["-O3","-march=native", "-fopenmp"]
-        extra_link_args = ["-fopenmp"]
-    
-nthreads = multiprocessing.cpu_count()
-
-
-define_macros = [("NPY_NO_DEPRECATED_API", "NPY_1_7_API_VERSION")]
-# define_macros = []
-
 
 cython_extnames = [
     "choreo.Choreo_cython_funs_2D",
@@ -71,6 +32,63 @@ cython_filenames = [
     "choreo/Choreo_cython_funs.pyx",
     "choreo/Choreo_cython_scipy_plus.pyx",
 ]
+
+if platform.system() == "Windows":
+
+    extra_compile_args = ["/O2", "/openmp"]
+    extra_link_args = ["/openmp"]
+
+    cython_extnames.append("choreo.Choreo_cython_funs_parallel")
+    cython_filenames.append("choreo/Choreo_cython_funs_parallel.pyx")
+
+else:
+
+
+    # print(platform.system())
+    # print( os.environ)
+
+    if ("PYODIDE_ROOT" in os.environ): # Building for Pyodide
+
+        extra_compile_args = ["-O3"]
+        extra_link_args = []
+
+        cython_extnames.append("choreo.Choreo_cython_funs_serial")
+        cython_filenames.append("choreo/Choreo_cython_funs_serial.pyx")
+
+
+    elif not(distutils.spawn.find_executable('clang') is None):
+
+        os.environ['CC'] = 'clang'
+        os.environ['LDSHARED'] = 'clang -shared'
+
+        # extra_compile_args = ["-O2","-march=native", "-fopenmp"]
+        # extra_compile_args = ["-O3","-march=native", "-fopenmp"]
+        extra_compile_args = ["-Ofast","-march=native", "-fopenmp"]
+        # extra_compile_args = []
+
+        extra_link_args = ["-fopenmp"]
+        # extra_link_args = []
+
+        cython_extnames.append("choreo.Choreo_cython_funs_parallel")
+        cython_filenames.append("choreo/Choreo_cython_funs_parallel.pyx")
+
+        # cython_extnames.append("choreo.Choreo_cython_funs_serial")
+        # cython_filenames.append("choreo/Choreo_cython_funs_serial.pyx")
+
+    else:
+
+        extra_compile_args = ["-O3","-march=native", "-fopenmp"]
+        extra_link_args = ["-fopenmp"]
+    
+        cython_extnames.append("choreo.Choreo_cython_funs_parallel")
+        cython_filenames.append("choreo/Choreo_cython_funs_parallel.pyx")
+    
+nthreads = multiprocessing.cpu_count()
+
+
+define_macros = [("NPY_NO_DEPRECATED_API", "NPY_1_7_API_VERSION")]
+# define_macros = []
+
 
 compiler_directives = {
     'wraparound': False,

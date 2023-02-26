@@ -1,5 +1,5 @@
 '''
-Choreo_cython_funs.pyx : Defines useful compiled functions in the Choreographies2 project.
+Choreo_cython_funs.pyx : Defines useful compiled functions in the choreo project.
 
 The functions in this file are (as much as possible) written is Cython.
 They will be cythonized (i.e. processed by Cython into a C code, which will be compiled ) in setup.py.
@@ -210,9 +210,6 @@ def Compute_action_Cython(
             ddiv = - k // TimeShiftDenUn[il,ib]
             rem = k + ddiv * TimeShiftDenUn[il,ib]
 
-            if (rem != 0):
-                print("WARNING: remainder in integer division. Gradient computation will fail.")
-
             all_shiftsUn[il,ib] = (((ddiv) % nint) + nint) % nint
         
         for ibi in range(loopnbi[il]):
@@ -221,9 +218,6 @@ def Compute_action_Cython(
 
             ddiv = - k // TimeShiftDenBin[il,ibi]
             rem = k + ddiv * TimeShiftDenBin[il,ibi]
-
-            if (rem != 0):
-                print("WARNING: remainder in integer division. Gradient computation will fail.")
 
             all_shiftsBin[il,ibi] = (((ddiv) % nint) + nint) % nint
     
@@ -419,9 +413,6 @@ def Compute_hash_action_Cython(
             ddiv = - k // TimeShiftDenUn[il,ib]
             rem = k + ddiv * TimeShiftDenUn[il,ib]
 
-            if (rem != 0):
-                print("WARNING: remainder in integer division. Gradient computation will fail.")
-
             all_shiftsUn[il,ib] = (((ddiv) % nint) + nint) % nint
         
         for ibi in range(loopnbi[il]):
@@ -430,9 +421,6 @@ def Compute_hash_action_Cython(
 
             ddiv = - k // TimeShiftDenBin[il,ibi]
             rem = k + ddiv * TimeShiftDenBin[il,ibi]
-
-            if (rem != 0):
-                print("WARNING: remainder in integer division. Gradient computation will fail.")
 
             all_shiftsBin[il,ibi] = (((ddiv) % nint) + nint) % nint
     
@@ -560,9 +548,6 @@ def Compute_MinDist_Cython(
             ddiv = - k // TimeShiftDenUn[il,ib]
             rem = k + ddiv * TimeShiftDenUn[il,ib]
 
-            if (rem != 0):
-                print("WARNING: remainder in integer division. Gradient computation will fail.")
-
             all_shiftsUn[il,ib] = (((ddiv) % nint) + nint) % nint
         
         for ibi in range(loopnbi[il]):
@@ -571,9 +556,6 @@ def Compute_MinDist_Cython(
 
             ddiv = - k // TimeShiftDenBin[il,ibi]
             rem = k + ddiv * TimeShiftDenBin[il,ibi]
-
-            if (rem != 0):
-                print("WARNING: remainder in integer division. Gradient computation will fail.")
 
             all_shiftsBin[il,ibi] = (((ddiv) % nint) + nint) % nint
 
@@ -906,9 +888,6 @@ def Compute_action_hess_mul_Cython(
             ddiv = - k // TimeShiftDenUn[il,ib]
             rem = k + ddiv * TimeShiftDenUn[il,ib]
 
-            if (rem != 0):
-                print("WARNING: remainder in integer division. Gradient computation will fail.")
-
             all_shiftsUn[il,ib] = (((ddiv) % nint) + nint) % nint
         
         for ibi in range(loopnbi[il]):
@@ -917,9 +896,6 @@ def Compute_action_hess_mul_Cython(
 
             ddiv = - k // TimeShiftDenBin[il,ibi]
             rem = k + ddiv * TimeShiftDenBin[il,ibi]
-
-            if (rem != 0):
-                print("WARNING: remainder in integer division. Gradient computation will fail.")
 
             all_shiftsBin[il,ibi] = (((ddiv) % nint) + nint) % nint
     
@@ -1110,9 +1086,6 @@ def Compute_Newton_err_Cython(
 
             ddiv = - k // TimeShiftDenUn[il,ib]
             rem = k + ddiv * TimeShiftDenUn[il,ib]
-
-            if (rem != 0):
-                print("WARNING: remainder in integer division. Gradient computation will fail.")
 
             all_shiftsUn[il,ib] = (((ddiv) % nint) + nint) % nint
         

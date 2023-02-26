@@ -86,6 +86,8 @@ def NPY_JS_to_py(npy_js):
 async def main():
 
     params_dict = js.ConfigDict.to_py()
+
+    geodim = 2
     
     CrashOnError_changevar = False
 

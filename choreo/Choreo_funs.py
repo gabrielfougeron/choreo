@@ -1,5 +1,5 @@
 '''
-Choreo_funs.py : Defines useful functions in the Choreographies2 project.
+Choreo_funs.py : Defines useful functions in the choreo project.
 '''
 
 import os
@@ -2142,6 +2142,27 @@ def setup_changevar(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCons=Tr
     param_to_coeff_T_cvg_lvl_list = []
     coeff_to_param_T_cvg_lvl_list = []
 
+    for il in range(nloop):
+        for ib in range(loopnb[il]):
+
+            k = (TimeRevsUn[il,ib]*nint_init*TimeShiftNumUn[il,ib])
+
+            ddiv = - k // TimeShiftDenUn[il,ib]
+            rem = k + ddiv * TimeShiftDenUn[il,ib]
+
+            if (rem != 0):
+                print("WARNING: remainder in integer division. Gradient computation will fail.")
+
+        for ibi in range(loopnbi[il]):
+
+            k = (TimeRevsBin[il,ibi]*nint_init*TimeShiftNumBin[il,ibi])
+
+            ddiv = - k // TimeShiftDenBin[il,ibi]
+            rem = k + ddiv * TimeShiftDenBin[il,ibi]
+
+            if (rem != 0):
+                print("WARNING: remainder in integer division. Gradient computation will fail.")
+
     for i in range(n_reconverge_it_max+1):
 
         nint_cvg_lvl_list.append(nint_init * (2**i))
@@ -2193,7 +2214,6 @@ def setup_changevar(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCons=Tr
     else:
         ComputeGradBackend = Compute_action_Cython
         ComputeHessBackend = Compute_action_hess_mul_Cython
-
 
     kwargs = {
         "geodim"                        :   geodim                          ,

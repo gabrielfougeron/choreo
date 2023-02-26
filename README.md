@@ -1,4 +1,4 @@
-# Choreographies2
+# choreo
 Finds periodic solutions to the N-body problem. 
 
 ## List of dependencies:

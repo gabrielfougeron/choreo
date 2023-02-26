@@ -304,16 +304,9 @@ if __name__ == "__main__":
 
     n = params_dict['Solver_CLI']['nproc']
 
-
-    os.environ['OMP_NUM_THREADS'] = '1'
-    os.environ['NUMEXPR_NUM_THREADS'] = '1'
-    os.environ['OPENBLAS_NUM_THREADS'] = '1'
-    os.environ['MKL_NUM_THREADS'] = '1'
-
-
     if Exec_Mul_Proc == "MultiProc":
 
-        # os.environ['OMP_NUM_THREADS'] = str(1)
+        os.environ['OMP_NUM_THREADS'] = str(1)
 
         print(f"Executing with {n} workers")
         
@@ -326,12 +319,12 @@ if __name__ == "__main__":
 
     elif Exec_Mul_Proc == "MultiThread":
 
-        # os.environ['OMP_NUM_THREADS'] = str(n)
+        os.environ['OMP_NUM_THREADS'] = str(n)
         main(params_dict)
 
     else :
 
-        # os.environ['OMP_NUM_THREADS'] = str(1)
+        os.environ['OMP_NUM_THREADS'] = str(1)
         main(params_dict)
 
 

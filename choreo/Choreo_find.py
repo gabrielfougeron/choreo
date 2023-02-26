@@ -803,7 +803,7 @@ def Speed_test(
     beg = time.perf_counter()
     for itest in range(n_test):
 
-        # f0 = ActionSyst.Compute_action_onlygrad(x0)
+        f0 = ActionSyst.Compute_action_onlygrad(x0)
         hess = ActionSyst.Compute_action_hess_mul(x0,dx)
         # toto = ActionSyst.Unpackage_all_coeffs(x0) 
 
