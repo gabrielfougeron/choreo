@@ -2105,10 +2105,6 @@ def Compute_hamil_hess_mul_Cython_nosym_split(
     return Hamil_hess_dx_np, Hamil_hess_dv_np
 
 
-
-
-
-
 def Compute_Derivative_Cython_nosym(
     long nbody                          ,
     long ncoeff                         ,
