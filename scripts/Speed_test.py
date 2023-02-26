@@ -1,9 +1,6 @@
 import os
 
-os.environ['OMP_NUM_THREADS'] = '1'
-os.environ['NUMEXPR_NUM_THREADS'] = '1'
 os.environ['OPENBLAS_NUM_THREADS'] = '1'
-os.environ['MKL_NUM_THREADS'] = '1'
 
 import concurrent.futures
 import multiprocessing
@@ -20,6 +17,23 @@ __PROJECT_ROOT__ = os.path.abspath(os.path.join(os.path.dirname(__file__),os.par
 sys.path.append(__PROJECT_ROOT__)
 
 import choreo 
+
+
+val = str(1)
+
+print(val)
+
+
+os.environ['OMP_NUM_THREADS'] = val
+# os.environ['NUMEXPR_NUM_THREADS'] = val
+# os.environ['OPENBLAS_NUM_THREADS'] = val
+# os.environ['MKL_NUM_THREADS'] = val
+
+
+
+Workspace_folder = "Sniff_all_sym/"
+
+
 
 def load_target_files(filename,Workspace_folder,target_speed):
 
@@ -56,16 +70,11 @@ def load_target_files(filename,Workspace_folder,target_speed):
     return Info_dict, all_pos
 
 
-def main():
+def main(params_dict):
 
     np.random.seed(int(time.time()*10000) % 5000)
 
-    Workspace_folder = "Sniff_all_sym/"
-
-    params_filename = os.path.join(Workspace_folder,"choreo_config.json")
-
-    with open(params_filename) as jsonFile:
-        params_dict = json.load(jsonFile)
+    geodim = 2
 
     file_basename = ''
     
@@ -196,8 +205,7 @@ def main():
     save_all_inits = False
     # save_all_inits = True
 
-    Save_img = True
-    # Save_img = False
+    Save_img = params_dict['Solver_CLI'] ['SaveImage']
 
     # Save_thumb = True
     Save_thumb = False
@@ -210,8 +218,7 @@ def main():
 
     color_list = params_dict["Animation_Colors"]["colorLookup"]
 
-    # Save_anim = True
-    Save_anim = False
+    Save_anim =  params_dict['Solver_CLI'] ['SaveVideo']
 
     vid_size = (8,8) # Image size in inches
     nint_plot_anim = 2*2*2*3*3*5*2
@@ -238,10 +245,9 @@ def main():
     max_norm_on_entry = 1e20
 
     Newt_err_norm_max = params_dict["Solver_Optim"]["Newt_err_norm_max"]  
-    # Newt_err_norm_max_save = Newt_err_norm_max*1000
-    Newt_err_norm_max_save = 1e-9
+    Newt_err_norm_max_save = params_dict["Solver_Optim"]["Newt_err_norm_safe"]  
 
-    duplicate_eps = 1e-8
+    duplicate_eps =  params_dict['Solver_Checks'] ['duplicate_eps'] 
 
     krylov_method = params_dict["Solver_Optim"]["krylov_method"]  
 
@@ -268,7 +274,6 @@ def main():
     n_grad_change = 1.
 
     freq_erase_dict = 100
-    hash_dict = {}
 
     n_opt = 0
     n_opt_max = 100
@@ -283,9 +288,9 @@ def main():
     Save_Init_Pos_Vel_Sol = False
 
     n_save_pos = 'auto'
-    Save_All_Pos = True
-    # Save_All_Pos = False
 
+    Save_All_Pos = True
+    
     plot_extend = 0.
 
     n_opt = 0
@@ -296,8 +301,10 @@ def main():
     ReconvergeSol = False
     AddNumberToOutputName = True
     
+
+
     # n_test = 100000
-    n_test = 2000
+    n_test = 1000
 # 
     all_kwargs = choreo.Pick_Named_Args_From_Dict(choreo.Speed_test,dict(globals(),**locals()))
 
@@ -305,24 +312,30 @@ def main():
 
 
 
-# 
+
 if __name__ == "__main__":
-    main()
-    
 
-# if __name__ == "__main__":
-# 
-#     # n = 5
-#     n = multiprocessing.cpu_count()
-#     # n = 1
-#     
-#     print(f"Executing with {n} workers")
-#     
-#     with concurrent.futures.ProcessPoolExecutor(max_workers=n) as executor:
-#         
-#         res = []
-#         for i in range(n):
-#             res.append(executor.submit(main))
-#             time.sleep(0.01)
+    params_filename = os.path.join(Workspace_folder,"choreo_config.json")
 
- 
+    with open(params_filename) as jsonFile:
+        params_dict = json.load(jsonFile)
+
+    # Exec_Mul_Proc = params_dict['Solver_CLI']['Exec_Mul_Proc']
+    Exec_Mul_Proc = False
+
+    n = params_dict['Solver_CLI']['nproc']
+
+    if Exec_Mul_Proc:
+
+        print(f"Executing with {n} workers")
+        
+        with concurrent.futures.ProcessPoolExecutor(max_workers=n) as executor:
+            
+            res = []
+            for i in range(n):
+                res.append(executor.submit(main,params_dict))
+                time.sleep(0.01)
+
+    else :
+
+        main(params_dict)

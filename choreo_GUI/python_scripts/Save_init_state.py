@@ -1,10 +1,5 @@
 import os
 
-os.environ['OMP_NUM_THREADS'] = '1'
-os.environ['NUMEXPR_NUM_THREADS'] = '1'
-os.environ['OPENBLAS_NUM_THREADS'] = '1'
-os.environ['MKL_NUM_THREADS'] = '1'
-
 import shutil
 import random
 import time
@@ -33,6 +28,8 @@ def NPY_JS_to_py(npy_js):
 def main():
 
     params_dict = js.ConfigDict.to_py()
+
+    geodim = 2
 
     file_basename = ''
     
