@@ -579,14 +579,18 @@ window.addEventListener("drop",function(e){
   </div>
   <div class="w3-container MainTab Solver_CLI" style="display:none">
     <h2>Command Line Interface</h2>
-    <div style = "max-width:350px; ">
+    <div style = "max-width:400px; ">
       <table style="font-size:16px; border:none; display:table">
         <tr>
           <td style="border:none;" >
-            <label for="CLI_multiproc">Multiprocessing in CLI</label>
+            <label for="CLI_multiproc">Parallel computation in CLI</label>
           </td>
-          <td style="border:none; max-width:90px; text-align: center;">
-            <input id ="CLI_multiproc" class="w3-check" type="checkbox" style="vertical-align: super" checked>
+          <td style="border:none; max-width:200px; text-align: center;">
+            <select class="w3-select" id="CLI_multiproc" style="text-align: center;"> 
+              <option value="MultiProc">Multiprocessing</option>
+              <option value="MultiThread" selected>Multithreading</option>
+              <option value="No">None</option>
+            </select>
           </td>
         </tr>
         <tr>
@@ -594,7 +598,7 @@ window.addEventListener("drop",function(e){
             <label for="CLI_nproc">Number of processes</label>
           </td>
           <td style="border:none; max-width:90px; ">
-            <input id ="CLI_nproc" type="number" value="2" min="2" style="text-align: center;">
+            <input id ="CLI_nproc" type="number" value="1" min="1" style="text-align: center;">
           </td>
         </tr>
         <tr>
