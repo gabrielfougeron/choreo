@@ -1,10 +1,13 @@
 
+import os
+
+os.environ['OPENBLAS_NUM_THREADS'] = '1'
+
 import numpy as np
 
 import scipy
 import slycot
 import sys
-import os
 import random
 
 

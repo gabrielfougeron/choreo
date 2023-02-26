@@ -172,7 +172,7 @@ def Compute_action_Cython(
     # This function is probably the most important one.
     # Computes the action and its gradient with respect to the Fourier coefficients of the generator in each loop.
     
-    cdef geodim = all_pos.shape[1]
+    cdef Py_ssize_t geodim = all_pos.shape[1]
 
     cdef Py_ssize_t il,ilp,i
     cdef Py_ssize_t idim,jdim
@@ -388,7 +388,7 @@ def Compute_hash_action_Cython(
     
     cdef long ihash
     
-    cdef double[::1] Hash_En = np.zeros((cnhash),dtype=np.float64)
+    cdef np.ndarray[double, ndim=1, mode="c"] Hash_En = np.zeros((cnhash),dtype=np.float64)
     cdef double[::1] Hash_pot = np.zeros((cnhash),dtype=np.float64)
 
     cdef double Kin_en = 0
@@ -516,12 +516,12 @@ def Compute_MinDist_Cython(
     long[:,::1]         TimeRevsBin     ,
     long[:,::1]         TimeShiftNumBin ,
     long[:,::1]         TimeShiftDenBin ,
-    double[:,:,:,::1]   all_coeffs   
+    np.ndarray[double, ndim=4, mode="c"] all_coeffs   
 ):
     # Computes the minimum inter-body distance along the trajectory.
     # A useful tool for collision detection.
 
-    cdef long geodim = all_coeffs.shape[1]
+    cdef long geodim = SpaceRotsUn.shape[2]
 
     cdef long il,ilp,i
     cdef long idim,idimp
@@ -1055,14 +1055,14 @@ def Compute_Newton_err_Cython(
     long[:,::1]         TimeRevsUn      ,
     long[:,::1]         TimeShiftNumUn  ,
     long[:,::1]         TimeShiftDenUn  ,
-    double[:,:,:,::1]   all_coeffs  
+    np.ndarray[double, ndim=4, mode="c"] all_coeffs  
 ):
     # Computes the "Newton error", i.e. the deviation wrt to the fundamental theorem of Newtonian dynamics m_i * a_i - \sum_j f_ij = 0
     # If the Newton error is zero, then the trajectory is physical.
     # Under some symmetry hypotheses, this is the Fourier transform of the gradient of the action.
     # Computing it explicitely is a useful safeguard.
 
-    cdef long geodim = all_coeffs.shape[1]
+    cdef long geodim = SpaceRotsUn.shape[2]
 
     cdef long il,ilp,i
     cdef long idim,idimp
@@ -1210,7 +1210,7 @@ def Assemble_Cstr_Matrix(
 ):
     # Assembles the matrix of constraints used to select constraint satisfying parameters
 
-    cdef geodim = SpaceRotsUn.shape[2]
+    cdef long geodim = SpaceRotsUn.shape[2]
 
     # cdef double eps_zero = 1e-14
     cdef double eps_zero = 1e-10

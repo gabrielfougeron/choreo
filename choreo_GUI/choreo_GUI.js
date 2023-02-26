@@ -648,7 +648,7 @@ function GatherConfigDict() {
 
     ConfigDict['Solver_CLI'] = {}
 
-    ConfigDict['Solver_CLI'] ['Exec_Mul_Proc']          = document.getElementById('CLI_multiproc').checked     
+    ConfigDict['Solver_CLI'] ['Exec_Mul_Proc']          = document.getElementById('CLI_multiproc').value     
     ConfigDict['Solver_CLI'] ['nproc']                  = parseInt(document.getElementById('CLI_nproc').value ,10)
 
     ConfigDict['Solver_CLI'] ['SaveImage']    = document.getElementById('CLI_SaveImage').checked   
@@ -847,7 +847,7 @@ function LoadConfigDict(ConfigDict) {
     document.getElementById('input_duplicate_eps').value    = ConfigDict['Solver_Checks'] ['duplicate_eps']       
     document.getElementById('checkbox_escape').checked      = ConfigDict['Solver_Checks'] ['Check_Escape']        
 
-    document.getElementById('CLI_multiproc').checked        = ConfigDict['Solver_CLI'] ['Exec_Mul_Proc']        
+    document.getElementById('CLI_multiproc').value          = ConfigDict['Solver_CLI'] ['Exec_Mul_Proc']        
     document.getElementById('CLI_nproc').value              = ConfigDict['Solver_CLI'] ['nproc']     
 
     document.getElementById('CLI_SaveImage').checked        = ConfigDict['Solver_CLI'] ['SaveImage']    
