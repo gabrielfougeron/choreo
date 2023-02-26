@@ -139,7 +139,7 @@ def Find_Choreo(
     print(f"    ==> Reduction of {100*(1-ActionSyst.coeff_to_param.shape[0]/ActionSyst.coeff_to_param.shape[1]):.2f} %")
     print('')
 
-    all_coeffs_min,all_coeffs_max = Make_Init_bounds_coeffs(ActionSyst.nloop,ncoeff,coeff_ampl_o,k_infl,k_max,coeff_ampl_min)
+    all_coeffs_min,all_coeffs_max = Make_Init_bounds_coeffs(ActionSyst.nloop,ActionSyst.geodim,ncoeff,coeff_ampl_o,k_infl,k_max,coeff_ampl_min)
     
 
     x_min = ActionSyst.Package_all_coeffs(all_coeffs_min)
@@ -636,7 +636,7 @@ def GenSymExample(
 
         # return False
 
-    all_coeffs_min,all_coeffs_max = Make_Init_bounds_coeffs(ActionSyst.nloop,ncoeff,coeff_ampl_o,k_infl,k_max,coeff_ampl_min)
+    all_coeffs_min,all_coeffs_max = Make_Init_bounds_coeffs(ActionSyst.nloop,ActionSyst.geodim,ncoeff,coeff_ampl_o,k_infl,k_max,coeff_ampl_min)
 
     x_min = ActionSyst.Package_all_coeffs(all_coeffs_min)
     x_max = ActionSyst.Package_all_coeffs(all_coeffs_max)
@@ -746,7 +746,7 @@ def Speed_test(
     ncoeff = ActionSyst.ncoeff
     nint = ActionSyst.nint
 
-    all_coeffs_min,all_coeffs_max = Make_Init_bounds_coeffs(ActionSyst.nloop,ncoeff,coeff_ampl_o,k_infl,k_max,coeff_ampl_min)
+    all_coeffs_min,all_coeffs_max = Make_Init_bounds_coeffs(ActionSyst.nloop,ActionSyst.geodim,ncoeff,coeff_ampl_o,k_infl,k_max,coeff_ampl_min)
     
 
     x_min = ActionSyst.Package_all_coeffs(all_coeffs_min)

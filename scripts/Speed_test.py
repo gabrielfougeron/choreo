@@ -1,5 +1,6 @@
 import os
 
+os.environ['OPENBLAS_NUM_THREADS'] = '1'
 
 import concurrent.futures
 import multiprocessing
@@ -18,7 +19,7 @@ sys.path.append(__PROJECT_ROOT__)
 import choreo 
 
 
-val = str(4)
+val = str(16)
 
 
 os.environ['OMP_NUM_THREADS'] = val
@@ -70,6 +71,8 @@ def load_target_files(filename,Workspace_folder,target_speed):
 def main(params_dict):
 
     np.random.seed(int(time.time()*10000) % 5000)
+
+    geodim = 2
 
     file_basename = ''
     
@@ -296,8 +299,10 @@ def main(params_dict):
     ReconvergeSol = False
     AddNumberToOutputName = True
     
+
+
     # n_test = 100000
-    n_test = 200
+    n_test = 100
 # 
     all_kwargs = choreo.Pick_Named_Args_From_Dict(choreo.Speed_test,dict(globals(),**locals()))
 
