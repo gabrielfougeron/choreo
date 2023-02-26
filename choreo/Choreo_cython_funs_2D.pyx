@@ -96,13 +96,13 @@ def Compute_action_Cython_2D(
     cdef Py_ssize_t ib,ibp
     cdef Py_ssize_t iint
     cdef Py_ssize_t k
-    cdef Py_ssize_t shift_i, shift_ip
     cdef long k2
     cdef long rem, ddiv
     cdef double pot,potp,potpp
     cdef double prod_mass,a,b,dx2,prod_fac
 
     cdef double Pot_en
+    cdef double[:,:,::1] grad_pot_all
 
     Pot_en, grad_pot_all = Compute_action_Cython_time_loop_2D(
         nloop             ,
@@ -134,19 +134,31 @@ def Compute_action_Cython_2D(
         prod_fac = MassSum[il]*cfourpisq
         
         for idim in range(2): 
-            Action_grad[il,idim,0,0] = -grad_pot_fft[il,idim,0].real
+            Action_grad[il,idim,0,0] = - grad_pot_fft[il,idim,0].real
             Action_grad[il,idim,0,1] = 0  
             for k in range(1,ncoeff):
                 
                 k2 = k*k
-                a = prod_fac*k2
+                
+                # ~ a = prod_fac*k2
+                a = 0
                 b=2*a  
+
                 Kin_en += a *((all_coeffs[il,idim,k,0]*all_coeffs[il,idim,k,0]) + (all_coeffs[il,idim,k,1]*all_coeffs[il,idim,k,1]))
                 
                 Action_grad[il,idim,k,0] = b*all_coeffs[il,idim,k,0] - 2*grad_pot_fft[il,idim,k].real
                 Action_grad[il,idim,k,1] = b*all_coeffs[il,idim,k,1] - 2*grad_pot_fft[il,idim,k].imag
+# ~ 
+# ~             k = ncoeff-1
+# ~             k2 = k*k
+# ~             # ~ a = prod_fac*k2
+# ~             a = 0
+# ~             b=2*a  
+# ~             Kin_en += a *(all_coeffs[il,idim,k,0]*all_coeffs[il,idim,k,0])
+# ~             Action_grad[il,idim,k,0] = b*all_coeffs[il,idim,k,0] - 2*grad_pot_fft[il,idim,k].real
+                
             
-    Action = Kin_en-Pot_en
+    Action = Kin_en-Pot_en/nint
     
     return Action,Action_grad_np
 
@@ -224,7 +236,7 @@ def Compute_action_hess_mul_Cython_2D(
         
         for idim in range(2):
             
-            Action_hess_dx[il,idim,0,0] = -hess_dx_pot_fft[il,idim,0].real
+            Action_hess_dx[il,idim,0,0] = - hess_dx_pot_fft[il,idim,0].real
             Action_hess_dx[il,idim,0,1] = 0.            
 
             for k in range(1,ncoeff):

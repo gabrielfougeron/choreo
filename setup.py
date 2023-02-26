@@ -69,11 +69,11 @@ else:
         extra_link_args = ["-fopenmp"]
         # extra_link_args = []
 
-        # cython_extnames.append("choreo.Choreo_cython_funs_parallel")
-        # cython_filenames.append("choreo/Choreo_cython_funs_parallel.pyx")
+        cython_extnames.append("choreo.Choreo_cython_funs_parallel")
+        cython_filenames.append("choreo/Choreo_cython_funs_parallel.pyx")
 
-        cython_extnames.append("choreo.Choreo_cython_funs_serial")
-        cython_filenames.append("choreo/Choreo_cython_funs_serial.pyx")
+        # cython_extnames.append("choreo.Choreo_cython_funs_serial")
+        # cython_filenames.append("choreo/Choreo_cython_funs_serial.pyx")
 
     else:
 

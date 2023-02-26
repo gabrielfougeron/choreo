@@ -92,8 +92,8 @@ def Compute_action_Cython_time_loop(
     cdef double ddx0,ddx1
     cdef double prod_mass,a,b,dx2,prod_fac
 
-    cdef np.ndarray[double, ndim=1, mode="c"] dx  = np.zeros((geodim),dtype=np.float64)
-    cdef np.ndarray[double, ndim=1, mode="c"] df = np.zeros((geodim),dtype=np.float64)
+    cdef double[::1] dx  = np.zeros((geodim),dtype=np.float64)
+    cdef double[::1] df = np.zeros((geodim),dtype=np.float64)
     
     cdef double Pot_en = 0.
 
@@ -182,8 +182,6 @@ def Compute_action_Cython_time_loop(
                     grad_pot_all[il ,idim, shift_i] += b
                     grad_pot_all[il ,idim, iint] -= dx[idim]
 
-    Pot_en = Pot_en / nint
-
     return Pot_en, grad_pot_all_np
 
 @cython.cdivision(True)
@@ -218,12 +216,12 @@ def Compute_action_hess_mul_Cython_time_loop(
     cdef Py_ssize_t k
     cdef long k2
     cdef double pot,potp,potpp
-    cdef double prod_mass,a,b,dx2,prod_fac,dxtddx
+    cdef double prod_mass,a,b,dx2,prod_fac,dxtddx,c
     cdef Py_ssize_t shift_i,shift_ip
 
-    cdef np.ndarray[double, ndim=1, mode="c"] dx  = np.zeros((geodim),dtype=np.float64)
-    cdef np.ndarray[double, ndim=1, mode="c"] ddx = np.zeros((geodim),dtype=np.float64)
-    cdef np.ndarray[double, ndim=1, mode="c"] ddf = np.zeros((geodim),dtype=np.float64)
+    cdef double[::1] dx  = np.zeros((geodim),dtype=np.float64)
+    cdef double[::1] ddx = np.zeros((geodim),dtype=np.float64)
+    cdef double[::1] ddf = np.zeros((geodim),dtype=np.float64)
 
     cdef np.ndarray[double, ndim=3, mode="c"] hess_pot_all_d_np = np.zeros((nloop,2,nint),dtype=np.float64)
     cdef double[:,:,::1] hess_pot_all_d = hess_pot_all_d_np
@@ -431,8 +429,6 @@ def Compute_action_Cython_time_loop_2D(
                 grad_pot_all[il ,1,shift_i] += b
                 grad_pot_all[il ,1,iint   ] -= dx1
 
-    Pot_en = Pot_en / nint
-
     return Pot_en, grad_pot_all_np
 
 
@@ -469,7 +465,7 @@ def Compute_action_hess_mul_Cython_time_loop_2D(
     cdef double dx0,dx1
     cdef double ddx0,ddx1
     cdef double ddf0,ddf1
-    cdef double prod_mass,a,b,dx2,prod_fac,dxtddx
+    cdef double prod_mass,a,b,dx2,prod_fac,dxtddx,c
     cdef Py_ssize_t shift_i,shift_ip
 
     cdef np.ndarray[double, ndim=3, mode="c"] hess_pot_all_d_np = np.zeros((nloop,2,nint),dtype=np.float64)
