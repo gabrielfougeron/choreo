@@ -18,6 +18,7 @@ np.import_array()
 
 cimport cython
 from cython.parallel cimport parallel, prange
+from libc.stdlib cimport abort, malloc, free
 
 import scipy.sparse
 
@@ -2373,65 +2374,3 @@ def InplaceSmoothCoeffs(
 
 
 
-
-def test_cython_prange():
-
-    cdef long nx = 12345
-    cdef long ny = 123
-
-
-    cdef double[:,::1] data = np.array(range(nx*ny),dtype=np.float64).reshape(nx,ny) / 11.
-
-    cdef np.ndarray[double, ndim=1, mode="c"] buf_1D_np = np.zeros((nx),dtype=np.float64)
-    cdef double[::1] buf_1D = buf_1D_np
-
-    cdef np.ndarray[double, ndim=1, mode="c"] buf_1D_p_np = np.zeros((nx),dtype=np.float64)
-    cdef double[::1] buf_1D_p = buf_1D_p_np
-
-    cdef double buf = 0
-    cdef double buf_p = 0
-
-    buf_p = loop_p(data,buf_1D_p,nx,ny)
-    buf   = loop  (data,buf_1D  ,nx,ny)
-
-    print(abs(buf-buf_p))
-    print(np.linalg.norm(buf_1D_np-buf_1D_p_np))
-
-
-cdef double loop_p(
-    double[:,::1] data,
-    double[::1] buf_1D,
-    long nx,
-    long ny
-) nogil :
-
-    cdef double buf = 0
-    cdef long ix, iy
-
-    for ix in prange(nx,num_threads =8,schedule='static'):
-
-        for iy in range(ny):
-
-            buf_1D[ix] += data[ix,iy]
-            buf += data[ix,iy]
-
-    return buf
-
-cdef double loop(
-    double[:,::1] data,
-    double[::1] buf_1D,
-    long nx,
-    long ny
-) nogil :
-
-    cdef double buf = 0
-    cdef long ix, iy
-
-    for ix in range(nx):
-
-        for iy in range(ny):
-
-            buf_1D[ix] += data[ix,iy]
-            buf += data[ix,iy]
-
-    return buf
