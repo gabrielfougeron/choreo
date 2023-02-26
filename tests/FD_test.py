@@ -1,6 +1,6 @@
 import os
 
-os.environ['OPENBLAS_NUM_THREADS'] = '1'import os
+os.environ['OPENBLAS_NUM_THREADS'] = '1'
 
 import sys
 import numpy as np
@@ -14,11 +14,8 @@ import copy
 
 import time
 
-
 __PROJECT_ROOT__ = os.path.abspath(os.path.join(os.path.dirname(__file__),os.pardir))
 sys.path.append(__PROJECT_ROOT__)
-
-os.environ['OMP_NUM_THREADS'] = '1'
 
 from choreo import *
 
@@ -85,15 +82,17 @@ dxa = np.random.random((ncoeffs_args))
 dxb =  np.random.random((ncoeffs_args))
 
 
+
+ActionSyst.ComputeGradBackend = Compute_action_Cython
+ActionSyst.ComputeHessBackend = Compute_action_hess_mul_Cython
+
+
 Actiono, Actiongrado = ActionSyst.Compute_action(x0)
 Hesso = ActionSyst.Compute_action_hess_mul(x0,dxb)
 
 # print('Action 0 : ',Actiono)
 # print(np.linalg.norm(Actiongrado))
 
-
-ActionSyst.ComputeGradBackend = Compute_action_Cython
-ActionSyst.ComputeHessBackend = Compute_action_hess_mul_Cython
 
 
 ActionSyst.ComputeGradBackend = Compute_action_Cython_2D
@@ -109,7 +108,7 @@ print("Backend change action error :",err)
 err = np.linalg.norm(Actiongrado - Actiongrad1) / (np.linalg.norm(Actiongrado) + np.linalg.norm(Actiongrad1))
 print("Backend change grad error :",err)
 err = np.linalg.norm(Hesso - Hess1) / (np.linalg.norm(Hesso) + np.linalg.norm(Hess1))
-print("Backend change grad error :",err)
+print("Backend change hess error :",err)
 
 
 
