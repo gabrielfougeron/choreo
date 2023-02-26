@@ -1,5 +1,6 @@
 import os
 
+os.environ['OPENBLAS_NUM_THREADS'] = '1'
 import concurrent.futures
 import multiprocessing
 import json

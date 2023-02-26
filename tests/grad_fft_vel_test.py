@@ -1,5 +1,6 @@
 import os
 
+os.environ['OPENBLAS_NUM_THREADS'] = '1'
 import sys
 import numpy as np
 import math as m
