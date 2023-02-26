@@ -19,6 +19,7 @@ import sys
 import fractions
 import scipy.integrate
 import scipy.special
+import functools
 
 __PROJECT_ROOT__ = os.path.abspath(os.path.join(os.path.dirname(__file__),os.pardir))
 sys.path.append(__PROJECT_ROOT__)
@@ -358,25 +359,37 @@ def ExecName(the_name, input_folder, store_folder):
 
         t_beg= time.perf_counter()
 
-        x,_ = solver(Hamil_LinOpt_xonly, pp,**kwargs)
+        # x,_ = solver(Hamil_LinOpt_xonly, pp,**kwargs)
 
-        # pp = ActionSyst_nosym.Compute_hamil_hess_xonly_precond_inv(pp)
-        # x,_ = solver(Hamil_LinOpt_xonly_preco, pp,**kwargs)
-        # x = ActionSyst_nosym.Compute_hamil_hess_xonly_precond_inv(x)
+        # sol = scipy.optimize.root(ActionSyst_nosym.Compute_hamil_hess_xonly_LinOpt, qp, args=(), method='krylov', jac=None, tol=None, callback=None, options=None)
+        # x = sol.x
+
+# 
+#         pp = ActionSyst_nosym.Compute_hamil_hess_xonly_precond_inv(pp)
+#         x,_ = solver(Hamil_LinOpt_xonly_preco, pp,**kwargs)
+#         x = ActionSyst_nosym.Compute_hamil_hess_xonly_precond_inv(x)
+
+
+
+        pp = ActionSyst_nosym.Compute_hamil_hess_xonly_precond_inv(pp)
+        fun = lambda y,x=x_nosym : ActionSyst_nosym.Compute_hamil_hess_xonly_precond(x,y)
+        sol = scipy.optimize.root(fun, pp, args=(), method='krylov', jac=None, tol=None, callback=None, options=None)
+        x = sol.x
+        x = ActionSyst_nosym.Compute_hamil_hess_xonly_precond_inv(x)
 
         t_end= time.perf_counter()
 
         v = q + ActionSyst_nosym.Compute_deriv(x)
 
-        print(t_end-t_beg)
+        # print(t_end-t_beg)
 
         return np.append(x,v)
 
 
 
 
-    n_eig = 2*ndof
-    # n_eig = 10
+    # n_eig = 2*ndof
+    n_eig = 5
 
     sigma=0.
 
@@ -388,7 +401,7 @@ def ExecName(the_name, input_folder, store_folder):
             dtype=np.float64
         )
 
-    Sp_eigenvalues, Sp_eigenvectors = scipy.sparse.linalg.eigs(Hamil_LinOpt, k=n_eig, M=None, sigma=sigma, which='SI', v0=None, ncv=ncv, maxiter=None, tol=0, return_eigenvectors=True, Minv=None, OPinv=OPinv, OPpart=None)
+    Sp_eigenvalues, Sp_eigenvectors = scipy.sparse.linalg.eigs(Hamil_LinOpt, k=n_eig, M=None, sigma=sigma, which='SM', v0=None, ncv=ncv, maxiter=None, tol=0, return_eigenvectors=True, Minv=None, OPinv=OPinv, OPpart=None)
 
     print(Sp_eigenvalues)
 
