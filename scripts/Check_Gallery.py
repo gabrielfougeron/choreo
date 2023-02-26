@@ -1,9 +1,6 @@
 import os
-# 
-os.environ['OMP_NUM_THREADS'] = '1'
-os.environ['NUMEXPR_NUM_THREADS'] = '1'
+
 os.environ['OPENBLAS_NUM_THREADS'] = '1'
-os.environ['MKL_NUM_THREADS'] = '1'
 
 import concurrent.futures
 import multiprocessing
@@ -199,7 +196,7 @@ def ExecName(the_name, the_file):
     n_reconverge_it_max = 0
     n_grad_change = 1.
 
-    ActionSyst = choreo.setup_changevar(nbody,nint_init,mass,n_reconverge_it_max,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change,CrashOnIdentity=False)
+    ActionSyst = choreo.setup_changevar(2,nbody,nint_init,mass,n_reconverge_it_max,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change,CrashOnIdentity=False)
 
 
 

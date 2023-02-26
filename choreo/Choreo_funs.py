@@ -1,5 +1,5 @@
 '''
-Choreo_funs.py : Defines useful functions in the Choreographies2 project.
+Choreo_funs.py : Defines useful functions in the choreo project.
 '''
 
 import os
@@ -10,6 +10,7 @@ import pickle
 import warnings
 import functools
 import json
+import types
 
 import numpy as np
 import math as m
@@ -22,6 +23,7 @@ import random
 import inspect
 import fractions
 
+
 from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.colors import cnames
@@ -33,7 +35,7 @@ try:
 except:
     pass
 
-from choreo.Choreo_cython_funs import ndim,twopi,nhash,n
+from choreo.Choreo_cython_funs import twopi,nhash,n
 from choreo.Choreo_cython_funs import Compute_action_Cython,Compute_action_hess_mul_Cython
 from choreo.Choreo_cython_funs import Compute_hash_action_Cython,Compute_Newton_err_Cython
 from choreo.Choreo_cython_funs import Assemble_Cstr_Matrix,diagmat_changevar
@@ -43,11 +45,10 @@ from choreo.Choreo_cython_funs import Transform_Coeffs_Single_Loop,SparseScaleCo
 from choreo.Choreo_cython_funs import the_irfft,the_rfft
 from choreo.Choreo_cython_funs import Compute_hamil_hess_mul_Cython_nosym,Compute_hamil_hess_mul_xonly_Cython_nosym
 from choreo.Choreo_cython_funs import Compute_Derivative_precond_inv_Cython_nosym,Compute_Derivative_precond_Cython_nosym
-from choreo.Choreo_cython_funs import Compute_Derivative_Cython_nosym
+from choreo.Choreo_cython_funs import Compute_Derivative_Cython_nosym,InplaceSmoothCoeffs
 
-if ndim == 2:
-    from choreo.Choreo_cython_funs_2D import Compute_action_Cython_2D as Compute_action_Cython ,Compute_action_hess_mul_Cython_2D as Compute_action_hess_mul_Cython
-    from choreo.Choreo_cython_funs_2D import RotateFastWithSlow_2D
+from choreo.Choreo_cython_funs_2D import Compute_action_Cython_2D, Compute_action_hess_mul_Cython_2D
+from choreo.Choreo_cython_funs_2D import RotateFastWithSlow_2D
 
 from choreo.Choreo_scipy_plus import *
 
@@ -120,7 +121,7 @@ class ChoreoAction():
         Computes the Fourier coefficients of the generator given the parameters.
         """
         
-        return self.param_to_coeff.dot(x).reshape(self.nloop,ndim,self.ncoeff,2)
+        return self.param_to_coeff.dot(x).reshape(self.nloop,self.geodim,self.ncoeff,2)
     
     def Package_all_coeffs_T(self,all_coeffs_grad):
 
@@ -128,8 +129,8 @@ class ChoreoAction():
     
     def Unpackage_all_coeffs_T(self,x):
 
-        return self.coeff_to_param_T.dot(x).reshape(self.nloop,ndim,self.ncoeff,2)
-        
+        return self.coeff_to_param_T.dot(x).reshape(self.nloop,self.geodim,self.ncoeff,2)
+
     def ApplyConditionning(self,x):
 
         return self.param_to_coeff_T.dot(self.param_to_coeff.dot(x))
@@ -137,6 +138,52 @@ class ChoreoAction():
     def ApplyInverseConditionning(self,x):
 
         return self.coeff_to_param.dot(self.coeff_to_param_T.dot(x))
+
+    def TransferParamBtwRefinementLevels(self,xin,iin=None,iout=None):
+
+        cvg_lvl_in = self.current_cvg_lvl
+
+        if iin is None:
+            iin = cvg_lvl_in
+            
+        if iout is None:
+            iout = iin + 1
+
+        self.current_cvg_lvl = iin
+
+        all_coeffs_in = self.Unpackage_all_coeffs(xin)
+        ncoeff_in = self.ncoeff
+
+
+        self.current_cvg_lvl = iout
+        ncoeff_out = self.ncoeff
+        
+        ncoeff_copy = min(ncoeff_in,ncoeff_out) 
+        all_coeffs_out = np.zeros((self.nloop,self.geodim,ncoeff_out,2),dtype=np.float64)
+        all_coeffs_out[:,:,:ncoeff_copy,:] = all_coeffs_in[:,:,:ncoeff_copy,:]
+
+        xout = self.Package_all_coeffs(all_coeffs_out)
+
+        self.current_cvg_lvl = cvg_lvl_in
+
+        return xout
+    
+    def GetAMGPreco(self,xo,fo=None,krylov_method='gmres',cycle='V'):
+        # cycle = 'V'
+        # cycle = 'W'
+        # cycle = 'F'
+        # cycle = 'AMLI'
+
+        levels = []
+        for ilvl in range (self.current_cvg_lvl,-1,-1):
+        # for ilvl in range (self.current_cvg_lvl,0,-1):
+
+            levels.append(NonLinLevel(ActionSyst = self, cvg_lvl = ilvl, xo = xo, fo = fo)) 
+
+        # ml = NonLinMultilevelSolver(levels=levels,coarse_solver=krylov_method)
+        ml = NonLinMultilevelSolver(levels=levels,coarse_solver='pinv')
+
+        return ml.aspreconditioner(cycle=cycle)
 
     def RemoveSym(self,x):
         r"""
@@ -273,7 +320,7 @@ class ChoreoAction():
 
         self.SavePosFFT(x)
 
-        J,GradJ =  Compute_action_Cython(
+        J,GradJ =  self.ComputeGradBackend(
             self.nloop          ,
             self.ncoeff       ,
             self.nint         ,
@@ -315,7 +362,7 @@ class ChoreoAction():
 
         self.SavePosFFT(x)
 
-        HessJdx = Compute_action_hess_mul_Cython(
+        HessJdx = self.ComputeHessBackend(
             self.nloop                      ,
             self.ncoeff                   ,
             self.nint                     ,
@@ -339,7 +386,7 @@ class ChoreoAction():
         )
 
         return self.Package_all_coeffs_T(HessJdx)
-            
+
     def Compute_action_hess_LinOpt(self,x):
         r"""
         Returns the Hessian of the action wrt parameters at a given point as a Scipy LinearOperator.
@@ -348,26 +395,8 @@ class ChoreoAction():
         return scipy.sparse.linalg.LinearOperator(
             (self.coeff_to_param.shape[0],self.coeff_to_param.shape[0]),
             matvec =  (lambda dx, xl=x, selfl=self : selfl.Compute_action_hess_mul(xl,dx)),
-            rmatvec = (lambda dx, xl=x, selfl=self : selfl.Compute_action_hess_mul(xl,dx))
-        )
-
-    @property
-    def ConditionMatrix(self):
-
-        return scipy.sparse.linalg.LinearOperator(
-            (self.coeff_to_param.shape[0],self.coeff_to_param.shape[0]),
-            matvec =  self.ApplyConditionning,
-            rmatvec = self.ApplyConditionning
-        )
-    
-    @property
-    def InverseConditionMatrix(self):
-
-        return scipy.sparse.linalg.LinearOperator(
-            (self.coeff_to_param.shape[0],self.coeff_to_param.shape[0]),
-            matvec =  self.ApplyInverseConditionning,
-            rmatvec = self.ApplyInverseConditionning
-        )
+            rmatvec = (lambda dx, xl=x, selfl=self : selfl.Compute_action_hess_mul(xl,dx)),
+            dtype = np.float64)
 
     def Compute_action(self,x):
         r"""
@@ -376,7 +405,7 @@ class ChoreoAction():
     
         self.SavePosFFT(x)
 
-        J,GradJ =  Compute_action_Cython(
+        J,GradJ =  self.ComputeGradBackend(
             self.nloop          ,
             self.ncoeff       ,
             self.nint         ,
@@ -407,9 +436,10 @@ class ChoreoAction():
         """
 
         Hash_Action =  Compute_hash_action_Cython(
+            self.geodim                     ,
             self.nloop                      ,
-            self.ncoeff                   ,
-            self.nint                     ,
+            self.ncoeff                     ,
+            self.nint                       ,
             self.mass                       ,
             self.loopnb                     ,
             self.Targets                    ,
@@ -528,9 +558,9 @@ class ChoreoAction():
 
     def Compute_Auto_ODE_RHS(self,x):
 
-        all_pos_vel = x.reshape(2,self.nbody,ndim)
+        all_pos_vel = x.reshape(2,self.nbody,self.geodim)
         
-        rhs = np.zeros((2,self.nbody,ndim))
+        rhs = np.zeros((2,self.nbody,self.geodim))
 
         rhs[0,:,:] = all_pos_vel[1,:,:]
         rhs[1,:,:] = Compute_Forces_Cython(
@@ -539,7 +569,7 @@ class ChoreoAction():
             self.nbody          
         )
 
-        return rhs.reshape(2*self.nbody*ndim)
+        return rhs.reshape(2*self.nbody*self.geodim)
 
     def Compute_ODE_RHS(self,t,x):
         return self.Compute_Auto_ODE_RHS(x)
@@ -551,7 +581,7 @@ class ChoreoAction():
 
         def gun(t,x):
             return Compute_Forces_Cython(
-                x.reshape(self.nbody,ndim)  ,
+                x.reshape(self.nbody,self.geodim)  ,
                 self.mass                   ,
                 self.nbody                  ,
             ).reshape(-1)
@@ -560,12 +590,12 @@ class ChoreoAction():
 
     def Compute_Auto_JacMat_ODE_RHS(self,x):
 
-        all_pos_vel = x.reshape(2,self.nbody,ndim)
+        all_pos_vel = x.reshape(2,self.nbody,self.geodim)
         
-        drhs = np.zeros((2,self.nbody,ndim,2,self.nbody,ndim))
+        drhs = np.zeros((2,self.nbody,self.geodim,2,self.nbody,self.geodim))
 
-        for ib in range(v):
-            for idim in range(ndim):
+        for ib in range(self.nbody):
+            for idim in range(self.geodim):
                 drhs[0,ib,idim,1,ib,idim] = 1
 
         drhs[1,:,:,0,:,:] = Compute_JacMat_Forces_Cython(
@@ -574,17 +604,17 @@ class ChoreoAction():
             self.nbody          ,
         )
 
-        return drhs.reshape(2*self.nbody*ndim,2*self.nbody*ndim)
+        return drhs.reshape(2*self.nbody*self.geodim,2*self.nbody*self.geodim)
 
     def Compute_JacMat_ODE_RHS(self,t,x):
         return self.Compute_Auto_JacMat_ODE_RHS(x)
             
     def Compute_Auto_JacMul_ODE_RHS(self,x,dx):
 
-        all_pos_vel   =  x.reshape(2,self.nbody,ndim)
-        all_pos_vel_d = dx.reshape(2,self.nbody,ndim)
+        all_pos_vel   =  x.reshape(2,self.nbody,self.geodim)
+        all_pos_vel_d = dx.reshape(2,self.nbody,self.geodim)
         
-        drhs = np.zeros((2,self.nbody,ndim))
+        drhs = np.zeros((2,self.nbody,self.geodim))
 
         drhs[0,:,:] = all_pos_vel_d[1,:,:]
 
@@ -595,23 +625,24 @@ class ChoreoAction():
             self.nbody          ,
         )
 
-        return drhs.reshape(2*self.nbody*ndim)
+        return drhs.reshape(2*self.nbody*self.geodim)
 
     def Compute_JacMul_ODE_RHS(self,t,x,dx):
         return self.Compute_Auto_JacMul_ODE_RHS(x,dx)
 
     def Compute_Auto_JacMul_ODE_RHS_LinOpt(self,x):
 
-        return scipy.sparse.linalg.LinearOperator((2*self.nbody*ndim,2*self.nbody*ndim),
+        return scipy.sparse.linalg.LinearOperator((2*self.nbody*self.geodim,2*self.nbody*self.geodim),
             matvec =  (lambda dx, xl=x, selfl=self : selfl.Compute_Auto_JacMul_ODE_RHS(xl,dx)),
-            rmatvec = (lambda dx, xl=x, selfl=self : selfl.Compute_Auto_JacMul_ODE_RHS(xl,dx)))
+            rmatvec = (lambda dx, xl=x, selfl=self : selfl.Compute_Auto_JacMul_ODE_RHS(xl,dx)),
+            dtype = np.float64)
 
     def GetTangentSystemDef(self,x,nint=None,method = 'SymplecticEuler'):
 
             if nint is None:
                 nint = self.nint
 
-            ndof = self.nbody*ndim
+            ndof = self.nbody*self.geodim
 
             if nint is None:
                 nint = self.nint
@@ -633,9 +664,9 @@ class ChoreoAction():
 
                 cur_pos = np.ascontiguousarray(all_pos_vel[0,:,:,i])
 
-                J = Compute_JacMat_Forces_Cython(cur_pos,self.mass,self.nbody).reshape(self.nbody*ndim,self.nbody*ndim)
+                J = Compute_JacMat_Forces_Cython(cur_pos,self.mass,self.nbody).reshape(self.nbody*self.geodim,self.nbody*self.geodim)
                 
-                return J.dot(x.reshape(self.nbody*ndim,2*self.nbody*ndim)).reshape(-1)
+                return J.dot(x.reshape(self.nbody*self.geodim,2*self.nbody*self.geodim)).reshape(-1)
 
             x0 = np.ascontiguousarray(np.concatenate((np.eye(ndof),np.zeros((ndof,ndof))),axis=1).reshape(-1))
             v0 = np.ascontiguousarray(np.concatenate((np.zeros((ndof,ndof)),np.eye(ndof)),axis=1).reshape(-1))
@@ -689,7 +720,7 @@ class ChoreoAction():
         """
 
         ncoeff = self.ncoeff
-        all_coeffs = np.zeros((self.nloop,ndim,ncoeff,2),dtype=np.float64)
+        all_coeffs = np.zeros((self.nloop,self.geodim,ncoeff,2),dtype=np.float64)
 
         for il in range(self.nloop):
 
@@ -825,7 +856,7 @@ class ChoreoAction():
         c_coeffs = self.Unpackage_all_coeffs(x).view(dtype=np.complex128)[...,0]
 
         all_pos = the_irfft(c_coeffs,norm="forward")        
-        all_pos_b = np.zeros((self.nbody,ndim,nint),dtype=np.float64)
+        all_pos_b = np.zeros((self.nbody,self.geodim,nint),dtype=np.float64)
         
         for il in range(self.nloop):
             for ib in range(self.loopnb[il]):
@@ -915,13 +946,13 @@ class ChoreoAction():
 
         all_pos_b = self.ComputeAllPos(x)
 
-        xbar_mean = np.zeros((ndim))
+        xbar_mean = np.zeros((self.geodim))
 
-        xbar_all = np.zeros((ndim,self.nint))
+        xbar_all = np.zeros((self.geodim,self.nint))
 
         for iint in range(self.nint):
 
-            xbar = np.zeros((ndim))
+            xbar = np.zeros((self.geodim))
             
             tot_mass = 0.
             for il in range(self.nloop):
@@ -947,7 +978,7 @@ class ChoreoAction():
 
     def Compute_hamil_hess_mul_nosym(self,x,all_coeffs_d_xv_vect):
 
-        all_coeffs_d_xv = all_coeffs_d_xv_vect.reshape(2,self.nbody,ndim,self.ncoeff,2)
+        all_coeffs_d_xv = all_coeffs_d_xv_vect.reshape(2,self.nbody,self.geodim,self.ncoeff,2)
 
         self.SavePosFFT(x)
 
@@ -967,7 +998,7 @@ class ChoreoAction():
         Returns the Hessian of the hamiltonian at a given point as a Scipy LinearOperator.
         """
 
-        the_shape = 2*self.nbody*ndim*self.ncoeff*2
+        the_shape = 2*self.nbody*self.geodim*self.ncoeff*2
 
         return scipy.sparse.linalg.LinearOperator(
             (the_shape,the_shape),
@@ -976,7 +1007,7 @@ class ChoreoAction():
 
     def Compute_hamil_hess_xonly(self,x,all_coeffs_d_x_vect):
 
-        all_coeffs_d_x = all_coeffs_d_x_vect.reshape(self.nbody,ndim,self.ncoeff,2)
+        all_coeffs_d_x = all_coeffs_d_x_vect.reshape(self.nbody,self.geodim,self.ncoeff,2)
 
         self.SavePosFFT(x)
 
@@ -993,7 +1024,7 @@ class ChoreoAction():
     
     def Compute_hamil_hess_xonly_LinOpt(self,x):
 
-        the_shape = self.nbody*ndim*self.ncoeff*2
+        the_shape = self.nbody*self.geodim*self.ncoeff*2
 
         return scipy.sparse.linalg.LinearOperator(
             (the_shape,the_shape),
@@ -1003,7 +1034,7 @@ class ChoreoAction():
     
     def Compute_hamil_hess_xonly_precond(self,x,all_coeffs_d_x_vect):
 
-        all_coeffs_d_x = all_coeffs_d_x_vect.reshape(self.nbody,ndim,self.ncoeff,2)
+        all_coeffs_d_x = all_coeffs_d_x_vect.reshape(self.nbody,self.geodim,self.ncoeff,2)
 
         all_coeffs_d_x_preco = Compute_Derivative_precond_inv_Cython_nosym(
             self.nbody          ,
@@ -1032,7 +1063,7 @@ class ChoreoAction():
     
     def Compute_hamil_hess_xonly_precond_LinOpt(self,x):
 
-        the_shape = self.nbody*ndim*self.ncoeff*2
+        the_shape = self.nbody*self.geodim*self.ncoeff*2
 
         return scipy.sparse.linalg.LinearOperator(
             (the_shape,the_shape),
@@ -1042,7 +1073,7 @@ class ChoreoAction():
     
     def Compute_hamil_hess_xonly_precond_inv(self,all_coeffs_d_x_vect):
 
-        all_coeffs_d_x = all_coeffs_d_x_vect.reshape(self.nbody,ndim,self.ncoeff,2)
+        all_coeffs_d_x = all_coeffs_d_x_vect.reshape(self.nbody,self.geodim,self.ncoeff,2)
 
         all_coeffs_d_x_preco = Compute_Derivative_precond_inv_Cython_nosym(
             self.nbody          ,
@@ -1055,7 +1086,7 @@ class ChoreoAction():
 
     def Compute_deriv(self,all_coeffs_d_x_vect):
 
-        all_coeffs_d_x = all_coeffs_d_x_vect.reshape(self.nbody,ndim,self.ncoeff,2)
+        all_coeffs_d_x = all_coeffs_d_x_vect.reshape(self.nbody,self.geodim,self.ncoeff,2)
 
         all_coeffs_d_x_preco = Compute_Derivative_Cython_nosym(
             self.nbody          ,
@@ -1072,137 +1103,355 @@ class ChoreoAction():
 
 
 
-    if ndim == 2:
 
-        def Gen_init_avg_2D(self,nT_slow,nT_fast,Info_dict_slow,all_coeffs_slow,Info_dict_fast_list,all_coeffs_fast_list,il_slow_source,ibl_slow_source,il_fast_source,ibl_fast_source,Rotate_fast_with_slow,Optimize_Init,Randomize_Fast_Init):
+    def Gen_init_avg_2D(self,nT_slow,nT_fast,Info_dict_slow,all_coeffs_slow,Info_dict_fast_list,all_coeffs_fast_list,il_slow_source,ibl_slow_source,il_fast_source,ibl_fast_source,Rotate_fast_with_slow,Optimize_Init,Randomize_Fast_Init):
 
-            nloop_slow = len(all_coeffs_fast_list)
+        nloop_slow = len(all_coeffs_fast_list)
 
-            if Randomize_Fast_Init :
+        if Randomize_Fast_Init :
 
-                init_SpaceRevscal = np.array([1. if (np.random.random() > 1./2.) else -1. for ils in range(nloop_slow)],dtype=np.float64)
-                init_TimeRevscal = np.array([1. if (np.random.random() > 1./2.) else -1. for ils in range(nloop_slow)],dtype=np.float64)
-                Act_Mul = 1. if (np.random.random() > 1./2.) else -1.
-                init_x = np.array([ np.random.random() for iparam in range(2*nloop_slow)],dtype=np.float64)
+            init_SpaceRevscal = np.array([1. if (np.random.random() > 1./2.) else -1. for ils in range(nloop_slow)],dtype=np.float64)
+            init_TimeRevscal = np.array([1. if (np.random.random() > 1./2.) else -1. for ils in range(nloop_slow)],dtype=np.float64)
+            Act_Mul = 1. if (np.random.random() > 1./2.) else -1.
+            init_x = np.array([ np.random.random() for iparam in range(2*nloop_slow)],dtype=np.float64)
 
-            else:
+        else:
 
-                init_SpaceRevscal = np.array([1. for ils in range(nloop_slow)],dtype=np.float64)
-                init_TimeRevscal = np.array([1. for ils in range(nloop_slow)],dtype=np.float64)
-                Act_Mul = 1.
-                init_x = np.zeros((2*nloop_slow),dtype=np.float64)
+            init_SpaceRevscal = np.array([1. for ils in range(nloop_slow)],dtype=np.float64)
+            init_TimeRevscal = np.array([1. for ils in range(nloop_slow)],dtype=np.float64)
+            Act_Mul = 1.
+            init_x = np.zeros((2*nloop_slow),dtype=np.float64)
 
-            def params_to_coeffs(x):
+        def params_to_coeffs(x):
 
-                all_coeffs_fast_list_mod = []
+            all_coeffs_fast_list_mod = []
 
-                for ils in range(nloop_slow):
+            for ils in range(nloop_slow):
 
-                    theta = twopi * x[2*ils]
-                    SpaceRevscal = init_SpaceRevscal[ils]
-                    SpaceRots = np.array( [[SpaceRevscal*np.cos(theta) , SpaceRevscal*np.sin(theta)] , [-np.sin(theta),np.cos(theta)]],dtype=np.float64)
-                    TimeRevs = init_TimeRevscal[ils]
-                    TimeShiftNum = x[2*ils+1]
-                    TimeShiftDen = 1
+                theta = twopi * x[2*ils]
+                SpaceRevscal = init_SpaceRevscal[ils]
+                SpaceRots = np.array( [[SpaceRevscal*np.cos(theta) , SpaceRevscal*np.sin(theta)] , [-np.sin(theta),np.cos(theta)]],dtype=np.float64)
+                TimeRevs = init_TimeRevscal[ils]
+                TimeShiftNum = x[2*ils+1]
+                TimeShiftDen = 1
 
-                    all_coeffs_fast_list_mod.append(Transform_Coeffs(SpaceRots, TimeRevs, TimeShiftNum, TimeShiftDen, all_coeffs_fast_list[ils]))
+                all_coeffs_fast_list_mod.append(Transform_Coeffs(SpaceRots, TimeRevs, TimeShiftNum, TimeShiftDen, all_coeffs_fast_list[ils]))
 
-                all_coeffs_avg = self.Compose_Two_Paths(Info_dict_slow,Info_dict_fast_list,il_slow_source,ibl_slow_source,il_fast_source,ibl_fast_source,nT_slow,nT_fast,all_coeffs_slow,all_coeffs_fast_list_mod,Rotate_fast_with_slow)
-
-                return all_coeffs_avg
-
-            if Optimize_Init :
-
-                def params_to_Action(x):
-
-                    all_coeffs_avg = params_to_coeffs(x)
-
-                    x_avg = self.Package_all_coeffs(all_coeffs_avg)
-                    Act, GAct = self.Compute_action(x_avg)
-                    
-                    return Act_Mul * Act
-
-                maxiter = 100
-                tol = 1e-10
-
-                opt_result = scipy.optimize.minimize(fun=params_to_Action,x0=init_x,method='CG',options={'disp':False,'maxiter':maxiter,'gtol':tol},tol=tol)
-
-                x_opt = opt_result['x']
-
-                all_coeffs_avg = params_to_coeffs(x_opt)
-
-            else:
-                all_coeffs_avg = params_to_coeffs(init_x)
+            all_coeffs_avg = self.Compose_Two_Paths(Info_dict_slow,Info_dict_fast_list,il_slow_source,ibl_slow_source,il_fast_source,ibl_fast_source,nT_slow,nT_fast,all_coeffs_slow,all_coeffs_fast_list_mod,Rotate_fast_with_slow)
 
             return all_coeffs_avg
 
-        def plot_all_2D(self,x,nint_plot,filename,fig_size=(10,10),dpi=100,color=None,color_list = None,xlim=None,extend=0.03):
-            r"""
-            Plots 2D trajectories and saves image in file
-            """
+        if Optimize_Init :
 
-            if color_list is None:
-                color_list = plt.rcParams['axes.prop_cycle'].by_key()['color']
+            def params_to_Action(x):
 
-            if isinstance(color,list):
+                all_coeffs_avg = params_to_coeffs(x)
+
+                x_avg = self.Package_all_coeffs(all_coeffs_avg)
+                Act, GAct = self.Compute_action(x_avg)
                 
-                for the_color in color :
-                    
-                    file_bas,file_ext = os.path.splitext(filename)
-                    
-                    the_filename = file_bas+'_'+the_color+file_ext
-                    
-                    self.plot_all_2D(x=x,nint_plot=nint_plot,filename=the_filename,fig_size=fig_size,dpi=dpi,color=the_color,color_list=color_list)
+                return Act_Mul * Act
+
+            maxiter = 100
+            tol = 1e-10
+
+            opt_result = scipy.optimize.minimize(fun=params_to_Action,x0=init_x,method='CG',options={'disp':False,'maxiter':maxiter,'gtol':tol},tol=tol)
+
+            x_opt = opt_result['x']
+
+            all_coeffs_avg = params_to_coeffs(x_opt)
+
+        else:
+            all_coeffs_avg = params_to_coeffs(init_x)
+
+        return all_coeffs_avg
+
+    def plot_all_2D(self,x,nint_plot,filename,fig_size=(10,10),dpi=100,color=None,color_list = None,xlim=None,extend=0.03):
+        r"""
+        Plots 2D trajectories and saves image in file
+        """
+
+        if color_list is None:
+            color_list = plt.rcParams['axes.prop_cycle'].by_key()['color']
+
+        if isinstance(color,list):
             
-            elif (color is None) or (color == "body") or (color == "loop") or (color == "loop_id") or (color == "none"):
+            for the_color in color :
                 
-                self.plot_all_2D_cpb(x,nint_plot,filename,fig_size=fig_size,dpi=dpi,color=color,color_list=color_list,xlim=xlim,extend=extend)
+                file_bas,file_ext = os.path.splitext(filename)
                 
-            elif (color == "velocity"):
+                the_filename = file_bas+'_'+the_color+file_ext
                 
-                self.plot_all_2D_cpv(x,nint_plot,filename,fig_size=fig_size,dpi=dpi,xlim=xlim,extend=extend)
-                
-            elif (color == "all"):
-                
-                self.plot_all_2D(x=x,nint_plot=nint_plot,filename=filename,fig_size=fig_size,dpi=dpi,color=["body","velocity"],color_list=color_list,xlim=xlim,extend=extend)
-
-            else:
-                
-                raise ValueError("Unknown color scheme")
-
-        def plot_all_2D_cpb(self,x,nint_plot,filename,fig_size=(10,10),dpi=100,color=None,color_list=None,xlim=None,extend=0.03):
-            r"""
-            Plots 2D trajectories with one color per body and saves image in file
-            """
+                self.plot_all_2D(x=x,nint_plot=nint_plot,filename=the_filename,fig_size=fig_size,dpi=dpi,color=the_color,color_list=color_list)
+        
+        elif (color is None) or (color == "body") or (color == "loop") or (color == "loop_id") or (color == "none"):
             
-            if color_list is None:
-                color_list = plt.rcParams['axes.prop_cycle'].by_key()['color']
-
-            all_coeffs = self.Unpackage_all_coeffs(x)
+            self.plot_all_2D_cpb(x,nint_plot,filename,fig_size=fig_size,dpi=dpi,color=color,color_list=color_list,xlim=xlim,extend=extend)
             
-            c_coeffs = all_coeffs.view(dtype=np.complex128)[...,0]
+        elif (color == "velocity"):
             
-            all_pos = np.zeros((self.nloop,ndim,nint_plot+1),dtype=np.float64)
-            all_pos[:,:,0:nint_plot] = the_irfft(c_coeffs,n=nint_plot,norm="forward")
-            all_pos[:,:,nint_plot] = all_pos[:,:,0]
+            self.plot_all_2D_cpv(x,nint_plot,filename,fig_size=fig_size,dpi=dpi,xlim=xlim,extend=extend)
             
-            n_loop_plot = np.count_nonzero((self.RequiresLoopDispUn))
-            i_loop_plot = 0
+        elif (color == "all"):
+            
+            self.plot_all_2D(x=x,nint_plot=nint_plot,filename=filename,fig_size=fig_size,dpi=dpi,color=["body","velocity"],color_list=color_list,xlim=xlim,extend=extend)
 
-            all_pos_b = np.zeros((n_loop_plot,ndim,nint_plot+1),dtype=np.float64)
+        else:
+            
+            raise ValueError("Unknown color scheme")
 
+    def plot_all_2D_cpb(self,x,nint_plot,filename,fig_size=(10,10),dpi=100,color=None,color_list=None,xlim=None,extend=0.03):
+        r"""
+        Plots 2D trajectories with one color per body and saves image in file
+        """
+        
+        if color_list is None:
+            color_list = plt.rcParams['axes.prop_cycle'].by_key()['color']
+
+        all_coeffs = self.Unpackage_all_coeffs(x)
+        
+        c_coeffs = all_coeffs.view(dtype=np.complex128)[...,0]
+        
+        all_pos = np.zeros((self.nloop,self.geodim,nint_plot+1),dtype=np.float64)
+        all_pos[:,:,0:nint_plot] = the_irfft(c_coeffs,n=nint_plot,norm="forward")
+        all_pos[:,:,nint_plot] = all_pos[:,:,0]
+        
+        n_loop_plot = np.count_nonzero((self.RequiresLoopDispUn))
+        i_loop_plot = 0
+
+        all_pos_b = np.zeros((n_loop_plot,self.geodim,nint_plot+1),dtype=np.float64)
+
+        for il in range(self.nloop):
+            for ib in range(self.loopnb[il]):
+                if (self.RequiresLoopDispUn[il,ib]) :
+                    for iint in range(nint_plot+1):
+                        # exact time is irrelevant
+                        all_pos_b[i_loop_plot,:,iint] = np.dot(self.SpaceRotsUn[il,ib,:,:],all_pos[il,:,iint])
+
+                    i_loop_plot +=1
+        
+        ncol = len(color_list)
+        
+        cb = ['b' for ib in range(n_loop_plot)]
+        i_loop_plot = 0
+
+        if (color is None) or (color == "none"):
             for il in range(self.nloop):
                 for ib in range(self.loopnb[il]):
                     if (self.RequiresLoopDispUn[il,ib]) :
-                        for iint in range(nint_plot+1):
-                            # exact time is irrelevant
-                            all_pos_b[i_loop_plot,:,iint] = np.dot(self.SpaceRotsUn[il,ib,:,:],all_pos[il,:,iint])
+
+                        cb[i_loop_plot] = color_list[0]
 
                         i_loop_plot +=1
+
+        elif (color == "body"):
+            for il in range(self.nloop):
+                for ib in range(self.loopnb[il]):
+                    if (self.RequiresLoopDispUn[il,ib]) :
+
+                        cb[i_loop_plot] = color_list[self.Targets[il,ib]%ncol]
+
+                        i_loop_plot +=1
+
+        elif (color == "loop"):
+            for il in range(self.nloop):
+                for ib in range(self.loopnb[il]):
+                    if (self.RequiresLoopDispUn[il,ib]) :
+
+                        cb[i_loop_plot] = color_list[il%ncol]
+
+                        i_loop_plot +=1
+
+        elif (color == "loop_id"):
+            for il in range(self.nloop):
+                for ib in range(self.loopnb[il]):
+                    if (self.RequiresLoopDispUn[il,ib]) :
+
+                        cb[i_loop_plot] = color_list[ib%ncol]
+
+                        i_loop_plot +=1
+
+        else:
+            raise ValueError(f'Unknown color scheme "{color}"')
+
+        if xlim is None:
+
+            xmin = all_pos_b[:,0,:].min()
+            xmax = all_pos_b[:,0,:].max()
+            ymin = all_pos_b[:,1,:].min()
+            ymax = all_pos_b[:,1,:].max()
+
+        else :
+
+            xmin = xlim[0]
+            xmax = xlim[1]
+            ymin = xlim[2]
+            ymax = xlim[3]
+        
+        xinf = xmin - extend*(xmax-xmin)
+        xsup = xmax + extend*(xmax-xmin)
+        
+        yinf = ymin - extend*(ymax-ymin)
+        ysup = ymax + extend*(ymax-ymin)
+        
+        hside = max(xsup-xinf,ysup-yinf)/2
+
+        xmid = (xinf+xsup)/2
+        ymid = (yinf+ysup)/2
+
+        xinf = xmid - hside
+        xsup = xmid + hside
+
+        yinf = ymid - hside
+        ysup = ymid + hside
+
+        # Plot-related
+        fig = plt.figure()
+        fig.set_size_inches(fig_size)
+        fig.set_dpi(dpi)
+        ax = plt.gca()
+
+        lines = sum([ax.plot([], [],'-',color=cb[ib] ,antialiased=True,zorder=-ib)  for ib in range(n_loop_plot)], [])
+        points = sum([ax.plot([], [],'ko', antialiased=True)for ib in range(n_loop_plot)], [])
+
+        ax.axis('off')
+        ax.set_xlim([xinf, xsup])
+        ax.set_ylim([yinf, ysup ])
+        ax.set_aspect('equal', adjustable='box')
+        plt.tight_layout()
+        
+        for i_loop_plot in range(n_loop_plot):
+
+            lines[i_loop_plot].set_data(all_pos_b[i_loop_plot,0,:], all_pos_b[i_loop_plot,1,:])
+
+        plt.savefig(filename)
+        
+        plt.close()
+
+    def plot_all_2D_cpv(self,x,nint_plot,filename,fig_size=(10,10),dpi=100,xlim=None,extend=0.03):
+        r"""
+        Plots 2D trajectories colored according to velocity and saves image in file
+        """
+        
+        all_coeffs = self.Unpackage_all_coeffs(x)            
+        c_coeffs = all_coeffs.view(dtype=np.complex128)[...,0]
+        
+        all_pos = np.zeros((self.nloop,self.geodim,nint_plot+1),dtype=np.float64)
+        all_pos[:,:,0:nint_plot] = the_irfft(c_coeffs,n=nint_plot,norm="forward")
+        all_pos[:,:,nint_plot] = all_pos[:,:,0]
+        
+        all_coeffs_v = np.zeros(all_coeffs.shape)
+        
+        for k in range(self.ncoeff):
+            all_coeffs_v[:,:,k,0] = -k * all_coeffs[:,:,k,1]
+            all_coeffs_v[:,:,k,1] =  k * all_coeffs[:,:,k,0]
+        
+        c_coeffs_v = all_coeffs_v.view(dtype=np.complex128)[...,0]
+        
+        all_vel = np.zeros((self.nloop,nint_plot+1),dtype=np.float64)
+        all_vel[:,0:nint_plot] = np.linalg.norm(the_irfft(c_coeffs_v,n=nint_plot,norm="forward"),axis=1)
+        all_vel[:,nint_plot] = all_vel[:,0]
+        
+        all_pos_b = np.zeros((self.nbody,self.geodim,nint_plot+1),dtype=np.float64)
+        
+        for il in range(self.nloop):
+            for ib in range(self.loopnb[il]):
+                for iint in range(nint_plot+1):
+                    # exact time is irrelevant
+                    all_pos_b[self.Targets[il,ib],:,iint] = np.dot(self.SpaceRotsUn[il,ib,:,:],all_pos[il,:,iint])
+        
+        all_vel_b = np.zeros((self.nbody,nint_plot+1),dtype=np.float64)
+        
+        for il in range(nloself.nloopop):
+            for ib in range(self.loopnb[il]):
+                for iint in range(nint_plot+1):
+                    # exact time is irrelevant
+                    all_vel_b[self.Targets[il,ib],iint] = all_vel[il,iint]
+        
+        if xlim is None:
+
+            xmin = all_pos_b[:,0,:].min()
+            xmax = all_pos_b[:,0,:].max()
+            ymin = all_pos_b[:,1,:].min()
+            ymax = all_pos_b[:,1,:].max()
+
+        else :
+
+            xmin = xlim[0]
+            xmax = xlim[1]
+            ymin = xlim[2]
+            ymax = xlim[3]
+
+        xinf = xmin - extend*(xmax-xmin)
+        xsup = xmax + extend*(xmax-xmin)
+        
+        yinf = ymin - extend*(ymax-ymin)
+        ysup = ymax + extend*(ymax-ymin)
+        
+        hside = max(xsup-xinf,ysup-yinf)/2
+
+        xmid = (xinf+xsup)/2
+        ymid = (yinf+ysup)/2
+
+        xinf = xmid - hside
+        xsup = xmid + hside
+
+        yinf = ymid - hside
+        ysup = ymid + hside
+
+        # Plot-related
+        fig = plt.figure()
+        fig.set_size_inches(fig_size)
+        fig.set_dpi(dpi)
+        ax = plt.gca()
+
+        # cmap = None
+        cmap = 'turbo'
+        # cmap = 'rainbow'
+        
+        norm = plt.Normalize(0,all_vel_b.max())
+        
+        for ib in range(self.nbody-1,-1,-1):
+                    
+            points = all_pos_b[ib,:,:].T.reshape(-1,1,2)
+            segments = np.concatenate([points[:-1],points[1:]],axis=1)
             
-            ncol = len(color_list)
+            lc = LineCollection(segments,cmap=cmap,norm=norm)
+            lc.set_array(all_vel_b[ib,:])
             
+            ax.add_collection(lc)
+
+        ax.axis('off')
+        ax.set_xlim([xinf, xsup])
+        ax.set_ylim([yinf, ysup ])
+        ax.set_aspect('equal', adjustable='box')
+        plt.tight_layout()
+
+        plt.savefig(filename)
+        
+        plt.close()
+
+    def plot_all_2D_anim(self,x,nint_plot,filename,nperiod=1,Plot_trace=True,fig_size=(5,5),dnint=1,all_pos_trace=None,all_pos_points=None,xlim=None,extend=0.03,color_list=None,color=None):
+        r"""
+        Creates a video of the bodies moving along their trajectories, and saves the file
+        """
+
+        if color_list is None:
+            color_list = plt.rcParams['axes.prop_cycle'].by_key()['color']
+
+        all_coeffs = self.Unpackage_all_coeffs(x)
+
+        maxloopnb = self.loopnb.max()
+        
+        ncol = len(color_list)
+
+        if (all_pos_trace is None):
+
+            n_loop_plot = np.count_nonzero((self.RequiresLoopDispUn))
+            i_loop_plot = 0
+
             cb = ['b' for ib in range(n_loop_plot)]
+
             i_loop_plot = 0
 
             if (color is None) or (color == "none"):
@@ -1244,343 +1493,251 @@ class ChoreoAction():
             else:
                 raise ValueError(f'Unknown color scheme "{color}"')
 
-            if xlim is None:
-
-                xmin = all_pos_b[:,0,:].min()
-                xmax = all_pos_b[:,0,:].max()
-                ymin = all_pos_b[:,1,:].min()
-                ymax = all_pos_b[:,1,:].max()
-
-            else :
-
-                xmin = xlim[0]
-                xmax = xlim[1]
-                ymin = xlim[2]
-                ymax = xlim[3]
+        else:
             
-            xinf = xmin - extend*(xmax-xmin)
-            xsup = xmax + extend*(xmax-xmin)
-            
-            yinf = ymin - extend*(ymax-ymin)
-            ysup = ymax + extend*(ymax-ymin)
-            
-            hside = max(xsup-xinf,ysup-yinf)/2
+            cb = ['b' for ib in range(len(all_pos_trace))]
 
-            xmid = (xinf+xsup)/2
-            ymid = (yinf+ysup)/2
-
-            xinf = xmid - hside
-            xsup = xmid + hside
-
-            yinf = ymid - hside
-            ysup = ymid + hside
-
-            # Plot-related
-            fig = plt.figure()
-            fig.set_size_inches(fig_size)
-            fig.set_dpi(dpi)
-            ax = plt.gca()
-
-            lines = sum([ax.plot([], [],'-',color=cb[ib] ,antialiased=True,zorder=-ib)  for ib in range(n_loop_plot)], [])
-            points = sum([ax.plot([], [],'ko', antialiased=True)for ib in range(n_loop_plot)], [])
-
-            ax.axis('off')
-            ax.set_xlim([xinf, xsup])
-            ax.set_ylim([yinf, ysup ])
-            ax.set_aspect('equal', adjustable='box')
-            plt.tight_layout()
-            
-            for i_loop_plot in range(n_loop_plot):
-
-                lines[i_loop_plot].set_data(all_pos_b[i_loop_plot,0,:], all_pos_b[i_loop_plot,1,:])
-
-            plt.savefig(filename)
-            
-            plt.close()
-
-        def plot_all_2D_cpv(self,x,nint_plot,filename,fig_size=(10,10),dpi=100,xlim=None,extend=0.03):
-            r"""
-            Plots 2D trajectories colored according to velocity and saves image in file
-            """
-            
-            all_coeffs = self.Unpackage_all_coeffs(x)            
-            c_coeffs = all_coeffs.view(dtype=np.complex128)[...,0]
-            
-            all_pos = np.zeros((self.nloop,ndim,nint_plot+1),dtype=np.float64)
-            all_pos[:,:,0:nint_plot] = the_irfft(c_coeffs,n=nint_plot,norm="forward")
-            all_pos[:,:,nint_plot] = all_pos[:,:,0]
-            
-            all_coeffs_v = np.zeros(all_coeffs.shape)
-            
-            for k in range(self.ncoeff):
-                all_coeffs_v[:,:,k,0] = -k * all_coeffs[:,:,k,1]
-                all_coeffs_v[:,:,k,1] =  k * all_coeffs[:,:,k,0]
-            
-            c_coeffs_v = all_coeffs_v.view(dtype=np.complex128)[...,0]
-            
-            all_vel = np.zeros((self.nloop,nint_plot+1),dtype=np.float64)
-            all_vel[:,0:nint_plot] = np.linalg.norm(the_irfft(c_coeffs_v,n=nint_plot,norm="forward"),axis=1)
-            all_vel[:,nint_plot] = all_vel[:,0]
-            
-            all_pos_b = np.zeros((self.nbody,ndim,nint_plot+1),dtype=np.float64)
-            
-            for il in range(self.nloop):
-                for ib in range(self.loopnb[il]):
-                    for iint in range(nint_plot+1):
-                        # exact time is irrelevant
-                        all_pos_b[self.Targets[il,ib],:,iint] = np.dot(self.SpaceRotsUn[il,ib,:,:],all_pos[il,:,iint])
-            
-            all_vel_b = np.zeros((self.nbody,nint_plot+1),dtype=np.float64)
-            
-            for il in range(nloself.nloopop):
-                for ib in range(self.loopnb[il]):
-                    for iint in range(nint_plot+1):
-                        # exact time is irrelevant
-                        all_vel_b[self.Targets[il,ib],iint] = all_vel[il,iint]
-            
-            if xlim is None:
-
-                xmin = all_pos_b[:,0,:].min()
-                xmax = all_pos_b[:,0,:].max()
-                ymin = all_pos_b[:,1,:].min()
-                ymax = all_pos_b[:,1,:].max()
-
-            else :
-
-                xmin = xlim[0]
-                xmax = xlim[1]
-                ymin = xlim[2]
-                ymax = xlim[3]
-
-            xinf = xmin - extend*(xmax-xmin)
-            xsup = xmax + extend*(xmax-xmin)
-            
-            yinf = ymin - extend*(ymax-ymin)
-            ysup = ymax + extend*(ymax-ymin)
-            
-            hside = max(xsup-xinf,ysup-yinf)/2
-
-            xmid = (xinf+xsup)/2
-            ymid = (yinf+ysup)/2
-
-            xinf = xmid - hside
-            xsup = xmid + hside
-
-            yinf = ymid - hside
-            ysup = ymid + hside
-
-            # Plot-related
-            fig = plt.figure()
-            fig.set_size_inches(fig_size)
-            fig.set_dpi(dpi)
-            ax = plt.gca()
-
-            # cmap = None
-            cmap = 'turbo'
-            # cmap = 'rainbow'
-            
-            norm = plt.Normalize(0,all_vel_b.max())
-            
-            for ib in range(self.nbody-1,-1,-1):
-                        
-                points = all_pos_b[ib,:,:].T.reshape(-1,1,2)
-                segments = np.concatenate([points[:-1],points[1:]],axis=1)
-                
-                lc = LineCollection(segments,cmap=cmap,norm=norm)
-                lc.set_array(all_vel_b[ib,:])
-                
-                ax.add_collection(lc)
-
-            ax.axis('off')
-            ax.set_xlim([xinf, xsup])
-            ax.set_ylim([yinf, ysup ])
-            ax.set_aspect('equal', adjustable='box')
-            plt.tight_layout()
-
-            plt.savefig(filename)
-            
-            plt.close()
-
-        def plot_all_2D_anim(self,x,nint_plot,filename,nperiod=1,Plot_trace=True,fig_size=(5,5),dnint=1,all_pos_trace=None,all_pos_points=None,xlim=None,extend=0.03,color_list=None,color=None):
-            r"""
-            Creates a video of the bodies moving along their trajectories, and saves the file
-            """
-
-            if color_list is None:
-                color_list = plt.rcParams['axes.prop_cycle'].by_key()['color']
-
-            all_coeffs = self.Unpackage_all_coeffs(x)
-
-            maxloopnb = self.loopnb.max()
-            
-            ncol = len(color_list)
-
-            if (all_pos_trace is None):
-
-                n_loop_plot = np.count_nonzero((self.RequiresLoopDispUn))
-                i_loop_plot = 0
-
-                cb = ['b' for ib in range(n_loop_plot)]
-
-                i_loop_plot = 0
-
-                if (color is None) or (color == "none"):
-                    for il in range(self.nloop):
-                        for ib in range(self.loopnb[il]):
-                            if (self.RequiresLoopDispUn[il,ib]) :
-
-                                cb[i_loop_plot] = color_list[0]
-
-                                i_loop_plot +=1
-
-                elif (color == "body"):
-                    for il in range(self.nloop):
-                        for ib in range(self.loopnb[il]):
-                            if (self.RequiresLoopDispUn[il,ib]) :
-
-                                cb[i_loop_plot] = color_list[self.Targets[il,ib]%ncol]
-
-                                i_loop_plot +=1
-
-                elif (color == "loop"):
-                    for il in range(self.nloop):
-                        for ib in range(self.loopnb[il]):
-                            if (self.RequiresLoopDispUn[il,ib]) :
-
-                                cb[i_loop_plot] = color_list[il%ncol]
-
-                                i_loop_plot +=1
-
-                elif (color == "loop_id"):
-                    for il in range(self.nloop):
-                        for ib in range(self.loopnb[il]):
-                            if (self.RequiresLoopDispUn[il,ib]) :
-
-                                cb[i_loop_plot] = color_list[ib%ncol]
-
-                                i_loop_plot +=1
-
-                else:
-                    raise ValueError(f'Unknown color scheme "{color}"')
+            if (color == "body"):
+                for ib in range(len(all_pos_trace)):
+                    cb[ib] = color_list[ib%ncol]
 
             else:
+                for ib in range(len(all_pos_trace)):
+                    cb[ib] = color_list[0]
+
+        nint_plot_img = nint_plot*dnint
+        nint_plot_vid = nint_plot
+
+        if (all_pos_trace is None) or (all_pos_points is None):
+
+            all_pos_b = np.zeros((self.nbody,self.geodim,nint_plot_img+1),dtype=np.float64)
+            all_pos_b[:,:,:nint_plot_img] = self.ComputeAllPos(x,nint=nint_plot_img)
+            all_pos_b[:,:,nint_plot_img] = all_pos_b[:,:,0]
+
+        if (all_pos_trace is None):
+
+            i_loop_plot = 0
+
+            all_pos_trace = np.zeros((n_loop_plot,self.geodim,nint_plot_img+1),dtype=np.float64)
+
+            for il in range(self.nloop):
+                for ib in range(self.loopnb[il]):
+                    if (self.RequiresLoopDispUn[il,ib]) :
+                        for iint in range(nint_plot+1):
+                            # exact time is irrelevant
+                            all_pos_trace[i_loop_plot,:,:] = all_pos_b[self.Targets[il,ib],:,:]
+
+                        i_loop_plot +=1
+
+        if (all_pos_points is None):
+            all_pos_points = all_pos_b
+
+        size_all_pos_points = all_pos_points.shape[2] - 1
+
+        if xlim is None:
+
+            xmin = all_pos_trace[:,0,:].min()
+            xmax = all_pos_trace[:,0,:].max()
+            ymin = all_pos_trace[:,1,:].min()
+            ymax = all_pos_trace[:,1,:].max()
+
+        else :
+
+            xmin = xlim[0]
+            xmax = xlim[1]
+            ymin = xlim[2]
+            ymax = xlim[3]
+
+        xinf = xmin - extend*(xmax-xmin)
+        xsup = xmax + extend*(xmax-xmin)
+        
+        yinf = ymin - extend*(ymax-ymin)
+        ysup = ymax + extend*(ymax-ymin)
+        
+        hside = max(xsup-xinf,ysup-yinf)/2
+
+        xmid = (xinf+xsup)/2
+        ymid = (yinf+ysup)/2
+
+        xinf = xmid - hside
+        xsup = xmid + hside
+
+        yinf = ymid - hside
+        ysup = ymid + hside
+
+
+        # Plot-related
+        fig = plt.figure()
+        fig.set_size_inches(fig_size)
+        ax = plt.gca()
+        lines = sum([ax.plot([], [],'-',color=cb[ib], antialiased=True,zorder=-ib)  for ib in range(len(all_pos_trace))], [])
+        points = sum([ax.plot([], [],'ko', antialiased=True)for ib in range(len(all_pos_points))], [])
+        
+        ax.axis('off')
+        ax.set_xlim([xinf, xsup])
+        ax.set_ylim([yinf, ysup ])
+        ax.set_aspect('equal', adjustable='box')
+        plt.tight_layout()
+        
+        # TODO: Understand why this is needed / how to rationalize this use. Is it even legal python ?
+
+        iint = [0]
+        
+        def init():
+            
+            if (Plot_trace):
+                for ib in range(len(all_pos_trace)):
+                    lines[ib].set_data(all_pos_trace[ib,0,:], all_pos_trace[ib,1,:])
+            
+            return lines + points
+
+        def update(i):
+            
+            for ib in range(len(all_pos_points)):
+                points[ib].set_data(all_pos_points[ib,0,iint[0]], all_pos_points[ib,1,iint[0]])
                 
-                cb = ['b' for ib in range(len(all_pos_trace))]
+            iint[0] = ((iint[0]+dnint) % size_all_pos_points)
 
-                if (color == "body"):
-                    for ib in range(len(all_pos_trace)):
-                        cb[ib] = color_list[ib%ncol]
+            return lines + points
+        
+        anim = animation.FuncAnimation(fig, update, frames=int(nperiod*nint_plot_vid),init_func=init, blit=True)
+                            
+        # Save as mp4. This requires mplayer or ffmpeg to be installed
+        # anim.save(filename, fps=60, codec='hevc')
+        anim.save(filename, fps=60, codec='h264')
+        # anim.save(filename, fps=60, codec='webm')
+        # anim.save(filename, fps=60,extra_args=['-vcodec ', 'h264_amf'])
+        # anim.save(filename, fps=60,extra_args=['-hwaccel ', 'cuda'])
+        
+        plt.close()
+        
 
-                else:
-                    for ib in range(len(all_pos_trace)):
-                        cb[ib] = color_list[0]
 
-            nint_plot_img = nint_plot*dnint
-            nint_plot_vid = nint_plot
 
-            if (all_pos_trace is None) or (all_pos_points is None):
+try:
 
-                all_pos_b = np.zeros((self.nbody,ndim,nint_plot_img+1),dtype=np.float64)
-                all_pos_b[:,:,:nint_plot_img] = self.ComputeAllPos(x,nint=nint_plot_img)
-                all_pos_b[:,:,nint_plot_img] = all_pos_b[:,:,0]
+    import pyamg
+    class NonLinLevel(pyamg.MultilevelSolver.Level):
 
-            if (all_pos_trace is None):
+        def __init__(self,ActionSyst,cvg_lvl,xo,fo,**kwargs):
+            super().__init__(**kwargs)
 
-                i_loop_plot = 0
+            self.ActionSyst = ActionSyst
+            self.cvg_lvl = cvg_lvl
 
-                all_pos_trace = np.zeros((n_loop_plot,ndim,nint_plot_img+1),dtype=np.float64)
+            self.update(xo,fo)
 
-                for il in range(self.nloop):
-                    for ib in range(self.loopnb[il]):
-                        if (self.RequiresLoopDispUn[il,ib]) :
-                            for iint in range(nint_plot+1):
-                                # exact time is irrelevant
-                                all_pos_trace[i_loop_plot,:,:] = all_pos_b[self.Targets[il,ib],:,:]
+        def update(self,x,f):
 
-                            i_loop_plot +=1
+            cvg_lvl_in = self.ActionSyst.current_cvg_lvl
 
-            if (all_pos_points is None):
-                all_pos_points = all_pos_b
+            self._x = self.ActionSyst.TransferParamBtwRefinementLevels(x,iin=self.ActionSyst.current_cvg_lvl,iout=self.cvg_lvl)
+            self._f = f
 
-            size_all_pos_points = all_pos_points.shape[2] - 1
-
-            if xlim is None:
-
-                xmin = all_pos_trace[:,0,:].min()
-                xmax = all_pos_trace[:,0,:].max()
-                ymin = all_pos_trace[:,1,:].min()
-                ymax = all_pos_trace[:,1,:].max()
-
-            else :
-
-                xmin = xlim[0]
-                xmax = xlim[1]
-                ymin = xlim[2]
-                ymax = xlim[3]
-
-            xinf = xmin - extend*(xmax-xmin)
-            xsup = xmax + extend*(xmax-xmin)
+            self.ActionSyst.current_cvg_lvl = self.cvg_lvl 
+            my_ndof = self.ActionSyst.coeff_to_param.shape[0]
             
-            yinf = ymin - extend*(ymax-ymin)
-            ysup = ymax + extend*(ymax-ymin)
+            self.A = scipy.sparse.linalg.LinearOperator((my_ndof,my_ndof),
+                matvec =  (lambda dx, xl=self._x, selfl=self : selfl.Compute_action_hess_mul(xl,dx)),
+                rmatvec = (lambda dx, xl=self._x, selfl=self : selfl.Compute_action_hess_mul(xl,dx)),
+                dtype = np.float64)
             
-            hside = max(xsup-xinf,ysup-yinf)/2
-
-            xmid = (xinf+xsup)/2
-            ymid = (yinf+ysup)/2
-
-            xinf = xmid - hside
-            xsup = xmid + hside
-
-            yinf = ymid - hside
-            ysup = ymid + hside
-
-
-            # Plot-related
-            fig = plt.figure()
-            fig.set_size_inches(fig_size)
-            ax = plt.gca()
-            lines = sum([ax.plot([], [],'-',color=cb[ib], antialiased=True,zorder=-ib)  for ib in range(len(all_pos_trace))], [])
-            points = sum([ax.plot([], [],'ko', antialiased=True)for ib in range(len(all_pos_points))], [])
+            self.A.nnz = -1
+            self.A.toarray = lambda selfl=self,ndof=my_ndof : selfl.A.dot(np.identity(ndof))
             
-            ax.axis('off')
-            ax.set_xlim([xinf, xsup])
-            ax.set_ylim([yinf, ysup ])
-            ax.set_aspect('equal', adjustable='box')
-            plt.tight_layout()
-            
-            # TODO: Understand why this is needed / how to rationalize this use. Is it even legal python ?
+            if self.cvg_lvl > 0:
 
-            iint = [0]
-            
-            def init():
+                self.ActionSyst.current_cvg_lvl = self.cvg_lvl - 1
+                coarse_ndof = self.ActionSyst.coeff_to_param.shape[0]
+
+                self.P = scipy.sparse.linalg.LinearOperator((my_ndof,coarse_ndof),
+                    matvec =  (lambda y, iinl = self.cvg_lvl - 1, ioutl = self.cvg_lvl, selfl=self : selfl.ActionSyst.TransferParamBtwRefinementLevels(y,iin=iinl,iout=ioutl)),
+                    dtype = np.float64)
                 
-                if (Plot_trace):
-                    for ib in range(len(all_pos_trace)):
-                        lines[ib].set_data(all_pos_trace[ib,0,:], all_pos_trace[ib,1,:])
-                
-                return lines + points
+                self.R = scipy.sparse.linalg.LinearOperator((coarse_ndof,my_ndof),
+                    matvec =  (lambda y, iinl = self.cvg_lvl,ioutl = self.cvg_lvl - 1, selfl=self : selfl.ActionSyst.TransferParamBtwRefinementLevels(y,iin=iinl,iout=ioutl)),
+                    dtype = np.float64)
 
-            def update(i):
-                
-                for ib in range(len(all_pos_points)):
-                    points[ib].set_data(all_pos_points[ib,0,iint[0]], all_pos_points[ib,1,iint[0]])
-                    
-                iint[0] = ((iint[0]+dnint) % size_all_pos_points)
+            self.ActionSyst.current_cvg_lvl = cvg_lvl_in
 
-                return lines + points
+        def presmoother(self,A,x,b):
+            self.smooth(x)
+
+        def postsmoother(self,A,x,b):
+            self.smooth(x)
+
+        def smooth(self,x):
+
+            cvg_lvl_in = self.ActionSyst.current_cvg_lvl
+
+            self.ActionSyst.current_cvg_lvl = self.cvg_lvl
+
+            all_coeffs = self.ActionSyst.Unpackage_all_coeffs(x)
+
+            smooth_mul_final = 1e-16
+
+            smooth_mul = (smooth_mul_final) ** (2. / self.ActionSyst.ncoeff)
+
+
+            InplaceSmoothCoeffs(
+                self.ActionSyst.nloop       ,
+                self.ActionSyst.ncoeff      ,
+                self.ActionSyst.ncoeff // 2 ,
+                smooth_mul                  ,
+                all_coeffs 
+            )
+
+            x[:] = self.ActionSyst.Package_all_coeffs(all_coeffs)
+
+            self.ActionSyst.current_cvg_lvl = cvg_lvl_in
+
+        def Compute_action_hess_mul(self,x,dx):
+
+            cvg_lvl_in = self.ActionSyst.current_cvg_lvl
+            self.ActionSyst.current_cvg_lvl = self.cvg_lvl 
+            res = self.ActionSyst.Compute_action_hess_mul(x,dx)
+            self.ActionSyst.current_cvg_lvl = cvg_lvl_in
+
+            return res
+
+    class NonLinMultilevelSolver(pyamg.MultilevelSolver):
+
+        def __init__(self,**kwargs):
+            super().__init__(**kwargs)
+
+        def update(self,x,f):
             
-            anim = animation.FuncAnimation(fig, update, frames=int(nperiod*nint_plot_vid),init_func=init, blit=True)
-                                
-            # Save as mp4. This requires mplayer or ffmpeg to be installed
-            # anim.save(filename, fps=60, codec='hevc')
-            anim.save(filename, fps=60, codec='h264')
-            # anim.save(filename, fps=60, codec='webm')
-            # anim.save(filename, fps=60,extra_args=['-vcodec ', 'h264_amf'])
-            # anim.save(filename, fps=60,extra_args=['-hwaccel ', 'cuda'])
-            
-            plt.close()
-            
+            for level in self.levels:
+                level.update(x,f)
+
+        def aspreconditioner(self, cycle='V'):
+
+            res = super(NonLinMultilevelSolver,self).aspreconditioner(cycle)
+            res.update = lambda x, f, selfl=self: selfl.update(x,f)
+
+            return res
+
+except:
+    pass
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
 class ChoreoSym():
     r"""
     This class defines the symmetries of the action
@@ -1599,7 +1756,7 @@ class ChoreoSym():
         self,
         LoopTarget=0,
         LoopSource=0,
-        SpaceRot=np.identity(ndim,dtype=np.float64),
+        SpaceRot=np.identity(2,dtype=np.float64),       # default dimension is 2 ... Not ideal
         TimeRev=1,
         TimeShift=fractions.Fraction(numerator=0,denominator=1)
     ):
@@ -1678,7 +1835,7 @@ class ChoreoSym():
 
         if ((abs(self.TimeShift % 1) < atol) and (self.TimeRev == 1) and (self.LoopTarget == self.LoopSource)):
             
-            return np.allclose(self.SpaceRot,np.identity(ndim,dtype=np.float64),rtol=0.,atol=atol)
+            return np.allclose(self.SpaceRot,np.identity(self.SpaceRot.shape[0],dtype=np.float64),rtol=0.,atol=atol)
             
         else:
         
@@ -1701,7 +1858,7 @@ class ChoreoSym():
         """   
         return ((self.Inverse()).Compose(other)).IsIdentity()
 
-def setup_changevar(nbody,nint_init,mass,n_reconverge_it_max=6,MomCons=True,n_grad_change=1.,Sym_list=[],CrashOnIdentity=True):
+def setup_changevar(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCons=True,n_grad_change=1.,Sym_list=[],CrashOnIdentity=True):
     r"""
     This function constructs a ChoreoAction
     It detects loops and constraints based on symmetries.
@@ -1795,7 +1952,7 @@ def setup_changevar(nbody,nint_init,mass,n_reconverge_it_max=6,MomCons=True,n_gr
     ProdMassSumAll_list = []
     UniqueSymsAll_list = []
     
-    SpaceRotsUn = np.zeros((nloop,maxlooplen,ndim,ndim),dtype=np.float64)
+    SpaceRotsUn = np.zeros((nloop,maxlooplen,geodim,geodim),dtype=np.float64)
     TimeRevsUn = np.zeros((nloop,maxlooplen),dtype=np.intp)
     TimeShiftNumUn = np.zeros((nloop,maxlooplen),dtype=np.intp)
     TimeShiftDenUn = np.zeros((nloop,maxlooplen),dtype=np.intp)
@@ -1910,7 +2067,7 @@ def setup_changevar(nbody,nint_init,mass,n_reconverge_it_max=6,MomCons=True,n_gr
     maxloopnbi = loopnbi.max()
     
     ProdMassSumAll = np.zeros((nloop,maxloopnbi),dtype=np.float64)
-    SpaceRotsBin = np.zeros((nloop,maxloopnbi,ndim,ndim),dtype=np.float64)
+    SpaceRotsBin = np.zeros((nloop,maxloopnbi,geodim,geodim),dtype=np.float64)
     TimeRevsBin = np.zeros((nloop,maxloopnbi),dtype=np.intp)
     TimeShiftNumBin = np.zeros((nloop,maxloopnbi),dtype=np.intp)
     TimeShiftDenBin = np.zeros((nloop,maxloopnbi),dtype=np.intp)
@@ -1962,7 +2119,7 @@ def setup_changevar(nbody,nint_init,mass,n_reconverge_it_max=6,MomCons=True,n_gr
     
     maxloopncstr = loopncstr.max()
     
-    SpaceRotsCstr = np.zeros((nloop,maxloopncstr,ndim,ndim),dtype=np.float64)
+    SpaceRotsCstr = np.zeros((nloop,maxloopncstr,geodim,geodim),dtype=np.float64)
     TimeRevsCstr = np.zeros((nloop,maxloopncstr),dtype=np.intp)
     TimeShiftNumCstr = np.zeros((nloop,maxloopncstr),dtype=np.intp)
     TimeShiftDenCstr = np.zeros((nloop,maxloopncstr),dtype=np.intp)
@@ -1984,6 +2141,27 @@ def setup_changevar(nbody,nint_init,mass,n_reconverge_it_max=6,MomCons=True,n_gr
 
     param_to_coeff_T_cvg_lvl_list = []
     coeff_to_param_T_cvg_lvl_list = []
+
+    for il in range(nloop):
+        for ib in range(loopnb[il]):
+
+            k = (TimeRevsUn[il,ib]*nint_init*TimeShiftNumUn[il,ib])
+
+            ddiv = - k // TimeShiftDenUn[il,ib]
+            rem = k + ddiv * TimeShiftDenUn[il,ib]
+
+            if (rem != 0):
+                print("WARNING: remainder in integer division. Gradient computation will fail.")
+
+        for ibi in range(loopnbi[il]):
+
+            k = (TimeRevsBin[il,ibi]*nint_init*TimeShiftNumBin[il,ibi])
+
+            ddiv = - k // TimeShiftDenBin[il,ibi]
+            rem = k + ddiv * TimeShiftDenBin[il,ibi]
+
+            if (rem != 0):
+                print("WARNING: remainder in integer division. Gradient computation will fail.")
 
     for i in range(n_reconverge_it_max+1):
 
@@ -2014,6 +2192,7 @@ def setup_changevar(nbody,nint_init,mass,n_reconverge_it_max=6,MomCons=True,n_gr
         param_to_coeff_csc = param_to_coeff_cvg_lvl_list[i].tocsc()
 
         diagmat = diagmat_changevar(
+            geodim,
             ncoeff_cvg_lvl_list[i],
             param_to_coeff_cvg_lvl_list[i].shape[1],
             param_to_coeff_csc.indptr,
@@ -2029,7 +2208,15 @@ def setup_changevar(nbody,nint_init,mass,n_reconverge_it_max=6,MomCons=True,n_gr
         param_to_coeff_T_cvg_lvl_list.append(param_to_coeff_cvg_lvl_list[i].transpose(copy=True))
         coeff_to_param_T_cvg_lvl_list.append(coeff_to_param_cvg_lvl_list[i].transpose(copy=True))
 
+    if geodim == 2:
+        ComputeGradBackend = Compute_action_Cython_2D
+        ComputeHessBackend = Compute_action_hess_mul_Cython_2D
+    else:
+        ComputeGradBackend = Compute_action_Cython
+        ComputeHessBackend = Compute_action_hess_mul_Cython
+
     kwargs = {
+        "geodim"                        :   geodim                          ,
         "nbody"                         :   nbody                           ,
         "nloop"                         :   nloop                           ,
         "mass"                          :   mass                            ,
@@ -2055,9 +2242,12 @@ def setup_changevar(nbody,nint_init,mass,n_reconverge_it_max=6,MomCons=True,n_gr
         "param_to_coeff_T_cvg_lvl_list" :   param_to_coeff_T_cvg_lvl_list   ,
         "coeff_to_param_T_cvg_lvl_list" :   coeff_to_param_T_cvg_lvl_list   ,
         "current_cvg_lvl"               :   0                               ,
+        "n_cvg_lvl"                     :   n_reconverge_it_max+1           ,
         "last_all_coeffs"               :   None                            ,
         "last_all_pos"                  :   None                            ,
         "Do_Pos_FFT"                    :   True                            ,
+        "ComputeGradBackend"            :   ComputeGradBackend              ,
+        "ComputeHessBackend"            :   ComputeHessBackend              ,
     }
 
     return ChoreoAction(**kwargs)
@@ -2100,9 +2290,10 @@ def null_space_sparseqr(AT):
 def AllPosToAllCoeffs(all_pos,ncoeffs):
 
     nloop = all_pos.shape[0]
+    geodim = all_pos.shape[1]
 
     c_coeffs = the_rfft(all_pos,axis=2,norm="forward")
-    all_coeffs = np.zeros((nloop,ndim,ncoeffs,2),dtype=np.float64)
+    all_coeffs = np.empty((nloop,geodim,ncoeffs,2),dtype=np.float64)
     all_coeffs[:,:,:,0] = c_coeffs.real
     all_coeffs[:,:,:,1] = c_coeffs.imag
 
@@ -2121,10 +2312,10 @@ def Transform_Coeffs(SpaceRot, TimeRev, TimeShiftNum, TimeShiftDen, all_coeffs):
         
     return all_coeffs_new
 
-def Make_Init_bounds_coeffs(nloop,ncoeff,coeff_ampl_o=1e-1,k_infl=1,k_max=200,coeff_ampl_min=1e-16):
+def Make_Init_bounds_coeffs(nloop,geodim,ncoeff,coeff_ampl_o=1e-1,k_infl=1,k_max=200,coeff_ampl_min=1e-16):
 
-    all_coeffs_min = np.zeros((nloop,ndim,ncoeff,2),dtype=np.float64)
-    all_coeffs_max = np.zeros((nloop,ndim,ncoeff,2),dtype=np.float64)
+    all_coeffs_min = np.zeros((nloop,geodim,ncoeff,2),dtype=np.float64)
+    all_coeffs_max = np.zeros((nloop,geodim,ncoeff,2),dtype=np.float64)
 
     randlimfac = 0.1
     # randlimfac = 0.
@@ -2134,7 +2325,7 @@ def Make_Init_bounds_coeffs(nloop,ncoeff,coeff_ampl_o=1e-1,k_infl=1,k_max=200,co
         coeff_slope = m.log(coeff_ampl_o/coeff_ampl_min)/(k_max-k_infl)
 
         for il in range(nloop):
-            for idim in range(ndim):
+            for idim in range(geodim):
                 for k in range(ncoeff):
 
                     if (k <= k_infl):
@@ -2157,7 +2348,9 @@ def Make_Init_bounds_coeffs(nloop,ncoeff,coeff_ampl_o=1e-1,k_infl=1,k_max=200,co
 
 def Compute_bar(all_coeffs,nloop,mass,loopnb,Targets,SpaceRotsUn):
 
-    xbar = np.zeros((ndim))
+    geodim = all_coeffs.shape[1]
+
+    xbar = np.zeros((geodim))
     tot_mass = 0.
 
     for il in range(nloop):
@@ -2183,7 +2376,9 @@ def Center_all_coeffs(all_coeffs,nloop,mass,loopnb,Targets,SpaceRotsUn):
 def RemoveSym_ann(all_coeffs,nbody,nloop,ncoeff,loopnb,Targets,SpaceRotsUn,TimeRevsUn,TimeShiftNumUn,TimeShiftDenUn):
     # Removes symmetries and gives coeffs for all bodies
 
-    all_coeffs_nosym = np.zeros((nbody,ndim,ncoeff,2),dtype=np.float64)
+    geodim = all_coeffs[1]
+
+    all_coeffs_nosym = np.zeros((nbody,geodim,ncoeff,2),dtype=np.float64)
 
     for il in range(nloop):
         for ib in range(loopnb[il]):
@@ -2410,7 +2605,7 @@ def Param_to_Param_direct(x,ActionSyst_source,ActionSyst_target):
     if (ncoeffs_target < ncoeffs_source):
         z = all_coeffs_source[:,:,0:ncoeffs_target,:].reshape(-1)
     else:
-        z = np.zeros((ActionSyst_target.nloop,ndim,ncoeffs_target,2))
+        z = np.zeros((ActionSyst_target.nloop,ActionSyst_target.geodim,ncoeffs_target,2))
         z[:,:,0:ncoeffs_source,:] = all_coeffs_source
         z = z.reshape(-1)
 
@@ -2424,12 +2619,12 @@ def Param_to_Param_rev(Gx,ActionSyst_source,ActionSyst_target):
     ncoeffs_target = ActionSyst_target.ncoeff
 
     Gy = ActionSyst_source.coeff_to_param_T.dot(Gx)
-    all_coeffs = Gy.reshape(ActionSyst_source.nloop,ndim,ncoeffs_source,2)
+    all_coeffs = Gy.reshape(ActionSyst_source.nloop,ActionSyst_source.geodim,ncoeffs_source,2)
 
     if (ncoeffs_target < ncoeffs_source):
         Gz = all_coeffs[:,:,0:ncoeffs_target,:].reshape(-1)
     else:
-        Gz = np.zeros((ActionSyst_target.nloop,ndim,ncoeffs_target,2))
+        Gz = np.zeros((ActionSyst_target.nloop,ActionSyst_target.geodim,ncoeffs_target,2))
         Gz[:,:,0:ncoeffs_source,:] = all_coeffs
         Gz = Gz.reshape(-1)
     
@@ -2449,14 +2644,16 @@ def TangentLagrangeResidual(
     ):
 
     x_1D = x.reshape(-1)
+
+    geodim = all_coeffs.shape[1]
     
     ibeg = 0
-    iend = (nbody*ndim*2*nbody*ndim*ncoeff*2)
-    all_coeffs_d = x_1D[ibeg:iend].reshape((nbody,ndim,2,nbody,ndim,ncoeff,2))
+    iend = (nbody*geodim*2*nbody*geodim*ncoeff*2)
+    all_coeffs_d = x_1D[ibeg:iend].reshape((nbody,geodim,2,nbody,geodim,ncoeff,2))
 
     ibeg = iend
-    iend = iend + (2*nbody*ndim*2*nbody*ndim)
-    LagrangeMulInit = x_1D[ibeg:iend].reshape((2,nbody,ndim,2,nbody,ndim))
+    iend = iend + (2*nbody*geodim*2*nbody*geodim)
+    LagrangeMulInit = x_1D[ibeg:iend].reshape((2,nbody,geodim,2,nbody,geodim))
 
     Action_hess_dx, LagrangeMulInit_der = Compute_action_hess_mul_Tan_Cython_nosym(
         nbody           ,

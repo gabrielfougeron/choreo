@@ -1,9 +1,6 @@
 import os
 
-os.environ['OMP_NUM_THREADS'] = '1'
-os.environ['NUMEXPR_NUM_THREADS'] = '1'
 os.environ['OPENBLAS_NUM_THREADS'] = '1'
-os.environ['MKL_NUM_THREADS'] = '1'
 
 import shutil
 import asyncio
@@ -89,6 +86,8 @@ def NPY_JS_to_py(npy_js):
 async def main():
 
     params_dict = js.ConfigDict.to_py()
+
+    geodim = 2
     
     CrashOnError_changevar = False
 

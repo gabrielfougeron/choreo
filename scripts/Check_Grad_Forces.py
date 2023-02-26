@@ -1,9 +1,6 @@
 import os
 
-os.environ['OMP_NUM_THREADS'] = '1'
-os.environ['NUMEXPR_NUM_THREADS'] = '1'
 os.environ['OPENBLAS_NUM_THREADS'] = '1'
-os.environ['MKL_NUM_THREADS'] = '1'
 
 import concurrent.futures
 import multiprocessing
@@ -109,15 +106,7 @@ def main():
 
     min_n_steps_ode = 1*nint_plot_anim
 
-    try:
-        the_lcm
-    except NameError:
-        period_div = 1.
-    else:
-        period_div = the_lcm
-# 
     nperiod_anim = 1.
-    # nperiod_anim = 1./period_div
 
     Plot_trace_anim = True
     # Plot_trace_anim = False
@@ -189,7 +178,7 @@ def main():
             n_reconverge_it_max = 0
             n_grad_change = 1.
 
-            ActionSyst = choreo.setup_changevar(nbody,nint_init,mass,n_reconverge_it_max,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change,CrashOnIdentity=False)
+            ActionSyst = choreo.setup_changevar(2,nbody,nint_init,mass,n_reconverge_it_max,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change,CrashOnIdentity=False)
 
             x = ActionSyst.Package_all_coeffs(all_coeffs)
 

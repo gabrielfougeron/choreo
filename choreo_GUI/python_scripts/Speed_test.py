@@ -1,9 +1,6 @@
 import os
 
-os.environ['OMP_NUM_THREADS'] = '1'
-os.environ['NUMEXPR_NUM_THREADS'] = '1'
 os.environ['OPENBLAS_NUM_THREADS'] = '1'
-os.environ['MKL_NUM_THREADS'] = '1'
 
 import concurrent.futures
 import multiprocessing
@@ -21,6 +18,8 @@ import choreo
 def main():
 
     params_dict = js.ConfigDict.to_py()
+
+    geodim = 2
 
     file_basename = ''
     

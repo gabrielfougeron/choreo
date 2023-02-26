@@ -1,12 +1,12 @@
 '''
-Choreo_cython_funs.pyx : Defines useful compiled functions in the Choreographies2 project.
+Choreo_cython_funs.pyx : Defines useful compiled functions in the choreo project.
 
 The functions in this file are (as much as possible) written is Cython.
 They will be cythonized (i.e. processed by Cython into a C code, which will be compiled ) in setup.py.
 
 Hence, in this file, performance is favored against readability or ease of use.
 
-This file also defines global constants in both C and Python format like the nuber of space dimensions (ndim), the potential law, etc ...
+This file also defines global constants in both C and Python format like the potential law, etc ...
 
 
 '''
@@ -17,6 +17,8 @@ cimport numpy as np
 np.import_array()
 
 cimport cython
+from cython.parallel cimport parallel, prange
+from libc.stdlib cimport abort, malloc, free
 
 import scipy.sparse
 
@@ -50,8 +52,6 @@ except:
         the_rfft = np.fft.rfft
         the_irfft = np.fft.irfft
 
-    
-cdef long cndim = 2 # Number of space dimensions
 
 cdef double cn = -0.5  #coeff of x^2 in the potential power law
 cdef double cnm1 = cn-1
@@ -91,8 +91,6 @@ cdef long cnhash = 5
 
 # Python definition of the very same variables
 
-ndim = cndim
-
 n = cn
 nm1 = cnm1
 nm2 = cnm2
@@ -129,7 +127,7 @@ def Cpt_interbody_pot(double xsq):
 def CCpt_hash_pot(double xsq):  # xsq is the square of the distance between two bodies !
     # C definition of the hashing potential. Allows easy detection of duplicates 
     
-    cdef np.ndarray[double, ndim=1, mode="c"] hash_pots = np.zeros((cnhash),dtype=np.float64)
+    cdef double[::1] hash_pots = np.zeros((cnhash),dtype=np.float64)
 
     hash_pots[0] = -cpow(xsq,hash_exp0)
     hash_pots[1] = -cpow(xsq,hash_exp1)
@@ -174,6 +172,8 @@ def Compute_action_Cython(
     # This function is probably the most important one.
     # Computes the action and its gradient with respect to the Fourier coefficients of the generator in each loop.
     
+    cdef Py_ssize_t geodim = all_pos.shape[1]
+
     cdef Py_ssize_t il,ilp,i
     cdef Py_ssize_t idim,jdim
     cdef Py_ssize_t ibi
@@ -185,8 +185,8 @@ def Compute_action_Cython(
     cdef double pot,potp,potpp
     cdef double prod_mass,a,b,dx2,prod_fac
 
-    cdef double[::1] dx = np.zeros((cndim),dtype=np.float64)
-    cdef double[::1] df = np.zeros((cndim),dtype=np.float64)
+    cdef double[::1] dx = np.zeros((geodim),dtype=np.float64)
+    cdef double[::1] df = np.zeros((geodim),dtype=np.float64)
 
     cdef long maxloopnb = 0
     cdef long maxloopnbi = 0
@@ -210,9 +210,6 @@ def Compute_action_Cython(
             ddiv = - k // TimeShiftDenUn[il,ib]
             rem = k + ddiv * TimeShiftDenUn[il,ib]
 
-            if (rem != 0):
-                print("WARNING: remainder in integer division. Gradient computation will fail.")
-
             all_shiftsUn[il,ib] = (((ddiv) % nint) + nint) % nint
         
         for ibi in range(loopnbi[il]):
@@ -222,12 +219,9 @@ def Compute_action_Cython(
             ddiv = - k // TimeShiftDenBin[il,ibi]
             rem = k + ddiv * TimeShiftDenBin[il,ibi]
 
-            if (rem != 0):
-                print("WARNING: remainder in integer division. Gradient computation will fail.")
-
             all_shiftsBin[il,ibi] = (((ddiv) % nint) + nint) % nint
     
-    cdef double[:,:,::1] grad_pot_all = np.zeros((nloop,cndim,nint),dtype=np.float64)
+    cdef double[:,:,::1] grad_pot_all = np.zeros((nloop,geodim,nint),dtype=np.float64)
 
     for iint in range(nint):
 
@@ -240,13 +234,13 @@ def Compute_action_Cython(
                         
                         prod_mass = mass[Targets[il,ib]]*mass[Targets[ilp,ibp]]
 
-                        for idim in range(cndim):
+                        for idim in range(geodim):
                             dx[idim] = SpaceRotsUn[il,ib,idim,0]*all_pos[il,0,all_shiftsUn[il,ib]] - SpaceRotsUn[ilp,ibp,idim,0]*all_pos[ilp,0,all_shiftsUn[ilp,ibp]]
-                            for jdim in range(1,cndim):
+                            for jdim in range(1,geodim):
                                 dx[idim] += SpaceRotsUn[il,ib,idim,jdim]*all_pos[il,jdim,all_shiftsUn[il,ib]] - SpaceRotsUn[ilp,ibp,idim,jdim]*all_pos[ilp,jdim,all_shiftsUn[ilp,ibp]]
 
                         dx2 = dx[0]*dx[0]
-                        for idim in range(1,cndim):
+                        for idim in range(1,geodim):
                             dx2 += dx[idim]*dx[idim]
                             
                         pot,potp,potpp = CCpt_interbody_pot(dx2)
@@ -255,19 +249,19 @@ def Compute_action_Cython(
 
                         a = (2*prod_mass*potp)
 
-                        for idim in range(cndim):
+                        for idim in range(geodim):
                             dx[idim] *= a
 
-                        for idim in range(cndim):
+                        for idim in range(geodim):
                             
                             b = SpaceRotsUn[il,ib,0,idim]*dx[0]
-                            for jdim in range(1,cndim):
+                            for jdim in range(1,geodim):
                                 b+=SpaceRotsUn[il,ib,jdim,idim]*dx[jdim]
                             
                             grad_pot_all[il ,idim,all_shiftsUn[il ,ib ]] += b
                             
                             b = SpaceRotsUn[ilp,ibp,0,idim]*dx[0]
-                            for jdim in range(1,cndim):
+                            for jdim in range(1,geodim):
                                 b+=SpaceRotsUn[ilp,ibp,jdim,idim]*dx[jdim]
                             
                             grad_pot_all[ilp,idim,all_shiftsUn[ilp,ibp]] -= b
@@ -277,15 +271,15 @@ def Compute_action_Cython(
 
             for ibi in range(loopnbi[il]):
                 
-                for idim in range(cndim):
+                for idim in range(geodim):
                     dx[idim] = SpaceRotsBin[il,ibi,idim,0]*all_pos[il,0,all_shiftsBin[il,ibi]]
-                    for jdim in range(1,cndim):
+                    for jdim in range(1,geodim):
                         dx[idim] += SpaceRotsBin[il,ibi,idim,jdim]*all_pos[il,jdim,all_shiftsBin[il,ibi]]
                     
                     dx[idim] -= all_pos[il,idim,iint]
                     
                 dx2 = dx[0]*dx[0]
-                for idim in range(1,cndim):
+                for idim in range(1,geodim):
                     dx2 += dx[idim]*dx[idim]
 
                 pot,potp,potpp = CCpt_interbody_pot(dx2)
@@ -294,13 +288,13 @@ def Compute_action_Cython(
                 
                 a = (2*ProdMassSumAll[il,ibi]*potp)
 
-                for idim in range(cndim):
+                for idim in range(geodim):
                     dx[idim] *= a
 
-                for idim in range(cndim):
+                for idim in range(geodim):
                     
                     b = SpaceRotsBin[il,ibi,0,idim]*dx[0]
-                    for jdim in range(1,cndim):
+                    for jdim in range(1,geodim):
                         b+=SpaceRotsBin[il,ibi,jdim,idim]*dx[jdim]
                     
                     grad_pot_all[il ,idim,all_shiftsBin[il,ibi]] += b
@@ -318,13 +312,13 @@ def Compute_action_Cython(
     Pot_en = Pot_en / nint
     cdef double complex[:,:,::1]  grad_pot_fft = the_rfft(grad_pot_all,norm="forward")  #
     cdef double Kin_en = 0  #
-    cdef np.ndarray[double, ndim=4, mode="c"] Action_grad_np = np.empty((nloop,cndim,ncoeff,2),np.float64)
+    cdef np.ndarray[double, ndim=4, mode="c"] Action_grad_np = np.empty((nloop,geodim,ncoeff,2),np.float64)
     cdef double[:,:,:,::1] Action_grad = Action_grad_np #
     for il in range(nloop):
         
         prod_fac = MassSum[il]*cfourpisq
         
-        for idim in range(cndim):   #
+        for idim in range(geodim):   #
             Action_grad[il,idim,0,0] = -grad_pot_fft[il,idim,0].real
             Action_grad[il,idim,0,1] = 0    #
             for k in range(1,ncoeff):
@@ -342,24 +336,25 @@ def Compute_action_Cython(
     return Action,Action_grad_np
     
 def Compute_hash_action_Cython(
-    long nloop,
-    long ncoeff,
-    long nint,
-    np.ndarray[double, ndim=1, mode="c"] mass  ,
-    np.ndarray[long  , ndim=1, mode="c"] loopnb  ,
-    np.ndarray[long  , ndim=2, mode="c"] Targets  ,
-    np.ndarray[double, ndim=1, mode="c"] MassSum  ,
-    np.ndarray[double, ndim=4, mode="c"] SpaceRotsUn  ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeRevsUn  ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeShiftNumUn  ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeShiftDenUn  ,
-    np.ndarray[long  , ndim=1, mode="c"] loopnbi  ,
-    np.ndarray[double, ndim=2, mode="c"] ProdMassSumAll  ,
-    np.ndarray[double, ndim=4, mode="c"] SpaceRotsBin  ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeRevsBin  ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeShiftNumBin  ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeShiftDenBin  ,
-    np.ndarray[double, ndim=4, mode="c"] all_coeffs  
+    long                geodim          ,
+    long                nloop           ,
+    long                ncoeff          ,
+    long                nint            ,
+    double[::1]         mass            ,
+    long[::1]           loopnb          ,
+    long[:,::1]         Targets         ,
+    double[::1]         MassSum         ,
+    double[:,:,:,::1]   SpaceRotsUn     ,
+    long[:,::1]         TimeRevsUn      ,
+    long[:,::1]         TimeShiftNumUn  ,
+    long[:,::1]         TimeShiftDenUn  ,
+    long[::1]           loopnbi         ,
+    double[:,::1]       ProdMassSumAll  ,
+    double[:,:,:,::1]   SpaceRotsBin    ,
+    long[:,::1]         TimeRevsBin     ,
+    long[:,::1]         TimeShiftNumBin ,
+    long[:,::1]         TimeShiftDenBin ,
+    np.ndarray[double, ndim=4, mode="c"]   all_coeffs  
 ):
     # Computes the hash of a set of trajectories.
     # The hash is meant to provide a likely unique short identification for duplicate detection.
@@ -374,15 +369,21 @@ def Compute_hash_action_Cython(
     cdef long ddiv,rem
     cdef double pot,potp,potpp
     cdef double prod_mass,a,b,dx2,prod_fac
-    cdef np.ndarray[double, ndim=1, mode="c"]  dx = np.zeros((cndim),dtype=np.float64)
+    cdef double[::1] dx = np.zeros((geodim),dtype=np.float64)
         
-    cdef long maxloopnb = loopnb.max()
-    cdef long maxloopnbi = loopnbi.max()
+    cdef long maxloopnb = 0
+    cdef long maxloopnbi = 0
+
+    for il in range(nloop):
+        if (maxloopnb < loopnb[il]):
+            maxloopnb = loopnb[il]
+        if (maxloopnbi < loopnbi[il]):
+            maxloopnbi = loopnbi[il]
     
     cdef long ihash
     
-    cdef np.ndarray[double, ndim=1, mode="c"]  Hash_En = np.zeros((cnhash),dtype=np.float64)
-    cdef np.ndarray[double, ndim=1, mode="c"]  Hash_pot = np.zeros((cnhash),dtype=np.float64)
+    cdef np.ndarray[double, ndim=1, mode="c"] Hash_En = np.zeros((cnhash),dtype=np.float64)
+    cdef double[::1] Hash_pot = np.zeros((cnhash),dtype=np.float64)
 
     cdef double Kin_en = 0
 
@@ -390,7 +391,7 @@ def Compute_hash_action_Cython(
         
         prod_fac = MassSum[il]*cfourpisq
         
-        for idim in range(cndim):
+        for idim in range(geodim):
             for k in range(1,ncoeff):
                 
                 k2 = k*k
@@ -399,7 +400,6 @@ def Compute_hash_action_Cython(
                 Kin_en += a *((all_coeffs[il,idim,k,0]*all_coeffs[il,idim,k,0]) + (all_coeffs[il,idim,k,1]*all_coeffs[il,idim,k,1]))
 
     c_coeffs = all_coeffs.view(dtype=np.complex128)[...,0]
-
     cdef np.ndarray[double, ndim=3, mode="c"] all_pos = the_irfft(c_coeffs,n=nint,axis=2,norm="forward")
 
     cdef np.ndarray[long, ndim=2, mode="c"]  all_shiftsUn = np.zeros((nloop,maxloopnb),dtype=np.int_)
@@ -413,9 +413,6 @@ def Compute_hash_action_Cython(
             ddiv = - k // TimeShiftDenUn[il,ib]
             rem = k + ddiv * TimeShiftDenUn[il,ib]
 
-            if (rem != 0):
-                print("WARNING: remainder in integer division. Gradient computation will fail.")
-
             all_shiftsUn[il,ib] = (((ddiv) % nint) + nint) % nint
         
         for ibi in range(loopnbi[il]):
@@ -425,12 +422,9 @@ def Compute_hash_action_Cython(
             ddiv = - k // TimeShiftDenBin[il,ibi]
             rem = k + ddiv * TimeShiftDenBin[il,ibi]
 
-            if (rem != 0):
-                print("WARNING: remainder in integer division. Gradient computation will fail.")
-
             all_shiftsBin[il,ibi] = (((ddiv) % nint) + nint) % nint
     
-    cdef np.ndarray[double, ndim=3, mode="c"] grad_pot_all = np.zeros((nloop,cndim,nint),dtype=np.float64)
+    cdef np.ndarray[double, ndim=3, mode="c"] grad_pot_all = np.zeros((nloop,geodim,nint),dtype=np.float64)
 
     for iint in range(nint):
 
@@ -443,13 +437,13 @@ def Compute_hash_action_Cython(
                         
                         prod_mass = mass[Targets[il,ib]]*mass[Targets[ilp,ibp]]
 
-                        for idim in range(cndim):
+                        for idim in range(geodim):
                             dx[idim] = SpaceRotsUn[il,ib,idim,0]*all_pos[il,0,all_shiftsUn[il,ib]] - SpaceRotsUn[ilp,ibp,idim,0]*all_pos[ilp,0,all_shiftsUn[ilp,ibp]]
-                            for jdim in range(1,cndim):
+                            for jdim in range(1,geodim):
                                 dx[idim] += SpaceRotsUn[il,ib,idim,jdim]*all_pos[il,jdim,all_shiftsUn[il,ib]] - SpaceRotsUn[ilp,ibp,idim,jdim]*all_pos[ilp,jdim,all_shiftsUn[ilp,ibp]]
 
                         dx2 = dx[0]*dx[0]
-                        for idim in range(1,cndim):
+                        for idim in range(1,geodim):
                             dx2 += dx[idim]*dx[idim]
                             
                         Hash_pot = CCpt_hash_pot(dx2)
@@ -462,15 +456,15 @@ def Compute_hash_action_Cython(
 
             for ibi in range(loopnbi[il]):
                 
-                for idim in range(cndim):
+                for idim in range(geodim):
                     dx[idim] = SpaceRotsBin[il,ibi,idim,0]*all_pos[il,0,all_shiftsBin[il,ibi]]
-                    for jdim in range(1,cndim):
+                    for jdim in range(1,geodim):
                         dx[idim] += SpaceRotsBin[il,ibi,idim,jdim]*all_pos[il,jdim,all_shiftsBin[il,ibi]]
                     
                     dx[idim] -= all_pos[il,idim,iint]
                     
                 dx2 = dx[0]*dx[0]
-                for idim in range(1,cndim):
+                for idim in range(1,geodim):
                     dx2 += dx[idim]*dx[idim]
 
                 Hash_pot = CCpt_hash_pot(dx2)
@@ -493,27 +487,29 @@ def Compute_hash_action_Cython(
     return Hash_En
     
 def Compute_MinDist_Cython(
-    long nloop,
-    long ncoeff,
-    long nint,
-    np.ndarray[double, ndim=1, mode="c"] mass  ,
-    np.ndarray[long  , ndim=1, mode="c"] loopnb  ,
-    np.ndarray[long  , ndim=2, mode="c"] Targets  ,
-    np.ndarray[double, ndim=1, mode="c"] MassSum  ,
-    np.ndarray[double, ndim=4, mode="c"] SpaceRotsUn  ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeRevsUn  ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeShiftNumUn  ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeShiftDenUn  ,
-    np.ndarray[long  , ndim=1, mode="c"] loopnbi  ,
-    np.ndarray[double, ndim=2, mode="c"] ProdMassSumAll  ,
-    np.ndarray[double, ndim=4, mode="c"] SpaceRotsBin  ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeRevsBin  ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeShiftNumBin  ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeShiftDenBin  ,
-    np.ndarray[double, ndim=4, mode="c"]  all_coeffs  
+    long                nloop           ,
+    long                ncoeff          ,
+    long                nint            ,
+    double[::1]         mass            ,
+    long[::1]           loopnb          ,
+    long[:,::1]         Targets         ,
+    double[::1]         MassSum         ,
+    double[:,:,:,::1]   SpaceRotsUn     ,
+    long[:,::1]         TimeRevsUn      ,
+    long[:,::1]         TimeShiftNumUn  ,
+    long[:,::1]         TimeShiftDenUn  ,
+    long[::1]           loopnbi         ,
+    double[:,::1]       ProdMassSumAll  ,
+    double[:,:,:,::1]   SpaceRotsBin    ,
+    long[:,::1]         TimeRevsBin     ,
+    long[:,::1]         TimeShiftNumBin ,
+    long[:,::1]         TimeShiftDenBin ,
+    np.ndarray[double, ndim=4, mode="c"] all_coeffs   
 ):
     # Computes the minimum inter-body distance along the trajectory.
     # A useful tool for collision detection.
+
+    cdef long geodim = SpaceRotsUn.shape[2]
 
     cdef long il,ilp,i
     cdef long idim,idimp
@@ -524,10 +520,16 @@ def Compute_MinDist_Cython(
     cdef long ddiv,rem
     cdef double pot,potp,potpp
     cdef double prod_mass,a,b,dx2,prod_fac
-    cdef np.ndarray[double, ndim=1, mode="c"]  dx = np.zeros((cndim),dtype=np.float64)
+    cdef np.ndarray[double, ndim=1, mode="c"]  dx = np.zeros((geodim),dtype=np.float64)
         
-    cdef long maxloopnb = loopnb.max()
-    cdef long maxloopnbi = loopnbi.max()
+    cdef long maxloopnb = 0
+    cdef long maxloopnbi = 0
+
+    for il in range(nloop):
+        if (maxloopnb < loopnb[il]):
+            maxloopnb = loopnb[il]
+        if (maxloopnbi < loopnbi[il]):
+            maxloopnbi = loopnbi[il]
     
     cdef double dx2min = 1e100
 
@@ -546,9 +548,6 @@ def Compute_MinDist_Cython(
             ddiv = - k // TimeShiftDenUn[il,ib]
             rem = k + ddiv * TimeShiftDenUn[il,ib]
 
-            if (rem != 0):
-                print("WARNING: remainder in integer division. Gradient computation will fail.")
-
             all_shiftsUn[il,ib] = (((ddiv) % nint) + nint) % nint
         
         for ibi in range(loopnbi[il]):
@@ -557,9 +556,6 @@ def Compute_MinDist_Cython(
 
             ddiv = - k // TimeShiftDenBin[il,ibi]
             rem = k + ddiv * TimeShiftDenBin[il,ibi]
-
-            if (rem != 0):
-                print("WARNING: remainder in integer division. Gradient computation will fail.")
 
             all_shiftsBin[il,ibi] = (((ddiv) % nint) + nint) % nint
 
@@ -572,13 +568,13 @@ def Compute_MinDist_Cython(
                 for ib in range(loopnb[il]):
                     for ibp in range(loopnb[ilp]):
                         
-                        for idim in range(cndim):
+                        for idim in range(geodim):
                             dx[idim] = SpaceRotsUn[il,ib,idim,0]*all_pos[il,0,all_shiftsUn[il,ib]] - SpaceRotsUn[ilp,ibp,idim,0]*all_pos[ilp,0,all_shiftsUn[ilp,ibp]]
-                            for jdim in range(1,cndim):
+                            for jdim in range(1,geodim):
                                 dx[idim] += SpaceRotsUn[il,ib,idim,jdim]*all_pos[il,jdim,all_shiftsUn[il,ib]] - SpaceRotsUn[ilp,ibp,idim,jdim]*all_pos[ilp,jdim,all_shiftsUn[ilp,ibp]]
 
                         dx2 = dx[0]*dx[0]
-                        for idim in range(1,cndim):
+                        for idim in range(1,geodim):
                             dx2 += dx[idim]*dx[idim]
                             
                         if (dx2 < dx2min):
@@ -589,15 +585,15 @@ def Compute_MinDist_Cython(
 
             for ibi in range(loopnbi[il]):
                 
-                for idim in range(cndim):
+                for idim in range(geodim):
                     dx[idim] = SpaceRotsBin[il,ibi,idim,0]*all_pos[il,0,all_shiftsBin[il,ibi]]
-                    for jdim in range(1,cndim):
+                    for jdim in range(1,geodim):
                         dx[idim] += SpaceRotsBin[il,ibi,idim,jdim]*all_pos[il,jdim,all_shiftsBin[il,ibi]]
                     
                     dx[idim] -= all_pos[il,idim,iint]
                     
                 dx2 = dx[0]*dx[0]
-                for idim in range(1,cndim):
+                for idim in range(1,geodim):
                     dx2 += dx[idim]*dx[idim]
                     
                 if (dx2 < dx2min):
@@ -614,25 +610,27 @@ def Compute_MinDist_Cython(
     return csqrt(dx2min)
    
 def Compute_Loop_Dist_Cython(
-    long nloop,
-    long ncoeff,
-    long nint,
-    np.ndarray[double, ndim=1, mode="c"] mass  ,
-    np.ndarray[long  , ndim=1, mode="c"] loopnb  ,
-    np.ndarray[long  , ndim=2, mode="c"] Targets  ,
-    np.ndarray[double, ndim=1, mode="c"] MassSum  ,
-    np.ndarray[double, ndim=4, mode="c"] SpaceRotsUn  ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeRevsUn  ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeShiftNumUn  ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeShiftDenUn  ,
-    np.ndarray[long  , ndim=1, mode="c"] loopnbi  ,
-    np.ndarray[double, ndim=2, mode="c"] ProdMassSumAll  ,
-    np.ndarray[double, ndim=4, mode="c"] SpaceRotsBin  ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeRevsBin  ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeShiftNumBin  ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeShiftDenBin  ,
-    np.ndarray[double, ndim=4, mode="c"]  all_coeffs  
+    long                nloop           ,
+    long                ncoeff          ,
+    long                nint            ,
+    double[::1]         mass            ,
+    long[::1]           loopnb          ,
+    long[:,::1]         Targets         ,
+    double[::1]         MassSum         ,
+    double[:,:,:,::1]   SpaceRotsUn     ,
+    long[:,::1]         TimeRevsUn      ,
+    long[:,::1]         TimeShiftNumUn  ,
+    long[:,::1]         TimeShiftDenUn  ,
+    long[::1]           loopnbi         ,
+    double[:,::1]       ProdMassSumAll  ,
+    double[:,:,:,::1]   SpaceRotsBin    ,
+    long[:,::1]         TimeRevsBin     ,
+    long[:,::1]         TimeShiftNumBin ,
+    long[:,::1]         TimeShiftDenBin ,
+    double[:,:,:,::1]   all_coeffs  
 ):
+
+    cdef long geodim = all_coeffs.shape[1]
         
     cdef long il,ilp,i
     cdef long idim,idimp
@@ -642,7 +640,7 @@ def Compute_Loop_Dist_Cython(
     cdef long k,k2
     cdef double sum_loop_dist2
     cdef double dx2
-    cdef np.ndarray[double, ndim=1, mode="c"]  dx = np.zeros((cndim),dtype=np.float64)
+    cdef double[::1] dx = np.zeros((geodim),dtype=np.float64)
 
     sum_loop_dist2 = 0.
     for il in range(nloop-1):
@@ -651,14 +649,14 @@ def Compute_Loop_Dist_Cython(
             for ib in range(loopnb[il]):
                 for ibp in range(loopnb[ilp]):
                     
-                    for idim in range(cndim):
+                    for idim in range(geodim):
                         dx[idim] = SpaceRotsUn[il,ib,idim,0]*all_coeffs[il,0,0,0] - SpaceRotsUn[ilp,ibp,idim,0]*all_coeffs[ilp,0,0,0]
                     
-                        for jdim in range(1,cndim):
+                        for jdim in range(1,geodim):
                             dx[idim] += SpaceRotsUn[il,ib,idim,jdim]*all_coeffs[il,jdim,0,0] - SpaceRotsUn[ilp,ibp,idim,jdim]*all_coeffs[ilp,jdim,0,0]
                             
                     dx2 = dx[0]*dx[0]
-                    for idim in range(1,cndim):
+                    for idim in range(1,geodim):
                         dx2 += dx[idim]*dx[idim]
 
                     sum_loop_dist2 += dx2
@@ -666,16 +664,16 @@ def Compute_Loop_Dist_Cython(
     for il in range(nloop):
         for ibi in range(loopnbi[il]):
                 
-            for idim in range(cndim):
+            for idim in range(geodim):
                 
                 dx[idim] = SpaceRotsBin[il,ibi,idim,0]*all_coeffs[il,0,0,0] - all_coeffs[il,idim,0,0]
-                for jdim in range(1,cndim):
+                for jdim in range(1,geodim):
                     
                     dx[idim] += SpaceRotsBin[il,ibi,idim,jdim]*all_coeffs[il,jdim,0,0]
                     
                 
                 dx2 = dx[0]*dx[0]
-                for idim in range(1,cndim):
+                for idim in range(1,geodim):
                     dx2 += dx[idim]*dx[idim]
 
                 sum_loop_dist2 += dx2
@@ -683,25 +681,27 @@ def Compute_Loop_Dist_Cython(
     return csqrt(sum_loop_dist2)
    
 def Compute_Loop_Dist_btw_avg_Cython(
-    long nloop,
-    long ncoeff,
-    long nint,
-    np.ndarray[double, ndim=1, mode="c"] mass  ,
-    np.ndarray[long  , ndim=1, mode="c"] loopnb  ,
-    np.ndarray[long  , ndim=2, mode="c"] Targets  ,
-    np.ndarray[double, ndim=1, mode="c"] MassSum  ,
-    np.ndarray[double, ndim=4, mode="c"] SpaceRotsUn  ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeRevsUn  ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeShiftNumUn  ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeShiftDenUn  ,
-    np.ndarray[long  , ndim=1, mode="c"] loopnbi  ,
-    np.ndarray[double, ndim=2, mode="c"] ProdMassSumAll  ,
-    np.ndarray[double, ndim=4, mode="c"] SpaceRotsBin  ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeRevsBin  ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeShiftNumBin  ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeShiftDenBin  ,
-    np.ndarray[double, ndim=4, mode="c"]  all_coeffs  
+    long                nloop           ,
+    long                ncoeff          ,
+    long                nint            ,
+    double[::1]         mass            ,
+    long[::1]           loopnb          ,
+    long[:,::1]         Targets         ,
+    double[::1]         MassSum         ,
+    double[:,:,:,::1]   SpaceRotsUn     ,
+    long[:,::1]         TimeRevsUn      ,
+    long[:,::1]         TimeShiftNumUn  ,
+    long[:,::1]         TimeShiftDenUn  ,
+    long[::1]           loopnbi         ,
+    double[:,::1]       ProdMassSumAll  ,
+    double[:,:,:,::1]   SpaceRotsBin    ,
+    long[:,::1]         TimeRevsBin     ,
+    long[:,::1]         TimeShiftNumBin ,
+    long[:,::1]         TimeShiftDenBin ,
+    double[:,:,:,::1]   all_coeffs  
 ):
+
+    cdef long geodim = all_coeffs.shape[1]
 
     cdef long il,ilp,i
     cdef long idim,idimp
@@ -711,13 +711,13 @@ def Compute_Loop_Dist_btw_avg_Cython(
     cdef long k,k2
     cdef double sum_loop_dist2
     cdef double dx2
-    cdef np.ndarray[double, ndim=1, mode="c"]  dx = np.zeros((cndim),dtype=np.float64)
+    cdef double[::1] dx = np.zeros((geodim),dtype=np.float64)
 
     sum_loop_dist2 = 0.
     for il in range(nloop-1):
         
         dx2 = all_coeffs[il,0,0,0]*all_coeffs[il,0,0,0]
-        for idim in range(1,cndim):
+        for idim in range(1,geodim):
             dx2 += all_coeffs[il,idim,0,0]*all_coeffs[il,idim,0,0]
 
         sum_loop_dist2 += dx2
@@ -726,25 +726,27 @@ def Compute_Loop_Dist_btw_avg_Cython(
     return csqrt(sum_loop_dist2)
    
 def Compute_Loop_Size_Dist_Cython(
-    long nloop,
-    long ncoeff,
-    long nint,
-    np.ndarray[double, ndim=1, mode="c"] mass  ,
-    np.ndarray[long  , ndim=1, mode="c"] loopnb  ,
-    np.ndarray[long  , ndim=2, mode="c"] Targets  ,
-    np.ndarray[double, ndim=1, mode="c"] MassSum  ,
-    np.ndarray[double, ndim=4, mode="c"] SpaceRotsUn  ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeRevsUn  ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeShiftNumUn  ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeShiftDenUn  ,
-    np.ndarray[long  , ndim=1, mode="c"] loopnbi  ,
-    np.ndarray[double, ndim=2, mode="c"] ProdMassSumAll  ,
-    np.ndarray[double, ndim=4, mode="c"] SpaceRotsBin  ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeRevsBin  ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeShiftNumBin  ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeShiftDenBin  ,
-    np.ndarray[double, ndim=4, mode="c"]  all_coeffs  
+    long                nloop           ,
+    long                ncoeff          ,
+    long                nint            ,
+    double[::1]         mass            ,
+    long[::1]           loopnb          ,
+    long[:,::1]         Targets         ,
+    double[::1]         MassSum         ,
+    double[:,:,:,::1]   SpaceRotsUn     ,
+    long[:,::1]         TimeRevsUn      ,
+    long[:,::1]         TimeShiftNumUn  ,
+    long[:,::1]         TimeShiftDenUn  ,
+    long[::1]           loopnbi         ,
+    double[:,::1]       ProdMassSumAll  ,
+    double[:,:,:,::1]   SpaceRotsBin    ,
+    long[:,::1]         TimeRevsBin     ,
+    long[:,::1]         TimeShiftNumBin ,
+    long[:,::1]         TimeShiftDenBin ,
+    double[:,:,:,::1]   all_coeffs  
 ):
+
+    cdef long geodim = all_coeffs.shape[1]
 
     cdef long il,ilp,i
     cdef long idim,idimp
@@ -755,7 +757,7 @@ def Compute_Loop_Size_Dist_Cython(
     cdef double loop_size,max_loop_size
     cdef double loop_dist,max_loop_dist
     cdef double dx2
-    cdef np.ndarray[double, ndim=1, mode="c"]  dx = np.zeros((cndim),dtype=np.float64)
+    cdef double[::1] dx = np.zeros((geodim),dtype=np.float64)
     
     cdef np.ndarray[double, ndim=1, mode="c"]  res = np.zeros((2),dtype=np.float64)
 
@@ -765,7 +767,7 @@ def Compute_Loop_Size_Dist_Cython(
         
         loop_size = 0
         
-        for idim in range(cndim):
+        for idim in range(geodim):
             for k in range(1,ncoeff):
                 
                 loop_size += all_coeffs[il,idim,k,0]*all_coeffs[il,idim,k,0]+all_coeffs[il,idim,k,1]*all_coeffs[il,idim,k,1]
@@ -785,14 +787,14 @@ def Compute_Loop_Size_Dist_Cython(
             for ib in range(loopnb[il]):
                 for ibp in range(loopnb[ilp]):
                     
-                    for idim in range(cndim):
+                    for idim in range(geodim):
                         dx[idim] = SpaceRotsUn[il,ib,idim,0]*all_coeffs[il,0,0,0] - SpaceRotsUn[ilp,ibp,idim,0]*all_coeffs[ilp,0,0,0]
                     
-                        for jdim in range(1,cndim):
+                        for jdim in range(1,geodim):
                             dx[idim] += SpaceRotsUn[il,ib,idim,jdim]*all_coeffs[il,jdim,0,0] - SpaceRotsUn[ilp,ibp,idim,jdim]*all_coeffs[ilp,jdim,0,0]
                             
                     dx2 = dx[0]*dx[0]
-                    for idim in range(1,cndim):
+                    for idim in range(1,geodim):
                         dx2 += dx[idim]*dx[idim]
 
                     if (dx2 > max_loop_dist):
@@ -801,16 +803,16 @@ def Compute_Loop_Size_Dist_Cython(
     for il in range(nloop):
         for ibi in range(loopnbi[il]):
                 
-            for idim in range(cndim):
+            for idim in range(geodim):
                 
                 dx[idim] = SpaceRotsBin[il,ibi,idim,0]*all_coeffs[il,0,0,0] - all_coeffs[il,idim,0,0]
-                for jdim in range(1,cndim):
+                for jdim in range(1,geodim):
                     
                     dx[idim] += SpaceRotsBin[il,ibi,idim,jdim]*all_coeffs[il,jdim,0,0]
                     
                 
                 dx2 = dx[0]*dx[0]
-                for idim in range(1,cndim):
+                for idim in range(1,geodim):
                     dx2 += dx[idim]*dx[idim]
 
                 if (dx2 > max_loop_dist):
@@ -847,6 +849,8 @@ def Compute_action_hess_mul_Cython(
     # Computes the matrix vector product H*dx where H is the Hessian of the action.
     # Useful to guide the root finding / optimisation process and to better understand the topography of the action (critical points / Morse theory).
 
+    cdef long geodim = all_coeffs.shape[1]
+
     cdef Py_ssize_t il,ilp,i
     cdef Py_ssize_t idim,jdim
     cdef Py_ssize_t ibi
@@ -857,9 +861,9 @@ def Compute_action_hess_mul_Cython(
     cdef long ddiv,rem
     cdef double pot,potp,potpp
     cdef double prod_mass,a,b,c,dx2,prod_fac,dxtddx
-    cdef double[::1] dx  = np.zeros((cndim),dtype=np.float64)
-    cdef double[::1] ddx = np.zeros((cndim),dtype=np.float64)
-    cdef double[::1] ddf = np.zeros((cndim),dtype=np.float64)
+    cdef double[::1] dx  = np.zeros((geodim),dtype=np.float64)
+    cdef double[::1] ddx = np.zeros((geodim),dtype=np.float64)
+    cdef double[::1] ddf = np.zeros((geodim),dtype=np.float64)
 
     cdef Py_ssize_t maxloopnb = 0
     cdef Py_ssize_t maxloopnbi = 0
@@ -884,9 +888,6 @@ def Compute_action_hess_mul_Cython(
             ddiv = - k // TimeShiftDenUn[il,ib]
             rem = k + ddiv * TimeShiftDenUn[il,ib]
 
-            if (rem != 0):
-                print("WARNING: remainder in integer division. Gradient computation will fail.")
-
             all_shiftsUn[il,ib] = (((ddiv) % nint) + nint) % nint
         
         for ibi in range(loopnbi[il]):
@@ -896,12 +897,9 @@ def Compute_action_hess_mul_Cython(
             ddiv = - k // TimeShiftDenBin[il,ibi]
             rem = k + ddiv * TimeShiftDenBin[il,ibi]
 
-            if (rem != 0):
-                print("WARNING: remainder in integer division. Gradient computation will fail.")
-
             all_shiftsBin[il,ibi] = (((ddiv) % nint) + nint) % nint
     
-    cdef double[:,:,::1] hess_pot_all_d = np.zeros((nloop,cndim,nint),dtype=np.float64)
+    cdef double[:,:,::1] hess_pot_all_d = np.zeros((nloop,geodim,nint),dtype=np.float64)
 
     for iint in range(nint):
 
@@ -914,16 +912,16 @@ def Compute_action_hess_mul_Cython(
                         
                         prod_mass = mass[Targets[il,ib]]*mass[Targets[ilp,ibp]]
 
-                        for idim in range(cndim):
+                        for idim in range(geodim):
                             dx[idim] = SpaceRotsUn[il,ib,idim,0]*all_pos[il,0,all_shiftsUn[il,ib]] - SpaceRotsUn[ilp,ibp,idim,0]*all_pos[ilp,0,all_shiftsUn[ilp,ibp]]
                             ddx[idim] = SpaceRotsUn[il,ib,idim,0]*all_pos_d[il,0,all_shiftsUn[il,ib]] - SpaceRotsUn[ilp,ibp,idim,0]*all_pos_d[ilp,0,all_shiftsUn[ilp,ibp]]
-                            for jdim in range(1,cndim):
+                            for jdim in range(1,geodim):
                                 dx[idim] += SpaceRotsUn[il,ib,idim,jdim]*all_pos[il,jdim,all_shiftsUn[il,ib]] - SpaceRotsUn[ilp,ibp,idim,jdim]*all_pos[ilp,jdim,all_shiftsUn[ilp,ibp]]
                                 ddx[idim] += SpaceRotsUn[il,ib,idim,jdim]*all_pos_d[il,jdim,all_shiftsUn[il,ib]] - SpaceRotsUn[ilp,ibp,idim,jdim]*all_pos_d[ilp,jdim,all_shiftsUn[ilp,ibp]]
 
                         dx2 = dx[0]*dx[0]
                         dxtddx = dx[0]*ddx[0]
-                        for idim in range(1,cndim):
+                        for idim in range(1,geodim):
                             dx2 += dx[idim]*dx[idim]
                             dxtddx += dx[idim]*ddx[idim]
                             
@@ -932,19 +930,19 @@ def Compute_action_hess_mul_Cython(
                         a = (2*prod_mass*potp)
                         b = (4*prod_mass*potpp*dxtddx)
                         
-                        for idim in range(cndim):
+                        for idim in range(geodim):
                             ddf[idim] = b*dx[idim]+a*ddx[idim]
                             
-                        for idim in range(cndim):
+                        for idim in range(geodim):
                             
                             c = SpaceRotsUn[il,ib,0,idim]*ddf[0]
-                            for jdim in range(1,cndim):
+                            for jdim in range(1,geodim):
                                 c+=SpaceRotsUn[il,ib,jdim,idim]*ddf[jdim]
                             
                             hess_pot_all_d[il ,idim,all_shiftsUn[il ,ib ]] += c
                             
                             c = SpaceRotsUn[ilp,ibp,0,idim]*ddf[0]
-                            for jdim in range(1,cndim):
+                            for jdim in range(1,geodim):
                                 c+=SpaceRotsUn[ilp,ibp,jdim,idim]*ddf[jdim]
                             
                             hess_pot_all_d[ilp,idim,all_shiftsUn[ilp,ibp]] -= c
@@ -954,10 +952,10 @@ def Compute_action_hess_mul_Cython(
 
             for ibi in range(loopnbi[il]):
                 
-                for idim in range(cndim):
+                for idim in range(geodim):
                     dx[idim]  = SpaceRotsBin[il,ibi,idim,0]*all_pos[il,0,all_shiftsBin[il,ibi]]
                     ddx[idim] = SpaceRotsBin[il,ibi,idim,0]*all_pos_d[il,0,all_shiftsBin[il,ibi]]
-                    for jdim in range(1,cndim):
+                    for jdim in range(1,geodim):
                         dx[idim]  += SpaceRotsBin[il,ibi,idim,jdim]*all_pos[il,jdim,all_shiftsBin[il,ibi]]
                         ddx[idim] += SpaceRotsBin[il,ibi,idim,jdim]*all_pos_d[il,jdim,all_shiftsBin[il,ibi]]
                     
@@ -966,7 +964,7 @@ def Compute_action_hess_mul_Cython(
                     
                 dx2 = dx[0]*dx[0]
                 dxtddx = dx[0]*ddx[0]
-                for idim in range(1,cndim):
+                for idim in range(1,geodim):
                     dx2 += dx[idim]*dx[idim]
                     dxtddx += dx[idim]*ddx[idim]
 
@@ -975,13 +973,13 @@ def Compute_action_hess_mul_Cython(
                 a = (2*ProdMassSumAll[il,ibi]*potp)
                 b = (4*ProdMassSumAll[il,ibi]*potpp*dxtddx)
         
-                for idim in range(cndim):
+                for idim in range(geodim):
                     ddf[idim] = b*dx[idim]+a*ddx[idim]
 
-                for idim in range(cndim):
+                for idim in range(geodim):
                     
                     c = SpaceRotsBin[il,ibi,0,idim]*ddf[0]
-                    for jdim in range(1,cndim):
+                    for jdim in range(1,geodim):
                         c+=SpaceRotsBin[il,ibi,jdim,idim]*ddf[jdim]
                     
                     hess_pot_all_d[il ,idim,all_shiftsBin[il,ibi]] += c
@@ -998,14 +996,14 @@ def Compute_action_hess_mul_Cython(
 
     cdef double complex[:,:,::1]  hess_dx_pot_fft = the_rfft(hess_pot_all_d,norm="forward")
 
-    cdef np.ndarray[double, ndim=4, mode="c"] Action_hess_dx_np = np.empty((nloop,cndim,ncoeff,2),np.float64)
+    cdef np.ndarray[double, ndim=4, mode="c"] Action_hess_dx_np = np.empty((nloop,geodim,ncoeff,2),np.float64)
     cdef double[:,:,:,::1] Action_hess_dx = Action_hess_dx_np
 
     for il in range(nloop):
         
         prod_fac = MassSum[il]*cfourpisq
         
-        for idim in range(cndim):
+        for idim in range(geodim):
             
             Action_hess_dx[il,idim,0,0] = -hess_dx_pot_fft[il,idim,0].real
             Action_hess_dx[il,idim,0,1] = 0 
@@ -1022,23 +1020,25 @@ def Compute_action_hess_mul_Cython(
     return Action_hess_dx_np
     
 def Compute_Newton_err_Cython(
-    long nbody,
-    long nloop,
-    long ncoeff,
-    long nint,
-    np.ndarray[double, ndim=1, mode="c"] mass  ,
-    np.ndarray[long  , ndim=1, mode="c"] loopnb  ,
-    np.ndarray[long  , ndim=2, mode="c"] Targets  ,
-    np.ndarray[double, ndim=4, mode="c"] SpaceRotsUn  ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeRevsUn  ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeShiftNumUn  ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeShiftDenUn  ,
+    long nbody                          ,
+    long nloop                          ,
+    long ncoeff                         ,
+    long nint                           ,
+    double[::1]         mass            ,
+    long[::1]           loopnb          ,
+    long[:,::1]         Targets         ,
+    double[:,:,:,::1]   SpaceRotsUn     ,
+    long[:,::1]         TimeRevsUn      ,
+    long[:,::1]         TimeShiftNumUn  ,
+    long[:,::1]         TimeShiftDenUn  ,
     np.ndarray[double, ndim=4, mode="c"] all_coeffs  
 ):
     # Computes the "Newton error", i.e. the deviation wrt to the fundamental theorem of Newtonian dynamics m_i * a_i - \sum_j f_ij = 0
     # If the Newton error is zero, then the trajectory is physical.
     # Under some symmetry hypotheses, this is the Fourier transform of the gradient of the action.
     # Computing it explicitely is a useful safeguard.
+
+    cdef long geodim = SpaceRotsUn.shape[2]
 
     cdef long il,ilp,i
     cdef long idim,idimp
@@ -1049,14 +1049,18 @@ def Compute_Newton_err_Cython(
     cdef long ddiv,rem
     cdef double pot,potp,potpp
     cdef double prod_mass,a,b,dx2,prod_fac
-    cdef np.ndarray[double, ndim=1, mode="c"]  dx = np.zeros((cndim),dtype=np.float64)
+    cdef double[::1] dx = np.zeros((geodim),dtype=np.float64)
 
-    cdef long maxloopnb = loopnb.max()
-    
-    cdef np.ndarray[double, ndim=4, mode="c"] acc_coeff = np.zeros((nloop,cndim,ncoeff,2),dtype=np.float64)
+    cdef long maxloopnb = 0
 
     for il in range(nloop):
-        for idim in range(cndim):
+        if (maxloopnb < loopnb[il]):
+            maxloopnb = loopnb[il]
+    
+    cdef np.ndarray[double, ndim=4, mode="c"] acc_coeff = np.zeros((nloop,geodim,ncoeff,2),dtype=np.float64)
+
+    for il in range(nloop):
+        for idim in range(geodim):
             for k in range(ncoeff):
                 
                 k2 = k*k
@@ -1067,7 +1071,7 @@ def Compute_Newton_err_Cython(
     c_acc_coeffs = acc_coeff.view(dtype=np.complex128)[...,0]
     cdef np.ndarray[double, ndim=3, mode="c"] all_acc = the_irfft(c_acc_coeffs,n=nint,axis=2,norm="forward")
     
-    cdef np.ndarray[double, ndim=3, mode="c"] all_Newt_err = np.zeros((nbody,cndim,nint),np.float64)
+    cdef np.ndarray[double, ndim=3, mode="c"] all_Newt_err = np.zeros((nbody,geodim,nint),np.float64)
     
     c_coeffs = all_coeffs.view(dtype=np.complex128)[...,0]
     
@@ -1083,9 +1087,6 @@ def Compute_Newton_err_Cython(
             ddiv = - k // TimeShiftDenUn[il,ib]
             rem = k + ddiv * TimeShiftDenUn[il,ib]
 
-            if (rem != 0):
-                print("WARNING: remainder in integer division. Gradient computation will fail.")
-
             all_shiftsUn[il,ib] = (((ddiv) % nint) + nint) % nint
         
         
@@ -1093,10 +1094,10 @@ def Compute_Newton_err_Cython(
 
         for il in range(nloop):
             for ib in range(loopnb[il]):
-                for idim in range(cndim):
+                for idim in range(geodim):
                     
                     b = SpaceRotsUn[il,ib,idim,0]*all_acc[il,0,all_shiftsUn[il,ib]]
-                    for jdim in range(1,cndim):  
+                    for jdim in range(1,geodim):  
                         b += SpaceRotsUn[il,ib,idim,jdim]*all_acc[il,jdim,all_shiftsUn[il,ib]]                  
 
                     all_Newt_err[Targets[il,ib],idim,iint] -= mass[Targets[il,ib]]*b
@@ -1110,20 +1111,20 @@ def Compute_Newton_err_Cython(
                         
                         prod_mass = mass[Targets[il,ib]]*mass[Targets[ilp,ibp]]
 
-                        for idim in range(cndim):
+                        for idim in range(geodim):
                             dx[idim] = SpaceRotsUn[il,ib,idim,0]*all_pos[il,0,all_shiftsUn[il,ib]] - SpaceRotsUn[ilp,ibp,idim,0]*all_pos[ilp,0,all_shiftsUn[ilp,ibp]]
-                            for jdim in range(1,cndim):
+                            for jdim in range(1,geodim):
                                 dx[idim] += SpaceRotsUn[il,ib,idim,jdim]*all_pos[il,jdim,all_shiftsUn[il,ib]] - SpaceRotsUn[ilp,ibp,idim,jdim]*all_pos[ilp,jdim,all_shiftsUn[ilp,ibp]]
 
                         dx2 = dx[0]*dx[0]
-                        for idim in range(1,cndim):
+                        for idim in range(1,geodim):
                             dx2 += dx[idim]*dx[idim]
                             
                         pot,potp,potpp = CCpt_interbody_pot(dx2)
                         
                         a = (2*prod_mass*potp)
 
-                        for idim in range(cndim):
+                        for idim in range(geodim):
                                 
                             b = a*dx[idim]
                             all_Newt_err[Targets[il ,ib ],idim,iint] += b
@@ -1137,20 +1138,20 @@ def Compute_Newton_err_Cython(
                     
                     prod_mass = mass[Targets[il,ib]]*mass[Targets[il,ibp]]
 
-                    for idim in range(cndim):
+                    for idim in range(geodim):
                         dx[idim] = SpaceRotsUn[il,ib,idim,0]*all_pos[il,0,all_shiftsUn[il,ib]] - SpaceRotsUn[il,ibp,idim,0]*all_pos[il,0,all_shiftsUn[il,ibp]]
-                        for jdim in range(1,cndim):
+                        for jdim in range(1,geodim):
                             dx[idim] += SpaceRotsUn[il,ib,idim,jdim]*all_pos[il,jdim,all_shiftsUn[il,ib]] - SpaceRotsUn[il,ibp,idim,jdim]*all_pos[il,jdim,all_shiftsUn[il,ibp]]
                     
                     dx2 = dx[0]*dx[0]
-                    for idim in range(1,cndim):
+                    for idim in range(1,geodim):
                         dx2 += dx[idim]*dx[idim]
                         
                     pot,potp,potpp = CCpt_interbody_pot(dx2)
                     
                     a = (2*prod_mass*potp)
 
-                    for idim in range(cndim):
+                    for idim in range(geodim):
                         
                         b = a*dx[idim]
                         all_Newt_err[Targets[il,ib] ,idim,iint] += b
@@ -1164,28 +1165,30 @@ def Compute_Newton_err_Cython(
     return all_Newt_err
                                                                                                                                                                 
 def Assemble_Cstr_Matrix(
-    long nloop,
-    long ncoeff,
-    bint MomCons,
-    np.ndarray[double, ndim=1, mode="c"] mass  ,
-    np.ndarray[long  , ndim=1, mode="c"] loopnb  ,
-    np.ndarray[long  , ndim=2, mode="c"] Targets  ,
-    np.ndarray[double, ndim=4, mode="c"] SpaceRotsUn  ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeRevsUn  ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeShiftNumUn  ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeShiftDenUn  ,
-    np.ndarray[long  , ndim=1, mode="c"] loopncstr  ,
-    np.ndarray[double, ndim=4, mode="c"] SpaceRotsCstr  ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeRevsCstr  ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeShiftNumCstr  ,
-    np.ndarray[long  , ndim=2, mode="c"] TimeShiftDenCstr 
+    long                nloop               ,
+    long                ncoeff              ,
+    bint                MomCons             ,
+    double[::1]         mass                ,
+    long[::1]           loopnb              ,
+    long[:,::1]         Targets             ,
+    double[:,:,:,::1]   SpaceRotsUn         ,
+    long[:,::1]         TimeRevsUn          ,
+    long[:,::1]         TimeShiftNumUn      ,
+    long[:,::1]         TimeShiftDenUn      ,
+    long[::1]           loopncstr           ,
+    double[:,:,:,::1]   SpaceRotsCstr       ,
+    long[:,::1]         TimeRevsCstr        ,
+    long[:,::1]         TimeShiftNumCstr    ,
+    long[:,::1]         TimeShiftDenCstr 
 ):
     # Assembles the matrix of constraints used to select constraint satisfying parameters
+
+    cdef long geodim = SpaceRotsUn.shape[2]
 
     # cdef double eps_zero = 1e-14
     cdef double eps_zero = 1e-10
     
-    # il,idim,k,ift => ift + 2*(k + ncoeff*(idim + ndim*il))
+    # il,idim,k,ift => ift + 2*(k + ncoeff*(idim + geodim*il))
 
     cdef long nnz = 0
     cdef long il,idim,jdim,ib,k,i
@@ -1199,7 +1202,7 @@ def Assemble_Cstr_Matrix(
     
     # Removes imaginary parts of c_0 and c_last
     for il in range(nloop):
-        for idim in range(cndim):
+        for idim in range(geodim):
              
             nnz += 2
     
@@ -1215,7 +1218,7 @@ def Assemble_Cstr_Matrix(
         
         for k in range(ncoeff):
 
-            for idim in range(cndim):
+            for idim in range(geodim):
                                       
                 for il in range(nloop):
                     for ib in range(loopnb[il]):
@@ -1224,7 +1227,7 @@ def Assemble_Cstr_Matrix(
                         c = ccos(ctwopi * k * dt)
                         s = csin(ctwopi * k * dt)  
 
-                        for jdim in range(cndim):
+                        for jdim in range(geodim):
 
                             mul = SpaceRotsUn[il,ib,idim,jdim]*mass[Targets[il,ib]]*invmasstot
                             val = mul * c
@@ -1246,7 +1249,7 @@ def Assemble_Cstr_Matrix(
                         c = ccos(ctwopi * k * dt)
                         s = csin(ctwopi * k * dt)  
 
-                        for jdim in range(cndim):
+                        for jdim in range(geodim):
 
                             mul = TimeRevsUn[il,ib] * SpaceRotsUn[il,ib,idim,jdim]*mass[Targets[il,ib]]*invmasstot
                             val = mul * s
@@ -1272,9 +1275,9 @@ def Assemble_Cstr_Matrix(
                 c = ccos( - ctwopi * k*dt)
                 s = csin( - ctwopi * k*dt)                        
                     
-                for idim in range(cndim):
+                for idim in range(geodim):
                         
-                    for jdim in range(cndim):
+                    for jdim in range(geodim):
 
                         val = SpaceRotsCstr[il,ilcstr,idim,jdim]*c
                         
@@ -1291,7 +1294,7 @@ def Assemble_Cstr_Matrix(
                         
                             nnz +=1
                         
-                    for jdim in range(cndim):
+                    for jdim in range(geodim):
 
                         val = SpaceRotsCstr[il,ilcstr,idim,jdim]*c
                         
@@ -1317,9 +1320,9 @@ def Assemble_Cstr_Matrix(
 
     # Removes imaginary parts of c_0 and c_last
     for il in range(nloop):
-        for idim in range(cndim):
+        for idim in range(geodim):
             
-            i = 1 + 2*(0 + ncoeff*(idim + cndim*il))  
+            i = 1 + 2*(0 + ncoeff*(idim + geodim*il))  
             
             cstr_row[nnz] = i
             cstr_col[nnz] = icstr
@@ -1328,7 +1331,7 @@ def Assemble_Cstr_Matrix(
             nnz +=1
             icstr +=1 
 
-            i = 1 + 2*(ncoeff-1 + ncoeff*(idim + cndim*il))  
+            i = 1 + 2*(ncoeff-1 + ncoeff*(idim + geodim*il))  
             
             cstr_row[nnz] = i
             cstr_col[nnz] = icstr
@@ -1342,7 +1345,7 @@ def Assemble_Cstr_Matrix(
         
         for k in range(ncoeff):
 
-            for idim in range(cndim):
+            for idim in range(geodim):
                                       
                 for il in range(nloop):
                     for ib in range(loopnb[il]):
@@ -1351,11 +1354,11 @@ def Assemble_Cstr_Matrix(
                         c = ccos(ctwopi * k * dt)
                         s = csin(ctwopi * k * dt)  
 
-                        for jdim in range(cndim):
+                        for jdim in range(geodim):
 
                             mul = SpaceRotsUn[il,ib,idim,jdim]*mass[Targets[il,ib]]*invmasstot
                                 
-                            i =  0 + 2*(k + ncoeff*(jdim + cndim*il))
+                            i =  0 + 2*(k + ncoeff*(jdim + geodim*il))
 
                             val = mul * c
 
@@ -1367,7 +1370,7 @@ def Assemble_Cstr_Matrix(
                             
                                 nnz +=1
                                 
-                            i =  1 + 2*(k + ncoeff*(jdim + cndim*il))
+                            i =  1 + 2*(k + ncoeff*(jdim + geodim*il))
 
                             val = - mul * s
 
@@ -1388,11 +1391,11 @@ def Assemble_Cstr_Matrix(
                         c = ccos(ctwopi * k * dt)
                         s = csin(ctwopi * k * dt)  
 
-                        for jdim in range(cndim):
+                        for jdim in range(geodim):
 
                             mul = TimeRevsUn[il,ib] * SpaceRotsUn[il,ib,idim,jdim]*mass[Targets[il,ib]]*invmasstot
                                 
-                            i =  0 + 2*(k + ncoeff*(jdim + cndim*il))
+                            i =  0 + 2*(k + ncoeff*(jdim + geodim*il))
 
                             val = mul * s
 
@@ -1404,7 +1407,7 @@ def Assemble_Cstr_Matrix(
                             
                                 nnz +=1
                                 
-                            i =  1 + 2*(k + ncoeff*(jdim + cndim*il))
+                            i =  1 + 2*(k + ncoeff*(jdim + geodim*il))
 
                             val = mul * c
 
@@ -1432,11 +1435,11 @@ def Assemble_Cstr_Matrix(
                     c = ccos( - ctwopi * k*dt)
                     s = csin( - ctwopi * k*dt)                        
                         
-                    for idim in range(cndim):
+                    for idim in range(geodim):
                             
-                        for jdim in range(cndim):
+                        for jdim in range(geodim):
                                 
-                            i =  0 + 2*(k + ncoeff*(jdim + cndim*il))
+                            i =  0 + 2*(k + ncoeff*(jdim + geodim*il))
 
                             val = SpaceRotsCstr[il,ilcstr,idim,jdim]*c
                             
@@ -1451,7 +1454,7 @@ def Assemble_Cstr_Matrix(
                             
                                 nnz +=1
                                 
-                            i =  1 + 2*(k + ncoeff*(jdim + cndim*il))
+                            i =  1 + 2*(k + ncoeff*(jdim + geodim*il))
 
                             val = - SpaceRotsCstr[il,ilcstr,idim,jdim]*s
                             
@@ -1465,9 +1468,9 @@ def Assemble_Cstr_Matrix(
                                 
                         icstr+=1
                             
-                        for jdim in range(cndim):
+                        for jdim in range(geodim):
                                 
-                            i =  1 + 2*(k + ncoeff*(jdim + cndim*il))
+                            i =  1 + 2*(k + ncoeff*(jdim + geodim*il))
 
                             val = SpaceRotsCstr[il,ilcstr,idim,jdim]*c
                             
@@ -1482,7 +1485,7 @@ def Assemble_Cstr_Matrix(
                             
                                 nnz +=1
                                 
-                            i =  0 + 2*(k + ncoeff*(jdim + cndim*il))
+                            i =  0 + 2*(k + ncoeff*(jdim + geodim*il))
 
                             val = SpaceRotsCstr[il,ilcstr,idim,jdim]*s
                             
@@ -1501,11 +1504,11 @@ def Assemble_Cstr_Matrix(
                     c = ccos( ctwopi * k*dt)
                     s = csin( ctwopi * k*dt)
                     
-                    for idim in range(cndim):
+                    for idim in range(geodim):
                             
-                        for jdim in range(cndim):
+                        for jdim in range(geodim):
                                 
-                            i =  0 + 2*(k + ncoeff*(jdim + cndim*il))
+                            i =  0 + 2*(k + ncoeff*(jdim + geodim*il))
 
                             val = SpaceRotsCstr[il,ilcstr,idim,jdim]*c
                             
@@ -1520,7 +1523,7 @@ def Assemble_Cstr_Matrix(
                             
                                 nnz +=1
                                 
-                            i =  1 + 2*(k + ncoeff*(jdim + cndim*il))
+                            i =  1 + 2*(k + ncoeff*(jdim + geodim*il))
 
                             val = SpaceRotsCstr[il,ilcstr,idim,jdim]*s
                             
@@ -1534,9 +1537,9 @@ def Assemble_Cstr_Matrix(
                                 
                         icstr+=1
                             
-                        for jdim in range(cndim):
+                        for jdim in range(geodim):
                                 
-                            i =  1 + 2*(k + ncoeff*(jdim + cndim*il))
+                            i =  1 + 2*(k + ncoeff*(jdim + geodim*il))
 
                             val = - SpaceRotsCstr[il,ilcstr,idim,jdim]*c
                             
@@ -1551,7 +1554,7 @@ def Assemble_Cstr_Matrix(
                             
                                 nnz +=1
                                 
-                            i =  0 + 2*(k + ncoeff*(jdim + cndim*il))
+                            i =  0 + 2*(k + ncoeff*(jdim + geodim*il))
 
                             val = SpaceRotsCstr[il,ilcstr,idim,jdim]*s
                             
@@ -1569,12 +1572,13 @@ def Assemble_Cstr_Matrix(
                     print(TimeRevsCstr[il,ilcstr])
                     raise ValueError("Invalid TimeRev")
 
-    cdef long n_idx = nloop*cndim*ncoeff*2
+    cdef long n_idx = nloop*geodim*ncoeff*2
 
     return scipy.sparse.coo_matrix((cstr_data,(cstr_row,cstr_col)),shape=(n_idx,icstr), dtype=np.float64)
     
 @cython.cdivision(True)
 def diagmat_changevar(
+    long geodim,
     long ncoeff,
     long nparam,
     int [::1] param_to_coeff_csc_indptr,
@@ -1611,8 +1615,8 @@ def diagmat_changevar(
             k = res % ncoeff
             res = res / ncoeff
                     
-            idim = res % cndim
-            il = res / cndim
+            idim = res % geodim
+            il = res / geodim
 
             if (k == 0):
                 k = 1
@@ -1633,8 +1637,8 @@ def diagmat_changevar(
     return scipy.sparse.coo_matrix((diag_vect,(diag_indices,diag_indices)),shape=(nparam,nparam), dtype=np.float64)
  
 def Compute_square_dist(
-    np.ndarray[double, ndim=1, mode="c"] x  ,
-    np.ndarray[double, ndim=1, mode="c"] y  ,
+    double[::1] x  ,
+    double[::1] y  ,
     long s
 ):
         
@@ -1650,17 +1654,18 @@ def Compute_square_dist(
     return res
     
 def Compute_Forces_Cython(
-    np.ndarray[double, ndim=2, mode="c"] x ,
-    np.ndarray[double, ndim=1, mode="c"] mass ,
+    double[:,::1] x ,
+    double[::1] mass ,
     long nbody,
 ):
     # Does not actually computes the forces on every body, but rather the force divided by the mass.
 
     cdef long ib, ibp
     cdef long idim
-    cdef np.ndarray[double, ndim=2, mode="c"] f = np.zeros((nbody,cndim),dtype=np.float64)
+    cdef long geodim = x.shape[1]
+    cdef np.ndarray[double, ndim=2, mode="c"] f = np.zeros((nbody,geodim),dtype=np.float64)
 
-    cdef np.ndarray[double, ndim=1, mode="c"]  dx = np.zeros((cndim),dtype=np.float64)
+    cdef double[::1] dx = np.zeros((geodim),dtype=np.float64)
 
     cdef double dx2,a
     cdef double b,bp
@@ -1668,11 +1673,11 @@ def Compute_Forces_Cython(
     for ib in range(nbody-1):
         for ibp in range(ib+1,nbody):
 
-            for idim in range(cndim):
+            for idim in range(geodim):
                 dx[idim] = x[ib,idim]-x[ibp,idim]
 
             dx2 = dx[0]*dx[0]
-            for idim in range(1,cndim):
+            for idim in range(1,geodim):
                 dx2 += dx[idim]*dx[idim]
 
             pot,potp,potpp = CCpt_interbody_pot(dx2)
@@ -1682,7 +1687,7 @@ def Compute_Forces_Cython(
             b  = a*mass[ibp]
             bp = a*mass[ib ]
 
-            for idim in range(cndim):
+            for idim in range(geodim):
 
                 f[ib,idim] -= b*dx[idim]
                 f[ibp,idim] += bp*dx[idim]
@@ -1691,17 +1696,18 @@ def Compute_Forces_Cython(
 
 
 def Compute_JacMat_Forces_Cython(
-    np.ndarray[double, ndim=2, mode="c"] x ,
-    np.ndarray[double, ndim=1, mode="c"] mass ,
+    double[:,::1] x ,
+    double[::1] mass ,
     long nbody,
 ):
     # Does not actually computes the forces on every body, but rather the force divided by the mass.
 
     cdef long ib, ibp
     cdef long idim,jdim
-    cdef np.ndarray[double, ndim=4, mode="c"] Jf = np.zeros((nbody,cndim,nbody,cndim),dtype=np.float64)
+    cdef long geodim = x.shape[1]
+    cdef np.ndarray[double, ndim=4, mode="c"] Jf = np.zeros((nbody,geodim,nbody,geodim),dtype=np.float64)
 
-    cdef np.ndarray[double, ndim=1, mode="c"]  dx = np.zeros((cndim),dtype=np.float64)
+    cdef double[::1] dx = np.zeros((geodim),dtype=np.float64)
 
     cdef double dx2
     cdef double a,aa,aap
@@ -1711,11 +1717,11 @@ def Compute_JacMat_Forces_Cython(
     for ib in range(nbody-1):
         for ibp in range(ib+1,nbody):
 
-            for idim in range(cndim):
+            for idim in range(geodim):
                 dx[idim] = x[ib,idim]-x[ibp,idim]
 
             dx2 = dx[0]*dx[0]
-            for idim in range(1,cndim):
+            for idim in range(1,geodim):
                 dx2 += dx[idim]*dx[idim]
 
             pot,potp,potpp = CCpt_interbody_pot(dx2)
@@ -1728,7 +1734,7 @@ def Compute_JacMat_Forces_Cython(
             bb  = b*mass[ibp]
             bpp = b*mass[ib ]
 
-            for idim in range(cndim):
+            for idim in range(geodim):
 
                 Jf[ib ,idim,ib ,idim] -= aa
                 Jf[ib ,idim,ibp,idim] += aa
@@ -1736,7 +1742,7 @@ def Compute_JacMat_Forces_Cython(
                 Jf[ibp,idim,ib ,idim] += aap
                 Jf[ibp,idim,ibp,idim] -= aap
 
-                for jdim in range(cndim):
+                for jdim in range(geodim):
 
                     dx2 = dx[idim]*dx[jdim]
                     c =  bb*dx2
@@ -1750,19 +1756,20 @@ def Compute_JacMat_Forces_Cython(
     return Jf
 
 def Compute_JacMul_Forces_Cython(
-    np.ndarray[double, ndim=2, mode="c"] x ,
-    np.ndarray[double, ndim=2, mode="c"] x_d ,
-    np.ndarray[double, ndim=1, mode="c"] mass ,
-    long nbody,
+    double[:,::1] x     ,
+    double[:,::1] x_d   ,
+    double[::1] mass    ,
+    long nbody          ,
 ):
     # Does not actually computes the forces on every body, but rather the force divided by the mass.
 
     cdef long ib, ibp
     cdef long idim,jdim
-    cdef np.ndarray[double, ndim=2, mode="c"] df = np.zeros((nbody,cndim),dtype=np.float64)
+    cdef long geodim = x.shape[1]
+    cdef np.ndarray[double, ndim=2, mode="c"] df = np.zeros((nbody,geodim),dtype=np.float64)
 
-    cdef np.ndarray[double, ndim=1, mode="c"]  dx = np.zeros((cndim),dtype=np.float64)
-    cdef np.ndarray[double, ndim=1, mode="c"]  ddx = np.zeros((cndim),dtype=np.float64)
+    cdef double[::1]  dx = np.zeros((geodim),dtype=np.float64)
+    cdef double[::1]  ddx = np.zeros((geodim),dtype=np.float64)
 
     cdef double dx2,dxtddx
     cdef double a,aa,aap
@@ -1772,13 +1779,13 @@ def Compute_JacMul_Forces_Cython(
     for ib in range(nbody-1):
         for ibp in range(ib+1,nbody):
 
-            for idim in range(cndim):
+            for idim in range(geodim):
                 dx[idim] = x[ib,idim]-x[ibp,idim]
                 ddx[idim] = x_d[ib,idim]-x_d[ibp,idim]
 
             dx2 = dx[0]*dx[0]
             dxtddx = dx[0]*ddx[0]
-            for idim in range(1,cndim):
+            for idim in range(1,geodim):
                 dx2 += dx[idim]*dx[idim]
                 dxtddx += dx[idim]*ddx[idim]
 
@@ -1792,7 +1799,7 @@ def Compute_JacMul_Forces_Cython(
             bb  = b*mass[ibp]
             bbp = b*mass[ib ]
 
-            for idim in range(cndim):
+            for idim in range(geodim):
                 df[ib ,idim] -= bb *dx[idim] + aa *ddx[idim]
                 df[ibp,idim] += bbp*dx[idim] + aap*ddx[idim]
 
@@ -1804,20 +1811,22 @@ def Transform_Coeffs_Single_Loop(
         double TimeShiftNum,
         double TimeShiftDen,
         double[:,:,::1] one_loop_coeffs,
-        long ncoeff
+        long ncoeff,
 ):
     # Transforms coeffs defining a single loop and returns updated coeffs
     
+    cdef long geodim = one_loop_coeffs.shape[0]
+
     cdef long  k,i,j
     cdef double c,s,dt,dphi
 
     cdef double x,y
 
-    cdef np.ndarray[double, ndim=3, mode="c"] all_coeffs_new_np = np.empty((cndim,ncoeff,2),dtype=np.float64)
+    cdef np.ndarray[double, ndim=3, mode="c"] all_coeffs_new_np = np.empty((geodim,ncoeff,2),dtype=np.float64)
     cdef double[:,:,::1] all_coeffs_new = all_coeffs_new_np
 
-    cdef double[::1] v = np.empty((cndim),dtype=np.float64)
-    cdef double[::1] w = np.empty((cndim),dtype=np.float64)
+    cdef double[::1] v = np.empty((geodim),dtype=np.float64)
+    cdef double[::1] w = np.empty((geodim),dtype=np.float64)
 
     for k in range(ncoeff):
         
@@ -1827,14 +1836,14 @@ def Transform_Coeffs_Single_Loop(
         c = ccos(dphi)
         s = csin(dphi)  
 
-        for i in range(cndim):
+        for i in range(geodim):
             v[i] = one_loop_coeffs[i,k,0] * c - TimeRev * one_loop_coeffs[i,k,1] * s
             w[i] = one_loop_coeffs[i,k,0] * s + TimeRev * one_loop_coeffs[i,k,1] * c
         
-        for i in range(cndim):
+        for i in range(geodim):
             x = SpaceRot[i,0] * v[0]
             y = SpaceRot[i,0] * w[0]
-            for j in range(1,cndim): 
+            for j in range(1,geodim): 
                 x += SpaceRot[i,j] * v[j]
                 y += SpaceRot[i,j] * w[j]
 
@@ -1849,40 +1858,41 @@ def SparseScaleCoeffs(
     long ncoeff_out,
     long ncoeff_in,
     long k_fac,
-    double rfac
+    double rfac,
 ):
+
+    cdef long geodim = one_loop_coeffs_in.shape[0]
 
     cdef long idim
     cdef long k
     cdef long kmax = min(ncoeff_out//k_fac,ncoeff_in)
 
-    cdef np.ndarray[double, ndim=3, mode="c"] all_coeffs_scale_np = np.zeros((cndim,ncoeff_out,2),dtype=np.float64)
+    cdef np.ndarray[double, ndim=3, mode="c"] all_coeffs_scale_np = np.zeros((geodim,ncoeff_out,2),dtype=np.float64)
     cdef double[:,:,::1] all_coeffs_scale = all_coeffs_scale_np
 
-    for idim in range(cndim):
+    for idim in range(geodim):
         for k in range(kmax):
             
             all_coeffs_scale[idim,k*k_fac,0]  = rfac * one_loop_coeffs_in[idim,k,0]
             all_coeffs_scale[idim,k*k_fac,1]  = rfac * one_loop_coeffs_in[idim,k,1]
 
-    
     return all_coeffs_scale_np
-
-
 
 def ComputeSpeedCoeffs(
     double[:,:,::1] one_loop_coeffs,
-    long ncoeff
+    long ncoeff,
 ):
+
+    cdef long geodim = one_loop_coeffs.shape[0]
 
     cdef long idim
     cdef long k
     cdef double prod_fac
 
-    cdef np.ndarray[double, ndim=3, mode="c"] one_loop_coeffs_speed_np = np.zeros((cndim,ncoeff,2),dtype=np.float64)
+    cdef np.ndarray[double, ndim=3, mode="c"] one_loop_coeffs_speed_np = np.zeros((geodim,ncoeff,2),dtype=np.float64)
     cdef double[:,:,::1] one_loop_coeffs_speed = one_loop_coeffs_speed_np
 
-    for idim in range(cndim):
+    for idim in range(geodim):
         for k in range(ncoeff):
 
             prod_fac = ctwopi*k
@@ -1902,6 +1912,8 @@ def Compute_hamil_hess_mul_Cython_nosym(
     np.ndarray[double, ndim=5, mode="c"]  all_coeffs_d_xv  
 ):
 
+    cdef long geodim = all_pos.shape[1]
+
     cdef Py_ssize_t il,ilp,i
     cdef Py_ssize_t idim,jdim
     cdef Py_ssize_t ibi
@@ -1913,17 +1925,17 @@ def Compute_hamil_hess_mul_Cython_nosym(
     cdef double pot,potp,potpp
     cdef double prod_mass,a,b,c,dx2,prod_fac,dxtddx
     cdef double aa,aap,bb,bbp
-    cdef double[::1] dx  = np.zeros((cndim),dtype=np.float64)
-    cdef double[::1] ddx = np.zeros((cndim),dtype=np.float64)
+    cdef double[::1] dx  = np.zeros((geodim),dtype=np.float64)
+    cdef double[::1] ddx = np.zeros((geodim),dtype=np.float64)
 
 
     # 0 = -d/dt x + v
-    # cdef np.ndarray[double, ndim=5, mode="c"] Hamil_hess_dxv_np = np.empty((2,nbody,cndim,ncoeff,2),dtype=np.float64)
-    cdef np.ndarray[double, ndim=5, mode="c"] Hamil_hess_dxv_np = np.zeros((2,nbody,cndim,ncoeff,2),dtype=np.float64)
+    # cdef np.ndarray[double, ndim=5, mode="c"] Hamil_hess_dxv_np = np.empty((2,nbody,geodim,ncoeff,2),dtype=np.float64)
+    cdef np.ndarray[double, ndim=5, mode="c"] Hamil_hess_dxv_np = np.zeros((2,nbody,geodim,ncoeff,2),dtype=np.float64)
     cdef double[:,:,:,:,::1] Hamil_hess_dxv = Hamil_hess_dxv_np
 
     for ib in range(nbody):
-        for idim in range(cndim):
+        for idim in range(geodim):
             for k in range(ncoeff):
 
                 prod_fac = ctwopi*k
@@ -1938,20 +1950,20 @@ def Compute_hamil_hess_mul_Cython_nosym(
     c_coeffs_d_x = all_coeffs_d_xv[0,:,:,:,:].view(dtype=np.complex128)[...,0]
     cdef double[:,:,::1] all_pos_d_x = the_irfft(c_coeffs_d_x,norm="forward")
 
-    cdef double[:,:,::1] hess_pot_all_d = np.zeros((nbody,cndim,nint),dtype=np.float64) # size ????
+    cdef double[:,:,::1] hess_pot_all_d = np.zeros((nbody,geodim,nint),dtype=np.float64) # size ????
 
     for iint in range(nint):
 
         for ib in range(nbody):
             for ibp in range(ib+1,nbody):
 
-                for idim in range(cndim):
+                for idim in range(geodim):
                     dx[idim] = all_pos[ib,idim,iint] - all_pos[ibp,idim,iint] 
                     ddx[idim] = all_pos_d_x[ib,idim,iint] - all_pos_d_x[ibp,idim,iint] 
 
                 dx2 = dx[0]*dx[0]
                 dxtddx = dx[0]*ddx[0]
-                for idim in range(1,cndim):
+                for idim in range(1,geodim):
                     dx2 += dx[idim]*dx[idim]
                     dxtddx += dx[idim]*ddx[idim]
 
@@ -1965,7 +1977,7 @@ def Compute_hamil_hess_mul_Cython_nosym(
                 bb  = b*mass[ibp]
                 bbp = b*mass[ib ]
 
-                for idim in range(cndim):
+                for idim in range(geodim):
 
                     hess_pot_all_d[ib ,idim,iint] += bb *dx[idim] + aa *ddx[idim]
                     hess_pot_all_d[ibp,idim,iint] -= bbp*dx[idim] + aap*ddx[idim]
@@ -1984,7 +1996,7 @@ def Compute_hamil_hess_mul_Cython_nosym(
 
     for ib in range(nbody):
 
-        for idim in range(cndim):
+        for idim in range(geodim):
             
             Hamil_hess_dxv[1,ib,idim,0,0] = -hess_dx_pot_fft[ib,idim,0].real
             Hamil_hess_dxv[1,ib,idim,0,1] = 0 
@@ -2014,6 +2026,8 @@ def Compute_hamil_hess_mul_Cython_nosym_split(
     np.ndarray[double, ndim=4, mode="c"]  all_coeffs_d_v  
 ):
 
+    cdef long geodim = all_pos.shape[1]
+
     cdef Py_ssize_t il,ilp,i
     cdef Py_ssize_t idim,jdim
     cdef Py_ssize_t ibi
@@ -2025,16 +2039,16 @@ def Compute_hamil_hess_mul_Cython_nosym_split(
     cdef double pot,potp,potpp
     cdef double prod_mass,a,b,c,dx2,prod_fac,dxtddx
     cdef double aa,aap,bb,bbp
-    cdef double[::1] dx  = np.zeros((cndim),dtype=np.float64)
-    cdef double[::1] ddx = np.zeros((cndim),dtype=np.float64)
+    cdef double[::1] dx  = np.zeros((geodim),dtype=np.float64)
+    cdef double[::1] ddx = np.zeros((geodim),dtype=np.float64)
 
 
     # 0 = -d/dt x + v
-    cdef np.ndarray[double, ndim=4, mode="c"] Hamil_hess_dx_np = np.zeros((nbody,cndim,ncoeff,2),dtype=np.float64)
+    cdef np.ndarray[double, ndim=4, mode="c"] Hamil_hess_dx_np = np.zeros((nbody,geodim,ncoeff,2),dtype=np.float64)
     cdef double[:,:,:,::1] Hamil_hess_dx = Hamil_hess_dx_np
 
     for ib in range(nbody):
-        for idim in range(cndim):
+        for idim in range(geodim):
             for k in range(ncoeff):
 
                 prod_fac = ctwopi*k
@@ -2049,20 +2063,20 @@ def Compute_hamil_hess_mul_Cython_nosym_split(
     c_coeffs_d_x = all_coeffs_d_x[:,:,:,:].view(dtype=np.complex128)[...,0]
     cdef double[:,:,::1] all_pos_d_x = the_irfft(c_coeffs_d_x,norm="forward")
 
-    cdef double[:,:,::1] hess_pot_all_d = np.zeros((nbody,cndim,nint),dtype=np.float64) # size ????
+    cdef double[:,:,::1] hess_pot_all_d = np.zeros((nbody,geodim,nint),dtype=np.float64) # size ????
 
     for iint in range(nint):
 
         for ib in range(nbody):
             for ibp in range(ib+1,nbody):
 
-                for idim in range(cndim):
+                for idim in range(geodim):
                     dx[idim] = all_pos[ib,idim,iint] - all_pos[ibp,idim,iint] 
                     ddx[idim] = all_pos_d_x[ib,idim,iint] - all_pos_d_x[ibp,idim,iint] 
 
                 dx2 = dx[0]*dx[0]
                 dxtddx = dx[0]*ddx[0]
-                for idim in range(1,cndim):
+                for idim in range(1,geodim):
                     dx2 += dx[idim]*dx[idim]
                     dxtddx += dx[idim]*ddx[idim]
 
@@ -2076,19 +2090,19 @@ def Compute_hamil_hess_mul_Cython_nosym_split(
                 bb  = b*mass[ibp]
                 bbp = b*mass[ib ]
 
-                for idim in range(cndim):
+                for idim in range(geodim):
 
                     hess_pot_all_d[ib ,idim,iint] += bb *dx[idim] + aa *ddx[idim]
                     hess_pot_all_d[ibp,idim,iint] -= bbp*dx[idim] + aap*ddx[idim]
 
     cdef double complex[:,:,::1]  hess_dx_pot_fft = the_rfft(hess_pot_all_d,norm="forward")
 
-    cdef np.ndarray[double, ndim=4, mode="c"] Hamil_hess_dv_np = np.zeros((nbody,cndim,ncoeff,2),dtype=np.float64)
+    cdef np.ndarray[double, ndim=4, mode="c"] Hamil_hess_dv_np = np.zeros((nbody,geodim,ncoeff,2),dtype=np.float64)
     cdef double[:,:,:,::1] Hamil_hess_dv = Hamil_hess_dv_np
 
     for ib in range(nbody):
 
-        for idim in range(cndim):
+        for idim in range(geodim):
             
             Hamil_hess_dv[ib,idim,0,0] = -hess_dx_pot_fft[ib,idim,0].real
             Hamil_hess_dv[ib,idim,0,1] = 0 
@@ -2108,8 +2122,10 @@ def Compute_hamil_hess_mul_Cython_nosym_split(
 def Compute_Derivative_Cython_nosym(
     long nbody                          ,
     long ncoeff                         ,
-    np.ndarray[double, ndim=4, mode="c"]  all_coeffs
+    double[:,:,:,::1]  all_coeffs
 ):
+
+    cdef long geodim = all_coeffs.shape[1]
 
     cdef Py_ssize_t idim,jdim
     cdef Py_ssize_t ib,ibp
@@ -2117,11 +2133,11 @@ def Compute_Derivative_Cython_nosym(
     cdef Py_ssize_t k
     cdef double prod_fac
 
-    cdef np.ndarray[double, ndim=4, mode="c"] all_coeffs_d_np = np.zeros((nbody,cndim,ncoeff,2),dtype=np.float64)
+    cdef np.ndarray[double, ndim=4, mode="c"] all_coeffs_d_np = np.zeros((nbody,geodim,ncoeff,2),dtype=np.float64)
     cdef double[:,:,:,::1] all_coeffs_d = all_coeffs_d_np
 
     for ib in range(nbody):
-        for idim in range(cndim):
+        for idim in range(geodim):
             for k in range(ncoeff):
 
                 prod_fac = ctwopi*k
@@ -2136,8 +2152,10 @@ def Compute_Derivative_Cython_nosym(
 def Compute_Derivative_precond_Cython_nosym(
     long nbody                          ,
     long ncoeff                         ,
-    np.ndarray[double, ndim=4, mode="c"]  all_coeffs
+    double[:,:,:,::1]  all_coeffs
 ):
+
+    cdef long geodim = all_coeffs.shape[1]
 
     cdef Py_ssize_t idim,jdim
     cdef Py_ssize_t ib,ibp
@@ -2145,11 +2163,11 @@ def Compute_Derivative_precond_Cython_nosym(
     cdef Py_ssize_t k
     cdef double prod_fac
 
-    cdef np.ndarray[double, ndim=4, mode="c"] all_coeffs_d_np = np.zeros((nbody,cndim,ncoeff,2),dtype=np.float64)
+    cdef np.ndarray[double, ndim=4, mode="c"] all_coeffs_d_np = np.zeros((nbody,geodim,ncoeff,2),dtype=np.float64)
     cdef double[:,:,:,::1] all_coeffs_d = all_coeffs_d_np
 
     for ib in range(nbody):
-        for idim in range(cndim):
+        for idim in range(geodim):
 
             all_coeffs_d[ib,idim,0,0] = ctwopi * all_coeffs[ib,idim,0,0]
             all_coeffs_d[ib,idim,0,1] = ctwopi * all_coeffs[ib,idim,0,1]
@@ -2166,8 +2184,10 @@ def Compute_Derivative_precond_Cython_nosym(
 def Compute_Derivative_precond_inv_Cython_nosym(
     long nbody                          ,
     long ncoeff                         ,
-    np.ndarray[double, ndim=4, mode="c"]  all_coeffs
+    double[:,:,:,::1]  all_coeffs
 ):
+
+    cdef long geodim = all_coeffs.shape[1]
 
     cdef Py_ssize_t idim,jdim
     cdef Py_ssize_t ib,ibp
@@ -2175,11 +2195,11 @@ def Compute_Derivative_precond_inv_Cython_nosym(
     cdef Py_ssize_t k
     cdef double prod_fac
 
-    cdef np.ndarray[double, ndim=4, mode="c"] all_coeffs_d_np = np.zeros((nbody,cndim,ncoeff,2),dtype=np.float64)
+    cdef np.ndarray[double, ndim=4, mode="c"] all_coeffs_d_np = np.zeros((nbody,geodim,ncoeff,2),dtype=np.float64)
     cdef double[:,:,:,::1] all_coeffs_d = all_coeffs_d_np
 
     for ib in range(nbody):
-        for idim in range(cndim):
+        for idim in range(geodim):
 
             prod_fac = 1. / ctwopi
 
@@ -2210,6 +2230,8 @@ def Compute_hamil_hess_mul_xonly_Cython_nosym(
     np.ndarray[double, ndim=4, mode="c"]  all_coeffs_d_x 
 ):
 
+    cdef long geodim = all_pos.shape[1]
+
     cdef Py_ssize_t il,ilp,i
     cdef Py_ssize_t idim,jdim
     cdef Py_ssize_t ibi
@@ -2221,12 +2243,12 @@ def Compute_hamil_hess_mul_xonly_Cython_nosym(
     cdef double pot,potp,potpp
     cdef double prod_mass,a,b,c,dx2,prod_fac,dxtddx
     cdef double aa,aap,bb,bbp
-    cdef double[::1] dx  = np.zeros((cndim),dtype=np.float64)
-    cdef double[::1] ddx = np.zeros((cndim),dtype=np.float64)
+    cdef double[::1] dx  = np.zeros((geodim),dtype=np.float64)
+    cdef double[::1] ddx = np.zeros((geodim),dtype=np.float64)
 
 
 
-    cdef np.ndarray[double, ndim=4, mode="c"] Hamil_hess_dx_np = np.empty((nbody,cndim,ncoeff,2),dtype=np.float64)
+    cdef np.ndarray[double, ndim=4, mode="c"] Hamil_hess_dx_np = np.empty((nbody,geodim,ncoeff,2),dtype=np.float64)
     cdef double[:,:,:,::1] Hamil_hess_dx = Hamil_hess_dx_np
 
 
@@ -2236,20 +2258,20 @@ def Compute_hamil_hess_mul_xonly_Cython_nosym(
     c_coeffs_d_x = all_coeffs_d_x[:,:,:,:].view(dtype=np.complex128)[...,0]
     cdef double[:,:,::1] all_pos_d_x = the_irfft(c_coeffs_d_x,norm="forward")
 
-    cdef double[:,:,::1] hess_pot_all_d = np.zeros((nbody,cndim,nint),dtype=np.float64) # size ????
+    cdef double[:,:,::1] hess_pot_all_d = np.zeros((nbody,geodim,nint),dtype=np.float64) # size ????
 
     for iint in range(nint):
 
         for ib in range(nbody):
             for ibp in range(ib+1,nbody):
 
-                for idim in range(cndim):
+                for idim in range(geodim):
                     dx[idim] = all_pos[ib,idim,iint] - all_pos[ibp,idim,iint] 
                     ddx[idim] = all_pos_d_x[ib,idim,iint] - all_pos_d_x[ibp,idim,iint] 
 
                 dx2 = dx[0]*dx[0]
                 dxtddx = dx[0]*ddx[0]
-                for idim in range(1,cndim):
+                for idim in range(1,geodim):
                     dx2 += dx[idim]*dx[idim]
                     dxtddx += dx[idim]*ddx[idim]
 
@@ -2263,7 +2285,7 @@ def Compute_hamil_hess_mul_xonly_Cython_nosym(
                 bb  = b*mass[ibp]
                 bbp = b*mass[ib ]
 
-                for idim in range(cndim):
+                for idim in range(geodim):
 
                     hess_pot_all_d[ib ,idim,iint] += bb *dx[idim] + aa *ddx[idim]
                     hess_pot_all_d[ibp,idim,iint] -= bbp*dx[idim] + aap*ddx[idim]
@@ -2276,7 +2298,7 @@ def Compute_hamil_hess_mul_xonly_Cython_nosym(
 
     for ib in range(nbody):
 
-        for idim in range(cndim):
+        for idim in range(geodim):
             
             Hamil_hess_dx[ib,idim,0,0] = -hess_dx_pot_fft[ib,idim,0].real
             Hamil_hess_dx[ib,idim,0,1] = 0 
@@ -2294,4 +2316,30 @@ def Compute_hamil_hess_mul_xonly_Cython_nosym(
 
 
     return Hamil_hess_dx_np
+
+
+def InplaceSmoothCoeffs(
+    long nloop                          ,
+    long ncoeff                         ,
+    long ncoeff_smooth_init             ,
+    double smooth_mul                   ,
+    double[:,:,:,::1]  all_coeffs 
+):
+
+    cdef Py_ssize_t il,k,idim
+    cdef double prod_mul
+    cdef long geodim = all_coeffs.shape[1]
+
+    for il in range(nloop):
+        for idim in range(geodim):
+            prod_mul = 1.
+            for k in range(ncoeff_smooth_init,ncoeff):
+
+                prod_mul *= smooth_mul
+
+                all_coeffs[il,idim,k,0] *= prod_mul
+                all_coeffs[il,idim,k,1] *= prod_mul
+
+
+
 

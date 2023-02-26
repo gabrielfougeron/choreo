@@ -1,10 +1,5 @@
 import os
 
-os.environ['OMP_NUM_THREADS'] = '1'
-os.environ['NUMEXPR_NUM_THREADS'] = '1'
-os.environ['OPENBLAS_NUM_THREADS'] = '1'
-os.environ['MKL_NUM_THREADS'] = '1'
-
 import sys,argparse
 import random
 import numpy as np
@@ -16,10 +11,16 @@ import shutil
 import time
 import builtins
 
+try:
+    import pyamg
+except:
+    pass
+
 from choreo.Choreo_scipy_plus import *
 from choreo.Choreo_funs import *
 
 def Find_Choreo(
+    geodim,
     nbody,
     n_reconverge_it_max,
     nint_init,
@@ -107,7 +108,11 @@ def Find_Choreo(
     print(f'Searching periodic solutions of {nbody:d} bodies.')
 
     print(f'Processing symmetries for {(n_reconverge_it_max+1):d} convergence levels.')
-    ActionSyst = setup_changevar(nbody,nint_init,mass,n_reconverge_it_max,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change,CrashOnIdentity=CrashOnError_changevar)
+    ActionSyst = setup_changevar(geodim,nbody,nint_init,mass,n_reconverge_it_max,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change,CrashOnIdentity=CrashOnError_changevar)
+
+    start_cvg_lvl = 0
+    # start_cvg_lvl = 2
+    ActionSyst.current_cvg_lvl = start_cvg_lvl
 
     print('')
 
@@ -134,7 +139,8 @@ def Find_Choreo(
     print(f"    ==> Reduction of {100*(1-ActionSyst.coeff_to_param.shape[0]/ActionSyst.coeff_to_param.shape[1]):.2f} %")
     print('')
 
-    all_coeffs_min,all_coeffs_max = Make_Init_bounds_coeffs(ActionSyst.nloop,ncoeff,coeff_ampl_o,k_infl,k_max,coeff_ampl_min)
+    all_coeffs_min,all_coeffs_max = Make_Init_bounds_coeffs(ActionSyst.nloop,ActionSyst.geodim,ncoeff,coeff_ampl_o,k_infl,k_max,coeff_ampl_min)
+    
 
     x_min = ActionSyst.Package_all_coeffs(all_coeffs_min)
     x_max = ActionSyst.Package_all_coeffs(all_coeffs_max)
@@ -189,7 +195,8 @@ def Find_Choreo(
         
         print(f'Optimization attempt number: {n_opt}')
 
-        ActionSyst.current_cvg_lvl = 0
+        ActionSyst.current_cvg_lvl = start_cvg_lvl
+
         ncoeff = ActionSyst.ncoeff
         nint = ActionSyst.nint
 
@@ -267,6 +274,8 @@ def Find_Choreo(
 
         while GoOn:
             # Set correct optim params
+
+            x0 = np.copy(best_sol.x)
             
             inner_tol = 0.
             
@@ -286,13 +295,28 @@ def Find_Choreo(
             
             inner_M = None
 
+            # inner_M = ActionSyst.GetAMGPreco(x0,krylov_method=krylov_method,cycle='V')
+            # inner_M = ActionSyst.GetAMGPreco(x0,krylov_method=krylov_method,cycle='W')
+            # inner_M = ActionSyst.GetAMGPreco(x0,krylov_method=krylov_method,cycle='F')
+            # inner_M = ActionSyst.GetAMGPreco(x0,krylov_method=krylov_method,cycle='AMLI')
+
+
             if (krylov_method == 'lgmres'):
                 jac_options = {'method':krylov_method,'rdiff':rdiff,'outer_k':outer_k,'inner_inner_m':inner_maxiter,'inner_store_outer_Av':store_outer_Av,'inner_tol':inner_tol,'inner_M':inner_M }
             elif (krylov_method == 'gmres'):
                 jac_options = {'method':krylov_method,'rdiff':rdiff,'outer_k':outer_k,'inner_tol':inner_tol,'inner_M':inner_M }
             else:
                 jac_options = {'method':krylov_method,'rdiff':rdiff,'outer_k':outer_k,'inner_tol':inner_tol,'inner_M':inner_M }
- 
+
+
+            # jac_options = {'method':pyamg.krylov.bicgstab}
+            # jac_options = {'method':pyamg.krylov.cr}
+            # jac_options = {'method':pyamg.krylov.fgmres}
+            # jac_options = {'method':pyamg.krylov.gmres}
+            # jac_options = {'method':pyamg.krylov.gmres_householder}
+            # jac_options = {'method':pyamg.krylov.gmres_mgs}
+
+
             if (Use_exact_Jacobian):
 
                 FGrad = lambda x,dx : ActionSyst.Compute_action_hess_mul(x,dx)
@@ -316,7 +340,6 @@ def Find_Choreo(
 
             try : 
                 
-                x0 = np.copy(best_sol.x)
                 opt_result , info = nonlin_solve_pp(F=F,x0=x0,jacobian=jacobian,verbose=disp_scipy_opt,maxiter=maxiter,f_tol=gradtol,line_search=line_search,callback=optim_callback,raise_exception=False,smin=linesearch_smin,full_output=True)
 
                 AskedForNext = (info['status'] == 0)
@@ -326,7 +349,7 @@ def Find_Choreo(
                 print(exc)
                 print("Value Error occured, skipping.")
                 GoOn = False
-                # raise(exc)
+                raise(exc)
                 
             if (AskedForNext):
                 print("Skipping at user's request")
@@ -377,18 +400,12 @@ def Find_Choreo(
                 CanRefine = (ActionSyst.current_cvg_lvl < n_reconverge_it_max)
                 
                 if CanRefine :
-                    
-                    all_coeffs_coarse = ActionSyst.Unpackage_all_coeffs(best_sol.x)
-                    ncoeff_coarse = ActionSyst.ncoeff
-                    
-                    ActionSyst.current_cvg_lvl += 1
-                    ncoeff_fine = ActionSyst.ncoeff
 
-                    all_coeffs_fine = np.zeros((ActionSyst.nloop,ndim,ncoeff_fine,2),dtype=np.float64)
-                    for k in range(ncoeff_coarse):
-                        all_coeffs_fine[:,:,k,:] = all_coeffs_coarse[:,:,k,:]
+                    x_fine = ActionSyst.TransferParamBtwRefinementLevels(best_sol.x)
+
+                    ActionSyst.current_cvg_lvl += 1
                         
-                    x_fine = ActionSyst.Package_all_coeffs(all_coeffs_fine)
+
                     f_fine = ActionSyst.Compute_action_onlygrad(x_fine)
                     f_fine_norm = np.linalg.norm(f_fine)
                     
@@ -534,6 +551,7 @@ def Find_Choreo(
     print('Done!')
 
 def GenSymExample(
+    geodim,
     nbody,
     nint_init,
     mass,
@@ -582,7 +600,7 @@ def GenSymExample(
     n_reconverge_it_max = 0
     n_grad_change = 1
 
-    ActionSyst = setup_changevar(nbody,nint_init,mass,n_reconverge_it_max,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change,CrashOnIdentity=CrashOnError_changevar)
+    ActionSyst = setup_changevar(geodim,nbody,nint_init,mass,n_reconverge_it_max,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change,CrashOnIdentity=CrashOnError_changevar)
 
     nbi_tot = 0
     for il in range(ActionSyst.nloop):
@@ -618,7 +636,7 @@ def GenSymExample(
 
         # return False
 
-    all_coeffs_min,all_coeffs_max = Make_Init_bounds_coeffs(ActionSyst.nloop,ncoeff,coeff_ampl_o,k_infl,k_max,coeff_ampl_min)
+    all_coeffs_min,all_coeffs_max = Make_Init_bounds_coeffs(ActionSyst.nloop,ActionSyst.geodim,ncoeff,coeff_ampl_o,k_infl,k_max,coeff_ampl_min)
 
     x_min = ActionSyst.Package_all_coeffs(all_coeffs_min)
     x_max = ActionSyst.Package_all_coeffs(all_coeffs_max)
@@ -680,6 +698,7 @@ def GenSymExample(
     return True
 
 def Speed_test(
+    geodim,
     nbody,
     n_reconverge_it_max,
     nint_init,
@@ -715,20 +734,20 @@ def Speed_test(
 
     """
     
-    ActionSyst = setup_changevar(nbody,nint_init,mass,n_reconverge_it_max,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change,CrashOnIdentity=CrashOnError_changevar)
 
-    nbi_tot = 0
-    for il in range(ActionSyst.nloop):
-        for ilp in range(il+1,ActionSyst.nloop):
-            nbi_tot += ActionSyst.loopnb[il]*ActionSyst.loopnb[ilp]
-        nbi_tot += ActionSyst.loopnbi[il]
-    nbi_naive = (nbody*(nbody-1))//2
+    ActionSyst = setup_changevar(geodim,nbody,nint_init,mass,n_reconverge_it_max,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change,CrashOnIdentity=CrashOnError_changevar)
 
-    ActionSyst.current_cvg_lvl = n_reconverge_it_max
+    start_cvg_lvl = 0
+    start_cvg_lvl = n_reconverge_it_max
+    # start_cvg_lvl = 2
+    ActionSyst.current_cvg_lvl = start_cvg_lvl
+
+
     ncoeff = ActionSyst.ncoeff
     nint = ActionSyst.nint
 
-    all_coeffs_min,all_coeffs_max = Make_Init_bounds_coeffs(ActionSyst.nloop,ncoeff,coeff_ampl_o,k_infl,k_max,coeff_ampl_min)
+    all_coeffs_min,all_coeffs_max = Make_Init_bounds_coeffs(ActionSyst.nloop,ActionSyst.geodim,ncoeff,coeff_ampl_o,k_infl,k_max,coeff_ampl_min)
+    
 
     x_min = ActionSyst.Package_all_coeffs(all_coeffs_min)
     x_max = ActionSyst.Package_all_coeffs(all_coeffs_max)
@@ -742,7 +761,7 @@ def Speed_test(
 
     sampler = UniformRandom(d=rand_dim)
 
-    x0 = np.random.random(ActionSyst.coeff_to_param.shape[1])
+    x0 = np.random.random(ActionSyst.param_to_coeff.shape[1])
     xmin = ActionSyst.Compute_MinDist(x0)
 
     if (xmin < 1e-5):

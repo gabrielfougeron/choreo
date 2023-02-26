@@ -218,7 +218,7 @@ def Make2DChoreoSymManyLoops(nloop=None,nbpl=None,SymName=None,SymType=None):
             SymGens.append(ChoreoSym(
                 LoopTarget=istart,
                 LoopSource=istart,
-                SpaceRot = np.identity(ndim,dtype=np.float64),
+                SpaceRot = np.identity(2,dtype=np.float64),
                 TimeRev=1,
                 TimeShift=fractions.Fraction(numerator=-1,denominator=the_lcm//nbpl[il])
             ))
