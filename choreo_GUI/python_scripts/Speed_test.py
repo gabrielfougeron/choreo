@@ -19,6 +19,8 @@ def main():
 
     params_dict = js.ConfigDict.to_py()
 
+    geodim = 2
+
     file_basename = ''
     
     CrashOnError_changevar = False
