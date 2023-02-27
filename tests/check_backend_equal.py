@@ -19,7 +19,7 @@ sys.path.append(__PROJECT_ROOT__)
 
 from choreo import *
 
-nint = 24
+nint = 2400
 
 ncoeff = nint//2 + 1
 
@@ -68,23 +68,29 @@ ActionSyst = setup_changevar(2,nbody,nint,mass,n_reconverge_it_max,Sym_list=Sym_
 ncoeffs_args = ActionSyst.coeff_to_param.shape[0]
 
 
+
 grad_backend_list = [
-    Compute_action_Cython_nD_serial,
     Compute_action_Cython_2D_serial,
-    Compute_action_Cython_nD_parallel,
-    Compute_action_Cython_2D_parallel,
-    Compute_action_Numba_nD_serial,
     Compute_action_Numba_2D_serial,
+    Compute_action_Cython_nD_serial,
+    Compute_action_Numba_nD_serial,
+    Compute_action_Cython_2D_parallel,
+    Compute_action_Numba_2D_parallel,
+    Compute_action_Cython_nD_parallel,
+    Compute_action_Numba_nD_parallel,
 ]
 
 hess_backend_list = [
-    Compute_action_hess_mul_Cython_nD_serial,
     Compute_action_hess_mul_Cython_2D_serial,
-    Compute_action_hess_mul_Cython_nD_parallel,
-    Compute_action_hess_mul_Cython_2D_parallel,
-    Compute_action_hess_mul_Numba_nD_serial,
     Compute_action_hess_mul_Numba_2D_serial,
+    Compute_action_hess_mul_Cython_nD_serial,
+    Compute_action_hess_mul_Numba_nD_serial,
+    Compute_action_hess_mul_Cython_2D_parallel,
+    Compute_action_hess_mul_Numba_2D_parallel,
+    Compute_action_hess_mul_Cython_nD_parallel,
+    Compute_action_hess_mul_Numba_nD_parallel,
 ]
+
 
 ActionSyst.ComputeGradBackend = grad_backend_list[0]
 ActionSyst.ComputeHessBackend = hess_backend_list[0]
