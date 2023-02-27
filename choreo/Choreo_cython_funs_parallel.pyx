@@ -31,6 +31,9 @@ from libc.math cimport isnan as cisnan
 from libc.math cimport isinf as cisinf
 
 
+from choreo.Choreo_cython_funs import the_rfft,the_irfft
+
+
 cdef double cn = -0.5  #coeff of x^2 in the potential power law
 cdef double cnm1 = cn-1
 cdef double cnm2 = cn-2
@@ -61,11 +64,110 @@ cdef inline (double, double, double) CCpt_interbody_pot(double xsq) nogil:
 
 
 
+@cython.cdivision(True)
+def Compute_action_Cython_nD_parallel(
+    long nloop                          ,
+    long ncoeff                         ,
+    long nint                           ,
+    double[::1]       mass              ,
+    long[::1]         loopnb            ,
+    long[:,::1]       Targets           ,
+    double[::1]       MassSum           ,
+    double[:,:,:,::1] SpaceRotsUn       ,
+    long[:,::1]       TimeRevsUn        ,
+    long[:,::1]       TimeShiftNumUn    ,
+    long[:,::1]       TimeShiftDenUn    ,
+    long[::1]         loopnbi           ,
+    double[:,::1]     ProdMassSumAll    ,
+    double[:,:,:,::1] SpaceRotsBin      ,
+    long[:,::1]       TimeRevsBin       ,
+    long[:,::1]       TimeShiftNumBin   ,
+    long[:,::1]       TimeShiftDenBin   ,
+    double[:,:,:,::1] all_coeffs        ,
+    double[:,:,::1]   all_pos 
+):
+    # This function is probably the most important one.
+    # Computes the action and its gradient with respect to the Fourier coefficients of the generator in each loop.
+    
+    cdef Py_ssize_t geodim = all_pos.shape[1]
+
+    cdef Py_ssize_t il,ilp
+    cdef Py_ssize_t idim,jdim
+    cdef Py_ssize_t ibi
+    cdef Py_ssize_t ib,ibp
+    cdef Py_ssize_t iint
+    cdef Py_ssize_t k
+    cdef long k2
+    cdef double prod_mass,a,b,dx2,prod_fac
+
+    cdef double Action
+
+    cdef double Pot_en
+    cdef double[:,:,::1] grad_pot_all
+
+    Pot_en, grad_pot_all = Compute_action_Cython_time_loop_nD_parallel(
+        nloop             ,
+        nint              ,
+        mass              ,
+        loopnb            ,
+        Targets           ,
+        SpaceRotsUn       ,
+        TimeRevsUn        ,
+        TimeShiftNumUn    ,
+        TimeShiftDenUn    ,
+        loopnbi           ,
+        ProdMassSumAll    ,
+        SpaceRotsBin      ,
+        TimeRevsBin       ,
+        TimeShiftNumBin   ,
+        TimeShiftDenBin   ,
+        all_pos           
+    )
+
+    cdef double complex[:,:,::1]  grad_pot_fft = the_rfft(grad_pot_all,norm="forward")  #
+    cdef double Kin_en = 0  #
+    cdef np.ndarray[double, ndim=4, mode="c"] Action_grad_np = np.empty((nloop,geodim,ncoeff,2),np.float64)
+    cdef double[:,:,:,::1] Action_grad = Action_grad_np #
+    for il in range(nloop):
+        
+        prod_fac = MassSum[il]*cfourpisq
+        
+        for idim in range(geodim): 
+
+            Action_grad[il,idim,0,0] = - grad_pot_fft[il,idim,0].real
+            Action_grad[il,idim,0,1] = 0  
+
+            for k in range(1,ncoeff-1):
+                
+                k2 = k*k
+
+                a = prod_fac*k2
+                b=2*a  
+
+                Kin_en += a *((all_coeffs[il,idim,k,0]*all_coeffs[il,idim,k,0]) + (all_coeffs[il,idim,k,1]*all_coeffs[il,idim,k,1]))
+                
+                Action_grad[il,idim,k,0] = b*all_coeffs[il,idim,k,0] - 2*grad_pot_fft[il,idim,k].real
+                Action_grad[il,idim,k,1] = b*all_coeffs[il,idim,k,1] - 2*grad_pot_fft[il,idim,k].imag
+
+
+            k = ncoeff-1
+            k2 = k*k
+            
+            a = prod_fac*k2
+            b=2*a  
+
+            Kin_en += a *((all_coeffs[il,idim,k,0]*all_coeffs[il,idim,k,0]))
+            Action_grad[il,idim,k,0] = b*all_coeffs[il,idim,k,0] - grad_pot_fft[il,idim,k].real
+            
+    Action = Kin_en-Pot_en/nint
+    
+    return Action,Action_grad_np
+
 
 
 @cython.cdivision(True)
 # cdef (double, double[:,:,::1]) Compute_action_Cython_time_loop(
-def Compute_action_Cython_time_loop(
+def Compute_action_Cython_time_loop_nD_parallel(
     long              nloop             ,
     long              nint              ,
     double[::1]       mass              ,
@@ -202,9 +304,110 @@ def Compute_action_Cython_time_loop(
 
     return Pot_en, grad_pot_all_local_np.sum(axis=0)
 
+
+
+
+@cython.cdivision(True)
+def Compute_action_hess_mul_Cython_nD_parallel(
+    long nloop                          ,
+    long ncoeff                         ,
+    long nint                           ,
+    double[::1]       mass              ,
+    long[::1]         loopnb            ,
+    long[:,::1]       Targets           ,
+    double[::1]       MassSum           ,
+    double[:,:,:,::1] SpaceRotsUn       ,
+    long[:,::1]       TimeRevsUn        ,
+    long[:,::1]       TimeShiftNumUn    ,
+    long[:,::1]       TimeShiftDenUn    ,
+    long[::1]         loopnbi           ,
+    double[:,::1]     ProdMassSumAll    ,
+    double[:,:,:,::1] SpaceRotsBin      ,
+    long[:,::1]       TimeRevsBin       ,
+    long[:,::1]       TimeShiftNumBin   ,
+    long[:,::1]       TimeShiftDenBin   ,
+    double[:,:,:,::1] all_coeffs        ,
+    np.ndarray[double, ndim=4, mode="c"]  all_coeffs_d  , # required
+    double[:,:,::1]   all_pos 
+):
+    # Computes the matrix vector product H*dx where H is the Hessian of the action.
+    # Useful to guide the root finding / optimisation process and to better understand the topography of the action (critical points / Morse theory).
+
+    cdef long geodim = all_coeffs.shape[1]
+
+    cdef Py_ssize_t il,ilp,i
+    cdef Py_ssize_t idim,jdim
+    cdef Py_ssize_t ibi
+    cdef Py_ssize_t ib,ibp
+    cdef Py_ssize_t iint
+    cdef Py_ssize_t k
+    cdef long k2
+
+    cdef double prod_mass,a,b,c,dx2,prod_fac,dxtddx
+
+    c_coeffs_d = all_coeffs_d.view(dtype=np.complex128)[...,0]
+    cdef double[:,:,::1]  all_pos_d = the_irfft(c_coeffs_d,n=nint,axis=2,norm="forward")
+
+    cdef double[:,:,::1] hess_pot_all_d
+
+    hess_pot_all_d = Compute_action_hess_mul_Cython_time_loop_nD_parallel(
+        nloop             ,
+        nint              ,
+        mass              ,
+        loopnb            ,
+        Targets           ,
+        SpaceRotsUn       ,
+        TimeRevsUn        ,
+        TimeShiftNumUn    ,
+        TimeShiftDenUn    ,
+        loopnbi           ,
+        ProdMassSumAll    ,
+        SpaceRotsBin      ,
+        TimeRevsBin       ,
+        TimeShiftNumBin   ,
+        TimeShiftDenBin   ,
+        all_pos           ,
+        all_pos_d         
+    )
+
+    cdef double complex[:,:,::1]  hess_dx_pot_fft = the_rfft(hess_pot_all_d,norm="forward")
+
+    cdef np.ndarray[double, ndim=4, mode="c"] Action_hess_dx_np = np.empty((nloop,geodim,ncoeff,2),np.float64)
+    cdef double[:,:,:,::1] Action_hess_dx = Action_hess_dx_np
+
+    for il in range(nloop):
+        
+        prod_fac = MassSum[il]*cfourpisq
+        
+        for idim in range(geodim):
+            
+            Action_hess_dx[il,idim,0,0] = -hess_dx_pot_fft[il,idim,0].real
+            Action_hess_dx[il,idim,0,1] = 0 
+
+            for k in range(1,ncoeff-1):
+                
+                k2 = k*k
+
+                a = 2*prod_fac*k2
+                
+                Action_hess_dx[il,idim,k,0] = a*all_coeffs_d[il,idim,k,0] - 2*hess_dx_pot_fft[il,idim,k].real
+                Action_hess_dx[il,idim,k,1] = a*all_coeffs_d[il,idim,k,1] - 2*hess_dx_pot_fft[il,idim,k].imag
+
+            k = ncoeff-1
+            k2 = k*k
+            a = 2*prod_fac*k2
+
+            Action_hess_dx[il,idim,k,0] = a*all_coeffs_d[il,idim,k,0] - hess_dx_pot_fft[il,idim,k].real
+
+    return Action_hess_dx_np
+    
+
+
+
+
 @cython.cdivision(True)
 # cdef np.ndarray[double, ndim=3, mode="c"] Compute_action_hess_mul_Cython_time_loop_2D(
-def Compute_action_hess_mul_Cython_time_loop(
+def Compute_action_hess_mul_Cython_time_loop_nD_parallel(
     long              nloop             ,
     long              nint              ,
     double[::1]       mass              ,
@@ -352,8 +555,112 @@ def Compute_action_hess_mul_Cython_time_loop(
 
 
 @cython.cdivision(True)
+def Compute_action_Cython_2D_parallel(
+    long nloop                          ,
+    long ncoeff                         ,
+    long nint                           ,
+    double[::1]       mass              ,
+    long[::1]         loopnb            ,
+    long[:,::1]       Targets           ,
+    double[::1]       MassSum           ,
+    double[:,:,:,::1] SpaceRotsUn       ,
+    long[:,::1]       TimeRevsUn        ,
+    long[:,::1]       TimeShiftNumUn    ,
+    long[:,::1]       TimeShiftDenUn    ,
+    long[::1]         loopnbi           ,
+    double[:,::1]     ProdMassSumAll    ,
+    double[:,:,:,::1] SpaceRotsBin      ,
+    long[:,::1]       TimeRevsBin       ,
+    long[:,::1]       TimeShiftNumBin   ,
+    long[:,::1]       TimeShiftDenBin   ,
+    double[:,:,:,::1] all_coeffs        ,
+    double[:,:,::1]   all_pos 
+):
+    # This function is probably the most important one.
+    # Computes the action and its gradient with respect to the Fourier coefficients of the generator in each loop.
+    
+    cdef Py_ssize_t il,ilp
+    cdef Py_ssize_t idim
+    cdef Py_ssize_t ibi
+    cdef Py_ssize_t ib,ibp
+    cdef Py_ssize_t iint
+    cdef Py_ssize_t k
+    cdef long k2
+    cdef long rem, ddiv
+    cdef double pot,potp,potpp
+    cdef double prod_mass,a,b,dx2,prod_fac
+
+    cdef double Pot_en
+    cdef double[:,:,::1] grad_pot_all
+
+    Pot_en, grad_pot_all = Compute_action_Cython_time_loop_2D_parallel(
+        nloop             ,
+        nint              ,
+        mass              ,
+        loopnb            ,
+        Targets           ,
+        SpaceRotsUn       ,
+        TimeRevsUn        ,
+        TimeShiftNumUn    ,
+        TimeShiftDenUn    ,
+        loopnbi           ,
+        ProdMassSumAll    ,
+        SpaceRotsBin      ,
+        TimeRevsBin       ,
+        TimeShiftNumBin   ,
+        TimeShiftDenBin   ,
+        all_pos           ,
+    )
+
+    cdef double complex[:,:,::1]  grad_pot_fft = the_rfft(grad_pot_all,norm="forward")  #
+    cdef double Kin_en = 0 
+    
+    # ~ cdef np.ndarray[double, ndim=4, mode="c"] Action_grad_np = np.empty((nloop,2,ncoeff,2),np.float64)
+    cdef np.ndarray[double, ndim=4, mode="c"] Action_grad_np = np.zeros((nloop,2,ncoeff,2),np.float64)
+    cdef double[:,:,:,::1] Action_grad = Action_grad_np
+
+    for il in range(nloop):
+        
+        prod_fac = MassSum[il]*cfourpisq
+        
+        for idim in range(2): 
+
+            Action_grad[il,idim,0,0] = - grad_pot_fft[il,idim,0].real
+            Action_grad[il,idim,0,1] = 0  
+            
+            for k in range(1,ncoeff-1):
+                
+                k2 = k*k
+                
+                a = prod_fac*k2
+                b=2*a  
+
+                Kin_en += a *((all_coeffs[il,idim,k,0]*all_coeffs[il,idim,k,0]) + (all_coeffs[il,idim,k,1]*all_coeffs[il,idim,k,1]))
+                
+                Action_grad[il,idim,k,0] = b*all_coeffs[il,idim,k,0] - 2*grad_pot_fft[il,idim,k].real
+                Action_grad[il,idim,k,1] = b*all_coeffs[il,idim,k,1] - 2*grad_pot_fft[il,idim,k].imag
+            
+
+            k = ncoeff-1
+            k2 = k*k
+            
+            a = prod_fac*k2
+            b=2*a  
+
+            Kin_en += a *((all_coeffs[il,idim,k,0]*all_coeffs[il,idim,k,0]))
+            Action_grad[il,idim,k,0] = b*all_coeffs[il,idim,k,0] - grad_pot_fft[il,idim,k].real
+
+
+    Action = Kin_en-Pot_en/nint
+    
+    return Action,Action_grad_np
+
+
+
+
+@cython.cdivision(True)
 # cdef (double, double[:,:,::1]) Compute_action_Cython_time_loop_2D(
-def Compute_action_Cython_time_loop_2D(
+def Compute_action_Cython_time_loop_2D_parallel(
     long              nloop             ,
     long              nint              ,
     double[::1]       mass              ,
@@ -471,9 +778,105 @@ def Compute_action_Cython_time_loop_2D(
     return Pot_en, grad_pot_all_local_np.sum(axis=0)
 
 
+
+@cython.cdivision(True)
+def Compute_action_hess_mul_Cython_2D_parallel(
+    long nloop                          ,
+    long ncoeff                         ,
+    long nint                           ,
+    double[::1]       mass              ,
+    long[::1]         loopnb            ,
+    long[:,::1]       Targets           ,
+    double[::1]       MassSum           ,
+    double[:,:,:,::1] SpaceRotsUn       ,
+    long[:,::1]       TimeRevsUn        ,
+    long[:,::1]       TimeShiftNumUn    ,
+    long[:,::1]       TimeShiftDenUn    ,
+    long[::1]         loopnbi           ,
+    double[:,::1]     ProdMassSumAll    ,
+    double[:,:,:,::1] SpaceRotsBin      ,
+    long[:,::1]       TimeRevsBin       ,
+    long[:,::1]       TimeShiftNumBin   ,
+    long[:,::1]       TimeShiftDenBin   ,
+    double[:,:,:,::1] all_coeffs        ,
+    np.ndarray[double, ndim=4, mode="c"]  all_coeffs_d  , # required
+    double[:,:,::1]   all_pos 
+):
+    # Computes the matrix vector product H*dx where H is the Hessian of the action.
+    # Useful to guide the root finding / optimisation process and to better understand the topography of the action (critical points / Morse theory).
+
+    cdef Py_ssize_t il,ilp
+    cdef Py_ssize_t idim,jdim
+    cdef Py_ssize_t ibi
+    cdef Py_ssize_t ib,ibp
+    cdef Py_ssize_t iint
+    cdef Py_ssize_t k
+    cdef long k2
+    cdef long rem, ddiv
+    cdef double pot,potp,potpp
+    cdef double prod_mass,a,b,prod_fac
+
+    cdef Py_ssize_t shift_i,shift_ip
+
+
+    c_coeffs_d = all_coeffs_d.view(dtype=np.complex128)[...,0]
+    cdef double[:,:,::1]  all_pos_d = the_irfft(c_coeffs_d,norm="forward")
+
+    cdef double[:,:,::1] hess_pot_all_d = Compute_action_hess_mul_Cython_time_loop_2D_parallel(
+        nloop             ,
+        nint              ,
+        mass              ,
+        loopnb            ,
+        Targets           ,
+        SpaceRotsUn       ,
+        TimeRevsUn        ,
+        TimeShiftNumUn    ,
+        TimeShiftDenUn    ,
+        loopnbi           ,
+        ProdMassSumAll    ,
+        SpaceRotsBin      ,
+        TimeRevsBin       ,
+        TimeShiftNumBin   ,
+        TimeShiftDenBin   ,
+        all_pos           ,
+        all_pos_d         
+    )
+
+    cdef double complex[:,:,::1]  hess_dx_pot_fft = the_rfft(hess_pot_all_d,norm="forward")
+
+    cdef np.ndarray[double, ndim=4, mode="c"] Action_hess_dx_np = np.empty((nloop,2,ncoeff,2),np.float64)
+    cdef double[:,:,:,::1] Action_hess_dx = Action_hess_dx_np
+
+    for il in range(nloop):
+        
+        prod_fac = MassSum[il]*cfourpisq
+        
+        for idim in range(2):
+            
+            Action_hess_dx[il,idim,0,0] = - hess_dx_pot_fft[il,idim,0].real
+            Action_hess_dx[il,idim,0,1] = 0.            
+
+            for k in range(1,ncoeff-1):
+                
+                k2 = k*k
+                a = 2*prod_fac*k2
+
+                Action_hess_dx[il,idim,k,0] = a*all_coeffs_d[il,idim,k,0] - 2*hess_dx_pot_fft[il,idim,k].real
+                Action_hess_dx[il,idim,k,1] = a*all_coeffs_d[il,idim,k,1] - 2*hess_dx_pot_fft[il,idim,k].imag
+
+            k = ncoeff-1
+            k2 = k*k
+            a = 2*prod_fac*k2
+
+            Action_hess_dx[il,idim,k,0] = a*all_coeffs_d[il,idim,k,0] - hess_dx_pot_fft[il,idim,k].real
+
+    return Action_hess_dx_np
+
+
+
 @cython.cdivision(True)
 # cdef np.ndarray[double, ndim=3, mode="c"] Compute_action_hess_mul_Cython_time_loop_2D(
-def Compute_action_hess_mul_Cython_time_loop_2D(
+def Compute_action_hess_mul_Cython_time_loop_2D_parallel(
     long              nloop             ,
     long              nint              ,
     double[::1]       mass              ,

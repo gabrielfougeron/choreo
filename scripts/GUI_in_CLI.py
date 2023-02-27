@@ -62,6 +62,9 @@ def main(params_dict):
 
     geodim = 2
 
+    TwoDBackend = (geodim == 2)
+    ParallelBackend = (params_dict['Solver_CLI']['Exec_Mul_Proc'] == "MultiThread")
+
     file_basename = ''
     
     CrashOnError_changevar = False

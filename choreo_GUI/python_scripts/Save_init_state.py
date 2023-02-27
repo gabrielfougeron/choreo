@@ -31,6 +31,9 @@ def main():
 
     geodim = 2
 
+    TwoDBackend = (geodim == 2)
+    ParallelBackend = False
+    
     file_basename = ''
     
     CrashOnError_changevar = False
