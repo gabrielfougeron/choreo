@@ -709,6 +709,8 @@ def Speed_test(
     geodim,
     ParallelBackend,
     TwoDBackend,
+    grad_backend,
+    hess_backend,
     nbody,
     n_reconverge_it_max,
     nint_init,
@@ -743,11 +745,15 @@ def Speed_test(
     Helper function to profile code
 
     """
-    
 
     ActionSyst = setup_changevar(geodim,nbody,nint_init,mass,n_reconverge_it_max,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change,CrashOnIdentity=CrashOnError_changevar)
 
-    ActionSyst.SetBackend(parallel=ParallelBackend,TwoD=TwoDBackend)
+    # ActionSyst.SetBackend(parallel=ParallelBackend,TwoD=TwoDBackend)
+
+    if not(grad_backend is None):
+        ActionSyst.ComputeGradBackend = grad_backend
+    if not(hess_backend is None):
+        ActionSyst.ComputeHessBackend = hess_backend
 
     start_cvg_lvl = 0
     start_cvg_lvl = n_reconverge_it_max
