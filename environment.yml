@@ -16,6 +16,8 @@ dependencies:
   - mkl
   - mkl_fft
   - pyamg
+  - numba
+  - icc_rt
   - pip:
     - cffi==1.15.0
     - pycparser==2.21
