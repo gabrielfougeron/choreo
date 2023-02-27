@@ -88,6 +88,9 @@ async def main():
     params_dict = js.ConfigDict.to_py()
 
     geodim = 2
+
+    TwoDBackend = (geodim == 2)
+    ParallelBackend = False
     
     CrashOnError_changevar = False
 
