@@ -1,6 +1,8 @@
 import os
 
 os.environ['OPENBLAS_NUM_THREADS'] = '1'
+os.environ['NUMEXPR_NUM_THREADS'] = '1'
+os.environ['MKL_NUM_THREADS'] = '1'
 
 import concurrent.futures
 import multiprocessing
@@ -19,16 +21,13 @@ sys.path.append(__PROJECT_ROOT__)
 import choreo 
 
 
-val = str(2)
-# val = str(1)
+# val = str(2)
+val = str(1)
 
 print(val)
 
 
 os.environ['OMP_NUM_THREADS'] = val
-# os.environ['NUMEXPR_NUM_THREADS'] = val
-# os.environ['OPENBLAS_NUM_THREADS'] = val
-# os.environ['MKL_NUM_THREADS'] = val
 
 
 
@@ -77,8 +76,8 @@ def main(params_dict):
 
     geodim = 2
 
-    TwoDBackend = True
-    # TwoDBackend = False
+    # TwoDBackend = True
+    TwoDBackend = False
     ParallelBackend = True
     # ParallelBackend = False
 
