@@ -1042,15 +1042,7 @@ def Compute_action_Numba_Kin_loop_nD_parallel(
 
     return Kin_en, Action_grad 
             
-# @numba.jit(parallel=True,**numba_kwargs)
-@numba.jit(parallel={ 'comprehension': True,  # parallel comprehension
-  'prange':        True,  # parallel for-loop
-  'numpy':         True,  # parallel numpy calls
-  'reduction':     False,  # parallel reduce calls
-  'setitem':       True,  # parallel setitem
-  'stencil':       True,  # parallel stencils
-  'fusion':        True,  # enable fusion or not
-},**numba_kwargs)
+@numba.jit(parallel=True,**numba_kwargs)
 def Compute_action_Numba_time_loop_nD_parallel(
     nloop             ,
     nint              ,
@@ -1072,15 +1064,16 @@ def Compute_action_Numba_time_loop_nD_parallel(
 
     geodim = all_pos.shape[1]
 
-    dx  = np.empty((geodim),dtype=np.float64) # hoisting ?
-
-    tot_rk = numba.get_num_threads()
+    # tot_rk = numba.get_num_threads()
+    tot_rk = 16
 
     Pot_en = np.zeros((tot_rk),dtype=np.float64)
 
     grad_pot_all = np.zeros((tot_rk,nloop,2,nint),dtype=np.float64)
 
     for iint in numba.prange(nint):
+
+        dx  = np.empty((geodim),dtype=np.float64) # hoisting ?
 
         rk = numba.get_thread_id()
 
@@ -1258,9 +1251,10 @@ def Compute_action_hess_mul_Numba_Kin_loop_nD_parallel(
             a = 2*prod_fac*k2
 
             Action_hess_dx[il,idim,k,0] = a*all_coeffs_d[il,idim,k,0] - hess_dx_pot_fft[il,idim,k].real
+
     return Action_hess_dx
 
-@numba.jit(parallel={'prange':True,'reduction':False},**numba_kwargs)
+@numba.jit(parallel=True,**numba_kwargs)
 def Compute_action_hess_mul_Numba_time_loop_nD_parallel(
     nloop             ,
     nint              ,
@@ -1283,13 +1277,18 @@ def Compute_action_hess_mul_Numba_time_loop_nD_parallel(
 
     geodim = all_pos.shape[1]
 
-    dx  = np.zeros((geodim),dtype=np.float64)
-    ddx = np.zeros((geodim),dtype=np.float64)
-    ddf = np.zeros((geodim),dtype=np.float64)
+    # tot_rk = numba.get_num_threads()
+    tot_rk = 16
 
-    hess_pot_all_d = np.zeros((nloop,2,nint),dtype=np.float64)
+    hess_pot_all_d = np.zeros((tot_rk,nloop,2,nint),dtype=np.float64)
 
     for iint in numba.prange(nint):
+
+        dx  = np.empty((geodim),dtype=np.float64) # hoisting ?
+        ddx = np.empty((geodim),dtype=np.float64) # hoisting ?
+        ddf = np.empty((geodim),dtype=np.float64) # hoisting ?
+
+        rk = numba.get_thread_id()
 
         # Different loops
         for il in range(nloop):
@@ -1330,13 +1329,13 @@ def Compute_action_hess_mul_Numba_time_loop_nD_parallel(
                             for jdim in range(1,geodim):
                                 c = c+SpaceRotsUn[il,ib,jdim,idim]*ddf[jdim]
                             
-                            hess_pot_all_d[il ,idim,shift_i] += c
+                            hess_pot_all_d[rk, il ,idim,shift_i] += c
                             
                             c = SpaceRotsUn[ilp,ibp,0,idim]*ddf[0]
                             for jdim in range(1,geodim):
                                 c = c+SpaceRotsUn[ilp,ibp,jdim,idim]*ddf[jdim]
                             
-                            hess_pot_all_d[ilp,idim,shift_ip] -= c
+                            hess_pot_all_d[rk, ilp,idim,shift_ip] -= c
 
         # Same loop + symmetry
         for il in range(nloop):
@@ -1375,10 +1374,10 @@ def Compute_action_hess_mul_Numba_time_loop_nD_parallel(
                     for jdim in range(1,geodim):
                         c = c+SpaceRotsBin[il,ibi,jdim,idim]*ddf[jdim]
                     
-                    hess_pot_all_d[il ,idim,shift_i] += c
-                    hess_pot_all_d[il ,idim,iint] -= ddf[idim]
+                    hess_pot_all_d[rk, il ,idim,shift_i] += c
+                    hess_pot_all_d[rk, il ,idim,iint] -= ddf[idim]
 
-    return hess_pot_all_d
+    return hess_pot_all_d.sum(axis=0)
 
 def Compute_action_Numba_2D_parallel(
     nloop             ,
@@ -1502,10 +1501,15 @@ def Compute_action_Numba_time_loop_2D_parallel(
     all_pos           ,
 ):
     
-    Pot_en = 0.
-    grad_pot_all = np.zeros((nloop,2,nint),dtype=np.float64)
+    # tot_rk = numba.get_num_threads()
+    tot_rk = 16
+
+    Pot_en = np.zeros((tot_rk),dtype=np.float64)
+    grad_pot_all = np.zeros((tot_rk,nloop,2,nint),dtype=np.float64)
 
     for iint in numba.prange(nint):
+
+        rk = numba.get_thread_id()
 
         # Different loops
         for il in range(nloop):
@@ -1533,18 +1537,18 @@ def Compute_action_Numba_time_loop_2D_parallel(
                             
                         pot,potp,potpp = Cpt_interbody_pot(dx2)
                         
-                        Pot_en += pot*prod_mass
+                        Pot_en[rk] += pot*prod_mass
 
                         a = (2*prod_mass*potp)
 
                         dx0 = a * dx0
                         dx1 = a * dx1
 
-                        grad_pot_all[il ,0,shift_i ] += SpaceRotsUn[il ,ib ,0,0] * dx0 + SpaceRotsUn[il ,ib ,1,0] * dx1
-                        grad_pot_all[ilp,0,shift_ip] -= SpaceRotsUn[ilp,ibp,0,0] * dx0 + SpaceRotsUn[ilp,ibp,1,0] * dx1
+                        grad_pot_all[rk, il ,0,shift_i ] += SpaceRotsUn[il ,ib ,0,0] * dx0 + SpaceRotsUn[il ,ib ,1,0] * dx1
+                        grad_pot_all[rk, ilp,0,shift_ip] -= SpaceRotsUn[ilp,ibp,0,0] * dx0 + SpaceRotsUn[ilp,ibp,1,0] * dx1
   
-                        grad_pot_all[il ,1,shift_i ] += SpaceRotsUn[il ,ib ,0,1] * dx0 + SpaceRotsUn[il ,ib ,1,1] * dx1
-                        grad_pot_all[ilp,1,shift_ip] -= SpaceRotsUn[ilp,ibp,0,1] * dx0 + SpaceRotsUn[ilp,ibp,1,1] * dx1
+                        grad_pot_all[rk, il ,1,shift_i ] += SpaceRotsUn[il ,ib ,0,1] * dx0 + SpaceRotsUn[il ,ib ,1,1] * dx1
+                        grad_pot_all[rk, ilp,1,shift_ip] -= SpaceRotsUn[ilp,ibp,0,1] * dx0 + SpaceRotsUn[ilp,ibp,1,1] * dx1
 
         # Same loop + symmetry
         for il in range(nloop):
@@ -1565,7 +1569,7 @@ def Compute_action_Numba_time_loop_2D_parallel(
 
                 pot,potp,potpp = Cpt_interbody_pot(dx2)
                 
-                Pot_en += pot*ProdMassSumAll[il,ibi]
+                Pot_en[rk] += pot*ProdMassSumAll[il,ibi]
                 
                 a = (2*ProdMassSumAll[il,ibi]*potp)
 
@@ -1574,15 +1578,15 @@ def Compute_action_Numba_time_loop_2D_parallel(
 
                 b = SpaceRotsBin[il,ibi,0,0]*dx0 + SpaceRotsBin[il,ibi,1,0]*dx1
 
-                grad_pot_all[il ,0,shift_i] += b
-                grad_pot_all[il ,0,iint   ] -= dx0
+                grad_pot_all[rk, il ,0,shift_i] += b
+                grad_pot_all[rk, il ,0,iint   ] -= dx0
 
                 b = SpaceRotsBin[il,ibi,0,1]*dx0 + SpaceRotsBin[il,ibi,1,1]*dx1
 
-                grad_pot_all[il ,1,shift_i] += b
-                grad_pot_all[il ,1,iint   ] -= dx1
+                grad_pot_all[rk, il ,1,shift_i] += b
+                grad_pot_all[rk, il ,1,iint   ] -= dx1
 
-    return Pot_en, grad_pot_all
+    return Pot_en.sum(), grad_pot_all.sum(axis=0)
 
 def Compute_action_hess_mul_Numba_2D_parallel(
     nloop             ,
@@ -1634,7 +1638,7 @@ def Compute_action_hess_mul_Numba_2D_parallel(
 
     hess_dx_pot_fft = the_rfft(hess_pot_all_d,norm="forward")
 
-    return Compute_action_hess_mul_Numba_Kin_loop_nD_parallel(
+    return Compute_action_hess_mul_Numba_Kin_loop_2D_parallel(
         nloop             ,
         ncoeff            ,
         MassSum           ,
@@ -1643,7 +1647,7 @@ def Compute_action_hess_mul_Numba_2D_parallel(
     )
 
 @numba.jit(parallel=True,**numba_kwargs)
-def Compute_action_hess_mul_Numba_Kin_loop_nD_parallel(
+def Compute_action_hess_mul_Numba_Kin_loop_2D_parallel(
         nloop             ,
         ncoeff            ,
         MassSum           ,
@@ -1698,10 +1702,15 @@ def Compute_action_hess_mul_Numba_time_loop_2D_parallel(
     all_pos           ,
     all_pos_d         ,
 ):
+    
+    # tot_rk = numba.get_num_threads()
+    tot_rk = 16
 
-    hess_pot_all_d = np.zeros((nloop,2,nint),dtype=np.float64)
+    hess_pot_all_d = np.zeros((tot_rk,nloop,2,nint),dtype=np.float64)
 
     for iint in numba.prange(nint):
+
+        rk = numba.get_thread_id()
 
         # Different loops
         for il in range(nloop):
@@ -1746,11 +1755,11 @@ def Compute_action_hess_mul_Numba_time_loop_2D_parallel(
                         ddf0 = b*dx0+a*ddx0
                         ddf1 = b*dx1+a*ddx1
                             
-                        hess_pot_all_d[il ,0,shift_i ] += SpaceRotsUn[il ,ib ,0,0] * ddf0 + SpaceRotsUn[il ,ib ,1,0] * ddf1
-                        hess_pot_all_d[ilp,0,shift_ip] -= SpaceRotsUn[ilp,ibp,0,0] * ddf0 + SpaceRotsUn[ilp,ibp,1,0] * ddf1
+                        hess_pot_all_d[rk, il ,0,shift_i ] += SpaceRotsUn[il ,ib ,0,0] * ddf0 + SpaceRotsUn[il ,ib ,1,0] * ddf1
+                        hess_pot_all_d[rk, ilp,0,shift_ip] -= SpaceRotsUn[ilp,ibp,0,0] * ddf0 + SpaceRotsUn[ilp,ibp,1,0] * ddf1
 
-                        hess_pot_all_d[il ,1,shift_i ] += SpaceRotsUn[il ,ib ,0,1] * ddf0 + SpaceRotsUn[il ,ib ,1,1] * ddf1
-                        hess_pot_all_d[ilp,1,shift_ip] -= SpaceRotsUn[ilp,ibp,0,1] * ddf0 + SpaceRotsUn[ilp,ibp,1,1] * ddf1
+                        hess_pot_all_d[rk, il ,1,shift_i ] += SpaceRotsUn[il ,ib ,0,1] * ddf0 + SpaceRotsUn[il ,ib ,1,1] * ddf1
+                        hess_pot_all_d[rk, ilp,1,shift_ip] -= SpaceRotsUn[ilp,ibp,0,1] * ddf0 + SpaceRotsUn[ilp,ibp,1,1] * ddf1
 
 
         # Same loop + symmetry
@@ -1787,11 +1796,11 @@ def Compute_action_hess_mul_Numba_time_loop_2D_parallel(
                 ddf0 = b*dx0+a*ddx0
                 ddf1 = b*dx1+a*ddx1
 
-                hess_pot_all_d[il ,0,shift_i] += SpaceRotsBin[il,ibi,0,0]*ddf0 + SpaceRotsBin[il,ibi,1,0]*ddf1
-                hess_pot_all_d[il ,0,iint   ] -= ddf0
+                hess_pot_all_d[rk, il ,0,shift_i] += SpaceRotsBin[il,ibi,0,0]*ddf0 + SpaceRotsBin[il,ibi,1,0]*ddf1
+                hess_pot_all_d[rk, il ,0,iint   ] -= ddf0
 
-                hess_pot_all_d[il ,1,shift_i] += SpaceRotsBin[il,ibi,0,1]*ddf0 + SpaceRotsBin[il,ibi,1,1]*ddf1
-                hess_pot_all_d[il ,1,iint   ] -= ddf1
+                hess_pot_all_d[rk, il ,1,shift_i] += SpaceRotsBin[il,ibi,0,1]*ddf0 + SpaceRotsBin[il,ibi,1,1]*ddf1
+                hess_pot_all_d[rk, il ,1,iint   ] -= ddf1
 
-    return hess_pot_all_d
+    return hess_pot_all_d.sum(axis=0)
 

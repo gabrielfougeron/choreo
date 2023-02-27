@@ -1,6 +1,17 @@
 import os
 
 os.environ['OPENBLAS_NUM_THREADS'] = '1'
+os.environ['NUMEXPR_NUM_THREADS'] = '1'
+os.environ['MKL_NUM_THREADS'] = '1'
+
+
+# val = str(1)
+val = str(16)
+
+print(val)
+
+os.environ['OMP_NUM_THREADS'] = val
+os.environ['NUMBA_NUM_THREADS'] = val
 
 import sys
 import numpy as np
