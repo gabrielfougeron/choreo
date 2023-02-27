@@ -35,8 +35,17 @@ try:
 except:
     pass
 
+from choreo.Choreo_cython_funs_serial import Compute_action_Cython_2D_serial, Compute_action_hess_mul_Cython_2D_serial
+from choreo.Choreo_cython_funs_serial import Compute_action_Cython_nD_serial, Compute_action_hess_mul_Cython_nD_serial
+
+try:
+        
+    from choreo.Choreo_cython_funs_parallel import Compute_action_Cython_2D_parallel, Compute_action_hess_mul_Cython_2D_parallel
+    from choreo.Choreo_cython_funs_parallel import Compute_action_Cython_nD_parallel, Compute_action_hess_mul_Cython_nD_parallel
+except:
+    pass
+
 from choreo.Choreo_cython_funs import twopi,nhash,n
-from choreo.Choreo_cython_funs import Compute_action_Cython,Compute_action_hess_mul_Cython
 from choreo.Choreo_cython_funs import Compute_hash_action_Cython,Compute_Newton_err_Cython
 from choreo.Choreo_cython_funs import Assemble_Cstr_Matrix,diagmat_changevar
 from choreo.Choreo_cython_funs import Compute_MinDist_Cython,Compute_Loop_Dist_btw_avg_Cython,Compute_square_dist,Compute_Loop_Size_Dist_Cython
@@ -46,9 +55,8 @@ from choreo.Choreo_cython_funs import the_irfft,the_rfft
 from choreo.Choreo_cython_funs import Compute_hamil_hess_mul_Cython_nosym,Compute_hamil_hess_mul_xonly_Cython_nosym
 from choreo.Choreo_cython_funs import Compute_Derivative_precond_inv_Cython_nosym,Compute_Derivative_precond_Cython_nosym
 from choreo.Choreo_cython_funs import Compute_Derivative_Cython_nosym,InplaceSmoothCoeffs
+from choreo.Choreo_cython_funs import RotateFastWithSlow_2D
 
-from choreo.Choreo_cython_funs_2D import Compute_action_Cython_2D, Compute_action_hess_mul_Cython_2D
-from choreo.Choreo_cython_funs_2D import RotateFastWithSlow_2D
 
 from choreo.Choreo_scipy_plus import *
 
@@ -70,7 +78,7 @@ class ChoreoAction():
     r"""
     This class defines everything needed to compute the action.
     """
-    def __init__(self, **kwargs):
+    def __init__(self,parallel=False,TwoD=True, **kwargs):
         r"""
         Class constructor. Just shove everything in there.
         """
@@ -83,6 +91,8 @@ class ChoreoAction():
             if key.endswith('_cvg_lvl_list'):
                 self.DefGetCurrentListAttribute(key)
 
+        self.SetBackend(parallel=parallel,TwoD=TwoD)
+
     def __str__(self):
 
         res = 'ChoreoAction object:\n'
@@ -92,6 +102,34 @@ class ChoreoAction():
             res += f'{key} : {val}\n'
 
         return res
+
+    def SetBackend(self,parallel=False,TwoD=True):
+
+        if TwoD:
+            
+            assert self.geodim == 2
+
+            if parallel:
+
+                self.ComputeGradBackend = Compute_action_Cython_2D_parallel
+                self.ComputeHessBackend = Compute_action_hess_mul_Cython_2D_parallel
+
+            else:
+
+                self.ComputeGradBackend = Compute_action_Cython_2D_serial
+                self.ComputeHessBackend = Compute_action_hess_mul_Cython_2D_serial
+
+        else:
+
+            if parallel:
+
+                self.ComputeGradBackend = Compute_action_Cython_nD_parallel
+                self.ComputeHessBackend = Compute_action_hess_mul_Cython_nD_parallel
+
+            else:
+
+                self.ComputeGradBackend = Compute_action_Cython_nD_serial
+                self.ComputeHessBackend = Compute_action_hess_mul_Cython_nD_serial
 
     def GetCurrentListAttribute(self,key):
 
@@ -2208,13 +2246,6 @@ def setup_changevar(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCons=Tr
         param_to_coeff_T_cvg_lvl_list.append(param_to_coeff_cvg_lvl_list[i].transpose(copy=True))
         coeff_to_param_T_cvg_lvl_list.append(coeff_to_param_cvg_lvl_list[i].transpose(copy=True))
 
-    if geodim == 2:
-        ComputeGradBackend = Compute_action_Cython_2D
-        ComputeHessBackend = Compute_action_hess_mul_Cython_2D
-    else:
-        ComputeGradBackend = Compute_action_Cython
-        ComputeHessBackend = Compute_action_hess_mul_Cython
-
     kwargs = {
         "geodim"                        :   geodim                          ,
         "nbody"                         :   nbody                           ,
@@ -2246,8 +2277,6 @@ def setup_changevar(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCons=Tr
         "last_all_coeffs"               :   None                            ,
         "last_all_pos"                  :   None                            ,
         "Do_Pos_FFT"                    :   True                            ,
-        "ComputeGradBackend"            :   ComputeGradBackend              ,
-        "ComputeHessBackend"            :   ComputeHessBackend              ,
     }
 
     return ChoreoAction(**kwargs)

@@ -19,7 +19,8 @@ sys.path.append(__PROJECT_ROOT__)
 import choreo 
 
 
-val = str(1)
+val = str(2)
+# val = str(1)
 
 print(val)
 
@@ -75,6 +76,11 @@ def main(params_dict):
     np.random.seed(int(time.time()*10000) % 5000)
 
     geodim = 2
+
+    TwoDBackend = True
+    # TwoDBackend = False
+    ParallelBackend = True
+    # ParallelBackend = False
 
     file_basename = ''
     
