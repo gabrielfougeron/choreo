@@ -6,7 +6,7 @@ os.environ['MKL_NUM_THREADS'] = '1'
 
 
 # val = str(1)
-val = str(16)
+val = str(4)
 
 print(val)
 

@@ -1,7 +1,9 @@
 import os
 import numpy as np
 import numba
+import multiprocessing
 
+max_num_threads = multiprocessing.cpu_count()
 
 from choreo.Choreo_cython_funs import the_rfft,the_irfft
 
@@ -1065,7 +1067,7 @@ def Compute_action_Numba_time_loop_nD_parallel(
     geodim = all_pos.shape[1]
 
     # tot_rk = numba.get_num_threads()
-    tot_rk = 16
+    tot_rk = max_num_threads
 
     Pot_en = np.zeros((tot_rk),dtype=np.float64)
 
@@ -1278,7 +1280,7 @@ def Compute_action_hess_mul_Numba_time_loop_nD_parallel(
     geodim = all_pos.shape[1]
 
     # tot_rk = numba.get_num_threads()
-    tot_rk = 16
+    tot_rk = max_num_threads
 
     hess_pot_all_d = np.zeros((tot_rk,nloop,2,nint),dtype=np.float64)
 
@@ -1502,7 +1504,7 @@ def Compute_action_Numba_time_loop_2D_parallel(
 ):
     
     # tot_rk = numba.get_num_threads()
-    tot_rk = 16
+    tot_rk = max_num_threads
 
     Pot_en = np.zeros((tot_rk),dtype=np.float64)
     grad_pot_all = np.zeros((tot_rk,nloop,2,nint),dtype=np.float64)
@@ -1704,7 +1706,7 @@ def Compute_action_hess_mul_Numba_time_loop_2D_parallel(
 ):
     
     # tot_rk = numba.get_num_threads()
-    tot_rk = 16
+    tot_rk = max_num_threads
 
     hess_pot_all_d = np.zeros((tot_rk,nloop,2,nint),dtype=np.float64)
 
