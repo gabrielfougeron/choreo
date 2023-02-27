@@ -19,8 +19,6 @@ sys.path.append(__PROJECT_ROOT__)
 
 from choreo import *
 
-
-
 nint = 24
 
 ncoeff = nint//2 + 1
@@ -71,17 +69,21 @@ ncoeffs_args = ActionSyst.coeff_to_param.shape[0]
 
 
 grad_backend_list = [
-Compute_action_Cython_nD_serial,
-Compute_action_Cython_2D_serial,
-Compute_action_Cython_nD_parallel,
-Compute_action_Cython_2D_parallel,
+    Compute_action_Cython_nD_serial,
+    Compute_action_Cython_2D_serial,
+    Compute_action_Cython_nD_parallel,
+    Compute_action_Cython_2D_parallel,
+    Compute_action_Numba_nD_serial,
+    Compute_action_Numba_2D_serial,
 ]
 
 hess_backend_list = [
-Compute_action_hess_mul_Cython_nD_serial,
-Compute_action_hess_mul_Cython_2D_serial,
-Compute_action_hess_mul_Cython_nD_parallel,
-Compute_action_hess_mul_Cython_2D_parallel,
+    Compute_action_hess_mul_Cython_nD_serial,
+    Compute_action_hess_mul_Cython_2D_serial,
+    Compute_action_hess_mul_Cython_nD_parallel,
+    Compute_action_hess_mul_Cython_2D_parallel,
+    Compute_action_hess_mul_Numba_nD_serial,
+    Compute_action_hess_mul_Numba_2D_serial,
 ]
 
 ActionSyst.ComputeGradBackend = grad_backend_list[0]
@@ -102,6 +104,10 @@ Hesso = ActionSyst.Compute_action_hess_mul(x0,dxb)
 
 
 for i in range(len(grad_backend_list)):
+
+    print('')
+    print(grad_backend_list[i].__name__)
+    print(hess_backend_list[i].__name__)
         
     ActionSyst.ComputeGradBackend = grad_backend_list[i]
     ActionSyst.ComputeHessBackend = hess_backend_list[i]
