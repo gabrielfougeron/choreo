@@ -1,6 +1,8 @@
 import os
 
 os.environ['OPENBLAS_NUM_THREADS'] = '1'
+os.environ['NUMEXPR_NUM_THREADS'] = '1'
+os.environ['MKL_NUM_THREADS'] = '1'
 
 
 import concurrent.futures
@@ -61,6 +63,9 @@ def main(params_dict):
     np.random.seed(int(time.time()*10000) % 5000)
 
     geodim = 2
+
+    TwoDBackend = (geodim == 2)
+    ParallelBackend = (params_dict['Solver_CLI']['Exec_Mul_Proc'] == "MultiThread")
 
     file_basename = ''
     

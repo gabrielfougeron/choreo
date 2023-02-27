@@ -109,6 +109,12 @@ def ExecName(the_name, input_folder, store_folder):
     print('--------------------------------------------')
     print('')
 
+
+    geodim = 2
+
+    TwoDBackend = (geodim == 2)
+    ParallelBackend = False
+
     file_basename = the_name
     
     Info_filename = os.path.join(input_folder,the_name + '.json')
