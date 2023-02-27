@@ -70,8 +70,22 @@ ActionSyst = setup_changevar(2,nbody,nint,mass,n_reconverge_it_max,Sym_list=Sym_
 ncoeffs_args = ActionSyst.coeff_to_param.shape[0]
 
 
-ActionSyst.ComputeGradBackend = Compute_action_Cython
-ActionSyst.ComputeHessBackend = Compute_action_hess_mul_Cython
+grad_backend_list = [
+Compute_action_Cython_nD_serial,
+Compute_action_Cython_2D_serial,
+Compute_action_Cython_nD_parallel,
+Compute_action_Cython_2D_parallel,
+]
+
+hess_backend_list = [
+Compute_action_hess_mul_Cython_nD_serial,
+Compute_action_hess_mul_Cython_2D_serial,
+Compute_action_hess_mul_Cython_nD_parallel,
+Compute_action_hess_mul_Cython_2D_parallel,
+]
+
+ActionSyst.ComputeGradBackend = grad_backend_list[0]
+ActionSyst.ComputeHessBackend = hess_backend_list[0]
 
 
 print('n params ',ncoeffs_args)
@@ -83,32 +97,22 @@ x0 = np.random.random((ncoeffs_args))
 dxa = np.zeros((ncoeffs_args))
 dxb =  np.random.random((ncoeffs_args))
 
-
-
-ActionSyst.ComputeGradBackend = Compute_action_Cython
-ActionSyst.ComputeHessBackend = Compute_action_hess_mul_Cython
-
-
 Actiono, Actiongrado = ActionSyst.Compute_action(x0)
 Hesso = ActionSyst.Compute_action_hess_mul(x0,dxb)
 
-# print('Action 0 : ',Actiono)
-# print(np.linalg.norm(Actiongrado))
 
+for i in range(len(grad_backend_list)):
+        
+    ActionSyst.ComputeGradBackend = grad_backend_list[i]
+    ActionSyst.ComputeHessBackend = hess_backend_list[i]
 
+    Action1, Actiongrad1 = ActionSyst.Compute_action(x0)
+    Hess1 = ActionSyst.Compute_action_hess_mul(x0,dxb)
 
-ActionSyst.ComputeGradBackend = Compute_action_Cython_2D
-ActionSyst.ComputeHessBackend = Compute_action_hess_mul_Cython_2D
-
-
-
-Action1, Actiongrad1 = ActionSyst.Compute_action(x0)
-Hess1 = ActionSyst.Compute_action_hess_mul(x0,dxb)
-
-err = abs(Actiono - Action1) / (abs(Actiono) + abs(Action1))
-print("Backend change action error :",err)
-err = np.linalg.norm(Actiongrado - Actiongrad1) / (np.linalg.norm(Actiongrado) + np.linalg.norm(Actiongrad1))
-print("Backend change grad error :",err)
-err = np.linalg.norm(Hesso - Hess1) / (np.linalg.norm(Hesso) + np.linalg.norm(Hess1))
-print("Backend change hess error :",err)
+    err = abs(Actiono - Action1) / (abs(Actiono) + abs(Action1))
+    print("Backend change action error :",err)
+    err = np.linalg.norm(Actiongrado - Actiongrad1) / (np.linalg.norm(Actiongrado) + np.linalg.norm(Actiongrad1))
+    print("Backend change grad error :",err)
+    err = np.linalg.norm(Hesso - Hess1) / (np.linalg.norm(Hesso) + np.linalg.norm(Hess1))
+    print("Backend change hess error :",err)
 
