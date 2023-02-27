@@ -314,7 +314,6 @@ def Compute_action_hess_mul_Cython(
         all_pos_d         
     )
 
-
     cdef double complex[:,:,::1]  hess_dx_pot_fft = the_rfft(hess_pot_all_d,norm="forward")
 
     cdef np.ndarray[double, ndim=4, mode="c"] Action_hess_dx_np = np.empty((nloop,geodim,ncoeff,2),np.float64)
@@ -329,7 +328,7 @@ def Compute_action_hess_mul_Cython(
             Action_hess_dx[il,idim,0,0] = -hess_dx_pot_fft[il,idim,0].real
             Action_hess_dx[il,idim,0,1] = 0 
 
-            for k in range(1,ncoeff):
+            for k in range(1,ncoeff-1):
                 
                 k2 = k*k
 
