@@ -4,6 +4,17 @@ os.environ['OPENBLAS_NUM_THREADS'] = '1'
 os.environ['NUMEXPR_NUM_THREADS'] = '1'
 os.environ['MKL_NUM_THREADS'] = '1'
 
+
+# val = str(1)
+val = str(16)
+
+print(val)
+
+os.environ['OMP_NUM_THREADS'] = val
+os.environ['NUMBA_NUM_THREADS'] = val
+
+
+
 import concurrent.futures
 import multiprocessing
 import shutil
@@ -19,15 +30,6 @@ __PROJECT_ROOT__ = os.path.abspath(os.path.join(os.path.dirname(__file__),os.par
 sys.path.append(__PROJECT_ROOT__)
 
 import choreo 
-
-
-# val = str(2)
-val = str(6)
-
-print(val)
-
-
-os.environ['OMP_NUM_THREADS'] = val
 
 
 
@@ -310,27 +312,32 @@ def main(params_dict):
 
     # n_test = 100000
     n_test = 1000
+    # n_test = 5000
 
 
 
     grad_backend_list = [
         choreo.Empty_Backend_action,
-        choreo.Compute_action_Cython_nD_serial,
         choreo.Compute_action_Cython_2D_serial,
-        choreo.Compute_action_Cython_nD_parallel,
-        choreo.Compute_action_Cython_2D_parallel,
-        choreo.Compute_action_Numba_nD_serial,
         choreo.Compute_action_Numba_2D_serial,
+        choreo.Compute_action_Cython_nD_serial,
+        choreo.Compute_action_Numba_nD_serial,
+        choreo.Compute_action_Cython_2D_parallel,
+        choreo.Compute_action_Numba_2D_parallel,
+        choreo.Compute_action_Cython_nD_parallel,
+        choreo.Compute_action_Numba_nD_parallel,
     ]
 
     hess_backend_list = [
         choreo.Empty_Backend_hess_mul,
-        choreo.Compute_action_hess_mul_Cython_nD_serial,
         choreo.Compute_action_hess_mul_Cython_2D_serial,
-        choreo.Compute_action_hess_mul_Cython_nD_parallel,
-        choreo.Compute_action_hess_mul_Cython_2D_parallel,
-        choreo.Compute_action_hess_mul_Numba_nD_serial,
         choreo.Compute_action_hess_mul_Numba_2D_serial,
+        choreo.Compute_action_hess_mul_Cython_nD_serial,
+        choreo.Compute_action_hess_mul_Numba_nD_serial,
+        choreo.Compute_action_hess_mul_Cython_2D_parallel,
+        choreo.Compute_action_hess_mul_Numba_2D_parallel,
+        choreo.Compute_action_hess_mul_Cython_nD_parallel,
+        choreo.Compute_action_hess_mul_Numba_nD_parallel,
     ]
 
 
