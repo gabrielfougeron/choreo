@@ -22,15 +22,17 @@ __version__ = "0.2.0"
 
 
 cython_extnames = [
-    "choreo.Choreo_cython_funs_2D",
+    # "choreo.Choreo_cython_funs_2D",
     "choreo.Choreo_cython_funs",
     "choreo.Choreo_cython_scipy_plus",
+    "choreo.Choreo_cython_funs_serial",
 ]
 
 cython_filenames = [
-    "choreo/Choreo_cython_funs_2D.pyx",
+    # "choreo/Choreo_cython_funs_2D.pyx",
     "choreo/Choreo_cython_funs.pyx",
     "choreo/Choreo_cython_scipy_plus.pyx",
+    "choreo/Choreo_cython_funs_serial.pyx",
 ]
 
 if platform.system() == "Windows":
@@ -52,9 +54,6 @@ else:
         extra_compile_args = ["-O3"]
         extra_link_args = []
 
-        cython_extnames.append("choreo.Choreo_cython_funs_serial")
-        cython_filenames.append("choreo/Choreo_cython_funs_serial.pyx")
-
 
     elif not(distutils.spawn.find_executable('clang') is None):
 
@@ -64,7 +63,7 @@ else:
         # extra_compile_args = ["-O2","-march=native", "-fopenmp"]
         # extra_compile_args = ["-O3","-march=native", "-fopenmp"]
         extra_compile_args = ["-Ofast","-march=native", "-fopenmp"]
-        # extra_compile_args = []
+        # extra_compile_args = ["-fopenmp"]
 
         extra_link_args = ["-fopenmp"]
         # extra_link_args = []
@@ -72,8 +71,6 @@ else:
         cython_extnames.append("choreo.Choreo_cython_funs_parallel")
         cython_filenames.append("choreo/Choreo_cython_funs_parallel.pyx")
 
-        # cython_extnames.append("choreo.Choreo_cython_funs_serial")
-        # cython_filenames.append("choreo/Choreo_cython_funs_serial.pyx")
 
     else:
 
