@@ -63,8 +63,8 @@ else:
 
         # extra_compile_args = ["-O2","-march=native", "-fopenmp"]
         # extra_compile_args = ["-O3","-march=native", "-fopenmp"]
-        extra_compile_args = ["-Ofast","-march=native", "-fopenmp"]
-        # extra_compile_args = []
+        # extra_compile_args = ["-Ofast","-march=native", "-fopenmp"]
+        extra_compile_args = ["-fopenmp"]
 
         extra_link_args = ["-fopenmp"]
         # extra_link_args = []

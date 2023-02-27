@@ -35,8 +35,8 @@ Compare_FD_grad = True
 # Compare_FD_hess = False
 Compare_FD_hess = True
 
-# exponent_eps_list = range(16)
-exponent_eps_list = [8]
+exponent_eps_list = range(16)
+# exponent_eps_list = [8]
 
 
 ncoeff_init = ncoeff
@@ -57,8 +57,8 @@ the_lcm = m.lcm(*nbpl)
 SymName = None
 Sym_list,nbody = Make2DChoreoSymManyLoops(nbpl=nbpl,SymName=SymName)
 
-# MomConsImposed = True
-MomConsImposed = False
+MomConsImposed = True
+# MomConsImposed = False
 
 
 
@@ -112,9 +112,9 @@ print("Backend change hess error :",err)
 
 
 
-
-ActionSyst.ComputeGradBackend = Compute_action_Cython
-ActionSyst.ComputeHessBackend = Compute_action_hess_mul_Cython
+# 
+# ActionSyst.ComputeGradBackend = Compute_action_Cython
+# ActionSyst.ComputeHessBackend = Compute_action_hess_mul_Cython
 
 
 

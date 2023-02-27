@@ -126,7 +126,8 @@ def Compute_action_Cython_2D(
     cdef double complex[:,:,::1]  grad_pot_fft = the_rfft(grad_pot_all,norm="forward")  #
     cdef double Kin_en = 0 
     
-    cdef np.ndarray[double, ndim=4, mode="c"] Action_grad_np = np.empty((nloop,2,ncoeff,2),np.float64)
+    # ~ cdef np.ndarray[double, ndim=4, mode="c"] Action_grad_np = np.empty((nloop,2,ncoeff,2),np.float64)
+    cdef np.ndarray[double, ndim=4, mode="c"] Action_grad_np = np.zeros((nloop,2,ncoeff,2),np.float64)
     cdef double[:,:,:,::1] Action_grad = Action_grad_np
 
     for il in range(nloop):
@@ -134,30 +135,33 @@ def Compute_action_Cython_2D(
         prod_fac = MassSum[il]*cfourpisq
         
         for idim in range(2): 
+
             Action_grad[il,idim,0,0] = - grad_pot_fft[il,idim,0].real
             Action_grad[il,idim,0,1] = 0  
-            for k in range(1,ncoeff):
+            
+            for k in range(1,ncoeff-1):
                 
                 k2 = k*k
                 
-                # ~ a = prod_fac*k2
-                a = 0
+                a = prod_fac*k2
                 b=2*a  
 
                 Kin_en += a *((all_coeffs[il,idim,k,0]*all_coeffs[il,idim,k,0]) + (all_coeffs[il,idim,k,1]*all_coeffs[il,idim,k,1]))
                 
                 Action_grad[il,idim,k,0] = b*all_coeffs[il,idim,k,0] - 2*grad_pot_fft[il,idim,k].real
                 Action_grad[il,idim,k,1] = b*all_coeffs[il,idim,k,1] - 2*grad_pot_fft[il,idim,k].imag
-# ~ 
-# ~             k = ncoeff-1
-# ~             k2 = k*k
-# ~             # ~ a = prod_fac*k2
-# ~             a = 0
-# ~             b=2*a  
-# ~             Kin_en += a *(all_coeffs[il,idim,k,0]*all_coeffs[il,idim,k,0])
-# ~             Action_grad[il,idim,k,0] = b*all_coeffs[il,idim,k,0] - 2*grad_pot_fft[il,idim,k].real
-                
             
+
+            k = ncoeff-1
+            k2 = k*k
+            
+            a = prod_fac*k2
+            b=2*a  
+
+            Kin_en += a *((all_coeffs[il,idim,k,0]*all_coeffs[il,idim,k,0]))
+            Action_grad[il,idim,k,0] = b*all_coeffs[il,idim,k,0] - grad_pot_fft[il,idim,k].real
+
+
     Action = Kin_en-Pot_en/nint
     
     return Action,Action_grad_np
@@ -239,13 +243,19 @@ def Compute_action_hess_mul_Cython_2D(
             Action_hess_dx[il,idim,0,0] = - hess_dx_pot_fft[il,idim,0].real
             Action_hess_dx[il,idim,0,1] = 0.            
 
-            for k in range(1,ncoeff):
+            for k in range(1,ncoeff-1):
                 
                 k2 = k*k
                 a = 2*prod_fac*k2
 
                 Action_hess_dx[il,idim,k,0] = a*all_coeffs_d[il,idim,k,0] - 2*hess_dx_pot_fft[il,idim,k].real
                 Action_hess_dx[il,idim,k,1] = a*all_coeffs_d[il,idim,k,1] - 2*hess_dx_pot_fft[il,idim,k].imag
+
+            k = ncoeff-1
+            k2 = k*k
+            a = 2*prod_fac*k2
+
+            Action_hess_dx[il,idim,k,0] = a*all_coeffs_d[il,idim,k,0] - hess_dx_pot_fft[il,idim,k].real
 
     return Action_hess_dx_np
     
