@@ -74,7 +74,7 @@ else:
 
     else:
 
-        extra_compile_args = ["-O3","-march=native", "-fopenmp"]
+        extra_compile_args = ["-Ofast","-march=native", "-fopenmp"]
         extra_link_args = ["-fopenmp"]
     
         cython_extnames.append("choreo.Choreo_cython_funs_parallel")

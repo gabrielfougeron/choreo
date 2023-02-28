@@ -1,14 +1,16 @@
 import os
+import multiprocessing
 
 os.environ['OPENBLAS_NUM_THREADS'] = '1'
 os.environ['NUMEXPR_NUM_THREADS'] = '1'
 os.environ['MKL_NUM_THREADS'] = '1'
 
+n_proc = multiprocessing.cpu_count()
+# n_proc = multiprocessing.cpu_count() // 2
 
-# val = str(1)
-val = str(4)
+val = str(n_proc)
 
-print(val)
+print(f'Parallel backends are launched on {val} threads')
 
 os.environ['OMP_NUM_THREADS'] = val
 os.environ['NUMBA_NUM_THREADS'] = val
