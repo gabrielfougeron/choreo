@@ -221,13 +221,14 @@ def Find_Choreo(
         
         xrand = sampler.random()
         
-        rand_dim = 0
-        for i in range(ActionSyst.coeff_to_param.shape[0]):
-            if (abs(x_max[i] - x_min[i]) > rand_eps):
-                x0[i] = x_avg[i] + x_min[i] + (x_max[i] - x_min[i])*xrand[rand_dim]
-                rand_dim +=1
-            else:
-                x0[i] = x_avg[i]
+        x0 = PopulateRandomInit(
+            ActionSyst.coeff_to_param.shape[0],
+            x_avg   ,  
+            x_min   ,  
+            x_max   ,
+            xrand   ,
+            rand_eps
+        )
 
         if save_all_inits or (save_first_init and n_opt == 1):
 
@@ -670,14 +671,15 @@ def GenSymExample(
     x0 = np.zeros((ActionSyst.coeff_to_param.shape[0]),dtype=np.float64)
     
     xrand = sampler.random()
-    
-    rand_dim = 0
-    for i in range(ActionSyst.coeff_to_param.shape[0]):
-        if (abs(x_max[i] - x_min[i]) > rand_eps):
-            x0[i] = x_avg[i] + x_min[i] + (x_max[i] - x_min[i])*xrand[rand_dim]
-            rand_dim +=1
-        else:
-            x0[i] = x_avg[i]
+
+    x0 = PopulateRandomInit(
+        ActionSyst.coeff_to_param.shape[0],
+        x_avg   ,  
+        x_min   ,  
+        x_max   ,
+        xrand   ,
+        rand_eps
+    )
 
     ActionSyst.Write_Descriptor(x0,'init.json',extend=plot_extend)
 
@@ -805,14 +807,14 @@ def Speed_test(
     
     xrand = sampler.random()
     
-    rand_dim = 0
-    for i in range(ActionSyst.coeff_to_param.shape[0]):
-        if (abs(x_max[i] - x_min[i]) > rand_eps):
-            x0[i] = x_avg[i] + x_min[i] + (x_max[i] - x_min[i])*xrand[rand_dim]
-            rand_dim +=1
-        else:
-            x0[i] = x_avg[i]
-
+    x0 = PopulateRandomInit(
+        ActionSyst.coeff_to_param.shape[0],
+        x_avg   ,  
+        x_min   ,  
+        x_max   ,
+        xrand   ,
+        rand_eps
+    )
 
     dx = np.random.random(x0.shape)
 
@@ -821,13 +823,14 @@ def Speed_test(
 
         xrand = sampler.random()
 
-        rand_dim = 0
-        for i in range(ActionSyst.coeff_to_param.shape[0]):
-            if (abs(x_max[i] - x_min[i]) > rand_eps):
-                x0[i] = x_avg[i] + x_min[i] + (x_max[i] - x_min[i])*xrand[rand_dim]
-                rand_dim +=1
-            else:
-                x0[i] = x_avg[i]
+        x0 = PopulateRandomInit(
+            ActionSyst.coeff_to_param.shape[0],
+            x_avg   ,  
+            x_min   ,  
+            x_max   ,
+            xrand   ,
+            rand_eps
+        )
 
         f0 = ActionSyst.Compute_action_onlygrad(x0)
         hess = ActionSyst.Compute_action_hess_mul(x0,dx)

@@ -58,6 +58,7 @@ from choreo.Choreo_cython_funs import Compute_hamil_hess_mul_Cython_nosym,Comput
 from choreo.Choreo_cython_funs import Compute_Derivative_precond_inv_Cython_nosym,Compute_Derivative_precond_Cython_nosym
 from choreo.Choreo_cython_funs import Compute_Derivative_Cython_nosym,InplaceSmoothCoeffs
 from choreo.Choreo_cython_funs import RotateFastWithSlow_2D
+from choreo.Choreo_cython_funs import PopulateRandomInit
 
 
 from choreo.Choreo_scipy_plus import *
