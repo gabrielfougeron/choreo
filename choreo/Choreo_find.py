@@ -145,7 +145,6 @@ def Find_Choreo(
 
     all_coeffs_min,all_coeffs_max = Make_Init_bounds_coeffs(ActionSyst.nloop,ActionSyst.geodim,ncoeff,coeff_ampl_o,k_infl,k_max,coeff_ampl_min)
     
-
     x_min = ActionSyst.Package_all_coeffs(all_coeffs_min)
     x_max = ActionSyst.Package_all_coeffs(all_coeffs_max)
 
@@ -766,7 +765,6 @@ def Speed_test(
 
     all_coeffs_min,all_coeffs_max = Make_Init_bounds_coeffs(ActionSyst.nloop,ActionSyst.geodim,ncoeff,coeff_ampl_o,k_infl,k_max,coeff_ampl_min)
     
-
     x_min = ActionSyst.Package_all_coeffs(all_coeffs_min)
     x_max = ActionSyst.Package_all_coeffs(all_coeffs_max)
 
@@ -820,6 +818,16 @@ def Speed_test(
 
     beg = time.perf_counter()
     for itest in range(n_test):
+
+        xrand = sampler.random()
+
+        rand_dim = 0
+        for i in range(ActionSyst.coeff_to_param.shape[0]):
+            if (abs(x_max[i] - x_min[i]) > rand_eps):
+                x0[i] = x_avg[i] + x_min[i] + (x_max[i] - x_min[i])*xrand[rand_dim]
+                rand_dim +=1
+            else:
+                x0[i] = x_avg[i]
 
         f0 = ActionSyst.Compute_action_onlygrad(x0)
         hess = ActionSyst.Compute_action_hess_mul(x0,dx)
