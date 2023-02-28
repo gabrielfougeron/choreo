@@ -1982,6 +1982,25 @@ def RotateFastWithSlow_2D(
     return all_pos_avg_np
 
 
+def PopulateRandomInit(
+    long nparam         ,
+    double[::1] x_avg   ,  
+    double[::1] x_min   ,  
+    double[::1] x_max   ,
+    double[::1] xrand   ,
+    double rand_eps
+):
 
+    cdef np.ndarray[double, ndim=1, mode="c"] x0 = np.zeros((nparam),dtype=np.float64)
 
+    cdef long rand_dim = 0
+    cdef long i
+    
+    for i in range(nparam):
+        if (cfabs(x_max[i] - x_min[i]) > rand_eps):
+            x0[i] = x_avg[i] + x_min[i] + (x_max[i] - x_min[i])*xrand[rand_dim]
+            rand_dim +=1
+        else:
+            x0[i] = x_avg[i]
 
+    return x0
