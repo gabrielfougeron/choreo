@@ -23,6 +23,7 @@ def Find_Choreo(
     geodim,
     TwoDBackend,
     ParallelBackend,
+    GradHessBackend,
     nbody,
     n_reconverge_it_max,
     nint_init,
@@ -112,7 +113,7 @@ def Find_Choreo(
     print(f'Processing symmetries for {(n_reconverge_it_max+1):d} convergence levels.')
     ActionSyst = setup_changevar(geodim,nbody,nint_init,mass,n_reconverge_it_max,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change,CrashOnIdentity=CrashOnError_changevar)
 
-    ActionSyst.SetBackend(parallel=ParallelBackend,TwoD=TwoDBackend)
+    ActionSyst.SetBackend(parallel=ParallelBackend,TwoD=TwoDBackend,GradHessBackend=GradHessBackend)
 
     start_cvg_lvl = 0
     # start_cvg_lvl = 2
@@ -558,6 +559,7 @@ def GenSymExample(
     geodim,
     ParallelBackend,
     TwoDBackend,
+    GradHessBackend,
     nbody,
     nint_init,
     mass,
@@ -608,7 +610,7 @@ def GenSymExample(
 
     ActionSyst = setup_changevar(geodim,nbody,nint_init,mass,n_reconverge_it_max,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change,CrashOnIdentity=CrashOnError_changevar)
 
-    ActionSyst.SetBackend(parallel=ParallelBackend,TwoD=TwoDBackend)
+    ActionSyst.SetBackend(parallel=ParallelBackend,TwoD=TwoDBackend,GradHessBackend=GradHessBackend)
     
     nbi_tot = 0
     for il in range(ActionSyst.nloop):
@@ -710,6 +712,7 @@ def Speed_test(
     geodim,
     ParallelBackend,
     TwoDBackend,
+    GradHessBackend,
     grad_backend,
     hess_backend,
     nbody,
@@ -749,7 +752,7 @@ def Speed_test(
 
     ActionSyst = setup_changevar(geodim,nbody,nint_init,mass,n_reconverge_it_max,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change,CrashOnIdentity=CrashOnError_changevar)
 
-    # ActionSyst.SetBackend(parallel=ParallelBackend,TwoD=TwoDBackend)
+    # ActionSyst.SetBackend(parallel=ParallelBackend,TwoD=TwoDBackend,GradHessBackend=GradHessBackend)
 
     if not(grad_backend is None):
         ActionSyst.ComputeGradBackend = grad_backend
