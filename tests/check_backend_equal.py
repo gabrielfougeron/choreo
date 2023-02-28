@@ -83,8 +83,10 @@ ncoeffs_args = ActionSyst.coeff_to_param.shape[0]
 
 
 grad_backend_list = [
+    Compute_action_Python_2D_serial,
     Compute_action_Cython_2D_serial,
     Compute_action_Numba_2D_serial,
+    Compute_action_Python_nD_serial,
     Compute_action_Cython_nD_serial,
     Compute_action_Numba_nD_serial,
     Compute_action_Cython_2D_parallel,
@@ -94,8 +96,10 @@ grad_backend_list = [
 ]
 
 hess_backend_list = [
+    Compute_action_hess_mul_Python_2D_serial,
     Compute_action_hess_mul_Cython_2D_serial,
     Compute_action_hess_mul_Numba_2D_serial,
+    Compute_action_hess_mul_Python_nD_serial,
     Compute_action_hess_mul_Cython_nD_serial,
     Compute_action_hess_mul_Numba_nD_serial,
     Compute_action_hess_mul_Cython_2D_parallel,

@@ -95,6 +95,63 @@ def Empty_Backend_hess_mul(
     
     return all_coeffs_d
 
+def Compute_action_Python_nD_serial(
+    nloop             ,
+    ncoeff            ,
+    nint              ,
+    mass              ,
+    loopnb            ,
+    Targets           ,
+    MassSum           ,
+    SpaceRotsUn       ,
+    TimeRevsUn        ,
+    TimeShiftNumUn    ,
+    TimeShiftDenUn    ,
+    loopnbi           ,
+    ProdMassSumAll    ,
+    SpaceRotsBin      ,
+    TimeRevsBin       ,
+    TimeShiftNumBin   ,
+    TimeShiftDenBin   ,
+    all_coeffs        ,
+    all_pos 
+):
+    # This function is probably the most important one.
+    # Computes the action and its gradient with respect to the Fourier coefficients of the generator in each loop.
+    
+    Pot_en, grad_pot_all = Compute_action_Python_time_loop_nD_serial(
+        nloop             ,
+        nint              ,
+        mass              ,
+        loopnb            ,
+        Targets           ,
+        SpaceRotsUn       ,
+        TimeRevsUn        ,
+        TimeShiftNumUn    ,
+        TimeShiftDenUn    ,
+        loopnbi           ,
+        ProdMassSumAll    ,
+        SpaceRotsBin      ,
+        TimeRevsBin       ,
+        TimeShiftNumBin   ,
+        TimeShiftDenBin   ,
+        all_pos           
+    )
+
+    grad_pot_fft = the_rfft(grad_pot_all,norm="forward") 
+
+    Kin_en, Action_grad = Compute_action_Python_Kin_loop_nD_serial(
+        nloop             ,
+        ncoeff            ,
+        MassSum           ,
+        all_coeffs        ,
+        grad_pot_fft 
+    )
+
+    Action = Kin_en-Pot_en/nint
+    
+    return Action,Action_grad
+
 def Compute_action_Numba_nD_serial(
     nloop             ,
     ncoeff            ,
@@ -152,8 +209,7 @@ def Compute_action_Numba_nD_serial(
     
     return Action,Action_grad
 
-@numba.jit(**numba_kwargs)
-def Compute_action_Numba_Kin_loop_nD_serial(
+def Compute_action_Python_Kin_loop_nD_serial(
         nloop             ,
         ncoeff            ,
         MassSum           ,
@@ -198,9 +254,10 @@ def Compute_action_Numba_Kin_loop_nD_serial(
             Action_grad[il,idim,k,0] = b*all_coeffs[il,idim,k,0] - grad_pot_fft[il,idim,k].real
 
     return Kin_en, Action_grad 
-            
-@numba.jit(**numba_kwargs)
-def Compute_action_Numba_time_loop_nD_serial(
+
+Compute_action_Numba_Kin_loop_nD_serial = numba.jit(Compute_action_Python_Kin_loop_nD_serial,**numba_kwargs)
+
+def Compute_action_Python_time_loop_nD_serial(
     nloop             ,
     nint              ,
     mass              ,
@@ -311,6 +368,64 @@ def Compute_action_Numba_time_loop_nD_serial(
 
     return Pot_en, grad_pot_all
 
+Compute_action_Numba_time_loop_nD_serial = numba.jit(Compute_action_Python_time_loop_nD_serial,**numba_kwargs)
+
+def Compute_action_hess_mul_Python_nD_serial(
+    nloop             ,
+    ncoeff            ,
+    nint              ,
+    mass              ,
+    loopnb            ,
+    Targets           ,
+    MassSum           ,
+    SpaceRotsUn       ,
+    TimeRevsUn        ,
+    TimeShiftNumUn    ,
+    TimeShiftDenUn    ,
+    loopnbi           ,
+    ProdMassSumAll    ,
+    SpaceRotsBin      ,
+    TimeRevsBin       ,
+    TimeShiftNumBin   ,
+    TimeShiftDenBin   ,
+    all_coeffs        ,
+    all_coeffs_d      , 
+    all_pos 
+):
+
+    c_coeffs_d = all_coeffs_d.view(dtype=np.complex128)[...,0]
+    all_pos_d = the_irfft(c_coeffs_d,n=nint,axis=2,norm="forward")
+
+    hess_pot_all_d = Compute_action_hess_mul_Python_time_loop_nD_serial(
+        nloop             ,
+        nint              ,
+        mass              ,
+        loopnb            ,
+        Targets           ,
+        SpaceRotsUn       ,
+        TimeRevsUn        ,
+        TimeShiftNumUn    ,
+        TimeShiftDenUn    ,
+        loopnbi           ,
+        ProdMassSumAll    ,
+        SpaceRotsBin      ,
+        TimeRevsBin       ,
+        TimeShiftNumBin   ,
+        TimeShiftDenBin   ,
+        all_pos           ,
+        all_pos_d         
+    )
+
+    hess_dx_pot_fft = the_rfft(hess_pot_all_d,norm="forward")
+
+    return Compute_action_hess_mul_Python_Kin_loop_nD_serial(
+        nloop             ,
+        ncoeff            ,
+        MassSum           ,
+        all_coeffs_d      ,
+        hess_dx_pot_fft 
+    )
+
 def Compute_action_hess_mul_Numba_nD_serial(
     nloop             ,
     ncoeff            ,
@@ -367,8 +482,7 @@ def Compute_action_hess_mul_Numba_nD_serial(
         hess_dx_pot_fft 
     )
 
-@numba.jit(**numba_kwargs)
-def Compute_action_hess_mul_Numba_Kin_loop_nD_serial(
+def Compute_action_hess_mul_Python_Kin_loop_nD_serial(
         nloop             ,
         ncoeff            ,
         MassSum           ,
@@ -405,8 +519,9 @@ def Compute_action_hess_mul_Numba_Kin_loop_nD_serial(
             Action_hess_dx[il,idim,k,0] = a*all_coeffs_d[il,idim,k,0] - hess_dx_pot_fft[il,idim,k].real
     return Action_hess_dx
 
-@numba.jit(**numba_kwargs)
-def Compute_action_hess_mul_Numba_time_loop_nD_serial(
+Compute_action_hess_mul_Numba_Kin_loop_nD_serial = numba.jit(Compute_action_hess_mul_Python_Kin_loop_nD_serial,**numba_kwargs)
+
+def Compute_action_hess_mul_Python_time_loop_nD_serial(
     nloop             ,
     nint              ,
     mass              ,
@@ -525,6 +640,65 @@ def Compute_action_hess_mul_Numba_time_loop_nD_serial(
 
     return hess_pot_all_d
 
+Compute_action_hess_mul_Numba_time_loop_nD_serial = numba.jit(Compute_action_hess_mul_Python_time_loop_nD_serial,**numba_kwargs)
+
+def Compute_action_Python_2D_serial(
+    nloop             ,
+    ncoeff            ,
+    nint              ,
+    mass              ,
+    loopnb            ,
+    Targets           ,
+    MassSum           ,
+    SpaceRotsUn       ,
+    TimeRevsUn        ,
+    TimeShiftNumUn    ,
+    TimeShiftDenUn    ,
+    loopnbi           ,
+    ProdMassSumAll    ,
+    SpaceRotsBin      ,
+    TimeRevsBin       ,
+    TimeShiftNumBin   ,
+    TimeShiftDenBin   ,
+    all_coeffs        ,
+    all_pos 
+):
+    # This function is probably the most important one.
+    # Computes the action and its gradient with respect to the Fourier coefficients of the generator in each loop.
+    
+    Pot_en, grad_pot_all = Compute_action_Python_time_loop_2D_serial(
+        nloop             ,
+        nint              ,
+        mass              ,
+        loopnb            ,
+        Targets           ,
+        SpaceRotsUn       ,
+        TimeRevsUn        ,
+        TimeShiftNumUn    ,
+        TimeShiftDenUn    ,
+        loopnbi           ,
+        ProdMassSumAll    ,
+        SpaceRotsBin      ,
+        TimeRevsBin       ,
+        TimeShiftNumBin   ,
+        TimeShiftDenBin   ,
+        all_pos           ,
+    )
+
+    grad_pot_fft = the_rfft(grad_pot_all,norm="forward")  #
+
+    Kin_en, Action_grad = Compute_action_Python_Kin_loop_2D_serial(
+        nloop             ,
+        ncoeff            ,
+        MassSum           ,
+        all_coeffs        ,
+        grad_pot_fft 
+    )
+
+    Action = Kin_en-Pot_en/nint
+    
+    return Action, Action_grad
+
 def Compute_action_Numba_2D_serial(
     nloop             ,
     ncoeff            ,
@@ -570,7 +744,7 @@ def Compute_action_Numba_2D_serial(
 
     grad_pot_fft = the_rfft(grad_pot_all,norm="forward")  #
 
-    Kin_en, Action_grad = Compute_action_Numba_Kin_loop_nD_serial(
+    Kin_en, Action_grad = Compute_action_Numba_Kin_loop_2D_serial(
         nloop             ,
         ncoeff            ,
         MassSum           ,
@@ -582,8 +756,7 @@ def Compute_action_Numba_2D_serial(
     
     return Action, Action_grad
 
-@numba.jit(**numba_kwargs)
-def Compute_action_Numba_Kin_loop_nD_serial(
+def Compute_action_Python_Kin_loop_2D_serial(
         nloop             ,
         ncoeff            ,
         MassSum           ,
@@ -627,8 +800,9 @@ def Compute_action_Numba_Kin_loop_nD_serial(
 
     return Kin_en, Action_grad
 
-@numba.jit(**numba_kwargs)
-def Compute_action_Numba_time_loop_2D_serial(
+Compute_action_Numba_Kin_loop_2D_serial = numba.jit(Compute_action_Python_Kin_loop_2D_serial,**numba_kwargs)
+
+def Compute_action_Python_time_loop_2D_serial(
     nloop             ,
     nint              ,
     mass              ,
@@ -729,6 +903,66 @@ def Compute_action_Numba_time_loop_2D_serial(
 
     return Pot_en, grad_pot_all
 
+Compute_action_Numba_time_loop_2D_serial = numba.jit(Compute_action_Python_time_loop_2D_serial,**numba_kwargs)
+
+def Compute_action_hess_mul_Python_2D_serial(
+    nloop             ,
+    ncoeff            ,
+    nint              ,
+    mass              ,
+    loopnb            ,
+    Targets           ,
+    MassSum           ,
+    SpaceRotsUn       ,
+    TimeRevsUn        ,
+    TimeShiftNumUn    ,
+    TimeShiftDenUn    ,
+    loopnbi           ,
+    ProdMassSumAll    ,
+    SpaceRotsBin      ,
+    TimeRevsBin       ,
+    TimeShiftNumBin   ,
+    TimeShiftDenBin   ,
+    all_coeffs        ,
+    all_coeffs_d      , 
+    all_pos 
+):
+    # Computes the matrix vector product H*dx where H is the Hessian of the action.
+    # Useful to guide the root finding / optimisation process and to better understand the topography of the action (critical points / Morse theory).
+
+    c_coeffs_d = all_coeffs_d.view(dtype=np.complex128)[...,0]
+    all_pos_d = the_irfft(c_coeffs_d,norm="forward")
+
+    hess_pot_all_d = Compute_action_hess_mul_Python_time_loop_2D_serial(
+        nloop             ,
+        nint              ,
+        mass              ,
+        loopnb            ,
+        Targets           ,
+        SpaceRotsUn       ,
+        TimeRevsUn        ,
+        TimeShiftNumUn    ,
+        TimeShiftDenUn    ,
+        loopnbi           ,
+        ProdMassSumAll    ,
+        SpaceRotsBin      ,
+        TimeRevsBin       ,
+        TimeShiftNumBin   ,
+        TimeShiftDenBin   ,
+        all_pos           ,
+        all_pos_d         
+    )
+
+    hess_dx_pot_fft = the_rfft(hess_pot_all_d,norm="forward")
+
+    return Compute_action_hess_mul_Python_Kin_loop_2D_serial(
+        nloop             ,
+        ncoeff            ,
+        MassSum           ,
+        all_coeffs_d      ,
+        hess_dx_pot_fft 
+    )
+
 def Compute_action_hess_mul_Numba_2D_serial(
     nloop             ,
     ncoeff            ,
@@ -779,7 +1013,7 @@ def Compute_action_hess_mul_Numba_2D_serial(
 
     hess_dx_pot_fft = the_rfft(hess_pot_all_d,norm="forward")
 
-    return Compute_action_hess_mul_Numba_Kin_loop_nD_serial(
+    return Compute_action_hess_mul_Numba_Kin_loop_2D_serial(
         nloop             ,
         ncoeff            ,
         MassSum           ,
@@ -787,8 +1021,7 @@ def Compute_action_hess_mul_Numba_2D_serial(
         hess_dx_pot_fft 
     )
 
-@numba.jit(**numba_kwargs)
-def Compute_action_hess_mul_Numba_Kin_loop_nD_serial(
+def Compute_action_hess_mul_Python_Kin_loop_2D_serial(
         nloop             ,
         ncoeff            ,
         MassSum           ,
@@ -823,8 +1056,9 @@ def Compute_action_hess_mul_Numba_Kin_loop_nD_serial(
 
     return Action_hess_dx
 
-@numba.jit(**numba_kwargs)
-def Compute_action_hess_mul_Numba_time_loop_2D_serial(
+Compute_action_hess_mul_Numba_Kin_loop_2D_serial = numba.jit(Compute_action_hess_mul_Python_Kin_loop_2D_serial,**numba_kwargs)
+
+def Compute_action_hess_mul_Python_time_loop_2D_serial(
     nloop             ,
     nint              ,
     mass              ,
@@ -939,6 +1173,8 @@ def Compute_action_hess_mul_Numba_time_loop_2D_serial(
                 hess_pot_all_d[il ,1,iint   ] -= ddf1
 
     return hess_pot_all_d
+
+Compute_action_hess_mul_Numba_time_loop_2D_serial = numba.jit(Compute_action_hess_mul_Python_time_loop_2D_serial,**numba_kwargs)
 
 def Compute_action_Numba_nD_parallel(
     nloop             ,
