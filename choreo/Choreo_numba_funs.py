@@ -1176,6 +1176,30 @@ def Compute_action_hess_mul_Python_time_loop_2D_serial(
 
 Compute_action_hess_mul_Numba_time_loop_2D_serial = numba.jit(Compute_action_hess_mul_Python_time_loop_2D_serial,**numba_kwargs)
 
+def Compute_action_Python_nD_parallel(
+    nloop             ,
+    ncoeff            ,
+    nint              ,
+    mass              ,
+    loopnb            ,
+    Targets           ,
+    MassSum           ,
+    SpaceRotsUn       ,
+    TimeRevsUn        ,
+    TimeShiftNumUn    ,
+    TimeShiftDenUn    ,
+    loopnbi           ,
+    ProdMassSumAll    ,
+    SpaceRotsBin      ,
+    TimeRevsBin       ,
+    TimeShiftNumBin   ,
+    TimeShiftDenBin   ,
+    all_coeffs        ,
+    all_pos 
+):
+
+    raise NotImplementedError
+    
 def Compute_action_Numba_nD_parallel(
     nloop             ,
     ncoeff            ,
@@ -1453,6 +1477,31 @@ def Compute_action_hess_mul_Numba_nD_parallel(
         hess_dx_pot_fft 
     )
 
+def Compute_action_hess_mul_Python_nD_parallel(
+    nloop             ,
+    ncoeff            ,
+    nint              ,
+    mass              ,
+    loopnb            ,
+    Targets           ,
+    MassSum           ,
+    SpaceRotsUn       ,
+    TimeRevsUn        ,
+    TimeShiftNumUn    ,
+    TimeShiftDenUn    ,
+    loopnbi           ,
+    ProdMassSumAll    ,
+    SpaceRotsBin      ,
+    TimeRevsBin       ,
+    TimeShiftNumBin   ,
+    TimeShiftDenBin   ,
+    all_coeffs        ,
+    all_coeffs_d      , 
+    all_pos 
+):
+
+    raise NotImplementedError
+
 @numba.jit(parallel=True,**numba_kwargs)
 def Compute_action_hess_mul_Numba_Kin_loop_nD_parallel(
         nloop             ,
@@ -1616,6 +1665,30 @@ def Compute_action_hess_mul_Numba_time_loop_nD_parallel(
                     hess_pot_all_d[rk, il ,idim,iint] -= ddf[idim]
 
     return hess_pot_all_d.sum(axis=0)
+
+def Compute_action_Python_2D_parallel(
+    nloop             ,
+    ncoeff            ,
+    nint              ,
+    mass              ,
+    loopnb            ,
+    Targets           ,
+    MassSum           ,
+    SpaceRotsUn       ,
+    TimeRevsUn        ,
+    TimeShiftNumUn    ,
+    TimeShiftDenUn    ,
+    loopnbi           ,
+    ProdMassSumAll    ,
+    SpaceRotsBin      ,
+    TimeRevsBin       ,
+    TimeShiftNumBin   ,
+    TimeShiftDenBin   ,
+    all_coeffs        ,
+    all_pos 
+):
+
+    raise NotImplementedError
 
 def Compute_action_Numba_2D_parallel(
     nloop             ,
@@ -1825,6 +1898,31 @@ def Compute_action_Numba_time_loop_2D_parallel(
                 grad_pot_all[rk, il ,1,iint   ] -= dx1
 
     return Pot_en.sum(), grad_pot_all.sum(axis=0)
+
+def Compute_action_hess_mul_Python_2D_parallel(
+    nloop             ,
+    ncoeff            ,
+    nint              ,
+    mass              ,
+    loopnb            ,
+    Targets           ,
+    MassSum           ,
+    SpaceRotsUn       ,
+    TimeRevsUn        ,
+    TimeShiftNumUn    ,
+    TimeShiftDenUn    ,
+    loopnbi           ,
+    ProdMassSumAll    ,
+    SpaceRotsBin      ,
+    TimeRevsBin       ,
+    TimeShiftNumBin   ,
+    TimeShiftDenBin   ,
+    all_coeffs        ,
+    all_coeffs_d      , 
+    all_pos 
+):
+
+    raise NotImplementedError
 
 def Compute_action_hess_mul_Numba_2D_parallel(
     nloop             ,
