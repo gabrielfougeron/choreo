@@ -46,6 +46,10 @@ try:
 except:
     pass
 
+try:
+    from choreo.Choreo_numba_funs import *
+except:
+    pass
 
 from choreo.Choreo_cython_funs import twopi,nhash,n
 from choreo.Choreo_cython_funs import Compute_hash_action_Cython,Compute_Newton_err_Cython
@@ -81,7 +85,7 @@ class ChoreoAction():
     r"""
     This class defines everything needed to compute the action.
     """
-    def __init__(self,parallel=False,TwoD=True, **kwargs):
+    def __init__(self,parallel=False,TwoD=True,GradHessBackend="Cython", **kwargs):
         r"""
         Class constructor. Just shove everything in there.
         """
@@ -94,7 +98,7 @@ class ChoreoAction():
             if key.endswith('_cvg_lvl_list'):
                 self.DefGetCurrentListAttribute(key)
 
-        self.SetBackend(parallel=parallel,TwoD=TwoD)
+        self.SetBackend(parallel=parallel,TwoD=TwoD,GradHessBackend=GradHessBackend)
 
     def __str__(self):
 
@@ -106,33 +110,35 @@ class ChoreoAction():
 
         return res
 
-    def SetBackend(self,parallel=False,TwoD=True):
+    def SetBackend(self,parallel=False,TwoD=True,GradHessBackend="Cython"):
+        
+        GradFunName = "Compute_action_" + GradHessBackend
+        HessFunName = "Compute_action_hess_mul_" + GradHessBackend
 
         if TwoD:
-            
+
             assert self.geodim == 2
 
-            if parallel:
-
-                self.ComputeGradBackend = Compute_action_Cython_2D_parallel
-                self.ComputeHessBackend = Compute_action_hess_mul_Cython_2D_parallel
-
-            else:
-
-                self.ComputeGradBackend = Compute_action_Cython_2D_serial
-                self.ComputeHessBackend = Compute_action_hess_mul_Cython_2D_serial
+            GradFunName = GradFunName + "_2D"
+            HessFunName = HessFunName + "_2D"
 
         else:
 
-            if parallel:
+            GradFunName = GradFunName + "_nD"
+            HessFunName = HessFunName + "_nD"
 
-                self.ComputeGradBackend = Compute_action_Cython_nD_parallel
-                self.ComputeHessBackend = Compute_action_hess_mul_Cython_nD_parallel
+        if parallel:
 
-            else:
+            GradFunName = GradFunName + "_parallel"
+            HessFunName = HessFunName + "_parallel"
 
-                self.ComputeGradBackend = Compute_action_Cython_nD_serial
-                self.ComputeHessBackend = Compute_action_hess_mul_Cython_nD_serial
+        else:
+
+            GradFunName = GradFunName + "_serial"
+            HessFunName = HessFunName + "_serial"
+
+        self.ComputeGradBackend = globals()[GradFunName]
+        self.ComputeHessBackend = globals()[HessFunName]
 
     def GetCurrentListAttribute(self,key):
 

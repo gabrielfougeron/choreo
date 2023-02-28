@@ -1,9 +1,12 @@
 import os
+import multiprocessing
 
+os.environ['NUMBA_NUM_THREADS'] = str(multiprocessing.cpu_count())
 os.environ['OPENBLAS_NUM_THREADS'] = '1'
 os.environ['NUMEXPR_NUM_THREADS'] = '1'
 os.environ['MKL_NUM_THREADS'] = '1'
 
+import numba
 
 import concurrent.futures
 import time
@@ -66,6 +69,7 @@ def main(params_dict):
 
     TwoDBackend = (geodim == 2)
     ParallelBackend = (params_dict['Solver_CLI']['Exec_Mul_Proc'] == "MultiThread")
+    GradHessBackend = params_dict['Solver_CLI']['GradHess_backend']
 
     file_basename = ''
     
@@ -307,24 +311,26 @@ if __name__ == "__main__":
 
     Exec_Mul_Proc = params_dict['Solver_CLI']['Exec_Mul_Proc']
 
-    n = params_dict['Solver_CLI']['nproc']
+    n_threads = params_dict['Solver_CLI']['nproc']
 
     if Exec_Mul_Proc == "MultiProc":
 
         os.environ['OMP_NUM_THREADS'] = str(1)
+        numba.set_num_threads(1)
 
-        print(f"Executing with {n} workers")
+        print(f"Executing with {n_threads} workers")
         
-        with concurrent.futures.ProcessPoolExecutor(max_workers=n) as executor:
+        with concurrent.futures.ProcessPoolExecutor(max_workers=n_threads) as executor:
             
             res = []
-            for i in range(n):
+            for i in range(n_threads):
                 res.append(executor.submit(main,params_dict))
                 time.sleep(0.01)
 
     elif Exec_Mul_Proc == "MultiThread":
 
-        os.environ['OMP_NUM_THREADS'] = str(n)
+        os.environ['OMP_NUM_THREADS'] = str(n_threads)
+        numba.set_num_threads(n_threads)
         main(params_dict)
 
     else :
