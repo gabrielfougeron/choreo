@@ -21,6 +21,10 @@ def main():
 
     geodim = 2
 
+    TwoDBackend = (geodim == 2)
+    ParallelBackend = False
+    GradHessBackend = 'Cython'
+
     file_basename = ''
     
     CrashOnError_changevar = False

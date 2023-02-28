@@ -81,8 +81,6 @@ def NPY_JS_to_py(npy_js):
 
     return np.asarray(npy_js["data"]).reshape(npy_js["shape"])
 
-
-
 async def main():
 
     params_dict = js.ConfigDict.to_py()
@@ -91,6 +89,7 @@ async def main():
 
     TwoDBackend = (geodim == 2)
     ParallelBackend = False
+    GradHessBackend = 'Cython'
     
     CrashOnError_changevar = False
 

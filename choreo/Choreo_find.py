@@ -759,9 +759,8 @@ def Speed_test(
     if not(hess_backend is None):
         ActionSyst.ComputeHessBackend = hess_backend
 
-    start_cvg_lvl = 0
+    # start_cvg_lvl = 0
     start_cvg_lvl = n_reconverge_it_max
-    # start_cvg_lvl = 2
     ActionSyst.current_cvg_lvl = start_cvg_lvl
 
 

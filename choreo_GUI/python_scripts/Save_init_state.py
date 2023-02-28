@@ -33,6 +33,7 @@ def main():
 
     TwoDBackend = (geodim == 2)
     ParallelBackend = False
+    GradHessBackend = 'Cython'
     
     file_basename = ''
     
