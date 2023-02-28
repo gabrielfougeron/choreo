@@ -22,14 +22,12 @@ __version__ = "0.2.0"
 
 
 cython_extnames = [
-    # "choreo.Choreo_cython_funs_2D",
     "choreo.Choreo_cython_funs",
     "choreo.Choreo_cython_scipy_plus",
     "choreo.Choreo_cython_funs_serial",
 ]
 
 cython_filenames = [
-    # "choreo/Choreo_cython_funs_2D.pyx",
     "choreo/Choreo_cython_funs.pyx",
     "choreo/Choreo_cython_scipy_plus.pyx",
     "choreo/Choreo_cython_funs_serial.pyx",
