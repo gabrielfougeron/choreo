@@ -2414,7 +2414,7 @@ def Center_all_coeffs(all_coeffs,nloop,mass,loopnb,Targets,SpaceRotsUn):
 def RemoveSym_ann(all_coeffs,nbody,nloop,ncoeff,loopnb,Targets,SpaceRotsUn,TimeRevsUn,TimeShiftNumUn,TimeShiftDenUn):
     # Removes symmetries and gives coeffs for all bodies
 
-    geodim = all_coeffs[1]
+    geodim = all_coeffs.shape[1]
 
     all_coeffs_nosym = np.zeros((nbody,geodim,ncoeff,2),dtype=np.float64)
 
