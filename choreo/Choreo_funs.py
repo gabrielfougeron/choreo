@@ -1478,7 +1478,7 @@ class ChoreoAction():
         
         plt.close()
 
-    def plot_all_2D_anim(self,x,nint_plot,filename,nperiod=1,Plot_trace=True,fig_size=(5,5),dnint=1,all_pos_trace=None,all_pos_points=None,xlim=None,extend=0.03,color_list=None,color=None):
+    def plot_all_2D_anim(self,x=None,nint_plot=None,filename=None,nperiod=1,Plot_trace=True,fig_size=(5,5),dnint=1,all_pos_trace=None,all_pos_points=None,xlim=None,extend=0.03,color_list=None,color=None,fps=60):
         r"""
         Creates a video of the bodies moving along their trajectories, and saves the file
         """
@@ -1486,9 +1486,9 @@ class ChoreoAction():
         if color_list is None:
             color_list = plt.rcParams['axes.prop_cycle'].by_key()['color']
 
-        all_coeffs = self.Unpackage_all_coeffs(x)
-
-        maxloopnb = self.loopnb.max()
+#         all_coeffs = self.Unpackage_all_coeffs(x)
+# 
+#         maxloopnb = self.loopnb.max()
         
         ncol = len(color_list)
 
@@ -1551,6 +1551,9 @@ class ChoreoAction():
             else:
                 for ib in range(len(all_pos_trace)):
                     cb[ib] = color_list[0]
+
+        if nint_plot is None:
+            nint_plot = self.nint
 
         nint_plot_img = nint_plot*dnint
         nint_plot_vid = nint_plot
@@ -1650,11 +1653,11 @@ class ChoreoAction():
         anim = animation.FuncAnimation(fig, update, frames=int(nperiod*nint_plot_vid),init_func=init, blit=True)
                             
         # Save as mp4. This requires mplayer or ffmpeg to be installed
-        # anim.save(filename, fps=60, codec='hevc')
-        anim.save(filename, fps=60, codec='h264')
-        # anim.save(filename, fps=60, codec='webm')
-        # anim.save(filename, fps=60,extra_args=['-vcodec ', 'h264_amf'])
-        # anim.save(filename, fps=60,extra_args=['-hwaccel ', 'cuda'])
+        # anim.save(filename, fps=fps, codec='hevc')
+        anim.save(filename, fps=fps, codec='h264')
+        # anim.save(filename, fps=fps, codec='webm')
+        # anim.save(filename, fps=fps,extra_args=['-vcodec ', 'h264_amf'])
+        # anim.save(filename, fps=fps,extra_args=['-hwaccel ', 'cuda'])
         
         plt.close()
         
