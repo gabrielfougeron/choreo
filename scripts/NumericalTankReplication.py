@@ -177,7 +177,7 @@ AddNumberToOutputName = False
 
 geodim = 2
 nbody = 3
-nint = nbody * 1000 * 512
+nint = nbody * 1024 * 512
 
 mass = np.ones(nbody)
 Sym_list = []
@@ -190,14 +190,17 @@ n_grad_change = 1.
 
 TwoDBackend = (geodim == 2)
 
-# GradHessBackend="Cython"
-GradHessBackend="Numba"
+GradHessBackend="Cython"
+# GradHessBackend="Numba"
 
 ParallelBackend = True
 # ParallelBackend = False
 
 nint_small = 30
 n_reconverge_it_max_small = 0
+
+Do_Speed_test = False
+# Do_Speed_test = True
 
 ActionSyst_small = choreo.setup_changevar(geodim,nbody,nint_small,mass,n_reconverge_it_max_small,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change,CrashOnIdentity=False)
 
@@ -210,7 +213,7 @@ SymplecticMethod = 'SymplecticRuth4'
 
 SymplecticIntegrator = choreo.GetSymplecticIntegrator(SymplecticMethod)
 
-disp_scipy_opt = False
+# disp_scipy_opt = False
 disp_scipy_opt = True
 
 
@@ -221,7 +224,8 @@ for n_NT_init in range(4,len(all_NT_init)):
 
     # nint_ODE_mul = 64
     # nint_ODE_mul =  2**11
-    nint_ODE_mul =  2**5
+    # nint_ODE_mul =  2**5
+    nint_ODE_mul =  2**3
     nint_ODE = nint_ODE_mul*nint
 
     fun,gun = ActionSyst_small.GetSymplecticODEDef()
@@ -340,17 +344,51 @@ for n_NT_init in range(4,len(all_NT_init)):
     Transform_Sym = choreo.ChoreoSym(SpaceRot=SpaceRot, TimeRev=TimeRev, TimeShift = fractions.Fraction(numerator=TimeShiftNum,denominator=TimeShiftDen))
 
 
+    if Do_Speed_test:
+
+        n_test = 1
+        grad_backend_list = [
+            choreo.Empty_Backend_action,
+            choreo.Compute_action_Cython_2D_serial,
+            choreo.Compute_action_Numba_2D_serial,
+            choreo.Compute_action_Cython_nD_serial,
+            choreo.Compute_action_Numba_nD_serial,
+            choreo.Compute_action_Cython_2D_parallel,
+            choreo.Compute_action_Numba_2D_parallel,
+            choreo.Compute_action_Cython_nD_parallel,
+            choreo.Compute_action_Numba_nD_parallel,
+        ]
+
+        hess_backend_list = [
+            choreo.Empty_Backend_hess_mul,
+            choreo.Compute_action_hess_mul_Cython_2D_serial,
+            choreo.Compute_action_hess_mul_Numba_2D_serial,
+            choreo.Compute_action_hess_mul_Cython_nD_serial,
+            choreo.Compute_action_hess_mul_Numba_nD_serial,
+            choreo.Compute_action_hess_mul_Cython_2D_parallel,
+            choreo.Compute_action_hess_mul_Numba_2D_parallel,
+            choreo.Compute_action_hess_mul_Cython_nD_parallel,
+            choreo.Compute_action_hess_mul_Numba_nD_parallel,
+        ]
+
+
+        for i in range(len(grad_backend_list)):
+
+            grad_backend = grad_backend_list[i]
+            hess_backend = hess_backend_list[i]
+
+            print('')
+            print(grad_backend.__name__)
+            print(hess_backend.__name__)
+                
+
+            all_kwargs = choreo.Pick_Named_Args_From_Dict(choreo.Speed_test,dict(globals(),**locals()))
+            choreo.Speed_test(**all_kwargs)
+
+
     all_kwargs = choreo.Pick_Named_Args_From_Dict(choreo.Find_Choreo,dict(**locals()))
     choreo.Find_Choreo(**all_kwargs)
-
-#     filename_output = store_folder+'/'+file_basename
-#     filename = filename_output+'.npy'
-#     all_pos_post_reconverge = np.load(filename)
-# 
-#     print(np.linalg.norm(all_pos_post_reconverge - all_pos))
-# 
-# 
-# 
+    
 
 
 
