@@ -177,7 +177,7 @@ AddNumberToOutputName = False
 
 geodim = 2
 nbody = 3
-nint = nbody * 1000 *4
+nint = nbody * 1000 * 512
 
 mass = np.ones(nbody)
 Sym_list = []
@@ -185,7 +185,7 @@ Sym_list = []
 # MomConsImposed = True
 MomConsImposed = False
 
-n_reconverge_it_max = 3
+n_reconverge_it_max = 0
 n_grad_change = 1.
 
 TwoDBackend = (geodim == 2)
@@ -220,7 +220,8 @@ disp_scipy_opt = True
 for n_NT_init in range(4,len(all_NT_init)):
 
     # nint_ODE_mul = 64
-    nint_ODE_mul =  2**11
+    # nint_ODE_mul =  2**11
+    nint_ODE_mul =  2**5
     nint_ODE = nint_ODE_mul*nint
 
     fun,gun = ActionSyst_small.GetSymplecticODEDef()
