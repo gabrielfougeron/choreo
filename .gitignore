@@ -42,3 +42,4 @@ sparseqr/
 !/choreo_GUI/choreo-gallery/**
 !/LICENCES/**
 !.devcontainer/Dockerfile
+!/NumericalTank_data/*
