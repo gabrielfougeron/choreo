@@ -26,8 +26,8 @@ One_sec = 1e9
 
 test_names = [
 # "y'' = -y",
-# "y'' = - exp(y)",
-"y'' = xy",
+"y'' = - exp(y)",
+# "y'' = xy",
 ]
 
 # SymplecticMethod = 'SymplecticEuler'
