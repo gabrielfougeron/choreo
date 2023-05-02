@@ -700,6 +700,10 @@ class ChoreoAction():
                 nint = 2*nint
             elif method in ['SymplecticRuth3','SymplecticRuth3_XV','SymplecticRuth3_VX']:
                 nint = 24*nint
+            elif method in ['SymplecticRuth4Rat','SymplecticRuth4Rat_XV','SymplecticRuth4Rat_VX']:
+                nint = 48*nint
+            else:
+                raise ValueError(f'Integration method not supported: {method}')
 
             all_pos_vel = self.ComputeAllPosVel(x,nint=nint)
 
