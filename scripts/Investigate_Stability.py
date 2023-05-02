@@ -31,9 +31,9 @@ twopi = 2*np.pi
 
 def main():
 
-    input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/01 - Classic gallery')
+    # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/01 - Classic gallery')
     # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/3/')
-    # input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery/01 - Classic gallery')
+    input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery/01 - Classic gallery')
     # input_folder = os.path.join(__PROJECT_ROOT__,'Keep/tests')
     
 #     ''' Include all files in tree '''
@@ -111,6 +111,8 @@ def ExecName(the_name, input_folder, store_folder):
     print('--------------------------------------------')
     print('')
 
+    geodim = 2
+
     file_basename = the_name
     
     Info_filename = os.path.join(input_folder,the_name + '.json')
@@ -128,7 +130,7 @@ def ExecName(the_name, input_folder, store_folder):
     ncoeff_init = nint // 2 + 1
 
     c_coeffs = choreo.the_rfft(all_pos,axis=2,norm="forward")
-    all_coeffs = np.zeros((Info_dict["nloop"],choreo.ndim,ncoeff_init,2),dtype=np.float64)
+    all_coeffs = np.zeros((Info_dict["nloop"],geodim,ncoeff_init,2),dtype=np.float64)
     all_coeffs[:,:,:,0] = c_coeffs.real
     all_coeffs[:,:,:,1] = c_coeffs.imag
 
@@ -224,19 +226,24 @@ def ExecName(the_name, input_folder, store_folder):
     if Seed_with_RK_solver:
 
 
-        LagrangeMulInit = np.zeros((2,nbody,choreo.ndim,2,nbody,choreo.ndim),dtype=np.float64)
+        LagrangeMulInit = np.zeros((2,nbody,geodim,2,nbody,geodim),dtype=np.float64)
 
         # SymplecticMethod = 'SymplecticEuler'
         # SymplecticMethod = 'SymplecticStormerVerlet'
-        SymplecticMethod = 'SymplecticRuth3'
+        # SymplecticMethod = 'SymplecticRuth3'
+        SymplecticMethod = 'SymplecticRuth4Rat'
         SymplecticIntegrator = choreo.GetSymplecticIntegrator(SymplecticMethod)
 
-        nint_ODE_mul = 128
+        # nint_ODE_mul = 128
+        # nint_ODE_mul = 48
+        # nint_ODE_mul = 24
+        # nint_ODE_mul = 2
+        nint_ODE_mul = 1
         nint_ODE = nint_ODE_mul*nint
 
         fun,gun,x0,v0 = ActionSyst.GetTangentSystemDef(x,nint_ODE,method=SymplecticMethod)
 
-        ndof = nbody*choreo.ndim
+        ndof = nbody*geodim
 
         all_xv = np.zeros((nint,2*ndof,2*ndof))
 
@@ -256,7 +263,7 @@ def ExecName(the_name, input_folder, store_folder):
 
         del fun,gun
 
-        all_pos_d_init = np.zeros((nbody,choreo.ndim,2,nbody,choreo.ndim,nint),dtype=np.float64)
+        all_pos_d_init = np.zeros((nbody,geodim,2,nbody,geodim,nint),dtype=np.float64)
 
         MonodromyMat = np.ascontiguousarray(np.concatenate((xf,vf),axis=0).reshape(2*ndof,2*ndof))
 
@@ -300,7 +307,7 @@ def ExecName(the_name, input_folder, store_folder):
 
             PeriodicPart = np.dot(all_xv[iint,:,:],scipy.linalg.expm(-(iint / nint)*MonodromyMatLog))
 
-            all_pos_d_init[:,:,:,:,:,iint] = (PeriodicPart.reshape(2,nbody*choreo.ndim,2,nbody*choreo.ndim)[0,:,:,:]).reshape((nbody,choreo.ndim,2,nbody,choreo.ndim))
+            all_pos_d_init[:,:,:,:,:,iint] = (PeriodicPart.reshape(2,nbody*geodim,2,nbody*geodim)[0,:,:,:]).reshape((nbody,geodim,2,nbody,geodim))
 
 
         # print(MonodromyMatLog)
@@ -325,7 +332,7 @@ def ExecName(the_name, input_folder, store_folder):
         # print("Relative error on loxodromy ",np.linalg.norm(Instability_magnitude - np.flip(1/Instability_magnitude))/np.linalg.norm(Instability_magnitude))
 
         all_coeffs_dc_init = choreo.the_rfft(all_pos_d_init,norm="forward")
-        all_coeffs_d_init = np.zeros((nbody,choreo.ndim,2,nbody,choreo.ndim,ncoeff,2),np.float64)
+        all_coeffs_d_init = np.zeros((nbody,geodim,2,nbody,geodim,ncoeff,2),np.float64)
         all_coeffs_d_init[:,:,:,:,:,:,0] = all_coeffs_dc_init[:,:,:,:,:,:ncoeff].real
         all_coeffs_d_init[:,:,:,:,:,:,1] = all_coeffs_dc_init[:,:,:,:,:,:ncoeff].imag
 
@@ -334,20 +341,20 @@ def ExecName(the_name, input_folder, store_folder):
 
     else:
 
-        all_coeffs_d_init = np.zeros((nbody,choreo.ndim,2,nbody,choreo.ndim,ncoeff,2),dtype=np.float64)
-        LagrangeMulInit = np.zeros((2,nbody,choreo.ndim,2,nbody,choreo.ndim),dtype=np.float64)
-        MonodromyMatLog = np.zeros((2,nbody,choreo.ndim,2,nbody,choreo.ndim),dtype=np.float64)
+        all_coeffs_d_init = np.zeros((nbody,geodim,2,nbody,geodim,ncoeff,2),dtype=np.float64)
+        LagrangeMulInit = np.zeros((2,nbody,geodim,2,nbody,geodim),dtype=np.float64)
+        MonodromyMatLog = np.zeros((2,nbody,geodim,2,nbody,geodim),dtype=np.float64)
 
         for ib in range(nbody):
-            for idim in range(choreo.ndim):
+            for idim in range(geodim):
                 all_coeffs_d_init[ib,idim,0,ib,idim,0,0] = 1
                 all_coeffs_d_init[ib,idim,1,ib,idim,1,1] = -1./(2*twopi)
 
 
         x0 = np.ascontiguousarray(np.concatenate((all_coeffs_d_init.reshape(-1), LagrangeMulInit.reshape(-1))))
 
-
-    MonodromyMatLog = np.ascontiguousarray(MonodromyMatLog.reshape(2,nbody,choreo.ndim,2,nbody,choreo.ndim))
+    exit()
+    MonodromyMatLog = np.ascontiguousarray(MonodromyMatLog.reshape(2,nbody,geodim,2,nbody,geodim))
 
     krylov_method = 'lgmres'
     # krylov_method = 'gmres'
@@ -385,12 +392,12 @@ def ExecName(the_name, input_folder, store_folder):
 
     
     ibeg = 0
-    iend = (nbody*choreo.ndim*2*nbody*choreo.ndim*ncoeff*2)
-    res_1D_all_coeffs = res_1D[ibeg:iend].reshape((nbody,choreo.ndim,2,nbody,choreo.ndim,ncoeff,2))
+    iend = (nbody*geodim*2*nbody*geodim*ncoeff*2)
+    res_1D_all_coeffs = res_1D[ibeg:iend].reshape((nbody,geodim,2,nbody,geodim,ncoeff,2))
 
     ibeg = iend
-    iend = iend + (2*nbody*choreo.ndim*2*nbody*choreo.ndim)
-    res_LagrangeMul = res_1D[ibeg:iend].reshape((2,nbody,choreo.ndim,2,nbody,choreo.ndim))
+    iend = iend + (2*nbody*geodim*2*nbody*geodim)
+    res_LagrangeMul = res_1D[ibeg:iend].reshape((2,nbody,geodim,2,nbody,geodim))
 
 
     # print(res_1D_all_coeffs)
@@ -405,10 +412,10 @@ def ExecName(the_name, input_folder, store_folder):
 #     plt.figure()
 # 
 #     for ib in range(nbody):
-#         for idim in range(choreo.ndim):
+#         for idim in range(geodim):
 #             for jvx in range(2):
 #                 for jb in range(nbody): 
-#                     for jdim in range(choreo.ndim):
+#                     for jdim in range(geodim):
 # 
 #                         # plt.plot(all_pos_d_init[ib,idim,jvx,jb,jdim,:])
 #                         plt.plot(res_1D_all_pos[ib,idim,jvx,jb,jdim,:])

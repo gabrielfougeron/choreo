@@ -50,6 +50,16 @@ class ExactKrylovJacobian(scipy.optimize.nonlin.KrylovJacobian):
     def rmatvec(self, v):
         return self.exactgrad(self.x0,v)
 
+
+
+
+
+
+#####################
+# EXPLICIT RK STUFF #
+#####################
+
+
 c_table_Euler = np.array([1.])
 d_table_Euler = np.array([1.])
 assert c_table_Euler.size == d_table_Euler.size
@@ -72,6 +82,13 @@ nsteps_Ruth4 = c_table_Ruth4.size
 SymplecticRuth4_XV = functools.partial(ExplicitSymplecticWithTable_XV_cython,c_table=c_table_Ruth4,d_table=d_table_Ruth4,nsteps=nsteps_Ruth4)
 SymplecticRuth4_VX = functools.partial(ExplicitSymplecticWithTable_VX_cython,c_table=c_table_Ruth4,d_table=d_table_Ruth4,nsteps=nsteps_Ruth4)
 
+c_table_Ruth4Rat = np.array([0.     , 1./3  , -1./3     , 1.        , -1./3 , 1./3  ])
+d_table_Ruth4Rat = np.array([7./48  , 3./8  , -1./48    , -1./48    ,  3./8 , 7./48 ])
+assert c_table_Ruth4Rat.size == d_table_Ruth4Rat.size
+nsteps_Ruth4Rat = c_table_Ruth4Rat.size
+SymplecticRuth4Rat_XV = functools.partial(ExplicitSymplecticWithTable_XV_cython,c_table=c_table_Ruth4Rat,d_table=d_table_Ruth4Rat,nsteps=nsteps_Ruth4Rat)
+SymplecticRuth4Rat_VX = functools.partial(ExplicitSymplecticWithTable_VX_cython,c_table=c_table_Ruth4Rat,d_table=d_table_Ruth4Rat,nsteps=nsteps_Ruth4Rat)
+
 all_SymplecticIntegrators = {
     'SymplecticEuler'               : SymplecticEuler_XV,
     'SymplecticEuler_XV'            : SymplecticEuler_XV,
@@ -85,7 +102,10 @@ all_SymplecticIntegrators = {
     'SymplecticRuth4'               : SymplecticRuth4_XV,
     'SymplecticRuth4_XV'            : SymplecticRuth4_XV,
     'SymplecticRuth4_VX'            : SymplecticRuth4_VX,
-    }
+    'SymplecticRuth4Rat'            : SymplecticRuth4Rat_XV,
+    'SymplecticRuth4Rat_XV'         : SymplecticRuth4Rat_XV,
+    'SymplecticRuth4Rat_VX'         : SymplecticRuth4Rat_VX,
+}
 
 all_unique_SymplecticIntegrators = {
     'SymplecticEuler_XV'            : SymplecticEuler_XV,
@@ -96,11 +116,31 @@ all_unique_SymplecticIntegrators = {
     'SymplecticRuth3_VX'            : SymplecticRuth3_VX,
     'SymplecticRuth4_XV'            : SymplecticRuth4_XV,
     'SymplecticRuth4_VX'            : SymplecticRuth4_VX,
-    }
+    'SymplecticRuth4Rat_XV'         : SymplecticRuth4Rat_XV,
+    'SymplecticRuth4Rat_VX'         : SymplecticRuth4Rat_VX,
+}
 
 def GetSymplecticIntegrator(method='SymplecticRuth3'):
 
     return all_SymplecticIntegrators[method]
+
+
+
+
+#####################
+# IMPLICIT RK STUFF #
+#####################
+
+a_table_Gauss_1 = np.array([[1.]])
+b_table_Gauss_1 = np.array([1.])
+c_table_Gauss_1 = np.array([1.])
+nsteps_Gauss_1 = a_table_Gauss_1.shape[0]
+assert a_table_Gauss_1.shape[1] == nsteps_Gauss_1
+assert b_table_Gauss_1.size == nsteps_Gauss_1
+assert c_table_Gauss_1.size == nsteps_Gauss_1
+
+
+
 
 
 def InstabilityDecomposition(Mat,eps=1e-12):
@@ -141,7 +181,6 @@ def InstabilityDecomposition(Mat,eps=1e-12):
 
     return Instability_magnitude,Instability_directions
 
-
 def algo_H(n,k,z):
 
     w = np.zeros((n))
@@ -161,7 +200,6 @@ def algo_H(n,k,z):
 
     return w
         
-
 def apply_H_sym(n,A,w):
     # Computes H A HT
     
@@ -190,9 +228,6 @@ def apply_H_left(n,A,w):
         for j in range(n):
 
             A[i,j] -= two_ovr_wTw *  w[i] * wTA[j]
-
-
-
 
 def algo_J(n,k,y,z):
 
@@ -230,8 +265,7 @@ def apply_J_sym(n,k,c,s,D,U,V):
     D[:,:] =   CDC + SVC + CUS + SDS.T
     U[:,:] = - CDS - SVS + CUC + CDS.T
     V[:,:] = - SDC + CVC - SUS + SDC.T
-    
-        
+            
 def apply_J_left(n,k,c,s,Q,P):
     # Computes J A
 
@@ -246,10 +280,6 @@ def apply_J_left(n,k,c,s,Q,P):
 
     Q[:,:] = QQ
     P[:,:] = PP
-
-
-
-
 
 def sqrt_2x2_mat(a,b,c):
     #                                         [ a  b ]
@@ -274,9 +304,6 @@ def sqrt_2x2_mat(a,b,c):
     gamma = q / beta
 
     return alpha,beta,gamma
-
-
-
 
 def SymplecticSchurOfSkewHamilton(H):
 
@@ -354,12 +381,8 @@ def SymplecticSchurOfSkewHamilton(H):
     print(QP @ H @ QP.T)
     
 
-#     M = scipy.linalg.sqrtm(A)
-#     N = scipy.linalg.solve_sylvester(M, -M.T, B)
-# 
-#     print(M)
-#     print(N)
-
-
-
-
+    #     M = scipy.linalg.sqrtm(A)
+    #     N = scipy.linalg.solve_sylvester(M, -M.T, B)
+    # 
+    #     print(M)
+    #     print(N)

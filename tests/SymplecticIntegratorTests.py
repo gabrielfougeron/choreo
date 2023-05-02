@@ -25,8 +25,8 @@ import datetime
 One_sec = 1e9
 
 test_names = [
-"y'' = -y",
-# "y'' = - exp(y)",
+# "y'' = -y",
+"y'' = - exp(y)",
 # "y'' = xy",
 ]
 
@@ -131,13 +131,13 @@ for SymplecticMethod,SymplecticIntegrator in the_integrators.items() :
             sol = np.ascontiguousarray(np.concatenate((xf,vf),axis=0).reshape(2*test_ndim))
             error = np.linalg.norm(sol-ex_final)
 
-            print(f'error : {error:e} time : {(t_end-t_beg)/One_sec:f}')
+            # print(f'error : {error:e} time : {(t_end-t_beg)/One_sec:f}')
 
-#             if (iref > 0):
-#                 error_mul = error/error_prev
-#                 est_order = -m.log(error_mul)/m.log(refinement_lvl[iref]/refinement_lvl[iref-1])
-# 
-#                 print(f'error : {error:e}     error mul : {error_mul:e}     estimated order : {est_order:e}     time : {(t_end-t_beg)/One_sec:f}')
-#                 print(f'error : {error:e}     estimated order : {est_order:.2f}')
+            if (iref > 0):
+                error_mul = error/error_prev
+                est_order = -m.log(error_mul)/m.log(refinement_lvl[iref]/refinement_lvl[iref-1])
+
+                # print(f'error : {error:e}     error mul : {error_mul:e}     estimated order : {est_order:e}     time : {(t_end-t_beg)/One_sec:f}')
+                print(f'error : {error:e}     estimated order : {est_order:.2f}')
 
             error_prev = error
