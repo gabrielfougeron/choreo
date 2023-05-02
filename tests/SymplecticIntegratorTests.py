@@ -26,8 +26,8 @@ One_sec = 1e9
 
 test_names = [
 # "y'' = -y",
-"y'' = - exp(y)",
-# "y'' = xy",
+# "y'' = - exp(y)",
+"y'' = xy",
 ]
 
 # SymplecticMethod = 'SymplecticEuler'
@@ -137,7 +137,7 @@ for SymplecticMethod,SymplecticIntegrator in the_integrators.items() :
                 error_mul = error/error_prev
                 est_order = -m.log(error_mul)/m.log(refinement_lvl[iref]/refinement_lvl[iref-1])
 
-                # print(f'error : {error:e}     error mul : {error_mul:e}     estimated order : {est_order:e}     time : {(t_end-t_beg)/One_sec:f}')
-                print(f'error : {error:e}     estimated order : {est_order:.2f}')
+                print(f'error : {error:e}     error mul : {error_mul:e}     estimated order : {est_order:.2f}     time : {(t_end-t_beg)/One_sec:f}')
+                # print(f'error : {error:e}     estimated order : {est_order:.2f}')
 
             error_prev = error

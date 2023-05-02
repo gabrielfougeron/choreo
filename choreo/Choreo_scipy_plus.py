@@ -139,6 +139,15 @@ assert a_table_Gauss_1.shape[1] == nsteps_Gauss_1
 assert b_table_Gauss_1.size == nsteps_Gauss_1
 assert c_table_Gauss_1.size == nsteps_Gauss_1
 
+db_G2 = m.pow(3,-1/2)/2
+a_table_Gauss_2 = np.array([[ 1./4  , 1./4 - db_G2  ],[ 1./4 + db_G2    , 1./4   ]])
+b_table_Gauss_2 = np.array([  1./2  , 1./2 ])
+c_table_Gauss_2 = np.array([  1./2 - db_G2 , 1./2 + db_G2 ])
+nsteps_Gauss_2 = a_table_Gauss_2.shape[0]
+assert a_table_Gauss_2.shape[1] == nsteps_Gauss_2
+assert b_table_Gauss_2.size == nsteps_Gauss_2
+assert c_table_Gauss_2.size == nsteps_Gauss_2
+
 
 
 
