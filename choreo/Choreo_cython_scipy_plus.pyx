@@ -51,8 +51,8 @@ def ExplicitSymplecticWithTable_VX_cython(
     cdef double tv = t_span[0]
     cdef double dt = (t_span[1] - t_span[0]) / nint
 
-    cdef np.ndarray[double, ndim=1, mode="c"] cdt = np.zeros((nsteps),dtype=np.float64)
-    cdef np.ndarray[double, ndim=1, mode="c"] ddt = np.zeros((nsteps),dtype=np.float64)
+    cdef np.ndarray[double, ndim=1, mode="c"] cdt = np.empty((nsteps),dtype=np.float64)
+    cdef np.ndarray[double, ndim=1, mode="c"] ddt = np.empty((nsteps),dtype=np.float64)
 
     cdef np.ndarray[double, ndim=1, mode="c"] x = x0.copy()
     cdef np.ndarray[double, ndim=1, mode="c"] v = v0.copy()
@@ -98,8 +98,8 @@ def ExplicitSymplecticWithTable_XV_cython(
     cdef double tv = t_span[0]
     cdef double dt = (t_span[1] - t_span[0]) / nint
 
-    cdef np.ndarray[double, ndim=1, mode="c"] cdt = np.zeros((nsteps),dtype=np.float64)
-    cdef np.ndarray[double, ndim=1, mode="c"] ddt = np.zeros((nsteps),dtype=np.float64)
+    cdef np.ndarray[double, ndim=1, mode="c"] cdt = np.empty((nsteps),dtype=np.float64)
+    cdef np.ndarray[double, ndim=1, mode="c"] ddt = np.empty((nsteps),dtype=np.float64)
 
     cdef np.ndarray[double, ndim=1, mode="c"] x = x0.copy()
     cdef np.ndarray[double, ndim=1, mode="c"] v = v0.copy()
@@ -229,6 +229,183 @@ def SymplecticStormerVerlet_VX_cython(
     t += dt_half
 
     return x,v
+
+
+
+def ImplicitSymplecticWithTableGaussSeidel_VX_cython(
+    object fun,
+    object gun,
+    (double, double) t_span,
+    np.ndarray[double, ndim=1, mode="c"] x0,
+    np.ndarray[double, ndim=1, mode="c"] v0,
+    long nint,
+    np.ndarray[double, ndim=2, mode="c"] a_table,
+    np.ndarray[double, ndim=1, mode="c"] b_table,
+    np.ndarray[double, ndim=1, mode="c"] c_table,
+    long nsteps,
+    double eps,
+    long maxiter
+):
+    r"""
+    
+    This function computes an approximate solution to the :ref:`partitioned Hamiltonian system<ode_PHS>` using an implicit Runge-Kutta method.
+    The implicit equations are solved using a Gauss Seidel approach
+    
+    :param fun: function 
+    :param gun: function 
+
+    :param t_span: initial and final time for simulation
+    :type t_span: (double, double)
+
+
+    :return: two np.ndarray[double, ndim=1, mode="c"] for the final 
+
+
+    """
+    cdef long ndof = x0.size
+    cdef long istep, id, iGS
+    cdef long i,j,k
+
+    cdef bint GoOnGS
+
+    cdef double tbeg, t
+    cdef double dt = (t_span[1] - t_span[0]) / nint
+
+    cdef np.ndarray[double, ndim=1, mode="c"] cdt = np.empty((nsteps),dtype=np.float64)
+    cdef np.ndarray[double, ndim=1, mode="c"] all_t = np.empty((nsteps),dtype=np.float64)
+    cdef np.ndarray[double, ndim=1, mode="c"] arg = np.empty((ndof),dtype=np.float64)
+
+    for istep in range(nsteps):
+        cdt[istep] = c_table[istep]*dt
+
+    cdef np.ndarray[double, ndim=1, mode="c"] x = x0.copy()
+    cdef np.ndarray[double, ndim=1, mode="c"] v = v0.copy()
+
+    cdef np.ndarray[double, ndim=1, mode="c"] res
+    cdef np.ndarray[double, ndim=1, mode="c"] dxdt = np.empty((ndof),dtype=np.float64)
+    cdef np.ndarray[double, ndim=2, mode="c"] all_res = np.empty((nsteps,ndof),dtype=np.float64)
+
+    cdef np.ndarray[double, ndim=2, mode="c"] dX = np.empty((nsteps,ndof),dtype=np.float64)
+    cdef np.ndarray[double, ndim=2, mode="c"] dV
+
+    cdef double eps_mul = eps * ndof * nsteps
+
+
+    for iint in range(nint):
+
+        tbeg = t_span[0] + iint * dt
+        for istep in range(nsteps):
+            all_t[istep] = tbeg + cdt[istep]
+
+
+
+        # TODO : Apply starting approximation to V
+        dV  = np.zeros((nsteps,ndof),dtype=np.float64)
+
+
+
+        iGS = 0
+
+        GoOnGS = True
+
+        while GoOnGS:
+
+            # dV => dX
+            for istep in range(nsteps):
+
+                for idof in range(ndof):
+                    arg[idof] = v[idof] + dV[istep,idof]
+
+                res = fun(all_t[istep],arg)  
+
+                for idof in range(ndof):
+                    all_res[istep,idof] = dt * res[idof]
+
+
+            for i in range(nsteps):
+                for j in range(ndof):
+                    dX[i,j] = a_table[i,0] * all_res[0,j]
+                    for k in range(1,nsteps):
+                        dX[i,j] += a_table[i,k] * all_res[k,j]
+
+
+            # dX => dV
+            for istep in range(nsteps):
+
+                for idof in range(ndof):
+                    arg[idof] = x[idof] + dX[istep,idof]
+
+                res = gun(all_t[istep],arg)  
+
+                for idof in range(ndof):
+                    all_res[istep,idof] = dt * res[idof]
+                    
+            for i in range(nsteps):
+                for j in range(ndof):
+                    dV[i,j] = a_table[i,0] * all_res[0,j]
+                    for k in range(1,nsteps):
+                        dV[i,j] += a_table[i,k] * all_res[k,j]
+
+
+            
+            iGS += 1
+
+            GoOnGS = (iGS < maxiter)
+
+        # x
+        for istep in range(nsteps):
+
+            for idof in range(ndof):
+                arg[idof] = v[idof] + dV[istep,idof]
+
+            res = fun(all_t[istep],arg)  
+
+            for idof in range(ndof):
+                all_res[istep,idof] = res[idof]
+
+        for i in range(ndof):
+            dxdt[i] = b_table[0] * all_res[0,i]
+            for k in range(1,nsteps):
+                dxdt[i] += b_table[k] * all_res[k,i]
+
+        # v
+        for istep in range(nsteps):
+
+            for idof in range(ndof):
+                arg[idof] = x[idof] + dX[istep,idof]
+
+            res = gun(all_t[istep],arg)  
+
+            for idof in range(ndof):
+                all_res[istep,idof] = res[idof]
+
+        for i in range(ndof):
+            res[i] = b_table[0] * all_res[0,i]
+            for k in range(1,nsteps):
+                res[i] += b_table[k] * all_res[k,i]
+
+
+        for idof in range(ndof):
+            x[idof] += dt * dxdt[idof]
+
+        for idof in range(ndof):
+            v[idof] += dt * res[idof]
+
+
+        
+
+    return x,v
+
+
+
+
+
+
+
+
+
+
+
 
 
 def Hessenberg_skew_Hamiltonian(

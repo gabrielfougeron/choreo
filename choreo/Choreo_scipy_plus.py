@@ -14,6 +14,7 @@ from choreo.Choreo_cython_scipy_plus import ExplicitSymplecticWithTable_XV_cytho
 from choreo.Choreo_cython_scipy_plus import ExplicitSymplecticWithTable_VX_cython
 from choreo.Choreo_cython_scipy_plus import SymplecticStormerVerlet_XV_cython
 from choreo.Choreo_cython_scipy_plus import SymplecticStormerVerlet_VX_cython
+from choreo.Choreo_cython_scipy_plus import ImplicitSymplecticWithTableGaussSeidel_VX_cython
 
 from choreo.Choreo_scipy_plus_nonlin import nonlin_solve_pp
 
@@ -89,6 +90,37 @@ nsteps_Ruth4Rat = c_table_Ruth4Rat.size
 SymplecticRuth4Rat_XV = functools.partial(ExplicitSymplecticWithTable_XV_cython,c_table=c_table_Ruth4Rat,d_table=d_table_Ruth4Rat,nsteps=nsteps_Ruth4Rat)
 SymplecticRuth4Rat_VX = functools.partial(ExplicitSymplecticWithTable_VX_cython,c_table=c_table_Ruth4Rat,d_table=d_table_Ruth4Rat,nsteps=nsteps_Ruth4Rat)
 
+
+
+#####################
+# IMPLICIT RK STUFF #
+#####################
+
+a_table_Gauss_1 = np.array([[1./2]])
+b_table_Gauss_1 = np.array([1.])
+c_table_Gauss_1 = np.array([1./2])
+nsteps_Gauss_1 = a_table_Gauss_1.shape[0]
+assert a_table_Gauss_1.shape[1] == nsteps_Gauss_1
+assert b_table_Gauss_1.size == nsteps_Gauss_1
+assert c_table_Gauss_1.size == nsteps_Gauss_1
+SymplecticGauss1_XV = functools.partial(ImplicitSymplecticWithTableGaussSeidel_VX_cython,a_table=a_table_Gauss_1,b_table=b_table_Gauss_1,c_table=c_table_Gauss_1,nsteps=nsteps_Gauss_1,eps=np.finfo(np.float64).eps,maxiter=1)
+
+
+db_G2 = m.pow(3,-1/2)/2
+a_table_Gauss_2 = np.array([[ 1./4  , 1./4 - db_G2  ],[ 1./4 + db_G2    , 1./4   ]])
+b_table_Gauss_2 = np.array([  1./2  , 1./2 ])
+c_table_Gauss_2 = np.array([  1./2 - db_G2 , 1./2 + db_G2 ])
+nsteps_Gauss_2 = a_table_Gauss_2.shape[0]
+assert a_table_Gauss_2.shape[1] == nsteps_Gauss_2
+assert b_table_Gauss_2.size == nsteps_Gauss_2
+assert c_table_Gauss_2.size == nsteps_Gauss_2
+SymplecticGauss2_XV = functools.partial(ImplicitSymplecticWithTableGaussSeidel_VX_cython,a_table=a_table_Gauss_2,b_table=b_table_Gauss_2,c_table=c_table_Gauss_2,nsteps=nsteps_Gauss_2,eps=np.finfo(np.float64).eps,maxiter=2)
+
+
+
+
+
+
 all_SymplecticIntegrators = {
     'SymplecticEuler'               : SymplecticEuler_XV,
     'SymplecticEuler_XV'            : SymplecticEuler_XV,
@@ -105,6 +137,8 @@ all_SymplecticIntegrators = {
     'SymplecticRuth4Rat'            : SymplecticRuth4Rat_XV,
     'SymplecticRuth4Rat_XV'         : SymplecticRuth4Rat_XV,
     'SymplecticRuth4Rat_VX'         : SymplecticRuth4Rat_VX,
+    'SymplecticGauss1'              : SymplecticGauss1_XV,
+    'SymplecticGauss2'              : SymplecticGauss2_XV,
 }
 
 all_unique_SymplecticIntegrators = {
@@ -118,6 +152,8 @@ all_unique_SymplecticIntegrators = {
     'SymplecticRuth4_VX'            : SymplecticRuth4_VX,
     'SymplecticRuth4Rat_XV'         : SymplecticRuth4Rat_XV,
     'SymplecticRuth4Rat_VX'         : SymplecticRuth4Rat_VX,
+    'SymplecticGauss1'              : SymplecticGauss1_XV,
+    'SymplecticGauss2'              : SymplecticGauss2_XV,
 }
 
 def GetSymplecticIntegrator(method='SymplecticRuth3'):
@@ -127,26 +163,12 @@ def GetSymplecticIntegrator(method='SymplecticRuth3'):
 
 
 
-#####################
-# IMPLICIT RK STUFF #
-#####################
 
-a_table_Gauss_1 = np.array([[1.]])
-b_table_Gauss_1 = np.array([1.])
-c_table_Gauss_1 = np.array([1.])
-nsteps_Gauss_1 = a_table_Gauss_1.shape[0]
-assert a_table_Gauss_1.shape[1] == nsteps_Gauss_1
-assert b_table_Gauss_1.size == nsteps_Gauss_1
-assert c_table_Gauss_1.size == nsteps_Gauss_1
 
-db_G2 = m.pow(3,-1/2)/2
-a_table_Gauss_2 = np.array([[ 1./4  , 1./4 - db_G2  ],[ 1./4 + db_G2    , 1./4   ]])
-b_table_Gauss_2 = np.array([  1./2  , 1./2 ])
-c_table_Gauss_2 = np.array([  1./2 - db_G2 , 1./2 + db_G2 ])
-nsteps_Gauss_2 = a_table_Gauss_2.shape[0]
-assert a_table_Gauss_2.shape[1] == nsteps_Gauss_2
-assert b_table_Gauss_2.size == nsteps_Gauss_2
-assert c_table_Gauss_2.size == nsteps_Gauss_2
+
+
+
+
 
 
 
