@@ -24,11 +24,11 @@ def ExplicitSymplecticWithTable_VX_cython(
     object fun,
     object gun,
     (double, double) t_span,
-    np.ndarray[double, ndim=1, mode="c"] x0,
-    np.ndarray[double, ndim=1, mode="c"] v0,
+    double[::1] x0,
+    double[::1] v0,
     long nint,
-    np.ndarray[double, ndim=1, mode="c"] c_table,
-    np.ndarray[double, ndim=1, mode="c"] d_table,
+    double[::1] c_table,
+    double[::1] d_table,
     long nsteps
 ):
     r"""
@@ -47,20 +47,28 @@ def ExplicitSymplecticWithTable_VX_cython(
 
     """
 
+    cdef long istep,id
+    cdef long ndof = x0.size
+
     cdef double tx = t_span[0]
     cdef double tv = t_span[0]
     cdef double dt = (t_span[1] - t_span[0]) / nint
 
-    cdef np.ndarray[double, ndim=1, mode="c"] cdt = np.zeros((nsteps),dtype=np.float64)
-    cdef np.ndarray[double, ndim=1, mode="c"] ddt = np.zeros((nsteps),dtype=np.float64)
+    cdef double[::1] cdt = np.empty((nsteps),dtype=np.float64)
+    cdef double[::1] ddt = np.empty((nsteps),dtype=np.float64)
 
-    cdef np.ndarray[double, ndim=1, mode="c"] x = x0.copy()
-    cdef np.ndarray[double, ndim=1, mode="c"] v = v0.copy()
+    cdef np.ndarray[double, ndim=1, mode="c"] x_np = np.empty((ndof),dtype=np.float64)
+    cdef double[::1] x = x_np
+    for idof in range(ndof):
+        x[idof] = x0[idof]
 
-    cdef long ndof = x0.size
-    cdef np.ndarray[double, ndim=1, mode="c"] res
+    cdef np.ndarray[double, ndim=1, mode="c"] v_np = np.empty((ndof),dtype=np.float64)
+    cdef double[::1] v = v_np
+    for idof in range(ndof):
+        v[idof] = v0[idof]
 
-    cdef long istep,id
+    cdef double[::1] res
+
     for istep in range(nsteps):
         cdt[istep] = c_table[istep]*dt
         ddt[istep] = d_table[istep]*dt
@@ -80,34 +88,41 @@ def ExplicitSymplecticWithTable_VX_cython(
                 v[idof] += ddt[istep] * res[idof]  
             tv += ddt[istep]
 
-    return x,v
+    return x_np, v_np
 
 def ExplicitSymplecticWithTable_XV_cython(
     object fun,
     object gun,
     (double, double) t_span,
-    np.ndarray[double, ndim=1, mode="c"] x0,
-    np.ndarray[double, ndim=1, mode="c"] v0,
+    double[::1] x0,
+    double[::1] v0,
     long nint,
-    np.ndarray[double, ndim=1, mode="c"] c_table,
-    np.ndarray[double, ndim=1, mode="c"] d_table,
+    double[::1] c_table,
+    double[::1] d_table,
     long nsteps
 ):
+
+    cdef long istep,idof
+    cdef long ndof = x0.size
 
     cdef double tx = t_span[0]
     cdef double tv = t_span[0]
     cdef double dt = (t_span[1] - t_span[0]) / nint
 
-    cdef np.ndarray[double, ndim=1, mode="c"] cdt = np.zeros((nsteps),dtype=np.float64)
-    cdef np.ndarray[double, ndim=1, mode="c"] ddt = np.zeros((nsteps),dtype=np.float64)
+    cdef double[::1] cdt = np.empty((nsteps),dtype=np.float64)
+    cdef double[::1] ddt = np.empty((nsteps),dtype=np.float64)
 
-    cdef np.ndarray[double, ndim=1, mode="c"] x = x0.copy()
-    cdef np.ndarray[double, ndim=1, mode="c"] v = v0.copy()
+    cdef np.ndarray[double, ndim=1, mode="c"] x_np = np.empty((ndof),dtype=np.float64)
+    cdef double[::1] x = x_np
+    for idof in range(ndof):
+        x[idof] = x0[idof]
 
-    cdef long ndof = x0.size
-    cdef np.ndarray[double, ndim=1, mode="c"] res
+    cdef np.ndarray[double, ndim=1, mode="c"] v_np = np.empty((ndof),dtype=np.float64)
+    cdef double[::1] v = v_np
+    for idof in range(ndof):
+        v[idof] = v0[idof]
 
-    cdef long istep,idof
+    cdef double[::1] res
 
     for istep in range(nsteps):
         cdt[istep] = c_table[istep]*dt
@@ -128,28 +143,35 @@ def ExplicitSymplecticWithTable_XV_cython(
 
             tx += ddt[istep]
 
-    return x,v
+    return x_np, v_np
 
 def SymplecticStormerVerlet_XV_cython(
     object fun,
     object gun,
     (double, double) t_span,
-    np.ndarray[double, ndim=1, mode="c"] x0,
-    np.ndarray[double, ndim=1, mode="c"] v0,
+    double[::1] x0,
+    double[::1] v0,
     long nint,
 ):
+
+    cdef long idof
+    cdef long ndof = x0.size
 
     cdef double t = t_span[0]
     cdef double dt = (t_span[1] - t_span[0]) / nint
     cdef double dt_half = dt*0.5
 
-    cdef np.ndarray[double, ndim=1, mode="c"] x = x0.copy()
-    cdef np.ndarray[double, ndim=1, mode="c"] v = v0.copy()
+    cdef np.ndarray[double, ndim=1, mode="c"] x_np = np.empty((ndof),dtype=np.float64)
+    cdef double[::1] x = x_np
+    for idof in range(ndof):
+        x[idof] = x0[idof]
 
-    cdef long ndof = x0.size
-    cdef np.ndarray[double, ndim=1, mode="c"] res
+    cdef np.ndarray[double, ndim=1, mode="c"] v_np = np.empty((ndof),dtype=np.float64)
+    cdef double[::1] v = v_np
+    for idof in range(ndof):
+        v[idof] = v0[idof]
 
-    cdef long idof
+    cdef double[::1] res
 
     res = gun(t,x)   
     for idof in range(ndof):
@@ -177,28 +199,35 @@ def SymplecticStormerVerlet_XV_cython(
     for idof in range(ndof):
         v[idof] += dt_half * res[idof]  
 
-    return x,v
+    return x_np, v_np
 
 def SymplecticStormerVerlet_VX_cython(
     object fun,
     object gun,
     (double, double) t_span,
-    np.ndarray[double, ndim=1, mode="c"] x0,
-    np.ndarray[double, ndim=1, mode="c"] v0,
+    double[::1] x0,
+    double[::1] v0,
     long nint,
 ):
+
+    cdef long idof
+    cdef long ndof = x0.size
 
     cdef double t = t_span[0]
     cdef double dt = (t_span[1] - t_span[0]) / nint
     cdef double dt_half = dt*0.5
 
-    cdef np.ndarray[double, ndim=1, mode="c"] x = x0.copy()
-    cdef np.ndarray[double, ndim=1, mode="c"] v = v0.copy()
+    cdef np.ndarray[double, ndim=1, mode="c"] x_np = np.empty((ndof),dtype=np.float64)
+    cdef double[::1] x = x_np
+    for idof in range(ndof):
+        x[idof] = x0[idof]
 
-    cdef long ndof = x0.size
-    cdef np.ndarray[double, ndim=1, mode="c"] res
+    cdef np.ndarray[double, ndim=1, mode="c"] v_np = np.empty((ndof),dtype=np.float64)
+    cdef double[::1] v = v_np
+    for idof in range(ndof):
+        v[idof] = v0[idof]
 
-    cdef long idof
+    cdef double[::1] res
 
     res = fun(t,v)  
     for idof in range(ndof):
@@ -228,7 +257,112 @@ def SymplecticStormerVerlet_VX_cython(
 
     t += dt_half
 
-    return x,v
+    return x_np, v_np
+
+
+
+
+
+def ImplicitSymplecticWithTable_VX_cython(
+    object fun,
+    object gun,
+    (double, double) t_span,
+    double[::1] x0,
+    double[::1] v0,
+    long nint,
+    double[::1] a_table,
+    double[::1] b_table,
+    double[::1] c_table,
+    long nsteps
+):
+    r"""
+    
+    This function computes an approximate solution to the :ref:`partitioned Hamiltonian system<ode_PHS>` using an implicit Runge-Kutta method.
+    THe implicit Runge-Kutta equations are solved with Gauss-Seidel iterations.
+    
+    :param fun: function 
+    :param gun: function 
+
+    :param t_span: initial and final time for simulation
+    :type t_span: (double, double)
+
+
+    :return: two np.ndarray[double, ndim=1, mode="c"] for the final 
+
+
+    """
+
+    cdef double tx = t_span[0]
+    cdef double tv = t_span[0]
+    cdef double dt = (t_span[1] - t_span[0]) / nint
+
+    cdef double[::1] cdt = np.empty((nsteps),dtype=np.float64)
+    cdef double[::1] ddt = np.empty((nsteps),dtype=np.float64)
+
+    cdef np.ndarray[double, ndim=1, mode="c"] x_np = x0
+    cdef np.ndarray[double, ndim=1, mode="c"] v_np = v0
+
+    cdef double[::1] x = x_np
+    cdef double[::1] v = v_np
+
+    cdef long ndof = x0.size
+    cdef double[::1] res
+
+    # cdef np.ndarray[double, ndim=1, mode="c"] x = x0.copy()
+    # cdef np.ndarray[double, ndim=1, mode="c"] v = v0.copy()
+
+
+# 
+#     cdef long istep,id
+#     for istep in range(nsteps):
+#         cdt[istep] = c_table[istep]*dt
+#         ddt[istep] = d_table[istep]*dt
+# 
+#     for iint in range(nint):
+# 
+#         for istep in range(nsteps):
+# 
+#             res = fun(tv,v)  
+#             for idof in range(ndof):
+#                 x[idof] += cdt[istep] * res[idof]  
+# 
+#             tx += cdt[istep]
+# 
+#             res = gun(tx,x)   
+#             for idof in range(ndof):
+#                 v[idof] += ddt[istep] * res[idof]  
+#             tv += ddt[istep]
+
+    return x_np, v_np
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 def Hessenberg_skew_Hamiltonian(
