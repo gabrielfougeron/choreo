@@ -3,6 +3,7 @@ import concurrent.futures
 import multiprocessing
 
 os.environ['NUMBA_NUM_THREADS'] = str(multiprocessing.cpu_count())
+os.environ['OMP_NUM_THREADS'] = str(multiprocessing.cpu_count())
 os.environ['OPENBLAS_NUM_THREADS'] = '1'
 os.environ['NUMEXPR_NUM_THREADS'] = '1'
 os.environ['MKL_NUM_THREADS'] = '1'
@@ -152,11 +153,11 @@ disp_scipy_opt = True
 # linesearch_smin = 0.1
 linesearch_smin = 1
 
-gradtol_list =          [1e-1   ,1e-3   ,1e-5   ,1e-7   ,1e-9   ,1e-11  ,1e-13  ,1e-15  ]
-inner_maxiter_list =    [30     ,30     ,50     ,60     ,70     ,80     ,100    ,100    ]
-maxiter_list =          [100    ,1000   ,1000   ,1000   ,500    ,500    ,100    ,20     ]
-outer_k_list =          [5      ,5      ,5      ,5      ,5      ,7      ,7      ,7      ]
-store_outer_Av_list =   [False  ,False  ,False  ,False  ,False  ,True   ,True   ,True   ]
+gradtol_list =          [1e-13  ,1e-13  ]
+inner_maxiter_list =    [100    ,100    ]
+maxiter_list =          [20     ,1      ]
+outer_k_list =          [7      ,7      ]
+store_outer_Av_list =   [True   ,True   ]
 # 
 # gradtol_list =          [1e-1   ,1e-3  ,1e-5  ]
 # inner_maxiter_list =    [30     ,30    ,50    ]
@@ -177,7 +178,9 @@ AddNumberToOutputName = False
 
 geodim = 2
 nbody = 3
-nint = nbody * 1024 * 512
+# nint = nbody * 1024 * 512
+nint = nbody * 1024 * 32
+# nint = nbody *  128
 
 mass = np.ones(nbody)
 Sym_list = []
@@ -209,7 +212,8 @@ ActionSyst_small = choreo.setup_changevar(geodim,nbody,nint_small,mass,n_reconve
 # SymplecticMethod = 'SymplecticEuler'
 # SymplecticMethod = 'SymplecticStormerVerlet'
 # SymplecticMethod = 'SymplecticRuth3'
-SymplecticMethod = 'SymplecticRuth4'
+# SymplecticMethod = 'SymplecticRuth4'
+SymplecticMethod = 'SymplecticGauss4'
 
 SymplecticIntegrator = choreo.GetSymplecticIntegrator(SymplecticMethod)
 
@@ -218,14 +222,16 @@ disp_scipy_opt = True
 
 
 
-# for n_NT_init in [2]:
+for n_NT_init in [1]:
 # for n_NT_init in range(len(all_NT_init)):
-for n_NT_init in range(4,len(all_NT_init)):
+# for n_NT_init in range(4,len(all_NT_init)):
 
     # nint_ODE_mul = 64
     # nint_ODE_mul =  2**11
-    # nint_ODE_mul =  2**5
-    nint_ODE_mul =  2**3
+    # nint_ODE_mul =  2**7
+    # nint_ODE_mul =  2**4
+    # nint_ODE_mul =  2**1
+    nint_ODE_mul =  1
     nint_ODE = nint_ODE_mul*nint
 
     fun,gun = ActionSyst_small.GetSymplecticODEDef()
