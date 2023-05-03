@@ -12,8 +12,7 @@ import numpy as np
 import scipy.linalg
 import sys
 import fractions
-# import scipy.integrate
-# import scipy.special
+import functools
 
 __PROJECT_ROOT__ = os.path.abspath(os.path.join(os.path.dirname(__file__),os.pardir))
 sys.path.append(__PROJECT_ROOT__)
@@ -30,28 +29,35 @@ test_names = [
 # "y'' = xy",
 ]
 
-# SymplecticMethod = 'SymplecticEuler'
-# SymplecticMethod = 'SymplecticStormerVerlet'
+
+
+
+methods = ['SymplecticGauss'+str(i) for i in range(1,11)]
+
+# methods.append('SymplecticEuler')
+# methods.append('SymplecticStormerVerlet')
 
 # 
-# SymplecticMethod = 'SymplecticEuler_XV'
-# SymplecticMethod = 'SymplecticEuler_VX'
-# SymplecticMethod = 'SymplecticStormerVerlet_XV'
-# SymplecticMethod = 'SymplecticStormerVerlet_VX'
+# methods.append('SymplecticEuler_XV')
+# methods.append('SymplecticEuler_VX')
+# methods.append('SymplecticStormerVerlet_XV')
+# methods.append('SymplecticStormerVerlet_VX')
 
-# SymplecticMethod = 'SymplecticEuler_Table_XV'
-SymplecticMethod = 'SymplecticEuler_Table_VX'
+# methods.append('SymplecticEuler_Table_XV')
+# methods.append(SymplecticEuler_Table_VX')
 
 
 
-# the_integrators = {SymplecticMethod:choreo.GetSymplecticIntegrator(SymplecticMethod)}
+the_integrators = {method:choreo.GetSymplecticIntegrator(method) for method in methods}
 
-the_integrators = choreo.all_unique_SymplecticIntegrators
+
+# the_integrators = choreo.all_unique_SymplecticIntegrators
 
 for SymplecticMethod,SymplecticIntegrator in the_integrators.items() :
     print('')
     print('SymplecticMethod : ',SymplecticMethod)
 
+    # SymplecticIntegrator = functools.partial(SymplecticIntegrator, maxiter = 40)
 
     for the_test in test_names:
 
@@ -113,9 +119,9 @@ for SymplecticMethod,SymplecticIntegrator in the_integrators.items() :
         # print(x0)
         # print(v0)
 
-        refinement_lvl = [1,2,4,8,16,32,64,128,256,512,1024,2048]
+        # refinement_lvl = [1,2,4,8,16,32,64,128,256,512,1024,2048]
         # refinement_lvl = [1,10,100]
-
+        refinement_lvl = [1,2,3,4,5,6,7,8,9,10]
 
         for iref in range(len(refinement_lvl)):
 
@@ -134,7 +140,7 @@ for SymplecticMethod,SymplecticIntegrator in the_integrators.items() :
             # print(f'error : {error:e} time : {(t_end-t_beg)/One_sec:f}')
 
             if (iref > 0):
-                error_mul = error/error_prev
+                error_mul = max(error/error_prev,1e-16)
                 est_order = -m.log(error_mul)/m.log(refinement_lvl[iref]/refinement_lvl[iref-1])
 
                 print(f'error : {error:e}     error mul : {error_mul:e}     estimated order : {est_order:.2f}     time : {(t_end-t_beg)/One_sec:f}')
