@@ -23,14 +23,14 @@ __version__ = "0.2.0"
 
 cython_extnames = [
     "choreo.Choreo_cython_funs",
-    "choreo.Choreo_cython_scipy_plus",
     "choreo.Choreo_cython_funs_serial",
+    "choreo.Choreo_cython_scipy_plus_ODE",
 ]
 
 cython_filenames = [
     "choreo/Choreo_cython_funs.pyx",
-    "choreo/Choreo_cython_scipy_plus.pyx",
     "choreo/Choreo_cython_funs_serial.pyx",
+    "choreo/Choreo_cython_scipy_plus_ODE.pyx",
 ]
 
 if platform.system() == "Windows":

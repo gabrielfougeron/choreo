@@ -1,5 +1,5 @@
 '''
-Choreo_scipy_plus.py : Define things I designed I feel ought to be in scipy.
+Choreo_scipy_plus_nonlin.py : Define non-linear optimization things I designed I feel ought to be in scipy.
 
 '''
 
@@ -9,6 +9,39 @@ import scipy.optimize
 import scipy.linalg as la
 import scipy.sparse as sp
 import functools
+
+class current_best:
+    # Class meant to store the best solution during scipy optimization / root finding
+    # Useful since scipy does not return the best solution, but rather the solution at the last iteration.
+    
+    def __init__(self,x,f):
+        
+        self.x = x
+        self.f = f
+        self.f_norm = np.linalg.norm(f)
+        
+    def update(self,x,f,f_norm):
+
+        if (f_norm < self.f_norm):
+            self.x = x
+            self.f = f
+            self.f_norm = f_norm
+
+    def get_best(self):
+        return self.x,self.f,self.f_norm
+
+class ExactKrylovJacobian(scipy.optimize.nonlin.KrylovJacobian):
+
+    def __init__(self,exactgrad, rdiff=None, method='lgmres', inner_maxiter=20,inner_M=None, outer_k=10, **kw):
+
+        scipy.optimize.nonlin.KrylovJacobian.__init__(self, rdiff, method, inner_maxiter,inner_M, outer_k, **kw)
+        self.exactgrad = exactgrad
+
+    def matvec(self, v):
+        return self.exactgrad(self.x0,v)
+
+    def rmatvec(self, v):
+        return self.exactgrad(self.x0,v)
 
 def nonlin_solve_pp(
         F,
