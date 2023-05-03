@@ -5,6 +5,7 @@ channels:
   - numba
 dependencies:
   - python=3.10
+  - mpmath
   - matplotlib
   - scipy
   - networkx
