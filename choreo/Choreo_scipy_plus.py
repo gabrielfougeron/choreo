@@ -13,4 +13,5 @@ import functools
 from choreo.Choreo_scipy_plus_ODE import *
 from choreo.Choreo_scipy_plus_linalg import *
 from choreo.Choreo_scipy_plus_nonlin import *
+from choreo.Choreo_scipy_plus_Hierarchical_Clustering import *
 

@@ -32,7 +32,7 @@ test_names = [
 
 
 
-methods = ['SymplecticGauss'+str(i) for i in range(1,11)]
+methods = ['SymplecticGauss'+str(i) for i in range(1,6)]
 
 # methods.append('SymplecticEuler')
 # methods.append('SymplecticStormerVerlet')

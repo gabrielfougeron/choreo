@@ -8,6 +8,7 @@ from matplotlib import animation
 import copy
 import os, shutil, sys
 import time
+import functools
 
 __PROJECT_ROOT__ = os.path.abspath(os.path.join(os.path.dirname(__file__),os.pardir))
 sys.path.append(__PROJECT_ROOT__)
@@ -15,15 +16,18 @@ sys.path.append(__PROJECT_ROOT__)
 import choreo 
 
 
+colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
+n_colors = len(colors)
+
 store_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym','NumericalTank_tests')
 all_pos_filename = os.path.join(store_folder,'NumericalTank_00001.npy')
+# all_pos_filename = os.path.join(store_folder,'NumericalTank_00000.npy')
 
 
 all_pos = np.load(all_pos_filename)
 c_coeffs = choreo.the_rfft(all_pos,axis=2,norm="forward") 
 
 k_plot_max = 20
-
 
 nloop = c_coeffs.shape[0]
 ncoeff = c_coeffs.shape[2]
@@ -35,8 +39,8 @@ ncoeff_plot = min(ncoeff,ncoeff_cap)
 ind = np.arange(ncoeff_plot) 
 
 
-# eps = 1e-18
-eps = 0.
+eps = 1e-18
+# eps = 0.
 
 ampl = np.zeros((nloop,ncoeff_plot),dtype=np.float64)
 max_ampl = np.zeros((nloop,ncoeff_plot),dtype=np.float64)
@@ -79,12 +83,60 @@ for il in range(nloop):
         cur_max = max(cur_max,ampl[il,k_inv])
         max_ampl[il,k_inv] = cur_max
 
+
+
+
+log_max_ampl_T = np.log(max_ampl).T
+
+degpolyfit = 1
+OneRangeCost = functools.partial(choreo.PolyCost,degpolyfit=degpolyfit)
+cuts,costs,hmin,hmax,hcmin,hcmax = choreo.FindFuses(log_max_ampl_T,OneRangeCost=OneRangeCost)
+
+n_clusters = 2
+
+color_clusters,depth_color_cluster = choreo.ColorClusters(log_max_ampl_T,ind,n_clusters,cuts)
+
+
+
+
+
+
+
+
+
+
+
+
 fig = plt.figure()
 fig.set_size_inches(16, 12)
 ax = fig.add_subplot(111)
-for il in range(nloop):
+# 
+# 
+# for il in range(nloop):
+#     
+#     ax.plot(ind,max_ampl[il,:])
+# 
+
+
+
+
+for i_clus in range(n_clusters):
     
-    ax.plot(ind,max_ampl[il,:])
+    imin = color_clusters[i_clus]
+    imax = color_clusters[i_clus+1]+1
+
+    for il in range(nloop):
+    
+        ax.plot(ind[imin:imax],max_ampl[il,imin:imax],c=colors[i_clus%n_colors])
+
+        z = np.polyfit(ind[imin:imax], log_max_ampl_T[imin:imax,il], degpolyfit, rcond=None, full=False)
+        p = np.poly1d(z)
+        
+        ax.plot(ind[imin:imax],np.exp(p(ind[imin:imax])),c='k')
+
+
+
+
 
 
 ax.set_yscale('log')
