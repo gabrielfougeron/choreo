@@ -429,6 +429,8 @@ def ImplicitSymplecticWithTableGaussSeidel_VX_cython(
 
             tot_niter += iGS
 
+            # Do EFT here ?
+
             for jdof in range(ndof):
                 for kstep in range(nsteps):
                     x[jdof] += b_table[kstep] * K_fun[kstep,jdof]
@@ -443,7 +445,7 @@ def ImplicitSymplecticWithTableGaussSeidel_VX_cython(
             v_keep[iint_keep,jdof] = v[jdof]
     
     # print(tot_niter)
-    print(1+nsteps*tot_niter)
+    # print(1+nsteps*tot_niter)
 
     return x_keep, v_keep
 

@@ -305,7 +305,7 @@ def GetSymplecticIntegrator(method='SymplecticRuth3'):
                 beta_table = Butcher_beta_np,
                 nsteps = n,
                 eps = np.finfo(np.float64).eps,
-                maxiter = 20
+                maxiter = 50
             )
 
         else:
