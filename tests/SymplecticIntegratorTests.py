@@ -25,8 +25,8 @@ One_sec = 1e9
 
 test_names = [
 # "y'' = -y",
-"y'' = - exp(y)",
-# "y'' = xy",
+# "y'' = - exp(y)",
+"y'' = xy",
 ]
 
 
@@ -131,7 +131,7 @@ for SymplecticMethod,SymplecticIntegrator in the_integrators.items() :
             v0 = np.copy(ex_init[test_ndim  :2*test_ndim])
 
             t_beg= time.perf_counter_ns()
-            xf,vf = SymplecticIntegrator(fun,gun,t_span,x0,v0,nint)
+            xf,vf = SymplecticIntegrator(fun,gun,t_span,x0,v0,nint,nint)
             t_end = time.perf_counter_ns()
 
             sol = np.ascontiguousarray(np.concatenate((xf,vf),axis=0).reshape(2*test_ndim))
