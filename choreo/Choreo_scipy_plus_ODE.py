@@ -13,8 +13,8 @@ import functools
 
 from choreo.Choreo_cython_scipy_plus_ODE import ExplicitSymplecticWithTable_XV_cython
 from choreo.Choreo_cython_scipy_plus_ODE import ExplicitSymplecticWithTable_VX_cython
-from choreo.Choreo_cython_scipy_plus_ODE import SymplecticStormerVerlet_XV_cython
-from choreo.Choreo_cython_scipy_plus_ODE import SymplecticStormerVerlet_VX_cython
+# from choreo.Choreo_cython_scipy_plus_ODE import SymplecticStormerVerlet_XV_cython
+# from choreo.Choreo_cython_scipy_plus_ODE import SymplecticStormerVerlet_VX_cython
 from choreo.Choreo_cython_scipy_plus_ODE import ImplicitSymplecticWithTableGaussSeidel_VX_cython
 
 
@@ -23,7 +23,6 @@ from choreo.Choreo_cython_scipy_plus_ODE import ImplicitSymplecticWithTableGauss
 #####################
 # EXPLICIT RK STUFF #
 #####################
-
 
 c_table_Euler = np.array([1.])
 d_table_Euler = np.array([1.])
@@ -186,7 +185,7 @@ def EvalLagrange(a,b,n,z,x,phipz=None):
 
     return lag
 
-def ComputeButcher_tables(a,b,n,w=None,z=None,wint=None,zint=None,nint=None):
+def ComputeButcher_a(a,b,n,w=None,z=None,wint=None,zint=None,nint=None):
 
     if (w is None) or (z is None) :
         w, z = QuadFrom3Term(a,b,n)
@@ -231,7 +230,7 @@ def ComputeButcher_tables(a,b,n,w=None,z=None,wint=None,zint=None,nint=None):
     for i in range(n):
         for j in range(n):
 
-            Butcher_beta[i,j] = w[j] + z[i] * Butcher_beta[i,j]
+            Butcher_beta[i,j] = z[i] * Butcher_beta[i,j]
 
 
     return Butcher_a, Butcher_beta
@@ -242,12 +241,11 @@ def ComputeGaussButcherTables(n):
     a, b = ShiftedGaussLegendre3Term(n)
     w, z = QuadFrom3Term(a,b,n)
 
-    Butcher_a, Butcher_beta = ComputeButcher_tables(a,b,n,w,z)
+    Butcher_a, Butcher_beta = ComputeButcher_a(a,b,n,w,z)
 
     Butcher_a_np = np.array(Butcher_a.tolist(),dtype=np.float64)
     Butcher_b_np = np.array(w.tolist(),dtype=np.float64).reshape(n)
     Butcher_c_np = np.array(z.tolist(),dtype=np.float64).reshape(n)
-
     Butcher_beta_np = np.array(Butcher_beta.tolist(),dtype=np.float64)
 
     return Butcher_a_np, Butcher_b_np, Butcher_c_np, Butcher_beta_np
@@ -262,9 +260,9 @@ all_SymplecticIntegrators = {
     'SymplecticEuler'               : SymplecticEuler_XV,
     'SymplecticEuler_XV'            : SymplecticEuler_XV,
     'SymplecticEuler_VX'            : SymplecticEuler_VX,
-    'SymplecticStormerVerlet'       : SymplecticStormerVerlet_XV_cython,
-    'SymplecticStormerVerlet_XV'    : SymplecticStormerVerlet_XV_cython,
-    'SymplecticStormerVerlet_VX'    : SymplecticStormerVerlet_VX_cython,
+    # 'SymplecticStormerVerlet'       : SymplecticStormerVerlet_XV_cython,
+    # 'SymplecticStormerVerlet_XV'    : SymplecticStormerVerlet_XV_cython,
+    # 'SymplecticStormerVerlet_VX'    : SymplecticStormerVerlet_VX_cython,
     'SymplecticRuth3'               : SymplecticRuth3_XV,
     'SymplecticRuth3_XV'            : SymplecticRuth3_XV,
     'SymplecticRuth3_VX'            : SymplecticRuth3_VX,
@@ -278,8 +276,8 @@ all_SymplecticIntegrators = {
 all_unique_SymplecticIntegrators = {
     'SymplecticEuler_XV'            : SymplecticEuler_XV,
     'SymplecticEuler_VX'            : SymplecticEuler_VX,
-    'SymplecticStormerVerlet_XV'    : SymplecticStormerVerlet_XV_cython,
-    'SymplecticStormerVerlet_VX'    : SymplecticStormerVerlet_VX_cython,
+    # 'SymplecticStormerVerlet_XV'    : SymplecticStormerVerlet_XV_cython,
+    # 'SymplecticStormerVerlet_VX'    : SymplecticStormerVerlet_VX_cython,
     'SymplecticRuth3_XV'            : SymplecticRuth3_XV,
     'SymplecticRuth3_VX'            : SymplecticRuth3_VX,
     'SymplecticRuth4_XV'            : SymplecticRuth4_XV,

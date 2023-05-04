@@ -20,6 +20,7 @@ from libc.math cimport sqrt as csqrt
 from libc.math cimport isnan as cisnan
 from libc.math cimport isinf as cisinf
 
+@cython.cdivision(True)
 def ExplicitSymplecticWithTable_VX_cython(
     object fun,
     object gun,
@@ -27,6 +28,7 @@ def ExplicitSymplecticWithTable_VX_cython(
     np.ndarray[double, ndim=1, mode="c"] x0,
     np.ndarray[double, ndim=1, mode="c"] v0,
     long nint,
+    long keep_freq,
     np.ndarray[double, ndim=1, mode="c"] c_table,
     np.ndarray[double, ndim=1, mode="c"] d_table,
     long nsteps
@@ -47,6 +49,13 @@ def ExplicitSymplecticWithTable_VX_cython(
 
     """
 
+    cdef long iint_keep, ifreq
+    cdef long nint_keep = nint // keep_freq
+    cdef long ndof = x0.size
+
+    cdef np.ndarray[double, ndim=2, mode="c"] x_keep = np.empty((nint_keep,ndof),dtype=np.float64)
+    cdef np.ndarray[double, ndim=2, mode="c"] v_keep = np.empty((nint_keep,ndof),dtype=np.float64)
+
     cdef double tx = t_span[0]
     cdef double tv = t_span[0]
     cdef double dt = (t_span[1] - t_span[0]) / nint
@@ -57,7 +66,6 @@ def ExplicitSymplecticWithTable_VX_cython(
     cdef np.ndarray[double, ndim=1, mode="c"] x = x0.copy()
     cdef np.ndarray[double, ndim=1, mode="c"] v = v0.copy()
 
-    cdef long ndof = x0.size
     cdef np.ndarray[double, ndim=1, mode="c"] res
 
     cdef long istep,id
@@ -65,23 +73,31 @@ def ExplicitSymplecticWithTable_VX_cython(
         cdt[istep] = c_table[istep]*dt
         ddt[istep] = d_table[istep]*dt
 
-    for iint in range(nint):
+    for iint_keep in range(nint_keep):
 
-        for istep in range(nsteps):
+        for ifreq in range(keep_freq):
 
-            res = fun(tv,v)  
-            for idof in range(ndof):
-                x[idof] += cdt[istep] * res[idof]  
+            for istep in range(nsteps):
 
-            tx += cdt[istep]
+                res = fun(tv,v)  
+                for idof in range(ndof):
+                    x[idof] += cdt[istep] * res[idof]  
 
-            res = gun(tx,x)   
-            for idof in range(ndof):
-                v[idof] += ddt[istep] * res[idof]  
-            tv += ddt[istep]
+                tx += cdt[istep]
 
-    return x,v
+                res = gun(tx,x)   
+                for idof in range(ndof):
+                    v[idof] += ddt[istep] * res[idof]  
+                tv += ddt[istep]
 
+        for idof in range(ndof):
+            x_keep[iint_keep,idof] = x[idof]
+        for idof in range(ndof):
+            v_keep[iint_keep,idof] = v[idof]
+
+    return x_keep, v_keep
+
+@cython.cdivision(True)
 def ExplicitSymplecticWithTable_XV_cython(
     object fun,
     object gun,
@@ -89,10 +105,18 @@ def ExplicitSymplecticWithTable_XV_cython(
     np.ndarray[double, ndim=1, mode="c"] x0,
     np.ndarray[double, ndim=1, mode="c"] v0,
     long nint,
+    long keep_freq,
     np.ndarray[double, ndim=1, mode="c"] c_table,
     np.ndarray[double, ndim=1, mode="c"] d_table,
     long nsteps
 ):
+
+    cdef long iint_keep, ifreq
+    cdef long nint_keep = nint // keep_freq
+    cdef long ndof = x0.size
+
+    cdef np.ndarray[double, ndim=2, mode="c"] x_keep = np.empty((nint_keep,ndof),dtype=np.float64)
+    cdef np.ndarray[double, ndim=2, mode="c"] v_keep = np.empty((nint_keep,ndof),dtype=np.float64)
 
     cdef double tx = t_span[0]
     cdef double tv = t_span[0]
@@ -104,7 +128,7 @@ def ExplicitSymplecticWithTable_XV_cython(
     cdef np.ndarray[double, ndim=1, mode="c"] x = x0.copy()
     cdef np.ndarray[double, ndim=1, mode="c"] v = v0.copy()
 
-    cdef long ndof = x0.size
+
     cdef np.ndarray[double, ndim=1, mode="c"] res
 
     cdef long istep,idof
@@ -113,125 +137,141 @@ def ExplicitSymplecticWithTable_XV_cython(
         cdt[istep] = c_table[istep]*dt
         ddt[istep] = d_table[istep]*dt
 
-    for iint in range(nint):
+    for iint_keep in range(nint_keep):
 
-        for istep in range(nsteps):
+        for ifreq in range(keep_freq):
 
-            res = gun(tx,x)   
-            for idof in range(ndof):
-                v[idof] += cdt[istep] * res[idof]  
-            tv += cdt[istep]
+            for istep in range(nsteps):
 
-            res = fun(tv,v)  
-            for idof in range(ndof):
-                x[idof] += ddt[istep] * res[idof]  
+                res = gun(tx,x)   
+                for idof in range(ndof):
+                    v[idof] += cdt[istep] * res[idof]  
+                tv += cdt[istep]
 
-            tx += ddt[istep]
+                res = fun(tv,v)  
+                for idof in range(ndof):
+                    x[idof] += ddt[istep] * res[idof]  
 
-    return x,v
+                tx += ddt[istep]
 
-def SymplecticStormerVerlet_XV_cython(
-    object fun,
-    object gun,
-    (double, double) t_span,
-    np.ndarray[double, ndim=1, mode="c"] x0,
-    np.ndarray[double, ndim=1, mode="c"] v0,
-    long nint,
-):
-
-    cdef double t = t_span[0]
-    cdef double dt = (t_span[1] - t_span[0]) / nint
-    cdef double dt_half = dt*0.5
-
-    cdef np.ndarray[double, ndim=1, mode="c"] x = x0.copy()
-    cdef np.ndarray[double, ndim=1, mode="c"] v = v0.copy()
-
-    cdef long ndof = x0.size
-    cdef np.ndarray[double, ndim=1, mode="c"] res
-
-    cdef long idof
-
-    res = gun(t,x)   
-    for idof in range(ndof):
-        v[idof] += dt_half * res[idof]  
-
-    for iint in range(nint-1):
-
-        res = fun(t,v)  
         for idof in range(ndof):
-            x[idof] += dt* res[idof]  
-
-        t += dt
-
-        res = gun(t,x)   
+            x_keep[iint_keep,idof] = x[idof]
         for idof in range(ndof):
-            v[idof] += dt * res[idof]  
+            v_keep[iint_keep,idof] = v[idof]
 
-    res = fun(t,v)  
-    for idof in range(ndof):
-        x[idof] += dt * res[idof]  
+    return x_keep, v_keep
 
-    t += dt
+# @cython.cdivision(True)
+# def SymplecticStormerVerlet_XV_cython(
+#     object fun,
+#     object gun,
+#     (double, double) t_span,
+#     np.ndarray[double, ndim=1, mode="c"] x0,
+#     np.ndarray[double, ndim=1, mode="c"] v0,
+#     long nint,
+#     long keep_freq,
+# ):
+# 
+#     cdef long iint_keep, ifreq
+#     cdef long nint_keep = nint // keep_freq
+#     cdef long ndof = x0.size
+# 
+#     cdef np.ndarray[double, ndim=2, mode="c"] x_keep = np.empty((nint_keep,ndof),dtype=np.float64)
+#     cdef np.ndarray[double, ndim=2, mode="c"] v_keep = np.empty((nint_keep,ndof),dtype=np.float64)
+# 
+#     cdef double t = t_span[0]
+#     cdef double dt = (t_span[1] - t_span[0]) / nint
+#     cdef double dt_half = dt*0.5
+# 
+#     cdef np.ndarray[double, ndim=1, mode="c"] x = x0.copy()
+#     cdef np.ndarray[double, ndim=1, mode="c"] v = v0.copy()
+# 
+#     cdef np.ndarray[double, ndim=1, mode="c"] res
+# 
+#     cdef long idof
+# 
+#     res = gun(t,x)   
+#     for idof in range(ndof):
+#         v[idof] += dt_half * res[idof]  
+# 
+#     for iint in range(nint-1):
+# 
+#         res = fun(t,v)  
+#         for idof in range(ndof):
+#             x[idof] += dt* res[idof]  
+# 
+#         t += dt
+# 
+#         res = gun(t,x)   
+#         for idof in range(ndof):
+#             v[idof] += dt * res[idof]  
+# 
+#     res = fun(t,v)  
+#     for idof in range(ndof):
+#         x[idof] += dt * res[idof]  
+# 
+#     t += dt
+# 
+#     res = gun(t,x)   
+#     for idof in range(ndof):
+#         v[idof] += dt_half * res[idof]  
+# 
+#     return x_keep, v_keep
+# 
+# @cython.cdivision(True)
+# def SymplecticStormerVerlet_VX_cython(
+#     object fun,
+#     object gun,
+#     (double, double) t_span,
+#     np.ndarray[double, ndim=1, mode="c"] x0,
+#     np.ndarray[double, ndim=1, mode="c"] v0,
+#     long nint,
+# ):
+# 
+#     cdef double t = t_span[0]
+#     cdef double dt = (t_span[1] - t_span[0]) / nint
+#     cdef double dt_half = dt*0.5
+# 
+#     cdef np.ndarray[double, ndim=1, mode="c"] x = x0.copy()
+#     cdef np.ndarray[double, ndim=1, mode="c"] v = v0.copy()
+# 
+#     cdef long ndof = x0.size
+#     cdef np.ndarray[double, ndim=1, mode="c"] res
+# 
+#     cdef long idof
+# 
+#     res = fun(t,v)  
+#     for idof in range(ndof):
+#         x[idof] += dt_half * res[idof]  
+# 
+#     t += dt_half
+#     
+#     for iint in range(nint-1):
+# 
+#         res = gun(t,x)   
+#         for idof in range(ndof):
+#             v[idof] += dt * res[idof]  
+# 
+#         res = fun(t,v)  
+#         for idof in range(ndof):
+#             x[idof] += dt* res[idof]  
+# 
+#         t += dt
+# 
+#     res = gun(t,x)   
+#     for idof in range(ndof):
+#         v[idof] += dt * res[idof]  
+# 
+#     res = fun(t,v)  
+#     for idof in range(ndof):
+#         x[idof] += dt_half* res[idof]  
+# 
+#     t += dt_half
+# 
+#     return x,v
 
-    res = gun(t,x)   
-    for idof in range(ndof):
-        v[idof] += dt_half * res[idof]  
 
-    return x,v
-
-def SymplecticStormerVerlet_VX_cython(
-    object fun,
-    object gun,
-    (double, double) t_span,
-    np.ndarray[double, ndim=1, mode="c"] x0,
-    np.ndarray[double, ndim=1, mode="c"] v0,
-    long nint,
-):
-
-    cdef double t = t_span[0]
-    cdef double dt = (t_span[1] - t_span[0]) / nint
-    cdef double dt_half = dt*0.5
-
-    cdef np.ndarray[double, ndim=1, mode="c"] x = x0.copy()
-    cdef np.ndarray[double, ndim=1, mode="c"] v = v0.copy()
-
-    cdef long ndof = x0.size
-    cdef np.ndarray[double, ndim=1, mode="c"] res
-
-    cdef long idof
-
-    res = fun(t,v)  
-    for idof in range(ndof):
-        x[idof] += dt_half * res[idof]  
-
-    t += dt_half
-    
-    for iint in range(nint-1):
-
-        res = gun(t,x)   
-        for idof in range(ndof):
-            v[idof] += dt * res[idof]  
-
-        res = fun(t,v)  
-        for idof in range(ndof):
-            x[idof] += dt* res[idof]  
-
-        t += dt
-
-    res = gun(t,x)   
-    for idof in range(ndof):
-        v[idof] += dt * res[idof]  
-
-    res = fun(t,v)  
-    for idof in range(ndof):
-        x[idof] += dt_half* res[idof]  
-
-    t += dt_half
-
-    return x,v
-
-
-
+@cython.cdivision(True)
 def ImplicitSymplecticWithTableGaussSeidel_VX_cython(
     object fun,
     object gun,
@@ -239,6 +279,7 @@ def ImplicitSymplecticWithTableGaussSeidel_VX_cython(
     np.ndarray[double, ndim=1, mode="c"] x0,
     np.ndarray[double, ndim=1, mode="c"] v0,
     long nint,
+    long keep_freq,
     np.ndarray[double, ndim=2, mode="c"] a_table,
     np.ndarray[double, ndim=1, mode="c"] b_table,
     np.ndarray[double, ndim=1, mode="c"] c_table,
@@ -266,7 +307,12 @@ def ImplicitSymplecticWithTableGaussSeidel_VX_cython(
     cdef long ndof = x0.size
     cdef long istep, id, iGS, jdof
     cdef long kstep
-    cdef long tot_nit = 0
+    cdef long tot_niter = 0
+    cdef long iint_keep, ifreq
+    cdef long nint_keep = nint // keep_freq
+
+    cdef np.ndarray[double, ndim=2, mode="c"] x_keep = np.empty((nint_keep,ndof),dtype=np.float64)
+    cdef np.ndarray[double, ndim=2, mode="c"] v_keep = np.empty((nint_keep,ndof),dtype=np.float64)
 
     cdef bint GoOnGS
 
@@ -286,7 +332,7 @@ def ImplicitSymplecticWithTableGaussSeidel_VX_cython(
 
     cdef np.ndarray[double, ndim=1, mode="c"] res
     cdef np.ndarray[double, ndim=2, mode="c"] K_fun = np.empty((nsteps,ndof),dtype=np.float64)
-    cdef np.ndarray[double, ndim=2, mode="c"] K_gun = np.zeros((nsteps,ndof),dtype=np.float64) # Needed for starting approx at iint = 0
+    cdef np.ndarray[double, ndim=2, mode="c"] K_gun = np.empty((nsteps,ndof),dtype=np.float64)
 
     cdef np.ndarray[double, ndim=2, mode="c"] dX = np.empty((nsteps,ndof),dtype=np.float64)
     cdef np.ndarray[double, ndim=2, mode="c"] dV = np.empty((nsteps,ndof),dtype=np.float64) 
@@ -296,103 +342,110 @@ def ImplicitSymplecticWithTableGaussSeidel_VX_cython(
     cdef double eps_mul = eps * ndof * nsteps * dt
     cdef double eps_mul2 = eps_mul * eps_mul
 
+    # First starting approximation using only one function evaluation
+    tbeg = t_span[0]
+    res = gun(tbeg,x)  
+    for istep in range(nsteps):
+        for jdof in range(ndof):
+            dV[istep,jdof] = cdt[istep] * res[jdof]
 
-    for iint in range(nint):
+    for iint_keep in range(nint_keep):
 
-        tbeg = t_span[0] + iint * dt    
-        for istep in range(nsteps):
-            all_t[istep] = tbeg + cdt[istep]
+        for ifreq in range(keep_freq):
 
-        # TODO : Apply starting approximation to V
-        for istep in range(nsteps):
+            iint = iint_keep * keep_freq + ifreq
+
+            tbeg = t_span[0] + iint * dt    
+            for istep in range(nsteps):
+                all_t[istep] = tbeg + cdt[istep]
+
+            for istep in range(nsteps):
+                for jdof in range(ndof):
+                    dV[istep,jdof] = beta_table[istep,0] * K_gun[0,jdof]
+                    for kstep in range(1,nsteps):
+                        dV[istep,jdof] += beta_table[istep,kstep] * K_gun[kstep,jdof]
+
+            iGS = 0
+
+            GoOnGS = True
+
+            while GoOnGS:
+
+                # dV => dX
+                for istep in range(nsteps):
+
+                    for jdof in range(ndof):
+                        arg[jdof] = v[jdof] + dV[istep,jdof]
+
+                    res = fun(all_t[istep],arg)  
+
+                    for jdof in range(ndof):
+                        K_fun[istep,jdof] = dt * res[jdof]
+
+                for istep in range(nsteps):
+                    for jdof in range(ndof):
+                        dX_prev[istep,jdof] = dX[istep,jdof] 
+
+
+                for istep in range(nsteps):
+                    for jdof in range(ndof):
+                        dX[istep,jdof] = a_table[istep,0] * K_fun[0,jdof]
+                        for kstep in range(1,nsteps):
+                            dX[istep,jdof] += a_table[istep,kstep] * K_fun[kstep,jdof]
+
+
+                # dX => dV
+                for istep in range(nsteps):
+
+                    for jdof in range(ndof):
+                        arg[jdof] = x[jdof] + dX[istep,jdof]
+
+                    res = gun(all_t[istep],arg)  
+
+                    for jdof in range(ndof):
+                        K_gun[istep,jdof] = dt * res[jdof]
+
+                for istep in range(nsteps):
+                    for jdof in range(ndof):
+                        dV_prev[istep,jdof] = dV[istep,jdof] 
+                        
+                for istep in range(nsteps):
+                    for jdof in range(ndof):
+                        dV[istep,jdof] = a_table[istep,0] * K_gun[0,jdof]
+                        for kstep in range(1,nsteps):
+                            dV[istep,jdof] += a_table[istep,kstep] * K_gun[kstep,jdof]
+
+                dXV_err = 0.
+                for istep in range(nsteps):
+                    for jdof in range(ndof):
+                        diff = dX[istep,jdof] - dX_prev[istep,jdof]
+                        dXV_err += diff * diff
+                        diff = dV[istep,jdof] - dV_prev[istep,jdof]
+                        dXV_err += diff * diff
+                
+                iGS += 1
+
+                GoOnGS = (iGS < maxiter) and (dXV_err > eps_mul2)
+
+            tot_niter += iGS
+
             for jdof in range(ndof):
-                dV[istep,jdof] = 0
+                for kstep in range(nsteps):
+                    x[jdof] += b_table[kstep] * K_fun[kstep,jdof]
 
-
-        # for istep in range(nsteps):
-        #     for jdof in range(ndof):
-        #         dV[istep,jdof] = beta_table[istep,0] * K_gun[0,jdof]
-        #         for kstep in range(1,nsteps):
-        #             dV[istep,jdof] += beta_table[istep,kstep] * K_gun[kstep,jdof]
-
-
-
-        iGS = 0
-
-        GoOnGS = True
-
-        while GoOnGS:
-
-            # dV => dX
-            for istep in range(nsteps):
-
-                for jdof in range(ndof):
-                    arg[jdof] = v[jdof] + dV[istep,jdof]
-
-                res = fun(all_t[istep],arg)  
-
-                for jdof in range(ndof):
-                    K_fun[istep,jdof] = dt * res[jdof]
-
-            for istep in range(nsteps):
-                for jdof in range(ndof):
-                    dX_prev[istep,jdof] = dX[istep,jdof] 
-
-
-            for istep in range(nsteps):
-                for jdof in range(ndof):
-                    dX[istep,jdof] = a_table[istep,0] * K_fun[0,jdof]
-                    for kstep in range(1,nsteps):
-                        dX[istep,jdof] += a_table[istep,kstep] * K_fun[kstep,jdof]
-
-
-            # dX => dV
-            for istep in range(nsteps):
-
-                for jdof in range(ndof):
-                    arg[jdof] = x[jdof] + dX[istep,jdof]
-
-                res = gun(all_t[istep],arg)  
-
-                for jdof in range(ndof):
-                    K_gun[istep,jdof] = dt * res[jdof]
-
-            for istep in range(nsteps):
-                for jdof in range(ndof):
-                    dV_prev[istep,jdof] = dV[istep,jdof] 
-                    
-            for istep in range(nsteps):
-                for jdof in range(ndof):
-                    dV[istep,jdof] = a_table[istep,0] * K_gun[0,jdof]
-                    for kstep in range(1,nsteps):
-                        dV[istep,jdof] += a_table[istep,kstep] * K_gun[kstep,jdof]
-
-            dXV_err = 0.
-            for istep in range(nsteps):
-                for jdof in range(ndof):
-                    diff = dX[istep,jdof] - dX_prev[istep,jdof]
-                    dXV_err += diff * diff
-                    diff = dV[istep,jdof] - dV_prev[istep,jdof]
-                    dXV_err += diff * diff
-            
-            iGS += 1
-
-            GoOnGS = (iGS < maxiter) and (dXV_err > eps_mul2)
-            # GoOnGS = (iGS < maxiter)
-
-        tot_nit += iGS
-
+            for jdof in range(ndof):
+                for kstep in range(nsteps):
+                    v[jdof] += b_table[kstep] * K_gun[kstep,jdof]
+        
         for jdof in range(ndof):
-            for kstep in range(nsteps):
-                x[jdof] += b_table[kstep] * K_fun[kstep,jdof]
-
+            x_keep[iint_keep,jdof] = x[jdof]
         for jdof in range(ndof):
-            for kstep in range(nsteps):
-                v[jdof] += b_table[kstep] * K_gun[kstep,jdof]
+            v_keep[iint_keep,jdof] = v[jdof]
     
-    print(tot_nit)
+    # print(tot_niter)
+    print(1+nsteps*tot_niter)
 
-    return x,v
+    return x_keep, v_keep
 
 
 
