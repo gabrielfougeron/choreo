@@ -153,11 +153,11 @@ disp_scipy_opt = True
 # linesearch_smin = 0.1
 linesearch_smin = 1
 
-gradtol_list =          [1e-13  ,1e-13  ]
-inner_maxiter_list =    [100    ,100    ]
-maxiter_list =          [20     ,1      ]
-outer_k_list =          [7      ,7      ]
-store_outer_Av_list =   [True   ,True   ]
+gradtol_list =          [1e-13  ,1e-13  ,1e-13  ]
+inner_maxiter_list =    [100    ,100    ,100    ]
+maxiter_list =          [1      ,20     ,1      ]
+outer_k_list =          [7      ,7      ,7      ]
+store_outer_Av_list =   [True   ,True   ,True   ]
 # 
 # gradtol_list =          [1e-1   ,1e-3  ,1e-5  ]
 # inner_maxiter_list =    [30     ,30    ,50    ]
@@ -178,9 +178,9 @@ AddNumberToOutputName = False
 
 geodim = 2
 nbody = 3
-# nint = nbody * 1024 * 512
-nint = nbody * 1024 * 32
-# nint = nbody *  128
+
+nint_first_try = nbody * 128
+
 
 mass = np.ones(nbody)
 Sym_list = []
@@ -188,7 +188,7 @@ Sym_list = []
 # MomConsImposed = True
 MomConsImposed = False
 
-n_reconverge_it_max = 0
+n_reconverge_it_max = 1
 n_grad_change = 1.
 
 TwoDBackend = (geodim == 2)
@@ -213,8 +213,8 @@ ActionSyst_small = choreo.setup_changevar(geodim,nbody,nint_small,mass,n_reconve
 # SymplecticMethod = 'SymplecticStormerVerlet'
 # SymplecticMethod = 'SymplecticRuth3'
 # SymplecticMethod = 'SymplecticRuth4'
-SymplecticMethod = 'SymplecticGauss3'
-# SymplecticMethod = 'SymplecticGauss6'
+# SymplecticMethod = 'SymplecticGauss3'
+SymplecticMethod = 'SymplecticGauss5'
 
 SymplecticIntegrator = choreo.GetSymplecticIntegrator(SymplecticMethod)
 
@@ -223,24 +223,19 @@ disp_scipy_opt = True
 
 
 
-for n_NT_init in [1]:
+# for n_NT_init in [0]:
 # for n_NT_init in range(len(all_NT_init)):
-# for n_NT_init in range(4,len(all_NT_init)):
+for n_NT_init in range(4,len(all_NT_init)):
 
     # nint_ODE_mul = 64
     # nint_ODE_mul =  2**11
     # nint_ODE_mul =  2**7
-    # nint_ODE_mul =  2**4
+    nint_ODE_mul =  2**4
     # nint_ODE_mul =  2**1
-    nint_ODE_mul =  1
-    nint_ODE = nint_ODE_mul*nint
+    # nint_ODE_mul =  1
 
     fun,gun = ActionSyst_small.GetSymplecticODEDef()
-
     ndof = nbody*ActionSyst_small.geodim
-
-    # all_x = np.zeros((nint,ActionSyst.nbody,ActionSyst.geodim))
-    all_x = np.zeros((ActionSyst_small.nbody,ActionSyst_small.geodim,nint))
 
     x0 = np.zeros(ndof)
     v0 = np.zeros(ndof)
@@ -269,61 +264,79 @@ for n_NT_init in [1]:
     x0 = x0 * rfac
     v0 = v0 * rfac * T_NT
 
-    T = 1.
-
     xi = x0
     vi = v0
 
 
 
     print("Time forward integration")
+    GoOn = True
+    itry = -1
+
+    while GoOn:
+
+        t_span = (0., 1.)
+
+        itry += 1
+        nint = nint_first_try * (2**itry)
+
+        print('')
+        print(f'nint = {nint}')
     
-    tbeg = time.perf_counter()
-    
-    t_span = (0., 1.)
-    all_x, all_v = SymplecticIntegrator(fun,gun,t_span,x0,v0,nint*nint_ODE_mul,nint_ODE_mul)
+        tbeg = time.perf_counter()
+        all_pos, all_v = SymplecticIntegrator(fun,gun,t_span,x0,v0,nint*nint_ODE_mul,nint_ODE_mul)
+        tend = time.perf_counter()
 
-    xf = all_x[-1,:]
-    vf = all_v[-1,:]
+        xf = all_pos[-1,:].copy()
+        vf = all_v[-1,:].copy()
 
-    all_x = all_x.reshape(ActionSyst_small.nbody,ActionSyst_small.geodim,nint)
-    all_v = all_v.reshape(ActionSyst_small.nbody,ActionSyst_small.geodim,nint)
-
+        all_pos[1:,:] = all_pos[:-1,:].copy()
+        all_pos[0,:] = x0.copy()
 
 
-
-
+        all_pos = all_pos.transpose().reshape(ActionSyst_small.nbody,ActionSyst_small.geodim,nint)
+        # all_v = all_v.transpose().reshape(ActionSyst_small.nbody,ActionSyst_small.geodim,nint)
 
 
 
+        print(f'Integration time: {tend-tbeg}')
 
-#     for iint in range(nint):
-#     # for iint in tqdm.tqdm(range(nint)):
-# 
-#         x0 = xf
-#         v0 = vf
-# 
-#         all_x[:,:,iint] = x0.reshape(ActionSyst_small.nbody,ActionSyst_small.geodim)
-# 
-#         t_span = (iint / nint, (iint+1) / nint)
-# 
-#         xf,vf = SymplecticIntegrator(fun,gun,t_span,x0,v0,nint_ODE_mul)
+        period_err = np.linalg.norm(xi-xf) + np.linalg.norm(vi-vf)
+
+        print(f'Error on Periodicity: {period_err}')
 
 
+        nint_init = nint
+        ncoeff_init = nint_init // 2 +1
 
+        c_coeffs = choreo.the_rfft(all_pos,axis=2,norm="forward")
+        all_coeffs = np.zeros((nbody,geodim,ncoeff_init,2),dtype=np.float64)
+        all_coeffs[:,:,:,0] = c_coeffs.real
+        all_coeffs[:,:,:,1] = c_coeffs.imag
 
+        eps = 1e-12
+        # eps = 0.
 
-    tend = time.perf_counter()
-    print(f'Integration time: {tend-tbeg}')
+        ampl = np.zeros((ncoeff_init),dtype=np.float64)
+        for k in range(ncoeff_init):
+            ampl[k] = np.linalg.norm(c_coeffs[:,:,k])
 
-    period_err = np.linalg.norm(xi-xf) + np.linalg.norm(vi-vf)
+        max_ampl = np.zeros((ncoeff_init),dtype=np.float64)
 
-    print(f'Error on Periodicity: {period_err}')
+        ncoeff_plotm1 = ncoeff_init - 1
 
+        cur_max = 0.
+        for k in range(ncoeff_init):
+            k_inv = ncoeff_plotm1 - k
 
+            cur_max = max(cur_max,ampl[k_inv])
+            max_ampl[k_inv] = cur_max
 
+        iprob = (ncoeff_init * 2) // 3
+        GoOn = (max_ampl[iprob] > eps)
 
-    exit()
+        print(f"Max amplitude at probe index: {max_ampl[iprob]}")
+        
 
 
 
@@ -339,14 +352,7 @@ for n_NT_init in [1]:
 
     # bare_name = the_name.split('/')[-1]
 
-    all_pos = all_x
-    nint_init = nint
-    ncoeff_init = nint_init // 2 +1
 
-    c_coeffs = choreo.the_rfft(all_pos,axis=2,norm="forward")
-    all_coeffs = np.zeros((nbody,geodim,ncoeff_init,2),dtype=np.float64)
-    all_coeffs[:,:,:,0] = c_coeffs.real
-    all_coeffs[:,:,:,1] = c_coeffs.imag
 
 
     # dx = np.linalg.norm(xi-xf)
