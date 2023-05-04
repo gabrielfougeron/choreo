@@ -213,7 +213,8 @@ ActionSyst_small = choreo.setup_changevar(geodim,nbody,nint_small,mass,n_reconve
 # SymplecticMethod = 'SymplecticStormerVerlet'
 # SymplecticMethod = 'SymplecticRuth3'
 # SymplecticMethod = 'SymplecticRuth4'
-SymplecticMethod = 'SymplecticGauss4'
+SymplecticMethod = 'SymplecticGauss3'
+# SymplecticMethod = 'SymplecticGauss6'
 
 SymplecticIntegrator = choreo.GetSymplecticIntegrator(SymplecticMethod)
 
@@ -273,24 +274,44 @@ for n_NT_init in [1]:
     xi = x0
     vi = v0
 
-    xf = x0
-    vf = v0
 
 
-    print("Explicit integration")
+    print("Time forward integration")
     
     tbeg = time.perf_counter()
-    for iint in range(nint):
-    # for iint in tqdm.tqdm(range(nint)):
+    
+    t_span = (0., 1.)
+    all_x, all_v = SymplecticIntegrator(fun,gun,t_span,x0,v0,nint*nint_ODE_mul,nint_ODE_mul)
 
-        x0 = xf
-        v0 = vf
+    xf = all_x[-1,:]
+    vf = all_v[-1,:]
 
-        all_x[:,:,iint] = x0.reshape(ActionSyst_small.nbody,ActionSyst_small.geodim)
+    all_x = all_x.reshape(ActionSyst_small.nbody,ActionSyst_small.geodim,nint)
+    all_v = all_v.reshape(ActionSyst_small.nbody,ActionSyst_small.geodim,nint)
 
-        t_span = (iint / nint, (iint+1) / nint)
 
-        xf,vf = SymplecticIntegrator(fun,gun,t_span,x0,v0,nint_ODE_mul)
+
+
+
+
+
+
+
+#     for iint in range(nint):
+#     # for iint in tqdm.tqdm(range(nint)):
+# 
+#         x0 = xf
+#         v0 = vf
+# 
+#         all_x[:,:,iint] = x0.reshape(ActionSyst_small.nbody,ActionSyst_small.geodim)
+# 
+#         t_span = (iint / nint, (iint+1) / nint)
+# 
+#         xf,vf = SymplecticIntegrator(fun,gun,t_span,x0,v0,nint_ODE_mul)
+
+
+
+
 
     tend = time.perf_counter()
     print(f'Integration time: {tend-tbeg}')
@@ -302,7 +323,7 @@ for n_NT_init in [1]:
 
 
 
-
+    exit()
 
 
 
