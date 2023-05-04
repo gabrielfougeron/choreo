@@ -278,7 +278,10 @@ for n_NT_init in [1]:
 
 
     print("Explicit integration")
-    for iint in tqdm.tqdm(range(nint)):
+    
+    tbeg = time.perf_counter()
+    for iint in range(nint):
+    # for iint in tqdm.tqdm(range(nint)):
 
         x0 = xf
         v0 = vf
@@ -289,6 +292,8 @@ for n_NT_init in [1]:
 
         xf,vf = SymplecticIntegrator(fun,gun,t_span,x0,v0,nint_ODE_mul)
 
+    tend = time.perf_counter()
+    print(f'Integration time: {tend-tbeg}')
 
     period_err = np.linalg.norm(xi-xf) + np.linalg.norm(vi-vf)
 
