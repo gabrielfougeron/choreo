@@ -60,30 +60,6 @@ SymplecticRuth4Rat_VX = functools.partial(ExplicitSymplecticWithTable_VX_cython,
 # IMPLICIT RK STUFF #
 #####################
 
-# a_table_Gauss_1 = np.array([[1./2]])
-# b_table_Gauss_1 = np.array([1.])
-# c_table_Gauss_1 = np.array([1./2])
-# nsteps_Gauss_1 = a_table_Gauss_1.shape[0]
-# assert a_table_Gauss_1.shape[1] == nsteps_Gauss_1
-# assert b_table_Gauss_1.size == nsteps_Gauss_1
-# assert c_table_Gauss_1.size == nsteps_Gauss_1
-# SymplecticGauss1_XV = functools.partial(ImplicitSymplecticWithTableGaussSeidel_VX_cython,a_table=a_table_Gauss_1,b_table=b_table_Gauss_1,c_table=c_table_Gauss_1,nsteps=nsteps_Gauss_1,eps=np.finfo(np.float64).eps,maxiter=1)
-# 
-# 
-# db_G2 = m.pow(3,-1/2)/2
-# a_table_Gauss_2 = np.array([[ 1./4  , 1./4 - db_G2  ],[ 1./4 + db_G2    , 1./4   ]])
-# b_table_Gauss_2 = np.array([  1./2  , 1./2 ])
-# c_table_Gauss_2 = np.array([  1./2 - db_G2 , 1./2 + db_G2 ])
-# nsteps_Gauss_2 = a_table_Gauss_2.shape[0]
-# assert a_table_Gauss_2.shape[1] == nsteps_Gauss_2
-# assert b_table_Gauss_2.size == nsteps_Gauss_2
-# assert c_table_Gauss_2.size == nsteps_Gauss_2
-# SymplecticGauss2_XV = functools.partial(ImplicitSymplecticWithTableGaussSeidel_VX_cython,a_table=a_table_Gauss_2,b_table=b_table_Gauss_2,c_table=c_table_Gauss_2,nsteps=nsteps_Gauss_2,eps=np.finfo(np.float64).eps,maxiter=2)
-
-
-
-
-
 
 def SafeGLIntOrder(N):
 
@@ -210,9 +186,9 @@ def EvalLagrange(a,b,n,z,x,phipz=None):
 
     return lag
 
-def ComputeButcher_a(a,b,n,z=None,wint=None,zint=None,nint=None):
+def ComputeButcher_tables(a,b,n,w=None,z=None,wint=None,zint=None,nint=None):
 
-    if z is None:
+    if (w is None) or (z is None) :
         w, z = QuadFrom3Term(a,b,n)
 
     if (nint is None) or (wint is None) or (zint is None):
@@ -239,7 +215,26 @@ def ComputeButcher_a(a,b,n,z=None,wint=None,zint=None,nint=None):
 
             Butcher_a[i,j] = z[i] * Butcher_a[i,j]
 
-    return Butcher_a
+
+    Butcher_beta = mpmath.matrix(n)
+
+    for iint in range(nint):
+
+        for i in range(n):
+
+            lag = EvalLagrange(a,b,n,z,1+z[i]*zint[iint])
+
+            for j in range(n):
+
+                Butcher_beta[i,j] = Butcher_beta[i,j] + wint[iint] * lag[j]
+
+    for i in range(n):
+        for j in range(n):
+
+            Butcher_beta[i,j] = w[j] + z[i] * Butcher_beta[i,j]
+
+
+    return Butcher_a, Butcher_beta
 
 
 def ComputeGaussButcherTables(n):
@@ -247,13 +242,15 @@ def ComputeGaussButcherTables(n):
     a, b = ShiftedGaussLegendre3Term(n)
     w, z = QuadFrom3Term(a,b,n)
 
-    Butcher_a = ComputeButcher_a(a,b,n,z)
+    Butcher_a, Butcher_beta = ComputeButcher_tables(a,b,n,w,z)
 
     Butcher_a_np = np.array(Butcher_a.tolist(),dtype=np.float64)
     Butcher_b_np = np.array(w.tolist(),dtype=np.float64).reshape(n)
     Butcher_c_np = np.array(z.tolist(),dtype=np.float64).reshape(n)
 
-    return Butcher_a_np, Butcher_b_np, Butcher_c_np
+    Butcher_beta_np = np.array(Butcher_beta.tolist(),dtype=np.float64)
+
+    return Butcher_a_np, Butcher_b_np, Butcher_c_np, Butcher_beta_np
 
 
 
@@ -276,10 +273,7 @@ all_SymplecticIntegrators = {
     'SymplecticRuth4_VX'            : SymplecticRuth4_VX,
     'SymplecticRuth4Rat'            : SymplecticRuth4Rat_XV,
     'SymplecticRuth4Rat_XV'         : SymplecticRuth4Rat_XV,
-    'SymplecticRuth4Rat_VX'         : SymplecticRuth4Rat_VX,
-    # 'SymplecticGauss1'              : SymplecticGauss1_XV,
-    # 'SymplecticGauss2'              : SymplecticGauss2_XV,
-}
+    'SymplecticRuth4Rat_VX'         : SymplecticRuth4Rat_VX,}
 
 all_unique_SymplecticIntegrators = {
     'SymplecticEuler_XV'            : SymplecticEuler_XV,
@@ -291,10 +285,7 @@ all_unique_SymplecticIntegrators = {
     'SymplecticRuth4_XV'            : SymplecticRuth4_XV,
     'SymplecticRuth4_VX'            : SymplecticRuth4_VX,
     'SymplecticRuth4Rat_XV'         : SymplecticRuth4Rat_XV,
-    'SymplecticRuth4Rat_VX'         : SymplecticRuth4Rat_VX,
-    # 'SymplecticGauss1'              : SymplecticGauss1_XV,
-    # 'SymplecticGauss2'              : SymplecticGauss2_XV,
-}
+    'SymplecticRuth4Rat_VX'         : SymplecticRuth4Rat_VX,}
 
 def GetSymplecticIntegrator(method='SymplecticRuth3'):
 
@@ -306,16 +297,17 @@ def GetSymplecticIntegrator(method='SymplecticRuth3'):
 
             descr = method.removeprefix("SymplecticGauss")
             n = int(descr)
-            Butcher_a_np, Butcher_b_np, Butcher_c_np = ComputeGaussButcherTables(n)
+            Butcher_a_np, Butcher_b_np, Butcher_c_np, Butcher_beta_np = ComputeGaussButcherTables(n)
 
             integrator = functools.partial(
                 ImplicitSymplecticWithTableGaussSeidel_VX_cython,
                 a_table = Butcher_a_np,
                 b_table = Butcher_b_np,
                 c_table = Butcher_c_np,
+                beta_table = Butcher_beta_np,
                 nsteps = n,
                 eps = np.finfo(np.float64).eps,
-                maxiter = n
+                maxiter = 20
             )
 
         else:
