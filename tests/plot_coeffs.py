@@ -15,13 +15,17 @@ sys.path.append(__PROJECT_ROOT__)
 
 import choreo 
 
+# Cluster_plot = True
+Cluster_plot = False
 
 colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
 n_colors = len(colors)
 
 store_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym','NumericalTank_tests')
-all_pos_filename = os.path.join(store_folder,'NumericalTank_00001.npy')
-# all_pos_filename = os.path.join(store_folder,'NumericalTank_00000.npy')
+file_basename = 'NumericalTank_00004_init'
+file_basename = 'NumericalTank_00004'
+all_pos_filename = os.path.join(store_folder,file_basename+'.npy')
+
 
 
 all_pos = np.load(all_pos_filename)
@@ -86,62 +90,47 @@ for il in range(nloop):
 
 
 
-log_max_ampl_T = np.log(max_ampl).T
-
-degpolyfit = 1
-OneRangeCost = functools.partial(choreo.PolyCost,degpolyfit=degpolyfit)
-cuts,costs,hmin,hmax,hcmin,hcmax = choreo.FindFuses(log_max_ampl_T,OneRangeCost=OneRangeCost)
-
-n_clusters = 2
-
-color_clusters,depth_color_cluster = choreo.ColorClusters(log_max_ampl_T,ind,n_clusters,cuts)
-
-
-
-
-
-
-
-
-
-
-
-
 fig = plt.figure()
 fig.set_size_inches(16, 12)
 ax = fig.add_subplot(111)
-# 
-# 
-# for il in range(nloop):
-#     
-#     ax.plot(ind,max_ampl[il,:])
-# 
 
+if Cluster_plot:
 
+    log_max_ampl_T = np.log(max_ampl).T
 
+    degpolyfit = 1
+    OneRangeCost = functools.partial(choreo.PolyCost,degpolyfit=degpolyfit)
+    cuts,costs,hmin,hmax,hcmin,hcmax = choreo.FindFuses(log_max_ampl_T,OneRangeCost=OneRangeCost)
 
-for i_clus in range(n_clusters):
-    
-    imin = color_clusters[i_clus]
-    imax = color_clusters[i_clus+1]+1
+    n_clusters = 2
+
+    color_clusters,depth_color_cluster = choreo.ColorClusters(log_max_ampl_T,ind,n_clusters,cuts)
+
+    for i_clus in range(n_clusters):
+        
+        imin = color_clusters[i_clus]
+        imax = color_clusters[i_clus+1]+1
+
+        for il in range(nloop):
+        
+            ax.plot(ind[imin:imax],max_ampl[il,imin:imax],c=colors[i_clus%n_colors])
+
+            z = np.polyfit(ind[imin:imax], log_max_ampl_T[imin:imax,il], degpolyfit, rcond=None, full=False)
+            p = np.poly1d(z)
+            
+            ax.plot(ind[imin:imax],np.exp(p(ind[imin:imax])),c='k')
+
+else:
 
     for il in range(nloop):
     
-        ax.plot(ind[imin:imax],max_ampl[il,imin:imax],c=colors[i_clus%n_colors])
-
-        z = np.polyfit(ind[imin:imax], log_max_ampl_T[imin:imax,il], degpolyfit, rcond=None, full=False)
-        p = np.poly1d(z)
-        
-        ax.plot(ind[imin:imax],np.exp(p(ind[imin:imax])),c='k')
-
-
-
+        ax.plot(ind,max_ampl[il,:],c=colors[il%n_colors])
 
 
 
 ax.set_yscale('log')
 plt.tight_layout()
 
-filename = os.path.join(store_folder,'bar_max.png')
+filename = os.path.join(store_folder,file_basename+'_bar_max.png')
 plt.savefig(filename)
 plt.close()
