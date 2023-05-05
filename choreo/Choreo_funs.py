@@ -55,7 +55,7 @@ from choreo.Choreo_cython_funs import twopi,nhash,n
 from choreo.Choreo_cython_funs import Compute_hash_action_Cython,Compute_Newton_err_Cython
 from choreo.Choreo_cython_funs import Assemble_Cstr_Matrix,diagmat_changevar
 from choreo.Choreo_cython_funs import Compute_MinDist_Cython,Compute_Loop_Dist_btw_avg_Cython,Compute_square_dist,Compute_Loop_Size_Dist_Cython
-from choreo.Choreo_cython_funs import Compute_Forces_Cython,Compute_JacMat_Forces_Cython,Compute_JacMul_Forces_Cython
+from choreo.Choreo_cython_funs import Compute_Forces_Cython,Compute_JacMat_Forces_Cython,Compute_JacMul_Forces_Cython,Compute_JacMulMat_Forces_Cython
 from choreo.Choreo_cython_funs import Transform_Coeffs_Single_Loop,SparseScaleCoeffs,ComputeSpeedCoeffs
 from choreo.Choreo_cython_funs import the_irfft,the_rfft
 from choreo.Choreo_cython_funs import Compute_hamil_hess_mul_Cython_nosym,Compute_hamil_hess_mul_xonly_Cython_nosym
@@ -634,6 +634,24 @@ class ChoreoAction():
             ).reshape(-1)
 
         return fun,gun
+    
+    def GetSymplecticTanODEDef(self):
+
+        def grad_fun(t,v,grad_v):
+            return grad_v
+
+        def grad_gun(t,x,grad_x):
+
+            ndof = self.nbody*self.geodim
+
+            return Compute_JacMulMat_Forces_Cython(
+                x.reshape(self.nbody,self.geodim),
+                grad_x.reshape(self.nbody,self.geodim,2*ndof)   ,
+                self.mass   ,
+                self.nbody  ,
+            ).reshape(ndof,2*ndof)
+
+        return grad_fun, grad_gun
 
     def Compute_Auto_JacMat_ODE_RHS(self,x):
 
