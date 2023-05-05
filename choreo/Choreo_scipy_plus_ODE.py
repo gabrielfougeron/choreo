@@ -16,6 +16,7 @@ from choreo.Choreo_cython_scipy_plus_ODE import ExplicitSymplecticWithTable_VX_c
 # from choreo.Choreo_cython_scipy_plus_ODE import SymplecticStormerVerlet_XV_cython
 # from choreo.Choreo_cython_scipy_plus_ODE import SymplecticStormerVerlet_VX_cython
 from choreo.Choreo_cython_scipy_plus_ODE import ImplicitSymplecticWithTableGaussSeidel_VX_cython
+from choreo.Choreo_cython_scipy_plus_ODE import ImplicitSymplecticTanWithTableGaussSeidel_VX_cython
 
 
 
@@ -214,7 +215,6 @@ def ComputeButcher_a(a,b,n,w=None,z=None,wint=None,zint=None,nint=None):
 
             Butcher_a[i,j] = z[i] * Butcher_a[i,j]
 
-
     Butcher_beta = mpmath.matrix(n)
 
     for iint in range(nint):
@@ -231,7 +231,6 @@ def ComputeButcher_a(a,b,n,w=None,z=None,wint=None,zint=None,nint=None):
         for j in range(n):
 
             Butcher_beta[i,j] = z[i] * Butcher_beta[i,j]
-
 
     return Butcher_a, Butcher_beta
 
@@ -311,6 +310,29 @@ def GetSymplecticIntegrator(method='SymplecticRuth3'):
         else:
             raise ValueError(f"Method not found: {method}")
 
+    return integrator
+
+def GetSymplecticTanIntegrator(method='SymplecticGauss1'):
+
+    if method.startswith("SymplecticGauss"):
+
+        descr = method.removeprefix("SymplecticGauss")
+        n = int(descr)
+        Butcher_a_np, Butcher_b_np, Butcher_c_np, Butcher_beta_np = ComputeGaussButcherTables(n)
+
+        integrator = functools.partial(
+            ImplicitSymplecticTanWithTableGaussSeidel_VX_cython,
+            a_table = Butcher_a_np,
+            b_table = Butcher_b_np,
+            c_table = Butcher_c_np,
+            beta_table = Butcher_beta_np,
+            nsteps = n,
+            eps = np.finfo(np.float64).eps,
+            maxiter = 50
+        )
+
+    else:
+        raise ValueError(f"Method not found: {method}")
 
     return integrator
 

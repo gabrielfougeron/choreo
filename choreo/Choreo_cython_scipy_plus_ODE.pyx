@@ -450,7 +450,7 @@ def ImplicitSymplecticWithTableGaussSeidel_VX_cython(
         for jdof in range(ndof):
             v_keep[iint_keep,jdof] = v[jdof]
     
-    print(tot_niter / nint)
+    # print(tot_niter / nint)
     # print(1+nsteps*tot_niter)
 
     return x_keep, v_keep
@@ -459,8 +459,7 @@ def ImplicitSymplecticWithTableGaussSeidel_VX_cython(
 
 
 
-@cython.cdivision(True)
-def ImplicitSymplecticStabilityWithTableGaussSeidel_VX_cython(
+def ImplicitSymplecticTanWithTableGaussSeidel_VX_cython(
     object fun,
     object gun,
     object grad_fun,
@@ -783,15 +782,15 @@ def ImplicitSymplecticStabilityWithTableGaussSeidel_VX_cython(
 
         for jdof in range(ndof):
             for kdof in range(twondof):
-                x_keep[iint_keep,jdof,kdof] = x[jdof,kdof]
+                grad_x_keep[iint_keep,jdof,kdof] = grad_x[jdof,kdof]
         for jdof in range(ndof):
             for kdof in range(twondof):
-                v_keep[iint_keep,jdof,kdof] = v[jdof,kdof]
+                grad_v_keep[iint_keep,jdof,kdof] = grad_v[jdof,kdof]
     
     # print(tot_niter)
     # print(1+nsteps*tot_niter)
 
-    return x_keep, v_keep
+    return x_keep, v_keep, grad_x_keep, grad_v_keep
 
 
 
