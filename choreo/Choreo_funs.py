@@ -876,6 +876,58 @@ class ChoreoAction():
         plt.savefig(filename)
         plt.close()
 
+    def plot_coeff_profile(self,x,filename,fig_size=(16, 12),color_list = None):
+        
+        if color_list is None:
+            color_list = plt.rcParams['axes.prop_cycle'].by_key()['color']
+
+        all_coeffs = self.Unpackage_all_coeffs(x)
+
+        eps = 1e-18
+        # eps = 0.
+
+        ampl = np.zeros((self.nloop,self.ncoeff),dtype=np.float64)
+        max_ampl = np.zeros((self.nloop,self.ncoeff),dtype=np.float64)
+
+        for il in range(self.nloop):
+            for k in range(self.ncoeff):
+                ampl[il,k] = np.linalg.norm(all_coeffs[il,:,k,:]) + eps
+
+
+        ncoeff_plotm1 = self.ncoeff - 1
+
+        for il in range(self.nloop):
+            cur_max = 0.
+            for k in range(self.ncoeff):
+                k_inv = ncoeff_plotm1 - k
+
+                cur_max = max(cur_max,ampl[il,k_inv])
+                max_ampl[il,k_inv] = cur_max
+
+        ind = np.arange(self.ncoeff) 
+
+        fig = plt.figure()
+        fig.set_size_inches(fig_size)
+        ax = plt.gca()
+        ncol = len(color_list)
+
+        for il in range(self.nloop):
+        
+            ax.plot(ind,max_ampl[il,:],c=color_list[il%ncol])
+
+    
+        ax.set_yscale('log')
+            
+        plt.tight_layout()
+        plt.savefig(filename)
+        plt.close()
+
+
+
+
+
+
+
     def Write_Descriptor(self,x,filename,Action=None,Gradaction=None,Newt_err_norm=None,dxmin=None,Hash_Action=None,max_path_length=None,extend=0.03):
         r"""
         Dumps a json file describing the current trajectories
@@ -1134,7 +1186,6 @@ class ChoreoAction():
 
         return all_coeffs_d_x_preco.reshape(-1)    
     
-
     def Compute_deriv(self,all_coeffs_d_x_vect):
 
         all_coeffs_d_x = all_coeffs_d_x_vect.reshape(self.nbody,self.geodim,self.ncoeff,2)
