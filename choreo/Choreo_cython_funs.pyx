@@ -1416,6 +1416,79 @@ def Compute_JacMul_Forces_Cython(
 
     return df
 
+
+def Compute_JacMulMat_Forces_Cython(
+    double[:,::1] x       ,
+    double[:,:,::1] x_d   ,
+    double[::1] mass      ,
+    long nbody            ,
+):
+    # Does not actually computes the forces on every body, but rather the force divided by the mass.
+
+    cdef long ib, ibp
+    cdef long idim,jdim
+    cdef long irhs
+    cdef long nrhs = x_d.shape[2]
+
+    cdef long geodim = x.shape[1]
+    cdef np.ndarray[double, ndim=3, mode="c"] df = np.zeros((nbody,geodim,nrhs),dtype=np.float64)
+
+    cdef double[::1]  dx = np.empty((geodim),dtype=np.float64)
+    cdef double[:,::1]  ddx = np.empty((geodim,nrhs),dtype=np.float64)
+    cdef double[::1]  dxtddx = np.zeros((nrhs),dtype=np.float64)
+
+    cdef double dx2
+    cdef double a,aa,aap
+    cdef double b,bb,bbp
+    cdef double cc,ccp
+
+    for ib in range(nbody-1):
+        for ibp in range(ib+1,nbody):
+
+            for idim in range(geodim):
+                dx[idim] = x[ib,idim]-x[ibp,idim]
+
+                for irhs in range(nrhs):
+                    ddx[idim,irhs] = x_d[ib,idim,irhs]-x_d[ibp,idim,irhs]
+
+            dx2 = dx[0]*dx[0]
+            for idim in range(1,geodim):
+                dx2 += dx[idim]*dx[idim]
+
+            for irhs in range(nrhs):
+                dxtddx[irhs] = dx[0]*ddx[0,irhs]
+
+            for idim in range(1,geodim):
+                for irhs in range(nrhs):
+                    dxtddx[irhs] += dx[idim]*ddx[idim,irhs]
+
+            pot,potp,potpp = CCpt_interbody_pot(dx2)
+
+            a = 2*potp
+            aa  = a*mass[ibp]
+            aap = a*mass[ib ]
+
+            for idim in range(geodim):
+                for irhs in range(nrhs):
+                    df[ib ,idim,irhs] -= aa *ddx[idim,irhs]
+                    df[ibp,idim,irhs] += aap*ddx[idim,irhs]
+
+            potpp = 4*potpp
+
+            for idim in range(geodim):
+                for irhs in range(nrhs):
+
+                    b = potpp*dxtddx[irhs]
+                    bb  = b*mass[ibp]
+                    bbp = b*mass[ib ]
+
+                    df[ib ,idim,irhs] -= bb *dx[idim]
+                    df[ibp,idim,irhs] += bbp*dx[idim]
+
+    return df
+
+
+
 def Transform_Coeffs_Single_Loop(
         double[:,::1] SpaceRot,
         double TimeRev, 

@@ -271,7 +271,6 @@ def ExplicitSymplecticWithTable_XV_cython(
 #     return x,v
 
 
-@cython.cdivision(True)
 def ImplicitSymplecticWithTableGaussSeidel_VX_cython(
     object fun,
     object gun,
@@ -316,7 +315,7 @@ def ImplicitSymplecticWithTableGaussSeidel_VX_cython(
 
     cdef bint GoOnGS
 
-    cdef double dXV_err, diff
+    cdef double dXV_err, dX_err,dV_err, diff
     cdef double tbeg, t
     cdef double dt = (t_span[1] - t_span[0]) / nint
 
@@ -415,6 +414,229 @@ def ImplicitSymplecticWithTableGaussSeidel_VX_cython(
                         for kstep in range(1,nsteps):
                             dV[istep,jdof] += a_table[istep,kstep] * K_gun[kstep,jdof]
 
+                dX_err = 0
+                for istep in range(nsteps):
+                    for jdof in range(ndof):
+                        diff = dX[istep,jdof] - dX_prev[istep,jdof]
+                        dX_err += diff * diff
+
+                dV_err = 0
+                for istep in range(nsteps):
+                    for jdof in range(ndof):
+                        diff = dV[istep,jdof] - dV_prev[istep,jdof]
+                        dV_err += diff * diff
+                
+                # dXV_err = dX_err + dV_err  
+                dXV_err = dX_err + dV_err * dt * dt 
+
+                iGS += 1
+
+                GoOnGS = (iGS < maxiter) and (dXV_err > eps_mul2)
+
+            tot_niter += iGS
+
+            # Do EFT here ?
+
+            for kstep in range(nsteps):
+                for jdof in range(ndof):
+                    x[jdof] += b_table[kstep] * K_fun[kstep,jdof]
+
+            for kstep in range(nsteps):
+                for jdof in range(ndof):
+                    v[jdof] += b_table[kstep] * K_gun[kstep,jdof]
+        
+        for jdof in range(ndof):
+            x_keep[iint_keep,jdof] = x[jdof]
+        for jdof in range(ndof):
+            v_keep[iint_keep,jdof] = v[jdof]
+    
+    print(tot_niter / nint)
+    # print(1+nsteps*tot_niter)
+
+    return x_keep, v_keep
+
+
+
+
+
+@cython.cdivision(True)
+def ImplicitSymplecticStabilityWithTableGaussSeidel_VX_cython(
+    object fun,
+    object gun,
+    object grad_fun,
+    object grad_gun,
+    (double, double) t_span,
+    np.ndarray[double, ndim=1, mode="c"] x0,
+    np.ndarray[double, ndim=1, mode="c"] v0,
+    long nint,
+    long keep_freq,
+    np.ndarray[double, ndim=2, mode="c"] a_table,
+    np.ndarray[double, ndim=1, mode="c"] b_table,
+    np.ndarray[double, ndim=1, mode="c"] c_table,
+    np.ndarray[double, ndim=2, mode="c"] beta_table,
+    long nsteps,
+    double eps,
+    long maxiter
+):
+    r"""
+    
+    This function computes an approximate solution to the :ref:`partitioned Hamiltonian system<ode_PHS>` using an implicit Runge-Kutta method.
+    The implicit equations are solved using a Gauss Seidel approach
+    
+    :param fun: function 
+    :param gun: function 
+
+    :param t_span: initial and final time for simulation
+    :type t_span: (double, double)
+
+
+    :return: two np.ndarray[double, ndim=1, mode="c"] for the final 
+
+
+    """
+    cdef long ndof = x0.size
+    cdef long twondof = 2*ndof
+    cdef long istep, id, iGS, jdof, kdof
+    cdef long kstep
+    cdef long tot_niter = 0
+    cdef long grad_tot_niter = 0
+    cdef long iint_keep, ifreq
+    cdef long nint_keep = nint // keep_freq
+
+    cdef np.ndarray[double, ndim=2, mode="c"] x_keep = np.empty((nint_keep,ndof),dtype=np.float64)
+    cdef np.ndarray[double, ndim=2, mode="c"] v_keep = np.empty((nint_keep,ndof),dtype=np.float64)
+
+    cdef np.ndarray[double, ndim=3, mode="c"] grad_x_keep = np.empty((nint_keep,ndof,twondof),dtype=np.float64)
+    cdef np.ndarray[double, ndim=3, mode="c"] grad_v_keep = np.empty((nint_keep,ndof,twondof),dtype=np.float64)
+
+    cdef bint GoOnGS
+
+    cdef double dXV_err, diff
+    cdef double tbeg, t
+    cdef double dt = (t_span[1] - t_span[0]) / nint
+
+    cdef np.ndarray[double, ndim=1, mode="c"] cdt = np.empty((nsteps),dtype=np.float64)
+    cdef np.ndarray[double, ndim=1, mode="c"] all_t = np.empty((nsteps),dtype=np.float64)
+    cdef np.ndarray[double, ndim=1, mode="c"] arg = np.empty((ndof),dtype=np.float64)
+    cdef np.ndarray[double, ndim=2, mode="c"] grad_arg = np.empty((ndof,twondof),dtype=np.float64)
+
+    for istep in range(nsteps):
+        cdt[istep] = c_table[istep]*dt
+
+    cdef np.ndarray[double, ndim=1, mode="c"] x = x0.copy()
+    cdef np.ndarray[double, ndim=1, mode="c"] v = v0.copy()
+
+    cdef np.ndarray[double, ndim=2, mode="c"] grad_x = np.zeros((ndof,twondof),dtype=np.float64)
+    cdef np.ndarray[double, ndim=2, mode="c"] grad_v = np.zeros((ndof,twondof),dtype=np.float64)
+
+    for idof in range(ndof):
+        grad_x[idof,idof] = 1
+    for idof in range(ndof):
+        grad_v[idof,ndof+idof] = 1
+
+    cdef np.ndarray[double, ndim=1, mode="c"] res
+    cdef np.ndarray[double, ndim=2, mode="c"] K_fun = np.empty((nsteps,ndof),dtype=np.float64)
+    cdef np.ndarray[double, ndim=2, mode="c"] K_gun = np.zeros((nsteps,ndof),dtype=np.float64) # zeros here to ensure correct first init.
+
+    cdef np.ndarray[double, ndim=2, mode="c"] dX = np.empty((nsteps,ndof),dtype=np.float64)
+    cdef np.ndarray[double, ndim=2, mode="c"] dV = np.empty((nsteps,ndof),dtype=np.float64) 
+    cdef np.ndarray[double, ndim=2, mode="c"] dX_prev = np.empty((nsteps,ndof),dtype=np.float64)
+    cdef np.ndarray[double, ndim=2, mode="c"] dV_prev = np.empty((nsteps,ndof),dtype=np.float64) 
+
+
+    cdef np.ndarray[double, ndim=2, mode="c"] grad_res
+    cdef np.ndarray[double, ndim=3, mode="c"] grad_K_fun = np.empty((nsteps,ndof,twondof),dtype=np.float64)
+    cdef np.ndarray[double, ndim=3, mode="c"] grad_K_gun = np.zeros((nsteps,ndof,twondof),dtype=np.float64) # zeros here to ensure correct first init.
+
+    cdef np.ndarray[double, ndim=3, mode="c"] grad_dX = np.empty((nsteps,ndof,twondof),dtype=np.float64)
+    cdef np.ndarray[double, ndim=3, mode="c"] grad_dV = np.empty((nsteps,ndof,twondof),dtype=np.float64) 
+    cdef np.ndarray[double, ndim=3, mode="c"] grad_dX_prev = np.empty((nsteps,ndof,twondof),dtype=np.float64)
+    cdef np.ndarray[double, ndim=3, mode="c"] grad_dV_prev = np.empty((nsteps,ndof,twondof),dtype=np.float64) 
+
+    cdef double eps_mul = eps * ndof * nsteps * dt
+    cdef double eps_mul2 = eps_mul * eps_mul
+
+    # cdef double eps_mul = eps * ndof * nsteps * dt
+    # cdef double eps_mul2 = eps_mul * eps_mul
+
+    # First starting approximation using only one function evaluation
+    tbeg = t_span[0]
+    res = gun(tbeg,x)  
+    for istep in range(nsteps):
+        for jdof in range(ndof):
+            dV[istep,jdof] = cdt[istep] * res[jdof]
+
+    grad_res = grad_gun(tbeg,x,grad_x)  
+    for istep in range(nsteps):
+        for jdof in range(ndof):
+            for kdof in range(twondof):
+                grad_dV[istep,jdof,kdof] = cdt[istep] * grad_res[jdof,kdof]
+
+    for iint_keep in range(nint_keep):
+
+        for ifreq in range(keep_freq):
+
+            iint = iint_keep * keep_freq + ifreq
+
+            tbeg = t_span[0] + iint * dt    
+            for istep in range(nsteps):
+                all_t[istep] = tbeg + cdt[istep]
+
+            for istep in range(nsteps):
+                for jdof in range(ndof):
+                    dV[istep,jdof] = beta_table[istep,0] * K_gun[0,jdof]
+                    for kstep in range(1,nsteps):
+                        dV[istep,jdof] += beta_table[istep,kstep] * K_gun[kstep,jdof]
+
+            iGS = 0
+
+            GoOnGS = True
+
+            while GoOnGS:
+
+                # dV => dX
+                for istep in range(nsteps):
+
+                    for jdof in range(ndof):
+                        arg[jdof] = v[jdof] + dV[istep,jdof]
+
+                    res = fun(all_t[istep],arg)  
+
+                    for jdof in range(ndof):
+                        K_fun[istep,jdof] = dt * res[jdof]
+
+                for istep in range(nsteps):
+                    for jdof in range(ndof):
+                        dX_prev[istep,jdof] = dX[istep,jdof] 
+
+
+                for istep in range(nsteps):
+                    for jdof in range(ndof):
+                        dX[istep,jdof] = a_table[istep,0] * K_fun[0,jdof]
+                        for kstep in range(1,nsteps):
+                            dX[istep,jdof] += a_table[istep,kstep] * K_fun[kstep,jdof]
+
+                # dX => dV
+                for istep in range(nsteps):
+
+                    for jdof in range(ndof):
+                        arg[jdof] = x[jdof] + dX[istep,jdof]
+
+                    res = gun(all_t[istep],arg)  
+
+                    for jdof in range(ndof):
+                        K_gun[istep,jdof] = dt * res[jdof]
+
+                for istep in range(nsteps):
+                    for jdof in range(ndof):
+                        dV_prev[istep,jdof] = dV[istep,jdof] 
+                        
+                for istep in range(nsteps):
+                    for jdof in range(ndof):
+                        dV[istep,jdof] = a_table[istep,0] * K_gun[0,jdof]
+                        for kstep in range(1,nsteps):
+                            dV[istep,jdof] += a_table[istep,kstep] * K_gun[kstep,jdof]
+
                 dXV_err = 0.
                 for istep in range(nsteps):
                     for jdof in range(ndof):
@@ -429,20 +651,142 @@ def ImplicitSymplecticWithTableGaussSeidel_VX_cython(
 
             tot_niter += iGS
 
+
+
+            for istep in range(nsteps):
+                for jdof in range(ndof):
+                    for kdof in range(twondof):
+                        grad_dV[istep,jdof,kdof] = beta_table[istep,0] * grad_K_gun[0,jdof,kdof]                        
+                        for kstep in range(1,nsteps):
+                            grad_dV[istep,jdof,kdof] += beta_table[istep,kstep] * grad_K_gun[kstep,jdof,kdof]
+
+
+
+
+            while GoOnGS:
+
+                # grad_dV => grad_dX
+                for istep in range(nsteps):
+
+                    for jdof in range(ndof):
+                        arg[jdof] = v[jdof] + dV[istep,jdof]
+
+                    for jdof in range(ndof):
+                        for kdof in range(twondof):
+                            grad_arg[jdof,kdof] = grad_v[jdof,kdof] + grad_dV[istep,jdof,kdof]
+
+                    grad_res = grad_fun(all_t[istep],arg,grad_arg)  
+
+                    for jdof in range(ndof):
+                        for kdof in range(twondof):
+                            grad_K_fun[istep,jdof,kdof] = dt * grad_res[jdof,kdof]
+
+                for istep in range(nsteps):
+                    for jdof in range(ndof):
+                        for kdof in range(twondof):
+                            grad_dX_prev[istep,jdof,kdof] = grad_dX[istep,jdof,kdof] 
+
+                for istep in range(nsteps):
+                    for jdof in range(ndof):
+                        for kdof in range(twondof):
+                            grad_dX[istep,jdof,kdof] = a_table[istep,0] * grad_K_fun[0,jdof,kdof]
+                            for kstep in range(1,nsteps):
+                                grad_dX[istep,jdof,kdof] += a_table[istep,kstep] * grad_K_fun[kstep,jdof,kdof]
+
+                # grad_dX => grad_dV
+                for istep in range(nsteps):
+
+                    for jdof in range(ndof):
+                        arg[jdof] = x[jdof] + dX[istep,jdof]
+
+                    for jdof in range(ndof):
+                        for kdof in range(twondof):
+                            grad_arg[jdof,kdof] = grad_x[jdof,kdof] + grad_dX[istep,jdof,kdof]
+
+                    grad_res = grad_gun(all_t[istep],arg,grad_arg)  
+
+                    for jdof in range(ndof):
+                        for kdof in range(twondof):
+                            grad_K_gun[istep,jdof,kdof] = dt * grad_res[jdof,kdof]
+
+                for istep in range(nsteps):
+                    for jdof in range(ndof):
+                        for kdof in range(twondof):
+                            grad_dV_prev[istep,jdof,kdof] = grad_dV[istep,jdof,kdof] 
+                        
+                for istep in range(nsteps):
+                    for jdof in range(ndof):
+                        for kdof in range(twondof):
+                            grad_dV[istep,jdof,kdof] = a_table[istep,0] * grad_K_gun[0,jdof,kdof]
+                            for kstep in range(1,nsteps):
+                                grad_dV[istep,jdof,kdof] += a_table[istep,kstep] * grad_K_gun[kstep,jdof,kdof]
+
+
+
+                            
+
+                dXV_err = 0.
+                for istep in range(nsteps):
+                    for jdof in range(ndof):
+                        for kdof in range(twondof):
+                            diff = grad_dX[istep,jdof,kdof] - grad_dX_prev[istep,jdof,kdof]
+                            dXV_err += diff * diff
+                            diff = grad_dV[istep,jdof,kdof] - grad_dV_prev[istep,jdof,kdof]
+                            dXV_err += diff * diff
+                
+                iGS += 1
+
+                GoOnGS = (iGS < maxiter) and (dXV_err > eps_mul2)
+
+            grad_tot_niter += iGS
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
             # Do EFT here ?
 
-            for jdof in range(ndof):
-                for kstep in range(nsteps):
+            for kstep in range(nsteps):
+                for jdof in range(ndof):
                     x[jdof] += b_table[kstep] * K_fun[kstep,jdof]
 
-            for jdof in range(ndof):
-                for kstep in range(nsteps):
+            for kstep in range(nsteps):
+                for jdof in range(ndof):
                     v[jdof] += b_table[kstep] * K_gun[kstep,jdof]
+        
+            for kstep in range(nsteps):
+                for jdof in range(ndof):
+                    for kdof in range(twondof):
+                        grad_x[jdof,kdof] += b_table[kstep] * grad_K_fun[kstep,jdof,kdof]
+
+            for kstep in range(nsteps):
+                for jdof in range(ndof):
+                    for kdof in range(twondof):
+                        grad_v[jdof,kdof] += b_table[kstep] * grad_K_gun[kstep,jdof,kdof]
         
         for jdof in range(ndof):
             x_keep[iint_keep,jdof] = x[jdof]
         for jdof in range(ndof):
             v_keep[iint_keep,jdof] = v[jdof]
+
+        for jdof in range(ndof):
+            for kdof in range(twondof):
+                x_keep[iint_keep,jdof,kdof] = x[jdof,kdof]
+        for jdof in range(ndof):
+            for kdof in range(twondof):
+                v_keep[iint_keep,jdof,kdof] = v[jdof,kdof]
     
     # print(tot_niter)
     # print(1+nsteps*tot_niter)
