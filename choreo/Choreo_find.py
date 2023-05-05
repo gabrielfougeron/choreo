@@ -54,6 +54,7 @@ def Find_Choreo(
     thumb_size,
     color,
     Save_Newton_Error,
+    Save_coeff_profile,
     gradtol_list,
     inner_maxiter_list,
     maxiter_list,
@@ -233,24 +234,55 @@ def Find_Choreo(
 
         if save_all_inits or (save_first_init and n_opt == 1):
 
-            ActionSyst.Write_Descriptor(x0,'init.json')
+            max_num_file = 0
+            
+            for filename in os.listdir(store_folder):
+                file_path = os.path.join(store_folder, filename)
+                file_root, file_ext = os.path.splitext(os.path.basename(file_path))
+                
+                if (file_basename in file_root) and (file_ext == '.json' ):
+
+                    file_root = file_root.replace(file_basename,"")
+
+                    try:
+                        max_num_file = max(max_num_file,int(file_root))
+                    except:
+                        pass
+
+            max_num_file = max_num_file + 1
+            n_find = max_num_file
+
+            if (AddNumberToOutputName):   
+
+                filename_output = os.path.join(store_folder,file_basename+'_init_'+str(max_num_file).zfill(5))
+
+            else:
+
+                filename_output = os.path.join(store_folder,file_basename+'_init')
+
+            print(f'Saving initial state as {filename_output}.*.')
+
+            ActionSyst.Write_Descriptor(x0,filename_output+'.json')
 
             if Save_img :
-                ActionSyst.plot_all_2D(x0,nint_plot_img,'init.png',fig_size=img_size,color=color,color_list=color_list)        
+                ActionSyst.plot_all_2D(x0,nint_plot_img,filename_output+'.png',fig_size=img_size,color=color,color_list=color_list)        
 
             if Save_thumb :
-                ActionSyst.plot_all_2D(x0,nint_plot_img,'init_thumb.png',fig_size=thumb_size,color=color,color_list=color_list)        
+                ActionSyst.plot_all_2D(x0,nint_plot_img,filename_output+'_thumb.png',fig_size=thumb_size,color=color,color_list=color_list)        
                 
             if Save_anim :
-                ActionSyst.plot_all_2D_anim(x0,nint_plot_anim,'init.mp4',nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size,dnint=dnint,color_list=color_list,color=color)
+                ActionSyst.plot_all_2D_anim(x0,nint_plot_anim,filename_output+'.mp4',nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size,dnint=dnint,color_list=color_list,color=color)
             
             if Save_Newton_Error :
-                ActionSyst.plot_Newton_Error(x0,'init_newton.png')
+                ActionSyst.plot_Newton_Error(x0,filename_output+'_newton.png')
+
+            if Save_coeff_profile:
+                ActionSyst.plot_coeff_profile(x0,filename_output+'_coeff_profile.png')
 
             if Save_All_Coeffs:
 
                 all_coeffs = ActionSyst.Unpackage_all_coeffs(x0)
-                np.save('init_coeffs.npy',all_coeffs)
+                np.save(filename_output+'_coeffs.npy',all_coeffs)
 
             if Save_All_Pos:
 
@@ -262,10 +294,10 @@ def Find_Choreo(
                 else:
                     all_pos = ActionSyst.ComputeAllLoopPos(x0,n_save_pos)
 
-                np.save('init.npy',all_pos)
+                np.save(filename_output+'.npy',all_pos)
 
-            for i in range(n_callback_after_init_list):
-                callback_after_init_list[i]()
+        for i in range(n_callback_after_init_list):
+            callback_after_init_list[i]()
   
         f0 = ActionSyst.Compute_action_onlygrad(x0)
         best_sol = current_best(x0,f0)
@@ -513,7 +545,10 @@ def Find_Choreo(
 
                     if Save_Newton_Error :
                         ActionSyst.plot_Newton_Error(best_sol.x,filename_output+'_newton.png')
-                    
+
+                    if Save_coeff_profile:
+                        ActionSyst.plot_coeff_profile(best_sol.x,filename_output+'_coeff_profile.png')
+
                     if Save_All_Coeffs:
                         all_coeffs = ActionSyst.Unpackage_all_coeffs(best_sol.x)
                         np.save(filename_output+'_coeffs.npy',all_coeffs)

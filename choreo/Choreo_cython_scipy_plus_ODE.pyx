@@ -332,7 +332,7 @@ def ImplicitSymplecticWithTableGaussSeidel_VX_cython(
 
     cdef np.ndarray[double, ndim=1, mode="c"] res
     cdef np.ndarray[double, ndim=2, mode="c"] K_fun = np.empty((nsteps,ndof),dtype=np.float64)
-    cdef np.ndarray[double, ndim=2, mode="c"] K_gun = np.empty((nsteps,ndof),dtype=np.float64)
+    cdef np.ndarray[double, ndim=2, mode="c"] K_gun = np.zeros((nsteps,ndof),dtype=np.float64) # zeros here to ensure correct first init.
 
     cdef np.ndarray[double, ndim=2, mode="c"] dX = np.empty((nsteps,ndof),dtype=np.float64)
     cdef np.ndarray[double, ndim=2, mode="c"] dV = np.empty((nsteps,ndof),dtype=np.float64) 

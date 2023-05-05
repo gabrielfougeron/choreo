@@ -2,8 +2,8 @@ import os
 import concurrent.futures
 import multiprocessing
 
-# os.environ['NUMBA_NUM_THREADS'] = str(multiprocessing.cpu_count())
-# os.environ['OMP_NUM_THREADS'] = str(multiprocessing.cpu_count())
+os.environ['NUMBA_NUM_THREADS'] = str(multiprocessing.cpu_count()//2)
+os.environ['OMP_NUM_THREADS'] = str(multiprocessing.cpu_count()//2)
 os.environ['OPENBLAS_NUM_THREADS'] = '1'
 os.environ['NUMEXPR_NUM_THREADS'] = '1'
 os.environ['MKL_NUM_THREADS'] = '1'
@@ -44,6 +44,9 @@ Save_All_Pos = True
 
 # Save_All_Coeffs = True
 Save_All_Coeffs = False
+
+Save_coeff_profile = True
+# Save_coeff_profile = False
 
 # Save_All_Coeffs_No_Sym = True
 Save_All_Coeffs_No_Sym = False
@@ -102,8 +105,8 @@ Check_Escape = True
 # Penalize_Escape = True
 Penalize_Escape = False
 
-save_first_init = False
-# save_first_init = True
+# save_first_init = False
+save_first_init = True
 
 save_all_inits = False
 # save_all_inits = True
@@ -212,7 +215,7 @@ Sym_list.append(
 # MomConsImposed = True
 MomConsImposed = False
 
-n_reconverge_it_max = 1
+n_reconverge_it_max = 0
 n_grad_change = 1.
 
 TwoDBackend = (geodim == 2)
@@ -226,8 +229,8 @@ ParallelBackend = True
 nint_small = 30
 n_reconverge_it_max_small = 0
 
-# Do_Speed_test = False
-Do_Speed_test = True
+Do_Speed_test = False
+# Do_Speed_test = True
 
 ActionSyst_small = choreo.setup_changevar(geodim,nbody,nint_small,mass,n_reconverge_it_max_small,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change,CrashOnIdentity=False)
 
@@ -238,7 +241,8 @@ ActionSyst_small = choreo.setup_changevar(geodim,nbody,nint_small,mass,n_reconve
 # SymplecticMethod = 'SymplecticRuth3'
 # SymplecticMethod = 'SymplecticRuth4'
 # SymplecticMethod = 'SymplecticGauss3'
-SymplecticMethod = 'SymplecticGauss5'
+# SymplecticMethod = 'SymplecticGauss5'
+SymplecticMethod = 'SymplecticGauss10'
 
 SymplecticIntegrator = choreo.GetSymplecticIntegrator(SymplecticMethod)
 
@@ -249,8 +253,8 @@ disp_scipy_opt = True
 # nint_ODE_mul = 64
 # nint_ODE_mul =  2**11
 # nint_ODE_mul =  2**7
-# nint_ODE_mul =  2**4
-nint_ODE_mul =  2**1
+nint_ODE_mul =  2**4
+# nint_ODE_mul =  2**1
 # nint_ODE_mul =  1
 
 
@@ -258,13 +262,14 @@ fun,gun = ActionSyst_small.GetSymplecticODEDef()
 ndof = nbody*ActionSyst_small.geodim
 
 
-for n_NT_init in [4]:
+for n_NT_init in [2]:
+# for n_NT_init in [4]:
 # for n_NT_init in range(len(all_NT_init)):
 # for n_NT_init in range(4,len(all_NT_init)):
 
 
-    # file_basename = 'NumericalTank_'+(str(n_NT_init).zfill(5))
-    # Info_filename = os.path.join(store_folder,file_basename + '.json')
+    file_basename = 'NumericalTank_'+(str(n_NT_init).zfill(5))
+    Info_filename = os.path.join(store_folder,file_basename + '.json')
 
     # if os.path.isfile(Info_filename):
     #     continue
@@ -297,8 +302,8 @@ for n_NT_init in [4]:
     x0 = x0 * rfac
     v0 = v0 * rfac * T_NT
 
-    xi = x0
-    vi = v0
+    xi = x0.copy()
+    vi = v0.copy()
 
 
 
@@ -307,6 +312,7 @@ for n_NT_init in [4]:
     itry = -1
 
     while GoOn:
+    # for i in range(4):
 
         t_span = (0., 1.)
 
@@ -323,20 +329,25 @@ for n_NT_init in [4]:
         xf = all_pos[-1,:].copy()
         vf = all_v[-1,:].copy()
 
+        print(f'Integration time: {tend-tbeg}')
+
+        if not(np.all(np.isfinite(xf)) and np.all(np.isfinite(vf))):
+            print('Nan results')
+            continue
+
+
+        period_err = np.linalg.norm(xi-xf) + np.linalg.norm(vi-vf)
+
+        print(f'Error on Periodicity: {period_err}')
+
+
+
         all_pos[1:,:] = all_pos[:-1,:].copy()
         all_pos[0,:] = x0.copy()
 
 
         all_pos = all_pos.transpose().reshape(ActionSyst_small.nbody,ActionSyst_small.geodim,nint)
         # all_v = all_v.transpose().reshape(ActionSyst_small.nbody,ActionSyst_small.geodim,nint)
-
-
-
-        print(f'Integration time: {tend-tbeg}')
-
-        period_err = np.linalg.norm(xi-xf) + np.linalg.norm(vi-vf)
-
-        print(f'Error on Periodicity: {period_err}')
 
 
         nint_init = nint
@@ -375,12 +386,13 @@ for n_NT_init in [4]:
 
 
 
-
-    # dx = np.linalg.norm(xi-xf)
-    # smooth_coeff = 1e3
-    # # smoothing
-    # for k in range(ncoeff_init):
-    #     all_coeffs[:,:,k,:] *= m.exp(- smooth_coeff * (k * dx)**2 )
+# 
+#     dx = np.linalg.norm(xi-xf)
+#     smooth_coeff = 1e3
+#     # smoothing
+#     ko = 170000
+#     for k in range(ko,ncoeff_init):
+#         all_coeffs[:,:,k,:] *= m.exp(- smooth_coeff * (k-ko))
 
 
 
@@ -410,10 +422,10 @@ for n_NT_init in [4]:
 
     # Transform_Sym = choreo.ChoreoSym(SpaceRot=SpaceRot, TimeRev=TimeRev, TimeShift = fractions.Fraction(numerator=TimeShiftNum,denominator=TimeShiftDen))
 
-
     if Do_Speed_test:
 
-        n_test = 1
+        n_test = 10
+
         grad_backend_list = [
             choreo.Empty_Backend_action,
             choreo.Compute_action_Cython_2D_serial,
@@ -447,7 +459,6 @@ for n_NT_init in [4]:
             print('')
             print(grad_backend.__name__)
             print(hess_backend.__name__)
-                
 
             all_kwargs = choreo.Pick_Named_Args_From_Dict(choreo.Speed_test,dict(globals(),**locals()))
             choreo.Speed_test(**all_kwargs)
