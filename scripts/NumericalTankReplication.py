@@ -245,6 +245,7 @@ ActionSyst_small = choreo.setup_changevar(geodim,nbody,nint_small,mass,n_reconve
 SymplecticMethod = 'SymplecticGauss10'
 
 SymplecticIntegrator = choreo.GetSymplecticIntegrator(SymplecticMethod)
+SymplecticTanIntegrator = choreo.GetSymplecticTanIntegrator(SymplecticMethod)
 
 # disp_scipy_opt = False
 disp_scipy_opt = True
@@ -259,10 +260,11 @@ nint_ODE_mul =  2**4
 
 
 fun,gun = ActionSyst_small.GetSymplecticODEDef()
+grad_fun,grad_gun = ActionSyst_small.GetSymplecticTanODEDef()
 ndof = nbody*ActionSyst_small.geodim
 
 
-for n_NT_init in [2]:
+for n_NT_init in [0]:
 # for n_NT_init in [4]:
 # for n_NT_init in range(len(all_NT_init)):
 # for n_NT_init in range(4,len(all_NT_init)):
@@ -302,10 +304,12 @@ for n_NT_init in [2]:
     x0 = x0 * rfac
     v0 = v0 * rfac * T_NT
 
+    print(x0,v0)
+
     xi = x0.copy()
     vi = v0.copy()
 
-
+    ndof = nbody * geodim
 
     print("Time forward integration")
     GoOn = True
@@ -322,12 +326,22 @@ for n_NT_init in [2]:
         print('')
         print(f'nint = {nint}')
     
+        # tbeg = time.perf_counter()
+        # all_pos, all_v = SymplecticIntegrator(fun,gun,t_span,x0,v0,nint*nint_ODE_mul,nint_ODE_mul)
+        # tend = time.perf_counter()
+
+
         tbeg = time.perf_counter()
-        all_pos, all_v = SymplecticIntegrator(fun,gun,t_span,x0,v0,nint*nint_ODE_mul,nint_ODE_mul)
+        all_pos, all_v, all_grad_pos, all_grad_v = SymplecticTanIntegrator(fun,gun,grad_fun,grad_gun,t_span,x0,v0,nint*nint_ODE_mul,nint_ODE_mul)
         tend = time.perf_counter()
+
 
         xf = all_pos[-1,:].copy()
         vf = all_v[-1,:].copy()
+
+        MonodromyMat = np.ascontiguousarray(np.concatenate((xf,vf),axis=0).reshape(2*ndof,2*ndof))
+
+
 
         print(f'Integration time: {tend-tbeg}')
 
@@ -467,6 +481,17 @@ for n_NT_init in [2]:
     all_kwargs = choreo.Pick_Named_Args_From_Dict(choreo.Find_Choreo,dict(**locals()))
     choreo.Find_Choreo(**all_kwargs)
     
+
+#     try:
+# 
+#         all_pos = np.load(os.path.join(store_folder,file_basename+'.npy'))
+# 
+#         
+# 
+#         
+# 
+#     except Exception:
+#         pass
 
 
 
