@@ -2,8 +2,8 @@ import os
 import concurrent.futures
 import multiprocessing
 
-os.environ['NUMBA_NUM_THREADS'] = str(multiprocessing.cpu_count())
-os.environ['OMP_NUM_THREADS'] = str(multiprocessing.cpu_count())
+# os.environ['NUMBA_NUM_THREADS'] = str(multiprocessing.cpu_count())
+# os.environ['OMP_NUM_THREADS'] = str(multiprocessing.cpu_count())
 os.environ['OPENBLAS_NUM_THREADS'] = '1'
 os.environ['NUMEXPR_NUM_THREADS'] = '1'
 os.environ['MKL_NUM_THREADS'] = '1'
@@ -202,8 +202,8 @@ ParallelBackend = True
 nint_small = 30
 n_reconverge_it_max_small = 0
 
-Do_Speed_test = False
-# Do_Speed_test = True
+# Do_Speed_test = False
+Do_Speed_test = True
 
 ActionSyst_small = choreo.setup_changevar(geodim,nbody,nint_small,mass,n_reconverge_it_max_small,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change,CrashOnIdentity=False)
 
@@ -222,20 +222,29 @@ SymplecticIntegrator = choreo.GetSymplecticIntegrator(SymplecticMethod)
 disp_scipy_opt = True
 
 
+# nint_ODE_mul = 64
+# nint_ODE_mul =  2**11
+# nint_ODE_mul =  2**7
+# nint_ODE_mul =  2**4
+nint_ODE_mul =  2**1
+# nint_ODE_mul =  1
 
-# for n_NT_init in [0]:
+
+fun,gun = ActionSyst_small.GetSymplecticODEDef()
+ndof = nbody*ActionSyst_small.geodim
+
+
+for n_NT_init in [4]:
 # for n_NT_init in range(len(all_NT_init)):
-for n_NT_init in range(4,len(all_NT_init)):
+# for n_NT_init in range(4,len(all_NT_init)):
 
-    # nint_ODE_mul = 64
-    # nint_ODE_mul =  2**11
-    # nint_ODE_mul =  2**7
-    nint_ODE_mul =  2**4
-    # nint_ODE_mul =  2**1
-    # nint_ODE_mul =  1
 
-    fun,gun = ActionSyst_small.GetSymplecticODEDef()
-    ndof = nbody*ActionSyst_small.geodim
+    # file_basename = 'NumericalTank_'+(str(n_NT_init).zfill(5))
+    # Info_filename = os.path.join(store_folder,file_basename + '.json')
+
+    # if os.path.isfile(Info_filename):
+    #     continue
+
 
     x0 = np.zeros(ndof)
     v0 = np.zeros(ndof)
@@ -339,18 +348,6 @@ for n_NT_init in range(4,len(all_NT_init)):
         
 
 
-
-    file_basename = 'NumericalTank_'+(str(n_NT_init).zfill(5))
-    
-    # Info_filename = os.path.join(input_folder,the_name + '.json')
-
-    # with open(Info_filename,'r') as jsonFile:
-    #     Info_dict = json.load(jsonFile)
-
-
-    # input_filename = os.path.join(input_folder,the_name + '.npy')
-
-    # bare_name = the_name.split('/')[-1]
 
 
 
