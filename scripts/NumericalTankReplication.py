@@ -185,6 +185,30 @@ nint_first_try = nbody * 128
 mass = np.ones(nbody)
 Sym_list = []
 
+
+Sym_list.append(
+    choreo.ChoreoSym(
+        LoopTarget=1,
+        LoopSource=0,
+        SpaceRot= np.array([[-1,0],[0,-1]],dtype=np.float64),
+        TimeRev=-1,
+        TimeShift=fractions.Fraction(
+            numerator=0,
+            denominator=2)
+    ))
+Sym_list.append(
+    choreo.ChoreoSym(
+        LoopTarget=2,
+        LoopSource=2,
+        SpaceRot= np.array([[-1,0],[0,-1]],dtype=np.float64),
+        TimeRev=-1,
+        TimeShift=fractions.Fraction(
+            numerator=0,
+            denominator=2)
+    ))
+
+
+
 # MomConsImposed = True
 MomConsImposed = False
 
@@ -367,16 +391,24 @@ for n_NT_init in [4]:
     # TimeShiftNum = 0
     # TimeShiftDen = 1
 
+    nloop = 2
 
-    theta = 2*np.pi * 0/2
-    SpaceRevscal = 1.
-    SpaceRot = np.array( [[SpaceRevscal*np.cos(theta) , SpaceRevscal*np.sin(theta)] , [-np.sin(theta),np.cos(theta)]])
-    TimeRev = 1.
-    TimeShiftNum = 0
-    TimeShiftDen = 2
+    all_coeffs_init = np.zeros((nloop,geodim,ncoeff_init,2),dtype=np.float64)
+    all_coeffs_init[0,:,:,:] = all_coeffs[0,:,:,:]
+    all_coeffs_init[1,:,:,:] = all_coeffs[2,:,:,:]
 
-    all_coeffs_init = choreo.Transform_Coeffs(SpaceRot, TimeRev, TimeShiftNum, TimeShiftDen, all_coeffs)
-    Transform_Sym = choreo.ChoreoSym(SpaceRot=SpaceRot, TimeRev=TimeRev, TimeShift = fractions.Fraction(numerator=TimeShiftNum,denominator=TimeShiftDen))
+    # theta = 2*np.pi * 0/2
+    # SpaceRevscal = 1.
+    # SpaceRot = np.array( [[SpaceRevscal*np.cos(theta) , SpaceRevscal*np.sin(theta)] , [-np.sin(theta),np.cos(theta)]])
+    # TimeRev = 1.
+    # TimeShiftNum = 0
+    # TimeShiftDen = 2
+
+    # all_coeffs_init = choreo.Transform_Coeffs(SpaceRot, TimeRev, TimeShiftNum, TimeShiftDen, all_coeffs)
+
+    # all_coeffs_init = all_coeffs
+
+    # Transform_Sym = choreo.ChoreoSym(SpaceRot=SpaceRot, TimeRev=TimeRev, TimeShift = fractions.Fraction(numerator=TimeShiftNum,denominator=TimeShiftDen))
 
 
     if Do_Speed_test:
