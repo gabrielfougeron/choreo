@@ -433,6 +433,9 @@ def ImplicitSymplecticWithTableGaussSeidel_VX_cython(
 
                 GoOnGS = (iGS < maxiter) and (dXV_err > eps_mul2)
 
+            if (iGS >= maxiter):
+                print("Max iter exceeded")
+
             tot_niter += iGS
 
             # Do EFT here ?
@@ -450,7 +453,7 @@ def ImplicitSymplecticWithTableGaussSeidel_VX_cython(
         for jdof in range(ndof):
             v_keep[iint_keep,jdof] = v[jdof]
     
-    # print(tot_niter / nint)
+    print(tot_niter / nint)
     # print(1+nsteps*tot_niter)
 
     return x_keep, v_keep
@@ -467,6 +470,8 @@ def ImplicitSymplecticTanWithTableGaussSeidel_VX_cython(
     (double, double) t_span,
     np.ndarray[double, ndim=1, mode="c"] x0,
     np.ndarray[double, ndim=1, mode="c"] v0,
+    np.ndarray[double, ndim=2, mode="c"] grad_x0,
+    np.ndarray[double, ndim=2, mode="c"] grad_v0,
     long nint,
     long keep_freq,
     np.ndarray[double, ndim=2, mode="c"] a_table,
@@ -494,7 +499,8 @@ def ImplicitSymplecticTanWithTableGaussSeidel_VX_cython(
 
     """
     cdef long ndof = x0.size
-    cdef long twondof = 2*ndof
+    # ~ cdef long grad_ndof = grad_x0.shape[1] # This does not work on numpy arrays ?
+    cdef long grad_ndof = 2*ndof 
     cdef long istep, id, iGS, jdof, kdof
     cdef long kstep
     cdef long tot_niter = 0
@@ -505,8 +511,8 @@ def ImplicitSymplecticTanWithTableGaussSeidel_VX_cython(
     cdef np.ndarray[double, ndim=2, mode="c"] x_keep = np.empty((nint_keep,ndof),dtype=np.float64)
     cdef np.ndarray[double, ndim=2, mode="c"] v_keep = np.empty((nint_keep,ndof),dtype=np.float64)
 
-    cdef np.ndarray[double, ndim=3, mode="c"] grad_x_keep = np.empty((nint_keep,ndof,twondof),dtype=np.float64)
-    cdef np.ndarray[double, ndim=3, mode="c"] grad_v_keep = np.empty((nint_keep,ndof,twondof),dtype=np.float64)
+    cdef np.ndarray[double, ndim=3, mode="c"] grad_x_keep = np.empty((nint_keep,ndof,grad_ndof),dtype=np.float64)
+    cdef np.ndarray[double, ndim=3, mode="c"] grad_v_keep = np.empty((nint_keep,ndof,grad_ndof),dtype=np.float64)
 
     cdef bint GoOnGS
 
@@ -517,7 +523,7 @@ def ImplicitSymplecticTanWithTableGaussSeidel_VX_cython(
     cdef np.ndarray[double, ndim=1, mode="c"] cdt = np.empty((nsteps),dtype=np.float64)
     cdef np.ndarray[double, ndim=1, mode="c"] all_t = np.empty((nsteps),dtype=np.float64)
     cdef np.ndarray[double, ndim=1, mode="c"] arg = np.empty((ndof),dtype=np.float64)
-    cdef np.ndarray[double, ndim=2, mode="c"] grad_arg = np.empty((ndof,twondof),dtype=np.float64)
+    cdef np.ndarray[double, ndim=2, mode="c"] grad_arg = np.empty((ndof,grad_ndof),dtype=np.float64)
 
     for istep in range(nsteps):
         cdt[istep] = c_table[istep]*dt
@@ -525,13 +531,9 @@ def ImplicitSymplecticTanWithTableGaussSeidel_VX_cython(
     cdef np.ndarray[double, ndim=1, mode="c"] x = x0.copy()
     cdef np.ndarray[double, ndim=1, mode="c"] v = v0.copy()
 
-    cdef np.ndarray[double, ndim=2, mode="c"] grad_x = np.zeros((ndof,twondof),dtype=np.float64)
-    cdef np.ndarray[double, ndim=2, mode="c"] grad_v = np.zeros((ndof,twondof),dtype=np.float64)
+    cdef np.ndarray[double, ndim=2, mode="c"] grad_x = grad_x0.copy()
+    cdef np.ndarray[double, ndim=2, mode="c"] grad_v = grad_v0.copy()
 
-    for idof in range(ndof):
-        grad_x[idof,idof] = 1
-    for idof in range(ndof):
-        grad_v[idof,ndof+idof] = 1
 
     cdef np.ndarray[double, ndim=1, mode="c"] res
     cdef np.ndarray[double, ndim=2, mode="c"] K_fun = np.empty((nsteps,ndof),dtype=np.float64)
@@ -544,19 +546,19 @@ def ImplicitSymplecticTanWithTableGaussSeidel_VX_cython(
 
 
     cdef np.ndarray[double, ndim=2, mode="c"] grad_res
-    cdef np.ndarray[double, ndim=3, mode="c"] grad_K_fun = np.empty((nsteps,ndof,twondof),dtype=np.float64)
-    cdef np.ndarray[double, ndim=3, mode="c"] grad_K_gun = np.zeros((nsteps,ndof,twondof),dtype=np.float64) # zeros here to ensure correct first init.
+    cdef np.ndarray[double, ndim=3, mode="c"] grad_K_fun = np.empty((nsteps,ndof,grad_ndof),dtype=np.float64)
+    cdef np.ndarray[double, ndim=3, mode="c"] grad_K_gun = np.zeros((nsteps,ndof,grad_ndof),dtype=np.float64) # zeros here to ensure correct first init.
 
-    cdef np.ndarray[double, ndim=3, mode="c"] grad_dX = np.empty((nsteps,ndof,twondof),dtype=np.float64)
-    cdef np.ndarray[double, ndim=3, mode="c"] grad_dV = np.empty((nsteps,ndof,twondof),dtype=np.float64) 
-    cdef np.ndarray[double, ndim=3, mode="c"] grad_dX_prev = np.empty((nsteps,ndof,twondof),dtype=np.float64)
-    cdef np.ndarray[double, ndim=3, mode="c"] grad_dV_prev = np.empty((nsteps,ndof,twondof),dtype=np.float64) 
+    cdef np.ndarray[double, ndim=3, mode="c"] grad_dX = np.empty((nsteps,ndof,grad_ndof),dtype=np.float64)
+    cdef np.ndarray[double, ndim=3, mode="c"] grad_dV = np.empty((nsteps,ndof,grad_ndof),dtype=np.float64) 
+    cdef np.ndarray[double, ndim=3, mode="c"] grad_dX_prev = np.empty((nsteps,ndof,grad_ndof),dtype=np.float64)
+    cdef np.ndarray[double, ndim=3, mode="c"] grad_dV_prev = np.empty((nsteps,ndof,grad_ndof),dtype=np.float64) 
 
     cdef double eps_mul = eps * ndof * nsteps * dt
     cdef double eps_mul2 = eps_mul * eps_mul
 
-    # cdef double eps_mul = eps * ndof * nsteps * dt
-    # cdef double eps_mul2 = eps_mul * eps_mul
+    cdef double grad_eps_mul = eps * ndof * grad_ndof * nsteps * dt
+    cdef double grad_eps_mul2 = grad_eps_mul * grad_eps_mul
 
     # First starting approximation using only one function evaluation
     tbeg = t_span[0]
@@ -568,7 +570,7 @@ def ImplicitSymplecticTanWithTableGaussSeidel_VX_cython(
     grad_res = grad_gun(tbeg,x,grad_x)  
     for istep in range(nsteps):
         for jdof in range(ndof):
-            for kdof in range(twondof):
+            for kdof in range(grad_ndof):
                 grad_dV[istep,jdof,kdof] = cdt[istep] * grad_res[jdof,kdof]
 
     for iint_keep in range(nint_keep):
@@ -588,7 +590,6 @@ def ImplicitSymplecticTanWithTableGaussSeidel_VX_cython(
                         dV[istep,jdof] += beta_table[istep,kstep] * K_gun[kstep,jdof]
 
             iGS = 0
-
             GoOnGS = True
 
             while GoOnGS:
@@ -648,19 +649,20 @@ def ImplicitSymplecticTanWithTableGaussSeidel_VX_cython(
 
                 GoOnGS = (iGS < maxiter) and (dXV_err > eps_mul2)
 
+            if (iGS >= maxiter):
+                print("Max iter exceeded")
+
             tot_niter += iGS
 
-
+            iGS = 0
+            GoOnGS = True
 
             for istep in range(nsteps):
                 for jdof in range(ndof):
-                    for kdof in range(twondof):
+                    for kdof in range(grad_ndof):
                         grad_dV[istep,jdof,kdof] = beta_table[istep,0] * grad_K_gun[0,jdof,kdof]                        
                         for kstep in range(1,nsteps):
                             grad_dV[istep,jdof,kdof] += beta_table[istep,kstep] * grad_K_gun[kstep,jdof,kdof]
-
-
-
 
             while GoOnGS:
 
@@ -671,23 +673,23 @@ def ImplicitSymplecticTanWithTableGaussSeidel_VX_cython(
                         arg[jdof] = v[jdof] + dV[istep,jdof]
 
                     for jdof in range(ndof):
-                        for kdof in range(twondof):
+                        for kdof in range(grad_ndof):
                             grad_arg[jdof,kdof] = grad_v[jdof,kdof] + grad_dV[istep,jdof,kdof]
 
                     grad_res = grad_fun(all_t[istep],arg,grad_arg)  
 
                     for jdof in range(ndof):
-                        for kdof in range(twondof):
+                        for kdof in range(grad_ndof):
                             grad_K_fun[istep,jdof,kdof] = dt * grad_res[jdof,kdof]
 
                 for istep in range(nsteps):
                     for jdof in range(ndof):
-                        for kdof in range(twondof):
+                        for kdof in range(grad_ndof):
                             grad_dX_prev[istep,jdof,kdof] = grad_dX[istep,jdof,kdof] 
 
                 for istep in range(nsteps):
                     for jdof in range(ndof):
-                        for kdof in range(twondof):
+                        for kdof in range(grad_ndof):
                             grad_dX[istep,jdof,kdof] = a_table[istep,0] * grad_K_fun[0,jdof,kdof]
                             for kstep in range(1,nsteps):
                                 grad_dX[istep,jdof,kdof] += a_table[istep,kstep] * grad_K_fun[kstep,jdof,kdof]
@@ -699,23 +701,23 @@ def ImplicitSymplecticTanWithTableGaussSeidel_VX_cython(
                         arg[jdof] = x[jdof] + dX[istep,jdof]
 
                     for jdof in range(ndof):
-                        for kdof in range(twondof):
+                        for kdof in range(grad_ndof):
                             grad_arg[jdof,kdof] = grad_x[jdof,kdof] + grad_dX[istep,jdof,kdof]
 
                     grad_res = grad_gun(all_t[istep],arg,grad_arg)  
 
                     for jdof in range(ndof):
-                        for kdof in range(twondof):
+                        for kdof in range(grad_ndof):
                             grad_K_gun[istep,jdof,kdof] = dt * grad_res[jdof,kdof]
 
                 for istep in range(nsteps):
                     for jdof in range(ndof):
-                        for kdof in range(twondof):
+                        for kdof in range(grad_ndof):
                             grad_dV_prev[istep,jdof,kdof] = grad_dV[istep,jdof,kdof] 
                         
                 for istep in range(nsteps):
                     for jdof in range(ndof):
-                        for kdof in range(twondof):
+                        for kdof in range(grad_ndof):
                             grad_dV[istep,jdof,kdof] = a_table[istep,0] * grad_K_gun[0,jdof,kdof]
                             for kstep in range(1,nsteps):
                                 grad_dV[istep,jdof,kdof] += a_table[istep,kstep] * grad_K_gun[kstep,jdof,kdof]
@@ -727,7 +729,7 @@ def ImplicitSymplecticTanWithTableGaussSeidel_VX_cython(
                 dXV_err = 0.
                 for istep in range(nsteps):
                     for jdof in range(ndof):
-                        for kdof in range(twondof):
+                        for kdof in range(grad_ndof):
                             diff = grad_dX[istep,jdof,kdof] - grad_dX_prev[istep,jdof,kdof]
                             dXV_err += diff * diff
                             diff = grad_dV[istep,jdof,kdof] - grad_dV_prev[istep,jdof,kdof]
@@ -735,25 +737,12 @@ def ImplicitSymplecticTanWithTableGaussSeidel_VX_cython(
                 
                 iGS += 1
 
-                GoOnGS = (iGS < maxiter) and (dXV_err > eps_mul2)
+                GoOnGS = (iGS < maxiter) and (dXV_err > grad_eps_mul)
+
+            if (iGS >= maxiter):
+                print("Max iter exceeded")
 
             grad_tot_niter += iGS
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
             # Do EFT here ?
 
@@ -767,12 +756,12 @@ def ImplicitSymplecticTanWithTableGaussSeidel_VX_cython(
         
             for kstep in range(nsteps):
                 for jdof in range(ndof):
-                    for kdof in range(twondof):
+                    for kdof in range(grad_ndof):
                         grad_x[jdof,kdof] += b_table[kstep] * grad_K_fun[kstep,jdof,kdof]
 
             for kstep in range(nsteps):
                 for jdof in range(ndof):
-                    for kdof in range(twondof):
+                    for kdof in range(grad_ndof):
                         grad_v[jdof,kdof] += b_table[kstep] * grad_K_gun[kstep,jdof,kdof]
         
         for jdof in range(ndof):
@@ -781,13 +770,14 @@ def ImplicitSymplecticTanWithTableGaussSeidel_VX_cython(
             v_keep[iint_keep,jdof] = v[jdof]
 
         for jdof in range(ndof):
-            for kdof in range(twondof):
+            for kdof in range(grad_ndof):
                 grad_x_keep[iint_keep,jdof,kdof] = grad_x[jdof,kdof]
         for jdof in range(ndof):
-            for kdof in range(twondof):
+            for kdof in range(grad_ndof):
                 grad_v_keep[iint_keep,jdof,kdof] = grad_v[jdof,kdof]
     
-    # print(tot_niter)
+    print(tot_niter/nint)
+    print(grad_tot_niter/nint)
     # print(1+nsteps*tot_niter)
 
     return x_keep, v_keep, grad_x_keep, grad_v_keep

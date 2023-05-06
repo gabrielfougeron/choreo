@@ -245,25 +245,18 @@ def ExecName(the_name, input_folder, store_folder):
 
         ndof = nbody*geodim
 
-        all_xv = np.zeros((nint,2*ndof,2*ndof))
-
         xf = x0
         vf = v0
 
-        for iint in range(nint):
+        t_span = (0.,1.)
 
-            x0 = xf
-            v0 = vf
-
-            all_xv[iint,:,:] = np.concatenate((x0,v0),axis=0).reshape(2*ndof,2*ndof)
-
-            t_span = (iint / nint,(iint+1)/nint)
-
-            xf,vf = SymplecticIntegrator(fun,gun,t_span,x0,v0,nint_ODE_mul)
+        all_x, all_v = SymplecticIntegrator(fun,gun,t_span,x0,v0,nint,nint_ODE_mul)
 
         del fun,gun
 
-        all_pos_d_init = np.zeros((nbody,geodim,2,nbody,geodim,nint),dtype=np.float64)
+        xf = all_x[-1,:].copy()
+        vf = all_v[-1,:].copy()
+
 
         MonodromyMat = np.ascontiguousarray(np.concatenate((xf,vf),axis=0).reshape(2*ndof,2*ndof))
 
@@ -291,17 +284,18 @@ def ExecName(the_name, input_folder, store_folder):
 
 
 
-        # eigvals,eigvects = scipy.linalg.eig(a=MonodromyMat)
+        eigvals,eigvects = scipy.linalg.eig(a=MonodromyMat)
         # eigvals,eigvects = scipy.linalg.eig(a=MonodromyMatLog)
         # eigvals,eigvects = scipy.linalg.eig(a=MonodromyMatLogsq)
 
         # print(eigvals)
-        # print(eigvals.real)
+        print(eigvals.real)
         # print(eigvects)
 
 
-        # exit()
+        exit()
 
+        all_pos_d_init = np.zeros((nbody,geodim,2,nbody,geodim,nint),dtype=np.float64)
 
         for iint in range(nint):
 
