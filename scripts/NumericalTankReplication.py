@@ -215,7 +215,7 @@ Sym_list.append(
 # MomConsImposed = True
 MomConsImposed = False
 
-n_reconverge_it_max = 0
+n_reconverge_it_max = 1
 n_grad_change = 1.
 
 TwoDBackend = (geodim == 2)
@@ -223,8 +223,8 @@ TwoDBackend = (geodim == 2)
 GradHessBackend="Cython"
 # GradHessBackend="Numba"
 
-ParallelBackend = True
-# ParallelBackend = False
+# ParallelBackend = True
+ParallelBackend = False
 
 nint_small = 30
 n_reconverge_it_max_small = 0
@@ -240,8 +240,10 @@ ActionSyst_small = choreo.setup_changevar(geodim,nbody,nint_small,mass,n_reconve
 # SymplecticMethod = 'SymplecticStormerVerlet'
 # SymplecticMethod = 'SymplecticRuth3'
 # SymplecticMethod = 'SymplecticRuth4'
+# SymplecticMethod = 'SymplecticGauss1'
+# SymplecticMethod = 'SymplecticGauss2'
 # SymplecticMethod = 'SymplecticGauss3'
-# SymplecticMethod = 'SymplecticGauss5'
+# SymplecticMethod = 'SymplecticGauss5' 
 SymplecticMethod = 'SymplecticGauss10'
 
 SymplecticIntegrator = choreo.GetSymplecticIntegrator(SymplecticMethod)
@@ -254,18 +256,21 @@ disp_scipy_opt = True
 # nint_ODE_mul = 64
 # nint_ODE_mul =  2**11
 # nint_ODE_mul =  2**7
-nint_ODE_mul =  2**4
+# nint_ODE_mul =  2**4
 # nint_ODE_mul =  2**1
-# nint_ODE_mul =  1
+nint_ODE_mul =  1
 
 
 fun,gun = ActionSyst_small.GetSymplecticODEDef()
 grad_fun,grad_gun = ActionSyst_small.GetSymplecticTanODEDef()
 ndof = nbody*ActionSyst_small.geodim
 
+w = np.zeros((2*ndof,2*ndof),dtype=np.float64)
+w[0:ndof,ndof:2*ndof] = np.identity(ndof)
+w[ndof:2*ndof,0:ndof] = -np.identity(ndof)
 
-for n_NT_init in [0]:
-# for n_NT_init in [4]:
+# for n_NT_init in [0]:
+for n_NT_init in [4]:
 # for n_NT_init in range(len(all_NT_init)):
 # for n_NT_init in range(4,len(all_NT_init)):
 
@@ -304,12 +309,22 @@ for n_NT_init in [0]:
     x0 = x0 * rfac
     v0 = v0 * rfac * T_NT
 
-    print(x0,v0)
+    # print(x0,v0)
 
     xi = x0.copy()
     vi = v0.copy()
 
     ndof = nbody * geodim
+
+    grad_x0 = np.zeros((ndof,2*ndof),dtype=np.float64)
+    grad_v0 = np.zeros((ndof,2*ndof),dtype=np.float64)
+    for idof in range(ndof):
+        grad_x0[idof,idof] = 1
+    for idof in range(ndof):
+        grad_v0[idof,ndof+idof] = 1
+
+
+
 
     print("Time forward integration")
     GoOn = True
@@ -326,28 +341,40 @@ for n_NT_init in [0]:
         print('')
         print(f'nint = {nint}')
     
-        # tbeg = time.perf_counter()
-        # all_pos, all_v = SymplecticIntegrator(fun,gun,t_span,x0,v0,nint*nint_ODE_mul,nint_ODE_mul)
-        # tend = time.perf_counter()
-
-
         tbeg = time.perf_counter()
-        all_pos, all_v, all_grad_pos, all_grad_v = SymplecticTanIntegrator(fun,gun,grad_fun,grad_gun,t_span,x0,v0,nint*nint_ODE_mul,nint_ODE_mul)
+        all_pos, all_v = SymplecticIntegrator(fun,gun,t_span,x0,v0,nint*nint_ODE_mul,nint_ODE_mul)
         tend = time.perf_counter()
-
-
-        xf = all_pos[-1,:].copy()
-        vf = all_v[-1,:].copy()
-
-        MonodromyMat = np.ascontiguousarray(np.concatenate((xf,vf),axis=0).reshape(2*ndof,2*ndof))
 
 
 
         print(f'Integration time: {tend-tbeg}')
 
-        if not(np.all(np.isfinite(xf)) and np.all(np.isfinite(vf))):
-            print('Nan results')
-            continue
+
+        tbeg = time.perf_counter()
+        all_pos, all_v, all_grad_pos, all_grad_v = SymplecticTanIntegrator(fun,gun,grad_fun,grad_gun,t_span,x0,v0,grad_x0,grad_v0,nint*nint_ODE_mul,nint_ODE_mul)
+        tend = time.perf_counter()
+
+
+
+        print(f'Integration time: {tend-tbeg}')
+
+        xf = all_pos[-1,:].copy()
+        vf = all_v[-1,:].copy()
+
+        grad_xf = all_grad_pos[-1,:,:].copy()
+        grad_vf = all_grad_v[-1,:,:].copy()
+
+        MonodromyMat = np.ascontiguousarray(np.concatenate((grad_xf,grad_vf),axis=0).reshape(2*ndof,2*ndof))
+
+
+        print('Symplecticity')
+        print(np.linalg.norm(w - np.dot(MonodromyMat.transpose(),np.dot(w,MonodromyMat))))
+        eigvals,eigvects = scipy.linalg.eig(a=MonodromyMat)
+        # print(eigvals)
+        # print(eigvals.real)
+        print(np.abs(eigvals))
+        # print(eigvects)
+
 
 
         period_err = np.linalg.norm(xi-xf) + np.linalg.norm(vi-vf)
