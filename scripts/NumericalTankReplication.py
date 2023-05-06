@@ -53,8 +53,8 @@ Save_coeff_profile = True
 # Save_All_Coeffs_No_Sym = True
 Save_All_Coeffs_No_Sym = False
 
-# Save_Newton_Error = True
-Save_Newton_Error = False
+Save_Newton_Error = True
+# Save_Newton_Error = False
 
 Save_img = True
 # Save_img = False
@@ -140,8 +140,8 @@ n_find_max = 1
 Newt_err_norm_max = 1e-12
 Newt_err_norm_max_save = 1e-9
 
-krylov_method = 'lgmres'
-# krylov_method = 'gmres'
+# krylov_method = 'lgmres'
+krylov_method = 'gmres'
 # krylov_method = 'bicgstab'
 # krylov_method = 'cgs'
 # krylov_method = 'minres'
@@ -191,26 +191,26 @@ mass = np.ones(nbody)
 Sym_list = []
 
 
-Sym_list.append(
-    choreo.ChoreoSym(
-        LoopTarget=1,
-        LoopSource=0,
-        SpaceRot= np.array([[-1,0],[0,-1]],dtype=np.float64),
-        TimeRev=-1,
-        TimeShift=fractions.Fraction(
-            numerator=0,
-            denominator=2)
-    ))
-Sym_list.append(
-    choreo.ChoreoSym(
-        LoopTarget=2,
-        LoopSource=2,
-        SpaceRot= np.array([[-1,0],[0,-1]],dtype=np.float64),
-        TimeRev=-1,
-        TimeShift=fractions.Fraction(
-            numerator=0,
-            denominator=2)
-    ))
+# Sym_list.append(
+#     choreo.ChoreoSym(
+#         LoopTarget=1,
+#         LoopSource=0,
+#         SpaceRot= np.array([[-1,0],[0,-1]],dtype=np.float64),
+#         TimeRev=-1,
+#         TimeShift=fractions.Fraction(
+#             numerator=0,
+#             denominator=2)
+#     ))
+# Sym_list.append(
+#     choreo.ChoreoSym(
+#         LoopTarget=2,
+#         LoopSource=2,
+#         SpaceRot= np.array([[-1,0],[0,-1]],dtype=np.float64),
+#         TimeRev=-1,
+#         TimeShift=fractions.Fraction(
+#             numerator=0,
+#             denominator=2)
+#     ))
 
 
 
@@ -259,6 +259,7 @@ disp_scipy_opt = True
 # nint_ODE_mul =  2**11
 # nint_ODE_mul =  2**7
 # nint_ODE_mul =  2**5
+# nint_ODE_mul =  2**3
 nint_ODE_mul =  2**1
 # nint_ODE_mul =  1
 
@@ -271,8 +272,8 @@ w = np.zeros((2*ndof,2*ndof),dtype=np.float64)
 w[0:ndof,ndof:2*ndof] = np.identity(ndof)
 w[ndof:2*ndof,0:ndof] = -np.identity(ndof)
 
-# for n_NT_init in [0]:
-for n_NT_init in [4]:
+for n_NT_init in [0]:
+# for n_NT_init in [4]:
 # for n_NT_init in range(len(all_NT_init)):
 # for n_NT_init in range(4,len(all_NT_init)):
 
@@ -284,48 +285,6 @@ for n_NT_init in [4]:
     #     continue
 
 
-    x0 = np.zeros(ndof)
-    v0 = np.zeros(ndof)
-
-    # Initial positions: (-1, 0), (1, 0), (0, 0)
-    # Initial velocities: (va, vb), (va, vb), (-2vb, -2vb)
-
-    x0[0] = -1
-    x0[2] = 1
-
-    va = all_NT_init[n_NT_init,0]
-    vb = all_NT_init[n_NT_init,1]
-    T_NT = all_NT_init[n_NT_init,2]
-    T_NT_s = all_NT_init[n_NT_init,3]
-
-    v0[0] = va
-    v0[1] = vb
-    v0[2] = va
-    v0[3] = vb
-    v0[4] = -2*va
-    v0[5] = -2*vb
-
-    phys_exp = 1/(choreo.n-1)
-    rfac = (T_NT) ** phys_exp
-
-    x0 = x0 * rfac
-    v0 = v0 * rfac * T_NT
-
-    # print(x0,v0)
-
-
-    ndof = nbody * geodim
-
-    grad_x0 = np.zeros((ndof,2*ndof),dtype=np.float64)
-    grad_v0 = np.zeros((ndof,2*ndof),dtype=np.float64)
-    for idof in range(ndof):
-        grad_x0[idof,idof] = 1
-    for idof in range(ndof):
-        grad_v0[idof,ndof+idof] = 1
-
-
-
-
     print("Time forward integration")
     GoOn = True
     itry = -1
@@ -333,10 +292,56 @@ for n_NT_init in [4]:
     while GoOn:
     # for i in range(1):
 
+
+
+        x0 = np.zeros(ndof)
+        v0 = np.zeros(ndof)
+
+        # Initial positions: (-1, 0), (1, 0), (0, 0)
+        # Initial velocities: (va, vb), (va, vb), (-2vb, -2vb)
+
+        x0[0] = -1
+        x0[2] = 1
+
+        va = all_NT_init[n_NT_init,0]
+        vb = all_NT_init[n_NT_init,1]
+        T_NT = all_NT_init[n_NT_init,2]
+        T_NT_s = all_NT_init[n_NT_init,3]
+
+        v0[0] = va
+        v0[1] = vb
+        v0[2] = va
+        v0[3] = vb
+        v0[4] = -2*va
+        v0[5] = -2*vb
+
+        phys_exp = 1/(choreo.n-1)
+        rfac = (T_NT) ** phys_exp
+
+        x0 = x0 * rfac
+        v0 = v0 * rfac * T_NT
+
+        # print(x0,v0)
+
+
+        ndof = nbody * geodim
+
+        grad_x0 = np.zeros((ndof,2*ndof),dtype=np.float64)
+        grad_v0 = np.zeros((ndof,2*ndof),dtype=np.float64)
+        for idof in range(ndof):
+            grad_x0[idof,idof] = 1
+        for idof in range(ndof):
+            grad_v0[idof,ndof+idof] = 1
+
+
+
+
         t_span = (0., 1.)
 
         itry += 1
         nint = nint_first_try * (2**itry)
+
+        n_ODE = nint*nint_ODE_mul
 
         OnePeriodIntegrator = lambda x0, v0 : SymplecticIntegrator(
                 fun = fun,
@@ -344,8 +349,8 @@ for n_NT_init in [4]:
                 t_span = t_span,
                 x0 = x0,
                 v0 = v0,
-                nint = nint*nint_ODE_mul,
-                keep_freq = nint*nint_ODE_mul)
+                nint = n_ODE,
+                keep_freq = n_ODE)
 
         OnePeriodTanIntegrator = lambda x0, v0, grad_x0, grad_v0 : SymplecticTanIntegrator(
                 fun = fun,
@@ -357,13 +362,14 @@ for n_NT_init in [4]:
                 v0 = v0,
                 grad_x0 = grad_x0,
                 grad_v0 = grad_v0,
-                nint = nint*nint_ODE_mul,
-                keep_freq = nint*nint_ODE_mul)
+                nint = n_ODE,
+                keep_freq = n_ODE)
 
 
 
         print('')
         print(f'nint = {nint}')
+        print(f'nODE = {n_ODE}')
     
 
         loss = functools.partial(choreo.ComputePeriodicityDefault, OnePeriodIntegrator = OnePeriodIntegrator)
@@ -372,37 +378,64 @@ for n_NT_init in [4]:
 
 
         vx0 = np.concatenate((x0,v0)).reshape(2*ndof)
+        tbeg = time.perf_counter()
+        dvx0 = loss(vx0)
+        best_sol = choreo.current_best(vx0,dvx0)
+        tend = time.perf_counter()
+        print(f'Integration time: {tend-tbeg}')
 
-        best_sol = choreo.current_best(vx0,loss(vx0))
-        print(f'Initial error on Periodicity: {best_sol.f_norm}')
+
+        period_err = np.linalg.norm(dvx0)
+        print(f'Error on Periodicity before optimization: {period_err}')
+        if (period_err > 1e-5):
+            continue
+
+        # line_search = 'armijo'
+        # line_search = 'wolfe'
+        line_search = None
+
+        # linesearch_smin = 0.1
+        linesearch_smin = 1.
+
+        # Use_exact_Jacobian_T = True
+        Use_exact_Jacobian_T = False
+
+        krylov_method_T = 'lgmres'
+        # krylov_method_T = 'gmres'
+        # krylov_method_T = 'bicgstab'
+        # krylov_method_T = 'cgs'
+        # krylov_method_T = 'minres'
+        # krylov_method_T = 'tfqmr'
+
+        jac_options = {'method':krylov_method_T,'rdiff':None,'inner_tol':0,'inner_M':None }
+
+        if (Use_exact_Jacobian_T):
+
+            FGrad = lambda x,dx : ActionSyst.Compute_action_hess_mul(x,dx)
+            jacobian = choreo.ExactKrylovJacobian(exactgrad=FGrad,**jac_options)
+
+        else: 
+            jacobian = scipy.optimize.nonlin.KrylovJacobian(**jac_options)
+
+        opt_result , info = choreo.nonlin_solve_pp(F=loss,x0=vx0,jacobian='krylov',verbose=True,maxiter=10,f_tol=1e-15,line_search=line_search,raise_exception=False,smin=linesearch_smin,full_output=True,callback=best_sol.update)
         
-
-#         # line_search = 'armijo'
-#         line_search = 'wolfe'
-#         # line_search = None
-# 
-#         linesearch_smin = 0.1
-#         # linesearch_smin = 1.
-# 
-#         opt_result , info = choreo.nonlin_solve_pp(F=loss,x0=vx0,jacobian='krylov',verbose=True,maxiter=100,f_tol=1e-15,line_search=line_search,raise_exception=False,smin=linesearch_smin,full_output=True)
-
-# 
-#         print(opt_result)
-#         print(info)
-
-        # print(f'Error on Periodicity: {best_sol.f_norm}')
+        vx0 = best_sol.x
+        dvx0 = best_sol.f
 
 
-        # res = scipy.optimize.root(loss, vx0, method='hybr', jac=None, tol=1e-15, callback=best_sol.update,options={'maxiter':100})
 
-#         res = scipy.optimize.root(loss, vx0, method='hybr', jac=None, tol=1e-15,options={'maxfev':10})
-        res = scipy.optimize.root(loss, vx0, method='hybr', jac=grad_only, tol=1e-15,options={'maxfev':1000})
+        # res = scipy.optimize.root(loss, vx0, method='hybr', jac=None, tol=1e-15,options={'maxiter':100})
+
+        # res = scipy.optimize.root(loss, vx0, method='hybr', jac=None, tol=1e-15,options={'maxfev':10})
+        # res = scipy.optimize.root(loss, vx0, method='hybr', jac=grad_only, tol=1e-15,options={'maxfev':10})
+
+        # res = scipy.optimize.root(loss, vx0, method='lm', jac=grad_only, tol=1e-15,options={'maxiter':10})
+        # vx0 = res.x
+        # dvx0 = res.fun
 
 
-        vx0 = res.x
-        dvx0 = res.fun
-        period_err = np.linalg.norm(dvx0[0:ndof]) + np.linalg.norm(dvx0[ndof:2*ndof])
-        print(f'Error on Periodicity: {period_err}')
+        period_err = np.linalg.norm(dvx0)
+        print(f'Error on Periodicity after optimization: {period_err}')
 
 
         x0 = vx0[0:ndof].copy()
@@ -414,39 +447,36 @@ for n_NT_init in [4]:
 
 
         # tbeg = time.perf_counter()
-        # all_pos, all_v = SymplecticIntegrator(fun,gun,t_span,x0,v0,nint*nint_ODE_mul,nint_ODE_mul)
+        all_pos, all_v = SymplecticIntegrator(fun,gun,t_span,x0,v0,nint*nint_ODE_mul,nint_ODE_mul)
         # tend = time.perf_counter()
         # print(f'Integration time: {tend-tbeg}')
-
-
-        tbeg = time.perf_counter()
-        all_pos, all_v, all_grad_pos, all_grad_v = SymplecticTanIntegrator(fun,gun,grad_fun,grad_gun,t_span,x0,v0,grad_x0,grad_v0,nint*nint_ODE_mul,nint_ODE_mul)
-        tend = time.perf_counter()
-
-
-
-        print(f'Integration time: {tend-tbeg}')
 
         xf = all_pos[-1,:].copy()
         vf = all_v[-1,:].copy()
 
-        grad_xf = all_grad_pos[-1,:,:].copy()
-        grad_vf = all_grad_v[-1,:,:].copy()
 
-        MonodromyMat = np.ascontiguousarray(np.concatenate((grad_xf,grad_vf),axis=0).reshape(2*ndof,2*ndof))
-
-
-        print('Symplecticity')
-        print(np.linalg.norm(w - np.dot(MonodromyMat.transpose(),np.dot(w,MonodromyMat))))
-        eigvals,eigvects = scipy.linalg.eig(a=MonodromyMat)
-        # print(eigvals)
-        # print(eigvals.real)
-        print(np.abs(eigvals))
-        # print(eigvects)
+        # tbeg = time.perf_counter()
+        # all_pos, all_v, all_grad_pos, all_grad_v = SymplecticTanIntegrator(fun,gun,grad_fun,grad_gun,t_span,x0,v0,grad_x0,grad_v0,nint*nint_ODE_mul,nint_ODE_mul)
+        # tend = time.perf_counter()
+        # print(f'Integration time: {tend-tbeg}')
 
 
+#         grad_xf = all_grad_pos[-1,:,:].copy()
+#         grad_vf = all_grad_v[-1,:,:].copy()
+# 
+#         MonodromyMat = np.ascontiguousarray(np.concatenate((grad_xf,grad_vf),axis=0).reshape(2*ndof,2*ndof))
+# 
+#         print('Symplecticity')
+#         print(np.linalg.norm(w - np.dot(MonodromyMat.transpose(),np.dot(w,MonodromyMat))))
+#         eigvals,eigvects = scipy.linalg.eig(a=MonodromyMat)
+#         # print(eigvals)
+#         # print(eigvals.real)
+#         print(np.abs(eigvals))
+#         # print(eigvects)
 
-        period_err = np.linalg.norm( np.concatenate((x0-xf,v0-vf)).reshape(2*ndof))
+
+
+        period_err = np.linalg.norm(np.concatenate((x0-xf,v0-vf)).reshape(2*ndof))
 
         print(f'Error on Periodicity: {period_err}')
 
@@ -487,7 +517,7 @@ for n_NT_init in [4]:
             max_ampl[k_inv] = cur_max
 
         iprob = (ncoeff_init * 2) // 3
-        GoOn = (max_ampl[iprob] > eps) or (period_err < 1e-10)
+        GoOn = (max_ampl[iprob] > eps) or (period_err > 1e-10)
 
         print(f"Max amplitude at probe index: {max_ampl[iprob]}")
         
@@ -505,11 +535,12 @@ for n_NT_init in [4]:
     # TimeShiftNum = 0
     # TimeShiftDen = 1
 
-    nloop = 2
+    # nloop = 2
+    # all_coeffs_init = np.zeros((nloop,geodim,ncoeff_init,2),dtype=np.float64)
+    # all_coeffs_init[0,:,:,:] = all_coeffs[0,:,:,:]
+    # all_coeffs_init[1,:,:,:] = all_coeffs[2,:,:,:]
 
-    all_coeffs_init = np.zeros((nloop,geodim,ncoeff_init,2),dtype=np.float64)
-    all_coeffs_init[0,:,:,:] = all_coeffs[0,:,:,:]
-    all_coeffs_init[1,:,:,:] = all_coeffs[2,:,:,:]
+    all_coeffs_init = all_coeffs
 
     # theta = 2*np.pi * 0/2
     # SpaceRevscal = 1.
