@@ -234,7 +234,7 @@ def ComputeButcher_a(a,b,n,w=None,z=None,wint=None,zint=None,nint=None):
 
     return Butcher_a, Butcher_beta
 
-
+@functools.cache
 def ComputeGaussButcherTables(n):
 
     a, b = ShiftedGaussLegendre3Term(n)

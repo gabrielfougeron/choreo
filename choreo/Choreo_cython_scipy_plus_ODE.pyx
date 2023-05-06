@@ -433,8 +433,8 @@ def ImplicitSymplecticWithTableGaussSeidel_VX_cython(
 
                 GoOnGS = (iGS < maxiter) and (dXV_err > eps_mul2)
 
-            if (iGS >= maxiter):
-                print("Max iter exceeded")
+            # if (iGS >= maxiter):
+            #     print("Max iter exceeded")
 
             tot_niter += iGS
 
@@ -499,8 +499,8 @@ def ImplicitSymplecticTanWithTableGaussSeidel_VX_cython(
 
     """
     cdef long ndof = x0.size
-    # ~ cdef long grad_ndof = grad_x0.shape[1] # This does not work on numpy arrays ?
-    cdef long grad_ndof = 2*ndof 
+    # ~ cdef long grad_ndof = grad_x0.shape[1] # Does this not work on numpy arrays ?
+    cdef long grad_ndof = grad_x0.size // ndof
     cdef long istep, id, iGS, jdof, kdof
     cdef long kstep
     cdef long tot_niter = 0
@@ -648,8 +648,8 @@ def ImplicitSymplecticTanWithTableGaussSeidel_VX_cython(
 
                 GoOnGS = (iGS < maxiter) and (dXV_err > eps_mul2)
 
-            if (iGS >= maxiter):
-                print("Max iter exceeded")
+            # if (iGS >= maxiter):
+            #     print("Max iter exceeded")
 
             tot_niter += iGS
 
@@ -738,8 +738,8 @@ def ImplicitSymplecticTanWithTableGaussSeidel_VX_cython(
 
                 GoOnGS = (iGS < maxiter) and (dXV_err > grad_eps_mul)
 
-            if (iGS >= maxiter):
-                print("Max iter exceeded")
+            # if (iGS >= maxiter):
+            #     print("Max iter exceeded")
 
             grad_tot_niter += iGS
 
