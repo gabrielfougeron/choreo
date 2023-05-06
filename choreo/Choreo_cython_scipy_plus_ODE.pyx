@@ -426,8 +426,8 @@ def ImplicitSymplecticWithTableGaussSeidel_VX_cython(
                         diff = dV[istep,jdof] - dV_prev[istep,jdof]
                         dV_err += diff * diff
                 
-                # dXV_err = dX_err + dV_err  
-                dXV_err = dX_err + dV_err * dt * dt 
+                dXV_err = dX_err + dV_err  
+                # dXV_err = dX_err + dV_err * dt * dt 
 
                 iGS += 1
 
@@ -453,7 +453,7 @@ def ImplicitSymplecticWithTableGaussSeidel_VX_cython(
         for jdof in range(ndof):
             v_keep[iint_keep,jdof] = v[jdof]
     
-    print(tot_niter / nint)
+    # print(tot_niter / nint)
     # print(1+nsteps*tot_niter)
 
     return x_keep, v_keep
@@ -533,7 +533,6 @@ def ImplicitSymplecticTanWithTableGaussSeidel_VX_cython(
 
     cdef np.ndarray[double, ndim=2, mode="c"] grad_x = grad_x0.copy()
     cdef np.ndarray[double, ndim=2, mode="c"] grad_v = grad_v0.copy()
-
 
     cdef np.ndarray[double, ndim=1, mode="c"] res
     cdef np.ndarray[double, ndim=2, mode="c"] K_fun = np.empty((nsteps,ndof),dtype=np.float64)
@@ -776,8 +775,8 @@ def ImplicitSymplecticTanWithTableGaussSeidel_VX_cython(
             for kdof in range(grad_ndof):
                 grad_v_keep[iint_keep,jdof,kdof] = grad_v[jdof,kdof]
     
-    print(tot_niter/nint)
-    print(grad_tot_niter/nint)
+    # print(tot_niter/nint)
+    # print(grad_tot_niter/nint)
     # print(1+nsteps*tot_niter)
 
     return x_keep, v_keep, grad_x_keep, grad_v_keep

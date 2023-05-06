@@ -33,13 +33,21 @@ cython_filenames = [
     "choreo/Choreo_cython_scipy_plus_ODE.pyx",
 ]
 
+cython_safemath_needed = [
+    False,
+    False,
+    False,
+]
+
 if platform.system() == "Windows":
 
-    extra_compile_args = ["/O2", "/openmp"]
+    extra_compile_args_std = ["/O2", "/openmp"]
+    extra_compile_args_safe = ["/O2", "/openmp"]
     extra_link_args = ["/openmp"]
 
     cython_extnames.append("choreo.Choreo_cython_funs_parallel")
     cython_filenames.append("choreo/Choreo_cython_funs_parallel.pyx")
+    cython_safemath_needed.append(False)
 
 else:
 
@@ -49,7 +57,8 @@ else:
 
     if ("PYODIDE_ROOT" in os.environ): # Building for Pyodide
 
-        extra_compile_args = ["-O3"]
+        extra_compile_args_std = ["-O3"]
+        extra_compile_args_safe = ["-O2"]
         extra_link_args = []
 
 
@@ -58,25 +67,25 @@ else:
         os.environ['CC'] = 'clang'
         os.environ['LDSHARED'] = 'clang -shared'
 
-        # extra_compile_args = ["-O2","-march=native", "-fopenmp"]
-        # extra_compile_args = ["-O3","-march=native", "-fopenmp"]
-        extra_compile_args = ["-Ofast","-march=native", "-fopenmp"]
-        # extra_compile_args = ["-fopenmp"]
+        extra_compile_args_std = ["-Ofast","-march=native", "-fopenmp"]
+        extra_compile_args_safe = ["-O2", "-fopenmp"]
 
         extra_link_args = ["-fopenmp"]
-        # extra_link_args = []
 
         cython_extnames.append("choreo.Choreo_cython_funs_parallel")
         cython_filenames.append("choreo/Choreo_cython_funs_parallel.pyx")
-
+        cython_safemath_needed.append(False)
 
     else:
 
-        extra_compile_args = ["-Ofast","-march=native", "-fopenmp"]
+        extra_compile_args_std = ["-Ofast","-march=native", "-fopenmp"]
+        extra_compile_args_safe = ["-O2", "-fopenmp"]
+        
         extra_link_args = ["-fopenmp"]
     
         cython_extnames.append("choreo.Choreo_cython_funs_parallel")
         cython_filenames.append("choreo/Choreo_cython_funs_parallel.pyx")
+        cython_safemath_needed.append(False)
     
 nthreads = multiprocessing.cpu_count()
 
@@ -114,11 +123,11 @@ extensions = [
     name = name,
     sources =  [source],
     include_dirs=[numpy.get_include()],
-    extra_compile_args = extra_compile_args,
+    extra_compile_args = extra_compile_args_safe if safemath_needed else extra_compile_args_std,
     extra_link_args = extra_link_args,
     define_macros  = define_macros ,
     )
-    for (name,source) in zip(cython_extnames,cython_filenames)
+    for (name,source,safemath_needed) in zip(cython_extnames,cython_filenames,cython_safemath_needed)
 ]
 
 ext_modules = Cython.Build.cythonize(

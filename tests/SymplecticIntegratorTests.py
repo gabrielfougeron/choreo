@@ -26,13 +26,14 @@ One_sec = 1e9
 test_names = [
 # "y'' = -y",
 # "y'' = - exp(y)",
-"y'' = xy",
+# "y'' = xy",
+"y' = Az; z' = By",
 ]
 
 
 
 
-methods = ['SymplecticGauss'+str(i) for i in range(1,6)]
+methods = ['SymplecticGauss'+str(i) for i in range(1,10)]
 
 # methods.append('SymplecticEuler')
 # methods.append('SymplecticStormerVerlet')
@@ -53,60 +54,88 @@ the_integrators = {method:choreo.GetSymplecticIntegrator(method) for method in m
 
 # the_integrators = choreo.all_unique_SymplecticIntegrators
 
-for SymplecticMethod,SymplecticIntegrator in the_integrators.items() :
+
+for the_test in test_names:
+
     print('')
-    print('SymplecticMethod : ',SymplecticMethod)
+    print('test name : ',the_test)
 
-    # SymplecticIntegrator = functools.partial(SymplecticIntegrator, maxiter = 40)
+    if the_test == "y'' = -y" :
+            # WOLFRAM
+            # y'' = - y
+            # y(x) = A cos(x) + B sin(x)
 
-    for the_test in test_names:
+        test_ndim = 2
 
+        ex_sol = lambda t : np.array( [ np.cos(t) , np.sin(t),-np.sin(t),np.cos(t) ]  )
+
+        fun = lambda t,y:  y
+        gun = lambda t,x:  -x
+
+    if the_test == "y'' = - exp(y)" :
+            # WOLFRAM
+            # y'' = - exp(y)
+            # y(x) = - 2 * ln( cosh(t / sqrt(2) ))
+
+        test_ndim = 1
+
+        invsqrt2 = 1./np.sqrt(2.)
+        sqrt2 = np.sqrt(2.)
+        ex_sol = lambda t : np.array( [ -2*np.log(np.cosh(invsqrt2*t)) , -sqrt2*np.tanh(invsqrt2*t) ]  )
+
+        fun = lambda t,y:  y
+        gun = lambda t,x: -np.exp(x)
+
+    if the_test == "y'' = xy" :
+
+        # Solutions: Airy functions
+        # Nonautonomous linear test case
+
+        test_ndim = 2
+
+        def ex_sol(t):
+
+            ai, aip, bi, bip = scipy.special.airy(t)
+
+            return np.array([ai,bi,aip,bip])
+
+
+        fun = lambda t,y:  y
+        gun = lambda t,x: np.array([t*x[0],t*x[1]],dtype=np.float64)
+        
+    if the_test == "y' = Az; z' = By" :
+
+        test_ndim = 2
+
+        A = np.random.rand(test_ndim,test_ndim)
+        A = A + A.T
+        B = np.random.rand(test_ndim,test_ndim)
+        B = B + B.T
+
+        AB = np.zeros((2*test_ndim,2*test_ndim))
+        AB[0:test_ndim,test_ndim:2*test_ndim] = A
+        AB[test_ndim:2*test_ndim,0:test_ndim] = B
+
+        yo = np.random.rand(test_ndim)
+        zo = np.random.rand(test_ndim)
+
+        yzo = np.zeros(2*test_ndim)
+        yzo[0:test_ndim] = yo
+        yzo[test_ndim:2*test_ndim] = zo
+
+        def ex_sol(t):
+
+            return scipy.linalg.expm(t*AB).dot(yzo)
+
+        fun = lambda t,z: A.dot(z)
+        gun = lambda t,y: B.dot(y)
+
+
+    for SymplecticMethod,SymplecticIntegrator in the_integrators.items() :
         print('')
-        print('test name : ',the_test)
+        print('SymplecticMethod : ',SymplecticMethod)
 
-        if the_test == "y'' = -y" :
-                # WOLFRAM
-                # y'' = - y
-                # y(x) = A cos(x) + B sin(x)
-
-            test_ndim = 2
-
-            ex_sol = lambda t : np.array( [ np.cos(t) , np.sin(t),-np.sin(t),np.cos(t) ]  )
-
-            fun = lambda t,y:  y
-            gun = lambda t,x:  -x
-
-        if the_test == "y'' = - exp(y)" :
-                # WOLFRAM
-                # y'' = - exp(y)
-                # y(x) = - 2 * ln( cosh(t / sqrt(2) ))
-
-            test_ndim = 1
-
-            invsqrt2 = 1./np.sqrt(2.)
-            sqrt2 = np.sqrt(2.)
-            ex_sol = lambda t : np.array( [ -2*np.log(np.cosh(invsqrt2*t)) , -sqrt2*np.tanh(invsqrt2*t) ]  )
-
-            fun = lambda t,y:  y
-            gun = lambda t,x: -np.exp(x)
-
-        if the_test == "y'' = xy" :
-
-            # Solutions: Airy functions
-            # Nonautonomous linear test case
-
-            test_ndim = 2
-
-            def ex_sol(t):
-
-                ai, aip, bi, bip = scipy.special.airy(t)
-
-                return np.array([ai,bi,aip,bip])
-
-
-            fun = lambda t,y:  y
-            gun = lambda t,x: np.array([t*x[0],t*x[1]],dtype=np.float64)
-
+        SymplecticIntegrator = functools.partial(SymplecticIntegrator, maxiter = 1000)
 
         t_span = (0.,np.pi)
 
