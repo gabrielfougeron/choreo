@@ -20,6 +20,8 @@ import sys
 import fractions
 import scipy.integrate
 import scipy.special
+import functools
+import inspect
 
 import tqdm
 
@@ -256,9 +258,9 @@ disp_scipy_opt = True
 # nint_ODE_mul = 64
 # nint_ODE_mul =  2**11
 # nint_ODE_mul =  2**7
-# nint_ODE_mul =  2**4
-# nint_ODE_mul =  2**1
-nint_ODE_mul =  1
+# nint_ODE_mul =  2**5
+nint_ODE_mul =  2**1
+# nint_ODE_mul =  1
 
 
 fun,gun = ActionSyst_small.GetSymplecticODEDef()
@@ -311,8 +313,6 @@ for n_NT_init in [4]:
 
     # print(x0,v0)
 
-    xi = x0.copy()
-    vi = v0.copy()
 
     ndof = nbody * geodim
 
@@ -331,23 +331,92 @@ for n_NT_init in [4]:
     itry = -1
 
     while GoOn:
-    # for i in range(4):
+    # for i in range(1):
 
         t_span = (0., 1.)
 
         itry += 1
         nint = nint_first_try * (2**itry)
 
+        OnePeriodIntegrator = lambda x0, v0 : SymplecticIntegrator(
+                fun = fun,
+                gun = gun,
+                t_span = t_span,
+                x0 = x0,
+                v0 = v0,
+                nint = nint*nint_ODE_mul,
+                keep_freq = nint*nint_ODE_mul)
+
+        OnePeriodTanIntegrator = lambda x0, v0, grad_x0, grad_v0 : SymplecticTanIntegrator(
+                fun = fun,
+                gun = gun,
+                grad_fun = grad_fun,
+                grad_gun = grad_gun,
+                t_span = t_span,
+                x0 = x0,
+                v0 = v0,
+                grad_x0 = grad_x0,
+                grad_v0 = grad_v0,
+                nint = nint*nint_ODE_mul,
+                keep_freq = nint*nint_ODE_mul)
+
+
+
         print('')
         print(f'nint = {nint}')
     
-        tbeg = time.perf_counter()
-        all_pos, all_v = SymplecticIntegrator(fun,gun,t_span,x0,v0,nint*nint_ODE_mul,nint_ODE_mul)
-        tend = time.perf_counter()
+
+        loss = functools.partial(choreo.ComputePeriodicityDefault, OnePeriodIntegrator = OnePeriodIntegrator)
+        grad_loss = functools.partial(choreo.ComputeGradPeriodicityDefault, OnePeriodTanIntegrator = OnePeriodTanIntegrator)
+        grad_only = lambda x : grad_loss(x)[1]
+
+
+        vx0 = np.concatenate((x0,v0)).reshape(2*ndof)
+
+        best_sol = choreo.current_best(vx0,loss(vx0))
+        print(f'Initial error on Periodicity: {best_sol.f_norm}')
+        
+
+#         # line_search = 'armijo'
+#         line_search = 'wolfe'
+#         # line_search = None
+# 
+#         linesearch_smin = 0.1
+#         # linesearch_smin = 1.
+# 
+#         opt_result , info = choreo.nonlin_solve_pp(F=loss,x0=vx0,jacobian='krylov',verbose=True,maxiter=100,f_tol=1e-15,line_search=line_search,raise_exception=False,smin=linesearch_smin,full_output=True)
+
+# 
+#         print(opt_result)
+#         print(info)
+
+        # print(f'Error on Periodicity: {best_sol.f_norm}')
+
+
+        # res = scipy.optimize.root(loss, vx0, method='hybr', jac=None, tol=1e-15, callback=best_sol.update,options={'maxiter':100})
+
+#         res = scipy.optimize.root(loss, vx0, method='hybr', jac=None, tol=1e-15,options={'maxfev':10})
+        res = scipy.optimize.root(loss, vx0, method='hybr', jac=grad_only, tol=1e-15,options={'maxfev':1000})
+
+
+        vx0 = res.x
+        dvx0 = res.fun
+        period_err = np.linalg.norm(dvx0[0:ndof]) + np.linalg.norm(dvx0[ndof:2*ndof])
+        print(f'Error on Periodicity: {period_err}')
+
+
+        x0 = vx0[0:ndof].copy()
+        v0 = vx0[ndof:2*ndof].copy()
 
 
 
-        print(f'Integration time: {tend-tbeg}')
+
+
+
+        # tbeg = time.perf_counter()
+        # all_pos, all_v = SymplecticIntegrator(fun,gun,t_span,x0,v0,nint*nint_ODE_mul,nint_ODE_mul)
+        # tend = time.perf_counter()
+        # print(f'Integration time: {tend-tbeg}')
 
 
         tbeg = time.perf_counter()
@@ -377,7 +446,7 @@ for n_NT_init in [4]:
 
 
 
-        period_err = np.linalg.norm(xi-xf) + np.linalg.norm(vi-vf)
+        period_err = np.linalg.norm( np.concatenate((x0-xf,v0-vf)).reshape(2*ndof))
 
         print(f'Error on Periodicity: {period_err}')
 
@@ -418,22 +487,14 @@ for n_NT_init in [4]:
             max_ampl[k_inv] = cur_max
 
         iprob = (ncoeff_init * 2) // 3
-        GoOn = (max_ampl[iprob] > eps)
+        GoOn = (max_ampl[iprob] > eps) or (period_err < 1e-10)
 
         print(f"Max amplitude at probe index: {max_ampl[iprob]}")
         
 
 
 
-
-
-# 
-#     dx = np.linalg.norm(xi-xf)
-#     smooth_coeff = 1e3
-#     # smoothing
-#     ko = 170000
-#     for k in range(ko,ncoeff_init):
-#         all_coeffs[:,:,k,:] *= m.exp(- smooth_coeff * (k-ko))
+    # exit()
 
 
 

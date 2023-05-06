@@ -106,9 +106,9 @@ compiler_directives = {
 
 # #### Profiler only ####
 # profile_compiler_directives = {
-#     'profile': True,
-#     'linetrace': True,
-#     'binding': True,
+    # 'profile': True,
+    # 'linetrace': True,
+    # 'binding': True,
 # }
 # compiler_directives.update(profile_compiler_directives)
 # 

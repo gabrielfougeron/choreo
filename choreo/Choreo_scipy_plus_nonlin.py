@@ -20,7 +20,10 @@ class current_best:
         self.f = f
         self.f_norm = np.linalg.norm(f)
         
-    def update(self,x,f,f_norm):
+    def update(self,x,f,f_norm=None):
+
+        if f_norm is None:
+            f_norm = np.linalg.norm(f)
 
         if (f_norm < self.f_norm):
             self.x = x
@@ -125,6 +128,8 @@ def nonlin_solve_pp(
 
         if callback:
             AskedForBreak = callback(x, Fx, Fx_norm_new)
+        else:
+            AskedForBreak = False
 
         if AskedForBreak:
             break
@@ -208,6 +213,8 @@ def _nonlin_line_search_pp(func, x, Fx, dx, search_type='armijo', rdiff=1e-8, sm
         s, phi1, phi0 = scipy.optimize.nonlin.scalar_search_wolfe1(phi, derphi, tmp_phi[0], xtol=1e-2, amin=smin)
     elif search_type == 'armijo':
         s, phi1 = scipy.optimize.nonlin.scalar_search_armijo(phi, tmp_phi[0], -tmp_phi[0], amin=smin)
+    else :
+        s = None
 
     if s is None:
         s = smin
