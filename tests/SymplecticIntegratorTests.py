@@ -33,7 +33,7 @@ test_names = [
 
 
 
-methods = ['SymplecticGauss'+str(i) for i in range(1,10)]
+methods = ['SymplecticGauss'+str(i) for i in range(1,11)]
 
 # methods.append('SymplecticEuler')
 # methods.append('SymplecticStormerVerlet')
@@ -61,9 +61,9 @@ for the_test in test_names:
     print('test name : ',the_test)
 
     if the_test == "y'' = -y" :
-            # WOLFRAM
-            # y'' = - y
-            # y(x) = A cos(x) + B sin(x)
+        # WOLFRAM
+        # y'' = - y
+        # y(x) = A cos(x) + B sin(x)
 
         test_ndim = 2
 
@@ -73,9 +73,9 @@ for the_test in test_names:
         gun = lambda t,x:  -x
 
     if the_test == "y'' = - exp(y)" :
-            # WOLFRAM
-            # y'' = - exp(y)
-            # y(x) = - 2 * ln( cosh(t / sqrt(2) ))
+        # WOLFRAM
+        # y'' = - exp(y)
+        # y(x) = - 2 * ln( cosh(t / sqrt(2) ))
 
         test_ndim = 1
 
@@ -99,18 +99,17 @@ for the_test in test_names:
 
             return np.array([ai,bi,aip,bip])
 
-
         fun = lambda t,y:  y
         gun = lambda t,x: np.array([t*x[0],t*x[1]],dtype=np.float64)
         
     if the_test == "y' = Az; z' = By" :
 
-        test_ndim = 2
+        test_ndim = 10
 
         A = np.random.rand(test_ndim,test_ndim)
-        A = A + A.T
+        # A = A + A.T
         B = np.random.rand(test_ndim,test_ndim)
-        B = B + B.T
+        # B = B + B.T
 
         AB = np.zeros((2*test_ndim,2*test_ndim))
         AB[0:test_ndim,test_ndim:2*test_ndim] = A
@@ -130,12 +129,11 @@ for the_test in test_names:
         fun = lambda t,z: A.dot(z)
         gun = lambda t,y: B.dot(y)
 
-
     for SymplecticMethod,SymplecticIntegrator in the_integrators.items() :
         print('')
         print('SymplecticMethod : ',SymplecticMethod)
 
-        SymplecticIntegrator = functools.partial(SymplecticIntegrator, maxiter = 1000)
+        SymplecticIntegrator = functools.partial(SymplecticIntegrator, maxiter = 50)
 
         t_span = (0.,np.pi)
 
@@ -150,7 +148,8 @@ for the_test in test_names:
 
         # refinement_lvl = [1,2,4,8,16,32,64,128,256,512,1024,2048]
         # refinement_lvl = [1,10,100]
-        refinement_lvl = [1,2,3,4,5,6,7,8,9,10]
+        refinement_lvl = list(range(1,11))
+        # refinement_lvl = list(range(1,101))
 
         for iref in range(len(refinement_lvl)):
 
@@ -164,7 +163,8 @@ for the_test in test_names:
             t_end = time.perf_counter_ns()
 
             sol = np.ascontiguousarray(np.concatenate((xf,vf),axis=0).reshape(2*test_ndim))
-            error = np.linalg.norm(sol-ex_final)
+            # error = np.linalg.norm(sol-ex_final)
+            error = np.linalg.norm(sol-ex_final)/np.linalg.norm(ex_final)
 
             # print(f'error : {error:e} time : {(t_end-t_beg)/One_sec:f}')
 

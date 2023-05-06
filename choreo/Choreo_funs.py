@@ -946,6 +946,7 @@ class ChoreoAction():
 
 
 
+
     def Write_Descriptor(self,x,filename,Action=None,Gradaction=None,Newt_err_norm=None,dxmin=None,Hash_Action=None,max_path_length=None,extend=0.03):
         r"""
         Dumps a json file describing the current trajectories
@@ -1854,6 +1855,31 @@ except:
 
 
 
+def ComputePeriodicityDefault(xv0,OnePeriodIntegrator):
+
+    twondof = xv0.size
+    ndof = twondof // 2
+    all_x,all_y = OnePeriodIntegrator(xv0[0:ndof].copy(),xv0[ndof:twondof].copy())
+
+    return np.ascontiguousarray(np.concatenate((all_x[-1,:],all_y[-1,:]),axis=0).reshape(twondof)) - xv0
+
+
+
+def ComputeGradPeriodicityDefault(xv0,OnePeriodTanIntegrator):
+
+    twondof = xv0.size
+    ndof = twondof // 2
+
+    grad_x0 = np.zeros((ndof,2*ndof),dtype=np.float64)
+    grad_v0 = np.zeros((ndof,2*ndof),dtype=np.float64)
+    for idof in range(ndof):
+        grad_x0[idof,idof] = 1
+    for idof in range(ndof):
+        grad_v0[idof,ndof+idof] = 1
+
+    all_x, all_y, all_grad_x, all_grad_y = OnePeriodTanIntegrator(xv0[0:ndof].copy(), xv0[ndof:twondof].copy(), grad_x0, grad_v0)
+
+    return np.ascontiguousarray(np.concatenate((all_x[-1,:],all_y[-1,:]),axis=0).reshape(twondof) - xv0) , np.ascontiguousarray(np.concatenate((all_grad_x[-1,:,:],all_grad_y[-1,:,:]),axis=0).reshape(twondof,twondof))
 
 
 
