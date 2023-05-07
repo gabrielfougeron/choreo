@@ -7,7 +7,7 @@ import numpy as np
 import math as m
 
 import mpmath
-mpmath.mp.dps = 60 # Precision specified as a number of digits in the representation. Double precision = 15
+mpmath.mp.dps = 600 # Precision specified as a number of digits in the representation. Double precision = 15
 
 import functools
 
@@ -234,7 +234,7 @@ def ComputeButcher_a(a,b,n,w=None,z=None,wint=None,zint=None,nint=None):
 
     return Butcher_a, Butcher_beta
 
-@functools.cache
+# @functools.cache
 def ComputeGaussButcherTables(n):
 
     a, b = ShiftedGaussLegendre3Term(n)
