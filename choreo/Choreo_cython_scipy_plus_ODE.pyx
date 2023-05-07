@@ -554,7 +554,6 @@ def ImplicitSymplecticTanWithTableGaussSeidel_VX_cython(
     cdef np.ndarray[double, ndim=3, mode="c"] grad_dV_prev = np.empty((nsteps,ndof,grad_ndof),dtype=np.float64) 
 
     cdef double eps_mul = eps * ndof * nsteps * dt
-    # cdef double eps_mul = eps * dt
     cdef double eps_mul2 = eps_mul * eps_mul
 
     cdef double grad_eps_mul = eps * ndof * grad_ndof * nsteps * dt
