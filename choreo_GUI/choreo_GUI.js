@@ -1520,14 +1520,14 @@ var checkbox_Mass_Scale = document.getElementById('checkbox_Mass_Scale');
 checkbox_Mass_Scale.addEventListener("change", checkbox_Mass_Scale_Handler, true);
 
 var input_body_radius = document.getElementById("input_body_radius");
-input_body_radius.addEventListener("input" , SlideBodyRadius, true);
+input_body_radius.addEventListener("input", SlideBodyRadius, true);
 input_body_radius.value = base_particle_size ;
 input_body_radius.min   = min_base_particle_size ;
 input_body_radius.max   = max_base_particle_size ;
 input_body_radius.step  = 0.05 ;
 
 var input_trail_width = document.getElementById("input_trail_width");
-input_trail_width.addEventListener("input" , SlideTrailWidth, true);
+input_trail_width.addEventListener("input", SlideTrailWidth, true);
 input_trail_width.value = base_trailWidth ;
 input_trail_width.min   = min_base_trailWidth ;
 input_trail_width.max   = max_base_trailWidth ;
@@ -1537,7 +1537,7 @@ var checkbox_Trail_vanish = document.getElementById('checkbox_Trail_vanish');
 checkbox_Trail_vanish.addEventListener("change", checkbox_Trail_vanish_Handler, true);
 
 var input_trail_vanish_length = document.getElementById("input_trail_vanish_length");
-input_trail_vanish_length.addEventListener("input" , SlideTrailTime, true);
+input_trail_vanish_length.addEventListener("input", SlideTrailTime, true);
 input_trail_vanish_length.value = base_trail_vanish_length ;
 input_trail_vanish_length.min   = min_base_trail_vanish_length ;
 input_trail_vanish_length.max   = max_base_trail_vanish_length ;
@@ -2086,6 +2086,7 @@ async function PlayFileFromRemote(name,npy_file,json_file) {
 
         var displayCanvas = document.getElementById("displayCanvas")
         var wasrunning = running
+
         if (running) {
             var event = new Event('StopAnimationFromOutsideCanvas')
             displayCanvas.dispatchEvent(event)
@@ -2124,7 +2125,7 @@ async function PlayFileFromRemote(name,npy_file,json_file) {
         }
 
     }
-
+    
 }
 
 async function LoadTargetFileFromRemote(name,npy_file,json_file) {
@@ -2283,7 +2284,14 @@ function MakeDirectoryTree_DefaultGallery(cur_directory,cur_treenode,click_callb
 
         cur_treenode.addChild(new_node)
 
-        new_node.on("click", (e,node)  => click_callback(cur_treenode.path_str + basename,cur_directory.files[basename]['.npy'],cur_directory.files[basename]['.json']));
+        new_node.on("click", async (e,node)  => {
+            // UpdateURL(cur_treenode.path_str+ basename)
+            // console.log(cur_treenode.path_str+ basename)
+            // console.log(cur_directory.files[basename]['.npy'])
+            // console.log(cur_directory.files[basename]['.json'])
+            await click_callback(cur_treenode.path_str + basename,cur_directory.files[basename]['.npy'],cur_directory.files[basename]['.json'])
+        }
+        )
 
     }
 
@@ -2298,22 +2306,35 @@ async function LoadDefaultGallery() {
         .then(data => {
             DefaultGallery_description = JSON.parse(data);
         })
-        
+
+
     var DefaultTree = new TreeNode(DefaultGallery_description.name,{expanded:true})
     DefaultTree.path_str = "Gallery/"
     MakeDirectoryTree_DefaultGallery(DefaultGallery_description,DefaultTree,PlayFileFromRemote)
-
-    var search_leaf = DefaultTree
-    while (!search_leaf.isLeaf()) {
-        search_leaf.setExpanded(true)
-        search_leaf = search_leaf.getChildren()[0]
-    }
-    search_leaf.setEnabled(true)
-    search_leaf.setSelected(true)
-
-    var DefaultTreeView = new TreeView(DefaultTree, "#DefaultGalleryContainer",{leaf_icon:" ",parent_icon:" ",show_root:false})
     
-    await search_leaf.getListener("click")()
+    // ReadURL
+    // console.log("url", window.location.href.split("#")[1])
+    // console.log("url", window.location.href)
+    UrlIsValid = false
+
+    if (UrlIsValid) { //  
+
+    } else {
+        var search_leaf = DefaultTree
+        while (!search_leaf.isLeaf()) { // Play the first sol in garllery
+            search_leaf.setExpanded(true)
+            search_leaf = search_leaf.getChildren()[0]
+        }
+        search_leaf.setEnabled(true)
+        search_leaf.setSelected(true)
+    
+
+        var DefaultTreeView = new TreeView(DefaultTree, "#DefaultGalleryContainer",{leaf_icon:" ",parent_icon:" ",show_root:false})
+
+        await search_leaf.getListener("click")()
+
+    }
+
 
     DefaultTree_Target = new TreeNode("Gallery",{expanded:true})
     DefaultTree_Target.path_str = "Gallery/"
@@ -2438,3 +2459,7 @@ function checkbox_EnableTargets_Handler(event) {
     }
 
 }
+
+// function UpdateURL(basepath){
+//     window.location.hash = basepath.replaceAll(" ", "~") // Espace insécable
+// }

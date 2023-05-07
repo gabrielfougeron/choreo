@@ -331,6 +331,7 @@ function canvasApp() {
 		
 		// Load the static gallery
 		await LoadDefaultGallery()
+
 		startAnimation()
 
 	}
