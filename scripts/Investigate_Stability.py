@@ -152,12 +152,10 @@ def ExecName(the_name, input_folder, store_folder):
 
 
 
-    all_coeffs_init = choreo.Transform_Coeffs(SpaceRot, TimeRev, TimeShiftNum, TimeShiftDen, all_coeffs)
-    Transform_Sym = choreo.ChoreoSym(SpaceRot=SpaceRot, TimeRev=TimeRev, TimeShift = fractions.Fraction(numerator=TimeShiftNum,denominator=TimeShiftDen))
+    # all_coeffs_init = choreo.Transform_Coeffs(SpaceRot, TimeRev, TimeShiftNum, TimeShiftDen, all_coeffs)
+    # Transform_Sym = choreo.ChoreoSym(SpaceRot=SpaceRot, TimeRev=TimeRev, TimeShift = fractions.Fraction(numerator=TimeShiftNum,denominator=TimeShiftDen))
 
     all_coeffs_init = np.copy(all_coeffs)
-
-
     Transform_Sym = None
 
 
@@ -261,6 +259,8 @@ def ExecName(the_name, input_folder, store_folder):
         MonodromyMat = np.ascontiguousarray(np.concatenate((xf,vf),axis=0).reshape(2*ndof,2*ndof))
 
 
+        print(MonodromyMat)
+
 
         # MonodromyMat = np.dot(MonodromyMat,MonodromyMat)
 
@@ -289,17 +289,20 @@ def ExecName(the_name, input_folder, store_folder):
         # eigvals,eigvects = scipy.linalg.eig(a=MonodromyMatLogsq)
 
         # print(eigvals)
-        print(eigvals.real)
+        # print(eigvals.real)
+        print(abs(eigvals))
         # print(eigvects)
 
 
-        exit()
+        # exit()
 
         all_pos_d_init = np.zeros((nbody,geodim,2,nbody,geodim,nint),dtype=np.float64)
 
         for iint in range(nint):
 
-            PeriodicPart = np.dot(all_xv[iint,:,:],scipy.linalg.expm(-(iint / nint)*MonodromyMatLog))
+            xv = np.ascontiguousarray(np.concatenate((all_x[iint,:],all_v[iint,:]),axis=0).reshape(2*ndof,2*ndof))
+
+            PeriodicPart = np.dot(xv,scipy.linalg.expm(-(iint / nint)*MonodromyMatLog))
 
             all_pos_d_init[:,:,:,:,:,iint] = (PeriodicPart.reshape(2,nbody*geodim,2,nbody*geodim)[0,:,:,:]).reshape((nbody,geodim,2,nbody,geodim))
 
@@ -319,6 +322,8 @@ def ExecName(the_name, input_folder, store_folder):
         Instability_magnitude,Instability_directions = choreo.InstabilityDecomposition(MonodromyMat)
 
         # print(Instability_magnitude)
+
+        print(zo)
 
         print(f'Relative error on flow eigenstate: {np.linalg.norm(MonodromyMat.dot(zo)-zo)/np.linalg.norm(zo):e}')
         # print(the_name+f' {Instability_magnitude[:]}')

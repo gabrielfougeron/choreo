@@ -31,7 +31,6 @@ twopi = 2*np.pi
 
 def main():
 
-    # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/01 - Classic gallery')
     # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/3/')
     input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery/01 - Classic gallery')
     # input_folder = os.path.join(__PROJECT_ROOT__,'Keep/tests')
@@ -52,19 +51,19 @@ def main():
 # 
 # # # 
 #     ''' Include all files in folder '''
-#     input_names_list = []
-#     for file_path in os.listdir(input_folder):
-#         file_path = os.path.join(input_folder, file_path)
-#         file_root, file_ext = os.path.splitext(os.path.basename(file_path))
-#         
-#         if (file_ext == '.json' ):
-#             # 
-#             # if int(file_root) > 8:
-#             #     input_names_list.append(file_root)
-# 
-#             input_names_list.append(file_root)
+    input_names_list = []
+    for file_path in os.listdir(input_folder):
+        file_path = os.path.join(input_folder, file_path)
+        file_root, file_ext = os.path.splitext(os.path.basename(file_path))
+        
+        if (file_ext == '.json' ):
+            # 
+            # if int(file_root) > 8:
+            #     input_names_list.append(file_root)
 
-    input_names_list = ['01 - Figure eight']
+            input_names_list.append(file_root)
+
+    # input_names_list = ['01 - Figure eight']
     # input_names_list = ['14 - Small mass gap']
     # input_names_list = ['04 - 5 pointed star']
 
@@ -152,12 +151,10 @@ def ExecName(the_name, input_folder, store_folder):
 
 
 
-    all_coeffs_init = choreo.Transform_Coeffs(SpaceRot, TimeRev, TimeShiftNum, TimeShiftDen, all_coeffs)
-    Transform_Sym = choreo.ChoreoSym(SpaceRot=SpaceRot, TimeRev=TimeRev, TimeShift = fractions.Fraction(numerator=TimeShiftNum,denominator=TimeShiftDen))
+    # all_coeffs_init = choreo.Transform_Coeffs(SpaceRot, TimeRev, TimeShiftNum, TimeShiftDen, all_coeffs)
+    # Transform_Sym = choreo.ChoreoSym(SpaceRot=SpaceRot, TimeRev=TimeRev, TimeShift = fractions.Fraction(numerator=TimeShiftNum,denominator=TimeShiftDen))
 
     all_coeffs_init = np.copy(all_coeffs)
-
-
     Transform_Sym = None
 
 
@@ -205,16 +202,16 @@ def ExecName(the_name, input_folder, store_folder):
     # nint_ODE_mul =  2**11
     # nint_ODE_mul =  2**7
     # nint_ODE_mul =  2**5
-    # nint_ODE_mul =  2**3
+    nint_ODE_mul =  2**3
     # nint_ODE_mul =  2**1
-    nint_ODE_mul =  1
+    # nint_ODE_mul =  1
 
     ndof = nbody*ActionSyst.geodim
 
     fun,gun = ActionSyst.GetSymplecticODEDef()
     x0, v0 = ActionSyst.Compute_init_pos_and_vel(x)
     z0 = np.ascontiguousarray(np.concatenate((x0, v0),axis=0).reshape(2*ndof))
-
+    
     
     grad_fun,grad_gun = ActionSyst.GetSymplecticTanODEDef()
     grad_x0 = np.zeros((ndof,2*ndof),dtype=np.float64)
@@ -252,13 +249,14 @@ def ExecName(the_name, input_folder, store_folder):
     #     print(arr.data.c_contiguous)
         # print(arr.data.f_contiguous)  # False
 
+    T = 1.
 
     all_x, all_v, all_grad_x, all_grad_v = SymplecticTanIntegrator(
         fun = fun,
         gun = gun,
         grad_fun = grad_fun,
         grad_gun = grad_gun,
-        t_span = (0.,1.),
+        t_span = (0.,T),
         x0 = x0,
         v0 = v0,
         grad_x0 = grad_x0,
@@ -281,6 +279,8 @@ def ExecName(the_name, input_folder, store_folder):
 
     MonodromyMat = np.ascontiguousarray(np.concatenate((grad_xf,grad_vf),axis=0).reshape(2*ndof,2*ndof))
 
+    # print(MonodromyMat)
+# 
     print('Symplecticity')
     print(np.linalg.norm(w - np.dot(MonodromyMat.transpose(),np.dot(w,MonodromyMat))))
 
@@ -288,10 +288,10 @@ def ExecName(the_name, input_folder, store_folder):
 
 
     eigvals,eigvects = scipy.linalg.eig(a=MonodromyMat)
-    print('Eigenvalues of the Monodromy matrix :')
+    # print('Eigenvalues of the Monodromy matrix :')
     # print(eigvals)
     # print(eigvals.real)
-    print(np.abs(eigvals))
+    # print(np.abs(eigvals))
     # print(eigvects)
 
 
@@ -305,8 +305,10 @@ def ExecName(the_name, input_folder, store_folder):
     # print(Instability_magnitude)
 
     # Evaluates the relative accuracy of the Monodromy matrix integration process
-    # zo should be an eigenvector of the Monodromy matrix, with eigenvalue 1
-    print(f'Relative error on flow eigenstate: {np.linalg.norm(MonodromyMat.dot(z0)-z0)/np.linalg.norm(z0):e}')
+    # f0 should be an eigenvector of the Monodromy matrix, with eigenvalue 1
+    z0 = np.ascontiguousarray(np.concatenate((x0, v0),axis=0).reshape(2*ndof))
+    f0 = ActionSyst.Compute_Auto_ODE_RHS(z0)
+    print(f'Relative error on flow eigenstate: {np.linalg.norm(MonodromyMat.dot(f0)-f0)/np.linalg.norm(f0):e}')
     # print(the_name+f' {Instability_magnitude[:]}')
     # print(the_name+f' {np.flip(1/Instability_magnitude[:])}')
     # print("Relative error on loxodromy ",np.linalg.norm(Instability_magnitude - np.flip(1/Instability_magnitude))/np.linalg.norm(Instability_magnitude))
