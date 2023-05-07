@@ -38,6 +38,7 @@ async function loadPyodideAndPackages() {
         "matplotlib",
         "sparseqr",
         "networkx",
+        "mpmath",
         "./python_dist/choreo-0.2.0-cp310-cp310-emscripten_3_1_27_wasm32.whl"
     ])
 
