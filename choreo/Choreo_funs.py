@@ -276,7 +276,7 @@ class ChoreoAction():
 
         return all_pos
 
-    def ComputeAllPosVel(self,x,nint=None):
+    def ComputeAllPosAndVel(self,x,nint=None):
         r"""
         Returns the positions and velocities of all bodies along the path.
         """
@@ -292,6 +292,15 @@ class ChoreoAction():
             all_coeffs_nosym[:,:,k] *= twopi*1j*k
 
         all_vel_b = the_irfft(all_coeffs_nosym,n=nint,norm="forward")
+
+        return all_pos_b, all_vel_b
+
+    def ComputeAllPosVel(self,x,nint=None):
+        r"""
+        Returns the positions and velocities of all bodies along the path.
+        """
+
+        all_pos_b, all_vel_b = self.ComputeAllPosAndVel(x,nint)
 
         return np.stack((all_pos_b,all_vel_b),axis=0)
 
@@ -316,6 +325,16 @@ class ChoreoAction():
         all_pos_vel = self.ComputeAllPosVel(x)
 
         return np.ascontiguousarray(all_pos_vel[:,:,:,0])
+        
+    def Compute_init_pos_and_vel(self,x):
+        r"""
+        Returns the initial positions and velocities of all bodies.
+        """
+        # I litterally do not know of any more efficient way to compute the initial positions and velocities.
+
+        all_pos_b, all_vel_b = self.ComputeAllPosAndVel(x)
+
+        return np.ascontiguousarray(all_pos_b[:,:,0]).reshape(-1), np.ascontiguousarray(all_vel_b[:,:,0]).reshape(-1)
 
     def Compute_action_onlygrad(self,x):
         r"""
@@ -723,7 +742,7 @@ class ChoreoAction():
             else:
                 raise ValueError(f'Integration method not supported: {method}')
 
-            all_pos_vel = self.ComputeAllPosVel(x,nint=nint)
+            all_pos = self.ComputeAllPos(x,nint=nint)
 
             def fun(t,v):
                 return v
@@ -731,7 +750,7 @@ class ChoreoAction():
             def gun(t,x):
                 i = round(t*nint) % nint
 
-                cur_pos = np.ascontiguousarray(all_pos_vel[0,:,:,i])
+                cur_pos = np.ascontiguousarray(all_pos[:,:,i])
 
                 J = Compute_JacMat_Forces_Cython(cur_pos,self.mass,self.nbody).reshape(self.nbody*self.geodim,self.nbody*self.geodim)
                 
