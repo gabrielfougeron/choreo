@@ -7,7 +7,6 @@ import numpy as np
 import math as m
 
 import mpmath
-mpmath.mp.dps = 600 # Precision specified as a number of digits in the representation. Double precision = 15
 
 import functools
 
@@ -234,7 +233,6 @@ def ComputeButcher_a(a,b,n,w=None,z=None,wint=None,zint=None,nint=None):
 
     return Butcher_a, Butcher_beta
 
-# @functools.cache
 def ComputeGaussButcherTables(n):
 
     a, b = ShiftedGaussLegendre3Term(n)
@@ -242,9 +240,17 @@ def ComputeGaussButcherTables(n):
 
     Butcher_a, Butcher_beta = ComputeButcher_a(a,b,n,w,z)
 
+    return Butcher_a, w, z, Butcher_beta
+
+@functools.cache
+def ComputeGaussButcherTables_np(n,dps=30):
+
+    mpmath.mp.dps = dps
+    Butcher_a, Butcher_b, Butcher_c, Butcher_beta = ComputeGaussButcherTables(n)
+
     Butcher_a_np = np.array(Butcher_a.tolist(),dtype=np.float64)
-    Butcher_b_np = np.array(w.tolist(),dtype=np.float64).reshape(n)
-    Butcher_c_np = np.array(z.tolist(),dtype=np.float64).reshape(n)
+    Butcher_b_np = np.array(Butcher_b.tolist(),dtype=np.float64).reshape(n)
+    Butcher_c_np = np.array(Butcher_c.tolist(),dtype=np.float64).reshape(n)
     Butcher_beta_np = np.array(Butcher_beta.tolist(),dtype=np.float64)
 
     return Butcher_a_np, Butcher_b_np, Butcher_c_np, Butcher_beta_np
@@ -294,7 +300,7 @@ def GetSymplecticIntegrator(method='SymplecticRuth3'):
 
             descr = method.removeprefix("SymplecticGauss")
             n = int(descr)
-            Butcher_a_np, Butcher_b_np, Butcher_c_np, Butcher_beta_np = ComputeGaussButcherTables(n)
+            Butcher_a_np, Butcher_b_np, Butcher_c_np, Butcher_beta_np = ComputeGaussButcherTables_np(n)
 
             integrator = functools.partial(
                 ImplicitSymplecticWithTableGaussSeidel_VX_cython,
@@ -318,7 +324,7 @@ def GetSymplecticTanIntegrator(method='SymplecticGauss1'):
 
         descr = method.removeprefix("SymplecticGauss")
         n = int(descr)
-        Butcher_a_np, Butcher_b_np, Butcher_c_np, Butcher_beta_np = ComputeGaussButcherTables(n)
+        Butcher_a_np, Butcher_b_np, Butcher_c_np, Butcher_beta_np = ComputeGaussButcherTables_np(n)
 
         integrator = functools.partial(
             ImplicitSymplecticTanWithTableGaussSeidel_VX_cython,

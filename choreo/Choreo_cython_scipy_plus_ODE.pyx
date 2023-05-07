@@ -333,8 +333,8 @@ def ImplicitSymplecticWithTableGaussSeidel_VX_cython(
     cdef np.ndarray[double, ndim=2, mode="c"] K_fun = np.empty((nsteps,ndof),dtype=np.float64)
     cdef np.ndarray[double, ndim=2, mode="c"] K_gun = np.zeros((nsteps,ndof),dtype=np.float64) # zeros here to ensure correct first init.
 
-    cdef np.ndarray[double, ndim=2, mode="c"] dX = np.empty((nsteps,ndof),dtype=np.float64)
-    cdef np.ndarray[double, ndim=2, mode="c"] dV = np.empty((nsteps,ndof),dtype=np.float64) 
+    cdef np.ndarray[double, ndim=2, mode="c"] dX = np.zeros((nsteps,ndof),dtype=np.float64)
+    cdef np.ndarray[double, ndim=2, mode="c"] dV = np.zeros((nsteps,ndof),dtype=np.float64) 
     cdef np.ndarray[double, ndim=2, mode="c"] dX_prev = np.empty((nsteps,ndof),dtype=np.float64)
     cdef np.ndarray[double, ndim=2, mode="c"] dV_prev = np.empty((nsteps,ndof),dtype=np.float64) 
 
@@ -538,8 +538,8 @@ def ImplicitSymplecticTanWithTableGaussSeidel_VX_cython(
     cdef np.ndarray[double, ndim=2, mode="c"] K_fun = np.empty((nsteps,ndof),dtype=np.float64)
     cdef np.ndarray[double, ndim=2, mode="c"] K_gun = np.zeros((nsteps,ndof),dtype=np.float64) # zeros here to ensure correct first init.
 
-    cdef np.ndarray[double, ndim=2, mode="c"] dX = np.empty((nsteps,ndof),dtype=np.float64)
-    cdef np.ndarray[double, ndim=2, mode="c"] dV = np.empty((nsteps,ndof),dtype=np.float64) 
+    cdef np.ndarray[double, ndim=2, mode="c"] dX = np.zeros((nsteps,ndof),dtype=np.float64)
+    cdef np.ndarray[double, ndim=2, mode="c"] dV = np.zeros((nsteps,ndof),dtype=np.float64) 
     cdef np.ndarray[double, ndim=2, mode="c"] dX_prev = np.empty((nsteps,ndof),dtype=np.float64)
     cdef np.ndarray[double, ndim=2, mode="c"] dV_prev = np.empty((nsteps,ndof),dtype=np.float64) 
 
@@ -548,12 +548,13 @@ def ImplicitSymplecticTanWithTableGaussSeidel_VX_cython(
     cdef np.ndarray[double, ndim=3, mode="c"] grad_K_fun = np.empty((nsteps,ndof,grad_ndof),dtype=np.float64)
     cdef np.ndarray[double, ndim=3, mode="c"] grad_K_gun = np.zeros((nsteps,ndof,grad_ndof),dtype=np.float64) # zeros here to ensure correct first init.
 
-    cdef np.ndarray[double, ndim=3, mode="c"] grad_dX = np.empty((nsteps,ndof,grad_ndof),dtype=np.float64)
-    cdef np.ndarray[double, ndim=3, mode="c"] grad_dV = np.empty((nsteps,ndof,grad_ndof),dtype=np.float64) 
+    cdef np.ndarray[double, ndim=3, mode="c"] grad_dX = np.zeros((nsteps,ndof,grad_ndof),dtype=np.float64)
+    cdef np.ndarray[double, ndim=3, mode="c"] grad_dV = np.zeros((nsteps,ndof,grad_ndof),dtype=np.float64) 
     cdef np.ndarray[double, ndim=3, mode="c"] grad_dX_prev = np.empty((nsteps,ndof,grad_ndof),dtype=np.float64)
     cdef np.ndarray[double, ndim=3, mode="c"] grad_dV_prev = np.empty((nsteps,ndof,grad_ndof),dtype=np.float64) 
 
     cdef double eps_mul = eps * ndof * nsteps * dt
+    # cdef double eps_mul = eps * dt
     cdef double eps_mul2 = eps_mul * eps_mul
 
     cdef double grad_eps_mul = eps * ndof * grad_ndof * nsteps * dt
@@ -648,8 +649,8 @@ def ImplicitSymplecticTanWithTableGaussSeidel_VX_cython(
 
                 GoOnGS = (iGS < maxiter) and (dXV_err > eps_mul2)
 
-            # if (iGS >= maxiter):
-            #     print("Max iter exceeded")
+            if (iGS >= maxiter):
+                print("Max iter exceeded")
 
             tot_niter += iGS
 
@@ -738,8 +739,8 @@ def ImplicitSymplecticTanWithTableGaussSeidel_VX_cython(
 
                 GoOnGS = (iGS < maxiter) and (dXV_err > grad_eps_mul)
 
-            # if (iGS >= maxiter):
-            #     print("Max iter exceeded")
+            if (iGS >= maxiter):
+                print("Max iter exceeded")
 
             grad_tot_niter += iGS
 
