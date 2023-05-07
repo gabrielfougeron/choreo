@@ -204,10 +204,10 @@ def ExecName(the_name, input_folder, store_folder):
     # nint_ODE_mul = 64
     # nint_ODE_mul =  2**11
     # nint_ODE_mul =  2**7
-    nint_ODE_mul =  2**5
+    # nint_ODE_mul =  2**5
     # nint_ODE_mul =  2**3
     # nint_ODE_mul =  2**1
-    # nint_ODE_mul =  1
+    nint_ODE_mul =  1
 
     ndof = nbody*ActionSyst.geodim
 
@@ -238,6 +238,7 @@ def ExecName(the_name, input_folder, store_folder):
     # SymplecticMethod = 'SymplecticRuth4Rat'
 
     # SymplecticMethod = 'SymplecticGauss1'
+    # SymplecticMethod = 'SymplecticGauss2'
     # SymplecticMethod = 'SymplecticGauss2'
     # SymplecticMethod = 'SymplecticGauss5'
     SymplecticMethod = 'SymplecticGauss10'
@@ -286,10 +287,11 @@ def ExecName(the_name, input_folder, store_folder):
 
 
 
-    # eigvals,eigvects = scipy.linalg.eig(a=MonodromyMat)
+    eigvals,eigvects = scipy.linalg.eig(a=MonodromyMat)
+    print('Eigenvalues of the Monodromy matrix :')
     # print(eigvals)
     # print(eigvals.real)
-    # print(np.abs(eigvals))
+    print(np.abs(eigvals))
     # print(eigvects)
 
 

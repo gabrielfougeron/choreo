@@ -101,7 +101,7 @@ for iint in range(nint):
 # print(w)
 # print(z)
 
-Butcher_a_np, Butcher_b_np, Butcher_c_np = choreo.ComputeGaussButcherTables(n)
+Butcher_a_np, Butcher_b_np, Butcher_c_np = choreo.ComputeGaussButcherTables_np(n)
 
 
 print(choreo.a_table_Gauss_2 - Butcher_a_np)
@@ -118,6 +118,6 @@ imin = 2
 imax = 20
 for i in range(imin,imax+1):
     tbeg = time.perf_counter()
-    Butcher_a_np, Butcher_b_np, Butcher_c_np = choreo.ComputeGaussButcherTables(i)
+    Butcher_a_np, Butcher_b_np, Butcher_c_np = choreo.ComputeGaussButcherTables_np(i)
     tend = time.perf_counter()
     print(f'n = {i}, time = {tend-tbeg}')
