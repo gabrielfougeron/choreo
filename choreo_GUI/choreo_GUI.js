@@ -2297,7 +2297,7 @@ function MakeDirectoryTree_DefaultGallery(cur_directory,cur_treenode,click_callb
 
 }
 
-window.addEventListener('hashchange', () => {GetGalleryNodeFromURL(DefaultTree)})
+window.addEventListener('hashchange', () => {LoadGalleryNodeFromURL()})
 
 function GetGalleryNodeFromURL(GalleryTree) {
 
@@ -2349,6 +2349,36 @@ function GetGalleryNodeFromURL(GalleryTree) {
 
 }
 
+async function LoadGalleryNodeFromURL() {
+
+    var [UrlIsValid, CurrentNode] = GetGalleryNodeFromURL(DefaultTree)
+
+    if (UrlIsValid) {
+
+        CurrentNode.getListener("click")()
+
+        var DefaultGalleryContainer = document.getElementById('DefaultGalleryContainer')
+        var AllSelectedNodes = DefaultGalleryContainer.TreeView.getSelectedNodes()
+
+        for (var inod = 0 ; inod < AllSelectedNodes.length; inod++) {
+            AllSelectedNodes[inod].setSelected(false)
+        }
+
+        CurrentNode.setSelected(true)
+
+        PathToCurrentNode = new TreePath(DefaultGalleryContainer.TreeView.getRoot(), CurrentNode)
+        DefaultGalleryContainer.TreeView.expandPath(PathToCurrentNode)
+
+        DefaultGalleryContainer.TreeView.reload()
+
+    } else {
+
+        console.log("Invalid custom URL")
+
+    }
+
+}
+
 async function LoadDefaultGallery() {
 			
     var gallery_filename = "gallery_descriptor.json"
@@ -2380,6 +2410,8 @@ async function LoadDefaultGallery() {
     CurrentNode.setSelected(true)
 
     var DefaultTreeView = new TreeView(DefaultTree, "#DefaultGalleryContainer",{leaf_icon:" ",parent_icon:" ",show_root:false})
+    var DefaultGalleryContainer = document.getElementById('DefaultGalleryContainer')
+    DefaultGalleryContainer.TreeView = DefaultTreeView
 
     await CurrentNode.getListener("click")()
 
