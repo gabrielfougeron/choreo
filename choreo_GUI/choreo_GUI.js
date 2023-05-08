@@ -2512,8 +2512,11 @@ function UpdateURL(basepath){
 }
 
 function CopyCustomURLToClipboard() {
+// 
+//     console.log(window.location.origin )
+//     console.log(window.location.pathname)
 
-    navigator.clipboard.writeText(window.location.origin +'/#'+ SolName.replaceAll(" ", "~"))
+    navigator.clipboard.writeText(window.location.origin + window.location.pathname +'#'+ SolName.replaceAll(" ", "~"))
 
 }
 
