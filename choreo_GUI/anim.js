@@ -29,10 +29,12 @@ var FPS_limit = 120
 var Elapsed_Time_During_Animation = 0
 var n_valid_dt_animation = 0
 
+var real_period_estimation = 1.
+
 var Last_UpdateFPSDisplay = 0
 var UpdateFPSDisplay_freq = 5
 
-var n_color = 0;
+var n_color = 0
 var colorLookup_init = [
 	"#50ce4d", // Moderate Lime Green
 	"#ff7006", // Vivid Orange
@@ -99,8 +101,11 @@ var	TargetFast_LoadedList
 
 var trailColorLookup
 
-var displayCanvas
-var context
+var mainCanvas
+var mainContext
+
+var trailLayerCanvas
+var trailLayerContext
 
 var particleLayerCanvas
 var particleLayerContext
@@ -222,26 +227,29 @@ function canvasApp() {
 	var GlobalRot_angle = 0.;
 	var GlobalRot = [[1.,0.],[0.,1.]];
 
-	displayCanvas = document.getElementById("displayCanvas");
-	context = displayCanvas.getContext("2d");
-	context.lineCap = "round";
-	displayCanvas.addEventListener("FinalizeSetOrbitFromOutsideCanvas", FinalizeSetOrbitFromOutsideCanvasHandler, true);
-	displayCanvas.addEventListener("FinalizeAndPlayFromOutsideCanvas", FinalizeAndPlayFromOutsideCanvasHandler, true);
-	displayCanvas.addEventListener("StopAnimationFromOutsideCanvas", StopAnimationFromOutsideCanvasHandler, true);
-	displayCanvas.addEventListener("DisableAnimationFromOutsideCanvas", DisableAnimationFromOutsideCanvasHandler, true);
-	displayCanvas.addEventListener("EnableAnimationFromOutsideCanvas", EnableAnimationFromOutsideCanvasHandler, true);
-	displayCanvas.addEventListener("StartAnimationFromOutsideCanvas", StartAnimationFromOutsideCanvasHandler, true);
-	displayCanvas.addEventListener("RemakeParticlesFromOutsideCanvas", RemakeParticlesFromOutsideCanvasHandler, true);
-	displayCanvas.addEventListener("ChangeColorsFromOutsideCanvas", ChangeColorsFromOutsideCanvasHandler, true);
-	displayCanvas.addEventListener("DrawAllPathsFromOutsideCanvas", DrawAllPathsFromOutsideCanvasHandler, true);
-	displayCanvas.addEventListener("CompleteSetOrbitFromOutsideCanvas", CompleteSetOrbitFromOutsideCanvasHandler, true);
+	mainCanvas = document.getElementById("mainCanvas");
+	mainContext = mainCanvas.getContext("2d");
+
+	trailLayerCanvas = document.getElementById("trailLayerCanvas");
+	trailLayerContext = trailLayerCanvas.getContext("2d");
+	trailLayerContext.lineCap = "round";
+	trailLayerCanvas.addEventListener("FinalizeSetOrbitFromOutsideCanvas", FinalizeSetOrbitFromOutsideCanvasHandler, true);
+	trailLayerCanvas.addEventListener("FinalizeAndPlayFromOutsideCanvas", FinalizeAndPlayFromOutsideCanvasHandler, true);
+	trailLayerCanvas.addEventListener("StopAnimationFromOutsideCanvas", StopAnimationFromOutsideCanvasHandler, true);
+	trailLayerCanvas.addEventListener("DisableAnimationFromOutsideCanvas", DisableAnimationFromOutsideCanvasHandler, true);
+	trailLayerCanvas.addEventListener("EnableAnimationFromOutsideCanvas", EnableAnimationFromOutsideCanvasHandler, true);
+	trailLayerCanvas.addEventListener("StartAnimationFromOutsideCanvas", StartAnimationFromOutsideCanvasHandler, true);
+	trailLayerCanvas.addEventListener("RemakeParticlesFromOutsideCanvas", RemakeParticlesFromOutsideCanvasHandler, true);
+	trailLayerCanvas.addEventListener("ChangeColorsFromOutsideCanvas", ChangeColorsFromOutsideCanvasHandler, true);
+	trailLayerCanvas.addEventListener("DrawAllPathsFromOutsideCanvas", DrawAllPathsFromOutsideCanvasHandler, true);
+	trailLayerCanvas.addEventListener("CompleteSetOrbitFromOutsideCanvas", CompleteSetOrbitFromOutsideCanvasHandler, true);
 	
 	particleLayerCanvas = document.getElementById("particleLayerCanvas");
 	particleLayerContext = particleLayerCanvas.getContext("2d");
 	particleLayerCanvas.addEventListener("click", startStopButtonHandler, true);
 	
-	displayWidth = displayCanvas.width;
-	displayHeight = displayCanvas.height;	
+	displayWidth = trailLayerCanvas.width;
+	displayHeight = trailLayerCanvas.height;	
 
 	var Min_PartRelSize = 0.5;
 	var Max_PartRelSize = 70.;
@@ -538,7 +546,7 @@ function canvasApp() {
 
 			var delta_angle = (e.value - e.preValue)* 2* Math.PI / 360.;
 			
-			RotateCanvas(displayCanvas,context,delta_angle);
+			RotateCanvas(trailLayerCanvas,trailLayerContext,delta_angle);
 			
 			setParticlePositions(time);
 			setParticlePositions(time); // dirty hack
@@ -580,14 +588,14 @@ function canvasApp() {
 		if (trajectoriesOn) {
 			
 			//fade
-			context.fillStyle = fadeScreenColor
+			trailLayerContext.fillStyle = fadeScreenColor
 
 			
 			var nfade = Math.floor(LastFadeTime/FadeInvFrequency)
 			if (!DoTrailVanish) {nfade = 0}
 
 			for (var ifade=0; ifade<nfade; ifade++){
-				context.fillRect(0,0,displayWidth,displayHeight)
+				trailLayerContext.fillRect(0,0,displayWidth,displayHeight)
 			}
 
 			LastFadeTime = LastFadeTime + tInc - nfade*FadeInvFrequency
@@ -611,11 +619,15 @@ function canvasApp() {
 				drawPathPortion(Lasttime,tInc) 
 			}
 		}
+
+		mainContext.drawImage(trailLayerCanvas, 0, 0);
+		mainContext.drawImage(particleLayerCanvas, 0, 0);
+
 	}
 	
 	function clearScreen() {
-		context.fillStyle = bgColor;
-		context.fillRect(0,0,displayWidth,displayHeight);
+		trailLayerContext.fillStyle = bgColor;
+		trailLayerContext.fillRect(0,0,displayWidth,displayHeight);
 	}
 	
 	function clearParticleLayer() {
@@ -754,8 +766,8 @@ function canvasApp() {
 
 					ib = PlotInfo['Targets'][il][ilb];
 					p = particles[ib];
-					context.lineWidth = p.PartRelSize * base_trailWidth ;
-					context.strokeStyle = p.trailColor;
+					trailLayerContext.lineWidth = p.PartRelSize * base_trailWidth ;
+					trailLayerContext.strokeStyle = p.trailColor;
 
 					// Super ugly
 					xl = Pos.data[  2*il    * n_pos] ;
@@ -767,8 +779,8 @@ function canvasApp() {
 					Pixx = xPixRate*(x - xMin) ;
 					Pixy = yPixRate*(y - yMax) ;
 
-					context.beginPath();
-					context.moveTo(Pixx, Pixy);
+					trailLayerContext.beginPath();
+					trailLayerContext.moveTo(Pixx, Pixy);
 
 					for (i_pos = 1 ; i_pos < n_pos ; i_pos++){
 
@@ -782,7 +794,7 @@ function canvasApp() {
 						Pixx = xPixRate*(x - xMin) ;
 						Pixy = yPixRate*(y - yMax) ;
 
-						context.lineTo(Pixx, Pixy);
+						trailLayerContext.lineTo(Pixx, Pixy);
 
 					}
 
@@ -796,8 +808,8 @@ function canvasApp() {
 					Pixx = xPixRate*(x - xMin) ;
 					Pixy = yPixRate*(y - yMax) ;
 
-					context.lineTo(Pixx, Pixy);
-					context.stroke();
+					trailLayerContext.lineTo(Pixx, Pixy);
+					trailLayerContext.stroke();
 
 				}
 
@@ -835,8 +847,8 @@ function canvasApp() {
 
 					ib = PlotInfo['Targets'][il][ilb];
 					p = particles[ib];
-					context.lineWidth = p.PartRelSize * base_trailWidth ;
-					context.strokeStyle = FallbackTrailColor;
+					trailLayerContext.lineWidth = p.PartRelSize * base_trailWidth ;
+					trailLayerContext.strokeStyle = FallbackTrailColor;
 
 					// Super ugly
 					xl = Pos.data[  2*il    * n_pos] ;
@@ -848,8 +860,8 @@ function canvasApp() {
 					Pixx = xPixRate*(x - xMin) ;
 					Pixy = yPixRate*(y - yMax) ;
 
-					context.beginPath();
-					context.moveTo(Pixx, Pixy);
+					trailLayerContext.beginPath();
+					trailLayerContext.moveTo(Pixx, Pixy);
 
 					for (i_pos = 1 ; i_pos < n_pos ; i_pos++){
 
@@ -863,7 +875,7 @@ function canvasApp() {
 						Pixx = xPixRate*(x - xMin) ;
 						Pixy = yPixRate*(y - yMax) ;
 
-						context.lineTo(Pixx, Pixy);
+						trailLayerContext.lineTo(Pixx, Pixy);
 
 					}
 
@@ -877,8 +889,8 @@ function canvasApp() {
 					Pixx = xPixRate*(x - xMin) ;
 					Pixy = yPixRate*(y - yMax) ;
 
-					context.lineTo(Pixx, Pixy);
-					context.stroke();
+					trailLayerContext.lineTo(Pixx, Pixy);
+					trailLayerContext.stroke();
 
 				}
 
@@ -943,12 +955,12 @@ function canvasApp() {
 
 				ib = PlotInfo['Targets'][il][ilb]
 				p = particles[ib]
-				context.strokeStyle = p.trailColor
-				context.lineWidth = p.PartRelSize * base_trailWidth 
+				trailLayerContext.strokeStyle = p.trailColor
+				trailLayerContext.lineWidth = p.PartRelSize * base_trailWidth 
 				lastPixX = xPixRate*(p.lastX - xMin)
 				lastPixY = yPixRate*(p.lastY - yMax)
-				context.beginPath()
-				context.moveTo(lastPixX,lastPixY)
+				trailLayerContext.beginPath()
+				trailLayerContext.moveTo(lastPixX,lastPixY)
 
 				tb_beg = ( PlotInfo['TimeRevsUn'][il][ilb] * (lasttime - PlotInfo['TimeShiftNumUn'][il][ilb] / PlotInfo['TimeShiftDenUn'][il][ilb]) +1)
 				ip_beg = (Math.floor(tb_beg*n_pos)+1)
@@ -975,7 +987,7 @@ function canvasApp() {
 					PixX = xPixRate*(xrot_glob - xMin)
 					PixY = yPixRate*(yrot_glob - yMax)
 
-					context.lineTo(PixX, PixY)
+					trailLayerContext.lineTo(PixX, PixY)
 					
 					lastPixX = PixX
 					lastPixY = PixY
@@ -985,8 +997,8 @@ function canvasApp() {
 				PixX = xPixRate*(p.x - xMin);
 				PixY = yPixRate*(p.y - yMax);
 
-				context.lineTo(PixX, PixY)
-				context.stroke()
+				trailLayerContext.lineTo(PixX, PixY)
+				trailLayerContext.stroke()
 
 
 			}
@@ -1108,6 +1120,8 @@ function canvasApp() {
 		var distance_rel = Max_PathLength / distance_ref
 
 		tInc = 1/(Time_One_Period*FPS_estimation * distance_rel) 
+
+		real_period_estimation = Time_One_Period * distance_rel
 
 		var speedTxt_val = Math.round(100*Math.pow(slider_value,sliderpow));
 		speedTxt.innerHTML = "Speed: "+speedTxt_val.toString();
