@@ -54,6 +54,7 @@ def Find_Choreo(
     thumb_size,
     color,
     Save_Newton_Error,
+    Save_GradientAction_Error,
     Save_coeff_profile,
     gradtol_list,
     inner_maxiter_list,
@@ -117,7 +118,6 @@ def Find_Choreo(
     ActionSyst.SetBackend(parallel=ParallelBackend,TwoD=TwoDBackend,GradHessBackend=GradHessBackend)
 
     start_cvg_lvl = 0
-    # start_cvg_lvl = 2
     ActionSyst.current_cvg_lvl = start_cvg_lvl
 
     print('')
@@ -274,6 +274,9 @@ def Find_Choreo(
             
             if Save_Newton_Error :
                 ActionSyst.plot_Newton_Error(x0,filename_output+'_newton.png')
+
+            if Save_GradientAction_Error :
+                ActionSyst.plot_GradientAction_Error(x0,filename_output+'_gradaction.png')
 
             if Save_coeff_profile:
                 ActionSyst.plot_coeff_profile(x0,filename_output+'_coeff_profile.png')
@@ -544,6 +547,9 @@ def Find_Choreo(
 
                     if Save_Newton_Error :
                         ActionSyst.plot_Newton_Error(best_sol.x,filename_output+'_newton.png')
+
+                    if Save_GradientAction_Error :
+                        ActionSyst.plot_GradientAction_Error(best_sol.x,filename_output+'_gradaction.png')
 
                     if Save_coeff_profile:
                         ActionSyst.plot_coeff_profile(best_sol.x,filename_output+'_coeff_profile.png')
