@@ -89,7 +89,6 @@ var Target_Tree
 var Target_current_type
 var Target_current_id
 
-
 var TargetSlow_PlotInfo
 var TargetSlow_Pos
 var TargetSlow_Loaded = false
@@ -100,7 +99,13 @@ var	TargetFast_LoadedList
 
 var trailColorLookup
 
-FileSystemAccessSupported = ('showOpenFilePicker' in window)
+var displayCanvas
+var context
+
+var particleLayerCanvas
+var particleLayerContext
+
+var FileSystemAccessSupported = ('showOpenFilePicker' in window)
 
 function AjaxGet(foldername){ return $.ajax({ url: foldername})}
 
@@ -216,9 +221,9 @@ function canvasApp() {
 
 	var GlobalRot_angle = 0.;
 	var GlobalRot = [[1.,0.],[0.,1.]];
-	
-	var displayCanvas = document.getElementById("displayCanvas");
-	var context = displayCanvas.getContext("2d");
+
+	displayCanvas = document.getElementById("displayCanvas");
+	context = displayCanvas.getContext("2d");
 	context.lineCap = "round";
 	displayCanvas.addEventListener("FinalizeSetOrbitFromOutsideCanvas", FinalizeSetOrbitFromOutsideCanvasHandler, true);
 	displayCanvas.addEventListener("FinalizeAndPlayFromOutsideCanvas", FinalizeAndPlayFromOutsideCanvasHandler, true);
@@ -231,8 +236,8 @@ function canvasApp() {
 	displayCanvas.addEventListener("DrawAllPathsFromOutsideCanvas", DrawAllPathsFromOutsideCanvasHandler, true);
 	displayCanvas.addEventListener("CompleteSetOrbitFromOutsideCanvas", CompleteSetOrbitFromOutsideCanvasHandler, true);
 	
-	var particleLayerCanvas = document.getElementById("particleLayerCanvas");
-	var particleLayerContext = particleLayerCanvas.getContext("2d");
+	particleLayerCanvas = document.getElementById("particleLayerCanvas");
+	particleLayerContext = particleLayerCanvas.getContext("2d");
 	particleLayerCanvas.addEventListener("click", startStopButtonHandler, true);
 	
 	displayWidth = displayCanvas.width;
