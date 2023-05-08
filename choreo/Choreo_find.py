@@ -250,7 +250,6 @@ def Find_Choreo(
                         pass
 
             max_num_file = max_num_file + 1
-            n_find = max_num_file
 
             if (AddNumberToOutputName):   
 
@@ -298,7 +297,7 @@ def Find_Choreo(
 
         for i in range(n_callback_after_init_list):
             callback_after_init_list[i]()
-  
+
         f0 = ActionSyst.Compute_action_onlygrad(x0)
         best_sol = current_best(x0,f0)
 
@@ -585,7 +584,7 @@ def Find_Choreo(
                     i_optim_param += 1
                 
             print('')
-        
+
         print('')
 
     print('Done!')
