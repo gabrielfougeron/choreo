@@ -41,10 +41,10 @@ var DownloadTxtFile = (function () {
 
 async function Play_Loop_From_Python(args){
 
-	var displayCanvas = document.getElementById("displayCanvas")
+	var trailLayerCanvas = document.getElementById("trailLayerCanvas")
 
     var event = new Event('StopAnimationFromOutsideCanvas')
-    displayCanvas.dispatchEvent(event)
+    trailLayerCanvas.dispatchEvent(event)
 
     SolName = args.solname
     var txt = await args.JSON_data.text()
@@ -53,7 +53,7 @@ async function Play_Loop_From_Python(args){
     Pos = {"data":args.NPY_data,"shape":args.NPY_shape}
 
     var event = new Event('EnableAnimationFromOutsideCanvas')
-    displayCanvas.dispatchEvent(event)
+    trailLayerCanvas.dispatchEvent(event)
 
     if (document.getElementById('checkbox_DisplayLoopsDuringSearch').checked) {
 
@@ -69,7 +69,7 @@ async function Play_Loop_From_Python(args){
     event.ResetRot = args.ResetRot
     event.setTinc = false
 
-    displayCanvas.dispatchEvent(event)
+    trailLayerCanvas.dispatchEvent(event)
 
     SearchIsOnGoing = false
     var ChoreoExecuteBtn = document.getElementById("ChoreoExecuteBtn")
@@ -114,10 +114,10 @@ async function Play_Loop_From_Python(args){
 
 function Python_no_sol_found(args) {
 
-	var displayCanvas = document.getElementById("displayCanvas");
+	var trailLayerCanvas = document.getElementById("trailLayerCanvas");
 
     var event = new Event('EnableAnimationFromOutsideCanvas');
-    displayCanvas.dispatchEvent(event);
+    trailLayerCanvas.dispatchEvent(event);
 
     if (document.getElementById('checkbox_DisplayLoopsDuringSearch').checked) {
 
@@ -156,26 +156,26 @@ async function Set_PlotInfo_From_Python(args){
     UpdateNowPlayingAndShare(SearchOnGoing=true)
 
     var event = new Event('FinalizeSetOrbitFromOutsideCanvas')
-    displayCanvas.dispatchEvent(event)
+    trailLayerCanvas.dispatchEvent(event)
 
 }
 
 async function Plot_Loops_During_Optim_From_Python(args){
 
-	var displayCanvas = document.getElementById("displayCanvas");
+	var trailLayerCanvas = document.getElementById("trailLayerCanvas");
 
     Pos = {"data":args.NPY_data,"shape":args.NPY_shape};
 
     setPlotWindow(args.Current_PlotWindow);
 
     var send_event = new Event('DrawAllPathsFromOutsideCanvas');
-    displayCanvas.dispatchEvent(send_event);
+    trailLayerCanvas.dispatchEvent(send_event);
 
 }
 
 async function Python_Imports_Done(args){
 
-	var displayCanvas = document.getElementById("displayCanvas");
+	var trailLayerCanvas = document.getElementById("trailLayerCanvas");
 
     PythonPrint({txt:"&#10;All python packages imported&#10;"});
 
@@ -200,7 +200,7 @@ async function Python_Imports_Done(args){
     Python_State_Div.classList.add('w3-hover-pale-green');
 
     var event = new Event('EnableAnimationFromOutsideCanvas');
-    displayCanvas.dispatchEvent(event);
+    trailLayerCanvas.dispatchEvent(event);
 
 }
 
@@ -334,7 +334,7 @@ async function ChoreoExecuteClick() {
         ChoreoSearchNext.disabled = ""
         AskForNext[0] = 0
 
-        var displayCanvas = document.getElementById("displayCanvas")
+        var trailLayerCanvas = document.getElementById("trailLayerCanvas")
 
         PythonClearPrints()
 
@@ -353,10 +353,10 @@ async function ChoreoExecuteClick() {
             RotSlider.disable()
 
             var event = new Event('StopAnimationFromOutsideCanvas')
-            displayCanvas.dispatchEvent(event)
+            trailLayerCanvas.dispatchEvent(event)
 
             var event = new Event('DisableAnimationFromOutsideCanvas')
-            displayCanvas.dispatchEvent(event)
+            trailLayerCanvas.dispatchEvent(event)
 
             trajectoriesOn = false
 
@@ -686,7 +686,7 @@ async function LoadConfigFile(the_file) {
 
 function LoadConfigDict(ConfigDict) {
 
-    var displayCanvas = document.getElementById("displayCanvas")
+    var trailLayerCanvas = document.getElementById("trailLayerCanvas")
 
     var table = document.getElementById('table_body_loop')
     var ncols = table.rows[0].cells.length
@@ -786,7 +786,7 @@ function LoadConfigDict(ConfigDict) {
     
     ExportColors()
     var send_event = new Event('ChangeColorsFromOutsideCanvas')
-    displayCanvas.dispatchEvent(send_event)
+    trailLayerCanvas.dispatchEvent(send_event)
 
     document.getElementById('checkbox_Limit_FPS').checked = ConfigDict['Animation_Framerate']['checkbox_Limit_FPS'] 
     document.getElementById('input_Limit_FPS').value = ConfigDict['Animation_Framerate'] ['input_Limit_FPS'] 
@@ -870,7 +870,7 @@ function OpenCloseLeftTab() {
     if (AllLeftTabs[0].classList.contains("open")) {CloseLeftTab();} else {OpenLeftTab();}
 }
 
-canvas_items_list= ["canvasContainer","displayCanvas","particleLayerCanvas"]
+canvas_items_list= ["canvasContainer","trailLayerCanvas","particleLayerCanvas"]
 
 function CloseLeftTab() {
     var i;
@@ -1280,13 +1280,13 @@ function ClickRemoveColor() {
 
     if (n_color > 1) {
 
-        var displayCanvas = document.getElementById("displayCanvas")
+        var trailLayerCanvas = document.getElementById("trailLayerCanvas")
 
         RemoveColor()
         ExportColors()
 
         var send_event = new Event('ChangeColorsFromOutsideCanvas')
-        displayCanvas.dispatchEvent(send_event)
+        trailLayerCanvas.dispatchEvent(send_event)
 
     }
 
@@ -1313,13 +1313,13 @@ function RemoveColor() {
   
 function ClickAddColor() {
 
-    var displayCanvas = document.getElementById("displayCanvas")
+    var trailLayerCanvas = document.getElementById("trailLayerCanvas")
 
     AddColor()
     ExportColors()
 
     var send_event = new Event('ChangeColorsFromOutsideCanvas')
-    displayCanvas.dispatchEvent(send_event)
+    trailLayerCanvas.dispatchEvent(send_event)
 }
 
 function AddColor(the_color) {
@@ -1391,7 +1391,7 @@ function onChangeColor(){
     
     ExportColors()
     var send_event = new Event('ChangeColorsFromOutsideCanvas')
-    displayCanvas.dispatchEvent(send_event)
+    trailLayerCanvas.dispatchEvent(send_event)
 
 }
 
@@ -1417,16 +1417,16 @@ color_method_input.addEventListener("input", color_method_input_Handler, true);
 
 function color_method_input_Handler(event) {
 
-    var displayCanvas = document.getElementById("displayCanvas");
+    var trailLayerCanvas = document.getElementById("trailLayerCanvas");
 
     var send_event = new Event('ChangeColorsFromOutsideCanvas');
-    displayCanvas.dispatchEvent(send_event);
+    trailLayerCanvas.dispatchEvent(send_event);
 
 }
 
 function ChangeColor_Handler(event) {
 
-    var displayCanvas = document.getElementById("displayCanvas");
+    var trailLayerCanvas = document.getElementById("trailLayerCanvas");
 
     var targetid = event.path[0].targetid;
     var color = event.path[0].value;
@@ -1434,7 +1434,7 @@ function ChangeColor_Handler(event) {
     colorLookup[targetid] = color;
     
     var send_event = new Event('ChangeColorsFromOutsideCanvas');
-    displayCanvas.dispatchEvent(send_event);
+    trailLayerCanvas.dispatchEvent(send_event);
 
 }
 
@@ -1568,12 +1568,12 @@ function SlideTrailTime(event) {
 
 function checkbox_Mass_Scale_Handler(event) {
 
-    var displayCanvas = document.getElementById("displayCanvas")
+    var trailLayerCanvas = document.getElementById("trailLayerCanvas")
 
     DoScaleSizeWithMass = event.currentTarget.checked
     
     var event = new Event('RemakeParticlesFromOutsideCanvas')
-    displayCanvas.dispatchEvent(event)
+    trailLayerCanvas.dispatchEvent(event)
 
 }
 
@@ -1609,13 +1609,13 @@ function checkbox_Limit_FPS_Handler(event) {
 
 }
 
-var checkbox_Cookie = document.getElementById('checkbox_Cookie');
-checkbox_Cookie.addEventListener("change", checkbox_Cookie_Handler, true);
+var checkbox_Cookie = document.getElementById('checkbox_Cookie')
+checkbox_Cookie.addEventListener("change", checkbox_Cookie_Handler, true)
 
-var Save_Cookie_Btn = document.getElementById('Save_Cookie_Btn');
-var Load_Cookie_Btn = document.getElementById('Load_Cookie_Btn');
+var Save_Cookie_Btn = document.getElementById('Save_Cookie_Btn')
+var Load_Cookie_Btn = document.getElementById('Load_Cookie_Btn')
 
-var Cookie_Message = document.getElementById('Cookie_Message');
+var Cookie_Message = document.getElementById('Cookie_Message')
 
 var cookie_name = "choreo_GUI"
 
@@ -1623,37 +1623,36 @@ function checkbox_Cookie_Handler(event) {
 
     if (event.currentTarget.checked) {
 
-        Save_Cookie_Btn.disabled = "";
-        Load_Cookie_Btn.disabled = "";
+        Save_Cookie_Btn.disabled = ""
+        Load_Cookie_Btn.disabled = ""
 
     } else {
 
-        Save_Cookie_Btn.disabled = "disabled";
-        Load_Cookie_Btn.disabled = "disabled";
+        Save_Cookie_Btn.disabled = "disabled"
+        Load_Cookie_Btn.disabled = "disabled"
 
-        txt = LoadCookie(cookie_name);
+        txt = LoadCookie(cookie_name)
 
         if (txt == "") {
 
-            IssueCookieMessage("There are no cookies on your device.");
+            IssueMessage(Cookie_Message,"There are no cookies on your device.",3000)
 
         } else {
 
-            DeleteCookie(cookie_name);
-            IssueCookieMessage("Cookie deleted !");
+            DeleteCookie(cookie_name)
+            IssueMessage(Cookie_Message,"Cookie deleted !",3000)
 
         }
     }
 
 }
 
-async function IssueCookieMessage(message,keep_up) {
+async function IssueMessage(HTMLdiv,message,duration) {
 
-    Cookie_Message.innerHTML = message;
+    HTMLdiv.innerHTML = message;
 
-    if (keep_up !== undefined) {
-    } else {
-        setTimeout(function(){IssueCookieMessage("",true)}, 3000);
+    if (duration > 0 ) {
+        setTimeout(function(){IssueMessage(HTMLdiv,"",-1)}, duration);
     }
 
 }
@@ -1667,16 +1666,16 @@ function SaveCookieClick(event) {
 
     SaveCookie(cookie_name, cookie_value, cookie_lifetime)
 
-    IssueCookieMessage("Cookie saved !")
+    IssueMessage(Cookie_Message,"Cookie saved !",3000)
 }
 
 function LoadCookieClick(event) {
 
     success = DealWithCookie()
     if (success) {
-        IssueCookieMessage("Cookie loaded !")
+        IssueMessage(Cookie_Message,"Cookie loaded !",3000)
     } else {
-        IssueCookieMessage("Cookie not found !")
+        IssueMessage(Cookie_Message,"Cookie not found !",3000)
     }
 
 }
@@ -2021,11 +2020,11 @@ async function PlayFileFromDisk(name,npy_file,json_file) {
 
     if (!SearchIsOnGoing) {
 
-        var displayCanvas = document.getElementById("displayCanvas")
+        var trailLayerCanvas = document.getElementById("trailLayerCanvas")
         var wasrunning = running
         if (running) {
             var event = new Event('StopAnimationFromOutsideCanvas')
-            displayCanvas.dispatchEvent(event)
+            trailLayerCanvas.dispatchEvent(event)
         }
 
         SolName = name
@@ -2044,11 +2043,11 @@ async function PlayFileFromDisk(name,npy_file,json_file) {
         Max_PathLength = PlotInfo["Max_PathLength"]
         
         var event = new Event("CompleteSetOrbitFromOutsideCanvas")
-        displayCanvas.dispatchEvent(event)
+        trailLayerCanvas.dispatchEvent(event)
         
         if (wasrunning) {
             var event = new Event('StartAnimationFromOutsideCanvas')
-            displayCanvas.dispatchEvent(event)
+            trailLayerCanvas.dispatchEvent(event)
         }
 
     }
@@ -2084,12 +2083,12 @@ async function PlayFileFromRemote(name,npy_file,json_file) {
 
     if (!SearchIsOnGoing) {
 
-        var displayCanvas = document.getElementById("displayCanvas")
+        var trailLayerCanvas = document.getElementById("trailLayerCanvas")
         var wasrunning = running
 
         if (running) {
             var event = new Event('StopAnimationFromOutsideCanvas')
-            displayCanvas.dispatchEvent(event)
+            trailLayerCanvas.dispatchEvent(event)
         }
 
         npyjs_obj = new npyjs()
@@ -2117,11 +2116,11 @@ async function PlayFileFromRemote(name,npy_file,json_file) {
         Max_PathLength = PlotInfo["Max_PathLength"]
 
         var event = new Event("CompleteSetOrbitFromOutsideCanvas")
-        displayCanvas.dispatchEvent(event)
+        trailLayerCanvas.dispatchEvent(event)
 
         if (wasrunning) {
             var event = new Event('StartAnimationFromOutsideCanvas')
-            displayCanvas.dispatchEvent(event)
+            trailLayerCanvas.dispatchEvent(event)
         }
 
     }
@@ -2557,20 +2556,47 @@ function CopyCustomURLToClipboard() {
 
 }
 
-function DownloadGIF() {
 
-    var encoder = new GIFEncoder()
-    encoder.start()
-    encoder.addFrame(context)
-    // encoder.addFrame(particleLayerContext)
-    // encoder.addFrames([context,particleLayerContext])
+function startRecording(Duration) {
+    const chunks = [] // here we will store our recorded media chunks (Blobs)
+    const stream = mainCanvas.captureStream() // grab our canvas MediaStream
+    const rec = new MediaRecorder(stream) // init the recorder
+    // every time the recorder has new data, we will store it in our array
+    rec.ondataavailable = e => chunks.push(e.data)
+    // only when the recorder stops, we construct a complete Blob from all the chunks
+    rec.onstop = e => exportVid(new Blob(chunks, {type: 'video/webm'}))
+    rec.start()
+    setTimeout(()=>rec.stop(), Duration) // stop recording after appropriate duration
+  }
 
-    encoder.finish();
-    encoder.download("download.gif");
+function exportVid(blob) {
+    const vid = document.createElement('video')
+    vid.src = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    document.getElementById('VideoMessage')
+    path_list = document.getElementById('NP_name').innerHTML.split('/')
+    videoname = path_list[path_list.length-1]
+    a.download = videoname+'.webm'
+    a.href = vid.src
+    a.click()
+  }
 
+function DownloadVideo() {
 
+    CanRecord = ((! SearchIsOnGoing) && (running))
 
-
-
+    if (CanRecord) {
+        var record_time = Math.round(real_period_estimation)
+        IssueMessage(VideoMessage,"Recording in progress. Expected time : "+record_time.toString()+" s",1000*real_period_estimation)
+        startRecording(1000*real_period_estimation)
+    } else {
+        VideoMessage = document.getElementById('VideoMessage')
+        if (! running) {
+            IssueMessage(VideoMessage,"Animation is not running",3000)
+        }
+    }
+    
 }
+
+
 
