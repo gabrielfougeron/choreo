@@ -191,8 +191,24 @@ window.addEventListener("drop",function(e){
   </div>
   <div class="w3-container MainTab Play_Share" style="display:none">
     <h2>Share Current Solution</h2>
-    <button class="w3-bar-item w3-button w3-hover-pale-red" id="CopyCustomURL_btn" style="text-align: center" onclick="CopyCustomURLToClipboard()">Copy custom URL to clipboard</button>
-    <button class="w3-bar-item w3-button w3-hover-pale-red" id="CopyCustomURL_btn" style="text-align: center" onclick="DownloadGIF()">Download GIF</button>
+    <div style = "max-width:600px; ">
+      <table style="font-size:16px; border:none; display:table">
+        <tr>
+          <td style="border:none;" >
+            <button class="w3-bar-item w3-button w3-hover-pale-red" id="CopyCustomURL_btn" style="text-align: center" onclick="CopyCustomURLToClipboard()">Copy custom URL to clipboard</button>
+          </td>
+          <td style="border:none; max-width:400px; " id="NP_name"></td>
+        </tr>
+        <tr>
+          <td style="border:none;" >
+            <button class="w3-bar-item w3-button w3-hover-pale-red" id="CopyCustomURL_btn" style="text-align: center" onclick="DownloadGIF()">Download GIF</button>
+          </td>
+          <td style="border:none; max-width:400px; " id="NP_name"></td>
+        </tr>
+      </table>
+    </div>
+    <!-- <button class="w3-bar-item w3-button w3-hover-pale-red" id="CopyCustomURL_btn" style="text-align: center" onclick="CopyCustomURLToClipboard()">Copy custom URL to clipboard</button>
+    <button class="w3-bar-item w3-button w3-hover-pale-red" id="CopyCustomURL_btn" style="text-align: center" onclick="DownloadGIF()">Download GIF</button> -->
   </div>
   <div class="w3-container MainTab Play_Gallery" style="display:none">
     <h2>Gallery</h2>
