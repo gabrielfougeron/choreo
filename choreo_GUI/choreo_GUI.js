@@ -2552,11 +2552,16 @@ function UpdateURL(basepath){
 }
 
 function CopyCustomURLToClipboard() {
-// 
-//     console.log(window.location.origin )
-//     console.log(window.location.pathname)
 
     navigator.clipboard.writeText(window.location.origin + window.location.pathname +'#'+ SolName.replaceAll(" ", "~"))
+
+}
+
+function DownloadGIF() {
+
+    var encoder = new GIFEncoder()
+    encoder.start()
+    encoder.addFrame(context)
 
 }
 
