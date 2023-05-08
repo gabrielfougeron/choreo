@@ -32,14 +32,6 @@
 <script src="assets/js/jquery.ui.touch-punch.min.js">//makes ui elements touch enabled</script>
 <script src="assets/js/roundslider.min.js">// Enables rotation slider</script>
 
-<!-- GIF Related -->
-
-<script type="text/javascript" src="assets/js/LZWEncoder.js"></script>
-<script type="text/javascript" src="assets/js/NeuQuant.js"></script>
-<script type="text/javascript" src="assets/js/GIFEncoder.js"></script>
-<script type="text/javascript" src="assets/js/b64.js"></script>
-
-
 <!-- Setting up Worker -->
 <script>
 pyodide_worker = new Worker("./Pyodide_worker.js");
@@ -119,10 +111,11 @@ window.addEventListener("drop",function(e){
   <div id="AnimationAndControlBlock"  style="margin-bottom:-20px">
     <div id="AnimationBlock">
       <div id="canvasContainer" >
-        <canvas id="displayCanvas" width="480px" height="480px" style="position: absolute; z-index: 1;">
+        <canvas id="mainCanvas" width="480px" height="480px" style="position: absolute; z-index: 1;">
             Your browser does not support HTML5 canvas.
         </canvas>
-        <canvas id="particleLayerCanvas" width="480px" height="480px" style="position: absolute; z-index: 2;"></canvas>
+        <canvas id="trailLayerCanvas" width="480px" height="480px" style="position: absolute; z-index: 2;"></canvas>
+        <canvas id="particleLayerCanvas" width="480px" height="480px" style="position: absolute; z-index: 3;"></canvas>
       </div>
     </div>
     <div id="PlayCommands" position="absolute">
@@ -201,9 +194,9 @@ window.addEventListener("drop",function(e){
         </tr>
         <tr>
           <td style="border:none;" >
-            <button class="w3-bar-item w3-button w3-hover-pale-red" id="CopyCustomURL_btn" style="text-align: center" onclick="DownloadGIF()">Download GIF</button>
+            <button class="w3-bar-item w3-button w3-hover-pale-red" id="CopyCustomURL_btn" style="text-align: center" onclick="DownloadVideo()">Download Video</button>
           </td>
-          <td style="border:none; max-width:400px; " id="NP_name"></td>
+          <td style="border:none; max-width:400px; " id="VideoMessage"></td>
         </tr>
       </table>
     </div>
