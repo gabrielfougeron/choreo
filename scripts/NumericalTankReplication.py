@@ -56,6 +56,9 @@ Save_All_Coeffs_No_Sym = False
 Save_Newton_Error = True
 # Save_Newton_Error = False
 
+Save_GradientAction_Error = True
+# Save_GradientAction_Error = False
+
 Save_img = True
 # Save_img = False
 
@@ -272,9 +275,9 @@ w = np.zeros((2*ndof,2*ndof),dtype=np.float64)
 w[0:ndof,ndof:2*ndof] = np.identity(ndof)
 w[ndof:2*ndof,0:ndof] = -np.identity(ndof)
 
-for n_NT_init in [0]:
+# for n_NT_init in [0]:
 # for n_NT_init in [4]:
-# for n_NT_init in range(len(all_NT_init)):
+for n_NT_init in range(len(all_NT_init)):
 # for n_NT_init in range(4,len(all_NT_init)):
 
 
@@ -410,9 +413,9 @@ for n_NT_init in [0]:
         jac_options = {'method':krylov_method_T,'rdiff':None,'inner_tol':0,'inner_M':None }
 
         if (Use_exact_Jacobian_T):
-
-            FGrad = lambda x,dx : ActionSyst.Compute_action_hess_mul(x,dx)
-            jacobian = choreo.ExactKrylovJacobian(exactgrad=FGrad,**jac_options)
+            pass
+#             FGrad = lambda x,dx : ActionSyst.Compute_action_hess_mul(x,dx)
+#             jacobian = choreo.ExactKrylovJacobian(exactgrad=FGrad,**jac_options)
 
         else: 
             jacobian = scipy.optimize.nonlin.KrylovJacobian(**jac_options)

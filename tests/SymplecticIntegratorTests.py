@@ -24,10 +24,10 @@ import datetime
 One_sec = 1e9
 
 test_names = [
-# "y'' = -y",
+"y'' = -y",
 # "y'' = - exp(y)",
 # "y'' = xy",
-"y' = Az; z' = By",
+# "y' = Az; z' = By",
 ]
 
 
@@ -146,9 +146,9 @@ for the_test in test_names:
         # print(x0)
         # print(v0)
 
-        # refinement_lvl = [1,2,4,8,16,32,64,128,256,512,1024,2048]
+        refinement_lvl = [1,2,4,8,16,32,64,128,256,512,1024,2048]
         # refinement_lvl = [1,10,100]
-        refinement_lvl = list(range(1,11))
+        # refinement_lvl = list(range(1,11))
         # refinement_lvl = list(range(1,101))
 
         for iref in range(len(refinement_lvl)):
