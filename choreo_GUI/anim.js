@@ -1,4 +1,5 @@
 // var Gallery_cache_behavior = {cache: "no-cache"}
+
 var Gallery_cache_behavior = {}
 
 var DefaultGallery_description
@@ -78,6 +79,9 @@ var	colorLookup = colorLookup_init
 var AllPosFilenames = []
 var AllPlotInfoFilenames = []
 var AllGalleryNames = []
+
+var DefaultTree
+var WorkspaceTree
 
 var DefaultTree_Target
 var Target_Tree
