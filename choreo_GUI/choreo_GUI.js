@@ -49,7 +49,7 @@ async function Play_Loop_From_Python(args){
     SolName = args.solname
     var txt = await args.JSON_data.text()
     PlotInfo = JSON.parse(txt)
-    UpdateNowPlaying()
+    UpdateNowPlayingAndShare()
     Pos = {"data":args.NPY_data,"shape":args.NPY_shape}
 
     var event = new Event('EnableAnimationFromOutsideCanvas')
@@ -153,7 +153,7 @@ async function Set_PlotInfo_From_Python(args){
     var txt = await args.JSON_data.text()
     SolName = "Search in progress"
     PlotInfo = JSON.parse(txt)
-    UpdateNowPlaying(SearchOnGoing=true)
+    UpdateNowPlayingAndShare(SearchOnGoing=true)
 
     var event = new Event('FinalizeSetOrbitFromOutsideCanvas')
     displayCanvas.dispatchEvent(event)
@@ -2035,7 +2035,7 @@ async function PlayFileFromDisk(name,npy_file,json_file) {
 
         const PlotInfoFile = await json_file.getFile()
         PlotInfo = JSON.parse(await readFileAsText(PlotInfoFile))
-        UpdateNowPlaying()
+        UpdateNowPlayingAndShare()
 
         let npyjs_obj = new npyjs()
         const PosFile = await npy_file.getFile()
@@ -2113,7 +2113,7 @@ async function PlayFileFromRemote(name,npy_file,json_file) {
 
         await Promise.all([finished_npy ,finished_json ])
 
-        UpdateNowPlaying()
+        UpdateNowPlayingAndShare()
         Max_PathLength = PlotInfo["Max_PathLength"]
 
         var event = new Event("CompleteSetOrbitFromOutsideCanvas")
@@ -2427,7 +2427,7 @@ async function LoadDefaultGallery() {
 
 function FormatMasses(the_mass){ return parseFloat(the_mass.toPrecision(3)).toString() }
 
-function UpdateNowPlaying(SearchOnGoing=false) {
+function UpdateNowPlayingAndShare(SearchOnGoing=false) {
 
     var NP_name = document.getElementById("NP_name")
     var NP_nbody = document.getElementById("NP_nbody")
@@ -2447,6 +2447,14 @@ function UpdateNowPlaying(SearchOnGoing=false) {
     NP_nbody.innerHTML = PlotInfo["nbody"].toString()
     NP_nloop.innerHTML = nloop.toString()
     NP_mass.innerHTML = loop_mass
+
+    var CopyCustomURL_btn = document.getElementById("CopyCustomURL_btn")
+    
+    if (SolName.startsWith("Gallery/")) {
+        CopyCustomURL_btn.disabled = ""
+    } else {
+        CopyCustomURL_btn.disabled = "disabled"
+    }
 
     if (SearchOnGoing) {
 
