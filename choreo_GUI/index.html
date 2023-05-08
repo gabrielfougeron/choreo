@@ -84,6 +84,7 @@ window.addEventListener("drop",function(e){
     </div>
     <div class="w3-bar w3-light-grey TopTab Play">
       <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Play_NowPlaying" onclick="ClickTopTabBtn('Play_NowPlaying')"   >Now Playing</button>
+      <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Play_Share" onclick="ClickTopTabBtn('Play_Share')"   >Share</button>
       <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Play_Gallery"    onclick="ClickTopTabBtn('Play_Gallery')"      >Gallery</button>
       <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Play_Workspace"  onclick="ClickTopTabBtn('Play_Workspace')"      >Workspace</button>
     </div>
@@ -179,6 +180,10 @@ window.addEventListener("drop",function(e){
         </tr>
       </table>
     </div>
+  </div>
+  <div class="w3-container MainTab Play_Share" style="display:none">
+    <h2>Share Current Solution</h2>
+    <button class="w3-bar-item w3-button w3-hover-pale-red" style="text-align: center" onclick="CopyCustomURLToClipboard()">Copy custom URL to clipboard</button>
   </div>
   <div class="w3-container MainTab Play_Gallery" style="display:none">
     <h2>Gallery</h2>

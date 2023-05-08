@@ -1965,7 +1965,7 @@ async function MakeDirectoryTree_Workspace(cur_directory,cur_treenode,click_call
 
 async function LoadWorkspaceGallery() {
 
-    var WorkspaceTree = new TreeNode(UserWorkspace.name,{expanded:true})
+    WorkspaceTree = new TreeNode(UserWorkspace.name,{expanded:true})
     WorkspaceTree.path_str = "Workspace/"
     await MakeDirectoryTree_Workspace(UserWorkspace,WorkspaceTree,PlayFileFromDisk)
 
@@ -2125,7 +2125,7 @@ async function PlayFileFromRemote(name,npy_file,json_file) {
         }
 
     }
-    
+
 }
 
 async function LoadTargetFileFromRemote(name,npy_file,json_file) {
@@ -2223,7 +2223,6 @@ function UpdateCurrentTarget(name,nfast) {
             div.id = "FastSolution_name"+i.toString()
             newcell.appendChild(div)
 
-
             var row = table.insertRow(2*i+1 + i_start_fast)
 
             var newcell = row.insertCell(0)
@@ -2281,6 +2280,7 @@ function MakeDirectoryTree_DefaultGallery(cur_directory,cur_treenode,click_callb
     for (const basename in cur_directory.files) {
 
         var new_node = new TreeNode(basename,{expanded:false})
+        new_node.path_str = cur_treenode.path_str + basename
 
         cur_treenode.addChild(new_node)
 
@@ -2297,6 +2297,58 @@ function MakeDirectoryTree_DefaultGallery(cur_directory,cur_treenode,click_callb
 
 }
 
+window.addEventListener('hashchange', () => {GetGalleryNodeFromURL(DefaultTree)})
+
+function GetGalleryNodeFromURL(GalleryTree) {
+
+    const URLPathList = window.location.hash.replace('#','').replaceAll('~',' ').split('/')
+
+    history.pushState("", document.title, window.location.pathname + window.location.search) // Removes hash from URL
+
+    if (URLPathList.length > 0) {
+        
+        var CurrentNode = GalleryTree
+        var CurrentPath = URLPathList[0]+'/'
+        var UrlIsValid = (CurrentNode.path_str == CurrentPath)
+
+        var n_links_followed = 1
+
+        while (UrlIsValid && (n_links_followed < URLPathList.length) ) {
+
+            CurrentPath = CurrentPath + URLPathList[n_links_followed]
+            if (n_links_followed < (URLPathList.length-1)) {
+                CurrentPath = CurrentPath + '/'
+            }
+
+            var all_Children = CurrentNode.getChildren()
+
+            i_child = 0
+            FoundChild = false
+            while( (! FoundChild) && (i_child < all_Children.length)) {
+
+                CurrentChild = all_Children[i_child]
+                
+                FoundChild = (CurrentChild.path_str == CurrentPath)
+                i_child += 1
+
+            }
+            
+            UrlIsValid = FoundChild
+            CurrentNode = CurrentChild
+
+            n_links_followed += 1
+
+        }
+
+    } else {
+        var UrlIsValid = false
+        var CurrentNode = false
+    }
+
+    return [UrlIsValid, CurrentNode]
+
+}
+
 async function LoadDefaultGallery() {
 			
     var gallery_filename = "gallery_descriptor.json"
@@ -2307,34 +2359,29 @@ async function LoadDefaultGallery() {
             DefaultGallery_description = JSON.parse(data);
         })
 
-
-    var DefaultTree = new TreeNode(DefaultGallery_description.name,{expanded:true})
+    DefaultTree = new TreeNode(DefaultGallery_description.name,{expanded:true})
     DefaultTree.path_str = "Gallery/"
     MakeDirectoryTree_DefaultGallery(DefaultGallery_description,DefaultTree,PlayFileFromRemote)
     
     // ReadURL
-    // console.log("url", window.location.href.split("#")[1])
-    // console.log("url", window.location.href)
-    UrlIsValid = false
+    var [UrlIsValid, CurrentNode] = GetGalleryNodeFromURL(DefaultTree)
 
-    if (UrlIsValid) { //  
-
-    } else {
-        var search_leaf = DefaultTree
-        while (!search_leaf.isLeaf()) { // Play the first sol in garllery
-            search_leaf.setExpanded(true)
-            search_leaf = search_leaf.getChildren()[0]
+    if (!UrlIsValid) {
+        var CurrentNode = DefaultTree
+        
+        while (!CurrentNode.isLeaf()) { // Play the first sol in gallery
+            CurrentNode.setExpanded(true)
+            CurrentNode = CurrentNode.getChildren()[0]
         }
-        search_leaf.setEnabled(true)
-        search_leaf.setSelected(true)
-    
-
-        var DefaultTreeView = new TreeView(DefaultTree, "#DefaultGalleryContainer",{leaf_icon:" ",parent_icon:" ",show_root:false})
-
-        await search_leaf.getListener("click")()
 
     }
 
+    CurrentNode.setEnabled(true)
+    CurrentNode.setSelected(true)
+
+    var DefaultTreeView = new TreeView(DefaultTree, "#DefaultGalleryContainer",{leaf_icon:" ",parent_icon:" ",show_root:false})
+
+    await CurrentNode.getListener("click")()
 
     DefaultTree_Target = new TreeNode("Gallery",{expanded:true})
     DefaultTree_Target.path_str = "Gallery/"
@@ -2460,6 +2507,13 @@ function checkbox_EnableTargets_Handler(event) {
 
 }
 
-// function UpdateURL(basepath){
-//     window.location.hash = basepath.replaceAll(" ", "~") // Espace insécable
-// }
+function UpdateURL(basepath){
+    window.location.hash = basepath.replaceAll(" ", "~") // Espace insécable
+}
+
+function CopyCustomURLToClipboard() {
+
+    navigator.clipboard.writeText(window.location.origin +'/#'+ SolName.replaceAll(" ", "~"))
+
+}
+
