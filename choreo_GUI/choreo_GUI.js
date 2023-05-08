@@ -2555,7 +2555,7 @@ function CopyCustomURLToClipboard() {
     navigator.clipboard.writeText(window.location.origin + window.location.pathname +'#'+ SolName.replaceAll(" ", "~"))
 
     const CopyURLMessage = document.getElementById('CopyURLMessage')
-    IssueMessage(CopyURLMessage,"Custom URL copied in clipboard",3000)
+    IssueMessage(CopyURLMessage,"Custom URL copied to clipboard",3000)
 
 }
 
