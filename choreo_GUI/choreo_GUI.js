@@ -2554,17 +2554,36 @@ function CopyCustomURLToClipboard() {
 
     navigator.clipboard.writeText(window.location.origin + window.location.pathname +'#'+ SolName.replaceAll(" ", "~"))
 
+    const CopyURLMessage = document.getElementById('CopyURLMessage')
+    IssueMessage(CopyURLMessage,"Custom URL copied in clipboard",3000)
+
 }
 
 
 function startRecording(Duration) {
     const chunks = [] // here we will store our recorded media chunks (Blobs)
     const stream = mainCanvas.captureStream() // grab our canvas MediaStream
-    const rec = new MediaRecorder(stream) // init the recorder
+    const video_potions = {
+        'audioBitsPerSecond' : 0,
+        'videoBitsPerSecond' : 1024*1024*8, // Increase default quality
+    }
+    const rec = new MediaRecorder(stream,video_potions) // init the recorder
+    // console.log(rec)
     // every time the recorder has new data, we will store it in our array
     rec.ondataavailable = e => chunks.push(e.data)
     // only when the recorder stops, we construct a complete Blob from all the chunks
-    rec.onstop = e => exportVid(new Blob(chunks, {type: 'video/webm'}))
+
+    // const export_options = { mimeType: 'video/webm;codecs=avc1,opus'};   //904KB
+    // const export_options = { mimeType: 'video/webm;codecs=h264,opus' };  //923KB
+    // const export_options = { mimeType: 'video/webm;codecs=vp9,opus' };   //1951KB
+    // const export_options = { mimeType: 'video/x-matroska;codecs=avc1' }; //917KB
+    // const export_options = { mimeType: 'video/webm;codecs=vp8,opus' };   //2687KB
+    // const export_options = { mimeType: 'video/webm;codecs=avc1' };       //917KB
+    const export_options = { mimeType: 'video/mp4;codecs=h265' };       //919KB
+    // const export_options = { mimeType: 'video/webm' };                   //906KB
+    // const export_options = { mimeType: '' };       
+
+    rec.onstop = e => exportVid(new Blob(chunks, export_options))
     rec.start()
     setTimeout(()=>rec.stop(), Duration) // stop recording after appropriate duration
   }
@@ -2576,7 +2595,7 @@ function exportVid(blob) {
     document.getElementById('VideoMessage')
     path_list = document.getElementById('NP_name').innerHTML.split('/')
     videoname = path_list[path_list.length-1]
-    a.download = videoname+'.webm'
+    a.download = videoname+'.mp4'
     a.href = vid.src
     a.click()
   }
@@ -2587,15 +2606,28 @@ function DownloadVideo() {
 
     if (CanRecord) {
         var record_time = Math.round(real_period_estimation)
-        IssueMessage(VideoMessage,"Recording in progress. Expected time : "+record_time.toString()+" s",1000*real_period_estimation)
+        IssueMessage(VideoMessage,"Recording in progress.<br>Expected time : "+record_time.toString()+" s",1000*real_period_estimation)
         startRecording(1000*real_period_estimation)
     } else {
-        VideoMessage = document.getElementById('VideoMessage')
+        const VideoMessage = document.getElementById('VideoMessage')
         if (! running) {
             IssueMessage(VideoMessage,"Animation is not running",3000)
         }
     }
     
+}
+
+function TweetVideo() {
+
+    http://twitter.com/share?text=text goes here&url=http://url goes here&hashtags=hashtag1,hashtag2,hashtag3
+
+    tweet_url = 'http://twitter.com/share'
+    tweet_url = tweet_url + '?text=Toto'
+    tweet_url = tweet_url + '&url=https://gabrielfougeron.github.io/choreo/'
+    tweet_url = tweet_url + '&hashtags=choreo_GUI'
+
+    window.open(tweet_url, "_blank")
+
 }
 
 
