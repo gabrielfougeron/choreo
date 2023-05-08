@@ -20,10 +20,16 @@ import pyodide
 def Send_init_PlotInfo():
 
     file_basename = ''
-
     max_num_file = 0
-    
+
+    store_folder = '/Workspace/GUI solutions'
+
+    if not(os.path.isdir(store_folder)):
+
+        store_folder = 'Sniff_all_sym/'
+
     for filename in os.listdir(store_folder):
+
         file_path = os.path.join(store_folder, filename)
         file_root, file_ext = os.path.splitext(os.path.basename(file_path))
         
@@ -37,12 +43,11 @@ def Send_init_PlotInfo():
                 pass
 
     max_num_file = max_num_file + 1
+    n_find = max_num_file
 
     file_basename = file_basename+str(max_num_file).zfill(5)
 
-    filename_output = os.path.join(store_folder,file_basename+'_init_'+str(max_num_file).zfill(5))
-
-    filename = filename_output+".json"
+    filename = os.path.join(store_folder,file_basename+'_init.json')
 
     if os.path.isfile(filename):
 
@@ -241,6 +246,9 @@ async def main():
 
     # Save_thumb = True
     Save_thumb = False
+
+    # Save_coeff_profile = True
+    Save_coeff_profile = False
 
     # img_size = (12,12) # Image size in inches
     img_size = (8,8) # Image size in inches

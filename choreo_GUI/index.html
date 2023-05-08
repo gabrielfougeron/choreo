@@ -17,7 +17,6 @@
 <link rel="stylesheet" href="./assets/css/treejs.css" id="treejs_styles">
 <link rel="stylesheet" href="./assets/css/choreo_GUI.css">
 
-
 <script src="assets/js/npy.js"></script>
 <script src="assets/js/tree.js"></script>
 <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3.0.1/es5/tex-mml-chtml.js"></script>
@@ -31,6 +30,10 @@
 <script src="assets/js/ultbuttons1.1.min.js">//fixes an issue with unresponsive button clicks</script>
 <script src="assets/js/jquery.ui.touch-punch.min.js">//makes ui elements touch enabled</script>
 <script src="assets/js/roundslider.min.js">// Enables rotation slider</script>
+
+<!-- Sharing related
+<script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+ -->
 
 <!-- Setting up Worker -->
 <script>
@@ -190,7 +193,7 @@ window.addEventListener("drop",function(e){
           <td style="border:none;" >
             <button class="w3-bar-item w3-button w3-hover-pale-red" id="CopyCustomURL_btn" style="text-align: center" onclick="CopyCustomURLToClipboard()">Copy custom URL to clipboard</button>
           </td>
-          <td style="border:none; max-width:400px; " id="NP_name"></td>
+          <td style="border:none; max-width:400px; " id="CopyURLMessage"></td>
         </tr>
         <tr>
           <td style="border:none;" >
@@ -198,10 +201,14 @@ window.addEventListener("drop",function(e){
           </td>
           <td style="border:none; max-width:400px; " id="VideoMessage"></td>
         </tr>
+        <!-- <tr>
+          <td style="border:none;" >
+            <button class="w3-bar-item w3-button w3-hover-pale-red" id="CopyCustomURL_btn" style="text-align: center" onclick="TweetVideo()">Tweet Video</button>
+          </td>
+          <td style="border:none; max-width:400px; " id="TweetVideoMessage"></td>
+        </tr> -->
       </table>
     </div>
-    <!-- <button class="w3-bar-item w3-button w3-hover-pale-red" id="CopyCustomURL_btn" style="text-align: center" onclick="CopyCustomURLToClipboard()">Copy custom URL to clipboard</button>
-    <button class="w3-bar-item w3-button w3-hover-pale-red" id="CopyCustomURL_btn" style="text-align: center" onclick="DownloadGIF()">Download GIF</button> -->
   </div>
   <div class="w3-container MainTab Play_Gallery" style="display:none">
     <h2>Gallery</h2>
@@ -216,13 +223,6 @@ window.addEventListener("drop",function(e){
       Click "Setup Workspace" to save solutions to your disk, browse previously computed solutions and use the (much faster) <a href="https://github.com/gabrielfougeron/choreo"><b>CLI python solver</b></a>.
     </div>
   </div>
-  <!-- <div class="w3-container MainTab Geom_Bodies Geom_Target Geom_Random Geom_Custom" style="display:none; text-align: justify;">
-    <table style="border:0;margin-bottom:10px;">
-      <tr>
-        <td style="border:0"><button id="ChoreoDispInitStateBtn"  class="w3-button w3-hover-pale-red w3-light-grey InTableControls" disabled="disabled" onclick="GenerateInitStateClick()">Generate init state</button></td>
-      </tr>
-    </table>
-  </div> -->
   <div class="w3-container MainTab Geom_Bodies" style="display:none; text-align: justify;">
     <h2>Bodies definition</h2>
     <table id = "table_body_loop" style="table-layout: fixed;">
