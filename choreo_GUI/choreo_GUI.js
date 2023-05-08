@@ -2562,6 +2562,15 @@ function DownloadGIF() {
     var encoder = new GIFEncoder()
     encoder.start()
     encoder.addFrame(context)
+    // encoder.addFrame(particleLayerContext)
+    // encoder.addFrames([context,particleLayerContext])
+
+    encoder.finish();
+    encoder.download("download.gif");
+
+
+
+
 
 }
 

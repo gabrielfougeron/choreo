@@ -140,6 +140,9 @@ GIFEncoder = function() {
 
 		try {
 			if (!is_imageData) {
+
+				console.log(im.getImageData(0, 0, im.canvas.width, im.canvas.height))
+
 				image = im.getImageData(0, 0, im.canvas.width, im.canvas.height).data;
 				if (!sizeSet) setSize(im.canvas.width, im.canvas.height);
 			} else {
@@ -183,6 +186,85 @@ GIFEncoder = function() {
 			writePixels(); // encode and write pixel data
 			firstFrame = false;
 		} catch (e) {
+			ok = false;
+		}
+
+		return ok;
+	};
+	
+	var addFrames = exports.addFrames = function addFrames(im_list, is_imageData) {
+		
+		if ((im_list === null) || !started || out === null) {
+			throw new Error("Please call start method before calling addFrames");
+		}
+
+		var ok = true;
+
+		try {
+			if (!is_imageData) {
+
+// 				var img = new Image();
+// 
+// 				var imageData = im.getImageData(0, 0, im.canvas.width, im.canvas.height).data
+// 				console.log(image)
+// 
+// 				if (!sizeSet) setSize(im.canvas.width, im.canvas.height);
+// 				for (var i_im = ; i_im < im_list.length; i_im++) {
+// 
+// 					im = im_list[i_im]
+// 					im_data = im.getImageData(0, 0, im.canvas.width, im.canvas.height).data;
+// 
+// 				}
+// 
+// 				img.src = imageData;
+// 
+// 				im = im_list[0]
+// 
+
+
+			} else {
+				throw new Error("Unsupported feature");
+				// if(im instanceof ImageData) {
+				// 	image = im.data;
+				// 	if(!sizeset || width!=im.width || height!=im.height) {
+				// 		setSize(im.width,im.height);
+				// 	} else {
+				// 		
+				// 	}
+				// } else if(im instanceof Uint8ClampedArray) {
+				// 	if(im.length==(width*height*4)) {
+				// 		image=im;
+				// 	} else {
+				// 		console.log("Please set the correct size: ImageData length mismatch");
+				// 		ok=false;
+				// 	}
+				// } else {
+				// 	console.log("Please provide correct input");
+				// 	ok=false;
+				// }
+			}
+			getImagePixels(); // convert to correct format if necessary
+			analyzePixels(); // build color table & map pixels
+
+			if (firstFrame) {
+				writeLSD(); // logical screen descriptior
+				writePalette(); // global color table
+				if (repeat >= 0) {
+					// use NS app extension to indicate reps
+					writeNetscapeExt();
+				}
+			}
+
+			writeGraphicCtrlExt(); // write graphic control extension
+			if (comment !== '') {
+				writeCommentExt(); // write comment extension
+			}
+			writeImageDesc(); // image descriptor
+			if (!firstFrame) writePalette(); // local color table
+			writePixels(); // encode and write pixel data
+			firstFrame = false;
+		} catch (e) {
+			throw e
 			ok = false;
 		}
 
