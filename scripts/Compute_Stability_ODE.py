@@ -51,21 +51,21 @@ def main():
 # 
 # # # 
 #     ''' Include all files in folder '''
-    input_names_list = []
-    for file_path in os.listdir(input_folder):
-        file_path = os.path.join(input_folder, file_path)
-        file_root, file_ext = os.path.splitext(os.path.basename(file_path))
-        
-        if (file_ext == '.json' ):
-            # 
-            # if int(file_root) > 8:
-            #     input_names_list.append(file_root)
-
-            input_names_list.append(file_root)
+#     input_names_list = []
+#     for file_path in os.listdir(input_folder):
+#         file_path = os.path.join(input_folder, file_path)
+#         file_root, file_ext = os.path.splitext(os.path.basename(file_path))
+#         
+#         if (file_ext == '.json' ):
+#             # 
+#             # if int(file_root) > 8:
+#             #     input_names_list.append(file_root)
+# 
+#             input_names_list.append(file_root)
 
     # input_names_list = ['01 - Figure eight']
     # input_names_list = ['14 - Small mass gap']
-    # input_names_list = ['04 - 5 pointed star']
+    input_names_list = ['03 - Trefoil']
 
 
     store_folder = os.path.join(__PROJECT_ROOT__,'Reconverged_sols')
@@ -202,9 +202,9 @@ def ExecName(the_name, input_folder, store_folder):
     # nint_ODE_mul =  2**11
     # nint_ODE_mul =  2**7
     # nint_ODE_mul =  2**5
-    nint_ODE_mul =  2**3
+    # nint_ODE_mul =  2**3
     # nint_ODE_mul =  2**1
-    # nint_ODE_mul =  1
+    nint_ODE_mul =  1
 
     ndof = nbody*ActionSyst.geodim
 
@@ -235,7 +235,6 @@ def ExecName(the_name, input_folder, store_folder):
     # SymplecticMethod = 'SymplecticRuth4Rat'
 
     # SymplecticMethod = 'SymplecticGauss1'
-    # SymplecticMethod = 'SymplecticGauss2'
     # SymplecticMethod = 'SymplecticGauss2'
     # SymplecticMethod = 'SymplecticGauss5'
     SymplecticMethod = 'SymplecticGauss10'
