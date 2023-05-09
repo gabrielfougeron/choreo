@@ -2297,6 +2297,7 @@ function MakeDirectoryTree_DefaultGallery(cur_directory,cur_treenode,click_callb
 }
 
 window.addEventListener('hashchange', () => {LoadGalleryNodeFromURL()})
+window.addEventListener('onhashchange', () => {LoadGalleryNodeFromURL()})
 
 function GetGalleryNodeFromURL(GalleryTree) {
 
@@ -2304,7 +2305,10 @@ function GetGalleryNodeFromURL(GalleryTree) {
 
     try {
         history.pushState("", document.title, window.location.pathname + window.location.search) // Removes hash from URL
-    } catch(e) {  }
+    } catch(e) { 
+        console.log(e)
+        console.log("Failed to reset URL")
+    }
 
     if (URLPathList.length > 0) {
         
