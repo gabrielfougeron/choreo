@@ -362,7 +362,7 @@ def Find_Choreo(
                 jacobian = ExactKrylovJacobian(exactgrad=FGrad,**jac_options)
 
             else: 
-                jacobian = scipy.optimize.nonlin.KrylovJacobian(**jac_options)
+                jacobian = scipy.optimize.KrylovJacobian(**jac_options)
 
 
             def optim_callback(x,f,f_norm):

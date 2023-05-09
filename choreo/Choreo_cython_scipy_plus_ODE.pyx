@@ -20,6 +20,7 @@ from libc.math cimport sqrt as csqrt
 from libc.math cimport isnan as cisnan
 from libc.math cimport isinf as cisinf
 
+@cython.cdivision(True)
 def IntegrateOnSegment(
     object fun,
     long ndim,
@@ -60,8 +61,6 @@ def IntegrateOnSegment(
         f_int[idim] = f_int[idim] * dx
 
     return f_int
-
-
 
 @cython.cdivision(True)
 def ExplicitSymplecticWithTable_VX_cython(
@@ -312,7 +311,7 @@ def ExplicitSymplecticWithTable_XV_cython(
 # 
 #     return x,v
 
-
+@cython.cdivision(True)
 def ImplicitSymplecticWithTableGaussSeidel_VX_cython(
     object fun,
     object gun,
@@ -459,7 +458,6 @@ def ImplicitSymplecticWithTableGaussSeidel_VX_cython(
                         for kstep in range(1,nsteps):
                             dX[istep,jdof] += a_table_x[istep,kstep] * K_fun[kstep,jdof]
 
-
                 # dX => dV
                 for istep in range(nsteps):
 
@@ -525,10 +523,7 @@ def ImplicitSymplecticWithTableGaussSeidel_VX_cython(
 
     return x_keep, v_keep
 
-
-
-
-
+@cython.cdivision(True)
 def ImplicitSymplecticTanWithTableGaussSeidel_VX_cython(
     object fun,
     object gun,
@@ -614,7 +609,6 @@ def ImplicitSymplecticTanWithTableGaussSeidel_VX_cython(
     cdef np.ndarray[double, ndim=2, mode="c"] dX_prev = np.empty((nsteps,ndof),dtype=np.float64)
     cdef np.ndarray[double, ndim=2, mode="c"] dV_prev = np.empty((nsteps,ndof),dtype=np.float64) 
 
-
     cdef np.ndarray[double, ndim=2, mode="c"] grad_res
     cdef np.ndarray[double, ndim=3, mode="c"] grad_K_fun = np.empty((nsteps,ndof,grad_ndof),dtype=np.float64)
     cdef np.ndarray[double, ndim=3, mode="c"] grad_K_gun = np.empty((nsteps,ndof,grad_ndof),dtype=np.float64)
@@ -637,7 +631,6 @@ def ImplicitSymplecticTanWithTableGaussSeidel_VX_cython(
 
     for istep in range(nsteps):
         cdt_x[istep] = c_table_x[istep]*dt
-
 
     # First starting approximation using only one function evaluation
     tbeg = t_span[0]
@@ -877,8 +870,8 @@ def ImplicitSymplecticTanWithTableGaussSeidel_VX_cython(
             for kdof in range(grad_ndof):
                 grad_v_keep[iint_keep,jdof,kdof] = grad_v[jdof,kdof]
     
-    # print(tot_niter/nint)
-    # print(grad_tot_niter/nint)
+    # print('Avg nit fun & gun : ',tot_niter/nint)
+    # print('Avg nit grad fun & gun : ',grad_tot_niter/nint)
     # print(1+nsteps*tot_niter)
 
     return x_keep, v_keep, grad_x_keep, grad_v_keep

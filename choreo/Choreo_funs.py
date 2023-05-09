@@ -662,13 +662,14 @@ class ChoreoAction():
         def grad_gun(t,x,grad_x):
 
             ndof = self.nbody*self.geodim
+            nrhs = grad_x.shape[1]
 
             return Compute_JacMulMat_Forces_Cython(
                 x.reshape(self.nbody,self.geodim),
-                grad_x.reshape(self.nbody,self.geodim,2*ndof)   ,
+                grad_x.reshape(self.nbody,self.geodim,nrhs)   ,
                 self.mass   ,
                 self.nbody  ,
-            ).reshape(ndof,2*ndof)
+            ).reshape(ndof,nrhs)
 
         return grad_fun, grad_gun
 
@@ -1948,6 +1949,21 @@ def ComputeGradPeriodicityDefault(xv0,OnePeriodTanIntegrator):
     all_x, all_y, all_grad_x, all_grad_y = OnePeriodTanIntegrator(xv0[0:ndof].copy(), xv0[ndof:twondof].copy(), grad_x0, grad_v0)
 
     return np.ascontiguousarray(np.concatenate((all_x[-1,:],all_y[-1,:]),axis=0).reshape(twondof) - xv0) , np.ascontiguousarray(np.concatenate((all_grad_x[-1,:,:],all_grad_y[-1,:,:]),axis=0).reshape(twondof,twondof))
+
+
+def ComputeGradMulPeriodicityDefault(xv0,grad_xv0,OnePeriodTanIntegrator):
+
+    twondof = xv0.size
+    ndof = twondof // 2
+
+    all_x, all_y, all_grad_x, all_grad_y = OnePeriodTanIntegrator(
+        xv0[0:ndof].copy(),
+        xv0[ndof:twondof].copy(),
+        grad_xv0[0:ndof].copy().reshape(ndof,1),
+        grad_xv0[ndof:twondof].copy().reshape(ndof,1),
+    )
+    
+    return np.ascontiguousarray(np.concatenate((all_x[-1,:],all_y[-1,:]),axis=0).reshape(twondof) - xv0) , np.ascontiguousarray(np.concatenate((all_grad_x[-1,:,:],all_grad_y[-1,:,:]),axis=0).reshape(twondof))
 
 
 
