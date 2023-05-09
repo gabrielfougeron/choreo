@@ -16,6 +16,7 @@ from choreo.Choreo_cython_scipy_plus_ODE import ExplicitSymplecticWithTable_VX_c
 # from choreo.Choreo_cython_scipy_plus_ODE import SymplecticStormerVerlet_VX_cython
 from choreo.Choreo_cython_scipy_plus_ODE import ImplicitSymplecticWithTableGaussSeidel_VX_cython
 from choreo.Choreo_cython_scipy_plus_ODE import ImplicitSymplecticTanWithTableGaussSeidel_VX_cython
+from choreo.Choreo_cython_scipy_plus_ODE import IntegrateOnSegment
 
 
 
@@ -185,8 +186,6 @@ def EvalLagrange(a,b,n,z,x,phipz=None):
 
     return lag
 
-
-
 def ComputeButcher_psi(x,y,a,b,n,w=None,z=None,wint=None,zint=None,nint=None):
 
     if (w is None) or (z is None) :
@@ -298,7 +297,21 @@ def SymmetricAdjointButcher(Butcher_a, Butcher_b, Butcher_c, Butcher_beta, Butch
     return Butcher_a_ad, Butcher_b_ad, Butcher_c_ad, Butcher_beta_ad, Butcher_gamma_ad
 
 
+@functools.cache
+def ComputeQuadrature_np(method,n,dps=30):
 
+    if method == "Gauss" :
+        a, b = ShiftedGaussLegendre3Term(n)
+        
+    else:
+        raise ValueError(f"Method not found: {method}")
+    
+    w, z = QuadFrom3Term(a,b,n)
+
+    w_np = np.array(w.tolist(),dtype=np.float64).reshape(n)
+    z_np = np.array(z.tolist(),dtype=np.float64).reshape(n)
+    
+    return w_np, z_np
 
 
 @functools.cache
@@ -314,6 +327,8 @@ def ComputeGaussButcherTables_np(n,dps=30):
     Butcher_gamma_np = np.array(Butcher_gamma.tolist(),dtype=np.float64)
 
     return Butcher_a_np, Butcher_b_np, Butcher_c_np, Butcher_beta_np, Butcher_gamma_np
+
+
 
 
 

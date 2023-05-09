@@ -20,6 +20,49 @@ from libc.math cimport sqrt as csqrt
 from libc.math cimport isnan as cisnan
 from libc.math cimport isinf as cisinf
 
+def IntegrateOnSegment(
+    object fun,
+    long ndim,
+    (double, double) x_span,
+    long nint,
+    np.ndarray[double, ndim=1, mode="c"] w,
+    np.ndarray[double, ndim=1, mode="c"] x,
+    long nsteps,
+):
+
+    cdef long iint,istep,idim
+    cdef double xbeg, dx
+    cdef double xi
+    cdef np.ndarray[double, ndim=1, mode="c"] cdx = np.empty((nsteps),dtype=np.float64)
+    cdef np.ndarray[double, ndim=1, mode="c"] res
+    cdef np.ndarray[double, ndim=1, mode="c"] f_int = np.zeros((ndim),dtype=np.float64)
+
+    dx = (x_span[1] - x_span[0]) / nint
+
+    for istep in range(nsteps):
+        cdx[istep] = x[istep] * dx
+
+    for iint in range(nint):
+
+        xbeg = x_span[0] + iint * dx
+
+        for istep in range(nsteps):
+
+            xi = xbeg + cdx[istep]
+            res = fun(xi)
+
+            for idim in range(ndim):
+
+                f_int[idim] = f_int[idim] + w[istep] * res[idim]
+
+    for idim in range(ndim):
+
+        f_int[idim] = f_int[idim] * dx
+
+    return f_int
+
+
+
 @cython.cdivision(True)
 def ExplicitSymplecticWithTable_VX_cython(
     object fun,
@@ -127,7 +170,6 @@ def ExplicitSymplecticWithTable_XV_cython(
 
     cdef np.ndarray[double, ndim=1, mode="c"] x = x0.copy()
     cdef np.ndarray[double, ndim=1, mode="c"] v = v0.copy()
-
 
     cdef np.ndarray[double, ndim=1, mode="c"] res
 
@@ -478,7 +520,7 @@ def ImplicitSymplecticWithTableGaussSeidel_VX_cython(
         for jdof in range(ndof):
             v_keep[iint_keep,jdof] = v[jdof]
     
-    print(tot_niter / nint)
+    # print(tot_niter / nint)
     # print(1+nsteps*tot_niter)
 
     return x_keep, v_keep
