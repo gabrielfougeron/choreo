@@ -185,9 +185,12 @@ def EvalLagrange(a,b,n,z,x,phipz=None):
 
     return lag
 
-def ComputeButcher_a(a,b,n,w=None,z=None,wint=None,zint=None,nint=None):
+
+
+def ComputeButcher_psi(x,y,a,b,n,w=None,z=None,wint=None,zint=None,nint=None):
 
     if (w is None) or (z is None) :
+        assert (w is None) and (z is None)
         w, z = QuadFrom3Term(a,b,n)
 
     if (nint is None) or (wint is None) or (zint is None):
@@ -197,63 +200,120 @@ def ComputeButcher_a(a,b,n,w=None,z=None,wint=None,zint=None,nint=None):
         aint, bint = ShiftedGaussLegendre3Term(nint)
         wint, zint = QuadFrom3Term(aint,bint,nint)
 
-    Butcher_a = mpmath.matrix(n)
+    Butcher_psi = mpmath.matrix(n)
 
     for iint in range(nint):
 
         for i in range(n):
 
-            lag = EvalLagrange(a,b,n,z,z[i]*zint[iint])
+            tint = x[i] + (y[i]-x[i]) * zint[iint]
+
+            lag = EvalLagrange(a,b,n,z,tint)
 
             for j in range(n):
 
-                Butcher_a[i,j] = Butcher_a[i,j] + wint[iint] * lag[j]
+                Butcher_psi[i,j] = Butcher_psi[i,j] + wint[iint] * lag[j]
 
     for i in range(n):
         for j in range(n):
 
-            Butcher_a[i,j] = z[i] * Butcher_a[i,j]
+            Butcher_psi[i,j] = (y[i]-x[i]) * Butcher_psi[i,j]
 
-    Butcher_beta = mpmath.matrix(n)
+    return Butcher_psi
 
-    for iint in range(nint):
+def ComputeButcher_a(a,b,n,w=None,z=None,wint=None,zint=None,nint=None):
 
-        for i in range(n):
+    if (w is None) or (z is None) :
+        assert (w is None) and (z is None)
+        w, z = QuadFrom3Term(a,b,n)
 
-            lag = EvalLagrange(a,b,n,z,1+z[i]*zint[iint])
+    x = mpmath.matrix(n,1)
+    return ComputeButcher_psi(x,z,a,b,n,w,z,wint,zint,nint)
 
-            for j in range(n):
+def ComputeButcher_beta_gamma(a,b,n,w=None,z=None,wint=None,zint=None,nint=None):
 
-                Butcher_beta[i,j] = Butcher_beta[i,j] + wint[iint] * lag[j]
+    if (w is None) or (z is None) :
+        w, z = QuadFrom3Term(a,b,n)
+
+    x = mpmath.matrix(n,1)
+    y = mpmath.matrix(n,1)
 
     for i in range(n):
-        for j in range(n):
+        x[i] = 1
+        y[i] = 1 + z[i]
 
-            Butcher_beta[i,j] = z[i] * Butcher_beta[i,j]
+    Butcher_beta = ComputeButcher_psi(x,y,a,b,n,w,z,wint,zint,nint)
 
-    return Butcher_a, Butcher_beta
+    for i in range(n):
+        x[i] = -1 + z[i]
+        y[i] = 0
+
+    Butcher_gamma = ComputeButcher_psi(x,y,a,b,n,w,z,wint,zint,nint)
+
+    return Butcher_beta, Butcher_gamma
 
 def ComputeGaussButcherTables(n):
 
     a, b = ShiftedGaussLegendre3Term(n)
     w, z = QuadFrom3Term(a,b,n)
 
-    Butcher_a, Butcher_beta = ComputeButcher_a(a,b,n,w,z)
+    nint = SafeGLIntOrder(n)
+    aint, bint = ShiftedGaussLegendre3Term(nint)
+    wint, zint = QuadFrom3Term(aint,bint,nint)
 
-    return Butcher_a, w, z, Butcher_beta
+    Butcher_a = ComputeButcher_a(a,b,n,w,z,wint,zint,nint)
+    Butcher_beta, Butcher_gamma = ComputeButcher_beta_gamma(a,b,n,w,z,wint,zint,nint)
+
+    return Butcher_a, w, z, Butcher_beta, Butcher_gamma
+
+def SymmetricAdjointQuadrature(w,z,n):
+
+    w_ad = mpmath.matrix(n,1)
+    z_ad = mpmath.matrix(n,1)
+
+    for i in range(n):
+
+        z_ad[i] = 1 - z[n-1-i]
+        w_ad[i] = w[n-1-i]
+
+    return w_ad, z_ad
+
+
+def SymmetricAdjointButcher(Butcher_a, Butcher_b, Butcher_c, Butcher_beta, Butcher_gamma, n):
+
+    Butcher_b_ad, Butcher_c_ad = SymmetricAdjointQuadrature(Butcher_b,Butcher_c,n)
+
+    Butcher_a_ad = mpmath.matrix(n)
+    Butcher_beta_ad = mpmath.matrix(n)
+    Butcher_gamma_ad = mpmath.matrix(n)
+
+    for i in range(n):
+        for j in range(n):
+            
+            Butcher_a_ad[i,j] = Butcher_b[n-1-j] - Butcher_a[n-1-i,n-1-j]
+
+            Butcher_beta_ad[i,j]  = Butcher_gamma[n-1-i,n-1-j]
+            Butcher_gamma_ad[i,j] = Butcher_beta[n-1-i,n-1-j]
+
+    return Butcher_a_ad, Butcher_b_ad, Butcher_c_ad, Butcher_beta_ad, Butcher_gamma_ad
+
+
+
+
 
 @functools.cache
 def ComputeGaussButcherTables_np(n,dps=30):
 
     mpmath.mp.dps = dps
-    Butcher_a, Butcher_b, Butcher_c, Butcher_beta = ComputeGaussButcherTables(n)
+    Butcher_a, Butcher_b, Butcher_c, Butcher_beta, Butcher_gamma = ComputeGaussButcherTables(n)
 
     Butcher_a_np = np.array(Butcher_a.tolist(),dtype=np.float64)
     Butcher_b_np = np.array(Butcher_b.tolist(),dtype=np.float64).reshape(n)
     Butcher_c_np = np.array(Butcher_c.tolist(),dtype=np.float64).reshape(n)
     Butcher_beta_np = np.array(Butcher_beta.tolist(),dtype=np.float64)
+    Butcher_gamma_np = np.array(Butcher_gamma.tolist(),dtype=np.float64)
 
-    return Butcher_a_np, Butcher_b_np, Butcher_c_np, Butcher_beta_np
+    return Butcher_a_np, Butcher_b_np, Butcher_c_np, Butcher_beta_np, Butcher_gamma_np
 
 
 
@@ -300,14 +360,18 @@ def GetSymplecticIntegrator(method='SymplecticRuth3'):
 
             descr = method.removeprefix("SymplecticGauss")
             n = int(descr)
-            Butcher_a_np, Butcher_b_np, Butcher_c_np, Butcher_beta_np = ComputeGaussButcherTables_np(n)
+            Butcher_a_np, Butcher_b_np, Butcher_c_np, Butcher_beta_np, _ = ComputeGaussButcherTables_np(n)
 
             integrator = functools.partial(
                 ImplicitSymplecticWithTableGaussSeidel_VX_cython,
-                a_table = Butcher_a_np,
-                b_table = Butcher_b_np,
-                c_table = Butcher_c_np,
-                beta_table = Butcher_beta_np,
+                a_table_x = Butcher_a_np,
+                b_table_x = Butcher_b_np,
+                c_table_x = Butcher_c_np,
+                beta_table_x = Butcher_beta_np,
+                a_table_v = Butcher_a_np,
+                b_table_v = Butcher_b_np,
+                c_table_v = Butcher_c_np,
+                beta_table_v = Butcher_beta_np,
                 nsteps = n,
                 eps = np.finfo(np.float64).eps,
                 maxiter = 500
@@ -324,14 +388,18 @@ def GetSymplecticTanIntegrator(method='SymplecticGauss1'):
 
         descr = method.removeprefix("SymplecticGauss")
         n = int(descr)
-        Butcher_a_np, Butcher_b_np, Butcher_c_np, Butcher_beta_np = ComputeGaussButcherTables_np(n)
+        Butcher_a_np, Butcher_b_np, Butcher_c_np, Butcher_beta_np, _ = ComputeGaussButcherTables_np(n)
 
         integrator = functools.partial(
             ImplicitSymplecticTanWithTableGaussSeidel_VX_cython,
-            a_table = Butcher_a_np,
-            b_table = Butcher_b_np,
-            c_table = Butcher_c_np,
-            beta_table = Butcher_beta_np,
+            a_table_x = Butcher_a_np,
+            b_table_x = Butcher_b_np,
+            c_table_x = Butcher_c_np,
+            beta_table_x = Butcher_beta_np,
+            a_table_v = Butcher_a_np,
+            b_table_v = Butcher_b_np,
+            c_table_v = Butcher_c_np,
+            beta_table_v = Butcher_beta_np,
             nsteps = n,
             eps = np.finfo(np.float64).eps,
             maxiter = 500
