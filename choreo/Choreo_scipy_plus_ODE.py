@@ -70,6 +70,8 @@ def SafeGLIntOrder(N):
 
     return n
 
+# 3 terms definition of polynomial families
+# P_n+1 = (X - a_n) P_n - b_n P_n-1
 def GaussLegendre3Term(n):
 
     a = mpmath.matrix(n,1)
@@ -277,7 +279,6 @@ def SymmetricAdjointQuadrature(w,z,n):
 
     return w_ad, z_ad
 
-
 def SymmetricAdjointButcher(Butcher_a, Butcher_b, Butcher_c, Butcher_beta, Butcher_gamma, n):
 
     Butcher_b_ad, Butcher_c_ad = SymmetricAdjointQuadrature(Butcher_b,Butcher_c,n)
@@ -296,7 +297,6 @@ def SymmetricAdjointButcher(Butcher_a, Butcher_b, Butcher_c, Butcher_beta, Butch
 
     return Butcher_a_ad, Butcher_b_ad, Butcher_c_ad, Butcher_beta_ad, Butcher_gamma_ad
 
-
 @functools.cache
 def ComputeQuadrature_np(method,n,dps=30):
 
@@ -312,7 +312,6 @@ def ComputeQuadrature_np(method,n,dps=30):
     z_np = np.array(z.tolist(),dtype=np.float64).reshape(n)
     
     return w_np, z_np
-
 
 @functools.cache
 def ComputeGaussButcherTables_np(n,dps=30):
