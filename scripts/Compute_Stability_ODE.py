@@ -65,7 +65,8 @@ def main():
 
     # input_names_list = ['01 - Figure eight']
     # input_names_list = ['14 - Small mass gap']
-    input_names_list = ['03 - Trefoil']
+    # input_names_list = ['03 - Trefoil']
+    input_names_list = ['04 - 5 pointed star']
 
 
     store_folder = os.path.join(__PROJECT_ROOT__,'Reconverged_sols')
@@ -194,18 +195,8 @@ def ExecName(the_name, input_folder, store_folder):
     print(f'Saved Newton Error : {Info_dict["Newton_Error"]}')
     print(f'Init Newton Error : {Newt_err_norm}')
 
-
     ncoeff = ActionSyst.ncoeff
     nint = ActionSyst.nint
-    
-    # nint_ODE_mul = 64
-    # nint_ODE_mul =  2**11
-    # nint_ODE_mul =  2**7
-    # nint_ODE_mul =  2**5
-    # nint_ODE_mul =  2**3
-    # nint_ODE_mul =  2**1
-    nint_ODE_mul =  1
-
     ndof = nbody*ActionSyst.geodim
 
     fun,gun = ActionSyst.GetSymplecticODEDef()
@@ -228,16 +219,20 @@ def ExecName(the_name, input_folder, store_folder):
     w[ndof:2*ndof,0:ndof] = -np.identity(ndof)
 
 
-
-    # SymplecticMethod = 'SymplecticEuler'
-    # SymplecticMethod = 'SymplecticStormerVerlet'
-    # SymplecticMethod = 'SymplecticRuth3'
-    # SymplecticMethod = 'SymplecticRuth4Rat'
+    
+    # nint_ODE_mul = 64
+    # nint_ODE_mul =  2**11
+    # nint_ODE_mul =  2**7
+    nint_ODE_mul =  2**5
+    # nint_ODE_mul =  2**3
+    # nint_ODE_mul =  2**1
+    # nint_ODE_mul =  1
 
     # SymplecticMethod = 'SymplecticGauss1'
-    # SymplecticMethod = 'SymplecticGauss2'
+    SymplecticMethod = 'SymplecticGauss2'
+    # SymplecticMethod = 'SymplecticGauss3'
     # SymplecticMethod = 'SymplecticGauss5'
-    SymplecticMethod = 'SymplecticGauss10'
+    # SymplecticMethod = 'SymplecticGauss10'
 
 
     SymplecticTanIntegrator = choreo.GetSymplecticTanIntegrator(SymplecticMethod)
@@ -278,21 +273,24 @@ def ExecName(the_name, input_folder, store_folder):
 
     MonodromyMat = np.ascontiguousarray(np.concatenate((grad_xf,grad_vf),axis=0).reshape(2*ndof,2*ndof))
 
+    # MonodromyMat = np.ascontiguousarray(MonodromyMat.T)
+
     # print(MonodromyMat)
 # 
     print('Symplecticity')
     print(np.linalg.norm(w - np.dot(MonodromyMat.transpose(),np.dot(w,MonodromyMat))))
+    # print((w - np.dot(MonodromyMat.transpose(),np.dot(w,MonodromyMat))))
 
 
 
 
     eigvals,eigvects = scipy.linalg.eig(a=MonodromyMat)
+    print('Max Eigenvalue of the Monodromy matrix :',np.abs(eigvals).max())
     # print('Eigenvalues of the Monodromy matrix :')
     # print(eigvals)
     # print(eigvals.real)
     # print(np.abs(eigvals))
     # print(eigvects)
-
 
 
     # print(MonodromyMatLog)
