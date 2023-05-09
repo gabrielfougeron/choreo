@@ -2304,7 +2304,7 @@ function GetGalleryNodeFromURL(GalleryTree) {
     const URLPathList = window.location.hash.replace('#','').replaceAll('~',' ').split('/')
 
     try {
-        history.pushState("", document.title, window.location.pathname + window.location.search) // Removes hash from URL
+        history.replaceState("", document.title, window.location.pathname + window.location.search) // Removes hash from URL
     } catch(e) { 
         console.log(e)
         console.log("Failed to reset URL")
