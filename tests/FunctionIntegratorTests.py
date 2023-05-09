@@ -24,7 +24,8 @@ import datetime
 One_sec = 1e9
 
 test_names = [
-    "exp",
+    # "exp",
+    "cos",
 ]
 
 
@@ -57,6 +58,15 @@ for the_test in test_names:
         fun = lambda x: np.array([m.exp(x)])
         Fun = lambda x: np.array([m.exp(x)])
 
+    if the_test == "cos" :
+        # WOLFRAM
+        # f(x) = cos(x)
+        # F(x) = sin(x)
+
+        test_ndim = 1
+
+        fun = lambda x: np.array([m.cos(x)])
+        Fun = lambda x: np.array([m.sin(x)])
 
 
     x_span = (0.,10.)

@@ -263,8 +263,8 @@ disp_scipy_opt = True
 # nint_ODE_mul =  2**7
 # nint_ODE_mul =  2**5
 # nint_ODE_mul =  2**3
-nint_ODE_mul =  2**1
-# nint_ODE_mul =  1
+# nint_ODE_mul =  2**1
+nint_ODE_mul =  1
 
 
 fun,gun = ActionSyst_small.GetSymplecticODEDef()
@@ -275,9 +275,9 @@ w = np.zeros((2*ndof,2*ndof),dtype=np.float64)
 w[0:ndof,ndof:2*ndof] = np.identity(ndof)
 w[ndof:2*ndof,0:ndof] = -np.identity(ndof)
 
-# for n_NT_init in [0]:
+for n_NT_init in [0]:
 # for n_NT_init in [4]:
-for n_NT_init in range(len(all_NT_init)):
+# for n_NT_init in range(len(all_NT_init)):
 # for n_NT_init in range(4,len(all_NT_init)):
 
 
@@ -377,7 +377,19 @@ for n_NT_init in range(len(all_NT_init)):
 
         loss = functools.partial(choreo.ComputePeriodicityDefault, OnePeriodIntegrator = OnePeriodIntegrator)
         grad_loss = functools.partial(choreo.ComputeGradPeriodicityDefault, OnePeriodTanIntegrator = OnePeriodTanIntegrator)
-        grad_only = lambda x : grad_loss(x)[1]
+        grad_loss_mul = functools.partial(choreo.ComputeGradMulPeriodicityDefault, OnePeriodTanIntegrator = OnePeriodTanIntegrator)
+        grad_only = lambda x : grad_loss(x)[1] - np.identity(2*ndof)
+        grad_only_mul = lambda x,v : grad_loss_mul(x,v)[1] - v
+
+
+
+
+
+
+
+
+
+
 
 
         vx0 = np.concatenate((x0,v0)).reshape(2*ndof)
@@ -393,6 +405,80 @@ for n_NT_init in range(len(all_NT_init)):
         if (period_err > 1e-5):
             continue
 
+
+
+
+
+
+
+
+        
+#         dxb = np.random.random(vx0.shape)
+#         # innz = 0
+#         # dxb = np.zeros(vx0.shape)
+#         # dxb[innz] = 1
+# 
+# 
+#         # tbeg = time.perf_counter()
+#         # all_pos, all_v = SymplecticIntegrator(fun,gun,t_span,x0,v0,nint*nint_ODE_mul,nint_ODE_mul)
+#         # tend = time.perf_counter()
+#         # print(f'Integration time: {tend-tbeg}')
+# 
+#         tbeg = time.perf_counter()
+#         exgrad = grad_only_mul(vx0,dxb)
+#         tend = time.perf_counter()
+#         # print(f'1 dir time: {tend-tbeg}')
+# 
+#         tbeg = time.perf_counter()
+#         gradmat = grad_only(vx0)
+#         tend = time.perf_counter()
+#         # print(f'Full Mat time: {tend-tbeg}')
+# 
+#         eigvals,eigvects = scipy.linalg.eig(a=gradmat)
+#         print('Max Eigenvalue of the Monodromy matrix :',np.abs(eigvals).max())
+# 
+#         exgrad_mat = np.dot(gradmat,dxb)
+# 
+#         print(np.linalg.norm(exgrad - exgrad_mat))
+# 
+#         # print(exgrad)
+# 
+#         # exponent_eps_list = range(16)
+#         exponent_eps_list = [8]
+# 
+#         for exponent_eps in exponent_eps_list:
+#             
+#             eps = 10**(-exponent_eps)
+# 
+#             xp = np.copy(vx0) + eps*dxb
+#             fp = loss(xp)
+#             
+#             xm = np.copy(vx0)
+#             fm = loss(xm)
+# 
+#             df_difffin = (fp-fm)/(eps)
+#             
+#             # print(df_difffin)
+#             
+#             print('')
+#             print('eps : ',eps)
+#             err_vect = df_difffin - exgrad
+#             # print('DF : ',np.linalg.norm(df_difffin))
+#             # print('EX : ',np.linalg.norm(exgrad))
+# 
+#             Abs_diff = np.linalg.norm(err_vect)
+#             print('Abs_diff : ',Abs_diff)
+#             Rel_diff = np.linalg.norm(err_vect)/(np.linalg.norm(df_difffin)+np.linalg.norm(exgrad))
+#             print('Rel_diff : ',Rel_diff)
+# 
+# 
+#         exit()
+
+
+
+
+
+
         # line_search = 'armijo'
         # line_search = 'wolfe'
         line_search = None
@@ -403,8 +489,10 @@ for n_NT_init in range(len(all_NT_init)):
         # Use_exact_Jacobian_T = True
         Use_exact_Jacobian_T = False
 
-        krylov_method_T = 'lgmres'
-        # krylov_method_T = 'gmres'
+        maxiter_period_opt = 30 
+
+        # krylov_method_T = 'lgmres'
+        krylov_method_T = 'gmres'
         # krylov_method_T = 'bicgstab'
         # krylov_method_T = 'cgs'
         # krylov_method_T = 'minres'
@@ -413,26 +501,28 @@ for n_NT_init in range(len(all_NT_init)):
         jac_options = {'method':krylov_method_T,'rdiff':None,'inner_tol':0,'inner_M':None }
 
         if (Use_exact_Jacobian_T):
-            pass
-#             FGrad = lambda x,dx : ActionSyst.Compute_action_hess_mul(x,dx)
-#             jacobian = choreo.ExactKrylovJacobian(exactgrad=FGrad,**jac_options)
+            jacobian = choreo.ExactKrylovJacobian(exactgrad=grad_only_mul,**jac_options)
 
         else: 
-            jacobian = scipy.optimize.nonlin.KrylovJacobian(**jac_options)
+            jacobian = scipy.optimize.KrylovJacobian(**jac_options)
 
-        opt_result , info = choreo.nonlin_solve_pp(F=loss,x0=vx0,jacobian='krylov',verbose=True,maxiter=10,f_tol=1e-15,line_search=line_search,raise_exception=False,smin=linesearch_smin,full_output=True,callback=best_sol.update)
+
+        opt_result , info = choreo.nonlin_solve_pp(F=loss,x0=vx0,jacobian=jacobian,verbose=True,maxiter=maxiter_period_opt,f_tol=1e-15,line_search=line_search,raise_exception=False,smin=linesearch_smin,full_output=True,callback=best_sol.update)
         
-        vx0 = best_sol.x
-        dvx0 = best_sol.f
+        print(opt_result)
+        print(info)
+# 
+#         vx0 = best_sol.x
+#         dvx0 = best_sol.f
 
 
 
-        # res = scipy.optimize.root(loss, vx0, method='hybr', jac=None, tol=1e-15,options={'maxiter':100})
+        # res = scipy.optimize.root(loss, vx0, method='lm', jac=grad_only, tol=1e-15,options={'maxiter':100})
 
-        # res = scipy.optimize.root(loss, vx0, method='hybr', jac=None, tol=1e-15,options={'maxfev':10})
-        # res = scipy.optimize.root(loss, vx0, method='hybr', jac=grad_only, tol=1e-15,options={'maxfev':10})
+        # res = scipy.optimize.root(loss, vx0, method='hybr', jac=grad_only, tol=1e-15,options={'maxfev':100})
 
-        # res = scipy.optimize.root(loss, vx0, method='lm', jac=grad_only, tol=1e-15,options={'maxiter':10})
+
+        # print(res.message)
         # vx0 = res.x
         # dvx0 = res.fun
 
@@ -478,10 +568,10 @@ for n_NT_init in range(len(all_NT_init)):
 #         # print(eigvects)
 
 
-
-        period_err = np.linalg.norm(np.concatenate((x0-xf,v0-vf)).reshape(2*ndof))
-
-        print(f'Error on Periodicity: {period_err}')
+# 
+#         period_err = np.linalg.norm(np.concatenate((x0-xf,v0-vf)).reshape(2*ndof))
+# 
+#         print(f'Error on Periodicity: {period_err}')
 
 
 

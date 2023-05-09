@@ -236,8 +236,8 @@ if Compare_FD_hess:
         Rel_difflist.append(Rel_diff)
         print('Rel_diff : ',Rel_diff)
 
-        ddf_difffin = (dfp-dfm)/(2*eps)
-        
+        # ddf_difffin = (dfp-dfm)/(2*eps)
+        # 
         # print('')
         # print('eps : ',eps)
         # print('df vals : ',ddf_difffin,ddf_fft_d)
