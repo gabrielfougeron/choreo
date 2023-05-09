@@ -2302,7 +2302,9 @@ function GetGalleryNodeFromURL(GalleryTree) {
 
     const URLPathList = window.location.hash.replace('#','').replaceAll('~',' ').split('/')
 
-    history.pushState("", document.title, window.location.pathname + window.location.search) // Removes hash from URL
+    try {
+        history.pushState("", document.title, window.location.pathname + window.location.search) // Removes hash from URL
+    } catch(e) {  }
 
     if (URLPathList.length > 0) {
         
@@ -2619,7 +2621,7 @@ function DownloadVideo() {
 
 function TweetVideo() {
 
-    http://twitter.com/share?text=text goes here&url=http://url goes here&hashtags=hashtag1,hashtag2,hashtag3
+    // http://twitter.com/share?text=text goes here&url=http://url goes here&hashtags=hashtag1,hashtag2,hashtag3
 
     tweet_url = 'http://twitter.com/share'
     tweet_url = tweet_url + '?text=Toto'
