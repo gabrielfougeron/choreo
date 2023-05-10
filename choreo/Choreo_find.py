@@ -386,7 +386,7 @@ def Find_Choreo(
 
             try : 
                 
-                opt_result , info = nonlin_solve_pp(F=F,x0=x0,jacobian=jacobian,verbose=disp_scipy_opt,maxiter=maxiter,f_tol=gradtol,line_search=line_search,callback=optim_callback,raise_exception=False,smin=linesearch_smin,full_output=True)
+                opt_result , info = nonlin_solve_pp(F=F,x0=x0,jacobian=jacobian,verbose=disp_scipy_opt,maxiter=maxiter,f_tol=gradtol,line_search=line_search,callback=optim_callback,raise_exception=False,smin=linesearch_smin,full_output=True,tol_norm=np.linalg.norm)
 
                 AskedForNext = (info['status'] == 0)
 
