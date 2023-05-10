@@ -2297,21 +2297,21 @@ function MakeDirectoryTree_DefaultGallery(cur_directory,cur_treenode,click_callb
 }
 
 window.addEventListener('hashchange', () => {LoadGalleryNodeFromURL()})
-window.addEventListener('onhashchange', () => {LoadGalleryNodeFromURL()})
 
 function GetGalleryNodeFromURL(GalleryTree) {
 
     const URLPathList = window.location.hash.replace('#','').replaceAll('~',' ').split('/')
 
-    try {
-        history.replaceState("", document.title, window.location.pathname + window.location.search) // Removes hash from URL
-    } catch(e) { 
-        console.log(e)
-        console.log("Failed to reset URL")
-    }
-
     if (URLPathList.length > 0) {
-        
+
+        try {
+            history.replaceState("", document.title, window.location.pathname + window.location.search) // Removes hash from URL
+        } catch(e) { 
+            // console.log(e)
+            // console.log("Failed to reset URL")
+            window.location.hash = ""
+        }
+            
         var CurrentNode = GalleryTree
         var CurrentPath = URLPathList[0]+'/'
         var UrlIsValid = (CurrentNode.path_str == CurrentPath)
@@ -2580,12 +2580,12 @@ function startRecording(Duration) {
     // only when the recorder stops, we construct a complete Blob from all the chunks
 
     // const export_options = { mimeType: 'video/webm;codecs=avc1,opus'};   //904KB
-    // const export_options = { mimeType: 'video/webm;codecs=h264,opus' };  //923KB
+    const export_options = { mimeType: 'video/mp4;codecs=h264,opus' };  //923KB
     // const export_options = { mimeType: 'video/webm;codecs=vp9,opus' };   //1951KB
     // const export_options = { mimeType: 'video/x-matroska;codecs=avc1' }; //917KB
     // const export_options = { mimeType: 'video/webm;codecs=vp8,opus' };   //2687KB
     // const export_options = { mimeType: 'video/webm;codecs=avc1' };       //917KB
-    const export_options = { mimeType: 'video/mp4;codecs=h265' };       //919KB
+    // const export_options = { mimeType: 'video/mp4;codecs=h265' };       //919KB
     // const export_options = { mimeType: 'video/webm' };                   //906KB
     // const export_options = { mimeType: '' };       
 
