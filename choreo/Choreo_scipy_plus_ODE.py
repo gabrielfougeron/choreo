@@ -18,6 +18,8 @@ from choreo.Choreo_cython_scipy_plus_ODE import ImplicitSymplecticWithTableGauss
 from choreo.Choreo_cython_scipy_plus_ODE import ImplicitSymplecticTanWithTableGaussSeidel_VX_cython
 from choreo.Choreo_cython_scipy_plus_ODE import IntegrateOnSegment
 
+from choreo.Choreo_cython_scipy_plus_ODE import ImplicitSymplecticWithTableGaussSeidel_VX_cython_blas
+
 
 
 
@@ -377,7 +379,8 @@ def GetSymplecticIntegrator(method='SymplecticRuth3'):
             Butcher_a_np, Butcher_b_np, Butcher_c_np, Butcher_beta_np, _ = ComputeGaussButcherTables_np(n)
 
             integrator = functools.partial(
-                ImplicitSymplecticWithTableGaussSeidel_VX_cython,
+                ImplicitSymplecticWithTableGaussSeidel_VX_cython_blas,
+                # ImplicitSymplecticWithTableGaussSeidel_VX_cython,
                 a_table_x = Butcher_a_np,
                 b_table_x = Butcher_b_np,
                 c_table_x = Butcher_c_np,
