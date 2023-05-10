@@ -37,7 +37,7 @@ class ExactKrylovJacobian(scipy.optimize.nonlin.KrylovJacobian):
 
     def __init__(self,exactgrad, rdiff=None, method='lgmres', inner_maxiter=20,inner_M=None, outer_k=10, **kw):
 
-        scipy.optimize.nonlin..KrylovJacobian.__init__(self, rdiff, method, inner_maxiter,inner_M, outer_k, **kw)
+        scipy.optimize.nonlin.KrylovJacobian.__init__(self, rdiff, method, inner_maxiter,inner_M, outer_k, **kw)
         self.exactgrad = exactgrad
 
     def matvec(self, v):
