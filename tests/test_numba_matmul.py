@@ -1,3 +1,10 @@
+import os
+
+os.environ['NUMBA_NUM_THREADS'] = '1'
+os.environ['OPENBLAS_NUM_THREADS'] = '1'
+os.environ['NUMEXPR_NUM_THREADS'] = '1'
+os.environ['MKL_NUM_THREADS'] = '1'
+
 import numba
 import numpy as np
 import time
@@ -25,9 +32,9 @@ Numpy_matmul = lambda a,b,c : a.dot(b,out=c)
 Numpy_matmul.__name__ = 'Numpy_matmul'
 
 
-N = 128
-L = 128
-M = 128
+N = 2
+L = 2
+M = 2
 
 a = np.random.random((N,L))
 b = np.random.random((L,M))
@@ -36,7 +43,7 @@ assert a.shape[1] == b.shape[0]
 
 
 
-ntests = 10
+ntests = 1000
 
 
 backends = [
