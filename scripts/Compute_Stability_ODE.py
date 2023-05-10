@@ -63,10 +63,10 @@ def main():
 # 
 #             input_names_list.append(file_root)
 
-    # input_names_list = ['01 - Figure eight']
+    input_names_list = ['01 - Figure eight']
     # input_names_list = ['14 - Small mass gap']
     # input_names_list = ['03 - Trefoil']
-    input_names_list = ['04 - 5 pointed star']
+    # input_names_list = ['04 - 5 pointed star']
 
 
     store_folder = os.path.join(__PROJECT_ROOT__,'Reconverged_sols')
@@ -223,16 +223,16 @@ def ExecName(the_name, input_folder, store_folder):
     # nint_ODE_mul = 64
     # nint_ODE_mul =  2**11
     # nint_ODE_mul =  2**7
-    nint_ODE_mul =  2**5
+    # nint_ODE_mul =  2**5
     # nint_ODE_mul =  2**3
     # nint_ODE_mul =  2**1
-    # nint_ODE_mul =  1
+    nint_ODE_mul =  1
 
     # SymplecticMethod = 'SymplecticGauss1'
-    SymplecticMethod = 'SymplecticGauss2'
+    # SymplecticMethod = 'SymplecticGauss2'
     # SymplecticMethod = 'SymplecticGauss3'
     # SymplecticMethod = 'SymplecticGauss5'
-    # SymplecticMethod = 'SymplecticGauss10'
+    SymplecticMethod = 'SymplecticGauss10'
 
 
     SymplecticTanIntegrator = choreo.GetSymplecticTanIntegrator(SymplecticMethod)
@@ -244,6 +244,8 @@ def ExecName(the_name, input_folder, store_folder):
         # print(arr.data.f_contiguous)  # False
 
     T = 1.
+
+    tbeg = time.perf_counter()
 
     all_x, all_v, all_grad_x, all_grad_v = SymplecticTanIntegrator(
         fun = fun,
@@ -258,6 +260,10 @@ def ExecName(the_name, input_folder, store_folder):
         nint = nint*nint_ODE_mul,
         keep_freq = nint_ODE_mul
     )
+
+    tend = time.perf_counter()
+
+    print(f'CPU time of integration :{tend-tbeg}')
 
 
     xf = all_x[-1,:].copy()
@@ -278,7 +284,7 @@ def ExecName(the_name, input_folder, store_folder):
     # print(MonodromyMat)
 # 
     print('Symplecticity')
-    print(np.linalg.norm(w - np.dot(MonodromyMat.transpose(),np.dot(w,MonodromyMat))))
+    print(np.linalg.norm(w - np.dot(MonodromyMat.transpose(),np.dot(w,MonodromyMat))) / np.linalg.norm(MonodromyMat))
     # print((w - np.dot(MonodromyMat.transpose(),np.dot(w,MonodromyMat))))
 
 
