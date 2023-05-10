@@ -112,6 +112,9 @@ var particleLayerContext
 
 var FileSystemAccessSupported = ('showOpenFilePicker' in window)
 
+const { createFFmpeg , fetchFile  } = FFmpeg;
+const ffmpeg = createFFmpeg()
+
 function AjaxGet(foldername){ return $.ajax({ url: foldername})}
 
 function GetFileBaseExt(filename) {
