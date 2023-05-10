@@ -26,8 +26,8 @@ One_sec = 1e9
 test_names = [
 # "y'' = -y",
 # "y'' = - exp(y)",
-"y'' = xy",
-# "y' = Az; z' = By",
+# "y'' = xy",
+"y' = Az; z' = By",
 ]
 
 
@@ -106,9 +106,13 @@ for the_test in test_names:
 
         test_ndim = 10
 
-        A = np.random.rand(test_ndim,test_ndim)
+
+
+        # A = np.random.rand(test_ndim,test_ndim)
+        A = np.identity(test_ndim)
         # A = A + A.T
-        B = np.random.rand(test_ndim,test_ndim)
+        # B = np.random.rand(test_ndim,test_ndim)
+        B = np.identity(test_ndim)
         # B = B + B.T
 
         AB = np.zeros((2*test_ndim,2*test_ndim))
@@ -151,6 +155,9 @@ for the_test in test_names:
         refinement_lvl = list(range(1,11))
         # refinement_lvl = list(range(1,101))
 
+        # n_tests = 1
+        n_tests = 100
+
         for iref in range(len(refinement_lvl)):
 
             nint = refinement_lvl[iref]
@@ -159,7 +166,8 @@ for the_test in test_names:
             v0 = np.copy(ex_init[test_ndim  :2*test_ndim])
 
             t_beg= time.perf_counter_ns()
-            xf,vf = SymplecticIntegrator(fun,gun,t_span,x0,v0,nint,nint)
+            for itest in range(n_tests):
+                xf,vf = SymplecticIntegrator(fun,gun,t_span,x0,v0,nint,nint)
             t_end = time.perf_counter_ns()
 
             sol = np.ascontiguousarray(np.concatenate((xf,vf),axis=0).reshape(2*test_ndim))
