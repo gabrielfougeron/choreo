@@ -385,7 +385,6 @@ def Compute_action_hess_mul_Cython_nD_serial(
 
 
 @cython.cdivision(True)
-# cdef np.ndarray[double, ndim=3, mode="c"] Compute_action_hess_mul_Cython_time_loop_2D(
 def Compute_action_hess_mul_Cython_time_loop_nD_serial(
     long              nloop             ,
     long              nint              ,
