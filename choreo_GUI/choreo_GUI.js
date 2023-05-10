@@ -1647,7 +1647,7 @@ function checkbox_Cookie_Handler(event) {
 
 }
 
-async function IssueMessage(HTMLdiv,message,duration) {
+async function IssueMessage(HTMLdiv,message,duration = -1) {
 
     HTMLdiv.innerHTML = message;
 
@@ -2584,6 +2584,8 @@ function startRecording(Duration) {
 
 async function exportVid(blob) {
 
+    IssueMessage(VideoMessage,"Converting recording to *.mp4")
+
     path_list = document.getElementById('NP_name').innerHTML.split('/')
     videoname = path_list[path_list.length-1]
 
@@ -2606,6 +2608,8 @@ async function exportVid(blob) {
     a.download = mp4mname
     a.href = vid.src
     a.click()
+
+    IssueMessage(VideoMessage,"Done. Video available for download.",3000)
   }
 
 function DownloadVideo() {
@@ -2614,7 +2618,7 @@ function DownloadVideo() {
 
     if (CanRecord) {
         var record_time = Math.round(real_period_estimation)
-        IssueMessage(VideoMessage,"Recording in progress.<br>Expected time : "+record_time.toString()+" s",1000*real_period_estimation)
+        IssueMessage(VideoMessage,"Recording in progress.<br>Expected time : "+record_time.toString()+" s")
         startRecording(1000*real_period_estimation)
     } else {
         const VideoMessage = document.getElementById('VideoMessage')
