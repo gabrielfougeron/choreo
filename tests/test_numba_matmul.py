@@ -47,7 +47,7 @@ ntests = 1000
 
 
 backends = [
-    Python_matmul,
+    # Python_matmul,
     Numba_matmul,
     Numpy_matmul,
 ]

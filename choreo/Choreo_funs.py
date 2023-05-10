@@ -662,13 +662,14 @@ class ChoreoAction():
         def grad_gun(t,x,grad_x):
 
             ndof = self.nbody*self.geodim
+            nrhs = grad_x.shape[1]
 
             return Compute_JacMulMat_Forces_Cython(
                 x.reshape(self.nbody,self.geodim),
-                grad_x.reshape(self.nbody,self.geodim,2*ndof)   ,
+                grad_x.reshape(self.nbody,self.geodim,nrhs)   ,
                 self.mass   ,
                 self.nbody  ,
-            ).reshape(ndof,2*ndof)
+            ).reshape(ndof,nrhs)
 
         return grad_fun, grad_gun
 
@@ -913,45 +914,94 @@ class ChoreoAction():
         plt.savefig(filename)
         plt.close()
 
+    
+
+    def plot_GradientAction_Error(self,x,filename,fig_size=(16, 12),color_list = None):
+
+        self.SavePosFFT(x)
+
+        J,GradJ =  self.ComputeGradBackend(
+            self.nloop          ,
+            self.ncoeff       ,
+            self.nint         ,
+            self.mass           ,
+            self.loopnb         ,
+            self.Targets        ,
+            self.MassSum        ,
+            self.SpaceRotsUn    ,
+            self.TimeRevsUn     ,
+            self.TimeShiftNumUn ,
+            self.TimeShiftDenUn ,
+            self.loopnbi        ,
+            self.ProdMassSumAll ,
+            self.SpaceRotsBin   ,
+            self.TimeRevsBin    ,
+            self.TimeShiftNumBin,
+            self.TimeShiftDenBin,
+            self.last_all_coeffs,
+            self.last_all_pos
+        )
+
+        self.plot_coeff_loglog(
+            GradJ,filename,
+            fig_size = fig_size,
+            color_list = color_list,
+            DoMaxInf = False
+        )    
+
     def plot_coeff_profile(self,x,filename,fig_size=(16, 12),color_list = None):
+
+        self.plot_coeff_loglog(
+            self.Unpackage_all_coeffs(x),filename,
+            fig_size = fig_size,
+            color_list = color_list,
+            DoMaxInf = True
+        )
+
+    def plot_coeff_loglog(self,all_coeffs,filename,fig_size=(16, 12),color_list = None,DoMaxInf=True):
         
         if color_list is None:
             color_list = plt.rcParams['axes.prop_cycle'].by_key()['color']
-
-        all_coeffs = self.Unpackage_all_coeffs(x)
 
         eps = 1e-18
         # eps = 0.
 
         ampl = np.zeros((self.nloop,self.ncoeff),dtype=np.float64)
-        max_ampl = np.zeros((self.nloop,self.ncoeff),dtype=np.float64)
 
         for il in range(self.nloop):
             for k in range(self.ncoeff):
                 ampl[il,k] = np.linalg.norm(all_coeffs[il,:,k,:]) + eps
 
-
-        ncoeff_plotm1 = self.ncoeff - 1
-
-        for il in range(self.nloop):
-            cur_max = 0.
-            for k in range(self.ncoeff):
-                k_inv = ncoeff_plotm1 - k
-
-                cur_max = max(cur_max,ampl[il,k_inv])
-                max_ampl[il,k_inv] = cur_max
-
-        ind = np.arange(self.ncoeff) 
-
         fig = plt.figure()
         fig.set_size_inches(fig_size)
         ax = plt.gca()
+
+        ind = np.arange(self.ncoeff) 
         ncol = len(color_list)
 
-        for il in range(self.nloop):
-        
-            ax.plot(ind,max_ampl[il,:],c=color_list[il%ncol])
+        if DoMaxInf :
 
+            max_ampl = np.zeros((self.nloop,self.ncoeff),dtype=np.float64)
+
+            ncoeff_plotm1 = self.ncoeff - 1
+
+            for il in range(self.nloop):
+                cur_max = 0.
+                for k in range(self.ncoeff):
+                    k_inv = ncoeff_plotm1 - k
+
+                    cur_max = max(cur_max,ampl[il,k_inv])
+                    max_ampl[il,k_inv] = cur_max
+
+            for il in range(self.nloop):
+            
+                ax.plot(ind,max_ampl[il,:],c=color_list[il%ncol])
+
+        else:
+
+            for il in range(self.nloop):
+            
+                ax.plot(ind,ampl[il,:],c=color_list[il%ncol])
     
         ax.set_yscale('log')
             
@@ -1899,6 +1949,21 @@ def ComputeGradPeriodicityDefault(xv0,OnePeriodTanIntegrator):
     all_x, all_y, all_grad_x, all_grad_y = OnePeriodTanIntegrator(xv0[0:ndof].copy(), xv0[ndof:twondof].copy(), grad_x0, grad_v0)
 
     return np.ascontiguousarray(np.concatenate((all_x[-1,:],all_y[-1,:]),axis=0).reshape(twondof) - xv0) , np.ascontiguousarray(np.concatenate((all_grad_x[-1,:,:],all_grad_y[-1,:,:]),axis=0).reshape(twondof,twondof))
+
+
+def ComputeGradMulPeriodicityDefault(xv0,grad_xv0,OnePeriodTanIntegrator):
+
+    twondof = xv0.size
+    ndof = twondof // 2
+
+    all_x, all_y, all_grad_x, all_grad_y = OnePeriodTanIntegrator(
+        xv0[0:ndof].copy(),
+        xv0[ndof:twondof].copy(),
+        grad_xv0[0:ndof].copy().reshape(ndof,1),
+        grad_xv0[ndof:twondof].copy().reshape(ndof,1),
+    )
+    
+    return np.ascontiguousarray(np.concatenate((all_x[-1,:],all_y[-1,:]),axis=0).reshape(twondof) - xv0) , np.ascontiguousarray(np.concatenate((all_grad_x[-1,:,:],all_grad_y[-1,:,:]),axis=0).reshape(twondof))
 
 
 
