@@ -1647,7 +1647,7 @@ function checkbox_Cookie_Handler(event) {
 
 }
 
-async function IssueMessage(HTMLdiv,message,duration) {
+async function IssueMessage(HTMLdiv,message,duration = -1) {
 
     HTMLdiv.innerHTML = message;
 
@@ -2297,21 +2297,21 @@ function MakeDirectoryTree_DefaultGallery(cur_directory,cur_treenode,click_callb
 }
 
 window.addEventListener('hashchange', () => {LoadGalleryNodeFromURL()})
-window.addEventListener('onhashchange', () => {LoadGalleryNodeFromURL()})
 
 function GetGalleryNodeFromURL(GalleryTree) {
 
     const URLPathList = window.location.hash.replace('#','').replaceAll('~',' ').split('/')
 
-    try {
-        history.replaceState("", document.title, window.location.pathname + window.location.search) // Removes hash from URL
-    } catch(e) { 
-        console.log(e)
-        console.log("Failed to reset URL")
-    }
-
     if (URLPathList.length > 0) {
-        
+
+        try {
+            history.replaceState("", document.title, window.location.pathname + window.location.search) // Removes hash from URL
+        } catch(e) { 
+            // console.log(e)
+            // console.log("Failed to reset URL")
+            window.location.hash = ""
+        }
+            
         var CurrentNode = GalleryTree
         var CurrentPath = URLPathList[0]+'/'
         var UrlIsValid = (CurrentNode.path_str == CurrentPath)
@@ -2375,10 +2375,6 @@ async function LoadGalleryNodeFromURL() {
         DefaultGalleryContainer.TreeView.expandPath(PathToCurrentNode)
 
         DefaultGalleryContainer.TreeView.reload()
-
-    } else {
-
-        console.log("Invalid custom URL")
 
     }
 
@@ -2579,31 +2575,41 @@ function startRecording(Duration) {
     rec.ondataavailable = e => chunks.push(e.data)
     // only when the recorder stops, we construct a complete Blob from all the chunks
 
-    // const export_options = { mimeType: 'video/webm;codecs=avc1,opus'};   //904KB
-    // const export_options = { mimeType: 'video/webm;codecs=h264,opus' };  //923KB
-    // const export_options = { mimeType: 'video/webm;codecs=vp9,opus' };   //1951KB
-    // const export_options = { mimeType: 'video/x-matroska;codecs=avc1' }; //917KB
-    // const export_options = { mimeType: 'video/webm;codecs=vp8,opus' };   //2687KB
-    // const export_options = { mimeType: 'video/webm;codecs=avc1' };       //917KB
-    const export_options = { mimeType: 'video/mp4;codecs=h265' };       //919KB
-    // const export_options = { mimeType: 'video/webm' };                   //906KB
-    // const export_options = { mimeType: '' };       
+    const export_options = { mimeType: 'video/webm;codecs=h264' };
 
     rec.onstop = e => exportVid(new Blob(chunks, export_options))
     rec.start()
     setTimeout(()=>rec.stop(), Duration) // stop recording after appropriate duration
   }
 
-function exportVid(blob) {
-    const vid = document.createElement('video')
-    vid.src = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    document.getElementById('VideoMessage')
+async function exportVid(blob) {
+
+    IssueMessage(VideoMessage,"Converting recording to *.mp4")
+
     path_list = document.getElementById('NP_name').innerHTML.split('/')
     videoname = path_list[path_list.length-1]
-    a.download = videoname+'.mp4'
+
+    const webmname = videoname+'.webm';
+    const mp4mname = videoname+'.mp4';
+    
+    if (! ffmpeg.isLoaded() ) {
+        await ffmpeg.load();
+    }
+
+    ffmpeg.FS('writeFile', webmname, new Uint8Array(await blob.arrayBuffer()));
+    await ffmpeg.run('-i', webmname, mp4mname);
+    const data = ffmpeg.FS('readFile', mp4mname);
+
+    const vid = document.createElement('video')
+    vid.src =  URL.createObjectURL(new Blob([data.buffer], { type: 'video/mp4' }));
+
+    const a = document.createElement('a')
+
+    a.download = mp4mname
     a.href = vid.src
     a.click()
+
+    IssueMessage(VideoMessage,"Done. Video available for download.",3000)
   }
 
 function DownloadVideo() {
@@ -2612,7 +2618,7 @@ function DownloadVideo() {
 
     if (CanRecord) {
         var record_time = Math.round(real_period_estimation)
-        IssueMessage(VideoMessage,"Recording in progress.<br>Expected time : "+record_time.toString()+" s",1000*real_period_estimation)
+        IssueMessage(VideoMessage,"Recording in progress.<br>Expected time : "+record_time.toString()+" s")
         startRecording(1000*real_period_estimation)
     } else {
         const VideoMessage = document.getElementById('VideoMessage')
