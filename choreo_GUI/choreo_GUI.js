@@ -2376,10 +2376,6 @@ async function LoadGalleryNodeFromURL() {
 
         DefaultGalleryContainer.TreeView.reload()
 
-    } else {
-
-        console.log("Invalid custom URL")
-
     }
 
 }
