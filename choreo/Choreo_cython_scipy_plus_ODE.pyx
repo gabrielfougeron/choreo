@@ -486,16 +486,28 @@ def ImplicitSymplecticWithTableGaussSeidel_VX_cython(
                 for istep in range(nsteps):
                     for jdof in range(ndof):
                         diff = dX[istep,jdof] - dX_prev[istep,jdof]
-                        dX_err += diff * diff
+                        dX_err += cfabs(diff)
 
                 dV_err = 0
                 for istep in range(nsteps):
                     for jdof in range(ndof):
                         diff = dV[istep,jdof] - dV_prev[istep,jdof]
-                        dV_err += diff * diff
-                
-                dXV_err = csqrt(dX_err) + csqrt(dV_err)
-                # dXV_err = dX_err + dV_err  
+                        dV_err += cfabs(diff)
+
+#                 dX_err = 0
+#                 for istep in range(nsteps):
+#                     for jdof in range(ndof):
+#                         diff = dX[istep,jdof] - dX_prev[istep,jdof]
+#                         dX_err += diff * diff
+# 
+#                 dV_err = 0
+#                 for istep in range(nsteps):
+#                     for jdof in range(ndof):
+#                         diff = dV[istep,jdof] - dV_prev[istep,jdof]
+#                         dV_err += diff * diff
+#                 
+                # dXV_err = csqrt(dX_err) + csqrt(dV_err)
+                dXV_err = dX_err + dV_err  
                 # dXV_err = dX_err + dV_err * dt * dt 
 
                 iGS += 1
@@ -608,7 +620,7 @@ def ImplicitSymplecticWithTableGaussSeidel_VX_cython_blas(
     cdef int dX_size = nsteps*ndof
     cdef int int_one = 1
 
-    cdef double eps_mul = eps * ndof * nsteps * dt
+    cdef double eps_mul = eps * dX_size * dt
     # cdef double eps_mul = eps * dt
 
     for istep in range(nsteps):
@@ -696,7 +708,8 @@ def ImplicitSymplecticWithTableGaussSeidel_VX_cython_blas(
                 # dV_prev = dV_prev - dV
                 scipy.linalg.cython_blas.daxpy(&dX_size,&minus_one,&dV[0,0],&int_one,&dV_prev[0,0],&int_one)
 
-                dV_err = scipy.linalg.cython_blas.dnrm2(&dX_size,&dV_prev[0,0],&int_one)
+                # dV_err = scipy.linalg.cython_blas.dnrm2(&dX_size,&dV_prev[0,0],&int_one)
+                dV_err = scipy.linalg.cython_blas.dasum(&dX_size,&dV_prev[0,0],&int_one)
 
                 dXV_err = dX_err + dV_err  
 
