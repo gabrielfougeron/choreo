@@ -104,7 +104,7 @@ for the_test in test_names:
         
     if the_test == "y' = Az; z' = By" :
 
-        test_ndim = 10
+        test_ndim = 100
 
 
 
