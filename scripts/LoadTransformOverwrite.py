@@ -28,11 +28,7 @@ One_sec = 1e9
 def main():
 
 
-    # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/3/')
-    # input_folder = os.path.join(__PROJECT_ROOT__,'Default_Gallery')
-    input_folder = os.path.join(__PROJECT_ROOT__,'Chain_Gallery/Keep/4/')
-    # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/copy/')
-    # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/Gallery_videos/C-4')
+    input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery/01 - Classic gallery')
 # 
 #     ''' Include all files in tree '''
 #     input_names_list = []
@@ -49,20 +45,28 @@ def main():
 #                 input_names_list.append(the_name)
 # 
 # # 
-    ''' Include all files in folder '''
+#     ''' Include all files in folder '''
+#     input_names_list = []
+#     for file_path in os.listdir(input_folder):
+#         file_path = os.path.join(input_folder, file_path)
+#         file_root, file_ext = os.path.splitext(os.path.basename(file_path))
+#         
+#         if (file_ext == '.json' ):
+#             # 
+#             # if int(file_root) > 8:
+#             #     input_names_list.append(file_root)
+# 
+#             input_names_list.append(file_root)
+
+
     input_names_list = []
-    for file_path in os.listdir(input_folder):
-        file_path = os.path.join(input_folder, file_path)
-        file_root, file_ext = os.path.splitext(os.path.basename(file_path))
-        
-        if (file_ext == '.json' ):
-            # 
-            # if int(file_root) > 8:
-            #     input_names_list.append(file_root)
+    input_names_list.append('01 - Figure eight'     )
+    # input_names_list.append('14 - Small mass gap'   )
+    # input_names_list.append('03 - Trefoil'          )
+    # input_names_list.append('04 - 5 pointed star'   ) 
+    input_names_list.append('07 - No symmetry'   ) 
+    input_names_list.append('09 - 3x2 Circles'   ) 
 
-            input_names_list.append(file_root)
-
-    # input_names_list = ['00004']
 
     store_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/mod')
     # store_folder = input_folder
@@ -136,8 +140,8 @@ def main():
 
     GradActionThresh = 1e-8
 # 
-    # InvestigateStability = True
-    InvestigateStability = False
+    InvestigateStability = True
+    # InvestigateStability = False
 
     # Save_Perturbed = True
     Save_Perturbed = False
@@ -216,11 +220,15 @@ def ExecName(
     Relative_Perturb,
     ):
 
+    print('--------------------------------------------')
     print('')
     print(the_name)
+    print('')
+    print('--------------------------------------------')
+    print('')
 
 
-    
+    geodim = 2
 
     Info_filename = os.path.join(input_folder,the_name)
     Info_filename = Info_filename + '.json'
@@ -239,7 +247,7 @@ def ExecName(
     ncoeff = nint // 2 + 1
 
     c_coeffs = choreo.the_rfft(all_pos,n=nint,axis=2,norm="forward")
-    all_coeffs = np.zeros((Info_dict["nloop"],choreo.ndim,ncoeff,2),dtype=np.float64)
+    all_coeffs = np.zeros((Info_dict["nloop"],geodim,ncoeff,2),dtype=np.float64)
     all_coeffs[:,:,:,0] = c_coeffs.real
     all_coeffs[:,:,:,1] = c_coeffs.imag
 
@@ -265,7 +273,7 @@ def ExecName(
     n_reconverge_it_max = 0
     n_grad_change = 1.
 
-    ActionSyst = choreo.setup_changevar(2,nbody,nint,mass,n_reconverge_it_max,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change,CrashOnIdentity=False)
+    ActionSyst = choreo.setup_changevar(geodim,nbody,nint,mass,n_reconverge_it_max,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change,CrashOnIdentity=False)
 
     x = ActionSyst.Package_all_coeffs(all_coeffs)
 
@@ -325,7 +333,7 @@ def ExecName(
 
         ode_res = scipy.integrate.solve_ivp(fun=fun, t_span=(0.,nperiod_anim), y0=yo, method=ODE_method, t_eval=t_eval, dense_output=False, events=None, vectorized=False,max_step=1./min_n_steps_ode,atol=atol_ode,rtol=rtol_ode)
 
-        all_pos_vel = ode_res['y'].reshape(2,nbody,choreo.ndim,round(nint_plot_img*nperiod_anim))
+        all_pos_vel = ode_res['y'].reshape(2,nbody,geodim,round(nint_plot_img*nperiod_anim))
         all_pos_ode = all_pos_vel[0,:,:,:]
         
         ActionSyst.plot_all_2D_anim(x,nint_plot_anim,filename_output+'_ode.mp4',nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size,dnint=dnint,all_pos_trace=all_pos_ode,all_pos_points=all_pos_ode,color_list=color_list,color=color)
@@ -348,7 +356,7 @@ def ExecName(
 
         fun,gun,x0,v0 = ActionSyst.GetTangentSystemDef(x,nint,method=SymplecticMethod)
 
-        ndof = nbody*choreo.ndim
+        ndof = nbody*geodim
 
         t_span = (0.,1.)
 
@@ -408,7 +416,7 @@ def ExecName(
             t_eval = np.array([i/nint_plot_img for i in range(round(nperiod_anim*nint_plot_img))])
             fun = lambda t,y: ActionSyst.Compute_ODE_RHS(t,y)
             ode_res = scipy.integrate.solve_ivp(fun=fun, t_span=(0.,nperiod_anim), y0=yo, method=ODE_method, t_eval=t_eval, dense_output=False, events=None, vectorized=False,max_step=1./min_n_steps_ode,atol=atol_ode,rtol=rtol_ode)
-            all_pos_vel = ode_res['y'].reshape(2,nbody,choreo.ndim,round(nint_plot_img*nperiod_anim))
+            all_pos_vel = ode_res['y'].reshape(2,nbody,geodim,round(nint_plot_img*nperiod_anim))
             all_pos_ode = all_pos_vel[0,:,:,:]
 
             vid_filename = filename_output+'_unperturbed_'+str(i).zfill(3)+'.mp4'
@@ -422,7 +430,7 @@ def ExecName(
             t_eval = np.array([i/nint_plot_img for i in range(round(nperiod_anim*nint_plot_img))])
             fun = lambda t,y: ActionSyst.Compute_ODE_RHS(t,y)
             ode_res = scipy.integrate.solve_ivp(fun=fun, t_span=(0.,nperiod_anim), y0=yo, method=ODE_method, t_eval=t_eval, dense_output=False, events=None, vectorized=False,max_step=1./min_n_steps_ode,atol=atol_ode,rtol=rtol_ode)
-            all_pos_vel = ode_res['y'].reshape(2,nbody,choreo.ndim,round(nint_plot_img*nperiod_anim))
+            all_pos_vel = ode_res['y'].reshape(2,nbody,geodim,round(nint_plot_img*nperiod_anim))
             all_pos_ode = all_pos_vel[0,:,:,:]
 
             vid_filename = filename_output+'_perturbed_'+str(irank).zfill(3)+'.mp4'
@@ -440,7 +448,7 @@ def ExecName(
             t_eval = np.array([i/nint_plot_img for i in range(round(nperiod_anim*nint_plot_img))])
             fun = lambda t,y: ActionSyst.Compute_ODE_RHS(t,y)
             ode_res = scipy.integrate.solve_ivp(fun=fun, t_span=(0.,nperiod_anim), y0=yo, method=ODE_method, t_eval=t_eval, dense_output=False, events=None, vectorized=False,max_step=1./min_n_steps_ode,atol=atol_ode,rtol=rtol_ode)
-            all_pos_vel = ode_res['y'].reshape(2,nbody,choreo.ndim,round(nint_plot_img*nperiod_anim))
+            all_pos_vel = ode_res['y'].reshape(2,nbody,geodim,round(nint_plot_img*nperiod_anim))
             all_pos_ode = all_pos_vel[0,:,:,:]
 
             vid_filename = filename_output+'_random_'+str(irank).zfill(3)+'.mp4'
@@ -467,23 +475,19 @@ def ExecName(
         print('')
         
 
-        # SymplecticMethod = 'SymplecticEuler'
-        # SymplecticMethod = 'SymplecticStormerVerlet'
-        # SymplecticMethod = 'SymplecticRuth3'
 
-        # the_integrators = {SymplecticMethod:choreo.GetSymplecticIntegrator(SymplecticMethod)}
+        # methods = ['SymplecticGauss'+str(i) for i in range(1,11)]
 
-        the_integrators = {
-            # 'SymplecticEuler_XV'            : choreo.SymplecticEuler_XV,
-            # 'SymplecticEuler_VX'            : choreo.SymplecticEuler_VX,
-            # 'SymplecticStormerVerlet_XV'    : choreo.SymplecticStormerVerlet_XV_cython,
-            # 'SymplecticStormerVerlet_VX'    : choreo.SymplecticStormerVerlet_VX_cython,
-            'SymplecticRuth3_XV'            : choreo.SymplecticRuth3_XV,
-            'SymplecticRuth3_VX'            : choreo.SymplecticRuth3_VX,
-            }
+        methods = []
+        methods.append('SymplecticEuler'        )
+        # methods.append('SymplecticStormerVerlet')
+        methods.append('SymplecticRuth3'        )
+        methods.append('SymplecticRuth4Rat'     )
+        
 
 
-        # the_integrators = choreo.all_unique_SymplecticIntegrators
+        the_integrators = {method:choreo.GetSymplecticIntegrator(method) for method in methods}
+
 
         for SymplecticMethod,SymplecticIntegrator in the_integrators.items() :
 
@@ -491,8 +495,8 @@ def ExecName(
             print('SymplecticMethod : ',SymplecticMethod)
             print('')
 
-            refinement_lvl = [64,128,256,512,1024]
-            # refinement_lvl = [1,2,4,8,16,32,64,128]
+            # refinement_lvl = [64,128,256,512,1024]
+            refinement_lvl = [1,2,4,8,16,32]
             # refinement_lvl = [1,10,100]
 
             for imul in range(len(refinement_lvl)):
@@ -503,13 +507,15 @@ def ExecName(
 
                 fun,gun,x0,v0 = ActionSyst.GetTangentSystemDef(x,nint,method=SymplecticMethod)
 
-                ndof = nbody*choreo.ndim
+                ndof = nbody*geodim
 
                 t_span = (0.,1.)
 
                 t_beg= time.perf_counter_ns()
-                xf,vf = SymplecticIntegrator(fun,gun,t_span,x0,v0,nint)
+                xf,vf = SymplecticIntegrator(fun,gun,t_span,x0,v0,nint,nint)
                 t_end = time.perf_counter_ns()
+
+
                 MonodromyMat = np.ascontiguousarray(np.concatenate((xf,vf),axis=0).reshape(2*ndof,2*ndof))
 
                 # Evaluates the relative accuracy of the Monodromy matrix integration process
@@ -518,11 +524,6 @@ def ExecName(
                 yo = ActionSyst.Compute_init_pos_vel(x).reshape(-1)
                 zo = ActionSyst.Compute_Auto_ODE_RHS(yo)
                 error_rel = np.linalg.norm(MonodromyMat.dot(zo)-zo)/np.linalg.norm(zo)
-
-                
-                Instability_magnitude,Instability_directions = choreo.InstabilityDecomposition(MonodromyMat)
-                error_rel = np.linalg.norm(Instability_magnitude - np.flip(1/Instability_magnitude))/np.linalg.norm(Instability_magnitude)
-
 
 
 
@@ -553,13 +554,20 @@ def ExecName(
         print('')
 
 
-        # SymplecticMethod = 'SymplecticEuler'
-        # SymplecticMethod = 'SymplecticStormerVerlet'
-        # SymplecticMethod = 'SymplecticRuth3'
+        # methods = ['SymplecticGauss'+str(i) for i in range(1,11)]
 
-        # the_integrators = {SymplecticMethod:choreo.GetSymplecticIntegrator(SymplecticMethod)}
+        methods = []
+        # methods.append('SymplecticEuler'        )
+        # methods.append('SymplecticStormerVerlet')
+        # methods.append('SymplecticRuth3'        )
+        # methods.append('SymplecticRuth4'        )
+        methods.append('SymplecticRuth4Rat'        )
+        
+        # methods.append('SymplecticGauss3')
 
-        the_integrators = choreo.all_unique_SymplecticIntegrators
+
+        the_integrators = {method:choreo.GetSymplecticIntegrator(method) for method in methods}
+
 
         for SymplecticMethod,SymplecticIntegrator in the_integrators.items() :
 
@@ -567,8 +575,9 @@ def ExecName(
             print('SymplecticMethod : ',SymplecticMethod)
             print('')
 
-            # refinement_lvl = [1,2,4,8,16,32,64,128,256,512]
-            refinement_lvl = [128,256,512]
+            # refinement_lvl = [1]
+            refinement_lvl = [1,2,4,8,16,32]
+            # refinement_lvl = [128,256,512]
             # refinement_lvl = [16,32]
             # refinement_lvl = [1,10,100]
 
@@ -578,7 +587,7 @@ def ExecName(
 
                 nint = ActionSyst.nint*nint_mul
 
-                ndim_ode = nbody*choreo.ndim
+                ndim_ode = nbody*geodim
 
                 all_pos_vel = ActionSyst.ComputeAllPosVel(x)
 
@@ -603,8 +612,12 @@ def ExecName(
                 fun,gun = ActionSyst.GetSymplecticODEDef()
 
                 t_beg= time.perf_counter_ns()
-                xf,vf = SymplecticIntegrator(fun,gun,t_span,x0,v0,nint)
+                xf,vf = SymplecticIntegrator(fun,gun,t_span,x0,v0,nint,nint)
                 t_end = time.perf_counter_ns()
+
+                xf.reshape(-1)
+                vf.reshape(-1)
+
 
                 # error_rel = np.linalg.norm(xf_exact-xf)+np.linalg.norm(vf_exact-vf)
                 error_rel = np.linalg.norm(xf_exact-xf)/np.linalg.norm(xf_exact)+np.linalg.norm(vf_exact-vf)/np.linalg.norm(vf_exact)

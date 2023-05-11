@@ -13,7 +13,7 @@ import numpy as np
 import scipy
 import scipy.linalg
 import sys
-import fractions
+import functools
 import scipy.integrate
 import scipy.special
 import matplotlib.pyplot as plt
@@ -48,7 +48,7 @@ def main():
 #                 file_path = os.path.join(root, file_root)
 #                 the_name = file_path[len(input_folder):]
 #                 input_names_list.append(the_name)
-# 
+# # 
 # # # 
 #     ''' Include all files in folder '''
 #     input_names_list = []
@@ -63,10 +63,17 @@ def main():
 # 
 #             input_names_list.append(file_root)
 
-    # input_names_list = ['01 - Figure eight']
-    # input_names_list = ['14 - Small mass gap']
-    # input_names_list = ['03 - Trefoil']
-    input_names_list = ['04 - 5 pointed star']
+    input_names_list = []
+    # input_names_list.append('01 - Figure eight'     )
+    # input_names_list.append('14 - Small mass gap'   )
+    # input_names_list.append('03 - Trefoil'          )
+    # input_names_list.append('04 - 5 pointed star'   ) 
+    # input_names_list.append('07 - No symmetry'   ) 
+    input_names_list.append('09 - 3x2 Circles'   ) 
+
+
+
+
 
 
     store_folder = os.path.join(__PROJECT_ROOT__,'Reconverged_sols')
@@ -223,19 +230,36 @@ def ExecName(the_name, input_folder, store_folder):
     # nint_ODE_mul = 64
     # nint_ODE_mul =  2**11
     # nint_ODE_mul =  2**7
-    nint_ODE_mul =  2**5
-    # nint_ODE_mul =  2**3
+    # nint_ODE_mul =  2**6
+    nint_ODE_mul =  2**3
     # nint_ODE_mul =  2**1
     # nint_ODE_mul =  1
 
     # SymplecticMethod = 'SymplecticGauss1'
-    SymplecticMethod = 'SymplecticGauss2'
+    # SymplecticMethod = 'SymplecticGauss2'
     # SymplecticMethod = 'SymplecticGauss3'
-    # SymplecticMethod = 'SymplecticGauss5'
+    SymplecticMethod = 'SymplecticGauss5'
     # SymplecticMethod = 'SymplecticGauss10'
+    # SymplecticMethod = 'SymplecticGauss10'
+    # SymplecticMethod = 'SymplecticGauss15'
+          
+    # SymplecticMethod = 'SymplecticGauss3'
+
+
+    # SymplecticMethod = 'LobattoIIIA_3'                 
+    # SymplecticMethod = 'LobattoIIIB_3'                 
+    # SymplecticMethod = 'LobattoIIIA_4'                 
+    # SymplecticMethod = 'LobattoIIIB_4'                 
+    # SymplecticMethod = 'PartitionedLobattoIII_AX_BV_3' 
+    # SymplecticMethod = 'PartitionedLobattoIII_AV_BX_3' 
+    # SymplecticMethod = 'PartitionedLobattoIII_AX_BV_4' 
+    # SymplecticMethod = 'PartitionedLobattoIII_AV_BX_4' 
+
+    print(f'Integration method : {SymplecticMethod}')
 
 
     SymplecticTanIntegrator = choreo.GetSymplecticTanIntegrator(SymplecticMethod)
+    SymplecticTanIntegrator = functools.partial(SymplecticTanIntegrator, maxiter = 1000)
 
     # for arr in [x0,v0,grad_x0,grad_v0]:
     #     print(arr.shape)
@@ -244,6 +268,8 @@ def ExecName(the_name, input_folder, store_folder):
         # print(arr.data.f_contiguous)  # False
 
     T = 1.
+
+    tbeg = time.perf_counter()
 
     all_x, all_v, all_grad_x, all_grad_v = SymplecticTanIntegrator(
         fun = fun,
@@ -258,6 +284,10 @@ def ExecName(the_name, input_folder, store_folder):
         nint = nint*nint_ODE_mul,
         keep_freq = nint_ODE_mul
     )
+
+    tend = time.perf_counter()
+
+    print(f'CPU time of integration :{tend-tbeg}')
 
 
     xf = all_x[-1,:].copy()
@@ -278,7 +308,7 @@ def ExecName(the_name, input_folder, store_folder):
     # print(MonodromyMat)
 # 
     print('Symplecticity')
-    print(np.linalg.norm(w - np.dot(MonodromyMat.transpose(),np.dot(w,MonodromyMat))))
+    print(np.linalg.norm(w - np.dot(MonodromyMat.transpose(),np.dot(w,MonodromyMat))) / (np.linalg.norm(MonodromyMat)**2))
     # print((w - np.dot(MonodromyMat.transpose(),np.dot(w,MonodromyMat))))
 
 
