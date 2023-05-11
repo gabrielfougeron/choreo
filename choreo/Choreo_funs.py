@@ -1621,6 +1621,127 @@ class ChoreoAction():
         
         plt.close()
 
+
+    def plot_given_2D(self,all_pos,filename,fig_size=(10,10),dpi=100,color=None,color_list=None,xlim=None,extend=0.03,CloseLoop=True):
+        r"""
+        Plots 2D trajectories with one color per body and saves image in file
+        """
+        
+        if color_list is None:
+            color_list = plt.rcParams['axes.prop_cycle'].by_key()['color']
+
+        n_loop_plot = all_pos.shape[0]
+        nint_plot = all_pos.shape[2]
+
+        if CloseLoop:
+
+            all_pos_b = np.zeros((n_loop_plot,self.geodim,nint_plot+1),dtype=np.float64)
+            all_pos_b[:,:,0:nint_plot] = all_pos
+            all_pos_b[:,:,nint_plot] = all_pos[:,:,0]
+
+        else:
+
+            all_pos_b = all_pos
+
+        ncol = len(color_list)
+        
+        cb = ['b' for ib in range(n_loop_plot)]
+        i_loop_plot = 0
+
+        if (color is None) or (color == "none"):
+            for il in range(self.nloop):
+                for ib in range(self.loopnb[il]):
+                    if (self.RequiresLoopDispUn[il,ib]) :
+
+                        cb[i_loop_plot] = color_list[0]
+
+                        i_loop_plot +=1
+
+        elif (color == "body"):
+            for il in range(self.nloop):
+                for ib in range(self.loopnb[il]):
+                    if (self.RequiresLoopDispUn[il,ib]) :
+
+                        cb[i_loop_plot] = color_list[self.Targets[il,ib]%ncol]
+
+                        i_loop_plot +=1
+
+        elif (color == "loop"):
+            for il in range(self.nloop):
+                for ib in range(self.loopnb[il]):
+                    if (self.RequiresLoopDispUn[il,ib]) :
+
+                        cb[i_loop_plot] = color_list[il%ncol]
+
+                        i_loop_plot +=1
+
+        elif (color == "loop_id"):
+            for il in range(self.nloop):
+                for ib in range(self.loopnb[il]):
+                    if (self.RequiresLoopDispUn[il,ib]) :
+
+                        cb[i_loop_plot] = color_list[ib%ncol]
+
+                        i_loop_plot +=1
+
+        else:
+            raise ValueError(f'Unknown color scheme "{color}"')
+
+        if xlim is None:
+
+            xmin = all_pos_b[:,0,:].min()
+            xmax = all_pos_b[:,0,:].max()
+            ymin = all_pos_b[:,1,:].min()
+            ymax = all_pos_b[:,1,:].max()
+
+        else :
+
+            xmin = xlim[0]
+            xmax = xlim[1]
+            ymin = xlim[2]
+            ymax = xlim[3]
+        
+        xinf = xmin - extend*(xmax-xmin)
+        xsup = xmax + extend*(xmax-xmin)
+        
+        yinf = ymin - extend*(ymax-ymin)
+        ysup = ymax + extend*(ymax-ymin)
+        
+        hside = max(xsup-xinf,ysup-yinf)/2
+
+        xmid = (xinf+xsup)/2
+        ymid = (yinf+ysup)/2
+
+        xinf = xmid - hside
+        xsup = xmid + hside
+
+        yinf = ymid - hside
+        ysup = ymid + hside
+
+        # Plot-related
+        fig = plt.figure()
+        fig.set_size_inches(fig_size)
+        fig.set_dpi(dpi)
+        ax = plt.gca()
+
+        lines = sum([ax.plot([], [],'-',color=cb[ib] ,antialiased=True,zorder=-ib)  for ib in range(n_loop_plot)], [])
+        points = sum([ax.plot([], [],'ko', antialiased=True)for ib in range(n_loop_plot)], [])
+
+        ax.axis('off')
+        ax.set_xlim([xinf, xsup])
+        ax.set_ylim([yinf, ysup ])
+        ax.set_aspect('equal', adjustable='box')
+        plt.tight_layout()
+        
+        for i_loop_plot in range(n_loop_plot):
+
+            lines[i_loop_plot].set_data(all_pos_b[i_loop_plot,0,:], all_pos_b[i_loop_plot,1,:])
+
+        plt.savefig(filename)
+        
+        plt.close()
+
+
     def plot_all_2D_anim(self,x=None,nint_plot=None,filename=None,nperiod=1,Plot_trace=True,fig_size=(5,5),dnint=1,all_pos_trace=None,all_pos_points=None,xlim=None,extend=0.03,color_list=None,color=None,fps=60):
         r"""
         Creates a video of the bodies moving along their trajectories, and saves the file
