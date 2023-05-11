@@ -151,9 +151,10 @@ for the_test in test_names:
         # print(x0)
         # print(v0)
 
-        # refinement_lvl = [1,2,4,8,16,32,64,128,256,512,1024,2048]
+        refinement_lvl = [1,2,4,8,16,32,64,128,256,512,1024,2048]
         # refinement_lvl = [1,10,100]
-        refinement_lvl = list(range(1,11))
+        # refinement_lvl = list(range(1,11))
+        # refinement_lvl = list(range(1,21))
         # refinement_lvl = list(range(1,101))
 
         # n_tests = 1
@@ -181,7 +182,7 @@ for the_test in test_names:
                 error_mul = max(error/error_prev,1e-16)
                 est_order = -m.log(error_mul)/m.log(refinement_lvl[iref]/refinement_lvl[iref-1])
 
-                print(f'error : {error:e}     error mul : {error_mul:e}     estimated order : {est_order:.2f}     time : {(t_end-t_beg)/One_sec:f}')
+                print(f'{nint:4d}  error : {error:e}     error mul : {error_mul:e}     estimated order : {est_order:.2f}     time : {(t_end-t_beg)/One_sec:f}')
                 # print(f'error : {error:e}     estimated order : {est_order:.2f}')
 
             error_prev = error
