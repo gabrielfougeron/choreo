@@ -27,33 +27,29 @@ One_sec = 1e9
 test_names = [
 # "y'' = -y",
 # "y'' = - exp(y)",
-"y'' = xy",
-# "y' = Az; z' = By",
+# "y'' = xy",
+"y' = Az; z' = By",
 ]
 
 
 
 
-# methods = ['SymplecticGauss'+str(i) for i in range(1,11)]
-
-# methods.append('SymplecticEuler')
-# methods.append('SymplecticStormerVerlet')
-
-# 
-# methods.append('SymplecticEuler_XV')
-# methods.append('SymplecticEuler_VX')
-# methods.append('SymplecticStormerVerlet_XV')
-# methods.append('SymplecticStormerVerlet_VX')
-
-# methods.append('SymplecticEuler_Table_XV')
-# methods.append(SymplecticEuler_Table_VX')
-
-
-
-# the_integrators = {method:choreo.GetSymplecticIntegrator(method) for method in methods}
+methods = [
+    'SymplecticGauss2'              ,
+    'SymplecticGauss3'              ,
+    'SymplecticGauss4'              ,
+    'LobattoIIIA_3'                 ,
+    'LobattoIIIB_3'                 ,
+    'LobattoIIIA_4'                 ,
+    'LobattoIIIB_4'                 ,
+    'PartitionedLobattoIII_AX_BV_3' ,
+    'PartitionedLobattoIII_AV_BX_3' ,
+    'PartitionedLobattoIII_AX_BV_4' ,
+    'PartitionedLobattoIII_AV_BX_4' ,
+]
 
 
-the_integrators = choreo.all_unique_SymplecticIntegrators
+the_integrators = {method:choreo.GetSymplecticIntegrator(method) for method in methods}
 
 
 for the_test in test_names:
@@ -105,7 +101,7 @@ for the_test in test_names:
         
     if the_test == "y' = Az; z' = By" :
 
-        test_ndim = 100
+        test_ndim = 10
 
 
 
@@ -138,9 +134,10 @@ for the_test in test_names:
         print('')
         print('SymplecticMethod : ',SymplecticMethod)
 
-        # SymplecticIntegrator = functools.partial(SymplecticIntegrator, maxiter = 50)
+        SymplecticIntegrator = functools.partial(SymplecticIntegrator, maxiter = 50)
 
-        t_span = (0.,np.pi)
+        # t_span = (0.,np.pi)
+        t_span = (0.,1.)
 
         ex_init  = ex_sol(t_span[0])
         ex_final = ex_sol(t_span[1])
@@ -151,14 +148,13 @@ for the_test in test_names:
         # print(x0)
         # print(v0)
 
-        refinement_lvl = [1,2,4,8,16,32,64,128,256,512,1024,2048]
+        # refinement_lvl = [1,2,4,8,16,32,64,128,256,512,1024,2048]
         # refinement_lvl = [1,10,100]
-        # refinement_lvl = list(range(1,11))
-        # refinement_lvl = list(range(1,21))
+        refinement_lvl = list(range(1,11))
         # refinement_lvl = list(range(1,101))
 
-        # n_tests = 1
-        n_tests = 100
+        n_tests = 1
+        # n_tests = 100
 
         for iref in range(len(refinement_lvl)):
 
@@ -167,7 +163,7 @@ for the_test in test_names:
             x0 = np.copy(ex_init[0          :  test_ndim])
             v0 = np.copy(ex_init[test_ndim  :2*test_ndim])
 
-            t_beg= time.perf_counter_ns()
+            t_beg = time.perf_counter_ns()
             for itest in range(n_tests):
                 xf,vf = SymplecticIntegrator(fun,gun,t_span,x0,v0,nint,nint)
             t_end = time.perf_counter_ns()
@@ -182,7 +178,7 @@ for the_test in test_names:
                 error_mul = max(error/error_prev,1e-16)
                 est_order = -m.log(error_mul)/m.log(refinement_lvl[iref]/refinement_lvl[iref-1])
 
-                print(f'{nint:4d}  error : {error:e}     error mul : {error_mul:e}     estimated order : {est_order:.2f}     time : {(t_end-t_beg)/One_sec:f}')
+                print(f'error : {error:e}     error mul : {error_mul:e}     estimated order : {est_order:.2f}     time : {(t_end-t_beg)/One_sec:f}')
                 # print(f'error : {error:e}     estimated order : {est_order:.2f}')
 
             error_prev = error
