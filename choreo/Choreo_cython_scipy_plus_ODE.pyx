@@ -133,6 +133,7 @@ def ExplicitSymplecticWithTable_VX_cython(
                 res = gun(tx,x)   
                 for idof in range(ndof):
                     v[idof] += ddt[istep] * res[idof]  
+
                 tv += ddt[istep]
 
         for idof in range(ndof):
@@ -498,11 +499,10 @@ def ImplicitSymplecticWithTableGaussSeidel_VX_cython(
 
                 iGS += 1
 
-                # GoOnGS = (iGS < maxiter) and (dXV_err > eps_mul2)
                 GoOnGS = (iGS < maxiter) and (dXV_err > eps_mul)
 
-            # if (iGS >= maxiter):
-            #     print("Max iter exceeded")
+            if (iGS >= maxiter):
+                print("Max iter exceeded. Rel error : ",dX_err/eps_mul,dV_err/eps_mul)
 
             tot_niter += iGS
 
@@ -700,8 +700,8 @@ def ImplicitSymplecticWithTableGaussSeidel_VX_cython_blas(
 
                 GoOnGS = (iGS < maxiter) and (dXV_err > eps_mul)
 
-            # if (iGS >= maxiter):
-            #     print("Max iter exceeded")
+            if (iGS >= maxiter):
+                print("Max iter exceeded. Rel error : ",dX_err/eps_mul,dV_err/eps_mul)
 
             tot_niter += iGS
 
@@ -943,7 +943,7 @@ def ImplicitSymplecticTanWithTableGaussSeidel_VX_cython(
                 GoOnGS = (iGS < maxiter) and (dXV_err > eps_mul)
 
             if (iGS >= maxiter):
-                print("Max iter exceeded")
+                print("Max iter exceeded. Rel error : ",dX_err/eps_mul,dV_err/eps_mul)
 
             tot_niter += iGS
 
@@ -1043,7 +1043,7 @@ def ImplicitSymplecticTanWithTableGaussSeidel_VX_cython(
                 GoOnGS = (iGS < maxiter) and (dXV_err > grad_eps_mul)
 
             if (iGS >= maxiter):
-                print("Max iter exceeded")
+                print("Max iter exceeded. Rel error : ",dX_err/eps_mul,dV_err/eps_mul)
 
             grad_tot_niter += iGS
 
@@ -1299,7 +1299,8 @@ def ImplicitSymplecticTanWithTableGaussSeidel_VX_cython_blas(
                 GoOnGS = (iGS < maxiter) and (dXV_err > eps_mul)
 
             if (iGS >= maxiter):
-                print("Max iter exceeded")
+                print("NonLin Max iter exceeded. Rel error : ",dXV_err,eps_mul,iint)
+                # print("NonLin Max iter exceeded. Error : ",dX_err,dV_err,eps_mul,iint)
 
             tot_niter += iGS
 
@@ -1373,7 +1374,8 @@ def ImplicitSymplecticTanWithTableGaussSeidel_VX_cython_blas(
                 GoOnGS = (iGS < maxiter) and (dXV_err > grad_eps_mul)
 
             if (iGS >= maxiter):
-                print("Max iter exceeded")
+                print("Tangent Max iter exceeded. Rel error : ",dXV_err/grad_eps_mul,iint)
+                # print("Tangent Max iter exceeded. Error : ",dX_err,dV_err,grad_eps_mul,iint)
 
             grad_tot_niter += iGS
 
