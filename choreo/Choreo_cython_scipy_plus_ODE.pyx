@@ -206,114 +206,139 @@ def ExplicitSymplecticWithTable_XV_cython(
 
     return x_keep, v_keep
 
-# @cython.cdivision(True)
-# def SymplecticStormerVerlet_XV_cython(
-#     object fun,
-#     object gun,
-#     (double, double) t_span,
-#     np.ndarray[double, ndim=1, mode="c"] x0,
-#     np.ndarray[double, ndim=1, mode="c"] v0,
-#     long nint,
-#     long keep_freq,
-# ):
+@cython.cdivision(True)
+def SymplecticStormerVerlet_XV_cython(
+    object fun,
+    object gun,
+    (double, double) t_span,
+    np.ndarray[double, ndim=1, mode="c"] x0,
+    np.ndarray[double, ndim=1, mode="c"] v0,
+    long nint,
+    long keep_freq,
+):
+
+    cdef long iint_keep, ifreq
+    cdef long nint_keep = nint // keep_freq
+    cdef long ndof = x0.size
+
+    cdef np.ndarray[double, ndim=2, mode="c"] x_keep = np.empty((nint_keep,ndof),dtype=np.float64)
+    cdef np.ndarray[double, ndim=2, mode="c"] v_keep = np.empty((nint_keep,ndof),dtype=np.float64)
+
+    cdef double t = t_span[0]
+    cdef double dt = (t_span[1] - t_span[0]) / nint
+    cdef double dt_half = dt*0.5
+
+    cdef np.ndarray[double, ndim=1, mode="c"] x = x0.copy()
+    cdef np.ndarray[double, ndim=1, mode="c"] v = v0.copy()
+
+    cdef np.ndarray[double, ndim=1, mode="c"] res
+
+    cdef long idof
+
+    res = gun(t,x)   
+    for idof in range(ndof):
+        v[idof] += dt_half * res[idof]  
+
+    for iint_keep in range(nint_keep):
+
+        for ifreq in range(keep_freq-1):
+
+            res = fun(t,v)  
+            for idof in range(ndof):
+                x[idof] += dt* res[idof]  
+
+            t += dt
+
+            res = gun(t,x)   
+            for idof in range(ndof):
+                v[idof] += dt * res[idof]  
+
+        res = fun(t,v)  
+        for idof in range(ndof):
+            x[idof] += dt * res[idof]  
+
+        t += dt
+
+        res = gun(t,x)   
+        for idof in range(ndof):
+            v[idof] += dt_half * res[idof]  
+
+        for idof in range(ndof):
+            x_keep[iint_keep,idof] = x[idof]
+
+        for idof in range(ndof):
+            v_keep[iint_keep,idof] = v[idof]
+
+        for idof in range(ndof):
+            v[idof] += dt_half * res[idof]  
+
+    return x_keep, v_keep
 # 
-#     cdef long iint_keep, ifreq
-#     cdef long nint_keep = nint // keep_freq
-#     cdef long ndof = x0.size
-# 
-#     cdef np.ndarray[double, ndim=2, mode="c"] x_keep = np.empty((nint_keep,ndof),dtype=np.float64)
-#     cdef np.ndarray[double, ndim=2, mode="c"] v_keep = np.empty((nint_keep,ndof),dtype=np.float64)
-# 
-#     cdef double t = t_span[0]
-#     cdef double dt = (t_span[1] - t_span[0]) / nint
-#     cdef double dt_half = dt*0.5
-# 
-#     cdef np.ndarray[double, ndim=1, mode="c"] x = x0.copy()
-#     cdef np.ndarray[double, ndim=1, mode="c"] v = v0.copy()
-# 
-#     cdef np.ndarray[double, ndim=1, mode="c"] res
-# 
-#     cdef long idof
-# 
-#     res = gun(t,x)   
-#     for idof in range(ndof):
-#         v[idof] += dt_half * res[idof]  
-# 
-#     for iint in range(nint-1):
-# 
-#         res = fun(t,v)  
-#         for idof in range(ndof):
-#             x[idof] += dt* res[idof]  
-# 
-#         t += dt
-# 
-#         res = gun(t,x)   
-#         for idof in range(ndof):
-#             v[idof] += dt * res[idof]  
-# 
-#     res = fun(t,v)  
-#     for idof in range(ndof):
-#         x[idof] += dt * res[idof]  
-# 
-#     t += dt
-# 
-#     res = gun(t,x)   
-#     for idof in range(ndof):
-#         v[idof] += dt_half * res[idof]  
-# 
-#     return x_keep, v_keep
-# 
-# @cython.cdivision(True)
-# def SymplecticStormerVerlet_VX_cython(
-#     object fun,
-#     object gun,
-#     (double, double) t_span,
-#     np.ndarray[double, ndim=1, mode="c"] x0,
-#     np.ndarray[double, ndim=1, mode="c"] v0,
-#     long nint,
-# ):
-# 
-#     cdef double t = t_span[0]
-#     cdef double dt = (t_span[1] - t_span[0]) / nint
-#     cdef double dt_half = dt*0.5
-# 
-#     cdef np.ndarray[double, ndim=1, mode="c"] x = x0.copy()
-#     cdef np.ndarray[double, ndim=1, mode="c"] v = v0.copy()
-# 
-#     cdef long ndof = x0.size
-#     cdef np.ndarray[double, ndim=1, mode="c"] res
-# 
-#     cdef long idof
-# 
-#     res = fun(t,v)  
-#     for idof in range(ndof):
-#         x[idof] += dt_half * res[idof]  
-# 
-#     t += dt_half
-#     
-#     for iint in range(nint-1):
-# 
-#         res = gun(t,x)   
-#         for idof in range(ndof):
-#             v[idof] += dt * res[idof]  
-# 
-#         res = fun(t,v)  
-#         for idof in range(ndof):
-#             x[idof] += dt* res[idof]  
-# 
-#         t += dt
-# 
-#     res = gun(t,x)   
-#     for idof in range(ndof):
-#         v[idof] += dt * res[idof]  
-# 
-#     res = fun(t,v)  
-#     for idof in range(ndof):
-#         x[idof] += dt_half* res[idof]  
-# 
-#     t += dt_half
-# 
-#     return x,v
+@cython.cdivision(True)
+def SymplecticStormerVerlet_VX_cython(
+    object fun,
+    object gun,
+    (double, double) t_span,
+    np.ndarray[double, ndim=1, mode="c"] x0,
+    np.ndarray[double, ndim=1, mode="c"] v0,
+    long nint,
+    long keep_freq,
+):
+
+    cdef double t = t_span[0]
+    cdef double dt = (t_span[1] - t_span[0]) / nint
+    cdef double dt_half = dt*0.5
+    cdef long nint_keep = nint // keep_freq
+    cdef long ndof = x0.size
+
+    cdef np.ndarray[double, ndim=1, mode="c"] x = x0.copy()
+    cdef np.ndarray[double, ndim=1, mode="c"] v = v0.copy()
+
+    cdef np.ndarray[double, ndim=2, mode="c"] x_keep = np.empty((nint_keep,ndof),dtype=np.float64)
+    cdef np.ndarray[double, ndim=2, mode="c"] v_keep = np.empty((nint_keep,ndof),dtype=np.float64)
+
+    cdef np.ndarray[double, ndim=1, mode="c"] res
+
+    cdef long idof
+
+    res = fun(t,v)  
+    
+    for iint_keep in range(nint_keep):
+
+        for idof in range(ndof):
+            x[idof] += dt_half * res[idof]  
+
+        t += dt_half
+
+        for ifreq in range(keep_freq-1):
+
+            res = gun(t,x)   
+            for idof in range(ndof):
+                v[idof] += dt * res[idof]  
+
+            res = fun(t,v)  
+            for idof in range(ndof):
+                x[idof] += dt* res[idof]  
+
+            t += dt
+
+        res = gun(t,x)   
+        for idof in range(ndof):
+            v[idof] += dt * res[idof]  
+
+        res = fun(t,v)  
+        for idof in range(ndof):
+            x[idof] += dt_half* res[idof]  
+
+        for idof in range(ndof):
+            x_keep[iint_keep,idof] = x[idof]
+
+        for idof in range(ndof):
+            v_keep[iint_keep,idof] = v[idof]
+
+        t += dt_half
+
+    return x,v
 
 @cython.cdivision(True)
 def ImplicitSymplecticWithTableGaussSeidel_VX_cython(
