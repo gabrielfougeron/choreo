@@ -12,8 +12,8 @@ import functools
 
 from choreo.Choreo_cython_scipy_plus_ODE import ExplicitSymplecticWithTable_XV_cython
 from choreo.Choreo_cython_scipy_plus_ODE import ExplicitSymplecticWithTable_VX_cython
-# from choreo.Choreo_cython_scipy_plus_ODE import SymplecticStormerVerlet_XV_cython
-# from choreo.Choreo_cython_scipy_plus_ODE import SymplecticStormerVerlet_VX_cython
+from choreo.Choreo_cython_scipy_plus_ODE import SymplecticStormerVerlet_XV_cython
+from choreo.Choreo_cython_scipy_plus_ODE import SymplecticStormerVerlet_VX_cython
 from choreo.Choreo_cython_scipy_plus_ODE import ImplicitSymplecticWithTableGaussSeidel_VX_cython
 from choreo.Choreo_cython_scipy_plus_ODE import ImplicitSymplecticTanWithTableGaussSeidel_VX_cython
 from choreo.Choreo_cython_scipy_plus_ODE import IntegrateOnSegment
@@ -33,6 +33,13 @@ assert c_table_Euler.size == d_table_Euler.size
 nsteps_Euler = c_table_Euler.size
 SymplecticEuler_XV = functools.partial(ExplicitSymplecticWithTable_XV_cython,c_table=c_table_Euler,d_table=d_table_Euler,nsteps=nsteps_Euler)
 SymplecticEuler_VX = functools.partial(ExplicitSymplecticWithTable_VX_cython,c_table=c_table_Euler,d_table=d_table_Euler,nsteps=nsteps_Euler)
+
+c_table_StormerVerlet = np.array([0.    ,1.      ])
+d_table_StormerVerlet = np.array([1./2  ,1./2    ])
+assert c_table_StormerVerlet.size == d_table_StormerVerlet.size
+nsteps_StormerVerlet = c_table_StormerVerlet.size
+SymplecticStormerVerlet_Table_XV = functools.partial(ExplicitSymplecticWithTable_XV_cython,c_table=c_table_StormerVerlet,d_table=d_table_StormerVerlet,nsteps=nsteps_StormerVerlet)
+SymplecticStormerVerlet_Table_VX = functools.partial(ExplicitSymplecticWithTable_VX_cython,c_table=c_table_StormerVerlet,d_table=d_table_StormerVerlet,nsteps=nsteps_StormerVerlet)
 
 c_table_Ruth3 = np.array([1.        ,-2./3  ,2/3    ])
 d_table_Ruth3 = np.array([-1./24    , 3./4  ,7./24  ])
@@ -634,9 +641,11 @@ all_SymplecticIntegrators = {
     'SymplecticEuler'               : SymplecticEuler_XV,
     'SymplecticEuler_XV'            : SymplecticEuler_XV,
     'SymplecticEuler_VX'            : SymplecticEuler_VX,
-    # 'SymplecticStormerVerlet'       : SymplecticStormerVerlet_XV_cython,
-    # 'SymplecticStormerVerlet_XV'    : SymplecticStormerVerlet_XV_cython,
-    # 'SymplecticStormerVerlet_VX'    : SymplecticStormerVerlet_VX_cython,
+    'SymplecticStormerVerlet'       : SymplecticStormerVerlet_XV_cython,
+    # 'SymplecticStormerVerlet_Table_VX'    : SymplecticStormerVerlet_Table_VX,
+    # 'SymplecticStormerVerlet_Table_XV'    : SymplecticStormerVerlet_Table_XV,
+    'SymplecticStormerVerlet_XV'    : SymplecticStormerVerlet_XV_cython,
+    'SymplecticStormerVerlet_VX'    : SymplecticStormerVerlet_VX_cython,
     'SymplecticRuth3'               : SymplecticRuth3_XV,
     'SymplecticRuth3_XV'            : SymplecticRuth3_XV,
     'SymplecticRuth3_VX'            : SymplecticRuth3_VX,
@@ -670,8 +679,10 @@ all_SymplecticTanIntegrators = {
 all_unique_SymplecticIntegrators = {
     'SymplecticEuler_XV'            : SymplecticEuler_XV,
     'SymplecticEuler_VX'            : SymplecticEuler_VX,
-    # 'SymplecticStormerVerlet_XV'    : SymplecticStormerVerlet_XV_cython,
-    # 'SymplecticStormerVerlet_VX'    : SymplecticStormerVerlet_VX_cython,
+    # 'SymplecticStormerVerlet_Table_VX'    : SymplecticStormerVerlet_Table_VX,
+    'SymplecticStormerVerlet_XV'    : SymplecticStormerVerlet_XV_cython,
+    # 'SymplecticStormerVerlet_Table_XV'    : SymplecticStormerVerlet_Table_XV,
+    'SymplecticStormerVerlet_VX'    : SymplecticStormerVerlet_VX_cython,
     'SymplecticRuth3_XV'            : SymplecticRuth3_XV,
     'SymplecticRuth3_VX'            : SymplecticRuth3_VX,
     'SymplecticRuth4_XV'            : SymplecticRuth4_XV,

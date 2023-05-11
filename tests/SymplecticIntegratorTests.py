@@ -27,14 +27,14 @@ One_sec = 1e9
 test_names = [
 # "y'' = -y",
 # "y'' = - exp(y)",
-# "y'' = xy",
-"y' = Az; z' = By",
+"y'' = xy",
+# "y' = Az; z' = By",
 ]
 
 
 
 
-methods = ['SymplecticGauss'+str(i) for i in range(1,11)]
+# methods = ['SymplecticGauss'+str(i) for i in range(1,11)]
 
 # methods.append('SymplecticEuler')
 # methods.append('SymplecticStormerVerlet')
@@ -50,10 +50,10 @@ methods = ['SymplecticGauss'+str(i) for i in range(1,11)]
 
 
 
-the_integrators = {method:choreo.GetSymplecticIntegrator(method) for method in methods}
+# the_integrators = {method:choreo.GetSymplecticIntegrator(method) for method in methods}
 
 
-# the_integrators = choreo.all_unique_SymplecticIntegrators
+the_integrators = choreo.all_unique_SymplecticIntegrators
 
 
 for the_test in test_names:
@@ -138,7 +138,7 @@ for the_test in test_names:
         print('')
         print('SymplecticMethod : ',SymplecticMethod)
 
-        SymplecticIntegrator = functools.partial(SymplecticIntegrator, maxiter = 50)
+        # SymplecticIntegrator = functools.partial(SymplecticIntegrator, maxiter = 50)
 
         t_span = (0.,np.pi)
 
