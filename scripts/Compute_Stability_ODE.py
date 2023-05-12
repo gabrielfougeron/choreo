@@ -64,12 +64,12 @@ def main():
 #             input_names_list.append(file_root)
 
     input_names_list = []
-    # input_names_list.append('01 - Figure eight'     )
+    input_names_list.append('01 - Figure eight'     )
     # input_names_list.append('14 - Small mass gap'   )
     # input_names_list.append('03 - Trefoil'          )
     # input_names_list.append('04 - 5 pointed star'   ) 
     # input_names_list.append('07 - No symmetry'   ) 
-    input_names_list.append('09 - 3x2 Circles'   ) 
+    # input_names_list.append('09 - 3x2 Circles'   ) 
 
 
 
@@ -226,19 +226,18 @@ def ExecName(the_name, input_folder, store_folder):
     w[ndof:2*ndof,0:ndof] = -np.identity(ndof)
 
 
-    
     # nint_ODE_mul = 64
     # nint_ODE_mul =  2**11
     # nint_ODE_mul =  2**7
     # nint_ODE_mul =  2**6
-    nint_ODE_mul =  2**3
+    # nint_ODE_mul =  2**3
     # nint_ODE_mul =  2**1
-    # nint_ODE_mul =  1
+    nint_ODE_mul =  1
 
-    # SymplecticMethod = 'SymplecticGauss1'
+    SymplecticMethod = 'SymplecticGauss1'
     # SymplecticMethod = 'SymplecticGauss2'
     # SymplecticMethod = 'SymplecticGauss3'
-    SymplecticMethod = 'SymplecticGauss5'
+    # SymplecticMethod = 'SymplecticGauss5'
     # SymplecticMethod = 'SymplecticGauss10'
     # SymplecticMethod = 'SymplecticGauss10'
     # SymplecticMethod = 'SymplecticGauss15'

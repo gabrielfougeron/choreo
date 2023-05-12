@@ -111,7 +111,6 @@ def Integrate(n_NT_init):
     w[ndof:2*ndof,0:ndof] = -np.identity(ndof)
 
 
-
 # 
 #     print('')
 #     print('#####################################')
