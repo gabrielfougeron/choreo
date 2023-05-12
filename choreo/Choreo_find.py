@@ -110,6 +110,7 @@ def Find_Choreo(
     ReconvergeSol,
     all_coeffs_init,
     AddNumberToOutputName,
+    SkipCheckRandomMinDist,
 ):
     """
 
@@ -168,18 +169,17 @@ def Find_Choreo(
 
     sampler = UniformRandom(d=rand_dim)
 
-    x0 = np.random.random(ActionSyst.param_to_coeff.shape[1])
-    xmin = ActionSyst.Compute_MinDist(x0)
+    if not(SkipCheckRandomMinDist):
 
-    if (xmin < 1e-5):
-        # print(xmin)
-        # raise ValueError("Init inter body distance too low. There is something wrong with constraints")
-        print("")
-        print(f"Init minimum inter body distance too low: {xmin}")
-        print("There is likely something wrong with constraints.")
-        print("")
+        x0 = np.random.random(ActionSyst.param_to_coeff.shape[1])
+        xmin = ActionSyst.Compute_MinDist(x0)
+        if (xmin < 1e-5):
+            print("")
+            print(f"Init minimum inter body distance too low: {xmin}")
+            print("There is likely something wrong with constraints.")
+            print("")
 
-        n_opt_max = -1
+            n_opt_max = -1
 
     n_opt = 0
     n_find = 0
