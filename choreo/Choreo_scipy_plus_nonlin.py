@@ -14,11 +14,18 @@ class current_best:
     # Class meant to store the best solution during scipy optimization / root finding
     # Useful since scipy does not return the best solution, but rather the solution at the last iteration.
     
-    def __init__(self,x,f):
+    def __init__(self,x=None,f=None,f_norm=None):
         
         self.x = x
         self.f = f
-        self.f_norm = np.linalg.norm(f)
+
+        if (f_norm is None):
+            if (f is None) :
+                self.f_norm = 1e100
+            else:
+                self.f_norm = np.linalg.norm(f)
+        
+
         
     def update(self,x,f,f_norm=None):
 
