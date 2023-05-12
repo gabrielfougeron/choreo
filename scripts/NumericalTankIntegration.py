@@ -55,9 +55,8 @@ def Integrate(n_NT_init):
     vid_size = (8,8) # Image size in inches
     # nint_plot_anim = 2*2*2*3*3
     nint_plot_anim = 2*2*2*3*3*5
-    dnint = 30
 
-    nint_plot_img = nint_plot_anim * dnint
+
 
     min_n_steps_ode = 1*nint_plot_anim
 
@@ -160,12 +159,20 @@ def Integrate(n_NT_init):
 
     t_span = (0., 1.)
 
+    # nint_anim = nbody * 1024 * 128
+    # nint_sub = 16
+
+    dnint = 16
+
     nint_anim = nbody * 1024 * 128
-    nint_sub = 16
+    # nint_anim = nbody * 1024 
+    nint_sub = 1 
 
     nint = nint_sub * nint_anim
 
-    all_pos, all_v = SymplecticIntegrator(
+    ActionSyst = choreo.setup_changevar(geodim,nbody,nint_anim,mass,n_reconverge_it_max_small,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change,CrashOnIdentity=False)
+
+    OnePeriodIntegrator = lambda x0, v0 : SymplecticIntegrator(
         fun = fun,
         gun = gun,
         t_span = t_span,
@@ -174,6 +181,45 @@ def Integrate(n_NT_init):
         nint = nint,
         keep_freq = nint_sub
     )
+
+    loss = functools.partial(choreo.ComputePeriodicityDefault, OnePeriodIntegrator = OnePeriodIntegrator)
+
+
+
+
+    # line_search = 'armijo'
+    # line_search = 'wolfe'
+    line_search = None
+
+    # linesearch_smin = 0.1
+    linesearch_smin = 1.
+
+    maxiter_period_opt = 3
+
+    # krylov_method_T = 'lgmres'
+    krylov_method_T = 'gmres'
+    # krylov_method_T = 'bicgstab'
+    # krylov_method_T = 'cgs'
+    # krylov_method_T = 'minres'
+    # krylov_method_T = 'tfqmr'
+
+    jac_options = {'method':krylov_method_T,'rdiff':None,'inner_tol':0,'inner_M':None }
+    jacobian = scipy.optimize.nonlin.KrylovJacobian(**jac_options)
+
+
+    best_sol = choreo.current_best()
+
+    vx0 = np.concatenate((x0,v0)).reshape(2*ndof)
+    opt_result , info = choreo.nonlin_solve_pp(F=loss,x0=vx0,jacobian=jacobian,verbose=True,maxiter=maxiter_period_opt,f_tol=1e-15,line_search=line_search,raise_exception=False,smin=linesearch_smin,full_output=True,callback=best_sol.update,tol_norm=np.linalg.norm)
+    
+    vx0 = best_sol.x
+
+    x0 = vx0[0:ndof].copy()
+    v0 = vx0[ndof:2*ndof].copy()
+
+
+
+    all_pos, all_v = OnePeriodIntegrator(x0,v0)
 
     xf = all_pos[-1,:].copy()
     vf = all_v[-1,:].copy()
@@ -189,17 +235,34 @@ def Integrate(n_NT_init):
 
     all_pos = np.ascontiguousarray(all_pos.transpose().reshape(ActionSyst_small.nbody,ActionSyst_small.geodim,nint_anim))
 
-# 
+    all_coeffs_c = choreo.the_rfft(all_pos,norm="forward")
+
+    all_coeffs = np.zeros((ActionSyst.nloop,ActionSyst.geodim,ActionSyst.ncoeff,2),dtype=np.float64)
+    all_coeffs[:,:,:,0] = all_coeffs_c[:,:,:].real
+    all_coeffs[:,:,:,1] = all_coeffs_c[:,:,:].imag
+
+    x = ActionSyst.Package_all_coeffs(all_coeffs)
+
+    filename_output = os.path.join(store_folder,file_basename + '.json')
+    ActionSyst.Write_Descriptor(x,filename_output)
+
+    filename_output = os.path.join(store_folder,file_basename + '.npy')
+    np.save(filename_output,all_pos)
+
     if ActionSyst_small :
         filename_output = os.path.join(store_folder,file_basename + '_ode.png')
 
-        ActionSyst_small.plot_given_2D(all_pos,filename_output,fig_size=img_size,color=color)
+        ActionSyst.plot_given_2D(all_pos,filename_output,fig_size=img_size,color=color)
 
     if Save_ODE_anim:
 
         filename_output = os.path.join(store_folder,file_basename + '_ode.mp4')
 
-        ActionSyst_small.plot_all_2D_anim(nint_plot=nint_anim,filename=filename_output,fig_size=vid_size,dnint=dnint,all_pos_trace=all_pos,all_pos_points=all_pos,color='body')
+        ActionSyst.plot_all_2D_anim(nint_plot=nint_anim,filename=filename_output,fig_size=vid_size,dnint=dnint,all_pos_trace=all_pos,all_pos_points=all_pos,color='body')
+
+
+
+# Integrate(0)
 
 
 if __name__ == "__main__":
