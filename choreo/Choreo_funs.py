@@ -1003,7 +1003,11 @@ class ChoreoAction():
             
                 ax.plot(ind,ampl[il,:],c=color_list[il%ncol])
     
+
+
         ax.set_yscale('log')
+
+        ax.set_ylim(bottom=1e-16)
             
         plt.tight_layout()
         plt.savefig(filename)

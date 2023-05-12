@@ -262,7 +262,7 @@ if __name__ == "__main__":
     with concurrent.futures.ProcessPoolExecutor(max_workers=n) as executor:
         
         res = []
-        for n_NT_init in range(len(all_NT_init)):
-        # for n_NT_init in range(4):
+        # for n_NT_init in range(len(all_NT_init)):
+        for n_NT_init in range(4):
             res.append(executor.submit(Integrate,n_NT_init))
             time.sleep(0.01)
