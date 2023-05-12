@@ -217,21 +217,17 @@ def Integrate(n_NT_init):
         all_coeffs_c = choreo.the_rfft(all_pos,norm="forward")
         
         ncoeff = nint // 2 + 1
-        ampl = np.zeros((ncoeff),dtype=np.float64)
-        for k in range(ncoeff):
-            ampl[k] = np.linalg.norm(all_coeffs_c[:,:,k])
-
-        max_ampl = np.zeros((ncoeff),dtype=np.float64)
 
         ncoeff_plotm1 = ncoeff - 1
 
-
-        iprob = (ncoeff * 2) // 3
+        iprob = (ncoeff * 9) // 10
         cur_max = 0.
         for k in range(iprob):
             k_inv = ncoeff_plotm1 - k
 
-            cur_max = max(cur_max,ampl[k_inv])
+            ampl = np.linalg.norm(all_coeffs_c[:,:,k_inv])
+
+            cur_max = max(cur_max,ampl)
 
 
         IsRepresentedByFourier = (cur_max < IsRepresentedByFourier_thresh)
