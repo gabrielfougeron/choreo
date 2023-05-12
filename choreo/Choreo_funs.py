@@ -942,8 +942,9 @@ class ChoreoAction():
             self.last_all_pos
         )
 
-        self.plot_coeff_loglog(
-            GradJ,filename,
+        plot_coeff_loglog(
+            GradJ,
+            filename,
             fig_size = fig_size,
             color_list = color_list,
             DoMaxInf = False
@@ -951,69 +952,13 @@ class ChoreoAction():
 
     def plot_coeff_profile(self,x,filename,fig_size=(16, 12),color_list = None):
 
-        self.plot_coeff_loglog(
-            self.Unpackage_all_coeffs(x),filename,
+        plot_coeff_loglog(
+            self.Unpackage_all_coeffs(x),
+            filename,
             fig_size = fig_size,
             color_list = color_list,
             DoMaxInf = True
         )
-
-    def plot_coeff_loglog(self,all_coeffs,filename,fig_size=(16, 12),color_list = None,DoMaxInf=True):
-        
-        if color_list is None:
-            color_list = plt.rcParams['axes.prop_cycle'].by_key()['color']
-
-        eps = 1e-18
-        # eps = 0.
-
-        ampl = np.zeros((self.nloop,self.ncoeff),dtype=np.float64)
-
-        for il in range(self.nloop):
-            for k in range(self.ncoeff):
-                ampl[il,k] = np.linalg.norm(all_coeffs[il,:,k,:]) + eps
-
-        fig = plt.figure()
-        fig.set_size_inches(fig_size)
-        ax = plt.gca()
-
-        ind = np.arange(self.ncoeff) 
-        ncol = len(color_list)
-
-        if DoMaxInf :
-
-            max_ampl = np.zeros((self.nloop,self.ncoeff),dtype=np.float64)
-
-            ncoeff_plotm1 = self.ncoeff - 1
-
-            for il in range(self.nloop):
-                cur_max = 0.
-                for k in range(self.ncoeff):
-                    k_inv = ncoeff_plotm1 - k
-
-                    cur_max = max(cur_max,ampl[il,k_inv])
-                    max_ampl[il,k_inv] = cur_max
-
-            for il in range(self.nloop):
-            
-                ax.plot(ind,max_ampl[il,:],c=color_list[il%ncol])
-
-        else:
-
-            for il in range(self.nloop):
-            
-                ax.plot(ind,ampl[il,:],c=color_list[il%ncol])
-    
-
-
-        ax.set_yscale('log')
-
-        ax.set_ylim(bottom=1e-16)
-            
-        plt.tight_layout()
-        plt.savefig(filename)
-        plt.close()
-
-
 
 
 
@@ -3017,3 +2962,62 @@ def TangentLagrangeResidual(
     )
 
     return np.concatenate((Action_hess_dx.reshape(-1),LagrangeMulInit_der.reshape(-1)))
+
+
+def plot_coeff_loglog(all_coeffs,filename,fig_size=(16, 12),color_list = None,DoMaxInf=True):
+    
+    if color_list is None:
+        color_list = plt.rcParams['axes.prop_cycle'].by_key()['color']
+
+    nloop = all_coeffs.shape[0]
+    ncoeff = all_coeffs.shape[2]
+
+    eps = 1e-18
+    # eps = 0.
+
+    ampl = np.zeros((nloop,ncoeff),dtype=np.float64)
+
+    for il in range(nloop):
+        for k in range(ncoeff):
+            ampl[il,k] = np.linalg.norm(all_coeffs[il,:,k,:]) + eps
+
+    fig = plt.figure()
+    fig.set_size_inches(fig_size)
+    ax = plt.gca()
+
+    ind = np.arange(ncoeff) 
+    ncol = len(color_list)
+
+    if DoMaxInf :
+
+        max_ampl = np.zeros((nloop,ncoeff),dtype=np.float64)
+
+        ncoeff_plotm1 = ncoeff - 1
+
+        for il in range(nloop):
+            cur_max = 0.
+            for k in range(ncoeff):
+                k_inv = ncoeff_plotm1 - k
+
+                cur_max = max(cur_max,ampl[il,k_inv])
+                max_ampl[il,k_inv] = cur_max
+
+        for il in range(nloop):
+        
+            ax.plot(ind,max_ampl[il,:],c=color_list[il%ncol])
+
+    else:
+
+        for il in range(nloop):
+        
+            ax.plot(ind,ampl[il,:],c=color_list[il%ncol])
+
+
+
+    ax.set_yscale('log')
+
+    ax.set_ylim(bottom=1e-16)
+        
+    plt.tight_layout()
+    plt.savefig(filename)
+    plt.close()

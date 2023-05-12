@@ -68,8 +68,8 @@ def Integrate(n_NT_init):
     # SymplecticMethod = 'SymplecticGauss1'
     # SymplecticMethod = 'SymplecticGauss2'
     # SymplecticMethod = 'SymplecticGauss3'
-    SymplecticMethod = 'SymplecticGauss5' 
-    # SymplecticMethod = 'SymplecticGauss10'
+    # SymplecticMethod = 'SymplecticGauss5' 
+    SymplecticMethod = 'SymplecticGauss10'
     # SymplecticMethod = 'SymplecticGauss15'
 
     SymplecticIntegrator = choreo.GetSymplecticIntegrator(SymplecticMethod)
@@ -102,7 +102,9 @@ def Integrate(n_NT_init):
     period_err_wish = 1e-10
 
     
-    IsRepresentedByFourier_thresh = 1e-13
+    # IsRepresentedByFourier_thresh = 1e-8
+    # IsRepresentedByFourier_thresh = 1e-9
+    IsRepresentedByFourier_thresh = 1e-14
 
 
 
@@ -194,10 +196,6 @@ def Integrate(n_NT_init):
 
         if CorrectAllPos:
 
-            all_pos_nc = all_pos
-
-            all_pos = np.zeros((nbody,geodim,nint),dtype=np.float64)
-
             for ib in range(nbody):
                 for idim in range(geodim):
                     
@@ -211,16 +209,19 @@ def Integrate(n_NT_init):
                         
                         t = iint / nint
 
-                        all_pos[ib,idim,iint] = all_pos_nc[ib,idim,iint] - (v*t + g*t*t/2 + b*m.sin(2*m.pi*t))
+                        all_pos[ib,idim,iint] -= (v*t + g*t*t/2 + b*m.sin(2*m.pi*t))
 
 
         all_coeffs_c = choreo.the_rfft(all_pos,norm="forward")
+
+
         
         ncoeff = nint // 2 + 1
 
         ncoeff_plotm1 = ncoeff - 1
 
-        iprob = (ncoeff * 9) // 10
+
+        iprob = (ncoeff * 1) // 5
         cur_max = 0.
         for k in range(iprob):
             k_inv = ncoeff_plotm1 - k
@@ -474,7 +475,7 @@ def Integrate(n_NT_init):
         print(f'Numerical Tank {n_NT_init:4d} could not integrate. Error: {period_err} Fourier at probe : {cur_max:.2e}')
 
 
-# Integrate(5)
+# Integrate(1)
 
 for n_NT_init in range(len(all_NT_init)):
 
