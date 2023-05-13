@@ -727,8 +727,7 @@ def GetSymplecticIntegrator(method='SymplecticRuth3', mul_x = True):
 
     return integrator
 
-def GetSymplecticTanIntegrator(method='SymplecticGauss1'):
-
+def GetSymplecticTanIntegrator(method='SymplecticGauss1', mul_x = True):
 
     integrator = all_SymplecticTanIntegrators.get(method)
 
@@ -740,9 +739,13 @@ def GetSymplecticTanIntegrator(method='SymplecticGauss1'):
             n = int(descr)
             Butcher_a_np, Butcher_b_np, Butcher_c_np, Butcher_beta_np, _ = ComputeGaussButcherTables_np(n)
 
+            if mul_x:
+                ImplicitSymplecticTanWithTableGaussSeidel = ImplicitSymplecticTanWithTableGaussSeidel_VX_cython_mulfun
+            else:
+                ImplicitSymplecticTanWithTableGaussSeidel = ImplicitSymplecticTanWithTableGaussSeidel_VX_cython
+
             integrator = functools.partial(
-                ImplicitSymplecticTanWithTableGaussSeidel_VX_cython,
-                # ImplicitSymplecticTanWithTableGaussSeidel_VX_cython,
+                ImplicitSymplecticTanWithTableGaussSeidel,
                 a_table_x = Butcher_a_np,
                 b_table_x = Butcher_b_np,
                 c_table_x = Butcher_c_np,
