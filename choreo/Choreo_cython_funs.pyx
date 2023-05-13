@@ -105,7 +105,7 @@ nhash = cnhash
 
 @cython.profile(False)
 @cython.linetrace(False)
-cdef inline (double, double, double) CCpt_interbody_pot(double xsq):  # xsq is the square of the distance between two bodies !
+cdef inline (double, double, double) CCpt_interbody_pot(double xsq) nogil:  # xsq is the square of the distance between two bodies !
     # Cython definition of the potential law
     
     cdef double a = cpow(xsq,cnm2)
@@ -1267,12 +1267,12 @@ def Compute_square_dist(
 def Compute_Forces_Cython(
     double[:,::1] x ,
     double[::1] mass ,
-    long nbody,
 ):
     # Does not actually computes the forces on every body, but rather the force divided by the mass.
 
     cdef long ib, ibp
     cdef long idim
+    cdef long nbody = x.shape[0]
     cdef long geodim = x.shape[1]
     cdef np.ndarray[double, ndim=2, mode="c"] f = np.zeros((nbody,geodim),dtype=np.float64)
 
@@ -1305,6 +1305,50 @@ def Compute_Forces_Cython(
 
     return f
 
+def Compute_Forces_Cython_mul_x(
+    double[:,:,::1] x ,
+    double[::1] mass ,
+):
+    # Does not actually computes the forces on every body, but rather the force divided by the mass.
+
+    cdef long ib, ibp
+    cdef long idim
+    cdef long irhs
+    cdef long nrhs = x.shape[0]
+    cdef long nbody = x.shape[1]
+    cdef long geodim = x.shape[2]
+    cdef np.ndarray[double, ndim=3, mode="c"] f = np.zeros((nrhs,nbody,geodim),dtype=np.float64)
+
+    cdef double[::1] dx = np.zeros((geodim),dtype=np.float64)
+
+    cdef double dx2,a
+    cdef double b,bp
+    cdef double pot,potp,potpp
+
+    for irhs in range(nrhs):
+        for ib in range(nbody-1):
+            for ibp in range(ib+1,nbody):
+
+                for idim in range(geodim):
+                    dx[idim] = x[irhs,ib,idim]-x[irhs,ibp,idim]
+
+                dx2 = dx[0]*dx[0]
+                for idim in range(1,geodim):
+                    dx2 += dx[idim]*dx[idim]
+
+                pot,potp,potpp = CCpt_interbody_pot(dx2)
+
+                a = 2*potp
+
+                b  = a*mass[ibp]
+                bp = a*mass[ib ]
+
+                for idim in range(geodim):
+
+                    f[irhs,ib,idim] -= b*dx[idim]
+                    f[irhs,ibp,idim] += bp*dx[idim]
+
+    return f
 
 def Compute_JacMat_Forces_Cython(
     double[:,::1] x ,
@@ -1318,7 +1362,7 @@ def Compute_JacMat_Forces_Cython(
     cdef long geodim = x.shape[1]
     cdef np.ndarray[double, ndim=4, mode="c"] Jf = np.zeros((nbody,geodim,nbody,geodim),dtype=np.float64)
 
-    cdef double[::1] dx = np.zeros((geodim),dtype=np.float64)
+    cdef double[::1] dx = np.empty((geodim),dtype=np.float64)
 
     cdef double dx2
     cdef double a,aa,aap
@@ -1379,8 +1423,8 @@ def Compute_JacMul_Forces_Cython(
     cdef long geodim = x.shape[1]
     cdef np.ndarray[double, ndim=2, mode="c"] df = np.zeros((nbody,geodim),dtype=np.float64)
 
-    cdef double[::1]  dx = np.zeros((geodim),dtype=np.float64)
-    cdef double[::1]  ddx = np.zeros((geodim),dtype=np.float64)
+    cdef double[::1]  dx = np.empty((geodim),dtype=np.float64)
+    cdef double[::1]  ddx = np.empty((geodim),dtype=np.float64)
 
     cdef double dx2,dxtddx
     cdef double a,aa,aap
@@ -1427,20 +1471,21 @@ def Compute_JacMulMat_Forces_Cython(
 
     cdef long ib, ibp
     cdef long idim,jdim
-    cdef long irhs
-    cdef long nrhs = x_d.shape[2]
+    cdef long i_grad_col
+    cdef long n_grad_col = x_d.shape[2]
 
     cdef long geodim = x.shape[1]
-    cdef np.ndarray[double, ndim=3, mode="c"] df = np.zeros((nbody,geodim,nrhs),dtype=np.float64)
+    cdef np.ndarray[double, ndim=3, mode="c"] df = np.zeros((nbody,geodim,n_grad_col),dtype=np.float64)
 
     cdef double[::1]  dx = np.empty((geodim),dtype=np.float64)
-    cdef double[:,::1]  ddx = np.empty((geodim,nrhs),dtype=np.float64)
-    cdef double[::1]  dxtddx = np.zeros((nrhs),dtype=np.float64)
+    cdef double[:,::1]  ddx = np.empty((geodim,n_grad_col),dtype=np.float64)
+    cdef double[::1]  dxtddx = np.empty((n_grad_col),dtype=np.float64)
 
     cdef double dx2
     cdef double a,aa,aap
     cdef double b,bb,bbp
     cdef double cc,ccp
+    cdef double pot,potp,potpp
 
     for ib in range(nbody-1):
         for ibp in range(ib+1,nbody):
@@ -1448,19 +1493,19 @@ def Compute_JacMulMat_Forces_Cython(
             for idim in range(geodim):
                 dx[idim] = x[ib,idim]-x[ibp,idim]
 
-                for irhs in range(nrhs):
-                    ddx[idim,irhs] = x_d[ib,idim,irhs]-x_d[ibp,idim,irhs]
+                for i_grad_col in range(n_grad_col):
+                    ddx[idim,i_grad_col] = x_d[ib,idim,i_grad_col]-x_d[ibp,idim,i_grad_col]
 
             dx2 = dx[0]*dx[0]
             for idim in range(1,geodim):
                 dx2 += dx[idim]*dx[idim]
 
-            for irhs in range(nrhs):
-                dxtddx[irhs] = dx[0]*ddx[0,irhs]
+            for i_grad_col in range(n_grad_col):
+                dxtddx[i_grad_col] = dx[0]*ddx[0,i_grad_col]
 
             for idim in range(1,geodim):
-                for irhs in range(nrhs):
-                    dxtddx[irhs] += dx[idim]*ddx[idim,irhs]
+                for i_grad_col in range(n_grad_col):
+                    dxtddx[i_grad_col] += dx[idim]*ddx[idim,i_grad_col]
 
             pot,potp,potpp = CCpt_interbody_pot(dx2)
 
@@ -1469,25 +1514,98 @@ def Compute_JacMulMat_Forces_Cython(
             aap = a*mass[ib ]
 
             for idim in range(geodim):
-                for irhs in range(nrhs):
-                    df[ib ,idim,irhs] -= aa *ddx[idim,irhs]
-                    df[ibp,idim,irhs] += aap*ddx[idim,irhs]
+                for i_grad_col in range(n_grad_col):
+                    df[ib ,idim,i_grad_col] -= aa *ddx[idim,i_grad_col]
+                    df[ibp,idim,i_grad_col] += aap*ddx[idim,i_grad_col]
 
             potpp = 4*potpp
 
             for idim in range(geodim):
-                for irhs in range(nrhs):
+                for i_grad_col in range(n_grad_col):
 
-                    b = potpp*dxtddx[irhs]
+                    b = potpp*dxtddx[i_grad_col]
                     bb  = b*mass[ibp]
                     bbp = b*mass[ib ]
 
-                    df[ib ,idim,irhs] -= bb *dx[idim]
-                    df[ibp,idim,irhs] += bbp*dx[idim]
+                    df[ib ,idim,i_grad_col] -= bb *dx[idim]
+                    df[ibp,idim,i_grad_col] += bbp*dx[idim]
 
     return df
 
+def Compute_JacMulMat_Forces_Cython_mul_x(
+    double[:,:,::1] x       ,
+    double[:,:,:,::1] x_d   ,
+    double[::1] mass      ,
+    long nbody            ,
+):
+    # Does not actually computes the forces on every body, but rather the force divided by the mass.
 
+    cdef long ib, ibp
+    cdef long idim,jdim
+    cdef long irhs
+    cdef long nrhs = x_d.shape[0]
+    cdef long i_grad_col
+    cdef long n_grad_col = x_d.shape[3]
+
+    cdef long geodim = x.shape[2]
+    cdef np.ndarray[double, ndim=4, mode="c"] df = np.zeros((nrhs,nbody,geodim,n_grad_col),dtype=np.float64)
+
+    cdef double[::1]  dx = np.empty((geodim),dtype=np.float64)
+    cdef double[:,::1]  ddx = np.empty((geodim,n_grad_col),dtype=np.float64)
+    cdef double[::1]  dxtddx = np.empty((n_grad_col),dtype=np.float64)
+
+    cdef double dx2
+    cdef double a,aa,aap
+    cdef double b,bb,bbp
+    cdef double cc,ccp
+    cdef double pot,potp,potpp
+
+    for irhs in range(nrhs):
+
+        for ib in range(nbody-1):
+            for ibp in range(ib+1,nbody):
+
+                for idim in range(geodim):
+                    dx[idim] = x[irhs,ib,idim]-x[irhs,ibp,idim]
+
+                    for i_grad_col in range(n_grad_col):
+                        ddx[idim,i_grad_col] = x_d[irhs,ib,idim,i_grad_col]-x_d[irhs,ibp,idim,i_grad_col]
+
+                dx2 = dx[0]*dx[0]
+                for idim in range(1,geodim):
+                    dx2 += dx[idim]*dx[idim]
+
+                for i_grad_col in range(n_grad_col):
+                    dxtddx[i_grad_col] = dx[0]*ddx[0,i_grad_col]
+
+                for idim in range(1,geodim):
+                    for i_grad_col in range(n_grad_col):
+                        dxtddx[i_grad_col] += dx[idim]*ddx[idim,i_grad_col]
+
+                pot,potp,potpp = CCpt_interbody_pot(dx2)
+
+                a = 2*potp
+                aa  = a*mass[ibp]
+                aap = a*mass[ib ]
+
+                for idim in range(geodim):
+                    for i_grad_col in range(n_grad_col):
+                        df[irhs,ib ,idim,i_grad_col] -= aa *ddx[idim,i_grad_col]
+                        df[irhs,ibp,idim,i_grad_col] += aap*ddx[idim,i_grad_col]
+
+                potpp = 4*potpp
+
+                for idim in range(geodim):
+                    for i_grad_col in range(n_grad_col):
+
+                        b = potpp*dxtddx[i_grad_col]
+                        bb  = b*mass[ibp]
+                        bbp = b*mass[ib ]
+
+                        df[irhs,ib ,idim,i_grad_col] -= bb *dx[idim]
+                        df[irhs,ibp,idim,i_grad_col] += bbp*dx[idim]
+
+    return df
 
 def Transform_Coeffs_Single_Loop(
         double[:,::1] SpaceRot,
@@ -2077,3 +2195,34 @@ def PopulateRandomInit(
             x0[i] = x_avg[i]
 
     return x0
+
+@cython.cdivision(True)
+cpdef InplaceCorrectPeriodicity(
+    double[:,:,::1]  all_pos,
+    double[::1]  x0,
+    double[::1]  v0,
+    double[::1]  xf,
+    double[::1]  vf,
+):
+
+    cdef int nbody = all_pos.shape[0]
+    cdef int geodim = all_pos.shape[1]
+    cdef int nint = all_pos.shape[2]
+
+    cdef int ib,idim,iint,i
+    cdef double iint_d, g,v,b,t
+
+    for ib in range(nbody):
+        for idim in range(geodim):
+            
+            i = geodim*ib + idim
+
+            g = vf[i] - v0[i]
+            v = (xf[i] - x0[i]) - (vf[i] - v0[i]) / 2
+            b = -v/ctwopi
+
+            for iint in range(nint):
+                iint_d = iint
+                t = iint_d / nint
+
+                all_pos[ib,idim,iint] -= (v*t + g*t*t/2 + b*csin(ctwopi*t))
