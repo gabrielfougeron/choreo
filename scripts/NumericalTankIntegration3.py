@@ -2,8 +2,14 @@ import os
 import concurrent.futures
 import multiprocessing
 
-os.environ['NUMBA_NUM_THREADS'] = str(multiprocessing.cpu_count()//2)
-os.environ['OMP_NUM_THREADS'] = str(multiprocessing.cpu_count()//2)
+# os.environ['NUMBA_NUM_THREADS'] = str(multiprocessing.cpu_count()//2)
+# os.environ['OMP_NUM_THREADS'] = str(multiprocessing.cpu_count()//2)
+# os.environ['OPENBLAS_NUM_THREADS'] = '1'
+# os.environ['NUMEXPR_NUM_THREADS'] = '1'
+# os.environ['MKL_NUM_THREADS'] = '1'
+
+os.environ['NUMBA_NUM_THREADS'] = '4'
+os.environ['OMP_NUM_THREADS'] = '4'
 os.environ['OPENBLAS_NUM_THREADS'] = '1'
 os.environ['NUMEXPR_NUM_THREADS'] = '1'
 os.environ['MKL_NUM_THREADS'] = '1'
@@ -15,15 +21,9 @@ import random
 import time
 import math as m
 import numpy as np
-import scipy.linalg
 import sys
 import fractions
-import scipy.integrate
-import scipy.special
 import functools
-import inspect
-
-import tqdm
 
 __PROJECT_ROOT__ = os.path.abspath(os.path.join(os.path.dirname(__file__),os.pardir))
 sys.path.append(__PROJECT_ROOT__)
@@ -196,20 +196,7 @@ def Integrate(n_NT_init):
 
         if CorrectAllPos:
 
-            for ib in range(nbody):
-                for idim in range(geodim):
-                    
-                    i = geodim*ib + idim
-
-                    g = vf[i] - v0[i]
-                    v = (xf[i] - x0[i]) - (vf[i] - v0[i]) / 2
-                    b = -v/(2*m.pi) 
-
-                    for iint in range(nint):
-                        
-                        t = iint / nint
-
-                        all_pos[ib,idim,iint] -= (v*t + g*t*t/2 + b*m.sin(2*m.pi*t))
+            choreo.InplaceCorrectPeriodicity(all_pos,x0,v0,xf,vf)
 
 
         all_coeffs_c = choreo.the_rfft(all_pos,norm="forward")
@@ -221,7 +208,7 @@ def Integrate(n_NT_init):
         ncoeff_plotm1 = ncoeff - 1
 
 
-        iprob = (ncoeff * 1) // 5
+        iprob = (ncoeff * 1) // 2
         cur_max = 0.
         for k in range(iprob):
             k_inv = ncoeff_plotm1 - k
@@ -402,8 +389,6 @@ def Integrate(n_NT_init):
         Sym_list = []
 
 
-
-
         # MomConsImposed = True
         MomConsImposed = False
 
@@ -415,53 +400,96 @@ def Integrate(n_NT_init):
         GradHessBackend="Cython"
         # GradHessBackend="Numba"
 
-        # ParallelBackend = True
-        ParallelBackend = False
-
-        Do_Speed_test = False
-        # Do_Speed_test = True
+        ParallelBackend = True
+        # ParallelBackend = False
 
         nint_init = nint
         ncoeff = nint // 2 + 1
 
+        # Do_Speed_test = True
+        Do_Speed_test = False
+        n_test = 3
 
         all_coeffs_c = choreo.the_rfft(all_pos,norm="forward")
 
-
-        all_coeffs_init = np.zeros((nbody,geodim,ncoeff,2),dtype=np.float64)
-        all_coeffs_init[:,:,:,0] = all_coeffs_c[:,:,:].real
-        all_coeffs_init[:,:,:,1] = all_coeffs_c[:,:,:].imag
-
-
-#         Sym_list.append(
-#             choreo.ChoreoSym(
-#                 LoopTarget=1,
-#                 LoopSource=0,
-#                 SpaceRot= np.array([[-1,0],[0,-1]],dtype=np.float64),
-#                 TimeRev=-1,
-#                 TimeShift=fractions.Fraction(
-#                     numerator=0,
-#                     denominator=2)
-#             ))
-#         Sym_list.append(
-#             choreo.ChoreoSym(
-#                 LoopTarget=2,
-#                 LoopSource=2,
-#                 SpaceRot= np.array([[-1,0],[0,-1]],dtype=np.float64),
-#                 TimeRev=-1,
-#                 TimeShift=fractions.Fraction(
-#                     numerator=0,
-#                     denominator=2)
-#             ))
-#         nloop = 2
 # 
-#         all_coeffs_init = np.zeros((nloop,geodim,ncoeff,2),dtype=np.float64)
-#         all_coeffs_init[0,:,:,0] = all_coeffs_c[0,:,:].real
-#         all_coeffs_init[0,:,:,1] = all_coeffs_c[0,:,:].imag
-#         all_coeffs_init[1,:,:,0] = all_coeffs_c[2,:,:].real
-#         all_coeffs_init[1,:,:,1] = all_coeffs_c[2,:,:].imag
+#         all_coeffs_init = np.zeros((nbody,geodim,ncoeff,2),dtype=np.float64)
+#         all_coeffs_init[:,:,:,0] = all_coeffs_c[:,:,:].real
+#         all_coeffs_init[:,:,:,1] = all_coeffs_c[:,:,:].imag
+
+
+        Sym_list.append(
+            choreo.ChoreoSym(
+                LoopTarget=1,
+                LoopSource=0,
+                SpaceRot= np.array([[-1,0],[0,-1]],dtype=np.float64),
+                TimeRev=-1,
+                TimeShift=fractions.Fraction(
+                    numerator=0,
+                    denominator=2)
+            ))
+        Sym_list.append(
+            choreo.ChoreoSym(
+                LoopTarget=2,
+                LoopSource=2,
+                SpaceRot= np.array([[-1,0],[0,-1]],dtype=np.float64),
+                TimeRev=-1,
+                TimeShift=fractions.Fraction(
+                    numerator=0,
+                    denominator=2)
+            ))
+        nloop = 2
+
+        all_coeffs_init = np.zeros((nloop,geodim,ncoeff,2),dtype=np.float64)
+        all_coeffs_init[0,:,:,0] = all_coeffs_c[0,:,:].real
+        all_coeffs_init[0,:,:,1] = all_coeffs_c[0,:,:].imag
+        all_coeffs_init[1,:,:,0] = all_coeffs_c[2,:,:].real
+        all_coeffs_init[1,:,:,1] = all_coeffs_c[2,:,:].imag
 
         SkipCheckRandomMinDist = True
+
+
+
+        if Do_Speed_test:
+
+            grad_backend_list = [
+                choreo.Empty_Backend_action,
+                choreo.Compute_action_Cython_2D_serial,
+                choreo.Compute_action_Numba_2D_serial,
+                # choreo.Compute_action_Cython_nD_serial,
+                # choreo.Compute_action_Numba_nD_serial,
+                choreo.Compute_action_Cython_2D_parallel,
+                choreo.Compute_action_Numba_2D_parallel,
+                # choreo.Compute_action_Cython_nD_parallel,
+                # choreo.Compute_action_Numba_nD_parallel,
+            ]
+
+            hess_backend_list = [
+                choreo.Empty_Backend_hess_mul,
+                choreo.Compute_action_hess_mul_Cython_2D_serial,
+                choreo.Compute_action_hess_mul_Numba_2D_serial,
+                # choreo.Compute_action_hess_mul_Cython_nD_serial,
+                # choreo.Compute_action_hess_mul_Numba_nD_serial,
+                choreo.Compute_action_hess_mul_Cython_2D_parallel,
+                choreo.Compute_action_hess_mul_Numba_2D_parallel,
+                # choreo.Compute_action_hess_mul_Cython_nD_parallel,
+                # choreo.Compute_action_hess_mul_Numba_nD_parallel,
+            ]
+
+
+            for i in range(len(grad_backend_list)):
+
+                grad_backend = grad_backend_list[i]
+                hess_backend = hess_backend_list[i]
+
+                print('')
+                print(grad_backend.__name__)
+                print(hess_backend.__name__)
+
+                all_kwargs = choreo.Pick_Named_Args_From_Dict(choreo.Speed_test,dict(globals(),**locals()))
+                choreo.Speed_test(**all_kwargs)
+
+
 
         all_kwargs = choreo.Pick_Named_Args_From_Dict(choreo.Find_Choreo,dict(globals(),**locals()))
 
@@ -475,13 +503,13 @@ def Integrate(n_NT_init):
         print(f'Numerical Tank {n_NT_init:4d} could not integrate. Error: {period_err} Fourier at probe : {cur_max:.2e}')
 
 
-# Integrate(1)
+# Integrate(4)
 
 for n_NT_init in range(len(all_NT_init)):
 
     Integrate(n_NT_init)
 
-# 
+# # 
 # if __name__ == "__main__":
 # 
 #     n = 5

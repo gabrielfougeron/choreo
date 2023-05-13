@@ -2077,3 +2077,34 @@ def PopulateRandomInit(
             x0[i] = x_avg[i]
 
     return x0
+
+
+cpdef InplaceCorrectPeriodicity(
+    double[:,:,::1]  all_pos,
+    double[::1]  x0,
+    double[::1]  v0,
+    double[::1]  xf,
+    double[::1]  vf,
+):
+
+    cdef int nbody = all_pos.shape[0]
+    cdef int geodim = all_pos.shape[1]
+    cdef int nint = all_pos.shape[2]
+
+    cdef int ib,idim,iint,i
+    cdef double g,v,b,t
+
+    for ib in range(nbody):
+        for idim in range(geodim):
+            
+            i = geodim*ib + idim
+
+            g = vf[i] - v0[i]
+            v = (xf[i] - x0[i]) - (vf[i] - v0[i]) / 2
+            b = -v/ctwopi
+
+            for iint in range(nint):
+                
+                t = iint / nint
+
+                all_pos[ib,idim,iint] -= (v*t + g*t*t/2 + b*csin(ctwopi*t))
