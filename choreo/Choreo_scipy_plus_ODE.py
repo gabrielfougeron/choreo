@@ -18,9 +18,8 @@ from choreo.Choreo_cython_scipy_plus_ODE import ImplicitSymplecticWithTableGauss
 from choreo.Choreo_cython_scipy_plus_ODE import ImplicitSymplecticTanWithTableGaussSeidel_VX_cython
 from choreo.Choreo_cython_scipy_plus_ODE import IntegrateOnSegment
 
-from choreo.Choreo_cython_scipy_plus_ODE import ImplicitSymplecticWithTableGaussSeidel_VX_cython_blas
-from choreo.Choreo_cython_scipy_plus_ODE import ImplicitSymplecticTanWithTableGaussSeidel_VX_cython_blas
-
+from choreo.Choreo_cython_scipy_plus_ODE import ImplicitSymplecticWithTableGaussSeidel_VX_cython_mulfun
+from choreo.Choreo_cython_scipy_plus_ODE import ImplicitSymplecticTanWithTableGaussSeidel_VX_cython_mulfun
 
 
 #####################
@@ -393,7 +392,7 @@ gamma_table_LobattoIIIB_4 = np.zeros((nsteps_LobattoIIIB_4,nsteps_LobattoIIIB_4)
 #######################################################################
 
 SymplecticLobattoIIIA_3 = functools.partial(
-    ImplicitSymplecticWithTableGaussSeidel_VX_cython_blas,
+    ImplicitSymplecticWithTableGaussSeidel_VX_cython,
     a_table_x = a_table_LobattoIIIA_3,
     b_table_x = b_table_LobattoIIIA_3,
     c_table_x = c_table_LobattoIIIA_3,
@@ -408,7 +407,7 @@ SymplecticLobattoIIIA_3 = functools.partial(
 )
 
 SymplecticLobattoIIIB_3 = functools.partial(
-    ImplicitSymplecticWithTableGaussSeidel_VX_cython_blas,
+    ImplicitSymplecticWithTableGaussSeidel_VX_cython,
     a_table_x = a_table_LobattoIIIB_3,
     b_table_x = b_table_LobattoIIIB_3,
     c_table_x = c_table_LobattoIIIB_3,
@@ -423,7 +422,7 @@ SymplecticLobattoIIIB_3 = functools.partial(
 )
 
 SymplecticLobattoIIIA_4 = functools.partial(
-    ImplicitSymplecticWithTableGaussSeidel_VX_cython_blas,
+    ImplicitSymplecticWithTableGaussSeidel_VX_cython,
     a_table_x = a_table_LobattoIIIA_4,
     b_table_x = b_table_LobattoIIIA_4,
     c_table_x = c_table_LobattoIIIA_4,
@@ -438,7 +437,7 @@ SymplecticLobattoIIIA_4 = functools.partial(
 )
 
 SymplecticLobattoIIIB_4 = functools.partial(
-    ImplicitSymplecticWithTableGaussSeidel_VX_cython_blas,
+    ImplicitSymplecticWithTableGaussSeidel_VX_cython,
     a_table_x = a_table_LobattoIIIB_4,
     b_table_x = b_table_LobattoIIIB_4,
     c_table_x = c_table_LobattoIIIB_4,
@@ -453,7 +452,7 @@ SymplecticLobattoIIIB_4 = functools.partial(
 )
 
 SymplecticPartitionedLobattoIII_AX_BV_3 = functools.partial(
-    ImplicitSymplecticWithTableGaussSeidel_VX_cython_blas,
+    ImplicitSymplecticWithTableGaussSeidel_VX_cython,
     a_table_x = a_table_LobattoIIIA_3,
     b_table_x = b_table_LobattoIIIA_3,
     c_table_x = c_table_LobattoIIIA_3,
@@ -468,7 +467,7 @@ SymplecticPartitionedLobattoIII_AX_BV_3 = functools.partial(
 )
 
 SymplecticPartitionedLobattoIII_AV_BX_3 = functools.partial(
-    ImplicitSymplecticWithTableGaussSeidel_VX_cython_blas,
+    ImplicitSymplecticWithTableGaussSeidel_VX_cython,
     a_table_x = a_table_LobattoIIIB_3,
     b_table_x = b_table_LobattoIIIB_3,
     c_table_x = c_table_LobattoIIIB_3,
@@ -483,7 +482,7 @@ SymplecticPartitionedLobattoIII_AV_BX_3 = functools.partial(
 )
 
 SymplecticPartitionedLobattoIII_AX_BV_4 = functools.partial(
-    ImplicitSymplecticWithTableGaussSeidel_VX_cython_blas,
+    ImplicitSymplecticWithTableGaussSeidel_VX_cython,
     a_table_x = a_table_LobattoIIIA_4,
     b_table_x = b_table_LobattoIIIA_4,
     c_table_x = c_table_LobattoIIIA_4,
@@ -498,7 +497,7 @@ SymplecticPartitionedLobattoIII_AX_BV_4 = functools.partial(
 )
 
 SymplecticPartitionedLobattoIII_AV_BX_4 = functools.partial(
-    ImplicitSymplecticWithTableGaussSeidel_VX_cython_blas,
+    ImplicitSymplecticWithTableGaussSeidel_VX_cython,
     a_table_x = a_table_LobattoIIIB_4,
     b_table_x = b_table_LobattoIIIB_4,
     c_table_x = c_table_LobattoIIIB_4,
@@ -515,7 +514,7 @@ SymplecticPartitionedLobattoIII_AV_BX_4 = functools.partial(
 ##############################################################################
 
 SymplecticTanLobattoIIIA_3 = functools.partial(
-    ImplicitSymplecticTanWithTableGaussSeidel_VX_cython_blas,
+    ImplicitSymplecticTanWithTableGaussSeidel_VX_cython,
     a_table_x = a_table_LobattoIIIA_3,
     b_table_x = b_table_LobattoIIIA_3,
     c_table_x = c_table_LobattoIIIA_3,
@@ -530,7 +529,7 @@ SymplecticTanLobattoIIIA_3 = functools.partial(
 )
 
 SymplecticTanLobattoIIIB_3 = functools.partial(
-    ImplicitSymplecticTanWithTableGaussSeidel_VX_cython_blas,
+    ImplicitSymplecticTanWithTableGaussSeidel_VX_cython,
     a_table_x = a_table_LobattoIIIB_3,
     b_table_x = b_table_LobattoIIIB_3,
     c_table_x = c_table_LobattoIIIB_3,
@@ -545,7 +544,7 @@ SymplecticTanLobattoIIIB_3 = functools.partial(
 )
 
 SymplecticTanLobattoIIIA_4 = functools.partial(
-    ImplicitSymplecticTanWithTableGaussSeidel_VX_cython_blas,
+    ImplicitSymplecticTanWithTableGaussSeidel_VX_cython,
     a_table_x = a_table_LobattoIIIA_4,
     b_table_x = b_table_LobattoIIIA_4,
     c_table_x = c_table_LobattoIIIA_4,
@@ -560,7 +559,7 @@ SymplecticTanLobattoIIIA_4 = functools.partial(
 )
 
 SymplecticTanLobattoIIIB_4 = functools.partial(
-    ImplicitSymplecticTanWithTableGaussSeidel_VX_cython_blas,
+    ImplicitSymplecticTanWithTableGaussSeidel_VX_cython,
     a_table_x = a_table_LobattoIIIB_4,
     b_table_x = b_table_LobattoIIIB_4,
     c_table_x = c_table_LobattoIIIB_4,
@@ -575,7 +574,7 @@ SymplecticTanLobattoIIIB_4 = functools.partial(
 )
 
 SymplecticTanPartitionedLobattoIII_AX_BV_3 = functools.partial(
-    ImplicitSymplecticTanWithTableGaussSeidel_VX_cython_blas,
+    ImplicitSymplecticTanWithTableGaussSeidel_VX_cython,
     a_table_x = a_table_LobattoIIIA_3,
     b_table_x = b_table_LobattoIIIA_3,
     c_table_x = c_table_LobattoIIIA_3,
@@ -590,7 +589,7 @@ SymplecticTanPartitionedLobattoIII_AX_BV_3 = functools.partial(
 )
 
 SymplecticTanPartitionedLobattoIII_AV_BX_3 = functools.partial(
-    ImplicitSymplecticTanWithTableGaussSeidel_VX_cython_blas,
+    ImplicitSymplecticTanWithTableGaussSeidel_VX_cython,
     a_table_x = a_table_LobattoIIIB_3,
     b_table_x = b_table_LobattoIIIB_3,
     c_table_x = c_table_LobattoIIIB_3,
@@ -605,7 +604,7 @@ SymplecticTanPartitionedLobattoIII_AV_BX_3 = functools.partial(
 )
 
 SymplecticTanPartitionedLobattoIII_AX_BV_4 = functools.partial(
-    ImplicitSymplecticTanWithTableGaussSeidel_VX_cython_blas,
+    ImplicitSymplecticTanWithTableGaussSeidel_VX_cython,
     a_table_x = a_table_LobattoIIIA_4,
     b_table_x = b_table_LobattoIIIA_4,
     c_table_x = c_table_LobattoIIIA_4,
@@ -620,7 +619,7 @@ SymplecticTanPartitionedLobattoIII_AX_BV_4 = functools.partial(
 )
 
 SymplecticTanPartitionedLobattoIII_AV_BX_4 = functools.partial(
-    ImplicitSymplecticTanWithTableGaussSeidel_VX_cython_blas,
+    ImplicitSymplecticTanWithTableGaussSeidel_VX_cython,
     a_table_x = a_table_LobattoIIIB_4,
     b_table_x = b_table_LobattoIIIB_4,
     c_table_x = c_table_LobattoIIIB_4,
@@ -691,7 +690,7 @@ all_unique_SymplecticIntegrators = {
     'SymplecticRuth4Rat_VX'         : SymplecticRuth4Rat_VX,
     }
 
-def GetSymplecticIntegrator(method='SymplecticRuth3'):
+def GetSymplecticIntegrator(method='SymplecticRuth3', mul_x = False):
 
     integrator = all_SymplecticIntegrators.get(method)
 
@@ -703,9 +702,13 @@ def GetSymplecticIntegrator(method='SymplecticRuth3'):
             n = int(descr)
             Butcher_a_np, Butcher_b_np, Butcher_c_np, Butcher_beta_np, _ = ComputeGaussButcherTables_np(n)
 
+            if mul_x:
+                ImplicitSymplecticWithTableGaussSeidel = ImplicitSymplecticWithTableGaussSeidel_VX_cython_mulfun
+            else:
+                ImplicitSymplecticWithTableGaussSeidel = ImplicitSymplecticWithTableGaussSeidel_VX_cython
+
             integrator = functools.partial(
-                ImplicitSymplecticWithTableGaussSeidel_VX_cython_blas,
-                # ImplicitSymplecticWithTableGaussSeidel_VX_cython,
+                ImplicitSymplecticWithTableGaussSeidel,
                 a_table_x = Butcher_a_np,
                 b_table_x = Butcher_b_np,
                 c_table_x = Butcher_c_np,
@@ -738,7 +741,7 @@ def GetSymplecticTanIntegrator(method='SymplecticGauss1'):
             Butcher_a_np, Butcher_b_np, Butcher_c_np, Butcher_beta_np, _ = ComputeGaussButcherTables_np(n)
 
             integrator = functools.partial(
-                ImplicitSymplecticTanWithTableGaussSeidel_VX_cython_blas,
+                ImplicitSymplecticTanWithTableGaussSeidel_VX_cython,
                 # ImplicitSymplecticTanWithTableGaussSeidel_VX_cython,
                 a_table_x = Butcher_a_np,
                 b_table_x = Butcher_b_np,

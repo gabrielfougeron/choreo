@@ -1267,12 +1267,12 @@ def Compute_square_dist(
 def Compute_Forces_Cython(
     double[:,::1] x ,
     double[::1] mass ,
-    long nbody,
 ):
     # Does not actually computes the forces on every body, but rather the force divided by the mass.
 
     cdef long ib, ibp
     cdef long idim
+    cdef long nbody = x.shape[0]
     cdef long geodim = x.shape[1]
     cdef np.ndarray[double, ndim=2, mode="c"] f = np.zeros((nbody,geodim),dtype=np.float64)
 
@@ -1302,6 +1302,50 @@ def Compute_Forces_Cython(
 
                 f[ib,idim] -= b*dx[idim]
                 f[ibp,idim] += bp*dx[idim]
+
+    return f
+
+def Compute_Forces_Cython_parallel(
+    double[:,:,::1] x ,
+    double[::1] mass ,
+):
+    # Does not actually computes the forces on every body, but rather the force divided by the mass.
+
+    cdef long ib, ibp
+    cdef long idim
+    cdef long irhs
+    cdef long nrhs = x.shape[0]
+    cdef long nbody = x.shape[1]
+    cdef long geodim = x.shape[2]
+    cdef np.ndarray[double, ndim=3, mode="c"] f = np.zeros((nrhs,nbody,geodim),dtype=np.float64)
+
+    cdef double[::1] dx = np.zeros((geodim),dtype=np.float64)
+
+    cdef double dx2,a
+    cdef double b,bp
+
+    for irhs in range(nrhs):
+        for ib in range(nbody-1):
+            for ibp in range(ib+1,nbody):
+
+                for idim in range(geodim):
+                    dx[idim] = x[irhs,ib,idim]-x[irhs,ibp,idim]
+
+                dx2 = dx[0]*dx[0]
+                for idim in range(1,geodim):
+                    dx2 += dx[idim]*dx[idim]
+
+                pot,potp,potpp = CCpt_interbody_pot(dx2)
+
+                a = 2*potp
+
+                b  = a*mass[ibp]
+                bp = a*mass[ib ]
+
+                for idim in range(geodim):
+
+                    f[irhs,ib,idim] -= b*dx[idim]
+                    f[irhs,ibp,idim] += bp*dx[idim]
 
     return f
 
