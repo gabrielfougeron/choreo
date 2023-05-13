@@ -690,7 +690,7 @@ all_unique_SymplecticIntegrators = {
     'SymplecticRuth4Rat_VX'         : SymplecticRuth4Rat_VX,
     }
 
-def GetSymplecticIntegrator(method='SymplecticRuth3', mul_x = False):
+def GetSymplecticIntegrator(method='SymplecticRuth3', mul_x = True):
 
     integrator = all_SymplecticIntegrators.get(method)
 
