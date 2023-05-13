@@ -42,6 +42,7 @@ try:
         
     from choreo.Choreo_cython_funs_parallel import Compute_action_Cython_2D_parallel, Compute_action_hess_mul_Cython_2D_parallel
     from choreo.Choreo_cython_funs_parallel import Compute_action_Cython_nD_parallel, Compute_action_hess_mul_Cython_nD_parallel
+    from choreo.Choreo_cython_funs_parallel import Compute_Forces_Cython_parallel, Compute_JacMulMat_Forces_Cython_parallel
 
 except:
     pass
@@ -55,7 +56,11 @@ from choreo.Choreo_cython_funs import twopi,nhash,n
 from choreo.Choreo_cython_funs import Compute_hash_action_Cython,Compute_Newton_err_Cython
 from choreo.Choreo_cython_funs import Assemble_Cstr_Matrix,diagmat_changevar
 from choreo.Choreo_cython_funs import Compute_MinDist_Cython,Compute_Loop_Dist_btw_avg_Cython,Compute_square_dist,Compute_Loop_Size_Dist_Cython
-from choreo.Choreo_cython_funs import Compute_Forces_Cython,Compute_JacMat_Forces_Cython,Compute_JacMul_Forces_Cython,Compute_JacMulMat_Forces_Cython
+from choreo.Choreo_cython_funs import Compute_JacMat_Forces_Cython,Compute_JacMul_Forces_Cython,Compute_JacMulMat_Forces_Cython
+
+from choreo.Choreo_cython_funs import Compute_Forces_Cython, Compute_Forces_Cython_mul_x
+from choreo.Choreo_cython_funs import Compute_JacMulMat_Forces_Cython, Compute_JacMulMat_Forces_Cython_mul_x
+
 from choreo.Choreo_cython_funs import Transform_Coeffs_Single_Loop,SparseScaleCoeffs,ComputeSpeedCoeffs
 from choreo.Choreo_cython_funs import the_irfft,the_rfft
 from choreo.Choreo_cython_funs import Compute_hamil_hess_mul_Cython_nosym,Compute_hamil_hess_mul_xonly_Cython_nosym
@@ -632,7 +637,6 @@ class ChoreoAction():
         rhs[1,:,:] = Compute_Forces_Cython(
             all_pos_vel[0,:,:]  ,
             self.mass           ,
-            self.nbody          
         )
 
         return rhs.reshape(2*self.nbody*self.geodim)
@@ -640,36 +644,98 @@ class ChoreoAction():
     def Compute_ODE_RHS(self,t,x):
         return self.Compute_Auto_ODE_RHS(x)
 
-    def GetSymplecticODEDef(self):
+    def GetSymplecticODEDef(self, mul_x = True, parallel = False):
 
         def fun(t,v):
-            return v
+            return v.copy()
 
-        def gun(t,x):
-            return Compute_Forces_Cython(
-                x.reshape(self.nbody,self.geodim)  ,
-                self.mass                   ,
-                self.nbody                  ,
-            ).reshape(-1)
+        assert mul_x or not(parallel)
+
+        if mul_x :
+
+            if parallel:
+
+                def gun(t,x):
+
+                    nrhs = x.shape[0]
+
+                    return Compute_Forces_Cython_parallel(
+                        x.reshape(nrhs,self.nbody,self.geodim)  ,
+                        self.mass                   ,
+                    ).reshape(nrhs,-1)
+            else:
+                
+                def gun(t,x):
+                        
+                    nrhs = x.shape[0]
+
+                    return Compute_Forces_Cython_mul_x(
+                        x.reshape(nrhs,self.nbody,self.geodim)  ,
+                        self.mass                   ,
+                    ).reshape(nrhs,-1)
+
+        else:
+
+            def gun(t,x):
+                return Compute_Forces_Cython(
+                    x.reshape(self.nbody,self.geodim)  ,
+                    self.mass                   ,
+                ).reshape(-1)
 
         return fun,gun
-    
-    def GetSymplecticTanODEDef(self):
+
+    def GetSymplecticTanODEDef(self, mul_x = True, parallel = False):
 
         def grad_fun(t,v,grad_v):
-            return grad_v
+            return grad_v.copy()
+        
+        assert mul_x or not(parallel)
 
-        def grad_gun(t,x,grad_x):
+        if mul_x :
 
-            ndof = self.nbody*self.geodim
-            nrhs = grad_x.shape[1]
+            if parallel:
 
-            return Compute_JacMulMat_Forces_Cython(
-                x.reshape(self.nbody,self.geodim),
-                grad_x.reshape(self.nbody,self.geodim,nrhs)   ,
-                self.mass   ,
-                self.nbody  ,
-            ).reshape(ndof,nrhs)
+                def grad_gun(t,x,grad_x):
+                        
+                    nrhs = x.shape[0]
+                    ndof = self.nbody*self.geodim
+                    n_grad_col = grad_x.shape[2]
+
+                    return Compute_JacMulMat_Forces_Cython_parallel(
+                        x.reshape(nrhs,self.nbody,self.geodim),
+                        grad_x.reshape(nrhs,self.nbody,self.geodim,n_grad_col)   ,
+                        self.mass   ,
+                        self.nbody  ,
+                    ).reshape(nrhs,ndof,n_grad_col)
+                
+            else:
+                
+                def grad_gun(t,x,grad_x):
+                        
+                    nrhs = x.shape[0]
+                    ndof = self.nbody*self.geodim
+                    n_grad_col = grad_x.shape[2]
+
+                    return Compute_JacMulMat_Forces_Cython_mul_x(
+                        x.reshape(nrhs,self.nbody,self.geodim),
+                        grad_x.reshape(nrhs,self.nbody,self.geodim,n_grad_col)   ,
+                        self.mass   ,
+                        self.nbody  ,
+                    ).reshape(nrhs,ndof,n_grad_col)
+
+        else:
+
+            def grad_gun(t,x,grad_x):
+
+                ndof = self.nbody*self.geodim
+                nrhs = grad_x.shape[1]
+
+                return Compute_JacMulMat_Forces_Cython(
+                    x.reshape(self.nbody,self.geodim),
+                    grad_x.reshape(self.nbody,self.geodim,nrhs)   ,
+                    self.mass   ,
+                    self.nbody  ,
+                ).reshape(ndof,nrhs)
 
         return grad_fun, grad_gun
 
@@ -942,8 +1008,9 @@ class ChoreoAction():
             self.last_all_pos
         )
 
-        self.plot_coeff_loglog(
-            GradJ,filename,
+        plot_coeff_loglog(
+            GradJ,
+            filename,
             fig_size = fig_size,
             color_list = color_list,
             DoMaxInf = False
@@ -951,65 +1018,13 @@ class ChoreoAction():
 
     def plot_coeff_profile(self,x,filename,fig_size=(16, 12),color_list = None):
 
-        self.plot_coeff_loglog(
-            self.Unpackage_all_coeffs(x),filename,
+        plot_coeff_loglog(
+            self.Unpackage_all_coeffs(x),
+            filename,
             fig_size = fig_size,
             color_list = color_list,
             DoMaxInf = True
         )
-
-    def plot_coeff_loglog(self,all_coeffs,filename,fig_size=(16, 12),color_list = None,DoMaxInf=True):
-        
-        if color_list is None:
-            color_list = plt.rcParams['axes.prop_cycle'].by_key()['color']
-
-        eps = 1e-18
-        # eps = 0.
-
-        ampl = np.zeros((self.nloop,self.ncoeff),dtype=np.float64)
-
-        for il in range(self.nloop):
-            for k in range(self.ncoeff):
-                ampl[il,k] = np.linalg.norm(all_coeffs[il,:,k,:]) + eps
-
-        fig = plt.figure()
-        fig.set_size_inches(fig_size)
-        ax = plt.gca()
-
-        ind = np.arange(self.ncoeff) 
-        ncol = len(color_list)
-
-        if DoMaxInf :
-
-            max_ampl = np.zeros((self.nloop,self.ncoeff),dtype=np.float64)
-
-            ncoeff_plotm1 = self.ncoeff - 1
-
-            for il in range(self.nloop):
-                cur_max = 0.
-                for k in range(self.ncoeff):
-                    k_inv = ncoeff_plotm1 - k
-
-                    cur_max = max(cur_max,ampl[il,k_inv])
-                    max_ampl[il,k_inv] = cur_max
-
-            for il in range(self.nloop):
-            
-                ax.plot(ind,max_ampl[il,:],c=color_list[il%ncol])
-
-        else:
-
-            for il in range(self.nloop):
-            
-                ax.plot(ind,ampl[il,:],c=color_list[il%ncol])
-    
-        ax.set_yscale('log')
-            
-        plt.tight_layout()
-        plt.savefig(filename)
-        plt.close()
-
-
 
 
 
@@ -1620,6 +1635,127 @@ class ChoreoAction():
         plt.savefig(filename)
         
         plt.close()
+
+
+    def plot_given_2D(self,all_pos,filename,fig_size=(10,10),dpi=100,color=None,color_list=None,xlim=None,extend=0.03,CloseLoop=True):
+        r"""
+        Plots 2D trajectories with one color per body and saves image in file
+        """
+        
+        if color_list is None:
+            color_list = plt.rcParams['axes.prop_cycle'].by_key()['color']
+
+        n_loop_plot = all_pos.shape[0]
+        nint_plot = all_pos.shape[2]
+
+        if CloseLoop:
+
+            all_pos_b = np.zeros((n_loop_plot,self.geodim,nint_plot+1),dtype=np.float64)
+            all_pos_b[:,:,0:nint_plot] = all_pos
+            all_pos_b[:,:,nint_plot] = all_pos[:,:,0]
+
+        else:
+
+            all_pos_b = all_pos
+
+        ncol = len(color_list)
+        
+        cb = ['b' for ib in range(n_loop_plot)]
+        i_loop_plot = 0
+
+        if (color is None) or (color == "none"):
+            for il in range(self.nloop):
+                for ib in range(self.loopnb[il]):
+                    if (self.RequiresLoopDispUn[il,ib]) :
+
+                        cb[i_loop_plot] = color_list[0]
+
+                        i_loop_plot +=1
+
+        elif (color == "body"):
+            for il in range(self.nloop):
+                for ib in range(self.loopnb[il]):
+                    if (self.RequiresLoopDispUn[il,ib]) :
+
+                        cb[i_loop_plot] = color_list[self.Targets[il,ib]%ncol]
+
+                        i_loop_plot +=1
+
+        elif (color == "loop"):
+            for il in range(self.nloop):
+                for ib in range(self.loopnb[il]):
+                    if (self.RequiresLoopDispUn[il,ib]) :
+
+                        cb[i_loop_plot] = color_list[il%ncol]
+
+                        i_loop_plot +=1
+
+        elif (color == "loop_id"):
+            for il in range(self.nloop):
+                for ib in range(self.loopnb[il]):
+                    if (self.RequiresLoopDispUn[il,ib]) :
+
+                        cb[i_loop_plot] = color_list[ib%ncol]
+
+                        i_loop_plot +=1
+
+        else:
+            raise ValueError(f'Unknown color scheme "{color}"')
+
+        if xlim is None:
+
+            xmin = all_pos_b[:,0,:].min()
+            xmax = all_pos_b[:,0,:].max()
+            ymin = all_pos_b[:,1,:].min()
+            ymax = all_pos_b[:,1,:].max()
+
+        else :
+
+            xmin = xlim[0]
+            xmax = xlim[1]
+            ymin = xlim[2]
+            ymax = xlim[3]
+        
+        xinf = xmin - extend*(xmax-xmin)
+        xsup = xmax + extend*(xmax-xmin)
+        
+        yinf = ymin - extend*(ymax-ymin)
+        ysup = ymax + extend*(ymax-ymin)
+        
+        hside = max(xsup-xinf,ysup-yinf)/2
+
+        xmid = (xinf+xsup)/2
+        ymid = (yinf+ysup)/2
+
+        xinf = xmid - hside
+        xsup = xmid + hside
+
+        yinf = ymid - hside
+        ysup = ymid + hside
+
+        # Plot-related
+        fig = plt.figure()
+        fig.set_size_inches(fig_size)
+        fig.set_dpi(dpi)
+        ax = plt.gca()
+
+        lines = sum([ax.plot([], [],'-',color=cb[ib] ,antialiased=True,zorder=-ib)  for ib in range(n_loop_plot)], [])
+        points = sum([ax.plot([], [],'ko', antialiased=True)for ib in range(n_loop_plot)], [])
+
+        ax.axis('off')
+        ax.set_xlim([xinf, xsup])
+        ax.set_ylim([yinf, ysup ])
+        ax.set_aspect('equal', adjustable='box')
+        plt.tight_layout()
+        
+        for i_loop_plot in range(n_loop_plot):
+
+            lines[i_loop_plot].set_data(all_pos_b[i_loop_plot,0,:], all_pos_b[i_loop_plot,1,:])
+
+        plt.savefig(filename)
+        
+        plt.close()
+
 
     def plot_all_2D_anim(self,x=None,nint_plot=None,filename=None,nperiod=1,Plot_trace=True,fig_size=(5,5),dnint=1,all_pos_trace=None,all_pos_points=None,xlim=None,extend=0.03,color_list=None,color=None,fps=60):
         r"""
@@ -2892,3 +3028,62 @@ def TangentLagrangeResidual(
     )
 
     return np.concatenate((Action_hess_dx.reshape(-1),LagrangeMulInit_der.reshape(-1)))
+
+
+def plot_coeff_loglog(all_coeffs,filename,fig_size=(16, 12),color_list = None,DoMaxInf=True):
+    
+    if color_list is None:
+        color_list = plt.rcParams['axes.prop_cycle'].by_key()['color']
+
+    nloop = all_coeffs.shape[0]
+    ncoeff = all_coeffs.shape[2]
+
+    eps = 1e-18
+    # eps = 0.
+
+    ampl = np.zeros((nloop,ncoeff),dtype=np.float64)
+
+    for il in range(nloop):
+        for k in range(ncoeff):
+            ampl[il,k] = np.linalg.norm(all_coeffs[il,:,k,:]) + eps
+
+    fig = plt.figure()
+    fig.set_size_inches(fig_size)
+    ax = plt.gca()
+
+    ind = np.arange(ncoeff) 
+    ncol = len(color_list)
+
+    if DoMaxInf :
+
+        max_ampl = np.zeros((nloop,ncoeff),dtype=np.float64)
+
+        ncoeff_plotm1 = ncoeff - 1
+
+        for il in range(nloop):
+            cur_max = 0.
+            for k in range(ncoeff):
+                k_inv = ncoeff_plotm1 - k
+
+                cur_max = max(cur_max,ampl[il,k_inv])
+                max_ampl[il,k_inv] = cur_max
+
+        for il in range(nloop):
+        
+            ax.plot(ind,max_ampl[il,:],c=color_list[il%ncol])
+
+    else:
+
+        for il in range(nloop):
+        
+            ax.plot(ind,ampl[il,:],c=color_list[il%ncol])
+
+
+
+    ax.set_yscale('log')
+
+    ax.set_ylim(bottom=1e-16)
+        
+    plt.tight_layout()
+    plt.savefig(filename)
+    plt.close()

@@ -1011,3 +1011,138 @@ def Compute_action_hess_mul_Cython_time_loop_2D_parallel(
                 hess_pot_all_d_local[rk, il ,1,iint   ] -= ddf1
 
     return hess_pot_all_d_local_np.sum(axis=0)
+
+def Compute_Forces_Cython_parallel(
+    double[:,:,::1] x ,
+    double[::1] mass ,
+):
+    # Does not actually computes the forces on every body, but rather the force divided by the mass.
+
+    cdef Py_ssize_t ib, ibp
+    cdef Py_ssize_t idim
+    cdef Py_ssize_t irhs
+    cdef Py_ssize_t nrhs = x.shape[0]
+    cdef Py_ssize_t nbody = x.shape[1]
+    cdef Py_ssize_t geodim = x.shape[2]
+    cdef np.ndarray[double, ndim=3, mode="c"] f = np.zeros((nrhs,nbody,geodim),dtype=np.float64)
+
+    cdef int num_threads = openmp.omp_get_max_threads()
+
+    cdef double *dx
+
+    cdef double dx2,a
+    cdef double b,bp
+    cdef double pot,potp,potpp
+
+    with nogil, parallel(num_threads=num_threads):
+
+        dx = <double *> malloc(sizeof(double) * geodim)
+
+        for irhs in prange(nrhs):
+        
+            for ib in range(nbody-1):
+                for ibp in range(ib+1,nbody):
+
+                    for idim in range(geodim):
+                        dx[idim] = x[irhs,ib,idim]-x[irhs,ibp,idim]
+
+                    dx2 = dx[0]*dx[0]
+                    for idim in range(1,geodim):
+                        dx2 = dx2 + dx[idim]*dx[idim]
+
+                    pot,potp,potpp = CCpt_interbody_pot(dx2)
+
+                    a = 2*potp
+
+                    b  = a*mass[ibp]
+                    bp = a*mass[ib ]
+ 
+                    for idim in range(geodim):
+
+                        f[irhs,ib ,idim] = f[irhs,ib ,idim] - b *dx[idim]
+                        f[irhs,ibp,idim] = f[irhs,ibp,idim] + bp*dx[idim]
+
+    return f
+
+def Compute_JacMulMat_Forces_Cython_parallel(
+    double[:,:,::1] x       ,
+    double[:,:,:,::1] x_d   ,
+    double[::1] mass      ,
+    long nbody            ,
+):
+    # Does not actually computes the forces on every body, but rather the force divided by the mass.
+
+    cdef Py_ssize_t ib, ibp
+    cdef Py_ssize_t idim,jdim
+    cdef Py_ssize_t irhs
+    cdef Py_ssize_t nrhs = x_d.shape[0]
+    cdef Py_ssize_t i_grad_col
+    cdef Py_ssize_t n_grad_col = x_d.shape[3]
+
+    cdef long geodim = x.shape[2]
+    cdef np.ndarray[double, ndim=4, mode="c"] df = np.zeros((nrhs,nbody,geodim,n_grad_col),dtype=np.float64)
+
+    cdef int num_threads = openmp.omp_get_max_threads()
+ 
+    cdef double *dx
+    cdef double *dxtddx
+    cdef double *ddx
+
+    cdef double dx2
+    cdef double a,aa,aap
+    cdef double b,bb,bbp
+    cdef double cc,ccp
+    cdef double pot,potp,potpp
+
+    with nogil, parallel(num_threads=num_threads):
+
+        dx = <double *> malloc(sizeof(double) * geodim)
+        ddx = <double *> malloc(sizeof(double) * geodim * n_grad_col)
+        dxtddx = <double *> malloc(sizeof(double) * n_grad_col)
+
+        for irhs in prange(nrhs):
+
+            for ib in range(nbody-1):
+                for ibp in range(ib+1,nbody):
+
+                    for idim in range(geodim):
+                        dx[idim] = x[irhs,ib,idim]-x[irhs,ibp,idim]
+
+                        for i_grad_col in range(n_grad_col):
+                            ddx[idim*n_grad_col+i_grad_col] = x_d[irhs,ib,idim,i_grad_col]-x_d[irhs,ibp,idim,i_grad_col]
+
+                    dx2 = dx[0]*dx[0]
+                    for idim in range(1,geodim):
+                        dx2 = dx2 + dx[idim]*dx[idim]
+
+                    for i_grad_col in range(n_grad_col):
+                        dxtddx[i_grad_col] = dx[0]*ddx[i_grad_col]
+
+                    for idim in range(1,geodim):
+                        for i_grad_col in range(n_grad_col):
+                            dxtddx[i_grad_col] = dxtddx[i_grad_col] + dx[idim]*ddx[idim*n_grad_col+i_grad_col] 
+
+                    pot,potp,potpp = CCpt_interbody_pot(dx2)
+
+                    a = 2*potp
+                    aa  = a*mass[ibp]
+                    aap = a*mass[ib ]
+
+                    for idim in range(geodim):
+                        for i_grad_col in range(n_grad_col):
+                            df[irhs,ib ,idim,i_grad_col] = df[irhs,ib ,idim,i_grad_col] - aa *ddx[idim*n_grad_col+i_grad_col] 
+                            df[irhs,ibp,idim,i_grad_col] = df[irhs,ibp,idim,i_grad_col] + aap*ddx[idim*n_grad_col+i_grad_col] 
+
+                    potpp = 4*potpp
+
+                    for idim in range(geodim):
+                        for i_grad_col in range(n_grad_col):
+
+                            b = potpp*dxtddx[i_grad_col]
+                            bb  = b*mass[ibp]
+                            bbp = b*mass[ib ]
+
+                            df[irhs,ib ,idim,i_grad_col] = df[irhs,ib ,idim,i_grad_col] - bb *dx[idim]
+                            df[irhs,ibp,idim,i_grad_col] = df[irhs,ibp,idim,i_grad_col] + bbp*dx[idim]
+
+    return df
