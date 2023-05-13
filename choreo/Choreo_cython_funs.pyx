@@ -1367,10 +1367,8 @@ def Compute_Forces_Cython_parallel(
     cdef Py_ssize_t geodim = x.shape[2]
     cdef np.ndarray[double, ndim=3, mode="c"] f = np.zeros((nrhs,nbody,geodim),dtype=np.float64)
 
-    # cdef int num_threads = openmp.omp_get_max_threads()
-    cdef int num_threads = nrhs
+    cdef int num_threads = openmp.omp_get_max_threads()
 
-    # cdef double[::1] dx = np.zeros((geodim),dtype=np.float64)
     cdef double *dx
 
     cdef double dx2,a

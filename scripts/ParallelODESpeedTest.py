@@ -1,9 +1,15 @@
 import os
-
-os.environ['OPENBLAS_NUM_THREADS'] = '1'
-
 import concurrent.futures
 import multiprocessing
+
+os.environ['NUMBA_NUM_THREADS'] = str(multiprocessing.cpu_count()//2)
+# os.environ['OMP_NUM_THREADS'] = str(multiprocessing.cpu_count()//2)
+os.environ['OMP_NUM_THREADS'] = str('4')
+os.environ['OPENBLAS_NUM_THREADS'] = '1'
+os.environ['NUMEXPR_NUM_THREADS'] = '1'
+os.environ['MKL_NUM_THREADS'] = '1'
+
+
 import json
 import shutil
 import random
@@ -64,12 +70,14 @@ def main():
 #             input_names_list.append(file_root)
 
     input_names_list = []
-    # input_names_list.append('01 - Figure eight'     )
+    input_names_list.append('01 - Figure eight'     )
     # input_names_list.append('14 - Small mass gap'   )
     # input_names_list.append('03 - Trefoil'          )
     # input_names_list.append('04 - 5 pointed star'   ) 
-    input_names_list.append('07 - No symmetry'   ) 
+    # input_names_list.append('07 - No symmetry'   ) 
     # input_names_list.append('09 - 3x2 Circles'   ) 
+    # input_names_list.append('11 - Resonating loops'   ) 
+    # input_names_list.append('12 - 100 bodies'   ) 
 
 
 
@@ -229,16 +237,17 @@ def ExecName(the_name, input_folder, store_folder):
     w[0:ndof,ndof:2*ndof] = np.identity(ndof)
     w[ndof:2*ndof,0:ndof] = -np.identity(ndof)
 
+    nint = 20000
 
     T = 1.
 
     # nint_ODE_mul = 64
     # nint_ODE_mul =  2**11
-    nint_ODE_mul =  2**8
+    # nint_ODE_mul =  2**8
     # nint_ODE_mul =  2**6
     # nint_ODE_mul =  2**3
     # nint_ODE_mul =  2**1
-    # nint_ODE_mul =  1
+    nint_ODE_mul =  1
 
     nsteps = 8
 
@@ -305,18 +314,14 @@ def ExecName(the_name, input_folder, store_folder):
 
     t_parallel = tend-tbeg
     print(f'Parallel integration time : {t_parallel}')
-# 
+
     print(f'Difference btw outputs : {np.linalg.norm(all_x_serial-all_x_parallel) + np.linalg.norm(all_v_serial-all_v_parallel)}')
     print(f'Difference btw outputs : {np.linalg.norm(all_x_serial-all_x_mul) + np.linalg.norm(all_v_serial-all_v_mul)}')
-    # print(f'Difference btw outputs x : {np.linalg.norm(all_x_serial-all_x_parallel)}')
-    # print(f'Difference btw outputs v : {np.linalg.norm(all_v_serial-all_v_parallel)}')
 
     if nsteps > 1:
 
         t_overhead = (t_serial - t_mul) / (nsteps - 1)
         t_bare = (nsteps * t_mul - t_serial ) / (nsteps - 1)
-
-
 
         print(f't_bare : {t_bare}')
         print(f't_overhead : {t_overhead}')
