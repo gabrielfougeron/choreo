@@ -56,6 +56,7 @@ from choreo.Choreo_cython_funs import Compute_hash_action_Cython,Compute_Newton_
 from choreo.Choreo_cython_funs import Assemble_Cstr_Matrix,diagmat_changevar
 from choreo.Choreo_cython_funs import Compute_MinDist_Cython,Compute_Loop_Dist_btw_avg_Cython,Compute_square_dist,Compute_Loop_Size_Dist_Cython
 from choreo.Choreo_cython_funs import Compute_Forces_Cython,Compute_JacMat_Forces_Cython,Compute_JacMul_Forces_Cython,Compute_JacMulMat_Forces_Cython
+from choreo.Choreo_cython_funs import Compute_Forces_Cython_parallel
 from choreo.Choreo_cython_funs import Transform_Coeffs_Single_Loop,SparseScaleCoeffs,ComputeSpeedCoeffs
 from choreo.Choreo_cython_funs import the_irfft,the_rfft
 from choreo.Choreo_cython_funs import Compute_hamil_hess_mul_Cython_nosym,Compute_hamil_hess_mul_xonly_Cython_nosym
@@ -632,7 +633,6 @@ class ChoreoAction():
         rhs[1,:,:] = Compute_Forces_Cython(
             all_pos_vel[0,:,:]  ,
             self.mass           ,
-            self.nbody          
         )
 
         return rhs.reshape(2*self.nbody*self.geodim)
@@ -640,20 +640,32 @@ class ChoreoAction():
     def Compute_ODE_RHS(self,t,x):
         return self.Compute_Auto_ODE_RHS(x)
 
-    def GetSymplecticODEDef(self):
+    def GetSymplecticODEDef(self, parallel = False):
 
         def fun(t,v):
-            return v
+            return v.copy()
 
-        def gun(t,x):
-            return Compute_Forces_Cython(
-                x.reshape(self.nbody,self.geodim)  ,
-                self.mass                   ,
-                self.nbody                  ,
-            ).reshape(-1)
+        if parallel:
+
+            def gun(t,x):
+
+                nrhs = x.shape[0]
+
+                return Compute_Forces_Cython_parallel(
+                    x.reshape(nrhs,self.nbody,self.geodim)  ,
+                    self.mass                   ,
+                ).reshape(nrhs,-1)
+
+        else:
+
+            def gun(t,x):
+                return Compute_Forces_Cython(
+                    x.reshape(self.nbody,self.geodim)  ,
+                    self.mass                   ,
+                ).reshape(-1)
 
         return fun,gun
-    
+
     def GetSymplecticTanODEDef(self):
 
         def grad_fun(t,v,grad_v):
