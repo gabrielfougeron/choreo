@@ -72,11 +72,16 @@ def Integrate(n_NT_init):
     SymplecticMethod = 'SymplecticGauss10'
     # SymplecticMethod = 'SymplecticGauss15'
 
-    SymplecticIntegrator = choreo.GetSymplecticIntegrator(SymplecticMethod)
-    SymplecticTanIntegrator = choreo.GetSymplecticTanIntegrator(SymplecticMethod)
+    # mul_x = True
+    mul_x = False
 
-    fun,gun = ActionSyst_small.GetSymplecticODEDef()
-    grad_fun,grad_gun = ActionSyst_small.GetSymplecticTanODEDef()
+    parallel = False
+
+    SymplecticIntegrator = choreo.GetSymplecticIntegrator(SymplecticMethod, mul_x = mul_x)
+    # SymplecticTanIntegrator = choreo.GetSymplecticTanIntegrator(SymplecticMethod)
+
+    fun,gun = ActionSyst_small.GetSymplecticODEDef(mul_x = mul_x, parallel = parallel)
+    # grad_fun,grad_gun = ActionSyst_small.GetSymplecticTanODEDef()
     ndof = nbody*ActionSyst_small.geodim
 
     w = np.zeros((2*ndof,2*ndof),dtype=np.float64)
@@ -95,7 +100,8 @@ def Integrate(n_NT_init):
     GoOn = True
 
     # i_try_max = 10
-    i_try_max = 12
+    # i_try_max = 12
+    i_try_max = 14
 
     period_err_max = 1e-2
     # period_err_max = 1e-8
