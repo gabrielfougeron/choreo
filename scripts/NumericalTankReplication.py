@@ -292,6 +292,11 @@ for n_NT_init in [0]:
     GoOn = True
     itry = -1
 
+
+
+
+    
+
     while GoOn:
     # for i in range(1):
 
@@ -412,7 +417,7 @@ for n_NT_init in [0]:
 
 
 
-        
+#         
 #         dxb = np.random.random(vx0.shape)
 #         # innz = 0
 #         # dxb = np.zeros(vx0.shape)
@@ -440,8 +445,8 @@ for n_NT_init in [0]:
 #         exgrad_mat = np.dot(gradmat,dxb)
 # 
 #         print(np.linalg.norm(exgrad - exgrad_mat))
-# 
-#         # print(exgrad)
+
+        # print(exgrad)
 # 
 #         # exponent_eps_list = range(16)
 #         exponent_eps_list = [8]
@@ -533,10 +538,6 @@ for n_NT_init in [0]:
 
         x0 = vx0[0:ndof].copy()
         v0 = vx0[ndof:2*ndof].copy()
-
-
-
-
 
 
         # tbeg = time.perf_counter()
