@@ -2078,7 +2078,7 @@ def PopulateRandomInit(
 
     return x0
 
-
+@cython.cdivision(True)
 cpdef InplaceCorrectPeriodicity(
     double[:,:,::1]  all_pos,
     double[::1]  x0,
@@ -2092,7 +2092,7 @@ cpdef InplaceCorrectPeriodicity(
     cdef int nint = all_pos.shape[2]
 
     cdef int ib,idim,iint,i
-    cdef double g,v,b,t
+    cdef double iint_d, g,v,b,t
 
     for ib in range(nbody):
         for idim in range(geodim):
@@ -2104,7 +2104,7 @@ cpdef InplaceCorrectPeriodicity(
             b = -v/ctwopi
 
             for iint in range(nint):
-                
-                t = iint / nint
+                iint_d = iint
+                t = iint_d / nint
 
                 all_pos[ib,idim,iint] -= (v*t + g*t*t/2 + b*csin(ctwopi*t))
