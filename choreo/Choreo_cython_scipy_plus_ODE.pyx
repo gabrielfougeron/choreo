@@ -409,8 +409,11 @@ def ImplicitSymplecticWithTableGaussSeidel_VX_cython(
     cdef np.ndarray[double, ndim=1, mode="c"] v = v0.copy()
 
     cdef np.ndarray[double, ndim=1, mode="c"] res
-    cdef np.ndarray[double, ndim=2, mode="c"] K_fun = np.empty((nsteps,ndof),dtype=np.float64)
-    cdef np.ndarray[double, ndim=2, mode="c"] K_gun = np.empty((nsteps,ndof),dtype=np.float64)
+    # cdef np.ndarray[double, ndim=2, mode="c"] K_fun = np.empty((nsteps,ndof),dtype=np.float64)
+    # cdef np.ndarray[double, ndim=2, mode="c"] K_gun = np.empty((nsteps,ndof),dtype=np.float64)
+    
+    cdef np.ndarray[double, ndim=2, mode="c"] K_fun = np.zeros((nsteps,ndof),dtype=np.float64)
+    cdef np.ndarray[double, ndim=2, mode="c"] K_gun = np.zeros((nsteps,ndof),dtype=np.float64)
 
     cdef np.ndarray[double, ndim=2, mode="c"] dX = np.empty((nsteps,ndof),dtype=np.float64)
     cdef np.ndarray[double, ndim=2, mode="c"] dV = np.empty((nsteps,ndof),dtype=np.float64) 
@@ -429,16 +432,16 @@ def ImplicitSymplecticWithTableGaussSeidel_VX_cython(
         cdt_x[istep] = c_table_x[istep]*dt
 
     # First starting approximation using only one function evaluation
-    tbeg = t_span[0]
-    res = gun(tbeg,x)  
-    for istep in range(nsteps):
-        for jdof in range(ndof):
-            K_gun[istep,jdof] = dt * res[jdof]
-            
-    res = fun(tbeg,v)  
-    for istep in range(nsteps):
-        for jdof in range(ndof):
-            K_fun[istep,jdof] = dt * res[jdof]
+    # tbeg = t_span[0]
+    # res = gun(tbeg,x)  
+    # for istep in range(nsteps):
+    #     for jdof in range(ndof):
+    #         K_gun[istep,jdof] = dt * res[jdof]
+    #         
+    # res = fun(tbeg,v)  
+    # for istep in range(nsteps):
+    #     for jdof in range(ndof):
+    #         K_fun[istep,jdof] = dt * res[jdof]
 
     for iint_keep in range(nint_keep):
 

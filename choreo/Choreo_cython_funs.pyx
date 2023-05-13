@@ -17,6 +17,9 @@ cimport numpy as np
 np.import_array()
 
 cimport cython
+from cython.parallel cimport parallel, prange
+cimport openmp
+from libc.stdlib cimport abort, malloc, free
 
 import scipy.sparse
 
@@ -105,7 +108,7 @@ nhash = cnhash
 
 @cython.profile(False)
 @cython.linetrace(False)
-cdef inline (double, double, double) CCpt_interbody_pot(double xsq):  # xsq is the square of the distance between two bodies !
+cdef inline (double, double, double) CCpt_interbody_pot(double xsq) nogil:  # xsq is the square of the distance between two bodies !
     # Cython definition of the potential law
     
     cdef double a = cpow(xsq,cnm2)
@@ -1305,7 +1308,7 @@ def Compute_Forces_Cython(
 
     return f
 
-def Compute_Forces_Cython_parallel(
+def Compute_Forces_Cython_parallel_fake(
     double[:,:,::1] x ,
     double[::1] mass ,
 ):
@@ -1323,6 +1326,7 @@ def Compute_Forces_Cython_parallel(
 
     cdef double dx2,a
     cdef double b,bp
+    cdef double pot,potp,potpp
 
     for irhs in range(nrhs):
         for ib in range(nbody-1):
@@ -1346,6 +1350,60 @@ def Compute_Forces_Cython_parallel(
 
                     f[irhs,ib,idim] -= b*dx[idim]
                     f[irhs,ibp,idim] += bp*dx[idim]
+
+    return f
+
+def Compute_Forces_Cython_parallel(
+    double[:,:,::1] x ,
+    double[::1] mass ,
+):
+    # Does not actually computes the forces on every body, but rather the force divided by the mass.
+
+    cdef Py_ssize_t ib, ibp
+    cdef Py_ssize_t idim
+    cdef Py_ssize_t irhs
+    cdef Py_ssize_t nrhs = x.shape[0]
+    cdef Py_ssize_t nbody = x.shape[1]
+    cdef Py_ssize_t geodim = x.shape[2]
+    cdef np.ndarray[double, ndim=3, mode="c"] f = np.zeros((nrhs,nbody,geodim),dtype=np.float64)
+
+    # cdef int num_threads = openmp.omp_get_max_threads()
+    cdef int num_threads = nrhs
+
+    # cdef double[::1] dx = np.zeros((geodim),dtype=np.float64)
+    cdef double *dx
+
+    cdef double dx2,a
+    cdef double b,bp
+    cdef double pot,potp,potpp
+
+    with nogil, parallel(num_threads=num_threads):
+
+        dx = <double *> malloc(sizeof(double) * geodim)
+
+        for irhs in prange(nrhs):
+        
+            for ib in range(nbody-1):
+                for ibp in range(ib+1,nbody):
+
+                    for idim in range(geodim):
+                        dx[idim] = x[irhs,ib,idim]-x[irhs,ibp,idim]
+
+                    dx2 = dx[0]*dx[0]
+                    for idim in range(1,geodim):
+                        dx2 = dx2 + dx[idim]*dx[idim]
+
+                    pot,potp,potpp = CCpt_interbody_pot(dx2)
+
+                    a = 2*potp
+
+                    b  = a*mass[ibp]
+                    bp = a*mass[ib ]
+ 
+                    for idim in range(geodim):
+
+                        f[irhs,ib ,idim] = f[irhs,ib ,idim] - b *dx[idim]
+                        f[irhs,ibp,idim] = f[irhs,ibp,idim] + bp*dx[idim]
 
     return f
 

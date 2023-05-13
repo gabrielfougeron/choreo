@@ -57,6 +57,7 @@ from choreo.Choreo_cython_funs import Assemble_Cstr_Matrix,diagmat_changevar
 from choreo.Choreo_cython_funs import Compute_MinDist_Cython,Compute_Loop_Dist_btw_avg_Cython,Compute_square_dist,Compute_Loop_Size_Dist_Cython
 from choreo.Choreo_cython_funs import Compute_Forces_Cython,Compute_JacMat_Forces_Cython,Compute_JacMul_Forces_Cython,Compute_JacMulMat_Forces_Cython
 from choreo.Choreo_cython_funs import Compute_Forces_Cython_parallel
+from choreo.Choreo_cython_funs import Compute_Forces_Cython_parallel_fake
 from choreo.Choreo_cython_funs import Transform_Coeffs_Single_Loop,SparseScaleCoeffs,ComputeSpeedCoeffs
 from choreo.Choreo_cython_funs import the_irfft,the_rfft
 from choreo.Choreo_cython_funs import Compute_hamil_hess_mul_Cython_nosym,Compute_hamil_hess_mul_xonly_Cython_nosym
@@ -640,21 +641,35 @@ class ChoreoAction():
     def Compute_ODE_RHS(self,t,x):
         return self.Compute_Auto_ODE_RHS(x)
 
-    def GetSymplecticODEDef(self, parallel = False):
+    def GetSymplecticODEDef(self, mul_x = True, parallel = False):
 
         def fun(t,v):
             return v.copy()
 
-        if parallel:
+        assert mul_x or not(parallel)
 
-            def gun(t,x):
+        if mul_x :
 
-                nrhs = x.shape[0]
+            if parallel:
 
-                return Compute_Forces_Cython_parallel(
-                    x.reshape(nrhs,self.nbody,self.geodim)  ,
-                    self.mass                   ,
-                ).reshape(nrhs,-1)
+                def gun(t,x):
+
+                    nrhs = x.shape[0]
+
+                    return Compute_Forces_Cython_parallel(
+                        x.reshape(nrhs,self.nbody,self.geodim)  ,
+                        self.mass                   ,
+                    ).reshape(nrhs,-1)
+            else:
+                
+                def gun(t,x):
+                        
+                    nrhs = x.shape[0]
+
+                    return Compute_Forces_Cython_parallel_fake(
+                        x.reshape(nrhs,self.nbody,self.geodim)  ,
+                        self.mass                   ,
+                    ).reshape(nrhs,-1)
 
         else:
 
