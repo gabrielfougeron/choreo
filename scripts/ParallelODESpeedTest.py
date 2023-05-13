@@ -64,11 +64,11 @@ def main():
 #             input_names_list.append(file_root)
 
     input_names_list = []
-    input_names_list.append('01 - Figure eight'     )
+    # input_names_list.append('01 - Figure eight'     )
     # input_names_list.append('14 - Small mass gap'   )
     # input_names_list.append('03 - Trefoil'          )
     # input_names_list.append('04 - 5 pointed star'   ) 
-    # input_names_list.append('07 - No symmetry'   ) 
+    input_names_list.append('07 - No symmetry'   ) 
     # input_names_list.append('09 - 3x2 Circles'   ) 
 
 
@@ -206,8 +206,10 @@ def ExecName(the_name, input_folder, store_folder):
     nint = ActionSyst.nint
     ndof = nbody*ActionSyst.geodim
 
-    fun_serial,gun_serial = ActionSyst.GetSymplecticODEDef(parallel=False)
-    fun_parallel,gun_parallel = ActionSyst.GetSymplecticODEDef(parallel=True)
+    fun_serial,gun_serial = ActionSyst.GetSymplecticODEDef(mul_x = False, parallel=False)
+    fun_mul,gun_mul = ActionSyst.GetSymplecticODEDef(mul_x = True, parallel=False)
+    fun_parallel,gun_parallel = ActionSyst.GetSymplecticODEDef(mul_x = True, parallel=True)
+    # fun_parallel,gun_parallel = ActionSyst.GetSymplecticODEDef(parallel=True)
 
     x0, v0 = ActionSyst.Compute_init_pos_and_vel(x)
     z0 = np.ascontiguousarray(np.concatenate((x0, v0),axis=0).reshape(2*ndof))
@@ -230,24 +232,17 @@ def ExecName(the_name, input_folder, store_folder):
 
     T = 1.
 
-
     # nint_ODE_mul = 64
     # nint_ODE_mul =  2**11
-    # nint_ODE_mul =  2**7
-    nint_ODE_mul =  2**6
+    nint_ODE_mul =  2**8
+    # nint_ODE_mul =  2**6
     # nint_ODE_mul =  2**3
     # nint_ODE_mul =  2**1
     # nint_ODE_mul =  1
 
-    # SymplecticMethod = 'SymplecticGauss1'
-    # SymplecticMethod = 'SymplecticGauss2'
-    # SymplecticMethod = 'SymplecticGauss3'
-    SymplecticMethod = 'SymplecticGauss5'
-    # SymplecticMethod = 'SymplecticGauss10'
-    # SymplecticMethod = 'SymplecticGauss10'
-    # SymplecticMethod = 'SymplecticGauss15'
-          
-    # SymplecticMethod = 'SymplecticGauss3'
+    nsteps = 8
+
+    SymplecticMethod = 'SymplecticGauss'+str(nsteps)
 
 
     # SymplecticMethod = 'LobattoIIIA_3'                 
@@ -277,7 +272,24 @@ def ExecName(the_name, input_folder, store_folder):
     )
     tend = time.perf_counter()
 
-    print(f'Serial integration time : {tend-tbeg}')
+    t_serial = tend-tbeg
+    print(f'Serial integration time : {t_serial}')
+
+    tbeg = time.perf_counter()
+    all_x_mul, all_v_mul = SymplecticIntegrator_mul_x(
+        fun = fun_mul,
+        gun = gun_mul,
+        t_span = (0.,T),
+        x0 = x0,
+        v0 = v0,
+        nint = nint*nint_ODE_mul,
+        keep_freq = nint_ODE_mul
+    )
+    tend = time.perf_counter()
+
+    t_mul = tend-tbeg
+    print(f'Mul x integration time : {t_mul}')
+
 
     tbeg = time.perf_counter()
     all_x_parallel, all_v_parallel = SymplecticIntegrator_mul_x(
@@ -291,13 +303,23 @@ def ExecName(the_name, input_folder, store_folder):
     )
     tend = time.perf_counter()
 
-    print(f'Parallel integration time : {tend-tbeg}')
-
+    t_parallel = tend-tbeg
+    print(f'Parallel integration time : {t_parallel}')
+# 
     print(f'Difference btw outputs : {np.linalg.norm(all_x_serial-all_x_parallel) + np.linalg.norm(all_v_serial-all_v_parallel)}')
+    print(f'Difference btw outputs : {np.linalg.norm(all_x_serial-all_x_mul) + np.linalg.norm(all_v_serial-all_v_mul)}')
     # print(f'Difference btw outputs x : {np.linalg.norm(all_x_serial-all_x_parallel)}')
     # print(f'Difference btw outputs v : {np.linalg.norm(all_v_serial-all_v_parallel)}')
 
+    if nsteps > 1:
 
+        t_overhead = (t_serial - t_mul) / (nsteps - 1)
+        t_bare = (nsteps * t_mul - t_serial ) / (nsteps - 1)
+
+
+
+        print(f't_bare : {t_bare}')
+        print(f't_overhead : {t_overhead}')
 
 
 
