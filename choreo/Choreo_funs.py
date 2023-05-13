@@ -42,6 +42,7 @@ try:
         
     from choreo.Choreo_cython_funs_parallel import Compute_action_Cython_2D_parallel, Compute_action_hess_mul_Cython_2D_parallel
     from choreo.Choreo_cython_funs_parallel import Compute_action_Cython_nD_parallel, Compute_action_hess_mul_Cython_nD_parallel
+    from choreo.Choreo_cython_funs_parallel import Compute_Forces_Cython_parallel, Compute_JacMulMat_Forces_Cython_parallel
 
 except:
     pass
@@ -55,9 +56,11 @@ from choreo.Choreo_cython_funs import twopi,nhash,n
 from choreo.Choreo_cython_funs import Compute_hash_action_Cython,Compute_Newton_err_Cython
 from choreo.Choreo_cython_funs import Assemble_Cstr_Matrix,diagmat_changevar
 from choreo.Choreo_cython_funs import Compute_MinDist_Cython,Compute_Loop_Dist_btw_avg_Cython,Compute_square_dist,Compute_Loop_Size_Dist_Cython
-from choreo.Choreo_cython_funs import Compute_Forces_Cython,Compute_JacMat_Forces_Cython,Compute_JacMul_Forces_Cython,Compute_JacMulMat_Forces_Cython
-from choreo.Choreo_cython_funs import Compute_Forces_Cython_parallel
-from choreo.Choreo_cython_funs import Compute_Forces_Cython_parallel_fake
+from choreo.Choreo_cython_funs import Compute_JacMat_Forces_Cython,Compute_JacMul_Forces_Cython,Compute_JacMulMat_Forces_Cython
+
+from choreo.Choreo_cython_funs import Compute_Forces_Cython, Compute_Forces_Cython_mul_x
+from choreo.Choreo_cython_funs import Compute_JacMulMat_Forces_Cython, Compute_JacMulMat_Forces_Cython_mul_x
+
 from choreo.Choreo_cython_funs import Transform_Coeffs_Single_Loop,SparseScaleCoeffs,ComputeSpeedCoeffs
 from choreo.Choreo_cython_funs import the_irfft,the_rfft
 from choreo.Choreo_cython_funs import Compute_hamil_hess_mul_Cython_nosym,Compute_hamil_hess_mul_xonly_Cython_nosym
@@ -666,7 +669,7 @@ class ChoreoAction():
                         
                     nrhs = x.shape[0]
 
-                    return Compute_Forces_Cython_parallel_fake(
+                    return Compute_Forces_Cython_mul_x(
                         x.reshape(nrhs,self.nbody,self.geodim)  ,
                         self.mass                   ,
                     ).reshape(nrhs,-1)
@@ -681,22 +684,58 @@ class ChoreoAction():
 
         return fun,gun
 
-    def GetSymplecticTanODEDef(self):
+    def GetSymplecticTanODEDef(self, mul_x = True, parallel = False):
 
         def grad_fun(t,v,grad_v):
-            return grad_v
+            return grad_v.copy()
+        
+        assert mul_x or not(parallel)
 
-        def grad_gun(t,x,grad_x):
+        if mul_x :
 
-            ndof = self.nbody*self.geodim
-            nrhs = grad_x.shape[1]
+            if parallel:
 
-            return Compute_JacMulMat_Forces_Cython(
-                x.reshape(self.nbody,self.geodim),
-                grad_x.reshape(self.nbody,self.geodim,nrhs)   ,
-                self.mass   ,
-                self.nbody  ,
-            ).reshape(ndof,nrhs)
+                def grad_gun(t,x,grad_x):
+                        
+                    nrhs = x.shape[0]
+                    ndof = self.nbody*self.geodim
+                    n_grad_col = grad_x.shape[2]
+
+                    return Compute_JacMulMat_Forces_Cython_parallel(
+                        x.reshape(nrhs,self.nbody,self.geodim),
+                        grad_x.reshape(nrhs,self.nbody,self.geodim,n_grad_col)   ,
+                        self.mass   ,
+                        self.nbody  ,
+                    ).reshape(nrhs,ndof,n_grad_col)
+                
+            else:
+                
+                def grad_gun(t,x,grad_x):
+                        
+                    nrhs = x.shape[0]
+                    ndof = self.nbody*self.geodim
+                    n_grad_col = grad_x.shape[2]
+
+                    return Compute_JacMulMat_Forces_Cython_mul_x(
+                        x.reshape(nrhs,self.nbody,self.geodim),
+                        grad_x.reshape(nrhs,self.nbody,self.geodim,n_grad_col)   ,
+                        self.mass   ,
+                        self.nbody  ,
+                    ).reshape(nrhs,ndof,n_grad_col)
+
+        else:
+
+            def grad_gun(t,x,grad_x):
+
+                ndof = self.nbody*self.geodim
+                nrhs = grad_x.shape[1]
+
+                return Compute_JacMulMat_Forces_Cython(
+                    x.reshape(self.nbody,self.geodim),
+                    grad_x.reshape(self.nbody,self.geodim,nrhs)   ,
+                    self.mass   ,
+                    self.nbody  ,
+                ).reshape(ndof,nrhs)
 
         return grad_fun, grad_gun
 
