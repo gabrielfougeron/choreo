@@ -29,7 +29,7 @@ all_pos_filename = os.path.join(store_folder,file_basename+'.npy')
 
 
 all_pos = np.load(all_pos_filename)
-c_coeffs = choreo.the_rfft(all_pos,axis=2,norm="forward") 
+c_coeffs = choreo.default_rfft(all_pos,axis=2,norm="forward") 
 
 k_plot_max = 20
 

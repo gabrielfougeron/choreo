@@ -234,7 +234,7 @@ def Integrate(n_NT_init):
 
     all_pos = np.ascontiguousarray(all_pos.transpose().reshape(ActionSyst_small.nbody,ActionSyst_small.geodim,nint_anim))
 
-    all_coeffs_c = choreo.the_rfft(all_pos,norm="forward")
+    all_coeffs_c = choreo.default_rfft(all_pos,norm="forward")
 
     all_coeffs = np.zeros((ActionSyst.nloop,ActionSyst.geodim,ActionSyst.ncoeff,2),dtype=np.float64)
     all_coeffs[:,:,:,0] = all_coeffs_c[:,:,:].real
