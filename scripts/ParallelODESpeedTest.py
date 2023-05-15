@@ -3,8 +3,9 @@ import concurrent.futures
 import multiprocessing
 
 os.environ['NUMBA_NUM_THREADS'] = str(multiprocessing.cpu_count()//2)
-# os.environ['OMP_NUM_THREADS'] = str(multiprocessing.cpu_count()//2)
-os.environ['OMP_NUM_THREADS'] = str('4')
+os.environ['OMP_NUM_THREADS'] = str(multiprocessing.cpu_count()//2)
+# os.environ['OMP_NUM_THREADS'] = str('4')
+# os.environ['OMP_NUM_THREADS'] = str('1')
 os.environ['OPENBLAS_NUM_THREADS'] = '1'
 os.environ['NUMEXPR_NUM_THREADS'] = '1'
 os.environ['MKL_NUM_THREADS'] = '1'
@@ -70,14 +71,14 @@ def main():
 #             input_names_list.append(file_root)
 
     input_names_list = []
-    input_names_list.append('01 - Figure eight'     )
+    # input_names_list.append('01 - Figure eight'     )
     # input_names_list.append('14 - Small mass gap'   )
     # input_names_list.append('03 - Trefoil'          )
     # input_names_list.append('04 - 5 pointed star'   ) 
     # input_names_list.append('07 - No symmetry'   ) 
     # input_names_list.append('09 - 3x2 Circles'   ) 
     # input_names_list.append('11 - Resonating loops'   ) 
-    # input_names_list.append('12 - 100 bodies'   ) 
+    input_names_list.append('12 - 100 bodies'   ) 
 
 
 
@@ -217,19 +218,20 @@ def ExecName(the_name, input_folder, store_folder):
     fun_serial,gun_serial = ActionSyst.GetSymplecticODEDef(mul_x = False, parallel=False)
     fun_mul,gun_mul = ActionSyst.GetSymplecticODEDef(mul_x = True, parallel=False)
     fun_parallel,gun_parallel = ActionSyst.GetSymplecticODEDef(mul_x = True, parallel=True)
-    # fun_parallel,gun_parallel = ActionSyst.GetSymplecticODEDef(parallel=True)
 
     x0, v0 = ActionSyst.Compute_init_pos_and_vel(x)
     z0 = np.ascontiguousarray(np.concatenate((x0, v0),axis=0).reshape(2*ndof))
     
-    
-    # grad_fun,grad_gun = ActionSyst.GetSymplecticTanODEDef()
-    # grad_x0 = np.zeros((ndof,2*ndof),dtype=np.float64)
-    # grad_v0 = np.zeros((ndof,2*ndof),dtype=np.float64)
-    # for idof in range(ndof):
-    #     grad_x0[idof,idof] = 1
-    # for idof in range(ndof):
-    #     grad_v0[idof,ndof+idof] = 1
+    grad_fun_serial,grad_gun_serial = ActionSyst.GetSymplecticTanODEDef(mul_x = False, parallel=False)
+    grad_fun_mul,grad_gun_mul = ActionSyst.GetSymplecticTanODEDef(mul_x = True, parallel=False)
+    grad_fun_parallel,grad_gun_parallel = ActionSyst.GetSymplecticTanODEDef(mul_x = True, parallel=True)
+
+    grad_x0 = np.zeros((ndof,2*ndof),dtype=np.float64)
+    grad_v0 = np.zeros((ndof,2*ndof),dtype=np.float64)
+    for idof in range(ndof):
+        grad_x0[idof,idof] = 1
+    for idof in range(ndof):
+        grad_v0[idof,ndof+idof] = 1
 
 
 
@@ -237,9 +239,9 @@ def ExecName(the_name, input_folder, store_folder):
     w[0:ndof,ndof:2*ndof] = np.identity(ndof)
     w[ndof:2*ndof,0:ndof] = -np.identity(ndof)
 
-    nint = 20000
+    nint = 1000
 
-    T = 1.
+    T = 1./1024
 
     # nint_ODE_mul = 64
     # nint_ODE_mul =  2**11
@@ -263,7 +265,11 @@ def ExecName(the_name, input_folder, store_folder):
     # SymplecticMethod = 'PartitionedLobattoIII_AX_BV_4' 
     # SymplecticMethod = 'PartitionedLobattoIII_AV_BX_4' 
 
+    print('')
     print(f'Integration method : {SymplecticMethod}')
+    print('')
+    print('Direct integration')
+    print('')
 
 
     SymplecticIntegrator_one_x = choreo.GetSymplecticIntegrator(SymplecticMethod, mul_x = False)
@@ -314,9 +320,11 @@ def ExecName(the_name, input_folder, store_folder):
 
     t_parallel = tend-tbeg
     print(f'Parallel integration time : {t_parallel}')
+    print('')
 
     print(f'Difference btw outputs : {np.linalg.norm(all_x_serial-all_x_parallel) + np.linalg.norm(all_v_serial-all_v_parallel)}')
     print(f'Difference btw outputs : {np.linalg.norm(all_x_serial-all_x_mul) + np.linalg.norm(all_v_serial-all_v_mul)}')
+    print('')
 
     if nsteps > 1:
 
@@ -327,27 +335,20 @@ def ExecName(the_name, input_folder, store_folder):
         print(f't_overhead : {t_overhead}')
 
 
+    print('')
+    print('Tangent integration')
+    print('')
 
+    SymplecticTanIntegrator_one_x = choreo.GetSymplecticTanIntegrator(SymplecticMethod, mul_x = False)
+    SymplecticTanIntegrator_mul_x = choreo.GetSymplecticTanIntegrator(SymplecticMethod, mul_x = True)
 
-
-    exit()
-
-    SymplecticTanIntegrator = choreo.GetSymplecticTanIntegrator(SymplecticMethod)
-    SymplecticTanIntegrator = functools.partial(SymplecticTanIntegrator, maxiter = 1000)
-
-    # for arr in [x0,v0,grad_x0,grad_v0]:
-    #     print(arr.shape)
-    #     print(arr.data.contiguous)
-    #     print(arr.data.c_contiguous)
-        # print(arr.data.f_contiguous)  # False
 
     tbeg = time.perf_counter()
-
-    all_x, all_v, all_grad_x, all_grad_v = SymplecticTanIntegrator(
-        fun = fun,
-        gun = gun,
-        grad_fun = grad_fun,
-        grad_gun = grad_gun,
+    all_x_serial, all_v_serial, all_grad_x_serial, all_grad_v_serial = SymplecticTanIntegrator_one_x(
+        fun = fun_serial,
+        gun = gun_serial,
+        grad_fun = grad_fun_serial,
+        grad_gun = grad_gun_serial,
         t_span = (0.,T),
         x0 = x0,
         v0 = v0,
@@ -356,65 +357,148 @@ def ExecName(the_name, input_folder, store_folder):
         nint = nint*nint_ODE_mul,
         keep_freq = nint_ODE_mul
     )
-
     tend = time.perf_counter()
 
-    print(f'CPU time of integration :{tend-tbeg}')
+    t_serial = tend-tbeg
+    print(f'Serial Tan integration time : {t_serial}')
+
+    tbeg = time.perf_counter()
+    all_x_mul, all_v_mul, all_grad_x_mul, all_grad_v_mul = SymplecticTanIntegrator_mul_x(
+        fun = fun_mul,
+        gun = gun_mul,
+        grad_fun = grad_fun_mul,
+        grad_gun = grad_gun_mul,
+        t_span = (0.,T),
+        x0 = x0,
+        v0 = v0,
+        grad_x0 = grad_x0,
+        grad_v0 = grad_v0,
+        nint = nint*nint_ODE_mul,
+        keep_freq = nint_ODE_mul
+    )
+    tend = time.perf_counter()
+
+    t_mul = tend-tbeg
+    print(f'Mul x Tan integration time : {t_mul}')
 
 
-    xf = all_x[-1,:].copy()
-    vf = all_v[-1,:].copy()
-    zf = np.ascontiguousarray(np.concatenate((xf, vf),axis=0).reshape(2*ndof))
+    tbeg = time.perf_counter()
+    all_x_parallel, all_v_parallel, all_grad_x_parallel, all_grad_v_parallel = SymplecticTanIntegrator_mul_x(
+        fun = fun_parallel,
+        gun = gun_parallel,
+        grad_fun = grad_fun_parallel,
+        grad_gun = grad_gun_parallel,
+        t_span = (0.,T),
+        x0 = x0,
+        v0 = v0,
+        grad_x0 = grad_x0,
+        grad_v0 = grad_v0,
+        nint = nint*nint_ODE_mul,
+        keep_freq = nint_ODE_mul
+    )
+    tend = time.perf_counter()
 
-    period_err = np.linalg.norm(zf-z0)
-    print(f'Error on Periodicity: {period_err}')
+    t_parallel = tend-tbeg
+    print(f'Parallel Tan integration time : {t_parallel}')
+
+    print('')
+
+    err = np.linalg.norm(all_x_serial-all_x_parallel) + np.linalg.norm(all_v_serial-all_v_parallel) + np.linalg.norm(all_grad_x_serial-all_grad_x_parallel) + np.linalg.norm(all_grad_v_serial-all_grad_v_parallel) 
+    print(f'Difference btw outputs : {err}')
+
+    # print(f'Difference btw outputs : {np.linalg.norm(all_x_serial-all_x_parallel)}')
+    # print(f'Difference btw outputs : {np.linalg.norm(all_v_serial-all_v_parallel) }')
+    # print(f'Difference btw outputs : {np.linalg.norm(all_grad_x_serial-all_grad_x_parallel)}')
+    # print(f'Difference btw outputs : {np.linalg.norm(all_grad_v_serial-all_grad_v_parallel) }')
+
+    err = np.linalg.norm(all_x_serial-all_x_mul) + np.linalg.norm(all_v_serial-all_v_mul) + np.linalg.norm(all_grad_x_serial-all_grad_x_mul) + np.linalg.norm(all_grad_v_serial-all_grad_v_mul) 
+    print(f'Difference btw outputs : {err}')
+
+    print('')
+    
+    if nsteps > 1:
+
+        t_overhead = (t_serial - t_mul) / (nsteps - 1)
+        t_bare = (nsteps * t_mul - t_serial ) / (nsteps - 1)
+
+        print(f't_bare : {t_bare}')
+        print(f't_overhead : {t_overhead}')
 
 
-    grad_xf = all_grad_x[-1,:,:].copy()
-    grad_vf = all_grad_v[-1,:,:].copy()
-
-    MonodromyMat = np.ascontiguousarray(np.concatenate((grad_xf,grad_vf),axis=0).reshape(2*ndof,2*ndof))
-
-    # MonodromyMat = np.ascontiguousarray(MonodromyMat.T)
-
-    # print(MonodromyMat)
+#     tbeg = time.perf_counter()
 # 
-    print('Symplecticity')
-    print(np.linalg.norm(w - np.dot(MonodromyMat.transpose(),np.dot(w,MonodromyMat))) / (np.linalg.norm(MonodromyMat)**2))
-    # print((w - np.dot(MonodromyMat.transpose(),np.dot(w,MonodromyMat))))
-
-
-
-
-    eigvals,eigvects = scipy.linalg.eig(a=MonodromyMat)
-    print('Max Eigenvalue of the Monodromy matrix :',np.abs(eigvals).max())
-    # print('Eigenvalues of the Monodromy matrix :')
-    # print(eigvals)
-    # print(eigvals.real)
-    # print(np.abs(eigvals))
-    # print(eigvects)
-
-
-    # print(MonodromyMatLog)
-    # print(MonodromyMat)
-
-    # '''Eigendecomposition'''
-    # Instability_magnitude,Instability_directions = choreo.InstabilityDecomposition(MonodromyMat)
-
-    # print(Instability_magnitude)
-
-    # Evaluates the relative accuracy of the Monodromy matrix integration process
-    # f0 should be an eigenvector of the Monodromy matrix, with eigenvalue 1
-    z0 = np.ascontiguousarray(np.concatenate((x0, v0),axis=0).reshape(2*ndof))
-    f0 = ActionSyst.Compute_Auto_ODE_RHS(z0)
-    print(f'Relative error on flow eigenstate: {np.linalg.norm(MonodromyMat.dot(f0)-f0)/np.linalg.norm(f0):e}')
-    # print(the_name+f' {Instability_magnitude[:]}')
-    # print(the_name+f' {np.flip(1/Instability_magnitude[:])}')
-    # print("Relative error on loxodromy ",np.linalg.norm(Instability_magnitude - np.flip(1/Instability_magnitude))/np.linalg.norm(Instability_magnitude))
-
-
-
-
+#     all_x, all_v, all_grad_x, all_grad_v = SymplecticTanIntegrator(
+#         fun = fun,
+#         gun = gun,
+#         grad_fun = grad_fun,
+#         grad_gun = grad_gun,
+#         t_span = (0.,T),
+#         x0 = x0,
+#         v0 = v0,
+#         grad_x0 = grad_x0,
+#         grad_v0 = grad_v0,
+#         nint = nint*nint_ODE_mul,
+#         keep_freq = nint_ODE_mul
+#     )
+# 
+#     tend = time.perf_counter()
+# 
+#     print(f'CPU time of integration :{tend-tbeg}')
+# 
+# 
+#     xf = all_x[-1,:].copy()
+#     vf = all_v[-1,:].copy()
+#     zf = np.ascontiguousarray(np.concatenate((xf, vf),axis=0).reshape(2*ndof))
+# 
+#     period_err = np.linalg.norm(zf-z0)
+#     print(f'Error on Periodicity: {period_err}')
+# 
+# 
+#     grad_xf = all_grad_x[-1,:,:].copy()
+#     grad_vf = all_grad_v[-1,:,:].copy()
+# 
+#     MonodromyMat = np.ascontiguousarray(np.concatenate((grad_xf,grad_vf),axis=0).reshape(2*ndof,2*ndof))
+# 
+#     # MonodromyMat = np.ascontiguousarray(MonodromyMat.T)
+# 
+#     # print(MonodromyMat)
+# # 
+#     print('Symplecticity')
+#     print(np.linalg.norm(w - np.dot(MonodromyMat.transpose(),np.dot(w,MonodromyMat))) / (np.linalg.norm(MonodromyMat)**2))
+#     # print((w - np.dot(MonodromyMat.transpose(),np.dot(w,MonodromyMat))))
+# 
+# 
+# 
+# 
+#     eigvals,eigvects = scipy.linalg.eig(a=MonodromyMat)
+#     print('Max Eigenvalue of the Monodromy matrix :',np.abs(eigvals).max())
+#     # print('Eigenvalues of the Monodromy matrix :')
+#     # print(eigvals)
+#     # print(eigvals.real)
+#     # print(np.abs(eigvals))
+#     # print(eigvects)
+# 
+# 
+#     # print(MonodromyMatLog)
+#     # print(MonodromyMat)
+# 
+#     # '''Eigendecomposition'''
+#     # Instability_magnitude,Instability_directions = choreo.InstabilityDecomposition(MonodromyMat)
+# 
+#     # print(Instability_magnitude)
+# 
+#     # Evaluates the relative accuracy of the Monodromy matrix integration process
+#     # f0 should be an eigenvector of the Monodromy matrix, with eigenvalue 1
+#     z0 = np.ascontiguousarray(np.concatenate((x0, v0),axis=0).reshape(2*ndof))
+#     f0 = ActionSyst.Compute_Auto_ODE_RHS(z0)
+#     print(f'Relative error on flow eigenstate: {np.linalg.norm(MonodromyMat.dot(f0)-f0)/np.linalg.norm(f0):e}')
+#     # print(the_name+f' {Instability_magnitude[:]}')
+#     # print(the_name+f' {np.flip(1/Instability_magnitude[:])}')
+#     # print("Relative error on loxodromy ",np.linalg.norm(Instability_magnitude - np.flip(1/Instability_magnitude))/np.linalg.norm(Instability_magnitude))
+# 
+# 
+# 
+# 
 
 
 
