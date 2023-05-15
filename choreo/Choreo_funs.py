@@ -47,6 +47,29 @@ try:
 except:
     pass
 
+
+try:
+
+    import mkl_fft._numpy_fft
+
+    default_rfft  = mkl_fft._numpy_fft.rfft
+    default_irfft = mkl_fft._numpy_fft.irfft
+
+except:
+
+    try:
+
+        import scipy.fft
+
+        default_rfft = scipy.fft.rfft
+        default_irfft = scipy.fft.irfft
+
+    except:
+
+        default_rfft = np.fft.rfft
+        default_irfft = np.fft.irfft
+
+
 try:
     from choreo.Choreo_numba_funs import *
 except:
@@ -62,15 +85,15 @@ from choreo.Choreo_cython_funs import Compute_Forces_Cython, Compute_Forces_Cyth
 from choreo.Choreo_cython_funs import Compute_JacMulMat_Forces_Cython, Compute_JacMulMat_Forces_Cython_mul_x
 
 from choreo.Choreo_cython_funs import Transform_Coeffs_Single_Loop,SparseScaleCoeffs,ComputeSpeedCoeffs
-from choreo.Choreo_cython_funs import the_irfft,the_rfft
 from choreo.Choreo_cython_funs import Compute_hamil_hess_mul_Cython_nosym,Compute_hamil_hess_mul_xonly_Cython_nosym
 from choreo.Choreo_cython_funs import Compute_Derivative_precond_inv_Cython_nosym,Compute_Derivative_precond_Cython_nosym
 from choreo.Choreo_cython_funs import Compute_Derivative_Cython_nosym,InplaceSmoothCoeffs
 from choreo.Choreo_cython_funs import RotateFastWithSlow_2D
 from choreo.Choreo_cython_funs import PopulateRandomInit
 
-
 from choreo.Choreo_scipy_plus import *
+
+
 
 def Pick_Named_Args_From_Dict(fun,the_dict,MissingArgsAreNone = True):
     
@@ -144,6 +167,9 @@ class ChoreoAction():
 
         self.ComputeGradBackend = globals()[GradFunName]
         self.ComputeHessBackend = globals()[HessFunName]
+
+        self.rfft = default_rfft
+        self.irfft = default_irfft
 
     def GetCurrentListAttribute(self,key):
 
@@ -264,7 +290,7 @@ class ChoreoAction():
             nint = self.nint
 
         all_coeffs_nosym = self.RemoveSym(x).view(dtype=np.complex128)[...,0]
-        all_pos_b = the_irfft(all_coeffs_nosym,n=nint,norm="forward")
+        all_pos_b = self.irfft(all_coeffs_nosym,n=nint,norm="forward")
 
         return all_pos_b
 
@@ -277,7 +303,7 @@ class ChoreoAction():
             nint = self.nint
 
         all_coeffs_c = self.Unpackage_all_coeffs(x).view(dtype=np.complex128)[...,0]
-        all_pos = the_irfft(all_coeffs_c,n=nint,norm="forward")
+        all_pos = self.irfft(all_coeffs_c,n=nint,norm="forward")
 
         return all_pos
 
@@ -290,13 +316,13 @@ class ChoreoAction():
             nint = self.nint
 
         all_coeffs_nosym = self.RemoveSym(x).view(dtype=np.complex128)[...,0]
-        all_pos_b = the_irfft(all_coeffs_nosym,n=nint,norm="forward")
+        all_pos_b = self.irfft(all_coeffs_nosym,n=nint,norm="forward")
 
         ncoeff = all_coeffs_nosym.shape[2]
         for k in range(ncoeff):
             all_coeffs_nosym[:,:,k] *= twopi*1j*k
 
-        all_vel_b = the_irfft(all_coeffs_nosym,n=nint,norm="forward")
+        all_vel_b = self.irfft(all_coeffs_nosym,n=nint,norm="forward")
 
         return all_pos_b, all_vel_b
 
@@ -393,8 +419,8 @@ class ChoreoAction():
 
         J,GradJ =  self.ComputeGradBackend(
             self.nloop          ,
-            self.ncoeff       ,
-            self.nint         ,
+            self.ncoeff         ,
+            self.nint           ,
             self.mass           ,
             self.loopnb         ,
             self.Targets        ,
@@ -410,7 +436,8 @@ class ChoreoAction():
             self.TimeShiftNumBin,
             self.TimeShiftDenBin,
             self.last_all_coeffs,
-            self.last_all_pos
+            self.last_all_pos   ,
+            self.rfft           ,
         )
 
         GJparam = (self.Package_all_coeffs_T(GradJ)) * escape_pen
@@ -424,7 +451,7 @@ class ChoreoAction():
             self.last_all_coeffs = self.Unpackage_all_coeffs(x)
             
             c_coeffs = self.last_all_coeffs.view(dtype=np.complex128)[...,0]
-            self.last_all_pos = the_irfft(c_coeffs,norm="forward")
+            self.last_all_pos = self.irfft(c_coeffs,norm="forward")
         
     def Compute_action_hess_mul(self,x,dx):
         r"""
@@ -435,8 +462,8 @@ class ChoreoAction():
 
         HessJdx = self.ComputeHessBackend(
             self.nloop                      ,
-            self.ncoeff                   ,
-            self.nint                     ,
+            self.ncoeff                     ,
+            self.nint                       ,
             self.mass                       ,
             self.loopnb                     ,
             self.Targets                    ,
@@ -453,7 +480,9 @@ class ChoreoAction():
             self.TimeShiftDenBin            ,
             self.last_all_coeffs            ,
             self.Unpackage_all_coeffs(dx)   ,
-            self.last_all_pos               
+            self.last_all_pos               ,
+            self.rfft                       ,
+            self.irfft                      ,           
         )
 
         return self.Package_all_coeffs_T(HessJdx)
@@ -478,8 +507,8 @@ class ChoreoAction():
 
         J,GradJ =  self.ComputeGradBackend(
             self.nloop          ,
-            self.ncoeff       ,
-            self.nint         ,
+            self.ncoeff         ,
+            self.nint           ,
             self.mass           ,
             self.loopnb         ,
             self.Targets        ,
@@ -495,8 +524,9 @@ class ChoreoAction():
             self.TimeShiftNumBin,
             self.TimeShiftDenBin,
             self.last_all_coeffs,
-            self.last_all_pos
-        )
+            self.last_all_pos   ,
+            self.rfft           ,
+        )   
 
         return J,self.Package_all_coeffs_T(GradJ)
 
@@ -927,18 +957,18 @@ class ChoreoAction():
                 nint = 2*(ncoeff-1)
 
                 c_coeffs_slow = all_coeffs_slow_mod.view(dtype=np.complex128)[...,0]
-                all_pos_slow = the_irfft(c_coeffs_slow,n=nint,axis=1)
+                all_pos_slow = self.irfft(c_coeffs_slow,n=nint,axis=1)
 
                 c_coeffs_fast = all_coeffs_fast_mod.view(dtype=np.complex128)[...,0]
-                all_pos_fast = the_irfft(c_coeffs_fast,n=nint,axis=1)
+                all_pos_fast = self.irfft(c_coeffs_fast,n=nint,axis=1)
 
                 all_coeffs_slow_mod_speed = ComputeSpeedCoeffs(all_coeffs_slow_mod,ncoeff)
                 c_coeffs_slow_mod_speed = all_coeffs_slow_mod_speed.view(dtype=np.complex128)[...,0]
-                all_pos_slow_mod_speed = the_irfft(c_coeffs_slow_mod_speed,n=nint,axis=1)
+                all_pos_slow_mod_speed = self.irfft(c_coeffs_slow_mod_speed,n=nint,axis=1)
 
                 all_pos_avg = RotateFastWithSlow_2D(all_pos_slow,all_pos_slow_mod_speed,all_pos_fast,nint)
 
-                c_coeffs_avg = the_rfft(all_pos_avg,axis=1)
+                c_coeffs_avg = self.rfft(all_pos_avg,axis=1)
 
                 kmax = min(ncoeff,ncoeff_slow)
 
@@ -988,8 +1018,8 @@ class ChoreoAction():
 
         J,GradJ =  self.ComputeGradBackend(
             self.nloop          ,
-            self.ncoeff       ,
-            self.nint         ,
+            self.ncoeff         ,
+            self.nint           ,
             self.mass           ,
             self.loopnb         ,
             self.Targets        ,
@@ -1005,7 +1035,8 @@ class ChoreoAction():
             self.TimeShiftNumBin,
             self.TimeShiftDenBin,
             self.last_all_coeffs,
-            self.last_all_pos
+            self.last_all_pos   ,
+            self.rfft           ,
         )
 
         plot_coeff_loglog(
@@ -1058,17 +1089,8 @@ class ChoreoAction():
         if max_path_length is None:
 
             max_path_length = self.Compute_MaxPathLength(x)
-        
-        c_coeffs = self.Unpackage_all_coeffs(x).view(dtype=np.complex128)[...,0]
 
-        all_pos = the_irfft(c_coeffs,norm="forward")        
-        all_pos_b = np.zeros((self.nbody,self.geodim,nint),dtype=np.float64)
-        
-        for il in range(self.nloop):
-            for ib in range(self.loopnb[il]):
-                for iint in range(nint):
-                    # exact time is irrelevant
-                    all_pos_b[self.Targets[il,ib],:,iint] = np.dot(self.SpaceRotsUn[il,ib,:,:],all_pos[il,:,iint])
+        all_pos_b = self.ComputeAllPos(x)
 
         xmin = all_pos_b[:,0,:].min()
         xmax = all_pos_b[:,0,:].max()
@@ -1195,6 +1217,8 @@ class ChoreoAction():
             self.mass           ,
             self.last_all_pos   ,
             all_coeffs_d_xv     ,
+            self.rfft           ,
+            self.irfft          ,
         )
 
         return Hdxv.reshape(-1)
@@ -1224,6 +1248,8 @@ class ChoreoAction():
             self.mass           ,
             self.last_all_pos   ,
             all_coeffs_d_x      ,
+            self.rfft           ,
+            self.irfft          ,
         )
 
         return res.reshape(-1)
@@ -1257,6 +1283,8 @@ class ChoreoAction():
             self.mass               ,
             self.last_all_pos       ,
             all_coeffs_d_x_preco    ,
+            self.rfft               ,
+            self.irfft              ,
         )
 
         res = Compute_Derivative_precond_inv_Cython_nosym(
@@ -1418,7 +1446,7 @@ class ChoreoAction():
         c_coeffs = all_coeffs.view(dtype=np.complex128)[...,0]
         
         all_pos = np.zeros((self.nloop,self.geodim,nint_plot+1),dtype=np.float64)
-        all_pos[:,:,0:nint_plot] = the_irfft(c_coeffs,n=nint_plot,norm="forward")
+        all_pos[:,:,0:nint_plot] = self.irfft(c_coeffs,n=nint_plot,norm="forward")
         all_pos[:,:,nint_plot] = all_pos[:,:,0]
         
         n_loop_plot = np.count_nonzero((self.RequiresLoopDispUn))
@@ -1542,7 +1570,7 @@ class ChoreoAction():
         c_coeffs = all_coeffs.view(dtype=np.complex128)[...,0]
         
         all_pos = np.zeros((self.nloop,self.geodim,nint_plot+1),dtype=np.float64)
-        all_pos[:,:,0:nint_plot] = the_irfft(c_coeffs,n=nint_plot,norm="forward")
+        all_pos[:,:,0:nint_plot] = self.irfft(c_coeffs,n=nint_plot,norm="forward")
         all_pos[:,:,nint_plot] = all_pos[:,:,0]
         
         all_coeffs_v = np.zeros(all_coeffs.shape)
@@ -1554,7 +1582,7 @@ class ChoreoAction():
         c_coeffs_v = all_coeffs_v.view(dtype=np.complex128)[...,0]
         
         all_vel = np.zeros((self.nloop,nint_plot+1),dtype=np.float64)
-        all_vel[:,0:nint_plot] = np.linalg.norm(the_irfft(c_coeffs_v,n=nint_plot,norm="forward"),axis=1)
+        all_vel[:,0:nint_plot] = np.linalg.norm(self.irfft(c_coeffs_v,n=nint_plot,norm="forward"),axis=1)
         all_vel[:,nint_plot] = all_vel[:,0]
         
         all_pos_b = np.zeros((self.nbody,self.geodim,nint_plot+1),dtype=np.float64)
@@ -2652,7 +2680,7 @@ def AllPosToAllCoeffs(all_pos,ncoeffs):
     nloop = all_pos.shape[0]
     geodim = all_pos.shape[1]
 
-    c_coeffs = the_rfft(all_pos,axis=2,norm="forward")
+    c_coeffs = default_rfft(all_pos,axis=2,norm="forward")
     all_coeffs = np.empty((nloop,geodim,ncoeffs,2),dtype=np.float64)
     all_coeffs[:,:,:,0] = c_coeffs.real
     all_coeffs[:,:,:,1] = c_coeffs.imag

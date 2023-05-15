@@ -5,8 +5,6 @@ import multiprocessing
 
 max_num_threads = multiprocessing.cpu_count()
 
-from choreo.Choreo_cython_funs import the_rfft,the_irfft
-
 numba_kwargs = {
     'nopython':True     ,
     'cache':True        ,
@@ -58,10 +56,11 @@ def Empty_Backend_action(
     TimeShiftNumBin   ,
     TimeShiftDenBin   ,
     all_coeffs        ,
-    all_pos 
+    all_pos           ,
+    rfft              ,
 ):
     
-    grad_pot_fft = the_rfft(all_pos,norm="forward")
+    grad_pot_fft = rfft(all_pos,norm="forward")
     
     return 0.,all_coeffs
 
@@ -85,13 +84,15 @@ def Empty_Backend_hess_mul(
     TimeShiftDenBin   ,
     all_coeffs        ,
     all_coeffs_d      , 
-    all_pos 
+    all_pos           ,
+    rfft              ,
+    irfft             ,
 ):
     
     c_coeffs_d = all_coeffs_d.view(dtype=np.complex128)[...,0]
-    all_pos_d = the_irfft(c_coeffs_d,n=nint,axis=2,norm="forward")
+    all_pos_d = irfft(c_coeffs_d,n=nint,axis=2,norm="forward")
 
-    hess_dx_pot_fft = the_rfft(all_pos,norm="forward")
+    hess_dx_pot_fft = rfft(all_pos,norm="forward")
     
     return all_coeffs_d
 
@@ -114,7 +115,8 @@ def Compute_action_Python_nD_serial(
     TimeShiftNumBin   ,
     TimeShiftDenBin   ,
     all_coeffs        ,
-    all_pos 
+    all_pos           ,
+    rfft              ,
 ):
     # This function is probably the most important one.
     # Computes the action and its gradient with respect to the Fourier coefficients of the generator in each loop.
@@ -138,7 +140,7 @@ def Compute_action_Python_nD_serial(
         all_pos           
     )
 
-    grad_pot_fft = the_rfft(grad_pot_all,norm="forward") 
+    grad_pot_fft = rfft(grad_pot_all,norm="forward") 
 
     Kin_en, Action_grad = Compute_action_Python_Kin_loop_nD_serial(
         nloop             ,
@@ -171,7 +173,8 @@ def Compute_action_Numba_nD_serial(
     TimeShiftNumBin   ,
     TimeShiftDenBin   ,
     all_coeffs        ,
-    all_pos 
+    all_pos           ,
+    rfft
 ):
     # This function is probably the most important one.
     # Computes the action and its gradient with respect to the Fourier coefficients of the generator in each loop.
@@ -195,7 +198,7 @@ def Compute_action_Numba_nD_serial(
         all_pos           
     )
 
-    grad_pot_fft = the_rfft(grad_pot_all,norm="forward") 
+    grad_pot_fft = rfft(grad_pot_all,norm="forward") 
 
     Kin_en, Action_grad = Compute_action_Numba_Kin_loop_nD_serial(
         nloop             ,
@@ -390,11 +393,13 @@ def Compute_action_hess_mul_Python_nD_serial(
     TimeShiftDenBin   ,
     all_coeffs        ,
     all_coeffs_d      , 
-    all_pos 
+    all_pos           ,
+    rfft              ,
+    irfft             ,
 ):
 
     c_coeffs_d = all_coeffs_d.view(dtype=np.complex128)[...,0]
-    all_pos_d = the_irfft(c_coeffs_d,n=nint,axis=2,norm="forward")
+    all_pos_d = irfft(c_coeffs_d,n=nint,axis=2,norm="forward")
 
     hess_pot_all_d = Compute_action_hess_mul_Python_time_loop_nD_serial(
         nloop             ,
@@ -416,7 +421,7 @@ def Compute_action_hess_mul_Python_nD_serial(
         all_pos_d         
     )
 
-    hess_dx_pot_fft = the_rfft(hess_pot_all_d,norm="forward")
+    hess_dx_pot_fft = rfft(hess_pot_all_d,norm="forward")
 
     return Compute_action_hess_mul_Python_Kin_loop_nD_serial(
         nloop             ,
@@ -446,11 +451,13 @@ def Compute_action_hess_mul_Numba_nD_serial(
     TimeShiftDenBin   ,
     all_coeffs        ,
     all_coeffs_d      , 
-    all_pos 
+    all_pos           ,
+    rfft              ,
+    irfft             ,
 ):
 
     c_coeffs_d = all_coeffs_d.view(dtype=np.complex128)[...,0]
-    all_pos_d = the_irfft(c_coeffs_d,n=nint,axis=2,norm="forward")
+    all_pos_d = irfft(c_coeffs_d,n=nint,axis=2,norm="forward")
 
     hess_pot_all_d = Compute_action_hess_mul_Numba_time_loop_nD_serial(
         nloop             ,
@@ -472,7 +479,7 @@ def Compute_action_hess_mul_Numba_nD_serial(
         all_pos_d         
     )
 
-    hess_dx_pot_fft = the_rfft(hess_pot_all_d,norm="forward")
+    hess_dx_pot_fft = rfft(hess_pot_all_d,norm="forward")
 
     return Compute_action_hess_mul_Numba_Kin_loop_nD_serial(
         nloop             ,
@@ -661,7 +668,8 @@ def Compute_action_Python_2D_serial(
     TimeShiftNumBin   ,
     TimeShiftDenBin   ,
     all_coeffs        ,
-    all_pos 
+    all_pos           ,
+    rfft              ,
 ):
     # This function is probably the most important one.
     # Computes the action and its gradient with respect to the Fourier coefficients of the generator in each loop.
@@ -685,7 +693,7 @@ def Compute_action_Python_2D_serial(
         all_pos           ,
     )
 
-    grad_pot_fft = the_rfft(grad_pot_all,norm="forward")  #
+    grad_pot_fft = rfft(grad_pot_all,norm="forward")  #
 
     Kin_en, Action_grad = Compute_action_Python_Kin_loop_2D_serial(
         nloop             ,
@@ -718,7 +726,8 @@ def Compute_action_Numba_2D_serial(
     TimeShiftNumBin   ,
     TimeShiftDenBin   ,
     all_coeffs        ,
-    all_pos 
+    all_pos           ,
+    rfft              ,
 ):
     # This function is probably the most important one.
     # Computes the action and its gradient with respect to the Fourier coefficients of the generator in each loop.
@@ -742,7 +751,7 @@ def Compute_action_Numba_2D_serial(
         all_pos           ,
     )
 
-    grad_pot_fft = the_rfft(grad_pot_all,norm="forward")  #
+    grad_pot_fft = rfft(grad_pot_all,norm="forward")  #
 
     Kin_en, Action_grad = Compute_action_Numba_Kin_loop_2D_serial(
         nloop             ,
@@ -925,13 +934,15 @@ def Compute_action_hess_mul_Python_2D_serial(
     TimeShiftDenBin   ,
     all_coeffs        ,
     all_coeffs_d      , 
-    all_pos 
+    all_pos           ,
+    rfft              ,
+    irfft             ,
 ):
     # Computes the matrix vector product H*dx where H is the Hessian of the action.
     # Useful to guide the root finding / optimisation process and to better understand the topography of the action (critical points / Morse theory).
 
     c_coeffs_d = all_coeffs_d.view(dtype=np.complex128)[...,0]
-    all_pos_d = the_irfft(c_coeffs_d,norm="forward")
+    all_pos_d = irfft(c_coeffs_d,norm="forward")
 
     hess_pot_all_d = Compute_action_hess_mul_Python_time_loop_2D_serial(
         nloop             ,
@@ -953,7 +964,7 @@ def Compute_action_hess_mul_Python_2D_serial(
         all_pos_d         
     )
 
-    hess_dx_pot_fft = the_rfft(hess_pot_all_d,norm="forward")
+    hess_dx_pot_fft = rfft(hess_pot_all_d,norm="forward")
 
     return Compute_action_hess_mul_Python_Kin_loop_2D_serial(
         nloop             ,
@@ -983,13 +994,15 @@ def Compute_action_hess_mul_Numba_2D_serial(
     TimeShiftDenBin   ,
     all_coeffs        ,
     all_coeffs_d      , 
-    all_pos 
+    all_pos           ,
+    rfft              ,
+    irfft             ,
 ):
     # Computes the matrix vector product H*dx where H is the Hessian of the action.
     # Useful to guide the root finding / optimisation process and to better understand the topography of the action (critical points / Morse theory).
 
     c_coeffs_d = all_coeffs_d.view(dtype=np.complex128)[...,0]
-    all_pos_d = the_irfft(c_coeffs_d,norm="forward")
+    all_pos_d = irfft(c_coeffs_d,norm="forward")
 
     hess_pot_all_d = Compute_action_hess_mul_Numba_time_loop_2D_serial(
         nloop             ,
@@ -1011,7 +1024,7 @@ def Compute_action_hess_mul_Numba_2D_serial(
         all_pos_d         
     )
 
-    hess_dx_pot_fft = the_rfft(hess_pot_all_d,norm="forward")
+    hess_dx_pot_fft = rfft(hess_pot_all_d,norm="forward")
 
     return Compute_action_hess_mul_Numba_Kin_loop_2D_serial(
         nloop             ,
@@ -1219,7 +1232,8 @@ def Compute_action_Numba_nD_parallel(
     TimeShiftNumBin   ,
     TimeShiftDenBin   ,
     all_coeffs        ,
-    all_pos 
+    all_pos           ,
+    rfft              ,
 ):
     # This function is probably the most important one.
     # Computes the action and its gradient with respect to the Fourier coefficients of the generator in each loop.
@@ -1243,7 +1257,7 @@ def Compute_action_Numba_nD_parallel(
         all_pos           
     )
 
-    grad_pot_fft = the_rfft(grad_pot_all,norm="forward") 
+    grad_pot_fft = rfft(grad_pot_all,norm="forward") 
 
     Kin_en, Action_grad = Compute_action_Numba_Kin_loop_nD_parallel(
         nloop             ,
@@ -1441,11 +1455,13 @@ def Compute_action_hess_mul_Numba_nD_parallel(
     TimeShiftDenBin   ,
     all_coeffs        ,
     all_coeffs_d      , 
-    all_pos 
+    all_pos           ,
+    rfft              ,
+    irfft             ,
 ):
 
     c_coeffs_d = all_coeffs_d.view(dtype=np.complex128)[...,0]
-    all_pos_d = the_irfft(c_coeffs_d,n=nint,axis=2,norm="forward")
+    all_pos_d = irfft(c_coeffs_d,n=nint,axis=2,norm="forward")
 
     hess_pot_all_d = Compute_action_hess_mul_Numba_time_loop_nD_parallel(
         nloop             ,
@@ -1467,7 +1483,7 @@ def Compute_action_hess_mul_Numba_nD_parallel(
         all_pos_d         
     )
 
-    hess_dx_pot_fft = the_rfft(hess_pot_all_d,norm="forward")
+    hess_dx_pot_fft = rfft(hess_pot_all_d,norm="forward")
 
     return Compute_action_hess_mul_Numba_Kin_loop_nD_parallel(
         nloop             ,
@@ -1709,7 +1725,8 @@ def Compute_action_Numba_2D_parallel(
     TimeShiftNumBin   ,
     TimeShiftDenBin   ,
     all_coeffs        ,
-    all_pos 
+    all_pos           ,
+    rfft              ,
 ):
     # This function is probably the most important one.
     # Computes the action and its gradient with respect to the Fourier coefficients of the generator in each loop.
@@ -1733,7 +1750,7 @@ def Compute_action_Numba_2D_parallel(
         all_pos           ,
     )
 
-    grad_pot_fft = the_rfft(grad_pot_all,norm="forward")  #
+    grad_pot_fft = rfft(grad_pot_all,norm="forward")  #
 
     Kin_en, Action_grad = Compute_action_Numba_Kin_loop_nD_parallel(
         nloop             ,
@@ -1944,13 +1961,15 @@ def Compute_action_hess_mul_Numba_2D_parallel(
     TimeShiftDenBin   ,
     all_coeffs        ,
     all_coeffs_d      , 
-    all_pos 
+    all_pos           ,
+    rfft              ,
+    irfft             ,
 ):
     # Computes the matrix vector product H*dx where H is the Hessian of the action.
     # Useful to guide the root finding / optimisation process and to better understand the topography of the action (critical points / Morse theory).
 
     c_coeffs_d = all_coeffs_d.view(dtype=np.complex128)[...,0]
-    all_pos_d = the_irfft(c_coeffs_d,norm="forward")
+    all_pos_d = irfft(c_coeffs_d,norm="forward")
 
     hess_pot_all_d = Compute_action_hess_mul_Numba_time_loop_2D_parallel(
         nloop             ,
@@ -1972,7 +1991,7 @@ def Compute_action_hess_mul_Numba_2D_parallel(
         all_pos_d         
     )
 
-    hess_dx_pot_fft = the_rfft(hess_pot_all_d,norm="forward")
+    hess_dx_pot_fft = rfft(hess_pot_all_d,norm="forward")
 
     return Compute_action_hess_mul_Numba_Kin_loop_2D_parallel(
         nloop             ,

@@ -587,7 +587,7 @@ for n_NT_init in [0]:
         nint_init = nint
         ncoeff_init = nint_init // 2 +1
 
-        c_coeffs = choreo.the_rfft(all_pos,axis=2,norm="forward")
+        c_coeffs = choreo.default_rfft(all_pos,axis=2,norm="forward")
         all_coeffs = np.zeros((nbody,geodim,ncoeff_init,2),dtype=np.float64)
         all_coeffs[:,:,:,0] = c_coeffs.real
         all_coeffs[:,:,:,1] = c_coeffs.imag
