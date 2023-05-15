@@ -23,7 +23,6 @@ import random
 import inspect
 import fractions
 
-
 from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.colors import cnames
@@ -390,6 +389,8 @@ class ChoreoAction():
 
     def Compute_action_onlygrad_escape(self,x):
 
+        self.SaveAllPos(x)
+
         rms_dist = Compute_Loop_Dist_btw_avg_Cython(
             self.nloop          ,
             self.ncoeff       ,
@@ -408,7 +409,8 @@ class ChoreoAction():
             self.TimeRevsBin    ,
             self.TimeShiftNumBin,
             self.TimeShiftDenBin,
-            self.Unpackage_all_coeffs(x)
+            self.last_all_coeffs,
+            self.last_all_pos   ,
         )
 
         escape_pen = 1 + self.escape_fac * abs(rms_dist)**self.escape_pow
@@ -479,7 +481,7 @@ class ChoreoAction():
             self.TimeShiftNumBin            ,
             self.TimeShiftDenBin            ,
             self.last_all_coeffs            ,
-            self.Unpackage_all_coeffs(dx)   ,
+            self.last_all_coeffs            ,
             self.last_all_pos               ,
             self.rfft                       ,
             self.irfft                      ,           
@@ -535,6 +537,8 @@ class ChoreoAction():
         Returns an invariant hash of the trajectories.
         Useful for duplicate detection
         """
+        
+        self.SavePosFFT(x)
 
         Hash_Action =  Compute_hash_action_Cython(
             self.geodim                     ,
@@ -555,7 +559,8 @@ class ChoreoAction():
             self.TimeRevsBin                ,
             self.TimeShiftNumBin            ,
             self.TimeShiftDenBin            ,
-            self.Unpackage_all_coeffs(x)
+            self.last_all_coeffs            ,
+            self.last_all_pos               ,
         )
 
         return Hash_Action
@@ -565,6 +570,8 @@ class ChoreoAction():
         Computes the Newton error at a certain value of parameters
         WARNING : DOUBLING NUMBER OF INTEGRATION POINTS
         """
+
+        self.SavePosFFT(x)
 
         all_Newt_err =  Compute_Newton_err_Cython(
             self.nbody                  ,
@@ -578,7 +585,9 @@ class ChoreoAction():
             self.TimeRevsUn             ,
             self.TimeShiftNumUn         ,
             self.TimeShiftDenUn         ,
-            self.Unpackage_all_coeffs(x)
+            self.last_all_coeffs        ,
+            self.last_all_pos           ,
+            self.irfft                  ,
         )
 
         return all_Newt_err
@@ -616,7 +625,8 @@ class ChoreoAction():
         r"""
         Returns the minimum inter-body distance along a set of trajectories
         """
-        
+        self.SavePosFFT(x)
+
         MinDist =  Compute_MinDist_Cython(
             self.nloop                  ,
             self.ncoeff               ,
@@ -635,7 +645,8 @@ class ChoreoAction():
             self.TimeRevsBin            ,
             self.TimeShiftNumBin        ,
             self.TimeShiftDenBin        ,
-            self.Unpackage_all_coeffs(x) 
+            self.last_all_coeffs        ,
+            self.last_all_pos           ,
         )
         
         return MinDist
@@ -1441,10 +1452,8 @@ class ChoreoAction():
         if color_list is None:
             color_list = plt.rcParams['axes.prop_cycle'].by_key()['color']
 
-        all_coeffs = self.Unpackage_all_coeffs(x)
-        
+        all_coeffs = self.Unpackage_all_coeffs(x)        
         c_coeffs = all_coeffs.view(dtype=np.complex128)[...,0]
-        
         all_pos = np.zeros((self.nloop,self.geodim,nint_plot+1),dtype=np.float64)
         all_pos[:,:,0:nint_plot] = self.irfft(c_coeffs,n=nint_plot,norm="forward")
         all_pos[:,:,nint_plot] = all_pos[:,:,0]
@@ -1568,7 +1577,6 @@ class ChoreoAction():
         
         all_coeffs = self.Unpackage_all_coeffs(x)            
         c_coeffs = all_coeffs.view(dtype=np.complex128)[...,0]
-        
         all_pos = np.zeros((self.nloop,self.geodim,nint_plot+1),dtype=np.float64)
         all_pos[:,:,0:nint_plot] = self.irfft(c_coeffs,n=nint_plot,norm="forward")
         all_pos[:,:,nint_plot] = all_pos[:,:,0]
@@ -1793,10 +1801,6 @@ class ChoreoAction():
         if color_list is None:
             color_list = plt.rcParams['axes.prop_cycle'].by_key()['color']
 
-#         all_coeffs = self.Unpackage_all_coeffs(x)
-# 
-#         maxloopnb = self.loopnb.max()
-        
         ncol = len(color_list)
 
         if (all_pos_trace is None):
