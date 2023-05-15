@@ -165,7 +165,7 @@ def ExecName(the_name, the_file):
 
     ncoeff_init = nint_init //2 + 1
 
-    c_coeffs = choreo.the_rfft(all_pos,axis=2,norm="forward")
+    c_coeffs = choreo.default_rfft(all_pos,axis=2,norm="forward")
     all_coeffs = np.zeros((Info_dict["nloop"],choreo.ndim,ncoeff_init,2),dtype=np.float64)
     all_coeffs[:,:,:,0] = c_coeffs.real
     all_coeffs[:,:,:,1] = c_coeffs.imag
@@ -317,7 +317,7 @@ def ExecName(the_name, the_file):
 #                         print(il,idim,k,ift,val)
 
     the_coeffs_c = the_coeffs.view(dtype=np.complex128)[...,0]
-    the_pos = choreo.the_irfft(the_coeffs_c,norm="forward")
+    the_pos = choreo.default_irfft(the_coeffs_c,norm="forward")
 
     for iint in range(ActionSyst.nint):
 

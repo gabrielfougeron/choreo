@@ -204,7 +204,7 @@ def Integrate(n_NT_init):
             choreo.InplaceCorrectPeriodicity(all_pos,x0,v0,xf,vf)
 
 
-        all_coeffs_c = choreo.the_rfft(all_pos,norm="forward")
+        all_coeffs_c = choreo.default_rfft(all_pos,norm="forward")
 
 
         
@@ -416,7 +416,7 @@ def Integrate(n_NT_init):
         Do_Speed_test = False
         n_test = 3
 
-        all_coeffs_c = choreo.the_rfft(all_pos,norm="forward")
+        all_coeffs_c = choreo.default_rfft(all_pos,norm="forward")
 
 # 
 #         all_coeffs_init = np.zeros((nbody,geodim,ncoeff,2),dtype=np.float64)
