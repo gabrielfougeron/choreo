@@ -129,7 +129,7 @@ def ExecName(the_name, input_folder, store_folder):
     nint = Info_dict["n_int"]
     ncoeff_init = nint // 2 + 1
 
-    c_coeffs = choreo.the_rfft(all_pos,axis=2,norm="forward")
+    c_coeffs = choreo.default_rfft(all_pos,axis=2,norm="forward")
     all_coeffs = np.zeros((Info_dict["nloop"],geodim,ncoeff_init,2),dtype=np.float64)
     all_coeffs[:,:,:,0] = c_coeffs.real
     all_coeffs[:,:,:,1] = c_coeffs.imag
@@ -218,7 +218,6 @@ def ExecName(the_name, input_folder, store_folder):
     
     all_coeffs = ActionSyst.RemoveSym(x)
     c_coeffs = all_coeffs.view(dtype=np.complex128)[...,0]
-    all_pos = choreo.the_irfft(c_coeffs,n=nint,axis=2,norm="forward")
 
 
     if Seed_with_RK_solver:
@@ -330,7 +329,7 @@ def ExecName(the_name, input_folder, store_folder):
         # print(the_name+f' {np.flip(1/Instability_magnitude[:])}')
         # print("Relative error on loxodromy ",np.linalg.norm(Instability_magnitude - np.flip(1/Instability_magnitude))/np.linalg.norm(Instability_magnitude))
 
-        all_coeffs_dc_init = choreo.the_rfft(all_pos_d_init,norm="forward")
+        all_coeffs_dc_init = choreo.default_rfft(all_pos_d_init,norm="forward")
         all_coeffs_d_init = np.zeros((nbody,geodim,2,nbody,geodim,ncoeff,2),np.float64)
         all_coeffs_d_init[:,:,:,:,:,:,0] = all_coeffs_dc_init[:,:,:,:,:,:ncoeff].real
         all_coeffs_d_init[:,:,:,:,:,:,1] = all_coeffs_dc_init[:,:,:,:,:,:ncoeff].imag
@@ -406,7 +405,7 @@ def ExecName(the_name, input_folder, store_folder):
 
 
     res_1D_all_coeffs_c = res_1D_all_coeffs.view(dtype=np.complex128)[...,0]
-    res_1D_all_pos = choreo.the_irfft(res_1D_all_coeffs_c,n=nint,norm="forward")
+    res_1D_all_pos = choreo.default_irfft(res_1D_all_coeffs_c,n=nint,norm="forward")
 
 #     plt.figure()
 # 
