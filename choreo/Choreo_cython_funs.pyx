@@ -614,7 +614,7 @@ def Compute_Newton_err_Cython(
     long[:,::1]         TimeRevsUn      ,
     long[:,::1]         TimeShiftNumUn  ,
     long[:,::1]         TimeShiftDenUn  ,
-    double[:,:,:,::1]   all_coeffs      ,
+    np.ndarray[double, ndim=4, mode="c"] all_coeffs,
     object              irfft           ,
 ):
     # Computes the "Newton error", i.e. the deviation wrt to the fundamental theorem of Newtonian dynamics m_i * a_i - \sum_j f_ij = 0
