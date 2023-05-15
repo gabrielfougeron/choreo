@@ -8,8 +8,8 @@ import multiprocessing
 # os.environ['NUMEXPR_NUM_THREADS'] = '1'
 # os.environ['MKL_NUM_THREADS'] = '1'
 
-os.environ['NUMBA_NUM_THREADS'] = '4'
-os.environ['OMP_NUM_THREADS'] = '4'
+os.environ['NUMBA_NUM_THREADS'] = '1'
+os.environ['OMP_NUM_THREADS'] = '1'
 os.environ['OPENBLAS_NUM_THREADS'] = '1'
 os.environ['NUMEXPR_NUM_THREADS'] = '1'
 os.environ['MKL_NUM_THREADS'] = '1'
@@ -72,8 +72,8 @@ def Integrate(n_NT_init):
     SymplecticMethod = 'SymplecticGauss10'
     # SymplecticMethod = 'SymplecticGauss15'
 
-    # mul_x = True
-    mul_x = False
+    mul_x = True
+    # mul_x = False
 
     parallel = False
 
@@ -101,16 +101,15 @@ def Integrate(n_NT_init):
 
     # i_try_max = 10
     # i_try_max = 12
-    i_try_max = 14
+    i_try_max = 13
 
     period_err_max = 1e-2
     # period_err_max = 1e-8
     period_err_wish = 1e-10
 
     
-    # IsRepresentedByFourier_thresh = 1e-8
-    # IsRepresentedByFourier_thresh = 1e-9
-    IsRepresentedByFourier_thresh = 1e-14
+    IsRepresentedByFourier_wish = 1e-14
+    IsRepresentedByFourier_max = 1e-9
 
 
 
@@ -224,7 +223,7 @@ def Integrate(n_NT_init):
             cur_max = max(cur_max,ampl)
 
 
-        IsRepresentedByFourier = (cur_max < IsRepresentedByFourier_thresh)
+        IsRepresentedByFourier = (cur_max < IsRepresentedByFourier_wish)
 
         
         print(f'Numerical Tank {n_NT_init:4d} Try n° {i_try} Error on periodicity : {period_err:.2e} Fourier at probe : {cur_max:.2e}')
@@ -236,7 +235,8 @@ def Integrate(n_NT_init):
 
 
     # if (period_err < period_err_max):
-    if (IsRepresentedByFourier):
+    # if (IsRepresentedByFourier):
+    if (cur_max < IsRepresentedByFourier_max):
 
 
         Transform_Sym = None
@@ -511,7 +511,15 @@ def Integrate(n_NT_init):
 
 # Integrate(4)
 
-for n_NT_init in range(len(all_NT_init)):
+
+# the_NT_init = range(len(all_NT_init))
+
+the_NT_init = [20]
+the_NT_init.extend(range(25,len(all_NT_init)))
+
+
+for n_NT_init in the_NT_init:
+# for n_NT_init in range(21,len(all_NT_init)):
 
     Integrate(n_NT_init)
 
