@@ -614,7 +614,7 @@ def Compute_Newton_err_Cython(
     long[:,::1]         TimeRevsUn      ,
     long[:,::1]         TimeShiftNumUn  ,
     long[:,::1]         TimeShiftDenUn  ,
-    np.ndarray[double, ndim=4, mode="c"] all_coeffs     ,
+    double[:,:,:,::1]   all_coeffs      ,
     double[:,:,::1]     all_pos         ,
     object              irfft           ,
 ):
@@ -642,7 +642,7 @@ def Compute_Newton_err_Cython(
         if (maxloopnb < loopnb[il]):
             maxloopnb = loopnb[il]
     
-    cdef np.ndarray[double, ndim=4, mode="c"] acc_coeff = np.zeros((nloop,geodim,ncoeff,2),dtype=np.float64)
+    cdef np.ndarray[double, ndim=4, mode="c"] acc_coeff = np.empty((nloop,geodim,ncoeff,2),dtype=np.float64)
 
     for il in range(nloop):
         for idim in range(geodim):

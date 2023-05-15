@@ -308,6 +308,7 @@ def Compute_action_hess_mul_Cython_nD_serial(
     np.ndarray[double, ndim=4, mode="c"]  all_coeffs_d  , # required
     double[:,:,::1]   all_pos           ,
     object            rfft              ,
+    object            irfft             ,
 ):
     # Computes the matrix vector product H*dx where H is the Hessian of the action.
     # Useful to guide the root finding / optimisation process and to better understand the topography of the action (critical points / Morse theory).
@@ -325,7 +326,7 @@ def Compute_action_hess_mul_Cython_nD_serial(
     cdef double prod_mass,a,b,c,dx2,prod_fac,dxtddx
 
     c_coeffs_d = all_coeffs_d.view(dtype=np.complex128)[...,0]
-    cdef double[:,:,::1]  all_pos_d = rfft(c_coeffs_d,n=nint,axis=2,norm="forward")
+    cdef double[:,:,::1]  all_pos_d = irfft(c_coeffs_d,n=nint,axis=2,norm="forward")
 
     cdef double[:,:,::1] hess_pot_all_d
 
