@@ -481,7 +481,7 @@ class ChoreoAction():
             self.TimeShiftNumBin            ,
             self.TimeShiftDenBin            ,
             self.last_all_coeffs            ,
-            self.last_all_coeffs            ,
+            self.Unpackage_all_coeffs(dx)   ,
             self.last_all_pos               ,
             self.rfft                       ,
             self.irfft                      ,           
