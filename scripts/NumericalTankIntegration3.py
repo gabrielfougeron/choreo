@@ -2,17 +2,17 @@ import os
 import concurrent.futures
 import multiprocessing
 
-# os.environ['NUMBA_NUM_THREADS'] = str(multiprocessing.cpu_count()//2)
-# os.environ['OMP_NUM_THREADS'] = str(multiprocessing.cpu_count()//2)
-# os.environ['OPENBLAS_NUM_THREADS'] = '1'
-# os.environ['NUMEXPR_NUM_THREADS'] = '1'
-# os.environ['MKL_NUM_THREADS'] = '1'
-
-os.environ['NUMBA_NUM_THREADS'] = '1'
-os.environ['OMP_NUM_THREADS'] = '1'
+os.environ['NUMBA_NUM_THREADS'] = str(multiprocessing.cpu_count()//2)
+os.environ['OMP_NUM_THREADS'] = str(multiprocessing.cpu_count()//2)
 os.environ['OPENBLAS_NUM_THREADS'] = '1'
 os.environ['NUMEXPR_NUM_THREADS'] = '1'
 os.environ['MKL_NUM_THREADS'] = '1'
+
+# os.environ['NUMBA_NUM_THREADS'] = '1'
+# os.environ['OMP_NUM_THREADS'] = '1'
+# os.environ['OPENBLAS_NUM_THREADS'] = '1'
+# os.environ['NUMEXPR_NUM_THREADS'] = '1'
+# os.environ['MKL_NUM_THREADS'] = '1'
 
 
 import json
@@ -67,9 +67,9 @@ def Integrate(n_NT_init):
     # SymplecticMethod = 'SymplecticRuth4'
     # SymplecticMethod = 'SymplecticGauss1'
     # SymplecticMethod = 'SymplecticGauss2'
-    # SymplecticMethod = 'SymplecticGauss3'
+    SymplecticMethod = 'SymplecticGauss3'
     # SymplecticMethod = 'SymplecticGauss5' 
-    SymplecticMethod = 'SymplecticGauss10'
+    # SymplecticMethod = 'SymplecticGauss10'
     # SymplecticMethod = 'SymplecticGauss15'
 
     mul_x = True
@@ -332,7 +332,6 @@ def Integrate(n_NT_init):
         k_infl          = 2
         k_max           = 3
 
-
         duplicate_eps = 1e-8
         freq_erase_dict = 100
         hash_dict = {}
@@ -340,7 +339,6 @@ def Integrate(n_NT_init):
         n_opt = 0
         n_opt_max = 1
         n_find_max = 1
-
 
         Newt_err_norm_max = 1e-12
         Newt_err_norm_max_save = 1e10
@@ -406,8 +404,8 @@ def Integrate(n_NT_init):
         GradHessBackend="Cython"
         # GradHessBackend="Numba"
 
-        ParallelBackend = True
-        # ParallelBackend = False
+        # ParallelBackend = True
+        ParallelBackend = False
 
         nint_init = nint
         ncoeff = nint // 2 + 1
@@ -422,7 +420,6 @@ def Integrate(n_NT_init):
 #         all_coeffs_init = np.zeros((nbody,geodim,ncoeff,2),dtype=np.float64)
 #         all_coeffs_init[:,:,:,0] = all_coeffs_c[:,:,:].real
 #         all_coeffs_init[:,:,:,1] = all_coeffs_c[:,:,:].imag
-
 
         Sym_list.append(
             choreo.ChoreoSym(
@@ -454,8 +451,6 @@ def Integrate(n_NT_init):
 
         SkipCheckRandomMinDist = True
 
-
-
         if Do_Speed_test:
 
             grad_backend_list = [
@@ -464,8 +459,8 @@ def Integrate(n_NT_init):
                 choreo.Compute_action_Numba_2D_serial,
                 # choreo.Compute_action_Cython_nD_serial,
                 # choreo.Compute_action_Numba_nD_serial,
-                choreo.Compute_action_Cython_2D_parallel,
-                choreo.Compute_action_Numba_2D_parallel,
+                # choreo.Compute_action_Cython_2D_parallel,
+                # choreo.Compute_action_Numba_2D_parallel,
                 # choreo.Compute_action_Cython_nD_parallel,
                 # choreo.Compute_action_Numba_nD_parallel,
             ]
@@ -476,8 +471,8 @@ def Integrate(n_NT_init):
                 choreo.Compute_action_hess_mul_Numba_2D_serial,
                 # choreo.Compute_action_hess_mul_Cython_nD_serial,
                 # choreo.Compute_action_hess_mul_Numba_nD_serial,
-                choreo.Compute_action_hess_mul_Cython_2D_parallel,
-                choreo.Compute_action_hess_mul_Numba_2D_parallel,
+                # choreo.Compute_action_hess_mul_Cython_2D_parallel,
+                # choreo.Compute_action_hess_mul_Numba_2D_parallel,
                 # choreo.Compute_action_hess_mul_Cython_nD_parallel,
                 # choreo.Compute_action_hess_mul_Numba_nD_parallel,
             ]
@@ -495,13 +490,9 @@ def Integrate(n_NT_init):
                 all_kwargs = choreo.Pick_Named_Args_From_Dict(choreo.Speed_test,dict(globals(),**locals()))
                 choreo.Speed_test(**all_kwargs)
 
-
-
         all_kwargs = choreo.Pick_Named_Args_From_Dict(choreo.Find_Choreo,dict(globals(),**locals()))
 
         choreo.Find_Choreo(**all_kwargs)
-
-
 
 
     else:
@@ -509,19 +500,19 @@ def Integrate(n_NT_init):
         print(f'Numerical Tank {n_NT_init:4d} could not integrate. Error: {period_err} Fourier at probe : {cur_max:.2e}')
 
 
-# Integrate(4)
+Integrate(20)
 
 
 # the_NT_init = range(len(all_NT_init))
 
-the_NT_init = [20]
-the_NT_init.extend(range(25,len(all_NT_init)))
+# the_NT_init = [20]
+# the_NT_init.extend(range(25,len(all_NT_init)))
 
 
-for n_NT_init in the_NT_init:
-# for n_NT_init in range(21,len(all_NT_init)):
-
-    Integrate(n_NT_init)
+# for n_NT_init in the_NT_init:
+# # for n_NT_init in range(21,len(all_NT_init)):
+# 
+#     Integrate(n_NT_init)
 
 # # 
 # if __name__ == "__main__":

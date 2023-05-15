@@ -571,8 +571,6 @@ class ChoreoAction():
         WARNING : DOUBLING NUMBER OF INTEGRATION POINTS
         """
 
-        self.SavePosFFT(x)
-
         all_Newt_err =  Compute_Newton_err_Cython(
             self.nbody                  ,
             self.nloop                  ,
@@ -585,8 +583,7 @@ class ChoreoAction():
             self.TimeRevsUn             ,
             self.TimeShiftNumUn         ,
             self.TimeShiftDenUn         ,
-            self.last_all_coeffs        ,
-            self.last_all_pos           ,
+            self.Unpackage_all_coeffs(x),
             self.irfft                  ,
         )
 
@@ -1067,11 +1064,6 @@ class ChoreoAction():
             color_list = color_list,
             DoMaxInf = True
         )
-
-
-
-
-
 
     def Write_Descriptor(self,x,filename,Action=None,Gradaction=None,Newt_err_norm=None,dxmin=None,Hash_Action=None,max_path_length=None,extend=0.03):
         r"""
