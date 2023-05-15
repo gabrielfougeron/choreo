@@ -30,10 +30,6 @@ from libc.math cimport sqrt as csqrt
 from libc.math cimport isnan as cisnan
 from libc.math cimport isinf as cisinf
 
-
-from choreo.Choreo_cython_funs import the_rfft,the_irfft
-
-
 cdef double cn = -0.5  #coeff of x^2 in the potential power law
 cdef double cnm1 = cn-1
 cdef double cnm2 = cn-2
@@ -84,7 +80,8 @@ def Compute_action_Cython_nD_parallel(
     long[:,::1]       TimeShiftNumBin   ,
     long[:,::1]       TimeShiftDenBin   ,
     double[:,:,:,::1] all_coeffs        ,
-    double[:,:,::1]   all_pos 
+    double[:,:,::1]   all_pos           ,
+    object            rfft
 ):
     # This function is probably the most important one.
     # Computes the action and its gradient with respect to the Fourier coefficients of the generator in each loop.
@@ -124,7 +121,7 @@ def Compute_action_Cython_nD_parallel(
         all_pos           
     )
 
-    cdef double complex[:,:,::1]  grad_pot_fft = the_rfft(grad_pot_all,norm="forward")  #
+    cdef double complex[:,:,::1]  grad_pot_fft = rfft(grad_pot_all,norm="forward")  #
     cdef double Kin_en = 0  #
     cdef np.ndarray[double, ndim=4, mode="c"] Action_grad_np = np.empty((nloop,geodim,ncoeff,2),np.float64)
     cdef double[:,:,:,::1] Action_grad = Action_grad_np #
@@ -328,7 +325,8 @@ def Compute_action_hess_mul_Cython_nD_parallel(
     long[:,::1]       TimeShiftDenBin   ,
     double[:,:,:,::1] all_coeffs        ,
     np.ndarray[double, ndim=4, mode="c"]  all_coeffs_d  , # required
-    double[:,:,::1]   all_pos 
+    double[:,:,::1]   all_pos           ,
+    object            rfft
 ):
     # Computes the matrix vector product H*dx where H is the Hessian of the action.
     # Useful to guide the root finding / optimisation process and to better understand the topography of the action (critical points / Morse theory).
@@ -346,7 +344,7 @@ def Compute_action_hess_mul_Cython_nD_parallel(
     cdef double prod_mass,a,b,c,dx2,prod_fac,dxtddx
 
     c_coeffs_d = all_coeffs_d.view(dtype=np.complex128)[...,0]
-    cdef double[:,:,::1]  all_pos_d = the_irfft(c_coeffs_d,n=nint,axis=2,norm="forward")
+    cdef double[:,:,::1]  all_pos_d = rfft(c_coeffs_d,n=nint,axis=2,norm="forward")
 
     cdef double[:,:,::1] hess_pot_all_d
 
@@ -367,10 +365,11 @@ def Compute_action_hess_mul_Cython_nD_parallel(
         TimeShiftNumBin   ,
         TimeShiftDenBin   ,
         all_pos           ,
-        all_pos_d         
+        all_pos_d         ,
+
     )
 
-    cdef double complex[:,:,::1]  hess_dx_pot_fft = the_rfft(hess_pot_all_d,norm="forward")
+    cdef double complex[:,:,::1]  hess_dx_pot_fft = rfft(hess_pot_all_d,norm="forward")
 
     cdef np.ndarray[double, ndim=4, mode="c"] Action_hess_dx_np = np.empty((nloop,geodim,ncoeff,2),np.float64)
     cdef double[:,:,:,::1] Action_hess_dx = Action_hess_dx_np
@@ -574,7 +573,8 @@ def Compute_action_Cython_2D_parallel(
     long[:,::1]       TimeShiftNumBin   ,
     long[:,::1]       TimeShiftDenBin   ,
     double[:,:,:,::1] all_coeffs        ,
-    double[:,:,::1]   all_pos 
+    double[:,:,::1]   all_pos           ,
+    object            rfft
 ):
     # This function is probably the most important one.
     # Computes the action and its gradient with respect to the Fourier coefficients of the generator in each loop.
@@ -612,7 +612,7 @@ def Compute_action_Cython_2D_parallel(
         all_pos           ,
     )
 
-    cdef double complex[:,:,::1]  grad_pot_fft = the_rfft(grad_pot_all,norm="forward")  #
+    cdef double complex[:,:,::1]  grad_pot_fft = rfft(grad_pot_all,norm="forward")  #
     cdef double Kin_en = 0 
     
     # ~ cdef np.ndarray[double, ndim=4, mode="c"] Action_grad_np = np.empty((nloop,2,ncoeff,2),np.float64)
@@ -800,7 +800,8 @@ def Compute_action_hess_mul_Cython_2D_parallel(
     long[:,::1]       TimeShiftDenBin   ,
     double[:,:,:,::1] all_coeffs        ,
     np.ndarray[double, ndim=4, mode="c"]  all_coeffs_d  , # required
-    double[:,:,::1]   all_pos 
+    double[:,:,::1]   all_pos           ,
+    object            rfft
 ):
     # Computes the matrix vector product H*dx where H is the Hessian of the action.
     # Useful to guide the root finding / optimisation process and to better understand the topography of the action (critical points / Morse theory).
@@ -820,7 +821,7 @@ def Compute_action_hess_mul_Cython_2D_parallel(
 
 
     c_coeffs_d = all_coeffs_d.view(dtype=np.complex128)[...,0]
-    cdef double[:,:,::1]  all_pos_d = the_irfft(c_coeffs_d,norm="forward")
+    cdef double[:,:,::1]  all_pos_d = rfft(c_coeffs_d,norm="forward")
 
     cdef double[:,:,::1] hess_pot_all_d = Compute_action_hess_mul_Cython_time_loop_2D_parallel(
         nloop             ,
@@ -842,7 +843,7 @@ def Compute_action_hess_mul_Cython_2D_parallel(
         all_pos_d         
     )
 
-    cdef double complex[:,:,::1]  hess_dx_pot_fft = the_rfft(hess_pot_all_d,norm="forward")
+    cdef double complex[:,:,::1]  hess_dx_pot_fft = rfft(hess_pot_all_d,norm="forward")
 
     cdef np.ndarray[double, ndim=4, mode="c"] Action_hess_dx_np = np.empty((nloop,2,ncoeff,2),np.float64)
     cdef double[:,:,:,::1] Action_hess_dx = Action_hess_dx_np

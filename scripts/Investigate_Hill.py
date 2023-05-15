@@ -126,7 +126,7 @@ def ExecName(the_name, input_folder, store_folder):
     nint = Info_dict["n_int"]
     ncoeff_init = nint // 2 + 1
 
-    c_coeffs = choreo.the_rfft(all_pos,axis=2,norm="forward")
+    c_coeffs = choreo.default_rfft(all_pos,axis=2,norm="forward")
     all_coeffs = np.zeros((Info_dict["nloop"],choreo.ndim,ncoeff_init,2),dtype=np.float64)
     all_coeffs[:,:,:,0] = c_coeffs.real
     all_coeffs[:,:,:,1] = c_coeffs.imag
@@ -199,7 +199,6 @@ def ExecName(the_name, input_folder, store_folder):
     
     all_coeffs = ActionSyst.RemoveSym(x)
     c_coeffs = all_coeffs.view(dtype=np.complex128)[...,0]
-    # all_pos = choreo.the_irfft(c_coeffs,n=nint,axis=2,norm="forward")
 
     ActionSyst_nosym = choreo.setup_changevar(2,nbody,nint,mass,n_reconverge_it_max,Sym_list=[],MomCons=False,n_grad_change=n_grad_change,CrashOnIdentity=False)
 
@@ -279,7 +278,7 @@ def ExecName(the_name, input_folder, store_folder):
     print(f'Relative error on flow eigenstate: {np.linalg.norm(MonodromyMat.dot(zo)-zo)/np.linalg.norm(zo):e}')
 
 
-    c_coeffs_d_xv = choreo.the_rfft(all_pos_d_xv,norm="forward")
+    c_coeffs_d_xv = choreo.default_rfft(all_pos_d_xv,norm="forward")
     all_coeffs = np.zeros((2*ndof,2*ndof,ncoeff,2),dtype=np.float64)
     all_coeffs[:,:,:,0] = c_coeffs_d_xv.real
     all_coeffs[:,:,:,1] = c_coeffs_d_xv.imag
