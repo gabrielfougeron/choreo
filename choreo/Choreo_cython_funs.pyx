@@ -28,29 +28,6 @@ from libc.math cimport sqrt as csqrt
 from libc.math cimport isnan as cisnan
 from libc.math cimport isinf as cisinf
 
-
-try:
-
-    import mkl_fft._numpy_fft
-
-    the_rfft  = mkl_fft._numpy_fft.rfft
-    the_irfft = mkl_fft._numpy_fft.irfft
-
-except:
-
-    try:
-
-        import scipy.fft
-
-        the_rfft = scipy.fft.rfft
-        the_irfft = scipy.fft.irfft
-
-    except:
-
-        the_rfft = np.fft.rfft
-        the_irfft = np.fft.irfft
-
-
 cdef double cn = -0.5  #coeff of x^2 in the potential power law
 cdef double cnm1 = cn-1
 cdef double cnm2 = cn-2
@@ -162,7 +139,8 @@ def Compute_hash_action_Cython(
     long[:,::1]         TimeRevsBin     ,
     long[:,::1]         TimeShiftNumBin ,
     long[:,::1]         TimeShiftDenBin ,
-    np.ndarray[double, ndim=4, mode="c"]   all_coeffs  
+    np.ndarray[double, ndim=4, mode="c"]   all_coeffs   ,
+    double[:,:,::1]     all_pos         ,
 ):
     # Computes the hash of a set of trajectories.
     # The hash is meant to provide a likely unique short identification for duplicate detection.
@@ -206,9 +184,6 @@ def Compute_hash_action_Cython(
                 a = prod_fac*k2
 
                 Kin_en += a *((all_coeffs[il,idim,k,0]*all_coeffs[il,idim,k,0]) + (all_coeffs[il,idim,k,1]*all_coeffs[il,idim,k,1]))
-
-    c_coeffs = all_coeffs.view(dtype=np.complex128)[...,0]
-    cdef np.ndarray[double, ndim=3, mode="c"] all_pos = the_irfft(c_coeffs,n=nint,axis=2,norm="forward")
 
     cdef np.ndarray[long, ndim=2, mode="c"]  all_shiftsUn = np.zeros((nloop,maxloopnb),dtype=np.int_)
     cdef np.ndarray[long, ndim=2, mode="c"]  all_shiftsBin = np.zeros((nloop,maxloopnbi),dtype=np.int_)
@@ -312,7 +287,8 @@ def Compute_MinDist_Cython(
     long[:,::1]         TimeRevsBin     ,
     long[:,::1]         TimeShiftNumBin ,
     long[:,::1]         TimeShiftDenBin ,
-    np.ndarray[double, ndim=4, mode="c"] all_coeffs   
+    np.ndarray[double, ndim=4, mode="c"] all_coeffs ,
+    double[:,:,::1]     all_pos         ,
 ):
     # Computes the minimum inter-body distance along the trajectory.
     # A useful tool for collision detection.
@@ -340,10 +316,6 @@ def Compute_MinDist_Cython(
             maxloopnbi = loopnbi[il]
     
     cdef double dx2min = 1e100
-
-    c_coeffs = all_coeffs.view(dtype=np.complex128)[...,0]
-
-    cdef np.ndarray[double, ndim=3, mode="c"] all_pos = the_irfft(c_coeffs,n=nint,axis=2,norm="forward")
 
     cdef np.ndarray[long, ndim=2, mode="c"]  all_shiftsUn = np.zeros((nloop,maxloopnb),dtype=np.int_)
     cdef np.ndarray[long, ndim=2, mode="c"]  all_shiftsBin = np.zeros((nloop,maxloopnbi),dtype=np.int_)
@@ -642,7 +614,9 @@ def Compute_Newton_err_Cython(
     long[:,::1]         TimeRevsUn      ,
     long[:,::1]         TimeShiftNumUn  ,
     long[:,::1]         TimeShiftDenUn  ,
-    np.ndarray[double, ndim=4, mode="c"] all_coeffs  
+    double[:,:,:,::1]   all_coeffs      ,
+    double[:,:,::1]     all_pos         ,
+    object              irfft           ,
 ):
     # Computes the "Newton error", i.e. the deviation wrt to the fundamental theorem of Newtonian dynamics m_i * a_i - \sum_j f_ij = 0
     # If the Newton error is zero, then the trajectory is physical.
@@ -668,7 +642,7 @@ def Compute_Newton_err_Cython(
         if (maxloopnb < loopnb[il]):
             maxloopnb = loopnb[il]
     
-    cdef np.ndarray[double, ndim=4, mode="c"] acc_coeff = np.zeros((nloop,geodim,ncoeff,2),dtype=np.float64)
+    cdef np.ndarray[double, ndim=4, mode="c"] acc_coeff = np.empty((nloop,geodim,ncoeff,2),dtype=np.float64)
 
     for il in range(nloop):
         for idim in range(geodim):
@@ -680,14 +654,9 @@ def Compute_Newton_err_Cython(
                 acc_coeff[il,idim,k,1] = a*all_coeffs[il,idim,k,1]
                 
     c_acc_coeffs = acc_coeff.view(dtype=np.complex128)[...,0]
-    cdef np.ndarray[double, ndim=3, mode="c"] all_acc = the_irfft(c_acc_coeffs,n=nint,axis=2,norm="forward")
+    cdef np.ndarray[double, ndim=3, mode="c"] all_acc = irfft(c_acc_coeffs,n=nint,axis=2,norm="forward")
     
     cdef np.ndarray[double, ndim=3, mode="c"] all_Newt_err = np.zeros((nbody,geodim,nint),np.float64)
-    
-    c_coeffs = all_coeffs.view(dtype=np.complex128)[...,0]
-    
-    cdef np.ndarray[double, ndim=3, mode="c"] all_pos = the_irfft(c_coeffs,n=nint,axis=2,norm="forward")
-
     cdef np.ndarray[long, ndim=2, mode="c"]  all_shiftsUn = np.zeros((nloop,maxloopnb),dtype=np.int_)
     
     for il in range(nloop):
@@ -699,7 +668,6 @@ def Compute_Newton_err_Cython(
             rem = k + ddiv * TimeShiftDenUn[il,ib]
 
             all_shiftsUn[il,ib] = (((ddiv) % nint) + nint) % nint
-        
         
     for iint in range(nint):
 
@@ -1711,7 +1679,9 @@ def Compute_hamil_hess_mul_Cython_nosym(
     long nint                           ,
     double[::1]       mass              ,
     double[:,:,::1]   all_pos           ,
-    np.ndarray[double, ndim=5, mode="c"]  all_coeffs_d_xv  
+    np.ndarray[double, ndim=5, mode="c"]  all_coeffs_d_xv  ,
+    object            rfft              ,
+    object            irfft             ,
 ):
 
     cdef long geodim = all_pos.shape[1]
@@ -1750,7 +1720,7 @@ def Compute_hamil_hess_mul_Cython_nosym(
     # 0 = -d/dt v + f/m
 
     c_coeffs_d_x = all_coeffs_d_xv[0,:,:,:,:].view(dtype=np.complex128)[...,0]
-    cdef double[:,:,::1] all_pos_d_x = the_irfft(c_coeffs_d_x,norm="forward")
+    cdef double[:,:,::1] all_pos_d_x = irfft(c_coeffs_d_x,norm="forward")
 
     cdef double[:,:,::1] hess_pot_all_d = np.zeros((nbody,geodim,nint),dtype=np.float64) # size ????
 
@@ -1784,17 +1754,7 @@ def Compute_hamil_hess_mul_Cython_nosym(
                     hess_pot_all_d[ib ,idim,iint] += bb *dx[idim] + aa *ddx[idim]
                     hess_pot_all_d[ibp,idim,iint] -= bbp*dx[idim] + aap*ddx[idim]
 
-
-
-
-
-
-
-
-                
-
-    cdef double complex[:,:,::1]  hess_dx_pot_fft = the_rfft(hess_pot_all_d,norm="forward")
-
+    cdef double complex[:,:,::1]  hess_dx_pot_fft = rfft(hess_pot_all_d,norm="forward")
 
     for ib in range(nbody):
 
@@ -1810,10 +1770,6 @@ def Compute_hamil_hess_mul_Cython_nosym(
                 Hamil_hess_dxv[1,ib,idim,k,0] =   prod_fac * all_coeffs_d_xv[1,ib,idim,k,1] - hess_dx_pot_fft[ib,idim,k].real
                 Hamil_hess_dxv[1,ib,idim,k,1] = - prod_fac * all_coeffs_d_xv[1,ib,idim,k,0] - hess_dx_pot_fft[ib,idim,k].imag
 
-
-
-
-
     return Hamil_hess_dxv_np
 
 
@@ -1825,7 +1781,9 @@ def Compute_hamil_hess_mul_Cython_nosym_split(
     double[::1]       mass              ,
     double[:,:,::1]   all_pos           ,
     np.ndarray[double, ndim=4, mode="c"]  all_coeffs_d_x  ,
-    np.ndarray[double, ndim=4, mode="c"]  all_coeffs_d_v  
+    np.ndarray[double, ndim=4, mode="c"]  all_coeffs_d_v  ,
+    object            rfft              ,
+    object            irfft             ,
 ):
 
     cdef long geodim = all_pos.shape[1]
@@ -1863,7 +1821,7 @@ def Compute_hamil_hess_mul_Cython_nosym_split(
     # 0 = -d/dt v + f/m
 
     c_coeffs_d_x = all_coeffs_d_x[:,:,:,:].view(dtype=np.complex128)[...,0]
-    cdef double[:,:,::1] all_pos_d_x = the_irfft(c_coeffs_d_x,norm="forward")
+    cdef double[:,:,::1] all_pos_d_x = irfft(c_coeffs_d_x,norm="forward")
 
     cdef double[:,:,::1] hess_pot_all_d = np.zeros((nbody,geodim,nint),dtype=np.float64) # size ????
 
@@ -1897,7 +1855,7 @@ def Compute_hamil_hess_mul_Cython_nosym_split(
                     hess_pot_all_d[ib ,idim,iint] += bb *dx[idim] + aa *ddx[idim]
                     hess_pot_all_d[ibp,idim,iint] -= bbp*dx[idim] + aap*ddx[idim]
 
-    cdef double complex[:,:,::1]  hess_dx_pot_fft = the_rfft(hess_pot_all_d,norm="forward")
+    cdef double complex[:,:,::1]  hess_dx_pot_fft = rfft(hess_pot_all_d,norm="forward")
 
     cdef np.ndarray[double, ndim=4, mode="c"] Hamil_hess_dv_np = np.zeros((nbody,geodim,ncoeff,2),dtype=np.float64)
     cdef double[:,:,:,::1] Hamil_hess_dv = Hamil_hess_dv_np
@@ -1915,8 +1873,6 @@ def Compute_hamil_hess_mul_Cython_nosym_split(
 
                 Hamil_hess_dv[ib,idim,k,0] =   prod_fac * all_coeffs_d_v[ib,idim,k,1] - hess_dx_pot_fft[ib,idim,k].real
                 Hamil_hess_dv[ib,idim,k,1] = - prod_fac * all_coeffs_d_v[ib,idim,k,0] - hess_dx_pot_fft[ib,idim,k].imag
-
-
 
     return Hamil_hess_dx_np, Hamil_hess_dv_np
 
@@ -2017,19 +1973,15 @@ def Compute_Derivative_precond_inv_Cython_nosym(
     
     return all_coeffs_d_np
 
-
-
-
-    
-
-
 def Compute_hamil_hess_mul_xonly_Cython_nosym(
     long nbody                          ,
     long ncoeff                         ,
     long nint                           ,
     double[::1]       mass              ,
     double[:,:,::1]   all_pos           ,
-    np.ndarray[double, ndim=4, mode="c"]  all_coeffs_d_x 
+    np.ndarray[double, ndim=4, mode="c"]  all_coeffs_d_x    ,
+    object            rfft              ,
+    object            irfft             ,
 ):
 
     cdef long geodim = all_pos.shape[1]
@@ -2048,17 +2000,13 @@ def Compute_hamil_hess_mul_xonly_Cython_nosym(
     cdef double[::1] dx  = np.zeros((geodim),dtype=np.float64)
     cdef double[::1] ddx = np.zeros((geodim),dtype=np.float64)
 
-
-
     cdef np.ndarray[double, ndim=4, mode="c"] Hamil_hess_dx_np = np.empty((nbody,geodim,ncoeff,2),dtype=np.float64)
     cdef double[:,:,:,::1] Hamil_hess_dx = Hamil_hess_dx_np
-
-
 
     # 0 = -d2/dt2 x + f/m
 
     c_coeffs_d_x = all_coeffs_d_x[:,:,:,:].view(dtype=np.complex128)[...,0]
-    cdef double[:,:,::1] all_pos_d_x = the_irfft(c_coeffs_d_x,norm="forward")
+    cdef double[:,:,::1] all_pos_d_x = irfft(c_coeffs_d_x,norm="forward")
 
     cdef double[:,:,::1] hess_pot_all_d = np.zeros((nbody,geodim,nint),dtype=np.float64) # size ????
 
@@ -2092,11 +2040,7 @@ def Compute_hamil_hess_mul_xonly_Cython_nosym(
                     hess_pot_all_d[ib ,idim,iint] += bb *dx[idim] + aa *ddx[idim]
                     hess_pot_all_d[ibp,idim,iint] -= bbp*dx[idim] + aap*ddx[idim]
 
-
-
-
-    cdef double complex[:,:,::1]  hess_dx_pot_fft = the_rfft(hess_pot_all_d,norm="forward")
-
+    cdef double complex[:,:,::1]  hess_dx_pot_fft = rfft(hess_pot_all_d,norm="forward")
 
     for ib in range(nbody):
 
@@ -2112,10 +2056,6 @@ def Compute_hamil_hess_mul_xonly_Cython_nosym(
                 
                 Hamil_hess_dx[ib,idim,k,0] = a * all_coeffs_d_x[ib,idim,k,0] - hess_dx_pot_fft[ib,idim,k].real
                 Hamil_hess_dx[ib,idim,k,1] = a * all_coeffs_d_x[ib,idim,k,1] - hess_dx_pot_fft[ib,idim,k].imag
-
-
-
-
 
     return Hamil_hess_dx_np
 

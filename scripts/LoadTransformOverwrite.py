@@ -246,7 +246,7 @@ def ExecName(
     nint = Info_dict["n_int"]
     ncoeff = nint // 2 + 1
 
-    c_coeffs = choreo.the_rfft(all_pos,n=nint,axis=2,norm="forward")
+    c_coeffs = choreo.default_rfft(all_pos,n=nint,axis=2,norm="forward")
     all_coeffs = np.zeros((Info_dict["nloop"],geodim,ncoeff,2),dtype=np.float64)
     all_coeffs[:,:,:,0] = c_coeffs.real
     all_coeffs[:,:,:,1] = c_coeffs.imag
