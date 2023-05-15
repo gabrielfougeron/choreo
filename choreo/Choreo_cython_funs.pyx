@@ -615,7 +615,6 @@ def Compute_Newton_err_Cython(
     long[:,::1]         TimeShiftNumUn  ,
     long[:,::1]         TimeShiftDenUn  ,
     double[:,:,:,::1]   all_coeffs      ,
-    double[:,:,::1]     all_pos         ,
     object              irfft           ,
 ):
     # Computes the "Newton error", i.e. the deviation wrt to the fundamental theorem of Newtonian dynamics m_i * a_i - \sum_j f_ij = 0
@@ -657,6 +656,12 @@ def Compute_Newton_err_Cython(
     cdef np.ndarray[double, ndim=3, mode="c"] all_acc = irfft(c_acc_coeffs,n=nint,axis=2,norm="forward")
     
     cdef np.ndarray[double, ndim=3, mode="c"] all_Newt_err = np.zeros((nbody,geodim,nint),np.float64)
+
+    c_coeffs = all_coeffs.view(dtype=np.complex128)[...,0]
+    
+    cdef np.ndarray[double, ndim=3, mode="c"] all_pos = irfft(c_coeffs,n=nint,axis=2,norm="forward")
+
+
     cdef np.ndarray[long, ndim=2, mode="c"]  all_shiftsUn = np.zeros((nloop,maxloopnb),dtype=np.int_)
     
     for il in range(nloop):
