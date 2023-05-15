@@ -292,6 +292,24 @@ class ChoreoAction():
         all_pos_b = self.irfft(all_coeffs_nosym,n=nint,norm="forward")
 
         return all_pos_b
+    
+    def ComputeRequiredDispPos(self,x,nint=None):
+
+        all_pos_b = self.ComputeAllPos(x,nint)
+
+        n_loop_plot = np.count_nonzero((self.RequiresLoopDispUn))
+        i_loop_plot = 0
+
+        all_pos_b = np.zeros((n_loop_plot,self.geodim,nint),dtype=np.float64)
+
+        ilb = 0
+
+        for il in range(self.nloop):
+            for ib in range(self.loopnb[il]):
+                if (self.RequiresLoopDispUn[il,ib]) :
+                    all_pos_b[i_loop_plot,:,:] = all_pos_b[ilb,:,:]
+                    i_loop_plot +=1
+                ilb += 1
 
     def ComputeAllLoopPos(self,x,nint=None):
         r"""
@@ -1018,8 +1036,6 @@ class ChoreoAction():
         plt.savefig(filename)
         plt.close()
 
-    
-
     def plot_GradientAction_Error(self,x,filename,fig_size=(16, 12),color_list = None):
 
         self.SavePosFFT(x)
@@ -1458,12 +1474,10 @@ class ChoreoAction():
         for il in range(self.nloop):
             for ib in range(self.loopnb[il]):
                 if (self.RequiresLoopDispUn[il,ib]) :
-                    for iint in range(nint_plot+1):
-                        # exact time is irrelevant
-                        all_pos_b[i_loop_plot,:,iint] = np.dot(self.SpaceRotsUn[il,ib,:,:],all_pos[il,:,iint])
-
+                    # exact time is irrelevant
+                    all_pos_b[i_loop_plot,:,:] = np.einsum('ik,kj->ij',self.SpaceRotsUn[il,ib,:,:],all_pos[il,:,:])
                     i_loop_plot +=1
-        
+
         ncol = len(color_list)
         
         cb = ['b' for ib in range(n_loop_plot)]
@@ -1589,9 +1603,8 @@ class ChoreoAction():
         
         for il in range(self.nloop):
             for ib in range(self.loopnb[il]):
-                for iint in range(nint_plot+1):
-                    # exact time is irrelevant
-                    all_pos_b[self.Targets[il,ib],:,iint] = np.dot(self.SpaceRotsUn[il,ib,:,:],all_pos[il,:,iint])
+                # exact time is irrelevant
+                all_pos_b[self.Targets[il,ib],:,:] = np.einsum('ik,kj->ij',self.SpaceRotsUn[il,ib,:,:],all_pos[il,:,:])
         
         all_vel_b = np.zeros((self.nbody,nint_plot+1),dtype=np.float64)
         
