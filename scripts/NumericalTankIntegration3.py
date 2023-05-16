@@ -99,7 +99,7 @@ def Integrate(n_NT_init):
 
     GoOn = True
 
-    i_try_max = 10
+    i_try_max = 15
     # i_try_max = 12
     # i_try_max = 13
 
@@ -202,8 +202,6 @@ def Integrate(n_NT_init):
 
         all_coeffs_c = choreo.default_rfft(all_pos,norm="forward")
 
-
-        
         ncoeff = nint // 2 + 1
 
         ncoeff_plotm1 = ncoeff - 1
@@ -408,7 +406,8 @@ def Integrate(n_NT_init):
 
         # Do_Speed_test = True
         Do_Speed_test = False
-        n_test = 3
+
+        n_test = 1
 
         all_coeffs_c = choreo.default_rfft(all_pos,norm="forward")
 
@@ -497,19 +496,18 @@ def Integrate(n_NT_init):
 
 
 # Integrate(20)
-Integrate(2)
+# Integrate(4)
 
 
-# the_NT_init = range(len(all_NT_init))
+the_NT_init = range(len(all_NT_init))
 
 # the_NT_init = [20]
 # the_NT_init.extend(range(25,len(all_NT_init)))
 
 
-# for n_NT_init in the_NT_init:
-# # for n_NT_init in range(21,len(all_NT_init)):
-# 
-#     Integrate(n_NT_init)
+for n_NT_init in the_NT_init:
+
+    Integrate(n_NT_init)
 
 # # 
 # if __name__ == "__main__":

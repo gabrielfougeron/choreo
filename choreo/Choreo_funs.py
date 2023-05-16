@@ -78,6 +78,8 @@ from choreo.Choreo_cython_funs import twopi,nhash,n
 from choreo.Choreo_cython_funs import Compute_hash_action_Cython,Compute_Newton_err_Cython
 from choreo.Choreo_cython_funs import Assemble_Cstr_Matrix, diagmat_changevar
 from choreo.Choreo_cython_funs import coeff_to_param_matrixfree, param_to_coeff_matrixfree
+from choreo.Choreo_cython_funs import Package_all_coeffs_matrixfree, Unpackage_all_coeffs_matrixfree
+from choreo.Choreo_cython_funs import Package_all_coeffs_T_matrixfree, Unpackage_all_coeffs_T_matrixfree
 from choreo.Choreo_cython_funs import Compute_MinDist_Cython,Compute_Loop_Dist_btw_avg_Cython,Compute_square_dist,Compute_Loop_Size_Dist_Cython
 from choreo.Choreo_cython_funs import Compute_JacMat_Forces_Cython,Compute_JacMul_Forces_Cython,Compute_JacMulMat_Forces_Cython
 
@@ -185,6 +187,71 @@ class ChoreoAction():
         if not(hasattr(ChoreoAction, fun_name)):
 
             setattr(ChoreoAction, fun_name, property(functools.partial(ChoreoAction.GetCurrentListAttribute,key=key)))
+# 
+#     def Package_all_coeffs(self,all_coeffs):
+#         r"""
+#         Transfers the Fourier coefficients of the generators to a single vector of parameters for search.
+#         The packaging process projects the trajectory onto the space of constraint satisfying trajectories.
+#         """
+# 
+#         if self.MatrixFreeChangevar:
+# 
+#             return coeff_to_param_matrixfree(
+#                 self.nloop          ,
+#                 self.geodim         ,
+#                 self.ncoeff         ,
+#                 self.n_grad_change  ,
+#                 self.SqrtMassSum    ,
+#                 all_coeffs          ,
+#             )
+# 
+#         else:
+#             return self.coeff_to_param.dot(all_coeffs.reshape(-1))
+#         
+#     def Unpackage_all_coeffs(self,x):
+#         r"""
+#         Computes the Fourier coefficients of the generator given the parameters.
+#         """
+#         
+#         if self.MatrixFreeChangevar:
+#             return param_to_coeff_matrixfree(
+#                 self.nloop          ,
+#                 self.geodim         ,
+#                 self.ncoeff         ,
+#                 - self.n_grad_change,
+#                 self.SqrtMassSum    ,
+#                 x                   ,
+#             )
+#         else:
+#             return self.param_to_coeff.dot(x).reshape(self.nloop,self.geodim,self.ncoeff,2)
+#     
+#     def Package_all_coeffs_T(self,all_coeffs_grad):
+# 
+#         if self.MatrixFreeChangevar:
+#             return coeff_to_param_matrixfree(
+#                 self.nloop          ,
+#                 self.geodim         ,
+#                 self.ncoeff         ,
+#                 - self.n_grad_change,
+#                 self.SqrtMassSum    ,
+#                 all_coeffs_grad     ,
+#             )
+#         else:
+#             return self.param_to_coeff_T.dot(all_coeffs_grad.reshape(-1))
+#     
+#     def Unpackage_all_coeffs_T(self,x):
+# 
+#         if self.MatrixFreeChangevar:
+#             return param_to_coeff_matrixfree(
+#                 self.nloop          ,
+#                 self.geodim         ,
+#                 self.ncoeff         ,
+#                 self.n_grad_change  ,
+#                 self.SqrtMassSum    ,
+#                 x                   ,
+#             )
+#         else:
+#             return self.coeff_to_param_T.dot(x).reshape(self.nloop,self.geodim,self.ncoeff,2)
 
     def Package_all_coeffs(self,all_coeffs):
         r"""
@@ -194,12 +261,11 @@ class ChoreoAction():
 
         if self.MatrixFreeChangevar:
 
-            return coeff_to_param_matrixfree(
+            return Package_all_coeffs_matrixfree(
                 self.nloop          ,
                 self.geodim         ,
                 self.ncoeff         ,
-                self.n_grad_change  ,
-                self.MassSum        ,
+                self.SqrtMassSum    ,
                 all_coeffs          ,
             )
 
@@ -212,12 +278,11 @@ class ChoreoAction():
         """
         
         if self.MatrixFreeChangevar:
-            return param_to_coeff_matrixfree(
+            return Unpackage_all_coeffs_matrixfree(
                 self.nloop          ,
                 self.geodim         ,
                 self.ncoeff         ,
-                - self.n_grad_change  ,
-                self.MassSum        ,
+                self.SqrtMassSum    ,
                 x                   ,
             )
         else:
@@ -226,12 +291,11 @@ class ChoreoAction():
     def Package_all_coeffs_T(self,all_coeffs_grad):
 
         if self.MatrixFreeChangevar:
-            return coeff_to_param_matrixfree(
+            return Package_all_coeffs_T_matrixfree(
                 self.nloop          ,
                 self.geodim         ,
                 self.ncoeff         ,
-                - self.n_grad_change  ,
-                self.MassSum        ,
+                self.SqrtMassSum    ,
                 all_coeffs_grad     ,
             )
         else:
@@ -240,12 +304,11 @@ class ChoreoAction():
     def Unpackage_all_coeffs_T(self,x):
 
         if self.MatrixFreeChangevar:
-            return param_to_coeff_matrixfree(
+            return Unpackage_all_coeffs_T_matrixfree(
                 self.nloop          ,
                 self.geodim         ,
                 self.ncoeff         ,
-                self.n_grad_change  ,
-                self.MassSum        ,
+                self.SqrtMassSum    ,
                 x                   ,
             )
         else:
@@ -2306,7 +2369,8 @@ class ChoreoSym():
         """   
         return ((self.Inverse()).Compose(other)).IsIdentity()
 
-def setup_changevar(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCons=True,n_grad_change=1.,Sym_list=[],CrashOnIdentity=True):
+def setup_changevar(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCons=True,n_grad_change=1.,Sym_list=[],CrashOnIdentity=True,ForceMatrixChangevar = False):
+    
     r"""
     This function constructs a ChoreoAction
     It detects loops and constraints based on symmetries.
@@ -2588,9 +2652,7 @@ def setup_changevar(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCons=Tr
     
     maxloopncstr = loopncstr.max()
 
-    # MatrixFreeChangevar = not(MomCons) and (maxloopncstr == 0)
-    # MatrixFreeChangevar = True
-    MatrixFreeChangevar = False
+    MatrixFreeChangevar = (not(MomCons) and (maxloopncstr == 0)) and not(ForceMatrixChangevar)
 
     ncoeff_cvg_lvl_list = []
     nint_cvg_lvl_list = []
@@ -2616,6 +2678,7 @@ def setup_changevar(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCons=Tr
             "loopgen"                       :   loopgen                         ,
             "Targets"                       :   Targets                         ,
             "MassSum"                       :   MassSum                         ,
+            "SqrtMassSum"                   :   np.sqrt(MassSum)                ,
             "SpaceRotsUn"                   :   SpaceRotsUn                     ,
             "TimeRevsUn"                    :   TimeRevsUn                      ,
             "TimeShiftNumUn"                :   TimeShiftNumUn                  ,

@@ -1227,7 +1227,7 @@ def coeff_to_param_matrixfree(
     long geodim ,
     long ncoeff ,
     double the_pow,
-    double [::1] MassSum,
+    double [::1] SqrtMassSum,
     double[:,:,:,::1] all_coeffs,
 ):
 
@@ -1236,12 +1236,16 @@ def coeff_to_param_matrixfree(
     cdef np.ndarray[double, ndim=1, mode="c"]  all_params = np.empty((nparam),dtype=np.float64)
 
     cdef long il,idim,k
+    cdef double loopmul
     cdef double mul
 
     for il in range(nloop):
+
+        loopmul = SqrtMassSum[il] * ctwopisqrt2
+
         for idim in range(geodim):
 
-            mul = csqrt(MassSum[il]) * ctwopisqrt2
+            mul = loopmul
             mul = cpow(mul,the_pow)
 
             all_params[iparam] = all_coeffs[il,idim,0,0] * mul
@@ -1249,7 +1253,7 @@ def coeff_to_param_matrixfree(
 
             for k in range(1,ncoeff-1):
 
-                mul = csqrt(MassSum[il]) * k * ctwopisqrt2
+                mul = loopmul * k
                 mul = cpow(mul,the_pow)
                     
                 all_params[iparam] = all_coeffs[il,idim,k,0] * mul
@@ -1258,7 +1262,7 @@ def coeff_to_param_matrixfree(
                 all_params[iparam] = all_coeffs[il,idim,k,1] * mul
                 iparam += 1
 
-            mul = csqrt(MassSum[il]) * (ncoeff-1) * ctwopisqrt2
+            mul = loopmul * (ncoeff-1)
             mul = cpow(mul,the_pow)
 
             all_params[iparam] = all_coeffs[il,idim,ncoeff-1,0] * mul
@@ -1272,7 +1276,7 @@ def param_to_coeff_matrixfree(
     long geodim ,
     long ncoeff ,
     double the_pow,
-    double [::1] MassSum,
+    double [::1] SqrtMassSum,
     double[::1] all_params,
 ):
 
@@ -1281,12 +1285,16 @@ def param_to_coeff_matrixfree(
     cdef np.ndarray[double, ndim=4, mode="c"]  all_coeffs = np.empty((nloop,geodim,ncoeff,2),dtype=np.float64)
 
     cdef long il,idim,k
+    cdef double loopmul
     cdef double mul
 
     for il in range(nloop):
+
+        loopmul = SqrtMassSum[il] * ctwopisqrt2
+
         for idim in range(geodim):
 
-            mul = csqrt(MassSum[il]) * ctwopisqrt2
+            mul = loopmul
             mul = cpow(mul,the_pow)
 
             all_coeffs[il,idim,0,0] = all_params[iparam] * mul
@@ -1296,7 +1304,7 @@ def param_to_coeff_matrixfree(
 
             for k in range(1,ncoeff-1):
 
-                mul = csqrt(MassSum[il]) * k * ctwopisqrt2
+                mul = loopmul * k
                 mul = cpow(mul,the_pow)
                     
                 all_coeffs[il,idim,k,0] = all_params[iparam] * mul
@@ -1305,8 +1313,196 @@ def param_to_coeff_matrixfree(
                 all_coeffs[il,idim,k,1] = all_params[iparam] * mul
                 iparam += 1
 
-            mul = csqrt(MassSum[il]) * (ncoeff-1) * ctwopisqrt2
+            mul = loopmul * (ncoeff-1)
             mul = cpow(mul,the_pow)
+
+            all_coeffs[il,idim,ncoeff-1,0] = all_params[iparam] * mul
+            iparam += 1
+
+            all_coeffs[il,idim,ncoeff-1,1] = 0.
+
+    return all_coeffs
+
+@cython.cdivision(True)
+def Package_all_coeffs_matrixfree(
+    long nloop  ,
+    long geodim ,
+    long ncoeff ,
+    double [::1] SqrtMassSum,
+    double[:,:,:,::1] all_coeffs,
+):
+
+    cdef long nparam = 2 * (ncoeff - 1) * nloop * geodim
+    cdef long iparam = 0
+    cdef np.ndarray[double, ndim=1, mode="c"]  all_params = np.empty((nparam),dtype=np.float64)
+
+    cdef long il,idim,k
+    cdef double loopmul
+    cdef double mul
+
+    for il in range(nloop):
+
+        loopmul = SqrtMassSum[il] * ctwopisqrt2
+
+        for idim in range(geodim):
+
+            mul = loopmul
+
+            all_params[iparam] = all_coeffs[il,idim,0,0] * mul
+            iparam += 1
+
+            for k in range(1,ncoeff-1):
+
+                mul = loopmul * k
+                    
+                all_params[iparam] = all_coeffs[il,idim,k,0] * mul
+                iparam += 1
+                    
+                all_params[iparam] = all_coeffs[il,idim,k,1] * mul
+                iparam += 1
+
+            mul = loopmul * (ncoeff-1)
+
+            all_params[iparam] = all_coeffs[il,idim,ncoeff-1,0] * mul
+            iparam += 1
+
+    return all_params
+
+@cython.cdivision(True)
+def Package_all_coeffs_T_matrixfree(
+    long nloop  ,
+    long geodim ,
+    long ncoeff ,
+    double [::1] SqrtMassSum,
+    double[:,:,:,::1] all_coeffs,
+):
+
+    cdef long nparam = 2 * (ncoeff - 1) * nloop * geodim
+    cdef long iparam = 0
+    cdef np.ndarray[double, ndim=1, mode="c"]  all_params = np.empty((nparam),dtype=np.float64)
+
+    cdef long il,idim,k
+    cdef double loopmul
+    cdef double mul
+
+    for il in range(nloop):
+
+        loopmul = SqrtMassSum[il] * ctwopisqrt2
+
+        for idim in range(geodim):
+
+            mul = 1./loopmul
+
+            all_params[iparam] = all_coeffs[il,idim,0,0] * mul
+            iparam += 1
+
+            for k in range(1,ncoeff-1):
+
+                mul = 1./(loopmul * k)
+                    
+                all_params[iparam] = all_coeffs[il,idim,k,0] * mul
+                iparam += 1
+                    
+                all_params[iparam] = all_coeffs[il,idim,k,1] * mul
+                iparam += 1
+
+            mul = 1./(loopmul * (ncoeff-1))
+
+            all_params[iparam] = all_coeffs[il,idim,ncoeff-1,0] * mul
+            iparam += 1
+
+    return all_params
+
+@cython.cdivision(True)
+def Unpackage_all_coeffs_matrixfree(
+    long nloop  ,
+    long geodim ,
+    long ncoeff ,
+    double [::1] SqrtMassSum,
+    double[::1] all_params,
+):
+
+    cdef long nparam = 2 * (ncoeff - 1) * nloop * geodim
+    cdef long iparam = 0
+    cdef np.ndarray[double, ndim=4, mode="c"]  all_coeffs = np.empty((nloop,geodim,ncoeff,2),dtype=np.float64)
+
+    cdef long il,idim,k
+    cdef double loopmul
+    cdef double mul
+
+    for il in range(nloop):
+
+        loopmul = SqrtMassSum[il] * ctwopisqrt2
+
+        for idim in range(geodim):
+
+            mul = 1./loopmul
+
+            all_coeffs[il,idim,0,0] = all_params[iparam] * mul
+            iparam += 1
+
+            all_coeffs[il,idim,0,1] = 0.
+
+            for k in range(1,ncoeff-1):
+
+                mul = 1./(loopmul * k)
+                    
+                all_coeffs[il,idim,k,0] = all_params[iparam] * mul
+                iparam += 1
+                    
+                all_coeffs[il,idim,k,1] = all_params[iparam] * mul
+                iparam += 1
+
+            mul = 1./(loopmul * (ncoeff-1))
+
+            all_coeffs[il,idim,ncoeff-1,0] = all_params[iparam] * mul
+            iparam += 1
+
+            all_coeffs[il,idim,ncoeff-1,1] = 0.
+
+    return all_coeffs
+
+@cython.cdivision(True)
+def Unpackage_all_coeffs_T_matrixfree(
+    long nloop  ,
+    long geodim ,
+    long ncoeff ,
+    double [::1] SqrtMassSum,
+    double[::1] all_params,
+):
+
+    cdef long nparam = 2 * (ncoeff - 1) * nloop * geodim
+    cdef long iparam = 0
+    cdef np.ndarray[double, ndim=4, mode="c"]  all_coeffs = np.empty((nloop,geodim,ncoeff,2),dtype=np.float64)
+
+    cdef long il,idim,k
+    cdef double loopmul
+    cdef double mul
+
+    for il in range(nloop):
+
+        loopmul = SqrtMassSum[il] * ctwopisqrt2
+
+        for idim in range(geodim):
+
+            mul = loopmul
+
+            all_coeffs[il,idim,0,0] = all_params[iparam] * mul
+            iparam += 1
+
+            all_coeffs[il,idim,0,1] = 0.
+
+            for k in range(1,ncoeff-1):
+
+                mul = loopmul * k
+                    
+                all_coeffs[il,idim,k,0] = all_params[iparam] * mul
+                iparam += 1
+                    
+                all_coeffs[il,idim,k,1] = all_params[iparam] * mul
+                iparam += 1
+
+            mul = loopmul * (ncoeff-1)
 
             all_coeffs[il,idim,ncoeff-1,0] = all_params[iparam] * mul
             iparam += 1
