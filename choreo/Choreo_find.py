@@ -312,24 +312,6 @@ def Find_Choreo(
 
         f0 = ActionSyst.Compute_action_onlygrad(x0)
         best_sol = current_best(x0,f0)
-# 
-#         all_coeffs_test = ActionSyst.Unpackage_all_coeffs(x0)
-#         x1 = ActionSyst.Package_all_coeffs(all_coeffs_test)
-# 
-#         print("aaa",np.linalg.norm(x0-x1))
-# 
-# 
-#         all_coeffs_test = ActionSyst.Unpackage_all_coeffs_T(x0)
-#         x1 = ActionSyst.Package_all_coeffs_T(all_coeffs_test)
-# 
-#         print("bbb",np.linalg.norm(x0-x1))
-# 
-# 
-
-
-
-
-
 
         GoOn = (best_sol.f_norm < max_norm_on_entry)
         
