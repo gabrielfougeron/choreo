@@ -417,37 +417,37 @@ def Integrate(n_NT_init):
         all_coeffs_c = choreo.default_rfft(all_pos,norm="forward")
 
 
-        # all_coeffs_init = np.zeros((nbody,geodim,ncoeff,2),dtype=np.float64)
-        # all_coeffs_init[:,:,:,0] = all_coeffs_c[:,:,:].real
-        # all_coeffs_init[:,:,:,1] = all_coeffs_c[:,:,:].imag
+        all_coeffs_init = np.zeros((nbody,geodim,ncoeff,2),dtype=np.float64)
+        all_coeffs_init[:,:,:,0] = all_coeffs_c[:,:,:].real
+        all_coeffs_init[:,:,:,1] = all_coeffs_c[:,:,:].imag
 
-        Sym_list.append(
-            choreo.ChoreoSym(
-                LoopTarget=1,
-                LoopSource=0,
-                SpaceRot= np.array([[-1,0],[0,-1]],dtype=np.float64),
-                TimeRev=-1,
-                TimeShift=fractions.Fraction(
-                    numerator=0,
-                    denominator=2)
-            ))
-        Sym_list.append(
-            choreo.ChoreoSym(
-                LoopTarget=2,
-                LoopSource=2,
-                SpaceRot= np.array([[-1,0],[0,-1]],dtype=np.float64),
-                TimeRev=-1,
-                TimeShift=fractions.Fraction(
-                    numerator=0,
-                    denominator=2)
-            ))
-        nloop = 2
-
-        all_coeffs_init = np.zeros((nloop,geodim,ncoeff,2),dtype=np.float64)
-        all_coeffs_init[0,:,:,0] = all_coeffs_c[0,:,:].real
-        all_coeffs_init[0,:,:,1] = all_coeffs_c[0,:,:].imag
-        all_coeffs_init[1,:,:,0] = all_coeffs_c[2,:,:].real
-        all_coeffs_init[1,:,:,1] = all_coeffs_c[2,:,:].imag
+#         Sym_list.append(
+#             choreo.ChoreoSym(
+#                 LoopTarget=1,
+#                 LoopSource=0,
+#                 SpaceRot= np.array([[-1,0],[0,-1]],dtype=np.float64),
+#                 TimeRev=-1,
+#                 TimeShift=fractions.Fraction(
+#                     numerator=0,
+#                     denominator=2)
+#             ))
+#         Sym_list.append(
+#             choreo.ChoreoSym(
+#                 LoopTarget=2,
+#                 LoopSource=2,
+#                 SpaceRot= np.array([[-1,0],[0,-1]],dtype=np.float64),
+#                 TimeRev=-1,
+#                 TimeShift=fractions.Fraction(
+#                     numerator=0,
+#                     denominator=2)
+#             ))
+#         nloop = 2
+# 
+#         all_coeffs_init = np.zeros((nloop,geodim,ncoeff,2),dtype=np.float64)
+#         all_coeffs_init[0,:,:,0] = all_coeffs_c[0,:,:].real
+#         all_coeffs_init[0,:,:,1] = all_coeffs_c[0,:,:].imag
+#         all_coeffs_init[1,:,:,0] = all_coeffs_c[2,:,:].real
+#         all_coeffs_init[1,:,:,1] = all_coeffs_c[2,:,:].imag
 
         SkipCheckRandomMinDist = True
 

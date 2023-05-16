@@ -78,7 +78,6 @@ MomConsImposed = False
 n_reconverge_it_max = 1
 n_grad_change = 1.
 ActionSyst = setup_changevar(2,nbody,nint,mass,n_reconverge_it_max,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change)
-ncoeffs_args = ActionSyst.coeff_to_param.shape[0]
 
 
 
@@ -113,14 +112,14 @@ ActionSyst.ComputeGradBackend = grad_backend_list[0]
 ActionSyst.ComputeHessBackend = hess_backend_list[0]
 
 
-print('n params ',ncoeffs_args)
+print('n params ',ActionSyst.nparams)
 
-x0 = np.random.random((ncoeffs_args))
+x0 = np.random.random((ActionSyst.nparams))
 # x0 = ActionSyst.Package_all_coeffs(all_coeffs)
 
 
-dxa = np.zeros((ncoeffs_args))
-dxb =  np.random.random((ncoeffs_args))
+dxa = np.zeros((ActionSyst.nparams))
+dxb =  np.random.random((ActionSyst.nparams))
 
 Actiono, Actiongrado = ActionSyst.Compute_action(x0)
 Hesso = ActionSyst.Compute_action_hess_mul(x0,dxb)

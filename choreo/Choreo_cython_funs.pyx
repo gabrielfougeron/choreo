@@ -1221,65 +1221,86 @@ def diagmat_changevar(
     return scipy.sparse.coo_matrix((diag_vect,(diag_indices,diag_indices)),shape=(nparam,nparam), dtype=np.float64)
 
 @cython.cdivision(True)
-def matrixfree_changevar(
-    long geodim,
-    long ncoeff,
-    long nparam,
-    int [::1] param_to_coeff_csc_indptr,
-    int [::1] param_to_coeff_csc_indices,
+def coeff_to_param_matrixfree(
+    long nloop  ,
+    long geodim ,
+    long ncoeff ,
     double the_pow,
-    double [::1] MassSum
+    double [::1] MassSum,
+    double[:,:,:,::1] all_coeffs,
 ):
 
-    cdef np.ndarray[double, ndim=1, mode="c"]  diag_vect = np.zeros((nparam),dtype=np.float64)
+    cdef long nparam = (2 * ncoeff - 1) * nloop * geodim
+    cdef long iparam = 0
+    cdef np.ndarray[double, ndim=1, mode="c"]  all_params = np.empty((nparam),dtype=np.float64)
 
-    cdef double mass_sum
-    cdef double k_avg, mass_avg, mul
-    
-    cdef long k_sum
-    cdef long ift,idx,res,k,idim,il,iparam
-    cdef long n_indptr,indptr_beg,indptr_end,i_shift
+    cdef long il,idim,k
+    cdef double mul
 
-    for iparam in range(nparam):
+    for il in range(nloop):
+        for idim in range(geodim):
 
-        mass_sum = 0.
-        k_sum = 0
+            mul = csqrt(MassSum[il]) * ctwopisqrt2
+            mul = cpow(mul,the_pow)
+            all_params[iparam] = all_coeffs[il,idim,0,0] * mul
+            iparam += 1
 
-        indptr_beg = param_to_coeff_csc_indptr[iparam]
-        indptr_end = param_to_coeff_csc_indptr[iparam+1]
-        n_indptr = indptr_end - indptr_beg
+            for k in range(1,ncoeff):
 
-        for i_shift in range(n_indptr):
-        
-            idx = param_to_coeff_csc_indices[indptr_beg+i_shift]
-
-            ift = idx%2
-            res = idx/2
-        
-            k = res % ncoeff
-            res = res / ncoeff
+                mul = csqrt(MassSum[il]) * k * ctwopisqrt2
+                mul = cpow(mul,the_pow)
                     
-            idim = res % geodim
-            il = res / geodim
+                all_params[iparam] = all_coeffs[il,idim,k,0] * mul
+                iparam += 1
+                    
+                all_params[iparam] = all_coeffs[il,idim,k,1] * mul
+                iparam += 1
 
-            if (k == 0):
-                k = 1
+    return all_params
 
-            mass_sum += MassSum[il]
-            k_sum += k
+@cython.cdivision(True)
+def param_to_coeff_matrixfree(
+    long nloop  ,
+    long geodim ,
+    long ncoeff ,
+    double the_pow,
+    double [::1] MassSum,
+    double[::1] all_params,
+):
 
-        k_sumd = k_sum
-        k_avg = k_sumd / n_indptr
-        mass_avg = mass_sum / n_indptr
+    cdef long nparam = (2 * ncoeff - 1) * nloop * geodim
+    cdef long iparam = 0
+    cdef np.ndarray[double, ndim=4, mode="c"]  all_coeffs = np.empty((nloop,geodim,ncoeff,2),dtype=np.float64)
 
-        mul = k_avg * csqrt(mass_avg) *  ctwopisqrt2
+    cdef long il,idim,k
+    cdef double mul
 
-        diag_vect[iparam] = cpow(mul,the_pow)
+    for il in range(nloop):
+        for idim in range(geodim):
 
-    cdef np.ndarray[long, ndim=1, mode="c"] diag_indices = np.array(range(nparam),dtype=np.int_)
+            mul = csqrt(MassSum[il]) * ctwopisqrt2
+            mul = cpow(mul,the_pow)
+            # all_params[iparam] = all_coeffs[il,idim,0,0] * mul
+            all_coeffs[il,idim,0,0] = all_params[iparam] * mul
+            iparam += 1
 
-    return scipy.sparse.coo_matrix((diag_vect,(diag_indices,diag_indices)),shape=(nparam,nparam), dtype=np.float64)
- 
+            all_coeffs[il,idim,0,1] = 0.
+
+            for k in range(1,ncoeff):
+
+                mul = csqrt(MassSum[il]) * k * ctwopisqrt2
+                mul = cpow(mul,the_pow)
+                    
+                # all_params[iparam] = all_coeffs[il,idim,k,0] * mul
+                all_coeffs[il,idim,k,0] = all_params[iparam] * mul
+                iparam += 1
+                    
+                # all_params[iparam] = all_coeffs[il,idim,k,1] * mul
+                all_coeffs[il,idim,k,1] = all_params[iparam] * mul
+                iparam += 1
+
+    return all_coeffs
+
 def Compute_square_dist(
     double[::1] x  ,
     double[::1] y  ,
