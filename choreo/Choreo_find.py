@@ -145,12 +145,14 @@ def Find_Choreo(
 
     ncoeff = ActionSyst.ncoeff
     nint = ActionSyst.nint
+    nparams_before = 2 * ncoeff * nbody * geodim
+    nparams_after = ActionSyst.nparams
 
     print(f'Convergence attempt number: 1')
     print(f"    Number of Fourier coeffs: {ncoeff}")
-    print(f"    Number of scalar parameters before constraints: {ActionSyst.coeff_to_param.shape[1]}")
-    print(f"    Number of scalar parameters after  constraints: {ActionSyst.coeff_to_param.shape[0]}")
-    print(f"    ==> Reduction of {100*(1-ActionSyst.coeff_to_param.shape[0]/ActionSyst.coeff_to_param.shape[1]):.2f} %")
+    print(f"    Number of scalar parameters before constraints: {nparams_before}")
+    print(f"    Number of scalar parameters after  constraints: {nparams_after}")
+    print(f"    ==> Reduction of {100*(1-nparams_after/nparams_before):.2f} %")
     print('')
 
     all_coeffs_min,all_coeffs_max = Make_Init_bounds_coeffs(ActionSyst.nloop,ActionSyst.geodim,ncoeff,coeff_ampl_o,k_infl,k_max,coeff_ampl_min)
@@ -160,7 +162,7 @@ def Find_Choreo(
 
     rand_eps = coeff_ampl_min
     rand_dim = 0
-    for i in range(ActionSyst.coeff_to_param.shape[0]):
+    for i in range(ActionSyst.nparams):
 
         if (abs(x_max[i] - x_min[i]) > rand_eps):
             rand_dim +=1
@@ -171,7 +173,7 @@ def Find_Choreo(
 
     if not(SkipCheckRandomMinDist):
 
-        x0 = np.random.random(ActionSyst.param_to_coeff.shape[1])
+        x0 = np.random.random(ActionSyst.nparams)
         xmin = ActionSyst.Compute_MinDist(x0)
         if (xmin < 1e-5):
             print("")
@@ -224,14 +226,14 @@ def Find_Choreo(
 
         else:
             
-            x_avg = np.zeros((ActionSyst.coeff_to_param.shape[0]),dtype=np.float64)
+            x_avg = np.zeros((ActionSyst.nparams),dtype=np.float64)
 
-        x0 = np.zeros((ActionSyst.coeff_to_param.shape[0]),dtype=np.float64)
+        x0 = np.zeros((ActionSyst.nparams),dtype=np.float64)
         
         xrand = sampler.random()
         
         x0 = PopulateRandomInit(
-            ActionSyst.coeff_to_param.shape[0],
+            ActionSyst.nparams,
             x_avg   ,  
             x_min   ,  
             x_max   ,
@@ -674,15 +676,17 @@ def GenSymExample(
 
     ncoeff = ActionSyst.ncoeff
     nint = ActionSyst.nint
+    nparams_before = 2 * ncoeff * nbody * geodim
+    nparams_after = ActionSyst.nparams
 
     print(f'Convergence attempt number: 1')
     print(f"    Number of Fourier coeffs: {ncoeff}")
-    print(f"    Number of scalar parameters before constraints: {ActionSyst.coeff_to_param.shape[1]}")
-    print(f"    Number of scalar parameters after  constraints: {ActionSyst.coeff_to_param.shape[0]}")
-    print(f"    ==> Reduction of {100*(1-ActionSyst.coeff_to_param.shape[0]/ActionSyst.coeff_to_param.shape[1]):.2f} %")
+    print(f"    Number of scalar parameters before constraints: {nparams_before}")
+    print(f"    Number of scalar parameters after  constraints: {nparams_after}")
+    print(f"    ==> Reduction of {100*(1-nparams_after/nparams_before):.2f} %")
     print('')
 
-    x0 = np.random.random(ActionSyst.param_to_coeff.shape[1])
+    x0 = np.random.random(ActionSyst.nparams)
     xmin = ActionSyst.Compute_MinDist(x0)
     if (xmin < 1e-5):
 
@@ -700,7 +704,7 @@ def GenSymExample(
 
     rand_eps = coeff_ampl_min
     rand_dim = 0
-    for i in range(ActionSyst.coeff_to_param.shape[0]):
+    for i in range(ActionSyst.nparams):
         if (abs(x_max[i] - x_min[i]) > rand_eps):
             rand_dim +=1
 
@@ -714,15 +718,15 @@ def GenSymExample(
     
     else:
         
-        x_avg = np.zeros((ActionSyst.coeff_to_param.shape[0]),dtype=np.float64)
+        x_avg = np.zeros((ActionSyst.nparams),dtype=np.float64)
 
 
-    x0 = np.zeros((ActionSyst.coeff_to_param.shape[0]),dtype=np.float64)
+    x0 = np.zeros((ActionSyst.nparams),dtype=np.float64)
     
     xrand = sampler.random()
 
     x0 = PopulateRandomInit(
-        ActionSyst.coeff_to_param.shape[0],
+        ActionSyst.nparams,
         x_avg   ,  
         x_min   ,  
         x_max   ,
@@ -821,14 +825,14 @@ def Speed_test(
 
     rand_eps = coeff_ampl_min
     rand_dim = 0
-    for i in range(ActionSyst.coeff_to_param.shape[0]):
+    for i in range(ActionSyst.nparams):
 
         if (abs(x_max[i] - x_min[i]) > rand_eps):
             rand_dim +=1
 
     sampler = UniformRandom(d=rand_dim)
 
-    x0 = np.random.random(ActionSyst.param_to_coeff.shape[1])
+    x0 = np.random.random(ActionSyst.nparams)
     xmin = ActionSyst.Compute_MinDist(x0)
 
     if (xmin < 1e-5):
@@ -849,15 +853,15 @@ def Speed_test(
     
     else:
         
-        x_avg = np.zeros((ActionSyst.coeff_to_param.shape[0]),dtype=np.float64)
+        x_avg = np.zeros((ActionSyst.nparams),dtype=np.float64)
 
         
-    x0 = np.zeros((ActionSyst.coeff_to_param.shape[0]),dtype=np.float64)
+    x0 = np.zeros((ActionSyst.nparams),dtype=np.float64)
     
     xrand = sampler.random()
     
     x0 = PopulateRandomInit(
-        ActionSyst.coeff_to_param.shape[0],
+        ActionSyst.nparams,
         x_avg   ,  
         x_min   ,  
         x_max   ,
@@ -873,7 +877,7 @@ def Speed_test(
         xrand = sampler.random()
 
         x0 = PopulateRandomInit(
-            ActionSyst.coeff_to_param.shape[0],
+            ActionSyst.nparams,
             x_avg   ,  
             x_min   ,  
             x_max   ,
