@@ -76,7 +76,8 @@ except:
 
 from choreo.Choreo_cython_funs import twopi,nhash,n
 from choreo.Choreo_cython_funs import Compute_hash_action_Cython,Compute_Newton_err_Cython
-from choreo.Choreo_cython_funs import Assemble_Cstr_Matrix, diagmat_changevar, matrixfree_changevar
+from choreo.Choreo_cython_funs import Assemble_Cstr_Matrix, diagmat_changevar
+from choreo.Choreo_cython_funs import coeff_to_param_matrixfree, param_to_coeff_matrixfree
 from choreo.Choreo_cython_funs import Compute_MinDist_Cython,Compute_Loop_Dist_btw_avg_Cython,Compute_square_dist,Compute_Loop_Size_Dist_Cython
 from choreo.Choreo_cython_funs import Compute_JacMat_Forces_Cython,Compute_JacMul_Forces_Cython,Compute_JacMulMat_Forces_Cython
 
@@ -192,7 +193,16 @@ class ChoreoAction():
         """
 
         if self.MatrixFreeChangevar:
-            raise NotImplementedError
+
+            return coeff_to_param_matrixfree(
+                self.nloop          ,
+                self.geodim         ,
+                self.ncoeff         ,
+                self.n_grad_change  ,
+                self.MassSum        ,
+                all_coeffs          ,
+            )
+
         else:
             return self.coeff_to_param.dot(all_coeffs.reshape(-1))
         
@@ -202,21 +212,42 @@ class ChoreoAction():
         """
         
         if self.MatrixFreeChangevar:
-            raise NotImplementedError
+            return param_to_coeff_matrixfree(
+                self.nloop          ,
+                self.geodim         ,
+                self.ncoeff         ,
+                - self.n_grad_change  ,
+                self.MassSum        ,
+                x                   ,
+            )
         else:
             return self.param_to_coeff.dot(x).reshape(self.nloop,self.geodim,self.ncoeff,2)
     
     def Package_all_coeffs_T(self,all_coeffs_grad):
 
         if self.MatrixFreeChangevar:
-            raise NotImplementedError
+            return coeff_to_param_matrixfree(
+                self.nloop          ,
+                self.geodim         ,
+                self.ncoeff         ,
+                - self.n_grad_change  ,
+                self.MassSum        ,
+                all_coeffs_grad     ,
+            )
         else:
             return self.param_to_coeff_T.dot(all_coeffs_grad.reshape(-1))
     
     def Unpackage_all_coeffs_T(self,x):
 
         if self.MatrixFreeChangevar:
-            raise NotImplementedError
+            return param_to_coeff_matrixfree(
+                self.nloop          ,
+                self.geodim         ,
+                self.ncoeff         ,
+                self.n_grad_change  ,
+                self.MassSum        ,
+                x                   ,
+            )
         else:
             return self.coeff_to_param_T.dot(x).reshape(self.nloop,self.geodim,self.ncoeff,2)
 
@@ -2577,7 +2608,7 @@ def setup_changevar(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCons=Tr
 
         for i in range(n_reconverge_it_max+1):
 
-            nparams_cvg_lvl_list.append((2 * ncoeff_cvg_lvl_list[i] - 1) * nbody * geodim) 
+            nparams_cvg_lvl_list.append((2 * ncoeff_cvg_lvl_list[i] - 1) * nloop * geodim) 
 
         kwargs = {
             "geodim"                        :   geodim                          ,
@@ -2609,6 +2640,7 @@ def setup_changevar(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCons=Tr
             # "coeff_to_param_T_cvg_lvl_list" :   coeff_to_param_T_cvg_lvl_list   ,
             "current_cvg_lvl"               :   0                               ,
             "n_cvg_lvl"                     :   n_reconverge_it_max+1           ,
+            "n_grad_change"                 :   n_grad_change                   ,
             "last_all_coeffs"               :   None                            ,
             "last_all_pos"                  :   None                            ,
             "Do_Pos_FFT"                    :   True                            ,
@@ -2662,12 +2694,14 @@ def setup_changevar(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCons=Tr
             param_to_coeff_cvg_lvl_list.append(null_space_sparseqr(cstrmat_sp))
             coeff_to_param_cvg_lvl_list.append(param_to_coeff_cvg_lvl_list[i].transpose(copy=True))
 
+            nparams_cvg_lvl_list.append(param_to_coeff_cvg_lvl_list[i].shape[1])
+
             param_to_coeff_csc = param_to_coeff_cvg_lvl_list[i].tocsc()
 
             diagmat = diagmat_changevar(
                 geodim,
                 ncoeff_cvg_lvl_list[i],
-                param_to_coeff_cvg_lvl_list[i].shape[1],
+                nparams_cvg_lvl_list[i],
                 param_to_coeff_csc.indptr,
                 param_to_coeff_csc.indices,
                 -n_grad_change,
@@ -2681,7 +2715,6 @@ def setup_changevar(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCons=Tr
             param_to_coeff_T_cvg_lvl_list.append(param_to_coeff_cvg_lvl_list[i].transpose(copy=True))
             coeff_to_param_T_cvg_lvl_list.append(coeff_to_param_cvg_lvl_list[i].transpose(copy=True))
 
-            nparams_cvg_lvl_list.append(coeff_to_param_cvg_lvl_list[i].shape[0])
 
         kwargs = {
             "geodim"                        :   geodim                          ,
@@ -2713,6 +2746,7 @@ def setup_changevar(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCons=Tr
             "coeff_to_param_T_cvg_lvl_list" :   coeff_to_param_T_cvg_lvl_list   ,
             "current_cvg_lvl"               :   0                               ,
             "n_cvg_lvl"                     :   n_reconverge_it_max+1           ,
+            "n_grad_change"                 :   n_grad_change                   ,
             "last_all_coeffs"               :   None                            ,
             "last_all_pos"                  :   None                            ,
             "Do_Pos_FFT"                    :   True                            ,
