@@ -191,30 +191,46 @@ class ChoreoAction():
         The packaging process projects the trajectory onto the space of constraint satisfying trajectories.
         """
 
-        return self.coeff_to_param.dot(all_coeffs.reshape(-1))
+        if self.MatrixFreeChangevar:
+            raise NotImplementedError
+        else:
+            return self.coeff_to_param.dot(all_coeffs.reshape(-1))
         
     def Unpackage_all_coeffs(self,x):
         r"""
         Computes the Fourier coefficients of the generator given the parameters.
         """
         
-        return self.param_to_coeff.dot(x).reshape(self.nloop,self.geodim,self.ncoeff,2)
+        if self.MatrixFreeChangevar:
+            raise NotImplementedError
+        else:
+            return self.param_to_coeff.dot(x).reshape(self.nloop,self.geodim,self.ncoeff,2)
     
     def Package_all_coeffs_T(self,all_coeffs_grad):
 
-        return self.param_to_coeff_T.dot(all_coeffs_grad.reshape(-1))
+        if self.MatrixFreeChangevar:
+            raise NotImplementedError
+        else:
+            return self.param_to_coeff_T.dot(all_coeffs_grad.reshape(-1))
     
     def Unpackage_all_coeffs_T(self,x):
 
-        return self.coeff_to_param_T.dot(x).reshape(self.nloop,self.geodim,self.ncoeff,2)
+        if self.MatrixFreeChangevar:
+            raise NotImplementedError
+        else:
+            return self.coeff_to_param_T.dot(x).reshape(self.nloop,self.geodim,self.ncoeff,2)
 
     def ApplyConditionning(self,x):
-
-        return self.param_to_coeff_T.dot(self.param_to_coeff.dot(x))
+        if self.MatrixFreeChangevar:
+            raise NotImplementedError
+        else:
+            return self.param_to_coeff_T.dot(self.param_to_coeff.dot(x))
     
     def ApplyInverseConditionning(self,x):
-
-        return self.coeff_to_param.dot(self.coeff_to_param_T.dot(x))
+        if self.MatrixFreeChangevar:
+            raise NotImplementedError
+        else:
+            return self.coeff_to_param.dot(self.coeff_to_param_T.dot(x))
 
     def TransferParamBtwRefinementLevels(self,xin,iin=None,iout=None):
 
@@ -513,7 +529,7 @@ class ChoreoAction():
         """
 
         return scipy.sparse.linalg.LinearOperator(
-            (self.coeff_to_param.shape[0],self.coeff_to_param.shape[0]),
+            (self.nparams,self.nparams),
             matvec =  (lambda dx, xl=x, selfl=self : selfl.Compute_action_hess_mul(xl,dx)),
             rmatvec = (lambda dx, xl=x, selfl=self : selfl.Compute_action_hess_mul(xl,dx)),
             dtype = np.float64)
@@ -2001,7 +2017,7 @@ try:
             self._f = f
 
             self.ActionSyst.current_cvg_lvl = self.cvg_lvl 
-            my_ndof = self.ActionSyst.coeff_to_param.shape[0]
+            my_ndof = self.ActionSyst.nparams
             
             self.A = scipy.sparse.linalg.LinearOperator((my_ndof,my_ndof),
                 matvec =  (lambda dx, xl=self._x, selfl=self : selfl.Compute_action_hess_mul(xl,dx)),
@@ -2014,7 +2030,7 @@ try:
             if self.cvg_lvl > 0:
 
                 self.ActionSyst.current_cvg_lvl = self.cvg_lvl - 1
-                coarse_ndof = self.ActionSyst.coeff_to_param.shape[0]
+                coarse_ndof = self.ActionSyst.nparams
 
                 self.P = scipy.sparse.linalg.LinearOperator((my_ndof,coarse_ndof),
                     matvec =  (lambda y, iinl = self.cvg_lvl - 1, ioutl = self.cvg_lvl, selfl=self : selfl.ActionSyst.TransferParamBtwRefinementLevels(y,iin=iinl,iout=ioutl)),
@@ -2517,37 +2533,6 @@ def setup_changevar(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCons=Tr
 
                 loop_rots.append(SpaceRotsUn[il,ib,:,:])
 
-    # Count constraints
-    loopncstr = np.zeros((nloop),dtype=np.intp)
-    
-    for il in range(nloop):
-        loopncstr[il] = len(SymGraph.nodes[loopgen[il]]["Constraint_list"])
-    
-    maxloopncstr = loopncstr.max()
-    
-    SpaceRotsCstr = np.zeros((nloop,maxloopncstr,geodim,geodim),dtype=np.float64)
-    TimeRevsCstr = np.zeros((nloop,maxloopncstr),dtype=np.intp)
-    TimeShiftNumCstr = np.zeros((nloop,maxloopncstr),dtype=np.intp)
-    TimeShiftDenCstr = np.zeros((nloop,maxloopncstr),dtype=np.intp)
-    
-    for il in range(nloop):
-        for i in range(loopncstr[il]):
-            
-            SpaceRotsCstr[il,i,:,:] = SymGraph.nodes[loopgen[il]]["Constraint_list"][i].SpaceRot
-            TimeRevsCstr[il,i]      = SymGraph.nodes[loopgen[il]]["Constraint_list"][i].TimeRev
-            TimeShiftNumCstr[il,i]  = SymGraph.nodes[loopgen[il]]["Constraint_list"][i].TimeShift.numerator
-            TimeShiftDenCstr[il,i]  = SymGraph.nodes[loopgen[il]]["Constraint_list"][i].TimeShift.denominator
-
-    # Now detect parameters and build change of variables
-
-    ncoeff_cvg_lvl_list = []
-    nint_cvg_lvl_list = []
-    param_to_coeff_cvg_lvl_list = []
-    coeff_to_param_cvg_lvl_list = []
-
-    param_to_coeff_T_cvg_lvl_list = []
-    coeff_to_param_T_cvg_lvl_list = []
-
     for il in range(nloop):
         for ib in range(loopnb[il]):
 
@@ -2569,83 +2554,167 @@ def setup_changevar(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCons=Tr
             if (rem != 0):
                 print("WARNING: remainder in integer division. Gradient computation will fail.")
 
+    # Count constraints
+    loopncstr = np.zeros((nloop),dtype=np.intp)
+    
+    for il in range(nloop):
+        loopncstr[il] = len(SymGraph.nodes[loopgen[il]]["Constraint_list"])
+    
+    maxloopncstr = loopncstr.max()
+
+    MatrixFreeChangevar = not(MomCons) and (maxloopncstr == 0)
+
+    ncoeff_cvg_lvl_list = []
+    nint_cvg_lvl_list = []
+    nparams_cvg_lvl_list = []
+
     for i in range(n_reconverge_it_max+1):
 
         nint_cvg_lvl_list.append(nint_init * (2**i))
         ncoeff_cvg_lvl_list.append(nint_cvg_lvl_list[i] // 2 + 1)
+        nparams_cvg_lvl_list.append((2 * ncoeff_cvg_lvl_list[i] - 1) * nbody * geodim) 
 
-        cstrmat_sp = Assemble_Cstr_Matrix(
-            nloop               ,
-            ncoeff_cvg_lvl_list[i]      ,
-            MomCons             ,
-            mass                ,
-            loopnb              ,
-            Targets             ,
-            SpaceRotsUn         ,
-            TimeRevsUn          ,
-            TimeShiftNumUn      ,
-            TimeShiftDenUn      ,
-            loopncstr           ,
-            SpaceRotsCstr       ,
-            TimeRevsCstr        ,
-            TimeShiftNumCstr    ,
-            TimeShiftDenCstr    
-        )
 
-        param_to_coeff_cvg_lvl_list.append(null_space_sparseqr(cstrmat_sp))
-        coeff_to_param_cvg_lvl_list.append(param_to_coeff_cvg_lvl_list[i].transpose(copy=True))
+    if (MatrixFreeChangevar):
 
-        param_to_coeff_csc = param_to_coeff_cvg_lvl_list[i].tocsc()
+        kwargs = {
+            "geodim"                        :   geodim                          ,
+            "nbody"                         :   nbody                           ,
+            "nloop"                         :   nloop                           ,
+            "mass"                          :   mass                            ,
+            "loopnb"                        :   loopnb                          ,
+            "loopgen"                       :   loopgen                         ,
+            "Targets"                       :   Targets                         ,
+            "MassSum"                       :   MassSum                         ,
+            "SpaceRotsUn"                   :   SpaceRotsUn                     ,
+            "TimeRevsUn"                    :   TimeRevsUn                      ,
+            "TimeShiftNumUn"                :   TimeShiftNumUn                  ,
+            "TimeShiftDenUn"                :   TimeShiftDenUn                  ,
+            "RequiresLoopDispUn"            :   RequiresLoopDispUn              ,
+            "loopnbi"                       :   loopnbi                         ,
+            "ProdMassSumAll"                :   ProdMassSumAll                  ,
+            "SpaceRotsBin"                  :   SpaceRotsBin                    ,
+            "TimeRevsBin"                   :   TimeRevsBin                     ,
+            "TimeShiftNumBin"               :   TimeShiftNumBin                 ,
+            "TimeShiftDenBin"               :   TimeShiftDenBin                 ,
+            "MatrixFreeChangevar"           :   MatrixFreeChangevar             ,
+            "ncoeff_cvg_lvl_list"           :   ncoeff_cvg_lvl_list             ,
+            "nint_cvg_lvl_list"             :   nint_cvg_lvl_list               ,
+            "nparams_cvg_lvl_list"          :   nparams_cvg_lvl_list            ,
+            # "param_to_coeff_cvg_lvl_list"   :   param_to_coeff_cvg_lvl_list     ,
+            # "coeff_to_param_cvg_lvl_list"   :   coeff_to_param_cvg_lvl_list     ,
+            # "param_to_coeff_T_cvg_lvl_list" :   param_to_coeff_T_cvg_lvl_list   ,
+            # "coeff_to_param_T_cvg_lvl_list" :   coeff_to_param_T_cvg_lvl_list   ,
+            "current_cvg_lvl"               :   0                               ,
+            "n_cvg_lvl"                     :   n_reconverge_it_max+1           ,
+            "last_all_coeffs"               :   None                            ,
+            "last_all_pos"                  :   None                            ,
+            "Do_Pos_FFT"                    :   True                            ,
+        }
 
-        diagmat = diagmat_changevar(
-            geodim,
-            ncoeff_cvg_lvl_list[i],
-            param_to_coeff_cvg_lvl_list[i].shape[1],
-            param_to_coeff_csc.indptr,
-            param_to_coeff_csc.indices,
-            -n_grad_change,
-            MassSum
-        )
+    else:
 
-        param_to_coeff_cvg_lvl_list[i] = param_to_coeff_cvg_lvl_list[i] @ diagmat
-        diagmat.data = np.reciprocal(diagmat.data)
-        coeff_to_param_cvg_lvl_list[i] =  diagmat @ coeff_to_param_cvg_lvl_list[i]
+        SpaceRotsCstr = np.zeros((nloop,maxloopncstr,geodim,geodim),dtype=np.float64)
+        TimeRevsCstr = np.zeros((nloop,maxloopncstr),dtype=np.intp)
+        TimeShiftNumCstr = np.zeros((nloop,maxloopncstr),dtype=np.intp)
+        TimeShiftDenCstr = np.zeros((nloop,maxloopncstr),dtype=np.intp)
+        
+        for il in range(nloop):
+            for i in range(loopncstr[il]):
+                
+                SpaceRotsCstr[il,i,:,:] = SymGraph.nodes[loopgen[il]]["Constraint_list"][i].SpaceRot
+                TimeRevsCstr[il,i]      = SymGraph.nodes[loopgen[il]]["Constraint_list"][i].TimeRev
+                TimeShiftNumCstr[il,i]  = SymGraph.nodes[loopgen[il]]["Constraint_list"][i].TimeShift.numerator
+                TimeShiftDenCstr[il,i]  = SymGraph.nodes[loopgen[il]]["Constraint_list"][i].TimeShift.denominator
 
-        param_to_coeff_T_cvg_lvl_list.append(param_to_coeff_cvg_lvl_list[i].transpose(copy=True))
-        coeff_to_param_T_cvg_lvl_list.append(coeff_to_param_cvg_lvl_list[i].transpose(copy=True))
+        # Now detect parameters and build change of variables
 
-    kwargs = {
-        "geodim"                        :   geodim                          ,
-        "nbody"                         :   nbody                           ,
-        "nloop"                         :   nloop                           ,
-        "mass"                          :   mass                            ,
-        "loopnb"                        :   loopnb                          ,
-        "loopgen"                       :   loopgen                         ,
-        "Targets"                       :   Targets                         ,
-        "MassSum"                       :   MassSum                         ,
-        "SpaceRotsUn"                   :   SpaceRotsUn                     ,
-        "TimeRevsUn"                    :   TimeRevsUn                      ,
-        "TimeShiftNumUn"                :   TimeShiftNumUn                  ,
-        "TimeShiftDenUn"                :   TimeShiftDenUn                  ,
-        "RequiresLoopDispUn"            :   RequiresLoopDispUn              ,
-        "loopnbi"                       :   loopnbi                         ,
-        "ProdMassSumAll"                :   ProdMassSumAll                  ,
-        "SpaceRotsBin"                  :   SpaceRotsBin                    ,
-        "TimeRevsBin"                   :   TimeRevsBin                     ,
-        "TimeShiftNumBin"               :   TimeShiftNumBin                 ,
-        "TimeShiftDenBin"               :   TimeShiftDenBin                 ,
-        "ncoeff_cvg_lvl_list"           :   ncoeff_cvg_lvl_list             ,
-        "nint_cvg_lvl_list"             :   nint_cvg_lvl_list               ,
-        "param_to_coeff_cvg_lvl_list"   :   param_to_coeff_cvg_lvl_list     ,
-        "coeff_to_param_cvg_lvl_list"   :   coeff_to_param_cvg_lvl_list     ,
-        "param_to_coeff_T_cvg_lvl_list" :   param_to_coeff_T_cvg_lvl_list   ,
-        "coeff_to_param_T_cvg_lvl_list" :   coeff_to_param_T_cvg_lvl_list   ,
-        "current_cvg_lvl"               :   0                               ,
-        "n_cvg_lvl"                     :   n_reconverge_it_max+1           ,
-        "last_all_coeffs"               :   None                            ,
-        "last_all_pos"                  :   None                            ,
-        "Do_Pos_FFT"                    :   True                            ,
-    }
+        param_to_coeff_cvg_lvl_list = []
+        coeff_to_param_cvg_lvl_list = []
+        param_to_coeff_T_cvg_lvl_list = []
+        coeff_to_param_T_cvg_lvl_list = []
+
+        for i in range(n_reconverge_it_max+1):
+
+            nint_cvg_lvl_list.append(nint_init * (2**i))
+            ncoeff_cvg_lvl_list.append(nint_cvg_lvl_list[i] // 2 + 1)
+
+            cstrmat_sp = Assemble_Cstr_Matrix(
+                nloop               ,
+                ncoeff_cvg_lvl_list[i]      ,
+                MomCons             ,
+                mass                ,
+                loopnb              ,
+                Targets             ,
+                SpaceRotsUn         ,
+                TimeRevsUn          ,
+                TimeShiftNumUn      ,
+                TimeShiftDenUn      ,
+                loopncstr           ,
+                SpaceRotsCstr       ,
+                TimeRevsCstr        ,
+                TimeShiftNumCstr    ,
+                TimeShiftDenCstr    
+            )
+
+            param_to_coeff_cvg_lvl_list.append(null_space_sparseqr(cstrmat_sp))
+            coeff_to_param_cvg_lvl_list.append(param_to_coeff_cvg_lvl_list[i].transpose(copy=True))
+
+            param_to_coeff_csc = param_to_coeff_cvg_lvl_list[i].tocsc()
+
+            diagmat = diagmat_changevar(
+                geodim,
+                ncoeff_cvg_lvl_list[i],
+                param_to_coeff_cvg_lvl_list[i].shape[1],
+                param_to_coeff_csc.indptr,
+                param_to_coeff_csc.indices,
+                -n_grad_change,
+                MassSum
+            )
+
+            param_to_coeff_cvg_lvl_list[i] = param_to_coeff_cvg_lvl_list[i] @ diagmat
+            diagmat.data = np.reciprocal(diagmat.data)
+            coeff_to_param_cvg_lvl_list[i] =  diagmat @ coeff_to_param_cvg_lvl_list[i]
+
+            param_to_coeff_T_cvg_lvl_list.append(param_to_coeff_cvg_lvl_list[i].transpose(copy=True))
+            coeff_to_param_T_cvg_lvl_list.append(coeff_to_param_cvg_lvl_list[i].transpose(copy=True))
+
+            nparams_cvg_lvl_list.append(coeff_to_param_cvg_lvl_list[i].shape[1])
+
+        kwargs = {
+            "geodim"                        :   geodim                          ,
+            "nbody"                         :   nbody                           ,
+            "nloop"                         :   nloop                           ,
+            "mass"                          :   mass                            ,
+            "loopnb"                        :   loopnb                          ,
+            "loopgen"                       :   loopgen                         ,
+            "Targets"                       :   Targets                         ,
+            "MassSum"                       :   MassSum                         ,
+            "SpaceRotsUn"                   :   SpaceRotsUn                     ,
+            "TimeRevsUn"                    :   TimeRevsUn                      ,
+            "TimeShiftNumUn"                :   TimeShiftNumUn                  ,
+            "TimeShiftDenUn"                :   TimeShiftDenUn                  ,
+            "RequiresLoopDispUn"            :   RequiresLoopDispUn              ,
+            "loopnbi"                       :   loopnbi                         ,
+            "ProdMassSumAll"                :   ProdMassSumAll                  ,
+            "SpaceRotsBin"                  :   SpaceRotsBin                    ,
+            "TimeRevsBin"                   :   TimeRevsBin                     ,
+            "TimeShiftNumBin"               :   TimeShiftNumBin                 ,
+            "TimeShiftDenBin"               :   TimeShiftDenBin                 ,
+            "MatrixFreeChangevar"           :   MatrixFreeChangevar             ,
+            "ncoeff_cvg_lvl_list"           :   ncoeff_cvg_lvl_list             ,
+            "nint_cvg_lvl_list"             :   nint_cvg_lvl_list               ,
+            "nparams_cvg_lvl_list"          :   nparams_cvg_lvl_list            ,
+            "param_to_coeff_cvg_lvl_list"   :   param_to_coeff_cvg_lvl_list     ,
+            "coeff_to_param_cvg_lvl_list"   :   coeff_to_param_cvg_lvl_list     ,
+            "param_to_coeff_T_cvg_lvl_list" :   param_to_coeff_T_cvg_lvl_list   ,
+            "coeff_to_param_T_cvg_lvl_list" :   coeff_to_param_T_cvg_lvl_list   ,
+            "current_cvg_lvl"               :   0                               ,
+            "n_cvg_lvl"                     :   n_reconverge_it_max+1           ,
+            "last_all_coeffs"               :   None                            ,
+            "last_all_pos"                  :   None                            ,
+            "Do_Pos_FFT"                    :   True                            ,
+        }
 
     return ChoreoAction(**kwargs)
 
@@ -2991,43 +3060,6 @@ def SelectFiles_Action(store_folder,hash_dict,Action_Hash_val=np.zeros((nhash)),
                     file_path_list.append(store_folder+'/'+file_root)
                         
     return file_path_list
-
-def Param_to_Param_direct(x,ActionSyst_source,ActionSyst_target):
-
-    all_coeffs_source = ActionSyst_source.Unpackage_all_coeffs(x)
-
-    ncoeffs_source = ActionSyst_source.ncoeff
-    ncoeffs_target = ActionSyst_target.ncoeff
-    
-    if (ncoeffs_target < ncoeffs_source):
-        z = all_coeffs_source[:,:,0:ncoeffs_target,:].reshape(-1)
-    else:
-        z = np.zeros((ActionSyst_target.nloop,ActionSyst_target.geodim,ncoeffs_target,2))
-        z[:,:,0:ncoeffs_source,:] = all_coeffs_source
-        z = z.reshape(-1)
-
-    res = ActionSyst_target.coeff_to_param.dot(z)
-    
-    return res
-
-def Param_to_Param_rev(Gx,ActionSyst_source,ActionSyst_target):
-
-    ncoeffs_source = ActionSyst_source.ncoeff
-    ncoeffs_target = ActionSyst_target.ncoeff
-
-    Gy = ActionSyst_source.coeff_to_param_T.dot(Gx)
-    all_coeffs = Gy.reshape(ActionSyst_source.nloop,ActionSyst_source.geodim,ncoeffs_source,2)
-
-    if (ncoeffs_target < ncoeffs_source):
-        Gz = all_coeffs[:,:,0:ncoeffs_target,:].reshape(-1)
-    else:
-        Gz = np.zeros((ActionSyst_target.nloop,ActionSyst_target.geodim,ncoeffs_target,2))
-        Gz[:,:,0:ncoeffs_source,:] = all_coeffs
-        Gz = Gz.reshape(-1)
-    
-    res = ActionSyst_target.param_to_coeff_T.dot(Gz)
-    
-    return res
 
 def TangentLagrangeResidual(
         x,
