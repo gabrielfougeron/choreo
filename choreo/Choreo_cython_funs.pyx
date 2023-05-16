@@ -1216,6 +1216,7 @@ def diagmat_changevar(
 
         diag_vect[iparam] = cpow(mul,the_pow)
 
+
     cdef np.ndarray[long, ndim=1, mode="c"] diag_indices = np.array(range(nparam),dtype=np.int_)
 
     return scipy.sparse.coo_matrix((diag_vect,(diag_indices,diag_indices)),shape=(nparam,nparam), dtype=np.float64)
@@ -1230,7 +1231,7 @@ def coeff_to_param_matrixfree(
     double[:,:,:,::1] all_coeffs,
 ):
 
-    cdef long nparam = (2 * ncoeff - 1) * nloop * geodim
+    cdef long nparam = 2 * (ncoeff - 1) * nloop * geodim
     cdef long iparam = 0
     cdef np.ndarray[double, ndim=1, mode="c"]  all_params = np.empty((nparam),dtype=np.float64)
 
@@ -1242,10 +1243,11 @@ def coeff_to_param_matrixfree(
 
             mul = csqrt(MassSum[il]) * ctwopisqrt2
             mul = cpow(mul,the_pow)
+
             all_params[iparam] = all_coeffs[il,idim,0,0] * mul
             iparam += 1
 
-            for k in range(1,ncoeff):
+            for k in range(1,ncoeff-1):
 
                 mul = csqrt(MassSum[il]) * k * ctwopisqrt2
                 mul = cpow(mul,the_pow)
@@ -1255,6 +1257,12 @@ def coeff_to_param_matrixfree(
                     
                 all_params[iparam] = all_coeffs[il,idim,k,1] * mul
                 iparam += 1
+
+            mul = csqrt(MassSum[il]) * (ncoeff-1) * ctwopisqrt2
+            mul = cpow(mul,the_pow)
+
+            all_params[iparam] = all_coeffs[il,idim,ncoeff-1,0] * mul
+            iparam += 1
 
     return all_params
 
@@ -1268,7 +1276,7 @@ def param_to_coeff_matrixfree(
     double[::1] all_params,
 ):
 
-    cdef long nparam = (2 * ncoeff - 1) * nloop * geodim
+    cdef long nparam = 2 * (ncoeff - 1) * nloop * geodim
     cdef long iparam = 0
     cdef np.ndarray[double, ndim=4, mode="c"]  all_coeffs = np.empty((nloop,geodim,ncoeff,2),dtype=np.float64)
 
@@ -1280,24 +1288,30 @@ def param_to_coeff_matrixfree(
 
             mul = csqrt(MassSum[il]) * ctwopisqrt2
             mul = cpow(mul,the_pow)
-            # all_params[iparam] = all_coeffs[il,idim,0,0] * mul
+
             all_coeffs[il,idim,0,0] = all_params[iparam] * mul
             iparam += 1
 
             all_coeffs[il,idim,0,1] = 0.
 
-            for k in range(1,ncoeff):
+            for k in range(1,ncoeff-1):
 
                 mul = csqrt(MassSum[il]) * k * ctwopisqrt2
                 mul = cpow(mul,the_pow)
                     
-                # all_params[iparam] = all_coeffs[il,idim,k,0] * mul
                 all_coeffs[il,idim,k,0] = all_params[iparam] * mul
                 iparam += 1
                     
-                # all_params[iparam] = all_coeffs[il,idim,k,1] * mul
                 all_coeffs[il,idim,k,1] = all_params[iparam] * mul
                 iparam += 1
+
+            mul = csqrt(MassSum[il]) * (ncoeff-1) * ctwopisqrt2
+            mul = cpow(mul,the_pow)
+
+            all_coeffs[il,idim,ncoeff-1,0] = all_params[iparam] * mul
+            iparam += 1
+
+            all_coeffs[il,idim,ncoeff-1,1] = 0.
 
     return all_coeffs
 

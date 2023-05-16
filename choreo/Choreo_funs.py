@@ -1261,11 +1261,6 @@ class ChoreoAction():
 
             xbar_all[:,iint] += xbar
 
-#         xbar_std = np.std(xbar_all,axis=1)
-# 
-#         if np.linalg.norm(xbar_std) > 1e-10 :
-#             print("aaa",np.linalg.norm(xbar_std))
-
         xbar_mean = np.mean(xbar_all,axis=1)
 
         return xbar_mean
@@ -2593,7 +2588,9 @@ def setup_changevar(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCons=Tr
     
     maxloopncstr = loopncstr.max()
 
-    MatrixFreeChangevar = not(MomCons) and (maxloopncstr == 0)
+    # MatrixFreeChangevar = not(MomCons) and (maxloopncstr == 0)
+    # MatrixFreeChangevar = True
+    MatrixFreeChangevar = False
 
     ncoeff_cvg_lvl_list = []
     nint_cvg_lvl_list = []
@@ -2608,7 +2605,7 @@ def setup_changevar(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCons=Tr
 
         for i in range(n_reconverge_it_max+1):
 
-            nparams_cvg_lvl_list.append((2 * ncoeff_cvg_lvl_list[i] - 1) * nloop * geodim) 
+            nparams_cvg_lvl_list.append(2 * (ncoeff_cvg_lvl_list[i] - 1) * nloop * geodim) 
 
         kwargs = {
             "geodim"                        :   geodim                          ,

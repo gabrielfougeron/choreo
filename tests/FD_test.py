@@ -52,20 +52,22 @@ mass = np.array([1.,1.,2.])
 
 Sym_list = []
 
-nbpl = [2,1]
+nbpl = [1,1,1]
 the_lcm = m.lcm(*nbpl)
 SymName = None
 Sym_list,nbody = Make2DChoreoSymManyLoops(nbpl=nbpl,SymName=SymName)
 
-MomConsImposed = True
-# MomConsImposed = False
+# MomConsImposed = True
+MomConsImposed = False
 
 
 
 n_reconverge_it_max = 1
 n_grad_change = 1.
 ActionSyst = setup_changevar(2,nbody,nint,mass,n_reconverge_it_max,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change)
-ncoeffs_args = ActionSyst.coeff_to_param.shape[0]
+ncoeffs_args = ActionSyst.nparams
+
+print(f'MatrixFreeChangevar : {ActionSyst.MatrixFreeChangevar}')
 
 
 print('n params ',ncoeffs_args)

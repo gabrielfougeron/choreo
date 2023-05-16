@@ -120,10 +120,6 @@ def Integrate(n_NT_init):
     while(GoOn):
         i_try +=1
 
-    # for i_try in [7]:
-
-
-
         # print(f'Numerical Tank {n_NT_init:4d} Try n° {i_try}')
 
         file_basename = 'NumericalTank_'+(str(n_NT_init).zfill(5))
@@ -232,7 +228,7 @@ def Integrate(n_NT_init):
         # GoOn = (i_try < i_try_max) and  (period_err > period_err_wish)
         GoOn = (i_try < i_try_max) and  not(IsRepresentedByFourier)
 
-
+    print('')
 
     # if (period_err < period_err_max):
     # if (IsRepresentedByFourier):
@@ -300,8 +296,8 @@ def Integrate(n_NT_init):
         # Save_Perturbed = True
         Save_Perturbed = False
 
-        Use_exact_Jacobian = True
-        # Use_exact_Jacobian = False
+        # Use_exact_Jacobian = True
+        Use_exact_Jacobian = False
 
         # Look_for_duplicates = True
         Look_for_duplicates = False
