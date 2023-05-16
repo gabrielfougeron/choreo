@@ -1219,6 +1219,66 @@ def diagmat_changevar(
     cdef np.ndarray[long, ndim=1, mode="c"] diag_indices = np.array(range(nparam),dtype=np.int_)
 
     return scipy.sparse.coo_matrix((diag_vect,(diag_indices,diag_indices)),shape=(nparam,nparam), dtype=np.float64)
+
+@cython.cdivision(True)
+def matrixfree_changevar(
+    long geodim,
+    long ncoeff,
+    long nparam,
+    int [::1] param_to_coeff_csc_indptr,
+    int [::1] param_to_coeff_csc_indices,
+    double the_pow,
+    double [::1] MassSum
+):
+
+    cdef np.ndarray[double, ndim=1, mode="c"]  diag_vect = np.zeros((nparam),dtype=np.float64)
+
+    cdef double mass_sum
+    cdef double k_avg, mass_avg, mul
+    
+    cdef long k_sum
+    cdef long ift,idx,res,k,idim,il,iparam
+    cdef long n_indptr,indptr_beg,indptr_end,i_shift
+
+    for iparam in range(nparam):
+
+        mass_sum = 0.
+        k_sum = 0
+
+        indptr_beg = param_to_coeff_csc_indptr[iparam]
+        indptr_end = param_to_coeff_csc_indptr[iparam+1]
+        n_indptr = indptr_end - indptr_beg
+
+        for i_shift in range(n_indptr):
+        
+            idx = param_to_coeff_csc_indices[indptr_beg+i_shift]
+
+            ift = idx%2
+            res = idx/2
+        
+            k = res % ncoeff
+            res = res / ncoeff
+                    
+            idim = res % geodim
+            il = res / geodim
+
+            if (k == 0):
+                k = 1
+
+            mass_sum += MassSum[il]
+            k_sum += k
+
+        k_sumd = k_sum
+        k_avg = k_sumd / n_indptr
+        mass_avg = mass_sum / n_indptr
+
+        mul = k_avg * csqrt(mass_avg) *  ctwopisqrt2
+
+        diag_vect[iparam] = cpow(mul,the_pow)
+
+    cdef np.ndarray[long, ndim=1, mode="c"] diag_indices = np.array(range(nparam),dtype=np.int_)
+
+    return scipy.sparse.coo_matrix((diag_vect,(diag_indices,diag_indices)),shape=(nparam,nparam), dtype=np.float64)
  
 def Compute_square_dist(
     double[::1] x  ,
