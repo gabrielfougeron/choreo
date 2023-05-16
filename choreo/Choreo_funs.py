@@ -76,7 +76,7 @@ except:
 
 from choreo.Choreo_cython_funs import twopi,nhash,n
 from choreo.Choreo_cython_funs import Compute_hash_action_Cython,Compute_Newton_err_Cython
-from choreo.Choreo_cython_funs import Assemble_Cstr_Matrix,diagmat_changevar
+from choreo.Choreo_cython_funs import Assemble_Cstr_Matrix, diagmat_changevar, matrixfree_changevar
 from choreo.Choreo_cython_funs import Compute_MinDist_Cython,Compute_Loop_Dist_btw_avg_Cython,Compute_square_dist,Compute_Loop_Size_Dist_Cython
 from choreo.Choreo_cython_funs import Compute_JacMat_Forces_Cython,Compute_JacMul_Forces_Cython,Compute_JacMulMat_Forces_Cython
 
@@ -2572,10 +2572,12 @@ def setup_changevar(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCons=Tr
 
         nint_cvg_lvl_list.append(nint_init * (2**i))
         ncoeff_cvg_lvl_list.append(nint_cvg_lvl_list[i] // 2 + 1)
-        nparams_cvg_lvl_list.append((2 * ncoeff_cvg_lvl_list[i] - 1) * nbody * geodim) 
-
 
     if (MatrixFreeChangevar):
+
+        for i in range(n_reconverge_it_max+1):
+
+            nparams_cvg_lvl_list.append((2 * ncoeff_cvg_lvl_list[i] - 1) * nbody * geodim) 
 
         kwargs = {
             "geodim"                        :   geodim                          ,
@@ -2679,7 +2681,7 @@ def setup_changevar(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCons=Tr
             param_to_coeff_T_cvg_lvl_list.append(param_to_coeff_cvg_lvl_list[i].transpose(copy=True))
             coeff_to_param_T_cvg_lvl_list.append(coeff_to_param_cvg_lvl_list[i].transpose(copy=True))
 
-            nparams_cvg_lvl_list.append(coeff_to_param_cvg_lvl_list[i].shape[1])
+            nparams_cvg_lvl_list.append(coeff_to_param_cvg_lvl_list[i].shape[0])
 
         kwargs = {
             "geodim"                        :   geodim                          ,

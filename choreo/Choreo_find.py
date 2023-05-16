@@ -145,7 +145,7 @@ def Find_Choreo(
 
     ncoeff = ActionSyst.ncoeff
     nint = ActionSyst.nint
-    nparams_before = 2 * ncoeff * nbody * geodim
+    nparams_before = 2 * ncoeff * ActionSyst.nloop * geodim
     nparams_after = ActionSyst.nparams
 
     print(f'Convergence attempt number: 1')
@@ -676,7 +676,7 @@ def GenSymExample(
 
     ncoeff = ActionSyst.ncoeff
     nint = ActionSyst.nint
-    nparams_before = 2 * ncoeff * nbody * geodim
+    nparams_before = 2 * ncoeff * ActionSyst.nloop * geodim
     nparams_after = ActionSyst.nparams
 
     print(f'Convergence attempt number: 1')

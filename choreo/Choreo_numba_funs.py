@@ -1208,7 +1208,8 @@ def Compute_action_Python_nD_parallel(
     TimeShiftNumBin   ,
     TimeShiftDenBin   ,
     all_coeffs        ,
-    all_pos 
+    all_pos           ,
+    rfft              ,
 ):
 
     raise NotImplementedError
@@ -1513,7 +1514,8 @@ def Compute_action_hess_mul_Python_nD_parallel(
     TimeShiftDenBin   ,
     all_coeffs        ,
     all_coeffs_d      , 
-    all_pos 
+    all_pos           ,
+    rfft              ,
 ):
 
     raise NotImplementedError
@@ -1701,7 +1703,8 @@ def Compute_action_Python_2D_parallel(
     TimeShiftNumBin   ,
     TimeShiftDenBin   ,
     all_coeffs        ,
-    all_pos 
+    all_pos           ,
+    rfft              ,
 ):
 
     raise NotImplementedError
@@ -1936,7 +1939,9 @@ def Compute_action_hess_mul_Python_2D_parallel(
     TimeShiftDenBin   ,
     all_coeffs        ,
     all_coeffs_d      , 
-    all_pos 
+    all_pos           ,
+    rfft              ,
+    irfft             ,
 ):
 
     raise NotImplementedError
