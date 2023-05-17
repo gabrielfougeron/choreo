@@ -499,7 +499,7 @@ def Integrate(n_NT_init):
 # Integrate(4)
 
 
-the_NT_init = range(len(all_NT_init))
+the_NT_init = range(13,len(all_NT_init))
 
 # the_NT_init = [20]
 # the_NT_init.extend(range(25,len(all_NT_init)))

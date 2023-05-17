@@ -2652,7 +2652,7 @@ def setup_changevar(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCons=Tr
     
     maxloopncstr = loopncstr.max()
 
-    MatrixFreeChangevar = (not(MomCons) and (maxloopncstr == 0)) and not(ForceMatrixChangevar)
+    MatrixFreeChangevar = (not(MomCons) and (maxloopncstr == 0)) and not(ForceMatrixChangevar) and (abs(n_grad_change - 1) == 0)
 
     ncoeff_cvg_lvl_list = []
     nint_cvg_lvl_list = []
