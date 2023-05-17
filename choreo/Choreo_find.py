@@ -143,6 +143,13 @@ def Find_Choreo(
     print(f'    ==> Reduction of {100*(1-nbi_tot/nbi_naive):.2f} % wrt the {nbi_naive:d} naive binary iteractions')
     print('')
 
+
+    if ActionSyst.MatrixFreeChangevar:
+        print('Matrix-free change of variables')
+    else:
+        print('Sparse change of variables')
+    print('')
+
     ncoeff = ActionSyst.ncoeff
     nint = ActionSyst.nint
     nparams_before = 2 * ncoeff * ActionSyst.nloop * geodim
