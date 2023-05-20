@@ -741,6 +741,9 @@ window.addEventListener("drop",function(e){
     &nbsp &nbsp This work is <a href="https://github.com/gabrielfougeron/choreo/blob/main/LICENSE"><b>open source</b></a> and includes substantial parts of <a href="https://github.com/gabrielfougeron/choreo/tree/main/LICENCES"><b>other open-source projects</b></a>.
     <br>&nbsp 
   </div>
+  <div class="w3-container MainTab Main_SOME3" style="display:none; text-align: justify;">
+    <h2>TOTO</h2>
+  </div>
 </div>
 </div>
 
@@ -749,35 +752,7 @@ window.addEventListener("drop",function(e){
 
 <script>
 
-ClickLeftTabBtn('Main')
-ClickTopTabBtn('Main_About')
-
-SlideNReconvergeItMax()
-
-for (var i = 0; i < 6; i++) {
-    ClickAddColLoopKrylov()
-}
-
-ClickAddBodyLoop()
-
-color_datalist = document.getElementById('presetColors')
-for (var i = 0; i < colorLookup_init.length; i++) {
-  var div = document.createElement('option')
-  div.innerHTML = colorLookup_init[i]
-  color_datalist.appendChild(div)
-}
-
-for (var i = 0; i < colorLookup_init.length; i++) {
-    AddColor()
-}
-
-Python_textarea.style.height = "400px"
-
-InitWorkspaceClick()
-
-document.getElementById('CLI_nproc').value = (navigator.hardwareConcurrency / 2)
-
-DealWithCookie()
+InitPage()
 
 </script>
 
