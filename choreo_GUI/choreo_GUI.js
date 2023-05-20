@@ -208,30 +208,6 @@ pyodide_worker.addEventListener('message', handleMessageFromWorker);
 
 Python_textarea = document.getElementById("Python_textarea")
 
-function OnWindowResize(){
-
-    var CommandBody = document.getElementById("CommandBody");
-    var AllLeftTabs = document.getElementsByClassName("LeftTab");
-    
-    if (window.innerWidth > 1220){
-        // Horizontal mode
-        CommandBody.style.position = "relative";
-        CommandBody.style.marginLeft = "610px";
-
-        if (AllLeftTabs[0].classList.contains("open")) {
-            CommandBody.style.bottom = "580px";
-        } else {
-            CommandBody.style.bottom = "710px";
-        }
-
-    } else {
-        CommandBody.style.position = "";
-        CommandBody.style.marginLeft = "10px";
-        CommandBody.style.bottom = "0px";
-    }
-
-}
-
 function ClickTopTabBtn(TabId) {
     var i;
     var AllTopTabBtns = document.getElementsByClassName("TopTabBtn");
