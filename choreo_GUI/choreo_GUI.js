@@ -2279,6 +2279,7 @@ function DealWithHashURL(){
     const hash_url = window.location.hash
 
     if (hash_url.startsWith("#SOME3")) {
+        ErasehashURL()
         LoadSOME3()
     } else if (hash_url.startsWith("#Gallery")) {
         LoadGalleryNodeFromURL()
@@ -2287,19 +2288,25 @@ function DealWithHashURL(){
 }
 
 
+function ErasehashURL(){
+
+    try {
+        history.replaceState("", document.title, window.location.pathname + window.location.search) // Removes hash from URL
+    } catch(e) { 
+        // console.log(e)
+        // console.log("Failed to reset URL")
+        window.location.hash = ""
+    }
+
+}
+
 function GetGalleryNodeFromURL(GalleryTree) {
 
     const URLPathList = window.location.hash.replace('#','').replaceAll('~',' ').split('/')
 
     if (URLPathList.length > 0) {
 
-        try {
-            history.replaceState("", document.title, window.location.pathname + window.location.search) // Removes hash from URL
-        } catch(e) { 
-            // console.log(e)
-            // console.log("Failed to reset URL")
-            window.location.hash = ""
-        }
+        ErasehashURL()
             
         var CurrentNode = GalleryTree
         var CurrentPath = URLPathList[0]+'/'
@@ -2688,5 +2695,10 @@ function LoadSOME3(){
 
     CloseLeftTab()
     ClickTopTabBtn('Main_SOME3')
+    
+    var AllTopTab = document.getElementsByClassName("TopTab");
+    for (i = 0; i < AllTopTab.length     ; i++) {
+        AllTopTab[i].style.display     = "none"
+    }
 
 }
