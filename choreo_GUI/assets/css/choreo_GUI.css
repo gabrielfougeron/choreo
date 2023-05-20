@@ -9,6 +9,7 @@ body {
 .content {
   max-width: 1220px;
   margin: auto;
+  display:flex;
 }
 .LeftTabBtn{
     text-align: center
@@ -19,9 +20,11 @@ body {
 }
 #CommandBody{ 
     max-width: 610px;
+    flex:1;
 }
 #AnimationAndMenuBlock{ 
     max-width: 610px;
+    flex:1;
 }
 #Python_textarea {
     resize: vertical;
@@ -31,6 +34,12 @@ body {
     background-color: #F1F1F1;
     color : #000000!important;
     /* height:480px; */
+}
+
+@media (max-width:1220px) {
+  .content {
+    flex-direction : column;
+  }
 }
 
 .in_text_btn{
