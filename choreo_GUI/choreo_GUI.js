@@ -2272,7 +2272,20 @@ function MakeDirectoryTree_DefaultGallery(cur_directory,cur_treenode,click_callb
 
 }
 
-window.addEventListener('hashchange', () => {LoadGalleryNodeFromURL()})
+window.addEventListener('hashchange', () => {DealWithHashURL()})
+
+function DealWithHashURL(){
+
+    const hash_url = window.location.hash
+
+    if (hash_url.startsWith("#SOME3")) {
+        LoadSOME3()
+    } else if (hash_url.startsWith("#Gallery")) {
+        LoadGalleryNodeFromURL()
+    }
+
+}
+
 
 function GetGalleryNodeFromURL(GalleryTree) {
 
@@ -2537,7 +2550,6 @@ function CopyCustomURLToClipboard() {
 
 }
 
-
 function startRecording(Duration) {
     const chunks = [] // here we will store our recorded media chunks (Blobs)
     const stream = mainCanvas.captureStream() // grab our canvas MediaStream
@@ -2605,7 +2617,7 @@ function DownloadVideo() {
     
 }
 
-function TweetVideo() {
+function TweetVideo() { // does not work yet
 
     // http://twitter.com/share?text=text goes here&url=http://url goes here&hashtags=hashtag1,hashtag2,hashtag3
 
@@ -2618,5 +2630,63 @@ function TweetVideo() {
 
 }
 
+async function LoadConfigFromFile(filename){
 
+    await fetch(filename,Gallery_cache_behavior)
+        .then(response => response.text())
+        .then(data => {
+            ConfigDict = JSON.parse(data)
+        })
 
+    LoadConfigDict(ConfigDict)
+
+}
+
+function InitPage(){
+
+    const hash_url = window.location.hash
+
+    if (hash_url.startsWith("#SOME3")) {
+        LoadSOME3()
+    } else {
+
+        ClickLeftTabBtn('Main')
+        ClickTopTabBtn('Main_About')
+
+        SlideNReconvergeItMax()
+
+        for (var i = 0; i < 6; i++) {
+            ClickAddColLoopKrylov()
+        }
+
+        ClickAddBodyLoop()
+
+        color_datalist = document.getElementById('presetColors')
+        for (var i = 0; i < colorLookup_init.length; i++) {
+        var div = document.createElement('option')
+        div.innerHTML = colorLookup_init[i]
+        color_datalist.appendChild(div)
+        }
+
+        for (var i = 0; i < colorLookup_init.length; i++) {
+            AddColor()
+        }
+
+        Python_textarea.style.height = "400px"
+
+        InitWorkspaceClick()
+
+        document.getElementById('CLI_nproc').value = (navigator.hardwareConcurrency / 2)
+
+        DealWithCookie()
+
+    }
+
+}
+
+function LoadSOME3(){
+
+    CloseLeftTab()
+    ClickTopTabBtn('Main_SOME3')
+
+}
