@@ -742,8 +742,38 @@ window.addEventListener("drop",function(e){
     <br>&nbsp 
   </div>
   <div class="w3-container MainTab Main_SOME3" style="display:none; text-align: justify;">
-    <h2 style="text-align: center;">TOTO</h2>
-    This will be my "blog post" for SOME3
+    <div id="some3textbox">
+      <h2 style="text-align: center;">TOTO</h2>
+      This will be my "blog post" for SOME3<br><br>
+
+      Toto va à la plage avec ses amis.<br><br>
+
+      Testing some stuff<br><br><br><br><br><br>
+
+      <div class = "right_char_speaks">Personnage droite parle</div><br>
+      Personnage gauche parle<br><br>
+      <div class = "right_char_speaks">Personnage droite parle encore, vraiment beaucoup beaucoup. Tellement que ce qu'il dit prend plusieurs lignes. ON dirait qu'il va s'arrêter, mais en fait non, ça continue encore !</div><br>
+      Personnage gauche répond, et parle vraiment beaucoup beaucoup. Tellement que ce qu'il dit prend plusieurs lignes. ON dirait qu'il va s'arrêter, mais en fait non, ça continue encore !<br><br>
+
+      <button class="w3-bar-item w3-button w3-hover-pale-red" style="text-align: center" 
+      onclick="PlayFileFromRemote('toto','choreo-gallery/02 - Families/03 - Relative equilibria/10/00008.npy','choreo-gallery/02 - Families/03 - Relative equilibria/10/00008.json')"
+      >Play this</button>
+      <button class="w3-bar-item w3-button w3-hover-pale-red" style="text-align: center" 
+      onclick="PlayFileFromRemote('toto','choreo-gallery/01 - Classic gallery/07 - No symmetry.npy','choreo-gallery/01 - Classic gallery/07 - No symmetry.json')"
+      >Or that</button>
+      
+      <button class="w3-bar-item w3-button w3-hover-pale-red" style="text-align: center" 
+      onclick="LoadConfigFileFromRemote('SOME3/config/1.json')"
+      >New color scheme</button>      
+
+      <button class="w3-bar-item w3-button w3-hover-pale-red" style="text-align: center" 
+      onclick="LoadComboDisplay('SOME3/(5,2)-chain')"
+      >Combo Display</button>
+
+      
+
+    </div>
+
   </div>
 </div>
 </div>
@@ -752,9 +782,7 @@ window.addEventListener("drop",function(e){
 <script src="./choreo_GUI.js"></script>
 
 <script>
-
 InitPage()
-
 </script>
 
 </body>
