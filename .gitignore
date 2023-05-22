@@ -43,3 +43,4 @@ sparseqr/
 !/LICENCES/**
 !.devcontainer/Dockerfile
 !/NumericalTank_data/*
+!/choreo_GUI/SOME3/**
