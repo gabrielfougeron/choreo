@@ -660,6 +660,17 @@ async function LoadConfigFile(the_file) {
 
 }
 
+async function LoadConfigFileFromRemote(json_filename) {
+
+    fetch(json_filename,Gallery_cache_behavior)
+        .then(response => response.text())
+        .then(data => {
+            var ConfigDict = JSON.parse(data)
+            LoadConfigDict(ConfigDict)
+        })
+
+}
+
 function LoadConfigDict(ConfigDict) {
 
     var trailLayerCanvas = document.getElementById("trailLayerCanvas")
@@ -2287,7 +2298,6 @@ function DealWithHashURL(){
 
 }
 
-
 function ErasehashURL(){
 
     try {
@@ -2575,7 +2585,7 @@ function startRecording(Duration) {
     rec.onstop = e => exportVid(new Blob(chunks, export_options))
     rec.start()
     setTimeout(()=>rec.stop(), Duration) // stop recording after appropriate duration
-  }
+}
 
 async function exportVid(blob) {
 
@@ -2605,7 +2615,7 @@ async function exportVid(blob) {
     a.click()
 
     IssueMessage(VideoMessage,"Done. Video available for download.",3000)
-  }
+}
 
 function DownloadVideo() {
 
@@ -2652,6 +2662,24 @@ async function LoadConfigFromFile(filename){
 function InitPage(){
 
     const hash_url = window.location.hash
+
+//     availHeight = window.screen.availHeight
+//     availWidth = window.screen.availWidth
+// 
+//     console.log("availHeight",availHeight)
+//     console.log("availWidth",availWidth)
+// 
+//     height = window.screen.height
+//     width = window.screen.width
+// 
+//     console.log("height",height)
+//     console.log("width",width)
+// 
+//     innerHeight = window.innerHeight
+//     innerWidth = window.innerWidth
+// 
+//     console.log("innerHeight",innerHeight)
+//     console.log("innerWidth",innerWidth)
 
     if (hash_url.startsWith("#SOME3")) {
         LoadSOME3()
@@ -2700,5 +2728,16 @@ function LoadSOME3(){
     for (i = 0; i < AllTopTab.length     ; i++) {
         AllTopTab[i].style.display     = "none"
     }
+
+}
+
+function LoadComboDisplay(path,name='') {
+
+    const config_file = path + '_config.json'
+    const json_file = path + '.json'
+    const npy_file = path + '.npy'
+
+    PlayFileFromRemote(name,npy_file,json_file)
+    LoadConfigFileFromRemote(config_file)
 
 }
