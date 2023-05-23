@@ -315,7 +315,7 @@ async def main():
     hash_dict = {}
 
     n_opt = 0
-    n_opt_max = 100
+    n_opt_max = params_dict['Solver_Optim']['n_opt']
     n_find_max = 1
 
     mul_coarse_to_fine = params_dict["Solver_Discr"]["mul_coarse_to_fine"]
