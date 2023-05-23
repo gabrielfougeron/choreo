@@ -6,11 +6,11 @@
       1
     ],
     "nbpl": [
-      5
+      4
     ],
     "SymType": [
       {
-        "n": 5,
+        "n": 4,
         "name": "C",
         "k": 1,
         "l": 1,
@@ -39,9 +39,18 @@
   },
   "Animation_Colors": {
     "color_method_input": "body",
-    "n_color": 1,
+    "n_color": 10,
     "colorLookup": [
-      "#00773f"
+      "#50ce4d",
+      "#ff7006",
+      "#a253c4",
+      "#ef1010",
+      "#25b5bc",
+      "#E86A96",
+      "#edc832",
+      "#ad6530",
+      "#00773f",
+      "#d6d6d6"
     ]
   },
   "Animation_Size": {
@@ -67,7 +76,7 @@
     "mul_coarse_to_fine": 3
   },
   "Solver_Optim": {
-    "n_opt": "2",
+    "n_opt": 100,
     "krylov_method": "bicgstab",
     "line_search": "wolfe",
     "line_search_smin": 0.1,

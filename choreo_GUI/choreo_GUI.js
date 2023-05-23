@@ -662,7 +662,7 @@ async function LoadConfigFile(the_file) {
 
 async function LoadConfigFileFromRemote(json_filename) {
 
-    fetch(json_filename,Gallery_cache_behavior)
+    return fetch(json_filename,Gallery_cache_behavior)
         .then(response => response.text())
         .then(data => {
             var ConfigDict = JSON.parse(data)
@@ -2740,5 +2740,12 @@ function LoadComboDisplay(path,name='') {
 
     PlayFileFromRemote(name,npy_file,json_file)
     LoadConfigFileFromRemote(config_file)
+
+}
+
+async function LoadFromRemoteThenSearch(config_filename) {
+
+    await LoadConfigFileFromRemote(config_filename)
+    ChoreoExecuteClick()
 
 }
