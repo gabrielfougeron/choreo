@@ -584,7 +584,7 @@ function GatherConfigDict() {
     ConfigDict['Solver_Discr'] ['mul_coarse_to_fine']  = parseFloat(document.getElementById('input_mul_coarse_to_fine').value)
 
     ConfigDict['Solver_Optim'] = {}
-
+    ConfigDict['Solver_Optim'] ['n_opt']    = parseInt(document.getElementById('input_Num_retries').value)
     ConfigDict['Solver_Optim'] ['krylov_method']  = document.getElementById('krylov_method').value
     ConfigDict['Solver_Optim'] ['line_search']    = document.getElementById('linesearch_method').value
     ConfigDict['Solver_Optim'] ['line_search_smin']    = parseFloat(document.getElementById('linesearch_smin').value)
@@ -795,6 +795,7 @@ function LoadConfigDict(ConfigDict) {
 
     SlideNReconvergeItMax();
 
+    document.getElementById('input_Num_retries').value          = ConfigDict['Solver_Optim'] ['n_opt']
     document.getElementById('krylov_method').value              = ConfigDict['Solver_Optim'] ['krylov_method']     
     document.getElementById('linesearch_method').value          = ConfigDict['Solver_Optim'] ['line_search']       
     document.getElementById('linesearch_smin').value            = ConfigDict['Solver_Optim'] ['line_search_smin']  
