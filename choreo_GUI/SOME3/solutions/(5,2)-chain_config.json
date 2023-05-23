@@ -69,6 +69,7 @@
     "mul_coarse_to_fine": 3
   },
   "Solver_Optim": {
+	"n_opt": "2",
     "krylov_method": "bicgstab",
     "line_search": "wolfe",
     "line_search_smin": 0.1,
