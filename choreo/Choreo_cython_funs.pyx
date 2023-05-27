@@ -2453,12 +2453,12 @@ cpdef InplaceCorrectPeriodicity(
             
             i = geodim*ib + idim
 
-            g = vf[i] - v0[i]
-            v = (xf[i] - x0[i]) - (vf[i] - v0[i]) / 2
+            g = (vf[i] - v0[i]) / 2
+            v = (xf[i] - x0[i]) - g 
             b = -v/ctwopi
 
             for iint in range(nint):
                 iint_d = iint
                 t = iint_d / nint
 
-                all_pos[ib,idim,iint] -= (v*t + g*t*t/2 + b*csin(ctwopi*t))
+                all_pos[ib,idim,iint] -= (v*t + g*t*t + b*csin(ctwopi*t))
