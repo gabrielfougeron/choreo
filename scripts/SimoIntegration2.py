@@ -33,10 +33,20 @@ import choreo
 
 
 store_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym','Simo_tests')
+ref_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym','Simo_keep_clean')
 NT_init_filename = os.path.join(__PROJECT_ROOT__,'NumericalTank_data','Simo_init_cond.txt')
 all_NT_init = np.loadtxt(NT_init_filename)
 
 def Integrate(n_NT_init):
+
+    file_basename = 'Simo_'+(str(n_NT_init).zfill(5))
+    Info_filename = os.path.join(store_folder,file_basename + '.json')
+    Info_filename_ref = os.path.join(ref_folder,file_basename + '.json')
+
+    # if os.path.isfile(Info_filename_ref):
+    #     print(f'Reference file found {Info_filename_ref}')
+    #     return
+
 
     geodim = 2
     nbody = 3
@@ -70,8 +80,8 @@ def Integrate(n_NT_init):
     # SymplecticMethod = 'SymplecticGauss2'
     # SymplecticMethod = 'SymplecticGauss3'
     # SymplecticMethod = 'SymplecticGauss5' 
-    SymplecticMethod = 'SymplecticGauss10'
-    # SymplecticMethod = 'SymplecticGauss15'
+    # SymplecticMethod = 'SymplecticGauss10'
+    SymplecticMethod = 'SymplecticGauss15'
 
     mul_x = True
     # mul_x = False
@@ -102,8 +112,9 @@ def Integrate(n_NT_init):
 
     # i_try_max = 1
     # i_try_max = 3
-    i_try_max = 6
-    # i_try_max = 8
+    # i_try_max = 6
+    # i_try_max = 9
+    i_try_max = 10
     # i_try_max = 15
     # i_try_max = 12
     # i_try_max = 13
@@ -182,17 +193,11 @@ def Integrate(n_NT_init):
 
     params_opt = all_NT_init[n_NT_init,0:4].copy()
 
-    i_try = -1
+    # i_try = -1
+    i_try = 7
     while(GoOn):
         i_try +=1
 
-        # print(f'Numerical Tank {n_NT_init:4d} Try n° {i_try}')
-
-        file_basename = 'Simo_'+(str(n_NT_init).zfill(5))
-        Info_filename = os.path.join(store_folder,file_basename + '.json')
-
-        # if os.path.isfile(Info_filename):
-        #     continue
 
         # print("Time forward integration")
         GoOn = True
@@ -260,8 +265,8 @@ def Integrate(n_NT_init):
         jac_options = {'method':krylov_method_T,'rdiff':None,'inner_tol':0,'inner_M':None }
         jacobian = scipy.optimize.nonlin.KrylovJacobian(**jac_options)
 
-        verbose=True
-        # verbose=False
+        # verbose=True
+        verbose=False
 
         # params_0 = params_opt
         params_0 = all_NT_init[n_NT_init,0:4].copy()
@@ -344,9 +349,9 @@ def Integrate(n_NT_init):
     print('')
 
     # if (period_err < period_err_max):
-    if (IsRepresentedByFourier):
+    # if (IsRepresentedByFourier):
     # if (cur_max < IsRepresentedByFourier_max):
-    # if True:
+    if True:
 
 
         Transform_Sym = None
@@ -451,7 +456,7 @@ def Integrate(n_NT_init):
         n_find_max = 1
 
         Newt_err_norm_max = 1e-12
-        Newt_err_norm_max_save = 1e-3
+        Newt_err_norm_max_save = 1e-1
 
         krylov_method = 'lgmres'
         # krylov_method = 'gmres'
@@ -465,8 +470,8 @@ def Integrate(n_NT_init):
         # line_search = 'wolfe'
         line_search = 'none'
 
-        # disp_scipy_opt = False
-        disp_scipy_opt = True
+        disp_scipy_opt = False
+        # disp_scipy_opt = True
 
         # linesearch_smin = 0.01
         linesearch_smin = 1
@@ -626,41 +631,32 @@ def Integrate(n_NT_init):
 # Integrate(1)
 
 
-the_NT_init = range(len(all_NT_init))
-# the_NT_init = range(21,len(all_NT_init))
-
-# the_NT_init = [0]
-# the_NT_init = [212]
+# the_NT_init = range(len(all_NT_init))
+# the_NT_init = range(260,len(all_NT_init))
+# 
+the_NT_init = [69]
+# the_NT_init = [32]
 # the_NT_init = [18]
 # the_NT_init.extend(range(25,len(all_NT_init)))
 
-# outliers = [ 4, 18, 19, 20 ]
-
-# 
-for n_NT_init in the_NT_init:
-
-    Integrate(n_NT_init)
-# 
-# for n_NT_init in the_NT_init:
-# 
-#     if n_NT_init not in outliers:
-# 
-#         Integrate(n_NT_init)
 
 # # 
-# if __name__ == "__main__":
+# for n_NT_init in the_NT_init:
 # 
-#     # n = 5
-#     n = multiprocessing.cpu_count() // 2
-#     # n = 4
-#     # 
-#     print(f"Executing with {n} workers")
-#     
-#     with concurrent.futures.ProcessPoolExecutor(max_workers=n) as executor:
-#         
-#         res = []
-#         for n_NT_init in range(len(all_NT_init)):
-#         # for n_NT_init in range(5):
-#         # for n_NT_init in [4]:
-#             res.append(executor.submit(Integrate,n_NT_init))
-#             time.sleep(0.01)
+#     Integrate(n_NT_init)
+
+# # # 
+if __name__ == "__main__":
+
+    # n = 5
+    # n = multiprocessing.cpu_count() // 2
+    n = 3
+    # 
+    print(f"Executing with {n} workers")
+    
+    with concurrent.futures.ProcessPoolExecutor(max_workers=n) as executor:
+        
+        res = []
+        for n_NT_init in the_NT_init:
+            res.append(executor.submit(Integrate,n_NT_init))
+            time.sleep(0.01)
