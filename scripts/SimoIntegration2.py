@@ -80,8 +80,8 @@ def Integrate(n_NT_init):
     # SymplecticMethod = 'SymplecticGauss2'
     # SymplecticMethod = 'SymplecticGauss3'
     # SymplecticMethod = 'SymplecticGauss5' 
-    # SymplecticMethod = 'SymplecticGauss10'
-    SymplecticMethod = 'SymplecticGauss15'
+    SymplecticMethod = 'SymplecticGauss10'
+    # SymplecticMethod = 'SymplecticGauss15'
 
     mul_x = True
     # mul_x = False

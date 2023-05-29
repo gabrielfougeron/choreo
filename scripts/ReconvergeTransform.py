@@ -1,9 +1,13 @@
 import os
-
-os.environ['OPENBLAS_NUM_THREADS'] = '1'
-
 import concurrent.futures
 import multiprocessing
+
+os.environ['NUMBA_NUM_THREADS'] = str(multiprocessing.cpu_count()//2)
+os.environ['OMP_NUM_THREADS'] = str(multiprocessing.cpu_count()//2)
+os.environ['OPENBLAS_NUM_THREADS'] = '1'
+os.environ['NUMEXPR_NUM_THREADS'] = '1'
+os.environ['MKL_NUM_THREADS'] = '1'
+
 import json
 import shutil
 import random
@@ -30,9 +34,10 @@ def main():
 
 
     # input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery/04 - Montaldi-Steckles-Gries')
+    input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery/05 - Simo')
     # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/9')
     # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/Keep/')
-    input_folder = os.path.join(__PROJECT_ROOT__,'Reconverged_sols')
+    # input_folder = os.path.join(__PROJECT_ROOT__,'Reconverged_sols')
     
 #     ''' Include all files in tree '''
 #     input_names_list = []
@@ -49,20 +54,21 @@ def main():
 #                 input_names_list.append(the_name)
 # 
 # # # 
-    ''' Include all files in folder '''
-    input_names_list = []
-    for file_path in os.listdir(input_folder):
-        file_path = os.path.join(input_folder, file_path)
-        file_root, file_ext = os.path.splitext(os.path.basename(file_path))
-        
-        if (file_ext == '.json' ):
-            # 
-            # if int(file_root) > 8:
-            #     input_names_list.append(file_root)
+#     ''' Include all files in folder '''
+#     input_names_list = []
+#     for file_path in os.listdir(input_folder):
+#         file_path = os.path.join(input_folder, file_path)
+#         file_root, file_ext = os.path.splitext(os.path.basename(file_path))
+#         
+#         if (file_ext == '.json' ):
+#             # 
+#             # if int(file_root) > 8:
+#             #     input_names_list.append(file_root)
+# 
+#             input_names_list.append(file_root)
 
-            input_names_list.append(file_root)
-
-    # input_names_list = ['01 - Figure eight']
+    # input_names_list = ['Simo_00069']
+    input_names_list = ['Simo_00269']
     # input_names_list = ['04 - 5 pointed star']
     # input_names_list = ['14 - Small mass gap']
 
@@ -70,15 +76,15 @@ def main():
     store_folder = os.path.join(__PROJECT_ROOT__,'Reconverged_sols')
     # store_folder = input_folder
 
-    Exec_Mul_Proc = True
-    # Exec_Mul_Proc = False
+    # Exec_Mul_Proc = True
+    Exec_Mul_Proc = False
 
     if Exec_Mul_Proc:
 
         # n = 1
-        # n = 4
+        n = 3
         # n = multiprocessing.cpu_count()
-        n = multiprocessing.cpu_count()//2
+        # n = multiprocessing.cpu_count()//2
         
         print(f"Executing with {n} workers")
         
@@ -96,18 +102,17 @@ def main():
             
         for the_name in input_names_list:
 
-            all_kwargs = choreo.Pick_Named_Args_From_Dict(ExecName,dict(globals(),**locals()))
             ExecName(the_name, input_folder, store_folder)
 
 
 def ExecName(the_name, input_folder, store_folder):
 
-    print('--------------------------------------------')
-    print('')
-    print(the_name)
-    print('')
-    print('--------------------------------------------')
-    print('')
+    # print('--------------------------------------------')
+    # print('')
+    # print(the_name)
+    # print('')
+    # print('--------------------------------------------')
+    # print('')
 
 
     geodim = 2
@@ -122,6 +127,36 @@ def ExecName(the_name, input_folder, store_folder):
     with open(Info_filename,'r') as jsonFile:
         Info_dict = json.load(jsonFile)
 
+    Info_filename_reconverged = os.path.join(store_folder,the_name + '.json')
+    if os.path.isfile(Info_filename_reconverged):
+        # print(f'Found Reconverged solution {the_name}')
+        with open(Info_filename_reconverged,'r') as jsonFile_reconverged:
+            Info_dict_reconverged = json.load(jsonFile_reconverged)
+
+
+        diff_hash = np.linalg.norm(np.array(Info_dict['Hash'])-np.array(Info_dict_reconverged['Hash']))
+
+        if (diff_hash > 1e-5):
+            print(the_name)
+            print(f'Hash difference : {diff_hash}')
+
+            # print(f'nint : {Info_dict["n_int"]}     {Info_dict_reconverged["n_int"]} ')
+            print(f'Grad Action : {Info_dict["Grad_Action"]}     {Info_dict_reconverged["Grad_Action"]}')
+            print(f'Newton error : {Info_dict["Newton_Error"]}     {Info_dict_reconverged["Newton_Error"]}')
+
+            print(f'nint : {Info_dict["n_int"]/Info_dict_reconverged["n_int"]} ')
+            # print(f'Grad Action : {Info_dict_reconverged["Grad_Action"]/Info_dict["Grad_Action"]}')
+            # print(f'Newton error : {Info_dict_reconverged["Newton_Error"]/Info_dict["Newton_Error"]}')
+            print('')
+
+
+        return
+
+
+    print(f'Newton error on load : {Info_dict["Newton_Error"] }')
+
+    # if Info_dict["Newton_Error"] < 1e-12 :
+    #     return
 
     input_filename = os.path.join(input_folder,the_name + '.npy')
 
@@ -132,9 +167,44 @@ def ExecName(the_name, input_folder, store_folder):
     ncoeff_init = nint_init // 2 +1
 
     c_coeffs = choreo.default_rfft(all_pos,axis=2,norm="forward")
-    all_coeffs = np.zeros((Info_dict["nloop"],choreo.ndim,ncoeff_init,2),dtype=np.float64)
-    all_coeffs[:,:,:,0] = c_coeffs.real
-    all_coeffs[:,:,:,1] = c_coeffs.imag
+
+    FindOptimalnint = True
+    # FindOptimalnint = False
+
+    if (FindOptimalnint):
+
+        thres = 1e-16
+        cur_max = 0.
+        k = ncoeff_init - 1
+
+        GoOn = True
+        while GoOn:
+
+            ampl = np.linalg.norm(c_coeffs[:,:,k])
+
+            k -= 1
+
+            GoOn = (k>0) and (ampl < thres)
+
+        nint_min = 2*(k-1)
+
+        while (nint_init > (2*nint_min)):
+
+            nint_init = nint_init // 2
+
+        print(f"Reduced nint_init from {Info_dict['n_int']} to {nint_init}")
+
+        ncoeff_init = nint_init // 2 +1
+
+
+
+
+    all_coeffs = np.zeros((Info_dict["nloop"],geodim,ncoeff_init,2),dtype=np.float64)
+    all_coeffs[:,:,:,0] = c_coeffs[:,:,0:ncoeff_init].real
+    all_coeffs[:,:,:,1] = c_coeffs[:,:,0:ncoeff_init].imag
+
+
+
 
 
     # theta = 2*np.pi * 0.
@@ -151,8 +221,6 @@ def ExecName(the_name, input_folder, store_folder):
     TimeRev = 1.
     TimeShiftNum = 0
     TimeShiftDen = 2
-
-
 
     all_coeffs_init = choreo.Transform_Coeffs(SpaceRot, TimeRev, TimeShiftNum, TimeShiftDen, all_coeffs)
     Transform_Sym = choreo.ChoreoSym(SpaceRot=SpaceRot, TimeRev=TimeRev, TimeShift = fractions.Fraction(numerator=TimeShiftNum,denominator=TimeShiftDen))
@@ -181,6 +249,30 @@ def ExecName(the_name, input_folder, store_folder):
 #         TimeShift=fractions.Fraction(numerator=0,denominator=1)
 #     ))
 
+    
+    Sym_list.append(
+        choreo.ChoreoSym(
+            LoopTarget=0,
+            LoopSource=0,
+            SpaceRot= np.array([[1,0],[0,-1]],dtype=np.float64),
+            TimeRev=-1,
+            TimeShift=fractions.Fraction(
+                numerator=0,
+                denominator=1)
+        ))
+
+
+
+
+
+    # Save_coeff_profile = True
+    Save_coeff_profile = False
+
+    # Save_Newton_Error = True
+    Save_Newton_Error = False
+
+    # Save_GradientAction_Error = True
+    Save_GradientAction_Error = False
 
     Save_All_Pos = True
     # Save_All_Pos = False
@@ -274,13 +366,20 @@ def ExecName(the_name, input_folder, store_folder):
     n_opt_max = 1
     n_find_max = 1
 
+    GradHessBackend="Cython"
+    # GradHessBackend="Numba"
+
+    # ParallelBackend = True
+    ParallelBackend = False
 
 
+    # n_reconverge_it_max = 0
     n_reconverge_it_max = 1
 
 
     Newt_err_norm_max = 1e-13
-    Newt_err_norm_max_save = Info_dict['Newton_Error']
+    # Newt_err_norm_max_save = Info_dict['Newton_Error']
+    Newt_err_norm_max_save = 1e-1
 
     krylov_method = 'lgmres'
     # krylov_method = 'gmres'
@@ -300,11 +399,11 @@ def ExecName(the_name, input_folder, store_folder):
     # linesearch_smin = 0.1
     linesearch_smin = 1
     
-    gradtol_list =          [1e-1   ,1e-3   ,1e-5   ,1e-7   ,1e-9   ,1e-11  ,1e-13  ,1e-15  ]
-    inner_maxiter_list =    [30     ,30     ,50     ,60     ,70     ,80     ,100    ,100    ]
-    maxiter_list =          [100    ,1000   ,1000   ,1000   ,500    ,500    ,300    ,100    ]
-    outer_k_list =          [5      ,5      ,5      ,5      ,5      ,7      ,7      ,7      ]
-    store_outer_Av_list =   [False  ,False  ,False  ,False  ,False  ,True   ,True   ,True   ]
+    gradtol_list =          [1e-1   ,1e-3   ,1e-5   ,1e-7   ,1e-9   ,1e-11  ,1e-13]
+    inner_maxiter_list =    [30     ,30     ,50     ,60     ,70     ,80     ,100  ]
+    maxiter_list =          [100    ,1000   ,1000   ,1000   ,500    ,500    ,5    ]
+    outer_k_list =          [5      ,5      ,5      ,5      ,5      ,7      ,7    ]
+    store_outer_Av_list =   [False  ,False  ,False  ,False  ,False  ,True   ,True ]
     # 
     # gradtol_list =          [1e-1   ,1e-3  ,1e-5  ]
     # inner_maxiter_list =    [30     ,30    ,50    ]
