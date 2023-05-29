@@ -43,9 +43,9 @@ def Integrate(n_NT_init):
     Info_filename = os.path.join(store_folder,file_basename + '.json')
     Info_filename_ref = os.path.join(ref_folder,file_basename + '.json')
 
-    # if os.path.isfile(Info_filename_ref):
-    #     print(f'Reference file found {Info_filename_ref}')
-    #     return
+    if os.path.isfile(Info_filename_ref):
+        print(f'Reference file found {Info_filename_ref}')
+        return
 
 
     geodim = 2
@@ -80,8 +80,9 @@ def Integrate(n_NT_init):
     # SymplecticMethod = 'SymplecticGauss2'
     # SymplecticMethod = 'SymplecticGauss3'
     # SymplecticMethod = 'SymplecticGauss5' 
-    SymplecticMethod = 'SymplecticGauss10'
+    # SymplecticMethod = 'SymplecticGauss10'
     # SymplecticMethod = 'SymplecticGauss15'
+    SymplecticMethod = 'SymplecticGauss20'
 
     mul_x = True
     # mul_x = False
@@ -114,10 +115,9 @@ def Integrate(n_NT_init):
     # i_try_max = 3
     # i_try_max = 6
     # i_try_max = 9
-    i_try_max = 10
-    # i_try_max = 15
-    # i_try_max = 12
-    # i_try_max = 13
+    # i_try_max = 10
+    i_try_max = 11
+
 
     period_err_max = 1e-1
     # period_err_max = 1e-8
@@ -129,8 +129,8 @@ def Integrate(n_NT_init):
     IsRepresentedByFourier_max = 1e-9
 
 
-    # CorrectAllPos = False
-    CorrectAllPos = True
+    CorrectAllPos = False
+    # CorrectAllPos = True
 
 
     def param_to_init(params):
@@ -194,7 +194,7 @@ def Integrate(n_NT_init):
     params_opt = all_NT_init[n_NT_init,0:4].copy()
 
     # i_try = -1
-    i_try = 7
+    i_try = i_try_max - 1
     while(GoOn):
         i_try +=1
 
@@ -203,10 +203,6 @@ def Integrate(n_NT_init):
         GoOn = True
         itry = -1
 
-
-
-        t_span = (0., 1.)
-        # t_span = (0., all_NT_init[n_NT_init,4])
 
         # nint_anim = nbody * 1024 * 128
         # nint_sub = 16
@@ -269,13 +265,13 @@ def Integrate(n_NT_init):
         verbose=False
 
         # params_0 = params_opt
-        params_0 = all_NT_init[n_NT_init,0:4].copy()
+#         params_0 = all_NT_init[n_NT_init,0:4].copy()
 
         best_sol = choreo.current_best(params_0,loss(params_0))
 
         print(f"On entry : {best_sol.f_norm}")
 
-        opt_result , info = choreo.nonlin_solve_pp(F=loss,x0=params_0,jacobian=jacobian,verbose=verbose,maxiter=maxiter_period_opt,f_tol=1e-15,line_search=line_search,raise_exception=False,smin=linesearch_smin,full_output=True,callback=best_sol.update,tol_norm=np.linalg.norm)
+        # opt_result , info = choreo.nonlin_solve_pp(F=loss,x0=params_0,jacobian=jacobian,verbose=verbose,maxiter=maxiter_period_opt,f_tol=1e-15,line_search=line_search,raise_exception=False,smin=linesearch_smin,full_output=True,callback=best_sol.update,tol_norm=np.linalg.norm)
         
         # params_opt = all_NT_init[n_NT_init,0:4].copy()
         params_opt = best_sol.x
@@ -298,6 +294,8 @@ def Integrate(n_NT_init):
         if CorrectAllPos:
             xt = x0[[4,5,0,1,2,3]].copy()
             vt = v0[[4,5,0,1,2,3]].copy()
+            # xt = x0[[2,3,4,5,0,1]].copy()
+            # vt = v0[[2,3,4,5,0,1]].copy()
 
             choreo.InplaceCorrectPeriodicity(third_pos,xt,vt,xf,vf)
 
@@ -456,7 +454,8 @@ def Integrate(n_NT_init):
         n_find_max = 1
 
         Newt_err_norm_max = 1e-12
-        Newt_err_norm_max_save = 1e-1
+        # Newt_err_norm_max_save = 1e-1
+        Newt_err_norm_max_save = 1e5
 
         krylov_method = 'lgmres'
         # krylov_method = 'gmres'
@@ -470,15 +469,15 @@ def Integrate(n_NT_init):
         # line_search = 'wolfe'
         line_search = 'none'
 
-        disp_scipy_opt = False
-        # disp_scipy_opt = True
+        # disp_scipy_opt = False
+        disp_scipy_opt = True
 
         # linesearch_smin = 0.01
         linesearch_smin = 1
 
         gradtol_list =          [1e-13  ]
         inner_maxiter_list =    [100    ]
-        maxiter_list =          [50      ]
+        maxiter_list =          [5      ]
         outer_k_list =          [7      ]
         store_outer_Av_list =   [True   ]
         # 
@@ -634,29 +633,29 @@ def Integrate(n_NT_init):
 # the_NT_init = range(len(all_NT_init))
 # the_NT_init = range(260,len(all_NT_init))
 # 
-the_NT_init = [69]
+the_NT_init = [250]
 # the_NT_init = [32]
 # the_NT_init = [18]
 # the_NT_init.extend(range(25,len(all_NT_init)))
 
 
 # # 
-# for n_NT_init in the_NT_init:
+for n_NT_init in the_NT_init:
+
+    Integrate(n_NT_init)
 # 
-#     Integrate(n_NT_init)
-
 # # # 
-if __name__ == "__main__":
-
-    # n = 5
-    # n = multiprocessing.cpu_count() // 2
-    n = 3
-    # 
-    print(f"Executing with {n} workers")
-    
-    with concurrent.futures.ProcessPoolExecutor(max_workers=n) as executor:
-        
-        res = []
-        for n_NT_init in the_NT_init:
-            res.append(executor.submit(Integrate,n_NT_init))
-            time.sleep(0.01)
+# if __name__ == "__main__":
+# 
+#     # n = 5
+#     # n = multiprocessing.cpu_count() // 2
+#     n = 3
+#     # 
+#     print(f"Executing with {n} workers")
+#     
+#     with concurrent.futures.ProcessPoolExecutor(max_workers=n) as executor:
+#         
+#         res = []
+#         for n_NT_init in the_NT_init:
+#             res.append(executor.submit(Integrate,n_NT_init))
+#             time.sleep(0.01)
