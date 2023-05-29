@@ -31,11 +31,9 @@ One_sec = 1e9
 
 def main():
 
-
-
     # input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery/04 - Montaldi-Steckles-Gries')
-    input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery/05 - Simo')
-    # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/9')
+    # input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery/05 - Simo')
+    input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/Simo_tests_needs_reconverge')
     # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/Keep/')
     # input_folder = os.path.join(__PROJECT_ROOT__,'Reconverged_sols')
     
@@ -53,22 +51,22 @@ def main():
 #                 the_name = file_path[len(input_folder):]
 #                 input_names_list.append(the_name)
 # 
-# # # 
-#     ''' Include all files in folder '''
-#     input_names_list = []
-#     for file_path in os.listdir(input_folder):
-#         file_path = os.path.join(input_folder, file_path)
-#         file_root, file_ext = os.path.splitext(os.path.basename(file_path))
-#         
-#         if (file_ext == '.json' ):
-#             # 
-#             # if int(file_root) > 8:
-#             #     input_names_list.append(file_root)
-# 
-#             input_names_list.append(file_root)
+# # 
+    ''' Include all files in folder '''
+    input_names_list = []
+    for file_path in os.listdir(input_folder):
+        file_path = os.path.join(input_folder, file_path)
+        file_root, file_ext = os.path.splitext(os.path.basename(file_path))
+        
+        if (file_ext == '.json' ):
+            # 
+            # if int(file_root) > 8:
+            #     input_names_list.append(file_root)
+
+            input_names_list.append(file_root)
 
     # input_names_list = ['Simo_00069']
-    input_names_list = ['Simo_00269']
+    # input_names_list = ['Simo_00269']
     # input_names_list = ['04 - 5 pointed star']
     # input_names_list = ['14 - Small mass gap']
 
@@ -127,30 +125,39 @@ def ExecName(the_name, input_folder, store_folder):
     with open(Info_filename,'r') as jsonFile:
         Info_dict = json.load(jsonFile)
 
-    Info_filename_reconverged = os.path.join(store_folder,the_name + '.json')
-    if os.path.isfile(Info_filename_reconverged):
-        # print(f'Found Reconverged solution {the_name}')
-        with open(Info_filename_reconverged,'r') as jsonFile_reconverged:
-            Info_dict_reconverged = json.load(jsonFile_reconverged)
+    Check_Already_Treated = True
+    # Check_Already_Treated = False
+
+    if Check_Already_Treated:
+
+        Info_filename_reconverged = os.path.join(store_folder,the_name + '.json')
+        if os.path.isfile(Info_filename_reconverged):
+
+            with open(Info_filename_reconverged,'r') as jsonFile_reconverged:
+                Info_dict_reconverged = json.load(jsonFile_reconverged)
 
 
-        diff_hash = np.linalg.norm(np.array(Info_dict['Hash'])-np.array(Info_dict_reconverged['Hash']))
+            diff_hash = np.linalg.norm(np.array(Info_dict['Hash'])-np.array(Info_dict_reconverged['Hash']))
 
-        if (diff_hash > 1e-5):
-            print(the_name)
-            print(f'Hash difference : {diff_hash}')
+            if (diff_hash > 1e-1):
+                print(the_name)
+                print(f'Hash difference : {diff_hash}')
 
-            # print(f'nint : {Info_dict["n_int"]}     {Info_dict_reconverged["n_int"]} ')
-            print(f'Grad Action : {Info_dict["Grad_Action"]}     {Info_dict_reconverged["Grad_Action"]}')
-            print(f'Newton error : {Info_dict["Newton_Error"]}     {Info_dict_reconverged["Newton_Error"]}')
+                # print(f'nint : {Info_dict["n_int"]}     {Info_dict_reconverged["n_int"]} ')
+                print(f'Grad Action : {Info_dict["Grad_Action"]}     {Info_dict_reconverged["Grad_Action"]}')
+                print(f'Newton error : {Info_dict["Newton_Error"]}     {Info_dict_reconverged["Newton_Error"]}')
 
-            print(f'nint : {Info_dict["n_int"]/Info_dict_reconverged["n_int"]} ')
-            # print(f'Grad Action : {Info_dict_reconverged["Grad_Action"]/Info_dict["Grad_Action"]}')
-            # print(f'Newton error : {Info_dict_reconverged["Newton_Error"]/Info_dict["Newton_Error"]}')
-            print('')
+                print(f'nint : {Info_dict["n_int"]/Info_dict_reconverged["n_int"]} ')
+                # print(f'Grad Action : {Info_dict_reconverged["Grad_Action"]/Info_dict["Grad_Action"]}')
+                # print(f'Newton error : {Info_dict_reconverged["Newton_Error"]/Info_dict["Newton_Error"]}')
+                print('')
 
+                return
 
-        return
+            else:
+                print(f'Found Reconverged solution {the_name}. Hash difference : {diff_hash}') 
+
+                return
 
 
     print(f'Newton error on load : {Info_dict["Newton_Error"] }')
@@ -378,8 +385,8 @@ def ExecName(the_name, input_folder, store_folder):
 
 
     Newt_err_norm_max = 1e-13
-    # Newt_err_norm_max_save = Info_dict['Newton_Error']
-    Newt_err_norm_max_save = 1e-1
+    Newt_err_norm_max_save = Info_dict['Newton_Error']
+    # Newt_err_norm_max_save = 1e-1
 
     krylov_method = 'lgmres'
     # krylov_method = 'gmres'
