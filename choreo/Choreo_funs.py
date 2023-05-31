@@ -956,9 +956,6 @@ class ChoreoAction():
 
     def GetTangentSystemDef(self,x,nint=None,method = 'SymplecticEuler'):
 
-            if nint is None:
-                nint = self.nint
-
             ndof = self.nbody*self.geodim
 
             if nint is None:
@@ -993,6 +990,56 @@ class ChoreoAction():
             v0 = np.ascontiguousarray(np.concatenate((np.zeros((ndof,ndof)),np.eye(ndof)),axis=1).reshape(-1))
 
             return fun,gun,x0,v0
+
+    def GetTangentSystemDef_new(self, x, Butcher_c, nint = None):
+
+        ndof = self.nbody*self.geodim
+
+        if nint is None:
+            nint = self.nint
+
+        nsteps = Butcher_c.size
+        all_coeffs = self.RemoveSym(x)
+
+        all_pos = np.zeros((nsteps,self.nbody,self.geodim,nint), dtype=np.float64)
+        
+        SpaceRot = np.eye(self.geodim)
+        TimeRev = 1
+        TimeShiftDen = 1.
+
+        for istep in range(nsteps):
+
+            TimeShiftNum = Butcher_c[istep]
+
+            shifted_coeffs =  Transform_Coeffs(SpaceRot, TimeRev, TimeShiftNum, TimeShiftDen, all_coeffs)
+
+            shifted_coeffs_c = shifted_coeffs.view(dtype=np.complex128)[...,0]
+            all_pos[istep,:,:,:] = self.irfft(shifted_coeffs_c,n=nint,norm="forward")
+
+        ndof = self.nbody*self.geodim
+
+        def fun(t,v):
+            return v
+
+        def gun(t,x):
+
+            i = round(t[0]*nint) % nint
+
+            cur_pos = np.ascontiguousarray(all_pos[:,:,:,i])
+
+            return Compute_JacMulMat_Forces_Cython_mul_x(
+                cur_pos,
+                x.reshape(nsteps,self.nbody,self.geodim,2*ndof)   ,
+                self.mass   ,
+                self.nbody  ,
+            ).reshape(nsteps,ndof*2*ndof)
+
+        x0 = np.ascontiguousarray(np.concatenate((np.eye(ndof),np.zeros((ndof,ndof))),axis=1).reshape(-1))
+        v0 = np.ascontiguousarray(np.concatenate((np.zeros((ndof,ndof)),np.eye(ndof)),axis=1).reshape(-1))
+
+        return fun,gun,x0,v0
+
+
 
     def HeuristicMinMax(self):
         r"""
