@@ -260,12 +260,6 @@ def ExecName(the_name, input_folder, store_folder):
     SymplecticTanIntegrator = choreo.GetSymplecticTanIntegrator(SymplecticMethod)
     SymplecticTanIntegrator = functools.partial(SymplecticTanIntegrator, maxiter = 1000)
 
-    # for arr in [x0,v0,grad_x0,grad_v0]:
-    #     print(arr.shape)
-    #     print(arr.data.contiguous)
-    #     print(arr.data.c_contiguous)
-        # print(arr.data.f_contiguous)  # False
-
     T = 1.
 
     tbeg = time.perf_counter()
