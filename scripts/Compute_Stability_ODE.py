@@ -252,13 +252,17 @@ def ExecName(the_name, input_folder, store_folder):
     ODE_TanIntegration = True
     # ODE_TanIntegration = False
 
+    parallel = True
+    parallel = False
+    
+
     if ODE_TanIntegration:
 
         fun,gun = ActionSyst.GetSymplecticODEDef()
         x0, v0 = ActionSyst.Compute_init_pos_and_vel(x)
         z0 = np.ascontiguousarray(np.concatenate((x0, v0),axis=0).reshape(2*ndof))
 
-        grad_fun,grad_gun = ActionSyst.GetSymplecticTanODEDef()
+        grad_fun,grad_gun = ActionSyst.GetSymplecticTanODEDef(parallel = parallel)
         grad_x0 = np.zeros((ndof,2*ndof),dtype=np.float64)
         grad_v0 = np.zeros((ndof,2*ndof),dtype=np.float64)
         for idof in range(ndof):
@@ -313,7 +317,7 @@ def ExecName(the_name, input_folder, store_folder):
 
         tbeg = time.perf_counter()
 
-        fun,gun,x0,v0 = ActionSyst.GetTangentSystemDefMul(x,Butcher_c_np,nint_ODE)
+        fun,gun,x0,v0 = ActionSyst.GetTangentSystemDefMul(x,Butcher_c_np,nint_ODE,parallel = parallel)
         all_x, all_v = SymplecticIntegrator(fun,gun,t_span,x0,v0,nint_ODE,nint_ODE)
 
         tend = time.perf_counter()
