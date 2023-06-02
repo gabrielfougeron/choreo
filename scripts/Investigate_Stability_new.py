@@ -50,9 +50,12 @@ def main():
 #                 the_name = file_path[len(input_folder):]
 #                 input_names_list.append(the_name)
 # 
-# # # 
-#     ''' Include all files in folder '''
-#     input_names_list = []
+# 
+
+    input_names_list = []
+
+
+    # ''' Include all files in folder '''
 #     for file_path in os.listdir(input_folder):
 #         file_path = os.path.join(input_folder, file_path)
 #         file_root, file_ext = os.path.splitext(os.path.basename(file_path))
@@ -64,9 +67,11 @@ def main():
 # 
 #             input_names_list.append(file_root)
 
-    input_names_list = ['01 - Figure eight']
-    # input_names_list = ['14 - Small mass gap']
-    # input_names_list = ['04 - 5 pointed star']
+    # input_names_list.append('01 - Figure eight')
+    # input_names_list.append('02 - Celtic knot')
+    # input_names_list.append('06 - Ten petal flower')
+    input_names_list.append('04 - 5 pointed star')
+
 
 
     store_folder = os.path.join(__PROJECT_ROOT__,'Reconverged_sols')
@@ -231,45 +236,45 @@ def ExecName(the_name, input_folder, store_folder):
         # nint_ODE_mul = 24
         # nint_ODE_mul = 2
         nint_ODE_mul = 1
+
         nint_ODE = nint_ODE_mul*nint
 
 
 
 
-
 # 
-        # SymplecticMethod = 'SymplecticEuler'
-        # SymplecticMethod = 'SymplecticStormerVerlet'
-        # SymplecticMethod = 'SymplecticRuth3'
-        SymplecticMethod = 'SymplecticRuth4Rat'
-        SymplecticIntegrator = choreo.GetSymplecticIntegrator(SymplecticMethod)
-
-        fun,gun,x0,v0 = ActionSyst.GetTangentSystemDef(x,nint_ODE,method=SymplecticMethod)
-
-
-
-
-#         SymplecticMethod = 'SymplecticGauss1'
-#         # SymplecticMethod = 'SymplecticGauss2'
-#         # SymplecticMethod = 'SymplecticGauss3'
-#         # SymplecticMethod = 'SymplecticGauss5'
-#         # SymplecticMethod = 'SymplecticGauss10'
-#         # SymplecticMethod = 'SymplecticGauss10'
-#         # SymplecticMethod = 'SymplecticGauss15'
-# 
-#         descr = SymplecticMethod.removeprefix("SymplecticGauss")
-#         n = int(descr)
-#         Butcher_a_np, Butcher_b_np, Butcher_c_np, Butcher_beta_np, _ = choreo.ComputeGaussButcherTables_np(n)
-# 
+# # # 
+#         # SymplecticMethod = 'SymplecticEuler'
+#         # SymplecticMethod = 'SymplecticStormerVerlet'
+#         # SymplecticMethod = 'SymplecticRuth3'
+#         SymplecticMethod = 'SymplecticRuth4Rat'
 #         SymplecticIntegrator = choreo.GetSymplecticIntegrator(SymplecticMethod)
 # 
-#         fun,gun,x0,v0 = ActionSyst.GetTangentSystemDef_new(x,Butcher_c_np,nint)
+#         fun,gun,x0,v0 = ActionSyst.GetTangentSystemDef(x,nint_ODE,method=SymplecticMethod)
+
+
+
+
+        # SymplecticMethod = 'SymplecticGauss1'
+        # SymplecticMethod = 'SymplecticGauss2'
+        # SymplecticMethod = 'SymplecticGauss3'
+        # SymplecticMethod = 'SymplecticGauss5'
+        SymplecticMethod = 'SymplecticGauss10'
+        # SymplecticMethod = 'SymplecticGauss15'
+
+        descr = SymplecticMethod.removeprefix("SymplecticGauss")
+        n = int(descr)
+        Butcher_a_np, Butcher_b_np, Butcher_c_np, Butcher_beta_np, _ = choreo.ComputeGaussButcherTables_np(n)
+
+        SymplecticIntegrator = choreo.GetSymplecticIntegrator(SymplecticMethod)
+
+        fun,gun,x0,v0 = ActionSyst.GetTangentSystemDefMul(x,Butcher_c_np,nint_ODE)
 
 
 
 
 
-        all_x, all_v = SymplecticIntegrator(fun,gun,t_span,x0,v0,nint,nint_ODE_mul)
+        all_x, all_v = SymplecticIntegrator(fun,gun,t_span,x0,v0,nint_ODE,nint_ODE_mul)
 
         del fun,gun
 
@@ -281,7 +286,7 @@ def ExecName(the_name, input_folder, store_folder):
         MonodromyMat = np.ascontiguousarray(np.concatenate((xf,vf),axis=0).reshape(2*ndof,2*ndof))
 
 
-        print(MonodromyMat)
+        # print(MonodromyMat)
 
 
         # MonodromyMat = np.dot(MonodromyMat,MonodromyMat)
@@ -300,8 +305,8 @@ def ExecName(the_name, input_folder, store_folder):
 
 
         print('Symplecticity')
-        print(np.linalg.norm(w - np.dot(MonodromyMat.transpose(),np.dot(w,MonodromyMat))))
-        print(np.linalg.norm(np.dot(MonodromyMatLog.transpose(),w) + np.dot(w,MonodromyMatLog)))
+        print(np.linalg.norm(w - np.dot(MonodromyMat.transpose(),np.dot(w,MonodromyMat)))/np.linalg.norm(MonodromyMat))
+        print(np.linalg.norm(np.dot(MonodromyMatLog.transpose(),w) + np.dot(w,MonodromyMatLog))/np.linalg.norm(MonodromyMat))
 
 
 
@@ -345,7 +350,7 @@ def ExecName(the_name, input_folder, store_folder):
 
         # print(Instability_magnitude)
 
-        print(zo)
+        # print(zo)
 
         print(f'Relative error on flow eigenstate: {np.linalg.norm(MonodromyMat.dot(zo)-zo)/np.linalg.norm(zo):e}')
         # print(the_name+f' {Instability_magnitude[:]}')
@@ -374,7 +379,8 @@ def ExecName(the_name, input_folder, store_folder):
 
         x0 = np.ascontiguousarray(np.concatenate((all_coeffs_d_init.reshape(-1), LagrangeMulInit.reshape(-1))))
 
-    exit()
+    return
+
     MonodromyMatLog = np.ascontiguousarray(MonodromyMatLog.reshape(2,nbody,geodim,2,nbody,geodim))
 
     krylov_method = 'lgmres'
