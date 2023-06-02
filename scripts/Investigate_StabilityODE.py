@@ -225,25 +225,20 @@ def ExecName(the_name, input_folder, store_folder):
     c_coeffs = all_coeffs.view(dtype=np.complex128)[...,0]
 
 
-    if Seed_with_RK_solver:
+    t_span = (0.,1.)
 
-        LagrangeMulInit = np.zeros((2,nbody,geodim,2,nbody,geodim),dtype=np.float64)
+    # nint_ODE_mul = 128
+    # nint_ODE_mul = 48
+    # nint_ODE_mul = 24
+    # nint_ODE_mul = 2
+    nint_ODE_mul = 1
 
-        t_span = (0.,1.)
-
-        # nint_ODE_mul = 128
-        # nint_ODE_mul = 48
-        # nint_ODE_mul = 24
-        # nint_ODE_mul = 2
-        nint_ODE_mul = 1
-
-        nint_ODE = nint_ODE_mul*nint
+    nint_ODE = nint_ODE_mul*nint
 
 
 
 
-# 
-# # # 
+
 #         # SymplecticMethod = 'SymplecticEuler'
 #         # SymplecticMethod = 'SymplecticStormerVerlet'
 #         # SymplecticMethod = 'SymplecticRuth3'
@@ -253,210 +248,112 @@ def ExecName(the_name, input_folder, store_folder):
 #         fun,gun,x0,v0 = ActionSyst.GetTangentSystemDef(x,nint_ODE,method=SymplecticMethod)
 
 
+    # SymplecticMethod = 'SymplecticGauss1'
+    # SymplecticMethod = 'SymplecticGauss2'
+    # SymplecticMethod = 'SymplecticGauss3'
+    # SymplecticMethod = 'SymplecticGauss5'
+    SymplecticMethod = 'SymplecticGauss10'
+    # SymplecticMethod = 'SymplecticGauss15'
 
+    descr = SymplecticMethod.removeprefix("SymplecticGauss")
+    n = int(descr)
+    Butcher_a_np, Butcher_b_np, Butcher_c_np, Butcher_beta_np, _ = choreo.ComputeGaussButcherTables_np(n)
 
-        # SymplecticMethod = 'SymplecticGauss1'
-        # SymplecticMethod = 'SymplecticGauss2'
-        # SymplecticMethod = 'SymplecticGauss3'
-        # SymplecticMethod = 'SymplecticGauss5'
-        SymplecticMethod = 'SymplecticGauss10'
-        # SymplecticMethod = 'SymplecticGauss15'
+    SymplecticIntegrator = choreo.GetSymplecticIntegrator(SymplecticMethod)
 
-        descr = SymplecticMethod.removeprefix("SymplecticGauss")
-        n = int(descr)
-        Butcher_a_np, Butcher_b_np, Butcher_c_np, Butcher_beta_np, _ = choreo.ComputeGaussButcherTables_np(n)
+    fun,gun,x0,v0 = ActionSyst.GetTangentSystemDefMul(x,Butcher_c_np,nint_ODE)
 
-        SymplecticIntegrator = choreo.GetSymplecticIntegrator(SymplecticMethod)
 
-        fun,gun,x0,v0 = ActionSyst.GetTangentSystemDefMul(x,Butcher_c_np,nint_ODE)
 
 
 
 
 
-        all_x, all_v = SymplecticIntegrator(fun,gun,t_span,x0,v0,nint_ODE,nint_ODE_mul)
+    all_x, all_v = SymplecticIntegrator(fun,gun,t_span,x0,v0,nint_ODE,nint_ODE_mul)
 
-        del fun,gun
+    del fun,gun
 
-        xf = all_x[-1,:].copy()
-        vf = all_v[-1,:].copy()
+    xf = all_x[-1,:].copy()
+    vf = all_v[-1,:].copy()
 
-        ndof = nbody*geodim
+    ndof = nbody*geodim
 
-        MonodromyMat = np.ascontiguousarray(np.concatenate((xf,vf),axis=0).reshape(2*ndof,2*ndof))
+    MonodromyMat = np.ascontiguousarray(np.concatenate((xf,vf),axis=0).reshape(2*ndof,2*ndof))
 
 
-        # print(MonodromyMat)
+    # print(MonodromyMat)
 
 
-        # MonodromyMat = np.dot(MonodromyMat,MonodromyMat)
+    # MonodromyMat = np.dot(MonodromyMat,MonodromyMat)
 
-        MonodromyMatLog = scipy.linalg.logm(MonodromyMat)
+    MonodromyMatLog = scipy.linalg.logm(MonodromyMat)
 
 
-        w = np.zeros((2*ndof,2*ndof),dtype=np.float64)
-        w[0:ndof,ndof:2*ndof] = np.identity(ndof)
-        w[ndof:2*ndof,0:ndof] = -np.identity(ndof)
+    w = np.zeros((2*ndof,2*ndof),dtype=np.float64)
+    w[0:ndof,ndof:2*ndof] = np.identity(ndof)
+    w[ndof:2*ndof,0:ndof] = -np.identity(ndof)
 
-        MonodromyMatLog = (MonodromyMatLog+ w @ MonodromyMatLog.T @ w ) / 2
+    MonodromyMatLog = (MonodromyMatLog+ w @ MonodromyMatLog.T @ w ) / 2
 
-        MonodromyMatLogsq = np.dot(MonodromyMatLog,MonodromyMatLog)
-        
-
-
-        print('Symplecticity')
-        print(np.linalg.norm(w - np.dot(MonodromyMat.transpose(),np.dot(w,MonodromyMat)))/np.linalg.norm(MonodromyMat))
-        print(np.linalg.norm(np.dot(MonodromyMatLog.transpose(),w) + np.dot(w,MonodromyMatLog))/np.linalg.norm(MonodromyMat))
-
-
-
-
-        eigvals,eigvects = scipy.linalg.eig(a=MonodromyMat)
-        # eigvals,eigvects = scipy.linalg.eig(a=MonodromyMatLog)
-        # eigvals,eigvects = scipy.linalg.eig(a=MonodromyMatLogsq)
-
-        # print(eigvals)
-        # print(eigvals.real)
-        print(abs(eigvals))
-        # print(eigvects)
-
-
-        # exit()
-
-        all_pos_d_init = np.zeros((nbody,geodim,2,nbody,geodim,nint),dtype=np.float64)
-
-        for iint in range(nint):
-
-            xv = np.ascontiguousarray(np.concatenate((all_x[iint,:],all_v[iint,:]),axis=0).reshape(2*ndof,2*ndof))
-
-            PeriodicPart = np.dot(xv,scipy.linalg.expm(-(iint / nint)*MonodromyMatLog))
-
-            all_pos_d_init[:,:,:,:,:,iint] = (PeriodicPart.reshape(2,nbody*geodim,2,nbody*geodim)[0,:,:,:]).reshape((nbody,geodim,2,nbody,geodim))
-
-
-        # print(MonodromyMatLog)
-        # print(MonodromyMat)
-
-        # Evaluates the relative accuracy of the Monodromy matrix integration process
-        # zo should be an eigenvector of the Monodromy matrix, with eigenvalue 1
-        yo = ActionSyst.Compute_init_pos_vel(x).reshape(-1)
-        zo = ActionSyst.Compute_Auto_ODE_RHS(yo)
-
-        # '''SVD'''
-        # U,Instability_magnitude,Instability_directions = scipy.linalg.svd(MonodromyMat, full_matrices=True, compute_uv=True, overwrite_a=False, check_finite=True, lapack_driver='gesdd')
-# 
-        '''Eigendecomposition'''
-        Instability_magnitude,Instability_directions = choreo.InstabilityDecomposition(MonodromyMat)
-
-        # print(Instability_magnitude)
-
-        # print(zo)
-
-        print(f'Relative error on flow eigenstate: {np.linalg.norm(MonodromyMat.dot(zo)-zo)/np.linalg.norm(zo):e}')
-        # print(the_name+f' {Instability_magnitude[:]}')
-        # print(the_name+f' {np.flip(1/Instability_magnitude[:])}')
-        # print("Relative error on loxodromy ",np.linalg.norm(Instability_magnitude - np.flip(1/Instability_magnitude))/np.linalg.norm(Instability_magnitude))
-
-        all_coeffs_dc_init = choreo.default_rfft(all_pos_d_init,norm="forward")
-        all_coeffs_d_init = np.zeros((nbody,geodim,2,nbody,geodim,ncoeff,2),np.float64)
-        all_coeffs_d_init[:,:,:,:,:,:,0] = all_coeffs_dc_init[:,:,:,:,:,:ncoeff].real
-        all_coeffs_d_init[:,:,:,:,:,:,1] = all_coeffs_dc_init[:,:,:,:,:,:ncoeff].imag
-
-
-        x0 = np.ascontiguousarray(np.concatenate((all_coeffs_d_init.reshape(-1),LagrangeMulInit.reshape(-1))))
-
-    else:
-
-        all_coeffs_d_init = np.zeros((nbody,geodim,2,nbody,geodim,ncoeff,2),dtype=np.float64)
-        LagrangeMulInit = np.zeros((2,nbody,geodim,2,nbody,geodim),dtype=np.float64)
-        MonodromyMatLog = np.zeros((2,nbody,geodim,2,nbody,geodim),dtype=np.float64)
-
-        for ib in range(nbody):
-            for idim in range(geodim):
-                all_coeffs_d_init[ib,idim,0,ib,idim,0,0] = 1
-                all_coeffs_d_init[ib,idim,1,ib,idim,1,1] = -1./(2*twopi)
-
-
-        x0 = np.ascontiguousarray(np.concatenate((all_coeffs_d_init.reshape(-1), LagrangeMulInit.reshape(-1))))
-
-    return
-
-    MonodromyMatLog = np.ascontiguousarray(MonodromyMatLog.reshape(2,nbody,geodim,2,nbody,geodim))
-
-    krylov_method = 'lgmres'
-    # krylov_method = 'gmres'
-    # krylov_method = 'bicgstab' 
-    # krylov_method = 'cgs'
-    # krylov_method = 'minres'
-    # krylov_method = 'tfqmr'
-
-
-    # line_search = 'armijo'
-    line_search = 'wolfe'
-
-    gradtol = 1e-13
-
-    disp_scipy_opt = True
-    # disp_scipy_opt = False
-
-    maxiter = 100
-
-
-            
-    F = lambda x : choreo.TangentLagrangeResidual(
-        x,
-        nbody,
-        ncoeff,
-        nint,
-        ActionSyst.mass,
-        all_coeffs,
-        all_pos,
-        MonodromyMatLog,
-    )
-
-    res_1D = F(x0)
-    # print(np.linalg.norm(res_1D))
-
+    MonodromyMatLogsq = np.dot(MonodromyMatLog,MonodromyMatLog)
     
-    ibeg = 0
-    iend = (nbody*geodim*2*nbody*geodim*ncoeff*2)
-    res_1D_all_coeffs = res_1D[ibeg:iend].reshape((nbody,geodim,2,nbody,geodim,ncoeff,2))
-
-    ibeg = iend
-    iend = iend + (2*nbody*geodim*2*nbody*geodim)
-    res_LagrangeMul = res_1D[ibeg:iend].reshape((2,nbody,geodim,2,nbody,geodim))
 
 
-    # print(res_1D_all_coeffs)
+    print('Symplecticity')
+    print(np.linalg.norm(w - np.dot(MonodromyMat.transpose(),np.dot(w,MonodromyMat)))/np.linalg.norm(MonodromyMat))
+    print(np.linalg.norm(np.dot(MonodromyMatLog.transpose(),w) + np.dot(w,MonodromyMatLog))/np.linalg.norm(MonodromyMat))
 
-    # print(np.linalg.norm(res_1D_all_coeffs))
-    # print(np.linalg.norm(res_LagrangeMul))
 
 
-    res_1D_all_coeffs_c = res_1D_all_coeffs.view(dtype=np.complex128)[...,0]
-    res_1D_all_pos = choreo.default_irfft(res_1D_all_coeffs_c,n=nint,norm="forward")
 
-#     plt.figure()
+    eigvals,eigvects = scipy.linalg.eig(a=MonodromyMat)
+    # eigvals,eigvects = scipy.linalg.eig(a=MonodromyMatLog)
+    # eigvals,eigvects = scipy.linalg.eig(a=MonodromyMatLogsq)
+
+    # print(eigvals)
+    # print(eigvals.real)
+    print(abs(eigvals))
+    # print(eigvects)
+
+
+    # exit()
+
+    all_pos_d_init = np.zeros((nbody,geodim,2,nbody,geodim,nint),dtype=np.float64)
+
+    for iint in range(nint):
+
+        xv = np.ascontiguousarray(np.concatenate((all_x[iint,:],all_v[iint,:]),axis=0).reshape(2*ndof,2*ndof))
+
+        PeriodicPart = np.dot(xv,scipy.linalg.expm(-(iint / nint)*MonodromyMatLog))
+
+        all_pos_d_init[:,:,:,:,:,iint] = (PeriodicPart.reshape(2,nbody*geodim,2,nbody*geodim)[0,:,:,:]).reshape((nbody,geodim,2,nbody,geodim))
+
+
+    # print(MonodromyMatLog)
+    # print(MonodromyMat)
+
+    # Evaluates the relative accuracy of the Monodromy matrix integration process
+    # zo should be an eigenvector of the Monodromy matrix, with eigenvalue 1
+    yo = ActionSyst.Compute_init_pos_vel(x).reshape(-1)
+    zo = ActionSyst.Compute_Auto_ODE_RHS(yo)
+
+    # '''SVD'''
+    # U,Instability_magnitude,Instability_directions = scipy.linalg.svd(MonodromyMat, full_matrices=True, compute_uv=True, overwrite_a=False, check_finite=True, lapack_driver='gesdd')
 # 
-#     for ib in range(nbody):
-#         for idim in range(geodim):
-#             for jvx in range(2):
-#                 for jb in range(nbody): 
-#                     for jdim in range(geodim):
-# 
-#                         # plt.plot(all_pos_d_init[ib,idim,jvx,jb,jdim,:])
-#                         plt.plot(res_1D_all_pos[ib,idim,jvx,jb,jdim,:])
-# 
-# 
-#     plt.savefig("out.png")
+    '''Eigendecomposition'''
+    Instability_magnitude,Instability_directions = choreo.InstabilityDecomposition(MonodromyMat)
+
+    # print(Instability_magnitude)
+
+    # print(zo)
+
+    print(f'Relative error on flow eigenstate: {np.linalg.norm(MonodromyMat.dot(zo)-zo)/np.linalg.norm(zo):e}')
+    # print(the_name+f' {Instability_magnitude[:]}')
+    # print(the_name+f' {np.flip(1/Instability_magnitude[:])}')
+    # print("Relative error on loxodromy ",np.linalg.norm(Instability_magnitude - np.flip(1/Instability_magnitude))/np.linalg.norm(Instability_magnitude))
 
 
-    jac_options = {'method':krylov_method}
-    jacobian = scipy.optimize.nonlin.KrylovJacobian(**jac_options)
 
-    opt_result , info = scipy.optimize.nonlin.nonlin_solve(F=F,x0=x0,jacobian=jacobian,verbose=disp_scipy_opt,maxiter=maxiter,f_tol=gradtol,line_search=line_search,raise_exception=False,full_output=True)
-
-    print(opt_result)
 
 if __name__ == "__main__":
     main()    

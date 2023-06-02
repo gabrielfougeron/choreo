@@ -31,8 +31,10 @@ twopi = 2*np.pi
 
 def main():
 
+
     # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/3/')
-    input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery/01 - Classic gallery')
+    # input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery/01 - Classic gallery')
+    input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery/02 - Families/02 - Chains/07')
     # input_folder = os.path.join(__PROJECT_ROOT__,'Keep/tests')
     
 #     ''' Include all files in tree '''
@@ -51,27 +53,27 @@ def main():
 # # 
 # # # 
 #     ''' Include all files in folder '''
-#     input_names_list = []
-#     for file_path in os.listdir(input_folder):
-#         file_path = os.path.join(input_folder, file_path)
-#         file_root, file_ext = os.path.splitext(os.path.basename(file_path))
-#         
-#         if (file_ext == '.json' ):
-#             # 
-#             # if int(file_root) > 8:
-#             #     input_names_list.append(file_root)
-# 
-#             input_names_list.append(file_root)
-
     input_names_list = []
-    input_names_list.append('01 - Figure eight'     )
+    for file_path in os.listdir(input_folder):
+        file_path = os.path.join(input_folder, file_path)
+        file_root, file_ext = os.path.splitext(os.path.basename(file_path))
+        
+        if (file_ext == '.json' ):
+            # 
+            # if int(file_root) > 8:
+            #     input_names_list.append(file_root)
+
+            input_names_list.append(file_root)
+
+    # input_names_list = []
+    # input_names_list.append('01 - Figure eight'     )
     # input_names_list.append('14 - Small mass gap'   )
     # input_names_list.append('03 - Trefoil'          )
     # input_names_list.append('04 - 5 pointed star'   ) 
     # input_names_list.append('07 - No symmetry'   ) 
     # input_names_list.append('09 - 3x2 Circles'   ) 
 
-
+    # input_names_list.append('02'   ) 
 
 
 
@@ -206,40 +208,31 @@ def ExecName(the_name, input_folder, store_folder):
     nint = ActionSyst.nint
     ndof = nbody*ActionSyst.geodim
 
-    fun,gun = ActionSyst.GetSymplecticODEDef()
-    x0, v0 = ActionSyst.Compute_init_pos_and_vel(x)
-    z0 = np.ascontiguousarray(np.concatenate((x0, v0),axis=0).reshape(2*ndof))
     
-    
-    grad_fun,grad_gun = ActionSyst.GetSymplecticTanODEDef()
-    grad_x0 = np.zeros((ndof,2*ndof),dtype=np.float64)
-    grad_v0 = np.zeros((ndof,2*ndof),dtype=np.float64)
-    for idof in range(ndof):
-        grad_x0[idof,idof] = 1
-    for idof in range(ndof):
-        grad_v0[idof,ndof+idof] = 1
-
 
 
     w = np.zeros((2*ndof,2*ndof),dtype=np.float64)
     w[0:ndof,ndof:2*ndof] = np.identity(ndof)
     w[ndof:2*ndof,0:ndof] = -np.identity(ndof)
 
+    t_span = (0.,1.)
 
     # nint_ODE_mul = 64
     # nint_ODE_mul =  2**11
     # nint_ODE_mul =  2**7
     # nint_ODE_mul =  2**6
-    # nint_ODE_mul =  2**3
+    nint_ODE_mul =  2**3
     # nint_ODE_mul =  2**1
-    nint_ODE_mul =  1
+    # nint_ODE_mul =  1
+    
+    nint_ODE = nint*nint_ODE_mul
 
-    SymplecticMethod = 'SymplecticGauss1'
+    # SymplecticMethod = 'SymplecticGauss1'
     # SymplecticMethod = 'SymplecticGauss2'
     # SymplecticMethod = 'SymplecticGauss3'
     # SymplecticMethod = 'SymplecticGauss5'
     # SymplecticMethod = 'SymplecticGauss10'
-    # SymplecticMethod = 'SymplecticGauss10'
+    SymplecticMethod = 'SymplecticGauss10'
     # SymplecticMethod = 'SymplecticGauss15'
           
     # SymplecticMethod = 'SymplecticGauss3'
@@ -256,52 +249,101 @@ def ExecName(the_name, input_folder, store_folder):
 
     print(f'Integration method : {SymplecticMethod}')
 
+    ODE_TanIntegration = True
+    # ODE_TanIntegration = False
 
-    SymplecticTanIntegrator = choreo.GetSymplecticTanIntegrator(SymplecticMethod)
-    SymplecticTanIntegrator = functools.partial(SymplecticTanIntegrator, maxiter = 1000)
+    if ODE_TanIntegration:
 
-    T = 1.
+        fun,gun = ActionSyst.GetSymplecticODEDef()
+        x0, v0 = ActionSyst.Compute_init_pos_and_vel(x)
+        z0 = np.ascontiguousarray(np.concatenate((x0, v0),axis=0).reshape(2*ndof))
 
-    tbeg = time.perf_counter()
+        grad_fun,grad_gun = ActionSyst.GetSymplecticTanODEDef()
+        grad_x0 = np.zeros((ndof,2*ndof),dtype=np.float64)
+        grad_v0 = np.zeros((ndof,2*ndof),dtype=np.float64)
+        for idof in range(ndof):
+            grad_x0[idof,idof] = 1
+        for idof in range(ndof):
+            grad_v0[idof,ndof+idof] = 1
 
-    all_x, all_v, all_grad_x, all_grad_v = SymplecticTanIntegrator(
-        fun = fun,
-        gun = gun,
-        grad_fun = grad_fun,
-        grad_gun = grad_gun,
-        t_span = (0.,T),
-        x0 = x0,
-        v0 = v0,
-        grad_x0 = grad_x0,
-        grad_v0 = grad_v0,
-        nint = nint*nint_ODE_mul,
-        keep_freq = nint_ODE_mul
-    )
 
-    tend = time.perf_counter()
+        SymplecticTanIntegrator = choreo.GetSymplecticTanIntegrator(SymplecticMethod)
+
+        tbeg = time.perf_counter()
+
+        all_x, all_v, all_grad_x, all_grad_v = SymplecticTanIntegrator(
+            fun = fun,
+            gun = gun,
+            grad_fun = grad_fun,
+            grad_gun = grad_gun,
+            t_span = t_span,
+            x0 = x0,
+            v0 = v0,
+            grad_x0 = grad_x0,
+            grad_v0 = grad_v0,
+            nint = nint_ODE,
+            keep_freq = nint_ODE
+        )
+
+        tend = time.perf_counter()
+
+        xf = all_x[-1,:].copy()
+        vf = all_v[-1,:].copy()
+        zf = np.ascontiguousarray(np.concatenate((xf, vf),axis=0).reshape(2*ndof))
+
+        period_err = np.linalg.norm(zf-z0)
+        print(f'Error on Periodicity: {period_err}')
+
+
+        grad_xf = all_grad_x[-1,:,:].copy()
+        grad_vf = all_grad_v[-1,:,:].copy()
+
+        MonodromyMat = np.ascontiguousarray(np.concatenate((grad_xf,grad_vf),axis=0).reshape(2*ndof,2*ndof))
+
+        yo = np.ascontiguousarray(np.concatenate((x0, v0),axis=0).reshape(2*ndof))
+        zo = ActionSyst.Compute_Auto_ODE_RHS(yo)
+
+    else:
+
+        descr = SymplecticMethod.removeprefix("SymplecticGauss")
+        n = int(descr)
+        Butcher_a_np, Butcher_b_np, Butcher_c_np, Butcher_beta_np, _ = choreo.ComputeGaussButcherTables_np(n)
+
+        SymplecticIntegrator = choreo.GetSymplecticIntegrator(SymplecticMethod)
+
+        tbeg = time.perf_counter()
+
+        fun,gun,x0,v0 = ActionSyst.GetTangentSystemDefMul(x,Butcher_c_np,nint_ODE)
+        all_x, all_v = SymplecticIntegrator(fun,gun,t_span,x0,v0,nint_ODE,nint_ODE)
+
+        tend = time.perf_counter()
+
+        del fun,gun
+
+        xf = all_x[-1,:].copy()
+        vf = all_v[-1,:].copy()
+
+        ndof = nbody*geodim
+
+        MonodromyMat = np.ascontiguousarray(np.concatenate((xf,vf),axis=0).reshape(2*ndof,2*ndof))
+
+        # Evaluates the relative accuracy of the Monodromy matrix integration process
+        # zo should be an eigenvector of the Monodromy matrix, with eigenvalue 1
+        yo = ActionSyst.Compute_init_pos_vel(x).reshape(-1)
+        zo = ActionSyst.Compute_Auto_ODE_RHS(yo)
+
+
 
     print(f'CPU time of integration :{tend-tbeg}')
 
 
-    xf = all_x[-1,:].copy()
-    vf = all_v[-1,:].copy()
-    zf = np.ascontiguousarray(np.concatenate((xf, vf),axis=0).reshape(2*ndof))
 
-    period_err = np.linalg.norm(zf-z0)
-    print(f'Error on Periodicity: {period_err}')
-
-
-    grad_xf = all_grad_x[-1,:,:].copy()
-    grad_vf = all_grad_v[-1,:,:].copy()
-
-    MonodromyMat = np.ascontiguousarray(np.concatenate((grad_xf,grad_vf),axis=0).reshape(2*ndof,2*ndof))
 
     # MonodromyMat = np.ascontiguousarray(MonodromyMat.T)
 
     # print(MonodromyMat)
 # 
-    print('Symplecticity')
-    print(np.linalg.norm(w - np.dot(MonodromyMat.transpose(),np.dot(w,MonodromyMat))) / (np.linalg.norm(MonodromyMat)**2))
+    print('Symplecticity : ',np.linalg.norm(w - np.dot(MonodromyMat.transpose(),np.dot(w,MonodromyMat))) / (np.linalg.norm(MonodromyMat)**2))
     # print((w - np.dot(MonodromyMat.transpose(),np.dot(w,MonodromyMat))))
 
 
@@ -326,9 +368,8 @@ def ExecName(the_name, input_folder, store_folder):
 
     # Evaluates the relative accuracy of the Monodromy matrix integration process
     # f0 should be an eigenvector of the Monodromy matrix, with eigenvalue 1
-    z0 = np.ascontiguousarray(np.concatenate((x0, v0),axis=0).reshape(2*ndof))
-    f0 = ActionSyst.Compute_Auto_ODE_RHS(z0)
-    print(f'Relative error on flow eigenstate: {np.linalg.norm(MonodromyMat.dot(f0)-f0)/np.linalg.norm(f0):e}')
+
+    print(f'Relative error on flow eigenstate: {np.linalg.norm(MonodromyMat.dot(zo)-zo)/np.linalg.norm(zo):e}')
     # print(the_name+f' {Instability_magnitude[:]}')
     # print(the_name+f' {np.flip(1/Instability_magnitude[:])}')
     # print("Relative error on loxodromy ",np.linalg.norm(Instability_magnitude - np.flip(1/Instability_magnitude))/np.linalg.norm(Instability_magnitude))
