@@ -955,6 +955,8 @@ class ChoreoAction():
             dtype = np.float64)
 
     def GetTangentSystemDef(self,x,nint=None,method = 'SymplecticEuler'):
+            
+            # For use with explicit integrators
 
             ndof = self.nbody*self.geodim
 
@@ -991,7 +993,9 @@ class ChoreoAction():
 
             return fun,gun,x0,v0
 
-    def GetTangentSystemDef_new(self, x, Butcher_c, nint = None):
+    def GetTangentSystemDefMul(self, x, Butcher_c, nint = None):
+
+        # For use with implicit integrators
 
         ndof = self.nbody*self.geodim
 
@@ -1005,21 +1009,20 @@ class ChoreoAction():
         
         SpaceRot = np.eye(self.geodim)
         TimeRev = 1
-        TimeShiftDen = 1.
+        TimeShiftDen = nint
 
         for istep in range(nsteps):
 
-            TimeShiftNum = Butcher_c[istep]
+            TimeShiftNum = - Butcher_c[istep] 
+            # TimeShiftNum = 0.
 
             shifted_coeffs =  Transform_Coeffs(SpaceRot, TimeRev, TimeShiftNum, TimeShiftDen, all_coeffs)
 
             shifted_coeffs_c = shifted_coeffs.view(dtype=np.complex128)[...,0]
             all_pos[istep,:,:,:] = self.irfft(shifted_coeffs_c,n=nint,norm="forward")
 
-        ndof = self.nbody*self.geodim
-
         def fun(t,v):
-            return v
+            return v.copy()
 
         def gun(t,x):
 
