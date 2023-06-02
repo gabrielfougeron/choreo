@@ -1,9 +1,24 @@
 import os
-
-os.environ['OPENBLAS_NUM_THREADS'] = '1'
-
 import concurrent.futures
 import multiprocessing
+
+# os.environ['NUMBA_NUM_THREADS'] = str(4)
+# os.environ['OMP_NUM_THREADS'] = str(4)
+
+# os.environ['NUMBA_NUM_THREADS'] = str(multiprocessing.cpu_count()//2)
+# os.environ['OMP_NUM_THREADS'] = str(multiprocessing.cpu_count()//2)
+os.environ['OPENBLAS_NUM_THREADS'] = str(multiprocessing.cpu_count()//2)
+os.environ['NUMEXPR_NUM_THREADS'] = str(multiprocessing.cpu_count()//2)
+os.environ['MKL_NUM_THREADS'] = str(multiprocessing.cpu_count()//2)
+
+os.environ['NUMBA_NUM_THREADS'] = str(1)
+os.environ['OMP_NUM_THREADS'] = str(1)
+# os.environ['OPENBLAS_NUM_THREADS'] = str(1)
+# os.environ['NUMEXPR_NUM_THREADS'] = str(1)
+# os.environ['MKL_NUM_THREADS'] = str(1)
+
+
+
 import json
 import shutil
 import random
@@ -252,7 +267,7 @@ def ExecName(the_name, input_folder, store_folder):
     ODE_TanIntegration = True
     # ODE_TanIntegration = False
 
-    parallel = True
+    # parallel = True
     parallel = False
     
 

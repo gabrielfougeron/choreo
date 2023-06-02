@@ -102,6 +102,8 @@ compiler_directives = {
     'overflowcheck': False,
     'overflowcheck.fold': False,
     'infer_types': True,
+    # 'c_api_binop_methods': True,
+    # 'binding': False,
 }
 
 # #### Profiler only ####
