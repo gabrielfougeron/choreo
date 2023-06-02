@@ -1,9 +1,18 @@
 import os
-
-os.environ['OPENBLAS_NUM_THREADS'] = '1'
-
 import concurrent.futures
 import multiprocessing
+
+os.environ['OPENBLAS_NUM_THREADS'] = '1'
+os.environ['NUMEXPR_NUM_THREADS'] = '1'
+os.environ['MKL_NUM_THREADS'] = '1'
+
+# os.environ['NUMBA_NUM_THREADS'] = '1'
+# os.environ['OMP_NUM_THREADS'] = '1'
+# os.environ['NUMBA_NUM_THREADS'] = '2'
+# os.environ['OMP_NUM_THREADS'] = '2'
+os.environ['NUMBA_NUM_THREADS'] = str(multiprocessing.cpu_count()//2)
+os.environ['OMP_NUM_THREADS'] = str(multiprocessing.cpu_count()//2)
+
 import json
 import shutil
 import random
@@ -55,22 +64,23 @@ def main():
     input_names_list = []
 
 
-    # ''' Include all files in folder '''
-#     for file_path in os.listdir(input_folder):
-#         file_path = os.path.join(input_folder, file_path)
-#         file_root, file_ext = os.path.splitext(os.path.basename(file_path))
-#         
-#         if (file_ext == '.json' ):
-#             # 
-#             # if int(file_root) > 8:
-#             #     input_names_list.append(file_root)
-# 
-#             input_names_list.append(file_root)
+    ''' Include all files in folder '''
+    for file_path in os.listdir(input_folder):
+        file_path = os.path.join(input_folder, file_path)
+        file_root, file_ext = os.path.splitext(os.path.basename(file_path))
+        
+        if (file_ext == '.json' ):
+            # 
+            # if int(file_root) > 8:
+            #     input_names_list.append(file_root)
+
+            input_names_list.append(file_root)
 
     # input_names_list.append('01 - Figure eight')
     # input_names_list.append('02 - Celtic knot')
     # input_names_list.append('06 - Ten petal flower')
-    input_names_list.append('04 - 5 pointed star')
+    # input_names_list.append('04 - 5 pointed star')
+    # input_names_list.append('08 - 2x3 Circles')
 
 
 
@@ -125,6 +135,7 @@ def ExecName(the_name, input_folder, store_folder):
     with open(Info_filename,'r') as jsonFile:
         Info_dict = json.load(jsonFile)
 
+    print(f'nbody = {Info_dict["nbody"]}')
 
     input_filename = os.path.join(input_folder,the_name + '.npy')
 
@@ -169,8 +180,8 @@ def ExecName(the_name, input_folder, store_folder):
     Sym_list = choreo.Make_SymList_From_InfoDict(Info_dict,Transform_Sym)
 
 
-    MomConsImposed = True
-    # MomConsImposed = False
+    # MomConsImposed = True
+    MomConsImposed = False
 # 
 #     rot_angle = 0
 #     s = -1
@@ -241,42 +252,74 @@ def ExecName(the_name, input_folder, store_folder):
 
 
 
-
-# 
-# # # 
-#         # SymplecticMethod = 'SymplecticEuler'
-#         # SymplecticMethod = 'SymplecticStormerVerlet'
-#         # SymplecticMethod = 'SymplecticRuth3'
-#         SymplecticMethod = 'SymplecticRuth4Rat'
-#         SymplecticIntegrator = choreo.GetSymplecticIntegrator(SymplecticMethod)
-# 
-#         fun,gun,x0,v0 = ActionSyst.GetTangentSystemDef(x,nint_ODE,method=SymplecticMethod)
-
-
-
-
         # SymplecticMethod = 'SymplecticGauss1'
         # SymplecticMethod = 'SymplecticGauss2'
         # SymplecticMethod = 'SymplecticGauss3'
         # SymplecticMethod = 'SymplecticGauss5'
         SymplecticMethod = 'SymplecticGauss10'
         # SymplecticMethod = 'SymplecticGauss15'
+        # SymplecticMethod = 'SymplecticGauss20'
+
+        # parallel = True
+        parallel = False
 
         descr = SymplecticMethod.removeprefix("SymplecticGauss")
         n = int(descr)
         Butcher_a_np, Butcher_b_np, Butcher_c_np, Butcher_beta_np, _ = choreo.ComputeGaussButcherTables_np(n)
 
+
         SymplecticIntegrator = choreo.GetSymplecticIntegrator(SymplecticMethod)
 
-        fun,gun,x0,v0 = ActionSyst.GetTangentSystemDefMul(x,Butcher_c_np,nint_ODE)
+#         fun,gun,x0,v0 = ActionSyst.GetTangentSystemDefMul(x,Butcher_c_np,nint_ODE,parallel = parallel)
+# 
+# 
+# 
+# 
+# 
+#         all_x, all_v = SymplecticIntegrator(fun,gun,t_span,x0,v0,nint_ODE,nint_ODE_mul)
+# 
+#         del fun,gun
 
 
 
 
+        for parallel in [False,True]:
 
-        all_x, all_v = SymplecticIntegrator(fun,gun,t_span,x0,v0,nint_ODE,nint_ODE_mul)
+            tbeg = time.perf_counter()
+            fun,gun,x0,v0 = ActionSyst.GetTangentSystemDefMul(x,Butcher_c_np,nint_ODE,parallel = parallel)
+            all_x, all_v = SymplecticIntegrator(fun,gun,t_span,x0,v0,nint_ODE,nint_ODE_mul)
+            tend = time.perf_counter()
+
+            print(f'Parallel = {parallel}, Integration time = {tend-tbeg}')
+
 
         del fun,gun
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         xf = all_x[-1,:].copy()
         vf = all_v[-1,:].copy()
@@ -302,7 +345,7 @@ def ExecName(the_name, input_folder, store_folder):
 
         MonodromyMatLogsq = np.dot(MonodromyMatLog,MonodromyMatLog)
         
-
+        print(f'Norm of Monodromy : {np.linalg.norm(MonodromyMat)}')
 
         print('Symplecticity')
         print(np.linalg.norm(w - np.dot(MonodromyMat.transpose(),np.dot(w,MonodromyMat)))/np.linalg.norm(MonodromyMat))
