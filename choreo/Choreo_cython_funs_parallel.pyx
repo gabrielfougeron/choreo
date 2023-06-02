@@ -301,9 +301,6 @@ def Compute_action_Cython_time_loop_nD_parallel(
 
     return Pot_en, grad_pot_all_local_np.sum(axis=0)
 
-
-
-
 @cython.cdivision(True)
 def Compute_action_hess_mul_Cython_nD_parallel(
     long nloop                          ,
@@ -1062,6 +1059,8 @@ def Compute_Forces_Cython_parallel(
                         f[irhs,ib ,idim] = f[irhs,ib ,idim] - b *dx[idim]
                         f[irhs,ibp,idim] = f[irhs,ibp,idim] + bp*dx[idim]
 
+        free(dx)
+
     return f
 
 def Compute_JacMulMat_Forces_Cython_parallel(
@@ -1144,5 +1143,9 @@ def Compute_JacMulMat_Forces_Cython_parallel(
 
                             df[irhs,ib ,idim,i_grad_col] = df[irhs,ib ,idim,i_grad_col] - bb *dx[idim]
                             df[irhs,ibp,idim,i_grad_col] = df[irhs,ibp,idim,i_grad_col] + bbp*dx[idim]
+
+        free(dx)
+        free(ddx)
+        free(dxtddx)
 
     return df
