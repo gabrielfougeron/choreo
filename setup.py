@@ -4,8 +4,8 @@ Creates and compiles C code from Cython file
 '''
 
 import os
+import shutil
 import setuptools
-import distutils # Deprecation of distutils. See  https://peps.python.org/pep-0632/
 import Cython.Build
 import numpy
 import platform
@@ -61,32 +61,32 @@ else:
         extra_compile_args_safe = ["-O2"]
         extra_link_args = []
 
-
-    elif not(distutils.spawn.find_executable('clang') is None):
-
-        os.environ['CC'] = 'clang'
-        os.environ['LDSHARED'] = 'clang -shared'
-
-        extra_compile_args_std = ["-Ofast","-march=native", "-fopenmp"]
-        extra_compile_args_safe = ["-O2", "-fopenmp"]
-
-        extra_link_args = ["-fopenmp"]
-
-        cython_extnames.append("choreo.Choreo_cython_funs_parallel")
-        cython_filenames.append("choreo/Choreo_cython_funs_parallel.pyx")
-        cython_safemath_needed.append(False)
-
     else:
 
+        all_compilers = ['icx','clang','gcc']
+        # all_compilers = ['clang']
+        # all_compilers = ['gcc']
+
+        for compiler in all_compilers:
+
+            if not(shutil.which(compiler) is None):
+
+                os.environ['CC'] = compiler
+                os.environ['LDSHARED'] = compiler+' -shared'
+
+                print(f'Compiler: {compiler}')
+
+                break
+
         extra_compile_args_std = ["-Ofast","-march=native", "-fopenmp"]
         extra_compile_args_safe = ["-O2", "-fopenmp"]
-        
+
         extra_link_args = ["-fopenmp"]
-    
+
         cython_extnames.append("choreo.Choreo_cython_funs_parallel")
         cython_filenames.append("choreo/Choreo_cython_funs_parallel.pyx")
         cython_safemath_needed.append(False)
-    
+
 nthreads = multiprocessing.cpu_count()
 
 
@@ -121,7 +121,7 @@ compiler_directives = {
 
 
 extensions = [
-    distutils.core.Extension(
+    setuptools.Extension(
     name = name,
     sources =  [source],
     include_dirs=[numpy.get_include()],
