@@ -203,18 +203,17 @@ def Find_Choreo(
     
     n_callback_after_init_list = len(callback_after_init_list)
 
-    while ((n_opt < n_opt_max) and (n_find < n_find_max)):
+    ForceFirstEntry = save_first_init
 
+    while (((n_opt < n_opt_max) and (n_find < n_find_max)) or ForceFirstEntry):
+
+        ForceFirstEntry = False
         AskedForNext = False
 
         if (Look_for_duplicates and ((n_opt % freq_erase_dict) == 0)):
             
             hash_dict = {}
             _ = SelectFiles_Action(store_folder,hash_dict)
-
-        n_opt += 1
-        
-        print(f'Optimization attempt number: {n_opt}')
 
         ActionSyst.current_cvg_lvl = start_cvg_lvl
 
@@ -248,7 +247,7 @@ def Find_Choreo(
             rand_eps
         )
 
-        if save_all_inits or (save_first_init and n_opt == 1):
+        if save_all_inits or (save_first_init and n_opt == 0):
 
             max_num_file = 0
             
@@ -326,6 +325,15 @@ def Find_Choreo(
             print(f"Norm on entry is {best_sol.f_norm:.2e} which is too big.")
         
         i_optim_param = 0
+
+        n_opt += 1
+
+        GoOn = (n_opt <= n_opt_max)
+        
+        if GoOn:
+            print(f'Optimization attempt number: {n_opt}')
+        else:
+            print('Reached max number of optimization attempts')
 
         while GoOn:
             # Set correct optim params

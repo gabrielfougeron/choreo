@@ -31,10 +31,11 @@ One_sec = 1e9
 
 def main():
 
+    input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery/01 - Classic gallery')
     # input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery/04 - Montaldi-Steckles-Gries')
     # input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery/05 - Simo')
-    input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/Simo_tests_needs_reconverge')
-    # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/Keep/')
+    # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/Simo_tests_needs_reconverge')
+    # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/test/')
     # input_folder = os.path.join(__PROJECT_ROOT__,'Reconverged_sols')
     
 #     ''' Include all files in tree '''
@@ -52,22 +53,22 @@ def main():
 #                 input_names_list.append(the_name)
 # 
 # # 
-    ''' Include all files in folder '''
-    input_names_list = []
-    for file_path in os.listdir(input_folder):
-        file_path = os.path.join(input_folder, file_path)
-        file_root, file_ext = os.path.splitext(os.path.basename(file_path))
-        
-        if (file_ext == '.json' ):
-            # 
-            # if int(file_root) > 8:
-            #     input_names_list.append(file_root)
-
-            input_names_list.append(file_root)
+#     ''' Include all files in folder '''
+#     input_names_list = []
+#     for file_path in os.listdir(input_folder):
+#         file_path = os.path.join(input_folder, file_path)
+#         file_root, file_ext = os.path.splitext(os.path.basename(file_path))
+#         
+#         if (file_ext == '.json' ):
+#             # 
+#             # if int(file_root) > 8:
+#             #     input_names_list.append(file_root)
+# 
+#             input_names_list.append(file_root)
 
     # input_names_list = ['Simo_00069']
     # input_names_list = ['Simo_00269']
-    # input_names_list = ['04 - 5 pointed star']
+    input_names_list = ['04 - 5 pointed star']
     # input_names_list = ['14 - Small mass gap']
 
 
@@ -236,50 +237,49 @@ def ExecName(the_name, input_folder, store_folder):
 
     ReconvergeSol = True
 
-
     nbody = Info_dict['nbody']
     mass = np.array(Info_dict['mass']).astype(np.float64)
     Sym_list = choreo.Make_SymList_From_InfoDict(Info_dict,Transform_Sym)
 
 
-    MomConsImposed = True
-    # MomConsImposed = False
+    # MomConsImposed = True
+    MomConsImposed = False
 # 
-#     rot_angle = 0
-#     s = -1
-# 
-#     Sym_list.append(choreo.ChoreoSym(
-#         LoopTarget=0,
-#         LoopSource=0,
-#         SpaceRot = np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64),
-#         TimeRev=-1,
-#         TimeShift=fractions.Fraction(numerator=0,denominator=1)
-#     ))
+    rot_angle = 0
+    s = -1
 
-    
-    Sym_list.append(
-        choreo.ChoreoSym(
-            LoopTarget=0,
-            LoopSource=0,
-            SpaceRot= np.array([[1,0],[0,-1]],dtype=np.float64),
-            TimeRev=-1,
-            TimeShift=fractions.Fraction(
-                numerator=0,
-                denominator=1)
-        ))
+    Sym_list.append(choreo.ChoreoSym(
+        LoopTarget=0,
+        LoopSource=0,
+        SpaceRot = np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64),
+        TimeRev=-1,
+        TimeShift=fractions.Fraction(numerator=0,denominator=1)
+    ))
 
-
+    # 
+    # Sym_list.append(
+    #     choreo.ChoreoSym(
+    #         LoopTarget=0,
+    #         LoopSource=0,
+    #         SpaceRot= np.array([[1,0],[0,-1]],dtype=np.float64),
+    #         TimeRev=-1,
+    #         TimeShift=fractions.Fraction(
+    #             numerator=0,
+    #             denominator=1)
+    #     ))
 
 
 
-    # Save_coeff_profile = True
-    Save_coeff_profile = False
 
-    # Save_Newton_Error = True
-    Save_Newton_Error = False
 
-    # Save_GradientAction_Error = True
-    Save_GradientAction_Error = False
+    Save_coeff_profile = True
+    # Save_coeff_profile = False
+
+    Save_Newton_Error = True
+    # Save_Newton_Error = False
+
+    Save_GradientAction_Error = True
+    # Save_GradientAction_Error = False
 
     Save_All_Pos = True
     # Save_All_Pos = False
@@ -311,7 +311,6 @@ def ExecName(the_name, input_folder, store_folder):
     # Save_anim = True
     Save_anim = False
 
-
     vid_size = (8,8) # Image size in inches
     # nint_plot_anim = 2*2*2*3*3
     nint_plot_anim = 2*2*2*3*3*5
@@ -332,7 +331,6 @@ def ExecName(the_name, input_folder, store_folder):
     # Save_Perturbed = True
     Save_Perturbed = False
 
-
     Use_exact_Jacobian = True
     # Use_exact_Jacobian = False
 
@@ -345,8 +343,8 @@ def ExecName(the_name, input_folder, store_folder):
     # Penalize_Escape = True
     Penalize_Escape = False
 
-    save_first_init = False
-    # save_first_init = True
+    # save_first_init = False
+    save_first_init = True
 
     save_all_inits = False
     # save_all_inits = True
@@ -370,6 +368,7 @@ def ExecName(the_name, input_folder, store_folder):
     hash_dict = {}
 
     n_opt = 0
+    # n_opt_max = 0
     n_opt_max = 1
     n_find_max = 1
 
@@ -385,8 +384,8 @@ def ExecName(the_name, input_folder, store_folder):
 
 
     Newt_err_norm_max = 1e-13
-    Newt_err_norm_max_save = Info_dict['Newton_Error']
-    # Newt_err_norm_max_save = 1e-1
+    # Newt_err_norm_max_save = Info_dict['Newton_Error']
+    Newt_err_norm_max_save = 1e-1
 
     krylov_method = 'lgmres'
     # krylov_method = 'gmres'
