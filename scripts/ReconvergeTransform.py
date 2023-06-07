@@ -31,11 +31,11 @@ One_sec = 1e9
 
 def main():
 
-    input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery/01 - Classic gallery')
+    # input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery/01 - Classic gallery')
     # input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery/04 - Montaldi-Steckles-Gries')
     # input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery/05 - Simo')
     # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/Simo_tests_needs_reconverge')
-    # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/test/')
+    input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/test/')
     # input_folder = os.path.join(__PROJECT_ROOT__,'Reconverged_sols')
     
 #     ''' Include all files in tree '''
@@ -126,8 +126,8 @@ def ExecName(the_name, input_folder, store_folder):
     with open(Info_filename,'r') as jsonFile:
         Info_dict = json.load(jsonFile)
 
-    Check_Already_Treated = True
-    # Check_Already_Treated = False
+    # Check_Already_Treated = True
+    Check_Already_Treated = False
 
     if Check_Already_Treated:
 
@@ -166,15 +166,28 @@ def ExecName(the_name, input_folder, store_folder):
     # if Info_dict["Newton_Error"] < 1e-12 :
     #     return
 
-    input_filename = os.path.join(input_folder,the_name + '.npy')
-
     bare_name = the_name.split('/')[-1]
 
-    all_pos = np.load(input_filename)
+    input_filename = os.path.join(input_folder,the_name + '_coeffs.npy')
+
+    if os.path.isfile(input_filename):
+
+        all_coeffs = np.load(input_filename)
+        c_coeffs = all_coeffs.view(dtype=np.complex128)[...,0]
+        print('Loaded coeff file')
+
+    else:
+
+        input_filename = os.path.join(input_folder,the_name + '.npy')
+
+        all_pos = np.load(input_filename)
+        c_coeffs = choreo.default_rfft(all_pos,axis=2,norm="forward")
+        print('Loaded position file')
+
     nint_init = Info_dict["n_int"]
     ncoeff_init = nint_init // 2 +1
+    assert c_coeffs.shape[2] == ncoeff_init
 
-    c_coeffs = choreo.default_rfft(all_pos,axis=2,norm="forward")
 
     FindOptimalnint = True
     # FindOptimalnint = False
@@ -284,8 +297,8 @@ def ExecName(the_name, input_folder, store_folder):
     Save_All_Pos = True
     # Save_All_Pos = False
 
-    # Save_All_Coeffs = True
-    Save_All_Coeffs = False
+    Save_All_Coeffs = True
+    # Save_All_Coeffs = False
 
     # Save_All_Coeffs_No_Sym = True
     Save_All_Coeffs_No_Sym = False
@@ -357,8 +370,8 @@ def ExecName(the_name, input_folder, store_folder):
     n_grad_change = 1.
     # n_grad_change = 0.
 
-    coeff_ampl_min  = 1e-16
-    coeff_ampl_o    = 1e-16
+    coeff_ampl_min  = 0
+    coeff_ampl_o    = 0
     k_infl          = 2
     k_max           = 3
 

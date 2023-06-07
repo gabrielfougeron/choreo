@@ -223,6 +223,9 @@ def Find_Choreo(
         if (ReconvergeSol):
 
             x_avg = ActionSyst.Package_all_coeffs(all_coeffs_init)
+
+            all_coeffs_roundtrip = ActionSyst.Unpackage_all_coeffs(x_avg)
+            print(f"Round trip distance: {np.linalg.norm(all_coeffs_init-all_coeffs_roundtrip)}")
         
         elif (LookForTarget):
 
@@ -246,6 +249,8 @@ def Find_Choreo(
             xrand   ,
             rand_eps
         )
+
+        print(np.linalg.norm(x0-x_avg))
 
         if save_all_inits or (save_first_init and n_opt == 0):
 
