@@ -251,10 +251,10 @@ n_grad_change = 1.
 # n_grad_change = 1.5
 
 
-coeff_ampl_o=1e-16
+coeff_ampl_o=0
 k_infl=1
 k_max=200
-coeff_ampl_min=1e-16
+coeff_ampl_min=0
 
 
 

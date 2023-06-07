@@ -145,8 +145,8 @@ def main(params_dict):
 
     if ((LookForTarget) and not(params_dict['Geom_Target'] ['RandomJitterTarget'])) :
 
-        coeff_ampl_min  = 1e-17
-        coeff_ampl_o    = 1e-17
+        coeff_ampl_min  = 0
+        coeff_ampl_o    = 0
         k_infl          = 2
         k_max           = 3
 

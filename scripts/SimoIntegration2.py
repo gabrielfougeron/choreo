@@ -440,8 +440,8 @@ def Integrate(n_NT_init):
         n_grad_change = 1.
         # n_grad_change = 0.
 
-        coeff_ampl_min  = 1e-16
-        coeff_ampl_o    = 1e-16
+        coeff_ampl_min  = 0
+        coeff_ampl_o    = 0
         k_infl          = 2
         k_max           = 3
 
