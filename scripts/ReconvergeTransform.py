@@ -31,11 +31,11 @@ One_sec = 1e9
 
 def main():
 
-    # input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery/01 - Classic gallery')
+    input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery/01 - Classic gallery')
     # input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery/04 - Montaldi-Steckles-Gries')
     # input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery/05 - Simo')
     # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/Simo_tests_needs_reconverge')
-    input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/test/')
+    # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/test/')
     # input_folder = os.path.join(__PROJECT_ROOT__,'Reconverged_sols')
     
 #     ''' Include all files in tree '''
@@ -54,22 +54,20 @@ def main():
 # 
 # # 
 #     ''' Include all files in folder '''
-#     input_names_list = []
-#     for file_path in os.listdir(input_folder):
-#         file_path = os.path.join(input_folder, file_path)
-#         file_root, file_ext = os.path.splitext(os.path.basename(file_path))
-#         
-#         if (file_ext == '.json' ):
-#             # 
-#             # if int(file_root) > 8:
-#             #     input_names_list.append(file_root)
-# 
-#             input_names_list.append(file_root)
+    input_names_list = []
+    for file_path in os.listdir(input_folder):
+        file_path = os.path.join(input_folder, file_path)
+        file_root, file_ext = os.path.splitext(os.path.basename(file_path))
+        
+        if (file_ext == '.json' ):
+            # 
+            # if int(file_root) > 8:
+            #     input_names_list.append(file_root)
 
-    # input_names_list = ['Simo_00069']
-    # input_names_list = ['Simo_00269']
-    input_names_list = ['04 - 5 pointed star']
-    # input_names_list = ['14 - Small mass gap']
+            input_names_list.append(file_root)
+
+    # input_names_list.append('04 - 5 pointed star')
+    # input_names_list.append('04 - 5 pointed star')
 
 
     store_folder = os.path.join(__PROJECT_ROOT__,'Reconverged_sols')
@@ -106,12 +104,12 @@ def main():
 
 def ExecName(the_name, input_folder, store_folder):
 
-    # print('--------------------------------------------')
-    # print('')
-    # print(the_name)
-    # print('')
-    # print('--------------------------------------------')
-    # print('')
+    print('--------------------------------------------')
+    print('')
+    print(the_name)
+    print('')
+    print('--------------------------------------------')
+    print('')
 
 
     geodim = 2
@@ -189,8 +187,8 @@ def ExecName(the_name, input_folder, store_folder):
     assert c_coeffs.shape[2] == ncoeff_init
 
 
-    FindOptimalnint = True
-    # FindOptimalnint = False
+    # FindOptimalnint = True
+    FindOptimalnint = False
 
     if (FindOptimalnint):
 
@@ -257,17 +255,17 @@ def ExecName(the_name, input_folder, store_folder):
 
     # MomConsImposed = True
     MomConsImposed = False
+# # 
+#     rot_angle = 0
+#     s = -1
 # 
-    rot_angle = 0
-    s = -1
-
-    Sym_list.append(choreo.ChoreoSym(
-        LoopTarget=0,
-        LoopSource=0,
-        SpaceRot = np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64),
-        TimeRev=-1,
-        TimeShift=fractions.Fraction(numerator=0,denominator=1)
-    ))
+#     Sym_list.append(choreo.ChoreoSym(
+#         LoopTarget=0,
+#         LoopSource=0,
+#         SpaceRot = np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64),
+#         TimeRev=-1,
+#         TimeShift=fractions.Fraction(numerator=0,denominator=1)
+#     ))
 
     # 
     # Sym_list.append(
@@ -381,8 +379,8 @@ def ExecName(the_name, input_folder, store_folder):
     hash_dict = {}
 
     n_opt = 0
-    # n_opt_max = 0
-    n_opt_max = 1
+    n_opt_max = 0
+    # n_opt_max = 1
     n_find_max = 1
 
     GradHessBackend="Cython"
@@ -392,8 +390,8 @@ def ExecName(the_name, input_folder, store_folder):
     ParallelBackend = False
 
 
-    # n_reconverge_it_max = 0
-    n_reconverge_it_max = 1
+    n_reconverge_it_max = 0
+    # n_reconverge_it_max = 1
 
 
     Newt_err_norm_max = 1e-13
