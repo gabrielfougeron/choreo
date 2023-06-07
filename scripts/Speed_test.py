@@ -32,11 +32,7 @@ sys.path.append(__PROJECT_ROOT__)
 
 import choreo 
 
-
-
 Workspace_folder = "Sniff_all_sym/"
-
-
 
 def load_target_files(filename,Workspace_folder,target_speed):
 
