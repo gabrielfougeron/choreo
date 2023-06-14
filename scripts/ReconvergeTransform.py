@@ -2,11 +2,11 @@ import os
 import concurrent.futures
 import multiprocessing
 
-os.environ['NUMBA_NUM_THREADS'] = str(multiprocessing.cpu_count()//2)
-os.environ['OMP_NUM_THREADS'] = str(multiprocessing.cpu_count()//2)
-os.environ['OPENBLAS_NUM_THREADS'] = '1'
-os.environ['NUMEXPR_NUM_THREADS'] = '1'
-os.environ['MKL_NUM_THREADS'] = '1'
+# os.environ['NUMBA_NUM_THREADS'] = str(multiprocessing.cpu_count()//2)
+# os.environ['OMP_NUM_THREADS'] = str(multiprocessing.cpu_count()//2)
+# os.environ['OPENBLAS_NUM_THREADS'] = '1'
+# os.environ['NUMEXPR_NUM_THREADS'] = '1'
+# os.environ['MKL_NUM_THREADS'] = '1'
 
 import json
 import shutil
@@ -25,7 +25,41 @@ sys.path.append(__PROJECT_ROOT__)
 
 import choreo 
 
-import datetime
+# import matplotlib
+# # gui_env = ['TKAgg','GTKAgg','Qt4Agg','WXAgg']
+# # gui_env = matplotlib.rcsetup.all_backends
+# 
+# import matplotlib.backends
+# import os.path
+# 
+# def is_backend_module(fname):
+#     """Identifies if a filename is a matplotlib backend module"""
+#     return fname.startswith('backend_') and fname.endswith('.py')
+# 
+# def backend_fname_formatter(fname): 
+#     """Removes the extension of the given filename, then takes away the leading 'backend_'."""
+#     return os.path.splitext(fname)[0][8:]
+# 
+# # get the directory where the backends live
+# backends_dir = os.path.dirname(matplotlib.backends.__file__)
+# 
+# # filter all files in that directory to identify all files which provide a backend
+# backend_fnames = filter(is_backend_module, os.listdir(backends_dir))
+# 
+# gui_env = [backend_fname_formatter(fname) for fname in backend_fnames]
+# 
+# for gui in gui_env:
+#     try:
+#         # print("testing", gui)
+#         matplotlib.use(gui,warn=False, force=True)
+#         from matplotlib import pyplot as plt
+#         print("PASSED : ", gui)
+#         break
+#     except:
+#         print("Failed : ", gui)
+#         continue
+# print("Using:",matplotlib.get_backend())
+# exit()
 
 One_sec = 1e9
 
@@ -319,8 +353,8 @@ def ExecName(the_name, input_folder, store_folder):
     # color = "velocity"
     # color = "all"
 
-    # Save_anim = True
-    Save_anim = False
+    Save_anim = True
+    # Save_anim = False
 
     vid_size = (8,8) # Image size in inches
     # nint_plot_anim = 2*2*2*3*3
