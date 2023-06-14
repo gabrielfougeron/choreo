@@ -10,6 +10,7 @@ import Cython.Build
 import numpy
 import platform
 import multiprocessing
+import pythran
 
 __version__ = "0.2.0"
 
@@ -19,7 +20,8 @@ __version__ = "0.2.0"
 # To build for the current platform, run :
 # python setup.py bdist_wheel
 
-
+# use_Pythran = True
+use_Pythran = False
 
 cython_extnames = [
     "choreo.Choreo_cython_funs",
@@ -62,10 +64,12 @@ else:
         extra_link_args = []
 
     else:
-
-        all_compilers = ['icx','clang','gcc']
-        # all_compilers = ['clang']
-        # all_compilers = ['gcc']
+        if use_Pythran:
+            all_compilers = ['clang++','g++']
+        else:
+            all_compilers = ['icx','clang','gcc']
+            # all_compilers = ['clang']
+            # all_compilers = ['gcc']
 
         for compiler in all_compilers:
 
@@ -104,6 +108,7 @@ compiler_directives = {
     'infer_types': True,
     # 'c_api_binop_methods': True,
     # 'binding': False,
+    'np_pythran' : use_Pythran
 }
 
 # #### Profiler only ####
@@ -118,13 +123,16 @@ compiler_directives = {
 # define_macros.extend(profile_define_macros)
 
 
+include_dirs = [numpy.get_include()]
 
+if use_Pythran:
+    include_dirs.append(pythran.get_include())
 
 extensions = [
     setuptools.Extension(
     name = name,
     sources =  [source],
-    include_dirs=[numpy.get_include()],
+    include_dirs = include_dirs,
     extra_compile_args = extra_compile_args_safe if safemath_needed else extra_compile_args_std,
     extra_link_args = extra_link_args,
     define_macros  = define_macros ,
