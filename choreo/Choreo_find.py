@@ -363,7 +363,6 @@ def Find_Choreo(
             # inner_M = ActionSyst.GetAMGPreco(x0,krylov_method=krylov_method,cycle='F')
             # inner_M = ActionSyst.GetAMGPreco(x0,krylov_method=krylov_method,cycle='AMLI')
 
-
             if (krylov_method == 'lgmres'):
                 jac_options = {'method':krylov_method,'rdiff':rdiff,'outer_k':outer_k,'inner_inner_m':inner_maxiter,'inner_store_outer_Av':store_outer_Av,'inner_tol':inner_tol,'inner_M':inner_M }
             elif (krylov_method == 'gmres'):
@@ -371,29 +370,18 @@ def Find_Choreo(
             else:
                 jac_options = {'method':krylov_method,'rdiff':rdiff,'outer_k':outer_k,'inner_tol':inner_tol,'inner_M':inner_M }
 
-
-            # jac_options = {'method':pyamg.krylov.bicgstab}
-            # jac_options = {'method':pyamg.krylov.cr}
-            # jac_options = {'method':pyamg.krylov.fgmres}
-            # jac_options = {'method':pyamg.krylov.gmres}
-            # jac_options = {'method':pyamg.krylov.gmres_householder}
-            # jac_options = {'method':pyamg.krylov.gmres_mgs}
-
-
-            if (Use_exact_Jacobian):
-
-                FGrad = lambda x,dx : ActionSyst.Compute_action_hess_mul(x,dx)
-                jacobian = ExactKrylovJacobian(exactgrad=FGrad,**jac_options)
-
-            else: 
-                jacobian = scipy.optimize.nonlin.KrylovJacobian(**jac_options)
-
+            jacobian = ActionSyst.GetKrylovJacobian(Use_exact_Jacobian, jac_options)
 
             def optim_callback(x,f,f_norm):
 
                 AskedForNext = False
                 
                 best_sol.update(x,f,f_norm)
+
+                # Do_Pos_FFT_enter = ActionSyst.Do_Pos_FFT
+                # ActionSyst.Do_Pos_FFT = True
+                # ActionSyst.SavePosFFT(x)
+                # ActionSyst.Do_Pos_FFT = Do_Pos_FFT_enter
 
                 for i in range(n_optim_callback_list):
 
@@ -618,6 +606,8 @@ def Find_Choreo(
         print('')
 
     print('Done!')
+
+    print("Total number of PosFFTs : ", ActionSyst.nfft)
 
 def GenSymExample(
     geodim,
@@ -1172,8 +1162,8 @@ def ChoreoFindFromDict(params_dict,Workspace_folder):
 
     n_opt = 0
     # n_opt_max = 1
-    n_opt_max = 1e6
-    n_find_max = 1e4
+    n_opt_max = params_dict["Solver_Optim"]["n_opt"]
+    n_find_max = params_dict["Solver_Optim"]["n_opt"]
 
     ReconvergeSol = False
     AddNumberToOutputName = True
