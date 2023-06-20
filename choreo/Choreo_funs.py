@@ -187,71 +187,6 @@ class ChoreoAction():
         if not(hasattr(ChoreoAction, fun_name)):
 
             setattr(ChoreoAction, fun_name, property(functools.partial(ChoreoAction.GetCurrentListAttribute,key=key)))
-# 
-#     def Package_all_coeffs(self,all_coeffs):
-#         r"""
-#         Transfers the Fourier coefficients of the generators to a single vector of parameters for search.
-#         The packaging process projects the trajectory onto the space of constraint satisfying trajectories.
-#         """
-# 
-#         if self.MatrixFreeChangevar:
-# 
-#             return coeff_to_param_matrixfree(
-#                 self.nloop          ,
-#                 self.geodim         ,
-#                 self.ncoeff         ,
-#                 self.n_grad_change  ,
-#                 self.SqrtMassSum    ,
-#                 all_coeffs          ,
-#             )
-# 
-#         else:
-#             return self.coeff_to_param.dot(all_coeffs.reshape(-1))
-#         
-#     def Unpackage_all_coeffs(self,x):
-#         r"""
-#         Computes the Fourier coefficients of the generator given the parameters.
-#         """
-#         
-#         if self.MatrixFreeChangevar:
-#             return param_to_coeff_matrixfree(
-#                 self.nloop          ,
-#                 self.geodim         ,
-#                 self.ncoeff         ,
-#                 - self.n_grad_change,
-#                 self.SqrtMassSum    ,
-#                 x                   ,
-#             )
-#         else:
-#             return self.param_to_coeff.dot(x).reshape(self.nloop,self.geodim,self.ncoeff,2)
-#     
-#     def Package_all_coeffs_T(self,all_coeffs_grad):
-# 
-#         if self.MatrixFreeChangevar:
-#             return coeff_to_param_matrixfree(
-#                 self.nloop          ,
-#                 self.geodim         ,
-#                 self.ncoeff         ,
-#                 - self.n_grad_change,
-#                 self.SqrtMassSum    ,
-#                 all_coeffs_grad     ,
-#             )
-#         else:
-#             return self.param_to_coeff_T.dot(all_coeffs_grad.reshape(-1))
-#     
-#     def Unpackage_all_coeffs_T(self,x):
-# 
-#         if self.MatrixFreeChangevar:
-#             return param_to_coeff_matrixfree(
-#                 self.nloop          ,
-#                 self.geodim         ,
-#                 self.ncoeff         ,
-#                 self.n_grad_change  ,
-#                 self.SqrtMassSum    ,
-#                 x                   ,
-#             )
-#         else:
-#             return self.coeff_to_param_T.dot(x).reshape(self.nloop,self.geodim,self.ncoeff,2)
 
     def Package_all_coeffs(self,all_coeffs):
         r"""
@@ -577,6 +512,8 @@ class ChoreoAction():
     def SavePosFFT(self,x):
 
         if self.Do_Pos_FFT:
+
+            self.nfft += 1
             
             self.last_all_coeffs = self.Unpackage_all_coeffs(x)
             
@@ -1059,6 +996,34 @@ class ChoreoAction():
 
         return fun,gun,x0,v0
 
+    def GetKrylovJacobian(self, Use_exact_Jacobian = True, jac_options_kw = {}):
+
+        if (Use_exact_Jacobian):
+
+            FGrad = lambda x,dx : self.Compute_action_hess_mul(x,dx)
+            jacobian = ExactKrylovJacobian(exactgrad=FGrad,**jac_options_kw)
+            jacobian.ActionSyst = self
+
+            def update(self, x, f=0):
+
+                # Do_Pos_FFT_enter = self.ActionSyst.Do_Pos_FFT
+                self.ActionSyst.Do_Pos_FFT = True
+                self.ActionSyst.SavePosFFT(x)
+                # self.ActionSyst.Do_Pos_FFT = False
+
+                scipy.optimize.nonlin.KrylovJacobian.update(self,x,f)
+
+            jacobian.update = types.MethodType(update, jacobian)
+
+            def solve(self, rhs, tol=0):
+
+                # self.ActionSyst.Do_Pos_FFT = True
+
+                return scipy.optimize.nonlin.KrylovJacobian.solve(self,rhs,tol)
+            
+            jacobian.solve = types.MethodType(solve, jacobian)
+
+        return jacobian
 
 
     def HeuristicMinMax(self):
@@ -2771,6 +2736,7 @@ def setup_changevar(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCons=Tr
             "last_all_coeffs"               :   None                            ,
             "last_all_pos"                  :   None                            ,
             "Do_Pos_FFT"                    :   True                            ,
+            "nfft"                          :   0                               ,
         }
 
     else:
@@ -2842,7 +2808,6 @@ def setup_changevar(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCons=Tr
             param_to_coeff_T_cvg_lvl_list.append(param_to_coeff_cvg_lvl_list[i].transpose(copy=True))
             coeff_to_param_T_cvg_lvl_list.append(coeff_to_param_cvg_lvl_list[i].transpose(copy=True))
 
-
         kwargs = {
             "geodim"                        :   geodim                          ,
             "nbody"                         :   nbody                           ,
@@ -2877,6 +2842,7 @@ def setup_changevar(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCons=Tr
             "last_all_coeffs"               :   None                            ,
             "last_all_pos"                  :   None                            ,
             "Do_Pos_FFT"                    :   True                            ,
+            "nfft"                          :   0                               ,
         }
 
     return ChoreoAction(**kwargs)
