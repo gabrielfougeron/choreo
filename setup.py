@@ -10,7 +10,7 @@ import Cython.Build
 import numpy
 import platform
 import multiprocessing
-import pythran
+
 
 __version__ = "0.2.0"
 
@@ -22,6 +22,9 @@ __version__ = "0.2.0"
 
 # use_Pythran = True
 use_Pythran = False
+
+if use_Pythran:
+    import pythran
 
 cython_extnames = [
     "choreo.Choreo_cython_funs",
@@ -84,8 +87,11 @@ else:
 
         extra_compile_args_std = ["-Ofast","-march=native", "-fopenmp"]
         extra_compile_args_safe = ["-O2", "-fopenmp"]
-
         extra_link_args = ["-fopenmp"]
+
+        # extra_compile_args_std = ["-fast","-march=native", "-fopenmp"]
+        # extra_compile_args_safe = ["-O2", "-fopenmp"]
+        # extra_link_args = ["-fopenmp","-ipo"]
 
         cython_extnames.append("choreo.Choreo_cython_funs_parallel")
         cython_filenames.append("choreo/Choreo_cython_funs_parallel.pyx")
@@ -99,6 +105,7 @@ define_macros = [("NPY_NO_DEPRECATED_API", "NPY_1_7_API_VERSION")]
 
 
 compiler_directives = {
+    'np_pythran' : use_Pythran,
     'wraparound': False,
     'boundscheck': False,
     'nonecheck': False,
@@ -108,7 +115,6 @@ compiler_directives = {
     'infer_types': True,
     # 'c_api_binop_methods': True,
     # 'binding': False,
-    'np_pythran' : use_Pythran
 }
 
 # #### Profiler only ####
