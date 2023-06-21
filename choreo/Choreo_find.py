@@ -378,11 +378,6 @@ def Find_Choreo(
                 
                 best_sol.update(x,f,f_norm)
 
-                # Do_Pos_FFT_enter = ActionSyst.Do_Pos_FFT
-                # ActionSyst.Do_Pos_FFT = True
-                # ActionSyst.SavePosFFT(x)
-                # ActionSyst.Do_Pos_FFT = Do_Pos_FFT_enter
-
                 for i in range(n_optim_callback_list):
 
                     AskedForNext = (AskedForNext or optim_callback_list[i](x,f,f_norm,ActionSyst))

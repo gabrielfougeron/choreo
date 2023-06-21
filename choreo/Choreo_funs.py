@@ -554,6 +554,35 @@ class ChoreoAction():
 
         return self.Package_all_coeffs_T(HessJdx)
 
+    def Compute_action_hess_mul_NoPosFFT(self,all_coeffs,all_pos,dx):
+
+        HessJdx = self.ComputeHessBackend(
+            self.nloop                      ,
+            self.ncoeff                     ,
+            self.nint                       ,
+            self.mass                       ,
+            self.loopnb                     ,
+            self.Targets                    ,
+            self.MassSum                    ,
+            self.SpaceRotsUn                ,
+            self.TimeRevsUn                 ,
+            self.TimeShiftNumUn             ,
+            self.TimeShiftDenUn             ,
+            self.loopnbi                    ,
+            self.ProdMassSumAll             ,
+            self.SpaceRotsBin               ,
+            self.TimeRevsBin                ,
+            self.TimeShiftNumBin            ,
+            self.TimeShiftDenBin            ,
+            all_coeffs                      ,
+            self.Unpackage_all_coeffs(dx)   ,
+            all_pos                         ,
+            self.rfft                       ,
+            self.irfft                      ,           
+        )
+
+        return self.Package_all_coeffs_T(HessJdx)
+
     def Compute_action_hess_LinOpt(self,x):
         r"""
         Returns the Hessian of the action wrt parameters at a given point as a Scipy LinearOperator.
@@ -1004,27 +1033,40 @@ class ChoreoAction():
             jacobian = ExactKrylovJacobian(exactgrad=FGrad,**jac_options_kw)
             jacobian.ActionSyst = self
 
-            def update(self, x, f=0):
+            def update(self, x, f):
 
-                # Do_Pos_FFT_enter = self.ActionSyst.Do_Pos_FFT
-                self.ActionSyst.Do_Pos_FFT = True
                 self.ActionSyst.SavePosFFT(x)
-                # self.ActionSyst.Do_Pos_FFT = False
+                self.all_coeffs = self.ActionSyst.last_all_coeffs.copy()
+                self.all_pos = self.ActionSyst.last_all_pos.copy()
 
-                scipy.optimize.nonlin.KrylovJacobian.update(self,x,f)
+                scipy.optimize.nonlin.KrylovJacobian.update(self, x, f)
 
-            jacobian.update = types.MethodType(update, jacobian)
+            def setup(self, x, f, func):
 
-            def solve(self, rhs, tol=0):
+                self.ActionSyst.SavePosFFT(x)
+                self.all_coeffs = self.ActionSyst.last_all_coeffs.copy()
+                self.all_pos = self.ActionSyst.last_all_pos.copy()
 
-                # self.ActionSyst.Do_Pos_FFT = True
+                scipy.optimize.nonlin.KrylovJacobian.setup(self, x, f, func)
 
-                return scipy.optimize.nonlin.KrylovJacobian.solve(self,rhs,tol)
+            def matvec(self,v):
+    
+                return self.ActionSyst.Compute_action_hess_mul_NoPosFFT(self.all_coeffs,self.all_pos,v)
             
-            jacobian.solve = types.MethodType(solve, jacobian)
+            def rmatvec(self,v):
+    
+                return self.ActionSyst.Compute_action_hess_mul_NoPosFFT(self.all_coeffs,self.all_pos,v)
+            
+            jacobian.update = types.MethodType(update, jacobian)
+            jacobian.setup = types.MethodType(setup, jacobian)
+            jacobian.matvec = types.MethodType(matvec, jacobian)
+            jacobian.rmatvec = types.MethodType(rmatvec, jacobian)
+
+        else: 
+
+            jacobian = scipy.optimize.nonlin.KrylovJacobian(**jac_options_kw)
 
         return jacobian
-
 
     def HeuristicMinMax(self):
         r"""
