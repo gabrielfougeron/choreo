@@ -125,17 +125,6 @@ def Find_Choreo(
 
     ActionSyst.SetBackend(parallel=ParallelBackend,TwoD=TwoDBackend,GradHessBackend=GradHessBackend)
 
-
-    print(ActionSyst.Do_Pos_FFT)
-    with ActionSyst.PausePosFFT :
-        print(ActionSyst.Do_Pos_FFT)
-    
-    print(ActionSyst.Do_Pos_FFT)
-
-
-
-    exit()
-
     start_cvg_lvl = 0
     ActionSyst.current_cvg_lvl = start_cvg_lvl
 
