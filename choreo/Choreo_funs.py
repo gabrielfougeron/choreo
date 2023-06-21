@@ -129,6 +129,7 @@ class ChoreoAction():
                 self.DefGetCurrentListAttribute(key)
 
         self.SetBackend(parallel=parallel,TwoD=TwoD,GradHessBackend=GradHessBackend)
+        self.PausePosFFT = self.NoPosFFT(self)
 
     def __str__(self):
 
