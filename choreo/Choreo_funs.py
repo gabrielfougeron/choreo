@@ -517,7 +517,17 @@ class ChoreoAction():
             
             c_coeffs = self.last_all_coeffs.view(dtype=np.complex128)[...,0]
             self.last_all_pos = self.irfft(c_coeffs,norm="forward")
-        
+            
+    class NoPosFFT():
+        def __init__(self,ActionSyst):
+            self.ActionSyst = ActionSyst
+
+        def __enter__(self):
+            self.ActionSyst.Do_Pos_FFT = False
+
+        def __exit__(self, type, value, traceback):
+            self.ActionSyst.Do_Pos_FFT = True
+
     def Compute_action_hess_mul(self,x,dx):
         r"""
         Returns the Hessian of the action (computed wrt the parameters) times a test vector of parameter deviations.
@@ -2735,13 +2745,7 @@ def setup_changevar(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCons=Tr
         nint_cvg_lvl_list.append(nint_init * (2**i))
         ncoeff_cvg_lvl_list.append(nint_cvg_lvl_list[i] // 2 + 1)
 
-    if (MatrixFreeChangevar):
-
-        for i in range(n_reconverge_it_max+1):
-
-            nparams_cvg_lvl_list.append(2 * (ncoeff_cvg_lvl_list[i] - 1) * nloop * geodim) 
-
-        kwargs = {
+    kwargs = {
             "geodim"                        :   geodim                          ,
             "nbody"                         :   nbody                           ,
             "nloop"                         :   nloop                           ,
@@ -2765,17 +2769,22 @@ def setup_changevar(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCons=Tr
             "MatrixFreeChangevar"           :   MatrixFreeChangevar             ,
             "ncoeff_cvg_lvl_list"           :   ncoeff_cvg_lvl_list             ,
             "nint_cvg_lvl_list"             :   nint_cvg_lvl_list               ,
-            "nparams_cvg_lvl_list"          :   nparams_cvg_lvl_list            ,
-            # "param_to_coeff_cvg_lvl_list"   :   param_to_coeff_cvg_lvl_list     ,
-            # "coeff_to_param_cvg_lvl_list"   :   coeff_to_param_cvg_lvl_list     ,
-            # "param_to_coeff_T_cvg_lvl_list" :   param_to_coeff_T_cvg_lvl_list   ,
-            # "coeff_to_param_T_cvg_lvl_list" :   coeff_to_param_T_cvg_lvl_list   ,
             "current_cvg_lvl"               :   0                               ,
             "n_cvg_lvl"                     :   n_reconverge_it_max+1           ,
             "n_grad_change"                 :   n_grad_change                   ,
             "last_all_coeffs"               :   None                            ,
             "last_all_pos"                  :   None                            ,
             "Do_Pos_FFT"                    :   True                            ,
+        }
+
+    if (MatrixFreeChangevar):
+
+        for i in range(n_reconverge_it_max+1):
+
+            nparams_cvg_lvl_list.append(2 * (ncoeff_cvg_lvl_list[i] - 1) * nloop * geodim) 
+
+        kwargs = kwargs | {
+            "nparams_cvg_lvl_list"          :   nparams_cvg_lvl_list            ,
         }
 
     else:
@@ -2801,9 +2810,6 @@ def setup_changevar(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCons=Tr
         coeff_to_param_T_cvg_lvl_list = []
 
         for i in range(n_reconverge_it_max+1):
-
-            nint_cvg_lvl_list.append(nint_init * (2**i))
-            ncoeff_cvg_lvl_list.append(nint_cvg_lvl_list[i] // 2 + 1)
 
             cstrmat_sp = Assemble_Cstr_Matrix(
                 nloop               ,
@@ -2847,40 +2853,12 @@ def setup_changevar(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCons=Tr
             param_to_coeff_T_cvg_lvl_list.append(param_to_coeff_cvg_lvl_list[i].transpose(copy=True))
             coeff_to_param_T_cvg_lvl_list.append(coeff_to_param_cvg_lvl_list[i].transpose(copy=True))
 
-        kwargs = {
-            "geodim"                        :   geodim                          ,
-            "nbody"                         :   nbody                           ,
-            "nloop"                         :   nloop                           ,
-            "mass"                          :   mass                            ,
-            "loopnb"                        :   loopnb                          ,
-            "loopgen"                       :   loopgen                         ,
-            "Targets"                       :   Targets                         ,
-            "MassSum"                       :   MassSum                         ,
-            "SpaceRotsUn"                   :   SpaceRotsUn                     ,
-            "TimeRevsUn"                    :   TimeRevsUn                      ,
-            "TimeShiftNumUn"                :   TimeShiftNumUn                  ,
-            "TimeShiftDenUn"                :   TimeShiftDenUn                  ,
-            "RequiresLoopDispUn"            :   RequiresLoopDispUn              ,
-            "loopnbi"                       :   loopnbi                         ,
-            "ProdMassSumAll"                :   ProdMassSumAll                  ,
-            "SpaceRotsBin"                  :   SpaceRotsBin                    ,
-            "TimeRevsBin"                   :   TimeRevsBin                     ,
-            "TimeShiftNumBin"               :   TimeShiftNumBin                 ,
-            "TimeShiftDenBin"               :   TimeShiftDenBin                 ,
-            "MatrixFreeChangevar"           :   MatrixFreeChangevar             ,
-            "ncoeff_cvg_lvl_list"           :   ncoeff_cvg_lvl_list             ,
-            "nint_cvg_lvl_list"             :   nint_cvg_lvl_list               ,
+        kwargs = kwargs | {
             "nparams_cvg_lvl_list"          :   nparams_cvg_lvl_list            ,
             "param_to_coeff_cvg_lvl_list"   :   param_to_coeff_cvg_lvl_list     ,
             "coeff_to_param_cvg_lvl_list"   :   coeff_to_param_cvg_lvl_list     ,
             "param_to_coeff_T_cvg_lvl_list" :   param_to_coeff_T_cvg_lvl_list   ,
             "coeff_to_param_T_cvg_lvl_list" :   coeff_to_param_T_cvg_lvl_list   ,
-            "current_cvg_lvl"               :   0                               ,
-            "n_cvg_lvl"                     :   n_reconverge_it_max+1           ,
-            "n_grad_change"                 :   n_grad_change                   ,
-            "last_all_coeffs"               :   None                            ,
-            "last_all_pos"                  :   None                            ,
-            "Do_Pos_FFT"                    :   True                            ,
         }
 
     return ChoreoAction(**kwargs)
@@ -3266,7 +3244,6 @@ def TangentLagrangeResidual(
     )
 
     return np.concatenate((Action_hess_dx.reshape(-1),LagrangeMulInit_der.reshape(-1)))
-
 
 def plot_coeff_loglog(all_coeffs,filename,fig_size=(16, 12),color_list = None,DoMaxInf=True):
     

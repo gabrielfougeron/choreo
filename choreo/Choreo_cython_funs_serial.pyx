@@ -579,7 +579,6 @@ def Compute_action_Cython_2D_serial(
     cdef double complex[:,:,::1]  grad_pot_fft = rfft(grad_pot_all,norm="forward")  #
     cdef double Kin_en = 0 
     
-    # ~ cdef np.ndarray[double, ndim=4, mode="c"] Action_grad_np = np.empty((nloop,2,ncoeff,2),np.float64)
     cdef np.ndarray[double, ndim=4, mode="c"] Action_grad_np = np.zeros((nloop,2,ncoeff,2),np.float64)
     cdef double[:,:,:,::1] Action_grad = Action_grad_np
 
@@ -604,7 +603,6 @@ def Compute_action_Cython_2D_serial(
                 Action_grad[il,idim,k,0] = b*all_coeffs[il,idim,k,0] - 2*grad_pot_fft[il,idim,k].real
                 Action_grad[il,idim,k,1] = b*all_coeffs[il,idim,k,1] - 2*grad_pot_fft[il,idim,k].imag
             
-
             k = ncoeff-1
             k2 = k*k
             
@@ -614,11 +612,9 @@ def Compute_action_Cython_2D_serial(
             Kin_en += a *((all_coeffs[il,idim,k,0]*all_coeffs[il,idim,k,0]))
             Action_grad[il,idim,k,0] = b*all_coeffs[il,idim,k,0] - grad_pot_fft[il,idim,k].real
 
-
     Action = Kin_en-Pot_en/nint
     
     return Action,Action_grad_np
-
 
 @cython.cdivision(True)
 # cdef (double, double[:,:,::1]) Compute_action_Cython_time_loop_2D(
