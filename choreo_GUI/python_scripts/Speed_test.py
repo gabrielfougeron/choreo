@@ -211,10 +211,7 @@ def main():
 
     plot_extend = 0.
 
-
-
-    # n_test = 100000
-    n_test = 200
+    n_test = params_dict["Solver_Optim"]["n_opt"]
 # 
     all_kwargs = choreo.Pick_Named_Args_From_Dict(choreo.Speed_test,dict(globals(),**locals()))
 
