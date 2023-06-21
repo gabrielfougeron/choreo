@@ -298,20 +298,17 @@ def main(params_dict):
     plot_extend = 0.
 
     n_opt = 0
-    # n_opt_max = 50
-    n_opt_max = 1e6
-    n_find_max = 1e4
+    n_opt_max = params_dict["Solver_Optim"]["n_opt"]
+    n_find_max = params_dict["Solver_Optim"]["n_opt"]
 
     ReconvergeSol = False
     AddNumberToOutputName = True
     
 
 
-    # n_test = 100000
-    n_test = 100
-    # n_test = 5000
+    n_test = params_dict["Solver_Optim"]["n_opt"]
 
-
+    print(f"Test is repeated {n_test} times")
 
     grad_backend_list = [
         choreo.Empty_Backend_action,
