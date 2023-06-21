@@ -602,8 +602,6 @@ def Find_Choreo(
 
     print('Done!')
 
-    print("Total number of PosFFTs : ", ActionSyst.nfft)
-
 def GenSymExample(
     geodim,
     ParallelBackend,

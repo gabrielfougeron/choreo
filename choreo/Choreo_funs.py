@@ -513,8 +513,6 @@ class ChoreoAction():
 
         if self.Do_Pos_FFT:
 
-            self.nfft += 1
-            
             self.last_all_coeffs = self.Unpackage_all_coeffs(x)
             
             c_coeffs = self.last_all_coeffs.view(dtype=np.complex128)[...,0]
@@ -2778,7 +2776,6 @@ def setup_changevar(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCons=Tr
             "last_all_coeffs"               :   None                            ,
             "last_all_pos"                  :   None                            ,
             "Do_Pos_FFT"                    :   True                            ,
-            "nfft"                          :   0                               ,
         }
 
     else:
@@ -2884,7 +2881,6 @@ def setup_changevar(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCons=Tr
             "last_all_coeffs"               :   None                            ,
             "last_all_pos"                  :   None                            ,
             "Do_Pos_FFT"                    :   True                            ,
-            "nfft"                          :   0                               ,
         }
 
     return ChoreoAction(**kwargs)
