@@ -318,10 +318,10 @@ def main(params_dict):
         # choreo.Compute_action_Python_nD_serial,
         choreo.Compute_action_Cython_nD_serial,
         choreo.Compute_action_Numba_nD_serial,
-        choreo.Compute_action_Cython_2D_parallel,
-        choreo.Compute_action_Numba_2D_parallel,
-        choreo.Compute_action_Cython_nD_parallel,
-        choreo.Compute_action_Numba_nD_parallel,
+        # choreo.Compute_action_Cython_2D_parallel,
+        # choreo.Compute_action_Numba_2D_parallel,
+        # choreo.Compute_action_Cython_nD_parallel,
+        # choreo.Compute_action_Numba_nD_parallel,
     ]
 
     hess_backend_list = [
@@ -332,10 +332,10 @@ def main(params_dict):
         # choreo.Compute_action_hess_mul_Python_nD_serial,
         choreo.Compute_action_hess_mul_Cython_nD_serial,
         choreo.Compute_action_hess_mul_Numba_nD_serial,
-        choreo.Compute_action_hess_mul_Cython_2D_parallel,
-        choreo.Compute_action_hess_mul_Numba_2D_parallel,
-        choreo.Compute_action_hess_mul_Cython_nD_parallel,
-        choreo.Compute_action_hess_mul_Numba_nD_parallel,
+        # choreo.Compute_action_hess_mul_Cython_2D_parallel,
+        # choreo.Compute_action_hess_mul_Numba_2D_parallel,
+        # choreo.Compute_action_hess_mul_Cython_nD_parallel,
+        # choreo.Compute_action_hess_mul_Numba_nD_parallel,
     ]
 
 
@@ -348,7 +348,6 @@ def main(params_dict):
         print(grad_backend.__name__)
         print(hess_backend.__name__)
             
-
         all_kwargs = choreo.Pick_Named_Args_From_Dict(choreo.Speed_test,dict(globals(),**locals()))
 
         choreo.Speed_test(**all_kwargs)

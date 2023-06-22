@@ -65,11 +65,11 @@ One_sec = 1e9
 
 def main():
 
-    input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery/01 - Classic gallery')
+    # input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery/01 - Classic gallery')
     # input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery/04 - Montaldi-Steckles-Gries')
     # input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery/05 - Simo')
     # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/Simo_tests_needs_reconverge')
-    # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/test/')
+    input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/6/')
     # input_folder = os.path.join(__PROJECT_ROOT__,'Reconverged_sols')
     
 #     ''' Include all files in tree '''
@@ -353,8 +353,8 @@ def ExecName(the_name, input_folder, store_folder):
     # color = "velocity"
     # color = "all"
 
-    Save_anim = True
-    # Save_anim = False
+    # Save_anim = True
+    Save_anim = False
 
     vid_size = (8,8) # Image size in inches
     # nint_plot_anim = 2*2*2*3*3
@@ -414,7 +414,7 @@ def ExecName(the_name, input_folder, store_folder):
 
     n_opt = 0
     n_opt_max = 0
-    # n_opt_max = 1
+    n_opt_max = 1
     n_find_max = 1
 
     GradHessBackend="Cython"
@@ -450,11 +450,11 @@ def ExecName(the_name, input_folder, store_folder):
     # linesearch_smin = 0.1
     linesearch_smin = 1
     
-    gradtol_list =          [1e-1   ,1e-3   ,1e-5   ,1e-7   ,1e-9   ,1e-11  ,1e-13]
-    inner_maxiter_list =    [30     ,30     ,50     ,60     ,70     ,80     ,100  ]
-    maxiter_list =          [100    ,1000   ,1000   ,1000   ,500    ,500    ,5    ]
-    outer_k_list =          [5      ,5      ,5      ,5      ,5      ,7      ,7    ]
-    store_outer_Av_list =   [False  ,False  ,False  ,False  ,False  ,True   ,True ]
+    gradtol_list =          [1e-1   ,1e-3   ,1e-5   ,1e-7   ,1e-9   ,1e-11  ,1e-13,1e-15]
+    inner_maxiter_list =    [30     ,30     ,50     ,60     ,70     ,80     ,100  ,100  ]
+    maxiter_list =          [100    ,1000   ,1000   ,1000   ,500    ,500    ,5    ,5    ]
+    outer_k_list =          [5      ,5      ,5      ,5      ,5      ,7      ,7    ,7    ]
+    store_outer_Av_list =   [False  ,False  ,False  ,False  ,False  ,True   ,True ,True ]
     # 
     # gradtol_list =          [1e-1   ,1e-3  ,1e-5  ]
     # inner_maxiter_list =    [30     ,30    ,50    ]
@@ -465,7 +465,7 @@ def ExecName(the_name, input_folder, store_folder):
     
     n_optim_param = len(gradtol_list)
     
-    gradtol_max = 100*gradtol_list[n_optim_param-1]
+    gradtol_max = 10*gradtol_list[n_optim_param-1]
     # foundsol_tol = 1000*gradtol_list[0]
     foundsol_tol = 1e10
     plot_extend = 0.

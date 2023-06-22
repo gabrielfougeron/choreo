@@ -60,6 +60,7 @@ def Integrate(n_NT_init):
 
     ActionSyst_small = choreo.setup_changevar(geodim,nbody,nint_small,mass,n_reconverge_it_max_small,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change,CrashOnIdentity=False)
 
+
     # print(choreo.all_unique_SymplecticIntegrators.keys())
 
     # SymplecticMethod = 'SymplecticEuler'

@@ -34,33 +34,33 @@ def main():
     # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/01 - Classic gallery')
     # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/10/')
     # input_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/5_diff_mass/')
-    input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery')
+    # input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery')
     # input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery/03 - Targets/Figure eight/')
-    # input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery/01 - Classic gallery')
+    input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery/01 - Classic gallery')
     # input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery/unsafe')
     # input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery/02 - Families/02 - Chains/04')
     # input_folder = os.path.join(__PROJECT_ROOT__,'choreo_GUI/choreo-gallery/04 - Montaldi-Steckles-Gries')
     # input_folder = os.path.join(__PROJECT_ROOT__,'Keep/tests')
 
-    ''' Include all files in tree '''
-    input_names_list = []
-    input_files_list = []
-    for root, dirnames, filenames in os.walk(input_folder):
-
-        for filename in filenames:
-            file_path = os.path.join(root, filename)
-            file_root, file_ext = os.path.splitext(os.path.basename(file_path))
-
-            if (file_ext == '.json' ):
-
-                file_path = os.path.join(root, file_root)
-                the_name = file_path[len(input_folder):]
-                input_names_list.append(the_name)
-                input_files_list.append(file_path)
+#     ''' Include all files in tree '''
+#     input_names_list = []
+#     input_files_list = []
+#     for root, dirnames, filenames in os.walk(input_folder):
+# 
+#         for filename in filenames:
+#             file_path = os.path.join(root, filename)
+#             file_root, file_ext = os.path.splitext(os.path.basename(file_path))
+# 
+#             if (file_ext == '.json' ):
+# 
+#                 file_path = os.path.join(root, file_root)
+#                 the_name = file_path[len(input_folder):]
+#                 input_names_list.append(the_name)
+#                 input_files_list.append(file_path)
 
 # # # # 
 #     ''' Include all files in folder '''
-#     input_names_list = []
+    input_names_list = []
 #     for file_path in os.listdir(input_folder):
 #         file_path = os.path.join(input_folder, file_path)
 #         file_root, file_ext = os.path.splitext(os.path.basename(file_path))
@@ -73,7 +73,7 @@ def main():
 #             input_names_list.append(file_root)
 
     ''' Include specific files '''
-    # input_names_list = ['01 - Figure eight']
+    input_names_list.append('01 - Figure eight')
 
 
 
@@ -94,8 +94,8 @@ def main():
             input_files_list.append(os.path.join(input_folder,the_name))
 
 
-    Exec_Mul_Proc = True
-    # Exec_Mul_Proc = False
+    # Exec_Mul_Proc = True
+    Exec_Mul_Proc = False
 
     if Exec_Mul_Proc:
 
@@ -135,6 +135,7 @@ def ExecName(the_name, the_file):
 
     file_basename = the_name
 
+    geodim = 2
 
     Info_filename = the_file + '.json'
 
@@ -152,7 +153,7 @@ def ExecName(the_name, the_file):
     ncoeff_init = nint_init //2 + 1
 
     c_coeffs = choreo.default_rfft(all_pos,axis=2,norm="forward")
-    all_coeffs = np.zeros((Info_dict["nloop"],choreo.ndim,ncoeff_init,2),dtype=np.float64)
+    all_coeffs = np.zeros((Info_dict["nloop"],geodim,ncoeff_init,2),dtype=np.float64)
     all_coeffs[:,:,:,0] = c_coeffs.real
     all_coeffs[:,:,:,1] = c_coeffs.imag
 
@@ -197,6 +198,14 @@ def ExecName(the_name, the_file):
     n_grad_change = 1.
 
     ActionSyst = choreo.setup_changevar(2,nbody,nint_init,mass,n_reconverge_it_max,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change,CrashOnIdentity=False)
+
+
+
+
+    print(ActionSyst)
+
+
+    exit()
 
 
 

@@ -885,7 +885,6 @@ def Speed_test(
 
         f0 = ActionSyst.Compute_action_onlygrad(x0)
         hess = ActionSyst.Compute_action_hess_mul(x0,dx)
-        # toto = ActionSyst.Unpackage_all_coeffs(x0) 
 
     end = time.perf_counter()
     tot_time += (end-beg)
