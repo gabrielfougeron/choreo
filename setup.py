@@ -112,7 +112,7 @@ compiler_directives = {
     'initializedcheck': False,
     'overflowcheck': False,
     'overflowcheck.fold': False,
-    'infer_types': True,
+    # 'infer_types': True,
     # 'c_api_binop_methods': True,
     # 'binding': False,
 }

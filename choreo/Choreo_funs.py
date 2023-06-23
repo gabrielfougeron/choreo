@@ -76,7 +76,8 @@ except:
 
 from choreo.Choreo_cython_funs import twopi,nhash,n
 from choreo.Choreo_cython_funs import Compute_hash_action_Cython,Compute_Newton_err_Cython
-from choreo.Choreo_cython_funs import Assemble_Cstr_Matrix, diagmat_changevar
+from choreo.Choreo_cython_funs import Assemble_Fourier_Cstr_Matrix, Assemble_Time_Cstr_Matrix
+from choreo.Choreo_cython_funs import diagmat_changevar
 from choreo.Choreo_cython_funs import coeff_to_param_matrixfree, param_to_coeff_matrixfree
 from choreo.Choreo_cython_funs import Package_all_coeffs_matrixfree, Unpackage_all_coeffs_matrixfree
 from choreo.Choreo_cython_funs import Package_all_coeffs_T_matrixfree, Unpackage_all_coeffs_T_matrixfree
@@ -2501,7 +2502,7 @@ def setup_changevar(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCons=Tr
     
     for Cycle in Cycles:
 
-        Constraint = ChoreoSym(LoopTarget=Cycle[0],LoopSource=Cycle[0])
+        Constraint = ChoreoSym(SpaceRot=np.identity(geodim),LoopTarget=Cycle[0],LoopSource=Cycle[0])
         
         Cycle_len = len(Cycle)
         
@@ -2547,6 +2548,8 @@ def setup_changevar(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCons=Tr
     ProdMassSumAll_list = []
     UniqueSymsAll_list = []
     
+    All_den_list = []
+
     SpaceRotsUn = np.zeros((nloop,maxlooplen,geodim,geodim),dtype=np.float64)
     TimeRevsUn = np.zeros((nloop,maxlooplen),dtype=np.intp)
     TimeShiftNumUn = np.zeros((nloop,maxlooplen),dtype=np.intp)
@@ -2566,7 +2569,7 @@ def setup_changevar(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCons=Tr
             
             MassSum[il] += mass[istart]
             
-            Sym = ChoreoSym(LoopTarget=istart,LoopSource=istart)
+            Sym = ChoreoSym(SpaceRot=np.identity(geodim),LoopTarget=istart,LoopSource=istart)
             
             path_len = len(path)
             
@@ -2598,7 +2601,8 @@ def setup_changevar(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCons=Tr
                 TimeShiftNumUn[il,ib] = -Sym.TimeShift.numerator % (-Sym.TimeShift.denominator)
                 TimeShiftDenUn[il,ib] = -Sym.TimeShift.denominator
 
-            
+            All_den_list.append(TimeShiftDenUn[il,ib])
+
             if (Sym.LoopTarget != loopgen[il]):
                 
                 for Constraint in SymGraph.nodes[Sym.LoopTarget]["Constraint_list"]:
@@ -2735,6 +2739,62 @@ def setup_changevar(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCons=Tr
     
     maxloopncstr = loopncstr.max()
 
+    SpaceRotsCstr = np.zeros((nloop,maxloopncstr,geodim,geodim),dtype=np.float64)
+    TimeRevsCstr = np.zeros((nloop,maxloopncstr),dtype=np.intp)
+    TimeShiftNumCstr = np.zeros((nloop,maxloopncstr),dtype=np.intp)
+    TimeShiftDenCstr = np.zeros((nloop,maxloopncstr),dtype=np.intp)
+
+    for il in range(nloop):
+        for i in range(loopncstr[il]):
+            
+            SpaceRotsCstr[il,i,:,:] = SymGraph.nodes[loopgen[il]]["Constraint_list"][i].SpaceRot
+            TimeRevsCstr[il,i]      = SymGraph.nodes[loopgen[il]]["Constraint_list"][i].TimeRev
+            TimeShiftNumCstr[il,i]  = SymGraph.nodes[loopgen[il]]["Constraint_list"][i].TimeShift.numerator
+            TimeShiftDenCstr[il,i]  = SymGraph.nodes[loopgen[il]]["Constraint_list"][i].TimeShift.denominator
+
+            All_den_list.append(TimeShiftDenCstr[il,i])
+
+    nint_min = m.lcm(*All_den_list)
+
+    time_cstrmat_sp = Assemble_Time_Cstr_Matrix(
+        nbody               ,
+        nloop               ,
+        nint_min            ,
+        MomCons             ,
+        mass                ,
+        loopnb              ,
+        loopgen             ,
+        Targets             ,
+        SpaceRotsUn         ,
+        TimeRevsUn          ,
+        TimeShiftNumUn      ,
+        TimeShiftDenUn      ,
+        loopncstr           ,
+        SpaceRotsCstr       ,
+        TimeRevsCstr        ,
+        TimeShiftNumCstr    ,
+        TimeShiftDenCstr    
+    )
+
+
+    nullspace, supplspace = split_input_space_null_suppl(time_cstrmat_sp)
+
+    print("nullspace")
+    print(nullspace)
+    print("supplspace")
+    print(supplspace)
+
+    print(time_cstrmat_sp.shape)
+
+    # print(nullspace.shape[1]/nullspace.shape[0])
+    # print(supplspace.shape[1]/supplspace.shape[0])
+
+    exit()
+
+
+
+
+
     MatrixFreeChangevar = (not(MomCons) and (maxloopncstr == 0)) and not(ForceMatrixChangevar) and (abs(n_grad_change - 1) == 0)
 
     ncoeff_cvg_lvl_list = []
@@ -2790,19 +2850,6 @@ def setup_changevar(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCons=Tr
 
     else:
 
-        SpaceRotsCstr = np.zeros((nloop,maxloopncstr,geodim,geodim),dtype=np.float64)
-        TimeRevsCstr = np.zeros((nloop,maxloopncstr),dtype=np.intp)
-        TimeShiftNumCstr = np.zeros((nloop,maxloopncstr),dtype=np.intp)
-        TimeShiftDenCstr = np.zeros((nloop,maxloopncstr),dtype=np.intp)
-        
-        for il in range(nloop):
-            for i in range(loopncstr[il]):
-                
-                SpaceRotsCstr[il,i,:,:] = SymGraph.nodes[loopgen[il]]["Constraint_list"][i].SpaceRot
-                TimeRevsCstr[il,i]      = SymGraph.nodes[loopgen[il]]["Constraint_list"][i].TimeRev
-                TimeShiftNumCstr[il,i]  = SymGraph.nodes[loopgen[il]]["Constraint_list"][i].TimeShift.numerator
-                TimeShiftDenCstr[il,i]  = SymGraph.nodes[loopgen[il]]["Constraint_list"][i].TimeShift.denominator
-
         # Now detect parameters and build change of variables
 
         param_to_coeff_cvg_lvl_list = []
@@ -2812,7 +2859,7 @@ def setup_changevar(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCons=Tr
 
         for i in range(n_reconverge_it_max+1):
 
-            cstrmat_sp = Assemble_Cstr_Matrix(
+            cstrmat_sp = Assemble_Fourier_Cstr_Matrix(
                 nloop               ,
                 ncoeff_cvg_lvl_list[i]      ,
                 MomCons             ,
@@ -2885,20 +2932,58 @@ def null_space_sparseqr(AT):
     nrow = AT.shape[0]
     
     if (nrow <= rank):
+
+        nullspace = scipy.sparse.coo_matrix(([],([],[])),shape=(nrow,0))
         
-        return scipy.sparse.coo_matrix(([],([],[])),shape=(nrow,0))
-    
     else:
 
         mask = []
         iker = 0
-        while (iker < Q.nnz):
+
+        for iker in range(Q.nnz):
+
             if (Q.col[iker] >= rank):
                 mask.append(iker)
-            iker += 1
             
-        return scipy.sparse.coo_matrix((Q.data[mask],(Q.row[mask],Q.col[mask]-rank)),shape=(nrow,nrow-rank))
+        nullspace = scipy.sparse.coo_matrix((Q.data[mask],(Q.row[mask],Q.col[mask]-rank)),shape=(nrow,nrow-rank))
+    
+    return nullspace
      
+def split_input_space_null_suppl(AT):
+    # Splits the input space of A into the nullspace of A and its orthogonal complementary
+    # Returns a basis of the null space of a matrix A.
+    # AT must be in COO format
+    # The nullspace of the TRANSPOSE of AT will be returned
+
+    # tolerance = 1e-5
+    tolerance = None
+
+    Q, R, E, rank = sparseqr.qr( AT, tolerance=tolerance )
+
+    nrow = AT.shape[0]
+    
+    if (nrow <= rank):
+
+        nullspace = scipy.sparse.coo_matrix(([],([],[])),shape=(nrow,0))
+        supplspace = scipy.sparse.identity(nrow , format='coo')
+
+    else:
+
+        mask_null = []
+        mask_suppl = []
+
+        for iker in range(Q.nnz):
+
+            if (Q.col[iker] < rank):
+                mask_suppl.append(iker)
+            else:
+                mask_null.append(iker)
+
+        nullspace = scipy.sparse.coo_matrix((Q.data[mask_null],(Q.row[mask_null],Q.col[mask_null]-rank)),shape=(nrow,nrow-rank))
+        supplspace = scipy.sparse.coo_matrix((Q.data[mask_suppl],(Q.row[mask_suppl],Q.col[mask_suppl])),shape=(nrow,rank))
+    
+    return nullspace, supplspace
+
 def AllPosToAllCoeffs(all_pos,ncoeffs):
 
     nloop = all_pos.shape[0]

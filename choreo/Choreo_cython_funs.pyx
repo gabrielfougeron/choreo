@@ -99,11 +99,11 @@ def Cpt_interbody_pot(double xsq):
     
     return CCpt_interbody_pot(xsq)
      
-def CCpt_hash_pot(double xsq):  # xsq is the square of the distance between two bodies !
+@cython.profile(False)
+@cython.linetrace(False)
+cdef inline void CCpt_hash_pot(double xsq, double[::1] hash_pots) nogil:  # xsq is the square of the distance between two bodies !
     # C definition of the hashing potential. Allows easy detection of duplicates 
     
-    cdef double[::1] hash_pots = np.zeros((cnhash),dtype=np.float64)
-
     hash_pots[0] = -cpow(xsq,hash_exp0)
     hash_pots[1] = -cpow(xsq,hash_exp1)
     hash_pots[2] = -cpow(xsq,hash_exp2)
@@ -117,8 +117,6 @@ def CCpt_hash_pot(double xsq):  # xsq is the square of the distance between two 
     # hash_pots[10] = -cpow(xsq,hash_exp10)
     # hash_pots[11] = -cpow(xsq,hash_exp11)
     # hash_pots[12] = -cpow(xsq,hash_exp12)
-    
-    return hash_pots
 
 def Compute_hash_action_Cython(
     long                geodim          ,
@@ -229,7 +227,7 @@ def Compute_hash_action_Cython(
                         for idim in range(1,geodim):
                             dx2 += dx[idim]*dx[idim]
                             
-                        Hash_pot = CCpt_hash_pot(dx2)
+                        CCpt_hash_pot(dx2, Hash_pot)
                         
                         for ihash in range(cnhash):
                             Hash_En[ihash] += Hash_pot[ihash] * prod_mass
@@ -250,7 +248,7 @@ def Compute_hash_action_Cython(
                 for idim in range(1,geodim):
                     dx2 += dx[idim]*dx[idim]
 
-                Hash_pot = CCpt_hash_pot(dx2)
+                CCpt_hash_pot(dx2, Hash_pot)
                 
                 for ihash in range(cnhash):
                     Hash_En[ihash] += Hash_pot[ihash] * ProdMassSumAll[il,ibi]
@@ -748,7 +746,7 @@ def Compute_Newton_err_Cython(
                 
     return all_Newt_err
                                                                                                                                                                 
-def Assemble_Cstr_Matrix(
+def Assemble_Fourier_Cstr_Matrix(
     long                nloop               ,
     long                ncoeff              ,
     bint                MomCons             ,
@@ -1157,6 +1155,251 @@ def Assemble_Cstr_Matrix(
                     raise ValueError("Invalid TimeRev")
 
     cdef long n_idx = nloop*geodim*ncoeff*2
+
+    return scipy.sparse.coo_matrix((cstr_data,(cstr_row,cstr_col)),shape=(n_idx,icstr), dtype=np.float64)
+
+@cython.cdivision(True)
+def Assemble_Time_Cstr_Matrix(
+    long                nbody               ,
+    long                nloop               ,
+    long                nint_min            ,
+    bint                MomCons             ,
+    double[::1]         mass                ,
+    long[::1]           loopnb              ,
+    long[::1]           loopgen             ,
+    long[:,::1]         Targets             ,
+    double[:,:,:,::1]   SpaceRotsUn         ,
+    long[:,::1]         TimeRevsUn          ,
+    long[:,::1]         TimeShiftNumUn      ,
+    long[:,::1]         TimeShiftDenUn      ,
+    long[::1]           loopncstr           ,
+    double[:,:,:,::1]   SpaceRotsCstr       ,
+    long[:,::1]         TimeRevsCstr        ,
+    long[:,::1]         TimeShiftNumCstr    ,
+    long[:,::1]         TimeShiftDenCstr 
+):
+    # Assembles the matrix of constraints used to select constraint satisfying parameters
+
+    cdef long geodim = SpaceRotsUn.shape[2]
+
+    # cdef double eps_zero = 1e-14
+    cdef double eps_zero = 1e-10
+
+    cdef long nnz
+    cdef long il, ilb, ib, jb
+    cdef long idim,jdim,i
+    cdef long ilcstr
+    cdef long iint,jint
+    cdef long icstr
+    
+    cdef double val,dt
+    cdef double masstot = 0
+    cdef double invmasstot = 0
+    cdef double mul
+
+    # iint, ib, idim => idim + geodim*(ib + nbody*iint) 
+
+    icstr = 0
+    nnz = 0
+
+    # Loop definition
+    for jint in range(nint_min):
+        for il in range(nloop):
+
+            ib = loopgen[il]
+            for ilb in range(loopnb[il]):
+            
+                jb = Targets[il,ilb]
+
+                if (ib != jb):
+
+                    iint = (((((jint - ((nint_min*TimeShiftNumUn[il ,ib ]) // TimeShiftDenUn[il ,ib ])) * TimeRevsUn[il ,ib ]) % nint_min) + nint_min) % nint_min)
+
+                    for idim in range(geodim):
+
+                        # i =  idim + geodim*(jb + nbody*jint) 
+                        # val = -1 
+
+                        # cstr_row[nnz] = i
+                        # cstr_col[nnz] = icstr
+                        # cstr_data[nnz] = val 
+                        # 
+                        nnz += 1
+
+                        for jdim in range(geodim):
+
+                            i = jdim + geodim*(ib + nbody*iint) 
+
+                            val = SpaceRotsUn[il,ib,idim,jdim]
+                            
+                            if (cfabs(val) > eps_zero):
+                                                            
+                                # cstr_row[nnz] = i
+                                # cstr_col[nnz] = icstr
+                                # cstr_data[nnz] = val 
+                                nnz += 1
+
+                        icstr += 1
+                    
+            # Symmetry constraints on loops
+
+            for ilcstr in range(loopncstr[il]):
+                
+                iint = (((((jint - ((nint_min*TimeShiftNumCstr[il,ilcstr]) // TimeShiftDenCstr[il,ilcstr])) * TimeRevsCstr[il,ilcstr]) % nint_min) + nint_min) % nint_min)
+
+                if (iint == jint):
+
+                    for idim in range(geodim):
+
+                        for jdim in range(geodim):
+
+                            # i = jdim + geodim*(ib + nbody*iint) 
+
+                            val = SpaceRotsCstr[il,ilcstr,idim,jdim]
+                            
+                            if (idim == jdim):
+                                val -=1.
+                            
+                            if (cfabs(val) > eps_zero):
+                                                            
+                                # cstr_row[nnz] = i
+                                # cstr_col[nnz] = icstr
+                                # cstr_data[nnz] = val 
+                                nnz += 1
+
+                        icstr += 1
+
+                else:
+
+                    for idim in range(geodim):
+
+                        i =  idim + geodim*(ib + nbody*jint) 
+
+                        # val = -1.
+
+                        # cstr_row[nnz] = i
+                        # cstr_col[nnz] = icstr
+                        # cstr_data[nnz] = val 
+                        nnz += 1
+
+                        for jdim in range(geodim):
+
+                            # i = jdim + geodim*(ib + nbody*iint) 
+
+                            val = SpaceRotsCstr[il,ilcstr,idim,jdim]
+                            
+                            if (cfabs(val) > eps_zero):
+                                                            
+                                # cstr_row[nnz] = i
+                                # cstr_col[nnz] = icstr
+                                # cstr_data[nnz] = val 
+                                nnz += 1
+
+                        icstr += 1
+  
+    cdef np.ndarray[long  , ndim=1, mode="c"] cstr_row  = np.zeros((nnz),dtype=np.int_   )
+    cdef np.ndarray[long  , ndim=1, mode="c"] cstr_col  = np.zeros((nnz),dtype=np.int_   )
+    cdef np.ndarray[double, ndim=1, mode="c"] cstr_data = np.zeros((nnz),dtype=np.float64)
+
+    icstr = 0
+    nnz = 0
+
+    # Loop definition
+    for jint in range(nint_min):
+        for il in range(nloop):
+
+            ib = loopgen[il]
+            for ilb in range(loopnb[il]):
+            
+                jb = Targets[il,ilb]
+
+                if (ib != jb):
+
+                    iint = (((((jint - ((nint_min*TimeShiftNumUn[il ,ib ]) // TimeShiftDenUn[il ,ib ])) * TimeRevsUn[il ,ib ]) % nint_min) + nint_min) % nint_min)
+
+                    for idim in range(geodim):
+
+                        i =  idim + geodim*(jb + nbody*jint) 
+                        val = -1 
+
+                        cstr_row[nnz] = i
+                        cstr_col[nnz] = icstr
+                        cstr_data[nnz] = val 
+                        
+                        nnz += 1
+
+                        for jdim in range(geodim):
+
+                            i = jdim + geodim*(ib + nbody*iint) 
+
+                            val = SpaceRotsUn[il,ib,idim,jdim]
+                            
+                            if (cfabs(val) > eps_zero):
+                                                            
+                                cstr_row[nnz] = i
+                                cstr_col[nnz] = icstr
+                                cstr_data[nnz] = val 
+                                nnz += 1
+
+                        icstr += 1
+                    
+            # Symmetry constraints on loops
+
+            for ilcstr in range(loopncstr[il]):
+                
+                iint = (((((jint - ((nint_min*TimeShiftNumCstr[il,ilcstr]) // TimeShiftDenCstr[il,ilcstr])) * TimeRevsCstr[il,ilcstr]) % nint_min) + nint_min) % nint_min)
+
+                if (iint == jint):
+
+                    for idim in range(geodim):
+
+                        for jdim in range(geodim):
+
+                            i = jdim + geodim*(ib + nbody*iint) 
+
+                            val = SpaceRotsCstr[il,ilcstr,idim,jdim]
+                            
+                            if (idim == jdim):
+                                val -=1.
+                            
+                            if (cfabs(val) > eps_zero):
+                                                            
+                                cstr_row[nnz] = i
+                                cstr_col[nnz] = icstr
+                                cstr_data[nnz] = val 
+                                nnz += 1
+
+                        icstr += 1
+
+                else:
+
+                    for idim in range(geodim):
+
+                        i =  idim + geodim*(ib + nbody*jint) 
+
+                        val = -1.
+
+                        cstr_row[nnz] = i
+                        cstr_col[nnz] = icstr
+                        cstr_data[nnz] = val 
+                        nnz += 1
+
+                        for jdim in range(geodim):
+
+                            i = jdim + geodim*(ib + nbody*iint) 
+
+                            val = SpaceRotsCstr[il,ilcstr,idim,jdim]
+                            
+                            if (cfabs(val) > eps_zero):
+                                                            
+                                cstr_row[nnz] = i
+                                cstr_col[nnz] = icstr
+                                cstr_data[nnz] = val 
+                                nnz += 1
+
+                        icstr += 1
+
+    cdef long n_idx = geodim*nbody*nint_min
 
     return scipy.sparse.coo_matrix((cstr_data,(cstr_row,cstr_col)),shape=(n_idx,icstr), dtype=np.float64)
     
