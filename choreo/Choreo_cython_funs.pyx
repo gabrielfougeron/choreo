@@ -46,7 +46,7 @@ cdef double cmnnm1 = -cnnm1
 # cdef long cnhash = hash_exps.size
 # Unfortunately, Cython does not allow that. Let's do it manually then
 
-cdef double hash_exp0 = -0.5
+cdef double hash_exp0 = cn
 cdef double hash_exp1 = -0.2
 cdef double hash_exp2 = -0.4
 cdef double hash_exp3 = -0.6
@@ -79,6 +79,24 @@ mn = cmn
 mnnm1 = cmnnm1
 
 nhash = cnhash
+
+hash_exp = np.array([
+    hash_exp0 ,
+    hash_exp1 ,
+    hash_exp2 ,
+    hash_exp3 ,
+    hash_exp4 ,
+    # hash_exp5 ,
+    # hash_exp6 ,
+    # hash_exp7 ,
+    # hash_exp8 ,
+    # hash_exp9 ,
+    # hash_exp10 ,
+    # hash_exp11 ,
+    # hash_exp12 ,   
+])
+
+assert hash_exp.shape[0] == nhash
 
 @cython.profile(False)
 @cython.linetrace(False)

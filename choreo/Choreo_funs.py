@@ -74,7 +74,7 @@ try:
 except:
     pass
 
-from choreo.Choreo_cython_funs import twopi,nhash,n
+from choreo.Choreo_cython_funs import twopi,nhash,n,hash_exp
 from choreo.Choreo_cython_funs import Compute_hash_action_Cython,Compute_Newton_err_Cython
 from choreo.Choreo_cython_funs import Assemble_Cstr_Matrix, diagmat_changevar
 from choreo.Choreo_cython_funs import coeff_to_param_matrixfree, param_to_coeff_matrixfree
@@ -3177,7 +3177,8 @@ def ReadHashFromFile(filename):
     else:
         return np.array(the_hash)
 
-def SelectFiles_Action(store_folder,hash_dict,Action_Hash_val=np.zeros((nhash)),rtol=1e-5):
+# def SelectFiles_Action(store_folder,hash_dict,Action_Hash_val=np.zeros((nhash)),rtol=1e-5,detect_multiples = False):
+def SelectFiles_Action(store_folder,hash_dict,Action_Hash_val=np.zeros((nhash)),rtol=1e-5,detect_multiples = True):
     # Creates a list of possible duplicates based on value of the action and hashes
 
     file_path_list = []
@@ -3199,14 +3200,64 @@ def SelectFiles_Action(store_folder,hash_dict,Action_Hash_val=np.zeros((nhash)),
 
             if not(This_Action_Hash is None):
 
-                IsCandidate = True
-                for ihash in range(nhash):
+                if detect_multiples:
 
-                    IsCandidate = (IsCandidate and ((abs(This_Action_Hash[ihash]-Action_Hash_val[ihash])) < ((abs(This_Action_Hash[ihash])+abs(Action_Hash_val[ihash]))*rtol)))
+                    print('')
+                    print(file_root)
+
+                    pow_fac_n = (n+1)/(n-1)
+                    pow_fac_n_inv = 1./pow_fac_n
+                    ratio = ( Action_Hash_val[0] / This_Action_Hash[0] ) ** pow_fac_n_inv
+                    k_mul = round(ratio)
+                    int_err = abs(ratio-k_mul)
+
+                    IsCandidate = (int_err < rtol)
+
+                    print(ratio)
+                    # print(int_err)
+
+                    for ihash in range(1,nhash):
+
+                        pow_fac_m = (2*hash_exp[ihash])/(n-1) - 1
+                        pow_fac_m_inv = 1./pow_fac_m
+
+                        # dS = (k_mul**pow_fac_n - k_mul**pow_fac_m) * (n/(n-1)) * This_Action_Hash[0]
+                        dS = (k_mul**pow_fac_n - k_mul**pow_fac_m) * (n/(n-1)) * Action_Hash_val[0]
+
+                        # print('dS=',dS)
+
+                        ratio = ((Action_Hash_val[ihash] - dS) / This_Action_Hash[ihash]) ** pow_fac_m_inv
+
+                        k_mul_m = round(ratio)
+                        int_err = abs(ratio-k_mul_m)
+                        # print(ratio,int_err)
+                        
+                        
+                        
+                        # print((Action_Hash_val[ihash] - dS))
+                        print(ratio)
+                        # print(pow_fac_m_inv)
+
+                        IsCandidate = (IsCandidate and (int_err < rtol))
+
+
+
+                    print(IsCandidate)
+                    
+
+
+
+
+                else:
+
+                    IsCandidate = True
+                    for ihash in range(nhash):
+                        IsCandidate = (IsCandidate and ((abs(This_Action_Hash[ihash]-Action_Hash_val[ihash])) < ((abs(This_Action_Hash[ihash])+abs(Action_Hash_val[ihash]))*rtol)))
 
                 if IsCandidate:
                     file_path_list.append(store_folder+'/'+file_root)
-                        
+
+                            
     return file_path_list
 
 def TangentLagrangeResidual(

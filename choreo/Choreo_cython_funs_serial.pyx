@@ -613,7 +613,7 @@ def Compute_action_Cython_2D_serial(
             Action_grad[il,idim,k,0] = b*all_coeffs[il,idim,k,0] - grad_pot_fft[il,idim,k].real
 
     Action = Kin_en-Pot_en/nint
-    
+
     return Action,Action_grad_np
 
 @cython.cdivision(True)
