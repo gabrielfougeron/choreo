@@ -3181,6 +3181,8 @@ def ReadHashFromFile(filename):
 def SelectFiles_Action(store_folder,hash_dict,Action_Hash_val=np.ones((nhash)),rtol=1e-5,detect_multiples = True):
     # Creates a list of possible duplicates based on value of the action and hashes
 
+    all_test = np.zeros(nhash)
+
     file_path_list = []
     for file_path in os.listdir(store_folder):
         file_path = os.path.join(store_folder, file_path)
@@ -3198,37 +3200,39 @@ def SelectFiles_Action(store_folder,hash_dict,Action_Hash_val=np.ones((nhash)),r
 
                     hash_dict[file_root] = This_Action_Hash
 
-            # print(This_Action_Hash)
-
             if not(This_Action_Hash is None):
+
+                # print('')
+                # print(file_root)
 
                 if detect_multiples:
 
                     T_val = n/(n-1) * Action_Hash_val[0]
                     This_T = n/(n-1) * This_Action_Hash[0]
 
-                    IsCandidate = True
-                    ihash = 0
-                    while ((IsCandidate) and (ihash < nhash)) :
+                    pow_fac_m = (2*hash_exp[0])/(n-1)
+                    pow_fac_m_inv = 1./pow_fac_m
 
-                        pow_fac_m = -(2*hash_exp[ihash])/(n-1)
+                    refval = ((Action_Hash_val[0] - T_val) / (This_Action_Hash[0]-This_T)) ** pow_fac_m_inv
+
+                    all_test[0] = 0.
+
+                    for ihash in range(1,nhash):
+
+                        pow_fac_m = (2*hash_exp[ihash])/(n-1)
                         pow_fac_m_inv = 1./pow_fac_m
 
-                        ratio = ((Action_Hash_val[ihash] - T_val) / (This_Action_Hash[ihash]-This_T)) ** pow_fac_m_inv
-
-                        k_mul_m = round(ratio)
-                        int_err = abs(ratio-k_mul_m)
-
-                        IsCandidate = (IsCandidate and (int_err < rtol))
-                        ihash += 1
+                        all_test[ihash] = ((Action_Hash_val[ihash] - T_val) / (This_Action_Hash[ihash]-This_T)) ** pow_fac_m_inv - refval
 
                 else:
 
-                    IsCandidate = True
-                    ihash = 0
-                    while ((IsCandidate) and (ihash < nhash)) :
-                        IsCandidate = (IsCandidate and ((abs(This_Action_Hash[ihash]-Action_Hash_val[ihash])) < ((abs(This_Action_Hash[ihash])+abs(Action_Hash_val[ihash]))*rtol)))
-                        ihash += 1
+                    for ihash in range(nhash):
+                        all_test[ihash] = abs(This_Action_Hash[ihash]-Action_Hash_val[ihash]) / (abs(This_Action_Hash[ihash])+abs(Action_Hash_val[ihash]))
+
+                IsCandidate = np.all(all_test < rtol)
+
+
+                # print(IsCandidate)
 
                 if IsCandidate:
                     file_path_list.append(store_folder+'/'+file_root)
