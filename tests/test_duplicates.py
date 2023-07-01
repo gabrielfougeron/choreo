@@ -30,13 +30,13 @@ def main():
         os.makedirs(store_folder)
 
 
-    Action_Hash_val = np.array([
-        10.624096524001287,
-        7.771489060335682,
-        9.506013930674246,
-        11.951765432717714,
-        15.400375776702386
-    ])
+    # Action_Hash_val = np.array([
+    #     10.624096524001287,
+    #     7.771489060335682,
+    #     9.506013930674246,
+    #     11.951765432717714,
+    #     15.400375776702386
+    # ])
     # Action_Hash_val = np.array([
     #     13.207782336993958,
     #     8.940998633639229,
@@ -44,14 +44,22 @@ def main():
     #     15.505419300517392,
     #     22.332968571854142
     # ])
+    Action_Hash_val = np.array([
+        16.86470199841179,
+        10.710511871983888,
+        14.25401950708666,
+        20.26492411682021,
+        30.461310846566093
+    ])
 
 
     hash_dict = {}
     choreo.SelectFiles_Action(store_folder,hash_dict,Action_Hash_val=Action_Hash_val)
 
 
+    # exit()
 
-    file_basename = '00005'
+    file_basename = '00001'
     all_pos_filename = os.path.join(store_folder,file_basename+'.npy')
     all_pos = np.load(all_pos_filename)
     c_coeffs = choreo.default_rfft(all_pos,axis=2,norm="forward") 
