@@ -79,6 +79,8 @@ def main():
 
                 Already_in = Already_in or IsCandidate
             
+            # print(key_new,Already_in)
+
             if not(Already_in):
 
                 n_master += 1
