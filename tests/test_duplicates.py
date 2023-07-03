@@ -29,16 +29,17 @@ def main():
 #         os.makedirs(store_folder)
 # 
 
+    # store_folder =  os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/','copy_cst1')
     store_folder =  os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/','fuse')
 
 
     Action_Hash_val = np.array(
- [
-        13.599048114713534,
-        9.140860967815005,
-        11.736692511970874,
-        15.991336148811968,
-        23.06132952834298
+[
+        18.28667345592079,
+        11.104642243102774,
+        14.995783927492775,
+        23.13391159631504,
+        41.62406449398281
     ]
     )
 
@@ -47,7 +48,10 @@ def main():
     only_Action = False
 
     hash_dict = {}
-    choreo.SelectFiles_Action(store_folder,hash_dict,Action_Hash_val=Action_Hash_val,rtol=rtol,detect_multiples=detect_multiples,only_Action=only_Action)
+    file_path_list = choreo.SelectFiles_Action(store_folder,hash_dict,Action_Hash_val=Action_Hash_val,rtol=rtol,detect_multiples=detect_multiples,only_Action=only_Action)
+
+
+    print(file_path_list)
 
 
     # exit()

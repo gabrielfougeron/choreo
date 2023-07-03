@@ -3200,12 +3200,7 @@ def SelectFiles_Action(store_folder, hash_dict, Action_Hash_val = np.ones((nhash
 
             if not(This_Action_Hash is None):
 
-                # print('')
-                # print(file_root)
-
                 IsCandidate = TestHashSame(Action_Hash_val, This_Action_Hash, rtol = rtol, detect_multiples = detect_multiples, only_Action = only_Action)
-                
-                # print(IsCandidate)
 
                 # print(file_root, IsCandidate)
 

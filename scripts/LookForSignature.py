@@ -22,8 +22,8 @@ import datetime
 
 def main():
     
-    now = datetime.datetime.now()    
-    print("now =", now)
+    # now = datetime.datetime.now()    
+    # print("now =", now)
 
     nbody = 3
 
@@ -57,15 +57,28 @@ def main():
 #             input_names_list.append(file_root)
 
 
+    rtol = 1e-5
+    detect_multiples = True
+    only_Action = True
+
+
+    ext_list = [
+        '.json',
+        '.png',
+        '.npy',
+        # '.mp4',
+        # '_thumb.png',
+        ]
+
     input_folder = store_folder
 
-    input_names_list = ['00002','00014']
+    input_names_list = ['00002','00023']
     hash_dict = {}
     choreo.SelectFiles_Action(store_folder,hash_dict)
-
+    hash_dict_copy = {}
+    choreo.SelectFiles_Action(copy_folder,hash_dict_copy)
 
     file_list = []
-
 
     for key, value in hash_dict.items():
 
@@ -89,21 +102,27 @@ def main():
 
 
     for the_file in file_list:
+        
+        the_hash = hash_dict[the_file]
 
-        ext_list = [
-            '.json',
-            '.png',
-            '.npy',
-            # '.mp4',
-            # '_thumb.png',
-            ]
+        Already_in = False
 
-        for ext in ext_list:
+        for key_master, val_master in hash_dict_copy.items():
 
-            filename = the_file + ext
+            IsCandidate = choreo.TestHashSame(the_hash, val_master, rtol = rtol, detect_multiples = detect_multiples, only_Action = only_Action)
+
+            Already_in = Already_in or IsCandidate
+
+        if not(Already_in):
             
-            source = os.path.join(store_folder,filename)
-            shutil.copy(source,copy_folder)
+            print(f'Found new : {the_file}')
+
+            for ext in ext_list:
+
+                filename = the_file + ext
+                
+                source = os.path.join(store_folder,filename)
+                shutil.copy(source,copy_folder)
 
 
 
