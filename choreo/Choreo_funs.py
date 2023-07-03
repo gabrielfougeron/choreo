@@ -3177,14 +3177,12 @@ def ReadHashFromFile(filename):
     else:
         return np.array(the_hash)
 
-# def SelectFiles_Action(store_folder,hash_dict,Action_Hash_val=np.zeros((nhash)),rtol=1e-5,detect_multiples = False):
-def SelectFiles_Action(store_folder,hash_dict,Action_Hash_val=np.ones((nhash)),rtol=1e-5,detect_multiples = True):
+def SelectFiles_Action(store_folder, hash_dict, Action_Hash_val = np.ones((nhash)), rtol = 1e-5, detect_multiples = True, only_Action = False):
     # Creates a list of possible duplicates based on value of the action and hashes
-
-    all_test = np.zeros(nhash)
 
     file_path_list = []
     for file_path in os.listdir(store_folder):
+
         file_path = os.path.join(store_folder, file_path)
         file_root, file_ext = os.path.splitext(os.path.basename(file_path))
         
@@ -3205,40 +3203,59 @@ def SelectFiles_Action(store_folder,hash_dict,Action_Hash_val=np.ones((nhash)),r
                 # print('')
                 # print(file_root)
 
-                if detect_multiples:
-
-                    T_val = n/(n-1) * Action_Hash_val[0]
-                    This_T = n/(n-1) * This_Action_Hash[0]
-
-                    pow_fac_m = (2*hash_exp[0])/(n-1)
-                    pow_fac_m_inv = 1./pow_fac_m
-
-                    refval = ((Action_Hash_val[0] - T_val) / (This_Action_Hash[0]-This_T)) ** pow_fac_m_inv
-
-                    all_test[0] = 0.
-
-                    for ihash in range(1,nhash):
-
-                        pow_fac_m = (2*hash_exp[ihash])/(n-1)
-                        pow_fac_m_inv = 1./pow_fac_m
-
-                        all_test[ihash] = ((Action_Hash_val[ihash] - T_val) / (This_Action_Hash[ihash]-This_T)) ** pow_fac_m_inv - refval
-
-                else:
-
-                    for ihash in range(nhash):
-                        all_test[ihash] = abs(This_Action_Hash[ihash]-Action_Hash_val[ihash]) / (abs(This_Action_Hash[ihash])+abs(Action_Hash_val[ihash]))
-
-                IsCandidate = np.all(all_test < rtol)
-
-
+                IsCandidate = TestHashSame(Action_Hash_val, This_Action_Hash, rtol = rtol, detect_multiples = detect_multiples, only_Action = only_Action)
+                
                 # print(IsCandidate)
+
+                # print(file_root, IsCandidate)
 
                 if IsCandidate:
                     file_path_list.append(store_folder+'/'+file_root)
 
-                            
     return file_path_list
+
+def TestHashSame(ActionHash_a, ActionHash_b, rtol = 1e-5, detect_multiples = True, only_Action = False):
+
+    if only_Action:
+
+        IsSame = abs(ActionHash_a[0] - ActionHash_b[0]) < rtol * (abs(ActionHash_b[0])+abs(ActionHash_a[0]))
+
+    else:
+
+        all_test = np.zeros(nhash)
+
+        if detect_multiples:
+
+            T_val = n/(n-1) * ActionHash_a[0]
+            This_T = n/(n-1) * ActionHash_b[0]
+
+            pow_fac_m = (2*hash_exp[0])/(n-1)
+            pow_fac_m_inv = 1./pow_fac_m
+
+            refval = ((ActionHash_a[0] - T_val) / (ActionHash_b[0]-This_T)) ** pow_fac_m_inv
+
+            all_test[0] = 0.
+
+            # print(refval)
+
+            for ihash in range(1,nhash):
+
+                pow_fac_m = (2*hash_exp[ihash])/(n-1)
+                pow_fac_m_inv = 1./pow_fac_m
+
+                all_test[ihash] = ((ActionHash_a[ihash] - T_val) / (ActionHash_b[ihash]-This_T)) ** pow_fac_m_inv - refval
+
+        else:
+
+            for ihash in range(nhash):
+
+                all_test[ihash] = (ActionHash_b[ihash]-ActionHash_a[ihash]) / (ActionHash_b[ihash] + ActionHash_a[ihash])
+
+        # print(np.linalg.norm(all_test,  np.inf))
+        IsSame = ( np.linalg.norm(all_test,  np.inf)  < rtol )
+
+    return IsSame
+
 
 def TangentLagrangeResidual(
         x,
