@@ -1181,28 +1181,4 @@ function canvasApp() {
 
 	}
 
-	
-
-// 
-// 	document.onkeyup = function (event) {
-// 
-// 		switch (event.code) {
-// 			case 'Space':
-// 				startStopButtonHandler();
-// 				break;
-// 			case 'Enter':
-// 			case 'NumpadEnter':
-// 				ChoreoExecuteClick();
-// 				break;
-// 			case 'ArrowRight':
-// 				SpeedPlusClick();
-// 				break;
-// 			case 'ArrowDown':
-// 				SpeedMinusClick();
-// 				break;
-// 
-// 		  }
-// 
-// 	}
-
 }
