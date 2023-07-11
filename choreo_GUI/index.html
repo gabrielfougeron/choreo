@@ -70,12 +70,12 @@ window.addEventListener("drop",function(e){
 <div class="content">
 <div id="AnimationAndMenuBlock">
   <div class="w3-bar-block w3-light-grey open LeftTab" style="width:130px; position:absolute;">
-    <button class="w3-bar-item w3-button w3-hover-grey"                             style="text-align: center" onclick="OpenCloseLeftTab()" >&#9776;</button>
-    <button class="w3-bar-item w3-button w3-hover-pale-red LeftTabBtn Main"         style="text-align: center" onclick="ClickLeftTabBtn('Main')"        >Main</button>
-    <button class="w3-bar-item w3-button w3-hover-pale-red LeftTabBtn Play"         style="text-align: center" onclick="ClickLeftTabBtn('Play')"        >Play</button>
-    <button class="w3-bar-item w3-button w3-hover-pale-red LeftTabBtn Geom"         style="text-align: center" onclick="ClickLeftTabBtn('Geom')"        >Geometry</button>
-    <button class="w3-bar-item w3-button w3-hover-pale-red LeftTabBtn Animation"    style="text-align: center" onclick="ClickLeftTabBtn('Animation')"   >Animation</button>
-    <button class="w3-bar-item w3-button w3-hover-pale-red LeftTabBtn Solver"       style="text-align: center" onclick="ClickLeftTabBtn('Solver')"      >Solver</button>
+    <button id="LeftTabOpenClose" class="w3-bar-item w3-button w3-hover-grey"                             style="text-align: center" onclick="OpenCloseLeftTab()" >&#9776;</button>
+    <button id="LeftTabMain"      class="w3-bar-item w3-button w3-hover-pale-red LeftTabBtn Main"         style="text-align: center" onclick="ClickLeftTabBtn('Main')"        >Main</button>
+    <button id="LeftTabPlay"      class="w3-bar-item w3-button w3-hover-pale-red LeftTabBtn Play"         style="text-align: center" onclick="ClickLeftTabBtn('Play')"        >Play</button>
+    <button id="LeftTabGeom"      class="w3-bar-item w3-button w3-hover-pale-red LeftTabBtn Geom"         style="text-align: center" onclick="ClickLeftTabBtn('Geom')"        >Geometry</button>
+    <button id="LeftTabAnimation" class="w3-bar-item w3-button w3-hover-pale-red LeftTabBtn Animation"    style="text-align: center" onclick="ClickLeftTabBtn('Animation')"   >Animation</button>
+    <button id="LeftTabSolver"    class="w3-bar-item w3-button w3-hover-pale-red LeftTabBtn Solver"       style="text-align: center" onclick="ClickLeftTabBtn('Solver')"      >Solver</button>
     <div class="w3-bar-item w3-light-grey" style="height:100px ; text-align: center" >  </div>
     <div class="w3-bar-item w3-button w3-orange" id="Python_State_Div"  style="text-align: center" onclick="ClickStateDiv()" >Loading</div>
     <button id="ChoreoDispInitStateBtn"  class="w3-bar-item w3-button w3-hover-pale-red w3-light-grey LeftTabBtn" style="text-align: center"  disabled="disabled" onclick="GenerateInitStateClick()">Generate initial state</button>
@@ -84,14 +84,14 @@ window.addEventListener("drop",function(e){
   <div id="MarginLeftTop" style="margin-left:130px;">
     <div class="w3-bar w3-light-grey TopTab Main">
       <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Main_About"        onclick="ClickTopTabBtn('Main_About')"        >About</button>
-      <button class="w3-bar-item w3-button w3-hover-pale- TopTabBtn Main_Help"            onclick="ClickTopTabBtn('Main_Help')"         >Help</button>
+      <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Main_Help"            onclick="ClickTopTabBtn('Main_Help')"         >Help</button>
       <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Main_Save_Config"  onclick="ClickTopTabBtn('Main_Save_Config')"  >Save settings</button>
     </div>
     <div class="w3-bar w3-light-grey TopTab Play">
-      <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Play_NowPlaying" onclick="ClickTopTabBtn('Play_NowPlaying')"   >Now Playing</button>
-      <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Play_Share" onclick="ClickTopTabBtn('Play_Share')"   >Share</button>
-      <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Play_Gallery"    onclick="ClickTopTabBtn('Play_Gallery')"      >Gallery</button>
-      <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Play_Workspace"  onclick="ClickTopTabBtn('Play_Workspace')"      >Workspace</button>
+      <button id="Play_NowPlaying"  class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Play_NowPlaying" onclick="ClickTopTabBtn('Play_NowPlaying')"   >Now Playing</button>
+      <button id="Play_Share"       class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Play_Share"      onclick="ClickTopTabBtn('Play_Share')"   >Share</button>
+      <button id="Play_Gallery"     class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Play_Gallery"    onclick="ClickTopTabBtn('Play_Gallery')"      >Gallery</button>
+      <button id="Play_Workspace"   class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Play_Workspace"  onclick="ClickTopTabBtn('Play_Workspace')"      >Workspace</button>
     </div>
     <div class="w3-bar w3-light-grey TopTab Geom">
         <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Geom_Bodies"   onclick="ClickTopTabBtn('Geom_Bodies')">Bodies</button>
@@ -790,8 +790,6 @@ window.addEventListener("drop",function(e){
       <button class="w3-bar-item w3-button w3-hover-pale-red" style="text-align: center" 
       onclick="LoadFromRemoteThenSearch('SOME3/config/choreo_4.json')"
       >Search choreo 4</button>     
-
-      
 
     </div>
 
