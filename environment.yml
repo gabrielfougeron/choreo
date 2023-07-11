@@ -1,10 +1,9 @@
 name: choreo
 channels:
   - conda-forge
-  - defaults
   - numba
 dependencies:
-  - python=3.10
+  - python=3.11.2
   - mpmath
   - matplotlib
   - scipy
