@@ -60,7 +60,7 @@ else:
     # print(platform.system())
     # print( os.environ)
 
-    if ("PYODIDE_ROOT" in os.environ): # Building for Pyodide
+    if ("PYODIDE" in os.environ): # Building for Pyodide
 
         extra_compile_args_std = ["-O3"]
         extra_compile_args_safe = ["-O2"]
