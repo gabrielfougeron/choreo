@@ -175,36 +175,36 @@ async function Plot_Loops_During_Optim_From_Python(args){
 
 async function Python_Imports_Done(args){
 
-	var trailLayerCanvas = document.getElementById("trailLayerCanvas");
+	var trailLayerCanvas = document.getElementById("trailLayerCanvas")
 
-    PythonPrint({txt:"&#10;All python packages imported&#10;"});
+    PythonPrint({txt:"&#10;All python packages imported&#10;"})
 
     SearchIsOnGoing = false
-    var ChoreoExecuteBtn = document.getElementById("ChoreoExecuteBtn");
-    ChoreoExecuteBtn.disabled = "";
-    var ChoreoDispInitStateBtn = document.getElementById("ChoreoDispInitStateBtn");
-    ChoreoDispInitStateBtn.disabled = "";
-    var ChoreoSearchNext = document.getElementById("ChoreoSearchNext");
-    ChoreoSearchNext.disabled = "disabled";
+    var ChoreoExecuteBtn = document.getElementById("ChoreoExecuteBtn")
+    ChoreoExecuteBtn.disabled = ""
+    var ChoreoDispInitStateBtn = document.getElementById("ChoreoDispInitStateBtn")
+    ChoreoDispInitStateBtn.disabled = ""
+    var ChoreoSearchNext = document.getElementById("ChoreoSearchNext")
+    ChoreoSearchNext.disabled = "disabled"
     AskForNext[0] = 0
 
-    var RotSlider = $("#RotSlider").data("roundSlider");
-    RotSlider.enable();
+    var RotSlider = $("#RotSlider").data("roundSlider")
+    RotSlider.enable()
     
-    var Python_State_Div = document.getElementById("Python_State_Div");
+    var Python_State_Div = document.getElementById("Python_State_Div")
 
-    Python_State_Div.innerHTML = "Find solution!";
-    Python_State_Div.classList.remove('w3-red');
-    Python_State_Div.classList.remove('w3-orange');
-    Python_State_Div.classList.add('w3-green');
-    Python_State_Div.classList.add('w3-hover-pale-green');
+    Python_State_Div.innerHTML = "Find solution!"
+    Python_State_Div.classList.remove('w3-red')
+    Python_State_Div.classList.remove('w3-orange')
+    Python_State_Div.classList.add('w3-green')
+    Python_State_Div.classList.add('w3-hover-pale-green')
 
-    var event = new Event('EnableAnimationFromOutsideCanvas');
-    trailLayerCanvas.dispatchEvent(event);
+    var event = new Event('EnableAnimationFromOutsideCanvas')
+    trailLayerCanvas.dispatchEvent(event)
 
 }
 
-pyodide_worker.addEventListener('message', handleMessageFromWorker);
+pyodide_worker.addEventListener('message', handleMessageFromWorker)
 
 Python_textarea = document.getElementById("Python_textarea")
 
@@ -1012,11 +1012,11 @@ function ClickAddColLoopKrylov() {
         "elem_class":"select", 
         "class":"w3-select",  
         "innerHTML":[
-            "<option value='True' selected>True</option><option value='False'>False</option>",
-            "<option value='True' selected>True</option><option value='False'>False</option>",
-            "<option value='True' selected>True</option><option value='False'>False</option>",
-            "<option value='True' selected>True</option><option value='False'>False</option>",
-            "<option value='True' selected>True</option><option value='False'>False</option>",
+            "<option value='True'>True</option><option value='False' selected>False</option>",
+            "<option value='True'>True</option><option value='False' selected>False</option>",
+            "<option value='True'>True</option><option value='False' selected>False</option>",
+            "<option value='True'>True</option><option value='False' selected>False</option>",
+            "<option value='True'>True</option><option value='False' selected>False</option>",
             "<option value='True'>True</option><option value='False' selected>False</option>",
             "<option value='True'>True</option><option value='False' selected>False</option>",
             "<option value='True'>True</option><option value='False' selected>False</option>",
@@ -1939,6 +1939,7 @@ async function MakeDirectoryTree_Workspace(cur_directory,cur_treenode,click_call
         if ((!(files_here[basename]['.npy'] === undefined)) && (!(files_here[basename]['.json'] === undefined))) {
 
             var new_node = new TreeNode(basename,{expanded:false})
+            new_node.path_str = cur_treenode.path_str + basename
 
             new_node.on("click", (e,node)  => click_callback(cur_treenode.path_str + basename,files_here[basename]['.npy'],files_here[basename]['.json']));
 
@@ -1957,6 +1958,7 @@ async function LoadWorkspaceGallery() {
     await MakeDirectoryTree_Workspace(UserWorkspace,WorkspaceTree,PlayFileFromDisk)
 
     var WorkspaceView = new TreeView(WorkspaceTree, "#WorkspaceGalleryContainer",{leaf_icon:" ",parent_icon:" ",show_root:false})
+    document.getElementById('WorkspaceGalleryContainer').TreeView = WorkspaceView 
 
     var WorkspaceTree_Target = new TreeNode("Workspace",{expanded:true})
     WorkspaceTree_Target.path_str = "Workspace/"
@@ -2257,7 +2259,6 @@ function MakeDirectoryTree_DefaultGallery(cur_directory,cur_treenode,click_callb
 
         var new_node = new TreeNode(the_dir.name,{expanded:false})
         new_node.path_str = cur_treenode.path_str + the_dir.name + "/"
-
         cur_treenode.addChild(new_node)
 
         MakeDirectoryTree_DefaultGallery(the_dir,new_node,click_callback)
@@ -2272,13 +2273,8 @@ function MakeDirectoryTree_DefaultGallery(cur_directory,cur_treenode,click_callb
         cur_treenode.addChild(new_node)
 
         new_node.on("click", async (e,node)  => {
-            // UpdateURL(cur_treenode.path_str+ basename)
-            // console.log(cur_treenode.path_str+ basename)
-            // console.log(cur_directory.files[basename]['.npy'])
-            // console.log(cur_directory.files[basename]['.json'])
             await click_callback(cur_treenode.path_str + basename,cur_directory.files[basename]['.npy'],cur_directory.files[basename]['.json'])
-        }
-        )
+        })
 
     }
 
@@ -2664,24 +2660,6 @@ function InitPage(){
 
     const hash_url = window.location.hash
 
-//     availHeight = window.screen.availHeight
-//     availWidth = window.screen.availWidth
-// 
-//     console.log("availHeight",availHeight)
-//     console.log("availWidth",availWidth)
-// 
-//     height = window.screen.height
-//     width = window.screen.width
-// 
-//     console.log("height",height)
-//     console.log("width",width)
-// 
-//     innerHeight = window.innerHeight
-//     innerWidth = window.innerWidth
-// 
-//     console.log("innerHeight",innerHeight)
-//     console.log("innerWidth",innerWidth)
-
     if (hash_url.startsWith("#SOME3")) {
         LoadSOME3()
     } else {
@@ -2747,5 +2725,148 @@ async function LoadFromRemoteThenSearch(config_filename) {
 
     await LoadConfigFileFromRemote(config_filename)
     ChoreoExecuteClick()
+
+}
+
+window.addEventListener("keydown", function (event) {
+
+    // console.log("Key press : ", event.code)
+
+    switch (event.code) {
+        case 'Space':
+            startStopButton.click()
+            break
+        case 'ArrowLeft':
+        case 'ArrowRight':
+        case 'ArrowDown':
+        case 'ArrowUp':
+            GalleryKeyboardSelect(event.code)
+            break
+
+      }
+
+})
+
+
+function GalleryKeyboardSelect(keycode){
+
+    // Am I currently in a gallery ?
+
+    var The_Gallery_View
+    var FoundGallery = false
+
+    if (document.getElementById("LeftTabPlay").classList.contains("w3-red")) {
+
+        if (document.getElementById("Play_Gallery").classList.contains("w3-red")) {
+
+            FoundGallery = true
+            The_Gallery_View = document.getElementById('DefaultGalleryContainer').TreeView
+
+        } else if  (WorkspaceIsSetUp && document.getElementById("Play_Workspace").classList.contains("w3-red")) {
+
+            FoundGallery = true
+            The_Gallery_View = document.getElementById('WorkspaceGalleryContainer').TreeView
+
+        }
+
+    }
+
+    if (FoundGallery) {
+
+        var SelectedNodes = The_Gallery_View.getSelectedNodes()
+
+        if (SelectedNodes.length == 1) {
+
+            var SelectedNode = SelectedNodes[0]
+
+            switch (keycode) {
+                case 'ArrowLeft':
+
+                    // Count number of "/" SUPER UGLY CODE COPIED FROM STACKOVERFLOW
+                    for(var i=SlashCount=0; i<SelectedNode.path_str.length; SlashCount+=+("/"===SelectedNode.path_str[i++]))
+
+                    IsRoot = (SlashCount <= 1)
+
+                    if (! IsRoot) {
+
+                        SelectedNode.setSelected(false)
+                    
+                        SelectedNode.parent.setSelected(true)
+                        SelectedNode.parent.setExpanded(false)
+
+                        The_Gallery_View.reload()
+
+                    }
+
+                    break
+                case 'ArrowRight':
+                    
+                    if (! SelectedNode.isLeaf()) {
+
+                        FirstChild = SelectedNode.getChildren()[0]
+                        FirstChild.setSelected(true)
+
+                        if (FirstChild.isLeaf()) {
+                                                    
+                            try {
+                                FirstChild.getListener("click")()
+                            } catch(e) {
+
+                            }
+                            
+                        }
+
+                        SelectedNode.setSelected(false)
+                        SelectedNode.setExpanded(true)
+                        
+                    
+                        The_Gallery_View.reload()
+
+                    }
+
+                    break
+                case 'ArrowDown':
+                case 'ArrowUp':
+                    
+                    var dId
+                    if (keycode == 'ArrowUp') {
+                        dId = -1
+                    } else {
+                        dId = 1
+                    }
+
+                    MyId = SelectedNode.parent.getIndexOfChild(SelectedNode)
+                    Siblings = SelectedNode.parent.getChildren()
+
+                    NextId = MyId + dId
+
+                    if (NextId < 0) {
+
+                    } else if  (NextId > Siblings.length-1) {
+
+                    } else {
+
+                        if (Siblings[NextId].isLeaf()) {
+
+                            try {
+                                Siblings[NextId].getListener("click")()
+                            } catch(e) {
+
+                            }
+                            
+                        }
+
+                        SelectedNode.setSelected(false)
+                        Siblings[NextId].setSelected(true)
+                        The_Gallery_View.reload()    
+
+                    }
+
+                    break
+              }
+
+        }
+
+    }
 
 }
