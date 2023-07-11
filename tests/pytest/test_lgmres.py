@@ -1,6 +1,6 @@
 from pytest_pyodide import run_in_pyodide
 
-@run_in_pyodide(packages=["matplotlib","sparseqr","networkx","./choreo-0.2.0-cp310-cp310-emscripten_3_1_27_wasm32.whl"])
+@run_in_pyodide(packages=["matplotlib","sparseqr","networkx","./choreo-0.2.0-cp311-cp311-emscripten_3_1_32_wasm32.whl"])
 async def test_scipy_lgmres(selenium_standalone):
 
     import numpy as np

@@ -16,7 +16,8 @@ function RedirectPythonPrint(txt) {
 var AskForNext;
 
 // load pyodide.js
-importScripts("https://cdn.jsdelivr.net/pyodide/v0.22.0/full/pyodide.js");
+importScripts("https://cdn.jsdelivr.net/pyodide/v0.23.4/full/pyodide.js");
+// importScripts("https://cdn.jsdelivr.net/pyodide/v0.22.0/full/pyodide.js");
 // importScripts("https://cdn.jsdelivr.net/pyodide/v0.21.2/full/pyodide.js");
 // importScripts("https://cdn.jsdelivr.net/pyodide/v0.21.3/full/pyodide.js");
 // importScripts("https://cdn.jsdelivr.net/pyodide/dev/full/pyodide.js");
@@ -39,7 +40,7 @@ async function loadPyodideAndPackages() {
         "sparseqr",
         "networkx",
         "mpmath",
-        "./python_dist/choreo-0.2.0-cp310-cp310-emscripten_3_1_27_wasm32.whl"
+        "./python_dist/choreo-0.2.0-cp311-cp311-emscripten_3_1_32_wasm32.whl"
     ])
 
 }
