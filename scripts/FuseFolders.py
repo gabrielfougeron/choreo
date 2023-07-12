@@ -32,15 +32,10 @@ def main():
 
     store_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/')
     
-    # nbody = 3
-    # store_folder = store_folder+str(nbody)
-
-    store_folder_a = os.path.join(store_folder,'copy_cst1')
-    store_folder_b = os.path.join(store_folder,'copy_cst2')
-
     folder_list = [
-        store_folder_a,
-        store_folder_b,
+        os.path.join(store_folder,'copy_cst3'),
+        os.path.join(store_folder,'copy_cst1'),
+        os.path.join(store_folder,'copy_cst2'),
     ]
 
 
@@ -52,18 +47,20 @@ def main():
     # os.makedirs(fuse_folder)
 
 
+
+    rtol = 1e-5
+    detect_multiples = True
+    only_Action = False
+
+
     hash_dict_list = []
 
     for folder in folder_list:
 
         hash_dict = {}
-        choreo.SelectFiles_Action(folder,hash_dict)
+        choreo.SelectFiles_Action(folder,hash_dict, rtol = rtol, detect_multiples = detect_multiples, only_Action = only_Action)
         hash_dict_list.append(hash_dict)
 
-
-    rtol = 1e-5
-    detect_multiples = True
-    only_Action = False
 
     n_master = 0
     master_hash_dict = {}
@@ -78,6 +75,9 @@ def main():
                 IsCandidate = choreo.TestHashSame(val_new, val_master, rtol = rtol, detect_multiples = detect_multiples, only_Action = only_Action)
 
                 Already_in = Already_in or IsCandidate
+
+                if IsCandidate:
+                    print(f'{folder}/{key_new} already in as {key_master}')
             
             # print(key_new,Already_in)
 
