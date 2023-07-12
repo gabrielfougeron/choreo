@@ -2728,25 +2728,26 @@ async function LoadFromRemoteThenSearch(config_filename) {
 
 }
 
-window.addEventListener("keydown", function (event) {
+window.addEventListener("keydown",
+    function (event) {
 
-    // console.log("Key press : ", event.code)
+        // console.log("Key press : ", event.code)
 
-    switch (event.code) {
-        case 'Space':
-            startStopButton.click()
-            break
-        case 'ArrowLeft':
-        case 'ArrowRight':
-        case 'ArrowDown':
-        case 'ArrowUp':
-            GalleryKeyboardSelect(event.code)
-            break
+        switch (event.code) {
+            case 'Space':
+                startStopButton.click()
+                break
+            case 'ArrowLeft':
+            case 'ArrowRight':
+            case 'ArrowDown':
+            case 'ArrowUp':
+                GalleryKeyboardSelect(event.code)
+                break
 
-      }
+        }
 
-})
-
+    }
+)
 
 function GalleryKeyboardSelect(keycode){
 
@@ -2819,7 +2820,6 @@ function GalleryKeyboardSelect(keycode){
                         SelectedNode.setSelected(false)
                         SelectedNode.setExpanded(true)
                         
-                    
                         The_Gallery_View.reload()
 
                     }
@@ -2863,7 +2863,7 @@ function GalleryKeyboardSelect(keycode){
                     }
 
                     break
-              }
+            }
 
         }
 
