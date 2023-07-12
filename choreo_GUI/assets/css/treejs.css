@@ -60,6 +60,11 @@
 	color: #fff;
 }
 
+.tj_container span.tj_description.selected{
+	background-color:#f44336!important;
+	color: #fff;
+}
+
 .tj_container span.tj_description.selected:hover{
 	background-color: #ffdddd!important;
 	color:#000!important;
