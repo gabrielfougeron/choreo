@@ -11,9 +11,6 @@ import numpy
 import platform
 import multiprocessing
 
-
-__version__ = "0.2.0"
-
 # To buid and use inplace, run the following command :
 # python setup.py build_ext --inplace
 
@@ -55,7 +52,6 @@ if platform.system() == "Windows":
     cython_safemath_needed.append(False)
 
 else:
-
 
     # print(platform.system())
     # print( os.environ)
@@ -99,10 +95,8 @@ else:
 
 nthreads = multiprocessing.cpu_count()
 
-
 define_macros = [("NPY_NO_DEPRECATED_API", "NPY_1_7_API_VERSION")]
 # define_macros = []
-
 
 compiler_directives = {
     'np_pythran' : use_Pythran,
@@ -134,6 +128,8 @@ include_dirs = [numpy.get_include()]
 if use_Pythran:
     include_dirs.append(pythran.get_include())
 
+Cython.Compiler.Options.cimport_from_pyx = True
+
 extensions = [
     setuptools.Extension(
     name = name,
@@ -155,17 +151,15 @@ ext_modules = Cython.Build.cythonize(
     nthreads = nthreads,
 )
 
+package_data = {"choreo":["choreo.h","*.pyx"]}
+
 setuptools.setup(
-    name = "choreo",
-    author = "Gabriel Fougeron <gabriel.fougeron@hotmail.fr>",
-    url = "https://github.com/gabrielfougeron/choreo",
-    version = __version__,
-    description="A set of tools to compute periodic solutions to the Newtonian N-body problem",
-    license = "BSD 2-Clause License",
-    platforms=['any'],
-    packages = setuptools.find_packages(),
+    platforms = ['any'],
     ext_modules = ext_modules,
-    zip_safe=False,
-    package_data={"choreo": ["choreo.h"]},
-    provides=['choreo'],
+    zip_safe = False,
+    packages = setuptools.find_packages(),
+    package_data = package_data,
+    provides = ['choreo'],
 )
+
+
