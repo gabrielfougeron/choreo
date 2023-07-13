@@ -37,6 +37,7 @@ dependencies = [
   "matplotlib",
   "sparseqr==1.2",
   "networkx",
+  "mpmath",
 ]
 
 [project.optional-dependencies]
