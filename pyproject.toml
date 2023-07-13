@@ -1,4 +1,52 @@
 [build-system]
-requires = ["setuptools>=42", "wheel", "Cython"]
-
+requires = [
+    "setuptools>=42",
+    "wheel",
+    "Cython",
+    "numpy",
+    "scipy",
+]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "choreo"  # as it would appear on PyPI
+version = "0.2.0"
+description="A set of tools to compute periodic solutions to the Newtonian N-body problem"
+readme = {file = "README.md", content-type = "text/markdown"}
+license = {file = "LICENSE"}
+keywords = ["ODE","periodic","N-body","gravitation"]
+authors = [
+  {name = "Gabriel Fougeron", email = "gabriel.fougeron@hotmail.fr"},
+]
+classifiers = [
+  "Development Status :: 2 - Pre-Alpha",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Cython",
+  "Programming Language :: JavaScript",
+  "Environment :: WebAssembly :: Emscripten",
+  "Intended Audience :: Education",
+  "License :: OSI Approved :: BSD License",
+  "Natural Language :: English",
+  "Topic :: Scientific/Engineering :: Mathematics",
+  "Topic :: Scientific/Engineering :: Physics",
+]
+dependencies = [
+  "scipy",
+  "numpy",
+  "matplotlib",
+]
+
+[project.optional-dependencies]
+gui = []
+cli = [
+  "numba",
+  "mkl_fft",
+]
+
+[project.urls]
+Homepage = "https://gabrielfougeron.github.io/choreo/"
+Documentation = "https://gabrielfougeron.github.io/choreo-docs/"
+Repository = "https://github.com/gabrielfougeron/choreo"
+Changelog = "https://github.com/gabrielfougeron/choreo/releases/"
+
+
