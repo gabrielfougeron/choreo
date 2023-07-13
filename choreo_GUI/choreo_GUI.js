@@ -2741,7 +2741,7 @@ window.addEventListener("keydown",
             case 'ArrowRight':
             case 'ArrowDown':
             case 'ArrowUp':
-                GalleryKeyboardSelect(event.code)
+                GalleryKeyboardSelect(event)
                 break
 
         }
@@ -2749,8 +2749,9 @@ window.addEventListener("keydown",
     }
 )
 
-function GalleryKeyboardSelect(keycode){
+function GalleryKeyboardSelect(event){
 
+    keycode = event.code
     // Am I currently in a gallery ?
 
     var The_Gallery_View
@@ -2773,6 +2774,8 @@ function GalleryKeyboardSelect(keycode){
     }
 
     if (FoundGallery) {
+
+        event.preventDefault()
 
         var SelectedNodes = The_Gallery_View.getSelectedNodes()
 
