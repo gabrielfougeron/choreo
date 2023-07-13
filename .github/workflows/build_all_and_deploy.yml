@@ -28,38 +28,33 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v3
     # 
-    - name: Setup Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: 3.11.2
-    # 
+    # - name: Setup Python
+    #   uses: actions/setup-python@v4
+    #   with:
+    #     python-version: 3.11.2
+    # # 
     - name: Setup Emscripten
       uses: mymindstorm/setup-emsdk@v11
       with:
         version: 3.1.32
     # 
-    - name: Install dependencies
+    - name: Build for Ubuntu
       run: |
-        sudo apt-get install libsuitesparse-dev    
-        python -m pip install --upgrade pip
-        pip install -r build_requirements.txt
+        pip install .
+        pip install .[gui,cli,docs]
+        python -m build
+        pip install -e .
     #
+    - name: Build for Pyodide
+      run: |
+        pyodide build
+        cp ./dist/choreo-0.2.0-cp311-cp311-emscripten_3_1_32_wasm32.whl ./choreo_GUI/python_dist/choreo-0.2.0-cp311-cp311-emscripten_3_1_32_wasm32.whl
+    # 
     - name: Make Gallery Descriptor 
       run: |
         cd choreo_GUI
         python MakeGalleryDescriptor.py
-        cd ..
-    # 
-    - name: Build for Ubuntu
-      run: |
-        python setup.py build_ext --inplace    
-    # 
-    - name: Build for Pyodide
-      run: pyodide build
-    #
-    - name: Copy generated Emscripten whl
-      run: |
-        cp ./dist/choreo-0.2.0-cp311-cp311-emscripten_3_1_32_wasm32.whl ./choreo_GUI/python_dist/choreo-0.2.0-cp311-cp311-emscripten_3_1_32_wasm32.whl
+        cd .. 
     # 
     - name: Setup Pages
       uses: actions/configure-pages@v1
