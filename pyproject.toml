@@ -45,7 +45,6 @@ gui = [
 ]
 cli = [
   "numba",
-  "mkl_fft",
 ]
 docs = [
   "Sphinx==5.1.1",
