@@ -5,6 +5,7 @@ requires = [
     "Cython",
     "numpy",
     "scipy",
+    "build",
 ]
 build-backend = "setuptools.build_meta"
 
@@ -34,14 +35,24 @@ dependencies = [
   "scipy",
   "numpy",
   "matplotlib",
+  "sparseqr==1.2",
+  "networkx",
 ]
 
 [project.optional-dependencies]
-gui = []
+gui = [
+  "pyodide-build==0.23.4",
+]
 cli = [
   "numba",
   "mkl_fft",
 ]
+docs = [
+  "Sphinx==5.1.1",
+  "sphinx-rtd-theme==1.0.0",
+  "sphinx-gallery==0.11.1",
+]
+
 
 [project.urls]
 Homepage = "https://gabrielfougeron.github.io/choreo/"
