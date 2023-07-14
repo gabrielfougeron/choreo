@@ -48,6 +48,9 @@ jobs:
         sudo apt-get update
         sudo apt-get install libsuitesparse-dev
     # 
+    - name: Run setup.py
+      run: python setup.py build_ext
+    # 
     - name: Build for Ubuntu
       run: python -m build
     #
