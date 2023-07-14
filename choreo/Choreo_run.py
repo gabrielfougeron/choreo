@@ -1,7 +1,7 @@
 import os
 import sys
 import multiprocessing
-from choreo.Choreo_find import ChoreReadDictAndFind
+from choreo.Choreo_find import ChoreoReadDictAndFind
 
 __PROJECT_ROOT__ = os.path.abspath(os.path.join(os.path.dirname(__file__),os.pardir))
 
@@ -12,12 +12,12 @@ def GUI_in_CLI(cli_args):
     parser = argparse.ArgumentParser(
         description = 'Searches periodic solutions to the N-body problem as defined in choreo_GUI')
 
-    default_Workspace = 'Sniff_all_sym/'
+    default_Workspace = './'
     parser.add_argument(
         '-f', '--foldername',
         default = default_Workspace,
         dest = 'Workspace_folder',
-        help = f'Workspace folder as defined in the GUI. Defaults to "{default_Workspace}".',
+        help = f'Workspace folder as defined in the GUI. Defaults to the current directory.',
         metavar = '',
     )
 
@@ -46,7 +46,8 @@ def GUI_in_CLI(cli_args):
         os.environ['MKL_NUM_THREADS'] = '1'
 
         sys.path.append(__PROJECT_ROOT__)
-        ChoreReadDictAndFind(Workspace_folder)
+
+        ChoreoReadDictAndFind(Workspace_folder)
 
     else:
 

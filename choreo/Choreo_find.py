@@ -121,6 +121,7 @@ def Find_Choreo(
     print(f'Searching periodic solutions of {nbody:d} bodies.')
 
     print(f'Processing symmetries for {(n_reconverge_it_max+1):d} convergence levels.')
+
     ActionSyst = setup_changevar(geodim,nbody,nint_init,mass,n_reconverge_it_max,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change,CrashOnIdentity=CrashOnError_changevar)
 
     ActionSyst.SetBackend(parallel=ParallelBackend,TwoD=TwoDBackend,GradHessBackend=GradHessBackend)
@@ -1164,7 +1165,7 @@ def ChoreoFindFromDict(params_dict,Workspace_folder):
 
     Find_Choreo(**all_kwargs)
 
-def ChoreReadDictAndFind(Workspace_folder,dict_name="choreo_config.json"):
+def ChoreoReadDictAndFind(Workspace_folder,dict_name="choreo_config.json"):
 
     params_filename = os.path.join(Workspace_folder,dict_name)
 
@@ -1198,6 +1199,7 @@ def ChoreReadDictAndFind(Workspace_folder,dict_name="choreo_config.json"):
     else :
 
         os.environ['OMP_NUM_THREADS'] = str(1)
+
         ChoreoFindFromDict(params_dict,Workspace_folder)
 
 
