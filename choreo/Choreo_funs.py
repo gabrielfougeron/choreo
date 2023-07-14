@@ -2330,6 +2330,135 @@ def ComputeGradMulPeriodicityDefault(xv0,grad_xv0,OnePeriodTanIntegrator):
 
 
 
+class ActionSym():
+    r"""
+    This class defines the symmetries of the action
+    Useful to detect loops and constraints.
+
+    Syntax : Giving one ChoreoSym to setup_changevar prescribes the following symmetry / constraint :
+
+    .. math::
+        x_{\text{LoopTarget}}(t) = \text{SpaceRot} \cdot x_{\text{LoopSource}} (\text{TimeRev} * (t - \text{TimeShift}))
+
+    Where SpaceRot is assumed orthogonal (never actually checked, so beware)
+    and TimeShift is defined as a rational fraction.
+
+    cf Palais' principle of symmetric criticality
+    """
+
+    def __init__(
+        self,
+        BodyPerm ,
+        SpaceRot ,
+        TimeRev  ,
+        TimeShift,
+    ):
+        r"""
+        Class constructor
+        """
+
+        self.BodyPerm = BodyPerm
+        self.SpaceRot = SpaceRot
+        self.TimeRev = TimeRev
+        self.TimeShift = TimeShift
+
+    def __str__(self):
+
+        out  = ""
+        out += f"BodyPerm: {self.LoopTarget}\n"
+        out += f"SpaceRot: {self.SpaceRot}\n"
+        out += f"TimeRev: {self.TimeRev}\n"
+        out += f"TimeShift: {self.TimeShift}"
+
+        return out
+    
+    @staticmethod
+    def Identity(nbody, geodim):
+
+        return ActionSym(
+            BodyPerm  = np.array(range(nbody), dtype = np.int_),
+            SpaceRot  = np.identity(geodim, dtype = np.float64),
+            TimeRev   = 1,
+            TimeShift = fractions.Fraction(
+                numerator = 0,
+                denominator = 1
+            )
+        )
+
+    def Inverse(self):
+        r"""
+        Returns the inverse of a symmetry transformation
+        """
+
+        InvPerm = np.empty_like(self.BodyPerm)
+        for ib in range(self.BodyPerm.size):
+            InvPerm[self.BodyPerm[ib]] = ib
+
+        inv_numerator = ((((-self.TimeRev*self.TimeShift.numerator) % self.TimeShift.denominator) + self.TimeShift.denominator) % self.TimeShift.denominator)
+
+        return ChoreoSym(
+            BodyPerm = InvPerm,
+            SpaceRot = self.SpaceRot.T,
+            TimeRev = self.TimeRev,         
+            TimeShift = fractions.Fraction(
+                numerator = inv_numerator,
+                denominator = self.TimeShift.denominator
+            )
+        )
+
+    def Compose(B,A):
+        r"""
+        Returns the composition of two transformations.
+
+        B.Compose(A) returns the composition B o A, i.e. applies A then B.
+        """
+
+        tshift = (B.TimeShift + 
+            fractions.Fraction(
+                numerator = int(B.TimeRev)*A.TimeShift.numerator,
+                denominator = A.TimeShift.denominator 
+            )
+        )
+
+        tshiftmod = fractions.Fraction(
+            numerator = tshift.numerator % tshift.denominator,
+            denominator = tshift.denominator
+        )
+    
+        ComposeBodyPerm = np.empty_like(B)
+        for ib in range(B.BodyPerm.size):
+            ComposeBodyPerm[ib] = B.BodyPerm[A.BodyPerm[ib]]
+
+        return ChoreoSym(
+            BodyPerm = ComposeBodyPerm,
+            SpaceRot = np.matmul(B.SpaceRot,A.SpaceRot),
+            TimeRev = (B.TimeRev * A.TimeRev),
+            TimeShift = tshiftmod
+        )
+
+    def IsIdentity(self, atol = 1e-10):
+        r"""
+        Returns True if the transformation is close to identity.
+        """       
+
+        return ( 
+            np.array_equal(self.BodyPerm, np.array(range(nbody), dtype = np.int_)) and
+            np.allclose(
+                self.SpaceRot,
+                np.identity(self.BodyPerm.size, dtype = np.float64),
+                rtol = 0.,
+                atol = atol
+            ) and
+            (self.TimeRev == 1) and
+            (abs(self.TimeShift % 1) < atol)
+        )
+
+    def IsSame(self, other, atol = 1e-10):
+        r"""
+        Returns True if the two transformations are almost identical.
+        """   
+        return ((self.Inverse()).Compose(other)).IsIdentity(atol = atol)
+
 
 
 class ChoreoSym():
@@ -2491,16 +2620,16 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
 
             iint_target = ((iint_target % nint_min) + nint_min) % nint_min 
 
-            node_source = (Sym.LoopSource, iint     )
-            node_target = (Sym.LoopTarget, iint_dest)
+            node_source = (Sym.LoopSource, iint       )
+            node_target = (Sym.LoopTarget, iint_target)
 
-            if (node_target > node_source)
+            if (node_target < node_source):
 
                 Sym = Sym.Inverse()
                 node_target, node_source = node_source, node_target
 
             if (node_source == node_target):
-                # Add constraint
+                # Symmetry is a constraint
                 if not(Sym.IsIdentity()):
                     SymGraph.nodes[node_source]["Constraint_list"].append(Sym)
 
@@ -2510,9 +2639,9 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
 
                 if edge in SymGraph.edges: # adds constraint instead of adding parallel edge
 
-                    Constraint = Sym.Inverse().Compose(SymGraph.edges[edge]["Sym"])
+                    Sym = Sym.Inverse().Compose(SymGraph.edges[edge]["Sym"])
                     
-                    if not(Constraint.IsIdentity()):
+                    if not(Sym.IsIdentity()):
                         SymGraph.nodes[node_source]["Constraint_list"].append(Sym)
                     
                 else: # Really adds edge
@@ -2539,7 +2668,7 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
             node_beg = Cycle[iedge]
             node_end = Cycle[(iedge+1)%Cycle_len]
             
-            if (ibeg < iend):
+            if (node_beg < node_end): ## order ???
 
                 Constraint = Constraint.Compose(SymGraph.edges[(ibeg,iend)]["Sym"])
                 
