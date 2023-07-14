@@ -1,12 +1,19 @@
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here.
 import pathlib
+import os
 import sys
 sys.path.insert(0, pathlib.Path(__file__).parents[2].resolve().as_posix())
 import sphinx_rtd_theme
 import choreo
 
 from sphinx_gallery.sorting import FileNameSortKey
+from sphinx_pyproject import SphinxConfig
+
+__PROJECT_ROOT__ = os.path.abspath(os.path.join(os.path.dirname(__file__),os.pardir))
+
+config = SphinxConfig(os.path.join(__PROJECT_ROOT__,"pyproject.toml"), globalns=globals())
+
 
 # Configuration file for the Sphinx documentation builder.
 #
@@ -15,11 +22,6 @@ from sphinx_gallery.sorting import FileNameSortKey
 
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
-
-project = 'choreo'
-copyright = '2022, Gabriel Fougeron'
-author = 'Gabriel Fougeron'
-release = '0.1'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
@@ -31,6 +33,9 @@ extensions = [
     'sphinx.ext.autosummary',
     'sphinx.ext.mathjax',
     'sphinx_gallery.gen_gallery',
+    'sphinx_needs',
+    'sphinxcontrib.test_reports',
+    'sphinxcontrib.plantuml'
 ]
 
 templates_path = ['_templates']
