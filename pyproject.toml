@@ -48,18 +48,22 @@ gui = [
 cli = [
   "numba",
 ]
-docs = [
-  "Sphinx==5.1.1",
-  "sphinx-rtd-theme==1.0.0",
-  "sphinx-gallery==0.11.1",
-  "sphinx-needs"
-]
 test = [
   "pytest",
   "pytest-xdist",
   "pytest-cov",
   "pytest-cython",
-  "pytest-envfiles"
+  "pytest-envfiles",
+  "tox",
+]
+docs = [
+  "Sphinx==5.1.1",
+  "sphinx-rtd-theme==1.0.0",
+  "sphinx-gallery==0.11.1",
+  "sphinx-needs",
+  "sphinx-pyproject",
+  "sphinx-test-reports",
+  "sphinxcontrib.plantuml",
 ]
 full = [
   "choreo[gui,cli,docs,test]"
@@ -80,5 +84,21 @@ addopts = "-ra -q"
 testpaths = [
     "tests",
 ]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+]
 
+[tool.tox]
+legacy_tox_ini = """
+    [tox]
+    min_version = 4.0
+    env_list =
+        py311
+        py310
+        py39
+
+    [testenv]
+    deps = pytest
+    commands = pytest
+"""
 
