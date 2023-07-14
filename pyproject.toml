@@ -52,6 +52,17 @@ docs = [
   "Sphinx==5.1.1",
   "sphinx-rtd-theme==1.0.0",
   "sphinx-gallery==0.11.1",
+  "sphinx-needs"
+]
+test = [
+  "pytest",
+  "pytest-xdist",
+  "pytest-cov",
+  "pytest-cython",
+  "pytest-envfiles"
+]
+full = [
+  "choreo[gui,cli,docs,test]"
 ]
 
 [project.scripts]
@@ -62,5 +73,12 @@ Homepage = "https://gabrielfougeron.github.io/choreo/"
 Documentation = "https://gabrielfougeron.github.io/choreo-docs/"
 Repository = "https://github.com/gabrielfougeron/choreo"
 Changelog = "https://github.com/gabrielfougeron/choreo/releases/"
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "-ra -q"
+testpaths = [
+    "tests",
+]
 
 
