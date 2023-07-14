@@ -51,13 +51,13 @@ jobs:
     - name: Build for Ubuntu
       run: python -m build
     #
+    - name: Install locally with pip
+      run:  pip install .[gui,cli,docs]
+    # 
     - name: Build for Pyodide
       run: |
         pyodide build
         cp ./dist/choreo-0.2.0-cp311-cp311-emscripten_3_1_32_wasm32.whl ./choreo_GUI/python_dist/choreo-0.2.0-cp311-cp311-emscripten_3_1_32_wasm32.whl
-    # 
-    - name: Install locally with pip
-      run:  pip install .[gui,cli,docs]
     #
     - name: Make Gallery Descriptor 
       run: |
