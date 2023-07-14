@@ -49,7 +49,7 @@ html_theme = 'sphinx_rtd_theme'
 
 html_static_path = ['_static']
 
-
+tr_report_template = "directives/test_report_template.txt"
 
 # sphinx-gallery configuration
 sphinx_gallery_conf = {

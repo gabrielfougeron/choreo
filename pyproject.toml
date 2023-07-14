@@ -91,6 +91,8 @@ testpaths = [
 filterwarnings = [
     "ignore::DeprecationWarning",
 ]
+junit_family = "xunit2"
+junit_suite_name = "Pytest test results"
 
 [tool.tox]
 legacy_tox_ini = """
