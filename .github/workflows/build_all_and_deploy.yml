@@ -52,7 +52,7 @@ jobs:
       run: python -m build
     # 
     - name: Install locally with pip
-      run:  pip install .[gui,cli,docs]
+      run:  pip install .[full]
     #
     - name: Run setup.py
       run: python setup.py build_ext
