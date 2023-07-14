@@ -868,51 +868,95 @@ def Assemble_Cstr_Matrix(
              
     # Symmetry constraints on loops
     for il in range(nloop):
-
+        
         for ilcstr in range(loopncstr[il]):
             
             for k in range(ncoeff):
                 
                 dt = TimeShiftNumCstr[il,ilcstr]/TimeShiftDenCstr[il,ilcstr]
-                c = ccos( - ctwopi * k*dt)
-                s = csin( - ctwopi * k*dt)                        
+                
+                if (TimeRevsCstr[il,ilcstr] == 1):
+
+                    c = ccos( - ctwopi * k*dt)
+                    s = csin( - ctwopi * k*dt)                        
+                        
+                    for idim in range(geodim):
+                            
+                        for jdim in range(geodim):
+
+                            val = SpaceRotsCstr[il,ilcstr,idim,jdim]*c
+                            
+                            if (idim == jdim):
+                                val -=1.
+
+                            if (cfabs(val) > eps_zero):
+
+                                nnz +=1
+
+                            val = - SpaceRotsCstr[il,ilcstr,idim,jdim]*s
+                            
+                            if (cfabs(val) > eps_zero):
+
+                                nnz +=1
+
+                        for jdim in range(geodim):
+
+                            val = SpaceRotsCstr[il,ilcstr,idim,jdim]*c
+                            
+                            if (idim == jdim):
+                                val -=1.
+
+                            if (cfabs(val) > eps_zero):
+
+                                nnz +=1
+
+                            val = SpaceRotsCstr[il,ilcstr,idim,jdim]*s
+                            
+                            if (cfabs(val) > eps_zero):
+
+                                nnz +=1
+                  
+                elif (TimeRevsCstr[il,ilcstr] == -1):
+
+                    c = ccos( ctwopi * k*dt)
+                    s = csin( ctwopi * k*dt)
                     
-                for idim in range(geodim):
-                        
-                    for jdim in range(geodim):
+                    for idim in range(geodim):
+                            
+                        for jdim in range(geodim):
 
-                        val = SpaceRotsCstr[il,ilcstr,idim,jdim]*c
-                        
-                        if (idim == jdim):
-                            val -=1.
+                            val = SpaceRotsCstr[il,ilcstr,idim,jdim]*c
+                            
+                            if (idim == jdim):
+                                val -=1.
+                            
+                            if (cfabs(val) > eps_zero):
 
-                        if (cfabs(val) > eps_zero):
-                        
-                            nnz +=1
+                                nnz +=1
 
-                        val = - SpaceRotsCstr[il,ilcstr,idim,jdim]*s
-                        
-                        if (cfabs(val) > eps_zero):
-                        
-                            nnz +=1
-                        
-                    for jdim in range(geodim):
+                            val = SpaceRotsCstr[il,ilcstr,idim,jdim]*s
+                            
+                            if (cfabs(val) > eps_zero):
 
-                        val = SpaceRotsCstr[il,ilcstr,idim,jdim]*c
-                        
-                        if (idim == jdim):
-                            val -=1.
+                                nnz +=1         
 
-                        if (cfabs(val) > eps_zero):
-                        
-                            nnz +=1
+                        for jdim in range(geodim):
 
-                        val = SpaceRotsCstr[il,ilcstr,idim,jdim]*s
-                        
-                        if (cfabs(val) > eps_zero):
-                        
-                            nnz +=1
-                                             
+                            val = - SpaceRotsCstr[il,ilcstr,idim,jdim]*c
+                            
+                            if (idim == jdim):
+                                val -=1.
+
+                            if (cfabs(val) > eps_zero):
+
+                                nnz +=1
+
+                            val = SpaceRotsCstr[il,ilcstr,idim,jdim]*s
+                            
+                            if (cfabs(val) > eps_zero):
+                                                    
+                                nnz +=1
+          
     cdef np.ndarray[long  , ndim=1, mode="c"] cstr_row  = np.zeros((nnz),dtype=np.int_   )
     cdef np.ndarray[long  , ndim=1, mode="c"] cstr_col  = np.zeros((nnz),dtype=np.int_   )
     cdef np.ndarray[double, ndim=1, mode="c"] cstr_data = np.zeros((nnz),dtype=np.float64)

@@ -2462,7 +2462,7 @@ def setup_changevar(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCons=Tr
      - Exhaustive list of unary transformation for generator to body.
      - Exhaustive list of binary transformations from generator within each loop.
     """
-    
+
     assert (nint_init % 2) == 0
 
     Identity_detected = False
