@@ -10,7 +10,7 @@ import choreo
 from sphinx_gallery.sorting import FileNameSortKey
 from sphinx_pyproject import SphinxConfig
 
-__PROJECT_ROOT__ = os.path.abspath(os.path.join(os.path.dirname(__file__),os.pardir))
+__PROJECT_ROOT__ = os.path.abspath(os.path.join(os.path.dirname(__file__),os.pardir,os.pardir))
 
 config = SphinxConfig(os.path.join(__PROJECT_ROOT__,"pyproject.toml"), globalns=globals())
 

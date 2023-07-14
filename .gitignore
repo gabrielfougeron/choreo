@@ -31,7 +31,10 @@ GUI_scripts/build/
 sparseqr/
 /docs/source/generated/
 /docs/source/_galleries/
+/docs/pytest_out/
 .pyodide-xbuildenv/
+.tox/
+.pytest_cache
 *.examples
 ##########################################################
 #           To be included (with preceding !)

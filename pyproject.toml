@@ -49,14 +49,18 @@ cli = [
   "numba",
 ]
 test = [
+  "choreo[cli]",
+  "attrs",
   "pytest",
   "pytest-xdist",
   "pytest-cov",
   "pytest-cython",
   "pytest-envfiles",
   "tox",
+  "tox-report",
 ]
 docs = [
+  "choreo[test]",
   "Sphinx==5.1.1",
   "sphinx-rtd-theme==1.0.0",
   "sphinx-gallery==0.11.1",
@@ -80,7 +84,7 @@ Changelog = "https://github.com/gabrielfougeron/choreo/releases/"
 
 [tool.pytest.ini_options]
 minversion = "6.0"
-addopts = "-ra -q"
+addopts = "-ra -q --junit-xml=docs/pytest_out/junit.xml"
 testpaths = [
     "tests",
 ]
@@ -90,15 +94,15 @@ filterwarnings = [
 
 [tool.tox]
 legacy_tox_ini = """
-    [tox]
-    min_version = 4.0
-    env_list =
-        py311
-        py310
-        py39
+[tox]
+min_version = 4.0
+env_list =
+    py{39,310,311}
 
-    [testenv]
-    deps = pytest
-    commands = pytest
+[testenv]
+extras = docs
+commands = 
+      pytest 
+      sphinx-build -d "{envtmpdir}{/}doctree" docs/source "{toxworkdir}{/}docs_out" --color -b html
 """
 

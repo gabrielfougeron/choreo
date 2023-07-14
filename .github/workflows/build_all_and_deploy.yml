@@ -80,6 +80,10 @@ jobs:
       id: deployment
       uses: actions/deploy-pages@v1
     #
+    - name: Run tests
+      run: |
+        pytest
+    #
     - name: Generate Documentation
       run: |
         cd docs
@@ -104,4 +108,7 @@ jobs:
         github_token: ${{ secrets.CHOREO_DOCS_TOKEN }} 
         repository: gabrielfougeron/choreo-docs
         force: true
-
+    #
+    - name: Run regression tests
+      run: |
+        tox

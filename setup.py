@@ -148,7 +148,7 @@ ext_modules = Cython.Build.cythonize(
     extensions,
     language_level = "3",
     annotate = True,
-    force = True,
+    # force = True,
     compiler_directives = compiler_directives,
     nthreads = nthreads,
 )
