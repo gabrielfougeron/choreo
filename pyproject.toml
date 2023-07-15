@@ -98,18 +98,18 @@ junit_family = "xunit2"
 junit_suite_name = "Pytest test results"
 junit_log_passing_tests = true
 
-[gh-actions]
-python = 
-    3.9: py39
-    3.10: py310
-    3.11: py311
-
 [tool.tox]
 legacy_tox_ini = """
 [tox]
 min_version = 4.0
 env_list =
     py{39,310,311}
+
+[gh-actions]
+python = 
+    3.9: py39
+    3.10: py310
+    3.11: py311
 
 [testenv]
 extras = docs
