@@ -30,7 +30,7 @@ jobs:
     - name: Install python build dependencies
       run: |
         pip install --upgrade pip
-        pip install .[full]
+        pip install .[cli,docs,unittest,regtest]
     - name: Run regression tests
       run: |
         tox
