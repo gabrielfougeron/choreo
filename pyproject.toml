@@ -59,7 +59,6 @@ unittest = [
 ]
 regtest = [
   "tox",
-  "tox-report",
   "tox-gh-actions",
 ]
 docs = [
