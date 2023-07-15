@@ -6,7 +6,6 @@ from pygments.token import Comment, Keyword, Name, Number, Operator, \
 class PythonVSMintedStyle(Style):
 
     background_color = '#282C34'
-    
 
     styles = {
         Token:                  '#ABB2BF',
