@@ -2335,7 +2335,7 @@ class ActionSym():
     This class defines the symmetries of the action
     Useful to detect loops and constraints.
 
-    Syntax : Giving one ChoreoSym to setup_changevar prescribes the following symmetry / constraint :
+    Syntax : Giving one ActionSym to setup_changevar prescribes the following symmetry / constraint :
 
     .. math::
         x_{\text{LoopTarget}}(t) = \text{SpaceRot} \cdot x_{\text{LoopSource}} (\text{TimeRev} * (t - \text{TimeShift}))
@@ -2396,7 +2396,7 @@ class ActionSym():
 
         inv_numerator = ((((-self.TimeRev*self.TimeShift.numerator) % self.TimeShift.denominator) + self.TimeShift.denominator) % self.TimeShift.denominator)
 
-        return ChoreoSym(
+        return ActionSym(
             BodyPerm = InvPerm,
             SpaceRot = self.SpaceRot.T,
             TimeRev = self.TimeRev,         
@@ -2425,11 +2425,15 @@ class ActionSym():
             denominator = tshift.denominator
         )
     
-        ComposeBodyPerm = np.empty_like(B)
+        ComposeBodyPerm = np.empty_like(B.BodyPerm)
         for ib in range(B.BodyPerm.size):
+            print(ComposeBodyPerm.shape)
+            print(B.BodyPerm.shape)
+            print(A.BodyPerm.shape)
+
             ComposeBodyPerm[ib] = B.BodyPerm[A.BodyPerm[ib]]
 
-        return ChoreoSym(
+        return ActionSym(
             BodyPerm = ComposeBodyPerm,
             SpaceRot = np.matmul(B.SpaceRot,A.SpaceRot),
             TimeRev = (B.TimeRev * A.TimeRev),
@@ -2442,10 +2446,10 @@ class ActionSym():
         """       
 
         return ( 
-            np.array_equal(self.BodyPerm, np.array(range(nbody), dtype = np.int_)) and
+            np.array_equal(self.BodyPerm, np.array(range(self.BodyPerm.size), dtype = np.int_)) and
             np.allclose(
                 self.SpaceRot,
-                np.identity(self.BodyPerm.size, dtype = np.float64),
+                np.identity(self.SpaceRot.shape[0], dtype = np.float64),
                 rtol = 0.,
                 atol = atol
             ) and
