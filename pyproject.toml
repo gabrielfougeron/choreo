@@ -64,8 +64,8 @@ docs = [
   "Sphinx",
   "pydata-sphinx-theme",
   "sphinx-gallery",
-  "sphinx-needs",
   "sphinx-pyproject",
+  "sphinx-needs",
   "sphinx-test-reports",
   "sphinxcontrib.plantuml",
 ]
