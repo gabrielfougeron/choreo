@@ -19,7 +19,7 @@ Contents
    api
    ode
 
-
+   test-report
 
 
 .. toctree::
