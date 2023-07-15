@@ -37,7 +37,7 @@ extensions = [
     'sphinx.ext.autosummary',
     'sphinx.ext.mathjax',
     'sphinx_gallery.gen_gallery',
-    # 'sphinx_needs',
+    'sphinx_needs',
     'sphinxcontrib.test_reports',
     'sphinxcontrib.plantuml'
 ]
