@@ -1,9 +1,6 @@
 name: Tox regression tests
 
-on:
-  push:
-    branches:    
-      - manual_trigger
+on: workflow_dispatch 
 
 permissions:
   contents: read
