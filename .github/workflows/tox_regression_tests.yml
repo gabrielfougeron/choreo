@@ -7,10 +7,12 @@ permissions:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
     strategy:
       matrix:
         python-version: ["3.9", "3.10", "3.11"]
+        os: [ubuntu-22.04, ubuntu-20.04, macos-latest]
+    #
+    runs-on: ${{ matrix.os }}
     steps:
     # 
     - name: Checkout repository
@@ -26,11 +28,17 @@ jobs:
         sudo apt-get update
         sudo apt-get install libomp-dev libsuitesparse-dev
         sudo apt-get install plantuml
-    #
+    # No GUI here since pyodide only supports one version on python at a time
     - name: Install python build dependencies
       run: |
         pip install --upgrade pip
-        pip install .[cli,docs,unittest,regtest]
-    - name: Run regression tests
+        pip install .[cli,docs,test]
+    #
+    - name: Run tests
       run: |
-        tox
+        pytest
+    #
+    - name: Generate Documentation
+      run: |
+        cd docs
+        make html
