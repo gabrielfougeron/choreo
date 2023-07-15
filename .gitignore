@@ -47,3 +47,4 @@ sparseqr/
 !.devcontainer/Dockerfile
 !/NumericalTank_data/*
 !/choreo_GUI/SOME3/**
+!/docs/source/directives/**
