@@ -10,6 +10,8 @@ At this address: `https://gabrielfougeron.github.io//choreo/ <https://gabrielfou
 
 
 
+
+
 Contents
 --------
 
@@ -19,12 +21,17 @@ Contents
    api
    ode
 
-   test-report
-
-
 .. toctree::
    :maxdepth: 1
    :caption: Contents:
+
+
+Automatic pytest reporting
+--------------------------
+
+.. toctree::
+
+   test-report/test-report
 
 
 
