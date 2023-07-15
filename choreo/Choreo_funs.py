@@ -2398,7 +2398,7 @@ class ActionSym():
 
         return ActionSym(
             BodyPerm = InvPerm,
-            SpaceRot = self.SpaceRot.T,
+            SpaceRot = self.SpaceRot.T.copy(),
             TimeRev = self.TimeRev,         
             TimeShift = fractions.Fraction(
                 numerator = inv_numerator,
