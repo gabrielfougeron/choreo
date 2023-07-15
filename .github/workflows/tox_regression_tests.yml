@@ -23,7 +23,7 @@ jobs:
     - name: Install python build dependencies
       run: |
         pip install --upgrade pip
-        run:  pip install .[full]
+        pip install .[full]
     - name: Run regression tests
       run: |
         tox
