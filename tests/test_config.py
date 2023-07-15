@@ -2,17 +2,13 @@ import attrs
 import pytest
 import inspect
 import typing
+import warnings
+import functools
 
 @attrs.define
 class float_tol:
     atol: float
     rtol: float
-
-@attrs.define
-class repeat:
-    small:  int
-    medium: int
-    big:    int
 
 @attrs.define
 class likelyhood():
@@ -68,9 +64,38 @@ def Physical_dims():
         all_geodims = [2, 3] ,
     )
 
-
 @pytest.fixture
 def Few_bodies():
     return nbody(
         all_nbodies = [2, 3, 4, 5] ,
     )
+
+def ProbabilisticTest(RepeatOnFail = 10):
+
+    def decorator(test):
+
+        @functools.wraps(test)
+        def wrapper(*args, **kwargs):
+            
+            try:
+                return test(*args, **kwargs)
+
+            except AssertionError:
+                
+                out_str = f"Probabilistic test failed. Running test again {RepeatOnFail} times."
+                head_foot = '='*len(out_str)
+
+                print('')
+                print(head_foot)
+                print(out_str)
+                print(head_foot)
+                print('')
+
+                for i in range(RepeatOnFail):
+                    res = test(*args, **kwargs)
+
+                return res
+
+        return wrapper
+    
+    return decorator

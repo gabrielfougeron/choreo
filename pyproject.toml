@@ -87,7 +87,7 @@ Changelog = "https://github.com/gabrielfougeron/choreo/releases/"
 
 [tool.pytest.ini_options]
 minversion = "6.0"
-addopts = "-ra --junit-xml=docs/pytest_out/junit.xml"
+addopts = "-v -ra --junit-xml=docs/pytest_out/junit.xml"
 testpaths = [
     "tests",
 ]
@@ -95,6 +95,7 @@ filterwarnings = [
     "ignore::DeprecationWarning",
 ]
 junit_family = "xunit2"
+junit_logging = "system-out"
 junit_suite_name = "Pytest test results"
 junit_log_passing_tests = true
 
