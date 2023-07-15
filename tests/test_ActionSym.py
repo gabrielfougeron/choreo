@@ -41,7 +41,7 @@ def test_Random(float64_tols, Physical_dims, Few_bodies):
     for geodim in Physical_dims.all_geodims:
         for nbody in Few_bodies.all_nbodies:
 
-            print(geodim,nbody)
+            print(f"geodim = {geodim}, nbody = {nbody}")
 
             Id = choreo.ActionSym.Identity(nbody, geodim)
 
@@ -54,3 +54,5 @@ def test_Random(float64_tols, Physical_dims, Few_bodies):
             B = choreo.ActionSym.Random(nbody, geodim)
 
             assert not(A.IsSame(B, atol = float64_tols.atol))
+
+            assert False
