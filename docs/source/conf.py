@@ -4,8 +4,6 @@ import pathlib
 import os
 import sys
 sys.path.insert(0, pathlib.Path(__file__).parents[2].resolve().as_posix())
-import sphinx_rtd_theme
-import choreo
 
 from sphinx_gallery.sorting import FileNameSortKey
 from sphinx_pyproject import SphinxConfig
@@ -45,11 +43,15 @@ exclude_patterns = []
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
 # html_theme = 'alabaster'
-html_theme = 'sphinx_rtd_theme'
+# html_theme = 'sphinx_rtd_theme'
+# html_theme = "sphinx_book_theme"
+html_theme = "pydata_sphinx_theme"
+html_logo = "_static/img/eight_icon.png"
+
 
 html_static_path = ['_static']
 
-tr_report_template = "directives/test_report_template.txt"
+tr_report_template = "./test-report/test_report_template.txt"
 
 # sphinx-gallery configuration
 sphinx_gallery_conf = {
