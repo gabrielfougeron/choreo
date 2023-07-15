@@ -84,13 +84,15 @@ Changelog = "https://github.com/gabrielfougeron/choreo/releases/"
 
 [tool.pytest.ini_options]
 minversion = "6.0"
-addopts = "-ra -q --junit-xml=docs/pytest_out/junit.xml"
+addopts = "-ra --junit-xml=docs/pytest_out/junit.xml"
 testpaths = [
     "tests",
 ]
 filterwarnings = [
     "ignore::DeprecationWarning",
 ]
+junit_log_passing_tests = true
+
 
 [tool.tox]
 legacy_tox_ini = """
