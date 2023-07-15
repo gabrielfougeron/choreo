@@ -36,6 +36,7 @@ sparseqr/
 .tox/
 .pytest_cache
 *.examples
+*.xml
 ##########################################################
 #           To be included (with preceding !)
 ##########################################################
@@ -49,3 +50,4 @@ sparseqr/
 !/choreo_GUI/SOME3/**
 !/docs/source/test-report/test_report_template.txt
 !/docs/source/_static/**
+
