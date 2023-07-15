@@ -89,7 +89,8 @@ html_context = {
     "github_user": "gabrielfougeron", # Username
     "github_repo": "choreo", # Repo name
     "github_version": "main", # Version
-    "conf_py_path": "/docs/source/", # Path in the checkout to the docs root
+    "version": "main", # Version
+    "conf_py_path": "docs/source/", # Path in the checkout to the docs root
 }
 
 
