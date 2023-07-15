@@ -48,7 +48,7 @@ gui = [
 cli = [
   "numba",
 ]
-test = [
+unittest = [
   "choreo[cli]",
   "attrs",
   "pytest",
@@ -56,8 +56,11 @@ test = [
   "pytest-cov",
   "pytest-cython",
   "pytest-envfiles",
+]
+regtest = [
   "tox",
   "tox-report",
+  "tox-gh-actions",
 ]
 docs = [
   "choreo[test]",
@@ -70,7 +73,7 @@ docs = [
   "sphinxcontrib.plantuml",
 ]
 full = [
-  "choreo[gui,cli,docs,test]"
+  "choreo[gui,cli,docs,unittest,regtest]"
 ]
 
 [project.scripts]
@@ -95,13 +98,18 @@ junit_family = "xunit2"
 junit_suite_name = "Pytest test results"
 junit_log_passing_tests = true
 
-
 [tool.tox]
 legacy_tox_ini = """
 [tox]
 min_version = 4.0
 env_list =
     py{39,310,311}
+
+[gh-actions]
+python = 
+    3.9: py39
+    3.10: py310
+    3.11: py311
 
 [testenv]
 extras = docs
