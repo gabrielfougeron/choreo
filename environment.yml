@@ -19,6 +19,9 @@ dependencies:
   - pyamg
   - numba
   - icc_rt
+  - pytest
+  - tox
+  - attrs
   - pip:
     - cffi==1.15.0
     - pycparser==2.21
