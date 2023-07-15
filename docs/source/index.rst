@@ -31,8 +31,7 @@ Automatic pytest reporting
 
 .. toctree::
 
-   test-report/test-report
-
+   test-report/main
 
 
 Indices and tables
