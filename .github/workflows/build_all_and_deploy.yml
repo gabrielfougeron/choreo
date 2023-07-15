@@ -59,8 +59,9 @@ jobs:
     #
     - name: Setup Emscripten
       uses: mymindstorm/setup-emsdk@v11
-        with:
-          version: ${{ env.EMSCRIPTEN_VERSION }}
+      with:
+        version: ${{ env.EMSCRIPTEN_VERSION }}
+    #
     - name: Build for Pyodide
       run: |
         pyodide build
