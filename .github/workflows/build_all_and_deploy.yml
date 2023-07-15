@@ -52,19 +52,15 @@ jobs:
     #
     - name: Run setup.py
       run: python setup.py build_ext
-    # 
-    # 
-    # - name: Setup Emscripten
-    #   uses: mymindstorm/setup-emsdk@v11
-    #   with:
-    #     version: 3.1.32
-    # 
-    - name: Setup Emscripten
+    #
+    - name: Read Emscripten version number
       run: |
         echo EMSCRIPTEN_VERSION=$(pyodide config get emscripten_version) >> $GITHUB_ENV
-    - uses: mymindstorm/setup-emsdk@v11
-      with:
-        version: ${{ env.EMSCRIPTEN_VERSION }}
+    #
+    - name: Setup Emscripten
+      uses: mymindstorm/setup-emsdk@v11
+        with:
+          version: ${{ env.EMSCRIPTEN_VERSION }}
     - name: Build for Pyodide
       run: |
         pyodide build
