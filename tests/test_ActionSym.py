@@ -33,7 +33,7 @@ def test_Identity(float64_tols, Physical_dims, Few_bodies):
 
             assert Id.IsSame(InvId, atol = float64_tols.atol)
 
-@ProbabilisticTest(RepeatOnFail = 5)
+@ProbabilisticTest()
 def test_Random(float64_tols, Physical_dims, Few_bodies):
 
     print("Testing group properties on random transformations.")
