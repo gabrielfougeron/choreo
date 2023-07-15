@@ -8,6 +8,7 @@ import pytest
 from test_config import *
 
 import numpy as np
+import scipy
 import fractions
 import choreo
 
@@ -35,7 +36,7 @@ def test_Random(float64_tols, Physical_dims, Few_bodies):
 
             mat = np.random.random_sample((geodim,geodim))
             sksymmat = mat - mat.T
-            rotmat = np.linalg.expm(sksymmat)
+            rotmat = scipy.linalg.expm(sksymmat)
 
             timerev = 1 if np.random.random_sample() < 0.5 else -1
 
@@ -51,3 +52,8 @@ def test_Random(float64_tols, Physical_dims, Few_bodies):
                 TimeRev = timerev,
                 TimeShift = timeshift,
             )
+
+            AInv = A.Inverse()
+
+            assert Id.IsSame(A.Compose(AInv), atol = float64_tols.atol)
+            assert Id.IsSame(AInv.Compose(A), atol = float64_tols.atol)
