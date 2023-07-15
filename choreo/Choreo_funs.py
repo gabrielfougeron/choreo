@@ -2385,6 +2385,30 @@ class ActionSym():
             )
         )
 
+    @staticmethod
+    def Random(nbody, geodim):
+
+        perm = np.random.permutation(nbody)
+
+        mat = np.random.random_sample((geodim,geodim))
+        sksymmat = mat - mat.T
+        rotmat = scipy.linalg.expm(sksymmat)
+
+        timerev = 1 if np.random.random_sample() < 0.5 else -1
+
+        maxden = 10*nbody
+        den = np.random.randint(low = 1, high = maxden)
+        num = np.random.randint(low = 0, high =    den)
+
+        timeshift = fractions.Fraction(numerator = num, denominator = den)
+
+        return ActionSym(
+            BodyPerm = perm,
+            SpaceRot = rotmat,
+            TimeRev = timerev,
+            TimeShift = timeshift,
+        )
+
     def Inverse(self):
         r"""
         Returns the inverse of a symmetry transformation
@@ -2427,10 +2451,6 @@ class ActionSym():
     
         ComposeBodyPerm = np.empty_like(B.BodyPerm)
         for ib in range(B.BodyPerm.size):
-            print(ComposeBodyPerm.shape)
-            print(B.BodyPerm.shape)
-            print(A.BodyPerm.shape)
-
             ComposeBodyPerm[ib] = B.BodyPerm[A.BodyPerm[ib]]
 
         return ActionSym(
