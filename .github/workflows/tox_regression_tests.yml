@@ -1,5 +1,10 @@
 name: Tox regression tests
 
+on:
+  push:
+    branches:    
+      - manual_trigger
+
 # Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
 permissions:
   contents: read
@@ -19,6 +24,10 @@ jobs:
       uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
+    - name: Install python build dependencies
+      run: |
+        pip install --upgrade pip
+        run:  pip install .[full]
     - name: Run regression tests
       run: |
         tox

@@ -87,7 +87,7 @@ jobs:
     #
     - name: Run tests
       run: |
-        pytest
+        python -m pytest
     #
     - name: Generate Documentation
       run: |
