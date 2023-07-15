@@ -1,6 +1,7 @@
 import attrs
 import pytest
 import inspect
+import typing
 
 @attrs.define
 class float_tol:
@@ -21,6 +22,14 @@ class likelyhood():
     unlikely:       float
     unbelievable:   float
     impossible:     float
+
+@attrs.define
+class dimension:
+    all_geodims:    list[int]
+
+@attrs.define
+class nbody:
+    all_nbodies:    list[int]
 
 @pytest.fixture
 def float64_tols():
@@ -47,3 +56,21 @@ def nonstiff_float64_likelyhood():
         impossible      = 1e-16,
     )
 
+@pytest.fixture
+def TwoD_only():
+    return dimension(
+        all_geodims = [2] ,
+    )
+
+@pytest.fixture
+def Physical_dims():
+    return dimension(
+        all_geodims = [2, 3] ,
+    )
+
+
+@pytest.fixture
+def Few_bodies():
+    return nbody(
+        all_nbodies = [2, 3, 4, 5] ,
+    )
