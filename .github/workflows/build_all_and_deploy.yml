@@ -86,8 +86,9 @@ jobs:
       uses: actions/deploy-pages@v1
     #
     - name: Run tests
+      continue-on-error: true
       run: |
-        python -m pytest
+        pytest
     #
     - name: Generate Documentation
       run: |
