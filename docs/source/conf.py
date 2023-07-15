@@ -4,6 +4,12 @@ import pathlib
 import os
 import sys
 sys.path.insert(0, pathlib.Path(__file__).parents[2].resolve().as_posix())
+sys.path.append(os.path.abspath("./_pygments"))
+
+# import style
+# pygments_style = style.PythonVSMintedStyle
+# pygments_style = 'style.PythonVSMintedStyle'
+
 
 from sphinx_gallery.sorting import FileNameSortKey
 from sphinx_pyproject import SphinxConfig
@@ -31,7 +37,7 @@ extensions = [
     'sphinx.ext.autosummary',
     'sphinx.ext.mathjax',
     'sphinx_gallery.gen_gallery',
-    'sphinx_needs',
+    # 'sphinx_needs',
     'sphinxcontrib.test_reports',
     'sphinxcontrib.plantuml'
 ]
@@ -48,8 +54,38 @@ exclude_patterns = []
 html_theme = "pydata_sphinx_theme"
 html_logo = "_static/img/eight_icon.png"
 
+html_theme_options = {
+    # "github_url": "https://github.com/gabrielfougeron/choreo",
+    # "navbar_end": ["theme-switcher", "navbar-icon-links"],
+    # "pygment_light_style": 'style.PythonVSMintedStyle',
+    # "pygment_dark_style":  'style.PythonVSMintedStyle',
+    "icon_links": [
+        {
+            "name": "GitHub",
+            "url": "https://github.com/gabrielfougeron/choreo",
+            "icon": "fa-brands fa-github",
+        },
+        {
+            "name": "Choreo_GUI",
+            "url": "https://gabrielfougeron.github.io/choreo/",
+            "icon": "_static/img/eight_icon.png",
+            # "icon": "fa-brands fa-github",
+        },
+    ],
+}
+
+
+
+
+
+
+
+
 
 html_static_path = ['_static']
+html_css_files = [
+    'css/custom.css',
+]
 
 tr_report_template = "./test-report/test_report_template.txt"
 

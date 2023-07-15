@@ -4,6 +4,10 @@
 | **Skipped test cases:** :need_count:`'{id}' in tags and 'skipped' == result and type=='{case_need}'`
 
 .. needtable::
+   :types: Test-File
+   :columns: id, file, suites, cases, passed
+
+.. needtable::
    :filter: '{id}' in tags and type == '{case_need}'
    :columns: id, title, result
    :style_row: tr_[[copy('result')]]
