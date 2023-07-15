@@ -3,9 +3,9 @@
 | **Failed test cases:** :need_count:`'{id}' in tags and 'failure' == result and type=='{case_need}'`
 | **Skipped test cases:** :need_count:`'{id}' in tags and 'skipped' == result and type=='{case_need}'`
 
-.. needtable::
-   :types: Test-File
-   :columns: id, file, suites, cases, passed
+.. needflow::
+   :types: Test-Suite, Test-Case
+   :filter: len(links) > 0 or len(links_back) > 0
 
 .. needtable::
    :filter: '{id}' in tags and type == '{case_need}'

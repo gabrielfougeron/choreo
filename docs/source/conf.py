@@ -7,8 +7,8 @@ sys.path.insert(0, pathlib.Path(__file__).parents[2].resolve().as_posix())
 sys.path.append(os.path.abspath("./_pygments"))
 
 # import style
-# pygments_style = style.PythonVSMintedStyle
 # pygments_style = 'style.PythonVSMintedStyle'
+
 
 
 from sphinx_gallery.sorting import FileNameSortKey
@@ -29,6 +29,9 @@ config = SphinxConfig(os.path.join(__PROJECT_ROOT__,"pyproject.toml"), globalns=
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
+
+language = "en"
+
 
 extensions = [
     'sphinx.ext.duration',
@@ -54,11 +57,14 @@ exclude_patterns = []
 html_theme = "pydata_sphinx_theme"
 html_logo = "_static/img/eight_icon.png"
 
+html_show_sourcelink = True
+
 html_theme_options = {
-    # "github_url": "https://github.com/gabrielfougeron/choreo",
-    # "navbar_end": ["theme-switcher", "navbar-icon-links"],
-    # "pygment_light_style": 'style.PythonVSMintedStyle',
-    # "pygment_dark_style":  'style.PythonVSMintedStyle',
+    'nosidebar': True,
+    # 'collapse_navigation': True,
+    "use_edit_page_button": True,
+    "pygment_light_style": 'tango',
+    "pygment_dark_style":  'monokai',
     "icon_links": [
         {
             "name": "GitHub",
@@ -69,16 +75,22 @@ html_theme_options = {
             "name": "Choreo_GUI",
             "url": "https://gabrielfougeron.github.io/choreo/",
             "icon": "_static/img/eight_icon.png",
-            # "icon": "fa-brands fa-github",
+            "type": "local",
         },
     ],
+    "footer_start" : "",
+    "footer_end" : "",
 }
 
 
 
-
-
-
+html_context = {
+    "display_github": True, # Integrate GitHub
+    "github_user": "gabrielfougeron", # Username
+    "github_repo": "choreo", # Repo name
+    "github_version": "main", # Version
+    "conf_py_path": "/docs/source/", # Path in the checkout to the docs root
+}
 
 
 
@@ -103,3 +115,4 @@ sphinx_gallery_conf = {
     # this case sphinx_gallery and numpy in a tuple of strings.
     'doc_module': ('choreo'),
 }   
+
