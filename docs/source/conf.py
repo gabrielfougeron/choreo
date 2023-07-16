@@ -42,8 +42,31 @@ extensions = [
     'sphinx_gallery.gen_gallery',
     'sphinx_needs',
     'sphinxcontrib.test_reports',
-    'sphinxcontrib.plantuml'
+    'sphinxcontrib.plantuml',
+    "nb2plots",
 ]
+
+
+
+
+# The suffix of source filenames.
+source_suffix = ".rst"
+
+# The encoding of source files.
+source_encoding = "utf-8"
+
+add_module_names = False
+
+
+
+
+
+
+
+
+
+
+
 
 templates_path = ['_templates']
 exclude_patterns = []
@@ -60,8 +83,11 @@ html_logo = "_static/img/eight_icon.png"
 html_show_sourcelink = True
 
 html_theme_options = {
-    'nosidebar': True,
-    # 'collapse_navigation': True,
+    "collapse_navigation": True,
+    "navigation_depth": 2,
+    "show_prev_next": False,
+    # 'nosidebar': True,
+    "header_links_before_dropdown": 7,
     "use_edit_page_button": True,
     "pygment_light_style": 'tango',
     "pygment_dark_style":  'monokai',
@@ -82,7 +108,15 @@ html_theme_options = {
     "footer_end" : "",
 }
 
-
+# Add / remove things from left sidebar
+html_sidebars = {
+    "**": ["sidebar-nav-bs", "sidebar-ethical-ads"],
+    # "**": [],
+    # "index": [],
+    # "install": [],
+    # "API": [],
+    # "auto_examples/index": [],
+}
 
 html_context = {
     "display_github": True, # Integrate GitHub
@@ -91,9 +125,8 @@ html_context = {
     "github_version": "main", # Version
     "version": "main", # Version
     "conf_py_path": "docs/source/", # Path in the checkout to the docs root
+    "default_mode": "light",
 }
-
-
 
 html_static_path = ['_static']
 html_css_files = [
@@ -117,3 +150,10 @@ sphinx_gallery_conf = {
     'doc_module': ('choreo'),
 }   
 
+# Options for LaTeX output
+# ------------------------
+
+# Use a latex engine that allows for unicode characters in docstrings
+latex_engine = "xelatex"
+# The paper size ('letter' or 'a4').
+latex_paper_size = "letter"
