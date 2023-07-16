@@ -2573,6 +2573,200 @@
                 }
             },
             "name": "05 - Simo"
+        },
+        {
+            "dirs": [],
+            "files": {
+                "00001": {
+                    ".json": "choreo-gallery/06 - Misc 3-bodies/00001.json",
+                    ".npy": "choreo-gallery/06 - Misc 3-bodies/00001.npy"
+                },
+                "00002": {
+                    ".json": "choreo-gallery/06 - Misc 3-bodies/00002.json",
+                    ".npy": "choreo-gallery/06 - Misc 3-bodies/00002.npy"
+                },
+                "00003": {
+                    ".json": "choreo-gallery/06 - Misc 3-bodies/00003.json",
+                    ".npy": "choreo-gallery/06 - Misc 3-bodies/00003.npy"
+                },
+                "00004": {
+                    ".json": "choreo-gallery/06 - Misc 3-bodies/00004.json",
+                    ".npy": "choreo-gallery/06 - Misc 3-bodies/00004.npy"
+                },
+                "00005": {
+                    ".json": "choreo-gallery/06 - Misc 3-bodies/00005.json",
+                    ".npy": "choreo-gallery/06 - Misc 3-bodies/00005.npy"
+                },
+                "00006": {
+                    ".json": "choreo-gallery/06 - Misc 3-bodies/00006.json",
+                    ".npy": "choreo-gallery/06 - Misc 3-bodies/00006.npy"
+                },
+                "00007": {
+                    ".json": "choreo-gallery/06 - Misc 3-bodies/00007.json",
+                    ".npy": "choreo-gallery/06 - Misc 3-bodies/00007.npy"
+                },
+                "00008": {
+                    ".json": "choreo-gallery/06 - Misc 3-bodies/00008.json",
+                    ".npy": "choreo-gallery/06 - Misc 3-bodies/00008.npy"
+                },
+                "00009": {
+                    ".json": "choreo-gallery/06 - Misc 3-bodies/00009.json",
+                    ".npy": "choreo-gallery/06 - Misc 3-bodies/00009.npy"
+                },
+                "00010": {
+                    ".json": "choreo-gallery/06 - Misc 3-bodies/00010.json",
+                    ".npy": "choreo-gallery/06 - Misc 3-bodies/00010.npy"
+                },
+                "00011": {
+                    ".json": "choreo-gallery/06 - Misc 3-bodies/00011.json",
+                    ".npy": "choreo-gallery/06 - Misc 3-bodies/00011.npy"
+                },
+                "00012": {
+                    ".json": "choreo-gallery/06 - Misc 3-bodies/00012.json",
+                    ".npy": "choreo-gallery/06 - Misc 3-bodies/00012.npy"
+                },
+                "00013": {
+                    ".json": "choreo-gallery/06 - Misc 3-bodies/00013.json",
+                    ".npy": "choreo-gallery/06 - Misc 3-bodies/00013.npy"
+                },
+                "00014": {
+                    ".json": "choreo-gallery/06 - Misc 3-bodies/00014.json",
+                    ".npy": "choreo-gallery/06 - Misc 3-bodies/00014.npy"
+                },
+                "00015": {
+                    ".json": "choreo-gallery/06 - Misc 3-bodies/00015.json",
+                    ".npy": "choreo-gallery/06 - Misc 3-bodies/00015.npy"
+                },
+                "00016": {
+                    ".json": "choreo-gallery/06 - Misc 3-bodies/00016.json",
+                    ".npy": "choreo-gallery/06 - Misc 3-bodies/00016.npy"
+                },
+                "00017": {
+                    ".json": "choreo-gallery/06 - Misc 3-bodies/00017.json",
+                    ".npy": "choreo-gallery/06 - Misc 3-bodies/00017.npy"
+                },
+                "00018": {
+                    ".json": "choreo-gallery/06 - Misc 3-bodies/00018.json",
+                    ".npy": "choreo-gallery/06 - Misc 3-bodies/00018.npy"
+                },
+                "00019": {
+                    ".json": "choreo-gallery/06 - Misc 3-bodies/00019.json",
+                    ".npy": "choreo-gallery/06 - Misc 3-bodies/00019.npy"
+                },
+                "00020": {
+                    ".json": "choreo-gallery/06 - Misc 3-bodies/00020.json",
+                    ".npy": "choreo-gallery/06 - Misc 3-bodies/00020.npy"
+                },
+                "00021": {
+                    ".json": "choreo-gallery/06 - Misc 3-bodies/00021.json",
+                    ".npy": "choreo-gallery/06 - Misc 3-bodies/00021.npy"
+                },
+                "00022": {
+                    ".json": "choreo-gallery/06 - Misc 3-bodies/00022.json",
+                    ".npy": "choreo-gallery/06 - Misc 3-bodies/00022.npy"
+                },
+                "00023": {
+                    ".json": "choreo-gallery/06 - Misc 3-bodies/00023.json",
+                    ".npy": "choreo-gallery/06 - Misc 3-bodies/00023.npy"
+                },
+                "00024": {
+                    ".json": "choreo-gallery/06 - Misc 3-bodies/00024.json",
+                    ".npy": "choreo-gallery/06 - Misc 3-bodies/00024.npy"
+                },
+                "00025": {
+                    ".json": "choreo-gallery/06 - Misc 3-bodies/00025.json",
+                    ".npy": "choreo-gallery/06 - Misc 3-bodies/00025.npy"
+                },
+                "00026": {
+                    ".json": "choreo-gallery/06 - Misc 3-bodies/00026.json",
+                    ".npy": "choreo-gallery/06 - Misc 3-bodies/00026.npy"
+                },
+                "00027": {
+                    ".json": "choreo-gallery/06 - Misc 3-bodies/00027.json",
+                    ".npy": "choreo-gallery/06 - Misc 3-bodies/00027.npy"
+                },
+                "00028": {
+                    ".json": "choreo-gallery/06 - Misc 3-bodies/00028.json",
+                    ".npy": "choreo-gallery/06 - Misc 3-bodies/00028.npy"
+                },
+                "00029": {
+                    ".json": "choreo-gallery/06 - Misc 3-bodies/00029.json",
+                    ".npy": "choreo-gallery/06 - Misc 3-bodies/00029.npy"
+                },
+                "00030": {
+                    ".json": "choreo-gallery/06 - Misc 3-bodies/00030.json",
+                    ".npy": "choreo-gallery/06 - Misc 3-bodies/00030.npy"
+                },
+                "00031": {
+                    ".json": "choreo-gallery/06 - Misc 3-bodies/00031.json",
+                    ".npy": "choreo-gallery/06 - Misc 3-bodies/00031.npy"
+                },
+                "00032": {
+                    ".json": "choreo-gallery/06 - Misc 3-bodies/00032.json",
+                    ".npy": "choreo-gallery/06 - Misc 3-bodies/00032.npy"
+                },
+                "00033": {
+                    ".json": "choreo-gallery/06 - Misc 3-bodies/00033.json",
+                    ".npy": "choreo-gallery/06 - Misc 3-bodies/00033.npy"
+                },
+                "00034": {
+                    ".json": "choreo-gallery/06 - Misc 3-bodies/00034.json",
+                    ".npy": "choreo-gallery/06 - Misc 3-bodies/00034.npy"
+                },
+                "00035": {
+                    ".json": "choreo-gallery/06 - Misc 3-bodies/00035.json",
+                    ".npy": "choreo-gallery/06 - Misc 3-bodies/00035.npy"
+                },
+                "00036": {
+                    ".json": "choreo-gallery/06 - Misc 3-bodies/00036.json",
+                    ".npy": "choreo-gallery/06 - Misc 3-bodies/00036.npy"
+                },
+                "00037": {
+                    ".json": "choreo-gallery/06 - Misc 3-bodies/00037.json",
+                    ".npy": "choreo-gallery/06 - Misc 3-bodies/00037.npy"
+                },
+                "00038": {
+                    ".json": "choreo-gallery/06 - Misc 3-bodies/00038.json",
+                    ".npy": "choreo-gallery/06 - Misc 3-bodies/00038.npy"
+                },
+                "00039": {
+                    ".json": "choreo-gallery/06 - Misc 3-bodies/00039.json",
+                    ".npy": "choreo-gallery/06 - Misc 3-bodies/00039.npy"
+                },
+                "00040": {
+                    ".json": "choreo-gallery/06 - Misc 3-bodies/00040.json",
+                    ".npy": "choreo-gallery/06 - Misc 3-bodies/00040.npy"
+                },
+                "00041": {
+                    ".json": "choreo-gallery/06 - Misc 3-bodies/00041.json",
+                    ".npy": "choreo-gallery/06 - Misc 3-bodies/00041.npy"
+                },
+                "00042": {
+                    ".json": "choreo-gallery/06 - Misc 3-bodies/00042.json",
+                    ".npy": "choreo-gallery/06 - Misc 3-bodies/00042.npy"
+                },
+                "00043": {
+                    ".json": "choreo-gallery/06 - Misc 3-bodies/00043.json",
+                    ".npy": "choreo-gallery/06 - Misc 3-bodies/00043.npy"
+                },
+                "00044": {
+                    ".json": "choreo-gallery/06 - Misc 3-bodies/00044.json",
+                    ".npy": "choreo-gallery/06 - Misc 3-bodies/00044.npy"
+                },
+                "00045": {
+                    ".json": "choreo-gallery/06 - Misc 3-bodies/00045.json",
+                    ".npy": "choreo-gallery/06 - Misc 3-bodies/00045.npy"
+                },
+                "00046": {
+                    ".json": "choreo-gallery/06 - Misc 3-bodies/00046.json",
+                    ".npy": "choreo-gallery/06 - Misc 3-bodies/00046.npy"
+                },
+                "00047": {
+                    ".json": "choreo-gallery/06 - Misc 3-bodies/00047.json",
+                    ".npy": "choreo-gallery/06 - Misc 3-bodies/00047.npy"
+                }
+            },
+            "name": "06 - Misc 3-bodies"
         }
     ],
     "files": {},

@@ -10,8 +10,8 @@ import shutil
 import time
 import builtins
 
-from choreo.Choreo_scipy_plus import *
-from choreo.Choreo_funs import *
+from choreo.scipy_plus import *
+from choreo.funs import *
 
 def Make2DChoreoSym(SymType,ib_list):
     r"""

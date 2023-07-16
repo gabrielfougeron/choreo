@@ -80,7 +80,7 @@ full = [
 ]
 
 [project.scripts]
-choreo_GUI_in_CLI = "choreo.Choreo_run:entrypoint_GUI_in_CLI"
+choreo_GUI_in_CLI = "choreo.run:entrypoint_GUI_in_CLI"
 
 [project.urls]
 Homepage = "https://gabrielfougeron.github.io/choreo/"

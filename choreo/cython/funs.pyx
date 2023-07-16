@@ -1,5 +1,5 @@
 '''
-Choreo_cython_funs.pyx : Defines useful compiled functions in the choreo project.
+funs.pyx : Defines useful compiled functions in the choreo project.
 
 The functions in this file are (as much as possible) written is Cython.
 They will be cythonized (i.e. processed by Cython into a C code, which will be compiled ) in setup.py.

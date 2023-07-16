@@ -1,12 +1,12 @@
 '''
-Choreo_cython_funs_2D.pyx : Defines useful compiled functions in the choreo project.
+funs_parallel.pyx : Defines useful compiled functions in the choreo project.
 
 The functions in this file are (as much as possible) written is Cython.
 They will be cythonized (i.e. processed by Cython into a C code, which will be compiled ) in setup.py.
 
 Hence, in this file, performance is favored against readability or ease of use.
 
-Functions in this files are specialized to 2 space dimensions with manual loop unrolling
+Functions in this files are parallel version of those defined in funs_serial.pyx
 
 
 '''

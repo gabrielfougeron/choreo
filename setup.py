@@ -24,15 +24,15 @@ if use_Pythran:
     import pythran
 
 cython_extnames = [
-    "choreo.Choreo_cython_funs",
-    "choreo.Choreo_cython_funs_serial",
-    "choreo.Choreo_cython_scipy_plus_ODE",
+    "choreo.cython.funs",
+    "choreo.cython.funs_serial",
+    "choreo.scipy_plus.cython.ODE",
 ]
 
 cython_filenames = [
-    "choreo/Choreo_cython_funs.pyx",
-    "choreo/Choreo_cython_funs_serial.pyx",
-    "choreo/Choreo_cython_scipy_plus_ODE.pyx",
+    "choreo/cython/funs.pyx",
+    "choreo/cython/funs_serial.pyx",
+    "choreo/scipy_plus/cython/ODE.pyx",
 ]
 
 cython_safemath_needed = [
@@ -47,8 +47,8 @@ if platform.system() == "Windows":
     extra_compile_args_safe = ["/O2", "/openmp"]
     extra_link_args = ["/openmp"]
 
-    cython_extnames.append("choreo.Choreo_cython_funs_parallel")
-    cython_filenames.append("choreo/Choreo_cython_funs_parallel.pyx")
+    cython_extnames.append("choreo.cython.funs_parallel")
+    cython_filenames.append("choreo/cython/funs_parallel.pyx")
     cython_safemath_needed.append(False)
 
 else:
@@ -93,8 +93,8 @@ else:
         # extra_compile_args_safe = ["-O2", "-fopenmp"]
         # extra_link_args = ["-fopenmp","-ipo"]
 
-        cython_extnames.append("choreo.Choreo_cython_funs_parallel")
-        cython_filenames.append("choreo/Choreo_cython_funs_parallel.pyx")
+        cython_extnames.append("choreo.cython.funs_parallel")
+        cython_filenames.append("choreo/cython/funs_parallel.pyx")
         cython_safemath_needed.append(False)
 
 nthreads = multiprocessing.cpu_count()

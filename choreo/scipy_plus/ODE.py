@@ -1,5 +1,5 @@
 '''
-Choreo_scipy_plus.py : Define  ODE-related things I designed I feel ought to be in scipy.
+ODE.py : Defines ODE-related things I designed I feel ought to be in scipy.
 
 '''
 
@@ -10,16 +10,16 @@ import mpmath
 
 import functools
 
-from choreo.Choreo_cython_scipy_plus_ODE import ExplicitSymplecticWithTable_XV_cython
-from choreo.Choreo_cython_scipy_plus_ODE import ExplicitSymplecticWithTable_VX_cython
-from choreo.Choreo_cython_scipy_plus_ODE import SymplecticStormerVerlet_XV_cython
-from choreo.Choreo_cython_scipy_plus_ODE import SymplecticStormerVerlet_VX_cython
-from choreo.Choreo_cython_scipy_plus_ODE import ImplicitSymplecticWithTableGaussSeidel_VX_cython
-from choreo.Choreo_cython_scipy_plus_ODE import ImplicitSymplecticTanWithTableGaussSeidel_VX_cython
-from choreo.Choreo_cython_scipy_plus_ODE import IntegrateOnSegment
+from choreo.scipy_plus.cython.ODE import ExplicitSymplecticWithTable_XV_cython
+from choreo.scipy_plus.cython.ODE import ExplicitSymplecticWithTable_VX_cython
+from choreo.scipy_plus.cython.ODE import SymplecticStormerVerlet_XV_cython
+from choreo.scipy_plus.cython.ODE import SymplecticStormerVerlet_VX_cython
+from choreo.scipy_plus.cython.ODE import ImplicitSymplecticWithTableGaussSeidel_VX_cython
+from choreo.scipy_plus.cython.ODE import ImplicitSymplecticTanWithTableGaussSeidel_VX_cython
+from choreo.scipy_plus.cython.ODE import IntegrateOnSegment
 
-from choreo.Choreo_cython_scipy_plus_ODE import ImplicitSymplecticWithTableGaussSeidel_VX_cython_mulfun
-from choreo.Choreo_cython_scipy_plus_ODE import ImplicitSymplecticTanWithTableGaussSeidel_VX_cython_mulfun
+from choreo.scipy_plus.cython.ODE import ImplicitSymplecticWithTableGaussSeidel_VX_cython_mulfun
+from choreo.scipy_plus.cython.ODE import ImplicitSymplecticTanWithTableGaussSeidel_VX_cython_mulfun
 
 
 #####################

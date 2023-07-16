@@ -1,5 +1,5 @@
 '''
-Choreo_scipy_plus.py : Define linear algebra related things I designed I feel ought to be in scipy.
+linalg.py : Define linear algebra related things I designed I feel ought to be in scipy.
 
 '''
 

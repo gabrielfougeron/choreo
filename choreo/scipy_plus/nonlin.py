@@ -1,5 +1,5 @@
 '''
-Choreo_scipy_plus_nonlin.py : Define non-linear optimization things I designed I feel ought to be in scipy.
+nonlin.py : Define non-linear optimization things I designed I feel ought to be in scipy.
 
 '''
 
