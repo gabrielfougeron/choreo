@@ -53,9 +53,6 @@ test = [
   "attrs",
   "pytest",
   "pytest-xdist",
-  "pytest-cov",
-  "pytest-cython",
-  "pytest-envfiles",
 ]
 docs = [
   "choreo[test]",
@@ -82,7 +79,7 @@ Changelog = "https://github.com/gabrielfougeron/choreo/releases/"
 
 [tool.pytest.ini_options]
 minversion = "6.0"
-addopts = "-v -ra --junit-xml=docs/pytest_out/junit.xml"
+addopts = "-v -ra --junit-xml=docs/pytest_out/junit.xml -n auto"
 testpaths = [
     "tests",
 ]

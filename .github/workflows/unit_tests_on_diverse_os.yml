@@ -1,4 +1,4 @@
-name: Tox regression tests
+name: Unit tests on diverse OS
 
 on: workflow_dispatch 
 
