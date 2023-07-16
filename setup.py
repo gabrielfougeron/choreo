@@ -153,13 +153,14 @@ ext_modules = Cython.Build.cythonize(
     nthreads = nthreads,
 )
 
+packages = setuptools.find_packages()
 package_data = {"choreo":["choreo.h","*.pyx"]}
 
 setuptools.setup(
     platforms = ['any'],
     ext_modules = ext_modules,
     zip_safe = False,
-    packages = setuptools.find_packages(),
+    packages = packages,
     package_data = package_data,
     provides = ['choreo'],
 )
