@@ -1,7 +1,11 @@
-from .funs            import *
-from .funs_serial     import *
+from choreo.cython.funs     import *
+from choreo.funs            import *
+from choreo.find            import *
+from choreo.scipy_plus      import *
+from choreo.helper          import *
+from choreo.run             import *
 
 try:
-    from .funs_parallel   import *
+    from choreo.numba_funs  import *
 except:
     pass
