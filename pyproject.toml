@@ -48,11 +48,21 @@ gui = [
 cli = [
   "numba",
 ]
-test = [
+test-cli = [
   "choreo[cli]",
   "attrs",
   "pytest",
   "pytest-xdist",
+]
+test-gui = [
+  "choreo[test-cli]",
+  "pytest-pyodide",
+  "pytest-httpserver",
+  "selenium",
+]
+test = [
+  # choreo[test-cli, test-gui], GUI tests are disabled for now
+  "choreo[test-cli]",
 ]
 docs = [
   "choreo[test]",
