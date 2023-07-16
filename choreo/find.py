@@ -22,9 +22,9 @@ try:
 except:
     pass
 
-from choreo.Choreo_scipy_plus import *
-from choreo.Choreo_funs import *
-from choreo.Choreo_helper import *
+from choreo.scipy_plus import *
+from choreo.funs import *
+from choreo.helper import *
 
 def Find_Choreo(
     geodim,

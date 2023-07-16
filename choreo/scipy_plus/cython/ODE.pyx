@@ -1,5 +1,5 @@
 '''
-Choreo_cython_scipy_plus_ODE.pyx : Defines ODE-related things I designed I feel ought to be in scipy ... but faster !
+ODE.pyx : Defines ODE-related things I designed I feel ought to be in scipy ... but faster !
 
 
 '''
