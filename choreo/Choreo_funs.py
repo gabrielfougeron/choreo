@@ -2386,7 +2386,10 @@ class ActionSym():
         )
 
     @staticmethod
-    def Random(nbody, geodim):
+    def Random(nbody, geodim, maxden = None):
+
+        if maxden is None:
+            maxden = 10*nbody
 
         perm = np.random.permutation(nbody)
 
@@ -2396,7 +2399,6 @@ class ActionSym():
 
         timerev = 1 if np.random.random_sample() < 0.5 else -1
 
-        maxden = 10*nbody
         den = np.random.randint(low = 1, high = maxden)
         num = np.random.randint(low = 0, high =    den)
 
@@ -2482,6 +2484,7 @@ class ActionSym():
         Returns True if the two transformations are almost identical.
         """   
         return ((self.Inverse()).Compose(other)).IsIdentity(atol = atol)
+
 
 
 
@@ -2627,10 +2630,67 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
 
     Identity_detected = False
 
-    SymGraph = networkx.Graph()
+    FullGraph = networkx.Graph()
     for ib in range(nbody):
         for iint in range(nint_min):
-            SymGraph.add_node((ib,iint),Constraint_list=[])
+            FullGraph.add_node((ib,iint),Constraint_list=[])
+
+
+
+    for Sym in SymList:
+
+        for ib in range(nbody):
+
+            ib_target = Sym.BodyPerm[ib]
+
+            for iint in range(nint_min):
+
+                iint_target = iint - Sym.TimeShift.numerator * (nint_min // Sym.TimeShift.denominator)
+
+                if (Sym.TimeRev == -1):
+                    
+                    iint_target = 1 - iint_target
+
+                iint_target = ((iint_target % nint_min) + nint_min) % nint_min 
+
+                node_source = (ib       , iint       )
+                node_target = (ib_target, iint_target)
+
+                FullGraph.add_edge(node_source, node_target, Sym = Sym)
+
+
+
+
+    for il in range(len(ConnectedComponents)):
+        
+        loopgen[il] = ConnectedComponents[il].pop()
+
+        paths_to_gen = networkx.shortest_path(SymGraph, target=loopgen[il])
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     for iint_source in range(nint_min):
 

@@ -73,6 +73,7 @@ docs = [
   "sphinx-needs",
   "sphinx-test-reports",
   "sphinxcontrib.plantuml",
+  "nb2plots",
 ]
 full = [
   "choreo[gui,cli,docs,test]"
