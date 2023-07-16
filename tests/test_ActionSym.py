@@ -54,5 +54,3 @@ def test_Random(float64_tols, Physical_dims, Few_bodies):
             B = choreo.ActionSym.Random(nbody, geodim)
 
             assert not(A.IsSame(B, atol = float64_tols.atol))
-
-            assert False
