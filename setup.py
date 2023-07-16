@@ -77,7 +77,7 @@ else:
                 os.environ['CC'] = compiler
                 os.environ['LDSHARED'] = compiler+' -shared'
 
-                print(f'Compiler: {compiler}')
+                # print(f'Compiler: {compiler}')
 
                 break
 
@@ -154,7 +154,8 @@ ext_modules = Cython.Build.cythonize(
 )
 
 packages = setuptools.find_packages()
-package_data = {"choreo":["choreo.h","*.pyx"]}
+
+package_data = {key : ['*.h','*.c','*.pyx'] for key in packages }
 
 setuptools.setup(
     platforms = ['any'],
