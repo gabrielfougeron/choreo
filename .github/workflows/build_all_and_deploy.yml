@@ -17,13 +17,12 @@ concurrency:
   cancel-in-progress: true
 
 
-
 jobs:
-  setup:
+  build:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
     #
     - name: Setup Python
@@ -45,13 +44,6 @@ jobs:
         pip install --upgrade pip
         pip install build
     #
-    #
-    #
-    #
-  build-for-ubuntu:
-    needs: setup
-    runs-on: ubuntu-latest
-    steps:
     - name: Build for Ubuntu
       run: python -m build
     # 
@@ -61,13 +53,6 @@ jobs:
     - name: Run setup.py
       run: python setup.py build_ext
     #
-    #
-    #
-    #
-  build-for-pyodide:
-    needs: build-for-ubuntu
-    runs-on: ubuntu-latest
-    steps:
     - name: Read Emscripten version number
       run: |
         echo EMSCRIPTEN_VERSION=$(pyodide config get emscripten_version) >> $GITHUB_ENV
@@ -82,13 +67,6 @@ jobs:
         pyodide build
         cp ./dist/choreo-0.2.0-cp311-cp311-emscripten_3_1_32_wasm32.whl ./choreo_GUI/python_dist/choreo-0.2.0-cp311-cp311-emscripten_3_1_32_wasm32.whl
     #
-    #
-    #
-    #
-  deploy-gui:
-    needs: build-for-pyodide
-    runs-on: ubuntu-latest
-    steps:
     - name: Make Gallery Descriptor 
       run: |
         cd choreo_GUI
@@ -107,25 +85,11 @@ jobs:
       id: deployment
       uses: actions/deploy-pages@v1
     #
-    #
-    #
-    #
-  test:
-    needs: build-for-pyodide
-    runs-on: ubuntu-latest
-    steps:
     - name: Run tests
       continue-on-error: true
       run: |
         pytest
     #
-    #
-    #
-    #
-  docs:
-    needs: test
-    runs-on: ubuntu-latest
-    steps:
     - name: Generate Documentation
       run: |
         cd docs
