@@ -5,4 +5,4 @@ sys.path.append(__PROJECT_ROOT__)
 
 import choreo 
 
-choreo.Choreo_run.GUI_in_CLI(['-f', './Sniff_all_sym/'])
+choreo.run.GUI_in_CLI(['-f', './Sniff_all_sym/'])

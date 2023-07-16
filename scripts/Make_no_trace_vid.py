@@ -9,7 +9,7 @@ import copy
 import os, shutil
 import time
 
-from Choreo_funs import *
+from choreo.funs import *
 
 
 nbody = np.array([8])
