@@ -10,7 +10,7 @@ jobs:
     strategy:
       matrix:
         python-version: ["3.9", "3.10", "3.11"]
-        os: [ubuntu-22.04, ubuntu-20.04, macos-13, macos-12, macos-11]
+        os: [ubuntu-22.04, ubuntu-20.04, macos-latest]
     #
     runs-on: ${{ matrix.os }}
     continue-on-error: true
