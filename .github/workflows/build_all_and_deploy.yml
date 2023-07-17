@@ -33,7 +33,8 @@ jobs:
     - name: Install apt-get dependencies for Ubuntu
       run: |
         sudo apt-get update
-        sudo apt-get install libomp-dev libsuitesparse-dev
+        sudo apt-get upgrade
+        sudo apt-get install libomp-dev libsuitesparse-dev clang
         sudo apt-get install plantuml
     # 
     - name: Checkout repository
