@@ -27,7 +27,7 @@ jobs:
     - uses: ConorMacBride/install-package@main
       with:
         brew: libomp-dev libsuitesparse-dev plantuml
-        apt: libomp-dev libsuitesparse-dev plantuml
+        apt: libomp-dev libsuitesparse-dev plantuml build-essential
         choco: libomp-dev libsuitesparse-dev plantuml
     # - name: Install apt-get dependencies for Ubuntu
     #   run: |
@@ -46,5 +46,6 @@ jobs:
     #
     - name: Generate Documentation
       run: |
+        python setup.py build_ext --inplace
         cd docs
         make html
