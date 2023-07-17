@@ -29,7 +29,7 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get upgrade
-        sudo apt-get install libomp-dev libsuitesparse-dev
+        sudo apt-get install libomp-dev libsuitesparse-dev clang
         sudo apt-get install plantuml
     #
     - name: Install brew dependencies for MacOs
@@ -37,7 +37,7 @@ jobs:
       run: |
         brew update
         brew upgrade
-        brew install libomp-dev libsuitesparse-dev plantuml
+        brew install libomp suite-sparse plantuml
     # 
     - name: Install python build dependencies
       run: |
