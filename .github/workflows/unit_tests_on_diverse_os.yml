@@ -24,6 +24,12 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
     #
+    - name: Debug workflow
+      run: |
+        echo ${{ matrix.os }}
+        echo (${{ startsWith( matrix.os, 'ubuntu') }})
+        echo (${{ startsWith( matrix.os, 'macos') }})
+    #
     - name: Install apt-get dependencies for Ubuntu
       if: (${{ startsWith( matrix.os, 'ubuntu') }})
       run: |
