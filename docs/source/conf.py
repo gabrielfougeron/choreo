@@ -48,7 +48,6 @@ extensions = [
 
 
 
-
 # The suffix of source filenames.
 source_suffix = ".rst"
 
@@ -83,10 +82,10 @@ html_logo = "_static/img/eight_icon.png"
 html_show_sourcelink = True
 
 html_theme_options = {
+    # 'nosidebar': True,
     "collapse_navigation": True,
     "navigation_depth": 2,
     "show_prev_next": False,
-    # 'nosidebar': True,
     "header_links_before_dropdown": 7,
     "use_edit_page_button": True,
     "pygment_light_style": 'tango',
@@ -150,10 +149,13 @@ sphinx_gallery_conf = {
     'doc_module': ('choreo'),
 }   
 
-# Options for LaTeX output
-# ------------------------
 
-# Use a latex engine that allows for unicode characters in docstrings
-latex_engine = "xelatex"
-# The paper size ('letter' or 'a4').
-latex_paper_size = "letter"
+
+
+##########
+# nbplot #
+##########
+
+# nbplot_html_show_formats = False
+# nbplot_include_source = False
+
