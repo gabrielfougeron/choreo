@@ -42,6 +42,9 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+build = [
+  "Cython",
+]
 gui = [
   "pyodide-build==0.23.4",
 ]
@@ -76,7 +79,7 @@ docs = [
   "nb2plots",
 ]
 full = [
-  "choreo[gui,cli,docs,test]"
+  "choreo[gui,cli,docs,test,build]"
 ]
 
 [project.scripts]

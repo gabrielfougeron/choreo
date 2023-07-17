@@ -24,21 +24,25 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
     #
-    - uses: ConorMacBride/install-package@main
-      with:
-        brew: libomp-dev libsuitesparse-dev plantuml
-        apt: libomp-dev libsuitesparse-dev plantuml build-essential
-        choco: libomp-dev libsuitesparse-dev plantuml
-    # - name: Install apt-get dependencies for Ubuntu
-    #   run: |
-    #     sudo apt-get update
-    #     sudo apt-get install libomp-dev libsuitesparse-dev
-    #     sudo apt-get install plantuml
-    # No GUI here since pyodide only supports one version on python at a time
+    - name: Install apt-get dependencies for Ubuntu
+      if: contains(${{ matrix.os }}, 'ubuntu')
+      run: |
+        sudo apt-get update
+        sudo apt-get upgrade
+        sudo apt-get install libomp-dev libsuitesparse-dev
+        sudo apt-get install plantuml
+    #
+    - name: Install brew dependencies for MacOs
+      if: contains(${{ matrix.os }}, 'ubuntu')
+      run: |
+        brew update
+        brew upgrade
+        brew install libomp-dev libsuitesparse-dev plantuml
+    # 
     - name: Install python build dependencies
       run: |
         pip install --upgrade pip
-        pip install .[cli,docs,test]
+        pip install .[cli,docs,test,build]
     #
     - name: Run tests
       run: |
