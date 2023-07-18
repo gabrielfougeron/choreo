@@ -29,26 +29,15 @@ jobs:
     - name: Install common dependencies
       run: |
         conda install -c conda-forge -y suitesparse clang plantuml openmp
-    #
-    # - name: Install dependencies for Ubuntu
-    #   if: startsWith(matrix.os, 'ubuntu')
-    #   run: |
-    #     conda install -c conda-forge -y suitesparse clang plantuml openmp
-    # #
-    - name: Install dependencies for MacOs
-      if: startsWith(matrix.os, 'macos')
-      uses: maxim-lobanov/setup-xcode@v1.5.1
-      with:
-        xcode-version: latest
     - name: Install dependencies for MacOs
       if: startsWith(matrix.os, 'macos')
       run: |
-        xcode-select --install
+        export SDKROOT=$(xcrun --sdk macosx --show-sdk-path)
     #
     - name: Install dependencies for Windows
       if: startsWith(matrix.os, 'windows')
       run: |
-        set Path "%Path%;C:\Miniconda\envs\__setup_conda\Library\include\suitesparse"
+        $env:Path += ';C:\Miniconda\envs\__setup_conda\Library\include\suitesparse' 
     # # 
     - name: Install python build dependencies
       run: |
