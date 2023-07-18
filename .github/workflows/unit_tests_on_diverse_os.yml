@@ -26,21 +26,26 @@ jobs:
         python-version: ${{ matrix.python-version }}
         conda-channels: anaconda, conda-forge
     #
-    - name: Install dependencies for Ubuntu
-      if: startsWith(matrix.os, 'ubuntu')
+    - name: Install common dependencies
       run: |
-        conda install -y suitesparse clang plantuml
+        conda install -c conda-forge -y suitesparse clang plantuml openmp
     #
+    # - name: Install dependencies for Ubuntu
+    #   if: startsWith(matrix.os, 'ubuntu')
+    #   run: |
+    #     conda install -c conda-forge -y suitesparse clang plantuml openmp
+    # #
     - name: Install dependencies for MacOs
       if: startsWith(matrix.os, 'macos')
-      run: |
-        conda install -y suitesparse clang plantuml
-    #
-    - name: Install choco dependencies for Windows
-      if: startsWith(matrix.os, 'windows')
-      run: |
-        conda install -y suitesparse clang plantuml
-    # 
+      uses: maxim-lobanov/setup-xcode@v1.5.1
+      with:
+        xcode-version: latest
+    # #
+    # - name: Install dependencies for Windows
+    #   if: startsWith(matrix.os, 'windows')
+    #   run: |
+    #     conda install -y suitesparse clang plantuml openmp
+    # # 
     - name: Install python build dependencies
       run: |
         pip install --upgrade pip
