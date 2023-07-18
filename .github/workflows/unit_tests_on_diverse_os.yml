@@ -36,7 +36,6 @@ jobs:
       run: |       
         conda install -c conda-forge -y plantuml
         brew install suite-sparse llvm libomp
-        brew install llvm libomp
         export CC=/usr/local/opt/llvm/bin/clang
         export PATH="/usr/local/opt/llvm/bin:$PATH"
         export LDFLAGS="-L/usr/local/opt/llvm/lib"
