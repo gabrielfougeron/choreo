@@ -33,11 +33,11 @@ jobs:
     #     conda install -c conda-forge -y plantuml openmp
     - name: Install dependencies for MacOs
       if: startsWith(matrix.os, 'macos')
-      run: |        
-        conda install -c conda-forge -y plantuml openmp
+      run: |       
         sudo rm -rf /Library/Developer/CommandLineTools
-        xcode-select --install
-        brew install suite-sparse llvm libomp
+        xcode-select --install 
+        brew install suite-sparse llvm
+        conda install -c conda-forge -y plantuml openmp
     #
     - name: Install dependencies for Windows
       if: startsWith(matrix.os, 'windows')
@@ -50,7 +50,7 @@ jobs:
     - name: Install dependencies for Ubuntu
       if: startsWith(matrix.os, 'ubuntu')
       run: |
-        conda install -c conda-forge -y suitesparse clang plantuml
+        conda install -c conda-forge -y suitesparse clang plantuml openmp
     # # 
     - name: Install python build dependencies
       run: |
