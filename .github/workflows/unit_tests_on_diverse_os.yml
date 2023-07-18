@@ -9,8 +9,10 @@ jobs:
   build:
     strategy:
       matrix:
-        python-version: ["3.9", "3.10", "3.11"]
-        os: [ubuntu-22.04, ubuntu-20.04, macos-latest, windows-latest]
+        # python-version: ["3.9", "3.10", "3.11"]
+        python-version: ["3.11"]
+        # os: [ubuntu-22.04, ubuntu-20.04, macos-latest, windows-latest]
+        os: [ubuntu-latest, macos-latest, windows-latest]
     #
     runs-on: ${{ matrix.os }}
     continue-on-error: true
@@ -31,12 +33,13 @@ jobs:
         conda install -c conda-forge -y suitesparse clang plantuml openmp
     - name: Install dependencies for MacOs
       if: startsWith(matrix.os, 'macos')
-      run: |
-        export SDKROOT=$(xcrun --sdk macosx --show-sdk-path)
+      run: |        
+        xcode-select --install
     #
     - name: Install dependencies for Windows
       if: startsWith(matrix.os, 'windows')
       run: |
+        conda install -c conda-forge -y sparseqr
         $env:Path += ';C:\Miniconda\envs\__setup_conda\Library\include\suitesparse' 
     # # 
     - name: Install python build dependencies
