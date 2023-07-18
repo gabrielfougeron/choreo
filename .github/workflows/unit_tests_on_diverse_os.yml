@@ -34,10 +34,9 @@ jobs:
     - name: Install dependencies for MacOs
       if: startsWith(matrix.os, 'macos')
       run: |       
-        sudo rm -rf /Library/Developer/CommandLineTools
-        xcode-select --install 
-        brew install suite-sparse llvm
-        conda install -c conda-forge -y plantuml openmp
+        conda install -c conda-forge -y plantuml
+        brew install suite-sparse llvm libomp
+        export CC=/usr/local/opt/llvm/bin/clang
     #
     - name: Install dependencies for Windows
       if: startsWith(matrix.os, 'windows')
@@ -46,6 +45,10 @@ jobs:
         cd "C:\Miniconda\envs\__setup_conda\Library\include\suitesparse"
         dir
         $env:Path += ';C:\Miniconda\envs\__setup_conda\Library\include\suitesparse'
+        echo 'toto'
+        $env:Path
+        echo 'tata'
+        $env:PATH
     #
     - name: Install dependencies for Ubuntu
       if: startsWith(matrix.os, 'ubuntu')
