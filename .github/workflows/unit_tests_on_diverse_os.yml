@@ -28,19 +28,21 @@ jobs:
         python-version: ${{ matrix.python-version }}
         conda-channels: anaconda, conda-forge
     #
-    - name: Install common dependencies
-      run: |
-        conda install -c conda-forge -y plantuml openmp
+    # - name: Install common dependencies
+    #   run: |
+    #     conda install -c conda-forge -y plantuml openmp
     - name: Install dependencies for MacOs
       if: startsWith(matrix.os, 'macos')
       run: |        
+        conda install -c conda-forge -y plantuml openmp
         sudo rm -rf /Library/Developer/CommandLineTools
         xcode-select --install
-        brew install suite-sparse llvm
+        brew install suite-sparse llvm libomp
     #
     - name: Install dependencies for Windows
       if: startsWith(matrix.os, 'windows')
       run: |
+        conda install -c conda-forge -y suitesparse plantuml
         cd "C:\Miniconda\envs\__setup_conda\Library\include\suitesparse"
         dir
         $env:Path += ';C:\Miniconda\envs\__setup_conda\Library\include\suitesparse'
@@ -48,7 +50,7 @@ jobs:
     - name: Install dependencies for Ubuntu
       if: startsWith(matrix.os, 'ubuntu')
       run: |
-        conda install -c conda-forge -y suitesparse clang
+        conda install -c conda-forge -y suitesparse clang plantuml
     # # 
     - name: Install python build dependencies
       run: |
