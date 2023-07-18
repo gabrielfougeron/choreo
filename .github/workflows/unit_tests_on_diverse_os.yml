@@ -30,19 +30,25 @@ jobs:
     #
     - name: Install common dependencies
       run: |
-        conda install -c conda-forge -y suitesparse clang plantuml openmp
+        conda install -c conda-forge -y plantuml openmp
     - name: Install dependencies for MacOs
       if: startsWith(matrix.os, 'macos')
       run: |        
         sudo rm -rf /Library/Developer/CommandLineTools
         xcode-select --install
+        brew install suite-sparse llvm
     #
     - name: Install dependencies for Windows
       if: startsWith(matrix.os, 'windows')
       run: |
-        cd "C:\Miniconda\envs\__setup_conda\Library\include\"
+        cd "C:\Miniconda\envs\__setup_conda\Library\include\suitesparse"
         dir
-        $env:Path += ';C:\Miniconda\envs\__setup_conda\Library\include\suitesparse' 
+        $env:Path += ';C:\Miniconda\envs\__setup_conda\Library\include\suitesparse'
+    #
+    - name: Install dependencies for Ubuntu
+      if: startsWith(matrix.os, 'ubuntu')
+      run: |
+        conda install -c conda-forge -y suitesparse clang
     # # 
     - name: Install python build dependencies
       run: |
