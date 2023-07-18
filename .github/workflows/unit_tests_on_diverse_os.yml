@@ -34,12 +34,14 @@ jobs:
     - name: Install dependencies for MacOs
       if: startsWith(matrix.os, 'macos')
       run: |        
+        sudo rm -rf /Library/Developer/CommandLineTools
         xcode-select --install
     #
     - name: Install dependencies for Windows
       if: startsWith(matrix.os, 'windows')
       run: |
-        conda install -c conda-forge -y sparseqr
+        cd "C:\Miniconda\envs\__setup_conda\Library\include\"
+        dir
         $env:Path += ';C:\Miniconda\envs\__setup_conda\Library\include\suitesparse' 
     # # 
     - name: Install python build dependencies
