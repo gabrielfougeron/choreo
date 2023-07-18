@@ -147,7 +147,7 @@ if use_Cython:
         language_level = "3",
         annotate = True,
         compiler_directives = compiler_directives,
-        nthreads = nthreads,
+        # nthreads = nthreads,
     )
     
 

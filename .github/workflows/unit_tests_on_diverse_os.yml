@@ -10,7 +10,7 @@ jobs:
     strategy:
       matrix:
         python-version: ["3.9", "3.10", "3.11"]
-        os: [ubuntu-22.04, ubuntu-20.04, macos-latest]
+        os: [ubuntu-22.04, ubuntu-20.04, macos-latest, windows-latest]
     #
     runs-on: ${{ matrix.os }}
     continue-on-error: true
@@ -19,25 +19,27 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v3
     # 
-    - name: Setup Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
+    - name: Setup conda
+      uses: s-weigand/setup-conda@v1
       with:
+        update-conda: true
         python-version: ${{ matrix.python-version }}
+        conda-channels: anaconda, conda-forge
     #
-    - name: Install apt-get dependencies for Ubuntu
+    - name: Install dependencies for Ubuntu
       if: startsWith(matrix.os, 'ubuntu')
       run: |
-        sudo apt-get update
-        sudo apt-get upgrade
-        sudo apt-get install libomp-dev libsuitesparse-dev clang
-        sudo apt-get install plantuml
+        conda install -y suitesparse clang plantuml
     #
-    - name: Install brew dependencies for MacOs
+    - name: Install dependencies for MacOs
       if: startsWith(matrix.os, 'macos')
       run: |
-        brew update
-        brew upgrade
-        brew install libomp suite-sparse plantuml
+        conda install -y suitesparse clang plantuml
+    #
+    - name: Install choco dependencies for Windows
+      if: startsWith(matrix.os, 'windows')
+      run: |
+        conda install -y suitesparse clang plantuml
     # 
     - name: Install python build dependencies
       run: |
