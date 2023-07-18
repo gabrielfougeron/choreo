@@ -1,5 +1,5 @@
-from .cython            import *
-from .scipy_plus        import *
+from .                  import cython
+from .                  import scipy_plus
 
 from .funs              import *
 from .find              import *

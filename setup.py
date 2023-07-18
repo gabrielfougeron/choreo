@@ -6,19 +6,22 @@ Creates and compiles C code from Cython file
 import os
 import shutil
 import setuptools
-import Cython.Build
 import numpy
 import platform
-import multiprocessing
 
-# To buid and use inplace, run the following command :
-# python setup.py build_ext --inplace
-
-# To build for the current platform, run :
-# python setup.py bdist_wheel
+# use_Cython = False
+use_Cython = True
 
 # use_Pythran = True
 use_Pythran = False
+
+if use_Cython:
+    import Cython.Build
+    import Cython.Compiler
+    Cython.Compiler.Options.cimport_from_pyx = True
+    src_ext = '.pyx'
+else:
+    src_ext = '.c'
 
 if use_Pythran:
     import pythran
@@ -27,12 +30,6 @@ cython_extnames = [
     "choreo.cython.funs",
     "choreo.cython.funs_serial",
     "choreo.scipy_plus.cython.ODE",
-]
-
-cython_filenames = [
-    "choreo/cython/funs.pyx",
-    "choreo/cython/funs_serial.pyx",
-    "choreo/scipy_plus/cython/ODE.pyx",
 ]
 
 cython_safemath_needed = [
@@ -48,7 +45,6 @@ if platform.system() == "Windows":
     extra_link_args = ["/openmp"]
 
     cython_extnames.append("choreo.cython.funs_parallel")
-    cython_filenames.append("choreo/cython/funs_parallel.pyx")
     cython_safemath_needed.append(False)
 
 else:
@@ -94,10 +90,9 @@ else:
         # extra_link_args = ["-fopenmp","-ipo"]
 
         cython_extnames.append("choreo.cython.funs_parallel")
-        cython_filenames.append("choreo/cython/funs_parallel.pyx")
         cython_safemath_needed.append(False)
 
-nthreads = multiprocessing.cpu_count()
+cython_filenames = [ ext_name.replace('.','/') + src_ext for ext_name in cython_extnames]
 
 define_macros = [("NPY_NO_DEPRECATED_API", "NPY_1_7_API_VERSION")]
 # define_macros = []
@@ -130,9 +125,7 @@ include_dirs = [numpy.get_include()]
 if use_Pythran:
     include_dirs.append(pythran.get_include())
 
-Cython.Compiler.Options.cimport_from_pyx = True
-
-extensions = [
+ext_modules = [
     setuptools.Extension(
     name = name,
     sources =  [source],
@@ -144,14 +137,19 @@ extensions = [
     for (name,source,safemath_needed) in zip(cython_extnames,cython_filenames,cython_safemath_needed)
 ]
 
-ext_modules = Cython.Build.cythonize(
-    extensions,
-    language_level = "3",
-    annotate = True,
-    # force = True,
-    compiler_directives = compiler_directives,
-    nthreads = nthreads,
-)
+if use_Cython:
+    
+    import multiprocessing
+    nthreads = multiprocessing.cpu_count()
+
+    ext_modules = Cython.Build.cythonize(
+        ext_modules,
+        language_level = "3",
+        annotate = True,
+        compiler_directives = compiler_directives,
+        nthreads = nthreads,
+    )
+    
 
 packages = setuptools.find_packages()
 
