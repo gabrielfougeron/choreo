@@ -52,7 +52,7 @@ jobs:
       run:  pip install .[full]
     #
     - name: Run setup.py
-      run: python setup.py build_ext
+      run: python setup.py build_ext --inplace
     #
     - name: Read Emscripten version number
       run: |
