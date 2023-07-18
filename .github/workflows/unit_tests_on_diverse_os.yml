@@ -35,8 +35,6 @@ jobs:
       if: startsWith(matrix.os, 'macos')
       run: |       
         conda install -c conda-forge -y plantuml openmp
-        brew update
-        brew upgrade
         brew install suite-sparse llvm libomp
     #
     - name: Install dependencies for Windows
@@ -44,6 +42,8 @@ jobs:
       run: |
         conda install -c conda-forge -y suitesparse plantuml
         $env:INCLUDE += ';C:\Miniconda\envs\__setup_conda\Library\include\suitesparse'
+        $env:PATH += ';C:\Miniconda\envs\__setup_conda\Library\include\suitesparse'
+        $env:LIB += ';C:\Miniconda\envs\__setup_conda\Library\include\suitesparse'
     #
     - name: Install dependencies for Ubuntu
       if: startsWith(matrix.os, 'ubuntu')
