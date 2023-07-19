@@ -40,12 +40,13 @@ jobs:
       if: startsWith(matrix.os, 'macos')
       run: |       
         conda install -c conda-forge -y plantuml
-        brew install suite-sparse llvm libomp
-        export CC="/usr/local/opt/llvm/bin/clang -lomp"
-        export PATH="/usr/local/opt/llvm/bin:$PATH"
-        export LDFLAGS="-L/usr/local/opt/llvm/lib"
-        export CFLAGS="-I/usr/local/opt/llvm/include"
-        export CC="/usr/local/opt/llvm/bin/clang"
+        brew install suite-sparse
+      # brew install suite-sparse llvm libomp
+      # export CC="/usr/local/opt/llvm/bin/clang -lomp"
+      # export PATH="/usr/local/opt/llvm/bin:$PATH"
+      # export LDFLAGS="-L/usr/local/opt/llvm/lib"
+      # export CFLAGS="-I/usr/local/opt/llvm/include"
+      # export CC="/usr/local/opt/llvm/bin/clang"
     #
     - name: Install dependencies for Windows
       if: startsWith(matrix.os, 'windows')
@@ -62,13 +63,13 @@ jobs:
       run: |
         conda install -c conda-forge -y suitesparse clang plantuml openmp
     # 
-    - name: Install run setup.py
-      run: |
-        python setup.py build_ext --inplace
-    # - name: Install python build dependencies
+    # - name: Install run setup.py
     #   run: |
-    #     pip install --upgrade pip
-    #     pip install .[cli,docs,test,build]
+    #     python setup.py build_ext --inplace
+    - name: Install python build dependencies
+      run: |
+        pip install --upgrade pip
+        pip install .[cli,docs,test,build]
     # #
     - name: Run tests
       run: |
