@@ -43,7 +43,12 @@ dependencies = [
 
 [project.optional-dependencies]
 build = [
+  "setuptools>=42",
+  "wheel",
   "Cython",
+  "numpy",
+  "scipy",
+  "build",
 ]
 gui = [
   "pyodide-build==0.23.4",
