@@ -113,8 +113,8 @@ else:
 
 
 print("bbb")
-pritn(os.environ['CC'])
-pritn(os.environ['LDSHARED'])
+print(os.environ['CC'])
+print(os.environ['LDSHARED'])
 
 
 cython_filenames = [ ext_name.replace('.','/') + src_ext for ext_name in cython_extnames]
