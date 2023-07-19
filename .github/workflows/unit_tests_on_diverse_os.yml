@@ -31,11 +31,10 @@ jobs:
     - name: Install dependencies for MacOs
       if: startsWith(matrix.os, 'macos')
       run: |       
-        conda install -c conda-forge -y plantuml suitesparse
-        brew install llvm libomp
+        conda install -c conda-forge -y plantuml 
+        brew install llvm libomp suite-sparse
 
-        echo "/usr/local/opt/llvm/bin" >> $GITHUB_PATH
-
+        echo 'PATH="/usr/local/opt/llvm/bin:$PATH"' >> $GITHUB_ENV
         echo 'CC=/usr/local/opt/llvm/bin/clang' >> $GITHUB_ENV
         echo 'LDFLAGS=-L/usr/local/opt/llvm/lib' >> $GITHUB_ENV
         echo 'CFLAGS=-I/usr/local/opt/llvm/include' >> $GITHUB_ENV
@@ -45,7 +44,7 @@ jobs:
       uses: bus1/cabuild/action/msdevshell@v1
       with:
         architecture: x64
-        
+
     - name: Install dependencies for Windows
       if: startsWith(matrix.os, 'windows')
       run: |
