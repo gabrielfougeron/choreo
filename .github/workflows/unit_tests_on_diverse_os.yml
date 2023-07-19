@@ -49,6 +49,12 @@ jobs:
         python setup.py build_ext --inplace
 
         pip install .[cli,docs,test,build]
+
+
+        pytest
+
+        cd docs
+        make html
     #
     - name: Build for Windows
       if: startsWith(matrix.os, 'windows')
@@ -58,9 +64,17 @@ jobs:
         $env:PATH += ';C:\Miniconda\envs\__setup_conda\Library\include\suitesparse'
         $env:LIB += ';C:\Miniconda\envs\__setup_conda\Library\include\suitesparse;C:\Miniconda\envs\__setup_conda\Lib\site-packages'
   
+        pip install --upgrade pip
+        pip install scipy numpy matplotlib sparseqr==1.2 networkx mpmath Cython
+
         python setup.py build_ext --inplace
         pip install .[cli,docs,test,build]
     
+
+        pytest
+
+        cd docs
+        make html
 
 # 
 #         mkdir "C:\Users\runneradmin\miniconda3"
@@ -87,12 +101,8 @@ jobs:
         python setup.py build_ext --inplace
 
         pip install .[cli,docs,test,build]
-    #
-    - name: Run tests
-      run: |
+
         pytest
-    #
-    - name: Generate Documentation
-      run: |
+
         cd docs
         make html
