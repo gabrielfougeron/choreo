@@ -15,7 +15,7 @@ jobs:
         os: [ubuntu-latest, macos-latest, windows-latest]
     #
     runs-on: ${{ matrix.os }}
-    continue-on-error: true
+    # continue-on-error: true
     steps:
     # 
     - name: Checkout repository
@@ -40,9 +40,6 @@ jobs:
         echo 'LDFLAGS=-L/usr/local/opt/llvm/lib' >> $GITHUB_ENV
         echo 'CFLAGS=-I/usr/local/opt/llvm/include' >> $GITHUB_ENV
 
-# echo 'PATH=/usr/local/opt/llvm/bin:{$PATH}' >> $GITHUB_ENV
-
-    #
     - name: Install dependencies for Windows
       if: startsWith(matrix.os, 'windows')
       run: |
@@ -53,9 +50,7 @@ jobs:
 
     - name: Setup MSVC Developer Command Prompt
       if: startsWith(matrix.os, 'windows')
-      uses: TheMrMilchmann/setup-msvc-dev@v2.0.1
-      with:
-        arch: x64
+      uses: ilammy/msvc-dev-cmd@v1.12.1
     #
     - name: Install dependencies for Ubuntu
       if: startsWith(matrix.os, 'ubuntu')
