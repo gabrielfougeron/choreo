@@ -56,12 +56,17 @@ jobs:
       if: startsWith(matrix.os, 'ubuntu')
       run: |
         conda install -c conda-forge -y suitesparse clang plantuml openmp
-    # # 
+    # 
     - name: Install python build dependencies
       run: |
         pip install --upgrade pip
-        pip install .[cli,docs,test,build]
-    #
+        pip install scipy numpy matplotlib sparseqr==1.2 networkx mpmath
+        python setup.py build_ext --inplace
+    # - name: Install python build dependencies
+    #   run: |
+    #     pip install --upgrade pip
+    #     pip install .[cli,docs,test,build]
+    # #
     - name: Run tests
       run: |
         pytest
