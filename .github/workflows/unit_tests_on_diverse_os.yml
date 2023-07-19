@@ -41,12 +41,12 @@ jobs:
       run: |       
         conda install -c conda-forge -y plantuml
         brew install suite-sparse llvm libomp
-        export CC="/usr/local/opt/llvm/bin/clang"
-        export PATH="/usr/local/opt/llvm/bin:$PATH"
-        export LDFLAGS="-L/usr/local/opt/llvm/lib"
-        export CFLAGS="-I/usr/local/opt/llvm/include"
-        export CC="/usr/local/opt/llvm/bin/clang"
-        alias clang="/usr/local/opt/llvm/bin/clang"
+        export CC=/usr/local/opt/llvm/bin/clang
+        export PATH=/usr/local/opt/llvm/bin:$PATH
+        export LDFLAGS=-L/usr/local/opt/llvm/lib
+        export CFLAGS=-I/usr/local/opt/llvm/include
+        clang --version
+        which clang
     #
     - name: Install dependencies for Windows
       if: startsWith(matrix.os, 'windows')
@@ -56,10 +56,6 @@ jobs:
         $env:PATH += ';C:\Miniconda\envs\__setup_conda\Library\include\suitesparse'
         $env:LIB += ';C:\Miniconda\envs\__setup_conda\Library\include\suitesparse'
         Copy-Item -Path "C:\Miniconda\envs\__setup_conda\Library\include\suitesparse\SuiteSparseQR_C.h" -Destination "C:\Miniconda\envs\__setup_conda\Lib\site-packages\sparseqr\"
-        cd "D:\a\choreo\"
-        dir
-        cd "D:\a\choreo\choreo"
-        dir
         Copy-Item -Path "D:\a\choreo\choreo\sparseqr_gen.py" -Destination "C:\Miniconda\envs\__setup_conda\Lib\site-packages\sparseqr\"
         cd "C:\Miniconda\envs\__setup_conda\Lib\site-packages\sparseqr\"
         dir
