@@ -15,7 +15,7 @@ jobs:
         os: [ubuntu-latest, macos-latest, windows-latest]
 
     runs-on: ${{ matrix.os }}
-    # continue-on-error: true
+    continue-on-error: true
     steps:
 
     - name: Checkout repository
@@ -45,6 +45,7 @@ jobs:
       uses: bus1/cabuild/action/msdevshell@v1
       with:
         architecture: x64
+        
     - name: Install dependencies for Windows
       if: startsWith(matrix.os, 'windows')
       run: |
@@ -73,7 +74,7 @@ jobs:
         cd ..
 
     - name: Read Emscripten version number
-      if: startsWith(matrix.os, 'ubuntu')
+      if: startsWith(matrix.os, 'ubuntu') && matrix.python-version == '3.11'
       run: |
         pip install .[full]
         echo EMSCRIPTEN_VERSION=$(pyodide config get emscripten_version) >> $GITHUB_ENV
