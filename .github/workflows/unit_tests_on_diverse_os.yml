@@ -65,11 +65,17 @@ jobs:
         pip install --upgrade pip wheel
         pip install .[cli,docs,test,build]
 
-        python -m build
-
         python setup.py build_ext --inplace
 
+        python -m build
+
         python -c 'import choreo' 
+
+        echo "fff"
+
+        echo $LIB
+        cd C:\Miniconda\envs\__setup_conda\Lib\site-packages\sparseqr
+        dir
 
         pytest
 
