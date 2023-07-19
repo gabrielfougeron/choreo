@@ -113,6 +113,7 @@ jobs:
       - name: Copy artifacts
         run: |
           mkdir dist
+          find ./artifacts-dl/lubuntu-latest-3.11/ -name '*.tar.gz' -exec cp {} ./dist \; 
           find ./artifacts-dl -name '*.whl' -exec cp {} ./dist \; 
 
       - name: Upload artifact
