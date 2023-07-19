@@ -41,7 +41,8 @@ jobs:
 
         pip install --upgrade pip
 
-        pip install scipy numpy matplotlib sparseqr==1.2 networkx mpmath Cython
+        pip install .[cli,docs,test,build]
+        
         python setup.py build_ext --inplace
 
         pytest
@@ -64,7 +65,8 @@ jobs:
 
         pip install --upgrade pip
 
-        pip install scipy numpy matplotlib sparseqr==1.2 networkx mpmath Cython
+        pip install .[cli,docs,test,build]
+
         python setup.py build_ext --inplace
 
         pytest
@@ -98,7 +100,8 @@ jobs:
 
         pip install --upgrade pip
 
-        pip install scipy numpy matplotlib sparseqr==1.2 networkx mpmath Cython
+        pip install .[cli,docs,test,build]
+        
         python setup.py build_ext --inplace
 
         pytest
