@@ -54,6 +54,8 @@ jobs:
     - name: Setup MSVC Developer Command Prompt
       if: startsWith(matrix.os, 'windows')
       uses: TheMrMilchmann/setup-msvc-dev@v2.0.1
+      with:
+        arch: x64
     #
     - name: Install dependencies for Ubuntu
       if: startsWith(matrix.os, 'ubuntu')
