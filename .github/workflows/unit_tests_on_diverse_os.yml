@@ -28,6 +28,7 @@ jobs:
     #     arch: amd64_x86
     #
     - name: Prepare MSVC
+      if: startsWith(matrix.os, 'windows')
       uses: bus1/cabuild/action/msdevshell@v1
       with:
         architecture: x64
