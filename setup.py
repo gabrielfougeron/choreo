@@ -39,10 +39,6 @@ cython_safemath_needed = [
 ]
 
 
-print("********************************************")
-print(f"Running on {platform.system()}")
-print("********************************************")
-
 if platform.system() == "Windows":
 
     extra_compile_args_std = ["/O2", "/openmp"]
@@ -54,13 +50,13 @@ if platform.system() == "Windows":
 
 elif platform.system() == "Darwin": # MacOS
 
-    extra_compile_args_std = ["-Ofast","-march=native", "-lomp"]
-    extra_compile_args_safe = ["-O2", "-lomp"]
-    extra_link_args = ["-lomp"]
+    # extra_compile_args_std = ["-Ofast","-march=native", "-lomp"]
+    # extra_compile_args_safe = ["-O2", "-lomp"]
+    # extra_link_args = ["-lomp"]
 
-    # extra_compile_args_std = ["-fast","-march=native", "-fopenmp"]
-    # extra_compile_args_safe = ["-O2", "-fopenmp"]
-    # extra_link_args = ["-fopenmp","-ipo"]
+    extra_compile_args_std = ["-Ofast","-march=native", "-fopenmp"]
+    extra_compile_args_safe = ["-O2", "-fopenmp"]
+    extra_link_args = ["-fopenmp"]
 
     cython_extnames.append("choreo.cython.funs_parallel")
     cython_safemath_needed.append(False)
@@ -110,6 +106,10 @@ elif platform.system() == "Linux":
 
         cython_extnames.append("choreo.cython.funs_parallel")
         cython_safemath_needed.append(False)
+
+else:
+
+    raise ValueError(f"Unsupported platform: {platform.system()}")
 
 cython_filenames = [ ext_name.replace('.','/') + src_ext for ext_name in cython_extnames]
 
