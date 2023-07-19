@@ -30,9 +30,12 @@ if 'CONDA_DEFAULT_ENV' in os.environ:
     include_dirs.append( join(homedir, 'anaconda3', 'envs', os.environ['CONDA_DEFAULT_ENV'], 'Library', 'include', 'suitesparse') )
     include_dirs.append( join(homedir, 'miniconda3', 'envs', os.environ['CONDA_DEFAULT_ENV'], 'Library', 'include', 'suitesparse') )
 
-    include_dirs.append("C:\Miniconda\envs\__setup_conda\Library\include\suitesparse")
+    print('ccc')
+    print(join(homedir, 'miniconda3', 'envs', os.environ['CONDA_DEFAULT_ENV'], 'Library', 'include', 'suitesparse'))
 
-    include_dirs.append( join(homedir, 'Miniconda', 'envs', os.environ['CONDA_DEFAULT_ENV'], 'Library', 'include', 'suitesparse') )
+#     include_dirs.append("C:\Miniconda\envs\__setup_conda\Library\include\suitesparse")
+# 
+#     include_dirs.append( join(homedir, 'Miniconda', 'envs', os.environ['CONDA_DEFAULT_ENV'], 'Library', 'include', 'suitesparse') )
 
 if platform.system() == 'Windows':
     # https://github.com/yig/PySPQR/issues/6
