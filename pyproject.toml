@@ -36,7 +36,7 @@ dependencies = [
   "scipy",
   "numpy",
   "matplotlib",
-  "sparseqr==1.2",
+  "sparseqr>=1.2",
   "networkx",
   "mpmath",
 ]
