@@ -56,9 +56,8 @@ jobs:
         $env:PATH += ';C:\Miniconda\envs\__setup_conda\Library\include\suitesparse'
         $env:LIB += ';C:\Miniconda\envs\__setup_conda\Library\include\suitesparse'
         Copy-Item -Path "C:\Miniconda\envs\__setup_conda\Library\include\suitesparse\SuiteSparseQR_C.h" -Destination "C:\Miniconda\envs\__setup_conda\Lib\site-packages\sparseqr\"
+        Copy-Item -Path "C:\Miniconda\envs\__setup_conda\Library\include\suitesparse\SuiteSparseQR_C.h" -Destination "'C:\\Miniconda\\envs\\__setup_conda\\Lib\\site-packages"
         Copy-Item -Path "D:\a\choreo\choreo\sparseqr_gen.py" -Destination "C:\Miniconda\envs\__setup_conda\Lib\site-packages\sparseqr\"
-        cd "C:\Miniconda\envs\__setup_conda\Lib\site-packages\sparseqr\"
-        dir
     #
     - name: Install dependencies for Ubuntu
       if: startsWith(matrix.os, 'ubuntu')

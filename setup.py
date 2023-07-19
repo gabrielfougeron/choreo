@@ -54,6 +54,10 @@ elif platform.system() == "Darwin": # MacOS
     # extra_compile_args_safe = ["-O2", "-lomp"]
     # extra_link_args = ["-lomp"]
 
+    os.environ['CC'] = "/usr/local/opt/llvm/bin/clang"
+    os.environ['LDFLAGS'] = "-L/usr/local/opt/llvm/lib"
+    os.environ['CFLAGS'] = "-I/usr/local/opt/llvm/include"
+
     extra_compile_args_std = ["-Ofast","-march=native", "-fopenmp"]
     extra_compile_args_safe = ["-O2", "-fopenmp"]
     extra_link_args = ["-fopenmp"]
