@@ -98,7 +98,7 @@ jobs:
       - name: Copy artifacts
         run: |
           mkdir dist
-          find ./artifacts-dl -name '*.whl' -exec cp {} ./dist
+          find ./artifacts-dl -name '*.whl' -exec cp {} ./dist \; 
     #
       - name: Upload artifact
         uses: actions/upload-artifact@v3
