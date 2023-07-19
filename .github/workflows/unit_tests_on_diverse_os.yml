@@ -34,10 +34,10 @@ jobs:
         conda install -c conda-forge -y plantuml
         brew install suite-sparse llvm libomp
 
-        echo 'export CC="/usr/local/opt/llvm/bin/clang"' >> $GITHUB_ENV
-        echo 'export PATH="/usr/local/opt/llvm/bin:$PATH"' >> $GITHUB_ENV
-        echo 'export LDFLAGS="-L/usr/local/opt/llvm/lib:$LDFLAGS"' >> $GITHUB_ENV
-        echo 'export CFLAGS="-I/usr/local/opt/llvm/include:$CFLAGS"' >> $GITHUB_ENV
+        echo 'CC="/usr/local/opt/llvm/bin/clang"' >> $GITHUB_ENV
+        echo 'PATH="/usr/local/opt/llvm/bin:$PATH"' >> $GITHUB_ENV
+        echo 'LDFLAGS="-L/usr/local/opt/llvm/lib:$LDFLAGS"' >> $GITHUB_ENV
+        echo 'CFLAGS="-I/usr/local/opt/llvm/include:$CFLAGS"' >> $GITHUB_ENV
 
     #
     - name: Install dependencies for Windows
@@ -45,9 +45,9 @@ jobs:
       run: |
         conda install -c conda-forge -y suitesparse plantuml
 
-        echo '$env:INCLUDE += ";C:\Miniconda\envs\__setup_conda\Library\include\suitesparse;C:\Miniconda\envs\__setup_conda\Lib\site-packages\sparseqr"' >> $GITHUB_ENV
-        echo '$env:PATH += ";C:\Miniconda\envs\__setup_conda\Library\include\suitesparse;C:\Miniconda\envs\__setup_conda\Lib\site-packages\sparseqr"' >> $GITHUB_ENV
-        echo '$env:LIB += ";C:\Miniconda\envs\__setup_conda\Library\include\suitesparse;C:\Miniconda\envs\__setup_conda\Lib\site-packages\sparseqr"' >> $GITHUB_ENV
+        echo 'INCLUDE += ";C:\Miniconda\envs\__setup_conda\Library\include\suitesparse;C:\Miniconda\envs\__setup_conda\Lib\site-packages\sparseqr"' >> $env:GITHUB_ENV
+        echo 'PATH += ";C:\Miniconda\envs\__setup_conda\Library\include\suitesparse;C:\Miniconda\envs\__setup_conda\Lib\site-packages\sparseqr"' >> $env:GITHUB_ENV
+        echo 'LIB += ";C:\Miniconda\envs\__setup_conda\Library\include\suitesparse;C:\Miniconda\envs\__setup_conda\Lib\site-packages\sparseqr"' >> $env:GITHUB_ENV
 
 
     - name: Install dependencies for Ubuntu
@@ -62,20 +62,19 @@ jobs:
         pip install scipy numpy matplotlib sparseqr==1.2 networkx mpmath Cython
         python setup.py build_ext --inplace
 
+        pip install --upgrade pip
 
-#         pip install --upgrade pip
-# 
-#         pip install .[cli,docs,test,build]
-# 
-#         python -m build
-# 
-#         python setup.py build_ext --inplace
-# 
-#         pytest
-# 
-#         cd docs
-#         make html
-#         cd ..
+        pip install .[cli,docs,test,build]
+
+        python -m build
+
+        python setup.py build_ext --inplace
+
+        pytest
+
+        cd docs
+        make html
+        cd ..
 
 
     - name: Upload artifact
