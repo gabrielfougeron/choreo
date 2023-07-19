@@ -1,6 +1,7 @@
 name: Build Test and Deploy on Github Pages
 
 on:
+  workflow_dispatch:
   push:
     branches:    
       - GUI_deploy
@@ -66,7 +67,10 @@ jobs:
     - name: Build for Pyodide
       run: |
         pyodide build
-        cp ./dist/choreo-0.2.0-cp311-cp311-emscripten_3_1_32_wasm32.whl ./choreo_GUI/python_dist/choreo-0.2.0-cp311-cp311-emscripten_3_1_32_wasm32.whl
+        find ./dist -name '*emscripten*.whl' -exec cp {} ./choreo_GUI/python_dist/ \; 
+    # cp ./dist/choreo-0.2.0-cp311-cp311-emscripten_3_1_32_wasm32.whl ./choreo_GUI/python_dist/choreo-0.2.0-cp311-cp311-emscripten_3_1_32_wasm32.whl
+
+
 
     - name: Make Gallery Descriptor 
       run: |
