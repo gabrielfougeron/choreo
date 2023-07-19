@@ -41,12 +41,15 @@ jobs:
       run: |       
         conda install -c conda-forge -y plantuml
         brew install suite-sparse llvm libomp
+        echo $CC
+
         export CC=/usr/local/opt/llvm/bin/clang
         export PATH=/usr/local/opt/llvm/bin:$PATH
         export LDFLAGS=-L/usr/local/opt/llvm/lib
         export CFLAGS=-I/usr/local/opt/llvm/include
         clang --version
         which clang
+        echo $CC
     #
     - name: Install dependencies for Windows
       if: startsWith(matrix.os, 'windows')
