@@ -31,6 +31,11 @@ jobs:
     # - name: Install common dependencies
     #   run: |
     #     conda install -c conda-forge -y plantuml openmp
+    - name: Install python build dependencies
+      run: |
+        pip install --upgrade pip
+        pip install scipy numpy matplotlib sparseqr==1.2 networkx mpmath Cython
+    #
     - name: Install dependencies for MacOs
       if: startsWith(matrix.os, 'macos')
       run: |       
@@ -57,10 +62,8 @@ jobs:
       run: |
         conda install -c conda-forge -y suitesparse clang plantuml openmp
     # 
-    - name: Install python build dependencies
+    - name: Install run setup.py
       run: |
-        pip install --upgrade pip
-        pip install scipy numpy matplotlib sparseqr==1.2 networkx mpmath Cython
         python setup.py build_ext --inplace
     # - name: Install python build dependencies
     #   run: |
