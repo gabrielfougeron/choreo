@@ -28,74 +28,40 @@ jobs:
         python-version: ${{ matrix.python-version }}
         conda-channels: anaconda, conda-forge
     #
-    - name: Build for MacOs
+    - name: Install dependencies for MacOs
       if: startsWith(matrix.os, 'macos')
       run: |       
         conda install -c conda-forge -y plantuml
         brew install suite-sparse llvm libomp
-        
-        export CC="/usr/local/opt/llvm/bin/clang"
-        export PATH="/usr/local/opt/llvm/bin:$PATH"
-        export LDFLAGS="-L/usr/local/opt/llvm/lib:$LDFLAGS"
-        export CFLAGS="-I/usr/local/opt/llvm/include:$CFLAGS"
 
-        pip install --upgrade pip
-
-        pip install .[cli,docs,test,build]
-        
-        python setup.py build_ext --inplace
-
-        pytest
-
-        cd docs
-        make html
-        cd ..
+        echo 'export CC="/usr/local/opt/llvm/bin/clang"' >> $GITHUB_ENV
+        echo 'PATH="/usr/local/opt/llvm/bin:$PATH"' >> $GITHUB_ENV
+        echo 'LDFLAGS="-L/usr/local/opt/llvm/lib:$LDFLAGS"' >> $GITHUB_ENV
+        echo 'CFLAGS="-I/usr/local/opt/llvm/include:$CFLAGS"' >> $GITHUB_ENV
 
     #
-    - name: Build for Windows
+    - name: Install dependencies for Windows
       if: startsWith(matrix.os, 'windows')
       run: |
         conda install -c conda-forge -y suitesparse plantuml
-        $env:INCLUDE += ';C:\Miniconda\envs\__setup_conda\Library\include\suitesparse;C:\Miniconda\envs\__setup_conda\Lib\site-packages\sparseqr'
-        $env:PATH += ';C:\Miniconda\envs\__setup_conda\Library\include\suitesparse;C:\Miniconda\envs\__setup_conda\Lib\site-packages\sparseqr'
-        $env:LIB += ';C:\Miniconda\envs\__setup_conda\Library\include\suitesparse;C:\Miniconda\envs\__setup_conda\Lib\site-packages\sparseqr'
 
-        pip install --upgrade pip
-
-        pip install .[cli,docs,test,build]
-
-        python setup.py build_ext --inplace
-
-        pytest
-
-        cd docs
-        make html
-        cd ..
+        echo '$env:INCLUDE += ";C:\Miniconda\envs\__setup_conda\Library\include\suitesparse;C:\Miniconda\envs\__setup_conda\Lib\site-packages\sparseqr"' >> $GITHUB_ENV
+        echo '$env:PATH += ";C:\Miniconda\envs\__setup_conda\Library\include\suitesparse;C:\Miniconda\envs\__setup_conda\Lib\site-packages\sparseqr"' >> $GITHUB_ENV
+        echo '$env:LIB += ";C:\Miniconda\envs\__setup_conda\Library\include\suitesparse;C:\Miniconda\envs\__setup_conda\Lib\site-packages\sparseqr"' >> $GITHUB_ENV
 
 
-# 
-#         mkdir "C:\Users\runneradmin\miniconda3"
-#         mkdir "C:\Users\runneradmin\miniconda3\envs"
-#         mkdir "C:\Users\runneradmin\miniconda3\envs\__setup_conda"
-#         mkdir "C:\Users\runneradmin\miniconda3\envs\__setup_conda\Library"
-#         mkdir "C:\Users\runneradmin\miniconda3\envs\__setup_conda\Library\include"
-#         mkdir "C:\Users\runneradmin\miniconda3\envs\__setup_conda\Library\include\suitesparse"
-#         Copy-Item -Path "C:\Miniconda\envs\__setup_conda\Library\include\suitesparse\SuiteSparseQR_C.h" -Destination "C:\Users\runneradmin\miniconda3\envs\__setup_conda\Library\include\suitesparse"
-#         Copy-Item -Path "C:\Miniconda\envs\__setup_conda\Library\include\suitesparse\cholmod.h" -Destination "C:\Users\runneradmin\miniconda3\envs\__setup_conda\Library\include\suitesparse"
-#         Copy-Item -Path "C:\Miniconda\envs\__setup_conda\Library\include\suitesparse\cholmod_io64.h" -Destination "C:\Users\runneradmin\miniconda3\envs\__setup_conda\Library\include\suitesparse"
-#         Copy-Item -Path "C:\Miniconda\envs\__setup_conda\Library\include\suitesparse\SuiteSparse_config.h" -Destination "C:\Users\runneradmin\miniconda3\envs\__setup_conda\Library\include\suitesparse"
-#         Copy-Item -Path "D:\a\choreo\choreo\sparseqr_gen.py" -Destination "C:\Miniconda\envs\__setup_conda\Lib\site-packages\sparseqr"
-
-
-    - name: Build for Ubuntu
+    - name: Install dependencies for Ubuntu
       if: startsWith(matrix.os, 'ubuntu')
       run: |
         conda install -c conda-forge -y suitesparse clang plantuml openmp
 
+
+    - name: Build Test Docs
+      run: |
         pip install --upgrade pip
 
         pip install .[cli,docs,test,build]
-        
+
         python setup.py build_ext --inplace
 
         pytest
