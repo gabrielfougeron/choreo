@@ -69,6 +69,8 @@ jobs:
 
         python setup.py build_ext --inplace
 
+        python -c 'import choreo' 
+
         pytest
 
         cd docs
@@ -113,7 +115,7 @@ jobs:
       - name: Copy artifacts
         run: |
           mkdir dist
-          find ./artifacts-dl/lubuntu-latest-3.11/ -name '*.tar.gz' -exec cp {} ./dist \; 
+          find ./artifacts-dl/ubuntu-latest-3.11/ -name '*.tar.gz' -exec cp {} ./dist \; 
           find ./artifacts-dl -name '*.whl' -exec cp {} ./dist \; 
 
       - name: Upload artifact

@@ -53,7 +53,7 @@ jobs:
       run:  pip install .[full]
 
     - name: Run setup.py
-      run: python setup.py build_ext
+      run: python setup.py build_ext --inplace
 
     - name: Read Emscripten version number
       run: |
@@ -68,9 +68,6 @@ jobs:
       run: |
         pyodide build
         find ./dist -name '*emscripten*.whl' -exec cp {} ./choreo_GUI/python_dist/ \; 
-    # cp ./dist/choreo-0.2.0-cp311-cp311-emscripten_3_1_32_wasm32.whl ./choreo_GUI/python_dist/choreo-0.2.0-cp311-cp311-emscripten_3_1_32_wasm32.whl
-
-
 
     - name: Make Gallery Descriptor 
       run: |
@@ -93,6 +90,7 @@ jobs:
     - name: Run tests
       continue-on-error: true
       run: |
+        python -c 'import choreo' 
         pytest
 
     - name: Generate Documentation
