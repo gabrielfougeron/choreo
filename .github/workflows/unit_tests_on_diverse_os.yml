@@ -28,15 +28,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
         conda-channels: anaconda, conda-forge
     #
-    # - name: Install common dependencies
-    #   run: |
-    #     conda install -c conda-forge -y plantuml openmp
-    - name: Install python build dependencies
-      run: |
-        pip install --upgrade pip
-        pip install scipy numpy matplotlib sparseqr==1.2 networkx mpmath Cython
-    #
-    - name: Install dependencies for MacOs
+    - name: Build for MacOs
       if: startsWith(matrix.os, 'macos')
       run: |       
         conda install -c conda-forge -y plantuml
@@ -50,8 +42,15 @@ jobs:
         echo $CC
         echo $LDFLAGS
         echo $CFLAGS
+
+        pip install --upgrade pip
+        pip install scipy numpy matplotlib sparseqr==1.2 networkx mpmath Cython
+
+        python setup.py build_ext --inplace
+
+        pip install .[cli,docs,test,build]
     #
-    - name: Install dependencies for Windows
+    - name: Build for Windows
       if: startsWith(matrix.os, 'windows')
       run: |
         conda install -c conda-forge -y suitesparse plantuml
@@ -69,22 +68,22 @@ jobs:
         Copy-Item -Path "C:\Miniconda\envs\__setup_conda\Library\include\suitesparse\SuiteSparseQR_C.h" -Destination "C:\Users\runneradmin\miniconda3\envs\__setup_conda\Library\include\suitesparse"
         Copy-Item -Path "C:\Miniconda\envs\__setup_conda\Library\include\suitesparse\cholmod.h" -Destination "C:\Users\runneradmin\miniconda3\envs\__setup_conda\Library\include\suitesparse"
         Copy-Item -Path "C:\Miniconda\envs\__setup_conda\Library\include\suitesparse\cholmod_io64.h" -Destination "C:\Users\runneradmin\miniconda3\envs\__setup_conda\Library\include\suitesparse"
+        Copy-Item -Path "C:\Miniconda\envs\__setup_conda\Library\include\suitesparse\SuiteSparse_config.h" -Destination "C:\Users\runneradmin\miniconda3\envs\__setup_conda\Library\include\suitesparse"
         Copy-Item -Path "D:\a\choreo\choreo\sparseqr_gen.py" -Destination "C:\Miniconda\envs\__setup_conda\Lib\site-packages\sparseqr\"
+
+        python setup.py build_ext --inplace
+        pip install .[cli,docs,test,build]
     #
-    - name: Install dependencies for Ubuntu
+    - name: Build for Ubuntu
       if: startsWith(matrix.os, 'ubuntu')
       run: |
         conda install -c conda-forge -y suitesparse clang plantuml openmp
-    # 
-    - name: Install run setup.py
-      run: |
-        echo $CC
-        echo $LDFLAGS
-        echo $CFLAGS
-        python setup.py build_ext --inplace
-    - name: Install python build dependencies
-      run: |
+
         pip install --upgrade pip
+        pip install scipy numpy matplotlib sparseqr==1.2 networkx mpmath Cython
+
+        python setup.py build_ext --inplace
+
         pip install .[cli,docs,test,build]
     #
     - name: Run tests
@@ -93,6 +92,5 @@ jobs:
     #
     - name: Generate Documentation
       run: |
-        python setup.py build_ext --inplace
         cd docs
         make html
