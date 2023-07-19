@@ -65,9 +65,7 @@ jobs:
       run: |
 
         pip install --upgrade pip wheel
-        pip install .[cli,docs,test,build]
-
-        python -m build
+        pip install setuptools>=42 wheel Cython build attrs pytest pytest-xdist Sphinx pydata-sphinx-theme sphinx-gallery sphinx-pyproject sphinx-needs sphinx-test-reports sphinxcontrib.plantuml nb2plots networkx sparseqr==1.2 scipy numpy matplotlib mpmath
 
         python setup.py build_ext --inplace
 
@@ -105,3 +103,20 @@ jobs:
         with:
           name: choreo-dist
           path: './dist/'
+
+
+# 
+# pip install --upgrade pip wheel
+# pip install .[cli,docs,test,build]
+# 
+# python -m build
+# 
+# python setup.py build_ext --inplace
+# 
+# pytest
+# 
+# cd docs
+# make html
+# cd ..
+# 
+  
