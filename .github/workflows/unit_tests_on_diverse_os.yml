@@ -65,7 +65,7 @@ jobs:
       run: |
 
         pip install --upgrade pip wheel
-        pip install -e .[cli,docs,test,build]
+        pip install .[cli,docs,test,build]
 
         python -m build
 
@@ -98,7 +98,7 @@ jobs:
       - name: Copy artifacts
         run: |
           mkdir dist
-          cp "$(find ./artifacts-dl -name '*.whl')" ./dist
+          find ./artifacts-dl -name '*.whl' -exec cp {} ./dist
     #
       - name: Upload artifact
         uses: actions/upload-artifact@v3
