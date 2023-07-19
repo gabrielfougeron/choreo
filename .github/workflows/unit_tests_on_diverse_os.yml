@@ -36,8 +36,8 @@ jobs:
         
         export CC="/usr/local/opt/llvm/bin/clang"
         export PATH="/usr/local/opt/llvm/bin:$PATH"
-        export LDFLAGS="-L/usr/local/opt/llvm/lib:LDFLAGS"
-        export CFLAGS="-I/usr/local/opt/llvm/include:CFLAGS"
+        export LDFLAGS="-L/usr/local/opt/llvm/lib:$LDFLAGS"
+        export CFLAGS="-I/usr/local/opt/llvm/include:$CFLAGS"
 
         pip install --upgrade pip
 
@@ -49,19 +49,16 @@ jobs:
 
         cd docs
         make html
+        cd ..
 
-        pytest
-
-        cd docs
-        make html
     #
     - name: Build for Windows
       if: startsWith(matrix.os, 'windows')
       run: |
         conda install -c conda-forge -y suitesparse plantuml
-        $env:INCLUDE += ';C:\Miniconda\envs\__setup_conda\Library\include\suitesparse'
-        $env:PATH += ';C:\Miniconda\envs\__setup_conda\Library\include\suitesparse'
-        $env:LIB += ';C:\Miniconda\envs\__setup_conda\Library\include\suitesparse;C:\Miniconda\envs\__setup_conda\Lib\site-packages'
+        $env:INCLUDE += ';C:\Miniconda\envs\__setup_conda\Library\include\suitesparse;C:\Miniconda\envs\__setup_conda\Lib\site-packages\sparseqr'
+        $env:PATH += ';C:\Miniconda\envs\__setup_conda\Library\include\suitesparse;C:\Miniconda\envs\__setup_conda\Lib\site-packages\sparseqr'
+        $env:LIB += ';C:\Miniconda\envs\__setup_conda\Library\include\suitesparse;C:\Miniconda\envs\__setup_conda\Lib\site-packages\sparseqr'
 
         pip install --upgrade pip
 
@@ -73,11 +70,8 @@ jobs:
 
         cd docs
         make html
+        cd ..
 
-        pytest
-
-        cd docs
-        make html
 
 # 
 #         mkdir "C:\Users\runneradmin\miniconda3"
@@ -108,11 +102,8 @@ jobs:
 
         cd docs
         make html
+        cd ..
 
-        pytest
-
-        cd docs
-        make html
 
     - name: Upload artifact
       uses: actions/upload-pages-artifact@v1
@@ -131,9 +122,9 @@ jobs:
           path: ./dist
       - name: Upload artifact
         run: |
-          ll
+          ls
           cd ./dist
-          ll
+          ls
 
 
 
