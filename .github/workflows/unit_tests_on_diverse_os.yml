@@ -31,13 +31,13 @@ jobs:
     - name: Install dependencies for MacOs
       if: startsWith(matrix.os, 'macos')
       run: |       
-        conda install -c conda-forge -y plantuml
-        brew install suite-sparse llvm libomp
+        conda install -c conda-forge -y plantuml suitesparse
+        brew install llvm libomp
 
         echo 'CC=/usr/local/opt/llvm/bin/clang' >> $GITHUB_ENV
-        echo 'PATH+=/usr/local/opt/llvm/bin' >> $GITHUB_ENV
-        echo 'LDFLAGS+=-L/usr/local/opt/llvm/lib' >> $GITHUB_ENV
-        echo 'CFLAGS+=-I/usr/local/opt/llvm/include' >> $GITHUB_ENV
+        echo 'PATH=/usr/local/opt/llvm/bin:$PATH' >> $GITHUB_ENV
+        echo 'LDFLAGS=-L/usr/local/opt/llvm/lib:$LDFLAGS' >> $GITHUB_ENV
+        echo 'CFLAGS=-I/usr/local/opt/llvm/include:$CFLAGS' >> $GITHUB_ENV
 
         which ld
 
@@ -48,9 +48,9 @@ jobs:
         conda install -c conda-forge -y suitesparse plantuml
 
 
-        echo 'INCLUDE+=";C:\Miniconda\envs\__setup_conda\Library\include\suitesparse;C:\Miniconda\envs\__setup_conda\Lib\site-packages\sparseqr"' >> $env:GITHUB_ENV
-        echo 'PATH+=";C:\Miniconda\envs\__setup_conda\Library\include\suitesparse;C:\Miniconda\envs\__setup_conda\Lib\site-packages\sparseqr"' >> $env:GITHUB_ENV
-        echo 'LIB+=";C:\Miniconda\envs\__setup_conda\Library\include\suitesparse;C:\Miniconda\envs\__setup_conda\Lib\site-packages\sparseqr"' >> $env:GITHUB_ENV
+        echo 'INCLUDE="C:\Miniconda\envs\__setup_conda\Library\include\suitesparse;C:\Miniconda\envs\__setup_conda\Lib\site-packages\sparseqr;$INCLUDE"' >> $env:GITHUB_ENV
+        echo 'PATH="C:\Miniconda\envs\__setup_conda\Library\include\suitesparse;C:\Miniconda\envs\__setup_conda\Lib\site-packages\sparseqr;$PATH"' >> $env:GITHUB_ENV
+        echo 'LIB="C:\Miniconda\envs\__setup_conda\Library\include\suitesparse;C:\Miniconda\envs\__setup_conda\Lib\site-packages\sparseqr;$LIB"' >> $env:GITHUB_ENV
 
 
     - name: Install dependencies for Ubuntu
@@ -62,14 +62,7 @@ jobs:
     - name: Build Test Docs
       run: |
 
-        which ld
-
         pip install --upgrade pip
-        pip install scipy numpy matplotlib sparseqr==1.2 networkx mpmath Cython build
-        python setup.py build_ext --inplace
-
-        pip install --upgrade pip
-
         pip install .[cli,docs,test,build]
 
         python -m build
@@ -86,7 +79,7 @@ jobs:
     - name: Upload artifact
       uses: actions/upload-artifact@v3
       with:
-        name: ${{ matrix.os  }} ${{ matrix.python-version }}
+        name: ${{ matrix.os  }}-${{ matrix.python-version }}
         path: './dist/'
 
   gather-dists:
