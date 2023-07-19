@@ -75,6 +75,7 @@ jobs:
     - name: Read Emscripten version number
       if: startsWith(matrix.os, 'ubuntu')
       run: |
+        pip install .[full]
         echo EMSCRIPTEN_VERSION=$(pyodide config get emscripten_version) >> $GITHUB_ENV
   
     - name: Setup Emscripten
@@ -87,7 +88,6 @@ jobs:
       if: startsWith(matrix.os, 'ubuntu')
       run: |
         echo  ${{ env.EMSCRIPTEN_VERSION }}
-        pip install .[full]
         pyodide build
 
     - name: Upload artifact
