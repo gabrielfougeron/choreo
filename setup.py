@@ -38,9 +38,6 @@ cython_safemath_needed = [
     False,
 ]
 
-print('eee')
-print(os.environ)
-
 if platform.system() == "Windows":
 
     extra_compile_args_std = ["/O2", "/openmp"]
