@@ -64,11 +64,9 @@ jobs:
     - name: Build Test Docs
       run: |
 
+        pip install --upgrade pip wheel
+        pip install -e .[cli,docs,test,build]
 
-        pip install --upgrade pip
-        pip install .[cli,docs,test,build]
-
-        pip install scipy numpy matplotlib sparseqr==1.2 networkx mpmath Cython build pytest
         python -m build
 
         python setup.py build_ext --inplace
@@ -100,7 +98,7 @@ jobs:
       - name: Copy artifacts
         run: |
           mkdir dist
-          cp $(find ./artifacts-dl -name '*.whl')" ./dist
+          cp "$(find ./artifacts-dl -name '*.whl')" ./dist
     #
       - name: Upload artifact
         uses: actions/upload-artifact@v3
