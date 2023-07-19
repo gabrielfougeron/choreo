@@ -68,6 +68,7 @@ jobs:
         mkdir "C:\Users\runneradmin\miniconda3\envs\__setup_conda\Library\include\suitesparse"
         Copy-Item -Path "C:\Miniconda\envs\__setup_conda\Library\include\suitesparse\SuiteSparseQR_C.h" -Destination "C:\Users\runneradmin\miniconda3\envs\__setup_conda\Library\include\suitesparse"
         Copy-Item -Path "C:\Miniconda\envs\__setup_conda\Library\include\suitesparse\cholmod.h" -Destination "C:\Users\runneradmin\miniconda3\envs\__setup_conda\Library\include\suitesparse"
+        Copy-Item -Path "C:\Miniconda\envs\__setup_conda\Library\include\suitesparse\cholmod_io64.h" -Destination "C:\Users\runneradmin\miniconda3\envs\__setup_conda\Library\include\suitesparse"
         Copy-Item -Path "D:\a\choreo\choreo\sparseqr_gen.py" -Destination "C:\Miniconda\envs\__setup_conda\Lib\site-packages\sparseqr\"
     #
     - name: Install dependencies for Ubuntu
@@ -77,6 +78,9 @@ jobs:
     # 
     - name: Install run setup.py
       run: |
+        echo $CC
+        echo $LDFLAGS
+        echo $CFLAGS
         python setup.py build_ext --inplace
     - name: Install python build dependencies
       run: |
