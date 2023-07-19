@@ -13,32 +13,21 @@ jobs:
         python-version: ["3.11"]
         # os: [ubuntu-22.04, ubuntu-20.04, macos-latest, windows-latest]
         os: [ubuntu-latest, macos-latest, windows-latest]
-    #
+
     runs-on: ${{ matrix.os }}
     # continue-on-error: true
     steps:
-    # 
+
     - name: Checkout repository
       uses: actions/checkout@v3
-    # 
-    # - name: Setup MSVC Developer Command Prompt
-    #   if: startsWith(matrix.os, 'windows')
-    #   uses: ilammy/msvc-dev-cmd@v1.12.1
-    #   with:
-    #     arch: amd64_x86
-    #
-    - name: Prepare MSVC
-      if: startsWith(matrix.os, 'windows')
-      uses: bus1/cabuild/action/msdevshell@v1
-      with:
-        architecture: x64
+
     - name: Setup conda
       uses: s-weigand/setup-conda@v1
       with:
         update-conda: true
         python-version: ${{ matrix.python-version }}
         conda-channels: anaconda, conda-forge
-    #
+
     - name: Install dependencies for MacOs
       if: startsWith(matrix.os, 'macos')
       run: |       
@@ -51,21 +40,23 @@ jobs:
         echo 'LDFLAGS=-L/usr/local/opt/llvm/lib' >> $GITHUB_ENV
         echo 'CFLAGS=-I/usr/local/opt/llvm/include' >> $GITHUB_ENV
 
+    - name: Prepare MSVC
+      if: startsWith(matrix.os, 'windows')
+      uses: bus1/cabuild/action/msdevshell@v1
+      with:
+        architecture: x64
     - name: Install dependencies for Windows
       if: startsWith(matrix.os, 'windows')
       run: |
         conda install -c conda-forge -y suitesparse plantuml
-# 
-#     echo 'INCLUDE="C:\Miniconda\envs\__setup_conda\Library\include\suitesparse;C:\Miniconda\envs\__setup_conda\Lib\site-packages\sparseqr;"' >> $env:GITHUB_ENV
-#     echo 'LIB="C:\Miniconda\envs\__setup_conda\Library\include\suitesparse;C:\Miniconda\envs\__setup_conda\Lib\site-packages\sparseqr;"' >> $env:GITHUB_ENV
-# 
 
-    #
+        echo 'INCLUDE="$INCLUDE;C:\Miniconda\envs\__setup_conda\Library\include\suitesparse;C:\Miniconda\envs\__setup_conda\Lib\site-packages\sparseqr"' >> $env:GITHUB_ENV
+        echo 'LIB="$LIB;C:\Miniconda\envs\__setup_conda\Library\include\suitesparse;C:\Miniconda\envs\__setup_conda\Lib\site-packages\sparseqr"' >> $env:GITHUB_ENV
+
     - name: Install dependencies for Ubuntu
       if: startsWith(matrix.os, 'ubuntu')
       run: |
         conda install -c conda-forge -y suitesparse clang plantuml openmp
-
 
     - name: Build Test Docs
       run: |
@@ -80,6 +71,26 @@ jobs:
         cd docs
         make html
         cd ..
+
+    - name: Read Emscripten version number
+      if: startsWith(matrix.os, 'ubuntu')
+      run: |
+        echo EMSCRIPTEN_VERSION=$(pyodide config get emscripten_version) >> $GITHUB_ENV
+  
+    - name: Setup Emscripten
+      if: startsWith(matrix.os, 'ubuntu')
+      uses: mymindstorm/setup-emsdk@v11
+      with:
+        version: ${{ env.EMSCRIPTEN_VERSION }}
+  
+    - name: Build for Pyodide
+      if: startsWith(matrix.os, 'ubuntu')
+      run: |
+        echo  ${{ env.EMSCRIPTEN_VERSION }}
+        pip install .[full]
+        pyodide build
+        cp ./dist/choreo-0.2.0-cp311-cp311-emscripten_3_1_32_wasm32.whl ./choreo_GUI/python_dist/choreo-0.2.0-cp311-cp311-emscripten_3_1_32_wasm32.whl
+
 
 
     - name: Upload artifact
@@ -98,12 +109,12 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           path: ./artifacts-dl
-    #
+
       - name: Copy artifacts
         run: |
           mkdir dist
           find ./artifacts-dl -name '*.whl' -exec cp {} ./dist \; 
-    #
+
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
