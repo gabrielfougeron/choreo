@@ -46,6 +46,7 @@ jobs:
         export LDFLAGS="-L/usr/local/opt/llvm/lib"
         export CFLAGS="-I/usr/local/opt/llvm/include"
         export CC="/usr/local/opt/llvm/bin/clang"
+        alias clang="/usr/local/opt/llvm/bin/clang"
     #
     - name: Install dependencies for Windows
       if: startsWith(matrix.os, 'windows')
@@ -55,6 +56,7 @@ jobs:
         $env:PATH += ';C:\Miniconda\envs\__setup_conda\Library\include\suitesparse'
         $env:LIB += ';C:\Miniconda\envs\__setup_conda\Library\include\suitesparse'
         Copy-Item -Path "C:\Miniconda\envs\__setup_conda\Library\include\suitesparse\SuiteSparseQR_C.h" -Destination "C:\Miniconda\envs\__setup_conda\Lib\site-packages\sparseqr\"
+        Copy-Item -Path "D:\a\choreo\sparseqr_gen.py" -Destination "C:\Miniconda\envs\__setup_conda\Lib\site-packages\sparseqr\"
         cd "C:\Miniconda\envs\__setup_conda\Lib\site-packages\sparseqr\"
         dir
     #
@@ -68,7 +70,6 @@ jobs:
     #     python setup.py build_ext --inplace
     - name: Install python build dependencies
       run: |
-        which clang
         pip install --upgrade pip
         pip install .[cli,docs,test,build]
     #
