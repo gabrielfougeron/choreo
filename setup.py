@@ -38,6 +38,11 @@ cython_safemath_needed = [
     False,
 ]
 
+
+print("********************************************")
+print(f"Running on {platform.system()}")
+print("********************************************")
+
 if platform.system() == "Windows":
 
     extra_compile_args_std = ["/O2", "/openmp"]
