@@ -21,6 +21,16 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v3
     # 
+    # - name: Setup MSVC Developer Command Prompt
+    #   if: startsWith(matrix.os, 'windows')
+    #   uses: ilammy/msvc-dev-cmd@v1.12.1
+    #   with:
+    #     arch: amd64_x86
+    #
+    - name: Prepare MSVC
+      uses: bus1/cabuild/action/msdevshell@v1
+      with:
+        architecture: x64
     - name: Setup conda
       uses: s-weigand/setup-conda@v1
       with:
@@ -44,15 +54,11 @@ jobs:
       if: startsWith(matrix.os, 'windows')
       run: |
         conda install -c conda-forge -y suitesparse plantuml
+# 
+#     echo 'INCLUDE="C:\Miniconda\envs\__setup_conda\Library\include\suitesparse;C:\Miniconda\envs\__setup_conda\Lib\site-packages\sparseqr;"' >> $env:GITHUB_ENV
+#     echo 'LIB="C:\Miniconda\envs\__setup_conda\Library\include\suitesparse;C:\Miniconda\envs\__setup_conda\Lib\site-packages\sparseqr;"' >> $env:GITHUB_ENV
+# 
 
-        echo 'INCLUDE="C:\Miniconda\envs\__setup_conda\Library\include\suitesparse;C:\Miniconda\envs\__setup_conda\Lib\site-packages\sparseqr;"' >> $env:GITHUB_ENV
-        echo 'LIB="C:\Miniconda\envs\__setup_conda\Library\include\suitesparse;C:\Miniconda\envs\__setup_conda\Lib\site-packages\sparseqr;"' >> $env:GITHUB_ENV
-
-    - name: Setup MSVC Developer Command Prompt
-      if: startsWith(matrix.os, 'windows')
-      uses: ilammy/msvc-dev-cmd@v1.12.1
-      with:
-        arch: amd64_x86
     #
     - name: Install dependencies for Ubuntu
       if: startsWith(matrix.os, 'ubuntu')
