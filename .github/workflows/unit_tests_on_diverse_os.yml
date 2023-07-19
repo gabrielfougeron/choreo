@@ -1,4 +1,4 @@
-name: Unit tests on diverse OS
+name: Build and Test on diverse OS
 
 on: workflow_dispatch 
 
@@ -52,7 +52,7 @@ jobs:
         conda install -c conda-forge -y suitesparse plantuml
 
         echo 'INCLUDE=C:\Miniconda\envs\__setup_conda\Library\include\suitesparse;C:\Miniconda\envs\__setup_conda\Lib\site-packages\sparseqr' >> $env:GITHUB_ENV
-        echo 'LIB=C:\Miniconda\envs\__setup_conda\Library\include\suitesparse;C:\Miniconda\envs\__setup_conda\Lib\site-packages\sparseqr' >> $env:GITHUB_ENV
+        echo 'LIB=C:\Miniconda\envs\__setup_conda\Library\include\suitesparse;C:\Miniconda\envs\__setup_conda\Lib\site-packages\sparseqr;C:\Miniconda\envs\__setup_conda\Lib\site-packages' >> $env:GITHUB_ENV
 
     - name: Install dependencies for Ubuntu
       if: startsWith(matrix.os, 'ubuntu')
@@ -63,7 +63,9 @@ jobs:
       run: |
 
         pip install --upgrade pip wheel
-        pip install setuptools>=42 wheel Cython build attrs pytest pytest-xdist Sphinx pydata-sphinx-theme sphinx-gallery sphinx-pyproject sphinx-needs sphinx-test-reports sphinxcontrib.plantuml nb2plots networkx sparseqr==1.2 scipy numpy matplotlib mpmath
+        pip install .[cli,docs,test,build]
+
+        python -m build
 
         python setup.py build_ext --inplace
 
