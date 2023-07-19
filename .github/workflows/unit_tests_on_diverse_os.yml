@@ -56,7 +56,11 @@ jobs:
         $env:PATH += ';C:\Miniconda\envs\__setup_conda\Library\include\suitesparse'
         $env:LIB += ';C:\Miniconda\envs\__setup_conda\Library\include\suitesparse'
         Copy-Item -Path "C:\Miniconda\envs\__setup_conda\Library\include\suitesparse\SuiteSparseQR_C.h" -Destination "C:\Miniconda\envs\__setup_conda\Lib\site-packages\sparseqr\"
-        Copy-Item -Path "D:\a\choreo\sparseqr_gen.py" -Destination "C:\Miniconda\envs\__setup_conda\Lib\site-packages\sparseqr\"
+        cd "D:\a\choreo\"
+        dir
+        cd "D:\a\choreo\choreo"
+        dir
+        Copy-Item -Path "D:\a\choreo\choreo\sparseqr_gen.py" -Destination "C:\Miniconda\envs\__setup_conda\Lib\site-packages\sparseqr\"
         cd "C:\Miniconda\envs\__setup_conda\Lib\site-packages\sparseqr\"
         dir
     #
@@ -65,9 +69,9 @@ jobs:
       run: |
         conda install -c conda-forge -y suitesparse clang plantuml openmp
     # 
-    # - name: Install run setup.py
-    #   run: |
-    #     python setup.py build_ext --inplace
+    - name: Install run setup.py
+      run: |
+        python setup.py build_ext --inplace
     - name: Install python build dependencies
       run: |
         pip install --upgrade pip
