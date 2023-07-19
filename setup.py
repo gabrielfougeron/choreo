@@ -111,12 +111,6 @@ else:
 
     raise ValueError(f"Unsupported platform: {platform.system()}")
 
-
-print("bbb")
-print(os.environ['CC'])
-print(os.environ['LDSHARED'])
-
-
 cython_filenames = [ ext_name.replace('.','/') + src_ext for ext_name in cython_extnames]
 
 define_macros = [("NPY_NO_DEPRECATED_API", "NPY_1_7_API_VERSION")]
