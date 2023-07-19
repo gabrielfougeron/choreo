@@ -29,9 +29,8 @@ if 'CONDA_DEFAULT_ENV' in os.environ:
     homedir = expanduser("~")
     include_dirs.append( join(homedir, 'anaconda3', 'envs', os.environ['CONDA_DEFAULT_ENV'], 'Library', 'include', 'suitesparse') )
     include_dirs.append( join(homedir, 'miniconda3', 'envs', os.environ['CONDA_DEFAULT_ENV'], 'Library', 'include', 'suitesparse') )
-    
-    print('aaa')
-    print(join(homedir, 'Miniconda', 'envs', os.environ['CONDA_DEFAULT_ENV'], 'Library', 'include', 'suitesparse'))
+
+    include_dirs.append("C:\Miniconda\envs\__setup_conda\Library\include\suitesparse")
 
     include_dirs.append( join(homedir, 'Miniconda', 'envs', os.environ['CONDA_DEFAULT_ENV'], 'Library', 'include', 'suitesparse') )
 
