@@ -96,8 +96,7 @@ Changelog = "https://github.com/gabrielfougeron/choreo/releases/"
 
 [tool.pytest.ini_options]
 minversion = "6.0"
-# addopts = "-v -ra --junit-xml=docs/pytest_out/junit.xml -n auto"
-addopts = "-v -ra --junit-xml=docs/pytest_out/junit.xml"
+addopts = "-v -ra --junit-xml=docs/pytest_out/junit.xml -n auto"
 testpaths = [
     "tests",
 ]
