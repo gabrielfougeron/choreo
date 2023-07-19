@@ -60,7 +60,7 @@ jobs:
     - name: Install python build dependencies
       run: |
         pip install --upgrade pip
-        pip install scipy numpy matplotlib sparseqr==1.2 networkx mpmath
+        pip install scipy numpy matplotlib sparseqr==1.2 networkx mpmath Cython
         python setup.py build_ext --inplace
     # - name: Install python build dependencies
     #   run: |
