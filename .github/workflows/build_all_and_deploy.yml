@@ -40,16 +40,21 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v3
     # 
+    # - name: Install python build dependencies
+    #   run: |
+    #     pip install --upgrade pip
+    #     pip install build
+    # #
+    # - name: Build for Ubuntu
+    #   run: python -m build
+    # # 
+    # - name: Install locally with pip
+    #   run:  pip install .[full]
+    #
     - name: Install python build dependencies
       run: |
         pip install --upgrade pip
-        pip install build
-    #
-    - name: Build for Ubuntu
-      run: python -m build
-    # 
-    - name: Install locally with pip
-      run:  pip install .[full]
+        pip install scipy numpy matplotlib sparseqr==1.2 networkx mpmath
     #
     - name: Run setup.py
       run: python setup.py build_ext
