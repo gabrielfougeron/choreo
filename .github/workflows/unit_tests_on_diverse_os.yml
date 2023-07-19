@@ -31,8 +31,8 @@ jobs:
     - name: Install dependencies for MacOs
       if: startsWith(matrix.os, 'macos')
       run: |       
-        conda install -c conda-forge -y plantuml 
-        brew install llvm libomp suite-sparse
+        conda install -c conda-forge -y plantuml suitesparse
+        brew install llvm libomp 
 
         echo "/usr/local/opt/llvm/bin" >> $GITHUB_PATH
 
