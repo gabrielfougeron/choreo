@@ -52,7 +52,21 @@ if platform.system() == "Windows":
     cython_extnames.append("choreo.cython.funs_parallel")
     cython_safemath_needed.append(False)
 
-else:
+elif platform.system() == "Darwin": # MacOS
+
+    extra_compile_args_std = ["-Ofast","-march=native", "-lomp"]
+    extra_compile_args_safe = ["-O2", "-lomp"]
+    extra_link_args = ["-lomp"]
+
+    # extra_compile_args_std = ["-fast","-march=native", "-fopenmp"]
+    # extra_compile_args_safe = ["-O2", "-fopenmp"]
+    # extra_link_args = ["-fopenmp","-ipo"]
+
+    cython_extnames.append("choreo.cython.funs_parallel")
+    cython_safemath_needed.append(False)
+
+
+elif platform.system() == "Linux":
 
     # print(platform.system())
     # print( os.environ)
