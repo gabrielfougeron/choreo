@@ -46,8 +46,6 @@ build = [
   "setuptools>=42",
   "wheel",
   "Cython",
-  "numpy",
-  "scipy",
   "build",
 ]
 gui = [
