@@ -35,9 +35,9 @@ jobs:
         brew install llvm libomp
 
         echo 'CC=/usr/local/opt/llvm/bin/clang' >> $GITHUB_ENV
-        echo 'PATH=/usr/local/opt/llvm/bin:$PATH' >> $GITHUB_ENV
-        echo 'LDFLAGS=-L/usr/local/opt/llvm/lib:$LDFLAGS' >> $GITHUB_ENV
-        echo 'CFLAGS=-I/usr/local/opt/llvm/include:$CFLAGS' >> $GITHUB_ENV
+        echo 'PATH=/usr/local/opt/llvm/bin:' >> $GITHUB_ENV
+        echo 'LDFLAGS=-L/usr/local/opt/llvm/lib:' >> $GITHUB_ENV
+        echo 'CFLAGS=-I/usr/local/opt/llvm/include:' >> $GITHUB_ENV
 
         which ld
 
@@ -48,9 +48,9 @@ jobs:
         conda install -c conda-forge -y suitesparse plantuml
 
 
-        echo 'INCLUDE="C:\Miniconda\envs\__setup_conda\Library\include\suitesparse;C:\Miniconda\envs\__setup_conda\Lib\site-packages\sparseqr;$INCLUDE"' >> $env:GITHUB_ENV
-        echo 'PATH="C:\Miniconda\envs\__setup_conda\Library\include\suitesparse;C:\Miniconda\envs\__setup_conda\Lib\site-packages\sparseqr;$PATH"' >> $env:GITHUB_ENV
-        echo 'LIB="C:\Miniconda\envs\__setup_conda\Library\include\suitesparse;C:\Miniconda\envs\__setup_conda\Lib\site-packages\sparseqr;$LIB"' >> $env:GITHUB_ENV
+        echo 'INCLUDE="C:\Miniconda\envs\__setup_conda\Library\include\suitesparse;C:\Miniconda\envs\__setup_conda\Lib\site-packages\sparseqr;"' >> $env:GITHUB_ENV
+        echo 'PATH="C:\Miniconda\envs\__setup_conda\Library\include\suitesparse;C:\Miniconda\envs\__setup_conda\Lib\site-packages\sparseqr;"' >> $env:GITHUB_ENV
+        echo 'LIB="C:\Miniconda\envs\__setup_conda\Library\include\suitesparse;C:\Miniconda\envs\__setup_conda\Lib\site-packages\sparseqr;"' >> $env:GITHUB_ENV
 
 
     - name: Install dependencies for Ubuntu
@@ -65,6 +65,7 @@ jobs:
         pip install --upgrade pip
         pip install .[cli,docs,test,build]
 
+        pip install scipy numpy matplotlib sparseqr==1.2 networkx mpmath Cython build
         python -m build
 
         python setup.py build_ext --inplace
@@ -91,29 +92,15 @@ jobs:
       - name: Download reports' artifacts
         uses: actions/download-artifact@v3
         with:
-          path: ./dist
-      - name: Upload artifact
+          path: ./artifacts-dl
+    #
+      - name: Copy artifacts
         run: |
-          cd ./dist
-          ls
-
-
-
-#         pip install --upgrade pip
-#         pip install build
-#         python -m build
-# 
-#         pip install .[cli,docs,test,build]
-#     
-#         pip install scipy numpy matplotlib sparseqr==1.2 networkx mpmath Cython
-#         python setup.py build_ext --inplace
-# 
-#         pytest
-# 
-#         cd docs
-#         make html
-# 
-#         pytest
-# 
-#         cd docs
-#         make html
+          mkdir dist
+          cp ./**/*.whl ./dist
+    #
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: choreo-dist
+          path: './dist/'
