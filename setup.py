@@ -38,6 +38,8 @@ cython_safemath_needed = [
     False,
 ]
 
+print('eee')
+print(os.environ)
 
 if platform.system() == "Windows":
 
@@ -49,20 +51,6 @@ if platform.system() == "Windows":
     cython_safemath_needed.append(False)
 
 elif platform.system() == "Darwin": # MacOS
-
-    # extra_compile_args_std = ["-Ofast","-march=native", "-lomp"]
-    # extra_compile_args_safe = ["-O2", "-lomp"]
-    # extra_link_args = ["-lomp"]
-
-    # os.environ['CC'] = "/usr/local/opt/llvm/bin/clang"
-    # os.environ['LDFLAGS'] = "-L/usr/local/opt/llvm/lib"
-    # os.environ['CFLAGS'] = "-I/usr/local/opt/llvm/include"
-
-    print('eee')
-    print(os.environ)
-    # print(os.environ['CC'])
-    # print(os.environ['LDFLAGS'])
-    # print(os.environ['CFLAGS'])
 
     extra_compile_args_std = ["-Ofast","-march=native", "-fopenmp"]
     extra_compile_args_safe = ["-O2", "-fopenmp"]
