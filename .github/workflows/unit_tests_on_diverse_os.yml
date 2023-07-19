@@ -84,8 +84,9 @@ jobs:
 
 
     - name: Upload artifact
-      uses: actions/upload-pages-artifact@v1
+      uses: actions/upload-artifact@v3
       with:
+        name: ${{ matrix.os  }} ${{ matrix.python-version }}
         path: './dist/'
 
   gather-dists:
@@ -100,7 +101,6 @@ jobs:
           path: ./dist
       - name: Upload artifact
         run: |
-          ls
           cd ./dist
           ls
 
