@@ -35,9 +35,11 @@ jobs:
         brew install suite-sparse llvm libomp
 
         echo 'CC=/usr/local/opt/llvm/bin/clang' >> $GITHUB_ENV
-        echo 'PATH=/usr/local/opt/llvm/bin' >> $GITHUB_ENV
-        echo 'LDFLAGS=-L/usr/local/opt/llvm/lib' >> $GITHUB_ENV
-        echo 'CFLAGS=-I/usr/local/opt/llvm/include' >> $GITHUB_ENV
+        echo 'PATH+=/usr/local/opt/llvm/bin' >> $GITHUB_ENV
+        echo 'LDFLAGS+=-L/usr/local/opt/llvm/lib' >> $GITHUB_ENV
+        echo 'CFLAGS+=-I/usr/local/opt/llvm/include' >> $GITHUB_ENV
+
+        which ld
 
     #
     - name: Install dependencies for Windows
@@ -46,9 +48,9 @@ jobs:
         conda install -c conda-forge -y suitesparse plantuml
 
 
-        echo 'INCLUDE = ";C:\Miniconda\envs\__setup_conda\Library\include\suitesparse;C:\Miniconda\envs\__setup_conda\Lib\site-packages\sparseqr"' >> $env:GITHUB_ENV
-        echo 'PATH = ";C:\Miniconda\envs\__setup_conda\Library\include\suitesparse;C:\Miniconda\envs\__setup_conda\Lib\site-packages\sparseqr"' >> $env:GITHUB_ENV
-        echo 'LIB = ";C:\Miniconda\envs\__setup_conda\Library\include\suitesparse;C:\Miniconda\envs\__setup_conda\Lib\site-packages\sparseqr"' >> $env:GITHUB_ENV
+        echo 'INCLUDE+=";C:\Miniconda\envs\__setup_conda\Library\include\suitesparse;C:\Miniconda\envs\__setup_conda\Lib\site-packages\sparseqr"' >> $env:GITHUB_ENV
+        echo 'PATH+=";C:\Miniconda\envs\__setup_conda\Library\include\suitesparse;C:\Miniconda\envs\__setup_conda\Lib\site-packages\sparseqr"' >> $env:GITHUB_ENV
+        echo 'LIB+=";C:\Miniconda\envs\__setup_conda\Library\include\suitesparse;C:\Miniconda\envs\__setup_conda\Lib\site-packages\sparseqr"' >> $env:GITHUB_ENV
 
 
     - name: Install dependencies for Ubuntu
@@ -59,6 +61,9 @@ jobs:
 
     - name: Build Test Docs
       run: |
+
+        which ld
+
         pip install --upgrade pip
         pip install scipy numpy matplotlib sparseqr==1.2 networkx mpmath Cython build
         python setup.py build_ext --inplace
