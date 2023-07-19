@@ -89,9 +89,6 @@ jobs:
         echo  ${{ env.EMSCRIPTEN_VERSION }}
         pip install .[full]
         pyodide build
-        cp ./dist/choreo-0.2.0-cp311-cp311-emscripten_3_1_32_wasm32.whl ./choreo_GUI/python_dist/choreo-0.2.0-cp311-cp311-emscripten_3_1_32_wasm32.whl
-
-
 
     - name: Upload artifact
       uses: actions/upload-artifact@v3
