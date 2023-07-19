@@ -46,10 +46,11 @@ jobs:
     - name: Install dependencies for Windows
       if: startsWith(matrix.os, 'windows')
       run: |
-        conda install -c conda-forge -y suitesparse plantuml openmp
+        conda install -c conda-forge -y suitesparse plantuml
 
+        echo 'INCLUDE="C:\Miniconda\envs\__setup_conda\Library\include\suitesparse;C:\Miniconda\envs\__setup_conda\Lib\site-packages\sparseqr;"' >> $env:GITHUB_ENV
+        echo 'LIB="C:\Miniconda\envs\__setup_conda\Library\include\suitesparse;C:\Miniconda\envs\__setup_conda\Lib\site-packages\sparseqr;"' >> $env:GITHUB_ENV
 
-# echo 'PATH="C:\Miniconda\envs\__setup_conda\Library\include\suitesparse;C:\Miniconda\envs\__setup_conda\Lib\site-packages\sparseqr;"' >> $env:GITHUB_ENV
     - name: Setup MSVC Developer Command Prompt
       if: startsWith(matrix.os, 'windows')
       uses: TheMrMilchmann/setup-msvc-dev@v2.0.1
