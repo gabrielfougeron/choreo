@@ -46,12 +46,8 @@ jobs:
     - name: Install dependencies for Windows
       if: startsWith(matrix.os, 'windows')
       run: |
-        conda install -c conda-forge -y suitesparse plantuml clan
+        conda install -c conda-forge -y suitesparse plantuml openmp
 
-        echo "C:\Miniconda\envs\__setup_conda\Library\include\suitesparse;C:\Miniconda\envs\__setup_conda\Lib\site-packages\sparseqr;" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-        
-        echo 'INCLUDE="C:\Miniconda\envs\__setup_conda\Library\include\suitesparse;C:\Miniconda\envs\__setup_conda\Lib\site-packages\sparseqr;"' >> $env:GITHUB_ENV
-        echo 'LIB="C:\Miniconda\envs\__setup_conda\Library\include\suitesparse;C:\Miniconda\envs\__setup_conda\Lib\site-packages\sparseqr;"' >> $env:GITHUB_ENV
 
 # echo 'PATH="C:\Miniconda\envs\__setup_conda\Library\include\suitesparse;C:\Miniconda\envs\__setup_conda\Lib\site-packages\sparseqr;"' >> $env:GITHUB_ENV
     - name: Setup MSVC Developer Command Prompt
@@ -123,3 +119,10 @@ jobs:
 # cd ..
 # 
   
+
+
+# 
+# echo "C:\Miniconda\envs\__setup_conda\Library\include\suitesparse;C:\Miniconda\envs\__setup_conda\Lib\site-packages\sparseqr;" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+#         
+# echo 'INCLUDE="C:\Miniconda\envs\__setup_conda\Library\include\suitesparse;C:\Miniconda\envs\__setup_conda\Lib\site-packages\sparseqr;"' >> $env:GITHUB_ENV
+# echo 'LIB="C:\Miniconda\envs\__setup_conda\Library\include\suitesparse;C:\Miniconda\envs\__setup_conda\Lib\site-packages\sparseqr;"' >> $env:GITHUB_ENV
