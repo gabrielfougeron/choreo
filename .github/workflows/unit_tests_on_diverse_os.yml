@@ -120,12 +120,13 @@ jobs:
 
       - name: Copy artifacts
         run: |
-          mkdir dist
-          find ./artifacts-dl/${{ env.python-version-source }}/ -name '*.tar.gz' -exec cp {} ./dist \; 
-          find ./artifacts-dl -name '*.whl' -exec cp {} ./dist \; 
+          mkdir choreo-dist
+          mkdir choreo-dist/dist
+          find ./artifacts-dl/${{ env.python-version-source }}/ -name '*.tar.gz' -exec cp {} ./choreo-dist/dist \; 
+          find ./artifacts-dl -name '*.whl' -exec cp {} ./choreo-dist/dist \; 
 
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
           name: choreo-dist
-          path: './dist/'
+          path: './choreo-dist/'
