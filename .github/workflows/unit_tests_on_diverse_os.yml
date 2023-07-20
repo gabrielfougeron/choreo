@@ -12,10 +12,10 @@ jobs:
       pyodide-os: "ubuntu-latest"
     strategy:
       matrix:
-        python-version: ["3.11"]
-        # python-version: ["3.9", "3.10", "3.11"]
-        os: ["ubuntu-latest"]
-        # os: ["ubuntu-latest", "macos-latest", "windows-latest"]
+        # python-version: ["3.11"]
+        python-version: ["3.9", "3.10", "3.11"]
+        # os: ["ubuntu-latest"]
+        os: ["ubuntu-latest", "macos-latest", "windows-latest"]
 
     runs-on: ${{ matrix.os }}
     continue-on-error: true
@@ -83,19 +83,19 @@ jobs:
 
     - name: Read Emscripten version number
       id: emscripten-version
-      if:  matrix.os == env.pyodide-os && matrix.python-version == env.python-pyodide-version
+      if:  matrix.os == env.pyodide-os && matrix.python-version == env.pyodide-python-version
       run: |
         pip install .[full]
         echo EMSCRIPTEN_VERSION=$(pyodide config get emscripten_version) >> $GITHUB_ENV
   
     - name: Setup Emscripten
-      if:  matrix.os == env.pyodide-os && matrix.python-version == env.python-pyodide-version
+      if:  matrix.os == env.pyodide-os && matrix.python-version == env.pyodide-python-version
       uses: mymindstorm/setup-emsdk@v11
       with:
         version: ${{ env.EMSCRIPTEN_VERSION }}
   
     - name: Build for Pyodide
-      if:  matrix.os == env.pyodide-os && matrix.python-version == env.python-pyodide-version
+      if:  matrix.os == env.pyodide-os && matrix.python-version == env.pyodide-python-version
       run: |
         pyodide build
 
