@@ -82,20 +82,19 @@ jobs:
 
     - name: Read Emscripten version number
       id: emscripten-version
-      if:  (matrix.os == "ubuntu-latest") && (matrix.python-version == env.python-pyodide-version)
+      if:  (${{matrix.os == 'ubuntu-latest'}}) && (matrix.python-version == env.python-pyodide-version)
       run: |
         pip install .[full]
         echo EMSCRIPTEN_VERSION=$(pyodide config get emscripten_version) >> $GITHUB_ENV
-    # echo PYTHON_VERSION=$(pyodide config get emscripten_version) >> $GITHUB_OUTPUT
   
     - name: Setup Emscripten
-      if:  (matrix.os == "ubuntu-latest") && (matrix.python-version == env.python-pyodide-version)
+      if:  (${{matrix.os == 'ubuntu-latest'}}) && (matrix.python-version == env.python-pyodide-version)
       uses: mymindstorm/setup-emsdk@v11
       with:
         version: ${{ env.EMSCRIPTEN_VERSION }}
   
     - name: Build for Pyodide
-      if:  (matrix.os == "ubuntu-latest") && (matrix.python-version == env.python-pyodide-version)
+      if:  (${{matrix.os == 'ubuntu-latest'}}) && (matrix.python-version == env.python-pyodide-version)
       run: |
         pyodide build
 
