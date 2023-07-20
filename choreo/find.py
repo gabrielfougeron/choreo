@@ -122,7 +122,20 @@ def Find_Choreo(
 
     print(f'Processing symmetries for {(n_reconverge_it_max+1):d} convergence levels.')
 
-    ActionSyst = setup_changevar(geodim,nbody,nint_init,mass,n_reconverge_it_max,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change,CrashOnIdentity=CrashOnError_changevar)
+    # ActionSyst = setup_changevar(
+    ActionSyst = setup_changevar_new_new(
+        geodim                                      ,
+        nbody                                       ,
+        nint_init                                   ,
+        mass                                        ,
+        n_reconverge_it_max                         ,
+        Sym_list = Sym_list                         ,
+        MomCons = MomConsImposed                    ,
+        n_grad_change = n_grad_change               ,
+        CrashOnIdentity = CrashOnError_changevar    ,
+    )
+
+    exit()
 
     ActionSyst.SetBackend(parallel=ParallelBackend,TwoD=TwoDBackend,GradHessBackend=GradHessBackend)
 

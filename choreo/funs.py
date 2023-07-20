@@ -2501,9 +2501,9 @@ class ChoreoSym():
     def __str__(self):
 
         out  = ""
-        out += f"Loop Target: {self.LoopTarget}\n"
-        out += f"Loop Source: {self.LoopSource}\n"
-        out += f"SpaceRot: {self.SpaceRot}\n"
+        out += f"Target: {self.LoopTarget}\n"
+        out += f"Source: {self.LoopSource}\n"
+        out += f"SpaceRot: \n{self.SpaceRot}\n"
         out += f"TimeRev: {self.TimeRev}\n"
         out += f"TimeShift: {self.TimeShift}"
 
@@ -3159,6 +3159,459 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
 
     return ChoreoAction(**kwargs)
 
+
+
+def setup_changevar_new_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCons=True,n_grad_change=1.,Sym_list=[],CrashOnIdentity=True,ForceMatrixChangevar = False):
+    
+    r"""
+    This function constructs a ChoreoAction
+    It detects loops and constraints based on symmetries.
+    It defines parameters according to given constraints and diagonal change of variable.
+    It computes useful objects to optimize the computation of the action :
+     - Exhaustive list of unary transformation for generator to body.
+     - Exhaustive list of binary transformations from generator within each loop.
+    """
+
+    SymGraph = networkx.Graph()
+    for i in range(nbody):
+        SymGraph.add_node(i,Constraint_list=[])
+
+    for Sym in Sym_list:
+
+        if (Sym.LoopTarget > Sym.LoopSource):
+            Sym=Sym.Inverse()
+
+        if (Sym.LoopTarget == Sym.LoopSource):
+            # Add constraint
+
+            AddConstraint = not(Sym.IsIdentity())
+
+            for StoredConstraint in SymGraph.nodes[Sym.LoopSource]["Constraint_list"]:
+                AddConstraint = AddConstraint and not(Sym.IsSame(StoredConstraint))
+            
+            if AddConstraint:
+                SymGraph.nodes[Sym.LoopSource]["Constraint_list"].append(Sym)
+            
+        else:
+            
+            edge = (Sym.LoopTarget, Sym.LoopSource)
+            
+            if edge in SymGraph.edges: # adds constraint instead of adding parallel edge
+                
+                Constraint = Sym.Inverse().Compose(SymGraph.edges[edge]["Sym"])
+
+                AddConstraint = not(Constraint.IsIdentity())
+
+                for StoredConstraint in SymGraph.nodes[Sym.LoopSource]["Constraint_list"]:
+                    AddConstraint = AddConstraint and not(Constraint.IsSame(StoredConstraint))
+                
+                if AddConstraint:
+                    SymGraph.nodes[Sym.LoopSource]["Constraint_list"].append(Constraint)
+
+            else: # Really adds edge
+                
+                SymGraph.add_edge(*edge,Sym=Sym)
+            
+    Cycles = list(networkx.cycle_basis(SymGraph))    
+    # Aggregate cycles symmetries into constraints
+    
+    for Cycle in Cycles:
+
+        istart = Cycle[0]
+
+        Constraint = ChoreoSym(
+            LoopTarget = istart,
+            LoopSource = istart,
+            SpaceRot = np.identity(geodim,dtype=np.float64),
+            TimeRev = 1,
+            TimeShift = fractions.Fraction(numerator=0,denominator=1)
+        )
+        
+        Cycle_len = len(Cycle)
+        
+        for iedge in range(Cycle_len):
+            
+            ibeg = Cycle[iedge]
+            iend = Cycle[(iedge+1)%Cycle_len]
+            
+            if (ibeg < iend):
+                Constraint = Constraint.Compose(SymGraph.edges[(ibeg,iend)]["Sym"])
+                
+            else:
+                Constraint = Constraint.Compose(SymGraph.edges[(iend,ibeg)]["Sym"].Inverse())
+                
+            if not(Constraint.IsIdentity()):
+                SymGraph.nodes[istart]["Constraint_list"].append(Constraint)
+            
+    # Choose one representative per connected component
+    # And aggregate path from the representative to each node of cycle
+    # Then bring all constraints back to this node, and aggregate constraints
+    
+    # print(SymGraph.nodes[0])
+
+
+
+
+    ConnectedComponents = list(networkx.connected_components(SymGraph))    
+
+    nloop = len(ConnectedComponents)
+
+    loopgen = np.zeros((nloop),dtype=np.intp)
+    loopnb  = np.zeros((nloop),dtype=np.intp)
+
+    maxlooplen = 0
+    for il in range(nloop):
+        loopnb[il] = len(ConnectedComponents[il])
+
+        if (loopnb[il] > maxlooplen):
+            maxlooplen = loopnb[il]
+
+    Targets = np.zeros((nloop,maxlooplen),dtype=np.intp)
+
+    AllGenToTarget = []
+    AllConstraints = []
+
+    for il in range(nloop):
+        
+        loopgen[il] = ConnectedComponents[il].pop()
+
+        paths_to_gen = networkx.shortest_path(SymGraph, target = loopgen[il])
+        
+        ib = 0
+        
+        GenToTarget = []
+        LoopConstraints = SymGraph.nodes[loopgen[il]]["Constraint_list"]
+
+        for istart,path in paths_to_gen.items():
+            
+            Sym = ChoreoSym(
+                LoopTarget = istart,
+                LoopSource = istart,
+                SpaceRot = np.identity(geodim,dtype=np.float64),
+                TimeRev = 1,
+                TimeShift = fractions.Fraction(numerator=0,denominator=1)
+            )
+
+            path_len = len(path)
+            
+            for iedge in range(path_len-1):
+                
+                ibeg = path[iedge  ]
+                iend = path[iedge+1]
+                
+                if (ibeg < iend):
+                    Sym = Sym.Compose(SymGraph.edges[(ibeg,iend)]["Sym"])
+
+                else:
+                    Sym = Sym.Compose(SymGraph.edges[(iend,ibeg)]["Sym"].Inverse())
+
+            Targets[il,ib] = istart
+
+            for Constraint in SymGraph.nodes[Sym.LoopTarget]["Constraint_list"]:
+
+                Constraint = (Sym.Inverse()).Compose(Constraint.Compose(Sym))
+
+                AddConstraint = not(Constraint.IsIdentity())
+
+                for StoredConstraint in LoopConstraints:
+                    AddConstraint = AddConstraint and not(Constraint.IsSame(StoredConstraint))
+
+                if AddConstraint:
+                    LoopConstraints.append(Constraint)
+            
+            GenToTarget.append(Sym)
+            
+            ib += 1
+
+        AllGenToTarget.append(GenToTarget)
+        AllConstraints.append(LoopConstraints)
+
+
+
+    for il in range(nloop):
+
+
+        print(f"===========================================================")
+        print(f"LOOP {il}")
+        print(f"GENERATOR {loopgen[il]}")
+        print('')
+
+        for icstr in range(len(AllConstraints[il])):
+            print(f"CONSTRAINT {icstr}")
+            print(AllConstraints[il][icstr])
+            print('')
+
+        for icstr in range(len(AllGenToTarget[il])):
+            print(f"GEN TO TARGET {icstr}")
+            print(AllGenToTarget[il][icstr])
+            print('')
+
+
+    networkx.draw(SymGraph, labels = {i:i for i in SymGraph.nodes})
+    plt.savefig('./NewSym_data/graph.pdf')
+
+
+
+
+
+
+
+
+
+
+
+
+
+#     for il in range(nloop):
+# 
+#         nbi = 0
+# 
+#         UniqueSyms = []
+#         ProdMassSum = []
+#         # Count unique pair transformations
+#         for ib in range(loopnb[il]-1):
+#             for ibp in range(ib+1,loopnb[il]):   
+# 
+#                 Sym = (GenToTarget[ibp]).Compose(GenToTarget[ib].Inverse())
+# 
+#                 if Sym.IsIdentity():
+# 
+#                     if CrashOnIdentity:
+#                         raise ValueError("Two bodies have identical trajectories")
+#                     else:
+#                         if not(Identity_detected):
+#                             print("Two bodies have identical trajectories")
+#                         
+#                     Identity_detected = True
+# 
+#                 IsUnique = True
+#                 for isym in range(len(UniqueSyms)):
+# 
+#                     IsUnique = not(Sym.IsSameLight(UniqueSyms[isym]))
+# 
+#                     if not(IsUnique):
+#                         break
+# 
+#                     SymInv = Sym.Inverse()
+#                     IsUnique = not(SymInv.IsSameLight(UniqueSyms[isym]))
+# 
+#                     if not(IsUnique):
+#                         break
+# 
+#                 if IsUnique:
+#                     UniqueSyms.append(Sym)
+#                     ProdMassSum.append(mass[Targets[il,ib]]*mass[Targets[il,ibp]])
+#                     loopnbi[il]+=1
+#                 else:
+#                     ProdMassSum[isym]+=mass[Targets[il,ib]]*mass[Targets[il,ibp]]
+#                     
+#         UniqueSymsAll_list.append(UniqueSyms)
+#         ProdMassSumAll_list.append(ProdMassSum)
+
+    # maxloopnbi = loopnbi.max()
+    # 
+    # ProdMassSumAll = np.zeros((nloop,maxloopnbi),dtype=np.float64)
+    # SpaceRotsBin = np.zeros((nloop,maxloopnbi,geodim,geodim),dtype=np.float64)
+    # TimeRevsBin = np.zeros((nloop,maxloopnbi),dtype=np.intp)
+    # TimeShiftNumBin = np.zeros((nloop,maxloopnbi),dtype=np.intp)
+    # TimeShiftDenBin = np.zeros((nloop,maxloopnbi),dtype=np.intp)
+
+#     for il in range(nloop):
+#         for ibi in range(loopnbi[il]):
+#             
+#             ProdMassSumAll[il,ibi] = ProdMassSumAll_list[il][ibi]
+# 
+#             SpaceRotsBin[il,ibi,:,:] = UniqueSymsAll_list[il][ibi].SpaceRot
+#             TimeRevsBin[il,ibi] = UniqueSymsAll_list[il][ibi].TimeRev
+# 
+#             if (UniqueSymsAll_list[il][ibi].TimeShift.denominator > 0):
+#                 TimeShiftNumBin[il,ibi] = UniqueSymsAll_list[il][ibi].TimeShift.numerator % UniqueSymsAll_list[il][ibi].TimeShift.denominator
+#                 TimeShiftDenBin[il,ibi] = UniqueSymsAll_list[il][ibi].TimeShift.denominator
+#             else:
+#                 TimeShiftNumBin[il,ibi] = (- UniqueSymsAll_list[il][ibi].TimeShift.numerator) % (- UniqueSymsAll_list[il][ibi].TimeShift.denominator)
+#                 TimeShiftDenBin[il,ibi] = - UniqueSymsAll_list[il][ibi].TimeShift.denominator
+
+    # Count how many unique paths need to be displayed
+#     RequiresLoopDispUn = np.zeros((nloop,maxlooplen),dtype=bool)
+# 
+#     eps_rot = 1e-10
+#     for il in range(nloop):
+# 
+#         loop_rots = []
+# 
+#         for ib in range(loopnb[il]): 
+# 
+#             Add_to_loop_rots = True
+# 
+#             for irot in range(len(loop_rots)):
+#                     
+#                 dist_ij = np.linalg.norm(SpaceRotsUn[il,ib,:,:] - loop_rots[irot])
+# 
+#                 Add_to_loop_rots = (Add_to_loop_rots and (dist_ij > eps_rot))
+# 
+#             RequiresLoopDispUn[il,ib] = Add_to_loop_rots
+# 
+#             if Add_to_loop_rots:
+# 
+#                 loop_rots.append(SpaceRotsUn[il,ib,:,:])
+# 
+#     for il in range(nloop):
+#         for ib in range(loopnb[il]):
+# 
+#             k = (TimeRevsUn[il,ib]*nint_init*TimeShiftNumUn[il,ib])
+# 
+#             ddiv = - k // TimeShiftDenUn[il,ib]
+#             rem = k + ddiv * TimeShiftDenUn[il,ib]
+# 
+#             if (rem != 0):
+#                 print("WARNING: remainder in integer division. Gradient computation will fail.")
+# 
+#         for ibi in range(loopnbi[il]):
+# 
+#             k = (TimeRevsBin[il,ibi]*nint_init*TimeShiftNumBin[il,ibi])
+# 
+#             ddiv = - k // TimeShiftDenBin[il,ibi]
+#             rem = k + ddiv * TimeShiftDenBin[il,ibi]
+# 
+#             if (rem != 0):
+#                 print("WARNING: remainder in integer division. Gradient computation will fail.")
+# 
+#     # Count constraints
+#     loopncstr = np.zeros((nloop),dtype=np.intp)
+#     
+#     for il in range(nloop):
+#         loopncstr[il] = len(SymGraph.nodes[loopgen[il]]["Constraint_list"])
+#     
+#     maxloopncstr = loopncstr.max()
+# 
+#     MatrixFreeChangevar = (not(MomCons) and (maxloopncstr == 0)) and not(ForceMatrixChangevar) and (abs(n_grad_change - 1) == 0)
+# 
+#     ncoeff_cvg_lvl_list = []
+#     nint_cvg_lvl_list = []
+#     nparams_cvg_lvl_list = []
+# 
+#     for i in range(n_reconverge_it_max+1):
+# 
+#         nint_cvg_lvl_list.append(nint_init * (2**i))
+#         ncoeff_cvg_lvl_list.append(nint_cvg_lvl_list[i] // 2 + 1)
+# 
+#     kwargs = {
+#             "geodim"                        :   geodim                          ,
+#             "nbody"                         :   nbody                           ,
+#             "nloop"                         :   nloop                           ,
+#             "mass"                          :   mass                            ,
+#             "loopnb"                        :   loopnb                          ,
+#             "loopgen"                       :   loopgen                         ,
+#             "Targets"                       :   Targets                         ,
+#             "MassSum"                       :   MassSum                         ,
+#             "SqrtMassSum"                   :   np.sqrt(MassSum)                ,
+#             "SpaceRotsUn"                   :   SpaceRotsUn                     ,
+#             "TimeRevsUn"                    :   TimeRevsUn                      ,
+#             "TimeShiftNumUn"                :   TimeShiftNumUn                  ,
+#             "TimeShiftDenUn"                :   TimeShiftDenUn                  ,
+#             "RequiresLoopDispUn"            :   RequiresLoopDispUn              ,
+#             "loopnbi"                       :   loopnbi                         ,
+#             "ProdMassSumAll"                :   ProdMassSumAll                  ,
+#             "SpaceRotsBin"                  :   SpaceRotsBin                    ,
+#             "TimeRevsBin"                   :   TimeRevsBin                     ,
+#             "TimeShiftNumBin"               :   TimeShiftNumBin                 ,
+#             "TimeShiftDenBin"               :   TimeShiftDenBin                 ,
+#             "MatrixFreeChangevar"           :   MatrixFreeChangevar             ,
+#             "ncoeff_cvg_lvl_list"           :   ncoeff_cvg_lvl_list             ,
+#             "nint_cvg_lvl_list"             :   nint_cvg_lvl_list               ,
+#             "current_cvg_lvl"               :   0                               ,
+#             "n_cvg_lvl"                     :   n_reconverge_it_max+1           ,
+#             "n_grad_change"                 :   n_grad_change                   ,
+#             "last_all_coeffs"               :   None                            ,
+#             "last_all_pos"                  :   None                            ,
+#             "Do_Pos_FFT"                    :   True                            ,
+#         }
+# 
+#     if (MatrixFreeChangevar):
+# 
+#         for i in range(n_reconverge_it_max+1):
+# 
+#             nparams_cvg_lvl_list.append(2 * (ncoeff_cvg_lvl_list[i] - 1) * nloop * geodim) 
+# 
+#         kwargs = kwargs | {
+#             "nparams_cvg_lvl_list"          :   nparams_cvg_lvl_list            ,
+#         }
+# 
+#     else:
+# 
+#         SpaceRotsCstr = np.zeros((nloop,maxloopncstr,geodim,geodim),dtype=np.float64)
+#         TimeRevsCstr = np.zeros((nloop,maxloopncstr),dtype=np.intp)
+#         TimeShiftNumCstr = np.zeros((nloop,maxloopncstr),dtype=np.intp)
+#         TimeShiftDenCstr = np.zeros((nloop,maxloopncstr),dtype=np.intp)
+#         
+#         for il in range(nloop):
+#             for i in range(loopncstr[il]):
+#                 
+#                 SpaceRotsCstr[il,i,:,:] = SymGraph.nodes[loopgen[il]]["Constraint_list"][i].SpaceRot
+#                 TimeRevsCstr[il,i]      = SymGraph.nodes[loopgen[il]]["Constraint_list"][i].TimeRev
+#                 TimeShiftNumCstr[il,i]  = SymGraph.nodes[loopgen[il]]["Constraint_list"][i].TimeShift.numerator
+#                 TimeShiftDenCstr[il,i]  = SymGraph.nodes[loopgen[il]]["Constraint_list"][i].TimeShift.denominator
+# 
+#         # Now detect parameters and build change of variables
+# 
+#         param_to_coeff_cvg_lvl_list = []
+#         coeff_to_param_cvg_lvl_list = []
+#         param_to_coeff_T_cvg_lvl_list = []
+#         coeff_to_param_T_cvg_lvl_list = []
+# 
+#         for i in range(n_reconverge_it_max+1):
+# 
+#             cstrmat_sp = Assemble_Cstr_Matrix(
+#                 nloop               ,
+#                 ncoeff_cvg_lvl_list[i]      ,
+#                 MomCons             ,
+#                 mass                ,
+#                 loopnb              ,
+#                 Targets             ,
+#                 SpaceRotsUn         ,
+#                 TimeRevsUn          ,
+#                 TimeShiftNumUn      ,
+#                 TimeShiftDenUn      ,
+#                 loopncstr           ,
+#                 SpaceRotsCstr       ,
+#                 TimeRevsCstr        ,
+#                 TimeShiftNumCstr    ,
+#                 TimeShiftDenCstr    
+#             )
+# 
+#             param_to_coeff_cvg_lvl_list.append(null_space_sparseqr(cstrmat_sp))
+#             coeff_to_param_cvg_lvl_list.append(param_to_coeff_cvg_lvl_list[i].transpose(copy=True))
+# 
+#             nparams_cvg_lvl_list.append(param_to_coeff_cvg_lvl_list[i].shape[1])
+# 
+#             param_to_coeff_csc = param_to_coeff_cvg_lvl_list[i].tocsc()
+# 
+#             diagmat = diagmat_changevar(
+#                 geodim,
+#                 ncoeff_cvg_lvl_list[i],
+#                 nparams_cvg_lvl_list[i],
+#                 param_to_coeff_csc.indptr,
+#                 param_to_coeff_csc.indices,
+#                 -n_grad_change,
+#                 MassSum
+#             )
+# 
+#             param_to_coeff_cvg_lvl_list[i] = param_to_coeff_cvg_lvl_list[i] @ diagmat
+#             diagmat.data = np.reciprocal(diagmat.data)
+#             coeff_to_param_cvg_lvl_list[i] =  diagmat @ coeff_to_param_cvg_lvl_list[i]
+# 
+#             param_to_coeff_T_cvg_lvl_list.append(param_to_coeff_cvg_lvl_list[i].transpose(copy=True))
+#             coeff_to_param_T_cvg_lvl_list.append(coeff_to_param_cvg_lvl_list[i].transpose(copy=True))
+# 
+#         kwargs = kwargs | {
+#             "nparams_cvg_lvl_list"          :   nparams_cvg_lvl_list            ,
+#             "param_to_coeff_cvg_lvl_list"   :   param_to_coeff_cvg_lvl_list     ,
+#             "coeff_to_param_cvg_lvl_list"   :   coeff_to_param_cvg_lvl_list     ,
+#             "param_to_coeff_T_cvg_lvl_list" :   param_to_coeff_T_cvg_lvl_list   ,
+#             "coeff_to_param_T_cvg_lvl_list" :   coeff_to_param_T_cvg_lvl_list   ,
+#         }
+# 
+#     return ChoreoAction(**kwargs)
 
 
 def setup_changevar(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCons=True,n_grad_change=1.,Sym_list=[],CrashOnIdentity=True,ForceMatrixChangevar = False):
