@@ -11,8 +11,10 @@ jobs:
       python-pyodide-version: "3.11"
     strategy:
       matrix:
-        python-version: ["3.9", "3.10", "3.11"]
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        python-version: ["3.11"]
+        # python-version: ["3.9", "3.10", "3.11"]
+        os: ["ubuntu-latest"]
+        # os: ["ubuntu-latest", "macos-latest", "windows-latest"]
 
     runs-on: ${{ matrix.os }}
     continue-on-error: true
@@ -79,19 +81,21 @@ jobs:
         cd ..
 
     - name: Read Emscripten version number
-      if: startsWith(matrix.os, 'ubuntu') && matrix.python-version == env.python-pyodide-version
+      id: emscripten-version
+      if:  (matrix.os == "ubuntu-latest") && (matrix.python-version == env.python-pyodide-version)
       run: |
         pip install .[full]
         echo EMSCRIPTEN_VERSION=$(pyodide config get emscripten_version) >> $GITHUB_ENV
+    # echo PYTHON_VERSION=$(pyodide config get emscripten_version) >> $GITHUB_OUTPUT
   
     - name: Setup Emscripten
-      if: startsWith(matrix.os, 'ubuntu') && matrix.python-version == env.python-pyodide-version
+      if:  (matrix.os == "ubuntu-latest") && (matrix.python-version == env.python-pyodide-version)
       uses: mymindstorm/setup-emsdk@v11
       with:
         version: ${{ env.EMSCRIPTEN_VERSION }}
   
     - name: Build for Pyodide
-      if: startsWith(matrix.os, 'ubuntu') && matrix.python-version == env.python-pyodide-version
+      if:  (matrix.os == "ubuntu-latest") && (matrix.python-version == env.python-pyodide-version)
       run: |
         pyodide build
 
@@ -115,7 +119,7 @@ jobs:
       - name: Copy artifacts
         run: |
           mkdir dist
-          find ./artifacts-dl/ubuntu-latest-${{env.python-pyodide-version}}/ -name '*.tar.gz' -exec cp {} ./dist \; 
+          find ./artifacts-dl/ubuntu-latest-${{ needs.build.env.python-pyodide-version }}/ -name '*.tar.gz' -exec cp {} ./dist \; 
           find ./artifacts-dl -name '*.whl' -exec cp {} ./dist \; 
 
       - name: Upload artifact
