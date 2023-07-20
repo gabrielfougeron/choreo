@@ -36,14 +36,17 @@ dependencies = [
   "scipy",
   "numpy",
   "matplotlib",
-  "sparseqr==1.2",
+  "sparseqr>=1.2",
   "networkx",
   "mpmath",
 ]
 
 [project.optional-dependencies]
 build = [
+  "setuptools>=42",
+  "wheel",
   "Cython",
+  "build",
 ]
 gui = [
   "pyodide-build==0.23.4",

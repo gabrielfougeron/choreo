@@ -47,7 +47,17 @@ if platform.system() == "Windows":
     cython_extnames.append("choreo.cython.funs_parallel")
     cython_safemath_needed.append(False)
 
-else:
+elif platform.system() == "Darwin": # MacOS
+
+    extra_compile_args_std = ["-Ofast","-march=native", "-fopenmp"]
+    extra_compile_args_safe = ["-O2", "-fopenmp"]
+    extra_link_args = ["-fopenmp"]
+
+    cython_extnames.append("choreo.cython.funs_parallel")
+    cython_safemath_needed.append(False)
+
+
+elif platform.system() == "Linux":
 
     # print(platform.system())
     # print( os.environ)
@@ -91,6 +101,10 @@ else:
 
         cython_extnames.append("choreo.cython.funs_parallel")
         cython_safemath_needed.append(False)
+
+else:
+
+    raise ValueError(f"Unsupported platform: {platform.system()}")
 
 cython_filenames = [ ext_name.replace('.','/') + src_ext for ext_name in cython_extnames]
 
@@ -147,7 +161,7 @@ if use_Cython:
         language_level = "3",
         annotate = True,
         compiler_directives = compiler_directives,
-        nthreads = nthreads,
+        # nthreads = nthreads,
     )
     
 
