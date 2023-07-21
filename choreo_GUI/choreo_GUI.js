@@ -682,7 +682,7 @@ function LoadConfigDict(ConfigDict) {
         deleteColumn('table_body_loop',icol)
     };
 
-    document.getElementById('checkbox_MomCons').checked  = ConfigDict['Geom_Bodies'] ['MomConsImposed'] 
+    document.getElementById('checkbox_MomCons').checked = ConfigDict['Geom_Bodies'] ['MomConsImposed'] 
 
     var n_loops = ConfigDict['Geom_Bodies'] ['n_loops']
 
@@ -2893,15 +2893,17 @@ function MakeBodyGraph(){
 
     for (ib = 0; ib < nbody; ib++) {
 
-        if (color_method_input.value == "body") {
-            color_id = ib;
-        } else if (color_method_input.value == "loop") {
-            color_id = il;
-        } else if (color_method_input.value == "loop_id") {
-            color_id = ilb;
-        } else {
-            color_id = 0;
-        }
+        // if (color_method_input.value == "body") {
+        //     color_id = ib;
+        // } else if (color_method_input.value == "loop") {
+        //     color_id = il;
+        // } else if (color_method_input.value == "loop_id") {
+        //     color_id = ilb;
+        // } else {
+        //     color_id = 0;
+        // }
+
+        color_id = ib;
         
         color = colorLookup[color_id % colorLookup.length];
 
@@ -2917,43 +2919,7 @@ function MakeBodyGraph(){
         }
 
     }
-// 
-//     var nodes = new vis.DataSet([
-//         { id: 0, label: "0"},
-//         { id: 1, label: "1"},
-//         { id: 2, label: "2"},
-//         { id: 3, label: "3"},
-//         { id: 4, label: "4"},
-//         { id: 5, label: "5" , font:{color:"white"}, color: { border: "black" }},
-//     ])
 
-
-
-    // var nodes = new vis.DataSet([{
-    //     id: 1,
-    //     borderWidth: 20,
-    //     color: {
-    //         border: '#000000',
-    //         background: '#000000',
-    //         border:  '#000000',
-    //         highlight: {
-    //             border: '#2B7CE9',
-    //             background: '#D2E5FF'
-    //         }
-    //     },
-    //     // x : 100,
-    //     // y : 100,
-    // }])
-
-
-    // create an array with edges
-    // var edges = new vis.DataSet([
-    //     { from: 1, to: 3 },
-    //     { from: 1, to: 2 },
-    //     { from: 2, to: 4 },
-    //     { from: 2, to: 5 },
-    //     { from: 3, to: 3 },
-    // ])
     // create an array with edges
     var edges = new vis.DataSet([
         { from: 0, to: 1 ,color : "black"},
@@ -2968,10 +2934,10 @@ function MakeBodyGraph(){
     }
 
     var options = {
-        autoResize: true,
+        // borderWidth: 1,
         height: '100%',
         width: '100%',
-        clickToUse: false,
+        // clickToUse: true,
         layout: {
         randomSeed: undefined,
         // improvedLayout:true,
@@ -3003,6 +2969,29 @@ function GraphFit(){
 }
 
 
+function CreateInputPermTable(){
+
+    console.log("toto")
+
+
+    nbody = document.getElementById("input_nbody").value
+
+    innerHTML = "" 
+    for (ib = 0; ib < nbody; ib++) {
+
+        innerHTML += "<tr><td style=border:none;'>"
+        innerHTML += ib.toString() + " : "
+        innerHTML += "<input type='number' value='"+ib.toString()+"' min='0' style='width:30px;'>"
+        innerHTML += "</td></tr>"
+        
+    }
+
+
+    return innerHTML
+
+}
+
+
 function ClickAddSym() {
     var table = document.getElementById('table_sym')
     var newcell
@@ -3012,40 +3001,45 @@ function ClickAddSym() {
 
     var input_dict = [
         {
-            "elem_class":"input", 
-            "type":"number", 
-            "value":"0",
-            "min":"0",
+            "elem_class":"table",
+            "style":"border:none;width: 63px;margin-left: auto;margin-right: auto",
+            "innerHTML": CreateInputPermTable(),
         },
         {
             "elem_class":"select", 
             "class":"w3-select",  
             "innerHTML":"<option value='True'>True</option><option value='False' selected>False</option>",
+            "style":"width: 53px; text-align: center;",
         },
         {
             "elem_class":"input", 
             "type":"number", 
             "value":"1",
+            "style":"width: 53px; text-align: center;",
         },
         {
             "elem_class":"input", 
             "type":"number", 
             "value":"1",
+            "style":"width: 53px; text-align: center;",
         },
         {
             "elem_class":"select", 
             "class":"w3-select",  
             "innerHTML":"<option value='True'>True</option><option value='False' selected>False</option>",
+            "style":"width: 53px; text-align: center;",
         },
         {
             "elem_class":"input", 
             "type":"number", 
             "value":"1",
+            "style":"width: 53px; text-align: center;",
         },
         {
             "elem_class":"input", 
             "type":"number", 
             "value":"1",
+            "style":"width: 53px; text-align: center;",
         }
     ]
 
@@ -3076,10 +3070,9 @@ function ClickAddSym() {
         newcell.style.textAlign = 'center'
         input = document.createElement(input_dict[ival]["elem_class"])
         for (var [key, val] of Object.entries(input_dict[ival])){
-        if (key != "elem_class"){
-            input[key] = val
-        }
-        input.style = "width: 53px; text-align: center;"
+            if (key != "elem_class"){
+                input[key] = val
+            }
         }
         newcell.appendChild(input)
     }
