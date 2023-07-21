@@ -1,53 +1,843 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <title>Vis Network | Basic usage</title>
+<!doctype html>
+<html lang="en" style="scrollbar-gutter: stable;"><head>
+<meta charset="UTF-8">
 
-    <script
-      type="text/javascript"
-      src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"
-    ></script>
+<title>choreo_GUI</title>
+<link rel="shortcut icon" href="./img/eight_icon.png" type="image/x-icon">
 
-    <style type="text/css">
-      #mynetwork {
-        width: 600px;
-        height: 400px;
-        border: 1px solid lightgray;
-      }
-    </style>
-  </head>
-  <body>
-    <p>Create a simple network with some nodes and edges.</p>
+<head>
+<meta name="viewport" content="width=610, user-scalable=0" id="myViewport">
 
-    <div id="mynetwork"></div>
+<script src="coi-serviceworker.min.js"></script>
 
-    <script type="text/javascript">
-      // create an array with nodes
-      var nodes = new vis.DataSet([
-        { id: 1, label: "Node 1" },
-        { id: 2, label: "Node 2" },
-        { id: 3, label: "Node 3" },
-        { id: 4, label: "Node 4" },
-        { id: 5, label: "Node 5" },
-      ]);
+<link rel="stylesheet" href="./assets/css/style.css">
+<link rel="stylesheet" href="./assets/css/main.css">
+<link rel="stylesheet" href="./assets/css/w3.css">
+<link rel="stylesheet" href="./assets/css/roundslider.min.css">
+<link rel="stylesheet" href="./assets/css/treejs.css" id="treejs_styles">
+<link rel="stylesheet" href="./assets/css/choreo_GUI.css">
 
-      // create an array with edges
-      var edges = new vis.DataSet([
-        { from: 1, to: 3 },
-        { from: 1, to: 2 },
-        { from: 2, to: 4 },
-        { from: 2, to: 5 },
-        { from: 3, to: 3 },
-      ]);
+<script src="assets/js/npy.js"></script>
+<script src="assets/js/tree.js"></script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3.0.1/es5/tex-mml-chtml.js"></script>
 
-      // create a network
-      var container = document.getElementById("mynetwork");
-      var data = {
-        nodes: nodes,
-        edges: edges,
-      };
-      var options = {};
-      var network = new vis.Network(container, data, options);
-    </script>
-  </body>
+
+
+<!-- <script src="assets/js/vis-network/standalone/umd/vis-network.min.js"></script> -->
+<script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js" ></script>
+
+
+<!-- Animation related -->
+<link rel="stylesheet" href="assets/css/jquery-ui-1.10.2.custom.min.css">
+<link href="assets/css/choreo_anims.css" rel="stylesheet" type="text/css">
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ffmpeg/0.11.6/ffmpeg.min.js"></script>
+
+<script src="assets/js/jquery-1.9.1.js"></script>
+<script src="assets/js/jquery-ui.js"></script>
+<script src="assets/js/ultbuttons1.1.min.js">//fixes an issue with unresponsive button clicks</script>
+<script src="assets/js/jquery.ui.touch-punch.min.js">//makes ui elements touch enabled</script>
+<script src="assets/js/roundslider.min.js">// Enables rotation slider</script>
+
+<!-- Sharing related
+<script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+ -->
+
+<!-- Setting up Worker -->
+<script>
+pyodide_worker = new Worker("./Pyodide_worker.js");
+pyodide_worker.postMessage({funname:"ExecutePythonFile",args:"./python_scripts/Python_imports.py"});
+
+
+var AskForNextBuffer = new SharedArrayBuffer(1)
+var AskForNext = new Uint8Array(AskForNextBuffer);
+pyodide_worker.postMessage({ funname: "setAskForNextBuffer",args:AskForNextBuffer });
+AskForNext[0] = 0;
+
+</script>
+
+<script src="anim.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+window.addEventListener("load", windowLoadHandler, false);
+window.addEventListener("dragover",function(e){
+  e = e || event;
+  e.preventDefault();
+},false);
+window.addEventListener("drop",function(e){
+  e = e || event;
+  e.preventDefault();
+},false);
+</script>
+
+</head>
+
+<body>
+
+<div class="content">
+<div id="AnimationAndMenuBlock">
+  <div class="w3-bar-block w3-light-grey open LeftTab" style="width:130px; position:absolute;">
+    <button id="LeftTabOpenClose" class="w3-bar-item w3-button w3-hover-grey"                             style="text-align: center" onclick="OpenCloseLeftTab()" >&#9776;</button>
+    <button id="LeftTabMain"      class="w3-bar-item w3-button w3-hover-pale-red LeftTabBtn Main"         style="text-align: center" onclick="ClickLeftTabBtn('Main')"        >Main</button>
+    <button id="LeftTabPlay"      class="w3-bar-item w3-button w3-hover-pale-red LeftTabBtn Play"         style="text-align: center" onclick="ClickLeftTabBtn('Play')"        >Play</button>
+    <button id="LeftTabGeom"      class="w3-bar-item w3-button w3-hover-pale-red LeftTabBtn Geom"         style="text-align: center" onclick="ClickLeftTabBtn('Geom')"        >Geometry</button>
+    <button id="LeftTabAnimation" class="w3-bar-item w3-button w3-hover-pale-red LeftTabBtn Animation"    style="text-align: center" onclick="ClickLeftTabBtn('Animation')"   >Animation</button>
+    <button id="LeftTabSolver"    class="w3-bar-item w3-button w3-hover-pale-red LeftTabBtn Solver"       style="text-align: center" onclick="ClickLeftTabBtn('Solver')"      >Solver</button>
+    <div class="w3-bar-item w3-light-grey" style="height:100px ; text-align: center" >  </div>
+    <div class="w3-bar-item w3-button w3-orange" id="Python_State_Div"  style="text-align: center" onclick="ClickStateDiv()" >Loading</div>
+    <button id="ChoreoDispInitStateBtn"  class="w3-bar-item w3-button w3-hover-pale-red w3-light-grey LeftTabBtn" style="text-align: center"  disabled="disabled" onclick="GenerateInitStateClick()">Generate initial state</button>
+    <button id="KillAndReloadWorkerBtn"  class="w3-bar-item w3-button w3-hover-pale-red w3-light-grey LeftTabBtn" style="text-align: center"                      onclick="KillAndReloadWorker()"                        >Kill worker</button>
+  </div>
+  <div id="MarginLeftTop" style="margin-left:130px;">
+    <div class="w3-bar w3-light-grey TopTab Main">
+      <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Main_About"        onclick="ClickTopTabBtn('Main_About')"        >About</button>
+      <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Main_Help"            onclick="ClickTopTabBtn('Main_Help')"         >Help</button>
+      <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Main_Save_Config"  onclick="ClickTopTabBtn('Main_Save_Config')"  >Save settings</button>
+    </div>
+    <div class="w3-bar w3-light-grey TopTab Play">
+      <button id="Play_NowPlaying"  class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Play_NowPlaying" onclick="ClickTopTabBtn('Play_NowPlaying')"   >Now Playing</button>
+      <button id="Play_Share"       class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Play_Share"      onclick="ClickTopTabBtn('Play_Share')"   >Share</button>
+      <button id="Play_Gallery"     class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Play_Gallery"    onclick="ClickTopTabBtn('Play_Gallery')"      >Gallery</button>
+      <button id="Play_Workspace"   class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Play_Workspace"  onclick="ClickTopTabBtn('Play_Workspace')"      >Workspace</button>
+    </div>
+    <div class="w3-bar w3-light-grey TopTab Geom">
+        <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Geom_New_Bodies"   onclick="ClickTopTabBtn_Geom_New_Bodies()">New Bodies</button>
+        <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Geom_Bodies"   onclick="ClickTopTabBtn('Geom_Bodies')">Bodies</button>
+        <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Geom_Target"   onclick="ClickTopTabBtn('Geom_Target')">Target</button>
+        <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Geom_Random"   onclick="ClickTopTabBtn('Geom_Random')">Random</button>
+        <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Geom_Custom"   onclick="ClickTopTabBtn('Geom_Custom')">Custom</button>
+    </div>
+    <div class="w3-bar w3-light-grey TopTab Animation">
+        <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Animation_Colors"    onclick="ClickTopTabBtn('Animation_Colors')"      >Colors</button>
+        <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Animation_Size"      onclick="ClickTopTabBtn('Animation_Size')"        >Size</button>
+        <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Animation_Framerate" onclick="ClickTopTabBtn_Animation_Framerate()"    >Framerate</button>
+        <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Animation_Search"    onclick="ClickTopTabBtn('Animation_Search')"      >Search</button>
+    </div>
+    <div class="w3-bar w3-light-grey TopTab Solver">
+        <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Solver_Output" onclick="ClickTopTabBtn_Solver_Output()" >Output</button>
+        <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Solver_Discr"  onclick="ClickTopTabBtn('Solver_Discr')" >Discretization</button>
+        <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Solver_Optim"  onclick="ClickTopTabBtn('Solver_Optim')" >Optimizer</button>
+        <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Solver_Checks" onclick="ClickTopTabBtn('Solver_Checks')">Checks</button>
+        <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Solver_CLI"    onclick="ClickTopTabBtn('Solver_CLI')"   >CLI</button>
+    </div>
+  </div>
+  <div id="AnimationAndControlBlock"  style="margin-bottom:-20px">
+    <div id="AnimationBlock">
+      <div id="canvasContainer" >
+        <canvas id="mainCanvas" width="480px" height="480px" style="position: absolute; z-index: 1;">
+            Your browser does not support HTML5 canvas.
+        </canvas>
+        <canvas id="trailLayerCanvas" width="480px" height="480px" style="position: absolute; z-index: 2;"></canvas>
+        <canvas id="particleLayerCanvas" width="480px" height="480px" style="position: absolute; z-index: 3;"></canvas>
+      </div>
+    </div>
+    <div id="PlayCommands" position="absolute">
+      <table style="border:0">
+        <tr>
+          <td colspan="3" style="border:0">
+            <button id="speedMinusBtn" class="w3-button w3-light-grey" style="text-align:center;font-size:16px;font-weight:bold;display:inline-block;margin-left:40px">-</button>
+            <div id="speedTxt" class="InTableControls">Speed</div>
+            <button id="speedPlusBtn" class="w3-button w3-light-grey" style="text-align:center;font-size:16px;font-weight:bold;display:inline-block;">+</button>
+            <div id="speedSlider"></div>
+          </td>
+          <td rowspan="2" style="border:0">
+            <div id="RotSlider" class="InTableControls"></div>
+          </td>
+        </tr>
+        <tr>
+          <td style="border:0">
+            <button id="startStopButton" class="w3-button w3-hover-pale-red w3-light-grey InTableControls">Stop</button>
+          </td>
+          <td style="border:0">
+            <button id="ClearButton" class="w3-button w3-hover-pale-red w3-light-grey InTableControls">Clear</button>
+          </td>
+          <td style="border:0">
+            <button id="trajectoryButton" class="w3-button w3-hover-pale-red w3-light-grey InTableControls">Hide trails</button>
+          </td>
+        </tr>
+      </table>
+    </div>
+  </div>
+</div>
+<div id="CommandBody">
+  <div class="w3-container MainTab Play_NowPlaying" style="display:none">
+    <h2>Now Playing</h2>
+    <div style = "max-width:600px; ">
+      <table style="font-size:16px; border:none; display:table">
+        <tr>
+          <td style="border:none;" >Name</td>
+          <td style="border:none; max-width:400px; " id="NP_name"></td>
+        </tr>
+        <tr>
+          <td style="border:none;" >Number of bodies</td>
+          <td style="border:none; max-width:400px; " id="NP_nbody"></td>
+        </tr>
+        <tr>
+          <td style="border:none;" >Number of loops</td>
+          <td style="border:none; max-width:400px; " id="NP_nloop"></td>
+        </tr>
+        <tr>
+          <td style="border:none;" >Masses of bodies in loops</td>
+          <td style="border:none; max-width:400px; " id="NP_mass"></td>
+        </tr>
+        <tr>
+          <td style="border:none;" >Newton error</td>
+          <td style="border:none; max-width:400px;" id="NP_Newton_Error"></td>
+        </tr>
+        <tr>
+          <td style="border:none;" >Number of integration points</td>
+          <td style="border:none; max-width:400px;" id="NP_nint"></td>
+        </tr>
+        <tr>
+          <td style="border:none;" >Value of Action</td>
+          <td style="border:none; max-width:400px;" id="NP_n_Action"></td>
+        </tr>
+      </table>
+    </div>
+  </div>
+  <div class="w3-container MainTab Play_Share" style="display:none">
+    <h2>Share Current Solution</h2>
+    <div style = "max-width:600px; ">
+      <table style="font-size:16px; border:none; display:table">
+        <tr>
+          <td style="border:none;" >
+            <button class="w3-bar-item w3-button w3-hover-pale-red" id="CopyCustomURL_btn" style="text-align: center" onclick="CopyCustomURLToClipboard()">Copy custom URL to clipboard</button>
+          </td>
+          <td style="border:none; max-width:400px; " id="CopyURLMessage"></td>
+        </tr>
+        <tr>
+          <td style="border:none;" >
+            <button class="w3-bar-item w3-button w3-hover-pale-red" id="CopyCustomURL_btn" style="text-align: center" onclick="DownloadVideo()">Download Video</button>
+          </td>
+          <td style="border:none; max-width:400px; " id="VideoMessage"></td>
+        </tr>
+        <!-- <tr>
+          <td style="border:none;" >
+            <button class="w3-bar-item w3-button w3-hover-pale-red" id="CopyCustomURL_btn" style="text-align: center" onclick="TweetVideo()">Tweet Video</button>
+          </td>
+          <td style="border:none; max-width:400px; " id="TweetVideoMessage"></td>
+        </tr> -->
+      </table>
+    </div>
+  </div>
+  <div class="w3-container MainTab Play_Gallery" style="display:none">
+    <h2>Gallery</h2>
+    <div id="DefaultGalleryContainer" style="overflow-y: auto; height:600px;" ></div>
+  </div>
+  <div class="w3-container MainTab Play_Workspace" style="display:none">
+    <h2>Setup Workspace</h2>
+    <button id="SetupWorkspaceBtn"   class="w3-button w3-hover-pale-red w3-light-grey InTableControls" onclick="ClickSetupWorkspace()" >Setup Workspace</button>
+    <button id="ReloadWorkspaceBtn"  class="w3-button w3-hover-pale-red w3-light-grey InTableControls" onclick="ClickReloadWorkspace()" disabled="disabled">Reload Workspace</button>
+    <div id="WorkspaceGalleryContainer" style="overflow-y: auto; height:600px;display:none"></div>
+    <div id="WorkspaceGalleryTxt"><br>
+      Click "Setup Workspace" to save solutions to your disk, browse previously computed solutions and use the (much faster) <a href="https://github.com/gabrielfougeron/choreo"><b>CLI python solver</b></a>.
+    </div>
+  </div>
+  <div class="w3-container MainTab Geom_New_Bodies" style="display:none; text-align: justify;">
+    <h2>New Bodies definition</h2>
+
+    <table style="display:block; font-size:16px; border:none; display:table; table-layout: fixed; width:600px">
+      <tr>
+        <td style="border:none;" ><label for="input_nbody">Number of bodies</label></td>
+        <td style="border:none;" ><input id ="input_nbody" type="number" value="3" min="1" style="width:50px;"></td>
+      </tr>
+    </table>
+
+    <div id="BodyGraphDiv"></div>
+    <button id="GraphFitBtn"   class="w3-button w3-hover-pale-red w3-light-grey" onclick="GraphFit()" >Fit!</button>
+    <button id="MakeBodyGraphBtn"   class="w3-button w3-hover-pale-red w3-light-grey" onclick="MakeBodyGraph()" >Update Graph</button>
+    
+    <table id = "table_sym" style="table-layout: fixed;">
+      <tr style="border-left-style:hidden;border-right-style:hidden;border-top-style:hidden;"><td style="width:120px;"><b><button class="w3-button w3-light-grey w3-hover-pale-red" style="text-align: center; font-size:16px" onclick="ClickAddSym()">Add Sym +</button></b></td></tr>
+      <tr><td style="width:120px;min-height:40px;"><b>Body permutation</b></td></tr>
+      <tr><td style="width:120px;min-height:40px;"><b>Reflection</b></td></tr>
+      <tr><td style="width:120px;min-height:40px;"><b>Rotation \(\alpha_p\)</b></td></tr>
+      <tr><td style="width:120px;min-height:40px;"><b>Rotation \(\alpha_q\)</b></td></tr>
+      <tr><td style="width:120px;min-height:40px;"><b>Time reversal</b></td></tr>
+      <tr><td style="width:120px;min-height:40px;"><b>Time lag \(\beta_p\)</b></td></tr>
+      <tr><td style="width:120px;min-height:40px;"><b>Time lag \(\beta_q\)</b></td></tr>
+    </table>
+
+
+  </div>
+  <div class="w3-container MainTab Geom_Bodies" style="display:none; text-align: justify;">
+    <h2>Bodies definition</h2>
+    <table id = "table_body_loop" style="table-layout: fixed;">
+      <tr style="border-left-style:hidden;border-right-style:hidden;border-top-style:hidden;"><td style="width:120px;"><b><button class="w3-button w3-light-grey w3-hover-pale-red TargetToggle" style="text-align: center; font-size:16px" onclick="ClickAddBodyLoop()">Add Loop +</button></b></td></tr>
+      <tr><td style="width:120px;"><b>Number of bodies n</b></td></tr>
+      <tr><td style="width:120px;"><b>Mass of bodies</b></td></tr>
+      <tr><td style="width:120px;"><b>Symmetry name</b></td></tr>
+      <tr><td style="width:120px;"><b>Symmetry k</b></td></tr>
+      <tr><td style="width:120px;"><b>Symmetry l</b></td></tr>
+      <tr><td style="width:120px;"><b>Symmetry m</b></td></tr>
+      <tr><td style="width:120px;"><b>Symmetry p</b></td></tr>
+      <tr><td style="width:120px;"><b>Symmetry q</b></td></tr>
+      <tr><td style="width:120px;"><b>Id range</b></td></tr>
+    </table>
+    <br>
+    &nbsp &nbsp The constant time lag between two bodies is \({m / n}\) of a total period.
+    Each body is the image of the previous one by a rotation of angle \(2\pi {p / q}\).
+    Each loop is invariant by a rotation of angle \(2\pi {l / k}\), with an added reflection of vertical axis if the symmetry name is D.
+    <br>
+    <br>
+    &nbsp &nbsp For more explanation, and a definition of the symmetry names Cp and Dp, <a href="https://arxiv.org/abs/1305.0470">see the following article: Montaldi, J., & Steckles, K. (2013). Classification of symmetry groups for planar-body choreographies.</a>
+  </div>
+  <div class="w3-container MainTab Geom_Target" style="display:none">    
+    <h2>Initial state target</h2>
+    <table style="display:block; font-size:16px; border:none; display:table; table-layout: fixed; width:600px; margin-bottom:-20px" id="table_targets">
+      <tr>
+        <td style="border:none;" ><label for="checkbox_Target">Seed solver with target</label></td>
+        <td style="border:none; max-width:50px;"><input id ="checkbox_Target" class="w3-check" type="checkbox" style="vertical-align: super" unchecked></td>
+      </tr>
+      <tr>
+        <td style="border:none;" ><label for="checkbox_RotateFastWithSlow">Rotate fast with slow</label></td>
+        <td style="border:none; max-width:50px;"><input id ="checkbox_RotateFastWithSlow" class="w3-check TargetToggle" type="checkbox" style="vertical-align: super" disabled="disabled" unchecked></td>
+      </tr>
+      <tr>
+        <td style="border:none;" ><label for="checkbox_RandomizeFastInit">Random transform fast loops</label></td>
+        <td style="border:none; max-width:50px;"><input id ="checkbox_RandomizeFastInit" class="w3-check TargetToggle" type="checkbox" style="vertical-align: super" disabled="disabled" checked></td>
+      </tr>
+      <tr>
+        <td style="border:none;" ><label for="checkbox_OptimizeRelative">Optimize relative fast starts</label></td>
+        <td style="border:none; max-width:50px;"><input id ="checkbox_OptimizeRelative" class="w3-check TargetToggle" type="checkbox" style="vertical-align: super" disabled="disabled" unchecked></td>
+      </tr>
+      <tr>
+        <td style="border:none;" ><label for="checkbox_RandomJitterTarget">Add random jitter</label></td>
+        <td style="border:none; max-width:50px;"><input id ="checkbox_RandomJitterTarget" class="w3-check TargetToggle" type="checkbox" style="vertical-align: super" disabled="disabled" unchecked></td>
+      </tr>
+      <tr>
+        <td style="border:none; ">
+          <b><button class="w3-button w3-light-grey w3-hover-pale-red dropdown_btn TargetToggle" id="ChooseSlowSolutionBtn" disabled="disabled" style="text-align: center; font-size:16px" onclick="ClickChooseSlowSolution()">Choose slow solution</button></b>
+          <div class="dropdown-content" id="TreeSlowContainer" style="overflow-y: auto; max-height:400px;"></div>
+        </td>
+        <td style="border:none; max-width:400px; " id="SlowSolution_name"></td>
+      </tr>
+      <tr>
+        <td style="border:none;" ><label for="input_nT_slow">Slow period multiplier</label></td>
+        <td style="border:none;" ><input id ="input_nT_slow" type="number" value="1" min="1" style="width:50px;" class="TargetToggle" disabled="disabled"></td>
+      </tr>
+    </table>
+  </div>
+  <div class="w3-container MainTab Geom_Random" style="display:none">
+    <h2>Initial state randomization </h2>
+    <img src="img/Random_init_description.svg" alt="Description of the random initial state" height="360px" width="480px">
+    <br>
+    <div style = "max-width:350px; ">
+      <table style="font-size:16px; border:none; display:table">
+        <tr>
+          <td style="border:none;" >
+            <label for="input_coeff_ampl_o">Max amplitude</label>
+          </td>
+          <td style="border:none; max-width:90px; ">
+            <input id ="input_coeff_ampl_o" type="text" value="1e-1" style="text-align: center;">
+          </td>
+        </tr>
+        <tr>
+          <td style="border:none;" >
+            <label for="input_coeff_ampl_min">Min amplitude</label>
+          </td>
+          <td style="border:none; max-width:90px; ">
+            <input id ="input_coeff_ampl_min" type="text" value="1e-16" style="text-align: center;">
+          </td>
+        </tr>
+        <tr>
+          <td style="border:none;" >
+            <label for="input_k_infl">Bend index</label>
+          </td>
+          <td style="border:none; max-width:90px; ">
+            <input id ="input_k_infl" type="number" value="3" min="1" style="text-align: center;">
+          </td>
+        </tr>
+        <tr>
+          <td style="border:none;" >
+            <label for="input_k_max">Vanishing index</label>
+          </td>
+          <td style="border:none; max-width:90px; ">
+            <input id ="input_k_max" type="number" value="50" min="1" style="text-align: center;">
+          </td>
+        </tr>
+      </table>
+    </div>
+  </div>
+  <div class="w3-container MainTab Geom_Custom" style="display:none">
+    <h2>Custom symmetry definition</h2>
+    <table style="display:block; font-size:16px; border:none; display:table; max-width:400px; margin-bottom:-20px">
+      <tr>
+        <td style="border:none;" ><label for="checkbox_MomCons">Treat momentum conservation as a constraint</label></td>
+        <td style="border:none;"><input id ="checkbox_MomCons" class="w3-check" type="checkbox" style="vertical-align: super" unchecked></td>
+      </tr>
+    </table>
+    <table id = "table_custom_sym" style="table-layout: fixed;">
+      <tr style="border-left-style:hidden;border-right-style:hidden;border-top-style:hidden;"><td style="width:120px;"><b><button class="w3-button w3-light-grey w3-hover-pale-red" style="text-align: center; font-size:16px" onclick="ClickAddCustomSym()">Add Sym +</button></b></td></tr>
+      <tr><td style="width:120px;min-height:40px;"><b>Loop target</b></td></tr>
+      <tr><td style="width:120px;min-height:40px;"><b>Loop source</b></td></tr>
+      <tr><td style="width:120px;min-height:40px;"><b>Reflection</b></td></tr>
+      <tr><td style="width:120px;min-height:40px;"><b>Rotation \(\alpha_p\)</b></td></tr>
+      <tr><td style="width:120px;min-height:40px;"><b>Rotation \(\alpha_q\)</b></td></tr>
+      <tr><td style="width:120px;min-height:40px;"><b>Time reversal</b></td></tr>
+      <tr><td style="width:120px;min-height:40px;"><b>Time lag \(\beta_p\)</b></td></tr>
+      <tr><td style="width:120px;min-height:40px;"><b>Time lag \(\beta_q\)</b></td></tr>
+    </table>
+    <br>
+    Loop target is the image of Loop source under:<br>
+    &nbsp - A possible reflection of vertical axis.<br>
+    &nbsp - A rotation of angle \(2 \pi \alpha_p / \alpha_q\).<br>
+    &nbsp - A possible time reversal.<br>
+    &nbsp - A time lag of \(\beta_p / \beta_q\) of a total period.<br>
+  </div>
+  <div class="w3-container MainTab Animation_Colors" style="display:none">
+    <h2>Colors</h2>
+    <div style = "max-width:200px; ">
+      <table style="font-size:16px; border:none; display:table">
+        <tr>
+          <td style="border:none;" >
+            <label for="color_method_input">Color by </label>
+          </td>
+          <td style="border:none; max-width:90px;text-align: center; ">
+            <select class="w3-select" id="color_method_input" style="text-align: center;"> 
+              <option value="body" selected>Body</option>
+              <option value="loop">Loop</option>
+              <option value="loop_id">Loop ID</option>
+              <option value="none">N° 0</option>
+            </select>
+          </td>
+        </tr> 
+      </table>
+    </div>
+    <td style="width:120px;">
+      <b><button class="w3-button w3-light-grey w3-hover-pale-red" style="text-align: center; font-size:16px" onclick="ClickAddColor()">Add +</button></b>
+      <b><button class="w3-button w3-light-grey w3-hover-pale-red" style="text-align: center; font-size:16px" onclick="ClickRemoveColor()">Remove -</button></b>
+    </td>
+    <table id = "table_pick_color" style="table-layout: fixed;">
+      <tr style="border-left-style:hidden;border-right-style:hidden;border-top-style:hidden;">
+        <td style="border-style:hidden"></td>
+        <td style="border-style:hidden"></td>
+        <td style="border-style:hidden"></td>
+        <td style="border-style:hidden"></td>
+      </tr> 
+    </table>
+    <datalist id="presetColors"></datalist>
+  </div>
+  <div class="w3-container MainTab Animation_Size" style="display:none">
+    <h2>Size</h2>
+    <table style="font-size:16px; border:none; display:table; max-width:450px">
+      <tr>
+      <td style="border:none; max-width:150px;" ><label for="viewport_custom_select">Mobile device view</label></td>
+      <td style="border:none ;text-align: center; ">
+        <select class="w3-select" id="viewport_custom_select" style="text-align: center; width:100px;"> 
+          <option value="portrait" selected>Portrait</option>
+          <option value="landscape">Landscape</option>
+          <option value="disable">Disable</option>
+        </select>
+      </td>
+      </tr>
+      <tr>
+      <td style="border:none; max-width:100px;" ><label for="checkbox_Mass_Scale">Size scales with mass</label></td>
+      <td style="border:none;text-align: center;"><input id ="checkbox_Mass_Scale" class="w3-check" type="checkbox" style="vertical-align: super" checked></td>
+      </tr>
+      <tr>
+        <td style="border:none; max-width:100px;">Body size</td>
+        <td style="border:none;"><input type="range" id="input_body_radius"></td>
+      </tr>
+      <tr>
+        <td style="border:none; max-width:100px;">Trail width</td>
+        <td style="border:none;"><input type="range" id="input_trail_width"></td>
+      </tr>
+      <tr>
+        <td style="border:none; max-width:100px;"><label for="checkbox_Trail_vanish">Trail vanishes</label></td>
+        <td style="border:none;text-align: center;"><input id ="checkbox_Trail_vanish" class="w3-check" type="checkbox" style="vertical-align: super" checked></td>
+      </tr>
+      <tr>
+        <td style="border:none; max-width:100px;">Trail length</td>
+        <td style="border:none;"><input type="range" id="input_trail_vanish_length"></td>
+      </tr>
+    </table>
+  </div>
+  <div class="w3-container MainTab Animation_Framerate" style="display:none">
+    <h2>Framerate options</h2>
+    <table style="font-size:16px; border:none; display:table; max-width:400px"">
+      <tr>
+        <td style="border:none;" >Estimate average FPS of animation: </td>
+        <td style="border:none; text-align: center;"> <div id="Estimate_FPS_txt" style="display:inline">30</div> </td>
+      </tr>
+      <tr>
+        <td style="border:none;" ><label for="checkbox_Limit_FPS">Limit FPS</label></td>
+        <td style="border:none; text-align: center;"><input id ="checkbox_Limit_FPS" class="w3-check" type="checkbox" style="vertical-align: super" unchecked></td>
+      </tr>
+      <tr>
+        <td style="border:none" ><label for="input_Limit_FPS" disabled="disabled">Max FPS:</label></td>
+        <td style="border:none; max-width:100px; text-align: center; "><input type="number" id="input_Limit_FPS" value="120" disabled="disabled" min="5"  style="text-align: center;"></td>
+      </tr>
+    </table>
+  </div>
+  <div class="w3-container MainTab Animation_Search" style="display:none">
+    <h2>Animations during search</h2>
+    <table style="font-size:16px; border:none; display:table; max-width:300px">
+      <tr>
+        <td style="border:none;" ><label for="checkbox_DisplayLoopsDuringSearch">Display loops during search</label></td>
+        <td style="border:none;"><input id ="checkbox_DisplayLoopsDuringSearch" class="w3-check" type="checkbox" style="vertical-align: super" checked></td>
+      </tr>
+      <tr>
+        <td style="border:none;" ><label for="checkbox_DisplayBodiesDuringSearch">Display bodies during search</label></td>
+        <td style="border:none;"><input id ="checkbox_DisplayBodiesDuringSearch" class="w3-check" type="checkbox" style="vertical-align: super" checked></td>
+      </tr>
+    </table>
+    <h2>Gallery related animations</h2>
+    <table style="font-size:16px; border:none; display:table; max-width:300px">
+      <tr>
+        <td style="border:none;" ><label for="checkbox_DisplayLoopOnGalleryLoad">Display whole trail on gallery load</label></td>
+        <td style="border:none;"><input id ="checkbox_DisplayLoopOnGalleryLoad" class="w3-check" type="checkbox" style="vertical-align: super" checked></td>
+      </tr>
+    </table>
+  </div>
+  <div class="w3-container MainTab Solver_Output" style="display:none">
+    <table style="border:0;margin-bottom:10px;display:none">
+      <tr>
+        <td style="border:0"><button id="ChoreoExecuteBtn"        class="w3-button w3-hover-pale-red w3-light-grey InTableControls" disabled="disabled" style="display:none"  onclick="ChoreoExecuteClick()"   ><b>Find solution!</b></button></td>
+        <td style="border:0"><button id="ChoreoSearchNext"        class="w3-button w3-hover-pale-red w3-light-grey InTableControls" disabled="disabled" style="display:none"  onclick="ChoreoSearchNextClick()">Next</button></td>
+        <!-- <td style="border:0"><button id="KillAndReloadWorkerBtn"  class="w3-button w3-hover-pale-red w3-light-grey InTableControls"                     onclick="KillAndReloadWorker()"                        >Kill worker</button></td> -->
+        <td style="border:0"><button id="Speed_TestBtn"           class="w3-button w3-hover-pale-red w3-light-grey InTableControls"                     style="display:none"  onclick="Speed_Test_Click()"     >Speed Test</button></td>
+      </tr>
+    </table>
+    <textarea id ="Python_textarea" readonly></textarea>
+    <!-- <button id="TestBtn"  class="w3-button w3-hover-pale-red w3-light-grey InTableControls" onclick="TestClick()"      >Test</button> -->
+  </div>
+  <div class="w3-container MainTab Solver_Discr" style="display:none">
+    <h2>Problem discretization</h2>
+    <div style = "max-width:400px; ">
+      <table style="font-size:16px; border:none; display:table">
+        <tr>
+          <td style="border:none;" ><label for="checkbox_exactJ">Use exact jacobian</label></td>
+          <td style="border:none;text-align: center;"><input id ="checkbox_exactJ" class="w3-check" type="checkbox" style="vertical-align: super" checked></td>
+        </tr>
+        <tr>
+          <td style="border:none"><h>Initial number of integration points</h></td>
+          <td style="border:none; max-width:100px; "><input type="number" id="input_nint_init" value="600" style="text-align: center;"></td>
+        </tr>
+        <tr>
+          <td style="border:none"><h>Maximum refinement levels:&nbsp&nbsp&nbsp</h><span id="display_n_reconverge_it_max"></span></td>
+          <td style="border:none; max-width:100px; "><input type="range" id="input_n_reconverge_it_max" value="4" min="0" max="12" oninput="SlideNReconvergeItMax()"></td>
+        </tr>
+        <tr>
+          <td style="border:none"><h>Coarse to fine multiplier</h></td>
+          <td style="border:none; max-width:100px; "><input type="text" id="input_mul_coarse_to_fine" value="3" style="text-align: center;" ></td>
+        </tr>
+      </table>
+    </div>
+  </div>
+  <div class="w3-container MainTab Solver_Optim" style="display:none">
+    <h2>Optimizer</h2>
+    <div style = "max-width:300px; ">
+      <table style="font-size:16px; border:none; display:table">
+        <tr>
+          <td style="border:none;" >
+            <label for="input_Num_retries">Number of optimizer tries</label>
+          </td>
+           <td style="border:none; max-width:100px; ">
+            <input type="number" id="input_Num_retries" value="100" style="text-align: center;" >
+          </td>
+        </tr>
+        <tr>
+          <td style="border:none;" >
+            <label for="krylov_method">Krylov method</label>
+          </td>
+          <td style="border:none; max-width:100px; ">
+            <select class="w3-select" id="krylov_method"  name="krylov_method" style="text-align: center;"> 
+              <option value="lgmres">LGMRES</option>
+              <option value="gmres">GMRES</option>
+              <option value="bicgstab" selected>BiCGSTAB</option>
+              <option value="cgs">CGS</option>
+              <option value="minres">MINRES</option>
+              <!-- <option value="tfqmr">TFQMR</option> -->
+            </select>
+          </td>
+        </tr>
+        <tr>
+          <td style="border:none;" >
+            <label for="linesearch_method">Line search method</label>
+          </td>
+           <td style="border:none; max-width:100px; ">
+            <select class="w3-select" id="linesearch_method" name="linesearch_method" style="text-align: center;"> 
+              <option value="cst">Constant</option>
+              <option value="wolfe" selected>Wolfe</option>
+              <option value="armijo">Armijo</option>
+            </select>
+          </td>
+        </tr>
+        <tr>
+          <td style="border:none;" >
+            <label for="linesearch_smin">Minimum line step</label>
+          </td>
+           <td style="border:none; max-width:100px; ">
+            <input type="text" id="linesearch_smin" value="1e-1" style="text-align: center;" >
+          </td>
+        </tr>
+        <tr>
+          <td style="border:none;" >
+            <label for="input_Newt_err_norm_safe">Minimum Newton error</label>
+          </td>
+           <td style="border:none; max-width:100px; ">
+            <input type="text" id="input_Newt_err_norm_safe" value="1e-8" style="text-align: center;" >
+          </td>
+        </tr>
+        <tr>
+          <td style="border:none;" >
+            <label for="input_Newt_err_norm_max">Maximum Newton error</label>
+          </td>
+           <td style="border:none; max-width:100px; ">
+            <input type="text" id="input_Newt_err_norm_max" value="1e-11" style="text-align: center;" >
+          </td>
+        </tr>
+        <tr>
+          <td style="border:none;" >
+            <label for="optim_verbose_lvl">Optimizer verbose level</label>
+          </td>
+          <td style="border:none; max-width:100px; ">
+            <select class="w3-select" id="optim_verbose_lvl"  name="optim_verbose_lvl" style="text-align: center;"> 
+              <option value="full">Full</option>
+              <option value="some" selected>Default</option>
+            </select>
+          </td>
+        </tr>
+      </table>
+    </div>
+    <br>
+    <h2>Convergence loop</h2>
+    <table id = "table_cvg_loop" style="table-layout: fixed;">
+      <tr style="border-left-style:hidden;border-right-style:hidden;border-top-style:hidden;"><td style="width:120px;"><b>
+        <button class="w3-button w3-light-grey w3-hover-pale-red" style="text-align: center; font-size:16px" onclick="ClickAddColLoopKrylov()">Add +</button>
+      </b></td></tr>
+      <tr><td style="width:120px;"><b>Gradient tolerance</b></td></tr>
+      <tr><td style="width:120px;"><b>Max iterations</b></td></tr>
+      <tr><td style="width:120px;"><b>Max inner iterations</b></td></tr>
+      <tr><td style="width:120px;"><b>Outer k</b></td></tr>
+      <tr><td style="width:120px;"><b>Store outer Av</b></td></tr>
+    </table>
+  </div>
+  <div class="w3-container MainTab Solver_Checks" style="display:none">
+    <h2>Solver checks</h2>
+    <div style = "max-width:400px; ">
+      <table style="font-size:16px; border:none; display:table">
+        <tr>
+          <td style="border:none;" >
+            <label for="checkbox_duplicates">Skip duplicates</label>
+          </td>
+          <td style="border:none; max-width:90px; text-align: center;">
+            <input id ="checkbox_duplicates" class="w3-check" type="checkbox" style="vertical-align: super" checked>
+          </td>
+        </tr>
+        <tr>
+          <td style="border:none;" >
+            <label for="input_duplicate_eps">Hash threshold for duplicate detection</label>
+          </td>
+          <td style="border:none; max-width:90px; ">
+            <input id ="input_duplicate_eps" type="text" value="1e-8" style="text-align: center;" disabled="disabled">
+          </td>
+        </tr>
+        <tr>
+          <td style="border:none;" >
+            <label for="checkbox_escape">Check for loop escape</label>
+          </td>
+          <td style="border:none; max-width:90px; text-align: center; ">
+            <input id ="checkbox_escape" class="w3-check" type="checkbox" style="vertical-align: super" checked>
+          </td>
+        </tr>
+      </table>
+    </div>
+  </div>
+  <div class="w3-container MainTab Solver_CLI" style="display:none">
+    <h2>Command Line Interface</h2>
+    <div style = "max-width:400px; ">
+      <table style="font-size:16px; border:none; display:table">
+        <tr>
+          <td style="border:none;" >
+            <label for="CLI_multiproc">Parallel computation in CLI</label>
+          </td>
+          <td style="border:none; max-width:200px; text-align: center;">
+            <select class="w3-select" id="CLI_multiproc" style="text-align: center;"> 
+              <option value="MultiProc" selected>Multiprocessing</option>
+              <option value="MultiThread">Multithreading</option>
+              <option value="No">None</option>
+            </select>
+          </td>
+        </tr>
+        <tr>
+          <td style="border:none;" >
+            <label for="CLI_nproc">Number of processes</label>
+          </td>
+          <td style="border:none; max-width:90px; ">
+            <input id ="CLI_nproc" type="number" value="1" min="1" style="text-align: center;">
+          </td>
+        </tr>
+        <td style="border:none;" >
+          <label for="CLI_backend">Gradient and Hessian backend</label>
+        </td>
+        <td style="border:none; max-width:200px; text-align: center;">
+          <select class="w3-select" id="CLI_backend" style="text-align: center;"> 
+            <option value="Python">Python</option>
+            <option value="Cython">Cython</option>
+            <option value="Numba" selected>Numba</option>
+          </select>
+        </td>
+        <tr>
+          <td style="border:none;" >
+            <label for="CLI_SaveImage">Save image of solutions</label>
+          </td>
+          <td style="border:none; max-width:90px; text-align: center;">
+            <input id ="CLI_SaveImage" class="w3-check" type="checkbox" style="vertical-align: super" checked>
+          </td>
+        </tr>
+        <tr>
+          <td style="border:none;" >
+            <label for="CLI_SaveVideo">Save video of solutions</label>
+          </td>
+          <td style="border:none; max-width:90px; text-align: center;">
+            <input id ="CLI_SaveVideo"  class="w3-check" type="checkbox" style="vertical-align: super">
+          </td>
+        </tr>
+      </table>
+    </div>
+  </div>
+  <div class="w3-container MainTab Main_Save_Config" style="display:none; max-width:480px">
+    <h2>Save settings</h2>
+    <table style="font-size:16px; border:none; display:table">
+      <tr>
+        <td style="border:none;" ><button class="w3-button w3-hover-pale-red w3-light-grey" onclick="SaveConfigFile()">Save current settings as file</button></td>
+      </tr>
+      <tr>
+        <td style="border:none;" >
+          <div  id="LoadConfigFileDropArea" ondrop="DropConfigFile(event)" ondragover="PreventDefaultDragOver(event);">
+            <input type="file" id="LoadConfigFileBtn" accept=".json" onchange="ClickLoadConfigFile(this.files); this.value=null ;" style="display:none">
+            <label class="w3-button w3-hover-pale-red w3-light-grey"  for="LoadConfigFileBtn">
+              Load settings from file
+            </label>
+          </div>
+        </td>
+      </tr>
+      <tr>
+        <td style="border:none;">
+          A cookie containing the configuration file can optionally be saved in your browser's profile data. It will then be automatically loaded on startup.
+        </td>
+      </tr>
+      <tr>
+        <td style="border:none;"><label for="checkbox_Cookie">I understand the legal implications and I want to enable cookies on this site. I retain my right to change my mind and to have the cookies saved/deleted in the future.</label></td>
+        <td style="border:none;"><input id ="checkbox_Cookie" class="w3-check" type="checkbox" style="vertical-align: super" unchecked></td>
+      </tr>
+      <tr>
+        <td style="border:none;" ><button class="w3-button w3-hover-pale-red w3-light-grey" onclick="SaveCookieClick()" disabled="disabled"  id ="Save_Cookie_Btn" >Save current settings as cookie</button></td>
+      </tr>
+      <tr>
+        <td style="border:none;" ><button class="w3-button w3-hover-pale-red w3-light-grey" onclick="LoadCookieClick()" disabled="disabled"  id ="Load_Cookie_Btn" >Load settings from cookie</button></td>
+      </tr>
+      <tr>
+        <td style="border:none;" ><div id ="Cookie_Message" ></div></td>
+      </tr>
+    </table>
+  </div>
+  <div class="w3-container MainTab Main_Help" style="display:none; text-align: justify;">
+    <h2>Help</h2>
+    <br>
+    &nbsp &nbsp This website provides a user interface to <b>choreo</b>, a python package designed to compute periodic solutions to ordinary differential equations, applied to the newtonian n-body gravitational problem.    
+    In this context, "periodic" means that the search is restricted to motions that loop back after some time, and then repeat <i>ad infinitum</i>.
+    <b>Choreographies</b> are such periodic motions giving their name to this package, where all bodies follow the same trajectory separated by a constant time lag.
+    <br>
+    &nbsp &nbsp Check out the<button class="in_text_btn" onclick="ClickLeftTabBtn('Play');ClickTopTabBtn('Play_Gallery')"><b>Gallery</b>,</button>which has several pre-computed solutions ready to play, highlighting the range of possibilities.
+    Even better, this web interface will allow you to compute your own solutions, no installation required!
+    <br>&nbsp 
+    <h3>Overview of the solving process</h3>
+    &nbsp &nbsp The first step of the solution process is to analyse the symmetry constraints in order to:<br>
+    <ul style="margin-left:2em">
+      <li>Prune the redundant binary body-body interactions, so that computations can be re-used.</li>
+      <li>Detect independant loops. The motion of every body in a loop can be deduced from that of a single representative.</li>
+      <li>Reformulate the symmetries so that they are understood <i>a priori</i> through parametrization. The shapes of all independant loops are constrained accordingly.</li>
+    </ul>
+    Then, <b>choreo</b> implements a <a href="https://en.wikipedia.org/wiki/Spectral_method">Fourier spectral method</a> to solve the equations of motion. Starting from an initial random set of parameters, the solver forms better and better guesses until convergence. It is also possible to use previously computed solutions to manufacture an acceptable initial state to the solver in the<button class="in_text_btn" onclick="ClickLeftTabBtn('Geom');ClickTopTabBtn('Geom_Target');"><b>Target</b></button>tab.
+    <br>&nbsp 
+    <h3>Getting started</h3>
+    &nbsp &nbsp The first step to compute your own periodic solution is to specify how many bodies will be interacting. The<button class="in_text_btn" onclick="ClickLeftTabBtn('Geom');ClickTopTabBtn('Geom_Bodies');"><b>Geometry</b></button>tab lets you create new bodies, specify their masses, and arrange them in choreographic loops with pre-defined symmetry constraints.
+    <br>&nbsp
+    <h3>Expert options</h3>
+    &nbsp &nbsp More complex symmetries can be specified under the<button class="in_text_btn" onclick="ClickLeftTabBtn('Geom');ClickTopTabBtn('Geom_Custom');"><b>Custom</b></button>tab. Don't hesitate to play around with the parameters of the<button class="in_text_btn" onclick="ClickLeftTabBtn('Geom');ClickTopTabBtn('Geom_Random');"><b>Random</b></button>initialization, as well as all of the<button class="in_text_btn" onclick="ClickLeftTabBtn('Solver');"><b>Solver</b></button>options.
+    <br>&nbsp 
+    <h3>Going further</h3>
+    &nbsp &nbsp For more thorough information about the meaning of the different settings and parameters, see the <a href="https://gabrielfougeron.github.io/choreo-docs/">online help for the python package <b>choreo</b>.</a>
+  </div>
+  <div class="w3-container MainTab Main_About" style="display:none; text-align: justify;">
+    <h2>About</h2>
+    <br>
+    &nbsp &nbsp Welcome to the web version of <b>choreo</b>, a python package designed to compute periodic solutions to ordinary differential equations, applied to the newtonian n-body gravitational problem.
+    <br>&nbsp 
+    <h3>Credits</h3>
+    &nbsp &nbsp This website and the associated python package <b>choreo</b> were created by Gabriel Fougeron.<br><br>
+    Many thanks to the many people without whom this project could not have come that far, including:
+    <ul style="margin-left:2em">
+      <li><a href="https://dangries.com/">Dan Gries</a> for his authorization to build upon his animation design.</li>
+      <li>Gregory Minton for his <a href="http://gminton.org/#choreo"><b>choreo.2.3.js</b></a> WebApp which inspired this work, and for his patience in answering my naive questions.</li>
+      <li>The <a href="https://pyodide.org/en/stable/"><b>Pyodide</b></a> team, and especially Hood Chatham and Gyeongjae Choi for their help in getting the in-browser version of <b>choreo</b> up and running.</li>
+      <li>Beta testers for their valuable feedback.</li>
+    </ul>
+    <br>
+    <h3>Providing Feedback</h3>
+    &nbsp &nbsp Please raise a <a href="https://github.com/gabrielfougeron/choreo/issues"><b>Github issue</b></a> to report bugs or suggest improvements.
+    <br>&nbsp 
+    <h3>License</h3>
+    &nbsp &nbsp This work is <a href="https://github.com/gabrielfougeron/choreo/blob/main/LICENSE"><b>open source</b></a> and includes substantial parts of <a href="https://github.com/gabrielfougeron/choreo/tree/main/LICENCES"><b>other open-source projects</b></a>.
+    <br>&nbsp 
+  </div>
+  <div class="w3-container MainTab Main_SOME3" style="display:none; text-align: justify;">
+    <div id="some3textbox">
+      <h2 style="text-align: center;">TOTO</h2>
+      This will be my "blog post" for SOME3<br><br>
+
+      <a href="https://gabrielfougeron.github.io/choreo/" target="_blank" rel="noopener noreferrer">Open choreo in a new tab</a>
+
+      Toto va à la plage avec ses amis.<br><br>
+
+      Testing some stuff<br><br><br><br><br><br>
+
+      <div class = "right_char_speaks">Personnage droite parle</div><br>
+      Personnage gauche parle<br><br>
+      <div class = "right_char_speaks">Personnage droite parle encore, vraiment beaucoup beaucoup. Tellement que ce qu'il dit prend plusieurs lignes. ON dirait qu'il va s'arrêter, mais en fait non, ça continue encore !</div><br>
+      Personnage gauche répond, et parle vraiment beaucoup beaucoup. Tellement que ce qu'il dit prend plusieurs lignes. ON dirait qu'il va s'arrêter, mais en fait non, ça continue encore !<br><br>
+
+      <button class="w3-bar-item w3-button w3-hover-pale-red" style="text-align: center" 
+      onclick="PlayFileFromRemote('toto','choreo-gallery/02 - Families/03 - Relative equilibria/10/00008.npy','choreo-gallery/02 - Families/03 - Relative equilibria/10/00008.json')"
+      >Play this</button>
+      <button class="w3-bar-item w3-button w3-hover-pale-red" style="text-align: center" 
+      onclick="PlayFileFromRemote('toto','choreo-gallery/01 - Classic gallery/07 - No symmetry.npy','choreo-gallery/01 - Classic gallery/07 - No symmetry.json')"
+      >Or that</button>
+      
+      <button class="w3-bar-item w3-button w3-hover-pale-red" style="text-align: center" 
+      onclick="LoadConfigFileFromRemote('SOME3/config/1.json')"
+      >New color scheme</button>      
+
+      <button class="w3-bar-item w3-button w3-hover-pale-red" style="text-align: center" 
+      onclick="LoadComboDisplay('SOME3/solutions/(5,2)-chain')"
+      >Combo Display</button>
+
+      <br>
+      <br>
+      <br>
+
+      <button class="w3-bar-item w3-button w3-hover-pale-red" style="text-align: center" 
+      onclick="LoadFromRemoteThenSearch('SOME3/config/choreo_3.json')"
+      >Search choreo 3</button>     
+      <button class="w3-bar-item w3-button w3-hover-pale-red" style="text-align: center" 
+      onclick="LoadFromRemoteThenSearch('SOME3/config/choreo_4.json')"
+      >Search choreo 4</button>     
+
+    </div>
+
+  </div>
+</div>
+</div>
+
+
+<script src="./choreo_GUI.js"></script>
+
+<script>
+InitPage()
+</script>
+
+</body>
 </html>

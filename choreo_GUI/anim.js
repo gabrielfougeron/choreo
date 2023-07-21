@@ -112,6 +112,8 @@ var particleLayerContext
 
 var FileSystemAccessSupported = ('showOpenFilePicker' in window)
 
+var BodyGraph
+
 const { createFFmpeg , fetchFile  } = FFmpeg;
 const ffmpeg = createFFmpeg()
 
