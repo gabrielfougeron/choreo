@@ -2331,9 +2331,6 @@ class ActionSym():
         TimeRev  ,
         TimeShift,
     ):
-        r"""
-        Class constructor
-        """
 
         self.BodyPerm = BodyPerm
         self.SpaceRot = SpaceRot
@@ -2488,15 +2485,32 @@ class ChoreoSym():
         TimeRev = 1,
         TimeShift = fractions.Fraction(numerator=0,denominator=1)
     ):
-        r"""
-        Class constructor
-        """
+        """__init__ Class constructor
+
+        :param LoopTarget: defaults to 0
+        :type LoopTarget: int, optional
+        :param LoopSource: defaults to 0
+        :type LoopSource: int, optional
+        :param SpaceRot: defaults to np.identity(2,dtype=np.float64)
+        :type SpaceRot: np.array, optional
+        :param TimeShift: defaults to fractions.Fraction(numerator=0,denominator=1)
+        :type TimeShift: fractions.Fraction, optional
+        """        
+
 
         self.LoopTarget = LoopTarget
         self.LoopSource = LoopSource
         self.SpaceRot = SpaceRot
         self.TimeRev = TimeRev
-        self.TimeShift = TimeShift
+
+        den = TimeShift.denominator
+        num = TimeShift.numerator
+        num = ((num % den) + den) % den
+
+        self.TimeShift = fractions.Fraction(
+            numerator = num     ,
+            denominator = den   ,
+        )
 
     def __str__(self):
 
@@ -2508,39 +2522,82 @@ class ChoreoSym():
         out += f"TimeShift: {self.TimeShift}"
 
         return out
-        
+
+    @staticmethod
+    def Random(geodim, maxden = 10, nbody = 10):
+        """ Generates a random ChoreoSym
+
+        Args:
+            geodim (int): Dimension of ambient space.
+            maxden (int, optional): Maximum denominator in time fractions. Defaults to 10.
+            nbody (int, optional): Maximum number of bodies. Defaults to 10.
+
+        Returns:
+            ChoreoSym: A random ChoreoSym.
+        """
+        LoopSource = random.randrange(nbody)
+        LoopTarget = random.randrange(nbody)
+
+        mat = np.random.random_sample((geodim,geodim))
+        sksymmat = mat - mat.T
+        rotmat = scipy.linalg.expm(sksymmat)
+
+        timerev = 1 if np.random.random_sample() < 0.5 else -1
+
+        den = np.random.randint(low = 1, high = maxden)
+        num = np.random.randint(low = 0, high =    den)
+
+        timeshift = fractions.Fraction(numerator = num, denominator = den)
+
+        return ChoreoSym(
+            LoopTarget = LoopTarget ,
+            LoopSource = LoopSource ,
+            SpaceRot = rotmat       ,
+            TimeRev = timerev       ,
+            TimeShift = timeshift   ,
+        )
+
     def Inverse(self):
         r"""
         Returns the inverse of a symmetry transformation
         """
 
+        den = self.TimeShift.denominator
+        num = (-self.TimeRev*self.TimeShift.numerator)
+
         return ChoreoSym(
-            LoopTarget=self.LoopSource,
-            LoopSource=self.LoopTarget,
+            LoopTarget = self.LoopSource,
+            LoopSource = self.LoopTarget,
             SpaceRot = self.SpaceRot.transpose(),
             TimeRev = self.TimeRev,         
-            TimeShift = fractions.Fraction(numerator=((-int(self.TimeRev)*self.TimeShift.numerator) % self.TimeShift.denominator),denominator=self.TimeShift.denominator)
+            TimeShift = fractions.Fraction(
+                numerator = num,
+                denominator = den
             )
+        )
 
-    def ComposeLight(B,A):
+    def ComposeLight(B, A):
         r"""
         Returns the composition of two transformations ignoring sources and targets.
 
         B.ComposeLight(A) returns the composition B o A, i.e. applies A then B, ignoring that target A might be different from source B.
         """
         
-        tshift = B.TimeShift + fractions.Fraction(numerator=int(B.TimeRev)*A.TimeShift.numerator,denominator=A.TimeShift.denominator)
-        tshiftmod = fractions.Fraction(numerator=tshift.numerator % tshift.denominator,denominator=tshift.denominator)
-    
+        num = A.TimeShift.numerator * B.TimeShift.denominator + A.TimeRev * B.TimeShift.numerator * A.TimeShift.denominator
+        den = B.TimeShift.denominator * B.TimeShift.denominator
+
         return ChoreoSym(
             LoopTarget = B.LoopTarget,
             LoopSource = A.LoopSource,
             SpaceRot = np.dot(B.SpaceRot,A.SpaceRot),
             TimeRev = (B.TimeRev * A.TimeRev),
-            TimeShift = tshiftmod
+            TimeShift = fractions.Fraction(
+                numerator = num,
+                denominator = den
             )
+        )
 
-    def Compose(B,A):
+    def Compose(B, A):
         r"""
         Returns the composition of two transformations.
         """
@@ -2556,20 +2613,28 @@ class ChoreoSym():
             
             raise ValueError("Symmetries cannot be composed")
 
-    def IsIdentity(self,atol = 1e-10):
+    def IsIdentity(self, atol = 1e-10):
         r"""
         Returns True if the transformation is close to identity.
         """        
 
         if ((abs(self.TimeShift % 1) < atol) and (self.TimeRev == 1) and (self.LoopTarget == self.LoopSource)):
             
-            return np.allclose(self.SpaceRot,np.identity(self.SpaceRot.shape[0],dtype=np.float64),rtol=0.,atol=atol)
+            return np.allclose(
+                self.SpaceRot , 
+                np.identity(
+                    self.SpaceRot.shape[0],
+                    dtype = np.float64
+                ),
+                rtol = 0.,
+                atol = atol,
+            )
             
         else:
         
             return False
             
-    def IsSameLight(self,other):
+    def IsSameLight(self, other, atol = 1e-10):
         r"""
         Returns True if the two transformations are almost identical, ignoring source and target
         """   
@@ -2578,14 +2643,20 @@ class ChoreoSym():
         RoundTrip.LoopSource = 0
         RoundTrip.LoopTarget = 0
 
-        return RoundTrip.IsIdentity()
+        return RoundTrip.IsIdentity(atol = atol)
         
-    def IsSame(self,other):
+    def IsSame(self, other, atol = 1e-10):
         r"""
         Returns True if the two transformations are almost identical.
         """   
-        return ((self.Inverse()).Compose(other)).IsIdentity()
 
+        if self.LoopTarget == other.LoopTarget :
+
+            return ((self.Inverse()).Compose(other)).IsIdentity(atol = atol)
+
+        else :
+            
+            return False
 
 def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCons=True,n_grad_change=1.,Sym_list=[],CrashOnIdentity=True,ForceMatrixChangevar = False):
     
