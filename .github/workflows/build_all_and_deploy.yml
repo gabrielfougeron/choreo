@@ -1,6 +1,7 @@
-name: Build_All_And_Deploy
+name: Build Test and Deploy on Github Pages
 
 on:
+  workflow_dispatch:
   push:
     branches:    
       - GUI_deploy
@@ -24,78 +25,79 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-    #
+
     - name: Setup Python
       uses: actions/setup-python@v4
       with:
         python-version: 3.11.2
-    #
+
     - name: Install apt-get dependencies for Ubuntu
       run: |
         sudo apt-get update
         sudo apt-get upgrade
         sudo apt-get install libomp-dev libsuitesparse-dev clang
         sudo apt-get install plantuml
-    # 
+
     - name: Checkout repository
       uses: actions/checkout@v3
-    # 
+
     - name: Install python build dependencies
       run: |
         pip install --upgrade pip
         pip install build
-    #
+ 
     - name: Build for Ubuntu
       run: python -m build
-    # 
+
     - name: Install locally with pip
       run:  pip install .[full]
-    #
+
     - name: Run setup.py
       run: python setup.py build_ext --inplace
-    #
+
     - name: Read Emscripten version number
       run: |
         echo EMSCRIPTEN_VERSION=$(pyodide config get emscripten_version) >> $GITHUB_ENV
-    #
+
     - name: Setup Emscripten
       uses: mymindstorm/setup-emsdk@v11
       with:
         version: ${{ env.EMSCRIPTEN_VERSION }}
-    #
+
     - name: Build for Pyodide
       run: |
         pyodide build
-        cp ./dist/choreo-0.2.0-cp311-cp311-emscripten_3_1_32_wasm32.whl ./choreo_GUI/python_dist/choreo-0.2.0-cp311-cp311-emscripten_3_1_32_wasm32.whl
-    #
+        find ./dist -name '*emscripten*.whl' -exec cp {} ./choreo_GUI/python_dist/ \; 
+
     - name: Make Gallery Descriptor 
       run: |
         cd choreo_GUI
         python MakeGalleryDescriptor.py
         cd .. 
-    # 
+
     - name: Setup Pages
       uses: actions/configure-pages@v1
-    #
+
     - name: Upload artifact
       uses: actions/upload-pages-artifact@v1
       with:
         path: './choreo_GUI/'
-    #
+
     - name: Deploy to GitHub Pages
       id: deployment
       uses: actions/deploy-pages@v1
-    #
+
     - name: Run tests
       continue-on-error: true
       run: |
+        python -c 'import choreo' 
         pytest
-    #
+
     - name: Generate Documentation
       run: |
         cd docs
         make html
-    #
+
     - name: Commit documentation changes
       run: |
         git clone https://github.com/ammaraskar/sphinx-action-test.git --branch gh-pages --single-branch gh-pages
@@ -106,7 +108,7 @@ jobs:
         git config --local user.name "GitHub Action"
         git add .
         git commit -m "Update documentation" -a || true
-    #
+
     - name: Push documentation changes
       uses: ad-m/github-push-action@master
       with:
