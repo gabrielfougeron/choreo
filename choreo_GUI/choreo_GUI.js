@@ -226,7 +226,7 @@ function  GeomTopTabBtn(TabId) {
             ClickTopTabBtn('Play_NowPlaying')
             break}
         case 'Geom': {
-            ClickTopTabBtn('Geom_Bodies')
+            ClickTopTabBtn('Geom_New_Bodies')
             break}
         case 'Animation': {
             ClickTopTabBtn('Animation_Colors')
