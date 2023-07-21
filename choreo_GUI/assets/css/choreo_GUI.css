@@ -67,10 +67,15 @@ body {
   padding:10px;
 }
 
-
 .right_char_speaks {
   text-align: right;
   width:500px;
   margin-left: auto; 
   margin-right: 0;
+}
+
+#BodyGraphDiv {
+  width: 400px;
+  height: 400px;
+  border: 1px solid lightgray;
 }
