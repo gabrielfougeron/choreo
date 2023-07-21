@@ -226,7 +226,7 @@ function  GeomTopTabBtn(TabId) {
             ClickTopTabBtn('Play_NowPlaying')
             break}
         case 'Geom': {
-            ClickTopTabBtn('Geom_New_Bodies')
+            ClickTopTabBtn_Geom_New_Bodies()
             break}
         case 'Animation': {
             ClickTopTabBtn('Animation_Colors')
@@ -1427,8 +1427,14 @@ function ChangeColor_Handler(event) {
 }
 
 function ClickTopTabBtn_Animation_Framerate() {
-    UpdateFPSDisplay();
-    ClickTopTabBtn('Animation_Framerate');
+    UpdateFPSDisplay()
+    ClickTopTabBtn('Animation_Framerate')
+}
+
+function ClickTopTabBtn_Geom_New_Bodies() {
+
+    ClickTopTabBtn('Geom_New_Bodies')
+    GraphFit()
 }
 
 function ClickTopTabBtn_Solver_Output() {
@@ -2694,6 +2700,10 @@ function InitPage(){
 
         DealWithCookie()
 
+
+        MakeBodyGraph()
+        GraphFit()
+
     }
 
 }
@@ -2871,5 +2881,209 @@ function GalleryKeyboardSelect(event){
         }
 
     }
+
+}
+
+function MakeBodyGraph(){
+
+    nbody = document.getElementById("input_nbody").value
+
+    nodes = new Array(input_nbody)
+
+
+    for (ib = 0; ib < nbody; ib++) {
+
+        if (color_method_input.value == "body") {
+            color_id = ib;
+        } else if (color_method_input.value == "loop") {
+            color_id = il;
+        } else if (color_method_input.value == "loop_id") {
+            color_id = ilb;
+        } else {
+            color_id = 0;
+        }
+        
+        color = colorLookup[color_id % colorLookup.length];
+
+        nodes[ib] = {
+            id: ib,
+            label: ' '+ib.toString()+' ',
+            font: { color:"black", size: 30},
+            color: color,
+            shape: "circle",
+            size: 30,
+            borderWidth: 2,
+            shadow: true,
+        }
+
+    }
+// 
+//     var nodes = new vis.DataSet([
+//         { id: 0, label: "0"},
+//         { id: 1, label: "1"},
+//         { id: 2, label: "2"},
+//         { id: 3, label: "3"},
+//         { id: 4, label: "4"},
+//         { id: 5, label: "5" , font:{color:"white"}, color: { border: "black" }},
+//     ])
+
+
+
+    // var nodes = new vis.DataSet([{
+    //     id: 1,
+    //     borderWidth: 20,
+    //     color: {
+    //         border: '#000000',
+    //         background: '#000000',
+    //         border:  '#000000',
+    //         highlight: {
+    //             border: '#2B7CE9',
+    //             background: '#D2E5FF'
+    //         }
+    //     },
+    //     // x : 100,
+    //     // y : 100,
+    // }])
+
+
+    // create an array with edges
+    // var edges = new vis.DataSet([
+    //     { from: 1, to: 3 },
+    //     { from: 1, to: 2 },
+    //     { from: 2, to: 4 },
+    //     { from: 2, to: 5 },
+    //     { from: 3, to: 3 },
+    // ])
+    // create an array with edges
+    var edges = new vis.DataSet([
+        { from: 0, to: 1 ,color : "black"},
+    ])
+
+    // create a network
+    var container = document.getElementById("BodyGraphDiv")
+
+    var data = {
+        nodes: nodes,
+        edges: edges,
+    }
+
+    var options = {
+        autoResize: true,
+        height: '100%',
+        width: '100%',
+        clickToUse: false,
+        layout: {
+        randomSeed: undefined,
+        // improvedLayout:true,
+        // clusterThreshold: 150,
+        // hierarchical: {
+        //         enabled:false,
+        //         levelSeparation: 150,
+        //         nodeSpacing: 100,
+        //         treeSpacing: 200,
+        //         blockShifting: true,
+        //         edgeMinimization: true,
+        //         parentCentralization: true,
+        //         direction: 'UD',        // UD, DU, LR, RL
+        //         sortMethod: 'hubsize',  // hubsize, directed
+        //         shakeTowards: 'leaves'  // roots, leaves
+        //     }
+        }
+    }
+
+    BodyGraph = new vis.Network(container, data, options)
+
+}
+
+
+function GraphFit(){
+
+    BodyGraph.fit()
+
+}
+
+
+function ClickAddSym() {
+    var table = document.getElementById('table_sym')
+    var newcell
+    var div,input
+    var irow, ival, jcol
+    var icol = table.rows[0].cells.length
+
+    var input_dict = [
+        {
+            "elem_class":"input", 
+            "type":"number", 
+            "value":"0",
+            "min":"0",
+        },
+        {
+            "elem_class":"select", 
+            "class":"w3-select",  
+            "innerHTML":"<option value='True'>True</option><option value='False' selected>False</option>",
+        },
+        {
+            "elem_class":"input", 
+            "type":"number", 
+            "value":"1",
+        },
+        {
+            "elem_class":"input", 
+            "type":"number", 
+            "value":"1",
+        },
+        {
+            "elem_class":"select", 
+            "class":"w3-select",  
+            "innerHTML":"<option value='True'>True</option><option value='False' selected>False</option>",
+        },
+        {
+            "elem_class":"input", 
+            "type":"number", 
+            "value":"1",
+        },
+        {
+            "elem_class":"input", 
+            "type":"number", 
+            "value":"1",
+        }
+    ]
+
+    n_fields = input_dict.length
+
+    irow = 0
+    newcell = table.rows[irow].insertCell(icol)
+    newcell.style.borderLeftStyle = 'hidden'
+    newcell.style.fontSize = '16px'
+    newcell.style.width = '65px'
+    newcell.style.textAlign = 'center'
+
+    div = document.createElement('button')
+    div.classList.add("w3-button")
+    div.classList.add("w3-light-grey")
+    div.classList.add("w3-hover-pale-red")
+    div.style.textAlign = "center"
+    div.style.fontSize ="16px"
+    div.style.fontWeight ="bold"
+    div.innerHTML = "-"
+
+    newcell.appendChild(div)
+
+    for (ival = 0; ival < n_fields; ival++) {
+        irow = ival + 1
+        newcell = table.rows[irow].insertCell(icol)
+        newcell.style.width = '65px'
+        newcell.style.textAlign = 'center'
+        input = document.createElement(input_dict[ival]["elem_class"])
+        for (var [key, val] of Object.entries(input_dict[ival])){
+        if (key != "elem_class"){
+            input[key] = val
+        }
+        input.style = "width: 53px; text-align: center;"
+        }
+        newcell.appendChild(input)
+    }
+
+    RedistributeClicksTableBodyLoop('table_sym',0)
 
 }
