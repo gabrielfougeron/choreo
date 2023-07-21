@@ -20,6 +20,7 @@ dependencies:
   - numba
   - icc_rt
   - pytest
+  - pytest-xdist
   - attrs
   - pip:
     - cffi==1.15.0
