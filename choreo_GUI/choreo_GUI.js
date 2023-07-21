@@ -444,46 +444,64 @@ function GenerateInitStateClick() {
 
 }
 
+function GatherGeom_Bodies(){
+
+    Geom_Bodies = {}
+
+    nbody = document.getElementById("input_nbody").value
+    Geom_Bodies ['nbody'] = nbody
+
+    Geom_Bodies ['MomConsImposed'] = document.getElementById('checkbox_MomCons').checked
+
+    // Geom_Bodies ['mass'] = []
+
+    table_sym = document.getElementById('table_sym')
+    var nsyms = table_sym.rows[0].cells.length - 1
+
+    Geom_Bodies ['nsyms'] = nsyms
+
+    AllSyms = []
+
+    for (var isym = 0; isym < nsyms; isym++) {
+
+        var the_sym = {}
+        
+        the_sym['BodyPerm'] = []
+
+        const icol = isym+1
+
+        for (ib = 0; ib < nbody; ib++) {
+
+            the_sym['BodyPerm'].push( parseInt(  table_sym.rows[1].cells[icol].children[0].rows[ib].cells[0].children[0].value,10))
+
+        }
+
+        the_sym['Reflexion']    =           table_sym.rows[2].cells[icol].children[0].value
+        the_sym['RotAngleNum']  = parseInt( table_sym.rows[3].cells[icol].children[0].value,10)
+        the_sym['RotAngleDen']  = parseInt( table_sym.rows[4].cells[icol].children[0].value,10)
+        the_sym['TimeRev']      =           table_sym.rows[5].cells[icol].children[0].value 
+        the_sym['TimeShiftNum'] = parseInt( table_sym.rows[6].cells[icol].children[0].value,10)
+        the_sym['TimeShiftDen'] = parseInt( table_sym.rows[7].cells[icol].children[0].value,10)
+
+        AllSyms.push(the_sym)
+
+    }
+
+    Geom_Bodies ['AllSyms'] = AllSyms
+
+    return Geom_Bodies
+
+}
+
 function GatherConfigDict() {
     /* Gathers all relevant input in the page and puts it in a dictionary */
 
     var ConfigDict = {}
 
-    ConfigDict['Geom_Bodies'] = {}
+    ConfigDict['Geom_Bodies'] = GatherGeom_Bodies()
 
-    ConfigDict['Geom_Bodies'] ['MomConsImposed'] = document.getElementById('checkbox_MomCons').checked
+    ConfigDict['Geom_Target'] = {}
 
-    table = document.getElementById('table_body_loop')
-    var ncols = table.rows[0].cells.length
-
-    ConfigDict['Geom_Bodies'] ['n_loops'] = ncols - 1
-
-    ConfigDict['Geom_Bodies'] ['mass'] = []
-    ConfigDict['Geom_Bodies'] ['nbpl'] = []
-
-    ConfigDict['Geom_Bodies'] ['SymType'] = []
-
-    for (var icol=1; icol < ncols; icol++) {
-
-        var the_sym = {}
-        
-        the_sym['n'] =  parseInt(  table.rows[1].cells[icol].children[0].value,10)
-
-        ConfigDict['Geom_Bodies'] ['nbpl'] . push( parseInt(  table.rows[1].cells[icol].children[0].value,10))
-        ConfigDict['Geom_Bodies'] ['mass'] . push( parseFloat(table.rows[2].cells[icol].children[0].value)   )
-        
-        the_sym['name'] = table.rows[3].cells[icol].children[0].value;
-        the_sym['k'] = parseInt(table.rows[4].cells[icol].children[0].value,10);
-        the_sym['l'] = parseInt(table.rows[5].cells[icol].children[0].value,10);
-        the_sym['m'] = parseInt(table.rows[6].cells[icol].children[0].value,10);
-        the_sym['p'] = parseInt(table.rows[7].cells[icol].children[0].value,10);
-        the_sym['q'] = parseInt(table.rows[8].cells[icol].children[0].value,10);
-
-        ConfigDict['Geom_Bodies'] ['SymType'].push(the_sym);
-
-    }
-
-    ConfigDict['Geom_Target'] = {};
     LookForTarget = document.getElementById('checkbox_Target').checked
     ConfigDict['Geom_Target'] ['LookForTarget'] = LookForTarget
     if (LookForTarget) {
@@ -529,31 +547,6 @@ function GatherConfigDict() {
     ConfigDict['Geom_Random'] ['coeff_ampl_min']  = parseFloat(document.getElementById('input_coeff_ampl_min' ).value   )
     ConfigDict['Geom_Random'] ['k_infl']          = parseInt(  document.getElementById('input_k_infl'         ).value,10)
     ConfigDict['Geom_Random'] ['k_max']           = parseInt(  document.getElementById('input_k_max'          ).value,10)
-
-    ConfigDict['Geom_Custom'] = {}
-
-    table = document.getElementById('table_custom_sym')
-    var ncols = table.rows[0].cells.length
-
-    ConfigDict['Geom_Custom'] ['n_custom_sym'] = ncols - 1
-    ConfigDict['Geom_Custom'] ['CustomSyms'] = []
-
-    for (var icol=1; icol < ncols; icol++) {
-
-        var the_sym = {}
-        
-        the_sym['LoopTarget']   = parseInt( table.rows[1].cells[icol].children[0].value,10)
-        the_sym['LoopSource']   = parseInt( table.rows[2].cells[icol].children[0].value,10)
-        the_sym['Reflexion']    =           table.rows[3].cells[icol].children[0].value
-        the_sym['RotAngleNum']  = parseInt( table.rows[4].cells[icol].children[0].value,10)
-        the_sym['RotAngleDen']  = parseInt( table.rows[5].cells[icol].children[0].value,10)
-        the_sym['TimeRev']      =           table.rows[6].cells[icol].children[0].value 
-        the_sym['TimeShiftNum'] = parseInt( table.rows[7].cells[icol].children[0].value,10)
-        the_sym['TimeShiftDen'] = parseInt( table.rows[8].cells[icol].children[0].value,10)
-
-        ConfigDict['Geom_Custom'] ['CustomSyms'].push(the_sym)
-
-    }
 
     ConfigDict['Animation_Colors'] = {}
     ConfigDict['Animation_Colors'] ["color_method_input"] = document.getElementById("color_method_input").value
@@ -671,39 +664,50 @@ async function LoadConfigFileFromRemote(json_filename) {
 
 }
 
-function LoadConfigDict(ConfigDict) {
+function LoadGeom_Bodies(Geom_Bodies){
 
-    var trailLayerCanvas = document.getElementById("trailLayerCanvas")
+    nbody = Geom_Bodies ['nbody'] 
+    document.getElementById("input_nbody").value = nbody
+    document.getElementById('checkbox_MomCons').checked = Geom_Bodies ['MomConsImposed']
+    
+    // Geom_Bodies ['mass'] = [] ???
 
-    var table = document.getElementById('table_body_loop')
-    var ncols = table.rows[0].cells.length
+    table_sym = document.getElementById('table_sym')
 
-    for (var icol=ncols-1; icol > 0; icol-- ) {
-        deleteColumn('table_body_loop',icol)
+    var ncols = table_sym.rows[0].cells.length
+    for (var icol = ncols-1; icol > 0; icol-- ) {
+        deleteColumn('table_sym',icol)
     };
 
-    document.getElementById('checkbox_MomCons').checked = ConfigDict['Geom_Bodies'] ['MomConsImposed'] 
+    nsyms = Geom_Bodies ['nsyms']
 
-    var n_loops = ConfigDict['Geom_Bodies'] ['n_loops']
+    for (var isym = 0; isym < nsyms; isym++) {
 
-    for (var il=0; il < n_loops; il++) {
+        const icol = isym+1
+        const the_sym = Geom_Bodies ['AllSyms'][isym]
 
-        ClickAddBodyLoop()
+        ClickAddSym()
 
-        var icol = il+1
+        for (ib = 0; ib < nbody; ib++) {
 
-        table.rows[1].cells[icol].children[0].value = ConfigDict['Geom_Bodies'] ['nbpl'] [il]
-        table.rows[2].cells[icol].children[0].value = ConfigDict['Geom_Bodies'] ['mass'] [il] . toString()
-        table.rows[3].cells[icol].children[0].value = ConfigDict['Geom_Bodies'] ['SymType'] [il] ['name']
-        table.rows[4].cells[icol].children[0].value = ConfigDict['Geom_Bodies'] ['SymType'] [il] ['k']
-        table.rows[5].cells[icol].children[0].value = ConfigDict['Geom_Bodies'] ['SymType'] [il] ['l']
-        table.rows[6].cells[icol].children[0].value = ConfigDict['Geom_Bodies'] ['SymType'] [il] ['m']
-        table.rows[7].cells[icol].children[0].value = ConfigDict['Geom_Bodies'] ['SymType'] [il] ['p']
-        table.rows[8].cells[icol].children[0].value = ConfigDict['Geom_Bodies'] ['SymType'] [il] ['q']
+            table_sym.rows[1].cells[icol].children[0].rows[ib].cells[0].children[0].value = the_sym['BodyPerm'][ib]
+
+        }
+
+        table_sym.rows[2].cells[icol].children[0].value = the_sym['Reflexion'] 
+        table_sym.rows[3].cells[icol].children[0].value = the_sym['RotAngleNum']
+        table_sym.rows[4].cells[icol].children[0].value = the_sym['RotAngleDen']
+        table_sym.rows[5].cells[icol].children[0].value = the_sym['TimeRev']
+        table_sym.rows[6].cells[icol].children[0].value = the_sym['TimeShiftNum']
+        table_sym.rows[7].cells[icol].children[0].value = the_sym['TimeShiftDen']
         
     }
 
-    RedistributeClicksTableBodyLoop('table_body_loop',1,RedistributeBodyCount)
+}
+
+function LoadConfigDict(ConfigDict) {
+
+    LoadGeom_Bodies(ConfigDict['Geom_Bodies'])
 
     if (document.getElementById('checkbox_Target').checked ^ ConfigDict['Geom_Target'] ['LookForTarget']) {
         checkbox_EnableTargets_Handler()
@@ -719,34 +723,6 @@ function LoadConfigDict(ConfigDict) {
     document.getElementById('input_coeff_ampl_min' ).value = ConfigDict['Geom_Random'] ['coeff_ampl_min'] 
     document.getElementById('input_k_infl'         ).value = ConfigDict['Geom_Random'] ['k_infl']         
     document.getElementById('input_k_max'          ).value = ConfigDict['Geom_Random'] ['k_max']          
-
-    var table = document.getElementById('table_custom_sym')
-    var ncols = table.rows[0].cells.length
-
-    for (var icol=ncols-1; icol > 0; icol-- ) {
-        deleteColumn('table_custom_sym',icol)
-    };
-
-    var nsym = ConfigDict['Geom_Custom'] ['n_custom_sym']
-
-    for (var isym=0; isym < nsym; isym++) {
-
-        ClickAddCustomSym()
-
-        var icol = isym+1
-
-        table.rows[1].cells[icol].children[0].value = ConfigDict['Geom_Custom'] ['CustomSyms'] [isym] ['LoopTarget']   
-        table.rows[2].cells[icol].children[0].value = ConfigDict['Geom_Custom'] ['CustomSyms'] [isym] ['LoopSource']   
-        table.rows[3].cells[icol].children[0].value = ConfigDict['Geom_Custom'] ['CustomSyms'] [isym] ['Reflexion']    
-        table.rows[4].cells[icol].children[0].value = ConfigDict['Geom_Custom'] ['CustomSyms'] [isym] ['RotAngleNum']  
-        table.rows[5].cells[icol].children[0].value = ConfigDict['Geom_Custom'] ['CustomSyms'] [isym] ['RotAngleDen']  
-        table.rows[6].cells[icol].children[0].value = ConfigDict['Geom_Custom'] ['CustomSyms'] [isym] ['TimeRev']      
-        table.rows[7].cells[icol].children[0].value = ConfigDict['Geom_Custom'] ['CustomSyms'] [isym] ['TimeShiftNum'] 
-        table.rows[8].cells[icol].children[0].value = ConfigDict['Geom_Custom'] ['CustomSyms'] [isym] ['TimeShiftDen'] 
-
-    }
-
-    RedistributeClicksTableBodyLoop('table_custom_sym',0)
 
     document.getElementById("color_method_input").value = ConfigDict['Animation_Colors'] ["color_method_input"]
     
@@ -773,6 +749,7 @@ function LoadConfigDict(ConfigDict) {
     
     ExportColors()
     var send_event = new Event('ChangeColorsFromOutsideCanvas')
+    var trailLayerCanvas = document.getElementById("trailLayerCanvas")
     trailLayerCanvas.dispatchEvent(send_event)
 
     document.getElementById('checkbox_Limit_FPS').checked = ConfigDict['Animation_Framerate']['checkbox_Limit_FPS'] 
@@ -831,7 +808,7 @@ function LoadConfigDict(ConfigDict) {
 
     }
 
-    RedistributeClicksTableBodyLoop('table_cvg_loop',1)
+    RedistributeClicksTable('table_cvg_loop',1)
 
     document.getElementById('checkbox_duplicates').checked  = ConfigDict['Solver_Checks'] ['Look_for_duplicates'] 
     document.getElementById('input_duplicate_eps').value    = ConfigDict['Solver_Checks'] ['duplicate_eps']       
@@ -939,7 +916,7 @@ function deleteLastColumn(tableId) {
     deleteColumn(tableId, lastCol);
 }
 
-function RedistributeClicksTableBodyLoop(tableid,mincol,fun_exec_end=function(){}){
+function RedistributeClicksTable(tableid, mincol) {
     var table = document.getElementById(tableid)
 
     for (var icol=1; icol < table.rows[0].cells.length; icol++) {
@@ -950,34 +927,12 @@ function RedistributeClicksTableBodyLoop(tableid,mincol,fun_exec_end=function(){
         div.onclick = function () {
             if (table.rows[0].cells.length > (mincol+1)) {
                 deleteColumn(tableid, this.button_number)
-                RedistributeClicksTableBodyLoop(tableid,mincol,fun_exec_end)
+                RedistributeClicksTable(tableid, mincol)
             }
         }
 
     }
 
-    fun_exec_end()
-
-}
-
-function RedistributeBodyCount() {
-    var table = document.getElementById('table_body_loop')
-
-    var irow_n_body = 1
-    var irow_body_range = 9
-    var ibody_low = 0
-    var ibody_high = 0                                   
-
-    for (var icol=1; icol < table.rows[0].cells.length; icol++) {
-        
-        var nbody = parseInt(table.rows[irow_n_body].cells[icol].children[0].value,10);
-        ibody_high = ibody_high + nbody -1 ;
-
-        table.rows[irow_body_range].cells[icol].children[0].innerHTML = ibody_low.toString() + " - " + ibody_high.toString();
-
-        ibody_low = ibody_high+1;
-        ibody_high = ibody_low;
-    }
 }
 
 function ClickAddColLoopKrylov() {
@@ -1064,110 +1019,7 @@ function ClickAddColLoopKrylov() {
         newcell.appendChild(input)
     }
 
-    RedistributeClicksTableBodyLoop('table_cvg_loop',1)
-
-}
-
-function ClickAddBodyLoop() {
-    var table = document.getElementById('table_body_loop')
-    var newcell
-    var div,input
-    var irow, ival, jcol
-    var icol = table.rows[0].cells.length
-
-    var input_dict = [
-        {
-            "elem_class":"input", 
-            "type":"number", 
-            "value":"3",
-            "min":"1",
-            "oninput":"RedistributeBodyCount",
-        },
-        {
-            "elem_class":"input", 
-            "type":"text", 
-            "value":"1.",
-        },
-        {
-            "elem_class":"select", 
-            "class":"w3-select",  
-            "innerHTML":"<option value='C' selected>C</option><option value='D'>D</option><option value='Cp'>Cp</option><option value='Dp'>Dp</option>",
-        },
-        {
-            "elem_class":"input", 
-            "type":"number", 
-            "min":"1",
-            "value":"1",
-        },
-        {
-            "elem_class":"input", 
-            "type":"number", 
-            "min":"0",
-            "value":"1",
-        },
-        {
-            "elem_class":"input", 
-            "type":"number", 
-            "min":"0",
-            "value":"1",
-        },
-        {
-            "elem_class":"input", 
-            "type":"number", 
-            "min":"0",
-            "value":"1",
-        },
-        {
-            "elem_class":"input", 
-            "type":"number", 
-            "min":"1",
-            "value":"1",
-        },
-        {
-            "elem_class":"text",
-            "max-width":"60px",
-            "innerHTML":"",
-        },
-    ]
-
-    n_fields = input_dict.length
-
-    irow = 0
-    newcell = table.rows[irow].insertCell(icol)
-    newcell.style.borderLeftStyle = 'hidden'
-    newcell.style.fontSize = '16px'
-    newcell.style.width = '60px'
-    newcell.style.textAlign = 'center'
-
-    div = document.createElement('button')
-    div.classList.add("w3-button","w3-light-grey","w3-hover-pale-red","TargetToggle")
-    div.style.textAlign = "center"
-    div.style.fontSize ="16px"
-    div.style.fontWeight ="bold"
-    div.innerHTML = "-"
-
-    newcell.appendChild(div)
-
-    for (ival = 0; ival < n_fields; ival++) {
-        irow = ival + 1
-        newcell = table.rows[irow].insertCell(icol)
-        newcell.style.width = '60px'
-        newcell.style.textAlign = 'center';  
-        input = document.createElement(input_dict[ival]["elem_class"])
-        input.classList.add("TargetToggle")
-        for (var [key, val] of Object.entries(input_dict[ival])){
-            if (key != "elem_class"){
-                input[key] = val
-            }
-            if (key == "oninput"){
-                input[key] = window[val]
-            }
-            input.style = "width: 45px; text-align: center;"
-        }
-        newcell.appendChild(input)
-    }
-
-    RedistributeClicksTableBodyLoop('table_body_loop',1,RedistributeBodyCount)
+    RedistributeClicksTable('table_cvg_loop',1)
 
 }
 
@@ -1258,7 +1110,7 @@ function ClickAddCustomSym() {
         newcell.appendChild(input)
     }
 
-    RedistributeClicksTableBodyLoop('table_custom_sym',0)
+    RedistributeClicksTable('table_custom_sym',0)
 
 }
 
@@ -2679,8 +2531,6 @@ function InitPage(){
             ClickAddColLoopKrylov()
         }
 
-        ClickAddBodyLoop()
-
         color_datalist = document.getElementById('presetColors')
         for (var i = 0; i < colorLookup_init.length; i++) {
         var div = document.createElement('option')
@@ -2995,20 +2845,40 @@ function MakeBodyGraph(){
         //         sortMethod: 'hubsize',  // hubsize, directed
         //         shakeTowards: 'leaves'  // roots, leaves
         //     }
+        },
+        physics: {
+            barnesHut: {
+                gravitationalConstant: -2000,
+                centralGravity: 0.1,
+                springLength: 100,
+                springConstant: 0.1,
+                avoidOverlap: 0.5,
+                damping: 0.1,
+            },
+            maxVelocity: 50,
+            solver: 'barnesHut',
+            timestep: 0.35,
+            stabilization: {
+                enabled: true,
+                iterations: 500,
+                updateInterval: 25
+            },
         }
     }
 
     BodyGraph = new vis.Network(container, data, options)
 
-}
+    BodyGraph.on("stabilizationIterationsDone", function () {
+        BodyGraph.setOptions( { physics: false } );
+    });
 
+}
 
 function GraphFit(){
 
     BodyGraph.fit()
 
 }
-
 
 function CreateInputPermTable(){
 
@@ -3030,7 +2900,6 @@ function CreateInputPermTable(){
     return innerHTML
 
 }
-
 
 function ClickAddSym() {
     var table = document.getElementById('table_sym')
@@ -3117,6 +2986,6 @@ function ClickAddSym() {
         newcell.appendChild(input)
     }
 
-    RedistributeClicksTableBodyLoop('table_sym',0)
+    RedistributeClicksTable('table_sym',0)
 
 }

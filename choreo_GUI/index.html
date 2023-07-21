@@ -21,9 +21,6 @@
 <script src="assets/js/tree.js"></script>
 <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3.0.1/es5/tex-mml-chtml.js"></script>
 
-
-
-<!-- <script src="assets/js/vis-network/standalone/umd/vis-network.min.js"></script> -->
 <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js" ></script>
 
 
@@ -101,11 +98,11 @@ window.addEventListener("drop",function(e){
       <button id="Play_Workspace"   class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Play_Workspace"  onclick="ClickTopTabBtn('Play_Workspace')"      >Workspace</button>
     </div>
     <div class="w3-bar w3-light-grey TopTab Geom">
-        <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Geom_New_Bodies"   onclick="ClickTopTabBtn_Geom_New_Bodies()">New Bodies</button>
-        <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Geom_Bodies"   onclick="ClickTopTabBtn('Geom_Bodies')">Bodies</button>
+        <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Geom_New_Bodies"   onclick="ClickTopTabBtn_Geom_New_Bodies()">Bodies</button>
+        <!-- <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Geom_Bodies"   onclick="ClickTopTabBtn('Geom_Bodies')">Bodies</button> -->
         <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Geom_Target"   onclick="ClickTopTabBtn('Geom_Target')">Target</button>
         <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Geom_Random"   onclick="ClickTopTabBtn('Geom_Random')">Random</button>
-        <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Geom_Custom"   onclick="ClickTopTabBtn('Geom_Custom')">Custom</button>
+        <!-- <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Geom_Custom"   onclick="ClickTopTabBtn('Geom_Custom')">Custom</button> -->
     </div>
     <div class="w3-bar w3-light-grey TopTab Animation">
         <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Animation_Colors"    onclick="ClickTopTabBtn('Animation_Colors')"      >Colors</button>
@@ -269,30 +266,6 @@ window.addEventListener("drop",function(e){
     &nbsp - A rotation of angle \(2 \pi \alpha_p / \alpha_q\).<br>
     &nbsp - A possible time reversal.<br>
     &nbsp - A time lag of \(t_p / t_q\) of a total period.<br>
-
-
-  </div>
-  <div class="w3-container MainTab Geom_Bodies" style="display:none; text-align: justify;">
-    <h2>Bodies definition</h2>
-    <table id = "table_body_loop" style="table-layout: fixed;">
-      <tr style="border-left-style:hidden;border-right-style:hidden;border-top-style:hidden;"><td style="width:120px;"><b><button class="w3-button w3-light-grey w3-hover-pale-red TargetToggle" style="text-align: center; font-size:16px" onclick="ClickAddBodyLoop()">Add Loop +</button></b></td></tr>
-      <tr><td style="width:120px;"><b>Number of bodies n</b></td></tr>
-      <tr><td style="width:120px;"><b>Mass of bodies</b></td></tr>
-      <tr><td style="width:120px;"><b>Symmetry name</b></td></tr>
-      <tr><td style="width:120px;"><b>Symmetry k</b></td></tr>
-      <tr><td style="width:120px;"><b>Symmetry l</b></td></tr>
-      <tr><td style="width:120px;"><b>Symmetry m</b></td></tr>
-      <tr><td style="width:120px;"><b>Symmetry p</b></td></tr>
-      <tr><td style="width:120px;"><b>Symmetry q</b></td></tr>
-      <tr><td style="width:120px;"><b>Id range</b></td></tr>
-    </table>
-    <br>
-    &nbsp &nbsp The constant time lag between two bodies is \({m / n}\) of a total period.
-    Each body is the image of the previous one by a rotation of angle \(2\pi {p / q}\).
-    Each loop is invariant by a rotation of angle \(2\pi {l / k}\), with an added reflection of vertical axis if the symmetry name is D.
-    <br>
-    <br>
-    &nbsp &nbsp For more explanation, and a definition of the symmetry names Cp and Dp, <a href="https://arxiv.org/abs/1305.0470">see the following article: Montaldi, J., & Steckles, K. (2013). Classification of symmetry groups for planar-body choreographies.</a>
   </div>
   <div class="w3-container MainTab Geom_Target" style="display:none">    
     <h2>Initial state target</h2>
@@ -370,26 +343,6 @@ window.addEventListener("drop",function(e){
         </tr>
       </table>
     </div>
-  </div>
-  <div class="w3-container MainTab Geom_Custom" style="display:none">
-    <h2>Custom symmetry definition</h2>
-    <table id = "table_custom_sym" style="table-layout: fixed;">
-      <tr style="border-left-style:hidden;border-right-style:hidden;border-top-style:hidden;"><td style="width:120px;"><b><button class="w3-button w3-light-grey w3-hover-pale-red" style="text-align: center; font-size:16px" onclick="ClickAddCustomSym()">Add Sym +</button></b></td></tr>
-      <tr><td style="width:120px;min-height:40px;"><b>Loop target</b></td></tr>
-      <tr><td style="width:120px;min-height:40px;"><b>Loop source</b></td></tr>
-      <tr><td style="width:120px;min-height:40px;"><b>Reflection</b></td></tr>
-      <tr><td style="width:120px;min-height:40px;"><b>Rotation \(\alpha_p\)</b></td></tr>
-      <tr><td style="width:120px;min-height:40px;"><b>Rotation \(\alpha_q\)</b></td></tr>
-      <tr><td style="width:120px;min-height:40px;"><b>Time reversal</b></td></tr>
-      <tr><td style="width:120px;min-height:40px;"><b>Time lag \(\beta_p\)</b></td></tr>
-      <tr><td style="width:120px;min-height:40px;"><b>Time lag \(\beta_q\)</b></td></tr>
-    </table>
-    <br>
-    Loop target is the image of Loop source under:<br>
-    &nbsp - A possible reflection of vertical axis.<br>
-    &nbsp - A rotation of angle \(2 \pi \alpha_p / \alpha_q\).<br>
-    &nbsp - A possible time reversal.<br>
-    &nbsp - A time lag of \(\beta_p / \beta_q\) of a total period.<br>
   </div>
   <div class="w3-container MainTab Animation_Colors" style="display:none">
     <h2>Colors</h2>
@@ -760,7 +713,7 @@ window.addEventListener("drop",function(e){
     Then, <b>choreo</b> implements a <a href="https://en.wikipedia.org/wiki/Spectral_method">Fourier spectral method</a> to solve the equations of motion. Starting from an initial random set of parameters, the solver forms better and better guesses until convergence. It is also possible to use previously computed solutions to manufacture an acceptable initial state to the solver in the<button class="in_text_btn" onclick="ClickLeftTabBtn('Geom');ClickTopTabBtn('Geom_Target');"><b>Target</b></button>tab.
     <br>&nbsp 
     <h3>Getting started</h3>
-    &nbsp &nbsp The first step to compute your own periodic solution is to specify how many bodies will be interacting. The<button class="in_text_btn" onclick="ClickLeftTabBtn('Geom');ClickTopTabBtn('Geom_Bodies');"><b>Geometry</b></button>tab lets you create new bodies, specify their masses, and arrange them in choreographic loops with pre-defined symmetry constraints.
+    &nbsp &nbsp The first step to compute your own periodic solution is to specify how many bodies will be interacting. The<button class="in_text_btn" onclick="ClickLeftTabBtn('Geom');ClickTopTabBtn_Geom_New_Bodies();"><b>Geometry</b></button>tab lets you create new bodies, specify their masses, and arrange them in choreographic loops with pre-defined symmetry constraints.
     <br>&nbsp
     <h3>Expert options</h3>
     &nbsp &nbsp More complex symmetries can be specified under the<button class="in_text_btn" onclick="ClickLeftTabBtn('Geom');ClickTopTabBtn('Geom_Custom');"><b>Custom</b></button>tab. Don't hesitate to play around with the parameters of the<button class="in_text_btn" onclick="ClickLeftTabBtn('Geom');ClickTopTabBtn('Geom_Random');"><b>Random</b></button>initialization, as well as all of the<button class="in_text_btn" onclick="ClickLeftTabBtn('Solver');"><b>Solver</b></button>options.
