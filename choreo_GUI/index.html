@@ -236,26 +236,17 @@ window.addEventListener("drop",function(e){
   <div class="w3-container MainTab Geom_New_Bodies" style="display:none; text-align: justify;">
     <h2>New Bodies definition</h2>
 
-    <table style="display:block; font-size:16px; border:none; display:table; table-layout: fixed; width:600px">
-      <tr>
-        <td style="border:none;" ><label for="input_nbody">Number of bodies</label></td>
-        <td style="border:none;" ><input id ="input_nbody" type="number" value="3" min="1" style="width:50px;"></td>
-      </tr>
-    </table>
-
     <button id="GraphFitBtn"   class="w3-button w3-hover-pale-red w3-light-grey" onclick="GraphFit()" >Fit!</button>
     <button id="MakeBodyGraphBtn"   class="w3-button w3-hover-pale-red w3-light-grey" onclick="MakeBodyGraph()" >Update Graph</button>
     <div id="BodyGraphDiv"></div>
 
     <table style="display:block; font-size:16px; border:none; display:table; width:600px">
       <tr>
-        <td style="border:none;" ><label for="input_nbody">Number of bodies</label></td>
+        <td style="border:none;width:400px;" ><label for="input_nbody">Number of bodies</label></td>
         <td style="border:none;" ><input id ="input_nbody" type="number" value="3" min="1" style="width:50px;"></td>
       </tr>
-    <!-- </table> -->
-    <!-- <table style="display:block; font-size:16px; border:none; display:table; width:600px""> -->
       <tr>
-        <td style="border:none;" ><label for="checkbox_MomCons">Treat momentum conservation as a constraint</label></td>
+        <td style="border:none;width:400px;" ><label for="checkbox_MomCons">Treat momentum conservation as a constraint</label></td>
         <td style="border:none;"><input id ="checkbox_MomCons" class="w3-check" type="checkbox" style="vertical-align: super" unchecked></td>
       </tr>
     </table>
@@ -268,9 +259,16 @@ window.addEventListener("drop",function(e){
       <tr><td style="width:120px;min-height:40px;"><b>Rotation \(\alpha_p\)</b></td></tr>
       <tr><td style="width:120px;min-height:40px;"><b>Rotation \(\alpha_q\)</b></td></tr>
       <tr><td style="width:120px;min-height:40px;"><b>Time reversal</b></td></tr>
-      <tr><td style="width:120px;min-height:40px;"><b>Time lag \(\beta_p\)</b></td></tr>
-      <tr><td style="width:120px;min-height:40px;"><b>Time lag \(\beta_q\)</b></td></tr>
+      <tr><td style="width:120px;min-height:40px;"><b>Time lag \(t_p\)</b></td></tr>
+      <tr><td style="width:120px;min-height:40px;"><b>Time lag \(t_q\)</b></td></tr>
     </table>
+    <br>
+    A symmetry imposes the system to be invariant under the combined action of:<br>
+    &nbsp - A permutation of the bodies.<br>
+    &nbsp - A possible reflection of vertical axis.<br>
+    &nbsp - A rotation of angle \(2 \pi \alpha_p / \alpha_q\).<br>
+    &nbsp - A possible time reversal.<br>
+    &nbsp - A time lag of \(t_p / t_q\) of a total period.<br>
 
 
   </div>

@@ -2890,7 +2890,6 @@ function MakeBodyGraph(){
 
     nodes = new Array(input_nbody)
 
-
     for (ib = 0; ib < nbody; ib++) {
 
         // if (color_method_input.value == "body") {
@@ -2920,10 +2919,52 @@ function MakeBodyGraph(){
 
     }
 
+    var table_sym = document.getElementById('table_sym')
+    var nsyms = table_sym.rows[0].cells.length - 1
+
+    var edges = new Array(nsyms*nbody)
+
+    for (isym = 0; isym < nsyms; isym++) {
+        
+        var perm = new Array(nbody).fill(0)
+
+        for (ib = 0; ib < nbody; ib++) {
+
+            const iedge = ib + isym * nbody
+            
+            const target = table_sym.rows[1].cells[isym+1].children[0].rows[ib].cells[0].children[0].value
+            
+            perm[target] = 1
+
+            edges[iedge] =  {
+                from: ib,
+                to: target ,
+                color : "black",
+                arrows: {
+                    to: {
+                        enabled: true,
+                        type: "arrow",
+                    },
+                },
+            }
+
+        }
+
+        var n_targets = perm.reduce((a, b) => a + b, 0)
+
+        if (n_targets == nbody) {
+            table_sym.rows[1].cells[isym+1].style.backgroundColor = "#F1F1F1"
+        } else {
+            table_sym.rows[1].cells[isym+1].style.backgroundColor = "#ffdddd"
+        }
+        
+    }
+
+
     // create an array with edges
-    var edges = new vis.DataSet([
-        { from: 0, to: 1 ,color : "black"},
-    ])
+    // var edges = new vis.DataSet([
+    //     { from: 0, to: 1 ,color : "black"},
+    // ])
 
     // create a network
     var container = document.getElementById("BodyGraphDiv")
@@ -2971,9 +3012,6 @@ function GraphFit(){
 
 function CreateInputPermTable(){
 
-    console.log("toto")
-
-
     nbody = document.getElementById("input_nbody").value
 
     innerHTML = "" 
@@ -2981,11 +3019,13 @@ function CreateInputPermTable(){
 
         innerHTML += "<tr><td style=border:none;'>"
         innerHTML += ib.toString() + " : "
-        innerHTML += "<input type='number' value='"+ib.toString()+"' min='0' style='width:30px;'>"
+        innerHTML += "<input type='number' "
+        innerHTML += "value='"+ib.toString()+"'"
+        innerHTML += "min='0' max='"+(nbody-1).toString()+"'"
+        innerHTML += "style='width:36px;'>"
         innerHTML += "</td></tr>"
         
     }
-
 
     return innerHTML
 
@@ -3002,7 +3042,7 @@ function ClickAddSym() {
     var input_dict = [
         {
             "elem_class":"table",
-            "style":"border:none;width: 63px;margin-left: auto;margin-right: auto",
+            "style":"font-size:10px;border:none;width: 63px;margin-left: auto;margin-right: auto;margin-bottom:-3px;",
             "innerHTML": CreateInputPermTable(),
         },
         {
@@ -3014,7 +3054,7 @@ function ClickAddSym() {
         {
             "elem_class":"input", 
             "type":"number", 
-            "value":"1",
+            "value":"0",
             "style":"width: 53px; text-align: center;",
         },
         {
@@ -3032,7 +3072,7 @@ function ClickAddSym() {
         {
             "elem_class":"input", 
             "type":"number", 
-            "value":"1",
+            "value":"0",
             "style":"width: 53px; text-align: center;",
         },
         {
