@@ -390,7 +390,6 @@ def Make_SymList_From_InfoDict(InfoDict,Transform_Sym=None):
     if Transform_Sym is None:
         Transform_Sym = ChoreoSym()
 
-
     SymList = []
 
     for il in range(InfoDict['nloop']):

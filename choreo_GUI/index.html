@@ -98,7 +98,7 @@ window.addEventListener("drop",function(e){
       <button id="Play_Workspace"   class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Play_Workspace"  onclick="ClickTopTabBtn('Play_Workspace')"      >Workspace</button>
     </div>
     <div class="w3-bar w3-light-grey TopTab Geom">
-        <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Geom_New_Bodies"   onclick="ClickTopTabBtn('Geom_New_Bodies')">Bodies</button>
+        <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Geom_New_Bodies"   onclick="ClickTopTabBtnGeom_New_Bodies()">Bodies</button>
         <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Geom_Target"   onclick="ClickTopTabBtn('Geom_Target')">Target</button>
         <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Geom_Random"   onclick="ClickTopTabBtn('Geom_Random')">Random</button>
     </div>
@@ -236,7 +236,7 @@ window.addEventListener("drop",function(e){
     <table style="display:block; font-size:16px; border:none; display:table; width:600px">
       <tr>
         <td style="border:none;width:400px;" ><label for="input_nbody">Number of bodies</label></td>
-        <td style="border:none;" ><input id ="input_nbody" type="number" value="3" min="1" style="width:50px;"></td>
+        <td style="border:none;" ><input id ="input_nbody" type="number" value="3" min="1" style="width:50px;" onchange="UpdateNumberofBodies()"></td>
       </tr>
       <tr>
         <td style="border:none;width:400px;" ><label for="checkbox_MomCons">Treat momentum conservation as a constraint</label></td>
@@ -700,7 +700,7 @@ window.addEventListener("drop",function(e){
     Then, <b>choreo</b> implements a <a href="https://en.wikipedia.org/wiki/Spectral_method">Fourier spectral method</a> to solve the equations of motion. Starting from an initial random set of parameters, the solver forms better and better guesses until convergence. It is also possible to use previously computed solutions to manufacture an acceptable initial state to the solver in the<button class="in_text_btn" onclick="ClickLeftTabBtn('Geom');ClickTopTabBtn('Geom_Target');"><b>Target</b></button>tab.
     <br>&nbsp 
     <h3>Getting started</h3>
-    &nbsp &nbsp The first step to compute your own periodic solution is to specify how many bodies will be interacting. The<button class="in_text_btn" onclick="ClickLeftTabBtn('Geom');ClickTopTabBtn('Geom_New_Bodies');"><b>Geometry</b></button>tab lets you create new bodies, specify their masses, and arrange them in choreographic loops with pre-defined symmetry constraints.
+    &nbsp &nbsp The first step to compute your own periodic solution is to specify how many bodies will be interacting. The<button class="in_text_btn" onclick="ClickLeftTabBtn('Geom');ClickTopTabBtnGeom_New_Bodies();"><b>Geometry</b></button>tab lets you create new bodies, specify their masses, and arrange them in choreographic loops with pre-defined symmetry constraints.
     <br>&nbsp
     <h3>Expert options</h3>
     &nbsp &nbsp More complex symmetries can be specified under the<button class="in_text_btn" onclick="ClickLeftTabBtn('Geom');ClickTopTabBtn('Geom_Custom');"><b>Custom</b></button>tab. Don't hesitate to play around with the parameters of the<button class="in_text_btn" onclick="ClickLeftTabBtn('Geom');ClickTopTabBtn('Geom_Random');"><b>Random</b></button>initialization, as well as all of the<button class="in_text_btn" onclick="ClickLeftTabBtn('Solver');"><b>Solver</b></button>options.

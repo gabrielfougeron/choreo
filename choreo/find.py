@@ -944,7 +944,7 @@ def ChoreoFindFromDict(params_dict,Workspace_folder):
 
     np.random.seed(int(time.time()*10000) % 5000)
 
-    geodim = 2
+    geodim = params_dict['Geom_Gen'] ['geodim']
 
     TwoDBackend = (geodim == 2)
     ParallelBackend = (params_dict['Solver_CLI']['Exec_Mul_Proc'] == "MultiThread")
@@ -956,7 +956,7 @@ def ChoreoFindFromDict(params_dict,Workspace_folder):
 
     LookForTarget = params_dict['Geom_Target'] ['LookForTarget']
 
-    if (LookForTarget) :
+    if (LookForTarget) : # IS LIKELY BROKEN !!!!
 
         Rotate_fast_with_slow = params_dict['Geom_Target'] ['Rotate_fast_with_slow']
         Optimize_Init = params_dict['Geom_Target'] ['Optimize_Init']
@@ -993,21 +993,66 @@ def ChoreoFindFromDict(params_dict,Workspace_folder):
         
         nbody = len(mass)
 
+
+
+    nbody = params_dict["Geom_Bodies"]["nbody"]
+    MomConsImposed = params_dict['Geom_Bodies'] ['MomConsImposed']
+    nsyms = params_dict["Geom_Bodies"]["nsyms"]
+
+    # TODO: change this
+    nloop = nbody
+    mass = np.ones(nloop)
+
+    Sym_list = []
+
+    if (geodim == 2):
+
+        for isym in range(nsyms):
+            
+            BodyPerm = np.array(params_dict["Geom_Bodies"]["AllSyms"][isym]["BodyPerm"],dtype=int)
+
+            Reflexion = params_dict["Geom_Bodies"]["AllSyms"][isym]["Reflexion"]
+            if (Reflexion == "True"):
+                s = -1
+            elif (Reflexion == "False"):
+                s = 1
+            else:
+                raise ValueError("Reflexion must be True or False")
+
+            rot_angle = 2 * np.pi * params_dict["Geom_Bodies"]["AllSyms"][isym]["RotAngleNum"] / params_dict["Geom_Bodies"]["AllSyms"][isym]["RotAngleDen"]
+
+            SpaceRot = np.array(
+                [   [ s*np.cos(rot_angle)   , -s*np.sin(rot_angle)  ],
+                    [ np.sin(rot_angle)     , np.cos(rot_angle)     ]   ]
+                , dtype = np.float64
+            )
+
+            TimeRev_str = params_dict["Geom_Bodies"]["AllSyms"][isym]["TimeRev"]
+            if (TimeRev_str == "True"):
+                TimeRev = -1
+            elif (TimeRev_str == "False"):
+                TimeRev = 1
+            else:
+                raise ValueError("TimeRev must be True or False")
+
+            TimeShift = fractions.Fraction(
+                numerator = params_dict["Geom_Bodies"]["AllSyms"][isym]["TimeShiftNum"],
+                denominator = params_dict["Geom_Bodies"]["AllSyms"][isym]["TimeShiftDen"]
+            )
+
+            Sym_list.append(
+                ActionSym(
+                    BodyPerm = BodyPerm     ,
+                    SpaceRot = SpaceRot     ,
+                    TimeRev = TimeRev       ,
+                    TimeShift = TimeShift   ,
+                )
+            )
+
     else:
 
-        n_make_loops = len(params_dict["Geom_Bodies"]["SymType"])
+        raise ValueError("Only compatible with 2D right now")
 
-        nbpl = params_dict["Geom_Bodies"]["nbpl"]
-
-        SymType = params_dict["Geom_Bodies"]["SymType"]
-
-        Sym_list,nbody = Make2DChoreoSymManyLoops(nbpl=nbpl,SymType=SymType)
-
-        mass = []
-        for il in range(n_make_loops):
-            mass.extend([params_dict["Geom_Bodies"]["mass"][il] for ib in range(nbpl[il])])
-
-        mass = np.array(mass,dtype=np.float64)
 
     if ((LookForTarget) and not(params_dict['Geom_Target'] ['RandomJitterTarget'])) :
 
@@ -1023,38 +1068,14 @@ def ChoreoFindFromDict(params_dict,Workspace_folder):
         k_infl          = params_dict["Geom_Random"]["k_infl"]
         k_max           = params_dict["Geom_Random"]["k_max"]
 
-    n_custom_sym = params_dict["Geom_Custom"]["n_custom_sym"]
-    
-    for isym in range(n_custom_sym):
-        
-        if (params_dict["Geom_Custom"]["CustomSyms"][isym]["Reflexion"] == "True"):
-            s = -1
-        elif (params_dict["Geom_Custom"]["CustomSyms"][isym]["Reflexion"] == "False"):
-            s = 1
-        else:
-            raise ValueError("Reflexion must be True or False")
-            
-        rot_angle = (2*np.pi * params_dict["Geom_Custom"]["CustomSyms"][isym]["RotAngleNum"]) / params_dict["Geom_Custom"]["CustomSyms"][isym]["RotAngleDen"]
 
-        if (params_dict["Geom_Custom"]["CustomSyms"][isym]["TimeRev"] == "True"):
-            TimeRev = -1
-        elif (params_dict["Geom_Custom"]["CustomSyms"][isym]["TimeRev"] == "False"):
-            TimeRev = 1
-        else:
-            raise ValueError("TimeRev must be True or False")
-        
-        Sym_list.append(
-            ChoreoSym(
-                LoopTarget=params_dict["Geom_Custom"]["CustomSyms"][isym]["LoopTarget"],
-                LoopSource=params_dict["Geom_Custom"]["CustomSyms"][isym]["LoopSource"],
-                SpaceRot= np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64),
-                TimeRev=TimeRev,
-                TimeShift=fractions.Fraction(
-                    numerator=params_dict["Geom_Custom"]["CustomSyms"][isym]["TimeShiftNum"],
-                    denominator=params_dict["Geom_Custom"]["CustomSyms"][isym]["TimeShiftDen"])
-                ))
 
-    MomConsImposed = params_dict['Geom_Bodies'] ['MomConsImposed']
+
+
+
+
+
+
 
     store_folder = os.path.join(Workspace_folder,str(nbody))
     if not(os.path.isdir(store_folder)):

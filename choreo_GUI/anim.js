@@ -111,8 +111,9 @@ var particleLayerContext
 var FileSystemAccessSupported = ('showOpenFilePicker' in window)
 
 var BodyGraph
+var PreviousInputValueNbody = 3
 
-const { createFFmpeg , fetchFile  } = FFmpeg;
+const { createFFmpeg , fetchFile  } = FFmpeg
 const ffmpeg = createFFmpeg()
 
 function AjaxGet(foldername){ return $.ajax({ url: foldername})}
