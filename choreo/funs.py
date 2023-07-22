@@ -2333,10 +2333,17 @@ class ActionSym():
         TimeShift,
     ):
 
+        den = TimeShift.denominator
+        num = TimeShift.numerator
+        num = ((num % den) + den) % den
+
         self.BodyPerm = BodyPerm
         self.SpaceRot = SpaceRot
         self.TimeRev = TimeRev
-        self.TimeShift = TimeShift
+        self.TimeShift = fractions.Fraction(
+            numerator = num     ,
+            denominator = den   ,
+        )
 
     def __str__(self):
 
@@ -2350,6 +2357,15 @@ class ActionSym():
     
     @staticmethod
     def Identity(nbody, geodim):
+        """Identity: Returns the identity transformation
+
+        :param nbody: Number of bodies
+        :type nbody: int
+        :param geodim: Dimension of ambient space
+        :type geodim: int
+        :return: The identity transformation of appropriate size
+        :rtype: ActionSym
+        """        
 
         return ActionSym(
             BodyPerm  = np.array(range(nbody), dtype = np.int_),
@@ -2363,6 +2379,17 @@ class ActionSym():
 
     @staticmethod
     def Random(nbody, geodim, maxden = None):
+        """Random Returns a random transformation
+
+        :param nbody: Number of bodies
+        :type nbody: int
+        :param geodim: Dimension of ambient space
+        :type geodim: int
+        :param maxden: Maximum denominator for TimeShift, defaults to None
+        :type maxden: int, optional
+        :return: A random transformation of appropriate size
+        :rtype: ActionSym
+        """        
 
         if maxden is None:
             maxden = 10*nbody
@@ -2396,7 +2423,7 @@ class ActionSym():
         for ib in range(self.BodyPerm.size):
             InvPerm[self.BodyPerm[ib]] = ib
 
-        inv_numerator = ((((-self.TimeRev*self.TimeShift.numerator) % self.TimeShift.denominator) + self.TimeShift.denominator) % self.TimeShift.denominator)
+        inv_numerator = - self.TimeRev * self.TimeShift.numerator
 
         return ActionSym(
             BodyPerm = InvPerm,
@@ -2408,24 +2435,15 @@ class ActionSym():
             )
         )
 
-    def Compose(B,A):
+    def Compose(B, A):
         r"""
         Returns the composition of two transformations.
 
         B.Compose(A) returns the composition B o A, i.e. applies A then B.
         """
 
-        tshift = (B.TimeShift + 
-            fractions.Fraction(
-                numerator = int(B.TimeRev)*A.TimeShift.numerator,
-                denominator = A.TimeShift.denominator 
-            )
-        )
-
-        tshiftmod = fractions.Fraction(
-            numerator = tshift.numerator % tshift.denominator,
-            denominator = tshift.denominator
-        )
+        num = A.TimeShift.numerator * B.TimeShift.denominator + A.TimeRev * B.TimeShift.numerator * A.TimeShift.denominator
+        den = A.TimeShift.denominator * B.TimeShift.denominator
     
         ComposeBodyPerm = np.empty_like(B.BodyPerm)
         for ib in range(B.BodyPerm.size):
@@ -2435,7 +2453,10 @@ class ActionSym():
             BodyPerm = ComposeBodyPerm,
             SpaceRot = np.matmul(B.SpaceRot,A.SpaceRot),
             TimeRev = (B.TimeRev * A.TimeRev),
-            TimeShift = tshiftmod
+            TimeShift = fractions.Fraction(
+                numerator = num     ,
+                denominator = den   ,
+            )
         )
 
     def IsIdentity(self, atol = 1e-10):
@@ -2452,7 +2473,7 @@ class ActionSym():
                 atol = atol
             ) and
             (self.TimeRev == 1) and
-            (abs(self.TimeShift % 1) < atol)
+            (abs(self.TimeShift) < atol)
         )
 
     def IsSame(self, other, atol = 1e-10):
@@ -2461,7 +2482,16 @@ class ActionSym():
         """   
         return ((self.Inverse()).Compose(other)).IsIdentity(atol = atol)
 
+    def ApplyT(self, Time):
 
+        den = self.TimeShift.denominator * Time.denominator
+        num = self.TimeRev * (Time.numerator * self.TimeShift.denominator - Time.denominator * self.TimeShift.numerator)
+        num = ((num % den) + den) % den
+
+        return fractions.Fraction(
+            numerator = num,
+            denominator = den
+        )
 
 
 class ChoreoSym():
@@ -2684,7 +2714,7 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
 
     All_den_list_on_entry = [2] # In case there is a reflexion
     for Sym in Sym_list:
-        All_den_list_on_entry.append(abs(Sym.TimeShift.denominator))
+        All_den_list_on_entry.append(Sym.TimeShift.denominator)
 
     nint_min = m.lcm(*All_den_list_on_entry) # ensures that all integer divisions will have zero remainder
 
@@ -2692,151 +2722,53 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
 
     Identity_detected = False
 
-    FullGraph = networkx.Graph()
+    FullGraph = networkx.DiGraph()
     for ib in range(nbody):
         for iint in range(nint_min):
             FullGraph.add_node((ib,iint),Constraint_list=[])
 
-
-
-    for Sym in SymList:
+    for Sym in Sym_list:
 
         for ib in range(nbody):
 
             ib_target = Sym.BodyPerm[ib]
 
             for iint in range(nint_min):
+                
+                if (Sym.TimeRev == 1): 
+                    Time = fractions.Fraction(numerator = iint, denominator = nint_min)
+                
+                else:
+                    Time = fractions.Fraction(numerator = (iint+1), denominator = nint_min)
 
-                iint_target = iint - Sym.TimeShift.numerator * (nint_min // Sym.TimeShift.denominator)
+                TimeTarget = Sym.ApplyT(Time)
 
-                if (Sym.TimeRev == -1):
-                    
-                    iint_target = 1 - iint_target
+                assert nint_min % TimeTarget.denominator == 0
 
-                iint_target = ((iint_target % nint_min) + nint_min) % nint_min 
+                iint_target = TimeTarget.numerator * (nint_min // TimeTarget.denominator)
 
                 node_source = (ib       , iint       )
                 node_target = (ib_target, iint_target)
-
-                FullGraph.add_edge(node_source, node_target, Sym = Sym)
-
-
-
-
-    for il in range(len(ConnectedComponents)):
-        
-        loopgen[il] = ConnectedComponents[il].pop()
-
-        paths_to_gen = networkx.shortest_path(SymGraph, target=loopgen[il])
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    for iint_source in range(nint_min):
-
-        for Sym in Sym_list:
-
-            iint_target = iint_source - Sym.TimeShift.numerator * (nint_min // Sym.TimeShift.denominator)
-
-            if (Sym.TimeRev == -1):
-                
-                iint_target = 1 - iint_target
-
-            iint_target = ((iint_target % nint_min) + nint_min) % nint_min 
-
-            node_source = (Sym.LoopSource, iint       )
-            node_target = (Sym.LoopTarget, iint_target)
-
-            if (node_target < node_source):
-
-                Sym = Sym.Inverse()
-                node_target, node_source = node_source, node_target
-
-            if (node_source == node_target):
-                # Symmetry is a constraint
-                if not(Sym.IsIdentity()):
-                    SymGraph.nodes[node_source]["Constraint_list"].append(Sym)
-
-            else:
-
                 edge = (node_source, node_target)
 
-                if edge in SymGraph.edges: # adds constraint instead of adding parallel edge
-
-                    Sym = Sym.Inverse().Compose(SymGraph.edges[edge]["Sym"])
-                    
-                    if not(Sym.IsIdentity()):
-                        SymGraph.nodes[node_source]["Constraint_list"].append(Sym)
-                    
-                else: # Really adds edge
-                    
-                    SymGraph.add_edge(*edge,Sym=Sym)
-
-    Cycles = list(networkx.cycle_basis(SymGraph))    
-    # Aggregate cycles symmetries into constraints
-    
-    for Cycle in Cycles:
-
-        Constraint = ChoreoSym(
-            LoopTarget=Cycle[0],
-            LoopSource=Cycle[0],
-            SpaceRot = np.identity(geodim,dtype=np.float64),
-            TimeRev = 1,
-            TimeShift = fractions.Fraction(numerator=0,denominator=1)
-        )
-        
-        Cycle_len = len(Cycle)
-        
-        for iedge in range(Cycle_len):
-            
-            node_beg = Cycle[iedge]
-            node_end = Cycle[(iedge+1)%Cycle_len]
-            
-            if (node_beg < node_end): ## order ???
-
-                Constraint = Constraint.Compose(SymGraph.edges[(ibeg,iend)]["Sym"])
+                if edge in FullGraph.edges:
                 
-            else:
-                
-                Constraint = Constraint.Compose(SymGraph.edges[(iend,ibeg)]["Sym"].Inverse())
-            
-        if not(Constraint.IsIdentity()):
-            
-            SymGraph.nodes[Cycle[0]]["Constraint_list"].append(Constraint)
+                    FullGraph.edges[edge]["SymList"].append(Sym)
 
+                else:
+                    
+                    FullGraph.add_edge(node_source, node_target, SymList = [Sym])
 
+    pos = {i:(i[1],i[0]) for i in FullGraph.nodes }
 
-
-
-
-
-
-
-
-
-
+    networkx.draw(
+        FullGraph,
+        pos = pos,
+        labels = {i:i for i in FullGraph.nodes},
+        connectionstyle="arc3,rad=0.1",
+    )
+    plt.savefig('./NewSym_data/graph.pdf')
+    plt.close()
 
 
 
