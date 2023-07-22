@@ -439,7 +439,7 @@ function GatherGeom_Bodies(nbody = -1){
 
     }
 
-    Geom_Bodies ['nbody'] = nbody
+    Geom_Bodies ['nbody'] = parseInt(nbody,10)
 
     Geom_Bodies ['MomConsImposed'] = document.getElementById('checkbox_MomCons').checked
 
@@ -2539,6 +2539,8 @@ function InitPage(){
 
         MakeBodyGraph()
 
+        document.getElementById("BodyGraphDiv").addEventListener("dblclick", MakeBodyGraph)
+
     }
 
 }
@@ -2966,7 +2968,6 @@ function ClickAddSym() {
     MakeBodyGraph()
 
 }
-
 
 function UpdateNumberofBodies() {
 
