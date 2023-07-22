@@ -27,6 +27,7 @@ from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.colors import cnames
 from matplotlib.collections import LineCollection
 from matplotlib import animation
+from matplotlib import colormaps
 
 try:
     import ffmpeg
@@ -2712,22 +2713,24 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
      - Exhaustive list of binary transformations from generator within each loop.
     """
 
-    All_den_list_on_entry = [2] # In case there is a reflexion
+    All_den_list_on_entry = [8] # In case there is a reflexion
     for Sym in Sym_list:
         All_den_list_on_entry.append(Sym.TimeShift.denominator)
 
-    nint_min = m.lcm(*All_den_list_on_entry) # ensures that all integer divisions will have zero remainder
+    nint_min = 2 * m.lcm(*All_den_list_on_entry) # ensures that all integer divisions will have zero remainder
 
-    assert (nint_init % nint_min) == 0
+    # assert (nint_init % nint_min) == 0
 
     Identity_detected = False
 
-    FullGraph = networkx.DiGraph()
+    FullGraph = networkx.Graph()
     for ib in range(nbody):
         for iint in range(nint_min):
             FullGraph.add_node((ib,iint),Constraint_list=[])
 
     for Sym in Sym_list:
+
+        SymInv = Sym.Inverse()
 
         for ib in range(nbody):
 
@@ -2749,24 +2752,124 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
 
                 node_source = (ib       , iint       )
                 node_target = (ib_target, iint_target)
-                edge = (node_source, node_target)
+
+                if node_source > node_target :
+                    edge = (node_target, node_source)
+                    EdgeSym = SymInv
+
+                else:
+                    edge = (node_source, node_target)
+                    EdgeSym = Sym
 
                 if edge in FullGraph.edges:
                 
-                    FullGraph.edges[edge]["SymList"].append(Sym)
+                    FullGraph.edges[edge]["SymList"].append(EdgeSym)
 
                 else:
                     
-                    FullGraph.add_edge(node_source, node_target, SymList = [Sym])
+                    FullGraph.add_edge(*edge, SymList = [EdgeSym])
+
+
+    BodyGraph = networkx.Graph()
+    for ib in range(nbody):
+        BodyGraph.add_node(ib)
+
+    for Sym in Sym_list:
+
+        for ib in range(nbody):
+
+            ib_target = Sym.BodyPerm[ib]
+
+            if ib > ib_target:
+                edge = (ib_target, ib)
+            else:
+                edge = (ib, ib_target)
+
+            if not(edge in BodyGraph.edges):
+            
+                   BodyGraph.add_edge(*edge)
+
+
+
+
+    nnodes = nbody*nint_min
+    node_color = np.zeros(nnodes)
+
+    for icolor, CC in enumerate(networkx.connected_components(FullGraph)):
+        for node in CC:
+            inode = node[1] + nint_min * node[0]
+            node_color[inode] = icolor
+
+    nedges = len(FullGraph.edges)
+    edge_color = np.zeros(nedges)
+
+    for iedge, edge in enumerate(FullGraph.edges):
+
+        ContainsDirect = False
+        ContainsIndirect = False
+
+        for Sym in FullGraph.edges[edge]["SymList"]:
+
+            if Sym.TimeRev == 1:
+                ContainsDirect = True
+            else:
+                ContainsIndirect = True
+
+        if ContainsDirect:
+            if ContainsIndirect:
+                color = 2
+            else:
+                color = 1
+        else:
+            color = 0
+
+        edge_color[iedge] = color
+
 
     pos = {i:(i[1],i[0]) for i in FullGraph.nodes }
 
-    networkx.draw(
+    fig, ax = plt.subplots()
+
+    # networkx.draw(
+    #     FullGraph,
+    #     pos = pos,
+    #     labels = {i:i for i in FullGraph.nodes},
+    #     node_color = node_color,
+    #     cmap = 'jet',
+    #     arrows = False,
+    #     # connectionstyle = "arc3,rad=0.1",
+    # )
+
+    networkx.draw_networkx_nodes(
         FullGraph,
         pos = pos,
-        labels = {i:i for i in FullGraph.nodes},
-        connectionstyle="arc3,rad=0.1",
+        ax = ax,
+        node_color = node_color,
+        cmap = 'gist_rainbow',
     )
+
+    # networkx.draw_networkx_labels(
+    #     FullGraph,
+    #     pos = pos,
+    #     ax = ax,
+        # labels = {i:i for i in FullGraph.nodes},
+    # )
+# 
+    networkx.draw_networkx_edges(
+        FullGraph,
+        pos = pos,
+        ax = ax,
+        arrows = True,
+        connectionstyle = "arc3,rad=0.1",
+        edge_color = edge_color,
+        edge_vmin = 0,
+        edge_vmax = 2,
+        edge_cmap = colormaps['jet'],
+    )
+
+    plt.axis('off')
+    fig.tight_layout()
+
     plt.savefig('./NewSym_data/graph.pdf')
     plt.close()
 
