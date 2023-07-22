@@ -72,12 +72,8 @@ async function Play_Loop_From_Python(args){
     trailLayerCanvas.dispatchEvent(event)
 
     SearchIsOnGoing = false
-    var ChoreoExecuteBtn = document.getElementById("ChoreoExecuteBtn")
-    ChoreoExecuteBtn.disabled = ""
     var ChoreoDispInitStateBtn = document.getElementById("ChoreoDispInitStateBtn")
     ChoreoDispInitStateBtn.disabled = ""
-    var ChoreoSearchNext = document.getElementById("ChoreoSearchNext")
-    ChoreoSearchNext.disabled = "disabled"
     AskForNext[0] = 0
 
     var RotSlider = $("#RotSlider").data("roundSlider")
@@ -128,12 +124,8 @@ function Python_no_sol_found(args) {
     } 
 
     SearchIsOnGoing = false
-    var ChoreoExecuteBtn = document.getElementById("ChoreoExecuteBtn");
-    ChoreoExecuteBtn.disabled = "";
     var ChoreoDispInitStateBtn = document.getElementById("ChoreoDispInitStateBtn");
     ChoreoDispInitStateBtn.disabled = "";
-    var ChoreoSearchNext = document.getElementById("ChoreoSearchNext");
-    ChoreoSearchNext.disabled = "disabled";
     AskForNext[0] = 0
 
     var RotSlider = $("#RotSlider").data("roundSlider");
@@ -180,12 +172,8 @@ async function Python_Imports_Done(args){
     PythonPrint({txt:"&#10;All python packages imported&#10;"})
 
     SearchIsOnGoing = false
-    var ChoreoExecuteBtn = document.getElementById("ChoreoExecuteBtn")
-    ChoreoExecuteBtn.disabled = ""
     var ChoreoDispInitStateBtn = document.getElementById("ChoreoDispInitStateBtn")
     ChoreoDispInitStateBtn.disabled = ""
-    var ChoreoSearchNext = document.getElementById("ChoreoSearchNext")
-    ChoreoSearchNext.disabled = "disabled"
     AskForNext[0] = 0
 
     var RotSlider = $("#RotSlider").data("roundSlider")
@@ -217,7 +205,7 @@ function ClickTopTabBtn(TabId) {
     for (i = 0; i < AllMainTabs.length  ; i++) { if (AllMainTabs[i].classList.contains(TabId))   {AllMainTabs[i].style.display   = "block";} else {AllMainTabs[i].style.display   = "none"     ;}}
 }
 
-function  GeomTopTabBtn(TabId) {
+function SwitchClickLeftTabBtn(TabId) {
     switch (TabId) {
         case 'Main': {
             ClickTopTabBtn('Main_About')
@@ -226,7 +214,7 @@ function  GeomTopTabBtn(TabId) {
             ClickTopTabBtn('Play_NowPlaying')
             break}
         case 'Geom': {
-            ClickTopTabBtn('Geom_New_Bodies')
+            ClickTopTabBtnGeom_New_Bodies()
             break}
         case 'Animation': {
             ClickTopTabBtn('Animation_Colors')
@@ -235,6 +223,13 @@ function  GeomTopTabBtn(TabId) {
             ClickTopTabBtn_Solver_Output()
             break}
     }
+}
+
+function ClickTopTabBtnGeom_New_Bodies() {
+    
+    ClickTopTabBtn('Geom_New_Bodies')
+    BodyGraph.fit()
+
 }
 
 function ClickLeftTabBtn(TabId) {
@@ -256,7 +251,7 @@ function ClickLeftTabBtn(TabId) {
             AllTopTab[i].style.display     = "none"     ;
         }
     }
-    GeomTopTabBtn(TabId);
+    SwitchClickLeftTabBtn(TabId);
 }
 
 var saveJSONData = (function () {
@@ -297,17 +292,13 @@ async function SaveConfigFile(UserDir=false,ConfigDict=undefined){
 
 async function ChoreoExecuteClick() {
 
-    var ChoreoExecuteBtn = document.getElementById("ChoreoExecuteBtn")
+    var ChoreoDispInitStateBtn = document.getElementById("ChoreoDispInitStateBtn")
 
-    if (!ChoreoExecuteBtn.disabled) {
+    if (!ChoreoDispInitStateBtn.disabled) {
         
         SearchIsOnGoing = true
-        var ChoreoExecuteBtn = document.getElementById("ChoreoExecuteBtn")
-        ChoreoExecuteBtn.disabled = "disabled"
         var ChoreoDispInitStateBtn = document.getElementById("ChoreoDispInitStateBtn")
         ChoreoDispInitStateBtn.disabled = "disabled"
-        var ChoreoSearchNext = document.getElementById("ChoreoSearchNext")
-        ChoreoSearchNext.disabled = ""
         AskForNext[0] = 0
 
         var trailLayerCanvas = document.getElementById("trailLayerCanvas")
@@ -436,11 +427,18 @@ function GenerateInitStateClick() {
 
 }
 
-function GatherGeom_Bodies(){
+function GatherGeom_Bodies(nbody = -1){
 
     Geom_Bodies = {}
 
-    nbody = document.getElementById("input_nbody").value
+    if (nbody < 0) {
+        nbody = document.getElementById("input_nbody").value
+    } else {
+
+        nbody = Math.min(document.getElementById("input_nbody").value, nbody)
+
+    }
+
     Geom_Bodies ['nbody'] = nbody
 
     Geom_Bodies ['MomConsImposed'] = document.getElementById('checkbox_MomCons').checked
@@ -489,6 +487,9 @@ function GatherConfigDict() {
     /* Gathers all relevant input in the page and puts it in a dictionary */
 
     var ConfigDict = {}
+
+    ConfigDict['Geom_Gen'] = {}
+    ConfigDict['Geom_Gen'] ['geodim'] = 2  // futureproofing for once
 
     ConfigDict['Geom_Bodies'] = GatherGeom_Bodies()
 
@@ -659,6 +660,7 @@ async function LoadConfigFileFromRemote(json_filename) {
 function LoadGeom_Bodies(Geom_Bodies){
 
     nbody = Geom_Bodies ['nbody'] 
+
     document.getElementById("input_nbody").value = nbody
     document.getElementById('checkbox_MomCons').checked = Geom_Bodies ['MomConsImposed']
     
@@ -694,6 +696,8 @@ function LoadGeom_Bodies(Geom_Bodies){
         table_sym.rows[7].cells[icol].children[0].value = the_sym['TimeShiftDen']
         
     }
+
+    PreviousInputValueNbody = nbody
 
 }
 
@@ -920,6 +924,7 @@ function RedistributeClicksTable(tableid, mincol) {
             if (table.rows[0].cells.length > (mincol+1)) {
                 deleteColumn(tableid, this.button_number)
                 RedistributeClicksTable(tableid, mincol)
+                MakeBodyGraph()
             }
         }
 
@@ -1303,12 +1308,8 @@ function KillAndReloadWorker() {
     pyodide_worker.terminate()
 
     SearchIsOnGoing = false
-    var ChoreoExecuteBtn = document.getElementById("ChoreoExecuteBtn")
-    ChoreoExecuteBtn.disabled = "disabled"
     var ChoreoDispInitStateBtn = document.getElementById("ChoreoDispInitStateBtn")
     ChoreoDispInitStateBtn.disabled = "disabled"
-    var ChoreoSearchNext = document.getElementById("ChoreoSearchNext")
-    ChoreoSearchNext.disabled = "disabled"
     AskForNext[0] = 0
 
     var Python_State_Div = document.getElementById("Python_State_Div")
@@ -1481,10 +1482,10 @@ function checkbox_Cookie_Handler(event) {
 
 async function IssueMessage(HTMLdiv,message,duration = -1) {
 
-    HTMLdiv.innerHTML = message;
+    HTMLdiv.innerHTML = message
 
     if (duration > 0 ) {
-        setTimeout(function(){IssueMessage(HTMLdiv,"",-1)}, duration);
+        setTimeout(function(){IssueMessage(HTMLdiv,"",-1)}, duration)
     }
 
 }
@@ -2532,8 +2533,9 @@ function InitPage(){
 
         document.getElementById('CLI_nproc').value = (navigator.hardwareConcurrency / 2)
 
-        DealWithCookie()
+        ClickAddSym()
 
+        DealWithCookie()
 
         MakeBodyGraph()
 
@@ -2793,13 +2795,6 @@ function MakeBodyGraph(){
         
     }
 
-
-    // create an array with edges
-    // var edges = new vis.DataSet([
-    //     { from: 0, to: 1 ,color : "black"},
-    // ])
-
-    // create a network
     var container = document.getElementById("BodyGraphDiv")
 
     var data = {
@@ -2867,8 +2862,9 @@ function CreateInputPermTable(){
         innerHTML += "<tr><td style=border:none;'>"
         innerHTML += ib.toString() + " : "
         innerHTML += "<input type='number' "
-        innerHTML += "value='"+ib.toString()+"'"
+        innerHTML += "value='"+((ib+1) % nbody).toString()+"'"
         innerHTML += "min='0' max='"+(nbody-1).toString()+"'"
+        innerHTML += "onchange='MakeBodyGraph()'"
         innerHTML += "style='width:36px;'>"
         innerHTML += "</td></tr>"
         
@@ -2879,6 +2875,8 @@ function CreateInputPermTable(){
 }
 
 function ClickAddSym() {
+
+    nbody = document.getElementById("input_nbody").value
     var table = document.getElementById('table_sym')
     var newcell
     var div,input
@@ -2918,13 +2916,13 @@ function ClickAddSym() {
         {
             "elem_class":"input", 
             "type":"number", 
-            "value":"0",
+            "value":"1",
             "style":"width: 53px; text-align: center;",
         },
         {
             "elem_class":"input", 
             "type":"number", 
-            "value":"1",
+            "value":(nbody).toString(),
             "style":"width: 53px; text-align: center;",
         }
     ]
@@ -2964,5 +2962,39 @@ function ClickAddSym() {
     }
 
     RedistributeClicksTable('table_sym',0)
+
+    MakeBodyGraph()
+
+}
+
+
+function UpdateNumberofBodies() {
+
+    var Geom_Bodies = GatherGeom_Bodies(PreviousInputValueNbody)
+    
+    new_nbody = document.getElementById("input_nbody").value
+    Geom_Bodies["nbody"] = new_nbody 
+
+    if (PreviousInputValueNbody < new_nbody) {
+
+        nsyms = Geom_Bodies ['nsyms']
+
+        for (var isym = 0; isym < nsyms; isym++) {
+
+            for (ib = PreviousInputValueNbody; ib < new_nbody; ib++) {
+
+                Geom_Bodies ['AllSyms'][isym]['BodyPerm'].push( ib )
+
+            }
+
+        }
+
+    }
+    
+    LoadGeom_Bodies(Geom_Bodies)
+
+    PreviousInputValueNbody = new_nbody
+
+    MakeBodyGraph()
 
 }
