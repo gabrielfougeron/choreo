@@ -226,7 +226,7 @@ function  GeomTopTabBtn(TabId) {
             ClickTopTabBtn('Play_NowPlaying')
             break}
         case 'Geom': {
-            ClickTopTabBtn_Geom_New_Bodies()
+            ClickTopTabBtn('Geom_New_Bodies')
             break}
         case 'Animation': {
             ClickTopTabBtn('Animation_Colors')
@@ -385,14 +385,6 @@ async function ChoreoExecuteClick() {
         }
 
     }
-
-}
-
-function Speed_Test_Click() {
-
-    var ConfigDict = GatherConfigDict()
-    pyodide_worker.postMessage({funname:"LoadDataInWorker",args:{ConfigDict:ConfigDict}})
-    pyodide_worker.postMessage({funname:"ExecutePythonFile",args:"./python_scripts/Speed_Test.py"})
 
 }
 
@@ -1281,12 +1273,6 @@ function ChangeColor_Handler(event) {
 function ClickTopTabBtn_Animation_Framerate() {
     UpdateFPSDisplay()
     ClickTopTabBtn('Animation_Framerate')
-}
-
-function ClickTopTabBtn_Geom_New_Bodies() {
-
-    ClickTopTabBtn('Geom_New_Bodies')
-    GraphFit()
 }
 
 function ClickTopTabBtn_Solver_Output() {
@@ -2542,8 +2528,6 @@ function InitPage(){
             AddColor()
         }
 
-        Python_textarea.style.height = "400px"
-
         InitWorkspaceClick()
 
         document.getElementById('CLI_nproc').value = (navigator.hardwareConcurrency / 2)
@@ -2552,7 +2536,6 @@ function InitPage(){
 
 
         MakeBodyGraph()
-        GraphFit()
 
     }
 
@@ -2871,12 +2854,6 @@ function MakeBodyGraph(){
     BodyGraph.on("stabilizationIterationsDone", function () {
         BodyGraph.setOptions( { physics: false } );
     });
-
-}
-
-function GraphFit(){
-
-    BodyGraph.fit()
 
 }
 
