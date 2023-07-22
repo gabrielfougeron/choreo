@@ -122,9 +122,9 @@ def Find_Choreo(
 
     print(f'Processing symmetries for {(n_reconverge_it_max+1):d} convergence levels.')
 
-    ActionSyst = setup_changevar(
+    # ActionSyst = setup_changevar(
     # ActionSyst = setup_changevar_new_new(
-    # ActionSyst = setup_changevar_new(
+    ActionSyst = setup_changevar_new(
         geodim                                      ,
         nbody                                       ,
         nint_init                                   ,
