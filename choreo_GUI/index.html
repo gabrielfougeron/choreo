@@ -98,11 +98,9 @@ window.addEventListener("drop",function(e){
       <button id="Play_Workspace"   class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Play_Workspace"  onclick="ClickTopTabBtn('Play_Workspace')"      >Workspace</button>
     </div>
     <div class="w3-bar w3-light-grey TopTab Geom">
-        <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Geom_New_Bodies"   onclick="ClickTopTabBtn_Geom_New_Bodies()">Bodies</button>
-        <!-- <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Geom_Bodies"   onclick="ClickTopTabBtn('Geom_Bodies')">Bodies</button> -->
+        <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Geom_New_Bodies"   onclick="ClickTopTabBtn('Geom_New_Bodies')">Bodies</button>
         <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Geom_Target"   onclick="ClickTopTabBtn('Geom_Target')">Target</button>
         <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Geom_Random"   onclick="ClickTopTabBtn('Geom_Random')">Random</button>
-        <!-- <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Geom_Custom"   onclick="ClickTopTabBtn('Geom_Custom')">Custom</button> -->
     </div>
     <div class="w3-bar w3-light-grey TopTab Animation">
         <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Animation_Colors"    onclick="ClickTopTabBtn('Animation_Colors')"      >Colors</button>
@@ -232,8 +230,6 @@ window.addEventListener("drop",function(e){
   </div>
   <div class="w3-container MainTab Geom_New_Bodies" style="display:none; text-align: justify;">
     <h2>New Bodies definition</h2>
-
-    <button id="GraphFitBtn"   class="w3-button w3-hover-pale-red w3-light-grey" onclick="GraphFit()" >Fit!</button>
     <button id="MakeBodyGraphBtn"   class="w3-button w3-hover-pale-red w3-light-grey" onclick="MakeBodyGraph()" >Update Graph</button>
     <div id="BodyGraphDiv"></div>
 
@@ -450,16 +446,7 @@ window.addEventListener("drop",function(e){
     </table>
   </div>
   <div class="w3-container MainTab Solver_Output" style="display:none">
-    <table style="border:0;margin-bottom:10px;display:none">
-      <tr>
-        <td style="border:0"><button id="ChoreoExecuteBtn"        class="w3-button w3-hover-pale-red w3-light-grey InTableControls" disabled="disabled" style="display:none"  onclick="ChoreoExecuteClick()"   ><b>Find solution!</b></button></td>
-        <td style="border:0"><button id="ChoreoSearchNext"        class="w3-button w3-hover-pale-red w3-light-grey InTableControls" disabled="disabled" style="display:none"  onclick="ChoreoSearchNextClick()">Next</button></td>
-        <!-- <td style="border:0"><button id="KillAndReloadWorkerBtn"  class="w3-button w3-hover-pale-red w3-light-grey InTableControls"                     onclick="KillAndReloadWorker()"                        >Kill worker</button></td> -->
-        <td style="border:0"><button id="Speed_TestBtn"           class="w3-button w3-hover-pale-red w3-light-grey InTableControls"                     style="display:none"  onclick="Speed_Test_Click()"     >Speed Test</button></td>
-      </tr>
-    </table>
     <textarea id ="Python_textarea" readonly></textarea>
-    <!-- <button id="TestBtn"  class="w3-button w3-hover-pale-red w3-light-grey InTableControls" onclick="TestClick()"      >Test</button> -->
   </div>
   <div class="w3-container MainTab Solver_Discr" style="display:none">
     <h2>Problem discretization</h2>
@@ -713,7 +700,7 @@ window.addEventListener("drop",function(e){
     Then, <b>choreo</b> implements a <a href="https://en.wikipedia.org/wiki/Spectral_method">Fourier spectral method</a> to solve the equations of motion. Starting from an initial random set of parameters, the solver forms better and better guesses until convergence. It is also possible to use previously computed solutions to manufacture an acceptable initial state to the solver in the<button class="in_text_btn" onclick="ClickLeftTabBtn('Geom');ClickTopTabBtn('Geom_Target');"><b>Target</b></button>tab.
     <br>&nbsp 
     <h3>Getting started</h3>
-    &nbsp &nbsp The first step to compute your own periodic solution is to specify how many bodies will be interacting. The<button class="in_text_btn" onclick="ClickLeftTabBtn('Geom');ClickTopTabBtn_Geom_New_Bodies();"><b>Geometry</b></button>tab lets you create new bodies, specify their masses, and arrange them in choreographic loops with pre-defined symmetry constraints.
+    &nbsp &nbsp The first step to compute your own periodic solution is to specify how many bodies will be interacting. The<button class="in_text_btn" onclick="ClickLeftTabBtn('Geom');ClickTopTabBtn('Geom_New_Bodies');"><b>Geometry</b></button>tab lets you create new bodies, specify their masses, and arrange them in choreographic loops with pre-defined symmetry constraints.
     <br>&nbsp
     <h3>Expert options</h3>
     &nbsp &nbsp More complex symmetries can be specified under the<button class="in_text_btn" onclick="ClickLeftTabBtn('Geom');ClickTopTabBtn('Geom_Custom');"><b>Custom</b></button>tab. Don't hesitate to play around with the parameters of the<button class="in_text_btn" onclick="ClickLeftTabBtn('Geom');ClickTopTabBtn('Geom_Random');"><b>Random</b></button>initialization, as well as all of the<button class="in_text_btn" onclick="ClickLeftTabBtn('Solver');"><b>Solver</b></button>options.
