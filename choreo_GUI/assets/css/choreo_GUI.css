@@ -33,7 +33,7 @@ body {
     line-height:1.0;
     background-color: #F1F1F1;
     color : #000000!important;
-    /* height:480px; */
+    height:600px;
 }
 
 @media (max-width:1220px) {
