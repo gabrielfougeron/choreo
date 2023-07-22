@@ -2701,31 +2701,32 @@ class ChoreoSym():
             denominator = den
         )
 
+def EdgesAreEitherDirectXORIndirect(FullGraph):
 
-def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCons=True,n_grad_change=1.,Sym_list=[],CrashOnIdentity=True,ForceMatrixChangevar = False):
-    
-    r"""
-    This function constructs a ChoreoAction
-    It detects loops and constraints based on symmetries.
-    It defines parameters according to given constraints and diagonal change of variable.
-    It computes useful objects to optimize the computation of the action :
-     - Exhaustive list of unary transformation for generator to body.
-     - Exhaustive list of binary transformations from generator within each loop.
-    """
+    AlwaysContainsExactlyOne = True
 
-    All_den_list_on_entry = [8] # In case there is a reflexion
-    for Sym in Sym_list:
-        All_den_list_on_entry.append(Sym.TimeShift.denominator)
+    for iedge, edge in enumerate(FullGraph.edges):
 
-    nint_min = 2 * m.lcm(*All_den_list_on_entry) # ensures that all integer divisions will have zero remainder
+        ContainsDirect = False
+        ContainsIndirect = False
 
-    # assert (nint_init % nint_min) == 0
+        for Sym in FullGraph.edges[edge]["SymList"]:
 
-    Identity_detected = False
+            if Sym.TimeRev == 1:
+                ContainsDirect = True
+            else:
+                ContainsIndirect = True
+
+        AlwaysContainsExactlyOne =  AlwaysContainsExactlyOne and (ContainsDirect ^ ContainsIndirect)  # XOR
+
+    return AlwaysContainsExactlyOne
+
+
+def Build_FullGraph(nbody, nint, Sym_list):
 
     FullGraph = networkx.Graph()
     for ib in range(nbody):
-        for iint in range(nint_min):
+        for iint in range(nint):
             FullGraph.add_node((ib,iint),Constraint_list=[])
 
     for Sym in Sym_list:
@@ -2736,19 +2737,19 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
 
             ib_target = Sym.BodyPerm[ib]
 
-            for iint in range(nint_min):
+            for iint in range(nint):
                 
                 if (Sym.TimeRev == 1): 
-                    Time = fractions.Fraction(numerator = iint, denominator = nint_min)
+                    Time = fractions.Fraction(numerator = iint, denominator = nint)
                 
                 else:
-                    Time = fractions.Fraction(numerator = (iint+1), denominator = nint_min)
+                    Time = fractions.Fraction(numerator = (iint+1), denominator = nint)
 
                 TimeTarget = Sym.ApplyT(Time)
 
-                assert nint_min % TimeTarget.denominator == 0
+                assert nint % TimeTarget.denominator == 0
 
-                iint_target = TimeTarget.numerator * (nint_min // TimeTarget.denominator)
+                iint_target = TimeTarget.numerator * (nint // TimeTarget.denominator)
 
                 node_source = (ib       , iint       )
                 node_target = (ib_target, iint_target)
@@ -2768,6 +2769,36 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
                 else:
                     
                     FullGraph.add_edge(*edge, SymList = [EdgeSym])
+    
+    if not(EdgesAreEitherDirectXORIndirect(FullGraph)):
+
+        FullGraph, nint = Build_FullGraph(nbody, 2*nint, Sym_list)
+
+    return FullGraph, nint
+
+
+def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCons=True,n_grad_change=1.,Sym_list=[],CrashOnIdentity=True,ForceMatrixChangevar = False):
+    
+    r"""
+    This function constructs a ChoreoAction
+    It detects loops and constraints based on symmetries.
+    It defines parameters according to given constraints and diagonal change of variable.
+    It computes useful objects to optimize the computation of the action :
+     - Exhaustive list of unary transformation for generator to body.
+     - Exhaustive list of binary transformations from generator within each loop.
+    """
+
+    All_den_list_on_entry = [] # In case there is a reflexion
+    for Sym in Sym_list:
+        All_den_list_on_entry.append(Sym.TimeShift.denominator)
+
+    nint_min =  m.lcm(*All_den_list_on_entry) # ensures that all integer divisions will have zero remainder
+
+    FullGraph, nint_min = Build_FullGraph(nbody, nint_min, Sym_list)
+
+    # assert (nint_init % nint_min) == 0
+
+    Identity_detected = False
 
 
     BodyGraph = networkx.Graph()
@@ -2824,7 +2855,6 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
             color = 0
 
         edge_color[iedge] = color
-
 
     pos = {i:(i[1],i[0]) for i in FullGraph.nodes }
 
