@@ -229,7 +229,7 @@ window.addEventListener("drop",function(e){
     </div>
   </div>
   <div class="w3-container MainTab Geom_New_Bodies" style="display:none; text-align: justify;">
-    <h2>New Bodies definition</h2>
+    <h2>Bodies and symmetries</h2>
     <div id="BodyGraphDiv"></div>
     <table style="display:block; font-size:16px; border:none; display:table; width:600px">
       <tr>
@@ -241,6 +241,14 @@ window.addEventListener("drop",function(e){
         <td style="border:none;"><input id ="checkbox_MomCons" class="w3-check" type="checkbox" style="vertical-align: super" unchecked></td>
       </tr>
     </table>
+    <div>
+      A symmetry requires the system to be invariant under the action of:<br>
+      &nbsp - A permutation of the bodies.<br>
+      &nbsp - A possible reflection of vertical axis.<br>
+      &nbsp - A rotation of angle \(2 \pi \alpha_p / \alpha_q\).<br>
+      &nbsp - A possible time reversal.<br>
+      &nbsp - A time lag of \(t_p / t_q\) of a total period.<br>
+      </div>
     <table id = "table_sym" style="table-layout: fixed;">
       <tr style="border-left-style:hidden;border-right-style:hidden;border-top-style:hidden;">
         <td style="width:120px;"><b><button class="w3-button w3-light-grey w3-hover-pale-red" style="text-align: center; font-size:16px" onclick="ClickAddSym()">Add Sym +</button></b></td>
@@ -252,14 +260,9 @@ window.addEventListener("drop",function(e){
       <tr><td style="width:120px;min-height:40px;"><b>Time reversal</b></td></tr>
       <tr><td style="width:120px;min-height:40px;"><b>Time lag \(t_p\)</b></td></tr>
       <tr><td style="width:120px;min-height:40px;"><b>Time lag \(t_q\)</b></td></tr>
-    </table>
-    <br>
-    A symmetry imposes the system to be invariant under the combined action of:<br>
-    &nbsp - A permutation of the bodies.<br>
-    &nbsp - A possible reflection of vertical axis.<br>
-    &nbsp - A rotation of angle \(2 \pi \alpha_p / \alpha_q\).<br>
-    &nbsp - A possible time reversal.<br>
-    &nbsp - A time lag of \(t_p / t_q\) of a total period.<br>
+    </table>  
+    <div id="MassMessage"></div>
+    <table id = "table_mass" style="table-layout: fixed;"></table>
   </div>
   <div class="w3-container MainTab Geom_Target" style="display:none">    
     <h2>Initial state target</h2>
