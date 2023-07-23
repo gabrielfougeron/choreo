@@ -436,7 +436,6 @@ function GatherGeom_Bodies(nbody = -1){
     } else {
 
         nbody = Math.min(document.getElementById("input_nbody").value, nbody)
-
     }
 
     Geom_Bodies ['nbody'] = parseInt(nbody,10)
@@ -462,7 +461,10 @@ function GatherGeom_Bodies(nbody = -1){
 
         for (ib = 0; ib < nbody; ib++) {
 
-            the_sym['BodyPerm'].push( parseInt(  table_sym.rows[1].cells[icol].children[0].rows[ib].cells[0].children[0].value,10))
+            var itarget = parseInt(  table_sym.rows[1].cells[icol].children[0].rows[ib].cells[0].children[0].value,10)
+            itarget = (itarget % nbody)
+
+            the_sym['BodyPerm'].push(itarget)
 
         }
 
@@ -680,7 +682,7 @@ function LoadGeom_Bodies(Geom_Bodies){
         const icol = isym+1
         const the_sym = Geom_Bodies ['AllSyms'][isym]
 
-        ClickAddSym()
+        DoAddSym()
 
         for (ib = 0; ib < nbody; ib++) {
 
@@ -1121,6 +1123,7 @@ function ClickRemoveColor() {
 
         RemoveColor()
         ExportColors()
+        MakeBodyGraph()
 
         var send_event = new Event('ChangeColorsFromOutsideCanvas')
         trailLayerCanvas.dispatchEvent(send_event)
@@ -1154,6 +1157,7 @@ function ClickAddColor() {
 
     AddColor()
     ExportColors()
+    MakeBodyGraph()
 
     var send_event = new Event('ChangeColorsFromOutsideCanvas')
     trailLayerCanvas.dispatchEvent(send_event)
@@ -1227,6 +1231,7 @@ function AddColor(the_color) {
 function onChangeColor(){
     
     ExportColors()
+    MakeBodyGraph()
     var send_event = new Event('ChangeColorsFromOutsideCanvas')
     trailLayerCanvas.dispatchEvent(send_event)
 
@@ -1254,6 +1259,8 @@ color_method_input.addEventListener("input", color_method_input_Handler, true);
 
 function color_method_input_Handler(event) {
 
+    MakeBodyGraph()
+
     var trailLayerCanvas = document.getElementById("trailLayerCanvas");
 
     var send_event = new Event('ChangeColorsFromOutsideCanvas');
@@ -1269,7 +1276,7 @@ function ChangeColor_Handler(event) {
     var color = event.path[0].value;
 
     colorLookup[targetid] = color;
-    
+    MakeBodyGraph()
     var send_event = new Event('ChangeColorsFromOutsideCanvas');
     trailLayerCanvas.dispatchEvent(send_event);
 
@@ -2533,7 +2540,7 @@ function InitPage(){
 
         document.getElementById('CLI_nproc').value = (navigator.hardwareConcurrency / 2)
 
-        ClickAddSym()
+        DoAddSym()
 
         DealWithCookie()
 
@@ -2721,33 +2728,83 @@ function GalleryKeyboardSelect(event){
 
 }
 
+function ConnectedComponents(nnodes, edges) {
+
+    seen = new Set()
+    All_CC = new Array()
+
+    for (inod = 0; inod < nnodes; inod++) {
+
+        if (! seen.has(inod)) {
+
+            neigh_set = BFS(edges,inod)
+
+            neigh_arr = new Array()
+            for (const item of neigh_set){
+                seen.add(item)
+                neigh_arr.push(item)
+            }
+
+            neigh_arr.sort(function(a,b){return a-b})
+
+            All_CC.push(neigh_arr)
+
+        }
+
+    }
+
+    All_CC.sort(function(a,b){return a[0]-b[0]})
+
+    return All_CC
+
+}
+
+// One step of breadth first search
+function BFS(edges, source) {
+
+    n = edges.length
+    seen = new Set()
+    seen.add(source)
+
+    nextlevel = [source]
+
+    while (nextlevel.length > 0) {
+        
+        thislevel = nextlevel
+        nextlevel = []
+        
+        for (const v of thislevel) {
+
+            for (const edge of edges) {
+
+                if (edge.from == v) {
+
+                    if (! seen.has(edge.to)) {
+
+                        seen.add(edge.to)
+                        nextlevel.push(edge.to)
+
+                    }
+                }
+            }
+        }
+    }
+
+    return seen
+}
+
+
 function MakeBodyGraph(){
 
     nbody = document.getElementById("input_nbody").value
-
     nodes = new Array(input_nbody)
 
     for (ib = 0; ib < nbody; ib++) {
-
-        // if (color_method_input.value == "body") {
-        //     color_id = ib;
-        // } else if (color_method_input.value == "loop") {
-        //     color_id = il;
-        // } else if (color_method_input.value == "loop_id") {
-        //     color_id = ilb;
-        // } else {
-        //     color_id = 0;
-        // }
-
-        color_id = ib;
-        
-        color = colorLookup[color_id % colorLookup.length];
 
         nodes[ib] = {
             id: ib,
             label: ' '+ib.toString()+' ',
             font: { color:"black", size: 30},
-            color: color,
             shape: "circle",
             size: 30,
             borderWidth: 2,
@@ -2758,8 +2815,9 @@ function MakeBodyGraph(){
 
     var table_sym = document.getElementById('table_sym')
     var nsyms = table_sym.rows[0].cells.length - 1
-
     var edges = new Array(nsyms*nbody)
+
+    AllPermsAreLegal = true
 
     for (isym = 0; isym < nsyms; isym++) {
         
@@ -2769,7 +2827,7 @@ function MakeBodyGraph(){
 
             const iedge = ib + isym * nbody
             
-            const target = table_sym.rows[1].cells[isym+1].children[0].rows[ib].cells[0].children[0].value
+            const target = parseInt(table_sym.rows[1].cells[isym+1].children[0].rows[ib].cells[0].children[0].value,10)
             
             perm[target] = 1
 
@@ -2789,13 +2847,77 @@ function MakeBodyGraph(){
 
         var n_targets = perm.reduce((a, b) => a + b, 0)
 
-        if (n_targets == nbody) {
+        ThisPermIsLegal = (n_targets == nbody)
+
+        if (ThisPermIsLegal) {
             table_sym.rows[1].cells[isym+1].style.backgroundColor = "#F1F1F1"
         } else {
             table_sym.rows[1].cells[isym+1].style.backgroundColor = "#ffdddd"
+            AllPermsAreLegal = false
         }
         
     }
+
+    if (AllPermsAreLegal) {
+
+        Targets = ConnectedComponents(nbody, edges)
+        nloops = Targets.length 
+    
+        for ( il = 0; il < nloops; il++) {
+
+            const nlb = Targets[il].length
+
+            for (ilb = 0; ilb < nlb; ilb++ ) {
+
+                ib = Targets[il][ilb]
+
+                if (color_method_input.value == "body") {
+                    color_id = ib;
+                } else if (color_method_input.value == "loop") {
+                    color_id = il;
+                } else if (color_method_input.value == "loop_id") {
+                    color_id = ilb;
+                } else {
+                    color_id = 0;
+                }
+    
+                color = colorLookup[color_id % colorLookup.length];
+                nodes[ib].color = color
+
+            }
+
+        }
+
+        MakeInputMasses(nloops)
+
+    } else {
+
+        for (ib = 0; ib < nbody; ib++) {
+    
+            if (color_method_input.value == "body") {
+                color_id = ib;
+            } else if (color_method_input.value == "loop") {
+                color_id = -1;
+            } else if (color_method_input.value == "loop_id") {
+                color_id = -1;
+            } else {
+                color_id = 0;
+            }
+            
+            if (color_id >= 0) {
+                color = colorLookup[color_id % colorLookup.length];
+            } else {
+                color = "#f44336"
+            }
+    
+            nodes[ib].color = color
+        }
+
+        ClearInputMasses()
+    }
+
+
+
 
     var container = document.getElementById("BodyGraphDiv")
 
@@ -2849,9 +2971,21 @@ function MakeBodyGraph(){
     BodyGraph = new vis.Network(container, data, options)
 
     BodyGraph.on("stabilizationIterationsDone", function () {
-        BodyGraph.setOptions( { physics: false } );
-    });
+        BodyGraph.setOptions( { physics: false } )
+    })
 
+}
+
+function MakeInputMasses(nloops) {
+
+
+
+}
+
+function ClearInputMasses() {
+
+
+    
 }
 
 function CreateInputPermTable(){
@@ -2877,6 +3011,13 @@ function CreateInputPermTable(){
 }
 
 function ClickAddSym() {
+
+    DoAddSym() 
+    MakeBodyGraph()
+
+}
+
+function DoAddSym() {
 
     nbody = document.getElementById("input_nbody").value
     var table = document.getElementById('table_sym')
@@ -2964,8 +3105,6 @@ function ClickAddSym() {
     }
 
     RedistributeClicksTable('table_sym',0)
-
-    MakeBodyGraph()
 
 }
 
