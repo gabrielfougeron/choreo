@@ -255,6 +255,26 @@ def MakeSymFromGlobalTransform(Transform_list,Permutation_list,mass):
 
     return SymGens
 
+def Make_ChoreoSymList_From_ActionSymList(ActionSymList, nbody):
+
+    ChoreoSymList = []
+    
+    for ASym in ActionSymList:
+
+        for ib in range(nbody):
+
+            ChoreoSymList.append(
+                ChoreoSym(
+                    LoopTarget = ASym.BodyPerm[ib],
+                    LoopSource = ib,
+                    SpaceRot = ASym.SpaceRot,
+                    TimeRev = ASym.TimeRev,
+                    TimeShift = ASym.TimeShift,
+                )
+            )
+
+    return ChoreoSymList
+
 def MakeLoopEarSymList(n_main_loop,n_ears,m_main_loop=1,m_ears=1,SelfReflMain=False,SelfReflEar=False):
     
     Permutation_list = []
