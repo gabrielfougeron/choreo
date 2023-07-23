@@ -2876,6 +2876,7 @@ function MakeBodyGraph_nodes_edges() {
     if (AllPermsAreLegal) {
 
         LoopTargets = ConnectedComponents(nbody, edges)
+
         nloops = LoopTargets.length 
     
         for ( il = 0; il < nloops; il++) {
@@ -3045,7 +3046,6 @@ function MakeLoopData() {
         newrow = table.insertRow(irow)
 
         newcell = newrow.insertCell(0)
-
         newcell.style.width = '80px'
         newcell.style.textAlign = 'left'
 
@@ -3054,14 +3054,35 @@ function MakeLoopData() {
         div.style.fontSize ="12px"
         div.style.fontWeight ="bold"
         div.innerHTML = "Loop "+il.toString()
-
         newcell.appendChild(div)
 
         newcell = newrow.insertCell(1)
+        newcell.style.textAlign = 'center'
 
         div = document.createElement('label')
         div.style.textAlign = "center"
         div.style.fontSize ="12px"
+        newcell.appendChild(div)
+
+        newcell = newrow.insertCell(2)
+        newcell.style.textAlign = 'center'
+
+        input = document.createElement('input')
+        input['type'] = "text"
+        input['value'] = MassArray[il].toString()
+        input['oninput'] = ReadMasses
+        input.style.fontSize = '12px'
+        input.style.width = '120px'
+        input.style.textAlign = 'center'
+
+        newcell.appendChild(input)
+
+    }
+
+    // Rewrite all LoopTargets
+    for (irow = 1; irow < nloops+1; irow++) {
+
+        il = irow -1 
 
         bodies_str = ""
         nlb = LoopTargets[il].length
@@ -3070,26 +3091,7 @@ function MakeLoopData() {
         }
         bodies_str += LoopTargets[il][nlb-1].toString()
 
-        div.innerHTML = bodies_str
-        
-        newcell.appendChild(div)
-
-
-        newcell = newrow.insertCell(2)
-
-        newcell.style.textAlign = 'center'
-
-        input = document.createElement('input')
-        input['type'] = "text"
-
-        input['value'] = MassArray[il].toString()
-        input['oninput'] = ReadMasses
-
-        input.style.fontSize = '12px'
-        input.style.width = '120px'
-        input.style.textAlign = 'center'
-
-        newcell.appendChild(input)
+        table.rows[irow].cells[1].children[0].innerHTML = bodies_str
 
     }
 
