@@ -111,20 +111,38 @@ def Find_Choreo(
     all_coeffs_init,
     AddNumberToOutputName,
     SkipCheckRandomMinDist,
+    CurrentlyDeveloppingNewStuff,
 ):
     """
 
     Finds periodic solutions
 
     """
+
+    if CurrentlyDeveloppingNewStuff:
+
+        # ActionSyst = setup_changevar(
+        # ActionSyst = setup_changevar_new_new(
+        ActionSyst = setup_changevar_new(
+            geodim                                      ,
+            nbody                                       ,
+            nint_init                                   ,
+            mass                                        ,
+            n_reconverge_it_max                         ,
+            Sym_list = Sym_list                         ,
+            MomCons = MomConsImposed                    ,
+            n_grad_change = n_grad_change               ,
+            CrashOnIdentity = CrashOnError_changevar    ,
+        )
+
+        exit()
+
     
     print(f'Searching periodic solutions of {nbody:d} bodies.')
 
     print(f'Processing symmetries for {(n_reconverge_it_max+1):d} convergence levels.')
 
-    # ActionSyst = setup_changevar(
-    # ActionSyst = setup_changevar_new_new(
-    ActionSyst = setup_changevar_new(
+    ActionSyst = setup_changevar(
         geodim                                      ,
         nbody                                       ,
         nint_init                                   ,
@@ -135,8 +153,6 @@ def Find_Choreo(
         n_grad_change = n_grad_change               ,
         CrashOnIdentity = CrashOnError_changevar    ,
     )
-
-    exit()
 
     ActionSyst.SetBackend(parallel=ParallelBackend,TwoD=TwoDBackend,GradHessBackend=GradHessBackend)
 
