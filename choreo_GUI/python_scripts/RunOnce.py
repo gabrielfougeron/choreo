@@ -170,6 +170,10 @@ async def main():
     nloop = nbody
     mass = np.ones(nloop)
 
+
+
+    
+
     Sym_list = []
 
     if (geodim == 2):
