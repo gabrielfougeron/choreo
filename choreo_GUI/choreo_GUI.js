@@ -442,8 +442,6 @@ function GatherGeom_Bodies(nbody = -1){
 
     Geom_Bodies ['MomConsImposed'] = document.getElementById('checkbox_MomCons').checked
 
-    // Geom_Bodies ['mass'] = []
-
     table_sym = document.getElementById('table_sym')
     var nsyms = table_sym.rows[0].cells.length - 1
 
@@ -480,7 +478,7 @@ function GatherGeom_Bodies(nbody = -1){
     }
 
     Geom_Bodies ['AllSyms'] = AllSyms
-
+    
     return Geom_Bodies
 
 }
@@ -494,6 +492,15 @@ function GatherConfigDict() {
     ConfigDict['Geom_Gen'] ['geodim'] = 2  // futureproofing for once
 
     ConfigDict['Geom_Bodies'] = GatherGeom_Bodies()
+
+    nloops = LoopTargets.length 
+    ConfigDict['Geom_Bodies']['nloop'] = nloops
+    ConfigDict['Geom_Bodies']['Targets'] = LoopTargets
+
+    ConfigDict['Geom_Bodies'] ['mass'] = []
+    for (il = 0; il < nloops; il++) {
+        ConfigDict['Geom_Bodies']['mass'].push(MassArray[il])
+    }
 
     ConfigDict['Geom_Target'] = {}
 
@@ -707,6 +714,11 @@ function LoadConfigDict(ConfigDict) {
 
     LoadGeom_Bodies(ConfigDict['Geom_Bodies'])
 
+    MassArray = ConfigDict['Geom_Bodies'] ['mass']
+    LoopTargets = ConfigDict['Geom_Bodies']['Targets']
+
+    MakeLoopData()
+
     if (document.getElementById('checkbox_Target').checked ^ ConfigDict['Geom_Target'] ['LookForTarget']) {
         checkbox_EnableTargets_Handler()
     }
@@ -836,75 +848,75 @@ function OpenCloseLeftTab() {
 canvas_items_list= ["canvasContainer","trailLayerCanvas","particleLayerCanvas"]
 
 function CloseLeftTab() {
-    var i;
-    var AllLeftTabs        = document.getElementsByClassName("LeftTab");
-    var MarginLeftTop      = document.getElementById("MarginLeftTop");
-    var AllLeftTabBtns     = document.getElementsByClassName("LeftTabBtn");
-    var AnimationBlock     = document.getElementById("AnimationBlock");
-    var AllTopTabs         = document.getElementsByClassName("TopTab");
-    var CommandBody        = document.getElementById("CommandBody");
+    var i
+    var AllLeftTabs        = document.getElementsByClassName("LeftTab")
+    var MarginLeftTop      = document.getElementById("MarginLeftTop")
+    var AllLeftTabBtns     = document.getElementsByClassName("LeftTabBtn")
+    var AnimationBlock     = document.getElementById("AnimationBlock")
+    var AllTopTabs         = document.getElementsByClassName("TopTab")
+    var CommandBody        = document.getElementById("CommandBody")
     for (i = 0; i < AllLeftTabs.length     ; i++) {
-        AllLeftTabs[i].classList.remove("open");
-        AllLeftTabs[i].classList.add("closed");
-        AllLeftTabs[i].style.width     = "43px"     ;
+        AllLeftTabs[i].classList.remove("open")
+        AllLeftTabs[i].classList.add("closed")
+        AllLeftTabs[i].style.width     = "43px"     
     }
-    MarginLeftTop.style.marginLeft      = "43px"     ;
+    MarginLeftTop.style.marginLeft      = "43px"     
     for (i = 0; i < AllLeftTabBtns.length; i++) {
-        AllLeftTabBtns[i].style.display     = "none";
+        AllLeftTabBtns[i].style.display     = "none"
     }
-    AnimationBlock.style.marginLeft      = "0px"     ;
+    AnimationBlock.style.marginLeft      = "0px"     
     for (i = 0; i < AllTopTabs.length; i++) {
-        AllTopTabs[i].style.width     = "567px";
+        AllTopTabs[i].style.width     = "567px"
     }
     for (i = 0; i < canvas_items_list.length; i++) {
-        var canvas_item = document.getElementById(canvas_items_list[i]);
-        canvas_item.style.width     = "610px"     ;
-        canvas_item.style.height     = "610px"     ;
+        var canvas_item = document.getElementById(canvas_items_list[i])
+        canvas_item.style.width     = "610px"     
+        canvas_item.style.height     = "610px"     
     }
     if (window.innerWidth > 1220){
-        CommandBody.style.bottom = "710px";
+        CommandBody.style.bottom = "710px"
     } 
     
 }
 
 function OpenLeftTab() {
-    var i;
-    var AllLeftTabs        = document.getElementsByClassName("LeftTab");
-    var MarginLeftTop      = document.getElementById("MarginLeftTop");
-    var AllLeftTabBtns     = document.getElementsByClassName("LeftTabBtn");
-    var AnimationBlock     = document.getElementById("AnimationBlock");
-    var AllTopTabs         = document.getElementsByClassName("TopTab");
-    var CommandBody        = document.getElementById("CommandBody");
+    var i
+    var AllLeftTabs        = document.getElementsByClassName("LeftTab")
+    var MarginLeftTop      = document.getElementById("MarginLeftTop")
+    var AllLeftTabBtns     = document.getElementsByClassName("LeftTabBtn")
+    var AnimationBlock     = document.getElementById("AnimationBlock")
+    var AllTopTabs         = document.getElementsByClassName("TopTab")
+    var CommandBody        = document.getElementById("CommandBody")
     for (i = 0; i < AllLeftTabs.length     ; i++) {
-        AllLeftTabs[i].classList.add("open");
-        AllLeftTabs[i].classList.remove("closed");
-        AllLeftTabs[i].style.width     = "130px"     ;
+        AllLeftTabs[i].classList.add("open")
+        AllLeftTabs[i].classList.remove("closed")
+        AllLeftTabs[i].style.width     = "130px"     
     }
-    MarginLeftTop.style.marginLeft      = "130px"     ;
+    MarginLeftTop.style.marginLeft      = "130px"     
     for (i = 0; i < AllLeftTabBtns.length; i++) {
-        AllLeftTabBtns[i].style.display     = "";
+        AllLeftTabBtns[i].style.display     = ""
     }
-    AnimationBlock.style.marginLeft      = "130px"     ;
+    AnimationBlock.style.marginLeft      = "130px"     
     for (i = 0; i < AllTopTabs.length; i++) {
-        AllTopTabs[i].style.width     = "480px";
+        AllTopTabs[i].style.width     = "480px"
     }
     for (i = 0; i < canvas_items_list.length; i++) {
         var canvas_item = document.getElementById(canvas_items_list[i]);
-        canvas_item.style.width     = "480px"     ;
-        canvas_item.style.height     = "480px"     ;
+        canvas_item.style.width     = "480px"     
+        canvas_item.style.height     = "480px"     
     }
     if (window.innerWidth > 1220){
-        CommandBody.style.bottom = "580px";
+        CommandBody.style.bottom = "580px"
     } 
 }    
 
 function deleteColumn(tableID, colnum) {
-    var table = document.getElementById(tableID);
-    var i;
+    var table = document.getElementById(tableID)
+    var i
 
     if (colnum < table.rows[0].cells.length) {
         for (i = 0; i < table.rows.length; i++) {
-            table.rows[i].deleteCell(colnum);
+            table.rows[i].deleteCell(colnum)
         }
     }
 }
@@ -2152,8 +2164,6 @@ function ErasehashURL(){
     try {
         history.replaceState("", document.title, window.location.pathname + window.location.search) // Removes hash from URL
     } catch(e) { 
-        // console.log(e)
-        // console.log("Failed to reset URL")
         window.location.hash = ""
     }
 
@@ -2424,7 +2434,6 @@ function startRecording(Duration) {
         'videoBitsPerSecond' : 1024*1024*8, // Increase default quality
     }
     const rec = new MediaRecorder(stream,video_potions) // init the recorder
-    // console.log(rec)
     // every time the recorder has new data, we will store it in our array
     rec.ondataavailable = e => chunks.push(e.data)
     // only when the recorder stops, we construct a complete Blob from all the chunks
@@ -2728,16 +2737,19 @@ function GalleryKeyboardSelect(event){
 
 }
 
-function ConnectedComponents(nnodes, edges) {
+function ConnectedComponents(nbody, edges) {
 
     seen = new Set()
     All_CC = new Array()
 
-    for (inod = 0; inod < nnodes; inod++) {
+    nedges = edges.length
+    nsym = nedges / nbody
 
-        if (! seen.has(inod)) {
+    for (ibody = 0; ibody < nbody; ibody++) {
 
-            neigh_set = BFS(edges,inod)
+        if (! seen.has(ibody)) {
+
+            neigh_set = BFS(edges, ibody, nsym, nbody)
 
             neigh_arr = new Array()
             for (const item of neigh_set){
@@ -2760,31 +2772,31 @@ function ConnectedComponents(nnodes, edges) {
 }
 
 // One step of breadth first search
-function BFS(edges, source) {
+function BFS(edges, ibody, nsym, nbody) {
 
-    n = edges.length
     seen = new Set()
-    seen.add(source)
+    seen.add(ibody)
 
-    nextlevel = [source]
+    nextlevel = [ibody]
 
     while (nextlevel.length > 0) {
         
         thislevel = nextlevel
         nextlevel = []
         
-        for (const v of thislevel) {
+        for (const jbody of thislevel) {
 
-            for (const edge of edges) {
+            for (isym = 0; isym < nsym; isym++) {
 
-                if (edge.from == v) {
+                const iedge = jbody + isym * nbody
+                const edge = edges[iedge]
+                const kbody = edge.to
 
-                    if (! seen.has(edge.to)) {
+                if (! seen.has(kbody)) {
 
-                        seen.add(edge.to)
-                        nextlevel.push(edge.to)
+                    seen.add(kbody)
+                    nextlevel.push(kbody)
 
-                    }
                 }
             }
         }
@@ -2794,9 +2806,9 @@ function BFS(edges, source) {
 }
 
 
-function MakeBodyGraph(){
+function MakeBodyGraph_nodes_edges() {
 
-    nbody = document.getElementById("input_nbody").value
+    nbody = parseInt(document.getElementById("input_nbody").value,10)
     nodes = new Array(input_nbody)
 
     for (ib = 0; ib < nbody; ib++) {
@@ -2835,6 +2847,9 @@ function MakeBodyGraph(){
                 from: ib,
                 to: target ,
                 color : "black",
+                smooth: { 
+                    type: "continuous" 
+                },
                 arrows: {
                     to: {
                         enabled: true,
@@ -2860,16 +2875,16 @@ function MakeBodyGraph(){
 
     if (AllPermsAreLegal) {
 
-        Targets = ConnectedComponents(nbody, edges)
-        nloops = Targets.length 
+        LoopTargets = ConnectedComponents(nbody, edges)
+        nloops = LoopTargets.length 
     
         for ( il = 0; il < nloops; il++) {
 
-            const nlb = Targets[il].length
+            const nlb = LoopTargets[il].length
 
             for (ilb = 0; ilb < nlb; ilb++ ) {
 
-                ib = Targets[il][ilb]
+                ib = LoopTargets[il][ilb]
 
                 if (color_method_input.value == "body") {
                     color_id = ib;
@@ -2888,7 +2903,7 @@ function MakeBodyGraph(){
 
         }
 
-        MakeInputMasses(nloops)
+        MakeLoopData(nloops)
 
     } else {
 
@@ -2911,13 +2926,18 @@ function MakeBodyGraph(){
             }
     
             nodes[ib].color = color
+
         }
 
         ClearInputMasses()
     }
 
+    return [nodes, edges]
+}
 
+function MakeBodyGraph(){
 
+    [nodes, edges] = MakeBodyGraph_nodes_edges()
 
     var container = document.getElementById("BodyGraphDiv")
 
@@ -2927,26 +2947,11 @@ function MakeBodyGraph(){
     }
 
     var options = {
-        // borderWidth: 1,
         height: '100%',
         width: '100%',
         // clickToUse: true,
         layout: {
-        randomSeed: undefined,
-        // improvedLayout:true,
-        // clusterThreshold: 150,
-        // hierarchical: {
-        //         enabled:false,
-        //         levelSeparation: 150,
-        //         nodeSpacing: 100,
-        //         treeSpacing: 200,
-        //         blockShifting: true,
-        //         edgeMinimization: true,
-        //         parentCentralization: true,
-        //         direction: 'UD',        // UD, DU, LR, RL
-        //         sortMethod: 'hubsize',  // hubsize, directed
-        //         shakeTowards: 'leaves'  // roots, leaves
-        //     }
+            randomSeed: undefined,
         },
         physics: {
             barnesHut: {
@@ -2976,15 +2981,148 @@ function MakeBodyGraph(){
 
 }
 
-function MakeInputMasses(nloops) {
+
+function MakeLoopData() {
+
+    nloops = LoopTargets.length
+
+    MassMessage = document.getElementById("MassMessage")
+    if (nloops == 1) {
+        plural = ''
+    } else { 
+        plural = 's'
+    }
+    MassMessage.innerHTML = "<br>Symmetries lead to the discovery of "+nloops.toString()+" independant loop"+plural+":<br><br>"
+
+    for (il = MassArray.length; il < nloops; il++) {
+        MassArray.push(1.)
+    }
+
+    var table = document.getElementById('table_mass')
+    var newcell
+
+    nloops_old = table.rows.length - 1
+
+    if (nloops_old < 0) { // make header
+
+        newrow = table.insertRow(0)
+
+        newcell = newrow.insertCell(0)
+        newcell.style.borderLeftStyle = 'hidden'
+        newcell.style.borderTopStyle = 'hidden'
+
+        newcell = newrow.insertCell(1)
+        div = document.createElement('label')
+        div.style.textAlign = "center"
+        div.style.fontSize ="12px"
+        div.style.fontWeight ="bold"
+        div.innerHTML = "Bodies"
+        newcell.appendChild(div)
+
+        newcell = newrow.insertCell(2)
+        div = document.createElement('label')
+        div.style.textAlign = "center"
+        div.style.fontSize ="12px"
+        div.style.fontWeight ="bold"
+        div.innerHTML = "Mass"
+        newcell.appendChild(div)
+
+        nloops_old = 0
+    }
+
+    // Delete extra rows
+    for (irow = nloops_old; irow >= nloops+1; irow--) {
+
+        table.deleteRow(irow)
+
+    }
+    
+    // Add extra rows
+    for (irow = nloops_old+1; irow < nloops+1; irow++) {
+
+        il = irow -1 
+
+        newrow = table.insertRow(irow)
+
+        newcell = newrow.insertCell(0)
+
+        newcell.style.width = '80px'
+        newcell.style.textAlign = 'left'
+
+        div = document.createElement('label')
+        div.style.textAlign = "left"
+        div.style.fontSize ="12px"
+        div.style.fontWeight ="bold"
+        div.innerHTML = "Loop "+il.toString()
+
+        newcell.appendChild(div)
+
+        newcell = newrow.insertCell(1)
+
+        div = document.createElement('label')
+        div.style.textAlign = "center"
+        div.style.fontSize ="12px"
+
+        bodies_str = ""
+        nlb = LoopTargets[il].length
+        for (ilb = 0; ilb <  nlb-1; ilb++) {
+            bodies_str += LoopTargets[il][ilb].toString()+', '
+        }
+        bodies_str += LoopTargets[il][nlb-1].toString()
+
+        div.innerHTML = bodies_str
+        
+        newcell.appendChild(div)
 
 
+        newcell = newrow.insertCell(2)
+
+        newcell.style.textAlign = 'center'
+
+        input = document.createElement('input')
+        input['type'] = "text"
+
+        input['value'] = MassArray[il].toString()
+        input['oninput'] = ReadMasses
+
+        input.style.fontSize = '12px'
+        input.style.width = '120px'
+        input.style.textAlign = 'center'
+
+        newcell.appendChild(input)
+
+    }
+
+}
+
+function ReadMasses() {
+
+    var table = document.getElementById('table_mass')
+
+    nrows = LoopTargets.length
+
+    for (irow = 1; irow < nloops; irow++) {
+
+        MassArray[irow-1] = parseFloat(table.rows[irow].cells[2].children[0].value)
+
+    }
 
 }
 
 function ClearInputMasses() {
 
+    MassMessage.innerHTML = "<br>Symmetries are not properly set."
 
+    var table = document.getElementById('table_mass')
+
+    nloops_old = table.rows.length
+
+    // Delete all rows
+    for (irow = nloops_old-1; irow >= 0; irow--) {
+
+        table.deleteRow(irow)
+
+    }
     
 }
 
@@ -3001,7 +3139,7 @@ function CreateInputPermTable(){
         innerHTML += "value='"+((ib+1) % nbody).toString()+"'"
         innerHTML += "min='0' max='"+(nbody-1).toString()+"'"
         innerHTML += "onchange='MakeBodyGraph()'"
-        innerHTML += "style='width:36px;'>"
+        innerHTML += "style='width:33px;'>"
         innerHTML += "</td></tr>"
         
     }
@@ -3112,7 +3250,7 @@ function UpdateNumberofBodies() {
 
     var Geom_Bodies = GatherGeom_Bodies(PreviousInputValueNbody)
     
-    new_nbody = document.getElementById("input_nbody").value
+    new_nbody = parseInt(document.getElementById("input_nbody").value,10)
     Geom_Bodies["nbody"] = new_nbody 
 
     if (PreviousInputValueNbody < new_nbody) {
