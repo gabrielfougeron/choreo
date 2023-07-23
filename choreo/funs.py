@@ -2721,17 +2721,35 @@ def EdgesAreEitherDirectXORIndirect(FullGraph):
 
     return AlwaysContainsExactlyOne
 
+def ContainsDoubleEdges(FullGraph):
 
-def Build_FullGraph(nbody, nint, Sym_list):
+    IContainDoubleEdges = False
+
+    for edge in FullGraph.edges:
+
+        ThisIsADoubleEdge = (len(FullGraph.edges[edge]["SymList"]) > 1)
+
+        # print(len(FullGraph.edges[edge]["SymList"]))
+# 
+#         for (SymA, SymB) in itertools.combinations(FullGraph.edges[edge]["SymList"],2):
+#             ThisIsADoubleEdge = ThisIsADoubleEdge or not(SymA.IsSame(SymB))
+
+        IContainDoubleEdges = IContainDoubleEdges or ThisIsADoubleEdge
+
+    return IContainDoubleEdges
+
+def Build_FullGraph(
+    nbody,
+    nint,
+    Sym_list,
+):
 
     FullGraph = networkx.Graph()
     for ib in range(nbody):
         for iint in range(nint):
-            FullGraph.add_node((ib,iint),Constraint_list=[])
+            FullGraph.add_node((ib,iint))
 
     for Sym in Sym_list:
-
-        SymInv = Sym.Inverse()
 
         for ib in range(nbody):
 
@@ -2754,25 +2772,113 @@ def Build_FullGraph(nbody, nint, Sym_list):
                 node_source = (ib       , iint       )
                 node_target = (ib_target, iint_target)
 
-                if node_source > node_target :
-                    edge = (node_target, node_source)
-                    EdgeSym = SymInv
+                if node_source <= node_target :
 
-                else:
                     edge = (node_source, node_target)
                     EdgeSym = Sym
 
-                if edge in FullGraph.edges:
-                
-                    FullGraph.edges[edge]["SymList"].append(EdgeSym)
+                    if edge in FullGraph.edges:
+                        
+                        FullGraph.edges[edge]["SymList"].append(EdgeSym)
 
-                else:
-                    
-                    FullGraph.add_edge(*edge, SymList = [EdgeSym])
+                    else:
+                        
+                        FullGraph.add_edge(*edge, SymList = [EdgeSym])
     
-    if not(EdgesAreEitherDirectXORIndirect(FullGraph)):
+    return FullGraph
 
-        FullGraph, nint = Build_FullGraph(nbody, 2*nint, Sym_list)
+# def Build_FullGraph_OLD(
+#     nbody,
+#     nint,
+#     Sym_list,
+# ):
+# 
+#     FullGraph = networkx.Graph()
+#     for ib in range(nbody):
+#         for iint in range(nint):
+#             FullGraph.add_node((ib,iint))
+# 
+#     for Sym in Sym_list:
+# 
+#         SymInv = Sym.Inverse()
+# 
+#         for ib in range(nbody):
+# 
+#             ib_target = Sym.BodyPerm[ib]
+# 
+#             for iint in range(nint):
+#                 
+#                 if (Sym.TimeRev == 1): 
+#                     Time = fractions.Fraction(numerator = iint, denominator = nint)
+#                 
+#                 else:
+#                     Time = fractions.Fraction(numerator = (iint+1), denominator = nint)
+# 
+#                 TimeTarget = Sym.ApplyT(Time)
+# 
+#                 assert nint % TimeTarget.denominator == 0
+# 
+#                 iint_target = TimeTarget.numerator * (nint // TimeTarget.denominator)
+# 
+#                 node_source = (ib       , iint       )
+#                 node_target = (ib_target, iint_target)
+# 
+#                 if node_source > node_target :
+#                     edge = (node_target, node_source)
+#                     EdgeSym = SymInv
+# 
+#                 else:
+#                     edge = (node_source, node_target)
+#                     EdgeSym = Sym
+# 
+#                 if edge in FullGraph.edges:
+#                     
+#                     FullGraph.edges[edge]["SymList"].append(EdgeSym)
+# 
+#                 else:
+#                     
+#                     FullGraph.add_edge(*edge, SymList = [EdgeSym])
+# 
+#     return FullGraph
+
+def Build_FullGraph_NoPb(
+    nbody,
+    nint,
+    Sym_list,
+    current_recursion = 1,
+    max_recursion = 5,
+):
+
+    if (current_recursion > max_recursion):
+
+        raise ValueError("Achieved max recursion level in Build_FullGraph")
+
+    # print('')
+    # print(f'Recursion level : {current_recursion} / {max_recursion}')
+    # print('')
+
+    FullGraph = Build_FullGraph(nbody, nint, Sym_list)
+# 
+#     if not(EdgesAreEitherDirectXORIndirect(FullGraph)):
+# 
+#         FullGraph, nint = Build_FullGraph_NoPb(
+#             nbody = nbody,
+#             nint = 2*nint,
+#             Sym_list = Sym_list,
+#             current_recursion = current_recursion+1,
+#             max_recursion = max_recursion,
+#         )
+
+
+    if ContainsDoubleEdges(FullGraph):
+
+        FullGraph, nint = Build_FullGraph_NoPb(
+            nbody = nbody,
+            nint = 2*nint,
+            Sym_list = Sym_list,
+            current_recursion = current_recursion+1,
+            max_recursion = max_recursion,
+        )
 
     return FullGraph, nint
 
@@ -2792,9 +2898,9 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
     for Sym in Sym_list:
         All_den_list_on_entry.append(Sym.TimeShift.denominator)
 
-    nint_min =  m.lcm(*All_den_list_on_entry) # ensures that all integer divisions will have zero remainder
+    nint_min = m.lcm(*All_den_list_on_entry) # ensures that all integer divisions will have zero remainder
 
-    FullGraph, nint_min = Build_FullGraph(nbody, nint_min, Sym_list)
+    FullGraph, nint_min = Build_FullGraph_NoPb(nbody, nint_min, Sym_list)
 
     # assert (nint_init % nint_min) == 0
 
@@ -2819,9 +2925,6 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
             if not(edge in BodyGraph.edges):
             
                    BodyGraph.add_edge(*edge)
-
-
-
 
     nnodes = nbody*nint_min
     node_color = np.zeros(nnodes)
