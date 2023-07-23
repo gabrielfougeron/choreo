@@ -2903,7 +2903,7 @@ function MakeBodyGraph_nodes_edges() {
 
         }
 
-        MakeLoopData(nloops)
+        MakeLoopData()
 
     } else {
 
@@ -3106,6 +3106,8 @@ function ReadMasses() {
         MassArray[irow-1] = parseFloat(table.rows[irow].cells[2].children[0].value)
 
     }
+
+    LoopTargets = []
 
 }
 
