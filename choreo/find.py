@@ -121,6 +121,8 @@ def Find_Choreo(
 
     if CurrentlyDeveloppingNewStuff:
 
+        print("WARNING : ENTERING DEV GROUNDS. Proceed with caution")
+
         # ActionSyst = setup_changevar(
         # ActionSyst = setup_changevar_new_new(
         ActionSyst = setup_changevar_new(
@@ -1086,6 +1088,10 @@ def ChoreoFindFromDict(params_dict,Workspace_folder):
 
 
 
+
+
+
+    CurrentlyDeveloppingNewStuff = params_dict.get("CurrentlyDeveloppingNewStuff",False)
 
 
 
