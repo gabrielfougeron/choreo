@@ -82,7 +82,7 @@ def Make2DChoreoSym(SymType,ib_list):
             SpaceRot = np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64),
             TimeRev=-1,
             TimeShift=fractions.Fraction(numerator=0,denominator=1)
-            ))
+        ))
         
     if ((SymType['name'] == 'Cp') or ((SymType['name'] == 'Dp') and (SymType['k'] == 2))):
         
@@ -95,7 +95,7 @@ def Make2DChoreoSym(SymType,ib_list):
             SpaceRot = np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64),
             TimeRev=1,
             TimeShift=fractions.Fraction(numerator=1,denominator=2)
-            ))
+        ))
 
     if (SymType['name'] == 'Dp'):
         
@@ -108,7 +108,7 @@ def Make2DChoreoSym(SymType,ib_list):
             SpaceRot = np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64),
             TimeRev=-1,
             TimeShift=fractions.Fraction(numerator=0,denominator=1)
-            ))
+        ))
     
     return SymGens
 
