@@ -12,9 +12,6 @@ import platform
 # use_Cython = False
 use_Cython = True
 
-# use_Pythran = True
-use_Pythran = False
-
 if use_Cython:
     import Cython.Build
     import Cython.Compiler
@@ -22,9 +19,6 @@ if use_Cython:
     src_ext = '.pyx'
 else:
     src_ext = '.c'
-
-if use_Pythran:
-    import pythran
 
 cython_extnames = [
     "choreo.cython.funs",
@@ -47,7 +41,17 @@ if platform.system() == "Windows":
     cython_extnames.append("choreo.cython.funs_parallel")
     cython_safemath_needed.append(False)
 
-else:
+elif platform.system() == "Darwin": # MacOS
+
+    extra_compile_args_std = ["-Ofast","-march=native", "-fopenmp"]
+    extra_compile_args_safe = ["-O2", "-fopenmp"]
+    extra_link_args = ["-fopenmp"]
+
+    cython_extnames.append("choreo.cython.funs_parallel")
+    cython_safemath_needed.append(False)
+
+
+elif platform.system() == "Linux":
 
     # print(platform.system())
     # print( os.environ)
@@ -59,12 +63,10 @@ else:
         extra_link_args = []
 
     else:
-        if use_Pythran:
-            all_compilers = ['clang++','g++']
-        else:
-            all_compilers = ['icx','clang','gcc']
-            # all_compilers = ['clang']
-            # all_compilers = ['gcc']
+
+        all_compilers = ['icx','clang','gcc']
+        # all_compilers = ['clang']
+        # all_compilers = ['gcc']
 
         for compiler in all_compilers:
 
@@ -92,13 +94,16 @@ else:
         cython_extnames.append("choreo.cython.funs_parallel")
         cython_safemath_needed.append(False)
 
+else:
+
+    raise ValueError(f"Unsupported platform: {platform.system()}")
+
 cython_filenames = [ ext_name.replace('.','/') + src_ext for ext_name in cython_extnames]
 
 define_macros = [("NPY_NO_DEPRECATED_API", "NPY_1_7_API_VERSION")]
 # define_macros = []
 
 compiler_directives = {
-    'np_pythran' : use_Pythran,
     'wraparound': False,
     'boundscheck': False,
     'nonecheck': False,
@@ -108,7 +113,7 @@ compiler_directives = {
     'infer_types': True,
 }
 
-### Profiler only ####
+# ## Profiler only ####
 # profile_compiler_directives = {
 #     'profile': True,
 #     'linetrace': True,
@@ -121,9 +126,6 @@ compiler_directives = {
 
 
 include_dirs = [numpy.get_include()]
-
-if use_Pythran:
-    include_dirs.append(pythran.get_include())
 
 ext_modules = [
     setuptools.Extension(

@@ -1,5 +1,3 @@
-// var Gallery_cache_behavior = {cache: "no-cache"}
-
 var Gallery_cache_behavior = {}
 
 var DefaultGallery_description
@@ -112,7 +110,12 @@ var particleLayerContext
 
 var FileSystemAccessSupported = ('showOpenFilePicker' in window)
 
-const { createFFmpeg , fetchFile  } = FFmpeg;
+var BodyGraph
+var PreviousInputValueNbody = 3
+var MassArray = [1.]
+var LoopTargets = []
+
+const { createFFmpeg , fetchFile  } = FFmpeg
 const ffmpeg = createFFmpeg()
 
 function AjaxGet(foldername){ return $.ajax({ url: foldername})}
