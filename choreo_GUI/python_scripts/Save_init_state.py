@@ -79,15 +79,19 @@ def main():
         nbody = len(mass)
 
 
-
-
     nbody = params_dict["Geom_Bodies"]["nbody"]
     MomConsImposed = params_dict['Geom_Bodies'] ['MomConsImposed']
     nsyms = params_dict["Geom_Bodies"]["nsyms"]
 
-    # TODO: change this
-    nloop = nbody
-    mass = np.ones(nloop)
+    nloop = params_dict["Geom_Bodies"]["nloop"]
+    mass = np.zeros(nbody)
+
+    for il in range(nloop):
+        for ilb in range(len(params_dict["Geom_Bodies"]["Targets"][il])):
+            
+            ib = params_dict["Geom_Bodies"]["Targets"][il][ilb]
+            mass[ib] = params_dict["Geom_Bodies"]["mass"][il]
+
 
     Sym_list = []
 
