@@ -2978,7 +2978,8 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
         pos = pos,
         ax = ax,
         node_color = node_color,
-        cmap = 'gist_rainbow',
+        # cmap = 'tab20',
+        cmap = 'turbo',
     )
 
     # networkx.draw_networkx_labels(
@@ -2988,17 +2989,17 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
         # labels = {i:i for i in FullGraph.nodes},
     # )
 # 
-    networkx.draw_networkx_edges(
-        FullGraph,
-        pos = pos,
-        ax = ax,
-        arrows = True,
-        connectionstyle = "arc3,rad=0.1",
-        edge_color = edge_color,
-        edge_vmin = 0,
-        edge_vmax = 2,
-        edge_cmap = colormaps['jet'],
-    )
+    # networkx.draw_networkx_edges(
+    #     FullGraph,
+    #     pos = pos,
+    #     ax = ax,
+    #     arrows = True,
+    #     connectionstyle = "arc3,rad=0.1",
+    #     edge_color = edge_color,
+    #     edge_vmin = 0,
+    #     edge_vmax = 1,
+    #     edge_cmap = colormaps['Set1'],
+    # )
 
     plt.axis('off')
     fig.tight_layout()
