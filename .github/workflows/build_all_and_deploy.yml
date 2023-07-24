@@ -96,7 +96,7 @@ jobs:
     - name: Generate Documentation
       run: |
         cd docs
-        make html
+        make all
 
     - name: Commit documentation changes
       run: |
