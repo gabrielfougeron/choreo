@@ -4,19 +4,22 @@ import pathlib
 import os
 import sys
 sys.path.insert(0, pathlib.Path(__file__).parents[2].resolve().as_posix())
-sys.path.append(os.path.abspath("./_pygments"))
-
-# import style
-# pygments_style = 'style.PythonVSMintedStyle'
-
-
 
 from sphinx_gallery.sorting import FileNameSortKey
 from sphinx_pyproject import SphinxConfig
 
 __PROJECT_ROOT__ = os.path.abspath(os.path.join(os.path.dirname(__file__),os.pardir,os.pardir))
 
-config = SphinxConfig(os.path.join(__PROJECT_ROOT__,"pyproject.toml"), globalns=globals())
+
+project = "Choreo"
+author = "Gabriel Fougeron"
+project_copyright = "2021, Gabriel Fougeron"
+version = '0.2.0'
+
+
+# sys.path.append(os.path.abspath("./_pygments"))
+# from style import PythonVSMintedStyle
+# pygments_style = PythonVSMintedStyle.__qualname__
 
 
 # Configuration file for the Sphinx documentation builder.
@@ -51,17 +54,12 @@ extensions = [
 # The suffix of source filenames.
 source_suffix = ".rst"
 
+master_doc = 'index'
+
 # The encoding of source files.
 source_encoding = "utf-8"
 
 add_module_names = False
-
-
-
-
-
-
-
 
 
 
@@ -159,3 +157,22 @@ sphinx_gallery_conf = {
 # nbplot_html_show_formats = False
 # nbplot_include_source = False
 
+
+#############
+# Latex PDF #
+#############
+latex_engine = "pdflatex"
+
+
+# latex_documents = [("startdocname", "targetname", "title", "author", "theme", "toctree_only")]
+
+latex_documents = [
+    (master_doc, 'choreo.tex', 'Choreo documentation', 'Gabriel Fougeron', 'manual'),
+]
+
+
+latex_use_latex_multicolumn = False
+latex_show_urls = "footnote"
+
+latex_theme = "manual"
+# latex_theme = "howto"

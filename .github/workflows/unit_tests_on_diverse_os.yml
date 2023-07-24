@@ -78,7 +78,7 @@ jobs:
         pytest
 
         cd docs
-        make html
+        make all
         cd ..
 
     - name: Read Emscripten version number
