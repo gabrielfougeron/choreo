@@ -72,12 +72,8 @@ async function Play_Loop_From_Python(args){
     trailLayerCanvas.dispatchEvent(event)
 
     SearchIsOnGoing = false
-    var ChoreoExecuteBtn = document.getElementById("ChoreoExecuteBtn")
-    ChoreoExecuteBtn.disabled = ""
     var ChoreoDispInitStateBtn = document.getElementById("ChoreoDispInitStateBtn")
     ChoreoDispInitStateBtn.disabled = ""
-    var ChoreoSearchNext = document.getElementById("ChoreoSearchNext")
-    ChoreoSearchNext.disabled = "disabled"
     AskForNext[0] = 0
 
     var RotSlider = $("#RotSlider").data("roundSlider")
@@ -128,12 +124,8 @@ function Python_no_sol_found(args) {
     } 
 
     SearchIsOnGoing = false
-    var ChoreoExecuteBtn = document.getElementById("ChoreoExecuteBtn");
-    ChoreoExecuteBtn.disabled = "";
     var ChoreoDispInitStateBtn = document.getElementById("ChoreoDispInitStateBtn");
     ChoreoDispInitStateBtn.disabled = "";
-    var ChoreoSearchNext = document.getElementById("ChoreoSearchNext");
-    ChoreoSearchNext.disabled = "disabled";
     AskForNext[0] = 0
 
     var RotSlider = $("#RotSlider").data("roundSlider");
@@ -180,12 +172,8 @@ async function Python_Imports_Done(args){
     PythonPrint({txt:"&#10;All python packages imported&#10;"})
 
     SearchIsOnGoing = false
-    var ChoreoExecuteBtn = document.getElementById("ChoreoExecuteBtn")
-    ChoreoExecuteBtn.disabled = ""
     var ChoreoDispInitStateBtn = document.getElementById("ChoreoDispInitStateBtn")
     ChoreoDispInitStateBtn.disabled = ""
-    var ChoreoSearchNext = document.getElementById("ChoreoSearchNext")
-    ChoreoSearchNext.disabled = "disabled"
     AskForNext[0] = 0
 
     var RotSlider = $("#RotSlider").data("roundSlider")
@@ -217,7 +205,7 @@ function ClickTopTabBtn(TabId) {
     for (i = 0; i < AllMainTabs.length  ; i++) { if (AllMainTabs[i].classList.contains(TabId))   {AllMainTabs[i].style.display   = "block";} else {AllMainTabs[i].style.display   = "none"     ;}}
 }
 
-function  GeomTopTabBtn(TabId) {
+function SwitchClickLeftTabBtn(TabId) {
     switch (TabId) {
         case 'Main': {
             ClickTopTabBtn('Main_About')
@@ -226,7 +214,7 @@ function  GeomTopTabBtn(TabId) {
             ClickTopTabBtn('Play_NowPlaying')
             break}
         case 'Geom': {
-            ClickTopTabBtn('Geom_Bodies')
+            ClickTopTabBtnGeom_New_Bodies()
             break}
         case 'Animation': {
             ClickTopTabBtn('Animation_Colors')
@@ -235,6 +223,13 @@ function  GeomTopTabBtn(TabId) {
             ClickTopTabBtn_Solver_Output()
             break}
     }
+}
+
+function ClickTopTabBtnGeom_New_Bodies() {
+    
+    ClickTopTabBtn('Geom_New_Bodies')
+    BodyGraph.fit()
+
 }
 
 function ClickLeftTabBtn(TabId) {
@@ -256,7 +251,7 @@ function ClickLeftTabBtn(TabId) {
             AllTopTab[i].style.display     = "none"     ;
         }
     }
-    GeomTopTabBtn(TabId);
+    SwitchClickLeftTabBtn(TabId);
 }
 
 var saveJSONData = (function () {
@@ -297,17 +292,13 @@ async function SaveConfigFile(UserDir=false,ConfigDict=undefined){
 
 async function ChoreoExecuteClick() {
 
-    var ChoreoExecuteBtn = document.getElementById("ChoreoExecuteBtn")
+    var ChoreoDispInitStateBtn = document.getElementById("ChoreoDispInitStateBtn")
 
-    if (!ChoreoExecuteBtn.disabled) {
+    if (!ChoreoDispInitStateBtn.disabled) {
         
         SearchIsOnGoing = true
-        var ChoreoExecuteBtn = document.getElementById("ChoreoExecuteBtn")
-        ChoreoExecuteBtn.disabled = "disabled"
         var ChoreoDispInitStateBtn = document.getElementById("ChoreoDispInitStateBtn")
         ChoreoDispInitStateBtn.disabled = "disabled"
-        var ChoreoSearchNext = document.getElementById("ChoreoSearchNext")
-        ChoreoSearchNext.disabled = ""
         AskForNext[0] = 0
 
         var trailLayerCanvas = document.getElementById("trailLayerCanvas")
@@ -388,14 +379,6 @@ async function ChoreoExecuteClick() {
 
 }
 
-function Speed_Test_Click() {
-
-    var ConfigDict = GatherConfigDict()
-    pyodide_worker.postMessage({funname:"LoadDataInWorker",args:{ConfigDict:ConfigDict}})
-    pyodide_worker.postMessage({funname:"ExecutePythonFile",args:"./python_scripts/Speed_Test.py"})
-
-}
-
 function GenerateInitStateClick() {
 
     PythonClearPrints()
@@ -444,46 +427,83 @@ function GenerateInitStateClick() {
 
 }
 
+function GatherGeom_Bodies(nbody = -1){
+
+    Geom_Bodies = {}
+
+    if (nbody < 0) {
+        nbody = document.getElementById("input_nbody").value
+    } else {
+
+        nbody = Math.min(document.getElementById("input_nbody").value, nbody)
+    }
+
+    Geom_Bodies ['nbody'] = parseInt(nbody,10)
+
+    Geom_Bodies ['MomConsImposed'] = document.getElementById('checkbox_MomCons').checked
+
+    table_sym = document.getElementById('table_sym')
+    var nsyms = table_sym.rows[0].cells.length - 1
+
+    Geom_Bodies ['nsyms'] = nsyms
+
+    AllSyms = []
+
+    for (var isym = 0; isym < nsyms; isym++) {
+
+        var the_sym = {}
+        
+        the_sym['BodyPerm'] = []
+
+        const icol = isym+1
+
+        for (ib = 0; ib < nbody; ib++) {
+
+            var itarget = parseInt(  table_sym.rows[1].cells[icol].children[0].rows[ib].cells[0].children[0].value,10)
+            itarget = (itarget % nbody)
+
+            the_sym['BodyPerm'].push(itarget)
+
+        }
+
+        the_sym['Reflexion']    =           table_sym.rows[2].cells[icol].children[0].value
+        the_sym['RotAngleNum']  = parseInt( table_sym.rows[3].cells[icol].children[0].value,10)
+        the_sym['RotAngleDen']  = parseInt( table_sym.rows[4].cells[icol].children[0].value,10)
+        the_sym['TimeRev']      =           table_sym.rows[5].cells[icol].children[0].value 
+        the_sym['TimeShiftNum'] = parseInt( table_sym.rows[6].cells[icol].children[0].value,10)
+        the_sym['TimeShiftDen'] = parseInt( table_sym.rows[7].cells[icol].children[0].value,10)
+
+        AllSyms.push(the_sym)
+
+    }
+
+    Geom_Bodies ['AllSyms'] = AllSyms
+    
+    return Geom_Bodies
+
+}
+
 function GatherConfigDict() {
     /* Gathers all relevant input in the page and puts it in a dictionary */
 
     var ConfigDict = {}
 
-    ConfigDict['Geom_Bodies'] = {}
+    ConfigDict['Geom_Gen'] = {}
+    ConfigDict['Geom_Gen'] ['geodim'] = 2  // futureproofing for once
 
-    ConfigDict['Geom_Bodies'] ['MomConsImposed'] = document.getElementById('checkbox_MomCons').checked
+    ConfigDict['Geom_Bodies'] = GatherGeom_Bodies()
 
-    table = document.getElementById('table_body_loop')
-    var ncols = table.rows[0].cells.length
-
-    ConfigDict['Geom_Bodies'] ['n_loops'] = ncols - 1
+    nloops = LoopTargets.length 
+    ConfigDict['Geom_Bodies']['nloop'] = nloops
+    ConfigDict['Geom_Bodies']['Targets'] = LoopTargets
 
     ConfigDict['Geom_Bodies'] ['mass'] = []
-    ConfigDict['Geom_Bodies'] ['nbpl'] = []
-
-    ConfigDict['Geom_Bodies'] ['SymType'] = []
-
-    for (var icol=1; icol < ncols; icol++) {
-
-        var the_sym = {}
-        
-        the_sym['n'] =  parseInt(  table.rows[1].cells[icol].children[0].value,10)
-
-        ConfigDict['Geom_Bodies'] ['nbpl'] . push( parseInt(  table.rows[1].cells[icol].children[0].value,10))
-        ConfigDict['Geom_Bodies'] ['mass'] . push( parseFloat(table.rows[2].cells[icol].children[0].value)   )
-        
-        the_sym['name'] = table.rows[3].cells[icol].children[0].value;
-        the_sym['k'] = parseInt(table.rows[4].cells[icol].children[0].value,10);
-        the_sym['l'] = parseInt(table.rows[5].cells[icol].children[0].value,10);
-        the_sym['m'] = parseInt(table.rows[6].cells[icol].children[0].value,10);
-        the_sym['p'] = parseInt(table.rows[7].cells[icol].children[0].value,10);
-        the_sym['q'] = parseInt(table.rows[8].cells[icol].children[0].value,10);
-
-        ConfigDict['Geom_Bodies'] ['SymType'].push(the_sym);
-
+    for (il = 0; il < nloops; il++) {
+        ConfigDict['Geom_Bodies']['mass'].push(MassArray[il])
     }
 
-    ConfigDict['Geom_Target'] = {};
+    ConfigDict['Geom_Target'] = {}
+
     LookForTarget = document.getElementById('checkbox_Target').checked
     ConfigDict['Geom_Target'] ['LookForTarget'] = LookForTarget
     if (LookForTarget) {
@@ -529,31 +549,6 @@ function GatherConfigDict() {
     ConfigDict['Geom_Random'] ['coeff_ampl_min']  = parseFloat(document.getElementById('input_coeff_ampl_min' ).value   )
     ConfigDict['Geom_Random'] ['k_infl']          = parseInt(  document.getElementById('input_k_infl'         ).value,10)
     ConfigDict['Geom_Random'] ['k_max']           = parseInt(  document.getElementById('input_k_max'          ).value,10)
-
-    ConfigDict['Geom_Custom'] = {}
-
-    table = document.getElementById('table_custom_sym')
-    var ncols = table.rows[0].cells.length
-
-    ConfigDict['Geom_Custom'] ['n_custom_sym'] = ncols - 1
-    ConfigDict['Geom_Custom'] ['CustomSyms'] = []
-
-    for (var icol=1; icol < ncols; icol++) {
-
-        var the_sym = {}
-        
-        the_sym['LoopTarget']   = parseInt( table.rows[1].cells[icol].children[0].value,10)
-        the_sym['LoopSource']   = parseInt( table.rows[2].cells[icol].children[0].value,10)
-        the_sym['Reflexion']    =           table.rows[3].cells[icol].children[0].value
-        the_sym['RotAngleNum']  = parseInt( table.rows[4].cells[icol].children[0].value,10)
-        the_sym['RotAngleDen']  = parseInt( table.rows[5].cells[icol].children[0].value,10)
-        the_sym['TimeRev']      =           table.rows[6].cells[icol].children[0].value 
-        the_sym['TimeShiftNum'] = parseInt( table.rows[7].cells[icol].children[0].value,10)
-        the_sym['TimeShiftDen'] = parseInt( table.rows[8].cells[icol].children[0].value,10)
-
-        ConfigDict['Geom_Custom'] ['CustomSyms'].push(the_sym)
-
-    }
 
     ConfigDict['Animation_Colors'] = {}
     ConfigDict['Animation_Colors'] ["color_method_input"] = document.getElementById("color_method_input").value
@@ -671,39 +666,58 @@ async function LoadConfigFileFromRemote(json_filename) {
 
 }
 
-function LoadConfigDict(ConfigDict) {
+function LoadGeom_Bodies(Geom_Bodies){
 
-    var trailLayerCanvas = document.getElementById("trailLayerCanvas")
+    nbody = Geom_Bodies ['nbody'] 
 
-    var table = document.getElementById('table_body_loop')
-    var ncols = table.rows[0].cells.length
+    document.getElementById("input_nbody").value = nbody
+    document.getElementById('checkbox_MomCons').checked = Geom_Bodies ['MomConsImposed']
+    
+    // Geom_Bodies ['mass'] = [] ???
 
-    for (var icol=ncols-1; icol > 0; icol-- ) {
-        deleteColumn('table_body_loop',icol)
+    table_sym = document.getElementById('table_sym')
+
+    var ncols = table_sym.rows[0].cells.length
+    for (var icol = ncols-1; icol > 0; icol-- ) {
+        deleteColumn('table_sym',icol)
     };
 
-    document.getElementById('checkbox_MomCons').checked  = ConfigDict['Geom_Bodies'] ['MomConsImposed'] 
+    nsyms = Geom_Bodies ['nsyms']
 
-    var n_loops = ConfigDict['Geom_Bodies'] ['n_loops']
+    for (var isym = 0; isym < nsyms; isym++) {
 
-    for (var il=0; il < n_loops; il++) {
+        const icol = isym+1
+        const the_sym = Geom_Bodies ['AllSyms'][isym]
 
-        ClickAddBodyLoop()
+        DoAddSym()
 
-        var icol = il+1
+        for (ib = 0; ib < nbody; ib++) {
 
-        table.rows[1].cells[icol].children[0].value = ConfigDict['Geom_Bodies'] ['nbpl'] [il]
-        table.rows[2].cells[icol].children[0].value = ConfigDict['Geom_Bodies'] ['mass'] [il] . toString()
-        table.rows[3].cells[icol].children[0].value = ConfigDict['Geom_Bodies'] ['SymType'] [il] ['name']
-        table.rows[4].cells[icol].children[0].value = ConfigDict['Geom_Bodies'] ['SymType'] [il] ['k']
-        table.rows[5].cells[icol].children[0].value = ConfigDict['Geom_Bodies'] ['SymType'] [il] ['l']
-        table.rows[6].cells[icol].children[0].value = ConfigDict['Geom_Bodies'] ['SymType'] [il] ['m']
-        table.rows[7].cells[icol].children[0].value = ConfigDict['Geom_Bodies'] ['SymType'] [il] ['p']
-        table.rows[8].cells[icol].children[0].value = ConfigDict['Geom_Bodies'] ['SymType'] [il] ['q']
+            table_sym.rows[1].cells[icol].children[0].rows[ib].cells[0].children[0].value = the_sym['BodyPerm'][ib]
+
+        }
+
+        table_sym.rows[2].cells[icol].children[0].value = the_sym['Reflexion'] 
+        table_sym.rows[3].cells[icol].children[0].value = the_sym['RotAngleNum']
+        table_sym.rows[4].cells[icol].children[0].value = the_sym['RotAngleDen']
+        table_sym.rows[5].cells[icol].children[0].value = the_sym['TimeRev']
+        table_sym.rows[6].cells[icol].children[0].value = the_sym['TimeShiftNum']
+        table_sym.rows[7].cells[icol].children[0].value = the_sym['TimeShiftDen']
         
     }
 
-    RedistributeClicksTableBodyLoop('table_body_loop',1,RedistributeBodyCount)
+    PreviousInputValueNbody = nbody
+
+}
+
+function LoadConfigDict(ConfigDict) {
+
+    LoadGeom_Bodies(ConfigDict['Geom_Bodies'])
+
+    MassArray = ConfigDict['Geom_Bodies'] ['mass']
+    LoopTargets = ConfigDict['Geom_Bodies']['Targets']
+
+    MakeLoopData()
 
     if (document.getElementById('checkbox_Target').checked ^ ConfigDict['Geom_Target'] ['LookForTarget']) {
         checkbox_EnableTargets_Handler()
@@ -719,34 +733,6 @@ function LoadConfigDict(ConfigDict) {
     document.getElementById('input_coeff_ampl_min' ).value = ConfigDict['Geom_Random'] ['coeff_ampl_min'] 
     document.getElementById('input_k_infl'         ).value = ConfigDict['Geom_Random'] ['k_infl']         
     document.getElementById('input_k_max'          ).value = ConfigDict['Geom_Random'] ['k_max']          
-
-    var table = document.getElementById('table_custom_sym')
-    var ncols = table.rows[0].cells.length
-
-    for (var icol=ncols-1; icol > 0; icol-- ) {
-        deleteColumn('table_custom_sym',icol)
-    };
-
-    var nsym = ConfigDict['Geom_Custom'] ['n_custom_sym']
-
-    for (var isym=0; isym < nsym; isym++) {
-
-        ClickAddCustomSym()
-
-        var icol = isym+1
-
-        table.rows[1].cells[icol].children[0].value = ConfigDict['Geom_Custom'] ['CustomSyms'] [isym] ['LoopTarget']   
-        table.rows[2].cells[icol].children[0].value = ConfigDict['Geom_Custom'] ['CustomSyms'] [isym] ['LoopSource']   
-        table.rows[3].cells[icol].children[0].value = ConfigDict['Geom_Custom'] ['CustomSyms'] [isym] ['Reflexion']    
-        table.rows[4].cells[icol].children[0].value = ConfigDict['Geom_Custom'] ['CustomSyms'] [isym] ['RotAngleNum']  
-        table.rows[5].cells[icol].children[0].value = ConfigDict['Geom_Custom'] ['CustomSyms'] [isym] ['RotAngleDen']  
-        table.rows[6].cells[icol].children[0].value = ConfigDict['Geom_Custom'] ['CustomSyms'] [isym] ['TimeRev']      
-        table.rows[7].cells[icol].children[0].value = ConfigDict['Geom_Custom'] ['CustomSyms'] [isym] ['TimeShiftNum'] 
-        table.rows[8].cells[icol].children[0].value = ConfigDict['Geom_Custom'] ['CustomSyms'] [isym] ['TimeShiftDen'] 
-
-    }
-
-    RedistributeClicksTableBodyLoop('table_custom_sym',0)
 
     document.getElementById("color_method_input").value = ConfigDict['Animation_Colors'] ["color_method_input"]
     
@@ -773,6 +759,7 @@ function LoadConfigDict(ConfigDict) {
     
     ExportColors()
     var send_event = new Event('ChangeColorsFromOutsideCanvas')
+    var trailLayerCanvas = document.getElementById("trailLayerCanvas")
     trailLayerCanvas.dispatchEvent(send_event)
 
     document.getElementById('checkbox_Limit_FPS').checked = ConfigDict['Animation_Framerate']['checkbox_Limit_FPS'] 
@@ -831,7 +818,7 @@ function LoadConfigDict(ConfigDict) {
 
     }
 
-    RedistributeClicksTableBodyLoop('table_cvg_loop',1)
+    RedistributeClicksTable('table_cvg_loop',1)
 
     document.getElementById('checkbox_duplicates').checked  = ConfigDict['Solver_Checks'] ['Look_for_duplicates'] 
     document.getElementById('input_duplicate_eps').value    = ConfigDict['Solver_Checks'] ['duplicate_eps']       
@@ -861,75 +848,75 @@ function OpenCloseLeftTab() {
 canvas_items_list= ["canvasContainer","trailLayerCanvas","particleLayerCanvas"]
 
 function CloseLeftTab() {
-    var i;
-    var AllLeftTabs        = document.getElementsByClassName("LeftTab");
-    var MarginLeftTop      = document.getElementById("MarginLeftTop");
-    var AllLeftTabBtns     = document.getElementsByClassName("LeftTabBtn");
-    var AnimationBlock     = document.getElementById("AnimationBlock");
-    var AllTopTabs         = document.getElementsByClassName("TopTab");
-    var CommandBody        = document.getElementById("CommandBody");
+    var i
+    var AllLeftTabs        = document.getElementsByClassName("LeftTab")
+    var MarginLeftTop      = document.getElementById("MarginLeftTop")
+    var AllLeftTabBtns     = document.getElementsByClassName("LeftTabBtn")
+    var AnimationBlock     = document.getElementById("AnimationBlock")
+    var AllTopTabs         = document.getElementsByClassName("TopTab")
+    var CommandBody        = document.getElementById("CommandBody")
     for (i = 0; i < AllLeftTabs.length     ; i++) {
-        AllLeftTabs[i].classList.remove("open");
-        AllLeftTabs[i].classList.add("closed");
-        AllLeftTabs[i].style.width     = "43px"     ;
+        AllLeftTabs[i].classList.remove("open")
+        AllLeftTabs[i].classList.add("closed")
+        AllLeftTabs[i].style.width     = "43px"     
     }
-    MarginLeftTop.style.marginLeft      = "43px"     ;
+    MarginLeftTop.style.marginLeft      = "43px"     
     for (i = 0; i < AllLeftTabBtns.length; i++) {
-        AllLeftTabBtns[i].style.display     = "none";
+        AllLeftTabBtns[i].style.display     = "none"
     }
-    AnimationBlock.style.marginLeft      = "0px"     ;
+    AnimationBlock.style.marginLeft      = "0px"     
     for (i = 0; i < AllTopTabs.length; i++) {
-        AllTopTabs[i].style.width     = "567px";
+        AllTopTabs[i].style.width     = "567px"
     }
     for (i = 0; i < canvas_items_list.length; i++) {
-        var canvas_item = document.getElementById(canvas_items_list[i]);
-        canvas_item.style.width     = "610px"     ;
-        canvas_item.style.height     = "610px"     ;
+        var canvas_item = document.getElementById(canvas_items_list[i])
+        canvas_item.style.width     = "610px"     
+        canvas_item.style.height     = "610px"     
     }
     if (window.innerWidth > 1220){
-        CommandBody.style.bottom = "710px";
+        CommandBody.style.bottom = "710px"
     } 
     
 }
 
 function OpenLeftTab() {
-    var i;
-    var AllLeftTabs        = document.getElementsByClassName("LeftTab");
-    var MarginLeftTop      = document.getElementById("MarginLeftTop");
-    var AllLeftTabBtns     = document.getElementsByClassName("LeftTabBtn");
-    var AnimationBlock     = document.getElementById("AnimationBlock");
-    var AllTopTabs         = document.getElementsByClassName("TopTab");
-    var CommandBody        = document.getElementById("CommandBody");
+    var i
+    var AllLeftTabs        = document.getElementsByClassName("LeftTab")
+    var MarginLeftTop      = document.getElementById("MarginLeftTop")
+    var AllLeftTabBtns     = document.getElementsByClassName("LeftTabBtn")
+    var AnimationBlock     = document.getElementById("AnimationBlock")
+    var AllTopTabs         = document.getElementsByClassName("TopTab")
+    var CommandBody        = document.getElementById("CommandBody")
     for (i = 0; i < AllLeftTabs.length     ; i++) {
-        AllLeftTabs[i].classList.add("open");
-        AllLeftTabs[i].classList.remove("closed");
-        AllLeftTabs[i].style.width     = "130px"     ;
+        AllLeftTabs[i].classList.add("open")
+        AllLeftTabs[i].classList.remove("closed")
+        AllLeftTabs[i].style.width     = "130px"     
     }
-    MarginLeftTop.style.marginLeft      = "130px"     ;
+    MarginLeftTop.style.marginLeft      = "130px"     
     for (i = 0; i < AllLeftTabBtns.length; i++) {
-        AllLeftTabBtns[i].style.display     = "";
+        AllLeftTabBtns[i].style.display     = ""
     }
-    AnimationBlock.style.marginLeft      = "130px"     ;
+    AnimationBlock.style.marginLeft      = "130px"     
     for (i = 0; i < AllTopTabs.length; i++) {
-        AllTopTabs[i].style.width     = "480px";
+        AllTopTabs[i].style.width     = "480px"
     }
     for (i = 0; i < canvas_items_list.length; i++) {
         var canvas_item = document.getElementById(canvas_items_list[i]);
-        canvas_item.style.width     = "480px"     ;
-        canvas_item.style.height     = "480px"     ;
+        canvas_item.style.width     = "480px"     
+        canvas_item.style.height     = "480px"     
     }
     if (window.innerWidth > 1220){
-        CommandBody.style.bottom = "580px";
+        CommandBody.style.bottom = "580px"
     } 
 }    
 
 function deleteColumn(tableID, colnum) {
-    var table = document.getElementById(tableID);
-    var i;
+    var table = document.getElementById(tableID)
+    var i
 
     if (colnum < table.rows[0].cells.length) {
         for (i = 0; i < table.rows.length; i++) {
-            table.rows[i].deleteCell(colnum);
+            table.rows[i].deleteCell(colnum)
         }
     }
 }
@@ -939,7 +926,7 @@ function deleteLastColumn(tableId) {
     deleteColumn(tableId, lastCol);
 }
 
-function RedistributeClicksTableBodyLoop(tableid,mincol,fun_exec_end=function(){}){
+function RedistributeClicksTable(tableid, mincol) {
     var table = document.getElementById(tableid)
 
     for (var icol=1; icol < table.rows[0].cells.length; icol++) {
@@ -950,34 +937,13 @@ function RedistributeClicksTableBodyLoop(tableid,mincol,fun_exec_end=function(){
         div.onclick = function () {
             if (table.rows[0].cells.length > (mincol+1)) {
                 deleteColumn(tableid, this.button_number)
-                RedistributeClicksTableBodyLoop(tableid,mincol,fun_exec_end)
+                RedistributeClicksTable(tableid, mincol)
+                MakeBodyGraph()
             }
         }
 
     }
 
-    fun_exec_end()
-
-}
-
-function RedistributeBodyCount() {
-    var table = document.getElementById('table_body_loop')
-
-    var irow_n_body = 1
-    var irow_body_range = 9
-    var ibody_low = 0
-    var ibody_high = 0                                   
-
-    for (var icol=1; icol < table.rows[0].cells.length; icol++) {
-        
-        var nbody = parseInt(table.rows[irow_n_body].cells[icol].children[0].value,10);
-        ibody_high = ibody_high + nbody -1 ;
-
-        table.rows[irow_body_range].cells[icol].children[0].innerHTML = ibody_low.toString() + " - " + ibody_high.toString();
-
-        ibody_low = ibody_high+1;
-        ibody_high = ibody_low;
-    }
 }
 
 function ClickAddColLoopKrylov() {
@@ -1064,110 +1030,7 @@ function ClickAddColLoopKrylov() {
         newcell.appendChild(input)
     }
 
-    RedistributeClicksTableBodyLoop('table_cvg_loop',1)
-
-}
-
-function ClickAddBodyLoop() {
-    var table = document.getElementById('table_body_loop')
-    var newcell
-    var div,input
-    var irow, ival, jcol
-    var icol = table.rows[0].cells.length
-
-    var input_dict = [
-        {
-            "elem_class":"input", 
-            "type":"number", 
-            "value":"3",
-            "min":"1",
-            "oninput":"RedistributeBodyCount",
-        },
-        {
-            "elem_class":"input", 
-            "type":"text", 
-            "value":"1.",
-        },
-        {
-            "elem_class":"select", 
-            "class":"w3-select",  
-            "innerHTML":"<option value='C' selected>C</option><option value='D'>D</option><option value='Cp'>Cp</option><option value='Dp'>Dp</option>",
-        },
-        {
-            "elem_class":"input", 
-            "type":"number", 
-            "min":"1",
-            "value":"1",
-        },
-        {
-            "elem_class":"input", 
-            "type":"number", 
-            "min":"0",
-            "value":"1",
-        },
-        {
-            "elem_class":"input", 
-            "type":"number", 
-            "min":"0",
-            "value":"1",
-        },
-        {
-            "elem_class":"input", 
-            "type":"number", 
-            "min":"0",
-            "value":"1",
-        },
-        {
-            "elem_class":"input", 
-            "type":"number", 
-            "min":"1",
-            "value":"1",
-        },
-        {
-            "elem_class":"text",
-            "max-width":"60px",
-            "innerHTML":"",
-        },
-    ]
-
-    n_fields = input_dict.length
-
-    irow = 0
-    newcell = table.rows[irow].insertCell(icol)
-    newcell.style.borderLeftStyle = 'hidden'
-    newcell.style.fontSize = '16px'
-    newcell.style.width = '60px'
-    newcell.style.textAlign = 'center'
-
-    div = document.createElement('button')
-    div.classList.add("w3-button","w3-light-grey","w3-hover-pale-red","TargetToggle")
-    div.style.textAlign = "center"
-    div.style.fontSize ="16px"
-    div.style.fontWeight ="bold"
-    div.innerHTML = "-"
-
-    newcell.appendChild(div)
-
-    for (ival = 0; ival < n_fields; ival++) {
-        irow = ival + 1
-        newcell = table.rows[irow].insertCell(icol)
-        newcell.style.width = '60px'
-        newcell.style.textAlign = 'center';  
-        input = document.createElement(input_dict[ival]["elem_class"])
-        input.classList.add("TargetToggle")
-        for (var [key, val] of Object.entries(input_dict[ival])){
-            if (key != "elem_class"){
-                input[key] = val
-            }
-            if (key == "oninput"){
-                input[key] = window[val]
-            }
-            input.style = "width: 45px; text-align: center;"
-        }
-        newcell.appendChild(input)
-    }
-
-    RedistributeClicksTableBodyLoop('table_body_loop',1,RedistributeBodyCount)
+    RedistributeClicksTable('table_cvg_loop',1)
 
 }
 
@@ -1258,7 +1121,7 @@ function ClickAddCustomSym() {
         newcell.appendChild(input)
     }
 
-    RedistributeClicksTableBodyLoop('table_custom_sym',0)
+    RedistributeClicksTable('table_custom_sym',0)
 
 }
 
@@ -1272,6 +1135,7 @@ function ClickRemoveColor() {
 
         RemoveColor()
         ExportColors()
+        MakeBodyGraph()
 
         var send_event = new Event('ChangeColorsFromOutsideCanvas')
         trailLayerCanvas.dispatchEvent(send_event)
@@ -1305,6 +1169,7 @@ function ClickAddColor() {
 
     AddColor()
     ExportColors()
+    MakeBodyGraph()
 
     var send_event = new Event('ChangeColorsFromOutsideCanvas')
     trailLayerCanvas.dispatchEvent(send_event)
@@ -1378,6 +1243,7 @@ function AddColor(the_color) {
 function onChangeColor(){
     
     ExportColors()
+    MakeBodyGraph()
     var send_event = new Event('ChangeColorsFromOutsideCanvas')
     trailLayerCanvas.dispatchEvent(send_event)
 
@@ -1405,6 +1271,8 @@ color_method_input.addEventListener("input", color_method_input_Handler, true);
 
 function color_method_input_Handler(event) {
 
+    MakeBodyGraph()
+
     var trailLayerCanvas = document.getElementById("trailLayerCanvas");
 
     var send_event = new Event('ChangeColorsFromOutsideCanvas');
@@ -1420,15 +1288,15 @@ function ChangeColor_Handler(event) {
     var color = event.path[0].value;
 
     colorLookup[targetid] = color;
-    
+    MakeBodyGraph()
     var send_event = new Event('ChangeColorsFromOutsideCanvas');
     trailLayerCanvas.dispatchEvent(send_event);
 
 }
 
 function ClickTopTabBtn_Animation_Framerate() {
-    UpdateFPSDisplay();
-    ClickTopTabBtn('Animation_Framerate');
+    UpdateFPSDisplay()
+    ClickTopTabBtn('Animation_Framerate')
 }
 
 function ClickTopTabBtn_Solver_Output() {
@@ -1459,12 +1327,8 @@ function KillAndReloadWorker() {
     pyodide_worker.terminate()
 
     SearchIsOnGoing = false
-    var ChoreoExecuteBtn = document.getElementById("ChoreoExecuteBtn")
-    ChoreoExecuteBtn.disabled = "disabled"
     var ChoreoDispInitStateBtn = document.getElementById("ChoreoDispInitStateBtn")
     ChoreoDispInitStateBtn.disabled = "disabled"
-    var ChoreoSearchNext = document.getElementById("ChoreoSearchNext")
-    ChoreoSearchNext.disabled = "disabled"
     AskForNext[0] = 0
 
     var Python_State_Div = document.getElementById("Python_State_Div")
@@ -1637,10 +1501,10 @@ function checkbox_Cookie_Handler(event) {
 
 async function IssueMessage(HTMLdiv,message,duration = -1) {
 
-    HTMLdiv.innerHTML = message;
+    HTMLdiv.innerHTML = message
 
     if (duration > 0 ) {
-        setTimeout(function(){IssueMessage(HTMLdiv,"",-1)}, duration);
+        setTimeout(function(){IssueMessage(HTMLdiv,"",-1)}, duration)
     }
 
 }
@@ -2300,8 +2164,6 @@ function ErasehashURL(){
     try {
         history.replaceState("", document.title, window.location.pathname + window.location.search) // Removes hash from URL
     } catch(e) { 
-        // console.log(e)
-        // console.log("Failed to reset URL")
         window.location.hash = ""
     }
 
@@ -2572,7 +2434,6 @@ function startRecording(Duration) {
         'videoBitsPerSecond' : 1024*1024*8, // Increase default quality
     }
     const rec = new MediaRecorder(stream,video_potions) // init the recorder
-    // console.log(rec)
     // every time the recorder has new data, we will store it in our array
     rec.ondataavailable = e => chunks.push(e.data)
     // only when the recorder stops, we construct a complete Blob from all the chunks
@@ -2673,8 +2534,6 @@ function InitPage(){
             ClickAddColLoopKrylov()
         }
 
-        ClickAddBodyLoop()
-
         color_datalist = document.getElementById('presetColors')
         for (var i = 0; i < colorLookup_init.length; i++) {
         var div = document.createElement('option')
@@ -2686,13 +2545,17 @@ function InitPage(){
             AddColor()
         }
 
-        Python_textarea.style.height = "400px"
-
         InitWorkspaceClick()
 
         document.getElementById('CLI_nproc').value = (navigator.hardwareConcurrency / 2)
 
+        DoAddSym()
+
         DealWithCookie()
+
+        MakeBodyGraph()
+
+        document.getElementById("BodyGraphDiv").addEventListener("dblclick", MakeBodyGraph)
 
     }
 
@@ -2871,5 +2734,543 @@ function GalleryKeyboardSelect(event){
         }
 
     }
+
+}
+
+function ConnectedComponents(nbody, edges) {
+
+    seen = new Set()
+    All_CC = new Array()
+
+    nedges = edges.length
+    nsym = nedges / nbody
+
+    for (ibody = 0; ibody < nbody; ibody++) {
+
+        if (! seen.has(ibody)) {
+
+            neigh_set = BFS(edges, ibody, nsym, nbody)
+
+            neigh_arr = new Array()
+            for (const item of neigh_set){
+                seen.add(item)
+                neigh_arr.push(item)
+            }
+
+            neigh_arr.sort(function(a,b){return a-b})
+
+            All_CC.push(neigh_arr)
+
+        }
+
+    }
+
+    All_CC.sort(function(a,b){return a[0]-b[0]})
+
+    return All_CC
+
+}
+
+// One step of breadth first search
+function BFS(edges, ibody, nsym, nbody) {
+
+    seen = new Set()
+    seen.add(ibody)
+
+    nextlevel = [ibody]
+
+    while (nextlevel.length > 0) {
+        
+        thislevel = nextlevel
+        nextlevel = []
+        
+        for (const jbody of thislevel) {
+
+            for (isym = 0; isym < nsym; isym++) {
+
+                const iedge = jbody + isym * nbody
+                const edge = edges[iedge]
+                const kbody = edge.to
+
+                if (! seen.has(kbody)) {
+
+                    seen.add(kbody)
+                    nextlevel.push(kbody)
+
+                }
+            }
+        }
+    }
+
+    return seen
+}
+
+
+function MakeBodyGraph_nodes_edges() {
+    
+    nbody = parseInt(document.getElementById("input_nbody").value,10)
+    nodes = new Array(input_nbody)
+
+    for (ib = 0; ib < nbody; ib++) {
+
+        nodes[ib] = {
+            id: ib,
+            label: ' '+ib.toString()+' ',
+            font: { color:"black", size: 30},
+            shape: "circle",
+            size: 30,
+            borderWidth: 2,
+            shadow: true,
+        }
+
+    }
+
+    var table_sym = document.getElementById('table_sym')
+    var nsyms = table_sym.rows[0].cells.length - 1
+    var edges = new Array(nsyms*nbody)
+
+    AllPermsAreLegal = true
+
+    for (isym = 0; isym < nsyms; isym++) {
+        
+        var perm = new Array(nbody).fill(0)
+
+        for (ib = 0; ib < nbody; ib++) {
+
+            const iedge = ib + isym * nbody
+            
+            const target = parseInt(table_sym.rows[1].cells[isym+1].children[0].rows[ib].cells[0].children[0].value,10)
+            
+            perm[target] = 1
+
+            edges[iedge] =  {
+                from: ib,
+                to: target ,
+                color : "black",
+                smooth: { 
+                    type: "continuous" 
+                },
+                arrows: {
+                    to: {
+                        enabled: true,
+                        type: "arrow",
+                    },
+                },
+            }
+
+        }
+
+        var n_targets = perm.reduce((a, b) => a + b, 0)
+
+        ThisPermIsLegal = (n_targets == nbody)
+
+        if (ThisPermIsLegal) {
+            table_sym.rows[1].cells[isym+1].style.backgroundColor = "#F1F1F1"
+        } else {
+            table_sym.rows[1].cells[isym+1].style.backgroundColor = "#ffdddd"
+            AllPermsAreLegal = false
+        }
+        
+    }
+
+    if (AllPermsAreLegal) {
+
+        LoopTargets = ConnectedComponents(nbody, edges)
+
+        nloops = LoopTargets.length 
+    
+        for ( il = 0; il < nloops; il++) {
+
+            const nlb = LoopTargets[il].length
+
+            for (ilb = 0; ilb < nlb; ilb++ ) {
+
+                ib = LoopTargets[il][ilb]
+
+                if (color_method_input.value == "body") {
+                    color_id = ib;
+                } else if (color_method_input.value == "loop") {
+                    color_id = il;
+                } else if (color_method_input.value == "loop_id") {
+                    color_id = ilb;
+                } else {
+                    color_id = 0;
+                }
+    
+                color = colorLookup[color_id % colorLookup.length];
+                nodes[ib].color = color
+
+            }
+
+        }
+
+        MakeLoopData()
+
+    } else {
+
+        LoopTargets = []
+
+        for (ib = 0; ib < nbody; ib++) {
+    
+            if (color_method_input.value == "body") {
+                color_id = ib;
+            } else if (color_method_input.value == "loop") {
+                color_id = -1;
+            } else if (color_method_input.value == "loop_id") {
+                color_id = -1;
+            } else {
+                color_id = 0;
+            }
+            
+            if (color_id >= 0) {
+                color = colorLookup[color_id % colorLookup.length];
+            } else {
+                color = "#f44336"
+            }
+    
+            nodes[ib].color = color
+
+        }
+
+        ClearInputMasses()
+    }
+
+    return [nodes, edges]
+}
+
+function MakeBodyGraph(){
+
+    [nodes, edges] = MakeBodyGraph_nodes_edges()
+
+    var container = document.getElementById("BodyGraphDiv")
+
+    var data = {
+        nodes: nodes,
+        edges: edges,
+    }
+
+    var options = {
+        height: '100%',
+        width: '100%',
+        clickToUse: true,
+        layout: {
+            randomSeed: undefined,
+        },
+        physics: {
+            barnesHut: {
+                gravitationalConstant: -2000,
+                centralGravity: 0.1,
+                springLength: 100,
+                springConstant: 0.1,
+                avoidOverlap: 0.5,
+                damping: 0.1,
+            },
+            maxVelocity: 50,
+            solver: 'barnesHut',
+            timestep: 0.35,
+            stabilization: {
+                enabled: true,
+                iterations: 500,
+                updateInterval: 25
+            },
+        }
+    }
+
+    BodyGraph = new vis.Network(container, data, options)
+
+    BodyGraph.on("stabilizationIterationsDone", function () {
+        BodyGraph.setOptions( { physics: false } )
+    })
+
+}
+
+
+function MakeLoopData() {
+
+    nloops = LoopTargets.length
+
+    MassMessage = document.getElementById("MassMessage")
+    if (nloops == 1) {
+        plural = ''
+    } else { 
+        plural = 's'
+    }
+    MassMessage.innerHTML = "<br>Symmetries lead to the discovery of "+nloops.toString()+" independant loop"+plural+":<br><br>"
+
+    for (il = MassArray.length; il < nloops; il++) {
+        MassArray.push(1.)
+    }
+
+    var table = document.getElementById('table_mass')
+    var newcell
+
+    nloops_old = table.rows.length - 1
+
+    if (nloops_old < 0) { // make header
+
+        newrow = table.insertRow(0)
+
+        newcell = newrow.insertCell(0)
+        newcell.style.borderLeftStyle = 'hidden'
+        newcell.style.borderTopStyle = 'hidden'
+
+        newcell = newrow.insertCell(1)
+        div = document.createElement('label')
+        div.style.textAlign = "center"
+        div.style.fontSize ="12px"
+        div.style.fontWeight ="bold"
+        div.innerHTML = "Bodies"
+        newcell.appendChild(div)
+
+        newcell = newrow.insertCell(2)
+        div = document.createElement('label')
+        div.style.textAlign = "center"
+        div.style.fontSize ="12px"
+        div.style.fontWeight ="bold"
+        div.innerHTML = "Mass"
+        newcell.appendChild(div)
+
+        nloops_old = 0
+    }
+
+    // Delete extra rows
+    for (irow = nloops_old; irow >= nloops+1; irow--) {
+
+        table.deleteRow(irow)
+
+    }
+    
+    // Add extra rows
+    for (irow = nloops_old+1; irow < nloops+1; irow++) {
+
+        il = irow -1 
+
+        newrow = table.insertRow(irow)
+
+        newcell = newrow.insertCell(0)
+        newcell.style.width = '80px'
+        newcell.style.textAlign = 'left'
+
+        div = document.createElement('label')
+        div.style.textAlign = "left"
+        div.style.fontSize ="12px"
+        div.style.fontWeight ="bold"
+        div.innerHTML = "Loop "+il.toString()
+        newcell.appendChild(div)
+
+        newcell = newrow.insertCell(1)
+        newcell.style.textAlign = 'center'
+
+        div = document.createElement('label')
+        div.style.textAlign = "center"
+        div.style.fontSize ="12px"
+        newcell.appendChild(div)
+
+        newcell = newrow.insertCell(2)
+        newcell.style.textAlign = 'center'
+
+        input = document.createElement('input')
+        input['type'] = "text"
+        input['value'] = MassArray[il].toString()
+        input['oninput'] = ReadMasses
+        input.style.fontSize = '12px'
+        input.style.width = '120px'
+        input.style.textAlign = 'center'
+
+        newcell.appendChild(input)
+
+    }
+
+    // Rewrite all LoopTargets
+    for (irow = 1; irow < nloops+1; irow++) {
+
+        il = irow -1 
+
+        bodies_str = ""
+        nlb = LoopTargets[il].length
+        for (ilb = 0; ilb <  nlb-1; ilb++) {
+            bodies_str += LoopTargets[il][ilb].toString()+', '
+        }
+        bodies_str += LoopTargets[il][nlb-1].toString()
+
+        table.rows[irow].cells[1].children[0].innerHTML = bodies_str
+
+    }
+
+}
+
+function ReadMasses() {
+
+    var table = document.getElementById('table_mass')
+
+    nrows = LoopTargets.length
+    for (irow = 1; irow < nrows+1; irow++) {
+        MassArray[irow-1] = parseFloat(table.rows[irow].cells[2].children[0].value)
+    }
+}
+
+function ClearInputMasses() {
+
+    MassMessage.innerHTML = "<br>Symmetries are not properly set."
+
+    var table = document.getElementById('table_mass')
+
+    nloops_old = table.rows.length
+
+    // Delete all rows
+    for (irow = nloops_old-1; irow >= 0; irow--) {
+        table.deleteRow(irow)
+    }
+    
+}
+
+function CreateInputPermTable(){
+
+    nbody = document.getElementById("input_nbody").value
+
+    innerHTML = "" 
+    for (ib = 0; ib < nbody; ib++) {
+
+        innerHTML += "<tr><td style=border:none;'>"
+        innerHTML += ib.toString() + " : "
+        innerHTML += "<input type='number' "
+        innerHTML += "value='"+((ib+1) % nbody).toString()+"'"
+        innerHTML += "min='0' max='"+(nbody-1).toString()+"'"
+        innerHTML += "onchange='MakeBodyGraph()'"
+        innerHTML += "style='width:33px;'>"
+        innerHTML += "</td></tr>"
+        
+    }
+
+    return innerHTML
+
+}
+
+function ClickAddSym() {
+
+    DoAddSym() 
+    MakeBodyGraph()
+
+}
+
+function DoAddSym() {
+
+    nbody = document.getElementById("input_nbody").value
+    var table = document.getElementById('table_sym')
+    var newcell
+    var div,input
+    var irow, ival, jcol
+    var icol = table.rows[0].cells.length
+
+    var input_dict = [
+        {
+            "elem_class":"table",
+            "style":"font-size:10px;border:none;width: 63px;margin-left: auto;margin-right: auto;margin-bottom:-3px;",
+            "innerHTML": CreateInputPermTable(),
+        },
+        {
+            "elem_class":"select", 
+            "class":"w3-select",  
+            "innerHTML":"<option value='True'>True</option><option value='False' selected>False</option>",
+            "style":"width: 53px; text-align: center;",
+        },
+        {
+            "elem_class":"input", 
+            "type":"number", 
+            "value":"0",
+            "style":"width: 53px; text-align: center;",
+        },
+        {
+            "elem_class":"input", 
+            "type":"number", 
+            "value":"1",
+            "style":"width: 53px; text-align: center;",
+        },
+        {
+            "elem_class":"select", 
+            "class":"w3-select",  
+            "innerHTML":"<option value='True'>True</option><option value='False' selected>False</option>",
+            "style":"width: 53px; text-align: center;",
+        },
+        {
+            "elem_class":"input", 
+            "type":"number", 
+            "value":"1",
+            "style":"width: 53px; text-align: center;",
+        },
+        {
+            "elem_class":"input", 
+            "type":"number", 
+            "value":(nbody).toString(),
+            "style":"width: 53px; text-align: center;",
+        }
+    ]
+
+    n_fields = input_dict.length
+
+    irow = 0
+    newcell = table.rows[irow].insertCell(icol)
+    newcell.style.borderLeftStyle = 'hidden'
+    newcell.style.fontSize = '16px'
+    newcell.style.width = '65px'
+    newcell.style.textAlign = 'center'
+
+    div = document.createElement('button')
+    div.classList.add("w3-button")
+    div.classList.add("w3-light-grey")
+    div.classList.add("w3-hover-pale-red")
+    div.style.textAlign = "center"
+    div.style.fontSize ="16px"
+    div.style.fontWeight ="bold"
+    div.innerHTML = "-"
+
+    newcell.appendChild(div)
+
+    for (ival = 0; ival < n_fields; ival++) {
+        irow = ival + 1
+        newcell = table.rows[irow].insertCell(icol)
+        newcell.style.width = '65px'
+        newcell.style.textAlign = 'center'
+        input = document.createElement(input_dict[ival]["elem_class"])
+        for (var [key, val] of Object.entries(input_dict[ival])){
+            if (key != "elem_class"){
+                input[key] = val
+            }
+        }
+        newcell.appendChild(input)
+    }
+
+    RedistributeClicksTable('table_sym',0)
+
+}
+
+function UpdateNumberofBodies() {
+
+    var Geom_Bodies = GatherGeom_Bodies(PreviousInputValueNbody)
+    
+    new_nbody = parseInt(document.getElementById("input_nbody").value,10)
+    Geom_Bodies["nbody"] = new_nbody 
+
+    if (PreviousInputValueNbody < new_nbody) {
+
+        nsyms = Geom_Bodies ['nsyms']
+
+        for (var isym = 0; isym < nsyms; isym++) {
+
+            for (ib = PreviousInputValueNbody; ib < new_nbody; ib++) {
+
+                Geom_Bodies ['AllSyms'][isym]['BodyPerm'].push( ib )
+
+            }
+
+        }
+
+    }
+    
+    LoadGeom_Bodies(Geom_Bodies)
+
+    PreviousInputValueNbody = new_nbody
+
+    MakeBodyGraph()
 
 }

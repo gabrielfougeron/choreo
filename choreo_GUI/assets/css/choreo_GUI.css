@@ -33,7 +33,7 @@ body {
     line-height:1.0;
     background-color: #F1F1F1;
     color : #000000!important;
-    /* height:480px; */
+    height:400px;
 }
 
 @media (max-width:1220px) {
@@ -67,10 +67,14 @@ body {
   padding:10px;
 }
 
-
 .right_char_speaks {
   text-align: right;
   width:500px;
   margin-left: auto; 
   margin-right: 0;
+}
+
+#BodyGraphDiv {
+  width: 600px;
+  height: 300px;
 }

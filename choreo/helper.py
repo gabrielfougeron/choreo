@@ -82,7 +82,7 @@ def Make2DChoreoSym(SymType,ib_list):
             SpaceRot = np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64),
             TimeRev=-1,
             TimeShift=fractions.Fraction(numerator=0,denominator=1)
-            ))
+        ))
         
     if ((SymType['name'] == 'Cp') or ((SymType['name'] == 'Dp') and (SymType['k'] == 2))):
         
@@ -95,7 +95,7 @@ def Make2DChoreoSym(SymType,ib_list):
             SpaceRot = np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64),
             TimeRev=1,
             TimeShift=fractions.Fraction(numerator=1,denominator=2)
-            ))
+        ))
 
     if (SymType['name'] == 'Dp'):
         
@@ -108,7 +108,7 @@ def Make2DChoreoSym(SymType,ib_list):
             SpaceRot = np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64),
             TimeRev=-1,
             TimeShift=fractions.Fraction(numerator=0,denominator=1)
-            ))
+        ))
     
     return SymGens
 
@@ -255,6 +255,26 @@ def MakeSymFromGlobalTransform(Transform_list,Permutation_list,mass):
 
     return SymGens
 
+def Make_ChoreoSymList_From_ActionSymList(ActionSymList, nbody):
+
+    ChoreoSymList = []
+    
+    for ASym in ActionSymList:
+
+        for ib in range(nbody):
+
+            ChoreoSymList.append(
+                ChoreoSym(
+                    LoopTarget = ASym.BodyPerm[ib],
+                    LoopSource = ib,
+                    SpaceRot = ASym.SpaceRot,
+                    TimeRev = ASym.TimeRev,
+                    TimeShift = ASym.TimeShift,
+                )
+            )
+
+    return ChoreoSymList
+
 def MakeLoopEarSymList(n_main_loop,n_ears,m_main_loop=1,m_ears=1,SelfReflMain=False,SelfReflEar=False):
     
     Permutation_list = []
@@ -389,7 +409,6 @@ def Make_SymList_From_InfoDict(InfoDict,Transform_Sym=None):
 
     if Transform_Sym is None:
         Transform_Sym = ChoreoSym()
-
 
     SymList = []
 
