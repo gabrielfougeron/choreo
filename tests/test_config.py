@@ -99,3 +99,20 @@ def ProbabilisticTest(RepeatOnFail = 10):
         return wrapper
     
     return decorator
+
+
+def RepeatTest(n = 10):
+
+    def decorator(test):
+
+        @functools.wraps(test)
+        def wrapper(*args, **kwargs):
+            
+            for i in range(n):
+                res = test(*args, **kwargs)
+
+            return res
+
+        return wrapper
+    
+    return decorator
