@@ -2807,7 +2807,7 @@ function BFS(edges, ibody, nsym, nbody) {
 
 
 function MakeBodyGraph_nodes_edges() {
-
+    
     nbody = parseInt(document.getElementById("input_nbody").value,10)
     nodes = new Array(input_nbody)
 
@@ -2908,6 +2908,8 @@ function MakeBodyGraph_nodes_edges() {
 
     } else {
 
+        LoopTargets = []
+
         for (ib = 0; ib < nbody; ib++) {
     
             if (color_method_input.value == "body") {
@@ -2950,7 +2952,7 @@ function MakeBodyGraph(){
     var options = {
         height: '100%',
         width: '100%',
-        // clickToUse: true,
+        clickToUse: true,
         layout: {
             randomSeed: undefined,
         },
@@ -3102,15 +3104,9 @@ function ReadMasses() {
     var table = document.getElementById('table_mass')
 
     nrows = LoopTargets.length
-
-    for (irow = 1; irow < nloops; irow++) {
-
+    for (irow = 1; irow < nrows+1; irow++) {
         MassArray[irow-1] = parseFloat(table.rows[irow].cells[2].children[0].value)
-
     }
-
-    LoopTargets = []
-
 }
 
 function ClearInputMasses() {
@@ -3123,9 +3119,7 @@ function ClearInputMasses() {
 
     // Delete all rows
     for (irow = nloops_old-1; irow >= 0; irow--) {
-
         table.deleteRow(irow)
-
     }
     
 }
