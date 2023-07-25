@@ -165,7 +165,7 @@ print( np.linalg.norm(x[0:n//4] - idct_III_c))
 print('')
 print('')
 print('')
-print('Even function + Odd quarter point => DST III')
+print('Odd function + Even quarter point => DST III')
 
 # y = np.random.random(n//4)
 y = np.array(range(n//4))+1
@@ -212,3 +212,52 @@ print( np.linalg.norm(rfft_c.imag[1::2] - (-2*dst_III_c)))
 
 print("Norm difference Btw initial and round trip DST III")
 print( np.linalg.norm(x[1:n//4+1] - idst_III_c))
+
+
+
+
+
+
+
+
+
+print('')
+print('')
+print('')
+print('Function with subperiod')
+
+
+
+n_sub_period = 5
+n_base = n
+
+n = n_base * n_sub_period
+
+
+y = np.random.random(n_base)
+x = np.zeros(n)
+
+for i in range(n_sub_period):
+    for j in range(n_base):
+        x[j+i*n_base] = y[j]
+
+
+rfft_c = scipy.fft.rfft(x)
+# print(rfft_c.real)
+
+print("Norm of coeffs c_k where k != i * n_sub_period")
+err = 0
+for i in range(1,n_sub_period):
+    err += np.linalg.norm(rfft_c[i::n_sub_period])
+
+print(err)
+
+
+rfftsub_c = scipy.fft.rfft(x[:n_base])
+
+
+print("Norm difference Btw strided RFFT and sub RFFT")
+print( np.linalg.norm(rfft_c[::n_sub_period] - n_sub_period*rfftsub_c))
+
+
+
