@@ -224,7 +224,7 @@ print( np.linalg.norm(x[1:n//4+1] - idst_III_c))
 print('')
 print('')
 print('')
-print('Function with subperiod')
+print('Function with subperiod => strided RFFT')
 
 
 
