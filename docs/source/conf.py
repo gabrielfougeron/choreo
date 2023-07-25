@@ -9,7 +9,7 @@ from sphinx_gallery.sorting import FileNameSortKey
 from sphinx_pyproject import SphinxConfig
 
 __PROJECT_ROOT__ = os.path.abspath(os.path.join(os.path.dirname(__file__),os.pardir,os.pardir))
-sys.path.insert(0, os.path.abspath('..'))
+
 
 project = "Choreo"
 author = "Gabriel Fougeron"
@@ -62,21 +62,16 @@ source_encoding = "utf-8"
 
 add_module_names = False
 
-
-
 autosummary_generate = True
 
-templates_path = ['_templates']
+templates_path = ['templates']
 exclude_patterns = []
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
-# html_theme = 'alabaster'
-# html_theme = 'sphinx_rtd_theme'
-# html_theme = "sphinx_book_theme"
 html_theme = "pydata_sphinx_theme"
-html_logo = "static/img/eight_icon.png"
+html_logo = os.path.join(__PROJECT_ROOT__,"docs","source","static","img","eight_icon.png")
 
 html_show_sourcelink = True
 
@@ -98,7 +93,7 @@ html_theme_options = {
         {
             "name": "Choreo_GUI",
             "url": "https://gabrielfougeron.github.io/choreo/",
-            "icon": "static/img/eight_icon.png",
+            "icon": html_logo,
             "type": "local",
         },
     ],
@@ -135,15 +130,36 @@ tr_report_template = "./test-report/test_report_template.txt"
 
 # sphinx-gallery configuration
 
+# 
+# root_examples = os.path.join(__PROJECT_ROOT__,"examples")
+# root_gallery_dirs = os.path.join(__PROJECT_ROOT__,"docs","source","_build","auto_examples")
+# 
+# examples_dirs = []
+# gallery_dirs = []
+# for path in os.listdir(root_examples):
+#     full_path = os.path.join(root_examples,path)
+#     if os.path.isdir(full_path):
+# 
+#         examples_dirs.append(full_path)
+#         examples_dirs.append(os.path.join(root_gallery_dirs,path))
+
+
+
+
+
 sphinx_gallery_conf = {
     # path to your examples scripts
-    'examples_dirs': '../../examples',
-    "within_subsection_order": FileNameSortKey,
-    # path where to save gallery generated examples
+    'filename_pattern': '/',
+    'examples_dirs': "../../examples/",
     "gallery_dirs": "_build/auto_examples/",
+    "within_subsection_order": FileNameSortKey,
     "backreferences_dir": "_build/generated",
     "image_scrapers": ("matplotlib",),
-    "plot_gallery": "True",
+    "default_thumb_file": html_logo,
+    "plot_gallery": True,
+    # 'junit': '../pytest_out/junit.xml',
+    'matplotlib_animations': True,
+    'nested_sections':True,
 }
 
 ##########

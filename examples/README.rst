@@ -1,5 +1,6 @@
-================
-Numerical tricks
-================
+.. _examples-index:
 
-This gallery showcases a few numerical tricks that are used in choreo.
+===================
+Gallery of examples
+===================
+
