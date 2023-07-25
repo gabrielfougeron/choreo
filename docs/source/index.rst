@@ -35,6 +35,14 @@ Indices and tables
 * :ref:`modindex`
 * :ref:`search`
 
+Example Gallery
+---------------
+
+
+* :doc:`Gallery of examples <_build/auto_examples/index>`.
+
+
+
 
 Dev sandbox
 -----------

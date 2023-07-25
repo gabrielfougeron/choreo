@@ -9,7 +9,7 @@ from sphinx_gallery.sorting import FileNameSortKey
 from sphinx_pyproject import SphinxConfig
 
 __PROJECT_ROOT__ = os.path.abspath(os.path.join(os.path.dirname(__file__),os.pardir,os.pardir))
-
+sys.path.insert(0, os.path.abspath('..'))
 
 project = "Choreo"
 author = "Gabriel Fougeron"
@@ -42,6 +42,7 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.autosummary',
     'sphinx.ext.mathjax',
+    'sphinx.ext.napoleon',
     'sphinx_gallery.gen_gallery',
     'sphinx_needs',
     'sphinxcontrib.test_reports',
@@ -63,7 +64,7 @@ add_module_names = False
 
 
 
-
+autosummary_generate = True
 
 templates_path = ['_templates']
 exclude_patterns = []
@@ -75,7 +76,7 @@ exclude_patterns = []
 # html_theme = 'sphinx_rtd_theme'
 # html_theme = "sphinx_book_theme"
 html_theme = "pydata_sphinx_theme"
-html_logo = "_static/img/eight_icon.png"
+html_logo = "static/img/eight_icon.png"
 
 html_show_sourcelink = True
 
@@ -97,7 +98,7 @@ html_theme_options = {
         {
             "name": "Choreo_GUI",
             "url": "https://gabrielfougeron.github.io/choreo/",
-            "icon": "_static/img/eight_icon.png",
+            "icon": "static/img/eight_icon.png",
             "type": "local",
         },
     ],
@@ -125,7 +126,7 @@ html_context = {
     "default_mode": "light",
 }
 
-html_static_path = ['_static']
+html_static_path = ['static']
 html_css_files = [
     'css/custom.css',
 ]
@@ -133,22 +134,17 @@ html_css_files = [
 tr_report_template = "./test-report/test_report_template.txt"
 
 # sphinx-gallery configuration
+
 sphinx_gallery_conf = {
-    # path to your example scripts
-    'examples_dirs': ['../gallery/sample-gallery-1', '../gallery/sample-gallery-2'],
-    # path to where to save gallery generated output
-    'gallery_dirs': ['_galleries/sample-gallery-1', '_galleries/sample-gallery-2'],
-    # specify that examples should be ordered according to filename
-    'within_subsection_order': FileNameSortKey,
-    # directory where function granular galleries are stored
-    'backreferences_dir': 'gen_modules/backreferences',
-    # Modules for which function level galleries are created.  In
-    # this case sphinx_gallery and numpy in a tuple of strings.
-    'doc_module': ('choreo'),
-}   
-
-
-
+    # path to your examples scripts
+    'examples_dirs': '../../examples',
+    "within_subsection_order": FileNameSortKey,
+    # path where to save gallery generated examples
+    "gallery_dirs": "_build/auto_examples/",
+    "backreferences_dir": "_build/generated",
+    "image_scrapers": ("matplotlib",),
+    "plot_gallery": "True",
+}
 
 ##########
 # nbplot #
