@@ -3,6 +3,7 @@ import numpy as np
 import timeit
 import math
 import matplotlib.pyplot as plt
+import matplotlib as mpl
 
 def run_benchmark(
     all_sizes               ,
@@ -89,14 +90,18 @@ def run_benchmark(
     return all_times
 
 def plot_benchmark(
-    all_times           ,
-    all_sizes           ,
-    all_funs            ,
-    n_repeat = 1        ,
-    figsize = (8,4.5)   ,
-    color_list = None   ,
-    log_plot = True     ,
-    show = False        ,
+    all_times               ,
+    all_sizes               ,
+    all_funs                ,
+    all_x_scalings = None   ,
+    all_y_scalings = None   ,
+    n_repeat = 1            ,
+    color_list = None       ,
+    log_plot = True         ,
+    show = False            ,
+    fig = None              ,
+    ax = None               ,
+    title = None            ,
 ):
     
     n_sizes = len(all_sizes)
@@ -106,10 +111,22 @@ def plot_benchmark(
     assert all_times.shape[1] == n_funs   
     assert all_times.shape[2] == n_repeat 
 
-    figsize = (8,4.5)
-    fig = plt.figure(figsize=figsize)
-    fig.clf()
-    ax = fig.add_subplot(1,1,1)
+    if all_x_scalings is None:
+        all_x_scalings = np.ones(n_funs)
+    else:
+        assert all_x_scalings.shape == (n_funs,)
+
+    if all_y_scalings is None:
+        all_y_scalings = np.ones(n_funs)
+    else:
+        assert all_y_scalings.shape == (n_funs,)
+
+    if (ax is None) or (fig is None):
+
+        fig = plt.figure()  
+        ax = fig.add_subplot(1,1,1)
+        
+
     if color_list is None:
         color_list = plt.rcParams['axes.prop_cycle'].by_key()['color']
 
@@ -117,11 +134,33 @@ def plot_benchmark(
         ax.set_yscale('log')
         ax.set_xscale('log')
 
-
+    leg_patch = []
     for i_fun in range(n_funs):
+
+        leg_patch.append(
+            mpl.patches.Patch(
+                color = color_list[i_fun]           ,
+                label = all_funs[i_fun].__name__    ,
+                # linestyle = linestyle       ,
+            )
+        )
+
         for i_repeat in range(n_repeat):
 
-            plt.plot(all_sizes, all_times[:, i_fun, i_repeat])
+            plot_y_val = all_times[:, i_fun, i_repeat] / all_y_scalings[i_fun]
+            plot_x_val = all_sizes * all_x_scalings[i_fun]
+
+            ax.plot(plot_x_val, plot_y_val)
+
+    ax.legend(
+        handles=leg_patch,    
+        bbox_to_anchor=(1.05, 1),
+        loc='upper left',
+        borderaxespad=0.,
+    )
+
+    if title is not None:
+        ax.set_title(title)
 
     if show:
         plt.show()
