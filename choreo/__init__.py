@@ -5,6 +5,7 @@ from .funs              import *
 from .find              import *
 from .helper            import *
 from .run               import *
+from .benchmark         import *
 from .default_fft       import *
 
 try:

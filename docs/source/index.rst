@@ -41,42 +41,6 @@ Indices and tables
 .. ode
 
 
-.. :doc:`Example gallery <_build/auto_examples/index>`
-.. 
-.. 
-.. Contents
-.. --------
-.. 
-.. .. toctree::
-..    :maxdepth: 1
-.. 
-..    usage
-..    _build/auto_examples/index
-..    api
-..    ode
-.. 
-.. 
-.. Automatic pytest reporting
-.. --------------------------
-.. 
-.. .. toctree::
-.. 
-..    test-report/test-report
-.. 
-.. 
-.. Indices and tables
-.. ------------------
-.. 
-.. * :ref:`genindex`
-.. * :ref:`modindex`
-.. * :ref:`search`
-.. 
-.. Example Gallery
-.. ---------------
-.. 
-.. 
-.. * :doc:`Gallery of examples <_build/auto_examples/index>`.
-.. 
 .. 
 Dev sandbox
 -----------
