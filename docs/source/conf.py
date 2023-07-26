@@ -47,7 +47,6 @@ extensions = [
     'sphinx_needs',
     'sphinxcontrib.test_reports',
     'sphinxcontrib.plantuml',
-    "nb2plots",
 ]
 
 
@@ -102,8 +101,7 @@ html_theme_options = {
 
 # Add / remove things from left sidebar
 html_sidebars = {
-    # "**": ["sidebar-nav-bs", "sidebar-ethical-ads"],
-    "**": [],
+    "**": ["sidebar-nav-bs", "sidebar-ethical-ads"],
     # "**": [],
 }
 
@@ -139,13 +137,6 @@ sphinx_gallery_conf = {
     'matplotlib_animations': True,
     'nested_sections':True,
 }
-
-##########
-# nbplot #
-##########
-
-# nbplot_html_show_formats = False
-# nbplot_include_source = False
 
 
 #############

@@ -1,8 +1,48 @@
 div.sphx-glr-download-link-note {
-  height: 0px;
-  visibility: hidden;
+  display:none;
 }
 p.sphx-glr-signature {
-  height: 0px;
-  visibility: hidden;
+  display:none;
 }
+
+.sphx-glr-single-img {
+  max-width: 100%!important;
+}
+
+.bd-container{
+  max-width:100%!important;
+}
+
+.bd-page-width{
+  max-width:100%!important;
+}
+
+.bd-main {
+  max-width:100%!important;
+}
+
+.bd-content {
+  max-width:100%!important;
+}
+
+.bd-article-container{
+  max-width:100%!important;
+}
+
+.bd-article-container{
+  max-width:100%!important;
+}
+
+.bd-article{
+  max-width:100%!important;
+} 
+
+bd-sidebar-primary{
+  max-width:400px!important;
+} 
+
+.bd-sidebar{
+  max-width:400px!important;
+} 
+
+        
