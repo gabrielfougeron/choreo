@@ -76,8 +76,7 @@ html_logo = os.path.join(__PROJECT_ROOT__,"docs","source","static","img","eight_
 html_show_sourcelink = True
 
 html_theme_options = {
-    # 'nosidebar': True,
-    "collapse_navigation": True,
+    # "collapse_navigation": True,
     "navigation_depth": 2,
     "show_prev_next": False,
     "header_links_before_dropdown": 7,
@@ -103,12 +102,9 @@ html_theme_options = {
 
 # Add / remove things from left sidebar
 html_sidebars = {
-    "**": ["sidebar-nav-bs", "sidebar-ethical-ads"],
+    # "**": ["sidebar-nav-bs", "sidebar-ethical-ads"],
+    "**": [],
     # "**": [],
-    # "index": [],
-    # "install": [],
-    # "API": [],
-    # "auto_examples/index": [],
 }
 
 html_context = {
@@ -130,23 +126,6 @@ tr_report_template = "./test-report/test_report_template.txt"
 
 # sphinx-gallery configuration
 
-# 
-# root_examples = os.path.join(__PROJECT_ROOT__,"examples")
-# root_gallery_dirs = os.path.join(__PROJECT_ROOT__,"docs","source","_build","auto_examples")
-# 
-# examples_dirs = []
-# gallery_dirs = []
-# for path in os.listdir(root_examples):
-#     full_path = os.path.join(root_examples,path)
-#     if os.path.isdir(full_path):
-# 
-#         examples_dirs.append(full_path)
-#         examples_dirs.append(os.path.join(root_gallery_dirs,path))
-
-
-
-
-
 sphinx_gallery_conf = {
     # path to your examples scripts
     'filename_pattern': '/',
@@ -157,7 +136,6 @@ sphinx_gallery_conf = {
     "image_scrapers": ("matplotlib",),
     "default_thumb_file": html_logo,
     "plot_gallery": True,
-    # 'junit': '../pytest_out/junit.xml',
     'matplotlib_animations': True,
     'nested_sections':True,
 }
@@ -182,9 +160,19 @@ latex_documents = [
     (master_doc, 'choreo.tex', 'Choreo documentation', 'Gabriel Fougeron', 'manual'),
 ]
 
+latex_elements = {'preamble':r'\usepackage{xfrac}'}
 
 latex_use_latex_multicolumn = False
 latex_show_urls = "footnote"
 
 latex_theme = "manual"
 # latex_theme = "howto"
+
+##################
+# Math rendering #
+##################
+# 
+# mathjax3_config = {
+#   'loader': {'load': ['[tex]/xfrac']},
+#   'tex': {'packages': {'[+]': ['xfrac']}},
+# }
