@@ -30,6 +30,7 @@ from pyfftw.interfaces import scipy_fft
 import choreo
 
 
+# %%
 all_backends = [
     'scipy',
     _scipy_fft_backend,
@@ -44,7 +45,10 @@ all_backends_names = [
 
 n_backends = len(all_backends)
 
-figsize = (8,9)
+dpi = 150
+
+figsize = (1600/dpi, 1600/dpi)
+
 
 fig, axs = plt.subplots(
     nrows = n_backends,
@@ -52,6 +56,7 @@ fig, axs = plt.subplots(
     sharex = True,
     sharey = True,
     figsize = figsize,
+    dpi = dpi   ,
 )
 
 
@@ -136,4 +141,5 @@ for i_backend, backend in enumerate(all_backends):
         title = all_backends_names[i_backend]   ,
     )
 
+plt.tight_layout()
 plt.show()
