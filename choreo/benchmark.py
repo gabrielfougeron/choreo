@@ -62,16 +62,20 @@ def run_benchmark(
                     globals = global_dict,
                 )
 
-                n_timeit_0dot2, est_time = Timer.autorange()
+                try:
+                    n_timeit_0dot2, est_time = Timer.autorange()
 
-                n_timeit = math.ceil(n_timeit_0dot2 * time_per_test / est_time)
+                    n_timeit = math.ceil(n_timeit_0dot2 * time_per_test / est_time)
 
-                times = Timer.repeat(
-                    repeat = n_repeat,
-                    number = n_timeit,
-                )
+                    times = Timer.repeat(
+                        repeat = n_repeat,
+                        number = n_timeit,
+                    )
 
-                all_times[i_size, i_fun, :] = np.array(times) / n_timeit
+                    all_times[i_size, i_fun, :] = np.array(times) / n_timeit
+
+                except Exception:
+                    pass
 
         if Save_timings_file:
             np.save(timings_filename, all_times)
@@ -137,20 +141,24 @@ def plot_benchmark(
     leg_patch = []
     for i_fun in range(n_funs):
 
-        leg_patch.append(
-            mpl.patches.Patch(
-                color = color_list[i_fun]           ,
-                label = all_funs[i_fun].__name__    ,
-                # linestyle = linestyle       ,
+        if (np.linalg.norm(all_times[:, i_fun, :]) > 0):
+
+            leg_patch.append(
+                mpl.patches.Patch(
+                    color = color_list[i_fun]           ,
+                    label = all_funs[i_fun].__name__    ,
+                    # linestyle = linestyle       ,
+                )
             )
-        )
 
         for i_repeat in range(n_repeat):
 
             plot_y_val = all_times[:, i_fun, i_repeat] / all_y_scalings[i_fun]
             plot_x_val = all_sizes * all_x_scalings[i_fun]
 
-            ax.plot(plot_x_val, plot_y_val)
+            if (np.linalg.norm(plot_y_val) > 0):
+
+                ax.plot(plot_x_val, plot_y_val, color = color_list[i_fun])
 
     ax.legend(
         handles=leg_patch,    
