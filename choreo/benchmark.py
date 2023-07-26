@@ -159,6 +159,10 @@ def plot_benchmark(
         borderaxespad=0.,
     )
 
+    ax.grid(True, which="major", linestyle="-")
+    ax.grid(True, which="minor", linestyle="dotted")
+
+
     if title is not None:
         ax.set_title(title)
 
