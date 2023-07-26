@@ -16,11 +16,16 @@ Contents
 --------
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
 
    usage
    _build/auto_examples/index
    test-report/test-report
+   
+   
+.. toctree::
+   :maxdepth: 1
+
    api
    
 
@@ -73,10 +78,10 @@ Indices and tables
 .. * :doc:`Gallery of examples <_build/auto_examples/index>`.
 .. 
 .. 
-.. Dev sandbox
-.. -----------
-.. 
-.. .. toctree::
-..    :maxdepth: 1
-.. 
-..    sandbox
+Dev sandbox
+-----------
+
+.. toctree::
+   :maxdepth: 1
+
+   sandbox
