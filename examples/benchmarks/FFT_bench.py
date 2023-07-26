@@ -24,24 +24,30 @@ import matplotlib.pyplot as plt
 import numpy as np
 import scipy
 import math
-from mkl_fft import _scipy_fft_backend
-from pyfftw.interfaces import scipy_fft
+
 
 import choreo
 
 
 # %%
-all_backends = [
-    'scipy',
-    _scipy_fft_backend,
-    scipy_fft
-]
+all_backends = ['scipy']
+all_backends_names = ['scipy']
 
-all_backends_names = [
-    'scipy',
-    'mkl_fft',
-    'pyfftw',
-]
+try:
+    from mkl_fft import _scipy_fft_backend
+    all_backends.append(_scipy_fft_backend)
+    all_backends_names.append('mkl_fft')
+
+except:
+    pass
+
+try:
+    from pyfftw.interfaces import scipy_fft
+    all_backends.append(scipy_fft)
+    all_backends_names.append('pyfftw')
+
+except:
+    pass
 
 n_backends = len(all_backends)
 
@@ -60,13 +66,31 @@ fig, axs = plt.subplots(
 )
 
 
+def fft(x):
+    scipy.fft.fft(x)
+
+def rfft(x):
+    scipy.fft.rfft(x)
+
+def dct_I(x):
+    scipy.fft.dct(x,1)
+
+def dst_I(x):
+    scipy.fft.dst(x,1)
+
+def dct_III(x):
+    scipy.fft.dct(x,3)
+
+def dst_III(x):
+    scipy.fft.dst(x,3)
+
+def prepare_x(n):
+    x = np.random.random(n)
+    return [(x, 'x')]
+
+
 for i_backend, backend in enumerate(all_backends):
   
-    scipy.fft.set_backend(
-        backend = backend   ,
-        only = True
-    )
-
     timings_folder = os.path.join(__PROJECT_ROOT__,'docs','source','_build','benchmarks_out')
 
     if not(os.path.isdir(timings_folder)):
@@ -75,27 +99,11 @@ for i_backend, backend in enumerate(all_backends):
     basename = 'FFT_bench_' + all_backends_names[i_backend]
     timings_filename = os.path.join(timings_folder,basename+'.npy')
 
-    def fft(x):
-        scipy.fft.fft(x)
 
-    def rfft(x):
-        scipy.fft.rfft(x)
-
-    def dct_I(x):
-        scipy.fft.dct(x,1)
-
-    def dst_I(x):
-        scipy.fft.dst(x,1)
-
-    def dct_III(x):
-        scipy.fft.dct(x,3)
-
-    def dst_III(x):
-        scipy.fft.dst(x,3)
-
-    def prepare_x(n):
-        x = np.random.random(n)
-        return [(x, 'x')]
+    scipy.fft.set_global_backend(
+        backend = backend   ,
+        only = True
+    )
 
     n_repeat = 1
 
