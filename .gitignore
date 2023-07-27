@@ -27,7 +27,6 @@
 Saves/
 testplots/
 build/
-docs/build/
 Sniff_all/
 Sniff_all_sym/
 *__pycache__*
@@ -35,8 +34,8 @@ dist/
 GUI_scripts/dist/
 GUI_scripts/build/
 sparseqr/
-/docs/source/generated/
-/docs/source/_galleries/
+docs/build/
+/docs/source/_build/
 /docs/pytest_out/
 NewSym_data/
 ##########################################################
@@ -50,6 +49,4 @@ NewSym_data/
 !.devcontainer/Dockerfile
 !/NumericalTank_data/*
 !/choreo_GUI/SOME3/**
-!/docs/source/test-report/test_report_template.txt
 !/docs/source/_static/**
-

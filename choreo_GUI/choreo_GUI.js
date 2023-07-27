@@ -1323,7 +1323,7 @@ function UpdateFPSDisplay() {
 }
 
 function KillAndReloadWorker() {
-    
+
     pyodide_worker.terminate()
 
     SearchIsOnGoing = false
@@ -1876,10 +1876,9 @@ async function PlayFileFromDisk(name,npy_file,json_file) {
 
         var trailLayerCanvas = document.getElementById("trailLayerCanvas")
         var wasrunning = running
-        if (running) {
-            var event = new Event('StopAnimationFromOutsideCanvas')
-            trailLayerCanvas.dispatchEvent(event)
-        }
+
+        var event = new Event('StopAnimationFromOutsideCanvas')
+        trailLayerCanvas.dispatchEvent(event)
 
         SolName = name
         
@@ -2739,8 +2738,8 @@ function GalleryKeyboardSelect(event){
 
 function ConnectedComponents(nbody, edges) {
 
-    seen = new Set()
-    All_CC = new Array()
+    var seen = new Set()
+    var All_CC = new Array()
 
     nedges = edges.length
     nsym = nedges / nbody
@@ -2749,9 +2748,9 @@ function ConnectedComponents(nbody, edges) {
 
         if (! seen.has(ibody)) {
 
-            neigh_set = BFS(edges, ibody, nsym, nbody)
+            var neigh_set = BFS(edges, ibody, nsym, nbody)
 
-            neigh_arr = new Array()
+            var neigh_arr = new Array()
             for (const item of neigh_set){
                 seen.add(item)
                 neigh_arr.push(item)
@@ -2774,10 +2773,10 @@ function ConnectedComponents(nbody, edges) {
 // One step of breadth first search
 function BFS(edges, ibody, nsym, nbody) {
 
-    seen = new Set()
+    var seen = new Set()
     seen.add(ibody)
 
-    nextlevel = [ibody]
+    var nextlevel = [ibody]
 
     while (nextlevel.length > 0) {
         
@@ -2805,11 +2804,10 @@ function BFS(edges, ibody, nsym, nbody) {
     return seen
 }
 
-
 function MakeBodyGraph_nodes_edges() {
     
-    nbody = parseInt(document.getElementById("input_nbody").value,10)
-    nodes = new Array(input_nbody)
+    var nbody = parseInt(document.getElementById("input_nbody").value,10)
+    var nodes = new Array(input_nbody)
 
     for (ib = 0; ib < nbody; ib++) {
 
@@ -2829,7 +2827,7 @@ function MakeBodyGraph_nodes_edges() {
     var nsyms = table_sym.rows[0].cells.length - 1
     var edges = new Array(nsyms*nbody)
 
-    AllPermsAreLegal = true
+    var AllPermsAreLegal = true
 
     for (isym = 0; isym < nsyms; isym++) {
         
@@ -2983,7 +2981,6 @@ function MakeBodyGraph(){
     })
 
 }
-
 
 function MakeLoopData() {
 

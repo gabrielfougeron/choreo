@@ -1,8 +1,17 @@
+=====
 Usage
 =====
 
-.. Installation
-.. ------------
+TODO
+
+
+Installation
+============
+
+Detail installation steps
+
+
+
 .. 
 .. To use Lumache, first install it using pip:
 .. 
@@ -15,3 +24,4 @@ Usage
 
 
 .. .. autofunction:: choreo.Find_Choreo
+
