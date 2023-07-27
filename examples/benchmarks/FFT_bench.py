@@ -30,20 +30,31 @@ import choreo
 
 
 # %%
-all_backends = ['scipy']
-all_backends_names = ['scipy']
+all_backends = []
+all_backends_names = []
+
+all_backends.append('scipy')
+all_backends_names.append('scipy')
 
 try:
-    from mkl_fft import _scipy_fft_backend
-    all_backends.append(_scipy_fft_backend)
+    import mkl_fft
+    all_backends.append(mkl_fft._scipy_fft_backend)
     all_backends_names.append('mkl_fft')
 
 except:
     pass
 
 try:
-    from pyfftw.interfaces import scipy_fft
-    all_backends.append(scipy_fft)
+
+    import pyfftw
+    pyfftw.interfaces.cache.enable()
+    pyfftw.interfaces.cache.set_keepalive_time(300000)
+    # pyfftw.config.PLANNER_EFFORT = 'FFTW_ESTIMATE'
+    # pyfftw.config.PLANNER_EFFORT = 'FFTW_MEASURE'
+    # pyfftw.config.PLANNER_EFFORT = 'FFTW_PATIENT'
+    pyfftw.config.PLANNER_EFFORT = 'FFTW_EXHAUSTIVE'
+
+    all_backends.append(pyfftw.interfaces.scipy_fft)
     all_backends_names.append('pyfftw')
 
 except:
@@ -62,8 +73,8 @@ fig, axs = plt.subplots(
     sharey = True,
     figsize = figsize,
     dpi = dpi   ,
+    squeeze = False,
 )
-
 
 def fft(x):
     scipy.fft.fft(x)
@@ -144,7 +155,7 @@ for i_backend, backend in enumerate(all_backends):
         all_x_scalings = all_scalings           ,
         n_repeat = n_repeat                     ,
         fig = fig                               ,
-        ax = axs[i_backend]                     ,
+        ax = axs[i_backend, 0]                  ,
         title = all_backends_names[i_backend]   ,
     )
 
