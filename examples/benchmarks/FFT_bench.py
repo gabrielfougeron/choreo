@@ -50,9 +50,9 @@ try:
     pyfftw.interfaces.cache.enable()
     pyfftw.interfaces.cache.set_keepalive_time(300000)
     # pyfftw.config.PLANNER_EFFORT = 'FFTW_ESTIMATE'
-    # pyfftw.config.PLANNER_EFFORT = 'FFTW_MEASURE'
+    pyfftw.config.PLANNER_EFFORT = 'FFTW_MEASURE'
     # pyfftw.config.PLANNER_EFFORT = 'FFTW_PATIENT'
-    pyfftw.config.PLANNER_EFFORT = 'FFTW_EXHAUSTIVE'
+    # pyfftw.config.PLANNER_EFFORT = 'FFTW_EXHAUSTIVE'
 
     all_backends.append(pyfftw.interfaces.scipy_fft)
     all_backends_names.append('pyfftw')
