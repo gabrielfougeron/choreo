@@ -2961,6 +2961,26 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
 
     pos = {i:(i[1],i[0]) for i in FullGraph.nodes }
 
+
+    edgelist = []
+#     for iedge, edge in enumerate(FullGraph.edges):
+# 
+#         Sym = FullGraph.edges[edge]["SymList"][0]
+# 
+#         issqrtid = (np.linalg.norm(np.matmul(Sym.SpaceRot,Sym.SpaceRot) - np.identity(geodim)) < 1e-12)
+#         isid = (np.linalg.norm(Sym.SpaceRot - np.identity(geodim)) < 1e-12)
+# 
+#         if issqrtid and not(isid):
+# 
+#             edgelist.append(edge)
+
+
+
+
+
+
+
+
     fig, ax = plt.subplots()
 
     # networkx.draw(
@@ -2978,7 +2998,8 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
         pos = pos,
         ax = ax,
         node_color = node_color,
-        cmap = 'gist_rainbow',
+        # cmap = 'tab20',
+        cmap = 'turbo',
     )
 
     # networkx.draw_networkx_labels(
@@ -2987,17 +3008,27 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
     #     ax = ax,
         # labels = {i:i for i in FullGraph.nodes},
     # )
-# 
+
+    # networkx.draw_networkx_edges(
+    #     FullGraph,
+    #     pos = pos,
+    #     ax = ax,
+    #     arrows = True,
+    #     connectionstyle = "arc3,rad=0.1",
+    #     edge_color = edge_color,
+    #     edge_vmin = 0,
+    #     edge_vmax = 1,
+    #     edge_cmap = colormaps['Set1'],
+    # )
+
     networkx.draw_networkx_edges(
         FullGraph,
         pos = pos,
         ax = ax,
         arrows = True,
         connectionstyle = "arc3,rad=0.1",
-        edge_color = edge_color,
-        edge_vmin = 0,
-        edge_vmax = 2,
-        edge_cmap = colormaps['jet'],
+        edge_color = "k",
+        edgelist = edgelist,
     )
 
     plt.axis('off')

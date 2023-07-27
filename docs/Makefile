@@ -14,6 +14,13 @@ help:
 
 .PHONY: help Makefile
 
+clean:
+
+
+clean:
+	rm -rf $(BUILDDIR)/
+	rm -rf source/_build/
+
 all:
 	make html
 	make latexpdf
