@@ -16,16 +16,14 @@ Contents
 --------
 
 .. toctree::
-   :maxdepth: 2
+   :hidden:
+   :includehidden:
+   :maxdepth: 1
+
 
    usage
    _build/auto_examples/index
    test-report/test-report
-   
-   
-.. toctree::
-   :maxdepth: 1
-
    api
    
 
@@ -37,15 +35,3 @@ Indices and tables
 * :ref:`modindex`
 * :ref:`search`
 
-
-.. ode
-
-
-.. 
-Dev sandbox
------------
-
-.. toctree::
-   :maxdepth: 1
-
-   sandbox

@@ -55,7 +55,6 @@ dpi = 150
 
 figsize = (1600/dpi, 1600/dpi)
 
-
 fig, axs = plt.subplots(
     nrows = n_backends,
     ncols = 1,
