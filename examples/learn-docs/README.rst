@@ -1,2 +1,0 @@
-DOCS TEST AND LEARN
-===================

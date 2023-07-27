@@ -49,4 +49,4 @@ NewSym_data/
 !.devcontainer/Dockerfile
 !/NumericalTank_data/*
 !/choreo_GUI/SOME3/**
-!/docs/source/static/**
+!/docs/source/_static/**

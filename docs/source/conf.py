@@ -70,13 +70,21 @@ exclude_patterns = []
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
 html_theme = "pydata_sphinx_theme"
-html_logo = os.path.join(__PROJECT_ROOT__,"docs","source","static","img","eight_icon.png")
+
+html_logo_abs = os.path.join(__PROJECT_ROOT__,"docs","source","_static","img","eight_icon.png")
+html_logo_rel = "_static/img/eight_icon.png"
+html_logo = html_logo_rel
+html_favicon = html_logo_rel
 
 html_show_sourcelink = True
 
 html_theme_options = {
-    # "collapse_navigation": True,
-    "navigation_depth": 2,
+    # 'navigation_depth': -1,
+    # "sidebar_includehidden" : True,
+    # "search_bar_text" : "Search the docs ...",
+    # "search_bar_position" : "sidebar",
+    # "show_nav_level" : 0 ,
+    # "show_toc_level" : 0 ,
     "show_prev_next": False,
     "header_links_before_dropdown": 7,
     "use_edit_page_button": True,
@@ -95,13 +103,18 @@ html_theme_options = {
             "type": "local",
         },
     ],
+    "logo": {
+        "text": "choreo",
+        "alt_text": "choreo",
+    },
+    # "external_links": [{"name": "GUI", "url": "https://gabrielfougeron.github.io/choreo/", "icon": html_logo,}],
     "footer_start" : "",
     "footer_end" : "",
 }
 
 # Add / remove things from left sidebar
 html_sidebars = {
-    "**": ["sidebar-nav-bs", "sidebar-ethical-ads"],
+    "**": ["sidebar-nav-bs"],
     # "**": [],
 }
 
@@ -115,7 +128,7 @@ html_context = {
     "default_mode": "light",
 }
 
-html_static_path = ['static']
+html_static_path = ['_static']
 html_css_files = [
     'css/custom.css',
 ]
@@ -132,7 +145,7 @@ sphinx_gallery_conf = {
     "within_subsection_order": FileNameSortKey,
     "backreferences_dir": "_build/generated",
     "image_scrapers": ("matplotlib",),
-    "default_thumb_file": html_logo,
+    "default_thumb_file": html_logo_abs,
     "plot_gallery": True,
     'matplotlib_animations': True,
     'nested_sections':True,
