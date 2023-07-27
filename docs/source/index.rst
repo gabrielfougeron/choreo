@@ -12,8 +12,14 @@ At this address: `https://gabrielfougeron.github.io//choreo/ <https://gabrielfou
 
 
 
-Contents
---------
+
+Indices and tables
+------------------
+
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`
+
 
 .. toctree::
    :hidden:
@@ -26,12 +32,3 @@ Contents
    test-report/test-report
    api
    
-
-
-Indices and tables
-------------------
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
-
