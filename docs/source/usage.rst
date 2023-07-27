@@ -1,10 +1,30 @@
+
+.. .. toctree::
+..    :hidden:
+..    :maxdepth: 1
+..    
+..     self
+
+
+=====
 Usage
 =====
 
 TODO
 
-.. Installation
-.. ------------
+
+Installation
+============
+
+Detail installation steps
+
+
+
+Bidule
+------
+
+
+
 .. 
 .. To use Lumache, first install it using pip:
 .. 
@@ -17,3 +37,4 @@ TODO
 
 
 .. .. autofunction:: choreo.Find_Choreo
+

@@ -1,4 +1,12 @@
 
+.. toctree::
+  :hidden:
+  :includehidden:
+  :maxdepth: 1
+  
+  self
+
+
 .. list-table:: Title
    :widths: 25 25 50
    :header-rows: 1
@@ -28,10 +36,24 @@ with overline, for chapters
 
 Title -- Number Signs
 #####################
+Title -- Number Signs
+#####################
+Title -- Number Signs
+#####################
+Title -- Number Signs
+#####################
 
 Suptitle -- Asterisks
 *********************
 
+Section -- Equal Signs
+======================
+Section -- Equal Signs
+======================
+Section -- Equal Signs
+======================
+Section -- Equal Signs
+======================
 Section -- Equal Signs
 ======================
 
