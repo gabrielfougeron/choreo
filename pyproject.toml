@@ -70,8 +70,11 @@ test = [
   # choreo[test-cli, test-gui], GUI tests are disabled for now
   "choreo[test-cli]",
 ]
+bench = [
+  "pyfftw",
+]
 docs = [
-  "choreo[test]",
+  "choreo[test,bench]",
   "Sphinx",
   "pydata-sphinx-theme",
   "sphinx-gallery",
@@ -79,7 +82,6 @@ docs = [
   "sphinx-needs",
   "sphinx-test-reports",
   "sphinxcontrib.plantuml",
-  "nb2plots",
 ]
 full = [
   "choreo[gui,cli,docs,test,build]"

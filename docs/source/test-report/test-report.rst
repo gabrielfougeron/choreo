@@ -1,5 +1,5 @@
-Test Report
-===========
+Tests
+=====
 
 .. test-report:: Junix report
    :id: REPORT
