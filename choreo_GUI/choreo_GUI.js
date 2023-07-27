@@ -1323,7 +1323,7 @@ function UpdateFPSDisplay() {
 }
 
 function KillAndReloadWorker() {
-    
+
     pyodide_worker.terminate()
 
     SearchIsOnGoing = false
@@ -1876,10 +1876,9 @@ async function PlayFileFromDisk(name,npy_file,json_file) {
 
         var trailLayerCanvas = document.getElementById("trailLayerCanvas")
         var wasrunning = running
-        if (running) {
-            var event = new Event('StopAnimationFromOutsideCanvas')
-            trailLayerCanvas.dispatchEvent(event)
-        }
+
+        var event = new Event('StopAnimationFromOutsideCanvas')
+        trailLayerCanvas.dispatchEvent(event)
 
         SolName = name
         
