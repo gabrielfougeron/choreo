@@ -1,11 +1,3 @@
-
-.. .. toctree::
-..    :hidden:
-..    :maxdepth: 1
-..    
-..     self
-
-
 =====
 Usage
 =====
@@ -17,11 +9,6 @@ Installation
 ============
 
 Detail installation steps
-
-
-
-Bidule
-------
 
 
 

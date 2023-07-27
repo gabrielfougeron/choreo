@@ -63,6 +63,11 @@ def run_benchmark(
                 )
 
                 try:
+
+                    # For functions that require caching
+                    Timer.timeit(number = 1)
+
+                    # Estimate time of everything
                     n_timeit_0dot2, est_time = Timer.autorange()
 
                     n_timeit = math.ceil(n_timeit_0dot2 * time_per_test / est_time)
