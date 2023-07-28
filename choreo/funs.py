@@ -2466,22 +2466,50 @@ class ActionSym():
         """       
 
         return ( 
-            np.array_equal(self.BodyPerm, np.array(range(self.BodyPerm.size), dtype = np.int_)) and
-            np.allclose(
-                self.SpaceRot,
-                np.identity(self.SpaceRot.shape[0], dtype = np.float64),
-                rtol = 0.,
-                atol = atol
-            ) and
-            (self.TimeRev == 1) and
-            (abs(self.TimeShift) < atol)
+            self.IsIdentityPerm() and
+            self.IsIdentityRot(atol = atol) and
+            self.IsIdentityTimeRev() and
+            self.IsIdentityTimeShift()
         )
+
+    def IsIdentityPerm(self):
+        return np.array_equal(self.BodyPerm, np.array(range(self.BodyPerm.size), dtype = np.int_))
+    
+    def IsIdentityRot(self, atol = 1e-10):
+        return np.allclose(
+            self.SpaceRot,
+            np.identity(self.SpaceRot.shape[0], dtype = np.float64),
+            rtol = 0.,
+            atol = atol
+        )    
+    
+    def IsIdentityTimeRev(self):
+        return (self.TimeRev == 1)
+    
+    def IsIdentityTimeShift(self):
+        return (self.TimeShift.numerator == 0)
 
     def IsSame(self, other, atol = 1e-10):
         r"""
         Returns True if the two transformations are almost identical.
         """   
         return ((self.Inverse()).Compose(other)).IsIdentity(atol = atol)
+    
+    def IsSamePerm(self, other):
+        return ((self.Inverse()).Compose(other)).IsIdentityPerm()    
+    
+    def IsSameRot(self, other, atol = 1e-10):
+        return ().IsIdentityRot(atol = atol)    
+    
+    def IsSameTimeRev(self, other):
+        return ((self.Inverse()).Compose(other)).IsIdentityTimeRev()    
+    
+    def IsSameTimeShift(self, other, atol = 1e-10):
+        return ((self.Inverse()).Compose(other)).IsIdentityTimeShift()
+
+    def IsSameRotAndTimeRev(self, other, atol = 1e-10):
+        Comp = (self.Inverse()).Compose(other)
+        return Comp.IsIdentityTimeRev() and Comp.IsIdentityRot(atol = atol)
 
     def ApplyT(self, Time):
 
@@ -2751,6 +2779,8 @@ def Build_FullGraph(
 
     for Sym in Sym_list:
 
+        SymInv = Sym.Inverse()
+
         for ib in range(nbody):
 
             ib_target = Sym.BodyPerm[ib]
@@ -2777,16 +2807,24 @@ def Build_FullGraph(
                     edge = (node_source, node_target)
                     EdgeSym = Sym
 
-                    if edge in FullGraph.edges:
-                        
+                else:
+
+                    edge = (node_target, node_source)
+                    EdgeSym = Sym
+
+                if edge in FullGraph.edges:
+                    
+                    AlreadyIn = False
+                    for OtherEdgeSym in FullGraph.edges[edge]["SymList"]:
+                        AlreadyIn = AlreadyIn or EdgeSym.IsSameRotAndTimeRev(OtherEdgeSym)
+
+                    if not(AlreadyIn) :
                         FullGraph.edges[edge]["SymList"].append(EdgeSym)
 
-                    else:
-                        
-                        FullGraph.add_edge(*edge, SymList = [EdgeSym])
+                else:
+                    FullGraph.add_edge(*edge, SymList = [EdgeSym])
     
     return FullGraph
-
 
 def Build_FullGraph_NoPb(
     nbody,
@@ -2805,17 +2843,6 @@ def Build_FullGraph_NoPb(
     # print('')
 
     FullGraph = Build_FullGraph(nbody, nint, Sym_list)
-# 
-#     if not(EdgesAreEitherDirectXORIndirect(FullGraph)):
-# 
-#         FullGraph, nint = Build_FullGraph_NoPb(
-#             nbody = nbody,
-#             nint = 2*nint,
-#             Sym_list = Sym_list,
-#             current_recursion = current_recursion+1,
-#             max_recursion = max_recursion,
-#         )
-
 
     if ContainsDoubleEdges(FullGraph):
 
@@ -2828,7 +2855,6 @@ def Build_FullGraph_NoPb(
         )
 
     return FullGraph, nint
-
 
 def Build_BodyGraph(nbody, Sym_list):
 
@@ -2906,7 +2932,7 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
 
     nsegm = isegm + 1
 
-    nbodysegm = np.zeros((nbody), dtype = int)
+    bodynsegm = np.zeros((nbody), dtype = int)
     HasContiguousGeneratingSegments = np.zeros((nbody), dtype = bool)
 
     for ib in range(nbody):
@@ -2924,27 +2950,68 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
         # print(unique_inverse)
         # print(unique_counts)
 
-        nbodysegm[ib] = unique.size
+        bodynsegm[ib] = unique.size
 
-        HasContiguousGeneratingSegments[ib] = ((unique_indices.max()+1) == nbodysegm[ib])
-
-
-    # print(HasContiguousGeneratingSegments)
+        HasContiguousGeneratingSegments[ib] = ((unique_indices.max()+1) == bodynsegm[ib])
 
     for il in range(nloop):
 
-        print(HasContiguousGeneratingSegments[Targets[il,:loopnb[il]]].any())
+        assert HasContiguousGeneratingSegments[Targets[il,:loopnb[il]]].any()
+
+        for ilb in range(loopnb[il]):
+
+            assert bodynsegm[Targets[il,ilb]] == bodynsegm[0]
+
+    # Choose loop generators with maximal exploitable FFT symmetry
+    loopgen = np.zeros((nloop), dtype = int)
+    loopnsegm = np.zeros((nloop), dtype = int)
+    for il in range(nloop):
+        for ilb in range(loopnb[il]):
+
+            if HasContiguousGeneratingSegments[Targets[il,ilb]]:
+                loopgen[il] = Targets[il,ilb]
+
+                break
 
 
 
 
+    # toto = networkx.shortest_path(FullGraph)
+
+    # print(type(toto[(0,0)][(1,0)]))
+
+#     All_Segment_Binary_Interactions = set()
+# 
+#     for iint in range(nint_min):
+# 
+#         for il in range(nloop):
+# 
+#             segmgen = 
+# 
+#             for ilb in range(loopnb[il]):
 
 
 
 
-
-
-
+#         
+#         for ib in range(nbody-1):
+# 
+#             segm  = (ib , iint)
+#             isegm  = bodysegm[*segm ]
+# 
+#             path_from_segm_to = networkx.shortest_path(FullGraph, source = segm)
+# 
+#             for ibp in range(ib,nbody):
+# 
+#                 segmp = (ibp, iint)
+#                 isegmp = bodysegm[*segmp] 
+# 
+#                 Sym = ActionSym.Identity(nbody, geodim)
+# 
+#                 print(type(path_from_segm_to[segmp]))
+# 
+# 
+# 
 
 
 
@@ -3035,27 +3102,27 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
         # labels = {i:i for i in FullGraph.nodes},
     # )
 
-    # networkx.draw_networkx_edges(
-    #     FullGraph,
-    #     pos = pos,
-    #     ax = ax,
-    #     arrows = True,
-    #     connectionstyle = "arc3,rad=0.1",
-    #     edge_color = edge_color,
-    #     edge_vmin = 0,
-    #     edge_vmax = 1,
-    #     edge_cmap = colormaps['Set1'],
-    # )
-
     networkx.draw_networkx_edges(
         FullGraph,
         pos = pos,
         ax = ax,
         arrows = True,
         connectionstyle = "arc3,rad=0.1",
-        edge_color = "k",
-        edgelist = edgelist,
+        edge_color = edge_color,
+        edge_vmin = 0,
+        edge_vmax = 1,
+        edge_cmap = colormaps['Set1'],
     )
+
+    # networkx.draw_networkx_edges(
+    #     FullGraph,
+    #     pos = pos,
+    #     ax = ax,
+    #     arrows = True,
+    #     connectionstyle = "arc3,rad=0.1",
+    #     edge_color = "k",
+    #     edgelist = edgelist,
+    # )
 
     plt.axis('off')
     fig.tight_layout()

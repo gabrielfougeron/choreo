@@ -717,8 +717,6 @@ function LoadConfigDict(ConfigDict) {
     MassArray = ConfigDict['Geom_Bodies'] ['mass']
     LoopTargets = ConfigDict['Geom_Bodies']['Targets']
 
-    MakeLoopData()
-
     if (document.getElementById('checkbox_Target').checked ^ ConfigDict['Geom_Target'] ['LookForTarget']) {
         checkbox_EnableTargets_Handler()
     }
@@ -830,6 +828,8 @@ function LoadConfigDict(ConfigDict) {
 
     document.getElementById('CLI_SaveImage').checked        = ConfigDict['Solver_CLI'] ['SaveImage']    
     document.getElementById('CLI_SaveVideo').checked        = ConfigDict['Solver_CLI'] ['SaveVideo']    
+
+    MakeBodyGraph()
     
 }
 

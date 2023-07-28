@@ -64,7 +64,7 @@ n_backends = len(all_backends)
 
 dpi = 150
 
-figsize = (1600/dpi, 1600/dpi)
+figsize = (1600/dpi, n_backends * 800 / dpi)
 
 fig, axs = plt.subplots(
     nrows = n_backends,
