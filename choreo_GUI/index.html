@@ -234,7 +234,7 @@ window.addEventListener("drop",function(e){
     <table style="display:block; font-size:16px; border:none; display:table; width:600px">
       <tr>
         <td style="border:none;width:400px;" ><label for="input_nbody">Number of bodies</label></td>
-        <td style="border:none;" ><input id ="input_nbody" type="number" value="3" min="1" style="width:50px;" onchange="UpdateNumberofBodies()"></td>
+        <td style="border:none;" ><input id ="input_nbody" type="number" value="3" min="2" style="width:50px;" onchange="UpdateNumberofBodies()"></td>
       </tr>
       <tr>
         <td style="border:none;width:400px;" ><label for="checkbox_MomCons">Treat momentum conservation as a constraint</label></td>
@@ -491,8 +491,8 @@ window.addEventListener("drop",function(e){
           <td style="border:none; max-width:100px; ">
             <select class="w3-select" id="krylov_method"  name="krylov_method" style="text-align: center;"> 
               <option value="lgmres">LGMRES</option>
-              <option value="gmres">GMRES</option>
-              <option value="bicgstab" selected>BiCGSTAB</option>
+              <option value="gmres" selected>GMRES</option>
+              <option value="bicgstab">BiCGSTAB</option>
               <option value="cgs">CGS</option>
               <option value="minres">MINRES</option>
               <!-- <option value="tfqmr">TFQMR</option> -->

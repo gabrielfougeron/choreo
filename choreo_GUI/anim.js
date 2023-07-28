@@ -392,7 +392,9 @@ function canvasApp() {
 
 	function anim_particles_loop(Time_since_origin){
 
-		request = requestAnimationFrame(anim_particles_loop);
+		if (running) {
+			request = requestAnimationFrame(anim_particles_loop);
+		}
 
 		if (Do_Limit_FPS) {
 
@@ -418,7 +420,6 @@ function canvasApp() {
 
 	function stopAnimation() {
 		running = false;
-		cancelAnimationFrame(request);
 		startStopButton.textContent = "Start";
 	}
 	
