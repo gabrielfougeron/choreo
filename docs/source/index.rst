@@ -9,23 +9,8 @@ Try it yourself online, no installation needed!
 At this address: `https://gabrielfougeron.github.io//choreo/ <https://gabrielfougeron.github.io//choreo/>`_ !
 
 
-Contents
---------
-
-.. toctree::
-   :maxdepth: 1
-
-   usage
-   api
-   ode
 
 
-Automatic pytest reporting
---------------------------
-
-.. toctree::
-
-   test-report/test-report
 
 
 Indices and tables
@@ -36,10 +21,14 @@ Indices and tables
 * :ref:`search`
 
 
-Dev sandbox
------------
-
 .. toctree::
+   :hidden:
+   :includehidden:
    :maxdepth: 1
 
-   sandbox
+
+   usage
+   _build/auto_examples/index
+   test-report/test-report
+   api
+   
