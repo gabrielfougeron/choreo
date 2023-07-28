@@ -169,7 +169,7 @@ async function Python_Imports_Done(args){
 
 	var trailLayerCanvas = document.getElementById("trailLayerCanvas")
 
-    PythonPrint({txt:"&#10;All python packages imported&#10;"})
+    PythonPrint({txt:"\nAll python packages imported\n"})
 
     SearchIsOnGoing = false
     var ChoreoDispInitStateBtn = document.getElementById("ChoreoDispInitStateBtn")
@@ -1334,7 +1334,7 @@ function KillAndReloadWorker() {
     var Python_State_Div = document.getElementById("Python_State_Div")
 
     PythonClearPrints()
-    PythonPrint({txt:"Python Killed. Reloading ...&#10;"})
+    PythonPrint({txt:"Python Killed. Reloading ...\n"})
 
     Python_State_Div.innerHTML = "Killed"
     Python_State_Div.classList.add('w3-red')
@@ -1588,18 +1588,19 @@ function DeleteCookie(name) {
 }
 
 function PythonClearPrints() {
-    Python_textarea.innerHTML = "";
+    Python_textarea.value = "";
 }
 
 function PythonPrint(args) {
 
-    var the_height = parseInt(Python_textarea.style.height, 10);
-    var is_at_bottom = (Python_textarea.scrollHeight - Python_textarea.scrollTop < (the_height + 10));
+    const delta_height_stick = 10
+    const the_height = parseInt(Python_textarea.style.height, 10)
+    const is_at_bottom = ((Python_textarea.scrollHeight - Python_textarea.scrollTop) < (the_height + delta_height_stick))
 
-    Python_textarea.innerHTML += args.txt + "&#10;";    
+    Python_textarea.value += args.txt + "\n"
 
     if (is_at_bottom) {
-        Python_textarea.scrollTop = Python_textarea.scrollHeight;
+        Python_textarea.scrollTop = Python_textarea.scrollHeight
     }
 
 }
@@ -2555,6 +2556,7 @@ function InitPage(){
         MakeBodyGraph()
 
         document.getElementById("BodyGraphDiv").addEventListener("dblclick", MakeBodyGraph)
+        Python_textarea.style.height = "400px"
 
     }
 
