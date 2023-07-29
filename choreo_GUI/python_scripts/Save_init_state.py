@@ -92,7 +92,6 @@ def main():
             ib = params_dict["Geom_Bodies"]["Targets"][il][ilb]
             mass[ib] = params_dict["Geom_Bodies"]["mass"][il]
 
-
     Sym_list = []
 
     if (geodim == 2):
