@@ -2349,7 +2349,7 @@ class ActionSym():
     def __str__(self):
 
         out  = ""
-        out += f"BodyPerm: {self.LoopTarget}\n"
+        out += f"BodyPerm: {self.BodyPerm}\n"
         out += f"SpaceRot: {self.SpaceRot}\n"
         out += f"TimeRev: {self.TimeRev}\n"
         out += f"TimeShift: {self.TimeShift}"
@@ -2812,7 +2812,7 @@ def Build_FullGraph(
                 else:
 
                     edge = (node_target, node_source)
-                    EdgeSym = Sym
+                    EdgeSym = SymInv
 
                 if edge in FullGraph.edges:
                     
@@ -2970,7 +2970,7 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
 
         for ilb in range(loopnb[il]):
 
-            assert bodynsegm[Targets[il,ilb]] == bodynsegm[0]
+            assert bodynsegm[Targets[il,ilb]] == bodynsegm[Targets[il,0]]
 
         for ils in range(bodynsegm[Targets[il,0]]):
 
@@ -3008,6 +3008,8 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
                 segm = (ib, iint)
                 isegm = bodysegm[*segm] 
 
+                assert il == segm_to_loop[isegm]
+
                 segmgen = (loopgen[il], segm_to_iint[isegm])
                 isegmgen = bodysegm[*segmgen] 
 
@@ -3020,14 +3022,34 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
 
                 for ipath in range(1,pathlen):
 
-                    edge = (path[ipath-1], path[ipath])
-                    Sym = FullGraph.edges[edge]["SymList"][0]
+                    if (path[ipath-1] > path[ipath]):
+
+                        edge = (path[ipath], path[ipath-1])
+                        Sym = FullGraph.edges[edge]["SymList"][0].Inverse()
+
+                    else:
+
+                        edge = (path[ipath-1], path[ipath])
+                        Sym = FullGraph.edges[edge]["SymList"][0]
 
                     GenToTargetSym = Sym.Compose(GenToTargetSym)
 
                 segm_gen_to_target[ib][iint] = GenToTargetSym
 
+                assert GenToTargetSym.BodyPerm[loopgen[il]] == ib
 
+
+
+
+
+
+
+
+
+
+
+
+    Identity_detected = False
 
     BinarySegmSyms = {}
 
@@ -3072,7 +3094,7 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
                     Identity_detected = True
 
                 AlreadyFound = False
-                for isym, FoundSym in enumerate(BinarySegmSyms[(isegm, isegmp)]["SymList"]):
+                for isym, FoundSym in enumerate(BinarySegmSyms[bisegm]["SymList"]):
                     
                     AlreadyFound = Sym.IsSameRotAndTimeRev(FoundSym)
                     if AlreadyFound:
@@ -3087,21 +3109,36 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
 
 
                 if AlreadyFound:
-                    BinarySegmSyms[(isegm, isegmp)]["SymCount"][isym] += 1
-                    BinarySegmSyms[(isegm, isegmp)]["ProdMassSum"][isym] += mass[BodyLoop[ib]]*mass[BodyLoop[ibp]]
+                    BinarySegmSyms[bisegm]["SymCount"][isym] += 1
+                    BinarySegmSyms[bisegm]["ProdMassSum"][isym] += mass[BodyLoop[ib]]*mass[BodyLoop[ibp]]
 
                 else:
-                    BinarySegmSyms[(isegm, isegmp)]["SymList"].append(Sym)
-                    BinarySegmSyms[(isegm, isegmp)]["SymCount"].append(1)
-                    BinarySegmSyms[(isegm, isegmp)]["ProdMassSum"].append(mass[BodyLoop[ib]]*mass[BodyLoop[ibp]])
+                    BinarySegmSyms[bisegm]["SymList"].append(Sym)
+                    BinarySegmSyms[bisegm]["SymCount"].append(1)
+                    BinarySegmSyms[bisegm]["ProdMassSum"].append(mass[BodyLoop[ib]]*mass[BodyLoop[ibp]])
 
 
+    count_tot = 0
+    count_unique = 0
+    for isegm in range(nsegm):
+        for isegmp in range(isegm,nsegm):
+            print()
+            print(isegm,isegmp)
+            print(BinarySegmSyms[(isegm, isegmp)]["SymCount"])
+            # for Sym in BinarySegmSyms[(isegm, isegmp)]["SymList"]:
+            #     print(Sym)
+
+            count_tot += sum(BinarySegmSyms[(isegm, isegmp)]["SymCount"])
+
+            count_unique += len(BinarySegmSyms[(isegm, isegmp)]["SymCount"])
 
 
+    print()
+    print(f"total count: {count_tot}")
+    print(f"total expected count: {nint_min * nbody * (nbody-1)//2}")
+    print(f"unique binary interaction count: {count_unique}")
 
-
-
-
+    print(f"ratio: {count_tot / count_unique}")
 
 
 
