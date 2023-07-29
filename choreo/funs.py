@@ -2490,7 +2490,10 @@ class ActionSym():
         return (self.TimeShift.numerator == 0)
     
     def IsIdentityRotAndTimeRev(self, atol = 1e-10):
-        return self.IsIdentityTimeRev() and self.IsIdentityRot(atol = atol)
+        return self.IsIdentityTimeRev() and self.IsIdentityRot(atol = atol)    
+    
+    def IsIdentityRotAndTime(self, atol = 1e-10):
+        return self.IsIdentityTimeRev() and self.IsIdentityRot(atol = atol) and self.IsIdentityTimeShift()
 
     def IsSame(self, other, atol = 1e-10):
         r"""
@@ -2512,6 +2515,9 @@ class ActionSym():
 
     def IsSameRotAndTimeRev(self, other, atol = 1e-10):
         return ((self.Inverse()).Compose(other)).IsIdentityRotAndTimeRev(atol = atol)
+    
+    def IsSameRotAndTime(self, other, atol = 1e-10):
+        return ((self.Inverse()).Compose(other)).IsIdentityRotAndTime(atol = atol)
 
     def ApplyT(self, Time):
 
@@ -2981,6 +2987,214 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
 
     assert isegm == nsegm
 
+    # Accumulate constraints on bodies (before choosing generator)
+    BodyConstraints = [[] for ib in range(nbody)]
+
+    Cycles = networkx.cycle_basis(BodyGraph)
+
+    # print(BodyGraph)
+
+    for Cycle in itertools.chain(BodyGraph.edges, Cycles):
+
+        Cycle_len = len(Cycle)
+
+        CycleSyms = []
+        for iedge in range(Cycle_len):
+            
+            ibeg = Cycle[iedge]
+            iend = Cycle[(iedge+1)%Cycle_len]
+
+            if (ibeg <= iend):
+                EdgeSyms = BodyGraph.edges[(ibeg,iend)]["SymList"]
+
+            else:
+
+                EdgeSyms = []
+                for Sym in BodyGraph.edges[(iend,ibeg)]["SymList"]:
+                    EdgeSyms.append(Sym.Inverse())
+                
+            CycleSyms.append(EdgeSyms)
+
+        CycleCstr = []
+        for CstrPath in itertools.product(*CycleSyms):
+
+            Constraint = ActionSym.Identity(nbody, geodim)
+
+            for Cstr in CstrPath:
+                Constraint = Cstr.Compose(Constraint)
+            
+            if not(Constraint.IsIdentityRotAndTime()):
+                AlreadyFound = False
+
+                for FoundCstr in CycleCstr:
+
+                    AlreadyFound = Constraint.IsSameRotAndTime(FoundCstr)
+                    if AlreadyFound:
+                        break
+
+                    ConstraintInv = Constraint.Inverse()
+                    AlreadyFound = ConstraintInv.IsSameRotAndTime(FoundCstr)
+                    if AlreadyFound:
+                        break
+
+                if not(AlreadyFound):
+                    CycleCstr.append(Constraint)
+
+        # The found cycle constraints actually apply to the first body in the cycle
+        for FirstBody in Cycle:
+            break
+
+        path_from_FirstBody_to = networkx.shortest_path(BodyGraph, source = FirstBody)
+
+        # Now add the Cycle constraint to every
+        for ib in Cycle:
+
+            FirstBodyToTargetSym =  ActionSym.Identity(nbody, geodim)
+
+            path = path_from_FirstBody_to[ib]            
+            pathlen = len(path)
+
+            for ipath in range(1,pathlen):
+
+                if (path[ipath-1] > path[ipath]):
+
+                    edge = (path[ipath], path[ipath-1])
+                    Sym = BodyGraph.edges[edge]["SymList"][0].Inverse()
+
+                else:
+
+                    edge = (path[ipath-1], path[ipath])
+                    Sym = BodyGraph.edges[edge]["SymList"][0]
+
+                FirstBodyToTargetSym = Sym.Compose(FirstBodyToTargetSym)
+
+            for Cstr in CycleCstr:
+
+                Constraint = FirstBodyToTargetSym.Inverse().Compose(Cstr.Compose(FirstBodyToTargetSym))
+
+                AlreadyFound = False
+                for FoundCstr in BodyConstraints[ib]:
+
+                    AlreadyFound = Constraint.IsSameRotAndTime(FoundCstr)
+                    if AlreadyFound:
+                        break
+
+                    ConstraintInv = Constraint.Inverse()
+                    AlreadyFound = ConstraintInv.IsSameRotAndTime(FoundCstr)
+                    if AlreadyFound:
+                        break
+                
+                if not(AlreadyFound):
+                    BodyConstraints[ib].append(Constraint)
+
+
+    for ib in range(nbody):
+
+        print()
+        print()
+        print()
+        print()
+        print("Body ",ib)
+        print("number of constraints",len(BodyConstraints[ib]))
+        for icstr, Cstr in enumerate(BodyConstraints[ib]):
+            print("Constraint number ",icstr)
+            print(Cstr)
+
+
+
+
+
+    # Accumulate constraints on segments. 
+    # TODO : prove that it is actually useless ?
+# 
+#     SegmConstraints = [ list() for isegm in range(nsegm)]
+# 
+#     Cycles = networkx.cycle_basis(FullGraph)
+# 
+#     print(f"Number of cycles: {len(Cycles)}")
+# 
+#     for Cycle in Cycles:
+# 
+#         isegm = bodysegm[*Cycle[0]]
+#         Cycle_len = len(Cycle)
+#         
+#         Constraint = ActionSym.Identity(nbody, geodim)
+# 
+#         for iedge in range(Cycle_len):
+#             
+#             ibeg = Cycle[iedge]
+#             iend = Cycle[(iedge+1)%Cycle_len]
+# 
+#             if (ibeg < iend):
+#                 # Constraint = Constraint.Compose(FullGraph.edges[(ibeg,iend)]["SymList"][0])
+#                 Constraint = FullGraph.edges[(ibeg,iend)]["SymList"][0].Compose(Constraint)
+#                 
+#             else:
+#                 # Constraint = Constraint.Compose(FullGraph.edges[(iend,ibeg)]["SymList"][0].Inverse())
+#                 Constraint = FullGraph.edges[(iend,ibeg)]["SymList"][0].Inverse().Compose(Constraint)
+# 
+# 
+#         if not(Constraint.IsIdentityRotAndTimeRev()):
+# 
+#             AlreadyFound = False
+#             for FoundCstr in SegmConstraints[isegm]:
+#                 
+#                 AlreadyFound = Constraint.IsSameRotAndTimeRev(FoundCstr)
+#                 if AlreadyFound:
+#                     break
+# 
+#                 ConstraintInv = Constraint.Inverse()
+#                 AlreadyFound = ConstraintInv.IsSameRotAndTimeRev(FoundCstr)
+#                 if AlreadyFound:
+#                     break
+# 
+#             if not(AlreadyFound):
+#                 SegmConstraints[isegm].append(Constraint)
+# 
+# 
+# 
+#     for isegm in range(nsegm):
+#         print()
+#         print("Segment number:", isegm)
+#         for icstr, Cstr in enumerate(SegmConstraints[isegm]):
+#             print()
+#             print("Constraint number:", icstr)
+#             print(Cstr)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     # Choose loop generators with maximal exploitable FFT symmetry
     loopgen = np.zeros((nloop), dtype = int)
@@ -3118,27 +3332,33 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
                     BinarySegmSyms[bisegm]["ProdMassSum"].append(mass[BodyLoop[ib]]*mass[BodyLoop[ibp]])
 
 
-    count_tot = 0
-    count_unique = 0
-    for isegm in range(nsegm):
-        for isegmp in range(isegm,nsegm):
-            print()
-            print(isegm,isegmp)
-            print(BinarySegmSyms[(isegm, isegmp)]["SymCount"])
-            # for Sym in BinarySegmSyms[(isegm, isegmp)]["SymList"]:
-            #     print(Sym)
-
-            count_tot += sum(BinarySegmSyms[(isegm, isegmp)]["SymCount"])
-
-            count_unique += len(BinarySegmSyms[(isegm, isegmp)]["SymCount"])
 
 
-    print()
-    print(f"total count: {count_tot}")
-    print(f"total expected count: {nint_min * nbody * (nbody-1)//2}")
-    print(f"unique binary interaction count: {count_unique}")
 
-    print(f"ratio: {count_tot / count_unique}")
+
+
+
+
+
+
+#     count_tot = 0
+#     count_unique = 0
+#     for isegm in range(nsegm):
+#         for isegmp in range(isegm,nsegm):
+#             print()
+#             print(isegm,isegmp)
+#             print(BinarySegmSyms[(isegm, isegmp)]["SymCount"])
+# 
+#             count_tot += sum(BinarySegmSyms[(isegm, isegmp)]["SymCount"])
+#             count_unique += len(BinarySegmSyms[(isegm, isegmp)]["SymCount"])
+# 
+# 
+#     print()
+#     print(f"total count: {count_tot}")
+#     print(f"total expected count: {nint_min * nbody * (nbody-1)//2}")
+#     print(f"unique binary interaction count: {count_unique}")
+# 
+#     print(f"ratio: {count_tot / count_unique}")
 
 
 
