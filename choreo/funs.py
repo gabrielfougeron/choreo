@@ -2895,99 +2895,8 @@ def Build_BodyGraph(nbody, Sym_list):
 
     return BodyGraph
 
-def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCons=True,n_grad_change=1.,Sym_list=[],CrashOnIdentity=True,ForceMatrixChangevar = False):
-    
-    r"""
-    This function constructs a ChoreoAction
-    It detects loops and constraints based on symmetries.
-    It defines parameters according to given constraints and diagonal change of variable.
-    It computes useful objects to optimize the computation of the action :
-     - Exhaustive list of unary transformation for generator to body.
-     - Exhaustive list of binary transformations from generator within each loop.
-    """
+def AccumulateBodyConstraints(BodyGraph, nbody, geodim):
 
-    All_den_list_on_entry = []
-    for Sym in Sym_list:
-        All_den_list_on_entry.append(Sym.TimeShift.denominator)
-
-    nint_min = m.lcm(*All_den_list_on_entry) # ensures that all integer divisions will have zero remainder
-
-    FullGraph, nint_min = Build_FullGraph_NoPb(nbody, nint_min, Sym_list)
-
-    BodyGraph =  Build_BodyGraph(nbody,Sym_list)
-
-    nloop = sum(1 for _ in networkx.connected_components(BodyGraph))
-    
-    loopnb = np.zeros((nloop), dtype = int)
-
-    for il, CC in enumerate(networkx.connected_components(BodyGraph)):
-        loopnb[il] = len(CC)
-
-    maxlooplen = loopnb.max()
-
-    BodyLoop = np.zeros((nbody), dtype = int)
-    Targets = np.zeros((nloop,maxlooplen), dtype = int)
-    for il, CC in enumerate(networkx.connected_components(BodyGraph)):
-        for ilb, ib in enumerate(CC):
-            Targets[il,ilb] = ib
-            BodyLoop[ib] = il
-
-    bodysegm = np.zeros((nbody, nint_min), dtype = int)
-
-    for isegm, CC in enumerate(networkx.connected_components(FullGraph)):
-
-        for ib, iint in CC:
-
-            bodysegm[ib, iint] = isegm
-
-    nsegm = isegm + 1
-
-    bodynsegm = np.zeros((nbody), dtype = int)
-    HasContiguousGeneratingSegments = np.zeros((nbody), dtype = bool)
-
-    for ib in range(nbody):
-
-        unique, unique_indices, unique_inverse, unique_counts = np.unique(bodysegm[ib, :], return_index = True, return_inverse = True, return_counts = True)
-
-        assert (unique == bodysegm[ib, unique_indices]).all()
-        assert (unique[unique_inverse] == bodysegm[ib, :]).all()
-
-        # print('')
-        # print(ib)
-        # print(bodysegm[ib, :])
-        # print(unique)
-        # print(unique_indices)
-        # print(unique_inverse)
-        # print(unique_counts)
-
-        bodynsegm[ib] = unique.size
-
-        HasContiguousGeneratingSegments[ib] = ((unique_indices.max()+1) == bodynsegm[ib])
-
-
-
-    segm_to_loop = np.zeros((nsegm), dtype = int)
-    segm_to_iint = np.zeros((nsegm), dtype = int)
-
-    isegm = 0
-    for il in range(nloop):
-
-        assert HasContiguousGeneratingSegments[Targets[il,:loopnb[il]]].any()
-
-        for ilb in range(loopnb[il]):
-
-            assert bodynsegm[Targets[il,ilb]] == bodynsegm[Targets[il,0]]
-
-        for ils in range(bodynsegm[Targets[il,0]]):
-
-            segm_to_loop[isegm] = il
-            segm_to_iint[isegm] = ils
-
-            isegm += 1
-
-    assert isegm == nsegm
-
-    # Accumulate constraints on bodies (before choosing generator)
     BodyConstraints = [[] for ib in range(nbody)]
 
     Cycles = networkx.cycle_basis(BodyGraph)
@@ -3087,127 +2996,57 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
                 if not(AlreadyFound):
                     BodyConstraints[ib].append(Constraint)
 
+    return BodyConstraints
 
-    for ib in range(nbody):
-
-        print()
-        print()
-        print()
-        print()
-        print("Body ",ib)
-        print("number of constraints",len(BodyConstraints[ib]))
-        for icstr, Cstr in enumerate(BodyConstraints[ib]):
-            print("Constraint number ",icstr)
-            print(Cstr)
-
-
-
-
-
+def AccumulateSegmentConstraints(FullGraph, nbody, geodim, nsegm, bodysegm):
     # Accumulate constraints on segments. 
     # TODO : prove that it is actually useless ?
-# 
-#     SegmConstraints = [ list() for isegm in range(nsegm)]
-# 
-#     Cycles = networkx.cycle_basis(FullGraph)
-# 
-#     print(f"Number of cycles: {len(Cycles)}")
-# 
-#     for Cycle in Cycles:
-# 
-#         isegm = bodysegm[*Cycle[0]]
-#         Cycle_len = len(Cycle)
-#         
-#         Constraint = ActionSym.Identity(nbody, geodim)
-# 
-#         for iedge in range(Cycle_len):
-#             
-#             ibeg = Cycle[iedge]
-#             iend = Cycle[(iedge+1)%Cycle_len]
-# 
-#             if (ibeg < iend):
-#                 # Constraint = Constraint.Compose(FullGraph.edges[(ibeg,iend)]["SymList"][0])
-#                 Constraint = FullGraph.edges[(ibeg,iend)]["SymList"][0].Compose(Constraint)
-#                 
-#             else:
-#                 # Constraint = Constraint.Compose(FullGraph.edges[(iend,ibeg)]["SymList"][0].Inverse())
-#                 Constraint = FullGraph.edges[(iend,ibeg)]["SymList"][0].Inverse().Compose(Constraint)
-# 
-# 
-#         if not(Constraint.IsIdentityRotAndTimeRev()):
-# 
-#             AlreadyFound = False
-#             for FoundCstr in SegmConstraints[isegm]:
-#                 
-#                 AlreadyFound = Constraint.IsSameRotAndTimeRev(FoundCstr)
-#                 if AlreadyFound:
-#                     break
-# 
-#                 ConstraintInv = Constraint.Inverse()
-#                 AlreadyFound = ConstraintInv.IsSameRotAndTimeRev(FoundCstr)
-#                 if AlreadyFound:
-#                     break
-# 
-#             if not(AlreadyFound):
-#                 SegmConstraints[isegm].append(Constraint)
-# 
-# 
-# 
-#     for isegm in range(nsegm):
-#         print()
-#         print("Segment number:", isegm)
-#         for icstr, Cstr in enumerate(SegmConstraints[isegm]):
-#             print()
-#             print("Constraint number:", icstr)
-#             print(Cstr)
+
+    SegmConstraints = [ list() for isegm in range(nsegm)]
+
+    Cycles = networkx.cycle_basis(FullGraph)
+
+    for Cycle in Cycles:
+
+        isegm = bodysegm[*Cycle[0]]
+        Cycle_len = len(Cycle)
+        
+        Constraint = ActionSym.Identity(nbody, geodim)
+
+        for iedge in range(Cycle_len):
+            
+            ibeg = Cycle[iedge]
+            iend = Cycle[(iedge+1)%Cycle_len]
+
+            if (ibeg < iend):
+                # Constraint = Constraint.Compose(FullGraph.edges[(ibeg,iend)]["SymList"][0])
+                Constraint = FullGraph.edges[(ibeg,iend)]["SymList"][0].Compose(Constraint)
+                
+            else:
+                # Constraint = Constraint.Compose(FullGraph.edges[(iend,ibeg)]["SymList"][0].Inverse())
+                Constraint = FullGraph.edges[(iend,ibeg)]["SymList"][0].Inverse().Compose(Constraint)
 
 
+        if not(Constraint.IsIdentityRotAndTimeRev()):
 
+            AlreadyFound = False
+            for FoundCstr in SegmConstraints[isegm]:
+                
+                AlreadyFound = Constraint.IsSameRotAndTimeRev(FoundCstr)
+                if AlreadyFound:
+                    break
 
+                ConstraintInv = Constraint.Inverse()
+                AlreadyFound = ConstraintInv.IsSameRotAndTimeRev(FoundCstr)
+                if AlreadyFound:
+                    break
 
+            if not(AlreadyFound):
+                SegmConstraints[isegm].append(Constraint)
 
+    return SegmConstraints
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    # Choose loop generators with maximal exploitable FFT symmetry
-    loopgen = np.zeros((nloop), dtype = int)
-    loopnsegm = np.zeros((nloop), dtype = int)
-    for il in range(nloop):
-        for ilb in range(loopnb[il]):
-
-            if HasContiguousGeneratingSegments[Targets[il,ilb]]:
-                loopgen[il] = Targets[il,ilb]
-
-                break
-
-
+def AccumulateSegmGenToTargetSym(FullGraph, nbody, geodim, nloop, nint_min, bodysegm, loopnb, loopgen, Targets, segm_to_iint, segm_to_loop):
 
     segm_gen_to_target = [ [ None for iint in range(nint_min)] for ib in range(nbody) ]
 
@@ -3252,24 +3091,18 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
 
                 assert GenToTargetSym.BodyPerm[loopgen[il]] == ib
 
+    return segm_gen_to_target
 
 
-
-
-
-
-
-
-
-
+def FindAllBinarySegments(segm_gen_to_target, nbody, nsegm, nint_min, bodysegm, CrashOnIdentity, mass, BodyLoop):
 
     Identity_detected = False
 
-    BinarySegmSyms = {}
+    BinarySegm = {}
 
     for isegm in range(nsegm):
         for isegmp in range(isegm,nsegm):
-            BinarySegmSyms[(isegm, isegmp)] = {
+            BinarySegm[(isegm, isegmp)] = {
                 "SymList" : [],
                 "SymCount" : [],
                 "ProdMassSum" : [],
@@ -3308,7 +3141,7 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
                     Identity_detected = True
 
                 AlreadyFound = False
-                for isym, FoundSym in enumerate(BinarySegmSyms[bisegm]["SymList"]):
+                for isym, FoundSym in enumerate(BinarySegm[bisegm]["SymList"]):
                     
                     AlreadyFound = Sym.IsSameRotAndTimeRev(FoundSym)
                     if AlreadyFound:
@@ -3323,42 +3156,181 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
 
 
                 if AlreadyFound:
-                    BinarySegmSyms[bisegm]["SymCount"][isym] += 1
-                    BinarySegmSyms[bisegm]["ProdMassSum"][isym] += mass[BodyLoop[ib]]*mass[BodyLoop[ibp]]
+                    BinarySegm[bisegm]["SymCount"][isym] += 1
+                    BinarySegm[bisegm]["ProdMassSum"][isym] += mass[BodyLoop[ib]]*mass[BodyLoop[ibp]]
 
                 else:
-                    BinarySegmSyms[bisegm]["SymList"].append(Sym)
-                    BinarySegmSyms[bisegm]["SymCount"].append(1)
-                    BinarySegmSyms[bisegm]["ProdMassSum"].append(mass[BodyLoop[ib]]*mass[BodyLoop[ibp]])
+                    BinarySegm[bisegm]["SymList"].append(Sym)
+                    BinarySegm[bisegm]["SymCount"].append(1)
+                    BinarySegm[bisegm]["ProdMassSum"].append(mass[BodyLoop[ib]]*mass[BodyLoop[ibp]])
+
+    return BinarySegm, Identity_detected
+
+
+def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCons=True,n_grad_change=1.,Sym_list=[],CrashOnIdentity=True,ForceMatrixChangevar = False):
+    
+    r"""
+    This function constructs a ChoreoAction
+    It detects loops and constraints based on symmetries.
+    It defines parameters according to given constraints and diagonal change of variable.
+    It computes useful objects to optimize the computation of the action :
+     - Exhaustive list of unary transformation for generator to body.
+     - Exhaustive list of binary transformations from generator within each loop.
+    """
+
+    All_den_list_on_entry = []
+    for Sym in Sym_list:
+        All_den_list_on_entry.append(Sym.TimeShift.denominator)
+
+    nint_min = m.lcm(*All_den_list_on_entry) # ensures that all integer divisions will have zero remainder
+
+    FullGraph, nint_min = Build_FullGraph_NoPb(nbody, nint_min, Sym_list)
+
+    BodyGraph =  Build_BodyGraph(nbody,Sym_list)
+
+    nloop = sum(1 for _ in networkx.connected_components(BodyGraph))
+    
+    loopnb = np.zeros((nloop), dtype = int)
+
+    for il, CC in enumerate(networkx.connected_components(BodyGraph)):
+        loopnb[il] = len(CC)
+
+    maxlooplen = loopnb.max()
+
+    BodyLoop = np.zeros((nbody), dtype = int)
+    Targets = np.zeros((nloop,maxlooplen), dtype = int)
+    for il, CC in enumerate(networkx.connected_components(BodyGraph)):
+        for ilb, ib in enumerate(CC):
+            Targets[il,ilb] = ib
+            BodyLoop[ib] = il
+
+    bodysegm = np.zeros((nbody, nint_min), dtype = int)
+    for isegm, CC in enumerate(networkx.connected_components(FullGraph)):
+        for ib, iint in CC:
+            bodysegm[ib, iint] = isegm
+
+    nsegm = isegm + 1
+
+    bodynsegm = np.zeros((nbody), dtype = int)
+    HasContiguousGeneratingSegments = np.zeros((nbody), dtype = bool)
+
+    for ib in range(nbody):
+
+        unique, unique_indices, unique_inverse, unique_counts = np.unique(bodysegm[ib, :], return_index = True, return_inverse = True, return_counts = True)
+
+        assert (unique == bodysegm[ib, unique_indices]).all()
+        assert (unique[unique_inverse] == bodysegm[ib, :]).all()
+
+        # print('')
+        # print(ib)
+        # print(bodysegm[ib, :])
+        # print(unique)
+        # print(unique_indices)
+        # print(unique_inverse)
+        # print(unique_counts)
+
+        bodynsegm[ib] = unique.size
+
+        HasContiguousGeneratingSegments[ib] = ((unique_indices.max()+1) == bodynsegm[ib])
+
+    segm_to_loop = np.zeros((nsegm), dtype = int)
+    segm_to_iint = np.zeros((nsegm), dtype = int)
+
+    isegm = 0
+    for il in range(nloop):
+
+        assert HasContiguousGeneratingSegments[Targets[il,:loopnb[il]]].any()
+
+        for ilb in range(loopnb[il]):
+
+            assert bodynsegm[Targets[il,ilb]] == bodynsegm[Targets[il,0]]
+
+        for ils in range(bodynsegm[Targets[il,0]]):
+
+            segm_to_loop[isegm] = il
+            segm_to_iint[isegm] = ils
+
+            isegm += 1
+
+    assert isegm == nsegm
+
+
+    BodyConstraints = AccumulateBodyConstraints(BodyGraph, nbody, geodim)
+
+    for ib in range(nbody):
+
+        print()
+        print('=========================================')
+        print()
+        print("Body ",ib)
+        print("number of constraints",len(BodyConstraints[ib]))
+        for icstr, Cstr in enumerate(BodyConstraints[ib]):
+            print()
+            print("Constraint number ",icstr)
+            print(Cstr)
 
 
 
 
 
-
-
-
-
-
-
-#     count_tot = 0
-#     count_unique = 0
+    # Accumulate constraints on segments. 
+    # So fat I've found zero constraints on segments. Is this because I only test on well-formed symmetries ?
+    # TODO : prove that it is actually useless ?
+# 
+#     SegmConstraints = AccumulateSegmentConstraints(FullGraph, nbody, geodim, nsegm, bodysegm)
+# 
 #     for isegm in range(nsegm):
-#         for isegmp in range(isegm,nsegm):
+#         print()
+#         print("Segment number:", isegm)
+#         for icstr, Cstr in enumerate(SegmConstraints[isegm]):
 #             print()
-#             print(isegm,isegmp)
-#             print(BinarySegmSyms[(isegm, isegmp)]["SymCount"])
-# 
-#             count_tot += sum(BinarySegmSyms[(isegm, isegmp)]["SymCount"])
-#             count_unique += len(BinarySegmSyms[(isegm, isegmp)]["SymCount"])
-# 
-# 
-#     print()
-#     print(f"total count: {count_tot}")
-#     print(f"total expected count: {nint_min * nbody * (nbody-1)//2}")
-#     print(f"unique binary interaction count: {count_unique}")
-# 
-#     print(f"ratio: {count_tot / count_unique}")
+#             print("Constraint number:", icstr)
+#             print(Cstr)
+
+
+
+
+
+
+    # Choose loop generators with maximal exploitable FFT symmetry
+    loopgen = np.zeros((nloop), dtype = int)
+    loopnsegm = np.zeros((nloop), dtype = int)
+    for il in range(nloop):
+        for ilb in range(loopnb[il]):
+
+            if HasContiguousGeneratingSegments[Targets[il,ilb]]:
+                loopgen[il] = Targets[il,ilb]
+
+                break
+
+
+
+
+
+
+    segm_gen_to_target =  AccumulateSegmGenToTargetSym(FullGraph, nbody, geodim, nloop, nint_min, bodysegm, loopnb, loopgen, Targets, segm_to_iint, segm_to_loop)
+
+    BinarySegm, Identity_detected = FindAllBinarySegments(segm_gen_to_target, nbody, nsegm, nint_min, bodysegm, CrashOnIdentity, mass, BodyLoop)
+
+
+    count_tot = 0
+    count_unique = 0
+    for isegm in range(nsegm):
+        for isegmp in range(isegm,nsegm):
+            print()
+            print(isegm,isegmp)
+            print(BinarySegm[(isegm, isegmp)]["SymCount"])
+
+            count_tot += sum(BinarySegm[(isegm, isegmp)]["SymCount"])
+            count_unique += len(BinarySegm[(isegm, isegmp)]["SymCount"])
+
+
+    print()
+    print(f"total count: {count_tot}")
+    print(f"total expected count: {nint_min * nbody * (nbody-1)//2}")
+    print(f"unique binary interaction count: {count_unique}")
+
+    print(f"ratio: {count_tot / count_unique}")
 
 
 
