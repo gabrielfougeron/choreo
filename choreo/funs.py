@@ -2482,12 +2482,15 @@ class ActionSym():
             rtol = 0.,
             atol = atol
         )    
-    
+
     def IsIdentityTimeRev(self):
         return (self.TimeRev == 1)
     
     def IsIdentityTimeShift(self):
         return (self.TimeShift.numerator == 0)
+    
+    def IsIdentityRotAndTimeRev(self, atol = 1e-10):
+        return self.IsIdentityTimeRev() and self.IsIdentityRot(atol = atol)
 
     def IsSame(self, other, atol = 1e-10):
         r"""
@@ -2508,8 +2511,7 @@ class ActionSym():
         return ((self.Inverse()).Compose(other)).IsIdentityTimeShift()
 
     def IsSameRotAndTimeRev(self, other, atol = 1e-10):
-        Comp = (self.Inverse()).Compose(other)
-        return Comp.IsIdentityTimeRev() and Comp.IsIdentityRot(atol = atol)
+        return ((self.Inverse()).Compose(other)).IsIdentityRotAndTimeRev(atol = atol)
 
     def ApplyT(self, Time):
 
@@ -2917,10 +2919,12 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
 
     maxlooplen = loopnb.max()
 
+    BodyLoop = np.zeros((nbody), dtype = int)
     Targets = np.zeros((nloop,maxlooplen), dtype = int)
     for il, CC in enumerate(networkx.connected_components(BodyGraph)):
         for ilb, ib in enumerate(CC):
             Targets[il,ilb] = ib
+            BodyLoop[ib] = il
 
     bodysegm = np.zeros((nbody, nint_min), dtype = int)
 
@@ -2954,6 +2958,12 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
 
         HasContiguousGeneratingSegments[ib] = ((unique_indices.max()+1) == bodynsegm[ib])
 
+
+
+    segm_to_loop = np.zeros((nsegm), dtype = int)
+    segm_to_iint = np.zeros((nsegm), dtype = int)
+
+    isegm = 0
     for il in range(nloop):
 
         assert HasContiguousGeneratingSegments[Targets[il,:loopnb[il]]].any()
@@ -2961,6 +2971,16 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
         for ilb in range(loopnb[il]):
 
             assert bodynsegm[Targets[il,ilb]] == bodynsegm[0]
+
+        for ils in range(bodynsegm[Targets[il,0]]):
+
+            segm_to_loop[isegm] = il
+            segm_to_iint[isegm] = ils
+
+            isegm += 1
+
+    assert isegm == nsegm
+
 
     # Choose loop generators with maximal exploitable FFT symmetry
     loopgen = np.zeros((nloop), dtype = int)
@@ -2975,43 +2995,107 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
 
 
 
+    segm_gen_to_target = [ [ None for iint in range(nint_min)] for ib in range(nbody) ]
 
-    # toto = networkx.shortest_path(FullGraph)
+    for il in range(nloop):
 
-    # print(type(toto[(0,0)][(1,0)]))
+        for ilb in range(loopnb[il]):
+        
+            ib = Targets[il,ilb]    
 
-#     All_Segment_Binary_Interactions = set()
-# 
-#     for iint in range(nint_min):
-# 
-#         for il in range(nloop):
-# 
-#             segmgen = 
-# 
-#             for ilb in range(loopnb[il]):
+            for iint in range(nint_min):
+                
+                segm = (ib, iint)
+                isegm = bodysegm[*segm] 
+
+                segmgen = (loopgen[il], segm_to_iint[isegm])
+                isegmgen = bodysegm[*segmgen] 
+
+                assert isegm == isegmgen
+
+                GenToTargetSym = ActionSym.Identity(nbody, geodim)
+
+                path = networkx.shortest_path(FullGraph, source = segmgen , target = segm)
+                pathlen = len(path)
+
+                for ipath in range(1,pathlen):
+
+                    edge = (path[ipath-1], path[ipath])
+                    Sym = FullGraph.edges[edge]["SymList"][0]
+
+                    GenToTargetSym = Sym.Compose(GenToTargetSym)
+
+                segm_gen_to_target[ib][iint] = GenToTargetSym
 
 
 
+    BinarySegmSyms = {}
 
-#         
-#         for ib in range(nbody-1):
-# 
-#             segm  = (ib , iint)
-#             isegm  = bodysegm[*segm ]
-# 
-#             path_from_segm_to = networkx.shortest_path(FullGraph, source = segm)
-# 
-#             for ibp in range(ib,nbody):
-# 
-#                 segmp = (ibp, iint)
-#                 isegmp = bodysegm[*segmp] 
-# 
-#                 Sym = ActionSym.Identity(nbody, geodim)
-# 
-#                 print(type(path_from_segm_to[segmp]))
-# 
-# 
-# 
+    for isegm in range(nsegm):
+        for isegmp in range(isegm,nsegm):
+            BinarySegmSyms[(isegm, isegmp)] = {
+                "SymList" : [],
+                "SymCount" : [],
+                "ProdMassSum" : [],
+            }
+
+    for iint in range(nint_min):
+
+        for ib in range(nbody-1):
+            
+            segm = (ib, iint)
+            isegm = bodysegm[*segm]
+
+            for ibp in range(ib+1,nbody):
+                
+                segmp = (ibp, iint)
+                isegmp = bodysegm[*segmp] 
+
+                if (isegm <= isegmp):
+
+                    bisegm = (isegm, isegmp)
+                    Sym = (segm_gen_to_target[ibp][iint]).Compose(segm_gen_to_target[ib][iint].Inverse())
+
+                else:
+
+                    bisegm = (isegmp, isegm)
+                    Sym = (segm_gen_to_target[ib][iint]).Compose(segm_gen_to_target[ibp][iint].Inverse())
+
+                if ((isegm == isegmp) and Sym.IsIdentityRotAndTimeRev()):
+
+                    if CrashOnIdentity:
+                        raise ValueError("Two bodies have identical trajectories")
+                    else:
+                        if not(Identity_detected):
+                            print("Two bodies have identical trajectories")
+                        
+                    Identity_detected = True
+
+                AlreadyFound = False
+                for isym, FoundSym in enumerate(BinarySegmSyms[(isegm, isegmp)]["SymList"]):
+                    
+                    AlreadyFound = Sym.IsSameRotAndTimeRev(FoundSym)
+                    if AlreadyFound:
+                        break
+
+                    if (isegm == isegmp):
+                        
+                        SymInv = Sym.Inverse()
+                        AlreadyFound = SymInv.IsSameRotAndTimeRev(FoundSym)
+                        if AlreadyFound:
+                            break
+
+
+                if AlreadyFound:
+                    BinarySegmSyms[(isegm, isegmp)]["SymCount"][isym] += 1
+                    BinarySegmSyms[(isegm, isegmp)]["ProdMassSum"][isym] += mass[BodyLoop[ib]]*mass[BodyLoop[ibp]]
+
+                else:
+                    BinarySegmSyms[(isegm, isegmp)]["SymList"].append(Sym)
+                    BinarySegmSyms[(isegm, isegmp)]["SymCount"].append(1)
+                    BinarySegmSyms[(isegm, isegmp)]["ProdMassSum"].append(mass[BodyLoop[ib]]*mass[BodyLoop[ibp]])
+
+
 
 
 
@@ -3227,8 +3311,6 @@ def setup_changevar(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCons=Tr
     loopgen = np.zeros((nloop),dtype=np.intp)
     loopnb = np.zeros((nloop),dtype=np.intp)
     loopnbi = np.zeros((nloop),dtype=np.intp)
-    
-    loop_gen_to_target = []
     
     Targets = np.zeros((nloop,maxlooplen),dtype=np.intp)
     MassSum = np.zeros((nloop),dtype=np.float64)
