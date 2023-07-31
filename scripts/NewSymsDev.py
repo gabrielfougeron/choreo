@@ -17,5 +17,7 @@ import choreo
 # choreo.run.GUI_in_CLI(['-f', os.path.join('.', 'NewSym_data', '4D')])
 # choreo.run.GUI_in_CLI(['-f', os.path.join('.', 'NewSym_data', '6Dk5')])
 # choreo.run.GUI_in_CLI(['-f', os.path.join('.', 'NewSym_data', 'overconstrained')])
-choreo.run.GUI_in_CLI(['-f', os.path.join('.', 'NewSym_data', '3C7k2')])
+# choreo.run.GUI_in_CLI(['-f', os.path.join('.', 'NewSym_data', '3C7k2')])
 # choreo.run.GUI_in_CLI(['-f', os.path.join('.', 'NewSym_data', '3D7k2')])
+# choreo.run.GUI_in_CLI(['-f', os.path.join('.', 'NewSym_data', '3C2k')])
+choreo.run.GUI_in_CLI(['-f', os.path.join('.', 'NewSym_data', '3D2k')])
