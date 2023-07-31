@@ -483,12 +483,10 @@ function canvasApp() {
 		clearScreen()
 		clearParticleLayer()
 		FinalizeSetOrbit(DoDrawParticles = false, DoXMinMax = true, setTinc = false)
-// 
-// 		if (document.getElementById('checkbox_DisplayBodiesDuringSearch').checked) {
-// 
-// 			startAnimation()
-// 	
-// 		}
+
+		if (document.getElementById('checkbox_DisplayBodiesDuringSearch').checked) {
+			startAnimation()
+		}
 
 	}
 
