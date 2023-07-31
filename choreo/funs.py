@@ -2841,7 +2841,7 @@ def Build_FullGraph_NoPb(
     current_recursion = 1,
     max_recursion = 5,
 ):
-
+    
     if (current_recursion > max_recursion):
 
         raise ValueError("Achieved max recursion level in Build_FullGraph")
@@ -3182,6 +3182,7 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
     for Sym in Sym_list:
         All_den_list_on_entry.append(Sym.TimeShift.denominator)
 
+
     nint_min = m.lcm(*All_den_list_on_entry) # ensures that all integer divisions will have zero remainder
 
     FullGraph, nint_min = Build_FullGraph_NoPb(nbody, nint_min, Sym_list)
@@ -3276,16 +3277,17 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
     # Accumulate constraints on segments. 
     # So fat I've found zero constraints on segments. Is this because I only test on well-formed symmetries ?
     # TODO : prove that it is actually useless ?
-# 
-#     SegmConstraints = AccumulateSegmentConstraints(FullGraph, nbody, geodim, nsegm, bodysegm)
-# 
-#     for isegm in range(nsegm):
-#         print()
-#         print("Segment number:", isegm)
-#         for icstr, Cstr in enumerate(SegmConstraints[isegm]):
-#             print()
-#             print("Constraint number:", icstr)
-#             print(Cstr)
+
+    SegmConstraints = AccumulateSegmentConstraints(FullGraph, nbody, geodim, nsegm, bodysegm)
+    print()
+    print("**************************************************")
+    for isegm in range(nsegm):
+        print()
+        print("Segment number:", isegm)
+        for icstr, Cstr in enumerate(SegmConstraints[isegm]):
+            print()
+            print("Constraint number:", icstr)
+            print(Cstr)
 
 
 
@@ -3312,6 +3314,9 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
 
     BinarySegm, Identity_detected = FindAllBinarySegments(segm_gen_to_target, nbody, nsegm, nint_min, bodysegm, CrashOnIdentity, mass, BodyLoop)
 
+    print('*****************************************')
+    print('')
+    print(f'Identity_detected: {Identity_detected}')
 
     count_tot = 0
     count_unique = 0
@@ -3320,6 +3325,14 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
             print()
             print(isegm,isegmp)
             print(BinarySegm[(isegm, isegmp)]["SymCount"])
+
+            for Sym in BinarySegm[(isegm, isegmp)]["SymList"]:
+
+                print()
+                print(Sym.SpaceRot)
+                print(Sym.TimeRev)
+
+
 
             count_tot += sum(BinarySegm[(isegm, isegmp)]["SymCount"])
             count_unique += len(BinarySegm[(isegm, isegmp)]["SymCount"])
@@ -3331,6 +3344,8 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
     print(f"unique binary interaction count: {count_unique}")
 
     print(f"ratio: {count_tot / count_unique}")
+
+    print(f'Cost per int: {count_unique / nint_min}')
 
 
 
