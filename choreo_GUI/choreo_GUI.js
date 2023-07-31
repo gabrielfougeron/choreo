@@ -43,8 +43,9 @@ async function Play_Loop_From_Python(args){
 
 	var trailLayerCanvas = document.getElementById("trailLayerCanvas")
 
-    var event = new Event('StopAnimationFromOutsideCanvas')
-    trailLayerCanvas.dispatchEvent(event)
+    // running = false
+//     var event = new Event('StopAnimationFromOutsideCanvas')
+//     trailLayerCanvas.dispatchEvent(event)
 
     SolName = args.solname
     var txt = await args.JSON_data.text()

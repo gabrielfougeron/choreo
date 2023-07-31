@@ -9,7 +9,7 @@ var SolName
 var Pos 
 var PlotInfo
 
-var running = false;
+var running = false
 
 var xMin=0., xMax=1., yMin=0., yMax=1.
 var Max_PathLength = 1.
@@ -393,104 +393,102 @@ function canvasApp() {
 	function anim_particles_loop(Time_since_origin){
 
 		if (running) {
-			request = requestAnimationFrame(anim_particles_loop);
+			request = requestAnimationFrame(anim_particles_loop)
 		}
 
 		if (Do_Limit_FPS) {
 
 			if (anim_schedule_time < Time_since_origin) {
-				anim_schedule_time += 1000/FPS_limit ;
-				Estimate_FPS(Time_since_origin);
-				anim_particles();
+				anim_schedule_time += 1000/FPS_limit 
+				Estimate_FPS(Time_since_origin)
+				anim_particles()
 			}
 
 		} else {
-			Estimate_FPS(Time_since_origin);
-			anim_particles();
+			Estimate_FPS(Time_since_origin)
+			anim_particles()
 		}
 
 	}
 	
 	function startAnimation() {
-		running = true;
-		startStopButton.textContent = "Stop";
-		input_Limit_FPS_Handler();
-		anim_particles_loop();
+		if (!running) {
+			running = true
+			startStopButton.textContent = "Stop"
+			input_Limit_FPS_Handler()
+			anim_particles_loop()
+		}
 	}
 
 	function stopAnimation() {
-		running = false;
-		startStopButton.textContent = "Start";
+		if (running) {
+			running = false
+			startStopButton.textContent = "Start"
+		}
 	}
 	
 	function startStopButtonHandler(e) {
 
 		if (!document.getElementById("startStopButton").disabled) {
 			if (running) {
-				stopAnimation();
+				stopAnimation()
 			}
 			else {
-				startAnimation();
+				startAnimation()
 			}
 		}
 	}
 
 	function trajectoryButtonHandler(e) {
 		if (trajectoriesOn) {
-			trajectoriesOn = false;
-			trajectoryButton.textContent ="Draw trails";
-			clearScreen();
+			trajectoriesOn = false
+			trajectoryButton.textContent ="Draw trails"
+			clearScreen()
 		}
 		else {
-			setStartPositions();
-			trajectoriesOn = true;
-			trajectoryButton.textContent = "Hide trails";
+			setStartPositions()
+			trajectoriesOn = true
+			trajectoryButton.textContent = "Hide trails"
 		}
 	}
 
 	function StopAnimationFromOutsideCanvasHandler(e) {
-		stopAnimation();
+		stopAnimation()
 	}
 
 	function DisableAnimationFromOutsideCanvasHandler(e) {
-		DisableAnimation();
-		clearScreen();
-		clearParticleLayer();
+		DisableAnimation()
+		clearScreen()
+		clearParticleLayer()
 	}
 
 	function DisableAnimation() {
-
 		document.getElementById("startStopButton").disabled = "disabled";
-
 	}
 
 	function EnableAnimationFromOutsideCanvasHandler(e) {
-		
-		EnableAnimation();
-
+		EnableAnimation()
 	}
 
 	function EnableAnimation() {
-
-		document.getElementById("startStopButton").disabled = "";
-
+		document.getElementById("startStopButton").disabled = ""
 	}
 
 	function StartAnimationFromOutsideCanvasHandler(e) {
-		startAnimation();
+		startAnimation()
 	}
 
 	function FinalizeSetOrbitFromOutsideCanvasHandler(e) {
 
-		clearScreen();
-		clearParticleLayer();
-		FinalizeSetOrbit(DoDrawParticles=false,DoXMinMax=true,setTinc=false) ;
-
-		if (document.getElementById('checkbox_DisplayBodiesDuringSearch').checked) {
-
-			startAnimation();
-	
-		}
+		clearScreen()
+		clearParticleLayer()
+		FinalizeSetOrbit(DoDrawParticles = false, DoXMinMax = true, setTinc = false)
+// 
+// 		if (document.getElementById('checkbox_DisplayBodiesDuringSearch').checked) {
+// 
+// 			startAnimation()
+// 	
+// 		}
 
 	}
 
@@ -501,7 +499,7 @@ function canvasApp() {
 	function FinalizeAndPlayFromOutsideCanvasHandler(e) {
 
 		if (e.DoClearScreen) {
-			clearScreen();
+			clearScreen()
 
 			if (e.ResetRot) {
 				var RotSlider = $("#RotSlider").data("roundSlider")
@@ -520,7 +518,7 @@ function canvasApp() {
 
 		}
 		
-		FinalizeSetOrbit(DoDrawParticles=true,DoXMinMax = e.DoXMinMax,setTinc=e.setTinc )
+		FinalizeSetOrbit(DoDrawParticles = true, DoXMinMax = e.DoXMinMax, setTinc = e.setTinc)
 		startAnimation()
 		
 	}
@@ -733,22 +731,14 @@ function canvasApp() {
 
 	function anim_path(Time_since_origin){
 
-		clearScreen();
-		DrawAllPaths();
+		clearScreen()
+		DrawAllPaths()
 
 	}
 
 	function DrawAllPathsFromOutsideCanvasHandler() {
 
-		if (running) {
-			cancelAnimationFrame(request)
-		}
-
 		request = requestAnimationFrame(anim_path)
-
-		if (running) {
-			request = requestAnimationFrame(anim_particles_loop)
-		}
 
 	}
 
@@ -828,8 +818,8 @@ function canvasApp() {
 	
 	function anim_path_grey(Time_since_origin){
 
-		clearScreen();
-		DrawAllPaths_Grey();
+		clearScreen()
+		DrawAllPaths_Grey()
 
 	}
 
@@ -1145,25 +1135,25 @@ function canvasApp() {
 				yMax : PlotInfo["ysup"],
 			}
 
-			setPlotWindow(plotWindow);
+			setPlotWindow(plotWindow)
 		}
 
-		SlideTrailTime();
-		makeParticles();
+		SlideTrailTime()
+		makeParticles()
 
-		setParticlePositions(time);
-		resetLastPositions();
-		setStartPositions();
+		setParticlePositions(time)
+		resetLastPositions()
+		setStartPositions()
 		
 		//if stopped, draw particles in correct place
 		if (!running) {
-			clearParticleLayer();
+			clearParticleLayer()
 			if (DoDrawParticles) {
-				drawParticles();	
+				drawParticles()
 			}
 		}
 		if (setTinc) {
-			setPeriodTime();
+			setPeriodTime()
 		}
 		
 	}
