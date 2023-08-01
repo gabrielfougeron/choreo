@@ -320,13 +320,16 @@ async function ChoreoExecuteClick() {
             RotSlider.setValue(0)
             RotSlider.disable()
 
-            var event = new Event('StopAnimationFromOutsideCanvas')
-            trailLayerCanvas.dispatchEvent(event)
+            trajectoriesOn = false
+            running = false
 
             var event = new Event('DisableAnimationFromOutsideCanvas')
             trailLayerCanvas.dispatchEvent(event)
 
-            trajectoriesOn = false
+            setTimeout(() => { // remove whatever is printed on requestAnimationFrame
+                var event = new Event('DisableAnimationFromOutsideCanvas')
+                trailLayerCanvas.dispatchEvent(event)
+              }, "30")
 
         }
 
@@ -1606,21 +1609,21 @@ function PythonPrint(args) {
 
 }
 
-var checkbox_DisplayLoopsDuringSearch = document.getElementById('checkbox_DisplayLoopsDuringSearch');
-checkbox_DisplayLoopsDuringSearch.addEventListener("change", checkbox_DisplayLoopsDuringSearchHandler, true);
+var checkbox_DisplayLoopsDuringSearch = document.getElementById('checkbox_DisplayLoopsDuringSearch')
+checkbox_DisplayLoopsDuringSearch.addEventListener("change", checkbox_DisplayLoopsDuringSearchHandler, true)
 
 function checkbox_DisplayLoopsDuringSearchHandler(event) {
 
-    var checkbox_DisplayBodiesDuringSearch = document.getElementById('checkbox_DisplayBodiesDuringSearch');
+    var checkbox_DisplayBodiesDuringSearch = document.getElementById('checkbox_DisplayBodiesDuringSearch')
 
     if (event.currentTarget.checked) {
 
-        checkbox_DisplayBodiesDuringSearch.disabled = "";
+        checkbox_DisplayBodiesDuringSearch.disabled = ""
 
     } else {
 
         checkbox_DisplayBodiesDuringSearch.checked = false;
-        checkbox_DisplayBodiesDuringSearch.disabled = "disabled";
+        checkbox_DisplayBodiesDuringSearch.disabled = "disabled"
         
     }
 
@@ -1879,8 +1882,8 @@ async function PlayFileFromDisk(name,npy_file,json_file) {
         var trailLayerCanvas = document.getElementById("trailLayerCanvas")
         var wasrunning = running
 
-        var event = new Event('StopAnimationFromOutsideCanvas')
-        trailLayerCanvas.dispatchEvent(event)
+        // var event = new Event('StopAnimationFromOutsideCanvas')
+        // trailLayerCanvas.dispatchEvent(event)
 
         SolName = name
         
@@ -1941,10 +1944,10 @@ async function PlayFileFromRemote(name,npy_file,json_file) {
         var trailLayerCanvas = document.getElementById("trailLayerCanvas")
         var wasrunning = running
 
-        if (running) {
-            var event = new Event('StopAnimationFromOutsideCanvas')
-            trailLayerCanvas.dispatchEvent(event)
-        }
+        // if (running) {
+        //     var event = new Event('StopAnimationFromOutsideCanvas')
+        //     trailLayerCanvas.dispatchEvent(event)
+        // }
 
         npyjs_obj = new npyjs()
 
