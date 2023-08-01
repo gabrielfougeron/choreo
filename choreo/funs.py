@@ -2765,11 +2765,6 @@ def ContainsDoubleEdges(FullGraph):
 
         ThisIsADoubleEdge = (len(FullGraph.edges[edge]["SymList"]) > 1)
 
-        # print(len(FullGraph.edges[edge]["SymList"]))
-# 
-#         for (SymA, SymB) in itertools.combinations(FullGraph.edges[edge]["SymList"],2):
-#             ThisIsADoubleEdge = ThisIsADoubleEdge or not(SymA.IsSame(SymB))
-
         IContainDoubleEdges = IContainDoubleEdges or ThisIsADoubleEdge
 
     return IContainDoubleEdges
@@ -3018,14 +3013,11 @@ def AccumulateSegmentConstraints(FullGraph, nbody, geodim, nsegm, bodysegm):
             ibeg = Cycle[iedge]
             iend = Cycle[(iedge+1)%Cycle_len]
 
-            if (ibeg < iend):
-                # Constraint = Constraint.Compose(FullGraph.edges[(ibeg,iend)]["SymList"][0])
+            if (ibeg <= iend):
                 Constraint = FullGraph.edges[(ibeg,iend)]["SymList"][0].Compose(Constraint)
                 
             else:
-                # Constraint = Constraint.Compose(FullGraph.edges[(iend,ibeg)]["SymList"][0].Inverse())
                 Constraint = FullGraph.edges[(iend,ibeg)]["SymList"][0].Inverse().Compose(Constraint)
-
 
         if not(Constraint.IsIdentityRotAndTimeRev()):
 
@@ -3279,15 +3271,20 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
     # TODO : prove that it is actually useless ?
 
     SegmConstraints = AccumulateSegmentConstraints(FullGraph, nbody, geodim, nsegm, bodysegm)
-    print()
-    print("**************************************************")
+    
     for isegm in range(nsegm):
-        print()
-        print("Segment number:", isegm)
-        for icstr, Cstr in enumerate(SegmConstraints[isegm]):
-            print()
-            print("Constraint number:", icstr)
-            print(Cstr)
+        assert len(SegmConstraints[isegm]) == 0
+
+
+    # print()
+    # print("**************************************************")
+    # for isegm in range(nsegm):
+    #     print()
+    #     print("Segment number:", isegm)
+    #     for icstr, Cstr in enumerate(SegmConstraints[isegm]):
+    #         print()
+    #         print("Constraint number:", icstr)
+    #         print(Cstr)
 
 
 
@@ -3295,7 +3292,7 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
 
 
     # Choose loop generators with maximal exploitable FFT symmetry
-    loopgen = np.zeros((nloop), dtype = int)
+    loopgen = - np.ones((nloop), dtype = int)
     loopnsegm = np.zeros((nloop), dtype = int)
     for il in range(nloop):
         for ilb in range(loopnb[il]):
@@ -3305,7 +3302,7 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
 
                 break
 
-
+        assert loopgen[il] >= 0
 
 
 
@@ -3325,12 +3322,12 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
             print()
             print(isegm,isegmp)
             print(BinarySegm[(isegm, isegmp)]["SymCount"])
-
-            for Sym in BinarySegm[(isegm, isegmp)]["SymList"]:
-
-                print()
-                print(Sym.SpaceRot)
-                print(Sym.TimeRev)
+# 
+#             for Sym in BinarySegm[(isegm, isegmp)]["SymList"]:
+# 
+#                 print()
+#                 print(Sym.SpaceRot)
+#                 print(Sym.TimeRev)
 
 
 
@@ -3347,116 +3344,121 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
 
     print(f'Cost per int: {count_unique / nint_min}')
 
+    print(f'Ratio of integration intervals to segments: {(nbody * nint_min) / nsegm}')
 
 
 
 
 
-    nnodes = nbody*nint_min
-    node_color = np.zeros(nnodes)
+    MakePlots = False
+    # MakePlots = True
 
-    for icolor, CC in enumerate(networkx.connected_components(FullGraph)):
-        for node in CC:
-            inode = node[1] + nint_min * node[0]
-            node_color[inode] = icolor
+    if MakePlots:
 
-    nedges = len(FullGraph.edges)
-    edge_color = np.zeros(nedges)
 
-    for iedge, edge in enumerate(FullGraph.edges):
+        nnodes = nbody*nint_min
+        node_color = np.zeros(nnodes)
 
-        ContainsDirect = False
-        ContainsIndirect = False
+        for icolor, CC in enumerate(networkx.connected_components(FullGraph)):
+            for node in CC:
+                inode = node[1] + nint_min * node[0]
+                node_color[inode] = icolor
 
-        for Sym in FullGraph.edges[edge]["SymList"]:
+        nedges = len(FullGraph.edges)
+        edge_color = np.zeros(nedges)
 
-            if Sym.TimeRev == 1:
-                ContainsDirect = True
+        for iedge, edge in enumerate(FullGraph.edges):
+
+            ContainsDirect = False
+            ContainsIndirect = False
+
+            for Sym in FullGraph.edges[edge]["SymList"]:
+
+                if Sym.TimeRev == 1:
+                    ContainsDirect = True
+                else:
+                    ContainsIndirect = True
+
+            if ContainsDirect:
+                if ContainsIndirect:
+                    color = 2
+                else:
+                    color = 1
             else:
-                ContainsIndirect = True
+                color = 0
 
-        if ContainsDirect:
-            if ContainsIndirect:
-                color = 2
-            else:
-                color = 1
-        else:
-            color = 0
+            edge_color[iedge] = color
 
-        edge_color[iedge] = color
-
-    pos = {i:(i[1],i[0]) for i in FullGraph.nodes }
+        pos = {i:(i[1],i[0]) for i in FullGraph.nodes }
 
 
-    edgelist = []
-#     for iedge, edge in enumerate(FullGraph.edges):
-# 
-#         Sym = FullGraph.edges[edge]["SymList"][0]
-# 
-#         issqrtid = (np.linalg.norm(np.matmul(Sym.SpaceRot,Sym.SpaceRot) - np.identity(geodim)) < 1e-12)
-#         isid = (np.linalg.norm(Sym.SpaceRot - np.identity(geodim)) < 1e-12)
-# 
-#         if issqrtid and not(isid):
-# 
-#             edgelist.append(edge)
+        # edgelist = []
+    #     for iedge, edge in enumerate(FullGraph.edges):
+    # 
+    #         Sym = FullGraph.edges[edge]["SymList"][0]
+    # 
+    #         issqrtid = (np.linalg.norm(np.matmul(Sym.SpaceRot,Sym.SpaceRot) - np.identity(geodim)) < 1e-12)
+    #         isid = (np.linalg.norm(Sym.SpaceRot - np.identity(geodim)) < 1e-12)
+    # 
+    #         if issqrtid and not(isid):
+    # 
+    #             edgelist.append(edge)
 
+        fig, ax = plt.subplots()
 
+        # networkx.draw(
+        #     FullGraph,
+        #     pos = pos,
+        #     labels = {i:i for i in FullGraph.nodes},
+        #     node_color = node_color,
+        #     cmap = 'jet',
+        #     arrows = False,
+        #     # connectionstyle = "arc3,rad=0.1",
+        # )
 
-    fig, ax = plt.subplots()
+        networkx.draw_networkx_nodes(
+            FullGraph,
+            pos = pos,
+            ax = ax,
+            node_color = node_color,
+            # cmap = 'tab20',
+            cmap = 'turbo',
+        )
 
-    # networkx.draw(
-    #     FullGraph,
-    #     pos = pos,
-    #     labels = {i:i for i in FullGraph.nodes},
-    #     node_color = node_color,
-    #     cmap = 'jet',
-    #     arrows = False,
-    #     # connectionstyle = "arc3,rad=0.1",
-    # )
+        # networkx.draw_networkx_labels(
+        #     FullGraph,
+        #     pos = pos,
+        #     ax = ax,
+            # labels = {i:i for i in FullGraph.nodes},
+        # )
 
-    networkx.draw_networkx_nodes(
-        FullGraph,
-        pos = pos,
-        ax = ax,
-        node_color = node_color,
-        # cmap = 'tab20',
-        cmap = 'turbo',
-    )
+        networkx.draw_networkx_edges(
+            FullGraph,
+            pos = pos,
+            ax = ax,
+            arrows = True,
+            connectionstyle = "arc3,rad=0.1",
+            edge_color = edge_color,
+            edge_vmin = 0,
+            edge_vmax = 1,
+            edge_cmap = colormaps['Set1'],
+        )
 
-    # networkx.draw_networkx_labels(
-    #     FullGraph,
-    #     pos = pos,
-    #     ax = ax,
-        # labels = {i:i for i in FullGraph.nodes},
-    # )
+        # networkx.draw_networkx_edges(
+        #     FullGraph,
+        #     pos = pos,
+        #     ax = ax,
+        #     arrows = True,
+        #     connectionstyle = "arc3,rad=0.1",
+        #     edge_color = "k",
+        #     edgelist = edgelist,
+        # )
 
-    networkx.draw_networkx_edges(
-        FullGraph,
-        pos = pos,
-        ax = ax,
-        arrows = True,
-        connectionstyle = "arc3,rad=0.1",
-        edge_color = edge_color,
-        edge_vmin = 0,
-        edge_vmax = 1,
-        edge_cmap = colormaps['Set1'],
-    )
+        plt.axis('off')
+        fig.tight_layout()
 
-    # networkx.draw_networkx_edges(
-    #     FullGraph,
-    #     pos = pos,
-    #     ax = ax,
-    #     arrows = True,
-    #     connectionstyle = "arc3,rad=0.1",
-    #     edge_color = "k",
-    #     edgelist = edgelist,
-    # )
-
-    plt.axis('off')
-    fig.tight_layout()
-
-    plt.savefig('./NewSym_data/graph.pdf')
-    plt.close()
+        plt.savefig('./NewSym_data/graph.pdf')
+        plt.close()
 
 
 

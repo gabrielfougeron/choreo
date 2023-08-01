@@ -241,7 +241,7 @@ function canvasApp() {
 	trailLayerContext.lineCap = "round";
 	trailLayerCanvas.addEventListener("FinalizeSetOrbitFromOutsideCanvas", FinalizeSetOrbitFromOutsideCanvasHandler, true);
 	trailLayerCanvas.addEventListener("FinalizeAndPlayFromOutsideCanvas", FinalizeAndPlayFromOutsideCanvasHandler, true);
-	trailLayerCanvas.addEventListener("StopAnimationFromOutsideCanvas", StopAnimationFromOutsideCanvasHandler, true);
+	// trailLayerCanvas.addEventListener("StopAnimationFromOutsideCanvas", StopAnimationFromOutsideCanvasHandler, true);
 	trailLayerCanvas.addEventListener("DisableAnimationFromOutsideCanvas", DisableAnimationFromOutsideCanvasHandler, true);
 	trailLayerCanvas.addEventListener("EnableAnimationFromOutsideCanvas", EnableAnimationFromOutsideCanvasHandler, true);
 	trailLayerCanvas.addEventListener("StartAnimationFromOutsideCanvas", StartAnimationFromOutsideCanvasHandler, true);
@@ -457,9 +457,9 @@ function canvasApp() {
 	}
 
 	function DisableAnimationFromOutsideCanvasHandler(e) {
-		DisableAnimation()
-		clearScreen()
 		clearParticleLayer()
+		clearScreen()		
+		DisableAnimation()
 	}
 
 	function DisableAnimation() {
@@ -629,14 +629,14 @@ function canvasApp() {
 	}
 	
 	function clearScreen() {
-		trailLayerContext.fillStyle = bgColor;
-		trailLayerContext.fillRect(0,0,displayWidth,displayHeight);
+		trailLayerContext.fillStyle = bgColor
+		trailLayerContext.fillRect(0,0,displayWidth,displayHeight)
 	}
 	
 	function clearParticleLayer() {
-		particleLayerContext.clearRect(0,0,displayWidth+1,displayHeight+1);
-	}
-	
+		particleLayerContext.clearRect(0,0,displayWidth+1,displayHeight+1)
+	}	
+
 	function makeParticles() {
 
 		particles = new Array(PlotInfo['nbody'])
