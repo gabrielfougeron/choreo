@@ -3038,7 +3038,7 @@ def AccumulateSegmentConstraints(FullGraph, nbody, geodim, nsegm, bodysegm):
 
     return SegmConstraints
 
-def AccumulateSegmGenToTargetSym(FullGraph, nbody, geodim, nloop, nint_min, bodysegm, loopnb, loopgen, Targets, segm_to_iint, segm_to_loop):
+def AccumulateSegmGenToTargetSym(FullGraph, nbody, geodim, nloop, nint_min, bodysegm, loopnb, loopgen, Targets, segm_to_iint, segm_to_body):
 
     segm_gen_to_target = [ [ None for iint in range(nint_min)] for ib in range(nbody) ]
 
@@ -3053,9 +3053,7 @@ def AccumulateSegmGenToTargetSym(FullGraph, nbody, geodim, nloop, nint_min, body
                 segm = (ib, iint)
                 isegm = bodysegm[*segm] 
 
-                assert il == segm_to_loop[isegm]
-
-                segmgen = (loopgen[il], segm_to_iint[isegm])
+                segmgen = (segm_to_body[isegm], segm_to_iint[isegm])
                 isegmgen = bodysegm[*segmgen] 
 
                 assert isegm == isegmgen
@@ -3081,7 +3079,7 @@ def AccumulateSegmGenToTargetSym(FullGraph, nbody, geodim, nloop, nint_min, body
 
                 segm_gen_to_target[ib][iint] = GenToTargetSym
 
-                assert GenToTargetSym.BodyPerm[loopgen[il]] == ib
+                # assert GenToTargetSym.BodyPerm[loopgen[il]] == ib
 
     return segm_gen_to_target
 
@@ -3204,6 +3202,8 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
 
     nsegm = isegm + 1
 
+    print(f"nsegm = {nsegm}")
+
     bodynsegm = np.zeros((nbody), dtype = int)
     HasContiguousGeneratingSegments = np.zeros((nbody), dtype = bool)
 
@@ -3225,44 +3225,6 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
         bodynsegm[ib] = unique.size
 
         HasContiguousGeneratingSegments[ib] = ((unique_indices.max()+1) == bodynsegm[ib])
-
-    segm_to_loop = np.zeros((nsegm), dtype = int)
-    segm_to_iint = np.zeros((nsegm), dtype = int)
-
-    isegm = 0
-    for il in range(nloop):
-
-        assert HasContiguousGeneratingSegments[Targets[il,:loopnb[il]]].any()
-
-        for ilb in range(loopnb[il]):
-
-            assert bodynsegm[Targets[il,ilb]] == bodynsegm[Targets[il,0]]
-
-        for ils in range(bodynsegm[Targets[il,0]]):
-
-            segm_to_loop[isegm] = il
-            segm_to_iint[isegm] = ils
-
-            isegm += 1
-
-    assert isegm == nsegm
-
-
-    BodyConstraints = AccumulateBodyConstraints(BodyGraph, nbody, geodim)
-
-    for ib in range(nbody):
-
-        print()
-        print('=========================================')
-        print()
-        print("Body ",ib)
-        print("number of constraints",len(BodyConstraints[ib]))
-        for icstr, Cstr in enumerate(BodyConstraints[ib]):
-            print()
-            print("Constraint number ",icstr)
-            print(Cstr)
-
-
 
 
 
@@ -3287,6 +3249,69 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
     #         print(Cstr)
 
 
+    segm_to_body = np.zeros((nsegm), dtype = int)
+    segm_to_iint = np.zeros((nsegm), dtype = int)
+
+    # Choose generating segments as first contiguous intervals of generating loops
+#     isegm = 0
+#     for il in range(nloop):
+# 
+#         assert HasContiguousGeneratingSegments[Targets[il,:loopnb[il]]].any()
+# 
+#         for ilb in range(loopnb[il]):
+# 
+#             assert bodynsegm[Targets[il,ilb]] == bodynsegm[Targets[il,0]]
+# 
+#         for ils in range(bodynsegm[Targets[il,0]]):
+# 
+#             segm_to_body[isegm] = Targets[il,0]
+#             segm_to_iint[isegm] = ils
+# 
+#             isegm += 1
+# 
+#     assert isegm == nsegm
+
+
+    # Choose generating segments as earliest times possible
+    assigned_segms = set()
+    for iint in range(nint_min):
+        for ib in range(nbody):
+
+            isegm = bodysegm[ib,iint]
+
+            if not(isegm in assigned_segms):
+                segm_to_body[isegm] = ib
+                segm_to_iint[isegm] = iint
+                assigned_segms.add(isegm)
+
+
+
+
+
+
+
+
+
+
+    BodyConstraints = AccumulateBodyConstraints(BodyGraph, nbody, geodim)
+
+    for ib in range(nbody):
+
+        print()
+        print('=========================================')
+        print()
+        print("Body ",ib)
+        print("number of constraints",len(BodyConstraints[ib]))
+        for icstr, Cstr in enumerate(BodyConstraints[ib]):
+            print()
+            print("Constraint number ",icstr)
+            print(Cstr)
+
+
+
+
+
+
 
 
 
@@ -3307,7 +3332,7 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
 
 
 
-    segm_gen_to_target =  AccumulateSegmGenToTargetSym(FullGraph, nbody, geodim, nloop, nint_min, bodysegm, loopnb, loopgen, Targets, segm_to_iint, segm_to_loop)
+    segm_gen_to_target =  AccumulateSegmGenToTargetSym(FullGraph, nbody, geodim, nloop, nint_min, bodysegm, loopnb, loopgen, Targets, segm_to_iint, segm_to_body)
 
     BinarySegm, Identity_detected = FindAllBinarySegments(segm_gen_to_target, nbody, nsegm, nint_min, bodysegm, CrashOnIdentity, mass, BodyLoop)
 
@@ -3322,12 +3347,12 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
             print()
             print(isegm,isegmp)
             print(BinarySegm[(isegm, isegmp)]["SymCount"])
-# 
-#             for Sym in BinarySegm[(isegm, isegmp)]["SymList"]:
-# 
-#                 print()
-#                 print(Sym.SpaceRot)
-#                 print(Sym.TimeRev)
+
+            for Sym in BinarySegm[(isegm, isegmp)]["SymList"]:
+
+                print()
+                print(Sym.SpaceRot)
+                print(Sym.TimeRev)
 
 
 
@@ -3350,8 +3375,8 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
 
 
 
-    MakePlots = False
-    # MakePlots = True
+    # MakePlots = False
+    MakePlots = True
 
     if MakePlots:
 
