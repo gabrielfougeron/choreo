@@ -2759,21 +2759,55 @@ def EdgesAreEitherDirectXORIndirect(FullGraph):
 
 def ContainsDoubleEdges(FullGraph):
 
-    IContainDoubleEdges = False
-
     for edge in FullGraph.edges:
 
-        ThisIsADoubleEdge = (len(FullGraph.edges[edge]["SymList"]) > 1)
+        if (len(FullGraph.edges[edge]["SymList"]) > 1):
+            return True
 
-        IContainDoubleEdges = IContainDoubleEdges or ThisIsADoubleEdge
+    return False
 
-    return IContainDoubleEdges
+def ContainsSelfReferingTimeRevSegment(FullGraph, nbody, nint):
 
-def Build_FullGraph(
-    nbody,
-    nint,
-    Sym_list,
-):
+    all_paths = networkx.shortest_path(FullGraph)
+
+    for iint in range(nint):
+        for ib in range(nbody-1):
+            segm = (ib, iint)
+            
+            path_from_segm_to = all_paths[segm]
+
+            for ibp in range(ib+1,nbody):
+                segmp = (ibp, iint)
+
+                path = path_from_segm_to.get(segmp)
+
+                if not(path is None):
+                    
+                    TimeRev = 1
+                    pathlen = len(path)
+
+                    for ipath in range(1,pathlen):
+
+                        if (path[ipath-1] > path[ipath]):
+
+                            edge = (path[ipath], path[ipath-1])
+                            Sym = FullGraph.edges[edge]["SymList"][0].Inverse()
+
+                        else:
+
+                            edge = (path[ipath-1], path[ipath])
+                            Sym = FullGraph.edges[edge]["SymList"][0]
+
+                        TimeRev *= Sym.TimeRev
+
+                    if (TimeRev == -1):
+                        
+                        return True
+                    
+    return False
+
+
+def Build_FullGraph(nbody, nint, Sym_list):
 
     FullGraph = networkx.Graph()
     for ib in range(nbody):
@@ -2856,6 +2890,17 @@ def Build_FullGraph_NoPb(
             current_recursion = current_recursion+1,
             max_recursion = max_recursion,
         )
+
+    if ContainsSelfReferingTimeRevSegment(FullGraph, nbody, nint):
+
+        FullGraph, nint = Build_FullGraph_NoPb(
+            nbody = nbody,
+            nint = 2*nint,
+            Sym_list = Sym_list,
+            current_recursion = current_recursion+1,
+            max_recursion = max_recursion,
+        ) 
+
 
     return FullGraph, nint
 
@@ -3083,7 +3128,6 @@ def AccumulateSegmGenToTargetSym(FullGraph, nbody, geodim, nloop, nint_min, body
 
     return segm_gen_to_target
 
-
 def FindAllBinarySegments(segm_gen_to_target, nbody, nsegm, nint_min, bodysegm, CrashOnIdentity, mass, BodyLoop):
 
     Identity_detected = False
@@ -3155,7 +3199,6 @@ def FindAllBinarySegments(segm_gen_to_target, nbody, nsegm, nint_min, bodysegm, 
                     BinarySegm[bisegm]["ProdMassSum"].append(mass[BodyLoop[ib]]*mass[BodyLoop[ibp]])
 
     return BinarySegm, Identity_detected
-
 
 def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCons=True,n_grad_change=1.,Sym_list=[],CrashOnIdentity=True,ForceMatrixChangevar = False):
     
@@ -3273,7 +3316,22 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
 
 
     # Choose generating segments as earliest times possible
+#     assigned_segms = set()
+#     for iint in range(nint_min):
+#         for ib in range(nbody):
+# 
+#             isegm = bodysegm[ib,iint]
+# 
+#             if not(isegm in assigned_segms):
+#                 segm_to_body[isegm] = ib
+#                 segm_to_iint[isegm] = iint
+#                 assigned_segms.add(isegm)
+
+
+
+    # Choose generating segments as earliest times possible
     assigned_segms = set()
+
     for iint in range(nint_min):
         for ib in range(nbody):
 
@@ -3290,22 +3348,19 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
 
 
 
-
-
-
     BodyConstraints = AccumulateBodyConstraints(BodyGraph, nbody, geodim)
 
-    for ib in range(nbody):
-
-        print()
-        print('=========================================')
-        print()
-        print("Body ",ib)
-        print("number of constraints",len(BodyConstraints[ib]))
-        for icstr, Cstr in enumerate(BodyConstraints[ib]):
-            print()
-            print("Constraint number ",icstr)
-            print(Cstr)
+#     for ib in range(nbody):
+# 
+#         print()
+#         print('=========================================')
+#         print()
+#         print("Body ",ib)
+#         print("number of constraints",len(BodyConstraints[ib]))
+#         for icstr, Cstr in enumerate(BodyConstraints[ib]):
+#             print()
+#             print("Constraint number ",icstr)
+#             print(Cstr)
 
 
 
@@ -3344,20 +3399,21 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
     count_unique = 0
     for isegm in range(nsegm):
         for isegmp in range(isegm,nsegm):
-            print()
-            print(isegm,isegmp)
-            print(BinarySegm[(isegm, isegmp)]["SymCount"])
-
-            for Sym in BinarySegm[(isegm, isegmp)]["SymList"]:
-
-                print()
-                print(Sym.SpaceRot)
-                print(Sym.TimeRev)
-
-
-
             count_tot += sum(BinarySegm[(isegm, isegmp)]["SymCount"])
             count_unique += len(BinarySegm[(isegm, isegmp)]["SymCount"])
+
+#             print()
+#             print(isegm,isegmp)
+#             print(BinarySegm[(isegm, isegmp)]["SymCount"])
+# 
+#             for Sym in BinarySegm[(isegm, isegmp)]["SymList"]:
+# 
+#                 print()
+#                 print(Sym.SpaceRot)
+#                 print(Sym.TimeRev)
+
+
+
 
 
     print()
@@ -3365,18 +3421,20 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
     print(f"total expected count: {nint_min * nbody * (nbody-1)//2}")
     print(f"unique binary interaction count: {count_unique}")
 
-    print(f"ratio: {count_tot / count_unique}")
-
     print(f'Cost per int: {count_unique / nint_min}')
 
+    print(f"ratio of total to unique binary interactions : {count_tot / count_unique}")
     print(f'Ratio of integration intervals to segments: {(nbody * nint_min) / nsegm}')
 
+    eps = 1e-12
+
+    assert abs((count_tot / count_unique)  - ((nbody * nint_min) / nsegm)) < eps
 
 
 
 
-    # MakePlots = False
-    MakePlots = True
+    MakePlots = False
+    # MakePlots = True
 
     if MakePlots:
 
