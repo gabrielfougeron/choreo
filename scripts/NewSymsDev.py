@@ -6,32 +6,45 @@ sys.path.append(__PROJECT_ROOT__)
 import choreo 
 
 
-# choreo.run.GUI_in_CLI(['-f', os.path.join('.', 'NewSym_data', '3q')])
-# choreo.run.GUI_in_CLI(['-f', os.path.join('.', 'NewSym_data', '2C3C')])
-# choreo.run.GUI_in_CLI(['-f', os.path.join('.', 'NewSym_data', '2D1')])
-# choreo.run.GUI_in_CLI(['-f', os.path.join('.', 'NewSym_data', 'test')])
-# choreo.run.GUI_in_CLI(['-f', os.path.join('.', 'NewSym_data', '4C5k')])
-# choreo.run.GUI_in_CLI(['-f', os.path.join('.', 'NewSym_data', '4D3k')])
-# choreo.run.GUI_in_CLI(['-f', os.path.join('.', 'NewSym_data', '4C')])
-# choreo.run.GUI_in_CLI(['-f', os.path.join('.', 'NewSym_data', '4D')])
-# choreo.run.GUI_in_CLI(['-f', os.path.join('.', 'NewSym_data', '6Dk5')])
-# choreo.run.GUI_in_CLI(['-f', os.path.join('.', 'NewSym_data', 'overconstrained')])
+all_tests = [
+    '3q',
+    '2C3C',
+    '2D1',
+    'test',
+    '4C5k',
+    '4D3k',
+    '4C',
+    '4D',
+    '3',
+    '3D',
+    '3C2k',
+    '3D2k',
+    '3C4k',
+    '3D4k',
+    '3C5k',
+    '3D5k',
+    '3C101k',
+    '3D101k',
+    'test_3D5k',
+    '3C7k2',
+    '3D7k2',
+    '6C',
+    '6D',
+    '6Ck5',
+    '6Dk5',
+]
 
 
-# choreo.run.GUI_in_CLI(['-f', os.path.join('.', 'NewSym_data', '3')])
-# choreo.run.GUI_in_CLI(['-f', os.path.join('.', 'NewSym_data', '3D')])
-# choreo.run.GUI_in_CLI(['-f', os.path.join('.', 'NewSym_data', '3C2k')])
-# choreo.run.GUI_in_CLI(['-f', os.path.join('.', 'NewSym_data', '3D2k')])
-# choreo.run.GUI_in_CLI(['-f', os.path.join('.', 'NewSym_data', '3C4k')])
-# choreo.run.GUI_in_CLI(['-f', os.path.join('.', 'NewSym_data', '3D4k')])
-# choreo.run.GUI_in_CLI(['-f', os.path.join('.', 'NewSym_data', '3C5k')])
-# choreo.run.GUI_in_CLI(['-f', os.path.join('.', 'NewSym_data', '3D5k')])
-# choreo.run.GUI_in_CLI(['-f', os.path.join('.', 'NewSym_data', '3C101k')])
-# choreo.run.GUI_in_CLI(['-f', os.path.join('.', 'NewSym_data', '3D101k')])
-
-choreo.run.GUI_in_CLI(['-f', os.path.join('.', 'NewSym_data', 'test_3D5k')])
 
 
 
-# choreo.run.GUI_in_CLI(['-f', os.path.join('.', 'NewSym_data', '3C7k2')])
-# choreo.run.GUI_in_CLI(['-f', os.path.join('.', 'NewSym_data', '3D7k2')])
+for test in all_tests:
+    print()
+    print("  OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO  ")
+    print()
+    print(test)
+    print()
+    choreo.run.GUI_in_CLI(['-f', os.path.join('.', 'NewSym_data', test)])
+
+
+

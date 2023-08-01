@@ -123,8 +123,6 @@ def Find_Choreo(
 
         print("WARNING : ENTERING DEV GROUNDS. Proceed with caution")
 
-        # ActionSyst = setup_changevar(
-        # ActionSyst = setup_changevar_new_new(
         ActionSyst = setup_changevar_new(
             geodim                                      ,
             nbody                                       ,
@@ -137,7 +135,7 @@ def Find_Choreo(
             CrashOnIdentity = CrashOnError_changevar    ,
         )
 
-        exit()
+        return
 
     
     print(f'Searching periodic solutions of {nbody:d} bodies.')
