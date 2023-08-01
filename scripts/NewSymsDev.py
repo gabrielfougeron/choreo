@@ -25,11 +25,11 @@ import choreo
 # choreo.run.GUI_in_CLI(['-f', os.path.join('.', 'NewSym_data', '3C4k')])
 # choreo.run.GUI_in_CLI(['-f', os.path.join('.', 'NewSym_data', '3D4k')])
 # choreo.run.GUI_in_CLI(['-f', os.path.join('.', 'NewSym_data', '3C5k')])
-choreo.run.GUI_in_CLI(['-f', os.path.join('.', 'NewSym_data', '3D5k')])
+# choreo.run.GUI_in_CLI(['-f', os.path.join('.', 'NewSym_data', '3D5k')])
 # choreo.run.GUI_in_CLI(['-f', os.path.join('.', 'NewSym_data', '3C101k')])
 # choreo.run.GUI_in_CLI(['-f', os.path.join('.', 'NewSym_data', '3D101k')])
 
-# choreo.run.GUI_in_CLI(['-f', os.path.join('.', 'NewSym_data', 'test_3D5k')])
+choreo.run.GUI_in_CLI(['-f', os.path.join('.', 'NewSym_data', 'test_3D5k')])
 
 
 
