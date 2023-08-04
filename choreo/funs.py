@@ -2768,13 +2768,12 @@ def ContainsDoubleEdges(FullGraph):
 
 def ContainsSelfReferingTimeRevSegment(FullGraph, nbody, nint):
 
-    all_paths = networkx.shortest_path(FullGraph)
-
     for iint in range(nint):
+    # for iint in range(1):
         for ib in range(nbody-1):
             segm = (ib, iint)
             
-            path_from_segm_to = all_paths[segm]
+            path_from_segm_to = networkx.shortest_path(FullGraph, source = segm)
 
             for ibp in range(ib+1,nbody):
                 segmp = (ibp, iint)
@@ -2789,16 +2788,11 @@ def ContainsSelfReferingTimeRevSegment(FullGraph, nbody, nint):
                     for ipath in range(1,pathlen):
 
                         if (path[ipath-1] > path[ipath]):
-
                             edge = (path[ipath], path[ipath-1])
-                            Sym = FullGraph.edges[edge]["SymList"][0].Inverse()
-
                         else:
-
                             edge = (path[ipath-1], path[ipath])
-                            Sym = FullGraph.edges[edge]["SymList"][0]
 
-                        TimeRev *= Sym.TimeRev
+                        TimeRev *=  FullGraph.edges[edge]["SymList"][0].TimeRev
 
                     if (TimeRev == -1):
                         
@@ -2872,7 +2866,6 @@ def Build_FullGraph_NoPb(
 ):
     
     if (current_recursion > max_recursion):
-
         raise ValueError("Achieved max recursion level in Build_FullGraph")
 
     # print('')
@@ -2883,7 +2876,7 @@ def Build_FullGraph_NoPb(
 
     if ContainsDoubleEdges(FullGraph):
 
-        FullGraph, nint = Build_FullGraph_NoPb(
+        return Build_FullGraph_NoPb(
             nbody = nbody,
             nint = 2*nint,
             Sym_list = Sym_list,
@@ -2893,14 +2886,13 @@ def Build_FullGraph_NoPb(
 
     if ContainsSelfReferingTimeRevSegment(FullGraph, nbody, nint):
 
-        FullGraph, nint = Build_FullGraph_NoPb(
+        return Build_FullGraph_NoPb(
             nbody = nbody,
             nint = 2*nint,
             Sym_list = Sym_list,
             current_recursion = current_recursion+1,
             max_recursion = max_recursion,
         ) 
-
 
     return FullGraph, nint
 
@@ -2940,8 +2932,6 @@ def AccumulateBodyConstraints(BodyGraph, nbody, geodim):
     BodyConstraints = [[] for ib in range(nbody)]
 
     Cycles = networkx.cycle_basis(BodyGraph)
-
-    # print(BodyGraph)
 
     for Cycle in itertools.chain(BodyGraph.edges, Cycles):
 
@@ -3124,8 +3114,6 @@ def AccumulateSegmGenToTargetSym(FullGraph, nbody, geodim, nloop, nint_min, body
 
                 segm_gen_to_target[ib][iint] = GenToTargetSym
 
-                # assert GenToTargetSym.BodyPerm[loopgen[il]] == ib
-
     return segm_gen_to_target
 
 def FindAllBinarySegments(segm_gen_to_target, nbody, nsegm, nint_min, bodysegm, CrashOnIdentity, mass, BodyLoop):
@@ -3215,7 +3203,6 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
     for Sym in Sym_list:
         All_den_list_on_entry.append(Sym.TimeShift.denominator)
 
-
     nint_min = m.lcm(*All_den_list_on_entry) # ensures that all integer divisions will have zero remainder
 
     FullGraph, nint_min = Build_FullGraph_NoPb(nbody, nint_min, Sym_list)
@@ -3269,8 +3256,6 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
 
         HasContiguousGeneratingSegments[ib] = ((unique_indices.max()+1) == bodynsegm[ib])
 
-
-
     # Accumulate constraints on segments. 
     # So fat I've found zero constraints on segments. Is this because I only test on well-formed symmetries ?
     # TODO : prove that it is actually useless ?
@@ -3313,20 +3298,6 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
 #             isegm += 1
 # 
 #     assert isegm == nsegm
-
-
-    # Choose generating segments as earliest times possible
-#     assigned_segms = set()
-#     for iint in range(nint_min):
-#         for ib in range(nbody):
-# 
-#             isegm = bodysegm[ib,iint]
-# 
-#             if not(isegm in assigned_segms):
-#                 segm_to_body[isegm] = ib
-#                 segm_to_iint[isegm] = iint
-#                 assigned_segms.add(isegm)
-
 
 
     # Choose generating segments as earliest times possible
@@ -3395,6 +3366,8 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
     print('')
     print(f'Identity_detected: {Identity_detected}')
 
+    All_Id = True
+
     count_tot = 0
     count_unique = 0
     for isegm in range(nsegm):
@@ -3406,12 +3379,16 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
 #             print(isegm,isegmp)
 #             print(BinarySegm[(isegm, isegmp)]["SymCount"])
 # 
-#             for Sym in BinarySegm[(isegm, isegmp)]["SymList"]:
-# 
-#                 print()
-#                 print(Sym.SpaceRot)
-#                 print(Sym.TimeRev)
+            for Sym in BinarySegm[(isegm, isegmp)]["SymList"]:
 
+                All_Id = All_Id and Sym.IsIdentityRotAndTimeRev()
+
+                # print()
+                # print(Sym.SpaceRot)
+                # print(Sym.TimeRev)
+
+                # print(np.linalg.norm(Sym.SpaceRot - np.identity(geodim)) < 1e-11)
+                # assert Sym.TimeRev == 1
 
 
 
@@ -3422,9 +3399,10 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
     print(f"unique binary interaction count: {count_unique}")
 
     print(f'Cost per int: {count_unique / nint_min}')
+    print(f'All binary transforms are identity: {All_Id}')
 
     print(f"ratio of total to unique binary interactions : {count_tot / count_unique}")
-    print(f'Ratio of integration intervals to segments: {(nbody * nint_min) / nsegm}')
+    print(f'ratio of integration intervals to segments : {(nbody * nint_min) / nsegm}')
 
     eps = 1e-12
 
@@ -3433,8 +3411,8 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
 
 
 
-    MakePlots = False
-    # MakePlots = True
+    # MakePlots = False
+    MakePlots = True
 
     if MakePlots:
 
