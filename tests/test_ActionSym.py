@@ -52,5 +52,28 @@ def test_Random(float64_tols, Physical_dims, Few_bodies):
             assert Id.IsSame(AInv.Compose(A), atol = float64_tols.atol)
 
             B = choreo.ActionSym.Random(nbody, geodim)
+            BInv = B.Inverse()
 
             assert not(A.IsSame(B, atol = float64_tols.atol))
+
+            AB = A.Compose(B)
+            BA = B.Compose(A)
+
+            n = AB.TimeShift.denominator
+            for i in range(n):
+
+                ti = fractions.Fraction(numerator = i, denominator = n)
+                tb = B.ApplyT(ti)
+                tab = A.ApplyT(tb)
+
+                assert tab == AB.ApplyT(ti)
+            
+            assert AB.Inverse().IsSame(BInv.Compose(AInv), atol = float64_tols.atol)
+            assert BA.Inverse().IsSame(AInv.Compose(BInv), atol = float64_tols.atol)
+
+            C = choreo.ActionSym.Random(nbody, geodim)
+
+            A_BC = A.Compose(B.Compose(C))
+            AB_C = A.Compose(B).Compose(C)
+
+            assert A_BC.IsSame(AB_C, atol = float64_tols.atol)
