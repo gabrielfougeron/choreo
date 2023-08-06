@@ -8,7 +8,7 @@ import time
 
 all_tests = [
     # '3q',
-    # '2C3C',
+    '2C3C',
     # '2D1',
     # 'test',
     # '4C5k',
@@ -16,7 +16,7 @@ all_tests = [
     # '4C',
     # '4D',
     # '3',
-    '3D',
+    # '3D',
     # '3C2k',
     # '3D2k',
     # '3C4k',

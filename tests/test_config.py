@@ -70,6 +70,14 @@ def Few_bodies():
         all_nbodies = [2, 3, 4, 5] ,
     )
 
+
+@pytest.fixture
+def Dense_linalg_dims():
+    return dimension(
+        all_geodims = [2, 10, 20] ,
+    )
+
+
 def ProbabilisticTest(RepeatOnFail = 10):
 
     def decorator(test):
@@ -99,7 +107,6 @@ def ProbabilisticTest(RepeatOnFail = 10):
         return wrapper
     
     return decorator
-
 
 def RepeatTest(n = 10):
 

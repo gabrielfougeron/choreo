@@ -24,6 +24,7 @@ except:
 
 from choreo.scipy_plus import *
 from choreo.funs import *
+from choreo.funs_new import *
 from choreo.helper import *
 
 def Find_Choreo(
@@ -1360,9 +1361,7 @@ def ChoreoFindFromDict_old(params_dict,Workspace_folder):
 
         raise ValueError("Only compatible with 2D right now")
 
-
     Sym_list = Make_ChoreoSymList_From_ActionSymList(Sym_list, nbody)
-
 
     if ((LookForTarget) and not(params_dict['Geom_Target'] ['RandomJitterTarget'])) :
 
