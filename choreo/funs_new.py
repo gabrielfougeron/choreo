@@ -190,6 +190,18 @@ class ActionSym():
         InvPerm = np.empty_like(self.BodyPerm)
         for ib in range(self.BodyPerm.size):
             InvPerm[self.BodyPerm[ib]] = ib
+# 
+#         inv_numerator = - self.TimeRev * self.TimeShift.numerator
+# 
+#         return ActionSym(
+#             BodyPerm = InvPerm,
+#             SpaceRot = self.SpaceRot.T.copy(),
+#             TimeRev = self.TimeRev,         
+#             TimeShift = fractions.Fraction(
+#                 numerator = inv_numerator,
+#                 denominator = self.TimeShift.denominator
+#             )
+#         )
 
         inv_numerator = - self.TimeRev * self.TimeShift.numerator
 
@@ -197,10 +209,7 @@ class ActionSym():
             BodyPerm = InvPerm,
             SpaceRot = self.SpaceRot.T.copy(),
             TimeRev = self.TimeRev,         
-            TimeShift = fractions.Fraction(
-                numerator = inv_numerator,
-                denominator = self.TimeShift.denominator
-            )
+            TimeShift = - self.TimeRev * self.TimeShift
         )
 
     def Compose(B, A):
@@ -209,10 +218,25 @@ class ActionSym():
 
         B.Compose(A) returns the composition B o A, i.e. applies A then B.
         """
+# 
+#         num = A.TimeShift.numerator * B.TimeShift.denominator + A.TimeRev * B.TimeShift.numerator * A.TimeShift.denominator
+#         den = A.TimeShift.denominator * B.TimeShift.denominator
+#     
+#         ComposeBodyPerm = np.empty_like(B.BodyPerm)
+#         for ib in range(B.BodyPerm.size):
+#             ComposeBodyPerm[ib] = B.BodyPerm[A.BodyPerm[ib]]
+# 
+#         return ActionSym(
+#             BodyPerm = ComposeBodyPerm,
+#             SpaceRot = np.matmul(B.SpaceRot,A.SpaceRot),
+#             TimeRev = (B.TimeRev * A.TimeRev),
+#             TimeShift = fractions.Fraction(
+#                 numerator = num     ,
+#                 denominator = den   ,
+#             )
+#         )
 
-        num = A.TimeShift.numerator * B.TimeShift.denominator + A.TimeRev * B.TimeShift.numerator * A.TimeShift.denominator
-        den = A.TimeShift.denominator * B.TimeShift.denominator
-    
+
         ComposeBodyPerm = np.empty_like(B.BodyPerm)
         for ib in range(B.BodyPerm.size):
             ComposeBodyPerm[ib] = B.BodyPerm[A.BodyPerm[ib]]
@@ -221,10 +245,7 @@ class ActionSym():
             BodyPerm = ComposeBodyPerm,
             SpaceRot = np.matmul(B.SpaceRot,A.SpaceRot),
             TimeRev = (B.TimeRev * A.TimeRev),
-            TimeShift = fractions.Fraction(
-                numerator = num     ,
-                denominator = den   ,
-            )
+            TimeShift = B.TimeRev * A.TimeShift + B.TimeShift
         )
 
     def IsIdentity(self, atol = 1e-10):
@@ -289,7 +310,8 @@ class ActionSym():
     def ApplyT(self, Time):
 
         den = self.TimeShift.denominator * Time.denominator
-        num = self.TimeRev * (Time.numerator * self.TimeShift.denominator - Time.denominator * self.TimeShift.numerator)
+        # num = self.TimeRev * (Time.numerator * self.TimeShift.denominator - Time.denominator * self.TimeShift.numerator)
+        num = self.TimeRev * Time.numerator * self.TimeShift.denominator - Time.denominator * self.TimeShift.numerator
         num = ((num % den) + den) % den
 
         return fractions.Fraction(
@@ -1012,20 +1034,6 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
             print(f"ncoeffs_min =  {ncoeffs_min}")
 
 
-# 
-#             for icstr, Sym in enumerate(BodyConstraints[ib]):
-#                 
-#                 print()
-#                 print(icstr)
-#                 print(Sym)
-
-            print('TOTO')
-            print(BodyConstraints[ib][4].Compose(BodyConstraints[ib][3].Inverse()))
-            print(BodyConstraints[ib][2].IsSame(BodyConstraints[ib][4].Compose(BodyConstraints[ib][3].Inverse())))
-
-            print()
-
-
             NullSpace_all = []
 
             for k in range(ncoeffs_min):
@@ -1037,15 +1045,12 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
 
                 for icstr, Sym in enumerate(BodyConstraints[ib]):
 
-                    if icstr in [0,1,2]:
-                        continue
-                    
                     # 
                     # print()
                     # print(icstr)
                     # print(Sym)
 
-                    alpha = - (2 * math.pi * (k * Sym.TimeShift.numerator % Sym.TimeShift.denominator)) / Sym.TimeShift.denominator
+                    alpha = - (2 * math.pi * Sym.TimeRev * (k * Sym.TimeShift.numerator % Sym.TimeShift.denominator)) / Sym.TimeShift.denominator
                     c = math.cos(alpha)
                     s = math.sin(alpha)
                     
@@ -1054,7 +1059,7 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
 
                             cstr_mat[icstr, idim, 0, jdim, 0] =   Sym.SpaceRot[idim, jdim] * c
                             cstr_mat[icstr, idim, 0, jdim, 1] = - Sym.SpaceRot[idim, jdim] * s * Sym.TimeRev
-                            cstr_mat[icstr, idim, 1, jdim, 0] =   Sym.SpaceRot[idim, jdim] * s
+                            cstr_mat[icstr, idim, 1, jdim, 0] =   Sym.SpaceRot[idim, jdim] * s 
                             cstr_mat[icstr, idim, 1, jdim, 1] =   Sym.SpaceRot[idim, jdim] * c * Sym.TimeRev
 
                         cstr_mat[icstr, idim, 0, idim, 0] -= 1
@@ -1112,9 +1117,6 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
             print("nint:",nint)
 
             for icstr, Sym in enumerate(BodyConstraints[ib]):
-
-                # if icstr in [0,1,2]:
-                #     continue
 
                 ConstraintIsRespected = True
 
