@@ -308,16 +308,18 @@ class ActionSym():
         return ((self.Inverse()).Compose(other)).IsIdentityRotAndTime(atol = atol)
 
     def ApplyT(self, Time):
+# 
+#         den = self.TimeShift.denominator * Time.denominator
+#         # num = self.TimeRev * (Time.numerator * self.TimeShift.denominator - Time.denominator * self.TimeShift.numerator)
+#         num = self.TimeRev * Time.numerator * self.TimeShift.denominator - Time.denominator * self.TimeShift.numerator
+#         num = ((num % den) + den) % den
+# 
+#         return fractions.Fraction(
+#             numerator = num,
+#             denominator = den
+#         
 
-        den = self.TimeShift.denominator * Time.denominator
-        # num = self.TimeRev * (Time.numerator * self.TimeShift.denominator - Time.denominator * self.TimeShift.numerator)
-        num = self.TimeRev * Time.numerator * self.TimeShift.denominator - Time.denominator * self.TimeShift.numerator
-        num = ((num % den) + den) % den
-
-        return fractions.Fraction(
-            numerator = num,
-            denominator = den
-        )
+        return  (self.TimeRev * Time - self.TimeShift) % 1
 
 def EdgesAreEitherDirectXORIndirect(FullGraph):
 
@@ -618,6 +620,29 @@ def AccumulateBodyConstraints(BodyGraph, nbody, geodim):
 
     return BodyConstraints
 
+
+
+
+def AccumulateBodyConstraints_2(Sym_list, nbody, geodim):
+
+    BodyConstraints = [[] for ib in range(nbody)]
+
+    for Sym in Sym_list:
+            
+        for ib in range(nbody):
+
+            Cstr = Sym
+
+            while (Cstr.BodyPerm[ib] != ib):
+
+                Cstr = Cstr.Compose(Sym)
+
+            BodyConstraints[ib].append(Cstr)
+
+    return BodyConstraints
+
+
+
 def AccumulateSegmentConstraints(FullGraph, nbody, geodim, nsegm, bodysegm):
     # Accumulate constraints on segments. 
     # TODO : prove that it is actually useless ?
@@ -908,7 +933,8 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
 
 
 
-    BodyConstraints = AccumulateBodyConstraints(BodyGraph, nbody, geodim)
+    # BodyConstraints = AccumulateBodyConstraints(BodyGraph, nbody, geodim)
+    BodyConstraints = AccumulateBodyConstraints_2(Sym_list, nbody, geodim)
 
 #     for ib in range(nbody):
 # 
@@ -921,8 +947,12 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
 #             print()
 #             print("Constraint number ",icstr)
 #             print(Cstr)
-
-
+# 
+# 
+#     for ib in range(nbody):
+#         print(f'ib:{ib}')
+#         for cstr in BodyConstraints[ib]:
+#             print(cstr)
 
 
 
@@ -943,10 +973,6 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
                 break
 
         assert loopgen[il] >= 0
-
-
-    # loopgen[0] = 1
-
 
 
 
@@ -1013,6 +1039,10 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
         nparam_tot = 0
         nparam_before_tot = 0
 
+        All_params_basis = []
+        
+        all_ncoeffs_min = []
+
         for il in range(nloop):
 
             ib = loopgen[il]
@@ -1023,34 +1053,30 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
 
                 all_time_dens.append(Sym.TimeShift.denominator)
 
-            ncoeffs_min = math.lcm(*all_time_dens)
+            ncoeffs_min =  math.lcm(*all_time_dens)
+
+            all_ncoeffs_min.append(ncoeffs_min)
 
             nparam_before_tot += ncoeffs_min * geodim * 2 * loopnb[il]
 
             ncstr = len(BodyConstraints[ib])
 
-            print(f"loop: {il}, loopgen: {ib}")
-            print(f"ncstr =  {ncstr}")
-            print(f"ncoeffs_min =  {ncoeffs_min}")
+            # print()
+            # print(f"loop: {il}, loopgen: {ib}")
+            # print(f"ncstr =  {ncstr}")
+            # print(f"ncoeffs_min =  {ncoeffs_min}")
 
 
             NullSpace_all = []
 
             for k in range(ncoeffs_min):
-
-                print()
-                print(f'k = {k}')
             
                 cstr_mat = np.zeros((ncstr, geodim, 2, geodim, 2), dtype = np.float64)
 
                 for icstr, Sym in enumerate(BodyConstraints[ib]):
 
-                    # 
-                    # print()
-                    # print(icstr)
-                    # print(Sym)
 
-                    alpha = - (2 * math.pi * Sym.TimeRev * (k * Sym.TimeShift.numerator % Sym.TimeShift.denominator)) / Sym.TimeShift.denominator
+                    alpha = - (2 * math.pi * k * Sym.TimeRev * Sym.TimeShift.numerator) / Sym.TimeShift.denominator
                     c = math.cos(alpha)
                     s = math.sin(alpha)
                     
@@ -1061,7 +1087,7 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
                             cstr_mat[icstr, idim, 0, jdim, 1] = - Sym.SpaceRot[idim, jdim] * s * Sym.TimeRev
                             cstr_mat[icstr, idim, 1, jdim, 0] =   Sym.SpaceRot[idim, jdim] * s 
                             cstr_mat[icstr, idim, 1, jdim, 1] =   Sym.SpaceRot[idim, jdim] * c * Sym.TimeRev
-
+                            
                         cstr_mat[icstr, idim, 0, idim, 0] -= 1
                         cstr_mat[icstr, idim, 1, idim, 1] -= 1
 
@@ -1078,43 +1104,45 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
 
                 cstr_mat_reshape = cstr_mat.reshape((ncstr*geodim*2, geodim*2))
 
-                # print(cstr_mat_reshape)
-
                 NullSpace = choreo.scipy_plus.linalg.null_space(cstr_mat_reshape)
 
                 nparam = NullSpace.shape[1]
 
-                print(nparam)
-                print(NullSpace)
-
                 nparam_tot += nparam
                 NullSpace_all.append(NullSpace.reshape(geodim,2,nparam))
 
+            All_params_basis.append(NullSpace_all)
 
 
-            nint = 6 * nint_min
-            assert (nint % 2) == 0
-            ncoeffs = nint//2 + 1
+        nint = math.lcm(2, nint_min)
+        assert (nint % 2) == 0
+        ncoeffs = nint//2 + 1
 
-            all_coeffs = np.zeros((ncoeffs,geodim,2), dtype = np.float64)
-            
+        all_coeffs = np.zeros((nloop,ncoeffs,geodim,2), dtype = np.float64)
+        
+        for il in range(nloop):
             for k in range(ncoeffs):
 
-                kmin = (k % ncoeffs_min)
+                kmin = (k % all_ncoeffs_min[il])
 
-                NullSpace = NullSpace_all[kmin]
+                NullSpace = All_params_basis[il][kmin]
                 nparam = NullSpace.shape[2]
-                
-                all_coeffs[k,:] = np.matmul(NullSpace, np.random.rand(nparam))
 
-            all_coeffs_c = all_coeffs.view(dtype=np.complex128)[...,0]
-            all_pos = scipy.fft.irfft(all_coeffs_c, axis=0)
+                all_coeffs[il,k,:,:] = np.matmul(NullSpace, np.random.rand(nparam))
 
-            assert all_pos.shape[0] == nint
+        all_coeffs_c = all_coeffs.view(dtype=np.complex128)[...,0]
+        all_pos = scipy.fft.irfft(all_coeffs_c, axis=1)
 
-            print()
-            print("ncoeffs:",ncoeffs)
-            print("nint:",nint)
+        assert all_pos.shape[1] == nint
+
+        # print()
+        # print("ncoeffs:",ncoeffs)
+        # print("nint:",nint)
+
+        AllConstraintAreRespected = True
+
+        for il in range(nloop):
+            ib = loopgen[il]
 
             for icstr, Sym in enumerate(BodyConstraints[ib]):
 
@@ -1128,21 +1156,21 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
                     tj = Sym.ApplyT(ti)
                     jint = tj.numerator * nint // tj.denominator
 
-                    err = np.linalg.norm(all_pos[iint,:] - np.matmul(Sym.SpaceRot, all_pos[jint,:]))
+                    err = np.linalg.norm(all_pos[il,iint,:] - np.matmul(Sym.SpaceRot, all_pos[il,jint,:]))
 
                     ConstraintIsRespected = ConstraintIsRespected and (err < eps)
 
-                    # if (err > eps):
-                    #     print(f'icstr : {icstr}')
-                        # print(f'err : {err}')
-
+                AllConstraintAreRespected = AllConstraintAreRespected and ConstraintIsRespected
                 if not(ConstraintIsRespected):
 
                     print(f'Constraint {icstr} is not respected')
+                
+            
+        assert AllConstraintAreRespected
 
 
 
-    print(f"nparam_tot = {nparam_tot}")
+    # print(f"nparam_tot = {nparam_tot}")
     print(f"ratio of parameters before and after constraints: {nparam_before_tot / nparam_tot}")
     # print(NullSpace_all)
 
