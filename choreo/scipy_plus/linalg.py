@@ -38,6 +38,11 @@ def null_space(A, eps = 1e-12):
 
         return Q[:, rank:]
 
+        # return scipy.linalg.null_space(A)
+
+
+
+
 def random_orthogonal_matrix(geodim):
 
     mat = np.random.random_sample((geodim,geodim))

@@ -48,24 +48,27 @@ def test_nullspace(float64_tols, Dense_linalg_dims):
                 assert Z.shape[0] == m
                 assert Z.shape[1] == 0
 
-            rank = np.random.randint(low = 0, high = min(n,m)+1)
-            nullspace_dim = min(n,m) - rank
+            # rank = np.random.randint(low = 0, high = min(n,m)+1)
 
-            Q = choreo.scipy_plus.linalg.random_orthogonal_matrix(m)
+            for rank in range( min(n,m)+1):
 
-            diag = np.random.rand(rank)
-            diagmat = np.zeros((n,m))
+                nullspace_dim = min(n,m) - rank
 
-            for i in range(rank):
-                diagmat[i,i] = 1 + diag[i]
+                Q = choreo.scipy_plus.linalg.random_orthogonal_matrix(m)
 
-            A = np.matmul(P, np.matmul(diagmat, Q))
+                diag = np.random.rand(rank)
+                diagmat = np.zeros((n,m))
 
-            Z = choreo.scipy_plus.linalg.null_space(A)
+                for i in range(rank):
+                    diagmat[i,i] = 2 + diag[i]
 
-            assert Z.shape[0] == m
-            assert Z.shape[1] == nullspace_dim
-            assert np.allclose(np.matmul(A,Z), np.zeros((n,nullspace_dim)), rtol = float64_tols.rtol , atol = float64_tols.atol) 
+                A = np.matmul(P, np.matmul(diagmat, Q))
+
+                Z = choreo.scipy_plus.linalg.null_space(A)
+
+                assert Z.shape[0] == m
+                assert Z.shape[1] == nullspace_dim
+                assert np.allclose(np.matmul(A,Z), np.zeros((n,nullspace_dim)), rtol = float64_tols.rtol , atol = float64_tols.atol) 
 
 
 
