@@ -1576,7 +1576,6 @@ def ChoreoReadDictAndFind_old(Workspace_folder,dict_name="choreo_config.json"):
     else :
 
         os.environ['OMP_NUM_THREADS'] = str(1)
-
         ChoreoFindFromDict_old(params_dict,Workspace_folder)
 
 
