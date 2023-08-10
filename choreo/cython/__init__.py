@@ -1,4 +1,5 @@
 from .funs import *
+from .funs_new import *
 from .funs_serial import *
 
 try:

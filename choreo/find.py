@@ -22,7 +22,7 @@ try:
 except:
     pass
 
-from choreo.scipy_plus import *
+import choreo.scipy_plus
 from choreo.funs import *
 from choreo.funs_new import *
 from choreo.helper import *

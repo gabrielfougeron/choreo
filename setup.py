@@ -22,6 +22,7 @@ else:
 
 cython_extnames = [
     "choreo.cython.funs",
+    "choreo.cython.funs_new",
     "choreo.cython.funs_serial",
     "choreo.scipy_plus.cython.ODE",
 ]
