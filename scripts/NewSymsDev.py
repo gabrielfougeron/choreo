@@ -6,6 +6,10 @@ sys.path.append(__PROJECT_ROOT__)
 import choreo 
 import time
 
+
+import cProfile
+import pstats
+
 all_tests = [
     '3q',
     '2C3C',
@@ -39,22 +43,24 @@ all_tests = [
 ]
 
 
+with cProfile.Profile() as pr:
 
+    for test in all_tests:
+        print()
+        print("  OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO  ")
+        print()
+        print(test)
+        print()
 
+        tbeg = time.perf_counter()
 
-for test in all_tests:
-    print()
-    print("  OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO  ")
-    print()
-    print(test)
-    print()
+        choreo.run.GUI_in_CLI(['-f', os.path.join('.', 'NewSym_data', test)])
+        
+        tend = time.perf_counter()
 
-    tbeg = time.perf_counter()
+        print(f'Elapsed : {tend-tbeg}')
 
-    choreo.run.GUI_in_CLI(['-f', os.path.join('.', 'NewSym_data', test)])
-    
-    tend = time.perf_counter()
-
-    print(f'Elapsed : {tend-tbeg}')
-
-
+    stats = pstats.Stats(pr)
+    stats.sort_stats(pstats.SortKey.TIME)
+    # stats.print_stats()
+    stats.dump_stats(filename='prof.prof')
