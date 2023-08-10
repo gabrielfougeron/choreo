@@ -315,36 +315,32 @@ def ContainsDoubleEdges(FullGraph):
 
 def ContainsSelfReferingTimeRevSegment(FullGraph, nbody, nint):
 
-    for iint in range(nint):
-    # for iint in range(1):
-        for ib in range(nbody-1):
-            segm = (ib, iint)
-            
-            path_from_segm_to = networkx.shortest_path(FullGraph, source = segm)
+    CCs = networkx.connected_components(FullGraph)
 
-            for ibp in range(ib+1,nbody):
-                segmp = (ibp, iint)
+    for CC in CCs:
 
-                path = path_from_segm_to.get(segmp)
+        for segm, segmp in itertools.combinations(CC,2):
 
-                if not(path is None):
+            if (segm[1] == segmp[1]):
+
+                path = networkx.shortest_path(FullGraph, source = segm, target = segmp)
+
+                TimeRev = 1
+                pathlen = len(path)
+
+                for ipath in range(1,pathlen):
+
+                    if (path[ipath-1] > path[ipath]):
+                        edge = (path[ipath], path[ipath-1])
+                    else:
+                        edge = (path[ipath-1], path[ipath])
+
+                    TimeRev *=  FullGraph.edges[edge]["SymList"][0].TimeRev
+
+                if (TimeRev == -1):
                     
-                    TimeRev = 1
-                    pathlen = len(path)
-
-                    for ipath in range(1,pathlen):
-
-                        if (path[ipath-1] > path[ipath]):
-                            edge = (path[ipath], path[ipath-1])
-                        else:
-                            edge = (path[ipath-1], path[ipath])
-
-                        TimeRev *=  FullGraph.edges[edge]["SymList"][0].TimeRev
-
-                    if (TimeRev == -1):
-                        
-                        return True
-                    
+                    return True
+                
     return False
 
 def Build_FullGraph(nbody, nint, Sym_list):
@@ -644,46 +640,43 @@ def AccumulateSegmentConstraints(FullGraph, nbody, geodim, nsegm, bodysegm):
 
     return SegmConstraints
 
-def AccumulateSegmGenToTargetSym(FullGraph, nbody, geodim, nloop, nint_min, bodysegm, loopnb, Targets, segm_to_iint, segm_to_body):
+def AccumulateSegmGenToTargetSym(FullGraph, nbody, geodim, nloop, nint_min, nsegm, bodysegm, segmbody, loopnb, Targets, segm_to_iint, segm_to_body):
 
     segm_gen_to_target = [ [ None for iint in range(nint_min)] for ib in range(nbody) ]
 
-    for il in range(nloop):
+    for isegm, ib_iint_list  in enumerate(segmbody):
 
-        for ilb in range(loopnb[il]):
-        
-            ib = Targets[il,ilb]    
+        segmgen = (segm_to_body[isegm], segm_to_iint[isegm])
+        isegmgen = bodysegm[*segmgen] 
 
-            for iint in range(nint_min):
-                
-                segm = (ib, iint)
-                isegm = bodysegm[*segm] 
+        path_from_segmgen = networkx.shortest_path(FullGraph, source = segmgen)
 
-                segmgen = (segm_to_body[isegm], segm_to_iint[isegm])
-                isegmgen = bodysegm[*segmgen] 
+        for ib, iint in ib_iint_list:
 
-                assert isegm == isegmgen
+            segm = (ib, iint)
 
-                GenToTargetSym = ActionSym.Identity(nbody, geodim)
+            assert isegm == isegmgen
 
-                path = networkx.shortest_path(FullGraph, source = segmgen , target = segm)
-                pathlen = len(path)
+            GenToTargetSym = ActionSym.Identity(nbody, geodim)
 
-                for ipath in range(1,pathlen):
+            path = path_from_segmgen[segm]
+            pathlen = len(path)
 
-                    if (path[ipath-1] > path[ipath]):
+            for ipath in range(1,pathlen):
 
-                        edge = (path[ipath], path[ipath-1])
-                        Sym = FullGraph.edges[edge]["SymList"][0].Inverse()
+                if (path[ipath-1] > path[ipath]):
 
-                    else:
+                    edge = (path[ipath], path[ipath-1])
+                    Sym = FullGraph.edges[edge]["SymList"][0].Inverse()
 
-                        edge = (path[ipath-1], path[ipath])
-                        Sym = FullGraph.edges[edge]["SymList"][0]
+                else:
 
-                    GenToTargetSym = Sym.Compose(GenToTargetSym)
+                    edge = (path[ipath-1], path[ipath])
+                    Sym = FullGraph.edges[edge]["SymList"][0]
 
-                segm_gen_to_target[ib][iint] = GenToTargetSym
+                GenToTargetSym = Sym.Compose(GenToTargetSym)
+
+            segm_gen_to_target[ib][iint] = GenToTargetSym
 
     return segm_gen_to_target
 
@@ -988,6 +981,15 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
                 assigned_segms.add(isegm)
 
 
+    segmbody = [[] for isegm in range(nsegm)]
+
+    for iint in range(nint_min):
+        for ib in range(nbody):
+
+            isegm = bodysegm[ib,iint]
+
+            segmbody[isegm].append((ib,iint))
+
 
 
     BodyConstraints = AccumulateBodyConstraints(Sym_list, nbody, geodim)
@@ -1007,7 +1009,8 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
     # exit()
 
 
-    segm_gen_to_target =  AccumulateSegmGenToTargetSym(FullGraph, nbody, geodim, nloop, nint_min, bodysegm, loopnb, Targets, segm_to_iint, segm_to_body)
+
+    segm_gen_to_target =  AccumulateSegmGenToTargetSym(FullGraph, nbody, geodim, nloop, nint_min, nsegm, bodysegm, segmbody, loopnb, Targets, segm_to_iint, segm_to_body)
 
     BinarySegm, Identity_detected = FindAllBinarySegments(segm_gen_to_target, nbody, nsegm, nint_min, bodysegm, CrashOnIdentity, mass, BodyLoop)
 
@@ -1073,7 +1076,6 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
     # print()
 
 
-    # All_params_basis = ComputeParamBasis(MomCons, nbody, geodim, nloop, loopnb, loopgen, BodyConstraints)
     All_params_basis = ComputeParamBasis_Body(MomCons, nbody, geodim, BodyConstraints)
 
 
@@ -1148,10 +1150,7 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
 
                 print(f'Constraint {icstr} is not respected')
             
-
-    
     assert AllConstraintAreRespected
-
 
     nparam_body = np.zeros((nbody),dtype=int)
     ncoeff_min_body = np.zeros((nbody),dtype=int)
