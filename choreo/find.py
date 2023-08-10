@@ -351,7 +351,7 @@ def Find_Choreo(
             callback_after_init_list[i]()
 
         f0 = ActionSyst.Compute_action_onlygrad(x0)
-        best_sol = current_best(x0,f0)
+        best_sol = choreo.scipy_plus.nonlin.current_best(x0,f0)
 
         GoOn = (best_sol.f_norm < max_norm_on_entry)
         
@@ -420,7 +420,7 @@ def Find_Choreo(
 
             try : 
                 
-                opt_result , info = nonlin_solve_pp(F=F,x0=x0,jacobian=jacobian,verbose=disp_scipy_opt,maxiter=maxiter,f_tol=gradtol,line_search=line_search,callback=optim_callback,raise_exception=False,smin=linesearch_smin,full_output=True,tol_norm=np.linalg.norm)
+                opt_result , info = choreo.scipy_plus.nonlin.nonlin_solve_pp(F=F,x0=x0,jacobian=jacobian,verbose=disp_scipy_opt,maxiter=maxiter,f_tol=gradtol,line_search=line_search,callback=optim_callback,raise_exception=False,smin=linesearch_smin,full_output=True,tol_norm=np.linalg.norm)
 
                 AskedForNext = (info['status'] == 0)
 
@@ -618,7 +618,7 @@ def Find_Choreo(
                     
                     print('Resizing.')
                     
-                    best_sol = current_best(x_fine,f_fine)
+                    best_sol = choreo.scipy_plus.nonlin.current_best(x_fine,f_fine)
                     ActionSyst.current_cvg_lvl += 1
                     
                     ncoeff = ActionSyst.ncoeff
