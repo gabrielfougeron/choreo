@@ -73,7 +73,7 @@ from choreo.cython.funs import Compute_Derivative_Cython_nosym,InplaceSmoothCoef
 from choreo.cython.funs import RotateFastWithSlow_2D
 from choreo.cython.funs import PopulateRandomInit
 
-# from choreo.scipy_plus import *
+import choreo.scipy_plus
 
 
 
@@ -1019,7 +1019,7 @@ class ChoreoAction():
         if (Use_exact_Jacobian):
 
             FGrad = lambda x,dx : self.Compute_action_hess_mul(x,dx)
-            jacobian = ExactKrylovJacobian(exactgrad=FGrad,**jac_options_kw)
+            jacobian = choreo.scipy_plus.nonlin.ExactKrylovJacobian(exactgrad=FGrad,**jac_options_kw)
             jacobian.ActionSyst = self
 
             def update(self, x, f):
@@ -2414,7 +2414,7 @@ class ChoreoSym():
         return ChoreoSym(
             LoopTarget = self.LoopSource,
             LoopSource = self.LoopTarget,
-            SpaceRot = self.SpaceRot.transpose(),
+            SpaceRot = self.SpaceRot.T,
             TimeRev = self.TimeRev,         
             TimeShift = fractions.Fraction(
                 numerator = num,

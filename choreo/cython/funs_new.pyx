@@ -79,7 +79,7 @@ cdef class ActionSym():
         return out
     
     @staticmethod
-    def Identity(nbody, geodim):
+    def Identity(long nbody, long geodim):
         """Identity: Returns the identity transformation
 
         :param nbody: Number of bodies
@@ -99,7 +99,7 @@ cdef class ActionSym():
         )
 
     @staticmethod
-    def Random(nbody, geodim, maxden = None):
+    def Random(long nbody, long geodim, long maxden = -1):
         """Random Returns a random transformation
 
         :param nbody: Number of bodies
@@ -112,7 +112,7 @@ cdef class ActionSym():
         :rtype: ActionSym
         """        
 
-        if maxden is None:
+        if maxden < 0:
             maxden = 10*nbody
 
         perm = np.random.permutation(nbody)
