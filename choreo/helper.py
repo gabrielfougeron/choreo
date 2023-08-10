@@ -269,7 +269,7 @@ def Make_ChoreoSymList_From_ActionSymList(ActionSymList, nbody):
                     LoopSource = ib,
                     SpaceRot = ASym.SpaceRot,
                     TimeRev = ASym.TimeRev,
-                    TimeShift = ASym.TimeShift,
+                    TimeShift = fractions.Fraction(numerator = ASym.TimeShiftNum, denominator = ASym.TimeShiftDen)
                 )
             )
 
