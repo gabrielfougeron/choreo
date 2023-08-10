@@ -9,7 +9,6 @@ from test_config import *
 
 import numpy as np
 import scipy
-import fractions
 import choreo
 
 def test_Identity(float64_tols, Physical_dims, Few_bodies):
@@ -21,7 +20,7 @@ def test_Identity(float64_tols, Physical_dims, Few_bodies):
 
             print(f"geodim = {geodim}, nbody = {nbody}")
 
-            Id = choreo.ActionSym.Identity(nbody, geodim)
+            Id = choreo.cython.ActionSym.Identity(nbody, geodim)
 
             assert Id.IsIdentity(atol = float64_tols.atol)
 
@@ -43,15 +42,15 @@ def test_Random(float64_tols, Physical_dims, Few_bodies):
 
             print(f"geodim = {geodim}, nbody = {nbody}")
 
-            Id = choreo.ActionSym.Identity(nbody, geodim)
+            Id = choreo.cython.ActionSym.Identity(nbody, geodim)
 
-            A = choreo.ActionSym.Random(nbody, geodim)
+            A = choreo.cython.ActionSym.Random(nbody, geodim)
             AInv = A.Inverse()
 
             assert Id.IsSame(A.Compose(AInv), atol = float64_tols.atol)
             assert Id.IsSame(AInv.Compose(A), atol = float64_tols.atol)
 
-            B = choreo.ActionSym.Random(nbody, geodim)
+            B = choreo.cython.ActionSym.Random(nbody, geodim)
             BInv = B.Inverse()
 
             assert not(A.IsSame(B, atol = float64_tols.atol))
@@ -59,19 +58,18 @@ def test_Random(float64_tols, Physical_dims, Few_bodies):
             AB = A.Compose(B)
             BA = B.Compose(A)
 
-            n = AB.TimeShift.denominator
+            n = AB.TimeShiftDen
             for i in range(n):
 
-                ti = fractions.Fraction(numerator = i, denominator = n)
-                tb = B.ApplyT(ti)
-                tab = A.ApplyT(tb)
+                tb = B.ApplyT(i, n)
+                tab = A.ApplyT(*tb)
 
-                assert tab == AB.ApplyT(ti)
+                assert tab == AB.ApplyT(i, n)
             
             assert AB.Inverse().IsSame(BInv.Compose(AInv), atol = float64_tols.atol)
             assert BA.Inverse().IsSame(AInv.Compose(BInv), atol = float64_tols.atol)
 
-            C = choreo.ActionSym.Random(nbody, geodim)
+            C = choreo.cython.ActionSym.Random(nbody, geodim)
 
             A_BC = A.Compose(B.Compose(C))
             AB_C = A.Compose(B).Compose(C)

@@ -73,7 +73,7 @@ from choreo.cython.funs import Compute_Derivative_Cython_nosym,InplaceSmoothCoef
 from choreo.cython.funs import RotateFastWithSlow_2D
 from choreo.cython.funs import PopulateRandomInit
 
-from choreo.scipy_plus import *
+# from choreo.scipy_plus import *
 
 
 
