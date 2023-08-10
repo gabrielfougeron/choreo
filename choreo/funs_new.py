@@ -23,6 +23,8 @@ from matplotlib import colormaps
 
 import choreo.scipy_plus
 
+from choreo.cython.funs_new import ActionSym
+
 # from matplotlib.colors import cnames
 # from matplotlib.collections import LineCollection
 # from matplotlib import animation
@@ -363,11 +365,14 @@ def Build_FullGraph(nbody, nint, Sym_list):
                 else:
                     tnum = ((iint+1)%nint)
 
-                TimeTarget = Sym.ApplyT(tnmu, nint)
+                tnum_target, tden_target = Sym.ApplyT(tnum, nint)
 
-                assert nint % TimeTarget.denominator == 0
+                # print(tnum,nint)
+                # print(tnum_target, tden_target)
 
-                iint_target = (TimeTarget.numerator * (nint // TimeTarget.denominator) + nint) % nint
+                assert nint % tden_target == 0
+
+                iint_target = (tnum_target * (nint // tden_target) + nint) % nint
 
                 # node_source = (ib       , iint       )
                 # node_target = (ib_target, iint_target)
@@ -1134,8 +1139,8 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
 
                 assert (nint % Sym.TimeShiftDen) == 0
 
-                tj = Sym.ApplyT(iint, nint)
-                jint = tj.numerator * nint // tj.denominator
+                tnum, tden = Sym.ApplyT(iint, nint)
+                jint = tnum * nint // tden
 
                 err = np.linalg.norm(all_pos[ib,iint,:] - np.matmul(Sym.SpaceRot, all_pos[ib,jint,:]))
 

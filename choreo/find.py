@@ -27,6 +27,8 @@ from choreo.funs import *
 from choreo.funs_new import *
 from choreo.helper import *
 
+from choreo.cython.funs_new import ActionSym
+
 def Find_Choreo(
     geodim,
     TwoDBackend,
@@ -1052,17 +1054,16 @@ def ChoreoFindFromDict(params_dict,Workspace_folder):
             else:
                 raise ValueError("TimeRev must be True or False")
 
-            TimeShift = fractions.Fraction(
-                numerator = params_dict["Geom_Bodies"]["AllSyms"][isym]["TimeShiftNum"],
-                denominator = params_dict["Geom_Bodies"]["AllSyms"][isym]["TimeShiftDen"]
-            )
+            TimeShiftNum = int(params_dict["Geom_Bodies"]["AllSyms"][isym]["TimeShiftNum"])
+            TimeShiftDen = int(params_dict["Geom_Bodies"]["AllSyms"][isym]["TimeShiftDen"])
 
             Sym_list.append(
                 ActionSym(
                     BodyPerm = BodyPerm     ,
                     SpaceRot = SpaceRot     ,
                     TimeRev = TimeRev       ,
-                    TimeShift = TimeShift   ,
+                    TimeShiftNum = TimeShiftNum   ,
+                    TimeShiftDen = TimeShiftDen   ,
                 )
             )
 
@@ -1343,17 +1344,16 @@ def ChoreoFindFromDict_old(params_dict,Workspace_folder):
             else:
                 raise ValueError("TimeRev must be True or False")
 
-            TimeShift = fractions.Fraction(
-                numerator = params_dict["Geom_Bodies"]["AllSyms"][isym]["TimeShiftNum"],
-                denominator = params_dict["Geom_Bodies"]["AllSyms"][isym]["TimeShiftDen"]
-            )
+            TimeShiftNum = int(params_dict["Geom_Bodies"]["AllSyms"][isym]["TimeShiftNum"])
+            TimeShiftDen = int(params_dict["Geom_Bodies"]["AllSyms"][isym]["TimeShiftDen"])
 
             Sym_list.append(
                 ActionSym(
                     BodyPerm = BodyPerm     ,
                     SpaceRot = SpaceRot     ,
                     TimeRev = TimeRev       ,
-                    TimeShift = TimeShift   ,
+                    TimeShiftNum = TimeShiftNum   ,
+                    TimeShiftDen = TimeShiftDen   ,
                 )
             )
 

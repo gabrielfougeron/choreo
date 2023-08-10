@@ -62,18 +62,18 @@ def main():
         print(f'Elapsed : {tend-tbeg}')
 # 
 
-if __name__ == "__main__":
-    main()
+# if __name__ == "__main__":
+#     main()
 
-# 
-# 
-#     if __name__ == "__main__":
-# 
-#         with cProfile.Profile() as pr:
-# 
-#             main()
-#             
-#             stats = pstats.Stats(pr)
-#             stats.sort_stats(pstats.SortKey.TIME)
-#             # stats.print_stats()
-#             stats.dump_stats(filename='prof.prof')
+
+
+if __name__ == "__main__":
+
+    with cProfile.Profile() as pr:
+
+        main()
+        
+        stats = pstats.Stats(pr)
+        stats.sort_stats(pstats.SortKey.TIME)
+        # stats.print_stats()
+        stats.dump_stats(filename='prof.prof')

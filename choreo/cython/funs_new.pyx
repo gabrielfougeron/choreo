@@ -1,10 +1,24 @@
 import numpy as np
 cimport numpy as np
 np.import_array()
+cimport cython
+
+from libc.math cimport fabs as cfabs
  
 import choreo.scipy_plus.linalg
 
-class ActionSym():
+@cython.cdivision(True)
+cdef inline long gcd (long a, long b) nogil:
+
+    cdef long c
+    while ( a != 0 ):
+        c = a
+        a = b % a
+        b = c
+
+    return b
+
+cdef class ActionSym():
     r"""
     This class defines the symmetries of the action
     Useful to detect loops and constraints.
@@ -20,21 +34,33 @@ class ActionSym():
     cf Palais' principle of symmetric criticality
     """
 
+    cdef public long[::1] BodyPerm
+    cdef public double[:,::1] SpaceRot
+    cdef public long TimeRev
+    cdef public long TimeShiftNum
+    cdef public long TimeShiftDen
+
+    @cython.cdivision(True)
     def __init__(
         self,
-        BodyPerm ,
-        SpaceRot ,
-        TimeRev  ,
-        TimeShiftNum,
-        TimeShiftDen,
+        long[::1] BodyPerm,
+        double[:,::1] SpaceRot,
+        long TimeRev,
+        long TimeShiftNum,
+        long TimeShiftDen,
     ):
 
-        num = ((TimeShiftNum % TimeShiftDen) + TimeShiftDen) % TimeShiftDen
+        cdef long num = ((TimeShiftNum % TimeShiftDen) + TimeShiftDen) % TimeShiftDen
+        cdef long den
 
         if (num == 0):
             den = 1
         else:
             den = TimeShiftDen
+
+        cdef long g = gcd(num,den)
+        num = num // g
+        den = den // g
 
         self.BodyPerm = BodyPerm
         self.SpaceRot = SpaceRot
@@ -91,7 +117,7 @@ class ActionSym():
 
         perm = np.random.permutation(nbody)
 
-        rotmat = choreo.scipy_plus.linalg.random_orthogonal_matrix(geodim)
+        rotmat = np.ascontiguousarray(choreo.scipy_plus.linalg.random_orthogonal_matrix(geodim))
 
         timerev = 1 if np.random.random_sample() < 0.5 else -1
 
@@ -106,13 +132,14 @@ class ActionSym():
             TimeShiftDen = den,
         )
 
-    def Inverse(self):
+    cpdef ActionSym Inverse(ActionSym self):
         r"""
         Returns the inverse of a symmetry transformation
         """
 
-        InvPerm = np.empty_like(self.BodyPerm)
-        for ib in range(self.BodyPerm.size):
+        cdef long[::1] InvPerm = np.zeros(self.BodyPerm.shape[0], dtype = np.intp)
+        cdef long ib
+        for ib in range(self.BodyPerm.shape[0]):
             InvPerm[self.BodyPerm[ib]] = ib
 
         return ActionSym(
@@ -123,26 +150,31 @@ class ActionSym():
             TimeShiftDen = self.TimeShiftDen
         )
 
-    def Compose(B, A):
+    cpdef ActionSym Compose(ActionSym B, ActionSym A):
         r"""
         Returns the composition of two transformations.
 
         B.Compose(A) returns the composition B o A, i.e. applies A then B.
         """
 
-        ComposeBodyPerm = np.empty_like(B.BodyPerm)
-        for ib in range(B.BodyPerm.size):
+        cdef long[::1] ComposeBodyPerm = np.zeros(B.BodyPerm.shape[0], dtype = np.intp)
+        cdef long ib
+        for ib in range(B.BodyPerm.shape[0]):
             ComposeBodyPerm[ib] = B.BodyPerm[A.BodyPerm[ib]]
+
+        cdef long trev = B.TimeRev * A.TimeRev
+        cdef long num = A.TimeRev * B.TimeShiftNum * A.TimeShiftDen + A.TimeShiftNum * B.TimeShiftDen
+        cdef long den = A.TimeShiftDen * B.TimeShiftDen
 
         return ActionSym(
             BodyPerm = ComposeBodyPerm,
             SpaceRot = np.matmul(B.SpaceRot,A.SpaceRot),
-            TimeRev = (B.TimeRev * A.TimeRev),
-            TimeShiftNum = A.TimeRev * B.TimeShiftNum * A.TimeShiftDen + A.TimeShiftNum * B.TimeShiftDen,
-            TimeShiftDen = A.TimeShiftDen * B.TimeShiftDen
+            TimeRev = trev,
+            TimeShiftNum = num,
+            TimeShiftDen = den
         )
 
-    def IsIdentity(self, atol = 1e-10):
+    cpdef bint IsIdentity(ActionSym self, double atol = 1e-10):
         r"""
         Returns True if the transformation is close to identity.
         """       
@@ -154,57 +186,79 @@ class ActionSym():
             self.IsIdentityTimeShift()
         )
 
-    def IsIdentityPerm(self):
-        return np.array_equal(self.BodyPerm, np.array(range(self.BodyPerm.size), dtype = np.int_))
-    
-    def IsIdentityRot(self, atol = 1e-10):
-        return np.allclose(
-            self.SpaceRot,
-            np.identity(self.SpaceRot.shape[0], dtype = np.float64),
-            rtol = 0.,
-            atol = atol
-        )    
+    cpdef bint IsIdentityPerm(ActionSym self):
 
-    def IsIdentityTimeRev(self):
+        cdef bint isid = True
+        cdef long ib
+        cdef long nbody = self.BodyPerm.shape[0]
+
+        for ib in range(nbody):
+            isid = isid and (self.BodyPerm[ib] == ib)
+
+        return isid
+    
+    cpdef bint IsIdentityRot(ActionSym self, double atol = 1e-10):
+
+        cdef bint isid = True
+        cdef long idim, jdim
+        cdef long geodim = self.SpaceRot.shape[0]
+
+        for idim in range(geodim):
+            isid = isid and (cfabs(self.SpaceRot[idim, idim] - 1.) < atol)
+
+        for idim in range(geodim-1):
+            for jdim in range(idim+1,geodim):
+
+                isid = isid and (cfabs(self.SpaceRot[idim, jdim]) < atol)
+                isid = isid and (cfabs(self.SpaceRot[jdim, idim]) < atol)
+
+        return isid
+
+    cpdef bint IsIdentityTimeRev(ActionSym self):
         return (self.TimeRev == 1)
     
-    def IsIdentityTimeShift(self):
+    cpdef bint IsIdentityTimeShift(ActionSym self):
         return (self.TimeShiftNum == 0)
     
-    def IsIdentityRotAndTimeRev(self, atol = 1e-10):
+    cpdef bint IsIdentityRotAndTimeRev(ActionSym self, double atol = 1e-10):
         return self.IsIdentityTimeRev() and self.IsIdentityRot(atol = atol)    
     
-    def IsIdentityRotAndTime(self, atol = 1e-10):
+    cpdef bint IsIdentityRotAndTime(ActionSym self, double atol = 1e-10):
         return self.IsIdentityTimeRev() and self.IsIdentityRot(atol = atol) and self.IsIdentityTimeShift()
 
-    def IsSame(self, other, atol = 1e-10):
+    cpdef bint IsSame(ActionSym self, other, double atol = 1e-10):
         r"""
         Returns True if the two transformations are almost identical.
         """   
         return ((self.Inverse()).Compose(other)).IsIdentity(atol = atol)
     
-    def IsSamePerm(self, other):
+    cpdef bint IsSamePerm(ActionSym self, other):
         return ((self.Inverse()).Compose(other)).IsIdentityPerm()    
     
-    def IsSameRot(self, other, atol = 1e-10):
-        return ().IsIdentityRot(atol = atol)    
+    cpdef bint IsSameRot(ActionSym self, other, double atol = 1e-10):
+        return ((self.Inverse()).Compose(other)).IsIdentityRot(atol = atol)    
     
-    def IsSameTimeRev(self, other):
+    cpdef bint IsSameTimeRev(ActionSym self, ActionSym other):
         return ((self.Inverse()).Compose(other)).IsIdentityTimeRev()    
     
-    def IsSameTimeShift(self, other, atol = 1e-10):
+    cpdef bint IsSameTimeShift(ActionSym self, ActionSym other, double atol = 1e-10):
         return ((self.Inverse()).Compose(other)).IsIdentityTimeShift()
 
-    def IsSameRotAndTimeRev(self, other, atol = 1e-10):
+    cpdef bint IsSameRotAndTimeRev(ActionSym self, ActionSym other, double atol = 1e-10):
         return ((self.Inverse()).Compose(other)).IsIdentityRotAndTimeRev(atol = atol)
     
-    def IsSameRotAndTime(self, other, atol = 1e-10):
+    cpdef bint IsSameRotAndTime(ActionSym self, ActionSym other, double atol = 1e-10):
         return ((self.Inverse()).Compose(other)).IsIdentityRotAndTime(atol = atol)
 
-    def ApplyT(self, tnum, tden):
+    @cython.cdivision(True)
+    cpdef (long, long)ApplyT(ActionSym self, long tnum, long tden):
 
-        num = self.TimeRev * (tnum * self.TimeShiftDen - self.TimeShiftNum * tden)
-        den = tden * self.TimeShiftDen
+        cdef long num = self.TimeRev * (tnum * self.TimeShiftDen - self.TimeShiftNum * tden)
+        cdef long den = tden * self.TimeShiftDen
         num = ((num % den) + den) % den
+
+        cdef long g = gcd(num,den)
+        num = num // g
+        den = den // g
 
         return  num, den
