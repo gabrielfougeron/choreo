@@ -10,40 +10,41 @@ import time
 import cProfile
 import pstats
 
-all_tests = [
-    '3q',
-    '2C3C',
-    '2C3C5k',
-    '2D3D',
-    '2D3D5k',
-    '2D1',
-    'test',
-    '4C5k',
-    '4D3k',
-    '4C',
-    '4D',
-    '3',
-    '3D',
-    '3C2k',
-    '3D2k',
-    '3C4k',
-    '3D4k',
-    '3C5k',
-    '3D5k',
-    '3C101k',
-    '3D101k',
-    'test_3D5k',
-    '3C7k2',
-    '3D7k2',
-    '6C',
-    '6D',
-    '6Ck5',
-    '6Dk5',
-    '5Dq',
-]
+def main():
+        
+    all_tests = [
+        '3q',
+        '2C3C',
+        '2C3C5k',
+        '2D3D',
+        '2D3D5k',
+        '2D1',
+        'test',
+        '4C5k',
+        '4D3k',
+        '4C',
+        '4D',
+        '3',
+        '3D',
+        '3C2k',
+        '3D2k',
+        '3C4k',
+        '3D4k',
+        '3C5k',
+        '3D5k',
+        '3C101k',
+        '3D101k',
+        'test_3D5k',
+        '3C7k2',
+        '3D7k2',
+        '6C',
+        '6D',
+        '6Ck5',
+        '6Dk5',
+        '5Dq',
+        '2C3C5C',
+    ]
 
-
-with cProfile.Profile() as pr:
 
     for test in all_tests:
         print()
@@ -59,8 +60,20 @@ with cProfile.Profile() as pr:
         tend = time.perf_counter()
 
         print(f'Elapsed : {tend-tbeg}')
+# 
 
-    stats = pstats.Stats(pr)
-    stats.sort_stats(pstats.SortKey.TIME)
-    # stats.print_stats()
-    stats.dump_stats(filename='prof.prof')
+if __name__ == "__main__":
+    main()
+
+# 
+# 
+#     if __name__ == "__main__":
+# 
+#         with cProfile.Profile() as pr:
+# 
+#             main()
+#             
+#             stats = pstats.Stats(pr)
+#             stats.sort_stats(pstats.SortKey.TIME)
+#             # stats.print_stats()
+#             stats.dump_stats(filename='prof.prof')
