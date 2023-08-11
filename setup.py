@@ -31,6 +31,7 @@ cython_safemath_needed = [
     False,
     False,
     False,
+    False,
 ]
 
 if platform.system() == "Windows":
