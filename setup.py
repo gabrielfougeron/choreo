@@ -138,7 +138,7 @@ ext_modules = [
     extra_link_args = extra_link_args,
     define_macros  = define_macros ,
     )
-    for (name,source,safemath_needed) in zip(cython_extnames,cython_filenames,cython_safemath_needed)
+    for (name,source,safemath_needed) in zip(cython_extnames,cython_filenames,cython_safemath_needed, strict = True)
 ]
 
 if use_Cython:
