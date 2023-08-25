@@ -1,23 +1,30 @@
+"""
+Convergence analysis of integration methods on segment
+======================================================
+"""
+
+# %%
 import os
-
-os.environ['OPENBLAS_NUM_THREADS'] = '1'
-
-# import concurrent.futures
-# import multiprocessing
-import shutil
-import random
-import time
-import math as m
-import numpy as np
-import scipy.linalg
 import sys
-import fractions
-import functools
 
-__PROJECT_ROOT__ = os.path.abspath(os.path.join(os.path.dirname(__file__),os.pardir))
+try:
+    __PROJECT_ROOT__ = os.path.abspath(os.path.join(os.path.dirname(__file__),os.pardir,os.pardir))
+
+    if ':' in __PROJECT_ROOT__:
+        __PROJECT_ROOT__ = os.getcwd()
+
+except (NameError, ValueError): 
+
+    __PROJECT_ROOT__ = os.path.abspath(os.path.join(os.getcwd(),os.pardir,os.pardir))
+
 sys.path.append(__PROJECT_ROOT__)
 
-import choreo 
+import matplotlib.pyplot as plt
+import numpy as np
+import scipy
+import math as m
+
+import choreo
 
 import datetime
 
@@ -77,20 +84,18 @@ for the_test in test_names:
             print('')
             print(f'Method : {method}     nsteps : {nsteps}')
 
-            w, x = choreo.scipy_plus.ODE.ComputeQuadrature_np(method,nsteps)
+            quad = choreo.scipy_plus.SegmQuad.ComputeQuadrature(method, nsteps)
 
             for iref in range(len(refinement_lvl)):
 
                 nint = refinement_lvl[iref]
 
-                approx = choreo.scipy_plus.ODE.IntegrateOnSegment(
+                approx = choreo.scipy_plus.SegmQuad.IntegrateOnSegment(
                     fun = fun,
                     ndim = test_ndim,
                     x_span = x_span,
                     nint = nint,
-                    w = w,
-                    x = x,
-                    nsteps = nsteps,
+                    quad = quad
                 )
 
                 error = np.linalg.norm(approx-exact)/np.linalg.norm(exact)
@@ -98,7 +103,6 @@ for the_test in test_names:
                 if (iref > 0):
                     error_mul = max(error/error_prev,1e-16)
                     est_order = -m.log(error_mul)/m.log(refinement_lvl[iref]/refinement_lvl[iref-1])
-
                     print(f'error : {error:e}     error mul : {error_mul:e}     estimated order : {est_order:.2f}')
 
                 error_prev = error
