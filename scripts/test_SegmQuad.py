@@ -20,9 +20,52 @@ timings_folder = os.path.join(__PROJECT_ROOT__,'build')
 basename = 'SegmQuad_bench'
 timings_filename = os.path.join(timings_folder,basename+'.npy')
 
+
+
+ndim = 10
+x_span = (0., 1.)
+method = 'Gauss'
+nsteps = 10
+quad = choreo.scipy_plus.SegmQuad.ComputeQuadrature(method, nsteps)
+
+
+py_fun = functools.partial(
+    choreo.scipy_plus.SegmQuad.IntegrateOnSegment,
+    fun = choreo.scipy_plus.cython.SegmQuad.py_fun,
+    ndim = ndim,
+    x_span = x_span,
+    quad = quad
+)
+
+cy_fun_LowLevel = functools.partial(
+    choreo.scipy_plus.SegmQuad.IntegrateOnSegment,
+    fun = scipy.LowLevelCallable.from_cython( choreo.scipy_plus.cython.SegmQuad, "cy_fun") ,
+    ndim = ndim,
+    x_span = x_span,
+    quad = quad
+)
+
+
+print(
+    choreo.scipy_plus.SegmQuad.IntegrateOnSegment(
+        # fun = scipy.LowLevelCallable.from_cython( choreo.scipy_plus.cython.SegmQuad, "cy_fun") ,
+        fun = choreo.scipy_plus.cython.SegmQuad.py_fun ,
+        ndim = ndim,
+        x_span = x_span,
+        quad = quad  ,
+        nint = 10
+    )
+)
+
+exit()
+
+
+
+
+
 all_funs = {
-    'cpdef_cy_fun' : functools.partial(choreo.scipy_plus.cython.CallableInterface.add_values,choreo.scipy_plus.cython.CallableInterface.cpdef_cy_fun),
-    'cy_fun_LowLevel' : functools.partial(choreo.scipy_plus.cython.CallableInterface.add_values,scipy.LowLevelCallable.from_cython(choreo.scipy_plus.cython.CallableInterface, "cdef_cy_fun")),
+    'py_fun' : py_fun ,
+    'cy_fun_LowLevel' : cy_fun_LowLevel,
 }
 
 all_funs_list = []
@@ -32,7 +75,8 @@ for name, fun in all_funs.items():
     all_funs_list.append(fun)
     all_names_list.append(name)
 
-all_maxval = np.array([2**i for i in range(18)])
+# all_maxval = np.array([2**i for i in range(18)])
+all_maxval = np.array([2**i for i in range(3)])
 
 def prepare_maxval(maxval):
     return [(maxval, 'maxval')]
