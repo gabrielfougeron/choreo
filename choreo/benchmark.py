@@ -13,6 +13,7 @@ def run_benchmark(
     time_per_test = 0.2     ,
     timings_filename = None ,
     show = False            ,
+    StopOnExcept=False      ,
     **show_kwargs           ,
 ):
     
@@ -22,7 +23,6 @@ def run_benchmark(
     else:
         Load_timings_file =  os.path.isfile(timings_filename)
         Save_timings_file = True
-
 
     n_sizes = len(all_sizes)
     n_funs = len(all_funs)
@@ -49,13 +49,15 @@ def run_benchmark(
         for i_size, size in enumerate(all_sizes):
             for i_fun, fun in enumerate(all_funs):
 
-                code = f'all_funs[{i_fun}](x)'
-
                 setup_vars = setup(size)
 
+                vars_str = ''
                 global_dict = {'all_funs' : all_funs}
                 for var, name in setup_vars:
                     global_dict[name] = var
+                    vars_str += name+','
+                    
+                code = f'all_funs[{i_fun}]({vars_str})'
 
                 Timer = timeit.Timer(
                     code,
@@ -76,11 +78,12 @@ def run_benchmark(
                         repeat = n_repeat,
                         number = n_timeit,
                     )
-
+                    
                     all_times[i_size, i_fun, :] = np.array(times) / n_timeit
 
-                except Exception:
-                    pass
+                except Exception as exc:
+                    if StopOnExcept:
+                        raise exc
 
         if Save_timings_file:
             np.save(timings_filename, all_times)
@@ -101,7 +104,8 @@ def run_benchmark(
 def plot_benchmark(
     all_times               ,
     all_sizes               ,
-    all_funs                ,
+    all_funs = None         ,
+    all_names = None        ,
     all_x_scalings = None   ,
     all_y_scalings = None   ,
     n_repeat = 1            ,
@@ -114,7 +118,16 @@ def plot_benchmark(
 ):
     
     n_sizes = len(all_sizes)
-    n_funs = len(all_funs)
+    
+    if all_funs is None:
+        if all_names is None:
+            raise("Value error: all_funs or all_names must be given")
+        else:
+            n_funs = len(all_names)
+    else:
+        n_funs = len(all_funs)
+        if all_names is not None:
+            assert len(all_names) == n_funs
 
     assert all_times.shape[0] == n_sizes  
     assert all_times.shape[1] == n_funs   
@@ -147,11 +160,16 @@ def plot_benchmark(
     for i_fun in range(n_funs):
 
         if (np.linalg.norm(all_times[:, i_fun, :]) > 0):
+            
+            if hasattr(all_funs[i_fun],'__name__'):
+                label = all_funs[i_fun].__name__
+            else:
+                label = all_names[i_fun]
 
             leg_patch.append(
                 mpl.patches.Patch(
-                    color = color_list[i_fun]           ,
-                    label = all_funs[i_fun].__name__    ,
+                    color = color_list[i_fun]   ,
+                    label = label               ,
                     # linestyle = linestyle       ,
                 )
             )
