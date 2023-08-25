@@ -29,7 +29,6 @@ from .ccallback cimport (ccallback_t, ccallback_prepare, ccallback_release, CCAL
 
 sigs = [
     (b"double (double)", 0),
-    # (b"double (double, double, int *, void *)", 1)
 ]
 
 # cdef ccallback_signature_t signatures[7]
@@ -45,29 +44,26 @@ signatures[idx + 1].signature = NULL
 
 
 
+cdef inline double cdef_cy_fun(double x) nogil noexcept:
+    # return csin(csin(csin(csin(csin(csin(csin(csin(csin(x)))))))))
+    return csin(x)
+    # return x
 
-cdef double cdef_cy_fun(double x) nogil:
-    return x
-
-cpdef double cpdef_cy_fun(double x) nogil:
-    return x
-
-def def_cy_fun(double x):
-    return x
+cpdef double cpdef_cy_fun(double x) nogil noexcept:
+    return cdef_cy_fun(x)
 
 
 
-
-
-
-
+ctypedef double (*callback_type)(double) nogil noexcept
 
 cdef double add_values_ann(
-        void *data,
+        ccallback_t callback,
         long maxval,
-    ) nogil:
+    ) nogil noexcept:
 
-    cdef ccallback_t *callback = <ccallback_t *>data
+    cdef callback_type c_fun = <callback_type> callback.c_function
+    cdef bint UseLowLevel = (callback.c_function != NULL)
+    
     cdef double result
     cdef double add = 0.0
     cdef double arg
@@ -78,18 +74,15 @@ cdef double add_values_ann(
 
         arg = i
 
-        if callback.c_function != NULL:
-            if callback.signature.value == 0:
-                result = (<double(*)(double) nogil>callback.c_function)(arg)
+        if UseLowLevel:
+            result = c_fun(arg)
         else:
             with gil:
-                result = float((<object>callback.py_function)(arg))
-
+                result = (<object>callback.py_function)(arg)
 
         add = add + result
 
     return add
-
 
 def add_values(
         callback_obj,
@@ -100,16 +93,38 @@ def add_values(
     """
     
     cdef ccallback_t callback
-    cdef int error_flag = 0
     cdef double result
 
     ccallback_prepare(&callback, signatures, callback_obj, CCALLBACK_DEFAULTS)
 
     with nogil:
-        result = add_values_ann(<void *>&callback, maxval)
+        result = add_values_ann(callback, maxval)
 
     ccallback_release(&callback)
 
     return result
 
 
+cdef inline double add_values_conly_ann(
+        callback_type fun,
+        long maxval = 10
+    ) nogil noexcept:
+
+    cdef double result
+    cdef double add = 0.0
+    cdef double arg
+
+    cdef long i
+    
+    for i in range(maxval):
+
+        arg = i
+        result = fun(arg)
+        add = add + result
+
+    return add
+
+
+cpdef double add_values_conly_fixed(long maxval=10):
+
+    return add_values_conly_ann(cdef_cy_fun, maxval)
