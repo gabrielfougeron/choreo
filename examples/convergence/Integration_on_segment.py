@@ -91,11 +91,11 @@ for the_test in test_names:
                 nint = refinement_lvl[iref]
 
                 approx = choreo.scipy_plus.SegmQuad.IntegrateOnSegment(
-                    fun = fun,
+                    fun = fun       ,
                     ndim = test_ndim,
-                    x_span = x_span,
-                    nint = nint,
-                    quad = quad
+                    x_span = x_span ,
+                    quad = quad     ,
+                    nint = nint     ,
                 )
 
                 error = np.linalg.norm(approx-exact)/np.linalg.norm(exact)
