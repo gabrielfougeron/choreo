@@ -1,7 +1,7 @@
 # import choreo.scipy_plus.cython
 
-from .ODE                       import *
-# import choreo.scipy_plus.ODE
+from .                          import ODE
+from .                          import SegmQuad
 
 from .linalg                    import *
 from .nonlin                    import *
