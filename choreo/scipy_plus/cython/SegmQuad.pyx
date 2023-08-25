@@ -27,7 +27,8 @@ from .ccallback cimport (ccallback_t, ccallback_prepare, ccallback_release, CCAL
                          ccallback_signature_t)
 
 sigs = [
-    (b"void (const double, double[::1])", 0),
+    (b"void (double, __Pyx_memviewslice)", 0),
+    (b"void (double, double *)", 1),
 ]
 
 cdef ccallback_signature_t signatures[2]
@@ -40,11 +41,27 @@ signatures[idx + 1].signature = NULL
 
 
 
-ctypedef void (*cy_fun_type)(const double, double[::1]) nogil noexcept
+# ctypedef void (*cy_fun_type)(const double, double[::1]) nogil noexcept
+ctypedef void (*cy_fun_type)(const double, double*) nogil noexcept
+
+# cdef inline void cy_fun(
+#     double x,
+#     double[::1] res,
+# ) nogil noexcept:
+# 
+#     cdef Py_ssize_t i
+#     cdef Py_ssize_t size = 10
+#     cdef double val
+# 
+#     for i in range(size):
+#         
+#         val = i * x
+#         res[i] = csin(val)
+
 
 cdef inline void cy_fun(
-    const double x,
-    double[::1] res,
+    double x    ,
+    double *res ,
 ) nogil noexcept:
 
     cdef Py_ssize_t i
@@ -56,10 +73,14 @@ cdef inline void cy_fun(
         val = i * x
         res[i] = csin(val)
 
+
+
+
+
 cpdef py_fun(const double x):
 
     cdef double[::1] res = np.empty((10),dtype=np.float64)
-    cy_fun(x, res)
+    cy_fun(x, &res[0])
     return res
 
 
@@ -80,13 +101,12 @@ cdef class QuadFormula:
         return self.w.shape[0]
     
 
-cpdef double[::1] IntegrateOnSegment(
-# def IntegrateOnSegment(
-    object fun,
-    long ndim,
-    (double, double) x_span,
-    long nint,
-    QuadFormula quad
+cpdef np.ndarray[double, ndim=1, mode="c"] IntegrateOnSegment(
+    object fun              ,
+    long ndim               ,
+    (double, double) x_span ,
+    QuadFormula quad        ,
+    long nint               ,
 ):
     
     cdef ccallback_t callback
@@ -97,8 +117,9 @@ cpdef double[::1] IntegrateOnSegment(
     cdef object py_fun = <object> callback.py_function
 
     cdef double[::1] f_res = np.empty((ndim),dtype=np.float64)
-    cdef double[::1] f_int = np.zeros((ndim),dtype=np.float64)
-    
+    cdef np.ndarray[double, ndim=1, mode="c"] f_int_np = np.zeros((ndim),dtype=np.float64)
+    cdef double[::1] f_int = f_int_np
+
     with nogil:
         IntegrateOnSegment_ann(
             c_fun       ,
@@ -112,11 +133,9 @@ cpdef double[::1] IntegrateOnSegment(
             f_int       ,
         )
 
-
     ccallback_release(&callback)
 
-    return f_int
-
+    return f_int_np
 
 @cython.cdivision(True)
 cdef void IntegrateOnSegment_ann(
@@ -151,12 +170,11 @@ cdef void IntegrateOnSegment_ann(
             xi = xbeg + cdx[istep]
 
             if UseLowLevel:
-                c_fun(xi, f_res)
+                c_fun(xi, &f_res[0])
 
             else:
                 with gil:
                     f_res = py_fun(xi)
-
 
             for idim in range(ndim):
 
