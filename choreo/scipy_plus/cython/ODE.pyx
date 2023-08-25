@@ -24,48 +24,6 @@ from libc.math cimport isnan as cisnan
 from libc.math cimport isinf as cisinf
 
 @cython.cdivision(True)
-def IntegrateOnSegment(
-    object fun,
-    long ndim,
-    (double, double) x_span,
-    long nint,
-    np.ndarray[double, ndim=1, mode="c"] w,
-    np.ndarray[double, ndim=1, mode="c"] x,
-    long nsteps,
-):
-
-    cdef long iint,istep,idim
-    cdef double xbeg, dx
-    cdef double xi
-    cdef np.ndarray[double, ndim=1, mode="c"] cdx = np.empty((nsteps),dtype=np.float64)
-    cdef np.ndarray[double, ndim=1, mode="c"] res
-    cdef np.ndarray[double, ndim=1, mode="c"] f_int = np.zeros((ndim),dtype=np.float64)
-
-    dx = (x_span[1] - x_span[0]) / nint
-
-    for istep in range(nsteps):
-        cdx[istep] = x[istep] * dx
-
-    for iint in range(nint):
-
-        xbeg = x_span[0] + iint * dx
-
-        for istep in range(nsteps):
-
-            xi = xbeg + cdx[istep]
-            res = fun(xi)
-
-            for idim in range(ndim):
-
-                f_int[idim] = f_int[idim] + w[istep] * res[idim]
-
-    for idim in range(ndim):
-
-        f_int[idim] = f_int[idim] * dx
-
-    return f_int
-
-@cython.cdivision(True)
 def ExplicitSymplecticWithTable_VX_cython(
     object fun,
     object gun,

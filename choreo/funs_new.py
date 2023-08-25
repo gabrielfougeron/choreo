@@ -977,9 +977,78 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
 
             assert nparam_body[Targets[il,0]] / ncoeff_min_body[Targets[il,0]] == nparam_body[Targets[il,ilb]] / ncoeff_min_body[Targets[il,ilb]]
 
-
         nparam_per_k_before_tot += geodim * 2 * loopnb[il]
         nparam_per_k_tot += nparam_body[Targets[il,0]] /  len(All_params_basis[Targets[il,0]])
+
+
+    # FFT tests
+
+    for ib in range(nbody):
+
+        print()
+        print(f'{ib = }')
+
+        ncoeffs_min = len(All_params_basis[ib])
+        no = math.lcm(2, nint_min)
+
+        nint = no * ncoeffs_min
+        ncoeffs = nint//2 + 1
+
+        body_coeffs = np.zeros((ncoeffs,geodim,2), dtype = np.float64)
+        
+        nparams_body = 0
+
+        for l in range(ncoeffs_min):
+            l = (k % ncoeffs_min)
+
+            NullSpace = All_params_basis[ib][l]
+            nparams_body += NullSpace.shape[2]
+            # print(k,nparams)
+
+        params_body = np.random.rand(nparam)
+
+
+
+
+
+
+# 
+#     for ib in range(nbody):
+#         ncoeffs_min = len(All_params_basis[ib])
+# 
+#         no = math.lcm(2, nint_min)
+# 
+#         nint = no * ncoeffs_min
+#         ncoeffs = nint//2 + 1
+# 
+#         body_coeffs = np.zeros((ncoeffs,geodim,2), dtype = np.float64)
+#         
+#         nparams_body = 0
+#         for k in range(ncoeffs):
+#             l = (k % ncoeffs_min)
+# 
+#             NullSpace = All_params_basis[ib][l]
+#             nparams_body += NullSpace.shape[2]
+# 
+#             
+# 
+#         params_body = np.random.rand(nparams_body)
+# 
+#             all_coeffs[ib,k,:,:] = np.matmul(NullSpace, np.random.rand(nparam))
+# 
+#     all_coeffs_c = all_coeffs.view(dtype=np.complex128)[...,0]
+#     all_pos = scipy.fft.irfft(all_coeffs_c, axis=1)
+# 
+#     AllConstraintAreRespected = True
+# 
+# 
+
+
+
+
+
+
+
 
 
 
