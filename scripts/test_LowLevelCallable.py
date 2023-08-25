@@ -8,8 +8,10 @@ os.environ['NUMEXPR_NUM_THREADS'] = '1'
 os.environ['MKL_NUM_THREADS'] = '1'
 
 import functools
+import time
 import matplotlib.pyplot as plt
 import numpy as np
+import math as m
 
 import choreo 
 import scipy
@@ -18,42 +20,33 @@ timings_folder = os.path.join(__PROJECT_ROOT__,'build')
 basename = 'LowLevelCallable_bench'
 timings_filename = os.path.join(timings_folder,basename+'.npy')
 
-def py_fun(x):
-    return x
+
+
+
+
+
+
+
+
+
+
+
+
 
 all_funs = {
-    'py_fun' : py_fun,
-    'def_cy_fun' : choreo.scipy_plus.cython.CallableInterface.def_cy_fun,
-    'cpdef_cy_fun' : choreo.scipy_plus.cython.CallableInterface.cpdef_cy_fun,
-    'cdef_cy_fun_LowLevel' : scipy.LowLevelCallable.from_cython(choreo.scipy_plus.cython.CallableInterface, "cdef_cy_fun"),
-    'cpdef_cy_fun_LowLevel' : scipy.LowLevelCallable.from_cython(choreo.scipy_plus.cython.CallableInterface, "cpdef_cy_fun"),
-    # 'def_cy_fun_LowLevel' : scipy.LowLevelCallable.from_cython(choreo.scipy_plus.cython.CallableInterface, "def_cy_fun"), # not in __pyx_capi__
+    'cpdef_cy_fun' : functools.partial(choreo.scipy_plus.cython.CallableInterface.add_values,choreo.scipy_plus.cython.CallableInterface.cpdef_cy_fun),
+    'cdef_cy_fun_LowLevel' : functools.partial(choreo.scipy_plus.cython.CallableInterface.add_values,scipy.LowLevelCallable.from_cython(choreo.scipy_plus.cython.CallableInterface, "cdef_cy_fun")),
+    'conly_fixed' : choreo.scipy_plus.cython.CallableInterface.add_values_conly_fixed,
 }
-
-
 
 all_funs_list = []
 all_names_list = []
 for name, fun in all_funs.items():
     
-    all_funs_list.append(functools.partial(choreo.scipy_plus.cython.CallableInterface.add_values, fun))
+    all_funs_list.append(fun)
     all_names_list.append(name)
 
-# 
-# def python_add(maxval):
-#     return choreo.scipy_plus.cython.CallableInterface.add_values(py_fun, maxval)
-# 
-# def cython_add(maxval):
-#     return choreo.scipy_plus.cython.CallableInterface.add_values(cy_fun, maxval)
-
-
-# all_funs_oneaarg = [
-#     python_add,
-#     cython_add,
-# ]
-
-all_maxval = np.array([2**i for i in range(10)])
-
+all_maxval = np.array([2**i for i in range(18)])
 
 def prepare_maxval(maxval):
     return [(maxval, 'maxval')]
@@ -79,7 +72,7 @@ all_times = choreo.benchmark.run_benchmark(
     setup = prepare_maxval,
     n_repeat = n_repeat,
     time_per_test = 0.2,
-    timings_filename = timings_filename,
+    # timings_filename = timings_filename,
 )
 
 choreo.plot_benchmark(
@@ -96,8 +89,8 @@ choreo.plot_benchmark(
 plt.tight_layout()
 plt.savefig('LowLevelCallable_bench.png')
 
-# 
-# 
+# # 
+# # 
 # for name, fun in all_funs.items():
 #     
 #         print()
@@ -106,13 +99,44 @@ plt.savefig('LowLevelCallable_bench.png')
 #         for maxval in all_maxval:
 #             
 #             tbeg = time.perf_counter()
-#             res = choreo.scipy_plus.cython.CallableInterface.add_values(fun, maxval)
+#             res = fun(maxval)
 #             tend = time.perf_counter()
 #             
-#             print(maxval, tend-tbeg)
+#             # print(maxval)
+#             print(res)
+#             # print(tend-tbeg)
 #             
 #             # print(res)
 #             # res = choreo.scipy_plus.cython.CallableInterface.add_values(cy_fun)
 #             # print(res)
+
 # 
 # 
+
+for maxval in all_maxval:
+
+    print()
+    print(maxval)
+    
+            
+    for name, fun in all_funs.items():
+        baseline_res = fun(maxval)
+        break
+        
+    for name, fun in all_funs.items():
+
+            
+            tbeg = time.perf_counter()
+            res = fun(maxval)
+            tend = time.perf_counter()
+            
+            # print(maxval)
+            # print(res)
+            print(abs(res-baseline_res))
+            # print(tend-tbeg)
+            
+            # print(res)
+            # res = choreo.scipy_plus.cython.CallableInterface.add_values(cy_fun)
+            # print(res)
+
+
