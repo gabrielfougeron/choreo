@@ -85,13 +85,13 @@ elif platform.system() == "Linux":
 
                 break
 
-        extra_compile_args_std = ["-O0","-march=native", "-fopenmp"]
-        extra_compile_args_safe = ["-O0", "-fopenmp"]
-        extra_link_args = ["-fopenmp"]
-
-        # extra_compile_args_std = ["-Ofast","-march=native", "-fopenmp"]
-        # extra_compile_args_safe = ["-O2", "-fopenmp"]
+        # extra_compile_args_std = ["-O0","-march=native", "-fopenmp"]
+        # extra_compile_args_safe = ["-O0", "-fopenmp"]
         # extra_link_args = ["-fopenmp"]
+
+        extra_compile_args_std = ["-Ofast","-march=native", "-fopenmp"]
+        extra_compile_args_safe = ["-O2", "-fopenmp"]
+        extra_link_args = ["-fopenmp"]
 
         # extra_compile_args_std = ["-fast","-march=native", "-fopenmp"]
         # extra_compile_args_safe = ["-O2", "-fopenmp"]
