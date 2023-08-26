@@ -20,7 +20,7 @@ timings_folder = os.path.join(__PROJECT_ROOT__,'build')
 basename = 'SegmQuad_bench'
 timings_filename = os.path.join(timings_folder,basename+'.npy')
 
-ndim = 10
+ndim = 1
 x_span = (0., 1.)
 method = 'Gauss'
 nsteps = 10
@@ -29,7 +29,7 @@ quad = choreo.scipy_plus.SegmQuad.ComputeQuadrature(method, nsteps)
 
 py_fun = functools.partial(
     choreo.scipy_plus.SegmQuad.IntegrateOnSegment,
-    choreo.scipy_plus.cython.SegmQuad.py_fun,
+    choreo.scipy_plus.cython.test.py_fun,
     ndim,
     x_span,
     quad
@@ -37,7 +37,7 @@ py_fun = functools.partial(
 
 cy_fun_pointer_LowLevel = functools.partial(
     choreo.scipy_plus.SegmQuad.IntegrateOnSegment,
-    scipy.LowLevelCallable.from_cython( choreo.scipy_plus.cython.SegmQuad, "cy_fun_pointer") ,
+    scipy.LowLevelCallable.from_cython( choreo.scipy_plus.cython.test, "cy_fun_pointer") ,
     ndim,
     x_span,
     quad
@@ -45,7 +45,15 @@ cy_fun_pointer_LowLevel = functools.partial(
 
 cy_fun_memoryview_LowLevel = functools.partial(
     choreo.scipy_plus.SegmQuad.IntegrateOnSegment,
-    scipy.LowLevelCallable.from_cython( choreo.scipy_plus.cython.SegmQuad, "cy_fun_memoryview") ,
+    scipy.LowLevelCallable.from_cython( choreo.scipy_plus.cython.test, "cy_fun_memoryview") ,
+    ndim,
+    x_span,
+    quad
+)
+
+cy_fun_oneval_LowLevel = functools.partial(
+    choreo.scipy_plus.SegmQuad.IntegrateOnSegment,
+    scipy.LowLevelCallable.from_cython( choreo.scipy_plus.cython.test, "cy_fun_oneval") ,
     ndim,
     x_span,
     quad
@@ -56,6 +64,7 @@ cy_fun_memoryview_LowLevel = functools.partial(
 all_funs = {
     'cy_fun_pointer_LowLevel' : cy_fun_pointer_LowLevel,
     'cy_fun_memoryview_LowLevel' : cy_fun_memoryview_LowLevel,
+    'cy_fun_oneval_LowLevel' : cy_fun_oneval_LowLevel,
     'py_fun' : py_fun ,
 }
 
@@ -122,7 +131,7 @@ plt.savefig('SegmQuad_bench.png')
 #             res = fun(nint)
 #             tend = time.perf_counter()
 #             
-            # print(res)
+#             print(res)
 
 
 
