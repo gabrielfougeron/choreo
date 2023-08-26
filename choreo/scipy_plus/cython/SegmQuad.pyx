@@ -41,7 +41,7 @@ signatures[C_FUN_POINTER].signature = b"void (double const , double *)"
 signatures[C_FUN_POINTER].value = C_FUN_POINTER
 
 ctypedef double (*c_fun_type_oneval)(const double) nogil noexcept
-signatures[C_FUN_ONEVAL].signature = b"double (double const)"
+signatures[C_FUN_ONEVAL].signature = b"double (double const )"
 signatures[C_FUN_ONEVAL].value = C_FUN_ONEVAL
 
 signatures[3].signature = NULL
@@ -101,51 +101,6 @@ cdef inline void LowLevelFun_apply(
         res[0] = fun.c_fun_oneval(x)
 
 
-cdef inline void cy_fun_pointer(
-    const double x,
-    double *res,
-) nogil noexcept:
-
-    cdef Py_ssize_t i
-    cdef Py_ssize_t size = 10
-    cdef double val
-
-    for i in range(size):
-        
-        val = i * x
-        res[i] = csin(val)
-
-
-
-
-cdef inline void cy_fun_memoryview(
-    const double x,
-    double[::1] res,
-) nogil noexcept:
-
-    cdef Py_ssize_t i
-    cdef Py_ssize_t size = 10
-    cdef double val
-
-    for i in range(size):
-        
-        val = i * x
-        res[i] = csin(val)
-
-cpdef double[::1] py_fun(const double x):
-
-    cdef double[::1] res = np.empty((10),dtype=np.float64)
-    cy_fun_memoryview(x, res)
-    return res
-
-
-
-
-
-
-
-
-
 cdef class QuadFormula:
     
     cdef double[::1] w
@@ -162,9 +117,6 @@ cdef class QuadFormula:
     def nsteps(self):
         return self.w.shape[0]
     
-
-
-
 
 cpdef np.ndarray[double, ndim=1, mode="c"] IntegrateOnSegment(
     object fun              ,
@@ -214,6 +166,8 @@ cpdef np.ndarray[double, ndim=1, mode="c"] IntegrateOnSegment(
 
     return f_int_np
 
+
+
 @cython.cdivision(True)
 cdef void IntegrateOnSegment_ann_lowlevel(
     LowLevelFun fun                 ,
@@ -254,6 +208,8 @@ cdef void IntegrateOnSegment_ann_lowlevel(
         f_int[idim] = f_int[idim] * dx
 
     free(cdx)
+
+
 
 @cython.cdivision(True)
 cdef void IntegrateOnSegment_ann_python(

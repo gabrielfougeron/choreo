@@ -26,7 +26,7 @@ cython_extnames = [
     "choreo.cython.funs_serial",
     "choreo.scipy_plus.cython.ODE",
     "choreo.scipy_plus.cython.SegmQuad",
-    "choreo.scipy_plus.cython.CallableInterface",
+    "choreo.scipy_plus.cython.test",
 ]
 
 cython_safemath_needed = [
