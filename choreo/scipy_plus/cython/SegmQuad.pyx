@@ -109,6 +109,31 @@ cdef inline void cy_fun_pointer(
         val = i * x
         res[i] = csin(val)
 
+
+
+
+# cdef inline void cy_fun_memoryview(
+#     const double x,
+#     double[::1] res,
+# ) nogil noexcept:
+# 
+#     cdef Py_ssize_t i
+#     cdef Py_ssize_t size = 10
+#     cdef double val
+# 
+#     for i in range(size):
+#         
+#         val = i * x
+#         res[i] = csin(val)
+# 
+# cpdef double[::1] py_fun(const double x):
+# 
+#     cdef double[::1] res = np.empty((10),dtype=np.float64)
+#     cy_fun_memoryview(x, res)
+#     return res
+
+
+
 cdef inline void cy_fun_memoryview(
     const double x,
     double[::1] res,
@@ -123,11 +148,16 @@ cdef inline void cy_fun_memoryview(
         val = i * x
         res[i] = csin(val)
 
-cpdef double[::1] py_fun(const double x):
+cpdef double[::1]  py_fun(double x):
 
     cdef double[::1] res = np.empty((10),dtype=np.float64)
+    
     cy_fun_memoryview(x, res)
+    
     return res
+
+
+
 
 
 
