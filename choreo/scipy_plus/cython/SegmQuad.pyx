@@ -123,12 +123,10 @@ cdef inline void cy_fun_memoryview(
         val = i * x
         res[i] = csin(val)
 
-cpdef double[::1] py_fun_test(const double x):
+cpdef double[::1] py_fun(const double x):
 
     cdef double[::1] res = np.empty((10),dtype=np.float64)
-    
     cy_fun_memoryview(x, res)
-    
     return res
 
 

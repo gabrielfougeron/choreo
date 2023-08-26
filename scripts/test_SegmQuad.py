@@ -28,16 +28,10 @@ quad = choreo.scipy_plus.SegmQuad.ComputeQuadrature(method, nsteps)
 
 
 
-def py_fun_script(x):
-
-    return choreo.scipy_plus.cython.SegmQuad.py_fun_test(x)
-
-
 
 py_fun = functools.partial(
     choreo.scipy_plus.SegmQuad.IntegrateOnSegment,
-    # choreo.scipy_plus.cython.SegmQuad.py_fun_test,
-    py_fun_script,
+    choreo.scipy_plus.cython.SegmQuad.py_fun,
     ndim,
     x_span,
     quad
