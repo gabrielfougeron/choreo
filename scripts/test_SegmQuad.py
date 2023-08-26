@@ -20,8 +20,6 @@ timings_folder = os.path.join(__PROJECT_ROOT__,'build')
 basename = 'SegmQuad_bench'
 timings_filename = os.path.join(timings_folder,basename+'.npy')
 
-
-
 ndim = 10
 x_span = (0., 1.)
 method = 'Gauss'
@@ -29,45 +27,46 @@ nsteps = 10
 quad = choreo.scipy_plus.SegmQuad.ComputeQuadrature(method, nsteps)
 
 
+
+def py_fun_script(x):
+
+    return choreo.scipy_plus.cython.SegmQuad.py_fun_test(x)
+
+
+
 py_fun = functools.partial(
     choreo.scipy_plus.SegmQuad.IntegrateOnSegment,
-    fun = choreo.scipy_plus.cython.SegmQuad.py_fun,
-    ndim = ndim,
-    x_span = x_span,
-    quad = quad
+    # choreo.scipy_plus.cython.SegmQuad.py_fun_test,
+    py_fun_script,
+    ndim,
+    x_span,
+    quad
 )
 
-cy_fun_LowLevel = functools.partial(
+cy_fun_pointer_LowLevel = functools.partial(
     choreo.scipy_plus.SegmQuad.IntegrateOnSegment,
-    fun = scipy.LowLevelCallable.from_cython( choreo.scipy_plus.cython.SegmQuad, "cy_fun") ,
-    ndim = ndim,
-    x_span = x_span,
-    quad = quad
+    scipy.LowLevelCallable.from_cython( choreo.scipy_plus.cython.SegmQuad, "cy_fun_pointer") ,
+    ndim,
+    x_span,
+    quad
+)
+
+cy_fun_memoryview_LowLevel = functools.partial(
+    choreo.scipy_plus.SegmQuad.IntegrateOnSegment,
+    scipy.LowLevelCallable.from_cython( choreo.scipy_plus.cython.SegmQuad, "cy_fun_memoryview") ,
+    ndim,
+    x_span,
+    quad
 )
 
 
-for fun in [
-    choreo.scipy_plus.cython.SegmQuad.py_fun,
-    scipy.LowLevelCallable.from_cython( choreo.scipy_plus.cython.SegmQuad, "cy_fun"),
-]:
 
-    print(
-        choreo.scipy_plus.SegmQuad.IntegrateOnSegment(
-            fun = fun,
-            ndim = ndim,
-            x_span = x_span,
-            quad = quad  ,
-            nint = 10
-        )
-    )
-
-
-exit()
 
 
 all_funs = {
+    'cy_fun_pointer_LowLevel' : cy_fun_pointer_LowLevel,
+    'cy_fun_memoryview_LowLevel' : cy_fun_memoryview_LowLevel,
     'py_fun' : py_fun ,
-    'cy_fun_LowLevel' : cy_fun_LowLevel,
 }
 
 all_funs_list = []
@@ -77,10 +76,9 @@ for name, fun in all_funs.items():
     all_funs_list.append(fun)
     all_names_list.append(name)
 
-# all_maxval = np.array([2**i for i in range(18)])
-all_maxval = np.array([2**i for i in range(3)])
+all_nint = np.array([2**i for i in range(10)])
 
-def prepare_maxval(nint):
+def setup(nint):
     return [(nint, 'nint')]
 
 dpi = 150
@@ -99,9 +97,9 @@ fig, ax = plt.subplots(
 n_repeat = 1
 # 
 # all_times = choreo.benchmark.run_benchmark(
-#     all_maxval,
+#     all_nint,
 #     all_funs_list,
-#     setup = prepare_maxval,
+#     setup = setup,
 #     n_repeat = n_repeat,
 #     time_per_test = 0.2,
 #     # timings_filename = timings_filename,
@@ -109,60 +107,53 @@ n_repeat = 1
 # 
 # choreo.plot_benchmark(
 #     all_times                               ,
-#     all_maxval                              ,
+#     all_nint                              ,
 #     all_funs_list                           ,
 #     all_names_list                          ,
 #     n_repeat = n_repeat                     ,
 #     fig = fig                               ,
 #     ax = ax                                 ,
-#     title = 'LowLevelCallable_bench'        ,
+#     title = 'SegmQuad_bench'        ,
 # )
 # 
 # plt.tight_layout()
-# plt.savefig('LowLevelCallable_bench.png')
+# plt.savefig('SegmQuad_bench.png')
 
 # # 
-# # 
+# # # 
 for name, fun in all_funs.items():
     
         print()
         print(name)
         
-        for maxval in all_maxval:
+        for nint in all_nint:
             
             tbeg = time.perf_counter()
-            res = fun(maxval)
+            res = fun(nint)
             tend = time.perf_counter()
             
-            # print(maxval)
-            print(res)
-            # print(tend-tbeg)
-            
-            # print(res)
-            # res = choreo.scipy_plus.cython.CallableInterface.add_values(cy_fun)
             # print(res)
 
 
 
-
-# for maxval in all_maxval:
+# for nint in all_nint:
 # 
 #     print()
-#     print(maxval)
+#     print(nint)
 #     
 #             
 #     for name, fun in all_funs.items():
-#         baseline_res = fun(maxval)
+#         baseline_res = fun(nint)
 #         break
 #         
 #     for name, fun in all_funs.items():
 # 
 #             
 #             tbeg = time.perf_counter()
-#             res = fun(maxval)
+#             res = fun(nint)
 #             tend = time.perf_counter()
 #             
-#             # print(maxval)
+#             # print(nint)
 #             # print(res)
 #             print(abs(res-baseline_res))
 #             # print(tend-tbeg)
