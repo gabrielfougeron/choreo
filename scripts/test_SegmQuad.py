@@ -46,21 +46,23 @@ cy_fun_LowLevel = functools.partial(
 )
 
 
-print(
-    choreo.scipy_plus.SegmQuad.IntegrateOnSegment(
-        # fun = scipy.LowLevelCallable.from_cython( choreo.scipy_plus.cython.SegmQuad, "cy_fun") ,
-        fun = choreo.scipy_plus.cython.SegmQuad.py_fun ,
-        ndim = ndim,
-        x_span = x_span,
-        quad = quad  ,
-        nint = 10
+for fun in [
+    choreo.scipy_plus.cython.SegmQuad.py_fun,
+    scipy.LowLevelCallable.from_cython( choreo.scipy_plus.cython.SegmQuad, "cy_fun"),
+]:
+
+    print(
+        choreo.scipy_plus.SegmQuad.IntegrateOnSegment(
+            fun = fun,
+            ndim = ndim,
+            x_span = x_span,
+            quad = quad  ,
+            nint = 10
+        )
     )
-)
+
 
 exit()
-
-
-
 
 
 all_funs = {
@@ -78,8 +80,8 @@ for name, fun in all_funs.items():
 # all_maxval = np.array([2**i for i in range(18)])
 all_maxval = np.array([2**i for i in range(3)])
 
-def prepare_maxval(maxval):
-    return [(maxval, 'maxval')]
+def prepare_maxval(nint):
+    return [(nint, 'nint')]
 
 dpi = 150
 figsize = (1600/dpi, 1 * 800 / dpi)
