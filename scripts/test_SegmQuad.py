@@ -27,8 +27,6 @@ nsteps = 10
 quad = choreo.scipy_plus.SegmQuad.ComputeQuadrature(method, nsteps)
 
 
-
-
 py_fun = functools.partial(
     choreo.scipy_plus.SegmQuad.IntegrateOnSegment,
     choreo.scipy_plus.cython.SegmQuad.py_fun,
@@ -52,8 +50,6 @@ cy_fun_memoryview_LowLevel = functools.partial(
     x_span,
     quad
 )
-
-
 
 
 
@@ -89,43 +85,43 @@ fig, ax = plt.subplots(
 )
 
 n_repeat = 1
-# 
-# all_times = choreo.benchmark.run_benchmark(
-#     all_nint,
-#     all_funs_list,
-#     setup = setup,
-#     n_repeat = n_repeat,
-#     time_per_test = 0.2,
-#     # timings_filename = timings_filename,
-# )
-# 
-# choreo.plot_benchmark(
-#     all_times                               ,
-#     all_nint                              ,
-#     all_funs_list                           ,
-#     all_names_list                          ,
-#     n_repeat = n_repeat                     ,
-#     fig = fig                               ,
-#     ax = ax                                 ,
-#     title = 'SegmQuad_bench'        ,
-# )
-# 
-# plt.tight_layout()
-# plt.savefig('SegmQuad_bench.png')
+
+all_times = choreo.benchmark.run_benchmark(
+    all_nint,
+    all_funs_list,
+    setup = setup,
+    n_repeat = n_repeat,
+    time_per_test = 0.2,
+    # timings_filename = timings_filename,
+)
+
+choreo.plot_benchmark(
+    all_times                               ,
+    all_nint                              ,
+    all_funs_list                           ,
+    all_names_list                          ,
+    n_repeat = n_repeat                     ,
+    fig = fig                               ,
+    ax = ax                                 ,
+    title = 'SegmQuad_bench'        ,
+)
+
+plt.tight_layout()
+plt.savefig('SegmQuad_bench.png')
 
 # # 
 # # # 
-for name, fun in all_funs.items():
-    
-        print()
-        print(name)
-        
-        for nint in all_nint:
-            
-            tbeg = time.perf_counter()
-            res = fun(nint)
-            tend = time.perf_counter()
-            
+# for name, fun in all_funs.items():
+#     
+#         print()
+#         print(name)
+#         
+#         for nint in all_nint:
+#             
+#             tbeg = time.perf_counter()
+#             res = fun(nint)
+#             tend = time.perf_counter()
+#             
             # print(res)
 
 
