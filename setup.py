@@ -156,6 +156,7 @@ if use_Cython:
         annotate = True,
         compiler_directives = compiler_directives,
         nthreads = nthreads,
+        # force = True,
     )
     
 
