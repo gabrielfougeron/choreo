@@ -1,3 +1,3 @@
 from .ODE import *
-from .SegmQuad import *
-from .CallableInterface import *
+from .SegmQuad import QuadFormula, IntegrateOnSegment
+from .test import *
