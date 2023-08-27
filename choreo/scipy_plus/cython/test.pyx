@@ -25,7 +25,7 @@ from libc.math cimport isinf as cisinf
 
 
 
-cdef inline void cy_fun_pointer(
+cdef inline void single_cy_fun_pointer(
     const double x,
     double *res,
 ) nogil noexcept:
@@ -39,25 +39,53 @@ cdef inline void cy_fun_pointer(
         val = (i+1) * x
         res[i] = csin(val)
 
-cdef inline void cy_fun_memoryview(
+cdef inline void single_cy_fun_memoryview(
     const double x,
     double[::1] res,
 ) nogil noexcept:
 
-    cy_fun_pointer(x,&res[0])
+    single_cy_fun_pointer(x,&res[0])
 
-cdef inline double cy_fun_oneval(
+cdef inline double single_cy_fun_oneval(
     const double x,
 ) nogil noexcept:
 
     cdef double res
-    cy_fun_pointer(x,&res)
+    single_cy_fun_pointer(x,&res)
     return res
 
-cpdef double[::1] py_fun(const double x):
+cpdef double[::1] single_py_fun(const double x):
 
-    cdef double[::1] res = np.empty((10),dtype=np.float64)
-    cy_fun_memoryview(x, res)
+    cdef double[::1] res = np.empty((1),dtype=np.float64)
+    single_cy_fun_memoryview(x, res)
     return res
 
 
+cdef int mul_size = 10
+mul_size_py = mul_size
+
+cdef inline void mul_cy_fun_pointer(
+    const double x,
+    double *res,
+) nogil noexcept:
+
+    cdef Py_ssize_t i
+    cdef double val
+
+    for i in range(mul_size):
+        
+        val = (i+1) * x
+        res[i] = csin(val)
+
+cdef inline void mul_cy_fun_memoryview(
+    const double x,
+    double[::1] res,
+) nogil noexcept:
+
+    mul_cy_fun_pointer(x,&res[0])
+
+cpdef double[::1] mul_py_fun(const double x):
+
+    cdef double[::1] res = np.empty((mul_size),dtype=np.float64)
+    mul_cy_fun_memoryview(x, res)
+    return res
