@@ -26,11 +26,6 @@ p.sphx-glr-signature {
   justify-content: left!important;
 }
 
-/* .bd-article-container{
-  max-width:1200px!important;
-  padding-left:calc(min(25% + 2rem, 400px + 2rem, max(0,2rem + 700px - 25%)))!important
-} */
-
 .bd-article{
   max-width:100%!important;
 } 
@@ -38,7 +33,7 @@ p.sphx-glr-signature {
 .bd-sidebar-primary{
   max-width:320px!important;
   height:100%!important;
-  position: absolute;
+  position: fixed;
 } 
 
 .bd-header__inner{

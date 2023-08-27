@@ -4,10 +4,9 @@ ODE.pyx : Defines ODE-related things I designed I feel ought to be in scipy ... 
 
 '''
 
-
-import os
 cimport scipy.linalg.cython_blas
 cimport scipy.linalg.cython_lapack
+from libc.stdlib cimport malloc, free
 
 import numpy as np
 cimport numpy as np
@@ -23,47 +22,23 @@ from libc.math cimport sqrt as csqrt
 from libc.math cimport isnan as cisnan
 from libc.math cimport isinf as cisinf
 
-@cython.cdivision(True)
-def IntegrateOnSegment(
-    object fun,
-    long ndim,
-    (double, double) x_span,
-    long nint,
-    np.ndarray[double, ndim=1, mode="c"] w,
-    np.ndarray[double, ndim=1, mode="c"] x,
-    long nsteps,
-):
+from .ccallback cimport ccallback_t, ccallback_prepare, ccallback_release, CCALLBACK_DEFAULTS, ccallback_signature_t
 
-    cdef long iint,istep,idim
-    cdef double xbeg, dx
-    cdef double xi
-    cdef np.ndarray[double, ndim=1, mode="c"] cdx = np.empty((nsteps),dtype=np.float64)
-    cdef np.ndarray[double, ndim=1, mode="c"] res
-    cdef np.ndarray[double, ndim=1, mode="c"] f_int = np.zeros((ndim),dtype=np.float64)
+cdef class ExplicitRKTable:
+    
+    cdef double[::1] c_table
+    cdef double[::1] d_table
 
-    dx = (x_span[1] - x_span[0]) / nint
+    def __init__(self, c_table, d_table):
 
-    for istep in range(nsteps):
-        cdx[istep] = x[istep] * dx
+        self.c_table = c_table
+        self.d_table = d_table
 
-    for iint in range(nint):
+        assert c_table.shape[0] == d_table.shape[0]
 
-        xbeg = x_span[0] + iint * dx
-
-        for istep in range(nsteps):
-
-            xi = xbeg + cdx[istep]
-            res = fun(xi)
-
-            for idim in range(ndim):
-
-                f_int[idim] = f_int[idim] + w[istep] * res[idim]
-
-    for idim in range(ndim):
-
-        f_int[idim] = f_int[idim] * dx
-
-    return f_int
+    @property
+    def nsteps(self):
+        return self.c_table.shape[0]
 
 @cython.cdivision(True)
 def ExplicitSymplecticWithTable_VX_cython(

@@ -22,11 +22,17 @@ else:
 
 cython_extnames = [
     "choreo.cython.funs",
+    "choreo.cython.funs_new",
     "choreo.cython.funs_serial",
     "choreo.scipy_plus.cython.ODE",
+    "choreo.scipy_plus.cython.SegmQuad",
+    "choreo.scipy_plus.cython.test",
 ]
 
 cython_safemath_needed = [
+    False,
+    False,
+    False,
     False,
     False,
     False,
@@ -136,7 +142,7 @@ ext_modules = [
     extra_link_args = extra_link_args,
     define_macros  = define_macros ,
     )
-    for (name,source,safemath_needed) in zip(cython_extnames,cython_filenames,cython_safemath_needed)
+    for (name,source,safemath_needed) in zip(cython_extnames,cython_filenames,cython_safemath_needed, strict = True)
 ]
 
 if use_Cython:
@@ -150,6 +156,7 @@ if use_Cython:
         annotate = True,
         compiler_directives = compiler_directives,
         nthreads = nthreads,
+        # force = True,
     )
     
 

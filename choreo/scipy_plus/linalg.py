@@ -12,6 +12,42 @@ import scipy.linalg
 # import scipy.sparse as sp
 # import functools
 
+def null_space(A, eps = 1e-12):
+
+    n = A.shape[0]
+    m = A.shape[1]
+
+    if (n == 0):
+
+        return np.identity(m)
+
+    else:
+
+        Q, R, P = scipy.linalg.qr(
+            A.T,
+            overwrite_a = False,
+            mode = 'economic',
+            pivoting = True
+        )
+
+        rank = min(R.shape)
+        for i in range(min(R.shape)):
+            if (abs(R[i, i]) < eps):
+                rank = i
+                break
+
+        return Q[:, rank:]
+
+        # return scipy.linalg.null_space(A)
+
+
+
+
+def random_orthogonal_matrix(geodim):
+
+    mat = np.random.random_sample((geodim,geodim))
+    sksymmat = mat - mat.T
+    return scipy.linalg.expm(sksymmat)
 
 def InstabilityDecomposition(Mat,eps=1e-12):
 
