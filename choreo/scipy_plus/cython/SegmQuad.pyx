@@ -31,15 +31,15 @@ cdef int C_FUN_ONEVAL = 2
 
 cdef ccallback_signature_t signatures[4]
 
-ctypedef void (*c_fun_type_memoryview)(const double, double[::1]) nogil noexcept
+ctypedef void (*c_fun_type_memoryview)(const double, double[::1]) noexcept nogil 
 signatures[C_FUN_MEMORYVIEW].signature = b"void (double const , __Pyx_memviewslice)"
 signatures[C_FUN_MEMORYVIEW].value = C_FUN_MEMORYVIEW
 
-ctypedef void (*c_fun_type_pointer)(const double, double*) nogil noexcept
+ctypedef void (*c_fun_type_pointer)(const double, double*) noexcept nogil 
 signatures[C_FUN_POINTER].signature = b"void (double const , double *)"
 signatures[C_FUN_POINTER].value = C_FUN_POINTER
 
-ctypedef double (*c_fun_type_oneval)(const double) nogil noexcept
+ctypedef double (*c_fun_type_oneval)(const double) noexcept nogil 
 signatures[C_FUN_ONEVAL].signature = b"double (double const )"
 signatures[C_FUN_ONEVAL].value = C_FUN_ONEVAL
 
@@ -88,7 +88,7 @@ cdef inline void LowLevelFun_apply(
     const LowLevelFun fun ,
     const double x        ,
     double[::1] res ,
-) nogil noexcept:
+) noexcept nogil:
 
     if fun.fun_type == C_FUN_MEMORYVIEW:
         fun.c_fun_memoryview(x, res)
@@ -176,7 +176,7 @@ cdef void IntegrateOnSegment_ann_lowlevel(
     QuadFormula quad                ,
     double[::1] f_res               ,
     double[::1] f_int               ,
-) nogil noexcept:
+) noexcept nogil:
 
     cdef Py_ssize_t istep
     cdef long iint
