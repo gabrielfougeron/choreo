@@ -1,6 +1,25 @@
+"""
+Benchmark of LowLevelCallable for Segment Quadrature
+====================================================
+"""
+
+# %%
+# Definition of benchmarked integrands
+
+# sphinx_gallery_start_ignore
 import os
 import sys
-__PROJECT_ROOT__ = os.path.abspath(os.path.join(os.path.dirname(__file__),os.pardir))
+
+try:
+    __PROJECT_ROOT__ = os.path.abspath(os.path.join(os.path.dirname(__file__),os.pardir,os.pardir))
+
+    if ':' in __PROJECT_ROOT__:
+        __PROJECT_ROOT__ = os.getcwd()
+
+except (NameError, ValueError): 
+
+    __PROJECT_ROOT__ = os.path.abspath(os.path.join(os.getcwd(),os.pardir,os.pardir))
+
 sys.path.append(__PROJECT_ROOT__)
 
 os.environ['OPENBLAS_NUM_THREADS'] = '1'
@@ -16,7 +35,12 @@ import math as m
 import choreo 
 import scipy
 
-timings_folder = os.path.join(__PROJECT_ROOT__,'build')
+
+timings_folder = os.path.join(__PROJECT_ROOT__,'docs','source','_build','benchmarks_out')
+
+if not(os.path.isdir(timings_folder)):
+    os.makedirs(timings_folder)
+
 basename_timings_filename = 'SegmQuad_bench'
 
 ndim = 1
@@ -24,6 +48,8 @@ x_span = (0., 1.)
 method = 'Gauss'
 nsteps = 10
 quad = choreo.scipy_plus.SegmQuad.ComputeQuadrature(method, nsteps)
+
+# sphinx_gallery_end_ignore
 
 single_py_fun = functools.partial(
     choreo.scipy_plus.SegmQuad.IntegrateOnSegment,
@@ -101,6 +127,8 @@ all_benchs = {
     f'Vector function of size {ndim}' : all_funs_2  ,
 }
 
+# sphinx_gallery_start_ignore
+
 n_bench = len(all_benchs)
 
 dpi = 150
@@ -149,7 +177,8 @@ for bench_name, all_funs in all_benchs.items():
         ax = axs[i_bench,0]                     ,
         title = bench_name                      ,
     )
-
-
+    
 plt.tight_layout()
-plt.savefig('SegmQuad_bench.png')
+plt.show()
+    
+# sphinx_gallery_end_ignore

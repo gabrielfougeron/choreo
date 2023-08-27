@@ -3,10 +3,13 @@ Benchmark of FFT algorithms
 ===========================
 """
 
-# %%
+# %% 
+# This benchmark compares execution times of several FFT functions using different backends
+
+# sphinx_gallery_start_ignore
+
 import os
 import sys
-
 
 try:
     __PROJECT_ROOT__ = os.path.abspath(os.path.join(os.path.dirname(__file__),os.pardir,os.pardir))
@@ -23,23 +26,50 @@ sys.path.append(__PROJECT_ROOT__)
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy
-import math
-
-
 import choreo
 
+timings_folder = os.path.join(__PROJECT_ROOT__,'docs','source','_build','benchmarks_out')
 
-# %%
+if not(os.path.isdir(timings_folder)):
+    os.makedirs(timings_folder)
+
+# sphinx_gallery_end_ignore
+
+def fft(x):
+    scipy.fft.fft(x)
+
+def rfft(x):
+    scipy.fft.rfft(x)
+
+def dct_I(x):
+    scipy.fft.dct(x,1)
+
+def dst_I(x):
+    scipy.fft.dst(x,1)
+
+def dct_III(x):
+    scipy.fft.dct(x,3)
+
+def dst_III(x):
+    scipy.fft.dst(x,3)
+    
+# sphinx_gallery_start_ignore
+
+def prepare_x(n):
+    x = np.random.random(n)
+    return [(x, 'x')]
+
+
 all_backends = []
 all_backends_names = []
 
 all_backends.append('scipy')
-all_backends_names.append('scipy')
+all_backends_names.append('Scipy backend')
 
 try:
     import mkl_fft
     all_backends.append(mkl_fft._scipy_fft_backend)
-    all_backends_names.append('mkl_fft')
+    all_backends_names.append('MKL backend')
 
 except:
     pass
@@ -55,7 +85,7 @@ try:
     # pyfftw.config.PLANNER_EFFORT = 'FFTW_EXHAUSTIVE'
 
     all_backends.append(pyfftw.interfaces.scipy_fft)
-    all_backends_names.append('pyfftw')
+    all_backends_names.append('PYFFTW backend')
 
 except:
     pass
@@ -76,39 +106,11 @@ fig, axs = plt.subplots(
     squeeze = False,
 )
 
-def fft(x):
-    scipy.fft.fft(x)
-
-def rfft(x):
-    scipy.fft.rfft(x)
-
-def dct_I(x):
-    scipy.fft.dct(x,1)
-
-def dst_I(x):
-    scipy.fft.dst(x,1)
-
-def dct_III(x):
-    scipy.fft.dct(x,3)
-
-def dst_III(x):
-    scipy.fft.dst(x,3)
-
-def prepare_x(n):
-    x = np.random.random(n)
-    return [(x, 'x')]
-
 
 for i_backend, backend in enumerate(all_backends):
   
-    timings_folder = os.path.join(__PROJECT_ROOT__,'docs','source','_build','benchmarks_out')
-
-    if not(os.path.isdir(timings_folder)):
-        os.makedirs(timings_folder)
-
-    basename = 'FFT_bench_' + all_backends_names[i_backend]
+    basename = 'FFT_bench_' + all_backends_names[i_backend].replace(' ','_')
     timings_filename = os.path.join(timings_folder,basename+'.npy')
-
 
     scipy.fft.set_global_backend(
         backend = backend   ,
@@ -158,6 +160,8 @@ for i_backend, backend in enumerate(all_backends):
         ax = axs[i_backend, 0]                  ,
         title = all_backends_names[i_backend]   ,
     )
-
+    
 plt.tight_layout()
 plt.show()
+
+# sphinx_gallery_end_ignore
