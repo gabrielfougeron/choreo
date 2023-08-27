@@ -31,16 +31,16 @@ cdef int C_FUN_ONEVAL = 2
 
 cdef ccallback_signature_t signatures[4]
 
-ctypedef void (*c_fun_type_memoryview)(const double, double[::1]) noexcept nogil 
-signatures[C_FUN_MEMORYVIEW].signature = b"void (double const , __Pyx_memviewslice)"
+ctypedef void (*c_fun_type_memoryview)(double, double[::1]) noexcept nogil 
+signatures[C_FUN_MEMORYVIEW].signature = b"void (double, __Pyx_memviewslice)"
 signatures[C_FUN_MEMORYVIEW].value = C_FUN_MEMORYVIEW
 
-ctypedef void (*c_fun_type_pointer)(const double, double*) noexcept nogil 
-signatures[C_FUN_POINTER].signature = b"void (double const , double *)"
+ctypedef void (*c_fun_type_pointer)(double, double*) noexcept nogil 
+signatures[C_FUN_POINTER].signature = b"void (double, double *)"
 signatures[C_FUN_POINTER].value = C_FUN_POINTER
 
-ctypedef double (*c_fun_type_oneval)(const double) noexcept nogil 
-signatures[C_FUN_ONEVAL].signature = b"double (double const )"
+ctypedef double (*c_fun_type_oneval)(double) noexcept nogil 
+signatures[C_FUN_ONEVAL].signature = b"double (double)"
 signatures[C_FUN_ONEVAL].value = C_FUN_ONEVAL
 
 signatures[3].signature = NULL
@@ -98,6 +98,23 @@ cdef inline void LowLevelFun_apply(
 
     elif fun.fun_type == C_FUN_ONEVAL:
         res[0] = fun.c_fun_oneval(x)
+
+
+cdef inline void PyFun_apply(
+    object fun ,
+    const double x  ,
+    double[::1] res ,
+):
+
+    cdef object f_res_raw
+
+    f_res_raw = fun(x)
+
+    if isinstance(f_res_raw, float):   # idim is expected to be 1
+        res[0] = f_res_raw
+    else: # Hoping for good luck in casting
+        res = f_res_raw
+
 
 
 cdef class QuadFormula:
@@ -197,7 +214,7 @@ cdef void IntegrateOnSegment_ann_lowlevel(
 
             xi = xbeg + cdx[istep]
 
-            LowLevelFun_apply(fun,xi,f_res)
+            LowLevelFun_apply(fun, xi, f_res)
 
             for idim in range(ndim):
 
@@ -228,6 +245,8 @@ cdef void IntegrateOnSegment_ann_python(
     cdef double xi
     cdef double *cdx = <double*> malloc(sizeof(double)*quad.w.shape[0])
 
+    cdef object f_res_raw
+
     dx = (x_span[1] - x_span[0]) / nint
 
     for istep in range(quad.w.shape[0]):
@@ -240,7 +259,7 @@ cdef void IntegrateOnSegment_ann_python(
 
             xi = xbeg + cdx[istep]
 
-            f_res = fun(xi)
+            PyFun_apply(fun, xi, f_res)
 
             for idim in range(ndim):
 
