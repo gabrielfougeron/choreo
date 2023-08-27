@@ -101,21 +101,23 @@ cdef inline void LowLevelFun_apply(
 
 
 cdef inline void PyFun_apply(
-    object fun ,
+    object fun      ,
     const double x  ,
     double[::1] res ,
-):
+    Py_ssize_t ndim ,  
+) noexcept:
 
     cdef object f_res_raw
+
+    cdef Py_ssize_t i
 
     f_res_raw = fun(x)
 
     if isinstance(f_res_raw, float):   # idim is expected to be 1
         res[0] = f_res_raw
-    else: # Hoping for good luck in casting
-        res = f_res_raw
-
-
+    else:
+        for i in range(ndim):
+            res[i] = f_res_raw[i]
 
 cdef class QuadFormula:
     
@@ -259,7 +261,7 @@ cdef void IntegrateOnSegment_ann_python(
 
             xi = xbeg + cdx[istep]
 
-            PyFun_apply(fun, xi, f_res)
+            PyFun_apply(fun, xi, f_res, ndim)
 
             for idim in range(ndim):
 
