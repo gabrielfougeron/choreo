@@ -135,12 +135,12 @@ include_dirs = [numpy.get_include()]
 
 ext_modules = [
     setuptools.Extension(
-    name = name,
-    sources =  [source],
-    include_dirs = include_dirs,
-    extra_compile_args = extra_compile_args_safe if safemath_needed else extra_compile_args_std,
-    extra_link_args = extra_link_args,
-    define_macros  = define_macros ,
+        name = name,
+        sources =  [source],
+        include_dirs = include_dirs,
+        extra_compile_args = extra_compile_args_safe if safemath_needed else extra_compile_args_std,
+        extra_link_args = extra_link_args,
+        define_macros  = define_macros ,
     )
     for (name,source,safemath_needed) in zip(cython_extnames,cython_filenames,cython_safemath_needed, strict = True)
 ]
@@ -162,7 +162,7 @@ if use_Cython:
 
 packages = setuptools.find_packages()
 
-package_data = {key : ['*.h','*.c','*.pyx'] for key in packages }
+package_data = {key : ['*.h','*.c','*.pyx','*.pxd'] for key in packages}
 
 setuptools.setup(
     platforms = ['any'],
