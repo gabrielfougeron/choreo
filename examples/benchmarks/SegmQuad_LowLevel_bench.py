@@ -80,7 +80,7 @@ nb_fun_inplace_pointer = choreo.scipy_plus.SegmQuad.nb_jit_inplace_double_array(
 
 # sphinx_gallery_end_ignore
 
-all_funs_1 = {
+all_funs_scalar = {
     'py_fun' : test_from_fun(py_fun) ,
     'py_fun_array' : test_from_fun(py_fun_array) ,
     'nb_fun' : test_from_fun(nb_fun) ,
@@ -112,11 +112,9 @@ def mul_py_fun_inplace_pointer(x, res):
 
 mul_nb_fun_inplace_pointer = choreo.scipy_plus.SegmQuad.nb_jit_inplace_double_array(mul_py_fun_inplace_pointer)
 
-
-
 # sphinx_gallery_end_ignore
 
-all_funs_2 = {
+all_funs_vect = {
     'py_fun' : None, 
     'py_fun_array' : test_from_fun(mul_py_fun_array) ,
     'nb_fun' : None ,
@@ -128,8 +126,8 @@ all_funs_2 = {
 }
 
 all_benchs = {
-    'Scalar function' : all_funs_1  ,
-    f'Vector function of size {choreo.scipy_plus.cython.test.mul_size_py}' : all_funs_2  ,
+    'Scalar function' : all_funs_scalar  ,
+    f'Vector function of size {choreo.scipy_plus.cython.test.mul_size_py}' : all_funs_vect  ,
 }
 
 # sphinx_gallery_start_ignore
@@ -151,7 +149,7 @@ fig, axs = plt.subplots(
 
 i_bench = -1
 
-all_nint = np.array([2**i for i in range(18)])
+all_nint = np.array([2**i for i in range(14)])
 
 def setup(nint):
     return [(nint, 'nint')]
