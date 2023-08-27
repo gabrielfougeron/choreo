@@ -4,7 +4,7 @@ Convergence analysis of integration methods on segment
 """
 
 # %%
-# Evaluation of absolute quadrature error with the following parameters:
+# Evaluation of relative quadrature error with the following parameters:
 
 # sphinx_gallery_start_ignore
 
@@ -41,26 +41,17 @@ def cpte_error(
 
     if fun_name == "exp" :
         # WOLFRAM
-        # f(x) = exp(x)
-        # F(x) = exp(x)
+        # f(x) = y*exp(y*x)
+        # F(x) = exp(y*x)
 
-        test_ndim = 1
+        test_ndim = 50
 
-        fun = lambda x: np.array([m.exp(x)])
-        Fun = lambda x: np.array([m.exp(x)])
+        fun = lambda x: np.array([y*m.exp(y*x) for y in range(test_ndim)])
+        Fun = lambda x: np.array([m.exp(y*x) for y in range(test_ndim)])
+        
+        x_span = (0.,1.)
+        exact = Fun(x_span[1]) - Fun(x_span[0])
 
-    if fun_name == "cos" :
-        # WOLFRAM
-        # f(x) = cos(x)
-        # F(x) = sin(x)
-
-        test_ndim = 1
-
-        fun = lambda x: np.array([m.cos(x)])
-        Fun = lambda x: np.array([m.sin(x)])
-
-    x_span = (0.,10.)
-    exact = Fun(x_span[1]) - Fun(x_span[0])
 
     quad = choreo.scipy_plus.SegmQuad.ComputeQuadrature(quad_method, quad_nsteps)
 
@@ -71,6 +62,11 @@ def cpte_error(
         quad = quad     ,
         nint = nint     ,
     )
+    
+    # print()
+    # print(approx)
+    # print(exact)
+    # print(approx/exact)
 
     error = np.linalg.norm(approx-exact)/np.linalg.norm(exact)
 
@@ -81,14 +77,13 @@ def cpte_error(
 
 fun_names = [
     "exp",
-    "cos",
 ]
 
 methods = [
     'Gauss'
 ]
 
-all_nsteps = range(1,10)
+all_nsteps = range(1,11)
 refinement_lvl = np.array(range(1,100))
 
 # sphinx_gallery_start_ignore
