@@ -28,7 +28,7 @@ from libc.math cimport isinf as cisinf
 cdef inline void single_cy_fun_pointer(
     const double x,
     double *res,
-) nogil noexcept:
+) noexcept nogil:
 
     cdef Py_ssize_t i
     cdef Py_ssize_t size = 1
@@ -42,13 +42,13 @@ cdef inline void single_cy_fun_pointer(
 cdef inline void single_cy_fun_memoryview(
     const double x,
     double[::1] res,
-) nogil noexcept:
+) noexcept nogil:
 
     single_cy_fun_pointer(x,&res[0])
 
 cdef inline double single_cy_fun_oneval(
     const double x,
-) nogil noexcept:
+) noexcept nogil:
 
     cdef double res
     single_cy_fun_pointer(x,&res)
@@ -67,7 +67,7 @@ mul_size_py = mul_size
 cdef inline void mul_cy_fun_pointer(
     const double x,
     double *res,
-) nogil noexcept:
+) noexcept nogil:
 
     cdef Py_ssize_t i
     cdef double val
@@ -80,7 +80,7 @@ cdef inline void mul_cy_fun_pointer(
 cdef inline void mul_cy_fun_memoryview(
     const double x,
     double[::1] res,
-) nogil noexcept:
+) noexcept nogil:
 
     mul_cy_fun_pointer(x,&res[0])
 
