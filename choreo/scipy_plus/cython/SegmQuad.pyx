@@ -4,7 +4,6 @@ ODE.pyx : Defines ODE-related things I designed I feel ought to be in scipy ... 
 
 '''
 
-import os
 cimport scipy.linalg.cython_blas
 cimport scipy.linalg.cython_lapack
 from libc.stdlib cimport malloc, free

@@ -10,6 +10,9 @@ from sphinx_pyproject import SphinxConfig
 
 __PROJECT_ROOT__ = os.path.abspath(os.path.join(os.path.dirname(__file__),os.pardir,os.pardir))
 
+import warnings
+warnings.filterwarnings("ignore", category=RuntimeWarning) 
+
 
 project = "Choreo"
 author = "Gabriel Fougeron"
