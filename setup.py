@@ -120,7 +120,7 @@ compiler_directives = {
     'infer_types': True,
 }
 
-# ## Profiler only ####
+## Profiler only ####
 # profile_compiler_directives = {
 #     'profile': True,
 #     'linetrace': True,
