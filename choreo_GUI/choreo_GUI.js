@@ -43,8 +43,9 @@ async function Play_Loop_From_Python(args){
 
 	var trailLayerCanvas = document.getElementById("trailLayerCanvas")
 
-    var event = new Event('StopAnimationFromOutsideCanvas')
-    trailLayerCanvas.dispatchEvent(event)
+    // running = false
+//     var event = new Event('StopAnimationFromOutsideCanvas')
+//     trailLayerCanvas.dispatchEvent(event)
 
     SolName = args.solname
     var txt = await args.JSON_data.text()
@@ -169,7 +170,7 @@ async function Python_Imports_Done(args){
 
 	var trailLayerCanvas = document.getElementById("trailLayerCanvas")
 
-    PythonPrint({txt:"&#10;All python packages imported&#10;"})
+    PythonPrint({txt:"\nAll python packages imported\n"})
 
     SearchIsOnGoing = false
     var ChoreoDispInitStateBtn = document.getElementById("ChoreoDispInitStateBtn")
@@ -319,13 +320,16 @@ async function ChoreoExecuteClick() {
             RotSlider.setValue(0)
             RotSlider.disable()
 
-            var event = new Event('StopAnimationFromOutsideCanvas')
-            trailLayerCanvas.dispatchEvent(event)
+            trajectoriesOn = false
+            running = false
 
             var event = new Event('DisableAnimationFromOutsideCanvas')
             trailLayerCanvas.dispatchEvent(event)
 
-            trajectoriesOn = false
+            setTimeout(() => { // remove whatever is printed on requestAnimationFrame
+                var event = new Event('DisableAnimationFromOutsideCanvas')
+                trailLayerCanvas.dispatchEvent(event)
+              }, "30")
 
         }
 
@@ -717,8 +721,6 @@ function LoadConfigDict(ConfigDict) {
     MassArray = ConfigDict['Geom_Bodies'] ['mass']
     LoopTargets = ConfigDict['Geom_Bodies']['Targets']
 
-    MakeLoopData()
-
     if (document.getElementById('checkbox_Target').checked ^ ConfigDict['Geom_Target'] ['LookForTarget']) {
         checkbox_EnableTargets_Handler()
     }
@@ -830,6 +832,8 @@ function LoadConfigDict(ConfigDict) {
 
     document.getElementById('CLI_SaveImage').checked        = ConfigDict['Solver_CLI'] ['SaveImage']    
     document.getElementById('CLI_SaveVideo').checked        = ConfigDict['Solver_CLI'] ['SaveVideo']    
+
+    MakeBodyGraph()
     
 }
 
@@ -1334,7 +1338,7 @@ function KillAndReloadWorker() {
     var Python_State_Div = document.getElementById("Python_State_Div")
 
     PythonClearPrints()
-    PythonPrint({txt:"Python Killed. Reloading ...&#10;"})
+    PythonPrint({txt:"Python Killed. Reloading ...\n"})
 
     Python_State_Div.innerHTML = "Killed"
     Python_State_Div.classList.add('w3-red')
@@ -1588,37 +1592,38 @@ function DeleteCookie(name) {
 }
 
 function PythonClearPrints() {
-    Python_textarea.innerHTML = "";
+    Python_textarea.value = "";
 }
 
 function PythonPrint(args) {
 
-    var the_height = parseInt(Python_textarea.style.height, 10);
-    var is_at_bottom = (Python_textarea.scrollHeight - Python_textarea.scrollTop < (the_height + 10));
+    const delta_height_stick = 10
+    const the_height = parseInt(Python_textarea.style.height, 10)
+    const is_at_bottom = ((Python_textarea.scrollHeight - Python_textarea.scrollTop) < (the_height + delta_height_stick))
 
-    Python_textarea.innerHTML += args.txt + "&#10;";    
+    Python_textarea.value += args.txt + "\n"
 
     if (is_at_bottom) {
-        Python_textarea.scrollTop = Python_textarea.scrollHeight;
+        Python_textarea.scrollTop = Python_textarea.scrollHeight
     }
 
 }
 
-var checkbox_DisplayLoopsDuringSearch = document.getElementById('checkbox_DisplayLoopsDuringSearch');
-checkbox_DisplayLoopsDuringSearch.addEventListener("change", checkbox_DisplayLoopsDuringSearchHandler, true);
+var checkbox_DisplayLoopsDuringSearch = document.getElementById('checkbox_DisplayLoopsDuringSearch')
+checkbox_DisplayLoopsDuringSearch.addEventListener("change", checkbox_DisplayLoopsDuringSearchHandler, true)
 
 function checkbox_DisplayLoopsDuringSearchHandler(event) {
 
-    var checkbox_DisplayBodiesDuringSearch = document.getElementById('checkbox_DisplayBodiesDuringSearch');
+    var checkbox_DisplayBodiesDuringSearch = document.getElementById('checkbox_DisplayBodiesDuringSearch')
 
     if (event.currentTarget.checked) {
 
-        checkbox_DisplayBodiesDuringSearch.disabled = "";
+        checkbox_DisplayBodiesDuringSearch.disabled = ""
 
     } else {
 
         checkbox_DisplayBodiesDuringSearch.checked = false;
-        checkbox_DisplayBodiesDuringSearch.disabled = "disabled";
+        checkbox_DisplayBodiesDuringSearch.disabled = "disabled"
         
     }
 
@@ -1877,8 +1882,8 @@ async function PlayFileFromDisk(name,npy_file,json_file) {
         var trailLayerCanvas = document.getElementById("trailLayerCanvas")
         var wasrunning = running
 
-        var event = new Event('StopAnimationFromOutsideCanvas')
-        trailLayerCanvas.dispatchEvent(event)
+        // var event = new Event('StopAnimationFromOutsideCanvas')
+        // trailLayerCanvas.dispatchEvent(event)
 
         SolName = name
         
@@ -1939,10 +1944,10 @@ async function PlayFileFromRemote(name,npy_file,json_file) {
         var trailLayerCanvas = document.getElementById("trailLayerCanvas")
         var wasrunning = running
 
-        if (running) {
-            var event = new Event('StopAnimationFromOutsideCanvas')
-            trailLayerCanvas.dispatchEvent(event)
-        }
+        // if (running) {
+        //     var event = new Event('StopAnimationFromOutsideCanvas')
+        //     trailLayerCanvas.dispatchEvent(event)
+        // }
 
         npyjs_obj = new npyjs()
 
@@ -2555,6 +2560,7 @@ function InitPage(){
         MakeBodyGraph()
 
         document.getElementById("BodyGraphDiv").addEventListener("dblclick", MakeBodyGraph)
+        Python_textarea.style.height = "400px"
 
     }
 

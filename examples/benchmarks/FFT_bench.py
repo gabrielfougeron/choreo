@@ -3,10 +3,14 @@ Benchmark of FFT algorithms
 ===========================
 """
 
-# %%
+# %% 
+# This benchmark compares execution times of several FFT functions using different backends
+# The plots give the measured execution time of the FFT as a function of the input length
+
+# sphinx_gallery_start_ignore
+
 import os
 import sys
-
 
 try:
     __PROJECT_ROOT__ = os.path.abspath(os.path.join(os.path.dirname(__file__),os.pardir,os.pardir))
@@ -23,58 +27,14 @@ sys.path.append(__PROJECT_ROOT__)
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy
-import math
-
-
 import choreo
 
+timings_folder = os.path.join(__PROJECT_ROOT__,'docs','source','_build','benchmarks_out')
 
-# %%
-all_backends = []
-all_backends_names = []
+if not(os.path.isdir(timings_folder)):
+    os.makedirs(timings_folder)
 
-all_backends.append('scipy')
-all_backends_names.append('scipy')
-
-try:
-    import mkl_fft
-    all_backends.append(mkl_fft._scipy_fft_backend)
-    all_backends_names.append('mkl_fft')
-
-except:
-    pass
-
-try:
-
-    import pyfftw
-    pyfftw.interfaces.cache.enable()
-    pyfftw.interfaces.cache.set_keepalive_time(300000)
-    # pyfftw.config.PLANNER_EFFORT = 'FFTW_ESTIMATE'
-    pyfftw.config.PLANNER_EFFORT = 'FFTW_MEASURE'
-    # pyfftw.config.PLANNER_EFFORT = 'FFTW_PATIENT'
-    # pyfftw.config.PLANNER_EFFORT = 'FFTW_EXHAUSTIVE'
-
-    all_backends.append(pyfftw.interfaces.scipy_fft)
-    all_backends_names.append('pyfftw')
-
-except:
-    pass
-
-n_backends = len(all_backends)
-
-dpi = 150
-
-figsize = (1600/dpi, 1600/dpi)
-
-fig, axs = plt.subplots(
-    nrows = n_backends,
-    ncols = 1,
-    sharex = True,
-    sharey = True,
-    figsize = figsize,
-    dpi = dpi   ,
-    squeeze = False,
-)
+# sphinx_gallery_end_ignore
 
 def fft(x):
     scipy.fft.fft(x)
@@ -93,22 +53,65 @@ def dct_III(x):
 
 def dst_III(x):
     scipy.fft.dst(x,3)
+    
+# sphinx_gallery_start_ignore
 
 def prepare_x(n):
     x = np.random.random(n)
     return [(x, 'x')]
 
 
+all_backends = []
+all_backends_names = []
+
+all_backends.append('scipy')
+all_backends_names.append('Scipy backend')
+
+try:
+    import mkl_fft
+    all_backends.append(mkl_fft._scipy_fft_backend)
+    all_backends_names.append('MKL backend')
+
+except:
+    pass
+
+try:
+
+    import pyfftw
+    pyfftw.interfaces.cache.enable()
+    pyfftw.interfaces.cache.set_keepalive_time(300000)
+    # pyfftw.config.PLANNER_EFFORT = 'FFTW_ESTIMATE'
+    pyfftw.config.PLANNER_EFFORT = 'FFTW_MEASURE'
+    # pyfftw.config.PLANNER_EFFORT = 'FFTW_PATIENT'
+    # pyfftw.config.PLANNER_EFFORT = 'FFTW_EXHAUSTIVE'
+
+    all_backends.append(pyfftw.interfaces.scipy_fft)
+    all_backends_names.append('PYFFTW backend')
+
+except:
+    pass
+
+n_backends = len(all_backends)
+
+dpi = 150
+
+figsize = (1600/dpi, n_backends * 800 / dpi)
+
+fig, axs = plt.subplots(
+    nrows = n_backends,
+    ncols = 1,
+    sharex = True,
+    sharey = True,
+    figsize = figsize,
+    dpi = dpi   ,
+    squeeze = False,
+)
+
+
 for i_backend, backend in enumerate(all_backends):
   
-    timings_folder = os.path.join(__PROJECT_ROOT__,'docs','source','_build','benchmarks_out')
-
-    if not(os.path.isdir(timings_folder)):
-        os.makedirs(timings_folder)
-
-    basename = 'FFT_bench_' + all_backends_names[i_backend]
+    basename = 'FFT_bench_' + all_backends_names[i_backend].replace(' ','_')
     timings_filename = os.path.join(timings_folder,basename+'.npy')
-
 
     scipy.fft.set_global_backend(
         backend = backend   ,
@@ -158,6 +161,8 @@ for i_backend, backend in enumerate(all_backends):
         ax = axs[i_backend, 0]                  ,
         title = all_backends_names[i_backend]   ,
     )
-
+    
 plt.tight_layout()
 plt.show()
+
+# sphinx_gallery_end_ignore

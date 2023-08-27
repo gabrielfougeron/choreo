@@ -1,6 +1,8 @@
-from .cython                    import *
+# import choreo.scipy_plus.cython
 
-from .ODE                       import *
+from .                          import ODE
+from .                          import SegmQuad
+
 from .linalg                    import *
 from .nonlin                    import *
 from .Hierarchical_Clustering   import *

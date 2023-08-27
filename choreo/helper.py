@@ -10,7 +10,7 @@ import shutil
 import time
 import builtins
 
-from choreo.scipy_plus import *
+# from choreo.scipy_plus import *
 from choreo.funs import *
 
 def Make2DChoreoSym(SymType,ib_list):
@@ -269,7 +269,7 @@ def Make_ChoreoSymList_From_ActionSymList(ActionSymList, nbody):
                     LoopSource = ib,
                     SpaceRot = ASym.SpaceRot,
                     TimeRev = ASym.TimeRev,
-                    TimeShift = ASym.TimeShift,
+                    TimeShift = fractions.Fraction(numerator = ASym.TimeShiftNum, denominator = ASym.TimeShiftDen)
                 )
             )
 

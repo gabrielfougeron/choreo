@@ -34,6 +34,10 @@ n = n_base   # Total number of nodes.
 
 t = np.array(range(n))/n
 x = np.array(range(n))+1
+
+err = np.linalg.norm(x.imag)
+print(err)
+
 plt.plot(t,x)
 plt.show()
 
@@ -77,6 +81,13 @@ for i in range(n//2+1):
 for i in range(n//2+1,n):
     x[i] = y[n - i]
 
+z = np.zeros(n)
+for i in range(n):
+    z[i] = x[i] - x[(n-i) % n]
+
+err = np.linalg.norm(z)
+print(err)
+
 plt.plot(t,x)
 plt.show()
 # %%
@@ -116,6 +127,13 @@ for i in range(1,n//2):
 
 for i in range(n//2+1,n):
     x[i] = - y[n - i - 1]
+
+z = np.zeros(n)
+for i in range(n):
+    z[i] = x[i] + x[(n-i) % n]
+
+err = np.linalg.norm(z)
+print(err)
 
 plt.plot(t,x)
 plt.show()
@@ -162,6 +180,20 @@ for i in range(n//2,n//2 + n//4):
 
 for i in range(n//2 + n//4 + 1,n):
     x[i] = y[n - i]
+
+z = np.zeros(n)
+for i in range(n):
+    z[i] = x[i] - x[(n-i) % n]
+
+err = np.linalg.norm(z)
+print(err)
+
+for i in range(n):
+    z[i] = x[i] + x[(n+n//2 - i) % n]
+
+err = np.linalg.norm(z)
+print(err)
+
 
 plt.plot(t,x)
 plt.show()
@@ -213,6 +245,19 @@ for i in range(n//2+1,n//2 + n//4+1):
 for i in range(n//2 + n//4+1,n):
     x[i] = -y[n-1 - i]
 
+z = np.zeros(n)
+for i in range(n):
+    z[i] = x[i] + x[(n-i) % n]
+
+err = np.linalg.norm(z)
+print(err)
+
+for i in range(n):
+    z[i] = x[i] - x[(n+n//2 - i) % n]
+
+err = np.linalg.norm(z)
+print(err)
+
 plt.plot(t,x)
 plt.show()
 
@@ -255,6 +300,14 @@ x = np.zeros(n)
 for i in range(sub_period):
     for j in range(n_base):
         x[j+i*n_base] = y[j]
+
+z = np.zeros(n)
+for i_sub in range(sub_period-1):
+    for i in range(n):
+        z[i] = x[i] - x[(i+(i_sub+1)*n_base) % n]
+
+    err = np.linalg.norm(z)
+    print(err)
 
 plt.plot(t,x)
 plt.show()
