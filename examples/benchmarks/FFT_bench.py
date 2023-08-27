@@ -5,6 +5,7 @@ Benchmark of FFT algorithms
 
 # %% 
 # This benchmark compares execution times of several FFT functions using different backends
+# The plots give the measured execution time of the FFT as a function of the input length
 
 # sphinx_gallery_start_ignore
 

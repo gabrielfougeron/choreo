@@ -20,3 +20,9 @@ for line in Id:
 
 import numpy as np
 np.show_config()
+
+# %%
+# Scipy config informations
+
+import scipy
+scipy.show_config()
