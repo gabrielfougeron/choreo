@@ -21,6 +21,8 @@ from choreo.scipy_plus.cython.ODE import ImplicitSymplecticTanWithTableGaussSeid
 from choreo.scipy_plus.cython.ODE import ImplicitSymplecticWithTableGaussSeidel_VX_cython_mulfun
 from choreo.scipy_plus.cython.ODE import ImplicitSymplecticTanWithTableGaussSeidel_VX_cython_mulfun
 
+from choreo.scipy_plus.multiprec_tables import ComputeGaussButcherTables
+
 
 #####################
 # EXPLICIT RK STUFF #
@@ -63,148 +65,9 @@ SymplecticRuth4Rat_XV = functools.partial(ExplicitSymplecticWithTable_XV_cython,
 SymplecticRuth4Rat_VX = functools.partial(ExplicitSymplecticWithTable_VX_cython,c_table=c_table_Ruth4Rat,d_table=d_table_Ruth4Rat,nsteps=nsteps_Ruth4Rat)
 
 
-
 #####################
 # IMPLICIT RK STUFF #
 #####################
-
-def GatherDerivAtZeros(a,b,n,z=None):
-
-    if z is None:
-        w, z = QuadFrom3Term(a,b,n)
-
-    phipz = mpmath.matrix(n,1)
-
-    for i in range(n):
-        
-        phip = EvalAllDerivFrom3Term(a,b,n,z[i])
-        phipz[i] = phip[n]
-
-    return phipz
-
-def EvalLagrange(a,b,n,z,x,phipz=None):
-
-    if phipz is None :
-          phipz = GatherDerivAtZeros(a,b,n,z)
-    
-    phi = EvalAllFrom3Term(a,b,n,x)
-    
-    lag = mpmath.matrix(n,1)
-    
-    for i in range(n):
-    
-        lag[i] = phi[n] / (phipz[i] * (x - z[i]))
-
-    return lag
-
-def ComputeButcher_psi(x,y,a,b,n,w=None,z=None,wint=None,zint=None,nint=None):
-
-    if (w is None) or (z is None) :
-        assert (w is None) and (z is None)
-        w, z = QuadFrom3Term(a,b,n)
-
-    if (nint is None) or (wint is None) or (zint is None):
-        assert (nint is None) and (wint is None) and (zint is None)
-        
-        nint = SafeGLIntOrder(n)
-        aint, bint = ShiftedGaussLegendre3Term(nint)
-        wint, zint = QuadFrom3Term(aint,bint,nint)
-
-    Butcher_psi = mpmath.matrix(n)
-
-    for iint in range(nint):
-
-        for i in range(n):
-
-            tint = x[i] + (y[i]-x[i]) * zint[iint]
-
-            lag = EvalLagrange(a,b,n,z,tint)
-
-            for j in range(n):
-
-                Butcher_psi[i,j] = Butcher_psi[i,j] + wint[iint] * lag[j]
-
-    for i in range(n):
-        for j in range(n):
-
-            Butcher_psi[i,j] = (y[i]-x[i]) * Butcher_psi[i,j]
-
-    return Butcher_psi
-
-def ComputeButcher_a(a,b,n,w=None,z=None,wint=None,zint=None,nint=None):
-
-    if (w is None) or (z is None) :
-        assert (w is None) and (z is None)
-        w, z = QuadFrom3Term(a,b,n)
-
-    x = mpmath.matrix(n,1)
-    return ComputeButcher_psi(x,z,a,b,n,w,z,wint,zint,nint)
-
-def ComputeButcher_beta_gamma(a,b,n,w=None,z=None,wint=None,zint=None,nint=None):
-
-    if (w is None) or (z is None) :
-        w, z = QuadFrom3Term(a,b,n)
-
-    x = mpmath.matrix(n,1)
-    y = mpmath.matrix(n,1)
-
-    for i in range(n):
-        x[i] = 1
-        y[i] = 1 + z[i]
-
-    Butcher_beta = ComputeButcher_psi(x,y,a,b,n,w,z,wint,zint,nint)
-
-    for i in range(n):
-        x[i] = -1 + z[i]
-        y[i] = 0
-
-    Butcher_gamma = ComputeButcher_psi(x,y,a,b,n,w,z,wint,zint,nint)
-
-    return Butcher_beta, Butcher_gamma
-
-def ComputeGaussButcherTables(n):
-
-    a, b = ShiftedGaussLegendre3Term(n)
-    w, z = QuadFrom3Term(a,b,n)
-
-    nint = SafeGLIntOrder(n)
-    aint, bint = ShiftedGaussLegendre3Term(nint)
-    wint, zint = QuadFrom3Term(aint,bint,nint)
-
-    Butcher_a = ComputeButcher_a(a,b,n,w,z,wint,zint,nint)
-    Butcher_beta, Butcher_gamma = ComputeButcher_beta_gamma(a,b,n,w,z,wint,zint,nint)
-
-    return Butcher_a, w, z, Butcher_beta, Butcher_gamma
-
-def SymmetricAdjointQuadrature(w,z,n):
-
-    w_ad = mpmath.matrix(n,1)
-    z_ad = mpmath.matrix(n,1)
-
-    for i in range(n):
-
-        z_ad[i] = 1 - z[n-1-i]
-        w_ad[i] = w[n-1-i]
-
-    return w_ad, z_ad
-
-def SymmetricAdjointButcher(Butcher_a, Butcher_b, Butcher_c, Butcher_beta, Butcher_gamma, n):
-
-    Butcher_b_ad, Butcher_c_ad = SymmetricAdjointQuadrature(Butcher_b,Butcher_c,n)
-
-    Butcher_a_ad = mpmath.matrix(n)
-    Butcher_beta_ad = mpmath.matrix(n)
-    Butcher_gamma_ad = mpmath.matrix(n)
-
-    for i in range(n):
-        for j in range(n):
-            
-            Butcher_a_ad[i,j] = Butcher_b[n-1-j] - Butcher_a[n-1-i,n-1-j]
-
-            Butcher_beta_ad[i,j]  = Butcher_gamma[n-1-i,n-1-j]
-            Butcher_gamma_ad[i,j] = Butcher_beta[n-1-i,n-1-j]
-
-    return Butcher_a_ad, Butcher_b_ad, Butcher_c_ad, Butcher_beta_ad, Butcher_gamma_ad
 
 
 @functools.cache

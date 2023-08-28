@@ -11,9 +11,6 @@ import math as m
 import numpy as np
 import scipy.linalg
 import sys
-import fractions
-import functools
-import line_profiler
 
 __PROJECT_ROOT__ = os.path.abspath(os.path.join(os.path.dirname(__file__),os.pardir))
 sys.path.append(__PROJECT_ROOT__)
@@ -50,10 +47,10 @@ test_names = [
 
 
 
-# the_integrators = {method:choreo.GetSymplecticIntegrator(method) for method in methods}
+# the_integrators = {method:choreo.scipy_plus.ODE.GetSymplecticIntegrator(method) for method in methods}
 
 
-the_integrators = choreo.all_unique_SymplecticIntegrators
+the_integrators = choreo.scipy_plus.ODE.all_unique_SymplecticIntegrators
 
 
 for the_test in test_names:
@@ -106,8 +103,6 @@ for the_test in test_names:
     if the_test == "y' = Az; z' = By" :
 
         test_ndim = 100
-
-
 
         # A = np.random.rand(test_ndim,test_ndim)
         A = np.identity(test_ndim)

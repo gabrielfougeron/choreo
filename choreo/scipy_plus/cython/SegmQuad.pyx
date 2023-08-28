@@ -132,10 +132,10 @@ cdef class QuadFormula:
     cdef long _th_cvg_rate
 
     def __init__(
-        self    ,
-        w       ,
-        x       ,
-        th_cvg_rate = None,
+        self                ,
+        w                   ,
+        x                   ,
+        th_cvg_rate = None  ,
     ):
 
         self._w = w
