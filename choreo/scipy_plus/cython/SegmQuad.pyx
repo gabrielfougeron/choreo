@@ -31,16 +31,16 @@ cdef int C_FUN_ONEVAL = 2
 
 cdef ccallback_signature_t signatures[4]
 
-ctypedef void (*c_fun_type_memoryview)(const double, double[::1]) noexcept nogil 
-signatures[C_FUN_MEMORYVIEW].signature = b"void (double const , __Pyx_memviewslice)"
+ctypedef void (*c_fun_type_memoryview)(double, double[::1]) noexcept nogil 
+signatures[C_FUN_MEMORYVIEW].signature = b"void (double, __Pyx_memviewslice)"
 signatures[C_FUN_MEMORYVIEW].value = C_FUN_MEMORYVIEW
 
-ctypedef void (*c_fun_type_pointer)(const double, double*) noexcept nogil 
-signatures[C_FUN_POINTER].signature = b"void (double const , double *)"
+ctypedef void (*c_fun_type_pointer)(double, double*) noexcept nogil 
+signatures[C_FUN_POINTER].signature = b"void (double, double *)"
 signatures[C_FUN_POINTER].value = C_FUN_POINTER
 
-ctypedef double (*c_fun_type_oneval)(const double) noexcept nogil 
-signatures[C_FUN_ONEVAL].signature = b"double (double const )"
+ctypedef double (*c_fun_type_oneval)(double) noexcept nogil 
+signatures[C_FUN_ONEVAL].signature = b"double (double)"
 signatures[C_FUN_ONEVAL].value = C_FUN_ONEVAL
 
 signatures[3].signature = NULL
@@ -100,21 +100,69 @@ cdef inline void LowLevelFun_apply(
         res[0] = fun.c_fun_oneval(x)
 
 
+cdef inline void PyFun_apply(
+    object fun      ,
+    const double x  ,
+    double[::1] res ,
+    Py_ssize_t ndim ,  
+) noexcept:
+
+    cdef object f_res_raw
+
+    cdef Py_ssize_t i
+
+    f_res_raw = fun(x)
+
+    if isinstance(f_res_raw, float):   # idim is expected to be 1
+        res[0] = f_res_raw
+    else:
+        for i in range(ndim):
+            res[i] = f_res_raw[i]
+
 cdef class QuadFormula:
+
+    """
+
+    integral( f ) ~ sum w_i f( x_i )
     
-    cdef double[::1] w
-    cdef double[::1] x
+    """
+    
+    cdef double[::1] _w
+    cdef double[::1] _x
+    cdef long _th_cvg_rate
 
-    def __init__(self, w, x):
+    def __init__(
+        self    ,
+        w       ,
+        x       ,
+        th_cvg_rate = None,
+    ):
 
-        self.w = w
-        self.x = x
+        self._w = w
+        self._x = x
 
-        assert w.shape[0] == x.shape[0]
+        assert self._w.shape[0] == self._x.shape[0]
+
+        if th_cvg_rate is None:
+            self._th_cvg_rate = -1
+        else:
+            self._th_cvg_rate = th_cvg_rate
 
     @property
     def nsteps(self):
-        return self.w.shape[0]
+        return self._w.shape[0]
+
+    @property
+    def x(self):
+        return np.array(self._x)
+    
+    @property
+    def w(self):
+        return np.array(self._w)    
+
+    @property
+    def th_cvg_rate(self):
+        return self._th_cvg_rate
     
 
 cpdef np.ndarray[double, ndim=1, mode="c"] IntegrateOnSegment(
@@ -183,25 +231,25 @@ cdef void IntegrateOnSegment_ann_lowlevel(
     cdef Py_ssize_t idim
     cdef double xbeg, dx
     cdef double xi
-    cdef double *cdx = <double*> malloc(sizeof(double)*quad.w.shape[0])
+    cdef double *cdx = <double*> malloc(sizeof(double)*quad._w.shape[0])
 
     dx = (x_span[1] - x_span[0]) / nint
 
-    for istep in range(quad.w.shape[0]):
-        cdx[istep] = quad.x[istep] * dx
+    for istep in range(quad._w.shape[0]):
+        cdx[istep] = quad._x[istep] * dx
 
     for iint in range(nint):
         xbeg = x_span[0] + iint * dx
 
-        for istep in range(quad.w.shape[0]):
+        for istep in range(quad._w.shape[0]):
 
             xi = xbeg + cdx[istep]
 
-            LowLevelFun_apply(fun,xi,f_res)
+            LowLevelFun_apply(fun, xi, f_res)
 
             for idim in range(ndim):
 
-                f_int[idim] = f_int[idim] + quad.w[istep] * f_res[idim]
+                f_int[idim] = f_int[idim] + quad._w[istep] * f_res[idim]
 
     for idim in range(ndim):
         f_int[idim] = f_int[idim] * dx
@@ -226,25 +274,27 @@ cdef void IntegrateOnSegment_ann_python(
     cdef Py_ssize_t idim
     cdef double xbeg, dx
     cdef double xi
-    cdef double *cdx = <double*> malloc(sizeof(double)*quad.w.shape[0])
+    cdef double *cdx = <double*> malloc(sizeof(double)*quad._w.shape[0])
+
+    cdef object f_res_raw
 
     dx = (x_span[1] - x_span[0]) / nint
 
-    for istep in range(quad.w.shape[0]):
-        cdx[istep] = quad.x[istep] * dx
+    for istep in range(quad._w.shape[0]):
+        cdx[istep] = quad._x[istep] * dx
 
     for iint in range(nint):
         xbeg = x_span[0] + iint * dx
 
-        for istep in range(quad.w.shape[0]):
+        for istep in range(quad._w.shape[0]):
 
             xi = xbeg + cdx[istep]
 
-            f_res = fun(xi)
+            PyFun_apply(fun, xi, f_res, ndim)
 
             for idim in range(ndim):
 
-                f_int[idim] = f_int[idim] + quad.w[istep] * f_res[idim]
+                f_int[idim] = f_int[idim] + quad._w[istep] * f_res[idim]
 
     for idim in range(ndim):
         f_int[idim] = f_int[idim] * dx

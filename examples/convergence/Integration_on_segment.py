@@ -4,7 +4,7 @@ Convergence analysis of integration methods on segment
 """
 
 # %%
-# Evaluation of absolute quadrature error with the following parameters:
+# Evaluation of relative quadrature error with the following parameters:
 
 # sphinx_gallery_start_ignore
 
@@ -41,26 +41,17 @@ def cpte_error(
 
     if fun_name == "exp" :
         # WOLFRAM
-        # f(x) = exp(x)
-        # F(x) = exp(x)
+        # f(x) = y*exp(y*x)
+        # F(x) = exp(y*x)
 
-        test_ndim = 1
+        test_ndim = 20
 
-        fun = lambda x: np.array([m.exp(x)])
-        Fun = lambda x: np.array([m.exp(x)])
+        fun = lambda x: np.array([y*m.exp(y*x) for y in range(test_ndim)])
+        Fun = lambda x: np.array([m.exp(y*x) for y in range(test_ndim)])
+        
+        x_span = (0.,1.)
+        exact = Fun(x_span[1]) - Fun(x_span[0])
 
-    if fun_name == "cos" :
-        # WOLFRAM
-        # f(x) = cos(x)
-        # F(x) = sin(x)
-
-        test_ndim = 1
-
-        fun = lambda x: np.array([m.cos(x)])
-        Fun = lambda x: np.array([m.sin(x)])
-
-    x_span = (0.,10.)
-    exact = Fun(x_span[1]) - Fun(x_span[0])
 
     quad = choreo.scipy_plus.SegmQuad.ComputeQuadrature(quad_method, quad_nsteps)
 
@@ -76,19 +67,17 @@ def cpte_error(
 
     return error
 
-
 # sphinx_gallery_end_ignore
 
 fun_names = [
     "exp",
-    "cos",
 ]
 
 methods = [
     'Gauss'
 ]
 
-all_nsteps = range(1,10)
+all_nsteps = range(1,11)
 refinement_lvl = np.array(range(1,100))
 
 # sphinx_gallery_start_ignore
@@ -115,7 +104,7 @@ figsize = (1600/dpi, n_bench * 800 / dpi)
 # sphinx_gallery_end_ignore
 
 # %%
-# The following plots give the measured convergence rate as a function of the number of quadrature subintervals
+# The following plots give the measured relative error as a function of the number of quadrature subintervals
 
 # sphinx_gallery_start_ignore
 
@@ -160,7 +149,8 @@ plt.tight_layout()
 plt.show()
 
 # %%
-# The following plots give the measured convergence rate as a function of the number of quadrature subintervals
+# The following plots give the measured convergence rate as a function of the number of quadrature subintervals.
+# The dotted lines are theoretical convergence rates.
 
 # sphinx_gallery_start_ignore
 
@@ -206,8 +196,28 @@ for bench_name, all_funs in all_benchs.items():
         title = f'Approximate convergence rate on integrand {bench_name}' ,
     )
     
+    for fun_name, fun in all_funs.items():
+            
+        quad_method = fun.args[1]
+        quad_nsteps = fun.args[2]
+
+        quad = choreo.scipy_plus.SegmQuad.ComputeQuadrature(quad_method, quad_nsteps)
+        th_order = quad.th_cvg_rate
+        xlim = axs[i_bench,0].get_xlim()
+
+        axs[i_bench,0].plot(xlim, [th_order, th_order], linestyle='dotted')
+        
 plt.tight_layout()
 
 # sphinx_gallery_end_ignore
 
 plt.show()
+
+# %%
+# We can see 3 distinct phases on these plots:
+# 
+# * A first pre-convergence phase, where the convergence rate is growing towards its theoretical value. the end of the pre-convergence phase occurs for a number of sub-intervals roughtly independant of the convergence order of the quadrature method.
+# * A steady convergence phase where the convergence remains close to the theoretical value
+# * A final phase, where the relative error stagnates arround 1e-15. The value of the integral is computed with maximal accuracy given floating point precision. The approximation of the convergence rate is dominated by seemingly random floating point errors.
+# 
+
