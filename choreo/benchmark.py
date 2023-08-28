@@ -17,18 +17,18 @@ def run_benchmark(
     setup = None            ,
     n_repeat = 1            ,
     time_per_test = 0.2     ,
-    timings_filename = None ,
+    filename = None         ,
     ForceBenchmark = False  ,
     show = False            ,
     StopOnExcept=False      ,
     **show_kwargs           ,
 ):
     
-    if timings_filename is None:
+    if filename is None:
         Load_timings_file = False
         Save_timings_file = False
     else:
-        Load_timings_file =  os.path.isfile(timings_filename) and not(ForceBenchmark)
+        Load_timings_file =  os.path.isfile(filename) and not(ForceBenchmark)
         Save_timings_file = True
 
     n_sizes = len(all_sizes)
@@ -43,7 +43,7 @@ def run_benchmark(
 
     if Load_timings_file:
 
-        all_times = np.load(timings_filename)
+        all_times = np.load(filename)
 
         BenchmarkUpToDate = True
         BenchmarkUpToDate = BenchmarkUpToDate and (all_times.shape[0] == n_sizes  )
@@ -108,7 +108,7 @@ def run_benchmark(
                         all_times[i_size, i_fun, i_repeat] = fun(setup(size))
 
         if Save_timings_file:
-            np.save(timings_filename, all_times)
+            np.save(filename, all_times)
 
     if show:
         plot_benchmark(

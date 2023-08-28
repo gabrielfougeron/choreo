@@ -95,10 +95,11 @@ cdef inline void PyFun_apply(
     double[::1] res     ,
 ):
 
-    print()
-    print(np.array(res))
-    res = fun(t, x)  
-    print(np.array(res))
+    cdef Py_ssize_t i
+    cdef object f_res_raw = fun(t, x)
+
+    for i in range(x.shape[0]):
+        res[i] = f_res_raw[i]
 
 
 cdef class ExplicitSymplecticRKTable:
@@ -154,11 +155,6 @@ cpdef ExplicitSymplecticIVP(
     long nint = 1                   ,
     long keep_freq = -1             ,
 ): 
-
-
-
-
-
 
     cdef ccallback_t callback_fun
     ccallback_prepare(&callback_fun, signatures, fun, CCALLBACK_DEFAULTS)
@@ -289,16 +285,14 @@ cdef void ExplicitSymplecticIVP_VX_ann_python(
 
             for istep in range(rk._c_table.shape[0]):
 
-                res = fun(tv,v)  
-                # PyFun_apply(fun,tv,v,res)
+                PyFun_apply(fun,tv,v,res)
 
                 for idof in range(ndof):
                     x[idof] += cdt[istep] * res[idof]  
 
                 tx += cdt[istep]
 
-                res = gun(tx,x)   
-                # PyFun_apply(gun,tx,x,res)
+                PyFun_apply(gun,tx,x,res)
 
                 for idof in range(ndof):
                     v[idof] += ddt[istep] * res[idof]  

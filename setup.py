@@ -87,13 +87,13 @@ elif platform.system() == "Linux":
 
                 break
 
-        extra_compile_args_std = ["-O0","-march=native", "-fopenmp"]
-        extra_compile_args_safe = ["-O0", "-fopenmp"]
-        extra_link_args = ["-fopenmp"]
-
-        # extra_compile_args_std = ["-Ofast","-march=native", "-fopenmp"]
-        # extra_compile_args_safe = ["-O2", "-fopenmp"]
+        # extra_compile_args_std = ["-O0","-march=native", "-fopenmp"]
+        # extra_compile_args_safe = ["-O0", "-fopenmp"]
         # extra_link_args = ["-fopenmp"]
+
+        extra_compile_args_std = ["-Ofast","-march=native", "-fopenmp"]
+        extra_compile_args_safe = ["-O2", "-fopenmp"]
+        extra_link_args = ["-fopenmp"]
 
         # extra_compile_args_std = ["-fast","-march=native", "-fopenmp"]
         # extra_compile_args_safe = ["-O2", "-fopenmp"]
@@ -113,12 +113,12 @@ define_macros = [("NPY_NO_DEPRECATED_API", "NPY_1_7_API_VERSION")]
 
 compiler_directives = {
     'wraparound': False,
-    # 'boundscheck': False,
-    # 'nonecheck': False,
-    # 'initializedcheck': False,
-    # 'overflowcheck': False,
-    # 'overflowcheck.fold': False,
-    # 'infer_types': True,
+    'boundscheck': False,
+    'nonecheck': False,
+    'initializedcheck': False,
+    'overflowcheck': False,
+    'overflowcheck.fold': False,
+    'infer_types': True,
 }
 
 ## Profiler only ####

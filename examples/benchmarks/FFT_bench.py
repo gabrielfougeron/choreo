@@ -148,7 +148,7 @@ for i_backend, backend in enumerate(all_backends):
         setup = prepare_x,
         n_repeat = 1,
         time_per_test = 0.2,
-        timings_filename = timings_filename,
+        filename = timings_filename,
     )
 
     choreo.plot_benchmark(

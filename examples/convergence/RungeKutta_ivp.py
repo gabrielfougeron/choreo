@@ -1,6 +1,6 @@
 """
-Convergence analysis of integration methods on segment
-======================================================
+Convergence analysis of explicit an implicit Runge-Kutta methods for ODE integration
+====================================================================================
 """
 
 # %%
@@ -28,6 +28,7 @@ sys.path.append(__PROJECT_ROOT__)
 import matplotlib.pyplot as plt
 import numpy as np
 import math as m
+import scipy
 
 import choreo
 
@@ -36,74 +37,154 @@ bench_folder = os.path.join(__PROJECT_ROOT__,'docs','source','_build','benchmark
 if not(os.path.isdir(bench_folder)):
     os.makedirs(bench_folder)
     
-basename_bench_filename = 'quad_cvg_bench_'
+basename_bench_filename = 'RK_ivp_cvg_bench_'
 
 # ForceBenchmark = True
 ForceBenchmark = False
 
 def cpte_error(
-    fun_name,
-    quad_method,
-    quad_nsteps,
+    eq_name,
+    rk_method,
+    mode,
     nint,
 ):
 
-    if fun_name == "exp" :
+
+    if eq_name == "y'' = -y" :
         # WOLFRAM
-        # f(x) = y*exp(y*x)
-        # F(x) = exp(y*x)
+        # y'' = - y
+        # y(x) = A cos(x) + B sin(x)
 
-        test_ndim = 20
+        test_ndim = 2
 
-        fun = lambda x: np.array([y*m.exp(y*x) for y in range(test_ndim)])
-        Fun = lambda x: np.array([m.exp(y*x) for y in range(test_ndim)])
+        ex_sol = lambda t : np.array( [ np.cos(t) , np.sin(t),-np.sin(t), np.cos(t) ]  )
+
+        fun = lambda t,y:   y.copy()
+        gun = lambda t,x:  -np.array(x.copy())
+
+    if eq_name == "y'' = - exp(y)" :
+        # WOLFRAM
+        # y'' = - exp(y)
+        # y(x) = - 2 * ln( cosh(t / sqrt(2) ))
+
+        test_ndim = 1
+
+        invsqrt2 = 1./np.sqrt(2.)
+        sqrt2 = np.sqrt(2.)
+        ex_sol = lambda t : np.array( [ -2*np.log(np.cosh(invsqrt2*t)) , -sqrt2*np.tanh(invsqrt2*t) ]  )
+
+        fun = lambda t,y:  y.copy()
+        gun = lambda t,x: -np.exp(x)
+
+    if eq_name == "y'' = xy" :
+
+        # Solutions: Airy functions
+        # Nonautonomous linear test case
+
+        test_ndim = 2
+
+        def ex_sol(t):
+
+            ai, aip, bi, bip = scipy.special.airy(t)
+
+            return np.array([ai,bi,aip,bip])
+
+        fun = lambda t,y: y.copy()
+        gun = lambda t,x: np.array([t*x[0],t*x[1]],dtype=np.float64)
         
-        x_span = (0.,1.)
-        exact = Fun(x_span[1]) - Fun(x_span[0])
+    if eq_name == "y' = Az; z' = By" :
+
+        test_ndim = 10
+
+        # A = np.random.rand(test_ndim,test_ndim)
+        A = np.identity(test_ndim)
+        # A = A + A.T
+        # B = np.random.rand(test_ndim,test_ndim)
+        B = np.identity(test_ndim)
+        # B = B + B.T
+
+        AB = np.zeros((2*test_ndim,2*test_ndim))
+        AB[0:test_ndim,test_ndim:2*test_ndim] = A
+        AB[test_ndim:2*test_ndim,0:test_ndim] = B
+
+        yo = np.random.rand(test_ndim)
+        zo = np.random.rand(test_ndim)
+
+        yzo = np.zeros(2*test_ndim)
+        yzo[0:test_ndim] = yo
+        yzo[test_ndim:2*test_ndim] = zo
+
+        def ex_sol(t):
+
+            return scipy.linalg.expm(t*AB).dot(yzo)
+
+        fun = lambda t,z: A.dot(z)
+        gun = lambda t,y: B.dot(y)
 
 
-    quad = choreo.scipy_plus.SegmQuad.ComputeQuadrature(quad_method, quad_nsteps)
 
-    approx = choreo.scipy_plus.SegmQuad.IntegrateOnSegment(
-        fun = fun       ,
-        ndim = test_ndim,
-        x_span = x_span ,
-        quad = quad     ,
+    t_span = (0.,np.pi)
+
+    ex_init  = ex_sol(t_span[0])
+    ex_final = ex_sol(t_span[1])
+
+    x0 = ex_init[0          :  test_ndim].copy()
+    v0 = ex_init[test_ndim  :2*test_ndim].copy()
+    
+    xf,vf = choreo.scipy_plus.ODE.ExplicitSymplecticIVP(
+        fun             ,
+        gun             ,
+        t_span          ,
+        x0              ,
+        v0              ,
         nint = nint     ,
+        rk = rk_method  ,
+        mode = mode     ,
     )
 
-    error = np.linalg.norm(approx-exact)/np.linalg.norm(exact)
+    sol = np.ascontiguousarray(np.concatenate((xf,vf),axis=0).reshape(2*test_ndim))
+    error = np.linalg.norm(sol-ex_final)/np.linalg.norm(ex_final)
 
     return error
- 
+
 # sphinx_gallery_end_ignore
 
-fun_names = [
-    "exp",
+eq_names = [
+    "y'' = -y"          ,
+    "y'' = - exp(y)"    ,
+    "y'' = xy"          ,
+    "y' = Az; z' = By"  ,
 ]
 
-methods = [
-    'Gauss'
-]
-
-all_nsteps = range(1,11)
-refinement_lvl = np.array(range(1,100))
+rk_tables = {
+    "SymplecticEuler": choreo.scipy_plus.precomputed_tables.SymplecticEuler ,
+    "StormerVerlet": choreo.scipy_plus.precomputed_tables.StormerVerlet     ,
+    "Ruth3": choreo.scipy_plus.precomputed_tables.Ruth3                     ,
+    "Ruth4": choreo.scipy_plus.precomputed_tables.Ruth4                     ,
+    "Ruth4Rat": choreo.scipy_plus.precomputed_tables.Ruth4Rat               ,
+}
 
 # sphinx_gallery_start_ignore
 
-def setup(nint):
-    return nint
+all_nint = np.array([2**i for i in range(14)])
+
     
 all_benchs = {
-    fun_name : {
-        f'{method} {nsteps}' : functools.partial(
-            cpte_error  ,
-            fun_name    ,
-            method      ,
-            nsteps      ,
-        ) for method, nsteps in itertools.product(methods, all_nsteps)
-    } for fun_name in fun_names
+    eq_name : {
+        f'{rk_name} {mode}' : functools.partial(
+            cpte_error ,
+            eq_name    ,
+            rk_table   ,
+            mode       ,
+        ) for (rk_name, rk_table), mode in itertools.product(rk_tables.items(), ['XV','VX'])
+    } for eq_name in eq_names
 }
+
+
+
+def setup(nint):
+    return nint
+
 
 n_bench = len(all_benchs)
 
@@ -121,7 +202,7 @@ fig, axs = plt.subplots(
     nrows = n_bench,
     ncols = 1,
     sharex = True,
-    sharey = True,
+    sharey = False,
     figsize = figsize,
     dpi = dpi   ,
     squeeze = False,
@@ -132,11 +213,11 @@ i_bench = -1
 for bench_name, all_funs in all_benchs.items():
 
     i_bench += 1
-
-    bench_filename = os.path.join(bench_folder,basename_bench_filename+bench_name.replace(' ','_')+'.npy')
-
+    
+    bench_filename = os.path.join(bench_folder,basename_bench_filename+str(i_bench).zfill(2)+'.npy')
+    
     all_errors = choreo.benchmark.run_benchmark(
-        refinement_lvl                  ,
+        all_nint                        ,
         all_funs                        ,
         setup = setup                   ,
         mode = "scalar_output"          ,
@@ -146,7 +227,7 @@ for bench_name, all_funs in all_benchs.items():
 
     choreo.plot_benchmark(
         all_errors                                  ,
-        refinement_lvl                              ,
+        all_nint                                    ,
         all_funs                                    ,
         fig = fig                                   ,
         ax = axs[i_bench,0]                         ,
@@ -169,13 +250,13 @@ plt.show()
 
 plt.close()
 
-plot_ylim = [0,20]
+plot_ylim = [0,5]
 
 fig, axs = plt.subplots(
     nrows = n_bench,
     ncols = 1,
     sharex = True,
-    sharey = True,
+    sharey = False,
     figsize = figsize,
     dpi = dpi   ,
     squeeze = False,
@@ -186,13 +267,11 @@ i_bench = -1
 for bench_name, all_funs in all_benchs.items():
 
     i_bench += 1
-
-    bench_filename = os.path.join(bench_folder,basename_bench_filename+bench_name.replace(' ','_')+'.npy')
-
-    print(bench_filename)
+    
+    bench_filename = os.path.join(bench_folder,basename_bench_filename+str(i_bench).zfill(2)+'.npy') 
 
     all_errors = choreo.benchmark.run_benchmark(
-        refinement_lvl                  ,
+        all_nint                        ,
         all_funs                        ,
         setup = setup                   ,
         mode = "scalar_output"          ,
@@ -202,14 +281,14 @@ for bench_name, all_funs in all_benchs.items():
 
     choreo.plot_benchmark(
         all_errors                                  ,
-        refinement_lvl                              ,
+        all_nint                                    ,
         all_funs                                    ,
         transform = "pol_cvgence_order"             ,
         plot_xlim = plot_xlim                       ,
         plot_ylim = plot_ylim                       ,
         logx_plot = True                            ,
         clip_vals = True                            ,
-        stop_after_first_clip = True                ,
+        # stop_after_first_clip = True                ,
         fig = fig                                   ,
         ax = axs[i_bench,0]                         ,
         title = f'Approximate convergence rate on integrand {bench_name}' ,
@@ -217,17 +296,15 @@ for bench_name, all_funs in all_benchs.items():
     
     for fun_name, fun in all_funs.items():
             
-        quad_method = fun.args[1]
-        quad_nsteps = fun.args[2]
-
-        quad = choreo.scipy_plus.SegmQuad.ComputeQuadrature(quad_method, quad_nsteps)
-        th_order = quad.th_cvg_rate
+        rk = fun.args[1]
+        
+        th_order = rk.th_cvg_rate
         xlim = axs[i_bench,0].get_xlim()
 
         axs[i_bench,0].plot(xlim, [th_order, th_order], linestyle='dotted')
         
 plt.tight_layout()
-
+ 
 # sphinx_gallery_end_ignore
 
 plt.show()
