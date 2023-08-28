@@ -168,7 +168,7 @@ for bench_name, all_funs in all_benchs.items():
         setup = setup,
         n_repeat = n_repeat,
         time_per_test = 0.2,
-        timings_filename = timings_filename,
+        filename = timings_filename,
     )
 
     choreo.plot_benchmark(

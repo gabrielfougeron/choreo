@@ -20,19 +20,6 @@ timings_folder = os.path.join(__PROJECT_ROOT__,'build')
 basename = 'LowLevelCallable_bench'
 timings_filename = os.path.join(timings_folder,basename+'.npy')
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 all_funs = {
     'cpdef_cy_fun' : functools.partial(choreo.scipy_plus.cython.CallableInterface.add_values,choreo.scipy_plus.cython.CallableInterface.cpdef_cy_fun),
     'cdef_cy_fun_LowLevel' : functools.partial(choreo.scipy_plus.cython.CallableInterface.add_values,scipy.LowLevelCallable.from_cython(choreo.scipy_plus.cython.CallableInterface, "cdef_cy_fun")),
@@ -72,7 +59,7 @@ all_times = choreo.benchmark.run_benchmark(
     setup = prepare_maxval,
     n_repeat = n_repeat,
     time_per_test = 0.2,
-    # timings_filename = timings_filename,
+    filename = timings_filename,
 )
 
 choreo.plot_benchmark(

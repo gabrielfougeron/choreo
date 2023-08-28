@@ -131,17 +131,17 @@ def cpte_error(
 
 
 eq_names = [
-    "y'' = -y",
-    "y'' = - exp(y)",
+    # "y'' = -y",
+    # "y'' = - exp(y)",
     "y'' = xy",
-    "y' = Az; z' = By",
+    # "y' = Az; z' = By",
 ]
 
 rk_tables = {
-    "SymplecticEuler": choreo.scipy_plus.precomputed_tables.SymplecticEuler ,
-    "StormerVerlet": choreo.scipy_plus.precomputed_tables.StormerVerlet     ,
-    "Ruth3": choreo.scipy_plus.precomputed_tables.Ruth3                     ,
-    "Ruth4": choreo.scipy_plus.precomputed_tables.Ruth4                     ,
+    # "SymplecticEuler": choreo.scipy_plus.precomputed_tables.SymplecticEuler ,
+    # "StormerVerlet": choreo.scipy_plus.precomputed_tables.StormerVerlet     ,
+    # "Ruth3": choreo.scipy_plus.precomputed_tables.Ruth3                     ,
+    # "Ruth4": choreo.scipy_plus.precomputed_tables.Ruth4                     ,
     "Ruth4Rat": choreo.scipy_plus.precomputed_tables.Ruth4Rat               ,
 }
 
