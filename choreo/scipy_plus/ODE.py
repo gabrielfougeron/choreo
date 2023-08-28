@@ -8,18 +8,21 @@ import math as m
 import mpmath
 import functools
 
-from choreo.scipy_plus.cython.SegmQuad import QuadFormula
-from choreo.scipy_plus.SegmQuad        import QuadFrom3Term
+from choreo.scipy_plus.cython.ODE import ExplicitSymplecticIVP
+from choreo.scipy_plus.cython.ODE import ExplicitSymplecticRKTable
 
 from choreo.scipy_plus.cython.ODE import ExplicitSymplecticWithTable_XV_cython
 from choreo.scipy_plus.cython.ODE import ExplicitSymplecticWithTable_VX_cython
 from choreo.scipy_plus.cython.ODE import SymplecticStormerVerlet_XV_cython
 from choreo.scipy_plus.cython.ODE import SymplecticStormerVerlet_VX_cython
+
 from choreo.scipy_plus.cython.ODE import ImplicitSymplecticWithTableGaussSeidel_VX_cython
 from choreo.scipy_plus.cython.ODE import ImplicitSymplecticTanWithTableGaussSeidel_VX_cython
-
 from choreo.scipy_plus.cython.ODE import ImplicitSymplecticWithTableGaussSeidel_VX_cython_mulfun
 from choreo.scipy_plus.cython.ODE import ImplicitSymplecticTanWithTableGaussSeidel_VX_cython_mulfun
+
+
+
 
 from choreo.scipy_plus.multiprec_tables import ComputeGaussButcherTables
 
