@@ -41,7 +41,10 @@ timings_folder = os.path.join(__PROJECT_ROOT__,'docs','source','_build','benchma
 if not(os.path.isdir(timings_folder)):
     os.makedirs(timings_folder)
 
-basename_timings_filename = 'SegmQuad_bench'
+basename_timings_filename = 'SegmQuad_bench_'
+
+ForceBenchmark = True
+# ForceBenchmark = False
 
 ndim = 1
 x_span = (0., 1.)
@@ -81,15 +84,15 @@ nb_fun_inplace_pointer = choreo.scipy_plus.SegmQuad.nb_jit_inplace_double_array(
 # sphinx_gallery_end_ignore
 
 all_funs_scalar = {
-    'py_fun' : test_from_fun(py_fun) ,
+    # 'py_fun' : test_from_fun(py_fun) ,
     'py_fun_array' : test_from_fun(py_fun_array) ,
-    'nb_fun' : test_from_fun(nb_fun) ,
-    'nb_fun_pointer' : test_from_fun(nb_fun_pointer) ,
-    'nb_fun_inplace_pointer' : test_from_fun(nb_fun_inplace_pointer) ,
-    'py_fun_in_pyx' : test_from_fun(choreo.scipy_plus.cython.test.single_py_fun) ,
-    'cy_fun_pointer_LowLevel' : test_from_fun(scipy.LowLevelCallable.from_cython(choreo.scipy_plus.cython.test, "single_cy_fun_pointer")),
+    # 'nb_fun' : test_from_fun(nb_fun) ,
+    # 'nb_fun_pointer' : test_from_fun(nb_fun_pointer) ,
+    # 'nb_fun_inplace_pointer' : test_from_fun(nb_fun_inplace_pointer) ,
+    # 'py_fun_in_pyx' : test_from_fun(choreo.scipy_plus.cython.test.single_py_fun) ,
+    # 'cy_fun_pointer_LowLevel' : test_from_fun(scipy.LowLevelCallable.from_cython(choreo.scipy_plus.cython.test, "single_cy_fun_pointer")),
     'cy_fun_memoryview_LowLevel' : test_from_fun(scipy.LowLevelCallable.from_cython(choreo.scipy_plus.cython.test, "single_cy_fun_memoryview")),
-    'cy_fun_oneval_LowLevel' : test_from_fun(scipy.LowLevelCallable.from_cython(choreo.scipy_plus.cython.test, "single_cy_fun_oneval")),
+    # 'cy_fun_oneval_LowLevel' : test_from_fun(scipy.LowLevelCallable.from_cython(choreo.scipy_plus.cython.test, "single_cy_fun_oneval")),
 }
 
 # sphinx_gallery_start_ignore
@@ -115,18 +118,18 @@ mul_nb_fun_inplace_pointer = choreo.scipy_plus.SegmQuad.nb_jit_inplace_double_ar
 # sphinx_gallery_end_ignore
 
 all_funs_vect = {
-    'py_fun' : None, 
+    # 'py_fun' : None, 
     'py_fun_array' : test_from_fun(mul_py_fun_array) ,
-    'nb_fun' : None ,
-    'nb_fun_pointer' : test_from_fun(mul_nb_fun_pointer) ,
-    'nb_fun_inplace_pointer' : test_from_fun(mul_nb_fun_inplace_pointer) ,
-    'py_fun_in_pyx' : test_from_fun(choreo.scipy_plus.cython.test.mul_py_fun),
-    'cy_fun_pointer_LowLevel' : test_from_fun(scipy.LowLevelCallable.from_cython(choreo.scipy_plus.cython.test, "mul_cy_fun_pointer")),
+    # 'nb_fun' : None ,
+    # 'nb_fun_pointer' : test_from_fun(mul_nb_fun_pointer) ,
+    # 'nb_fun_inplace_pointer' : test_from_fun(mul_nb_fun_inplace_pointer) ,
+    # 'py_fun_in_pyx' : test_from_fun(choreo.scipy_plus.cython.test.mul_py_fun),
+    # 'cy_fun_pointer_LowLevel' : test_from_fun(scipy.LowLevelCallable.from_cython(choreo.scipy_plus.cython.test, "mul_cy_fun_pointer")),
     'cy_fun_memoryview_LowLevel' : test_from_fun(scipy.LowLevelCallable.from_cython(choreo.scipy_plus.cython.test, "mul_cy_fun_memoryview")),
 }
 
 all_benchs = {
-    'Scalar function' : all_funs_scalar  ,
+    # 'Scalar function' : all_funs_scalar  ,
     f'Vector function of size {choreo.scipy_plus.cython.test.mul_size_py}' : all_funs_vect  ,
 }
 
@@ -169,6 +172,7 @@ for bench_name, all_funs in all_benchs.items():
         n_repeat = n_repeat,
         time_per_test = 0.2,
         filename = timings_filename,
+        ForceBenchmark = ForceBenchmark ,
     )
 
     choreo.plot_benchmark(
