@@ -76,10 +76,10 @@ cdef LowLevelFun LowLevelFun_init(
     return fun
 
 cdef inline void LowLevelFun_apply(
-    const LowLevelFun fun ,
-    const double t        ,
-    double[::1] x   ,
-    double[::1] res ,
+    const LowLevelFun fun   ,
+    const double t          ,
+    double[::1] x           ,
+    double[::1] res         ,
 ) noexcept nogil:
 
     if fun.fun_type == C_FUN_MEMORYVIEW:
@@ -88,19 +88,26 @@ cdef inline void LowLevelFun_apply(
     elif fun.fun_type == C_FUN_POINTER:
         fun.c_fun_pointer(t, &x[0], &res[0])
 
+cdef int PY_FUN_FLOAT = 0
+cdef int PY_FUN_NDARRAY = 1 
+
 cdef inline void PyFun_apply(
     object fun          ,
+    const int res_type  ,
     const double t      ,
-    const double[::1] x ,
+    double[::1] x       ,
     double[::1] res     ,
 ):
 
     cdef Py_ssize_t i
-    cdef np.ndarray[double, ndim=1, mode="c"] f_res_raw = fun(t, x)
+    cdef np.ndarray[double, ndim=1, mode="c"] f_res_np
 
-    for i in range(x.shape[0]):
-        res[i] = f_res_raw[i]
-
+    if (res_type == PY_FUN_FLOAT):   
+        res[0] = fun(t, x)
+    else:
+        f_res_np = fun(t, x)
+        for i in range(x.shape[0]):
+            res[i] = f_res_np[i]
 
 
 cdef class ExplicitSymplecticRKTable:
@@ -160,15 +167,37 @@ cpdef ExplicitSymplecticIVP(
     cdef ccallback_t callback_fun
     ccallback_prepare(&callback_fun, signatures, fun, CCALLBACK_DEFAULTS)
     cdef LowLevelFun lowlevelfun = LowLevelFun_init(callback_fun)
-    cdef object py_fun = None
 
     cdef ccallback_t callback_gun
     ccallback_prepare(&callback_gun, signatures, gun, CCALLBACK_DEFAULTS)
     cdef LowLevelFun lowlevelgun = LowLevelFun_init(callback_gun)
-    cdef object py_gun = None
 
     if (lowlevelfun.fun_type == PY_FUN) != (lowlevelgun.fun_type == PY_FUN):
         raise ValueError("fun and gun must both be python functions or LowLevelCallables")
+
+    cdef object py_fun_res = None
+    cdef object py_gun_res = None
+    cdef object py_fun, py_gun
+    cdef int py_fun_type
+
+    if lowlevelfun.fun_type == PY_FUN:
+        py_fun = <object> lowlevelfun.py_fun
+        py_gun = <object> lowlevelgun.py_fun
+        
+        py_fun_res = py_fun(t_span[0], v0)
+        py_gun_res = py_gun(t_span[0], x0)
+
+        if isinstance(py_fun_res, float) and isinstance(py_gun_res, float):
+            py_fun_type = PY_FUN_FLOAT
+        elif isinstance(py_fun_res, np.ndarray) and isinstance(py_gun_res, np.ndarray):
+            py_fun_type = PY_FUN_NDARRAY
+        else:
+            raise ValueError(f"Could not recognize return type of python callable. Found {type(py_fun_res)} and {type(py_gun_res)}.")
+
+    else:
+        py_fun = None
+        py_gun = None
+        py_fun_type = -1
 
     if (x0.shape[0] != v0.shape[0]):
         raise ValueError("x0 and v0 must have the same shape")
@@ -179,24 +208,26 @@ cpdef ExplicitSymplecticIVP(
     cdef long ndof = x0.shape[0]
     cdef long nint_keep = nint // keep_freq
 
-    cdef np.ndarray[double, ndim=2, mode="c"] x_keep = np.empty((nint_keep, ndof), dtype=np.float64)
-    cdef np.ndarray[double, ndim=2, mode="c"] v_keep = np.empty((nint_keep, ndof), dtype=np.float64)
+    cdef np.ndarray[double, ndim=2, mode="c"] x_keep_np = np.empty((nint_keep, ndof), dtype=np.float64)
+    cdef np.ndarray[double, ndim=2, mode="c"] v_keep_np = np.empty((nint_keep, ndof), dtype=np.float64)
+    cdef double[:,::1] x_keep = x_keep_np
+    cdef double[:,::1] v_keep = v_keep_np
 
     cdef double[::1] x = x0.copy()
     cdef double[::1] v = v0.copy()
 
     cdef double[::1] res = np.empty((ndof), dtype=np.float64)
 
-    if lowlevelfun.fun_type == PY_FUN:
+    if mode == 'VX':
 
-        py_fun = <object> lowlevelfun.py_fun
-        py_gun = <object> lowlevelgun.py_fun
-
-        if mode == 'VX':
-
-            ExplicitSymplecticIVP_VX_ann_python(
+        with nogil:
+        
+            ExplicitSymplecticIVP_VX_ann(
+                lowlevelfun ,
+                lowlevelgun ,
                 py_fun      ,
                 py_gun      ,
+                py_fun_type ,
                 t_span      ,
                 x           ,
                 v           ,
@@ -208,11 +239,15 @@ cpdef ExplicitSymplecticIVP(
                 v_keep      ,
             )
 
-        elif mode == 'XV':
+    elif mode == 'XV':
 
-            ExplicitSymplecticIVP_XV_ann_python(
+        with nogil:
+            ExplicitSymplecticIVP_XV_ann(
+                lowlevelfun ,
+                lowlevelgun ,
                 py_fun      ,
                 py_gun      ,
+                py_fun_type ,
                 t_span      ,
                 x           ,
                 v           ,
@@ -224,25 +259,8 @@ cpdef ExplicitSymplecticIVP(
                 v_keep      ,
             )
 
-
-        else:
-            raise ValueError(f"Unknown mode {mode}. Possible options are 'VX' and 'XV'.")
-
-    # else:
-        # 
-        # with nogil:
-        #     ExplicitSymplecticIVP_ann_lowlevel(
-            # t_span      ,
-        #     x           ,
-        #     v           ,
-        #     res         ,
-        #     rk          ,
-        #     nint        ,
-        #     keep_freq   ,
-        #     x_keep      ,
-        #     v_keep      ,
-        # )
-
+    else:
+        raise ValueError(f"Unknown mode {mode}. Possible options are 'VX' and 'XV'.")
 
     ccallback_release(&callback_fun)
     ccallback_release(&callback_gun)
@@ -250,19 +268,22 @@ cpdef ExplicitSymplecticIVP(
     return x_keep, v_keep
 
 @cython.cdivision(True)
-cdef void ExplicitSymplecticIVP_VX_ann_python(
-    object fun                      ,
-    object gun                      ,
-    (double, double) t_span         ,
+cdef void ExplicitSymplecticIVP_VX_ann(
+    LowLevelFun lowlevelfun   ,
+    LowLevelFun lowlevelgun   ,
+    object py_fun                   ,
+    object py_gun                   ,
+    const int py_fun_type           ,
+    const (double, double) t_span   ,
     double[::1] x                   ,
     double[::1] v                   ,
     double[::1] res                 ,
     ExplicitSymplecticRKTable rk    ,
-    long nint                       ,
-    long keep_freq                  ,
+    const long nint                 ,
+    const long keep_freq            ,
     double[:,::1] x_keep            ,
     double[:,::1] v_keep            ,
-):
+) noexcept nogil:
 
     cdef double tx = t_span[0]
     cdef double tv = t_span[0]
@@ -286,16 +307,22 @@ cdef void ExplicitSymplecticIVP_VX_ann_python(
 
             for istep in range(rk._c_table.shape[0]):
 
-                # res = fun(tv, v)
-                PyFun_apply(fun,tv,v,res)
+                if py_fun_type > 0:
+                    with gil:
+                        PyFun_apply(py_fun, py_fun_type, tv, v, res)
+                else:
+                    LowLevelFun_apply(lowlevelfun, tv, v, res)
 
                 for idof in range(ndof):
                     x[idof] += cdt[istep] * res[idof]  
 
                 tx += cdt[istep]
 
-                # res = gun(tx, x)
-                PyFun_apply(gun,tx,x,res)
+                if py_fun_type > 0:
+                    with gil:
+                        PyFun_apply(py_gun, py_fun_type, tx, x, res)
+                else:
+                    LowLevelFun_apply(lowlevelgun, tx, x, res)
 
                 for idof in range(ndof):
                     v[idof] += ddt[istep] * res[idof]  
@@ -311,19 +338,22 @@ cdef void ExplicitSymplecticIVP_VX_ann_python(
     free(ddt)
 
 @cython.cdivision(True)
-cdef void ExplicitSymplecticIVP_XV_ann_python(
-    object fun                      ,
-    object gun                      ,
-    (double, double) t_span         ,
+cdef void ExplicitSymplecticIVP_XV_ann(
+    LowLevelFun lowlevelfun   ,
+    LowLevelFun lowlevelgun   ,
+    object py_fun                   ,
+    object py_gun                   ,
+    const int py_fun_type           ,
+    const (double, double) t_span   ,
     double[::1] x                   ,
     double[::1] v                   ,
     double[::1] res                 ,
     ExplicitSymplecticRKTable rk    ,
-    long nint                       ,
-    long keep_freq                  ,
+    const long nint                 ,
+    const long keep_freq            ,
     double[:,::1] x_keep            ,
     double[:,::1] v_keep            ,
-):
+) noexcept nogil:
 
     cdef double tx = t_span[0]
     cdef double tv = t_span[0]
@@ -347,15 +377,21 @@ cdef void ExplicitSymplecticIVP_XV_ann_python(
 
             for istep in range(rk._c_table.shape[0]):
 
-                # res = gun(tx, x)   
-                PyFun_apply(gun,tx,x,res)
+                if py_fun_type > 0:
+                    with gil:
+                        PyFun_apply(py_gun, py_fun_type, tx, x, res)
+                else:
+                    LowLevelFun_apply(lowlevelgun, tx, x, res)
 
                 for idof in range(ndof):
                     v[idof] += cdt[istep] * res[idof]  
                 tv += cdt[istep]
 
-                # res = fun(tv, v)  
-                PyFun_apply(fun,tv,v,res)
+                if py_fun_type > 0:
+                    with gil:
+                        PyFun_apply(py_fun, py_fun_type, tv, v, res)
+                else:
+                    LowLevelFun_apply(lowlevelfun, tv, v, res)
 
                 for idof in range(ndof):
                     x[idof] += ddt[istep] * res[idof]  

@@ -99,24 +99,40 @@ cdef inline void LowLevelFun_apply(
     elif fun.fun_type == C_FUN_ONEVAL:
         res[0] = fun.c_fun_oneval(x)
 
+cdef int PY_FUN_FLOAT = 0
+cdef int PY_FUN_NDARRAY = 1 
 
 cdef inline void PyFun_apply(
-    object fun      ,
-    const double x  ,
-    double[::1] res ,
-    Py_ssize_t ndim ,  
+    object fun          ,
+    const int res_type  ,
+    const double x      ,
+    double[::1] res     ,
+    Py_ssize_t ndim     ,  
 ):
 
     cdef Py_ssize_t i
-    cdef object f_res_raw = fun(x)
+    cdef np.ndarray[double, ndim=1, mode="c"] f_res_np
 
-
-    if isinstance(f_res_raw, float):   # idim is expected to be 1
-        res[0] = f_res_raw
+    if (res_type == PY_FUN_FLOAT):   
+        res[0] = fun(x)
     else:
+        f_res_np = fun(x)
         for i in range(ndim):
-            res[i] = f_res_raw[i]
-        # res = f_res_raw
+            res[i] = f_res_np[i]
+# 
+# cdef inline void PyFun_apply(
+#     object fun      ,
+#     const double x  ,
+#     double[::1] res ,
+#     Py_ssize_t ndim ,  
+# ):
+# 
+#     cdef Py_ssize_t i
+#     cdef np.ndarray[double, ndim=1, mode="c"] f_res_raw = fun(x)
+# 
+#     for i in range(ndim):
+#         res[i] = f_res_raw[i]
+#         # res = f_res_raw
 
 
             
@@ -178,18 +194,35 @@ cpdef np.ndarray[double, ndim=1, mode="c"] IntegrateOnSegment(
     cdef ccallback_t callback
     ccallback_prepare(&callback, signatures, fun, CCALLBACK_DEFAULTS)
     cdef LowLevelFun lowlevelfun = LowLevelFun_init(callback)
-    cdef object py_fun = None
+    
+    cdef object py_fun_res = None
+    cdef object py_fun
+    cdef int py_fun_type
+    if lowlevelfun.fun_type == PY_FUN:
+        py_fun = <object> lowlevelfun.py_fun
+        
+        py_fun_res = py_fun(x_span[0])
+
+        if isinstance(py_fun_res, float):
+            py_fun_type = PY_FUN_FLOAT
+        elif isinstance(py_fun_res, np.ndarray):
+            py_fun_type = PY_FUN_NDARRAY
+        else:
+            raise ValueError(f"Could not recognize return type of python callable. Found {type(py_fun_type)}.")
+
+    else:
+        py_fun = None
+        py_fun_type = -1
 
     cdef double[::1] f_res = np.empty((ndim),dtype=np.float64)
     cdef np.ndarray[double, ndim=1, mode="c"] f_int_np = np.zeros((ndim),dtype=np.float64)
     cdef double[::1] f_int = f_int_np
 
-    if lowlevelfun.fun_type == PY_FUN:
-
-        py_fun = <object> lowlevelfun.py_fun
-
-        IntegrateOnSegment_ann_python(
+    with nogil:
+        IntegrateOnSegment_ann(
+            lowlevelfun ,
             py_fun      ,
+            py_fun_type ,
             ndim        ,
             x_span      ,
             nint        ,
@@ -198,28 +231,15 @@ cpdef np.ndarray[double, ndim=1, mode="c"] IntegrateOnSegment(
             f_int       ,
         )
 
-    else:
-        
-        with nogil:
-            IntegrateOnSegment_ann_lowlevel(
-                lowlevelfun ,
-                ndim        ,
-                x_span      ,
-                nint        ,
-                quad        ,
-                f_res       ,
-                f_int       ,
-            )
-
     ccallback_release(&callback)
 
     return f_int_np
 
-
-
 @cython.cdivision(True)
-cdef void IntegrateOnSegment_ann_lowlevel(
-    LowLevelFun fun                 ,
+cdef void IntegrateOnSegment_ann(
+    LowLevelFun lowlevelfun         ,
+    object py_fun                   ,
+    const int py_fun_type           ,
     const long ndim                 ,
     const (double, double) x_span   ,
     const long nint                 ,
@@ -247,7 +267,11 @@ cdef void IntegrateOnSegment_ann_lowlevel(
 
             xi = xbeg + cdx[istep]
 
-            LowLevelFun_apply(fun, xi, f_res)
+            if py_fun_type > 0:
+                with gil:
+                    PyFun_apply(py_fun, py_fun_type, xi, f_res, ndim)
+            else:
+                LowLevelFun_apply(lowlevelfun, xi, f_res)
 
             for idim in range(ndim):
 
@@ -258,47 +282,3 @@ cdef void IntegrateOnSegment_ann_lowlevel(
 
     free(cdx)
 
-
-
-@cython.cdivision(True)
-cdef void IntegrateOnSegment_ann_python(
-    object fun                      ,
-    const long ndim                 ,
-    const (double, double) x_span   ,
-    const long nint                 ,
-    QuadFormula quad                ,
-    double[::1] f_res               ,
-    double[::1] f_int               ,
-):
-
-    cdef Py_ssize_t istep
-    cdef long iint
-    cdef Py_ssize_t idim
-    cdef double xbeg, dx
-    cdef double xi
-    cdef double *cdx = <double*> malloc(sizeof(double)*quad._w.shape[0])
-
-    cdef object f_res_raw
-
-    dx = (x_span[1] - x_span[0]) / nint
-
-    for istep in range(quad._w.shape[0]):
-        cdx[istep] = quad._x[istep] * dx
-
-    for iint in range(nint):
-        xbeg = x_span[0] + iint * dx
-
-        for istep in range(quad._w.shape[0]):
-
-            xi = xbeg + cdx[istep]
-
-            PyFun_apply(fun, xi, f_res, ndim)
-
-            for idim in range(ndim):
-
-                f_int[idim] = f_int[idim] + quad._w[istep] * f_res[idim]
-
-    for idim in range(ndim):
-        f_int[idim] = f_int[idim] * dx
-
-    free(cdx)
