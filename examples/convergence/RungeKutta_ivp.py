@@ -172,7 +172,6 @@ rk_tables = {
 
 all_nint = np.array([2**i for i in range(14)])
 
-    
 all_benchs = {
     eq_name : {
         f'{rk_name} {mode}' : functools.partial(
@@ -332,12 +331,10 @@ plt.show()
 
 plt.close()
 
-# plot_ylim = [0,5]
-
 fig, axs = plt.subplots(
     nrows = n_bench,
     ncols = 1,
-    sharex = True,
+    sharex = False,
     sharey = False,
     figsize = figsize,
     dpi = dpi   ,
