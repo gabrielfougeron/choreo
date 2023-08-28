@@ -42,8 +42,8 @@ if not(os.path.isdir(bench_folder)):
     
 basename_bench_filename = 'quad_cvg_bench_'
 
-ForceBenchmark = True
-# ForceBenchmark = False
+# ForceBenchmark = True
+ForceBenchmark = False
 
 def cpte_error(
     fun_name,
@@ -192,8 +192,6 @@ for bench_name, all_funs in all_benchs.items():
     i_bench += 1
 
     bench_filename = os.path.join(bench_folder,basename_bench_filename+bench_name.replace(' ','_')+'.npy')
-
-    print(bench_filename)
 
     all_errors = choreo.benchmark.run_benchmark(
         refinement_lvl                  ,
