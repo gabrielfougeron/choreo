@@ -24,7 +24,84 @@ from libc.math cimport isinf as cisinf
 
 from .ccallback cimport ccallback_t, ccallback_prepare, ccallback_release, CCALLBACK_DEFAULTS, ccallback_signature_t
 
-cdef class ExplicitRKTable:
+
+cdef int PY_FUN = -1
+cdef int C_FUN_MEMORYVIEW = 0
+cdef int C_FUN_POINTER = 1
+
+cdef ccallback_signature_t signatures[3]
+
+ctypedef void (*c_fun_type_memoryview)(double, double[::1], double[::1]) noexcept nogil 
+signatures[C_FUN_MEMORYVIEW].signature = b"void (double, __Pyx_memviewslice, __Pyx_memviewslice)"
+signatures[C_FUN_MEMORYVIEW].value = C_FUN_MEMORYVIEW
+
+ctypedef void (*c_fun_type_pointer)(double, double*, double*) noexcept nogil 
+signatures[C_FUN_POINTER].signature = b"void (double, double *, double *)"
+signatures[C_FUN_POINTER].value = C_FUN_POINTER
+
+signatures[2].signature = NULL
+
+cdef struct s_LowLevelFun:
+    int fun_type
+    void *py_fun
+    c_fun_type_memoryview c_fun_memoryview
+    c_fun_type_pointer c_fun_pointer
+
+ctypedef s_LowLevelFun LowLevelFun
+
+cdef LowLevelFun LowLevelFun_init(
+    ccallback_t callback
+):
+
+    cdef LowLevelFun fun
+
+    fun.py_fun = NULL
+    fun.c_fun_memoryview = NULL
+    fun.c_fun_pointer = NULL
+
+    if (callback.py_function == NULL):
+        fun.fun_type = callback.signature.value
+    else:
+        fun.fun_type = PY_FUN
+
+    if fun.fun_type == PY_FUN:
+        fun.py_fun = callback.py_function
+
+    elif fun.fun_type == C_FUN_MEMORYVIEW:
+        fun.c_fun_memoryview = <c_fun_type_memoryview> callback.c_function
+
+    elif fun.fun_type == C_FUN_POINTER:
+        fun.c_fun_pointer = <c_fun_type_pointer> callback.c_function
+
+    return fun
+
+cdef inline void LowLevelFun_apply(
+    const LowLevelFun fun ,
+    const double t        ,
+    double[::1] x   ,
+    double[::1] res ,
+) noexcept nogil:
+
+    if fun.fun_type == C_FUN_MEMORYVIEW:
+        fun.c_fun_memoryview(t, x, res)
+
+    elif fun.fun_type == C_FUN_POINTER:
+        fun.c_fun_pointer(t, &x[0], &res[0])
+
+cdef inline void PyFun_apply(
+    object fun          ,
+    const double t      ,
+    const double[::1] x ,
+    double[::1] res     ,
+):
+
+    print()
+    print(np.array(res))
+    res = fun(t, x)  
+    print(np.array(res))
+
+
+cdef class ExplicitSymplecticRKTable:
     
     cdef double[::1] _c_table
     cdef double[::1] _d_table
@@ -62,6 +139,162 @@ cdef class ExplicitRKTable:
     @property
     def th_cvg_rate(self):
         return self._th_cvg_rate
+
+
+@cython.cdivision(True)
+# cpdef (np.ndarray[double, ndim=2, mode="c"], np.ndarray[double, ndim=2, mode="c"]) ExplicitSymplecticIntegrate(
+cpdef ExplicitSymplecticIVP(
+    object fun                      ,
+    object gun                      ,
+    (double, double) t_span         ,
+    double[::1] x0                  ,
+    double[::1] v0                  ,
+    ExplicitSymplecticRKTable rk    ,
+    long nint                       ,
+    long keep_freq                  ,
+): 
+
+    cdef ccallback_t callback_fun
+    ccallback_prepare(&callback_fun, signatures, fun, CCALLBACK_DEFAULTS)
+    cdef LowLevelFun lowlevelfun = LowLevelFun_init(callback_fun)
+    cdef object py_fun = None
+
+    cdef ccallback_t callback_gun
+    ccallback_prepare(&callback_gun, signatures, gun, CCALLBACK_DEFAULTS)
+    cdef LowLevelFun lowlevelgun = LowLevelFun_init(callback_gun)
+    cdef object py_gun = None
+
+    if (lowlevelfun.fun_type == PY_FUN) != (lowlevelgun.fun_type == PY_FUN):
+        raise ValueError("fun and gun must both be python functions or LowLevelCallables")
+
+    if (x0.shape[0] != v0.shape[0]):
+        raise ValueError("x0 and v0 must have the same shape")
+
+    cdef long ndof = x0.shape[0]
+    cdef long nint_keep = nint // keep_freq
+
+    cdef np.ndarray[double, ndim=2, mode="c"] x_keep = np.empty((nint_keep, ndof), dtype=np.float64)
+    cdef np.ndarray[double, ndim=2, mode="c"] v_keep = np.empty((nint_keep, ndof), dtype=np.float64)
+
+    cdef double[::1] x = x0.copy()
+    cdef double[::1] v = v0.copy()
+
+    cdef double[::1] res = np.empty((ndof), dtype=np.float64)
+
+    if lowlevelfun.fun_type == PY_FUN:
+
+        py_fun = <object> lowlevelfun.py_fun
+        py_gun = <object> lowlevelgun.py_fun
+
+        ExplicitSymplecticIVP_ann_python(
+            py_fun      ,
+            py_gun      ,
+            t_span      ,
+            x           ,
+            v           ,
+            res         ,
+            rk          ,
+            nint        ,
+            keep_freq   ,
+            x_keep      ,
+            v_keep      ,
+        )
+
+    # else:
+        # 
+        # with nogil:
+        #     ExplicitSymplecticIVP_ann_lowlevel(
+            # t_span      ,
+        #     x           ,
+        #     v           ,
+        #     res         ,
+        #     rk          ,
+        #     nint        ,
+        #     keep_freq   ,
+        #     x_keep      ,
+        #     v_keep      ,
+        # )
+
+
+    ccallback_release(&callback_fun)
+    ccallback_release(&callback_gun)
+
+    return x_keep, v_keep
+
+
+
+
+
+
+
+
+
+@cython.cdivision(True)
+cdef void ExplicitSymplecticIVP_ann_python(
+    object fun                      ,
+    object gun                      ,
+    (double, double) t_span         ,
+    double[::1] x                   ,
+    double[::1] v                   ,
+    double[::1] res                 ,
+    ExplicitSymplecticRKTable rk    ,
+    long nint                       ,
+    long keep_freq                  ,
+    double[:,::1] x_keep            ,
+    double[:,::1] v_keep            ,
+):
+
+    cdef double tx = t_span[0]
+    cdef double tv = t_span[0]
+    cdef double dt = (t_span[1] - t_span[0]) / nint
+
+    cdef long ndof = x.shape[0]
+    cdef long nint_keep = nint // keep_freq
+
+    cdef double *cdt = <double *> malloc(sizeof(double) * rk._c_table.shape[0])
+    cdef double *ddt = <double *> malloc(sizeof(double) * rk._c_table.shape[0])
+
+    cdef Py_ssize_t istep, idof, iint_keep
+
+    for istep in range(rk._c_table.shape[0]):
+        cdt[istep] = rk._c_table[istep] * dt
+        ddt[istep] = rk._d_table[istep] * dt
+
+    for iint_keep in range(nint_keep):
+
+        for ifreq in range(keep_freq):
+
+            for istep in range(rk._c_table.shape[0]):
+
+                res = fun(tv,v)  
+                # PyFun_apply(fun,tv,v,res)
+
+                for idof in range(ndof):
+                    x[idof] += cdt[istep] * res[idof]  
+
+                tx += cdt[istep]
+
+                res = gun(tx,x)   
+                # PyFun_apply(gun,tx,x,res)
+
+                for idof in range(ndof):
+                    v[idof] += ddt[istep] * res[idof]  
+
+                tv += ddt[istep]
+
+        for idof in range(ndof):
+            x_keep[iint_keep,idof] = x[idof]
+        for idof in range(ndof):
+            v_keep[iint_keep,idof] = v[idof]
+
+    free(cdt)
+    free(ddt)
+
+
+
+
+
+
 
 @cython.cdivision(True)
 def ExplicitSymplecticWithTable_VX_cython(
@@ -111,7 +344,7 @@ def ExplicitSymplecticWithTable_VX_cython(
 
     cdef np.ndarray[double, ndim=1, mode="c"] res
 
-    cdef long istep,id
+    cdef long istep, idof
     for istep in range(nsteps):
         cdt[istep] = c_table[istep]*dt
         ddt[istep] = d_table[istep]*dt

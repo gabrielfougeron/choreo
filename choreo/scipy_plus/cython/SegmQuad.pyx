@@ -105,7 +105,7 @@ cdef inline void PyFun_apply(
     const double x  ,
     double[::1] res ,
     Py_ssize_t ndim ,  
-) noexcept:
+):
 
     cdef object f_res_raw
 
@@ -267,7 +267,7 @@ cdef void IntegrateOnSegment_ann_python(
     QuadFormula quad                ,
     double[::1] f_res               ,
     double[::1] f_int               ,
-) noexcept:
+):
 
     cdef Py_ssize_t istep
     cdef long iint

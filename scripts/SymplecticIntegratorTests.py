@@ -33,8 +33,14 @@ test_names = [
 
 # methods = ['SymplecticGauss'+str(i) for i in range(1,11)]
 
+methods = []
+
 # methods.append('SymplecticEuler')
 # methods.append('SymplecticStormerVerlet')
+# methods.append('SymplecticRuth3')
+# methods.append('SymplecticRuth4')
+methods.append('SymplecticRuth4Rat_XV')
+methods.append('SymplecticRuth4Rat_VX')
 
 # 
 # methods.append('SymplecticEuler_XV')
@@ -47,10 +53,10 @@ test_names = [
 
 
 
-# the_integrators = {method:choreo.scipy_plus.ODE.GetSymplecticIntegrator(method) for method in methods}
+the_integrators = {method:choreo.scipy_plus.ODE.GetSymplecticIntegrator(method) for method in methods}
 
 
-the_integrators = choreo.scipy_plus.ODE.all_unique_SymplecticIntegrators
+# the_integrators = choreo.scipy_plus.ODE.all_unique_SymplecticIntegrators
 
 
 for the_test in test_names:
@@ -152,8 +158,8 @@ for the_test in test_names:
         # refinement_lvl = list(range(1,21))
         # refinement_lvl = list(range(1,101))
 
-        # n_tests = 1
-        n_tests = 100
+        n_tests = 1
+        # n_tests = 100
 
         for iref in range(len(refinement_lvl)):
 
@@ -177,7 +183,8 @@ for the_test in test_names:
                 error_mul = max(error/error_prev,1e-16)
                 est_order = -m.log(error_mul)/m.log(refinement_lvl[iref]/refinement_lvl[iref-1])
 
-                print(f'{nint:4d}  error : {error:e}     error mul : {error_mul:e}     estimated order : {est_order:.2f}     time : {(t_end-t_beg)/One_sec:f}')
+                # print(f'{nint:4d}  error : {error:e}     error mul : {error_mul:e}     estimated order : {est_order:.2f}     time : {(t_end-t_beg)/One_sec:f}')
+                print(f'{nint:4d}  error : {error:e}     error mul : {error_mul:e}     estimated order : {est_order:.2f}')
                 # print(f'error : {error:e}     estimated order : {est_order:.2f}')
 
             error_prev = error
