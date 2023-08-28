@@ -150,9 +150,15 @@ cpdef ExplicitSymplecticIVP(
     double[::1] x0                  ,
     double[::1] v0                  ,
     ExplicitSymplecticRKTable rk    ,
-    long nint                       ,
-    long keep_freq                  ,
+    object mode = "XV"              ,
+    long nint = 1                   ,
+    long keep_freq = -1             ,
 ): 
+
+
+
+
+
 
     cdef ccallback_t callback_fun
     ccallback_prepare(&callback_fun, signatures, fun, CCALLBACK_DEFAULTS)
@@ -170,6 +176,9 @@ cpdef ExplicitSymplecticIVP(
     if (x0.shape[0] != v0.shape[0]):
         raise ValueError("x0 and v0 must have the same shape")
 
+    if (keep_freq < 0):
+        keep_freq = nint
+
     cdef long ndof = x0.shape[0]
     cdef long nint_keep = nint // keep_freq
 
@@ -186,19 +195,41 @@ cpdef ExplicitSymplecticIVP(
         py_fun = <object> lowlevelfun.py_fun
         py_gun = <object> lowlevelgun.py_fun
 
-        ExplicitSymplecticIVP_ann_python(
-            py_fun      ,
-            py_gun      ,
-            t_span      ,
-            x           ,
-            v           ,
-            res         ,
-            rk          ,
-            nint        ,
-            keep_freq   ,
-            x_keep      ,
-            v_keep      ,
-        )
+        if mode == 'VX':
+
+            ExplicitSymplecticIVP_VX_ann_python(
+                py_fun      ,
+                py_gun      ,
+                t_span      ,
+                x           ,
+                v           ,
+                res         ,
+                rk          ,
+                nint        ,
+                keep_freq   ,
+                x_keep      ,
+                v_keep      ,
+            )
+
+        elif mode == 'XV':
+
+            ExplicitSymplecticIVP_XV_ann_python(
+                py_fun      ,
+                py_gun      ,
+                t_span      ,
+                x           ,
+                v           ,
+                res         ,
+                rk          ,
+                nint        ,
+                keep_freq   ,
+                x_keep      ,
+                v_keep      ,
+            )
+
+
+        else:
+            raise ValueError(f"Unknown mode {mode}. Possible options are 'VX' and 'XV'.")
 
     # else:
         # 
@@ -221,16 +252,8 @@ cpdef ExplicitSymplecticIVP(
 
     return x_keep, v_keep
 
-
-
-
-
-
-
-
-
 @cython.cdivision(True)
-cdef void ExplicitSymplecticIVP_ann_python(
+cdef void ExplicitSymplecticIVP_VX_ann_python(
     object fun                      ,
     object gun                      ,
     (double, double) t_span         ,
@@ -289,6 +312,187 @@ cdef void ExplicitSymplecticIVP_ann_python(
 
     free(cdt)
     free(ddt)
+
+@cython.cdivision(True)
+cdef void ExplicitSymplecticIVP_XV_ann_python(
+    object fun                      ,
+    object gun                      ,
+    (double, double) t_span         ,
+    double[::1] x                   ,
+    double[::1] v                   ,
+    double[::1] res                 ,
+    ExplicitSymplecticRKTable rk    ,
+    long nint                       ,
+    long keep_freq                  ,
+    double[:,::1] x_keep            ,
+    double[:,::1] v_keep            ,
+):
+
+    cdef double tx = t_span[0]
+    cdef double tv = t_span[0]
+    cdef double dt = (t_span[1] - t_span[0]) / nint
+
+    cdef long ndof = x.shape[0]
+    cdef long nint_keep = nint // keep_freq
+
+    cdef double *cdt = <double *> malloc(sizeof(double) * rk._c_table.shape[0])
+    cdef double *ddt = <double *> malloc(sizeof(double) * rk._c_table.shape[0])
+
+    cdef Py_ssize_t istep, idof, iint_keep
+
+    for istep in range(rk._c_table.shape[0]):
+        cdt[istep] = rk._c_table[istep]*dt
+        ddt[istep] = rk._d_table[istep]*dt
+
+    for iint_keep in range(nint_keep):
+
+        for ifreq in range(keep_freq):
+
+            for istep in range(rk._c_table.shape[0]):
+
+                res = gun(tx, x)   
+                # PyFun_apply(gun,tx,x,res)
+
+                for idof in range(ndof):
+                    v[idof] += cdt[istep] * res[idof]  
+                tv += cdt[istep]
+
+                res = fun(tv, v)  
+                # PyFun_apply(fun,tv,v,res)
+
+                for idof in range(ndof):
+                    x[idof] += ddt[istep] * res[idof]  
+
+                tx += ddt[istep]
+
+        for idof in range(ndof):
+            x_keep[iint_keep,idof] = x[idof]
+        for idof in range(ndof):
+            v_keep[iint_keep,idof] = v[idof]
+
+    free(cdt)
+    free(ddt)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+@cython.cdivision(True)
+def ExplicitSymplecticWithTable_XV_cython(
+    object fun,
+    object gun,
+    (double, double) t_span,
+    np.ndarray[double, ndim=1, mode="c"] x0,
+    np.ndarray[double, ndim=1, mode="c"] v0,
+    long nint,
+    long keep_freq,
+    np.ndarray[double, ndim=1, mode="c"] c_table,
+    np.ndarray[double, ndim=1, mode="c"] d_table,
+    long nsteps
+):
+
+    cdef long iint_keep, ifreq
+    cdef long nint_keep = nint // keep_freq
+    cdef long ndof = x0.size
+
+    cdef np.ndarray[double, ndim=2, mode="c"] x_keep = np.empty((nint_keep,ndof),dtype=np.float64)
+    cdef np.ndarray[double, ndim=2, mode="c"] v_keep = np.empty((nint_keep,ndof),dtype=np.float64)
+
+    cdef double tx = t_span[0]
+    cdef double tv = t_span[0]
+    cdef double dt = (t_span[1] - t_span[0]) / nint
+
+    cdef np.ndarray[double, ndim=1, mode="c"] cdt = np.empty((nsteps),dtype=np.float64)
+    cdef np.ndarray[double, ndim=1, mode="c"] ddt = np.empty((nsteps),dtype=np.float64)
+
+    cdef np.ndarray[double, ndim=1, mode="c"] x = x0.copy()
+    cdef np.ndarray[double, ndim=1, mode="c"] v = v0.copy()
+
+    cdef np.ndarray[double, ndim=1, mode="c"] res
+
+    cdef long istep,idof
+
+    for istep in range(nsteps):
+        cdt[istep] = c_table[istep]*dt
+        ddt[istep] = d_table[istep]*dt
+
+    for iint_keep in range(nint_keep):
+
+        for ifreq in range(keep_freq):
+
+            for istep in range(nsteps):
+
+                res = gun(tx,x)   
+                for idof in range(ndof):
+                    v[idof] += cdt[istep] * res[idof]  
+                tv += cdt[istep]
+
+                res = fun(tv,v)  
+                for idof in range(ndof):
+                    x[idof] += ddt[istep] * res[idof]  
+
+                tx += ddt[istep]
+
+        for idof in range(ndof):
+            x_keep[iint_keep,idof] = x[idof]
+        for idof in range(ndof):
+            v_keep[iint_keep,idof] = v[idof]
+
+    return x_keep, v_keep
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

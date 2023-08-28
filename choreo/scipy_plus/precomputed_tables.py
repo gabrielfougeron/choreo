@@ -44,3 +44,4 @@ Ruth4Rat = ExplicitSymplecticRKTable(
     d_table = np.array([7./48  , 3./8  , -1./48    , -1./48    ,  3./8 , 7./48 ])   ,
     th_cvg_rate = 4                                                                 ,
 )
+
