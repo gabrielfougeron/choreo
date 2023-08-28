@@ -27,7 +27,6 @@ sys.path.append(__PROJECT_ROOT__)
 
 import matplotlib.pyplot as plt
 import numpy as np
-import scipy
 import math as m
 
 import choreo
