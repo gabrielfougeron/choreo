@@ -4,6 +4,7 @@ Creates and compiles C code from Cython file
 '''
 
 import os
+import sys
 import shutil
 import setuptools
 import numpy
@@ -119,7 +120,7 @@ compiler_directives = {
     'infer_types': True,
 }
 
-# ## Profiler only ####
+## Profiler only ####
 # profile_compiler_directives = {
 #     'profile': True,
 #     'linetrace': True,
@@ -156,7 +157,7 @@ if use_Cython:
         annotate = True,
         compiler_directives = compiler_directives,
         nthreads = nthreads,
-        # force = True,
+        force = ("-f" in sys.argv),
     )
     
 

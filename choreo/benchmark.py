@@ -81,7 +81,6 @@ def run_benchmark(
                     )
 
                     try:
-
                         # For functions that require caching
                         Timer.timeit(number = 1)
 
