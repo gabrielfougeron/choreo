@@ -127,6 +127,7 @@ def plot_benchmark(
     all_sizes               ,
     all_funs = None         ,
     all_names = None        ,
+    all_xvalues = None      ,
     all_x_scalings = None   ,
     all_y_scalings = None   ,
     n_repeat = 1            ,
@@ -231,8 +232,12 @@ def plot_benchmark(
             for i_repeat in range(n_repeat):
 
                 plot_y_val = all_times[:, i_fun, i_repeat] / all_y_scalings[i_fun]
-                plot_x_val = all_sizes * all_x_scalings[i_fun]
-
+                
+                if all_xvalues is None:
+                    plot_x_val = all_sizes * all_x_scalings[i_fun]
+                else:   
+                    plot_x_val = all_xvalues[:, i_fun, i_repeat] / all_y_scalings[i_fun]
+                
                 if transform in ["pol_growth_order", "pol_cvgence_order"]:
                     
                     transformed_plot_y_val = np.zeros_like(plot_y_val)

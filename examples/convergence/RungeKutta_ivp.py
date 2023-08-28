@@ -63,8 +63,8 @@ def cpte_error(
 
         ex_sol = lambda t : np.array( [ np.cos(t) , np.sin(t),-np.sin(t), np.cos(t) ]  )
 
-        fun = lambda t,y:   y.copy()
-        gun = lambda t,x:  -np.array(x.copy())
+        fun = lambda t,y:   np.array(y)
+        gun = lambda t,x:  -np.array(x)
 
     if eq_name == "y'' = - exp(y)" :
         # WOLFRAM
@@ -77,7 +77,7 @@ def cpte_error(
         sqrt2 = np.sqrt(2.)
         ex_sol = lambda t : np.array( [ -2*np.log(np.cosh(invsqrt2*t)) , -sqrt2*np.tanh(invsqrt2*t) ]  )
 
-        fun = lambda t,y:  y.copy()
+        fun = lambda t,y:  np.array(y)
         gun = lambda t,x: -np.exp(x)
 
     if eq_name == "y'' = xy" :
@@ -93,7 +93,7 @@ def cpte_error(
 
             return np.array([ai,bi,aip,bip])
 
-        fun = lambda t,y: y.copy()
+        fun = lambda t,y: np.array(y)
         gun = lambda t,x: np.array([t*x[0],t*x[1]],dtype=np.float64)
         
     if eq_name == "y' = Az; z' = By" :
@@ -155,9 +155,9 @@ def cpte_error(
 
 eq_names = [
     "y'' = -y"          ,
-    # "y'' = - exp(y)"    ,
-    # "y'' = xy"          ,
-    # "y' = Az; z' = By"  ,
+    "y'' = - exp(y)"    ,
+    "y'' = xy"          ,
+    "y' = Az; z' = By"  ,
 ]
 
 rk_tables = {
@@ -371,16 +371,16 @@ for bench_name, all_funs in all_benchs.items():
         filename = timings_filename     ,
         ForceBenchmark = ForceBenchmark ,
     )
-
+    
     choreo.plot_benchmark(
         all_errors                                  ,
-        all_times                                   ,
+        all_nint                                    ,
         all_funs                                    ,
-        transform = "pol_cvgence_order"             ,
+        all_xvalues = all_times                     ,
         logx_plot = True                            ,
         fig = fig                                   ,
         ax = axs[i_bench,0]                         ,
-        title = f'Approximate convergence rate on integrand {bench_name}' ,
+        title = f'Error as a function of cumputational cost for equation {bench_name}' ,
     )
 
 plt.tight_layout()
@@ -388,4 +388,5 @@ plt.tight_layout()
 # sphinx_gallery_end_ignore
 
 plt.show()
+
 
