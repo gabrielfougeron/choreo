@@ -110,11 +110,16 @@ cdef inline void PyFun_apply(
     cdef Py_ssize_t i
     cdef object f_res_raw = fun(x)
 
+
     if isinstance(f_res_raw, float):   # idim is expected to be 1
         res[0] = f_res_raw
     else:
         for i in range(ndim):
             res[i] = f_res_raw[i]
+        # res = f_res_raw
+
+
+            
 
 cdef class QuadFormula:
 

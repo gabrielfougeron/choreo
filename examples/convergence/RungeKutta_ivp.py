@@ -25,6 +25,10 @@ except (NameError, ValueError):
 
 sys.path.append(__PROJECT_ROOT__)
 
+os.environ['OPENBLAS_NUM_THREADS'] = '1'
+os.environ['NUMEXPR_NUM_THREADS'] = '1'
+os.environ['MKL_NUM_THREADS'] = '1'
+
 import matplotlib.pyplot as plt
 import numpy as np
 import math as m
@@ -151,9 +155,9 @@ def cpte_error(
 
 eq_names = [
     "y'' = -y"          ,
-    "y'' = - exp(y)"    ,
-    "y'' = xy"          ,
-    "y' = Az; z' = By"  ,
+    # "y'' = - exp(y)"    ,
+    # "y'' = xy"          ,
+    # "y' = Az; z' = By"  ,
 ]
 
 rk_tables = {
@@ -185,6 +189,9 @@ all_benchs = {
 def setup(nint):
     return nint
 
+def setup_timings(nint):
+    return [(nint, 'nint')]
+
 
 n_bench = len(all_benchs)
 
@@ -214,7 +221,7 @@ for bench_name, all_funs in all_benchs.items():
 
     i_bench += 1
     
-    bench_filename = os.path.join(bench_folder,basename_bench_filename+str(i_bench).zfill(2)+'.npy')
+    bench_filename = os.path.join(bench_folder,basename_bench_filename+str(i_bench).zfill(2)+'_error.npy')
     
     all_errors = choreo.benchmark.run_benchmark(
         all_nint                        ,
@@ -268,7 +275,7 @@ for bench_name, all_funs in all_benchs.items():
 
     i_bench += 1
     
-    bench_filename = os.path.join(bench_folder,basename_bench_filename+str(i_bench).zfill(2)+'.npy') 
+    bench_filename = os.path.join(bench_folder,basename_bench_filename+str(i_bench).zfill(2)+'_error.npy') 
 
     all_errors = choreo.benchmark.run_benchmark(
         all_nint                        ,
@@ -316,4 +323,69 @@ plt.show()
 # * A steady convergence phase where the convergence remains close to the theoretical value
 # * A final phase, where the relative error stagnates arround 1e-15. The value of the integral is computed with maximal accuracy given floating point precision. The approximation of the convergence rate is dominated by seemingly random floating point errors.
 # 
+
+
+# %%
+# Error as a function of running time
+
+# sphinx_gallery_start_ignore
+
+plt.close()
+
+# plot_ylim = [0,5]
+
+fig, axs = plt.subplots(
+    nrows = n_bench,
+    ncols = 1,
+    sharex = True,
+    sharey = False,
+    figsize = figsize,
+    dpi = dpi   ,
+    squeeze = False,
+)
+
+i_bench = -1
+
+for bench_name, all_funs in all_benchs.items():
+
+    i_bench += 1
+    
+    bench_filename = os.path.join(bench_folder,basename_bench_filename+str(i_bench).zfill(2)+'_error.npy') 
+
+    all_errors = choreo.benchmark.run_benchmark(
+        all_nint                        ,
+        all_funs                        ,
+        setup = setup                   ,
+        mode = "scalar_output"          ,
+        filename = bench_filename       ,
+        ForceBenchmark = ForceBenchmark ,
+    )
+    
+    timings_filename = os.path.join(bench_folder,basename_bench_filename+str(i_bench).zfill(2)+'_timings.npy') 
+    
+    all_times = choreo.benchmark.run_benchmark(
+        all_nint                        ,
+        all_funs                        ,
+        setup = setup_timings           ,
+        mode = "timings"                ,
+        filename = timings_filename     ,
+        ForceBenchmark = ForceBenchmark ,
+    )
+
+    choreo.plot_benchmark(
+        all_errors                                  ,
+        all_times                                   ,
+        all_funs                                    ,
+        transform = "pol_cvgence_order"             ,
+        logx_plot = True                            ,
+        fig = fig                                   ,
+        ax = axs[i_bench,0]                         ,
+        title = f'Approximate convergence rate on integrand {bench_name}' ,
+    )
+
+plt.tight_layout()
+ 
+# sphinx_gallery_end_ignore
+
+plt.show()
 
