@@ -90,16 +90,17 @@ cdef inline void LowLevelFun_apply(
 
 cdef inline void PyFun_apply(
     object fun          ,
-    double t      ,
-    double[::1] x ,
+    const double t      ,
+    const double[::1] x ,
     double[::1] res     ,
 ):
 
     cdef Py_ssize_t i
-    cdef object f_res_raw = fun(t, x)
+    cdef np.ndarray[double, ndim=1, mode="c"] f_res_raw = fun(t, x)
 
     for i in range(x.shape[0]):
         res[i] = f_res_raw[i]
+
 
 
 cdef class ExplicitSymplecticRKTable:
@@ -285,16 +286,16 @@ cdef void ExplicitSymplecticIVP_VX_ann_python(
 
             for istep in range(rk._c_table.shape[0]):
 
-                res = fun(tv, v)
-                # PyFun_apply(fun,tv,v,res)
+                # res = fun(tv, v)
+                PyFun_apply(fun,tv,v,res)
 
                 for idof in range(ndof):
                     x[idof] += cdt[istep] * res[idof]  
 
                 tx += cdt[istep]
 
-                res = gun(tx, x)
-                # PyFun_apply(gun,tx,x,res)
+                # res = gun(tx, x)
+                PyFun_apply(gun,tx,x,res)
 
                 for idof in range(ndof):
                     v[idof] += ddt[istep] * res[idof]  
@@ -346,15 +347,15 @@ cdef void ExplicitSymplecticIVP_XV_ann_python(
 
             for istep in range(rk._c_table.shape[0]):
 
-                res = gun(tx, x)   
-                # PyFun_apply(gun,tx,x,res)
+                # res = gun(tx, x)   
+                PyFun_apply(gun,tx,x,res)
 
                 for idof in range(ndof):
                     v[idof] += cdt[istep] * res[idof]  
                 tv += cdt[istep]
 
-                res = fun(tv, v)  
-                # PyFun_apply(fun,tv,v,res)
+                # res = fun(tv, v)  
+                PyFun_apply(fun,tv,v,res)
 
                 for idof in range(ndof):
                     x[idof] += ddt[istep] * res[idof]  
