@@ -34,7 +34,7 @@ import math as m
 
 import choreo 
 import scipy
-
+import numba
 
 timings_folder = os.path.join(__PROJECT_ROOT__,'docs','source','_build','benchmarks_out')
 
@@ -49,82 +49,85 @@ method = 'Gauss'
 nsteps = 10
 quad = choreo.scipy_plus.SegmQuad.ComputeQuadrature(method, nsteps)
 
+def test_from_fun(fun):
+    
+    return functools.partial(
+        choreo.scipy_plus.SegmQuad.IntegrateOnSegment,
+        fun,
+        ndim,
+        x_span,
+        quad
+    )
+
+
+def py_fun(x):
+    return np.sin(x)
+
+nb_fun = choreo.scipy_plus.SegmQuad.nb_jit_double_double(py_fun)
+
+def py_fun_array(x):
+    res = np.empty((ndim))
+    res[0] = np.sin(x)
+    return res
+
+nb_fun_pointer = choreo.scipy_plus.SegmQuad.nb_jit_array_double(py_fun_array)
+
+def py_fun_inplace_pointer(x, res):
+    res[0] = np.sin(x)
+
+nb_fun_inplace_pointer = choreo.scipy_plus.SegmQuad.nb_jit_inplace_double_array(py_fun_inplace_pointer)
+
+
 # sphinx_gallery_end_ignore
 
-single_py_fun = functools.partial(
-    choreo.scipy_plus.SegmQuad.IntegrateOnSegment,
-    choreo.scipy_plus.cython.test.single_py_fun,
-    ndim,
-    x_span,
-    quad
-)
-
-single_cy_fun_pointer_LowLevel = functools.partial(
-    choreo.scipy_plus.SegmQuad.IntegrateOnSegment,
-    scipy.LowLevelCallable.from_cython( choreo.scipy_plus.cython.test, "single_cy_fun_pointer") ,
-    ndim,
-    x_span,
-    quad
-)
-
-single_cy_fun_memoryview_LowLevel = functools.partial(
-    choreo.scipy_plus.SegmQuad.IntegrateOnSegment,
-    scipy.LowLevelCallable.from_cython( choreo.scipy_plus.cython.test, "single_cy_fun_memoryview") ,
-    ndim,
-    x_span,
-    quad
-)
-
-single_cy_fun_oneval_LowLevel = functools.partial(
-    choreo.scipy_plus.SegmQuad.IntegrateOnSegment,
-    scipy.LowLevelCallable.from_cython( choreo.scipy_plus.cython.test, "single_cy_fun_oneval") ,
-    ndim,
-    x_span,
-    quad
-)
-
-all_funs_1 = {
-    'py_fun' : single_py_fun ,
-    'cy_fun_pointer_LowLevel' : single_cy_fun_pointer_LowLevel,
-    'cy_fun_memoryview_LowLevel' : single_cy_fun_memoryview_LowLevel,
-    'cy_fun_oneval_LowLevel' : single_cy_fun_oneval_LowLevel,
+all_funs_scalar = {
+    'py_fun' : test_from_fun(py_fun) ,
+    'py_fun_array' : test_from_fun(py_fun_array) ,
+    'nb_fun' : test_from_fun(nb_fun) ,
+    'nb_fun_pointer' : test_from_fun(nb_fun_pointer) ,
+    'nb_fun_inplace_pointer' : test_from_fun(nb_fun_inplace_pointer) ,
+    'py_fun_in_pyx' : test_from_fun(choreo.scipy_plus.cython.test.single_py_fun) ,
+    'cy_fun_pointer_LowLevel' : test_from_fun(scipy.LowLevelCallable.from_cython(choreo.scipy_plus.cython.test, "single_cy_fun_pointer")),
+    'cy_fun_memoryview_LowLevel' : test_from_fun(scipy.LowLevelCallable.from_cython(choreo.scipy_plus.cython.test, "single_cy_fun_memoryview")),
+    'cy_fun_oneval_LowLevel' : test_from_fun(scipy.LowLevelCallable.from_cython(choreo.scipy_plus.cython.test, "single_cy_fun_oneval")),
 }
+
+# sphinx_gallery_start_ignore
 
 ndim = choreo.scipy_plus.cython.test.mul_size_py
 
-mul_py_fun = functools.partial(
-    choreo.scipy_plus.SegmQuad.IntegrateOnSegment,
-    choreo.scipy_plus.cython.test.mul_py_fun,
-    ndim,
-    x_span,
-    quad
-)
+def mul_py_fun_array(x):
+    res = np.empty((ndim))
+    for i in range(ndim):
+        val = (i+1) * x
+        res[i] = np.sin(val)
+    return res
 
-mul_cy_fun_pointer_LowLevel = functools.partial(
-    choreo.scipy_plus.SegmQuad.IntegrateOnSegment,
-    scipy.LowLevelCallable.from_cython( choreo.scipy_plus.cython.test, "mul_cy_fun_pointer") ,
-    ndim,
-    x_span,
-    quad
-)
+mul_nb_fun_pointer = choreo.scipy_plus.SegmQuad.nb_jit_array_double(mul_py_fun_array)
 
-mul_cy_fun_memoryview_LowLevel = functools.partial(
-    choreo.scipy_plus.SegmQuad.IntegrateOnSegment,
-    scipy.LowLevelCallable.from_cython( choreo.scipy_plus.cython.test, "mul_cy_fun_memoryview") ,
-    ndim,
-    x_span,
-    quad
-)
+def mul_py_fun_inplace_pointer(x, res):
+    for i in range(ndim):
+        val = (i+1) * x
+        res[i] = np.sin(val)
 
-all_funs_2 = {
-    'py_fun' : mul_py_fun ,
-    'cy_fun_pointer_LowLevel' : mul_cy_fun_pointer_LowLevel,
-    'cy_fun_memoryview_LowLevel' : mul_cy_fun_memoryview_LowLevel,
+mul_nb_fun_inplace_pointer = choreo.scipy_plus.SegmQuad.nb_jit_inplace_double_array(mul_py_fun_inplace_pointer)
+
+# sphinx_gallery_end_ignore
+
+all_funs_vect = {
+    'py_fun' : None, 
+    'py_fun_array' : test_from_fun(mul_py_fun_array) ,
+    'nb_fun' : None ,
+    'nb_fun_pointer' : test_from_fun(mul_nb_fun_pointer) ,
+    'nb_fun_inplace_pointer' : test_from_fun(mul_nb_fun_inplace_pointer) ,
+    'py_fun_in_pyx' : test_from_fun(choreo.scipy_plus.cython.test.mul_py_fun),
+    'cy_fun_pointer_LowLevel' : test_from_fun(scipy.LowLevelCallable.from_cython(choreo.scipy_plus.cython.test, "mul_cy_fun_pointer")),
+    'cy_fun_memoryview_LowLevel' : test_from_fun(scipy.LowLevelCallable.from_cython(choreo.scipy_plus.cython.test, "mul_cy_fun_memoryview")),
 }
 
 all_benchs = {
-    'Scalar function' : all_funs_1  ,
-    f'Vector function of size {ndim}' : all_funs_2  ,
+    'Scalar function' : all_funs_scalar  ,
+    f'Vector function of size {choreo.scipy_plus.cython.test.mul_size_py}' : all_funs_vect  ,
 }
 
 # sphinx_gallery_start_ignore
@@ -146,7 +149,7 @@ fig, axs = plt.subplots(
 
 i_bench = -1
 
-all_nint = np.array([2**i for i in range(18)])
+all_nint = np.array([2**i for i in range(14)])
 
 def setup(nint):
     return [(nint, 'nint')]
@@ -180,5 +183,6 @@ for bench_name, all_funs in all_benchs.items():
     
 plt.tight_layout()
 plt.show()
+
     
 # sphinx_gallery_end_ignore
