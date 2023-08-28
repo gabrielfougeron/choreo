@@ -26,19 +26,42 @@ from .ccallback cimport ccallback_t, ccallback_prepare, ccallback_release, CCALL
 
 cdef class ExplicitRKTable:
     
-    cdef double[::1] c_table
-    cdef double[::1] d_table
+    cdef double[::1] _c_table
+    cdef double[::1] _d_table
+    cdef long _th_cvg_rate
 
-    def __init__(self, c_table, d_table):
+    def __init__(
+        self                ,
+        c_table             ,
+        d_table             ,
+        th_cvg_rate = None  ,
+    ):
 
-        self.c_table = c_table
-        self.d_table = d_table
+        self._c_table = c_table
+        self._d_table = d_table
 
         assert c_table.shape[0] == d_table.shape[0]
 
+        if th_cvg_rate is None:
+            self._th_cvg_rate = -1
+        else:
+            self._th_cvg_rate = th_cvg_rate
+
     @property
     def nsteps(self):
-        return self.c_table.shape[0]
+        return self._c_table.shape[0]
+
+    @property
+    def c_table(self):
+        return np.array(self._c_table)
+    
+    @property
+    def d_table(self):
+        return np.array(self._d_table)    
+
+    @property
+    def th_cvg_rate(self):
+        return self._th_cvg_rate
 
 @cython.cdivision(True)
 def ExplicitSymplecticWithTable_VX_cython(
