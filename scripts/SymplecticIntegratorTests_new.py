@@ -3,7 +3,7 @@ import os
 os.environ['OPENBLAS_NUM_THREADS'] = '1'
 
 import functools
-import time
+import itertools
 import math as m
 import numpy as np
 import scipy.linalg
@@ -20,6 +20,7 @@ import choreo
 def cpte_error(
     eq_name,
     rk_method,
+    mode,
     nint,
 ):
 
@@ -29,12 +30,12 @@ def cpte_error(
         # y'' = - y
         # y(x) = A cos(x) + B sin(x)
 
-        test_ndim = 1
+        test_ndim = 2
 
-        ex_sol = lambda t : np.array( [ np.cos(t) , np.sin(t),-np.sin(t),np.cos(t) ]  )
+        ex_sol = lambda t : np.array( [ np.cos(t) , np.sin(t),-np.sin(t), np.cos(t) ]  )
 
-        fun = lambda t,y:  y.copy()
-        gun = lambda t,x:  -x.copy()
+        fun = lambda t,y:   y.copy()
+        gun = lambda t,x:  -np.array(x.copy())
 
     if eq_name == "y'' = - exp(y)" :
         # WOLFRAM
@@ -48,7 +49,7 @@ def cpte_error(
         ex_sol = lambda t : np.array( [ -2*np.log(np.cosh(invsqrt2*t)) , -sqrt2*np.tanh(invsqrt2*t) ]  )
 
         fun = lambda t,y:  y.copy()
-        gun = lambda t,x: np.array([-np.exp(x)])
+        gun = lambda t,x: -np.exp(x)
 
     if eq_name == "y'' = xy" :
 
@@ -105,17 +106,22 @@ def cpte_error(
     x0 = ex_init[0          :  test_ndim].copy()
     v0 = ex_init[test_ndim  :2*test_ndim].copy()
     
-    # print(rk_method.nsteps)
+#     print(x0.shape)
+#     print(v0.shape)
+#     print(fun(0.,x0).shape)
+#     print(gun(0.,v0).shape)
+# 
+#     exit()
 
     xf,vf = choreo.scipy_plus.ODE.ExplicitSymplecticIVP(
-        fun         ,
-        gun         ,
-        t_span      ,
-        x0          ,
-        v0          ,
-        rk_method   ,
-        nint        ,
-        nint        ,
+        fun             ,
+        gun             ,
+        t_span          ,
+        x0              ,
+        v0              ,
+        nint = nint     ,
+        rk = rk_method  ,
+        mode = mode     ,
     )
 
     sol = np.ascontiguousarray(np.concatenate((xf,vf),axis=0).reshape(2*test_ndim))
@@ -125,10 +131,10 @@ def cpte_error(
 
 
 eq_names = [
-    # "y'' = -y",
-    # "y'' = - exp(y)",
+    "y'' = -y",
+    "y'' = - exp(y)",
     "y'' = xy",
-    # "y' = Az; z' = By",
+    "y' = Az; z' = By",
 ]
 
 rk_tables = {
@@ -144,11 +150,12 @@ all_nint = [1,2,4,8,16,32,64,128,256,512,1024,2048]
     
 all_benchs = {
     eq_name : {
-        f'{rk_name}' : functools.partial(
-            cpte_error  ,
+        f'{rk_name} {mode}' : functools.partial(
+            cpte_error ,
             eq_name    ,
-            rk_table      ,
-        ) for rk_name, rk_table in rk_tables.items()
+            rk_table   ,
+            mode       ,
+        ) for (rk_name, rk_table), mode in itertools.product(rk_tables.items(), ['XV','VX'])
     } for eq_name in eq_names
 }
 
