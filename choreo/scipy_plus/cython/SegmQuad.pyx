@@ -107,11 +107,8 @@ cdef inline void PyFun_apply(
     Py_ssize_t ndim ,  
 ):
 
-    cdef object f_res_raw
-
     cdef Py_ssize_t i
-
-    f_res_raw = fun(x)
+    cdef object f_res_raw = fun(x)
 
     if isinstance(f_res_raw, float):   # idim is expected to be 1
         res[0] = f_res_raw
