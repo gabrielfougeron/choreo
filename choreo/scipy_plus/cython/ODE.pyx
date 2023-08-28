@@ -90,8 +90,8 @@ cdef inline void LowLevelFun_apply(
 
 cdef inline void PyFun_apply(
     object fun          ,
-    const double t      ,
-    const double[::1] x ,
+    double t      ,
+    double[::1] x ,
     double[::1] res     ,
 ):
 
@@ -285,14 +285,16 @@ cdef void ExplicitSymplecticIVP_VX_ann_python(
 
             for istep in range(rk._c_table.shape[0]):
 
-                PyFun_apply(fun,tv,v,res)
+                res = fun(tv, v)
+                # PyFun_apply(fun,tv,v,res)
 
                 for idof in range(ndof):
                     x[idof] += cdt[istep] * res[idof]  
 
                 tx += cdt[istep]
 
-                PyFun_apply(gun,tx,x,res)
+                res = gun(tx, x)
+                # PyFun_apply(gun,tx,x,res)
 
                 for idof in range(ndof):
                     v[idof] += ddt[istep] * res[idof]  
