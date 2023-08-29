@@ -26,10 +26,17 @@ StormerVerlet = ExplicitSymplecticRKTable(
     th_cvg_rate = 2                         ,
 )
 
+
 Ruth3 = ExplicitSymplecticRKTable(
     c_table = np.array([1.        ,-2./3  ,2/3    ])    ,
     d_table = np.array([-1./24    , 3./4  ,7./24  ])    ,
     th_cvg_rate = 3                                     ,
+)
+
+McAte3 = ExplicitSymplecticRKTable(
+    c_table = np.array([0.2683300957817599  ,-0.18799161879915982  , 0.9196615230173999     ])  ,
+    d_table = np.array([0.9196615230173999 , -0.18799161879915982   ,0.2683300957817599     ])  ,
+    th_cvg_rate = 3                                                                             ,
 )
 
 curt2 = m.pow(2,1./3)
@@ -45,3 +52,8 @@ Ruth4Rat = ExplicitSymplecticRKTable(
     th_cvg_rate = 4                                                                 ,
 )
 
+McAte4 = ExplicitSymplecticRKTable(
+    c_table = np.array([0.128846158365384185    ,  0.441583023616466524 ,-0.085782019412973646  , 0.515352837431122936  ])  ,
+    d_table = np.array([ 0.334003603286321425   , 0.756320000515668291  , -0.224819803079420806 ,0.134496199277431089   ])  ,
+    th_cvg_rate = 4                                                                                                         ,
+)

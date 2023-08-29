@@ -97,11 +97,11 @@ all_funs_scalar = {
 
 # sphinx_gallery_start_ignore
 
-ndim = choreo.scipy_plus.cython.test.mul_size_py
+ndim_mul = choreo.scipy_plus.cython.test.mul_size_py
 
 def mul_py_fun_array(x):
-    res = np.empty((ndim))
-    for i in range(ndim):
+    res = np.empty((ndim_mul))
+    for i in range(ndim_mul):
         val = (i+1) * x
         res[i] = np.sin(val)
     return res
@@ -109,7 +109,7 @@ def mul_py_fun_array(x):
 mul_nb_fun_pointer = choreo.scipy_plus.SegmQuad.nb_jit_array_double(mul_py_fun_array)
 
 def mul_py_fun_inplace_pointer(x, res):
-    for i in range(ndim):
+    for i in range(ndim_mul):
         val = (i+1) * x
         res[i] = np.sin(val)
 
