@@ -152,6 +152,7 @@ sphinx_gallery_conf = {
     "plot_gallery": True,
     'matplotlib_animations': True,
     'nested_sections':True,
+    # 'run_stale_examples': True, # Force rebuilding of examples even if the *py file did not change.
 }
 
 
