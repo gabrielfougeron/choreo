@@ -1,6 +1,6 @@
 """
-Convergence analysis of explicit an implicit Runge-Kutta methods for ODE integration
-====================================================================================
+Convergence analysis of explicit Runge-Kutta methods for ODE IVP
+================================================================
 """
 
 # %%
@@ -43,8 +43,8 @@ if not(os.path.isdir(bench_folder)):
     
 basename_bench_filename = 'RK_ivp_cvg_bench_'
 
-# ForceBenchmark = True
-ForceBenchmark = False
+ForceBenchmark = True
+# ForceBenchmark = False
 
 def cpte_error(
     eq_name,
@@ -111,8 +111,8 @@ def cpte_error(
         AB[0:test_ndim,test_ndim:2*test_ndim] = A
         AB[test_ndim:2*test_ndim,0:test_ndim] = B
 
-        yo = np.random.rand(test_ndim)
-        zo = np.random.rand(test_ndim)
+        yo = np.array(range(test_ndim))
+        zo = np.array(range(test_ndim))
 
         yzo = np.zeros(2*test_ndim)
         yzo[0:test_ndim] = yo
@@ -161,11 +161,14 @@ eq_names = [
 ]
 
 rk_tables = {
-    "SymplecticEuler": choreo.scipy_plus.precomputed_tables.SymplecticEuler ,
-    "StormerVerlet": choreo.scipy_plus.precomputed_tables.StormerVerlet     ,
-    "Ruth3": choreo.scipy_plus.precomputed_tables.Ruth3                     ,
-    "Ruth4": choreo.scipy_plus.precomputed_tables.Ruth4                     ,
-    "Ruth4Rat": choreo.scipy_plus.precomputed_tables.Ruth4Rat               ,
+    # "SymplecticEuler": choreo.scipy_plus.precomputed_tables.SymplecticEuler ,
+    # "StormerVerlet": choreo.scipy_plus.precomputed_tables.StormerVerlet     , 
+    # "Ruth3": choreo.scipy_plus.precomputed_tables.Ruth3                     ,
+    # "McAte3": choreo.scipy_plus.precomputed_tables.McAte3                     ,
+    "McAte4": choreo.scipy_plus.precomputed_tables.McAte4                     ,
+    "McAte4_rev": choreo.scipy_plus.precomputed_tables.McAte4.cpte_reversed()                     ,
+    # "Ruth4": choreo.scipy_plus.precomputed_tables.Ruth4                     ,
+    # "Ruth4Rat": choreo.scipy_plus.precomputed_tables.Ruth4Rat               ,
 }
 
 # sphinx_gallery_start_ignore
@@ -248,6 +251,7 @@ plt.tight_layout()
 
 plt.show()
 
+
 # %%
 # The following plots give the measured convergence rate as a function of the number of quadrature subintervals.
 # The dotted lines are theoretical convergence rates.
@@ -323,67 +327,66 @@ plt.show()
 # * A final phase, where the relative error stagnates arround 1e-15. The value of the integral is computed with maximal accuracy given floating point precision. The approximation of the convergence rate is dominated by seemingly random floating point errors.
 # 
 
-
 # %%
 # Error as a function of running time
 
 # sphinx_gallery_start_ignore
-
-plt.close()
-
-fig, axs = plt.subplots(
-    nrows = n_bench,
-    ncols = 1,
-    sharex = False,
-    sharey = False,
-    figsize = figsize,
-    dpi = dpi   ,
-    squeeze = False,
-)
-
-i_bench = -1
-
-for bench_name, all_funs in all_benchs.items():
-
-    i_bench += 1
-    
-    bench_filename = os.path.join(bench_folder,basename_bench_filename+str(i_bench).zfill(2)+'_error.npy') 
-
-    all_errors = choreo.benchmark.run_benchmark(
-        all_nint                        ,
-        all_funs                        ,
-        setup = setup                   ,
-        mode = "scalar_output"          ,
-        filename = bench_filename       ,
-        ForceBenchmark = ForceBenchmark ,
-    )
-    
-    timings_filename = os.path.join(bench_folder,basename_bench_filename+str(i_bench).zfill(2)+'_timings.npy') 
-    
-    all_times = choreo.benchmark.run_benchmark(
-        all_nint                        ,
-        all_funs                        ,
-        setup = setup_timings           ,
-        mode = "timings"                ,
-        filename = timings_filename     ,
-        ForceBenchmark = ForceBenchmark ,
-    )
-    
-    choreo.plot_benchmark(
-        all_errors                                  ,
-        all_nint                                    ,
-        all_funs                                    ,
-        all_xvalues = all_times                     ,
-        logx_plot = True                            ,
-        fig = fig                                   ,
-        ax = axs[i_bench,0]                         ,
-        title = f'Error as a function of cumputational cost for equation {bench_name}' ,
-    )
-
-plt.tight_layout()
- 
-# sphinx_gallery_end_ignore
-
-plt.show()
+# 
+# plt.close()
+# 
+# fig, axs = plt.subplots(
+#     nrows = n_bench,
+#     ncols = 1,
+#     sharex = False,
+#     sharey = False,
+#     figsize = figsize,
+#     dpi = dpi   ,
+#     squeeze = False,
+# )
+# 
+# i_bench = -1
+# 
+# for bench_name, all_funs in all_benchs.items():
+# 
+#     i_bench += 1
+#     
+#     bench_filename = os.path.join(bench_folder,basename_bench_filename+str(i_bench).zfill(2)+'_error.npy') 
+# 
+#     all_errors = choreo.benchmark.run_benchmark(
+#         all_nint                        ,
+#         all_funs                        ,
+#         setup = setup                   ,
+#         mode = "scalar_output"          ,
+#         filename = bench_filename       ,
+#         ForceBenchmark = ForceBenchmark ,
+#     )
+#     
+#     timings_filename = os.path.join(bench_folder,basename_bench_filename+str(i_bench).zfill(2)+'_timings.npy') 
+#     
+#     all_times = choreo.benchmark.run_benchmark(
+#         all_nint                        ,
+#         all_funs                        ,
+#         setup = setup_timings           ,
+#         mode = "timings"                ,
+#         filename = timings_filename     ,
+#         ForceBenchmark = ForceBenchmark ,
+#     )
+#     
+#     choreo.plot_benchmark(
+#         all_errors                                  ,
+#         all_nint                                    ,
+#         all_funs                                    ,
+#         all_xvalues = all_times                     ,
+#         logx_plot = True                            ,
+#         fig = fig                                   ,
+#         ax = axs[i_bench,0]                         ,
+#         title = f'Error as a function of computational cost for equation {bench_name}' ,
+#     )
+# 
+# plt.tight_layout()
+#  
+# # sphinx_gallery_end_ignore
+# 
+# plt.show()
 
 

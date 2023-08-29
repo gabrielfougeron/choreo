@@ -118,8 +118,8 @@ cdef class ExplicitSymplecticRKTable:
 
     def __init__(
         self                ,
-        c_table             ,
-        d_table             ,
+        c_table     = None  ,
+        d_table     = None  ,
         th_cvg_rate = None  ,
     ):
 
@@ -149,6 +149,23 @@ cdef class ExplicitSymplecticRKTable:
     def th_cvg_rate(self):
         return self._th_cvg_rate
 
+    def cpte_reversed(self):
+
+        cdef Py_ssize_t nsteps = self.nsteps
+        cdef Py_ssize_t i
+
+        c_table_reversed = np.empty((nsteps), dtype=np.float64)
+        d_table_reversed = np.empty((nsteps), dtype=np.float64)
+
+        for i in range(nsteps):
+            c_table_reversed[i] = self._d_table[nsteps-i-1]
+            d_table_reversed[i] = self._c_table[nsteps-i-1]
+
+        return ExplicitSymplecticRKTable(
+            c_table = c_table_reversed      ,
+            d_table = d_table_reversed      ,
+            th_cvg_rate = self._th_cvg_rate ,
+        )
 
 @cython.cdivision(True)
 # cpdef (np.ndarray[double, ndim=2, mode="c"], np.ndarray[double, ndim=2, mode="c"]) ExplicitSymplecticIntegrate(
@@ -222,7 +239,7 @@ cpdef ExplicitSymplecticIVP(
 
         with nogil:
         
-            ExplicitSymplecticIVP_VX_ann(
+            ExplicitSymplecticIVP_ann(
                 lowlevelfun ,
                 lowlevelgun ,
                 py_fun      ,
@@ -242,21 +259,21 @@ cpdef ExplicitSymplecticIVP(
     elif mode == 'XV':
 
         with nogil:
-            ExplicitSymplecticIVP_XV_ann(
-                lowlevelfun ,
+            ExplicitSymplecticIVP_ann(
                 lowlevelgun ,
-                py_fun      ,
+                lowlevelfun ,
                 py_gun      ,
+                py_fun      ,
                 py_fun_type ,
                 t_span      ,
-                x           ,
                 v           ,
+                x           ,
                 res         ,
                 rk          ,
                 nint        ,
                 keep_freq   ,
-                x_keep      ,
                 v_keep      ,
+                x_keep      ,
             )
 
     else:
@@ -268,9 +285,9 @@ cpdef ExplicitSymplecticIVP(
     return x_keep, v_keep
 
 @cython.cdivision(True)
-cdef void ExplicitSymplecticIVP_VX_ann(
-    LowLevelFun lowlevelfun   ,
-    LowLevelFun lowlevelgun   ,
+cdef void ExplicitSymplecticIVP_ann(
+    const LowLevelFun lowlevelfun   ,
+    const LowLevelFun lowlevelgun   ,
     object py_fun                   ,
     object py_gun                   ,
     const int py_fun_type           ,
@@ -336,76 +353,6 @@ cdef void ExplicitSymplecticIVP_VX_ann(
 
     free(cdt)
     free(ddt)
-
-@cython.cdivision(True)
-cdef void ExplicitSymplecticIVP_XV_ann(
-    LowLevelFun lowlevelfun   ,
-    LowLevelFun lowlevelgun   ,
-    object py_fun                   ,
-    object py_gun                   ,
-    const int py_fun_type           ,
-    const (double, double) t_span   ,
-    double[::1] x                   ,
-    double[::1] v                   ,
-    double[::1] res                 ,
-    ExplicitSymplecticRKTable rk    ,
-    const long nint                 ,
-    const long keep_freq            ,
-    double[:,::1] x_keep            ,
-    double[:,::1] v_keep            ,
-) noexcept nogil:
-
-    cdef double tx = t_span[0]
-    cdef double tv = t_span[0]
-    cdef double dt = (t_span[1] - t_span[0]) / nint
-
-    cdef long ndof = x.shape[0]
-    cdef long nint_keep = nint // keep_freq
-
-    cdef double *cdt = <double *> malloc(sizeof(double) * rk._c_table.shape[0])
-    cdef double *ddt = <double *> malloc(sizeof(double) * rk._c_table.shape[0])
-
-    cdef Py_ssize_t istep, idof, iint_keep
-
-    for istep in range(rk._c_table.shape[0]):
-        cdt[istep] = rk._c_table[istep]*dt
-        ddt[istep] = rk._d_table[istep]*dt
-
-    for iint_keep in range(nint_keep):
-
-        for ifreq in range(keep_freq):
-
-            for istep in range(rk._c_table.shape[0]):
-
-                if py_fun_type > 0:
-                    with gil:
-                        PyFun_apply(py_gun, py_fun_type, tx, x, res)
-                else:
-                    LowLevelFun_apply(lowlevelgun, tx, x, res)
-
-                for idof in range(ndof):
-                    v[idof] += cdt[istep] * res[idof]  
-                tv += cdt[istep]
-
-                if py_fun_type > 0:
-                    with gil:
-                        PyFun_apply(py_fun, py_fun_type, tv, v, res)
-                else:
-                    LowLevelFun_apply(lowlevelfun, tv, v, res)
-
-                for idof in range(ndof):
-                    x[idof] += ddt[istep] * res[idof]  
-
-                tx += ddt[istep]
-
-        for idof in range(ndof):
-            x_keep[iint_keep,idof] = x[idof]
-        for idof in range(ndof):
-            v_keep[iint_keep,idof] = v[idof]
-
-    free(cdt)
-    free(ddt)
-
 
 
 

@@ -119,22 +119,6 @@ cdef inline void PyFun_apply(
         f_res_np = fun(x)
         for i in range(ndim):
             res[i] = f_res_np[i]
-# 
-# cdef inline void PyFun_apply(
-#     object fun      ,
-#     const double x  ,
-#     double[::1] res ,
-#     Py_ssize_t ndim ,  
-# ):
-# 
-#     cdef Py_ssize_t i
-#     cdef np.ndarray[double, ndim=1, mode="c"] f_res_raw = fun(x)
-# 
-#     for i in range(ndim):
-#         res[i] = f_res_raw[i]
-#         # res = f_res_raw
-
-
             
 
 cdef class QuadFormula:
@@ -199,6 +183,8 @@ cpdef np.ndarray[double, ndim=1, mode="c"] IntegrateOnSegment(
     cdef object py_fun
     cdef int py_fun_type
     if lowlevelfun.fun_type == PY_FUN:
+        # print("detected Python function")
+
         py_fun = <object> lowlevelfun.py_fun
         
         py_fun_res = py_fun(x_span[0])
@@ -208,9 +194,13 @@ cpdef np.ndarray[double, ndim=1, mode="c"] IntegrateOnSegment(
         elif isinstance(py_fun_res, np.ndarray):
             py_fun_type = PY_FUN_NDARRAY
         else:
-            raise ValueError(f"Could not recognize return type of python callable. Found {type(py_fun_type)}.")
+            raise ValueError(f"Could not recognize return type of python callable. Found {type(py_fun_res)}.")
+
+
 
     else:
+        # print("detected low level function")
+
         py_fun = None
         py_fun_type = -1
 
