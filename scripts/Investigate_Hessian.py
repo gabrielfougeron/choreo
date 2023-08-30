@@ -1,6 +1,8 @@
 import os
 
-os.environ['OPENBLAS_NUM_THREADS'] = '1'import os
+os.environ['OPENBLAS_NUM_THREADS'] = '1'
+
+import os
 
 import concurrent.futures
 import multiprocessing
