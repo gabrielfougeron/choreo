@@ -42,10 +42,10 @@ bench_folder = os.path.join(__PROJECT_ROOT__,'docs','source','_build','benchmark
 if not(os.path.isdir(bench_folder)):
     os.makedirs(bench_folder)
     
-basename_bench_filename = 'RK_ivp_cvg_bench_'
+basename_bench_filename = 'ExplicitRK_ivp_cvg_bench_'
 
-ForceBenchmark = True
-# ForceBenchmark = False
+# ForceBenchmark = True
+ForceBenchmark = False
 
 def cpte_error(
     eq_name,

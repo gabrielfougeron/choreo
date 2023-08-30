@@ -38,7 +38,7 @@ def GaussLegendre3Term(n):
     return a, b
 
 def ShiftedGaussLegendre3Term(n):
-
+    
     a = mpmath.matrix(n,1)
     b = mpmath.matrix(n,1)
 

@@ -42,7 +42,7 @@ bench_folder = os.path.join(__PROJECT_ROOT__,'docs','source','_build','benchmark
 if not(os.path.isdir(bench_folder)):
     os.makedirs(bench_folder)
     
-basename_bench_filename = 'RK_ivp_cvg_bench_'
+basename_bench_filename = 'ImplicitRK_ivp_cvg_bench_'
 
 # ForceBenchmark = True
 ForceBenchmark = False
@@ -50,7 +50,6 @@ ForceBenchmark = False
 def cpte_error(
     eq_name,
     rk_method,
-    mode,
     nint,
 ):
 
@@ -129,15 +128,15 @@ def cpte_error(
     x0 = ex_init[0          :  test_ndim].copy()
     v0 = ex_init[test_ndim  :2*test_ndim].copy()
     
-    xf,vf = choreo.scipy_plus.ODE.ExplicitSymplecticIVP(
+    xf,vf = choreo.scipy_plus.ODE.ImplicitSymplecticIVP(
         fun             ,
         gun             ,
         t_span          ,
         x0              ,
         v0              ,
+        rk_x = rk_method,
+        rk_v = rk_method,
         nint = nint     ,
-        rk = rk_method  ,
-        mode = mode     ,
     )
 
     sol = np.ascontiguousarray(np.concatenate((xf,vf),axis=0).reshape(2*test_ndim))
@@ -158,7 +157,7 @@ method_names = [
     'Gauss'   ,            
 ]
 
-all_orders = range(5)
+all_orders = range(1,5)
 
 def get_table(rk_name, order):
     
@@ -175,11 +174,10 @@ all_nint = np.array([2**i for i in range(14)])
 
 all_benchs = {
     eq_name : {
-        f'{rk_name}' : functools.partial(
+        f'{rk_name} {order}' : functools.partial(
             cpte_error ,
             eq_name    ,
-            get_table(rk_name,order),
-            'VX'       ,
+            get_table(rk_name,order)
         ) for rk_name, order in itertools.product(method_names, all_orders)
     } for eq_name in eq_names
 }
@@ -217,6 +215,8 @@ fig, axs = plt.subplots(
 
 i_bench = -1
 
+plot_ylim = [1e-17,1e1]
+
 for bench_name, all_funs in all_benchs.items():
 
     i_bench += 1
@@ -238,6 +238,7 @@ for bench_name, all_funs in all_benchs.items():
         all_funs                                    ,
         fig = fig                                   ,
         ax = axs[i_bench,0]                         ,
+        plot_ylim = plot_ylim                       ,
         title = f'Relative error on integrand {bench_name}' ,
     )
     
@@ -344,6 +345,8 @@ fig, axs = plt.subplots(
 
 i_bench = -1
 
+plot_ylim = [1e-17,1e1]
+
 for bench_name, all_funs in all_benchs.items():
 
     i_bench += 1
@@ -378,6 +381,7 @@ for bench_name, all_funs in all_benchs.items():
         logx_plot = True                            ,
         fig = fig                                   ,
         ax = axs[i_bench,0]                         ,
+        plot_ylim = plot_ylim                       ,
         title = f'Relative error as a function of computational cost for equation {bench_name}' ,
     )
 
