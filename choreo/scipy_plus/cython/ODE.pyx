@@ -333,7 +333,7 @@ cpdef ExplicitSymplecticIVP(
     ccallback_release(&callback_fun)
     ccallback_release(&callback_gun)
 
-    return x_keep, v_keep
+    return x_keep_np, v_keep_np
 
 @cython.cdivision(True)
 cdef void ExplicitSymplecticIVP_ann(
@@ -602,7 +602,7 @@ cpdef ImplicitSymplecticIVP(
     ccallback_release(&callback_fun)
     ccallback_release(&callback_gun)
 
-    return x_keep, v_keep
+    return x_keep_np, v_keep_np
 
 
 @cython.cdivision(True)

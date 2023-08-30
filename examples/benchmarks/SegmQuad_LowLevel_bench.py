@@ -25,6 +25,7 @@ sys.path.append(__PROJECT_ROOT__)
 os.environ['OPENBLAS_NUM_THREADS'] = '1'
 os.environ['NUMEXPR_NUM_THREADS'] = '1'
 os.environ['MKL_NUM_THREADS'] = '1'
+os.environ['OMP_NUM_THREADS'] = '1'
 
 import functools
 import time
@@ -52,7 +53,7 @@ method = 'Gauss'
 nsteps = 10
 quad = choreo.scipy_plus.SegmQuad.ComputeQuadrature(method, nsteps)
 
-def test_from_fun(fun):
+def test_from_scalar_fun(fun):
     
     return functools.partial(
         choreo.scipy_plus.SegmQuad.IntegrateOnSegment,
@@ -84,20 +85,30 @@ nb_fun_inplace_pointer = choreo.scipy_plus.SegmQuad.nb_jit_inplace_double_array(
 # sphinx_gallery_end_ignore
 
 all_funs_scalar = {
-    'py_fun' : test_from_fun(py_fun) ,
-    'py_fun_array' : test_from_fun(py_fun_array) ,
-    'nb_fun' : test_from_fun(nb_fun) ,
-    'nb_fun_pointer' : test_from_fun(nb_fun_pointer) ,
-    'nb_fun_inplace_pointer' : test_from_fun(nb_fun_inplace_pointer) ,
-    'py_fun_in_pyx' : test_from_fun(choreo.scipy_plus.cython.test.single_py_fun) ,
-    'cy_fun_pointer_LowLevel' : test_from_fun(scipy.LowLevelCallable.from_cython(choreo.scipy_plus.cython.test, "single_cy_fun_pointer")),
-    'cy_fun_memoryview_LowLevel' : test_from_fun(scipy.LowLevelCallable.from_cython(choreo.scipy_plus.cython.test, "single_cy_fun_memoryview")),
-    'cy_fun_oneval_LowLevel' : test_from_fun(scipy.LowLevelCallable.from_cython(choreo.scipy_plus.cython.test, "single_cy_fun_oneval")),
+    'py_fun' : test_from_scalar_fun(py_fun) ,
+    'py_fun_array' : test_from_scalar_fun(py_fun_array) ,
+    'nb_fun' : test_from_scalar_fun(nb_fun) ,
+    'nb_fun_pointer' : test_from_scalar_fun(nb_fun_pointer) ,
+    'nb_fun_inplace_pointer' : test_from_scalar_fun(nb_fun_inplace_pointer) ,
+    'py_fun_in_pyx' : test_from_scalar_fun(choreo.scipy_plus.cython.test.single_py_fun) ,
+    'cy_fun_pointer_LowLevel' : test_from_scalar_fun(scipy.LowLevelCallable.from_cython(choreo.scipy_plus.cython.test, "single_cy_fun_pointer")),
+    'cy_fun_memoryview_LowLevel' : test_from_scalar_fun(scipy.LowLevelCallable.from_cython(choreo.scipy_plus.cython.test, "single_cy_fun_memoryview")),
+    'cy_fun_oneval_LowLevel' : test_from_scalar_fun(scipy.LowLevelCallable.from_cython(choreo.scipy_plus.cython.test, "single_cy_fun_oneval")),
 }
 
 # sphinx_gallery_start_ignore
 
 ndim_mul = choreo.scipy_plus.cython.test.mul_size_py
+
+def test_from_vect_fun(fun):
+    
+    return functools.partial(
+        choreo.scipy_plus.SegmQuad.IntegrateOnSegment,
+        fun,
+        ndim_mul,
+        x_span,
+        quad
+    )
 
 def mul_py_fun_array(x):
     res = np.empty((ndim_mul))
@@ -119,13 +130,13 @@ mul_nb_fun_inplace_pointer = choreo.scipy_plus.SegmQuad.nb_jit_inplace_double_ar
 
 all_funs_vect = {
     'py_fun' : None, 
-    'py_fun_array' : test_from_fun(mul_py_fun_array) ,
+    'py_fun_array' : test_from_vect_fun(mul_py_fun_array) ,
     'nb_fun' : None ,
-    'nb_fun_pointer' : test_from_fun(mul_nb_fun_pointer) ,
-    'nb_fun_inplace_pointer' : test_from_fun(mul_nb_fun_inplace_pointer) ,
-    'py_fun_in_pyx' : test_from_fun(choreo.scipy_plus.cython.test.mul_py_fun),
-    'cy_fun_pointer_LowLevel' : test_from_fun(scipy.LowLevelCallable.from_cython(choreo.scipy_plus.cython.test, "mul_cy_fun_pointer")),
-    'cy_fun_memoryview_LowLevel' : test_from_fun(scipy.LowLevelCallable.from_cython(choreo.scipy_plus.cython.test, "mul_cy_fun_memoryview")),
+    'nb_fun_pointer' : test_from_vect_fun(mul_nb_fun_pointer) ,
+    'nb_fun_inplace_pointer' : test_from_vect_fun(mul_nb_fun_inplace_pointer) ,
+    'py_fun_in_pyx' : test_from_vect_fun(choreo.scipy_plus.cython.test.mul_py_fun),
+    'cy_fun_pointer_LowLevel' : test_from_vect_fun(scipy.LowLevelCallable.from_cython(choreo.scipy_plus.cython.test, "mul_cy_fun_pointer")),
+    'cy_fun_memoryview_LowLevel' : test_from_vect_fun(scipy.LowLevelCallable.from_cython(choreo.scipy_plus.cython.test, "mul_cy_fun_memoryview")),
 }
 
 all_benchs = {
@@ -152,7 +163,7 @@ fig, axs = plt.subplots(
 
 i_bench = -1
 
-all_nint = np.array([2**i for i in range(14)])
+all_nint = np.array([2**i for i in range(12)])
 
 def setup(nint):
     return [(nint, 'nint')]
@@ -190,3 +201,5 @@ plt.show()
 
     
 # sphinx_gallery_end_ignore
+
+

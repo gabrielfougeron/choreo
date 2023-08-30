@@ -183,8 +183,6 @@ cpdef np.ndarray[double, ndim=1, mode="c"] IntegrateOnSegment(
     cdef object py_fun
     cdef int py_fun_type
     if lowlevelfun.fun_type == PY_FUN:
-        # print("detected Python function")
-
         py_fun = <object> lowlevelfun.py_fun
         
         py_fun_res = py_fun(x_span[0])
@@ -196,10 +194,7 @@ cpdef np.ndarray[double, ndim=1, mode="c"] IntegrateOnSegment(
         else:
             raise ValueError(f"Could not recognize return type of python callable. Found {type(py_fun_res)}.")
 
-
-
     else:
-        # print("detected low level function")
 
         py_fun = None
         py_fun_type = -1
@@ -238,6 +233,7 @@ cdef void IntegrateOnSegment_ann(
     double[::1] f_int               ,
 ) noexcept nogil:
 
+
     cdef Py_ssize_t istep
     cdef long iint
     cdef Py_ssize_t idim
@@ -264,7 +260,6 @@ cdef void IntegrateOnSegment_ann(
                 LowLevelFun_apply(lowlevelfun, xi, f_res)
 
             for idim in range(ndim):
-
                 f_int[idim] = f_int[idim] + quad._w[istep] * f_res[idim]
 
     for idim in range(ndim):
