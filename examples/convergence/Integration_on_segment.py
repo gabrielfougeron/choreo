@@ -35,7 +35,7 @@ import math as m
 
 import choreo
 
-bench_folder = os.path.join(__PROJECT_ROOT__,'docs','source','_build','benchmarks_out')
+bench_folder = os.path.join(__PROJECT_ROOT__,'examples','generated_files')
 
 if not(os.path.isdir(bench_folder)):
     os.makedirs(bench_folder)
