@@ -143,6 +143,7 @@ tr_report_template = "./test-report/test_report_template.txt"
 sphinx_gallery_conf = {
     # path to your examples scripts
     'filename_pattern': '/',
+    'ignore_pattern': r'NOTREADY',
     'examples_dirs': "../../examples/",
     "gallery_dirs": "_build/auto_examples/",
     "within_subsection_order": FileNameSortKey,

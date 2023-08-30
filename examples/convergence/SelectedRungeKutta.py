@@ -45,8 +45,8 @@ if not(os.path.isdir(bench_folder)):
     
 basename_bench_filename = 'SelectedRK_ivp_cvg_bench_'
 
-ForceBenchmark = True
-# ForceBenchmark = False
+# ForceBenchmark = True
+ForceBenchmark = False
 
 def cpte_error(
     eq_name,
