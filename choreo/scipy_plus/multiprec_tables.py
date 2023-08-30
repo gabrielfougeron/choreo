@@ -3,10 +3,14 @@ ODE.py : Defines ODE-related things I designed I feel ought to be in scipy.
 
 '''
 
+import functools
 import math as m
 import mpmath
+import numpy as np
 
 from choreo.scipy_plus.cython.SegmQuad import QuadFormula
+from choreo.scipy_plus.cython.ODE import ExplicitSymplecticRKTable
+from choreo.scipy_plus.cython.ODE import ImplicitSymplecticRKTable
 
 def SafeGLIntOrder(N):
 
@@ -244,3 +248,33 @@ def SymmetricAdjointButcher(Butcher_a, Butcher_b, Butcher_c, Butcher_beta, Butch
             Butcher_gamma_ad[i,j] = Butcher_beta[n-1-i,n-1-j]
 
     return Butcher_a_ad, Butcher_b_ad, Butcher_c_ad, Butcher_beta_ad, Butcher_gamma_ad
+
+@functools.cache
+def ComputeGaussButcherTables_np(n,dps=30):
+
+    mpmath.mp.dps = dps
+    Butcher_a, Butcher_b, Butcher_c, Butcher_beta, Butcher_gamma = ComputeGaussButcherTables(n)
+
+    Butcher_a_np = np.array(Butcher_a.tolist(),dtype=np.float64)
+    Butcher_b_np = np.array(Butcher_b.tolist(),dtype=np.float64).reshape(n)
+    Butcher_c_np = np.array(Butcher_c.tolist(),dtype=np.float64).reshape(n)
+    Butcher_beta_np = np.array(Butcher_beta.tolist(),dtype=np.float64)
+    Butcher_gamma_np = np.array(Butcher_gamma.tolist(),dtype=np.float64)
+
+    return Butcher_a_np, Butcher_b_np, Butcher_c_np, Butcher_beta_np, Butcher_gamma_np
+
+def ComputeImplicitSymplecticRKTable_Gauss(n,dps=30):
+    
+    Butcher_a_np, Butcher_b_np, Butcher_c_np, Butcher_beta_np, Butcher_gamma_np = ComputeGaussButcherTables_np(n,dps=dps)
+    
+    return ImplicitSymplecticRKTable(
+        a_table     = Butcher_a_np      ,
+        b_table     = Butcher_b_np      ,
+        c_table     = Butcher_c_np      ,
+        beta_table  = Butcher_beta_np   ,
+        gamma_table = Butcher_gamma_np  ,
+        th_cvg_rate = 2*n               ,
+    )
+        
+        
+        

@@ -11,6 +11,9 @@ import functools
 from choreo.scipy_plus.cython.ODE import ExplicitSymplecticIVP
 from choreo.scipy_plus.cython.ODE import ExplicitSymplecticRKTable
 
+from choreo.scipy_plus.cython.ODE import ImplicitSymplecticIVP
+from choreo.scipy_plus.cython.ODE import ImplicitSymplecticRKTable
+
 from choreo.scipy_plus.cython.ODE import ExplicitSymplecticWithTable_XV_cython
 from choreo.scipy_plus.cython.ODE import ExplicitSymplecticWithTable_VX_cython
 from choreo.scipy_plus.cython.ODE import SymplecticStormerVerlet_XV_cython
@@ -22,9 +25,7 @@ from choreo.scipy_plus.cython.ODE import ImplicitSymplecticWithTableGaussSeidel_
 from choreo.scipy_plus.cython.ODE import ImplicitSymplecticTanWithTableGaussSeidel_VX_cython_mulfun
 
 
-
-
-from choreo.scipy_plus.multiprec_tables import ComputeGaussButcherTables
+from choreo.scipy_plus.multiprec_tables import ComputeGaussButcherTables_np
 
 
 #####################
@@ -71,24 +72,6 @@ SymplecticRuth4Rat_VX = functools.partial(ExplicitSymplecticWithTable_VX_cython,
 #####################
 # IMPLICIT RK STUFF #
 #####################
-
-
-@functools.cache
-def ComputeGaussButcherTables_np(n,dps=30):
-
-    mpmath.mp.dps = dps
-    Butcher_a, Butcher_b, Butcher_c, Butcher_beta, Butcher_gamma = ComputeGaussButcherTables(n)
-
-    Butcher_a_np = np.array(Butcher_a.tolist(),dtype=np.float64)
-    Butcher_b_np = np.array(Butcher_b.tolist(),dtype=np.float64).reshape(n)
-    Butcher_c_np = np.array(Butcher_c.tolist(),dtype=np.float64).reshape(n)
-    Butcher_beta_np = np.array(Butcher_beta.tolist(),dtype=np.float64)
-    Butcher_gamma_np = np.array(Butcher_gamma.tolist(),dtype=np.float64)
-
-    return Butcher_a_np, Butcher_b_np, Butcher_c_np, Butcher_beta_np, Butcher_gamma_np
-
-
-######################################################################
 
 
 nsteps_LobattoIIIA_3 = 3
