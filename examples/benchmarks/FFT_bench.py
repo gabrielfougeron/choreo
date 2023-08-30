@@ -29,7 +29,7 @@ import numpy as np
 import scipy
 import choreo
 
-timings_folder = os.path.join(__PROJECT_ROOT__,'docs','source','_build','benchmarks_out')
+timings_folder = os.path.join(__PROJECT_ROOT__,'examples','generated_files')
 
 if not(os.path.isdir(timings_folder)):
     os.makedirs(timings_folder)
