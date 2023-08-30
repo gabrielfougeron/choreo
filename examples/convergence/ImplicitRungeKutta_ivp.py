@@ -170,7 +170,7 @@ all_orders = range(1,11)
     
 # sphinx_gallery_start_ignore
 
-all_nint = np.array([2**i for i in range(14)])
+all_nint = np.array([2**i for i in range(12)])
 
 all_benchs = {
     eq_name : {
