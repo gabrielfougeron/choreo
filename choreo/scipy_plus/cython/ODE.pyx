@@ -154,7 +154,7 @@ cdef inline void PyFun_apply_vectorized(
             f_res_np = fun(all_t[i], all_x[i,:])
 
             for j in range(all_x.shape[1]):
-                all_res[i,j] = f_res_np[i,j]
+                all_res[i,j] = f_res_np[j]
 
 
 
@@ -624,14 +624,14 @@ cdef void ImplicitSymplecticIVP_ann(
     double[:,::1] dV_prev           ,
     double[::1]   all_t_x           ,
     double[::1]   all_t_v           ,
-    double[:,::1] a_table_x         ,
-    double[::1]   b_table_x         ,
-    double[::1]   c_table_x         ,
-    double[:,::1] beta_table_x      ,
-    double[:,::1] a_table_v         ,
-    double[::1]   b_table_v         ,
-    double[::1]   c_table_v         ,
-    double[:,::1] beta_table_v      ,
+    const double[:,::1] a_table_x   ,
+    const double[::1]   b_table_x   ,
+    const double[::1]   c_table_x   ,
+    const double[:,::1] beta_table_x,
+    const double[:,::1] a_table_v   ,
+    const double[::1]   b_table_v   ,
+    const double[::1]   c_table_v   ,
+    const double[:,::1] beta_table_v,
     const long nint                 ,
     const long keep_freq            ,
     const double eps                ,
@@ -644,6 +644,7 @@ cdef void ImplicitSymplecticIVP_ann(
     cdef long iGS
     cdef Py_ssize_t istep, jdof
     cdef Py_ssize_t iint_keep, ifreq
+    cdef long iint
     cdef long tot_niter = 0
     cdef long nint_keep = nint // keep_freq
 
