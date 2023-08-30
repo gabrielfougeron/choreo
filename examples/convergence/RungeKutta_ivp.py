@@ -35,6 +35,7 @@ import math as m
 import scipy
 
 import choreo
+import choreo.scipy_plus.precomputed_tables as precomputed_tables
 
 bench_folder = os.path.join(__PROJECT_ROOT__,'docs','source','_build','benchmarks_out')
 
@@ -52,7 +53,6 @@ def cpte_error(
     mode,
     nint,
 ):
-
 
     if eq_name == "y'' = -y" :
         # WOLFRAM
@@ -100,12 +100,8 @@ def cpte_error(
 
         test_ndim = 10
 
-        # A = np.random.rand(test_ndim,test_ndim)
-        A = np.identity(test_ndim)
-        # A = A + A.T
-        # B = np.random.rand(test_ndim,test_ndim)
+        A = np.diag(np.array(range(test_ndim)))
         B = np.identity(test_ndim)
-        # B = B + B.T
 
         AB = np.zeros((2*test_ndim,2*test_ndim))
         AB[0:test_ndim,test_ndim:2*test_ndim] = A
@@ -160,29 +156,36 @@ eq_names = [
     "y' = Az; z' = By"  ,
 ]
 
-rk_tables = {
-    # "SymplecticEuler": choreo.scipy_plus.precomputed_tables.SymplecticEuler ,
-    # "StormerVerlet": choreo.scipy_plus.precomputed_tables.StormerVerlet     , 
-    # "Ruth3": choreo.scipy_plus.precomputed_tables.Ruth3                     ,
-    # "McAte3": choreo.scipy_plus.precomputed_tables.McAte3                     ,
-    "McAte4": choreo.scipy_plus.precomputed_tables.McAte4                     ,
-    "McAte4_rev": choreo.scipy_plus.precomputed_tables.McAte4.cpte_reversed()                     ,
-    # "Ruth4": choreo.scipy_plus.precomputed_tables.Ruth4                     ,
-    # "Ruth4Rat": choreo.scipy_plus.precomputed_tables.Ruth4Rat               ,
-}
-
+method_names = [
+    'SymplecticEuler'   ,           
+    'StormerVerlet'     ,       
+    'McAte2'            ,   
+    'Ruth3'             ,
+    'McAte3'            ,   
+    'Ruth4'             ,
+    'Ruth4Rat'          ,   
+    'McAte4'            ,   
+    'CalvoSanz4'        ,       
+    'McAte5'            ,   
+    'KahanLi6'          ,   
+    'Yoshida6'          ,   
+    'KahanLi8'          ,   
+    'McAte8'            ,   
+    'SofSpa10'          ,   
+]
+    
 # sphinx_gallery_start_ignore
 
 all_nint = np.array([2**i for i in range(14)])
 
 all_benchs = {
     eq_name : {
-        f'{rk_name} {mode}' : functools.partial(
+        f'{rk_name}' : functools.partial(
             cpte_error ,
             eq_name    ,
-            rk_table   ,
-            mode       ,
-        ) for (rk_name, rk_table), mode in itertools.product(rk_tables.items(), ['XV','VX'])
+            getattr(globals()['precomputed_tables'], rk_name),
+            'VX'       ,
+        ) for rk_name in method_names
     } for eq_name in eq_names
 }
 
@@ -260,7 +263,7 @@ plt.show()
 
 plt.close()
 
-plot_ylim = [0,5]
+plot_ylim = [0,10]
 
 fig, axs = plt.subplots(
     nrows = n_bench,
@@ -297,7 +300,7 @@ for bench_name, all_funs in all_benchs.items():
         plot_xlim = plot_xlim                       ,
         plot_ylim = plot_ylim                       ,
         logx_plot = True                            ,
-        clip_vals = True                            ,
+        # clip_vals = True                            ,
         # stop_after_first_clip = True                ,
         fig = fig                                   ,
         ax = axs[i_bench,0]                         ,
@@ -331,62 +334,62 @@ plt.show()
 # Error as a function of running time
 
 # sphinx_gallery_start_ignore
-# 
-# plt.close()
-# 
-# fig, axs = plt.subplots(
-#     nrows = n_bench,
-#     ncols = 1,
-#     sharex = False,
-#     sharey = False,
-#     figsize = figsize,
-#     dpi = dpi   ,
-#     squeeze = False,
-# )
-# 
-# i_bench = -1
-# 
-# for bench_name, all_funs in all_benchs.items():
-# 
-#     i_bench += 1
-#     
-#     bench_filename = os.path.join(bench_folder,basename_bench_filename+str(i_bench).zfill(2)+'_error.npy') 
-# 
-#     all_errors = choreo.benchmark.run_benchmark(
-#         all_nint                        ,
-#         all_funs                        ,
-#         setup = setup                   ,
-#         mode = "scalar_output"          ,
-#         filename = bench_filename       ,
-#         ForceBenchmark = ForceBenchmark ,
-#     )
-#     
-#     timings_filename = os.path.join(bench_folder,basename_bench_filename+str(i_bench).zfill(2)+'_timings.npy') 
-#     
-#     all_times = choreo.benchmark.run_benchmark(
-#         all_nint                        ,
-#         all_funs                        ,
-#         setup = setup_timings           ,
-#         mode = "timings"                ,
-#         filename = timings_filename     ,
-#         ForceBenchmark = ForceBenchmark ,
-#     )
-#     
-#     choreo.plot_benchmark(
-#         all_errors                                  ,
-#         all_nint                                    ,
-#         all_funs                                    ,
-#         all_xvalues = all_times                     ,
-#         logx_plot = True                            ,
-#         fig = fig                                   ,
-#         ax = axs[i_bench,0]                         ,
-#         title = f'Error as a function of computational cost for equation {bench_name}' ,
-#     )
-# 
-# plt.tight_layout()
-#  
-# # sphinx_gallery_end_ignore
-# 
-# plt.show()
+
+plt.close()
+
+fig, axs = plt.subplots(
+    nrows = n_bench,
+    ncols = 1,
+    sharex = False,
+    sharey = False,
+    figsize = figsize,
+    dpi = dpi   ,
+    squeeze = False,
+)
+
+i_bench = -1
+
+for bench_name, all_funs in all_benchs.items():
+
+    i_bench += 1
+    
+    bench_filename = os.path.join(bench_folder,basename_bench_filename+str(i_bench).zfill(2)+'_error.npy') 
+
+    all_errors = choreo.benchmark.run_benchmark(
+        all_nint                        ,
+        all_funs                        ,
+        setup = setup                   ,
+        mode = "scalar_output"          ,
+        filename = bench_filename       ,
+        ForceBenchmark = ForceBenchmark ,
+    )
+    
+    timings_filename = os.path.join(bench_folder,basename_bench_filename+str(i_bench).zfill(2)+'_timings.npy') 
+    
+    all_times = choreo.benchmark.run_benchmark(
+        all_nint                        ,
+        all_funs                        ,
+        setup = setup_timings           ,
+        mode = "timings"                ,
+        filename = timings_filename     ,
+        ForceBenchmark = ForceBenchmark ,
+    )
+    
+    choreo.plot_benchmark(
+        all_errors                                  ,
+        all_nint                                    ,
+        all_funs                                    ,
+        all_xvalues = all_times                     ,
+        logx_plot = True                            ,
+        fig = fig                                   ,
+        ax = axs[i_bench,0]                         ,
+        title = f'Error as a function of computational cost for equation {bench_name}' ,
+    )
+
+plt.tight_layout()
+ 
+# sphinx_gallery_end_ignore
+
+plt.show()
 
 
