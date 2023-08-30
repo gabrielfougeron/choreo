@@ -10,6 +10,13 @@ def isnotfinite(arr):
     np.bitwise_not(res, out=res)  # in-place
     return res
 
+default_color_list = list(mpl.colors.TABLEAU_COLORS)
+default_color_list.append(mpl.colors.BASE_COLORS['b'])
+default_color_list.append(mpl.colors.BASE_COLORS['g'])
+default_color_list.append(mpl.colors.BASE_COLORS['r'])
+default_color_list.append(mpl.colors.BASE_COLORS['m'])
+default_color_list.append(mpl.colors.BASE_COLORS['k'])
+
 def run_benchmark(
     all_sizes               ,
     all_funs                ,
@@ -131,7 +138,7 @@ def plot_benchmark(
     all_x_scalings = None   ,
     all_y_scalings = None   ,
     n_repeat = 1            ,
-    color_list = None       ,
+    color_list = default_color_list ,
     logx_plot = None        ,
     logy_plot = None        ,
     plot_ylim = None        ,
@@ -192,10 +199,6 @@ def plot_benchmark(
 
         fig = plt.figure()  
         ax = fig.add_subplot(1,1,1)
-        
-
-    if color_list is None:
-        color_list = plt.rcParams['axes.prop_cycle'].by_key()['color']
         
     n_colors = len(color_list)
 
