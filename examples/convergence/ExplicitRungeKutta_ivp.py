@@ -243,7 +243,7 @@ for bench_name, all_funs in all_benchs.items():
         all_funs                                    ,
         fig = fig                                   ,
         ax = axs[i_bench,0]                         ,
-        title = f'Absolute error on integrand {bench_name}' ,
+        title = f'Relative error on integrand {bench_name}' ,
     )
     
 plot_xlim = axs[0,0].get_xlim()
@@ -383,7 +383,7 @@ for bench_name, all_funs in all_benchs.items():
         logx_plot = True                            ,
         fig = fig                                   ,
         ax = axs[i_bench,0]                         ,
-        title = f'Error as a function of computational cost for equation {bench_name}' ,
+        title = f'Relative error as a function of computational cost for equation {bench_name}' ,
     )
 
 plt.tight_layout()
