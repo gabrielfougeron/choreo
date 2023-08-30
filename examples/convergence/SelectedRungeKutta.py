@@ -1,6 +1,6 @@
 """
-Convergence analysis of implicit Runge-Kutta methods for ODE IVP
-================================================================
+Convergence analysis of Runge-Kutta methods for ODE IVP
+=======================================================
 """
 
 # %%
@@ -28,6 +28,7 @@ sys.path.append(__PROJECT_ROOT__)
 os.environ['OPENBLAS_NUM_THREADS'] = '1'
 os.environ['NUMEXPR_NUM_THREADS'] = '1'
 os.environ['MKL_NUM_THREADS'] = '1'
+os.environ['OMP_NUM_THREADS'] = '1'
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -42,7 +43,7 @@ bench_folder = os.path.join(__PROJECT_ROOT__,'docs','source','_build','benchmark
 if not(os.path.isdir(bench_folder)):
     os.makedirs(bench_folder)
     
-basename_bench_filename = 'ImplicitRK_ivp_cvg_bench_'
+basename_bench_filename = 'SelectedRK_ivp_cvg_bench_'
 
 # ForceBenchmark = True
 ForceBenchmark = False
@@ -62,8 +63,8 @@ def cpte_error(
 
         ex_sol = lambda t : np.array( [ np.cos(t) , np.sin(t),-np.sin(t), np.cos(t) ]  )
 
-        fun = lambda t,y:   np.array(y)
-        gun = lambda t,x:  -np.array(x)
+        fun = lambda t,y:   np.asarray(y)
+        gun = lambda t,x:  -np.asarray(x)
 
     if eq_name == "y'' = - exp(y)" :
         # WOLFRAM
@@ -128,23 +129,22 @@ def cpte_error(
     x0 = ex_init[0          :  test_ndim].copy()
     v0 = ex_init[test_ndim  :2*test_ndim].copy()
     
-    xf,vf = choreo.scipy_plus.ODE.ImplicitSymplecticIVP(
+    xf,vf = choreo.scipy_plus.ODE.SymplecticIVP(
         fun             ,
         gun             ,
         t_span          ,
         x0              ,
         v0              ,
-        rk_x = rk_method,
-        rk_v = rk_method,
+        rk = rk_method  ,
         nint = nint     ,
     )
-
+        
     sol = np.ascontiguousarray(np.concatenate((xf,vf),axis=0).reshape(2*test_ndim))
     error = np.linalg.norm(sol-ex_final)/np.linalg.norm(ex_final)
 
     return error
 
-def get_table(rk_name, order):
+def get_implicit_table(rk_name, order):
     
     if rk_name == "Gauss":
         
@@ -161,24 +161,29 @@ eq_names = [
     "y' = Az; z' = By"  ,
 ]
 
-method_names = [
-    'Gauss'   ,            
-]
+implicit_methods = {f'{rk_name} {order}' : get_implicit_table(rk_name, order) for rk_name, order in itertools.product(["Gauss"], [2,4,6,8])}
 
-all_orders = range(1,11)
+explicit_methods = {rk_name : getattr(globals()['precomputed_tables'], rk_name) for rk_name in [
+    'McAte4'    ,
+    'McAte5'    ,
+    'KahanLi8'  ,
+    'SofSpa10'  ,
+]}
 
-    
+
 # sphinx_gallery_start_ignore
 
 all_nint = np.array([2**i for i in range(14)])
 
+all_methods = {**explicit_methods, **implicit_methods}
+
 all_benchs = {
     eq_name : {
-        f'{rk_name} {order}' : functools.partial(
+        f'{rk_name}' : functools.partial(
             cpte_error ,
             eq_name    ,
-            get_table(rk_name,order)
-        ) for rk_name, order in itertools.product(method_names, all_orders)
+            rk
+        ) for rk_name, rk in all_methods.items()
     } for eq_name in eq_names
 }
 
