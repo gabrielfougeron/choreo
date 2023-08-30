@@ -19,7 +19,7 @@ clean:
 
 clean:
 	rm -rf $(BUILDDIR)/
-# rm -rf source/_build/
+	rm -rf source/_build/
 
 all:
 	make html
