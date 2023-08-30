@@ -1,6 +1,7 @@
 import os
 import numpy as np
 import timeit
+import time
 import math
 import matplotlib.pyplot as plt
 import matplotlib as mpl

@@ -45,8 +45,8 @@ if not(os.path.isdir(bench_folder)):
     
 basename_bench_filename = 'SelectedRK_ivp_cvg_bench_'
 
-# ForceBenchmark = True
-ForceBenchmark = False
+ForceBenchmark = True
+# ForceBenchmark = False
 
 def cpte_error(
     eq_name,
@@ -115,7 +115,6 @@ def cpte_error(
         yzo[test_ndim:2*test_ndim] = zo
 
         def ex_sol(t):
-
             return scipy.linalg.expm(t*AB).dot(yzo)
 
         fun = lambda t,z: A.dot(z)
@@ -161,19 +160,23 @@ eq_names = [
     "y' = Az; z' = By"  ,
 ]
 
-implicit_methods = {f'{rk_name} {order}' : get_implicit_table(rk_name, order) for rk_name, order in itertools.product(["Gauss"], [2,4,6,8])}
+implicit_methods = {
+    f'{rk_name} {order}' : get_implicit_table(rk_name, order) for rk_name, order in itertools.product(["Gauss"], [2,4,6,8])
+}
 
-explicit_methods = {rk_name : getattr(globals()['precomputed_tables'], rk_name) for rk_name in [
-    'McAte4'    ,
-    'McAte5'    ,
-    'KahanLi8'  ,
-    'SofSpa10'  ,
-]}
+explicit_methods = {
+    rk_name : getattr(globals()['precomputed_tables'], rk_name) for rk_name in [
+            'McAte4'    ,
+            'McAte5'    ,
+            'KahanLi8'  ,
+            'SofSpa10'  ,
+    ]
+}
 
 
 # sphinx_gallery_start_ignore
 
-all_nint = np.array([2**i for i in range(14)])
+all_nint = np.array([2**i for i in range(12)])
 
 all_methods = {**explicit_methods, **implicit_methods}
 
