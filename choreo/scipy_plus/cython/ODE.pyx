@@ -123,8 +123,8 @@ cdef class ExplicitSymplecticRKTable:
         th_cvg_rate = None  ,
     ):
 
-        self._c_table = c_table
-        self._d_table = d_table
+        self._c_table = c_table.copy()
+        self._d_table = d_table.copy()
 
         assert c_table.shape[0] == d_table.shape[0]
 
@@ -149,7 +149,7 @@ cdef class ExplicitSymplecticRKTable:
     def th_cvg_rate(self):
         return self._th_cvg_rate
 
-    def cpte_reversed(self):
+    def symmetric_adjoint(self):
 
         cdef Py_ssize_t nsteps = self.nsteps
         cdef Py_ssize_t i
@@ -167,6 +167,7 @@ cdef class ExplicitSymplecticRKTable:
             th_cvg_rate = self._th_cvg_rate ,
         )
 
+
 @cython.cdivision(True)
 # cpdef (np.ndarray[double, ndim=2, mode="c"], np.ndarray[double, ndim=2, mode="c"]) ExplicitSymplecticIntegrate(
 cpdef ExplicitSymplecticIVP(
@@ -176,7 +177,7 @@ cpdef ExplicitSymplecticIVP(
     double[::1] x0                  ,
     double[::1] v0                  ,
     ExplicitSymplecticRKTable rk    ,
-    object mode = "XV"              ,
+    object mode = "VX"              ,
     long nint = 1                   ,
     long keep_freq = -1             ,
 ): 
