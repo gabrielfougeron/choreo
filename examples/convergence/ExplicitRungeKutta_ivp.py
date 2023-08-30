@@ -222,6 +222,8 @@ fig, axs = plt.subplots(
 
 i_bench = -1
 
+plot_ylim = [1e-17,1e1]
+
 for bench_name, all_funs in all_benchs.items():
 
     i_bench += 1
@@ -241,6 +243,7 @@ for bench_name, all_funs in all_benchs.items():
         all_errors                                  ,
         all_nint                                    ,
         all_funs                                    ,
+        plot_ylim = plot_ylim                       ,
         fig = fig                                   ,
         ax = axs[i_bench,0]                         ,
         title = f'Relative error on integrand {bench_name}' ,
@@ -349,6 +352,8 @@ fig, axs = plt.subplots(
 
 i_bench = -1
 
+plot_ylim = [1e-17,1e1]
+
 for bench_name, all_funs in all_benchs.items():
 
     i_bench += 1
@@ -380,6 +385,7 @@ for bench_name, all_funs in all_benchs.items():
         all_nint                                    ,
         all_funs                                    ,
         all_xvalues = all_times                     ,
+        plot_ylim = plot_ylim                       ,
         logx_plot = True                            ,
         fig = fig                                   ,
         ax = axs[i_bench,0]                         ,
