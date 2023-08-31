@@ -357,7 +357,7 @@ cdef void ExplicitSymplecticIVP_ann(
     cdef double tv = t_span[0]
     cdef double dt = (t_span[1] - t_span[0]) / nint
 
-    cdef long ndof = x.shape[0]
+    cdef int ndof = x.shape[0]
     cdef long nint_keep = nint // keep_freq
     cdef long nsteps = rk._c_table.shape[0]
 
@@ -375,40 +375,36 @@ cdef void ExplicitSymplecticIVP_ann(
         for ifreq in range(keep_freq):
 
             for istep in range(nsteps):
-
+                
+                # res = f(t,v)
                 if py_fun_type > 0:
                     with gil:
                         PyFun_apply(py_fun, py_fun_type, tv, v, res)
                 else:
                     LowLevelFun_apply(lowlevelfun, tv, v, res)
 
-                for idof in range(ndof):
-                    x[idof] += cdt[istep] * res[idof]  
+                # x = x + cdt * res
+                scipy.linalg.cython_blas.daxpy(&ndof,&cdt[istep],&res[0],&int_one,&x[0],&int_one)
 
                 tx += cdt[istep]
 
+                # res = g(t,x)
                 if py_fun_type > 0:
                     with gil:
                         PyFun_apply(py_gun, py_fun_type, tx, x, res)
                 else:
                     LowLevelFun_apply(lowlevelgun, tx, x, res)
 
-                for idof in range(ndof):
-                    v[idof] += ddt[istep] * res[idof]  
+                # v = v + ddt * res
+                scipy.linalg.cython_blas.daxpy(&ndof,&ddt[istep],&res[0],&int_one,&v[0],&int_one)
 
                 tv += ddt[istep]
 
-        for idof in range(ndof):
-            x_keep[iint_keep,idof] = x[idof]
-        for idof in range(ndof):
-            v_keep[iint_keep,idof] = v[idof]
+        scipy.linalg.cython_blas.dcopy(&ndof,&x[0],&int_one,&x_keep[iint_keep,0],&int_one)
+        scipy.linalg.cython_blas.dcopy(&ndof,&v[0],&int_one,&v_keep[iint_keep,0],&int_one)
 
     free(cdt)
     free(ddt)
-
-
-
-
 
 cdef class ImplicitSymplecticRKTable:
     
@@ -476,8 +472,6 @@ cdef class ImplicitSymplecticRKTable:
     def th_cvg_rate(self):
         return self._th_cvg_rate
 
-
-
 @cython.cdivision(True)
 cpdef ImplicitSymplecticIVP(
     object fun                              ,
@@ -544,8 +538,6 @@ cpdef ImplicitSymplecticIVP(
 
     cdef double[::1] x = x0.copy()
     cdef double[::1] v = v0.copy()
-    
-    cdef double[:,::1] all_args = np.empty((nsteps,ndof),dtype=np.float64)
 
     cdef double[:,::1]  K_fun = np.zeros((nsteps,ndof),dtype=np.float64)
     cdef double[:,::1]  K_gun = np.zeros((nsteps,ndof),dtype=np.float64)
@@ -574,7 +566,6 @@ cpdef ImplicitSymplecticIVP(
             t_span          ,
             x               ,
             v               ,
-            all_args        ,
             K_fun           ,
             K_gun           ,
             dX              ,
@@ -615,7 +606,6 @@ cdef void ImplicitSymplecticIVP_ann(
     const (double, double) t_span   ,
     double[::1]   x                 ,
     double[::1]   v                 ,
-    double[:,::1] all_args          ,
     double[:,::1] K_fun             ,
     double[:,::1] K_gun             ,
     double[:,::1] dX                ,
@@ -691,44 +681,38 @@ cdef void ImplicitSymplecticIVP_ann(
 
             while GoOnGS:
 
-                # all_args = v + dV
-                for istep in range(nsteps):
-                    for jdof in range(ndof):
-                        all_args[istep,jdof] = v[jdof] + dV[istep,jdof]
-
-                # # K_fun = dt * fun(t,v)
-                # K_fun = fun(all_t_v,all_args)  
-                if py_fun_type > 0:
-                    with gil:
-                        PyFun_apply_vectorized(py_fun, py_fun_type, all_t_v, all_args, K_fun)
-                else:
-                    LowLevelFun_apply_vectorized(lowlevelfun, all_t_v, all_args, K_fun)
-
-                scipy.linalg.cython_blas.dscal(&dX_size,&dt,&K_fun[0,0],&int_one)
+                # dV_prev = dV
+                scipy.linalg.cython_blas.dcopy(&dX_size,&dV[0,0],&int_one,&dV_prev[0,0],&int_one)
 
                 # dX_prev = dX
                 scipy.linalg.cython_blas.dcopy(&dX_size,&dX[0,0],&int_one,&dX_prev[0,0],&int_one)
 
+                # K_fun = dt * fun(t,x+dV)
+                for istep in range(nsteps):
+                    scipy.linalg.cython_blas.daxpy(&ndof,&one,&v[0],&int_one,&dV[istep,0],&int_one)
+
+                if py_fun_type > 0:
+                    with gil:
+                        PyFun_apply_vectorized(py_fun, py_fun_type, all_t_v, dV, K_fun)
+                else:
+                    LowLevelFun_apply_vectorized(lowlevelfun, all_t_v, dV, K_fun)
+
+                scipy.linalg.cython_blas.dscal(&dX_size,&dt,&K_fun[0,0],&int_one)
+
                 # dX = a_table_x .K_fun
                 scipy.linalg.cython_blas.dgemm(transn,transn,&ndof,&nsteps,&nsteps,&one,&K_fun[0,0],&ndof,&a_table_x[0,0],&nsteps,&zero,&dX[0,0],&ndof)
 
-                # all_args = x + dX
+                # K_gun = dt * gun(t,x+dX)
                 for istep in range(nsteps):
-                    for jdof in range(ndof):
-                        all_args[istep,jdof] = x[jdof] + dX[istep,jdof]
+                    scipy.linalg.cython_blas.daxpy(&ndof,&one,&x[0],&int_one,&dX[istep,0],&int_one)
 
-                # # K_gun = dt * gun(t,x)
-                # K_gun = gun(all_t_x,all_args)  
                 if py_fun_type > 0:
                     with gil:
-                        PyFun_apply_vectorized(py_gun, py_fun_type, all_t_x, all_args, K_gun)
+                        PyFun_apply_vectorized(py_gun, py_fun_type, all_t_x, dX, K_gun)
                 else:
-                    LowLevelFun_apply_vectorized(lowlevelgun, all_t_x, all_args, K_gun)
+                    LowLevelFun_apply_vectorized(lowlevelgun, all_t_x, dX, K_gun)
 
                 scipy.linalg.cython_blas.dscal(&dX_size,&dt,&K_gun[0,0],&int_one)
-
-                # dV_prev = dV
-                scipy.linalg.cython_blas.dcopy(&dX_size,&dV[0,0],&int_one,&dV_prev[0,0],&int_one)
 
                 # dV = a_table_v . K_gun
                 scipy.linalg.cython_blas.dgemm(transn,transn,&ndof,&nsteps,&nsteps,&one,&K_gun[0,0],&ndof,&a_table_v[0,0],&nsteps,&zero,&dV[0,0],&ndof)
@@ -761,10 +745,8 @@ cdef void ImplicitSymplecticIVP_ann(
             # v = v + b_table_v^T . K_gun
             scipy.linalg.cython_blas.dgemv(transn,&ndof,&nsteps,&one,&K_gun[0,0],&ndof,&b_table_v[0],&int_one,&one,&v[0],&int_one)
         
-        for jdof in range(ndof):
-            x_keep[iint_keep,jdof] = x[jdof]
-        for jdof in range(ndof):
-            v_keep[iint_keep,jdof] = v[jdof]
+        scipy.linalg.cython_blas.dcopy(&ndof,&x[0],&int_one,&x_keep[iint_keep,0],&int_one)
+        scipy.linalg.cython_blas.dcopy(&ndof,&v[0],&int_one,&v_keep[iint_keep,0],&int_one)
     
     # print(tot_niter / nint)
     # print(1+nsteps*tot_niter)
