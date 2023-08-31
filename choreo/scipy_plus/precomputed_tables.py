@@ -78,6 +78,53 @@ CalvoSanz4 = ExplicitSymplecticRKTable(
     th_cvg_rate = 4                                                                                                         ,
 )
 
+
+
+# Again, the solutions with the minimal number of stages do not give the best
+# methods (remember the good performance of Suzuki’s fourth order method (II.4.5)
+# in Fig. II.4.4), so we look for 4th order methods with larger s. McLachlan (1995)
+# has constructed a method for s = 5 with particularly small error terms and nice
+# coefficients
+# β1 = α5 = 14 −
+# √
+# 19
+# 108
+# ,
+# α1 = β5 = 146 + 5
+# √
+# 19
+# 540
+# ,
+# (3.6)
+# β2 = α4 = −23 − 20
+# √
+# 19
+# 270
+# ,
+# α2 = β4 = −2 + 10
+# √
+# 19
+# 135
+# ,
+# β3 = α3 = 1
+# 5,
+# which he recommends “for all uses”.
+# In Fig. 3.2 we compare the nume
+
+
+
+# perturbations of integrable systems), more spectacular gains of efficiency are pos-
+# sible. For example, Blanes & Moan (2002) have constructed the following fourth
+# order method with s = 6
+# β1 = α6 = 0.082984406417405,
+# α1 = β6 = 0.16231455076687,
+# β2 = α5 = 0.23399525073150,
+# α2 = β5 = 0.37087741497958 ,
+# β3 = α4 = −0.40993371990193,
+# α3 = β4 = 0.059762097006575 
+
+
+
 # Order 5
 
 McAte5 = ExplicitSymplecticRKTable(
@@ -101,6 +148,15 @@ McAte5 = ExplicitSymplecticRKTable(
 )
 
 # Order 6
+
+
+# γ1 = γ7 =
+# 0.78451361047755726381949763
+# γ2 = γ6 =
+# 0.23557321335935813368479318
+# γ3 = γ5 = −1.17767998417887100694641568
+# γ4 =
+# 1.31518632068391121888424973
 
 Yoshida6 = ExplicitSymplecticRKTable(
     c_table = np.array([
