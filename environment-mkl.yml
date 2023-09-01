@@ -1,0 +1,28 @@
+name: choreo-intel
+channels:
+  - intel
+dependencies:
+  - python=3.11.2
+  - scipy
+  - numba
+  - mpmath
+  - matplotlib
+  - networkx
+  - cython
+  - ffmpeg
+  - suitesparse
+  - tbb 
+  - ffmpeg-python
+  - pip
+  - mkl
+  - mkl_fft
+  - pyamg
+  - icc_rt
+  - pytest
+  - pytest-xdist
+  - attrs
+  - pip:
+    - cffi==1.15.0
+    - pycparser==2.21
+    - sparseqr==1.1.2
+    - build>=0.10.0
