@@ -1,10 +1,10 @@
 """
-Convergence analysis of Runge-Kutta methods for ODE IVP
-=======================================================
+Benchmark of Error-Free Transforms for ODE IVP
+==============================================
 """
 
 # %%
-# Evaluation of relative quadrature error with the following parameters:
+# This benchmark compares accuracy and efficiency of several summation algorithms in floating point arithmetics for initial value problems of ordinary differential equations
 
 # sphinx_gallery_start_ignore
 
@@ -43,7 +43,7 @@ bench_folder = os.path.join(__PROJECT_ROOT__,'examples','generated_files')
 if not(os.path.isdir(bench_folder)):
     os.makedirs(bench_folder)
     
-basename_bench_filename = 'SelectedRK_ivp_cvg_bench_'
+basename_bench_filename = 'EFT_RK_bench_'
 
 # ForceBenchmark = True
 ForceBenchmark = False
@@ -220,7 +220,7 @@ for bench_name, all_funs in all_benchs.items():
         logx_plot = True                            ,
         fig = fig                                   ,
         ax = axs[i_bench,0]                         ,
-        title = f'Computational cost (s) as a function of iterations for equation {bench_name}' ,
+        title = f'Computational cost (s) as a function of number of iterations for equation {bench_name}' ,
     )
 
 plt.tight_layout()

@@ -84,7 +84,7 @@ all_benchs = {
             choreo.scipy_plus.test.ODE_cpte_error_on_test ,
             eq_name    ,
             getattr(globals()['precomputed_tables'], rk_name),
-            'VX'       ,
+            mode = 'VX'       ,
         ) for rk_name in method_names
     } for eq_name in eq_names
 }

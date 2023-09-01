@@ -95,6 +95,7 @@ jobs:
 
     - name: Generate Documentation
       run: |
+        python ./scripts/run_all_examples.py
         cd docs
         make html
 
