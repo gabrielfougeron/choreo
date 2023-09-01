@@ -627,7 +627,6 @@ cpdef ImplicitSymplecticIVP(
 
     return x_keep_np, v_keep_np
 
-
 @cython.cdivision(True)
 cdef void ImplicitSymplecticIVP_ann(
     const LowLevelFun lowlevelfun   ,
@@ -784,7 +783,6 @@ cdef void ImplicitSymplecticIVP_ann(
 
                 GoOnGS = (iGS < maxiter) and (dXV_err > eps_mul)
 
-            # exit()
             # if (iGS >= maxiter):
                 # print("Max iter exceeded. Rel error : ",dX_err/eps_mul,dV_err/eps_mul)
 
