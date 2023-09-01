@@ -77,6 +77,8 @@ jobs:
 
         pytest
 
+        python ./scripts/run_all_examples.py
+
         cd docs
         make html
         cd ..
