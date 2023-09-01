@@ -56,8 +56,8 @@ methods = [
 ]
 
 all_nsteps = range(1,11)
-# refinement_lvl = np.array(range(1,100))
-refinement_lvl = np.array([2**i for i in range(18)])
+refinement_lvl = np.array(range(1,100))
+# refinement_lvl = np.array([2**i for i in range(18)])
 
 # sphinx_gallery_start_ignore
 

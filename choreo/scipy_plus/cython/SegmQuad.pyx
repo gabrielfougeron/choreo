@@ -128,7 +128,6 @@ cdef inline void PyFun_apply(
         for i in range(ndim):
             res[i] = f_res_np[i]
             
-
 cdef class QuadFormula:
 
     """
@@ -174,7 +173,6 @@ cdef class QuadFormula:
     def th_cvg_rate(self):
         return self._th_cvg_rate
     
-
 cpdef np.ndarray[double, ndim=1, mode="c"] IntegrateOnSegment(
     object fun              ,
     int ndim                ,

@@ -6,14 +6,14 @@ Warning: this file needs to be compile without unsafe optimizations. No -Ofast. 
 from libc.stdlib cimport malloc, free
 cimport cython
 
-cdef inline (double, double) Fast2Sum(double a, double b) noexcept nogil: 
+cdef (double, double) Fast2Sum(double a, double b) noexcept nogil: 
 
     cdef double x = a + b
     cdef double y = (a-x) + b
     
     return (x,y)
 
-cdef inline (double, double) TwoSum(double a, double b) noexcept nogil: 
+cdef (double, double) TwoSum(double a, double b) noexcept nogil: 
 
     cdef double x = a+b
     cdef double z = x-a
@@ -34,7 +34,7 @@ cdef void TwoSum_incr(double *y, double *d, double *e, int n) noexcept nogil:
         e[j] = e[j] + (a - y[j])
 
 
-cdef inline void FastVecSum(double* p, double* q, long n) noexcept nogil:
+cdef void FastVecSum(double* p, double* q, long n) noexcept nogil:
 
     cdef Py_ssize_t i
 
@@ -43,7 +43,7 @@ cdef inline void FastVecSum(double* p, double* q, long n) noexcept nogil:
 
         q[i], q[i-1] = Fast2Sum(p[i], q[i-1])
 
-cdef inline void VecSum(double* p, double* q, long n) noexcept nogil:
+cdef void VecSum(double* p, double* q, long n) noexcept nogil:
 
     cdef Py_ssize_t i
 
