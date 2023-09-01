@@ -1,6 +1,6 @@
 """
-Convergence analysis of implicit Runge-Kutta methods for ODE IVP
-================================================================
+Convergence analysis of Runge-Kutta methods for ODE IVP
+=======================================================
 """
 
 # %%
@@ -28,6 +28,7 @@ sys.path.append(__PROJECT_ROOT__)
 os.environ['OPENBLAS_NUM_THREADS'] = '1'
 os.environ['NUMEXPR_NUM_THREADS'] = '1'
 os.environ['MKL_NUM_THREADS'] = '1'
+os.environ['OMP_NUM_THREADS'] = '1'
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -42,12 +43,13 @@ bench_folder = os.path.join(__PROJECT_ROOT__,'examples','generated_files')
 if not(os.path.isdir(bench_folder)):
     os.makedirs(bench_folder)
     
-basename_bench_filename = 'ImplicitRK_ivp_cvg_bench_'
+basename_bench_filename = 'SelectedRK_ivp_cvg_bench_'
 
 # ForceBenchmark = True
 ForceBenchmark = False
 
-def get_table(rk_name, order):
+
+def get_implicit_table(rk_name, order):
     
     if rk_name == "Gauss":
         
@@ -64,28 +66,45 @@ eq_names = [
     "y' = Az; z' = By"  ,
 ]
 
-method_names = [
-    'Gauss'   ,            
-]
+implicit_methods = {
+    f'{rk_name} {order}' : get_implicit_table(rk_name, order) for rk_name, order in itertools.product(["Gauss"], [2,4,6,8])
+}
 
-all_orders = range(1,11)
+explicit_methods = {
+    rk_name : getattr(globals()['precomputed_tables'], rk_name) for rk_name in [
+            'McAte4'    ,
+            'McAte5'    ,
+            'KahanLi8'  ,
+            'SofSpa10'  ,
+    ]
+}
 
-    
 # sphinx_gallery_start_ignore
 
-all_nint = np.array([2**i for i in range(12)])
+all_nint = np.array([2**i for i in range(18)])
+
+all_methods = {**explicit_methods, **implicit_methods}
+
+def EFT_str(DoEFT):
+    return 'w/' if DoEFT else 'w/o'
+
+all_EFT = [True, False]
 
 all_benchs = {
     eq_name : {
-        f'{rk_name} {order}' : functools.partial(
+        f'{rk_name} {EFT_str(DoEFT)} EFT' : functools.partial(
             choreo.scipy_plus.test.ODE_cpte_error_on_test ,
-            eq_name    ,
-            get_table(rk_name,order)
-        ) for rk_name, order in itertools.product(method_names, all_orders)
+            eq_name         ,
+            rk              ,
+            DoEFT = DoEFT   ,
+        ) for (rk_name, rk), DoEFT in itertools.product(all_methods.items(), all_EFT)
     } for eq_name in eq_names
 }
 
+color_list = [choreo.benchmark.default_color_list[i] for (i, rk), DoEFT in itertools.product(enumerate(all_methods), all_EFT)]
 
+linestyle_loop = [ 'solid','dotted']
+linestyle_list = [linestyle_loop[i] for rk, (i,DoEFT) in itertools.product(all_methods, enumerate(all_EFT))]
 
 def setup(nint):
     return nint
@@ -139,6 +158,8 @@ for bench_name, all_funs in all_benchs.items():
         all_errors                                  ,
         all_nint                                    ,
         all_funs                                    ,
+        color_list = color_list                     ,
+        linestyle_list = linestyle_list             ,
         fig = fig                                   ,
         ax = axs[i_bench,0]                         ,
         plot_ylim = plot_ylim                       ,
@@ -153,13 +174,14 @@ plt.tight_layout()
 
 plt.show()
 
-
 # %%
 # Error as a function of running time
 
 # sphinx_gallery_start_ignore
 
 plt.close()
+
+all_nint = np.array([2**i for i in range(12)])
 
 fig, axs = plt.subplots(
     nrows = n_bench,
@@ -173,22 +195,10 @@ fig, axs = plt.subplots(
 
 i_bench = -1
 
-plot_ylim = [1e-17,1e1]
 
 for bench_name, all_funs in all_benchs.items():
 
     i_bench += 1
-    
-    bench_filename = os.path.join(bench_folder,basename_bench_filename+str(i_bench).zfill(2)+'_error.npy') 
-
-    all_errors = choreo.benchmark.run_benchmark(
-        all_nint                        ,
-        all_funs                        ,
-        setup = setup                   ,
-        mode = "scalar_output"          ,
-        filename = bench_filename       ,
-        ForceBenchmark = ForceBenchmark ,
-    )
     
     timings_filename = os.path.join(bench_folder,basename_bench_filename+str(i_bench).zfill(2)+'_timings.npy') 
     
@@ -202,15 +212,15 @@ for bench_name, all_funs in all_benchs.items():
     )
     
     choreo.plot_benchmark(
-        all_errors                                  ,
+        all_times                                   ,
         all_nint                                    ,
         all_funs                                    ,
-        all_xvalues = all_times                     ,
+        color_list = color_list                     ,
+        linestyle_list = linestyle_list             ,
         logx_plot = True                            ,
         fig = fig                                   ,
         ax = axs[i_bench,0]                         ,
-        plot_ylim = plot_ylim                       ,
-        title = f'Relative error as a function of computational cost for equation {bench_name}' ,
+        title = f'Computational cost (s) as a function of iterations for equation {bench_name}' ,
     )
 
 plt.tight_layout()

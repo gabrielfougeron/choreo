@@ -22,23 +22,19 @@ if use_Cython:
 else:
     src_ext = '.c'
 
-cython_extnames = [
-    "choreo.cython.funs",
-    "choreo.cython.funs_new",
-    "choreo.cython.funs_serial",
-    "choreo.scipy_plus.cython.ODE",
-    "choreo.scipy_plus.cython.SegmQuad",
-    "choreo.scipy_plus.cython.test",
+cython_extnames_safemath = [
+    ("choreo.cython.funs"                   , False),
+    ("choreo.cython.funs_new"               , False),
+    ("choreo.cython.funs_serial"            , False),
+    ("choreo.scipy_plus.cython.ODE"         , False),
+    ("choreo.scipy_plus.cython.SegmQuad"    , False),
+    ("choreo.scipy_plus.cython.test"        , False),
+    ("choreo.scipy_plus.cython.eft_lib"     , True ),
 ]
 
-cython_safemath_needed = [
-    False,
-    False,
-    False,
-    False,
-    False,
-    False,
-]
+cython_extnames = [item[0] for item in cython_extnames_safemath]
+cython_safemath_needed = [item[1] for item in cython_extnames_safemath]
+
 
 if platform.system() == "Windows":
 
@@ -92,12 +88,12 @@ elif platform.system() == "Linux":
         # extra_link_args = ["-fopenmp"]
 
         extra_compile_args_std = ["-Ofast","-march=native", "-fopenmp"]
-        extra_compile_args_safe = ["-O2", "-fopenmp"]
+        extra_compile_args_safe = ["-O3", "-fopenmp"]
         extra_link_args = ["-fopenmp"]
 
-        # extra_compile_args_std = ["-fast","-march=native", "-fopenmp"]
-        # extra_compile_args_safe = ["-O2", "-fopenmp"]
-        # extra_link_args = ["-fopenmp","-ipo"]
+        # extra_compile_args_std = ["-Ofast","-march=native", "-fopenmp"]
+        # extra_compile_args_safe = ["-O0", "-fopenmp"]
+        # extra_link_args = ["-fopenmp"]
 
         cython_extnames.append("choreo.cython.funs_parallel")
         cython_safemath_needed.append(False)

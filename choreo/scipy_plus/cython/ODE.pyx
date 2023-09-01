@@ -3,6 +3,7 @@ ODE.pyx : Defines ODE-related things I designed I feel ought to be in scipy ... 
 
 
 '''
+from choreo.scipy_plus.cython.eft_lib cimport TwoSum_incr
 
 cimport scipy.linalg.cython_blas
 cimport scipy.linalg.cython_lapack
@@ -157,9 +158,6 @@ cdef inline void PyFun_apply_vectorized(
                 all_res[i,j] = f_res_np[j]
 
 
-
-
-
 cdef class ExplicitSymplecticRKTable:
     
     cdef double[::1] _c_table
@@ -219,7 +217,6 @@ cdef class ExplicitSymplecticRKTable:
 
 
 @cython.cdivision(True)
-# cpdef (np.ndarray[double, ndim=2, mode="c"], np.ndarray[double, ndim=2, mode="c"]) ExplicitSymplecticIntegrate(
 cpdef ExplicitSymplecticIVP(
     object fun                      ,
     object gun                      ,
@@ -230,6 +227,7 @@ cpdef ExplicitSymplecticIVP(
     object mode = "VX"              ,
     long nint = 1                   ,
     long keep_freq = -1             ,
+    bint DoEFT = True               ,
 ): 
 
     if (x0.shape[0] != v0.shape[0]):
@@ -303,6 +301,7 @@ cpdef ExplicitSymplecticIVP(
                 rk          ,
                 nint        ,
                 keep_freq   ,
+                DoEFT       ,
                 x_keep      ,
                 v_keep      ,
             )
@@ -323,6 +322,7 @@ cpdef ExplicitSymplecticIVP(
                 rk          ,
                 nint        ,
                 keep_freq   ,
+                DoEFT       ,
                 v_keep      ,
                 x_keep      ,
             )
@@ -349,6 +349,7 @@ cdef void ExplicitSymplecticIVP_ann(
     ExplicitSymplecticRKTable rk    ,
     const long nint                 ,
     const long keep_freq            ,
+    const bint DoEFT                ,
     double[:,::1] x_keep            ,
     double[:,::1] v_keep            ,
 ) noexcept nogil:
@@ -364,7 +365,22 @@ cdef void ExplicitSymplecticIVP_ann(
     cdef double *cdt = <double *> malloc(sizeof(double) * nsteps)
     cdef double *ddt = <double *> malloc(sizeof(double) * nsteps)
 
-    cdef Py_ssize_t istep, idof, iint_keep
+    cdef double *x_eft_comp
+    cdef double *v_eft_comp
+    cdef double tx_comp = 0.
+    cdef double tv_comp = 0.
+
+    cdef Py_ssize_t istep, iint_keep
+
+    if DoEFT:
+
+        x_eft_comp = <double *> malloc(sizeof(double) * ndof)
+        for istep in range(ndof):
+            x_eft_comp[istep] = 0.
+
+        v_eft_comp = <double *> malloc(sizeof(double) * ndof)
+        for istep in range(ndof):
+            v_eft_comp[istep] = 0.
 
     for istep in range(nsteps):
         cdt[istep] = rk._c_table[istep] * dt
@@ -384,9 +400,14 @@ cdef void ExplicitSymplecticIVP_ann(
                     LowLevelFun_apply(lowlevelfun, tv, v, res)
 
                 # x = x + cdt * res
-                scipy.linalg.cython_blas.daxpy(&ndof,&cdt[istep],&res[0],&int_one,&x[0],&int_one)
+                if DoEFT:
+                    scipy.linalg.cython_blas.dscal(&ndof,&cdt[istep],&res[0],&int_one)
+                    TwoSum_incr(&x[0],&res[0],x_eft_comp,ndof)
+                    TwoSum_incr(&tx,&cdt[istep],&tx_comp,1)
 
-                tx += cdt[istep]
+                else:
+                    scipy.linalg.cython_blas.daxpy(&ndof,&cdt[istep],&res[0],&int_one,&x[0],&int_one)
+                    tx += cdt[istep]
 
                 # res = g(t,x)
                 if py_fun_type > 0:
@@ -396,15 +417,24 @@ cdef void ExplicitSymplecticIVP_ann(
                     LowLevelFun_apply(lowlevelgun, tx, x, res)
 
                 # v = v + ddt * res
-                scipy.linalg.cython_blas.daxpy(&ndof,&ddt[istep],&res[0],&int_one,&v[0],&int_one)
+                if DoEFT:
+                    scipy.linalg.cython_blas.dscal(&ndof,&ddt[istep],&res[0],&int_one)
+                    TwoSum_incr(&v[0],&res[0],v_eft_comp,ndof)
+                    TwoSum_incr(&tv,&ddt[istep],&tv_comp,1)
 
-                tv += ddt[istep]
+                else:
+                    scipy.linalg.cython_blas.daxpy(&ndof,&ddt[istep],&res[0],&int_one,&v[0],&int_one)
+                    tv += ddt[istep]
 
         scipy.linalg.cython_blas.dcopy(&ndof,&x[0],&int_one,&x_keep[iint_keep,0],&int_one)
         scipy.linalg.cython_blas.dcopy(&ndof,&v[0],&int_one,&v_keep[iint_keep,0],&int_one)
 
     free(cdt)
     free(ddt)
+
+    if DoEFT:
+        free(x_eft_comp)
+        free(v_eft_comp)
 
 cdef class ImplicitSymplecticRKTable:
     
@@ -483,6 +513,7 @@ cpdef ImplicitSymplecticIVP(
     ImplicitSymplecticRKTable rk_v          ,
     long nint = 1                           ,
     long keep_freq = -1                     ,
+    bint DoEFT = True                       ,
     double eps = np.finfo(np.float64).eps   ,
     long maxiter = 50                       ,
 ):
@@ -584,6 +615,7 @@ cpdef ImplicitSymplecticIVP(
             rk_v._beta_table,
             nint            ,
             keep_freq       ,
+            DoEFT           ,
             eps             ,
             maxiter         ,
             x_keep          ,
@@ -624,6 +656,7 @@ cdef void ImplicitSymplecticIVP_ann(
     const double[:,::1] beta_table_v,
     const long nint                 ,
     const long keep_freq            ,
+    const bint DoEFT                ,
     const double eps                ,
     const long maxiter              ,
     double[:,::1] x_keep            ,
@@ -645,8 +678,28 @@ cdef void ImplicitSymplecticIVP_ann(
     cdef double dt = (t_span[1] - t_span[0]) / nint
     cdef int nsteps = a_table_x.shape[0]
 
-    cdef double *cdt_x =    <double *> malloc(sizeof(double) * nsteps)
-    cdef double *cdt_v =    <double *> malloc(sizeof(double) * nsteps)
+    cdef double *x_eft_comp
+    cdef double *v_eft_comp
+    cdef double *dxv
+    cdef double tx_comp = 0.
+    cdef double tv_comp = 0.
+
+    if DoEFT:
+
+        dxv = <double *> malloc(sizeof(double) * ndof)
+        for istep in range(ndof):
+            dxv[istep] = 0.
+
+        x_eft_comp = <double *> malloc(sizeof(double) * ndof)
+        for istep in range(ndof):
+            x_eft_comp[istep] = 0.
+
+        v_eft_comp = <double *> malloc(sizeof(double) * ndof)
+        for istep in range(ndof):
+            v_eft_comp[istep] = 0.
+
+    cdef double *cdt_x = <double *> malloc(sizeof(double) * nsteps)
+    cdef double *cdt_v = <double *> malloc(sizeof(double) * nsteps)
 
     cdef int dX_size = nsteps*ndof
     cdef double eps_mul = eps * dX_size * dt
@@ -687,7 +740,7 @@ cdef void ImplicitSymplecticIVP_ann(
                 # dX_prev = dX
                 scipy.linalg.cython_blas.dcopy(&dX_size,&dX[0,0],&int_one,&dX_prev[0,0],&int_one)
 
-                # K_fun = dt * fun(t,x+dV)
+                # K_fun = dt * fun(t,v+dV)
                 for istep in range(nsteps):
                     scipy.linalg.cython_blas.daxpy(&ndof,&one,&v[0],&int_one,&dV[istep,0],&int_one)
 
@@ -719,12 +772,12 @@ cdef void ImplicitSymplecticIVP_ann(
 
                 # dX_prev = dX_prev - dX
                 scipy.linalg.cython_blas.daxpy(&dX_size,&minus_one,&dX[0,0],&int_one,&dX_prev[0,0],&int_one)
-                dX_err = scipy.linalg.cython_blas.dasum(&dX_size,&dX_prev[0,0],&int_one)
 
                 # dV_prev = dV_prev - dV
                 scipy.linalg.cython_blas.daxpy(&dX_size,&minus_one,&dV[0,0],&int_one,&dV_prev[0,0],&int_one)
-                dV_err = scipy.linalg.cython_blas.dasum(&dX_size,&dV_prev[0,0],&int_one)
 
+                dX_err = scipy.linalg.cython_blas.dasum(&dX_size,&dX_prev[0,0],&int_one)
+                dV_err = scipy.linalg.cython_blas.dasum(&dX_size,&dV_prev[0,0],&int_one)
                 dXV_err = dX_err + dV_err  
 
                 iGS += 1
@@ -737,13 +790,25 @@ cdef void ImplicitSymplecticIVP_ann(
 
             tot_niter += iGS
 
-            # Do EFT here ?
+            if DoEFT:
 
-            # x = x + b_table_x^T . K_fun
-            scipy.linalg.cython_blas.dgemv(transn,&ndof,&nsteps,&one,&K_fun[0,0],&ndof,&b_table_x[0],&int_one,&one,&x[0],&int_one)
+                # dxv = b_table_x^T . K_fun
+                scipy.linalg.cython_blas.dgemv(transn,&ndof,&nsteps,&one,&K_fun[0,0],&ndof,&b_table_x[0],&int_one,&zero,dxv,&int_one)
+                # x = x + dxv
+                TwoSum_incr(&x[0],&dxv[0],x_eft_comp,ndof)
 
-            # v = v + b_table_v^T . K_gun
-            scipy.linalg.cython_blas.dgemv(transn,&ndof,&nsteps,&one,&K_gun[0,0],&ndof,&b_table_v[0],&int_one,&one,&v[0],&int_one)
+                # y = b_table_v^T . K_gun
+                scipy.linalg.cython_blas.dgemv(transn,&ndof,&nsteps,&one,&K_gun[0,0],&ndof,&b_table_v[0],&int_one,&zero,dxv,&int_one)
+                # v = v + dxv
+                TwoSum_incr(&v[0],&dxv[0],v_eft_comp,ndof)
+
+            else:
+
+                # x = x + b_table_x^T . K_fun
+                scipy.linalg.cython_blas.dgemv(transn,&ndof,&nsteps,&one,&K_fun[0,0],&ndof,&b_table_x[0],&int_one,&one,&x[0],&int_one)
+
+                # v = v + b_table_v^T . K_gun
+                scipy.linalg.cython_blas.dgemv(transn,&ndof,&nsteps,&one,&K_gun[0,0],&ndof,&b_table_v[0],&int_one,&one,&v[0],&int_one)
         
         scipy.linalg.cython_blas.dcopy(&ndof,&x[0],&int_one,&x_keep[iint_keep,0],&int_one)
         scipy.linalg.cython_blas.dcopy(&ndof,&v[0],&int_one,&v_keep[iint_keep,0],&int_one)
@@ -754,6 +819,11 @@ cdef void ImplicitSymplecticIVP_ann(
     free(cdt_x)
     free(cdt_v)
 
+    if DoEFT:
+
+        free(dxv)
+        free(x_eft_comp)
+        free(v_eft_comp)
 
 
 

@@ -155,3 +155,19 @@ def mul_py_fun_tx(double t, double x):
     cdef double[::1] res = np.empty((mul_size),dtype=np.float64)
     mul_cy_fun_memoryview_tx(t,x, res)
     return res
+
+@cython.cdivision(True)
+cpdef inplace_taylor_poly(double[:] v, x):
+
+    cdef Py_ssize_t i
+    cdef double cur_term = 1.
+
+    v[0] = cur_term
+
+    for i in range(1,v.shape[0]):
+
+        cur_term = cur_term * (x / i)
+
+        v[i] = cur_term
+
+        

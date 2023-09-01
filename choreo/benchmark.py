@@ -18,6 +18,8 @@ default_color_list.append(mpl.colors.BASE_COLORS['r'])
 default_color_list.append(mpl.colors.BASE_COLORS['m'])
 default_color_list.append(mpl.colors.BASE_COLORS['k'])
 
+default_linestyle_list = ['solid']
+
 def run_benchmark(
     all_sizes               ,
     all_funs                ,
@@ -140,6 +142,7 @@ def plot_benchmark(
     all_y_scalings = None   ,
     n_repeat = 1            ,
     color_list = default_color_list ,
+    linestyle_list = default_linestyle_list ,
     logx_plot = None        ,
     logy_plot = None        ,
     plot_ylim = None        ,
@@ -202,6 +205,7 @@ def plot_benchmark(
         ax = fig.add_subplot(1,1,1)
         
     n_colors = len(color_list)
+    n_linestyle = len(linestyle_list)
 
     if logx_plot is None:
         logx_plot = (transform is None)
@@ -224,12 +228,13 @@ def plot_benchmark(
         if (np.linalg.norm(all_times[:, i_fun, :]) > 0):
             
             color = color_list[i_fun % n_colors]
+            linestyle = linestyle_list[i_fun % n_linestyle]
             
             leg_patch.append(
                 mpl.patches.Patch(
-                    color = color       ,
+                    color = color                   ,
                     label = all_names_list[i_fun]   ,
-                    # linestyle = linestyle       ,
+                    linestyle = linestyle           ,
                 )
             )
 
@@ -292,7 +297,12 @@ def plot_benchmark(
                 masked_plot_y_val = np.ma.array(plot_y_val, mask = mask)
 
                 if (np.ma.max(masked_plot_y_val) > 0):
-                    ax.plot(plot_x_val, plot_y_val, color = color)
+                    ax.plot(
+                        plot_x_val              ,
+                        plot_y_val              ,
+                        color = color           ,
+                        linestyle = linestyle   ,
+                    )
 
     ax.legend(
         handles=leg_patch,    

@@ -13,39 +13,39 @@ import pstats
 def main():
         
     all_tests = [
-        # '3q',
-        # '2C3C',
-        # '2C3C5k',
-        # '2D3D',
-        # '2D3D5k',
-        # '2D1',
-        # 'test',
-        # '4C5k',
-        # '4D3k',
-        # '4C',
-        # '4D',
-        # '3',
-        # '3D',
-        # '3C2k',
-        # '3D2k',
-        # '3C4k',
-        # '3D4k',
-        # '3C5k',
+        '3q',
+        '2C3C',
+        '2C3C5k',
+        '2D3D',
+        '2D3D5k',
+        '2D1',
+        'test',
+        '4C5k',
+        '4D3k',
+        '4C',
+        '4D',
+        '3',
+        '3D',
+        '3C2k',
+        '3D2k',
+        '3C4k',
+        '3D4k',
+        '3C5k',
         '3D5k',
-        # '3C101k',
-        # '3D101k',
-        # 'test_3D5k',
-        # '3C7k2',
-        # '3D7k2',
-        # '6C',
-        # '6D',
-        # '6Ck5',
-        # '6Dk5',
-        # '5Dq',
-        # '2C3C5C',
+        '3C101k',
+        '3D101k',
+        'test_3D5k',
+        '3C7k2',
+        '3D7k2',
+        '6C',
+        '6D',
+        '6Ck5',
+        '6Dk5',
+        '5Dq',
+        '2C3C5C',
     ]
 
-
+    tbeg_loop = time.perf_counter()
     for test in all_tests:
         print()
         print("  OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO  ")
@@ -59,7 +59,12 @@ def main():
         
         tend = time.perf_counter()
 
-        print(f'Elapsed : {tend-tbeg}')
+        print(f'Elapsed time : {tend-tbeg} s')
+        
+    tend_loop = time.perf_counter()
+    
+    print()
+    print(f'Total elapsed time : {tend_loop-tbeg_loop} s')
 # 
 
 if __name__ == "__main__":
