@@ -4,6 +4,8 @@ ODE.pyx : Defines ODE-related things I designed I feel ought to be in scipy ... 
 
 '''
 
+from choreo.scipy_plus.cython.eft_lib cimport TwoSum_incr
+
 cimport scipy.linalg.cython_blas
 cimport scipy.linalg.cython_lapack
 from libc.stdlib cimport malloc, free
@@ -23,6 +25,12 @@ from libc.math cimport isnan as cisnan
 from libc.math cimport isinf as cisinf
 
 from .ccallback cimport ccallback_t, ccallback_prepare, ccallback_release, CCALLBACK_DEFAULTS, ccallback_signature_t
+
+cdef double minus_one = -1.
+cdef double one = 1.
+cdef double zero = 0.
+cdef char *transn = 'n'
+cdef int int_one = 1
 
 cdef int PY_FUN = -1
 cdef int C_FUN_MEMORYVIEW = 0
@@ -107,7 +115,7 @@ cdef inline void PyFun_apply(
     const int res_type  ,
     const double x      ,
     double[::1] res     ,
-    Py_ssize_t ndim     ,  
+    int ndim            ,  
 ):
 
     cdef Py_ssize_t i
@@ -169,10 +177,11 @@ cdef class QuadFormula:
 
 cpdef np.ndarray[double, ndim=1, mode="c"] IntegrateOnSegment(
     object fun              ,
-    long ndim               ,
+    int ndim                ,
     (double, double) x_span ,
     QuadFormula quad        ,
-    long nint               ,
+    long nint = 1           ,
+    bint DoEFT = True       ,
 ):
 
     cdef ccallback_t callback
@@ -211,7 +220,9 @@ cpdef np.ndarray[double, ndim=1, mode="c"] IntegrateOnSegment(
             ndim        ,
             x_span      ,
             nint        ,
-            quad        ,
+            DoEFT       ,
+            quad._w     ,
+            quad._x     ,
             f_res       ,
             f_int       ,
         )
@@ -225,45 +236,62 @@ cdef void IntegrateOnSegment_ann(
     LowLevelFun lowlevelfun         ,
     object py_fun                   ,
     const int py_fun_type           ,
-    const long ndim                 ,
+    const int ndim                  ,
     const (double, double) x_span   ,
     const long nint                 ,
-    QuadFormula quad                ,
+    const bint DoEFT                ,
+    const double[::1] w             ,
+    const double[::1] x             ,
     double[::1] f_res               ,
     double[::1] f_int               ,
 ) noexcept nogil:
-
 
     cdef Py_ssize_t istep
     cdef long iint
     cdef Py_ssize_t idim
     cdef double xbeg, dx
     cdef double xi
-    cdef double *cdx = <double*> malloc(sizeof(double)*quad._w.shape[0])
+
+    cdef double* f_eft_comp
+
+    if DoEFT:
+
+        f_eft_comp = <double *> malloc(sizeof(double) * ndim)
+        for istep in range(ndim):
+            f_eft_comp[istep] = 0.
+
+    cdef double *cdx = <double*> malloc(sizeof(double)*w.shape[0])
 
     dx = (x_span[1] - x_span[0]) / nint
 
-    for istep in range(quad._w.shape[0]):
-        cdx[istep] = quad._x[istep] * dx
+    for istep in range(w.shape[0]):
+        cdx[istep] = x[istep] * dx
 
     for iint in range(nint):
         xbeg = x_span[0] + iint * dx
 
-        for istep in range(quad._w.shape[0]):
+        for istep in range(w.shape[0]):
 
             xi = xbeg + cdx[istep]
 
+            # f_res = f(xi)
             if py_fun_type > 0:
                 with gil:
                     PyFun_apply(py_fun, py_fun_type, xi, f_res, ndim)
             else:
                 LowLevelFun_apply(lowlevelfun, xi, f_res)
 
-            for idim in range(ndim):
-                f_int[idim] = f_int[idim] + quad._w[istep] * f_res[idim]
+            # f_int = f_int + w * f_res
+            if DoEFT:
+                scipy.linalg.cython_blas.dscal(&ndim,&w[istep],&f_res[0],&int_one)
+                TwoSum_incr(&f_int[0],&f_res[0],f_eft_comp,ndim)
 
-    for idim in range(ndim):
-        f_int[idim] = f_int[idim] * dx
+            else:
+                scipy.linalg.cython_blas.daxpy(&ndim,&w[istep],&f_res[0],&int_one,&f_int[0],&int_one)
+
+    scipy.linalg.cython_blas.dscal(&ndim,&dx,&f_int[0],&int_one)
 
     free(cdx)
 
+    if DoEFT:
+        free(f_eft_comp)

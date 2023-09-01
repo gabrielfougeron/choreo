@@ -42,8 +42,8 @@ if not(os.path.isdir(bench_folder)):
     
 basename_bench_filename = 'quad_cvg_bench_'
 
-# ForceBenchmark = True
-ForceBenchmark = False
+ForceBenchmark = True
+# ForceBenchmark = False
 
 # sphinx_gallery_end_ignore
 
@@ -56,7 +56,8 @@ methods = [
 ]
 
 all_nsteps = range(1,11)
-refinement_lvl = np.array(range(1,100))
+# refinement_lvl = np.array(range(1,100))
+refinement_lvl = np.array([2**i for i in range(18)])
 
 # sphinx_gallery_start_ignore
 
