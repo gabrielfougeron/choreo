@@ -47,106 +47,6 @@ basename_bench_filename = 'ExplicitRK_ivp_cvg_bench_'
 # ForceBenchmark = True
 ForceBenchmark = False
 
-def cpte_error(
-    eq_name,
-    rk_method,
-    mode,
-    nint,
-):
-
-    if eq_name == "y'' = -y" :
-        # WOLFRAM
-        # y'' = - y
-        # y(x) = A cos(x) + B sin(x)
-
-        test_ndim = 2
-
-        ex_sol = lambda t : np.array( [ np.cos(t) , np.sin(t),-np.sin(t), np.cos(t) ]  )
-
-        fun = lambda t,y:   np.array(y)
-        gun = lambda t,x:  -np.array(x)
-
-    if eq_name == "y'' = - exp(y)" :
-        # WOLFRAM
-        # y'' = - exp(y)
-        # y(x) = - 2 * ln( cosh(t / sqrt(2) ))
-
-        test_ndim = 1
-
-        invsqrt2 = 1./np.sqrt(2.)
-        sqrt2 = np.sqrt(2.)
-        ex_sol = lambda t : np.array( [ -2*np.log(np.cosh(invsqrt2*t)) , -sqrt2*np.tanh(invsqrt2*t) ]  )
-
-        fun = lambda t,y:  np.array(y)
-        gun = lambda t,x: -np.exp(x)
-
-    if eq_name == "y'' = xy" :
-
-        # Solutions: Airy functions
-        # Nonautonomous linear test case
-
-        test_ndim = 2
-
-        def ex_sol(t):
-
-            ai, aip, bi, bip = scipy.special.airy(t)
-
-            return np.array([ai,bi,aip,bip])
-
-        fun = lambda t,y: np.array(y)
-        gun = lambda t,x: np.array([t*x[0],t*x[1]],dtype=np.float64)
-        
-    if eq_name == "y' = Az; z' = By" :
-
-        test_ndim = 10
-
-        A = np.diag(np.array(range(test_ndim)))
-        B = np.identity(test_ndim)
-
-        AB = np.zeros((2*test_ndim,2*test_ndim))
-        AB[0:test_ndim,test_ndim:2*test_ndim] = A
-        AB[test_ndim:2*test_ndim,0:test_ndim] = B
-
-        yo = np.array(range(test_ndim))
-        zo = np.array(range(test_ndim))
-
-        yzo = np.zeros(2*test_ndim)
-        yzo[0:test_ndim] = yo
-        yzo[test_ndim:2*test_ndim] = zo
-
-        def ex_sol(t):
-
-            return scipy.linalg.expm(t*AB).dot(yzo)
-
-        fun = lambda t,z: A.dot(z)
-        gun = lambda t,y: B.dot(y)
-
-
-
-    t_span = (0.,np.pi)
-
-    ex_init  = ex_sol(t_span[0])
-    ex_final = ex_sol(t_span[1])
-
-    x0 = ex_init[0          :  test_ndim].copy()
-    v0 = ex_init[test_ndim  :2*test_ndim].copy()
-    
-    xf,vf = choreo.scipy_plus.ODE.ExplicitSymplecticIVP(
-        fun             ,
-        gun             ,
-        t_span          ,
-        x0              ,
-        v0              ,
-        nint = nint     ,
-        rk = rk_method  ,
-        mode = mode     ,
-    )
-
-    sol = np.ascontiguousarray(np.concatenate((xf,vf),axis=0).reshape(2*test_ndim))
-    error = np.linalg.norm(sol-ex_final)/np.linalg.norm(ex_final)
-
-    return error
-
 # sphinx_gallery_end_ignore
 
 eq_names = [
@@ -181,7 +81,7 @@ all_nint = np.array([2**i for i in range(12)])
 all_benchs = {
     eq_name : {
         f'{rk_name}' : functools.partial(
-            cpte_error ,
+            choreo.scipy_plus.test.ODE_cpte_error_on_test ,
             eq_name    ,
             getattr(globals()['precomputed_tables'], rk_name),
             'VX'       ,

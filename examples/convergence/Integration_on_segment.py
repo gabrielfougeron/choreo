@@ -45,41 +45,6 @@ basename_bench_filename = 'quad_cvg_bench_'
 # ForceBenchmark = True
 ForceBenchmark = False
 
-def cpte_error(
-    fun_name,
-    quad_method,
-    quad_nsteps,
-    nint,
-):
-
-    if fun_name == "exp" :
-        # WOLFRAM
-        # f(x) = y*exp(y*x)
-        # F(x) = exp(y*x)
-
-        test_ndim = 20
-
-        fun = lambda x: np.array([y*m.exp(y*x) for y in range(test_ndim)])
-        Fun = lambda x: np.array([m.exp(y*x) for y in range(test_ndim)])
-        
-        x_span = (0.,1.)
-        exact = Fun(x_span[1]) - Fun(x_span[0])
-
-
-    quad = choreo.scipy_plus.SegmQuad.ComputeQuadrature(quad_method, quad_nsteps)
-
-    approx = choreo.scipy_plus.SegmQuad.IntegrateOnSegment(
-        fun = fun       ,
-        ndim = test_ndim,
-        x_span = x_span ,
-        quad = quad     ,
-        nint = nint     ,
-    )
-
-    error = np.linalg.norm(approx-exact)/np.linalg.norm(exact)
-
-    return error
- 
 # sphinx_gallery_end_ignore
 
 fun_names = [
@@ -101,7 +66,7 @@ def setup(nint):
 all_benchs = {
     fun_name : {
         f'{method} {nsteps}' : functools.partial(
-            cpte_error  ,
+            choreo.scipy_plus.test.Quad_cpte_error_on_test  ,
             fun_name    ,
             method      ,
             nsteps      ,
