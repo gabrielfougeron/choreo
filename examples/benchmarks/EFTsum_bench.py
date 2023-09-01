@@ -1,11 +1,10 @@
 """
-Benchmark of FFT algorithms
-===========================
+Benchmark of Error-Free Transforms for summation
+================================================
 """
 
 # %% 
-# This benchmark compares execution times of several FFT functions using different backends
-# The plots give the measured execution time of the FFT as a function of the input length
+# This benchmark compares accuracy and efficiency of several summation algorithms in floating point arithmetics
 
 # sphinx_gallery_start_ignore
 
@@ -117,7 +116,7 @@ fig, axs = plt.subplots(
     squeeze = True,
 )
 
-basename = 'sum_bench_time'
+basename = 'sum_bench_accuracy'
 error_filename = os.path.join(timings_folder,basename+'.npy')
 
 n_repeat = 1

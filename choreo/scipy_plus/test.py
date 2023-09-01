@@ -6,7 +6,7 @@ from choreo.scipy_plus.SegmQuad import ComputeQuadrature
 from choreo.scipy_plus.SegmQuad import IntegrateOnSegment
 
 
-def cpte_error(
+def Quad_cpte_error_on_test(
     fun_name,
     quad_method,
     quad_nsteps,
