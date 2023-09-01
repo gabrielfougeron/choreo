@@ -124,19 +124,19 @@ def main():
             else:
                 raise ValueError("TimeRev must be True or False")
 
-            TimeShift = fractions.Fraction(
-                numerator = params_dict["Geom_Bodies"]["AllSyms"][isym]["TimeShiftNum"],
-                denominator = params_dict["Geom_Bodies"]["AllSyms"][isym]["TimeShiftDen"]
-            )
+            TimeShiftNum = params_dict["Geom_Bodies"]["AllSyms"][isym]["TimeShiftNum"]
+            TimeShiftDen = params_dict["Geom_Bodies"]["AllSyms"][isym]["TimeShiftDen"]
 
             Sym_list.append(
                 choreo.ActionSym(
                     BodyPerm = BodyPerm     ,
                     SpaceRot = SpaceRot     ,
                     TimeRev = TimeRev       ,
-                    TimeShift = TimeShift   ,
+                    TimeShiftNum = TimeShiftNum   ,
+                    TimeShiftDen = TimeShiftDen   ,
                 )
             )
+
 
     else:
 
