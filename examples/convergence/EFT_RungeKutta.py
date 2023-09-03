@@ -86,13 +86,13 @@ all_nint = np.array([2**i for i in range(18)])
 all_methods = {**explicit_methods, **implicit_methods}
 
 def EFT_str(DoEFT):
-    return 'w/' if DoEFT else 'w/o'
+    return 'w/ EFT' if DoEFT else 'w/o EFT'
 
 all_EFT = [True, False]
 
 all_benchs = {
     eq_name : {
-        f'{rk_name} {EFT_str(DoEFT)} EFT' : functools.partial(
+        f'{rk_name} {EFT_str(DoEFT)}' : functools.partial(
             choreo.scipy_plus.test.ODE_cpte_error_on_test ,
             eq_name         ,
             rk              ,

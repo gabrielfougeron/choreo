@@ -4,7 +4,7 @@ ODE.py : Defines ODE-related things I designed I feel ought to be in scipy.
 '''
 
 import functools
-import math as m
+import math
 import mpmath
 import numpy as np
 
@@ -14,7 +14,7 @@ from choreo.scipy_plus.cython.ODE import ImplicitSymplecticRKTable
 
 def SafeGLIntOrder(N):
 
-    n = m.ceil(N/2)
+    n = math.ceil(N/2)
 
     if (((n%2) == 1) and ((N%2) == 1)) or ((n-1) == N):
         n += 1
@@ -276,5 +276,78 @@ def ComputeImplicitSymplecticRKTable_Gauss(n,dps=30):
         th_cvg_rate = 2*n               ,
     )
         
+def Yoshida_w_to_cd(w_in, th_cvg_rate):
+    '''
+    input : vector w as in Construction of higher order symplectic integrators in PHYSICS LETTERS A by Haruo Yoshida 1990.
+    
+    w[1:m+1] (m elements) is provided. w0 is implicit.
+
+    '''
+    
+    m = w_in.shape[0]
+    
+    wo = 1-2*math.fsum(w_in)
+    w = np.zeros((m+1),dtype=np.float64)
+    w[0] = wo
+    for i in range(m):
+        w[i+1] = w_in[i]
+    
+    n = 2*m + 2
+
+    c_table = np.zeros((n),dtype=np.float64)    
+    d_table = np.zeros((n),dtype=np.float64)   
+    
+    for i in range(m): 
+        val = w[m-i]
+        d_table[i]      = val
+        d_table[2*m-i]  = val
+    d_table[m] = w[0]
         
+    c_table[0]     = w[m] / 2
+    c_table[2*m+1] = w[m] / 2
+    for i in range(m): 
+        val = (w[m-i]+w[m-1-i]) / 2
+        c_table[i+1]      = val
+        c_table[2*m-i]  = val
         
+    return ExplicitSymplecticRKTable(
+        c_table     ,
+        d_table     ,
+        th_cvg_rate ,
+    )
+    
+            
+def Yoshida_w_to_cd_reduced(w, th_cvg_rate):
+    '''
+    input : vector w as in Construction of higher order symplectic integrators in PHYSICS LETTERS A by Haruo Yoshida 1990.
+    
+    w[1:m+1] (m elements) is provided. w0 is implicit.
+
+    '''
+    
+    m = w.shape[0]
+    n = 2*m
+
+    c_table = np.zeros((n),dtype=np.float64)    
+    d_table = np.zeros((n),dtype=np.float64)   
+    
+    for i in range(m): 
+        val = w[m-1-i]
+        d_table[i]      = val
+        d_table[n-2-i]  = val
+
+        
+    c_table[0]   = w[m-1] / 2
+    c_table[n-1] = w[m-1] / 2
+    for i in range(m-1): 
+        val = (w[m-1-i]+w[m-2-i]) / 2
+        c_table[i+1]    = val
+        c_table[n-2-i]  = val
+        
+    return ExplicitSymplecticRKTable(
+        c_table     ,
+        d_table     ,
+        th_cvg_rate ,
+    )
+    
+    

@@ -215,7 +215,6 @@ cdef class ExplicitSymplecticRKTable:
             th_cvg_rate = self._th_cvg_rate ,
         )
 
-
 @cython.cdivision(True)
 cpdef ExplicitSymplecticIVP(
     object fun                      ,
