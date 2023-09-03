@@ -56,39 +56,34 @@ eq_names = [
     "y' = Az; z' = By"  ,
 ]
 
-method_names = [
-    'SymplecticEuler'   ,           
-    'StormerVerlet'     ,       
-    'McAte2'            ,   
-    'Ruth3'             ,
-    'McAte3'            ,   
-    'Ruth4'             ,
-    'Ruth4Rat'          ,   
-    'McAte4'            ,   
-    'CalvoSanz4'        ,       
-    'McAte5'            ,   
-    'KahanLi6'          ,   
-    'Yoshida6'          ,   
-    'KahanLi8'          ,   
-    'McAte8'            ,   
-    'SofSpa10'          ,   
-]
-    
+
+all_methods = { name : getattr(precomputed_tables,name) for name in dir(precomputed_tables) if isinstance(getattr(precomputed_tables,name),choreo.scipy_plus.ODE.ExplicitSymplecticRKTable) }
+
+method_order_hierarchy = {}
+for name, rk in all_methods.items():
+
+    order = rk.th_cvg_rate
+    cur_same_order = method_order_hierarchy.get(order, {})
+    cur_same_order[name] = rk
+    method_order_hierarchy[order] = cur_same_order
+
+sorted_method_order = sorted(method_order_hierarchy)
+
 # sphinx_gallery_start_ignore
 
-all_nint = np.array([2**i for i in range(12)])
+
+all_nint = np.array([2**i for i in range(10)])
 
 all_benchs = {
-    eq_name : {
+    f'{eq_name} methods of order {order}' : {
         f'{rk_name}' : functools.partial(
             choreo.scipy_plus.test.ODE_cpte_error_on_test ,
             eq_name    ,
-            getattr(globals()['precomputed_tables'], rk_name),
+            rk,
             mode = 'VX'       ,
-        ) for rk_name in method_names
-    } for eq_name in eq_names
+        ) for rk_name, rk in method_order_hierarchy[order].items()
+    } for order, eq_name in itertools.product(sorted_method_order, eq_names)
 }
-
 
 
 def setup(nint):
@@ -270,6 +265,97 @@ for bench_name, all_funs in all_benchs.items():
     )
     
     timings_filename = os.path.join(bench_folder,basename_bench_filename+str(i_bench).zfill(2)+'_timings.npy') 
+    
+    all_times = choreo.benchmark.run_benchmark(
+        all_nint                        ,
+        all_funs                        ,
+        setup = setup_timings           ,
+        mode = "timings"                ,
+        filename = timings_filename     ,
+        ForceBenchmark = ForceBenchmark ,
+    )
+    
+    choreo.plot_benchmark(
+        all_errors                                  ,
+        all_nint                                    ,
+        all_funs                                    ,
+        all_xvalues = all_times                     ,
+        plot_ylim = plot_ylim                       ,
+        logx_plot = True                            ,
+        fig = fig                                   ,
+        ax = axs[i_bench,0]                         ,
+        title = f'Relative error as a function of computational cost for equation {bench_name}' ,
+    )
+
+plt.tight_layout()
+ 
+# sphinx_gallery_end_ignore
+
+plt.show()
+
+# %%
+# Error as a function of running time for different orders
+
+# sphinx_gallery_start_ignore
+
+plt.close()
+
+best_method_by_order = {
+    1: 'SymplecticEuler',
+    2: 'McAte2',
+    3: 'McAte3',
+    4: 'McAte4',
+    5: 'McAte5',
+    6: 'KahanLi6',
+    8: 'KahanLi8',
+    10:'SofSpa10',
+}
+
+
+all_benchs = {
+    f'{eq_name}' : {
+        f'{rk_name}' : functools.partial(
+            choreo.scipy_plus.test.ODE_cpte_error_on_test ,
+            eq_name    ,
+            all_methods[rk_name],
+            mode = 'VX'       ,
+        ) for (order, rk_name) in best_method_by_order.items()
+    } for eq_name in eq_names
+}
+
+n_bench = len(all_benchs)
+figsize = (1600/dpi, n_bench * 800 / dpi)
+
+fig, axs = plt.subplots(
+    nrows = n_bench,
+    ncols = 1,
+    sharex = False,
+    sharey = False,
+    figsize = figsize,
+    dpi = dpi   ,
+    squeeze = False,
+)
+
+i_bench = -1
+
+plot_ylim = [1e-17,1e1]
+
+for bench_name, all_funs in all_benchs.items():
+
+    i_bench += 1
+    
+    bench_filename = os.path.join(bench_folder,basename_bench_filename+str(i_bench).zfill(2)+'_error_best.npy') 
+
+    all_errors = choreo.benchmark.run_benchmark(
+        all_nint                        ,
+        all_funs                        ,
+        setup = setup                   ,
+        mode = "scalar_output"          ,
+        filename = bench_filename       ,
+        ForceBenchmark = ForceBenchmark ,
+    )
+    
+    timings_filename = os.path.join(bench_folder,basename_bench_filename+str(i_bench).zfill(2)+'_timings_best.npy') 
     
     all_times = choreo.benchmark.run_benchmark(
         all_nint                        ,

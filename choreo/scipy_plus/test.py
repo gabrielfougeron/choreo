@@ -122,7 +122,7 @@ def ODE_cpte_error_on_test(
 
     x0 = ex_init[0          :  test_ndim].copy()
     v0 = ex_init[test_ndim  :2*test_ndim].copy()
-    
+
     xf,vf = SymplecticIVP(
         fun             ,
         gun             ,
