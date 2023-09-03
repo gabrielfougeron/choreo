@@ -12,15 +12,6 @@ from choreo.scipy_plus.cython.SegmQuad import QuadFormula
 from choreo.scipy_plus.cython.ODE import ExplicitSymplecticRKTable
 from choreo.scipy_plus.cython.ODE import ImplicitSymplecticRKTable
 
-def SafeGLIntOrder(N):
-
-    n = math.ceil(N/2)
-
-    if (((n%2) == 1) and ((N%2) == 1)) or ((n-1) == N):
-        n += 1
-
-    return n
-
 # 3 terms definition of polynomial families
 # P_n+1 = (X - a_n) P_n - b_n P_n-1
 def GaussLegendre3Term(n):
@@ -54,37 +45,6 @@ def ShiftedGaussLegendre3Term(n):
 
     return a, b
 
-def EvalAllFrom3Term(a,b,n,x):
-    # n >= 1
-
-    phi = mpmath.matrix(n+1,1)
-
-    phi[0] = mpmath.mpf(1)
-    phi[1] = x - a[0]
-
-    for i in range(1,n):
-
-        phi[i+1] = (x - a[i]) * phi[i] - b[i] * phi[i-1]
-
-    return phi
-
-def EvalAllDerivFrom3Term(a,b,n,x,phi=None):
-    # n >= 1
-
-    if phi is None:
-        phi = EvalAllFrom3Term(a,b,n,x)
-
-    phip = mpmath.matrix(n+1,1)
-
-    phip[0] = 0
-    phip[1] = 1
-
-    for i in range(1,n):
-
-        phip[i+1] = (x - a[i]) * phip[i] - b[i] * phip[i-1] + phi[i]
-
-    return phip
-
 def MatFrom3Term(a,b,n):
     
     J =  mpmath.matrix(n)
@@ -110,114 +70,55 @@ def QuadFrom3Term(a,b,n):
 
     return w, z
 
-
-def GatherDerivAtZeros(a,b,n,z=None):
-
-    if z is None:
-        w, z = QuadFrom3Term(a,b,n)
-
-    phipz = mpmath.matrix(n,1)
-
-    for i in range(n):
-        
-        phip = EvalAllDerivFrom3Term(a,b,n,z[i])
-        phipz[i] = phip[n]
-
-    return phipz
-
-def EvalLagrange(a,b,n,z,x,phipz=None):
-
-    if phipz is None :
-          phipz = GatherDerivAtZeros(a,b,n,z)
+def BuildButcherCMat(z,n,m):
     
-    phi = EvalAllFrom3Term(a,b,n,x)
+    mat = mpmath.matrix(n,m)
+
+    for j in range(n):
+        for i in range(m):
+            mat[j,i] = z[j]**i
+            
+    return mat
+
+def BuildButcherCRHS(y,z,n,m):
     
-    lag = mpmath.matrix(n,1)
+    rhs = mpmath.matrix(n,m)
+
+    for j in range(n):
+        for i in range(m):
+            rhs[j,i] = (z[j]**(i+1) - y[j]**(i+1))/(i+1)
+            
+    return rhs
+
+def ComputeButcher_collocation(z,n):
     
-    for i in range(n):
-    
-        lag[i] = phi[n] / (phipz[i] * (x - z[i]))
-
-    return lag
-
-def ComputeButcher_psi(x,y,a,b,n,w=None,z=None,wint=None,zint=None,nint=None):
-
-    if (w is None) or (z is None) :
-        assert (w is None) and (z is None)
-        w, z = QuadFrom3Term(a,b,n)
-
-    if (nint is None) or (wint is None) or (zint is None):
-        assert (nint is None) and (wint is None) and (zint is None)
-        
-        nint = SafeGLIntOrder(n)
-        aint, bint = ShiftedGaussLegendre3Term(nint)
-        wint, zint = QuadFrom3Term(aint,bint,nint)
-
-    Butcher_psi = mpmath.matrix(n)
-
-    for iint in range(nint):
-
-        for i in range(n):
-
-            tint = x[i] + (y[i]-x[i]) * zint[iint]
-
-            lag = EvalLagrange(a,b,n,z,tint)
-
-            for j in range(n):
-
-                Butcher_psi[i,j] = Butcher_psi[i,j] + wint[iint] * lag[j]
-
-    for i in range(n):
-        for j in range(n):
-
-            Butcher_psi[i,j] = (y[i]-x[i]) * Butcher_psi[i,j]
-
-    return Butcher_psi
-
-def ComputeButcher_a(a,b,n,w=None,z=None,wint=None,zint=None,nint=None):
-
-    if (w is None) or (z is None) :
-        assert (w is None) and (z is None)
-        w, z = QuadFrom3Term(a,b,n)
-
-    x = mpmath.matrix(n,1)
-    return ComputeButcher_psi(x,z,a,b,n,w,z,wint,zint,nint)
-
-def ComputeButcher_beta_gamma(a,b,n,w=None,z=None,wint=None,zint=None,nint=None):
-
-    if (w is None) or (z is None) :
-        w, z = QuadFrom3Term(a,b,n)
-
-    x = mpmath.matrix(n,1)
     y = mpmath.matrix(n,1)
-
     for i in range(n):
-        x[i] = 1
-        y[i] = 1 + z[i]
-
-    Butcher_beta = ComputeButcher_psi(x,y,a,b,n,w,z,wint,zint,nint)
-
-    for i in range(n):
-        x[i] = -1 + z[i]
         y[i] = 0
-
-    Butcher_gamma = ComputeButcher_psi(x,y,a,b,n,w,z,wint,zint,nint)
-
-    return Butcher_beta, Butcher_gamma
-
-def ComputeGaussButcherTables(n):
-
-    a, b = ShiftedGaussLegendre3Term(n)
-    w, z = QuadFrom3Term(a,b,n)
-
-    nint = SafeGLIntOrder(n)
-    aint, bint = ShiftedGaussLegendre3Term(nint)
-    wint, zint = QuadFrom3Term(aint,bint,nint)
-
-    Butcher_a = ComputeButcher_a(a,b,n,w,z,wint,zint,nint)
-    Butcher_beta, Butcher_gamma = ComputeButcher_beta_gamma(a,b,n,w,z,wint,zint,nint)
-
-    return Butcher_a, w, z, Butcher_beta, Butcher_gamma
+    
+    mat = BuildButcherCMat(z,n,n)
+    mat_inv = mat ** (-1)
+    
+    rhs = BuildButcherCRHS(y,z,n,n)
+    Butcher_a = rhs * mat_inv
+    
+    zp = mpmath.matrix(n,1)
+    for i in range(n):
+        y[i]  = 1
+        zp[i] = 1+z[i]
+        
+    rhs = BuildButcherCRHS(y,zp,n,n)
+    Butcher_beta = rhs * mat_inv    
+    
+    zp = mpmath.matrix(n,1)
+    for i in range(n):
+        y[i]  = -1+z[i]
+        zp[i] = 0
+        
+    rhs = BuildButcherCRHS(y,zp,n,n)
+    Butcher_gamma = rhs * mat_inv
+    
+    return Butcher_a, Butcher_beta, Butcher_gamma
 
 def SymmetricAdjointQuadrature(w,z,n):
 
@@ -250,20 +151,23 @@ def SymmetricAdjointButcher(Butcher_a, Butcher_b, Butcher_c, Butcher_beta, Butch
     return Butcher_a_ad, Butcher_b_ad, Butcher_c_ad, Butcher_beta_ad, Butcher_gamma_ad
 
 @functools.cache
-def ComputeGaussButcherTables_np(n,dps=30):
+def ComputeGaussButcherTables_np(n, dps=60):
 
     mpmath.mp.dps = dps
-    Butcher_a, Butcher_b, Butcher_c, Butcher_beta, Butcher_gamma = ComputeGaussButcherTables(n)
+
+    a, b = ShiftedGaussLegendre3Term(n)
+    w, z = QuadFrom3Term(a,b,n)
+    Butcher_a, Butcher_beta , Butcher_gamma = ComputeButcher_collocation(z, n)
 
     Butcher_a_np = np.array(Butcher_a.tolist(),dtype=np.float64)
-    Butcher_b_np = np.array(Butcher_b.tolist(),dtype=np.float64).reshape(n)
-    Butcher_c_np = np.array(Butcher_c.tolist(),dtype=np.float64).reshape(n)
+    Butcher_b_np = np.array(w.tolist(),dtype=np.float64).reshape(n)
+    Butcher_c_np = np.array(z.tolist(),dtype=np.float64).reshape(n)
     Butcher_beta_np = np.array(Butcher_beta.tolist(),dtype=np.float64)
     Butcher_gamma_np = np.array(Butcher_gamma.tolist(),dtype=np.float64)
 
     return Butcher_a_np, Butcher_b_np, Butcher_c_np, Butcher_beta_np, Butcher_gamma_np
 
-def ComputeImplicitSymplecticRKTable_Gauss(n,dps=30):
+def ComputeImplicitSymplecticRKTable_Gauss(n, dps=60):
     
     Butcher_a_np, Butcher_b_np, Butcher_c_np, Butcher_beta_np, Butcher_gamma_np = ComputeGaussButcherTables_np(n,dps=dps)
     
@@ -316,7 +220,6 @@ def Yoshida_w_to_cd(w_in, th_cvg_rate):
         th_cvg_rate ,
     )
     
-            
 def Yoshida_w_to_cd_reduced(w, th_cvg_rate):
     '''
     input : vector w as in Construction of higher order symplectic integrators in PHYSICS LETTERS A by Haruo Yoshida 1990.
