@@ -111,12 +111,40 @@ def LobattoMatFrom3Term(a,b,n):
 
     return J
 
+def RadauMatFrom3Term(a,b,n,x):
+    
+    J =  mpmath.matrix(n)
+    
+    for i in range(n-1):
+        J[i,i] = a[i]
+
+    for i in range(n-1):
+
+        J[i  ,i+1] = mpmath.sqrt(b[i+1])
+        J[i+1,i  ] = J[i  ,i+1]
+
+    m = n-1
+    phim = EvalAllFrom3Term(a,b,m,x)
+    alpha = x - b[m] * phim[m-1] / phim[m]
+
+    J[n-1, n-1] = alpha
+
+    return J
+
 def QuadFrom3Term(a,b,n, method = "Gauss"):
 
     if method == "Gauss":
         J = GaussMatFrom3Term(a,b,n)
-    elif method == "Lobatto":
+    elif method == "Radau_I":
+        x = mpmath.mpf(0)
+        J = RadauMatFrom3Term(a,b,n,x)
+    elif method == "Radau_II":
+        x = mpmath.mpf(1)
+        J = RadauMatFrom3Term(a,b,n,x)
+    elif method == "Lobatto_III":
         J = LobattoMatFrom3Term(a,b,n)
+    else:
+        raise ValueError(f"Unknown method {method}")
     
     z, P = mpmath.mp.eigsy(J)
 
@@ -147,13 +175,13 @@ def BuildButcherCRHS(y,z,n,m):
     return rhs
 
 def ComputeButcher_collocation(z,n):
+
+    mat = BuildButcherCMat(z,n,n)
+    mat_inv = mat ** (-1)
     
     y = mpmath.matrix(n,1)
     for i in range(n):
         y[i] = 0
-    
-    mat = BuildButcherCMat(z,n,n)
-    mat_inv = mat ** (-1)
     
     rhs = BuildButcherCRHS(y,z,n,n)
     Butcher_a = rhs * mat_inv
@@ -175,6 +203,27 @@ def ComputeButcher_collocation(z,n):
     Butcher_gamma = rhs * mat_inv
     
     return Butcher_a, Butcher_beta, Butcher_gamma
+
+def ComputeButcher_sub_collocation(z,n):
+
+    mat = BuildButcherCMat(z,n-1,n-1)
+    mat_inv = mat ** (-1)
+    
+    y = mpmath.matrix(n,1)
+    for i in range(n):
+        y[i] = 0
+    
+    rhs_plus = BuildButcherCRHS(y,z,n,n)
+    rhs = rhs_plus[1:n,0:(n-1)]
+    Butcher_a_sub = rhs * mat_inv
+    
+    Butcher_a = mpmath.matrix(n)
+    for i in range(n-1):
+        for j in range(n-1):
+            Butcher_a[i+1,j] = Butcher_a_sub[i,j]
+            
+    return Butcher_a
+
 
 def SymmetricAdjointQuadrature(w,z,n):
 
@@ -218,56 +267,72 @@ def SymplecticAdjointButcher(Butcher_a, Butcher_b, n):
     return Butcher_a_ad
 
 @functools.cache
-def ComputeGaussButcherTables_np(n, dps=60, method="Gauss"):
+def ComputeGaussButcherTables(n, dps=60, method="Gauss"):
 
     mpmath.mp.dps = dps
 
     a, b = ShiftedGaussLegendre3Term(n)
-    w, z = QuadFrom3Term(a,b,n, method=method)
-    Butcher_a, Butcher_beta , Butcher_gamma = ComputeButcher_collocation(z, n)
-
-    Butcher_a_np = np.array(Butcher_a.tolist(),dtype=np.float64)
-    Butcher_b_np = np.array(w.tolist(),dtype=np.float64).reshape(n)
-    Butcher_c_np = np.array(z.tolist(),dtype=np.float64).reshape(n)
-    Butcher_beta_np = np.array(Butcher_beta.tolist(),dtype=np.float64)
-    Butcher_gamma_np = np.array(Butcher_gamma.tolist(),dtype=np.float64)
-
-    return Butcher_a_np, Butcher_b_np, Butcher_c_np, Butcher_beta_np, Butcher_gamma_np
-
-@functools.cache
-def ComputeGaussButcherTablesPair_np(n, dps=60, method="Gauss"):
-
-    mpmath.mp.dps = dps
-
-    a, b = ShiftedGaussLegendre3Term(n)
-    w, z = QuadFrom3Term(a,b,n, method=method)
+    
+    for quad_method in ["Gauss", "Radau_II", "Radau_I", "Lobatto_III"]:
+        if quad_method in method:
+            w, z = QuadFrom3Term(a,b,n, method=quad_method)
+            break
+    else:
+        return ValueError(f"Unknown associated quadrature method {method}")
+    
     Butcher_a, Butcher_beta , Butcher_gamma = ComputeButcher_collocation(z, n)
     
-    Butcher_a_ad = SymplecticAdjointButcher(Butcher_a, w, n)
-
-    Butcher_a_np = np.array(Butcher_a.tolist(),dtype=np.float64)
-    Butcher_b_np = np.array(w.tolist(),dtype=np.float64).reshape(n)
-    Butcher_c_np = np.array(z.tolist(),dtype=np.float64).reshape(n)
-    Butcher_beta_np = np.array(Butcher_beta.tolist(),dtype=np.float64)
-    Butcher_gamma_np = np.array(Butcher_gamma.tolist(),dtype=np.float64)
-    Butcher_a_ad_np = np.array(Butcher_a_ad.tolist(),dtype=np.float64)
-
-    return Butcher_a_np, Butcher_b_np, Butcher_c_np, Butcher_beta_np, Butcher_gamma_np, Butcher_a_ad_np
-
-def ComputeImplicitSymplecticRKTable_Gauss(n, dps=60, method="Gauss"):
+    if method in ["Lobatto_IIIC", "Lobatto_IIIC*"]:
+        Butcher_a = ComputeButcher_sub_collocation(z,n)
     
-    if method == "Gauss":
+    known_method = False
+    if method in ["Gauss", "Lobatto_IIIA", "Radau_IIA", "Lobatto_IIIC*"]:
+        # No transformation is required
+        known_method = True
+        
+    if method in ["Lobatto_IIIB", "Radau_IA", "Lobatto_IIIC"]:
+        known_method = True
+        # Symplectic adjoint
+        Butcher_a = SymplecticAdjointButcher(Butcher_a, w, n)  
+                  
+    if method in ["Radau_IB", "Radau_IIB", "Lobatto_IIIS", "Lobatto_IIID" ]:
+        known_method = True
+        # Symplectic adjoint average
+        Butcher_a_ad = SymplecticAdjointButcher(Butcher_a, w, n)    
+        Butcher_a = (Butcher_a_ad + Butcher_a) / 2
+        
+    return Butcher_a, w, z, Butcher_beta, Butcher_gamma
+
+def GetConvergenceRate(method, n):
+    
+    if "Gauss" in method:
         if n < 1:
             raise ValueError(f"Incorrect value for n {n}")
         th_cvg_rate = 2*n
-    elif method == "Lobatto":
+    elif "Radau" in method:
+        if n < 2:
+            raise ValueError(f"Incorrect value for n {n}")
+        th_cvg_rate = 2*n-1
+    elif "Lobatto" in method:
         if n < 2:
             raise ValueError(f"Incorrect value for n {n}")
         th_cvg_rate = 2*n-2
     else:
         raise ValueError(f"Unknown method {method}")
     
-    Butcher_a_np, Butcher_b_np, Butcher_c_np, Butcher_beta_np, Butcher_gamma_np = ComputeGaussButcherTables_np(n, dps=dps, method=method)
+    return th_cvg_rate
+
+def ComputeImplicitSymplecticRKTable_Gauss(n, dps=60, method="Gauss"):
+
+    th_cvg_rate = GetConvergenceRate(method, n)
+    
+    Butcher_a, Butcher_b, Butcher_c, Butcher_beta, Butcher_gamma = ComputeGaussButcherTables(n, dps=dps, method=method)
+
+    Butcher_a_np = np.array(Butcher_a.tolist(),dtype=np.float64)
+    Butcher_b_np = np.array(Butcher_b.tolist(),dtype=np.float64).reshape(n)
+    Butcher_c_np = np.array(Butcher_c.tolist(),dtype=np.float64).reshape(n)
+    Butcher_beta_np = np.array(Butcher_beta.tolist(),dtype=np.float64)
+    Butcher_gamma_np = np.array(Butcher_gamma.tolist(),dtype=np.float64)
     
     return ImplicitSymplecticRKTable(
         a_table     = Butcher_a_np      ,
@@ -280,18 +345,17 @@ def ComputeImplicitSymplecticRKTable_Gauss(n, dps=60, method="Gauss"):
         
 def ComputeImplicitSymplecticRKTablePair_Gauss(n, dps=60, method="Gauss"):
     
-    if method == "Gauss":
-        if n < 1:
-            raise ValueError(f"Incorrect value for n {n}")
-        th_cvg_rate = 2*n
-    elif method == "Lobatto":
-        if n < 2:
-            raise ValueError(f"Incorrect value for n {n}")
-        th_cvg_rate = 2*n-2
-    else:
-        raise ValueError(f"Unknown method {method}")
+    th_cvg_rate = GetConvergenceRate(method, n)
     
-    Butcher_a_np, Butcher_b_np, Butcher_c_np, Butcher_beta_np, Butcher_gamma_np, Butcher_a_ad_np = ComputeGaussButcherTablesPair_np(n, dps=dps, method=method)
+    Butcher_a, Butcher_b, Butcher_c, Butcher_beta, Butcher_gamma = ComputeGaussButcherTables(n, dps=dps, method=method)
+    Butcher_a_ad = SymplecticAdjointButcher(Butcher_a, Butcher_b, n)  
+    
+    Butcher_a_np = np.array(Butcher_a.tolist(),dtype=np.float64)
+    Butcher_b_np = np.array(Butcher_b.tolist(),dtype=np.float64).reshape(n)
+    Butcher_c_np = np.array(Butcher_c.tolist(),dtype=np.float64).reshape(n)
+    Butcher_beta_np = np.array(Butcher_beta.tolist(),dtype=np.float64)
+    Butcher_gamma_np = np.array(Butcher_gamma.tolist(),dtype=np.float64)
+    Butcher_a_ad_np = np.array(Butcher_a_ad.tolist(),dtype=np.float64)
     
     rk = ImplicitSymplecticRKTable(
         a_table     = Butcher_a_np      ,
@@ -312,9 +376,6 @@ def ComputeImplicitSymplecticRKTablePair_Gauss(n, dps=60, method="Gauss"):
     )
     
     return rk, rk_ad
-        
-        
-        
         
 def Yoshida_w_to_cd(w_in, th_cvg_rate):
     '''
