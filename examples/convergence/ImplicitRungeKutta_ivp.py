@@ -71,12 +71,12 @@ method_names = [
 ]
 
 # all_orders = range(2,6)
-all_orders = [5]
+all_orders = [4]
 
     
 # sphinx_gallery_start_ignore
 
-all_nint = np.array([2**i for i in range(12)])
+all_nint = np.array([2**i for i in range(8)])
 
 all_benchs = {}
 for eq_name in eq_names:

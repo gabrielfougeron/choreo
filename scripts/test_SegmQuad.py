@@ -23,7 +23,7 @@ ndim = 1
 x_span = (0., 1.)
 method = 'Gauss'
 nsteps = 10
-quad = choreo.scipy_plus.SegmQuad.ComputeQuadrature(method, nsteps)
+quad = choreo.scipy_plus.multiprec_tables.ComputeQuadrature(nsteps, method=method)
 
 single_py_fun = functools.partial(
     choreo.scipy_plus.SegmQuad.IntegrateOnSegment,

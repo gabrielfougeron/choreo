@@ -36,8 +36,8 @@ print(f'Precision on load : {mpmath.mp.dps}')
 print_dps = 15
 
 # nsteps_list = list(range(1,20))
-nsteps_list = [2,3,4,5]
-# nsteps_list = [3]
+# nsteps_list = [2,3,4,5]
+nsteps_list = [3]
 # dps_list = [15]
 # dps_list = [15,30,60,120,240]
 # dps_list = [60]
@@ -49,9 +49,9 @@ method_list = [
     # "Radau_IIA" ,
     # "Radau_IB" ,
     # "Radau_IIB" ,
-    # "Lobatto_IIIA" ,
-    # "Lobatto_IIIB" ,
-    "Lobatto_IIIC" ,
+    "Lobatto_IIIA" ,
+    "Lobatto_IIIB" ,
+    # "Lobatto_IIIC" ,
     # "Lobatto_IIIC*" ,
 ]
 

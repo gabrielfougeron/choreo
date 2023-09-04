@@ -51,7 +51,7 @@ ndim = 1
 x_span = (0., 1.)
 method = 'Gauss'
 nsteps = 10
-quad = choreo.scipy_plus.SegmQuad.ComputeQuadrature(method, nsteps)
+quad = choreo.scipy_plus.SegmQuad.ComputeQuadrature(nsteps, method=method)
 
 def test_from_scalar_fun(fun):
     

@@ -2,7 +2,7 @@ import math as m
 import numpy as np
 import scipy
 from choreo.scipy_plus.ODE import SymplecticIVP, ImplicitSymplecticIVP
-from choreo.scipy_plus.SegmQuad import ComputeQuadrature
+from choreo.scipy_plus.multiprec_tables import ComputeQuadrature
 from choreo.scipy_plus.SegmQuad import IntegrateOnSegment
 
 
@@ -27,7 +27,7 @@ def Quad_cpte_error_on_test(
         exact = Fun(x_span[1]) - Fun(x_span[0])
 
 
-    quad = ComputeQuadrature(quad_method, quad_nsteps)
+    quad = ComputeQuadrature(quad_nsteps, method = quad_method)
 
     approx = IntegrateOnSegment(
         fun = fun       ,
