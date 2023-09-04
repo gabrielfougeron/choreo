@@ -52,10 +52,14 @@ fun_names = [
 ]
 
 methods = [
-    'Gauss'
+    'Gauss',
+    'Radau_I',
+    'Radau_II',
+    'Lobatto_III',
 ]
 
-all_nsteps = range(1,11)
+# all_nsteps = range(2,11)
+all_nsteps = [5]
 refinement_lvl = np.array(range(1,100))
 # refinement_lvl = np.array([2**i for i in range(18)])
 
@@ -188,7 +192,7 @@ for bench_name, all_funs in all_benchs.items():
         quad_method = fun.args[1]
         quad_nsteps = fun.args[2]
 
-        quad = choreo.scipy_plus.SegmQuad.ComputeQuadrature(quad_method, quad_nsteps)
+        quad = choreo.scipy_plus.multiprec_tables.ComputeQuadrature(quad_nsteps, method=quad_method)
         th_order = quad.th_cvg_rate
         xlim = axs[i_bench,0].get_xlim()
 

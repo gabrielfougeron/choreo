@@ -322,6 +322,25 @@ def GetConvergenceRate(method, n):
     
     return th_cvg_rate
 
+@functools.cache
+def ComputeQuadrature(n, dps=30, method="Gauss"):
+
+    th_cvg_rate = GetConvergenceRate(method, n)
+    
+    mpmath.mp.dps = dps
+    a, b = ShiftedGaussLegendre3Term(n)
+    w, z = QuadFrom3Term(a,b,n,method=method)
+
+    w_np = np.array(w.tolist(),dtype=np.float64).reshape(n)
+    z_np = np.array(z.tolist(),dtype=np.float64).reshape(n)
+    
+    return QuadFormula(
+        w = w_np                    ,
+        x = z_np                    ,
+        th_cvg_rate = th_cvg_rate   ,
+    )
+
+
 def ComputeImplicitSymplecticRKTable_Gauss(n, dps=60, method="Gauss"):
 
     th_cvg_rate = GetConvergenceRate(method, n)

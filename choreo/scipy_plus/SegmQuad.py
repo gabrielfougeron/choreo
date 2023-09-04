@@ -12,35 +12,11 @@ import scipy
 from choreo.scipy_plus.cython.SegmQuad import IntegrateOnSegment
 from choreo.scipy_plus.cython.SegmQuad import QuadFormula
 
-from choreo.scipy_plus.multiprec_tables import ShiftedGaussLegendre3Term
-from choreo.scipy_plus.multiprec_tables import QuadFrom3Term
-
 try:
     import numba 
     UseNumba = True
 except ImportError:
     UseNumba = False
-
-@functools.cache
-def ComputeQuadrature(method,n,dps=30):
-
-    if method == "Gauss" :
-        a, b = ShiftedGaussLegendre3Term(n)
-        th_cvg_rate = 2*n
-        
-    else:
-        raise ValueError(f"Method not found: {method}")
-    
-    w, z = QuadFrom3Term(a,b,n)
-
-    w_np = np.array(w.tolist(),dtype=np.float64).reshape(n)
-    z_np = np.array(z.tolist(),dtype=np.float64).reshape(n)
-    
-    return QuadFormula(
-        w = w_np                    ,
-        x = z_np                    ,
-        th_cvg_rate = th_cvg_rate   ,
-    )
 
 if UseNumba:
     # Define decorators to make scipy.LowLevelCallable from python functions using numba
