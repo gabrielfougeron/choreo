@@ -1,7 +1,7 @@
 import math as m
 import numpy as np
 import scipy
-from choreo.scipy_plus.ODE import SymplecticIVP
+from choreo.scipy_plus.ODE import SymplecticIVP, ImplicitSymplecticIVP
 from choreo.scipy_plus.SegmQuad import ComputeQuadrature
 from choreo.scipy_plus.SegmQuad import IntegrateOnSegment
 
@@ -41,14 +41,8 @@ def Quad_cpte_error_on_test(
 
     return error
  
-
-def ODE_cpte_error_on_test(
-    eq_name     ,
-    rk_method   ,
-    nint        ,
-    **kwargs    ,
-):
-
+def ODE_define_test(eq_name):
+     
     if eq_name == "y'' = -y" :
         # WOLFRAM
         # y'' = - y
@@ -115,6 +109,18 @@ def ODE_cpte_error_on_test(
         fun = lambda t,z: A.dot(z)
         gun = lambda t,y: B.dot(y)
 
+    return fun, gun, ex_sol, test_ndim
+ 
+
+def ODE_cpte_error_on_test(
+    eq_name     ,
+    rk_method   ,
+    nint        ,
+    **kwargs    ,
+):
+
+    fun, gun, ex_sol, test_ndim = ODE_define_test(eq_name)
+
     t_span = (0.,np.pi)
 
     ex_init  = ex_sol(t_span[0])
@@ -134,6 +140,41 @@ def ODE_cpte_error_on_test(
         **kwargs        ,
     )
         
+    sol = np.ascontiguousarray(np.concatenate((xf,vf),axis=0).reshape(2*test_ndim))
+    error = np.linalg.norm(sol-ex_final)/np.linalg.norm(ex_final)
+
+    return error
+
+def ISPRK_ODE_cpte_error_on_test(
+    eq_name     ,
+    rk_x        ,
+    rk_v        ,
+    nint        ,
+    **kwargs    ,
+):
+
+    fun, gun, ex_sol, test_ndim = ODE_define_test(eq_name)
+
+    t_span = (0.,np.pi)
+
+    ex_init  = ex_sol(t_span[0])
+    ex_final = ex_sol(t_span[1])
+
+    x0 = ex_init[0          :  test_ndim].copy()
+    v0 = ex_init[test_ndim  :2*test_ndim].copy()
+
+    xf,vf = ImplicitSymplecticIVP(
+        fun             ,
+        gun             ,
+        t_span          ,
+        x0              ,
+        v0              ,
+        rk_x = rk_x     ,
+        rk_v = rk_v     ,
+        nint = nint     ,
+        **kwargs        ,
+    )
+                
     sol = np.ascontiguousarray(np.concatenate((xf,vf),axis=0).reshape(2*test_ndim))
     error = np.linalg.norm(sol-ex_final)/np.linalg.norm(ex_final)
 

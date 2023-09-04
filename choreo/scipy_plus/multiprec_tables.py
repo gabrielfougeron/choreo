@@ -45,7 +45,21 @@ def ShiftedGaussLegendre3Term(n):
 
     return a, b
 
-def MatFrom3Term(a,b,n):
+def EvalAllFrom3Term(a,b,n,x):
+    # n >= 1
+
+    phi = mpmath.matrix(n+1,1)
+
+    phi[0] = mpmath.mpf(1)
+    phi[1] = x - a[0]
+
+    for i in range(1,n):
+
+        phi[i+1] = (x - a[i]) * phi[i] - b[i] * phi[i-1]
+
+    return phi
+
+def GaussMatFrom3Term(a,b,n):
     
     J =  mpmath.matrix(n)
     
@@ -59,9 +73,51 @@ def MatFrom3Term(a,b,n):
 
     return J
 
-def QuadFrom3Term(a,b,n):
+def LobattoMatFrom3Term(a,b,n):
+    
+    J =  mpmath.matrix(n)
+    
+    for i in range(n-1):
+        J[i,i] = a[i]
 
-    J = MatFrom3Term(a,b,n)
+    for i in range(n-2):
+
+        J[i  ,i+1] = mpmath.sqrt(b[i+1])
+        J[i+1,i  ] = J[i  ,i+1]
+
+    m = n-1
+
+    xm = mpmath.mpf(0)
+    phim = EvalAllFrom3Term(a,b,m,xm)
+    xp = mpmath.mpf(1)
+    phip = EvalAllFrom3Term(a,b,m,xp)
+
+    mat = mpmath.matrix(2)
+    
+    mat[0,0] = phim[m]
+    mat[1,0] = phip[m]
+    mat[0,1] = phim[m-1]
+    mat[1,1] = phip[m-1]
+    
+    rhs = mpmath.matrix(2,1)
+    rhs[0] = xm * phim[m]
+    rhs[1] = xp * phip[m]
+
+    (alpha, beta) = (mat ** -1) * rhs
+
+    J[n-1, n-1] = alpha
+    J[n-2, n-1] = mpmath.sqrt(beta)
+    J[n-1, n-2] = J[n-2, n-1]
+
+    return J
+
+def QuadFrom3Term(a,b,n, method = "Gauss"):
+
+    if method == "Gauss":
+        J = GaussMatFrom3Term(a,b,n)
+    elif method == "Lobatto":
+        J = LobattoMatFrom3Term(a,b,n)
+    
     z, P = mpmath.mp.eigsy(J)
 
     w = mpmath.matrix(n,1)
@@ -150,13 +206,24 @@ def SymmetricAdjointButcher(Butcher_a, Butcher_b, Butcher_c, Butcher_beta, Butch
 
     return Butcher_a_ad, Butcher_b_ad, Butcher_c_ad, Butcher_beta_ad, Butcher_gamma_ad
 
+def SymplecticAdjointButcher(Butcher_a, Butcher_b, n):
+
+    Butcher_a_ad = mpmath.matrix(n)
+
+    for i in range(n):
+        for j in range(n):
+            
+            Butcher_a_ad[i,j] = Butcher_b[j] * (1 - Butcher_a[j,i] / Butcher_b[i])
+            
+    return Butcher_a_ad
+
 @functools.cache
-def ComputeGaussButcherTables_np(n, dps=60):
+def ComputeGaussButcherTables_np(n, dps=60, method="Gauss"):
 
     mpmath.mp.dps = dps
 
     a, b = ShiftedGaussLegendre3Term(n)
-    w, z = QuadFrom3Term(a,b,n)
+    w, z = QuadFrom3Term(a,b,n, method=method)
     Butcher_a, Butcher_beta , Butcher_gamma = ComputeButcher_collocation(z, n)
 
     Butcher_a_np = np.array(Butcher_a.tolist(),dtype=np.float64)
@@ -167,9 +234,40 @@ def ComputeGaussButcherTables_np(n, dps=60):
 
     return Butcher_a_np, Butcher_b_np, Butcher_c_np, Butcher_beta_np, Butcher_gamma_np
 
-def ComputeImplicitSymplecticRKTable_Gauss(n, dps=60):
+@functools.cache
+def ComputeGaussButcherTablesPair_np(n, dps=60, method="Gauss"):
+
+    mpmath.mp.dps = dps
+
+    a, b = ShiftedGaussLegendre3Term(n)
+    w, z = QuadFrom3Term(a,b,n, method=method)
+    Butcher_a, Butcher_beta , Butcher_gamma = ComputeButcher_collocation(z, n)
     
-    Butcher_a_np, Butcher_b_np, Butcher_c_np, Butcher_beta_np, Butcher_gamma_np = ComputeGaussButcherTables_np(n,dps=dps)
+    Butcher_a_ad = SymplecticAdjointButcher(Butcher_a, w, n)
+
+    Butcher_a_np = np.array(Butcher_a.tolist(),dtype=np.float64)
+    Butcher_b_np = np.array(w.tolist(),dtype=np.float64).reshape(n)
+    Butcher_c_np = np.array(z.tolist(),dtype=np.float64).reshape(n)
+    Butcher_beta_np = np.array(Butcher_beta.tolist(),dtype=np.float64)
+    Butcher_gamma_np = np.array(Butcher_gamma.tolist(),dtype=np.float64)
+    Butcher_a_ad_np = np.array(Butcher_a_ad.tolist(),dtype=np.float64)
+
+    return Butcher_a_np, Butcher_b_np, Butcher_c_np, Butcher_beta_np, Butcher_gamma_np, Butcher_a_ad_np
+
+def ComputeImplicitSymplecticRKTable_Gauss(n, dps=60, method="Gauss"):
+    
+    if method == "Gauss":
+        if n < 1:
+            raise ValueError(f"Incorrect value for n {n}")
+        th_cvg_rate = 2*n
+    elif method == "Lobatto":
+        if n < 2:
+            raise ValueError(f"Incorrect value for n {n}")
+        th_cvg_rate = 2*n-2
+    else:
+        raise ValueError(f"Unknown method {method}")
+    
+    Butcher_a_np, Butcher_b_np, Butcher_c_np, Butcher_beta_np, Butcher_gamma_np = ComputeGaussButcherTables_np(n, dps=dps, method=method)
     
     return ImplicitSymplecticRKTable(
         a_table     = Butcher_a_np      ,
@@ -177,8 +275,46 @@ def ComputeImplicitSymplecticRKTable_Gauss(n, dps=60):
         c_table     = Butcher_c_np      ,
         beta_table  = Butcher_beta_np   ,
         gamma_table = Butcher_gamma_np  ,
-        th_cvg_rate = 2*n               ,
+        th_cvg_rate = th_cvg_rate       ,
     )
+        
+def ComputeImplicitSymplecticRKTablePair_Gauss(n, dps=60, method="Gauss"):
+    
+    if method == "Gauss":
+        if n < 1:
+            raise ValueError(f"Incorrect value for n {n}")
+        th_cvg_rate = 2*n
+    elif method == "Lobatto":
+        if n < 2:
+            raise ValueError(f"Incorrect value for n {n}")
+        th_cvg_rate = 2*n-2
+    else:
+        raise ValueError(f"Unknown method {method}")
+    
+    Butcher_a_np, Butcher_b_np, Butcher_c_np, Butcher_beta_np, Butcher_gamma_np, Butcher_a_ad_np = ComputeGaussButcherTablesPair_np(n, dps=dps, method=method)
+    
+    rk = ImplicitSymplecticRKTable(
+        a_table     = Butcher_a_np      ,
+        b_table     = Butcher_b_np      ,
+        c_table     = Butcher_c_np      ,
+        beta_table  = Butcher_beta_np   ,
+        gamma_table = Butcher_gamma_np  ,
+        th_cvg_rate = th_cvg_rate       ,
+    )
+    
+    rk_ad = ImplicitSymplecticRKTable(
+        a_table     = Butcher_a_ad_np   ,
+        b_table     = Butcher_b_np      ,
+        c_table     = Butcher_c_np      ,
+        beta_table  = Butcher_beta_np   ,
+        gamma_table = Butcher_gamma_np  ,
+        th_cvg_rate = th_cvg_rate       ,
+    )
+    
+    return rk, rk_ad
+        
+        
+        
         
 def Yoshida_w_to_cd(w_in, th_cvg_rate):
     '''
@@ -222,9 +358,11 @@ def Yoshida_w_to_cd(w_in, th_cvg_rate):
     
 def Yoshida_w_to_cd_reduced(w, th_cvg_rate):
     '''
+    Variation on Yosida's method
+    
     input : vector w as in Construction of higher order symplectic integrators in PHYSICS LETTERS A by Haruo Yoshida 1990.
     
-    w[1:m+1] (m elements) is provided. w0 is implicit.
+    w[1:m+1] (m elements) is provided.
 
     '''
     
