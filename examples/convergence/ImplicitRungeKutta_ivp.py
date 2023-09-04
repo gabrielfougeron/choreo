@@ -44,16 +44,8 @@ if not(os.path.isdir(bench_folder)):
     
 basename_bench_filename = 'ImplicitRK_ivp_cvg_bench_'
 
-ForceBenchmark = True
-# ForceBenchmark = False
-
-def get_table(rk_name, order):
-    
-    if rk_name == "Gauss":
-        
-        return choreo.scipy_plus.multiprec_tables.ComputeImplicitSymplecticRKTable_Gauss(order)
-    
-    raise ValueError(f"Unknown {rk_name = }")
+# ForceBenchmark = True
+ForceBenchmark = False
 
 # sphinx_gallery_end_ignore
 
@@ -66,24 +58,33 @@ eq_names = [
 
 method_names = [
     'Gauss'   ,            
+    'Lobatto'   ,            
 ]
 
-all_orders = range(1,11)
+all_orders = range(2,6)
 
     
 # sphinx_gallery_start_ignore
 
 all_nint = np.array([2**i for i in range(12)])
 
-all_benchs = {
-    eq_name : {
-        f'{rk_name} {order}' : functools.partial(
-            choreo.scipy_plus.test.ODE_cpte_error_on_test ,
-            eq_name    ,
-            get_table(rk_name,order)
-        ) for rk_name, order in itertools.product(method_names, all_orders)
-    } for eq_name in eq_names
-}
+all_benchs = {}
+for eq_name in eq_names:
+    bench = {}
+    for rk_name, order in itertools.product(method_names, all_orders):
+        
+        rk, rk_ad = choreo.scipy_plus.multiprec_tables.ComputeImplicitSymplecticRKTablePair_Gauss(order,method=rk_name)
+        
+        bench[f'{rk_name} {order}'] = functools.partial(
+            choreo.scipy_plus.test.ISPRK_ODE_cpte_error_on_test ,
+            eq_name ,
+            rk      ,     
+            rk_ad   ,     
+        )
+    
+    all_benchs[eq_name] = bench
+
+
 
 
 
