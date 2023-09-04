@@ -58,10 +58,20 @@ eq_names = [
 
 method_names = [
     'Gauss'   ,            
-    'Lobatto'   ,            
+    'Radau_IA'   ,            
+    'Radau_IIA'   ,            
+    'Radau_IB'   ,            
+    'Radau_IIB'   ,                   
+    'Lobatto_IIIA'   ,            
+    'Lobatto_IIIB'   ,            
+    'Lobatto_IIIC'   ,            
+    'Lobatto_IIIC*'  ,            
+    'Lobatto_IIID'  ,            
+    'Lobatto_IIIS'  ,            
 ]
 
-all_orders = range(2,6)
+# all_orders = range(2,6)
+all_orders = [5]
 
     
 # sphinx_gallery_start_ignore
