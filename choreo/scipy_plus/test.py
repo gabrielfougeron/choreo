@@ -54,6 +54,16 @@ def ODE_define_test(eq_name):
 
         fun = lambda t,y:   np.asarray(y)
         gun = lambda t,x:  -np.asarray(x)
+        
+        def fgun(t, xy):
+            
+            fxy = np.empty(2*test_ndim)
+            fxy[0] =  xy[2]
+            fxy[1] =  xy[3]
+            fxy[2] = -xy[0]
+            fxy[3] = -xy[1]
+            
+            return fxy
 
     if eq_name == "y'' = - exp(y)" :
         # WOLFRAM
@@ -68,6 +78,14 @@ def ODE_define_test(eq_name):
 
         fun = lambda t,y:  np.array(y)
         gun = lambda t,x: -np.exp(x)
+        
+        def fgun(t, xy):
+            
+            fxy = np.empty(2*test_ndim)
+            fxy[0] = xy[1]
+            fxy[1] = -np.exp(xy[0])
+
+            return fxy
 
     if eq_name == "y'' = xy" :
 
@@ -84,6 +102,17 @@ def ODE_define_test(eq_name):
 
         fun = lambda t,y: np.array(y)
         gun = lambda t,x: np.array([t*x[0],t*x[1]],dtype=np.float64)
+        
+        def fgun(t, xy):
+            
+            fxy = np.empty(2*test_ndim)
+            fxy[0] =  xy[2]
+            fxy[1] =  xy[3]
+            fxy[2] = t*xy[0]
+            fxy[3] = t*xy[1]
+            
+            return fxy
+        
         
     if eq_name == "y' = Az; z' = By" :
 
@@ -108,8 +137,16 @@ def ODE_define_test(eq_name):
 
         fun = lambda t,z: A.dot(z)
         gun = lambda t,y: B.dot(y)
+        
+        def fgun(t, xy):
+            
+            fxy = np.empty(2*test_ndim)
+            fxy[:test_ndim] =  A.dot(xy[test_ndim:])
+            fxy[test_ndim:] =  B.dot(xy[:test_ndim])
 
-    return fun, gun, ex_sol, test_ndim
+            return fxy
+
+    return fun, gun, fgun, ex_sol, test_ndim
  
 
 def ODE_cpte_error_on_test(
@@ -119,7 +156,7 @@ def ODE_cpte_error_on_test(
     **kwargs    ,
 ):
 
-    fun, gun, ex_sol, test_ndim = ODE_define_test(eq_name)
+    fun, gun, fgun, ex_sol, test_ndim = ODE_define_test(eq_name)
 
     t_span = (0.,np.pi)
 
@@ -153,7 +190,7 @@ def ISPRK_ODE_cpte_error_on_test(
     **kwargs    ,
 ):
 
-    fun, gun, ex_sol, test_ndim = ODE_define_test(eq_name)
+    fun, gun, fgun, ex_sol, test_ndim = ODE_define_test(eq_name)
 
     t_span = (0.,np.pi)
 
@@ -177,5 +214,37 @@ def ISPRK_ODE_cpte_error_on_test(
                 
     sol = np.ascontiguousarray(np.concatenate((xf,vf),axis=0).reshape(2*test_ndim))
     error = np.linalg.norm(sol-ex_final)/np.linalg.norm(ex_final)
+
+    return error
+
+def scipy_ODE_cpte_error_on_test(
+    eq_name     ,
+    method      ,
+    nint        ,
+    **kwargs    ,
+):
+
+    fun, gun, fgun, ex_sol, test_ndim = ODE_define_test(eq_name)
+
+    t_span = (0.,np.pi)
+    
+    max_step = (t_span[1] - t_span[0]) / nint
+
+    ex_init  = ex_sol(t_span[0])
+    ex_final = ex_sol(t_span[1])
+
+    bunch = scipy.integrate.solve_ivp(
+        fun = fgun                      ,
+        t_span = t_span                 ,
+        y0 = ex_init                    ,
+        method = method                 ,
+        t_eval = np.array([t_span[1]])  ,
+        first_step = max_step           ,
+        max_step = max_step             ,
+        atol = 1.             ,
+        rtol = 1.             ,
+    )
+
+    error = np.linalg.norm(bunch.y[:,0]-ex_final)/np.linalg.norm(ex_final)
 
     return error

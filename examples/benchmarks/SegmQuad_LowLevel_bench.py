@@ -35,7 +35,6 @@ import math as m
 
 import choreo 
 import scipy
-import numba
 
 timings_folder = os.path.join(__PROJECT_ROOT__,'examples','generated_files')
 
@@ -51,7 +50,7 @@ ndim = 1
 x_span = (0., 1.)
 method = 'Gauss'
 nsteps = 10
-quad = choreo.scipy_plus.SegmQuad.ComputeQuadrature(nsteps, method=method)
+quad = choreo.scipy_plus.multiprec_tables.ComputeQuadrature(nsteps, method=method)
 
 def test_from_scalar_fun(fun):
     
