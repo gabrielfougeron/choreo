@@ -1,6 +1,6 @@
 """
-Convergence analysis of Runge-Kutta methods for ODE IVP
-=======================================================
+Convergence analysis of implicit Runge-Kutta methods for ODE IVP
+================================================================
 """
 
 # %%
@@ -28,7 +28,6 @@ sys.path.append(__PROJECT_ROOT__)
 os.environ['OPENBLAS_NUM_THREADS'] = '1'
 os.environ['NUMEXPR_NUM_THREADS'] = '1'
 os.environ['MKL_NUM_THREADS'] = '1'
-os.environ['OMP_NUM_THREADS'] = '1'
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -43,18 +42,10 @@ bench_folder = os.path.join(__PROJECT_ROOT__,'examples','generated_files')
 if not(os.path.isdir(bench_folder)):
     os.makedirs(bench_folder)
     
-basename_bench_filename = 'SelectedRK_ivp_cvg_bench_'
+basename_bench_filename = 'ImplicitRK_ivp_cvg_bench_'
 
 # ForceBenchmark = True
 ForceBenchmark = False
-
-def get_implicit_table_pair(rk_name, order):
-    
-    if rk_name == "Gauss":
-        
-        return choreo.scipy_plus.multiprec_tables.ComputeImplicitSymplecticRKTablePair_Gauss(order)
-    
-    raise ValueError(f"Unknown {rk_name = }")
 
 # sphinx_gallery_end_ignore
 
@@ -65,20 +56,7 @@ eq_names = [
     "y' = Az; z' = By"  ,
 ]
 
-implicit_methods = {
-    f'{rk_name} {order}' : get_implicit_table_pair(rk_name, order) for rk_name, order in itertools.product(["Gauss"], [2,4,6,8])
-}
-
-explicit_methods = {
-    rk_name : getattr(globals()['precomputed_tables'], rk_name) for rk_name in [
-            'McAte4'    ,
-            'McAte5'    ,
-            'KahanLi8'  ,
-            'SofSpa10'  ,
-    ]
-}
-
-scipy_methods = [
+method_names = [
     "RK45" ,  
     "RK23" ,  
     "DOP853" ,  
@@ -88,6 +66,7 @@ scipy_methods = [
 ]
 
 
+    
 # sphinx_gallery_start_ignore
 
 all_nint = np.array([2**i for i in range(12)])
@@ -95,25 +74,8 @@ all_nint = np.array([2**i for i in range(12)])
 all_benchs = {}
 for eq_name in eq_names:
     bench = {}
-    
-    for method, (rk, rk_ad) in implicit_methods.items():
+    for method in method_names:
         
-        bench[f'{method}'] = functools.partial(
-            choreo.scipy_plus.test.ISPRK_ODE_cpte_error_on_test ,
-            eq_name     ,
-            rk          ,
-            rk_ad       ,
-        )  
-            
-    for method, rk in explicit_methods.items():
-        
-        bench[f'{method}'] = functools.partial(
-            choreo.scipy_plus.test.ODE_cpte_error_on_test ,
-            eq_name    ,
-            rk
-        )  
-        
-    for method in scipy_methods:
         
         bench[f'{method}'] = functools.partial(
             choreo.scipy_plus.test.scipy_ODE_cpte_error_on_test ,
@@ -122,17 +84,6 @@ for eq_name in eq_names:
         )
     
     all_benchs[eq_name] = bench
-
-
-    
-# sphinx_gallery_start_ignore
-
-all_nint = np.array([2**i for i in range(12)])
-
-
-    
-    
-
 
 
 
@@ -202,6 +153,7 @@ plt.tight_layout()
 # sphinx_gallery_end_ignore
 
 plt.show()
+
 
 # %%
 # Error as a function of running time

@@ -37,7 +37,7 @@ print_dps = 15
 
 # nsteps_list = list(range(1,20))
 # nsteps_list = [2,3,4,5]
-nsteps_list = [3]
+nsteps_list = [2,3]
 # dps_list = [15]
 # dps_list = [15,30,60,120,240]
 # dps_list = [60]
@@ -45,12 +45,12 @@ nsteps_list = [3]
 
 method_list = [
     # "Gauss" ,
-    # "Radau_IA" ,
-    # "Radau_IIA" ,
+    "Radau_IA" ,
+    "Radau_IIA" ,
     # "Radau_IB" ,
     # "Radau_IIB" ,
-    "Lobatto_IIIA" ,
-    "Lobatto_IIIB" ,
+    # "Lobatto_IIIA" ,
+    # "Lobatto_IIIB" ,
     # "Lobatto_IIIC" ,
     # "Lobatto_IIIC*" ,
 ]
