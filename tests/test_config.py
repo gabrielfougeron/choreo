@@ -128,7 +128,7 @@ def ClassicalImplicitRKMethods():
     )    
     
 @pytest.fixture
-def ClassicalImplicitRKMethodPairs():
+def SymplecticImplicitRKMethodPairs():
     return ImplicitRKMethodPairs(
         all_method_pairs = [
             ("Gauss"        , "Gauss"           ),
@@ -138,6 +138,26 @@ def ClassicalImplicitRKMethodPairs():
             ("Lobatto_IIIS" , "Lobatto_IIIS"    ),
             ("Lobatto_IIIA" , "Lobatto_IIIB"    ),
             ("Lobatto_IIIC" , "Lobatto_IIIC*"   ),
+        ]   
+    )    
+    
+@pytest.fixture
+def SymmetricImplicitRKMethodPairs():
+    return ImplicitRKMethodPairs(
+        all_method_pairs = [
+            ("Gauss"        , "Gauss"           ),
+            ("Lobatto_IIIA" , "Lobatto_IIIA"    ),
+            ("Radau_IB"     , "Radau_IIB"       ),
+            ("Lobatto_IIIS" , "Lobatto_IIIS"    ),
+            ("Lobatto_IIID" , "Lobatto_IIID"    ),
+        ]   
+    )
+    
+@pytest.fixture
+def SymmetricSymplecticImplicitRKMethodPairs():
+    return ImplicitRKMethodPairs(
+        all_method_pairs = [
+            ("Radau_IA"     , "Radau_IIA"       ),
         ]   
     )
 

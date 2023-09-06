@@ -35,26 +35,26 @@ print(f'Precision on load : {mpmath.mp.dps}')
 
 print_dps = 15
 
-nsteps_list = list(range(2,10))
+# nsteps_list = list(range(2,10))
 # nsteps_list = [2,3,4,5]
-# nsteps_list = [2,3]
+nsteps_list = [2]
 # dps_list = [15]
 # dps_list = [15,30,60,120,240]
 # dps_list = [60]
 # overkill_dps = 1000
 
 method_list = [
-    "Gauss" ,
+    # "Gauss" ,
     "Radau_IA" ,
     "Radau_IIA" ,
     "Radau_IB" ,
     "Radau_IIB" ,
-    "Lobatto_IIIA" ,
-    "Lobatto_IIIB" ,
-    "Lobatto_IIIC" ,
-    "Lobatto_IIIC*" ,
-    'Lobatto_IIID'  ,            
-    'Lobatto_IIIS'  ,  
+    # "Lobatto_IIIA" ,
+    # "Lobatto_IIIB" ,
+    # "Lobatto_IIIC" ,
+    # "Lobatto_IIIC*" ,
+    # 'Lobatto_IIID'  ,            
+    # 'Lobatto_IIIS'  ,  
 ]
 
 
@@ -73,8 +73,10 @@ for nsteps in nsteps_list:
         rk = choreo.scipy_plus.multiprec_tables.ComputeImplicitRKTable_Gauss(nsteps, dps=600, method=method)
         rk_ad = rk.symplectic_adjoint()
 
-        print(rk.stability_cst)
-        print(choreo.scipy_plus.ODE.ImplicitRKTable.symplectic_default(rk))
-        print(rk.is_symplectic())
+        # print(rk.stability_cst)
+        # print(choreo.scipy_plus.ODE.ImplicitRKTable.symplectic_default(rk))
+        # print(rk.is_symplectic())
+        
+        print(rk.a_table)
 
 

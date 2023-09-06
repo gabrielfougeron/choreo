@@ -68,8 +68,16 @@ def test_ImplicitRKDefaultDPSIsEnough(float64_tols_strict, ClassicalImplicitRKMe
                 atol = float64_tols_strict.atol ,
                 rtol = float64_tols_strict.rtol ,
             )
+            
+            rk_ad = rk.symplectic_adjoint()
+            print(rk.symplectic_default(rk_ad))
+            assert rk.is_symplectic_pair(rk_ad, tol = float64_tols_strict.atol)
+            
+            rk_ad = rk.symmetric_adjoint()
+            print(rk.symmetry_default(rk_ad))
+            assert rk.is_symmetric_pair(rk_ad, tol = float64_tols_strict.atol)
 
-def test_ImplicitSymplecticPairs(float64_tols_strict, ClassicalImplicitRKMethodPairs, Small_orders):
+def test_ImplicitSymplecticPairs(float64_tols_strict, SymplecticImplicitRKMethodPairs, Small_orders):
 
     print("Making sure that the symplecticity default is small enough")
 
@@ -79,13 +87,57 @@ def test_ImplicitSymplecticPairs(float64_tols_strict, ClassicalImplicitRKMethodP
         print(f'{nsteps = }')
         print()
         
-        for method_pair in ClassicalImplicitRKMethodPairs.all_method_pairs:
+        for method_pair in SymplecticImplicitRKMethodPairs.all_method_pairs:
             
             print()
             print(f'{method_pair = }')
             
             rk      = choreo.scipy_plus.multiprec_tables.ComputeImplicitRKTable_Gauss(nsteps, method=method_pair[0])
             rk_ad   = choreo.scipy_plus.multiprec_tables.ComputeImplicitRKTable_Gauss(nsteps, method=method_pair[1])
+            
+            print(rk.symplectic_default(rk_ad))
+            
+            assert rk.is_symplectic_pair(rk_ad, tol = float64_tols_strict.atol)
+
+def test_ImplicitSymmetricPairs(float64_tols_strict, SymmetricImplicitRKMethodPairs, Small_orders):
+
+    print("Making sure that the symmetry default is small enough")
+
+    for nsteps in Small_orders.all_orders:
+        
+        print()
+        print(f'{nsteps = }')
+        print()
+        
+        for method_pair in SymmetricImplicitRKMethodPairs.all_method_pairs:
+            
+            print()
+            print(f'{method_pair = }')
+            
+            rk      = choreo.scipy_plus.multiprec_tables.ComputeImplicitRKTable_Gauss(nsteps, method=method_pair[0])
+            rk_ad   = choreo.scipy_plus.multiprec_tables.ComputeImplicitRKTable_Gauss(nsteps, method=method_pair[1])
+            
+            print(rk.symmetry_default(rk_ad))
+            
+            assert rk.is_symmetric_pair(rk_ad, tol = float64_tols_strict.atol)
+
+def test_ImplicitSymmetricSymplecticPairs(float64_tols_strict, SymmetricSymplecticImplicitRKMethodPairs, Small_orders):
+
+    print("Making sure that the symmetry-symplecticity default is small enough")
+
+    for nsteps in Small_orders.all_orders:
+        
+        print()
+        print(f'{nsteps = }')
+        print()
+        
+        for method_pair in SymmetricSymplecticImplicitRKMethodPairs.all_method_pairs:
+            
+            print()
+            print(f'{method_pair = }')
+            
+            rk      = choreo.scipy_plus.multiprec_tables.ComputeImplicitRKTable_Gauss(nsteps, method=method_pair[0])
+            rk_ad   = choreo.scipy_plus.multiprec_tables.ComputeImplicitRKTable_Gauss(nsteps, method=method_pair[1]).symmetric_adjoint()
             
             print(rk.symplectic_default(rk_ad))
             
