@@ -1,8 +1,12 @@
 '''
-ODE.pyx : Defines ODE-related things I designed I feel ought to be in scipy ... but faster !
-
+SegmQuad.pyx : Defines segment quadrature related things I designed I feel ought to be in scipy ... but faster !
 
 '''
+
+__all__ = [
+    'QuadFormula',
+    'IntegrateOnSegment',
+]
 
 from choreo.scipy_plus.cython.eft_lib cimport TwoSum_incr
 

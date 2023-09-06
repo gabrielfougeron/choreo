@@ -62,9 +62,9 @@ elif platform.system() == "Linux":
 
     if ("PYODIDE" in os.environ): # Building for Pyodide
 
-        extra_compile_args_std = ["-O3"]
-        extra_compile_args_safe = ["-O2"]
-        extra_link_args = []
+        extra_compile_args_std = ["-O3","-ffast-math","-flto"]
+        extra_compile_args_safe = ["-O3","-flto"]
+        extra_link_args = ["-flto"]
 
     else:
 
@@ -87,9 +87,9 @@ elif platform.system() == "Linux":
         # extra_compile_args_safe = ["-O0", "-fopenmp"]
         # extra_link_args = ["-fopenmp"]
 
-        extra_compile_args_std = ["-Ofast","-march=native", "-fopenmp"]
-        extra_compile_args_safe = ["-O3", "-fopenmp"]
-        extra_link_args = ["-fopenmp"]
+        extra_compile_args_std = ["-Ofast","-march=native", "-fopenmp", "-flto"]
+        extra_compile_args_safe = ["-O3", "-fopenmp", "-flto"]
+        extra_link_args = ["-fopenmp", "-flto"]
 
         # extra_compile_args_std = ["-Ofast","-march=native", "-fopenmp"]
         # extra_compile_args_safe = ["-O0", "-fopenmp"]
