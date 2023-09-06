@@ -86,7 +86,7 @@ elif platform.system() == "Linux":
         # extra_compile_args_std = ["-O0","-march=native", "-fopenmp"]
         # extra_compile_args_safe = ["-O0", "-fopenmp"]
         # extra_link_args = ["-fopenmp"]
-
+# 
         extra_compile_args_std = ["-Ofast","-march=native", "-fopenmp", "-flto"]
         extra_compile_args_safe = ["-O3", "-fopenmp", "-flto"]
         extra_link_args = ["-fopenmp", "-flto"]

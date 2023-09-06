@@ -90,71 +90,71 @@ def mul_py_fun(double x):
     return np.asarray(res)
 
 
-cdef inline void single_cy_fun_pointer_tx(
-    double t,
-    double x,
-    double *res,
-) noexcept nogil:
-
-    cdef Py_ssize_t i
-    cdef Py_ssize_t size = 1
-    cdef double val
-
-    for i in range(size):
-        
-        val = (i+1) * x
-        res[i] = csin(t*val)
-
-cdef inline void single_cy_fun_memoryview_tx(
-    double t,
-    double x,
-    double[::1] res,
-) noexcept nogil:
-
-    single_cy_fun_pointer_tx(t,x,&res[0])
-
-cdef inline double single_cy_fun_oneval_tx(
-    double t,
-    double x,
-) noexcept nogil:
-
-    cdef double res
-    single_cy_fun_pointer_tx(t,x,&res)
-    return res
-
-def single_py_fun_tx(double t, double x):
-
-    cdef double[::1] res = np.empty((1),dtype=np.float64)
-    single_cy_fun_memoryview_tx(t,x, res)
-    return res
+# cdef inline void single_cy_fun_pointer_tx(
+#     double t,
+#     double x,
+#     double *res,
+# ) noexcept nogil:
+# 
+#     cdef Py_ssize_t i
+#     cdef Py_ssize_t size = 1
+#     cdef double val
+# 
+#     for i in range(size):
+#         
+#         val = (i+1) * x
+#         res[i] = csin(t*val)
+# 
+# cdef inline void single_cy_fun_memoryview_tx(
+#     double t,
+#     double x,
+#     double[::1] res,
+# ) noexcept nogil:
+# 
+#     single_cy_fun_pointer_tx(t,x,&res[0])
+# 
+# cdef inline double single_cy_fun_oneval_tx(
+#     double t,
+#     double x,
+# ) noexcept nogil:
+# 
+#     cdef double res
+#     single_cy_fun_pointer_tx(t,x,&res)
+#     return res
+# 
+# def single_py_fun_tx(double t, double x):
+# 
+#     cdef double[::1] res = np.empty((1),dtype=np.float64)
+#     single_cy_fun_memoryview_tx(t,x, res)
+#     return res
 
 cdef inline void mul_cy_fun_pointer_tx(
-    double t,
-    double x,
-    double *res,
+    double t    ,
+    double *x   ,
+    double *res ,
 ) noexcept nogil:
 
     cdef Py_ssize_t i
     cdef double val
 
     for i in range(mul_size):
-        
-        val = (i+1) * x
-        res[i] = csin(t*val)
+
+        res[i] = csin(t*(i+1) * x[i])
 
 cdef inline void mul_cy_fun_memoryview_tx(
-    double t,
-    double x,
-    double[::1] res,
+    double t        ,
+    double[::1] x   ,
+    double[::1] res ,
 ) noexcept nogil:
 
-    mul_cy_fun_pointer_tx(t,x,&res[0])
+    mul_cy_fun_pointer_tx(t, &x[0], &res[0])
 
-def mul_py_fun_tx(double t, double x):
+
+def mul_py_fun_tx(double t, double[::1] x):
 
     cdef double[::1] res = np.empty((mul_size),dtype=np.float64)
     mul_cy_fun_memoryview_tx(t,x, res)
-    return res
+    return np.asarray(res)
 
 @cython.cdivision(True)
 cpdef inplace_taylor_poly(double[:] v, x):
