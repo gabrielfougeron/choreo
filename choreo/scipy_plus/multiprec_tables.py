@@ -194,9 +194,8 @@ def ComputeButcher_collocation(z,n):
     rhs = BuildButcherCRHS(y,zp,n,n)
     Butcher_beta = rhs * mat_inv    
     
-    zp = mpmath.matrix(n,1)
     for i in range(n):
-        y[i]  = -1+z[i]
+        y[i]  = -1 + z[i]
         zp[i] = 0
         
     rhs = BuildButcherCRHS(y,zp,n,n)
@@ -282,7 +281,7 @@ def ComputeGaussButcherTables(n, dps=60, method="Gauss"):
     
     Butcher_a, Butcher_beta , Butcher_gamma = ComputeButcher_collocation(z, n)
     
-    if method in ["Lobatto_IIIC", "Lobatto_IIIC*"]:
+    if method in ["Lobatto_IIIC", "Lobatto_IIIC*", "Lobatto_IIID"]:
         Butcher_a = ComputeButcher_sub_collocation(z,n)
     
     known_method = False
@@ -300,6 +299,9 @@ def ComputeGaussButcherTables(n, dps=60, method="Gauss"):
         # Symplectic adjoint average
         Butcher_a_ad = SymplecticAdjointButcher(Butcher_a, w, n)    
         Butcher_a = (Butcher_a_ad + Butcher_a) / 2
+        
+    if not(known_method):
+        raise ValueError(f'Unknown method {method}')
         
     return Butcher_a, w, z, Butcher_beta, Butcher_gamma
 
