@@ -471,7 +471,7 @@ cdef class ImplicitRKTable:
         self._b_table = b_table.copy()
         self._c_table = c_table.copy()
         self._beta_table = beta_table.copy()
-        self._gamma_table = beta_table.copy()
+        self._gamma_table = gamma_table.copy()
 
         assert self._a_table.shape[0] == self._a_table.shape[1]
         assert self._a_table.shape[0] == self._b_table.shape[0]
@@ -518,9 +518,9 @@ cdef class ImplicitRKTable:
     def stability_cst(self):
         return np.linalg.norm(self.a_table, np.inf)
 
-    def symmetric_adjoint(self):
+    cpdef ImplicitRKTable symmetric_adjoint(self):
 
-        cdef Py_ssize_t n = self.nsteps
+        cdef Py_ssize_t n = self._a_table.shape[0]
         cdef Py_ssize_t i, j
 
         a_table_sym = np.empty((n,n), dtype=np.float64)
@@ -550,15 +550,65 @@ cdef class ImplicitRKTable:
             th_cvg_rate = self._th_cvg_rate ,
         )
 
-    def symplectic_adjoint(self):
 
-        cdef Py_ssize_t n = self.nsteps
+    cpdef double _symmetry_default(
+        self                    ,
+        ImplicitRKTable other   ,
+    ) noexcept:
+
+        cdef Py_ssize_t nsteps = self._a_table.shape[0]
+        cdef Py_ssize_t i,j
+        cdef double maxi = -1
+        cdef double val
+
+        for i in range(nsteps):
+
+            val = self._b_table[i] - other._b_table[nsteps-1-i] 
+            maxi = max(maxi, cfabs(val))
+
+            val = self._c_table[i] + other._c_table[nsteps-1-i] - 1
+            maxi = max(maxi, cfabs(val))
+
+            for j in range(self._a_table.shape[0]):
+                val = self._a_table[i,j] - self._b_table[j] + other._a_table[nsteps-1-i,nsteps-1-j]
+                maxi = max(maxi, cfabs(val))
+                
+                val = self._beta_table[i,j] - other._gamma_table[nsteps-1-i,nsteps-1-j]
+                maxi = max(maxi, cfabs(val))
+
+                val = self._gamma_table[i,j] - other._beta_table[nsteps-1-i,nsteps-1-j]
+                maxi = max(maxi, cfabs(val))
+                
+        return maxi
+
+    def symmetry_default(
+        self        ,
+        other = None,
+    ):
+        if other is None:
+            return self._symmetry_default(self)
+        else:
+            return self._symmetry_default(other)
+     
+    cpdef bint _is_symmetric_pair(self, ImplicitRKTable other, double tol):
+        return (self._symmetry_default(other) < tol)
+
+    def is_symmetric_pair(self, ImplicitRKTable other, double tol = 1e-12):
+        return self._is_symmetric_pair(other, tol)
+
+    def is_symmetric(self, double tol = 1e-12):
+        return self._is_symmetric_pair(self, tol)
+
+
+    cpdef ImplicitRKTable symplectic_adjoint(self):
+
+        cdef Py_ssize_t nsteps = self._a_table.shape[0]
         cdef Py_ssize_t i, j
 
-        a_table_sym = np.empty((n,n), dtype=np.float64)
+        a_table_sym = np.empty((nsteps,nsteps), dtype=np.float64)
 
-        for i in range(n):
-            for j in range(n):
+        for i in range(nsteps):
+            for j in range(nsteps):
                 
                 a_table_sym[i,j] = self._b_table[j] * (1. - self._a_table[j,i] / self._b_table[i])
 
@@ -576,16 +626,17 @@ cdef class ImplicitRKTable:
         ImplicitRKTable other   ,
     ) noexcept:
 
+        cdef Py_ssize_t nsteps = self._a_table.shape[0]
         cdef Py_ssize_t i,j
         cdef double maxi = -1
         cdef double val
 
-        for i in range(self._a_table.shape[0]):
+        for i in range(nsteps):
 
             val = self._b_table[i] - other._b_table[i] 
             maxi = max(maxi, cfabs(val))
 
-            for j in range(self._a_table.shape[0]):
+            for j in range(nsteps):
                 val = self._b_table[i] * other._a_table[i,j] + other._b_table[j] * self._a_table[j,i] - self._b_table[i] * other._b_table[j] 
                 maxi = max(maxi, cfabs(val))
 
