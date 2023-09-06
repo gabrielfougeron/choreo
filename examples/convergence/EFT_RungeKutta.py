@@ -45,8 +45,8 @@ if not(os.path.isdir(bench_folder)):
     
 basename_bench_filename = 'EFT_RK_bench_'
 
-# ForceBenchmark = True
-ForceBenchmark = False
+ForceBenchmark = True
+# ForceBenchmark = False
 
 
 def get_implicit_table(rk_name, order):
@@ -81,7 +81,7 @@ explicit_methods = {
 
 # sphinx_gallery_start_ignore
 
-all_nint = np.array([2**i for i in range(18)])
+all_nint = np.array([2**i for i in range(16)])
 
 all_methods = {**explicit_methods, **implicit_methods}
 

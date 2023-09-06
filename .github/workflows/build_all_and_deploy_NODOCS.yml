@@ -1,0 +1,71 @@
+name: Build Test and Deploy on Github Pages
+
+on:
+  workflow_dispatch:
+
+# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow one concurrent deployment
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  build:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.11.2
+
+    - name: Install apt-get dependencies for Ubuntu
+      run: |
+        sudo apt-get update
+        sudo apt-get upgrade
+        sudo apt-get install libomp-dev libsuitesparse-dev clang
+        sudo apt-get install plantuml
+
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Read Emscripten version number
+      run: |
+        echo EMSCRIPTEN_VERSION=$(pyodide config get emscripten_version) >> $GITHUB_ENV
+
+    - name: Setup Emscripten
+      uses: mymindstorm/setup-emsdk@v11
+      with:
+        version: ${{ env.EMSCRIPTEN_VERSION }}
+
+    - name: Build for Pyodide
+      run: |
+        pyodide build
+        find ./dist -name '*emscripten*.whl' -exec cp {} ./choreo_GUI/python_dist/ \; 
+
+    - name: Make Gallery Descriptor 
+      run: |
+        cd choreo_GUI
+        python MakeGalleryDescriptor.py
+        cd .. 
+
+    - name: Setup Pages
+      uses: actions/configure-pages@v1
+
+    - name: Upload artifact
+      uses: actions/upload-pages-artifact@v1
+      with:
+        path: './choreo_GUI/'
+
+    - name: Deploy to GitHub Pages
+      id: deployment
+      uses: actions/deploy-pages@v1
+
