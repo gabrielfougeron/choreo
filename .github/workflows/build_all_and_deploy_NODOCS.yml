@@ -1,4 +1,4 @@
-name: Build Test and Deploy on Github Pages
+name: Deploy on Github pages no docs no tests
 
 on:
   workflow_dispatch:
