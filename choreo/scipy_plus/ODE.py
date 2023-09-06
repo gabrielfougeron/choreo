@@ -14,7 +14,7 @@ from choreo.scipy_plus.cython.ODE import ExplicitSymplecticIVP
 from choreo.scipy_plus.cython.ODE import ExplicitSymplecticRKTable
 
 from choreo.scipy_plus.cython.ODE import ImplicitSymplecticIVP
-from choreo.scipy_plus.cython.ODE import ImplicitSymplecticRKTable
+from choreo.scipy_plus.cython.ODE import ImplicitRKTable
 
 def SymplecticIVP(
     fun         ,
@@ -37,7 +37,7 @@ def SymplecticIVP(
             **kwargs    ,
         )
     
-    elif isinstance(rk,ImplicitSymplecticRKTable):
+    elif isinstance(rk,ImplicitRKTable):
         return ImplicitSymplecticIVP(
             fun         ,
             gun         ,

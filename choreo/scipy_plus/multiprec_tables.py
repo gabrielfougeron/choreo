@@ -10,7 +10,7 @@ import numpy as np
 
 from choreo.scipy_plus.cython.SegmQuad import QuadFormula
 from choreo.scipy_plus.cython.ODE import ExplicitSymplecticRKTable
-from choreo.scipy_plus.cython.ODE import ImplicitSymplecticRKTable
+from choreo.scipy_plus.cython.ODE import ImplicitRKTable
 
 # 3 terms definition of polynomial families
 # P_n+1 = (X - a_n) P_n - b_n P_n-1
@@ -340,8 +340,7 @@ def ComputeQuadrature(n, dps=30, method="Gauss"):
         th_cvg_rate = th_cvg_rate   ,
     )
 
-
-def ComputeImplicitSymplecticRKTable_Gauss(n, dps=60, method="Gauss"):
+def ComputeImplicitRKTable_Gauss(n, dps=60, method="Gauss"):
 
     th_cvg_rate = GetConvergenceRate(method, n)
     
@@ -353,7 +352,7 @@ def ComputeImplicitSymplecticRKTable_Gauss(n, dps=60, method="Gauss"):
     Butcher_beta_np = np.array(Butcher_beta.tolist(),dtype=np.float64)
     Butcher_gamma_np = np.array(Butcher_gamma.tolist(),dtype=np.float64)
     
-    return ImplicitSymplecticRKTable(
+    return ImplicitRKTable(
         a_table     = Butcher_a_np      ,
         b_table     = Butcher_b_np      ,
         c_table     = Butcher_c_np      ,
@@ -376,7 +375,7 @@ def ComputeImplicitSymplecticRKTablePair_Gauss(n, dps=60, method="Gauss"):
     Butcher_gamma_np = np.array(Butcher_gamma.tolist(),dtype=np.float64)
     Butcher_a_ad_np = np.array(Butcher_a_ad.tolist(),dtype=np.float64)
     
-    rk = ImplicitSymplecticRKTable(
+    rk = ImplicitRKTable(
         a_table     = Butcher_a_np      ,
         b_table     = Butcher_b_np      ,
         c_table     = Butcher_c_np      ,
@@ -385,7 +384,7 @@ def ComputeImplicitSymplecticRKTablePair_Gauss(n, dps=60, method="Gauss"):
         th_cvg_rate = th_cvg_rate       ,
     )
     
-    rk_ad = ImplicitSymplecticRKTable(
+    rk_ad = ImplicitRKTable(
         a_table     = Butcher_a_ad_np   ,
         b_table     = Butcher_b_np      ,
         c_table     = Butcher_c_np      ,
