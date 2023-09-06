@@ -1,8 +1,15 @@
 '''
 ODE.pyx : Defines ODE-related things I designed I feel ought to be in scipy ... but faster !
 
-
 '''
+
+__all__ = [
+    'ExplicitSymplecticRKTable' ,
+    'ImplicitSymplecticRKTable' ,
+    'ExplicitSymplecticIVP'     ,
+    'ImplicitSymplecticIVP'     ,
+]
+
 from choreo.scipy_plus.cython.eft_lib cimport TwoSum_incr
 
 cimport scipy.linalg.cython_blas
@@ -105,15 +112,17 @@ cdef inline void PyFun_apply(
     double[::1] res     ,
 ):
 
-    cdef Py_ssize_t i
+    cdef int n
     cdef np.ndarray[double, ndim=1, mode="c"] f_res_np
 
     if (res_type == PY_FUN_FLOAT):   
         res[0] = fun(t, x)
     else:
         f_res_np = fun(t, x)
-        for i in range(x.shape[0]):
-            res[i] = f_res_np[i]
+
+        n = x.shape[0]
+        scipy.linalg.cython_blas.dcopy(&n,&f_res_np[0],&int_one,&res[0],&int_one)
+
 
 cdef inline void LowLevelFun_apply_vectorized(
     const LowLevelFun fun   ,
@@ -143,7 +152,8 @@ cdef inline void PyFun_apply_vectorized(
     double[:,::1] all_res   ,
 ):
 
-    cdef Py_ssize_t i, j
+    cdef Py_ssize_t i
+    cdef int n 
     cdef np.ndarray[double, ndim=1, mode="c"] f_res_np
 
     if (res_type == PY_FUN_FLOAT): 
@@ -151,11 +161,14 @@ cdef inline void PyFun_apply_vectorized(
             all_res[i,0] = fun(all_t[i], all_x[i,:])
 
     else:
+        
+        n = all_x.shape[1]
+        
         for i in range(all_t.shape[0]):  
             f_res_np = fun(all_t[i], all_x[i,:])
 
-            for j in range(all_x.shape[1]):
-                all_res[i,j] = f_res_np[j]
+            scipy.linalg.cython_blas.dcopy(&n,&f_res_np[0],&int_one,&all_res[i,0],&int_one)
+
 
 
 cdef class ExplicitSymplecticRKTable:
@@ -874,7 +887,6 @@ cdef void ImplicitSymplecticIVP_ann(
         free(dxv)
         free(x_eft_comp)
         free(v_eft_comp)
-
 
 
 
