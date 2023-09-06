@@ -55,7 +55,7 @@ x0 = np.random.random(ndim_mul)
 v0 = np.random.random(ndim_mul)
 
 nsteps = 8
-rk_method = choreo.scipy_plus.multiprec_tables.ComputeImplicitSymplecticRKTable_Gauss(nsteps)
+rk_method = choreo.scipy_plus.multiprec_tables.ComputeImplicitRKTable_Gauss(nsteps)
 
 def test_from_fun(fun):
     

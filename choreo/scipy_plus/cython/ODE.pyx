@@ -5,7 +5,7 @@ ODE.pyx : Defines ODE-related things I designed I feel ought to be in scipy ... 
 
 __all__ = [
     'ExplicitSymplecticRKTable' ,
-    'ImplicitSymplecticRKTable' ,
+    'ImplicitRKTable'           ,
     'ExplicitSymplecticIVP'     ,
     'ImplicitSymplecticIVP'     ,
 ]
@@ -448,7 +448,7 @@ cdef void ExplicitSymplecticIVP_ann(
         free(x_eft_comp)
         free(v_eft_comp)
 
-cdef class ImplicitSymplecticRKTable:
+cdef class ImplicitRKTable:
     
     cdef double[:,::1] _a_table
     cdef double[::1] _b_table
@@ -514,6 +514,10 @@ cdef class ImplicitSymplecticRKTable:
     def th_cvg_rate(self):
         return self._th_cvg_rate
 
+    @property
+    def stability_cst(self):
+        return np.linalg.norm(self.a_table, np.inf)
+
     def symmetric_adjoint(self):
 
         cdef Py_ssize_t n = self.nsteps
@@ -537,7 +541,7 @@ cdef class ImplicitSymplecticRKTable:
                 beta_table_sym[i,j]  = self._gamma_table[n-1-i,n-1-j]
                 gamma_table_sym[i,j] = self._beta_table[n-1-i,n-1-j]
 
-        return ImplicitSymplecticRKTable(
+        return ImplicitRKTable(
             a_table     = a_table_sym       ,
             b_table     = b_table_sym       ,
             c_table     = c_table_sym       ,
@@ -558,7 +562,7 @@ cdef class ImplicitSymplecticRKTable:
                 
                 a_table_sym[i,j] = self._b_table[j] * (1. - self._a_table[j,i] / self._b_table[i])
 
-        return ImplicitSymplecticRKTable(
+        return ImplicitRKTable(
             a_table     = a_table_sym       ,
             b_table     = self._b_table     ,
             c_table     = self._c_table     ,
@@ -567,6 +571,44 @@ cdef class ImplicitSymplecticRKTable:
             th_cvg_rate = self._th_cvg_rate ,
         )
 
+    cpdef double _symplectic_default(
+        self                    ,
+        ImplicitRKTable other   ,
+    ) noexcept:
+
+        cdef Py_ssize_t i,j
+        cdef double maxi = -1
+        cdef double val
+
+        for i in range(self._a_table.shape[0]):
+
+            val = self._b_table[i] - other._b_table[i] 
+            maxi = max(maxi, cfabs(val))
+
+            for j in range(self._a_table.shape[0]):
+                val = self._b_table[i] * other._a_table[i,j] + other._b_table[j] * self._a_table[j,i] - self._b_table[i] * other._b_table[j] 
+                maxi = max(maxi, cfabs(val))
+
+        return maxi
+
+    def symplectic_default(
+        self        ,
+        other = None,
+    ):
+        if other is None:
+            return self._symplectic_default(self)
+        else:
+            return self._symplectic_default(other)
+     
+    cpdef bint _is_symplectic_pair(self, ImplicitRKTable other, double tol):
+        return (self._symplectic_default(other) < tol)
+
+    def is_symplectic_pair(self, ImplicitRKTable other, double tol = 1e-12):
+        return self._is_symplectic_pair(other, tol)
+
+    def is_symplectic(self, double tol = 1e-12):
+        return self._is_symplectic_pair(self, tol)
+
 @cython.cdivision(True)
 cpdef ImplicitSymplecticIVP(
     object fun                              ,
@@ -574,8 +616,8 @@ cpdef ImplicitSymplecticIVP(
     (double, double) t_span                 ,
     double[::1] x0                          ,
     double[::1] v0                          ,
-    ImplicitSymplecticRKTable rk_x          ,
-    ImplicitSymplecticRKTable rk_v          ,
+    ImplicitRKTable rk_x                    ,
+    ImplicitRKTable rk_v                    ,
     long nint = 1                           ,
     long keep_freq = -1                     ,
     bint DoEFT = True                       ,

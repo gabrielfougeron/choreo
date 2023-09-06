@@ -58,7 +58,7 @@ eq_names = [
 ]
 
 implicit_methods = {
-    f'{rk_name} {order}' : choreo.scipy_plus.multiprec_tables.ComputeImplicitSymplecticRKTable_Gauss(order, method=rk_name) for rk_name, order in itertools.product(["Gauss"], [2,4,6,8])
+    f'{rk_name} {order}' : choreo.scipy_plus.multiprec_tables.ComputeImplicitRKTable_Gauss(order, method=rk_name) for rk_name, order in itertools.product(["Gauss"], [2,4,6,8])
 }
 
 explicit_methods = {

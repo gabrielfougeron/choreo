@@ -42,7 +42,7 @@ bench_folder = os.path.join(__PROJECT_ROOT__,'examples','generated_files')
 if not(os.path.isdir(bench_folder)):
     os.makedirs(bench_folder)
     
-basename_bench_filename = 'ImplicitRK_ivp_cvg_bench_'
+basename_bench_filename = 'scipy_ivp_cvg_bench_'
 
 # ForceBenchmark = True
 ForceBenchmark = False
@@ -57,16 +57,14 @@ eq_names = [
 ]
 
 method_names = [
-    "RK45" ,  
-    "RK23" ,  
-    "DOP853" ,  
+    "RK45"  ,  
+    "RK23"  ,  
+    "DOP853",  
     "Radau" ,  
-    "BDF" ,  
+    "BDF"   ,  
     "LSODA" ,  
 ]
 
-
-    
 # sphinx_gallery_start_ignore
 
 all_nint = np.array([2**i for i in range(12)])
