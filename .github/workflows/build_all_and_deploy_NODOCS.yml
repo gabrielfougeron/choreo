@@ -40,7 +40,6 @@ jobs:
     - name: Install python build dependencies
       run: |
         pip install --upgrade pip
-        pip install build
 
     - name: Install locally with pip
       run:  pip install .[full]

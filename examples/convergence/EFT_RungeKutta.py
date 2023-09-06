@@ -45,17 +45,8 @@ if not(os.path.isdir(bench_folder)):
     
 basename_bench_filename = 'EFT_RK_bench_'
 
-ForceBenchmark = True
-# ForceBenchmark = False
-
-
-def get_implicit_table(rk_name, order):
-    
-    if rk_name == "Gauss":
-        
-        return choreo.scipy_plus.multiprec_tables.ComputeImplicitSymplecticRKTable_Gauss(order)
-    
-    raise ValueError(f"Unknown {rk_name = }")
+# ForceBenchmark = True
+ForceBenchmark = False
 
 # sphinx_gallery_end_ignore
 
@@ -67,7 +58,7 @@ eq_names = [
 ]
 
 implicit_methods = {
-    f'{rk_name} {order}' : get_implicit_table(rk_name, order) for rk_name, order in itertools.product(["Gauss"], [2,4,6,8])
+    f'{rk_name} {order}' : choreo.scipy_plus.multiprec_tables.ComputeImplicitSymplecticRKTable_Gauss(order, method=rk_name) for rk_name, order in itertools.product(["Gauss"], [2,4,6,8])
 }
 
 explicit_methods = {

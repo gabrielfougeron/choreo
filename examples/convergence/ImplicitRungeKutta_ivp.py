@@ -44,8 +44,8 @@ if not(os.path.isdir(bench_folder)):
     
 basename_bench_filename = 'ImplicitRK_ivp_cvg_bench_'
 
-ForceBenchmark = True
-# ForceBenchmark = False
+# ForceBenchmark = True
+ForceBenchmark = False
 
 # sphinx_gallery_end_ignore
 
