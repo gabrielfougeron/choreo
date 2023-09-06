@@ -37,7 +37,7 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v3
 
-      - name: Install python build dependencies
+    - name: Install python build dependencies
       run: |
         pip install --upgrade pip
         pip install build
