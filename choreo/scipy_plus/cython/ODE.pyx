@@ -1205,6 +1205,10 @@ cdef void ImplicitSymplecticIVP_ann(
 
             if DoTanIntegration:
 
+
+                with gil:
+                    print("a",iint)
+
                 iGS = 0
                 GoOnGS = True
 
@@ -1310,6 +1314,11 @@ cdef void ImplicitSymplecticIVP_ann(
                     # grad_v = grad_v + grad_dxv
                     TwoSum_incr(&grad_v[0,0],grad_dxv,grad_v_eft_comp,grad_nvar)
 
+
+                    with gil:
+                        check_nan(grad_x)
+                        check_nan(grad_v)
+
             else:
 
                 # x = x + b_table_x^T . K_fun
@@ -1326,8 +1335,19 @@ cdef void ImplicitSymplecticIVP_ann(
                     # grad_v = grad_v + b_table_v^T . grad_K_gun
                     scipy.linalg.cython_blas.dgemv(transn,&grad_nvar,&nsteps,&one,&grad_K_gun[0,0,0],&grad_nvar,&b_table_v[0],&int_one,&one,&grad_v[0,0],&int_one)
 
+
         scipy.linalg.cython_blas.dcopy(&ndof,&x[0],&int_one,&x_keep[iint_keep,0],&int_one)
         scipy.linalg.cython_blas.dcopy(&ndof,&v[0],&int_one,&v_keep[iint_keep,0],&int_one)
+
+        if DoTanIntegration:
+
+            scipy.linalg.cython_blas.dcopy(&grad_nvar,&grad_x[0,0],&int_one,&grad_x_keep[iint_keep,0,0],&int_one)
+            scipy.linalg.cython_blas.dcopy(&grad_nvar,&grad_v[0,0],&int_one,&grad_v_keep[iint_keep,0,0],&int_one)
+
+            # with gil:
+            #     check_nan(grad_x)
+            #     check_nan(grad_v)
+
     
     # print(tot_niter / nint)
     # print(1+nsteps*tot_niter)
@@ -1348,7 +1368,16 @@ cdef void ImplicitSymplecticIVP_ann(
             free(grad_v_eft_comp)
 
 
+cdef void check_nan(double[:,::1] x):
 
+    cdef Py_ssize_t i,j
+
+    for i in range(x.shape[0]):
+        for j in range(x.shape[1]):
+
+            if cisnan(x[i,j]):
+                print("isnan",i,j)
+                exit()
 
 
 
