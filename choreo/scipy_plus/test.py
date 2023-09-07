@@ -148,7 +148,6 @@ def ODE_define_test(eq_name):
 
     return fun, gun, fgun, ex_sol, test_ndim
  
-
 def ODE_cpte_error_on_test(
     eq_name     ,
     rk_method   ,
@@ -248,3 +247,51 @@ def scipy_ODE_cpte_error_on_test(
     error = np.linalg.norm(bunch.y[:,0]-ex_final)/np.linalg.norm(ex_final)
 
     return error
+
+def compute_FD(fun,xo,dx,eps,fo=None,order=1):
+    
+    if fo is None:
+        fo = fun(xo)
+        
+    if order == 1:
+        
+        xp = xo + eps*dx
+        fp = fun(xp)
+        dfdx = (fp-fo)/eps
+        
+    elif (order == 2):
+        
+        xp = xo + eps*dx
+        fp = fun(xp)        
+        xm = xo - eps*dx
+        fm = fun(xm)
+        dfdx = (fp-fm)/(2*eps)
+        
+    else:
+        
+        raise ValueError(f"Invalid order {order}")
+
+    return dfdx
+
+def compare_FD_and_exact_grad(fun,gradfun,xo,dx=None,epslist=None,order=1):
+    
+    if epslist is None:
+        epslist = [10**(-i) for i in range(16)]
+        
+    if dx is None:
+        shape = xo.shape
+        dx = np.random.rand(*shape)
+    
+    fo = fun(xo)
+    dfdx_exact = gradfun(xo,dx)
+    dfdx_exact_magn = np.linalg.norm(dfdx_exact)
+    
+    error_list = []
+    for eps in epslist:
+        dfdx_FD = compute_FD(fun,xo,dx,eps,fo=fo,order=order)
+        
+        error = np.linalg.norm(dfdx_FD - dfdx_exact) / dfdx_exact_magn 
+        error_list.append(error)
+    
+    return np.array(error_list)
+        

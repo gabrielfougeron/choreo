@@ -83,13 +83,13 @@ elif platform.system() == "Linux":
 
                 break
 
-        # extra_compile_args_std = ["-O0","-march=native", "-fopenmp"]
-        # extra_compile_args_safe = ["-O0", "-fopenmp"]
-        # extra_link_args = ["-fopenmp"]
+        extra_compile_args_std = ["-O0","-march=native", "-fopenmp"]
+        extra_compile_args_safe = ["-O0", "-fopenmp"]
+        extra_link_args = ["-fopenmp"]
 # 
-        extra_compile_args_std = ["-Ofast","-march=native", "-fopenmp", "-flto"]
-        extra_compile_args_safe = ["-O3", "-fopenmp", "-flto"]
-        extra_link_args = ["-fopenmp", "-flto"]
+        # extra_compile_args_std = ["-Ofast","-march=native", "-fopenmp", "-flto"]
+        # extra_compile_args_safe = ["-O3", "-fopenmp", "-flto"]
+        # extra_link_args = ["-fopenmp", "-flto"]
 
         # extra_compile_args_std = ["-Ofast","-march=native", "-fopenmp"]
         # extra_compile_args_safe = ["-O0", "-fopenmp"]
@@ -108,26 +108,26 @@ define_macros = [("NPY_NO_DEPRECATED_API", "NPY_1_7_API_VERSION")]
 
 compiler_directives = {
     'wraparound': False,
-    'boundscheck': False,
-    'nonecheck': False,
-    'initializedcheck': False,
-    'overflowcheck': False,
-    'overflowcheck.fold': False,
-    'infer_types': True,
+    # 'boundscheck': False,
+    # 'nonecheck': False,
+    # 'initializedcheck': False,
+    # 'overflowcheck': False,
+    # 'overflowcheck.fold': False,
+    # 'infer_types': True,
 }
 
 ##### Profiler only ####
-# profile_compiler_directives = {
-#     'profile': True,
-#     'linetrace': True,
-#     'binding': True,
-# }
-# compiler_directives.update(profile_compiler_directives)
-# profile_define_macros = [
-#     ('CYTHON_TRACE', '1')   ,
-#     ('CYTHON_TRACE_NOGIL', '1')   ,
-# ]
-# define_macros.extend(profile_define_macros)
+profile_compiler_directives = {
+    'profile': True,
+    'linetrace': True,
+    'binding': True,
+}
+compiler_directives.update(profile_compiler_directives)
+profile_define_macros = [
+    ('CYTHON_TRACE', '1')   ,
+    ('CYTHON_TRACE_NOGIL', '1')   ,
+]
+define_macros.extend(profile_define_macros)
 
 
 include_dirs = [numpy.get_include()]
