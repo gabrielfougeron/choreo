@@ -129,8 +129,10 @@ cdef inline void PyFun_apply(
         res[0] = fun(x)
     else:
         f_res_np = fun(x)
-        for i in range(ndim):
-            res[i] = f_res_np[i]
+        
+        scipy.linalg.cython_blas.dcopy(&ndim,&f_res_np[0],&int_one,&res[0],&int_one)
+        # for i in range(ndim):
+            # res[i] = f_res_np[i]
             
 cdef class QuadFormula:
 
@@ -167,11 +169,11 @@ cdef class QuadFormula:
 
     @property
     def x(self):
-        return np.array(self._x)
+        return np.asarray(self._x)
     
     @property
     def w(self):
-        return np.array(self._w)    
+        return np.asarray(self._w)    
 
     @property
     def th_cvg_rate(self):
