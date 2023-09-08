@@ -56,19 +56,25 @@ A = np.random.random((ndim,ndim))
 
 def fun(t,x):
     
+    return np.dot(A,x)
+
+def gun(t,x):
+    
     return np.dot(A,x)*np.dot(x,x)
 
 def gradfun(t,x,dx):
+
+    return np.dot(A,dx)
+
+def gradgun(t,x,dx):
 
     dxr = np.asarray(dx).reshape(-1)
     resr = 2*np.dot(x,dxr)*np.dot(A,x) + np.dot(x,x)*np.dot(A,dxr)
     return resr.reshape(-1,1)
 
-
-
 to = random.random()
-fun_inst = functools.partial(fun,to)
-gradfun_inst = functools.partial(gradfun,to)
+fun_inst = functools.partial(gun,to)
+gradfun_inst = functools.partial(gradgun,to)
 
 xo = np.random.rand(ndim)
 dxo = np.random.rand(ndim)
@@ -115,7 +121,7 @@ def int_fun(x):
     
     resx, resv = choreo.scipy_plus.ODE.ImplicitSymplecticIVP(
         fun         ,
-        fun         ,
+        gun         ,
         t_span      ,
         xx          ,
         vx          ,
@@ -136,14 +142,14 @@ def int_grad_fun_impl(x,dx):
     
     resx, resv, grad_resx, grad_resv = choreo.scipy_plus.ODE.ImplicitSymplecticIVP(
         fun         ,
-        fun         ,
+        gun         ,
         t_span      ,
         xx          ,
         vx          ,
         rk          ,
         rk          ,
         grad_fun = gradfun  ,
-        grad_gun = gradfun  ,
+        grad_gun = gradgun  ,
         grad_x0 = dxx       ,
         grad_v0 = dxv       ,
         nint = nint         ,
@@ -186,13 +192,13 @@ def int_grad_fun_expl(x,dx):
     
     resx, resv, grad_resx, grad_resv = choreo.scipy_plus.ODE.ExplicitSymplecticIVP(
         fun         ,
-        fun         ,
+        gun         ,
         t_span      ,
         xx          ,
         vx          ,
         rk_expl          ,
         grad_fun = gradfun  ,
-        grad_gun = gradfun  ,
+        grad_gun = gradgun  ,
         grad_x0 = dxx       ,
         grad_v0 = dxv       ,
         nint = nint         ,

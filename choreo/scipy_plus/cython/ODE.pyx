@@ -1385,6 +1385,9 @@ cdef void ImplicitSymplecticIVP_ann(
             # dX = beta_table_x . K_fun
             scipy.linalg.cython_blas.dgemm(transn,transn,&ndof,&nsteps,&nsteps,&one,&K_fun[0,0],&ndof,&beta_table_x[0,0],&nsteps,&zero,&dX[0,0],&ndof)
 
+            # dX_prev = dX
+            scipy.linalg.cython_blas.dcopy(&dX_size,&dX[0,0],&int_one,&dX_prev[0,0],&int_one)
+
             iGS = 0
             GoOnGS = True
 
@@ -1392,9 +1395,6 @@ cdef void ImplicitSymplecticIVP_ann(
 
                 # dV_prev = dV
                 scipy.linalg.cython_blas.dcopy(&dX_size,&dV[0,0],&int_one,&dV_prev[0,0],&int_one)
-
-                # dX_prev = dX
-                scipy.linalg.cython_blas.dcopy(&dX_size,&dX[0,0],&int_one,&dX_prev[0,0],&int_one)
 
                 # K_fun = dt * fun(t,v+dV)
                 for istep in range(nsteps):
@@ -1411,6 +1411,13 @@ cdef void ImplicitSymplecticIVP_ann(
                 # dX = a_table_x .K_fun
                 scipy.linalg.cython_blas.dgemm(transn,transn,&ndof,&nsteps,&nsteps,&one,&K_fun[0,0],&ndof,&a_table_x[0,0],&nsteps,&zero,&dX[0,0],&ndof)
 
+                # dX_prev = dX_prev - dX
+                scipy.linalg.cython_blas.daxpy(&dX_size,&minus_one,&dX[0,0],&int_one,&dX_prev[0,0],&int_one)
+                dX_err = scipy.linalg.cython_blas.dasum(&dX_size,&dX_prev[0,0],&int_one)
+
+                # dX_prev = dX
+                scipy.linalg.cython_blas.dcopy(&dX_size,&dX[0,0],&int_one,&dX_prev[0,0],&int_one)
+
                 # K_gun = dt * gun(t,x+dX)
                 for istep in range(nsteps):
                     scipy.linalg.cython_blas.daxpy(&ndof,&one,&x[0],&int_one,&dX[istep,0],&int_one)
@@ -1426,14 +1433,10 @@ cdef void ImplicitSymplecticIVP_ann(
                 # dV = a_table_v . K_gun
                 scipy.linalg.cython_blas.dgemm(transn,transn,&ndof,&nsteps,&nsteps,&one,&K_gun[0,0],&ndof,&a_table_v[0,0],&nsteps,&zero,&dV[0,0],&ndof)
 
-                # dX_prev = dX_prev - dX
-                scipy.linalg.cython_blas.daxpy(&dX_size,&minus_one,&dX[0,0],&int_one,&dX_prev[0,0],&int_one)
-
                 # dV_prev = dV_prev - dV
                 scipy.linalg.cython_blas.daxpy(&dX_size,&minus_one,&dV[0,0],&int_one,&dV_prev[0,0],&int_one)
-
-                dX_err = scipy.linalg.cython_blas.dasum(&dX_size,&dX_prev[0,0],&int_one)
                 dV_err = scipy.linalg.cython_blas.dasum(&dX_size,&dV_prev[0,0],&int_one)
+
                 dXV_err = dX_err + dV_err  
 
                 iGS += 1
@@ -1462,13 +1465,13 @@ cdef void ImplicitSymplecticIVP_ann(
                 # grad_dX = beta_table_x . grad_K_fun
                 scipy.linalg.cython_blas.dgemm(transn,transn,&grad_nvar,&nsteps,&nsteps,&one,&grad_K_fun[0,0,0],&grad_nvar,&beta_table_x[0,0],&nsteps,&zero,&grad_dX[0,0,0],&grad_nvar)
 
+                # grad_dX_prev = grad_dX
+                scipy.linalg.cython_blas.dcopy(&grad_dX_size,&grad_dX[0,0,0],&int_one,&grad_dX_prev[0,0,0],&int_one)
+
                 while GoOnGS:
 
-                    # grad_dV_prev = grad_dV
-                    scipy.linalg.cython_blas.dcopy(&grad_dX_size,&grad_dV[0,0,0],&int_one,&grad_dV_prev[0,0,0],&int_one)
-
-                    # grad_dX_prev = grad_dX
-                    scipy.linalg.cython_blas.dcopy(&grad_dX_size,&grad_dX[0,0,0],&int_one,&grad_dX_prev[0,0,0],&int_one)
+                    # grad_dV_prev = grad_dV_prev - grad_dV
+                    scipy.linalg.cython_blas.daxpy(&grad_dX_size,&minus_one,&grad_dV[0,0,0],&int_one,&grad_dV_prev[0,0,0],&int_one)
 
                     # grad_K_fun = dt * grad_fun(t,grad_v+grad_dV)
                     for istep in range(nsteps):
@@ -1485,6 +1488,13 @@ cdef void ImplicitSymplecticIVP_ann(
                     # grad_dX = a_table_x . grad_K_fun
                     scipy.linalg.cython_blas.dgemm(transn,transn,&grad_nvar,&nsteps,&nsteps,&one,&grad_K_fun[0,0,0],&grad_nvar,&a_table_x[0,0],&nsteps,&zero,&grad_dX[0,0,0],&grad_nvar)
 
+                    # grad_dX_prev = grad_dX_prev - grad_dX
+                    scipy.linalg.cython_blas.daxpy(&grad_dX_size,&minus_one,&grad_dX[0,0,0],&int_one,&grad_dX_prev[0,0,0],&int_one)
+                    dX_err = scipy.linalg.cython_blas.dasum(&grad_dX_size,&grad_dX_prev[0,0,0],&int_one)
+
+                    # grad_dX_prev = grad_dX
+                    scipy.linalg.cython_blas.dcopy(&grad_dX_size,&grad_dX[0,0,0],&int_one,&grad_dX_prev[0,0,0],&int_one)
+
                     # grad_K_gun = dt * grad_gun(t,grad_x+grad_dX)
                     for istep in range(nsteps):
                         scipy.linalg.cython_blas.daxpy(&grad_nvar,&one,&grad_x[0,0],&int_one,&grad_dX[istep,0,0],&int_one)
@@ -1500,14 +1510,10 @@ cdef void ImplicitSymplecticIVP_ann(
                     # grad_dV = a_table_v . grad_K_gun
                     scipy.linalg.cython_blas.dgemm(transn,transn,&grad_nvar,&nsteps,&nsteps,&one,&grad_K_gun[0,0,0],&grad_nvar,&a_table_v[0,0],&nsteps,&zero,&grad_dV[0,0,0],&grad_nvar)
 
-                    # grad_dX_prev = grad_dX_prev - grad_dX
-                    scipy.linalg.cython_blas.daxpy(&grad_dX_size,&minus_one,&grad_dX[0,0,0],&int_one,&grad_dX_prev[0,0,0],&int_one)
-
                     # grad_dV_prev = grad_dV_prev - grad_dV
                     scipy.linalg.cython_blas.daxpy(&grad_dX_size,&minus_one,&grad_dV[0,0,0],&int_one,&grad_dV_prev[0,0,0],&int_one)
-
-                    dX_err = scipy.linalg.cython_blas.dasum(&grad_dX_size,&grad_dX_prev[0,0,0],&int_one)
                     dV_err = scipy.linalg.cython_blas.dasum(&grad_dX_size,&grad_dV_prev[0,0,0],&int_one)
+
                     dXV_err = dX_err + dV_err  
 
                     iGS += 1
