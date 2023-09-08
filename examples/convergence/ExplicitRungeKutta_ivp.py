@@ -44,8 +44,8 @@ if not(os.path.isdir(bench_folder)):
     
 basename_bench_filename = 'ExplicitRK_ivp_cvg_bench_'
 
-# ForceBenchmark = True
-ForceBenchmark = False
+ForceBenchmark = True
+# ForceBenchmark = False
 
 # sphinx_gallery_end_ignore
 
@@ -63,9 +63,11 @@ method_order_hierarchy = {}
 for name, rk in all_methods.items():
 
     order = rk.th_cvg_rate
-    cur_same_order = method_order_hierarchy.get(order, {})
-    cur_same_order[name] = rk
-    method_order_hierarchy[order] = cur_same_order
+    
+    if order == 10:
+        cur_same_order = method_order_hierarchy.get(order, {})
+        cur_same_order[name] = rk
+        method_order_hierarchy[order] = cur_same_order
 
 sorted_method_order = sorted(method_order_hierarchy)
 

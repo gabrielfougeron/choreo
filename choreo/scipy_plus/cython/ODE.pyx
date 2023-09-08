@@ -44,6 +44,9 @@ cdef int C_FUN_POINTER = 1
 cdef int C_GRAD_FUN_MEMORYVIEW = 2
 cdef int C_GRAD_FUN_POINTER = 3
 
+cdef int PY_FUN_FLOAT = 0
+cdef int PY_FUN_NDARRAY = 1 
+
 cdef ccallback_signature_t signatures[5]
 
 ctypedef void (*c_fun_type_memoryview)(double, double[::1], double[::1]) noexcept nogil 
@@ -121,9 +124,6 @@ cdef inline void LowLevelFun_apply(
     elif fun.fun_type == C_FUN_POINTER:
         fun.c_fun_pointer(t, &x[0], &res[0])
 
-cdef int PY_FUN_FLOAT = 0
-cdef int PY_FUN_NDARRAY = 1 
-
 cdef inline void PyFun_apply(
     object fun          ,
     const int res_type  ,
@@ -142,6 +142,40 @@ cdef inline void PyFun_apply(
 
         n = x.shape[0]
         scipy.linalg.cython_blas.dcopy(&n,&f_res_np[0],&int_one,&res[0],&int_one)
+
+cdef inline void LowLevelFun_grad_apply(
+    const LowLevelFun grad_fun  ,
+    const double t              ,
+    double[::1] x               ,
+    double[:,::1] grad_x        ,
+    double[:,::1] res           ,
+) noexcept nogil:
+
+    if grad_fun.fun_type == C_GRAD_FUN_MEMORYVIEW:
+        grad_fun.c_grad_fun_memoryview(t, x, grad_x, res)
+
+    elif grad_fun.fun_type == C_GRAD_FUN_POINTER:
+        grad_fun.c_grad_fun_pointer(t, &x[0], &grad_x[0,0], &res[0,0])
+
+cdef inline void PyFun_grad_apply(
+    object grad_fun         ,
+    const int res_type      ,
+    const double t          ,
+    double[::1] x           ,
+    double[:,::1] grad_x    ,
+    double[:,::1] res       ,
+):
+
+    cdef int n
+    cdef np.ndarray[double, ndim=2, mode="c"] f_res_np
+
+    if (res_type == PY_FUN_FLOAT):   
+        res[0,:] = grad_fun(t, x, grad_x)
+    else:
+        f_res_np = grad_fun(t, x, grad_x)
+
+        n = grad_x.shape[0]*grad_x.shape[1]
+        scipy.linalg.cython_blas.dcopy(&n,&f_res_np[0,0],&int_one,&res[0,0],&int_one)
 
 cdef inline void LowLevelFun_apply_vectorized(
     const LowLevelFun fun   ,
@@ -298,6 +332,10 @@ cpdef ExplicitSymplecticIVP(
     double[::1] x0                  ,
     double[::1] v0                  ,
     ExplicitSymplecticRKTable rk    ,
+    object grad_fun = None          ,
+    object grad_gun = None          ,
+    double[:,::1] grad_x0 = None    ,
+    double[:,::1] grad_v0 = None    ,
     object mode = "VX"              ,
     long nint = 1                   ,
     long keep_freq = -1             ,
@@ -342,6 +380,18 @@ cpdef ExplicitSymplecticIVP(
         py_gun = None
         py_fun_type = -1
 
+    cdef bint DoTanIntegration = not(grad_fun is None) or not(grad_gun is None) or not(grad_x0 is None) or not(grad_v0 is None)
+
+    cdef ccallback_t callback_grad_fun
+    cdef LowLevelFun lowlevelgrad_fun
+
+    cdef ccallback_t callback_grad_gun
+    cdef LowLevelFun lowlevelgrad_gun
+
+    cdef object py_grad_fun_res = None
+    cdef object py_grad_gun_res = None
+    cdef object py_grad_fun, py_grad_gun
+
     if (keep_freq < 0):
         keep_freq = nint
 
@@ -358,47 +408,164 @@ cpdef ExplicitSymplecticIVP(
     cdef double[:,::1] x_keep = x_keep_np
     cdef double[:,::1] v_keep = v_keep_np
 
+    cdef double[:,::1] grad_x
+    cdef double[:,::1] grad_v
+    cdef double[:,::1] grad_res
+
+    cdef np.ndarray[double, ndim=3, mode="c"] grad_x_keep_np
+    cdef np.ndarray[double, ndim=3, mode="c"] grad_v_keep_np
+    cdef double[:,:,::1] grad_x_keep
+    cdef double[:,:,::1] grad_v_keep
+    cdef int grad_ndof
+    cdef Py_ssize_t i,j
+
+    if DoTanIntegration:
+
+        if (grad_x0 is None) and (grad_v0 is None):
+
+            grad_ndof = 2*ndof
+
+            grad_x = np.zeros((ndof, grad_ndof), dtype=np.float64)
+            grad_v = np.zeros((ndof, grad_ndof), dtype=np.float64)
+
+            for i in range(ndof):
+
+                grad_x[i,i] = 1.
+                
+                j = ndof+i
+                grad_v[i,j] = 1.
+
+        elif not(grad_x0 is None) and not(grad_v0 is None):
+
+            grad_x = grad_x0.copy()
+            grad_v = grad_v0.copy()
+
+            assert grad_x.shape[0] == ndof
+            assert grad_v.shape[0] == ndof
+            
+            grad_ndof = grad_x.shape[1]
+            assert grad_v.shape[1] == grad_ndof
+
+        else:
+            raise ValueError('Wrong values for grad_x0 and/or grad_v0')
+
+        grad_x_keep_np = np.empty((nint_keep, ndof, grad_ndof), dtype=np.float64)
+        grad_v_keep_np = np.empty((nint_keep, ndof, grad_ndof), dtype=np.float64)
+
+        grad_x_keep = grad_x_keep_np
+        grad_v_keep = grad_v_keep_np
+
+        grad_res = np.empty((ndof, grad_ndof), dtype=np.float64)
+
+        if grad_fun is None:
+            raise ValueError(f"grad_fun was not provided")
+        if grad_gun is None:
+            raise ValueError(f"grad_gun was not provided")
+
+        ccallback_prepare(&callback_grad_fun, signatures, grad_fun, CCALLBACK_DEFAULTS)
+        lowlevelgrad_fun = LowLevelFun_init(callback_grad_fun)
+
+        ccallback_prepare(&callback_grad_gun, signatures, grad_gun, CCALLBACK_DEFAULTS)
+        lowlevelgrad_gun = LowLevelFun_init(callback_grad_gun)
+
+        if (lowlevelgrad_fun.fun_type == PY_FUN) != (lowlevelgrad_gun.fun_type == PY_FUN):
+            raise ValueError("fun and gun must both be python functions or LowLevelCallables")
+
+        if lowlevelgrad_fun.fun_type == PY_FUN:
+            py_grad_fun = <object> lowlevelgrad_fun.py_fun
+            py_grad_gun = <object> lowlevelgrad_gun.py_fun
+            
+            py_grad_fun_res = py_grad_fun(t_span[0], v0, grad_v)
+            py_grad_gun_res = py_grad_gun(t_span[0], x0, grad_x)
+
+            if isinstance(py_grad_fun_res, float) and isinstance(py_grad_gun_res, float):
+                py_grad_fun_type = PY_FUN_FLOAT
+            elif isinstance(py_fun_res, np.ndarray) and isinstance(py_grad_gun_res, np.ndarray):
+                py_grad_fun_type = PY_FUN_NDARRAY
+            else:
+                raise ValueError(f"Could not recognize return type of python callable. Found {type(py_grad_fun_res)} and {type(py_grad_gun_res)}.")
+
+        else:
+            py_grad_fun = None
+            py_grad_gun = None
+
+    else:
+
+        grad_x = np.zeros((0, 0), dtype=np.float64)
+        grad_v = np.zeros((0, 0), dtype=np.float64)
+
+        grad_x_keep_np = np.empty((0, 0, 0), dtype=np.float64)
+        grad_v_keep_np = np.empty((0, 0, 0), dtype=np.float64)
+
+        grad_x_keep = grad_x_keep_np
+        grad_v_keep = grad_v_keep_np
+
+        grad_res = np.empty((0, 0), dtype=np.float64)
+
+        py_grad_fun = None
+        py_grad_gun = None        
+
     if mode == 'VX':
 
         with nogil:
         
             ExplicitSymplecticIVP_ann(
-                lowlevelfun ,
-                lowlevelgun ,
-                py_fun      ,
-                py_gun      ,
-                py_fun_type ,
-                t_span      ,
-                x           ,
-                v           ,
-                res         ,
-                rk          ,
-                nint        ,
-                keep_freq   ,
-                DoEFT       ,
-                x_keep      ,
-                v_keep      ,
+                lowlevelfun         ,
+                lowlevelgun         ,
+                lowlevelgrad_fun    ,
+                lowlevelgrad_gun    ,
+                py_fun              ,
+                py_gun              ,
+                py_grad_fun         ,
+                py_grad_gun         ,
+                py_fun_type         ,
+                t_span              ,
+                x                   ,
+                v                   ,
+                grad_x              ,
+                grad_v              ,
+                res                 ,
+                grad_res            ,
+                rk                  ,
+                nint                ,
+                keep_freq           ,
+                DoEFT               ,
+                DoTanIntegration    ,
+                x_keep              ,
+                v_keep              ,
+                grad_x_keep         ,
+                grad_v_keep         ,
             )
 
     elif mode == 'XV':
 
         with nogil:
             ExplicitSymplecticIVP_ann(
-                lowlevelgun ,
-                lowlevelfun ,
-                py_gun      ,
-                py_fun      ,
-                py_fun_type ,
-                t_span      ,
-                v           ,
-                x           ,
-                res         ,
-                rk          ,
-                nint        ,
-                keep_freq   ,
-                DoEFT       ,
-                v_keep      ,
-                x_keep      ,
+                lowlevelgun         ,
+                lowlevelfun         ,
+                lowlevelgrad_gun    ,
+                lowlevelgrad_fun    ,
+                py_gun              ,
+                py_fun              ,
+                py_grad_gun         ,
+                py_grad_fun         ,
+                py_fun_type         ,
+                t_span              ,
+                v                   ,
+                x                   ,
+                grad_v              ,
+                grad_x              ,
+                res                 ,
+                grad_res            ,
+                rk                  ,
+                nint                ,
+                keep_freq           ,
+                DoEFT               ,
+                DoTanIntegration    ,
+                v_keep              ,
+                x_keep              ,
+                grad_v_keep         ,
+                grad_x_keep         ,
             )
 
     else:
@@ -407,25 +574,44 @@ cpdef ExplicitSymplecticIVP(
     ccallback_release(&callback_fun)
     ccallback_release(&callback_gun)
 
-    return x_keep_np, v_keep_np
+    if DoTanIntegration:
+
+        ccallback_release(&callback_grad_fun)
+        ccallback_release(&callback_grad_gun)
+
+        return x_keep_np, v_keep_np, grad_x_keep_np, grad_v_keep_np
+    
+    else:
+        
+        return x_keep_np, v_keep_np
 
 @cython.cdivision(True)
 cdef void ExplicitSymplecticIVP_ann(
-    const LowLevelFun lowlevelfun   ,
-    const LowLevelFun lowlevelgun   ,
-    object py_fun                   ,
-    object py_gun                   ,
-    const int py_fun_type           ,
-    const (double, double) t_span   ,
-    double[::1] x                   ,
-    double[::1] v                   ,
-    double[::1] res                 ,
-    ExplicitSymplecticRKTable rk    ,
-    const long nint                 ,
-    const long keep_freq            ,
-    const bint DoEFT                ,
-    double[:,::1] x_keep            ,
-    double[:,::1] v_keep            ,
+    const LowLevelFun lowlevelfun       ,
+    const LowLevelFun lowlevelgun       ,
+    const LowLevelFun lowlevelgrad_fun  ,
+    const LowLevelFun lowlevelgrad_gun  ,
+          object py_fun                 ,
+          object py_gun                 ,
+          object py_grad_fun            ,
+          object py_grad_gun            ,
+    const int py_fun_type               ,
+    const (double, double) t_span       ,
+          double[::1]     x             ,
+          double[::1]     v             ,
+          double[:,::1]   grad_x        ,
+          double[:,::1]   grad_v        ,
+          double[::1]     res           ,
+          double[:,::1]   grad_res      ,
+          ExplicitSymplecticRKTable rk  ,
+    const long nint                     ,
+    const long keep_freq                ,
+    const bint DoEFT                    ,
+    const bint DoTanIntegration         ,
+          double[:,::1]   x_keep        ,
+          double[:,::1]   v_keep        ,
+          double[:,:,::1] grad_x_keep   ,
+          double[:,:,::1] grad_v_keep   ,
 ) noexcept nogil:
 
     cdef double tx = t_span[0]
@@ -436,11 +622,17 @@ cdef void ExplicitSymplecticIVP_ann(
     cdef long nint_keep = nint // keep_freq
     cdef long nsteps = rk._c_table.shape[0]
 
+    cdef int grad_nvar
+    if DoTanIntegration:
+        grad_nvar = ndof * grad_x.shape[1]
+
     cdef double *cdt = <double *> malloc(sizeof(double) * nsteps)
     cdef double *ddt = <double *> malloc(sizeof(double) * nsteps)
 
     cdef double *x_eft_comp
     cdef double *v_eft_comp
+    cdef double *grad_x_eft_comp
+    cdef double *grad_v_eft_comp
     cdef double tx_comp = 0.
     cdef double tv_comp = 0.
 
@@ -455,6 +647,16 @@ cdef void ExplicitSymplecticIVP_ann(
         v_eft_comp = <double *> malloc(sizeof(double) * ndof)
         for istep in range(ndof):
             v_eft_comp[istep] = 0.
+
+        if DoTanIntegration:
+
+            grad_x_eft_comp = <double *> malloc(sizeof(double) * grad_nvar)
+            for istep in range(grad_nvar):
+                grad_x_eft_comp[istep] = 0.
+
+            grad_v_eft_comp = <double *> malloc(sizeof(double) * grad_nvar)
+            for istep in range(grad_nvar):
+                grad_v_eft_comp[istep] = 0.
 
     for istep in range(nsteps):
         cdt[istep] = rk._c_table[istep] * dt
@@ -472,6 +674,14 @@ cdef void ExplicitSymplecticIVP_ann(
                         PyFun_apply(py_fun, py_fun_type, tv, v, res)
                 else:
                     LowLevelFun_apply(lowlevelfun, tv, v, res)
+                
+                if DoTanIntegration:
+                    # grad_res = grad_f(t,v,grad_v)
+                    if py_fun_type > 0:
+                        with gil:
+                            PyFun_grad_apply(py_grad_fun, py_fun_type, tv, v, grad_v, grad_res)
+                    else:
+                        LowLevelFun_grad_apply(lowlevelgrad_fun, tv, v, grad_v, grad_res)
 
                 # x = x + cdt * res
                 if DoEFT:
@@ -479,9 +689,16 @@ cdef void ExplicitSymplecticIVP_ann(
                     TwoSum_incr(&x[0],&res[0],x_eft_comp,ndof)
                     TwoSum_incr(&tx,&cdt[istep],&tx_comp,1)
 
+                    if DoTanIntegration:
+                        scipy.linalg.cython_blas.dscal(&grad_nvar,&cdt[istep],&grad_res[0,0],&int_one)
+                        TwoSum_incr(&grad_x[0,0],&grad_res[0,0],grad_x_eft_comp,grad_nvar)
+
                 else:
                     scipy.linalg.cython_blas.daxpy(&ndof,&cdt[istep],&res[0],&int_one,&x[0],&int_one)
                     tx += cdt[istep]
+
+                    if DoTanIntegration:
+                        scipy.linalg.cython_blas.daxpy(&grad_nvar,&cdt[istep],&grad_res[0,0],&int_one,&grad_x[0,0],&int_one)
 
                 # res = g(t,x)
                 if py_fun_type > 0:
@@ -490,18 +707,38 @@ cdef void ExplicitSymplecticIVP_ann(
                 else:
                     LowLevelFun_apply(lowlevelgun, tx, x, res)
 
+                if DoTanIntegration:
+                    # grad_res = grad_g(t,x,grad_x)
+                    if py_fun_type > 0:
+                        with gil:
+                            PyFun_grad_apply(py_grad_gun, py_fun_type, tx, x, grad_x, grad_res)
+                    else:
+                        LowLevelFun_grad_apply(lowlevelgrad_gun, tx, x, grad_x, grad_res)
+
                 # v = v + ddt * res
                 if DoEFT:
                     scipy.linalg.cython_blas.dscal(&ndof,&ddt[istep],&res[0],&int_one)
                     TwoSum_incr(&v[0],&res[0],v_eft_comp,ndof)
                     TwoSum_incr(&tv,&ddt[istep],&tv_comp,1)
 
+                    if DoTanIntegration:
+                        scipy.linalg.cython_blas.dscal(&grad_nvar,&ddt[istep],&grad_res[0,0],&int_one)
+                        TwoSum_incr(&grad_v[0,0],&grad_res[0,0],grad_v_eft_comp,grad_nvar)
+
                 else:
                     scipy.linalg.cython_blas.daxpy(&ndof,&ddt[istep],&res[0],&int_one,&v[0],&int_one)
                     tv += ddt[istep]
 
+                    if DoTanIntegration:
+                        scipy.linalg.cython_blas.daxpy(&grad_nvar,&ddt[istep],&grad_res[0,0],&int_one,&grad_v[0,0],&int_one)
+
         scipy.linalg.cython_blas.dcopy(&ndof,&x[0],&int_one,&x_keep[iint_keep,0],&int_one)
         scipy.linalg.cython_blas.dcopy(&ndof,&v[0],&int_one,&v_keep[iint_keep,0],&int_one)
+
+        if DoTanIntegration:
+
+            scipy.linalg.cython_blas.dcopy(&grad_nvar,&grad_x[0,0],&int_one,&grad_x_keep[iint_keep,0,0],&int_one)
+            scipy.linalg.cython_blas.dcopy(&grad_nvar,&grad_v[0,0],&int_one,&grad_v_keep[iint_keep,0,0],&int_one)
 
     free(cdt)
     free(ddt)
@@ -509,6 +746,11 @@ cdef void ExplicitSymplecticIVP_ann(
     if DoEFT:
         free(x_eft_comp)
         free(v_eft_comp)
+
+        if DoTanIntegration:
+
+            free(grad_x_eft_comp)
+            free(grad_v_eft_comp)
 
 cdef class ImplicitRKTable:
     
@@ -611,7 +853,6 @@ cdef class ImplicitRKTable:
             gamma_table = gamma_table_sym   ,
             th_cvg_rate = self._th_cvg_rate ,
         )
-
 
     cpdef double _symmetry_default(
         self                    ,
@@ -867,9 +1108,9 @@ cpdef ImplicitSymplecticIVP(
 
             assert grad_x.shape[0] == ndof
             assert grad_v.shape[0] == ndof
-            assert grad_x.shape[1] == grad_v.shape[1]
-
+            
             grad_ndof = grad_x.shape[1]
+            assert grad_v.shape[1] == grad_ndof
 
         else:
             raise ValueError('Wrong values for grad_x0 and/or grad_v0')

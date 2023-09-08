@@ -43,12 +43,12 @@ bench_folder = os.path.join(__PROJECT_ROOT__,'examples','generated_files')
 
 if not(os.path.isdir(bench_folder)):
     os.makedirs(bench_folder)
-    
-basename_bench_filename = 'Tan_IVP_vs_FD'
 
 nsteps = 8
 method = "Gauss"
 rk = choreo.scipy_plus.multiprec_tables.ComputeImplicitRKTable_Gauss(nsteps, method=method)
+
+rk_expl = choreo.scipy_plus.precomputed_tables.SofSpa10
 
 ndim = 2
 
@@ -106,7 +106,7 @@ plt.tight_layout()
 
 nint = 100
 
-t_span = (0.,0.1)
+t_span = (0.,0.01)
 
 def int_fun(x):
     
@@ -126,7 +126,7 @@ def int_fun(x):
 
     return np.ascontiguousarray(np.concatenate((resx,resv)).reshape(-1))
 
-def int_grad_fun(x,dx):
+def int_grad_fun_impl(x,dx):
     
     xx = x[:ndim].copy()
     vx = x[ndim:].copy()
@@ -161,7 +161,53 @@ fig, ax = plt.subplots(
 
 for i, order in enumerate(orderlist):
 
-    err = choreo.scipy_plus.test.compare_FD_and_exact_grad(int_fun,int_grad_fun,xo,dx=dxo,epslist=epslist,order=order)
+    err = choreo.scipy_plus.test.compare_FD_and_exact_grad(int_fun,int_grad_fun_impl,xo,dx=dxo,epslist=epslist,order=order)
+
+    plt.plot(epslist,err)
+
+ax.set_xscale('log')
+ax.set_yscale('log')
+
+plt.tight_layout()
+
+plt.show()
+
+# %%
+
+plt.close()
+
+def int_grad_fun_expl(x,dx):
+    
+    xx = x[:ndim].copy()
+    vx = x[ndim:].copy()
+    
+    dxx = dx[:ndim].reshape(ndim,-1).copy()
+    dxv = dx[ndim:].reshape(ndim,-1).copy()
+    
+    resx, resv, grad_resx, grad_resv = choreo.scipy_plus.ODE.ExplicitSymplecticIVP(
+        fun         ,
+        fun         ,
+        t_span      ,
+        xx          ,
+        vx          ,
+        rk_expl          ,
+        grad_fun = gradfun  ,
+        grad_gun = gradfun  ,
+        grad_x0 = dxx       ,
+        grad_v0 = dxv       ,
+        nint = nint         ,
+    )
+    
+    return np.ascontiguousarray(np.concatenate((grad_resx,grad_resv)).reshape(-1))
+
+fig, ax = plt.subplots(
+    figsize = figsize,
+    dpi = dpi   ,
+)
+
+for i, order in enumerate(orderlist):
+
+    err = choreo.scipy_plus.test.compare_FD_and_exact_grad(int_fun,int_grad_fun_expl,xo,dx=dxo,epslist=epslist,order=order)
 
     plt.plot(epslist,err)
 
