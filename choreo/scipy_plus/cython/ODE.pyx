@@ -1592,3 +1592,4 @@ cdef void ImplicitSymplecticIVP_ann(
             free(grad_dxv)
             free(grad_x_eft_comp)
             free(grad_v_eft_comp)
+
