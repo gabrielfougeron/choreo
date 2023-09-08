@@ -740,7 +740,8 @@ cpdef ImplicitSymplecticIVP(
     double[:,::1] grad_v0 = None            ,
     long nint = 1                           ,
     long keep_freq = -1                     ,
-    bint DoEFT = True                       ,
+    # bint DoEFT = True                       ,
+    bint DoEFT = False                       ,
     double eps = np.finfo(np.float64).eps   ,
     long maxiter = 50                       ,
 ):
@@ -780,6 +781,10 @@ cpdef ImplicitSymplecticIVP(
             py_fun_type = PY_FUN_FLOAT
         elif isinstance(py_fun_res, np.ndarray) and isinstance(py_gun_res, np.ndarray):
             py_fun_type = PY_FUN_NDARRAY
+            
+            assert py_fun_res.shape[0] == x0.shape[0]
+            assert py_gun_res.shape[0] == x0.shape[0]
+
         else:
             raise ValueError(f"Could not recognize return type of python callable. Found {type(py_fun_res)} and {type(py_gun_res)}.")
 
@@ -1090,8 +1095,6 @@ cdef void ImplicitSymplecticIVP_ann(
     if DoEFT:
 
         dxv = <double *> malloc(sizeof(double) * ndof)
-        for istep in range(ndof):
-            dxv[istep] = 0.
 
         x_eft_comp = <double *> malloc(sizeof(double) * ndof)
         for istep in range(ndof):
@@ -1104,8 +1107,6 @@ cdef void ImplicitSymplecticIVP_ann(
         if DoTanIntegration:
 
             grad_dxv = <double *> malloc(sizeof(double) * grad_nvar)
-            for istep in range(grad_nvar):
-                grad_dxv[istep] = 0.
 
             grad_x_eft_comp = <double *> malloc(sizeof(double) * grad_nvar)
             for istep in range(grad_nvar):
@@ -1205,20 +1206,14 @@ cdef void ImplicitSymplecticIVP_ann(
 
             if DoTanIntegration:
 
-
-                with gil:
-                    print("a",iint)
-
                 iGS = 0
                 GoOnGS = True
+
+                # ONLY dV here! dX was updated before !!
 
                 # dV = v + dV
                 for istep in range(nsteps):
                     scipy.linalg.cython_blas.daxpy(&ndof,&one,&v[0],&int_one,&dV[istep,0],&int_one)
-
-                # dX = x + dX
-                for istep in range(nsteps):
-                    scipy.linalg.cython_blas.daxpy(&ndof,&one,&x[0],&int_one,&dX[istep,0],&int_one)
 
                 # grad_dV = beta_table_v . grad_K_gun
                 scipy.linalg.cython_blas.dgemm(transn,transn,&grad_nvar,&nsteps,&nsteps,&one,&grad_K_gun[0,0,0],&grad_nvar,&beta_table_v[0,0],&nsteps,&zero,&grad_dV[0,0,0],&grad_nvar)
@@ -1246,9 +1241,6 @@ cdef void ImplicitSymplecticIVP_ann(
 
                     scipy.linalg.cython_blas.dscal(&grad_dX_size,&dt,&grad_K_fun[0,0,0],&int_one)
 
-                    # grad_dX_prev = grad_dX
-                    scipy.linalg.cython_blas.dcopy(&grad_dX_size,&grad_dX[0,0,0],&int_one,&grad_dX_prev[0,0,0],&int_one)
-
                     # grad_dX = a_table_x . grad_K_fun
                     scipy.linalg.cython_blas.dgemm(transn,transn,&grad_nvar,&nsteps,&nsteps,&one,&grad_K_fun[0,0,0],&grad_nvar,&a_table_x[0,0],&nsteps,&zero,&grad_dX[0,0,0],&grad_nvar)
 
@@ -1258,26 +1250,23 @@ cdef void ImplicitSymplecticIVP_ann(
 
                     if py_fun_type > 0:
                         with gil:
-                            PyFun_apply_grad_vectorized(py_grad_gun, py_fun_type, all_t_v, dV, grad_dX, grad_K_gun)
+                            PyFun_apply_grad_vectorized(py_grad_gun, py_fun_type, all_t_x, dX, grad_dX, grad_K_gun)
                     else:
-                        LowLevelFun_apply_grad_vectorized(lowlevelgrad_gun, all_t_v, dV, grad_dX, grad_K_gun)
+                        LowLevelFun_apply_grad_vectorized(lowlevelgrad_gun, all_t_x, dX, grad_dX, grad_K_gun)
 
                     scipy.linalg.cython_blas.dscal(&grad_dX_size,&dt,&grad_K_gun[0,0,0],&int_one)
-
-                    # grad_dV_prev = grad_dV
-                    scipy.linalg.cython_blas.dcopy(&grad_dX_size,&grad_dV[0,0,0],&int_one,&grad_dV_prev[0,0,0],&int_one)
 
                     # grad_dV = a_table_v . grad_K_gun
                     scipy.linalg.cython_blas.dgemm(transn,transn,&grad_nvar,&nsteps,&nsteps,&one,&grad_K_gun[0,0,0],&grad_nvar,&a_table_v[0,0],&nsteps,&zero,&grad_dV[0,0,0],&grad_nvar)
 
                     # grad_dX_prev = grad_dX_prev - grad_dX
                     scipy.linalg.cython_blas.daxpy(&grad_dX_size,&minus_one,&grad_dX[0,0,0],&int_one,&grad_dX_prev[0,0,0],&int_one)
-                    dX_err = scipy.linalg.cython_blas.dasum(&grad_dX_size,&grad_dX_prev[0,0,0],&int_one)
 
                     # grad_dV_prev = grad_dV_prev - grad_dV
                     scipy.linalg.cython_blas.daxpy(&grad_dX_size,&minus_one,&grad_dV[0,0,0],&int_one,&grad_dV_prev[0,0,0],&int_one)
-                    dV_err = scipy.linalg.cython_blas.dasum(&grad_dX_size,&grad_dV_prev[0,0,0],&int_one)
 
+                    dX_err = scipy.linalg.cython_blas.dasum(&grad_dX_size,&grad_dX_prev[0,0,0],&int_one)
+                    dV_err = scipy.linalg.cython_blas.dasum(&grad_dX_size,&grad_dV_prev[0,0,0],&int_one)
                     dXV_err = dX_err + dV_err  
 
                     iGS += 1
@@ -1285,8 +1274,8 @@ cdef void ImplicitSymplecticIVP_ann(
                     GoOnGS = (iGS < maxiter) and (dXV_err > grad_eps_mul)
 
                 # if (iGS >= maxiter):
-                    # print("Tangent Max iter exceeded. Rel error : ",dXV_err/grad_eps_mul,iint)
-                    # print("Tangent Max iter exceeded. Error : ",dX_err,dV_err,grad_eps_mul,iint)
+                #     with gil:
+                #         print("Tangent Max iter exceeded. Rel error : ",dXV_err/grad_eps_mul,iint)
 
                 grad_tot_niter += iGS
 
@@ -1314,11 +1303,6 @@ cdef void ImplicitSymplecticIVP_ann(
                     # grad_v = grad_v + grad_dxv
                     TwoSum_incr(&grad_v[0,0],grad_dxv,grad_v_eft_comp,grad_nvar)
 
-
-                    with gil:
-                        check_nan(grad_x)
-                        check_nan(grad_v)
-
             else:
 
                 # x = x + b_table_x^T . K_fun
@@ -1344,11 +1328,6 @@ cdef void ImplicitSymplecticIVP_ann(
             scipy.linalg.cython_blas.dcopy(&grad_nvar,&grad_x[0,0],&int_one,&grad_x_keep[iint_keep,0,0],&int_one)
             scipy.linalg.cython_blas.dcopy(&grad_nvar,&grad_v[0,0],&int_one,&grad_v_keep[iint_keep,0,0],&int_one)
 
-            # with gil:
-            #     check_nan(grad_x)
-            #     check_nan(grad_v)
-
-    
     # print(tot_niter / nint)
     # print(1+nsteps*tot_niter)
 
@@ -1366,317 +1345,3 @@ cdef void ImplicitSymplecticIVP_ann(
             free(grad_dxv)
             free(grad_x_eft_comp)
             free(grad_v_eft_comp)
-
-
-cdef void check_nan(double[:,::1] x):
-
-    cdef Py_ssize_t i,j
-
-    for i in range(x.shape[0]):
-        for j in range(x.shape[1]):
-
-            if cisnan(x[i,j]):
-                print("isnan",i,j)
-                exit()
-
-
-
-# def ImplicitSymplecticTanWithTableGaussSeidel_VX_cython_mulfun(
-#     object fun,
-#     object gun,
-#     object grad_fun,
-#     object grad_gun,
-#     (double, double) t_span,
-#     np.ndarray[double, ndim=1, mode="c"] x0,
-#     np.ndarray[double, ndim=1, mode="c"] v0,
-#     np.ndarray[double, ndim=2, mode="c"] grad_x0,
-#     np.ndarray[double, ndim=2, mode="c"] grad_v0,
-#     int nint,
-#     int keep_freq,
-#     np.ndarray[double, ndim=2, mode="c"] a_table_x,
-#     np.ndarray[double, ndim=1, mode="c"] b_table_x,
-#     np.ndarray[double, ndim=1, mode="c"] c_table_x,
-#     np.ndarray[double, ndim=2, mode="c"] beta_table_x,
-#     np.ndarray[double, ndim=2, mode="c"] a_table_v,
-#     np.ndarray[double, ndim=1, mode="c"] b_table_v,
-#     np.ndarray[double, ndim=1, mode="c"] c_table_v,
-#     np.ndarray[double, ndim=2, mode="c"] beta_table_v,
-#     int nsteps,
-#     double eps,
-#     int maxiter
-# ):
-#     r"""
-#     
-#     This function computes an approximate solution to the :ref:`partitioned Hamiltonian system<ode_PHS>` using an implicit Runge-Kutta method.
-#     The implicit equations are solved using a Gauss Seidel approach
-#     
-#     :param fun: function 
-#     :param gun: function 
-# 
-#     :param t_span: initial and final time for simulation
-#     :type t_span: (double, double)
-# 
-# 
-#     :return: two np.ndarray[double, ndim=1, mode="c"] for the final 
-# 
-# 
-#     """
-#     cdef int ndof = x0.size
-#     # ~ cdef int grad_ndof = grad_x0.shape[1] # Does this not work on numpy arrays ?
-#     cdef int grad_ndof = grad_x0.size // ndof
-#     cdef int istep, id, iGS, jdof, kdof
-#     cdef int kstep
-#     cdef int tot_niter = 0
-#     cdef int grad_tot_niter = 0
-#     cdef int iint_keep, ifreq
-#     cdef int nint_keep = nint // keep_freq
-# 
-#     cdef np.ndarray[double, ndim=2, mode="c"] x_keep = np.empty((nint_keep,ndof),dtype=np.float64)
-#     cdef np.ndarray[double, ndim=2, mode="c"] v_keep = np.empty((nint_keep,ndof),dtype=np.float64)
-# 
-#     cdef np.ndarray[double, ndim=3, mode="c"] grad_x_keep = np.empty((nint_keep,ndof,grad_ndof),dtype=np.float64)
-#     cdef np.ndarray[double, ndim=3, mode="c"] grad_v_keep = np.empty((nint_keep,ndof,grad_ndof),dtype=np.float64)
-# 
-#     cdef bint GoOnGS
-# 
-#     cdef double minus_one = -1.
-#     cdef double one = 1.
-#     cdef double zero = 0.
-#     cdef char *transn = 'n'
-#     cdef int int_one = 1
-# 
-#     cdef double dX_err, dV_err
-#     cdef double dXV_err, diff
-#     cdef double tbeg, t
-#     cdef double dt = (t_span[1] - t_span[0]) / nint
-# 
-#     cdef np.ndarray[double, ndim=1, mode="c"] cdt_x = np.empty((nsteps),dtype=np.float64)
-#     cdef np.ndarray[double, ndim=1, mode="c"] all_t_x = np.empty((nsteps),dtype=np.float64)
-#     cdef np.ndarray[double, ndim=1, mode="c"] cdt_v = np.empty((nsteps),dtype=np.float64)
-#     cdef np.ndarray[double, ndim=1, mode="c"] all_t_v = np.empty((nsteps),dtype=np.float64)
-# 
-#     cdef np.ndarray[double, ndim=2, mode="c"] all_args = np.empty((nsteps,ndof),dtype=np.float64)
-#     cdef np.ndarray[double, ndim=3, mode="c"] all_grad_args = np.empty((nsteps,ndof,grad_ndof),dtype=np.float64)
-# 
-#     cdef np.ndarray[double, ndim=1, mode="c"] x = x0.copy()
-#     cdef np.ndarray[double, ndim=1, mode="c"] v = v0.copy()
-# 
-#     cdef np.ndarray[double, ndim=2, mode="c"] grad_x = grad_x0.copy()
-#     cdef np.ndarray[double, ndim=2, mode="c"] grad_v = grad_v0.copy()
-# 
-#     cdef np.ndarray[double, ndim=1, mode="c"] res
-#     cdef np.ndarray[double, ndim=2, mode="c"] K_fun = np.zeros((nsteps,ndof),dtype=np.float64)
-#     cdef np.ndarray[double, ndim=2, mode="c"] K_gun = np.zeros((nsteps,ndof),dtype=np.float64)
-# 
-#     cdef np.ndarray[double, ndim=2, mode="c"] dX = np.empty((nsteps,ndof),dtype=np.float64)
-#     cdef np.ndarray[double, ndim=2, mode="c"] dV = np.empty((nsteps,ndof),dtype=np.float64) 
-#     cdef np.ndarray[double, ndim=2, mode="c"] dX_prev = np.empty((nsteps,ndof),dtype=np.float64)
-#     cdef np.ndarray[double, ndim=2, mode="c"] dV_prev = np.empty((nsteps,ndof),dtype=np.float64) 
-# 
-#     cdef np.ndarray[double, ndim=2, mode="c"] grad_res
-#     cdef np.ndarray[double, ndim=3, mode="c"] grad_K_fun = np.zeros((nsteps,ndof,grad_ndof),dtype=np.float64)
-#     cdef np.ndarray[double, ndim=3, mode="c"] grad_K_gun = np.zeros((nsteps,ndof,grad_ndof),dtype=np.float64)
-# 
-#     cdef np.ndarray[double, ndim=3, mode="c"] grad_dX = np.empty((nsteps,ndof,grad_ndof),dtype=np.float64)
-#     cdef np.ndarray[double, ndim=3, mode="c"] grad_dV = np.empty((nsteps,ndof,grad_ndof),dtype=np.float64) 
-#     cdef np.ndarray[double, ndim=3, mode="c"] grad_dX_prev = np.empty((nsteps,ndof,grad_ndof),dtype=np.float64)
-#     cdef np.ndarray[double, ndim=3, mode="c"] grad_dV_prev = np.empty((nsteps,ndof,grad_ndof),dtype=np.float64) 
-# 
-#     cdef int dX_size = nsteps*ndof
-#     cdef int grad_nvar = ndof * grad_ndof
-#     cdef int grad_dX_size = nsteps * grad_nvar
-# 
-#     cdef double eps_mul = eps * dX_size * dt
-#     cdef double grad_eps_mul = eps * grad_dX_size * dt
-# 
-#     for istep in range(nsteps):
-#         cdt_v[istep] = c_table_v[istep]*dt
-# 
-#     for istep in range(nsteps):
-#         cdt_x[istep] = c_table_x[istep]*dt
-# 
-#     for iint_keep in range(nint_keep):
-# 
-#         for ifreq in range(keep_freq):
-# 
-#             iint = iint_keep * keep_freq + ifreq
-# 
-#             tbeg = t_span[0] + iint * dt    
-#             for istep in range(nsteps):
-#                 all_t_v[istep] = tbeg + cdt_v[istep]
-# 
-#             for istep in range(nsteps):
-#                 all_t_x[istep] = tbeg + cdt_x[istep]
-# 
-#             # dX = beta_table_x . K_fun
-#             scipy.linalg.cython_blas.dgemm(transn,transn,&ndof,&nsteps,&nsteps,&one,&K_fun[0,0],&ndof,&beta_table_x[0,0],&nsteps,&zero,&dX[0,0],&ndof)
-# 
-#             # dV = beta_table_v . K_gun
-#             scipy.linalg.cython_blas.dgemm(transn,transn,&ndof,&nsteps,&nsteps,&one,&K_gun[0,0],&ndof,&beta_table_v[0,0],&nsteps,&zero,&dV[0,0],&ndof)
-# 
-#             iGS = 0
-#             GoOnGS = True
-# 
-#             while GoOnGS:
-# 
-#                 # all_args = v + dV
-#                 for istep in range(nsteps):
-#                     for jdof in range(ndof):
-#                         all_args[istep,jdof] = v[jdof] + dV[istep,jdof]
-# 
-#                 # K_fun = dt * fun(t,v)
-#                 K_fun = fun(all_t_v,all_args)  
-# 
-#                 scipy.linalg.cython_blas.dscal(&dX_size,&dt,&K_fun[0,0],&int_one)
-# 
-#                 # dX_prev = dX
-#                 scipy.linalg.cython_blas.dcopy(&dX_size,&dX[0,0],&int_one,&dX_prev[0,0],&int_one)
-# 
-#                 # dX = a_table_x .K_fun
-#                 scipy.linalg.cython_blas.dgemm(transn,transn,&ndof,&nsteps,&nsteps,&one,&K_fun[0,0],&ndof,&a_table_x[0,0],&nsteps,&zero,&dX[0,0],&ndof)
-# 
-#                 # all_args = x + dX
-#                 for istep in range(nsteps):
-#                     for jdof in range(ndof):
-#                         all_args[istep,jdof] = x[jdof] + dX[istep,jdof]
-# 
-#                 # K_gun = dt * gun(t,x)
-#                 K_gun = gun(all_t_x,all_args)  
-# 
-#                 scipy.linalg.cython_blas.dscal(&dX_size,&dt,&K_gun[0,0],&int_one)
-# 
-#                 # dV_prev = dV
-#                 scipy.linalg.cython_blas.dcopy(&dX_size,&dV[0,0],&int_one,&dV_prev[0,0],&int_one)
-#                 
-#                 # dV = a_table_v . K_gun
-#                 scipy.linalg.cython_blas.dgemm(transn,transn,&ndof,&nsteps,&nsteps,&one,&K_gun[0,0],&ndof,&a_table_v[0,0],&nsteps,&zero,&dV[0,0],&ndof)
-# 
-#                 # dX_prev = dX_prev - dX
-#                 scipy.linalg.cython_blas.daxpy(&dX_size,&minus_one,&dX[0,0],&int_one,&dX_prev[0,0],&int_one)
-#                 dX_err = scipy.linalg.cython_blas.dasum(&dX_size,&dX_prev[0,0],&int_one)
-# 
-#                 # dV_prev = dV_prev - dV
-#                 scipy.linalg.cython_blas.daxpy(&dX_size,&minus_one,&dV[0,0],&int_one,&dV_prev[0,0],&int_one)
-#                 dV_err = scipy.linalg.cython_blas.dasum(&dX_size,&dV_prev[0,0],&int_one)
-#                 
-#                 dXV_err = dX_err + dV_err  
-# 
-#                 iGS += 1
-# 
-#                 GoOnGS = (iGS < maxiter) and (dXV_err > eps_mul)
-# 
-#             # if (iGS >= maxiter):
-#                 # print("NonLin Max iter exceeded. Rel error : ",dXV_err,eps_mul,iint)
-#                 # print("NonLin Max iter exceeded. Error : ",dX_err,dV_err,eps_mul,iint)
-# 
-#             tot_niter += iGS
-# 
-#             iGS = 0
-#             GoOnGS = True
-# 
-#             # grad_dV = beta_table_v . grad_K_gun
-#             scipy.linalg.cython_blas.dgemm(transn,transn,&grad_nvar,&nsteps,&nsteps,&one,&grad_K_gun[0,0,0],&grad_nvar,&beta_table_v[0,0],&nsteps,&zero,&grad_dV[0,0,0],&grad_nvar)
-# 
-#             # grad_dX = beta_table_x . grad_K_fun
-#             scipy.linalg.cython_blas.dgemm(transn,transn,&grad_nvar,&nsteps,&nsteps,&one,&grad_K_fun[0,0,0],&grad_nvar,&beta_table_x[0,0],&nsteps,&zero,&grad_dX[0,0,0],&grad_nvar)
-# 
-#             while GoOnGS:
-# 
-#                 # all_args = v + dV
-#                 for istep in range(nsteps):
-#                     for jdof in range(ndof):
-#                         all_args[istep,jdof] = v[jdof] + dV[istep,jdof]
-# 
-#                 # all_grad_args = grad_v + grad_dV
-#                 for istep in range(nsteps):
-#                     for jdof in range(ndof):
-#                         for kdof in range(grad_ndof):
-#                             all_grad_args[istep,jdof,kdof] = grad_v[jdof,kdof] + grad_dV[istep,jdof,kdof]
-# 
-#                 # grad_K_fun = dt * fun(t,v,grad_v)
-#                 grad_K_fun = grad_fun(all_t_v,all_args,all_grad_args)  
-# 
-#                 scipy.linalg.cython_blas.dscal(&grad_dX_size,&dt,&grad_K_fun[0,0,0],&int_one)
-# 
-#                 # grad_dX_prev = grad_dX
-#                 scipy.linalg.cython_blas.dcopy(&grad_dX_size,&grad_dX[0,0,0],&int_one,&grad_dX_prev[0,0,0],&int_one)
-# 
-#                 # grad_dX = a_table_x . grad_K_fun
-#                 scipy.linalg.cython_blas.dgemm(transn,transn,&grad_nvar,&nsteps,&nsteps,&one,&grad_K_fun[0,0,0],&grad_nvar,&a_table_x[0,0],&nsteps,&zero,&grad_dX[0,0,0],&grad_nvar)
-# 
-#                 # all_args = x + dX
-#                 for istep in range(nsteps):
-#                     for jdof in range(ndof):
-#                         all_args[istep,jdof] = x[jdof] + dX[istep,jdof]
-# 
-#                 # all_grad_args = grad_x + grad_dX
-#                 for istep in range(nsteps):
-#                     for jdof in range(ndof):
-#                         for kdof in range(grad_ndof):
-#                             all_grad_args[istep,jdof,kdof] = grad_x[jdof,kdof] + grad_dX[istep,jdof,kdof]
-# 
-#                 # grad_K_gun = dt * gun(t,x,grad_x)
-#                 grad_K_gun = grad_gun(all_t_x,all_args,all_grad_args)  
-# 
-#                 scipy.linalg.cython_blas.dscal(&grad_dX_size,&dt,&grad_K_gun[0,0,0],&int_one)
-# 
-#                 # grad_dV_prev = grad_dV
-#                 scipy.linalg.cython_blas.dcopy(&grad_dX_size,&grad_dV[0,0,0],&int_one,&grad_dV_prev[0,0,0],&int_one)
-# 
-#                 # grad_dV = a_table_v . grad_K_gun
-#                 scipy.linalg.cython_blas.dgemm(transn,transn,&grad_nvar,&nsteps,&nsteps,&one,&grad_K_gun[0,0,0],&grad_nvar,&a_table_v[0,0],&nsteps,&zero,&grad_dV[0,0,0],&grad_nvar)
-# 
-#                 # grad_dX_prev = grad_dX_prev - grad_dX
-#                 scipy.linalg.cython_blas.daxpy(&grad_dX_size,&minus_one,&grad_dX[0,0,0],&int_one,&grad_dX_prev[0,0,0],&int_one)
-#                 dX_err = scipy.linalg.cython_blas.dasum(&grad_dX_size,&grad_dX_prev[0,0,0],&int_one)
-# 
-#                 # grad_dV_prev = grad_dV_prev - grad_dV
-#                 scipy.linalg.cython_blas.daxpy(&grad_dX_size,&minus_one,&grad_dV[0,0,0],&int_one,&grad_dV_prev[0,0,0],&int_one)
-#                 dV_err = scipy.linalg.cython_blas.dasum(&grad_dX_size,&grad_dV_prev[0,0,0],&int_one)
-# 
-#                 dXV_err = dX_err + dV_err  
-# 
-#                 iGS += 1
-# 
-#                 GoOnGS = (iGS < maxiter) and (dXV_err > grad_eps_mul)
-# 
-#             # if (iGS >= maxiter):
-#                 # print("Tangent Max iter exceeded. Rel error : ",dXV_err/grad_eps_mul,iint)
-#                 # print("Tangent Max iter exceeded. Error : ",dX_err,dV_err,grad_eps_mul,iint)
-# 
-#             grad_tot_niter += iGS
-# 
-#             # Do EFT here ?
-# 
-#             # x = x + b_table_x^T . K_fun
-#             scipy.linalg.cython_blas.dgemv(transn,&ndof,&nsteps,&one,&K_fun[0,0],&ndof,&b_table_x[0],&int_one,&one,&x[0],&int_one)
-# 
-#             # v = v + b_table_v^T . K_gun
-#             scipy.linalg.cython_blas.dgemv(transn,&ndof,&nsteps,&one,&K_gun[0,0],&ndof,&b_table_v[0],&int_one,&one,&v[0],&int_one)
-# 
-#             # grad_x = grad_x + b_table_x^T . grad_K_fun
-#             scipy.linalg.cython_blas.dgemv(transn,&grad_nvar,&nsteps,&one,&grad_K_fun[0,0,0],&grad_nvar,&b_table_x[0],&int_one,&one,&grad_x[0,0],&int_one)
-# 
-#             # grad_v = grad_v + b_table_v^T . grad_K_gun
-#             scipy.linalg.cython_blas.dgemv(transn,&grad_nvar,&nsteps,&one,&grad_K_gun[0,0,0],&grad_nvar,&b_table_v[0],&int_one,&one,&grad_v[0,0],&int_one)
-# 
-#         for jdof in range(ndof):
-#             x_keep[iint_keep,jdof] = x[jdof]
-#         for jdof in range(ndof):
-#             v_keep[iint_keep,jdof] = v[jdof]
-# 
-#         for jdof in range(ndof):
-#             for kdof in range(grad_ndof):
-#                 grad_x_keep[iint_keep,jdof,kdof] = grad_x[jdof,kdof]
-#         for jdof in range(ndof):
-#             for kdof in range(grad_ndof):
-#                 grad_v_keep[iint_keep,jdof,kdof] = grad_v[jdof,kdof]
-#     
-#     # print('Avg nit fun & gun : ',tot_niter/nint)
-#     # print('Avg nit grad fun & gun : ',grad_tot_niter/nint)
-#     # print(1+nsteps*tot_niter)
-# 
-#     return x_keep, v_keep, grad_x_keep, grad_v_keep
-
-
-
