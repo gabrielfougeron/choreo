@@ -73,7 +73,6 @@ method_names = [
 # all_orders = range(2,6)
 all_orders = [4]
 
-    
 # sphinx_gallery_start_ignore
 
 all_nint = np.array([2**i for i in range(8)])
