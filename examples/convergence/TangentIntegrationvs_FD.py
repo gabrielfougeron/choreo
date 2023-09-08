@@ -50,21 +50,28 @@ nsteps = 8
 method = "Gauss"
 rk = choreo.scipy_plus.multiprec_tables.ComputeImplicitRKTable_Gauss(nsteps, method=method)
 
+ndim = 2
+
+A = np.random.random((ndim,ndim))
+
 def fun(t,x):
     
-    return np.array([np.sin(t*np.dot(x,x))])
+    return np.dot(A,x)*np.dot(x,x)
 
 def gradfun(t,x,dx):
-    
-    return np.array([2*t*np.cos(t*np.dot(x,x))*np.dot(x,dx)])
+
+    dxr = np.asarray(dx).reshape(-1)
+    resr = 2*np.dot(x,dxr)*np.dot(A,x) + np.dot(x,x)*np.dot(A,dxr)
+    return resr.reshape(-1,1)
+
 
 
 to = random.random()
 fun_inst = functools.partial(fun,to)
 gradfun_inst = functools.partial(gradfun,to)
 
-n = 10
-xo = np.random.rand(n)
+xo = np.random.rand(ndim)
+dxo = np.random.rand(ndim)
 
 orderlist = [1,2]
 epslist = [10**(-i) for i in range(16)]
@@ -82,7 +89,7 @@ fig, ax = plt.subplots(
 
 for i, order in enumerate(orderlist):
 
-    err = choreo.scipy_plus.test.compare_FD_and_exact_grad(fun_inst,gradfun_inst,xo,dx=None,epslist=epslist,order=order)
+    err = choreo.scipy_plus.test.compare_FD_and_exact_grad(fun_inst,gradfun_inst,xo,dx=dxo,epslist=epslist,order=order)
 
     plt.plot(epslist,err)
 
@@ -97,14 +104,14 @@ plt.tight_layout()
 
 # plt.close()
 
-nint = int(1e3)
+nint = 100
 
-t_span = (0.,0.001)
+t_span = (0.,0.1)
 
 def int_fun(x):
     
-    xx = x[:n].copy()
-    vx = x[n:].copy()
+    xx = x[:ndim].copy()
+    vx = x[ndim:].copy()
     
     resx, resv = choreo.scipy_plus.ODE.ImplicitSymplecticIVP(
         fun         ,
@@ -121,11 +128,11 @@ def int_fun(x):
 
 def int_grad_fun(x,dx):
     
-    xx = x[:n].copy()
-    vx = x[n:].copy()
+    xx = x[:ndim].copy()
+    vx = x[ndim:].copy()
     
-    dxx = dx[:n].reshape(n,-1).copy()
-    dxv = dx[n:].reshape(n,-1).copy()
+    dxx = dx[:ndim].reshape(ndim,-1).copy()
+    dxv = dx[ndim:].reshape(ndim,-1).copy()
     
     resx, resv, grad_resx, grad_resv = choreo.scipy_plus.ODE.ImplicitSymplecticIVP(
         fun         ,
@@ -141,33 +148,22 @@ def int_grad_fun(x,dx):
         grad_v0 = dxv       ,
         nint = nint         ,
     )
+    
+    return np.ascontiguousarray(np.concatenate((grad_resx,grad_resv)).reshape(-1))
 
-    return np.ascontiguousarray(np.concatenate((grad_resx,grad_resv)).reshape(2*n))
-
-xo = np.random.rand(2*n)
-dxo = np.random.rand(2*n)
-# 
-print(xo)
-print(int_fun(xo))
-print(int_grad_fun(xo,dxo))
-
+xo = np.random.rand(2*ndim)
+dxo = np.random.rand(2*ndim)
 
 fig, ax = plt.subplots(
     figsize = figsize,
     dpi = dpi   ,
 )
 
-
 for i, order in enumerate(orderlist):
 
-    err = choreo.scipy_plus.test.compare_FD_and_exact_grad(int_fun,int_grad_fun,xo,dx=None,epslist=epslist,order=order)
-
-
-    print(err)
+    err = choreo.scipy_plus.test.compare_FD_and_exact_grad(int_fun,int_grad_fun,xo,dx=dxo,epslist=epslist,order=order)
 
     plt.plot(epslist,err)
-
-
 
 ax.set_xscale('log')
 ax.set_yscale('log')
