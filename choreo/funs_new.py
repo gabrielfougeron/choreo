@@ -837,28 +837,6 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
 
 
 
-# 
-#     # Choose loop generators with maximal exploitable FFT symmetry
-#     loopgen = - np.ones((nloop), dtype = int)
-#     loopnsegm = np.zeros((nloop), dtype = int)
-#     for il in range(nloop):
-#         for ilb in range(loopnb[il]):
-# 
-#             if BodyHasContiguousGeneratingSegments[Targets[il,ilb]]:
-#                 loopgen[il] = Targets[il,ilb]
-#                 break
-# 
-#         assert loopgen[il] >= 0
-
-
-
-    # Choose loop generators with maximal exploitable FFT symmetry
-#     loopgen = - np.ones((nloop), dtype = int)
-#     loopnsegm = np.zeros((nloop), dtype = int)
-#     for il in range(nloop):
-#         loopgen[il] = Targets[il,0]
-# 
-
 
 
     
@@ -967,11 +945,11 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
 
         for ilb in range(loopnb[il]):
 
-#             print()
-#             print(il,ilb)
-#             print(ncoeff_min_body[Targets[il,ilb]])
-#             print(nparam_body[Targets[il,ilb]])
-#             print(nnz_body[Targets[il,ilb]])
+            print()
+            print(il,ilb)
+            print(ncoeff_min_body[Targets[il,ilb]])
+            print(nparam_body[Targets[il,ilb]])
+            print(nnz_body[Targets[il,ilb]])
 # 
 #             print(nparam_body[Targets[il,ilb]] / ncoeff_min_body[Targets[il,ilb]])
 
@@ -981,67 +959,125 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
         nparam_per_k_tot += nparam_body[Targets[il,0]] /  len(All_params_basis[Targets[il,0]])
 
 
-    # FFT tests
 
+
+
+# 
+#     # Choose loop generators with maximal exploitable FFT symmetry
+#     loopgen = - np.ones((nloop), dtype = int)
+#     loopnsegm = np.zeros((nloop), dtype = int)
+#     for il in range(nloop):
+#         for ilb in range(loopnb[il]):
+# 
+#             if BodyHasContiguousGeneratingSegments[Targets[il,ilb]]:
+#                 loopgen[il] = Targets[il,ilb]
+#                 break
+# 
+#         assert loopgen[il] >= 0
+
+
+# 
+#     # Choose loop generators with smallest 
+#     loopgen = - np.ones((nloop), dtype = int)
+#     loopnsegm = np.zeros((nloop), dtype = int)
+#     for il in range(nloop):
+#         loopgen[il] = Targets[il,0]
+
+
+
+
+
+
+
+
+
+
+
+
+    # FFT tests
+    
+    
+    # nint = math.lcm(2, nint_min)
+    nint = math.lcm(2, nint_min, *ncoeff_min_body)
+    
+    
+    ncoeffs = nint//2 + 1
+
+    # Create parameters
+    all_params = []
     for ib in range(nbody):
 
-        print()
-        print(f'{ib = }')
+        # print()
+        # print(f'{ib = }')
 
-        ncoeffs_min = len(All_params_basis[ib])
-        no = math.lcm(2, nint_min)
-
-        nint = no * ncoeffs_min
-        ncoeffs = nint//2 + 1
-
-        body_coeffs = np.zeros((ncoeffs,geodim,2), dtype = np.float64)
-        
         nparams_body = 0
+        
+        ncoeffs_min = len(All_params_basis[ib])
 
-        for l in range(ncoeffs_min):
+        for k in range(ncoeffs):
             l = (k % ncoeffs_min)
 
             NullSpace = All_params_basis[ib][l]
             nparams_body += NullSpace.shape[2]
-            # print(k,nparams)
 
-        params_body = np.random.rand(nparam)
+        params_body = np.random.rand(nparams_body)
+        all_params.append(params_body)
+        
+    # Parameters to all_pos through coeffs
+    all_coeffs = np.zeros((nbody,ncoeffs,geodim,2), dtype = np.float64)
+    for ib in range(nbody):
+
+        nparams_body = 0
+        
+        ncoeffs_min = len(All_params_basis[ib])
+        
+        iparam = 0
+
+        for k in range(ncoeffs):
+            l = (k % ncoeffs_min)
+            NullSpace = All_params_basis[ib][l]
+            jparam = iparam + NullSpace.shape[2]
+
+            all_coeffs[ib, k, : ,:] = np.dot(NullSpace, all_params[ib][iparam:jparam])
+            
+            iparam = jparam
+    
+
+    all_coeffs_c = all_coeffs.view(dtype=np.complex128)[...,0]
+    all_pos = scipy.fft.irfft(all_coeffs_c, axis=1)
+
+    # Make sure body constraints are respected
+
+    AllConstraintAreRespected = True
+
+    for ib in range(nbody):
+
+        for icstr, Sym in enumerate(BodyConstraints[ib]):
+
+            ConstraintIsRespected = True
+
+            for iint in range(nint):
+
+                assert (nint % Sym.TimeShiftDen) == 0
+
+                tnum, tden = Sym.ApplyT(iint, nint)
+                jint = tnum * nint // tden
+
+                err = np.linalg.norm(all_pos[ib,iint,:] - np.matmul(Sym.SpaceRot, all_pos[ib,jint,:]))
+
+                ConstraintIsRespected = ConstraintIsRespected and (err < eps)
+
+            AllConstraintAreRespected = AllConstraintAreRespected and ConstraintIsRespected
+            if not(ConstraintIsRespected):
+
+                print(f'Constraint {icstr} is not respected')
+            
+    assert AllConstraintAreRespected
 
 
+    #Parameters to all_pos without all_coeffs
+    all_pos_new = np.zeros((nbody,nint,geodim), dtype = np.float64)
 
-
-
-
-# 
-#     for ib in range(nbody):
-#         ncoeffs_min = len(All_params_basis[ib])
-# 
-#         no = math.lcm(2, nint_min)
-# 
-#         nint = no * ncoeffs_min
-#         ncoeffs = nint//2 + 1
-# 
-#         body_coeffs = np.zeros((ncoeffs,geodim,2), dtype = np.float64)
-#         
-#         nparams_body = 0
-#         for k in range(ncoeffs):
-#             l = (k % ncoeffs_min)
-# 
-#             NullSpace = All_params_basis[ib][l]
-#             nparams_body += NullSpace.shape[2]
-# 
-#             
-# 
-#         params_body = np.random.rand(nparams_body)
-# 
-#             all_coeffs[ib,k,:,:] = np.matmul(NullSpace, np.random.rand(nparam))
-# 
-#     all_coeffs_c = all_coeffs.view(dtype=np.complex128)[...,0]
-#     all_pos = scipy.fft.irfft(all_coeffs_c, axis=1)
-# 
-#     AllConstraintAreRespected = True
-# 
-# 
 
 
 
