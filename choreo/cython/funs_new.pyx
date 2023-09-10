@@ -251,7 +251,7 @@ cdef class ActionSym():
         return ((self.Inverse()).Compose(other)).IsIdentityRotAndTime(atol = atol)
 
     @cython.cdivision(True)
-    cpdef (long, long)ApplyT(ActionSym self, long tnum, long tden):
+    cpdef (long, long) ApplyT(ActionSym self, long tnum, long tden):
 
         cdef long num = self.TimeRev * (tnum * self.TimeShiftDen - self.TimeShiftNum * tden)
         cdef long den = tden * self.TimeShiftDen

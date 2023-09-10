@@ -273,7 +273,7 @@ def compute_FD(fun,xo,dx,eps,fo=None,order=1):
 
     return dfdx
 
-def compare_FD_and_exact_grad(fun,gradfun,xo,dx=None,epslist=None,order=1):
+def compare_FD_and_exact_grad(fun,gradfun,xo,dx=None,epslist=None,order=1,vectorize=True):
     
     if epslist is None:
         epslist = [10**(-i) for i in range(16)]
@@ -283,7 +283,10 @@ def compare_FD_and_exact_grad(fun,gradfun,xo,dx=None,epslist=None,order=1):
         dx = np.random.rand(*shape)
     
     fo = fun(xo)
-    dfdx_exact = gradfun(xo,dx.reshape(-1,1)).reshape(-1)
+    if vectorize:
+        dfdx_exact = gradfun(xo,dx.reshape(-1,1)).reshape(-1)
+    else:
+        dfdx_exact = gradfun(xo,dx)
     dfdx_exact_magn = np.linalg.norm(dfdx_exact)
     
     error_list = []
