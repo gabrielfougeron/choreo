@@ -104,7 +104,7 @@ ax.set_yscale('log')
 
 plt.tight_layout()
 
-# plt.show()
+plt.show()
 
 # %%
 

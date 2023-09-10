@@ -1,6 +1,6 @@
 """
-Convergence analysis of implicit Runge-Kutta methods for ODE IVP
-================================================================
+Convergence analysis of scipy's Runge-Kutta methods for ODE IVP
+===============================================================
 """
 
 # %%

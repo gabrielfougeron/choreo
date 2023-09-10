@@ -128,14 +128,6 @@ for eq_name in eq_names:
 
 all_nint = np.array([2**i for i in range(12)])
 
-
-    
-    
-
-
-
-
-
 def setup(nint):
     return nint
 

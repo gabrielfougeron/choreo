@@ -13,7 +13,7 @@ import pstats
 def main():
         
     all_tests = [
-        '3q',
+        # '3q',
         '2C3C',
         '2C3C5k',
         '2D3D',
