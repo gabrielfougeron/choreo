@@ -313,8 +313,7 @@ plt.plot(t,x)
 plt.show()
 
 # %%
-# In this case, the coefficients of the Fourier transform that are not a numbered by a multiple of the subperiod are zero.
-
+# In this case, the coefficients of the Fourier transform that are not indexed by a multiple of the subperiod are zero.
 
 rfft_c = scipy.fft.rfft(x)
 err = 0
@@ -336,4 +335,3 @@ print(err)
 irfftsub_c = scipy.fft.irfft(rfftsub_c)
 err = np.linalg.norm(x[:n_base] - irfftsub_c)
 print(err)
-

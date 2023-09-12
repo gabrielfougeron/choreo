@@ -923,7 +923,8 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
             
     assert AllConstraintAreRespected
 
-    nparam_body = np.zeros((nbody),dtype=int)
+    nparam_body_sum = np.zeros((nbody),dtype=int)
+    nparam_body_max = np.zeros((nbody),dtype=int)
     ncoeff_min_body = np.zeros((nbody),dtype=int)
     nnz_body = np.zeros((nbody),dtype=int)
     for ib in range(nbody):
@@ -934,7 +935,8 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
 
         for k in range(ncoeff_min_body[ib]):
 
-            nparam_body[ib] += All_params_basis[ib][k].shape[-1]
+            nparam_body_sum[ib] += All_params_basis[ib][k].shape[2]
+            nparam_body_max[ib] = max(nparam_body_max[ib], All_params_basis[ib][k].shape[2])
             nnz_body[ib] += np.count_nonzero(All_params_basis[ib][k])
 
 
@@ -944,19 +946,19 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
     for il in range(nloop):
 
         for ilb in range(loopnb[il]):
-
-            print()
-            print(il,ilb)
-            print(ncoeff_min_body[Targets[il,ilb]])
-            print(nparam_body[Targets[il,ilb]])
-            print(nnz_body[Targets[il,ilb]])
+# 
+#             print()
+#             print(il,ilb)
+#             print(ncoeff_min_body[Targets[il,ilb]])
+#             print(nparam_body_sum[Targets[il,ilb]])
+            # print(nnz_body[Targets[il,ilb]])
 # 
 #             print(nparam_body[Targets[il,ilb]] / ncoeff_min_body[Targets[il,ilb]])
 
-            assert nparam_body[Targets[il,0]] / ncoeff_min_body[Targets[il,0]] == nparam_body[Targets[il,ilb]] / ncoeff_min_body[Targets[il,ilb]]
+            assert nparam_body_sum[Targets[il,0]] / ncoeff_min_body[Targets[il,0]] == nparam_body_sum[Targets[il,ilb]] / ncoeff_min_body[Targets[il,ilb]]
 
         nparam_per_k_before_tot += geodim * 2 * loopnb[il]
-        nparam_per_k_tot += nparam_body[Targets[il,0]] /  len(All_params_basis[Targets[il,0]])
+        nparam_per_k_tot += nparam_body_sum[Targets[il,0]] /  len(All_params_basis[Targets[il,0]])
 
 
 
@@ -996,12 +998,14 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
 
     # FFT tests
     
-    
-    # nint = math.lcm(2, nint_min)
-    nint = math.lcm(2, nint_min, *ncoeff_min_body)
+    # nint_min_body = [2*(nc-1) for nc in ncoeff_min_body]
     
     
-    ncoeffs = nint//2 + 1
+    nint = math.lcm(2, nint_min)
+    # nint = math.lcm(2, nint_min, *nint_min_body)
+    
+    
+    ncoeffs = nint //2 + 1
 
     # Create parameters
     all_params = []
@@ -1013,7 +1017,7 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
         nparams_body = 0
         
         ncoeffs_min = len(All_params_basis[ib])
-
+     
         for k in range(ncoeffs):
             l = (k % ncoeffs_min)
 
@@ -1073,16 +1077,73 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
                 print(f'Constraint {icstr} is not respected')
             
     assert AllConstraintAreRespected
+    
+    # Transform NullSpace basis to a complex form
+    All_params_basis_c = []
+    for ib in range(nbody):
+        
+        ncoeffs_min = ncoeff_min_body[ib]
+        npbm = nparam_body_max[ib] 
+        NullSpace_mat_c = np.zeros((geodim, ncoeffs_min, npbm), dtype=np.complex128)
+
+        print()
+        print(ncoeffs_min)
+        print(npb)
+
+        for l in range(ncoeffs_min):
+
+            for idim in range(geodim):
+                
+                npb = All_params_basis[ib][l].shape[2]
+                
+                NullSpace_mat_c[idim,l,iparamo:jparamo] = All_params_basis[ib][l][idim,0,:] + 1j*All_params_basis[ib][l][idim,1,:]
+            
+        # NullSpace_mat_c
+        NullSpace_mat_pos = scipy.fft.irfft(NullSpace_mat_c, axis=1)
+    
+    
+    
 
 
     #Parameters to all_pos without all_coeffs
     all_pos_new = np.zeros((nbody,nint,geodim), dtype = np.float64)
 
+    for ib in range(nbody):
 
+        ncoeffs_min = ncoeff_min_body[ib]
+        npb = nparam_body_sum[ib] 
+        
+        iparam = 0
+        
+        komax = ((ncoeffs-1)// ncoeffs_min) +1
+        # komax = ncoeffs // ncoeffs_min
+        
+        # print(komax)
+        # assert komax 
+        
+        params_array = np.zeros((komax,npb))
 
+        for k in range(ncoeffs):
+            ko = k // ncoeffs_min
+            l = (k % ncoeffs_min)
+            
+            NullSpace = All_params_basis[ib][l]
+            jparam = iparam + NullSpace.shape[2]
+            
+            iparamo = iparam % npb
+            jparamo = iparamo + NullSpace.shape[2]
 
+            params_array[ko,iparamo:jparamo] = all_params[ib][iparam:jparam]
+            
+            iparam = jparam
 
-
+        params_array_fft = scipy.fft.ifft(params_array, axis=0)
+        
+        
+# 
+#         for l in range(ncoeffs_min):
+#             
+#             runit = m.exp( 1j * 2 * m.pi * l
 
 
 
