@@ -15,7 +15,12 @@ import random
 import scipy
 import time
 
-np.set_printoptions(edgeitems=10,linewidth=200)
+np.set_printoptions(
+    precision = 3,
+    edgeitems = 10,
+    linewidth = 200,
+    floatmode = "fixed",
+    )
 
         
 print()        
@@ -34,8 +39,7 @@ fft_f = scipy.fft.fft(f)
 
 rf = f.copy().reshape(qint, pint) 
 
-rf_1 = scipy.fft.fft(rf, axis=0)
-
+rf_1 = scipy.fft.fft(rf, axis=0) 
 
 for iq in range(qint):
     for ip in range(pint):        
@@ -45,9 +49,76 @@ for iq in range(qint):
         rf_1[iq, ip] *= w
         
 # CAREFUL ! TRANSPOSE HERE !        
-fft_rf = scipy.fft.fft(rf_1, axis=1).T.reshape(-1)
+fft_rf = scipy.fft.fft(rf_1.T, axis=0).reshape(-1)
 
 print(np.linalg.norm(fft_f - fft_rf))
+
+print()        
+print("="*80)
+print()
+
+# IDEM tranposed
+
+pint = 2
+qint = 3
+nint = pint * qint
+
+f = np.random.random((nint)) + 1j * np.random.random((nint))
+
+fft_f = scipy.fft.fft(f)
+
+rf = f.copy().reshape(qint, pint) 
+
+# CAREFUL ! TRANSPOSE HERE !    
+rf_1 = scipy.fft.fft(rf.T, axis=1)
+
+
+for iq in range(qint):
+    for ip in range(pint):        
+        
+        w = np.exp((-2j*m.pi*ip*iq)/nint)
+        
+        rf_1[ip, iq] *= w
+    
+fft_rf = scipy.fft.fft(rf_1, axis=0).reshape(-1)
+
+
+print(np.linalg.norm(fft_f - fft_rf))
+
+
+print()        
+print("="*80)
+print()
+
+
+# IDEM with array of transposed shape (since pint and qint have similar roles)
+
+pint = 2
+qint = 3
+nint = pint * qint
+
+f = np.random.random((nint)) + 1j * np.random.random((nint))
+
+fft_f = scipy.fft.fft(f)
+
+rf = f.copy().reshape(pint,qint) 
+
+# CAREFUL ! TRANSPOSE HERE !    
+rf_1 = scipy.fft.fft(rf.T, axis=1)
+
+
+for iq in range(qint):
+    for ip in range(pint):        
+        
+        w = np.exp((-2j*m.pi*ip*iq)/nint)
+        
+        rf_1[iq, ip] *= w
+    
+fft_rf = scipy.fft.fft(rf_1, axis=0).reshape(-1)
+
+
+print(np.linalg.norm(fft_f - fft_rf))
+
 
 print()        
 print("="*80)
@@ -60,7 +131,6 @@ ifft_f = scipy.fft.ifft(f)
 rf = f.copy().reshape(qint, pint) 
 
 rf_1 = scipy.fft.ifft(rf, axis=0)
-
 
 for iq in range(qint):
     for ip in range(pint):        
@@ -202,3 +272,227 @@ rfft_total = scipy.fft.irfft(rfft_rf_quad, axis=0).reshape(-1)
         
 
 print(np.linalg.norm(f_sol - rfft_total))
+
+
+print()        
+print("="*80)
+print()
+
+
+# Now for the general setup, with complex numbers:
+
+
+ncoeffs_min = 2
+nparam_per_period = 3
+nperiods = 3
+nint = ncoeffs_min * nperiods
+
+All_params_basis = np.random.random((ncoeffs_min, nparam_per_period)) + 1j * np.random.random((ncoeffs_min, nparam_per_period))
+all_params = np.random.random((nparam_per_period, nperiods)) + 1j * np.random.random((nparam_per_period, nperiods))
+
+all_coeffs = np.dot(All_params_basis, all_params).reshape(-1)
+
+all_pos_direct = scipy.fft.ifft(all_coeffs)
+
+
+
+# Making the tables artificially longer before FFT + Naive convolution
+
+All_params_basis_long = np.zeros((nint,nparam_per_period),dtype=np.complex128)
+all_params_long = np.zeros((nparam_per_period,nint),dtype=np.complex128)
+
+for iint in range(nint):
+
+    All_params_basis_long[iint,: ] = All_params_basis[iint // nperiods,:]
+        
+for iint in range(nint):
+        
+    all_params_long[:, iint] = all_params[:, iint % nperiods]  
+    
+ifft_f_long = scipy.fft.ifft(All_params_basis_long, axis=0)
+ifft_g_long = scipy.fft.ifft(all_params_long, axis=1) # This is sparse with sparsity pattern one in ncoeffs_min
+
+
+convolve_ifft_fg = np.zeros((nint),dtype = np.complex128)
+
+for iint in range(nint):
+    for jint in range(nint):
+        
+        ijint = (iint - jint + nint) % nint
+        
+        convolve_ifft_fg[iint] += np.dot(ifft_f_long[jint,:], ifft_g_long[:,ijint])
+        
+print(np.linalg.norm(all_pos_direct - convolve_ifft_fg))
+print()         
+
+
+
+# Finding the right tables
+
+
+ifft_f  = scipy.fft.ifft(All_params_basis, axis=0)
+ifft_g  = scipy.fft.ifft(all_params, axis=1)
+
+
+ifft_f_long_bis = np.zeros((nint,nparam_per_period),dtype=np.complex128)
+ifft_g_long_bis = np.zeros((nparam_per_period,nint),dtype=np.complex128) 
+
+
+for ip in range(nperiods):
+    for iq in range(ncoeffs_min):
+    
+        jint = iq + ncoeffs_min*ip
+
+        if jint == 0:
+            mul = 1.
+        else:
+
+            mul = 1./nperiods * (1-np.exp(2j*m.pi*iq/ncoeffs_min)) / (1-np.exp(2j*m.pi*jint/nint))
+            
+        ifft_f_long_bis[jint,:] = ifft_f[iq,:] * mul
+
+
+print(np.linalg.norm(ifft_f_long - ifft_f_long_bis))
+
+print()
+
+for ip in range(nperiods):
+    ifft_g_long_bis[:,ip * ncoeffs_min] = ifft_g[:,ip]
+
+print(np.linalg.norm(ifft_g_long - ifft_g_long_bis))
+
+# Reduced convolution version I
+
+convolve_ifft_fg = np.zeros((nint),dtype = np.complex128)
+
+ifft_f_mod = ifft_f.copy()
+
+for iq in range(ncoeffs_min):
+    
+    if iq == 0:
+        mul = 1.
+    else:        
+        mul = (1-np.exp(2j*m.pi*iq / ncoeffs_min))
+
+    ifft_f_mod[iq,:] *= mul
+
+
+for ip in range(nperiods):
+    
+    for jpp in range(ip,ip+nperiods):
+            
+        for iq in range(ncoeffs_min):
+                    
+            jp = jpp-ip
+            
+            iint = ((jpp)*ncoeffs_min + iq) % nint
+            
+            jint = iq + ncoeffs_min * (jpp-ip)
+            
+            if iq == 0:
+                if jp == 0:
+                    mul = 1.
+                else:
+                    mul = 0.
+            else:
+                mul = 1. / (nperiods * (1-np.exp(2j*m.pi*jint / nint)))
+
+
+            convolve_ifft_fg[iint] += np.dot(ifft_f_mod[iq,:], ifft_g[:,ip]) * mul
+        
+
+        
+print()        
+print(np.linalg.norm(all_pos_direct - convolve_ifft_fg))
+#         
+
+# Reduced convolution version II
+
+convolve_ifft_fg = np.zeros((nint),dtype = np.complex128)
+
+for ip in range(nperiods):
+    for jint in range(nint):
+        
+        ijint = (ip * ncoeffs_min + jint) % nint
+
+        convolve_ifft_fg[ijint] += np.dot(ifft_f_long[jint,:], ifft_g[:,ip])
+        
+        
+print()        
+print(np.linalg.norm(all_pos_direct - convolve_ifft_fg))
+
+# Without convolution
+
+
+
+print()        
+print("="*80)
+print()
+
+
+ncoeffs_min = 2
+nparam_per_period = 3
+nperiods = 3
+nint = ncoeffs_min * nperiods
+
+All_params_basis = np.random.random((ncoeffs_min, nparam_per_period)) + 1j * np.random.random((ncoeffs_min, nparam_per_period))
+all_params = np.random.random((nparam_per_period, nperiods)) + 1j * np.random.random((nparam_per_period, nperiods))
+
+all_coeffs = np.dot(All_params_basis, all_params).reshape(-1)
+
+all_pos_direct = scipy.fft.ifft(all_coeffs)
+
+
+ifft_f  = scipy.fft.ifft(All_params_basis, axis=0)
+
+inter_array = np.zeros((ncoeffs_min,nperiods),dtype=np.complex128)
+
+for iq in range(ncoeffs_min):
+    
+    for ip in range(nperiods):    
+        
+        w = np.exp((2j*m.pi*iq*ip)/nint)    
+        
+        inter_array[iq, ip] = w * np.matmul(ifft_f[iq,:], all_params[:,ip])
+        
+
+ifft_fg  = scipy.fft.ifft(inter_array, axis=1).T.reshape(-1)
+
+ 
+print()        
+print(np.linalg.norm(all_pos_direct - ifft_fg))
+
+
+print()        
+print("="*80)
+print()
+
+
+ncoeffs_min = 3
+nparam_per_period = 1
+nperiods = 2
+nint = ncoeffs_min * nperiods
+
+All_params_basis = np.random.random((ncoeffs_min, nparam_per_period)) + 1j * np.random.random((ncoeffs_min, nparam_per_period))
+all_params = np.random.random((nparam_per_period, nperiods)) + 1j * np.random.random((nparam_per_period, nperiods))
+
+all_coeffs = np.dot(All_params_basis, all_params).T.reshape(-1)
+
+all_pos_direct = scipy.fft.ifft(all_coeffs)
+
+ifft_g  = scipy.fft.ifft(all_params, axis=1)
+
+inter_array = np.zeros((nperiods,ncoeffs_min),dtype=np.complex128)
+
+for iq in range(ncoeffs_min):
+    
+    for ip in range(nperiods):        
+        
+        w = np.exp((2j*m.pi*iq*ip)/nint)
+        
+        inter_array[ip, iq] = w * np.matmul(All_params_basis[iq,:], ifft_g[:,ip])
+
+ifft_fg  = scipy.fft.ifft(inter_array, axis=1).T.reshape(-1)
+ 
+print()        
+print(np.linalg.norm(all_pos_direct - ifft_fg))
