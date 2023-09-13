@@ -529,3 +529,84 @@ ifft_fg  = scipy.fft.ifft(inter_array, axis=0).reshape(-1)
        
 print(np.linalg.norm(all_pos_direct - ifft_fg))
 print(np.linalg.norm(all_pos_direct[:nperiods] - sum_fg))
+
+print()        
+print("="*80)
+print()
+
+# Without convolution, on a subdomain, NO GLOBAL ARRAYS!!!!
+
+ncoeffs_min = 3
+nparam_per_period = 15
+nperiods = 37
+nint = ncoeffs_min * nperiods
+
+All_params_basis = np.random.random((ncoeffs_min, nparam_per_period)) + 1j * np.random.random((ncoeffs_min, nparam_per_period))
+all_params = np.random.random((nparam_per_period, nperiods)) + 1j * np.random.random((nparam_per_period, nperiods))
+
+all_coeffs = np.dot(All_params_basis, all_params).T.reshape(-1)
+all_pos_direct = scipy.fft.ifft(all_coeffs)
+
+ifft_g  = scipy.fft.ifft(all_params, axis=1)
+
+inter_array = np.zeros((nperiods),dtype=np.complex128)
+
+ncoeffs_min_inv = 1.  / ncoeffs_min
+
+for iq in range(ncoeffs_min):
+    
+    wo = np.exp((2j*m.pi*iq)/nint)
+    
+    w = ncoeffs_min_inv
+    
+    for ip in range(nperiods):        
+        
+        inter_array[ip] += w * np.matmul(All_params_basis[iq,:], ifft_g[:,ip])
+        
+        w *= wo
+
+print(np.linalg.norm(all_pos_direct[:nperiods] - inter_array))
+
+# IS THIS REALLY WHAT I WANT THOUGH ?
+# DO THIS WITH ULTIMATELY REAL POSITIONS ?
+# START WITH INVERSING THESE RELATIONS ? (<=> go from positions to parameters)
+
+
+
+print()        
+print("="*80)
+print()
+
+# Without convolution
+
+ncoeffs_min = 2
+nparam_per_period = 3
+nperiods = 3
+nint = ncoeffs_min * nperiods
+
+All_params_basis = np.random.random((ncoeffs_min, nparam_per_period)) + 1j * np.random.random((ncoeffs_min, nparam_per_period))
+all_params = np.random.random((nparam_per_period, nperiods)) + 1j * np.random.random((nparam_per_period, nperiods))
+
+all_coeffs = np.dot(All_params_basis, all_params).reshape(-1)
+
+all_pos_direct = scipy.fft.ifft(all_coeffs)
+
+ifft_f  = scipy.fft.ifft(All_params_basis, axis=0)
+
+inter_array = np.zeros((ncoeffs_min,nperiods),dtype=np.complex128)
+
+for iq in range(ncoeffs_min):
+    
+    for ip in range(nperiods):    
+        
+        w = np.exp((2j*m.pi*iq*ip)/nint)    
+        
+        inter_array[iq, ip] = w * np.matmul(ifft_f[iq,:], all_params[:,ip])
+        
+
+ifft_fg  = scipy.fft.ifft(inter_array, axis=1).T.reshape(-1)
+
+sum_fg  = np.sum(inter_array, axis=1).reshape(-1) / nperiods
+
+print(np.linalg.norm(all_pos_direct - ifft_fg))
+print(np.linalg.norm(all_pos_direct[:ncoeffs_min] - sum_fg[:ncoeffs_min]))
