@@ -214,11 +214,6 @@ print("="*80)
 print()
 
 
-# print(rfft_rf_quad.shape)
-# print(pint)
-# print(qcoeff)
-# 
-# exit()
 # IRFFT
 
 
@@ -421,13 +416,15 @@ for ip in range(nperiods):
 print()        
 print(np.linalg.norm(all_pos_direct - convolve_ifft_fg))
 
-# Without convolution
-
 
 
 print()        
 print("="*80)
 print()
+
+
+# Without convolution
+
 
 
 ncoeffs_min = 2
@@ -458,8 +455,7 @@ for iq in range(ncoeffs_min):
 
 ifft_fg  = scipy.fft.ifft(inter_array, axis=1).T.reshape(-1)
 
- 
-print()        
+
 print(np.linalg.norm(all_pos_direct - ifft_fg))
 
 
@@ -468,9 +464,9 @@ print("="*80)
 print()
 
 
-ncoeffs_min = 3
-nparam_per_period = 1
-nperiods = 2
+ncoeffs_min = 5
+nparam_per_period = 15
+nperiods = 11
 nint = ncoeffs_min * nperiods
 
 All_params_basis = np.random.random((ncoeffs_min, nparam_per_period)) + 1j * np.random.random((ncoeffs_min, nparam_per_period))
@@ -482,7 +478,7 @@ all_pos_direct = scipy.fft.ifft(all_coeffs)
 
 ifft_g  = scipy.fft.ifft(all_params, axis=1)
 
-inter_array = np.zeros((nperiods,ncoeffs_min),dtype=np.complex128)
+inter_array = np.zeros((ncoeffs_min,nperiods),dtype=np.complex128)
 
 for iq in range(ncoeffs_min):
     
@@ -490,9 +486,46 @@ for iq in range(ncoeffs_min):
         
         w = np.exp((2j*m.pi*iq*ip)/nint)
         
-        inter_array[ip, iq] = w * np.matmul(All_params_basis[iq,:], ifft_g[:,ip])
+        inter_array[iq, ip] = w * np.matmul(All_params_basis[iq,:], ifft_g[:,ip])
 
-ifft_fg  = scipy.fft.ifft(inter_array, axis=1).T.reshape(-1)
- 
-print()        
+ifft_fg  = scipy.fft.ifft(inter_array, axis=0).reshape(-1)
+       
 print(np.linalg.norm(all_pos_direct - ifft_fg))
+
+
+print()        
+print("="*80)
+print()
+
+# Without convolution, ON A SUBDOMAIN !!!!
+
+ncoeffs_min = 2
+nparam_per_period = 15
+nperiods = 3
+nint = ncoeffs_min * nperiods
+
+All_params_basis = np.random.random((ncoeffs_min, nparam_per_period)) + 1j * np.random.random((ncoeffs_min, nparam_per_period))
+all_params = np.random.random((nparam_per_period, nperiods)) + 1j * np.random.random((nparam_per_period, nperiods))
+
+all_coeffs = np.dot(All_params_basis, all_params).T.reshape(-1)
+
+all_pos_direct = scipy.fft.ifft(all_coeffs)
+
+ifft_g  = scipy.fft.ifft(all_params, axis=1)
+
+inter_array = np.zeros((ncoeffs_min,nperiods),dtype=np.complex128)
+
+for iq in range(ncoeffs_min):
+    
+    for ip in range(nperiods):        
+        
+        w = np.exp((2j*m.pi*iq*ip)/nint)
+        
+        inter_array[iq, ip] = w * np.matmul(All_params_basis[iq,:], ifft_g[:,ip])
+
+sum_fg = np.sum(inter_array, axis=0) / ncoeffs_min
+
+ifft_fg  = scipy.fft.ifft(inter_array, axis=0).reshape(-1)
+       
+print(np.linalg.norm(all_pos_direct - ifft_fg))
+print(np.linalg.norm(all_pos_direct[:nperiods] - sum_fg))
