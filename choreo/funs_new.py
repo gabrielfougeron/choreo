@@ -1083,25 +1083,27 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
     for ib in range(nbody):
         
         ncoeffs_min = ncoeff_min_body[ib]
-        npbm = nparam_body_max[ib] 
-        NullSpace_mat_c = np.zeros((geodim, ncoeffs_min, npbm), dtype=np.complex128)
-
-        print()
-        print(ncoeffs_min)
-        print(npb)
+        npb = nparam_body_sum[ib] 
+        NullSpace_mat_c = np.zeros((geodim, ncoeffs_min, npb), dtype=np.complex128)
+        
+        iparam = 0
 
         for l in range(ncoeffs_min):
+            
+            NullSpace = All_params_basis[ib][l]
+            jparam = iparam + NullSpace.shape[2]
 
             for idim in range(geodim):
                 
-                npb = All_params_basis[ib][l].shape[2]
-                
-                NullSpace_mat_c[idim,l,iparamo:jparamo] = All_params_basis[ib][l][idim,0,:] + 1j*All_params_basis[ib][l][idim,1,:]
+                NullSpace_mat_c[idim,l,iparam:jparam] = All_params_basis[ib][l][idim,0,:] + 1j*All_params_basis[ib][l][idim,1,:]
             
-        # NullSpace_mat_c
-        NullSpace_mat_pos = scipy.fft.irfft(NullSpace_mat_c, axis=1)
-    
-    
+            jparam = iparam
+            
+    #         
+    #     # NullSpace_mat_c
+    #     NullSpace_mat_pos = scipy.fft.irfft(NullSpace_mat_c, axis=1)
+    # 
+    # 
     
 
 
@@ -1109,19 +1111,36 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
     all_pos_new = np.zeros((nbody,nint,geodim), dtype = np.float64)
 
     for ib in range(nbody):
+        
+        
+        
+        ncoeffs_min = ncoeff_min_body[ib]
+        npb = nparam_body_sum[ib] 
+        NullSpace_mat_c = np.zeros((geodim, ncoeffs_min, npb), dtype=np.complex128)
+        
+        iparam = 0
+
+        for l in range(ncoeffs_min):
+            
+            NullSpace = All_params_basis[ib][l]
+            jparam = iparam + NullSpace.shape[2]
+
+            for idim in range(geodim):
+                
+                NullSpace_mat_c[idim,l,iparam:jparam] = All_params_basis[ib][l][idim,0,:] + 1j*All_params_basis[ib][l][idim,1,:]
+            
+            jparam = iparam
+            
+        
 
         ncoeffs_min = ncoeff_min_body[ib]
         npb = nparam_body_sum[ib] 
         
         iparam = 0
         
-        komax = ((ncoeffs-1)// ncoeffs_min) +1
-        # komax = ncoeffs // ncoeffs_min
-        
-        # print(komax)
-        # assert komax 
-        
-        params_array = np.zeros((komax,npb))
+        nperiods = ((ncoeffs-1)// ncoeffs_min) +1
+
+        params_array = np.zeros((npb,nperiods))
 
         for k in range(ncoeffs):
             ko = k // ncoeffs_min
@@ -1133,12 +1152,31 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
             iparamo = iparam % npb
             jparamo = iparamo + NullSpace.shape[2]
 
-            params_array[ko,iparamo:jparamo] = all_params[ib][iparam:jparam]
+            params_array[iparamo:jparamo, ko] = all_params[ib][iparam:jparam]
             
             iparam = jparam
 
-        params_array_fft = scipy.fft.ifft(params_array, axis=0)
+        params_array_fft = scipy.fft.ifft(params_array, axis=1)
         
+        inter_array = np.zeros((geodim,nperiods),dtype=np.complex128)
+
+        ncoeffs_min_inv = 1.  / ncoeffs_min
+
+        for iq in range(ncoeffs_min):
+            
+            wo = np.exp((2j*m.pi*iq)/nint)
+            
+            w = ncoeffs_min_inv
+            
+            All_params_basis[ib][l]
+            
+            for ip in range(nperiods):        
+                
+                inter_array[:,ip] += w * np.matmul(NullSpace_mat_c[:,iq,:], params_array_fft[:,ip])
+                
+                w *= wo
+
+        print(np.linalg.norm(all_pos_direct[:nperiods] - inter_array))
         
 # 
 #         for l in range(ncoeffs_min):
