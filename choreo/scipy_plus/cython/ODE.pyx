@@ -267,6 +267,7 @@ cdef inline void PyFun_apply_grad_vectorized(
 
             scipy.linalg.cython_blas.dcopy(&n,&f_res_np[0,0],&int_one,&all_res[i,0,0],&int_one)
 
+@cython.final
 cdef class ExplicitSymplecticRKTable:
     
     cdef double[::1] _c_table
@@ -289,23 +290,28 @@ cdef class ExplicitSymplecticRKTable:
             self._th_cvg_rate = -1
         else:
             self._th_cvg_rate = th_cvg_rate
-
+    
+    @cython.final
     @property
     def nsteps(self):
         return self._c_table.shape[0]
 
+    @cython.final
     @property
     def c_table(self):
         return np.asarray(self._c_table)
     
+    @cython.final
     @property
     def d_table(self):
         return np.asarray(self._d_table)    
 
+    @cython.final
     @property
     def th_cvg_rate(self):
         return self._th_cvg_rate
 
+    @cython.final
     def symmetric_adjoint(self):
 
         cdef Py_ssize_t nsteps = self.nsteps
@@ -752,6 +758,7 @@ cdef void ExplicitSymplecticIVP_ann(
             free(grad_x_eft_comp)
             free(grad_v_eft_comp)
 
+@cython.final
 cdef class ImplicitRKTable:
     
     cdef double[:,::1] _a_table
@@ -761,6 +768,7 @@ cdef class ImplicitRKTable:
     cdef double[:,::1] _gamma_table
     cdef long _th_cvg_rate
 
+    @cython.final
     def __init__(
         self                ,
         a_table     = None  ,
@@ -790,38 +798,47 @@ cdef class ImplicitRKTable:
         else:
             self._th_cvg_rate = th_cvg_rate
 
+    @cython.final
     @property
     def nsteps(self):
         return self._a_table.shape[0]
 
+    @cython.final
     @property
     def a_table(self):
         return np.asarray(self._a_table)
 
+    @cython.final
     @property
     def b_table(self):
         return np.asarray(self._b_table)
 
+    @cython.final
     @property
     def c_table(self):
         return np.asarray(self._c_table)
     
+    @cython.final
     @property
     def beta_table(self):
         return np.asarray(self._beta_table)    
 
+    @cython.final
     @property
     def gamma_table(self):
         return np.asarray(self._gamma_table)    
 
+    @cython.final
     @property
     def th_cvg_rate(self):
         return self._th_cvg_rate
 
+    @cython.final
     @property
     def stability_cst(self):
         return np.linalg.norm(self.a_table, np.inf)
 
+    @cython.final
     cpdef ImplicitRKTable symmetric_adjoint(self):
 
         cdef Py_ssize_t n = self._a_table.shape[0]
@@ -854,6 +871,7 @@ cdef class ImplicitRKTable:
             th_cvg_rate = self._th_cvg_rate ,
         )
 
+    @cython.final
     cpdef double _symmetry_default(
         self                    ,
         ImplicitRKTable other   ,
@@ -884,6 +902,7 @@ cdef class ImplicitRKTable:
                 
         return maxi
 
+    @cython.final
     def symmetry_default(
         self        ,
         other = None,
@@ -892,16 +911,20 @@ cdef class ImplicitRKTable:
             return self._symmetry_default(self)
         else:
             return self._symmetry_default(other)
-     
+    
+    @cython.final
     cpdef bint _is_symmetric_pair(self, ImplicitRKTable other, double tol):
         return (self._symmetry_default(other) < tol)
 
+    @cython.final
     def is_symmetric_pair(self, ImplicitRKTable other, double tol = 1e-12):
         return self._is_symmetric_pair(other, tol)
 
+    @cython.final
     def is_symmetric(self, double tol = 1e-12):
         return self._is_symmetric_pair(self, tol)
 
+    @cython.final
     @cython.cdivision(True)
     cpdef ImplicitRKTable symplectic_adjoint(self):
 
@@ -924,6 +947,7 @@ cdef class ImplicitRKTable:
             th_cvg_rate = self._th_cvg_rate ,
         )
 
+    @cython.final
     cpdef double _symplectic_default(
         self                    ,
         ImplicitRKTable other   ,
@@ -948,6 +972,7 @@ cdef class ImplicitRKTable:
 
         return maxi
 
+    @cython.final
     def symplectic_default(
         self        ,
         other = None,
@@ -956,13 +981,16 @@ cdef class ImplicitRKTable:
             return self._symplectic_default(self)
         else:
             return self._symplectic_default(other)
-     
+    
+    @cython.final
     cpdef bint _is_symplectic_pair(self, ImplicitRKTable other, double tol):
         return (self._symplectic_default(other) < tol)
 
+    @cython.final
     def is_symplectic_pair(self, ImplicitRKTable other, double tol = 1e-12):
         return self._is_symplectic_pair(other, tol)
 
+    @cython.final
     def is_symplectic(self, double tol = 1e-12):
         return self._is_symplectic_pair(self, tol)
 
