@@ -134,6 +134,7 @@ cdef inline void PyFun_apply(
         # for i in range(ndim):
             # res[i] = f_res_np[i]
             
+@cython.final
 cdef class QuadFormula:
 
     """
