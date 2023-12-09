@@ -55,7 +55,7 @@ cdef void VecSum(double* p, double* q, long n) noexcept nogil:
 cpdef double SumK(
     double[::1] v       ,
     long k = 0          ,
-):
+) noexcept:
  
     cdef Py_ssize_t i
 
@@ -158,7 +158,7 @@ cpdef double FastSumK(
 
     return res
 
-cpdef double naive_sum_vect(double[:] v):
+cpdef double naive_sum_vect(double[:] v) noexcept nogil:
 
     cdef Py_ssize_t i
     cdef double res = 0.
