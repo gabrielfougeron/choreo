@@ -39,6 +39,10 @@ import scipy
 import choreo
 import choreo.scipy_plus.precomputed_tables as precomputed_tables
 
+if ("--no-show" in sys.argv):
+    plt.show = (lambda : None)
+
+
 bench_folder = os.path.join(__PROJECT_ROOT__,'examples','generated_files')
 
 if not(os.path.isdir(bench_folder)):
@@ -49,6 +53,8 @@ method = "Gauss"
 rk = choreo.scipy_plus.multiprec_tables.ComputeImplicitRKTable_Gauss(nsteps, method=method)
 
 rk_expl = choreo.scipy_plus.precomputed_tables.SofSpa10
+
+# sphinx_gallery_end_ignore
 
 ndim = 2
 
@@ -71,6 +77,9 @@ def gradgun(t,x,dx):
     dxr = np.asarray(dx).reshape(-1)
     resr = 2*np.dot(x,dxr)*np.dot(A,x) + np.dot(x,x)*np.dot(A,dxr)
     return resr.reshape(-1,1)
+
+
+# sphinx_gallery_start_ignore
 
 to = random.random()
 fun_inst = functools.partial(gun,to)
@@ -103,12 +112,13 @@ ax.set_xscale('log')
 ax.set_yscale('log')
 
 plt.tight_layout()
+# sphinx_gallery_end_ignore
 
 plt.show()
 
 # %%
 
-# plt.close()
+plt.close()
 
 nint = 100
 
@@ -157,6 +167,9 @@ def int_grad_fun_impl(x,dx):
     
     return np.ascontiguousarray(np.concatenate((grad_resx,grad_resv)).reshape(-1))
 
+
+# sphinx_gallery_start_ignore
+
 xo = np.random.rand(2*ndim)
 dxo = np.random.rand(2*ndim)
 
@@ -175,6 +188,11 @@ ax.set_xscale('log')
 ax.set_yscale('log')
 
 plt.tight_layout()
+
+
+# sphinx_gallery_end_ignore
+
+
 
 plt.show()
 

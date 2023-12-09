@@ -12,6 +12,7 @@ import time
 import matplotlib.pyplot as plt
 
 
+
 orderlist = [1,2]
 epslist = [10**(-i) for i in range(16)]
 

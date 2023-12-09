@@ -15,10 +15,8 @@ Defining symmetries in choreo
    :toctree: _build/generated
 
    choreo.ChoreoSym
-   choreo.Make2DChoreoSym
 
 .. autosummary::
    :toctree: _build/generated
 
-   choreo.ExplicitSymplecticWithTable_VX_cython
 

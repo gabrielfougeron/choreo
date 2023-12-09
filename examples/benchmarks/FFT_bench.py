@@ -29,6 +29,9 @@ import numpy as np
 import scipy
 import choreo
 
+if ("--no-show" in sys.argv):
+    plt.show = (lambda : None)
+
 timings_folder = os.path.join(__PROJECT_ROOT__,'examples','generated_files')
 
 if not(os.path.isdir(timings_folder)):

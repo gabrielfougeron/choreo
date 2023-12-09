@@ -36,6 +36,9 @@ import math as m
 import scipy
 import choreo
 
+if ("--no-show" in sys.argv):
+    plt.show = (lambda : None)
+
 timings_folder = os.path.join(__PROJECT_ROOT__,'examples','generated_files')
 
 # ForceBenchmark = True
@@ -163,6 +166,7 @@ choreo.plot_benchmark(
 )
     
 plt.tight_layout()
+
 plt.show()
 
 # sphinx_gallery_end_ignore
@@ -233,6 +237,7 @@ choreo.plot_benchmark(
 )
     
 plt.tight_layout()
+
 plt.show()
 
 # sphinx_gallery_end_ignore
