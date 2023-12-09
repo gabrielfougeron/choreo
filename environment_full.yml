@@ -28,12 +28,11 @@ dependencies:
   - Sphinx
   - pydata-sphinx-theme
   - sphinx-gallery
-  - sphinx-pyproject
   - sphinx-needs
-  - sphinx-test-reports
-  - sphinxcontrib.plantuml
   - pip:
     - cffi==1.15.0
     - pycparser==2.21
     - sparseqr==1.1.2
-    - build>=0.10.0
+    - sphinx-pyproject
+    - sphinx-test-reports
+    - sphinxcontrib.plantuml
