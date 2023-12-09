@@ -38,6 +38,9 @@ import scipy
 import choreo
 import choreo.scipy_plus.precomputed_tables as precomputed_tables
 
+if ("--no-show" in sys.argv):
+    plt.show = (lambda : None)
+
 bench_folder = os.path.join(__PROJECT_ROOT__,'examples','generated_files')
 
 if not(os.path.isdir(bench_folder)):
@@ -121,10 +124,6 @@ for eq_name in eq_names:
         )
     
     all_benchs[eq_name] = bench
-
-
-    
-# sphinx_gallery_start_ignore
 
 all_nint = np.array([2**i for i in range(12)])
 

@@ -38,6 +38,9 @@ import scipy
 import choreo
 import choreo.scipy_plus.precomputed_tables as precomputed_tables
 
+if ("--no-show" in sys.argv):
+    plt.show = (lambda : None)
+
 bench_folder = os.path.join(__PROJECT_ROOT__,'examples','generated_files')
 
 if not(os.path.isdir(bench_folder)):

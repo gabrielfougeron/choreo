@@ -35,6 +35,9 @@ import math as m
 
 import choreo
 
+if ("--no-show" in sys.argv):
+    plt.show = (lambda : None)
+
 bench_folder = os.path.join(__PROJECT_ROOT__,'examples','generated_files')
 
 if not(os.path.isdir(bench_folder)):
@@ -201,6 +204,7 @@ for bench_name, all_funs in all_benchs.items():
 plt.tight_layout()
 
 # sphinx_gallery_end_ignore
+
 
 plt.show()
 

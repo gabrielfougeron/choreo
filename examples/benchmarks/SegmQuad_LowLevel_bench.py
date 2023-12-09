@@ -36,6 +36,10 @@ import math as m
 import choreo 
 import scipy
 
+if ("--no-show" in sys.argv):
+    plt.show = (lambda : None)
+
+
 timings_folder = os.path.join(__PROJECT_ROOT__,'examples','generated_files')
 
 if not(os.path.isdir(timings_folder)):

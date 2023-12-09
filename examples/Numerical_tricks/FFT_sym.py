@@ -22,6 +22,10 @@ A few numerical investigation of how symmetries of a signal determine the shape 
 import numpy as np
 import scipy
 import matplotlib.pyplot as plt
+import sys
+
+if ("--no-show" in sys.argv):
+    plt.show = (lambda : None)
 
 n_base = 8  # Base number of nodes. This could be any **even** integer > 0
 
