@@ -8,7 +8,7 @@ from libc.math cimport fabs as cfabs
 import choreo.scipy_plus.linalg
 
 @cython.cdivision(True)
-cdef inline long gcd (long a, long b) nogil:
+cdef inline long gcd (long a, long b) noexcept nogil:
 
     cdef long c
     while ( a != 0 ):
