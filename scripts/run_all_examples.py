@@ -20,12 +20,14 @@ if Remove_gen_files:
             os.remove(full_name)
 
 env = os.environ
-env['DISPLAY'] = ''
+# env['DISPLAY'] = ''
 
 env['OPENBLAS_NUM_THREADS'] = '1'
 env['NUMEXPR_NUM_THREADS'] = '1'
 env['MKL_NUM_THREADS'] = '1'
 env['OMP_NUM_THREADS'] = '1'
+
+all_scripts = []
 
 for root, dirs, files in os.walk(examples_dir):
     for name in files:
@@ -33,12 +35,21 @@ for root, dirs, files in os.walk(examples_dir):
         base, ext = os.path.splitext(full_name)
 
         if ext in [".py"]:
+            
+            all_scripts.append(full_name)
+
+nscripts = len(all_scripts)
+            
+for i, script_name in enumerate(all_scripts):
+            
+            small_name = os.path.split(script_name)[-1]
+            
             print()
-            print(f"Running {name}")
+            print(f"Running script {i} of {nscripts} : {small_name}")
             
             tbeg = time.perf_counter()
             subprocess.run(
-                ["python", full_name],
+                ["python", script_name, "--no-show"],
                 capture_output=True,
                 env = env,
             )

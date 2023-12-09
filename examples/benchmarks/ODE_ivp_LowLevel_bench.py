@@ -36,6 +36,9 @@ import choreo
 import scipy
 import numba
 
+if ("--no-show" in sys.argv):
+    plt.show = (lambda : None)
+
 timings_folder = os.path.join(__PROJECT_ROOT__,'examples','generated_files')
 
 if not(os.path.isdir(timings_folder)):
@@ -43,8 +46,8 @@ if not(os.path.isdir(timings_folder)):
 
 basename_timings_filename = 'ODE_ivp_lowlevel_bench_'
 
-ForceBenchmark = True
-# ForceBenchmark = False
+# ForceBenchmark = True
+ForceBenchmark = False
 
 
 ndim_mul = choreo.scipy_plus.cython.test.mul_size_py
