@@ -46,7 +46,7 @@ cdef double cmnnm1 = -cnnm1
 # xsq is the square of the distance between two bodies !
 @cython.profile(False)
 @cython.linetrace(False)
-cdef inline (double, double, double) CCpt_interbody_pot(double xsq) nogil:
+cdef inline (double, double, double) CCpt_interbody_pot(double xsq) noexcept nogil:
     # Cython definition of the potential law
     
     cdef double a = cpow(xsq,cnm2)
@@ -57,8 +57,6 @@ cdef inline (double, double, double) CCpt_interbody_pot(double xsq) nogil:
     cdef double potpp = cmnnm1*a
     
     return pot,potp,potpp
-
-
 
 @cython.cdivision(True)
 def Compute_action_Cython_nD_parallel(
@@ -398,10 +396,6 @@ def Compute_action_hess_mul_Cython_nD_parallel(
 
     return Action_hess_dx_np
     
-
-
-
-
 @cython.cdivision(True)
 def Compute_action_hess_mul_Cython_time_loop_nD_parallel(
     long              nloop             ,
@@ -652,9 +646,6 @@ def Compute_action_Cython_2D_parallel(
     
     return Action,Action_grad_np
 
-
-
-
 @cython.cdivision(True)
 # cdef (double, double[:,:,::1]) Compute_action_Cython_time_loop_2D(
 def Compute_action_Cython_time_loop_2D_parallel(
@@ -868,8 +859,6 @@ def Compute_action_hess_mul_Cython_2D_parallel(
             Action_hess_dx[il,idim,k,0] = a*all_coeffs_d[il,idim,k,0] - hess_dx_pot_fft[il,idim,k].real
 
     return Action_hess_dx_np
-
-
 
 @cython.cdivision(True)
 # cdef np.ndarray[double, ndim=3, mode="c"] Compute_action_hess_mul_Cython_time_loop_2D(
