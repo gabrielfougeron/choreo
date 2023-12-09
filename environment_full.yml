@@ -1,0 +1,39 @@
+name: choreo
+channels:
+  - conda-forge
+  - numba
+dependencies:
+  - python=3.11.2
+  - mpmath
+  - matplotlib
+  - scipy
+  - networkx
+  - cython
+  - ffmpeg
+  - suitesparse
+  - tbb 
+  - ffmpeg-python
+  - pip
+  - mkl
+  - mkl_fft
+  - pyamg
+  - numba
+  - icc_rt
+  - pytest
+  - pytest-xdist
+  - attrs
+  - pyfftw
+  - build
+  - pyodide-build=0.23.4
+  - Sphinx
+  - pydata-sphinx-theme
+  - sphinx-gallery
+  - sphinx-pyproject
+  - sphinx-needs
+  - sphinx-test-reports
+  - sphinxcontrib.plantuml
+  - pip:
+    - cffi==1.15.0
+    - pycparser==2.21
+    - sparseqr==1.1.2
+    - build>=0.10.0
