@@ -100,7 +100,7 @@ assert hash_exp.shape[0] == nhash
 
 @cython.profile(False)
 @cython.linetrace(False)
-cdef inline (double, double, double) CCpt_interbody_pot(double xsq) nogil:  # xsq is the square of the distance between two bodies !
+cdef inline (double, double, double) CCpt_interbody_pot(double xsq) noexcept nogil:  # xsq is the square of the distance between two bodies !
     # Cython definition of the potential law
     
     cdef double a = cpow(xsq,cnm2)

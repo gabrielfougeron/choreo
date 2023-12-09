@@ -57,9 +57,6 @@ elif platform.system() == "Darwin": # MacOS
 
 elif platform.system() == "Linux":
 
-    # print(platform.system())
-    # print( os.environ)
-
     if ("PYODIDE" in os.environ): # Building for Pyodide
 
         extra_compile_args_std = ["-O3","-ffast-math","-flto"]
@@ -78,15 +75,13 @@ elif platform.system() == "Linux":
 
                 os.environ['CC'] = compiler
                 os.environ['LDSHARED'] = compiler+' -shared'
-
-                # print(f'Compiler: {compiler}')
-
+                
                 break
 
         # extra_compile_args_std = ["-O0","-march=native", "-fopenmp"]
         # extra_compile_args_safe = ["-O0", "-fopenmp"]
         # extra_link_args = ["-fopenmp"]
-# 
+        
         extra_compile_args_std = ["-Ofast","-march=native", "-fopenmp", "-flto"]
         extra_compile_args_safe = ["-O3", "-fopenmp", "-flto"]
         extra_link_args = ["-fopenmp", "-flto"]

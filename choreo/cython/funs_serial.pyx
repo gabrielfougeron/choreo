@@ -43,7 +43,7 @@ cdef double cmnnm1 = -cnnm1
 # xsq is the square of the distance between two bodies !
 @cython.profile(False)
 @cython.linetrace(False)
-cdef inline (double, double, double) CCpt_interbody_pot(double xsq) nogil:
+cdef inline (double, double, double) CCpt_interbody_pot(double xsq) noexcept nogil:
     # Cython definition of the potential law
     
     cdef double a = cpow(xsq,cnm2)
@@ -54,8 +54,6 @@ cdef inline (double, double, double) CCpt_interbody_pot(double xsq) nogil:
     cdef double potpp = cmnnm1*a
     
     return pot,potp,potpp
-
-
 
 @cython.cdivision(True)
 def Compute_action_Cython_nD_serial(
