@@ -46,16 +46,24 @@ def rfft(x):
     scipy.fft.rfft(x)
 
 def dct_I(x):
-    scipy.fft.dct(x,1)
+    N = x.shape[0]
+    n = N // 2 + 1
+    scipy.fft.dct(x[:n],1)
 
 def dst_I(x):
-    scipy.fft.dst(x,1)
+    N = x.shape[0]
+    n = N // 2 - 1
+    scipy.fft.dst(x[:n],1)
 
 def dct_III(x):
-    scipy.fft.dct(x,3)
+    N = x.shape[0]
+    n = N // 4
+    scipy.fft.dct(x[:n],3)
 
 def dst_III(x):
-    scipy.fft.dst(x,3)
+    N = x.shape[0]
+    n = N // 4
+    scipy.fft.dst(x[:n],3)
     
 # sphinx_gallery_start_ignore
 
@@ -136,15 +144,6 @@ for i_backend, backend in enumerate(all_backends):
         dst_III,
     ]
 
-    all_scalings = np.array([
-        1,
-        2,
-        4,
-        4,
-        8,
-        8,
-    ])
-
     all_times = choreo.benchmark.run_benchmark(
         all_sizes,
         all_funs,
@@ -158,7 +157,6 @@ for i_backend, backend in enumerate(all_backends):
         all_times                               ,
         all_sizes                               ,
         all_funs                                ,
-        all_x_scalings = all_scalings           ,
         n_repeat = n_repeat                     ,
         fig = fig                               ,
         ax = axs[i_backend, 0]                  ,
