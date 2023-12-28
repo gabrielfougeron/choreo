@@ -164,6 +164,61 @@ err = np.linalg.norm(x[1:n//2] - idst_I_x)
 print(err)
 
 # %%
+# Even - Odd decomposition of real-valued signals
+# *********************************
+# 
+# Any signal can be decomposed in even and odd parts
+
+
+n = 2*n_base   # Total number of nodes. Necessarily even here.
+t = np.array(range(n))/n
+x = np.array(range(n))+1
+
+x_even = np.zeros(n)
+x_odd = np.zeros(n)
+for i in range(n):
+    x_even[i] = (x[i] + x[(n-i) % n]) / 2
+    x_odd[i]  = (x[i] - x[(n-i) % n]) / 2
+
+
+z = np.zeros(n)
+for i in range(n):
+    z[i] = x_even[i] - x_even[(n-i) % n]
+
+err = np.linalg.norm(z)
+print(err)
+
+z = np.zeros(n)
+for i in range(n):
+    z[i] = x_odd[i] + x_odd[(n-i) % n]
+
+err = np.linalg.norm(z)
+print(err)
+
+z = x - (x_even + x_odd)
+
+err = np.linalg.norm(z)
+print(err)
+
+plt.plot(t,x)
+plt.plot(t,x_even)
+plt.plot(t,x_odd)
+plt.show()
+
+# %%
+# The even and odd parts can be transformed separately to form the transform of the initial signal
+
+rfft_c = scipy.fft.rfft(x)
+dct_I_c = scipy.fft.dct(x_even[0:n//2+1],1)
+dst_I_c =  scipy.fft.dst(x_odd[1:n//2],1)
+
+err = np.linalg.norm(rfft_c.real - dct_I_c)
+print(err)
+err = np.linalg.norm(rfft_c.imag[1:n//2] - (- dst_I_c))
+print(err)
+
+
+# %%
 # Real-valued even-odd signals and DCT III
 # ****************************************
 # 
