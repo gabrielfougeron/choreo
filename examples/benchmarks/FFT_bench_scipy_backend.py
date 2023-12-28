@@ -1,11 +1,12 @@
 """
-Benchmark of FFT algorithms
-===========================
+Benchmark of FFT implementations available as scipy backends
+============================================================
 """
 
 # %% 
-# This benchmark compares execution times of several FFT functions using different backends
-# The plots give the measured execution time of the FFT as a function of the input length
+# This benchmark compares execution times of several FFT functions using different scipy backends.
+# The plots give the measured execution time of the FFT as a function of the input length.
+# The input length is of the form 3 * 5 * 2**i, so as to favor powers of 2 and small divisors.
 
 # sphinx_gallery_start_ignore
 

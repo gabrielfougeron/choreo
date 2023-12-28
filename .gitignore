@@ -38,6 +38,7 @@ docs/build/
 /docs/source/_build/
 /docs/pytest_out/
 NewSym_data/
+docs/source/sg_execution_times.rst
 ##########################################################
 #           To be included (with preceding !)
 ##########################################################
@@ -50,3 +51,4 @@ NewSym_data/
 !/NumericalTank_data/*
 !/choreo_GUI/SOME3/**
 !/docs/source/_static/**
+

@@ -165,7 +165,7 @@ print(err)
 
 # %%
 # Even - Odd decomposition of real-valued signals
-# *********************************
+# ***********************************************
 # 
 # Any signal can be decomposed in even and odd parts
 
