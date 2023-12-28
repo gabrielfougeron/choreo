@@ -728,12 +728,12 @@ assert nint == all_pos_direct.shape[0]
 # The average value is treated separately
 meanval = -np.dot(All_params_basis[0,:].real,all_params[:,0]) / nint
 # All parameters are doubled here.
-ifft_g  = scipy.fft.ihfft(2*all_params, axis=1, n=2*nperiods)
+ifft_g  = scipy.fft.ihfft(all_params, axis=1, n=2*nperiods)
 
 n_inter = nperiods + 1
 inter_array = np.full((n_inter), meanval)
 
-ncoeffs_min_inv = 1.  / ncoeffs_min
+ncoeffs_min_inv = 2.  / ncoeffs_min
 
 for iq in range(ncoeffs_min):
     
