@@ -129,15 +129,10 @@ def prepare_x(n):
 basename = f'Inplace_conjugation_bench'
 timings_filename = os.path.join(timings_folder,basename+'.npy')
 
-n_repeat = 1
-time_per_test = 0.2
-
 all_times = choreo.benchmark.run_benchmark(
     all_sizes                       ,
     all_funs                        ,
     setup = prepare_x               ,
-    n_repeat = 1                    ,
-    time_per_test = 0.2             ,
     filename = timings_filename     ,
     ForceBenchmark = ForceBenchmark     ,
 )
@@ -146,11 +141,9 @@ choreo.plot_benchmark(
     all_times           ,
     all_sizes           ,
     all_funs            ,
-    # all_names           ,
-    n_repeat = n_repeat ,
     fig = fig           ,
     ax = ax             ,
-    # title = f'{fft_type} on {nthreads} thread{plural}'    ,
+    title = f'Inplace conjugation'    ,
 )
     
 plt.tight_layout()

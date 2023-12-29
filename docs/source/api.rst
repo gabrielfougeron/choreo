@@ -6,6 +6,7 @@ API
 
    choreo
    choreo.Find_Choreo
+   choreo.benchmark
 
 
 Defining symmetries in choreo
