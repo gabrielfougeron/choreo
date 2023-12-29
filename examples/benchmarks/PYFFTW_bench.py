@@ -72,7 +72,7 @@ def setup_all(fft_type, nthreads, all_sizes):
         pyfftw.config.PLANNER_EFFORT = planner_effort
 
         def rfft_pyfftw_interface(x):
-            pyfftw.interfaces.scipy_fftpack.rfft(x, threads = nthreads)
+            getattr(pyfftw.interfaces.scipy_fftpack, fft_type)(x, threads = nthreads)
 
         all_funs.append(rfft_pyfftw_interface)
         all_names.append("pyfftw_interface")
@@ -129,8 +129,6 @@ def setup_all(fft_type, nthreads, all_sizes):
         
     except Exception as ex:
         print(ex)
-        raise ex
-        # pass 
 
     try:
         
