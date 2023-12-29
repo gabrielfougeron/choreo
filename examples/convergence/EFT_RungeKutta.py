@@ -31,6 +31,7 @@ os.environ['MKL_NUM_THREADS'] = '1'
 os.environ['OMP_NUM_THREADS'] = '1'
 
 import matplotlib.pyplot as plt
+import matplotlib as mpl
 import numpy as np
 import math as m
 import scipy
@@ -95,7 +96,14 @@ all_benchs = {
     } for eq_name in eq_names
 }
 
-color_list = [choreo.benchmark.default_color_list[i] for (i, rk), DoEFT in itertools.product(enumerate(all_methods), all_EFT)]
+color_list_loop = list(mpl.colors.TABLEAU_COLORS)
+color_list_loop.append(mpl.colors.BASE_COLORS['b'])
+color_list_loop.append(mpl.colors.BASE_COLORS['g'])
+color_list_loop.append(mpl.colors.BASE_COLORS['r'])
+color_list_loop.append(mpl.colors.BASE_COLORS['m'])
+color_list_loop.append(mpl.colors.BASE_COLORS['k'])
+
+color_list = [color_list_loop[i] for (i, rk), DoEFT in itertools.product(enumerate(all_methods), all_EFT)]
 
 linestyle_loop = [ 'solid','dotted']
 linestyle_list = [linestyle_loop[i] for rk, (i,DoEFT) in itertools.product(all_methods, enumerate(all_EFT))]

@@ -130,8 +130,6 @@ all_nint = np.array([2**i for i in range(8)])
 def setup(nint):
     return [(nint, 'nint')]
 
-n_repeat = 1
-
 for bench_name, all_funs in all_benchs.items():
 
     i_bench += 1
@@ -142,8 +140,6 @@ for bench_name, all_funs in all_benchs.items():
         all_nint,
         all_funs,
         setup = setup,
-        n_repeat = n_repeat,
-        time_per_test = 0.2,
         filename = timings_filename,
         ForceBenchmark = ForceBenchmark ,
         StopOnExcept = True,
@@ -153,7 +149,6 @@ for bench_name, all_funs in all_benchs.items():
         all_times                               ,
         all_nint                                ,
         all_funs                                ,
-        n_repeat = n_repeat                     ,
         fig = fig                               ,
         ax = axs[i_bench,0]                     ,
         title = bench_name                      ,

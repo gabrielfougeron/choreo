@@ -130,10 +130,6 @@ for i_backend, backend in enumerate(all_backends):
         only = True
     )
 
-    n_repeat = 1
-
-    time_per_test = 0.2
-
     all_sizes = np.array([4*3*5 * 2**n for n in range(15)])
 
     all_funs = [
@@ -149,8 +145,6 @@ for i_backend, backend in enumerate(all_backends):
         all_sizes,
         all_funs,
         setup = prepare_x,
-        n_repeat = 1,
-        time_per_test = 0.2,
         filename = timings_filename,
     )
 
@@ -158,7 +152,6 @@ for i_backend, backend in enumerate(all_backends):
         all_times                               ,
         all_sizes                               ,
         all_funs                                ,
-        n_repeat = n_repeat                     ,
         fig = fig                               ,
         ax = axs[i_backend, 0]                  ,
         title = all_backends_names[i_backend]   ,

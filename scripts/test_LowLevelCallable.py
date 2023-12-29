@@ -48,17 +48,12 @@ fig, ax = plt.subplots(
     sharey = True,
     figsize = figsize,
     dpi = dpi   ,
-    # squeeze = False,
 )
-
-n_repeat = 1
 
 all_times = choreo.benchmark.run_benchmark(
     all_maxval,
     all_funs_list,
     setup = prepare_maxval,
-    n_repeat = n_repeat,
-    time_per_test = 0.2,
     filename = timings_filename,
 )
 
@@ -67,7 +62,6 @@ choreo.plot_benchmark(
     all_maxval                              ,
     all_funs_list                           ,
     all_names_list                          ,
-    n_repeat = n_repeat                     ,
     fig = fig                               ,
     ax = ax                                 ,
     title = 'LowLevelCallable_bench'        ,

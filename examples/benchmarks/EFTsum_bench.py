@@ -122,10 +122,6 @@ fig, axs = plt.subplots(
 basename = 'sum_bench_accuracy'
 error_filename = os.path.join(timings_folder,basename+'.npy')
 
-n_repeat = 1
-
-time_per_test = 0.2
-
 # all_alphas = np.array([float(2**i) for i in range(10)])
 all_alphas = np.array([float(alpha) for alpha in range(500)])
 
@@ -149,8 +145,6 @@ all_times = choreo.benchmark.run_benchmark(
     all_error_funs                  ,
     setup = setup                   ,
     mode = "scalar_output"          ,
-    n_repeat = 1                    ,
-    time_per_test = 0.2             ,
     filename = error_filename       ,
     ForceBenchmark = ForceBenchmark ,
 )
@@ -159,7 +153,6 @@ choreo.plot_benchmark(
     all_times                               ,
     all_alphas                              ,
     all_error_funs                          ,
-    n_repeat = n_repeat                     ,
     fig = fig                               ,
     ax = axs                                ,
     title = "Relative error for increasing conditionning"   ,
@@ -197,10 +190,6 @@ fig, axs = plt.subplots(
 basename = 'sum_bench_time'
 timings_filename = os.path.join(timings_folder,basename+'.npy')
 
-n_repeat = 1
-
-time_per_test = 0.2
-
 all_sizes = np.array([2**n for n in range(21)])
 
 all_funs = [
@@ -220,8 +209,6 @@ all_times = choreo.benchmark.run_benchmark(
     all_sizes                       ,
     all_funs                        ,
     setup = prepare_x               ,
-    n_repeat = 1                    ,
-    time_per_test = 0.2             ,
     filename = timings_filename     ,
     ForceBenchmark = ForceBenchmark ,
 )
@@ -230,7 +217,6 @@ choreo.plot_benchmark(
     all_times                               ,
     all_sizes                               ,
     all_funs                                ,
-    n_repeat = n_repeat                     ,
     fig = fig                               ,
     ax = axs                                ,
     title = "Time (s) as a function of array size"   ,

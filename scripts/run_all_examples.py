@@ -8,10 +8,7 @@ __PROJECT_ROOT__ = os.path.abspath(os.path.join(os.path.dirname(__file__),os.par
 examples_dir = os.path.join(__PROJECT_ROOT__,"examples")
 gen_files_dir = os.path.join(__PROJECT_ROOT__,"examples","generated_files")
 
-
 Remove_gen_files = ("-c" in sys.argv)
-# Remove_gen_files = True
-# Remove_gen_files = False
 
 if Remove_gen_files:
     for root, dirs, files in os.walk(gen_files_dir):
@@ -20,8 +17,6 @@ if Remove_gen_files:
             os.remove(full_name)
 
 env = os.environ
-# env['DISPLAY'] = ''
-
 env['OPENBLAS_NUM_THREADS'] = '1'
 env['NUMEXPR_NUM_THREADS'] = '1'
 env['MKL_NUM_THREADS'] = '1'

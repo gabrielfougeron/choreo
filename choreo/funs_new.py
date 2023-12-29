@@ -962,8 +962,6 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
 
 
 
-    return
-
 # 
 #     # Choose loop generators with maximal exploitable FFT symmetry
 #     loopgen = - np.ones((nloop), dtype = int)
@@ -996,10 +994,14 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
 
 
 
+
+
+
+
+
+
+
     # FFT tests
-    
-    # nint_min_body = [2*(nc-1) for nc in ncoeff_min_body]
-    
     
     nint = math.lcm(2, nint_min)
     # nint = math.lcm(2, nint_min, *nint_min_body)
@@ -1096,92 +1098,8 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
             for idim in range(geodim):
                 
                 NullSpace_mat_c[idim,l,iparam:jparam] = All_params_basis[ib][l][idim,0,:] + 1j*All_params_basis[ib][l][idim,1,:]
-            
+
             jparam = iparam
-            
-    #         
-    #     # NullSpace_mat_c
-    #     NullSpace_mat_pos = scipy.fft.irfft(NullSpace_mat_c, axis=1)
-    # 
-    # 
-    
-
-
-    #Parameters to all_pos without all_coeffs
-    all_pos_new = np.zeros((nbody,nint,geodim), dtype = np.float64)
-
-    for ib in range(nbody):
-        
-        
-        
-        ncoeffs_min = ncoeff_min_body[ib]
-        npb = nparam_body_sum[ib] 
-        NullSpace_mat_c = np.zeros((geodim, ncoeffs_min, npb), dtype=np.complex128)
-        
-        iparam = 0
-
-        for l in range(ncoeffs_min):
-            
-            NullSpace = All_params_basis[ib][l]
-            jparam = iparam + NullSpace.shape[2]
-
-            for idim in range(geodim):
-                
-                NullSpace_mat_c[idim,l,iparam:jparam] = All_params_basis[ib][l][idim,0,:] + 1j*All_params_basis[ib][l][idim,1,:]
-            
-            jparam = iparam
-            
-        
-
-        ncoeffs_min = ncoeff_min_body[ib]
-        npb = nparam_body_sum[ib] 
-        
-        iparam = 0
-        
-        nperiods = ((ncoeffs-1)// ncoeffs_min) +1
-
-        params_array = np.zeros((npb,nperiods))
-
-        for k in range(ncoeffs):
-            ko = k // ncoeffs_min
-            l = (k % ncoeffs_min)
-            
-            NullSpace = All_params_basis[ib][l]
-            jparam = iparam + NullSpace.shape[2]
-            
-            iparamo = iparam % npb
-            jparamo = iparamo + NullSpace.shape[2]
-
-            params_array[iparamo:jparamo, ko] = all_params[ib][iparam:jparam]
-            
-            iparam = jparam
-
-        params_array_fft = scipy.fft.ifft(params_array, axis=1)
-        
-        inter_array = np.zeros((geodim,nperiods),dtype=np.complex128)
-
-        ncoeffs_min_inv = 1.  / ncoeffs_min
-
-        for iq in range(ncoeffs_min):
-            
-            wo = np.exp((2j*m.pi*iq)/nint)
-            
-            w = ncoeffs_min_inv
-            
-            All_params_basis[ib][l]
-            
-            for ip in range(nperiods):        
-                
-                inter_array[:,ip] += w * np.matmul(NullSpace_mat_c[:,iq,:], params_array_fft[:,ip])
-                
-                w *= wo
-
-        print(np.linalg.norm(all_pos_direct[:nperiods] - inter_array))
-        
-# 
-#         for l in range(ncoeffs_min):
-#             
-#             runit = m.exp( 1j * 2 * m.pi * l
 
 
 
@@ -1208,14 +1126,14 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
     print(f"ratio of parameters before and after constraints: {nparam_per_k_before_tot / nparam_per_k_tot}")
 
 
-
-    # print(f"nparam_tot = {nparam_tot}")
-    assert abs((count_tot / count_unique)  - ((nbody * nint_min) / nsegm)) < eps
-    assert abs((nparam_per_k_before_tot / nparam_per_k_tot)  - ((nbody * nint_min) / nsegm)) < eps
-
-
+    reduction_ratio = count_tot / count_unique
+    assert abs((count_tot / count_unique)  - reduction_ratio) < eps
+    assert abs(((nbody * nint_min) / nsegm) - reduction_ratio) < eps
+    assert abs((nparam_per_k_before_tot / nparam_per_k_tot)  - reduction_ratio) < eps
 
 
+
+    return
 
 
     MakePlots = False
