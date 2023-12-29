@@ -51,7 +51,4 @@ NewSym_data/
 !/NumericalTank_data/*
 !/choreo_GUI/SOME3/**
 !/docs/source/_static/**
-##########################################################
-#           For real, not this one!
-##########################################################
-docs/source/sg_execution_times.rst
+!/docs/source/test-report/test_report_template.txt
