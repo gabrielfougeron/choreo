@@ -711,7 +711,7 @@ print()
 
 ncoeffs_min = 7
 nparam_per_period = 3
-nperiods = 17
+nperiods = 37
 nint = 2 * (ncoeffs_min * nperiods)
 
 All_params_basis = np.random.random((ncoeffs_min, nparam_per_period)) + 1j * np.random.random((ncoeffs_min, nparam_per_period))
@@ -726,9 +726,10 @@ assert nint == all_pos_direct.shape[0]
 
 
 # The average value is treated separately
-meanval = -np.dot(All_params_basis[0,:].real,all_params[:,0]) / nint
+meanval = -np.dot(All_params_basis[0,:].real, all_params[:,0]) / nint
 # All parameters are doubled here.
-ifft_g  = scipy.fft.ihfft(all_params, axis=1, n=2*nperiods)
+# ifft_g  = scipy.fft.ihfft(all_params, axis=1, n=2*nperiods) # identical but ihfft is less often available in fft packages
+ifft_g  = np.conjugate(scipy.fft.rfft(all_params, axis=1, n=2*nperiods))/(2*nperiods)
 
 n_inter = nperiods + 1
 inter_array = np.full((n_inter), meanval)
