@@ -154,6 +154,7 @@ def plot_benchmark(
     ax = None               ,
     title = None            ,
     transform = None        ,
+    relative_to = None      ,
 ):
     
     n_sizes = len(all_sizes)
@@ -204,6 +205,36 @@ def plot_benchmark(
         fig = plt.figure()  
         ax = fig.add_subplot(1,1,1)
         
+    if (relative_to is None):
+        
+        relative_to_array = np.ones((n_sizes))
+        
+    else:
+        
+        if isinstance(relative_to, np.ndarray):
+
+            relative_to_array = relative_to
+
+            assert relative_to_array.ndim == 1
+            assert relative_to_array.shape[0] == n_sizes
+        
+        else:
+            
+            if isinstance(relative_to, int):
+                relative_to_idx = relative_to
+                
+            elif isinstance(relative_to, str):
+                try:
+                    relative_to_idx = all_names_list.index(relative_to)
+                except ValueError:
+                    raise ValueError(f'{relative_to} is not a known name')
+            else:
+                raise ValueError(f'Invalid relative_to argument {relative_to}')
+            
+            assert np.all(all_times[:, relative_to_idx, :] > 0.)
+            
+            relative_to_array = (np.sum(all_times[:, relative_to_idx, :], axis=1) / n_repeat)
+        
     n_colors = len(color_list)
     n_linestyle = len(linestyle_list)
 
@@ -212,7 +243,7 @@ def plot_benchmark(
         
     if logy_plot is None:
         logy_plot = (transform is None)
-
+        
     if logx_plot:
         ax.set_xscale('log')
     if logy_plot:
@@ -240,12 +271,13 @@ def plot_benchmark(
 
             for i_repeat in range(n_repeat):
 
-                plot_y_val = all_times[:, i_fun, i_repeat] / all_y_scalings[i_fun]
+                plot_y_val = all_times[:, i_fun, i_repeat] / relative_to_array # Broadcast
+                plot_y_val /= all_y_scalings[i_fun]
                 
                 if all_xvalues is None:
                     plot_x_val = all_sizes * all_x_scalings[i_fun]
                 else:   
-                    plot_x_val = all_xvalues[:, i_fun, i_repeat] / all_y_scalings[i_fun]
+                    plot_x_val = all_xvalues[:, i_fun, i_repeat] / all_x_scalings[i_fun]
                 
                 if transform in ["pol_growth_order", "pol_cvgence_order"]:
                     
