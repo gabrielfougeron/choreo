@@ -35,6 +35,7 @@ import math as m
 
 import choreo 
 import scipy
+import pyquickbench
 
 if ("--no-show" in sys.argv):
     plt.show = (lambda : None)
@@ -177,7 +178,7 @@ for bench_name, all_funs in all_benchs.items():
 
     timings_filename = os.path.join(timings_folder,basename_timings_filename+bench_name.replace(' ','_')+'.npy')
 
-    all_times = choreo.benchmark.run_benchmark(
+    all_times = pyquickbench.run_benchmark(
         all_nint,
         all_funs,
         setup = setup,
@@ -185,7 +186,7 @@ for bench_name, all_funs in all_benchs.items():
         ForceBenchmark = ForceBenchmark ,
     )
 
-    choreo.plot_benchmark(
+    pyquickbench.plot_benchmark(
         all_times                               ,
         all_nint                                ,
         all_funs                                ,

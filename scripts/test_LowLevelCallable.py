@@ -16,6 +16,8 @@ import math as m
 import choreo 
 import scipy
 
+import pyquickbench
+
 timings_folder = os.path.join(__PROJECT_ROOT__,'build')
 basename = 'LowLevelCallable_bench'
 timings_filename = os.path.join(timings_folder,basename+'.npy')
@@ -50,14 +52,14 @@ fig, ax = plt.subplots(
     dpi = dpi   ,
 )
 
-all_times = choreo.benchmark.run_benchmark(
+all_times = pyquickbench.run_benchmark(
     all_maxval,
     all_funs_list,
     setup = prepare_maxval,
     filename = timings_filename,
 )
 
-choreo.plot_benchmark(
+pyquickbench.plot_benchmark(
     all_times                               ,
     all_maxval                              ,
     all_funs_list                           ,
