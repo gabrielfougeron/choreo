@@ -35,6 +35,7 @@ GUI_scripts/dist/
 GUI_scripts/build/
 sparseqr/
 docs/build/
+docs/gh-pages/
 /docs/source/_build/
 /docs/pytest_out/
 NewSym_data/
