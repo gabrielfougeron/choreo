@@ -37,7 +37,7 @@ numba_opt_dict = {
     'nogil':True        ,
 }
 
-import choreo
+import pyquickbench
 
 if ("--no-show" in sys.argv):
     plt.show = (lambda : None)
@@ -129,7 +129,7 @@ def prepare_x(n):
 basename = f'Inplace_conjugation_bench'
 timings_filename = os.path.join(timings_folder,basename+'.npy')
 
-all_times = choreo.benchmark.run_benchmark(
+all_times = pyquickbench.run_benchmark(
     all_sizes                       ,
     all_funs                        ,
     setup = prepare_x               ,
@@ -137,7 +137,7 @@ all_times = choreo.benchmark.run_benchmark(
     ForceBenchmark = ForceBenchmark     ,
 )
 
-choreo.plot_benchmark(
+pyquickbench.plot_benchmark(
     all_times           ,
     all_sizes           ,
     all_funs            ,

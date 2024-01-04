@@ -35,6 +35,7 @@ import numpy as np
 import math as m
 import scipy
 import choreo
+import pyquickbench
 
 if ("--no-show" in sys.argv):
     plt.show = (lambda : None)
@@ -94,7 +95,6 @@ def exact_sum(alpha):
     y = setup(alpha)
     return m.fsum(y)
     
-
 def compute_error(f, x):
     
     ex_res =  exact_sum(-x[1])
@@ -140,7 +140,7 @@ all_funs = [
 
 all_error_funs = { f.__name__ :  functools.partial(compute_error, f) for f in all_funs if f is not m_fsum}
 
-all_times = choreo.benchmark.run_benchmark(
+all_times = pyquickbench.run_benchmark(
     all_alphas                      ,
     all_error_funs                  ,
     setup = setup                   ,
@@ -149,7 +149,7 @@ all_times = choreo.benchmark.run_benchmark(
     ForceBenchmark = ForceBenchmark ,
 )
 
-choreo.plot_benchmark(
+pyquickbench.plot_benchmark(
     all_times                               ,
     all_alphas                              ,
     all_error_funs                          ,
@@ -205,7 +205,7 @@ all_funs = [
     FastSumK_3,
 ]
 
-all_times = choreo.benchmark.run_benchmark(
+all_times = pyquickbench.run_benchmark(
     all_sizes                       ,
     all_funs                        ,
     setup = prepare_x               ,
@@ -213,7 +213,7 @@ all_times = choreo.benchmark.run_benchmark(
     ForceBenchmark = ForceBenchmark ,
 )
 
-choreo.plot_benchmark(
+pyquickbench.plot_benchmark(
     all_times                               ,
     all_sizes                               ,
     all_funs                                ,

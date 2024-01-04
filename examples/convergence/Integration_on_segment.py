@@ -34,6 +34,7 @@ import numpy as np
 import math as m
 
 import choreo
+import pyquickbench
 
 if ("--no-show" in sys.argv):
     plt.show = (lambda : None)
@@ -112,7 +113,7 @@ for bench_name, all_funs in all_benchs.items():
 
     bench_filename = os.path.join(bench_folder,basename_bench_filename+bench_name.replace(' ','_')+'.npy')
 
-    all_errors = choreo.benchmark.run_benchmark(
+    all_errors = pyquickbench.run_benchmark(
         refinement_lvl                  ,
         all_funs                        ,
         setup = setup                   ,
@@ -121,7 +122,7 @@ for bench_name, all_funs in all_benchs.items():
         ForceBenchmark = ForceBenchmark ,
     )
 
-    choreo.plot_benchmark(
+    pyquickbench.plot_benchmark(
         all_errors                                  ,
         refinement_lvl                              ,
         all_funs                                    ,
@@ -166,7 +167,7 @@ for bench_name, all_funs in all_benchs.items():
 
     bench_filename = os.path.join(bench_folder,basename_bench_filename+bench_name.replace(' ','_')+'.npy')
 
-    all_errors = choreo.benchmark.run_benchmark(
+    all_errors = pyquickbench.run_benchmark(
         refinement_lvl                  ,
         all_funs                        ,
         setup = setup                   ,
@@ -175,7 +176,7 @@ for bench_name, all_funs in all_benchs.items():
         ForceBenchmark = ForceBenchmark ,
     )
 
-    choreo.plot_benchmark(
+    pyquickbench.plot_benchmark(
         all_errors                                  ,
         refinement_lvl                              ,
         all_funs                                    ,

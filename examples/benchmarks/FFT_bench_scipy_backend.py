@@ -28,7 +28,7 @@ sys.path.append(__PROJECT_ROOT__)
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy
-import choreo
+import pyquickbench
 
 if ("--no-show" in sys.argv):
     plt.show = (lambda : None)
@@ -92,8 +92,8 @@ try:
     import pyfftw
     pyfftw.interfaces.cache.enable()
     pyfftw.interfaces.cache.set_keepalive_time(300000)
-    # pyfftw.config.PLANNER_EFFORT = 'FFTW_ESTIMATE'
-    pyfftw.config.PLANNER_EFFORT = 'FFTW_MEASURE'
+    pyfftw.config.PLANNER_EFFORT = 'FFTW_ESTIMATE'
+    # pyfftw.config.PLANNER_EFFORT = 'FFTW_MEASURE'
     # pyfftw.config.PLANNER_EFFORT = 'FFTW_PATIENT'
     # pyfftw.config.PLANNER_EFFORT = 'FFTW_EXHAUSTIVE'
 
@@ -141,14 +141,14 @@ for i_backend, backend in enumerate(all_backends):
         dst_III,
     ]
 
-    all_times = choreo.benchmark.run_benchmark(
+    all_times = pyquickbench.run_benchmark(
         all_sizes,
         all_funs,
         setup = prepare_x,
         filename = timings_filename,
     )
 
-    choreo.plot_benchmark(
+    pyquickbench.plot_benchmark(
         all_times                               ,
         all_sizes                               ,
         all_funs                                ,

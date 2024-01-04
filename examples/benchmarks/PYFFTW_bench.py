@@ -30,7 +30,7 @@ sys.path.append(__PROJECT_ROOT__)
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy
-import choreo
+import pyquickbench
 
 if ("--no-show" in sys.argv):
     plt.show = (lambda : None)
@@ -63,10 +63,10 @@ def setup_all(fft_type, nthreads, all_sizes):
         pyfftw.interfaces.cache.enable()
         pyfftw.interfaces.cache.set_keepalive_time(300000)
 
-        # planner_effort = 'FFTW_ESTIMATE'
+        planner_effort = 'FFTW_ESTIMATE'
         # planner_effort = 'FFTW_MEASURE'
         # planner_effort = 'FFTW_PATIENT'
-        planner_effort = 'FFTW_EXHAUSTIVE'
+        # planner_effort = 'FFTW_EXHAUSTIVE'
 
         pyfftw.config.NUM_THREADS = nthreads
         pyfftw.config.PLANNER_EFFORT = planner_effort
@@ -199,14 +199,14 @@ def plot_all(relative_to=None):
         basename = f'PYFFT_bench_{fft_type}_{nthreads}_thread{plural}'
         timings_filename = os.path.join(timings_folder,basename+'.npy')
 
-        all_times = choreo.benchmark.run_benchmark(
+        all_times = pyquickbench.run_benchmark(
             all_sizes                       ,
             all_funs                        ,
             setup = prepare_x               ,
             filename = timings_filename     ,
         )
 
-        choreo.plot_benchmark(
+        pyquickbench.plot_benchmark(
             all_times           ,
             all_sizes           ,
             all_funs            ,
