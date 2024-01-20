@@ -1,0 +1,1 @@
+choreo[gui,cli,docs,test_cli,test_gui,build]

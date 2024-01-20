@@ -67,9 +67,6 @@ all_nsteps = [5]
 refinement_lvl = np.array(range(1,100))
 # refinement_lvl = np.array([2**i for i in range(18)])
 
-# sphinx_gallery_start_ignore
-
-
 def setup(fun_name, quad_method, quad_nsteps, nint):
     return {'fun_name': fun_name, 'quad_method': quad_method, 'quad_nsteps': quad_nsteps, 'nint': nint}
 
@@ -146,7 +143,7 @@ for iy, nstep in enumerate(all_nsteps):
         
 fig.tight_layout()
 fig.show()
-# sphinx_gallery_end_ignore
+
 
 
 # %%
