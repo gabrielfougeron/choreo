@@ -185,12 +185,12 @@ def plot_all(relative_to=None):
         if fft_type in ['fft']:
             def prepare_x(n):
                 x = np.random.random(n) + 1j*np.random.random(n)
-                return [(x, 'x')]
+                return {'x': x}
             
         elif fft_type in ['rfft']:
             def prepare_x(n):
                 x = np.random.random(n)
-                return [(x, 'x')]
+                return {'x': x}
         else:
             raise ValueError(f'No prepare function for {fft_type}')
 

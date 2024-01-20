@@ -70,7 +70,7 @@ refinement_lvl = np.array(range(1,100))
 # sphinx_gallery_start_ignore
 
 def setup(nint):
-    return nint
+    return {'nint': nint}
     
 all_benchs = {
     fun_name : {

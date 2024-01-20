@@ -1,0 +1,4 @@
+choreo[cli]
+attrs
+pytest
+pytest-xdist

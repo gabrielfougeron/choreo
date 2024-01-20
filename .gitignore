@@ -5,6 +5,7 @@
 *.png
 *.jpg
 *.npy
+*.npz
 *.mp4
 *.html
 *.txt
@@ -53,3 +54,4 @@ NewSym_data/
 !/choreo_GUI/SOME3/**
 !/docs/source/_static/**
 !/docs/source/test-report/test_report_template.txt
+!/requirements/requirements*.txt

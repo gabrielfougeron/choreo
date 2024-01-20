@@ -1,0 +1,4 @@
+setuptools>=42
+wheel
+Cython
+build

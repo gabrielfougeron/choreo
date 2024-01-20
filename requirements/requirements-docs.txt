@@ -1,0 +1,8 @@
+choreo[test,bench,cli]
+Sphinx
+pydata-sphinx-theme
+sphinx-gallery
+sphinx-pyproject
+sphinx-needs
+sphinx-test-reports
+sphinxcontrib.plantuml

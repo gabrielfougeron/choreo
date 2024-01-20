@@ -38,7 +38,7 @@ for name, fun in all_funs.items():
 all_maxval = np.array([2**i for i in range(18)])
 
 def prepare_maxval(maxval):
-    return [(maxval, 'maxval')]
+    return {'maxval': maxval}
 
 dpi = 150
 figsize = (1600/dpi, 1 * 800 / dpi)
