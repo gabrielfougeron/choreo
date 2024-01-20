@@ -5,53 +5,42 @@ import os
 import sys
 sys.path.insert(0, pathlib.Path(__file__).parents[2].resolve().as_posix())
 
-from sphinx_gallery.sorting import FileNameSortKey
-from sphinx_pyproject import SphinxConfig
+from sphinx_gallery.sorting import FileNameSortKey, ExplicitOrder
 
 __PROJECT_ROOT__ = os.path.abspath(os.path.join(os.path.dirname(__file__),os.pardir,os.pardir))
 
 import warnings
 warnings.filterwarnings("ignore", category=RuntimeWarning) 
 
-
 project = "Choreo"
 author = "Gabriel Fougeron"
 project_copyright = "2021, Gabriel Fougeron"
 version = '0.2.0'
 
-
 # sys.path.append(os.path.abspath("./_pygments"))
 # from style import PythonVSMintedStyle
 # pygments_style = PythonVSMintedStyle.__qualname__
 
-
-# Configuration file for the Sphinx documentation builder.
-#
-# For the full list of built-in configuration values, see the documentation:
-# https://www.sphinx-doc.org/en/master/usage/configuration.html
-
-# -- Project information -----------------------------------------------------
-# https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
-
-# -- General configuration ---------------------------------------------------
-# https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
-
 language = "en"
 
-
 extensions = [
-    'sphinx.ext.duration',
-    'sphinx.ext.doctest',
-    'sphinx.ext.autodoc',
-    'sphinx.ext.autosummary',
-    'sphinx.ext.mathjax',
-    'sphinx.ext.napoleon',
-    'sphinx_gallery.gen_gallery',
-    'sphinx_needs',
-    'sphinxcontrib.test_reports',
-    'sphinxcontrib.plantuml',
+    "sphinx.ext.duration"           ,
+    "sphinx.ext.doctest"            ,
+    "sphinx.ext.autodoc"            ,
+    "sphinx.ext.viewcode"           ,
+    "sphinx.ext.todo"               ,
+    "sphinx.ext.autosummary"        ,
+    "sphinx.ext.mathjax"            ,
+    "sphinx.ext.napoleon"           ,
+    "sphinx.ext.intersphinx"        ,
+    "sphinx.ext.githubpages"        ,
+    "sphinx_gallery.gen_gallery"    ,
+    "sphinx_needs"                  ,
+    "sphinxcontrib.test_reports"    ,
+    "sphinxcontrib.plantuml"        ,
+    "myst_parser"                   ,
+    "sphinxext.rediraffe"           ,
 ]
-
 
 # The suffix of source filenames.
 source_suffix = ".rst"
@@ -68,6 +57,22 @@ autosummary_generate = True
 templates_path = ['templates']
 exclude_patterns = []
 
+intersphinx_mapping = {
+    "python":       ("https://docs.python.org/3"                    , None) ,
+    "sphinx":       ("https://www.sphinx-doc.org/en/master/"        , None) ,
+    "numpy":        ("http://docs.scipy.org/doc/numpy"              , None) ,
+    "scipy":        ("http://docs.scipy.org/doc/scipy/reference/"   , None) ,
+    "matplotlib":   ("http://matplotlib.sourceforge.net/"           , None) , 
+}
+
+intersphinx_disabled_reftypes = ["*"]
+intersphinx_cache_limit = -1
+intersphinx_timeout = 1
+
+rediraffe_redirects = {
+    "gallery": "_build/auto_examples/index"             ,
+}
+
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
@@ -77,7 +82,7 @@ html_logo_abs = os.path.join(__PROJECT_ROOT__,"docs","source","_static","img","e
 html_logo_rel = "_static/img/eight_icon.png"
 html_logo = html_logo_rel
 html_favicon = html_logo_rel
-
+html_baseurl = "https://gabrielfougeron.github.io/choreo-docs"
 html_show_sourcelink = True
 
 html_theme_options = {
@@ -104,6 +109,17 @@ html_theme_options = {
             "icon": html_logo,
             "type": "local",
         },
+        # {
+        #     "name": "PyPI",
+        #     "url": "https://pypi.org/project/pyquickbench/",
+        #     "icon": "fa-custom fa-pypi",
+        # },
+        # {
+        #     "name": "Anaconda",
+        #     # "url": "https://anaconda.org/conda-forge/pyquickbench",
+        #     "url": "https://anaconda.org/conda-forge",
+        #     "icon": "fa-custom fa-anaconda",
+        # },
     ],
     "logo": {
         "text": "choreo",
@@ -116,23 +132,30 @@ html_theme_options = {
 
 # Add / remove things from left sidebar
 html_sidebars = {
-    "**": ["sidebar-nav-bs"],
+    "**": [
+            "navbar-logo"       ,
+            "sidebar-nav-bs"    ,
+        ],
     # "**": [],
 }
 
 html_context = {
-    "display_github": True, # Integrate GitHub
-    "github_user": "gabrielfougeron", # Username
-    "github_repo": "choreo", # Repo name
-    "github_version": "main", # Version
-    "version": "main", # Version
-    "conf_py_path": "docs/source/", # Path in the checkout to the docs root
-    "default_mode": "light",
+    "display_github"    : True              , # Integrate GitHub
+    "github_user"       : "gabrielfougeron" , # Username
+    "github_repo"       : "pyquickbench"    , # Repo name
+    "github_version"    : "main"            , # Version
+    "version"           : "main"            , # Version
+    "conf_py_path"      : "docs/source/"    , # Path in the checkout to the docs root
+    "doc_path"          : "docs/source/"    ,
+    "default_mode"      : "light"           ,
 }
 
 html_static_path = ['_static']
 html_css_files = [
     'css/custom.css',
+]
+html_js_files = [
+    "js/custom-icon.js",
 ]
 
 tr_report_template = "./test-report/test_report_template.txt"
@@ -141,18 +164,24 @@ tr_report_template = "./test-report/test_report_template.txt"
 
 sphinx_gallery_conf = {
     # path to your examples scripts
-    'filename_pattern': '/',
-    'ignore_pattern': r'NOTREADY',
-    'examples_dirs': "../../examples/",
-    "gallery_dirs": "_build/auto_examples/",
-    "within_subsection_order": FileNameSortKey,
-    "backreferences_dir": "_build/generated",
-    "image_scrapers": ("matplotlib",),
-    "default_thumb_file": html_logo_abs,
-    "plot_gallery": True,
-    'matplotlib_animations': True,
-    'nested_sections':True,
-    # 'run_stale_examples': True, # Force rebuilding of examples even if the *py file did not change.
+    'filename_pattern': '/'                                 ,
+    'ignore_pattern': r'NOTREADY'                           ,
+    'examples_dirs': "../../examples/"                      ,
+    "gallery_dirs": "_build/auto_examples/"                 ,
+    "subsection_order"          : ExplicitOrder([
+        "../../examples/Numerical_tricks"   ,
+        "../../examples/convergence"        ,
+        "../../examples/benchmarks"         ,
+    ])                                                      ,
+    "within_subsection_order": FileNameSortKey              ,
+    "backreferences_dir": "_build/generated"                ,
+    "image_scrapers": ("matplotlib",)                       ,
+    "default_thumb_file": html_logo_abs                     ,
+    "plot_gallery": True                                    ,
+    'matplotlib_animations': True                           ,
+    'nested_sections':True                                  ,
+    "reference_url"             : {"sphinx_gallery": None,} ,
+    "min_reported_time"         : 10000                     ,
 }
 
 

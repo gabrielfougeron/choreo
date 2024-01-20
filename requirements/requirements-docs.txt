@@ -6,3 +6,6 @@ sphinx-pyproject
 sphinx-needs
 sphinx-test-reports
 sphinxcontrib.plantuml
+seed-intersphinx-mapping
+myst-parser
+sphinxext-rediraffe

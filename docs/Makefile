@@ -20,7 +20,7 @@ clean:
 
 all:
 	make html
-	make latexpdf
+	# make latexpdf
 	make deploy
 
 deploy:
