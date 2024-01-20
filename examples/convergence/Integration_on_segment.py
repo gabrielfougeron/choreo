@@ -51,7 +51,7 @@ ForceBenchmark = False
 
 # sphinx_gallery_end_ignore
 
-fun_names = [
+all_integrands = [
     "exp",
 ]
 
@@ -69,145 +69,85 @@ refinement_lvl = np.array(range(1,100))
 
 # sphinx_gallery_start_ignore
 
-def setup(nint):
-    return {'nint': nint}
-    
-all_benchs = {
-    fun_name : {
-        f'{method} {nsteps}' : functools.partial(
-            choreo.scipy_plus.test.Quad_cpte_error_on_test  ,
-            fun_name    ,
-            method      ,
-            nsteps      ,
-        ) for method, nsteps in itertools.product(methods, all_nsteps)
-    } for fun_name in fun_names
+
+def setup(fun_name, quad_method, quad_nsteps, nint):
+    return {'fun_name': fun_name, 'quad_method': quad_method, 'quad_nsteps': quad_nsteps, 'nint': nint}
+
+all_args = {
+    'integrand': all_integrands,
+    'quad_method': methods,
+    'quad_nsteps': all_nsteps,
+    'nint': refinement_lvl,
 }
+    
+all_funs = [choreo.scipy_plus.test.Quad_cpte_error_on_test]
+    
 
-n_bench = len(all_benchs)
+bench_filename = os.path.join(bench_folder,basename_bench_filename+'.npz')
 
-dpi = 150
-figsize = (1600/dpi, n_bench * 800 / dpi)
-
-# sphinx_gallery_end_ignore
-
-# %%
-# The following plots give the measured relative error as a function of the number of quadrature subintervals
-
-# sphinx_gallery_start_ignore
-
-fig, axs = plt.subplots(
-    nrows = n_bench,
-    ncols = 1,
-    sharex = True,
-    sharey = True,
-    figsize = figsize,
-    dpi = dpi   ,
-    squeeze = False,
+all_errors = pyquickbench.run_benchmark(
+    all_args                        ,
+    all_funs                        ,
+    setup = setup                   ,
+    mode = "scalar_output"          ,
+    filename = bench_filename       ,
+    ForceBenchmark = ForceBenchmark ,
 )
 
-i_bench = -1
+plot_intent = {
+    'integrand': "subplot_grid_x"       ,
+    'quad_method': "curve_color"        ,
+    'quad_nsteps': "subplot_grid_y"     ,
+    'nint': "points"                    ,
+    pyquickbench.fun_ax_name : "same"   ,
+}
 
-for bench_name, all_funs in all_benchs.items():
+fig, ax = pyquickbench.plot_benchmark(
+    all_errors                              ,
+    all_args                                ,
+    all_funs                                ,
+    plot_intent = plot_intent               ,
+    title = 'Absolute error of quadrature'  ,
+)
 
-    i_bench += 1
-
-    bench_filename = os.path.join(bench_folder,basename_bench_filename+bench_name.replace(' ','_')+'.npy')
-
-    all_errors = pyquickbench.run_benchmark(
-        refinement_lvl                  ,
-        all_funs                        ,
-        setup = setup                   ,
-        mode = "scalar_output"          ,
-        filename = bench_filename       ,
-        ForceBenchmark = ForceBenchmark ,
-    )
-
-    pyquickbench.plot_benchmark(
-        all_errors                                  ,
-        refinement_lvl                              ,
-        all_funs                                    ,
-        fig = fig                                   ,
-        ax = axs[i_bench,0]                         ,
-        title = f'Absolute error on integrand {bench_name}' ,
-    )
-    
-plot_xlim = axs[0,0].get_xlim()
-    
-plt.tight_layout()
-
-# sphinx_gallery_end_ignore
-
-plt.show()
+plot_xlim = ax[0,0].get_xlim()
+fig.tight_layout()
+fig.show()
 
 # %%
 # The following plots give the measured convergence rate as a function of the number of quadrature subintervals.
 # The dotted lines are theoretical convergence rates.
 
-# sphinx_gallery_start_ignore
-
-plt.close()
-
+ 
 plot_ylim = [0,20]
 
-fig, axs = plt.subplots(
-    nrows = n_bench,
-    ncols = 1,
-    sharex = True,
-    sharey = True,
-    figsize = figsize,
-    dpi = dpi   ,
-    squeeze = False,
+fig, ax = pyquickbench.plot_benchmark(
+    all_errors                              ,
+    all_args                                ,
+    all_funs                                ,
+    transform = "pol_cvgence_order"         ,
+    plot_xlim = plot_xlim                   ,
+    plot_ylim = plot_ylim                   ,
+    logx_plot = True                        ,
+    clip_vals = True                        ,
+    stop_after_first_clip = True            ,
+    plot_intent = plot_intent               ,
+    title = 'Approximate convergence rate'  ,
 )
 
-i_bench = -1
+for iy, nstep in enumerate(all_nsteps):
+    for method in methods:
 
-for bench_name, all_funs in all_benchs.items():
-
-    i_bench += 1
-
-    bench_filename = os.path.join(bench_folder,basename_bench_filename+bench_name.replace(' ','_')+'.npy')
-
-    all_errors = pyquickbench.run_benchmark(
-        refinement_lvl                  ,
-        all_funs                        ,
-        setup = setup                   ,
-        mode = "scalar_output"          ,
-        filename = bench_filename       ,
-        ForceBenchmark = ForceBenchmark ,
-    )
-
-    pyquickbench.plot_benchmark(
-        all_errors                                  ,
-        refinement_lvl                              ,
-        all_funs                                    ,
-        transform = "pol_cvgence_order"             ,
-        plot_xlim = plot_xlim                       ,
-        plot_ylim = plot_ylim                       ,
-        logx_plot = True                            ,
-        clip_vals = True                            ,
-        stop_after_first_clip = True                ,
-        fig = fig                                   ,
-        ax = axs[i_bench,0]                         ,
-        title = f'Approximate convergence rate on integrand {bench_name}' ,
-    )
-    
-    for fun_name, fun in all_funs.items():
-            
-        quad_method = fun.args[1]
-        quad_nsteps = fun.args[2]
-
-        quad = choreo.scipy_plus.multiprec_tables.ComputeQuadrature(quad_nsteps, method=quad_method)
+        quad = choreo.scipy_plus.multiprec_tables.ComputeQuadrature(nstep, method=method)
         th_order = quad.th_cvg_rate
-        xlim = axs[i_bench,0].get_xlim()
+        xlim = ax[0,iy].get_xlim()
 
-        axs[i_bench,0].plot(xlim, [th_order, th_order], linestyle='dotted')
+        ax[0,iy].plot(xlim, [th_order, th_order], linestyle='dotted')
         
-plt.tight_layout()
-
+fig.tight_layout()
+fig.show()
 # sphinx_gallery_end_ignore
 
-
-plt.show()
 
 # %%
 # We can see 3 distinct phases on these plots:
