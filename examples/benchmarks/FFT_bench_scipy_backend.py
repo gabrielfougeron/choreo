@@ -119,10 +119,13 @@ all_funs = [
     dst_III ,
 ]
 
+n_repeat = 10
+
 all_times = pyquickbench.run_benchmark(
     all_args                    ,
     all_funs                    ,
     setup = setup               ,
+    n_repeat = n_repeat         ,
     filename = timings_filename ,
     title = 'Absolute timings'  ,
 )
