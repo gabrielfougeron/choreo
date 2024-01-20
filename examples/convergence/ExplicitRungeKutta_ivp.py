@@ -302,13 +302,13 @@ plt.close()
 
 best_method_by_order = {
     1: 'SymplecticEuler',
-    2: 'McAte2',
-    3: 'McAte3',
-    4: 'McAte4',
-    5: 'McAte5',
-    6: 'KahanLi6',
-    8: 'KahanLi8',
-    10:'SofSpa10',
+    2: 'McAte2'         ,
+    3: 'McAte3'         ,
+    4: 'McAte4'         ,
+    5: 'McAte5'         ,
+    6: 'KahanLi6'       ,
+    8: 'KahanLi8'       ,
+    10:'SofSpa10'       ,
 }
 
 

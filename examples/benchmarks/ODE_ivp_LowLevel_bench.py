@@ -45,7 +45,7 @@ timings_folder = os.path.join(__PROJECT_ROOT__,'examples','generated_files')
 if not(os.path.isdir(timings_folder)):
     os.makedirs(timings_folder)
 
-basename_timings_filename = 'ODE_ivp_lowlevel_bench_'
+basename_timings_filename = 'ODE_ivp_lowlevel_bench'
 
 # ForceBenchmark = True
 ForceBenchmark = False
@@ -73,8 +73,6 @@ def test_from_fun(fun):
         nint = nint     ,
     )
 
-
-
 def mul_py_fun_array(t,x):
     res = np.empty((ndim_mul))
     for i in range(ndim_mul):
@@ -91,10 +89,9 @@ def mul_py_fun_inplace_pointer(t,x, res):
 
 mul_nb_fun_inplace_pointer = choreo.scipy_plus.ODE.nb_jit_inplace_double_array(mul_py_fun_inplace_pointer)
 
-
 # sphinx_gallery_end_ignore
 
-all_funs_vect = {
+all_funs = {
     'mul_py_fun_array' : test_from_fun(mul_py_fun_array),
     'mul_nb_fun_inplace_pointer' : test_from_fun(mul_nb_fun_inplace_pointer),
     'py_fun_in_pyx' : test_from_fun(choreo.scipy_plus.cython.test.mul_py_fun_tx) ,
@@ -102,61 +99,47 @@ all_funs_vect = {
     'cy_fun_memoryview_LowLevel' : test_from_fun(scipy.LowLevelCallable.from_cython(choreo.scipy_plus.cython.test, "mul_cy_fun_memoryview_tx")),
 }
 
-all_benchs = {
-    f'Vector function of size {choreo.scipy_plus.cython.test.mul_size_py}' : all_funs_vect  ,
-}
-
 # sphinx_gallery_start_ignore
 
-n_bench = len(all_benchs)
-
-dpi = 150
-figsize = (1600/dpi, n_bench * 800 / dpi)
-
-fig, axs = plt.subplots(
-    nrows = n_bench,
-    ncols = 1,
-    sharex = True,
-    sharey = True,
-    figsize = figsize,
-    dpi = dpi   ,
-    squeeze = False,
-)
-
-i_bench = -1
-
-# all_nint = np.array([2**i for i in range(12)])
 all_nint = np.array([2**i for i in range(8)])
 
 def setup(nint):
     return {'nint': nint}
 
-for bench_name, all_funs in all_benchs.items():
+timings_filename = os.path.join(timings_folder,basename_timings_filename+'.npz')
 
-    i_bench += 1
+n_repeat = 10
 
-    timings_filename = os.path.join(timings_folder,basename_timings_filename+bench_name.replace(' ','_')+'.npy')
+all_times = pyquickbench.run_benchmark(
+    all_nint                        ,
+    all_funs                        ,
+    n_repeat = n_repeat             ,
+    setup = setup                   ,
+    filename = timings_filename     ,
+    ForceBenchmark = ForceBenchmark ,
+    StopOnExcept = True             ,
+)
 
-    all_times = pyquickbench.run_benchmark(
-        all_nint,
-        all_funs,
-        setup = setup,
-        filename = timings_filename,
-        ForceBenchmark = ForceBenchmark ,
-        StopOnExcept = True,
-    )
+pyquickbench.plot_benchmark(
+    all_times           ,
+    all_nint            ,
+    all_funs            ,
+    show = True         ,
+)
 
-    pyquickbench.plot_benchmark(
-        all_times                               ,
-        all_nint                                ,
-        all_funs                                ,
-        fig = fig                               ,
-        ax = axs[i_bench,0]                     ,
-        title = bench_name                      ,
-    )
-    
-plt.tight_layout()
-plt.show()
-
-    
 # sphinx_gallery_end_ignore
+
+# %%
+# 
+
+relative_to_val = {pyquickbench.fun_ax_name:'cy_fun_memoryview_LowLevel'}
+
+pyquickbench.plot_benchmark(
+    all_times                           ,
+    all_nint                            ,
+    all_funs                            ,
+    show = True                         ,
+    relative_to_val = relative_to_val   ,
+    title = 'Timings relative to cy_fun_memoryview_LowLevel'      ,
+)
+
