@@ -1,0 +1,4 @@
+choreo[test-cli]
+pytest-pyodide
+pytest-httpserver
+selenium

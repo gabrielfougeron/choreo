@@ -88,11 +88,11 @@ def setup(alpha):
     x = np.zeros((n),dtype=np.float64)
     choreo.scipy_plus.cython.test.inplace_taylor_poly(x, -alpha)
     
-    return x
+    return {'x' : x}
 
 @functools.cache
 def exact_sum(alpha):
-    y = setup(alpha)
+    y = setup(alpha)['x']
     return m.fsum(y)
     
 def compute_error(f, x):
@@ -104,38 +104,22 @@ def compute_error(f, x):
     
     return rel_err + 1e-40
 
-
-dpi = 150
-
-figsize = (1600/dpi, 800 / dpi)
-
-fig, axs = plt.subplots(
-    nrows = 1,
-    ncols = 1,
-    sharex = True,
-    sharey = True,
-    figsize = figsize,
-    dpi = dpi   ,
-    squeeze = True,
-)
-
 basename = 'sum_bench_accuracy'
-error_filename = os.path.join(timings_folder,basename+'.npy')
+error_filename = os.path.join(timings_folder,basename+'.npz')
 
-# all_alphas = np.array([float(2**i) for i in range(10)])
-all_alphas = np.array([float(alpha) for alpha in range(500)])
+all_alphas = {"alpha" : np.array([float(alpha) for alpha in range(200)])}
 
 all_funs = [
-    naive_sum,
-    builtin_sum,
-    np_sum,
-    m_fsum,
-    SumK_1,
-    SumK_2,
-    SumK_3,
-    FastSumK_1,
-    FastSumK_2,
-    FastSumK_3,
+    naive_sum   ,
+    builtin_sum ,
+    np_sum      ,
+    m_fsum      ,
+    SumK_1      ,
+    SumK_2      ,
+    SumK_3      ,
+    FastSumK_1  ,
+    FastSumK_2  ,
+    FastSumK_3  ,
 ]
 
 all_error_funs = { f.__name__ :  functools.partial(compute_error, f) for f in all_funs if f is not m_fsum}
@@ -150,18 +134,13 @@ all_times = pyquickbench.run_benchmark(
 )
 
 pyquickbench.plot_benchmark(
-    all_times                               ,
-    all_alphas                              ,
-    all_error_funs                          ,
-    fig = fig                               ,
-    ax = axs                                ,
+    all_times       ,
+    all_alphas      ,
+    all_error_funs  ,
+    show = True     ,
     title = "Relative error for increasing conditionning"   ,
 )
     
-plt.tight_layout()
-
-plt.show()
-
 # sphinx_gallery_end_ignore
 
 
@@ -169,41 +148,14 @@ plt.show()
 
 def prepare_x(n):
     x = np.random.random(n)
-    return [(x, 'x')]
+    return {'x': x}
 
 # sphinx_gallery_start_ignore
-dpi = 150
-
-figsize = (1600/dpi, 800 / dpi)
-
-fig, axs = plt.subplots(
-    nrows = 1,
-    ncols = 1,
-    sharex = True,
-    sharey = True,
-    figsize = figsize,
-    dpi = dpi   ,
-    squeeze = True,
-)
-
 
 basename = 'sum_bench_time'
-timings_filename = os.path.join(timings_folder,basename+'.npy')
+timings_filename = os.path.join(timings_folder,basename+'.npz')
 
-all_sizes = np.array([2**n for n in range(21)])
-
-all_funs = [
-    naive_sum,
-    builtin_sum,
-    np_sum,
-    m_fsum,
-    SumK_1,
-    SumK_2,
-    SumK_3,
-    FastSumK_1,
-    FastSumK_2,
-    FastSumK_3,
-]
+all_sizes = {"n" : np.array([2**n for n in range(21)])}
 
 all_times = pyquickbench.run_benchmark(
     all_sizes                       ,
@@ -214,16 +166,11 @@ all_times = pyquickbench.run_benchmark(
 )
 
 pyquickbench.plot_benchmark(
-    all_times                               ,
-    all_sizes                               ,
-    all_funs                                ,
-    fig = fig                               ,
-    ax = axs                                ,
+    all_times   ,
+    all_sizes   ,
+    all_funs    ,
+    show = True ,
     title = "Time (s) as a function of array size"   ,
 )
-    
-plt.tight_layout()
-
-plt.show()
 
 # sphinx_gallery_end_ignore

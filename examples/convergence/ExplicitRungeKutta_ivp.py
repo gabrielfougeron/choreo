@@ -90,13 +90,8 @@ all_benchs = {
     } for order, eq_name in itertools.product(sorted_method_order, eq_names)
 }
 
-
 def setup(nint):
-    return nint
-
-def setup_timings(nint):
-    return [(nint, 'nint')]
-
+    return {'nint': nint}
 
 n_bench = len(all_benchs)
 
@@ -274,7 +269,7 @@ for bench_name, all_funs in all_benchs.items():
     all_times = pyquickbench.run_benchmark(
         all_nint                        ,
         all_funs                        ,
-        setup = setup_timings           ,
+        setup = setup                   ,
         mode = "timings"                ,
         filename = timings_filename     ,
         ForceBenchmark = ForceBenchmark ,
@@ -365,7 +360,7 @@ for bench_name, all_funs in all_benchs.items():
     all_times = pyquickbench.run_benchmark(
         all_nint                        ,
         all_funs                        ,
-        setup = setup_timings           ,
+        setup = setup                   ,
         mode = "timings"                ,
         filename = timings_filename     ,
         ForceBenchmark = ForceBenchmark ,
