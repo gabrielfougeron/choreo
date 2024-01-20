@@ -124,7 +124,7 @@ all_funs = [
 
 def prepare_x(n):
     x = np.random.random(n) + 1j*np.random.random(n)
-    return [(x, 'x')]
+    return {'x': x}
     
 basename = f'Inplace_conjugation_bench'
 timings_filename = os.path.join(timings_folder,basename+'.npy')

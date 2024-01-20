@@ -129,7 +129,7 @@ i_bench = -1
 all_nint = np.array([2**i for i in range(8)])
 
 def setup(nint):
-    return [(nint, 'nint')]
+    return {'nint': nint}
 
 for bench_name, all_funs in all_benchs.items():
 

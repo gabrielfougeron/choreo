@@ -32,56 +32,21 @@ classifiers = [
   "Topic :: Scientific/Engineering :: Physics",
 ]
 requires-python = ">= 3.9"
-dependencies = [
-  "scipy",
-  "numpy",
-  "matplotlib",
-  "sparseqr>=1.2",
-  "networkx",
-  "mpmath",
-]
+dynamic = ["dependencies", "optional-dependencies"]
+[tool.setuptools.dynamic.dependencies]
+file = ["requirements.txt"]
 
-[project.optional-dependencies]
-build = [
-  "setuptools>=42",
-  "wheel",
-  "Cython",
-  "build",
-]
-gui = [
-  "pyodide-build==0.24.1",
-]
-cli = [
-  "numba",
-]
-test-cli = [
-  "choreo[cli]",
-  "attrs",
-  "pytest",
-  "pytest-xdist",
-]
-test-gui = [
-  "choreo[test-cli]",
-  "pytest-pyodide",
-  "pytest-httpserver",
-  "selenium",
-]
+[tool.setuptools.dynamic.optional-dependencies]
+build = {file = ["requirements-build.txt"]}
+gui = {file = ["requirements-gui.txt"]}
+cli = {file = ["requirements-cli.txt"]}
+test-cli = {file = ["requirements-test-cli.txt"]}
+test-gui = {file = ["requirements-test-gui.txt"]}
+test-bench = {file = ["requirements-bench.txt"]}
+test-docs = {file = ["requirements-docs.txt"]}
 test = [
   # choreo[test-cli, test-gui], GUI tests are disabled for now
   "choreo[test-cli]",
-]
-bench = [
-  "pyfftw",
-]
-docs = [
-  "choreo[test,bench]",
-  "Sphinx",
-  "pydata-sphinx-theme",
-  "sphinx-gallery",
-  "sphinx-pyproject",
-  "sphinx-needs",
-  "sphinx-test-reports",
-  "sphinxcontrib.plantuml",
 ]
 full = [
   "choreo[gui,cli,docs,test,build]"
