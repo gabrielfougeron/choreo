@@ -57,3 +57,13 @@ p.sphx-glr-signature {
     padding-left:calc(min(25% + 2rem))!important;
   }
 }
+
+.need .content {
+  display: block;
+  overflow-y: hidden;
+  max-height: 45px;
+}
+
+.need .content:hover {
+  max-height: 100%!important;
+}

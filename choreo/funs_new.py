@@ -25,55 +25,6 @@ import choreo.scipy_plus
 
 from choreo.cython.funs_new import ActionSym
 
-# from matplotlib.colors import cnames
-# from matplotlib.collections import LineCollection
-# from matplotlib import animation
-
-
-# try:
-#     import ffmpeg
-# except:
-#     pass
-# 
-# from choreo.cython.funs_serial import Compute_action_Cython_2D_serial, Compute_action_hess_mul_Cython_2D_serial
-# from choreo.cython.funs_serial import Compute_action_Cython_nD_serial, Compute_action_hess_mul_Cython_nD_serial
-# 
-# try:
-#         
-#     from choreo.cython.funs_parallel import Compute_action_Cython_2D_parallel, Compute_action_hess_mul_Cython_2D_parallel
-#     from choreo.cython.funs_parallel import Compute_action_Cython_nD_parallel, Compute_action_hess_mul_Cython_nD_parallel
-#     from choreo.cython.funs_parallel import Compute_Forces_Cython_parallel, Compute_JacMulMat_Forces_Cython_parallel
-# 
-# except:
-#     pass
-# 
-# from choreo.default_fft import *
-# 
-# 
-# try:
-#     from choreo.numba_funs import *
-# except:
-#     pass
-
-# from choreo.cython.funs import twopi,nhash,n,hash_exp
-# from choreo.cython.funs import Compute_hash_action_Cython,Compute_Newton_err_Cython
-# from choreo.cython.funs import Assemble_Cstr_Matrix, diagmat_changevar
-# from choreo.cython.funs import coeff_to_param_matrixfree, param_to_coeff_matrixfree
-# from choreo.cython.funs import Package_all_coeffs_matrixfree, Unpackage_all_coeffs_matrixfree
-# from choreo.cython.funs import Package_all_coeffs_T_matrixfree, Unpackage_all_coeffs_T_matrixfree
-# from choreo.cython.funs import Compute_MinDist_Cython,Compute_Loop_Dist_btw_avg_Cython,Compute_square_dist,Compute_Loop_Size_Dist_Cython
-# from choreo.cython.funs import Compute_JacMat_Forces_Cython,Compute_JacMul_Forces_Cython,Compute_JacMulMat_Forces_Cython
-# 
-# from choreo.cython.funs import Compute_Forces_Cython, Compute_Forces_Cython_mul_x
-# from choreo.cython.funs import Compute_JacMulMat_Forces_Cython, Compute_JacMulMat_Forces_Cython_mul_x
-# 
-# from choreo.cython.funs import Transform_Coeffs_Single_Loop,SparseScaleCoeffs,ComputeSpeedCoeffs
-# from choreo.cython.funs import Compute_hamil_hess_mul_Cython_nosym,Compute_hamil_hess_mul_xonly_Cython_nosym
-# from choreo.cython.funs import Compute_Derivative_precond_inv_Cython_nosym,Compute_Derivative_precond_Cython_nosym
-# from choreo.cython.funs import Compute_Derivative_Cython_nosym,InplaceSmoothCoeffs
-# from choreo.cython.funs import RotateFastWithSlow_2D
-# from choreo.cython.funs import PopulateRandomInit
-# 
 
 def EdgesAreEitherDirectXORIndirect(FullGraph):
 
@@ -231,7 +182,6 @@ def Build_FullGraph_NoPb(
         ) 
 
     return FullGraph, nint
-
 
 def Build_BodyGraph(nbody, Sym_list):
 
@@ -624,6 +574,52 @@ def ComputeParamBasis_Body(MomCons, nbody, geodim, BodyConstraints):
 
     return All_params_basis
 
+def reorganize_All_params_basis(All_params_basis, all_params, geodim):
+    
+    nbody = len(All_params_basis)
+    
+    all_nnz_k = []
+    all_params_basis_reoganized = []
+    all_params_reoganized = []
+    
+    for ib in range(nbody):
+        
+        params_basis = All_params_basis[ib]
+        
+        ncoeffs_min = len(params_basis)
+        
+        last_nparam = None
+        nnz_k = []
+        for k in range(ncoeffs_min):
+            
+            nparam_now = params_basis[k].shape[2]
+            
+            if last_nparam is None and nparam_now != 0:
+                last_nparam = nparam_now
+            elif nparam_now != 0:
+                assert nparam_now == last_nparam
+            
+            if nparam_now != 0:
+                nnz_k.append(k)
+                
+        nnz_k = np.array(nnz_k)
+        all_nnz_k.append(nnz_k)
+            
+        params_basis_reoganized = np.empty((nnz_k.shape[0], geodim,  last_nparam), dtype=np.complex128)    
+        
+        for ik, k in enumerate(nnz_k):
+            
+            params_basis_reoganized[ik,:,:] = params_basis[k][:,0,:] + 1j*params_basis[k][:,1,:]
+        
+
+        all_params_basis_reoganized.append(params_basis_reoganized)
+
+        assert (all_params[ib].shape[0] % last_nparam) == 0
+
+        all_params_reoganized.append(all_params[ib].reshape(-1, last_nparam).transpose().copy())
+
+    return all_params_basis_reoganized, all_nnz_k, all_params_reoganized
+
 def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCons=False,n_grad_change=1.,Sym_list=[],CrashOnIdentity=True,ForceMatrixChangevar = False):
     
     r"""
@@ -878,7 +874,7 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
             assert abs(avg_param_per_k[Targets[il,ilb]]  - avg_param_per_k[Targets[il,0]]) < eps
 
 
-    nint = math.lcm(2, nint_min)
+    nint = math.lcm(2, nint_min) 
     ncoeffs = nint//2 + 1
 
     all_coeffs = np.zeros((nbody,ncoeffs,geodim,2), dtype = np.float64)
@@ -1031,6 +1027,7 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
         
     # Parameters to all_pos through coeffs
     all_coeffs = np.zeros((nbody,ncoeffs,geodim,2), dtype = np.float64)
+    
     for ib in range(nbody):
 
         nparams_body = 0
@@ -1042,13 +1039,14 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
         for k in range(ncoeffs):
             l = (k % ncoeffs_min)
             NullSpace = All_params_basis[ib][l]
+            
             jparam = iparam + NullSpace.shape[2]
-
+            
             all_coeffs[ib, k, : ,:] = np.dot(NullSpace, all_params[ib][iparam:jparam])
             
             iparam = jparam
-    
 
+        
     all_coeffs_c = all_coeffs.view(dtype=np.complex128)[...,0]
     all_pos = scipy.fft.irfft(all_coeffs_c, axis=1)
 
@@ -1080,26 +1078,52 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
             
     assert AllConstraintAreRespected
     
-    # Transform NullSpace basis to a complex form
-    All_params_basis_c = []
+    
+    
+    
+    all_params_basis_reoganized, all_nnz_k, all_params_reoganized = reorganize_All_params_basis(All_params_basis, all_params, geodim)
+    
+
+
     for ib in range(nbody):
-        
-        ncoeffs_min = ncoeff_min_body[ib]
-        npb = nparam_body_sum[ib] 
-        NullSpace_mat_c = np.zeros((geodim, ncoeffs_min, npb), dtype=np.complex128)
-        
-        iparam = 0
 
-        for l in range(ncoeffs_min):
-            
-            NullSpace = All_params_basis[ib][l]
-            jparam = iparam + NullSpace.shape[2]
+        coeffs_reorganized = np.matmul(all_params_basis_reoganized[ib], all_params_reoganized[ib])
+        
+        ncoeffs_min = len(All_params_basis[ib])
 
-            for idim in range(geodim):
+        kincr = 0
+        
+        for k in range(ncoeffs):
+            kmod = k % ncoeffs_min
+
+            for i, nnz_k in enumerate(all_nnz_k[ib]):
+                if nnz_k == kmod:
+                    found=True
+                    break
+            else:
+                found=False
+                    
+            if found:    
+                assert np.linalg.norm(coeffs_reorganized[i,:,kincr] - all_coeffs_c[ib, k, : ]) == 0.                
+                kincr+=1
+
+            else:
+                assert np.linalg.norm(all_coeffs_c[ib, k, : ]) == 0.
                 
-                NullSpace_mat_c[idim,l,iparam:jparam] = All_params_basis[ib][l][idim,0,:] + 1j*All_params_basis[ib][l][idim,1,:]
+                
+               
 
-            jparam = iparam
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1110,7 +1134,7 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
     print('*****************************************')
     print('')
     print(f'{AllConstraintAreRespected = }')     
-    print(f'{Identity_detected=}')
+    print(f'{Identity_detected = }')
     print(f'All binary transforms are identity: {All_Id}')
 
     print()
@@ -1136,8 +1160,8 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
     return
 
 
-    MakePlots = False
-    # MakePlots = True
+    # MakePlots = False
+    MakePlots = True
 
     if MakePlots:
 

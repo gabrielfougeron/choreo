@@ -48,8 +48,8 @@ if not(os.path.isdir(timings_folder)):
 
 basename_timings_filename = 'SegmQuad_bench_'
 
-# ForceBenchmark = True
-ForceBenchmark = False
+ForceBenchmark = True
+# ForceBenchmark = False
 
 ndim = 1
 x_span = (0., 1.)
@@ -133,9 +133,9 @@ mul_nb_fun_inplace_pointer = choreo.scipy_plus.SegmQuad.nb_jit_inplace_double_ar
 # sphinx_gallery_end_ignore
 
 all_funs_vect = {
-    'py_fun' : None, 
+    # 'py_fun' : None, 
     'py_fun_array' : test_from_vect_fun(mul_py_fun_array) ,
-    'nb_fun' : None ,
+    # 'nb_fun' : None ,
     'nb_fun_pointer' : test_from_vect_fun(mul_nb_fun_pointer) ,
     'nb_fun_inplace_pointer' : test_from_vect_fun(mul_nb_fun_inplace_pointer) ,
     'py_fun_in_pyx' : test_from_vect_fun(choreo.scipy_plus.cython.test.mul_py_fun),
