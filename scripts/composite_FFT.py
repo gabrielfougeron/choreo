@@ -1077,9 +1077,9 @@ print(np.linalg.norm(all_pos_direct - all_pos))
 
 # No copy
 
-ncoeffs_min = 7
+ncoeffs_min = 2
 nparam_per_period = 3
-nperiods = 5
+nperiods = 2
 nint = ncoeffs_min * nperiods
 
 All_params_basis = np.random.random((ncoeffs_min, nparam_per_period)) + 1j * np.random.random((ncoeffs_min, nparam_per_period))
@@ -1092,7 +1092,7 @@ all_pos_direct = scipy.fft.ifft(all_coeffs)
 ifft_f = scipy.fft.ifft(All_params_basis, axis=0)
 
 
-all_pos_mat = np.zeros((ncoeffs_min, nperiods), dtype=np.complex128)
+all_pos_mat = np.zeros((nperiods, ncoeffs_min), dtype=np.complex128)
 
 wo = np.exp(2j*np.pi/nint)
 for ip in range(ncoeffs_min):
@@ -1105,8 +1105,8 @@ for ip in range(ncoeffs_min):
     
     ifft_g = scipy.fft.ifft(all_params, axis=1)
 
-    all_pos_mat[ip,:] = np.matmul(ifft_f[ip,:], ifft_g)
+    all_pos_mat[:,ip] = np.matmul(ifft_f[ip,:], ifft_g)
 
-all_pos = all_pos_mat.T.reshape(-1)
+all_pos = all_pos_mat.reshape(-1)
 
 print(np.linalg.norm(all_pos_direct - all_pos))
