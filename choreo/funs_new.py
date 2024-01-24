@@ -605,18 +605,19 @@ def reorganize_All_params_basis(All_params_basis, all_params, geodim):
         nnz_k = np.array(nnz_k)
         all_nnz_k.append(nnz_k)
             
-        params_basis_reoganized = np.empty((nnz_k.shape[0], geodim,  last_nparam), dtype=np.complex128)    
+        params_basis_reoganized = np.empty((geodim, nnz_k.shape[0], last_nparam), dtype=np.complex128)    
         
         for ik, k in enumerate(nnz_k):
             
-            params_basis_reoganized[ik,:,:] = params_basis[k][:,0,:] + 1j*params_basis[k][:,1,:]
+            params_basis_reoganized[:,ik,:] = params_basis[k][:,0,:] + 1j*params_basis[k][:,1,:]
         
 
         all_params_basis_reoganized.append(params_basis_reoganized)
 
         assert (all_params[ib].shape[0] % last_nparam) == 0
 
-        all_params_reoganized.append(all_params[ib].reshape(-1, last_nparam).transpose().copy())
+        # all_params_reoganized.append(all_params[ib].reshape(-1, last_nparam).transpose().copy())
+        all_params_reoganized.append(all_params[ib].reshape(-1, last_nparam).copy())
 
     return all_params_basis_reoganized, all_nnz_k, all_params_reoganized
 
@@ -999,8 +1000,8 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
 
     # FFT tests
     
-    nint = math.lcm(2, nint_min)
-    # nint = math.lcm(2, nint_min, *nint_min_body)
+    # nint = math.lcm(2, nint_min) 
+    nint = 2* nint_min
     
     
     ncoeffs = nint //2 + 1
@@ -1084,10 +1085,16 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
     all_params_basis_reoganized, all_nnz_k, all_params_reoganized = reorganize_All_params_basis(All_params_basis, all_params, geodim)
     
 
-
+    # Check that all_coeffs can be recovered
     for ib in range(nbody):
 
-        coeffs_reorganized = np.matmul(all_params_basis_reoganized[ib], all_params_reoganized[ib])
+        print('a')
+        print(all_params_basis_reoganized[ib].shape)
+        print(all_params_reoganized[ib].shape)
+
+
+        # coeffs_reorganized = np.matmul(all_params_basis_reoganized[ib], all_params_reoganized[ib])
+        coeffs_reorganized = np.matmul(all_params_basis_reoganized[ib], all_params_reoganized[ib].transpose())
         
         ncoeffs_min = len(All_params_basis[ib])
 
@@ -1104,7 +1111,7 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
                 found=False
                     
             if found:    
-                assert np.linalg.norm(coeffs_reorganized[i,:,kincr] - all_coeffs_c[ib, k, : ]) == 0.                
+                assert np.linalg.norm(coeffs_reorganized[:,i,kincr] - all_coeffs_c[ib, k, : ]) == 0.                
                 kincr+=1
 
             else:
@@ -1114,10 +1121,10 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
                
 
 
+    # # Magic composite FFT
+    # for ib in range(nbody):
 
-
-
-
+        # meanval = -np.dot(All_params_basis[0,:].real, all_params[:,0]) / nint
 
 
 

@@ -1,26 +1,19 @@
-import os
-
-os.environ['OPENBLAS_NUM_THREADS'] = '1'
-
-import sys
 import numpy as np
 import math as m
-import scipy.optimize as opt
-from matplotlib import pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
-from matplotlib.colors import cnames
-from matplotlib import animation
-import copy
-import random
 import scipy
-import time
+import itertools
 
 np.set_printoptions(
     precision = 3,
     edgeitems = 10,
     linewidth = 150,
     floatmode = "fixed",
-    )
+)
+
+def proj_to_zero(array, eps=1e-14):
+    for idx in itertools.product(*[range(i)  for i in array.shape]):
+        if abs(array[idx]) < eps:
+            array[idx] = 0.
 
         
 print()        
@@ -91,7 +84,7 @@ print("="*80)
 print()
 
 
-# IDEM with array of transposed shape (since pint and qint have similar roles)
+# IDEM with array of transposed shape (since pint and qint have similar roles: nint = pint * qint = qint * pint)
 
 pint = 2
 qint = 3
@@ -753,4 +746,367 @@ print(np.linalg.norm(all_pos_direct[:n_inter] - inter_array))
 
 
 
+print()        
+print("="*80)
+print()
 
+# standard vector convolution
+
+nint = 7
+
+a = np.random.random((nint)) + 1j * np.random.random((nint))
+b = np.random.random((nint)) + 1j * np.random.random((nint))
+
+c = np.zeros((nint), dtype=np.complex128)
+
+for k in range(nint):
+    for i in range(nint):
+        ik = (nint + k - i ) % nint
+        c[k] += a[i] * b[ik]
+
+
+fft_a = scipy.fft.fft(a)
+fft_b = scipy.fft.fft(b)
+fft_c = scipy.fft.fft(c)
+
+print(np.linalg.norm(fft_c - fft_a * fft_b))
+
+
+c = a * b
+ifft_a = scipy.fft.ifft(a)
+ifft_b = scipy.fft.ifft(b)
+ifft_c = scipy.fft.ifft(c)
+
+convo = np.zeros((nint), dtype=np.complex128)
+
+for k in range(nint):
+    for i in range(nint):
+        ik = (nint + k - i ) % nint
+        convo[k] += ifft_a[i] * ifft_b[ik]
+
+
+print(np.linalg.norm(convo - ifft_c))
+
+
+
+
+
+
+print()        
+print("="*80)
+print()
+
+
+# Reconstruction of signal of the form a * 1^T or 1 * b^T.
+
+ncoeffs_min = 3
+nperiods = 2
+nint = ncoeffs_min * nperiods
+
+
+All_params_basis = np.random.random((ncoeffs_min)) + 1j * np.random.random((ncoeffs_min))
+all_params = np.random.random((nperiods)) + 1j * np.random.random((nperiods))
+
+
+ifft_f = scipy.fft.ifft(All_params_basis)
+ifft_g = scipy.fft.ifft(all_params)
+
+
+All_params_basis_mat = np.matmul(All_params_basis.reshape((ncoeffs_min,1)),  np.ones((1,nperiods), dtype=np.complex128))
+all_params_mat = np.matmul( np.ones((ncoeffs_min,1), dtype=np.complex128), all_params.reshape((1,nperiods)))
+
+
+ifft_f_mat = scipy.fft.ifft(All_params_basis_mat.reshape(-1))
+ifft_g_mat = scipy.fft.ifft(all_params_mat.reshape(-1))
+
+
+ifft_g_recons = np.zeros((nint), dtype=np.complex128)
+for kq in range(nperiods):
+    ifft_g_recons[kq*ncoeffs_min] = ifft_g[kq]
+    
+print(np.linalg.norm(ifft_g_recons - ifft_g_mat))
+
+ifft_f_recons = np.zeros((nint), dtype=np.complex128)
+
+for j in range(nint):
+    
+    jq, jp = divmod(j,ncoeffs_min)
+    
+    if j == 0:
+        
+        fac = 1.
+        
+    else:
+        
+        wn = np.exp(2j*np.pi*j/ncoeffs_min)
+        wd = np.exp(2j*np.pi*j/nint)
+        
+        fac = (1-wn)/(1-wd)/nperiods
+    
+    ifft_f_recons[j] = ifft_f[jp] * fac
+
+print(np.linalg.norm(ifft_f_recons - ifft_f_mat))
+
+
+
+
+print()        
+print("="*80)
+print()
+
+
+# Using convolution
+
+
+
+ncoeffs_min = 3
+nparam_per_period = 1
+nperiods = 6
+nint = ncoeffs_min * nperiods
+
+All_params_basis = np.random.random((ncoeffs_min, nparam_per_period)) + 1j * np.random.random((ncoeffs_min, nparam_per_period))
+all_params = np.random.random((nparam_per_period, nperiods)) + 1j * np.random.random((nparam_per_period, nperiods))
+
+all_coeffs = np.dot(All_params_basis, all_params).reshape(-1)
+
+all_pos_direct = scipy.fft.ifft(all_coeffs)
+
+ifft_f = scipy.fft.ifft(All_params_basis, axis=0)
+ifft_g = scipy.fft.ifft(all_params, axis=1)
+ifft_fg = np.matmul(ifft_f, ifft_g)
+
+
+All_params_basis_mat = np.zeros((ncoeffs_min, nperiods, nparam_per_period), dtype=np.complex128)
+for ip in range(nperiods):
+    All_params_basis_mat[:,ip,:] = All_params_basis
+
+ifft_f_mat = scipy.fft.ifft(All_params_basis_mat.reshape((nint,nparam_per_period)), axis=0).reshape((ncoeffs_min, nperiods, nparam_per_period))
+
+
+convo = np.zeros((nint), dtype=np.complex128)
+
+for k in range(nint):
+    
+    kp, kq = divmod(k, nperiods)
+    
+    for i in range(nint):
+        ik = (nint + k - i ) % nint
+        
+        ip, iq = divmod(i, nperiods)
+        iiq, iip = divmod(i, ncoeffs_min)
+        ikp, ikq = divmod(ik, ncoeffs_min)
+        
+        if ikq == 0:
+
+            if i == 0:
+                
+                fac = 1.
+                
+            else:
+                
+                wn = np.exp(2j*np.pi*i/ncoeffs_min)
+                wd = np.exp(2j*np.pi*i/nint)
+                
+                fac = (1-wn)/(1-wd)/nperiods
+                
+                
+            convo[k] += ifft_fg[iip, ikp] * fac
+
+
+print(np.linalg.norm(convo - all_pos_direct))
+
+
+# Another version
+
+n_inter = nint
+convo = np.zeros((n_inter), dtype=np.complex128)
+ 
+for ikp in range(nperiods):
+        
+    for k in range(n_inter):
+
+        ik = ikp*ncoeffs_min
+        i = (nint + k - ik ) % nint
+        iiq, iip = divmod(i, ncoeffs_min)
+
+        if i == 0:
+            fac = 1.
+        else:
+            wn = np.exp(2j*np.pi*i/ncoeffs_min)
+            wd = np.exp(2j*np.pi*i/nint)
+            fac = (1-wn)/(1-wd)/nperiods
+            
+        convo[k] += ifft_fg[iip, ikp] * fac
+
+
+print(np.linalg.norm(convo - all_pos_direct[:n_inter]))
+
+
+# Another version
+
+convo = np.zeros((nint), dtype=np.complex128)
+ 
+for ikp in range(nperiods):
+
+    ik = ikp*ncoeffs_min
+
+    for iip in range(ncoeffs_min):
+        
+        for iiq in range(nperiods):
+            
+            i = iip + ncoeffs_min*iiq
+            
+            k = (i + ik ) % nint
+            
+            if i == 0:
+                fac = 1.
+            else:
+                wn = np.exp(2j*np.pi*iip/ncoeffs_min)
+                wd = np.exp(2j*np.pi*i/nint)
+                fac = (1-wn)/(1-wd)/nperiods
+                
+            convo[k] += ifft_fg[iip, ikp] * fac
+
+
+print(np.linalg.norm(convo - all_pos_direct[:nint]))
+
+
+# Another version
+
+ninter = nint
+convo = np.zeros((ninter), dtype=np.complex128)
+
+for iip in range(ncoeffs_min):
+         
+    for ikp in range(nperiods): 
+
+        ik = ikp*ncoeffs_min
+        
+        for iiq in range(nperiods):
+            
+            ii = (ikp + iiq) % nperiods
+            k = iip + ii*ncoeffs_min
+
+            i = iip + ncoeffs_min*iiq            
+            if i == 0:
+                fac = 1.
+            else:
+                wn = np.exp(2j*np.pi*iip/ncoeffs_min)
+                wd = np.exp(2j*np.pi*i/nint)
+                fac = (1-wn)/(1-wd)/nperiods
+                
+            convo[k] += ifft_fg[iip, ikp] * fac
+
+
+print(np.linalg.norm(convo - all_pos_direct[:ninter]))
+
+
+
+# Another version
+ninter = 1
+convo = np.zeros((ninter), dtype=np.complex128)
+ 
+for ikp in range(nperiods):
+    
+    ik = ikp*ncoeffs_min
+        
+    for k in range(ninter):
+        
+        iip = k % ncoeffs_min
+
+        i = (nint + k - ik ) % nint
+
+        if i == 0:
+            fac = 1.
+        else:
+            wn = np.exp(2j*np.pi*i/ncoeffs_min)
+            wd = np.exp(2j*np.pi*i/nint)
+            fac = (1-wn)/(1-wd)/nperiods
+            
+            
+        convo[k] += ifft_fg[iip, ikp] * fac
+
+
+print(np.linalg.norm(convo - all_pos_direct[:ninter]))
+
+
+
+print()        
+print("="*80)
+print()
+
+
+# No convolution ?
+
+ncoeffs_min = 7
+nparam_per_period = 3
+nperiods = 5
+nint = ncoeffs_min * nperiods
+
+All_params_basis = np.random.random((ncoeffs_min, nparam_per_period)) + 1j * np.random.random((ncoeffs_min, nparam_per_period))
+all_params = np.random.random((nparam_per_period, nperiods)) + 1j * np.random.random((nparam_per_period, nperiods))
+
+all_coeffs = np.dot(All_params_basis, all_params).reshape(-1)
+
+all_pos_direct = scipy.fft.ifft(all_coeffs)
+
+ifft_f = scipy.fft.ifft(All_params_basis, axis=0)
+
+
+all_pos = np.zeros((nint), dtype=np.complex128)
+
+woo = np.exp(2j*np.pi/nint)
+wo = 1.
+for ip in range(ncoeffs_min):
+
+    all_params_cp = all_params.copy()
+    
+    w = 1.
+    for iq in range(nperiods):
+        all_params_cp[:,iq] *= w
+        w *= wo
+    wo *= woo
+    
+    ifft_g = scipy.fft.ifft(all_params_cp, axis=1)
+
+    all_pos[ip::ncoeffs_min] = np.matmul(ifft_f[ip,:], ifft_g)
+
+
+print(np.linalg.norm(all_pos_direct - all_pos))
+
+
+# No copy
+
+ncoeffs_min = 7
+nparam_per_period = 3
+nperiods = 5
+nint = ncoeffs_min * nperiods
+
+All_params_basis = np.random.random((ncoeffs_min, nparam_per_period)) + 1j * np.random.random((ncoeffs_min, nparam_per_period))
+all_params = np.random.random((nparam_per_period, nperiods)) + 1j * np.random.random((nparam_per_period, nperiods))
+
+all_coeffs = np.dot(All_params_basis, all_params).reshape(-1)
+
+all_pos_direct = scipy.fft.ifft(all_coeffs)
+
+ifft_f = scipy.fft.ifft(All_params_basis, axis=0)
+
+
+all_pos_mat = np.zeros((ncoeffs_min, nperiods), dtype=np.complex128)
+
+wo = np.exp(2j*np.pi/nint)
+for ip in range(ncoeffs_min):
+
+    if (ip != 0):
+        w = 1.
+        for iq in range(nperiods):
+            all_params[:,iq] *= w
+            w *= wo
+    
+    ifft_g = scipy.fft.ifft(all_params, axis=1)
+
+    all_pos_mat[ip,:] = np.matmul(ifft_f[ip,:], ifft_g)
+
+all_pos = all_pos_mat.T.reshape(-1)
+
+print(np.linalg.norm(all_pos_direct - all_pos))
