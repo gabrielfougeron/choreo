@@ -59,8 +59,8 @@ def setup_all(fft_type, nthreads, all_sizes):
         pyfftw.interfaces.cache.enable()
         pyfftw.interfaces.cache.set_keepalive_time(300000)
 
-        # planner_effort = 'FFTW_ESTIMATE'
-        planner_effort = 'FFTW_MEASURE'
+        planner_effort = 'FFTW_ESTIMATE'
+        # planner_effort = 'FFTW_MEASURE'
         # planner_effort = 'FFTW_PATIENT'
         # planner_effort = 'FFTW_EXHAUSTIVE'
 
@@ -119,6 +119,9 @@ def setup_all(fft_type, nthreads, all_sizes):
         
         all_funs["pyfftw_custom"] = custom_fftw
         
+        wis = pyfftw.export_wisdom()
+        print(wis)
+        
     except Exception as ex:
         print(ex)
 
@@ -152,7 +155,7 @@ def plot_all(relative_to = None):
         multiprocessing.cpu_count()//2
     ]
     
-    all_sizes = np.array([4*3*5 * 2**n for n in range(15)])
+    all_sizes = np.array([4*3*5 * 2**n for n in range(2)])
 
     n_plots = len(all_nthreads) * len(all_fft_types)
 
@@ -201,6 +204,7 @@ def plot_all(relative_to = None):
             n_repeat = n_repeat             ,
             setup = prepare_x               ,
             filename = timings_filename     ,
+            ShowProgress=True               ,
         )
         
         if relative_to is None:
