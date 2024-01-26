@@ -1088,13 +1088,10 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
     # Check that all_coeffs can be recovered
     for ib in range(nbody):
 
-        print('a')
-        print(all_params_basis_reoganized[ib].shape)
-        print(all_params_reoganized[ib].shape)
 
 
-        # coeffs_reorganized = np.matmul(all_params_basis_reoganized[ib], all_params_reoganized[ib])
-        coeffs_reorganized = np.matmul(all_params_basis_reoganized[ib], all_params_reoganized[ib].transpose())
+        coeffs_reorganized = np.matmul(all_params_basis_reoganized[ib], all_params_reoganized[ib])
+        # coeffs_reorganized = np.matmul(all_params_basis_reoganized[ib], all_params_reoganized[ib].transpose())
         
         ncoeffs_min = len(All_params_basis[ib])
 
