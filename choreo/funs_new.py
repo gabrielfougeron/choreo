@@ -574,13 +574,13 @@ def ComputeParamBasis_Body(MomCons, nbody, geodim, BodyConstraints):
 
     return All_params_basis
 
-def reorganize_All_params_basis(All_params_basis, all_params, geodim):
+def reorganize_All_params_basis(All_params_basis):
     
     nbody = len(All_params_basis)
+    geodim = All_params_basis[0][0].shape[0]
     
     all_nnz_k = []
     all_params_basis_reoganized = []
-    all_params_reoganized = []
     
     for ib in range(nbody):
         
@@ -611,15 +611,9 @@ def reorganize_All_params_basis(All_params_basis, all_params, geodim):
             
             params_basis_reoganized[:,ik,:] = params_basis[k][:,0,:] + 1j*params_basis[k][:,1,:]
         
-
         all_params_basis_reoganized.append(params_basis_reoganized)
 
-        assert (all_params[ib].shape[0] % last_nparam) == 0
-
-        # all_params_reoganized.append(all_params[ib].reshape(-1, last_nparam).transpose().copy())
-        all_params_reoganized.append(all_params[ib].reshape(-1, last_nparam).copy())
-
-    return all_params_basis_reoganized, all_nnz_k, all_params_reoganized
+    return all_params_basis_reoganized, all_nnz_k
 
 def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCons=False,n_grad_change=1.,Sym_list=[],CrashOnIdentity=True,ForceMatrixChangevar = False):
     
@@ -991,19 +985,21 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
 
 
 
-
-
-
-
-
-
-
-    # FFT tests
     
+    all_params_basis_reoganized, all_nnz_k = reorganize_All_params_basis(All_params_basis)
+
+    ncoeff_min_body_nnz = [all_nnz_k[ib].shape[0] for ib in range(nbody)]
+
+
+
+
+
+
+    
+
     # nint = math.lcm(2, nint_min) 
-    nint = 2* nint_min
-    
-    
+    # nint = 2* nint_min
+    nint = 2 * m.lcm(*ncoeff_min_body)
     ncoeffs = nint //2 + 1
 
     # Create parameters
@@ -1017,7 +1013,7 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
         
         ncoeffs_min = len(All_params_basis[ib])
      
-        for k in range(ncoeffs):
+        for k in range(ncoeffs-1):
             l = (k % ncoeffs_min)
 
             NullSpace = All_params_basis[ib][l]
@@ -1037,7 +1033,7 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
         
         iparam = 0
 
-        for k in range(ncoeffs):
+        for k in range(ncoeffs-1):
             l = (k % ncoeffs_min)
             NullSpace = All_params_basis[ib][l]
             
@@ -1073,50 +1069,235 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
                 ConstraintIsRespected = ConstraintIsRespected and (err < eps)
 
             AllConstraintAreRespected = AllConstraintAreRespected and ConstraintIsRespected
+            
             if not(ConstraintIsRespected):
-
-                print(f'Constraint {icstr} is not respected')
+                print(f'Body {ib} constraint {icstr} is not respected')
             
     assert AllConstraintAreRespected
     
     
-    
-    
-    all_params_basis_reoganized, all_nnz_k, all_params_reoganized = reorganize_All_params_basis(All_params_basis, all_params, geodim)
-    
 
-    # Check that all_coeffs can be recovered
+    # return
+
+    # nint = math.lcm(2, nint_min) 
+    # nint = 2 * m.lcm(*ncoeff_min_body)
+    ncoeffs = nint // 2 + 1
+    
+    all_coeffs_simple_c = np.zeros((nbody, ncoeffs, geodim), dtype=np.complex128)
+    all_coeffs_a_c = np.zeros((nbody, ncoeffs, geodim), dtype=np.complex128)
+
+    # Parameters to all_pos through coeffs
+    all_coeffs = np.zeros((nbody,ncoeffs,geodim,2), dtype = np.float64)
+
+    # Create parameters
     for ib in range(nbody):
 
+        # print()
+        # print(f'{ib = }')
 
-
-        coeffs_reorganized = np.matmul(all_params_basis_reoganized[ib], all_params_reoganized[ib])
-        # coeffs_reorganized = np.matmul(all_params_basis_reoganized[ib], all_params_reoganized[ib].transpose())
+        params_basis_reoganized = all_params_basis_reoganized[ib]
+        nparam_per_period_body = params_basis_reoganized.shape[2]
+        nnz_k = all_nnz_k[ib]
         
         ncoeffs_min = len(All_params_basis[ib])
 
-        kincr = 0
+        nperiods_body = 0
+        for k in range(ncoeffs-1):
+            l = (k % ncoeffs_min)
+            
+            NullSpace = All_params_basis[ib][l]
+            if  (NullSpace.shape[2] != 0):
+                assert NullSpace.shape[2] == nparam_per_period_body            
+                assert l == nnz_k[nperiods_body % ncoeff_min_body_nnz[ib]]
+                
+                nperiods_body += 1
+                
+
+        assert nperiods_body % ncoeff_min_body_nnz[ib] == 0
+
+        npr = nperiods_body // ncoeff_min_body_nnz[ib]
+
+
+        params_body = np.random.random((nparam_per_period_body, npr, ncoeff_min_body_nnz[ib]))
+
+        ip = 0
+        for k in range(ncoeffs-1):
+            l = (k % ncoeffs_min)
+            NullSpace = All_params_basis[ib][l]
+            if  (NullSpace.shape[2] != 0):
+
+                p, q = divmod(ip,  ncoeff_min_body_nnz[ib])
+
+                assert l == nnz_k[q]
+                
+                all_coeffs[ib, k, : ,:] = np.dot(NullSpace, params_body[:, p, q])
+                ip+=1
+                
+        assert ip == nperiods_body
+                
         
-        for k in range(ncoeffs):
-            kmod = k % ncoeffs_min
-
-            for i, nnz_k in enumerate(all_nnz_k[ib]):
-                if nnz_k == kmod:
-                    found=True
-                    break
-            else:
-                found=False
-                    
-            if found:    
-                assert np.linalg.norm(coeffs_reorganized[:,i,kincr] - all_coeffs_c[ib, k, : ]) == 0.                
-                kincr+=1
-
-            else:
-                assert np.linalg.norm(all_coeffs_c[ib, k, : ]) == 0.
+        assert npr * ncoeff_min_body[ib] == (ncoeffs-1)
+        
+        for idim in range(geodim):
+            for i in range(ncoeff_min_body_nnz[ib]):
+                for ipr in range(npr):
                 
+                    k = nnz_k[i] + ncoeff_min_body[ib] * ipr
+    
+                    all_coeffs_simple_c[ib, k, idim] = np.matmul(params_basis_reoganized[idim,i,:], params_body[:, ipr, i])
+        
+        coeffs_reorganized = np.einsum('ijk,klj->lji' ,params_basis_reoganized ,params_body )
+        coeffs_dense = np.zeros((npr, ncoeff_min_body[ib], geodim), dtype=np.complex128)
+        coeffs_dense[:,nnz_k,:] = coeffs_reorganized
+        
+        all_coeffs_a_c[ib,:(ncoeffs-1),:] = coeffs_dense.reshape(((ncoeffs-1), geodim))
+        
                 
-               
+    all_coeffs_c = all_coeffs.view(dtype=np.complex128)[...,0]
+    assert np.linalg.norm(all_coeffs_c - all_coeffs_simple_c) < 1e-14
+    assert np.linalg.norm(all_coeffs_c - all_coeffs_a_c) < 1e-14
 
+    # return
+        
+        
+        
+        
+        
+        
+        
+    all_pos = scipy.fft.irfft(all_coeffs_c, axis=1)
+    
+        
+        
+        
+        
+        
+
+    # Make sure body constraints are respected
+
+    AllConstraintAreRespected = True
+
+    for ib in range(nbody):
+
+        for icstr, Sym in enumerate(BodyConstraints[ib]):
+            
+            assert (nint % Sym.TimeShiftDen) == 0
+
+            ConstraintIsRespected = True
+
+            for iint in range(nint):
+
+                tnum, tden = Sym.ApplyT(iint, nint)
+                jint = tnum * nint // tden
+                
+                err = np.linalg.norm(all_pos[ib,iint,:] - np.matmul(Sym.SpaceRot, all_pos[ib,jint,:]))
+
+                ConstraintIsRespected = ConstraintIsRespected and (err < eps)
+
+            AllConstraintAreRespected = AllConstraintAreRespected and ConstraintIsRespected
+            
+            if not(ConstraintIsRespected):
+                print(f'Body {ib} constraint {icstr} is not respected')
+            
+    assert AllConstraintAreRespected
+    
+        
+
+
+    
+    
+    
+    
+    
+    
+# 
+# 
+#     # Check that all_coeffs can be recovered
+#     for ib in range(nbody):
+# 
+#         coeffs_reorganized = np.matmul(all_params_basis_reoganized[ib], all_params_reoganized[ib])
+#         
+#         kincr = 0
+#         
+#         for k in range(ncoeffs):
+#             kmod = k % ncoeff_min_body[ib]
+# 
+#             for i, nnz_k in enumerate(all_nnz_k[ib]):
+#                 if nnz_k == kmod:
+#                     found=True
+#                     break
+#             else:
+#                 found=False
+#                     
+#             if found:    
+#                 assert np.linalg.norm(coeffs_reorganized[:,i,kincr] - all_coeffs_c[ib, k, : ]) == 0.                
+#                 kincr+=1
+# 
+#             else:
+#                 assert np.linalg.norm(all_coeffs_c[ib, k, : ]) == 0.
+#                 
+# 
+# 
+#     # Composite FFT
+#     for ib in range(nbody):
+#         print()
+#         print(ib)
+#         # print(f'{ncoeff_min_body[ib] = }')
+#         # print(f'{all_params_basis_reoganized[ib].shape = }')
+#         # print(f'{all_params_reoganized[ib].shape = }')
+# 
+#         ncoeffs_min = ncoeff_min_body[ib]
+#         nparam_per_period = all_params_basis_reoganized[ib].shape[2]
+#         nperiods = all_params_reoganized[ib].shape[1]
+#         nint_composite = 2 * (ncoeffs_min * nperiods)
+# 
+#         print(f'{ncoeffs_min = }')
+#         print(f'{nparam_per_period = }')
+#         print(f'{nperiods = }')
+#         print(f'{nint_composite = }')
+#         print(f'{nint_min = }')
+#         print(f'{nint = }')
+# 
+# 
+# 
+#         coeffs_reorganized = np.matmul(all_params_basis_reoganized[ib], all_params_reoganized[ib])
+#         
+#         kincr = 0
+#         
+#         for k in range(ncoeffs):
+#             kmod = k % ncoeff_min_body[ib]
+# 
+#             for i, nnz_k in enumerate(all_nnz_k[ib]):
+#                 if nnz_k == kmod:
+#                     found=True
+#                     break
+#             else:
+#                 found=False
+#                     
+#             if found:    
+#                 assert np.linalg.norm(coeffs_reorganized[:,i,kincr] - all_coeffs_c[ib, k, : ]) == 0.                
+#                 kincr+=1
+# 
+#             else:
+#                 assert np.linalg.norm(all_coeffs_c[ib, k, : ]) == 0.
+#                 
+#         
+#         params_basis_reoganized = all_params_basis_reoganized[ib]
+#         shape = (
+#             geodim                              ,
+#             ncoeff_min_body[ib]                 ,
+#             params_basis_reoganized.shape[2]    ,
+#         )
+#         
+#         param_basis_dense = np.zeros(shape, dtype=np.complex128)
+#                
+#         nnz_k = all_nnz_k[ib]       
+#         
+#         for ik, k in enumerate(nnz_k):
+#             param_basis_dense[:,k,:] = params_basis_reoganized[:,ik,:]
+            
+        # ifft_param_basis_dense = scipy.fft.ifft(All_params_basis, axis=0)
+            
 
     # # Magic composite FFT
     # for ib in range(nbody):
