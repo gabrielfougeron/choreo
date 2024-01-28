@@ -1085,6 +1085,7 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
     
     all_coeffs_simple_c = np.zeros((nbody, ncoeffs, geodim), dtype=np.complex128)
     all_coeffs_a_c = np.zeros((nbody, ncoeffs, geodim), dtype=np.complex128)
+    all_coeffs_b_c = np.zeros((nbody, ncoeffs, geodim), dtype=np.complex128)
 
     # Parameters to all_pos through coeffs
     all_coeffs = np.zeros((nbody,ncoeffs,geodim,2), dtype = np.float64)
@@ -1100,22 +1101,8 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
         nnz_k = all_nnz_k[ib]
         
         ncoeffs_min = len(All_params_basis[ib])
-
-        nperiods_body = 0
-        for k in range(ncoeffs-1):
-            l = (k % ncoeffs_min)
-            
-            NullSpace = All_params_basis[ib][l]
-            if  (NullSpace.shape[2] != 0):
-                assert NullSpace.shape[2] == nparam_per_period_body            
-                assert l == nnz_k[nperiods_body % ncoeff_min_body_nnz[ib]]
-                
-                nperiods_body += 1
-                
-
-        assert nperiods_body % ncoeff_min_body_nnz[ib] == 0
-
-        npr = nperiods_body // ncoeff_min_body_nnz[ib]
+        npr = (ncoeffs-1) //  ncoeff_min_body[ib]
+        nperiods_body = npr * ncoeff_min_body_nnz[ib]
 
 
         params_body = np.random.random((nparam_per_period_body, npr, ncoeff_min_body_nnz[ib]))
@@ -1146,21 +1133,31 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
     
                     all_coeffs_simple_c[ib, k, idim] = np.matmul(params_basis_reoganized[idim,i,:], params_body[:, ipr, i])
         
-        coeffs_reorganized = np.einsum('ijk,klj->lji' ,params_basis_reoganized ,params_body )
+        coeffs_reorganized = np.einsum('ijk,klj->lji', params_basis_reoganized, params_body)
         coeffs_dense = np.zeros((npr, ncoeff_min_body[ib], geodim), dtype=np.complex128)
         coeffs_dense[:,nnz_k,:] = coeffs_reorganized
         
         all_coeffs_a_c[ib,:(ncoeffs-1),:] = coeffs_dense.reshape(((ncoeffs-1), geodim))
         
+        
+        params_basis_dense = np.zeros((geodim, ncoeff_min_body[ib], nparam_per_period_body), dtype=np.complex128)
+        params_body_dense =  np.zeros((nparam_per_period_body, npr, ncoeff_min_body[ib]), dtype=np.complex128)
+        
+        for ik, k in enumerate(nnz_k):
+            
+            params_basis_dense[:, k, :] = params_basis_reoganized[:, ik, :]
+            params_body_dense[:, :, k] = params_body[:, :, ik]
+        
+        all_coeffs_b_c[ib,:(ncoeffs-1),:] = np.einsum('ijk,klj->lji', params_basis_dense, params_body_dense).reshape(((ncoeffs-1), geodim))
+        
                 
     all_coeffs_c = all_coeffs.view(dtype=np.complex128)[...,0]
     assert np.linalg.norm(all_coeffs_c - all_coeffs_simple_c) < 1e-14
     assert np.linalg.norm(all_coeffs_c - all_coeffs_a_c) < 1e-14
+    assert np.linalg.norm(all_coeffs_c - all_coeffs_b_c) < 1e-14
 
     # return
-        
-        
-        
+    
         
         
         
@@ -1201,9 +1198,33 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
             
     assert AllConstraintAreRespected
     
+
+
+
+    for il in range(nloop):
+        
+        print()
+        print(il)
+        for ilb in range(loopnb[il]):
+            
+            ib = Targets[il,ilb]
+            
+            params_basis_reoganized = all_params_basis_reoganized[ib]
+            nparam_per_period_body = params_basis_reoganized.shape[2]
+            nnz_k = all_nnz_k[ib]
+            
+            ncoeffs_min = len(All_params_basis[ib])
+            npr = (ncoeffs-1) //  ncoeff_min_body[ib]
+            nperiods_body = npr * ncoeff_min_body_nnz[ib]
+        
+            nparams = nparam_per_period_body * npr * ncoeff_min_body_nnz[ib]
+            
+            print(ib, nparams)
+        
         
 
-
+    
+    
     
     
     
