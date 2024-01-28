@@ -1172,3 +1172,105 @@ ifft_fg = np.matmul(ifft_f[0,:].real, ifft_g.real) + np.matmul(ifft_f[0,:].imag,
 all_pos = meanval + ifft_fg
 
 print(np.linalg.norm(all_pos_direct[:(nperiods+1):ncoeffs_min] - all_pos))
+
+
+
+print()        
+print("="*80)
+print()
+
+# Complex FFT as in the planets
+
+P = 5
+Q = 7
+R = 11
+nint = R*P
+
+a = np.random.random((P,Q)) + 1j*np.random.random((P,Q))
+b = np.random.random((Q,R,P)) + 1j*np.random.random((Q,R,P))
+
+all_coeffs = np.einsum('jk,klj->lj', a, b).reshape(nint)
+
+all_pos_direct = scipy.fft.ifft(all_coeffs)
+
+ifft_b = scipy.fft.ifft(b, axis=1)
+
+all_pos_mat = np.zeros((P, Q), dtype=np.complex128)
+
+wo = np.exp(2j*np.pi/nint)
+wref = 1.
+for m in range(R):
+    w = 1.
+    for j in range(P):
+        ifft_b[:,m,j] *= w
+        w *= wref
+    wref *= wo
+
+
+inter_coeffs = np.einsum('jk,klj->lj', a, ifft_b)
+
+all_pos = scipy.fft.ifft(inter_coeffs, axis=1).T.reshape(nint)
+
+print(np.linalg.norm(all_pos_direct - all_pos))
+
+
+
+ifft_b = scipy.fft.ifft(b, axis=1)
+Pinv = 1./P
+wo = np.exp(2j*np.pi/nint)
+wref = 1.
+for m in range(R):
+    w = Pinv
+    for j in range(P):
+        ifft_b[:,m,j] *= w
+        w *= wref
+    wref *= wo
+
+all_pos_slice = np.einsum('jk,klj->l', a, ifft_b)
+
+print(np.linalg.norm(all_pos_direct[:R] - all_pos_slice))
+
+
+
+print()        
+print("="*80)
+print()
+
+# Real FFT as in the planets
+
+
+P = 5
+Q = 7
+R = 11
+nint = 2*R*P
+ncoeffs = nint//2+1
+
+
+a = np.random.random((P,Q)) + 1j*np.random.random((P,Q))
+b = np.random.random((Q,R,P))
+
+all_coeffs = np.zeros((ncoeffs),dtype=np.complex128)
+all_coeffs[:(ncoeffs-1)] = np.einsum('jk,klj->lj', a, b).reshape((ncoeffs-1))
+
+all_pos_direct = scipy.fft.irfft(all_coeffs)
+
+ifft_b = np.conjugate(scipy.fft.rfft(b, axis=1, n=2*R))/(2*R)
+
+n_inter = R+1
+
+Pinv = 2./P
+wo = np.exp(2j*np.pi/nint)
+wref = 1.
+for m in range(n_inter):
+    w = Pinv
+    for j in range(P):
+        ifft_b[:,m,j] *= w
+        w *= wref
+    wref *= wo
+
+
+meanval = -np.dot(a[0,:], b[:,0,0]).real / nint
+all_pos_slice = np.einsum('jk,klj->l', a, ifft_b).real + meanval
+
+print(np.linalg.norm(all_pos_direct[:n_inter]-all_pos_slice[:n_inter]))
+
