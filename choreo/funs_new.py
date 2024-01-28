@@ -1219,7 +1219,16 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
         
             nparams = nparam_per_period_body * npr * ncoeff_min_body_nnz[ib]
             
-            print(ib, nparams)
+            if ilb == 0:
+                nparams_ref = nparams
+                nparam_per_period_body_ref = nparam_per_period_body
+            else:
+                assert nparams == nparams_ref
+                assert nparam_per_period_body_ref == nparam_per_period_body
+            
+            # print(ib, nparams, nparam_per_period_body, ncoeff_min_body[ib])
+            
+            print(ib, ncoeff_min_body[ib])
         
         
 
