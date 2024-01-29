@@ -630,7 +630,7 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
     for Sym in Sym_list:
         All_den_list_on_entry.append(Sym.TimeShiftDen)
 
-    nint_min = m.lcm(*All_den_list_on_entry) # ensures that all integer divisions will have zero remainder
+    nint_min = math.lcm(*All_den_list_on_entry) # ensures that all integer divisions will have zero remainder
 
     FullGraph, nint_min = Build_FullGraph_NoPb(nbody, nint_min, Sym_list)
 
@@ -999,7 +999,7 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
 
     # nint = math.lcm(2, nint_min) 
     # nint = 2* nint_min
-    nint = 2 * m.lcm(*ncoeff_min_body)
+    nint = 2 * math.lcm(*ncoeff_min_body)
     ncoeffs = nint //2 + 1
 
     # Create parameters
@@ -1080,12 +1080,13 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
     # return
 
     # nint = math.lcm(2, nint_min) 
-    # nint = 2 * m.lcm(*ncoeff_min_body)
+    # nint = 2 * math.lcm(*ncoeff_min_body)
     ncoeffs = nint // 2 + 1
     
     all_coeffs_simple_c = np.zeros((nbody, ncoeffs, geodim), dtype=np.complex128)
     all_coeffs_a_c = np.zeros((nbody, ncoeffs, geodim), dtype=np.complex128)
     all_coeffs_b_c = np.zeros((nbody, ncoeffs, geodim), dtype=np.complex128)
+    all_pos_slice = []
 
     # Parameters to all_pos through coeffs
     all_coeffs = np.zeros((nbody,ncoeffs,geodim,2), dtype = np.float64)
@@ -1141,7 +1142,7 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
         
         
         params_basis_dense = np.zeros((geodim, ncoeff_min_body[ib], nparam_per_period_body), dtype=np.complex128)
-        params_body_dense =  np.zeros((nparam_per_period_body, npr, ncoeff_min_body[ib]), dtype=np.complex128)
+        params_body_dense =  np.zeros((nparam_per_period_body, npr, ncoeff_min_body[ib]), dtype=np.float64)
         
         for ik, k in enumerate(nnz_k):
             
@@ -1149,6 +1150,38 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
             params_body_dense[:, :, k] = params_body[:, :, ik]
         
         all_coeffs_b_c[ib,:(ncoeffs-1),:] = np.einsum('ijk,klj->lji', params_basis_dense, params_body_dense).reshape(((ncoeffs-1), geodim))
+        
+        
+        ifft_b =  scipy.fft.rfft(params_body_dense, axis=1, n=2*npr)
+        n_inter = npr+1
+
+        fac = 1./(npr * ncoeff_min_body[ib])
+        wo = np.exp(-2j*np.pi/nint)
+        wref = 1.
+        for m in range(n_inter):
+            w = fac
+            for j in range(ncoeff_min_body[ib]):
+                ifft_b[:,m,j] *= w
+                w *= wref
+            wref *= wo
+        
+        
+        meanval = np.matmul(params_basis_dense[:,0,:].real, params_body_dense[:,0,0]) / nint
+        
+        pos_slice = np.einsum('ijk,klj->li', params_basis_dense.real, ifft_b.real) + np.einsum('ijk,klj->li', params_basis_dense.imag, ifft_b.imag)
+        
+        for idim in range(geodim):
+            pos_slice[:,idim] -= meanval[idim]
+        
+        all_pos_slice.append(pos_slice)
+        
+        
+        
+        
+        
+        
+        
+        
         
                 
     all_coeffs_c = all_coeffs.view(dtype=np.complex128)[...,0]
@@ -1158,12 +1191,17 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
 
     # return
     
-        
-        
-        
-        
+
     all_pos = scipy.fft.irfft(all_coeffs_c, axis=1)
     
+    for ib in range(nbody):
+        
+        pos_slice = all_pos_slice[ib]
+        n_inter = pos_slice.shape[0]
+        
+        print(ib,n_inter)
+        
+        assert np.linalg.norm(all_pos[ib,:n_inter,:] - pos_slice) < 1e-14
         
         
         
@@ -1199,7 +1237,7 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
     assert AllConstraintAreRespected
     
 
-
+    return
 
     for il in range(nloop):
         
