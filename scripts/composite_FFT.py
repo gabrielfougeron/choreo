@@ -1254,12 +1254,12 @@ all_coeffs[:(ncoeffs-1)] = np.einsum('jk,klj->lj', a, b).reshape((ncoeffs-1))
 
 all_pos_direct = scipy.fft.irfft(all_coeffs)
 
-ifft_b = np.conjugate(scipy.fft.rfft(b, axis=1, n=2*R))/(2*R)
+ifft_b =  scipy.fft.rfft(b, axis=1, n=2*R)
 
 n_inter = R+1
 
-Pinv = 2./P
-wo = np.exp(2j*np.pi/nint)
+Pinv = 1./(P * R)
+wo = np.exp(-2j*np.pi/nint)
 wref = 1.
 for m in range(n_inter):
     w = Pinv
@@ -1269,8 +1269,10 @@ for m in range(n_inter):
     wref *= wo
 
 
-meanval = -np.dot(a[0,:], b[:,0,0]).real / nint
-all_pos_slice = np.einsum('jk,klj->l', a, ifft_b).real + meanval
+meanval = np.dot(a[0,:].real, b[:,0,0]) / nint
+all_pos_slice = np.einsum('jk,klj->l', a.real, ifft_b.real) + np.einsum('jk,klj->l', a.imag, ifft_b.imag) - meanval
 
 print(np.linalg.norm(all_pos_direct[:n_inter]-all_pos_slice[:n_inter]))
+
+
 
