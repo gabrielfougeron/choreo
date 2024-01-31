@@ -512,7 +512,7 @@ def ComputeParamBasis_Body(MomCons, nbody, geodim, BodyConstraints):
             all_time_dens = []
 
             for icstr, Sym in enumerate(BodyConstraints[ib]):
-
+                assert Sym.BodyPerm[ib] == ib
                 all_time_dens.append(Sym.TimeShiftDen)
 
             ncoeffs_min =  math.lcm(*all_time_dens)
@@ -626,11 +626,34 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
      - Exhaustive list of binary transformations from generator within each loop.
     """
 
+    GlobalTimeShift = ActionSym(
+        BodyPerm  = np.array(range(nbody), dtype = np.int_),
+        SpaceRot  = np.identity(geodim, dtype = np.float64),
+        TimeRev   = 1,
+        TimeShiftNum = 1    ,
+        TimeShiftDen = 12,
+    )
+    
+    Shifted_sym_list = []
+
+    for Sym in Sym_list:
+        Shifted_sym_list.append( Sym.Conjugate(GlobalTimeShift))
+        
+    Sym_list = Shifted_sym_list
+        
+    
+    
+
     All_den_list_on_entry = []
     for Sym in Sym_list:
         All_den_list_on_entry.append(Sym.TimeShiftDen)
 
     nint_min = math.lcm(*All_den_list_on_entry) # ensures that all integer divisions will have zero remainder
+    
+    
+    
+    
+    
 
     FullGraph, nint_min = Build_FullGraph_NoPb(nbody, nint_min, Sym_list)
 
@@ -645,32 +668,19 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
 
     maxlooplen = loopnb.max()
 
-    BodyLoop = np.zeros((nbody), dtype = int)
-    Targets = np.zeros((nloop,maxlooplen), dtype = int)
-    for il, CC in enumerate(networkx.connected_components(BodyGraph)):
-        for ilb, ib in enumerate(CC):
-            Targets[il,ilb] = ib
-            BodyLoop[ib] = il
-
-# 
-#     for edge in BodyGraph.edges:
-#         print()
-#         print(edge)
-#         for isym, Sym in enumerate(BodyGraph.edges[edge]["SymList"]):
-#             # print(f'{Sym = }')
-#             print()
-#             print(isym)
-#             print(Sym)
-# 
-    # exit()
-
-
     bodysegm = np.zeros((nbody, nint_min), dtype = int)
     for isegm, CC in enumerate(networkx.connected_components(FullGraph)):
         for ib, iint in CC:
             bodysegm[ib, iint] = isegm
 
     nsegm = isegm + 1
+
+    BodyLoop = np.zeros((nbody), dtype = int)
+    Targets = np.zeros((nloop,maxlooplen), dtype = int)
+    for il, CC in enumerate(networkx.connected_components(BodyGraph)):
+        for ilb, ib in enumerate(CC):
+            Targets[il,ilb] = ib
+            BodyLoop[ib] = il
 
     print(f"{nsegm = }")
 
@@ -684,9 +694,9 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
         assert (unique == bodysegm[ib, unique_indices]).all()
         assert (unique[unique_inverse] == bodysegm[ib, :]).all()
 
-        # print('')
-        # print(ib)
-        # print(bodysegm[ib, :])
+        print()
+        print(ib)
+        print(bodysegm[ib, :])
         # print(unique)
         # print(unique_indices)
         # print(unique_inverse)
@@ -695,6 +705,8 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
         bodynsegm[ib] = unique.size
 
         BodyHasContiguousGeneratingSegments[ib] = ((unique_indices.max()+1) == bodynsegm[ib])
+        
+        print(BodyHasContiguousGeneratingSegments[ib])
 
     AllLoopsHaveContiguousGeneratingSegments = True
     for il in range(nloop):
@@ -715,6 +727,7 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
     for isegm in range(nsegm):
         assert len(SegmConstraints[isegm]) == 0
 
+    # return
 
 
 
@@ -779,18 +792,24 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
 
     BodyConstraints = AccumulateBodyConstraints(Sym_list, nbody, geodim)
 
-#     for ib in range(nbody):
-# 
-#         print()
-#         print("*************************************************")
-#         print()
-#         # print(f'{ib = }')
-#         print(f'loop {BodyLoop[ib]} body {ib}')
-#         for icstr, Sym in enumerate(BodyConstraints[ib]):
-#             print()
-#             print(f'{icstr = }')
-#             print(Sym)
+    for ib in range(nbody):
 
+        print()
+        print("*************************************************")
+        print()
+        # print(f'{ib = }')
+        print(f'loop {BodyLoop[ib]} body {ib}')
+        for icstr, Sym in enumerate(BodyConstraints[ib]):
+            assert Sym.BodyPerm[ib] == ib
+            
+            print()
+            print(f'{icstr = }')
+            print('Sym.SpaceRot')
+            print(np.asarray(Sym.SpaceRot))
+            print(f'{Sym.TimeRev}')
+            print(f'Sym.TimeShift : {Sym.TimeShiftNum} / {Sym.TimeShiftDen}')
+
+    print()
     # exit()
 
 
@@ -1187,17 +1206,18 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
             for j in range(ncoeff_min_body_nnz[ib]):
                 w = fac * np.exp(-2j*np.pi*nnz_k[j] * m/nint)
                 ifft_b[:,m,j] *= w
-        
-        if nnz_k[0] == 0:
-            meanval = np.matmul(params_basis_reoganized[:,0,:].real, params_body[:,0,0]) / nint
-        else:
-            meanval = np.zeros((geodim))
+
 
         
         pos_slice = np.einsum('ijk,klj->li', params_basis_reoganized.real, ifft_b.real) + np.einsum('ijk,klj->li', params_basis_reoganized.imag, ifft_b.imag)
         
-        for idim in range(geodim):
-            pos_slice[:,idim] -= meanval[idim]
+        
+        if nnz_k[0] == 0:
+            
+            meanval = np.matmul(params_basis_reoganized[:,0,:].real, params_body[:,0,0]) / nint            
+            for idim in range(geodim):
+                pos_slice[:,idim] -= meanval[idim]
+
         
         all_pos_slice_a.append(pos_slice)
         
@@ -1224,15 +1244,12 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
     
     for ib in range(nbody):
         
-        pos_slice = all_pos_slice_b[ib]
+        pos_slice = all_pos_slice_a[ib]
         n_inter = pos_slice.shape[0]
 
         assert np.linalg.norm(all_pos[ib,:n_inter,:] - pos_slice) < 1e-14
-        
-        # print(all_pos_slice_b[ib] - all_pos_slice_a[ib])
-        # print(np.linalg.norm(all_pos_slice_b[ib] - all_pos_slice_a[ib]))
-        
-        assert np.linalg.norm(all_pos_slice_b[ib] - all_pos_slice_a[ib]) < 1e-14
+        assert np.linalg.norm(all_pos_slice_a[ib] - pos_slice) < 1e-14
+        assert np.linalg.norm(all_pos_slice_b[ib] - pos_slice) < 1e-14
         
         
         
@@ -1244,8 +1261,11 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
     AllConstraintAreRespected = True
 
     for ib in range(nbody):
+        print()
+        print(f'Body {ib}')
 
         for icstr, Sym in enumerate(BodyConstraints[ib]):
+            print(f'{icstr = }')
             
             assert (nint % Sym.TimeShiftDen) == 0
 
@@ -1257,6 +1277,10 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
                 jint = tnum * nint // tden
                 
                 err = np.linalg.norm(all_pos[ib,iint,:] - np.matmul(Sym.SpaceRot, all_pos[ib,jint,:]))
+                
+                # print(iint, jint, err)
+                print(iint, jint)
+                
 
                 ConstraintIsRespected = ConstraintIsRespected and (err < eps)
 
@@ -1300,7 +1324,7 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
             nparams = nparam_per_period_body * npr * ncoeff_min_body_nnz[ib]
             
             # assert (nparams == expected_nparam)
-            assert (nparams == expected_nparam) or not(All_Id)
+            # assert (nparams == expected_nparam) or not(All_Id)
             
             if ilb == 0:
                 nparam_per_period_body_ref = nparam_per_period_body
@@ -1362,7 +1386,7 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
 
 
 
-    return
+    # return
 # 
 
     # MakePlots = False
@@ -1446,7 +1470,7 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
         #     ax = ax,
             # labels = {i:i for i in FullGraph.nodes},
         # )
-
+# 
         networkx.draw_networkx_edges(
             FullGraph,
             pos = pos,
@@ -1459,15 +1483,6 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
             edge_cmap = colormaps['Set1'],
         )
 
-        # networkx.draw_networkx_edges(
-        #     FullGraph,
-        #     pos = pos,
-        #     ax = ax,
-        #     arrows = True,
-        #     connectionstyle = "arc3,rad=0.1",
-        #     edge_color = "k",
-        #     edgelist = edgelist,
-        # )
 
         plt.axis('off')
         fig.tight_layout()
