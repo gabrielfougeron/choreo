@@ -75,9 +75,11 @@ cdef class ActionSym():
     def __str__(self):
 
         out  = ""
-        out += f"BodyPerm: {self.BodyPerm}\n"
-        out += f"SpaceRot: {self.SpaceRot}\n"
-        out += f"TimeRev: {self.TimeRev}\n"
+        out += f"BodyPerm:\n"
+        out += f"{np.asarray(self.BodyPerm)}\n"
+        out += f"SpaceRot:\n"
+        out += f"{np.asarray(self.SpaceRot)}\n"
+        out += f"TimeRev: {np.asarray(self.TimeRev)}\n"
         out += f"TimeShift: {self.TimeShiftNum / self.TimeShiftDen}"
 
         return out
@@ -85,14 +87,8 @@ cdef class ActionSym():
     @cython.final
     @staticmethod
     def Identity(long nbody, long geodim):
-        """Identity: Returns the identity transformation
-
-        :param nbody: Number of bodies
-        :type nbody: int
-        :param geodim: Dimension of ambient space
-        :type geodim: int
-        :return: The identity transformation of appropriate size
-        :rtype: ActionSym
+        """
+        Identity: Returns the identity transformation
         """        
 
         return ActionSym(
@@ -106,16 +102,8 @@ cdef class ActionSym():
     @cython.final
     @staticmethod
     def Random(long nbody, long geodim, long maxden = -1):
-        """Random Returns a random transformation
-
-        :param nbody: Number of bodies
-        :type nbody: int
-        :param geodim: Dimension of ambient space
-        :type geodim: int
-        :param maxden: Maximum denominator for TimeShift, defaults to None
-        :type maxden: int, optional
-        :return: A random transformation of appropriate size
-        :rtype: ActionSym
+        """
+        Random Returns a random transformation
         """        
 
         if maxden < 0:
@@ -158,6 +146,7 @@ cdef class ActionSym():
         )
 
     @cython.final
+    @cython.cdivision(True)
     cpdef ActionSym Compose(ActionSym B, ActionSym A):
         r"""
         Returns the composition of two transformations.
@@ -174,6 +163,10 @@ cdef class ActionSym():
         cdef long num = A.TimeRev * B.TimeShiftNum * A.TimeShiftDen + A.TimeShiftNum * B.TimeShiftDen
         cdef long den = A.TimeShiftDen * B.TimeShiftDen
 
+        cdef long g = gcd(num,den)
+        num = num // g
+        den = den // g
+
         return ActionSym(
             BodyPerm = ComposeBodyPerm,
             SpaceRot = np.matmul(B.SpaceRot,A.SpaceRot),
@@ -181,6 +174,16 @@ cdef class ActionSym():
             TimeShiftNum = num,
             TimeShiftDen = den
         )
+
+    @cython.final
+    cpdef ActionSym Conjugate(ActionSym A, ActionSym B):
+        r"""
+        Returns the conjugation of a transformation wrt another transformation.
+
+        A.Conjugate(B) returns the conjugation B o A o B^-1.
+        """
+
+        return B.Compose(A.Compose(B.Inverse()))
 
     @cython.final
     cpdef bint IsIdentity(ActionSym self, double atol = 1e-10):
