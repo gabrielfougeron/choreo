@@ -995,11 +995,10 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
 
 
 
-    
 
-    # nint = math.lcm(2, nint_min) 
-    # nint = 2* nint_min
-    nint = 2 * math.lcm(*ncoeff_min_body)
+    nint = 2 * nint_min
+        
+    # nint = 2 * math.lcm(*ncoeff_min_body)
     ncoeffs = nint //2 + 1
 
     # Create parameters
@@ -1086,7 +1085,8 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
     all_coeffs_simple_c = np.zeros((nbody, ncoeffs, geodim), dtype=np.complex128)
     all_coeffs_a_c = np.zeros((nbody, ncoeffs, geodim), dtype=np.complex128)
     all_coeffs_b_c = np.zeros((nbody, ncoeffs, geodim), dtype=np.complex128)
-    all_pos_slice = []
+    all_pos_slice_b = []
+    all_pos_slice_a = []
 
     # Parameters to all_pos through coeffs
     all_coeffs = np.zeros((nbody,ncoeffs,geodim,2), dtype = np.float64)
@@ -1151,6 +1151,7 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
         
         all_coeffs_b_c[ib,:(ncoeffs-1),:] = np.einsum('ijk,klj->lji', params_basis_dense, params_body_dense).reshape(((ncoeffs-1), geodim))
         
+        # Dense version with lots of zeros
         
         ifft_b =  scipy.fft.rfft(params_body_dense, axis=1, n=2*npr)
         n_inter = npr+1
@@ -1165,7 +1166,6 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
                 w *= wref
             wref *= wo
         
-        
         meanval = np.matmul(params_basis_dense[:,0,:].real, params_body_dense[:,0,0]) / nint
         
         pos_slice = np.einsum('ijk,klj->li', params_basis_dense.real, ifft_b.real) + np.einsum('ijk,klj->li', params_basis_dense.imag, ifft_b.imag)
@@ -1173,7 +1173,35 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
         for idim in range(geodim):
             pos_slice[:,idim] -= meanval[idim]
         
-        all_pos_slice.append(pos_slice)
+        all_pos_slice_b.append(pos_slice)
+        
+        
+        # Sparse version with fewer zeros
+        
+        
+        ifft_b =  scipy.fft.rfft(params_body, axis=1, n=2*npr)
+        n_inter = npr+1
+
+        fac = 1./(npr * ncoeff_min_body[ib])
+        for m in range(n_inter):
+            for j in range(ncoeff_min_body_nnz[ib]):
+                w = fac * np.exp(-2j*np.pi*nnz_k[j] * m/nint)
+                ifft_b[:,m,j] *= w
+        
+        if nnz_k[0] == 0:
+            meanval = np.matmul(params_basis_reoganized[:,0,:].real, params_body[:,0,0]) / nint
+        else:
+            meanval = np.zeros((geodim))
+
+        
+        pos_slice = np.einsum('ijk,klj->li', params_basis_reoganized.real, ifft_b.real) + np.einsum('ijk,klj->li', params_basis_reoganized.imag, ifft_b.imag)
+        
+        for idim in range(geodim):
+            pos_slice[:,idim] -= meanval[idim]
+        
+        all_pos_slice_a.append(pos_slice)
+        
+        
         
         
         
@@ -1196,12 +1224,15 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
     
     for ib in range(nbody):
         
-        pos_slice = all_pos_slice[ib]
+        pos_slice = all_pos_slice_b[ib]
         n_inter = pos_slice.shape[0]
-        
-        print(ib,n_inter)
-        
+
         assert np.linalg.norm(all_pos[ib,:n_inter,:] - pos_slice) < 1e-14
+        
+        # print(all_pos_slice_b[ib] - all_pos_slice_a[ib])
+        # print(np.linalg.norm(all_pos_slice_b[ib] - all_pos_slice_a[ib]))
+        
+        assert np.linalg.norm(all_pos_slice_b[ib] - all_pos_slice_a[ib]) < 1e-14
         
         
         
@@ -1237,12 +1268,24 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
     assert AllConstraintAreRespected
     
 
-    return
+    print(nint, nint_min)
+    # print((nbody * nint_min) // nsegm)
+    # print(nint // nint_min)
+    # print(nint_min, nsegm)
+    
+    
+        
+    assert nint % nint_min == 0
+    nint_fac = (nint // nint_min) 
 
     for il in range(nloop):
         
+
         print()
         print(il)
+        
+        expected_nparam = geodim * nint_fac * loopnb[il]
+        
         for ilb in range(loopnb[il]):
             
             ib = Targets[il,ilb]
@@ -1251,131 +1294,40 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
             nparam_per_period_body = params_basis_reoganized.shape[2]
             nnz_k = all_nnz_k[ib]
             
-            ncoeffs_min = len(All_params_basis[ib])
             npr = (ncoeffs-1) //  ncoeff_min_body[ib]
             nperiods_body = npr * ncoeff_min_body_nnz[ib]
         
             nparams = nparam_per_period_body * npr * ncoeff_min_body_nnz[ib]
             
+            # assert (nparams == expected_nparam)
+            assert (nparams == expected_nparam) or not(All_Id)
+            
             if ilb == 0:
-                nparams_ref = nparams
                 nparam_per_period_body_ref = nparam_per_period_body
             else:
-                assert nparams == nparams_ref
                 assert nparam_per_period_body_ref == nparam_per_period_body
             
-            # print(ib, nparams, nparam_per_period_body, ncoeff_min_body[ib])
             
-            print(ib, ncoeff_min_body[ib])
+            pos_slice = all_pos_slice_b[ib]
+            n_inter = pos_slice.shape[0]
+            
+            assert n_inter == (npr+1)
+
+            # print(ib, nparams, nparam_per_period_body, npr, ncoeff_min_body_nnz[ib])
+            # print(ib, n_inter-1)
+            print(ib, nparams, nparam_per_period_body, npr, ncoeff_min_body_nnz[ib], ncoeff_min_body[ib])
+            # print(ib, nparams,)
+            
+            # Size of biggest possible contiguous segment
+            # assert npr % nint_fac == 0
+            # print(ib, nparams, npr, nint_fac )
+
         
-        
 
     
     
     
     
-    
-    
-    
-    
-# 
-# 
-#     # Check that all_coeffs can be recovered
-#     for ib in range(nbody):
-# 
-#         coeffs_reorganized = np.matmul(all_params_basis_reoganized[ib], all_params_reoganized[ib])
-#         
-#         kincr = 0
-#         
-#         for k in range(ncoeffs):
-#             kmod = k % ncoeff_min_body[ib]
-# 
-#             for i, nnz_k in enumerate(all_nnz_k[ib]):
-#                 if nnz_k == kmod:
-#                     found=True
-#                     break
-#             else:
-#                 found=False
-#                     
-#             if found:    
-#                 assert np.linalg.norm(coeffs_reorganized[:,i,kincr] - all_coeffs_c[ib, k, : ]) == 0.                
-#                 kincr+=1
-# 
-#             else:
-#                 assert np.linalg.norm(all_coeffs_c[ib, k, : ]) == 0.
-#                 
-# 
-# 
-#     # Composite FFT
-#     for ib in range(nbody):
-#         print()
-#         print(ib)
-#         # print(f'{ncoeff_min_body[ib] = }')
-#         # print(f'{all_params_basis_reoganized[ib].shape = }')
-#         # print(f'{all_params_reoganized[ib].shape = }')
-# 
-#         ncoeffs_min = ncoeff_min_body[ib]
-#         nparam_per_period = all_params_basis_reoganized[ib].shape[2]
-#         nperiods = all_params_reoganized[ib].shape[1]
-#         nint_composite = 2 * (ncoeffs_min * nperiods)
-# 
-#         print(f'{ncoeffs_min = }')
-#         print(f'{nparam_per_period = }')
-#         print(f'{nperiods = }')
-#         print(f'{nint_composite = }')
-#         print(f'{nint_min = }')
-#         print(f'{nint = }')
-# 
-# 
-# 
-#         coeffs_reorganized = np.matmul(all_params_basis_reoganized[ib], all_params_reoganized[ib])
-#         
-#         kincr = 0
-#         
-#         for k in range(ncoeffs):
-#             kmod = k % ncoeff_min_body[ib]
-# 
-#             for i, nnz_k in enumerate(all_nnz_k[ib]):
-#                 if nnz_k == kmod:
-#                     found=True
-#                     break
-#             else:
-#                 found=False
-#                     
-#             if found:    
-#                 assert np.linalg.norm(coeffs_reorganized[:,i,kincr] - all_coeffs_c[ib, k, : ]) == 0.                
-#                 kincr+=1
-# 
-#             else:
-#                 assert np.linalg.norm(all_coeffs_c[ib, k, : ]) == 0.
-#                 
-#         
-#         params_basis_reoganized = all_params_basis_reoganized[ib]
-#         shape = (
-#             geodim                              ,
-#             ncoeff_min_body[ib]                 ,
-#             params_basis_reoganized.shape[2]    ,
-#         )
-#         
-#         param_basis_dense = np.zeros(shape, dtype=np.complex128)
-#                
-#         nnz_k = all_nnz_k[ib]       
-#         
-#         for ik, k in enumerate(nnz_k):
-#             param_basis_dense[:,k,:] = params_basis_reoganized[:,ik,:]
-            
-        # ifft_param_basis_dense = scipy.fft.ifft(All_params_basis, axis=0)
-            
-
-    # # Magic composite FFT
-    # for ib in range(nbody):
-
-        # meanval = -np.dot(All_params_basis[0,:].real, all_params[:,0]) / nint
-
-
-
-
-
 
 
 
@@ -1411,7 +1363,7 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
 
 
     return
-
+# 
 
     # MakePlots = False
     MakePlots = True
