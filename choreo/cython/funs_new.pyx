@@ -80,7 +80,7 @@ cdef class ActionSym():
         out += f"SpaceRot:\n"
         out += f"{np.asarray(self.SpaceRot)}\n"
         out += f"TimeRev: {np.asarray(self.TimeRev)}\n"
-        out += f"TimeShift: {self.TimeShiftNum / self.TimeShiftDen}"
+        out += f"TimeShift: {self.TimeShiftNum} / {self.TimeShiftDen}"
 
         return out
     
