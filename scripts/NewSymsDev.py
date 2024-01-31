@@ -12,8 +12,8 @@ def main():
     all_tests = [
         '3q',
         '2C3C',
-        '2C3C5k',
         '2D3D',
+        '2C3C5k',
         '2D3D5k',
         '2D1',
         'test',
