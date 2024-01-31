@@ -224,24 +224,25 @@ def Build_BodyGraph(nbody, Sym_list):
 def AppendIfNotSameRotAndTime(CstrList, Constraint):
 
     if not(Constraint.IsIdentityRotAndTime()):
-        
-        AlreadyFound = False
-            
+
         for FoundCstr in CstrList:
 
-            AlreadyFound = Constraint.IsSameRotAndTime(FoundCstr)
-            if AlreadyFound:
+            if Constraint.IsSameRotAndTime(FoundCstr):
                 break
 
-            AlreadyFound = Constraint.IsSameRotAndTime(FoundCstr.Inverse())
-            if AlreadyFound:
+            if Constraint.IsSameRotAndTime(FoundCstr.Inverse()):
                 break
 
-        if not(AlreadyFound):
+        else:
+            
+            print("dddd",Constraint)
+            print()
             
             CstrList.append(Constraint)
 
-def AccumulateBodyConstraints(Sym_list, nbody, geodim):
+def AccumulateBodyConstraints_old(Sym_list, nbody, geodim):
+    
+    raise ValueError
 
     BodyConstraints = [[] for _ in range(nbody)]
 
@@ -338,6 +339,189 @@ def AccumulateBodyConstraints(Sym_list, nbody, geodim):
             AppendIfNotSameRotAndTime(BodyConstraints[ib], Constraint)
 
     return BodyConstraints
+
+def AccumulateBodyConstraints(Sym_list, nbody, geodim):
+    
+    print("============================================")
+    print("In AccumulateBodyConstraints")
+
+
+    for isym, Sym in enumerate(Sym_list):
+        print()
+        print(isym)
+        print(Sym)
+        print()
+
+    print("===============")
+
+
+    BodyConstraints = [list() for _ in range(nbody)]
+
+    SimpleBodyGraph = networkx.Graph()
+    for ib in range(nbody):
+        SimpleBodyGraph.add_node(ib)
+
+    for Sym in Sym_list:
+
+        for ib in range(nbody):
+
+            ib_target = Sym.BodyPerm[ib]
+
+            if ib != ib_target:
+
+                if ib > ib_target:
+                    edge = (ib_target, ib)
+                    EdgeSym = Sym.Inverse()
+                else:
+                    edge = (ib, ib_target)
+                    EdgeSym = Sym
+
+                if not(edge in SimpleBodyGraph.edges):
+
+                    SimpleBodyGraph.add_edge(*edge, Sym = EdgeSym)
+                    
+    print(f'{len(Sym_list) = }')
+    for Sym in Sym_list:
+        print()
+        print(Sym)
+        print()
+        
+        for ib in range(nbody):
+            
+            print("z",ib)
+
+            ib_target = Sym.BodyPerm[ib]
+
+            if ib == ib_target:
+
+                AppendIfNotSameRotAndTime(BodyConstraints[ib], Sym)                
+            
+            else:
+                    
+                if ib > ib_target:
+                    edge = (ib_target, ib)
+                    EdgeSym = Sym.Inverse()
+                else:
+                    edge = (ib, ib_target)
+                    EdgeSym = Sym
+                    
+                try:
+                    
+                    ParallelEdgeSym = SimpleBodyGraph.edges[edge]["Sym"]
+
+                    print("EdgeSym = ", EdgeSym)
+                    print()
+                    print("ParallelEdgeSym = ", ParallelEdgeSym)
+                    print()
+                    print(edge)
+                          
+
+                    Constraint = EdgeSym.Inverse().Compose(ParallelEdgeSym)
+                    assert Constraint.BodyPerm[edge[0]] == edge[0]
+                    print()
+                    print(Constraint)
+                    
+                    AppendIfNotSameRotAndTime(BodyConstraints[edge[0]], Constraint)
+
+                    Constraint = EdgeSym.Compose(ParallelEdgeSym.Inverse())
+                    assert Constraint.BodyPerm[edge[1]] == edge[1]
+                    print()
+                    print(Constraint)
+                    
+                    AppendIfNotSameRotAndTime(BodyConstraints[edge[1]], Constraint)
+                    
+                    
+                    
+                except:
+                    pass
+
+
+
+    print()
+    print("Cycles")
+    print()
+
+
+
+    Cycles = networkx.cycle_basis(SimpleBodyGraph)
+
+    for Cycle in itertools.chain(SimpleBodyGraph.edges, Cycles):
+
+        Cycle_len = len(Cycle)
+        FirstBody = Cycle[0]
+
+        FirstBodyConstraint = ActionSym.Identity(nbody, geodim)
+        for iedge in range(Cycle_len):
+            
+            ibeg = Cycle[iedge]
+            iend = Cycle[(iedge+1)%Cycle_len]
+            
+            # print(iedge, FirstBody, ibeg, iend)
+
+            if (ibeg > iend):
+                Sym = SimpleBodyGraph.edges[(iend,ibeg)]["Sym"].Inverse()
+
+            else:
+                Sym = SimpleBodyGraph.edges[(ibeg,iend)]["Sym"]
+                
+            assert Sym.BodyPerm[ibeg] == iend
+                
+            FirstBodyConstraint = Sym.Compose(FirstBodyConstraint)
+        
+        # print()
+        # print("b",FirstBodyConstraint)
+        assert FirstBodyConstraint.BodyPerm[FirstBody] == FirstBody
+        # print()
+
+        if not(FirstBodyConstraint.IsIdentityRotAndTime()):
+            
+            path_from_FirstBody = networkx.shortest_path(SimpleBodyGraph, source = FirstBody)
+
+            # Now add the Cycle constraints to every body in the cycle
+            for ib in Cycle:
+
+                FirstBodyToibSym = ActionSym.Identity(nbody, geodim)
+
+                path = path_from_FirstBody[ib]            
+                pathlen = len(path)
+
+                for ipath in range(1,pathlen):
+
+                    if (path[ipath-1] > path[ipath]):
+
+                        edge = (path[ipath], path[ipath-1])
+                        Sym = SimpleBodyGraph.edges[edge]["Sym"].Inverse()
+
+                    else:
+
+                        edge = (path[ipath-1], path[ipath])
+                        Sym = SimpleBodyGraph.edges[edge]["Sym"]
+
+                    FirstBodyToibSym = Sym.Compose(FirstBodyToibSym)
+
+                # print('a', FirstBody, ib, FirstBodyToibSym.BodyPerm[FirstBody], FirstBodyToibSym.BodyPerm[ib])
+                
+                assert FirstBodyToibSym.BodyPerm[FirstBody] == ib
+                
+                Constraint = FirstBodyConstraint.Conjugate(FirstBodyToibSym)
+
+                assert Constraint.BodyPerm[ib] == ib
+# 
+#                 print("ccc",Constraint)
+#                 print()
+#                 
+                AppendIfNotSameRotAndTime(BodyConstraints[ib], Constraint)
+
+    return BodyConstraints
+
+
+
+
+
+
+
+
+
 
 def AccumulateSegmentConstraints(FullGraph, nbody, geodim, nsegm, bodysegm):
     # Accumulate constraints on segments. 
@@ -806,11 +990,11 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
             print(f'{icstr = }')
             print('Sym.SpaceRot')
             print(np.asarray(Sym.SpaceRot))
-            print(f'{Sym.TimeRev}')
+            print(f'{Sym.TimeRev = }')
             print(f'Sym.TimeShift : {Sym.TimeShiftNum} / {Sym.TimeShiftDen}')
 
     print()
-    # exit()
+    return
 
 
 
