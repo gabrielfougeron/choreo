@@ -142,8 +142,7 @@ def Build_FullGraph_NoPb(
     current_recursion = 1,
     max_recursion = 5,
 ):
-    # print(f'{current_recursion=}')
-    
+
     if (current_recursion > max_recursion):
         raise ValueError("Achieved max recursion level in Build_FullGraph")
 
@@ -225,106 +224,6 @@ def AppendIfNotSameRotAndTime(CstrList, Constraint):
 
             CstrList.append(Constraint)
 
-def AccumulateBodyConstraints_old(Sym_list, nbody, geodim):
-    
-    raise ValueError
-
-    BodyConstraints = [[] for _ in range(nbody)]
-
-    SimpleBodyGraph = networkx.Graph()
-    for ib in range(nbody):
-        SimpleBodyGraph.add_node(ib)
-
-    for Sym in Sym_list:
-
-        SymInv = Sym.Inverse()
-
-        for ib in range(nbody):
-
-            ib_target = Sym.BodyPerm[ib]
-
-            if ib == ib_target:
-
-                AppendIfNotSameRotAndTime(BodyConstraints[ib], Sym)                
-            
-            else:
-                    
-                if ib > ib_target:
-                    edge = (ib_target, ib)
-                    EdgeSym = SymInv
-                else:
-                    edge = (ib, ib_target)
-                    EdgeSym = Sym
-
-                if (edge in SimpleBodyGraph.edges):
-
-                    Constraint = EdgeSym.Inverse().Compose(SimpleBodyGraph.edges[edge]["Sym"])
-                    assert Constraint.BodyPerm[edge[0]] == edge[0]
-                    AppendIfNotSameRotAndTime(BodyConstraints[edge[0]], Constraint)
-
-                    Constraint = EdgeSym.Compose(SimpleBodyGraph.edges[edge]["Sym"].Inverse())
-                    assert Constraint.BodyPerm[edge[1]] == edge[1]
-                    AppendIfNotSameRotAndTime(BodyConstraints[edge[1]], Constraint)
-
-                else:
-
-                    SimpleBodyGraph.add_edge(*edge, Sym = EdgeSym)
-
-    Cycles = networkx.cycle_basis(SimpleBodyGraph)
-
-    for Cycle in itertools.chain(SimpleBodyGraph.edges, Cycles):
-
-        Cycle_len = len(Cycle)
-
-        FirstBodyConstraint = ActionSym.Identity(nbody, geodim)
-        for iedge in range(Cycle_len):
-            
-            ibeg = Cycle[iedge]
-            iend = Cycle[(iedge+1)%Cycle_len]
-
-            if (ibeg <= iend):
-                Sym = SimpleBodyGraph.edges[(ibeg,iend)]["Sym"]
-
-            else:
-                Sym = SimpleBodyGraph.edges[(ibeg,iend)]["Sym"].Inverse()
-                
-            FirstBodyConstraint = Sym.Compose(FirstBodyConstraint)
-
-        FirstBody = Cycle[0]
-        assert FirstBodyConstraint.BodyPerm[FirstBody] == FirstBody
-
-        path_to_FirstBody = networkx.shortest_path(SimpleBodyGraph, target = FirstBody)
-
-        # Now add the Cycle constraints to every body in the cycle
-        for ib in Cycle:
-
-            ibToFirstBodySym =  ActionSym.Identity(nbody, geodim)
-
-            path = path_to_FirstBody[ib]            
-            pathlen = len(path)
-
-            for ipath in range(1,pathlen):
-
-                if (path[ipath-1] > path[ipath]):
-
-                    edge = (path[ipath], path[ipath-1])
-                    Sym = SimpleBodyGraph.edges[edge]["Sym"].Inverse()
-
-                else:
-
-                    edge = (path[ipath-1], path[ipath])
-                    Sym = SimpleBodyGraph.edges[edge]["Sym"]
-
-                ibToFirstBodySym = Sym.Compose(ibToFirstBodySym)
-
-            Constraint = ibToFirstBodySym.Inverse().Compose(FirstBodyConstraint.Compose(ibToFirstBodySym))
-
-            assert Constraint.BodyPerm[ib] == ib
-
-            AppendIfNotSameRotAndTime(BodyConstraints[ib], Constraint)
-
-    return BodyConstraints
-
 def AccumulateBodyConstraints(Sym_list, nbody, geodim):
 
     BodyConstraints = [list() for _ in range(nbody)]
@@ -352,7 +251,6 @@ def AccumulateBodyConstraints(Sym_list, nbody, geodim):
 
                     SimpleBodyGraph.add_edge(*edge, Sym = EdgeSym)
                     
-    print(f'{len(Sym_list) = }')
     for Sym in Sym_list:
 
         for ib in range(nbody):
@@ -743,38 +641,13 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
      - Exhaustive list of binary transformations from generator within each loop.
     """
 
-    GlobalTimeShift = ActionSym(
-        BodyPerm  = np.array(range(nbody), dtype = np.int_),
-        SpaceRot  = np.identity(geodim, dtype = np.float64),
-        TimeRev   = 1,
-        TimeShiftNum = 1    ,
-        TimeShiftDen = 12,
-    )
-    
-    Shifted_sym_list = []
-
-    for Sym in Sym_list:
-        Shifted_sym_list.append( Sym.Conjugate(GlobalTimeShift))
-        
-    Sym_list = Shifted_sym_list
-        
-    
-    
-
     All_den_list_on_entry = []
     for Sym in Sym_list:
         All_den_list_on_entry.append(Sym.TimeShiftDen)
 
     nint_min = math.lcm(*All_den_list_on_entry) # ensures that all integer divisions will have zero remainder
     
-    
-    
-    
-    
-
-    FullGraph, nint_min = Build_FullGraph_NoPb(nbody, nint_min, Sym_list)
-
-    BodyGraph =  Build_BodyGraph(nbody,Sym_list)
+    BodyGraph =  Build_BodyGraph(nbody, Sym_list)
 
     nloop = sum(1 for _ in networkx.connected_components(BodyGraph))
     
@@ -784,14 +657,7 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
         loopnb[il] = len(CC)
 
     maxlooplen = loopnb.max()
-
-    bodysegm = np.zeros((nbody, nint_min), dtype = int)
-    for isegm, CC in enumerate(networkx.connected_components(FullGraph)):
-        for ib, iint in CC:
-            bodysegm[ib, iint] = isegm
-
-    nsegm = isegm + 1
-
+    
     BodyLoop = np.zeros((nbody), dtype = int)
     Targets = np.zeros((nloop,maxlooplen), dtype = int)
     for il, CC in enumerate(networkx.connected_components(BodyGraph)):
@@ -799,41 +665,80 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
             Targets[il,ilb] = ib
             BodyLoop[ib] = il
 
-    print(f"{nsegm = }")
 
-    bodynsegm = np.zeros((nbody), dtype = int)
-    BodyHasContiguousGeneratingSegments = np.zeros((nbody), dtype = bool)
+    del BodyGraph # We now explore global time shifts, so this graph may be rendered obselete
+    
 
-    for ib in range(nbody):
-
-        unique, unique_indices, unique_inverse, unique_counts = np.unique(bodysegm[ib, :], return_index = True, return_inverse = True, return_counts = True)
-
-        assert (unique == bodysegm[ib, unique_indices]).all()
-        assert (unique[unique_inverse] == bodysegm[ib, :]).all()
-
-        print()
-        print(ib)
-        print(bodysegm[ib, :])
-        # print(unique)
-        # print(unique_indices)
-        # print(unique_inverse)
-        # print(unique_counts)
-
-        bodynsegm[ib] = unique.size
-
-        BodyHasContiguousGeneratingSegments[ib] = ((unique_indices.max()+1) == bodynsegm[ib])
+    
+    # Making sure nint_min is big enough
+    FullGraph, nint_min = Build_FullGraph_NoPb(nbody, nint_min, Sym_list)
+    
+    for i_shift in range(nint_min):
         
-        print(BodyHasContiguousGeneratingSegments[ib])
+        if i_shift != 0:
+            
+            GlobalTimeShift = ActionSym(
+                BodyPerm  = np.array(range(nbody), dtype = np.int_) ,
+                SpaceRot  = np.identity(geodim, dtype = np.float64) ,
+                TimeRev   = 1                                       ,
+                TimeShiftNum = i_shift                              ,
+                TimeShiftDen = nint_min                             ,
+            )
+            
+            Shifted_sym_list = []
+            for Sym in Sym_list:
+                Shifted_sym_list.append( Sym.Conjugate(GlobalTimeShift))
+            Sym_list = Shifted_sym_list
+        
+            FullGraph = Build_FullGraph(nbody, nint_min, Sym_list)
 
-    AllLoopsHaveContiguousGeneratingSegments = True
-    for il in range(nloop):
-        LoopHasContiguousGeneratingSegments = False
-        for ilb in range(loopnb[il]):
-            LoopHasContiguousGeneratingSegments = LoopHasContiguousGeneratingSegments or BodyHasContiguousGeneratingSegments[Targets[il,ilb]]
+        bodysegm = np.zeros((nbody, nint_min), dtype = int)
+        for isegm, CC in enumerate(networkx.connected_components(FullGraph)):
+            for ib, iint in CC:
+                bodysegm[ib, iint] = isegm
 
-        AllLoopsHaveContiguousGeneratingSegments = AllLoopsHaveContiguousGeneratingSegments and LoopHasContiguousGeneratingSegments
+        nsegm = isegm + 1
+        
+        bodynsegm = np.zeros((nbody), dtype = int)
+        BodyHasContiguousGeneratingSegments = np.zeros((nbody), dtype = bool)
 
-    print(f'{AllLoopsHaveContiguousGeneratingSegments = }')
+        for ib in range(nbody):
+
+            unique, unique_indices, unique_inverse, unique_counts = np.unique(bodysegm[ib, :], return_index = True, return_inverse = True, return_counts = True)
+
+            assert (unique == bodysegm[ib, unique_indices]).all()
+            assert (unique[unique_inverse] == bodysegm[ib, :]).all()
+
+            # print()
+            # print(ib)
+            # print(bodysegm[ib, :])
+            # print(unique)
+            # print(unique_indices)
+            # print(unique_inverse)
+            # print(unique_counts)
+
+            bodynsegm[ib] = unique.size
+
+            BodyHasContiguousGeneratingSegments[ib] = ((unique_indices.max()+1) == bodynsegm[ib])
+            
+        AllLoopsHaveContiguousGeneratingSegments = True
+        for il in range(nloop):
+            LoopHasContiguousGeneratingSegments = False
+            for ilb in range(loopnb[il]):
+                LoopHasContiguousGeneratingSegments = LoopHasContiguousGeneratingSegments or BodyHasContiguousGeneratingSegments[Targets[il,ilb]]
+
+            AllLoopsHaveContiguousGeneratingSegments = AllLoopsHaveContiguousGeneratingSegments and LoopHasContiguousGeneratingSegments
+        
+        if AllLoopsHaveContiguousGeneratingSegments:
+            break
+    
+    else:
+        
+        raise ValueError("Could not find time shift such that all loops have contiguous generating segments")
+
+    print(f"Required {i_shift} shifts to find reference such that all loops have contiguous generating segments")
+
+
 
     # Accumulate constraints on segments. 
     # So far I've found zero constraints on segments. Is this because I only test on well-formed symmetries ?
@@ -1496,7 +1401,7 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
 
 
 
-    # return
+    return
 # 
 
     # MakePlots = False
