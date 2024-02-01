@@ -288,3 +288,12 @@ cdef class ActionSym():
         den = den // g
 
         return  num, den
+
+    @cython.final
+    @cython.cdivision(True)
+    cpdef (long, long) ApplyTSegm(ActionSym self, long tnum, long tden):
+
+        if (self.TimeRev == -1): 
+            tnum = ((tnum+1)%tden)
+
+        return self.ApplyT(tnum, tden)
