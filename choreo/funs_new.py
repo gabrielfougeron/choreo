@@ -101,28 +101,16 @@ def Build_FullGraph(nbody, nint, Sym_list):
             ib_target = Sym.BodyPerm[ib]
 
             for iint in range(nint):
-                
-                if (Sym.TimeRev == 1): 
-                    tnum = iint
-                
-                else:
-                    tnum = ((iint+1)%nint)
 
-                tnum_target, tden_target = Sym.ApplyT(tnum, nint)
-
-                # print(tnum,nint)
-                # print(tnum_target, tden_target)
+                tnum_target, tden_target = Sym.ApplyTSegm(iint, nint)
 
                 assert nint % tden_target == 0
 
                 iint_target = (tnum_target * (nint // tden_target) + nint) % nint
 
-                # node_source = (ib       , iint       )
-                # node_target = (ib_target, iint_target)
-
-                node_source = (ib       , iint_target)
-                node_target = (ib_target, iint       )
-
+                node_source = (ib       , iint       )
+                node_target = (ib_target, iint_target)
+                
                 if node_source <= node_target :
 
                     edge = (node_source, node_target)
@@ -234,10 +222,7 @@ def AppendIfNotSameRotAndTime(CstrList, Constraint):
                 break
 
         else:
-            
-            print("dddd",Constraint)
-            print()
-            
+
             CstrList.append(Constraint)
 
 def AccumulateBodyConstraints_old(Sym_list, nbody, geodim):
@@ -341,19 +326,6 @@ def AccumulateBodyConstraints_old(Sym_list, nbody, geodim):
     return BodyConstraints
 
 def AccumulateBodyConstraints(Sym_list, nbody, geodim):
-    
-    print("============================================")
-    print("In AccumulateBodyConstraints")
-
-
-    for isym, Sym in enumerate(Sym_list):
-        print()
-        print(isym)
-        print(Sym)
-        print()
-
-    print("===============")
-
 
     BodyConstraints = [list() for _ in range(nbody)]
 
@@ -382,20 +354,14 @@ def AccumulateBodyConstraints(Sym_list, nbody, geodim):
                     
     print(f'{len(Sym_list) = }')
     for Sym in Sym_list:
-        print()
-        print(Sym)
-        print()
-        
+
         for ib in range(nbody):
-            
-            print("z",ib)
 
             ib_target = Sym.BodyPerm[ib]
 
             if ib == ib_target:
 
                 AppendIfNotSameRotAndTime(BodyConstraints[ib], Sym)                
-            
             else:
                     
                 if ib > ib_target:
@@ -409,39 +375,16 @@ def AccumulateBodyConstraints(Sym_list, nbody, geodim):
                     
                     ParallelEdgeSym = SimpleBodyGraph.edges[edge]["Sym"]
 
-                    print("EdgeSym = ", EdgeSym)
-                    print()
-                    print("ParallelEdgeSym = ", ParallelEdgeSym)
-                    print()
-                    print(edge)
-                          
-
                     Constraint = EdgeSym.Inverse().Compose(ParallelEdgeSym)
                     assert Constraint.BodyPerm[edge[0]] == edge[0]
-                    print()
-                    print(Constraint)
-                    
                     AppendIfNotSameRotAndTime(BodyConstraints[edge[0]], Constraint)
 
                     Constraint = EdgeSym.Compose(ParallelEdgeSym.Inverse())
                     assert Constraint.BodyPerm[edge[1]] == edge[1]
-                    print()
-                    print(Constraint)
-                    
                     AppendIfNotSameRotAndTime(BodyConstraints[edge[1]], Constraint)
-                    
-                    
-                    
+
                 except:
                     pass
-
-
-
-    print()
-    print("Cycles")
-    print()
-
-
 
     Cycles = networkx.cycle_basis(SimpleBodyGraph)
 
@@ -456,8 +399,6 @@ def AccumulateBodyConstraints(Sym_list, nbody, geodim):
             ibeg = Cycle[iedge]
             iend = Cycle[(iedge+1)%Cycle_len]
             
-            # print(iedge, FirstBody, ibeg, iend)
-
             if (ibeg > iend):
                 Sym = SimpleBodyGraph.edges[(iend,ibeg)]["Sym"].Inverse()
 
@@ -468,10 +409,7 @@ def AccumulateBodyConstraints(Sym_list, nbody, geodim):
                 
             FirstBodyConstraint = Sym.Compose(FirstBodyConstraint)
         
-        # print()
-        # print("b",FirstBodyConstraint)
         assert FirstBodyConstraint.BodyPerm[FirstBody] == FirstBody
-        # print()
 
         if not(FirstBodyConstraint.IsIdentityRotAndTime()):
             
@@ -499,17 +437,12 @@ def AccumulateBodyConstraints(Sym_list, nbody, geodim):
 
                     FirstBodyToibSym = Sym.Compose(FirstBodyToibSym)
 
-                # print('a', FirstBody, ib, FirstBodyToibSym.BodyPerm[FirstBody], FirstBodyToibSym.BodyPerm[ib])
-                
                 assert FirstBodyToibSym.BodyPerm[FirstBody] == ib
                 
                 Constraint = FirstBodyConstraint.Conjugate(FirstBodyToibSym)
 
                 assert Constraint.BodyPerm[ib] == ib
-# 
-#                 print("ccc",Constraint)
-#                 print()
-#                 
+
                 AppendIfNotSameRotAndTime(BodyConstraints[ib], Constraint)
 
     return BodyConstraints
@@ -976,25 +909,25 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
 
     BodyConstraints = AccumulateBodyConstraints(Sym_list, nbody, geodim)
 
-    for ib in range(nbody):
-
-        print()
-        print("*************************************************")
-        print()
-        # print(f'{ib = }')
-        print(f'loop {BodyLoop[ib]} body {ib}')
-        for icstr, Sym in enumerate(BodyConstraints[ib]):
-            assert Sym.BodyPerm[ib] == ib
-            
-            print()
-            print(f'{icstr = }')
-            print('Sym.SpaceRot')
-            print(np.asarray(Sym.SpaceRot))
-            print(f'{Sym.TimeRev = }')
-            print(f'Sym.TimeShift : {Sym.TimeShiftNum} / {Sym.TimeShiftDen}')
-
-    print()
-    return
+#     for ib in range(nbody):
+# 
+#         print()
+#         print("*************************************************")
+#         print()
+#         # print(f'{ib = }')
+#         print(f'loop {BodyLoop[ib]} body {ib}')
+#         for icstr, Sym in enumerate(BodyConstraints[ib]):
+#             assert Sym.BodyPerm[ib] == ib
+#             
+#             print()
+#             print(f'{icstr = }')
+#             print('Sym.SpaceRot')
+#             print(np.asarray(Sym.SpaceRot))
+#             print(f'{Sym.TimeRev = }')
+#             print(f'Sym.TimeShift : {Sym.TimeShiftNum} / {Sym.TimeShiftDen}')
+# 
+#     print()
+    # return
 
 
 
@@ -1445,12 +1378,9 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
     AllConstraintAreRespected = True
 
     for ib in range(nbody):
-        print()
-        print(f'Body {ib}')
 
         for icstr, Sym in enumerate(BodyConstraints[ib]):
-            print(f'{icstr = }')
-            
+
             assert (nint % Sym.TimeShiftDen) == 0
 
             ConstraintIsRespected = True
@@ -1461,10 +1391,6 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
                 jint = tnum * nint // tden
                 
                 err = np.linalg.norm(all_pos[ib,iint,:] - np.matmul(Sym.SpaceRot, all_pos[ib,jint,:]))
-                
-                # print(iint, jint, err)
-                print(iint, jint)
-                
 
                 ConstraintIsRespected = ConstraintIsRespected and (err < eps)
 
