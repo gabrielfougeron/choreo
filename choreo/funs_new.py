@@ -668,8 +668,6 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
 
     del BodyGraph # We now explore global time shifts, so this graph may be rendered obselete
     
-
-    
     # Making sure nint_min is big enough
     FullGraph, nint_min = Build_FullGraph_NoPb(nbody, nint_min, Sym_list)
     
@@ -687,7 +685,7 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
             
             Shifted_sym_list = []
             for Sym in Sym_list:
-                Shifted_sym_list.append( Sym.Conjugate(GlobalTimeShift))
+                Shifted_sym_list.append(Sym.Conjugate(GlobalTimeShift))
             Sym_list = Shifted_sym_list
         
             FullGraph = Build_FullGraph(nbody, nint_min, Sym_list)
@@ -1323,7 +1321,7 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
         print()
         print(il)
         
-        expected_nparam = geodim * nint_fac * loopnb[il]
+        # expected_nparam = geodim * nint_fac * loopnb[il]
         
         for ilb in range(loopnb[il]):
             
@@ -1352,14 +1350,14 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
             
             assert n_inter == (npr+1)
 
-            # print(ib, nparams, nparam_per_period_body, npr, ncoeff_min_body_nnz[ib])
+            print(ib, nparams, nparam_per_period_body, npr, ncoeff_min_body_nnz[ib], BodyHasContiguousGeneratingSegments[ib])
             # print(ib, n_inter-1)
-            print(ib, nparams, nparam_per_period_body, npr, ncoeff_min_body_nnz[ib], ncoeff_min_body[ib])
+            # print(ib, nparams, nparam_per_period_body, npr, ncoeff_min_body_nnz[ib], ncoeff_min_body[ib])
             # print(ib, nparams,)
             
             # Size of biggest possible contiguous segment
             # assert npr % nint_fac == 0
-            # print(ib, nparams, npr, nint_fac )
+            # print(ib, nint, npr // nint_fac )
 
         
 
@@ -1402,7 +1400,6 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
 
 
     return
-# 
 
     # MakePlots = False
     MakePlots = True
