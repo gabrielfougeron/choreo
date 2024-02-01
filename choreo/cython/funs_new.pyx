@@ -19,6 +19,8 @@ cdef inline long gcd (long a, long b) noexcept nogil:
     return b
 
 
+cdef double default_atol = 1e-10
+
 @cython.final
 cdef class ActionSym():
     r"""
@@ -186,7 +188,7 @@ cdef class ActionSym():
         return B.Compose(A.Compose(B.Inverse()))
 
     @cython.final
-    cpdef bint IsIdentity(ActionSym self, double atol = 1e-10):
+    cpdef bint IsIdentity(ActionSym self, double atol = default_atol):
         r"""
         Returns True if the transformation is close to identity.
         """       
@@ -211,7 +213,7 @@ cdef class ActionSym():
         return isid
     
     @cython.final
-    cpdef bint IsIdentityRot(ActionSym self, double atol = 1e-10):
+    cpdef bint IsIdentityRot(ActionSym self, double atol = default_atol):
 
         cdef bint isid = True
         cdef long idim, jdim
@@ -237,15 +239,15 @@ cdef class ActionSym():
         return (self.TimeShiftNum == 0)
 
     @cython.final    
-    cpdef bint IsIdentityRotAndTimeRev(ActionSym self, double atol = 1e-10):
+    cpdef bint IsIdentityRotAndTimeRev(ActionSym self, double atol = default_atol):
         return self.IsIdentityTimeRev() and self.IsIdentityRot(atol = atol)    
 
     @cython.final
-    cpdef bint IsIdentityRotAndTime(ActionSym self, double atol = 1e-10):
+    cpdef bint IsIdentityRotAndTime(ActionSym self, double atol = default_atol):
         return self.IsIdentityTimeRev() and self.IsIdentityRot(atol = atol) and self.IsIdentityTimeShift()
 
     @cython.final
-    cpdef bint IsSame(ActionSym self, other, double atol = 1e-10):
+    cpdef bint IsSame(ActionSym self, other, double atol = default_atol):
         r"""
         Returns True if the two transformations are almost identical.
         """   
@@ -256,7 +258,7 @@ cdef class ActionSym():
         return ((self.Inverse()).Compose(other)).IsIdentityPerm()    
     
     @cython.final
-    cpdef bint IsSameRot(ActionSym self, other, double atol = 1e-10):
+    cpdef bint IsSameRot(ActionSym self, other, double atol = default_atol):
         return ((self.Inverse()).Compose(other)).IsIdentityRot(atol = atol)    
     
     @cython.final
@@ -264,15 +266,15 @@ cdef class ActionSym():
         return ((self.Inverse()).Compose(other)).IsIdentityTimeRev()    
     
     @cython.final
-    cpdef bint IsSameTimeShift(ActionSym self, ActionSym other, double atol = 1e-10):
+    cpdef bint IsSameTimeShift(ActionSym self, ActionSym other, double atol = default_atol):
         return ((self.Inverse()).Compose(other)).IsIdentityTimeShift()
 
     @cython.final
-    cpdef bint IsSameRotAndTimeRev(ActionSym self, ActionSym other, double atol = 1e-10):
+    cpdef bint IsSameRotAndTimeRev(ActionSym self, ActionSym other, double atol = default_atol):
         return ((self.Inverse()).Compose(other)).IsIdentityRotAndTimeRev(atol = atol)
     
     @cython.final
-    cpdef bint IsSameRotAndTime(ActionSym self, ActionSym other, double atol = 1e-10):
+    cpdef bint IsSameRotAndTime(ActionSym self, ActionSym other, double atol = default_atol):
         return ((self.Inverse()).Compose(other)).IsIdentityRotAndTime(atol = atol)
 
     @cython.final
