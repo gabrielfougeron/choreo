@@ -224,22 +224,18 @@ def AppendIfNotSameRotAndTime(CstrList, Constraint):
 
             CstrList.append(Constraint)
 
-def AccumulateLoopGenConstraints(Sym_list, nbody, nloop, loopgen, geodim):
 
-    LoopGenConstraints = [list() for _ in range(nloop)]
+def AccumulateBodyConstraints(Sym_list, nbody, geodim):
+
+    BodyConstraints = [list() for _ in range(nbody)]
 
     SimpleBodyGraph = networkx.Graph()
-    for il in range(nloop):
-        ib = loopgen[il]
+    for ib in range(nbody):
         SimpleBodyGraph.add_node(ib)
-
-    print(SimpleBodyGraph)
-    print(SimpleBodyGraph.nodes)
 
     for Sym in Sym_list:
 
-        for il in range(nloop):
-            ib = loopgen[il]
+        for ib in range(nbody):
 
             ib_target = Sym.BodyPerm[ib]
 
@@ -252,22 +248,19 @@ def AccumulateLoopGenConstraints(Sym_list, nbody, nloop, loopgen, geodim):
                     edge = (ib, ib_target)
                     EdgeSym = Sym
 
-                print(edge)
-                
                 if not(edge in SimpleBodyGraph.edges):
 
                     SimpleBodyGraph.add_edge(*edge, Sym = EdgeSym)
                     
     for Sym in Sym_list:
 
-        for il in range(nloop):
-            ib = loopgen[il]
+        for ib in range(nbody):
 
             ib_target = Sym.BodyPerm[ib]
 
             if ib == ib_target:
 
-                AppendIfNotSameRotAndTime(LoopGenConstraints[il], Sym)                
+                AppendIfNotSameRotAndTime(BodyConstraints[ib], Sym)                
             else:
                     
                 if ib > ib_target:
@@ -283,11 +276,11 @@ def AccumulateLoopGenConstraints(Sym_list, nbody, nloop, loopgen, geodim):
 
                     Constraint = EdgeSym.Inverse().Compose(ParallelEdgeSym)
                     assert Constraint.BodyPerm[edge[0]] == edge[0]
-                    AppendIfNotSameRotAndTime(LoopGenConstraints[edge[0]], Constraint)
+                    AppendIfNotSameRotAndTime(BodyConstraints[edge[0]], Constraint)
 
                     Constraint = EdgeSym.Compose(ParallelEdgeSym.Inverse())
                     assert Constraint.BodyPerm[edge[1]] == edge[1]
-                    AppendIfNotSameRotAndTime(LoopGenConstraints[edge[1]], Constraint)
+                    AppendIfNotSameRotAndTime(BodyConstraints[edge[1]], Constraint)
 
                 except:
                     pass
@@ -321,71 +314,37 @@ def AccumulateLoopGenConstraints(Sym_list, nbody, nloop, loopgen, geodim):
             
             path_from_FirstBody = networkx.shortest_path(SimpleBodyGraph, source = FirstBody)
 
-            # Now add the Cycle constraints to the loop generator
-            ib = loopgen[il]
+            # Now add the Cycle constraints to every body in the cycle
+            for ib in Cycle:
 
-            FirstBodyToibSym = ActionSym.Identity(nbody, geodim)
+                FirstBodyToibSym = ActionSym.Identity(nbody, geodim)
 
-            path = path_from_FirstBody[ib]            
-            pathlen = len(path)
+                path = path_from_FirstBody[ib]            
+                pathlen = len(path)
 
-            for ipath in range(1,pathlen):
+                for ipath in range(1,pathlen):
 
-                if (path[ipath-1] > path[ipath]):
+                    if (path[ipath-1] > path[ipath]):
 
-                    edge = (path[ipath], path[ipath-1])
-                    Sym = SimpleBodyGraph.edges[edge]["Sym"].Inverse()
+                        edge = (path[ipath], path[ipath-1])
+                        Sym = SimpleBodyGraph.edges[edge]["Sym"].Inverse()
 
-                else:
+                    else:
 
-                    edge = (path[ipath-1], path[ipath])
-                    Sym = SimpleBodyGraph.edges[edge]["Sym"]
+                        edge = (path[ipath-1], path[ipath])
+                        Sym = SimpleBodyGraph.edges[edge]["Sym"]
 
-                FirstBodyToibSym = Sym.Compose(FirstBodyToibSym)
+                    FirstBodyToibSym = Sym.Compose(FirstBodyToibSym)
 
-            assert FirstBodyToibSym.BodyPerm[FirstBody] == ib
-            
-            Constraint = FirstBodyConstraint.Conjugate(FirstBodyToibSym)
+                assert FirstBodyToibSym.BodyPerm[FirstBody] == ib
+                
+                Constraint = FirstBodyConstraint.Conjugate(FirstBodyToibSym)
 
-            assert Constraint.BodyPerm[ib] == ib
+                assert Constraint.BodyPerm[ib] == ib
 
-            AppendIfNotSameRotAndTime(LoopGenConstraints[il], Constraint)
+                AppendIfNotSameRotAndTime(BodyConstraints[ib], Constraint)
 
-    return LoopGenConstraints
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    return BodyConstraints
 
 
 
@@ -842,25 +801,10 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
             segmbody[isegm].append((ib,iint))
 
 
+    # This could certainly be made more efficient
+    BodyConstraints = AccumulateBodyConstraints(Sym_list, nbody, geodim)
+    LoopGenConstraints = [BodyConstraints[ib]for ib in loopgen]
 
-
-
-    LoopGenConstraints = AccumulateLoopGenConstraints(Sym_list, nbody, nloop, loopgen, geodim)
-
-
-    for il in range(nloop):
-        print()
-        print(il)
-        print()
-        for Sym in  LoopGenConstraints[il]:
-            print(Sym)
-            
-            
-    
-    
-    
-    
-    
     
 
 
@@ -1184,63 +1128,7 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
             
     assert AllConstraintAreRespected
     
-        
-    # assert nint % nint_min == 0
-    # nint_fac = (nint // nint_min) 
-# 
-#     for il in range(nloop):
-#         
-#         params_basis_reoganized = all_params_basis_reoganized[il]
-#         nparam_per_period_loop = params_basis_reoganized.shape[2]
-#         nnz_k = all_nnz_k[il]
-#         
-#         npr = (ncoeffs-1) //  ncoeff_min_loop[il]
-#         nperiods_loop = npr * ncoeff_min_loop_nnz[il]
-#     
-#         nparams = nparam_per_period_loop * npr * ncoeff_min_loop_nnz[il]
-#         
-#         # assert (nparams == expected_nparam)
-#         # assert (nparams == expected_nparam) or not(All_Id)
-#         
-#         if ilb == 0:
-#             nparam_per_period_loop_ref = nparam_per_period_loop
-#         else:
-#             assert nparam_per_period_loop_ref == nparam_per_period_loop
-#         
-#         
-#         pos_slice = all_pos_slice_b[il]
-#         n_inter = pos_slice.shape[0]
-#         
-#         assert n_inter == (npr+1)
-
-        # print(il, nparams, nparam_per_period_loop, npr, ncoeff_min_loop_nnz[il])
-
-
-        
-
-    
-    
-    
-    
-
-
-
-
-
-
-#     nparam_nosym = 0
-#     nparam_tot = 0
-# 
-#     for il in range(nloop):
-# 
-#         nparam_nosym += geodim * 2 * loopnb[il]
-#         nparam_tot += nparam_loop_sum[il] /  ncoeff_min_loop[il] 
-
-    
-    assert nbody == loopnb.sum()
-    
-    
-
+   
     
     nparam_nosym = geodim * nint * nbody
     nparam_tot = 0
@@ -1248,13 +1136,6 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
     for il in range(nloop):
         nparam_tot += math.prod(all_params[il].shape)
 
-    print('a')
-    print(geodim,  nint, nbody)
-    print(nparam_nosym)
-
-    for il in range(nloop):
-        print(all_params[il].shape)
-    print(nparam_tot)
     
     print('*****************************************')
     print('')
@@ -1278,11 +1159,11 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
     reduction_ratio = count_tot / count_unique
     assert abs((count_tot / count_unique)  - reduction_ratio) < eps
     assert abs(((nbody * nint_min) / nsegm) - reduction_ratio) < eps
-    # assert abs((nparam_nosym / nparam_tot)  - reduction_ratio) < eps
+    assert abs((nparam_nosym / nparam_tot)  - reduction_ratio) < eps
 
 
 
-    # return
+    return
 
     # MakePlots = False
     MakePlots = True
