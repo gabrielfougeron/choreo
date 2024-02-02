@@ -771,7 +771,7 @@ def DetectLoops(Sym_list, nbody):
     
     
 
-def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCons=False,n_grad_change=1.,Sym_list=[],CrashOnIdentity=True,ForceMatrixChangevar = False):
+def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, MomCons=False, n_grad_change=1., Sym_list=[], CrashOnIdentity=True, ForceMatrixChangevar = False, store_folder = ""):
     
     r"""
     This function constructs a ChoreoAction
@@ -868,7 +868,6 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
     BodyConstraints = AccumulateBodyConstraints(Sym_list, nbody, geodim)
     LoopGenConstraints = [BodyConstraints[ib]for ib in loopgen]
 
-    return
     
     # AccumulateSegmGenToInterSym(FullGraph
 
@@ -876,33 +875,20 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
 
     # segm_gen_to_interaction =  AccumulateSegmGenToTargetSym(FullGraph, nbody, geodim, nloop, nint_min, nsegm, bodysegm, segmbody, loopnb, Targets, segm_to_iint, segm_to_body)
 
-    BinarySegm, Identity_detected = FindAllBinarySegments(segm_gen_to_target, nbody, nsegm, nint_min, bodysegm, CrashOnIdentity, mass, BodyLoop)
-
-    All_Id = True
-
-    count_tot = 0
-    count_unique = 0
-    for isegm in range(nsegm):
-        for isegmp in range(isegm,nsegm):
-            count_tot += sum(BinarySegm[(isegm, isegmp)]["SymCount"])
-            count_unique += len(BinarySegm[(isegm, isegmp)]["SymCount"])
-
-#             print()
-#             print(isegm,isegmp)
-#             print(BinarySegm[(isegm, isegmp)]["SymCount"])
+#     BinarySegm, Identity_detected = FindAllBinarySegments(segm_gen_to_target, nbody, nsegm, nint_min, bodysegm, CrashOnIdentity, mass, BodyLoop)
 # 
-            for Sym in BinarySegm[(isegm, isegmp)]["SymList"]:
-
-                All_Id = All_Id and Sym.IsIdentityRotAndTimeRev()
-
-                # print()
-                # print(Sym.SpaceRot)
-                # print(Sym.TimeRev)
-
-                # print(np.linalg.norm(Sym.SpaceRot - np.identity(geodim)) < 1e-11)
-                # assert Sym.TimeRev == 1
-
-
+#     All_Id = True
+# 
+#     count_tot = 0
+#     count_unique = 0
+#     for isegm in range(nsegm):
+#         for isegmp in range(isegm,nsegm):
+#             count_tot += sum(BinarySegm[(isegm, isegmp)]["SymCount"])
+#             count_unique += len(BinarySegm[(isegm, isegmp)]["SymCount"])
+# 
+#             for Sym in BinarySegm[(isegm, isegmp)]["SymList"]:
+# 
+#                 All_Id = All_Id and Sym.IsIdentityRotAndTimeRev()
 
 
 
@@ -1204,32 +1190,32 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
     print('*****************************************')
     print('')
     print(f'{AllConstraintAreRespected = }')     
-    print(f'{Identity_detected = }')
-    print(f'All binary transforms are identity: {All_Id}')
+    # print(f'{Identity_detected = }')
+    # print(f'All binary transforms are identity: {All_Id}')
     
     # assert All_Id
 
     print()
-    print(f"total binary interaction count: {count_tot}")
-    print(f"total expected binary interaction count: {nint_min * nbody * (nbody-1)//2}")
-    print(f"unique binary interaction count: {count_unique}")
+    # print(f"total binary interaction count: {count_tot}")
+    # print(f"total expected binary interaction count: {nint_min * nbody * (nbody-1)//2}")
+    # print(f"unique binary interaction count: {count_unique}")
 
 
 
     print()
-    print(f"ratio of total to unique binary interactions : {count_tot / count_unique}")
+    # print(f"ratio of total to unique binary interactions : {count_tot / count_unique}")
     print(f'ratio of integration intervals to segments : {(nbody * nint_min) / nsegm}')
     print(f"ratio of parameters before and after constraints: {nparam_nosym / nparam_tot}")
 
 
-    reduction_ratio = count_tot / count_unique
-    assert abs((count_tot / count_unique)  - reduction_ratio) < eps
-    assert abs(((nbody * nint_min) / nsegm) - reduction_ratio) < eps
-    assert abs((nparam_nosym / nparam_tot)  - reduction_ratio) < eps
+    # reduction_ratio = count_tot / count_unique
+    # assert abs((count_tot / count_unique)  - reduction_ratio) < eps
+    # assert abs(((nbody * nint_min) / nsegm) - reduction_ratio) < eps
+    # assert abs((nparam_nosym / nparam_tot)  - reduction_ratio) < eps
 
 
 
-    return
+    # return
 
     # MakePlots = False
     MakePlots = True
@@ -1328,8 +1314,10 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
 
         plt.axis('off')
         fig.tight_layout()
-
-        plt.savefig('./NewSym_data/graph.pdf')
+        
+        dirname = os.path.split(store_folder)[0]
+        
+        plt.savefig(os.path.join(dirname, 'graph.pdf'))
         plt.close()
 
 
