@@ -39,7 +39,7 @@ docs/build/
 docs/gh-pages/
 /docs/source/_build/
 /docs/pytest_out/
-NewSym_data/
+/NewSym_data/*
 /docs/source/sg_execution_times.rst
 ##########################################################
 #           To be included (with preceding !)
@@ -55,3 +55,5 @@ NewSym_data/
 !/docs/source/_static/**
 !/docs/source/test-report/test_report_template.txt
 !/requirements/requirements*.txt
+!NewSym_data/**/
+!NewSym_data/**/choreo_config.json

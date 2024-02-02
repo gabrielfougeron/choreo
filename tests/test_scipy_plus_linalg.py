@@ -48,8 +48,6 @@ def test_nullspace(float64_tols, Dense_linalg_dims):
                 assert Z.shape[0] == m
                 assert Z.shape[1] == 0
 
-            # rank = np.random.randint(low = 0, high = min(n,m)+1)
-
             for rank in range( min(n,m)+1):
 
                 nullspace_dim = min(n,m) - rank

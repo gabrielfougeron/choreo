@@ -7,11 +7,6 @@ import numpy as np
 import math as m
 import scipy.linalg
 
-# import scipy.optimize
-# import scipy.linalg as la
-# import scipy.sparse as sp
-# import functools
-
 def null_space(A, eps = 1e-12):
 
     n = A.shape[0]
@@ -25,22 +20,21 @@ def null_space(A, eps = 1e-12):
 
         Q, R, P = scipy.linalg.qr(
             A.T,
-            overwrite_a = False,
-            mode = 'economic',
-            pivoting = True
+            overwrite_a = False ,
+            mode = 'economic'   ,
+            pivoting = True     ,
         )
 
-        rank = min(R.shape)
         for i in range(min(R.shape)):
             if (abs(R[i, i]) < eps):
                 rank = i
                 break
+        else:
+            rank = min(R.shape)
 
         return Q[:, rank:]
 
         # return scipy.linalg.null_space(A)
-
-
 
 
 def random_orthogonal_matrix(geodim):
@@ -49,12 +43,12 @@ def random_orthogonal_matrix(geodim):
     sksymmat = mat - mat.T
     return scipy.linalg.expm(sksymmat)
 
-def InstabilityDecomposition(Mat,eps=1e-12):
+def InstabilityDecomposition(Mat, eps=1e-12):
 
     n,m = Mat.shape
     assert n==m
 
-    eigvals,eigvects = scipy.linalg.eig(a=Mat, b=None, left=False, right=True, overwrite_a=False, overwrite_b=False, check_finite=True, homogeneous_eigvals=False)
+    eigvals, eigvects = scipy.linalg.eig(a=Mat, b=None, left=False, right=True, overwrite_a=False, overwrite_b=False, check_finite=True, homogeneous_eigvals=False)
 
     idx_sort = np.argsort(-abs(eigvals))
     Instability_magnitude = abs(eigvals)[idx_sort]

@@ -1,0 +1,174 @@
+{
+  "Geom_Gen": {
+    "geodim": 2
+  },
+  "Geom_Bodies": {
+    "nbody": 5,
+    "MomConsImposed": false,
+    "nsyms": 2,
+    "AllSyms": [
+      {
+        "BodyPerm": [
+          1,
+          2,
+          0,
+          4,
+          3
+        ],
+        "Reflexion": "False",
+        "RotAngleNum": 0,
+        "RotAngleDen": 1,
+        "TimeRev": "False",
+        "TimeShiftNum": 1,
+        "TimeShiftDen": 6
+      },
+      {
+        "BodyPerm": [
+          0,
+          2,
+          1,
+          4,
+          3
+        ],
+        "Reflexion": "True",
+        "RotAngleNum": 0,
+        "RotAngleDen": 1,
+        "TimeRev": "True",
+        "TimeShiftNum": 0,
+        "TimeShiftDen": 1
+      }
+    ],
+    "nloop": 2,
+    "Targets": [
+      [
+        0,
+        1,
+        2
+      ],
+      [
+        3,
+        4
+      ]
+    ],
+    "mass": [
+      1,
+      1
+    ]
+  },
+  "Geom_Target": {
+    "LookForTarget": false,
+    "Rotate_fast_with_slow": false,
+    "Randomize_Fast_Init": true,
+    "Optimize_Init": false,
+    "RandomJitterTarget": false
+  },
+  "Geom_Random": {
+    "coeff_ampl_o": 0.1,
+    "coeff_ampl_min": 1e-16,
+    "k_infl": 3,
+    "k_max": 50
+  },
+  "Animation_Colors": {
+    "color_method_input": "body",
+    "n_color": 10,
+    "colorLookup": [
+      "#50ce4d",
+      "#ff7006",
+      "#a253c4",
+      "#ef1010",
+      "#25b5bc",
+      "#e86a96",
+      "#edc832",
+      "#ad6530",
+      "#00773f",
+      "#d6d6d6"
+    ]
+  },
+  "Animation_Size": {
+    "checkbox_Mass_Scale": true,
+    "input_body_radius": "6",
+    "input_trail_width": "2.2",
+    "checkbox_Trail_vanish": true,
+    "input_trail_vanish_length": "1.1"
+  },
+  "Animation_Framerate": {
+    "checkbox_Limit_FPS": false,
+    "input_Limit_FPS": 120
+  },
+  "Animation_Search": {
+    "DisplayLoopsDuringSearch": true,
+    "DisplayBodiesDuringSearch": true,
+    "DisplayLoopOnGalleryLoad": true
+  },
+  "Solver_Discr": {
+    "Use_exact_Jacobian": true,
+    "nint_init": 600,
+    "n_reconverge_it_max": 4,
+    "mul_coarse_to_fine": 3
+  },
+  "Solver_Optim": {
+    "n_opt": 100,
+    "krylov_method": "gmres",
+    "line_search": "wolfe",
+    "line_search_smin": 0.1,
+    "Newt_err_norm_safe": 1e-8,
+    "Newt_err_norm_max": 1e-11,
+    "optim_verbose_lvl": "some"
+  },
+  "Solver_Loop": {
+    "n_optim_param": 6,
+    "gradtol_list": [
+      0.1,
+      0.001,
+      0.00001,
+      1e-7,
+      1e-9,
+      1e-11
+    ],
+    "inner_maxiter_list": [
+      30,
+      30,
+      50,
+      60,
+      70,
+      80
+    ],
+    "maxiter_list": [
+      100,
+      1000,
+      1000,
+      1000,
+      500,
+      500
+    ],
+    "outer_k_list": [
+      5,
+      5,
+      5,
+      5,
+      5,
+      7
+    ],
+    "store_outer_Av_list": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "Solver_Checks": {
+    "Look_for_duplicates": true,
+    "duplicate_eps": 1e-8,
+    "Check_Escape": true
+  },
+  "Solver_CLI": {
+    "Exec_Mul_Proc": "No",
+    "nproc": 8,
+    "GradHess_backend": "Numba",
+    "SaveImage": true,
+    "SaveVideo": false
+  },
+  "CurrentlyDeveloppingNewStuff" : true
+}
