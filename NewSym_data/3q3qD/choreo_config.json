@@ -167,7 +167,7 @@
     "Check_Escape": true
   },
   "Solver_CLI": {
-    "Exec_Mul_Proc": "MultiProc",
+    "Exec_Mul_Proc": "No",
     "nproc": 8,
     "GradHess_backend": "Numba",
     "SaveImage": true,
