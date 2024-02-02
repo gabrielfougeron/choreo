@@ -136,6 +136,7 @@ def Find_Choreo(
             MomCons = MomConsImposed                    ,
             n_grad_change = n_grad_change               ,
             CrashOnIdentity = CrashOnError_changevar    ,
+            store_folder = store_folder                 ,
         )
 
         return
@@ -925,9 +926,9 @@ def Speed_test(
 
     print(f'Total time s : {tot_time}')
         
-def ChoreoFindFromDict(params_dict,Workspace_folder):
+def ChoreoFindFromDict(params_dict, Workspace_folder):
 
-    def load_target_files(filename,Workspace_folder,target_speed):
+    def load_target_files(filename, Workspace_folder, target_speed):
 
         if (filename == "no file"):
 
@@ -1207,7 +1208,7 @@ def ChoreoFindFromDict(params_dict,Workspace_folder):
     ReconvergeSol = False
     AddNumberToOutputName = True
     
-    all_kwargs = Pick_Named_Args_From_Dict(Find_Choreo,dict(globals(),**locals()))
+    all_kwargs = Pick_Named_Args_From_Dict(Find_Choreo, dict(globals(), **locals()))
 
     Find_Choreo(**all_kwargs)
 
@@ -1505,9 +1506,9 @@ def ChoreoFindFromDict_old(params_dict,Workspace_folder):
 
 
 
-def ChoreoReadDictAndFind(Workspace_folder,dict_name="choreo_config.json"):
+def ChoreoReadDictAndFind(Workspace_folder, dict_name="choreo_config.json"):
 
-    params_filename = os.path.join(Workspace_folder,dict_name)
+    params_filename = os.path.join(Workspace_folder, dict_name)
 
     with open(params_filename) as jsonFile:
         params_dict = json.load(jsonFile)
@@ -1534,15 +1535,15 @@ def ChoreoReadDictAndFind(Workspace_folder,dict_name="choreo_config.json"):
 
         os.environ['OMP_NUM_THREADS'] = str(n_threads)
         numba.set_num_threads(n_threads)
-        ChoreoFindFromDict(params_dict,Workspace_folder)
+        ChoreoFindFromDict(params_dict, Workspace_folder)
 
     else :
 
         os.environ['OMP_NUM_THREADS'] = str(1)
 
-        ChoreoFindFromDict(params_dict,Workspace_folder)
+        ChoreoFindFromDict(params_dict, Workspace_folder)
 
-def ChoreoReadDictAndFind_old(Workspace_folder,dict_name="choreo_config.json"):
+def ChoreoReadDictAndFind_old(Workspace_folder, dict_name="choreo_config.json"):
 
     params_filename = os.path.join(Workspace_folder,dict_name)
 

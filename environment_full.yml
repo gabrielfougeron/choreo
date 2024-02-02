@@ -29,6 +29,7 @@ dependencies:
   - pydata-sphinx-theme
   - sphinx-gallery
   - sphinx-needs
+  - pyquickbench
   - pip:
     - cffi==1.15.0
     - pycparser==2.21
