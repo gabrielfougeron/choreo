@@ -13,9 +13,7 @@ import math as m
 import scipy
 
 import scipy.optimize
-import sparseqr
 import networkx
-import random
 import math
 
 from matplotlib import pyplot as plt
@@ -436,7 +434,53 @@ def AccumulateSegmGenToTargetSym(FullGraph, nbody, geodim, nloop, nint_min, nseg
 
             segm_gen_to_target[ib][iint] = GenToTargetSym
 
-    return segm_gen_to_target
+    return segm_gen_to_target    
+
+def AccumulateSegmGenToTargetSym(FullGraph, nbody, geodim, nloop, nint_min, nsegm, bodysegm, segmbody, loopnb, Targets, segm_to_iint, segm_to_body):
+
+    segm_gen_to_target = [ [ None for iint in range(nint_min)] for ib in range(nbody) ]
+
+    for isegm, ib_iint_list  in enumerate(segmbody):
+
+        segmgen = (segm_to_body[isegm], segm_to_iint[isegm])
+        isegmgen = bodysegm[*segmgen] 
+
+        path_from_segmgen = networkx.shortest_path(FullGraph, source = segmgen)
+
+        for ib, iint in ib_iint_list:
+
+            segm = (ib, iint)
+
+            assert isegm == isegmgen
+
+            GenToTargetSym = ActionSym.Identity(nbody, geodim)
+
+            path = path_from_segmgen[segm]
+            pathlen = len(path)
+
+            for ipath in range(1,pathlen):
+
+                if (path[ipath-1] > path[ipath]):
+
+                    edge = (path[ipath], path[ipath-1])
+                    Sym = FullGraph.edges[edge]["SymList"][0].Inverse()
+
+                else:
+
+                    edge = (path[ipath-1], path[ipath])
+                    Sym = FullGraph.edges[edge]["SymList"][0]
+
+                GenToTargetSym = Sym.Compose(GenToTargetSym)
+
+            segm_gen_to_target[ib][iint] = GenToTargetSym
+
+    return segm_gen_to_target    
+
+
+
+
+
+
 
 def FindAllBinarySegments(segm_gen_to_target, nbody, nsegm, nint_min, bodysegm, CrashOnIdentity, mass, BodyLoop):
 
@@ -774,11 +818,11 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
 
 
 
-    segm_to_body = np.zeros((nsegm), dtype = int)
-    segm_to_iint = np.zeros((nsegm), dtype = int)
+    # Choose interacting segments as earliest possible times.
 
+    intersegm_to_body = np.zeros((nsegm), dtype = int)
+    intersegm_to_iint = np.zeros((nsegm), dtype = int)
 
-    # Choose generating segments as earliest possible times
     assigned_segms = set()
 
     for iint in range(nint_min):
@@ -787,9 +831,28 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
             isegm = bodysegm[ib,iint]
 
             if not(isegm in assigned_segms):
-                segm_to_body[isegm] = ib
-                segm_to_iint[isegm] = iint
+                intersegm_to_body[isegm] = ib
+                intersegm_to_iint[isegm] = iint
                 assigned_segms.add(isegm)
+
+    # Choose generating segments as contiguous chunks of loop generators
+    assigned_segms = set()
+
+    gensegm_to_body = np.zeros((nsegm), dtype = int)
+    gensegm_to_iint = np.zeros((nsegm), dtype = int)
+
+    for iint in range(nint_min):
+        for il in range(nloop):
+            ib = loopgen[il]
+
+            isegm = bodysegm[ib,iint]
+
+            if not(isegm in assigned_segms):
+                gensegm_to_body[isegm] = ib
+                gensegm_to_iint[isegm] = iint
+                assigned_segms.add(isegm)
+
+
 
 
     segmbody = [[] for isegm in range(nsegm)]
@@ -805,12 +868,13 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
     BodyConstraints = AccumulateBodyConstraints(Sym_list, nbody, geodim)
     LoopGenConstraints = [BodyConstraints[ib]for ib in loopgen]
 
+    return
     
+    # AccumulateSegmGenToInterSym(FullGraph
 
 
 
-
-    segm_gen_to_target =  AccumulateSegmGenToTargetSym(FullGraph, nbody, geodim, nloop, nint_min, nsegm, bodysegm, segmbody, loopnb, Targets, segm_to_iint, segm_to_body)
+    # segm_gen_to_interaction =  AccumulateSegmGenToTargetSym(FullGraph, nbody, geodim, nloop, nint_min, nsegm, bodysegm, segmbody, loopnb, Targets, segm_to_iint, segm_to_body)
 
     BinarySegm, Identity_detected = FindAllBinarySegments(segm_gen_to_target, nbody, nsegm, nint_min, bodysegm, CrashOnIdentity, mass, BodyLoop)
 
@@ -1142,6 +1206,8 @@ def setup_changevar_new(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCon
     print(f'{AllConstraintAreRespected = }')     
     print(f'{Identity_detected = }')
     print(f'All binary transforms are identity: {All_Id}')
+    
+    # assert All_Id
 
     print()
     print(f"total binary interaction count: {count_tot}")
