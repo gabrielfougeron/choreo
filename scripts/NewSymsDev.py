@@ -10,9 +10,16 @@ import time
 def main():
         
     all_tests = [
-        '3q',
-        '3q3q',
-        '3q3qD',
+        # '3q',
+        # '3q3q',
+        # '3q3qD',
+        '1q2q',
+        '2q2q',
+        # '4q4q',
+        # '4q4qD',
+        # '4q4qD3k',
+        # '5q5q',
+        # '6q6q',
         # '2C3C',
         # '2D3D',
         # '2C3C5k',
