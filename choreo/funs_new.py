@@ -24,16 +24,16 @@ import choreo.scipy_plus
 from choreo.cython.funs_new import ActionSym
 
 
-def EdgesAreEitherDirectXORIndirect(FullGraph):
+def EdgesAreEitherDirectXORIndirect(SegmGraph):
 
     AlwaysContainsExactlyOne = True
 
-    for iedge, edge in enumerate(FullGraph.edges):
+    for iedge, edge in enumerate(SegmGraph.edges):
 
         ContainsDirect = False
         ContainsIndirect = False
 
-        for Sym in FullGraph.edges[edge]["SymList"]:
+        for Sym in SegmGraph.edges[edge]["SymList"]:
 
             if Sym.TimeRev == 1:
                 ContainsDirect = True
@@ -44,18 +44,18 @@ def EdgesAreEitherDirectXORIndirect(FullGraph):
 
     return AlwaysContainsExactlyOne
 
-def ContainsDoubleEdges(FullGraph):
+def ContainsDoubleEdges(SegmGraph):
 
-    for edge in FullGraph.edges:
+    for edge in SegmGraph.edges:
 
-        if (len(FullGraph.edges[edge]["SymList"]) > 1):
+        if (len(SegmGraph.edges[edge]["SymList"]) > 1):
             return True
-
+    
     return False
 
-def ContainsSelfReferingTimeRevSegment(FullGraph):
+def ContainsSelfReferingTimeRevSegment(SegmGraph):
 
-    CCs = networkx.connected_components(FullGraph)
+    CCs = networkx.connected_components(SegmGraph)
 
     for CC in CCs:
 
@@ -63,7 +63,7 @@ def ContainsSelfReferingTimeRevSegment(FullGraph):
 
             if (segm[1] == segmp[1]):
 
-                path = networkx.shortest_path(FullGraph, source = segm, target = segmp)
+                path = networkx.shortest_path(SegmGraph, source = segm, target = segmp)
 
                 TimeRev = 1
                 pathlen = len(path)
@@ -75,7 +75,7 @@ def ContainsSelfReferingTimeRevSegment(FullGraph):
                     else:
                         edge = (path[ipath-1], path[ipath])
 
-                    TimeRev *=  FullGraph.edges[edge]["SymList"][0].TimeRev
+                    TimeRev *=  SegmGraph.edges[edge]["SymList"][0].TimeRev
 
                 if (TimeRev == -1):
                     
@@ -83,12 +83,17 @@ def ContainsSelfReferingTimeRevSegment(FullGraph):
                 
     return False
 
-def Build_FullGraph(nbody, nint, Sym_list):
 
-    FullGraph = networkx.Graph()
+
+def Build_BodyTimeGraph(nbody, nint, Sym_list, Tfun = None):
+    
+    if Tfun is None:
+        return ValueError('Invalid Tfun')
+
+    Graph = networkx.Graph()
     for ib in range(nbody):
         for iint in range(nint):
-            FullGraph.add_node((ib,iint))
+            Graph.add_node((ib,iint))
 
     for Sym in Sym_list:
 
@@ -100,7 +105,7 @@ def Build_FullGraph(nbody, nint, Sym_list):
 
             for iint in range(nint):
 
-                tnum_target, tden_target = Sym.ApplyTSegm(iint, nint)
+                tnum_target, tden_target = Tfun(Sym, iint, nint)
 
                 assert nint % tden_target == 0
 
@@ -119,21 +124,81 @@ def Build_FullGraph(nbody, nint, Sym_list):
                     edge = (node_target, node_source)
                     EdgeSym = SymInv
 
-                if edge in FullGraph.edges:
-                    
-                    AlreadyIn = False
-                    for OtherEdgeSym in FullGraph.edges[edge]["SymList"]:
-                        AlreadyIn = AlreadyIn or EdgeSym.IsSameRotAndTimeRev(OtherEdgeSym)
-
-                    if not(AlreadyIn) :
-                        FullGraph.edges[edge]["SymList"].append(EdgeSym)
-
+                edge_dict = Graph.edges.get(edge)
+                
+                if edge_dict is None:
+                    Graph.add_edge(*edge, SymList = [EdgeSym])
+                
                 else:
-                    FullGraph.add_edge(*edge, SymList = [EdgeSym])
+                    
+                    for OtherEdgeSym in edge_dict["SymList"]:
+                        if EdgeSym.IsSameRotAndTimeRev(OtherEdgeSym):
+                            break
+                    else:
+                        edge_dict["SymList"].append(EdgeSym)
     
-    return FullGraph
+    return Graph
 
-def Build_FullGraph_NoPb(
+Build_SegmGraph = functools.partial(Build_BodyTimeGraph, Tfun = ActionSym.ApplyTSegm)
+Build_InstGraph = functools.partial(Build_BodyTimeGraph, Tfun = ActionSym.ApplyT    )
+
+# def Build_InstGraph(nbody, nint, Sym_list, Tfun = ActionSym.ApplyT):
+#     
+#     if Tfun is None:
+#         return ValueError('Invalid Tfun')
+# 
+#     Graph = networkx.Graph()
+#     for ib in range(nbody):
+#         for iint in range(nint):
+#             Graph.add_node((ib,iint))
+# 
+#     for Sym in Sym_list:
+# 
+#         SymInv = Sym.Inverse()
+# 
+#         for ib in range(nbody):
+# 
+#             ib_target = Sym.BodyPerm[ib]
+# 
+#             for iint in range(nint):
+# 
+#                 tnum_target, tden_target = Tfun(Sym, iint, nint)
+# 
+#                 assert nint % tden_target == 0
+# 
+#                 iint_target = (tnum_target * (nint // tden_target) + nint) % nint
+# 
+#                 node_source = (ib       , iint       )
+#                 node_target = (ib_target, iint_target)
+#                 
+#                 if (iint == iint_target):
+#                     
+#                     if node_source <= node_target :
+# 
+#                         edge = (node_source, node_target)
+#                         EdgeSym = Sym
+# 
+#                     else:
+# 
+#                         edge = (node_target, node_source)
+#                         EdgeSym = SymInv
+# 
+#                     if edge in Graph.edges:
+#                         
+#                         AlreadyIn = False
+#                         for OtherEdgeSym in Graph.edges[edge]["SymList"]:
+#                             AlreadyIn = AlreadyIn or EdgeSym.IsSameRotAndTimeRev(OtherEdgeSym)
+# 
+#                         if not(AlreadyIn) :
+#                             Graph.edges[edge]["SymList"].append(EdgeSym)
+# 
+#                     else:
+#                         Graph.add_edge(*edge, SymList = [EdgeSym])
+#     
+#     return Graph
+
+
+def Build_SegmGraph_NoPb(
     nbody,
     nint,
     Sym_list,
@@ -142,13 +207,13 @@ def Build_FullGraph_NoPb(
 ):
 
     if (current_recursion > max_recursion):
-        raise ValueError("Achieved max recursion level in Build_FullGraph")
+        raise ValueError("Achieved max recursion level in Build_SegmGraph")
 
-    FullGraph = Build_FullGraph(nbody, nint, Sym_list)
+    SegmGraph = Build_SegmGraph(nbody, nint, Sym_list)
 
-    if ContainsDoubleEdges(FullGraph):
+    if ContainsDoubleEdges(SegmGraph):
 
-        return Build_FullGraph_NoPb(
+        return Build_SegmGraph_NoPb(
             nbody = nbody,
             nint = 2*nint,
             Sym_list = Sym_list,
@@ -156,9 +221,9 @@ def Build_FullGraph_NoPb(
             max_recursion = max_recursion,
         )
 
-    if ContainsSelfReferingTimeRevSegment(FullGraph):
+    if ContainsSelfReferingTimeRevSegment(SegmGraph):
 
-        return Build_FullGraph_NoPb(
+        return Build_SegmGraph_NoPb(
             nbody = nbody,
             nint = 2*nint,
             Sym_list = Sym_list,
@@ -166,7 +231,7 @@ def Build_FullGraph_NoPb(
             max_recursion = max_recursion,
         ) 
 
-    return FullGraph, nint
+    return SegmGraph, nint
 
 def Build_BodyGraph(nbody, Sym_list):
 
@@ -221,6 +286,24 @@ def AppendIfNotSameRotAndTime(CstrList, Constraint):
         else:
 
             CstrList.append(Constraint)
+            
+# def AppendIfNotSameRotAndBodyPerm(CstrList, Constraint):
+# 
+#     if not(Constraint.IsIdentityRotAndTime()):
+# 
+#         for FoundCstr in CstrList:
+# 
+#             if Constraint.IsSameRotAndBodyPerm(FoundCstr):
+#                 break
+# 
+#             if Constraint.IsSameRotAndBodyPerm(FoundCstr.Inverse()):
+#                 break
+# 
+#         else:
+# 
+#             CstrList.append(Constraint)
+#             
+            
 
 
 def AccumulateBodyConstraints(Sym_list, nbody, geodim):
@@ -351,13 +434,12 @@ def AccumulateBodyConstraints(Sym_list, nbody, geodim):
 
 
 
-def AccumulateSegmentConstraints(FullGraph, nbody, geodim, nsegm, bodysegm):
+def AccumulateSegmentConstraints(SegmGraph, nbody, geodim, nsegm, bodysegm):
     # Accumulate constraints on segments. 
-    # TODO : prove that it is actually useless ?
 
     SegmConstraints = [ list() for isegm in range(nsegm)]
 
-    Cycles = networkx.cycle_basis(FullGraph)
+    Cycles = networkx.cycle_basis(SegmGraph)
 
     for Cycle in Cycles:
 
@@ -372,31 +454,61 @@ def AccumulateSegmentConstraints(FullGraph, nbody, geodim, nsegm, bodysegm):
             iend = Cycle[(iedge+1)%Cycle_len]
 
             if (ibeg <= iend):
-                Constraint = FullGraph.edges[(ibeg,iend)]["SymList"][0].Compose(Constraint)
+                Constraint = SegmGraph.edges[(ibeg,iend)]["SymList"][0].Compose(Constraint)
                 
             else:
-                Constraint = FullGraph.edges[(iend,ibeg)]["SymList"][0].Inverse().Compose(Constraint)
+                Constraint = SegmGraph.edges[(iend,ibeg)]["SymList"][0].Inverse().Compose(Constraint)
 
-        if not(Constraint.IsIdentityRotAndTimeRev()):
-
-            AlreadyFound = False
-            for FoundCstr in SegmConstraints[isegm]:
-                
-                AlreadyFound = Constraint.IsSameRotAndTimeRev(FoundCstr)
-                if AlreadyFound:
-                    break
-
-                ConstraintInv = Constraint.Inverse()
-                AlreadyFound = ConstraintInv.IsSameRotAndTimeRev(FoundCstr)
-                if AlreadyFound:
-                    break
-
-            if not(AlreadyFound):
-                SegmConstraints[isegm].append(Constraint)
+        AppendIfNotSameRotAndTime(SegmConstraints[isegm], Constraint)
 
     return SegmConstraints
 
-def AccumulateSegmGenToTargetSym(FullGraph, nbody, geodim, nloop, nint_min, nsegm, bodysegm, segmbody, loopnb, Targets, segm_to_iint, segm_to_body):
+
+
+
+
+
+
+def AccumulateInstConstraints(InstGraph, nbody, geodim, ninst, bodyinst):
+    # Accumulate constraints on segments. 
+
+    InstConstraints = [ list() for iinst in range(ninst)]
+
+    Cycles = networkx.cycle_basis(InstGraph)
+
+    # Instants can be self referring
+    for Cycle in itertools.chain(InstGraph.edges, Cycles):
+
+        iinst = bodyinst[*Cycle[0]]
+        Cycle_len = len(Cycle)
+        
+        Constraint = ActionSym.Identity(nbody, geodim)
+
+        for iedge in range(Cycle_len):
+            
+            ibeg = Cycle[iedge]
+            iend = Cycle[(iedge+1)%Cycle_len]
+
+            if (ibeg <= iend):
+                Constraint = InstGraph.edges[(ibeg,iend)]["SymList"][0].Compose(Constraint)
+                
+            else:
+                Constraint = InstGraph.edges[(iend,ibeg)]["SymList"][0].Inverse().Compose(Constraint)
+        
+        # assert Constraint.TimeShiftNum == 0
+        # 
+        # print()
+        # print("aaa", 
+        
+        AppendIfNotSameRotAndTime(InstConstraints[iinst], Constraint)
+
+    return InstConstraints
+
+
+
+
+
+def AccumulateSegmGenToTargetSym(SegmGraph, nbody, geodim, nloop, nint_min, nsegm, bodysegm, segmbody, loopnb, Targets, segm_to_iint, segm_to_body):
 
     segm_gen_to_target = [ [ None for iint in range(nint_min)] for ib in range(nbody) ]
 
@@ -405,7 +517,7 @@ def AccumulateSegmGenToTargetSym(FullGraph, nbody, geodim, nloop, nint_min, nseg
         segmgen = (segm_to_body[isegm], segm_to_iint[isegm])
         isegmgen = bodysegm[*segmgen] 
 
-        path_from_segmgen = networkx.shortest_path(FullGraph, source = segmgen)
+        path_from_segmgen = networkx.shortest_path(SegmGraph, source = segmgen)
 
         for ib, iint in ib_iint_list:
 
@@ -423,62 +535,18 @@ def AccumulateSegmGenToTargetSym(FullGraph, nbody, geodim, nloop, nint_min, nseg
                 if (path[ipath-1] > path[ipath]):
 
                     edge = (path[ipath], path[ipath-1])
-                    Sym = FullGraph.edges[edge]["SymList"][0].Inverse()
+                    Sym = SegmGraph.edges[edge]["SymList"][0].Inverse()
 
                 else:
 
                     edge = (path[ipath-1], path[ipath])
-                    Sym = FullGraph.edges[edge]["SymList"][0]
+                    Sym = SegmGraph.edges[edge]["SymList"][0]
 
                 GenToTargetSym = Sym.Compose(GenToTargetSym)
 
             segm_gen_to_target[ib][iint] = GenToTargetSym
 
     return segm_gen_to_target    
-
-def AccumulateSegmGenToTargetSym(FullGraph, nbody, geodim, nloop, nint_min, nsegm, bodysegm, segmbody, loopnb, Targets, segm_to_iint, segm_to_body):
-
-    segm_gen_to_target = [ [ None for iint in range(nint_min)] for ib in range(nbody) ]
-
-    for isegm, ib_iint_list  in enumerate(segmbody):
-
-        segmgen = (segm_to_body[isegm], segm_to_iint[isegm])
-        isegmgen = bodysegm[*segmgen] 
-
-        path_from_segmgen = networkx.shortest_path(FullGraph, source = segmgen)
-
-        for ib, iint in ib_iint_list:
-
-            segm = (ib, iint)
-
-            assert isegm == isegmgen
-
-            GenToTargetSym = ActionSym.Identity(nbody, geodim)
-
-            path = path_from_segmgen[segm]
-            pathlen = len(path)
-
-            for ipath in range(1,pathlen):
-
-                if (path[ipath-1] > path[ipath]):
-
-                    edge = (path[ipath], path[ipath-1])
-                    Sym = FullGraph.edges[edge]["SymList"][0].Inverse()
-
-                else:
-
-                    edge = (path[ipath-1], path[ipath])
-                    Sym = FullGraph.edges[edge]["SymList"][0]
-
-                GenToTargetSym = Sym.Compose(GenToTargetSym)
-
-            segm_gen_to_target[ib][iint] = GenToTargetSym
-
-    return segm_gen_to_target    
-
-
-
-
 
 
 
@@ -491,9 +559,9 @@ def FindAllBinarySegments(segm_gen_to_target, nbody, nsegm, nint_min, bodysegm, 
     for isegm in range(nsegm):
         for isegmp in range(isegm,nsegm):
             BinarySegm[(isegm, isegmp)] = {
-                "SymList" : [],
-                "SymCount" : [],
-                "ProdMassSum" : [],
+                "SymList" : []      ,
+                "SymCount" : []     ,
+                "ProdMassSum" : []  ,
             }
 
     for iint in range(nint_min):
@@ -672,10 +740,10 @@ def reorganize_All_params_basis(All_params_basis):
 
     return all_params_basis_reoganized, all_nnz_k
 
-def ExploreGlobalShifts_BuildFullGraph(geodim, nbody, nloop, loopnb, Targets, nint_min, Sym_list):
+def ExploreGlobalShifts_BuildSegmGraph(geodim, nbody, nloop, loopnb, Targets, nint_min, Sym_list):
 
     # Making sure nint_min is big enough
-    FullGraph, nint_min = Build_FullGraph_NoPb(nbody, nint_min, Sym_list)
+    SegmGraph, nint_min = Build_SegmGraph_NoPb(nbody, nint_min, Sym_list)
     
     for i_shift in range(nint_min):
         
@@ -694,10 +762,10 @@ def ExploreGlobalShifts_BuildFullGraph(geodim, nbody, nloop, loopnb, Targets, ni
                 Shifted_sym_list.append(Sym.Conjugate(GlobalTimeShift))
             Sym_list = Shifted_sym_list
         
-            FullGraph = Build_FullGraph(nbody, nint_min, Sym_list)
+            SegmGraph = Build_SegmGraph(nbody, nint_min, Sym_list)
 
         bodysegm = np.zeros((nbody, nint_min), dtype = int)
-        for isegm, CC in enumerate(networkx.connected_components(FullGraph)):
+        for isegm, CC in enumerate(networkx.connected_components(SegmGraph)):
             for ib, iint in CC:
                 bodysegm[ib, iint] = isegm
 
@@ -713,16 +781,7 @@ def ExploreGlobalShifts_BuildFullGraph(geodim, nbody, nloop, loopnb, Targets, ni
             assert (unique == bodysegm[ib, unique_indices]).all()
             assert (unique[unique_inverse] == bodysegm[ib, :]).all()
 
-            # print()
-            # print(ib)
-            # print(bodysegm[ib, :])
-            # print(unique)
-            # print(unique_indices)
-            # print(unique_inverse)
-            # print(unique_counts)
-
             bodynsegm[ib] = unique.size
-
             BodyHasContiguousGeneratingSegments[ib] = ((unique_indices.max()+1) == bodynsegm[ib])
             
         AllLoopsHaveContiguousGeneratingSegments = True
@@ -742,15 +801,15 @@ def ExploreGlobalShifts_BuildFullGraph(geodim, nbody, nloop, loopnb, Targets, ni
 
     # print(f"Required {i_shift} shifts to find reference such that all loops have contiguous generating segments")
     
-    return FullGraph, nint_min, nsegm, bodysegm, BodyHasContiguousGeneratingSegments
+    return SegmGraph, nint_min, nsegm, bodysegm, BodyHasContiguousGeneratingSegments, Sym_list
 
-def DetectLoops(Sym_list, nbody):
+def DetectLoops(Sym_list, nbody, nint_min_fac = 1):
 
     All_den_list_on_entry = []
     for Sym in Sym_list:
         All_den_list_on_entry.append(Sym.TimeShiftDen)
 
-    nint_min = math.lcm(*All_den_list_on_entry) # ensures that all integer divisions will have zero remainder
+    nint_min = nint_min_fac * math.lcm(*All_den_list_on_entry) # ensures that all integer divisions will have zero remainder
     
     BodyGraph =  Build_BodyGraph(nbody, Sym_list)
 
@@ -773,6 +832,89 @@ def DetectLoops(Sym_list, nbody):
     return nint_min, nloop, loopnb, BodyLoop, Targets
     
     
+    
+def PlotTimeBodyGraph(Graph, nbody, nint_min, filename):
+
+    nnodes = nbody*nint_min
+    node_color = np.zeros(nnodes)
+
+    for icolor, CC in enumerate(networkx.connected_components(Graph)):
+        for node in CC:
+            inode = node[1] + nint_min * node[0]
+            node_color[inode] = icolor
+
+    nedges = len(Graph.edges)
+    edge_color = np.zeros(nedges)
+
+    for iedge, (key, edge) in enumerate(Graph.edges.items()):
+
+        ContainsDirect = False
+        ContainsIndirect = False
+
+        for Sym in edge["SymList"]:
+
+            if Sym.TimeRev == 1:
+                ContainsDirect = True
+            else:
+                ContainsIndirect = True
+
+        # if ContainsDirect:
+        #     if ContainsIndirect:
+        #         color = 2
+        #     else:
+        #         color = 1
+        # else:
+        #     color = 0
+        
+        if ContainsIndirect:
+            fac = -1
+        else:
+            fac = 1
+        
+        color = len(edge["SymList"]) * fac
+
+        edge_color[iedge] = color
+
+    # print(edge_color)
+    
+    pos = {i:(i[1],i[0]) for i in Graph.nodes }
+
+    fig, ax = plt.subplots()
+
+    networkx.draw_networkx_nodes(
+        Graph,
+        pos = pos,
+        ax = ax,
+        node_color = node_color,
+        # cmap = 'tab20',
+        cmap = 'turbo',
+    )
+    
+    color_min = edge_color.min()
+    color_max = edge_color.max()
+    
+    edge_vmax = max(abs(color_min), abs(color_max))
+    edge_vmin = - edge_vmax
+
+    networkx.draw_networkx_edges(
+        Graph,
+        pos = pos,
+        ax = ax,
+        arrows = True,
+        connectionstyle = "arc3,rad=0.1",
+        edge_color = edge_color,
+        edge_vmin = edge_vmin,
+        edge_vmax = edge_vmax,
+        edge_cmap = colormaps['Set1'],
+    )
+
+
+    plt.axis('off')
+    fig.tight_layout()
+    
+    plt.savefig(filename)
+    plt.close()
+
 
 def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, MomCons=False, n_grad_change=1., Sym_list=[], CrashOnIdentity=True, ForceMatrixChangevar = False, store_folder = ""):
     
@@ -785,9 +927,11 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
      - Exhaustive list of binary transformations from generator within each loop.
     """
 
+    # nint_min, nloop, loopnb, BodyLoop, Targets = DetectLoops(Sym_list, nbody, nint_min_fac = 2)
     nint_min, nloop, loopnb, BodyLoop, Targets = DetectLoops(Sym_list, nbody)
     
-    FullGraph, nint_min, nsegm, bodysegm, BodyHasContiguousGeneratingSegments = ExploreGlobalShifts_BuildFullGraph(geodim, nbody, nloop, loopnb, Targets, nint_min, Sym_list)
+    SegmGraph, nint_min, nsegm, bodysegm, BodyHasContiguousGeneratingSegments, Sym_list = ExploreGlobalShifts_BuildSegmGraph(geodim, nbody, nloop, loopnb, Targets, nint_min, Sym_list)
+
 
 
     # Choose loop generators with maximal exploitable FFT symmetry
@@ -803,20 +947,21 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
 
 
 
-
-
-
-
-
     # Accumulate constraints on segments. 
-    # So far I've found zero constraints on segments. Is this because I only test on well-formed symmetries ?
-    # TODO : prove that it is actually useless ?
-# 
-#     SegmConstraints = AccumulateSegmentConstraints(FullGraph, nbody, geodim, nsegm, bodysegm)
-#     
-#     for isegm in range(nsegm):
-#         assert len(SegmConstraints[isegm]) == 0
 
+    SegmConstraints = AccumulateSegmentConstraints(SegmGraph, nbody, geodim, nsegm, bodysegm)
+    
+    print()
+    print("Segment Constraints")
+    for isegm in range(nsegm):
+        ncstr = len(SegmConstraints[isegm])
+        print(f'{isegm = } {ncstr = }')
+
+        for icstr, Constraint in enumerate(SegmConstraints[isegm]):
+            print(f'{icstr = }')
+            print(Constraint)
+            print()
+    print()
 
 
     # Choose interacting segments as earliest possible times.
@@ -832,9 +977,18 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
             isegm = bodysegm[ib,iint]
 
             if not(isegm in assigned_segms):
+                
                 intersegm_to_body[isegm] = ib
                 intersegm_to_iint[isegm] = iint
                 assigned_segms.add(isegm)
+
+    # Checking that all segments occur in all intervals
+
+    for iint in range(nint_min):        
+        for isegm in range(nsegm):
+            assert isegm in bodysegm[:,iint]
+
+
 
     # Choose generating segments as contiguous chunks of loop generators
     assigned_segms = set()
@@ -856,11 +1010,63 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
 
 
 
-    segmbody = [[] for isegm in range(nsegm)]
-    for iint in range(nint_min):
-        for ib in range(nbody):
-            isegm = bodysegm[ib,iint]
-            segmbody[isegm].append((ib,iint))
+    # Setting up forward ODE:
+    # - What are my parameters ?
+    # - Integration end + Lack of periodicity
+    # - Constraints on initial values => Parametrization 
+
+
+
+    InstGraph = Build_InstGraph(nbody, nint_min, Sym_list)
+    
+    bodyinst = np.zeros((nbody, nint_min), dtype = int)
+    for iinst, CC in enumerate(networkx.connected_components(SegmGraph)):
+        for ib, iint in CC:
+            bodyinst[ib, iint] = iinst
+
+    ninst = iinst + 1
+    
+    print("Instant Graph double edges")
+    for iedge, (key, edge) in enumerate(InstGraph.edges.items()):
+        
+        nsym = len(edge["SymList"])
+        
+        print(key, nsym)
+        
+        # if nsym > 1:
+            # print(key, nsym)
+    
+    # InstConstraints = AccumulateInstConstraints(InstGraph, nbody, geodim, ninst, bodyinst)
+
+    # One segment is enough (checked before)
+    
+#     print("Initial time constraints")
+#     for iinst in range(ninst):
+#         ncstr = len(InstConstraints[iinst])
+#         print(f'{iinst = } {ncstr = }')
+# 
+#         for icstr, Constraint in enumerate(InstConstraints[iinst]):
+#             print(f'{icstr = }')
+#             print(Constraint)
+#             print()
+#     print()
+#     
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
     # This could certainly be made more efficient
@@ -868,11 +1074,17 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
     LoopGenConstraints = [BodyConstraints[ib]for ib in loopgen]
 
     
-    # AccumulateSegmGenToInterSym(FullGraph
+    # AccumulateSegmGenToInterSym(SegmGraph
 
 
+    segmbody = [[] for isegm in range(nsegm)]
+    for iint in range(nint_min):
+        for ib in range(nbody):
+            isegm = bodysegm[ib,iint]
+            segmbody[isegm].append((ib,iint))
 
-    segm_gen_to_interaction =  AccumulateSegmGenToTargetSym(FullGraph, nbody, geodim, nloop, nint_min, nsegm, bodysegm, segmbody, loopnb, Targets, intersegm_to_iint, intersegm_to_body)
+
+    segm_gen_to_interaction =  AccumulateSegmGenToTargetSym(SegmGraph, nbody, geodim, nloop, nint_min, nsegm, bodysegm, segmbody, loopnb, Targets, intersegm_to_iint, intersegm_to_body)
 
     BinarySegm, Identity_detected = FindAllBinarySegments(segm_gen_to_interaction, nbody, nsegm, nint_min, bodysegm, CrashOnIdentity, mass, BodyLoop)
 
@@ -1130,8 +1342,6 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
     assert np.linalg.norm(all_coeffs_c - all_coeffs_a_c) < 1e-14
     assert np.linalg.norm(all_coeffs_c - all_coeffs_b_c) < 1e-14
 
-    # return
-    
 
     all_pos = scipy.fft.irfft(all_coeffs_c, axis=1)
     
@@ -1216,109 +1426,14 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
 
     # return
 
-    # MakePlots = False
-    MakePlots = True
+    dirname = os.path.split(store_folder)[0]
+    symname = os.path.split(dirname)[1]
+    filename = os.path.join(dirname, f'{symname}_graph_segm.pdf')
 
-    if MakePlots:
-
-
-        nnodes = nbody*nint_min
-        node_color = np.zeros(nnodes)
-
-        for icolor, CC in enumerate(networkx.connected_components(FullGraph)):
-            for node in CC:
-                inode = node[1] + nint_min * node[0]
-                node_color[inode] = icolor
-
-        nedges = len(FullGraph.edges)
-        edge_color = np.zeros(nedges)
-
-        for iedge, edge in enumerate(FullGraph.edges):
-
-            ContainsDirect = False
-            ContainsIndirect = False
-
-            for Sym in FullGraph.edges[edge]["SymList"]:
-
-                if Sym.TimeRev == 1:
-                    ContainsDirect = True
-                else:
-                    ContainsIndirect = True
-
-            if ContainsDirect:
-                if ContainsIndirect:
-                    color = 2
-                else:
-                    color = 1
-            else:
-                color = 0
-
-            edge_color[iedge] = color
-
-        pos = {i:(i[1],i[0]) for i in FullGraph.nodes }
-
-
-        # edgelist = []
-    #     for iedge, edge in enumerate(FullGraph.edges):
-    # 
-    #         Sym = FullGraph.edges[edge]["SymList"][0]
-    # 
-    #         issqrtid = (np.linalg.norm(np.matmul(Sym.SpaceRot,Sym.SpaceRot) - np.identity(geodim)) < 1e-12)
-    #         isid = (np.linalg.norm(Sym.SpaceRot - np.identity(geodim)) < 1e-12)
-    # 
-    #         if issqrtid and not(isid):
-    # 
-    #             edgelist.append(edge)
-
-        fig, ax = plt.subplots()
-
-        # networkx.draw(
-        #     FullGraph,
-        #     pos = pos,
-        #     labels = {i:i for i in FullGraph.nodes},
-        #     node_color = node_color,
-        #     cmap = 'jet',
-        #     arrows = False,
-        #     # connectionstyle = "arc3,rad=0.1",
-        # )
-
-        networkx.draw_networkx_nodes(
-            FullGraph,
-            pos = pos,
-            ax = ax,
-            node_color = node_color,
-            # cmap = 'tab20',
-            cmap = 'turbo',
-        )
-
-        # networkx.draw_networkx_labels(
-        #     FullGraph,
-        #     pos = pos,
-        #     ax = ax,
-            # labels = {i:i for i in FullGraph.nodes},
-        # )
-# 
-        networkx.draw_networkx_edges(
-            FullGraph,
-            pos = pos,
-            ax = ax,
-            arrows = True,
-            connectionstyle = "arc3,rad=0.1",
-            edge_color = edge_color,
-            edge_vmin = 0,
-            edge_vmax = 1,
-            edge_cmap = colormaps['Set1'],
-        )
-
-
-        plt.axis('off')
-        fig.tight_layout()
-        
-        dirname = os.path.split(store_folder)[0]
-        symname = os.path.split(dirname)[1]
-        
-        plt.savefig(os.path.join(dirname, f'graph_{symname}.pdf'))
-        plt.close()
+    PlotTimeBodyGraph(SegmGraph, nbody, nint_min, filename)
+    
+    filename = os.path.join(dirname, f'{symname}_graph_isnt.pdf')
+    PlotTimeBodyGraph(InstGraph, nbody, nint_min, filename)
 
 
 
