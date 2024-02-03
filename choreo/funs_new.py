@@ -655,10 +655,13 @@ def reorganize_All_params_basis(All_params_basis):
             
             if nparam_now != 0:
                 nnz_k.append(k)
+        
+        if last_nparam is None:
+            last_nparam = 0
                 
-        nnz_k = np.array(nnz_k)
+        nnz_k = np.array(nnz_k, dtype=np.intp)
         all_nnz_k.append(nnz_k)
-            
+
         params_basis_reoganized = np.empty((geodim, nnz_k.shape[0], last_nparam), dtype=np.complex128)    
         
         for ik, k in enumerate(nnz_k):
@@ -808,13 +811,11 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
     # Accumulate constraints on segments. 
     # So far I've found zero constraints on segments. Is this because I only test on well-formed symmetries ?
     # TODO : prove that it is actually useless ?
-
-    SegmConstraints = AccumulateSegmentConstraints(FullGraph, nbody, geodim, nsegm, bodysegm)
-    
-    for isegm in range(nsegm):
-        assert len(SegmConstraints[isegm]) == 0
-
-    # return
+# 
+#     SegmConstraints = AccumulateSegmentConstraints(FullGraph, nbody, geodim, nsegm, bodysegm)
+#     
+#     for isegm in range(nsegm):
+#         assert len(SegmConstraints[isegm]) == 0
 
 
 
@@ -856,10 +857,8 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
 
 
     segmbody = [[] for isegm in range(nsegm)]
-
     for iint in range(nint_min):
         for ib in range(nbody):
-
             isegm = bodysegm[ib,iint]
             segmbody[isegm].append((ib,iint))
 
@@ -873,22 +872,22 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
 
 
 
-    # segm_gen_to_interaction =  AccumulateSegmGenToTargetSym(FullGraph, nbody, geodim, nloop, nint_min, nsegm, bodysegm, segmbody, loopnb, Targets, segm_to_iint, segm_to_body)
+    segm_gen_to_interaction =  AccumulateSegmGenToTargetSym(FullGraph, nbody, geodim, nloop, nint_min, nsegm, bodysegm, segmbody, loopnb, Targets, intersegm_to_iint, intersegm_to_body)
 
-#     BinarySegm, Identity_detected = FindAllBinarySegments(segm_gen_to_target, nbody, nsegm, nint_min, bodysegm, CrashOnIdentity, mass, BodyLoop)
-# 
-#     All_Id = True
-# 
-#     count_tot = 0
-#     count_unique = 0
-#     for isegm in range(nsegm):
-#         for isegmp in range(isegm,nsegm):
-#             count_tot += sum(BinarySegm[(isegm, isegmp)]["SymCount"])
-#             count_unique += len(BinarySegm[(isegm, isegmp)]["SymCount"])
-# 
-#             for Sym in BinarySegm[(isegm, isegmp)]["SymList"]:
-# 
-#                 All_Id = All_Id and Sym.IsIdentityRotAndTimeRev()
+    BinarySegm, Identity_detected = FindAllBinarySegments(segm_gen_to_interaction, nbody, nsegm, nint_min, bodysegm, CrashOnIdentity, mass, BodyLoop)
+
+    All_Id = True
+
+    count_tot = 0
+    count_unique = 0
+    for isegm in range(nsegm):
+        for isegmp in range(isegm,nsegm):
+            count_tot += sum(BinarySegm[(isegm, isegmp)]["SymCount"])
+            count_unique += len(BinarySegm[(isegm, isegmp)]["SymCount"])
+
+            for Sym in BinarySegm[(isegm, isegmp)]["SymList"]:
+
+                All_Id = All_Id and Sym.IsIdentityRotAndTimeRev()
 
 
 
@@ -1105,12 +1104,12 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
         
         pos_slice = np.einsum('ijk,klj->li', params_basis_reoganized.real, ifft_b.real) + np.einsum('ijk,klj->li', params_basis_reoganized.imag, ifft_b.imag)
         
-        
-        if nnz_k[0] == 0:
-            
-            meanval = np.matmul(params_basis_reoganized[:,0,:].real, params_loop[:,0,0]) / nint            
-            for idim in range(geodim):
-                pos_slice[:,idim] -= meanval[idim]
+        if nnz_k.shape[0] > 0:
+            if nnz_k[0] == 0:
+                
+                meanval = np.matmul(params_basis_reoganized[:,0,:].real, params_loop[:,0,0]) / nint            
+                for idim in range(geodim):
+                    pos_slice[:,idim] -= meanval[idim]
 
         
         all_pos_slice_a.append(pos_slice)
@@ -1190,20 +1189,20 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
     print('*****************************************')
     print('')
     print(f'{AllConstraintAreRespected = }')     
-    # print(f'{Identity_detected = }')
-    # print(f'All binary transforms are identity: {All_Id}')
+    print(f'{Identity_detected = }')
+    print(f'All binary transforms are identity: {All_Id}')
     
     # assert All_Id
 
     print()
-    # print(f"total binary interaction count: {count_tot}")
-    # print(f"total expected binary interaction count: {nint_min * nbody * (nbody-1)//2}")
-    # print(f"unique binary interaction count: {count_unique}")
+    print(f"total binary interaction count: {count_tot}")
+    print(f"total expected binary interaction count: {nint_min * nbody * (nbody-1)//2}")
+    print(f"unique binary interaction count: {count_unique}")
 
 
 
     print()
-    # print(f"ratio of total to unique binary interactions : {count_tot / count_unique}")
+    print(f"ratio of total to unique binary interactions : {count_tot / count_unique}")
     print(f'ratio of integration intervals to segments : {(nbody * nint_min) / nsegm}')
     print(f"ratio of parameters before and after constraints: {nparam_nosym / nparam_tot}")
 
@@ -1316,8 +1315,9 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
         fig.tight_layout()
         
         dirname = os.path.split(store_folder)[0]
+        symname = os.path.split(dirname)[1]
         
-        plt.savefig(os.path.join(dirname, 'graph.pdf'))
+        plt.savefig(os.path.join(dirname, f'graph_{symname}.pdf'))
         plt.close()
 
 
