@@ -148,6 +148,26 @@ cdef class ActionSym():
         )
 
     @cython.final
+    cpdef ActionSym TimeDerivative(ActionSym self):
+        r"""
+        Returns the time derivative of a symmetry transformation.
+        If self transforms positions, then self.TimeDerivative() transforms speeds
+        """
+
+        cdef double[:, ::1] SpaceRot = self.SpaceRot.copy()
+        for i in range(SpaceRot.shape[0]):
+            for j in range(SpaceRot.shape[1]):
+                SpaceRot[i, j] *= self.TimeRev
+
+        return ActionSym(
+            BodyPerm = self.BodyPerm.copy() ,
+            SpaceRot = SpaceRot             ,
+            TimeRev = self.TimeRev          ,         
+            TimeShiftNum = self.TimeShiftNum,
+            TimeShiftDen = self.TimeShiftDen,
+        )
+
+    @cython.final
     @cython.cdivision(True)
     cpdef ActionSym Compose(ActionSym B, ActionSym A):
         r"""
@@ -239,6 +259,14 @@ cdef class ActionSym():
         return (self.TimeShiftNum == 0)
 
     @cython.final    
+    cpdef bint IsIdentityPermAndRot(ActionSym self, double atol = default_atol):
+        return self.IsIdentityPerm() and self.IsIdentityRot(atol = atol)    
+
+    @cython.final    
+    cpdef bint IsIdentityPermAndRotAndTimeRev(ActionSym self, double atol = default_atol):
+        return self.IsIdentityPerm() and self.IsIdentityRot(atol = atol) and self.IsIdentityTimeRev()
+
+    @cython.final    
     cpdef bint IsIdentityRotAndTimeRev(ActionSym self, double atol = default_atol):
         return self.IsIdentityTimeRev() and self.IsIdentityRot(atol = atol)    
 
@@ -268,6 +296,10 @@ cdef class ActionSym():
     @cython.final
     cpdef bint IsSameTimeShift(ActionSym self, ActionSym other, double atol = default_atol):
         return ((self.Inverse()).Compose(other)).IsIdentityTimeShift()
+
+    @cython.final    
+    cpdef bint IsSamePermAndRot(ActionSym self, ActionSym other, double atol = default_atol):
+        return ((self.Inverse()).Compose(other)).IsIdentityPermAndRot(atol = atol)
 
     @cython.final
     cpdef bint IsSameRotAndTimeRev(ActionSym self, ActionSym other, double atol = default_atol):
