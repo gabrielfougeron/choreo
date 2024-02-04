@@ -24,26 +24,6 @@ import choreo.scipy_plus
 from choreo.cython.funs_new import ActionSym
 
 
-def EdgesAreEitherDirectXORIndirect(SegmGraph):
-
-    AlwaysContainsExactlyOne = True
-
-    for iedge, edge in enumerate(SegmGraph.edges):
-
-        ContainsDirect = False
-        ContainsIndirect = False
-
-        for Sym in SegmGraph.edges[edge]["SymList"]:
-
-            if Sym.TimeRev == 1:
-                ContainsDirect = True
-            else:
-                ContainsIndirect = True
-
-        AlwaysContainsExactlyOne =  AlwaysContainsExactlyOne and (ContainsDirect ^ ContainsIndirect)  # XOR
-
-    return AlwaysContainsExactlyOne
-
 def ContainsDoubleEdges(SegmGraph):
 
     for edge in SegmGraph.edges:
@@ -85,7 +65,7 @@ def ContainsSelfReferingTimeRevSegment(SegmGraph):
 
 
 
-def Build_BodyTimeGraph(nbody, nint, Sym_list, Tfun = None):
+def Build_BodyTimeGraph(nbody, nint, Sym_list, Tfun = None, VelSym = False):
     
     if Tfun is None:
         return ValueError('Invalid Tfun')
@@ -124,6 +104,9 @@ def Build_BodyTimeGraph(nbody, nint, Sym_list, Tfun = None):
                     edge = (node_target, node_source)
                     EdgeSym = SymInv
 
+                if VelSym:
+                    EdgeSym = EdgeSym.TimeDerivative()
+                
                 edge_dict = Graph.edges.get(edge)
                 
                 if edge_dict is None:
@@ -139,63 +122,9 @@ def Build_BodyTimeGraph(nbody, nint, Sym_list, Tfun = None):
     
     return Graph
 
-Build_SegmGraph = functools.partial(Build_BodyTimeGraph, Tfun = ActionSym.ApplyTSegm)
-Build_InstGraph = functools.partial(Build_BodyTimeGraph, Tfun = ActionSym.ApplyT    )
-
-# def Build_InstGraph(nbody, nint, Sym_list, Tfun = ActionSym.ApplyT):
-#     
-#     if Tfun is None:
-#         return ValueError('Invalid Tfun')
-# 
-#     Graph = networkx.Graph()
-#     for ib in range(nbody):
-#         for iint in range(nint):
-#             Graph.add_node((ib,iint))
-# 
-#     for Sym in Sym_list:
-# 
-#         SymInv = Sym.Inverse()
-# 
-#         for ib in range(nbody):
-# 
-#             ib_target = Sym.BodyPerm[ib]
-# 
-#             for iint in range(nint):
-# 
-#                 tnum_target, tden_target = Tfun(Sym, iint, nint)
-# 
-#                 assert nint % tden_target == 0
-# 
-#                 iint_target = (tnum_target * (nint // tden_target) + nint) % nint
-# 
-#                 node_source = (ib       , iint       )
-#                 node_target = (ib_target, iint_target)
-#                 
-#                 if (iint == iint_target):
-#                     
-#                     if node_source <= node_target :
-# 
-#                         edge = (node_source, node_target)
-#                         EdgeSym = Sym
-# 
-#                     else:
-# 
-#                         edge = (node_target, node_source)
-#                         EdgeSym = SymInv
-# 
-#                     if edge in Graph.edges:
-#                         
-#                         AlreadyIn = False
-#                         for OtherEdgeSym in Graph.edges[edge]["SymList"]:
-#                             AlreadyIn = AlreadyIn or EdgeSym.IsSameRotAndTimeRev(OtherEdgeSym)
-# 
-#                         if not(AlreadyIn) :
-#                             Graph.edges[edge]["SymList"].append(EdgeSym)
-# 
-#                     else:
-#                         Graph.add_edge(*edge, SymList = [EdgeSym])
-#     
-#     return Graph
+Build_SegmGraph    = functools.partial(Build_BodyTimeGraph, Tfun = ActionSym.ApplyTSegm, VelSym = False)
+Build_InstGraphPos = functools.partial(Build_BodyTimeGraph, Tfun = ActionSym.ApplyT    , VelSym = False)
+Build_InstGraphVel = functools.partial(Build_BodyTimeGraph, Tfun = ActionSym.ApplyT    , VelSym = True)
 
 
 def Build_SegmGraph_NoPb(
@@ -254,57 +183,43 @@ def Build_BodyGraph(nbody, Sym_list):
                 edge = (ib, ib_target)
                 EdgeSym = Sym
 
-            if (edge in BodyGraph.edges):
-
-                for FoundSym in BodyGraph.edges[edge]["SymList"]:
-
-                    AlreadyFound = EdgeSym.IsSameRotAndTime(FoundSym)
-                    if AlreadyFound:
-                        break
-
-                if not(AlreadyFound):
-                    BodyGraph.edges[edge]["SymList"].append(EdgeSym)
-
+            edge_dict = BodyGraph.edges.get(edge)
+            
+            if edge_dict is None:
+                BodyGraph.add_edge(*edge, SymList = [EdgeSym])
+                
             else:
 
-                BodyGraph.add_edge(*edge, SymList = [EdgeSym])
+                for FoundSym in edge_dict["SymList"]:
+                    if EdgeSym.IsSameRotAndTime(FoundSym):
+                        break
+
+                else:
+                    edge_dict["SymList"].append(EdgeSym)
 
     return BodyGraph
 
-def AppendIfNotSameRotAndTime(CstrList, Constraint):
 
-    if not(Constraint.IsIdentityRotAndTime()):
+
+def AppendIfNot(CstrList, Constraint, test_callback):
+
+    if not(test_callback(Constraint)):
 
         for FoundCstr in CstrList:
 
-            if Constraint.IsSameRotAndTime(FoundCstr):
+            if test_callback(Constraint.Compose(FoundCstr)):
                 break
 
-            if Constraint.IsSameRotAndTime(FoundCstr.Inverse()):
+            if test_callback(Constraint.Compose(FoundCstr.Inverse())):
                 break
 
         else:
 
             CstrList.append(Constraint)
-            
-# def AppendIfNotSameRotAndBodyPerm(CstrList, Constraint):
-# 
-#     if not(Constraint.IsIdentityRotAndTime()):
-# 
-#         for FoundCstr in CstrList:
-# 
-#             if Constraint.IsSameRotAndBodyPerm(FoundCstr):
-#                 break
-# 
-#             if Constraint.IsSameRotAndBodyPerm(FoundCstr.Inverse()):
-#                 break
-# 
-#         else:
-# 
-#             CstrList.append(Constraint)
-#             
-            
 
+AppendIfNotSameRotAndTime = functools.partial(AppendIfNot, test_callback = ActionSym.IsIdentityRotAndTime)
+AppendIfNotSame = functools.partial(AppendIfNot, test_callback = ActionSym.IsIdentity)
+AppendIfNotSamePermAndRot = functools.partial(AppendIfNot, test_callback = ActionSym.IsIdentityPermAndRot)
 
 def AccumulateBodyConstraints(Sym_list, nbody, geodim):
 
@@ -351,9 +266,12 @@ def AccumulateBodyConstraints(Sym_list, nbody, geodim):
                     edge = (ib, ib_target)
                     EdgeSym = Sym
                     
-                try:
-                    
-                    ParallelEdgeSym = SimpleBodyGraph.edges[edge]["Sym"]
+
+                edge_dict = SimpleBodyGraph.edges.get(edge)
+                
+                if not(edge_dict is None):
+                
+                    ParallelEdgeSym = edge_dict["Sym"]
 
                     Constraint = EdgeSym.Inverse().Compose(ParallelEdgeSym)
                     assert Constraint.BodyPerm[edge[0]] == edge[0]
@@ -363,8 +281,8 @@ def AccumulateBodyConstraints(Sym_list, nbody, geodim):
                     assert Constraint.BodyPerm[edge[1]] == edge[1]
                     AppendIfNotSameRotAndTime(BodyConstraints[edge[1]], Constraint)
 
-                except:
-                    pass
+
+
 
     Cycles = networkx.cycle_basis(SimpleBodyGraph)
 
@@ -469,40 +387,157 @@ def AccumulateSegmentConstraints(SegmGraph, nbody, geodim, nsegm, bodysegm):
 
 
 
-def AccumulateInstConstraints(InstGraph, nbody, geodim, ninst, bodyinst):
-    # Accumulate constraints on segments. 
+def AccumulateInstConstraints(Sym_list, nbody, geodim, nint, VelSym=False):
 
-    InstConstraints = [ list() for iinst in range(ninst)]
+    InstConstraints = [list() for iint in range(nint)]
+
+    InstGraph = networkx.Graph()
+    for iint in range(nint):
+        InstGraph.add_node(iint)
+
+    for Sym in Sym_list:
+
+        if VelSym:
+            Sym = Sym.TimeDerivative()
+
+        SymInv = Sym.Inverse()
+
+        for iint in range(nint):
+
+            tnum_target, tden_target = Sym.ApplyT(iint, nint)
+
+            assert nint % tden_target == 0
+
+            iint_target = (tnum_target * (nint // tden_target) + nint) % nint
+
+            if iint <= iint_target :
+                edge = (iint, iint_target)
+                EdgeSym = Sym
+            else:
+                edge = (iint_target, iint)
+                EdgeSym = SymInv
+
+            if not(edge in InstGraph.edges):
+                InstGraph.add_edge(*edge, Sym = EdgeSym)
+                
+    for Sym in Sym_list:
+        
+        if VelSym:
+            Sym = Sym.TimeDerivative()
+        
+        SymInv = Sym.Inverse()
+
+        for iint in range(nint):
+
+            tnum_target, tden_target = Sym.ApplyT(iint, nint)
+
+            assert nint % tden_target == 0
+
+            iint_target = (tnum_target * (nint // tden_target) + nint) % nint
+
+            if iint == iint_target:
+
+                AppendIfNotSamePermAndRot(InstConstraints[iint], Sym)                
+                
+            else:
+                    
+                if iint <= iint_target :
+                    edge = (iint, iint_target)
+                    EdgeSym = Sym
+                else:
+                    edge = (iint_target, iint)
+                    EdgeSym = SymInv
+                    
+                edge_dict = InstGraph.edges.get(edge)
+                
+                if not(edge_dict is None):
+                
+                    ParallelEdgeSym = edge_dict["Sym"]
+
+                    Constraint = EdgeSym.Inverse().Compose(ParallelEdgeSym)
+                    tnum_target, tden_target = Constraint.ApplyT(edge[0], nint)
+                    assert nint % tden_target == 0
+                    assert edge[0] == (tnum_target * (nint // tden_target) + nint) % nint
+                    AppendIfNotSamePermAndRot(InstConstraints[edge[0]], Constraint)
+
+                    Constraint = EdgeSym.Compose(ParallelEdgeSym.Inverse())
+                    tnum_target, tden_target = Constraint.ApplyT(edge[1], nint)
+                    assert nint % tden_target == 0
+                    assert edge[1] == (tnum_target * (nint // tden_target) + nint) % nint
+                    AppendIfNotSamePermAndRot(InstConstraints[edge[1]], Constraint)
+
+
 
     Cycles = networkx.cycle_basis(InstGraph)
 
-    # Instants can be self referring
     for Cycle in itertools.chain(InstGraph.edges, Cycles):
 
-        iinst = bodyinst[*Cycle[0]]
         Cycle_len = len(Cycle)
-        
-        Constraint = ActionSym.Identity(nbody, geodim)
+        FirstInst = Cycle[0]
 
+        FirstInstConstraint = ActionSym.Identity(nbody, geodim)
         for iedge in range(Cycle_len):
-            
+                        
             ibeg = Cycle[iedge]
             iend = Cycle[(iedge+1)%Cycle_len]
 
-            if (ibeg <= iend):
-                Constraint = InstGraph.edges[(ibeg,iend)]["SymList"][0].Compose(Constraint)
-                
+            if (ibeg > iend):
+                Sym = InstGraph.edges[(iend,ibeg)]["Sym"].Inverse()
+
             else:
-                Constraint = InstGraph.edges[(iend,ibeg)]["SymList"][0].Inverse().Compose(Constraint)
+                Sym = InstGraph.edges[(ibeg,iend)]["Sym"]
+            
+            tnum_target, tden_target = Sym.ApplyT(ibeg, nint)
+            assert nint % tden_target == 0
+            assert iend == (tnum_target * (nint // tden_target) + nint) % nint
+
+            FirstInstConstraint = Sym.Compose(FirstInstConstraint)
         
-        # assert Constraint.TimeShiftNum == 0
-        # 
-        # print()
-        # print("aaa", 
-        
-        AppendIfNotSameRotAndTime(InstConstraints[iinst], Constraint)
+        tnum_target, tden_target = FirstInstConstraint.ApplyT(FirstInst, nint)
+        assert nint % tden_target == 0
+        assert FirstInst == (tnum_target * (nint // tden_target) + nint) % nint
+
+        if not(FirstInstConstraint.IsIdentityPermAndRotAndTimeRev()):
+            
+            path_from_FirstInst = networkx.shortest_path(InstGraph, source = FirstInst)
+
+            # Now add the Cycle constraints to every instant in the cycle
+            for iint in Cycle:
+
+                FirstInstToiintSym = ActionSym.Identity(nbody, geodim)
+
+                path = path_from_FirstInst[iint]            
+                pathlen = len(path)
+
+                for ipath in range(1, pathlen):
+
+                    if (path[ipath-1] > path[ipath]):
+
+                        edge = (path[ipath], path[ipath-1])
+                        Sym = InstGraph.edges[edge]["Sym"].Inverse()
+
+                    else:
+
+                        edge = (path[ipath-1], path[ipath])
+                        Sym = InstGraph.edges[edge]["Sym"]
+
+                    FirstInstToiintSym = Sym.Compose(FirstInstToiintSym)
+
+                tnum_target, tden_target = FirstInstToiintSym.ApplyT(FirstInst, nint)
+                assert nint % tden_target == 0
+                assert iint == (tnum_target * (nint // tden_target) + nint) % nint
+                
+                Constraint = FirstInstConstraint.Conjugate(FirstInstToiintSym)
+
+                tnum_target, tden_target = Constraint.ApplyT(iint, nint)
+                assert nint % tden_target == 0
+                assert iint == (tnum_target * (nint // tden_target) + nint) % nint
+
+                AppendIfNotSamePermAndRot(InstConstraints[iint], Constraint)
 
     return InstConstraints
+                    
+                    
 
 
 
@@ -1015,48 +1050,28 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
     # - Integration end + Lack of periodicity
     # - Constraints on initial values => Parametrization 
 
-
-
-    InstGraph = Build_InstGraph(nbody, nint_min, Sym_list)
     
-    bodyinst = np.zeros((nbody, nint_min), dtype = int)
-    for iinst, CC in enumerate(networkx.connected_components(SegmGraph)):
-        for ib, iint in CC:
-            bodyinst[ib, iint] = iinst
-
-    ninst = iinst + 1
-    
-    print("Instant Graph double edges")
-    for iedge, (key, edge) in enumerate(InstGraph.edges.items()):
-        
-        nsym = len(edge["SymList"])
-        
-        print(key, nsym)
-        
-        # if nsym > 1:
-            # print(key, nsym)
-    
-    # InstConstraints = AccumulateInstConstraints(InstGraph, nbody, geodim, ninst, bodyinst)
+    InstConstraintsPos = AccumulateInstConstraints(Sym_list, nbody, geodim, nint_min, VelSym=False)
+    InstConstraintsVel = AccumulateInstConstraints(Sym_list, nbody, geodim, nint_min, VelSym=True )
 
     # One segment is enough (checked before)
     
-#     print("Initial time constraints")
-#     for iinst in range(ninst):
-#         ncstr = len(InstConstraints[iinst])
-#         print(f'{iinst = } {ncstr = }')
-# 
-#         for icstr, Constraint in enumerate(InstConstraints[iinst]):
-#             print(f'{icstr = }')
-#             print(Constraint)
-#             print()
-#     print()
-#     
-
-
-
-
-
-
+    print("Initial time Position constraints")
+    ncstr = len(InstConstraintsPos[0])
+    print(f'{ncstr = }')
+    for icstr, Constraint in enumerate(InstConstraintsPos[0]):
+        print(f'{icstr = }')
+        print(Constraint)
+        print()    
+    print()    
+    print("Initial time Velocity constraints")
+    ncstr = len(InstConstraintsVel[0])
+    print(f'{ncstr = }')
+    for icstr, Constraint in enumerate(InstConstraintsVel[0]):
+        print(f'{icstr = }')
+        print(Constraint)
+        print()
+    print()
 
 
 
@@ -1424,16 +1439,13 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
 
 
 
-    # return
+    return
 
     dirname = os.path.split(store_folder)[0]
     symname = os.path.split(dirname)[1]
     filename = os.path.join(dirname, f'{symname}_graph_segm.pdf')
 
     PlotTimeBodyGraph(SegmGraph, nbody, nint_min, filename)
-    
-    filename = os.path.join(dirname, f'{symname}_graph_isnt.pdf')
-    PlotTimeBodyGraph(InstGraph, nbody, nint_min, filename)
 
 
 
