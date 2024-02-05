@@ -685,8 +685,12 @@ def ComputeParamBasis_InitVal(nbody, geodim, InstConstraints, mass, BodyLoop, Mo
                 cstr_mat[idim, ib, idim] = mass[BodyLoop[ib]]
 
     cstr_mat = cstr_buf.reshape((-1, nbody*geodim))
+    
+    print('aaa')
+    print(cstr_mat)
 
     NullSpace = choreo.scipy_plus.linalg.null_space(cstr_mat)
+    
     nparam = NullSpace.shape[1]
     NullSpace = NullSpace.reshape(nbody, geodim, nparam)
 
@@ -1030,17 +1034,17 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
 
     SegmConstraints = AccumulateSegmentConstraints(SegmGraph, nbody, geodim, nsegm, bodysegm)
     
-    print()
-    print("Segment Constraints")
-    for isegm in range(nsegm):
-        ncstr = len(SegmConstraints[isegm])
-        print(f'{isegm = } {ncstr = }')
-
-        for icstr, Constraint in enumerate(SegmConstraints[isegm]):
-            print(f'{icstr = }')
-            print(Constraint)
-            print()
-    print()
+#     print()
+#     print("Segment Constraints")
+#     for isegm in range(nsegm):
+#         ncstr = len(SegmConstraints[isegm])
+#         print(f'{isegm = } {ncstr = }')
+# 
+#         for icstr, Constraint in enumerate(SegmConstraints[isegm]):
+#             print(f'{icstr = }')
+#             print(Constraint)
+#             print()
+#     print()
 
 
     # Choose interacting segments as earliest possible times.
@@ -1117,12 +1121,14 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
     #     print()
     # print()
 
+    # MomCons_InitVal = False
+    MomCons_InitVal = True
 
-
-    InitValPosBasis = ComputeParamBasis_InitVal(nbody, geodim, InstConstraintsPos[0], mass, BodyLoop, MomCons=True)
-    InitValVelBasis = ComputeParamBasis_InitVal(nbody, geodim, InstConstraintsVel[0], mass, BodyLoop, MomCons=True)
+    InitValPosBasis = ComputeParamBasis_InitVal(nbody, geodim, InstConstraintsPos[0], mass, BodyLoop, MomCons=MomCons_InitVal)
+    InitValVelBasis = ComputeParamBasis_InitVal(nbody, geodim, InstConstraintsVel[0], mass, BodyLoop, MomCons=MomCons_InitVal)
     
     print("Initial Position parameters")
+    print("nparam = ",InitValPosBasis.shape[2])
     print()
     for iparam in range(InitValPosBasis.shape[2]):
         
@@ -1132,6 +1138,7 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
         
         
     print("Initial Velocity parameters")
+    print("nparam = ",InitValVelBasis.shape[2])
     print()
     for iparam in range(InitValVelBasis.shape[2]):
         
@@ -1140,7 +1147,7 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
         print()
     
     
-    return
+    # return
 
 
 

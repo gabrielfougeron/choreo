@@ -50,7 +50,7 @@ def test_nullspace(float64_tols, Dense_linalg_dims):
 
             for rank in range( min(n,m)+1):
 
-                nullspace_dim = min(n,m) - rank
+                nullspace_dim = m - rank
 
                 Q = choreo.scipy_plus.linalg.random_orthogonal_matrix(m)
 
@@ -66,7 +66,8 @@ def test_nullspace(float64_tols, Dense_linalg_dims):
 
                 assert Z.shape[0] == m
                 assert Z.shape[1] == nullspace_dim
-                assert np.allclose(np.matmul(A,Z), np.zeros((n,nullspace_dim)), rtol = float64_tols.rtol , atol = float64_tols.atol) 
+                assert np.allclose(np.matmul(A,Z), 0, rtol = float64_tols.rtol , atol = float64_tols.atol) 
+
 
 
 
