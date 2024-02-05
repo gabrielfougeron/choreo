@@ -18,7 +18,6 @@ cdef inline long gcd (long a, long b) noexcept nogil:
 
     return b
 
-
 cdef double default_atol = 1e-10
 
 @cython.final
@@ -47,12 +46,12 @@ cdef class ActionSym():
     @cython.final
     @cython.cdivision(True)
     def __init__(
-        self,
-        long[::1] BodyPerm,
-        double[:,::1] SpaceRot,
-        long TimeRev,
-        long TimeShiftNum,
-        long TimeShiftDen,
+        self                    ,
+        long[::1] BodyPerm      ,
+        double[:,::1] SpaceRot  ,
+        long TimeRev            ,
+        long TimeShiftNum       ,
+        long TimeShiftDen       ,
     ):
 
         cdef long num = ((TimeShiftNum % TimeShiftDen) + TimeShiftDen) % TimeShiftDen
