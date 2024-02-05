@@ -21,20 +21,28 @@ def null_space(A, eps = 1e-12):
         Q, R, P = scipy.linalg.qr(
             A.T,
             overwrite_a = False ,
-            mode = 'economic'   ,
+            mode = 'full'       ,
+            # mode = 'economic'       ,
             pivoting = True     ,
         )
+        
+        # assert np.linalg.norm(A[P,:] - np.matmul(R.T, Q.T)) < eps 
+        
+        k = min(R.shape)
 
-        for i in range(min(R.shape)):
+        for i in range(k):
             if (abs(R[i, i]) < eps):
                 rank = i
                 break
         else:
             rank = min(R.shape)
 
-        return Q[:, rank:]
+        # nullspace_dim = m - rank
+        # nullspace = np.zeros((m, nullspace_dim), dtype=np.float64)
 
-        # return scipy.linalg.null_space(A)
+        # return Q[:, rank:]
+
+        return scipy.linalg.null_space(A, rcond=eps)
 
 
 def random_orthogonal_matrix(geodim):
