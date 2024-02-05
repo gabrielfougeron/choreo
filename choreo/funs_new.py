@@ -381,12 +381,6 @@ def AccumulateSegmentConstraints(SegmGraph, nbody, geodim, nsegm, bodysegm):
 
     return SegmConstraints
 
-
-
-
-
-
-
 def AccumulateInstConstraints(Sym_list, nbody, geodim, nint, VelSym=False):
 
     InstConstraints = [list() for iint in range(nint)]
@@ -465,8 +459,6 @@ def AccumulateInstConstraints(Sym_list, nbody, geodim, nint, VelSym=False):
                     assert nint % tden_target == 0
                     assert edge[1] == (tnum_target * (nint // tden_target) + nint) % nint
                     AppendIfNotSamePermAndRot(InstConstraints[edge[1]], Constraint)
-
-
 
     Cycles = networkx.cycle_basis(InstGraph)
 
@@ -656,9 +648,61 @@ def FindAllBinarySegments(segm_gen_to_target, nbody, nsegm, nint_min, bodysegm, 
 
     return BinarySegm, Identity_detected
 
-def ComputeParamBasis_Loop(MomCons, nbody, nloop, loopgen, geodim, LoopGenConstraints):
+def ComputeParamBasis_InitVal(nbody, geodim, InstConstraints, mass, BodyLoop, MomCons=True, eps=1e-12):
 
-    eps = 1e-12
+    ncstr = len(InstConstraints)
+    
+    nbuf_nomomcons = ncstr * nbody * geodim * nbody * geodim
+    nbuf = nbuf_nomomcons
+    if MomCons:
+       nbuf +=  geodim * nbody * geodim
+    
+    cstr_buf = np.zeros((nbuf), dtype = np.float64)
+    
+    # I do not use reshape here because I want an error to throw if for some reason the data needs to be copied
+    # cf https://stackoverflow.com/a/14271298
+    cstr_mat = cstr_buf[:nbuf_nomomcons].view()
+    cstr_mat.shape = (ncstr, nbody, geodim, nbody, geodim)
+
+    for icstr, Sym in enumerate(InstConstraints):
+        for ib in range(nbody): 
+            
+            jb = Sym.BodyPerm[ib]
+                   
+            for idim in range(geodim):
+                for jdim in range(geodim):
+
+                    cstr_mat[icstr, ib, idim, jb, jdim] = Sym.SpaceRot[idim, jdim]
+                    
+                cstr_mat[icstr, ib, idim, ib, idim] -= 1
+
+    if MomCons:
+        cstr_mat = cstr_buf[nbuf_nomomcons:].view()
+        cstr_mat.shape = (geodim, nbody, geodim)
+        
+        for ib in range(nbody): 
+            for idim in range(geodim):
+                cstr_mat[idim, ib, idim] = mass[BodyLoop[ib]]
+
+    cstr_mat = cstr_buf.reshape((-1, nbody*geodim))
+
+    NullSpace = choreo.scipy_plus.linalg.null_space(cstr_mat)
+    nparam = NullSpace.shape[1]
+    NullSpace = NullSpace.reshape(nbody, geodim, nparam)
+
+    for ib in range(nbody): 
+        for idim in range(geodim):
+            for iparam in range(nparam):
+
+                if abs(NullSpace[ib, idim, iparam]) < eps:
+                    NullSpace[ib, idim, iparam] = 0
+       
+    return NullSpace
+
+
+
+
+def ComputeParamBasis_Loop(MomCons, nbody, nloop, loopgen, geodim, LoopGenConstraints, eps=1e-12):
 
     if (MomCons):
         raise NotImplementedError("Momentum conservation as a constraint is not available at the moment")
@@ -1056,26 +1100,47 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
 
     # One segment is enough (checked before)
     
-    print("Initial time Position constraints")
-    ncstr = len(InstConstraintsPos[0])
-    print(f'{ncstr = }')
-    for icstr, Constraint in enumerate(InstConstraintsPos[0]):
-        print(f'{icstr = }')
-        print(Constraint)
-        print()    
-    print()    
-    print("Initial time Velocity constraints")
-    ncstr = len(InstConstraintsVel[0])
-    print(f'{ncstr = }')
-    for icstr, Constraint in enumerate(InstConstraintsVel[0]):
-        print(f'{icstr = }')
-        print(Constraint)
-        print()
+    # print("Initial time Position constraints")
+    # ncstr = len(InstConstraintsPos[0])
+    # print(f'{ncstr = }')
+    # for icstr, Constraint in enumerate(InstConstraintsPos[0]):
+    #     print(f'{icstr = }')
+    #     print(Constraint)
+    #     print()    
+    # print()    
+    # print("Initial time Velocity constraints")
+    # ncstr = len(InstConstraintsVel[0])
+    # print(f'{ncstr = }')
+    # for icstr, Constraint in enumerate(InstConstraintsVel[0]):
+    #     print(f'{icstr = }')
+    #     print(Constraint)
+    #     print()
+    # print()
+
+
+
+    InitValPosBasis = ComputeParamBasis_InitVal(nbody, geodim, InstConstraintsPos[0], mass, BodyLoop, MomCons=True)
+    InitValVelBasis = ComputeParamBasis_InitVal(nbody, geodim, InstConstraintsVel[0], mass, BodyLoop, MomCons=True)
+    
+    print("Initial Position parameters")
     print()
-
-
-
-
+    for iparam in range(InitValPosBasis.shape[2]):
+        
+        print(f'{iparam = }')
+        print(InitValPosBasis[:,:,iparam])    
+        print()
+        
+        
+    print("Initial Velocity parameters")
+    print()
+    for iparam in range(InitValVelBasis.shape[2]):
+        
+        print(f'{iparam = }')
+        print(InitValVelBasis[:,:,iparam])
+        print()
+    
+    
+    return
 
 
 
