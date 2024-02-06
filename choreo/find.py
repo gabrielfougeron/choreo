@@ -1059,6 +1059,9 @@ def ChoreoFindFromDict(params_dict, Workspace_folder):
         else:
             
             SpaceRot = np.array(SpaceRot, dtype = np.float64)
+            
+            if SpaceRot.shape != (geodim, geodim):
+                raise  ValueError(f"Invalid SpaceRot dimension. {geodim =}, {SpaceRot.shape =}")
                 
         TimeRev_str = params_dict["Geom_Bodies"]["AllSyms"][isym]["TimeRev"]
         if (TimeRev_str == "True"):
