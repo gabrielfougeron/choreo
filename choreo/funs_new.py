@@ -1015,6 +1015,31 @@ def CountSegmentBinaryInteractions(BinarySegm, nsegm):
     
     return All_Id, count_tot, count_unique
 
+def AssertAllConstraintAreRespected(LoopGenConstraints, all_pos, eps=1e-12):
+    # Make sure loop constraints are respected
+
+    nint = all_pos.shape[1]
+    
+    for il, Constraints in enumerate(LoopGenConstraints):
+
+        for icstr, Sym in enumerate(Constraints):
+
+            assert (nint % Sym.TimeShiftDen) == 0
+
+            ConstraintIsRespected = True
+
+            for iint in range(nint):
+
+                tnum, tden = Sym.ApplyT(iint, nint)
+                jint = tnum * nint // tden
+                
+                err = np.linalg.norm(all_pos[il,iint,:] - np.matmul(Sym.SpaceRot, all_pos[il,jint,:]))
+
+                assert (err < eps)
+
+
+    
+
 def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, MomCons=False, n_grad_change=1., Sym_list=[], CrashOnIdentity=True, ForceMatrixChangevar = False, store_folder = ""):
     
     r"""
@@ -1173,8 +1198,6 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
         print()
     
     
-    #  Coincidence ?
-    assert InitValVelBasis.shape[2] == InitValPosBasis.shape[2]
 
 
 
@@ -1207,19 +1230,6 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
     All_params_basis = ComputeParamBasis_Loop(MomCons, nbody, nloop, loopgen, geodim, LoopGenConstraints)
 
 
-    avg_param_per_k = np.zeros((nloop),dtype=np.float64)
-    for il in range(nloop):
-
-        nparam_body = 0
-        fill_num = 0
-        k_mul = len(All_params_basis[il])
-        
-        for k, NullSpace  in enumerate(All_params_basis[il]):
-            nparam_body += NullSpace.shape[2]
-            fill_num += np.count_nonzero(NullSpace) 
-
-        avg_param_per_k[il] = nparam_body / k_mul
-
 
     nint = math.lcm(2, nint_min) 
     ncoeffs = nint//2 + 1
@@ -1240,31 +1250,7 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
     all_coeffs_c = all_coeffs.view(dtype=np.complex128)[...,0]
     all_pos = scipy.fft.irfft(all_coeffs_c, axis=1)
 
-    AllConstraintAreRespected = True
-
-    for il in range(nloop):
-
-        for icstr, Sym in enumerate(LoopGenConstraints[il]):
-
-            ConstraintIsRespected = True
-
-            for iint in range(nint):
-
-                assert (nint % Sym.TimeShiftDen) == 0
-
-                tnum, tden = Sym.ApplyT(iint, nint)
-                jint = tnum * nint // tden
-
-                err = np.linalg.norm(all_pos[il,iint,:] - np.matmul(Sym.SpaceRot, all_pos[il,jint,:]))
-
-                ConstraintIsRespected = ConstraintIsRespected and (err < eps)
-
-            AllConstraintAreRespected = AllConstraintAreRespected and ConstraintIsRespected
-            if not(ConstraintIsRespected):
-
-                print(f'Constraint {icstr} is not respected')
-            
-    assert AllConstraintAreRespected
+    AssertAllConstraintAreRespected(LoopGenConstraints, all_pos)
 
     nparam_loop_sum = np.zeros((nloop),dtype=int)
     nparam_loop_max = np.zeros((nloop),dtype=int)
@@ -1447,51 +1433,9 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
         
         
         
-        
+    AssertAllConstraintAreRespected(LoopGenConstraints, all_pos)
 
-    # Make sure loop constraints are respected
 
-    AllConstraintAreRespected = True
-
-    for il in range(nloop):
-
-        for icstr, Sym in enumerate(LoopGenConstraints[il]):
-
-            assert (nint % Sym.TimeShiftDen) == 0
-
-            ConstraintIsRespected = True
-
-            for iint in range(nint):
-
-                tnum, tden = Sym.ApplyT(iint, nint)
-                jint = tnum * nint // tden
-                
-                err = np.linalg.norm(all_pos[il,iint,:] - np.matmul(Sym.SpaceRot, all_pos[il,jint,:]))
-
-                ConstraintIsRespected = ConstraintIsRespected and (err < eps)
-
-            AllConstraintAreRespected = AllConstraintAreRespected and ConstraintIsRespected
-            
-            if not(ConstraintIsRespected):
-                print(f'Loop {il} constraint {icstr} is not respected')
-            
-    assert AllConstraintAreRespected
-    
-   
-   
-   
-    # for il in range(nloop):
-    #     params_basis_reoganized = all_params_basis_reoganized[il]
-    #     
-    #     print(f'{il = }')
-    #     print(params_basis_reoganized)
-    #     print()
-    #     
-   
-   
-   
-   
-   
    
     
     nparam_nosym = geodim * nint * nbody
