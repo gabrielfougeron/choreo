@@ -8,6 +8,7 @@ import math as m
 import scipy.linalg
 
 def null_space(A, eps = 1e-12):
+    # Why would this be better than scipy.linalg.null_space ???
 
     n = A.shape[0]
     m = A.shape[1]
@@ -40,9 +41,9 @@ def null_space(A, eps = 1e-12):
         # nullspace_dim = m - rank
         # nullspace = np.zeros((m, nullspace_dim), dtype=np.float64)
 
-        # return Q[:, rank:]
+        return Q[:, rank:]
 
-        return scipy.linalg.null_space(A, rcond=eps)
+        # return scipy.linalg.null_space(A, rcond=eps)
 
 
 def random_orthogonal_matrix(geodim):
