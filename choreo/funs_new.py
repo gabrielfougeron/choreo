@@ -63,8 +63,6 @@ def ContainsSelfReferingTimeRevSegment(SegmGraph):
                 
     return False
 
-
-
 def Build_BodyTimeGraph(nbody, nint, Sym_list, Tfun = None, VelSym = False):
     
     if Tfun is None:
@@ -125,7 +123,6 @@ def Build_BodyTimeGraph(nbody, nint, Sym_list, Tfun = None, VelSym = False):
 Build_SegmGraph    = functools.partial(Build_BodyTimeGraph, Tfun = ActionSym.ApplyTSegm, VelSym = False)
 Build_InstGraphPos = functools.partial(Build_BodyTimeGraph, Tfun = ActionSym.ApplyT    , VelSym = False)
 Build_InstGraphVel = functools.partial(Build_BodyTimeGraph, Tfun = ActionSym.ApplyT    , VelSym = True)
-
 
 def Build_SegmGraph_NoPb(
     nbody,
@@ -198,8 +195,6 @@ def Build_BodyGraph(nbody, Sym_list):
                     edge_dict["SymList"].append(EdgeSym)
 
     return BodyGraph
-
-
 
 def AppendIfNot(CstrList, Constraint, test_callback):
 
@@ -344,13 +339,6 @@ def AccumulateBodyConstraints(Sym_list, nbody, geodim):
                 AppendIfNotSameRotAndTime(BodyConstraints[ib], Constraint)
 
     return BodyConstraints
-
-
-
-
-
-
-
 
 def AccumulateSegmentConstraints(SegmGraph, nbody, geodim, nsegm, bodysegm):
     # Accumulate constraints on segments, assuming there is only one symmetry per edge in the graph (checked before)
@@ -529,12 +517,6 @@ def AccumulateInstConstraints(Sym_list, nbody, geodim, nint, VelSym=False):
 
     return InstConstraints
                     
-                    
-
-
-
-
-
 def AccumulateSegmGenToTargetSym(SegmGraph, nbody, geodim, nint_min, nsegm, bodysegm, segm_to_iint, segm_to_body):
     
     segmbody = [[] for isegm in range(nsegm)]
@@ -580,8 +562,6 @@ def AccumulateSegmGenToTargetSym(SegmGraph, nbody, geodim, nint_min, nsegm, body
             segm_gen_to_target[ib][iint] = GenToTargetSym
 
     return segm_gen_to_target    
-
-
 
 def FindAllBinarySegments(segm_gen_to_target, nbody, nsegm, nint_min, bodysegm, CrashOnIdentity, mass, BodyLoop):
 
@@ -705,9 +685,6 @@ def ComputeParamBasis_InitVal(nbody, geodim, InstConstraints, mass, BodyLoop, Mo
                     NullSpace[ib, idim, iparam] = 0
        
     return NullSpace
-
-
-
 
 def ComputeParamBasis_Loop(MomCons, nbody, nloop, loopgen, geodim, LoopGenConstraints, eps=1e-12):
 
@@ -1037,8 +1014,48 @@ def AssertAllConstraintAreRespected(LoopGenConstraints, all_pos, eps=1e-12):
 
                 assert (err < eps)
 
+# def ComputePeriodicitydefault(SegmGraph, bodysegm, nint_min, xo, xf):
+#     
+#     # xo belongs to the first segment
+#     iint = 0
+#     # xf
+#     jint = (iint+1) % nint_min
+#     
+#     nbody = xo.shape[0]
+#     geodim = xo.shape[1]
+#     
+#     for ib in range(nbody):
+#     
 
+# def PosSliceToAllPos()
+
+# def PrepareParamBuf():
+
+def BundleListOfArrays(ListOfArrays):
     
+    n = len(ListOfArrays)
+    
+    ref_arr = ListOfArrays[0]
+    
+    n_shapes = np.zeros((n, ref_arr.ndim), dtype=np.intp)
+    n_shifts = np.zeros((n+1), dtype=np.intp)
+    
+    for i, arr in enumerate(ListOfArrays):
+        
+        assert ref_arr.ndim == arr.ndim
+        assert ref_arr.dtype == arr.dtype
+        
+        n_shapes[i,:] = arr.shape
+        n_shifts[i+1] = n_shifts[i] + math.prod(arr.shape)
+        
+    buf = np.empty((n_shifts[n]), dtype=ref_arr.dtype)
+    
+    for i, arr in enumerate(ListOfArrays):
+        
+        buf[n_shifts[i]:n_shifts[i+1]] = arr.reshape(-1)
+        
+    return buf, n_shapes, n_shifts
+
 
 def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, MomCons=False, n_grad_change=1., Sym_list=[], CrashOnIdentity=True, ForceMatrixChangevar = False, store_folder = ""):
     
@@ -1075,17 +1092,17 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
 
     SegmConstraints = AccumulateSegmentConstraints(SegmGraph, nbody, geodim, nsegm, bodysegm)
     
-    print()
-    print("Segment Constraints")
-    for isegm in range(nsegm):
-        ncstr = len(SegmConstraints[isegm])
-        print(f'{isegm = } {ncstr = }')
-
-        for icstr, Constraint in enumerate(SegmConstraints[isegm]):
-            print(f'{icstr = }')
-            print(Constraint)
-            print()
-    print()
+#     print()
+#     print("Segment Constraints")
+#     for isegm in range(nsegm):
+#         ncstr = len(SegmConstraints[isegm])
+#         print(f'{isegm = } {ncstr = }')
+# 
+#         for icstr, Constraint in enumerate(SegmConstraints[isegm]):
+#             print(f'{icstr = }')
+#             print(Constraint)
+#             print()
+#     print()
 
     # ComputeParamBasis_Segm(nbody, geodim, SegmConstraints)
 
@@ -1178,24 +1195,24 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
     InitValPosBasis = ComputeParamBasis_InitVal(nbody, geodim, InstConstraintsPos[0], mass, BodyLoop, MomCons=MomCons_InitVal)
     InitValVelBasis = ComputeParamBasis_InitVal(nbody, geodim, InstConstraintsVel[0], mass, BodyLoop, MomCons=MomCons_InitVal)
     
-    print("Initial Position parameters")
-    print("nparam = ",InitValPosBasis.shape[2])
-    print()
-    for iparam in range(InitValPosBasis.shape[2]):
-        
-        print(f'{iparam = }')
-        print(InitValPosBasis[:,:,iparam])    
-        print()
-        
-        
-    print("Initial Velocity parameters")
-    print("nparam = ",InitValVelBasis.shape[2])
-    print()
-    for iparam in range(InitValVelBasis.shape[2]):
-        
-        print(f'{iparam = }')
-        print(InitValVelBasis[:,:,iparam])
-        print()
+    # print("Initial Position parameters")
+    # print("nparam = ",InitValPosBasis.shape[2])
+    # print()
+    # for iparam in range(InitValPosBasis.shape[2]):
+    #     
+    #     print(f'{iparam = }')
+    #     print(InitValPosBasis[:,:,iparam])    
+    #     print()
+    #     
+    #     
+    # print("Initial Velocity parameters")
+    # print("nparam = ",InitValVelBasis.shape[2])
+    # print()
+    # for iparam in range(InitValVelBasis.shape[2]):
+    #     
+    #     print(f'{iparam = }')
+    #     print(InitValVelBasis[:,:,iparam])
+    #     print()
     
     
 
@@ -1273,8 +1290,6 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
 
     ncoeff_min_loop_nnz = [all_nnz_k[il].shape[0] for il in range(nloop)]
 
-
-
     
 
     # return
@@ -1322,8 +1337,6 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
                 ip+=1
                 
         assert ip == nperiods_loop
-                
-        
         assert npr * ncoeff_min_loop[il] == (ncoeffs-1)
         
         for idim in range(geodim):
@@ -1403,12 +1416,19 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
         all_pos_slice_a.append(pos_slice)
         
         
+    # Without lists now.
+
+    params_buf, params_shapes, params_shifts = BundleListOfArrays(all_params)
+    params_basis_buf, params_basis_shapes, params_basis_shifts = BundleListOfArrays(all_params_basis_reoganized)
         
-        
-        
-        
-        
-        
+    # print(params_shapes)
+    # print(params_shifts)
+    # print(params_basis_shapes)
+    # print(params_basis_shifts)
+      
+    if All_Id:  
+        for il in range(1,nloop):
+            assert (params_basis_shapes[il,:] == params_basis_shapes[0,:]).all()
         
         
         
@@ -1447,7 +1467,6 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
     
     print('*****************************************')
     print('')
-    print(f'{AllConstraintAreRespected = }')     
     print(f'{Identity_detected = }')
     print(f'All binary transforms are identity: {All_Id}')
     
