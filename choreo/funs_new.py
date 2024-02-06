@@ -353,7 +353,7 @@ def AccumulateBodyConstraints(Sym_list, nbody, geodim):
 
 
 def AccumulateSegmentConstraints(SegmGraph, nbody, geodim, nsegm, bodysegm):
-    # Accumulate constraints on segments. 
+    # Accumulate constraints on segments, assuming there is only one symmetry per edge in the graph (checked before)
 
     SegmConstraints = [ list() for isegm in range(nsegm)]
 
@@ -535,22 +535,28 @@ def AccumulateInstConstraints(Sym_list, nbody, geodim, nint, VelSym=False):
 
 
 
-def AccumulateSegmGenToTargetSym(SegmGraph, nbody, geodim, nloop, nint_min, nsegm, bodysegm, segmbody, loopnb, Targets, segm_to_iint, segm_to_body):
+def AccumulateSegmGenToTargetSym(SegmGraph, nbody, geodim, nint_min, nsegm, bodysegm, segm_to_iint, segm_to_body):
+    
+    segmbody = [[] for isegm in range(nsegm)]
+    for iint in range(nint_min):
+        for ib in range(nbody):
+            isegm = bodysegm[ib,iint]
+            segmbody[isegm].append((ib,iint))
 
     segm_gen_to_target = [ [ None for iint in range(nint_min)] for ib in range(nbody) ]
 
     for isegm, ib_iint_list  in enumerate(segmbody):
 
         segmgen = (segm_to_body[isegm], segm_to_iint[isegm])
+        
         isegmgen = bodysegm[*segmgen] 
+        assert isegm == isegmgen
 
         path_from_segmgen = networkx.shortest_path(SegmGraph, source = segmgen)
 
         for ib, iint in ib_iint_list:
 
             segm = (ib, iint)
-
-            assert isegm == isegmgen
 
             GenToTargetSym = ActionSym.Identity(nbody, geodim)
 
@@ -685,9 +691,6 @@ def ComputeParamBasis_InitVal(nbody, geodim, InstConstraints, mass, BodyLoop, Mo
                 cstr_mat[idim, ib, idim] = mass[BodyLoop[ib]]
 
     cstr_mat = cstr_buf.reshape((-1, nbody*geodim))
-    
-    print('aaa')
-    print(cstr_mat)
 
     NullSpace = choreo.scipy_plus.linalg.null_space(cstr_mat)
     
@@ -913,9 +916,7 @@ def DetectLoops(Sym_list, nbody, nint_min_fac = 1):
             BodyLoop[ib] = il
 
     return nint_min, nloop, loopnb, BodyLoop, Targets
-    
-    
-    
+        
 def PlotTimeBodyGraph(Graph, nbody, nint_min, filename):
 
     nnodes = nbody*nint_min
@@ -991,13 +992,28 @@ def PlotTimeBodyGraph(Graph, nbody, nint_min, filename):
         edge_cmap = colormaps['Set1'],
     )
 
-
     plt.axis('off')
     fig.tight_layout()
     
     plt.savefig(filename)
     plt.close()
 
+def CountSegmentBinaryInteractions(BinarySegm, nsegm):
+    
+    All_Id = True
+
+    count_tot = 0
+    count_unique = 0
+    for isegm in range(nsegm):
+        for isegmp in range(isegm,nsegm):
+            count_tot += sum(BinarySegm[(isegm, isegmp)]["SymCount"])
+            count_unique += len(BinarySegm[(isegm, isegmp)]["SymCount"])
+
+            for Sym in BinarySegm[(isegm, isegmp)]["SymList"]:
+
+                All_Id = All_Id and Sym.IsIdentityRotAndTimeRev()    
+    
+    return All_Id, count_tot, count_unique
 
 def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, MomCons=False, n_grad_change=1., Sym_list=[], CrashOnIdentity=True, ForceMatrixChangevar = False, store_folder = ""):
     
@@ -1034,17 +1050,27 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
 
     SegmConstraints = AccumulateSegmentConstraints(SegmGraph, nbody, geodim, nsegm, bodysegm)
     
-#     print()
-#     print("Segment Constraints")
-#     for isegm in range(nsegm):
-#         ncstr = len(SegmConstraints[isegm])
-#         print(f'{isegm = } {ncstr = }')
-# 
-#         for icstr, Constraint in enumerate(SegmConstraints[isegm]):
-#             print(f'{icstr = }')
-#             print(Constraint)
-#             print()
-#     print()
+    print()
+    print("Segment Constraints")
+    for isegm in range(nsegm):
+        ncstr = len(SegmConstraints[isegm])
+        print(f'{isegm = } {ncstr = }')
+
+        for icstr, Constraint in enumerate(SegmConstraints[isegm]):
+            print(f'{icstr = }')
+            print(Constraint)
+            print()
+    print()
+
+    # ComputeParamBasis_Segm(nbody, geodim, SegmConstraints)
+
+
+
+
+
+
+
+
 
 
     # Choose interacting segments as earliest possible times.
@@ -1147,7 +1173,8 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
         print()
     
     
-    # return
+    #  Coincidence ?
+    assert InitValVelBasis.shape[2] == InitValPosBasis.shape[2]
 
 
 
@@ -1155,41 +1182,13 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
 
 
 
-
-    # This could certainly be made more efficient
-    BodyConstraints = AccumulateBodyConstraints(Sym_list, nbody, geodim)
-    LoopGenConstraints = [BodyConstraints[ib]for ib in loopgen]
 
     
-    # AccumulateSegmGenToInterSym(SegmGraph
-
-
-    segmbody = [[] for isegm in range(nsegm)]
-    for iint in range(nint_min):
-        for ib in range(nbody):
-            isegm = bodysegm[ib,iint]
-            segmbody[isegm].append((ib,iint))
-
-
-    segm_gen_to_interaction =  AccumulateSegmGenToTargetSym(SegmGraph, nbody, geodim, nloop, nint_min, nsegm, bodysegm, segmbody, loopnb, Targets, intersegm_to_iint, intersegm_to_body)
+    segm_gen_to_interaction = AccumulateSegmGenToTargetSym(SegmGraph, nbody, geodim, nint_min, nsegm, bodysegm, intersegm_to_iint, intersegm_to_body)
 
     BinarySegm, Identity_detected = FindAllBinarySegments(segm_gen_to_interaction, nbody, nsegm, nint_min, bodysegm, CrashOnIdentity, mass, BodyLoop)
 
-    All_Id = True
-
-    count_tot = 0
-    count_unique = 0
-    for isegm in range(nsegm):
-        for isegmp in range(isegm,nsegm):
-            count_tot += sum(BinarySegm[(isegm, isegmp)]["SymCount"])
-            count_unique += len(BinarySegm[(isegm, isegmp)]["SymCount"])
-
-            for Sym in BinarySegm[(isegm, isegmp)]["SymList"]:
-
-                All_Id = All_Id and Sym.IsIdentityRotAndTimeRev()
-
-
-
+    All_Id, count_tot, count_unique = CountSegmentBinaryInteractions(BinarySegm, nsegm)
 
 
 
@@ -1201,6 +1200,9 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
     # print('================================================')
     # print()
 
+    # This could certainly be made more efficient
+    BodyConstraints = AccumulateBodyConstraints(Sym_list, nbody, geodim)
+    LoopGenConstraints = [BodyConstraints[ib]for ib in loopgen]
 
     All_params_basis = ComputeParamBasis_Loop(MomCons, nbody, nloop, loopgen, geodim, LoopGenConstraints)
 
@@ -1268,6 +1270,7 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
     nparam_loop_max = np.zeros((nloop),dtype=int)
     ncoeff_min_loop = np.zeros((nloop),dtype=int)
     nnz_loop = np.zeros((nloop),dtype=int)
+    
     for il in range(nloop):
         
         ncoeff_min_loop[il] = len(All_params_basis[il])
@@ -1475,6 +1478,21 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
     assert AllConstraintAreRespected
     
    
+   
+   
+    # for il in range(nloop):
+    #     params_basis_reoganized = all_params_basis_reoganized[il]
+    #     
+    #     print(f'{il = }')
+    #     print(params_basis_reoganized)
+    #     print()
+    #     
+   
+   
+   
+   
+   
+   
     
     nparam_nosym = geodim * nint * nbody
     nparam_tot = 0
@@ -1495,7 +1513,7 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
     print(f"total binary interaction count: {count_tot}")
     print(f"total expected binary interaction count: {nint_min * nbody * (nbody-1)//2}")
     print(f"unique binary interaction count: {count_unique}")
-
+    print(f'{nsegm = }')
 
 
     print()
@@ -1503,11 +1521,14 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
     print(f'ratio of integration intervals to segments : {(nbody * nint_min) / nsegm}')
     print(f"ratio of parameters before and after constraints: {nparam_nosym / nparam_tot}")
 
+    reduction_ratio = nparam_nosym / nparam_tot
 
-    # reduction_ratio = count_tot / count_unique
-    # assert abs((count_tot / count_unique)  - reduction_ratio) < eps
-    # assert abs(((nbody * nint_min) / nsegm) - reduction_ratio) < eps
-    # assert abs((nparam_nosym / nparam_tot)  - reduction_ratio) < eps
+    assert abs((nparam_nosym / nparam_tot)  - reduction_ratio) < eps
+    
+    if All_Id:
+        assert abs((count_tot / count_unique)  - reduction_ratio) < eps
+        assert abs(((nbody * nint_min) / nsegm) - reduction_ratio) < eps
+
 
 
 

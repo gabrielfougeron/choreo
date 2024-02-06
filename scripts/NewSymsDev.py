@@ -28,9 +28,9 @@ def main():
         # 'test',
         # '4C5k',
         # '4D3k',
-        '4C',
+        # '4C',
         # '4D',
-        # '3',
+        # '3C',
         # '3D',
         # '3D1',
         # '3C2k',
@@ -50,6 +50,7 @@ def main():
         # '6Dk5',
         # '5Dq',
         # '2C3C5C',
+        '3C_3dim',
     ]
 
     tbeg_loop = time.perf_counter()

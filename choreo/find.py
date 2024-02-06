@@ -1024,54 +1024,62 @@ def ChoreoFindFromDict(params_dict, Workspace_folder):
     mass = np.ones(nloop)
 
     Sym_list = []
+    
 
-    if (geodim == 2):
+    for isym in range(nsyms):
+        
+        BodyPerm = np.array(params_dict["Geom_Bodies"]["AllSyms"][isym]["BodyPerm"],dtype=int)
 
-        for isym in range(nsyms):
+        SpaceRot = params_dict["Geom_Bodies"]["AllSyms"][isym].get("SpaceRot")
+
+        if SpaceRot is None:
             
-            BodyPerm = np.array(params_dict["Geom_Bodies"]["AllSyms"][isym]["BodyPerm"],dtype=int)
+            if geodim == 2:
+                    
+                Reflexion = params_dict["Geom_Bodies"]["AllSyms"][isym]["Reflexion"]
+                if (Reflexion == "True"):
+                    s = -1
+                elif (Reflexion == "False"):
+                    s = 1
+                else:
+                    raise ValueError("Reflexion must be True or False")
+                    
+                rot_angle = 2 * np.pi * params_dict["Geom_Bodies"]["AllSyms"][isym]["RotAngleNum"] / params_dict["Geom_Bodies"]["AllSyms"][isym]["RotAngleDen"]
 
-            Reflexion = params_dict["Geom_Bodies"]["AllSyms"][isym]["Reflexion"]
-            if (Reflexion == "True"):
-                s = -1
-            elif (Reflexion == "False"):
-                s = 1
-            else:
-                raise ValueError("Reflexion must be True or False")
-
-            rot_angle = 2 * np.pi * params_dict["Geom_Bodies"]["AllSyms"][isym]["RotAngleNum"] / params_dict["Geom_Bodies"]["AllSyms"][isym]["RotAngleDen"]
-
-            SpaceRot = np.array(
-                [   [ s*np.cos(rot_angle)   , -s*np.sin(rot_angle)  ],
-                    [ np.sin(rot_angle)     , np.cos(rot_angle)     ]   ]
-                , dtype = np.float64
-            )
-
-            TimeRev_str = params_dict["Geom_Bodies"]["AllSyms"][isym]["TimeRev"]
-            if (TimeRev_str == "True"):
-                TimeRev = -1
-            elif (TimeRev_str == "False"):
-                TimeRev = 1
-            else:
-                raise ValueError("TimeRev must be True or False")
-
-            TimeShiftNum = int(params_dict["Geom_Bodies"]["AllSyms"][isym]["TimeShiftNum"])
-            TimeShiftDen = int(params_dict["Geom_Bodies"]["AllSyms"][isym]["TimeShiftDen"])
-
-            Sym_list.append(
-                ActionSym(
-                    BodyPerm = BodyPerm     ,
-                    SpaceRot = SpaceRot     ,
-                    TimeRev = TimeRev       ,
-                    TimeShiftNum = TimeShiftNum   ,
-                    TimeShiftDen = TimeShiftDen   ,
+                SpaceRot = np.array(
+                    [   [ s*np.cos(rot_angle)   , -s*np.sin(rot_angle)  ],
+                        [   np.sin(rot_angle)   ,    np.cos(rot_angle)  ]   ]
+                    , dtype = np.float64
                 )
+
+            else:
+                
+                raise ValueError(f"Provided space dimension: {geodim}. Please give a SpaceRot matrix directly.")
+            
+        else:
+            
+            SpaceRot = np.array(SpaceRot, dtype = np.float64)
+                
+        TimeRev_str = params_dict["Geom_Bodies"]["AllSyms"][isym]["TimeRev"]
+        if (TimeRev_str == "True"):
+            TimeRev = -1
+        elif (TimeRev_str == "False"):
+            TimeRev = 1
+        else:
+            raise ValueError("TimeRev must be True or False")
+
+        TimeShiftNum = int(params_dict["Geom_Bodies"]["AllSyms"][isym]["TimeShiftNum"])
+        TimeShiftDen = int(params_dict["Geom_Bodies"]["AllSyms"][isym]["TimeShiftDen"])
+
+        Sym_list.append(
+            ActionSym(
+                BodyPerm = BodyPerm     ,
+                SpaceRot = SpaceRot     ,
+                TimeRev = TimeRev       ,
+                TimeShiftNum = TimeShiftNum   ,
+                TimeShiftDen = TimeShiftDen   ,
             )
-
-    else:
-
-        raise ValueError("Only compatible with 2D right now")
-
+        )
 
     if ((LookForTarget) and not(params_dict['Geom_Target'] ['RandomJitterTarget'])) :
 
