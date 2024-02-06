@@ -64,10 +64,15 @@ def test_nullspace(float64_tols, Dense_linalg_dims):
 
                 Z = choreo.scipy_plus.linalg.null_space(A)
 
+                # Dimensions
                 assert Z.shape[0] == m
                 assert Z.shape[1] == nullspace_dim
+                
+                # Nullspace property
                 assert np.allclose(np.matmul(A,Z), 0, rtol = float64_tols.rtol , atol = float64_tols.atol) 
 
+                # Orthogonality
+                assert np.allclose(np.matmul(Z.T,Z), np.identity(nullspace_dim), rtol = float64_tols.rtol , atol = float64_tols.atol) 
 
 
 
