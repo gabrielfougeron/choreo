@@ -24,8 +24,8 @@ def test_random_orthogonal_matrix(float64_tols, Dense_linalg_dims):
 
         rot = choreo.scipy_plus.linalg.random_orthogonal_matrix(n)
 
-        assert np.allclose(np.matmul(rot  , rot.T), np.identity(n), rtol = float64_tols.rtol , atol = float64_tols.atol) 
-        assert np.allclose(np.matmul(rot.T, rot  ), np.identity(n), rtol = float64_tols.rtol , atol = float64_tols.atol) 
+        assert np.allclose(np.matmul(rot  , rot.T), np.identity(n), rtol = float64_tols.rtol, atol = float64_tols.atol) 
+        assert np.allclose(np.matmul(rot.T, rot  ), np.identity(n), rtol = float64_tols.rtol, atol = float64_tols.atol) 
 
 
 @ProbabilisticTest()
@@ -37,7 +37,7 @@ def test_nullspace(float64_tols, Dense_linalg_dims):
 
         for m in Dense_linalg_dims.all_geodims:
 
-            print(f"Dimension: {n}, {m}")
+            print(f"Dimensions: {n}, {m}")
 
             P = choreo.scipy_plus.linalg.random_orthogonal_matrix(n)
 
@@ -69,16 +69,42 @@ def test_nullspace(float64_tols, Dense_linalg_dims):
                 assert Z.shape[1] == nullspace_dim
                 
                 # Nullspace property
-                assert np.allclose(np.matmul(A,Z), 0, rtol = float64_tols.rtol , atol = float64_tols.atol) 
+                assert np.allclose(np.matmul(A,Z), 0, rtol = float64_tols.rtol, atol = float64_tols.atol) 
 
                 # Orthogonality
-                assert np.allclose(np.matmul(Z.T,Z), np.identity(nullspace_dim), rtol = float64_tols.rtol , atol = float64_tols.atol) 
+                assert np.allclose(np.matmul(Z.T,Z), np.identity(nullspace_dim), rtol = float64_tols.rtol, atol = float64_tols.atol) 
 
 
 
 
+@ProbabilisticTest()
+def test_nullspace(float64_tols, Dense_linalg_dims):
+    
+    print("Testing matrix multiplication")
 
 
+    for n in Dense_linalg_dims.all_geodims:
+        for k in Dense_linalg_dims.all_geodims:
+            for m in Dense_linalg_dims.all_geodims:
+
+                print(f"Dimensions: {n}, {k}, {m}")
+                
+                A = np.random.random((n,k))
+                B = np.random.random((k,m))
+                
+                AB_np = np.zeros((n,m),dtype=np.float64)
+                np.matmul(A,B,out=AB_np)     
+                    
+                AB_blas = np.zeros((n,m),dtype=np.float64)
+                choreo.cython.funs_new.blas_matmul_contiguous(A,B,AB_blas)
+                assert np.allclose(AB_np, AB_blas, rtol = float64_tols.rtol, atol = float64_tols.atol)     
+                                
+                AB_blis = np.zeros((n,m),dtype=np.float64)
+                choreo.cython.test_blis.blis_matmul_contiguous(A,B,AB_blis)
+                assert np.allclose(AB_np, AB_blis, rtol = float64_tols.rtol, atol = float64_tols.atol) 
+            
+            
+            
 
 
 
