@@ -21,7 +21,7 @@ from matplotlib import colormaps
 
 import choreo.scipy_plus
 
-from choreo.cython.funs_new import ActionSym
+from choreo.cython.funs_new import ActionSym, partial_fft_to_pos_slice_blis
 
 
 def ContainsDoubleEdges(SegmGraph):
@@ -1058,24 +1058,28 @@ def BundleListOfArrays(ListOfArrays):
 
 def reference_params_to_pos_slice(params_basis_reoganized, params_loop, nnz_k, geodim, nint, ncoeff_min_loop):
     
-    npr = params_loop.shape[1]
-    ncoeff_min_loop_nnz = params_loop.shape[2]
+
+    eps = 1e-12
     
-    ifft_b =  scipy.fft.rfft(params_loop, axis=1, n=2*npr)
+    ncoeff_min_loop_nnz = params_loop.shape[0]
+    npr = params_loop.shape[2]
+    
+    ifft_b =  scipy.fft.rfft(params_loop, axis=2, n=2*npr)
     n_inter = npr+1
 
     fac = 1./(npr * ncoeff_min_loop)
     for m in range(n_inter):
         for j in range(ncoeff_min_loop_nnz):
             w = fac * np.exp(-2j*np.pi*nnz_k[j] * m/nint)
-            ifft_b[:,m,j] *= w
+            ifft_b[j,:,m] *= w
 
-    pos_slice = np.einsum('ijk,klj->li', params_basis_reoganized.real, ifft_b.real) + np.einsum('ijk,klj->li', params_basis_reoganized.imag, ifft_b.imag)
-    
+    pos_slice = np.empty((n_inter, geodim), dtype=np.float64)
+    partial_fft_to_pos_slice_blis(ifft_b, params_basis_reoganized, pos_slice)
+
     if nnz_k.shape[0] > 0:
         if nnz_k[0] == 0:
             
-            meanval = np.matmul(params_basis_reoganized[:,0,:].real, params_loop[:,0,0]) / nint            
+            meanval = np.matmul(params_basis_reoganized[:,0,:].real, params_loop[0,:,0]) / nint            
             for idim in range(geodim):
                 pos_slice[:,idim] -= meanval[idim]
 
@@ -1091,6 +1095,8 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
      - Exhaustive list of unary transformation for generator to body.
      - Exhaustive list of binary transformations from generator within each loop.
     """
+
+    eps = 1e-12
 
     # nint_min, nloop, loopnb, BodyLoop, Targets = DetectLoops(Sym_list, nbody, nint_min_fac = 2)
     nint_min, nloop, loopnb, BodyLoop, Targets = DetectLoops(Sym_list, nbody)
@@ -1257,9 +1263,6 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
 
 
     
-    eps = 1e-12
-
-
     # print()
     # print('================================================')
     # print()
@@ -1343,7 +1346,8 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
         npr = (ncoeffs-1) //  ncoeff_min_loop[il]
         nperiods_loop = npr * ncoeff_min_loop_nnz[il]
 
-        params_loop = np.random.random((nparam_per_period_loop, npr, ncoeff_min_loop_nnz[il]))
+        # params_loop = np.random.random((nparam_per_period_loop, npr, ncoeff_min_loop_nnz[il]))
+        params_loop = np.random.random((ncoeff_min_loop_nnz[il], nparam_per_period_loop, npr))
         
         all_params.append(params_loop)
 
@@ -1357,7 +1361,8 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
 
                 assert l == nnz_k[q]
                 
-                all_coeffs[il, k, : ,:] = np.dot(NullSpace, params_loop[:, p, q])
+                # all_coeffs[il, k, : ,:] = np.dot(NullSpace, params_loop[:, p, q])
+                all_coeffs[il, k, : ,:] = np.dot(NullSpace, params_loop[q,:, p])
                 ip+=1
                 
         assert ip == nperiods_loop
@@ -1369,9 +1374,10 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
                 
                     k = nnz_k[i] + ncoeff_min_loop[il] * ipr
     
-                    all_coeffs_simple_c[il, k, idim] = np.matmul(params_basis_reoganized[idim,i,:], params_loop[:, ipr, i])
+                    # all_coeffs_simple_c[il, k, idim] = np.matmul(params_basis_reoganized[idim,i,:], params_loop[:, ipr, i])
+                    all_coeffs_simple_c[il, k, idim] = np.matmul(params_basis_reoganized[idim,i,:], params_loop[i, :, ipr])
         
-        coeffs_reorganized = np.einsum('ijk,klj->lji', params_basis_reoganized, params_loop)
+        coeffs_reorganized = np.einsum('ijk,jkl->lji', params_basis_reoganized, params_loop)
         coeffs_dense = np.zeros((npr, ncoeff_min_loop[il], geodim), dtype=np.complex128)
         coeffs_dense[:,nnz_k,:] = coeffs_reorganized
         
@@ -1379,18 +1385,21 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
         
         
         params_basis_dense = np.zeros((geodim, ncoeff_min_loop[il], nparam_per_period_loop), dtype=np.complex128)
-        params_loop_dense =  np.zeros((nparam_per_period_loop, npr, ncoeff_min_loop[il]), dtype=np.float64)
+        # params_loop_dense =  np.zeros((nparam_per_period_loop, npr, ncoeff_min_loop[il]), dtype=np.float64)
+        params_loop_dense =  np.zeros((ncoeff_min_loop[il], nparam_per_period_loop, npr), dtype=np.float64)
         
         for ik, k in enumerate(nnz_k):
             
             params_basis_dense[:, k, :] = params_basis_reoganized[:, ik, :]
-            params_loop_dense[:, :, k] = params_loop[:, :, ik]
+            # params_loop_dense[:, :, k] = params_loop[:, :, ik]
+            params_loop_dense[k, :, :] = params_loop[ik, :, :]
         
-        all_coeffs_b_c[il,:(ncoeffs-1),:] = np.einsum('ijk,klj->lji', params_basis_dense, params_loop_dense).reshape(((ncoeffs-1), geodim))
+        # all_coeffs_b_c[il,:(ncoeffs-1),:] = np.einsum('ijk,klj->lji', params_basis_dense, params_loop_dense).reshape(((ncoeffs-1), geodim))
+        all_coeffs_b_c[il,:(ncoeffs-1),:] = np.einsum('ijk,jkl->lji', params_basis_dense, params_loop_dense).reshape(((ncoeffs-1), geodim))
         
         # Dense version with lots of zeros
         
-        ifft_b =  scipy.fft.rfft(params_loop_dense, axis=1, n=2*npr)
+        ifft_b =  scipy.fft.rfft(params_loop_dense, axis=2, n=2*npr)
         n_inter = npr+1
 
         fac = 1./(npr * ncoeff_min_loop[il])
@@ -1399,13 +1408,13 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
         for m in range(n_inter):
             w = fac
             for j in range(ncoeff_min_loop[il]):
-                ifft_b[:,m,j] *= w
+                ifft_b[j,:,m] *= w
                 w *= wref
             wref *= wo
         
-        meanval = np.matmul(params_basis_dense[:,0,:].real, params_loop_dense[:,0,0]) / nint
+        meanval = np.matmul(params_basis_dense[:,0,:].real, params_loop_dense[0,:,0]) / nint
         
-        pos_slice = np.einsum('ijk,klj->li', params_basis_dense.real, ifft_b.real) + np.einsum('ijk,klj->li', params_basis_dense.imag, ifft_b.imag)
+        pos_slice = np.einsum('ijk,jkl->li', params_basis_dense.real, ifft_b.real) + np.einsum('ijk,jkl->li', params_basis_dense.imag, ifft_b.imag)
         
         for idim in range(geodim):
             pos_slice[:,idim] -= meanval[idim]

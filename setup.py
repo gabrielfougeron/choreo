@@ -26,6 +26,7 @@ cython_extnames_safemath = [
     ("choreo.cython.funs"                   , False),
     ("choreo.cython.funs_new"               , False),
     ("choreo.cython.funs_serial"            , False),
+    ("choreo.cython.test_blis"              , False),
     ("choreo.scipy_plus.cython.ODE"         , False),
     ("choreo.scipy_plus.cython.SegmQuad"    , False),
     ("choreo.scipy_plus.cython.test"        , False),
