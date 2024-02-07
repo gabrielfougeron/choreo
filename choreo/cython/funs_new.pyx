@@ -4,8 +4,12 @@ np.import_array()
 cimport cython
 
 from libc.math cimport fabs as cfabs
- 
+cimport scipy.linalg.cython_blas
+cimport blis.cy
+
 import choreo.scipy_plus.linalg
+
+
 
 @cython.cdivision(True)
 cdef inline long gcd (long a, long b) noexcept nogil:
@@ -330,3 +334,51 @@ cdef class ActionSym():
             tnum = ((tnum+1)%tden)
 
         return self.ApplyT(tnum, tden)
+
+
+
+cdef double one_double = 1.
+cdef double zero_double = 0.
+cdef char *transn = 'n'
+
+cdef inline void blas_matmul_contiguous(
+    double[:,::1] a,
+    double[:,::1] b,
+    double[:,::1] c
+) noexcept nogil:
+
+    cdef int n = a.shape[0]
+    cdef int k = a.shape[1]
+    cdef int m = b.shape[1]
+
+    scipy.linalg.cython_blas.dgemm(transn, transn, &m, &n, &k, &one_double, &b[0,0], &m, &a[0,0], &k, &zero_double, &c[0,0], &m)
+
+cpdef void Cython_blas(
+    double[:,::1] a,
+    double[:,::1] b,
+    double[:,::1] c
+) noexcept nogil:
+
+    cdef int n = a.shape[0]
+    cdef int k = a.shape[1]
+    cdef int m = b.shape[1]
+
+    scipy.linalg.cython_blas.dgemm(transn, transn, &m, &n, &k, &one_double, &b[0,0], &m, &a[0,0], &k, &zero_double, &c[0,0], &m)
+
+
+cpdef void Cython_blis(
+    double[:,::1] a,
+    double[:,::1] b,
+    double[:,::1] c
+) nogil noexcept:
+
+    cdef int n = a.shape[0]
+    cdef int k = a.shape[1]
+    cdef int m = b.shape[1]
+
+    blis.cy.gemm(blis.cy.NO_TRANSPOSE, blis.cy.NO_TRANSPOSE,
+                n, m, k,
+                1.0, &a[0,0], k, 1,
+                &b[0,0], m, 1,
+                0.0, &c[0,0], m, 1
+            )
