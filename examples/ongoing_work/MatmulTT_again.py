@@ -81,16 +81,20 @@ def numba_parallel(a, b, c):
 
                 c[i,j] += a[i,k]*b[k,j]
 
-def numpy_matmul(a, b, c):
-    np.matmul(a, b, out=c)
+def numpy_matmulTT(a, b, c):
+    np.matmul(a.T, b.T, out=c)
+    
+def numpy_matmulTT_2(a, b, c):
+    cT=np.matmul(b, a)
+    c[:,:] = cT.T
 
 dtypes_dict = {
     "float64" : np.float64,
 }
 
 def setup_abc(P, R, Q, real_dtype):
-    a = np.random.random((P,R)).astype(dtype=dtypes_dict[real_dtype])
-    b = np.random.random((R,Q)).astype(dtype=dtypes_dict[real_dtype])
+    a = np.random.random((R,P)).astype(dtype=dtypes_dict[real_dtype])
+    b = np.random.random((Q,R)).astype(dtype=dtypes_dict[real_dtype])
     c = np.zeros((P,Q),dtype=dtypes_dict[real_dtype])
     return {'a':a, 'b':b, 'c':c}
 
@@ -99,8 +103,8 @@ max_exp = 20
 
 all_args = {
     "P" : [8]                               ,
-    "Q" : [8]                               ,
-    "R" : [2 ** k for k in range(max_exp)]     ,
+    "Q" : [2 ** k for k in range(max_exp)]                                ,
+    "R" :  [8]   ,
     "real_dtype": ["float64"]    ,
 }
 
@@ -108,9 +112,10 @@ all_funs = [
     # python          ,
     # numba_serial    ,
     # numba_parallel  ,
-    numpy_matmul    ,
-    choreo.cython.funs_new.blas_matmul_contiguous,
-    choreo.cython.test_blis.blis_matmul_contiguous,
+    numpy_matmulTT    ,
+    numpy_matmulTT_2    ,
+    choreo.cython.funs_new.blas_matmulTT_contiguous,
+    # choreo.cython.test_blis.blis_matmul_contiguous,
 ]
 
 n_repeat = 10
@@ -120,7 +125,7 @@ MonotonicAxes = ["P", "Q", "R"]
 
 # # %%
 # 
-basename = 'matmul_timings'
+basename = 'matmulTT_timings'
 filename = os.path.join(timings_folder,basename+'.npz')
 
 all_timings = pyquickbench.run_benchmark(
@@ -137,15 +142,15 @@ all_timings = pyquickbench.run_benchmark(
 
 plot_intent = {
     "P" : 'single_value'   ,
-    "Q" : 'single_value'               ,
-    "R" : 'points'             ,
+    "Q" : 'points'              ,
+    "R" :  'single_value'             ,
     "real_dtype": 'curve_linestyle'  ,
     pyquickbench.fun_ax_name :  'curve_color'             ,
 }
 
 single_values_idx = {
     "P" : 0 ,
-    "Q" : 0 ,
+    "R" : 0 ,
 }
 
 pyquickbench.plot_benchmark(
@@ -161,7 +166,7 @@ pyquickbench.plot_benchmark(
 
 relative_to_val = {
     "real_dtype": 'float64'  ,
-    pyquickbench.fun_ax_name :  'blas_matmul_contiguous'   ,
+    pyquickbench.fun_ax_name :  'blas_matmulTT_contiguous'   ,
 }
 
 

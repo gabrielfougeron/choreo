@@ -367,9 +367,27 @@ cpdef void blas_matmul_contiguous(
     scipy.linalg.cython_blas.dgemm(transn, transn, &m, &n, &k, &one_double, &b[0,0], &m, &a[0,0], &k, &zero_double, &c[0,0], &m)
 
 
+cpdef void blas_matmulTT_contiguous(
+    double[:,::1] a,
+    double[:,::1] b,
+    double[:,::1] c
+) noexcept nogil:
+
+    cdef int n = a.shape[1]
+    cdef int k = a.shape[0]
+    cdef int m = b.shape[0]
+
+    scipy.linalg.cython_blas.dgemm(transt, transt, &m, &n, &k, &one_double, &b[0,0], &k, &a[0,0], &n, &zero_double, &c[0,0], &m)
+
+
 
 # The function partial_fft_to_pos_slice implements the following, but in low level
 # pos_slice is assumed already allocated, but can be uninitialized (use np.empty)
+# 
+# 
+# pos_slice = np.einsum('ijk,jkl->li', params_basis_reoganized.real, ifft_b.real) + np.einsum('ijk,jkl->li', params_basis_reoganized.imag, ifft_b.imag)  
+# 
+# Or, similarly:
 # 
 # ifft_c = ifft_b.view(dtype=np.float64).reshape(ncom, n_inter,2)
 # params_basis_reoganized_c = params_basis_reoganized.view(dtype=np.float64).reshape(geodim, ncom,2)
@@ -377,34 +395,33 @@ cpdef void blas_matmul_contiguous(
 # pos_slice =  np.matmul(ifft_c[:,:,0].T, params_basis_reoganized_c[:,:,0].T)
 # pos_slice += np.matmul(ifft_c[:,:,1].T, params_basis_reoganized_c[:,:,1].T)
 
-# cpdef void partial_fft_to_pos_slice(
-#     double complex[:,:,::1] ifft_b                    ,
-#     double complex[:,:,::1] params_basis_reoganized   ,
-#     double[:,::1] pos_slice                           ,
-# ) noexcept nogil:
-# 
-#     cdef int ninter = pos_slice.shape[0]
-#     cdef int geodim = pos_slice.shape[1]
-# 
-#     cdef int ncom =  ifft_b.shape[0] * ifft_b.shape[1]
-# 
-#     cdef double* ifft_b_real = <double*> &ifft_b[0,0,0]
-#     cdef double* params_basis_reoganized_real = <double*> &params_basis_reoganized[0,0,0]
-#     cdef double* res = &pos_slice[0,0]
-# 
-#     # cdef int lda = 2*ncom
-#     cdef int lda = 2*ninter
-#     cdef int ldb = 2*ncom
+cpdef void partial_fft_to_pos_slice_blas(
+    double complex[:,:,::1] ifft_b                  ,
+    double[:,:,::1] params_basis_reoganized_real    ,
+    double[:,:,::1] params_basis_reoganized_imag    ,
+    double[:,::1] pos_slice                         ,
+) noexcept nogil:
 
-# 
-#     scipy.linalg.cython_blas.dgemm(
-#         transt, transt,
-#         &ninter, &geodim, &ncom, &one_double,
-#         params_basis_reoganized_real, &lda,
-#         ifft_b_real, &ldb,
-#         &zero_double, res, &geodim
-#     )
-#     
+    cdef int ninter = pos_slice.shape[0]
+    cdef int geodim = pos_slice.shape[1]
+
+    cdef int ncom =  ifft_b.shape[0] * ifft_b.shape[1]
+
+    cdef double* ifft_b_real = <double*> &ifft_b[0,0,0]
+    cdef double* res = &pos_slice[0,0]
+
+    cdef int lda = 2*ncom
+    # cdef int lda = 2*ninter
+    cdef int ldb = 2*ncom
+
+    scipy.linalg.cython_blas.dgemm(
+        transt, transt,
+        &ncom, &geodim, &geodim, &one_double,
+        &params_basis_reoganized_real[0,0,0], &ncom,
+        ifft_b_real, &ncom,
+        &zero_double, res, &geodim
+    )
+    
 #     # Pointer addition
 #     ifft_b_real += 1
 #     params_basis_reoganized_real += 1
@@ -436,7 +453,6 @@ cpdef void partial_fft_to_pos_slice_blis(
     cdef int lda = 2*ninter
     cdef int ldb = 2*ncom
 
-
     blis.cy.gemm(
         blis.cy.TRANSPOSE, blis.cy.TRANSPOSE,
         ninter, geodim, ncom,
@@ -444,15 +460,15 @@ cpdef void partial_fft_to_pos_slice_blis(
         params_basis_reoganized_real, ldb, 2 ,
         0.0, res, geodim, 1
     )
-
-    # Pointer addition
-    ifft_b_real += 1
-    params_basis_reoganized_real += 1
-
-    blis.cy.gemm(
-        blis.cy.TRANSPOSE, blis.cy.TRANSPOSE,
-        ninter, geodim, ncom,
-        1.0, ifft_b_real, lda, 2,
-        params_basis_reoganized_real, ldb, 2 ,
-        1.0, res, geodim, 1
-    )
+# 
+#     # Pointer addition
+#     ifft_b_real += 1
+#     params_basis_reoganized_real += 1
+# 
+#     blis.cy.gemm(
+#         blis.cy.TRANSPOSE, blis.cy.TRANSPOSE,
+#         ninter, geodim, ncom,
+#         1.0, ifft_b_real, lda, 2,
+#         params_basis_reoganized_real, ldb, 2 ,
+#         1.0, res, geodim, 1
+#     )

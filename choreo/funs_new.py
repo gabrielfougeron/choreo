@@ -21,7 +21,7 @@ from matplotlib import colormaps
 
 import choreo.scipy_plus
 
-from choreo.cython.funs_new import ActionSym, partial_fft_to_pos_slice_blis
+from choreo.cython.funs_new import ActionSym, partial_fft_to_pos_slice_blis, partial_fft_to_pos_slice_blas
 
 
 def ContainsDoubleEdges(SegmGraph):
@@ -1075,6 +1075,27 @@ def reference_params_to_pos_slice(params_basis_reoganized, params_loop, nnz_k, g
 
     pos_slice = np.empty((n_inter, geodim), dtype=np.float64)
     partial_fft_to_pos_slice_blis(ifft_b, params_basis_reoganized, pos_slice)
+#     
+    params_basis_reoganized_real = np.ascontiguousarray(params_basis_reoganized.real, dtype=np.float64)
+    params_basis_reoganized_imag = np.ascontiguousarray(params_basis_reoganized.imag, dtype=np.float64)
+    pos_slice_blas = np.empty((n_inter, geodim), dtype=np.float64)
+    partial_fft_to_pos_slice_blas(ifft_b, params_basis_reoganized_real, params_basis_reoganized_imag, pos_slice_blas)
+
+
+    print(pos_slice)
+    print(pos_slice_blas)
+
+
+
+    # pos_slice_einsum = np.einsum('ijk,jkl->li', params_basis_reoganized.real, ifft_b.real) + np.einsum('ijk,jkl->li', params_basis_reoganized.imag, ifft_b.imag)  
+    pos_slice_einsum_real = np.einsum('ijk,jkl->li', params_basis_reoganized.real, ifft_b.real)
+    # pos_slice_einsum_imag = np.einsum('ijk,jkl->li', params_basis_reoganized.imag, ifft_b.imag)  
+
+    print(pos_slice_einsum_real)
+    # print(pos_slice_einsum_imag)
+
+    assert np.linalg.norm(pos_slice - pos_slice_blas) < eps
+
 
     if nnz_k.shape[0] > 0:
         if nnz_k[0] == 0:
