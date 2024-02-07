@@ -1,6 +1,7 @@
 name: choreo-intel
 channels:
   - intel
+  - conda-forge
 dependencies:
   - python=3.11.2
   - scipy
