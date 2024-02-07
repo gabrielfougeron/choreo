@@ -163,11 +163,8 @@ pyquickbench.plot_benchmark(
 
 
 relative_to_val = {
-    # "P" : 'single_value'   ,
-    # "Q" : 'single_value'               ,
-    # "R" : 'points'             ,
     "real_dtype": 'float64'  ,
-    pyquickbench.fun_ax_name :  'Cython_blas'             ,
+    pyquickbench.fun_ax_name :  'Cython_blas'   ,
 }
 
 

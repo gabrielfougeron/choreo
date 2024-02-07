@@ -1056,6 +1056,30 @@ def BundleListOfArrays(ListOfArrays):
         
     return buf, n_shapes, n_shifts
 
+def reference_params_to_pos_slice(params_basis_reoganized, params_loop, nnz_k, geodim, nint, ncoeff_min_loop):
+    
+    npr = params_loop.shape[1]
+    ncoeff_min_loop_nnz = params_loop.shape[2]
+    
+    ifft_b =  scipy.fft.rfft(params_loop, axis=1, n=2*npr)
+    n_inter = npr+1
+
+    fac = 1./(npr * ncoeff_min_loop)
+    for m in range(n_inter):
+        for j in range(ncoeff_min_loop_nnz):
+            w = fac * np.exp(-2j*np.pi*nnz_k[j] * m/nint)
+            ifft_b[:,m,j] *= w
+
+    pos_slice = np.einsum('ijk,klj->li', params_basis_reoganized.real, ifft_b.real) + np.einsum('ijk,klj->li', params_basis_reoganized.imag, ifft_b.imag)
+    
+    if nnz_k.shape[0] > 0:
+        if nnz_k[0] == 0:
+            
+            meanval = np.matmul(params_basis_reoganized[:,0,:].real, params_loop[:,0,0]) / nint            
+            for idim in range(geodim):
+                pos_slice[:,idim] -= meanval[idim]
+
+    return pos_slice
 
 def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, MomCons=False, n_grad_change=1., Sym_list=[], CrashOnIdentity=True, ForceMatrixChangevar = False, store_folder = ""):
     
@@ -1392,25 +1416,7 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
         # Sparse version with fewer zeros
         
         
-        ifft_b =  scipy.fft.rfft(params_loop, axis=1, n=2*npr)
-        n_inter = npr+1
-
-        fac = 1./(npr * ncoeff_min_loop[il])
-        for m in range(n_inter):
-            for j in range(ncoeff_min_loop_nnz[il]):
-                w = fac * np.exp(-2j*np.pi*nnz_k[j] * m/nint)
-                ifft_b[:,m,j] *= w
-
-
-        
-        pos_slice = np.einsum('ijk,klj->li', params_basis_reoganized.real, ifft_b.real) + np.einsum('ijk,klj->li', params_basis_reoganized.imag, ifft_b.imag)
-        
-        if nnz_k.shape[0] > 0:
-            if nnz_k[0] == 0:
-                
-                meanval = np.matmul(params_basis_reoganized[:,0,:].real, params_loop[:,0,0]) / nint            
-                for idim in range(geodim):
-                    pos_slice[:,idim] -= meanval[idim]
+        pos_slice = reference_params_to_pos_slice(params_basis_reoganized, params_loop, nnz_k, geodim, nint, ncoeff_min_loop[il])
 
         
         all_pos_slice_a.append(pos_slice)
