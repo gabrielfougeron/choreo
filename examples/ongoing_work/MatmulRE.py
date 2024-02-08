@@ -63,12 +63,8 @@ if not(os.path.isdir(timings_folder)):
 
 
 def numpy_matmul_complex(a, b, c):
-    c[:,:] = np.matmul(a.T, b.T).real
+    c[:,:] = np.matmul(a, b).real
     
-    
-def numpy_matmul_2real(a, b, c):
-    np.matmul(a.real.T, b.real.T, out=c)
-    c -= np.matmul(a.imag.T, b.imag.T)
     
     
 dtypes_dict = {
@@ -79,8 +75,8 @@ dtypes_complex_dict = {
 }
 
 def setup_abc(P, R, Q, real_dtype):
-    a = np.random.random((R,P)).astype(dtype=dtypes_dict[real_dtype]) + 1j*np.random.random((R,P)).astype(dtype=dtypes_dict[real_dtype])
-    b = np.random.random((Q,R)).astype(dtype=dtypes_dict[real_dtype]) + 1j* np.random.random((Q,R)).astype(dtype=dtypes_dict[real_dtype]) 
+    a = np.random.random((P,R)).astype(dtype=dtypes_dict[real_dtype]) + 1j*np.random.random((P,R)).astype(dtype=dtypes_dict[real_dtype])
+    b = np.random.random((R,Q)).astype(dtype=dtypes_dict[real_dtype]) + 1j*np.random.random((R,Q)).astype(dtype=dtypes_dict[real_dtype])
     c = np.zeros((P,Q),dtype=dtypes_dict[real_dtype])
     return {'a':a, 'b':b, 'c':c}
 
@@ -88,16 +84,16 @@ max_exp = 20
 # max_exp = 10
 
 all_args = {
-    "P" : [8]                               ,
-    "Q" :  [8]                                 ,
-    "R" :  [2 ** k for k in range(max_exp)]     ,
+    "P" :  [2]                               ,
+    "R" :  [4]     ,
+    "Q" :  [2 ** k for k in range(max_exp)]                                 ,
     "real_dtype": ["float64"]    ,
 }
 
 all_funs = [
     numpy_matmul_complex    ,
-    numpy_matmul_2real    ,
-    choreo.cython.funs_new.real_of_matmul,
+    choreo.cython.test_blis.blas_matmul_real,
+    choreo.cython.test_blis.blis_matmul_real,
 ]
 
 n_repeat = 10
@@ -124,8 +120,8 @@ all_timings = pyquickbench.run_benchmark(
 
 plot_intent = {
     "P" : 'single_value'   ,
-    "Q" : 'single_value'               ,
-    "R" :  'points'            ,
+    "Q" : 'points'              ,
+    "R" : 'single_value'              ,
     "real_dtype": 'curve_linestyle'  ,
     pyquickbench.fun_ax_name :  'curve_color'             ,
 }
@@ -133,6 +129,7 @@ plot_intent = {
 single_values_idx = {
     "P" : 0 ,
     "Q" : 0 ,
+    "R" : 0 ,
 }
 
 pyquickbench.plot_benchmark(
@@ -148,7 +145,7 @@ pyquickbench.plot_benchmark(
 
 relative_to_val = {
     "real_dtype": 'float64'  ,
-    pyquickbench.fun_ax_name :  'real_of_matmul'   ,
+    pyquickbench.fun_ax_name :  'numpy_matmul_complex'   ,
 }
 
 
@@ -161,4 +158,5 @@ pyquickbench.plot_benchmark(
     show = True                             ,
     relative_to_val = relative_to_val       ,
 )
+
 
