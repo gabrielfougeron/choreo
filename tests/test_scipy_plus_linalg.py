@@ -146,11 +146,14 @@ def test_matmul_realpart(float64_tols, Dense_linalg_dims):
                     
                 AB_blis = np.zeros((n,m),dtype=np.float64)
                 choreo.cython.test_blis.blis_matmul_real(A,B,AB_blis)
-                
                 assert np.allclose(AB_np.real, AB_blis, rtol = float64_tols.rtol, atol = float64_tols.atol)     
                                 
                 AB_blas = np.zeros((n,m),dtype=np.float64)
                 choreo.cython.test_blis.blas_matmul_real(A,B,AB_blas)
+                assert np.allclose(AB_np.real, AB_blas, rtol = float64_tols.rtol, atol = float64_tols.atol) 
+                                            
+                AB_blas = np.zeros((n,m),dtype=np.float64)
+                choreo.cython.test_blis.blas_matmul_real_copy(A,B,AB_blas)
                 assert np.allclose(AB_np.real, AB_blas, rtol = float64_tols.rtol, atol = float64_tols.atol) 
             
             
