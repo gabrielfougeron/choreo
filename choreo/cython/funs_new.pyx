@@ -4,10 +4,12 @@ np.import_array()
 cimport cython
 
 from libc.math cimport fabs as cfabs
+from libc.complex cimport cexp
+
 cimport scipy.linalg.cython_blas
+from libc.stdlib cimport malloc, free
 
 import choreo.scipy_plus.linalg
-cimport blis.cy
 
 
 @cython.cdivision(True)
@@ -366,7 +368,6 @@ cpdef void blas_matmul_contiguous(
 
     scipy.linalg.cython_blas.dgemm(transn, transn, &m, &n, &k, &one_double, &b[0,0], &m, &a[0,0], &k, &zero_double, &c[0,0], &m)
 
-
 cpdef void blas_matmulTT_contiguous(
     double[:,::1] a,
     double[:,::1] b,
@@ -380,95 +381,100 @@ cpdef void blas_matmulTT_contiguous(
     scipy.linalg.cython_blas.dgemm(transt, transt, &m, &n, &k, &one_double, &b[0,0], &k, &a[0,0], &n, &zero_double, &c[0,0], &m)
 
 
+cpdef void blas_matmulNT_contiguous(
+    double[:,::1] a,
+    double[:,::1] b,
+    double[:,::1] c
+) noexcept nogil:
 
-# The function partial_fft_to_pos_slice implements the following, but in low level
-# pos_slice is assumed already allocated, but can be uninitialized (use np.empty)
-# 
-# 
-# pos_slice = np.einsum('ijk,jkl->li', params_basis_reoganized.real, ifft_b.real) + np.einsum('ijk,jkl->li', params_basis_reoganized.imag, ifft_b.imag)  
-# 
-# Or, similarly:
-# 
-# ifft_c = ifft_b.view(dtype=np.float64).reshape(ncom, n_inter,2)
-# params_basis_reoganized_c = params_basis_reoganized.view(dtype=np.float64).reshape(geodim, ncom,2)
-# 
-# pos_slice =  np.matmul(ifft_c[:,:,0].T, params_basis_reoganized_c[:,:,0].T)
-# pos_slice += np.matmul(ifft_c[:,:,1].T, params_basis_reoganized_c[:,:,1].T)
+    cdef int n = a.shape[0]
+    cdef int k = a.shape[1]
+    cdef int m = b.shape[0]
 
-cpdef void partial_fft_to_pos_slice_blas(
+    scipy.linalg.cython_blas.dgemm(transt, transn, &m, &n, &k, &one_double, &b[0,0], &k, &a[0,0], &k, &zero_double, &c[0,0], &m)
+
+
+
+cdef double ctwopi = 2* np.pi
+cdef double complex cminustwopi = -1j*ctwopi
+cdef int int_one = 1
+
+@cython.cdivision(True)
+cpdef void partial_fft_to_pos_slice(
     double complex[:,:,::1] ifft_b                  ,
-    double[:,:,::1] params_basis_reoganized_real    ,
-    double[:,:,::1] params_basis_reoganized_imag    ,
+    double complex[:,:,::1] params_basis_reoganized ,
+    int ncoeff_min_loop                             ,
+    long[::1] nnz_k                                 ,
+    double[:,::1] param_basis_0                     ,
+    double[:,:,::1] params_loop                     ,
     double[:,::1] pos_slice                         ,
 ) noexcept nogil:
 
-    cdef int ninter = pos_slice.shape[0]
-    cdef int geodim = pos_slice.shape[1]
+    cdef int n_inter = ifft_b.shape[0]
+    cdef int npr = n_inter -1
+    cdef int nppl = ifft_b.shape[2]
+    cdef int ncoeff_min_loop_nnz = nnz_k.shape[0]
+    cdef int geodim = params_basis_reoganized.shape[0]
+    cdef int nint = 2*ncoeff_min_loop*npr
+    cdef Py_ssize_t m, j, i, k
 
-    cdef int ncom =  ifft_b.shape[0] * ifft_b.shape[1]
+    cdef double complex fac
+    cdef double complex w, wo, winter
 
-    cdef double* ifft_b_real = <double*> &ifft_b[0,0,0]
-    cdef double* res = &pos_slice[0,0]
+    # Compute twiddle factors    
+    if ncoeff_min_loop_nnz > 0:
 
-    cdef int lda = 2*ncom
-    # cdef int lda = 2*ninter
-    cdef int ldb = 2*ncom
+        fac = 1./(npr * ncoeff_min_loop)
+        wo =  cexp(cminustwopi/nint)
+        winter = 1.
 
-    scipy.linalg.cython_blas.dgemm(
-        transt, transt,
-        &ncom, &geodim, &geodim, &one_double,
-        &params_basis_reoganized_real[0,0,0], &ncom,
-        ifft_b_real, &ncom,
-        &zero_double, res, &geodim
-    )
-    
-#     # Pointer addition
-#     ifft_b_real += 1
-#     params_basis_reoganized_real += 1
-# 
-#     scipy.linalg.cython_blas.dgemm(
-#         transt, transt,
-#         &ninter, &geodim, &ncom, &one_double,
-#         params_basis_reoganized_real, &lda,
-#         ifft_b_real, &ldb,
-#         &one_double, res, &geodim
-#     )
+        for m in range(n_inter):
 
+            w = fac
 
-cpdef void partial_fft_to_pos_slice_blis(
-    double complex[:,:,::1] ifft_b                    ,
-    double complex[:,:,::1] params_basis_reoganized   ,
-    double[:,::1] pos_slice                           ,
-) noexcept nogil:
+            for i in range(nnz_k[0]):
+                w *= winter
 
-    cdef int ninter = pos_slice.shape[0]
-    cdef int geodim = pos_slice.shape[1]
+            for j in range(ncoeff_min_loop_nnz-1):
 
-    cdef int ncom =  ifft_b.shape[0] * ifft_b.shape[1]
+                # w = fac * cexp((-1j*ctwopi*nnz_k[j] * m)/nint)
 
-    cdef double* ifft_b_real = <double*> &ifft_b[0,0,0]
-    cdef double* params_basis_reoganized_real = <double*> &params_basis_reoganized[0,0,0]
-    cdef double* res = &pos_slice[0,0]
+                for i in range(nppl):
+                    ifft_b[m,j,i] *= w
 
-    cdef int lda = 2*ninter
-    cdef int ldb = 2*ncom
+                for i in range(nnz_k[j], nnz_k[j+1]):
+                    w *= winter
 
-    blis.cy.gemm(
-        blis.cy.TRANSPOSE, blis.cy.TRANSPOSE,
-        ninter, geodim, ncom,
-        1.0, ifft_b_real, lda, 2,
-        params_basis_reoganized_real, ldb, 2 ,
-        0.0, res, geodim, 1
-    )
+            j = ncoeff_min_loop_nnz-1
 
-    # Pointer addition
-    ifft_b_real += 1
-    params_basis_reoganized_real += 1
+            for i in range(nppl):
+                ifft_b[m,j,i] *= w
 
-    blis.cy.gemm(
-        blis.cy.TRANSPOSE, blis.cy.TRANSPOSE,
-        ninter, geodim, ncom,
-        1.0, ifft_b_real, lda, 2,
-        params_basis_reoganized_real, ldb, 2 ,
-        1.0, res, geodim, 1
-    )
+            winter *= wo            
+
+    # Computes a.real * b.real.T + a.imag * b.imag.T using clever memory arrangement and a single gemm call
+    cdef double* ifft_b_r = <double*> &ifft_b[0,0,0]
+    cdef double* params_basis_reoganized_r = <double*> &params_basis_reoganized[0,0,0]
+
+    cdef int ncom = 2*ncoeff_min_loop_nnz*nppl
+
+    scipy.linalg.cython_blas.dgemm(transt, transn, &geodim, &n_inter, &ncom, &one_double, params_basis_reoganized_r, &ncom, ifft_b_r, &ncom, &zero_double, &pos_slice[0,0], &geodim)
+
+    cdef double* meanval
+
+    # Taking care of the mean value
+    if ncoeff_min_loop_nnz > 0:
+        if nnz_k[0] == 0:
+
+            meanval  = <double*> malloc(sizeof(double)*geodim)
+
+            scipy.linalg.cython_blas.dgemv(transt,&nppl,&geodim,&one_double,&param_basis_0[0,0],&nppl,&params_loop[0,0,0],&int_one,&zero_double,meanval,&int_one)
+
+            for i in range(geodim):
+                meanval[i] = - meanval[i] / nint
+
+            for j in range(n_inter):
+                for i in range(geodim):
+                    pos_slice[j,i] += meanval[i]
+
+            free(meanval)

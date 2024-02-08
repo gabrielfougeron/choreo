@@ -123,6 +123,28 @@ def test_matmulTT(float64_tols, Dense_linalg_dims):
                 BTAT_blas = np.zeros((m,n),dtype=np.float64)
                 choreo.cython.funs_new.blas_matmulTT_contiguous(B,A,BTAT_blas)
                 assert np.allclose(BTAT_np, BTAT_blas, rtol = float64_tols.rtol, atol = float64_tols.atol)     
+                                            
+@ProbabilisticTest()
+def test_matmulNT(float64_tols, Dense_linalg_dims):
+    
+    print("Testing matrix multiplication")
+
+    for n in Dense_linalg_dims.all_geodims:
+        for k in Dense_linalg_dims.all_geodims:
+            for m in Dense_linalg_dims.all_geodims:
+
+                print(f"Dimensions: {m}, {k}, {n}")
+                
+                A = np.random.random((m,k))
+                B = np.random.random((n,k))
+                
+                ABT_np = np.zeros((m,n),dtype=np.float64)
+                np.matmul(A,B.T,out=ABT_np)     
+
+                ABT_blas = np.zeros((m,n),dtype=np.float64)
+                choreo.cython.funs_new.blas_matmulNT_contiguous(A,B,ABT_blas)
+                
+                assert np.allclose(ABT_np, ABT_blas, rtol = float64_tols.rtol, atol = float64_tols.atol)     
                                 
 
 
