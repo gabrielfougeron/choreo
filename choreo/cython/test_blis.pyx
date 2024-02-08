@@ -12,7 +12,7 @@ cpdef void blis_matmul_contiguous(
     double[:,::1] a,
     double[:,::1] b,
     double[:,::1] c
-) nogil noexcept:
+) noexcept nogil:
 
     cdef int m = a.shape[0]
     cdef int k = a.shape[1]

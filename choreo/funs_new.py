@@ -21,7 +21,7 @@ from matplotlib import colormaps
 
 import choreo.scipy_plus
 
-from choreo.cython.funs_new import ActionSym, partial_fft_to_pos_slice_blis, partial_fft_to_pos_slice_blas
+from choreo.cython.funs_new import ActionSym, partial_fft_to_pos_slice
 
 
 def ContainsDoubleEdges(SegmGraph):
@@ -1065,6 +1065,8 @@ def reference_params_to_pos_slice(params_basis_reoganized, params_loop, nnz_k, g
     npr = params_loop.shape[0]
     
     ifft_b =  scipy.fft.rfft(params_loop, axis=0, n=2*npr)
+    ifft_b_cp = ifft_b.copy()
+    
     n_inter = npr+1
 
     fac = 1./(npr * ncoeff_min_loop)
@@ -1074,22 +1076,8 @@ def reference_params_to_pos_slice(params_basis_reoganized, params_loop, nnz_k, g
             ifft_b[m,j,:] *= w
 
 
-    # params_basis_reoganized_r = params_basis_reoganized.view(dtype=np.float64).reshape(params_basis_reoganized.shape[0],2)
-    # ifft_b_r = ifft_b.view(dtype=np.float64).reshape(*ifft_b.shape,2)
-    # pos_slice_r = np.einsum('ijkr,ljkr->li', params_basis_reoganized_r, ifft_b_r)
-    
-    shape2 = params_basis_reoganized.shape[1] * params_basis_reoganized.shape[2] * 2 
-    params_basis_reoganized_r = params_basis_reoganized.view(dtype=np.float64).reshape(params_basis_reoganized.shape[0],shape2)
-    shape2 = ifft_b.shape[1] * ifft_b.shape[2] * 2 
-    ifft_b_r = ifft_b.view(dtype=np.float64).reshape(ifft_b.shape[0],shape2)
-    pos_slice_r = np.matmul(ifft_b_r, params_basis_reoganized_r.T)
-
-
     pos_slice = np.einsum('ijk,ljk->li', params_basis_reoganized.real, ifft_b.real) + np.einsum('ijk,ljk->li', params_basis_reoganized.imag, ifft_b.imag)  
-    
-    
 
-    assert np.linalg.norm(pos_slice - pos_slice_r) < eps
 
 
     if nnz_k.shape[0] > 0:
@@ -1098,6 +1086,18 @@ def reference_params_to_pos_slice(params_basis_reoganized, params_loop, nnz_k, g
             meanval = np.matmul(params_basis_reoganized[:,0,:].real, params_loop[0,0,:]) / nint            
             for idim in range(geodim):
                 pos_slice[:,idim] -= meanval[idim]
+
+    if nnz_k.shape[0] > 0:
+        param_basis_0 = np.ascontiguousarray(params_basis_reoganized[:,0,:].real)
+    else:
+        param_basis_0 = np.zeros((0,0),dtype=np.float64)
+        
+    pos_slice_r = np.empty((n_inter, geodim),dtype=np.float64)
+    partial_fft_to_pos_slice(ifft_b_cp, params_basis_reoganized, ncoeff_min_loop, nnz_k, param_basis_0, params_loop, pos_slice_r)
+
+    assert np.linalg.norm(ifft_b_cp - ifft_b) < eps
+    assert np.linalg.norm(pos_slice - pos_slice_r) < eps
+
 
     return pos_slice
 
