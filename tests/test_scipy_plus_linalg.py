@@ -127,4 +127,31 @@ def test_matmulTT(float64_tols, Dense_linalg_dims):
 
 
 
+@ProbabilisticTest()
+def test_matmul_realpart(float64_tols, Dense_linalg_dims):
+    
+    print("Testing matrix multiplication")
+
+    for n in Dense_linalg_dims.all_geodims:
+        for k in Dense_linalg_dims.all_geodims:
+            for m in Dense_linalg_dims.all_geodims:
+
+                print(f"Dimensions: {n}, {k}, {m}")
+                
+                A = np.random.random((n,k)) + 1j*np.random.random((n,k))
+                B = np.random.random((k,m)) + 1j*np.random.random((k,m))
+                
+                AB_np = np.zeros((n,m),dtype=np.complex128)
+                np.matmul(A,B,out=AB_np)     
+                    
+                AB_blis = np.zeros((n,m),dtype=np.float64)
+                choreo.cython.test_blis.blis_matmul_real(A,B,AB_blis)
+                
+                assert np.allclose(AB_np.real, AB_blis, rtol = float64_tols.rtol, atol = float64_tols.atol)     
+                                
+                AB_blas = np.zeros((n,m),dtype=np.float64)
+                choreo.cython.test_blis.blas_matmul_real(A,B,AB_blas)
+                assert np.allclose(AB_np.real, AB_blas, rtol = float64_tols.rtol, atol = float64_tols.atol) 
+            
+            
 
