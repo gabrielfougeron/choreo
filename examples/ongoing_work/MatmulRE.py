@@ -65,6 +65,11 @@ if not(os.path.isdir(timings_folder)):
 def numpy_matmul_complex(a, b, c):
     c[:,:] = np.matmul(a, b).real
     
+def numpy_matmul_real(a, b, c):
+    a = a.view(dtype=np.float64).reshape(  a.shape[0],2*a.shape[1])
+    b = b.view(dtype=np.float64).reshape(2*b.shape[0],  b.shape[1])
+    np.matmul(a, b, out=c)
+    
     
     
 dtypes_dict = {
@@ -95,6 +100,7 @@ all_args = {
 
 all_funs = [
     numpy_matmul_complex    ,
+    numpy_matmul_real       ,
     choreo.cython.test_blis.blas_matmul_real,
     choreo.cython.test_blis.blis_matmul_real,
     choreo.cython.test_blis.blas_matmul_real_copy,
