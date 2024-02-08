@@ -421,6 +421,11 @@ cpdef void partial_fft_to_pos_slice(
     cdef double complex fac
     cdef double complex w, wo, winter
 
+    cdef double* ifft_b_r = <double*> &ifft_b[0,0,0]
+    cdef double* params_basis_reoganized_r = <double*> &params_basis_reoganized[0,0,0]
+    cdef int ncom = 2*ncoeff_min_loop_nnz*nppl
+    cdef double* meanval
+
     # Compute twiddle factors    
     if ncoeff_min_loop_nnz > 0:
 
@@ -453,14 +458,8 @@ cpdef void partial_fft_to_pos_slice(
             winter *= wo            
 
     # Computes a.real * b.real.T + a.imag * b.imag.T using clever memory arrangement and a single gemm call
-    cdef double* ifft_b_r = <double*> &ifft_b[0,0,0]
-    cdef double* params_basis_reoganized_r = <double*> &params_basis_reoganized[0,0,0]
-
-    cdef int ncom = 2*ncoeff_min_loop_nnz*nppl
 
     scipy.linalg.cython_blas.dgemm(transt, transn, &geodim, &n_inter, &ncom, &one_double, params_basis_reoganized_r, &ncom, ifft_b_r, &ncom, &zero_double, &pos_slice[0,0], &geodim)
-
-    cdef double* meanval
 
     # Taking care of the mean value
     if ncoeff_min_loop_nnz > 0:
