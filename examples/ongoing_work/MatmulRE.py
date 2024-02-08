@@ -74,7 +74,11 @@ dtypes_complex_dict = {
     "float64" : np.complex128,
 }
 
-def setup_abc(P, R, Q, real_dtype):
+def setup_abc(PR, Q, real_dtype):
+    
+    P = PR[0]
+    R = PR[1]
+    
     a = np.random.random((P,R)).astype(dtype=dtypes_dict[real_dtype]) + 1j*np.random.random((P,R)).astype(dtype=dtypes_dict[real_dtype])
     b = np.random.random((R,Q)).astype(dtype=dtypes_dict[real_dtype]) + 1j*np.random.random((R,Q)).astype(dtype=dtypes_dict[real_dtype])
     c = np.zeros((P,Q),dtype=dtypes_dict[real_dtype])
@@ -84,8 +88,7 @@ max_exp = 20
 # max_exp = 10
 
 all_args = {
-    "P" :  [2]                               ,
-    "R" :  [4]     ,
+    "PR" :  [[2,2],[2,4],[3,3],[3,6]]                               ,
     "Q" :  [2 ** k for k in range(max_exp)]                                 ,
     "real_dtype": ["float64"]    ,
 }
@@ -94,11 +97,12 @@ all_funs = [
     numpy_matmul_complex    ,
     choreo.cython.test_blis.blas_matmul_real,
     choreo.cython.test_blis.blis_matmul_real,
+    choreo.cython.test_blis.blas_matmul_real_copy,
 ]
 
-n_repeat = 10
+n_repeat = 100
 
-MonotonicAxes = ["P", "Q", "R"]
+MonotonicAxes = ["Q"]
 
 
 # # %%
@@ -119,17 +123,11 @@ all_timings = pyquickbench.run_benchmark(
 )
 
 plot_intent = {
-    "P" : 'single_value'   ,
+    "PR" : 'subplot_grid_y'   ,
     "Q" : 'points'              ,
-    "R" : 'single_value'              ,
     "real_dtype": 'curve_linestyle'  ,
     pyquickbench.fun_ax_name :  'curve_color'             ,
-}
-
-single_values_idx = {
-    "P" : 0 ,
-    "Q" : 0 ,
-    "R" : 0 ,
+    pyquickbench.repeat_ax_name :  'reduction_avg'             ,
 }
 
 pyquickbench.plot_benchmark(
@@ -137,7 +135,6 @@ pyquickbench.plot_benchmark(
     all_args                                ,
     all_funs                                ,
     plot_intent = plot_intent               ,
-    single_values_idx = single_values_idx   ,
     show = True                             ,
 )
 
@@ -145,7 +142,7 @@ pyquickbench.plot_benchmark(
 
 relative_to_val = {
     "real_dtype": 'float64'  ,
-    pyquickbench.fun_ax_name :  'numpy_matmul_complex'   ,
+    pyquickbench.fun_ax_name :  'blas_matmul_real'   ,
 }
 
 
@@ -154,7 +151,6 @@ pyquickbench.plot_benchmark(
     all_args                                ,
     all_funs                                ,
     plot_intent = plot_intent               ,
-    single_values_idx = single_values_idx   ,
     show = True                             ,
     relative_to_val = relative_to_val       ,
 )

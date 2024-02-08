@@ -1084,7 +1084,12 @@ def reference_params_to_pos_slice(params_basis_reoganized, params_loop, nnz_k, g
 # 
 #     print(pos_slice)
 #     print(pos_slice_blas)
-# 
+
+
+    params_basis_reoganized_r = params_basis_reoganized.view(dtype=np.float64).reshape(*params_basis_reoganized.shape,2)
+    ifft_b_r = ifft_b.view(dtype=np.float64).reshape(*ifft_b.shape,2)
+
+    pos_slice_r = np.einsum('ijkr,jklr->li', params_basis_reoganized_r, ifft_b_r)
 
 
     pos_slice = np.einsum('ijk,jkl->li', params_basis_reoganized.real, ifft_b.real) + np.einsum('ijk,jkl->li', params_basis_reoganized.imag, ifft_b.imag)  
@@ -1099,7 +1104,7 @@ def reference_params_to_pos_slice(params_basis_reoganized, params_loop, nnz_k, g
     # print(pos_slice_einsum_real)
     # print(pos_slice_einsum_imag)
 
-    # assert np.linalg.norm(pos_slice - pos_slice_blas) < eps
+    assert np.linalg.norm(pos_slice - pos_slice_r) < eps
 
 
     if nnz_k.shape[0] > 0:
