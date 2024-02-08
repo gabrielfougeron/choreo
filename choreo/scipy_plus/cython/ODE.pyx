@@ -13,7 +13,6 @@ __all__ = [
 from choreo.scipy_plus.cython.eft_lib cimport TwoSum_incr
 
 cimport scipy.linalg.cython_blas
-cimport scipy.linalg.cython_lapack
 from libc.stdlib cimport malloc, free
 
 import numpy as np
