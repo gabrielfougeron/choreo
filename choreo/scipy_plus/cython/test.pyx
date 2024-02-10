@@ -1,5 +1,5 @@
 '''
-ODE.pyx : Defines ODE-related things I designed I feel ought to be in scipy ... but faster !
+test functions
 
 
 '''

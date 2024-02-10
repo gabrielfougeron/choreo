@@ -93,7 +93,7 @@ max_exp = 20
 # max_exp = 10
 
 all_args = {
-    "PR" :  [[2,2],[2,4],[3,3],[3,6]]                               ,
+    "PR" :  [[64,64]]                               ,
     "Q" :  [2 ** k for k in range(max_exp)]                                 ,
     "real_dtype": ["float64"]    ,
 }

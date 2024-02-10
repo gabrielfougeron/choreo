@@ -8,6 +8,9 @@ cimport scipy.linalg.cython_blas
 cimport blis.cy
 from libc.stdlib cimport abort, malloc, free
 
+cimport pyfftw
+
+
 cpdef void blis_matmul_contiguous(
     double[:,::1] a,
     double[:,::1] b,
@@ -98,7 +101,6 @@ cpdef void blas_matmul_real(
 
     free(res_complex)
 
-
 cpdef void blas_matmul_real_copy(
     double complex[:,::1] a ,
     double complex[:,::1] b ,
@@ -133,3 +135,84 @@ cpdef void blas_matmul_real_copy(
 
     free(a_double)
     free(b_double)
+
+
+
+# cpdef void create_memview(
+#     double [::1] buf,
+#     int m,
+#     int n,
+# # ) noexcept nogil:
+# ):
+# 
+#     print("toto")
+#     print(buf)
+# 
+#     cdef double[:,::1] view = <double[:m,:n:1]> &buf[0]
+# 
+#     print(view)
+# 
+
+
+cdef fused contiguous_double_memview:
+    double[::1]
+    double[:,::1]
+    double[:,:,::1]
+    double[:,:,:,::1]
+    double[:,:,:,:,::1]
+    double[:,:,:,:,:,::1]
+    double[:,:,:,:,:,:,::1]
+
+cdef inline void contiguous_buffer_as_memview(
+    contiguous_double_memview view  ,
+    Py_ssize_t *shape               ,
+    int ndim                        ,
+    double *buf                     ,
+) noexcept nogil:
+
+    cdef Py_ssize_t i
+
+    for i in range(ndim):
+        view.shape[i] = shape[i]
+        view.suboffsets[i] = -1
+
+    view.strides[ndim-1] = sizeof(double)
+    for i in range(ndim-2, 0, -1):
+        view.strides[i] = view.strides[i+1] * shape[i]
+
+    # view.view.buf = <char*> buf
+
+
+
+cpdef void create_memview(
+    double [::1] buf,
+    int m,
+    int n,
+# ) noexcept nogil:
+):
+
+    # print(buf[0], buf[1], buf[2], buf[3], buf[4], buf[5])
+
+    print(buf)
+    print(dir(buf))
+
+#     cdef double[:,::1] view
+#     cdef Py_ssize_t shape[2]
+#     shape[0] = m
+#     shape[1] = n
+# 
+#     contiguous_buffer_as_memview(view, shape, 2, &buf[0])
+
+
+
+    # view.data = <char*> &buf[0]
+# 
+#     print(view[1,0], buf[n])
+# 
+#     shape[0] = n
+#     shape[1] = m
+# 
+#     contiguous_buffer_as_memview(view, shape, 2, &buf[0])
+# 
+#     print(view[1,0], buf[m])
+
