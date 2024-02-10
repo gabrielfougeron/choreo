@@ -561,7 +561,7 @@ def AccumulateSegmGenToTargetSym(SegmGraph, nbody, geodim, nint_min, nsegm, body
 
             segm_gen_to_target[ib][iint] = GenToTargetSym
 
-    return segm_gen_to_target    
+    return segm_gen_to_target                        
 
 def FindAllBinarySegments(segm_gen_to_target, nbody, nsegm, nint_min, bodysegm, CrashOnIdentity, mass, BodyLoop):
 
@@ -609,28 +609,24 @@ def FindAllBinarySegments(segm_gen_to_target, nbody, nsegm, nint_min, bodysegm, 
                         
                     Identity_detected = True
 
-                AlreadyFound = False
+                isym = 0 # In case BinarySegm[bisegm]["SymList"] is empty
                 for isym, FoundSym in enumerate(BinarySegm[bisegm]["SymList"]):
                     
-                    AlreadyFound = Sym.IsSameRotAndTimeRev(FoundSym)
-                    if AlreadyFound:
+                    if Sym.IsSameRotAndTimeRev(FoundSym):
                         break
 
                     if (isegm == isegmp):
-                        
                         SymInv = Sym.Inverse()
-                        AlreadyFound = SymInv.IsSameRotAndTimeRev(FoundSym)
-                        if AlreadyFound:
+                        if SymInv.IsSameRotAndTimeRev(FoundSym):
                             break
-
-                if AlreadyFound:
-                    BinarySegm[bisegm]["SymCount"][isym] += 1
-                    BinarySegm[bisegm]["ProdMassSum"][isym] += mass[BodyLoop[ib]]*mass[BodyLoop[ibp]]
-
+                        
                 else:
                     BinarySegm[bisegm]["SymList"].append(Sym)
-                    BinarySegm[bisegm]["SymCount"].append(1)
-                    BinarySegm[bisegm]["ProdMassSum"].append(mass[BodyLoop[ib]]*mass[BodyLoop[ibp]])
+                    BinarySegm[bisegm]["SymCount"].append(0)
+                    BinarySegm[bisegm]["ProdMassSum"].append(0.)
+
+                BinarySegm[bisegm]["SymCount"][isym] += 1
+                BinarySegm[bisegm]["ProdMassSum"][isym] += mass[BodyLoop[ib]]*mass[BodyLoop[ibp]]
 
     return BinarySegm, Identity_detected
 
@@ -771,11 +767,11 @@ def reorganize_All_params_basis(All_params_basis):
     for il in range(nloop):
         
         params_basis = All_params_basis[il]
-        ncoeffs_min = len(params_basis)
+        ncoeff_min = len(params_basis)
         
         last_nparam = None
         nnz_k = []
-        for k in range(ncoeffs_min):
+        for k in range(ncoeff_min):
             
             nparam_now = params_basis[k].shape[2]
             
@@ -800,6 +796,7 @@ def reorganize_All_params_basis(All_params_basis):
             params_basis_reoganized[:,ik,:] = params_basis[k][:,0,:] + 1j*params_basis[k][:,1,:]
         
         all_params_basis_reoganized.append(params_basis_reoganized)
+
 
     return all_params_basis_reoganized, all_nnz_k
 
@@ -1101,6 +1098,38 @@ def reference_params_to_pos_slice(params_basis_reoganized, params_loop, nnz_k, g
 
     return pos_slice
 
+
+def Generating_to_interacting(SegmGraph, nbody, geodim, nsegm, intersegm_to_iint, intersegm_to_body, gensegm_to_iint, gensegm_to_body):
+    
+    AllSyms = []
+    
+    for isegm in range(nsegm):
+    
+        gensegm = (gensegm_to_body[isegm], gensegm_to_iint[isegm])
+        intersegm = (intersegm_to_body[isegm], intersegm_to_iint[isegm])
+        
+        path = networkx.shortest_path(SegmGraph, source = gensegm, target = intersegm)
+        
+        SourceToTargetSym = ActionSym.Identity(nbody, geodim)
+        
+        for iedge in range(len(path)-1):
+       
+            if (path[iedge] > path[iedge+1]):
+
+                edge = (path[iedge+1], path[iedge] )
+                Sym = SegmGraph.edges[edge]["SymList"][0].Inverse()
+
+            else:
+
+                edge = (path[iedge] , path[iedge+1])
+                Sym = SegmGraph.edges[edge]["SymList"][0]
+        
+            SourceToTargetSym = Sym.Compose(SourceToTargetSym)
+
+        AllSyms.append(SourceToTargetSym)
+        
+    return AllSyms
+
 def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, MomCons=False, n_grad_change=1., Sym_list=[], CrashOnIdentity=True, ForceMatrixChangevar = False, store_folder = ""):
     
     r"""
@@ -1261,20 +1290,22 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
     #     print()
     
     
-
-
-
-
-
+    
+    gensegm_to_all = AccumulateSegmGenToTargetSym(SegmGraph, nbody, geodim, nint_min, nsegm, bodysegm, gensegm_to_iint, gensegm_to_body)
+    GenToIntSyms = Generating_to_interacting(SegmGraph, nbody, geodim, nsegm, intersegm_to_iint, intersegm_to_body, gensegm_to_iint, gensegm_to_body)
 
 
 
     
-    segm_gen_to_interaction = AccumulateSegmGenToTargetSym(SegmGraph, nbody, geodim, nint_min, nsegm, bodysegm, intersegm_to_iint, intersegm_to_body)
+    intersegm_to_all = AccumulateSegmGenToTargetSym(SegmGraph, nbody, geodim, nint_min, nsegm, bodysegm, intersegm_to_iint, intersegm_to_body)
 
-    BinarySegm, Identity_detected = FindAllBinarySegments(segm_gen_to_interaction, nbody, nsegm, nint_min, bodysegm, CrashOnIdentity, mass, BodyLoop)
+    BinarySegm, Identity_detected = FindAllBinarySegments(intersegm_to_all, nbody, nsegm, nint_min, bodysegm, CrashOnIdentity, mass, BodyLoop)
 
     All_Id, count_tot, count_unique = CountSegmentBinaryInteractions(BinarySegm, nsegm)
+
+
+
+
 
 
 
@@ -1286,10 +1317,27 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
     # This could certainly be made more efficient
     BodyConstraints = AccumulateBodyConstraints(Sym_list, nbody, geodim)
     LoopGenConstraints = [BodyConstraints[ib]for ib in loopgen]
+    
+    
+    # for isegm in range(nsegm):
+    #     
+    #     print()
+    #     print(isegm)
+    #     print(gensegm_to_iint[isegm], gensegm_to_body[isegm])
+    #     print(intersegm_to_iint[isegm], intersegm_to_body[isegm])
+    #     print(GenToIntSyms[isegm])
+    #     print(gensegm_to_all[intersegm_to_body[isegm]][intersegm_to_iint[isegm]])
+    #     
+    #     
+    #     assert GenToIntSyms[isegm].IsSameRot(gensegm_to_all[intersegm_to_body[isegm]][intersegm_to_iint[isegm]])
+    #     assert GenToIntSyms[isegm].IsSameTimeRev(gensegm_to_all[intersegm_to_body[isegm]][intersegm_to_iint[isegm]])
+    
+    
+    
+    
+    
 
     All_params_basis = ComputeParamBasis_Loop(MomCons, nbody, nloop, loopgen, geodim, LoopGenConstraints)
-
-
 
     nint = math.lcm(2, nint_min) 
     ncoeffs = nint//2 + 1
@@ -1312,31 +1360,16 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
 
     AssertAllConstraintAreRespected(LoopGenConstraints, all_pos)
 
-    nparam_loop_sum = np.zeros((nloop),dtype=int)
-    nparam_loop_max = np.zeros((nloop),dtype=int)
-    ncoeff_min_loop = np.zeros((nloop),dtype=int)
-    nnz_loop = np.zeros((nloop),dtype=int)
-    
-    for il in range(nloop):
-        
-        ncoeff_min_loop[il] = len(All_params_basis[il])
-
-        for k in range(ncoeff_min_loop[il]):
-
-            nparam_loop_sum[il] += All_params_basis[il][k].shape[2]
-            nparam_loop_max[il] = max(nparam_loop_max[il], All_params_basis[il][k].shape[2])
-            nnz_loop[il] += np.count_nonzero(All_params_basis[il][k])
-
-
  
     all_params_basis_reoganized, all_nnz_k = reorganize_All_params_basis(All_params_basis)
 
-    ncoeff_min_loop_nnz = [all_nnz_k[il].shape[0] for il in range(nloop)]
+    ncoeff_min_loop = np.array([len(All_params_basis[il]) for il in range(nloop)], dtype=np.intp)
+    ncoeff_min_loop_nnz = np.array([all_nnz_k[il].shape[0] for il in range(nloop)], dtype=np.intp)
 
     
 
     # return
-    nint = 2 * nint_min
+    nint = 2 * nint_min * 7
     ncoeffs = nint // 2 + 1
     
     all_coeffs_simple_c = np.zeros((nloop, ncoeffs, geodim), dtype=np.complex128)
@@ -1344,6 +1377,8 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
     all_coeffs_b_c = np.zeros((nloop, ncoeffs, geodim), dtype=np.complex128)
     all_pos_slice_b = []
     all_pos_slice_a = []
+    
+    all_pos_b = np.zeros((nloop,nint,geodim),dtype=np.float64)
 
     # Parameters to all_pos through coeffs
     all_coeffs = np.zeros((nloop,ncoeffs,geodim,2), dtype = np.float64)
@@ -1362,8 +1397,6 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
         npr = (ncoeffs-1) //  ncoeff_min_loop[il]
         nperiods_loop = npr * ncoeff_min_loop_nnz[il]
 
-        # params_loop = np.random.random((nparam_per_period_loop, npr, ncoeff_min_loop_nnz[il]))
-        # params_loop = np.random.random((ncoeff_min_loop_nnz[il], nparam_per_period_loop, npr))
         params_loop = np.random.random((npr, ncoeff_min_loop_nnz[il], nparam_per_period_loop))
         
         all_params.append(params_loop)
@@ -1378,8 +1411,6 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
 
                 assert l == nnz_k[q]
                 
-                # all_coeffs[il, k, : ,:] = np.dot(NullSpace, params_loop[:, p, q])
-                # all_coeffs[il, k, : ,:] = np.dot(NullSpace, params_loop[q,:, p])
                 all_coeffs[il, k, : ,:] = np.dot(NullSpace, params_loop[p, q,:])
                 ip+=1
                 
@@ -1392,8 +1423,6 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
                 
                     k = nnz_k[i] + ncoeff_min_loop[il] * ipr
     
-                    # all_coeffs_simple_c[il, k, idim] = np.matmul(params_basis_reoganized[idim,i,:], params_loop[:, ipr, i])
-                    # all_coeffs_simple_c[il, k, idim] = np.matmul(params_basis_reoganized[idim,i,:], params_loop[i, :, ipr])
                     all_coeffs_simple_c[il, k, idim] = np.matmul(params_basis_reoganized[idim,i,:], params_loop[ipr, i, :])
         
         coeffs_reorganized = np.einsum('ijk,ljk->lji', params_basis_reoganized, params_loop)
@@ -1404,19 +1433,13 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
         
         
         params_basis_dense = np.zeros((geodim, ncoeff_min_loop[il], nparam_per_period_loop), dtype=np.complex128)
-        # params_loop_dense =  np.zeros((nparam_per_period_loop, npr, ncoeff_min_loop[il]), dtype=np.float64)
-        # params_loop_dense =  np.zeros((ncoeff_min_loop[il], nparam_per_period_loop, npr), dtype=np.float64)
         params_loop_dense =  np.zeros((npr, ncoeff_min_loop[il], nparam_per_period_loop), dtype=np.float64)
         
         for ik, k in enumerate(nnz_k):
             
             params_basis_dense[:, k, :] = params_basis_reoganized[:, ik, :]
-            # params_loop_dense[:, :, k] = params_loop[:, :, ik]
-            # params_loop_dense[k, :, :] = params_loop[ik, :, :]
             params_loop_dense[:,k, :] = params_loop[:, ik,:]
         
-        # all_coeffs_b_c[il,:(ncoeffs-1),:] = np.einsum('ijk,klj->lji', params_basis_dense, params_loop_dense).reshape(((ncoeffs-1), geodim))
-        # all_coeffs_b_c[il,:(ncoeffs-1),:] = np.einsum('ijk,jkl->lji', params_basis_dense, params_loop_dense).reshape(((ncoeffs-1), geodim))
         all_coeffs_b_c[il,:(ncoeffs-1),:] = np.einsum('ijk,ljk->lji', params_basis_dense, params_loop_dense).reshape(((ncoeffs-1), geodim))
         
         # Dense version with lots of zeros
@@ -1442,17 +1465,29 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
             pos_slice[:,idim] -= meanval[idim]
         
         all_pos_slice_b.append(pos_slice)
+        # 
+        # 
+        # print()
+        # print(params_loop.shape)
+        # print(pos_slice.shape)
         
+        # print(n_inter, (nint // nint_min -1 ) * loopnb[il] + 1)
         
         # Sparse version with fewer zeros
         
+        # print(nint*geodim)
+        # print(params_loop.shape)
         
         pos_slice = reference_params_to_pos_slice(params_basis_reoganized, params_loop, nnz_k, geodim, nint, ncoeff_min_loop[il])
 
+        # print(pos_slice.shape)
         
         all_pos_slice_a.append(pos_slice)
         
-        
+    
+    # return
+    
+    
     # Without lists now.
 
     params_buf, params_shapes, params_shifts = BundleListOfArrays(all_params)
@@ -1463,9 +1498,9 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
     # print(params_basis_shapes)
     # print(params_basis_shifts)
       
-    if All_Id:  
-        for il in range(1,nloop):
-            assert (params_basis_shapes[il,:] == params_basis_shapes[0,:]).all()
+    # if All_Id:  
+    #     for il in range(1,nloop):
+    #         assert (params_basis_shapes[il,:] == params_basis_shapes[0,:]).all()
         
         
         
@@ -1488,6 +1523,94 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
         assert np.linalg.norm(all_pos_slice_b[il] - pos_slice) < 1e-14
         
         
+
+    for il in range(nloop):
+        
+        ib = loopgen[il] # because only loops have been computed in all_pos so far.
+        
+        for iint in range(nint_min):
+            
+            isegm = bodysegm[ib, iint]
+            
+            Sym = gensegm_to_all[ib][iint]
+            
+            ib_source = gensegm_to_body[isegm]
+            iint_source = gensegm_to_iint[isegm]
+            
+            il_source = BodyLoop[ib_source]
+            assert il_source == il
+            
+
+            segm_size = nint // nint_min
+            
+
+
+            # print(iint_source, semg_size)
+            
+
+            ibeg_source = (iint_source* (nint // nint_min) + nint) % nint             
+            iend_source = ibeg_source + segm_size
+
+            assert iend_source <= nint
+
+            pos_source_segm = all_pos[il,ibeg_source:iend_source,:]
+            pos_target_segm = np.empty((segm_size,geodim),dtype=np.float64)
+            
+            # 
+#             print()
+# 
+#             print(iint_source)
+#             print(iint)
+            # print(pos_slice_source.shape)
+            # print(iint_source*semg_size, (iint_source+1)*semg_size)
+            # print(pos_source_segm.shape)
+            # print(semg_size,geodim)
+            # print(Sym.SpaceRot.shape)
+            # print(Sym.TimeRev)
+            
+            print()
+            
+            for iint_s in range(ibeg_source, iend_source):
+                
+                tnum, tden = Sym.ApplyTInv(iint_s, nint)
+                
+                assert nint % tden == 0
+                iint_t = (tnum * (nint // tden) + nint) % nint
+
+                xs = np.matmul(Sym.SpaceRot, all_pos[il, iint_s,:])
+                xt = all_pos[il, iint_t,:]
+                dx = xs - xt
+                
+                # print()
+                
+                # print(Sym.TimeRev)
+                # print(iint_s, iint_t, np.linalg.norm(np.asarray(Sym.SpaceRot) - np.asarray(Sym.SpaceRot.T)) < eps)
+                # print(np.asarray(Sym.SpaceRot))
+                # print(xs)
+                # print(xt)
+                # print(dx)
+                
+                
+                                
+                # assert (np.linalg.norm(dx)) < eps
+            
+            
+            # Sym.TransformSegment(in_segm=pos_source_segm, out=pos_target_segm)
+            
+
+#             ibeg = iint*(segm_size-1)
+#             iend = ibeg + segm_size
+#             
+#             # print()
+#             print(all_pos[il,ibeg:iend,:])
+#             print(pos_target_segm)
+#             print(all_pos[il,ibeg:iend,:] - pos_target_segm)
+# 
+#             # assert np.linalg.norm(all_pos[il,ibeg:iend,:] - pos_target_segm) < eps
+#             print(np.linalg.norm(all_pos[il,ibeg:iend,:] - pos_target_segm))
+  
+                
+                
         
         
     AssertAllConstraintAreRespected(LoopGenConstraints, all_pos)
@@ -1532,7 +1655,7 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
 
 
 
-    return
+    # return
 
     dirname = os.path.split(store_folder)[0]
     symname = os.path.split(dirname)[1]
