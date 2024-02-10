@@ -332,10 +332,46 @@ cdef class ActionSym():
     cpdef (long, long) ApplyTSegm(ActionSym self, long tnum, long tden):
 
         if (self.TimeRev == -1): 
+            tnum = ((tnum+tden-1)%tden)
+
+        return self.ApplyT(tnum, tden)
+
+
+    @cython.final
+    @cython.cdivision(True)
+    cpdef (long, long) ApplyTInv(ActionSym self, long tnum, long tden):
+
+        cdef long num = self.TimeRev * tnum * self.TimeShiftDen + self.TimeShiftNum * tden
+        cdef long den = tden * self.TimeShiftDen
+        
+        num = ((num % den) + den) % den
+        cdef long g = gcd(num,den)
+        num = num // g
+        den = den // g
+
+        return  num, den
+# 
+    @cython.final
+    @cython.cdivision(True)
+    cpdef (long, long) ApplyTInvSegm(ActionSym self, long tnum, long tden):
+
+        if (self.TimeRev == -1): 
             tnum = ((tnum+1)%tden)
 
         return self.ApplyT(tnum, tden)
 
+    @cython.final
+    def TransformSegment(ActionSym self, in_segm, out):
+
+        np.matmul(in_segm, self.SpaceRot.T,out=out)
+        out = out[::-1,:].copy()
+
+
+
+#         if self.TimeRev == 1:
+#             np.matmul(in_segm, self.SpaceRot.T,out=out)
+#         else:
+#             np.matmul(in_segm[::-1,:], self.SpaceRot.T,out=out)
 
 
 cdef double one_double = 1.
@@ -430,7 +466,7 @@ cpdef void partial_fft_to_pos_slice(
     if ncoeff_min_loop_nnz > 0:
 
         fac = 1./(npr * ncoeff_min_loop)
-        wo =  cexp(cminustwopi/nint)
+        wo =  cexp(cminustwopi / nint)
         winter = 1.
 
         for m in range(n_inter):
@@ -458,7 +494,6 @@ cpdef void partial_fft_to_pos_slice(
             winter *= wo            
 
     # Computes a.real * b.real.T + a.imag * b.imag.T using clever memory arrangement and a single gemm call
-
     scipy.linalg.cython_blas.dgemm(transt, transn, &geodim, &n_inter, &ncom, &one_double, params_basis_reoganized_r, &ncom, ifft_b_r, &ncom, &zero_double, &pos_slice[0,0], &geodim)
 
     # Taking care of the mean value

@@ -56,7 +56,14 @@ elif platform.system() == "Darwin": # MacOS
     cython_safemath_needed.append(False)
 
 
+
 elif platform.system() == "Linux":
+    
+    ignore_warnings_args = [
+        "-Wno-unused-variable",
+        "-Wno-unused-function",
+        "-Wno-incompatible-pointer-types-discards-qualifiers",
+        ] 
 
     if ("PYODIDE" in os.environ): # Building for Pyodide
 
@@ -83,8 +90,8 @@ elif platform.system() == "Linux":
         # extra_compile_args_safe = ["-O0", "-fopenmp"]
         # extra_link_args = ["-fopenmp"]
         
-        extra_compile_args_std = ["-Ofast","-march=native", "-fopenmp", "-flto"]
-        extra_compile_args_safe = ["-O3", "-fopenmp", "-flto"]
+        extra_compile_args_std = ["-Ofast", "-march=native", "-fopenmp", "-flto", *ignore_warnings_args]
+        extra_compile_args_safe = ["-O3", "-fopenmp", "-flto", "-Wno-unused-variable"]
         extra_link_args = ["-fopenmp", "-flto"]
 
         # extra_compile_args_std = ["-Ofast","-march=native", "-fopenmp"]

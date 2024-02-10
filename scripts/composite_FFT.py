@@ -1134,46 +1134,6 @@ print(np.linalg.norm(all_pos_direct[::ncoeffs_min] - all_pos_slice))
 
 
 
-print()        
-print("="*80)
-print()
-
-# # IRFFT via ICFFT of double length with decomposable nint and real transforms
-
-
-
-ncoeffs_min = 1
-nparam_per_period = 1
-nperiods = 37
-nint = 2 * (ncoeffs_min * nperiods)
-
-All_params_basis = np.random.random((ncoeffs_min, nparam_per_period)) + 1j * np.random.random((ncoeffs_min, nparam_per_period))
-all_params = np.random.random((nparam_per_period, nperiods))
- 
-all_coeffs = np.zeros((nint//2+1), dtype=np.complex128)
-all_coeffs[:nint//2] = np.dot(All_params_basis, all_params).reshape(-1)
-
-all_pos_direct = scipy.fft.irfft(all_coeffs)
-assert nint == all_pos_direct.shape[0]
-
-
-ifft_f = scipy.fft.ifft(All_params_basis, axis=0)
-
-meanval = -np.dot(All_params_basis[0,:].real, all_params[:,0]) / nint
-# All parameters are doubled here.
-# ifft_g  = scipy.fft.ihfft(all_params, axis=1, n=2*nperiods) # identical but ihfft is less often available in fft packages
-# ifft_g  = np.conjugate(scipy.fft.rfft(all_params, axis=1, n=2*nperiods))/(2*nperiods)
-# ifft_fg = np.matmul(ifft_f[0,:], ifft_g).real
-
-
-ifft_g  = scipy.fft.rfft(all_params, axis=1, n=2*nperiods)/(nperiods)
-ifft_fg = np.matmul(ifft_f[0,:].real, ifft_g.real) + np.matmul(ifft_f[0,:].imag, ifft_g.imag)
-
-all_pos = meanval + ifft_fg
-
-print(np.linalg.norm(all_pos_direct[:(nperiods+1):ncoeffs_min] - all_pos))
-
-
 
 print()        
 print("="*80)
