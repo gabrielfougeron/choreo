@@ -315,7 +315,6 @@ cdef class ActionSym():
 
     @cython.final
     @cython.cdivision(True)
-    # cpdef (long, long) ApplyT(ActionSym self, long tnum, long tden):
     cpdef (long, long) ApplyTInv(ActionSym self, long tnum, long tden):
 
         cdef long num = self.TimeRev * (tnum * self.TimeShiftDen - self.TimeShiftNum * tden)
@@ -330,20 +329,16 @@ cdef class ActionSym():
 
     @cython.final
     @cython.cdivision(True)
-    # cpdef (long, long) ApplyTSegm(ActionSym self, long tnum, long tden):
     cpdef (long, long) ApplyTInvSegm(ActionSym self, long tnum, long tden):
 
         if (self.TimeRev == -1): 
-            # tnum = ((tnum+tden-1)%tden)
             tnum = ((tnum+1)%tden)
 
-        # return self.ApplyT(tnum, tden)
         return self.ApplyTInv(tnum, tden)
 
 
     @cython.final
     @cython.cdivision(True)
-    # cpdef (long, long) ApplyTInv(ActionSym self, long tnum, long tden):
     cpdef (long, long) ApplyT(ActionSym self, long tnum, long tden):
 
         cdef long num = self.TimeRev * tnum * self.TimeShiftDen + self.TimeShiftNum * tden
@@ -356,40 +351,23 @@ cdef class ActionSym():
 
         return  num, den
 
-
-
-
-
     @cython.final
     @cython.cdivision(True)
-    # cpdef (long, long) ApplyTInvSegm(ActionSym self, long tnum, long tden):
     cpdef (long, long) ApplyTSegm(ActionSym self, long tnum, long tden):
 
         if (self.TimeRev == -1): 
-            # tnum = ((tnum+tden-1)%tden)
             tnum = ((tnum+1)%tden)
 
-        # return self.ApplyTInv(tnum, tden)
         return self.ApplyT(tnum, tden)
 
 
-
-
-
-
-
+    # THIS IS NOT A PERFORMANCE-ORIENTED METHOD
     @cython.final
     def TransformSegment(ActionSym self, in_segm, out):
-# 
-#         np.matmul(in_segm, self.SpaceRot.T,out=out)
-#         # out = out[::-1,:].copy()
-# 
-# 
 
-        if self.TimeRev == 1:
-            np.matmul(in_segm, self.SpaceRot.T,out=out)
-        else:
-            np.matmul(in_segm[::-1,:], self.SpaceRot.T,out=out)
+        np.matmul(in_segm, self.SpaceRot.T,out=out)
+        if self.TimeRev == -1:
+            out[:,:] = out[::-1,:]
 
 
 cdef double one_double = 1.
@@ -530,3 +508,59 @@ cpdef void partial_fft_to_pos_slice(
                     pos_slice[j,i] += meanval[i]
 
             free(meanval)
+
+# @cython.cdivision(True)
+# cpdef void Populate_allsegmpos_cy(
+#     double[:,:,::1] all_pos         ,
+#     double[:,:,::1] allsegmpos      ,
+#     double[:,:,::1] GenSpaceRot     ,
+#     long[::1]       GenTimeRev      ,
+#     long[::1]       gensegm_to_body ,
+#     long[::1]       gensegm_to_iint ,
+#     long[::1]       BodyLoop        ,
+# ) noexcept nogil:
+#     
+#     cdef int nsegm = allsegmpos.shape[0]
+#     cdef int segm_size = allsegmpos.shape[1]
+#     cdef int nint = all_pos.shape[1]
+# 
+#     cdef Py_ssize_t isegm, ib, iint, ibeg, iend
+# 
+#     bint tmp_alloc = False
+# 
+#     for isegm in range(nsegm):
+# 
+#         ib = gensegm_to_body[isegm]
+#         iint = gensegm_to_iint[isegm]
+#         il = BodyLoop[ib]
+#     
+#         ibeg = iint * segm_size         
+#         iend = ibeg + segm_size
+# 
+#         if GenTimeRev[isegm] > 0:
+# 
+#             np.matmul(
+#                 all_pos[il,ibeg:iend,:]     ,
+#                 GenSpaceRot[isegm,:,:].T    ,
+#                 out=allsegmpos[isegm,:,:]   ,
+#             )
+# 
+# 
+#     double[:,::1] a,
+#     double[:,::1] b,
+#     double[:,::1] c
+# ) noexcept nogil:
+# 
+#     cdef int n = a.shape[0]
+#     cdef int k = a.shape[1]
+#     cdef int m = b.shape[0]
+# 
+#     scipy.linalg.cython_blas.dgemm(transt, transn, &m, &n, &k, &one_double, &b[0,0], &k, &a[0,0], &k, &zero_double, &c[0,0], &m)
+# 
+
+
+        
+#         else:
+# 
+#         if GenTimeRev[isegm] < 0:
+#             allsegmpos[isegm,:,:] = allsegmpos[isegm,::-1,:]
