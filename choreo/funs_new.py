@@ -989,7 +989,7 @@ def CountSegmentBinaryInteractions(BinarySegm, nsegm):
     
     return All_Id, count_tot, count_unique
 
-def AssertAllConstraintAreRespected(LoopGenConstraints, all_pos, eps=1e-12):
+def AssertAllBodyConstraintAreRespected(LoopGenConstraints, all_pos, eps=1e-12):
     # Make sure loop constraints are respected
 
     nint = all_pos.shape[1]
@@ -1007,15 +1007,83 @@ def AssertAllConstraintAreRespected(LoopGenConstraints, all_pos, eps=1e-12):
                 tnum, tden = Sym.ApplyT(iint, nint)
                 jint = tnum * nint // tden
                 
-                # err = np.linalg.norm(all_pos[il,iint,:] - np.matmul(Sym.SpaceRot, all_pos[il,jint,:]))
                 err = np.linalg.norm(all_pos[il,jint,:] - np.matmul(Sym.SpaceRot, all_pos[il,iint,:]))
 
                 assert (err < eps)
                 
+
+def AssertAllSegmGenConstraintsAreRespected(gensegm_to_all, nint_min, bodysegm, loopgen, gensegm_to_body, gensegm_to_iint , BodyLoop, all_pos, eps=1e-12):
+
+    nloop = all_pos.shape[0]
+    nint = all_pos.shape[1]
+    geodim = all_pos.shape[2]
+
+    for il in range(nloop):
+        
+        ib = loopgen[il] # because only loops have been computed in all_pos so far.
+        
+        for iint in range(nint_min):
+            
+            isegm = bodysegm[ib, iint]
+            
+            Sym = gensegm_to_all[ib][iint]
+            
+            ib_source = gensegm_to_body[isegm]
+            iint_source = gensegm_to_iint[isegm]
+            
+            il_source = BodyLoop[ib_source]
+            assert il_source == il
+            
+            segm_size = nint // nint_min
+
+            ibeg_source = (iint_source* (nint // nint_min) + nint) % nint             
+            iend_source = ibeg_source + segm_size
+            assert iend_source <= nint
+            
+            # One position at a time
+            for iint_s in range(ibeg_source, iend_source):
+                
+                tnum, tden = Sym.ApplyT(iint_s, nint)
+                
+                assert nint % tden == 0
+                iint_t = (tnum * (nint // tden) + nint) % nint
+
+                xs = np.matmul(Sym.SpaceRot, all_pos[il, iint_s,:])
+                xt = all_pos[il, iint_t,:]
+                dx = xs - xt
+
+                assert (np.linalg.norm(dx)) < eps
+                
+            tnum_target, tden_target = Sym.ApplyTSegm(iint_source, nint_min)
+            assert nint_min % tden_target == 0
+            iint_target = (tnum_target * (nint_min // tden_target) + nint_min) % nint_min   
+                
+            ibeg_target = (iint_target* (nint // nint_min) + nint) % nint             
+            iend_target = ibeg_target + segm_size
+            
+            # IMPORTANT !!!!
+            if Sym.TimeRev == -1:
+                ibeg_target += 1
+                iend_target += 1
+            
+            pos_source_segm = all_pos[il,ibeg_source:iend_source,:]
+            pos_target_segm = np.empty((segm_size,geodim),dtype=np.float64)
+
+            Sym.TransformSegment(pos_source_segm, pos_target_segm)
+
+            if iend_target <= nint:
+               
+                assert (np.linalg.norm(pos_target_segm - all_pos[il, ibeg_target:iend_target, :])) < eps
+                
+            else:
+                
+                assert iend_target == nint+1
+                assert (np.linalg.norm(pos_target_segm[:segm_size-1,:] - all_pos[il, ibeg_target:iend_target-1, :])) < eps
+                assert (np.linalg.norm(pos_target_segm[segm_size-1,:] - all_pos[il, 0, :])) < eps
                 
                 
-                
-                
+
+
 
 # def ComputePeriodicitydefault(SegmGraph, bodysegm, nint_min, xo, xf):
 #     
@@ -1364,7 +1432,7 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
     all_coeffs_c = all_coeffs.view(dtype=np.complex128)[...,0]
     all_pos = scipy.fft.irfft(all_coeffs_c, axis=1)
 
-    AssertAllConstraintAreRespected(LoopGenConstraints, all_pos)
+    AssertAllBodyConstraintAreRespected(LoopGenConstraints, all_pos)
 
  
     all_params_basis_reoganized, all_nnz_k = reorganize_All_params_basis(All_params_basis)
@@ -1529,97 +1597,9 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
         assert np.linalg.norm(all_pos_slice_b[il] - pos_slice) < 1e-14
         
         
+    AssertAllSegmGenConstraintsAreRespected(gensegm_to_all, nint_min, bodysegm, loopgen, gensegm_to_body, gensegm_to_iint , BodyLoop, all_pos)
 
-    for il in range(nloop):
-        
-        ib = loopgen[il] # because only loops have been computed in all_pos so far.
-        
-        for iint in range(nint_min):
-            
-            isegm = bodysegm[ib, iint]
-            
-            Sym = gensegm_to_all[ib][iint]
-            
-            ib_source = gensegm_to_body[isegm]
-            iint_source = gensegm_to_iint[isegm]
-            
-            il_source = BodyLoop[ib_source]
-            assert il_source == il
-            
-
-            segm_size = nint // nint_min
-            
-
-
-            # print(iint_source, semg_size)
-            
-
-            ibeg_source = (iint_source* (nint // nint_min) + nint) % nint             
-            iend_source = ibeg_source + segm_size
-
-            assert iend_source <= nint
-
-            pos_source_segm = all_pos[il,ibeg_source:iend_source,:]
-            pos_target_segm = np.empty((segm_size,geodim),dtype=np.float64)
-            
-            # 
-#             print()
-# 
-#             print(iint_source)
-#             print(iint)
-            # print(pos_slice_source.shape)
-            # print(iint_source*semg_size, (iint_source+1)*semg_size)
-            # print(pos_source_segm.shape)
-            # print(semg_size,geodim)
-            # print(Sym.SpaceRot.shape)
-            # print(Sym.TimeRev)
-            
-            print()
-            
-            for iint_s in range(ibeg_source, iend_source):
-                
-                tnum, tden = Sym.ApplyT(iint_s, nint)
-                
-                assert nint % tden == 0
-                iint_t = (tnum * (nint // tden) + nint) % nint
-
-                xs = np.matmul(Sym.SpaceRot, all_pos[il, iint_s,:])
-                xt = all_pos[il, iint_t,:]
-                dx = xs - xt
-                
-                # print()
-                
-                # print(Sym.TimeRev)
-                # print(iint_s, iint_t, np.linalg.norm(np.asarray(Sym.SpaceRot) - np.asarray(Sym.SpaceRot.T)) < eps)
-                # print(np.asarray(Sym.SpaceRot))
-                # print(xs)
-                # print(xt)
-                # print(dx)
-                
-                
-                                
-                assert (np.linalg.norm(dx)) < eps
-            
-            
-            # Sym.TransformSegment(in_segm=pos_source_segm, out=pos_target_segm)
-            
-
-#             ibeg = iint*(segm_size-1)
-#             iend = ibeg + segm_size
-#             
-#             # print()
-#             print(all_pos[il,ibeg:iend,:])
-#             print(pos_target_segm)
-#             print(all_pos[il,ibeg:iend,:] - pos_target_segm)
-# 
-#             # assert np.linalg.norm(all_pos[il,ibeg:iend,:] - pos_target_segm) < eps
-#             print(np.linalg.norm(all_pos[il,ibeg:iend,:] - pos_target_segm))
-  
-                
-                
-        
-        
-    AssertAllConstraintAreRespected(LoopGenConstraints, all_pos)
+    AssertAllBodyConstraintAreRespected(LoopGenConstraints, all_pos)
 
 
    

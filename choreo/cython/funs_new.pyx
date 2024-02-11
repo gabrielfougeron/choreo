@@ -186,7 +186,6 @@ cdef class ActionSym():
             ComposeBodyPerm[ib] = B.BodyPerm[A.BodyPerm[ib]]
 
         cdef long trev = B.TimeRev * A.TimeRev
-        # cdef long num = A.TimeRev * B.TimeShiftNum * A.TimeShiftDen + A.TimeShiftNum * B.TimeShiftDen
         cdef long num = B.TimeRev * A.TimeShiftNum * B.TimeShiftDen + B.TimeShiftNum * A.TimeShiftDen
         cdef long den = A.TimeShiftDen * B.TimeShiftDen
 
@@ -381,16 +380,16 @@ cdef class ActionSym():
 
     @cython.final
     def TransformSegment(ActionSym self, in_segm, out):
+# 
+#         np.matmul(in_segm, self.SpaceRot.T,out=out)
+#         # out = out[::-1,:].copy()
+# 
+# 
 
-        np.matmul(in_segm, self.SpaceRot.T,out=out)
-        out = out[::-1,:].copy()
-
-
-
-#         if self.TimeRev == 1:
-#             np.matmul(in_segm, self.SpaceRot.T,out=out)
-#         else:
-#             np.matmul(in_segm[::-1,:], self.SpaceRot.T,out=out)
+        if self.TimeRev == 1:
+            np.matmul(in_segm, self.SpaceRot.T,out=out)
+        else:
+            np.matmul(in_segm[::-1,:], self.SpaceRot.T,out=out)
 
 
 cdef double one_double = 1.
