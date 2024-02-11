@@ -186,7 +186,8 @@ cdef class ActionSym():
             ComposeBodyPerm[ib] = B.BodyPerm[A.BodyPerm[ib]]
 
         cdef long trev = B.TimeRev * A.TimeRev
-        cdef long num = A.TimeRev * B.TimeShiftNum * A.TimeShiftDen + A.TimeShiftNum * B.TimeShiftDen
+        # cdef long num = A.TimeRev * B.TimeShiftNum * A.TimeShiftDen + A.TimeShiftNum * B.TimeShiftDen
+        cdef long num = B.TimeRev * A.TimeShiftNum * B.TimeShiftDen + B.TimeShiftNum * A.TimeShiftDen
         cdef long den = A.TimeShiftDen * B.TimeShiftDen
 
         cdef long g = gcd(num,den)
@@ -315,7 +316,8 @@ cdef class ActionSym():
 
     @cython.final
     @cython.cdivision(True)
-    cpdef (long, long) ApplyT(ActionSym self, long tnum, long tden):
+    # cpdef (long, long) ApplyT(ActionSym self, long tnum, long tden):
+    cpdef (long, long) ApplyTInv(ActionSym self, long tnum, long tden):
 
         cdef long num = self.TimeRev * (tnum * self.TimeShiftDen - self.TimeShiftNum * tden)
         cdef long den = tden * self.TimeShiftDen
@@ -329,17 +331,21 @@ cdef class ActionSym():
 
     @cython.final
     @cython.cdivision(True)
-    cpdef (long, long) ApplyTSegm(ActionSym self, long tnum, long tden):
+    # cpdef (long, long) ApplyTSegm(ActionSym self, long tnum, long tden):
+    cpdef (long, long) ApplyTInvSegm(ActionSym self, long tnum, long tden):
 
         if (self.TimeRev == -1): 
-            tnum = ((tnum+tden-1)%tden)
+            # tnum = ((tnum+tden-1)%tden)
+            tnum = ((tnum+1)%tden)
 
-        return self.ApplyT(tnum, tden)
+        # return self.ApplyT(tnum, tden)
+        return self.ApplyTInv(tnum, tden)
 
 
     @cython.final
     @cython.cdivision(True)
-    cpdef (long, long) ApplyTInv(ActionSym self, long tnum, long tden):
+    # cpdef (long, long) ApplyTInv(ActionSym self, long tnum, long tden):
+    cpdef (long, long) ApplyT(ActionSym self, long tnum, long tden):
 
         cdef long num = self.TimeRev * tnum * self.TimeShiftDen + self.TimeShiftNum * tden
         cdef long den = tden * self.TimeShiftDen
@@ -350,15 +356,28 @@ cdef class ActionSym():
         den = den // g
 
         return  num, den
-# 
+
+
+
+
+
     @cython.final
     @cython.cdivision(True)
-    cpdef (long, long) ApplyTInvSegm(ActionSym self, long tnum, long tden):
+    # cpdef (long, long) ApplyTInvSegm(ActionSym self, long tnum, long tden):
+    cpdef (long, long) ApplyTSegm(ActionSym self, long tnum, long tden):
 
         if (self.TimeRev == -1): 
+            # tnum = ((tnum+tden-1)%tden)
             tnum = ((tnum+1)%tden)
 
+        # return self.ApplyTInv(tnum, tden)
         return self.ApplyT(tnum, tden)
+
+
+
+
+
+
 
     @cython.final
     def TransformSegment(ActionSym self, in_segm, out):

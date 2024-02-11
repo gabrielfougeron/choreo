@@ -1007,9 +1007,15 @@ def AssertAllConstraintAreRespected(LoopGenConstraints, all_pos, eps=1e-12):
                 tnum, tden = Sym.ApplyT(iint, nint)
                 jint = tnum * nint // tden
                 
-                err = np.linalg.norm(all_pos[il,iint,:] - np.matmul(Sym.SpaceRot, all_pos[il,jint,:]))
+                # err = np.linalg.norm(all_pos[il,iint,:] - np.matmul(Sym.SpaceRot, all_pos[il,jint,:]))
+                err = np.linalg.norm(all_pos[il,jint,:] - np.matmul(Sym.SpaceRot, all_pos[il,iint,:]))
 
                 assert (err < eps)
+                
+                
+                
+                
+                
 
 # def ComputePeriodicitydefault(SegmGraph, bodysegm, nint_min, xo, xf):
 #     
@@ -1572,7 +1578,7 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
             
             for iint_s in range(ibeg_source, iend_source):
                 
-                tnum, tden = Sym.ApplyTInv(iint_s, nint)
+                tnum, tden = Sym.ApplyT(iint_s, nint)
                 
                 assert nint % tden == 0
                 iint_t = (tnum * (nint // tden) + nint) % nint
@@ -1592,7 +1598,7 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
                 
                 
                                 
-                # assert (np.linalg.norm(dx)) < eps
+                assert (np.linalg.norm(dx)) < eps
             
             
             # Sym.TransformSegment(in_segm=pos_source_segm, out=pos_target_segm)
@@ -1655,7 +1661,7 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
 
 
 
-    # return
+    return
 
     dirname = os.path.split(store_folder)[0]
     symname = os.path.split(dirname)[1]
