@@ -152,6 +152,15 @@ cpdef void blas_matmul_real_copy(
 # 
 #     print(view)
 # 
+cdef void create_memview(
+    double *buf,
+    int n,
+# ) noexcept nogil:
+):
+
+    cdef double[::1] view = <double[:n:1]> buf
+
+
 
 
 cdef fused contiguous_double_memview:
@@ -183,36 +192,4 @@ cdef inline void contiguous_buffer_as_memview(
     # view.view.buf = <char*> buf
 
 
-
-cpdef void create_memview(
-    double [::1] buf,
-    int m,
-    int n,
-# ) noexcept nogil:
-):
-
-    # print(buf[0], buf[1], buf[2], buf[3], buf[4], buf[5])
-
-    print(buf)
-    print(dir(buf))
-
-#     cdef double[:,::1] view
-#     cdef Py_ssize_t shape[2]
-#     shape[0] = m
-#     shape[1] = n
-# 
-#     contiguous_buffer_as_memview(view, shape, 2, &buf[0])
-
-
-
-    # view.data = <char*> &buf[0]
-# 
-#     print(view[1,0], buf[n])
-# 
-#     shape[0] = n
-#     shape[1] = m
-# 
-#     contiguous_buffer_as_memview(view, shape, 2, &buf[0])
-# 
-#     print(view[1,0], buf[m])
 

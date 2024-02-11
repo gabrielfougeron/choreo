@@ -13,6 +13,12 @@ Benchmark of FFT implementations available as scipy backends
 import os
 import sys
 
+os.environ['OPENBLAS_NUM_THREADS'] = '1'
+os.environ['NUMEXPR_NUM_THREADS'] = '1'
+os.environ['MKL_NUM_THREADS'] = '1'
+os.environ['OMP_NUM_THREADS'] = '1'
+os.environ['TBB_NUM_THREADS'] = '1'
+
 try:
     __PROJECT_ROOT__ = os.path.abspath(os.path.join(os.path.dirname(__file__),os.pardir,os.pardir))
 
@@ -113,10 +119,10 @@ all_args = {
 all_funs = [
     fft     ,
     rfft    ,
-    dct_I   ,
-    dst_I   ,
-    dct_III ,
-    dst_III ,
+    # dct_I   ,
+    # dst_I   ,
+    # dct_III ,
+    # dst_III ,
 ]
 
 n_repeat = 10

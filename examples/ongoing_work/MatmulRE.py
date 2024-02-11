@@ -54,7 +54,7 @@ import pyquickbench
 if ("--no-show" in sys.argv):
     plt.show = (lambda : None)
 
-timings_folder = os.path.join(__PROJECT_ROOT__,'examples','generated_files_time_consuming')
+timings_folder = os.path.join(__PROJECT_ROOT__,'scripts','time_tests')
 
 if not(os.path.isdir(timings_folder)):
     os.makedirs(timings_folder)
