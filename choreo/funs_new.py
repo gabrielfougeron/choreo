@@ -22,6 +22,7 @@ from matplotlib import colormaps
 import choreo.scipy_plus
 
 from choreo.cython.funs_new import ActionSym, partial_fft_to_pos_slice
+# from choreo.cython.funs_new import Populate_allsegmpos_cy
 
 
 def ContainsDoubleEdges(SegmGraph):
@@ -559,6 +560,10 @@ def AccumulateSegmGenToTargetSym(SegmGraph, nbody, geodim, nint_min, nsegm, body
 
                 GenToTargetSym = Sym.Compose(GenToTargetSym)
 
+            tnum_target, tden_target = GenToTargetSym.ApplyTSegm(segm_to_iint[isegm], nint_min)
+            assert nint_min % tden_target == 0
+            assert iint == (tnum_target * (nint_min // tden_target) + nint_min) % nint_min  
+
             segm_gen_to_target[ib][iint] = GenToTargetSym
 
     return segm_gen_to_target                        
@@ -797,7 +802,6 @@ def reorganize_All_params_basis(All_params_basis):
         
         all_params_basis_reoganized.append(params_basis_reoganized)
 
-
     return all_params_basis_reoganized, all_nnz_k
 
 def ExploreGlobalShifts_BuildSegmGraph(geodim, nbody, nloop, loopnb, Targets, nint_min, Sym_list):
@@ -1011,7 +1015,6 @@ def AssertAllBodyConstraintAreRespected(LoopGenConstraints, all_pos, eps=1e-12):
 
                 assert (err < eps)
                 
-
 def AssertAllSegmGenConstraintsAreRespected(gensegm_to_all, nint_min, bodysegm, loopgen, gensegm_to_body, gensegm_to_iint , BodyLoop, all_pos, eps=1e-12):
 
     nloop = all_pos.shape[0]
@@ -1036,7 +1039,7 @@ def AssertAllSegmGenConstraintsAreRespected(gensegm_to_all, nint_min, bodysegm, 
             
             segm_size = nint // nint_min
 
-            ibeg_source = (iint_source* (nint // nint_min) + nint) % nint             
+            ibeg_source = iint_source * segm_size          
             iend_source = ibeg_source + segm_size
             assert iend_source <= nint
             
@@ -1054,11 +1057,12 @@ def AssertAllSegmGenConstraintsAreRespected(gensegm_to_all, nint_min, bodysegm, 
 
                 assert (np.linalg.norm(dx)) < eps
                 
+            # All positions at once
             tnum_target, tden_target = Sym.ApplyTSegm(iint_source, nint_min)
             assert nint_min % tden_target == 0
             iint_target = (tnum_target * (nint_min // tden_target) + nint_min) % nint_min   
                 
-            ibeg_target = (iint_target* (nint // nint_min) + nint) % nint             
+            ibeg_target = iint_target * segm_size         
             iend_target = ibeg_target + segm_size
             
             # IMPORTANT !!!!
@@ -1203,6 +1207,33 @@ def Generating_to_interacting(SegmGraph, nbody, geodim, nsegm, intersegm_to_iint
         AllSyms.append(SourceToTargetSym)
         
     return AllSyms
+
+def Populate_allsegmpos(all_pos, allsegmpos, GenSpaceRot, GenTimeRev, gensegm_to_body, gensegm_to_iint, BodyLoop):
+    
+    nsegm = allsegmpos.shape[0]
+    segm_size = allsegmpos.shape[1]
+    nint = all_pos.shape[1]
+
+    for isegm in range(nsegm):
+
+        ib = gensegm_to_body[isegm]
+        iint = gensegm_to_iint[isegm]
+        il = BodyLoop[ib]
+    
+        ibeg = iint * segm_size         
+        iend = ibeg + segm_size
+        assert iend <= nint
+
+        np.matmul(
+            all_pos[il,ibeg:iend,:]     ,
+            GenSpaceRot[isegm,:,:].T    ,
+            out=allsegmpos[isegm,:,:]   ,
+        )
+        
+        if GenTimeRev[isegm] == -1:
+            allsegmpos[isegm,:,:] = allsegmpos[isegm,::-1,:]
+    
+    
 
 def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, MomCons=False, n_grad_change=1., Sym_list=[], CrashOnIdentity=True, ForceMatrixChangevar = False, store_folder = ""):
     
@@ -1598,10 +1629,54 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
         
         
     AssertAllSegmGenConstraintsAreRespected(gensegm_to_all, nint_min, bodysegm, loopgen, gensegm_to_body, gensegm_to_iint , BodyLoop, all_pos)
-
     AssertAllBodyConstraintAreRespected(LoopGenConstraints, all_pos)
 
+    GenTimeRev = np.zeros((nsegm), dtype=np.intp)
+    GenSpaceRot = np.zeros((nsegm, geodim, geodim), dtype=np.float64)
 
+    for isegm in range(nsegm):
+
+        ib = intersegm_to_body[isegm]
+        iint = intersegm_to_iint[isegm]
+
+        Sym = gensegm_to_all[ib][iint]
+        
+        GenTimeRev[isegm] = Sym.TimeRev
+        GenSpaceRot[isegm,:,:] = Sym.SpaceRot
+        
+        # tnum_target, tden_target = Sym.ApplyTSegm(gensegm_to_iint[isegm], nint_min)
+        # assert nint_min % tden_target == 0
+        # assert intersegm_to_iint[isegm] == (tnum_target * (nint_min // tden_target) + nint_min) % nint_min  
+
+    segm_size = nint // nint_min
+    
+    allsegmpos = np.empty((nsegm, segm_size, geodim), dtype=np.float64)
+    Populate_allsegmpos(all_pos, allsegmpos, GenSpaceRot, GenTimeRev, gensegm_to_body, gensegm_to_iint, BodyLoop)
+    
+    # allsegmpos_cy = np.empty((nsegm, segm_size, geodim), dtype=np.float64)
+    # Populate_allsegmpos_cy(all_pos, allsegmpos_cy, GenSpaceRot, GenTimeRev, gensegm_to_body, gensegm_to_iint, BodyLoop)
+    # assert np.linalg.norm((allsegmpos_cy - allsegmpos)) < eps
+
+
+    for isegm in range(nsegm):
+
+        ib = intersegm_to_body[isegm]
+        iint = intersegm_to_iint[isegm]
+        il = BodyLoop[ib]
+        
+        # print(ib, loopgen[il])
+        
+        if ib == loopgen[il]: # Since all_pos only containts LOOP positions!
+
+            ibeg = iint * segm_size
+            iend = ibeg + segm_size
+            assert iend <= nint
+            assert np.linalg.norm(allsegmpos[isegm,:,:] - all_pos[il,ibeg:iend,:]) < eps
+            
+            Sym = gensegm_to_all[ib][iint]
+        
+        
+        
    
     
     nparam_nosym = geodim * nint * nbody
