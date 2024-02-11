@@ -76,17 +76,14 @@ from choreo.cython.funs import PopulateRandomInit
 import choreo.scipy_plus
 
 
-
-def Pick_Named_Args_From_Dict(fun,the_dict,MissingArgsAreNone = True):
+def Pick_Named_Args_From_Dict(fun, the_dict, MissingArgsAreNone=True):
     
     list_of_args = inspect.getfullargspec(fun).args
     
     if MissingArgsAreNone:
-        
-        all_kwargs = {k:the_dict.get(k,None) for k in list_of_args}
+        all_kwargs = {k:the_dict.get(k) for k in list_of_args}
         
     else:
-        
         all_kwargs = {k:the_dict[k] for k in list_of_args}
     
     return all_kwargs

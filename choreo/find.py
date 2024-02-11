@@ -928,6 +928,12 @@ def Speed_test(
         
 def ChoreoFindFromDict(params_dict, Workspace_folder):
 
+    all_kwargs = ChoreoLoadFromDict(params_dict, Workspace_folder, callback = Find_Choreo)
+
+    Find_Choreo(**all_kwargs)
+        
+def ChoreoLoadFromDict(params_dict, Workspace_folder, callback=None):
+
     def load_target_files(filename, Workspace_folder, target_speed):
 
         if (filename == "no file"):
@@ -1025,7 +1031,6 @@ def ChoreoFindFromDict(params_dict, Workspace_folder):
 
     Sym_list = []
     
-
     for isym in range(nsyms):
         
         BodyPerm = np.array(params_dict["Geom_Bodies"]["AllSyms"][isym]["BodyPerm"],dtype=int)
@@ -1219,11 +1224,12 @@ def ChoreoFindFromDict(params_dict, Workspace_folder):
     ReconvergeSol = False
     AddNumberToOutputName = True
     
-    all_kwargs = Pick_Named_Args_From_Dict(Find_Choreo, dict(globals(), **locals()))
+    if callback is None:
+        return dict(**locals())
+    else:
+        return Pick_Named_Args_From_Dict(callback, dict(**locals()))
 
-    Find_Choreo(**all_kwargs)
-
-def ChoreoFindFromDict_old(params_dict,Workspace_folder):
+def ChoreoFindFromDict_old(params_dict, Workspace_folder):
 
     def load_target_files(filename,Workspace_folder,target_speed):
 
