@@ -1132,7 +1132,6 @@ def BundleListOfArrays(ListOfArrays):
 
 def reference_params_to_pos_slice(params_basis_reoganized, params_loop, nnz_k, geodim, nint, ncoeff_min_loop):
     
-
     eps = 1e-12
     
     ncoeff_min_loop_nnz = params_loop.shape[1]
@@ -1165,14 +1164,10 @@ def reference_params_to_pos_slice(params_basis_reoganized, params_loop, nnz_k, g
         param_basis_0 = np.ascontiguousarray(params_basis_reoganized[:,0,:].real)
     else:
         param_basis_0 = np.zeros((0,0),dtype=np.float64)
-        
-        
-    
-        
+                
     pos_slice_r = np.empty((n_inter, geodim),dtype=np.float64)
     partial_fft_to_pos_slice(ifft_b_cp, params_basis_reoganized, ncoeff_min_loop, nnz_k, param_basis_0, params_loop, pos_slice_r)
 
-    # assert np.linalg.norm(ifft_b_cp - ifft_b) < eps
     assert np.linalg.norm(pos_slice - pos_slice_r) < eps
 
 
@@ -1997,16 +1992,16 @@ def params_to_all_pos_slice_mod(all_params_basis_reoganized, all_params, all_nnz
 
         ifft_b =  scipy.fft.rfft(params_loop, axis=0, n=2*npr)
         
-        n_inter = npr+1
-            
-        if nnz_k.shape[0] > 0:
-            param_basis_0 = np.ascontiguousarray(params_basis_reoganized[:,0,:].real)
-        else:
-            param_basis_0 = np.zeros((0,0),dtype=np.float64)
-
-
-        pos_slice_r = np.empty((n_inter, geodim),dtype=np.float64)
-        partial_fft_to_pos_slice_mod(ifft_b, params_basis_reoganized, ncoeff_min, nnz_k, param_basis_0, params_loop, pos_slice_r)
+#         n_inter = npr+1
+#             
+#         if nnz_k.shape[0] > 0:
+#             param_basis_0 = np.ascontiguousarray(params_basis_reoganized[:,0,:].real)
+#         else:
+#             param_basis_0 = np.zeros((0,0),dtype=np.float64)
+# 
+# 
+#         pos_slice_r = np.empty((n_inter, geodim),dtype=np.float64)
+#         partial_fft_to_pos_slice_mod(ifft_b, params_basis_reoganized, ncoeff_min, nnz_k, param_basis_0, params_loop, pos_slice_r)
                 
 def params_to_all_pos_slice_mod2(all_params_basis_reoganized, all_params, all_nnz_k, ncoeff_min_loop, ncoeffs):
     
