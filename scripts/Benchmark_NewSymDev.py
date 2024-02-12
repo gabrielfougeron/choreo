@@ -13,26 +13,26 @@ import choreo
 import pyquickbench
 import json
 import matplotlib.pyplot as plt
-import mkl_fft
-import scipy
-scipy.fft.set_global_backend(
-    backend = mkl_fft._scipy_fft_backend   ,
-    only = True
-)
+# import mkl_fft
+# import scipy
+# scipy.fft.set_global_backend(
+#     backend = mkl_fft._scipy_fft_backend   ,
+#     only = True
+# )
 
 
 if ("--no-show" in sys.argv):
     plt.show = (lambda : None)
 
 all_funs = {
-    'all_pos_full'  : choreo.funs_new.params_to_all_pos,
-    'all_pos_full_mod'  : choreo.funs_new.params_to_all_pos_mod,
+    # 'all_pos_full'  : choreo.funs_new.params_to_all_pos,
+    'all_pos_full_mod'  : choreo.funs_new.params_to_all_pos_mod,    
     
     
     'all_pos_slice' : choreo.funs_new.params_to_all_pos_slice,
     'all_pos_slice_mod'  : choreo.funs_new.params_to_all_pos_slice_mod,
-    'all_pos_slice_mod2'  : choreo.funs_new.params_to_all_pos_slice_mod2,
-    'all_pos_slice_mod3'  : choreo.funs_new.params_to_all_pos_slice_mod3,
+    # 'all_pos_slice_mod2'  : choreo.funs_new.params_to_all_pos_slice_mod2,
+    # 'all_pos_slice_mod3'  : choreo.funs_new.params_to_all_pos_slice_mod3,
 }
 
 def setup(test_name, nint_fac):
