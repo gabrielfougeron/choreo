@@ -25,8 +25,8 @@ if ("--no-show" in sys.argv):
     plt.show = (lambda : None)
 
 all_funs = {
-    # 'all_pos_full'  : choreo.funs_new.params_to_all_pos,
-    # 'all_pos_full_mod'  : choreo.funs_new.params_to_all_pos_mod,
+    'all_pos_full'  : choreo.funs_new.params_to_all_pos,
+    'all_pos_full_mod'  : choreo.funs_new.params_to_all_pos_mod,
     
     
     'all_pos_slice' : choreo.funs_new.params_to_all_pos_slice,
@@ -64,7 +64,7 @@ all_tests = [
     # '1q2q',
     # '5q5q',
     # '6q6q',
-    '2C3C',
+    # '2C3C',
     # '2D3D',   
     # '2C3C5k',
     # '2D3D5k',
@@ -94,15 +94,15 @@ all_tests = [
     # '2C3C5C',
     # '3C_3dim',
     # '2D1_3dim',
-    # '3C',
-    # '3C2k',
-    # '4C5k',
-    # "3C11k",
-    # "3C17k",
-    # "3C23k",
-    # "3C29k",
-    # "3C37k",
-    # '3C101k',
+    '3C',
+    '3C2k',
+    '4C5k',
+    "3C11k",
+    "3C17k",
+    "3C23k",
+    "3C29k",
+    "3C37k",
+    '3C101k',
 ]
 
 min_exp = 7

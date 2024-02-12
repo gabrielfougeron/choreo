@@ -429,6 +429,7 @@ cpdef void blas_matmulNT_contiguous(
 
 cdef double ctwopi = 2* np.pi
 cdef double complex cminustwopi = -1j*ctwopi
+cdef int int_zero = 0
 cdef int int_one = 1
 cdef int max_pow = 10
 cdef int max_pow_val = 1024
@@ -444,7 +445,6 @@ cpdef void partial_fft_to_pos_slice(
     double[:,:,::1] params_loop                     ,
     double[:,::1] pos_slice                         ,
 ) noexcept nogil:
-# ):
 
     cdef int n_inter = ifft_b.shape[0]
     cdef int npr = n_inter -1
@@ -455,7 +455,6 @@ cpdef void partial_fft_to_pos_slice(
     cdef Py_ssize_t m, j, i, k
 
     cdef double dfac
-    cdef double complex fac
     cdef double complex w, wo, winter
 
     cdef double* ifft_b_r = <double*> &ifft_b[0,0,0]
@@ -463,35 +462,38 @@ cpdef void partial_fft_to_pos_slice(
     cdef int ncom = 2*ncoeff_min_loop_nnz*nppl
     cdef int ndbl = n_inter*ncom
     cdef double* meanval
-    cdef double* ifft_b_ptr = <double*> &ifft_b[0,0,0]
 
     cdef double complex w_pow[10] # max_pow
 
     cdef int ibit
     cdef int nbit = 1
     cdef int twopow = 1
+    cdef bint *nnz_bin 
+    cdef int *nnz_k_int
 
-    # Compute twiddle factors    : w = fac * cexp((cminustwopi *nnz_k[j] * m)/nint)
+    nnz_k_int  = <int*> malloc(sizeof(int)*ncoeff_min_loop_nnz)
+    for j in range(ncoeff_min_loop_nnz):  
+        nnz_k_int[j] = <int> nnz_k[j] 
+
+    # Compute twiddle factors    : w = cexp((cminustwopi *nnz_k_int[j] * m)/nint)
     if ncoeff_min_loop_nnz > 0:
 
-        if nnz_k[ncoeff_min_loop_nnz-1] == 0:
-            # All twiddle factors are the same and are purely real
+        if nnz_k_int[ncoeff_min_loop_nnz-1] > 0:
 
-            dfac = 1./(npr * ncoeff_min_loop)
-            scipy.linalg.cython_blas.dscal(&ndbl,&dfac,ifft_b_ptr,&int_one)
-
-        else: 
-
-            fac = 1./(npr * ncoeff_min_loop)
             wo =  cexp(cminustwopi / nint)
             winter = 1.
 
-            if (nnz_k[ncoeff_min_loop_nnz-1] <  max_pow_val):
+            if (nnz_k_int[ncoeff_min_loop_nnz-1] <  max_pow_val):
                 # Power of two decomposition for integer exponentiation for sparse twiddle
                 
-                while (twopow < nnz_k[ncoeff_min_loop_nnz-1]) :
+                while (twopow < nnz_k_int[ncoeff_min_loop_nnz-1]) :
                     twopow *= 2
                     nbit += 1
+
+                nnz_bin  = <bint*> malloc(sizeof(int)*nbit*ncoeff_min_loop_nnz)
+                for j in range(ncoeff_min_loop_nnz):
+                    for ibit in range(nbit):
+                        nnz_bin[ibit + j*nbit] = ((nnz_k_int[j] >> (ibit)) & 1) # tests if the ibit-th bit of nnz_k_int[j] is one 
 
                 for m in range(n_inter):
 
@@ -501,15 +503,17 @@ cpdef void partial_fft_to_pos_slice(
 
                     for j in range(ncoeff_min_loop_nnz):
                         
-                        w = fac
+                        w = 1.
                         for ibit in range(nbit):
-                            if (nnz_k[j] >> (ibit)) & 1: # if the ibit-th bit of nnz_k[j] is one 
+                            if nnz_bin[ibit + j*nbit]:
                                 w *= w_pow[ibit] 
 
                         for i in range(nppl):
                             ifft_b[m,j,i] *= w
 
-                    winter *= wo    
+                    winter *= wo
+
+                free(nnz_bin)
             else:
                 # Direct method. Extremely unlikely.
 
@@ -517,30 +521,33 @@ cpdef void partial_fft_to_pos_slice(
 
                     for j in range(ncoeff_min_loop_nnz):
 
-                        w =  fac * cexp((cminustwopi * nnz_k[j] * m)/nint)
+                        w =  cexp((cminustwopi * nnz_k_int[j] * m)/nint)
 
                         for i in range(nppl):
                             ifft_b[m,j,i] *= w
 
+    
+    dfac = 1./(npr * ncoeff_min_loop)
+
     # Computes a.real * b.real.T + a.imag * b.imag.T using clever memory arrangement and a single gemm call
-    scipy.linalg.cython_blas.dgemm(transt, transn, &geodim, &n_inter, &ncom, &one_double, params_basis_reoganized_r, &ncom, ifft_b_r, &ncom, &zero_double, &pos_slice[0,0], &geodim)
+    scipy.linalg.cython_blas.dgemm(transt, transn, &geodim, &n_inter, &ncom, &dfac, params_basis_reoganized_r, &ncom, ifft_b_r, &ncom, &zero_double, &pos_slice[0,0], &geodim)
 
     # Taking care of the mean value
     if ncoeff_min_loop_nnz > 0:
-        if nnz_k[0] == 0:
+        if nnz_k_int[0] == 0:
 
             meanval  = <double*> malloc(sizeof(double)*geodim)
 
-            scipy.linalg.cython_blas.dgemv(transt,&nppl,&geodim,&one_double,&param_basis_0[0,0],&nppl,&params_loop[0,0,0],&int_one,&zero_double,meanval,&int_one)
+            dfac = - 1./ nint
+            scipy.linalg.cython_blas.dgemv(transt,&nppl,&geodim,&dfac,&param_basis_0[0,0],&nppl,&params_loop[0,0,0],&int_one,&zero_double,meanval,&int_one)
 
             for i in range(geodim):
-                meanval[i] = - meanval[i] / nint
-
-            for j in range(n_inter):
-                for i in range(geodim):
-                    pos_slice[j,i] += meanval[i]
+                scipy.linalg.cython_blas.daxpy(&n_inter,&one_double,&meanval[i],&int_zero,&pos_slice[0,i],&geodim)
 
             free(meanval)
+
+    free(nnz_k_int)
+
 
 @cython.cdivision(True)
 cpdef void partial_fft_to_pos_slice_mod(
