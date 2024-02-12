@@ -6,7 +6,8 @@ import itertools
 np.set_printoptions(
     precision = 3,
     edgeitems = 10,
-    linewidth = 150,
+    # linewidth = 150,
+    linewidth = 300,
     floatmode = "fixed",
 )
 
@@ -1245,7 +1246,7 @@ print()
 
 
 P = 5
-Q = 7
+Q = 3
 R = 11
 nint = 2*R*P
 ncoeffs = nint//2+1
@@ -1253,17 +1254,32 @@ ncoeffs = nint//2+1
 a = np.random.random((P,Q)) + 1j*np.random.random((P,Q))
 b = np.random.random((R,P,Q))
 
+# b = np.zeros((R,P,Q),dtype=np.float64)
+# b[0,1,0] = 1
+
+
+
 all_coeffs = np.zeros((ncoeffs),dtype=np.complex128)
 all_coeffs[:(ncoeffs-1)] = np.einsum('jk,ljk->lj', a, b).reshape((ncoeffs-1))
 
 all_pos_direct = scipy.fft.irfft(all_coeffs)
 
-ifft_b =  scipy.fft.rfft(b, axis=0, n=2*R)
+n= 2*R
 
-n_inter = R+1
+# ifft_b =  scipy.fft.rfft(b, axis=0, n=2*R)
+ifft_b =  scipy.fft.ihfft(b, axis=0, n=n) * (n)
+
+
+ifft_b.resize((2*R,P,Q))
+for i in range(1,R):
+    ifft_b[2*R-i,:,:] = ifft_b[i,:,:].conj()
+# ifft_b  [0,:,:] *= 2
+
+n_inter = ifft_b.shape[0]
+# n_inter = R+1
 
 Pinv = 1./(P * R)
-wo = np.exp(-2j*np.pi/nint)
+wo = np.exp(2j*np.pi/nint)
 wref = 1.
 for m in range(n_inter):
     w = Pinv
@@ -1272,11 +1288,14 @@ for m in range(n_inter):
         w *= wref
     wref *= wo
 
-
 meanval = np.dot(a[0,:].real, b[0,0,:]) / nint
-all_pos_slice = np.einsum('jk,ljk->l', a.real, ifft_b.real) + np.einsum('jk,ljk->l', a.imag, ifft_b.imag) - meanval
-
-print(np.linalg.norm(all_pos_direct[:n_inter]-all_pos_slice[:n_inter]))
+all_pos_slice = np.einsum('jk,ljk->l', a.real, ifft_b.real) - np.einsum('jk,ljk->l', a.imag, ifft_b.imag) - meanval
 
 
 
+inter_coeffs = np.einsum('jk,ljk->lj', a, ifft_b[: ,:,:])
+
+all_pos = scipy.fft.ifft(inter_coeffs, axis=1).T.real.reshape(-1) * P - meanval
+
+
+print(np.linalg.norm(all_pos_direct-all_pos))
