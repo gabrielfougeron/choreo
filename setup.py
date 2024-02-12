@@ -63,7 +63,7 @@ elif platform.system() == "Linux":
         "-Wno-unused-variable",
         "-Wno-unused-function",
         "-Wno-incompatible-pointer-types-discards-qualifiers",
-        ] 
+    ] 
 
     if ("PYODIDE" in os.environ): # Building for Pyodide
 
@@ -91,7 +91,7 @@ elif platform.system() == "Linux":
         # extra_link_args = ["-fopenmp"]
         
         extra_compile_args_std = ["-Ofast", "-march=native", "-fopenmp", "-flto", *ignore_warnings_args]
-        extra_compile_args_safe = ["-O3", "-fopenmp", "-flto", "-Wno-unused-variable"]
+        extra_compile_args_safe = ["-O3", "-fopenmp", "-flto", *ignore_warnings_args]
         extra_link_args = ["-fopenmp", "-flto"]
 
         # extra_compile_args_std = ["-Ofast","-march=native", "-fopenmp"]
@@ -116,7 +116,7 @@ compiler_directives = {
     'initializedcheck': False,
     'overflowcheck': False,
     'overflowcheck.fold': False,
-    'infer_types': True,
+    # 'infer_types': True,
 }
 
 ##### Profiler only ####
