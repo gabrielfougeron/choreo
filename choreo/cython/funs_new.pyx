@@ -524,61 +524,6 @@ cpdef void partial_fft_to_pos_slice(
 
 
 
-# 
-# @cython.cdivision(True)
-# cpdef void partial_fft_to_all_pos(
-#     double complex[:,:,::1] ifft_b                  ,
-#     double complex[:,:,::1] params_basis_reoganized ,
-#     int ncoeff_min_loop                             ,
-#     long[::1] nnz_k                                 ,
-#     double[:,::1] param_basis_0                     ,
-#     double[:,:,::1] params_loop                     ,
-#     double[:,::1] all_pos                           ,
-# ) noexcept nogil:
-# 
-#     cdef int n_inter = ifft_b.shape[0] # Cannot be long as it will be an argument to dgemm
-#     cdef int npr = n_inter - 1
-#     cdef int nppl = ifft_b.shape[2]
-#     cdef int ncoeff_min_loop_nnz = nnz_k.shape[0]
-#     cdef int geodim = params_basis_reoganized.shape[0]
-#     cdef long nint = 2*ncoeff_min_loop*npr
-#     cdef Py_ssize_t i
-# 
-#     cdef double dfac
-# 
-#     cdef double* params_basis_reoganized_r = <double*> &params_basis_reoganized[0,0,0]
-#     cdef double* ifft_b_r = <double*> &ifft_b[0,0,0]
-# 
-#     cdef int ncom = 2*ncoeff_min_loop_nnz*nppl
-#     cdef double* meanval
-# 
-#     inplace_twiddle(ifft_b, nnz_k, nint)
-# 
-#     dfac = 1./(npr * ncoeff_min_loop)
-# 
-#     # Computes a.real * b.real.T + a.imag * b.imag.T using clever memory arrangement and a single gemm call
-#     scipy.linalg.cython_blas.dgemm(transt, transn, &geodim, &npr, &ncom, &dfac, params_basis_reoganized_r, &ncom, ifft_b_r, &ncom, &zero_double, &all_pos[0,0], &geodim)
-# 
-# 
-# 
-#     # Taking care of the mean value
-#     if ncoeff_min_loop_nnz > 0:
-#         if nnz_k[0] == 0:
-# 
-#             meanval  = <double*> malloc(sizeof(double)*geodim)
-# 
-#             dfac = - 1./ nint
-#             scipy.linalg.cython_blas.dgemv(transt,&nppl,&geodim,&dfac,&param_basis_0[0,0],&nppl,&params_loop[0,0,0],&int_one,&zero_double,meanval,&int_one)
-# 
-#             for i in range(geodim):
-#                 scipy.linalg.cython_blas.daxpy(&n_inter,&one_double,&meanval[i],&int_zero,&pos_slice[0,i],&geodim)
-# 
-#             free(meanval)
-# 
-# 
-# 
-# 
-# 
 
 
 
