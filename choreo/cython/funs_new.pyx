@@ -50,7 +50,7 @@ cdef class ActionSym():
 
     @cython.final
     @cython.cdivision(True)
-    def __init__(
+    def __cinit__(
         self                    ,
         long[::1] BodyPerm      ,
         double[:,::1] SpaceRot  ,
@@ -435,7 +435,7 @@ cdef int int_zero = 0
 cdef int int_one = 1
 cdef int int_two = 2
 
-
+@cython.cdivision(True)
 cdef void inplace_twiddle(
     double complex[:,:,::1] ifft_b  ,
     long[::1] nnz_k                 ,
@@ -444,7 +444,6 @@ cdef void inplace_twiddle(
 ) noexcept nogil:
 
     cdef int nppl = ifft_b.shape[2]
-    cdef int npr = ifft_b.shape[0] -1
     cdef int ncoeff_min_loop_nnz = nnz_k.shape[0]
 
     cdef double complex w, wo, winter
