@@ -2,12 +2,12 @@ import os
 import sys
 __PROJECT_ROOT__ = os.path.abspath(os.path.join(os.path.dirname(__file__),os.pardir))
 sys.path.append(__PROJECT_ROOT__)
-
-os.environ['OPENBLAS_NUM_THREADS'] = '1'
-os.environ['NUMEXPR_NUM_THREADS'] = '1'
-os.environ['MKL_NUM_THREADS'] = '1'
-os.environ['OMP_NUM_THREADS'] = '1'
-os.environ['TBB_NUM_THREADS'] = '1'
+# 
+# os.environ['OPENBLAS_NUM_THREADS'] = '1'
+# os.environ['NUMEXPR_NUM_THREADS'] = '1'
+# os.environ['MKL_NUM_THREADS'] = '1'
+# os.environ['OMP_NUM_THREADS'] = '1'
+# os.environ['TBB_NUM_THREADS'] = '1'
 
 import choreo 
 import pyquickbench
@@ -26,13 +26,12 @@ if ("--no-show" in sys.argv):
 
 all_funs = {
     # 'all_pos_full'  : choreo.funs_new.params_to_all_pos,
-    'all_pos_full_mod'  : choreo.funs_new.params_to_all_pos_mod,    
+    # 'all_pos_full_mod'  : choreo.funs_new.params_to_all_pos_mod,    
     
     
     'all_pos_slice' : choreo.funs_new.params_to_all_pos_slice,
-    'all_pos_slice_mod'  : choreo.funs_new.params_to_all_pos_slice_mod,
-    # 'all_pos_slice_mod2'  : choreo.funs_new.params_to_all_pos_slice_mod2,
-    # 'all_pos_slice_mod3'  : choreo.funs_new.params_to_all_pos_slice_mod3,
+    'all_pos_slice_nocopy' : choreo.funs_new.params_to_all_pos_slice_nocopy,
+
 }
 
 def setup(test_name, nint_fac):
@@ -73,8 +72,8 @@ all_tests = [
     # '4D3k',
     # '4C',
     # '4D',
-    # '3C',
-    # '3D',
+    '3C',
+    '3D',
     # '3D1',
     # '3C2k',
     # '3D2k',
@@ -106,7 +105,7 @@ all_tests = [
 ]
 
 min_exp = 7
-max_exp = 12
+max_exp = 20
 
 n_repeat = 10
 
@@ -132,7 +131,7 @@ all_timings = pyquickbench.run_benchmark(
     ShowProgress = True     ,
     n_repeat = n_repeat     ,
     MonotonicAxes = MonotonicAxes,
-    # ForceBenchmark = True
+    ForceBenchmark = True
 )
 
 plot_intent = {
