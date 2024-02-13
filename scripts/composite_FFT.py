@@ -1411,8 +1411,6 @@ all_pos_direct = scipy.fft.irfft(all_coeffs)
 n= 2*R
 
 b[0,0,:] *= 0.5
-
-
 ifft_b =  scipy.fft.rfft(b, axis=0, n=2*R)
 
 n_inter = ifft_b.shape[0]
@@ -1429,7 +1427,7 @@ print(np.linalg.norm(all_pos_direct[:R+1] - all_pos_slice))
 
 for j in range(P):
     w = np.exp(2j*np.pi*j/P)
-    ifft_b[:R,j,:] *= w
+    ifft_b[1:R,j,:] *= w
 
 ifft_btrev = ifft_b[R-1:0:-1,:,:].conj().copy()
 

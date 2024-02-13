@@ -1130,42 +1130,12 @@ def BundleListOfArrays(ListOfArrays):
         
     return buf, n_shapes, n_shifts
 
-def reference_params_to_pos_slice(params_basis_reorganized, params_loop, nnz_k, geodim, nint, ncoeff_min_loop):
+def reference_params_to_pos_slice_1npr(params_basis_reorganized, params_loop, nnz_k, ncoeff_min_loop):
     
     eps = 1e-12
-    
-    ncoeff_min_loop_nnz = params_loop.shape[1]
+
     npr = params_loop.shape[0]
-    
-    ifft_b =  scipy.fft.rfft(params_loop, axis=0, n=2*npr)
-    
-    n_inter = npr+1
-
-    fac = 1./(npr * ncoeff_min_loop)
-    for m in range(n_inter):
-        for j in range(ncoeff_min_loop_nnz):
-            w = fac * np.exp(-2j*np.pi*nnz_k[j] * m/nint)
-            ifft_b[m,j,:] *= w
-
-
-    pos_slice = np.einsum('ijk,ljk->li', params_basis_reorganized.real, ifft_b.real) + np.einsum('ijk,ljk->li', params_basis_reorganized.imag, ifft_b.imag)  
-
-
-
-    if nnz_k.shape[0] > 0:
-        if nnz_k[0] == 0:
-            
-            meanval = np.matmul(params_basis_reorganized[:,0,:].real, params_loop[0,0,:]) / nint            
-            for idim in range(geodim):
-                pos_slice[:,idim] -= meanval[idim]
-
-    if nnz_k.shape[0] > 0:
-        param_basis_0 = np.ascontiguousarray(params_basis_reorganized[:,0,:].real)
-    else:
-        param_basis_0 = np.zeros((0,0),dtype=np.float64)
-             
-             
-             
+    geodim = params_basis_reorganized.shape[0]
                 
     params_loop_cp = params_loop.copy()
 
@@ -1175,10 +1145,26 @@ def reference_params_to_pos_slice(params_basis_reorganized, params_loop, nnz_k, 
     
     ifft_b =  scipy.fft.rfft(params_loop_cp, axis=0, n=2*npr)
                 
-    pos_slice_r = np.empty((n_inter, geodim),dtype=np.float64)
-    partial_fft_to_pos_slice(ifft_b, params_basis_reorganized, ncoeff_min_loop, nnz_k, pos_slice_r)
+    pos_slice = np.empty((npr, geodim),dtype=np.float64)
+    partial_fft_to_pos_slice_1npr(ifft_b, params_basis_reorganized, ncoeff_min_loop, nnz_k, pos_slice)
 
-    assert np.linalg.norm(pos_slice - pos_slice_r) < eps
+    return pos_slice
+
+def reference_params_to_pos_slice_2npr(params_basis_reorganized, params_loop, nnz_k, ncoeff_min_loop):
+    
+    npr = params_loop.shape[0]
+    geodim = params_basis_reorganized.shape[0]
+    
+    params_loop_cp = params_loop.copy() # ça ca va dégager bientot
+
+    if nnz_k.shape[0] > 0:
+        if nnz_k[0] == 0:
+            params_loop_cp[0,0,:] *= 0.5
+    
+    ifft_b =  scipy.fft.rfft(params_loop_cp, axis=0, n=2*npr)
+                
+    pos_slice = np.empty((2*npr, geodim),dtype=np.float64)
+    partial_fft_to_pos_slice_2npr(ifft_b, params_basis_reorganized, ncoeff_min_loop, nnz_k, pos_slice)
 
     return pos_slice
 
@@ -1570,19 +1556,22 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
         
     print( f'{n_sub_fft = }')
     assert (n_sub_fft == n_sub_fft[0]).all()
-    n_sub_fft = n_sub_fft[0]
+    if n_sub_fft[0] == 1:
+        nnpr = 2
+    else:
+        nnpr = 1
 
 
 
-    # return
     nint = 2 * nint_min * 4
     ncoeffs = nint // 2 + 1
+    segm_size = nint // nint_min
     
     all_coeffs_simple_c = np.zeros((nloop, ncoeffs, geodim), dtype=np.complex128)
     all_coeffs_a_c = np.zeros((nloop, ncoeffs, geodim), dtype=np.complex128)
     all_coeffs_b_c = np.zeros((nloop, ncoeffs, geodim), dtype=np.complex128)
-    all_pos_slice_b = []
-    all_pos_slice_a = []
+
+    all_pos_slice_nnpr = []
     
 
     # Parameters to all_pos through coeffs
@@ -1652,37 +1641,40 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
         
         # Dense version with lots of zeros
         
-        ifft_b =  scipy.fft.rfft(params_loop_dense, axis=0, n=2*npr)
-        n_inter = npr+1
-
-        fac = 1./(npr * ncoeff_min_loop[il])
-        wo = np.exp(-2j*np.pi/nint)
-        wref = 1.
-        for m in range(n_inter):
-            w = fac
-            for j in range(ncoeff_min_loop[il]):
-                ifft_b[m,j,:] *= w
-                w *= wref
-            wref *= wo
-        
-        meanval = np.matmul(params_basis_dense[:,0,:].real, params_loop_dense[0,0,:]) / nint
-        
-        pos_slice = np.einsum('ijk,ljk->li', params_basis_dense.real, ifft_b.real) + np.einsum('ijk,ljk->li', params_basis_dense.imag, ifft_b.imag)
-        
-        for idim in range(geodim):
-            pos_slice[:,idim] -= meanval[idim]
-        
-        all_pos_slice_b.append(pos_slice)
+#         ifft_b =  scipy.fft.rfft(params_loop_dense, axis=0, n=2*npr)
+#         n_inter = npr+1
+# 
+#         fac = 1./(npr * ncoeff_min_loop[il])
+#         wo = np.exp(-2j*np.pi/nint)
+#         wref = 1.
+#         for m in range(n_inter):
+#             w = fac
+#             for j in range(ncoeff_min_loop[il]):
+#                 ifft_b[m,j,:] *= w
+#                 w *= wref
+#             wref *= wo
+#         
+#         meanval = np.matmul(params_basis_dense[:,0,:].real, params_loop_dense[0,0,:]) / nint
+#         
+#         pos_slice = np.einsum('ijk,ljk->li', params_basis_dense.real, ifft_b.real) + np.einsum('ijk,ljk->li', params_basis_dense.imag, ifft_b.imag)
+#         
+#         for idim in range(geodim):
+#             pos_slice[:,idim] -= meanval[idim]
+#         
+#         all_pos_slice_b.append(pos_slice)
         
         
         
         
         
         # Sparse version with fewer zeros
-        pos_slice = reference_params_to_pos_slice(params_basis_reorganized, params_loop, nnz_k, geodim, nint, ncoeff_min_loop[il])
-        all_pos_slice_a.append(pos_slice)
         
+        if nnpr == 1:
+            pos_slice = reference_params_to_pos_slice_1npr(params_basis_reorganized, params_loop, nnz_k, ncoeff_min_loop[il])
+        else:
+            pos_slice = reference_params_to_pos_slice_2npr(params_basis_reorganized, params_loop, nnz_k, ncoeff_min_loop[il])
         
+        all_pos_slice_nnpr.append(pos_slice)
         # print()
         # print(nint_min)
         # print(2*nint_min)
@@ -1718,12 +1710,11 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
     
     for il in range(nloop):
         
-        pos_slice = all_pos_slice_a[il]
-        n_inter = pos_slice.shape[0]
+        n_inter = all_pos_slice_nnpr[il].shape[0]
+        
+        assert n_inter == (segm_size * ngensegm_loop[il])
+        assert np.linalg.norm(all_pos[il,:n_inter,:] - all_pos_slice_nnpr[il]) < 1e-14
 
-        assert np.linalg.norm(all_pos[il,:n_inter,:] - pos_slice) < 1e-14
-        assert np.linalg.norm(all_pos_slice_a[il] - pos_slice) < 1e-14
-        assert np.linalg.norm(all_pos_slice_b[il] - pos_slice) < 1e-14
         
 
         
@@ -1748,7 +1739,7 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
         # assert nint_min % tden_target == 0
         # assert intersegm_to_iint[isegm] == (tnum_target * (nint_min // tden_target) + nint_min) % nint_min  
 
-    segm_size = nint // nint_min
+    
     
     allsegmpos = np.empty((nsegm, segm_size, geodim), dtype=np.float64)
     Populate_allsegmpos(all_pos, allsegmpos, GenSpaceRot, GenTimeRev, gensegm_to_body, gensegm_to_iint, BodyLoop)
