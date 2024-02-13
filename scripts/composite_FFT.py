@@ -1424,40 +1424,14 @@ for m in range(n_inter):
         w = Pinv * np.exp(-2j*np.pi*m*j/nint)
         ifft_b[m,j,:] *= w
 
-ifft_bt = ifft_b.copy()
-
-ifft_b4 = np.zeros((R,P,Q),dtype=np.complex128)
-
-for m in range(R):
-    for j in range(P):
-        w = np.exp(-2j*np.pi*(2*R)*j/nint)
-        ifft_b4[m,j,:] = w * ifft_b[R-m,j,:].conj()
-
-
-# for m in range(R):
-#     for j in range(P):
-#         w = np.exp(-2j*np.pi*(2*R)*j/nint)
-#         ifft_bt[m,j,:] = w * ifft_bt[m,j,:].conj()
-# 
-# ifft_btrev = ifft_bt[R:0:-1,:,:].copy()
-
-
+all_pos_slice = np.einsum('jk,ljk->l', a.real, ifft_b.real) + np.einsum('jk,ljk->l', a.imag, ifft_b.imag)
+print(np.linalg.norm(all_pos_direct[:R+1] - all_pos_slice))
 
 for j in range(P):
     w = np.exp(2j*np.pi*j/P)
-    ifft_bt[:R,j,:] *= w
+    ifft_b[:R,j,:] *= w
 
-ifft_btrev = np.zeros((R,P,Q),dtype=np.complex128)
-ifft_btrev[0,:,:] = ifft_bt[R,:,:]
-ifft_btrev[1:,:,:] = ifft_bt[R-1:0:-1,:,:].conj()
-
-
-
-all_pos_slice = np.einsum('jk,ljk->l', a.real, ifft_b.real[:R,:,:]) + np.einsum('jk,ljk->l', a.imag, ifft_b.imag[:R,:,:])
-print(np.linalg.norm(all_pos_direct[:R] - all_pos_slice))
-
-all_pos_slice = np.einsum('jk,ljk->l', a.real, ifft_b4.real) + np.einsum('jk,ljk->l', a.imag, ifft_b4.imag)
-print(np.linalg.norm(all_pos_direct[R:2*R] - all_pos_slice))
+ifft_btrev = ifft_b[R-1:0:-1,:,:].conj().copy()
 
 all_pos_slice = np.einsum('jk,ljk->l', a.real, ifft_btrev.real) + np.einsum('jk,ljk->l', a.imag, ifft_btrev.imag)
-print(np.linalg.norm(all_pos_direct[R:2*R] - all_pos_slice))
+print(np.linalg.norm(all_pos_direct[R+1:2*R] - all_pos_slice))
