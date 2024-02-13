@@ -513,7 +513,9 @@ cpdef void partial_fft_to_pos_slice_1npr(
 
     # Casting complex double to double array
     cdef double* params_basis_reoganized_r = <double*> &params_basis_reoganized[0,0,0]
-    cdef double* ifft_b_r = <double*> &ifft_b[0,0,0]
+    cdef double* ifft_b_r = NULL
+    if ncoeff_min_loop_nnz > 0:
+        ifft_b_r = <double*> &ifft_b[0,0,0]
 
     cdef int nzcom = ncoeff_min_loop_nnz*nppl
     cdef int ndcom = 2*nzcom
@@ -548,11 +550,17 @@ cpdef void partial_fft_to_pos_slice_2npr(
 
     # Casting complex double to double array
     cdef double* params_basis_reoganized_r = <double*> &params_basis_reoganized[0,0,0]
-    cdef double* ifft_b_r = <double*> &ifft_b[0,0,0]
+    cdef double* ifft_b_r = NULL
+    if ncoeff_min_loop_nnz > 0:
+        ifft_b_r = <double*> &ifft_b[0,0,0]
     
     cdef int nppl = ifft_b.shape[2]
     cdef int nzcom = ncoeff_min_loop_nnz*nppl
     cdef int ndcom = 2*nzcom
+    cdef int nconj
+
+    cdef double complex w
+    cdef Py_ssize_t m, j, i
 
     inplace_twiddle(ifft_b, nnz_k, nint, n_inter)
 
@@ -560,9 +568,6 @@ cpdef void partial_fft_to_pos_slice_2npr(
 
     # Computes a.real * b.real.T + a.imag * b.imag.T using clever memory arrangement and a single gemm call
     scipy.linalg.cython_blas.dgemm(transt, transn, &geodim, &n_inter, &ndcom, &dfac, params_basis_reoganized_r, &ndcom, ifft_b_r, &ndcom, &zero_double, &pos_slice[0,0], &geodim)
-
-    cdef double complex w, wo
-    cdef Py_ssize_t m, j, i
 
     for j in range(ncoeff_min_loop_nnz):
         w = cexp(citwopi*nnz_k[j]/ncoeff_min_loop)
@@ -573,7 +578,7 @@ cpdef void partial_fft_to_pos_slice_2npr(
     n_inter = npr-1
     # Inplace conjugaison
     ifft_b_r += 1 + ndcom
-    cdef int nconj = n_inter*nzcom
+    nconj = n_inter*nzcom
     scipy.linalg.cython_blas.dscal(&nconj,&minusone_double,ifft_b_r,&int_two)
 
     cdef double complex *ztmp = <double complex*> malloc(sizeof(double complex) * nconj)
@@ -588,6 +593,69 @@ cpdef void partial_fft_to_pos_slice_2npr(
     scipy.linalg.cython_blas.dgemm(transt, transn, &geodim, &n_inter, &ndcom, &dfac, params_basis_reoganized_r, &ndcom, dtmp, &ndcom, &zero_double, &pos_slice[npr+1,0], &geodim)
 
     free(ztmp)
+
+
+
+
+@cython.cdivision(True)
+cpdef void partial_fft_to_pos_slice_2npr_nocopy(
+    double complex[:,:,::1] ifft_b                  ,
+    double complex[:,:,::1] params_basis_reoganized ,
+    int ncoeff_min_loop                             ,
+    long[::1] nnz_k                                 ,
+    double[:,::1] pos_slice                         ,
+) noexcept nogil:
+
+    cdef int n_inter = ifft_b.shape[0] # Cannot be long as it will be an argument to dgemm
+    cdef int npr = n_inter - 1
+    cdef int ncoeff_min_loop_nnz = nnz_k.shape[0]
+    cdef int geodim = params_basis_reoganized.shape[0]
+    cdef long nint = 2*ncoeff_min_loop*npr
+
+    cdef double dfac
+
+    # Casting complex double to double array
+    cdef double* params_basis_reoganized_r = <double*> &params_basis_reoganized[0,0,0]
+    cdef double* ifft_b_r = NULL
+    if ncoeff_min_loop_nnz > 0:
+        ifft_b_r = <double*> &ifft_b[0,0,0]
+
+    cdef int nppl = ifft_b.shape[2]
+    cdef int nzcom = ncoeff_min_loop_nnz*nppl
+    cdef int ndcom = 2*nzcom
+    cdef int nconj
+
+    inplace_twiddle(ifft_b, nnz_k, nint, n_inter)
+
+    dfac = 1./(npr * ncoeff_min_loop)
+
+    # Computes a.real * b.real.T + a.imag * b.imag.T using clever memory arrangement and a single gemm call
+    scipy.linalg.cython_blas.dgemm(transt, transn, &geodim, &n_inter, &ndcom, &dfac, params_basis_reoganized_r, &ndcom, ifft_b_r, &ndcom, &zero_double, &pos_slice[0,0], &geodim)
+
+    cdef double complex w
+    cdef Py_ssize_t m, j, i
+
+    for j in range(ncoeff_min_loop_nnz):
+        w = cexp(citwopi*nnz_k[j]/ncoeff_min_loop)
+        for m in range(1,npr):
+            for i in range(nppl):
+                ifft_b[m,j,i] *= w
+
+    n_inter = npr-1
+
+    # Inplace conjugaison
+    ifft_b_r += 1 + ndcom
+    nconj = n_inter*nzcom
+    scipy.linalg.cython_blas.dscal(&nconj,&minusone_double,ifft_b_r,&int_two)
+
+    ifft_b_r = <double*> &ifft_b[npr,0,0]
+    for i in range(n_inter):
+        ifft_b_r -= ndcom
+
+        scipy.linalg.cython_blas.dgemv(transt, &ndcom, &geodim, &dfac, params_basis_reoganized_r, &ndcom, ifft_b_r, &int_one, &zero_double, &pos_slice[npr+1+i,0], &int_one)
+
+
+
 
 
 
