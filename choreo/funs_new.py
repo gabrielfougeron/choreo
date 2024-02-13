@@ -1138,7 +1138,6 @@ def reference_params_to_pos_slice(params_basis_reorganized, params_loop, nnz_k, 
     npr = params_loop.shape[0]
     
     ifft_b =  scipy.fft.rfft(params_loop, axis=0, n=2*npr)
-    ifft_b_cp = ifft_b.copy()
     
     n_inter = npr+1
 
@@ -1164,9 +1163,20 @@ def reference_params_to_pos_slice(params_basis_reorganized, params_loop, nnz_k, 
         param_basis_0 = np.ascontiguousarray(params_basis_reorganized[:,0,:].real)
     else:
         param_basis_0 = np.zeros((0,0),dtype=np.float64)
+             
+             
+             
+                
+    params_loop_cp = params_loop.copy()
+
+    if nnz_k.shape[0] > 0:
+        if nnz_k[0] == 0:
+            params_loop_cp[0,0,:] *= 0.5
+    
+    ifft_b =  scipy.fft.rfft(params_loop_cp, axis=0, n=2*npr)
                 
     pos_slice_r = np.empty((n_inter, geodim),dtype=np.float64)
-    partial_fft_to_pos_slice(ifft_b_cp, params_basis_reorganized, ncoeff_min_loop, nnz_k, param_basis_0, params_loop, pos_slice_r)
+    partial_fft_to_pos_slice(ifft_b, params_basis_reorganized, ncoeff_min_loop, nnz_k, pos_slice_r)
 
     assert np.linalg.norm(pos_slice - pos_slice_r) < eps
 
@@ -1560,7 +1570,6 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
     all_pos_slice_b = []
     all_pos_slice_a = []
     
-    all_pos_b = np.zeros((nloop,nint,geodim),dtype=np.float64)
 
     # Parameters to all_pos through coeffs
     all_coeffs = np.zeros((nloop,ncoeffs,geodim,2), dtype = np.float64)
@@ -1669,8 +1678,6 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
         # print(nint_min)
         # print(2*nint_min)
         
-        all_pos_b[il,:,:] = reference_params_to_all_pos_loop(params_basis_reorganized, params_loop, nnz_k, geodim, nint, ncoeff_min_loop[il])
-
 
     
     # return
@@ -1701,17 +1708,6 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
     all_pos = scipy.fft.irfft(all_coeffs_c, axis=1)
     
     for il in range(nloop):
-
-        print()
-        print(il)
-        print()
-        print(all_pos[il,:,:])
-        print()
-        print(all_pos_b[il,:,:])
-        print()
-        print(all_pos[il,:,:] - all_pos_b[il,:,:])
-
-        assert np.linalg.norm(all_pos[il,:,:]- all_pos_b[il,:,:]) < 1e-14
         
         pos_slice = all_pos_slice_a[il]
         n_inter = pos_slice.shape[0]
