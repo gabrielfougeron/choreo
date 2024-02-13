@@ -1559,6 +1559,20 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
     ncoeff_min_loop = np.array([len(All_params_basis[il]) for il in range(nloop)], dtype=np.intp)
     ncoeff_min_loop_nnz = np.array([all_nnz_k[il].shape[0] for il in range(nloop)], dtype=np.intp)
 
+    n_sub_fft = np.zeros((nloop), dtype=np.intp)
+    for il in range(nloop):
+        
+        assert nint_min % ncoeff_min_loop[il] == 0
+        assert (nint_min // ncoeff_min_loop[il]) % ngensegm_loop[il] == 0        
+        assert (nint_min // (ncoeff_min_loop[il] * ngensegm_loop[il])) in [1,2]
+        
+        n_sub_fft[il] = (nint_min // (ncoeff_min_loop[il] * ngensegm_loop[il]))
+        
+    print( f'{n_sub_fft = }')
+    assert (n_sub_fft == n_sub_fft[0]).all()
+    n_sub_fft = n_sub_fft[0]
+
+
 
     # return
     nint = 2 * nint_min * 4
@@ -1663,11 +1677,6 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
         
         
         
-        print(il, nint_min//ncoeff_min_loop[il], 2*ngensegm_loop[il])
-
-        
-
-
         
         # Sparse version with fewer zeros
         pos_slice = reference_params_to_pos_slice(params_basis_reorganized, params_loop, nnz_k, geodim, nint, ncoeff_min_loop[il])
