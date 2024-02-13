@@ -1254,11 +1254,6 @@ ncoeffs = nint//2+1
 a = np.random.random((P,Q)) + 1j*np.random.random((P,Q))
 b = np.random.random((R,P,Q))
 
-# b = np.zeros((R,P,Q),dtype=np.float64)
-# b[0,1,0] = 1
-
-
-
 all_coeffs = np.zeros((ncoeffs),dtype=np.complex128)
 all_coeffs[:(ncoeffs-1)] = np.einsum('jk,ljk->lj', a, b).reshape((ncoeffs-1))
 
@@ -1266,14 +1261,19 @@ all_pos_direct = scipy.fft.irfft(all_coeffs)
 
 n= 2*R
 
-# ifft_b =  scipy.fft.rfft(b, axis=0, n=2*R)
-ifft_b =  scipy.fft.ihfft(b, axis=0, n=n) * (n)
+b[0,0,:] *= 0.5
+meanval = 0.
+
+# meanval = np.dot(a[0,:].real, b[0,0,:]) / nint
+
+ifft_b =  scipy.fft.rfft(b, axis=0, n=2*R).conj()
+# ifft_b =  scipy.fft.ihfft(b, axis=0, n=n) * (n)
 
 
 ifft_b.resize((2*R,P,Q))
 for i in range(1,R):
     ifft_b[2*R-i,:,:] = ifft_b[i,:,:].conj()
-# ifft_b  [0,:,:] *= 2
+
 
 n_inter = ifft_b.shape[0]
 # n_inter = R+1
@@ -1288,7 +1288,7 @@ for m in range(n_inter):
         w *= wref
     wref *= wo
 
-meanval = np.dot(a[0,:].real, b[0,0,:]) / nint
+
 all_pos_slice = np.einsum('jk,ljk->l', a.real, ifft_b.real) - np.einsum('jk,ljk->l', a.imag, ifft_b.imag) - meanval
 
 
@@ -1298,4 +1298,92 @@ inter_coeffs = np.einsum('jk,ljk->lj', a, ifft_b[: ,:,:])
 all_pos = scipy.fft.ifft(inter_coeffs, axis=1).T.real.reshape(-1) * P - meanval
 
 
+# print(all_pos_direct-all_pos)
 print(np.linalg.norm(all_pos_direct-all_pos))
+
+print()        
+print("="*80)
+print()
+
+# Idem, without resize
+
+
+P = 5
+Q = 3
+R = 11
+nint = 2*R*P
+ncoeffs = nint//2+1
+
+a = np.random.random((P,Q)) + 1j*np.random.random((P,Q))
+b = np.random.random((R,P,Q))
+
+all_coeffs = np.zeros((ncoeffs),dtype=np.complex128)
+all_coeffs[:(ncoeffs-1)] = np.einsum('jk,ljk->lj', a, b).reshape((ncoeffs-1))
+
+all_pos_direct = scipy.fft.irfft(all_coeffs)
+
+n= 2*R
+
+b[0,0,:] *= 0.5
+
+
+ifft_b =  scipy.fft.rfft(b, axis=0, n=2*R)
+# ifft_b =  scipy.fft.ihfft(b, axis=0, n=n) * (n)
+
+
+ifft_b3 = np.zeros((R,P,Q),dtype=np.complex128)
+for i in range(1,R+1):
+    ifft_b3[R-i,:,:] = ifft_b[i,:,:].conj()
+
+
+ifft_b.resize((2*R,P,Q))
+for i in range(1,R):
+    ifft_b[2*R-i,:,:] = ifft_b[i,:,:].conj()
+
+
+
+
+n_inter = ifft_b.shape[0]
+# n_inter = R+1
+
+Pinv = 1./(P * R)
+for m in range(n_inter):
+    for j in range(P):
+        w = Pinv * np.exp(-2j*np.pi*m*j/nint)
+        ifft_b[m,j,:] *= w
+
+ifft_b2 = ifft_b[R:,:,:]
+
+Pinv = 1./(P * R)
+for m in range(R):
+    for j in range(P):
+        w = Pinv * np.exp(-2j*np.pi*(R+m)*j/nint)
+        ifft_b3[m,j,:] *= w
+
+
+
+ifft_b4 = np.zeros((R,P,Q),dtype=np.complex128)
+
+for m in range(R):
+    for j in range(P):
+        w = np.exp(-2j*np.pi*(2*R)*j/nint)
+        ifft_b4[m,j,:] = w * ifft_b[R-m,j,:].conj()
+
+
+
+all_pos_slice = np.einsum('jk,ljk->l', a.real, ifft_b.real[:2*R,:,:]) + np.einsum('jk,ljk->l', a.imag, ifft_b.imag[:2*R,:,:])
+print(np.linalg.norm(all_pos_direct[:2*R] - all_pos_slice))
+
+all_pos_slice = np.einsum('jk,ljk->l', a.real, ifft_b.real[:R,:,:]) + np.einsum('jk,ljk->l', a.imag, ifft_b.imag[:R,:,:])
+print(np.linalg.norm(all_pos_direct[:R] - all_pos_slice))
+
+all_pos_slice = np.einsum('jk,ljk->l', a.real, ifft_b2.real) + np.einsum('jk,ljk->l', a.imag, ifft_b2.imag)
+print(np.linalg.norm(all_pos_direct[R:2*R] - all_pos_slice))
+
+all_pos_slice = np.einsum('jk,ljk->l', a.real, ifft_b3.real) + np.einsum('jk,ljk->l', a.imag, ifft_b3.imag)
+print(np.linalg.norm(all_pos_direct[R:2*R] - all_pos_slice))
+
+
+
+all_pos_slice = np.einsum('jk,ljk->l', a.real, ifft_b4.real) + np.einsum('jk,ljk->l', a.imag, ifft_b4.imag)
+print(np.linalg.norm(all_pos_direct[R:2*R] - all_pos_slice))
