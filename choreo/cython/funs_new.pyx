@@ -50,7 +50,7 @@ cdef class ActionSym():
 
     @cython.final
     @cython.cdivision(True)
-    def __cinit__(
+    def __init__(
         self                    ,
         long[::1] BodyPerm      ,
         double[:,::1] SpaceRot  ,
