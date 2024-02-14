@@ -874,7 +874,7 @@ def DetectLoops(Sym_list, nbody, nint_min_fac = 1):
 
     nint_min = nint_min_fac * math.lcm(*All_den_list_on_entry) # ensures that all integer divisions will have zero remainder
     
-    BodyGraph =  Build_BodyGraph(nbody, Sym_list)
+    BodyGraph = Build_BodyGraph(nbody, Sym_list)
 
     nloop = sum(1 for _ in networkx.connected_components(BodyGraph))
     
@@ -892,7 +892,7 @@ def DetectLoops(Sym_list, nbody, nint_min_fac = 1):
             Targets[il,ilb] = ib
             BodyLoop[ib] = il
 
-    return nint_min, nloop, loopnb, BodyLoop, Targets
+    return nint_min, nloop, loopnb, BodyLoop, Targets, BodyGraph
         
 def PlotTimeBodyGraph(Graph, nbody, nint_min, filename):
 
@@ -1175,6 +1175,48 @@ def Generating_to_interacting(SegmGraph, nbody, geodim, nsegm, intersegm_to_iint
         
     return AllSyms
 
+def Compute_all_body_pos(all_pos, BodyGraph, loopgen, BodyLoop):
+    
+    nbody = BodyLoop.shape[0]
+    nint = all_pos.shape[1]
+    geodim = all_pos.shape[2]
+    
+    all_body_pos = np.zeros((nbody,nint,geodim), dtype=np.float64)
+
+    for ib in range(nbody):
+        
+        il = BodyLoop[ib]
+        ib_gen = loopgen[il]
+        
+        if (ib == ib_gen) :
+            
+            all_body_pos[ib,:,:] = all_pos[il,:,:]
+            
+        else:
+        
+            path = networkx.shortest_path(BodyGraph, source = ib_gen, target = ib)
+
+            pathlen = len(path)
+
+            TotSym = ActionSym.Identity(nbody, geodim)
+            for ipath in range(1,pathlen):
+
+                if (path[ipath-1] > path[ipath]):
+                    Sym = BodyGraph.edges[(path[ipath], path[ipath-1])]["SymList"][0].Inverse()
+                else:
+                    Sym = BodyGraph.edges[(path[ipath-1], path[ipath])]["SymList"][0]
+
+                TotSym = Sym.Compose(TotSym)
+        
+            for iint_gen in range(nint):
+                
+                tnum, tden = TotSym.ApplyT(iint_gen, nint)
+                iint_target = tnum * nint // tden
+                
+                all_body_pos[ib,iint_target,:] = np.matmul(TotSym.SpaceRot, all_pos[il,iint_gen,:])
+
+    return all_body_pos
+
 def Populate_allsegmpos(all_pos, GenSpaceRot, GenTimeRev, gensegm_to_body, gensegm_to_iint, BodyLoop, nint_min):
     
     nsegm = gensegm_to_body.shape[0]
@@ -1189,12 +1231,13 @@ def Populate_allsegmpos(all_pos, GenSpaceRot, GenTimeRev, gensegm_to_body, gense
         ib = gensegm_to_body[isegm]
         iint = gensegm_to_iint[isegm]
         il = BodyLoop[ib]
-    
-        ibeg = iint * segm_size         
-        iend = ibeg + segm_size
-        assert iend <= nint
+
 
         if GenTimeRev[isegm] == 1:
+                
+            ibeg = iint * segm_size         
+            iend = ibeg + segm_size
+            assert iend <= nint
             
             np.matmul(
                 all_pos[il,ibeg:iend,:]     ,
@@ -1203,11 +1246,14 @@ def Populate_allsegmpos(all_pos, GenSpaceRot, GenTimeRev, gensegm_to_body, gense
             )            
 
         else:
+
+            ibeg = iint * segm_size + 1
+            iend = ibeg + segm_size
+            assert iend <= nint
             
             allsegmpos[isegm,:,:] = np.matmul(
                 all_pos[il,ibeg:iend,:]     ,
                 GenSpaceRot[isegm,:,:].T    ,
-                out=allsegmpos[isegm,:,:]   ,
             )[::-1,:]
     
 
@@ -1257,8 +1303,7 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
 
     eps = 1e-12
 
-    # nint_min, nloop, loopnb, BodyLoop, Targets = DetectLoops(Sym_list, nbody, nint_min_fac = 2)
-    nint_min, nloop, loopnb, BodyLoop, Targets = DetectLoops(Sym_list, nbody)
+    nint_min, nloop, loopnb, BodyLoop, Targets, BodyGraph = DetectLoops(Sym_list, nbody)
     
     SegmGraph, nint_min, nsegm, bodysegm, BodyHasContiguousGeneratingSegments, Sym_list = ExploreGlobalShifts_BuildSegmGraph(geodim, nbody, nloop, loopnb, Targets, nint_min, Sym_list)
 
@@ -1581,6 +1626,8 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
     
     allsegmpos = Populate_allsegmpos(all_pos, GenSpaceRot, GenTimeRev, gensegm_to_body, gensegm_to_iint, BodyLoop, nint_min)
     
+    all_body_pos = Compute_all_body_pos(all_pos, BodyGraph, loopgen, BodyLoop)
+    
     # allsegmpos_cy = np.empty((nsegm, segm_size, geodim), dtype=np.float64)
     # Populate_allsegmpos_cy(all_pos, allsegmpos_cy, GenSpaceRot, GenTimeRev, gensegm_to_body, gensegm_to_iint, BodyLoop)
     # assert np.linalg.norm((allsegmpos_cy - allsegmpos)) < eps
@@ -1594,16 +1641,22 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
         
         # print(ib, loopgen[il])
         
-        if ib == loopgen[il]: # Since all_pos only containts LOOP positions!
+#         if ib == loopgen[il]: # Since all_pos only containts LOOP positions!
+# 
+#             ibeg = iint * segm_size
+#             iend = ibeg + segm_size
+#             assert iend <= nint
+#             assert np.linalg.norm(allsegmpos[isegm,:,:] - all_pos[il,ibeg:iend,:]) < eps
+#             
+#             Sym = gensegm_to_all[ib][iint]        
+    
 
-            ibeg = iint * segm_size
-            iend = ibeg + segm_size
-            assert iend <= nint
-            assert np.linalg.norm(allsegmpos[isegm,:,:] - all_pos[il,ibeg:iend,:]) < eps
-            
-            Sym = gensegm_to_all[ib][iint]
+        ibeg = iint * segm_size
+        iend = ibeg + segm_size
+        assert iend <= nint
+        assert np.linalg.norm(allsegmpos[isegm,:,:] - all_body_pos[ib,ibeg:iend,:]) < eps
         
-        
+
 
     for il in range(nloop):    
         
