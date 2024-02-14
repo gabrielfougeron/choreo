@@ -568,13 +568,14 @@ cpdef void partial_fft_to_pos_slice_2npr(
     # Computes a.real * b.real.T + a.imag * b.imag.T using clever memory arrangement and a single gemm call
     scipy.linalg.cython_blas.dgemm(transt, transn, &geodim, &n_inter, &ndcom, &dfac, params_basis_reoganized_r, &ndcom, ifft_b_r, &ndcom, &zero_double, &pos_slice[0,0], &geodim)
 
-    for j in range(ncoeff_min_loop_nnz):
-        w = cexp(citwopi*nnz_k[j]/ncoeff_min_loop)
-        for m in range(1,npr):
-            for i in range(nppl):
-                ifft_b[m,j,i] *= w
 
     n_inter = npr-1
+   
+    for j in range(ncoeff_min_loop_nnz):
+        w = cexp(citwopi*nnz_k[j]/ncoeff_min_loop)
+        for i in range(nppl):
+            scipy.linalg.cython_blas.zscal(&n_inter,&w,&ifft_b[1,j,i],&nzcom)
+
     # Inplace conjugaison
     ifft_b_r += 1 + ndcom
     nconj = n_inter*nzcom
@@ -640,82 +641,32 @@ cpdef void partial_fft_to_pos_slice_2npr_nocopy(
             for i in range(nppl):
                 ifft_b[m,j,i] *= w
 
-    n_inter = npr-1
 
+    n_inter = npr-1
     # Inplace conjugaison
     ifft_b_r += 1 + ndcom
     nconj = n_inter*nzcom
     scipy.linalg.cython_blas.dscal(&nconj,&minusone_double,ifft_b_r,&int_two)
 
-    ifft_b_r = <double*> &ifft_b[npr,0,0]
+    cdef double complex *ztmp = <double complex*> malloc(sizeof(double complex) * nconj)
+    cdef double *dtmp = (<double*> ztmp) + n_inter*ndcom
+
+    ifft_b_r -= 1
     for i in range(n_inter):
-        ifft_b_r -= ndcom
+        dtmp -= ndcom
+        scipy.linalg.cython_blas.dcopy(&ndcom,ifft_b_r,&int_one,dtmp,&int_one)
+        ifft_b_r += ndcom
 
-        scipy.linalg.cython_blas.dgemv(transt, &ndcom, &geodim, &dfac, params_basis_reoganized_r, &ndcom, ifft_b_r, &int_one, &zero_double, &pos_slice[npr+1+i,0], &int_one)
+    scipy.linalg.cython_blas.dgemm(transt, transn, &geodim, &n_inter, &ndcom, &dfac, params_basis_reoganized_r, &ndcom, dtmp, &ndcom, &zero_double, &pos_slice[npr+1,0], &geodim)
 
-
-
-
-
-
+    free(ztmp)
 
 
 
 
 
 
-# @cython.cdivision(True)
-# cpdef void Populate_allsegmpos_cy(
-#     double[:,:,::1] all_pos         ,
-#     double[:,:,::1] allsegmpos      ,
-#     double[:,:,::1] GenSpaceRot     ,
-#     long[::1]       GenTimeRev      ,
-#     long[::1]       gensegm_to_body ,
-#     long[::1]       gensegm_to_iint ,
-#     long[::1]       BodyLoop        ,
-# ) noexcept nogil:
-#     
-#     cdef int nsegm = allsegmpos.shape[0]
-#     cdef int segm_size = allsegmpos.shape[1]
-#     cdef int nint = all_pos.shape[1]
-# 
-#     cdef Py_ssize_t isegm, ib, iint, ibeg, iend
-# 
-#     bint tmp_alloc = False
-# 
-#     for isegm in range(nsegm):
-# 
-#         ib = gensegm_to_body[isegm]
-#         iint = gensegm_to_iint[isegm]
-#         il = BodyLoop[ib]
-#     
-#         ibeg = iint * segm_size         
-#         iend = ibeg + segm_size
-# 
-#         if GenTimeRev[isegm] > 0:
-# 
-#             np.matmul(
-#                 all_pos[il,ibeg:iend,:]     ,
-#                 GenSpaceRot[isegm,:,:].T    ,
-#                 out=allsegmpos[isegm,:,:]   ,
-#             )
-# 
-# 
-#     double[:,::1] a,
-#     double[:,::1] b,
-#     double[:,::1] c
-# ) noexcept nogil:
-# 
-#     cdef int n = a.shape[0]
-#     cdef int k = a.shape[1]
-#     cdef int m = b.shape[0]
-# 
-#     scipy.linalg.cython_blas.dgemm(transt, transn, &m, &n, &k, &one_double, &b[0,0], &k, &a[0,0], &k, &zero_double, &c[0,0], &m)
-# 
 
 
-        
-#         else:
-# 
-#         if GenTimeRev[isegm] < 0:
-#             allsegmpos[isegm,:,:] = allsegmpos[isegm,::-1,:]
+
+
