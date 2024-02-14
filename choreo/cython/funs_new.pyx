@@ -6,6 +6,8 @@ cimport cython
 from libc.math cimport fabs as cfabs
 from libc.complex cimport cexp
 
+import scipy
+
 cimport scipy.linalg.cython_blas
 from libc.stdlib cimport malloc, free
 
@@ -370,6 +372,9 @@ cdef class ActionSym():
             out[:,:] = out[::-1,:]
 
 
+
+
+
 cdef double one_double = 1.
 cdef double zero_double = 0.
 cdef char *transn = 'n'
@@ -467,7 +472,7 @@ cdef void inplace_twiddle(
                 twopow *= 2
                 nbit += 1
 
-            nnz_bin  = <bint*> malloc(sizeof(int)*nbit*ncoeff_min_loop_nnz)
+            nnz_bin  = <bint*> malloc(sizeof(bint)*nbit*ncoeff_min_loop_nnz)
             for j in range(ncoeff_min_loop_nnz):
                 for ibit in range(nbit):
                     nnz_bin[ibit + j*nbit] = ((nnz_k[j] >> (ibit)) & 1) # tests if the ibit-th bit of nnz_k[j] is one 
@@ -597,6 +602,10 @@ cpdef void partial_fft_to_pos_slice_2npr(
 
 
 
+
+
+
+# Benchmark of alternatives
 @cython.cdivision(True)
 cpdef void partial_fft_to_pos_slice_2npr_nocopy(
     double complex[:,:,::1] ifft_b                  ,
@@ -663,10 +672,95 @@ cpdef void partial_fft_to_pos_slice_2npr_nocopy(
 
 
 
+    
+cpdef void DoAllIFFTs(
+    double[::1] params_buf          , long[:,::1] params_shapes     , long[::1] params_shifts   ,
+    long[::1] nnz_k_buf             , long[:,::1] nnz_k_shapes      , long[::1] nnz_k_shifts    ,
+    double complex[::1] ifft_buf    , long[:,::1] ifft_shapes       , long[::1] ifft_shifts     ,
+):
+
+    cdef double [:,:,::1] params
+    cdef long[::1] nnz_k
+    cdef double complex[:,:,::1] ifft
+
+    cdef int nloop = params_shapes.shape[0]
+    cdef int n
+    cdef double complex * dest
+    cdef Py_ssize_t il, i
+
+    for il in range(nloop):
+
+        if params_shapes[il,1] > 0:
+
+            params = <double[:params_shapes[il,0],:params_shapes[il,1],:params_shapes[il,2]:1]> &params_buf[params_shifts[il]]
+            nnz_k = <long[:nnz_k_shapes[il,0]:1]> &nnz_k_buf[nnz_k_shifts[il]]
+
+            if nnz_k.shape[0] > 0:
+                if nnz_k[0] == 0:
+                    for i in range(params.shape[2]):
+                        params[0,0,i] *= 0.5
+
+            ifft = scipy.fft.rfft(params, axis=0, n=2*params.shape[0])
+
+            dest = &ifft_buf[0] + ifft_shifts[il]
+            n = ifft_shifts[il+1] - ifft_shifts[il]
+            scipy.linalg.cython_blas.zcopy(&n,&ifft[0,0,0],&int_one,dest,&int_one)
+
+            
 
 
 
+cpdef void ifft_to_pos_slice(
+    double complex[::1] ifft_buf            , long[:,::1] ifft_shapes           , long[::1] ifft_shifts         ,
+    double complex[::1] params_basis_buf    , long[:,::1] params_basis_shapes   , long[::1] params_basis_shifts ,
+    long[::1] nnz_k_buf                     , long[:,::1] nnz_k_shapes          , long[::1] nnz_k_shifts        ,
+    double[::1] pos_slice_buf               , long[:,::1] pos_slice_shapes      , long[::1] pos_slice_shifts    ,
+    long[::1] ncoeff_min_loop, long nnpr,
+):
+
+    cdef double complex[:,:,::1] ifft
+    cdef double complex[:,:,::1] params_basis
+    cdef long[::1] nnz_k
+    cdef double[:,::1] pos_slice
+
+    cdef int nloop = ncoeff_min_loop.shape[0]
+    cdef Py_ssize_t il, i
+
+    for il in range(nloop):
+
+        if params_basis_shapes[il,1] > 0:
+
+            ifft = <double complex[:ifft_shapes[il,0],:ifft_shapes[il,1],:ifft_shapes[il,2]:1]> &ifft_buf[ifft_shifts[il]]
+            params_basis = <double complex[:params_basis_shapes[il,0],:params_basis_shapes[il,1],:params_basis_shapes[il,2]:1]> &params_basis_buf[params_basis_shifts[il]]
+            nnz_k = <long[:nnz_k_shapes[il,0]:1]> &nnz_k_buf[nnz_k_shifts[il]]
+            pos_slice = <double[:pos_slice_shapes[il,0],:pos_slice_shapes[il,1]:1]> &pos_slice_buf[pos_slice_shifts[il]]
+
+            if nnpr == 1:
+                partial_fft_to_pos_slice_1npr(ifft, params_basis, ncoeff_min_loop[il], nnz_k, pos_slice)
+            else:
+                partial_fft_to_pos_slice_2npr(ifft, params_basis, ncoeff_min_loop[il], nnz_k, pos_slice)
 
 
 
+cpdef void params_to_pos_slice(
+    double[::1] params_buf                  , long[:,::1] params_shapes         , long[::1] params_shifts   ,
+    double complex[::1] ifft_buf            , long[:,::1] ifft_shapes           , long[::1] ifft_shifts         ,
+    double complex[::1] params_basis_buf    , long[:,::1] params_basis_shapes   , long[::1] params_basis_shifts ,
+    long[::1] nnz_k_buf                     , long[:,::1] nnz_k_shapes          , long[::1] nnz_k_shifts        ,
+    double[::1] pos_slice_buf               , long[:,::1] pos_slice_shapes      , long[::1] pos_slice_shifts    ,
+    long[::1] ncoeff_min_loop, long nnpr,
+):
 
+    DoAllIFFTs(
+        params_buf  , params_shapes , params_shifts ,
+        nnz_k_buf   , nnz_k_shapes  , nnz_k_shifts  ,
+        ifft_buf    , ifft_shapes   , ifft_shifts   ,
+    )
+
+    ifft_to_pos_slice(
+        ifft_buf            , ifft_shapes           , ifft_shifts           ,
+        params_basis_buf    , params_basis_shapes   , params_basis_shifts   ,
+        nnz_k_buf           , nnz_k_shapes          , nnz_k_shifts          ,
+        pos_slice_buf       , pos_slice_shapes      , pos_slice_shifts      ,
+        ncoeff_min_loop     , nnpr                  ,
+    )

@@ -765,8 +765,8 @@ def reorganize_All_params_basis(All_params_basis):
     nloop = len(All_params_basis)
     geodim = All_params_basis[0][0].shape[0]
     
-    all_nnz_k = []
-    all_params_basis_reorganized = []
+    nnz_k_list = []
+    params_basis_reorganized_list = []
     
     for il in range(nloop):
         
@@ -791,7 +791,7 @@ def reorganize_All_params_basis(All_params_basis):
             last_nparam = 0
                 
         nnz_k = np.array(nnz_k, dtype=np.intp)
-        all_nnz_k.append(nnz_k)
+        nnz_k_list.append(nnz_k)
 
         params_basis_reorganized = np.empty((geodim, nnz_k.shape[0], last_nparam), dtype=np.complex128)    
         
@@ -799,9 +799,9 @@ def reorganize_All_params_basis(All_params_basis):
             
             params_basis_reorganized[:,ik,:] = params_basis[k][:,0,:] + 1j*params_basis[k][:,1,:]
         
-        all_params_basis_reorganized.append(params_basis_reorganized)
+        params_basis_reorganized_list.append(params_basis_reorganized)
 
-    return all_params_basis_reorganized, all_nnz_k
+    return params_basis_reorganized_list, nnz_k_list
 
 def ExploreGlobalShifts_BuildSegmGraph(geodim, nbody, nloop, loopnb, Targets, nint_min, Sym_list):
 
@@ -1105,30 +1105,46 @@ def AssertAllSegmGenConstraintsAreRespected(gensegm_to_all, nint_min, bodysegm, 
 
 # def PrepareParamBuf():
 
-def BundleListOfArrays(ListOfArrays):
+
+
+def BundleListOfShapes(ListOfShapes):
     
-    n = len(ListOfArrays)
+    n = len(ListOfShapes)
     
-    ref_arr = ListOfArrays[0]
+    ref_shp = ListOfShapes[0]
+    ref_ndim = len(ref_shp)
     
-    n_shapes = np.zeros((n, ref_arr.ndim), dtype=np.intp)
+    n_shapes = np.zeros((n, ref_ndim), dtype=np.intp)
     n_shifts = np.zeros((n+1), dtype=np.intp)
     
-    for i, arr in enumerate(ListOfArrays):
+    for i, shp in enumerate(ListOfShapes):
         
-        assert ref_arr.ndim == arr.ndim
-        assert ref_arr.dtype == arr.dtype
+        assert ref_ndim == len(shp)
         
-        n_shapes[i,:] = arr.shape
-        n_shifts[i+1] = n_shifts[i] + math.prod(arr.shape)
+        n_shapes[i,:] = shp
+        n_shifts[i+1] = n_shifts[i] + math.prod(shp)
         
-    buf = np.empty((n_shifts[n]), dtype=ref_arr.dtype)
+    return n_shapes, n_shifts
+
+def BundleListOfArrays(ListOfArrays):
+        
+    ListOfShapes = [arr.shape for arr in ListOfArrays]
+    n_shapes, n_shifts = BundleListOfShapes(ListOfShapes)
+
+    ref_arr = ListOfArrays[0]
+
+    buf = np.empty((n_shifts[-1]), dtype=ref_arr.dtype)
     
     for i, arr in enumerate(ListOfArrays):
+        
+        assert ref_arr.dtype == arr.dtype
         
         buf[n_shifts[i]:n_shifts[i+1]] = arr.reshape(-1)
         
     return buf, n_shapes, n_shifts
+
+    
+    
 
 def params_to_pos_slice_loop(params_basis_reorganized, params_loop, nnz_k, ncoeff_min_loop, nnpr):
     
@@ -1228,6 +1244,35 @@ def Populate_allsegmpos(all_pos, allsegmpos, GenSpaceRot, GenTimeRev, gensegm_to
         if GenTimeRev[isegm] == -1:
             allsegmpos[isegm,:,:] = allsegmpos[isegm,::-1,:]
     
+def params_to_all_coeffs(
+    params_buf, params_shapes, params_shifts,
+    params_basis_reorganized_list, nnz_k_list, ncoeff_min_loop, nint
+):
+    
+    assert nint % 2 == 0
+    ncoeffs = nint//2 +1
+    
+    geodim = params_basis_reorganized_list[0].shape[0]
+    nloop = ncoeff_min_loop.shape[0]
+    
+    all_coeffs = np.zeros((nloop, ncoeffs, geodim), dtype=np.complex128)
+    
+    for il in range(nloop):
+        
+        params_basis_reorganized = params_basis_reorganized_list[il]
+        nparam_per_period_loop = params_basis_reorganized.shape[2]
+        nnz_k = nnz_k_list[il]
+        
+        npr = (ncoeffs-1) //  ncoeff_min_loop[il]
+        
+        params_loop = params_buf[params_shifts[il]:params_shifts[il+1]].reshape(params_shapes[il])
+        
+        coeffs_reorganized = np.einsum('ijk,ljk->lji', params_basis_reorganized, params_loop)
+        
+        coeffs_dense = all_coeffs[il,:(ncoeffs-1),:].reshape(npr, ncoeff_min_loop[il], geodim)
+        coeffs_dense[:,nnz_k,:] = coeffs_reorganized
+        
+    return all_coeffs
     
 
 def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, MomCons=False, n_grad_change=1., Sym_list=[], CrashOnIdentity=True, ForceMatrixChangevar = False, store_folder = ""):
@@ -1462,10 +1507,10 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
     AssertAllBodyConstraintAreRespected(LoopGenConstraints, all_pos)
 
  
-    all_params_basis_reorganized, all_nnz_k = reorganize_All_params_basis(All_params_basis)
+    params_basis_reorganized_list, nnz_k_list = reorganize_All_params_basis(All_params_basis)
 
     ncoeff_min_loop = np.array([len(All_params_basis[il]) for il in range(nloop)], dtype=np.intp)
-    ncoeff_min_loop_nnz = np.array([all_nnz_k[il].shape[0] for il in range(nloop)], dtype=np.intp)
+    ncoeff_min_loop_nnz = np.array([nnz_k_list[il].shape[0] for il in range(nloop)], dtype=np.intp)
 
     n_sub_fft = np.zeros((nloop), dtype=np.intp)
     for il in range(nloop):
@@ -1500,16 +1545,16 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
     # Parameters to all_pos through coeffs
     all_coeffs = np.zeros((nloop,ncoeffs,geodim,2), dtype = np.float64)
 
-    all_params = []
+    all_params_list = []
     # Create parameters
     for il in range(nloop):
 
         # print()
         # print(f'{il = }')
 
-        params_basis_reorganized = all_params_basis_reorganized[il]
+        params_basis_reorganized = params_basis_reorganized_list[il]
         nparam_per_period_loop = params_basis_reorganized.shape[2]
-        nnz_k = all_nnz_k[il]
+        nnz_k = nnz_k_list[il]
         
 
         
@@ -1518,7 +1563,7 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
 
         params_loop = np.random.random((npr, ncoeff_min_loop_nnz[il], nparam_per_period_loop))
         
-        all_params.append(params_loop)
+        all_params_list.append(params_loop)
 
         assert nint_min % ncoeff_min_loop[il] == 0
         
@@ -1551,7 +1596,6 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
         coeffs_reorganized = np.einsum('ijk,ljk->lji', params_basis_reorganized, params_loop)
         coeffs_dense = np.zeros((npr, ncoeff_min_loop[il], geodim), dtype=np.complex128)
         coeffs_dense[:,nnz_k,:] = coeffs_reorganized
-        
         all_coeffs_a_c[il,:(ncoeffs-1),:] = coeffs_dense.reshape(((ncoeffs-1), geodim))
         
         params_basis_dense = np.zeros((geodim, ncoeff_min_loop[il], nparam_per_period_loop), dtype=np.complex128)
@@ -1607,20 +1651,7 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
     
     # return
     
-    
-    # Without lists now.
-    params_buf, params_shapes, params_shifts = BundleListOfArrays(all_params)
-    params_basis_buf, params_basis_shapes, params_basis_shifts = BundleListOfArrays(all_params_basis_reorganized)
-        
-    # print(params_shapes)
-    # print(params_shifts)
-    # print(params_basis_shapes)
-    # print(params_basis_shifts)
-      
-    if All_Id:  
-        for il in range(1,nloop):
-            assert (params_basis_shapes[il,:] == params_basis_shapes[0,:]).all()
-        
+
         
         
                 
@@ -1643,6 +1674,87 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
         assert n_inter == (segm_size * ngensegm_loop[il])
         assert np.linalg.norm(all_pos[il,:n_inter,:] - all_pos_slice_nnpr[il]) < 1e-14
 
+        
+        
+        
+    
+    
+    
+    
+    # Without lists now.
+    
+    params_basis_buf, params_basis_shapes, params_basis_shifts = BundleListOfArrays(params_basis_reorganized_list)
+    nnz_k_buf, nnz_k_shapes, nnz_k_shifts = BundleListOfArrays(nnz_k_list)
+    
+    params_shapes_list = []
+    ifft_shapes_list = []
+    pos_slice_shapes_list = []
+    for il in range(nloop):
+
+        nppl = params_basis_reorganized_list[il].shape[2]
+        assert nint % (2*ncoeff_min_loop[il]) == 0
+        npr = nint //  (2*ncoeff_min_loop[il])
+        
+        params_shapes_list.append((npr, ncoeff_min_loop_nnz[il], nppl))
+        ifft_shapes_list.append((npr+1, ncoeff_min_loop_nnz[il], nppl))
+        pos_slice_shapes_list.append((npr*nnpr, geodim))
+        
+
+    params_shapes, params_shifts = BundleListOfShapes(params_shapes_list)
+    ifft_shapes, ifft_shifts = BundleListOfShapes(ifft_shapes_list)
+    pos_slice_shapes, pos_slice_shifts = BundleListOfShapes(pos_slice_shapes_list)
+        
+    old_params_buf, params_shapes_chk, params_shifts_chk = BundleListOfArrays(all_params_list)
+
+    assert (params_shapes == params_shapes_chk).all()
+    assert (params_shifts == params_shifts_chk).all()
+        
+    params_buf = np.random.random((params_shifts[-1]))
+    
+    ifft_buf = np.empty((ifft_shifts[-1]),dtype=np.complex128)    
+    pos_slice_buf = np.zeros((pos_slice_shifts[-1]),dtype=np.float64)    
+            
+    params_to_pos_slice(
+        params_buf.copy()   , params_shapes         , params_shifts         ,
+        ifft_buf            , ifft_shapes           , ifft_shifts           ,
+        params_basis_buf    , params_basis_shapes   , params_basis_shifts   ,
+        nnz_k_buf           , nnz_k_shapes          , nnz_k_shifts          ,
+        pos_slice_buf       , pos_slice_shapes      , pos_slice_shifts      ,
+        ncoeff_min_loop     , nnpr  ,
+    )
+            
+    all_coeffs = params_to_all_coeffs(
+        params_buf, params_shapes, params_shifts,
+        params_basis_reorganized_list, nnz_k_list, ncoeff_min_loop, nint
+    )
+        
+    all_pos = scipy.fft.irfft(all_coeffs, axis=1)
+ 
+        
+    for il in range(nloop):
+        
+        n_inter = pos_slice_shapes[il,0]
+        assert n_inter == (segm_size * ngensegm_loop[il])
+        
+        pos_slice = pos_slice_buf[pos_slice_shifts[il]:pos_slice_shifts[il+1]].reshape(pos_slice_shapes[il])
+        
+        # print(all_pos[il,:n_inter,:])
+        # print(pos_slice)
+        # print(all_pos[il,:n_inter,:]-pos_slice)
+        
+        assert np.linalg.norm(all_pos[il,:n_inter,:] - pos_slice) < 1e-14
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
         
 
         
@@ -1714,15 +1826,15 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
         # 
         # print()
         # print(il, nint_loop_min, n_inter)
-        # print(all_params_basis_reorganized[il].shape)
-        # print(all_params_basis_reorganized[il])
+        # print(params_basis_reorganized_list[il].shape)
+        # print(params_basis_reorganized_list[il])
         
         
     nparam_nosym = geodim * nint * nbody
     nparam_tot = 0
 
     for il in range(nloop):
-        nparam_tot += math.prod(all_params[il].shape)
+        nparam_tot += math.prod(all_params_list[il].shape)
 
     
     print('*****************************************')
@@ -1898,10 +2010,10 @@ def Prepare_data_for_speed_comparison(
 
     All_params_basis = ComputeParamBasis_Loop(False, nbody, nloop, loopgen, geodim, LoopGenConstraints)
 
-    all_params_basis_reorganized, all_nnz_k = reorganize_All_params_basis(All_params_basis)
+    params_basis_reorganized_list, nnz_k_list = reorganize_All_params_basis(All_params_basis)
 
     ncoeff_min_loop = np.array([len(All_params_basis[il]) for il in range(nloop)], dtype=np.intp)
-    ncoeff_min_loop_nnz = np.array([all_nnz_k[il].shape[0] for il in range(nloop)], dtype=np.intp)
+    ncoeff_min_loop_nnz = np.array([nnz_k_list[il].shape[0] for il in range(nloop)], dtype=np.intp)
 
 
     n_sub_fft = np.zeros((nloop), dtype=np.intp)
@@ -1929,19 +2041,19 @@ def Prepare_data_for_speed_comparison(
     nint = 2 * nint_min * nint_fac
     ncoeffs = nint // 2 + 1
     
-    all_params = []
+    all_params_list = []
     # Create parameters
     for il in range(nloop):
         
-        params_basis_reorganized = all_params_basis_reorganized[il]
+        params_basis_reorganized = params_basis_reorganized_list[il]
         nparam_per_period_loop = params_basis_reorganized.shape[2]
-        nnz_k = all_nnz_k[il]
+        nnz_k = nnz_k_list[il]
         
         npr = (ncoeffs-1) //  ncoeff_min_loop[il]
         nperiods_loop = npr * ncoeff_min_loop_nnz[il]
         
         params_loop = np.random.random((npr, ncoeff_min_loop_nnz[il], nparam_per_period_loop))
-        all_params.append(params_loop)
+        all_params_list.append(params_loop)
         
     return Pick_Named_Args_From_Dict(params_to_all_pos, dict(**locals()))
         
@@ -1960,19 +2072,19 @@ def Pick_Named_Args_From_Dict(fun, the_dict, MissingArgsAreNone=True):
     return all_kwargs
 
 
-def params_to_all_pos_mod(all_params_basis_reorganized, all_params, all_nnz_k, ncoeff_min_loop, ncoeffs, nnpr):
+def params_to_all_pos_mod(params_basis_reorganized_list, all_params_list, nnz_k_list, ncoeff_min_loop, ncoeffs, nnpr):
     
-    nloop = len(all_params_basis_reorganized)
-    geodim = all_params_basis_reorganized[0].shape[0]
+    nloop = len(params_basis_reorganized_list)
+    geodim = params_basis_reorganized_list[0].shape[0]
     all_coeffs = np.zeros((nloop,ncoeffs,geodim), dtype=np.complex128)
     
 #     for il in range(nloop):
 #         
-#         params_loop = all_params[il]
+#         params_loop = all_params_list[il]
 #         
-#         params_basis_reorganized = all_params_basis_reorganized[il]
+#         params_basis_reorganized = params_basis_reorganized_list[il]
 #         geodim = params_basis_reorganized.shape[0]
-#         nnz_k = all_nnz_k[il]
+#         nnz_k = nnz_k_list[il]
 #         
 #         npr = (ncoeffs-1) //  ncoeff_min_loop[il]
 #         ncoeff_min_loop_nnz = len(nnz_k)
@@ -1985,19 +2097,19 @@ def params_to_all_pos_mod(all_params_basis_reorganized, all_params, all_nnz_k, n
         
     all_pos = scipy.fft.irfft(all_coeffs, axis=1)
         
-def params_to_all_pos(all_params_basis_reorganized, all_params, all_nnz_k, ncoeff_min_loop, ncoeffs, nnpr):
+def params_to_all_pos(params_basis_reorganized_list, all_params_list, nnz_k_list, ncoeff_min_loop, ncoeffs, nnpr):
     
-    nloop = len(all_params_basis_reorganized)
-    geodim = all_params_basis_reorganized[0].shape[0]
+    nloop = len(params_basis_reorganized_list)
+    geodim = params_basis_reorganized_list[0].shape[0]
     all_coeffs = np.zeros((nloop,ncoeffs,geodim), dtype=np.complex128)
     
     for il in range(nloop):
         
-        params_loop = all_params[il]
+        params_loop = all_params_list[il]
         
-        params_basis_reorganized = all_params_basis_reorganized[il]
+        params_basis_reorganized = params_basis_reorganized_list[il]
         geodim = params_basis_reorganized.shape[0]
-        nnz_k = all_nnz_k[il]
+        nnz_k = nnz_k_list[il]
         
         npr = (ncoeffs-1) //  ncoeff_min_loop[il]
         ncoeff_min_loop_nnz = len(nnz_k)
@@ -2011,32 +2123,32 @@ def params_to_all_pos(all_params_basis_reorganized, all_params, all_nnz_k, ncoef
     all_pos = scipy.fft.irfft(all_coeffs, axis=1)
                 
 
-def params_to_all_pos_slice(all_params_basis_reorganized, all_params, all_nnz_k, ncoeff_min_loop, ncoeffs, nnpr):
+def params_to_all_pos_slice(params_basis_reorganized_list, all_params_list, nnz_k_list, ncoeff_min_loop, ncoeffs, nnpr):
     
-    nloop = len(all_params_basis_reorganized)
-    geodim = all_params_basis_reorganized[0].shape[0]
+    nloop = len(params_basis_reorganized_list)
+    geodim = params_basis_reorganized_list[0].shape[0]
     nint = 2*(ncoeffs-1)
     
     for il in range(nloop):
         
-        params_loop = all_params[il]
-        params_basis_reorganized = all_params_basis_reorganized[il]
-        nnz_k = all_nnz_k[il]
+        params_loop = all_params_list[il]
+        params_basis_reorganized = params_basis_reorganized_list[il]
+        nnz_k = nnz_k_list[il]
         ncoeff_min = ncoeff_min_loop[il]
 
         params_to_pos_slice_loop(params_basis_reorganized, params_loop, nnz_k, ncoeff_min, nnpr)
         
-def params_to_all_pos_slice_nocopy(all_params_basis_reorganized, all_params, all_nnz_k, ncoeff_min_loop, ncoeffs, nnpr):
+def params_to_all_pos_slice_nocopy(params_basis_reorganized_list, all_params_list, nnz_k_list, ncoeff_min_loop, ncoeffs, nnpr):
     
-    nloop = len(all_params_basis_reorganized)
-    geodim = all_params_basis_reorganized[0].shape[0]
+    nloop = len(params_basis_reorganized_list)
+    geodim = params_basis_reorganized_list[0].shape[0]
     nint = 2*(ncoeffs-1)
     
     for il in range(nloop):
         
-        params_loop = all_params[il]
-        params_basis_reorganized = all_params_basis_reorganized[il]
-        nnz_k = all_nnz_k[il]
+        params_loop = all_params_list[il]
+        params_basis_reorganized = params_basis_reorganized_list[il]
+        nnz_k = nnz_k_list[il]
         ncoeff_min = ncoeff_min_loop[il]
 
         params_to_pos_slice_loop_nocopy(params_basis_reorganized, params_loop, nnz_k, ncoeff_min, nnpr)
