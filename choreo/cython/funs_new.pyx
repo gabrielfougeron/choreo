@@ -100,7 +100,7 @@ cdef class ActionSym():
         """        
 
         return ActionSym(
-            BodyPerm  = np.array(range(nbody), dtype = np.int_),
+            BodyPerm  = np.array(range(nbody), dtype = np.intp),
             SpaceRot  = np.identity(geodim, dtype = np.float64),
             TimeRev   = 1,
             TimeShiftNum = 0,
@@ -691,60 +691,60 @@ cdef void ifft_to_pos_slice(
                     npr, ncoeff_min_loop_nnz, ncoeff_min_loop_il, geodim, nppl,
                 )
 
-cdef void pos_slice_to_segmpos(
-    const double* pos_slice_buf_ptr , long[:,::1] pos_slice_shapes  , long[::1] pos_slice_shifts    ,
-    const double* segmpos_buf_ptr   ,
-    double[:,:,::1] GenSpaceRot     ,
-    long[::1] GenTimeRev            ,
-    long[::1] gensegm_to_body       ,
-    long[::1] gensegm_to_iint       ,
-    long[::1] BodyLoop              ,
-    long segm_size                  ,
-) noexcept nogil:
-
-
-    cdef int nsegm = gensegm_to_body.shape[0]
-    cdef double* pos_slice
-    cdef double* segmpos
-    cdef double* tmp
-
-    cdef int geodim = GenSpaceRot.shape[1]
-    cdef int nitems = segm_size*geodim
-    cdef Py_ssize_t isegm, ib, il
-    cdef Py_ssize_t i
-
-    cdef bint NeedsAllocate = False
-
-    for isegm in range(nsegm):
-        NeedsAllocate = NeedsAllocate || (GenTimeRev[isegm] < 0)
-
-    if NeedsAllocate:
-        tmp = <double*> malloc(sizeof(double)*nitems)
-
-    for isegm in range(nsegm):
-
-        ib = gensegm_to_body[isegm]
-        iint = gensegm_to_iint[isegm]
-        il = BodyLoop[ib]
-
-        pos_slice = pos_slice_buf_ptr + pos_slice_shifts[il] + nitems*iint
-    
-        if GenTimeRev[isegm] == 1:
-
-            segmpos = segmpos_buf_ptr + nitems*isegm
-            scipy.linalg.cython_blas.dgemm(transt, transn, &geodim, &segm_size, &geodim, &one_double, &GenSpaceRot[isegm,0,0], &k, pos_slice, &geodim, &zero_double, segmpos, &geodim)
-
-        else:
-
-            segmpos = segmpos_buf_ptr + nitems*(isegm+1)
-            scipy.linalg.cython_blas.dgemm(transt, transn, &geodim, &segm_size, &geodim, &one_double, &GenSpaceRot[isegm,0,0], &k, pos_slice, &geodim, &zero_double, tmp, &geodim)
-
-            for i in range(nitems):
-                segmpos -= 1
-                segmpos[0] = tmp[0]
-
-    if NeedsAllocate:
-        free(tmp)
+# cdef void pos_slice_to_segmpos(
+#     const double* pos_slice_buf_ptr , long[:,::1] pos_slice_shapes  , long[::1] pos_slice_shifts    ,
+#     const double* segmpos_buf_ptr   ,
+#     double[:,:,::1] GenSpaceRot     ,
+#     long[::1] GenTimeRev            ,
+#     long[::1] gensegm_to_body       ,
+#     long[::1] gensegm_to_iint       ,
+#     long[::1] BodyLoop              ,
+#     long segm_size                  ,
+# ) noexcept nogil:
+# 
+# 
+#     cdef int nsegm = gensegm_to_body.shape[0]
+#     cdef double* pos_slice
+#     cdef double* segmpos
+#     cdef double* tmp
+# 
+#     cdef int geodim = GenSpaceRot.shape[1]
+#     cdef int nitems = segm_size*geodim
+#     cdef Py_ssize_t isegm, ib, il
+#     cdef Py_ssize_t i
+# 
+#     cdef bint NeedsAllocate = False
+# 
+#     for isegm in range(nsegm):
+#         NeedsAllocate = NeedsAllocate || (GenTimeRev[isegm] < 0)
+# 
+#     if NeedsAllocate:
+#         tmp = <double*> malloc(sizeof(double)*nitems)
+# 
+#     for isegm in range(nsegm):
+# 
+#         ib = gensegm_to_body[isegm]
+#         iint = gensegm_to_iint[isegm]
+#         il = BodyLoop[ib]
+# 
+#         pos_slice = pos_slice_buf_ptr + pos_slice_shifts[il] + nitems*iint
+#     
+#         if GenTimeRev[isegm] == 1:
+# 
+#             segmpos = segmpos_buf_ptr + nitems*isegm
+#             scipy.linalg.cython_blas.dgemm(transt, transn, &geodim, &segm_size, &geodim, &one_double, &GenSpaceRot[isegm,0,0], &k, pos_slice, &geodim, &zero_double, segmpos, &geodim)
+# 
+#         else:
+# 
+#             segmpos = segmpos_buf_ptr + nitems*(isegm+1)
+#             scipy.linalg.cython_blas.dgemm(transt, transn, &geodim, &segm_size, &geodim, &one_double, &GenSpaceRot[isegm,0,0], &k, pos_slice, &geodim, &zero_double, tmp, &geodim)
+# 
+#             for i in range(nitems):
+#                 segmpos -= 1
+#                 segmpos[0] = tmp[0]
+# 
+#     if NeedsAllocate:
+#         free(tmp)
 
 
 cpdef void params_to_pos_slice(
@@ -775,53 +775,53 @@ cpdef void params_to_pos_slice(
 
     free(ifft_buf_ptr)
 
-@cython.cdivision(True)
-cpdef void params_to_segmpos(
-    double[::1] params_buf                  , long[:,::1] params_shapes         , long[::1] params_shifts       ,
-                                              long[:,::1] ifft_shapes           , long[::1] ifft_shifts         ,
-    double complex[::1] params_basis_buf    , long[:,::1] params_basis_shapes   , long[::1] params_basis_shifts ,
-    long[::1] nnz_k_buf                     , long[:,::1] nnz_k_shapes          , long[::1] nnz_k_shifts        ,
-                                              long[:,::1] pos_slice_shapes      , long[::1] pos_slice_shifts    ,
-    long[::1] ncoeff_min_loop, long nnpr,
-):
-
-    cdef double complex *ifft_buf_ptr
-    cdef double *pos_slice_buf_ptr
-
-
-    ifft_buf_ptr = <double complex *> malloc(sizeof(double complex)*ifft_shifts[ifft_shapes.shape[0]])
-
-    params_to_ifft(
-        params_buf  , params_shapes , params_shifts ,
-        nnz_k_buf   , nnz_k_shapes  , nnz_k_shifts  ,
-        ifft_buf_ptr, ifft_shapes   , ifft_shifts   ,
-    )
-
-    with nogil:
-
-        pos_slice_buf_ptr = <double *> malloc(sizeof(double)*pos_slice_shifts[pos_slice_shapes.shape[0]])
-
-        ifft_to_pos_slice(
-            ifft_buf_ptr        , ifft_shapes           , ifft_shifts           ,
-            params_basis_buf    , params_basis_shapes   , params_basis_shifts   ,
-            nnz_k_buf           , nnz_k_shapes          , nnz_k_shifts          ,
-            pos_slice_buf_ptr   , pos_slice_shapes      , pos_slice_shifts      ,
-            ncoeff_min_loop     , nnpr                  ,
-        )
-
-        free(ifft_buf_ptr)
-
-        # cdef double *segmpos_buf_ptr = <double *> malloc(sizeof(double)*pos_slice_shifts[pos_slice_shapes.shape[0]])
-
-
-        pos_slice_to_segmpos(
-            double[::1] params_buf                  , long[:,::1] params_shapes         , long[::1] params_shifts       ,
-                                                    long[:,::1] ifft_shapes           , long[::1] ifft_shifts         ,
-            double complex[::1] params_basis_buf    , long[:,::1] params_basis_shapes   , long[::1] params_basis_shifts ,
-            long[::1] nnz_k_buf                     , long[:,::1] nnz_k_shapes          , long[::1] nnz_k_shifts        ,
-                                                    long[:,::1] pos_slice_shapes      , long[::1] pos_slice_shifts    ,
-            long[::1] ncoeff_min_loop, long nnpr,
-        ):
-
-        free(pos_slice_buf_ptr)
+# @cython.cdivision(True)
+# cpdef void params_to_segmpos(
+#     double[::1] params_buf                  , long[:,::1] params_shapes         , long[::1] params_shifts       ,
+#                                               long[:,::1] ifft_shapes           , long[::1] ifft_shifts         ,
+#     double complex[::1] params_basis_buf    , long[:,::1] params_basis_shapes   , long[::1] params_basis_shifts ,
+#     long[::1] nnz_k_buf                     , long[:,::1] nnz_k_shapes          , long[::1] nnz_k_shifts        ,
+#                                               long[:,::1] pos_slice_shapes      , long[::1] pos_slice_shifts    ,
+#     long[::1] ncoeff_min_loop, long nnpr,
+# ):
+# 
+#     cdef double complex *ifft_buf_ptr
+#     cdef double *pos_slice_buf_ptr
+# 
+# 
+#     ifft_buf_ptr = <double complex *> malloc(sizeof(double complex)*ifft_shifts[ifft_shapes.shape[0]])
+# 
+#     params_to_ifft(
+#         params_buf  , params_shapes , params_shifts ,
+#         nnz_k_buf   , nnz_k_shapes  , nnz_k_shifts  ,
+#         ifft_buf_ptr, ifft_shapes   , ifft_shifts   ,
+#     )
+# 
+#     with nogil:
+# 
+#         pos_slice_buf_ptr = <double *> malloc(sizeof(double)*pos_slice_shifts[pos_slice_shapes.shape[0]])
+# 
+#         ifft_to_pos_slice(
+#             ifft_buf_ptr        , ifft_shapes           , ifft_shifts           ,
+#             params_basis_buf    , params_basis_shapes   , params_basis_shifts   ,
+#             nnz_k_buf           , nnz_k_shapes          , nnz_k_shifts          ,
+#             pos_slice_buf_ptr   , pos_slice_shapes      , pos_slice_shifts      ,
+#             ncoeff_min_loop     , nnpr                  ,
+#         )
+# 
+#         free(ifft_buf_ptr)
+# 
+#         # cdef double *segmpos_buf_ptr = <double *> malloc(sizeof(double)*pos_slice_shifts[pos_slice_shapes.shape[0]])
+# 
+# 
+#         pos_slice_to_segmpos(
+#             double[::1] params_buf                  , long[:,::1] params_shapes         , long[::1] params_shifts       ,
+#                                                     long[:,::1] ifft_shapes           , long[::1] ifft_shifts         ,
+#             double complex[::1] params_basis_buf    , long[:,::1] params_basis_shapes   , long[::1] params_basis_shifts ,
+#             long[::1] nnz_k_buf                     , long[:,::1] nnz_k_shapes          , long[::1] nnz_k_shifts        ,
+#                                                     long[:,::1] pos_slice_shapes      , long[::1] pos_slice_shifts    ,
+#             long[::1] ncoeff_min_loop, long nnpr,
+#         ):
+# 
+#         free(pos_slice_buf_ptr)
 
