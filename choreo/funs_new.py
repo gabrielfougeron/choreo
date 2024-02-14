@@ -1232,7 +1232,6 @@ def Populate_allsegmpos(all_pos, GenSpaceRot, GenTimeRev, gensegm_to_body, gense
         iint = gensegm_to_iint[isegm]
         il = BodyLoop[ib]
 
-
         if GenTimeRev[isegm] == 1:
                 
             ibeg = iint * segm_size         
@@ -1464,7 +1463,18 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
     All_Id, count_tot, count_unique = CountSegmentBinaryInteractions(BinarySegm, nsegm)
 
 
+    GenTimeRev = np.zeros((nsegm), dtype=np.intp)
+    GenSpaceRot = np.zeros((nsegm, geodim, geodim), dtype=np.float64)
 
+    for isegm in range(nsegm):
+
+        ib = intersegm_to_body[isegm]
+        iint = intersegm_to_iint[isegm]
+
+        Sym = gensegm_to_all[ib][iint]
+        
+        GenTimeRev[isegm] = Sym.TimeRev
+        GenSpaceRot[isegm,:,:] = Sym.SpaceRot
 
 
 
@@ -1547,7 +1557,15 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
         
         params_shapes_list.append((npr, ncoeff_min_loop_nnz[il], nppl))
         ifft_shapes_list.append((npr+1, ncoeff_min_loop_nnz[il], nppl))
-        pos_slice_shapes_list.append((npr*nnpr, geodim))
+        
+        if nnpr == 1:
+            ninter = npr+1
+        elif nnpr == 2:
+            ninter = 2*npr
+        else:
+            raise ValueError(f'Impossible value for {nnpr = }')
+        
+        pos_slice_shapes_list.append((ninter, geodim))
         
 
     params_shapes, params_shifts = BundleListOfShapes(params_shapes_list)
@@ -1556,18 +1574,23 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
         
         
     params_buf = np.random.random((params_shifts[-1]))
-      
-    pos_slice_buf = np.zeros((pos_slice_shifts[-1]),dtype=np.float64)    
             
-    params_to_pos_slice(
+    segmpos_cy = params_to_segmpos(
         params_buf.copy()   , params_shapes         , params_shifts         ,
                               ifft_shapes           , ifft_shifts           ,
         params_basis_buf    , params_basis_shapes   , params_basis_shifts   ,
         nnz_k_buf           , nnz_k_shapes          , nnz_k_shifts          ,
-        pos_slice_buf       , pos_slice_shapes      , pos_slice_shifts      ,
+                              pos_slice_shapes      , pos_slice_shifts      ,
         ncoeff_min_loop     , nnpr  ,
+        GenSpaceRot         ,
+        GenTimeRev          ,
+        gensegm_to_body     ,
+        gensegm_to_iint     ,
+        BodyLoop            ,
+        segm_size           ,
     )
             
+
     all_coeffs = params_to_all_coeffs(
         params_buf, params_shapes, params_shifts,
         params_basis_reorganized_list, nnz_k_list, ncoeff_min_loop, nint
@@ -1576,80 +1599,22 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
     all_pos = scipy.fft.irfft(all_coeffs, axis=1)
  
         
-    for il in range(nloop):
-        
-        n_inter = pos_slice_shapes[il,0]
-        assert n_inter == (segm_size * ngensegm_loop[il])
-        
-        pos_slice = pos_slice_buf[pos_slice_shifts[il]:pos_slice_shifts[il+1]].reshape(pos_slice_shapes[il])
-
-        
-        assert np.linalg.norm(all_pos[il,:n_inter,:] - pos_slice) < 1e-14
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-
-        
-        
     AssertAllSegmGenConstraintsAreRespected(gensegm_to_all, nint_min, bodysegm, loopgen, gensegm_to_body, gensegm_to_iint , BodyLoop, all_pos)
     AssertAllBodyConstraintAreRespected(LoopGenConstraints, all_pos)
 
-    GenTimeRev = np.zeros((nsegm), dtype=np.intp)
-    GenSpaceRot = np.zeros((nsegm, geodim, geodim), dtype=np.float64)
 
-    for isegm in range(nsegm):
-
-        ib = intersegm_to_body[isegm]
-        iint = intersegm_to_iint[isegm]
-
-        Sym = gensegm_to_all[ib][iint]
-        
-        GenTimeRev[isegm] = Sym.TimeRev
-        GenSpaceRot[isegm,:,:] = Sym.SpaceRot
-        
-        # tnum_target, tden_target = Sym.ApplyTSegm(gensegm_to_iint[isegm], nint_min)
-        # assert nint_min % tden_target == 0
-        # assert intersegm_to_iint[isegm] == (tnum_target * (nint_min // tden_target) + nint_min) % nint_min  
-
-    
-    
-    
     allsegmpos = Populate_allsegmpos(all_pos, GenSpaceRot, GenTimeRev, gensegm_to_body, gensegm_to_iint, BodyLoop, nint_min)
     
     all_body_pos = Compute_all_body_pos(all_pos, BodyGraph, loopgen, BodyLoop)
     
-    # allsegmpos_cy = np.empty((nsegm, segm_size, geodim), dtype=np.float64)
-    # Populate_allsegmpos_cy(all_pos, allsegmpos_cy, GenSpaceRot, GenTimeRev, gensegm_to_body, gensegm_to_iint, BodyLoop)
-    # assert np.linalg.norm((allsegmpos_cy - allsegmpos)) < eps
-
-
+    
+    assert np.linalg.norm(allsegmpos - segmpos_cy) < eps
+    
     for isegm in range(nsegm):
 
         ib = intersegm_to_body[isegm]
         iint = intersegm_to_iint[isegm]
         il = BodyLoop[ib]
-        
-        # print(ib, loopgen[il])
-        
-#         if ib == loopgen[il]: # Since all_pos only containts LOOP positions!
-# 
-#             ibeg = iint * segm_size
-#             iend = ibeg + segm_size
-#             assert iend <= nint
-#             assert np.linalg.norm(allsegmpos[isegm,:,:] - all_pos[il,ibeg:iend,:]) < eps
-#             
-#             Sym = gensegm_to_all[ib][iint]        
-    
 
         ibeg = iint * segm_size
         iend = ibeg + segm_size
