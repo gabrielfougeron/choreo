@@ -1144,48 +1144,48 @@ def BundleListOfArrays(ListOfArrays):
     return buf, n_shapes, n_shifts
 
     
-    
-
-def params_to_pos_slice_loop(params_basis_reorganized, params_loop, nnz_k, ncoeff_min_loop, nnpr):
-    
-    npr = params_loop.shape[0]
-    geodim = params_basis_reorganized.shape[0]
-                
-    params_loop_cp = params_loop.copy()
-
-    if nnz_k.shape[0] > 0:
-        if nnz_k[0] == 0:
-            params_loop_cp[0,0,:] *= 0.5
-    
-    ifft_b =  scipy.fft.rfft(params_loop_cp, axis=0, n=2*npr)
-    
-    pos_slice = np.empty((nnpr*npr, geodim),dtype=np.float64)
-    if nnpr == 1:
-        partial_fft_to_pos_slice_1npr(ifft_b, params_basis_reorganized, ncoeff_min_loop, nnz_k, pos_slice)
-    else:
-        partial_fft_to_pos_slice_2npr(ifft_b, params_basis_reorganized, ncoeff_min_loop, nnz_k, pos_slice)
-        
-    return pos_slice
-
-def params_to_pos_slice_loop_nocopy(params_basis_reorganized, params_loop, nnz_k, ncoeff_min_loop, nnpr):
-    
-    npr = params_loop.shape[0]
-    geodim = params_basis_reorganized.shape[0]
-                
-    params_loop_cp = params_loop.copy()
-
-    if nnz_k.shape[0] > 0:
-        if nnz_k[0] == 0:
-            params_loop_cp[0,0,:] *= 0.5
-    
-    ifft_b =  scipy.fft.rfft(params_loop_cp, axis=0, n=2*npr)
-    
-    pos_slice = np.empty((nnpr*npr, geodim),dtype=np.float64)
-    if nnpr == 1:
-        partial_fft_to_pos_slice_1npr(ifft_b, params_basis_reorganized, ncoeff_min_loop, nnz_k, pos_slice)
-    else:
-        partial_fft_to_pos_slice_2npr_nocopy(ifft_b, params_basis_reorganized, ncoeff_min_loop, nnz_k, pos_slice)
-        
+#     
+# 
+# def params_to_pos_slice_loop(params_basis_reorganized, params_loop, nnz_k, ncoeff_min_loop, nnpr):
+#     
+#     npr = params_loop.shape[0]
+#     geodim = params_basis_reorganized.shape[0]
+#                 
+#     params_loop_cp = params_loop.copy()
+# 
+#     if nnz_k.shape[0] > 0:
+#         if nnz_k[0] == 0:
+#             params_loop_cp[0,0,:] *= 0.5
+#     
+#     ifft_b =  scipy.fft.rfft(params_loop_cp, axis=0, n=2*npr)
+#     
+#     pos_slice = np.empty((nnpr*npr, geodim),dtype=np.float64)
+#     if nnpr == 1:
+#         partial_fft_to_pos_slice_1npr(ifft_b, params_basis_reorganized, ncoeff_min_loop, nnz_k, pos_slice)
+#     else:
+#         partial_fft_to_pos_slice_2npr(ifft_b, params_basis_reorganized, ncoeff_min_loop, nnz_k, pos_slice)
+#         
+#     return pos_slice
+# 
+# def params_to_pos_slice_loop_nocopy(params_basis_reorganized, params_loop, nnz_k, ncoeff_min_loop, nnpr):
+#     
+#     npr = params_loop.shape[0]
+#     geodim = params_basis_reorganized.shape[0]
+#                 
+#     params_loop_cp = params_loop.copy()
+# 
+#     if nnz_k.shape[0] > 0:
+#         if nnz_k[0] == 0:
+#             params_loop_cp[0,0,:] *= 0.5
+#     
+#     ifft_b =  scipy.fft.rfft(params_loop_cp, axis=0, n=2*npr)
+#     
+#     pos_slice = np.empty((nnpr*npr, geodim),dtype=np.float64)
+#     if nnpr == 1:
+#         partial_fft_to_pos_slice_1npr(ifft_b, params_basis_reorganized, ncoeff_min_loop, nnz_k, pos_slice)
+#     else:
+#         partial_fft_to_pos_slice_2npr_nocopy(ifft_b, params_basis_reorganized, ncoeff_min_loop, nnz_k, pos_slice)
+#         
     return pos_slice
 
 def Generating_to_interacting(SegmGraph, nbody, geodim, nsegm, intersegm_to_iint, intersegm_to_body, gensegm_to_iint, gensegm_to_body):
@@ -1219,11 +1219,14 @@ def Generating_to_interacting(SegmGraph, nbody, geodim, nsegm, intersegm_to_iint
         
     return AllSyms
 
-def Populate_allsegmpos(all_pos, allsegmpos, GenSpaceRot, GenTimeRev, gensegm_to_body, gensegm_to_iint, BodyLoop):
+def Populate_allsegmpos(all_pos, GenSpaceRot, GenTimeRev, gensegm_to_body, gensegm_to_iint, nint_min, BodyLoop):
     
-    nsegm = allsegmpos.shape[0]
-    segm_size = allsegmpos.shape[1]
+    nsegm = gensegm_to_body.shape[0]
     nint = all_pos.shape[1]
+    geodim = all_pos.shape[2]
+    segm_size = nint // nint_min
+    
+    allsegmpos = np.empty((nsegm, segm_size, geodim), dtype=np.float64)
 
     for isegm in range(nsegm):
 
@@ -1235,14 +1238,21 @@ def Populate_allsegmpos(all_pos, allsegmpos, GenSpaceRot, GenTimeRev, gensegm_to
         iend = ibeg + segm_size
         assert iend <= nint
 
-        np.matmul(
-            all_pos[il,ibeg:iend,:]     ,
-            GenSpaceRot[isegm,:,:].T    ,
-            out=allsegmpos[isegm,:,:]   ,
-        )
-        
         if GenTimeRev[isegm] == -1:
-            allsegmpos[isegm,:,:] = allsegmpos[isegm,::-1,:]
+            
+            allsegmpos[isegm,:,:] = np.matmul(
+                all_pos[il,ibeg:iend,:]     ,
+                GenSpaceRot[isegm,:,:].T    ,
+                out=allsegmpos[isegm,:,:]   ,
+            )[::-1,:]
+    
+        else:
+            np.matmul(
+                all_pos[il,ibeg:iend,:]     ,
+                GenSpaceRot[isegm,:,:].T    ,
+                out=allsegmpos[isegm,:,:]   ,
+            )
+    return allsegmpos
     
 def params_to_all_coeffs(
     params_buf, params_shapes, params_shifts,
@@ -1639,10 +1649,10 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
         # Sparse version with fewer zeros
         
 
-        pos_slice = params_to_pos_slice_loop(params_basis_reorganized, params_loop, nnz_k, ncoeff_min_loop[il],nnpr)
+        # pos_slice = params_to_pos_slice_loop(params_basis_reorganized, params_loop, nnz_k, ncoeff_min_loop[il],nnpr)
 
         
-        all_pos_slice_nnpr.append(pos_slice)
+        # all_pos_slice_nnpr.append(pos_slice)
         # print()
         # print(nint_min)
         # print(2*nint_min)
@@ -1663,18 +1673,18 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
 
     all_pos = scipy.fft.irfft(all_coeffs_c, axis=1)
     
-    for il in range(nloop):
-        
-        n_inter = all_pos_slice_nnpr[il].shape[0]
-        # 
-        # print(all_pos[il,:n_inter,:])
-        # print(all_pos_slice_nnpr[il])
-        # print(all_pos[il,:n_inter,:]-all_pos_slice_nnpr[il])
-        
-        assert n_inter == (segm_size * ngensegm_loop[il])
-        assert np.linalg.norm(all_pos[il,:n_inter,:] - all_pos_slice_nnpr[il]) < 1e-14
-
-        
+#     for il in range(nloop):
+#         
+#         n_inter = all_pos_slice_nnpr[il].shape[0]
+#         # 
+#         # print(all_pos[il,:n_inter,:])
+#         # print(all_pos_slice_nnpr[il])
+#         # print(all_pos[il,:n_inter,:]-all_pos_slice_nnpr[il])
+#         
+#         assert n_inter == (segm_size * ngensegm_loop[il])
+#         assert np.linalg.norm(all_pos[il,:n_inter,:] - all_pos_slice_nnpr[il]) < 1e-14
+# 
+#         
         
         
     
@@ -1710,13 +1720,12 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
     assert (params_shifts == params_shifts_chk).all()
         
     params_buf = np.random.random((params_shifts[-1]))
-    
-    ifft_buf = np.empty((ifft_shifts[-1]),dtype=np.complex128)    
+      
     pos_slice_buf = np.zeros((pos_slice_shifts[-1]),dtype=np.float64)    
             
     params_to_pos_slice(
         params_buf.copy()   , params_shapes         , params_shifts         ,
-        ifft_buf            , ifft_shapes           , ifft_shifts           ,
+                              ifft_shapes           , ifft_shifts           ,
         params_basis_buf    , params_basis_shapes   , params_basis_shifts   ,
         nnz_k_buf           , nnz_k_shapes          , nnz_k_shifts          ,
         pos_slice_buf       , pos_slice_shapes      , pos_slice_shifts      ,
@@ -1737,10 +1746,7 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
         assert n_inter == (segm_size * ngensegm_loop[il])
         
         pos_slice = pos_slice_buf[pos_slice_shifts[il]:pos_slice_shifts[il+1]].reshape(pos_slice_shapes[il])
-        
-        # print(all_pos[il,:n_inter,:])
-        # print(pos_slice)
-        # print(all_pos[il,:n_inter,:]-pos_slice)
+
         
         assert np.linalg.norm(all_pos[il,:n_inter,:] - pos_slice) < 1e-14
         
@@ -1781,8 +1787,8 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
 
     
     
-    allsegmpos = np.empty((nsegm, segm_size, geodim), dtype=np.float64)
-    Populate_allsegmpos(all_pos, allsegmpos, GenSpaceRot, GenTimeRev, gensegm_to_body, gensegm_to_iint, BodyLoop)
+    
+    allsegmpos = Populate_allsegmpos(all_pos, GenSpaceRot, GenTimeRev, gensegm_to_body, gensegm_to_iint, nint_min, BodyLoop)
     
     # allsegmpos_cy = np.empty((nsegm, segm_size, geodim), dtype=np.float64)
     # Populate_allsegmpos_cy(all_pos, allsegmpos_cy, GenSpaceRot, GenTimeRev, gensegm_to_body, gensegm_to_iint, BodyLoop)
