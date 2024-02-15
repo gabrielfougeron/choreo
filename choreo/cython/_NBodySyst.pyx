@@ -11,71 +11,90 @@ from libc.stdlib cimport malloc, free
 
 from choreo.scipy_plus.cython.blas_consts cimport *
 
-
 import choreo.scipy_plus.linalg
-from choreo.funs_new import *
-
+from choreo.NBodySyst_build import *
 
 import scipy
-
-
 
 @cython.final
 cdef class NBodySyst():
     r"""
     This class defines a N-body system
     """
-    # Semi-private with getters
-    cdef long _geodim
-    cdef long _nbody
-    # cdef double[::1] _loopmass
-    cdef long _nint_min
-    cdef long _nloop
+    
+    cdef readonly long geodim
+    cdef readonly long nbody
+    cdef readonly long nint_min
+    cdef readonly long nloop
+    cdef readonly long nsegm
+
     cdef long[::1] _loopnb
-    cdef long[::1] _bodyloop
-    cdef long[:,::1] _Targets
-    cdef object _BodyGraph
-
-    @property
-    def geodim(self):
-        return self._geodim
-
-    @property
-    def nbody(self):
-        return self._nbody
-
-    @property
-    def nint_min(self):
-        return self._nint_min
-
-    @property
-    def nloop(self):
-        return self._nloop
-
     @property
     def loopnb(self):
         return np.asarray(self._loopnb)
 
+    cdef long[::1] _bodyloop
     @property
     def bodyloop(self):
         return np.asarray(self._bodyloop)
 
+    cdef double[::1] _loopmass
+    @property
+    def loopmass(self):
+        return np.asarray(self._loopmass)
+
+    cdef long[:,::1] _Targets
     @property
     def Targets(self):
         return np.asarray(self._Targets)
+
+    cdef long[:,::1] _bodysegm
+    @property
+    def bodysegm(self):
+        return np.asarray(self._bodysegm)
+
+    cdef long[::1] _loopgen
+    @property
+    def loopgen(self):
+        return np.asarray(self._loopgen)
+
+
+
+    cdef readonly object BodyGraph
+    cdef readonly object SegmGraph
+    cdef readonly object SegmConstraints
+
+
+
+
 
     def __init__(
         self                ,
         long geodim         ,
         long nbody          ,
-        double[::1] mass    ,
+        double[::1] bodymass,
         list Sym_list       , 
     ):
 
-        self._geodim = geodim
-        self._nbody = nbody
+        if (bodymass.shape[0] != nbody):
+            raise ValueError(f'Incompatible number of bodies {nbody} vs number of masses {bodymass.shape[0]}')
 
-        self._nint_min, self._nloop, self._loopnb, self._bodyloop, self._Targets, self._BodyGraph = DetectLoops(Sym_list, nbody)
+        self.geodim = geodim
+        self.nbody = nbody
+
+        self.nint_min, self.nloop, self._loopnb, self._loopmass, self._bodyloop, self._Targets, self.BodyGraph = DetectLoops(Sym_list, nbody, bodymass)
+
+        self.SegmGraph, self.nint_min, self.nsegm, self._bodysegm, BodyHasContiguousGeneratingSegments, Sym_list = ExploreGlobalShifts_BuildSegmGraph(self.geodim, self.nbody, self.nloop, self._loopnb, self._Targets, self.nint_min, Sym_list)
+
+        self._loopgen = ChooseLoopGen(self.nloop, self._loopnb, BodyHasContiguousGeneratingSegments, self._Targets)
+
+        self.SegmConstraints = AccumulateSegmentConstraints(self.SegmGraph, self.nbody, self.geodim, self.nsegm, self.bodysegm)
+
+
+
+
+
+
 
 
 
