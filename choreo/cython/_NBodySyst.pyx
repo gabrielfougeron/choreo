@@ -27,6 +27,7 @@ cdef class NBodySyst():
     cdef readonly long nint_min
     cdef readonly long nloop
     cdef readonly long nsegm
+    cdef readonly long nnpr
 
     cdef long[::1] _loopnb
     @property
@@ -58,11 +59,79 @@ cdef class NBodySyst():
     def loopgen(self):
         return np.asarray(self._loopgen)
 
+    cdef long[::1] _intersegm_to_body
+    @property
+    def intersegm_to_body(self):
+        return np.asarray(self._intersegm_to_body)
 
+    cdef long[::1] _intersegm_to_iint
+    @property
+    def intersegm_to_iint(self):
+        return np.asarray(self._intersegm_to_iint)
+
+    cdef long[::1] _gensegm_to_body
+    @property
+    def gensegm_to_body(self):
+        return np.asarray(self._gensegm_to_body)
+
+    cdef long[::1] _gensegm_to_iint
+    @property
+    def gensegm_to_iint(self):
+        return np.asarray(self._gensegm_to_iint)
+
+    cdef long[::1] _ngensegm_loop
+    @property
+    def ngensegm_loop(self):
+        return np.asarray(self._ngensegm_loop)
+
+    cdef long[::1] _GenTimeRev
+    @property
+    def GenTimeRev(self):
+        return np.asarray(self._GenTimeRev)
+
+    cdef double[:,:,::1] _GenSpaceRot
+    @property
+    def GenSpaceRot(self):
+        return np.asarray(self._GenSpaceRot)
+
+    cdef double complex[::1] _params_basis_buf
+    cdef long[:,::1] _params_basis_shapes
+    cdef long[::1] _params_basis_shifts
+
+    cdef long[::1] _nnz_k_buf
+    cdef long[:,::1] _nnz_k_shapes
+    cdef long[::1] _nnz_k_shifts
+
+    cdef long[::1] _ncoeff_min_loop
 
     cdef readonly object BodyGraph
     cdef readonly object SegmGraph
-    cdef readonly object SegmConstraints
+    
+    # Things that change with nint
+    cdef long _nint
+    @property
+    def nint(self):
+        return self._nint
+    
+    cdef long _nint_fac
+    @property
+    def nint_fac(self):
+        return self._nint_fac
+        
+    cdef readonly long ncoeffs
+    cdef readonly long segm_size
+    cdef readonly long nparams
+
+
+    cdef long[:,::1] _params_shapes   
+    cdef long[::1] _params_shifts
+
+    cdef long[:,::1] _ifft_shapes      
+    cdef long[::1] _ifft_shifts
+
+    cdef long[:,::1] _pos_slice_shapes
+    cdef long[::1] _pos_slice_shifts
+
 
 
 
@@ -76,6 +145,8 @@ cdef class NBodySyst():
         list Sym_list       , 
     ):
 
+        self._nint = -1 # Signals that things that scale with loop size are not set yet
+
         if (bodymass.shape[0] != nbody):
             raise ValueError(f'Incompatible number of bodies {nbody} vs number of masses {bodymass.shape[0]}')
 
@@ -84,21 +155,104 @@ cdef class NBodySyst():
 
         self.nint_min, self.nloop, self._loopnb, self._loopmass, self._bodyloop, self._Targets, self.BodyGraph = DetectLoops(Sym_list, nbody, bodymass)
 
-        self.SegmGraph, self.nint_min, self.nsegm, self._bodysegm, BodyHasContiguousGeneratingSegments, Sym_list = ExploreGlobalShifts_BuildSegmGraph(self.geodim, self.nbody, self.nloop, self._loopnb, self._Targets, self.nint_min, Sym_list)
+        self.SegmGraph, self.nint_min, self.nsegm, self._bodysegm, BodyHasContiguousGeneratingSegments, Sym_list = ExploreGlobalShifts_BuildSegmGraph(geodim, nbody, self.nloop, self._loopnb, self._Targets, self.nint_min, Sym_list)
 
         self._loopgen = ChooseLoopGen(self.nloop, self._loopnb, BodyHasContiguousGeneratingSegments, self._Targets)
 
-        self.SegmConstraints = AccumulateSegmentConstraints(self.SegmGraph, self.nbody, self.geodim, self.nsegm, self.bodysegm)
+        SegmConstraints = AccumulateSegmentConstraints(self.SegmGraph, nbody, geodim, self.nsegm, self._bodysegm)
+
+        self._intersegm_to_body, self._intersegm_to_iint = ChooseInterSegm(self.nsegm, self.nint_min, nbody, self._bodysegm)
+
+        self._gensegm_to_body, self._gensegm_to_iint, self._ngensegm_loop = ChooseGenSegm(self.nsegm, self.nint_min, self.nloop, self._loopgen, self._bodysegm)
 
 
+        # Setting up forward ODE:
+        # - What are my parameters ?
+        # - Integration end + Lack of periodicity
+        # - Constraints on initial values => Parametrization 
+
+        
+        InstConstraintsPos = AccumulateInstConstraints(Sym_list, nbody, geodim, self.nint_min, VelSym=False)
+        InstConstraintsVel = AccumulateInstConstraints(Sym_list, nbody, geodim, self.nint_min, VelSym=True )
+
+        MomCons_InitVal = True
+
+        InitValPosBasis = ComputeParamBasis_InitVal(nbody, geodim, InstConstraintsPos[0], bodymass, MomCons=MomCons_InitVal)
+        InitValVelBasis = ComputeParamBasis_InitVal(nbody, geodim, InstConstraintsVel[0], bodymass, MomCons=MomCons_InitVal)
 
 
+        gensegm_to_all = AccumulateSegmGenToTargetSym(self.SegmGraph, nbody, geodim, self.nint_min, self.nsegm, self._bodysegm, self._gensegm_to_iint, self._gensegm_to_body)
+        self._GenTimeRev, self._GenSpaceRot = GatherGenSym(self.nsegm, self.geodim, self._intersegm_to_body, self._intersegm_to_iint, gensegm_to_all)
+
+        GenToIntSyms = Generating_to_interacting(self.SegmGraph, nbody, geodim, self.nsegm, self._intersegm_to_iint, self._intersegm_to_body, self._gensegm_to_iint, self._gensegm_to_body)
+
+        intersegm_to_all = AccumulateSegmGenToTargetSym(self.SegmGraph, nbody, geodim, self.nint_min, self.nsegm, self._bodysegm, self._intersegm_to_iint, self._intersegm_to_body)
+
+        BinarySegm, Identity_detected = FindAllBinarySegments(intersegm_to_all, nbody, self.nsegm, self.nint_min, self._bodysegm, False, bodymass)
+
+        All_Id, count_tot, count_unique = CountSegmentBinaryInteractions(BinarySegm, self.nsegm)
+
+        # This could certainly be made more efficient
+        BodyConstraints = AccumulateBodyConstraints(Sym_list, nbody, geodim)
+        LoopGenConstraints = [BodyConstraints[ib] for ib in self._loopgen]
 
 
+        All_params_basis = ComputeParamBasis_Loop(nbody, self.nloop, self._loopgen, geodim, LoopGenConstraints)
+        params_basis_reorganized_list, nnz_k_list = reorganize_All_params_basis(All_params_basis)
+        
+        self._params_basis_buf, self._params_basis_shapes, self._params_basis_shifts = BundleListOfArrays(params_basis_reorganized_list)
+        self._nnz_k_buf, self._nnz_k_shapes, self._nnz_k_shifts = BundleListOfArrays(nnz_k_list)
+
+        self._ncoeff_min_loop = np.array([len(All_params_basis[il]) for il in range(self.nloop)], dtype=np.intp)
+
+        self.nnpr = Compute_nnpr(self.nloop, self.nint_min, self._ncoeff_min_loop, self._ngensegm_loop)
 
 
+    @nint_fac.setter
+    def nint_fac(self, long nint_fac_in):
 
+        self.nint = 2 * self.nint_min * nint_fac_in
+    
 
+    @nint.setter
+    @cython.cdivision(True)
+    def nint(self, long nint_in):
+
+        if (nint_in % (2 * self.nint_min)) != 0:
+            raise ValueError(f"Provided nint {nint_in} should be divisible by {2 * self.nint_min}")
+
+        self._nint = 2 * self.nint_min * 4
+        self.ncoeffs = self._nint // 2 + 1
+        self.segm_size = self._nint // self.nint_min
+
+        params_shapes_list = []
+        ifft_shapes_list = []
+        pos_slice_shapes_list = []
+        for il in range(self.nloop):
+
+            nppl = self._params_basis_shapes[il,2]
+            assert self._nint % (2*self._ncoeff_min_loop[il]) == 0
+            npr = self._nint //  (2*self._ncoeff_min_loop[il])
+            
+            params_shapes_list.append((npr, self._nnz_k_shapes[il,0], nppl))
+            ifft_shapes_list.append((npr+1, self._nnz_k_shapes[il,0], nppl))
+            
+            if self.nnpr == 1:
+                ninter = npr+1
+            elif self.nnpr == 2:
+                ninter = 2*npr
+            else:
+                raise ValueError(f'Impossible value for {nnpr = }')
+            
+            pos_slice_shapes_list.append((ninter, self.geodim))
+            
+        self._params_shapes, self._params_shifts = BundleListOfShapes(params_shapes_list)
+        self._ifft_shapes, self._ifft_shifts = BundleListOfShapes(ifft_shapes_list)
+        self._pos_slice_shapes, self._pos_slice_shifts = BundleListOfShapes(pos_slice_shapes_list)
+
+        self.nparams = self._params_shifts[self.nloop]
+
+    
 
 
 
@@ -405,7 +559,7 @@ cdef void pos_slice_to_segmpos(
         free(tmp_loc)
 
 @cython.cdivision(True)
-cpdef np.ndarray[double, ndim=3, mode="c"] params_to_segmpos(
+cdef double[:,:,::1] _params_to_segmpos(
     double[::1] params_buf                  , long[:,::1] params_shapes         , long[::1] params_shifts       ,
                                               long[:,::1] ifft_shapes           , long[::1] ifft_shifts         ,
     double complex[::1] params_basis_buf    , long[:,::1] params_basis_shapes   , long[::1] params_basis_shifts ,
@@ -426,6 +580,9 @@ cpdef np.ndarray[double, ndim=3, mode="c"] params_to_segmpos(
     cdef int nsegm = gensegm_to_body.shape[0]
     cdef int geodim = GenSpaceRot.shape[1]
     cdef int size
+
+    # cdef np.ndarray[double, ndim=3, mode="c"] segmpos_np = np.empty((nsegm, segm_size, geodim), dtype=np.float64)
+    # cdef double[:,:,::1] segmpos = segmpos_np
 
     cdef double[:,:,::1] segmpos = np.empty((nsegm, segm_size, geodim), dtype=np.float64)
 
@@ -466,4 +623,4 @@ cpdef np.ndarray[double, ndim=3, mode="c"] params_to_segmpos(
 
         free(pos_slice_buf_ptr)
 
-    return np.asarray(segmpos)
+    return segmpos

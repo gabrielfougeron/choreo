@@ -683,77 +683,73 @@ def ComputeParamBasis_InitVal(nbody, geodim, InstConstraints, bodymass, MomCons=
        
     return NullSpace
 
-def ComputeParamBasis_Loop(MomCons, nbody, nloop, loopgen, geodim, LoopGenConstraints, eps=1e-12):
+def ComputeParamBasis_Loop(nbody, nloop, loopgen, geodim, LoopGenConstraints, eps=1e-12):
 
-    if (MomCons):
-        raise NotImplementedError("Momentum conservation as a constraint is not available at the moment")
-    else:
+    All_params_basis = []
 
-        All_params_basis = []
+    for il in range(nloop):
+        ib = loopgen[il]
 
-        for il in range(nloop):
-            ib = loopgen[il]
+        all_time_dens = []
 
-            all_time_dens = []
+        for Sym in LoopGenConstraints[il]:
+            assert Sym.BodyPerm[ib] == ib
+            all_time_dens.append(Sym.TimeShiftDen)
 
-            for Sym in LoopGenConstraints[il]:
-                assert Sym.BodyPerm[ib] == ib
-                all_time_dens.append(Sym.TimeShiftDen)
+        ncoeffs_min =  math.lcm(*all_time_dens)
 
-            ncoeffs_min =  math.lcm(*all_time_dens)
+        ncstr = len(LoopGenConstraints[il])
+        
+        NullSpace_all = []
 
-            ncstr = len(LoopGenConstraints[il])
-            
-            NullSpace_all = []
+        for k in range(ncoeffs_min):
+        
+            cstr_mat = np.zeros((ncstr, geodim, 2, geodim, 2), dtype = np.float64)
 
-            for k in range(ncoeffs_min):
-            
-                cstr_mat = np.zeros((ncstr, geodim, 2, geodim, 2), dtype = np.float64)
+            for icstr, Sym in enumerate(LoopGenConstraints[il]):
 
-                for icstr, Sym in enumerate(LoopGenConstraints[il]):
+                alpha = - (2 * math.pi * k * Sym.TimeShiftNum) / Sym.TimeShiftDen
+                c = math.cos(alpha)
+                s = math.sin(alpha)
+                
+                for idim in range(geodim):
+                    for jdim in range(geodim):
 
-                    alpha = - (2 * math.pi * k * Sym.TimeShiftNum) / Sym.TimeShiftDen
-                    c = math.cos(alpha)
-                    s = math.sin(alpha)
-                    
-                    for idim in range(geodim):
-                        for jdim in range(geodim):
+                        cstr_mat[icstr, idim, 0, jdim, 0] =   Sym.SpaceRot[idim, jdim] * c
+                        cstr_mat[icstr, idim, 0, jdim, 1] = - Sym.SpaceRot[idim, jdim] * s * Sym.TimeRev
+                        cstr_mat[icstr, idim, 1, jdim, 0] =   Sym.SpaceRot[idim, jdim] * s 
+                        cstr_mat[icstr, idim, 1, jdim, 1] =   Sym.SpaceRot[idim, jdim] * c * Sym.TimeRev
+                        
+                    cstr_mat[icstr, idim, 0, idim, 0] -= 1
+                    cstr_mat[icstr, idim, 1, idim, 1] -= 1
 
-                            cstr_mat[icstr, idim, 0, jdim, 0] =   Sym.SpaceRot[idim, jdim] * c
-                            cstr_mat[icstr, idim, 0, jdim, 1] = - Sym.SpaceRot[idim, jdim] * s * Sym.TimeRev
-                            cstr_mat[icstr, idim, 1, jdim, 0] =   Sym.SpaceRot[idim, jdim] * s 
-                            cstr_mat[icstr, idim, 1, jdim, 1] =   Sym.SpaceRot[idim, jdim] * c * Sym.TimeRev
-                            
-                        cstr_mat[icstr, idim, 0, idim, 0] -= 1
-                        cstr_mat[icstr, idim, 1, idim, 1] -= 1
-
-                # Projection towards 0 will increase sparsity of NullSpace
-                for icstr in range(ncstr):
-                    for idim in range(geodim):
-                        for ift in range(2):
-                            for jdim in range(geodim):
-                                for jft in range(2):
-
-                                    if abs(cstr_mat[icstr, idim, ift, jdim, jft]) < eps :
-                                        cstr_mat[icstr, idim, ift, jdim, jft] = 0
-
-
-                cstr_mat_reshape = cstr_mat.reshape((ncstr*geodim*2, geodim*2))
-
-                NullSpace = choreo.scipy_plus.linalg.null_space(cstr_mat_reshape)
-                nparam = NullSpace.shape[1]
-                NullSpace = NullSpace.reshape(geodim,2,nparam)
-
+            # Projection towards 0 will increase sparsity of NullSpace
+            for icstr in range(ncstr):
                 for idim in range(geodim):
                     for ift in range(2):
-                        for iparam in range(nparam):
+                        for jdim in range(geodim):
+                            for jft in range(2):
 
-                            if abs(NullSpace[idim, ift, iparam]) < eps:
-                                NullSpace[idim, ift, iparam] = 0
+                                if abs(cstr_mat[icstr, idim, ift, jdim, jft]) < eps :
+                                    cstr_mat[icstr, idim, ift, jdim, jft] = 0
 
-                NullSpace_all.append(NullSpace)
 
-            All_params_basis.append(NullSpace_all)
+            cstr_mat_reshape = cstr_mat.reshape((ncstr*geodim*2, geodim*2))
+
+            NullSpace = choreo.scipy_plus.linalg.null_space(cstr_mat_reshape)
+            nparam = NullSpace.shape[1]
+            NullSpace = NullSpace.reshape(geodim,2,nparam)
+
+            for idim in range(geodim):
+                for ift in range(2):
+                    for iparam in range(nparam):
+
+                        if abs(NullSpace[idim, ift, iparam]) < eps:
+                            NullSpace[idim, ift, iparam] = 0
+
+            NullSpace_all.append(NullSpace)
+
+        All_params_basis.append(NullSpace_all)
 
     return All_params_basis
 
@@ -1103,7 +1099,69 @@ def ChooseLoopGen(nloop, loopnb, BodyHasContiguousGeneratingSegments, Targets):
     
     return loopgen
                 
+def ChooseInterSegm(nsegm, nint_min, nbody, bodysegm):
 
+    # Choose interacting segments as earliest possible times.
+
+    intersegm_to_body = np.zeros((nsegm), dtype = int)
+    intersegm_to_iint = np.zeros((nsegm), dtype = int)
+
+    assigned_segms = set()
+
+    for iint in range(nint_min):
+        for ib in range(nbody):
+
+            isegm = bodysegm[ib,iint]
+
+            if not(isegm in assigned_segms):
+                
+                intersegm_to_body[isegm] = ib
+                intersegm_to_iint[isegm] = iint
+                assigned_segms.add(isegm)
+
+    return intersegm_to_body, intersegm_to_iint
+
+def ChooseGenSegm(nsegm, nint_min, nloop, loopgen, bodysegm):
+    
+    assigned_segms = set()
+
+    gensegm_to_body = np.zeros((nsegm), dtype = int)
+    gensegm_to_iint = np.zeros((nsegm), dtype = int)
+    ngensegm_loop = np.zeros((nloop), dtype = int)
+
+    for iint in range(nint_min):
+        for il in range(nloop):
+            ib = loopgen[il]
+
+            isegm = bodysegm[ib,iint]
+
+            if not(isegm in assigned_segms):
+                gensegm_to_body[isegm] = ib
+                gensegm_to_iint[isegm] = iint
+                assigned_segms.add(isegm)
+                ngensegm_loop[il] += 1
+
+    return gensegm_to_body, gensegm_to_iint, ngensegm_loop
+
+def Compute_nnpr(nloop, nint_min, ncoeff_min_loop, ngensegm_loop):
+    
+    n_sub_fft = np.zeros((nloop), dtype=np.intp)
+    for il in range(nloop):
+        
+        assert nint_min % ncoeff_min_loop[il] == 0
+        assert (nint_min // ncoeff_min_loop[il]) % ngensegm_loop[il] == 0        
+        assert (nint_min // (ncoeff_min_loop[il] * ngensegm_loop[il])) in [1,2]
+        
+        n_sub_fft[il] = (nint_min // (ncoeff_min_loop[il] * ngensegm_loop[il]))
+        
+    assert (n_sub_fft == n_sub_fft[0]).all()
+    
+    if n_sub_fft[0] == 1:
+        nnpr = 2
+    else:
+        nnpr = 1
+        
+    return nnpr
 
 
 # def ComputePeriodicitydefault(SegmGraph, bodysegm, nint_min, xo, xf):
@@ -1123,6 +1181,23 @@ def ChooseLoopGen(nloop, loopnb, BodyHasContiguousGeneratingSegments, Targets):
 
 # def PrepareParamBuf():
 
+
+def GatherGenSym(nsegm, geodim, intersegm_to_body, intersegm_to_iint, gensegm_to_all):
+    
+    GenTimeRev = np.zeros((nsegm), dtype=np.intp)
+    GenSpaceRot = np.zeros((nsegm, geodim, geodim), dtype=np.float64)
+
+    for isegm in range(nsegm):
+
+        ib = intersegm_to_body[isegm]
+        iint = intersegm_to_iint[isegm]
+
+        Sym = gensegm_to_all[ib][iint]
+        
+        GenTimeRev[isegm] = Sym.TimeRev
+        GenSpaceRot[isegm,:,:] = Sym.SpaceRot
+        
+    return GenTimeRev, GenSpaceRot
 
 
 def BundleListOfShapes(ListOfShapes):
