@@ -95,7 +95,7 @@ def test_matmul(float64_tols, Dense_linalg_dims):
                 np.matmul(A,B,out=AB_np)     
                     
                 AB_blas = np.zeros((n,m),dtype=np.float64)
-                choreo.cython.funs_new.blas_matmul_contiguous(A,B,AB_blas)
+                choreo.cython.test_blis.blas_matmul_contiguous(A,B,AB_blas)
                 assert np.allclose(AB_np, AB_blas, rtol = float64_tols.rtol, atol = float64_tols.atol)     
                                 
                 AB_blis = np.zeros((n,m),dtype=np.float64)
@@ -121,7 +121,7 @@ def test_matmulTT(float64_tols, Dense_linalg_dims):
                 np.matmul(B.T,A.T,out=BTAT_np)     
                     
                 BTAT_blas = np.zeros((m,n),dtype=np.float64)
-                choreo.cython.funs_new.blas_matmulTT_contiguous(B,A,BTAT_blas)
+                choreo.cython.test_blis.blas_matmulTT_contiguous(B,A,BTAT_blas)
                 assert np.allclose(BTAT_np, BTAT_blas, rtol = float64_tols.rtol, atol = float64_tols.atol)     
                                             
 @ProbabilisticTest()
@@ -142,7 +142,7 @@ def test_matmulNT(float64_tols, Dense_linalg_dims):
                 np.matmul(A,B.T,out=ABT_np)     
 
                 ABT_blas = np.zeros((m,n),dtype=np.float64)
-                choreo.cython.funs_new.blas_matmulNT_contiguous(A,B,ABT_blas)
+                choreo.cython.test_blis.blas_matmulNT_contiguous(A,B,ABT_blas)
                 
                 assert np.allclose(ABT_np, ABT_blas, rtol = float64_tols.rtol, atol = float64_tols.atol)     
                                 

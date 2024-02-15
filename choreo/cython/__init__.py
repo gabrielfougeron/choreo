@@ -1,5 +1,6 @@
 from .funs import *
-from .funs_new import *
+from ._ActionSym import ActionSym
+from ._NBodySyst import *
 from .funs_serial import *
 from .test_blis import *
 

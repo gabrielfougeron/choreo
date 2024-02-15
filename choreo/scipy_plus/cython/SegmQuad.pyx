@@ -29,11 +29,7 @@ from libc.math cimport isinf as cisinf
 
 from .ccallback cimport ccallback_t, ccallback_prepare, ccallback_release, CCALLBACK_DEFAULTS, ccallback_signature_t
 
-cdef double minus_one = -1.
-cdef double one = 1.
-cdef double zero = 0.
-cdef char *transn = 'n'
-cdef int int_one = 1
+from choreo.scipy_plus.cython.blas_consts cimport *
 
 cdef int PY_FUN = -1
 cdef int C_FUN_MEMORYVIEW = 0

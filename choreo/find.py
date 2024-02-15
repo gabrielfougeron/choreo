@@ -27,7 +27,8 @@ from choreo.funs import *
 from choreo.funs_new import *
 from choreo.helper import *
 
-from choreo.cython.funs_new import ActionSym
+from choreo.cython._ActionSym import ActionSym
+
 
 def Find_Choreo(
     geodim,

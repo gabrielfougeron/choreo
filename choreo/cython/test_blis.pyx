@@ -10,6 +10,61 @@ from libc.stdlib cimport abort, malloc, free
 
 cimport pyfftw
 
+from choreo.scipy_plus.cython.blas_consts cimport *
+
+
+
+cdef inline void _blas_matmul_contiguous(
+    double[:,::1] a,
+    double[:,::1] b,
+    double[:,::1] c
+) noexcept nogil:
+
+    # nk,km -> nm
+    cdef int n = a.shape[0]
+    cdef int k = a.shape[1]
+    cdef int m = b.shape[1]
+
+    scipy.linalg.cython_blas.dgemm(transn, transn, &m, &n, &k, &one_double, &b[0,0], &m, &a[0,0], &k, &zero_double, &c[0,0], &m)
+
+cpdef void blas_matmul_contiguous(
+    double[:,::1] a,
+    double[:,::1] b,
+    double[:,::1] c
+) noexcept nogil:
+
+    cdef int n = a.shape[0]
+    cdef int k = a.shape[1]
+    cdef int m = b.shape[1]
+
+    scipy.linalg.cython_blas.dgemm(transn, transn, &m, &n, &k, &one_double, &b[0,0], &m, &a[0,0], &k, &zero_double, &c[0,0], &m)
+
+cpdef void blas_matmulTT_contiguous(
+    double[:,::1] a,
+    double[:,::1] b,
+    double[:,::1] c
+) noexcept nogil:
+
+    cdef int n = a.shape[1]
+    cdef int k = a.shape[0]
+    cdef int m = b.shape[0]
+
+    scipy.linalg.cython_blas.dgemm(transt, transt, &m, &n, &k, &one_double, &b[0,0], &k, &a[0,0], &n, &zero_double, &c[0,0], &m)
+
+
+cpdef void blas_matmulNT_contiguous(
+    double[:,::1] a,
+    double[:,::1] b,
+    double[:,::1] c
+) noexcept nogil:
+
+    cdef int n = a.shape[0]
+    cdef int k = a.shape[1]
+    cdef int m = b.shape[0]
+
+    scipy.linalg.cython_blas.dgemm(transt, transn, &m, &n, &k, &one_double, &b[0,0], &k, &a[0,0], &k, &zero_double, &c[0,0], &m)
+
+
 
 cpdef void blis_matmul_contiguous(
     double[:,::1] a,
@@ -68,16 +123,6 @@ cpdef void blis_matmul_real(
         1.0, res, n, 1
     )
 
-cdef int int_one = 1
-cdef int int_two = 2
-cdef double minus_one_double = -1.
-cdef double one_double = 1.
-cdef double zero_double = 0.
-cdef double complex one_double_complex = 1.
-cdef double complex zero_double_complex = 0.
-cdef char *transn = 'n'
-cdef char *transt = 't'
-
 cpdef void blas_matmul_real(
     double complex[:,::1] a ,
     double complex[:,::1] b ,
@@ -131,7 +176,7 @@ cpdef void blas_matmul_real_copy(
 
     scipy.linalg.cython_blas.dcopy(&nk,a_start,&int_two,a_double,&int_one)
     scipy.linalg.cython_blas.dcopy(&km,b_start,&int_two,b_double,&int_one)
-    scipy.linalg.cython_blas.dgemm(transn, transn, &m, &n, &k, &minus_one_double, b_double, &m, a_double, &k, &one_double, c_start, &m)
+    scipy.linalg.cython_blas.dgemm(transn, transn, &m, &n, &k, &minusone_double, b_double, &m, a_double, &k, &one_double, c_start, &m)
 
     free(a_double)
     free(b_double)
