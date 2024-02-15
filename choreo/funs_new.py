@@ -22,7 +22,6 @@ from matplotlib import colormaps
 import choreo.scipy_plus
 
 from choreo.cython._ActionSym import *
-from choreo.cython._NBodySyst import *
 
 
 def ContainsDoubleEdges(SegmGraph):
@@ -568,7 +567,7 @@ def AccumulateSegmGenToTargetSym(SegmGraph, nbody, geodim, nint_min, nsegm, body
 
     return segm_gen_to_target                        
 
-def FindAllBinarySegments(segm_gen_to_target, nbody, nsegm, nint_min, bodysegm, CrashOnIdentity, mass, BodyLoop):
+def FindAllBinarySegments(segm_gen_to_target, nbody, nsegm, nint_min, bodysegm, CrashOnIdentity, bodymass):
 
     Identity_detected = False
 
@@ -631,11 +630,11 @@ def FindAllBinarySegments(segm_gen_to_target, nbody, nsegm, nint_min, bodysegm, 
                     BinarySegm[bisegm]["ProdMassSum"].append(0.)
 
                 BinarySegm[bisegm]["SymCount"][isym] += 1
-                BinarySegm[bisegm]["ProdMassSum"][isym] += mass[BodyLoop[ib]]*mass[BodyLoop[ibp]]
+                BinarySegm[bisegm]["ProdMassSum"][isym] += bodymass[ib]*bodymass[ibp]
 
     return BinarySegm, Identity_detected
 
-def ComputeParamBasis_InitVal(nbody, geodim, InstConstraints, mass, BodyLoop, MomCons=True, eps=1e-12):
+def ComputeParamBasis_InitVal(nbody, geodim, InstConstraints, bodymass, MomCons=True, eps=1e-12):
 
     ncstr = len(InstConstraints)
     
@@ -669,7 +668,7 @@ def ComputeParamBasis_InitVal(nbody, geodim, InstConstraints, mass, BodyLoop, Mo
         
         for ib in range(nbody): 
             for idim in range(geodim):
-                cstr_mat[idim, ib, idim] = mass[BodyLoop[ib]]
+                cstr_mat[idim, ib, idim] = bodymass[ib]
 
     cstr_mat = cstr_buf.reshape((-1, nbody*geodim))
 
@@ -1290,7 +1289,7 @@ def params_to_all_coeffs(
     return all_coeffs
     
 
-def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, MomCons=False, n_grad_change=1., Sym_list=[], CrashOnIdentity=True, ForceMatrixChangevar = False, store_folder = ""):
+def setup_changevar_new(geodim, nbody, nint_init, bodymass, n_reconverge_it_max=6, MomCons=False, n_grad_change=1., Sym_list=[], CrashOnIdentity=True, ForceMatrixChangevar = False, store_folder = ""):
     
     r"""
     This function constructs a ChoreoAction
@@ -1301,9 +1300,18 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
      - Exhaustive list of binary transformations from generator within each loop.
     """
 
+    assert bodymass.shape[0] == nbody
+
     eps = 1e-12
 
     nint_min, nloop, loopnb, BodyLoop, Targets, BodyGraph = DetectLoops(Sym_list, nbody)
+    
+    loopmass = np.zeros((nloop),dtype=np.float64)
+    for il in range(nloop):
+        loopmass[il] = bodymass[Targets[il,0]]
+        for ilb in range(loopnb[il]):
+            ib = Targets[il,ilb]
+            assert loopmass[il] == bodymass[ib]
     
     SegmGraph, nint_min, nsegm, bodysegm, BodyHasContiguousGeneratingSegments, Sym_list = ExploreGlobalShifts_BuildSegmGraph(geodim, nbody, nloop, loopnb, Targets, nint_min, Sym_list)
 
@@ -1427,8 +1435,8 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
     # MomCons_InitVal = False
     MomCons_InitVal = True
 
-    InitValPosBasis = ComputeParamBasis_InitVal(nbody, geodim, InstConstraintsPos[0], mass, BodyLoop, MomCons=MomCons_InitVal)
-    InitValVelBasis = ComputeParamBasis_InitVal(nbody, geodim, InstConstraintsVel[0], mass, BodyLoop, MomCons=MomCons_InitVal)
+    InitValPosBasis = ComputeParamBasis_InitVal(nbody, geodim, InstConstraintsPos[0], bodymass, MomCons=MomCons_InitVal)
+    InitValVelBasis = ComputeParamBasis_InitVal(nbody, geodim, InstConstraintsVel[0], bodymass, MomCons=MomCons_InitVal)
     
     # print("Initial Position parameters")
     # print("nparam = ",InitValPosBasis.shape[2])
@@ -1459,7 +1467,7 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
     
     intersegm_to_all = AccumulateSegmGenToTargetSym(SegmGraph, nbody, geodim, nint_min, nsegm, bodysegm, intersegm_to_iint, intersegm_to_body)
 
-    BinarySegm, Identity_detected = FindAllBinarySegments(intersegm_to_all, nbody, nsegm, nint_min, bodysegm, CrashOnIdentity, mass, BodyLoop)
+    BinarySegm, Identity_detected = FindAllBinarySegments(intersegm_to_all, nbody, nsegm, nint_min, bodysegm, CrashOnIdentity, bodymass)
 
     All_Id, count_tot, count_unique = CountSegmentBinaryInteractions(BinarySegm, nsegm)
 
@@ -1549,7 +1557,7 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
 
     
     
-    
+    return
     # Without lists now.
 
     
@@ -1713,189 +1721,65 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
 
 
 
-
-
-def Prepare_data_for_speed_comparison(
-    geodim                  ,
-    nbody                   ,
-    mass                    ,
-    n_reconverge_it_max     ,
-    Sym_list                ,
-    nint_fac                ,
-):
-
-
-    eps = 1e-12
-
-    # nint_min, nloop, loopnb, BodyLoop, Targets = DetectLoops(Sym_list, nbody, nint_min_fac = 2)
-    nint_min, nloop, loopnb, BodyLoop, Targets = DetectLoops(Sym_list, nbody)
-    
-    SegmGraph, nint_min, nsegm, bodysegm, BodyHasContiguousGeneratingSegments, Sym_list = ExploreGlobalShifts_BuildSegmGraph(geodim, nbody, nloop, loopnb, Targets, nint_min, Sym_list)
-
-
-
-    # Choose loop generators with maximal exploitable FFT symmetry
-    loopgen = -np.ones((nloop), dtype = np.intp)
-    for il in range(nloop):
-        for ilb in range(loopnb[il]):
-
-            if BodyHasContiguousGeneratingSegments[Targets[il,ilb]]:
-                loopgen[il] = Targets[il,ilb]
-                break
-
-        assert loopgen[il] >= 0
-
-
-
-    # Accumulate constraints on segments. 
-
-    SegmConstraints = AccumulateSegmentConstraints(SegmGraph, nbody, geodim, nsegm, bodysegm)
-
-
-
-
-
-
-    # Choose interacting segments as earliest possible times.
-
-    intersegm_to_body = np.zeros((nsegm), dtype = int)
-    intersegm_to_iint = np.zeros((nsegm), dtype = int)
-
-    assigned_segms = set()
-
-    for iint in range(nint_min):
-        for ib in range(nbody):
-
-            isegm = bodysegm[ib,iint]
-
-            if not(isegm in assigned_segms):
-                
-                intersegm_to_body[isegm] = ib
-                intersegm_to_iint[isegm] = iint
-                assigned_segms.add(isegm)
-
-    # Checking that all segments occur in all intervals
-
-    for iint in range(nint_min):        
-        for isegm in range(nsegm):
-            assert isegm in bodysegm[:,iint]
-
-
-
-    # Choose generating segments as contiguous chunks of loop generators
-    assigned_segms = set()
-
-    gensegm_to_body = np.zeros((nsegm), dtype = int)
-    gensegm_to_iint = np.zeros((nsegm), dtype = int)
-    ngensegm_loop = np.zeros((nloop), dtype = int)
-
-    for iint in range(nint_min):
-        for il in range(nloop):
-            ib = loopgen[il]
-
-            isegm = bodysegm[ib,iint]
-
-            if not(isegm in assigned_segms):
-                gensegm_to_body[isegm] = ib
-                gensegm_to_iint[isegm] = iint
-                assigned_segms.add(isegm)
-                ngensegm_loop[il] += 1
-
-
-
-
-
-
-    
-    gensegm_to_all = AccumulateSegmGenToTargetSym(SegmGraph, nbody, geodim, nint_min, nsegm, bodysegm, gensegm_to_iint, gensegm_to_body)
-    
-    GenToIntSyms = Generating_to_interacting(SegmGraph, nbody, geodim, nsegm, intersegm_to_iint, intersegm_to_body, gensegm_to_iint, gensegm_to_body)
-
-
-    
-    intersegm_to_all = AccumulateSegmGenToTargetSym(SegmGraph, nbody, geodim, nint_min, nsegm, bodysegm, intersegm_to_iint, intersegm_to_body)
-
-    BinarySegm, Identity_detected = FindAllBinarySegments(intersegm_to_all, nbody, nsegm, nint_min, bodysegm, True, mass, BodyLoop)
-
-    All_Id, count_tot, count_unique = CountSegmentBinaryInteractions(BinarySegm, nsegm)
-
-
-
-    # This could certainly be made more efficient
-    BodyConstraints = AccumulateBodyConstraints(Sym_list, nbody, geodim)
-    LoopGenConstraints = [BodyConstraints[ib]for ib in loopgen]
-
-
-    All_params_basis = ComputeParamBasis_Loop(False, nbody, nloop, loopgen, geodim, LoopGenConstraints)
-
-    params_basis_reorganized_list, nnz_k_list = reorganize_All_params_basis(All_params_basis)
-
-    ncoeff_min_loop = np.array([len(All_params_basis[il]) for il in range(nloop)], dtype=np.intp)
-    ncoeff_min_loop_nnz = np.array([nnz_k_list[il].shape[0] for il in range(nloop)], dtype=np.intp)
-
-
-    n_sub_fft = np.zeros((nloop), dtype=np.intp)
-    for il in range(nloop):
-        
-        assert nint_min % ncoeff_min_loop[il] == 0
-        assert (nint_min // ncoeff_min_loop[il]) % ngensegm_loop[il] == 0        
-        assert (nint_min // (ncoeff_min_loop[il] * ngensegm_loop[il])) in [1,2]
-        
-        n_sub_fft[il] = (nint_min // (ncoeff_min_loop[il] * ngensegm_loop[il]))
-        
-
-    assert (n_sub_fft == n_sub_fft[0]).all()
-    if n_sub_fft[0] == 1:
-        nnpr = 2
-    else:
-        nnpr = 1
-
-
-
-
-
-
-
-    nint = 2 * nint_min * nint_fac
-    ncoeffs = nint // 2 + 1
-    
-    all_params_list = []
-    # Create parameters
-    for il in range(nloop):
-        
-        params_basis_reorganized = params_basis_reorganized_list[il]
-        nparam_per_period_loop = params_basis_reorganized.shape[2]
-        nnz_k = nnz_k_list[il]
-        
-        npr = (ncoeffs-1) //  ncoeff_min_loop[il]
-        nperiods_loop = npr * ncoeff_min_loop_nnz[il]
-        
-        params_loop = np.random.random((npr, ncoeff_min_loop_nnz[il], nparam_per_period_loop))
-        all_params_list.append(params_loop)
-        
-    return Pick_Named_Args_From_Dict(params_to_all_pos, dict(**locals()))
-        
+# 
+# 
+# def Prepare_data_for_speed_comparison(
+#     geodim                  ,
+#     nbody                   ,
+#     mass                    ,
+#     n_reconverge_it_max     ,
+#     Sym_list                ,
+#     nint_fac                ,
+# ):
+# 
+#     return Pick_Named_Args_From_Dict(params_to_all_pos, dict(**locals()))
+#         
 # TODO: To be removed of course
-def Pick_Named_Args_From_Dict(fun, the_dict, MissingArgsAreNone=True):
-    
-    import inspect
-    list_of_args = inspect.getfullargspec(fun).args
-    
-    if MissingArgsAreNone:
-        all_kwargs = {k:the_dict.get(k) for k in list_of_args}
-        
-    else:
-        all_kwargs = {k:the_dict[k] for k in list_of_args}
-    
-    return all_kwargs
-
-
-def params_to_all_pos_mod(params_basis_reorganized_list, all_params_list, nnz_k_list, ncoeff_min_loop, ncoeffs, nnpr):
-    
-    nloop = len(params_basis_reorganized_list)
-    geodim = params_basis_reorganized_list[0].shape[0]
-    all_coeffs = np.zeros((nloop,ncoeffs,geodim), dtype=np.complex128)
-    
+# def Pick_Named_Args_From_Dict(fun, the_dict, MissingArgsAreNone=True):
+#     
+#     import inspect
+#     list_of_args = inspect.getfullargspec(fun).args
+#     
+#     if MissingArgsAreNone:
+#         all_kwargs = {k:the_dict.get(k) for k in list_of_args}
+#         
+#     else:
+#         all_kwargs = {k:the_dict[k] for k in list_of_args}
+#     
+#     return all_kwargs
+# 
+# 
+# def params_to_all_pos_mod(params_basis_reorganized_list, all_params_list, nnz_k_list, ncoeff_min_loop, ncoeffs, nnpr):
+#     
+#     nloop = len(params_basis_reorganized_list)
+#     geodim = params_basis_reorganized_list[0].shape[0]
+#     all_coeffs = np.zeros((nloop,ncoeffs,geodim), dtype=np.complex128)
+#     
+# #     for il in range(nloop):
+# #         
+# #         params_loop = all_params_list[il]
+# #         
+# #         params_basis_reorganized = params_basis_reorganized_list[il]
+# #         geodim = params_basis_reorganized.shape[0]
+# #         nnz_k = nnz_k_list[il]
+# #         
+# #         npr = (ncoeffs-1) //  ncoeff_min_loop[il]
+# #         ncoeff_min_loop_nnz = len(nnz_k)
+# # 
+# #         coeffs_reorganized = np.einsum('ijk,ljk->lji', params_basis_reorganized, params_loop)
+# #         
+# #         coeffs_dense = np.zeros((npr, ncoeff_min_loop[il], geodim), dtype=np.complex128)
+# #         coeffs_dense[:,nnz_k,:] = coeffs_reorganized
+# #         all_coeffs[il,:(ncoeffs-1),:] = coeffs_dense.reshape(((ncoeffs-1), geodim))
+#         
+#     all_pos = scipy.fft.irfft(all_coeffs, axis=1)
+#         
+# def params_to_all_pos(params_basis_reorganized_list, all_params_list, nnz_k_list, ncoeff_min_loop, ncoeffs, nnpr):
+#     
+#     nloop = len(params_basis_reorganized_list)
+#     geodim = params_basis_reorganized_list[0].shape[0]
+#     all_coeffs = np.zeros((nloop,ncoeffs,geodim), dtype=np.complex128)
+#     
 #     for il in range(nloop):
 #         
 #         params_loop = all_params_list[il]
@@ -1912,34 +1796,9 @@ def params_to_all_pos_mod(params_basis_reorganized_list, all_params_list, nnz_k_
 #         coeffs_dense = np.zeros((npr, ncoeff_min_loop[il], geodim), dtype=np.complex128)
 #         coeffs_dense[:,nnz_k,:] = coeffs_reorganized
 #         all_coeffs[il,:(ncoeffs-1),:] = coeffs_dense.reshape(((ncoeffs-1), geodim))
-        
-    all_pos = scipy.fft.irfft(all_coeffs, axis=1)
-        
-def params_to_all_pos(params_basis_reorganized_list, all_params_list, nnz_k_list, ncoeff_min_loop, ncoeffs, nnpr):
-    
-    nloop = len(params_basis_reorganized_list)
-    geodim = params_basis_reorganized_list[0].shape[0]
-    all_coeffs = np.zeros((nloop,ncoeffs,geodim), dtype=np.complex128)
-    
-    for il in range(nloop):
-        
-        params_loop = all_params_list[il]
-        
-        params_basis_reorganized = params_basis_reorganized_list[il]
-        geodim = params_basis_reorganized.shape[0]
-        nnz_k = nnz_k_list[il]
-        
-        npr = (ncoeffs-1) //  ncoeff_min_loop[il]
-        ncoeff_min_loop_nnz = len(nnz_k)
-
-        coeffs_reorganized = np.einsum('ijk,ljk->lji', params_basis_reorganized, params_loop)
-        
-        coeffs_dense = np.zeros((npr, ncoeff_min_loop[il], geodim), dtype=np.complex128)
-        coeffs_dense[:,nnz_k,:] = coeffs_reorganized
-        all_coeffs[il,:(ncoeffs-1),:] = coeffs_dense.reshape(((ncoeffs-1), geodim))
-        
-    all_pos = scipy.fft.irfft(all_coeffs, axis=1)
-                
+#         
+#     all_pos = scipy.fft.irfft(all_coeffs, axis=1)
+#                 
 
 # def params_to_all_pos_slice(params_basis_reorganized_list, all_params_list, nnz_k_list, ncoeff_min_loop, ncoeffs, nnpr):
 #     

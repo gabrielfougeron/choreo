@@ -6,14 +6,82 @@ cimport cython
 from libc.math cimport fabs as cfabs
 from libc.complex cimport cexp
 
-import scipy
-
 cimport scipy.linalg.cython_blas
 from libc.stdlib cimport malloc, free
 
-import choreo.scipy_plus.linalg
-
 from choreo.scipy_plus.cython.blas_consts cimport *
+
+
+import choreo.scipy_plus.linalg
+from choreo.funs_new import *
+
+
+import scipy
+
+
+
+@cython.final
+cdef class NBodySyst():
+    r"""
+    This class defines a N-body system
+    """
+    # Semi-private with getters
+    cdef long _geodim
+    cdef long _nbody
+    # cdef double[::1] _loopmass
+    cdef long _nint_min
+    cdef long _nloop
+    cdef long[::1] _loopnb
+    cdef long[::1] _bodyloop
+    cdef long[:,::1] _Targets
+    cdef object _BodyGraph
+
+    @property
+    def geodim(self):
+        return self._geodim
+
+    @property
+    def nbody(self):
+        return self._nbody
+
+    @property
+    def nint_min(self):
+        return self._nint_min
+
+    @property
+    def nloop(self):
+        return self._nloop
+
+    @property
+    def loopnb(self):
+        return np.asarray(self._loopnb)
+
+    @property
+    def bodyloop(self):
+        return np.asarray(self._bodyloop)
+
+    @property
+    def Targets(self):
+        return np.asarray(self._Targets)
+
+    def __init__(
+        self                ,
+        long geodim         ,
+        long nbody          ,
+        double[::1] mass    ,
+        list Sym_list       , 
+    ):
+
+        self._geodim = geodim
+        self._nbody = nbody
+
+        self._nint_min, self._nloop, self._loopnb, self._bodyloop, self._Targets, self._BodyGraph = DetectLoops(Sym_list, nbody)
+
+
+
+
+
+
 
 @cython.cdivision(True)
 cdef void inplace_twiddle(
@@ -265,7 +333,6 @@ cdef void pos_slice_to_segmpos(
     long[::1] BodyLoop              ,
     long segm_size                  ,
 ) noexcept nogil:
-
 
     cdef int nsegm = gensegm_to_body.shape[0]
     cdef double* pos_slice

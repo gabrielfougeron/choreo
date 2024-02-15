@@ -43,13 +43,20 @@ cdef class ActionSym():
     cf Palais' principle of symmetric criticality
     """
 
-    cdef public long[::1] BodyPerm
-    cdef public double[:,::1] SpaceRot
-    cdef public long TimeRev
-    cdef public long TimeShiftNum
-    cdef public long TimeShiftDen
+    cdef long[::1] _BodyPerm
+    cdef double[:,::1] _SpaceRot
+    cdef readonly long TimeRev
+    cdef readonly long TimeShiftNum
+    cdef readonly long TimeShiftDen
 
-    @cython.final
+    @property
+    def BodyPerm(self):
+        return np.asarray(self._BodyPerm)
+
+    @property
+    def SpaceRot(self):
+        return np.asarray(self._SpaceRot)
+
     @cython.cdivision(True)
     def __init__(
         self                    ,
@@ -72,8 +79,8 @@ cdef class ActionSym():
         num = num // g
         den = den // g
 
-        self.BodyPerm = BodyPerm
-        self.SpaceRot = SpaceRot
+        self._BodyPerm = BodyPerm
+        self._SpaceRot = SpaceRot
         self.TimeRev = TimeRev
         self.TimeShiftNum = num
         self.TimeShiftDen = den
@@ -83,10 +90,10 @@ cdef class ActionSym():
 
         out  = ""
         out += f"BodyPerm:\n"
-        out += f"{np.asarray(self.BodyPerm)}\n"
+        out += f"{self.BodyPerm}\n"
         out += f"SpaceRot:\n"
-        out += f"{np.asarray(self.SpaceRot)}\n"
-        out += f"TimeRev: {np.asarray(self.TimeRev)}\n"
+        out += f"{self.SpaceRot}\n"
+        out += f"TimeRev: {self.TimeRev}\n"
         out += f"TimeShift: {self.TimeShiftNum} / {self.TimeShiftDen}"
 
         return out
@@ -139,14 +146,14 @@ cdef class ActionSym():
         Returns the inverse of a symmetry transformation
         """
 
-        cdef long[::1] InvPerm = np.zeros(self.BodyPerm.shape[0], dtype = np.intp)
+        cdef long[::1] InvPerm = np.zeros(self._BodyPerm.shape[0], dtype = np.intp)
         cdef long ib
-        for ib in range(self.BodyPerm.shape[0]):
-            InvPerm[self.BodyPerm[ib]] = ib
+        for ib in range(self._BodyPerm.shape[0]):
+            InvPerm[self._BodyPerm[ib]] = ib
 
         return ActionSym(
             BodyPerm = InvPerm,
-            SpaceRot = self.SpaceRot.T.copy(),
+            SpaceRot = self._SpaceRot.T.copy(),
             TimeRev = self.TimeRev,         
             TimeShiftNum = - self.TimeRev * self.TimeShiftNum,
             TimeShiftDen = self.TimeShiftDen
@@ -159,13 +166,13 @@ cdef class ActionSym():
         If self transforms positions, then self.TimeDerivative() transforms speeds
         """
 
-        cdef double[:, ::1] SpaceRot = self.SpaceRot.copy()
+        cdef double[:, ::1] SpaceRot = self._SpaceRot.copy()
         for i in range(SpaceRot.shape[0]):
             for j in range(SpaceRot.shape[1]):
                 SpaceRot[i, j] *= self.TimeRev
 
         return ActionSym(
-            BodyPerm = self.BodyPerm.copy() ,
+            BodyPerm = self._BodyPerm.copy() ,
             SpaceRot = SpaceRot             ,
             TimeRev = self.TimeRev          ,         
             TimeShiftNum = self.TimeShiftNum,
@@ -181,10 +188,10 @@ cdef class ActionSym():
         B.Compose(A) returns the composition B o A, i.e. applies A then B.
         """
 
-        cdef long[::1] ComposeBodyPerm = np.zeros(B.BodyPerm.shape[0], dtype = np.intp)
+        cdef long[::1] ComposeBodyPerm = np.zeros(B._BodyPerm.shape[0], dtype = np.intp)
         cdef long ib
-        for ib in range(B.BodyPerm.shape[0]):
-            ComposeBodyPerm[ib] = B.BodyPerm[A.BodyPerm[ib]]
+        for ib in range(B._BodyPerm.shape[0]):
+            ComposeBodyPerm[ib] = B._BodyPerm[A._BodyPerm[ib]]
 
         cdef long trev = B.TimeRev * A.TimeRev
         cdef long num = B.TimeRev * A.TimeShiftNum * B.TimeShiftDen + B.TimeShiftNum * A.TimeShiftDen
@@ -196,7 +203,7 @@ cdef class ActionSym():
 
         return ActionSym(
             BodyPerm = ComposeBodyPerm,
-            SpaceRot = np.matmul(B.SpaceRot,A.SpaceRot),
+            SpaceRot = np.matmul(B._SpaceRot,A._SpaceRot),
             TimeRev = trev,
             TimeShiftNum = num,
             TimeShiftDen = den
@@ -230,10 +237,10 @@ cdef class ActionSym():
 
         cdef bint isid = True
         cdef long ib
-        cdef long nbody = self.BodyPerm.shape[0]
+        cdef long nbody = self._BodyPerm.shape[0]
 
         for ib in range(nbody):
-            isid = isid and (self.BodyPerm[ib] == ib)
+            isid = isid and (self._BodyPerm[ib] == ib)
 
         return isid
     
@@ -242,16 +249,16 @@ cdef class ActionSym():
 
         cdef bint isid = True
         cdef long idim, jdim
-        cdef long geodim = self.SpaceRot.shape[0]
+        cdef long geodim = self._SpaceRot.shape[0]
 
         for idim in range(geodim):
-            isid = isid and (cfabs(self.SpaceRot[idim, idim] - 1.) < atol)
+            isid = isid and (cfabs(self._SpaceRot[idim, idim] - 1.) < atol)
 
         for idim in range(geodim-1):
             for jdim in range(idim+1,geodim):
 
-                isid = isid and (cfabs(self.SpaceRot[idim, jdim]) < atol)
-                isid = isid and (cfabs(self.SpaceRot[jdim, idim]) < atol)
+                isid = isid and (cfabs(self._SpaceRot[idim, jdim]) < atol)
+                isid = isid and (cfabs(self._SpaceRot[jdim, idim]) < atol)
 
         return isid
 
@@ -366,7 +373,7 @@ cdef class ActionSym():
     @cython.final
     def TransformSegment(ActionSym self, in_segm, out):
 
-        np.matmul(in_segm, self.SpaceRot.T,out=out)
+        np.matmul(in_segm, self._SpaceRot.T,out=out)
         if self.TimeRev == -1:
             out[:,:] = out[::-1,:]
 
