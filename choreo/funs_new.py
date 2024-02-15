@@ -21,7 +21,8 @@ from matplotlib import colormaps
 
 import choreo.scipy_plus
 
-from choreo.cython.funs_new import *
+from choreo.cython._ActionSym import *
+from choreo.cython._NBodySyst import *
 
 
 def ContainsDoubleEdges(SegmGraph):
@@ -1533,6 +1534,14 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
     print( f'{nnpr = }')
     
     
+    params_basis_buf, params_basis_shapes, params_basis_shifts = BundleListOfArrays(params_basis_reorganized_list)
+    nnz_k_buf, nnz_k_shapes, nnz_k_shifts = BundleListOfArrays(nnz_k_list)
+    
+    
+    
+    # ###############################################################
+    # A partir d'ici on commence à "utiliser" l'objet.
+    
 
     nint = 2 * nint_min * 4
     ncoeffs = nint // 2 + 1
@@ -1542,9 +1551,7 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
     
     
     # Without lists now.
-    
-    params_basis_buf, params_basis_shapes, params_basis_shifts = BundleListOfArrays(params_basis_reorganized_list)
-    nnz_k_buf, nnz_k_shapes, nnz_k_shifts = BundleListOfArrays(nnz_k_list)
+
     
     params_shapes_list = []
     ifft_shapes_list = []
@@ -1567,7 +1574,6 @@ def setup_changevar_new(geodim, nbody, nint_init, mass, n_reconverge_it_max=6, M
         
         pos_slice_shapes_list.append((ninter, geodim))
         
-
     params_shapes, params_shifts = BundleListOfShapes(params_shapes_list)
     ifft_shapes, ifft_shifts = BundleListOfShapes(ifft_shapes_list)
     pos_slice_shapes, pos_slice_shifts = BundleListOfShapes(pos_slice_shapes_list)
