@@ -80,49 +80,10 @@ def setup_changevar_new(geodim, nbody, nint_init, bodymass, n_reconverge_it_max=
 
 
     # Choose interacting segments as earliest possible times.
-
-    intersegm_to_body = np.zeros((nsegm), dtype = int)
-    intersegm_to_iint = np.zeros((nsegm), dtype = int)
-
-    assigned_segms = set()
-
-    for iint in range(nint_min):
-        for ib in range(nbody):
-
-            isegm = bodysegm[ib,iint]
-
-            if not(isegm in assigned_segms):
-                
-                intersegm_to_body[isegm] = ib
-                intersegm_to_iint[isegm] = iint
-                assigned_segms.add(isegm)
-
-    # Checking that all segments occur in all intervals
-
-    for iint in range(nint_min):        
-        for isegm in range(nsegm):
-            assert isegm in bodysegm[:,iint]
-
-
+    intersegm_to_body, intersegm_to_iint = ChooseInterSegm(nsegm, nint_min, nbody, bodysegm)
 
     # Choose generating segments as contiguous chunks of loop generators
-    assigned_segms = set()
-
-    gensegm_to_body = np.zeros((nsegm), dtype = int)
-    gensegm_to_iint = np.zeros((nsegm), dtype = int)
-    ngensegm_loop = np.zeros((nloop), dtype = int)
-
-    for iint in range(nint_min):
-        for il in range(nloop):
-            ib = loopgen[il]
-
-            isegm = bodysegm[ib,iint]
-
-            if not(isegm in assigned_segms):
-                gensegm_to_body[isegm] = ib
-                gensegm_to_iint[isegm] = iint
-                assigned_segms.add(isegm)
-                ngensegm_loop[il] += 1
+    gensegm_to_body, gensegm_to_iint, ngensegm_loop = ChooseGenSegm(nsegm, nint_min, nloop, loopgen, bodysegm)
                 
 
 
@@ -182,11 +143,10 @@ def setup_changevar_new(geodim, nbody, nint_init, bodymass, n_reconverge_it_max=
     
     
     gensegm_to_all = AccumulateSegmGenToTargetSym(SegmGraph, nbody, geodim, nint_min, nsegm, bodysegm, gensegm_to_iint, gensegm_to_body)
+    GenTimeRev, GenSpaceRot = GatherGenSym(nsegm, geodim, intersegm_to_body, intersegm_to_iint, gensegm_to_all)
+    
     GenToIntSyms = Generating_to_interacting(SegmGraph, nbody, geodim, nsegm, intersegm_to_iint, intersegm_to_body, gensegm_to_iint, gensegm_to_body)
 
-
-
-    
     intersegm_to_all = AccumulateSegmGenToTargetSym(SegmGraph, nbody, geodim, nint_min, nsegm, bodysegm, intersegm_to_iint, intersegm_to_body)
 
     BinarySegm, Identity_detected = FindAllBinarySegments(intersegm_to_all, nbody, nsegm, nint_min, bodysegm, CrashOnIdentity, bodymass)
@@ -194,18 +154,7 @@ def setup_changevar_new(geodim, nbody, nint_init, bodymass, n_reconverge_it_max=
     All_Id, count_tot, count_unique = CountSegmentBinaryInteractions(BinarySegm, nsegm)
 
 
-    GenTimeRev = np.zeros((nsegm), dtype=np.intp)
-    GenSpaceRot = np.zeros((nsegm, geodim, geodim), dtype=np.float64)
-
-    for isegm in range(nsegm):
-
-        ib = intersegm_to_body[isegm]
-        iint = intersegm_to_iint[isegm]
-
-        Sym = gensegm_to_all[ib][iint]
-        
-        GenTimeRev[isegm] = Sym.TimeRev
-        GenSpaceRot[isegm,:,:] = Sym.SpaceRot
+    
 
 
 
@@ -217,7 +166,7 @@ def setup_changevar_new(geodim, nbody, nint_init, bodymass, n_reconverge_it_max=
 
     # This could certainly be made more efficient
     BodyConstraints = AccumulateBodyConstraints(Sym_list, nbody, geodim)
-    LoopGenConstraints = [BodyConstraints[ib]for ib in loopgen]
+    LoopGenConstraints = [BodyConstraints[ib] for ib in loopgen]
     
     
     # for isegm in range(nsegm):
@@ -238,78 +187,39 @@ def setup_changevar_new(geodim, nbody, nint_init, bodymass, n_reconverge_it_max=
     
     
 
-    All_params_basis = ComputeParamBasis_Loop(MomCons, nbody, nloop, loopgen, geodim, LoopGenConstraints)
-
- 
+    All_params_basis = ComputeParamBasis_Loop(nbody, nloop, loopgen, geodim, LoopGenConstraints)
     params_basis_reorganized_list, nnz_k_list = reorganize_All_params_basis(All_params_basis)
-
-    ncoeff_min_loop = np.array([len(All_params_basis[il]) for il in range(nloop)], dtype=np.intp)
-    ncoeff_min_loop_nnz = np.array([nnz_k_list[il].shape[0] for il in range(nloop)], dtype=np.intp)
-
-    n_sub_fft = np.zeros((nloop), dtype=np.intp)
-    for il in range(nloop):
-        
-        assert nint_min % ncoeff_min_loop[il] == 0
-        assert (nint_min // ncoeff_min_loop[il]) % ngensegm_loop[il] == 0        
-        assert (nint_min // (ncoeff_min_loop[il] * ngensegm_loop[il])) in [1,2]
-        
-        n_sub_fft[il] = (nint_min // (ncoeff_min_loop[il] * ngensegm_loop[il]))
-        
-    assert (n_sub_fft == n_sub_fft[0]).all()
-    if n_sub_fft[0] == 1:
-        nnpr = 2
-    else:
-        nnpr = 1
-
-    print( f'{nnpr = }')
-    
     
     params_basis_buf, params_basis_shapes, params_basis_shifts = BundleListOfArrays(params_basis_reorganized_list)
     nnz_k_buf, nnz_k_shapes, nnz_k_shifts = BundleListOfArrays(nnz_k_list)
+
+    ncoeff_min_loop = np.array([len(All_params_basis[il]) for il in range(nloop)], dtype=np.intp)
+    ncoeff_min_loop_nnz = np.array([nnz_k_list[il].shape[0] for il in range(nloop)], dtype=np.intp)
+    
+
+    nnpr = Compute_nnpr(nloop, nint_min, ncoeff_min_loop, ngensegm_loop)
+
+    print( f'{nnpr = }')
+    
+
     
     
     
     # ###############################################################
     # A partir d'ici on commence à "utiliser" l'objet.
     
-
-    nint = 2 * nint_min * 4
-    ncoeffs = nint // 2 + 1
-    segm_size = nint // nint_min
+    nbodysyst.nint = 2 * nint_min * 4
 
     
     
-    return
     # Without lists now.
 
     
-    params_shapes_list = []
-    ifft_shapes_list = []
-    pos_slice_shapes_list = []
-    for il in range(nloop):
-
-        nppl = params_basis_reorganized_list[il].shape[2]
-        assert nint % (2*ncoeff_min_loop[il]) == 0
-        npr = nint //  (2*ncoeff_min_loop[il])
-        
-        params_shapes_list.append((npr, ncoeff_min_loop_nnz[il], nppl))
-        ifft_shapes_list.append((npr+1, ncoeff_min_loop_nnz[il], nppl))
-        
-        if nnpr == 1:
-            ninter = npr+1
-        elif nnpr == 2:
-            ninter = 2*npr
-        else:
-            raise ValueError(f'Impossible value for {nnpr = }')
-        
-        pos_slice_shapes_list.append((ninter, geodim))
-        
-    params_shapes, params_shifts = BundleListOfShapes(params_shapes_list)
-    ifft_shapes, ifft_shifts = BundleListOfShapes(ifft_shapes_list)
-    pos_slice_shapes, pos_slice_shifts = BundleListOfShapes(pos_slice_shapes_list)
         
         
-    params_buf = np.random.random((params_shifts[-1]))
+    params_buf = np.random.random((nbodysyst.nparams))
+    
+    return
             
     segmpos_cy = params_to_segmpos(
         params_buf.copy()   , params_shapes         , params_shifts         ,
