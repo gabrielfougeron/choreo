@@ -20,7 +20,6 @@ import choreo.scipy_plus
 
 from choreo.cython._ActionSym import *
 
-
 def ContainsDoubleEdges(SegmGraph):
 
     for edge in SegmGraph.edges:
@@ -564,73 +563,6 @@ def AccumulateSegmGenToTargetSym(SegmGraph, nbody, geodim, nint_min, nsegm, body
 
     return segm_gen_to_target                        
 
-def FindAllBinarySegments(segm_gen_to_target, nbody, nsegm, nint_min, bodysegm, CrashOnIdentity, bodymass):
-
-    Identity_detected = False
-
-    BinarySegm = {}
-
-    for isegm in range(nsegm):
-        for isegmp in range(isegm,nsegm):
-            BinarySegm[(isegm, isegmp)] = {
-                "SymList" : []      ,
-                "SymCount" : []     ,
-                "ProdMassSum" : []  ,
-            }
-
-    for iint in range(nint_min):
-
-        for ib in range(nbody-1):
-            
-            segm = (ib, iint)
-            isegm = bodysegm[*segm]
-
-            for ibp in range(ib+1,nbody):
-                
-                segmp = (ibp, iint)
-                isegmp = bodysegm[*segmp] 
-
-                if (isegm <= isegmp):
-
-                    bisegm = (isegm, isegmp)
-                    Sym = (segm_gen_to_target[ibp][iint]).Compose(segm_gen_to_target[ib][iint].Inverse())
-
-                else:
-
-                    bisegm = (isegmp, isegm)
-                    Sym = (segm_gen_to_target[ib][iint]).Compose(segm_gen_to_target[ibp][iint].Inverse())
-
-                if ((isegm == isegmp) and Sym.IsIdentityRotAndTimeRev()):
-
-                    if CrashOnIdentity:
-                        raise ValueError("Two bodies have identical trajectories")
-                    else:
-                        if not(Identity_detected):
-                            print("Two bodies have identical trajectories")
-                        
-                    Identity_detected = True
-
-                isym = 0 # In case BinarySegm[bisegm]["SymList"] is empty
-                for isym, FoundSym in enumerate(BinarySegm[bisegm]["SymList"]):
-                    
-                    if Sym.IsSameRotAndTimeRev(FoundSym):
-                        break
-
-                    if (isegm == isegmp):
-                        SymInv = Sym.Inverse()
-                        if SymInv.IsSameRotAndTimeRev(FoundSym):
-                            break
-                        
-                else:
-                    BinarySegm[bisegm]["SymList"].append(Sym)
-                    BinarySegm[bisegm]["SymCount"].append(0)
-                    BinarySegm[bisegm]["ProdMassSum"].append(0.)
-
-                BinarySegm[bisegm]["SymCount"][isym] += 1
-                BinarySegm[bisegm]["ProdMassSum"][isym] += bodymass[ib]*bodymass[ibp]
-
-    return BinarySegm, Identity_detected
-
 def ComputeParamBasis_InitVal(nbody, geodim, InstConstraints, bodymass, MomCons=True, eps=1e-12):
 
     ncstr = len(InstConstraints)
@@ -681,7 +613,7 @@ def ComputeParamBasis_InitVal(nbody, geodim, InstConstraints, bodymass, MomCons=
                 if abs(NullSpace[ib, idim, iparam]) < eps:
                     NullSpace[ib, idim, iparam] = 0
        
-    return NullSpace
+    return np.ascontiguousarray(NullSpace)
 
 def ComputeParamBasis_Loop(nbody, nloop, loopgen, geodim, LoopGenConstraints, eps=1e-12):
 
@@ -796,103 +728,7 @@ def reorganize_All_params_basis(All_params_basis):
 
     return params_basis_reorganized_list, nnz_k_list
 
-def ExploreGlobalShifts_BuildSegmGraph(geodim, nbody, nloop, loopnb, Targets, nint_min, Sym_list):
 
-    # Making sure nint_min is big enough
-    SegmGraph, nint_min = Build_SegmGraph_NoPb(nbody, nint_min, Sym_list)
-    
-    for i_shift in range(nint_min):
-        
-        if i_shift != 0:
-            
-            GlobalTimeShift = ActionSym(
-                BodyPerm  = np.array(range(nbody), dtype = np.int_) ,
-                SpaceRot  = np.identity(geodim, dtype = np.float64) ,
-                TimeRev   = 1                                       ,
-                TimeShiftNum = i_shift                              ,
-                TimeShiftDen = nint_min                             ,
-            )
-            
-            Shifted_sym_list = []
-            for Sym in Sym_list:
-                Shifted_sym_list.append(Sym.Conjugate(GlobalTimeShift))
-            Sym_list = Shifted_sym_list
-        
-            SegmGraph = Build_SegmGraph(nbody, nint_min, Sym_list)
-
-        bodysegm = np.zeros((nbody, nint_min), dtype = int)
-        for isegm, CC in enumerate(networkx.connected_components(SegmGraph)):
-            for ib, iint in CC:
-                bodysegm[ib, iint] = isegm
-
-        nsegm = isegm + 1
-        
-        bodynsegm = np.zeros((nbody), dtype = int)
-        BodyHasContiguousGeneratingSegments = np.zeros((nbody), dtype = bool)
-
-        for ib in range(nbody):
-
-            unique, unique_indices, unique_inverse, unique_counts = np.unique(bodysegm[ib, :], return_index = True, return_inverse = True, return_counts = True)
-
-            assert (unique == bodysegm[ib, unique_indices]).all()
-            assert (unique[unique_inverse] == bodysegm[ib, :]).all()
-
-            bodynsegm[ib] = unique.size
-            BodyHasContiguousGeneratingSegments[ib] = ((unique_indices.max()+1) == bodynsegm[ib])
-            
-        AllLoopsHaveContiguousGeneratingSegments = True
-        for il in range(nloop):
-            LoopHasContiguousGeneratingSegments = False
-            for ilb in range(loopnb[il]):
-                LoopHasContiguousGeneratingSegments = LoopHasContiguousGeneratingSegments or BodyHasContiguousGeneratingSegments[Targets[il,ilb]]
-
-            AllLoopsHaveContiguousGeneratingSegments = AllLoopsHaveContiguousGeneratingSegments and LoopHasContiguousGeneratingSegments
-        
-        if AllLoopsHaveContiguousGeneratingSegments:
-            break
-    
-    else:
-        
-        raise ValueError("Could not find time shift such that all loops have contiguous generating segments")
-
-    # print(f"Required {i_shift} shifts to find reference such that all loops have contiguous generating segments")
-    
-    return SegmGraph, nint_min, nsegm, bodysegm, BodyHasContiguousGeneratingSegments, Sym_list
-
-def DetectLoops(Sym_list, nbody, bodymass, nint_min_fac = 1):
-
-    All_den_list_on_entry = []
-    for Sym in Sym_list:
-        All_den_list_on_entry.append(Sym.TimeShiftDen)
-
-    nint_min = nint_min_fac * math.lcm(*All_den_list_on_entry) # ensures that all integer divisions will have zero remainder
-    
-    BodyGraph = Build_BodyGraph(nbody, Sym_list)
-
-    nloop = sum(1 for _ in networkx.connected_components(BodyGraph))
-    
-    loopnb = np.zeros((nloop), dtype = int)
-
-    for il, CC in enumerate(networkx.connected_components(BodyGraph)):
-        loopnb[il] = len(CC)
-
-    maxlooplen = loopnb.max()
-    
-    BodyLoop = np.zeros((nbody), dtype = int)
-    Targets = np.zeros((nloop,maxlooplen), dtype = int)
-    for il, CC in enumerate(networkx.connected_components(BodyGraph)):
-        for ilb, ib in enumerate(CC):
-            Targets[il,ilb] = ib
-            BodyLoop[ib] = il
-
-    loopmass = np.zeros((nloop),dtype=np.float64)
-    for il in range(nloop):
-        loopmass[il] = bodymass[Targets[il,0]]
-        for ilb in range(loopnb[il]):
-            ib = Targets[il,ilb]
-            assert loopmass[il] == bodymass[ib]
-
-    return nint_min, nloop, loopnb, loopmass, BodyLoop, Targets, BodyGraph
         
 def PlotTimeBodyGraph(Graph, nbody, nint_min, filename):
 
@@ -909,23 +745,11 @@ def PlotTimeBodyGraph(Graph, nbody, nint_min, filename):
 
     for iedge, (key, edge) in enumerate(Graph.edges.items()):
 
-        ContainsDirect = False
         ContainsIndirect = False
-
         for Sym in edge["SymList"]:
 
-            if Sym.TimeRev == 1:
-                ContainsDirect = True
-            else:
+            if Sym.TimeRev == -1:
                 ContainsIndirect = True
-
-        # if ContainsDirect:
-        #     if ContainsIndirect:
-        #         color = 2
-        #     else:
-        #         color = 1
-        # else:
-        #     color = 0
         
         if ContainsIndirect:
             fac = -1
@@ -1084,120 +908,7 @@ def AssertAllSegmGenConstraintsAreRespected(gensegm_to_all, nint_min, bodysegm, 
                 assert (np.linalg.norm(pos_target_segm[:segm_size-1,:] - all_pos[il, ibeg_target:iend_target-1, :])) < eps
                 assert (np.linalg.norm(pos_target_segm[segm_size-1,:] - all_pos[il, 0, :])) < eps
           
-def ChooseLoopGen(nloop, loopnb, BodyHasContiguousGeneratingSegments, Targets):
-    
-    # Choose loop generators with maximal exploitable FFT symmetry
-    loopgen = -np.ones((nloop), dtype = np.intp)
-    for il in range(nloop):
-        for ilb in range(loopnb[il]):
 
-            if BodyHasContiguousGeneratingSegments[Targets[il,ilb]]:
-                loopgen[il] = Targets[il,ilb]
-                break
-
-        assert loopgen[il] >= 0    
-    
-    return loopgen
-                
-def ChooseInterSegm(nsegm, nint_min, nbody, bodysegm):
-
-    # Choose interacting segments as earliest possible times.
-
-    intersegm_to_body = np.zeros((nsegm), dtype = int)
-    intersegm_to_iint = np.zeros((nsegm), dtype = int)
-
-    assigned_segms = set()
-
-    for iint in range(nint_min):
-        for ib in range(nbody):
-
-            isegm = bodysegm[ib,iint]
-
-            if not(isegm in assigned_segms):
-                
-                intersegm_to_body[isegm] = ib
-                intersegm_to_iint[isegm] = iint
-                assigned_segms.add(isegm)
-
-    return intersegm_to_body, intersegm_to_iint
-
-def ChooseGenSegm(nsegm, nint_min, nloop, loopgen, bodysegm):
-    
-    assigned_segms = set()
-
-    gensegm_to_body = np.zeros((nsegm), dtype = int)
-    gensegm_to_iint = np.zeros((nsegm), dtype = int)
-    ngensegm_loop = np.zeros((nloop), dtype = int)
-
-    for iint in range(nint_min):
-        for il in range(nloop):
-            ib = loopgen[il]
-
-            isegm = bodysegm[ib,iint]
-
-            if not(isegm in assigned_segms):
-                gensegm_to_body[isegm] = ib
-                gensegm_to_iint[isegm] = iint
-                assigned_segms.add(isegm)
-                ngensegm_loop[il] += 1
-
-    return gensegm_to_body, gensegm_to_iint, ngensegm_loop
-
-def Compute_nnpr(nloop, nint_min, ncoeff_min_loop, ngensegm_loop):
-    
-    n_sub_fft = np.zeros((nloop), dtype=np.intp)
-    for il in range(nloop):
-        
-        assert nint_min % ncoeff_min_loop[il] == 0
-        assert (nint_min // ncoeff_min_loop[il]) % ngensegm_loop[il] == 0        
-        assert (nint_min // (ncoeff_min_loop[il] * ngensegm_loop[il])) in [1,2]
-        
-        n_sub_fft[il] = (nint_min // (ncoeff_min_loop[il] * ngensegm_loop[il]))
-        
-    assert (n_sub_fft == n_sub_fft[0]).all()
-    
-    if n_sub_fft[0] == 1:
-        nnpr = 2
-    else:
-        nnpr = 1
-        
-    return nnpr
-
-
-# def ComputePeriodicitydefault(SegmGraph, bodysegm, nint_min, xo, xf):
-#     
-#     # xo belongs to the first segment
-#     iint = 0
-#     # xf
-#     jint = (iint+1) % nint_min
-#     
-#     nbody = xo.shape[0]
-#     geodim = xo.shape[1]
-#     
-#     for ib in range(nbody):
-#     
-
-# def PosSliceToAllPos()
-
-# def PrepareParamBuf():
-
-
-def GatherGenSym(nsegm, geodim, intersegm_to_body, intersegm_to_iint, gensegm_to_all):
-    
-    GenTimeRev = np.zeros((nsegm), dtype=np.intp)
-    GenSpaceRot = np.zeros((nsegm, geodim, geodim), dtype=np.float64)
-
-    for isegm in range(nsegm):
-
-        ib = intersegm_to_body[isegm]
-        iint = intersegm_to_iint[isegm]
-
-        Sym = gensegm_to_all[ib][iint]
-        
-        GenTimeRev[isegm] = Sym.TimeRev
-        GenSpaceRot[isegm,:,:] = Sym.SpaceRot
-        
-    return GenTimeRev, GenSpaceRot
 
 
 def BundleListOfShapes(ListOfShapes):
@@ -1235,79 +946,6 @@ def BundleListOfArrays(ListOfArrays):
         buf[n_shifts[i]:n_shifts[i+1]] = arr.reshape(-1)
         
     return buf, n_shapes, n_shifts
-
-def Generating_to_interacting(SegmGraph, nbody, geodim, nsegm, intersegm_to_iint, intersegm_to_body, gensegm_to_iint, gensegm_to_body):
-    
-    AllSyms = []
-    
-    for isegm in range(nsegm):
-    
-        gensegm = (gensegm_to_body[isegm], gensegm_to_iint[isegm])
-        intersegm = (intersegm_to_body[isegm], intersegm_to_iint[isegm])
-        
-        path = networkx.shortest_path(SegmGraph, source = gensegm, target = intersegm)
-        
-        SourceToTargetSym = ActionSym.Identity(nbody, geodim)
-        
-        for iedge in range(len(path)-1):
-       
-            if (path[iedge] > path[iedge+1]):
-
-                edge = (path[iedge+1], path[iedge] )
-                Sym = SegmGraph.edges[edge]["SymList"][0].Inverse()
-
-            else:
-
-                edge = (path[iedge] , path[iedge+1])
-                Sym = SegmGraph.edges[edge]["SymList"][0]
-        
-            SourceToTargetSym = Sym.Compose(SourceToTargetSym)
-
-        AllSyms.append(SourceToTargetSym)
-        
-    return AllSyms
-
-def Compute_all_body_pos(all_pos, BodyGraph, loopgen, BodyLoop):
-    
-    nbody = BodyLoop.shape[0]
-    nint = all_pos.shape[1]
-    geodim = all_pos.shape[2]
-    
-    all_body_pos = np.zeros((nbody,nint,geodim), dtype=np.float64)
-
-    for ib in range(nbody):
-        
-        il = BodyLoop[ib]
-        ib_gen = loopgen[il]
-        
-        if (ib == ib_gen) :
-            
-            all_body_pos[ib,:,:] = all_pos[il,:,:]
-            
-        else:
-        
-            path = networkx.shortest_path(BodyGraph, source = ib_gen, target = ib)
-
-            pathlen = len(path)
-
-            TotSym = ActionSym.Identity(nbody, geodim)
-            for ipath in range(1,pathlen):
-
-                if (path[ipath-1] > path[ipath]):
-                    Sym = BodyGraph.edges[(path[ipath], path[ipath-1])]["SymList"][0].Inverse()
-                else:
-                    Sym = BodyGraph.edges[(path[ipath-1], path[ipath])]["SymList"][0]
-
-                TotSym = Sym.Compose(TotSym)
-        
-            for iint_gen in range(nint):
-                
-                tnum, tden = TotSym.ApplyT(iint_gen, nint)
-                iint_target = tnum * nint // tden
-                
-                all_body_pos[ib,iint_target,:] = np.matmul(TotSym.SpaceRot, all_pos[il,iint_gen,:])
-
-    return all_body_pos
 
 def Populate_allsegmpos(all_pos, GenSpaceRot, GenTimeRev, gensegm_to_body, gensegm_to_iint, BodyLoop, nint_min):
     
@@ -1349,34 +987,3 @@ def Populate_allsegmpos(all_pos, GenSpaceRot, GenTimeRev, gensegm_to_body, gense
     
 
     return allsegmpos
-    
-def params_to_all_coeffs(
-    params_buf, params_shapes, params_shifts,
-    params_basis_reorganized_list, nnz_k_list, ncoeff_min_loop, nint
-):
-    
-    assert nint % 2 == 0
-    ncoeffs = nint//2 +1
-    
-    geodim = params_basis_reorganized_list[0].shape[0]
-    nloop = ncoeff_min_loop.shape[0]
-    
-    all_coeffs = np.zeros((nloop, ncoeffs, geodim), dtype=np.complex128)
-    
-    for il in range(nloop):
-        
-        params_basis_reorganized = params_basis_reorganized_list[il]
-        nparam_per_period_loop = params_basis_reorganized.shape[2]
-        nnz_k = nnz_k_list[il]
-        
-        npr = (ncoeffs-1) //  ncoeff_min_loop[il]
-        
-        params_loop = params_buf[params_shifts[il]:params_shifts[il+1]].reshape(params_shapes[il])
-        
-        coeffs_reorganized = np.einsum('ijk,ljk->lji', params_basis_reorganized, params_loop)
-        
-        coeffs_dense = all_coeffs[il,:(ncoeffs-1),:].reshape(npr, ncoeff_min_loop[il], geodim)
-        coeffs_dense[:,nnz_k,:] = coeffs_reorganized
-        
-    return all_coeffs
-    

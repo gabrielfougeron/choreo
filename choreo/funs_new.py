@@ -36,292 +36,111 @@ def setup_changevar_new(geodim, nbody, nint_init, bodymass, n_reconverge_it_max=
     """
 
     
-    nbodysyst = NBodySyst(geodim, nbody, bodymass, Sym_list)
+    NBS = NBodySyst(geodim, nbody, bodymass, Sym_list)
 
-    assert bodymass.shape[0] == nbody
-
-    eps = 1e-12
-
-    nint_min, nloop, loopnb, loopmass, BodyLoop, Targets, BodyGraph = DetectLoops(Sym_list, nbody, bodymass)
-
-    
-    SegmGraph, nint_min, nsegm, bodysegm, BodyHasContiguousGeneratingSegments, Sym_list = ExploreGlobalShifts_BuildSegmGraph(geodim, nbody, nloop, loopnb, Targets, nint_min, Sym_list)
-
-    loopgen = ChooseLoopGen(nloop, loopnb, BodyHasContiguousGeneratingSegments, Targets)
-
-
-
-
-    # Accumulate constraints on segments. 
-
-    SegmConstraints = AccumulateSegmentConstraints(SegmGraph, nbody, geodim, nsegm, bodysegm)
-    
-#     print()
-#     print("Segment Constraints")
-#     for isegm in range(nsegm):
-#         ncstr = len(SegmConstraints[isegm])
-#         print(f'{isegm = } {ncstr = }')
-# 
-#         for icstr, Constraint in enumerate(SegmConstraints[isegm]):
-#             print(f'{icstr = }')
-#             print(Constraint)
-#             print()
-#     print()
-
-    # ComputeParamBasis_Segm(nbody, geodim, SegmConstraints)
-
-
-
-
-
-
-
-
-
-
-    # Choose interacting segments as earliest possible times.
-    intersegm_to_body, intersegm_to_iint = ChooseInterSegm(nsegm, nint_min, nbody, bodysegm)
-
-    # Choose generating segments as contiguous chunks of loop generators
-    gensegm_to_body, gensegm_to_iint, ngensegm_loop = ChooseGenSegm(nsegm, nint_min, nloop, loopgen, bodysegm)
-                
-
-
-    # Setting up forward ODE:
-    # - What are my parameters ?
-    # - Integration end + Lack of periodicity
-    # - Constraints on initial values => Parametrization 
-
-    
-    InstConstraintsPos = AccumulateInstConstraints(Sym_list, nbody, geodim, nint_min, VelSym=False)
-    InstConstraintsVel = AccumulateInstConstraints(Sym_list, nbody, geodim, nint_min, VelSym=True )
-
-    # One segment is enough (checked before)
-    
-    # print("Initial time Position constraints")
-    # ncstr = len(InstConstraintsPos[0])
-    # print(f'{ncstr = }')
-    # for icstr, Constraint in enumerate(InstConstraintsPos[0]):
-    #     print(f'{icstr = }')
-    #     print(Constraint)
-    #     print()    
-    # print()    
-    # print("Initial time Velocity constraints")
-    # ncstr = len(InstConstraintsVel[0])
-    # print(f'{ncstr = }')
-    # for icstr, Constraint in enumerate(InstConstraintsVel[0]):
-    #     print(f'{icstr = }')
-    #     print(Constraint)
-    #     print()
-    # print()
-
-    # MomCons_InitVal = False
-    MomCons_InitVal = True
-
-    InitValPosBasis = ComputeParamBasis_InitVal(nbody, geodim, InstConstraintsPos[0], bodymass, MomCons=MomCons_InitVal)
-    InitValVelBasis = ComputeParamBasis_InitVal(nbody, geodim, InstConstraintsVel[0], bodymass, MomCons=MomCons_InitVal)
-    
-    # print("Initial Position parameters")
-    # print("nparam = ",InitValPosBasis.shape[2])
-    # print()
-    # for iparam in range(InitValPosBasis.shape[2]):
-    #     
-    #     print(f'{iparam = }')
-    #     print(InitValPosBasis[:,:,iparam])    
-    #     print()
-    #     
-    #     
-    # print("Initial Velocity parameters")
-    # print("nparam = ",InitValVelBasis.shape[2])
-    # print()
-    # for iparam in range(InitValVelBasis.shape[2]):
-    #     
-    #     print(f'{iparam = }')
-    #     print(InitValVelBasis[:,:,iparam])
-    #     print()
-    
-    
-    
-    gensegm_to_all = AccumulateSegmGenToTargetSym(SegmGraph, nbody, geodim, nint_min, nsegm, bodysegm, gensegm_to_iint, gensegm_to_body)
-    GenTimeRev, GenSpaceRot = GatherGenSym(nsegm, geodim, intersegm_to_body, intersegm_to_iint, gensegm_to_all)
-    
-    GenToIntSyms = Generating_to_interacting(SegmGraph, nbody, geodim, nsegm, intersegm_to_iint, intersegm_to_body, gensegm_to_iint, gensegm_to_body)
-
-    intersegm_to_all = AccumulateSegmGenToTargetSym(SegmGraph, nbody, geodim, nint_min, nsegm, bodysegm, intersegm_to_iint, intersegm_to_body)
-
-    BinarySegm, Identity_detected = FindAllBinarySegments(intersegm_to_all, nbody, nsegm, nint_min, bodysegm, CrashOnIdentity, bodymass)
-
-    All_Id, count_tot, count_unique = CountSegmentBinaryInteractions(BinarySegm, nsegm)
-
-
-    
-
-
-
-
-    
-    # print()
-    # print('================================================')
-    # print()
-
-    # This could certainly be made more efficient
-    BodyConstraints = AccumulateBodyConstraints(Sym_list, nbody, geodim)
-    LoopGenConstraints = [BodyConstraints[ib] for ib in loopgen]
-    
-    
-    # for isegm in range(nsegm):
-    #     
-    #     print()
-    #     print(isegm)
-    #     print(gensegm_to_iint[isegm], gensegm_to_body[isegm])
-    #     print(intersegm_to_iint[isegm], intersegm_to_body[isegm])
-    #     print(GenToIntSyms[isegm])
-    #     print(gensegm_to_all[intersegm_to_body[isegm]][intersegm_to_iint[isegm]])
-    #     
-    #     
-    #     assert GenToIntSyms[isegm].IsSameRot(gensegm_to_all[intersegm_to_body[isegm]][intersegm_to_iint[isegm]])
-    #     assert GenToIntSyms[isegm].IsSameTimeRev(gensegm_to_all[intersegm_to_body[isegm]][intersegm_to_iint[isegm]])
-    
-    
-    
-    
-    
-
-    All_params_basis = ComputeParamBasis_Loop(nbody, nloop, loopgen, geodim, LoopGenConstraints)
-    params_basis_reorganized_list, nnz_k_list = reorganize_All_params_basis(All_params_basis)
-    
-    params_basis_buf, params_basis_shapes, params_basis_shifts = BundleListOfArrays(params_basis_reorganized_list)
-    nnz_k_buf, nnz_k_shapes, nnz_k_shifts = BundleListOfArrays(nnz_k_list)
-
-    ncoeff_min_loop = np.array([len(All_params_basis[il]) for il in range(nloop)], dtype=np.intp)
-    ncoeff_min_loop_nnz = np.array([nnz_k_list[il].shape[0] for il in range(nloop)], dtype=np.intp)
-    
-
-    nnpr = Compute_nnpr(nloop, nint_min, ncoeff_min_loop, ngensegm_loop)
-
-    print( f'{nnpr = }')
-    
-
-    
-    
-    
     # ###############################################################
     # A partir d'ici on commence à "utiliser" l'objet.
     
-    nbodysyst.nint = 2 * nint_min * 4
+    NBS.nint_fac = 4
 
     
+    
+    # params_to_all_coeffs_noopt
     
     # Without lists now.
 
-    
-        
-        
-    params_buf = np.random.random((nbodysyst.nparams))
-    
-    return
-            
-    segmpos_cy = params_to_segmpos(
-        params_buf.copy()   , params_shapes         , params_shifts         ,
-                              ifft_shapes           , ifft_shifts           ,
-        params_basis_buf    , params_basis_shapes   , params_basis_shifts   ,
-        nnz_k_buf           , nnz_k_shapes          , nnz_k_shifts          ,
-                              pos_slice_shapes      , pos_slice_shifts      ,
-        ncoeff_min_loop     , nnpr  ,
-        GenSpaceRot         ,
-        GenTimeRev          ,
-        gensegm_to_body     ,
-        gensegm_to_iint     ,
-        BodyLoop            ,
-        segm_size           ,
-    )
-            
 
-    all_coeffs = params_to_all_coeffs(
-        params_buf, params_shapes, params_shifts,
-        params_basis_reorganized_list, nnz_k_list, ncoeff_min_loop, nint
-    )
-        
+    params_buf = np.random.random((NBS.nparams))
+
+    all_coeffs = NBS.params_to_all_coeffs_noopt(params_buf)        
     all_pos = scipy.fft.irfft(all_coeffs, axis=1)
- 
-        
-    AssertAllSegmGenConstraintsAreRespected(gensegm_to_all, nint_min, bodysegm, loopgen, gensegm_to_body, gensegm_to_iint , BodyLoop, all_pos)
-    AssertAllBodyConstraintAreRespected(LoopGenConstraints, all_pos)
-
-
-    allsegmpos = Populate_allsegmpos(all_pos, GenSpaceRot, GenTimeRev, gensegm_to_body, gensegm_to_iint, BodyLoop, nint_min)
+    segmpos_noopt = NBS.all_pos_to_segmpos_noopt(all_pos)
     
-    all_body_pos = Compute_all_body_pos(all_pos, BodyGraph, loopgen, BodyLoop)
+    segmpos_cy = NBS.params_to_segmpos(params_buf)
     
-    
-    assert np.linalg.norm(allsegmpos - segmpos_cy) < eps
-    
-    for isegm in range(nsegm):
+    assert np.linalg.norm(segmpos_noopt - segmpos_cy) < 1e-14
+  
 
-        ib = intersegm_to_body[isegm]
-        iint = intersegm_to_iint[isegm]
-        il = BodyLoop[ib]
+#         
+#     AssertAllSegmGenConstraintsAreRespected(gensegm_to_all, nint_min, bodysegm, loopgen, gensegm_to_body, gensegm_to_iint , BodyLoop, all_pos)
+#     AssertAllBodyConstraintAreRespected(LoopGenConstraints, all_pos)
+# 
+# 
+#     allsegmpos = Populate_allsegmpos(all_pos, GenSpaceRot, GenTimeRev, gensegm_to_body, gensegm_to_iint, BodyLoop, nint_min)
+#     
+#     all_body_pos = Compute_all_body_pos(all_pos, BodyGraph, loopgen, BodyLoop)
+#     
+#     
+#     assert np.linalg.norm(allsegmpos - segmpos_cy) < eps
+#     
+#     for isegm in range(nsegm):
+# 
+#         ib = intersegm_to_body[isegm]
+#         iint = intersegm_to_iint[isegm]
+#         il = BodyLoop[ib]
+# 
+#         ibeg = iint * segm_size
+#         iend = ibeg + segm_size
+#         assert iend <= nint
+#         assert np.linalg.norm(allsegmpos[isegm,:,:] - all_body_pos[ib,ibeg:iend,:]) < eps
+#         
+# 
+# 
+#     for il in range(nloop):    
+#         
+#         ib = loopgen[il]
+#         nseg_in_loop = np.count_nonzero(gensegm_to_body == ib)
+#         
+#         nint_loop_min = nseg_in_loop * segm_size
+#         
+#         npr = (ncoeffs-1) //  ncoeff_min_loop[il]
+#         n_inter = npr+1
+#         
+#         # params_basis_reorganized = np.empty((geodim, nnz_k.shape[0], last_nparam), dtype=np.complex128) 
+# 
+#         
+#         # assert nint_loop_min <= 2*n_inter
+#         
+#         # 
+#         # print()
+#         # print(il, nint_loop_min, n_inter)
+#         # print(params_basis_reorganized_list[il].shape)
+#         # print(params_basis_reorganized_list[il])
+#         
+#         
+    nparam_nosym = geodim * NBS.nint * nbody
+    nparam_tot = NBS.nparams
 
-        ibeg = iint * segm_size
-        iend = ibeg + segm_size
-        assert iend <= nint
-        assert np.linalg.norm(allsegmpos[isegm,:,:] - all_body_pos[ib,ibeg:iend,:]) < eps
-        
-
-
-    for il in range(nloop):    
-        
-        ib = loopgen[il]
-        nseg_in_loop = np.count_nonzero(gensegm_to_body == ib)
-        
-        nint_loop_min = nseg_in_loop * segm_size
-        
-        npr = (ncoeffs-1) //  ncoeff_min_loop[il]
-        n_inter = npr+1
-        
-        # params_basis_reorganized = np.empty((geodim, nnz_k.shape[0], last_nparam), dtype=np.complex128) 
-
-        
-        # assert nint_loop_min <= 2*n_inter
-        
-        # 
-        # print()
-        # print(il, nint_loop_min, n_inter)
-        # print(params_basis_reorganized_list[il].shape)
-        # print(params_basis_reorganized_list[il])
-        
-        
-    nparam_nosym = geodim * nint * nbody
-    nparam_tot = params_shifts[-1]
-
+    # All_Id, count_tot, count_unique = CountSegmentBinaryInteractions(NBS.BinarySegm, NBS.nsegm)
     
     print('*****************************************')
     print('')
-    print(f'{Identity_detected = }')
-    print(f'All binary transforms are identity: {All_Id}')
+    # print(f'{Identity_detected = }')
+    # print(f'All binary transforms are identity: {All_Id}')
     
     # assert All_Id
+    
+    # ninter_tot = NBS.nint_min * nbody * (nbody-1)//2
+    # ninter_unique = NBS.nsegm * (NBS.nsegm-1)//2
 
-    print()
-    print(f"total binary interaction count: {count_tot}")
-    print(f"total expected binary interaction count: {nint_min * nbody * (nbody-1)//2}")
-    print(f"unique binary interaction count: {count_unique}")
-    print(f'{nsegm = }')
+    # print()
+    # print(f"total binary interaction count: {ninter_tot}")
+    # print(f"unique binary interaction count: {ninter_unique}")
+    print(f'{NBS.nsegm = }')
 
 
-    print()
-    print(f"ratio of total to unique binary interactions : {count_tot / count_unique}")
-    print(f'ratio of integration intervals to segments : {(nbody * nint_min) / nsegm}')
+    # print(f"ratio of total to unique binary interactions : {ninter_tot  / ninter_unique}")
+    print(f'ratio of integration intervals to segments : {(nbody * NBS.nint_min) / NBS.nsegm}')
     print(f"ratio of parameters before and after constraints: {nparam_nosym / nparam_tot}")
 
     reduction_ratio = nparam_nosym / nparam_tot
 
-    assert abs((nparam_nosym / nparam_tot)  - reduction_ratio) < eps
-    
-    if All_Id:
-        assert abs((count_tot / count_unique)  - reduction_ratio) < eps
-        assert abs(((nbody * nint_min) / nsegm) - reduction_ratio) < eps
-
+#     assert abs((nparam_nosym / nparam_tot)  - reduction_ratio) < eps
+#     
+#     if All_Id:
+#         assert abs((count_tot / count_unique)  - reduction_ratio) < eps
+#         assert abs(((nbody * nint_min) / nsegm) - reduction_ratio) < eps
+# 
 
 
 
@@ -331,7 +150,7 @@ def setup_changevar_new(geodim, nbody, nint_init, bodymass, n_reconverge_it_max=
     symname = os.path.split(dirname)[1]
     filename = os.path.join(dirname, f'{symname}_graph_segm.pdf')
 
-    PlotTimeBodyGraph(SegmGraph, nbody, nint_min, filename)
+    PlotTimeBodyGraph(NBS.SegmGraph, nbody, NBS.nint_min, filename)
 
 
 
