@@ -933,7 +933,7 @@ def ChoreoFindFromDict(params_dict, Workspace_folder):
 
     Find_Choreo(**all_kwargs)
         
-def ChoreoLoadFromDict(params_dict, Workspace_folder, callback=None):
+def ChoreoLoadFromDict(params_dict, Workspace_folder, callback=None, args_list=None):
 
     def load_target_files(filename, Workspace_folder, target_speed):
 
@@ -1020,15 +1020,18 @@ def ChoreoLoadFromDict(params_dict, Workspace_folder, callback=None):
         
         nbody = len(mass)
 
-
-
     nbody = params_dict["Geom_Bodies"]["nbody"]
     MomConsImposed = params_dict['Geom_Bodies'] ['MomConsImposed']
     nsyms = params_dict["Geom_Bodies"]["nsyms"]
 
-    # TODO: change this
-    nloop = nbody
-    mass = np.ones(nloop)
+    nloop = params_dict["Geom_Bodies"]["nloop"]
+    mass = np.zeros(nbody)
+
+    for il in range(nloop):
+        for ilb in range(len(params_dict["Geom_Bodies"]["Targets"][il])):
+            
+            ib = params_dict["Geom_Bodies"]["Targets"][il][ilb]
+            mass[ib] = params_dict["Geom_Bodies"]["mass"][il]
 
     Sym_list = []
     
@@ -1226,7 +1229,11 @@ def ChoreoLoadFromDict(params_dict, Workspace_folder, callback=None):
     AddNumberToOutputName = True
     
     if callback is None:
-        return dict(**locals())
+        if args_list is None:
+            return dict(**locals())
+        else:
+            loc = locals()
+            return {key:loc[key] for key in args_list}
     else:
         return Pick_Named_Args_From_Dict(callback, dict(**locals()))
 
