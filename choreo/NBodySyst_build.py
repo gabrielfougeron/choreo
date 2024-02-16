@@ -725,18 +725,18 @@ def CountSegmentBinaryInteractions(BinarySegm, nsegm):
     
     All_Id = True
 
-    count_tot = 0
-    count_unique = 0
+    nbin_segm_tot = 0
+    nbin_segm_unique = 0
     for isegm in range(nsegm):
         for isegmp in range(isegm,nsegm):
-            count_tot += sum(BinarySegm[(isegm, isegmp)]["SymCount"])
-            count_unique += len(BinarySegm[(isegm, isegmp)]["SymCount"])
+            nbin_segm_tot += sum(BinarySegm[(isegm, isegmp)]["SymCount"])
+            nbin_segm_unique += len(BinarySegm[(isegm, isegmp)]["SymCount"])
 
             for Sym in BinarySegm[(isegm, isegmp)]["SymList"]:
 
                 All_Id = All_Id and Sym.IsIdentityRotAndTimeRev()    
     
-    return All_Id, count_tot, count_unique
+    return All_Id, nbin_segm_tot, nbin_segm_unique
 
 def AssertAllBodyConstraintAreRespected(LoopGenConstraints, all_pos, eps=1e-12):
     # Make sure loop constraints are respected
@@ -945,3 +945,70 @@ def AccumulateSegmGenToTargetSym(
             
     return segm_gen_to_target                       
 
+
+def FindAllBinarySegments(segm_gen_to_target, nbody, nsegm, nint_min, bodysegm, CrashOnIdentity, bodymass):
+
+    Identity_detected = False
+
+    BinarySegm = {}
+
+    for isegm in range(nsegm):
+        for isegmp in range(isegm,nsegm):
+            BinarySegm[(isegm, isegmp)] = {
+                "SymList" : []      ,
+                "SymCount" : []     ,
+                "ProdMassSum" : []  ,
+            }
+
+    for iint in range(nint_min):
+
+        for ib in range(nbody-1):
+            
+            segm = (ib, iint)
+            isegm = bodysegm[*segm]
+
+            for ibp in range(ib+1,nbody):
+                
+                segmp = (ibp, iint)
+                isegmp = bodysegm[*segmp] 
+
+                if (isegm <= isegmp):
+
+                    bisegm = (isegm, isegmp)
+                    Sym = (segm_gen_to_target[ibp][iint]).Compose(segm_gen_to_target[ib][iint].Inverse())
+
+                else:
+
+                    bisegm = (isegmp, isegm)
+                    Sym = (segm_gen_to_target[ib][iint]).Compose(segm_gen_to_target[ibp][iint].Inverse())
+
+                if ((isegm == isegmp) and Sym.IsIdentityRotAndTimeRev()):
+
+                    if CrashOnIdentity:
+                        raise ValueError("Two bodies have identical trajectories")
+                    else:
+                        if not(Identity_detected):
+                            print("Two bodies have identical trajectories")
+                        
+                    Identity_detected = True
+
+                isym = 0 # In case BinarySegm[bisegm]["SymList"] is empty
+                for isym, FoundSym in enumerate(BinarySegm[bisegm]["SymList"]):
+                    
+                    if Sym.IsSameRotAndTimeRev(FoundSym):
+                        break
+
+                    if (isegm == isegmp):
+                        SymInv = Sym.Inverse()
+                        if SymInv.IsSameRotAndTimeRev(FoundSym):
+                            break
+                        
+                else:
+                    BinarySegm[bisegm]["SymList"].append(Sym)
+                    BinarySegm[bisegm]["SymCount"].append(0)
+                    BinarySegm[bisegm]["ProdMassSum"].append(0.)
+
+                BinarySegm[bisegm]["SymCount"][isym] += 1
+                BinarySegm[bisegm]["ProdMassSum"][isym] += bodymass[ib]*bodymass[ibp]
+
+    return BinarySegm, Identity_detected

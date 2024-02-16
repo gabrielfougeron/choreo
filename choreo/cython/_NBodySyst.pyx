@@ -33,6 +33,10 @@ cdef class NBodySyst():
     cdef readonly long nloop
     cdef readonly long nsegm
     cdef readonly long nnpr
+    cdef readonly long nbin_segm_tot
+    cdef readonly long nbin_segm_unique
+
+    cdef readonly bint All_BinSegmTransformId
 
     cdef long[::1] _loopnb
     @property
@@ -206,7 +210,7 @@ cdef class NBodySyst():
         intersegm_to_all = AccumulateSegmGenToTargetSym(self.SegmGraph, nbody, geodim, self.nint_min, self.nsegm, self._bodysegm, self._intersegm_to_iint, self._intersegm_to_body)
 
         BinarySegm, Identity_detected = FindAllBinarySegments(intersegm_to_all, nbody, self.nsegm, self.nint_min, self._bodysegm, False, bodymass)
-        All_Id, count_tot, count_unique = CountSegmentBinaryInteractions(BinarySegm, self.nsegm)
+        self.All_BinSegmTransformId, self.nbin_segm_tot, self.nbin_segm_unique = CountSegmentBinaryInteractions(BinarySegm, self.nsegm)
 
         # This could certainly be made more efficient
         BodyConstraints = AccumulateBodyConstraints(Sym_list, nbody, geodim)

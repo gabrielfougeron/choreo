@@ -95,12 +95,9 @@ def test_matmul(float64_tols, Dense_linalg_dims):
                 np.matmul(A,B,out=AB_np)     
                     
                 AB_blas = np.zeros((n,m),dtype=np.float64)
-                choreo.cython.test_blis.blas_matmul_contiguous(A,B,AB_blas)
+                choreo.cython.test_blas.blas_matmul_contiguous(A,B,AB_blas)
                 assert np.allclose(AB_np, AB_blas, rtol = float64_tols.rtol, atol = float64_tols.atol)     
                                 
-                AB_blis = np.zeros((n,m),dtype=np.float64)
-                choreo.cython.test_blis.blis_matmul_contiguous(A,B,AB_blis)
-                assert np.allclose(AB_np, AB_blis, rtol = float64_tols.rtol, atol = float64_tols.atol) 
             
             
 @ProbabilisticTest()
@@ -121,7 +118,7 @@ def test_matmulTT(float64_tols, Dense_linalg_dims):
                 np.matmul(B.T,A.T,out=BTAT_np)     
                     
                 BTAT_blas = np.zeros((m,n),dtype=np.float64)
-                choreo.cython.test_blis.blas_matmulTT_contiguous(B,A,BTAT_blas)
+                choreo.cython.test_blas.blas_matmulTT_contiguous(B,A,BTAT_blas)
                 assert np.allclose(BTAT_np, BTAT_blas, rtol = float64_tols.rtol, atol = float64_tols.atol)     
                                             
 @ProbabilisticTest()
@@ -142,7 +139,7 @@ def test_matmulNT(float64_tols, Dense_linalg_dims):
                 np.matmul(A,B.T,out=ABT_np)     
 
                 ABT_blas = np.zeros((m,n),dtype=np.float64)
-                choreo.cython.test_blis.blas_matmulNT_contiguous(A,B,ABT_blas)
+                choreo.cython.test_blas.blas_matmulNT_contiguous(A,B,ABT_blas)
                 
                 assert np.allclose(ABT_np, ABT_blas, rtol = float64_tols.rtol, atol = float64_tols.atol)     
                                 
@@ -165,17 +162,13 @@ def test_matmul_realpart(float64_tols, Dense_linalg_dims):
                 
                 AB_np = np.zeros((n,m),dtype=np.complex128)
                 np.matmul(A,B,out=AB_np)     
-                    
-                AB_blis = np.zeros((n,m),dtype=np.float64)
-                choreo.cython.test_blis.blis_matmul_real(A,B,AB_blis)
-                assert np.allclose(AB_np.real, AB_blis, rtol = float64_tols.rtol, atol = float64_tols.atol)     
                                 
                 AB_blas = np.zeros((n,m),dtype=np.float64)
-                choreo.cython.test_blis.blas_matmul_real(A,B,AB_blas)
+                choreo.cython.test_blas.blas_matmul_real(A,B,AB_blas)
                 assert np.allclose(AB_np.real, AB_blas, rtol = float64_tols.rtol, atol = float64_tols.atol) 
                                             
                 AB_blas = np.zeros((n,m),dtype=np.float64)
-                choreo.cython.test_blis.blas_matmul_real_copy(A,B,AB_blas)
+                choreo.cython.test_blas.blas_matmul_real_copy(A,B,AB_blas)
                 assert np.allclose(AB_np.real, AB_blas, rtol = float64_tols.rtol, atol = float64_tols.atol) 
             
             
