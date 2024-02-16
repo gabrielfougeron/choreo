@@ -128,6 +128,11 @@ cdef class NBodySyst():
         return np.asarray(self._nnz_k_buf[self._nnz_k_shifts[il]:self._nnz_k_shifts[il+1]]).reshape(self._nnz_k_shapes[il])
 
     cdef long[::1] _ncoeff_min_loop
+    @property
+    def ncoeff_min_loop(self):
+        return np.asarray(self._ncoeff_min_loop)
+
+    cdef bint[::1] _BodyHasContiguousGeneratingSegments
 
     cdef readonly object BodyGraph
     cdef readonly object SegmGraph
@@ -156,7 +161,7 @@ cdef class NBodySyst():
     cdef long[:,::1] _pos_slice_shapes
     cdef long[::1] _pos_slice_shifts
 
-    cdef bint[::1] _BodyHasContiguousGeneratingSegments
+
 
 
     def __init__(
@@ -438,13 +443,10 @@ cdef class NBodySyst():
             self.nnpr = 1
             
 
-
     @nint_fac.setter
     def nint_fac(self, long nint_fac_in):
-
         self.nint = 2 * self.nint_min * nint_fac_in
     
-
     @nint.setter
     @cython.cdivision(True)
     def nint(self, long nint_in):
@@ -452,7 +454,8 @@ cdef class NBodySyst():
         if (nint_in % (2 * self.nint_min)) != 0:
             raise ValueError(f"Provided nint {nint_in} should be divisible by {2 * self.nint_min}")
 
-        self._nint = 2 * self.nint_min * 4
+        self._nint = nint_in
+        self._nint_fac = nint_in // (2 * self.nint_min)
         self.ncoeffs = self._nint // 2 + 1
         self.segm_size = self._nint // self.nint_min
 
