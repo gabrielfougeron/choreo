@@ -11,8 +11,6 @@ import numpy as np
 import scipy
 import choreo
 
-
-
 @ProbabilisticTest()
 def test_random_orthogonal_matrix(float64_tols, Dense_linalg_dims):
 
@@ -78,7 +76,7 @@ def test_nullspace(float64_tols, Dense_linalg_dims):
 
 
 @ProbabilisticTest()
-def test_matmul(float64_tols, Dense_linalg_dims):
+def test_matmul(float64_tols: float_tol, Dense_linalg_dims: dimension):
     
     print("Testing matrix multiplication")
 
@@ -101,7 +99,7 @@ def test_matmul(float64_tols, Dense_linalg_dims):
             
             
 @ProbabilisticTest()
-def test_matmulTT(float64_tols, Dense_linalg_dims):
+def test_matmulTT(float64_tols: float_tol, Dense_linalg_dims: dimension):
     
     print("Testing matrix multiplication")
 
@@ -122,7 +120,7 @@ def test_matmulTT(float64_tols, Dense_linalg_dims):
                 assert np.allclose(BTAT_np, BTAT_blas, rtol = float64_tols.rtol, atol = float64_tols.atol)     
                                             
 @ProbabilisticTest()
-def test_matmulNT(float64_tols, Dense_linalg_dims):
+def test_matmulNT(float64_tols: float_tol, Dense_linalg_dims: dimension):
     
     print("Testing matrix multiplication")
 
@@ -147,7 +145,7 @@ def test_matmulNT(float64_tols, Dense_linalg_dims):
 
 
 @ProbabilisticTest()
-def test_matmul_realpart(float64_tols, Dense_linalg_dims):
+def test_matmul_realpart(float64_tols: float_tol, Dense_linalg_dims: dimension):
     
     print("Testing matrix multiplication")
 

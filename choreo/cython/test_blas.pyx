@@ -7,7 +7,7 @@ from libc.math cimport fabs as cfabs
 cimport scipy.linalg.cython_blas
 from libc.stdlib cimport abort, malloc, free
 
-cimport pyfftw
+# cimport pyfftw
 
 from choreo.scipy_plus.cython.blas_consts cimport *
 
