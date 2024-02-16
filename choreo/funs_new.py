@@ -111,36 +111,30 @@ def setup_changevar_new(geodim, nbody, nint_init, bodymass, n_reconverge_it_max=
     nparam_nosym = geodim * NBS.nint * nbody
     nparam_tot = NBS.nparams
 
-    # All_Id, count_tot, count_unique = CountSegmentBinaryInteractions(NBS.BinarySegm, NBS.nsegm)
-    
     print('*****************************************')
     print('')
     # print(f'{Identity_detected = }')
-    # print(f'All binary transforms are identity: {All_Id}')
+    print(f'All binary transforms are identity: {NBS.All_BinSegmTransformId}')
     
-    # assert All_Id
     
-    # ninter_tot = NBS.nint_min * nbody * (nbody-1)//2
-    # ninter_unique = NBS.nsegm * (NBS.nsegm-1)//2
-
-    # print()
-    # print(f"total binary interaction count: {ninter_tot}")
-    # print(f"unique binary interaction count: {ninter_unique}")
+    print()
+    print(f"total binary segment interaction count: {NBS.nbin_segm_tot}")
+    print(f"unique binary segment interaction count: {NBS.nbin_segm_unique}")
     print(f'{NBS.nsegm = }')
 
 
-    # print(f"ratio of total to unique binary interactions : {ninter_tot  / ninter_unique}")
+    print(f"ratio of total to unique binary interactions : {NBS.nbin_segm_tot  / NBS.nbin_segm_unique}")
     print(f'ratio of integration intervals to segments : {(nbody * NBS.nint_min) / NBS.nsegm}')
     print(f"ratio of parameters before and after constraints: {nparam_nosym / nparam_tot}")
 
     reduction_ratio = nparam_nosym / nparam_tot
 
-#     assert abs((nparam_nosym / nparam_tot)  - reduction_ratio) < eps
-#     
-#     if All_Id:
-#         assert abs((count_tot / count_unique)  - reduction_ratio) < eps
-#         assert abs(((nbody * nint_min) / nsegm) - reduction_ratio) < eps
-# 
+    assert abs((nparam_nosym / nparam_tot)  - reduction_ratio) < 1e-14
+    
+    if NBS.All_BinSegmTransformId:
+        assert abs(NBS.nbin_segm_tot  / NBS.nbin_segm_unique  - reduction_ratio) < 1e-14
+        assert abs((nbody * NBS.nint_min) / NBS.nsegm - reduction_ratio) < 1e-14
+
 
 
 
