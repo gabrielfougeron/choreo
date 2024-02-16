@@ -1,3 +1,9 @@
+import os
+import sys
+
+__PROJECT_ROOT__ = os.path.abspath(os.path.join(os.path.dirname(__file__),os.pardir))
+sys.path.append(__PROJECT_ROOT__)
+
 import attrs
 import pytest
 import inspect
@@ -5,6 +11,8 @@ import typing
 import warnings
 import functools
 import numpy as np
+import json
+import choreo
 
 @attrs.define
 class float_tol:
@@ -208,7 +216,7 @@ def RepeatTest(n = 10):
     return decorator
 
 @pytest.fixture
-def AllTestSyms():
+def AllConfigNames():
     return [
         '3q'        , '3q3q'    , '3q3qD'   , '2q2q'    , '4q4q'    , '4q4qD'   ,
         '4q4qD3k'   , '1q2q'    , '5q5q'    , '6q6q'    , '2C3C'    , '2D3D'    ,
