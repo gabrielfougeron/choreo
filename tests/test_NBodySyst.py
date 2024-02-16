@@ -40,3 +40,25 @@ def test_create_NBodySyst(AllConfigNames):
         print(f"Config name : {config_name}")
         
         NBS = load_from_config_file(config_name)
+
+
+def test_all_pos_to_segmpos(AllConfigNames, float64_tols):
+    
+    for config_name in AllConfigNames:
+        
+        print(f"Config name : {config_name}")
+        
+        NBS = load_from_config_file(config_name)
+        
+        NBS.nint_fac = 10
+        params_buf = np.random.random((NBS.nparams))
+
+        # Unoptimized version
+        all_coeffs = NBS.params_to_all_coeffs_noopt(params_buf)        
+        all_pos = scipy.fft.irfft(all_coeffs, axis=1)
+        segmpos_noopt = NBS.all_pos_to_segmpos_noopt(all_pos)
+        
+        # Optimized version
+        segmpos_cy = NBS.params_to_segmpos(params_buf)
+        
+        assert np.allclose(segmpos_noopt, segmpos_cy, rtol = float64_tols.rtol, atol = float64_tols.atol) 

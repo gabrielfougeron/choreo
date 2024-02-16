@@ -14,28 +14,41 @@ import pyquickbench
 import json
 import numpy as np
 import matplotlib.pyplot as plt
-# import mkl_fft
-# import scipy
-# scipy.fft.set_global_backend(
-#     backend = mkl_fft._scipy_fft_backend   ,
-#     only = True
-# )
+import mkl_fft
+import scipy
+scipy.fft.set_global_backend(
+    backend = mkl_fft._scipy_fft_backend   ,
+    only = True
+)
 
 
 if ("--no-show" in sys.argv):
     plt.show = (lambda : None)
 
 
-def params_to_segmpos_unsafe(NBS, params_buf):
+def params_to_segmpos_noopt(NBS, params_buf):
+    
+    all_coeffs = NBS.params_to_all_coeffs_noopt(params_buf)        
+    all_pos = scipy.fft.irfft(all_coeffs, axis=1)
+    segmpos_noopt = NBS.all_pos_to_segmpos_noopt(all_pos)
+    
+    
+def params_to_segmpos_opt(NBS, params_buf):
     NBS.params_to_segmpos(params_buf, overwrite_x=True)
     
-def params_to_segmpos_safe(NBS, params_buf):
-    NBS.params_to_segmpos(params_buf, overwrite_x=False)
+def params_to_segmpos_opt_domul(NBS, params_buf):
+    
+    for isegm in range(NBS.nsegm):
+        NBS._GenSpaceRotIsId[isegm] = False
+    
+    NBS.params_to_segmpos(params_buf, overwrite_x=True)
+    
 
 
 all_funs = [
-    params_to_segmpos_unsafe    ,
-    params_to_segmpos_safe      ,
+    # params_to_segmpos_noopt     ,
+    params_to_segmpos_opt       ,
+    params_to_segmpos_opt_domul ,
 ]
 
 def setup(test_name, nint_fac):
@@ -75,7 +88,7 @@ all_tests = [
     # '1q2q',
     # '5q5q',
     # '6q6q',
-    '2C3C',
+    # '2C3C',
     # '2D3D',   
     # '2C3C5k',
     # '2D3D5k',
@@ -84,11 +97,11 @@ all_tests = [
     # '4D3k',
     # '4C',
     # '4D',
-    '3C',
-    '3D',
+    # '3C',
+    # '3D',
     # '3D1',
-    # '3C2k',
-    # '3D2k',
+    '3C2k',
+    '3D2k',
     # '3C4k',
     # '3D4k',
     # '3C5k',
@@ -102,7 +115,7 @@ all_tests = [
     # '6Ck5',
     # '6Dk5',
     # '5Dq',
-    '2C3C5C',
+    # '2C3C5C',
     # '3C_3dim',
     # '2D1_3dim',
     # '3C',
@@ -116,10 +129,10 @@ all_tests = [
     # '3C101k',
 ]
 
-min_exp = 7
+min_exp = 3
 max_exp = 15
 
-n_repeat = 1000
+n_repeat = 100
 
 MonotonicAxes = ["nint_fac"]
 
@@ -143,20 +156,20 @@ all_timings = pyquickbench.run_benchmark(
     ShowProgress = True     ,
     n_repeat = n_repeat     ,
     MonotonicAxes = MonotonicAxes,
-    # ForceBenchmark = True,
+    ForceBenchmark = True,
 )
 
 plot_intent = {
     "test_name" : 'subplot_grid_y'                  ,
     "nint_fac" : 'points'                           ,
     pyquickbench.fun_ax_name :  'curve_color'       ,
-    pyquickbench.repeat_ax_name :  'reduction_median'  ,
+    pyquickbench.repeat_ax_name :  'reduction_min'  ,
     # pyquickbench.repeat_ax_name :  'same'  ,
 }
 
 relative_to_val_list = [
     None    ,
-    {pyquickbench.fun_ax_name :  'params_to_segmpos_unsafe'},
+    {pyquickbench.fun_ax_name : 'params_to_segmpos_opt'},
 ]
 
 for relative_to_val in relative_to_val_list:
