@@ -163,10 +163,6 @@ cdef class NBodySyst():
         list Sym_list       , 
     ):
 
-        TT = pyquickbench.TimeTrain(
-        include_locs = False    ,
-        align_toc_names = True  ,
-    )
 
         self._nint = -1 # Signals that things that scale with loop size are not set yet
 
@@ -187,7 +183,6 @@ cdef class NBodySyst():
         self.ChooseInterSegm()
         self.ChooseGenSegm()
 
-        TT.toc("ChooseGenSegm")
 
         # Setting up forward ODE:
         # - What are my parameters ?
@@ -198,13 +193,9 @@ cdef class NBodySyst():
         InstConstraintsPos = AccumulateInstConstraints(Sym_list, nbody, geodim, self.nint_min, VelSym=False)
         InstConstraintsVel = AccumulateInstConstraints(Sym_list, nbody, geodim, self.nint_min, VelSym=True )
 
-        TT.toc("Init_Values_1")
-
         self._InitValPosBasis = ComputeParamBasis_InitVal(nbody, geodim, InstConstraintsPos[0], bodymass, MomCons=True)
         self._InitValVelBasis = ComputeParamBasis_InitVal(nbody, geodim, InstConstraintsVel[0], bodymass, MomCons=True)
 
-
-        TT.toc("Init_Values_2")
 
         gensegm_to_all = AccumulateSegmGenToTargetSym(self.SegmGraph, nbody, geodim, self.nint_min, self.nsegm, self._bodysegm, self._gensegm_to_iint, self._gensegm_to_body)
 
@@ -214,9 +205,8 @@ cdef class NBodySyst():
 
         intersegm_to_all = AccumulateSegmGenToTargetSym(self.SegmGraph, nbody, geodim, self.nint_min, self.nsegm, self._bodysegm, self._intersegm_to_iint, self._intersegm_to_body)
 
-        TT.toc("AccumulateSegmGenToTargetSym")
-
-        # BinarySegm, Identity_detected = FindAllBinarySegments(intersegm_to_all, nbody, self.nsegm, self.nint_min, self._bodysegm, False, bodymass)
+        BinarySegm, Identity_detected = FindAllBinarySegments(intersegm_to_all, nbody, self.nsegm, self.nint_min, self._bodysegm, False, bodymass)
+        All_Id, count_tot, count_unique = CountSegmentBinaryInteractions(BinarySegm, self.nsegm)
 
         # This could certainly be made more efficient
         BodyConstraints = AccumulateBodyConstraints(Sym_list, nbody, geodim)
@@ -230,11 +220,10 @@ cdef class NBodySyst():
 
         self._ncoeff_min_loop = np.array([len(All_params_basis[il]) for il in range(self.nloop)], dtype=np.intp)
 
+
+
+
         self.Compute_nnpr()
-
-        TT.toc("END")
-
-        print(TT)
 
 
     def DetectLoops(self, Sym_list, nbody, bodymass, nint_min_fac = 1):
