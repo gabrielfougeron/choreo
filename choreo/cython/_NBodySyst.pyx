@@ -98,6 +98,7 @@ cdef class NBodySyst():
     def GenTimeRev(self):
         return np.asarray(self._GenTimeRev)
 
+    cdef bint[::1] _GenSpaceRotIsId
     cdef double[:,:,::1] _GenSpaceRot
     @property
     def GenSpaceRot(self):
@@ -410,9 +411,11 @@ cdef class NBodySyst():
         
         GenTimeRev = np.zeros((self.nsegm), dtype=np.intp)
         GenSpaceRot = np.zeros((self.nsegm, self.geodim, self.geodim), dtype=np.float64)
+        GenSpaceRotIsId = np.zeros((self.nsegm), dtype=np.intc)
 
         self._GenTimeRev = GenTimeRev
         self._GenSpaceRot = GenSpaceRot
+        self._GenSpaceRotIsId = GenSpaceRotIsId
 
         for isegm in range(self.nsegm):
 
@@ -423,6 +426,8 @@ cdef class NBodySyst():
             
             GenTimeRev[isegm] = Sym.TimeRev
             GenSpaceRot[isegm,:,:] = Sym.SpaceRot
+
+            self._GenSpaceRotIsId[isegm] = Sym.IsIdentityRot()
 
     def Compute_nnpr(self):
         
@@ -601,7 +606,7 @@ cdef class NBodySyst():
             self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
                                       self._pos_slice_shapes    , self._pos_slice_shifts    ,
             self._ncoeff_min_loop   , self.nnpr                 ,
-            self._GenSpaceRot       , self._GenTimeRev          ,
+            self._GenSpaceRotIsId   , self._GenSpaceRot         , self._GenTimeRev          ,
             self._gensegm_to_body   , self._gensegm_to_iint     ,
             self._bodyloop          , self.segm_size            ,
         )
@@ -854,6 +859,7 @@ cdef void ifft_to_pos_slice(
 cdef void pos_slice_to_segmpos(
     const double* pos_slice_buf_ptr , long[:,::1] pos_slice_shapes  , long[::1] pos_slice_shifts    ,
     const double* segmpos_buf_ptr   ,
+    bint[::1] GenSpaceRotIsId       ,
     double[:,:,::1] GenSpaceRot     ,
     long[::1] GenTimeRev            ,
     long[::1] gensegm_to_body       ,
@@ -877,7 +883,7 @@ cdef void pos_slice_to_segmpos(
     cdef bint NeedsAllocate = False
 
     for isegm in range(nsegm):
-        NeedsAllocate = (NeedsAllocate or (GenTimeRev[isegm] < 0))
+        NeedsAllocate = (NeedsAllocate or ((GenTimeRev[isegm] < 0) and not(GenSpaceRotIsId[isegm])))
 
     if NeedsAllocate:
         tmp_loc = <double*> malloc(sizeof(double)*nitems)
@@ -893,22 +899,35 @@ cdef void pos_slice_to_segmpos(
             pos_slice = pos_slice_buf_ptr + pos_slice_shifts[il] + nitems*iint
             segmpos = segmpos_buf_ptr + nitems*isegm
 
-            scipy.linalg.cython_blas.dgemm(transt, transn, &geodim, &segm_size_int, &geodim, &one_double, &GenSpaceRot[isegm,0,0], &geodim, pos_slice, &geodim, &zero_double, segmpos, &geodim)
+            if GenSpaceRotIsId[isegm]:
+                scipy.linalg.cython_blas.dcopy(&nitems,pos_slice,&int_one,segmpos,&int_one)
+            else:
+                scipy.linalg.cython_blas.dgemm(transt, transn, &geodim, &segm_size_int, &geodim, &one_double, &GenSpaceRot[isegm,0,0], &geodim, pos_slice, &geodim, &zero_double, segmpos, &geodim)
 
         else:
 
             pos_slice = pos_slice_buf_ptr + pos_slice_shifts[il] + nitems*iint + geodim
-            tmp = tmp_loc
-
-            scipy.linalg.cython_blas.dgemm(transt, transn, &geodim, &segm_size_int, &geodim, &one_double, &GenSpaceRot[isegm,0,0], &geodim, pos_slice, &geodim, &zero_double, tmp, &geodim)
-
             segmpos = segmpos_buf_ptr + nitems*(isegm+1) - geodim
 
-            for i in range(segm_size):
-                for idim in range(geodim):
-                    segmpos[idim] = tmp[idim]
-                segmpos -= geodim
-                tmp += geodim
+            if GenSpaceRotIsId[isegm]:
+
+                for i in range(segm_size):
+                    for idim in range(geodim):
+                        segmpos[idim] = pos_slice[idim]
+                    segmpos -= geodim
+                    pos_slice += geodim
+                            
+            else:
+                
+                tmp = tmp_loc
+                scipy.linalg.cython_blas.dgemm(transt, transn, &geodim, &segm_size_int, &geodim, &one_double, &GenSpaceRot[isegm,0,0], &geodim, pos_slice, &geodim, &zero_double, tmp, &geodim)
+
+                for i in range(segm_size):
+                    for idim in range(geodim):
+                        segmpos[idim] = tmp[idim]
+                    segmpos -= geodim
+                    tmp += geodim
+
 
     if NeedsAllocate:
         free(tmp_loc)
@@ -920,8 +939,8 @@ cdef double[:,:,::1] params_to_segmpos(
     double complex[::1] params_basis_buf    , long[:,::1] params_basis_shapes   , long[::1] params_basis_shifts ,
     long[::1] nnz_k_buf                     , long[:,::1] nnz_k_shapes          , long[::1] nnz_k_shifts        ,
                                               long[:,::1] pos_slice_shapes      , long[::1] pos_slice_shifts    ,
-    long[::1] ncoeff_min_loop, long nnpr    ,
-    double[:,:,::1] GenSpaceRot             , long[::1] GenTimeRev              ,
+    long[::1] ncoeff_min_loop               , long nnpr                         ,
+    bint[::1] GenSpaceRotIsId               , double[:,:,::1] GenSpaceRot       , long[::1] GenTimeRev          ,
     long[::1] gensegm_to_body       ,
     long[::1] gensegm_to_iint       ,
     long[::1] BodyLoop              ,
@@ -967,6 +986,7 @@ cdef double[:,:,::1] params_to_segmpos(
         pos_slice_to_segmpos(
             pos_slice_buf_ptr   , pos_slice_shapes  , pos_slice_shifts ,
             &segmpos[0,0,0] ,
+            GenSpaceRotIsId,
             GenSpaceRot     ,
             GenTimeRev      ,
             gensegm_to_body ,
