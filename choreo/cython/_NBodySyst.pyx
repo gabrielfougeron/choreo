@@ -8,6 +8,7 @@ from libc.complex cimport cexp
 
 cimport scipy.linalg.cython_blas
 from libc.stdlib cimport malloc, free
+from libc.string cimport memset
 
 from choreo.scipy_plus.cython.blas_consts cimport *
 
@@ -971,7 +972,7 @@ cdef double[:,:,::1] params_to_segmpos(
 
         size = pos_slice_shifts[pos_slice_shapes.shape[0]]
         pos_slice_buf_ptr = <double *> malloc(sizeof(double)*size)
-        scipy.linalg.cython_blas.dscal(&size,&zero_double,pos_slice_buf_ptr,&int_one)
+        memset(pos_slice_buf_ptr, 0, sizeof(double)*size)
 
         ifft_to_pos_slice(
             ifft_buf_ptr        , ifft_shapes           , ifft_shifts           ,
