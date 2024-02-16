@@ -12,6 +12,7 @@ sys.path.append(__PROJECT_ROOT__)
 import choreo 
 import pyquickbench
 import json
+import numpy as np
 import matplotlib.pyplot as plt
 # import mkl_fft
 # import scipy
@@ -24,31 +25,42 @@ import matplotlib.pyplot as plt
 if ("--no-show" in sys.argv):
     plt.show = (lambda : None)
 
-all_funs = {
-    # 'all_pos_full'  : choreo.funs_new.params_to_all_pos,
-    # 'all_pos_full_mod'  : choreo.funs_new.params_to_all_pos_mod,    
-    
-    
-    'all_pos_slice' : choreo.funs_new.params_to_all_pos_slice,
-    'all_pos_slice_nocopy' : choreo.funs_new.params_to_all_pos_slice_nocopy,
 
-}
+def params_to_segmpos_unsafe(NBS, params_buf):
+    NBS.params_to_segmpos(params_buf, overwrite_x=True)
+    
+def params_to_segmpos_safe(NBS, params_buf):
+    NBS.params_to_segmpos(params_buf, overwrite_x=False)
+
+
+all_funs = [
+    params_to_segmpos_unsafe    ,
+    params_to_segmpos_safe      ,
+]
 
 def setup(test_name, nint_fac):
     
-    Workspace_folder = os.path.join(__PROJECT_ROOT__, 'NewSym_data', 'tests')
-    params_filename = os.path.join(__PROJECT_ROOT__, 'NewSym_data', test_name, "choreo_config.json")
+
+    Workspace_folder = os.path.join(__PROJECT_ROOT__, 'tests', 'NewSym_data', test_name)
+    params_filename = os.path.join(Workspace_folder, 'choreo_config.json')
     
     with open(params_filename) as jsonFile:
         params_dict = json.load(jsonFile)
+
+    all_kwargs = choreo.find.ChoreoLoadFromDict(params_dict, Workspace_folder, args_list=["geodim", "nbody", "mass", "Sym_list"])
+    
+    geodim = all_kwargs["geodim"]
+    nbody = all_kwargs["nbody"]
+    mass = all_kwargs["mass"]
+    Sym_list = all_kwargs["Sym_list"]
+    
+    NBS = choreo.cython._NBodySyst.NBodySyst(geodim, nbody, mass, Sym_list)
+    NBS.nint_fac = nint_fac
+    
         
-    all_kwargs_speed = choreo.find.ChoreoLoadFromDict(params_dict, Workspace_folder, callback=choreo.funs_new.Prepare_data_for_speed_comparison)
+    params_buf = np.random.random((NBS.nparams))
     
-    all_kwargs_speed['nint_fac'] = nint_fac
-    
-    all_kwargs = choreo.funs_new.Prepare_data_for_speed_comparison(**all_kwargs_speed)
-    
-    return all_kwargs
+    return {"NBS":NBS, "params_buf":params_buf}
         
 
         
@@ -105,9 +117,9 @@ all_tests = [
 ]
 
 min_exp = 7
-max_exp = 20
+max_exp = 15
 
-n_repeat = 10
+n_repeat = 1000
 
 MonotonicAxes = ["nint_fac"]
 
@@ -125,25 +137,26 @@ filename = os.path.join(timings_folder,basename+'.npz')
 all_timings = pyquickbench.run_benchmark(
     all_args                ,
     all_funs                ,
-    setup = setup       ,
+    setup = setup           ,
     filename = filename     ,
     StopOnExcept = True     ,
     ShowProgress = True     ,
     n_repeat = n_repeat     ,
     MonotonicAxes = MonotonicAxes,
-    ForceBenchmark = True
+    # ForceBenchmark = True,
 )
 
 plot_intent = {
     "test_name" : 'subplot_grid_y'                  ,
     "nint_fac" : 'points'                           ,
     pyquickbench.fun_ax_name :  'curve_color'       ,
-    pyquickbench.repeat_ax_name :  'reduction_min'  ,
+    pyquickbench.repeat_ax_name :  'reduction_median'  ,
+    # pyquickbench.repeat_ax_name :  'same'  ,
 }
 
 relative_to_val_list = [
     None    ,
-    {pyquickbench.fun_ax_name :  'all_pos_slice'},
+    {pyquickbench.fun_ax_name :  'params_to_segmpos_unsafe'},
 ]
 
 for relative_to_val in relative_to_val_list:
@@ -155,5 +168,6 @@ for relative_to_val in relative_to_val_list:
         plot_intent = plot_intent               ,
         show = True                             ,
         relative_to_val = relative_to_val       ,
+            # alpha = 1./255                  ,
     )
 
