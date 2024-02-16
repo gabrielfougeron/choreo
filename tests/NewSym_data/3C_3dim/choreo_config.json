@@ -14,14 +14,25 @@
           0
         ],
         "SpaceRot": [
-          [1, 0, 0],
-          [0, 1, 0],
-          [0, 0, 1]
+          [1,0,0],
+          [0,1,0],
+          [0,0,1]
         ],
         "TimeRev": "False",
         "TimeShiftNum": 1,
         "TimeShiftDen": 3
       }
+    ],
+    "nloop": 1,
+    "Targets": [
+      [
+        0,
+        1,
+        2
+      ]
+    ],
+    "mass": [
+      1
     ]
   },
   "Geom_Target": {
@@ -46,7 +57,7 @@
       "#a253c4",
       "#ef1010",
       "#25b5bc",
-      "#e86a96",
+      "#E86A96",
       "#edc832",
       "#ad6530",
       "#00773f",
@@ -77,7 +88,7 @@
   },
   "Solver_Optim": {
     "n_opt": 100,
-    "krylov_method": "bicgstab",
+    "krylov_method": "gmres",
     "line_search": "wolfe",
     "line_search_smin": 0.1,
     "Newt_err_norm_safe": 1e-8,
