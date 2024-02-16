@@ -9,9 +9,8 @@ from libc.complex cimport cexp
 
 cimport scipy.linalg.cython_blas
 
-
 import choreo.scipy_plus.linalg
-
+import networkx
 
 @cython.cdivision(True)
 cdef inline long gcd (long a, long b) noexcept nogil:
@@ -376,7 +375,6 @@ cdef class ActionSym():
         np.matmul(in_segm, self._SpaceRot.T,out=out)
         if self.TimeRev == -1:
             out[:,:] = out[::-1,:]
-
 
 
 

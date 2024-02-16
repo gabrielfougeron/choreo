@@ -12,9 +12,14 @@ from libc.stdlib cimport malloc, free
 from choreo.scipy_plus.cython.blas_consts cimport *
 
 import choreo.scipy_plus.linalg
+
 from choreo.NBodySyst_build import *
 
 import scipy
+import pyquickbench
+
+
+
 
 @cython.final
 cdef class NBodySyst():
@@ -150,7 +155,6 @@ cdef class NBodySyst():
     cdef bint[::1] _BodyHasContiguousGeneratingSegments
 
 
-
     def __init__(
         self                ,
         long geodim         ,
@@ -158,6 +162,11 @@ cdef class NBodySyst():
         double[::1] bodymass,
         list Sym_list       , 
     ):
+
+        TT = pyquickbench.TimeTrain(
+        include_locs = False    ,
+        align_toc_names = True  ,
+    )
 
         self._nint = -1 # Signals that things that scale with loop size are not set yet
 
@@ -178,6 +187,7 @@ cdef class NBodySyst():
         self.ChooseInterSegm()
         self.ChooseGenSegm()
 
+        TT.toc("ChooseGenSegm")
 
         # Setting up forward ODE:
         # - What are my parameters ?
@@ -188,9 +198,13 @@ cdef class NBodySyst():
         InstConstraintsPos = AccumulateInstConstraints(Sym_list, nbody, geodim, self.nint_min, VelSym=False)
         InstConstraintsVel = AccumulateInstConstraints(Sym_list, nbody, geodim, self.nint_min, VelSym=True )
 
+        TT.toc("Init_Values_1")
+
         self._InitValPosBasis = ComputeParamBasis_InitVal(nbody, geodim, InstConstraintsPos[0], bodymass, MomCons=True)
         self._InitValVelBasis = ComputeParamBasis_InitVal(nbody, geodim, InstConstraintsVel[0], bodymass, MomCons=True)
 
+
+        TT.toc("Init_Values_2")
 
         gensegm_to_all = AccumulateSegmGenToTargetSym(self.SegmGraph, nbody, geodim, self.nint_min, self.nsegm, self._bodysegm, self._gensegm_to_iint, self._gensegm_to_body)
 
@@ -199,6 +213,8 @@ cdef class NBodySyst():
         # GenToIntSyms = Generating_to_interacting(self.SegmGraph, nbody, geodim, self.nsegm, self._intersegm_to_iint, self._intersegm_to_body, self._gensegm_to_iint, self._gensegm_to_body)
 
         intersegm_to_all = AccumulateSegmGenToTargetSym(self.SegmGraph, nbody, geodim, self.nint_min, self.nsegm, self._bodysegm, self._intersegm_to_iint, self._intersegm_to_body)
+
+        TT.toc("AccumulateSegmGenToTargetSym")
 
         # BinarySegm, Identity_detected = FindAllBinarySegments(intersegm_to_all, nbody, self.nsegm, self.nint_min, self._bodysegm, False, bodymass)
 
@@ -215,6 +231,10 @@ cdef class NBodySyst():
         self._ncoeff_min_loop = np.array([len(All_params_basis[il]) for il in range(self.nloop)], dtype=np.intp)
 
         self.Compute_nnpr()
+
+        TT.toc("END")
+
+        print(TT)
 
 
     def DetectLoops(self, Sym_list, nbody, bodymass, nint_min_fac = 1):
@@ -259,6 +279,8 @@ cdef class NBodySyst():
 
     def ExploreGlobalShifts_BuildSegmGraph(self, Sym_list):
 
+        cdef Py_ssize_t ib
+
         # Making sure nint_min is big enough
         self.SegmGraph, self.nint_min = Build_SegmGraph_NoPb(self.nbody, self.nint_min, Sym_list)
         
@@ -281,7 +303,7 @@ cdef class NBodySyst():
             
                 self.SegmGraph = Build_SegmGraph(self.nbody, self.nint_min, Sym_list)
 
-            bodysegm = np.zeros((self.nbody, self.nint_min), dtype = int)
+            bodysegm = np.zeros((self.nbody, self.nint_min), dtype = np.intp)
             self._bodysegm = bodysegm
             for isegm, CC in enumerate(networkx.connected_components(self.SegmGraph)):
                 for ib, iint in CC:
