@@ -17,8 +17,10 @@ from matplotlib import pyplot as plt
 from matplotlib import colormaps
 
 import choreo.scipy_plus
+import pyquickbench
 
 from choreo.cython._ActionSym import *
+# from choreo.cython._ActionSym import AccumulateSegmGenToTargetSym
 
 def ContainsDoubleEdges(SegmGraph):
 
@@ -513,56 +515,6 @@ def AccumulateInstConstraints(Sym_list, nbody, geodim, nint, VelSym=False):
 
     return InstConstraints
                     
-def AccumulateSegmGenToTargetSym(SegmGraph, nbody, geodim, nint_min, nsegm, bodysegm, segm_to_iint, segm_to_body):
-    
-    segmbody = [[] for isegm in range(nsegm)]
-    for iint in range(nint_min):
-        for ib in range(nbody):
-            isegm = bodysegm[ib,iint]
-            segmbody[isegm].append((ib,iint))
-
-    segm_gen_to_target = [ [ None for iint in range(nint_min)] for ib in range(nbody) ]
-
-    for isegm, ib_iint_list  in enumerate(segmbody):
-
-        segmgen = (segm_to_body[isegm], segm_to_iint[isegm])
-        
-        isegmgen = bodysegm[*segmgen] 
-        assert isegm == isegmgen
-
-        path_from_segmgen = networkx.shortest_path(SegmGraph, source = segmgen)
-
-        for ib, iint in ib_iint_list:
-
-            segm = (ib, iint)
-
-            GenToTargetSym = ActionSym.Identity(nbody, geodim)
-
-            path = path_from_segmgen[segm]
-            pathlen = len(path)
-
-            for ipath in range(1,pathlen):
-
-                if (path[ipath-1] > path[ipath]):
-
-                    edge = (path[ipath], path[ipath-1])
-                    Sym = SegmGraph.edges[edge]["SymList"][0].Inverse()
-
-                else:
-
-                    edge = (path[ipath-1], path[ipath])
-                    Sym = SegmGraph.edges[edge]["SymList"][0]
-
-                GenToTargetSym = Sym.Compose(GenToTargetSym)
-
-            tnum_target, tden_target = GenToTargetSym.ApplyTSegm(segm_to_iint[isegm], nint_min)
-            assert nint_min % tden_target == 0
-            assert iint == (tnum_target * (nint_min // tden_target) + nint_min) % nint_min  
-
-            segm_gen_to_target[ib][iint] = GenToTargetSym
-
-    return segm_gen_to_target                        
-
 def ComputeParamBasis_InitVal(nbody, geodim, InstConstraints, bodymass, MomCons=True, eps=1e-12):
 
     ncstr = len(InstConstraints)
@@ -987,3 +939,43 @@ def Populate_allsegmpos(all_pos, GenSpaceRot, GenTimeRev, gensegm_to_body, gense
     
 
     return allsegmpos
+
+
+def AccumulateSegmGenToTargetSym(
+        SegmGraph       ,
+        nbody           , 
+        geodim          , 
+        nint_min        , 
+        nsegm           , 
+        bodysegm        , 
+        segm_to_iint    ,  
+        segm_to_body    ,
+    ):
+
+    segm_gen_to_target = [ [ None for iint in range(nint_min)] for ib in range(nbody) ]
+
+    for isegm in range(nsegm):
+        
+        ib = segm_to_body[isegm]
+        iint = segm_to_iint[isegm]
+        
+        segm_gen_to_target[ib][iint] = ActionSym.Identity(nbody, geodim)
+        segm_source = (ib, iint)
+        
+        for edge in networkx.dfs_edges(SegmGraph, source=segm_source):
+            
+            Sym = segm_gen_to_target[edge[0][0]][edge[0][1]]
+            
+            assert Sym is not None
+            
+            if edge[0] > edge[1]:
+                EdgeSym = SegmGraph.edges[edge]["SymList"][0].Inverse()
+            else:
+                EdgeSym = SegmGraph.edges[edge]["SymList"][0]
+
+
+                
+            segm_gen_to_target[edge[1][0]][edge[1][1]] = EdgeSym.Compose(Sym)
+            
+    return segm_gen_to_target                       
+
