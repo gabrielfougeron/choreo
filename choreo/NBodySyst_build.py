@@ -435,15 +435,9 @@ def AccumulateInstConstraints(Sym_list, nbody, geodim, nint, VelSym=False):
                     ParallelEdgeSym = edge_dict["Sym"]
 
                     Constraint = EdgeSym.Inverse().Compose(ParallelEdgeSym)
-                    tnum_target, tden_target = Constraint.ApplyT(edge[0], nint)
-                    assert nint % tden_target == 0
-                    assert edge[0] == (tnum_target * (nint // tden_target) + nint) % nint
                     AppendIfNotSamePermAndRot(InstConstraints[edge[0]], Constraint)
 
                     Constraint = EdgeSym.Compose(ParallelEdgeSym.Inverse())
-                    tnum_target, tden_target = Constraint.ApplyT(edge[1], nint)
-                    assert nint % tden_target == 0
-                    assert edge[1] == (tnum_target * (nint // tden_target) + nint) % nint
                     AppendIfNotSamePermAndRot(InstConstraints[edge[1]], Constraint)
 
     Cycles = networkx.cycle_basis(InstGraph)
@@ -464,54 +458,30 @@ def AccumulateInstConstraints(Sym_list, nbody, geodim, nint, VelSym=False):
 
             else:
                 Sym = InstGraph.edges[(ibeg,iend)]["Sym"]
-            
-            tnum_target, tden_target = Sym.ApplyT(ibeg, nint)
-            assert nint % tden_target == 0
-            assert iend == (tnum_target * (nint // tden_target) + nint) % nint
 
             FirstInstConstraint = Sym.Compose(FirstInstConstraint)
-        
-        tnum_target, tden_target = FirstInstConstraint.ApplyT(FirstInst, nint)
-        assert nint % tden_target == 0
-        assert FirstInst == (tnum_target * (nint // tden_target) + nint) % nint
 
         if not(FirstInstConstraint.IsIdentityPermAndRotAndTimeRev()):
             
-            path_from_FirstInst = networkx.shortest_path(InstGraph, source = FirstInst)
+            AppendIfNotSamePermAndRot(InstConstraints[FirstInst], FirstInstConstraint)
 
+            SymFromFirstInst = ActionSym.Identity(nbody, geodim)
+
+            jint = FirstInst
             # Now add the Cycle constraints to every instant in the cycle
-            for iint in Cycle:
+            for iint in Cycle[1:]:
 
-                FirstInstToiintSym = ActionSym.Identity(nbody, geodim)
+                if jint > iint:
+                    Sym = InstGraph.edges[(iint,jint)]["Sym"].Inverse()
+                else:
+                    Sym = InstGraph.edges[(jint,iint)]["Sym"]
+                    
+                SymFromFirstInst = Sym.Compose(SymFromFirstInst)
 
-                path = path_from_FirstInst[iint]            
-                pathlen = len(path)
-
-                for ipath in range(1, pathlen):
-
-                    if (path[ipath-1] > path[ipath]):
-
-                        edge = (path[ipath], path[ipath-1])
-                        Sym = InstGraph.edges[edge]["Sym"].Inverse()
-
-                    else:
-
-                        edge = (path[ipath-1], path[ipath])
-                        Sym = InstGraph.edges[edge]["Sym"]
-
-                    FirstInstToiintSym = Sym.Compose(FirstInstToiintSym)
-
-                tnum_target, tden_target = FirstInstToiintSym.ApplyT(FirstInst, nint)
-                assert nint % tden_target == 0
-                assert iint == (tnum_target * (nint // tden_target) + nint) % nint
-                
-                Constraint = FirstInstConstraint.Conjugate(FirstInstToiintSym)
-
-                tnum_target, tden_target = Constraint.ApplyT(iint, nint)
-                assert nint % tden_target == 0
-                assert iint == (tnum_target * (nint // tden_target) + nint) % nint
-
+                Constraint = FirstInstConstraint.Conjugate(SymFromFirstInst)
                 AppendIfNotSamePermAndRot(InstConstraints[iint], Constraint)
+                
+                jint = iint
 
     return InstConstraints
                     
@@ -966,15 +936,11 @@ def AccumulateSegmGenToTargetSym(
             
             Sym = segm_gen_to_target[edge[0][0]][edge[0][1]]
             
-            assert Sym is not None
-            
             if edge[0] > edge[1]:
                 EdgeSym = SegmGraph.edges[edge]["SymList"][0].Inverse()
             else:
                 EdgeSym = SegmGraph.edges[edge]["SymList"][0]
 
-
-                
             segm_gen_to_target[edge[1][0]][edge[1][1]] = EdgeSym.Compose(Sym)
             
     return segm_gen_to_target                       
