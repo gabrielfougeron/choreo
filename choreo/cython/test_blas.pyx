@@ -5,7 +5,6 @@ cimport cython
 
 from libc.math cimport fabs as cfabs
 cimport scipy.linalg.cython_blas
-cimport blis.cy
 from libc.stdlib cimport abort, malloc, free
 
 cimport pyfftw
@@ -65,63 +64,6 @@ cpdef void blas_matmulNT_contiguous(
     scipy.linalg.cython_blas.dgemm(transt, transn, &m, &n, &k, &one_double, &b[0,0], &k, &a[0,0], &k, &zero_double, &c[0,0], &m)
 
 
-
-cpdef void blis_matmul_contiguous(
-    double[:,::1] a,
-    double[:,::1] b,
-    double[:,::1] c
-) noexcept nogil:
-
-    cdef int m = a.shape[0]
-    cdef int k = a.shape[1]
-    cdef int n = b.shape[1]
-
-    blis.cy.gemm(
-        blis.cy.NO_TRANSPOSE, blis.cy.NO_TRANSPOSE,
-        m, n, k,
-        1.0, &a[0,0], k, 1,
-        &b[0,0], n, 1,
-        0.0, &c[0,0], n, 1
-    )
-
-
-# Computes the real part of a @ b
-cpdef void blis_matmul_real(
-    double complex[:,::1] a ,
-    double complex[:,::1] b ,
-    double[:,::1] c         ,
-) noexcept nogil:
-
-    cdef int m = a.shape[0]
-    cdef int k = a.shape[1]
-    cdef int n = b.shape[1]
-
-    cdef double* a_real = <double*> &a[0,0]
-    cdef double* b_real = <double*> &b[0,0]
-    cdef double* res = &c[0,0]
-
-    cdef int lda = 2 * k
-    cdef int ldb = 2 * n
-
-    blis.cy.gemm(
-        blis.cy.NO_TRANSPOSE, blis.cy.NO_TRANSPOSE,
-        m, n, k,
-        1.0, a_real, lda, 2,
-        b_real, ldb, 2 ,
-        0.0, res, n, 1
-    )
-
-    # Pointer addition
-    a_real += 1
-    b_real += 1
-
-    blis.cy.gemm(
-        blis.cy.NO_TRANSPOSE, blis.cy.NO_TRANSPOSE,
-        m, n, k,
-        -1.0, a_real, lda, 2,
-        b_real, ldb, 2 ,
-        1.0, res, n, 1
-    )
 
 cpdef void blas_matmul_real(
     double complex[:,::1] a ,

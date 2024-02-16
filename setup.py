@@ -27,7 +27,7 @@ cython_extnames_safemath = [
     ("choreo.cython._ActionSym"             , False),
     ("choreo.cython._NBodySyst"             , False),
     ("choreo.cython.funs_serial"            , False),
-    ("choreo.cython.test_blis"              , False),
+    ("choreo.cython.test_blas"              , False),
     ("choreo.scipy_plus.cython.ODE"         , False),
     ("choreo.scipy_plus.cython.SegmQuad"    , False),
     ("choreo.scipy_plus.cython.test"        , False),
@@ -69,8 +69,8 @@ elif platform.system() == "Linux":
 
     if ("PYODIDE" in os.environ): # Building for Pyodide
 
-        extra_compile_args_std = ["-O3","-ffast-math","-flto"]
-        extra_compile_args_safe = ["-O3","-flto"]
+        extra_compile_args_std = ["-O3","-ffast-math","-flto",  *ignore_warnings_args]
+        extra_compile_args_safe = ["-O3","-flto",  *ignore_warnings_args]
         extra_link_args = ["-flto"]
 
     else:

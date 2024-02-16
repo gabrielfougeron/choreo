@@ -101,9 +101,8 @@ all_args = {
 all_funs = [
     numpy_matmul_complex    ,
     numpy_matmul_real       ,
-    choreo.cython.test_blis.blas_matmul_real,
-    choreo.cython.test_blis.blis_matmul_real,
-    choreo.cython.test_blis.blas_matmul_real_copy,
+    choreo.cython.test_blas.blas_matmul_real,
+    choreo.cython.test_blas.blas_matmul_real_copy,
 ]
 
 n_repeat = 100

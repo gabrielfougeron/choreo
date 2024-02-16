@@ -110,7 +110,6 @@ all_funs = [
     # numba_parallel  ,
     numpy_matmul    ,
     choreo.cython.funs_new.blas_matmul_contiguous,
-    choreo.cython.test_blis.blis_matmul_contiguous,
 ]
 
 n_repeat = 10
