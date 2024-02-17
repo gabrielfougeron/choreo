@@ -6,6 +6,9 @@ sys.path.append(__PROJECT_ROOT__)
 import choreo 
 import time
 import pyquickbench
+import json
+import numpy as np
+import scipy
 
 def main():
         
@@ -67,16 +70,111 @@ def main():
         print(test)
         print()
 
-        choreo.run.GUI_in_CLI(['-f', os.path.join('.', 'tests', 'NewSym_data', test)])
+
+        doit(test)
+        # choreo.run.GUI_in_CLI(['-f', os.path.join('.', 'tests', 'NewSym_data', test)])
         
         TT.toc(test)
 
     print()
     print(TT)
+  
+
+
+
+def doit(config_name):
+
+    Workspace_folder = os.path.join(__PROJECT_ROOT__, 'tests', 'NewSym_data', config_name)
+    params_filename = os.path.join(Workspace_folder, 'choreo_config.json')
     
-# 
+    with open(params_filename) as jsonFile:
+        params_dict = json.load(jsonFile)
+
+    all_kwargs = choreo.find.ChoreoLoadFromDict(params_dict, Workspace_folder, args_list=["geodim", "nbody", "mass", "Sym_list"])
+    
+    geodim = all_kwargs["geodim"]
+    nbody = all_kwargs["nbody"]
+    mass = all_kwargs["mass"]
+    Sym_list = all_kwargs["Sym_list"]
+    
+    NBS = choreo.cython._NBodySyst.NBodySyst(geodim, nbody, mass, Sym_list)
+    
+    NBS.nint_fac = 10
+    
+    params_buf = np.random.random((NBS.nparams))
+
+    all_coeffs = NBS.params_to_all_coeffs_noopt(params_buf)        
+    all_pos = scipy.fft.irfft(all_coeffs, axis=1)
+    segmpos_noopt = NBS.all_pos_to_segmpos_noopt(all_pos)
+    
+    segmpos_cy = NBS.params_to_segmpos(params_buf)
+    
+    assert np.linalg.norm(segmpos_noopt - segmpos_cy) < 1e-14
+  
+    
+    nparam_nosym = geodim * NBS.nint * nbody
+    nparam_tot = NBS.nparams
+
+    print('*****************************************')
+    print('')
+    # print(f'{Identity_detected = }')
+    print(f'All binary transforms are identity: {NBS.All_BinSegmTransformId}')
+    
+    
+    print()
+    print(f"total binary segment interaction count: {NBS.nbin_segm_tot}")
+    print(f"unique binary segment interaction count: {NBS.nbin_segm_unique}")
+    print(f'{NBS.nsegm = }')
+
+
+    print(f"ratio of total to unique binary interactions : {NBS.nbin_segm_tot  / NBS.nbin_segm_unique}")
+    print(f'ratio of integration intervals to segments : {(nbody * NBS.nint_min) / NBS.nsegm}')
+    print(f"ratio of parameters before and after constraints: {nparam_nosym / nparam_tot}")
+
+    reduction_ratio = nparam_nosym / nparam_tot
+
+    assert abs((nparam_nosym / nparam_tot)  - reduction_ratio) < 1e-14
+    
+    if NBS.All_BinSegmTransformId:
+        assert abs(NBS.nbin_segm_tot  / NBS.nbin_segm_unique  - reduction_ratio) < 1e-14
+        assert abs((nbody * NBS.nint_min) / NBS.nsegm - reduction_ratio) < 1e-14
+
+
+    return
+
+    dirname = os.path.split(store_folder)[0]
+    symname = os.path.split(dirname)[1]
+    filename = os.path.join(dirname, f'{symname}_graph_segm.pdf')
+
+    PlotTimeBodyGraph(NBS.SegmGraph, nbody, NBS.nint_min, filename)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 if __name__ == "__main__":
     main()
-
-
