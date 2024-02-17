@@ -239,6 +239,9 @@ cdef class NBodySyst():
 
         self.Compute_nnpr()
 
+        # I'd rather do this twice than leave __init__ in a partially initiaized state
+        self.nint_fac = 1
+
 
     def DetectLoops(self, bodymass, nint_min_fac = 1):
 

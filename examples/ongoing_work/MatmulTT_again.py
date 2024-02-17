@@ -114,7 +114,7 @@ all_funs = [
     # numba_parallel  ,
     numpy_matmulTT    ,
     numpy_matmulTT_2    ,
-    choreo.cython.funs_new.blas_matmulTT_contiguous,
+    choreo.cython.test_blas.blas_matmulTT_contiguous,
 ]
 
 n_repeat = 10
