@@ -88,8 +88,8 @@ elif platform.system() == "Linux":
                 
                 break
 
-        # extra_compile_args_std = ["-O0","-march=native", "-fopenmp"]
-        # extra_compile_args_safe = ["-O0", "-fopenmp"]
+        # extra_compile_args_std = ["-O0","-march=native", "-fopenmp", *ignore_warnings_args]
+        # extra_compile_args_safe = ["-O0", "-fopenmp", *ignore_warnings_args]
         # extra_link_args = ["-fopenmp"]
         # 
         extra_compile_args_std = ["-Ofast", "-march=native", "-fopenmp", "-flto", *ignore_warnings_args]
@@ -122,17 +122,17 @@ compiler_directives = {
 }
 
 ##### Profiler only ####
-profile_compiler_directives = {
-    'profile': True,
-    'linetrace': True,
-    'binding': True,
-}
-compiler_directives.update(profile_compiler_directives)
-profile_define_macros = [
-    ('CYTHON_TRACE', '1')   ,
-    ('CYTHON_TRACE_NOGIL', '1')   ,
-]
-define_macros.extend(profile_define_macros)
+# profile_compiler_directives = {
+#     'profile': True,
+#     'linetrace': True,
+#     'binding': True,
+# }
+# compiler_directives.update(profile_compiler_directives)
+# profile_define_macros = [
+#     ('CYTHON_TRACE', '1')   ,
+#     ('CYTHON_TRACE_NOGIL', '1')   ,
+# ]
+# define_macros.extend(profile_define_macros)
 
 
 include_dirs = [numpy.get_include()]

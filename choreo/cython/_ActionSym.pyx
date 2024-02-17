@@ -372,7 +372,7 @@ cdef class ActionSym():
     @cython.final
     def TransformSegment(ActionSym self, in_segm, out):
 
-        np.matmul(in_segm, self._SpaceRot.T,out=out)
+        np.matmul(in_segm, self._SpaceRot.T, out=out)
         if self.TimeRev == -1:
             out[:,:] = out[::-1,:]
 
