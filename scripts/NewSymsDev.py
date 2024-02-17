@@ -13,49 +13,49 @@ import scipy
 def main():
         
     all_tests = [
-        '3q',
-        '3q3q',
-        '3q3qD',
-        '2q2q',
-        '4q4q',
-        '4q4qD',
-        '4q4qD3k',
-        '1q2q',
-        '5q5q',
-        '6q6q',
-        '2C3C',
-        '2D3D',   
-        '2C3C5k',
-        '2D3D5k',
-        '2D1',
-        '4C5k',
-        '4D3k',
+        # '3q',
+        # '3q3q',
+        # '3q3qD',
+        # '2q2q',
+        # '4q4q',
+        # '4q4qD',
+        # '4q4qD3k',
+        # '1q2q',
+        # '5q5q',
+        # '6q6q',
+        # '2C3C',
+        # '2D3D',   
+        # '2C3C5k',
+        # '2D3D5k',
+        # '2D1',
+        # '4C5k',
+        # '4D3k',
         '4C',
-        '4D',
-        '3C',
-        '3D',
-        '3D1',
-        '3C2k',
-        '3D2k',
-        '3Dp',
-        '3C4k',
-        '3D4k',
-        '3C5k',
-        '3D5k',
-        '3C101k',
-        '3D101k',
-        'test_3D5k',
-        '3C7k2',
-        '3D7k2',
-        '6C',
-        '6D',
-        '6Ck5',
-        '6Dk5',
-        '5Dq',
-        '2C3C5C',
-        '3C_3dim',
-        '2D1_3dim', 
-        '3C11k',
+        # '4D',
+        # '3C',
+        # '3D',
+        # '3D1',
+        # '3C2k',
+        # '3D2k',
+        # '3Dp',
+        # '3C4k',
+        # '3D4k',
+        # '3C5k',
+        # '3D5k',
+        # '3C101k',
+        # '3D101k',
+        # 'test_3D5k',
+        # '3C7k2',
+        # '3D7k2',
+        # '6C',
+        # '6D',
+        # '6Ck5',
+        # '6Dk5',
+        # '5Dq',
+        # '2C3C5C',
+        # '3C_3dim',
+        # '2D1_3dim', 
+        # '3C11k',
     ]
 
     TT = pyquickbench.TimeTrain(
@@ -72,12 +72,11 @@ def main():
 
 
         doit(test)
-        # choreo.run.GUI_in_CLI(['-f', os.path.join('.', 'tests', 'NewSym_data', test)])
         
         TT.toc(test)
 
     print()
-    print(TT)
+    # print(TT)
   
 
 
@@ -99,9 +98,30 @@ def doit(config_name):
     
     NBS = choreo.cython._NBodySyst.NBodySyst(geodim, nbody, mass, Sym_list)
     
-    NBS.nint_fac = 10
+    NBS.nint_fac = 1
+    
+    
+    all_coeffs = np.zeros((NBS.nloop, NBS.ncoeffs, NBS.geodim),dtype=np.complex128)
+    
+    all_coeffs[:,0,:] = 1j
+    params_buf_useless = NBS.all_coeffs_to_params_noopt(all_coeffs)
+    
+    print(params_buf_useless)
+    
+    
+    
+    return
+    
+    
+    
+    
+    eps = 1e-14
     
     params_buf = np.random.random((NBS.nparams))
+    # NBS.project_params_buf(params_buf)
+    
+    
+    
 
     all_coeffs = NBS.params_to_all_coeffs_noopt(params_buf)        
     all_pos = scipy.fft.irfft(all_coeffs, axis=1)
@@ -111,6 +131,41 @@ def doit(config_name):
     
     assert np.linalg.norm(segmpos_noopt - segmpos_cy) < 1e-14
   
+    
+    # print(all_coeffs)
+    
+    
+    
+    all_coeffs_rt = scipy.fft.rfft(all_pos, axis=1)
+    
+    
+    # print(all_coeffs_rt - all_coeffs)
+    
+    
+    params_buf_rt = NBS.all_coeffs_to_params_noopt(all_coeffs_rt)
+    print(params_buf - params_buf_rt)
+    
+    
+    # assert (np.linalg.norm(all_coeffs - all_coeffs_rt)) < eps
+    assert (np.linalg.norm(params_buf - params_buf_rt)) < eps
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     
     nparam_nosym = geodim * NBS.nint * nbody
     nparam_tot = NBS.nparams
