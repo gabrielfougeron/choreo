@@ -136,8 +136,12 @@ cdef class NBodySyst():
 
     cdef bint[::1] _BodyHasContiguousGeneratingSegments
 
+    cdef readonly list Sym_list
     cdef readonly object BodyGraph
     cdef readonly object SegmGraph
+
+    cdef readonly list gensegm_to_all
+    cdef readonly list LoopGenConstraints
     
     # Things that change with nint
     cdef long _nint
@@ -182,10 +186,11 @@ cdef class NBodySyst():
 
         self.geodim = geodim
         self.nbody = nbody
+        self.Sym_list = Sym_list
 
-        self.DetectLoops(Sym_list, nbody, bodymass)
+        self.DetectLoops(bodymass)
 
-        Sym_list = self.ExploreGlobalShifts_BuildSegmGraph(Sym_list)
+        self.ExploreGlobalShifts_BuildSegmGraph()
 
         self.ChooseLoopGen()
 
@@ -201,16 +206,16 @@ cdef class NBodySyst():
         # - Constraints on initial values => Parametrization 
 
         
-        InstConstraintsPos = AccumulateInstConstraints(Sym_list, nbody, geodim, self.nint_min, VelSym=False)
-        InstConstraintsVel = AccumulateInstConstraints(Sym_list, nbody, geodim, self.nint_min, VelSym=True )
+        InstConstraintsPos = AccumulateInstConstraints(self.Sym_list, nbody, geodim, self.nint_min, VelSym=False)
+        InstConstraintsVel = AccumulateInstConstraints(self.Sym_list, nbody, geodim, self.nint_min, VelSym=True )
 
         self._InitValPosBasis = ComputeParamBasis_InitVal(nbody, geodim, InstConstraintsPos[0], bodymass, MomCons=True)
         self._InitValVelBasis = ComputeParamBasis_InitVal(nbody, geodim, InstConstraintsVel[0], bodymass, MomCons=True)
 
 
-        gensegm_to_all = AccumulateSegmGenToTargetSym(self.SegmGraph, nbody, geodim, self.nint_min, self.nsegm, self._bodysegm, self._gensegm_to_iint, self._gensegm_to_body)
+        self.gensegm_to_all = AccumulateSegmGenToTargetSym(self.SegmGraph, nbody, geodim, self.nint_min, self.nsegm, self._bodysegm, self._gensegm_to_iint, self._gensegm_to_body)
 
-        self.GatherGenSym(gensegm_to_all)
+        self.GatherGenSym()
 
         # GenToIntSyms = Generating_to_interacting(self.SegmGraph, nbody, geodim, self.nsegm, self._intersegm_to_iint, self._intersegm_to_body, self._gensegm_to_iint, self._gensegm_to_body)
 
@@ -220,10 +225,11 @@ cdef class NBodySyst():
         self.All_BinSegmTransformId, self.nbin_segm_tot, self.nbin_segm_unique = CountSegmentBinaryInteractions(BinarySegm, self.nsegm)
 
         # This could certainly be made more efficient
-        BodyConstraints = AccumulateBodyConstraints(Sym_list, nbody, geodim)
-        LoopGenConstraints = [BodyConstraints[ib] for ib in self._loopgen]
+        BodyConstraints = AccumulateBodyConstraints(self.Sym_list, nbody, geodim)
+        self.LoopGenConstraints = [BodyConstraints[ib] for ib in self._loopgen]
 
-        All_params_basis = ComputeParamBasis_Loop(nbody, self.nloop, self._loopgen, geodim, LoopGenConstraints)
+        # Idem, but I'm too lazy to change it and it is not performance critical
+        All_params_basis = ComputeParamBasis_Loop(nbody, self.nloop, self._loopgen, geodim, self.LoopGenConstraints)
         params_basis_reorganized_list, nnz_k_list = reorganize_All_params_basis(All_params_basis)
         
         self._params_basis_buf, self._params_basis_shapes, self._params_basis_shifts = BundleListOfArrays(params_basis_reorganized_list)
@@ -231,25 +237,22 @@ cdef class NBodySyst():
 
         self._ncoeff_min_loop = np.array([len(All_params_basis[il]) for il in range(self.nloop)], dtype=np.intp)
 
-
-
-
         self.Compute_nnpr()
 
 
-    def DetectLoops(self, Sym_list, nbody, bodymass, nint_min_fac = 1):
+    def DetectLoops(self, bodymass, nint_min_fac = 1):
 
         All_den_list_on_entry = []
-        for Sym in Sym_list:
+        for Sym in self.Sym_list:
             All_den_list_on_entry.append(Sym.TimeShiftDen)
 
         self.nint_min = nint_min_fac * math.lcm(*All_den_list_on_entry) # ensures that all integer divisions will have zero remainder
         
-        BodyGraph = Build_BodyGraph(nbody, Sym_list)
+        BodyGraph = Build_BodyGraph(self.nbody, self.Sym_list)
 
         self.nloop = sum(1 for _ in networkx.connected_components(BodyGraph))
         
-        loopnb = np.zeros((self.nloop), dtype = int)
+        loopnb = np.zeros((self.nloop), dtype = np.intp)
         self._loopnb = loopnb
 
         for il, CC in enumerate(networkx.connected_components(BodyGraph)):
@@ -257,7 +260,7 @@ cdef class NBodySyst():
 
         maxlooplen = loopnb.max()
         
-        BodyLoop = np.zeros((nbody), dtype = int)
+        BodyLoop = np.zeros((self.nbody), dtype = np.intp)
         self._bodyloop = BodyLoop
         Targets = np.zeros((self.nloop, maxlooplen), dtype=np.intp)
         self._Targets = Targets
@@ -277,12 +280,12 @@ cdef class NBodySyst():
         self.BodyGraph = BodyGraph
 
 
-    def ExploreGlobalShifts_BuildSegmGraph(self, Sym_list):
+    def ExploreGlobalShifts_BuildSegmGraph(self):
 
         cdef Py_ssize_t ib
 
         # Making sure nint_min is big enough
-        self.SegmGraph, self.nint_min = Build_SegmGraph_NoPb(self.nbody, self.nint_min, Sym_list)
+        self.SegmGraph, self.nint_min = Build_SegmGraph_NoPb(self.nbody, self.nint_min, self.Sym_list)
         
         for i_shift in range(self.nint_min):
             
@@ -297,11 +300,11 @@ cdef class NBodySyst():
                 )
                 
                 Shifted_sym_list = []
-                for Sym in Sym_list:
+                for Sym in self.Sym_list:
                     Shifted_sym_list.append(Sym.Conjugate(GlobalTimeShift))
-                Sym_list = Shifted_sym_list
+                self.Sym_list = Shifted_sym_list
             
-                self.SegmGraph = Build_SegmGraph(self.nbody, self.nint_min, Sym_list)
+                self.SegmGraph = Build_SegmGraph(self.nbody, self.nint_min, self.Sym_list)
 
             bodysegm = np.zeros((self.nbody, self.nint_min), dtype = np.intp)
             self._bodysegm = bodysegm
@@ -342,8 +345,6 @@ cdef class NBodySyst():
             raise ValueError("Could not find time shift such that all loops have contiguous generating segments")
 
         # print(f"Required {i_shift} shifts to find reference such that all loops have contiguous generating segments")
-        
-        return Sym_list
 
     def ChooseLoopGen(self):
         
@@ -408,7 +409,7 @@ cdef class NBodySyst():
                     ngensegm_loop[il] += 1
 
 
-    def GatherGenSym(self, gensegm_to_all):
+    def GatherGenSym(self):
         
         GenTimeRev = np.zeros((self.nsegm), dtype=np.intp)
         GenSpaceRot = np.zeros((self.nsegm, self.geodim, self.geodim), dtype=np.float64)
@@ -423,7 +424,7 @@ cdef class NBodySyst():
             ib = self._intersegm_to_body[isegm]
             iint = self._intersegm_to_iint[isegm]
 
-            Sym = gensegm_to_all[ib][iint]
+            Sym = self.gensegm_to_all[ib][iint]
             
             GenTimeRev[isegm] = Sym.TimeRev
             GenSpaceRot[isegm,:,:] = Sym.SpaceRot
@@ -491,6 +492,96 @@ cdef class NBodySyst():
         self._pos_slice_shapes, self._pos_slice_shifts = BundleListOfShapes(pos_slice_shapes_list)
 
         self.nparams = self._params_shifts[self.nloop]
+
+
+
+    def AssertAllSegmGenConstraintsAreRespected(self, all_pos, eps=1e-12):
+
+        for il in range(self.nloop):
+            
+            ib = self._loopgen[il] # because only loops have been computed in all_pos so far.
+            
+            for iint in range(self.nint_min):
+                
+                isegm = self._bodysegm[ib, iint]
+                
+                Sym = self.gensegm_to_all[ib][iint]
+                
+                ib_source = self._gensegm_to_body[isegm]
+                iint_source = self._gensegm_to_iint[isegm]
+                
+                il_source = self._bodyloop[ib_source]
+                assert il_source == il
+                
+                self.segm_size = self._nint // self.nint_min
+
+                ibeg_source = iint_source * self.segm_size          
+                iend_source = ibeg_source + self.segm_size
+                assert iend_source <= self._nint
+                
+                # One position at a time
+                for iint_s in range(ibeg_source, iend_source):
+                    
+                    tnum, tden = Sym.ApplyT(iint_s, self._nint)
+                    
+                    assert self._nint % tden == 0
+                    iint_t = (tnum * (self._nint // tden) + self._nint) % self._nint
+
+                    xs = np.matmul(Sym.SpaceRot, all_pos[il, iint_s,:])
+                    xt = all_pos[il, iint_t,:]
+                    dx = xs - xt
+
+                    assert (np.linalg.norm(dx)) < eps
+                    
+                # All positions at once
+                tnum_target, tden_target = Sym.ApplyTSegm(iint_source, self.nint_min)
+                assert self.nint_min % tden_target == 0
+                iint_target = (tnum_target * (self.nint_min // tden_target) + self.nint_min) % self.nint_min   
+                    
+                ibeg_target = iint_target * self.segm_size         
+                iend_target = ibeg_target + self.segm_size
+                
+                # IMPORTANT !!!!
+                if Sym.TimeRev == -1:
+                    ibeg_target += 1
+                    iend_target += 1
+                
+                pos_source_segm = all_pos[il,ibeg_source:iend_source,:]
+                pos_target_segm = np.empty((self.segm_size, self.geodim), dtype=np.float64)
+
+                Sym.TransformSegment(pos_source_segm, pos_target_segm)
+
+                if iend_target <= self._nint:
+                
+                    assert (np.linalg.norm(pos_target_segm - all_pos[il, ibeg_target:iend_target, :])) < eps
+                    
+                else:
+                    
+                    assert iend_target == self._nint+1
+                    assert (np.linalg.norm(pos_target_segm[:self.segm_size-1,:] - all_pos[il, ibeg_target:iend_target-1, :])) < eps
+                    assert (np.linalg.norm(pos_target_segm[ self.segm_size-1,:] - all_pos[il, 0, :])) < eps
+            
+
+    def AssertAllBodyConstraintAreRespected(self, all_pos, eps=1e-12):
+        # Make sure loop constraints are respected
+        
+        for il, Constraints in enumerate(self.LoopGenConstraints):
+
+            for icstr, Sym in enumerate(Constraints):
+
+                assert (self._nint % Sym.TimeShiftDen) == 0
+
+                ConstraintIsRespected = True
+
+                for iint in range(self._nint):
+
+                    tnum, tden = Sym.ApplyT(iint, self._nint)
+                    jint = tnum * self._nint // tden
+                    
+                    err = np.linalg.norm(all_pos[il,jint,:] - np.matmul(Sym.SpaceRot, all_pos[il,iint,:]))
+
+                    assert (err < eps)
+
 
             
     def params_to_all_coeffs_noopt(self, params_buf):
@@ -614,6 +705,22 @@ cdef class NBodySyst():
 
         return np.asarray(segmpos)
             
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
