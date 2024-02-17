@@ -12,7 +12,6 @@ import scipy
 import fractions
 import json
 import choreo
-import choreo.cython._NBodySyst
 
 def load_from_config_file(config_name):
     
@@ -62,3 +61,6 @@ def test_all_pos_to_segmpos(AllConfigNames, float64_tols):
         segmpos_cy = NBS.params_to_segmpos(params_buf)
         
         assert np.allclose(segmpos_noopt, segmpos_cy, rtol = float64_tols.rtol, atol = float64_tols.atol) 
+        
+        NBS.AssertAllSegmGenConstraintsAreRespected(all_pos)
+        NBS.AssertAllBodyConstraintAreRespected(all_pos)
