@@ -121,25 +121,25 @@ def Find_Choreo(
     Finds periodic solutions
 
     """
-
-    if CurrentlyDeveloppingNewStuff:
-
-        print("WARNING : ENTERING DEV GROUNDS. Proceed with caution")
-
-        ActionSyst = setup_changevar_new(
-            geodim                                      ,
-            nbody                                       ,
-            nint_init                                   ,
-            mass                                        ,
-            n_reconverge_it_max                         ,
-            Sym_list = Sym_list                         ,
-            MomCons = MomConsImposed                    ,
-            n_grad_change = n_grad_change               ,
-            CrashOnIdentity = CrashOnError_changevar    ,
-            store_folder = store_folder                 ,
-        )
-
-        return
+# 
+#     if CurrentlyDeveloppingNewStuff:
+# 
+#         print("WARNING : ENTERING DEV GROUNDS. Proceed with caution")
+# 
+#         ActionSyst = setup_changevar_new(
+#             geodim                                      ,
+#             nbody                                       ,
+#             nint_init                                   ,
+#             mass                                        ,
+#             n_reconverge_it_max                         ,
+#             Sym_list = Sym_list                         ,
+#             MomCons = MomConsImposed                    ,
+#             n_grad_change = n_grad_change               ,
+#             CrashOnIdentity = CrashOnError_changevar    ,
+#             store_folder = store_folder                 ,
+#         )
+# 
+#         return
 
     
     print(f'Searching periodic solutions of {nbody:d} bodies.')
