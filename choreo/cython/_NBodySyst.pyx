@@ -607,7 +607,37 @@ cdef class NBodySyst():
             coeffs_dense = all_coeffs[il,:(self.ncoeffs-1),:].reshape(npr, self._ncoeff_min_loop[il], self.geodim)                
             coeffs_dense[:,nnz_k,:] = np.einsum('ijk,ljk->lji', params_basis, params_loop)
             
-        return all_coeffs   
+        all_coeffs[:,0,:].imag = 0
+
+        return all_coeffs    
+
+    def all_coeffs_to_params_noopt(self, all_coeffs):
+
+        assert all_coeffs.shape[0] == self.nloop
+        assert all_coeffs.shape[1] == self.ncoeffs
+        assert all_coeffs.shape[2] == self.geodim
+
+        params_buf = np.zeros((self.nparams), dtype=np.float64)
+
+        all_coeffs[:,0,:] *= 0.5 # WHYYYYY ????
+
+        for il in range(self.nloop):
+
+            params_basis = self.params_basis(il)
+            nnz_k = self.nnz_k(il)
+
+            npr = (self.ncoeffs-1) //  self._ncoeff_min_loop[il]
+
+            coeffs_dense = all_coeffs[il,:(self.ncoeffs-1),:].reshape(npr, self._ncoeff_min_loop[il], self.geodim)                
+
+            params_loop = params_buf[self._params_shifts[il]:self._params_shifts[il+1]].reshape(self._params_shapes[il])
+
+            params_loop[:] = np.einsum('ijk,lji->ljk', params_basis.conj(), coeffs_dense[:,nnz_k,:]).real
+
+
+        all_coeffs[:,0,:] *= 2 # Putting it back the way it was
+
+        return params_buf   
 
     def all_pos_to_all_body_pos_noopt(self, all_pos):
 
@@ -708,6 +738,21 @@ cdef class NBodySyst():
 
         return np.asarray(segmpos)
             
+#     cpdef void project_params_buf(self, double[::1] params_buf):
+# 
+#         cdef Py_ssize_t il
+# 
+# 
+#         for il in range(self.nloop):
+# 
+#             if self._params_shapes[il,1] > 0:
+# 
+#                 if self._nnz_k_shapes[il,0] > 0:
+# 
+#                     if self._nnz_k_buf[self._nnz_k_shifts[il]] == 0:
+# 
+#                         params_buf[self._params_shifts[il]+ ???
+
 
 
 

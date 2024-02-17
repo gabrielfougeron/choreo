@@ -3,11 +3,11 @@ import sys
 __PROJECT_ROOT__ = os.path.abspath(os.path.join(os.path.dirname(__file__),os.pardir))
 sys.path.append(__PROJECT_ROOT__)
 # 
-# os.environ['OPENBLAS_NUM_THREADS'] = '1'
-# os.environ['NUMEXPR_NUM_THREADS'] = '1'
-# os.environ['MKL_NUM_THREADS'] = '1'
-# os.environ['OMP_NUM_THREADS'] = '1'
-# os.environ['TBB_NUM_THREADS'] = '1'
+os.environ['OPENBLAS_NUM_THREADS'] = '1'
+os.environ['NUMEXPR_NUM_THREADS'] = '1'
+os.environ['MKL_NUM_THREADS'] = '1'
+os.environ['OMP_NUM_THREADS'] = '1'
+os.environ['TBB_NUM_THREADS'] = '1'
 
 import choreo 
 import pyquickbench
@@ -34,13 +34,10 @@ def params_to_segmpos_noopt(NBS, params_buf):
     
     
 def params_to_segmpos_opt(NBS, params_buf):
-    NBS.params_to_segmpos(params_buf, overwrite_x=True)
+    NBS.params_to_segmpos(params_buf, overwrite_x=False)
     
-def params_to_segmpos_opt_domul(NBS, params_buf):
-    
-    for isegm in range(NBS.nsegm):
-        NBS._GenSpaceRotIsId[isegm] = False
-    
+
+def params_to_segmpos_opt_safe(NBS, params_buf):
     NBS.params_to_segmpos(params_buf, overwrite_x=True)
     
 
@@ -48,7 +45,7 @@ def params_to_segmpos_opt_domul(NBS, params_buf):
 all_funs = [
     # params_to_segmpos_noopt     ,
     params_to_segmpos_opt       ,
-    params_to_segmpos_opt_domul ,
+    params_to_segmpos_opt_safe ,
 ]
 
 def setup(test_name, nint_fac):
