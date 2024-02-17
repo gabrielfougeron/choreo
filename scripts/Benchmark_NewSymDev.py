@@ -44,8 +44,8 @@ def params_to_segmpos_opt_safe(NBS, params_buf):
 
 all_funs = [
     # params_to_segmpos_noopt     ,
-    params_to_segmpos_opt       ,
     params_to_segmpos_opt_safe ,
+    params_to_segmpos_opt       ,
 ]
 
 def setup(test_name, nint_fac):
@@ -94,11 +94,11 @@ all_tests = [
     # '4D3k',
     # '4C',
     # '4D',
-    # '3C',
+    '3C',
     # '3D',
     # '3D1',
-    '3C2k',
-    '3D2k',
+    # '3C2k',
+    # '3D2k',
     # '3C4k',
     # '3D4k',
     # '3C5k',
@@ -127,9 +127,9 @@ all_tests = [
 ]
 
 min_exp = 3
-max_exp = 15
+max_exp = 25
 
-n_repeat = 100
+n_repeat = 1000
 
 MonotonicAxes = ["nint_fac"]
 
@@ -160,7 +160,8 @@ plot_intent = {
     "test_name" : 'subplot_grid_y'                  ,
     "nint_fac" : 'points'                           ,
     pyquickbench.fun_ax_name :  'curve_color'       ,
-    pyquickbench.repeat_ax_name :  'reduction_min'  ,
+    # pyquickbench.repeat_ax_name :  'reduction_avg'  ,
+    pyquickbench.repeat_ax_name :  'reduction_logavg'  ,
     # pyquickbench.repeat_ax_name :  'same'  ,
 }
 
