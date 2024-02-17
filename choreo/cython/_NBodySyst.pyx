@@ -129,6 +129,14 @@ cdef class NBodySyst():
     def nnz_k(self, long il):
         return np.asarray(self._nnz_k_buf[self._nnz_k_shifts[il]:self._nnz_k_shifts[il+1]]).reshape(self._nnz_k_shapes[il])
 
+    # Removal of imaginary part of c_o
+    cdef long[::1] _co_rem_buf
+    cdef long[:,::1] _co_rem_shapes
+    cdef long[::1] _co_rem_shifts
+
+    def co_rem(self, long il):
+        return np.asarray(self._co_rem_buf[self._co_rem_shifts[il]:self._co_rem_shifts[il+1]]).reshape(self._co_rem_shapes[il])
+
     cdef long[::1] _ncoeff_min_loop
     @property
     def ncoeff_min_loop(self):
@@ -167,6 +175,8 @@ cdef class NBodySyst():
     cdef long[:,::1] _pos_slice_shapes
     cdef long[::1] _pos_slice_shifts
 
+    def loop_params(self, params_buf, long il):
+        return params_buf[self._params_shifts[il]:self._params_shifts[il+1]].reshape(self._params_shapes[il])
 
 
 
@@ -230,10 +240,11 @@ cdef class NBodySyst():
 
         # Idem, but I'm too lazy to change it and it is not performance critical
         All_params_basis = ComputeParamBasis_Loop(nbody, self.nloop, self._loopgen, geodim, self.LoopGenConstraints)
-        params_basis_reorganized_list, nnz_k_list = reorganize_All_params_basis(All_params_basis)
+        params_basis_reorganized_list, nnz_k_list, co_rem_list = reorganize_All_params_basis(All_params_basis)
         
         self._params_basis_buf, self._params_basis_shapes, self._params_basis_shifts = BundleListOfArrays(params_basis_reorganized_list)
         self._nnz_k_buf, self._nnz_k_shapes, self._nnz_k_shifts = BundleListOfArrays(nnz_k_list)
+        self._co_rem_buf, self._co_rem_shapes, self._co_rem_shifts = BundleListOfArrays(co_rem_list)
 
         self._ncoeff_min_loop = np.array([len(All_params_basis[il]) for il in range(self.nloop)], dtype=np.intp)
 
@@ -454,11 +465,13 @@ cdef class NBodySyst():
             
 
     @nint_fac.setter
+    @cython.final
     def nint_fac(self, long nint_fac_in):
         self.nint = 2 * self.nint_min * nint_fac_in
     
     @nint.setter
     @cython.cdivision(True)
+    @cython.final
     def nint(self, long nint_in):
 
         if (nint_in % (2 * self.nint_min)) != 0:
@@ -498,6 +511,7 @@ cdef class NBodySyst():
 
 
 
+    @cython.final
     def AssertAllSegmGenConstraintsAreRespected(self, all_pos, eps=1e-12):
 
         for il in range(self.nloop):
@@ -565,6 +579,7 @@ cdef class NBodySyst():
                     assert (np.linalg.norm(pos_target_segm[ self.segm_size-1,:] - all_pos[il, 0, :])) < eps
             
 
+    @cython.final
     def AssertAllBodyConstraintAreRespected(self, all_pos, eps=1e-12):
         # Make sure loop constraints are respected
         
@@ -587,6 +602,7 @@ cdef class NBodySyst():
 
 
             
+    @cython.final
     def params_to_all_coeffs_noopt(self, params_buf):
 
         assert params_buf.shape[0] == self.nparams
@@ -611,6 +627,7 @@ cdef class NBodySyst():
 
         return all_coeffs    
 
+    @cython.final
     def all_coeffs_to_params_noopt(self, all_coeffs):
 
         assert all_coeffs.shape[0] == self.nloop
@@ -635,10 +652,12 @@ cdef class NBodySyst():
             params_loop[:] = np.einsum('ijk,lji->ljk', params_basis.conj(), coeffs_dense[:,nnz_k,:]).real
 
 
+
         all_coeffs[:,0,:] *= 2 # Putting it back the way it was
 
         return params_buf   
 
+    @cython.final
     def all_pos_to_all_body_pos_noopt(self, all_pos):
 
         assert all_pos.shape[0] == self._nint
@@ -679,6 +698,7 @@ cdef class NBodySyst():
 
         return all_body_pos     
 
+    @cython.final
     def all_pos_to_segmpos_noopt(self, all_pos):
         
         assert self._nint == all_pos.shape[1]
@@ -716,7 +736,8 @@ cdef class NBodySyst():
 
         return allsegmpos
  
-
+    
+    @cython.final
     def params_to_segmpos(self, double[::1] params_buf, bint overwrite_x=False):
 
         assert params_buf.shape[0] == self.nparams
@@ -756,7 +777,7 @@ cdef class NBodySyst():
 
 
 
-
+# cdef 
 
 
 
@@ -1084,7 +1105,6 @@ cdef void pos_slice_to_segmpos(
                     segmpos -= geodim
                     tmp += geodim
 
-
     if NeedsAllocate:
         free(tmp_loc)
 
@@ -1109,9 +1129,6 @@ cdef double[:,:,::1] params_to_segmpos(
     cdef int nsegm = gensegm_to_body.shape[0]
     cdef int geodim = GenSpaceRot.shape[1]
     cdef int size
-
-    # cdef np.ndarray[double, ndim=3, mode="c"] segmpos_np = np.empty((nsegm, segm_size, geodim), dtype=np.float64)
-    # cdef double[:,:,::1] segmpos = segmpos_np
 
     cdef double[:,:,::1] segmpos = np.empty((nsegm, segm_size, geodim), dtype=np.float64)
 
