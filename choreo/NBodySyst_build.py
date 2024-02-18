@@ -615,6 +615,7 @@ def reorganize_All_params_basis(All_params_basis):
     nnz_k_list = []
     params_basis_reorganized_list = []
     co_rem_list = []
+    co_in_list = []
     
     for il in range(nloop):
         
@@ -649,20 +650,23 @@ def reorganize_All_params_basis(All_params_basis):
         
         params_basis_reorganized_list.append(params_basis_reorganized)
         
-        co_rem = []
+        co_in = []
         eps = 1e-12
         if nnz_k.shape[0] > 0:
             if nnz_k[0] == 0:
 
                 for iparam in range(params_basis_reorganized.shape[2]):
                     
-                    if np.linalg.norm(params_basis_reorganized[:,0,iparam].imag) > eps:
-                        
-                        co_rem.append(iparam)
+                    IsIn = np.linalg.norm(params_basis_reorganized[:,0,iparam].imag)
+                    
+                    if IsIn:
+                        co_in.append(1)
+                    else:
+                        co_in.append(0)
+                    
+        co_in_list.append(np.array(co_in, dtype=np.intc))
 
-        co_rem_list.append(np.array(co_rem, dtype=np.intp))
-
-    return params_basis_reorganized_list, nnz_k_list, co_rem_list
+    return params_basis_reorganized_list, nnz_k_list, co_in_list
 
 
         

@@ -64,3 +64,35 @@ def test_all_pos_to_segmpos(AllConfigNames, float64_tols):
         
         NBS.AssertAllSegmGenConstraintsAreRespected(all_pos)
         NBS.AssertAllBodyConstraintAreRespected(all_pos)
+        
+@ProbabilisticTest()
+def test_capture_co(AllConfigNames):
+    
+    for config_name in AllConfigNames:
+            
+        print(f"Config name : {config_name}")
+
+        NBS = load_from_config_file(config_name)
+
+        NBS.nint_fac = 10
+        params_buf = np.random.random((NBS.nparams))
+        
+    
+    nnz = [[] for il in range(NBS.nloop)]
+    for il in range(NBS.nloop):
+        
+        nnz_k = NBS.nnz_k(il)
+        params_basis = NBS.params_basis(il)
+        
+        eps = 1e-12
+        if nnz_k.shape[0] > 0:
+            if nnz_k[0] == 0:
+                
+                for iparam in range(params_basis.shape[2]):
+                    if np.linalg.norm(params_basis[:,0,iparam].imag) > eps:
+                        nnz[il].append(iparam)
+
+        for il in range(NBS.nloop):
+            co_in = NBS.co_in(il)
+            for iparam in range(co_in.shape[0]):            
+                assert co_in[iparam] == (iparam in nnz[il])

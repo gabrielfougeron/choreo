@@ -108,13 +108,13 @@ cython_filenames = [ ext_name.replace('.','/') + src_ext for ext_name in cython_
 define_macros = [("NPY_NO_DEPRECATED_API", "NPY_1_7_API_VERSION")]
 
 compiler_directives = {
-    'wraparound': False,
-    'boundscheck': False,
-    'nonecheck': False,
-    'initializedcheck': False,
-    'overflowcheck': False,
-    'overflowcheck.fold': False,
-    'infer_types': True,
+    # 'wraparound': False,
+    # 'boundscheck': False,
+    # 'nonecheck': False,
+    # 'initializedcheck': False,
+    # 'overflowcheck': False,
+    # 'overflowcheck.fold': False,
+    # 'infer_types': True,
 }
 
 ##### Profiler only ####
