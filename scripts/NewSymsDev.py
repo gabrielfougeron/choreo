@@ -155,9 +155,16 @@ def doit(config_name):
     print(nnz)
     print(all_coeffs.shape[0]*all_coeffs.shape[2])
     print(np.count_nonzero(params_buf_useless))
-    for il in range(NBS.nloop):
-        print(il,NBS.co_rem(il))
     
+    for il in range(NBS.nloop):
+        co_in = NBS.co_in(il)
+        for iparam in range(co_in.shape[0]):            
+            assert co_in[iparam] == ((iparam in nnz[il]))
+
+        
+    
+    
+
     
     
     # for il in range(NBS.nloop):
