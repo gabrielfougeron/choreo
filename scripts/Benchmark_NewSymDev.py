@@ -34,11 +34,7 @@ def params_to_segmpos_noopt(NBS, params_buf):
     
     
 def params_to_segmpos_opt(NBS, params_buf):
-    NBS.params_to_segmpos(params_buf, overwrite_x=False)
-    
-
-def params_to_segmpos_opt_safe(NBS, params_buf):
-    NBS.params_to_segmpos(params_buf, overwrite_x=True)
+    NBS.params_to_segmpos(params_buf)
     
 
 
@@ -129,7 +125,7 @@ all_tests = [
 min_exp = 3
 max_exp = 25
 
-n_repeat = 1000
+n_repeat = 100
 
 MonotonicAxes = ["nint_fac"]
 

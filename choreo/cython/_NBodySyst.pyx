@@ -130,12 +130,13 @@ cdef class NBodySyst():
         return np.asarray(self._nnz_k_buf[self._nnz_k_shifts[il]:self._nnz_k_shifts[il+1]]).reshape(self._nnz_k_shapes[il])
 
     # Removal of imaginary part of c_o
-    cdef long[::1] _co_rem_buf
-    cdef long[:,::1] _co_rem_shapes
-    cdef long[::1] _co_rem_shifts
+    cdef bint[::1] _co_in_buf
+    cdef long[:,::1] _co_in_shapes
+    cdef long[::1] _co_in_shifts
+    cdef long nrem
 
-    def co_rem(self, long il):
-        return np.asarray(self._co_rem_buf[self._co_rem_shifts[il]:self._co_rem_shifts[il+1]]).reshape(self._co_rem_shapes[il])
+    def co_in(self, long il):
+        return np.asarray(self._co_in_buf[self._co_in_shifts[il]:self._co_in_shifts[il+1]]).reshape(self._co_in_shapes[il]) > 0
 
     cdef long[::1] _ncoeff_min_loop
     @property
@@ -240,11 +241,16 @@ cdef class NBodySyst():
 
         # Idem, but I'm too lazy to change it and it is not performance critical
         All_params_basis = ComputeParamBasis_Loop(nbody, self.nloop, self._loopgen, geodim, self.LoopGenConstraints)
-        params_basis_reorganized_list, nnz_k_list, co_rem_list = reorganize_All_params_basis(All_params_basis)
+        params_basis_reorganized_list, nnz_k_list, co_in_list = reorganize_All_params_basis(All_params_basis)
         
         self._params_basis_buf, self._params_basis_shapes, self._params_basis_shifts = BundleListOfArrays(params_basis_reorganized_list)
         self._nnz_k_buf, self._nnz_k_shapes, self._nnz_k_shifts = BundleListOfArrays(nnz_k_list)
-        self._co_rem_buf, self._co_rem_shapes, self._co_rem_shifts = BundleListOfArrays(co_rem_list)
+        self._co_in_buf, self._co_in_shapes, self._co_in_shifts = BundleListOfArrays(co_in_list)
+
+        self.nrem = 0
+        for i in range(self._co_in_shifts[self.nloop]):
+            if self._co_in_buf[i]:
+                self.nrem+1
 
         self._ncoeff_min_loop = np.array([len(All_params_basis[il]) for il in range(self.nloop)], dtype=np.intp)
 
@@ -507,7 +513,7 @@ cdef class NBodySyst():
         self._ifft_shapes, self._ifft_shifts = BundleListOfShapes(ifft_shapes_list)
         self._pos_slice_shapes, self._pos_slice_shifts = BundleListOfShapes(pos_slice_shapes_list)
 
-        self.nparams = self._params_shifts[self.nloop]
+        self.nparams = self._params_shifts[self.nloop] - self.nrem
 
 
 
@@ -603,9 +609,20 @@ cdef class NBodySyst():
 
             
     @cython.final
-    def params_to_all_coeffs_noopt(self, params_buf):
+    def params_to_all_coeffs_noopt(self, double[::1] params_buf_in):
 
-        assert params_buf.shape[0] == self.nparams
+        assert params_buf_in.shape[0] == self.nparams
+
+        # TODO PYFFTW allocate here if needed.
+        cdef np.ndarray[double, ndim=1, mode='c'] params_buf = np.empty((self._params_shifts[self.nloop]), dtype=np.float64)
+
+        changevar_mom(
+            &params_buf_in[0]       , self._params_shapes     , self._params_shifts   ,
+            self._nnz_k_buf         , self._nnz_k_shapes      , self._nnz_k_shifts    ,
+            self._co_in_buf         , self._co_in_shapes      , self._co_in_shifts    ,
+            self._ncoeff_min_loop   ,
+            &params_buf[0]          , 
+        )   
 
         all_coeffs = np.zeros((self.nloop, self.ncoeffs, self.geodim), dtype=np.complex128)
         
@@ -738,12 +755,20 @@ cdef class NBodySyst():
  
     
     @cython.final
-    def params_to_segmpos(self, double[::1] params_buf, bint overwrite_x=False):
+    def params_to_segmpos(self, double[::1] params_buf_in):
 
-        assert params_buf.shape[0] == self.nparams
+        assert params_buf_in.shape[0] == self.nparams
 
-        if overwrite_x:
-            params_buf = params_buf.copy()
+        # TODO PYFFTW allocate here if needed.
+        cdef double[::1] params_buf = np.empty((self._params_shifts[self.nloop]), dtype=np.float64)
+
+        changevar_mom(
+            &params_buf_in[0]       , self._params_shapes     , self._params_shifts   ,
+            self._nnz_k_buf         , self._nnz_k_shapes      , self._nnz_k_shifts    ,
+            self._co_in_buf         , self._co_in_shapes      , self._co_in_shifts    ,
+            self._ncoeff_min_loop   ,
+            &params_buf[0]          , 
+        )   
 
         segmpos = params_to_segmpos(
             params_buf              , self._params_shapes       , self._params_shifts       ,
@@ -758,26 +783,100 @@ cdef class NBodySyst():
         )
 
         return np.asarray(segmpos)
-            
-#     cpdef void project_params_buf(self, double[::1] params_buf):
-# 
-#         cdef Py_ssize_t il
-# 
-# 
-#         for il in range(self.nloop):
-# 
-#             if self._params_shapes[il,1] > 0:
-# 
-#                 if self._nnz_k_shapes[il,0] > 0:
-# 
-#                     if self._nnz_k_buf[self._nnz_k_shifts[il]] == 0:
-# 
-#                         params_buf[self._params_shifts[il]+ ???
 
 
 
 
-# cdef 
+cdef void changevar_mom(
+    double *params_buf_in       , long[:,::1] params_shapes     , long[::1] params_shifts   ,
+    long[::1] nnz_k_buf         , long[:,::1] nnz_k_shapes      , long[::1] nnz_k_shifts    ,
+    bint[::1] co_in_buf         , long[:,::1] co_in_shapes      , long[::1] co_in_shifts    ,
+    long[::1] ncoeff_min_loop   ,
+    double *params_buf      , 
+# ) noexcept nogil:
+):
+
+    cdef double* cur_param_buf_in = params_buf_in
+    cdef double* cur_params_buf = params_buf
+    cdef double loopmul, mul
+
+    cdef int nloop = params_shapes.shape[0]
+    cdef Py_ssize_t il, idim, ipr, ik, iparam
+    cdef long k, ko
+
+    for il in range(nloop):
+
+        # TODO : check correct factor here
+        # loopmul = SqrtMassSum[il] * ctwopisqrt2
+        loopmul = 1.
+
+        # ipr = 0 treated separately
+        # ik = 0 treated separately
+        if nnz_k_shapes[il,0] > 0:
+
+            k = nnz_k_buf[nnz_k_shifts[il]]
+        
+            if k == 0:
+
+                for iparam in range(params_shapes[il,2]):
+
+                    if co_in_buf[co_in_shifts[il]+iparam]:
+
+                        cur_params_buf[0] = loopmul*cur_param_buf_in[0]
+
+                        cur_params_buf += 1
+                        cur_param_buf_in += 1
+                    
+                    else:
+                        # DO NOT INCREMENT cur_param_buf_in !!!
+                        cur_params_buf[0] = 0
+                        cur_params_buf += 1
+
+            else:
+
+                mul = loopmul*k
+
+                for iparam in range(params_shapes[il,2]):
+
+                    cur_params_buf[0] = mul*cur_param_buf_in[0]
+
+                    cur_params_buf += 1
+                    cur_param_buf_in += 1
+
+
+        for ik in range(1, nnz_k_shapes[il,0]):
+
+            k = nnz_k_buf[nnz_k_shifts[il]+ik]
+            mul = loopmul*k
+
+            for iparam in range(params_shapes[il,2]):
+
+                cur_params_buf[0] = mul*cur_param_buf_in[0]
+
+                cur_params_buf += 1
+                cur_param_buf_in += 1
+
+
+
+
+        for ipr in range(1,params_shapes[il,0]):
+
+            ko = ipr * ncoeff_min_loop[il]
+
+            for ik in range(nnz_k_shapes[il,0]):
+
+                k = ko + nnz_k_buf[nnz_k_shifts[il]+ik]
+                mul = loopmul*k
+
+                for iparam in range(params_shapes[il,2]):
+
+                    cur_params_buf[0] = mul*cur_param_buf_in[0]
+
+                    cur_params_buf += 1
+                    cur_param_buf_in += 1
+
+
+
 
 
 
@@ -955,7 +1054,7 @@ cdef void params_to_ifft(
     double[::1] params_buf          , long[:,::1] params_shapes     , long[::1] params_shifts   ,
     long[::1] nnz_k_buf             , long[:,::1] nnz_k_shapes      , long[::1] nnz_k_shifts    ,
     double complex *ifft_buf_ptr    , long[:,::1] ifft_shapes       , long[::1] ifft_shifts     ,
-):
+) noexcept nogil:
 
     cdef double [:,:,::1] params
     cdef long[::1] nnz_k
@@ -970,15 +1069,18 @@ cdef void params_to_ifft(
 
         if params_shapes[il,1] > 0:
 
-            params = <double[:params_shapes[il,0],:params_shapes[il,1],:params_shapes[il,2]:1]> &params_buf[params_shifts[il]]
-            nnz_k = <long[:nnz_k_shapes[il,0]:1]> &nnz_k_buf[nnz_k_shifts[il]]
+            with gil:
 
-            if nnz_k.shape[0] > 0:
-                if nnz_k[0] == 0:
-                    for i in range(params.shape[2]):
-                        params[0,0,i] *= 0.5
+                params = <double[:params_shapes[il,0],:params_shapes[il,1],:params_shapes[il,2]:1]> &params_buf[params_shifts[il]]
+                nnz_k = <long[:nnz_k_shapes[il,0]:1]> &nnz_k_buf[nnz_k_shifts[il]]
 
-            ifft = scipy.fft.rfft(params, axis=0, n=2*params.shape[0])
+                if nnz_k.shape[0] > 0:
+                    if nnz_k[0] == 0:
+                        for i in range(params.shape[2]):
+                            params[0,0,i] *= 0.5
+
+                ifft = scipy.fft.rfft(params, axis=0, n=2*params.shape[0])
+
 
             dest = ifft_buf_ptr + ifft_shifts[il]
             n = ifft_shifts[il+1] - ifft_shifts[il]
@@ -1121,7 +1223,7 @@ cdef double[:,:,::1] params_to_segmpos(
     long[::1] gensegm_to_iint       ,
     long[::1] BodyLoop              ,
     long segm_size                  ,
-):
+) noexcept:
 
     cdef double complex *ifft_buf_ptr
     cdef double *pos_slice_buf_ptr
@@ -1132,15 +1234,15 @@ cdef double[:,:,::1] params_to_segmpos(
 
     cdef double[:,:,::1] segmpos = np.empty((nsegm, segm_size, geodim), dtype=np.float64)
 
-    ifft_buf_ptr = <double complex *> malloc(sizeof(double complex)*ifft_shifts[ifft_shapes.shape[0]])
-
-    params_to_ifft(
-        params_buf  , params_shapes , params_shifts ,
-        nnz_k_buf   , nnz_k_shapes  , nnz_k_shifts  ,
-        ifft_buf_ptr, ifft_shapes   , ifft_shifts   ,
-    )
-
     with nogil:
+
+        ifft_buf_ptr = <double complex *> malloc(sizeof(double complex)*ifft_shifts[ifft_shapes.shape[0]])
+
+        params_to_ifft(
+            params_buf  , params_shapes , params_shifts ,
+            nnz_k_buf   , nnz_k_shapes  , nnz_k_shifts  ,
+            ifft_buf_ptr, ifft_shapes   , ifft_shifts   ,
+        )
 
         size = pos_slice_shifts[pos_slice_shapes.shape[0]]
         pos_slice_buf_ptr = <double *> malloc(sizeof(double)*size)
