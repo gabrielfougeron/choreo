@@ -656,13 +656,13 @@ def reorganize_All_params_basis(All_params_basis):
             if nnz_k[0] == 0:
 
                 for iparam in range(params_basis_reorganized.shape[2]):
-                    
-                    IsIn = np.linalg.norm(params_basis_reorganized[:,0,iparam].imag)
-                    
-                    if IsIn:
-                        co_in.append(1)
-                    else:
+         
+                    IsOut = abs(np.linalg.norm(params_basis_reorganized[:,0,iparam].imag) - 1) < eps
+
+                    if IsOut:
                         co_in.append(0)
+                    else:
+                        co_in.append(1)
                     
         co_in_list.append(np.array(co_in, dtype=np.intc))
 

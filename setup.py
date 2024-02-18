@@ -75,8 +75,8 @@ elif platform.system() == "Linux":
 
     else:
 
-        all_compilers = ['icx','clang','gcc']
-        # all_compilers = ['clang']
+        # all_compilers = ['icx','clang','gcc']
+        all_compilers = ['clang']
         # all_compilers = ['gcc']
 
         for compiler in all_compilers:
@@ -87,14 +87,14 @@ elif platform.system() == "Linux":
                 os.environ['LDSHARED'] = compiler+' -shared'
                 
                 break
+# 
+        # extra_compile_args_std = ["-O0","-march=native", "-fopenmp", *ignore_warnings_args]
+        # extra_compile_args_safe = ["-O0", "-fopenmp", *ignore_warnings_args]
+        # extra_link_args = ["-fopenmp"]
 
-        extra_compile_args_std = ["-O0","-march=native", "-fopenmp", *ignore_warnings_args]
-        extra_compile_args_safe = ["-O0", "-fopenmp", *ignore_warnings_args]
-        extra_link_args = ["-fopenmp"]
-
-        # extra_compile_args_std = ["-Ofast", "-march=native", "-fopenmp", "-flto", *ignore_warnings_args]
-        # extra_compile_args_safe = ["-O3", "-fopenmp", "-flto", *ignore_warnings_args]
-        # extra_link_args = ["-fopenmp", "-flto"]
+        extra_compile_args_std = ["-Ofast", "-march=native", "-fopenmp", "-flto", *ignore_warnings_args]
+        extra_compile_args_safe = ["-O3", "-fopenmp", "-flto", *ignore_warnings_args]
+        extra_link_args = ["-fopenmp", "-flto"]
 
         cython_extnames.append("choreo.cython.funs_parallel")
         cython_safemath_needed.append(False)
@@ -108,27 +108,27 @@ cython_filenames = [ ext_name.replace('.','/') + src_ext for ext_name in cython_
 define_macros = [("NPY_NO_DEPRECATED_API", "NPY_1_7_API_VERSION")]
 
 compiler_directives = {
-    # 'wraparound': False,
-    # 'boundscheck': False,
-    # 'nonecheck': False,
-    # 'initializedcheck': False,
-    # 'overflowcheck': False,
-    # 'overflowcheck.fold': False,
+    'wraparound': False,
+    'boundscheck': False,
+    'nonecheck': False,
+    'initializedcheck': False,
+    'overflowcheck': False,
+    'overflowcheck.fold': False,
     # 'infer_types': True,
 }
 
 ##### Profiler only ####
-# profile_compiler_directives = {
-#     'profile': True,
-#     'linetrace': True,
-#     'binding': True,
-# }
-# compiler_directives.update(profile_compiler_directives)
-# profile_define_macros = [
-#     ('CYTHON_TRACE', '1')   ,
-#     ('CYTHON_TRACE_NOGIL', '1')   ,
-# ]
-# define_macros.extend(profile_define_macros)
+profile_compiler_directives = {
+    'profile': True,
+    'linetrace': True,
+    'binding': True,
+}
+compiler_directives.update(profile_compiler_directives)
+profile_define_macros = [
+    ('CYTHON_TRACE', '1')   ,
+    ('CYTHON_TRACE_NOGIL', '1')   ,
+]
+define_macros.extend(profile_define_macros)
 
 
 include_dirs = [numpy.get_include()]

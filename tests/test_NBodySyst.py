@@ -55,15 +55,16 @@ def test_all_pos_to_segmpos(AllConfigNames, float64_tols):
         # Unoptimized version
         all_coeffs = NBS.params_to_all_coeffs_noopt(params_buf)        
         all_pos = scipy.fft.irfft(all_coeffs, axis=1)
+        
+        NBS.AssertAllSegmGenConstraintsAreRespected(all_pos)
+        NBS.AssertAllBodyConstraintAreRespected(all_pos)
+        
         segmpos_noopt = NBS.all_pos_to_segmpos_noopt(all_pos)
         
         # Optimized version
         segmpos_cy = NBS.params_to_segmpos(params_buf)
         
         assert np.allclose(segmpos_noopt, segmpos_cy, rtol = float64_tols.rtol, atol = float64_tols.atol) 
-        
-        NBS.AssertAllSegmGenConstraintsAreRespected(all_pos)
-        NBS.AssertAllBodyConstraintAreRespected(all_pos)
         
 @ProbabilisticTest()
 def test_capture_co(AllConfigNames):
@@ -73,26 +74,47 @@ def test_capture_co(AllConfigNames):
         print(f"Config name : {config_name}")
 
         NBS = load_from_config_file(config_name)
-
         NBS.nint_fac = 10
-        params_buf = np.random.random((NBS.nparams))
-        
-    
-    nnz = [[] for il in range(NBS.nloop)]
-    for il in range(NBS.nloop):
-        
-        nnz_k = NBS.nnz_k(il)
-        params_basis = NBS.params_basis(il)
-        
+
         eps = 1e-12
-        if nnz_k.shape[0] > 0:
-            if nnz_k[0] == 0:
-                
-                for iparam in range(params_basis.shape[2]):
-                    if np.linalg.norm(params_basis[:,0,iparam].imag) > eps:
-                        nnz[il].append(iparam)
+        nnz = [[] for il in range(NBS.nloop)]
+        for il in range(NBS.nloop):
+            
+            nnz_k = NBS.nnz_k(il)
+            params_basis = NBS.params_basis(il)
+            
+            if nnz_k.shape[0] > 0:
+                if nnz_k[0] == 0:
+
+                    for iparam in range(params_basis.shape[2]):
+                        
+                        if np.linalg.norm(params_basis[:,0,iparam].imag) > eps:
+                            
+                            nnz[il].append(iparam)
 
         for il in range(NBS.nloop):
             co_in = NBS.co_in(il)
             for iparam in range(co_in.shape[0]):            
-                assert co_in[iparam] == (iparam in nnz[il])
+                assert not(co_in[iparam]) == (iparam in nnz[il])
+
+def test_round_trips(AllConfigNames, float64_tols):
+    
+    for config_name in AllConfigNames:
+        
+        print(f"Config name : {config_name}")
+        
+        NBS = load_from_config_file(config_name)
+        
+        NBS.nint_fac = 10
+        params_buf = np.random.random((NBS.nparams))
+
+        all_coeffs = NBS.params_to_all_coeffs_noopt(params_buf)  
+        all_pos = scipy.fft.irfft(all_coeffs, axis=1)
+        
+        all_coeffs_rt = scipy.fft.rfft(all_pos, axis=1)
+        print(np.linalg.norm(all_coeffs_rt - all_coeffs))
+        assert np.allclose(all_coeffs, all_coeffs_rt, rtol = float64_tols.rtol, atol = float64_tols.atol) 
+
+        params_buf_rt = NBS.all_coeffs_to_params_noopt(all_coeffs_rt)
+        print(np.linalg.norm(params_buf - params_buf_rt))
+        assert np.allclose(params_buf, params_buf_rt, rtol = float64_tols.rtol, atol = float64_tols.atol) 

@@ -84,7 +84,7 @@ def main():
         TT.toc(test)
 
     print()
-    # print(TT)
+    print(TT)
   
 
 
@@ -109,123 +109,56 @@ def doit(config_name):
     NBS = choreo.cython._NBodySyst.NBodySyst(geodim, nbody, mass, Sym_list)
     
     NBS.nint_fac = 1
-    
-    
-    all_coeffs = np.zeros((NBS.nloop, NBS.ncoeffs, NBS.geodim),dtype=np.complex128)
-    
-    all_coeffs[:,0,:] = 1j*np.random.random((all_coeffs.shape[0],all_coeffs.shape[2]))
-    params_buf_useless = NBS.all_coeffs_to_params_noopt(all_coeffs)
-    
-    # print(params_buf_useless)
-    
-    nnz = [[] for il in range(NBS.nloop)]
-    for il in range(NBS.nloop):
-        
-        nnz_k = NBS.nnz_k(il)
-        params_basis = NBS.params_basis(il)
-        
-        if nnz_k.shape[0] > 0:
-            if nnz_k[0] == 0:
 
-                
-                # print(il)
-                # print(params_basis[:,0,:].imag)
-                
-                for iparam in range(params_basis.shape[2]):
-                    
-                    if np.linalg.norm(params_basis[:,0,iparam].imag) > eps:
-                        
-                        nnz[il].append(iparam)
-
-        
-    # print(nnz, np.count_nonzero(params_buf_useless))
-    # assert abs(nnz - np.count_nonzero(params_buf_useless)) < eps
-    
-    for il in range(NBS.nloop):
-        
-        params = NBS.loop_params(params_buf_useless, il)
-        
-        assert abs(len(nnz[il]) - np.count_nonzero(params)) < eps
-    # 
-    # print(nnz[il])
-    
-    # print(NBS.nloop)
-    # print(nnz)
-    
-    print(nnz)
-    print(all_coeffs.shape[0]*all_coeffs.shape[2])
-    print(np.count_nonzero(params_buf_useless))
-    
-    for il in range(NBS.nloop):
-        co_in = NBS.co_in(il)
-        for iparam in range(co_in.shape[0]):            
-            assert co_in[iparam] == ((iparam in nnz[il]))
-
-        
-    
+    eps = 1e-12
     
 
-    
-    
-    # for il in range(NBS.nloop):
-    #     print()
-    #     print(f'{il = }')
-    #     # print(NBS.params_basis(il))
-    #     
-    #     # geodim, nnz_k.shape[0], last_nparam
-    #     # params_basis = NBS.params_basis(il).copy()
-    #     
-    #     # print(params_basis.shape)
-    #     
-    #     # m = params_basis.shape[0]
-    #     # n = 2*params_basis.shape[1]*params_basis.shape[2]
-    #     
-    #     # print(m==n)
-    #     
-    #     # params_basis_r = params_basis.view(dtype=np.float64).reshape(m,n)
-    #     
-    #     # print(params_basis_r)
-    #     # 
-    #     # print(NBS.nnz_k(il))
-    
-    
-    
-    return
-    
-    
-
-    
     params_buf = np.random.random((NBS.nparams))
     # NBS.project_params_buf(params_buf)
     
+    print(f'{NBS.nparams = }') 
+    print(f'{NBS.nparams_incl_o = }') 
+    print(f'{NBS.nrem = }') 
     
+    # return
+    # print(params_buf)
     
+    print(NBS.nrem)
+    for il in range(NBS.nloop):
+        print(NBS.co_in(il))
+    
+    # return
 
-    all_coeffs = NBS.params_to_all_coeffs_noopt(params_buf)        
-    all_pos = scipy.fft.irfft(all_coeffs, axis=1)
-    segmpos_noopt = NBS.all_pos_to_segmpos_noopt(all_pos)
     
-    segmpos_cy = NBS.params_to_segmpos(params_buf)
     
-    assert np.linalg.norm(segmpos_noopt - segmpos_cy) < 1e-14
-  
     
     # print(all_coeffs)
+    # return
     
     
+    
+    
+    
+    
+    all_coeffs = NBS.params_to_all_coeffs_noopt(params_buf)  
+    all_pos = scipy.fft.irfft(all_coeffs, axis=1)
+    # 
+    # segmpos_noopt = NBS.all_pos_to_segmpos_noopt(all_pos)
+    # segmpos_cy = NBS.params_to_segmpos(params_buf)
+    # 
+    # print(np.linalg.norm(segmpos_noopt - segmpos_cy))
+    # assert np.linalg.norm(segmpos_noopt - segmpos_cy) < eps
+  
+
     
     all_coeffs_rt = scipy.fft.rfft(all_pos, axis=1)
-    
-    
-    # print(all_coeffs_rt - all_coeffs)
-    
-    
+    print(np.linalg.norm(all_coeffs_rt - all_coeffs))
+    assert (np.linalg.norm(all_coeffs - all_coeffs_rt)) < eps    
+
+
     params_buf_rt = NBS.all_coeffs_to_params_noopt(all_coeffs_rt)
-    print(params_buf - params_buf_rt)
-    
-    
-    # assert (np.linalg.norm(all_coeffs - all_coeffs_rt)) < eps
-    # assert (np.linalg.norm(params_buf - params_buf_rt)) < eps
+    print(np.linalg.norm(params_buf - params_buf_rt))
+    assert (np.linalg.norm(params_buf - params_buf_rt)) < eps
     
     
     
@@ -246,7 +179,7 @@ def doit(config_name):
     
     
     nparam_nosym = geodim * NBS.nint * nbody
-    nparam_tot = NBS.nparams
+    nparam_tot = NBS.nparams_incl_o
 
     print('*****************************************')
     print('')
@@ -266,11 +199,11 @@ def doit(config_name):
 
     reduction_ratio = nparam_nosym / nparam_tot
 
-    assert abs((nparam_nosym / nparam_tot)  - reduction_ratio) < 1e-14
+    assert abs((nparam_nosym / nparam_tot)  - reduction_ratio) < eps
     
     if NBS.All_BinSegmTransformId:
-        assert abs(NBS.nbin_segm_tot  / NBS.nbin_segm_unique  - reduction_ratio) < 1e-14
-        assert abs((nbody * NBS.nint_min) / NBS.nsegm - reduction_ratio) < 1e-14
+        assert abs(NBS.nbin_segm_tot  / NBS.nbin_segm_unique  - reduction_ratio) < eps
+        assert abs((nbody * NBS.nint_min) / NBS.nsegm - reduction_ratio) < eps
 
 
     return

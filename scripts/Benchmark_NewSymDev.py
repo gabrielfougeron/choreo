@@ -39,8 +39,7 @@ def params_to_segmpos_opt(NBS, params_buf):
 
 
 all_funs = [
-    # params_to_segmpos_noopt     ,
-    params_to_segmpos_opt_safe ,
+    params_to_segmpos_noopt     ,
     params_to_segmpos_opt       ,
 ]
 
