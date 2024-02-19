@@ -834,6 +834,26 @@ cdef class NBodySyst():
         )
 
         return np.asarray(segmpos)
+ 
+    
+    @cython.final
+    def params_to_segmpos_rt_check(self, double[::1] params_mom_buf):
+
+        assert params_mom_buf.shape[0] == self.nparams
+
+        segmpos = params_to_segmpos_rt_check(
+            params_mom_buf          , self._params_shapes       , self._params_shifts       ,
+                                      self._ifft_shapes         , self._ifft_shifts         ,
+            self._params_basis_buf  , self._params_basis_shapes , self._params_basis_shifts ,
+            self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
+            self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
+                                      self._pos_slice_shapes    , self._pos_slice_shifts    ,
+            self._ncoeff_min_loop   , self.nnpr                 ,
+            self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
+            self._gensegm_to_body   , self._gensegm_to_iint     ,
+            self._bodyloop          , self.segm_size            , self.segm_store           ,
+        )
+
 
 
 
@@ -1205,10 +1225,59 @@ cdef void params_to_ifft(
 
                 ifft = scipy.fft.rfft(params, axis=0, n=2*params.shape[0])
 
+                # TODO : remove this once validation is done
+                if nnz_k.shape[0] > 0:
+                    if nnz_k[0] == 0:
+                        for i in range(params.shape[2]):
+                            params[0,0,i] *= 2
+
 
             dest = ifft_buf_ptr + ifft_shifts[il]
             n = ifft_shifts[il+1] - ifft_shifts[il]
             scipy.linalg.cython_blas.zcopy(&n,&ifft[0,0,0],&int_one,dest,&int_one)
+
+
+cdef void ifft_to_params(
+    double complex *ifft_buf_ptr    , long[:,::1] ifft_shapes       , long[::1] ifft_shifts     ,
+    double* params_buf              , long[:,::1] params_shapes     , long[::1] params_shifts   ,
+    long[::1] nnz_k_buf             , long[:,::1] nnz_k_shapes      , long[::1] nnz_k_shifts    ,
+# ) noexcept nogil:
+):
+
+    cdef double [:,:,::1] params
+    cdef long[::1] nnz_k
+    cdef double complex[:,:,::1] ifft
+
+    cdef int nloop = params_shapes.shape[0]
+    cdef int n
+    cdef double* dest
+    cdef Py_ssize_t il, i
+
+    for il in range(nloop):
+
+        if params_shapes[il,1] > 0:
+
+            nnz_k = <long[:nnz_k_shapes[il,0]:1]> &nnz_k_buf[nnz_k_shifts[il]]
+            ifft = <double complex[:ifft_shapes[il,0],:ifft_shapes[il,1],:ifft_shapes[il,2]:1]> &ifft_buf_ptr[ifft_shifts[il]]
+
+            params = scipy.fft.irfft(ifft, axis=0)
+
+
+            if nnz_k.shape[0] > 0:
+                if nnz_k[0] == 0:
+                    for i in range(params.shape[2]):
+                        params[0,0,i] *= 2
+
+
+
+            dest = params_buf + params_shifts[il]
+            n = params_shifts[il+1] - params_shifts[il]
+            scipy.linalg.cython_blas.dcopy(&n,&params[0,0,0],&int_one,dest,&int_one)
+
+
+
+
+
 
 
 cdef void ifft_to_pos_slice(
@@ -1337,6 +1406,84 @@ cdef void pos_slice_to_segmpos(
     if NeedsAllocate:
         free(tmp_loc)
 
+cdef void segmpos_to_pos_slice(
+    const double* segmpos_buf_ptr   ,
+    const double* pos_slice_buf_ptr , long[:,::1] pos_slice_shapes  , long[::1] pos_slice_shifts    ,
+    bint[::1] InterSpaceRotIsId     ,
+    double[:,:,::1] InterSpaceRot   ,
+    long[::1] InterTimeRev          ,
+    long[::1] gensegm_to_body     ,
+    long[::1] gensegm_to_iint     ,
+    long[::1] BodyLoop              ,
+    long segm_size                  ,
+    long segm_store                 ,
+) noexcept nogil:
+
+    cdef int nsegm = gensegm_to_body.shape[0]
+    cdef double* pos_slice
+    cdef double* segmpos
+    cdef double* tmp_loc
+    cdef double* tmp
+
+    cdef int geodim = InterSpaceRot.shape[1]
+    cdef int segm_store_int = segm_store
+    cdef int nitems_size = segm_size*geodim
+    cdef int nitems_store = segm_store*geodim
+    cdef Py_ssize_t isegm, ib, il, iint
+    cdef Py_ssize_t i, idim
+
+    cdef bint NeedsAllocate = False
+
+    for isegm in range(nsegm):
+        NeedsAllocate = (NeedsAllocate or ((InterTimeRev[isegm] < 0) and not(InterSpaceRotIsId[isegm])))
+
+    if NeedsAllocate:
+        tmp_loc = <double*> malloc(sizeof(double)*nitems_store)
+
+    for isegm in range(nsegm):
+
+        ib = gensegm_to_body[isegm]
+        iint = gensegm_to_iint[isegm]
+        il = BodyLoop[ib]
+
+        if InterTimeRev[isegm] == 1:
+
+            pos_slice = pos_slice_buf_ptr + pos_slice_shifts[il] + nitems_size*iint
+            segmpos = segmpos_buf_ptr + nitems_store*isegm
+
+            if InterSpaceRotIsId[isegm]:
+                # scipy.linalg.cython_blas.dcopy(&nitems_store,pos_slice,&int_one,segmpos,&int_one)
+                scipy.linalg.cython_blas.dcopy(&nitems_store,segmpos,&int_one,pos_slice,&int_one)
+            else:
+                scipy.linalg.cython_blas.dgemm(transt, transn, &geodim, &segm_store_int, &geodim, &one_double, &InterSpaceRot[isegm,0,0], &geodim, pos_slice, &geodim, &zero_double, segmpos, &geodim)
+
+        else:
+
+            pos_slice = pos_slice_buf_ptr + pos_slice_shifts[il] + nitems_size*iint + geodim
+            segmpos = segmpos_buf_ptr + nitems_store*(isegm+1) - geodim
+
+            if InterSpaceRotIsId[isegm]:
+
+                for i in range(segm_store):
+                    for idim in range(geodim):
+                        segmpos[idim] = pos_slice[idim]
+                    segmpos -= geodim
+                    pos_slice += geodim
+                            
+            else:
+                
+                tmp = tmp_loc
+                scipy.linalg.cython_blas.dgemm(transt, transn, &geodim, &segm_store_int, &geodim, &one_double, &InterSpaceRot[isegm,0,0], &geodim, pos_slice, &geodim, &zero_double, tmp, &geodim)
+
+                for i in range(segm_store):
+                    for idim in range(geodim):
+                        segmpos[idim] = tmp[idim]
+                    segmpos -= geodim
+                    tmp += geodim
+
+    if NeedsAllocate:
+        free(tmp_loc)
+
 @cython.cdivision(True)
 cdef double[:,:,::1] params_to_segmpos(
     double[::1] params_mom_buf              , long[:,::1] params_shapes         , long[::1] params_shifts       ,
@@ -1346,7 +1493,7 @@ cdef double[:,:,::1] params_to_segmpos(
     bint[::1] co_in_buf                     , long[:,::1] co_in_shapes          , long[::1] co_in_shifts        ,
                                               long[:,::1] pos_slice_shapes      , long[::1] pos_slice_shifts    ,
     long[::1] ncoeff_min_loop               , long nnpr                         ,
-    bint[::1] InterSpaceRotIsId               , double[:,:,::1] InterSpaceRot       , long[::1] InterTimeRev          ,
+    bint[::1] InterSpaceRotIsId             , double[:,:,::1] InterSpaceRot     , long[::1] InterTimeRev        ,
     long[::1] gensegm_to_body       ,
     long[::1] gensegm_to_iint       ,
     long[::1] BodyLoop              ,
@@ -1418,3 +1565,134 @@ cdef double[:,:,::1] params_to_segmpos(
         free(pos_slice_buf_ptr)
 
     return segmpos
+
+
+
+@cython.cdivision(True)
+cdef void params_to_segmpos_rt_check(
+    double[::1] params_mom_buf              , long[:,::1] params_shapes         , long[::1] params_shifts       ,
+                                              long[:,::1] ifft_shapes           , long[::1] ifft_shifts         ,
+    double complex[::1] params_basis_buf    , long[:,::1] params_basis_shapes   , long[::1] params_basis_shifts ,
+    long[::1] nnz_k_buf                     , long[:,::1] nnz_k_shapes          , long[::1] nnz_k_shifts        ,
+    bint[::1] co_in_buf                     , long[:,::1] co_in_shapes          , long[::1] co_in_shifts        ,
+                                              long[:,::1] pos_slice_shapes      , long[::1] pos_slice_shifts    ,
+    long[::1] ncoeff_min_loop               , long nnpr                         ,
+    bint[::1] InterSpaceRotIsId             , double[:,:,::1] InterSpaceRot     , long[::1] InterTimeRev        ,
+    long[::1] gensegm_to_body       ,
+    long[::1] gensegm_to_iint       ,
+    long[::1] BodyLoop              ,
+    long segm_size                  ,
+    long segm_store                 ,
+):
+
+    # cdef double *params_pos_buf
+    # cdef double complex *ifft_buf_ptr
+    # cdef double *pos_slice_buf_ptr
+
+    cdef int nsegm = gensegm_to_body.shape[0]
+    cdef int geodim = InterSpaceRot.shape[1]
+    cdef int size
+
+    cdef double eps = 1e-12
+
+
+    # TODO PYFFTW allocate here if needed.
+    cdef double[::1] params_pos_buf = np.empty((params_shifts[params_shapes.shape[0]]),dtype=np.float64)
+    cdef double[::1] params_mom_buf_rt = np.empty((params_mom_buf.shape[0]),dtype=np.float64)
+
+    changevar_mom(
+        &params_mom_buf[0]  , params_shapes , params_shifts ,
+        nnz_k_buf           , nnz_k_shapes  , nnz_k_shifts  ,
+        co_in_buf           , co_in_shapes  , co_in_shifts  ,
+        ncoeff_min_loop     ,
+        &params_pos_buf[0]  , 
+    )   
+
+    changevar_mom_inv(
+        &params_pos_buf[0]      , params_shapes , params_shifts ,
+        nnz_k_buf               , nnz_k_shapes  , nnz_k_shifts  ,
+        co_in_buf               , co_in_shapes  , co_in_shifts  ,
+        ncoeff_min_loop         ,
+        &params_mom_buf_rt[0]   , 
+    )   
+
+    params_mom_buf_np = np.asarray(params_mom_buf)
+    params_mom_buf_rt_np = np.asarray(params_mom_buf_rt)
+
+    print(np.linalg.norm(params_mom_buf_np - params_mom_buf_rt_np))
+    assert np.linalg.norm(params_mom_buf_np - params_mom_buf_rt_np) < eps
+
+
+
+    cdef double complex[::1] ifft_buf_ptr = np.empty((ifft_shifts[ifft_shapes.shape[0]]),dtype=np.complex128)
+    cdef double[::1] params_pos_buf_rt = np.empty((params_shifts[params_shapes.shape[0]]),dtype=np.float64)
+
+    params_to_ifft(
+        &params_pos_buf[0]  , params_shapes , params_shifts ,
+        nnz_k_buf           , nnz_k_shapes  , nnz_k_shifts  ,
+        &ifft_buf_ptr[0]    , ifft_shapes   , ifft_shifts   ,
+    )
+
+    ifft_to_params(
+        &ifft_buf_ptr[0]        , ifft_shapes   , ifft_shifts   ,
+        &params_pos_buf_rt[0]   , params_shapes , params_shifts ,
+        nnz_k_buf               , nnz_k_shapes  , nnz_k_shifts  ,
+    )
+
+
+
+    params_pos_buf_np = np.asarray(params_pos_buf)
+    params_pos_buf_rt_np = np.asarray(params_pos_buf_rt)
+
+    # print(params_pos_buf_np)
+    # print(params_pos_buf_rt_np)
+    # print(params_pos_buf_rt_np-params_pos_buf_np)
+
+
+    print(np.linalg.norm(params_pos_buf_np - params_pos_buf_rt_np))
+    assert np.linalg.norm(params_pos_buf_np - params_pos_buf_rt_np) < eps
+
+    print(np.linalg.norm(params_mom_buf_np - params_mom_buf_rt_np))
+    assert np.linalg.norm(params_mom_buf_np - params_mom_buf_rt_np) < eps
+
+
+
+
+
+    
+
+#     # PYFFTW free ???
+#     free(params_pos_buf)
+# 
+#     size = pos_slice_shifts[pos_slice_shapes.shape[0]]
+#     pos_slice_buf_ptr = <double *> malloc(sizeof(double)*size)
+#     memset(pos_slice_buf_ptr, 0, sizeof(double)*size)
+# 
+#     ifft_to_pos_slice(
+#         ifft_buf_ptr        , ifft_shapes           , ifft_shifts           ,
+#         &params_basis_buf[0], params_basis_shapes   , params_basis_shifts   ,
+#         &nnz_k_buf[0]       , nnz_k_shapes          , nnz_k_shifts          ,
+#         pos_slice_buf_ptr   , pos_slice_shapes      , pos_slice_shifts      ,
+#         ncoeff_min_loop     , nnpr                  ,
+#     )
+# 
+#     free(ifft_buf_ptr)
+# 
+# 
+#     cdef double[:,:,::1] segmpos = np.empty((nsegm, segm_store, geodim), dtype=np.float64)
+# 
+#     pos_slice_to_segmpos(
+#         pos_slice_buf_ptr   , pos_slice_shapes  , pos_slice_shifts ,
+#         &segmpos[0,0,0] ,
+#         InterSpaceRotIsId,
+#         InterSpaceRot     ,
+#         InterTimeRev      ,
+#         gensegm_to_body ,
+#         gensegm_to_iint ,
+#         BodyLoop        ,
+#         segm_size       ,
+#         segm_store      ,
+#     )
+# 
+#     free(pos_slice_buf_ptr)
+
