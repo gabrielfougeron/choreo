@@ -769,7 +769,6 @@ cdef class NBodySyst():
 
         assert params_mom_buf.shape[0] == self.nparams
 
-
         segmpos = params_to_segmpos(
             params_mom_buf          , self._params_shapes       , self._params_shifts       ,
                                       self._ifft_shapes         , self._ifft_shifts         ,
@@ -1310,56 +1309,56 @@ cdef double[:,:,::1] params_to_segmpos(
 
     cdef double[:,:,::1] segmpos = np.empty((nsegm, segm_size, geodim), dtype=np.float64)
 
-    # with nogil:
+    with nogil:
 
-    # TODO PYFFTW allocate here if needed.
-    params_pos_buf = <double*> malloc(sizeof(double)*params_shifts[params_shapes.shape[0]])
+        # TODO PYFFTW allocate here if needed.
+        params_pos_buf = <double*> malloc(sizeof(double)*params_shifts[params_shapes.shape[0]])
 
-    changevar_mom(
-        &params_mom_buf[0]  , params_shapes , params_shifts ,
-        nnz_k_buf           , nnz_k_shapes  , nnz_k_shifts  ,
-        co_in_buf           , co_in_shapes  , co_in_shifts  ,
-        ncoeff_min_loop     ,
-        params_pos_buf      , 
-    )   
+        changevar_mom(
+            &params_mom_buf[0]  , params_shapes , params_shifts ,
+            nnz_k_buf           , nnz_k_shapes  , nnz_k_shifts  ,
+            co_in_buf           , co_in_shapes  , co_in_shifts  ,
+            ncoeff_min_loop     ,
+            params_pos_buf      , 
+        )   
 
-    ifft_buf_ptr = <double complex *> malloc(sizeof(double complex)*ifft_shifts[ifft_shapes.shape[0]])
+        ifft_buf_ptr = <double complex *> malloc(sizeof(double complex)*ifft_shifts[ifft_shapes.shape[0]])
 
-    params_to_ifft(
-        params_pos_buf  , params_shapes , params_shifts ,
-        nnz_k_buf       , nnz_k_shapes  , nnz_k_shifts  ,
-        ifft_buf_ptr    , ifft_shapes   , ifft_shifts   ,
-    )
+        params_to_ifft(
+            params_pos_buf  , params_shapes , params_shifts ,
+            nnz_k_buf       , nnz_k_shapes  , nnz_k_shifts  ,
+            ifft_buf_ptr    , ifft_shapes   , ifft_shifts   ,
+        )
 
-    # PYFFTW free ???
-    free(params_pos_buf)
+        # PYFFTW free ???
+        free(params_pos_buf)
 
-    size = pos_slice_shifts[pos_slice_shapes.shape[0]]
-    pos_slice_buf_ptr = <double *> malloc(sizeof(double)*size)
-    memset(pos_slice_buf_ptr, 0, sizeof(double)*size)
+        size = pos_slice_shifts[pos_slice_shapes.shape[0]]
+        pos_slice_buf_ptr = <double *> malloc(sizeof(double)*size)
+        memset(pos_slice_buf_ptr, 0, sizeof(double)*size)
 
-    ifft_to_pos_slice(
-        ifft_buf_ptr        , ifft_shapes           , ifft_shifts           ,
-        &params_basis_buf[0], params_basis_shapes   , params_basis_shifts   ,
-        &nnz_k_buf[0]       , nnz_k_shapes          , nnz_k_shifts          ,
-        pos_slice_buf_ptr   , pos_slice_shapes      , pos_slice_shifts      ,
-        ncoeff_min_loop     , nnpr                  ,
-    )
+        ifft_to_pos_slice(
+            ifft_buf_ptr        , ifft_shapes           , ifft_shifts           ,
+            &params_basis_buf[0], params_basis_shapes   , params_basis_shifts   ,
+            &nnz_k_buf[0]       , nnz_k_shapes          , nnz_k_shifts          ,
+            pos_slice_buf_ptr   , pos_slice_shapes      , pos_slice_shifts      ,
+            ncoeff_min_loop     , nnpr                  ,
+        )
 
-    free(ifft_buf_ptr)
+        free(ifft_buf_ptr)
 
-    pos_slice_to_segmpos(
-        pos_slice_buf_ptr   , pos_slice_shapes  , pos_slice_shifts ,
-        &segmpos[0,0,0] ,
-        GenSpaceRotIsId,
-        GenSpaceRot     ,
-        GenTimeRev      ,
-        gensegm_to_body ,
-        gensegm_to_iint ,
-        BodyLoop        ,
-        segm_size       ,
-    )
+        pos_slice_to_segmpos(
+            pos_slice_buf_ptr   , pos_slice_shapes  , pos_slice_shifts ,
+            &segmpos[0,0,0] ,
+            GenSpaceRotIsId,
+            GenSpaceRot     ,
+            GenTimeRev      ,
+            gensegm_to_body ,
+            gensegm_to_iint ,
+            BodyLoop        ,
+            segm_size       ,
+        )
 
-    free(pos_slice_buf_ptr)
+        free(pos_slice_buf_ptr)
 
     return segmpos
