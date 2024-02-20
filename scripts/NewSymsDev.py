@@ -113,10 +113,10 @@ def doit(config_name):
     
     NBS = choreo.cython._NBodySyst.NBodySyst(geodim, nbody, mass, Sym_list)
     
-    if NBS.nnpr == 2:
-        return
+    # if NBS.nnpr == 2:
+    #     return
     
-    NBS.nint_fac = 2
+    NBS.nint_fac = 10
 
     eps = 1e-12
     
