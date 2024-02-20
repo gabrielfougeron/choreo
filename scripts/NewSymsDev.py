@@ -118,22 +118,21 @@ def doit(config_name):
     
     NBS.nint_fac = 10
 
-    eps = 1e-12
+    eps = 1e-11
     
 
     params_buf = np.random.random((NBS.nparams))
 
+    segmpos_cy = NBS.params_to_segmpos(params_buf)
+    params_buf_rt = NBS.segmpos_to_params(segmpos_cy)
     
-
-
-
-    NBS.params_to_segmpos_rt_check(params_buf)
-
-
-
-
-
-
+    # 
+    # print( params_buf)
+    # print(params_buf_rt )
+    # print(params_buf_rt - params_buf)
+    
+    print(np.linalg.norm(params_buf - params_buf_rt))
+    assert np.linalg.norm(params_buf - params_buf_rt) < eps
 
 
 
