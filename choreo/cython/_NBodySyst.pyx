@@ -1128,8 +1128,7 @@ cdef void partial_fft_to_pos_slice_1npr(
     cdef double* params_basis_r = <double*> params_basis
     cdef double* ifft_r = <double*> const_ifft
 
-    cdef int nzcom = ncoeff_min_loop_nnz*nppl
-    cdef int ndcom = 2*nzcom
+    cdef int ndcom = 2*ncoeff_min_loop_nnz*nppl
 
     inplace_twiddle(const_ifft, nnz_k, nint, n_inter, ncoeff_min_loop_nnz, nppl, -1)
 
@@ -1240,6 +1239,95 @@ cdef void partial_fft_to_pos_slice_2npr(
 
     free(ztmp)
     
+
+
+
+
+
+@cython.cdivision(True)
+cdef void pos_slice_to_partial_fft_2npr(
+    const double* const_pos_slice           ,
+    const double complex* params_basis      ,
+    const long* nnz_k                       ,
+    const double complex* const_ifft        ,
+    int npr                                 ,
+    int ncoeff_min_loop_nnz                 ,
+    int ncoeff_min_loop                     ,
+    int geodim                              ,
+    int nppl                                ,
+# ) noexcept nogil:
+):
+
+    cdef int n_inter = npr+1
+    cdef long nint = 2*ncoeff_min_loop*npr
+
+    cdef double dfac
+
+    # Casting complex double to double array
+    cdef double* params_basis_r = <double*> params_basis
+    cdef double complex* ifft = const_ifft
+    cdef double* ifft_r = <double*> const_ifft
+    cdef double* pos_slice
+    
+    cdef int nzcom = ncoeff_min_loop_nnz*nppl
+    cdef int ndcom = 2*nzcom
+    cdef int nconj
+
+    cdef double complex w
+    cdef Py_ssize_t m, j, i
+
+    dfac = (npr * ncoeff_min_loop)
+    n_inter = npr-1
+    nconj = n_inter*nzcom
+
+    cdef double complex *ztmp = <double complex*> malloc(sizeof(double complex) * nconj)
+    cdef double *dtmp = (<double*> ztmp)
+
+    pos_slice = const_pos_slice + (npr+1)*geodim
+    # Again with the clever memory arrangement and a single gemm call
+    scipy.linalg.cython_blas.dgemm(transn, transn, &ndcom, &n_inter, &geodim, &dfac, params_basis_r, &ndcom, pos_slice, &geodim, &zero_double, dtmp, &ndcom)
+
+    dtmp += n_inter*ndcom
+    ifft_r = (<double*> const_ifft) + ndcom
+    for i in range(n_inter):
+        dtmp -= ndcom
+        scipy.linalg.cython_blas.dcopy(&ndcom,dtmp,&int_one,ifft_r,&int_one)
+        ifft_r += ndcom
+
+    free(ztmp)
+
+    # Inplace conjugaison
+    ifft_r = (<double*> const_ifft) + 1 + ndcom
+    scipy.linalg.cython_blas.dscal(&nconj,&minusone_double,ifft_r,&int_two)    
+
+    ifft += nzcom
+    for j in range(ncoeff_min_loop_nnz):
+        w = cexp(cminusitwopi*nnz_k[j]/ncoeff_min_loop)
+        for i in range(nppl):
+            scipy.linalg.cython_blas.zscal(&n_inter,&w,ifft,&nzcom)
+            ifft += 1
+
+    # Initialize start and end of ifft_r
+    ifft_r = (<double*> const_ifft)
+    memset(ifft_r, 0, sizeof(double)*ndcom)
+    ifft_r = (<double*> const_ifft) + npr*ndcom
+    memset(ifft_r, 0, sizeof(double)*ndcom)
+
+    pos_slice = const_pos_slice
+    n_inter = npr+1
+    ifft_r = (<double*> const_ifft) 
+    # Again with the clever memory arrangement and a single gemm call
+    scipy.linalg.cython_blas.dgemm(transn, transn, &ndcom, &n_inter, &geodim, &dfac, params_basis_r, &ndcom, pos_slice, &geodim, &one_double, ifft_r, &ndcom)
+
+    # Double start and end of ifft_r
+    scipy.linalg.cython_blas.dscal(&ndcom,&two_double,ifft_r,&int_one)
+    ifft_r += npr*ndcom
+    scipy.linalg.cython_blas.dscal(&ndcom,&two_double,ifft_r,&int_one)
+
+    inplace_twiddle(const_ifft, nnz_k, nint, n_inter, ncoeff_min_loop_nnz, nppl, 1)
+
+
+
 cdef void params_to_ifft(
     double* params_buf              , long[:,::1] params_shapes     , long[::1] params_shifts   ,
     long[::1] nnz_k_buf             , long[:,::1] nnz_k_shapes      , long[::1] nnz_k_shifts    ,
@@ -1305,6 +1393,7 @@ cdef void ifft_to_params(
 
             nnz_k = <long[:nnz_k_shapes[il,0]:1]> &nnz_k_buf[nnz_k_shifts[il]]
             ifft = <double complex[:ifft_shapes[il,0],:ifft_shapes[il,1],:ifft_shapes[il,2]:1]> &ifft_buf_ptr[ifft_shifts[il]]
+
 
             params = scipy.fft.irfft(ifft, axis=0)
 
@@ -1423,11 +1512,11 @@ cdef void pos_slice_to_ifft(
                     pos_slice, params_basis, nnz_k, ifft,
                     npr, ncoeff_min_loop_nnz, ncoeff_min_loop_il, geodim, nppl,
                 )
-            # else:
-            #     partial_fft_to_pos_slice_2npr(
-            #         ifft, params_basis, nnz_k, pos_slice,
-            #         npr, ncoeff_min_loop_nnz, ncoeff_min_loop_il, geodim, nppl,
-            #     )
+            else:
+                pos_slice_to_partial_fft_2npr(
+                    pos_slice, params_basis, nnz_k, ifft,
+                    npr, ncoeff_min_loop_nnz, ncoeff_min_loop_il, geodim, nppl,
+                )
 
 
 
@@ -1560,7 +1649,6 @@ cdef void segmpos_to_pos_slice(
             segmpos = segmpos_buf_ptr + nitems_store*isegm
 
             if InterSpaceRotIsId[isegm]:
-                # scipy.linalg.cython_blas.dcopy(&nitems_store,pos_slice,&int_one,segmpos,&int_one)
                 scipy.linalg.cython_blas.dcopy(&nitems_store,segmpos,&int_one,pos_slice,&int_one)
             else:
                 scipy.linalg.cython_blas.dgemm(transt, transn, &geodim, &segm_store_int, &geodim, &one_double, &InterSpaceRot[isegm,0,0], &geodim, pos_slice, &geodim, &zero_double, segmpos, &geodim)
@@ -1733,10 +1821,11 @@ cdef void params_to_segmpos_rt_check(
 
 
     cdef double complex[::1] ifft_buf = np.empty((ifft_shifts[ifft_shapes.shape[0]]),dtype=np.complex128)
-    cdef double[::1] params_pos_buf_rt = np.empty((params_shifts[params_shapes.shape[0]]),dtype=np.float64)
+    cdef double[::1] params_pos_buf_rt = np.zeros((params_shifts[params_shapes.shape[0]]),dtype=np.float64)
 
     cdef double[::1] pos_slice_buf = np.zeros((pos_slice_shifts[pos_slice_shapes.shape[0]]),dtype=np.float64)
     cdef double complex[::1] ifft_buf_rt = np.empty((ifft_shifts[ifft_shapes.shape[0]]),dtype=np.complex128)
+    # cdef double complex[::1] ifft_buf_rt = np.zeros((ifft_shifts[ifft_shapes.shape[0]]),dtype=np.complex128)
 
 
     params_to_ifft(
@@ -1764,6 +1853,19 @@ cdef void params_to_segmpos_rt_check(
         ncoeff_min_loop     , nnpr                  ,
     )
 
+
+
+    ifft_buf_np = np.asarray(ifft_buf)
+    ifft_buf_rt_np = np.asarray(ifft_buf_rt)
+
+    # print(ifft_buf_np)
+    # print(ifft_buf_rt_np)
+    # print(ifft_buf_np-ifft_buf_rt_np)
+
+
+
+
+
     ifft_to_params(
         &ifft_buf_rt[0]            , ifft_shapes   , ifft_shifts   ,
         &params_pos_buf_rt[0]   , params_shapes , params_shifts ,
@@ -1774,7 +1876,40 @@ cdef void params_to_segmpos_rt_check(
     params_pos_buf_np = np.asarray(params_pos_buf)
     params_pos_buf_rt_np = np.asarray(params_pos_buf_rt)
 
+    # print(params_pos_buf_np)
+    # print(params_pos_buf_rt_np)
+    # print(params_pos_buf_np - params_pos_buf_rt_np)
+
+
+
+
     print(np.linalg.norm(params_pos_buf_np - params_pos_buf_rt_np))
+
+
+
+
+
+    # params_to_ifft(
+    #     &params_pos_buf_rt[0]  , params_shapes , params_shifts ,
+    #     nnz_k_buf           , nnz_k_shapes  , nnz_k_shifts  ,
+    #     &ifft_buf_rt[0]        , ifft_shapes   , ifft_shifts   ,
+    # )
+
+# 
+#     ifft_buf_np = np.asarray(ifft_buf)
+#     ifft_buf_rt_np = np.asarray(ifft_buf_rt)
+# 
+#     print(ifft_buf_np)
+#     print(ifft_buf_rt_np)
+#     print(ifft_buf_np-ifft_buf_rt_np)
+# 
+
+
+
+
+
+
+
     assert np.linalg.norm(params_pos_buf_np - params_pos_buf_rt_np) < eps
 
 
