@@ -122,4 +122,11 @@ def test_round_trips(AllConfigNames, float64_tols):
         params_buf_rt = NBS.all_coeffs_to_params_noopt(all_coeffs_rt)
         # print(np.linalg.norm(params_buf - params_buf_rt))
         assert np.allclose(params_buf, params_buf_rt, rtol = float64_tols.rtol, atol = float64_tols.atol) 
-# 
+        
+        segmpos_cy = NBS.params_to_segmpos(params_buf)
+        params_buf_rt = NBS.segmpos_to_params(segmpos_cy)
+        # print(np.linalg.norm(params_buf - params_buf_rt))
+        assert np.allclose(params_buf, params_buf_rt, rtol = float64_tols.rtol, atol = float64_tols.atol) 
+        
+
+

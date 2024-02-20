@@ -62,6 +62,7 @@ elif platform.system() == "Darwin": # MacOS
 elif platform.system() == "Linux":
     
     ignore_warnings_args = [
+        "-g",
         "-Wno-unused-variable",
         "-Wno-unused-function",
         "-Wno-incompatible-pointer-types-discards-qualifiers",
@@ -76,8 +77,8 @@ elif platform.system() == "Linux":
     else:
 
         # all_compilers = ['icx','clang','gcc']
-        all_compilers = ['clang']
-        # all_compilers = ['gcc']
+        # all_compilers = ['clang']
+        all_compilers = ['gcc']
 
         for compiler in all_compilers:
 
@@ -109,7 +110,7 @@ cython_filenames = [ ext_name.replace('.','/') + src_ext for ext_name in cython_
 define_macros = [("NPY_NO_DEPRECATED_API", "NPY_1_7_API_VERSION")]
 
 compiler_directives = {
-    'wraparound': False,
+    # 'wraparound': False,
     # 'boundscheck': False,
     # 'nonecheck': False,
     # 'initializedcheck': False,
