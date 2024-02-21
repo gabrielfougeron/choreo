@@ -25,32 +25,20 @@ import scipy
 if ("--no-show" in sys.argv):
     plt.show = (lambda : None)
 
+def all_coeffs_to_kin_nrj(NBS, params_buf, all_coeffs):
 
-def params_to_segmpos_noopt(NBS, params_buf, segmpos):
+    kin = NBS.all_coeffs_to_kin_nrj(all_coeffs)
     
-    all_coeffs = NBS.params_to_all_coeffs_noopt(params_buf)        
-    all_pos = scipy.fft.irfft(all_coeffs, axis=1)
-    segmpos_noopt = NBS.all_pos_to_segmpos_noopt(all_pos)
-    
-def segmpos_to_params_noopt(NBS, params_buf, segmpos):
-    
-    all_pos = NBS.segmpos_to_all_pos_noopt(segmpos)
-    all_coeffs = scipy.fft.rfft(all_pos, axis=1)
-    params = NBS.all_coeffs_to_params_noopt(all_coeffs)
+def params_to_kin_nrj(NBS, params_buf, all_coeffs):
 
-def params_to_segmpos_opt(NBS, params_buf, segmpos):
-    NBS.params_to_segmpos(params_buf)
-    
-def segmpos_to_params_opt(NBS, params_buf, segmpos):
-    NBS.segmpos_to_params(segmpos)
+    kin_opt = NBS.params_to_kin_nrj(params_buf)
     
 
 
 all_funs = [
-    params_to_segmpos_noopt     ,
-    segmpos_to_params_noopt     ,
-    params_to_segmpos_opt       ,
-    segmpos_to_params_opt       ,
+
+    all_coeffs_to_kin_nrj       ,
+    params_to_kin_nrj       ,
 ]
 
 def setup(test_name, nint_fac):
@@ -72,9 +60,9 @@ def setup(test_name, nint_fac):
     NBS.nint_fac = nint_fac
     
     params_buf = np.random.random((NBS.nparams))
-    segmpos = NBS.params_to_segmpos(params_buf)
+    all_coeffs = NBS.params_to_all_coeffs_noopt(params_buf) 
     
-    return {"NBS":NBS, "params_buf":params_buf, "segmpos":segmpos}
+    return {"NBS":NBS, "params_buf":params_buf, "all_coeffs":all_coeffs}
         
 
         
@@ -85,12 +73,12 @@ all_tests = [
     # '2q2q',
     # '4q4q',
     # '4q4qD',
-    '4q4qD3k',
+    # '4q4qD3k',
     # '1q2q',
     # '5q5q',
     # '6q6q',
     # '2C3C',
-    # '2D3D',   
+    '2D3D',   
     # '2C3C5k',
     # '2D3D5k',
     # '2D1',
@@ -98,8 +86,8 @@ all_tests = [
     # '4D3k',
     # '4C',
     # '4D',
-    # '3C',
-    # '3D',
+    '3C',
+    '3D',
     # '3D1',
     # '3C2k',
     # '3D2k',
@@ -107,7 +95,7 @@ all_tests = [
     # '3D4k',
     # '3C5k',
     # '3D5k',
-    '3D101k',
+    # '3D101k',
     # 'test_3D5k',
     # '3C7k2',
     # '3D7k2',
@@ -131,7 +119,7 @@ all_tests = [
 ]
 
 min_exp = 3
-max_exp = 25
+max_exp = 20
 
 n_repeat = 100
 
@@ -171,7 +159,7 @@ plot_intent = {
 
 relative_to_val_list = [
     None    ,
-    {pyquickbench.fun_ax_name : 'params_to_segmpos_opt'},
+    {pyquickbench.fun_ax_name : 'params_to_kin_nrj'},
 ]
 
 for relative_to_val in relative_to_val_list:
