@@ -178,3 +178,17 @@ def test_kin(AllNBS, float64_tols):
         print(np.linalg.norm(kin_grad_params - kin_grad_params_2))
         assert np.allclose(kin_grad_params, kin_grad_params_2, rtol = float64_tols.rtol, atol = float64_tols.atol) 
         
+        def grad(x, dx):
+            return np.dot(NBS.params_to_kin_nrg_grad(x), dx)
+        
+        err = choreo.scipy_plus.test.compare_FD_and_exact_grad(
+            NBS.params_to_kin_nrg   ,
+            grad                    ,
+            params_buf              ,
+            dx=None                 ,
+            epslist=None            ,
+            order=2                 ,
+            vectorize=False         ,
+        )
+        
+        assert err.min() < float64_tols.rtol

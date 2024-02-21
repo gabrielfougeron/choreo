@@ -113,39 +113,43 @@ def doit(config_name):
     
     NBS = choreo.cython._NBodySyst.NBodySyst(geodim, nbody, mass, Sym_list)
     
-    # if NBS.nnpr == 2:
-    #     return
+    NBS.nint_fac = 10
     
-    NBS.nint_fac = 2
-
-    eps = 1e-11
-
-    params_buf = np.random.random((NBS.nparams))
+    print(NBS.BinSpaceRotIsId)
     
-    def grad(x,dx):
-        return np.dot(NBS.params_to_kin_nrg_grad(x), dx)
     
-    err = choreo.scipy_plus.test.compare_FD_and_exact_grad(
-        NBS.params_to_kin_nrg   ,
-        grad                    ,
-        params_buf              ,
-        dx=None                 ,
-        epslist=None            ,
-        order=2                 ,
-        vectorize=False         ,
-    )
- 
-    # print(err.min())
-
-    kin_grad_params = NBS.params_to_kin_nrg_grad(params_buf)
-    all_coeffs = NBS.params_to_all_coeffs_noopt(params_buf) 
-
-    kin_grad_coeffs = NBS.all_coeffs_to_kin_nrg_grad(all_coeffs)
-
-    kin_grad_params_2 = NBS.all_coeffs_to_params_noopt(kin_grad_coeffs, transpose=True)
     
-    print(np.linalg.norm(kin_grad_params - kin_grad_params_2))
-    assert (np.linalg.norm(kin_grad_params - kin_grad_params_2) < eps)
+    
+    
+# 
+#     eps = 1e-11
+# 
+#     params_buf = np.random.random((NBS.nparams))
+#     
+#     def grad(x,dx):
+#         return np.dot(NBS.params_to_kin_nrg_grad(x), dx)
+#     
+#     err = choreo.scipy_plus.test.compare_FD_and_exact_grad(
+#         NBS.params_to_kin_nrg   ,
+#         grad                    ,
+#         params_buf              ,
+#         dx=None                 ,
+#         epslist=None            ,
+#         order=2                 ,
+#         vectorize=False         ,
+#     )
+#  
+#     print(err.min())
+# 
+#     kin_grad_params = NBS.params_to_kin_nrg_grad(params_buf)
+#     all_coeffs = NBS.params_to_all_coeffs_noopt(params_buf) 
+# 
+#     kin_grad_coeffs = NBS.all_coeffs_to_kin_nrg_grad(all_coeffs)
+# 
+#     kin_grad_params_2 = NBS.all_coeffs_to_params_noopt(kin_grad_coeffs, transpose=True)
+#     
+#     print(np.linalg.norm(kin_grad_params - kin_grad_params_2))
+#     assert (np.linalg.norm(kin_grad_params - kin_grad_params_2) < eps)
 
 
     return

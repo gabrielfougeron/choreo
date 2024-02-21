@@ -95,6 +95,36 @@ cdef class NBodySyst():
     def ngensegm_loop(self):
         return np.asarray(self._ngensegm_loop)
 
+    cdef long[::1] _BinSourceSegm
+    @property
+    def BinSourceSegm(self):
+        return np.asarray(self._BinSourceSegm)
+
+    cdef long[::1] _BinTargetSegm
+    @property
+    def BinTargetSegm(self):
+        return np.asarray(self._BinTargetSegm)
+        
+    cdef long[::1] _BinTimeRev
+    @property
+    def BinTimeRev(self):
+        return np.asarray(self._BinTimeRev)
+        
+    cdef double[:,:,::1] _BinSpaceRot
+    @property
+    def BinSpaceRot(self):
+        return np.asarray(self._BinSpaceRot)        
+
+    cdef bint[::1] _BinSpaceRotIsId
+    @property
+    def BinSpaceRotIsId(self):
+        return np.asarray(self._BinSpaceRotIsId) > 0
+        
+    cdef double[::1] _BinProdMassSum
+    @property
+    def BinProdMassSum(self):
+        return np.asarray(self._BinProdMassSum)
+
     cdef long[::1] _InterTimeRev
     @property
     def InterTimeRev(self):
@@ -117,7 +147,6 @@ cdef class NBodySyst():
         return np.asarray(self._InitValVelBasis)
         
     cdef double complex[::1] _params_basis_buf
-    # cdef double complex[::1] _params_basis_conj_buf
     cdef long[:,::1] _params_basis_shapes
     cdef long[::1] _params_basis_shifts
 
@@ -185,13 +214,16 @@ cdef class NBodySyst():
     cdef long[::1] _pos_slice_shifts
 
     def __init__(
-        self                ,
-        long geodim         ,
-        long nbody          ,
-        double[::1] bodymass,
-        list Sym_list       , 
+        self                        ,
+        long geodim                 ,
+        long nbody                  ,
+        double[::1] bodymass        ,
+        list Sym_list               , 
+        bint CrashOnIdentity = True ,
     ):
 
+        cdef Py_ssize_t i, il, ibin, ib
+        cdef double eps = 1e-12
 
         self._nint = -1 # Signals that things that scale with loop size are not set yet
 
@@ -201,6 +233,8 @@ cdef class NBodySyst():
         self.geodim = geodim
         self.nbody = nbody
         self.Sym_list = Sym_list
+        for ib in range(nbody):
+            assert bodymass[ib] != 0.
 
         self.DetectLoops(bodymass)
 
@@ -235,8 +269,14 @@ cdef class NBodySyst():
 
         self.GatherInterSym()
 
-        BinarySegm, Identity_detected = FindAllBinarySegments(self.intersegm_to_all, nbody, self.nsegm, self.nint_min, self._bodysegm, False, bodymass)
+        BinarySegm, Identity_detected = FindAllBinarySegments(self.intersegm_to_all, nbody, self.nsegm, self.nint_min, self._bodysegm, CrashOnIdentity, bodymass)
         self.All_BinSegmTransformId, self.nbin_segm_tot, self.nbin_segm_unique = CountSegmentBinaryInteractions(BinarySegm, self.nsegm)
+
+        self._BinSourceSegm, self._BinTargetSegm, self._BinTimeRev, self._BinSpaceRot, self._BinProdMassSum = ReorganizeBinarySegments(BinarySegm)
+        assert self._BinSourceSegm.shape[0] == self.nbin_segm_unique
+        self._BinSpaceRotIsId = np.zeros((self.nbin_segm_unique), dtype=np.intc)
+        for ibin in range(self.nbin_segm_unique):
+            self._BinSpaceRotIsId[ibin] = (np.linalg.norm(self._BinSpaceRot[ibin,:,:] - np.identity(self.geodim)) < eps)
 
         # This could certainly be made more efficient
         BodyConstraints = AccumulateBodyConstraints(self.Sym_list, nbody, geodim)
@@ -250,8 +290,6 @@ cdef class NBodySyst():
 
         self._nnz_k_buf, self._nnz_k_shapes, self._nnz_k_shifts = BundleListOfArrays(nnz_k_list)
         self._co_in_buf, self._co_in_shapes, self._co_in_shifts = BundleListOfArrays(co_in_list)
-
-        cdef Py_ssize_t i, il
 
         self._nco_in_loop = np.zeros((self.nloop), dtype=np.intp)
         self._ncor_loop = np.zeros((self.nloop), dtype=np.intp)
@@ -689,7 +727,6 @@ cdef class NBodySyst():
                 )   
 
         return np.asarray(params_buf_out)
-
 
     @cython.final
     def all_coeffs_to_kin_nrg(self, double complex[:,:,::1] all_coeffs):
@@ -1306,7 +1343,7 @@ cdef void changevar_mom_T(
 
     for il in range(nloop):
 
-        loopmul = 1/csqrt(loopnb[il] * loopmass[il] * cfourpisq)
+        loopmul = 1./csqrt(loopnb[il] * loopmass[il] * cfourpisq)
 
         # ipr = 0 treated separately
         # ik = 0 treated separately
@@ -1367,8 +1404,6 @@ cdef void changevar_mom_T(
 
                     cur_params_mom_buf += 1
                     cur_param_pos_buf += 1
-
-
  
 @cython.cdivision(True)
 cdef double params_to_kin_nrg(
