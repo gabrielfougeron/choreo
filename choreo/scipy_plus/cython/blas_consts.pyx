@@ -16,9 +16,10 @@ cdef double minusone_double = -1
 cdef double two_double = 2.
 cdef double one_double = 1.
 cdef double zero_double = 0.
-cdef double ctwopi = 2* np.pi
+cdef double ctwopi = 2*np.pi
 cdef double ctwopisqrt2 = ctwopi*csqrt(2.)
-cdef double cfourpi = 2 * ctwopi
+cdef double cfourpi = 2*ctwopi
+cdef double ctwopisq = 2*np.pi*np.pi
 cdef double cfourpisq = ctwopi*ctwopi
 
 cdef double complex zero_double_complex = 0.
