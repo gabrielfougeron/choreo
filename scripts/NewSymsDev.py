@@ -85,7 +85,7 @@ def main():
         TT.toc(test)
 
     print()
-    print(TT)
+    # print(TT)
   
 
 def proj_to_zero(array, eps=1e-14):
@@ -119,41 +119,30 @@ def doit(config_name):
     NBS.nint_fac = 10
 
     eps = 1e-11
-    
+    # 
+    # for il in range(NBS.nloop):
+    #     print(il, NBS.co_in(il))
+
 
     params_buf = np.random.random((NBS.nparams))
-
-#     segmpos_cy = NBS.params_to_segmpos(params_buf)
-#     params_buf_rt = NBS.segmpos_to_params(segmpos_cy)
-#     
-# 
-#     print(np.linalg.norm(params_buf - params_buf_rt, ord=np.inf))
-#     assert np.linalg.norm(params_buf - params_buf_rt) < eps
-
-
     
-    NBS.nint_fac = 2**15
-    params_buf = np.random.random((NBS.nparams))
+    # print(f'{params_buf.shape = }')
+    # print()
+    # params_buf[:geodim] = 0
+    
     all_coeffs = NBS.params_to_all_coeffs_noopt(params_buf)  
-    all_pos = scipy.fft.irfft(all_coeffs, axis=1)
-    segmpos = NBS.all_pos_to_segmpos_noopt(all_pos)
+
+    kin = NBS.all_coeffs_to_kin_nrj(all_coeffs)
+    # print(kin)
+
+    kin_opt = NBS.params_to_kin_nrj(params_buf)
+
+    # print(kin)
+    # print(kin_opt)
+    print(abs(kin - kin_opt))
+    # print(kin / kin_opt)
     
-    all_pos_rt = NBS.segmpos_to_all_pos_noopt(segmpos)
-    print(np.linalg.norm(all_pos_rt - all_pos))
-            
-    all_coeffs_rt = scipy.fft.rfft(all_pos_rt, axis=1)
-    print(np.linalg.norm(all_coeffs_rt - all_coeffs))
-
-    params_buf_rt = NBS.all_coeffs_to_params_noopt(all_coeffs_rt)
-    print(np.linalg.norm(params_buf - params_buf_rt))
-    
-    segmpos_cy = NBS.params_to_segmpos(params_buf)
-    params_buf_rt = NBS.segmpos_to_params(segmpos_cy)
-    print(np.linalg.norm(params_buf - params_buf_rt))
-        
-
-
-
+    assert abs(kin - kin_opt) < eps
 
 
 

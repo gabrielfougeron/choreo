@@ -226,3 +226,27 @@ def AllConfigNames():
         '3D101k'    , '3C7k2'   , '3D7k2'   , '6C'      , '6D'      , '6Ck5'    ,
         '6Dk5'      , '5Dq'     , '2C3C5C'  , '3C_3dim' , '2D1_3dim', '3C11k'   ,
     ]
+
+
+def load_from_config_file(config_name):
+    
+    Workspace_folder = os.path.join(__PROJECT_ROOT__, 'tests', 'NewSym_data', config_name)
+    params_filename = os.path.join(Workspace_folder, 'choreo_config.json')
+    
+    with open(params_filename) as jsonFile:
+        params_dict = json.load(jsonFile)
+
+    all_kwargs = choreo.find.ChoreoLoadFromDict(params_dict, Workspace_folder, args_list=["geodim", "nbody", "mass", "Sym_list"])
+    
+    geodim = all_kwargs["geodim"]
+    nbody = all_kwargs["nbody"]
+    mass = all_kwargs["mass"]
+    Sym_list = all_kwargs["Sym_list"]
+    
+    return choreo.cython._NBodySyst.NBodySyst(geodim, nbody, mass, Sym_list)
+
+
+@pytest.fixture
+def AllNBS(AllConfigNames):
+    return {config_name:load_from_config_file(config_name) for config_name in AllConfigNames}
+

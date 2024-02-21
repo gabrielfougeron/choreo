@@ -13,42 +13,12 @@ import fractions
 import json
 import choreo
 
-def load_from_config_file(config_name):
+def test_all_pos_to_segmpos(AllNBS, float64_tols):
     
-    Workspace_folder = os.path.join(__PROJECT_ROOT__, 'tests', 'NewSym_data', config_name)
-    params_filename = os.path.join(Workspace_folder, 'choreo_config.json')
-    
-    with open(params_filename) as jsonFile:
-        params_dict = json.load(jsonFile)
-
-    all_kwargs = choreo.find.ChoreoLoadFromDict(params_dict, Workspace_folder, args_list=["geodim", "nbody", "mass", "Sym_list"])
-    
-    geodim = all_kwargs["geodim"]
-    nbody = all_kwargs["nbody"]
-    mass = all_kwargs["mass"]
-    Sym_list = all_kwargs["Sym_list"]
-    
-    return choreo.cython._NBodySyst.NBodySyst(geodim, nbody, mass, Sym_list)
-
-
-
-def test_create_NBodySyst(AllConfigNames):
-    
-    for config_name in AllConfigNames:
+    for name, NBS in AllNBS.items():
         
-        print(f"Config name : {config_name}")
-        
-        NBS = load_from_config_file(config_name)
+        print(f"Config name : {name}")     
 
-
-def test_all_pos_to_segmpos(AllConfigNames, float64_tols):
-    
-    for config_name in AllConfigNames:
-        
-        print(f"Config name : {config_name}")
-        
-        NBS = load_from_config_file(config_name)
-        
         NBS.nint_fac = 10
         params_buf = np.random.random((NBS.nparams))
 
@@ -66,14 +36,11 @@ def test_all_pos_to_segmpos(AllConfigNames, float64_tols):
         
         assert np.allclose(segmpos_noopt, segmpos_cy, rtol = float64_tols.rtol, atol = float64_tols.atol) 
      
-     
-def test_segmpos_to_all_pos(AllConfigNames, float64_tols):
+def test_segmpos_to_all_pos(AllNBS, float64_tols):
     
-    for config_name in AllConfigNames:
+    for name, NBS in AllNBS.items():
         
-        print(f"Config name : {config_name}")
-        
-        NBS = load_from_config_file(config_name)
+        print(f"Config name : {name}")     
         
         NBS.nint_fac = 10
         params_buf = np.random.random((NBS.nparams))
@@ -88,20 +55,13 @@ def test_segmpos_to_all_pos(AllConfigNames, float64_tols):
         params = NBS.all_coeffs_to_params_noopt(all_coeffs)
 
         assert np.allclose(params_buf, params, rtol = float64_tols.rtol, atol = float64_tols.atol) 
-     
-     
-     
-     
-     
         
 @ProbabilisticTest()
-def test_capture_co(AllConfigNames):
+def test_capture_co(AllNBS):
     
-    for config_name in AllConfigNames:
-            
-        print(f"Config name : {config_name}")
-
-        NBS = load_from_config_file(config_name)
+    for name, NBS in AllNBS.items():
+        
+        print(f"Config name : {name}")     
         NBS.nint_fac = 10
 
         eps = 1e-12
@@ -125,13 +85,11 @@ def test_capture_co(AllConfigNames):
             for iparam in range(co_in.shape[0]):            
                 assert not(co_in[iparam]) == (iparam in nnz[il])
 
-def test_round_trips(AllConfigNames, float64_tols):
+def test_round_trips(AllNBS, float64_tols):
     
-    for config_name in AllConfigNames:
+    for name, NBS in AllNBS.items():
         
-        print(f"Config name : {config_name}")
-        
-        NBS = load_from_config_file(config_name)
+        print(f"Config name : {name}")     
         
         NBS.nint_fac = 10
         params_buf = np.random.random((NBS.nparams))
@@ -156,5 +114,18 @@ def test_round_trips(AllConfigNames, float64_tols):
         # print(np.linalg.norm(params_buf - params_buf_rt))
         assert np.allclose(params_buf, params_buf_rt, rtol = float64_tols.rtol, atol = float64_tols.atol) 
         
-
-
+def test_kin(AllNBS, float64_tols):
+    
+    for name, NBS in AllNBS.items():
+        
+        print(f"Config name : {name}")        
+        NBS.nint_fac = 10
+        params_buf = np.random.random((NBS.nparams))
+        
+        all_coeffs = NBS.params_to_all_coeffs_noopt(params_buf) 
+        kin = NBS.all_coeffs_to_kin_nrj(all_coeffs)
+        kin_opt = NBS.params_to_kin_nrj(params_buf)
+        
+        assert abs(kin - kin_opt) < float64_tols.atol
+        assert 2*abs(kin - kin_opt) / (kin + kin_opt) < float64_tols.rtol
+        
