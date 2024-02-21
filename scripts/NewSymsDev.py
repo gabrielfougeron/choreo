@@ -85,7 +85,7 @@ def main():
         TT.toc(test)
 
     print()
-    # print(TT)
+    print(TT)
   
 
 def proj_to_zero(array, eps=1e-14):
@@ -123,18 +123,34 @@ def doit(config_name):
 
     params_buf = np.random.random((NBS.nparams))
 
+#     segmpos_cy = NBS.params_to_segmpos(params_buf)
+#     params_buf_rt = NBS.segmpos_to_params(segmpos_cy)
+#     
+# 
+#     print(np.linalg.norm(params_buf - params_buf_rt, ord=np.inf))
+#     assert np.linalg.norm(params_buf - params_buf_rt) < eps
+
+
+    
+    NBS.nint_fac = 2**15
+    params_buf = np.random.random((NBS.nparams))
+    all_coeffs = NBS.params_to_all_coeffs_noopt(params_buf)  
+    all_pos = scipy.fft.irfft(all_coeffs, axis=1)
+    segmpos = NBS.all_pos_to_segmpos_noopt(all_pos)
+    
+    all_pos_rt = NBS.segmpos_to_all_pos_noopt(segmpos)
+    print(np.linalg.norm(all_pos_rt - all_pos))
+            
+    all_coeffs_rt = scipy.fft.rfft(all_pos_rt, axis=1)
+    print(np.linalg.norm(all_coeffs_rt - all_coeffs))
+
+    params_buf_rt = NBS.all_coeffs_to_params_noopt(all_coeffs_rt)
+    print(np.linalg.norm(params_buf - params_buf_rt))
+    
     segmpos_cy = NBS.params_to_segmpos(params_buf)
     params_buf_rt = NBS.segmpos_to_params(segmpos_cy)
-    
-    # 
-    # print( params_buf)
-    # print(params_buf_rt )
-    # print(params_buf_rt - params_buf)
-    
     print(np.linalg.norm(params_buf - params_buf_rt))
-    assert np.linalg.norm(params_buf - params_buf_rt) < eps
-
-
+        
 
 
 

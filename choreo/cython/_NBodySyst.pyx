@@ -739,6 +739,8 @@ cdef class NBodySyst():
         
         assert self._nint == all_pos.shape[1]
         
+        cdef Py_ssize_t ib, iint, il
+
         allsegmpos = np.empty((self.nsegm, self.segm_store, self.geodim), dtype=np.float64)
 
         for isegm in range(self.nsegm):
@@ -774,6 +776,8 @@ cdef class NBodySyst():
     def segmpos_to_all_pos_noopt(self, allsegmpos):
 
         assert self.segm_store == allsegmpos.shape[1]
+
+        cdef Py_ssize_t ib, iint, il
 
         all_pos = np.empty((self.nloop, self._nint, self.geodim), dtype=np.float64)
 
@@ -1245,11 +1249,6 @@ cdef void partial_fft_to_pos_slice_2npr(
 
     free(ztmp)
     
-
-
-
-
-
 @cython.cdivision(True)
 cdef void pos_slice_to_partial_fft_2npr(
     const double* const_pos_slice           ,
@@ -1661,6 +1660,7 @@ cdef void segmpos_to_pos_slice(
                         segmpos[idim] = tmp[idim]
                     segmpos -= geodim
                     tmp += geodim
+
 
     if NeedsAllocate:
         free(tmp_loc)

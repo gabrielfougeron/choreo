@@ -65,6 +65,34 @@ def test_all_pos_to_segmpos(AllConfigNames, float64_tols):
         segmpos_cy = NBS.params_to_segmpos(params_buf)
         
         assert np.allclose(segmpos_noopt, segmpos_cy, rtol = float64_tols.rtol, atol = float64_tols.atol) 
+     
+     
+def test_segmpos_to_all_pos(AllConfigNames, float64_tols):
+    
+    for config_name in AllConfigNames:
+        
+        print(f"Config name : {config_name}")
+        
+        NBS = load_from_config_file(config_name)
+        
+        NBS.nint_fac = 10
+        params_buf = np.random.random((NBS.nparams))
+        segmpos = NBS.params_to_segmpos(params_buf)
+
+
+        all_pos = NBS.segmpos_to_all_pos_noopt(segmpos)
+        NBS.AssertAllSegmGenConstraintsAreRespected(all_pos)
+        NBS.AssertAllBodyConstraintAreRespected(all_pos)
+        
+        all_coeffs = scipy.fft.rfft(all_pos, axis=1)
+        params = NBS.all_coeffs_to_params_noopt(all_coeffs)
+
+        assert np.allclose(params_buf, params, rtol = float64_tols.rtol, atol = float64_tols.atol) 
+     
+     
+     
+     
+     
         
 @ProbabilisticTest()
 def test_capture_co(AllConfigNames):
@@ -112,7 +140,7 @@ def test_round_trips(AllConfigNames, float64_tols):
         segmpos = NBS.all_pos_to_segmpos_noopt(all_pos)
         
         all_pos_rt = NBS.segmpos_to_all_pos_noopt(segmpos)
-        # print(np.linalg.norm(all_coeffs_rt - all_coeffs))
+        # print(np.linalg.norm(all_pos_rt - all_pos))
         assert np.allclose(all_pos, all_pos_rt, rtol = float64_tols.rtol, atol = float64_tols.atol) 
                 
         all_coeffs_rt = scipy.fft.rfft(all_pos_rt, axis=1)
