@@ -14,38 +14,47 @@ import pyquickbench
 import json
 import numpy as np
 import matplotlib.pyplot as plt
-import mkl_fft
 import scipy
-scipy.fft.set_global_backend(
-    backend = mkl_fft._scipy_fft_backend   ,
-    only = True
-)
+# import mkl_fft
+# scipy.fft.set_global_backend(
+#     backend = mkl_fft._scipy_fft_backend   ,
+#     only = True
+# )
 
 
 if ("--no-show" in sys.argv):
     plt.show = (lambda : None)
 
 
-def params_to_segmpos_noopt(NBS, params_buf):
+def params_to_segmpos_noopt(NBS, params_buf, segmpos):
     
     all_coeffs = NBS.params_to_all_coeffs_noopt(params_buf)        
     all_pos = scipy.fft.irfft(all_coeffs, axis=1)
     segmpos_noopt = NBS.all_pos_to_segmpos_noopt(all_pos)
     
+def segmpos_to_params_noopt(NBS, params_buf, segmpos):
     
-def params_to_segmpos_opt(NBS, params_buf):
+    all_pos = NBS.segmpos_to_all_pos_noopt(segmpos)
+    all_coeffs = scipy.fft.rfft(all_pos, axis=1)
+    params = NBS.all_coeffs_to_params_noopt(all_coeffs)
+
+def params_to_segmpos_opt(NBS, params_buf, segmpos):
     NBS.params_to_segmpos(params_buf)
+    
+def segmpos_to_params_opt(NBS, params_buf, segmpos):
+    NBS.segmpos_to_params(segmpos)
     
 
 
 all_funs = [
     params_to_segmpos_noopt     ,
+    segmpos_to_params_noopt     ,
     params_to_segmpos_opt       ,
+    segmpos_to_params_opt       ,
 ]
 
 def setup(test_name, nint_fac):
     
-
     Workspace_folder = os.path.join(__PROJECT_ROOT__, 'tests', 'NewSym_data', test_name)
     params_filename = os.path.join(Workspace_folder, 'choreo_config.json')
     
@@ -62,10 +71,10 @@ def setup(test_name, nint_fac):
     NBS = choreo.cython._NBodySyst.NBodySyst(geodim, nbody, mass, Sym_list)
     NBS.nint_fac = nint_fac
     
-        
     params_buf = np.random.random((NBS.nparams))
+    segmpos = NBS.params_to_segmpos(params_buf)
     
-    return {"NBS":NBS, "params_buf":params_buf}
+    return {"NBS":NBS, "params_buf":params_buf, "segmpos":segmpos}
         
 
         
@@ -76,7 +85,7 @@ all_tests = [
     # '2q2q',
     # '4q4q',
     # '4q4qD',
-    # '4q4qD3k',
+    '4q4qD3k',
     # '1q2q',
     # '5q5q',
     # '6q6q',
@@ -89,7 +98,7 @@ all_tests = [
     # '4D3k',
     # '4C',
     # '4D',
-    '3C',
+    # '3C',
     # '3D',
     # '3D1',
     # '3C2k',
@@ -98,7 +107,7 @@ all_tests = [
     # '3D4k',
     # '3C5k',
     # '3D5k',
-    # '3D101k',
+    '3D101k',
     # 'test_3D5k',
     # '3C7k2',
     # '3D7k2',
@@ -144,11 +153,11 @@ all_timings = pyquickbench.run_benchmark(
     all_funs                ,
     setup = setup           ,
     filename = filename     ,
-    StopOnExcept = True     ,
+    # StopOnExcept = True     ,
     ShowProgress = True     ,
     n_repeat = n_repeat     ,
     MonotonicAxes = MonotonicAxes,
-    ForceBenchmark = True,
+    # ForceBenchmark = True,
 )
 
 plot_intent = {
