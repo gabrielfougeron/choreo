@@ -1,5 +1,5 @@
 """
-Valiadation of tangent integration alorithms using Finite Differences
+Validation of tangent integration algorithms using Finite Differences
 =====================================================================
 """
 

@@ -25,20 +25,20 @@ import scipy
 if ("--no-show" in sys.argv):
     plt.show = (lambda : None)
 
-def all_coeffs_to_kin_nrj(NBS, params_buf, all_coeffs):
+def all_coeffs_to_kin_nrg(NBS, params_buf, all_coeffs):
 
-    kin = NBS.all_coeffs_to_kin_nrj(all_coeffs)
+    kin = NBS.all_coeffs_to_kin_nrg(all_coeffs)
     
-def params_to_kin_nrj(NBS, params_buf, all_coeffs):
+def params_to_kin_nrg(NBS, params_buf, all_coeffs):
 
-    kin_opt = NBS.params_to_kin_nrj(params_buf)
+    kin_opt = NBS.params_to_kin_nrg(params_buf)
     
 
 
 all_funs = [
 
-    all_coeffs_to_kin_nrj       ,
-    params_to_kin_nrj       ,
+    all_coeffs_to_kin_nrg       ,
+    params_to_kin_nrg       ,
 ]
 
 def setup(test_name, nint_fac):
@@ -145,7 +145,7 @@ all_timings = pyquickbench.run_benchmark(
     ShowProgress = True     ,
     n_repeat = n_repeat     ,
     MonotonicAxes = MonotonicAxes,
-    # ForceBenchmark = True,
+    ForceBenchmark = True,
 )
 
 plot_intent = {
@@ -159,7 +159,7 @@ plot_intent = {
 
 relative_to_val_list = [
     None    ,
-    {pyquickbench.fun_ax_name : 'params_to_kin_nrj'},
+    {pyquickbench.fun_ax_name : 'params_to_kin_nrg'},
 ]
 
 for relative_to_val in relative_to_val_list:

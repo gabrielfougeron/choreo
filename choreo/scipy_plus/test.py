@@ -273,14 +273,13 @@ def compute_FD(fun,xo,dx,eps,fo=None,order=1):
 
     return dfdx
 
-def compare_FD_and_exact_grad(fun,gradfun,xo,dx=None,epslist=None,order=1,vectorize=True):
+def compare_FD_and_exact_grad(fun, gradfun, xo, dx=None, epslist=None, order=1, vectorize=True):
     
     if epslist is None:
         epslist = [10**(-i) for i in range(16)]
         
     if dx is None:
-        shape = xo.shape
-        dx = np.random.rand(*shape)
+        dx = np.array(np.random.rand(*xo.shape), dtype= xo.dtype)
     
     fo = fun(xo)
     if vectorize:
