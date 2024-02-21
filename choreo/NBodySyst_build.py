@@ -668,8 +668,6 @@ def reorganize_All_params_basis(All_params_basis):
 
     return params_basis_reorganized_list, nnz_k_list, co_in_list
 
-
-        
 def PlotTimeBodyGraph(Graph, nbody, nint_min, filename):
 
     nnodes = nbody*nint_min
@@ -868,7 +866,6 @@ def AccumulateSegmGenToTargetSym(
             
     return segm_gen_to_target                       
 
-
 def FindAllBinarySegments(segm_gen_to_target, nbody, nsegm, nint_min, bodysegm, CrashOnIdentity, bodymass):
 
     Identity_detected = False
@@ -896,12 +893,10 @@ def FindAllBinarySegments(segm_gen_to_target, nbody, nsegm, nint_min, bodysegm, 
                 isegmp = bodysegm[*segmp] 
 
                 if (isegm <= isegmp):
-
                     bisegm = (isegm, isegmp)
                     Sym = (segm_gen_to_target[ibp][iint]).Compose(segm_gen_to_target[ib][iint].Inverse())
 
                 else:
-
                     bisegm = (isegmp, isegm)
                     Sym = (segm_gen_to_target[ib][iint]).Compose(segm_gen_to_target[ibp][iint].Inverse())
 
@@ -915,23 +910,54 @@ def FindAllBinarySegments(segm_gen_to_target, nbody, nsegm, nint_min, bodysegm, 
                         
                     Identity_detected = True
 
-                isym = 0 # In case BinarySegm[bisegm]["SymList"] is empty
+                AlreadyFound = False
                 for isym, FoundSym in enumerate(BinarySegm[bisegm]["SymList"]):
                     
-                    if Sym.IsSameRotAndTimeRev(FoundSym):
-                        break
+                    AlreadyFound = AlreadyFound or Sym.IsSameRotAndTimeRev(FoundSym)
 
                     if (isegm == isegmp):
                         SymInv = Sym.Inverse()
-                        if SymInv.IsSameRotAndTimeRev(FoundSym):
-                            break
-                        
+                        AlreadyFound = AlreadyFound or SymInv.IsSameRotAndTimeRev(FoundSym)
+
+                    if AlreadyFound:
+                        BinarySegm[bisegm]["SymCount"][isym] += 1
+                        BinarySegm[bisegm]["ProdMassSum"][isym] += bodymass[ib]*bodymass[ibp]
+                        break
+
                 else:
                     BinarySegm[bisegm]["SymList"].append(Sym)
-                    BinarySegm[bisegm]["SymCount"].append(0)
-                    BinarySegm[bisegm]["ProdMassSum"].append(0.)
-
-                BinarySegm[bisegm]["SymCount"][isym] += 1
-                BinarySegm[bisegm]["ProdMassSum"][isym] += bodymass[ib]*bodymass[ibp]
+                    BinarySegm[bisegm]["SymCount"].append(1)
+                    BinarySegm[bisegm]["ProdMassSum"].append(bodymass[ib]*bodymass[ibp])
 
     return BinarySegm, Identity_detected
+
+def ReorganizeBinarySegments(BinarySegm):
+    
+    BinSourceSegm = []
+    BinTargetSegm = []
+    BinTimeRev = []
+    BinSpaceRot = []
+    BinProdMassSum = []
+    
+    for (isegm, isegmp), bin_data in BinarySegm.items():
+        
+        assert len(bin_data["SymList"]) == len(bin_data["SymCount"]) 
+        assert len(bin_data["SymList"]) == len(bin_data["ProdMassSum"]) 
+
+        for(Sym, prodmasssum) in zip(bin_data["SymList"], bin_data["ProdMassSum"]):
+
+            assert prodmasssum != 0.
+
+            BinSourceSegm.append(isegm)
+            BinTargetSegm.append(isegmp)
+            BinTimeRev.append(Sym.TimeRev)
+            BinSpaceRot.append(Sym.SpaceRot)
+            BinProdMassSum.append(prodmasssum)
+
+    BinSourceSegm = np.array(BinSourceSegm, dtype=np.intp)
+    BinTargetSegm = np.array(BinTargetSegm, dtype=np.intp)
+    BinTimeRev = np.array(BinTimeRev, dtype=np.intp)
+    BinSpaceRot = np.array(BinSpaceRot, dtype=np.float64)
+    BinProdMassSum = np.array(BinProdMassSum, dtype=np.float64)
+        
+    return BinSourceSegm, BinTargetSegm, BinTimeRev, BinSpaceRot, BinProdMassSum
