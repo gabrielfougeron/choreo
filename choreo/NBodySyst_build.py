@@ -17,7 +17,6 @@ from matplotlib import pyplot as plt
 from matplotlib import colormaps
 
 import choreo.scipy_plus
-import pyquickbench
 
 from choreo.cython._ActionSym import *
 # from choreo.cython._ActionSym import AccumulateSegmGenToTargetSym
