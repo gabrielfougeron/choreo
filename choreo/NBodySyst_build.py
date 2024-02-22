@@ -865,7 +865,7 @@ def AccumulateSegmGenToTargetSym(
             
     return segm_gen_to_target                       
 
-def FindAllBinarySegments(segm_gen_to_target, nbody, nsegm, nint_min, bodysegm, CrashOnIdentity, bodymass):
+def FindAllBinarySegments(segm_gen_to_target, nbody, nsegm, nint_min, bodysegm, CrashOnIdentity, bodycharge):
 
     Identity_detected = False
 
@@ -876,7 +876,7 @@ def FindAllBinarySegments(segm_gen_to_target, nbody, nsegm, nint_min, bodysegm, 
             BinarySegm[(isegm, isegmp)] = {
                 "SymList" : []      ,
                 "SymCount" : []     ,
-                "ProdMassSum" : []  ,
+                "ProdChargeSum" : []  ,
             }
 
     for iint in range(nint_min):
@@ -920,13 +920,13 @@ def FindAllBinarySegments(segm_gen_to_target, nbody, nsegm, nint_min, bodysegm, 
 
                     if AlreadyFound:
                         BinarySegm[bisegm]["SymCount"][isym] += 1
-                        BinarySegm[bisegm]["ProdMassSum"][isym] += bodymass[ib]*bodymass[ibp]
+                        BinarySegm[bisegm]["ProdChargeSum"][isym] += bodycharge[ib]*bodycharge[ibp]
                         break
 
                 else:
                     BinarySegm[bisegm]["SymList"].append(Sym)
                     BinarySegm[bisegm]["SymCount"].append(1)
-                    BinarySegm[bisegm]["ProdMassSum"].append(bodymass[ib]*bodymass[ibp])
+                    BinarySegm[bisegm]["ProdChargeSum"].append(bodycharge[ib]*bodycharge[ibp])
 
     return BinarySegm, Identity_detected
 
@@ -936,27 +936,27 @@ def ReorganizeBinarySegments(BinarySegm):
     BinTargetSegm = []
     BinTimeRev = []
     BinSpaceRot = []
-    BinProdMassSum = []
+    BinProdChargeSum = []
     
     for (isegm, isegmp), bin_data in BinarySegm.items():
         
         assert len(bin_data["SymList"]) == len(bin_data["SymCount"]) 
-        assert len(bin_data["SymList"]) == len(bin_data["ProdMassSum"]) 
+        assert len(bin_data["SymList"]) == len(bin_data["ProdChargeSum"]) 
 
-        for(Sym, prodmasssum) in zip(bin_data["SymList"], bin_data["ProdMassSum"]):
+        for(Sym, prodchargesum) in zip(bin_data["SymList"], bin_data["ProdChargeSum"]):
 
-            assert prodmasssum != 0.
+            assert prodchargesum != 0.
 
             BinSourceSegm.append(isegm)
             BinTargetSegm.append(isegmp)
             BinTimeRev.append(Sym.TimeRev)
             BinSpaceRot.append(Sym.SpaceRot)
-            BinProdMassSum.append(prodmasssum)
+            BinProdChargeSum.append(prodchargesum)
 
     BinSourceSegm = np.array(BinSourceSegm, dtype=np.intp)
     BinTargetSegm = np.array(BinTargetSegm, dtype=np.intp)
     BinTimeRev = np.array(BinTimeRev, dtype=np.intp)
     BinSpaceRot = np.array(BinSpaceRot, dtype=np.float64)
-    BinProdMassSum = np.array(BinProdMassSum, dtype=np.float64)
+    BinProdChargeSum = np.array(BinProdChargeSum, dtype=np.float64)
         
-    return BinSourceSegm, BinTargetSegm, BinTimeRev, BinSpaceRot, BinProdMassSum
+    return BinSourceSegm, BinTargetSegm, BinTimeRev, BinSpaceRot, BinProdChargeSum
