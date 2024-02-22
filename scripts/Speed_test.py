@@ -68,7 +68,6 @@ def load_target_files(filename,Workspace_folder,target_speed):
 
     return Info_dict, all_pos
 
-
 def main(params_dict):
 
     np.random.seed(int(time.time()*10000) % 5000)

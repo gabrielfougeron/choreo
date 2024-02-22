@@ -237,15 +237,17 @@ def load_from_config_file(config_name):
     with open(params_filename) as jsonFile:
         params_dict = json.load(jsonFile)
 
-    all_kwargs = choreo.find.ChoreoLoadFromDict(params_dict, Workspace_folder, args_list=["geodim", "nbody", "mass", "charge", "Sym_list"])
+    all_kwargs = choreo.find.ChoreoLoadFromDict(params_dict, Workspace_folder, args_list=["geodim", "nbody", "mass", "charge", "inter_pow", "inter_pm", "Sym_list"])
     
     geodim = all_kwargs["geodim"]
     nbody = all_kwargs["nbody"]
     mass = all_kwargs["mass"]
     charge = all_kwargs["charge"]
+    inter_pow = all_kwargs["inter_pow"]
+    inter_pm = all_kwargs["inter_pm"]
     Sym_list = all_kwargs["Sym_list"]
     
-    return choreo.cython._NBodySyst.NBodySyst(geodim, nbody, mass, charge, Sym_list)
+    return choreo.cython._NBodySyst.NBodySyst(geodim, nbody, mass, charge, inter_pow, inter_pm, Sym_list)
 
 
 @pytest.fixture

@@ -1046,6 +1046,23 @@ def ChoreoLoadFromDict(params_dict, Workspace_folder, callback=None, args_list=N
                 ib = params_dict["Phys_Bodies"]["Targets"][il][ilb]
                 charge[ib] = params_dict["Phys_Bodies"]["mass"][il]
 
+    # TODO: Remove this
+    # Backwards compatibility again
+    try:
+        inter_pow = params_dict["Phys_Inter"]["inter_pow"]
+        inter_pm_in = params_dict["Phys_Inter"]["inter_pm"]
+        
+        if inter_pm_in == "plus":
+            inter_pm = 1
+        elif inter_pm_in == "minus":
+            inter_pm = -1
+        else:
+            raise ValueError(f"Invalid inter_pm {inter_pm_in}")
+
+    except KeyError:
+        inter_pow = -1.
+        inter_pm = 1
+
     Sym_list = []
     
     for isym in range(nsyms):
