@@ -1,5 +1,5 @@
 {
-  "Geom_Bodies": {
+  "Phys_Bodies": {
     "MomConsImposed": false,
     "n_loops": 1,
     "mass": [
@@ -20,20 +20,20 @@
       }
     ]
   },
-  "Geom_Target": {
+  "Phys_Target": {
     "LookForTarget": false,
     "Rotate_fast_with_slow": false,
     "Randomize_Fast_Init": true,
     "Optimize_Init": false,
     "RandomJitterTarget": false
   },
-  "Geom_Random": {
+  "Phys_Random": {
     "coeff_ampl_o": 0.1,
     "coeff_ampl_min": 1e-16,
     "k_infl": 3,
     "k_max": 50
   },
-  "Geom_Custom": {
+  "Phys_Custom": {
     "n_custom_sym": 0,
     "CustomSyms": []
   },

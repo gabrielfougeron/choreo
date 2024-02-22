@@ -215,6 +215,7 @@ cdef class NBodySyst():
         long geodim                 ,
         long nbody                  ,
         double[::1] bodymass        ,
+        double[::1] bodycharge      ,
         list Sym_list               , 
         bint CrashOnIdentity = True ,
     ):

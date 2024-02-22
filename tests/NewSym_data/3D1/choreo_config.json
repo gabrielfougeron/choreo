@@ -1,8 +1,8 @@
 {
-  "Geom_Gen": {
+  "Phys_Gen": {
     "geodim": 2
   },
-  "Geom_Bodies": {
+  "Phys_Bodies": {
     "nbody": 4,
     "MomConsImposed": false,
     "nsyms": 2,
@@ -52,14 +52,14 @@
       1
     ]
   },
-  "Geom_Target": {
+  "Phys_Target": {
     "LookForTarget": false,
     "Rotate_fast_with_slow": false,
     "Randomize_Fast_Init": true,
     "Optimize_Init": false,
     "RandomJitterTarget": false
   },
-  "Geom_Random": {
+  "Phys_Random": {
     "coeff_ampl_o": 0.1,
     "coeff_ampl_min": 1e-16,
     "k_infl": 3,
