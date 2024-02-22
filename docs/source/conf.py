@@ -142,7 +142,7 @@ html_sidebars = {
 html_context = {
     "display_github"    : True              , # Integrate GitHub
     "github_user"       : "gabrielfougeron" , # Username
-    "github_repo"       : "pyquickbench"    , # Repo name
+    "github_repo"       : "choreo"          , # Repo name
     "github_version"    : "main"            , # Version
     "version"           : "main"            , # Version
     "conf_py_path"      : "docs/source/"    , # Path in the checkout to the docs root

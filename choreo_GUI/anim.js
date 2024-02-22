@@ -113,6 +113,7 @@ var FileSystemAccessSupported = ('showOpenFilePicker' in window)
 var BodyGraph
 var PreviousInputValueNbody = 3
 var MassArray = [1.]
+var ChargeArray = [1.]
 var LoopTargets = []
 
 const { createFFmpeg , fetchFile  } = FFmpeg

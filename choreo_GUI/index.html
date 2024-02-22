@@ -74,33 +74,34 @@ window.addEventListener("drop",function(e){
 <div class="content">
 <div id="AnimationAndMenuBlock">
   <div class="w3-bar-block w3-light-grey open LeftTab" style="width:130px; position:absolute;">
-    <button id="LeftTabOpenClose" class="w3-bar-item w3-button w3-hover-grey"                             style="text-align: center" onclick="OpenCloseLeftTab()" >&#9776;</button>
+    <button id="LeftTabOpenClose" class="w3-bar-item w3-button w3-hover-grey"                             style="text-align: center" onclick="OpenCloseLeftTab()"             >&#9776;</button>
     <button id="LeftTabMain"      class="w3-bar-item w3-button w3-hover-pale-red LeftTabBtn Main"         style="text-align: center" onclick="ClickLeftTabBtn('Main')"        >Main</button>
     <button id="LeftTabPlay"      class="w3-bar-item w3-button w3-hover-pale-red LeftTabBtn Play"         style="text-align: center" onclick="ClickLeftTabBtn('Play')"        >Play</button>
-    <button id="LeftTabGeom"      class="w3-bar-item w3-button w3-hover-pale-red LeftTabBtn Geom"         style="text-align: center" onclick="ClickLeftTabBtn('Geom')"        >Geometry</button>
+    <button id="LeftTabGeom"      class="w3-bar-item w3-button w3-hover-pale-red LeftTabBtn Phys"         style="text-align: center" onclick="ClickLeftTabBtn('Phys')"        >Physics</button>
     <button id="LeftTabAnimation" class="w3-bar-item w3-button w3-hover-pale-red LeftTabBtn Animation"    style="text-align: center" onclick="ClickLeftTabBtn('Animation')"   >Animation</button>
     <button id="LeftTabSolver"    class="w3-bar-item w3-button w3-hover-pale-red LeftTabBtn Solver"       style="text-align: center" onclick="ClickLeftTabBtn('Solver')"      >Solver</button>
     <div class="w3-bar-item w3-light-grey" style="height:100px ; text-align: center" >  </div>
     <div class="w3-bar-item w3-button w3-orange" id="Python_State_Div"  style="text-align: center" onclick="ClickStateDiv()" >Loading</div>
     <button id="ChoreoDispInitStateBtn"  class="w3-bar-item w3-button w3-hover-pale-red w3-light-grey LeftTabBtn" style="text-align: center"  disabled="disabled" onclick="GenerateInitStateClick()">Generate initial state</button>
-    <button id="KillAndReloadWorkerBtn"  class="w3-bar-item w3-button w3-hover-pale-red w3-light-grey LeftTabBtn" style="text-align: center"                      onclick="KillAndReloadWorker()"                        >Kill worker</button>
+    <button id="KillAndReloadWorkerBtn"  class="w3-bar-item w3-button w3-hover-pale-red w3-light-grey LeftTabBtn" style="text-align: center"                      onclick="KillAndReloadWorker()"   >Kill worker</button>
   </div>
   <div id="MarginLeftTop" style="margin-left:130px;">
     <div class="w3-bar w3-light-grey TopTab Main">
       <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Main_About"        onclick="ClickTopTabBtn('Main_About')"        >About</button>
-      <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Main_Help"            onclick="ClickTopTabBtn('Main_Help')"         >Help</button>
+      <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Main_Help"         onclick="ClickTopTabBtn('Main_Help')"         >Help</button>
       <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Main_Save_Config"  onclick="ClickTopTabBtn('Main_Save_Config')"  >Save settings</button>
     </div>
     <div class="w3-bar w3-light-grey TopTab Play">
-      <button id="Play_NowPlaying"  class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Play_NowPlaying" onclick="ClickTopTabBtn('Play_NowPlaying')"   >Now Playing</button>
-      <button id="Play_Share"       class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Play_Share"      onclick="ClickTopTabBtn('Play_Share')"   >Share</button>
-      <button id="Play_Gallery"     class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Play_Gallery"    onclick="ClickTopTabBtn('Play_Gallery')"      >Gallery</button>
-      <button id="Play_Workspace"   class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Play_Workspace"  onclick="ClickTopTabBtn('Play_Workspace')"      >Workspace</button>
+      <button id="Play_NowPlaying"  class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Play_NowPlaying" onclick="ClickTopTabBtn('Play_NowPlaying')" >Now Playing</button>
+      <button id="Play_Share"       class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Play_Share"      onclick="ClickTopTabBtn('Play_Share')"      >Share</button>
+      <button id="Play_Gallery"     class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Play_Gallery"    onclick="ClickTopTabBtn('Play_Gallery')"    >Gallery</button>
+      <button id="Play_Workspace"   class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Play_Workspace"  onclick="ClickTopTabBtn('Play_Workspace')"  >Workspace</button>
     </div>
-    <div class="w3-bar w3-light-grey TopTab Geom">
-        <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Geom_New_Bodies"   onclick="ClickTopTabBtnGeom_New_Bodies()">Bodies</button>
-        <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Geom_Target"   onclick="ClickTopTabBtn('Geom_Target')">Target</button>
-        <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Geom_Random"   onclick="ClickTopTabBtn('Geom_Random')">Random</button>
+    <div class="w3-bar w3-light-grey TopTab Phys">
+      <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Phys_New_Bodies"   onclick="ClickTopTabBtnPhys_New_Bodies()">Bodies</button>
+        <!-- <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Phys_Target"     onclick="ClickTopTabBtn('Phys_Target')">Target</button> -->
+      <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Phys_Random"       onclick="ClickTopTabBtn('Phys_Random')">Random</button>
+      <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Phys_Inter"        onclick="ClickTopTabBtn('Phys_Inter')">Interaction</button>
     </div>
     <div class="w3-bar w3-light-grey TopTab Animation">
         <button class="w3-bar-item w3-button w3-hover-pale-red TopTabBtn Animation_Colors"    onclick="ClickTopTabBtn('Animation_Colors')"      >Colors</button>
@@ -228,7 +229,7 @@ window.addEventListener("drop",function(e){
       Click "Setup Workspace" to save solutions to your disk, browse previously computed solutions and use the (much faster) <a href="https://github.com/gabrielfougeron/choreo"><b>CLI python solver</b></a>.
     </div>
   </div>
-  <div class="w3-container MainTab Geom_New_Bodies" style="display:none; text-align: justify;">
+  <div class="w3-container MainTab Phys_New_Bodies" style="display:none; text-align: justify;">
     <h2>Bodies and symmetries</h2>
     <div id="BodyGraphDiv"></div>
     <table style="display:block; font-size:16px; border:none; display:table; width:600px">
@@ -264,7 +265,7 @@ window.addEventListener("drop",function(e){
     <div id="MassMessage"></div>
     <table id = "table_mass" style="table-layout: fixed;"></table>
   </div>
-  <div class="w3-container MainTab Geom_Target" style="display:none">    
+  <div class="w3-container MainTab Phys_Target" style="display:none">    
     <h2>Initial state target</h2>
     <table style="display:block; font-size:16px; border:none; display:table; table-layout: fixed; width:600px; margin-bottom:-20px" id="table_targets">
       <tr>
@@ -300,7 +301,7 @@ window.addEventListener("drop",function(e){
       </tr>
     </table>
   </div>
-  <div class="w3-container MainTab Geom_Random" style="display:none">
+  <div class="w3-container MainTab Phys_Random" style="display:none">
     <h2>Initial state randomization </h2>
     <img src="img/Random_init_description.svg" alt="Description of the random initial state" height="360px" width="480px">
     <br>
@@ -340,6 +341,39 @@ window.addEventListener("drop",function(e){
         </tr>
       </table>
     </div>
+  </div>
+  <div class="w3-container MainTab Phys_Inter" style="display:none">
+    <h2>Interactions </h2>
+    The interaction energy between two bodies scales with a certain power of the distance separating them. If this energy grows with distance, then the force between two bodies is attractive, else it is repulsive.
+    <br>
+    <br>
+    <div style="text-align:center">
+      \(V_{i,j} \propto \pm q_i q_j \|\mathbf{x}_i - \mathbf{x}_j\|^n\)
+    </div>
+    <br>
+    In the case of gravity, this power is \(-1\) and the charges equal the masses.
+    <div style = "max-width:350px; ">
+      <table style="font-size:16px; border:none; display:table">
+          <td style="border:none;" >
+            <label for="inter_pow">Interaction power</label>
+          </td>
+          <td style="border:none; max-width:90px; ">
+            <input id ="inter_pow" type="text" value="-1" style="text-align: center;">
+          </td>
+        </tr>
+        <tr>
+          <td style="border:none;" >
+            <label for="inter_pm">Energy sign</label>
+          </td>
+          <td style="border:none; max-width:100px; ">
+            <select class="w3-select" id="inter_pm"  name="inter_pm" style="text-align: center;"> 
+              <option value="plus" selected>+</option>
+              <option value="minus">-</option>
+            </select>
+          </td>
+        </tr>
+      </table>
+    </div>  
   </div>
   <div class="w3-container MainTab Animation_Colors" style="display:none">
     <h2>Colors</h2>
@@ -698,13 +732,13 @@ window.addEventListener("drop",function(e){
       <li>Detect independant loops. The motion of every body in a loop can be deduced from that of a single representative.</li>
       <li>Reformulate the symmetries so that they are understood <i>a priori</i> through parametrization. The shapes of all independant loops are constrained accordingly.</li>
     </ul>
-    Then, <b>choreo</b> implements a <a href="https://en.wikipedia.org/wiki/Spectral_method">Fourier spectral method</a> to solve the equations of motion. Starting from an initial random set of parameters, the solver forms better and better guesses until convergence. It is also possible to use previously computed solutions to manufacture an acceptable initial state to the solver in the<button class="in_text_btn" onclick="ClickLeftTabBtn('Geom');ClickTopTabBtn('Geom_Target');"><b>Target</b></button>tab.
+    Then, <b>choreo</b> implements a <a href="https://en.wikipedia.org/wiki/Spectral_method">Fourier spectral method</a> to solve the equations of motion. Starting from an initial random set of parameters, the solver forms better and better guesses until convergence. It is also possible to use previously computed solutions to manufacture an acceptable initial state to the solver in the<button class="in_text_btn" onclick="ClickLeftTabBtn('Phys');ClickTopTabBtn('Phys_Target');"><b>Target</b></button>tab.
     <br>&nbsp 
     <h3>Getting started</h3>
-    &nbsp &nbsp The first step to compute your own periodic solution is to specify how many bodies will be interacting. The<button class="in_text_btn" onclick="ClickLeftTabBtn('Geom');ClickTopTabBtnGeom_New_Bodies();"><b>Geometry</b></button>tab lets you create new bodies, specify their masses, and arrange them in choreographic loops with pre-defined symmetry constraints.
+    &nbsp &nbsp The first step to compute your own periodic solution is to specify how many bodies will be interacting. The<button class="in_text_btn" onclick="ClickLeftTabBtn('Phys');ClickTopTabBtnPhys_New_Bodies();"><b>Physics</b></button>tab lets you create new bodies, specify their masses, and arrange them in choreographic loops with pre-defined symmetry constraints.
     <br>&nbsp
     <h3>Expert options</h3>
-    &nbsp &nbsp More complex symmetries can be specified under the<button class="in_text_btn" onclick="ClickLeftTabBtn('Geom');ClickTopTabBtn('Geom_Custom');"><b>Custom</b></button>tab. Don't hesitate to play around with the parameters of the<button class="in_text_btn" onclick="ClickLeftTabBtn('Geom');ClickTopTabBtn('Geom_Random');"><b>Random</b></button>initialization, as well as all of the<button class="in_text_btn" onclick="ClickLeftTabBtn('Solver');"><b>Solver</b></button>options.
+    &nbsp &nbsp More complex symmetries can be specified under the<button class="in_text_btn" onclick="ClickLeftTabBtn('Phys');ClickTopTabBtn('Phys_Custom');"><b>Custom</b></button>tab. Don't hesitate to play around with the parameters of the<button class="in_text_btn" onclick="ClickLeftTabBtn('Phys');ClickTopTabBtn('Phys_Random');"><b>Random</b></button>initialization, as well as all of the<button class="in_text_btn" onclick="ClickLeftTabBtn('Solver');"><b>Solver</b></button>options.
     <br>&nbsp 
     <h3>Going further</h3>
     &nbsp &nbsp For more thorough information about the meaning of the different settings and parameters, see the <a href="https://gabrielfougeron.github.io/choreo-docs/">online help for the python package <b>choreo</b>.</a>
