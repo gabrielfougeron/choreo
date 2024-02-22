@@ -214,8 +214,8 @@ function SwitchClickLeftTabBtn(TabId) {
         case 'Play': {
             ClickTopTabBtn('Play_NowPlaying')
             break}
-        case 'Geom': {
-            ClickTopTabBtnGeom_New_Bodies()
+        case 'Phys': {
+            ClickTopTabBtnPhys_New_Bodies()
             break}
         case 'Animation': {
             ClickTopTabBtn('Animation_Colors')
@@ -226,9 +226,9 @@ function SwitchClickLeftTabBtn(TabId) {
     }
 }
 
-function ClickTopTabBtnGeom_New_Bodies() {
+function ClickTopTabBtnPhys_New_Bodies() {
     
-    ClickTopTabBtn('Geom_New_Bodies')
+    ClickTopTabBtn('Phys_New_Bodies')
     BodyGraph.fit()
 
 }
@@ -343,7 +343,7 @@ async function ChoreoExecuteClick() {
 
         ReadyToRun = true
 
-        if (ConfigDict['Geom_Target'] ['LookForTarget']) {
+        if (ConfigDict['Phys_Target'] ['LookForTarget']) {
 
             ReadyToRun = TargetSlow_Loaded
 
@@ -399,7 +399,7 @@ function GenerateInitStateClick() {
 
     ReadyToRun = true
 
-    if (ConfigDict['Geom_Target'] ['LookForTarget']) {
+    if (ConfigDict['Phys_Target'] ['LookForTarget']) {
 
         ReadyToRun = TargetSlow_Loaded
 
@@ -431,9 +431,9 @@ function GenerateInitStateClick() {
 
 }
 
-function GatherGeom_Bodies(nbody = -1){
+function GatherPhys_Bodies(nbody = -1){
 
-    Geom_Bodies = {}
+    Phys_Bodies = {}
 
     if (nbody < 0) {
         nbody = document.getElementById("input_nbody").value
@@ -442,14 +442,14 @@ function GatherGeom_Bodies(nbody = -1){
         nbody = Math.min(document.getElementById("input_nbody").value, nbody)
     }
 
-    Geom_Bodies ['nbody'] = parseInt(nbody,10)
+    Phys_Bodies ['nbody'] = parseInt(nbody,10)
 
-    Geom_Bodies ['MomConsImposed'] = document.getElementById('checkbox_MomCons').checked
+    Phys_Bodies ['MomConsImposed'] = document.getElementById('checkbox_MomCons').checked
 
     table_sym = document.getElementById('table_sym')
     var nsyms = table_sym.rows[0].cells.length - 1
 
-    Geom_Bodies ['nsyms'] = nsyms
+    Phys_Bodies ['nsyms'] = nsyms
 
     AllSyms = []
 
@@ -481,9 +481,9 @@ function GatherGeom_Bodies(nbody = -1){
 
     }
 
-    Geom_Bodies ['AllSyms'] = AllSyms
+    Phys_Bodies ['AllSyms'] = AllSyms
     
-    return Geom_Bodies
+    return Phys_Bodies
 
 }
 
@@ -492,67 +492,73 @@ function GatherConfigDict() {
 
     var ConfigDict = {}
 
-    ConfigDict['Geom_Gen'] = {}
-    ConfigDict['Geom_Gen'] ['geodim'] = 2  // futureproofing for once
+    ConfigDict['Phys_Gen'] = {}
+    ConfigDict['Phys_Gen'] ['geodim'] = 2  // futureproofing for once
 
-    ConfigDict['Geom_Bodies'] = GatherGeom_Bodies()
+    ConfigDict['Phys_Bodies'] = GatherPhys_Bodies()
 
     nloops = LoopTargets.length 
-    ConfigDict['Geom_Bodies']['nloop'] = nloops
-    ConfigDict['Geom_Bodies']['Targets'] = LoopTargets
+    ConfigDict['Phys_Bodies']['nloop'] = nloops
+    ConfigDict['Phys_Bodies']['Targets'] = LoopTargets
 
-    ConfigDict['Geom_Bodies'] ['mass'] = []
+    ConfigDict['Phys_Bodies'] ['mass'] = []
+    ConfigDict['Phys_Bodies'] ['charge'] = []
     for (il = 0; il < nloops; il++) {
-        ConfigDict['Geom_Bodies']['mass'].push(MassArray[il])
+        ConfigDict['Phys_Bodies']['mass'].push(MassArray[il])
+        ConfigDict['Phys_Bodies']['charge'].push(ChargeArray[il])
     }
 
-    ConfigDict['Geom_Target'] = {}
+    ConfigDict['Phys_Target'] = {}
 
     LookForTarget = document.getElementById('checkbox_Target').checked
-    ConfigDict['Geom_Target'] ['LookForTarget'] = LookForTarget
+    ConfigDict['Phys_Target'] ['LookForTarget'] = LookForTarget
     if (LookForTarget) {
 
-        ConfigDict['Geom_Target'] ['nT_slow'] =  parseInt(document.getElementById('input_nT_slow').value,10)  
-        ConfigDict['Geom_Target'] ['nT_fast'] = []
+        ConfigDict['Phys_Target'] ['nT_slow'] =  parseInt(document.getElementById('input_nT_slow').value,10)  
+        ConfigDict['Phys_Target'] ['nT_fast'] = []
 
-        ConfigDict['Geom_Target'] ['fast_filenames'] = []
+        ConfigDict['Phys_Target'] ['fast_filenames'] = []
 
         if (TargetSlow_Loaded) {
 
             var nfast = TargetSlow_PlotInfo["nloop"]
 
-            ConfigDict['Geom_Target'] ['slow_filename'] = document.getElementById("SlowSolution_name").innerHTML
+            ConfigDict['Phys_Target'] ['slow_filename'] = document.getElementById("SlowSolution_name").innerHTML
 
             for (var i=0; i < nfast; i++) {
 
-                ConfigDict['Geom_Target'] ['nT_fast'].push( parseInt(document.getElementById("input_nT_fast"+i.toString()).value,10))
+                ConfigDict['Phys_Target'] ['nT_fast'].push( parseInt(document.getElementById("input_nT_fast"+i.toString()).value,10))
 
                 if (TargetFast_LoadedList[i]) {
-                    ConfigDict['Geom_Target'] ['fast_filenames'].push(document.getElementById("FastSolution_name"+i.toString()).innerHTML)
+                    ConfigDict['Phys_Target'] ['fast_filenames'].push(document.getElementById("FastSolution_name"+i.toString()).innerHTML)
                 } else {
-                    ConfigDict['Geom_Target'] ['fast_filenames'].push("no file")
+                    ConfigDict['Phys_Target'] ['fast_filenames'].push("no file")
                 }
 
             }
             
         } else {
 
-            ConfigDict['Geom_Target'] ['slow_filename'] = "no file"
+            ConfigDict['Phys_Target'] ['slow_filename'] = "no file"
 
         }
 
     }
 
-    ConfigDict['Geom_Target'] ['Rotate_fast_with_slow'] = document.getElementById('checkbox_RotateFastWithSlow').checked
-    ConfigDict['Geom_Target'] ['Randomize_Fast_Init'] = document.getElementById('checkbox_RandomizeFastInit').checked
-    ConfigDict['Geom_Target'] ['Optimize_Init'] = document.getElementById('checkbox_OptimizeRelative').checked
-    ConfigDict['Geom_Target'] ['RandomJitterTarget'] = document.getElementById('checkbox_RandomJitterTarget').checked
+    ConfigDict['Phys_Target'] ['Rotate_fast_with_slow'] = document.getElementById('checkbox_RotateFastWithSlow').checked
+    ConfigDict['Phys_Target'] ['Randomize_Fast_Init'] = document.getElementById('checkbox_RandomizeFastInit').checked
+    ConfigDict['Phys_Target'] ['Optimize_Init'] = document.getElementById('checkbox_OptimizeRelative').checked
+    ConfigDict['Phys_Target'] ['RandomJitterTarget'] = document.getElementById('checkbox_RandomJitterTarget').checked
 
-    ConfigDict['Geom_Random'] = {}
-    ConfigDict['Geom_Random'] ['coeff_ampl_o']    = parseFloat(document.getElementById('input_coeff_ampl_o'   ).value   )
-    ConfigDict['Geom_Random'] ['coeff_ampl_min']  = parseFloat(document.getElementById('input_coeff_ampl_min' ).value   )
-    ConfigDict['Geom_Random'] ['k_infl']          = parseInt(  document.getElementById('input_k_infl'         ).value,10)
-    ConfigDict['Geom_Random'] ['k_max']           = parseInt(  document.getElementById('input_k_max'          ).value,10)
+    ConfigDict['Phys_Random'] = {}
+    ConfigDict['Phys_Random'] ['coeff_ampl_o']      = parseFloat(document.getElementById('input_coeff_ampl_o'   ).value   )
+    ConfigDict['Phys_Random'] ['coeff_ampl_min']    = parseFloat(document.getElementById('input_coeff_ampl_min' ).value   )
+    ConfigDict['Phys_Random'] ['k_infl']            = parseInt(  document.getElementById('input_k_infl'         ).value,10)
+    ConfigDict['Phys_Random'] ['k_max']             = parseInt(  document.getElementById('input_k_max'          ).value,10)
+
+    ConfigDict['Phys_Inter'] = {}
+    ConfigDict['Phys_Inter'] ['inter_pow']          = parseFloat(document.getElementById('inter_pow'            ).value   )
+    ConfigDict['Phys_Inter'] ['inter_pm']           = document.getElementById('inter_pm').value
 
     ConfigDict['Animation_Colors'] = {}
     ConfigDict['Animation_Colors'] ["color_method_input"] = document.getElementById("color_method_input").value
@@ -670,14 +676,14 @@ async function LoadConfigFileFromRemote(json_filename) {
 
 }
 
-function LoadGeom_Bodies(Geom_Bodies){
+function LoadPhys_Bodies(Phys_Bodies){
 
-    nbody = Geom_Bodies ['nbody'] 
+    nbody = Phys_Bodies ['nbody'] 
 
     document.getElementById("input_nbody").value = nbody
-    document.getElementById('checkbox_MomCons').checked = Geom_Bodies ['MomConsImposed']
+    document.getElementById('checkbox_MomCons').checked = Phys_Bodies ['MomConsImposed']
     
-    // Geom_Bodies ['mass'] = [] ???
+    // Phys_Bodies ['mass'] = [] ???
 
     table_sym = document.getElementById('table_sym')
 
@@ -686,12 +692,12 @@ function LoadGeom_Bodies(Geom_Bodies){
         deleteColumn('table_sym',icol)
     };
 
-    nsyms = Geom_Bodies ['nsyms']
+    nsyms = Phys_Bodies ['nsyms']
 
     for (var isym = 0; isym < nsyms; isym++) {
 
         const icol = isym+1
-        const the_sym = Geom_Bodies ['AllSyms'][isym]
+        const the_sym = Phys_Bodies ['AllSyms'][isym]
 
         DoAddSym()
 
@@ -716,25 +722,34 @@ function LoadGeom_Bodies(Geom_Bodies){
 
 function LoadConfigDict(ConfigDict) {
 
-    LoadGeom_Bodies(ConfigDict['Geom_Bodies'])
+    LoadPhys_Bodies(ConfigDict['Phys_Bodies'])
 
-    MassArray = ConfigDict['Geom_Bodies'] ['mass']
-    LoopTargets = ConfigDict['Geom_Bodies']['Targets']
+    MassArray = ConfigDict['Phys_Bodies'] ['mass']
+    // ChargeArray = ConfigDict['Phys_Bodies'] ['charge']
+    ChargeArray = ConfigDict['Phys_Bodies'] ['mass'] // TODO : Change this !!!
 
-    if (document.getElementById('checkbox_Target').checked ^ ConfigDict['Geom_Target'] ['LookForTarget']) {
+    LoopTargets = ConfigDict['Phys_Bodies']['Targets']
+
+    if (document.getElementById('checkbox_Target').checked ^ ConfigDict['Phys_Target'] ['LookForTarget']) {
         checkbox_EnableTargets_Handler()
     }
     
-    document.getElementById('checkbox_Target'            ).checked = ConfigDict['Geom_Target'] ['LookForTarget']
-    document.getElementById('checkbox_RotateFastWithSlow').checked = ConfigDict['Geom_Target'] ['Rotate_fast_with_slow']
-    document.getElementById('checkbox_RandomizeFastInit' ).checked = ConfigDict['Geom_Target'] ['Randomize_Fast_Init']
-    document.getElementById('checkbox_OptimizeRelative'  ).checked = ConfigDict['Geom_Target'] ['Optimize_Init']
-    document.getElementById('checkbox_RandomJitterTarget').checked = ConfigDict['Geom_Target'] ['RandomJitterTarget']
+    document.getElementById('checkbox_Target'            ).checked = ConfigDict['Phys_Target'] ['LookForTarget']
+    document.getElementById('checkbox_RotateFastWithSlow').checked = ConfigDict['Phys_Target'] ['Rotate_fast_with_slow']
+    document.getElementById('checkbox_RandomizeFastInit' ).checked = ConfigDict['Phys_Target'] ['Randomize_Fast_Init']
+    document.getElementById('checkbox_OptimizeRelative'  ).checked = ConfigDict['Phys_Target'] ['Optimize_Init']
+    document.getElementById('checkbox_RandomJitterTarget').checked = ConfigDict['Phys_Target'] ['RandomJitterTarget']
 
-    document.getElementById('input_coeff_ampl_o'   ).value = ConfigDict['Geom_Random'] ['coeff_ampl_o']   
-    document.getElementById('input_coeff_ampl_min' ).value = ConfigDict['Geom_Random'] ['coeff_ampl_min'] 
-    document.getElementById('input_k_infl'         ).value = ConfigDict['Geom_Random'] ['k_infl']         
-    document.getElementById('input_k_max'          ).value = ConfigDict['Geom_Random'] ['k_max']          
+    document.getElementById('input_coeff_ampl_o'   ).value = ConfigDict['Phys_Random'] ['coeff_ampl_o']   
+    document.getElementById('input_coeff_ampl_min' ).value = ConfigDict['Phys_Random'] ['coeff_ampl_min'] 
+    document.getElementById('input_k_infl'         ).value = ConfigDict['Phys_Random'] ['k_infl']         
+    document.getElementById('input_k_max'          ).value = ConfigDict['Phys_Random'] ['k_max']        
+    
+    // TODO: Activate this!
+    // document.getElementById('inter_pow'            ).value = ConfigDict['Phys_Inter'] ['inter_pow']
+    // document.getElementById('inter_pm'             ).value = ConfigDict['Phys_Inter'] ['inter_pm']   
+    document.getElementById('inter_pow').value              = "-1"     
+    document.getElementById('inter_pm').value              = "plus"     
 
     document.getElementById("color_method_input").value = ConfigDict['Animation_Colors'] ["color_method_input"]
     
@@ -3003,6 +3018,9 @@ function MakeLoopData() {
     for (il = MassArray.length; il < nloops; il++) {
         MassArray.push(1.)
     }
+    for (il = ChargeArray.length; il < nloops; il++) {
+        ChargeArray.push(1.)
+    }
 
     var table = document.getElementById('table_mass')
     var newcell
@@ -3031,6 +3049,14 @@ function MakeLoopData() {
         div.style.fontSize ="12px"
         div.style.fontWeight ="bold"
         div.innerHTML = "Mass"
+        newcell.appendChild(div)
+
+        newcell = newrow.insertCell(3)
+        div = document.createElement('label')
+        div.style.textAlign = "center"
+        div.style.fontSize ="12px"
+        div.style.fontWeight ="bold"
+        div.innerHTML = "Charge"
         newcell.appendChild(div)
 
         nloops_old = 0
@@ -3075,7 +3101,18 @@ function MakeLoopData() {
         input = document.createElement('input')
         input['type'] = "text"
         input['value'] = MassArray[il].toString()
-        input['oninput'] = ReadMasses
+        input['oninput'] = ReadFromMassTableFun(2, MassArray) 
+        input.style.fontSize = '12px'
+        input.style.width = '120px'
+        input.style.textAlign = 'center'
+
+        newcell.appendChild(input)
+
+        newcell = newrow.insertCell(3)
+        input = document.createElement('input')
+        input['type'] = "text"
+        input['value'] = ChargeArray[il].toString()
+        input['oninput'] = ReadFromMassTableFun(3, ChargeArray) 
         input.style.fontSize = '12px'
         input.style.width = '120px'
         input.style.textAlign = 'center'
@@ -3102,13 +3139,16 @@ function MakeLoopData() {
 
 }
 
-function ReadMasses() {
+function ReadFromMassTableFun(col_id, the_array) {
+    return function () {
 
-    var table = document.getElementById('table_mass')
+        var table = document.getElementById('table_mass')
 
-    nrows = LoopTargets.length
-    for (irow = 1; irow < nrows+1; irow++) {
-        MassArray[irow-1] = parseFloat(table.rows[irow].cells[2].children[0].value)
+        nrows = LoopTargets.length
+        for (irow = 1; irow < nrows+1; irow++) {
+            the_array[irow-1] = parseFloat(table.rows[irow].cells[col_id].children[0].value)
+        }
+        
     }
 }
 
@@ -3118,12 +3158,13 @@ function ClearInputMasses() {
 
     var table = document.getElementById('table_mass')
 
-    nloops_old = table.rows.length
+    var nloops_old = table.rows.length
 
     // Delete all rows
     for (irow = nloops_old-1; irow >= 0; irow--) {
         table.deleteRow(irow)
     }
+
     
 }
 
@@ -3249,20 +3290,20 @@ function DoAddSym() {
 
 function UpdateNumberofBodies() {
 
-    var Geom_Bodies = GatherGeom_Bodies(PreviousInputValueNbody)
+    var Phys_Bodies = GatherPhys_Bodies(PreviousInputValueNbody)
     
     new_nbody = parseInt(document.getElementById("input_nbody").value,10)
-    Geom_Bodies["nbody"] = new_nbody 
+    Phys_Bodies["nbody"] = new_nbody 
 
     if (PreviousInputValueNbody < new_nbody) {
 
-        nsyms = Geom_Bodies ['nsyms']
+        nsyms = Phys_Bodies ['nsyms']
 
         for (var isym = 0; isym < nsyms; isym++) {
 
             for (ib = PreviousInputValueNbody; ib < new_nbody; ib++) {
 
-                Geom_Bodies ['AllSyms'][isym]['BodyPerm'].push( ib )
+                Phys_Bodies ['AllSyms'][isym]['BodyPerm'].push( ib )
 
             }
 
@@ -3270,7 +3311,7 @@ function UpdateNumberofBodies() {
 
     }
     
-    LoadGeom_Bodies(Geom_Bodies)
+    LoadPhys_Bodies(Phys_Bodies)
 
     PreviousInputValueNbody = new_nbody
 

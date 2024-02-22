@@ -18,9 +18,6 @@ import choreo.scipy_plus.linalg
 from choreo.NBodySyst_build import *
 
 import scipy
-import pyquickbench
-
-
 
 
 @cython.final

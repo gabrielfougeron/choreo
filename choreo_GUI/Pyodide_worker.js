@@ -35,7 +35,7 @@ async function loadPyodideAndPackages() {
     RedirectPythonPrint("Python initialized\n")		
 
     RedirectPythonPrint("Importing packages ...")
-
+    
     await pyodide.loadPackage([
         "matplotlib",
         "sparseqr",
