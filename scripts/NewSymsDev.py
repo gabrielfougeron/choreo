@@ -106,14 +106,15 @@ def doit(config_name):
     with open(params_filename) as jsonFile:
         params_dict = json.load(jsonFile)
 
-    all_kwargs = choreo.find.ChoreoLoadFromDict(params_dict, Workspace_folder, args_list=["geodim", "nbody", "mass", "Sym_list"])
+    all_kwargs = choreo.find.ChoreoLoadFromDict(params_dict, Workspace_folder, args_list=["geodim", "nbody", "mass", "charge", "Sym_list"])
     
     geodim = all_kwargs["geodim"]
     nbody = all_kwargs["nbody"]
     mass = all_kwargs["mass"]
+    charge = all_kwargs["charge"]
     Sym_list = all_kwargs["Sym_list"]
     
-    NBS = choreo.cython._NBodySyst.NBodySyst(geodim, nbody, mass, Sym_list)
+    NBS = choreo.cython._NBodySyst.NBodySyst(geodim, nbody, mass, charge, Sym_list)
     
     NBS.nint_fac = 10
     

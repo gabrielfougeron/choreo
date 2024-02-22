@@ -970,7 +970,7 @@ def ChoreoLoadFromDict(params_dict, Workspace_folder, callback=None, args_list=N
 
     np.random.seed(int(time.time()*10000) % 5000)
 
-    geodim = params_dict['Geom_Gen'] ['geodim']
+    geodim = params_dict['Phys_Gen'] ['geodim']
 
     TwoDBackend = (geodim == 2)
     ParallelBackend = (params_dict['Solver_CLI']['Exec_Mul_Proc'] == "MultiThread")
@@ -980,18 +980,18 @@ def ChoreoLoadFromDict(params_dict, Workspace_folder, callback=None, args_list=N
     
     CrashOnError_changevar = False
 
-    LookForTarget = params_dict['Geom_Target'] ['LookForTarget']
+    LookForTarget = params_dict['Phys_Target'] ['LookForTarget']
 
     if (LookForTarget) : # IS LIKELY BROKEN !!!!
 
-        Rotate_fast_with_slow = params_dict['Geom_Target'] ['Rotate_fast_with_slow']
-        Optimize_Init = params_dict['Geom_Target'] ['Optimize_Init']
-        Randomize_Fast_Init =  params_dict['Geom_Target'] ['Randomize_Fast_Init']
+        Rotate_fast_with_slow = params_dict['Phys_Target'] ['Rotate_fast_with_slow']
+        Optimize_Init = params_dict['Phys_Target'] ['Optimize_Init']
+        Randomize_Fast_Init =  params_dict['Phys_Target'] ['Randomize_Fast_Init']
             
-        nT_slow = params_dict['Geom_Target'] ['nT_slow']
-        nT_fast = params_dict['Geom_Target'] ['nT_fast']
+        nT_slow = params_dict['Phys_Target'] ['nT_slow']
+        nT_fast = params_dict['Phys_Target'] ['nT_fast']
 
-        Info_dict_slow_filename = params_dict['Geom_Target'] ["slow_filename"]
+        Info_dict_slow_filename = params_dict['Phys_Target'] ["slow_filename"]
         Info_dict_slow, all_pos_slow = load_target_files(Info_dict_slow_filename,Workspace_folder,"slow")
 
         ncoeff_slow = Info_dict_slow["n_int"] // 2 + 1
@@ -1004,7 +1004,7 @@ def ChoreoLoadFromDict(params_dict, Workspace_folder, callback=None, args_list=N
 
         for i in range(len(nT_fast)) :
 
-            Info_dict_fast_filename = params_dict['Geom_Target'] ["fast_filenames"] [i]
+            Info_dict_fast_filename = params_dict['Phys_Target'] ["fast_filenames"] [i]
             Info_dict_fast, all_pos_fast = load_target_files(Info_dict_fast_filename,Workspace_folder,"fast"+str(i))
             Info_dict_fast_list.append(Info_dict_fast)
 
@@ -1019,32 +1019,46 @@ def ChoreoLoadFromDict(params_dict, Workspace_folder, callback=None, args_list=N
         
         nbody = len(mass)
 
-    nbody = params_dict["Geom_Bodies"]["nbody"]
-    MomConsImposed = params_dict['Geom_Bodies'] ['MomConsImposed']
-    nsyms = params_dict["Geom_Bodies"]["nsyms"]
+    nbody = params_dict["Phys_Bodies"]["nbody"]
+    MomConsImposed = params_dict['Phys_Bodies'] ['MomConsImposed']
+    nsyms = params_dict["Phys_Bodies"]["nsyms"]
 
-    nloop = params_dict["Geom_Bodies"]["nloop"]
+    nloop = params_dict["Phys_Bodies"]["nloop"]
+    
     mass = np.zeros(nbody)
-
     for il in range(nloop):
-        for ilb in range(len(params_dict["Geom_Bodies"]["Targets"][il])):
+        for ilb in range(len(params_dict["Phys_Bodies"]["Targets"][il])):
             
-            ib = params_dict["Geom_Bodies"]["Targets"][il][ilb]
-            mass[ib] = params_dict["Geom_Bodies"]["mass"][il]
+            ib = params_dict["Phys_Bodies"]["Targets"][il][ilb]
+            mass[ib] = params_dict["Phys_Bodies"]["mass"][il]    
+            
+    charge = np.zeros(nbody)
+    try:
+        for il in range(nloop):
+            for ilb in range(len(params_dict["Phys_Bodies"]["Targets"][il])):                
+                ib = params_dict["Phys_Bodies"]["Targets"][il][ilb]
+                charge[ib] = params_dict["Phys_Bodies"]["charge"][il]
+    except KeyError:
+        # TODO: Remove this
+        # Replaces charge with mass for backwards compatibility
+        for il in range(nloop):
+            for ilb in range(len(params_dict["Phys_Bodies"]["Targets"][il])):                
+                ib = params_dict["Phys_Bodies"]["Targets"][il][ilb]
+                charge[ib] = params_dict["Phys_Bodies"]["mass"][il]
 
     Sym_list = []
     
     for isym in range(nsyms):
         
-        BodyPerm = np.array(params_dict["Geom_Bodies"]["AllSyms"][isym]["BodyPerm"],dtype=int)
+        BodyPerm = np.array(params_dict["Phys_Bodies"]["AllSyms"][isym]["BodyPerm"],dtype=int)
 
-        SpaceRot = params_dict["Geom_Bodies"]["AllSyms"][isym].get("SpaceRot")
+        SpaceRot = params_dict["Phys_Bodies"]["AllSyms"][isym].get("SpaceRot")
 
         if SpaceRot is None:
             
             if geodim == 2:
                     
-                Reflexion = params_dict["Geom_Bodies"]["AllSyms"][isym]["Reflexion"]
+                Reflexion = params_dict["Phys_Bodies"]["AllSyms"][isym]["Reflexion"]
                 if (Reflexion == "True"):
                     s = -1
                 elif (Reflexion == "False"):
@@ -1052,7 +1066,7 @@ def ChoreoLoadFromDict(params_dict, Workspace_folder, callback=None, args_list=N
                 else:
                     raise ValueError("Reflexion must be True or False")
                     
-                rot_angle = 2 * np.pi * params_dict["Geom_Bodies"]["AllSyms"][isym]["RotAngleNum"] / params_dict["Geom_Bodies"]["AllSyms"][isym]["RotAngleDen"]
+                rot_angle = 2 * np.pi * params_dict["Phys_Bodies"]["AllSyms"][isym]["RotAngleNum"] / params_dict["Phys_Bodies"]["AllSyms"][isym]["RotAngleDen"]
 
                 SpaceRot = np.array(
                     [   [ s*np.cos(rot_angle)   , -s*np.sin(rot_angle)  ],
@@ -1071,7 +1085,7 @@ def ChoreoLoadFromDict(params_dict, Workspace_folder, callback=None, args_list=N
             if SpaceRot.shape != (geodim, geodim):
                 raise  ValueError(f"Invalid SpaceRot dimension. {geodim =}, {SpaceRot.shape =}")
                 
-        TimeRev_str = params_dict["Geom_Bodies"]["AllSyms"][isym]["TimeRev"]
+        TimeRev_str = params_dict["Phys_Bodies"]["AllSyms"][isym]["TimeRev"]
         if (TimeRev_str == "True"):
             TimeRev = -1
         elif (TimeRev_str == "False"):
@@ -1079,8 +1093,8 @@ def ChoreoLoadFromDict(params_dict, Workspace_folder, callback=None, args_list=N
         else:
             raise ValueError("TimeRev must be True or False")
 
-        TimeShiftNum = int(params_dict["Geom_Bodies"]["AllSyms"][isym]["TimeShiftNum"])
-        TimeShiftDen = int(params_dict["Geom_Bodies"]["AllSyms"][isym]["TimeShiftDen"])
+        TimeShiftNum = int(params_dict["Phys_Bodies"]["AllSyms"][isym]["TimeShiftNum"])
+        TimeShiftDen = int(params_dict["Phys_Bodies"]["AllSyms"][isym]["TimeShiftDen"])
 
         Sym_list.append(
             ActionSym(
@@ -1092,7 +1106,7 @@ def ChoreoLoadFromDict(params_dict, Workspace_folder, callback=None, args_list=N
             )
         )
 
-    if ((LookForTarget) and not(params_dict['Geom_Target'] ['RandomJitterTarget'])) :
+    if ((LookForTarget) and not(params_dict['Phys_Target'] ['RandomJitterTarget'])) :
 
         coeff_ampl_min  = 0
         coeff_ampl_o    = 0
@@ -1101,10 +1115,10 @@ def ChoreoLoadFromDict(params_dict, Workspace_folder, callback=None, args_list=N
 
     else:
 
-        coeff_ampl_min  = params_dict["Geom_Random"]["coeff_ampl_min"]
-        coeff_ampl_o    = params_dict["Geom_Random"]["coeff_ampl_o"]
-        k_infl          = params_dict["Geom_Random"]["k_infl"]
-        k_max           = params_dict["Geom_Random"]["k_max"]
+        coeff_ampl_min  = params_dict["Phys_Random"]["coeff_ampl_min"]
+        coeff_ampl_o    = params_dict["Phys_Random"]["coeff_ampl_o"]
+        k_infl          = params_dict["Phys_Random"]["k_infl"]
+        k_max           = params_dict["Phys_Random"]["k_max"]
 
     CurrentlyDeveloppingNewStuff = params_dict.get("CurrentlyDeveloppingNewStuff",False)
 
@@ -1274,7 +1288,7 @@ def ChoreoFindFromDict_old(params_dict, Workspace_folder):
 
     np.random.seed(int(time.time()*10000) % 5000)
 
-    geodim = params_dict['Geom_Gen'] ['geodim']
+    geodim = params_dict['Phys_Gen'] ['geodim']
 
     TwoDBackend = (geodim == 2)
     ParallelBackend = (params_dict['Solver_CLI']['Exec_Mul_Proc'] == "MultiThread")
@@ -1284,18 +1298,18 @@ def ChoreoFindFromDict_old(params_dict, Workspace_folder):
     
     CrashOnError_changevar = False
 
-    LookForTarget = params_dict['Geom_Target'] ['LookForTarget']
+    LookForTarget = params_dict['Phys_Target'] ['LookForTarget']
 
     if (LookForTarget) : # IS LIKELY BROKEN !!!!
 
-        Rotate_fast_with_slow = params_dict['Geom_Target'] ['Rotate_fast_with_slow']
-        Optimize_Init = params_dict['Geom_Target'] ['Optimize_Init']
-        Randomize_Fast_Init =  params_dict['Geom_Target'] ['Randomize_Fast_Init']
+        Rotate_fast_with_slow = params_dict['Phys_Target'] ['Rotate_fast_with_slow']
+        Optimize_Init = params_dict['Phys_Target'] ['Optimize_Init']
+        Randomize_Fast_Init =  params_dict['Phys_Target'] ['Randomize_Fast_Init']
             
-        nT_slow = params_dict['Geom_Target'] ['nT_slow']
-        nT_fast = params_dict['Geom_Target'] ['nT_fast']
+        nT_slow = params_dict['Phys_Target'] ['nT_slow']
+        nT_fast = params_dict['Phys_Target'] ['nT_fast']
 
-        Info_dict_slow_filename = params_dict['Geom_Target'] ["slow_filename"]
+        Info_dict_slow_filename = params_dict['Phys_Target'] ["slow_filename"]
         Info_dict_slow, all_pos_slow = load_target_files(Info_dict_slow_filename,Workspace_folder,"slow")
 
         ncoeff_slow = Info_dict_slow["n_int"] // 2 + 1
@@ -1308,7 +1322,7 @@ def ChoreoFindFromDict_old(params_dict, Workspace_folder):
 
         for i in range(len(nT_fast)) :
 
-            Info_dict_fast_filename = params_dict['Geom_Target'] ["fast_filenames"] [i]
+            Info_dict_fast_filename = params_dict['Phys_Target'] ["fast_filenames"] [i]
             Info_dict_fast, all_pos_fast = load_target_files(Info_dict_fast_filename,Workspace_folder,"fast"+str(i))
             Info_dict_fast_list.append(Info_dict_fast)
 
@@ -1324,18 +1338,18 @@ def ChoreoFindFromDict_old(params_dict, Workspace_folder):
         nbody = len(mass)
 
 
-    nbody = params_dict["Geom_Bodies"]["nbody"]
-    MomConsImposed = params_dict['Geom_Bodies'] ['MomConsImposed']
-    nsyms = params_dict["Geom_Bodies"]["nsyms"]
+    nbody = params_dict["Phys_Bodies"]["nbody"]
+    MomConsImposed = params_dict['Phys_Bodies'] ['MomConsImposed']
+    nsyms = params_dict["Phys_Bodies"]["nsyms"]
 
-    nloop = params_dict["Geom_Bodies"]["nloop"]
+    nloop = params_dict["Phys_Bodies"]["nloop"]
+    
     mass = np.zeros(nbody)
-
     for il in range(nloop):
-        for ilb in range(len(params_dict["Geom_Bodies"]["Targets"][il])):
+        for ilb in range(len(params_dict["Phys_Bodies"]["Targets"][il])):
             
-            ib = params_dict["Geom_Bodies"]["Targets"][il][ilb]
-            mass[ib] = params_dict["Geom_Bodies"]["mass"][il]
+            ib = params_dict["Phys_Bodies"]["Targets"][il][ilb]
+            mass[ib] = params_dict["Phys_Bodies"]["mass"][il]
 
     Sym_list = []
 
@@ -1343,9 +1357,9 @@ def ChoreoFindFromDict_old(params_dict, Workspace_folder):
 
         for isym in range(nsyms):
             
-            BodyPerm = np.array(params_dict["Geom_Bodies"]["AllSyms"][isym]["BodyPerm"],dtype=int)
+            BodyPerm = np.array(params_dict["Phys_Bodies"]["AllSyms"][isym]["BodyPerm"],dtype=int)
 
-            Reflexion = params_dict["Geom_Bodies"]["AllSyms"][isym]["Reflexion"]
+            Reflexion = params_dict["Phys_Bodies"]["AllSyms"][isym]["Reflexion"]
             if (Reflexion == "True"):
                 s = -1
             elif (Reflexion == "False"):
@@ -1353,7 +1367,7 @@ def ChoreoFindFromDict_old(params_dict, Workspace_folder):
             else:
                 raise ValueError("Reflexion must be True or False")
 
-            rot_angle = 2 * np.pi * params_dict["Geom_Bodies"]["AllSyms"][isym]["RotAngleNum"] / params_dict["Geom_Bodies"]["AllSyms"][isym]["RotAngleDen"]
+            rot_angle = 2 * np.pi * params_dict["Phys_Bodies"]["AllSyms"][isym]["RotAngleNum"] / params_dict["Phys_Bodies"]["AllSyms"][isym]["RotAngleDen"]
 
             SpaceRot = np.array(
                 [   [ s*np.cos(rot_angle)   , -s*np.sin(rot_angle)  ],
@@ -1361,7 +1375,7 @@ def ChoreoFindFromDict_old(params_dict, Workspace_folder):
                 , dtype = np.float64
             )
 
-            TimeRev_str = params_dict["Geom_Bodies"]["AllSyms"][isym]["TimeRev"]
+            TimeRev_str = params_dict["Phys_Bodies"]["AllSyms"][isym]["TimeRev"]
             if (TimeRev_str == "True"):
                 TimeRev = -1
             elif (TimeRev_str == "False"):
@@ -1369,8 +1383,8 @@ def ChoreoFindFromDict_old(params_dict, Workspace_folder):
             else:
                 raise ValueError("TimeRev must be True or False")
 
-            TimeShiftNum = int(params_dict["Geom_Bodies"]["AllSyms"][isym]["TimeShiftNum"])
-            TimeShiftDen = int(params_dict["Geom_Bodies"]["AllSyms"][isym]["TimeShiftDen"])
+            TimeShiftNum = int(params_dict["Phys_Bodies"]["AllSyms"][isym]["TimeShiftNum"])
+            TimeShiftDen = int(params_dict["Phys_Bodies"]["AllSyms"][isym]["TimeShiftDen"])
 
             Sym_list.append(
                 ActionSym(
@@ -1388,7 +1402,7 @@ def ChoreoFindFromDict_old(params_dict, Workspace_folder):
 
     Sym_list = Make_ChoreoSymList_From_ActionSymList(Sym_list, nbody)
 
-    if ((LookForTarget) and not(params_dict['Geom_Target'] ['RandomJitterTarget'])) :
+    if ((LookForTarget) and not(params_dict['Phys_Target'] ['RandomJitterTarget'])) :
 
         coeff_ampl_min  = 0
         coeff_ampl_o    = 0
@@ -1397,10 +1411,10 @@ def ChoreoFindFromDict_old(params_dict, Workspace_folder):
 
     else:
 
-        coeff_ampl_min  = params_dict["Geom_Random"]["coeff_ampl_min"]
-        coeff_ampl_o    = params_dict["Geom_Random"]["coeff_ampl_o"]
-        k_infl          = params_dict["Geom_Random"]["k_infl"]
-        k_max           = params_dict["Geom_Random"]["k_max"]
+        coeff_ampl_min  = params_dict["Phys_Random"]["coeff_ampl_min"]
+        coeff_ampl_o    = params_dict["Phys_Random"]["coeff_ampl_o"]
+        k_infl          = params_dict["Phys_Random"]["k_infl"]
+        k_max           = params_dict["Phys_Random"]["k_max"]
 
     CurrentlyDeveloppingNewStuff = params_dict.get("CurrentlyDeveloppingNewStuff",False)
 

@@ -724,9 +724,8 @@ function LoadConfigDict(ConfigDict) {
 
     LoadPhys_Bodies(ConfigDict['Phys_Bodies'])
 
-    MassArray = ConfigDict['Phys_Bodies'] ['mass']
-    // ChargeArray = ConfigDict['Phys_Bodies'] ['charge']
-    ChargeArray = ConfigDict['Phys_Bodies'] ['mass'] // TODO : Change this !!!
+    MassArray   = ConfigDict['Phys_Bodies'] ['mass']
+    ChargeArray = ConfigDict['Phys_Bodies'] ['charge']
 
     LoopTargets = ConfigDict['Phys_Bodies']['Targets']
 
@@ -745,11 +744,8 @@ function LoadConfigDict(ConfigDict) {
     document.getElementById('input_k_infl'         ).value = ConfigDict['Phys_Random'] ['k_infl']         
     document.getElementById('input_k_max'          ).value = ConfigDict['Phys_Random'] ['k_max']        
     
-    // TODO: Activate this!
-    // document.getElementById('inter_pow'            ).value = ConfigDict['Phys_Inter'] ['inter_pow']
-    // document.getElementById('inter_pm'             ).value = ConfigDict['Phys_Inter'] ['inter_pm']   
-    document.getElementById('inter_pow').value              = "-1"     
-    document.getElementById('inter_pm').value              = "plus"     
+    document.getElementById('inter_pow'            ).value = ConfigDict['Phys_Inter'] ['inter_pow']
+    document.getElementById('inter_pm'             ).value = ConfigDict['Phys_Inter'] ['inter_pm']   
 
     document.getElementById("color_method_input").value = ConfigDict['Animation_Colors'] ["color_method_input"]
     

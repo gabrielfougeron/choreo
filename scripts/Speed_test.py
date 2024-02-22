@@ -84,18 +84,18 @@ def main(params_dict):
     
     CrashOnError_changevar = False
 
-    LookForTarget = params_dict['Geom_Target'] ['LookForTarget']
+    LookForTarget = params_dict['Phys_Target'] ['LookForTarget']
 
     if (LookForTarget) :
 
-        Rotate_fast_with_slow = params_dict['Geom_Target'] ['Rotate_fast_with_slow']
-        Optimize_Init = params_dict['Geom_Target'] ['Optimize_Init']
-        Randomize_Fast_Init =  params_dict['Geom_Target'] ['Randomize_Fast_Init']
+        Rotate_fast_with_slow = params_dict['Phys_Target'] ['Rotate_fast_with_slow']
+        Optimize_Init = params_dict['Phys_Target'] ['Optimize_Init']
+        Randomize_Fast_Init =  params_dict['Phys_Target'] ['Randomize_Fast_Init']
             
-        nT_slow = params_dict['Geom_Target'] ['nT_slow']
-        nT_fast = params_dict['Geom_Target'] ['nT_fast']
+        nT_slow = params_dict['Phys_Target'] ['nT_slow']
+        nT_fast = params_dict['Phys_Target'] ['nT_fast']
 
-        Info_dict_slow_filename = params_dict['Geom_Target'] ["slow_filename"]
+        Info_dict_slow_filename = params_dict['Phys_Target'] ["slow_filename"]
         Info_dict_slow, all_pos_slow = load_target_files(Info_dict_slow_filename,Workspace_folder,"slow")
 
         ncoeff_slow = Info_dict_slow["n_int"] // 2 + 1
@@ -108,7 +108,7 @@ def main(params_dict):
 
         for i in range(len(nT_fast)) :
 
-            Info_dict_fast_filename = params_dict['Geom_Target'] ["fast_filenames"] [i]
+            Info_dict_fast_filename = params_dict['Phys_Target'] ["fast_filenames"] [i]
             Info_dict_fast, all_pos_fast = load_target_files(Info_dict_fast_filename,Workspace_folder,"fast"+str(i))
             Info_dict_fast_list.append(Info_dict_fast)
 
@@ -125,21 +125,21 @@ def main(params_dict):
 
     else:
 
-        n_make_loops = len(params_dict["Geom_Bodies"]["SymType"])
+        n_make_loops = len(params_dict["Phys_Bodies"]["SymType"])
 
-        nbpl = params_dict["Geom_Bodies"]["nbpl"]
+        nbpl = params_dict["Phys_Bodies"]["nbpl"]
 
-        SymType = params_dict["Geom_Bodies"]["SymType"]
+        SymType = params_dict["Phys_Bodies"]["SymType"]
 
         Sym_list,nbody = choreo.Make2DChoreoSymManyLoops(nbpl=nbpl,SymType=SymType)
 
         mass = []
         for il in range(n_make_loops):
-            mass.extend([params_dict["Geom_Bodies"]["mass"][il] for ib in range(nbpl[il])])
+            mass.extend([params_dict["Phys_Bodies"]["mass"][il] for ib in range(nbpl[il])])
 
         mass = np.array(mass,dtype=np.float64)
 
-    if ((LookForTarget) and not(params_dict['Geom_Target'] ['RandomJitterTarget'])) :
+    if ((LookForTarget) and not(params_dict['Phys_Target'] ['RandomJitterTarget'])) :
 
         coeff_ampl_min  = 0
         coeff_ampl_o    = 0
@@ -148,43 +148,43 @@ def main(params_dict):
 
     else:
 
-        coeff_ampl_min  = params_dict["Geom_Random"]["coeff_ampl_min"]
-        coeff_ampl_o    = params_dict["Geom_Random"]["coeff_ampl_o"]
-        k_infl          = params_dict["Geom_Random"]["k_infl"]
-        k_max           = params_dict["Geom_Random"]["k_max"]
+        coeff_ampl_min  = params_dict["Phys_Random"]["coeff_ampl_min"]
+        coeff_ampl_o    = params_dict["Phys_Random"]["coeff_ampl_o"]
+        k_infl          = params_dict["Phys_Random"]["k_infl"]
+        k_max           = params_dict["Phys_Random"]["k_max"]
 
-    n_custom_sym = params_dict["Geom_Custom"]["n_custom_sym"]
+    n_custom_sym = params_dict["Phys_Custom"]["n_custom_sym"]
     
     for isym in range(n_custom_sym):
         
-        if (params_dict["Geom_Custom"]["CustomSyms"][isym]["Reflexion"] == "True"):
+        if (params_dict["Phys_Custom"]["CustomSyms"][isym]["Reflexion"] == "True"):
             s = -1
-        elif (params_dict["Geom_Custom"]["CustomSyms"][isym]["Reflexion"] == "False"):
+        elif (params_dict["Phys_Custom"]["CustomSyms"][isym]["Reflexion"] == "False"):
             s = 1
         else:
             raise ValueError("Reflexion must be True or False")
             
-        rot_angle = (2*np.pi * params_dict["Geom_Custom"]["CustomSyms"][isym]["RotAngleNum"]) / params_dict["Geom_Custom"]["CustomSyms"][isym]["RotAngleDen"]
+        rot_angle = (2*np.pi * params_dict["Phys_Custom"]["CustomSyms"][isym]["RotAngleNum"]) / params_dict["Phys_Custom"]["CustomSyms"][isym]["RotAngleDen"]
 
-        if (params_dict["Geom_Custom"]["CustomSyms"][isym]["TimeRev"] == "True"):
+        if (params_dict["Phys_Custom"]["CustomSyms"][isym]["TimeRev"] == "True"):
             TimeRev = -1
-        elif (params_dict["Geom_Custom"]["CustomSyms"][isym]["TimeRev"] == "False"):
+        elif (params_dict["Phys_Custom"]["CustomSyms"][isym]["TimeRev"] == "False"):
             TimeRev = 1
         else:
             raise ValueError("TimeRev must be True or False")
         
         Sym_list.append(
             choreo.ChoreoSym(
-                LoopTarget=params_dict["Geom_Custom"]["CustomSyms"][isym]["LoopTarget"],
-                LoopSource=params_dict["Geom_Custom"]["CustomSyms"][isym]["LoopSource"],
+                LoopTarget=params_dict["Phys_Custom"]["CustomSyms"][isym]["LoopTarget"],
+                LoopSource=params_dict["Phys_Custom"]["CustomSyms"][isym]["LoopSource"],
                 SpaceRot= np.array([[s*np.cos(rot_angle),-s*np.sin(rot_angle)],[np.sin(rot_angle),np.cos(rot_angle)]],dtype=np.float64),
                 TimeRev=TimeRev,
                 TimeShift=fractions.Fraction(
-                    numerator=params_dict["Geom_Custom"]["CustomSyms"][isym]["TimeShiftNum"],
-                    denominator=params_dict["Geom_Custom"]["CustomSyms"][isym]["TimeShiftDen"])
+                    numerator=params_dict["Phys_Custom"]["CustomSyms"][isym]["TimeShiftNum"],
+                    denominator=params_dict["Phys_Custom"]["CustomSyms"][isym]["TimeShiftDen"])
                 ))
 
-    MomConsImposed = params_dict['Geom_Bodies'] ['MomConsImposed']
+    MomConsImposed = params_dict['Phys_Bodies'] ['MomConsImposed']
 
     store_folder = os.path.join(Workspace_folder,str(nbody))
     if not(os.path.isdir(store_folder)):
