@@ -52,6 +52,11 @@ cdef class NBodySyst():
     def loopmass(self):
         return np.asarray(self._loopmass)
 
+    cdef double[::1] _loopcharge
+    @property
+    def loopcharge(self):
+        return np.asarray(self._loopcharge)
+
     cdef long[:,::1] _Targets
     @property
     def Targets(self):
@@ -117,10 +122,10 @@ cdef class NBodySyst():
     def BinSpaceRotIsId(self):
         return np.asarray(self._BinSpaceRotIsId) > 0
         
-    cdef double[::1] _BinProdMassSum
+    cdef double[::1] _BinProdChargeSum
     @property
-    def BinProdMassSum(self):
-        return np.asarray(self._BinProdMassSum)
+    def BinProdChargeSum(self):
+        return np.asarray(self._BinProdChargeSum)
 
     cdef long[::1] _InterTimeRev
     @property
@@ -182,6 +187,9 @@ cdef class NBodySyst():
     cdef readonly list gensegm_to_all
     cdef readonly list intersegm_to_all
     cdef readonly list LoopGenConstraints
+
+    cdef double inter_pow
+    cdef long inter_pm
     
     # Things that change with nint
     cdef long _nint
@@ -200,7 +208,7 @@ cdef class NBodySyst():
     cdef readonly long nparams
     cdef readonly long nparams_incl_o
 
-    # WARNING: These are the shapes and shifts of POS params, not MOM params
+    # WARNING: These are the shapes and shifts of POS params, NOT MOM params!
     cdef long[:,::1] _params_shapes   
     cdef long[::1] _params_shifts
 
@@ -216,6 +224,8 @@ cdef class NBodySyst():
         long nbody                  ,
         double[::1] bodymass        ,
         double[::1] bodycharge      ,
+        double inter_pow            ,
+        long inter_pm               ,
         list Sym_list               , 
         bint CrashOnIdentity = True ,
     ):
@@ -223,18 +233,28 @@ cdef class NBodySyst():
         cdef Py_ssize_t i, il, ibin, ib
         cdef double eps = 1e-12
 
+        self.inter_pow = inter_pow
+        self.inter_pm = inter_pm
+
+
+
+
+
         self._nint = -1 # Signals that things that scale with loop size are not set yet
 
         if (bodymass.shape[0] != nbody):
             raise ValueError(f'Incompatible number of bodies {nbody} vs number of masses {bodymass.shape[0]}')
+        if (bodycharge.shape[0] != nbody):
+            raise ValueError(f'Incompatible number of bodies {nbody} vs number of charges {bodycharge.shape[0]}')
 
         self.geodim = geodim
         self.nbody = nbody
         self.Sym_list = Sym_list
+        # Zero charges are OK but not zero masses
         for ib in range(nbody):
             assert bodymass[ib] != 0.
 
-        self.DetectLoops(bodymass)
+        self.DetectLoops(bodymass, bodycharge)
 
         self.ExploreGlobalShifts_BuildSegmGraph()
 
@@ -267,10 +287,10 @@ cdef class NBodySyst():
 
         self.GatherInterSym()
 
-        BinarySegm, Identity_detected = FindAllBinarySegments(self.intersegm_to_all, nbody, self.nsegm, self.nint_min, self._bodysegm, CrashOnIdentity, bodymass)
+        BinarySegm, Identity_detected = FindAllBinarySegments(self.intersegm_to_all, nbody, self.nsegm, self.nint_min, self._bodysegm, CrashOnIdentity, bodycharge)
         self.All_BinSegmTransformId, self.nbin_segm_tot, self.nbin_segm_unique = CountSegmentBinaryInteractions(BinarySegm, self.nsegm)
 
-        self._BinSourceSegm, self._BinTargetSegm, self._BinTimeRev, self._BinSpaceRot, self._BinProdMassSum = ReorganizeBinarySegments(BinarySegm)
+        self._BinSourceSegm, self._BinTargetSegm, self._BinTimeRev, self._BinSpaceRot, self._BinProdChargeSum = ReorganizeBinarySegments(BinarySegm)
         assert self._BinSourceSegm.shape[0] == self.nbin_segm_unique
         self._BinSpaceRotIsId = np.zeros((self.nbin_segm_unique), dtype=np.intc)
         for ibin in range(self.nbin_segm_unique):
@@ -308,7 +328,7 @@ cdef class NBodySyst():
         self.nint_fac = 1
 
 
-    def DetectLoops(self, bodymass, nint_min_fac = 1):
+    def DetectLoops(self, bodymass, bodycharge, nint_min_fac = 1):
 
         All_den_list_on_entry = []
         for Sym in self.Sym_list:
@@ -344,6 +364,14 @@ cdef class NBodySyst():
             for ilb in range(loopnb[il]):
                 ib = Targets[il,ilb]
                 assert loopmass[il] == bodymass[ib]
+
+        loopcharge = np.zeros((self.nloop), dtype=np.float64)
+        self._loopcharge = loopcharge
+        for il in range(self.nloop):
+            loopcharge[il] = bodycharge[Targets[il,0]]
+            for ilb in range(loopnb[il]):
+                ib = Targets[il,ilb]
+                assert loopcharge[il] == bodycharge[ib]
 
         self.BodyGraph = BodyGraph
 

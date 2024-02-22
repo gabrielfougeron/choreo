@@ -111,12 +111,12 @@ define_macros = [("NPY_NO_DEPRECATED_API", "NPY_1_7_API_VERSION")]
 
 compiler_directives = {
     'wraparound': False,
-    'boundscheck': False,
-    'nonecheck': False,
-    'initializedcheck': False,
-    'overflowcheck': False,
-    'overflowcheck.fold': False,
-    'infer_types': True,
+    # 'boundscheck': False,
+    # 'nonecheck': False,
+    # 'initializedcheck': False,
+    # 'overflowcheck': False,
+    # 'overflowcheck.fold': False,
+    # 'infer_types': True,
 }
 
 ##### Profiler only ####
@@ -131,7 +131,6 @@ compiler_directives = {
 #     ('CYTHON_TRACE_NOGIL', '1')   ,
 # ]
 # define_macros.extend(profile_define_macros)
-
 
 include_dirs = [numpy.get_include()]
 
@@ -161,7 +160,6 @@ if use_Cython:
         force = ("-f" in sys.argv),
     )
     
-
 packages = setuptools.find_packages()
 
 package_data = {key : ['*.h','*.c','*.pyx','*.pxd'] for key in packages}
