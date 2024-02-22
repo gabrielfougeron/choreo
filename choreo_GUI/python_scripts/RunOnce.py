@@ -121,16 +121,16 @@ async def main():
     
     CrashOnError_changevar = False
 
-    LookForTarget = params_dict['Geom_Target'] ['LookForTarget']
+    LookForTarget = params_dict['Phys_Target'] ['LookForTarget']
 
     if (LookForTarget) : # IS LIKELY BROKEN !!!!
 
-        Rotate_fast_with_slow = params_dict['Geom_Target'] ['Rotate_fast_with_slow']
-        Optimize_Init = params_dict['Geom_Target'] ['Optimize_Init']
-        Randomize_Fast_Init =  params_dict['Geom_Target'] ['Randomize_Fast_Init']
+        Rotate_fast_with_slow = params_dict['Phys_Target'] ['Rotate_fast_with_slow']
+        Optimize_Init = params_dict['Phys_Target'] ['Optimize_Init']
+        Randomize_Fast_Init =  params_dict['Phys_Target'] ['Randomize_Fast_Init']
             
-        nT_slow = params_dict['Geom_Target'] ['nT_slow']
-        nT_fast = params_dict['Geom_Target'] ['nT_fast']
+        nT_slow = params_dict['Phys_Target'] ['nT_slow']
+        nT_fast = params_dict['Phys_Target'] ['nT_fast']
 
         Info_dict_slow = js.TargetSlow_PlotInfo.to_py()
 
@@ -160,18 +160,18 @@ async def main():
         nbody = len(mass)
 
 
-    nbody = params_dict["Geom_Bodies"]["nbody"]
-    MomConsImposed = params_dict['Geom_Bodies'] ['MomConsImposed']
-    nsyms = params_dict["Geom_Bodies"]["nsyms"]
+    nbody = params_dict["Phys_Bodies"]["nbody"]
+    MomConsImposed = params_dict['Phys_Bodies'] ['MomConsImposed']
+    nsyms = params_dict["Phys_Bodies"]["nsyms"]
 
-    nloop = params_dict["Geom_Bodies"]["nloop"]
+    nloop = params_dict["Phys_Bodies"]["nloop"]
     mass = np.zeros(nbody)
 
     for il in range(nloop):
-        for ilb in range(len(params_dict["Geom_Bodies"]["Targets"][il])):
+        for ilb in range(len(params_dict["Phys_Bodies"]["Targets"][il])):
             
-            ib = params_dict["Geom_Bodies"]["Targets"][il][ilb]
-            mass[ib] = params_dict["Geom_Bodies"]["mass"][il]
+            ib = params_dict["Phys_Bodies"]["Targets"][il][ilb]
+            mass[ib] = params_dict["Phys_Bodies"]["mass"][il]
 
     Sym_list = []
 
@@ -179,9 +179,9 @@ async def main():
 
         for isym in range(nsyms):
             
-            BodyPerm = np.array(params_dict["Geom_Bodies"]["AllSyms"][isym]["BodyPerm"],dtype=int)
+            BodyPerm = np.array(params_dict["Phys_Bodies"]["AllSyms"][isym]["BodyPerm"],dtype=int)
 
-            Reflexion = params_dict["Geom_Bodies"]["AllSyms"][isym]["Reflexion"]
+            Reflexion = params_dict["Phys_Bodies"]["AllSyms"][isym]["Reflexion"]
             if (Reflexion == "True"):
                 s = -1
             elif (Reflexion == "False"):
@@ -189,7 +189,7 @@ async def main():
             else:
                 raise ValueError("Reflexion must be True or False")
 
-            rot_angle = 2 * np.pi * params_dict["Geom_Bodies"]["AllSyms"][isym]["RotAngleNum"] / params_dict["Geom_Bodies"]["AllSyms"][isym]["RotAngleDen"]
+            rot_angle = 2 * np.pi * params_dict["Phys_Bodies"]["AllSyms"][isym]["RotAngleNum"] / params_dict["Phys_Bodies"]["AllSyms"][isym]["RotAngleDen"]
 
             SpaceRot = np.array(
                 [   [ s*np.cos(rot_angle)   , -s*np.sin(rot_angle)  ],
@@ -197,7 +197,7 @@ async def main():
                 , dtype = np.float64
             )
 
-            TimeRev_str = params_dict["Geom_Bodies"]["AllSyms"][isym]["TimeRev"]
+            TimeRev_str = params_dict["Phys_Bodies"]["AllSyms"][isym]["TimeRev"]
             if (TimeRev_str == "True"):
                 TimeRev = -1
             elif (TimeRev_str == "False"):
@@ -205,8 +205,8 @@ async def main():
             else:
                 raise ValueError("TimeRev must be True or False")
 
-            TimeShiftNum = params_dict["Geom_Bodies"]["AllSyms"][isym]["TimeShiftNum"]
-            TimeShiftDen = params_dict["Geom_Bodies"]["AllSyms"][isym]["TimeShiftDen"]
+            TimeShiftNum = params_dict["Phys_Bodies"]["AllSyms"][isym]["TimeShiftNum"]
+            TimeShiftDen = params_dict["Phys_Bodies"]["AllSyms"][isym]["TimeShiftDen"]
 
             Sym_list.append(
                 choreo.ActionSym(
@@ -228,7 +228,7 @@ async def main():
 
 
 
-    if ((LookForTarget) and not(params_dict['Geom_Target'] ['RandomJitterTarget'])) :
+    if ((LookForTarget) and not(params_dict['Phys_Target'] ['RandomJitterTarget'])) :
 
         coeff_ampl_min  = 0
         coeff_ampl_o    = 0
@@ -237,10 +237,10 @@ async def main():
 
     else:
 
-        coeff_ampl_min  = params_dict["Geom_Random"]["coeff_ampl_min"]
-        coeff_ampl_o    = params_dict["Geom_Random"]["coeff_ampl_o"]
-        k_infl          = params_dict["Geom_Random"]["k_infl"]
-        k_max           = params_dict["Geom_Random"]["k_max"]
+        coeff_ampl_min  = params_dict["Phys_Random"]["coeff_ampl_min"]
+        coeff_ampl_o    = params_dict["Phys_Random"]["coeff_ampl_o"]
+        k_infl          = params_dict["Phys_Random"]["k_infl"]
+        k_max           = params_dict["Phys_Random"]["k_max"]
 
 
 
