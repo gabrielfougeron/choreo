@@ -1826,19 +1826,16 @@ cdef void pos_slice_to_partial_fft_1npr(
     if direction > 0:
         dfac = 2*(npr * ncoeff_min_loop)
     else:
-        dfac = 1./ncoeff_min_loop
+        dfac = 1./(ncoeff_min_loop)
 
     # Again with the clever memory arrangement and a single gemm call
     scipy.linalg.cython_blas.dgemm(transn, transn, &ndcom, &n_inter, &geodim, &dfac, params_basis_r, &ndcom, pos_slice, &geodim, &zero_double, ifft_r, &ndcom)
 
-    if direction > 0:
-        pass
-    else:
+    if direction < 0:
         # Double start and end of ifft_r
         scipy.linalg.cython_blas.dscal(&ndcom,&two_double,ifft_r,&int_one)
         ifft_r += npr*ndcom
         scipy.linalg.cython_blas.dscal(&ndcom,&two_double,ifft_r,&int_one)
-
 
     inplace_twiddle(const_ifft, nnz_k, nint, n_inter, ncoeff_min_loop_nnz, nppl, 1)
 
@@ -2038,6 +2035,7 @@ cdef void ifft_to_params(
     double complex *ifft_buf_ptr    , long[:,::1] ifft_shapes       , long[::1] ifft_shifts     ,
     long[::1] nnz_k_buf             , long[:,::1] nnz_k_shapes      , long[::1] nnz_k_shifts    ,
     double* params_buf              , long[:,::1] params_shapes     , long[::1] params_shifts   ,
+    int direction                   ,
 ) noexcept nogil:
 
     cdef double [:,:,::1] params
@@ -2059,6 +2057,12 @@ cdef void ifft_to_params(
                 ifft = <double complex[:ifft_shapes[il,0],:ifft_shapes[il,1],:ifft_shapes[il,2]:1]> &ifft_buf_ptr[ifft_shifts[il]]
 
                 params = scipy.fft.irfft(ifft, axis=0)
+
+            if direction < 0:
+                if nnz_k.shape[0] > 0:
+                    if nnz_k[0] == 0:
+                        for i in range(params.shape[2]):
+                            params[0,0,i] *= 0.5
 
             dest = params_buf + params_shifts[il]
             n = params_shifts[il+1] - params_shifts[il]
@@ -2458,6 +2462,7 @@ cdef void segmpos_to_params(
         ifft_buf_ptr    , ifft_shapes   , ifft_shifts   ,
         nnz_k_buf       , nnz_k_shapes  , nnz_k_shifts  ,
         params_pos_buf  , params_shapes , params_shifts ,
+        1               ,
     )
 
     # PYFFTW free ??
@@ -2564,12 +2569,12 @@ cdef void segmpos_to_params_T(
     long[::1] ncoeff_min_loop               , long nnpr                         ,
     long[::1] loopnb                        , double[::1] loopmass              ,
     bint[::1] InterSpaceRotIsId             , double[:,:,::1] InterSpaceRot     , long[::1] InterTimeRev        ,
-    long[::1] gensegm_to_body       ,
-    long[::1] gensegm_to_iint       ,
-    long[::1] BodyLoop              ,
-    long segm_size                  ,
-    long segm_store                 ,
-    double[::1] params_mom_buf      ,
+    long[::1] gensegm_to_body               ,
+    long[::1] gensegm_to_iint               ,
+    long[::1] BodyLoop                      ,
+    long segm_size                          ,
+    long segm_store                         ,
+    double[::1] params_mom_buf              ,
 ) noexcept nogil:
 
     cdef double *params_pos_buf
@@ -2615,6 +2620,7 @@ cdef void segmpos_to_params_T(
         ifft_buf_ptr    , ifft_shapes   , ifft_shifts   ,
         nnz_k_buf       , nnz_k_shapes  , nnz_k_shifts  ,
         params_pos_buf  , params_shapes , params_shifts ,
+        -1              ,
     )
 
     # PYFFTW free ??
@@ -2650,8 +2656,7 @@ cdef double segm_pos_to_pot_nrg(
 
     cdef double pot_nrg = 0.
     cdef double pot_nrg_bin
-    cdef double dx2
-    cdef double* dx = <double*> malloc(sizeof(double)*geodim)
+    cdef double dx2, a
 
     cdef double* tmp_loc
     cdef bint NeedsAllocate = False
@@ -2694,11 +2699,11 @@ cdef double segm_pos_to_pot_nrg(
         pot_nrg_bin = 0
         for iint in range(segm_size):
 
-            dx[0] = pos[0] - posp[0]
-            dx2 = dx[0]*dx[0]
+            a = pos[0] - posp[0]
+            dx2 = a*a
             for idim in range(1,geodim):
-                dx[idim] = pos[idim] - posp[idim]
-                dx2 = dx2 + dx[idim]*dx[idim]
+                a = pos[idim] - posp[idim]
+                dx2 = dx2 + a*a
 
             pot = inter_law(dx2)
 
@@ -2709,7 +2714,6 @@ cdef double segm_pos_to_pot_nrg(
 
         pot_nrg += pot_nrg_bin * BinProdChargeSum[ibin]
 
-    free(dx)
     if NeedsAllocate:
         free(tmp_loc)
 
@@ -2733,9 +2737,7 @@ cdef void segm_pos_to_pot_nrg_grad(
     cdef Py_ssize_t dpos
     cdef Py_ssize_t dposp = geodim
 
-    # cdef double pot_nrg = 0.
-    # cdef double pot_nrg_bin
-    cdef double dx2, a
+    cdef double dx2, a, b
     cdef double* dx = <double*> malloc(sizeof(double)*geodim)
 
     cdef double* tmp_loc
@@ -2763,13 +2765,9 @@ cdef void segm_pos_to_pot_nrg_grad(
         if BinTimeRev[ibin] > 0:
 
             if BinSpaceRotIsId[ibin]:
-                with gil:
-                    print('a', ibin)
                 pos = &segmpos[isegm,0,0]
                 grad = &pot_nrg_grad[isegm,0,0]
             else:
-                with gil:
-                    print('b', ibin)
                 pos = tmp_loc
                 scipy.linalg.cython_blas.dgemm(transt, transn, &geodim, &segm_size_int, &geodim, &one_double, &BinSpaceRot[ibin,0,0], &geodim, &segmpos[isegm,0,0], &geodim, &zero_double, tmp_loc, &geodim)
 
@@ -2779,19 +2777,14 @@ cdef void segm_pos_to_pot_nrg_grad(
         else:
 
             if BinSpaceRotIsId[ibin]:
-                with gil:
-                    print('c', ibin)
                 pos = &segmpos[isegm,segm_store-1,0]
                 grad = &pot_nrg_grad[isegm,segm_store-1,0]
             else:
-                with gil:
-                    print('d', ibin)
                 pos = tmp_loc + (segm_size-1)*geodim
                 scipy.linalg.cython_blas.dgemm(transt, transn, &geodim, &segm_size_int, &geodim, &one_double, &BinSpaceRot[ibin,0,0], &geodim, &segmpos[isegm,1,0], &geodim, &zero_double, tmp_loc, &geodim)
 
                 grad = tmp_loc_grad + (segm_size-1)*geodim
                 memset(tmp_loc_grad, 0, nitems)
-
 
 
         isegmp = BinTargetSegm[ibin]
@@ -2810,15 +2803,11 @@ cdef void segm_pos_to_pot_nrg_grad(
             pot = inter_law(dx2)
 
             a = 2*BinProdChargeSum[ibin]*pot.potp
+
             for idim in range(geodim):
-                dx[idim] = a*dx[idim]
-                grad[idim] = grad[idim] + dx[idim]
-                gradp[idim] = gradp[idim] - dx[idim]
-
-
-
-
-
+                b = a*dx[idim]
+                grad[idim] = grad[idim] + b
+                gradp[idim] = gradp[idim] - b
 
 
             pos += dpos
@@ -2830,7 +2819,6 @@ cdef void segm_pos_to_pot_nrg_grad(
         if BinTimeRev[ibin] > 0:
             
             if not(BinSpaceRotIsId[ibin]):
-
 
                 scipy.linalg.cython_blas.dgemm(transt, transn, &geodim, &segm_size_int, &geodim, &one_double, &BinSpaceRot[ibin,0,0], &geodim, tmp_loc_grad, &geodim, &one_double, &pot_nrg_grad[isegm,0,0], &geodim)
 

@@ -33,7 +33,7 @@ def main():
         # '5q5q',
         # '6q6q',
         # '2C3C',
-        # '2D3D',   
+        '2D3D',   
         # '2C3C5k',
         # '2D3D5k',
         # '2D1',
@@ -51,8 +51,8 @@ def main():
         # '3D4k',
         # '3C5k',
         # '3D5k',
-        '3C101k',
-        '3D101k',
+        # '3C101k',
+        # '3D101k',
         # 'test_3D5k',
         # '3C7k2',
         # '3D7k2',
@@ -158,13 +158,10 @@ def doit(config_name):
 
     eps = 1e-11
 
-    params_buf = np.random.random((NBS.nparams))
     
+    params_buf = np.random.random((NBS.nparams))
     dx = np.random.random((NBS.nparams))
-    # dx = np.ones((NBS.nparams))
-    # dx = np.zeros((NBS.nparams))
-    # dx[0:4] = 0.
-    # 
+
     def grad(x,dx):
         return np.dot(NBS.params_to_pot_nrg_grad(x), dx)
     
@@ -179,6 +176,40 @@ def doit(config_name):
     )
  
     print(err.min())
+    print(NBS.BinSpaceRotIsId)
+    print(NBS.BinTimeRev)
+    print(NBS.BinSourceSegm)
+    print(NBS.BinTargetSegm)
+    print(NBS.BinProdChargeSum)
+    
+    
+    for i in range(NBS.nparams):
+        
+        dx = np.zeros((NBS.nparams))
+        dx  [i] = 1
+        err = choreo.scipy_plus.test.compare_FD_and_exact_grad(
+            NBS.params_to_pot_nrg   ,
+            grad                    ,
+            params_buf              ,
+            dx=dx                 ,
+            epslist=None            ,
+            order=2                 ,
+            vectorize=False         ,
+            relative=False          ,
+        )
+    
+        print(i,err.min())
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
 
 #     kin_grad_params = NBS.params_to_kin_nrg_grad(params_buf)
 #     all_coeffs = NBS.params_to_all_coeffs_noopt(params_buf) 
@@ -191,19 +222,7 @@ def doit(config_name):
 #     assert (np.linalg.norm(kin_grad_params - kin_grad_params_2) < eps)
 
 
-    segmpos_dual = np.random.random((NBS.nsegm,NBS.segm_store,NBS.geodim))
 
-    segmpos = NBS.params_to_segmpos(params_buf)
-    
-    params_buf_dual = NBS.segmpos_to_params_T(segmpos_dual)
-    
-    
-    print(np.dot(segmpos_dual.reshape(-1), segmpos.reshape(-1)) / np.dot(params_buf, params_buf_dual)  )
-    print(np.dot(params_buf, params_buf_dual) / np.dot(segmpos_dual.reshape(-1), segmpos.reshape(-1)) )
-    
-    
-
-    assert err.min() < 1e-6
 
 
 
