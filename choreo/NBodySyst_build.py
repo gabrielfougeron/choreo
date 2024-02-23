@@ -1,25 +1,16 @@
 
-import os
 import itertools
-import time
 import functools
-import json
 
 import numpy as np
-import math as m
-import scipy
-
-import scipy.optimize
 import networkx
 import math
 
 from matplotlib import pyplot as plt
 from matplotlib import colormaps
 
-import choreo.scipy_plus
-
-from choreo.cython._ActionSym import *
-# from choreo.cython._ActionSym import AccumulateSegmGenToTargetSym
+import choreo.scipy_plus.linalg
+from choreo.cython._ActionSym import ActionSym
 
 def ContainsDoubleEdges(SegmGraph):
 
@@ -829,7 +820,6 @@ def Populate_allsegmpos(all_pos, GenSpaceRot, GenTimeRev, gensegm_to_body, gense
     
 
     return allsegmpos
-
 
 def AccumulateSegmGenToTargetSym(
         SegmGraph       ,
