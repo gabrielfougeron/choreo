@@ -260,7 +260,7 @@ def Compute_action_Cython_time_loop_nD_serial(
                     
                 dx2 = dx[0]*dx[0]
                 for idim in range(1,geodim):
-                    dx2 = dx2 +dx[idim]*dx[idim]
+                    dx2 = dx2 + dx[idim]*dx[idim]
 
                 pot,potp,potpp = CCpt_interbody_pot(dx2)
                 
@@ -275,7 +275,7 @@ def Compute_action_Cython_time_loop_nD_serial(
                     
                     b = SpaceRotsBin[il,ibi,0,idim]*dx[0]
                     for jdim in range(1,geodim):
-                        b= b + SpaceRotsBin[il,ibi,jdim,idim]*dx[jdim]
+                        b = b + SpaceRotsBin[il,ibi,jdim,idim]*dx[jdim]
                     
                     grad_pot_all[il ,idim, shift_i] += b
                     grad_pot_all[il ,idim, iint] -= dx[idim]
