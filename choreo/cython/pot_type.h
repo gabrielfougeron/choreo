@@ -2,9 +2,9 @@
 #ifndef POT_TYPE_H_
 #define POT_TYPE_H_
 
-typedef struct pot_res pot_res_t;
+typedef struct pot_t_ pot_t;
 
-struct pot_res {
+struct pot_t_ {
   double pot;
   double potp;
   double potpp;
