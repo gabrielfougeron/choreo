@@ -13,6 +13,7 @@ import functools
 import numpy as np
 import json
 import choreo
+import scipy
 
 @attrs.define
 class float_tol:
@@ -243,12 +244,20 @@ def load_from_config_file(config_name):
     nbody = all_kwargs["nbody"]
     mass = all_kwargs["mass"]
     charge = all_kwargs["charge"]
-    inter_pow = all_kwargs["inter_pow"]
-    inter_pm = all_kwargs["inter_pm"]
     Sym_list = all_kwargs["Sym_list"]
     
-    return choreo.cython._NBodySyst.NBodySyst(geodim, nbody, mass, charge, inter_pow, inter_pm, Sym_list)
+    inter_pow = all_kwargs["inter_pow"]
+    inter_pm = all_kwargs["inter_pm"]
+    
+    inter_pow = all_kwargs["inter_pow"]
+    inter_pm = all_kwargs["inter_pm"]
+    
+    if (inter_pow == -1.) and (inter_pm == 1) :
+        inter_pot_fun = scipy.LowLevelCallable.from_cython(choreo.cython._NBodySyst, "gravity_pot")
+    else:
+        raise NotImplementedError
 
+    return choreo.cython._NBodySyst.NBodySyst(geodim, nbody, mass, charge, Sym_list, inter_pot_fun)
 
 @pytest.fixture
 def AllNBS(AllConfigNames):
