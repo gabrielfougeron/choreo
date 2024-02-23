@@ -121,7 +121,7 @@ def test_changevars(AllNBS, float64_tols):
     for name, NBS in AllNBS.items():
         
         print(f"Config name : {name}")        
-        NBS.nint_fac = 1
+        NBS.nint_fac = 10
         
         params_mom_buf = np.random.random((NBS.nparams))
         
@@ -153,7 +153,31 @@ def test_changevars(AllNBS, float64_tols):
         dot_pos = np.dot(params_pos_buf, params_pos_buf_dual)
         
         assert abs(dot_mom - dot_pos) < float64_tols.atol
-        assert 2*abs(dot_mom - dot_pos) / (dot_mom + dot_pos) < float64_tols.rtol
+        assert 2*abs(dot_mom - dot_pos) / (dot_mom + dot_pos) < float64_tols.rtol        
+        
+def test_params_segmpos_dual(AllNBS, float64_tols):
+    
+    for name, NBS in AllNBS.items():
+        
+        print(f"Config name : {name}")        
+        NBS.nint_fac = 10
+        
+        params_buf = np.random.random((NBS.nparams))
+        segmpos = NBS.params_to_segmpos(params_buf)
+        
+        segmpos_dual = np.random.random((NBS.nsegm,NBS.segm_store,NBS.geodim))
+        if NBS.nnpr == 1:
+            # Not sure how to impose compatibility conditions
+            segmpos_dual[:,NBS.segm_store-1,:] = 0
+            segmpos_dual[:,0,:] = 0
+        
+        params_buf_dual = NBS.segmpos_to_params_T(segmpos_dual)
+        
+        dot_params = np.dot(params_buf, params_buf_dual)
+        dot_segmpos = np.dot(segmpos_dual.reshape(-1), segmpos.reshape(-1))
+
+        assert abs(dot_params - dot_segmpos) < float64_tols.atol
+        assert 2*abs(dot_params - dot_segmpos) / (dot_params + dot_segmpos) < float64_tols.rtol
     
 def test_kin(AllNBS, float64_tols):
     
