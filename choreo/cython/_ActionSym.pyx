@@ -13,7 +13,8 @@ import choreo.scipy_plus.linalg
 import networkx
 
 @cython.cdivision(True)
-cdef inline long gcd (long a, long b) noexcept nogil:
+# cdef inline long gcd (long a, long b) noexcept nogil:
+cdef long gcd (long a, long b) noexcept nogil:
 
     cdef long c
     while ( a != 0 ):

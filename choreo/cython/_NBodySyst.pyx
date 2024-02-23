@@ -3,6 +3,7 @@ cimport numpy as np
 np.import_array()
 cimport cython
 
+from libc.math cimport pow as cpow
 from libc.math cimport fabs as cfabs
 from libc.math cimport sqrt as csqrt
 from libc.complex cimport cexp
@@ -12,12 +13,98 @@ from libc.stdlib cimport malloc, free
 from libc.string cimport memset
 
 from choreo.scipy_plus.cython.blas_consts cimport *
+from choreo.scipy_plus.cython.ccallback cimport ccallback_t, ccallback_prepare, ccallback_release, CCALLBACK_DEFAULTS, ccallback_signature_t
+from choreo.cython._ActionSym cimport ActionSym
 
-import choreo.scipy_plus.linalg
+# Explicit imports to avoid mysterious problems with CCALLBACK_DEFAULTS
+from choreo.NBodySyst_build import (
+    ContainsDoubleEdges ,
+    ContainsSelfReferingTimeRevSegment,
+    Build_SegmGraph ,
+    Build_SegmGraph_NoPb    ,
+    Build_BodyGraph ,
+    AccumulateBodyConstraints,
+    AccumulateSegmentConstraints,
+    AccumulateInstConstraints,
+    ComputeParamBasis_InitVal,
+    ComputeParamBasis_Loop,
+    reorganize_All_params_basis,
+    PlotTimeBodyGraph,
+    CountSegmentBinaryInteractions,
+    BundleListOfShapes,
+    BundleListOfArrays,
+    Populate_allsegmpos,
+    AccumulateSegmGenToTargetSym,
+    FindAllBinarySegments,
+    ReorganizeBinarySegments,
+)
 
-from choreo.NBodySyst_build import *
-
+import math
 import scipy
+import networkx
+
+cdef extern from "pot_type.h":
+    ctypedef struct pot_res_t:
+        double pot
+        double potp
+        double potpp
+
+cdef ccallback_signature_t signatures[2]
+
+ctypedef pot_res_t (*inter_law_fun_type)(double) noexcept nogil 
+signatures[0].signature = b"pot_res_t (double)"
+signatures[0].value = 0
+signatures[1].signature = NULL
+
+# @cython.profile(False)
+# @cython.linetrace(False)
+# cdef inline (double, double, double) CCpt_interbody_pot(double xsq) noexcept nogil:
+#     # Cython definition of the potential law
+#     
+#     cdef double a = cpow(xsq,cnm2)
+#     cdef double b = xsq*a
+#     
+#     cdef double pot = -xsq*b
+#     cdef double potp = cmn*b
+#     cdef double potpp = cmnnm1*a
+#     
+#     return pot,potp,potpp
+
+@cython.profile(False)
+@cython.linetrace(False)
+cdef pot_res_t gravity_pot(double xsq) noexcept nogil:
+    
+    cdef double a = cpow(xsq,-2.5)
+    cdef double b = xsq*a
+
+    cdef pot_res_t res
+    
+    res.pot = -xsq*b
+    res.potp = 0.5*b
+    res.potpp = (-0.75)*a
+    
+    return res
+
+cdef pot_res_t power_law_pot(double xsq, double cn) noexcept nogil:
+    # Cython definition of the potential law
+    
+    cdef double cnm1 = cn-1
+    cdef double cnm2 = cn-2
+    cdef double cnnm1 = cn*(cn-1)
+    cdef double cmn = -cn
+    cdef double cmnnm1 = -cnnm1
+
+    cdef double a = cpow(xsq,cnm2)
+    cdef double b = xsq*a
+
+    cdef pot_res_t res
+    
+    res.pot = -xsq*b
+    res.potp = cmn*b
+    res.potpp = cmnnm1*a
+
+    return res
+
 
 
 @cython.final
@@ -188,8 +275,10 @@ cdef class NBodySyst():
     cdef readonly list intersegm_to_all
     cdef readonly list LoopGenConstraints
 
-    cdef double inter_pow
-    cdef long inter_pm
+    # cdef double inter_pow
+    # cdef long inter_pm
+
+    cdef inter_law_fun_type inter_law_fun
     
     # Things that change with nint
     cdef long _nint
@@ -224,20 +313,23 @@ cdef class NBodySyst():
         long nbody                  ,
         double[::1] bodymass        ,
         double[::1] bodycharge      ,
-        double inter_pow            ,
-        long inter_pm               ,
-        list Sym_list               , 
+        list Sym_list               ,
+        object inter_pot_fun        , 
         bint CrashOnIdentity = True ,
     ):
 
         cdef Py_ssize_t i, il, ibin, ib
         cdef double eps = 1e-12
 
-        self.inter_pow = inter_pow
-        self.inter_pm = inter_pm
+        cdef ccallback_t callback_inter_fun
+        ccallback_prepare(&callback_inter_fun, signatures, inter_pot_fun, CCALLBACK_DEFAULTS)
 
-
-
+        if (callback_inter_fun.py_function != NULL):
+            raise ValueError("Provided inter_pot_fun is a Python function which is disallowed for performance reasons. Please provide a C function.")
+        elif (callback_inter_fun.signature.value != 0):
+            raise ValueError(f"Provided inter_pot_fun is a C function with incorrect signature. Signature should be {signatures[0].signature}")
+        else:
+            self.inter_law_fun = <inter_law_fun_type> callback_inter_fun.c_function
 
 
         self._nint = -1 # Signals that things that scale with loop size are not set yet
@@ -545,7 +637,10 @@ cdef class NBodySyst():
             self.nnpr = 2
         else:
             self.nnpr = 1
-            
+    #         
+    # def SetInterFun(
+    #     self            ,
+    #     object fun=None ,
 
     @nint_fac.setter
     @cython.final
@@ -587,7 +682,7 @@ cdef class NBodySyst():
             elif self.nnpr == 2:
                 ninter = 2*npr
             else:
-                raise ValueError(f'Impossible value for {nnpr = }')
+                raise ValueError(f'Impossible value for nnpr {self.nnpr}')
             
             pos_slice_shapes_list.append((ninter, self.geodim))
             
@@ -952,10 +1047,10 @@ cdef class NBodySyst():
 
                     TotSym = Sym.Compose(TotSym)
             
-                for iint_gen in range(nint):
+                for iint_gen in range(self._nint):
                     
-                    tnum, tden = TotSym.ApplyT(iint_gen, nint)
-                    iint_target = tnum * nint // tden
+                    tnum, tden = TotSym.ApplyT(iint_gen, self._nint)
+                    iint_target = tnum * self._nint // tden
                     
                     all_body_pos[ib,iint_target,:] = np.matmul(TotSym.SpaceRot, all_pos[il,iint_gen,:])
 
