@@ -292,6 +292,19 @@ def compare_FD_and_exact_grad(fun, gradfun, xo, dx=None, epslist=None, order=1, 
     for eps in epslist:
         dfdx_FD = compute_FD(fun,xo,dx,eps,fo=fo,order=order)
         
+        # print(dfdx_exact, dfdx_FD )
+        
+        
+        val = dfdx_exact/dfdx_FD
+        try:
+            rd = round(val)
+        except:
+            rd = np.inf
+        
+        # print(val, rd)
+        # print(dfdx_exact, dfdx_FD,val, rd)
+
+        
         error = np.linalg.norm(dfdx_FD - dfdx_exact) / dfdx_exact_magn 
         error_list.append(error)
     

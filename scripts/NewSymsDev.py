@@ -41,7 +41,7 @@ def main():
         # '4D3k',
         # '4C',
         # '4D',
-        '3C',
+        # '3C',
         # '3D',
         # '3D1',
         # '3C2k',
@@ -51,8 +51,8 @@ def main():
         # '3D4k',
         # '3C5k',
         # '3D5k',
-        # '3C101k',
-        # '3D101k',
+        '3C101k',
+        '3D101k',
         # 'test_3D5k',
         # '3C7k2',
         # '3D7k2',
@@ -125,7 +125,7 @@ def doit(config_name):
     
     NBS = choreo.cython._NBodySyst.NBodySyst(geodim, nbody, mass, charge, Sym_list, inter_pot_fun)
     
-    NBS.nint_fac = 100
+    NBS.nint_fac = 1
     
     # params_buf = np.random.random((NBS.nparams))
     # pot_nrg = NBS.params_to_pot_nrg(params_buf)
@@ -142,16 +142,29 @@ def doit(config_name):
     print(f'{NBS.nint = }')
     print(f'{NBS.segm_size = }')
     print(f'{NBS.ncoeffs-1 = }')
-
+    print(f'{NBS.nparams = }')
+    print(f'{NBS.nint_min = }')
+    print(f'{NBS.nnpr = }')
+    print()
+    print('NBS.params_shapes')
+    print(NBS.params_shapes)
+    print('NBS.ifft_shapes')
+    print(NBS.ifft_shapes)
+    print('NBS.pos_slice_shapes')
+    print(NBS.pos_slice_shapes)
+    print('NBS.ncoeff_min_loop')
+    print(NBS.ncoeff_min_loop)
+    print()
 
     eps = 1e-11
 
     params_buf = np.random.random((NBS.nparams))
     
-    # dx = np.random.random((NBS.nparams))
-    dx = np.zeros((NBS.nparams))
-    dx[2] = 1.
-    
+    dx = np.random.random((NBS.nparams))
+    # dx = np.ones((NBS.nparams))
+    # dx = np.zeros((NBS.nparams))
+    # dx[0:4] = 0.
+    # 
     def grad(x,dx):
         return np.dot(NBS.params_to_pot_nrg_grad(x), dx)
     
@@ -166,7 +179,6 @@ def doit(config_name):
     )
  
     print(err.min())
-    print(err)
 
 #     kin_grad_params = NBS.params_to_kin_nrg_grad(params_buf)
 #     all_coeffs = NBS.params_to_all_coeffs_noopt(params_buf) 
@@ -177,6 +189,29 @@ def doit(config_name):
 #     
 #     print(np.linalg.norm(kin_grad_params - kin_grad_params_2))
 #     assert (np.linalg.norm(kin_grad_params - kin_grad_params_2) < eps)
+
+
+    segmpos_dual = np.random.random((NBS.nsegm,NBS.segm_store,NBS.geodim))
+
+    segmpos = NBS.params_to_segmpos(params_buf)
+    
+    params_buf_dual = NBS.segmpos_to_params_T(segmpos_dual)
+    
+    
+    print(np.dot(segmpos_dual.reshape(-1), segmpos.reshape(-1)) / np.dot(params_buf, params_buf_dual)  )
+    print(np.dot(params_buf, params_buf_dual) / np.dot(segmpos_dual.reshape(-1), segmpos.reshape(-1)) )
+    
+    
+
+    assert err.min() < 1e-6
+
+
+
+
+
+
+
+
 
 
     return
