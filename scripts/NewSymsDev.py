@@ -22,51 +22,51 @@ np.set_printoptions(
 def main():
         
     all_tests = [
-        # '3q',
-        # '3q3q',
-        # '3q3qD',
-        # '2q2q',
-        # '4q4q',
-        # '4q4qD',
-        # '4q4qD3k',
-        # '1q2q',
-        # '5q5q',
-        # '6q6q',
-        # '2C3C',
-        # '2D3D',   
-        # '2C3C5k',
-        # '2D3D5k',
-        # '2D1',
-        # '4C5k',
-        # '4D3k',
-        # '4C',
-        # '4D',
-        # '3C',
-        # '3D',
-        # '3D1',
-        # '3C2k',
-        # '3D2k',
-        # '3Dp',
+        '3q',
+        '3q3q',
+        '3q3qD',
+        '2q2q',
+        '4q4q',
+        '4q4qD',
+        '4q4qD3k',
+        '1q2q',
+        '5q5q',
+        '6q6q',
+        '2C3C',
+        '2D3D',   
+        '2C3C5k',
+        '2D3D5k',
+        '2D1',
+        '4C5k',
+        '4D3k',
+        '4C',
+        '4D',
+        '3C',
+        '3D',
+        '3D1',
+        '3C2k',
+        '3D2k',
+        '3Dp',
         '3C4k',
-        # '3D4k',
-        # '3C5k',
-        # '3D5k',
-        # '3C101k',
-        # '3D101k',
-        # 'test_3D5k',
-        # '3C7k2',
-        # '3D7k2',
-        # '6C',
-        # '6D',
-        # '6Ck5',
-        # '6Dk5',
-        # '5Dq',
-        # '2C3C5C',
-        # '3C_3dim',
-        # '2D1_3dim', 
-        # '3C11k',
-        # '5q',
-        # '5Dq_',
+        '3D4k',
+        '3C5k',
+        '3D5k',
+        '3C101k',
+        '3D101k',
+        'test_3D5k',
+        '3C7k2',
+        '3D7k2',
+        '6C',
+        '6D',
+        '6Ck5',
+        '6Dk5',
+        '5Dq',
+        '2C3C5C',
+        '3C_3dim',
+        '2D1_3dim', 
+        '3C11k',
+        '5q',
+        '5Dq_',
     ]
 
     TT = pyquickbench.TimeTrain(
@@ -170,40 +170,42 @@ def doit(config_name):
     # print(NBS.BinTargetSegm)
     # print(NBS.BinProdChargeSum)
     print()
-    print(NBS.InterSpaceRotIsId)
-    print(NBS.InterTimeRev)
-    print(NBS.InterSpaceRot)
+    # print(NBS.InterSpaceRotIsId)
+    # print(NBS.InterTimeRev)
+    # print(NBS.InterSpaceRot)
     print()
     
     
     params_buf = np.random.random((NBS.nparams))
-    all_coeffs = NBS.params_to_all_coeffs_noopt(params_buf)  
-    all_pos = scipy.fft.irfft(all_coeffs, axis=1)
-    segmpos = NBS.all_pos_to_segmpos_noopt(all_pos)
-    
-    all_pos_rt = NBS.segmpos_to_all_pos_noopt(segmpos)
-    print(np.linalg.norm(all_pos_rt - all_pos))
-    # assert np.allclose(all_pos, all_pos_rt, rtol = float64_tols.rtol, atol = float64_tols.atol) 
-#             
-    all_coeffs_rt = scipy.fft.rfft(all_pos_rt, axis=1)
-    print(np.linalg.norm(all_coeffs_rt - all_coeffs))
-    # assert np.allclose(all_coeffs, all_coeffs_rt, rtol = float64_tols.rtol, atol = float64_tols.atol) 
-
-    params_buf_rt = NBS.all_coeffs_to_params_noopt(all_coeffs_rt)
-    print(np.linalg.norm(params_buf - params_buf_rt))
-    
+#     all_coeffs = NBS.params_to_all_coeffs_noopt(params_buf)  
+#     all_pos = scipy.fft.irfft(all_coeffs, axis=1)
+#     segmpos = NBS.all_pos_to_segmpos_noopt(all_pos)
+#     
+#     all_pos_rt = NBS.segmpos_to_all_pos_noopt(segmpos)
+#     print(np.linalg.norm(all_pos_rt - all_pos))
+#     # assert np.allclose(all_pos, all_pos_rt, rtol = float64_tols.rtol, atol = float64_tols.atol) 
+# #             
+#     all_coeffs_rt = scipy.fft.rfft(all_pos_rt, axis=1)
+#     print(np.linalg.norm(all_coeffs_rt - all_coeffs))
+#     # assert np.allclose(all_coeffs, all_coeffs_rt, rtol = float64_tols.rtol, atol = float64_tols.atol) 
+# 
+#     params_buf_rt = NBS.all_coeffs_to_params_noopt(all_coeffs_rt)
+#     print(np.linalg.norm(params_buf - params_buf_rt))
+#     
     segmpos_cy = NBS.params_to_segmpos(params_buf)
     params_buf_rt_2 = NBS.segmpos_to_params(segmpos_cy)
     
     # print(segmpos_cy)
-    # print(params_buf)
-    # print(params_buf_rt_2)
+    print(params_buf)
+    print(params_buf_rt_2)
+    print(params_buf-params_buf_rt_2)
     
     print(np.linalg.norm(params_buf - params_buf_rt_2))
     # assert np.allclose(params_buf, params_buf_rt, rtol = float64_tols.rtol, atol = float64_tols.atol) 
     
     print()
     
+    assert(np.linalg.norm(params_buf - params_buf_rt_2) < eps)
 
     
     

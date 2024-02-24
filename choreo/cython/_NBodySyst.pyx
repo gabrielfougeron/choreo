@@ -2298,9 +2298,10 @@ cdef void segmpos_to_pos_slice(
         else:
 
             pos_slice = pos_slice_buf_ptr + pos_slice_shifts[il] + nitems_size*iint
-            segmpos = segmpos_buf_ptr + nitems_store*(isegm+1) - geodim
 
             if InterSpaceRotIsId[isegm]:
+
+                segmpos = segmpos_buf_ptr + nitems_store*(isegm+1) - geodim
 
                 for i in range(segm_store):
                     for idim in range(geodim):
@@ -2309,15 +2310,18 @@ cdef void segmpos_to_pos_slice(
                     pos_slice += geodim
                             
             else:
-                
+
+                segmpos = segmpos_buf_ptr + nitems_store*(isegm)
                 tmp = tmp_loc
+
                 scipy.linalg.cython_blas.dgemm(transn, transn, &geodim, &segm_store_int, &geodim, &one_double, &InterSpaceRot[isegm,0,0], &geodim, segmpos, &geodim, &zero_double, tmp, &geodim)
 
+                tmp = tmp_loc + nitems_store - geodim
                 for i in range(segm_store):
                     for idim in range(geodim):
                         pos_slice[idim] = tmp[idim]
-                    pos_slice -= geodim
-                    tmp += geodim
+                    pos_slice += geodim
+                    tmp -= geodim
 
     if NeedsAllocate:
         free(tmp_loc)
