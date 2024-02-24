@@ -33,7 +33,7 @@ def main():
         # '5q5q',
         # '6q6q',
         # '2C3C',
-        '2D3D',   
+        # '2D3D',   
         # '2C3C5k',
         # '2D3D5k',
         # '2D1',
@@ -47,7 +47,7 @@ def main():
         # '3C2k',
         # '3D2k',
         # '3Dp',
-        # '3C4k',
+        '3C4k',
         # '3D4k',
         # '3C5k',
         # '3D5k',
@@ -145,6 +145,7 @@ def doit(config_name):
     print(f'{NBS.nparams = }')
     print(f'{NBS.nint_min = }')
     print(f'{NBS.nnpr = }')
+    print(f'{NBS.loopgen = }')
     print()
     print('NBS.params_shapes')
     print(NBS.params_shapes)
@@ -156,15 +157,89 @@ def doit(config_name):
     print(NBS.ncoeff_min_loop)
     print()
 
-    eps = 1e-11
+    eps = 1e-8
 
-    
     params_buf = np.random.random((NBS.nparams))
-    dx = np.random.random((NBS.nparams))
 
     def grad(x,dx):
         return np.dot(NBS.params_to_pot_nrg_grad(x), dx)
+    # 
+    # print(NBS.BinSpaceRotIsId)
+    # print(NBS.BinTimeRev)
+    # print(NBS.BinSourceSegm)
+    # print(NBS.BinTargetSegm)
+    # print(NBS.BinProdChargeSum)
+    print()
+    print(NBS.InterSpaceRotIsId)
+    print(NBS.InterTimeRev)
+    print(NBS.InterSpaceRot)
+    print()
     
+    
+    params_buf = np.random.random((NBS.nparams))
+    all_coeffs = NBS.params_to_all_coeffs_noopt(params_buf)  
+    all_pos = scipy.fft.irfft(all_coeffs, axis=1)
+    segmpos = NBS.all_pos_to_segmpos_noopt(all_pos)
+    
+    all_pos_rt = NBS.segmpos_to_all_pos_noopt(segmpos)
+    print(np.linalg.norm(all_pos_rt - all_pos))
+    # assert np.allclose(all_pos, all_pos_rt, rtol = float64_tols.rtol, atol = float64_tols.atol) 
+#             
+    all_coeffs_rt = scipy.fft.rfft(all_pos_rt, axis=1)
+    print(np.linalg.norm(all_coeffs_rt - all_coeffs))
+    # assert np.allclose(all_coeffs, all_coeffs_rt, rtol = float64_tols.rtol, atol = float64_tols.atol) 
+
+    params_buf_rt = NBS.all_coeffs_to_params_noopt(all_coeffs_rt)
+    print(np.linalg.norm(params_buf - params_buf_rt))
+    
+    segmpos_cy = NBS.params_to_segmpos(params_buf)
+    params_buf_rt_2 = NBS.segmpos_to_params(segmpos_cy)
+    
+    # print(segmpos_cy)
+    # print(params_buf)
+    # print(params_buf_rt_2)
+    
+    print(np.linalg.norm(params_buf - params_buf_rt_2))
+    # assert np.allclose(params_buf, params_buf_rt, rtol = float64_tols.rtol, atol = float64_tols.atol) 
+    
+    print()
+    
+
+    
+    
+    
+    
+    
+    
+    
+    return
+    
+    for i in range(NBS.nparams):
+        
+        dx = np.zeros((NBS.nparams))
+        dx  [i] = 1
+        err = choreo.scipy_plus.test.compare_FD_and_exact_grad(
+            NBS.params_to_pot_nrg   ,
+            grad                    ,
+            params_buf              ,
+            dx=dx                   ,
+            epslist=None            ,
+            order=2                 ,
+            vectorize=False         ,
+            # relative=False          ,
+        )
+
+        errmin = err.min()
+        if errmin < eps:
+            errmin = 0
+        
+        print(i, errmin)
+    
+    
+    print()
+
+    dx = np.random.random((NBS.nparams))
+
     err = choreo.scipy_plus.test.compare_FD_and_exact_grad(
         NBS.params_to_pot_nrg   ,
         grad                    ,
@@ -176,35 +251,6 @@ def doit(config_name):
     )
  
     print(err.min())
-    print(NBS.BinSpaceRotIsId)
-    print(NBS.BinTimeRev)
-    print(NBS.BinSourceSegm)
-    print(NBS.BinTargetSegm)
-    print(NBS.BinProdChargeSum)
-    
-    
-    for i in range(NBS.nparams):
-        
-        dx = np.zeros((NBS.nparams))
-        dx  [i] = 1
-        err = choreo.scipy_plus.test.compare_FD_and_exact_grad(
-            NBS.params_to_pot_nrg   ,
-            grad                    ,
-            params_buf              ,
-            dx=dx                 ,
-            epslist=None            ,
-            order=2                 ,
-            vectorize=False         ,
-            relative=False          ,
-        )
-    
-        print(i,err.min())
-    
-    
-    
-    
-    
-    
     
     
     
