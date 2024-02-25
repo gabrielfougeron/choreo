@@ -165,11 +165,6 @@ def test_params_segmpos_dual(AllNBS, float64_tols):
         segmpos = NBS.params_to_segmpos(params_buf)
         
         segmpos_dual = np.random.random((NBS.nsegm,NBS.segm_store,NBS.geodim))
-        if NBS.nnpr == 1:
-            # Not sure how to impose compatibility conditions
-            segmpos_dual[:,NBS.segm_store-1,:] = 0
-            segmpos_dual[:,0,:] = 0
-        
         params_buf_dual = NBS.segmpos_to_params_T(segmpos_dual)
         
         dot_params = np.dot(params_buf, params_buf_dual)

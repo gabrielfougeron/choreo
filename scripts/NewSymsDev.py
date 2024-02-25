@@ -131,7 +131,7 @@ def doit(config_name):
     
     NBS = choreo.cython._NBodySyst.NBodySyst(geodim, nbody, mass, charge, Sym_list, inter_pot_fun)
     
-    NBS.nint_fac = 10
+    NBS.nint_fac = 4
     
     # params_buf = np.random.random((NBS.nparams))
     # pot_nrg = NBS.params_to_pot_nrg(params_buf)
@@ -169,14 +169,14 @@ def doit(config_name):
 
     def grad(x,dx):
         return np.dot(NBS.params_to_pot_nrg_grad(x), dx)
-    # 
+    
     # print(NBS.BinSpaceRotIsId)
-    # print(NBS.BinTimeRev)
+    print(NBS.BinTimeRev)
     # print(NBS.BinSourceSegm)
     # print(NBS.BinTargetSegm)
     # print(NBS.BinProdChargeSum)
-    print()
-    print(NBS.InterSpaceRotIsId)
+    # print()
+    # print(NBS.InterSpaceRotIsId)
     print(NBS.InterTimeRev)
     # print(NBS.InterSpaceRot)
     print()
@@ -185,89 +185,8 @@ def doit(config_name):
     
     
     params_buf = np.random.random((NBS.nparams))
-    # params_buf = np.zeros((NBS.nparams), dtype=np.float64)
-    # params_buf[0:4] = np.random.random((4))
-    
-    
-    all_coeffs = NBS.params_to_all_coeffs_noopt(params_buf)  
-    all_pos = scipy.fft.irfft(all_coeffs, axis=1)
-    segmpos = NBS.all_pos_to_segmpos_noopt(all_pos)
-    
-    
-    NBS.AssertAllSegmGenConstraintsAreRespected(all_pos)
-    NBS.AssertAllBodyConstraintAreRespected(all_pos)
-    
-    
-    segpos_cy = NBS.params_to_segmpos(params_buf)
-    assert np.linalg.norm(segmpos - segpos_cy) < eps
-    
-    all_pos_rt = NBS.segmpos_to_all_pos_noopt(segmpos)
 
-    NBS.AssertAllSegmGenConstraintsAreRespected(all_pos_rt)
-    NBS.AssertAllBodyConstraintAreRespected(all_pos_rt)
-
-    err = all_pos_rt - all_pos
     
-    
-#     for il in range(NBS.nloop):
-#         
-#         ib = NBS.loopgen[il]
-#         
-#         for iint in range(NBS.nint_min):
-#             
-#             Sym = NBS.intersegm_to_all[ib][iint]
-#             
-#             isegm = NBS.bodysegm[ib, iint]
-#             
-#             print()
-#             print(isegm, il, iint)
-#             print(Sym)
-#             
-#             
-#             ibeg = iint * NBS.segm_size         
-#             iend = ibeg + NBS.segm_size
-#             
-#             assert iend <= NBS.nint
-#             print(ibeg,iend,NBS.nint)
-# 
-#             print(all_pos[il,ibeg:iend,:])    
-#             print(segmpos[isegm,:,:])    
-#             
-#             
-#             print(all_pos_rt[il,ibeg:iend,:])
-#             
-# 
-#             
-#             
-#             print(err[il,ibeg:iend,:])
-            
-    
-    
-    
-#     print(all_pos)    
-#     print(all_pos_rt)
-# 
-#     err = all_pos_rt - all_pos
-#     err *= 1000
-#     
-    # proj_to_zero(err,eps)
-# 
-    # print(err)
-    # print(np.linalg.norm(err))
-
-    assert np.linalg.norm(all_pos_rt - all_pos) < eps
-    
-    
-    # 
-    # 
-    # choreo.NBodySyst_build.plot_given_2D(all_pos, 'plot.png')
-    # choreo.NBodySyst_build.plot_given_2D(all_pos_rt, 'plot_rt.png')
-    # 
-    
-    
-    
-    
-    return
     
     for i in range(NBS.nparams):
         
@@ -281,7 +200,7 @@ def doit(config_name):
             epslist=None            ,
             order=2                 ,
             vectorize=False         ,
-            # relative=False          ,
+            relative=False          ,
         )
 
         errmin = err.min()
@@ -304,27 +223,33 @@ def doit(config_name):
         order=2                 ,
         vectorize=False         ,
     )
+
+
+    print(err.min()) 
+    # assert (err.min() < eps) or (NBS.nnpr == 1)
+    # assert (err.min() < eps) == (NBS.InterTimeRev == 1).all()
+    assert (err.min() < eps)
  
-    print(err.min())
-    
-    
-    
-    
-    
 
-#     kin_grad_params = NBS.params_to_kin_nrg_grad(params_buf)
-#     all_coeffs = NBS.params_to_all_coeffs_noopt(params_buf) 
+    
+    
+    
 # 
-#     kin_grad_coeffs = NBS.all_coeffs_to_kin_nrg_grad(all_coeffs)
-# 
-#     kin_grad_params_2 = NBS.all_coeffs_to_params_noopt(kin_grad_coeffs, transpose=True)
+#     segmpos = NBS.params_to_segmpos(params_buf)
 #     
-#     print(np.linalg.norm(kin_grad_params - kin_grad_params_2))
-#     assert (np.linalg.norm(kin_grad_params - kin_grad_params_2) < eps)
-
-
-
-
+#     segmpos_dual = np.random.random((NBS.nsegm,NBS.segm_store,NBS.geodim))
+#     # if NBS.nnpr == 1:
+#         # Not sure how to impose compatibility conditions
+#         # segmpos_dual[:,NBS.segm_store-1,:] = 0
+#         # segmpos_dual[:,0,:] = 0
+#     
+#     params_buf_dual = NBS.segmpos_to_params_T(segmpos_dual)
+#     
+#     dot_params = np.dot(params_buf, params_buf_dual)
+#     dot_segmpos = np.dot(segmpos_dual.reshape(-1), segmpos.reshape(-1))
+# 
+#     print( abs(dot_params - dot_segmpos) < eps )
+#     print( 2*abs(dot_params - dot_segmpos) / (dot_params + dot_segmpos) < eps )
 
 
 
