@@ -46,7 +46,6 @@ def test_segmpos_to_all_pos(AllNBS, float64_tols):
         params_buf = np.random.random((NBS.nparams))
         segmpos = NBS.params_to_segmpos(params_buf)
 
-
         all_pos = NBS.segmpos_to_all_pos_noopt(segmpos)
         NBS.AssertAllSegmGenConstraintsAreRespected(all_pos)
         NBS.AssertAllBodyConstraintAreRespected(all_pos)
@@ -101,11 +100,11 @@ def test_round_trips(AllNBS, float64_tols):
         print(np.linalg.norm(all_pos_rt - all_pos))
         assert np.allclose(all_pos, all_pos_rt, rtol = float64_tols.rtol, atol = float64_tols.atol) 
                 
-        all_coeffs_rt = scipy.fft.rfft(all_pos_rt, axis=1)
+        all_coeffs_rt = scipy.fft.rfft(all_pos, axis=1)
         print(np.linalg.norm(all_coeffs_rt - all_coeffs))
         assert np.allclose(all_coeffs, all_coeffs_rt, rtol = float64_tols.rtol, atol = float64_tols.atol) 
 
-        params_buf_rt = NBS.all_coeffs_to_params_noopt(all_coeffs_rt)
+        params_buf_rt = NBS.all_coeffs_to_params_noopt(all_coeffs)
         print(np.linalg.norm(params_buf - params_buf_rt))
         assert np.allclose(params_buf, params_buf_rt, rtol = float64_tols.rtol, atol = float64_tols.atol) 
         
