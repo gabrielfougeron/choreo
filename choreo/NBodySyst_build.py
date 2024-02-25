@@ -821,13 +821,12 @@ def Populate_allsegmpos(all_pos, GenSpaceRot, GenTimeRev, gensegm_to_body, gense
 
     return allsegmpos
 
-def AccumulateSegmGenToTargetSym(
+def AccumulateSegmSourceToTargetSym(
         SegmGraph       ,
         nbody           , 
         geodim          , 
         nint_min        , 
         nsegm           , 
-        bodysegm        , 
         segm_to_iint    ,  
         segm_to_body    ,
     ):
@@ -845,11 +844,11 @@ def AccumulateSegmGenToTargetSym(
         for edge in networkx.dfs_edges(SegmGraph, source=segm_source):
             
             Sym = segm_gen_to_target[edge[0][0]][edge[0][1]]
-            
-            if edge[0] > edge[1]:
-                EdgeSym = SegmGraph.edges[edge]["SymList"][0].Inverse()
-            else:
+         
+            if edge[0] <= edge[1]:
                 EdgeSym = SegmGraph.edges[edge]["SymList"][0]
+            else:
+                EdgeSym = SegmGraph.edges[edge]["SymList"][0].Inverse()
 
             segm_gen_to_target[edge[1][0]][edge[1][1]] = EdgeSym.Compose(Sym)
             
@@ -950,3 +949,79 @@ def ReorganizeBinarySegments(BinarySegm):
     BinProdChargeSum = np.array(BinProdChargeSum, dtype=np.float64)
         
     return BinSourceSegm, BinTargetSegm, BinTimeRev, BinSpaceRot, BinProdChargeSum
+
+
+def plot_given_2D(all_pos, filename, fig_size=(10,10), dpi=100, color=None, color_list=None, xlim=None, extend=0.03, CloseLoop=True):
+
+        if color_list is None:
+            color_list = plt.rcParams['axes.prop_cycle'].by_key()['color']
+
+        nloop = all_pos.shape[0]
+        nint_plot = all_pos.shape[1]
+        geodim = all_pos.shape[2]
+
+        if CloseLoop:
+            all_pos_b = np.zeros((nloop, nint_plot+1, geodim), dtype=np.float64)
+            all_pos_b[:,0:nint_plot,:] = all_pos
+            all_pos_b[:,nint_plot,:] = all_pos[:,0,:]
+
+        else:
+            all_pos_b = all_pos
+
+        ncol = len(color_list)
+        
+        cb = [color_list[ib] for ib in range(nloop)]
+        i_loop_plot = 0
+
+        if xlim is None:
+
+            xmin = all_pos_b[:,:,0].min()
+            xmax = all_pos_b[:,:,0].max()
+            ymin = all_pos_b[:,:,1].min()
+            ymax = all_pos_b[:,:,1].max()
+
+        else :
+
+            xmin = xlim[0]
+            xmax = xlim[1]
+            ymin = xlim[2]
+            ymax = xlim[3]
+        
+        xinf = xmin - extend*(xmax-xmin)
+        xsup = xmax + extend*(xmax-xmin)
+        
+        yinf = ymin - extend*(ymax-ymin)
+        ysup = ymax + extend*(ymax-ymin)
+        
+        hside = max(xsup-xinf,ysup-yinf)/2
+
+        xmid = (xinf+xsup)/2
+        ymid = (yinf+ysup)/2
+
+        xinf = xmid - hside
+        xsup = xmid + hside
+
+        yinf = ymid - hside
+        ysup = ymid + hside
+
+        # Plot-related
+        fig = plt.figure()
+        fig.set_size_inches(fig_size)
+        fig.set_dpi(dpi)
+        ax = plt.gca()
+
+        lines = sum([ax.plot([], [],'-',color=cb[ib] ,antialiased=True,zorder=-ib)  for ib in range(nloop)], [])
+        points = sum([ax.plot([], [],'ko', antialiased=True)for ib in range(nloop)], [])
+
+        ax.axis('off')
+        ax.set_xlim([xinf, xsup])
+        ax.set_ylim([yinf, ysup ])
+        ax.set_aspect('equal', adjustable='box')
+        plt.tight_layout()
+        
+        for i_loop_plot in range(nloop):
+            lines[i_loop_plot].set_data(all_pos_b[i_loop_plot,:,0], all_pos_b[i_loop_plot,:,1])
+
+        plt.savefig(filename)
+        
+        plt.close()
