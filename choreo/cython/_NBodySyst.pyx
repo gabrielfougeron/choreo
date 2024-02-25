@@ -34,7 +34,7 @@ from choreo.NBodySyst_build import (
     BundleListOfShapes,
     BundleListOfArrays,
     Populate_allsegmpos,
-    AccumulateSegmGenToTargetSym,
+    AccumulateSegmSourceToTargetSym,
     FindAllBinarySegments,
     ReorganizeBinarySegments,
 )
@@ -371,11 +371,11 @@ cdef class NBodySyst():
         self._InitValVelBasis = ComputeParamBasis_InitVal(nbody, geodim, InstConstraintsVel[0], bodymass, MomCons=True)
 
 
-        self.gensegm_to_all = AccumulateSegmGenToTargetSym(self.SegmGraph, nbody, geodim, self.nint_min, self.nsegm, self._bodysegm, self._gensegm_to_iint, self._gensegm_to_body)
+        self.gensegm_to_all = AccumulateSegmSourceToTargetSym(self.SegmGraph, nbody, geodim, self.nint_min, self.nsegm, self._gensegm_to_iint, self._gensegm_to_body)
 
         # GenToIntSyms = Generating_to_interacting(self.SegmGraph, nbody, geodim, self.nsegm, self._intersegm_to_iint, self._intersegm_to_body, self._gensegm_to_iint, self._gensegm_to_body)
 
-        self.intersegm_to_all = AccumulateSegmGenToTargetSym(self.SegmGraph, nbody, geodim, self.nint_min, self.nsegm, self._bodysegm, self._intersegm_to_iint, self._intersegm_to_body)
+        self.intersegm_to_all = AccumulateSegmSourceToTargetSym(self.SegmGraph, nbody, geodim, self.nint_min, self.nsegm, self._intersegm_to_iint, self._intersegm_to_body)
 
         self.GatherInterSym()
 
@@ -596,7 +596,6 @@ cdef class NBodySyst():
                     assigned_segms.add(isegm)
                     ngensegm_loop[il] += 1
 
-
     def GatherInterSym(self):
         
         InterTimeRev = np.zeros((self.nsegm), dtype=np.intp)
@@ -608,14 +607,12 @@ cdef class NBodySyst():
         self._InterSpaceRotIsId = InterSpaceRotIsId
 
         for isegm in range(self.nsegm):
-# 
-#             ib = self._intersegm_to_body[isegm]
-#             iint = self._intersegm_to_iint[isegm]
-            
+
             ib = self._gensegm_to_body[isegm]
             iint = self._gensegm_to_iint[isegm]
 
             Sym = self.intersegm_to_all[ib][iint]
+            # Sym = self.intersegm_to_all[ib][iint].Inverse()
             
             InterTimeRev[isegm] = Sym.TimeRev
             InterSpaceRot[isegm,:,:] = Sym.SpaceRot
@@ -1154,7 +1151,7 @@ cdef class NBodySyst():
         
         cdef Py_ssize_t ib, iint, il
 
-        allsegmpos = np.empty((self.nsegm, self.segm_store, self.geodim), dtype=np.float64)
+        segmpos = np.empty((self.nsegm, self.segm_store, self.geodim), dtype=np.float64)
 
         for isegm in range(self.nsegm):
 
@@ -1171,24 +1168,24 @@ cdef class NBodySyst():
             if self._InterTimeRev[isegm] > 0:
 
                 np.matmul(
-                    all_pos[il,ibeg:iend,:]                     ,
-                    np.asarray(self._InterSpaceRot[isegm,:,:]).T  ,
-                    out = allsegmpos[isegm,:,:]                 ,
+                    all_pos[il,ibeg:iend,:]         ,
+                    self._InterSpaceRot[isegm,:,:]  ,
+                    out = segmpos[isegm,:,:]        ,
                 )            
 
             else:
 
-                allsegmpos[isegm,:,:] = np.matmul(
-                    all_pos[il,ibeg:iend,:]                     ,
-                    np.asarray(self._InterSpaceRot[isegm,:,:]).T  ,
+                segmpos[isegm,:,:] = np.matmul(
+                    all_pos[il,ibeg:iend,:]         ,
+                    self._InterSpaceRot[isegm,:,:]  ,
                 )[::-1,:]
 
-        return allsegmpos
+        return segmpos
 
     @cython.final
-    def segmpos_to_all_pos_noopt(self, allsegmpos):
+    def segmpos_to_all_pos_noopt(self, segmpos):
 
-        assert self.segm_store == allsegmpos.shape[1]
+        assert self.segm_store == segmpos.shape[1]
 
         cdef Py_ssize_t ib, iint, il
 
@@ -1200,33 +1197,21 @@ cdef class NBodySyst():
 
             for iint in range(self.nint_min):
 
-                Sym = self.intersegm_to_all[ib][iint]
                 isegm = self._bodysegm[ib, iint]
+                Sym = self.intersegm_to_all[ib][iint]
 
-                assert il == self._bodyloop[self._intersegm_to_body[isegm]]
+                ibeg = iint * self.segm_size         
+                iend = ibeg + self.segm_size
+                assert iend <= self._nint
 
                 if Sym.TimeRev > 0:
-
-                    ibeg = iint * self.segm_size         
-                    iend = ibeg + self.segm_size
-                    assert iend <= self._nint
-
-                    np.matmul(
-                        allsegmpos[isegm,:self.segm_size,:]           ,
-                        Sym.SpaceRot.T                  ,
-                        out = all_pos[il,ibeg:iend,:]   ,
-                    )            
-
+                    segmbeg = 0
+                    segmend = self.segm_size
                 else:
+                    segmbeg = 1
+                    segmend = self.segm_size+1
 
-                    ibeg = iint * self.segm_size         
-                    iend = ibeg + self.segm_size
-                    assert iend <= self._nint
-
-                    all_pos[il,ibeg:iend,:] = np.matmul(
-                        allsegmpos[isegm,1:,:]              ,
-                        Sym.SpaceRot.T                        ,
-                    )[::-1,:]
+                Sym.TransformSegment(segmpos[isegm,segmbeg:segmend,:], all_pos[il,ibeg:iend,:])
 
         return all_pos
         
@@ -1282,8 +1267,6 @@ cdef class NBodySyst():
 
         return np.asarray(params_mom_buf)    
 
-
-
     @cython.final
     def segmpos_to_params_T(self, double[:,:,::1] segmpos):
 
@@ -1309,13 +1292,6 @@ cdef class NBodySyst():
             )
 
         return np.asarray(params_mom_buf)
-
-
-
-
-
-
-    
  
 @cython.cdivision(True)
 cdef void changevar_mom(
@@ -2217,7 +2193,8 @@ cdef void pos_slice_to_segmpos(
                 scipy.linalg.cython_blas.dcopy(&nitems_store,pos_slice,&int_one,segmpos,&int_one)
 
             else:
-                scipy.linalg.cython_blas.dgemm(transt, transn, &geodim, &segm_store_int, &geodim, &one_double, &InterSpaceRot[isegm,0,0], &geodim, pos_slice, &geodim, &zero_double, segmpos, &geodim)
+                # scipy.linalg.cython_blas.dgemm(transt, transn, &geodim, &segm_store_int, &geodim, &one_double, &InterSpaceRot[isegm,0,0], &geodim, pos_slice, &geodim, &zero_double, segmpos, &geodim)
+                scipy.linalg.cython_blas.dgemm(transn, transn, &geodim, &segm_store_int, &geodim, &one_double, &InterSpaceRot[isegm,0,0], &geodim, pos_slice, &geodim, &zero_double, segmpos, &geodim)
 
         else:
 
@@ -2233,7 +2210,8 @@ cdef void pos_slice_to_segmpos(
                             
             else:
                 tmp = tmp_loc
-                scipy.linalg.cython_blas.dgemm(transt, transn, &geodim, &segm_store_int, &geodim, &one_double, &InterSpaceRot[isegm,0,0], &geodim, pos_slice, &geodim, &zero_double, tmp, &geodim)
+                # scipy.linalg.cython_blas.dgemm(transt, transn, &geodim, &segm_store_int, &geodim, &one_double, &InterSpaceRot[isegm,0,0], &geodim, pos_slice, &geodim, &zero_double, tmp, &geodim)
+                scipy.linalg.cython_blas.dgemm(transn, transn, &geodim, &segm_store_int, &geodim, &one_double, &InterSpaceRot[isegm,0,0], &geodim, pos_slice, &geodim, &zero_double, tmp, &geodim)
 
                 for i in range(segm_store):
 
@@ -2293,7 +2271,8 @@ cdef void segmpos_to_pos_slice(
             if InterSpaceRotIsId[isegm]:
                 scipy.linalg.cython_blas.dcopy(&nitems_store,segmpos,&int_one,pos_slice,&int_one)
             else:
-                scipy.linalg.cython_blas.dgemm(transn, transn, &geodim, &segm_store_int, &geodim, &one_double, &InterSpaceRot[isegm,0,0], &geodim, segmpos, &geodim, &zero_double, pos_slice, &geodim)
+                # scipy.linalg.cython_blas.dgemm(transn, transn, &geodim, &segm_store_int, &geodim, &one_double, &InterSpaceRot[isegm,0,0], &geodim, segmpos, &geodim, &zero_double, pos_slice, &geodim)
+                scipy.linalg.cython_blas.dgemm(transt, transn, &geodim, &segm_store_int, &geodim, &one_double, &InterSpaceRot[isegm,0,0], &geodim, segmpos, &geodim, &zero_double, pos_slice, &geodim)
 
         else:
 
@@ -2314,7 +2293,8 @@ cdef void segmpos_to_pos_slice(
                 segmpos = segmpos_buf_ptr + nitems_store*(isegm)
                 tmp = tmp_loc
 
-                scipy.linalg.cython_blas.dgemm(transn, transn, &geodim, &segm_store_int, &geodim, &one_double, &InterSpaceRot[isegm,0,0], &geodim, segmpos, &geodim, &zero_double, tmp, &geodim)
+                # scipy.linalg.cython_blas.dgemm(transn, transn, &geodim, &segm_store_int, &geodim, &one_double, &InterSpaceRot[isegm,0,0], &geodim, segmpos, &geodim, &zero_double, tmp, &geodim)
+                scipy.linalg.cython_blas.dgemm(transt, transn, &geodim, &segm_store_int, &geodim, &one_double, &InterSpaceRot[isegm,0,0], &geodim, segmpos, &geodim, &zero_double, tmp, &geodim)
 
                 tmp = tmp_loc + nitems_store - geodim
                 for i in range(segm_store):
@@ -2814,12 +2794,10 @@ cdef void segm_pos_to_pot_nrg_grad(
                 grad[idim] = grad[idim] + b
                 gradp[idim] = gradp[idim] - b
 
-
             pos += dpos
             posp += dposp
             grad += dpos
             gradp += dposp
-
         
         if BinTimeRev[ibin] > 0:
             

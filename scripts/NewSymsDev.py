@@ -19,6 +19,12 @@ np.set_printoptions(
     floatmode = "fixed",
 )
 
+
+def proj_to_zero(array, eps=1e-14):
+    for idx in itertools.product(*[range(i)  for i in array.shape]):
+        if abs(array[idx]) < eps:
+            array[idx] = 0.
+
 def main():
         
     all_tests = [
@@ -125,7 +131,7 @@ def doit(config_name):
     
     NBS = choreo.cython._NBodySyst.NBodySyst(geodim, nbody, mass, charge, Sym_list, inter_pot_fun)
     
-    NBS.nint_fac = 1
+    NBS.nint_fac = 10
     
     # params_buf = np.random.random((NBS.nparams))
     # pot_nrg = NBS.params_to_pot_nrg(params_buf)
@@ -170,46 +176,93 @@ def doit(config_name):
     # print(NBS.BinTargetSegm)
     # print(NBS.BinProdChargeSum)
     print()
-    # print(NBS.InterSpaceRotIsId)
-    # print(NBS.InterTimeRev)
+    print(NBS.InterSpaceRotIsId)
+    print(NBS.InterTimeRev)
     # print(NBS.InterSpaceRot)
     print()
     
     
+    
+    
     params_buf = np.random.random((NBS.nparams))
-#     all_coeffs = NBS.params_to_all_coeffs_noopt(params_buf)  
-#     all_pos = scipy.fft.irfft(all_coeffs, axis=1)
-#     segmpos = NBS.all_pos_to_segmpos_noopt(all_pos)
-#     
-#     all_pos_rt = NBS.segmpos_to_all_pos_noopt(segmpos)
-#     print(np.linalg.norm(all_pos_rt - all_pos))
-#     # assert np.allclose(all_pos, all_pos_rt, rtol = float64_tols.rtol, atol = float64_tols.atol) 
-# #             
-#     all_coeffs_rt = scipy.fft.rfft(all_pos_rt, axis=1)
-#     print(np.linalg.norm(all_coeffs_rt - all_coeffs))
-#     # assert np.allclose(all_coeffs, all_coeffs_rt, rtol = float64_tols.rtol, atol = float64_tols.atol) 
-# 
-#     params_buf_rt = NBS.all_coeffs_to_params_noopt(all_coeffs_rt)
-#     print(np.linalg.norm(params_buf - params_buf_rt))
-#     
-    segmpos_cy = NBS.params_to_segmpos(params_buf)
-    params_buf_rt_2 = NBS.segmpos_to_params(segmpos_cy)
+    # params_buf = np.zeros((NBS.nparams), dtype=np.float64)
+    # params_buf[0:4] = np.random.random((4))
     
-    # print(segmpos_cy)
-    print(params_buf)
-    print(params_buf_rt_2)
-    print(params_buf-params_buf_rt_2)
     
-    print(np.linalg.norm(params_buf - params_buf_rt_2))
-    # assert np.allclose(params_buf, params_buf_rt, rtol = float64_tols.rtol, atol = float64_tols.atol) 
+    all_coeffs = NBS.params_to_all_coeffs_noopt(params_buf)  
+    all_pos = scipy.fft.irfft(all_coeffs, axis=1)
+    segmpos = NBS.all_pos_to_segmpos_noopt(all_pos)
     
-    print()
     
-    assert(np.linalg.norm(params_buf - params_buf_rt_2) < eps)
+    NBS.AssertAllSegmGenConstraintsAreRespected(all_pos)
+    NBS.AssertAllBodyConstraintAreRespected(all_pos)
+    
+    
+    segpos_cy = NBS.params_to_segmpos(params_buf)
+    assert np.linalg.norm(segmpos - segpos_cy) < eps
+    
+    all_pos_rt = NBS.segmpos_to_all_pos_noopt(segmpos)
 
+    NBS.AssertAllSegmGenConstraintsAreRespected(all_pos_rt)
+    NBS.AssertAllBodyConstraintAreRespected(all_pos_rt)
+
+    err = all_pos_rt - all_pos
+    
+    
+#     for il in range(NBS.nloop):
+#         
+#         ib = NBS.loopgen[il]
+#         
+#         for iint in range(NBS.nint_min):
+#             
+#             Sym = NBS.intersegm_to_all[ib][iint]
+#             
+#             isegm = NBS.bodysegm[ib, iint]
+#             
+#             print()
+#             print(isegm, il, iint)
+#             print(Sym)
+#             
+#             
+#             ibeg = iint * NBS.segm_size         
+#             iend = ibeg + NBS.segm_size
+#             
+#             assert iend <= NBS.nint
+#             print(ibeg,iend,NBS.nint)
+# 
+#             print(all_pos[il,ibeg:iend,:])    
+#             print(segmpos[isegm,:,:])    
+#             
+#             
+#             print(all_pos_rt[il,ibeg:iend,:])
+#             
+# 
+#             
+#             
+#             print(err[il,ibeg:iend,:])
+            
     
     
     
+#     print(all_pos)    
+#     print(all_pos_rt)
+# 
+#     err = all_pos_rt - all_pos
+#     err *= 1000
+#     
+    # proj_to_zero(err,eps)
+# 
+    # print(err)
+    # print(np.linalg.norm(err))
+
+    assert np.linalg.norm(all_pos_rt - all_pos) < eps
+    
+    
+    # 
+    # 
+    # choreo.NBodySyst_build.plot_given_2D(all_pos, 'plot.png')
+    # choreo.NBodySyst_build.plot_given_2D(all_pos_rt, 'plot_rt.png')
+    # 
     
     
     
