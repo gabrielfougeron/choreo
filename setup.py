@@ -111,11 +111,11 @@ define_macros = [("NPY_NO_DEPRECATED_API", "NPY_1_7_API_VERSION")]
 
 compiler_directives = {
     'wraparound': False,
-    # 'boundscheck': False,
-    # 'nonecheck': False,
-    # 'initializedcheck': False,
-    # 'overflowcheck': False,
-    # 'overflowcheck.fold': False,
+    'boundscheck': False,
+    'nonecheck': False,
+    'initializedcheck': False,
+    'overflowcheck': False,
+    'overflowcheck.fold': False,
     # 'infer_types': True,
 }
 
