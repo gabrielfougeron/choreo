@@ -882,11 +882,13 @@ def FindAllBinarySegments(segm_gen_to_target, nbody, nsegm, nint_min, bodysegm, 
 
                 if (isegm <= isegmp):
                     bisegm = (isegm, isegmp)
-                    Sym = (segm_gen_to_target[ibp][iint]).Compose(segm_gen_to_target[ib][iint].Inverse())
+                    # Sym = (segm_gen_to_target[ibp][iint]).Compose(segm_gen_to_target[ib][iint].Inverse())
+                    Sym = (segm_gen_to_target[ibp][iint].Inverse()).Compose(segm_gen_to_target[ib][iint])
 
                 else:
                     bisegm = (isegmp, isegm)
-                    Sym = (segm_gen_to_target[ib][iint]).Compose(segm_gen_to_target[ibp][iint].Inverse())
+                    # Sym = (segm_gen_to_target[ib][iint]).Compose(segm_gen_to_target[ibp][iint].Inverse())
+                    Sym = (segm_gen_to_target[ib][iint].Inverse()).Compose(segm_gen_to_target[ibp][iint])
 
                 if ((isegm == isegmp) and Sym.IsIdentityRotAndTimeRev()):
 
