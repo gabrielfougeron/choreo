@@ -210,3 +210,41 @@ def test_kin(AllNBS, float64_tols):
         )
         
         assert err.min() < float64_tols.rtol
+        
+def test_pot(AllNBS):
+    
+    for name, NBS in AllNBS.items():
+        
+        print(f"Config name : {name}")        
+        NBS.nint_fac = 10
+        params_buf = np.random.random((NBS.nparams))
+        
+        def grad(x,dx):
+            return np.dot(NBS.params_to_pot_nrg_grad(x), dx)
+        
+        dx = np.random.random((NBS.nparams))
+
+        err = choreo.scipy_plus.test.compare_FD_and_exact_grad(
+            NBS.params_to_pot_nrg   ,
+            grad                    ,
+            params_buf              ,
+            dx=dx                   ,
+            epslist=None            ,
+            order=2                 ,
+            vectorize=False         ,
+        )
+
+        assert (err.min() <  1e-7)
+        
+        err = choreo.scipy_plus.test.compare_FD_and_exact_grad(
+            NBS.params_to_pot_nrg_grad  ,
+            NBS.params_to_pot_nrg_hess  ,
+            params_buf                  ,
+            dx=dx                       ,
+            epslist=None                ,
+            order=2                     ,
+            vectorize=False             ,
+        )
+
+        assert (err.min() <  1e-7)
+    
