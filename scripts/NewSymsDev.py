@@ -50,7 +50,7 @@ def main():
         '3C',
         '3D',
         # '3D1',
-        '3C2k',
+        # '3C2k',
         # '3D2k',
         # '3Dp',
         # '3C4k',
@@ -125,62 +125,40 @@ def doit(config_name):
     inter_pm = all_kwargs["inter_pm"]
     
     if (inter_pow == -1.) and (inter_pm == 1) :
-        inter_pot_fun = scipy.LowLevelCallable.from_cython(choreo.cython._NBodySyst, "gravity_pot")
+        # inter_pot_fun = scipy.LowLevelCallable.from_cython(choreo.cython._NBodySyst, "gravity_pot")
+        inter_pot_fun = scipy.LowLevelCallable.from_cython(choreo.cython._NBodySyst, "elastic_pot")
     else:
         raise NotImplementedError
     
     NBS = choreo.cython._NBodySyst.NBodySyst(geodim, nbody, mass, charge, Sym_list, inter_pot_fun)
     
+    nint_fac_ini = 100
+    nint_fac_big = nint_fac_ini*2
     
+    NBS.nint_fac = nint_fac_ini
+    nparams_ini = NBS.nparams
     
+
+
+    NBS.nint_fac = nint_fac_ini
+    params_buf = np.random.random((NBS.nparams))
     
-    NBS.nint_fac = 10
-#     
-#     params_buf = np.random.random((NBS.nparams))
-#     segmpos = NBS.params_to_segmpos(params_buf)
-#     
-# # 
-# 
-#     # Unoptimized version
-#     all_coeffs = NBS.params_to_all_coeffs_noopt(params_buf)        
-#     all_pos = scipy.fft.irfft(all_coeffs, axis=1, norm='forward')
-#     # all_pos = scipy.fft.irfft(all_coeffs, axis=1)
-#     segmpos_noopt = NBS.all_pos_to_segmpos_noopt(all_pos)
-#     
-#     
-#     print(segmpos_noopt[:,0,:]/segmpos[:,0,:])
-#     print(segmpos[:,0,:]/segmpos_noopt[:,0,:])
-#     
-#     
-#     # return
-#     # 
-#     
-#     kin_nrg = NBS.params_to_kin_nrg(params_buf)
-#     pot_nrg = NBS.params_to_pot_nrg(params_buf)
-#     
-#     params_buf_long = NBS.params_resize(params_buf, 100) 
-#     NBS.nint_fac = 100
-#     segmpos_long = NBS.params_to_segmpos(params_buf_long)
-#     all_pos_long = NBS.segmpos_to_all_pos_noopt(segmpos_long)
-#     
-#     kin_nrg_long = NBS.params_to_kin_nrg(params_buf_long)
-#     pot_nrg_long = NBS.params_to_pot_nrg(params_buf_long)
-#     
-#     
-#     
-#     # print(segmpos[:,0,:])
-#     # print(segmpos_long[:,0,:])
-#     print(segmpos[:,0,:] / segmpos_long[:,0,:])
-#     
+    # params_buf[10:] = 0
+        
+    kin_nrg = NBS.params_to_kin_nrg(params_buf)
+    pot_nrg = NBS.params_to_pot_nrg(params_buf)
     
-    # print(kin_nrg, kin_nrg_long)
-    # print(pot_nrg, pot_nrg_long)
-    # print(pot_nrg/ pot_nrg_long)
-    # print(pot_nrg_long/pot_nrg)
+    params_buf_long = NBS.params_resize(params_buf, nint_fac_big) 
+    NBS.nint_fac = nint_fac_big
+    segmpos_long = NBS.params_to_segmpos(params_buf_long)
+    all_pos_long = NBS.segmpos_to_all_pos_noopt(segmpos_long)
     
-    
-    
-    
+    kin_nrg_long = NBS.params_to_kin_nrg(params_buf_long)
+    pot_nrg_long = NBS.params_to_pot_nrg(params_buf_long)
+
+    print(kin_nrg - kin_nrg_long)
+    print(pot_nrg - pot_nrg_long)
+
     
     
     
@@ -193,30 +171,6 @@ def doit(config_name):
     
     
     
-    
-    
-    
-    
-    
-    # choreo.NBodySyst_build.plot_given_2D(all_pos, 'all_pos.png')
-    # choreo.NBodySyst_build.plot_given_2D(all_pos_long, 'all_pos_long.png')    
-    # 
-    # 
-    # 
-    # params_buf_long[:] = 0
-    # n=10
-    # params_buf_long[0:n] = np.random.random((n))
-    # segmpos_long = NBS.params_to_segmpos(params_buf_long)
-    # all_pos_long = NBS.segmpos_to_all_pos_noopt(segmpos_long)
-    # 
-    # params_buf = NBS.params_resize(params_buf_long, 2) 
-    # NBS.nint_fac = 2    
-    # segmpos = NBS.params_to_segmpos(params_buf)
-    # all_pos = NBS.segmpos_to_all_pos_noopt(segmpos)
-    # 
-    # choreo.NBodySyst_build.plot_given_2D(all_pos, 'all_pos_2.png')
-    # choreo.NBodySyst_build.plot_given_2D(all_pos_long, 'all_pos_long_2.png')
-
 
 
     return
