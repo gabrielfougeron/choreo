@@ -112,8 +112,7 @@ def doit():
     all_tests = [
         '3C',
         '3D',
-        # '3D4k',
-        # '3C4k',
+        # '3C2k',
     ]
         
     NBS_list = []
@@ -142,8 +141,7 @@ def doit():
     NBSC = NBS_list[0]
     NBSD = NBS_list[1]
         
-    nint = 48 * 2
-    # nint = 12
+    nint = 12
 
     NBSD.nint = nint
     NBSC.nint = nint
@@ -151,6 +149,8 @@ def doit():
 
 
     params_D = np.random.random((NBSD.nparams))
+    
+
     segmpos_D = NBSD.params_to_segmpos(params_D)
     all_coeffs_D = NBSD.params_to_all_coeffs_noopt(params_D)        
     all_pos_D = scipy.fft.irfft(all_coeffs_D, axis=1, norm='forward')
@@ -163,42 +163,34 @@ def doit():
     
     
     
-    
-    print(np.linalg.norm(segmpos_D[0,:,:] - segmpos_C[0,:NBSD.segm_store,:]))
-    print(np.linalg.norm(segmpos_D[1,:,:] - segmpos_C[2,:NBSD.segm_store,:]))
-    print(np.linalg.norm(segmpos_D[2,:,:] - segmpos_C[1,:NBSD.segm_store,:]))
+    # 
+    # print(np.linalg.norm(segmpos_D[0,:,:] - segmpos_C[0,:NBSD.segm_store,:]))
+    # print(np.linalg.norm(segmpos_D[1,:,:] - segmpos_C[2,:NBSD.segm_store,:]))
+    # print(np.linalg.norm(segmpos_D[2,:,:] - segmpos_C[1,:NBSD.segm_store,:]))
+
+    print(segmpos_D[0,:,:])
+    print(segmpos_C[0,:,:])
 
 
-    
-    
-    
-    
-    
-    
-    
-    
-    
+
+
     print(np.linalg.norm(all_pos_D - all_pos_C))
     
     
 
-    
-        
+
     kin_nrg_D = NBSD.params_to_kin_nrg(params_D)
     pot_nrg_D = NBSD.params_to_pot_nrg(params_D)        
     
+
     kin_nrg_C = NBSC.params_to_kin_nrg(params_C)
     pot_nrg_C = NBSC.params_to_pot_nrg(params_C)
 
 
-    # print(kin_nrg_D)
-    # print(kin_nrg_C)
+
     print(kin_nrg_D-kin_nrg_C)
-    
-    # print(pot_nrg_D)
-    # print(pot_nrg_C)
     print(pot_nrg_D-pot_nrg_C)
-    # print(pot_nrg_D/pot_nrg_C)
+
 
 
 

@@ -280,3 +280,58 @@ def test_resize(AllNBS, float64_tols):
         
         assert np.allclose(segmpos[:,:small_segm_size,:], segmpos_long[:,:long_segm_size:fac,:], rtol = float64_tols.rtol, atol = float64_tols.atol) 
         
+@ProbabilisticTest()
+def test_pot_indep_resize(AllNBS):
+    
+    for name, NBS in AllNBS.items():
+        
+        print(f"Config name : {name}")   
+        
+        Passed_any = False
+        
+        ntries = 100
+        
+        err = np.zeros((ntries,4))
+        
+        for itry in range(ntries): 
+            
+            Passed = True
+            
+            nint_fac_short = 5
+            nint_fac_mid = 200
+            nint_fac_big = nint_fac_mid*2
+            
+            NBS.nint_fac = nint_fac_short
+            params_buf_short = np.random.random((NBS.nparams))
+            
+            params_buf_mid = NBS.params_resize(params_buf_short, nint_fac_mid) 
+            params_buf_big = NBS.params_resize(params_buf_short, nint_fac_big) 
+
+            NBS.nint_fac = nint_fac_mid
+            kin_nrg = NBS.params_to_kin_nrg(params_buf_mid)
+            pot_nrg = NBS.params_to_pot_nrg(params_buf_mid)
+            
+            NBS.nint_fac = nint_fac_big
+            kin_nrg_big= NBS.params_to_kin_nrg(params_buf_big)
+            pot_nrg_big= NBS.params_to_pot_nrg(params_buf_big)
+            
+            err[itry,0] = abs(kin_nrg - kin_nrg_big)
+            err[itry,1] = 2*abs(kin_nrg - kin_nrg_big) / abs(kin_nrg + kin_nrg_big)
+            err[itry,2] = abs(pot_nrg - pot_nrg_big)
+            err[itry,3] = 2*abs(pot_nrg - pot_nrg_big) / abs(pot_nrg + pot_nrg_big) 
+
+            Passed = Passed and err[itry,0] < 1e-7
+            Passed = Passed and err[itry,1] < 1e-7    
+            
+            Passed = Passed and err[itry,2] < 1e-7
+            Passed = Passed and err[itry,3] < 1e-7
+            
+            Passed_any = Passed_any or Passed
+            
+            if Passed_any:
+                break
+            
+        if not(Passed_any):
+            print(err)
+        
+        assert Passed_any
