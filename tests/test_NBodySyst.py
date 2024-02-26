@@ -254,6 +254,7 @@ def test_resize(AllNBS, float64_tols):
         
         print(f"Config name : {name}")        
         NBS.nint_fac = 10
+        small_segm_size = NBS.segm_size
         params_buf = np.random.random((NBS.nparams))
         segmpos = NBS.params_to_segmpos(params_buf)
         
@@ -263,8 +264,12 @@ def test_resize(AllNBS, float64_tols):
         
         assert np.allclose(segmpos, segmpos_noopt, rtol = float64_tols.rtol, atol = float64_tols.atol) 
         
-        params_buf_long = NBS.params_resize(params_buf, 100) 
-        NBS.nint_fac = 100
+        fac = 4
+        new_nint_fac = fac * NBS.nint_fac
+        
+        params_buf_long = NBS.params_resize(params_buf, new_nint_fac) 
+        NBS.nint_fac = new_nint_fac
+        long_segm_size = NBS.segm_size
         segmpos_long = NBS.params_to_segmpos(params_buf_long)
         
         all_coeffs = NBS.params_to_all_coeffs_noopt(params_buf_long)  
@@ -273,5 +278,5 @@ def test_resize(AllNBS, float64_tols):
         
         assert np.allclose(segmpos_long, segmpos_long_noopt, rtol = float64_tols.rtol, atol = float64_tols.atol) 
         
-        assert np.allclose(segmpos[:,0,:], segmpos_long[:,0,:], rtol = float64_tols.rtol, atol = float64_tols.atol) 
+        assert np.allclose(segmpos[:,:small_segm_size,:], segmpos_long[:,:long_segm_size:fac,:], rtol = float64_tols.rtol, atol = float64_tols.atol) 
         

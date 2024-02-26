@@ -71,10 +71,21 @@ cdef pot_t gravity_pot(double xsq) noexcept nogil:
     
     return res
 
-cdef pot_t power_law_pot(double xsq, double cn) noexcept nogil:
-    # Cython definition of the potential law
+@cython.profile(False)
+@cython.linetrace(False)
+cdef pot_t elastic_pot(double xsq) noexcept nogil:
     
-    cdef double cnm1 = cn-1
+    cdef pot_t res
+    
+    res.pot = xsq
+    res.potp = 1.
+    res.potpp = 0.
+    
+    return res
+
+cdef pot_t power_law_pot(double xsq, double cn) noexcept nogil:
+    # cn is the exponent of x^2 in the potential power law
+    
     cdef double cnm2 = cn-2
     cdef double cmnnm1 = -cn*(cn-1)
 
@@ -385,6 +396,7 @@ cdef class NBodySyst():
         self._BinSpaceRotIsId = np.zeros((self.nbin_segm_unique), dtype=np.intc)
         for ibin in range(self.nbin_segm_unique):
             self._BinSpaceRotIsId[ibin] = (np.linalg.norm(self._BinSpaceRot[ibin,:,:] - np.identity(self.geodim)) < eps)
+            self._BinProdChargeSum[ibin] /= self.nint_min
 
         # This could certainly be made more efficient
         BodyConstraints = AccumulateBodyConstraints(self.Sym_list, nbody, geodim)
@@ -2762,6 +2774,7 @@ cdef double segm_pos_to_pot_nrg(
     cdef double pot_nrg = 0.
     cdef double pot_nrg_bin
     cdef double dx2, a
+    cdef double bin_fac
 
     cdef double* tmp_loc_pos
     cdef bint NeedsAllocate = False
@@ -2800,6 +2813,9 @@ cdef double segm_pos_to_pot_nrg(
         isegmp = BinTargetSegm[ibin]
         posp = &segmpos[isegmp,0,0]
 
+        bin_fac = BinProdChargeSum[ibin]
+        bin_fac /= segm_size
+
         incr = geodim*BinTimeRev[ibin]
         pot_nrg_bin = 0
         for iint in range(segm_size):
@@ -2817,7 +2833,7 @@ cdef double segm_pos_to_pot_nrg(
             pos += incr
             posp += incrp
 
-        pot_nrg += pot_nrg_bin * BinProdChargeSum[ibin]
+        pot_nrg += pot_nrg_bin * bin_fac
 
     if NeedsAllocate:
         free(tmp_loc_pos)
@@ -2843,6 +2859,7 @@ cdef void segm_pos_to_pot_nrg_grad(
     cdef Py_ssize_t incrp = geodim
 
     cdef double dx2, a, b
+    cdef double bin_fac
     cdef double* dx = <double*> malloc(sizeof(double)*geodim)
 
     cdef double* tmp_loc_pos
@@ -2896,6 +2913,9 @@ cdef void segm_pos_to_pot_nrg_grad(
         posp = &segmpos[isegmp,0,0]
         gradp = &pot_nrg_grad[isegmp,0,0]
 
+        bin_fac = 2*BinProdChargeSum[ibin]
+        bin_fac /= segm_size
+
         incr = geodim*BinTimeRev[ibin]
         for iint in range(segm_size):
 
@@ -2907,7 +2927,7 @@ cdef void segm_pos_to_pot_nrg_grad(
 
             pot = inter_law(dx2)
 
-            a = 2*BinProdChargeSum[ibin]*pot.potp
+            a = bin_fac*pot.potp
 
             for idim in range(geodim):
                 b = a*dx[idim]
@@ -2952,6 +2972,7 @@ cdef void segm_pos_to_pot_nrg_hess(
     cdef pot_t pot
 
     cdef double dx2, dxtddx, a, b, ddf
+    cdef double bin_fac, two_bin_fac
     cdef double* dx = <double*> malloc(sizeof(double)*geodim)
     cdef double* ddx = <double*> malloc(sizeof(double)*geodim)
 
@@ -3012,11 +3033,14 @@ cdef void segm_pos_to_pot_nrg_hess(
                 hess = tmp_loc_hess + (segm_size-1)*geodim
                 memset(tmp_loc_hess, 0, nitems)
 
-
         isegmp = BinTargetSegm[ibin]
         posp = &segmpos[isegmp,0,0]
         dposp = &dsegmpos[isegmp,0,0]
         hessp = &pot_nrg_hess[isegmp,0,0]
+
+        bin_fac = 2*BinProdChargeSum[ibin]
+        bin_fac /= segm_size
+        two_bin_fac = 2*bin_fac
 
         incr = geodim*BinTimeRev[ibin]
         for iint in range(segm_size):
@@ -3034,8 +3058,8 @@ cdef void segm_pos_to_pot_nrg_hess(
 
             pot = inter_law(dx2)
 
-            a = 2*BinProdChargeSum[ibin]*pot.potp
-            b = 4*BinProdChargeSum[ibin]*pot.potpp*dxtddx
+            a = bin_fac*pot.potp
+            b = two_bin_fac*pot.potpp*dxtddx
 
             for idim in range(geodim):
                 ddf = b*dx[idim]+a*ddx[idim]
