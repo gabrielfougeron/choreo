@@ -47,9 +47,9 @@ def main():
         # '4D3k',
         # '4C',
         # '4D',
-        '3C',
+        # '3C',
         # '3D',
-        # '3D1',
+        '3D1',
         # '3C2k',
         # '3D2k',
         # '3Dp',
@@ -131,128 +131,38 @@ def doit(config_name):
     
     NBS = choreo.cython._NBodySyst.NBodySyst(geodim, nbody, mass, charge, Sym_list, inter_pot_fun)
     
-    NBS.nint_fac = 1
-    
-    # params_buf = np.random.random((NBS.nparams))
-    # pot_nrg = NBS.params_to_pot_nrg(params_buf)
-    # 
-    # print(pot_nrg)
-    
-    # pot_nrg_grad = NBS.params_to_pot_nrg_grad(params_buf)
-    
-    
-    # print(pot_nrg_grad)
-    
-    
-    # 
-    # print(f'{NBS.nint = }')
-    # print(f'{NBS.segm_size = }')
-    # print(f'{NBS.ncoeffs-1 = }')
-    # print(f'{NBS.nparams = }')
-    # print(f'{NBS.nint_min = }')
-    # print(f'{NBS.nnpr = }')
-    # print(f'{NBS.loopgen = }')
-    # print()
-    # print('NBS.params_shapes')
-    # print(NBS.params_shapes)
-    # print('NBS.ifft_shapes')
-    # print(NBS.ifft_shapes)
-    # print('NBS.pos_slice_shapes')
-    # print(NBS.pos_slice_shapes)
-    # print('NBS.ncoeff_min_loop')
-    # print(NBS.ncoeff_min_loop)
-    # print()
-
-    eps = 1e-8
-
-
-    
-    # print(NBS.BinSpaceRotIsId)
-    # print(NBS.BinTimeRev)
-    # print(NBS.BinSourceSegm)
-    # print(NBS.BinTargetSegm)
-    # print(NBS.BinProdChargeSum)
-    # print()
-    # print(NBS.InterSpaceRotIsId)
-    # print(NBS.InterTimeRev)
-    # print(NBS.InterSpaceRot)
-    # print()
     
     
     
+    NBS.nint_fac = 2
     
     params_buf = np.random.random((NBS.nparams))
+    segmpos = NBS.params_to_segmpos(params_buf)
+    all_pos = NBS.segmpos_to_all_pos_noopt(segmpos)
     
+    params_buf_long = NBS.params_resize(params_buf, 100) 
+    NBS.nint_fac = 100
+    segmpos_long = NBS.params_to_segmpos(params_buf_long)
+    all_pos_long = NBS.segmpos_to_all_pos_noopt(segmpos_long)
     
-#     
-    for i in range(NBS.nparams):
-        
-        dx = np.zeros((NBS.nparams))
-        dx[i] = 1
-        err = choreo.scipy_plus.test.compare_FD_and_exact_grad(
-            NBS.params_to_pot_nrg_grad   ,
-            NBS.params_to_pot_nrg_hess   ,
-            params_buf                  ,
-            dx=dx                       ,
-            epslist=None                ,
-            order=2                     ,
-            vectorize=False             ,
-            relative=False              ,
-        )
-
-        errmin = err.min()
-        # if errmin < eps:
-        #     errmin = 0
-        
-        print(i, errmin)
-#     
-    
-    print()
-
-    dx = np.random.random((NBS.nparams))
-
-    err = choreo.scipy_plus.test.compare_FD_and_exact_grad(
-        NBS.params_to_pot_nrg_grad   ,
-        NBS.params_to_pot_nrg_hess   ,
-        params_buf              ,
-        dx=dx                 ,
-        epslist=None            ,
-        order=2                 ,
-        vectorize=False         ,
-    )
-
-
-    print(err.min()) 
-    # assert (err.min() < eps) or (NBS.nnpr == 1)
-    # assert (err.min() < eps) == (NBS.InterTimeRev == 1).all()
-    # assert (err.min() < eps)
- 
-
+    choreo.NBodySyst_build.plot_given_2D(all_pos, 'all_pos.png')
+    choreo.NBodySyst_build.plot_given_2D(all_pos_long, 'all_pos_long.png')    
     
     
     
-# 
-#     segmpos = NBS.params_to_segmpos(params_buf)
-#     
-#     segmpos_dual = np.random.random((NBS.nsegm,NBS.segm_store,NBS.geodim))
-#     # if NBS.nnpr == 1:
-#         # Not sure how to impose compatibility conditions
-#         # segmpos_dual[:,NBS.segm_store-1,:] = 0
-#         # segmpos_dual[:,0,:] = 0
-#     
-#     params_buf_dual = NBS.segmpos_to_params_T(segmpos_dual)
-#     
-#     dot_params = np.dot(params_buf, params_buf_dual)
-#     dot_segmpos = np.dot(segmpos_dual.reshape(-1), segmpos.reshape(-1))
-# 
-#     print( abs(dot_params - dot_segmpos) < eps )
-#     print( 2*abs(dot_params - dot_segmpos) / (dot_params + dot_segmpos) < eps )
-
-
-
-
-
-
+    params_buf_long[:] = 0
+    n=10
+    params_buf_long[0:n] = np.random.random((n))
+    segmpos_long = NBS.params_to_segmpos(params_buf_long)
+    all_pos_long = NBS.segmpos_to_all_pos_noopt(segmpos_long)
+    
+    params_buf = NBS.params_resize(params_buf_long, 2) 
+    NBS.nint_fac = 2    
+    segmpos = NBS.params_to_segmpos(params_buf)
+    all_pos = NBS.segmpos_to_all_pos_noopt(segmpos)
+    
+    choreo.NBodySyst_build.plot_given_2D(all_pos, 'all_pos_2.png')
+    choreo.NBodySyst_build.plot_given_2D(all_pos_long, 'all_pos_long_2.png')
 
 
 

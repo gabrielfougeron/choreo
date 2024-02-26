@@ -76,9 +76,7 @@ cdef pot_t power_law_pot(double xsq, double cn) noexcept nogil:
     
     cdef double cnm1 = cn-1
     cdef double cnm2 = cn-2
-    cdef double cnnm1 = cn*(cn-1)
-    cdef double cmn = -cn
-    cdef double cmnnm1 = -cnnm1
+    cdef double cmnnm1 = -cn*(cn-1)
 
     cdef double a = cpow(xsq,cnm2)
     cdef double b = xsq*a
@@ -86,7 +84,7 @@ cdef pot_t power_law_pot(double xsq, double cn) noexcept nogil:
     cdef pot_t res
     
     res.pot = -xsq*b
-    res.potp = cmn*b
+    res.potp = -cn*b
     res.potpp = cmnnm1*a
 
     return res
@@ -776,7 +774,6 @@ cdef class NBodySyst():
 
                     assert (err < eps)
 
-
     @cython.final
     def params_changevar(self, double[::1] params_buf_in, bint inv=False, bint transpose=False):
 
@@ -843,6 +840,61 @@ cdef class NBodySyst():
                 )   
 
         return np.asarray(params_buf_out)
+
+    @cython.final
+    def params_resize(self, double[::1] params_buf_in, long nint_fac=1):
+
+        assert params_buf_in.shape[0] == self.nparams
+
+        cdef Py_ssize_t out_nint = 2 * self.nint_min * nint_fac
+        cdef Py_ssize_t il
+
+        params_shapes_list = []
+        for il in range(self.nloop):
+
+            nppl = self._params_basis_shapes[il,2]
+            npr = out_nint // (2*self._ncoeff_min_loop[il])
+
+            params_shapes_list.append((npr, self._nnz_k_shapes[il,0], nppl))
+
+        cdef long[:,::1] params_shapes_out
+        cdef long[::1] params_shifts_out
+        params_shapes_out, params_shifts_out = BundleListOfShapes(params_shapes_list)
+
+        cdef long nparams_out = params_shifts_out[self.nloop] - self.nrem
+
+        params_buf_out_np = np.zeros((nparams_out), dtype=np.float64)
+        cdef double[::1] params_buf_out = params_buf_out_np
+
+        cdef double* source = &params_buf_in[0]
+        cdef double* dest = &params_buf_out[0]
+        cdef int n_in, n_out
+
+        if nint_fac < self._nint_fac:
+
+            for il in range(self.nloop):
+
+                n_out = params_shifts_out[il+1] - (params_shifts_out[il] + self._nco_in_loop[il])
+                n_in = self._params_shifts[il+1] - (self._params_shifts[il] + self._nco_in_loop[il])
+
+                scipy.linalg.cython_blas.dcopy(&n_out, source, &int_one, dest, &int_one)
+
+                dest += n_out
+                source += n_in
+
+        else:
+
+            for il in range(self.nloop):
+
+                n_out = params_shifts_out[il+1] - (params_shifts_out[il] + self._nco_in_loop[il])
+                n_in = self._params_shifts[il+1] - (self._params_shifts[il] + self._nco_in_loop[il])
+
+                scipy.linalg.cython_blas.dcopy(&n_in, source, &int_one, dest, &int_one)
+
+                dest += n_out
+                source += n_in
+
+        return params_buf_out_np
 
     @cython.final
     def all_coeffs_to_kin_nrg(self, double complex[:,:,::1] all_coeffs):
@@ -1702,7 +1754,6 @@ cdef double params_to_kin_nrg(
     cdef double kin = 0
     cdef int beg
     cdef int n
-    cdef int ncor_loop_cum = 0
 
     for il in range(nloop):
 
@@ -1734,7 +1785,6 @@ cdef void params_to_kin_nrg_grad(
     cdef double kin = 0
     cdef int beg
     cdef int n
-    cdef int ncor_loop_cum = 0
 
     for il in range(nloop):
 
@@ -2971,7 +3021,7 @@ cdef void segm_pos_to_pot_nrg_hess(
             dx2 = dx[0]*dx[0]
             ddx[0] = dpos[0] - dposp[0]
             dxtddx = dx[0]*ddx[0]
-            
+
             for idim in range(1,geodim):
                 dx[idim] = pos[idim] - posp[idim]
                 dx2 = dx2 + dx[idim]*dx[idim]
