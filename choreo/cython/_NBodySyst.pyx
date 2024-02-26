@@ -1887,7 +1887,8 @@ cdef void partial_fft_to_pos_slice_1npr(
 
     inplace_twiddle(const_ifft, nnz_k, nint, n_inter, ncoeff_min_loop_nnz, nppl, -1)
 
-    dfac = 1./(npr * ncoeff_min_loop)
+    # dfac = 1./(npr * ncoeff_min_loop)
+    dfac = 2.
 
     # Computes a.real * b.real.T + a.imag * b.imag.T using clever memory arrangement and a single gemm call
     scipy.linalg.cython_blas.dgemm(transt, transn, &geodim, &n_inter, &ndcom, &dfac, params_basis_r, &ndcom, ifft_r, &ndcom, &zero_double, pos_slice, &geodim)
@@ -1918,9 +1919,9 @@ cdef void pos_slice_to_partial_fft_1npr(
     cdef int ndcom = 2*ncoeff_min_loop_nnz*nppl
 
     if direction > 0:
-        dfac = 2*(npr * ncoeff_min_loop)
+        dfac = 1.
     else:
-        dfac = 1./(ncoeff_min_loop)
+        dfac = 2*npr
 
     # Again with the clever memory arrangement and a single gemm call
     scipy.linalg.cython_blas.dgemm(transn, transn, &ndcom, &n_inter, &geodim, &dfac, params_basis_r, &ndcom, pos_slice, &geodim, &zero_double, ifft_r, &ndcom)
@@ -1966,7 +1967,9 @@ cdef void partial_fft_to_pos_slice_2npr(
 
     inplace_twiddle(const_ifft, nnz_k, nint, n_inter, ncoeff_min_loop_nnz, nppl, -1)
 
-    dfac = 1./(npr * ncoeff_min_loop)
+    # dfac = 1./(npr * ncoeff_min_loop)
+    # dfac = 2./(ncoeff_min_loop)
+    dfac = 2.
 
     # Computes a.real * b.real.T + a.imag * b.imag.T using clever memory arrangement and a single gemm call
     scipy.linalg.cython_blas.dgemm(transt, transn, &geodim, &n_inter, &ndcom, &dfac, params_basis_r, &ndcom, ifft_r, &ndcom, &zero_double, pos_slice, &geodim)
@@ -2031,9 +2034,9 @@ cdef void pos_slice_to_partial_fft_2npr(
     cdef Py_ssize_t m, j, i
 
     if direction > 0:
-        dfac = (npr * ncoeff_min_loop)
+        dfac = 0.5
     else:
-        dfac = 1./ncoeff_min_loop
+        dfac = 2*npr
 
     n_inter = npr-1
     nconj = n_inter*nzcom
@@ -2099,11 +2102,11 @@ cdef void params_to_ifft(
     cdef double complex * dest
     cdef Py_ssize_t il, i
 
-    for il in range(nloop):
+    with gil:
 
-        if params_shapes[il,1] > 0:
+        for il in range(nloop):
 
-            with gil:
+            if params_shapes[il,1] > 0:
 
                 params = <double[:params_shapes[il,0],:params_shapes[il,1],:params_shapes[il,2]:1]> &params_buf[params_shifts[il]]
                 nnz_k = <long[:nnz_k_shapes[il,0]:1]> &nnz_k_buf[nnz_k_shifts[il]]
@@ -2121,9 +2124,9 @@ cdef void params_to_ifft(
                         for i in range(params.shape[2]):
                             params[0,0,i] *= 2
 
-            dest = ifft_buf_ptr + ifft_shifts[il]
-            n = ifft_shifts[il+1] - ifft_shifts[il]
-            scipy.linalg.cython_blas.zcopy(&n,&ifft[0,0,0],&int_one,dest,&int_one)
+                dest = ifft_buf_ptr + ifft_shifts[il]
+                n = ifft_shifts[il+1] - ifft_shifts[il]
+                scipy.linalg.cython_blas.zcopy(&n,&ifft[0,0,0],&int_one,dest,&int_one)
 
 cdef void ifft_to_params(
     double complex *ifft_buf_ptr    , long[:,::1] ifft_shapes       , long[::1] ifft_shifts     ,
@@ -2141,26 +2144,26 @@ cdef void ifft_to_params(
     cdef double* dest
     cdef Py_ssize_t il, i
 
-    for il in range(nloop):
+    with gil:
 
-        if params_shapes[il,1] > 0:
+        for il in range(nloop):
 
-            with gil:
+            if params_shapes[il,1] > 0:
 
                 nnz_k = <long[:nnz_k_shapes[il,0]:1]> &nnz_k_buf[nnz_k_shifts[il]]
                 ifft = <double complex[:ifft_shapes[il,0],:ifft_shapes[il,1],:ifft_shapes[il,2]:1]> &ifft_buf_ptr[ifft_shifts[il]]
 
                 params = scipy.fft.irfft(ifft, axis=0)
 
-            if direction < 0:
-                if nnz_k.shape[0] > 0:
-                    if nnz_k[0] == 0:
-                        for i in range(params.shape[2]):
-                            params[0,0,i] *= 0.5
+                if direction < 0:
+                    if nnz_k.shape[0] > 0:
+                        if nnz_k[0] == 0:
+                            for i in range(params.shape[2]):
+                                params[0,0,i] *= 0.5
 
-            dest = params_buf + params_shifts[il]
-            n = params_shifts[il+1] - params_shifts[il]
-            scipy.linalg.cython_blas.dcopy(&n,&params[0,0,0],&int_one,dest,&int_one)
+                dest = params_buf + params_shifts[il]
+                n = params_shifts[il+1] - params_shifts[il]
+                scipy.linalg.cython_blas.dcopy(&n,&params[0,0,0],&int_one,dest,&int_one)
 
 cdef void ifft_to_pos_slice(
     double complex *ifft_buf_ptr            , long[:,::1] ifft_shapes           , long[::1] ifft_shifts         ,
@@ -2738,6 +2741,7 @@ cdef void segmpos_to_params_T(
 
     free(params_pos_buf)
 
+@cython.cdivision(True)
 cdef double segm_pos_to_pot_nrg(
     double[:,:,::1] segmpos         ,
     long[::1] BinSourceSegm         , long[::1] BinTargetSegm       ,
