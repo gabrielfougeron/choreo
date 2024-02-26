@@ -100,7 +100,7 @@ cdef pot_t power_law_pot(double xsq, double cn) noexcept nogil:
 
     return res
 
-
+cdef double[::1] default_Hash_exp = np.array([-0.1, -0.2, -0.3, -0.4, -0.5, -0.6, -0.7, -0.8, -0.9])
 
 @cython.final
 cdef class NBodySyst():
@@ -274,8 +274,10 @@ cdef class NBodySyst():
     cdef readonly list intersegm_to_all
     cdef readonly list LoopGenConstraints
 
-    # cdef double inter_pow
-    # cdef long inter_pm
+    cdef double[::1] _Hash_exp
+    @property
+    def Hash_exp(self):
+        return np.asarray(self._Hash_exp)
 
     cdef inter_law_fun_type inter_law
     
@@ -347,6 +349,8 @@ cdef class NBodySyst():
             raise ValueError(f'Incompatible number of bodies {nbody} vs number of masses {bodymass.shape[0]}')
         if (bodycharge.shape[0] != nbody):
             raise ValueError(f'Incompatible number of bodies {nbody} vs number of charges {bodycharge.shape[0]}')
+
+        self._Hash_exp = default_Hash_exp
 
         self.geodim = geodim
         self.nbody = nbody
@@ -473,7 +477,6 @@ cdef class NBodySyst():
                 assert loopcharge[il] == bodycharge[ib]
 
         self.BodyGraph = BodyGraph
-
 
     def ExploreGlobalShifts_BuildSegmGraph(self):
 
@@ -974,6 +977,42 @@ cdef class NBodySyst():
         )
 
         return np.asarray(grad_buf)
+
+    @cython.final
+    def params_to_hash(self, double[::1] params_mom_buf):
+
+        assert params_mom_buf.shape[0] == self.nparams
+
+        cdef double[:,:,::1] segmpos = np.empty((self.nsegm, self.segm_store, self.geodim), dtype=np.float64)
+        cdef double[::1] Hash = np.empty((self._Hash_exp.shape[0]), dtype=np.float64)
+
+        with nogil:
+
+            params_to_segmpos(
+                params_mom_buf          , self._params_shapes       , self._params_shifts       ,
+                                          self._ifft_shapes         , self._ifft_shifts         ,
+                self._params_basis_buf  , self._params_basis_shapes , self._params_basis_shifts ,
+                self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
+                self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
+                                          self._pos_slice_shapes    , self._pos_slice_shifts    ,
+                self._ncoeff_min_loop   , self.nnpr                 ,
+                self._loopnb            , self._loopmass            ,
+                self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
+                self._gensegm_to_body   , self._gensegm_to_iint     ,
+                self._bodyloop          , self.segm_size            , self.segm_store           ,
+                segmpos                 ,
+            )
+
+            segm_pos_to_hash(
+                segmpos                 ,
+                self._BinSourceSegm     , self._BinTargetSegm   ,
+                self._BinTimeRev        , self._BinSpaceRot     , self._BinSpaceRotIsId ,
+                self._BinProdChargeSum  ,
+                self.segm_size          , self.segm_store       ,
+                self._Hash_exp          , Hash                  ,   
+            )
+        
+        return np.asarray(Hash)
 
     @cython.final
     def params_to_pot_nrg(self, double[::1] params_mom_buf):
@@ -1666,6 +1705,7 @@ cdef void changevar_mom_inv(
                     cur_params_mom_buf += 1
                     cur_param_pos_buf += 1
 
+@cython.cdivision(True)
 cdef void changevar_mom_T(
     double *params_pos_buf      , long[:,::1] params_shapes     , long[::1] params_shifts   ,
     long[::1] nnz_k_buf         , long[:,::1] nnz_k_shapes      , long[::1] nnz_k_shifts    ,
@@ -1895,7 +1935,6 @@ cdef void partial_fft_to_pos_slice_1npr(
 
     inplace_twiddle(const_ifft, nnz_k, nint, n_inter, ncoeff_min_loop_nnz, nppl, -1)
 
-    # dfac = 1./(npr * ncoeff_min_loop)
     dfac = 2.
 
     # Computes a.real * b.real.T + a.imag * b.imag.T using clever memory arrangement and a single gemm call
@@ -1975,8 +2014,6 @@ cdef void partial_fft_to_pos_slice_2npr(
 
     inplace_twiddle(const_ifft, nnz_k, nint, n_inter, ncoeff_min_loop_nnz, nppl, -1)
 
-    # dfac = 1./(npr * ncoeff_min_loop)
-    # dfac = 2./(ncoeff_min_loop)
     dfac = 2.
 
     # Computes a.real * b.real.T + a.imag * b.imag.T using clever memory arrangement and a single gemm call
@@ -2750,6 +2787,139 @@ cdef void segmpos_to_params_T(
     free(params_pos_buf)
 
 @cython.cdivision(True)
+cdef void segm_pos_to_hash(
+    double[:,:,::1] segmpos         ,
+    long[::1] BinSourceSegm         , long[::1] BinTargetSegm       ,
+    long[::1] BinTimeRev            , double[:,:,::1] BinSpaceRot   , bint[::1] BinSpaceRotIsId ,
+    double[::1] BinProdChargeSum    ,
+    long segm_size                  , long segm_store               ,
+    double[::1] Hash_exp            , double[::1] Hash              ,           
+) noexcept nogil:
+
+    cdef long nbin = BinSourceSegm.shape[0]
+    cdef int geodim = BinSpaceRot.shape[1]
+    cdef int segm_store_int = segm_store
+    cdef int nexp = Hash_exp.shape[0]
+    cdef Py_ssize_t iexp
+    cdef Py_ssize_t ibin, idim
+    cdef Py_ssize_t isegm, isegmp
+    cdef Py_ssize_t incr
+    cdef Py_ssize_t incrp = geodim
+
+    cdef double pot
+    cdef double dx2, a
+    cdef double bin_fac
+    cdef double* hash_tmp = <double*> malloc(sizeof(double)*nexp)
+
+    cdef bint size_is_store = (segm_size == segm_store) # because nnpr was not given
+
+    cdef double* tmp_loc_pos
+    cdef bint NeedsAllocate = False
+
+    for ibin in range(nbin):
+        NeedsAllocate = (NeedsAllocate or (not(BinSpaceRotIsId[ibin])))
+
+    if NeedsAllocate:
+        tmp_loc_pos = <double*> malloc(sizeof(double)*segm_store*geodim)
+
+    cdef double* pos
+    cdef double* posp
+
+    for iexp in range(nexp):
+        Hash[iexp] = 0
+
+    for ibin in range(nbin):
+
+        isegm = BinSourceSegm[ibin]
+
+        if BinTimeRev[ibin] > 0:
+
+            if BinSpaceRotIsId[ibin]:
+                pos = &segmpos[isegm,0,0]
+            else:
+                pos = tmp_loc_pos
+                scipy.linalg.cython_blas.dgemm(transt, transn, &geodim, &segm_store_int, &geodim, &one_double, &BinSpaceRot[ibin,0,0], &geodim, &segmpos[isegm,0,0], &geodim, &zero_double, tmp_loc_pos, &geodim)
+
+        else:
+
+            if BinSpaceRotIsId[ibin]:
+                pos = &segmpos[isegm,segm_store-1,0]
+            else:
+                pos = tmp_loc_pos + (segm_store-1)*geodim
+                scipy.linalg.cython_blas.dgemm(transt, transn, &geodim, &segm_store_int, &geodim, &one_double, &BinSpaceRot[ibin,0,0], &geodim, &segmpos[isegm,0,0], &geodim, &zero_double, tmp_loc_pos, &geodim)
+
+        isegmp = BinTargetSegm[ibin]
+        posp = &segmpos[isegmp,0,0]
+
+        bin_fac = BinProdChargeSum[ibin]
+        bin_fac /= segm_size
+
+        memset(hash_tmp, 0, sizeof(double)*nexp)
+
+        incr = geodim*BinTimeRev[ibin]
+
+        if size_is_store:
+
+            for iint in range(segm_size):
+
+                a = pos[0] - posp[0]
+                dx2 = a*a
+                for idim in range(1,geodim):
+                    a = pos[idim] - posp[idim]
+                    dx2 = dx2 + a*a
+
+                for iexp in range(nexp):
+                    hash_tmp[iexp] += cpow(dx2, Hash_exp[iexp])
+
+                pos += incr
+                posp += incrp
+
+        else:
+            
+            # First iteration
+            a = pos[0] - posp[0]
+            dx2 = a*a
+            for idim in range(1,geodim):
+                a = pos[idim] - posp[idim]
+                dx2 = dx2 + a*a
+
+            for iexp in range(nexp):
+                hash_tmp[iexp] += 0.5 * cpow(dx2, Hash_exp[iexp])
+
+            pos += incr
+            posp += incrp
+
+            for iint in range(1,segm_size):
+
+                a = pos[0] - posp[0]
+                dx2 = a*a
+                for idim in range(1,geodim):
+                    a = pos[idim] - posp[idim]
+                    dx2 = dx2 + a*a
+
+                for iexp in range(nexp):
+                    hash_tmp[iexp] += cpow(dx2, Hash_exp[iexp])
+
+                pos += incr
+                posp += incrp
+
+            # Last iteration
+            a = pos[0] - posp[0]
+            dx2 = a*a
+            for idim in range(1,geodim):
+                a = pos[idim] - posp[idim]
+                dx2 = dx2 + a*a
+
+            for iexp in range(nexp):
+                hash_tmp[iexp] += 0.5 * cpow(dx2, Hash_exp[iexp])
+
+        scipy.linalg.cython_blas.daxpy(&nexp, &bin_fac, hash_tmp, &int_one, &Hash[0], &int_one)
+
+    free(hash_tmp)
+    if NeedsAllocate:
+        free(tmp_loc_pos)
+
+@cython.cdivision(True)
 cdef double segm_pos_to_pot_nrg(
     double[:,:,::1] segmpos         ,
     long[::1] BinSourceSegm         , long[::1] BinTargetSegm       ,
@@ -2883,6 +3053,7 @@ cdef double segm_pos_to_pot_nrg(
 
     return pot_nrg
 
+@cython.cdivision(True)
 cdef void segm_pos_to_pot_nrg_grad(
     double[:,:,::1] segmpos         , double[:,:,::1] pot_nrg_grad  ,
     long[::1] BinSourceSegm         , long[::1] BinTargetSegm       ,
@@ -2952,7 +3123,6 @@ cdef void segm_pos_to_pot_nrg_grad(
 
                 grad = tmp_loc_grad + (segm_store-1)*geodim
                 memset(tmp_loc_grad, 0, nitems)
-
 
         isegmp = BinTargetSegm[ibin]
         posp = &segmpos[isegmp,0,0]
@@ -3062,6 +3232,7 @@ cdef void segm_pos_to_pot_nrg_grad(
         free(tmp_loc_pos)
         free(tmp_loc_grad)
 
+@cython.cdivision(True)
 cdef void segm_pos_to_pot_nrg_hess(
     double[:,:,::1] segmpos         , double[:,:,::1] dsegmpos      , double[:,:,::1] pot_nrg_hess  ,
     long[::1] BinSourceSegm         , long[::1] BinTargetSegm       ,
