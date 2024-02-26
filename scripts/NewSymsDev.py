@@ -132,31 +132,15 @@ def doit(config_name):
     
     NBS = choreo.cython._NBodySyst.NBodySyst(geodim, nbody, mass, charge, Sym_list, inter_pot_fun)
 
-    nint_fac_short = 2
-    nint_fac_mid = 500
-    nint_fac_big = nint_fac_mid*2
+    NBS.nint_fac = 1000
+    params_buf = np.random.random((NBS.nparams))
     
-    NBS.nint_fac = nint_fac_short
-    params_buf_short = np.random.random((NBS.nparams))
+    Hash = NBS.params_to_hash(params_buf)
+    pot_nrg = NBS.params_to_pot_nrg(params_buf)
     
-    params_buf_mid = NBS.params_resize(params_buf_short, nint_fac_mid) 
-    params_buf_big = NBS.params_resize(params_buf_short, nint_fac_big) 
+    print(Hash[4] + pot_nrg)
+    # assert Hash[4] + pot_nrg < 1e-12
 
-    NBS.nint_fac = nint_fac_mid
-    kin_nrg = NBS.params_to_kin_nrg(params_buf_mid)
-    pot_nrg = NBS.params_to_pot_nrg(params_buf_mid)
-    
-    NBS.nint_fac = nint_fac_big
-    kin_nrg_big= NBS.params_to_kin_nrg(params_buf_big)
-    pot_nrg_big= NBS.params_to_pot_nrg(params_buf_big)
-
-    print( abs(kin_nrg - kin_nrg_big) )
-    print( 2*abs(kin_nrg - kin_nrg_big) / abs(kin_nrg + kin_nrg_big) )
-    print( abs(pot_nrg - pot_nrg_big))
-    print( 2*abs(pot_nrg - pot_nrg_big) / abs(pot_nrg + pot_nrg_big))
-        
-    
-    
     
     
     
