@@ -28,51 +28,51 @@ def proj_to_zero(array, eps=1e-14):
 def main():
         
     all_tests = [
-        '3q',
-        '3q3q',
-        '3q3qD',
-        '2q2q',
-        '4q4q',
-        '4q4qD',
-        '4q4qD3k',
-        '1q2q',
-        '5q5q',
-        '6q6q',
-        '2C3C',
-        '2D3D',   
-        '2C3C5k',
-        '2D3D5k',
-        '2D1',
-        '4C5k',
-        '4D3k',
-        '4C',
-        '4D',
+        # '3q',
+        # '3q3q',
+        # '3q3qD',
+        # '2q2q',
+        # '4q4q',
+        # '4q4qD',
+        # '4q4qD3k',
+        # '1q2q',
+        # '5q5q',
+        # '6q6q',
+        # '2C3C',
+        # '2D3D',   
+        # '2C3C5k',
+        # '2D3D5k',
+        # '2D1',
+        # '4C5k',
+        # '4D3k',
+        # '4C',
+        # '4D',
         '3C',
-        '3D',
-        '3D1',
-        '3C2k',
-        '3D2k',
-        '3Dp',
-        '3C4k',
-        '3D4k',
-        '3C5k',
-        '3D5k',
-        '3C101k',
-        '3D101k',
-        'test_3D5k',
-        '3C7k2',
-        '3D7k2',
-        '6C',
-        '6D',
-        '6Ck5',
-        '6Dk5',
-        '5Dq',
-        '2C3C5C',
-        '3C_3dim',
-        '2D1_3dim', 
-        '3C11k',
-        '5q',
-        '5Dq_',
+        # '3D',
+        # '3D1',
+        # '3C2k',
+        # '3D2k',
+        # '3Dp',
+        # '3C4k',
+        # '3D4k',
+        # '3C5k',
+        # '3D5k',
+        # '3C101k',
+        # '3D101k',
+        # 'test_3D5k',
+        # '3C7k2',
+        # '3D7k2',
+        # '6C',
+        # '6D',
+        # '6Ck5',
+        # '6Dk5',
+        # '5Dq',
+        # '2C3C5C',
+        # '3C_3dim',
+        # '2D1_3dim', 
+        # '3C11k',
+        # '5q',
+        # '5Dq_',
     ]
 
     TT = pyquickbench.TimeTrain(
@@ -132,21 +132,56 @@ def doit(config_name):
     
     NBS = choreo.cython._NBodySyst.NBodySyst(geodim, nbody, mass, charge, Sym_list, inter_pot_fun)
 
-    NBS.nint_fac = 1000
+    NBS.nint_fac = 10000
     params_buf = np.random.random((NBS.nparams))
-    
-    Hash = NBS.params_to_hash(params_buf)
-    pot_nrg = NBS.params_to_pot_nrg(params_buf)
-    
-    print(Hash[4] + pot_nrg)
-    # assert Hash[4] + pot_nrg < 1e-12
+    dx = np.random.random((NBS.nparams))
 
+    def grad(x,dx):
+        return np.dot(NBS.params_to_pot_nrg_grad(x), dx)
     
+    err = choreo.scipy_plus.test.compare_FD_and_exact_grad(
+        NBS.params_to_pot_nrg_grad  ,
+        NBS.params_to_pot_nrg_hess  ,
+        params_buf                  ,
+        dx=dx                       ,
+        epslist=None                ,
+        order=2                     ,
+        vectorize=False             ,
+    )
     
+    print(err.min())
     
-    
-    
+        
+#     def grad(x,dx):
+#         return np.dot(NBS.params_to_pot_nrg_grad_new(x), dx)
+# 
+#     err_new = choreo.scipy_plus.test.compare_FD_and_exact_grad(
+#         NBS.params_to_pot_nrg   ,
+#         grad                    ,
+#         params_buf              ,
+#         dx=dx                   ,
+#         epslist=None            ,
+#         order=2                 ,
+#         vectorize=False         ,
+#     )
 
+    err_new = choreo.scipy_plus.test.compare_FD_and_exact_grad(
+        NBS.params_to_pot_nrg_grad_new  ,
+        NBS.params_to_pot_nrg_hess  ,
+        params_buf                  ,
+        dx=dx                       ,
+        epslist=None                ,
+        order=2                     ,
+        vectorize=False             ,
+    )
+
+
+    print(err_new.min())
+    
+    
+    print(f"New is better : {err_new.min() < err.min()}")
+
+    print(err_new/err)
 
     return
     

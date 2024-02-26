@@ -25,20 +25,20 @@ import scipy
 if ("--no-show" in sys.argv):
     plt.show = (lambda : None)
 
-def all_coeffs_to_kin_nrg(NBS, params_buf, all_coeffs):
+def params_to_pot_nrg_grad(NBS, params_buf):
 
-    kin = NBS.all_coeffs_to_kin_nrg(all_coeffs)
+    NBS.params_to_pot_nrg_grad_new(params_buf)
     
-def params_to_kin_nrg(NBS, params_buf, all_coeffs):
+def params_to_pot_nrg_grad_new(NBS, params_buf):
 
-    kin_opt = NBS.params_to_kin_nrg(params_buf)
+    NBS.params_to_pot_nrg_grad(params_buf)
     
 
 
 all_funs = [
 
-    all_coeffs_to_kin_nrg       ,
-    params_to_kin_nrg       ,
+    params_to_pot_nrg_grad       ,
+    params_to_pot_nrg_grad_new       ,
 ]
 
 def setup(test_name, nint_fac):
@@ -49,20 +49,21 @@ def setup(test_name, nint_fac):
     with open(params_filename) as jsonFile:
         params_dict = json.load(jsonFile)
 
-    all_kwargs = choreo.find.ChoreoLoadFromDict(params_dict, Workspace_folder, args_list=["geodim", "nbody", "mass", "Sym_list"])
+    all_kwargs = choreo.find.ChoreoLoadFromDict(params_dict, Workspace_folder, args_list=["geodim", "nbody", "mass", "charge", "Sym_list"])
     
     geodim = all_kwargs["geodim"]
     nbody = all_kwargs["nbody"]
     mass = all_kwargs["mass"]
+    charge = all_kwargs["charge"]
     Sym_list = all_kwargs["Sym_list"]
     
-    NBS = choreo.cython._NBodySyst.NBodySyst(geodim, nbody, mass, Sym_list)
+    inter_pot_fun = scipy.LowLevelCallable.from_cython(choreo.cython._NBodySyst, "gravity_pot")
+    NBS = choreo.cython._NBodySyst.NBodySyst(geodim, nbody, mass, charge, Sym_list, inter_pot_fun)
     NBS.nint_fac = nint_fac
-    
+        
     params_buf = np.random.random((NBS.nparams))
-    all_coeffs = NBS.params_to_all_coeffs_noopt(params_buf) 
-    
-    return {"NBS":NBS, "params_buf":params_buf, "all_coeffs":all_coeffs}
+
+    return {"NBS":NBS, "params_buf":params_buf}
         
 
         
@@ -70,7 +71,7 @@ all_tests = [
     # '3q',
     # '3q3q',
     # '3q3qD',
-    '2q2q',
+    # '2q2q',
     # '4q4q',
     # '4q4qD',
     # '4q4qD3k',
@@ -86,7 +87,7 @@ all_tests = [
     # '4D3k',
     # '4C',
     # '4D',
-    # '3C',
+    '3C',
     # '3D',
     # '3D1',
     # '3C2k',
@@ -121,7 +122,7 @@ all_tests = [
 min_exp = 3
 max_exp = 20
 
-n_repeat = 100
+n_repeat = 10000
 
 MonotonicAxes = ["nint_fac"]
 
@@ -145,21 +146,21 @@ all_timings = pyquickbench.run_benchmark(
     ShowProgress = True     ,
     n_repeat = n_repeat     ,
     MonotonicAxes = MonotonicAxes,
-    ForceBenchmark = True,
+    # ForceBenchmark = True,
 )
 
 plot_intent = {
     "test_name" : 'subplot_grid_y'                  ,
     "nint_fac" : 'points'                           ,
     pyquickbench.fun_ax_name :  'curve_color'       ,
-    # pyquickbench.repeat_ax_name :  'reduction_avg'  ,
-    pyquickbench.repeat_ax_name :  'reduction_logavg'  ,
+    pyquickbench.repeat_ax_name :  'reduction_avg'  ,
+    # pyquickbench.repeat_ax_name :  'reduction_min'  ,
     # pyquickbench.repeat_ax_name :  'same'  ,
 }
 
 relative_to_val_list = [
     None    ,
-    {pyquickbench.fun_ax_name : 'params_to_kin_nrg'},
+    {pyquickbench.fun_ax_name : 'params_to_pot_nrg_grad'},
 ]
 
 for relative_to_val in relative_to_val_list:
