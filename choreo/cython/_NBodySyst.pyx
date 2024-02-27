@@ -325,7 +325,7 @@ cdef class NBodySyst():
         double[::1] bodymass        ,
         double[::1] bodycharge      ,
         list Sym_list               ,
-        object inter_pot_fun = None , 
+        object inter_law = None     , 
         bint CrashOnIdentity = True ,
     ):
 
@@ -333,17 +333,20 @@ cdef class NBodySyst():
         cdef double eps = 1e-12
 
         cdef ccallback_t callback_inter_fun
-        if inter_pot_fun is None:
+        if inter_law is None:
             self.inter_law = gravity_pot
         else:
-            ccallback_prepare(&callback_inter_fun, signatures, inter_pot_fun, CCALLBACK_DEFAULTS)
+            ccallback_prepare(&callback_inter_fun, signatures, inter_law, CCALLBACK_DEFAULTS)
 
             if (callback_inter_fun.py_function != NULL):
-                raise ValueError("Provided inter_pot_fun is a Python function which is disallowed for performance reasons. Please provide a C function.")
+                raise ValueError("Provided inter_law is a Python function which is disallowed for performance reasons. Please provide a C function.")
             elif (callback_inter_fun.signature.value != 0):
-                raise ValueError(f"Provided inter_pot_fun is a C function with incorrect signature. Signature should be {signatures[0].signature}")
+                raise ValueError(f"Provided inter_law is a C function with incorrect signature. Signature should be {signatures[0].signature}")
             else:
                 self.inter_law = <inter_law_fun_type> callback_inter_fun.c_function
+
+        if not(self.Validate_inter_law()):
+            raise ValueError(f'Finite differences could not validate the provided potential law.')
 
         if (bodymass.shape[0] != nbody):
             raise ValueError(f'Incompatible number of bodies {nbody} vs number of masses {bodymass.shape[0]}')
@@ -557,7 +560,6 @@ cdef class NBodySyst():
                     break
 
             assert loopgen[il] >= 0    
-
 
     def ChooseInterSegm(self):
 
@@ -784,6 +786,32 @@ cdef class NBodySyst():
                     err = np.linalg.norm(all_pos[il,jint,:] - np.matmul(Sym.SpaceRot, all_pos[il,iint,:]))
 
                     assert (err < eps)
+
+    @cython.final
+    @cython.cdivision(True)
+    def Validate_inter_law(self, double xsqo=1., double dxsq=1e-4,  double eps=1e-7, bint verbose=False):
+
+        cdef double xsqp = xsqo + dxsq
+        cdef double xsqm = xsqo - dxsq
+
+        cdef pot_t poto = self.inter_law(xsqo)
+        cdef pot_t potp = self.inter_law(xsqp)
+        cdef pot_t potm = self.inter_law(xsqm)
+
+        cdef double fd1 = (potp.pot - potm.pot) / (2*dxsq)
+        cdef double fd2 = ((potp.pot - poto.pot) + (potm.pot - poto.pot)) / (dxsq*dxsq)
+        
+        cdef double err_fd1 = cfabs(fd1 - poto.potp )
+        cdef double err_fd2 = cfabs(fd2 - poto.potpp)
+
+        if verbose:
+            print(err_fd1)
+            print(err_fd2)
+
+        cdef bint FD1_OK = (err_fd1 < eps)
+        cdef bint FD2_OK = (err_fd2 < eps)
+
+        return (FD1_OK and FD2_OK)
 
     @cython.final
     def params_changevar(self, double[::1] params_buf_in, bint inv=False, bint transpose=False):

@@ -124,64 +124,19 @@ def doit(config_name):
     inter_pow = all_kwargs["inter_pow"]
     inter_pm = all_kwargs["inter_pm"]
     
+    
+    # inter_law = choreo.numba_funs_new.power_law_pot(-0.5)
+    
     if (inter_pow == -1.) and (inter_pm == 1) :
-        inter_pot_fun = scipy.LowLevelCallable.from_cython(choreo.cython._NBodySyst, "gravity_pot")
-        # inter_pot_fun = scipy.LowLevelCallable.from_cython(choreo.cython._NBodySyst, "elastic_pot")
+        inter_law = scipy.LowLevelCallable.from_cython(choreo.cython._NBodySyst, "gravity_pot")
+        # inter_law = scipy.LowLevelCallable.from_cython(choreo.cython._NBodySyst, "elastic_pot")
     else:
         raise NotImplementedError
     
-    NBS = choreo.cython._NBodySyst.NBodySyst(geodim, nbody, mass, charge, Sym_list, inter_pot_fun)
+    NBS = choreo.cython._NBodySyst.NBodySyst(geodim, nbody, mass, charge, Sym_list, inter_law)
 
-    NBS.nint_fac = 10000
-    params_buf = np.random.random((NBS.nparams))
-    dx = np.random.random((NBS.nparams))
+    print(NBS.Validate_inter_law())
 
-    def grad(x,dx):
-        return np.dot(NBS.params_to_pot_nrg_grad(x), dx)
-    
-    err = choreo.scipy_plus.test.compare_FD_and_exact_grad(
-        NBS.params_to_pot_nrg_grad  ,
-        NBS.params_to_pot_nrg_hess  ,
-        params_buf                  ,
-        dx=dx                       ,
-        epslist=None                ,
-        order=2                     ,
-        vectorize=False             ,
-    )
-    
-    print(err.min())
-    
-        
-#     def grad(x,dx):
-#         return np.dot(NBS.params_to_pot_nrg_grad_new(x), dx)
-# 
-#     err_new = choreo.scipy_plus.test.compare_FD_and_exact_grad(
-#         NBS.params_to_pot_nrg   ,
-#         grad                    ,
-#         params_buf              ,
-#         dx=dx                   ,
-#         epslist=None            ,
-#         order=2                 ,
-#         vectorize=False         ,
-#     )
-
-    err_new = choreo.scipy_plus.test.compare_FD_and_exact_grad(
-        NBS.params_to_pot_nrg_grad_new  ,
-        NBS.params_to_pot_nrg_hess  ,
-        params_buf                  ,
-        dx=dx                       ,
-        epslist=None                ,
-        order=2                     ,
-        vectorize=False             ,
-    )
-
-
-    print(err_new.min())
-    
-    
-    print(f"New is better : {err_new.min() < err.min()}")
-
-    print(err_new/err)
 
     return
     
