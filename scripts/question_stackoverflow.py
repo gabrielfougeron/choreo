@@ -1,17 +1,58 @@
-import numpy as np
-import math as m
+import cffi
+import numba
+from numba.core.typing import cffi_utils
+import scipy
 
-shape_0 =(2,3) 
-shape_1 = (2,2,2)
+numba_kwargs = {
+    'nopython':True     ,
+    'cache':True        ,
+    'fastmath':True     ,
+    'nogil':True        ,
+}
 
-shifts = np.zeros((3),dtype=np.intp)
-shifts[1] = m.prod(shape_0)
-shifts[2] = shifts[1] + m.prod(shape_1)
 
-buf = np.random.random((shifts[2]))
-arr_0 = buf[shifts[0]:shifts[1]].reshape(shape_0)
-arr_1 = buf[shifts[1]:shifts[2]].reshape(shape_1)
+src = """
+typedef  double (*fun_t)(double) ;
+"""
 
-print(buf)
-print(arr_0)
-print(arr_1)
+ffi = cffi.FFI()
+ffi.cdef(src)
+
+sig = cffi_utils.map_type(ffi.typeof('fun_t'), use_record_dtype=True)
+
+def param_fun(n):
+
+    @numba.cfunc(sig)
+    @numba.jit(signature=sig, **numba_kwargs)
+    def fun(x):
+        return n*x
+
+    return scipy.LowLevelCallable(fun.ctypes)
+
+toto = param_fun(0.5)
+
+
+
+src = """
+typedef struct {
+  double a;
+} a_t;
+
+typedef a_t (*fun_t)(double) ;
+"""
+
+ffi = cffi.FFI()
+ffi.cdef(src)
+
+sig = cffi_utils.map_type(ffi.typeof('fun_t'), use_record_dtype=True)
+
+def param_fun(n):
+
+    @numba.cfunc(sig)
+    @numba.jit(signature=sig, **numba_kwargs)
+    def param_fun(x):
+        return n*x
+
+    return scipy.LowLevelCallable(param_fun.ctypes)
+
+toto = param_fun(0.5)

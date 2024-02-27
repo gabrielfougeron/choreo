@@ -253,11 +253,11 @@ def load_from_config_file(config_name):
     inter_pm = all_kwargs["inter_pm"]
     
     if (inter_pow == -1.) and (inter_pm == 1) :
-        inter_pot_fun = scipy.LowLevelCallable.from_cython(choreo.cython._NBodySyst, "gravity_pot")
+        inter_law = scipy.LowLevelCallable.from_cython(choreo.cython._NBodySyst, "gravity_pot")
     else:
         raise NotImplementedError
 
-    return choreo.cython._NBodySyst.NBodySyst(geodim, nbody, mass, charge, Sym_list, inter_pot_fun)
+    return choreo.cython._NBodySyst.NBodySyst(geodim, nbody, mass, charge, Sym_list, inter_law)
 
 @pytest.fixture
 def AllNBS(AllConfigNames):

@@ -57,8 +57,8 @@ def setup(test_name, nint_fac):
     charge = all_kwargs["charge"]
     Sym_list = all_kwargs["Sym_list"]
     
-    inter_pot_fun = scipy.LowLevelCallable.from_cython(choreo.cython._NBodySyst, "gravity_pot")
-    NBS = choreo.cython._NBodySyst.NBodySyst(geodim, nbody, mass, charge, Sym_list, inter_pot_fun)
+    inter_law = scipy.LowLevelCallable.from_cython(choreo.cython._NBodySyst, "gravity_pot")
+    NBS = choreo.cython._NBodySyst.NBodySyst(geodim, nbody, mass, charge, Sym_list, inter_law)
     NBS.nint_fac = nint_fac
         
     params_buf = np.random.random((NBS.nparams))
