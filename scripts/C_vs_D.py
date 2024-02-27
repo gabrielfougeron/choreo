@@ -133,10 +133,10 @@ def doit():
         charge = all_kwargs["charge"]
         Sym_list = all_kwargs["Sym_list"]
         
-        inter_pot_fun = scipy.LowLevelCallable.from_cython(choreo.cython._NBodySyst, "gravity_pot")
-        # inter_pot_fun = scipy.LowLevelCallable.from_cython(choreo.cython._NBodySyst, "elastic_pot")
+        inter_law = scipy.LowLevelCallable.from_cython(choreo.cython._NBodySyst, "gravity_pot")
+        # inter_law = scipy.LowLevelCallable.from_cython(choreo.cython._NBodySyst, "elastic_pot")
 
-        NBS_list.append(choreo.cython._NBodySyst.NBodySyst(geodim, nbody, mass, charge, Sym_list, inter_pot_fun))
+        NBS_list.append(choreo.cython._NBodySyst.NBodySyst(geodim, nbody, mass, charge, Sym_list, inter_law))
         
     NBSC = NBS_list[0]
     NBSD = NBS_list[1]
