@@ -17,9 +17,6 @@ def pow_inter_law(n):
 
     nm2 = n-2
     mnnm1 = -n*(n-1)
-
-    @numba.cfunc(numba.types.void(numba.types.float64, numba.types.CPointer(numba.types.float64)))
-    @numba.jit(**numba_kwargs)
     def pot_fun(xsq, res):
         
         a = xsq ** nm2
@@ -28,6 +25,14 @@ def pow_inter_law(n):
         res[0] = -xsq*b
         res[1] = -n*b
         res[2] = mnnm1*a
-        
-    return scipy.LowLevelCallable(pot_fun.ctypes)
 
+    return jit_inter_law(pot_fun)
+
+def jit_inter_law(py_inter_law):
+    
+    sig = numba.types.void(numba.types.float64, numba.types.CPointer(numba.types.float64))
+    jit_fun = numba.jit(sig, **numba_kwargs)(py_inter_law)
+    cfunc_fun = numba.cfunc(sig)(jit_fun)
+    
+    return scipy.LowLevelCallable(cfunc_fun.ctypes)
+    
