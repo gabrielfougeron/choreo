@@ -125,7 +125,7 @@ def doit(config_name):
     inter_pm = all_kwargs["inter_pm"]
     
     
-    inter_law = choreo.numba_funs_new.pow_inter_law(-0.8)
+    inter_law = choreo.numba_funs_new.pow_inter_law(-0.3)
     
     # if (inter_pow == -1.) and (inter_pm == 1) :
     #     inter_law = scipy.LowLevelCallable.from_cython(choreo.cython._NBodySyst, "gravity_pot")
@@ -139,8 +139,7 @@ def doit(config_name):
     
     NBS = choreo.cython._NBodySyst.NBodySyst(geodim, nbody, mass, charge, Sym_list, inter_law)
 
-    print(NBS.Validate_inter_law())
-
+    print(NBS.Detect_homo_inter_law())
 
     return
     

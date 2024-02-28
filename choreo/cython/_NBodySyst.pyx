@@ -800,6 +800,35 @@ cdef class NBodySyst():
         return (FD1_OK and FD2_OK)
 
     @cython.final
+    @cython.cdivision(True)
+    def Detect_homo_inter_law(self, double xsqo=1., double fac=1.1, long n=10, double eps=1e-10):
+
+        cdef double[3] pot
+        cdef double xsq = xsqo
+
+        cdef Py_ssize_t i
+        cdef double[::1] alpha_approx = np.empty((n), dtype=np.float64)
+        cdef alpha_avg = 0
+
+        for i in range(n):
+
+            self._inter_law(xsq, pot)
+
+            alpha_approx[i] = xsq * pot[1] / pot[0]
+            alpha_avg += alpha_approx[i]
+
+            xsq *= fac    
+
+        alpha_avg /= n
+
+        cdef bint IsHomo = True
+
+        for i in range(n):
+            IsHomo = IsHomo and cfabs(alpha_approx[i] - alpha_avg) < eps
+
+        return IsHomo, alpha_avg
+
+    @cython.final
     def params_changevar(self, double[::1] params_buf_in, bint inv=False, bint transpose=False):
 
         cdef double[::1] params_buf_out
