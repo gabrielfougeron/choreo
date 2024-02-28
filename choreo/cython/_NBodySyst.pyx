@@ -43,47 +43,33 @@ import math
 import scipy
 import networkx
 
-cdef extern from "pot_type.h":
-    ctypedef struct pot_t:
-        double pot
-        double potp
-        double potpp
-
 cdef ccallback_signature_t signatures[2]
 
-ctypedef pot_t (*inter_law_fun_type)(double) noexcept nogil 
-signatures[0].signature = b"pot_t (double)"
+ctypedef void (*inter_law_fun_type)(double, double*) noexcept nogil 
+signatures[0].signature = b"void (double, double *)"
 signatures[0].value = 0
 signatures[1].signature = NULL
 
 @cython.profile(False)
 @cython.linetrace(False)
-cdef pot_t gravity_pot(double xsq) noexcept nogil:
+cdef void gravity_pot(double xsq, double* res) noexcept nogil:
     
     cdef double a = cpow(xsq,-2.5)
     cdef double b = xsq*a
 
-    cdef pot_t res
-    
-    res.pot = -xsq*b
-    res.potp = 0.5*b
-    res.potpp = (-0.75)*a
-    
-    return res
+    res[0] = -xsq*b
+    res[1]= 0.5*b
+    res[2] = (-0.75)*a
 
 @cython.profile(False)
 @cython.linetrace(False)
-cdef pot_t elastic_pot(double xsq) noexcept nogil:
+cdef void elastic_pot(double xsq, double* res) noexcept nogil:
     
-    cdef pot_t res
-    
-    res.pot = xsq
-    res.potp = 1.
-    res.potpp = 0.
-    
-    return res
+    res[0] = xsq
+    res[1] = 1.
+    res[2] = 0.
 
-cdef pot_t power_law_pot(double xsq, double cn) noexcept nogil:
+cdef void power_law_pot(double xsq, double cn, double* res) noexcept nogil:
     # cn is the exponent of x^2 in the potential power law
     
     cdef double cnm2 = cn-2
@@ -92,13 +78,9 @@ cdef pot_t power_law_pot(double xsq, double cn) noexcept nogil:
     cdef double a = cpow(xsq,cnm2)
     cdef double b = xsq*a
 
-    cdef pot_t res
-    
-    res.pot = -xsq*b
-    res.potp = -cn*b
-    res.potpp = cmnnm1*a
-
-    return res
+    res[0] = -xsq*b
+    res[1] = -cn*b
+    res[2] = cmnnm1*a
 
 cdef double[::1] default_Hash_exp = np.array([-0.1, -0.2, -0.3, -0.4, -0.5, -0.6, -0.7, -0.8, -0.9])
 
@@ -279,7 +261,7 @@ cdef class NBodySyst():
     def Hash_exp(self):
         return np.asarray(self._Hash_exp)
 
-    cdef inter_law_fun_type inter_law
+    cdef inter_law_fun_type _inter_law
     
     # Things that change with nint
     cdef long _nint
@@ -334,7 +316,7 @@ cdef class NBodySyst():
 
         cdef ccallback_t callback_inter_fun
         if inter_law is None:
-            self.inter_law = gravity_pot
+            self._inter_law = gravity_pot
         else:
             ccallback_prepare(&callback_inter_fun, signatures, inter_law, CCALLBACK_DEFAULTS)
 
@@ -343,7 +325,7 @@ cdef class NBodySyst():
             elif (callback_inter_fun.signature.value != 0):
                 raise ValueError(f"Provided inter_law is a C function with incorrect signature. Signature should be {signatures[0].signature}")
             else:
-                self.inter_law = <inter_law_fun_type> callback_inter_fun.c_function
+                self._inter_law = <inter_law_fun_type> callback_inter_fun.c_function
 
         if not(self.Validate_inter_law()):
             raise ValueError(f'Finite differences could not validate the provided potential law.')
@@ -794,15 +776,19 @@ cdef class NBodySyst():
         cdef double xsqp = xsqo + dxsq
         cdef double xsqm = xsqo - dxsq
 
-        cdef pot_t poto = self.inter_law(xsqo)
-        cdef pot_t potp = self.inter_law(xsqp)
-        cdef pot_t potm = self.inter_law(xsqm)
+        cdef double[3] poto
+        cdef double[3] potp
+        cdef double[3] potm
 
-        cdef double fd1 = (potp.pot - potm.pot) / (2*dxsq)
-        cdef double fd2 = ((potp.pot - poto.pot) + (potm.pot - poto.pot)) / (dxsq*dxsq)
+        self._inter_law(xsqo, poto)
+        self._inter_law(xsqp, potp)
+        self._inter_law(xsqm, potm)
+
+        cdef double fd1 = (potp[0] - potm[0]) / (2*dxsq)
+        cdef double fd2 = ((potp[0] - poto[0]) + (potm[0] - poto[0])) / (dxsq*dxsq)
         
-        cdef double err_fd1 = cfabs(fd1 - poto.potp )
-        cdef double err_fd2 = cfabs(fd2 - poto.potpp)
+        cdef double err_fd1 = cfabs(fd1 - poto[1])
+        cdef double err_fd2 = cfabs(fd2 - poto[2])
 
         if verbose:
             print(err_fd1)
@@ -1073,7 +1059,7 @@ cdef class NBodySyst():
                 self._BinTimeRev        , self._BinSpaceRot     , self._BinSpaceRotIsId ,
                 self._BinProdChargeSum  ,
                 self.segm_size          , self.segm_store       ,
-                self.inter_law          ,
+                self._inter_law         ,
             )
         
         return pot_nrg
@@ -1111,7 +1097,7 @@ cdef class NBodySyst():
                 self._BinTimeRev        , self._BinSpaceRot     , self._BinSpaceRotIsId ,
                 self._BinProdChargeSum  ,
                 self.segm_size          , self.segm_store       ,
-                self.inter_law          ,
+                self._inter_law         ,
             )
 
             segmpos_to_params_T(
@@ -1181,7 +1167,7 @@ cdef class NBodySyst():
                 self._BinTimeRev        , self._BinSpaceRot     , self._BinSpaceRotIsId ,
                 self._BinProdChargeSum  ,
                 self.segm_size          , self.segm_store       ,
-                self.inter_law          ,
+                self._inter_law         ,
             )
 
             segmpos_to_params_T(
@@ -2975,7 +2961,7 @@ cdef double segm_pos_to_pot_nrg(
     cdef double* tmp_loc_pos
     cdef bint NeedsAllocate = False
 
-    cdef pot_t pot
+    cdef double[3] pot
 
     for ibin in range(nbin):
         NeedsAllocate = (NeedsAllocate or (not(BinSpaceRotIsId[ibin])))
@@ -3025,9 +3011,9 @@ cdef double segm_pos_to_pot_nrg(
                     a = pos[idim] - posp[idim]
                     dx2 += a*a
 
-                pot = inter_law(dx2)
+                inter_law(dx2, pot)
 
-                pot_nrg_bin += pot.pot
+                pot_nrg_bin += pot[0]
 
                 pos += incr
                 posp += incrp
@@ -3041,9 +3027,9 @@ cdef double segm_pos_to_pot_nrg(
                 a = pos[idim] - posp[idim]
                 dx2 += a*a
 
-            pot = inter_law(dx2)
+            inter_law(dx2, pot)
 
-            pot_nrg_bin += 0.5*pot.pot
+            pot_nrg_bin += 0.5*pot[0]
 
             pos += incr
             posp += incrp
@@ -3056,9 +3042,9 @@ cdef double segm_pos_to_pot_nrg(
                     a = pos[idim] - posp[idim]
                     dx2 += a*a
 
-                pot = inter_law(dx2)
+                inter_law(dx2, pot)
 
-                pot_nrg_bin += pot.pot
+                pot_nrg_bin += pot[0]
 
                 pos += incr
                 posp += incrp
@@ -3070,9 +3056,9 @@ cdef double segm_pos_to_pot_nrg(
                 a = pos[idim] - posp[idim]
                 dx2 += a*a
 
-            pot = inter_law(dx2)
+            inter_law(dx2, pot)
 
-            pot_nrg_bin += 0.5*pot.pot
+            pot_nrg_bin += 0.5*pot[0]
 
         pot_nrg += pot_nrg_bin * bin_fac
 
@@ -3112,7 +3098,7 @@ cdef void segm_pos_to_pot_nrg_grad(
     cdef double* tmp_loc_gradp
     cdef bint NeedsAllocate = False
 
-    cdef pot_t pot
+    cdef double[3] pot
 
     for ibin in range(nbin):
         NeedsAllocate = (NeedsAllocate or (not(BinSpaceRotIsId[ibin])))
@@ -3173,9 +3159,9 @@ cdef void segm_pos_to_pot_nrg_grad(
                     dx[idim] = pos[idim] - posp[idim]
                     dx2 += dx[idim]*dx[idim]
 
-                pot = inter_law(dx2)
+                inter_law(dx2, pot)
 
-                a = pot.potp
+                a = pot[1]
 
                 for idim in range(geodim):
                     b = a*dx[idim]
@@ -3197,9 +3183,9 @@ cdef void segm_pos_to_pot_nrg_grad(
                 dx[idim] = pos[idim] - posp[idim]
                 dx2 += dx[idim]*dx[idim]
 
-            pot = inter_law(dx2)
+            inter_law(dx2, pot)
 
-            a = 0.5*pot.potp
+            a = 0.5*pot[1]
 
             for idim in range(geodim):
                 b = a*dx[idim]
@@ -3220,9 +3206,9 @@ cdef void segm_pos_to_pot_nrg_grad(
                     dx[idim] = pos[idim] - posp[idim]
                     dx2 += dx[idim]*dx[idim]
 
-                pot = inter_law(dx2)
+                inter_law(dx2, pot)
 
-                a = pot.potp
+                a = pot[1]
 
                 for idim in range(geodim):
                     b = a*dx[idim]
@@ -3242,9 +3228,9 @@ cdef void segm_pos_to_pot_nrg_grad(
                 dx[idim] = pos[idim] - posp[idim]
                 dx2 += dx[idim]*dx[idim]
 
-            pot = inter_law(dx2)
+            inter_law(dx2, pot)
 
-            a = 0.5*pot.potp
+            a = 0.5*pot[1]
 
             for idim in range(geodim):
                 b = a*dx[idim]
@@ -3290,7 +3276,7 @@ cdef void segm_pos_to_pot_nrg_hess(
 
     cdef bint size_is_store = (segm_size == segm_store) # because nnpr was not given
 
-    cdef pot_t pot
+    cdef double[3] pot
 
     cdef double dx2, dxtddx, a, b, ddf
     cdef double bin_fac
@@ -3381,10 +3367,10 @@ cdef void segm_pos_to_pot_nrg_hess(
                     ddx[idim] = dpos[idim] - dposp[idim]
                     dxtddx += dx[idim]*ddx[idim]
 
-                pot = inter_law(dx2)
+                inter_law(dx2, pot)
 
-                a = pot.potp
-                b = 2*pot.potpp*dxtddx
+                a = pot[1]
+                b = 2*pot[2]*dxtddx
 
                 for idim in range(geodim):
                     ddf = b*dx[idim]+a*ddx[idim]
@@ -3413,10 +3399,10 @@ cdef void segm_pos_to_pot_nrg_hess(
                 ddx[idim] = dpos[idim] - dposp[idim]
                 dxtddx += dx[idim]*ddx[idim]
 
-            pot = inter_law(dx2)
+            inter_law(dx2, pot)
 
-            a = 0.5*pot.potp
-            b = pot.potpp*dxtddx
+            a = 0.5*pot[1]
+            b = pot[2]*dxtddx
 
             for idim in range(geodim):
                 ddf = b*dx[idim]+a*ddx[idim]
@@ -3444,10 +3430,10 @@ cdef void segm_pos_to_pot_nrg_hess(
                     ddx[idim] = dpos[idim] - dposp[idim]
                     dxtddx += dx[idim]*ddx[idim]
 
-                pot = inter_law(dx2)
+                inter_law(dx2, pot)
 
-                a = pot.potp
-                b = 2*pot.potpp*dxtddx
+                a = pot[1]
+                b = 2*pot[2]*dxtddx
 
                 for idim in range(geodim):
                     ddf = b*dx[idim]+a*ddx[idim]
@@ -3474,10 +3460,10 @@ cdef void segm_pos_to_pot_nrg_hess(
                 ddx[idim] = dpos[idim] - dposp[idim]
                 dxtddx += dx[idim]*ddx[idim]
 
-            pot = inter_law(dx2)
+            inter_law(dx2, pot)
 
-            a = 0.5*pot.potp
-            b = pot.potpp*dxtddx
+            a = 0.5*pot[1]
+            b = pot[2]*dxtddx
 
             for idim in range(geodim):
                 ddf = b*dx[idim]+a*ddx[idim]
