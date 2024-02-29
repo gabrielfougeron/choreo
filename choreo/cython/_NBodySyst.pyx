@@ -5,8 +5,10 @@ cimport cython
 
 from libc.math cimport pow as cpow
 from libc.math cimport fabs as cfabs
+from libc.math cimport log as clog
 from libc.math cimport sqrt as csqrt
-from libc.complex cimport cexp
+from libc.math cimport exp as cexp
+from libc.complex cimport cexp as ccexp
 
 cimport scipy.linalg.cython_blas
 from libc.stdlib cimport malloc, free
@@ -263,6 +265,9 @@ cdef class NBodySyst():
 
     cdef inter_law_fun_type _inter_law
     
+    cdef readonly bint LawIsHomo
+    cdef readonly double Homo_exp
+
     # Things that change with nint
     cdef long _nint
     @property
@@ -329,6 +334,8 @@ cdef class NBodySyst():
 
         if not(self.Validate_inter_law()):
             raise ValueError(f'Finite differences could not validate the provided potential law.')
+
+        self.LawIsHomo, self.Homo_exp = self.Detect_homo_inter_law()
 
         if (bodymass.shape[0] != nbody):
             raise ValueError(f'Incompatible number of bodies {nbody} vs number of masses {bodymass.shape[0]}')
@@ -828,6 +835,49 @@ cdef class NBodySyst():
 
         return IsHomo, alpha_avg
 
+# 
+#     @cython.final
+#     def Write_Descriptor(
+#         self, mom_params_buf, filename,
+#         Action=None, Gradaction=None, Newt_err_norm=None, dxmin=None, Hash_Action=None, max_path_length=None, extend=0.03,
+#     ):
+# 
+#         if Action is None:
+#             Action = self.
+
+
+
+
+    @cython.final
+    @cython.cdivision(True)
+    def Make_params_bounds(self, double coeff_ampl_o=1e-1, long k_infl=1, long k_max=200, double coeff_ampl_min=1e-16):
+
+        cdef double[::1] pos_buf_min = np.zeros((self.nparams_incl_o), dtype=np.float64)
+        cdef double[::1] pos_buf_max = np.zeros((self.nparams_incl_o), dtype=np.float64)
+
+        Make_Init_bounds_coeffs(
+            &pos_buf_min[0]         , self._params_shapes   , self._params_shifts   ,
+            self._nnz_k_buf         , self._nnz_k_shapes    , self._nnz_k_shifts    ,
+            self._co_in_buf         , self._co_in_shapes    , self._co_in_shifts    ,
+            self._ncoeff_min_loop   ,
+            -coeff_ampl_o           , coeff_ampl_min        ,
+            k_infl                  , k_max                 ,
+        )
+
+        Make_Init_bounds_coeffs(
+            &pos_buf_max[0]         , self._params_shapes   , self._params_shifts   ,
+            self._nnz_k_buf         , self._nnz_k_shapes    , self._nnz_k_shifts    ,
+            self._co_in_buf         , self._co_in_shapes    , self._co_in_shifts    ,
+            self._ncoeff_min_loop   ,
+            coeff_ampl_o            , coeff_ampl_min        ,
+            k_infl                  , k_max                 ,
+        )
+
+        mom_buf_min = self.params_changevar(pos_buf_min, inv=True, transpose=False)
+        mom_buf_max = self.params_changevar(pos_buf_max, inv=True, transpose=False)
+
+        return mom_buf_min, mom_buf_max
+
     @cython.final
     def params_changevar(self, double[::1] params_buf_in, bint inv=False, bint transpose=False):
 
@@ -1007,15 +1057,16 @@ cdef class NBodySyst():
             &params_mom_buf[0]  , self._params_shapes   , self._params_shifts   ,
             self._ncor_loop     , self._nco_in_loop     ,
         )
-        
+
     @cython.final
     def params_to_kin_nrg_grad(self, double[::1] params_mom_buf):
 
-        cdef double[::1] grad_buf = np.empty((self.nparams), dtype=np.float64)
+        cdef double[::1] grad_buf = np.zeros((self.nparams), dtype=np.float64)
 
-        params_to_kin_nrg_grad(
+        params_to_kin_nrg_grad_daxpy(
             &params_mom_buf[0]  , self._params_shapes   , self._params_shifts   ,
             self._ncor_loop     , self._nco_in_loop     ,
+            1.                  ,
             &grad_buf[0]        ,
         )
 
@@ -1098,7 +1149,6 @@ cdef class NBodySyst():
 
         assert params_mom_buf.shape[0] == self.nparams
 
-        cdef double pot_nrg
         cdef double[:,:,::1] segmpos = np.empty((self.nsegm, self.segm_store, self.geodim), dtype=np.float64)
         cdef double[:,:,::1] pot_nrg_grad = np.zeros((self.nsegm, self.segm_store, self.geodim), dtype=np.float64)
         cdef double[::1] params_grad = np.empty((self.nparams), dtype=np.float64)
@@ -1125,7 +1175,7 @@ cdef class NBodySyst():
                 self._BinSourceSegm     , self._BinTargetSegm   ,
                 self._BinTimeRev        , self._BinSpaceRot     , self._BinSpaceRotIsId ,
                 self._BinProdChargeSum  ,
-                self.segm_size          , self.segm_store       ,
+                self.segm_size          , self.segm_store       , 1.                    ,
                 self._inter_law         ,
             )
 
@@ -1152,7 +1202,6 @@ cdef class NBodySyst():
         assert params_mom_buf.shape[0] == self.nparams
         assert dparams_mom_buf.shape[0] == self.nparams
 
-        cdef double pot_nrg
         cdef double[:,:,::1] segmpos = np.empty((self.nsegm, self.segm_store, self.geodim), dtype=np.float64)
         cdef double[:,:,::1] dsegmpos = np.empty((self.nsegm, self.segm_store, self.geodim), dtype=np.float64)
         cdef double[:,:,::1] pot_nrg_hess = np.zeros((self.nsegm, self.segm_store, self.geodim), dtype=np.float64)
@@ -1191,11 +1240,11 @@ cdef class NBodySyst():
             )
 
             segm_pos_to_pot_nrg_hess(
-                segmpos                 , dsegmpos              , pot_nrg_hess          ,
-                self._BinSourceSegm     , self._BinTargetSegm   ,
-                self._BinTimeRev        , self._BinSpaceRot     , self._BinSpaceRotIsId ,
+                segmpos                 , dsegmpos                  , pot_nrg_hess              ,
+                self._BinSourceSegm     , self._BinTargetSegm       ,
+                self._BinTimeRev        , self._BinSpaceRot         , self._BinSpaceRotIsId     ,
                 self._BinProdChargeSum  ,
-                self.segm_size          , self.segm_store       ,
+                self.segm_size          , self.segm_store           , 1.                        ,
                 self._inter_law         ,
             )
 
@@ -1215,6 +1264,242 @@ cdef class NBodySyst():
             )
 
         return np.asarray(params_hess)
+
+    def params_to_action(self, double[::1] params_mom_buf):
+
+        assert params_mom_buf.shape[0] == self.nparams
+
+        cdef double action
+        cdef double[:,:,::1] segmpos = np.empty((self.nsegm, self.segm_store, self.geodim), dtype=np.float64)
+
+        with nogil:
+
+            action = params_to_kin_nrg(
+                &params_mom_buf[0]      , self._params_shapes       , self._params_shifts       ,
+                self._ncor_loop         , self._nco_in_loop         ,
+            )
+
+            params_to_segmpos(
+                params_mom_buf          , self._params_shapes       , self._params_shifts       ,
+                                          self._ifft_shapes         , self._ifft_shifts         ,
+                self._params_basis_buf  , self._params_basis_shapes , self._params_basis_shifts ,
+                self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
+                self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
+                                          self._pos_slice_shapes    , self._pos_slice_shifts    ,
+                self._ncoeff_min_loop   , self.nnpr                 ,
+                self._loopnb            , self._loopmass            ,
+                self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
+                self._gensegm_to_body   , self._gensegm_to_iint     ,
+                self._bodyloop          , self.segm_size            , self.segm_store           ,
+                segmpos                 ,
+            )
+
+            action -= segm_pos_to_pot_nrg(
+                segmpos                 ,
+                self._BinSourceSegm     , self._BinTargetSegm   ,
+                self._BinTimeRev        , self._BinSpaceRot     , self._BinSpaceRotIsId ,
+                self._BinProdChargeSum  ,
+                self.segm_size          , self.segm_store       ,
+                self._inter_law         ,
+            )
+        
+        return action
+
+    @cython.final
+    def params_to_action_grad(self, double[::1] params_mom_buf):
+
+        assert params_mom_buf.shape[0] == self.nparams
+
+        cdef double pot_nrg
+        cdef double[:,:,::1] segmpos = np.empty((self.nsegm, self.segm_store, self.geodim), dtype=np.float64)
+        cdef double[:,:,::1] pot_nrg_grad = np.zeros((self.nsegm, self.segm_store, self.geodim), dtype=np.float64)
+        cdef double[::1] action_grad = np.empty((self.nparams), dtype=np.float64)
+
+        with nogil:
+
+            params_to_segmpos(
+                params_mom_buf          , self._params_shapes       , self._params_shifts       ,
+                                          self._ifft_shapes         , self._ifft_shifts         ,
+                self._params_basis_buf  , self._params_basis_shapes , self._params_basis_shifts ,
+                self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
+                self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
+                                          self._pos_slice_shapes    , self._pos_slice_shifts    ,
+                self._ncoeff_min_loop   , self.nnpr                 ,
+                self._loopnb            , self._loopmass            ,
+                self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
+                self._gensegm_to_body   , self._gensegm_to_iint     ,
+                self._bodyloop          , self.segm_size            , self.segm_store           ,
+                segmpos                 ,
+            )
+
+            segm_pos_to_pot_nrg_grad(
+                segmpos                 , pot_nrg_grad          ,
+                self._BinSourceSegm     , self._BinTargetSegm   ,
+                self._BinTimeRev        , self._BinSpaceRot     , self._BinSpaceRotIsId ,
+                self._BinProdChargeSum  ,
+                self.segm_size          , self.segm_store       , -1.                   ,
+                self._inter_law         ,
+            )
+
+            segmpos_to_params_T(
+                pot_nrg_grad            , self._params_shapes       , self._params_shifts       ,
+                                          self._ifft_shapes         , self._ifft_shifts         ,
+                self._params_basis_buf  , self._params_basis_shapes , self._params_basis_shifts ,
+                self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
+                self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
+                                          self._pos_slice_shapes    , self._pos_slice_shifts    ,
+                self._ncoeff_min_loop   , self.nnpr                 ,
+                self._loopnb            , self._loopmass            ,
+                self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
+                self._gensegm_to_body   , self._gensegm_to_iint     ,
+                self._bodyloop          , self.segm_size            , self.segm_store           ,
+                action_grad             ,
+            )
+
+            params_to_kin_nrg_grad_daxpy(
+                &params_mom_buf[0]  , self._params_shapes   , self._params_shifts   ,
+                self._ncor_loop     , self._nco_in_loop     ,
+                1.                  ,
+                &action_grad[0]     ,
+            )
+
+        return np.asarray(action_grad)
+
+    @cython.final
+    def params_to_action_hess(self, double[::1] params_mom_buf, double[::1] dparams_mom_buf):
+
+        assert params_mom_buf.shape[0] == self.nparams
+        assert dparams_mom_buf.shape[0] == self.nparams
+
+        cdef double[:,:,::1] segmpos = np.empty((self.nsegm, self.segm_store, self.geodim), dtype=np.float64)
+        cdef double[:,:,::1] dsegmpos = np.empty((self.nsegm, self.segm_store, self.geodim), dtype=np.float64)
+        cdef double[:,:,::1] pot_nrg_hess = np.zeros((self.nsegm, self.segm_store, self.geodim), dtype=np.float64)
+        cdef double[::1] action_hess = np.empty((self.nparams), dtype=np.float64)
+
+        with nogil:
+
+            params_to_segmpos(
+                params_mom_buf          , self._params_shapes       , self._params_shifts       ,
+                                          self._ifft_shapes         , self._ifft_shifts         ,
+                self._params_basis_buf  , self._params_basis_shapes , self._params_basis_shifts ,
+                self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
+                self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
+                                          self._pos_slice_shapes    , self._pos_slice_shifts    ,
+                self._ncoeff_min_loop   , self.nnpr                 ,
+                self._loopnb            , self._loopmass            ,
+                self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
+                self._gensegm_to_body   , self._gensegm_to_iint     ,
+                self._bodyloop          , self.segm_size            , self.segm_store           ,
+                segmpos                 ,
+            )
+
+            params_to_segmpos(
+                dparams_mom_buf         , self._params_shapes       , self._params_shifts       ,
+                                          self._ifft_shapes         , self._ifft_shifts         ,
+                self._params_basis_buf  , self._params_basis_shapes , self._params_basis_shifts ,
+                self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
+                self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
+                                          self._pos_slice_shapes    , self._pos_slice_shifts    ,
+                self._ncoeff_min_loop   , self.nnpr                 ,
+                self._loopnb            , self._loopmass            ,
+                self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
+                self._gensegm_to_body   , self._gensegm_to_iint     ,
+                self._bodyloop          , self.segm_size            , self.segm_store           ,
+                dsegmpos                ,
+            )
+
+            segm_pos_to_pot_nrg_hess(
+                segmpos                 , dsegmpos                  , pot_nrg_hess              ,
+                self._BinSourceSegm     , self._BinTargetSegm       ,
+                self._BinTimeRev        , self._BinSpaceRot         , self._BinSpaceRotIsId     ,
+                self._BinProdChargeSum  ,
+                self.segm_size          , self.segm_store           , -1.                       ,
+                self._inter_law         ,
+            )
+
+            segmpos_to_params_T(
+                pot_nrg_hess            , self._params_shapes       , self._params_shifts       ,
+                                          self._ifft_shapes         , self._ifft_shifts         ,
+                self._params_basis_buf  , self._params_basis_shapes , self._params_basis_shifts ,
+                self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
+                self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
+                                          self._pos_slice_shapes    , self._pos_slice_shifts    ,
+                self._ncoeff_min_loop   , self.nnpr                 ,
+                self._loopnb            , self._loopmass            ,
+                self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
+                self._gensegm_to_body   , self._gensegm_to_iint     ,
+                self._bodyloop          , self.segm_size            , self.segm_store           ,
+                action_hess             ,
+            )
+
+            params_to_kin_nrg_grad_daxpy(
+                &dparams_mom_buf[0] , self._params_shapes   , self._params_shifts   ,
+                self._ncor_loop     , self._nco_in_loop     ,
+                1.                  ,
+                &action_hess[0]     ,
+            )
+
+        return np.asarray(action_hess)
+
+    @cython.final
+    def segmpos_dparams_to_action_hess(self, double[:,:,::1] segmpos, double[::1] dparams_mom_buf):
+
+        assert segmpos.shape[1] == self.segm_store
+        assert dparams_mom_buf.shape[0] == self.nparams
+
+        cdef double[:,:,::1] dsegmpos = np.empty((self.nsegm, self.segm_store, self.geodim), dtype=np.float64)
+        cdef double[:,:,::1] pot_nrg_hess = np.zeros((self.nsegm, self.segm_store, self.geodim), dtype=np.float64)
+        cdef double[::1] action_hess = np.empty((self.nparams), dtype=np.float64)
+
+        with nogil:
+
+            params_to_segmpos(
+                dparams_mom_buf         , self._params_shapes       , self._params_shifts       ,
+                                          self._ifft_shapes         , self._ifft_shifts         ,
+                self._params_basis_buf  , self._params_basis_shapes , self._params_basis_shifts ,
+                self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
+                self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
+                                          self._pos_slice_shapes    , self._pos_slice_shifts    ,
+                self._ncoeff_min_loop   , self.nnpr                 ,
+                self._loopnb            , self._loopmass            ,
+                self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
+                self._gensegm_to_body   , self._gensegm_to_iint     ,
+                self._bodyloop          , self.segm_size            , self.segm_store           ,
+                dsegmpos                ,
+            )
+
+            segm_pos_to_pot_nrg_hess(
+                segmpos                 , dsegmpos                  , pot_nrg_hess              ,
+                self._BinSourceSegm     , self._BinTargetSegm       ,
+                self._BinTimeRev        , self._BinSpaceRot         , self._BinSpaceRotIsId     ,
+                self._BinProdChargeSum  ,
+                self.segm_size          , self.segm_store           , -1.                       ,
+                self._inter_law         ,
+            )
+
+            segmpos_to_params_T(
+                pot_nrg_hess            , self._params_shapes       , self._params_shifts       ,
+                                          self._ifft_shapes         , self._ifft_shifts         ,
+                self._params_basis_buf  , self._params_basis_shapes , self._params_basis_shifts ,
+                self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
+                self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
+                                          self._pos_slice_shapes    , self._pos_slice_shifts    ,
+                self._ncoeff_min_loop   , self.nnpr                 ,
+                self._loopnb            , self._loopmass            ,
+                self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
+                self._gensegm_to_body   , self._gensegm_to_iint     ,
+                self._bodyloop          , self.segm_size            , self.segm_store           ,
+                action_hess             ,
+            )
+
+            params_to_kin_nrg_grad_daxpy(
+                &dparams_mom_buf[0] , self._params_shapes   , self._params_shifts   ,
+                self._ncor_loop     , self._nco_in_loop     ,
+                1.                  ,
+                &action_hess[0]     ,
+            )
+
+        return np.asarray(action_hess)
 
     @cython.final
     def params_to_all_coeffs_noopt(self, double[::1] params_mom_buf, bint transpose=False):
@@ -1500,6 +1785,45 @@ cdef class NBodySyst():
             )
 
         return np.asarray(params_mom_buf)
+ 
+@cython.cdivision(True)
+cdef void Make_Init_bounds_coeffs(
+    double *params_pos_buf      , long[:,::1] params_shapes     , long[::1] params_shifts   ,
+    long[::1] nnz_k_buf         , long[:,::1] nnz_k_shapes      , long[::1] nnz_k_shifts    ,
+    bint[::1] co_in_buf         , long[:,::1] co_in_shapes      , long[::1] co_in_shifts    ,
+    long[::1] ncoeff_min_loop   ,
+    double coeff_ampl_o         , double coeff_ampl_min         ,
+    long k_infl                 , long k_max                    ,
+) noexcept nogil:
+
+    cdef double* cur_param_pos_buf = params_pos_buf
+    cdef double ampl
+    cdef double randlimfac = 0.1
+
+    cdef int nloop = params_shapes.shape[0]
+    cdef Py_ssize_t il, idim, ipr, ik, iparam
+    cdef long k, ko
+
+    cdef double coeff_slope = clog(cfabs(coeff_ampl_o/coeff_ampl_min))/(k_max-k_infl)
+
+    for il in range(nloop):
+
+        for ipr in range(params_shapes[il,0]):
+
+            ko = ipr * ncoeff_min_loop[il]
+
+            for ik in range(nnz_k_shapes[il,0]):
+
+                k = ko + nnz_k_buf[nnz_k_shifts[il]+ik]
+                if (k <= k_infl):
+                    ampl = coeff_ampl_o
+                else:
+                    ampl = coeff_ampl_o * cexp(-coeff_slope*(k-k_infl))
+
+                for iparam in range(params_shapes[il,2]):
+
+                    cur_param_pos_buf[0] = ampl
+                    cur_param_pos_buf += 1
  
 @cython.cdivision(True)
 cdef void changevar_mom(
@@ -1868,7 +2192,6 @@ cdef void params_to_kin_nrg_grad(
 
     cdef double* loc = params_mom_buf
     cdef double* grad_loc = grad_buf
-    cdef double loopmul
 
     cdef int nloop = params_shapes.shape[0]
     cdef Py_ssize_t il
@@ -1886,6 +2209,35 @@ cdef void params_to_kin_nrg_grad(
         n = params_shifts[il+1] - (params_shifts[il] + ncor_loop[il] + nco_in_loop[il])
         
         scipy.linalg.cython_blas.dcopy(&n, loc, &int_one, grad_loc, &int_one)
+
+        loc += n
+        grad_loc += n 
+
+@cython.cdivision(True)
+cdef void params_to_kin_nrg_grad_daxpy(
+    double *params_mom_buf  , long[:,::1] params_shapes , long[::1] params_shifts   ,
+    long[::1] ncor_loop     , long[::1] nco_in_loop     ,
+    double mul              ,
+    double *grad_buf        ,
+) noexcept nogil:
+
+    cdef double* loc = params_mom_buf
+    cdef double* grad_loc = grad_buf
+
+    cdef int nloop = params_shapes.shape[0]
+    cdef Py_ssize_t il
+
+    cdef double kin = 0
+    cdef int beg
+    cdef int n
+
+    for il in range(nloop):
+
+        loc += ncor_loop[il]
+        grad_loc += ncor_loop[il]
+        n = params_shifts[il+1] - (params_shifts[il] + ncor_loop[il] + nco_in_loop[il])
+        
+        scipy.linalg.cython_blas.daxpy(&n, &mul, loc, &int_one, grad_loc, &int_one)
 
         loc += n
         grad_loc += n
@@ -1917,7 +2269,7 @@ cdef void inplace_twiddle(
 
         if nnz_k[ncoeff_min_loop_nnz-1] > 0:
 
-            wo =  cexp(direction * citwopi / nint)
+            wo =  ccexp(direction * citwopi / nint)
             winter = 1.
 
             while (twopow < nnz_k[ncoeff_min_loop_nnz-1]) :
@@ -1942,7 +2294,7 @@ cdef void inplace_twiddle(
                         if nnz_bin[ibit + j*nbit]:
                             w *= w_pow[ibit] 
 
-                    # w = cexp(direction * citwopi * m * nnz_k[j] / nint)
+                    # w = ccexp(direction * citwopi * m * nnz_k[j] / nint)
 
                     for i in range(nppl):
                         ifft[0] *= w
@@ -2065,7 +2417,7 @@ cdef void partial_fft_to_pos_slice_2npr(
     n_inter = npr-1
     ifft += nzcom
     for j in range(ncoeff_min_loop_nnz):
-        w = cexp(citwopi*nnz_k[j]/ncoeff_min_loop)
+        w = ccexp(citwopi*nnz_k[j]/ncoeff_min_loop)
         for i in range(nppl):
             scipy.linalg.cython_blas.zscal(&n_inter,&w,ifft,&nzcom)
             ifft += 1
@@ -2151,7 +2503,7 @@ cdef void pos_slice_to_partial_fft_2npr(
 
     ifft += nzcom
     for j in range(ncoeff_min_loop_nnz):
-        w = cexp(cminusitwopi*nnz_k[j]/ncoeff_min_loop)
+        w = ccexp(cminusitwopi*nnz_k[j]/ncoeff_min_loop)
         for i in range(nppl):
             scipy.linalg.cython_blas.zscal(&n_inter,&w,ifft,&nzcom)
             ifft += 1
@@ -3102,7 +3454,7 @@ cdef void segm_pos_to_pot_nrg_grad(
     long[::1] BinSourceSegm         , long[::1] BinTargetSegm       ,
     long[::1] BinTimeRev            , double[:,:,::1] BinSpaceRot   , bint[::1] BinSpaceRotIsId ,
     double[::1] BinProdChargeSum    ,
-    long segm_size                  , long segm_store               ,
+    long segm_size                  , long segm_store               , double globalmul          ,
     inter_law_fun_type inter_law    ,
 ) noexcept nogil:
 
@@ -3173,7 +3525,7 @@ cdef void segm_pos_to_pot_nrg_grad(
         posp = &segmpos[isegmp,0,0]
         gradp = tmp_loc_gradp
 
-        bin_fac = 2*BinProdChargeSum[ibin]
+        bin_fac = 2*BinProdChargeSum[ibin]*globalmul
         bin_fac /= segm_size
 
         incr = geodim*BinTimeRev[ibin]
@@ -3289,7 +3641,7 @@ cdef void segm_pos_to_pot_nrg_hess(
     long[::1] BinSourceSegm         , long[::1] BinTargetSegm       ,
     long[::1] BinTimeRev            , double[:,:,::1] BinSpaceRot   , bint[::1] BinSpaceRotIsId     ,
     double[::1] BinProdChargeSum    ,
-    long segm_size                  , long segm_store               ,
+    long segm_size                  , long segm_store               , double globalmul              ,
     inter_law_fun_type inter_law    ,
 ) noexcept nogil:
 
@@ -3376,7 +3728,7 @@ cdef void segm_pos_to_pot_nrg_hess(
         dposp = &dsegmpos[isegmp,0,0]
         hessp = tmp_loc_hessp
 
-        bin_fac = 2*BinProdChargeSum[ibin]
+        bin_fac = 2*BinProdChargeSum[ibin]*globalmul
         bin_fac /= segm_size
 
         incr = geodim*BinTimeRev[ibin]
@@ -3513,4 +3865,6 @@ cdef void segm_pos_to_pot_nrg_hess(
     if NeedsAllocate:
         free(tmp_loc_pos)
         free(tmp_loc_dpos)
+
+
 

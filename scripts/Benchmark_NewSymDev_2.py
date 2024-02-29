@@ -14,21 +14,26 @@ import json
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy
-# import mkl_fft
-# scipy.fft.set_global_backend(
-#     backend = mkl_fft._scipy_fft_backend   ,
-#     only = True
-# )
+
+import mkl_fft
+scipy.fft.set_global_backend(
+    backend = mkl_fft._scipy_fft_backend   ,
+    only = True
+)
+
+
 import choreo 
+
 
 if ("--no-show" in sys.argv):
     plt.show = (lambda : None)
 
 def params_to_pot_nrg_grad(NBS, params_buf):
     NBS.params_to_pot_nrg_grad(params_buf)
+    
 
 all_funs = [
-    params_to_pot_nrg_grad       ,
+    params_to_pot_nrg_grad  ,
 ]
 
 def setup(test_name, nint_fac):
@@ -48,7 +53,6 @@ def setup(test_name, nint_fac):
     Sym_list = all_kwargs["Sym_list"]
     
     inter_law_cy = scipy.LowLevelCallable.from_cython(choreo.cython._NBodySyst, "gravity_pot")
-    inter_law_nb = choreo.numba_funs_new.pow_inter_law(0.5, 1)
     
     NBS = choreo.cython._NBodySyst.NBodySyst(geodim, nbody, mass, charge, Sym_list, inter_law_cy)
     NBS.nint_fac = nint_fac
@@ -97,7 +101,7 @@ all_tests = [
     # '6Ck5',
     # '6Dk5',
     # '5Dq',
-    '2C3C5C',
+    # '2C3C5C',
     # '3C_3dim',
     # '2D1_3dim',
     # '3C',
@@ -111,10 +115,10 @@ all_tests = [
     # '3C101k',
 ]
 
-min_exp = 3
-max_exp = 20
+min_exp = 5
+max_exp = 10
 
-n_repeat = 10
+n_repeat = 1000
 
 MonotonicAxes = ["nint_fac"]
 
@@ -126,20 +130,43 @@ all_args = {
 
 timings_folder = os.path.join(__PROJECT_ROOT__,'examples','generated_files_time_consuming')
 
-basename = 'NewSymDev_timing'
+basename = 'NewSymDev_timing_1'
 filename = os.path.join(timings_folder,basename+'.npz')
 
-all_timings = pyquickbench.run_benchmark(
+all_timings_1 = pyquickbench.run_benchmark(
     all_args                ,
     all_funs                ,
     setup = setup           ,
     filename = filename     ,
-    # StopOnExcept = True     ,
     ShowProgress = True     ,
+    time_per_test = 2.     ,
     n_repeat = n_repeat     ,
     MonotonicAxes = MonotonicAxes,
     ForceBenchmark = True,
 )
+
+
+basename = 'NewSymDev_timing_2'
+filename = os.path.join(timings_folder,basename+'.npz')
+
+all_timings_2 = pyquickbench.run_benchmark(
+    all_args                ,
+    all_funs                ,
+    setup = setup           ,
+    filename = filename     ,
+    ShowProgress = True     ,
+    time_per_test = 2.     ,
+    n_repeat = n_repeat     ,
+    MonotonicAxes = MonotonicAxes,
+    ForceBenchmark = True,
+)
+
+# print(all_timings_1.shape)
+
+all_timings = np.concatenate((all_timings_1, all_timings_2), axis=2)
+
+
+# print(all_timings.shape)
 
 plot_intent = {
     "test_name" : 'subplot_grid_y'                  ,
@@ -152,7 +179,7 @@ plot_intent = {
 
 relative_to_val_list = [
     None    ,
-    # {pyquickbench.fun_ax_name : 'params_to_pot_nrg_grad'},
+    {pyquickbench.fun_ax_name : 'fftpack'},
 ]
 
 for relative_to_val in relative_to_val_list:
@@ -160,7 +187,7 @@ for relative_to_val in relative_to_val_list:
     pyquickbench.plot_benchmark(
         all_timings                             ,
         all_args                                ,
-        all_funs                                ,
+        all_fun_names = ["fftpack", "mkl"]                      ,
         plot_intent = plot_intent               ,
         show = True                             ,
         relative_to_val = relative_to_val       ,
