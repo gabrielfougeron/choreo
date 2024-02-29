@@ -4,24 +4,28 @@ try:
 except:
     pass
 
+try:
+    import numba
+except:
+    pass
 
-import random
+# import random
 import numpy as np
-import math as m
+# import math as m
 import scipy
+import json
+import time
+import inspect
 
 
 
-# import choreo.scipy_plus
-# from choreo.funs import *
-# from choreo.helper import *
-
-import choreo
+import choreo.scipy_plus
 from choreo.cython._ActionSym import ActionSym
 from choreo.cython._NBodySyst import NBodySyst
 
 
 def Find_Choreo(
+    *,
     geodim,
     nbody,
     mass,
@@ -45,13 +49,37 @@ def Find_Choreo(
     save_all_inits,
     file_basename,
     AddNumberToOutputName,
+    Save_img,
+    Save_thumb,
+    Save_anim,
+    callback_after_init_list,
+    optim_callback_list,
+    max_norm_on_entry,
+    gradtol_list,
+    inner_maxiter_list,
+    maxiter_list,
+    outer_k_list,
+    store_outer_Av_list,
+    n_optim_param,
+    krylov_method,
+    Use_exact_Jacobian,
+    disp_scipy_opt,
+    line_search,
+    linesearch_smin,
+    Check_Escape,
+    foundsol_tol,
+    gradtol_max,
+    n_reconverge_it_max,
+    plot_extend,
+    mul_coarse_to_fine,
+    duplicate_eps,
 ):
     """
 
     Finds periodic solutions
 
     """
-    
+
     print(f'Searching periodic solutions of {nbody:d} bodies.')
     
     if (inter_pow == -1.) and (inter_pm == 1) :
@@ -60,6 +88,8 @@ def Find_Choreo(
         inter_law = choreo.numba_funs_new.pow_inter_law(inter_pow/2, inter_pm)
 
     NBS = choreo.cython._NBodySyst.NBodySyst(geodim, nbody, mass, charge, Sym_list, inter_law)
+
+    nint_fac_init = 100
 
     NBS.nint_fac = nint_fac_init
 
@@ -104,14 +134,16 @@ def Find_Choreo(
     ForceFirstEntry = save_first_init
 
     while (((n_opt < n_opt_max) and (n_find < n_find_max)) or ForceFirstEntry):
+        
+        NBS.nint_fac = nint_fac_init
 
         ForceFirstEntry = False
         AskedForNext = False
 
         if (Look_for_duplicates and ((n_opt % freq_erase_dict) == 0)):
-            
+
             hash_dict = {}
-            _ = SelectFiles_Action(store_folder, hash_dict)
+            UpdateHashDict(store_folder, hash_dict)
 
         if (ReconvergeSol):
             raise NotImplementedError
@@ -128,7 +160,8 @@ def Find_Choreo(
             
             x_avg = np.zeros((NBS.nparams), dtype=np.float64)
 
-        x0 = x_avg + x_min + x_ptp * np.random.random((NBS.nparams))
+        x = x_avg + x_min + x_ptp * np.random.random((NBS.nparams))
+        segmpos = NBS.params_to_segmpos(x)
         
         if save_all_inits or (save_first_init and n_opt == 0):
 
@@ -159,48 +192,52 @@ def Find_Choreo(
 
             print(f'Saving initial state as {filename_output}.*.')
 
-            ActionSyst.Write_Descriptor(x0,filename_output+'.json')
+
+            NBS.Write_Descriptor(x, segmpos, filename_output+'.json')
 
             if Save_img :
-                ActionSyst.plot_all_2D(x0,nint_plot_img,filename_output+'.png',fig_size=img_size,color=color,color_list=color_list)        
+                pass
+                # ActionSyst.plot_all_2D(x,nint_plot_img,filename_output+'.png',fig_size=img_size,color=color,color_list=color_list)        
 
             if Save_thumb :
-                ActionSyst.plot_all_2D(x0,nint_plot_img,filename_output+'_thumb.png',fig_size=thumb_size,color=color,color_list=color_list)        
+                pass
+                # ActionSyst.plot_all_2D(x,nint_plot_img,filename_output+'_thumb.png',fig_size=thumb_size,color=color,color_list=color_list)        
                 
             if Save_anim :
-                ActionSyst.plot_all_2D_anim(x0,nint_plot_anim,filename_output+'.mp4',nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size,dnint=dnint,color_list=color_list,color=color)
+                pass
+                # ActionSyst.plot_all_2D_anim(x,nint_plot_anim,filename_output+'.mp4',nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size,dnint=dnint,color_list=color_list,color=color)
             
-            if Save_Newton_Error :
-                ActionSyst.plot_Newton_Error(x0,filename_output+'_newton.png')
+#             if Save_Newton_Error :
+#                 ActionSyst.plot_Newton_Error(x,filename_output+'_newton.png')
+# 
+#             if Save_GradientAction_Error :
+#                 ActionSyst.plot_GradientAction_Error(x,filename_output+'_gradaction.png')
+# 
+#             if Save_coeff_profile:
+#                 ActionSyst.plot_coeff_profile(x,filename_output+'_coeff_profile.png')
 
-            if Save_GradientAction_Error :
-                ActionSyst.plot_GradientAction_Error(x0,filename_output+'_gradaction.png')
+#             if Save_All_Coeffs:
+# 
+#                 all_coeffs = ActionSyst.Unpackage_all_coeffs(x)
+#                 np.save(filename_output+'_coeffs.npy',all_coeffs)
 
-            if Save_coeff_profile:
-                ActionSyst.plot_coeff_profile(x0,filename_output+'_coeff_profile.png')
-
-            if Save_All_Coeffs:
-
-                all_coeffs = ActionSyst.Unpackage_all_coeffs(x0)
-                np.save(filename_output+'_coeffs.npy',all_coeffs)
-
-            if Save_All_Pos:
-
-                if n_save_pos is None:
-                    all_pos = ActionSyst.ComputeAllLoopPos(x0)
-                elif n_save_pos == 'auto':
-                    # TODO : implement auto
-                    all_pos = ActionSyst.ComputeAllLoopPos(x0)
-                else:
-                    all_pos = ActionSyst.ComputeAllLoopPos(x0,n_save_pos)
-
-                np.save(filename_output+'.npy',all_pos)
+#             if Save_All_Pos:
+# 
+#                 if n_save_pos is None:
+#                     all_pos = ActionSyst.ComputeAllLoopPos(x)
+#                 elif n_save_pos == 'auto':
+#                     # TODO : implement auto
+#                     all_pos = ActionSyst.ComputeAllLoopPos(x)
+#                 else:
+#                     all_pos = ActionSyst.ComputeAllLoopPos(x,n_save_pos)
+# 
+#                 np.save(filename_output+'.npy',all_pos)
 
         for i in range(n_callback_after_init_list):
             callback_after_init_list[i]()
 
-        f0 = ActionSyst.Compute_action_onlygrad(x0)
-        best_sol = choreo.scipy_plus.nonlin.current_best(x0,f0)
+        f0 = NBS.segmpos_params_to_action_grad(segmpos, x)
+        best_sol = choreo.scipy_plus.nonlin.current_best(x, f0)
 
         GoOn = (best_sol.f_norm < max_norm_on_entry)
         
@@ -221,7 +258,7 @@ def Find_Choreo(
         while GoOn:
             # Set correct optim params
 
-            x0 = np.copy(best_sol.x)
+            x = np.copy(best_sol.x)
             
             inner_tol = 0.
             
@@ -233,18 +270,12 @@ def Find_Choreo(
             store_outer_Av = store_outer_Av_list[i_optim_param]
 
             ActionGradNormEnterLoop = best_sol.f_norm
+            current_cvg_lvl = 0
             
             print(f'Action Grad Norm on entry: {ActionGradNormEnterLoop:.2e}')
-            print(f'Optim level: {i_optim_param+1} / {n_optim_param}    Resize level: {ActionSyst.current_cvg_lvl+1} / {n_reconverge_it_max+1}')
-            
-            F = lambda x : ActionSyst.Compute_action_onlygrad(x)
+            # print(f'Optim level: {i_optim_param+1} / {n_optim_param}    Resize level: {ActionSyst.current_cvg_lvl+1} / {n_reconverge_it_max+1}')
             
             inner_M = None
-
-            # inner_M = ActionSyst.GetAMGPreco(x0,krylov_method=krylov_method,cycle='V')
-            # inner_M = ActionSyst.GetAMGPreco(x0,krylov_method=krylov_method,cycle='W')
-            # inner_M = ActionSyst.GetAMGPreco(x0,krylov_method=krylov_method,cycle='F')
-            # inner_M = ActionSyst.GetAMGPreco(x0,krylov_method=krylov_method,cycle='AMLI')
 
             if (krylov_method == 'lgmres'):
                 jac_options = {'method':krylov_method,'rdiff':rdiff,'outer_k':outer_k,'inner_inner_m':inner_maxiter,'inner_store_outer_Av':store_outer_Av,'inner_tol':inner_tol,'inner_M':inner_M }
@@ -253,7 +284,7 @@ def Find_Choreo(
             else:
                 jac_options = {'method':krylov_method,'rdiff':rdiff,'outer_k':outer_k,'inner_tol':inner_tol,'inner_M':inner_M }
 
-            jacobian = ActionSyst.GetKrylovJacobian(Use_exact_Jacobian, jac_options)
+            jacobian = NBS.GetKrylovJacobian(Use_exact_Jacobian, jac_options)
 
             def optim_callback(x,f,f_norm):
 
@@ -263,13 +294,15 @@ def Find_Choreo(
 
                 for i in range(n_optim_callback_list):
 
-                    AskedForNext = (AskedForNext or optim_callback_list[i](x,f,f_norm,ActionSyst))
+                    AskedForNext = (AskedForNext or optim_callback_list[i](x,f,f_norm,NBS))
 
                 return AskedForNext
 
             try : 
                 
-                opt_result , info = choreo.scipy_plus.nonlin.nonlin_solve_pp(F=F,x0=x0,jacobian=jacobian,verbose=disp_scipy_opt,maxiter=maxiter,f_tol=gradtol,line_search=line_search,callback=optim_callback,raise_exception=False,smin=linesearch_smin,full_output=True,tol_norm=np.linalg.norm)
+                opt_result , info = choreo.scipy_plus.nonlin.nonlin_solve_pp(
+                    F=NBS.params_to_action_grad, x0=x, jacobian=jacobian, 
+                    verbose=disp_scipy_opt, maxiter=maxiter, f_tol=gradtol,  line_search=line_search, callback=optim_callback, raise_exception=False,smin=linesearch_smin, full_output=True, tol_norm=np.linalg.norm)
 
                 AskedForNext = (info['status'] == 0)
 
@@ -287,13 +320,13 @@ def Find_Choreo(
             SaveSol = False
 
             Gradaction = best_sol.f_norm
-
-            Hash_Action = None
-            Action = None
+            segmpos = NBS.params_to_segmpos(best_sol.x)
+            Hash_Action = None # TODO : change that!
             
             if (GoOn and Check_Escape):
                 
-                Escaped,_ = ActionSyst.Detect_Escape(best_sol.x)
+                Escaped = False
+                # Escaped,_ = NBS.Detect_Escape(best_sol.x)
 
                 if Escaped:
                     print('One loop escaped. Starting over.')    
@@ -301,8 +334,8 @@ def Find_Choreo(
                 GoOn = GoOn and not(Escaped)
                 
             if (GoOn and Look_for_duplicates):
-
-                Found_duplicate,file_path = ActionSyst.Check_Duplicates(best_sol.x,hash_dict,store_folder,duplicate_eps)
+                
+                Found_duplicate, file_path = Check_Duplicates(NBS, segmpos, hash_dict, store_folder,duplicate_eps)
                 
                 if (Found_duplicate):
                 
@@ -318,70 +351,43 @@ def Find_Choreo(
                 # print(f'Opt Action Grad Norm : {best_sol.f_norm} from {ActionGradNormEnterLoop}')
                 print(f'Opt Action Grad Norm: {best_sol.f_norm:.2e}')
             
-                Newt_err = ActionSyst.Compute_Newton_err(best_sol.x)
-                Newt_err_norm = np.linalg.norm(Newt_err)/(nint*nbody)
-                NewtonPreciseGood = (Newt_err_norm < Newt_err_norm_max)
-                NewtonPreciseEnough = (Newt_err_norm < Newt_err_norm_max_save)
-                print(f'Newton Error: {Newt_err_norm:.2e}')
-                
                 CanChangeOptimParams = i_optim_param < (n_optim_param-1)
                 
-                CanRefine = (ActionSyst.current_cvg_lvl < n_reconverge_it_max)
+                CanRefine = (current_cvg_lvl < n_reconverge_it_max)
                 
                 if CanRefine :
 
-                    x_fine = ActionSyst.TransferParamBtwRefinementLevels(best_sol.x)
-
-                    ActionSyst.current_cvg_lvl += 1
-                        
-
-                    f_fine = ActionSyst.Compute_action_onlygrad(x_fine)
+                    nint_fac_cur = NBS.nint_fac
+                    nint_fac = 2*nint_fac_cur
+                    x_fine = NBS.params_resize(best_sol.x, nint_fac)
+                    NBS.nint_fac = nint_fac
+                    
+                    f_fine = NBS.params_to_action_grad(x_fine)
                     f_fine_norm = np.linalg.norm(f_fine)
                     
                     NeedsRefinement = (f_fine_norm > mul_coarse_to_fine*best_sol.f_norm)
                     
-                    ActionSyst.current_cvg_lvl += -1
-                
+                    NBS.nint_fac = nint_fac_cur
+
                 else:
                     
                     NeedsRefinement = False
 
                 # NeedsChangeOptimParams = GoOn and CanChangeOptimParams and not(ParamPreciseEnough) and not(NewtonPreciseGood) and not(NeedsRefinement)
-                NeedsChangeOptimParams = GoOn and CanChangeOptimParams and not(NewtonPreciseGood) and not(NeedsRefinement)
-                
-                # print("ParamFoundSol ",ParamFoundSol)
-                # print("ParamPreciseEnough ",ParamPreciseEnough)
-                # print("NewtonPreciseEnough ",NewtonPreciseEnough)
-                # print("NewtonPreciseGood ",NewtonPreciseGood)
-                # print("NeedsChangeOptimParams ",NeedsChangeOptimParams)
-                # print("CanChangeOptimParams ",CanChangeOptimParams)
-                # print("NeedsRefinement ",NeedsRefinement)
-                # print("CanRefine ",CanRefine)
-                # 
+                NeedsChangeOptimParams = GoOn and CanChangeOptimParams and not(NeedsRefinement)
+
                 if GoOn and not(ParamFoundSol):
                 
                     GoOn = False
                     print('Optimizer could not zero in on a solution.')
-
-                if GoOn and not(ParamPreciseEnough) and not(NewtonPreciseEnough) and not(CanChangeOptimParams):
                 
-                    GoOn = False
-
-                    print('Newton Error too high, discarding solution.')
-                
-                if GoOn and ParamPreciseEnough and not(NewtonPreciseEnough) and not(NeedsRefinement):
+                if GoOn and ParamPreciseEnough and not(NeedsRefinement):
 
                     GoOn=False
-                    print("Stopping search: there might be something wrong with the constraints.")
-                    # SaveSol = True
-                
-                if GoOn and NewtonPreciseGood :
-
-                    GoOn = False
                     print("Stopping search: found solution.")
                     SaveSol = True
-                    
-                if GoOn and NewtonPreciseEnough and not(CanChangeOptimParams) :
+
+                if GoOn and ParamPreciseEnough and not(CanChangeOptimParams) :
 
                     GoOn = False
                     print("Stopping search: found approximate solution.")
@@ -424,55 +430,53 @@ def Find_Choreo(
 
                     print(f'Saving solution as {filename_output}.*.')
              
-                    ActionSyst.Write_Descriptor(best_sol.x,filename_output+'.json',Action=Action,Gradaction=Gradaction,Newt_err_norm=Newt_err_norm,Hash_Action=Hash_Action,extend=plot_extend)
+                    NBS.Write_Descriptor(best_sol.x ,segmpos ,filename = filename_output+'.json', Gradaction=Gradaction, Hash_Action=Hash_Action, extend=plot_extend)
 
-                    if Save_img :
-                        ActionSyst.plot_all_2D(best_sol.x,nint_plot_img,filename_output+'.png',fig_size=img_size,color=color,color_list=color_list)
-                    
-                    if Save_thumb :
-                        ActionSyst.plot_all_2D(best_sol.x,nint_plot_img,filename_output+'_thumb.png',fig_size=thumb_size,color=color,color_list=color_list)
+                    # if Save_img :
+                    #     ActionSyst.plot_all_2D(best_sol.x,nint_plot_img,filename_output+'.png',fig_size=img_size,color=color,color_list=color_list)
+                    # 
+                    # if Save_thumb :
+                    #     ActionSyst.plot_all_2D(best_sol.x,nint_plot_img,filename_output+'_thumb.png',fig_size=thumb_size,color=color,color_list=color_list)
                         
-                    if Save_anim :
-                        ActionSyst.plot_all_2D_anim(best_sol.x,nint_plot_anim,filename_output+'.mp4',nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size,dnint=dnint,color_list=color_list,color=color)
+#                     if Save_anim :
+#                         ActionSyst.plot_all_2D_anim(best_sol.x,nint_plot_anim,filename_output+'.mp4',nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size,dnint=dnint,color_list=color_list,color=color)
+# 
+#                     if Save_Newton_Error :
+#                         ActionSyst.plot_Newton_Error(best_sol.x,filename_output+'_newton.png')
+# 
+#                     if Save_GradientAction_Error :
+#                         ActionSyst.plot_GradientAction_Error(best_sol.x,filename_output+'_gradaction.png')
+# 
+#                     if Save_coeff_profile:
+#                         ActionSyst.plot_coeff_profile(best_sol.x,filename_output+'_coeff_profile.png')
+# 
+#                     if Save_All_Coeffs:
+#                         all_coeffs = ActionSyst.Unpackage_all_coeffs(best_sol.x)
+#                         np.save(filename_output+'_coeffs.npy',all_coeffs)
 
-                    if Save_Newton_Error :
-                        ActionSyst.plot_Newton_Error(best_sol.x,filename_output+'_newton.png')
-
-                    if Save_GradientAction_Error :
-                        ActionSyst.plot_GradientAction_Error(best_sol.x,filename_output+'_gradaction.png')
-
-                    if Save_coeff_profile:
-                        ActionSyst.plot_coeff_profile(best_sol.x,filename_output+'_coeff_profile.png')
-
-                    if Save_All_Coeffs:
-                        all_coeffs = ActionSyst.Unpackage_all_coeffs(best_sol.x)
-                        np.save(filename_output+'_coeffs.npy',all_coeffs)
-
-                    if Save_All_Pos:
-                        if n_save_pos is None:
-                            all_pos = ActionSyst.ComputeAllLoopPos(best_sol.x)
-                        elif n_save_pos == 'auto':
-                            # TODO : implement auto
-                            all_pos = ActionSyst.ComputeAllLoopPos(best_sol.x)
-                        else:
-                            all_pos = ActionSyst.ComputeAllLoopPos(best_sol.x,n_save_pos)
-
-                        np.save(filename_output+'.npy',all_pos)
-
-                    if Save_Init_Pos_Vel_Sol:
-                        all_pos_b = ActionSyst.Compute_init_pos_vel(best_sol.x)
-                        np.save(filename_output+'_init.npy',all_coeffs)
-               
+#                     if Save_All_Pos:
+#                         if n_save_pos is None:
+#                             all_pos = ActionSyst.ComputeAllLoopPos(best_sol.x)
+#                         elif n_save_pos == 'auto':
+#                             # TODO : implement auto
+#                             all_pos = ActionSyst.ComputeAllLoopPos(best_sol.x)
+#                         else:
+#                             all_pos = ActionSyst.ComputeAllLoopPos(best_sol.x,n_save_pos)
+# 
+#                         np.save(filename_output+'.npy',all_pos)
+# 
+#                     if Save_Init_Pos_Vel_Sol:
+#                         all_pos_b = ActionSyst.Compute_init_pos_vel(best_sol.x)
+#                         np.save(filename_output+'_init.npy',all_coeffs)
+#                
                 if GoOn and NeedsRefinement:
                     
                     print('Resizing.')
                     
-                    best_sol = choreo.scipy_plus.nonlin.current_best(x_fine,f_fine)
-                    ActionSyst.current_cvg_lvl += 1
-                    
-                    ncoeff = ActionSyst.ncoeff
-                    nint = ActionSyst.nint    
-                    
+                    best_sol = choreo.scipy_plus.nonlin.current_best(x_fine, f_fine)
+                    NBS.nint_fac = 2*NBS.nint_fac
+                    current_cvg_lvl += 1
+                     
                 if GoOn and NeedsChangeOptimParams:
                     
                     print('Changing optimizer parameters.')
@@ -484,160 +488,160 @@ def Find_Choreo(
         print('')
 
     print('Done!')
-
-def GenSymExample(
-    geodim,
-    ParallelBackend,
-    TwoDBackend,
-    GradHessBackend,
-    nbody,
-    nint_init,
-    mass,
-    Sym_list,
-    MomConsImposed,
-    n_grad_change,
-    coeff_ampl_o,
-    k_infl,
-    k_max,
-    coeff_ampl_min,
-    LookForTarget,
-    nT_slow,
-    nT_fast,
-    Info_dict_slow,
-    all_coeffs_slow,
-    Info_dict_fast_list,
-    all_coeffs_fast_list,
-    il_slow_source,
-    ibl_slow_source,
-    il_fast_source,
-    ibl_fast_source,
-    Rotate_fast_with_slow,
-    Optimize_Init,
-    Randomize_Fast_Init,
-    Save_img,
-    nint_plot_img,
-    img_size,
-    color,
-    Save_anim,
-    nint_plot_anim,
-    nperiod_anim,
-    Plot_trace_anim,
-    vid_size,
-    dnint,
-    Save_All_Coeffs,
-    Save_All_Pos,
-    n_save_pos,
-    plot_extend,
-    CrashOnError_changevar,
-    color_list,
-):
-
-    print(f'Building an initial state with {nbody:d} bodies.')
-    print('')
-
-    n_reconverge_it_max = 0
-    n_grad_change = 1
-
-    ActionSyst = setup_changevar(geodim,nbody,nint_init,mass,n_reconverge_it_max,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change,CrashOnIdentity=CrashOnError_changevar)
-
-    ActionSyst.SetBackend(parallel=ParallelBackend,TwoD=TwoDBackend,GradHessBackend=GradHessBackend)
-    
-    nbi_tot = 0
-    for il in range(ActionSyst.nloop):
-        for ilp in range(il+1,ActionSyst.nloop):
-            nbi_tot += ActionSyst.loopnb[il]*ActionSyst.loopnb[ilp]
-        nbi_tot += ActionSyst.loopnbi[il]
-    nbi_naive = (nbody*(nbody-1))//2
-
-    print('Imposed constraints lead to the detection of:')
-    print(f'    {ActionSyst.nloop:d} independant loops')
-    print(f'    {nbi_tot:d} binary interactions')
-    print(f'    ==> Reduction of {100*(1-nbi_tot/nbi_naive):.2f} % wrt the {nbi_naive:d} naive binary iteractions')
-    print('')
-
-    ncoeff = ActionSyst.ncoeff
-    nint = ActionSyst.nint
-    nparams_before = 2 * ncoeff * ActionSyst.nloop * geodim
-    nparams_after = ActionSyst.nparams
-
-    print(f'Convergence attempt number: 1')
-    print(f"    Number of Fourier coeffs: {ncoeff}")
-    print(f"    Number of scalar parameters before constraints: {nparams_before}")
-    print(f"    Number of scalar parameters after  constraints: {nparams_after}")
-    print(f"    ==> Reduction of {100*(1-nparams_after/nparams_before):.2f} %")
-    print('')
-
-    x0 = np.random.random(ActionSyst.nparams)
-    xmin = ActionSyst.Compute_MinDist(x0)
-    if (xmin < 1e-5):
-
-        print("")
-        print(f"Init minimum inter body distance too low : {xmin:.2e}.")
-        print("There is likely something wrong with constraints.")
-        print("")
-
-        # return False
-
-    all_coeffs_min,all_coeffs_max = Make_Init_bounds_coeffs(ActionSyst.nloop,ActionSyst.geodim,ncoeff,coeff_ampl_o,k_infl,k_max,coeff_ampl_min)
-
-    x_min = ActionSyst.Package_all_coeffs(all_coeffs_min)
-    x_max = ActionSyst.Package_all_coeffs(all_coeffs_max)
-
-    rand_eps = coeff_ampl_min
-    rand_dim = 0
-    for i in range(ActionSyst.nparams):
-        if (abs(x_max[i] - x_min[i]) > rand_eps):
-            rand_dim +=1
-
-    sampler = UniformRandom(d=rand_dim)
-
-    if (LookForTarget):
-        
-        all_coeffs_avg = ActionSyst.Gen_init_avg_2D(nT_slow,nT_fast,Info_dict_slow,all_coeffs_slow,Info_dict_fast_list,all_coeffs_fast_list,il_slow_source,ibl_slow_source,il_fast_source,ibl_fast_source,Rotate_fast_with_slow,Optimize_Init,Randomize_Fast_Init)    
-
-        x_avg = ActionSyst.Package_all_coeffs(all_coeffs_avg)
-    
-    else:
-        
-        x_avg = np.zeros((ActionSyst.nparams),dtype=np.float64)
-
-    x0 = np.zeros((ActionSyst.nparams),dtype=np.float64)
-    
-    xrand = sampler.random()
-
-    x0 = PopulateRandomInit(
-        ActionSyst.nparams,
-        x_avg   ,  
-        x_min   ,  
-        x_max   ,
-        xrand   ,
-        rand_eps
-    )
-
-    ActionSyst.Write_Descriptor(x0,'init.json',extend=plot_extend)
-
-    if Save_img :
-        ActionSyst.plot_all_2D(x0,nint_plot_img,'init.png',fig_size=img_size,color=color,color_list=color_list)        
-
-    if Save_anim :
-        ActionSyst.plot_all_2D_anim(x0,nint_plot_anim,'init.mp4',nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size,dnint=dnint,color_list=color_list,color=color)
-
-    if Save_All_Coeffs:
-        all_coeffs = ActionSyst.Unpackage_all_coeffs(x0)
-        np.save('init_coeffs.npy',all_coeffs)
-
-    if Save_All_Pos:
-        if n_save_pos is None:
-            all_pos_b = ActionSyst.ComputeAllLoopPos(x0)
-        elif n_save_pos == 'auto':
-            # TODO : implement auto
-            all_pos_b = ActionSyst.ComputeAllLoopPos(x0)
-        else:
-            all_pos_b = ActionSyst.ComputeAllLoopPos(x0,n_save_pos)
-
-        np.save('init.npy',all_pos_b)
-
-    return True
+# 
+# def GenSymExample(
+#     geodim,
+#     ParallelBackend,
+#     TwoDBackend,
+#     GradHessBackend,
+#     nbody,
+#     nint_init,
+#     mass,
+#     Sym_list,
+#     MomConsImposed,
+#     n_grad_change,
+#     coeff_ampl_o,
+#     k_infl,
+#     k_max,
+#     coeff_ampl_min,
+#     LookForTarget,
+#     nT_slow,
+#     nT_fast,
+#     Info_dict_slow,
+#     all_coeffs_slow,
+#     Info_dict_fast_list,
+#     all_coeffs_fast_list,
+#     il_slow_source,
+#     ibl_slow_source,
+#     il_fast_source,
+#     ibl_fast_source,
+#     Rotate_fast_with_slow,
+#     Optimize_Init,
+#     Randomize_Fast_Init,
+#     Save_img,
+#     nint_plot_img,
+#     img_size,
+#     color,
+#     Save_anim,
+#     nint_plot_anim,
+#     nperiod_anim,
+#     Plot_trace_anim,
+#     vid_size,
+#     dnint,
+#     Save_All_Coeffs,
+#     Save_All_Pos,
+#     n_save_pos,
+#     plot_extend,
+#     CrashOnError_changevar,
+#     color_list,
+# ):
+# 
+#     print(f'Building an initial state with {nbody:d} bodies.')
+#     print('')
+# 
+#     n_reconverge_it_max = 0
+#     n_grad_change = 1
+# 
+#     ActionSyst = setup_changevar(geodim,nbody,nint_init,mass,n_reconverge_it_max,Sym_list=Sym_list,MomCons=MomConsImposed,n_grad_change=n_grad_change,CrashOnIdentity=CrashOnError_changevar)
+# 
+#     ActionSyst.SetBackend(parallel=ParallelBackend,TwoD=TwoDBackend,GradHessBackend=GradHessBackend)
+#     
+#     nbi_tot = 0
+#     for il in range(ActionSyst.nloop):
+#         for ilp in range(il+1,ActionSyst.nloop):
+#             nbi_tot += ActionSyst.loopnb[il]*ActionSyst.loopnb[ilp]
+#         nbi_tot += ActionSyst.loopnbi[il]
+#     nbi_naive = (nbody*(nbody-1))//2
+# 
+#     print('Imposed constraints lead to the detection of:')
+#     print(f'    {ActionSyst.nloop:d} independant loops')
+#     print(f'    {nbi_tot:d} binary interactions')
+#     print(f'    ==> Reduction of {100*(1-nbi_tot/nbi_naive):.2f} % wrt the {nbi_naive:d} naive binary iteractions')
+#     print('')
+# 
+#     ncoeff = ActionSyst.ncoeff
+#     nint = ActionSyst.nint
+#     nparams_before = 2 * ncoeff * ActionSyst.nloop * geodim
+#     nparams_after = ActionSyst.nparams
+# 
+#     print(f'Convergence attempt number: 1')
+#     print(f"    Number of Fourier coeffs: {ncoeff}")
+#     print(f"    Number of scalar parameters before constraints: {nparams_before}")
+#     print(f"    Number of scalar parameters after  constraints: {nparams_after}")
+#     print(f"    ==> Reduction of {100*(1-nparams_after/nparams_before):.2f} %")
+#     print('')
+# 
+#     x0 = np.random.random(ActionSyst.nparams)
+#     xmin = ActionSyst.Compute_MinDist(x0)
+#     if (xmin < 1e-5):
+# 
+#         print("")
+#         print(f"Init minimum inter body distance too low : {xmin:.2e}.")
+#         print("There is likely something wrong with constraints.")
+#         print("")
+# 
+#         # return False
+# 
+#     all_coeffs_min,all_coeffs_max = Make_Init_bounds_coeffs(ActionSyst.nloop,ActionSyst.geodim,ncoeff,coeff_ampl_o,k_infl,k_max,coeff_ampl_min)
+# 
+#     x_min = ActionSyst.Package_all_coeffs(all_coeffs_min)
+#     x_max = ActionSyst.Package_all_coeffs(all_coeffs_max)
+# 
+#     rand_eps = coeff_ampl_min
+#     rand_dim = 0
+#     for i in range(ActionSyst.nparams):
+#         if (abs(x_max[i] - x_min[i]) > rand_eps):
+#             rand_dim +=1
+# 
+#     sampler = UniformRandom(d=rand_dim)
+# 
+#     if (LookForTarget):
+#         
+#         all_coeffs_avg = ActionSyst.Gen_init_avg_2D(nT_slow,nT_fast,Info_dict_slow,all_coeffs_slow,Info_dict_fast_list,all_coeffs_fast_list,il_slow_source,ibl_slow_source,il_fast_source,ibl_fast_source,Rotate_fast_with_slow,Optimize_Init,Randomize_Fast_Init)    
+# 
+#         x_avg = ActionSyst.Package_all_coeffs(all_coeffs_avg)
+#     
+#     else:
+#         
+#         x_avg = np.zeros((ActionSyst.nparams),dtype=np.float64)
+# 
+#     x0 = np.zeros((ActionSyst.nparams),dtype=np.float64)
+#     
+#     xrand = sampler.random()
+# 
+#     x0 = PopulateRandomInit(
+#         ActionSyst.nparams,
+#         x_avg   ,  
+#         x_min   ,  
+#         x_max   ,
+#         xrand   ,
+#         rand_eps
+#     )
+# 
+#     ActionSyst.Write_Descriptor(x0,'init.json',extend=plot_extend)
+# 
+#     if Save_img :
+#         ActionSyst.plot_all_2D(x0,nint_plot_img,'init.png',fig_size=img_size,color=color,color_list=color_list)        
+# 
+#     if Save_anim :
+#         ActionSyst.plot_all_2D_anim(x0,nint_plot_anim,'init.mp4',nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size,dnint=dnint,color_list=color_list,color=color)
+# 
+#     if Save_All_Coeffs:
+#         all_coeffs = ActionSyst.Unpackage_all_coeffs(x0)
+#         np.save('init_coeffs.npy',all_coeffs)
+# 
+#     if Save_All_Pos:
+#         if n_save_pos is None:
+#             all_pos_b = ActionSyst.ComputeAllLoopPos(x0)
+#         elif n_save_pos == 'auto':
+#             # TODO : implement auto
+#             all_pos_b = ActionSyst.ComputeAllLoopPos(x0)
+#         else:
+#             all_pos_b = ActionSyst.ComputeAllLoopPos(x0,n_save_pos)
+# 
+#         np.save('init.npy',all_pos_b)
+# 
+#     return True
    
 def ChoreoFindFromDict(params_dict, Workspace_folder):
 
@@ -980,9 +984,22 @@ def ChoreoLoadFromDict(params_dict, Workspace_folder, callback=None, args_list=N
     else:
         return Pick_Named_Args_From_Dict(callback, dict(**locals()))
 
-def ChoreoReadDictAndFind(Workspace_folder, dict_name="choreo_config.json"):
 
-    params_filename = os.path.join(Workspace_folder, dict_name)
+def Pick_Named_Args_From_Dict(fun, the_dict, MissingArgsAreNone=True):
+    
+    list_of_args = inspect.getfullargspec(fun).kwonlyargs
+
+    if MissingArgsAreNone:
+        all_kwargs = {k:the_dict.get(k) for k in list_of_args}
+        
+    else:
+        all_kwargs = {k:the_dict[k] for k in list_of_args}
+    
+    return all_kwargs
+
+def ChoreoReadDictAndFind(Workspace_folder, config_filename="choreo_config.json"):
+
+    params_filename = os.path.join(Workspace_folder, config_filename)
 
     with open(params_filename) as jsonFile:
         params_dict = json.load(jsonFile)
@@ -1016,3 +1033,56 @@ def ChoreoReadDictAndFind(Workspace_folder, dict_name="choreo_config.json"):
         os.environ['OMP_NUM_THREADS'] = str(1)
 
         ChoreoFindFromDict(params_dict, Workspace_folder)
+
+def UpdateHashDict(store_folder, hash_dict):
+    # Creates a list of possible duplicates based on value of the action and hashes
+
+    file_path_list = []
+    for file_path in os.listdir(store_folder):
+
+        file_path = os.path.join(store_folder, file_path)
+        file_root, file_ext = os.path.splitext(os.path.basename(file_path))
+        
+        if (file_ext == '.json' ):
+            
+            This_Action_Hash = hash_dict.get(file_root)
+            
+            if (This_Action_Hash is None) :
+
+                This_Action_Hash = ReadHashFromFile(file_path) 
+
+                if not(This_Action_Hash is None):
+
+                    hash_dict[file_root] = This_Action_Hash
+
+def ReadHashFromFile(filename):
+
+    with open(filename,'r') as jsonFile:
+        Info_dict = json.load(jsonFile)
+
+    the_hash = Info_dict.get("Hash")
+
+    if the_hash is None:
+        return None
+    else:
+        return np.array(the_hash)
+
+def Check_Duplicates(NBS, segmpos, hash_dict, store_folder, duplicate_eps):
+    r"""
+    Checks whether there is a duplicate of a given trajecory in the provided folder
+    """
+
+    Hash_Action = NBS.segmpos_to_hash(segmpos)
+
+    UpdateHashDict(store_folder, hash_dict)
+    
+    for file_path, found_hash in hash_dict.items():
+        
+        IsCandidate = NBS.TestHashSame(Hash_Action, found_hash, duplicate_eps)
+        
+        print(Hash_Action, found_hash, IsCandidate)
+        
+        if IsCandidate:
+            return True, file_path
+
+    return False, None
