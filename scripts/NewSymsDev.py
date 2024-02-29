@@ -133,9 +133,9 @@ def doit(config_name):
     
     
     NBS = choreo.cython._NBodySyst.NBodySyst(geodim, nbody, mass, charge, Sym_list, inter_law)
-
-    print(NBS.Validate_inter_law())
-    print(NBS.Detect_homo_inter_law())
+# 
+#     print(NBS.Validate_inter_law())
+#     print(NBS.Detect_homo_inter_law())
 
     return
     

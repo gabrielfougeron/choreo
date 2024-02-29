@@ -1840,7 +1840,6 @@ class ChoreoAction():
         
         plt.close()
 
-
     def plot_given_2D(self,all_pos,filename,fig_size=(10,10),dpi=100,color=None,color_list=None,xlim=None,extend=0.03,CloseLoop=True):
         r"""
         Plots 2D trajectories with one color per body and saves image in file
@@ -1864,7 +1863,7 @@ class ChoreoAction():
 
         ncol = len(color_list)
         
-        cb = ['b' for ib in range(n_loop_plot)]
+        cb = ['b' for _ in range(n_loop_plot)]
         i_loop_plot = 0
 
         if (color is None) or (color == "none"):
