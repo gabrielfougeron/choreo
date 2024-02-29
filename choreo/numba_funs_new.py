@@ -13,13 +13,13 @@ numba_kwargs = {
     'nogil':True        ,
 }
 
-def pow_inter_law(n):
+def pow_inter_law(n, alpha):
 
     nm2 = n-2
     mnnm1 = -n*(n-1)
     def pot_fun(xsq, res):
         
-        a = xsq ** nm2
+        a = alpha*xsq ** nm2
         b = xsq*a
 
         res[0] = -xsq*b
