@@ -1305,8 +1305,6 @@ class ChoreoAction():
 
         Info_dict = {}
 
-        max_path_length
-
         Info_dict["nbody"] = self.nbody
         Info_dict["n_int"] = nint
 

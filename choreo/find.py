@@ -248,7 +248,7 @@ def Find_Choreo(
         if (Look_for_duplicates and ((n_opt % freq_erase_dict) == 0)):
             
             hash_dict = {}
-            _ = SelectFiles_Action(store_folder,hash_dict)
+            _ = SelectFiles_Action(store_folder, hash_dict)
 
         ActionSyst.current_cvg_lvl = start_cvg_lvl
 
