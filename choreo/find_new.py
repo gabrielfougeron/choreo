@@ -321,9 +321,8 @@ def Find_Choreo(
 
             SaveSol = False
 
-            Gradaction = best_sol.f_norm
             segmpos = NBS.params_to_segmpos(best_sol.x)
-            Hash_Action = None # TODO : change that!
+            Hash_Action = NBS.segmpos_to_hash(segmpos)
             
             if (GoOn and Check_Escape):
                 
@@ -337,7 +336,7 @@ def Find_Choreo(
                 
             if (GoOn and Look_for_duplicates):
                 
-                Found_duplicate, file_path = Check_Duplicates(NBS, segmpos, hash_dict, store_folder,duplicate_eps)
+                Found_duplicate, file_path = Check_Duplicates(NBS, segmpos, hash_dict, store_folder, duplicate_eps, Hash_Action)
                 
                 if (Found_duplicate):
                 
@@ -418,7 +417,7 @@ def Find_Choreo(
 
                     print(f'Saving solution as {filename_output}.*.')
              
-                    NBS.Write_Descriptor(best_sol.x ,segmpos ,filename = filename_output+'.json', Gradaction=Gradaction, Hash_Action=Hash_Action, extend=plot_extend)
+                    NBS.Write_Descriptor(best_sol.x ,segmpos ,filename = filename_output+'.json', Gradaction=f_fine_norm, Hash_Action=Hash_Action, extend=plot_extend)
 
                     if Save_img :
 
@@ -1040,14 +1039,15 @@ def ReadHashFromFile(filename):
     else:
         return np.array(the_hash)
 
-def Check_Duplicates(NBS, segmpos, hash_dict, store_folder, duplicate_eps):
+def Check_Duplicates(NBS, segmpos, hash_dict, store_folder, duplicate_eps, Hash_Action=None):
     r"""
     Checks whether there is a duplicate of a given trajecory in the provided folder
     """
-
-    Hash_Action = NBS.segmpos_to_hash(segmpos)
-
+    
     UpdateHashDict(store_folder, hash_dict)
+
+    if Hash_Action is None:
+        Hash_Action = NBS.segmpos_to_hash(segmpos)
     
     for file_path, found_hash in hash_dict.items():
         
