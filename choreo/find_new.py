@@ -73,6 +73,10 @@ def Find_Choreo(
     plot_extend,
     mul_coarse_to_fine,
     duplicate_eps,
+    Save_SegmPos,
+    img_size,
+    color,
+    color_list,
 ):
     """
 
@@ -432,8 +436,9 @@ def Find_Choreo(
              
                     NBS.Write_Descriptor(best_sol.x ,segmpos ,filename = filename_output+'.json', Gradaction=Gradaction, Hash_Action=Hash_Action, extend=plot_extend)
 
-                    # if Save_img :
-                    #     ActionSyst.plot_all_2D(best_sol.x,nint_plot_img,filename_output+'.png',fig_size=img_size,color=color,color_list=color_list)
+                    if Save_img :
+
+                        NBS.plot_segmpos_2D(segmpos, filename_output+'.png', fig_size=img_size, color=color, color_list=color_list)
                     # 
                     # if Save_thumb :
                     #     ActionSyst.plot_all_2D(best_sol.x,nint_plot_img,filename_output+'_thumb.png',fig_size=thumb_size,color=color,color_list=color_list)
@@ -454,16 +459,8 @@ def Find_Choreo(
 #                         all_coeffs = ActionSyst.Unpackage_all_coeffs(best_sol.x)
 #                         np.save(filename_output+'_coeffs.npy',all_coeffs)
 
-#                     if Save_All_Pos:
-#                         if n_save_pos is None:
-#                             all_pos = ActionSyst.ComputeAllLoopPos(best_sol.x)
-#                         elif n_save_pos == 'auto':
-#                             # TODO : implement auto
-#                             all_pos = ActionSyst.ComputeAllLoopPos(best_sol.x)
-#                         else:
-#                             all_pos = ActionSyst.ComputeAllLoopPos(best_sol.x,n_save_pos)
-# 
-#                         np.save(filename_output+'.npy',all_pos)
+                    if Save_SegmPos:
+                        np.save(filename_output+'.npy', segmpos)
 # 
 #                     if Save_Init_Pos_Vel_Sol:
 #                         all_pos_b = ActionSyst.Compute_init_pos_vel(best_sol.x)
@@ -963,7 +960,7 @@ def ChoreoLoadFromDict(params_dict, Workspace_folder, callback=None, args_list=N
 
     n_save_pos = 'auto'
 
-    Save_All_Pos = True
+    Save_SegmPos = True
     
     plot_extend = 0.
 
@@ -1079,9 +1076,7 @@ def Check_Duplicates(NBS, segmpos, hash_dict, store_folder, duplicate_eps):
     for file_path, found_hash in hash_dict.items():
         
         IsCandidate = NBS.TestHashSame(Hash_Action, found_hash, duplicate_eps)
-        
-        print(Hash_Action, found_hash, IsCandidate)
-        
+
         if IsCandidate:
             return True, file_path
 

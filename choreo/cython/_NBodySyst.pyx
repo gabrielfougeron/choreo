@@ -20,25 +20,26 @@ from choreo.cython._ActionSym cimport ActionSym
 
 # Explicit imports to avoid mysterious problems with CCALLBACK_DEFAULTS
 from choreo.NBodySyst_build import (
-    ContainsDoubleEdges ,
-    ContainsSelfReferingTimeRevSegment,
-    Build_SegmGraph ,
-    Build_SegmGraph_NoPb    ,
-    Build_BodyGraph ,
-    AccumulateBodyConstraints,
-    AccumulateSegmentConstraints,
-    AccumulateInstConstraints,
-    ComputeParamBasis_InitVal,
-    ComputeParamBasis_Loop,
-    reorganize_All_params_basis,
-    PlotTimeBodyGraph,
-    CountSegmentBinaryInteractions,
-    BundleListOfShapes,
-    BundleListOfArrays,
-    Populate_allsegmpos,
-    AccumulateSegmSourceToTargetSym,
-    FindAllBinarySegments,
-    ReorganizeBinarySegments,
+    ContainsDoubleEdges                 ,
+    ContainsSelfReferingTimeRevSegment  ,
+    Build_SegmGraph                     ,
+    Build_SegmGraph_NoPb                ,
+    Build_BodyGraph                     ,
+    AccumulateBodyConstraints           ,
+    AccumulateSegmentConstraints        ,
+    AccumulateInstConstraints           ,
+    ComputeParamBasis_InitVal           ,
+    ComputeParamBasis_Loop              ,
+    reorganize_All_params_basis         ,
+    PlotTimeBodyGraph                   ,
+    CountSegmentBinaryInteractions      ,
+    BundleListOfShapes                  ,
+    BundleListOfArrays                  ,
+    Populate_allsegmpos                 ,
+    AccumulateSegmSourceToTargetSym     ,
+    FindAllBinarySegments               ,
+    ReorganizeBinarySegments            ,
+    DetectSegmRequiresDisp              ,
 )
 
 import math
@@ -46,6 +47,12 @@ import scipy
 import networkx
 import json
 import types
+
+try:
+    from matplotlib import pyplot as plt
+    from matplotlib import colormaps
+except:
+    pass
 
 cdef ccallback_signature_t signatures[2]
 
@@ -260,6 +267,11 @@ cdef class NBodySyst():
     cdef readonly list intersegm_to_all
     cdef readonly list LoopGenConstraints
 
+    cdef bint[:,::1] _SegmRequiresDisp
+    @property
+    def SegmRequiresDisp(self):
+        return np.asarray(self._SegmRequiresDisp) > 0
+
     cdef double[::1] _Hash_exp
     @property
     def Hash_exp(self):
@@ -392,6 +404,8 @@ cdef class NBodySyst():
         for ibin in range(self.nbin_segm_unique):
             self._BinSpaceRotIsId[ibin] = (np.linalg.norm(self._BinSpaceRot[ibin,:,:] - np.identity(self.geodim)) < eps)
             self._BinProdChargeSum[ibin] /= self.nint_min
+
+        self._SegmRequiresDisp = DetectSegmRequiresDisp(self.SegmGraph, self.intersegm_to_all, nbody, self.nint_min)
 
         # This could certainly be made more efficient
         BodyConstraints = AccumulateBodyConstraints(self.Sym_list, nbody, geodim)
@@ -817,7 +831,7 @@ cdef class NBodySyst():
 
         cdef Py_ssize_t i
         cdef double[::1] alpha_approx = np.empty((n), dtype=np.float64)
-        cdef alpha_avg = 0
+        cdef double alpha_avg = 0
 
         for i in range(n):
 
@@ -839,7 +853,7 @@ cdef class NBodySyst():
 
     @cython.final
     def Write_Descriptor(
-        self, params_mom_buf, segmpos=None, filename=None,
+        self, double[::1] params_mom_buf, segmpos=None, filename=None,
         Action=None, Gradaction=None, dxmin=None, Hash_Action=None, max_path_length=None,
         extend=0.03,
     ):
@@ -972,6 +986,8 @@ cdef class NBodySyst():
 
         return jacobian
 
+    @cython.final
+    @cython.cdivision(True)
     def TestHashSame(self, double[::1] Hash_a, double[::1] Hash_b, double rtol=1e-5, bint detect_multiples=True):
 
         cdef long nhash = self._Hash_exp.shape[0]
@@ -981,21 +997,19 @@ cdef class NBodySyst():
         
         cdef double[::1] all_test = np.zeros(self._Hash_exp.shape[0])
         cdef Py_ssize_t ihash
-        cdef double pow_fac_m, pow_fac_m_inv, refval
+        cdef double pow_fac_m, refval
 
         if detect_multiples and self.LawIsHomo:
 
-            pow_fac_m = (2*self._Hash_exp[0])/(self.Homo_exp-1)
-            pow_fac_m_inv = 1./pow_fac_m
+            pow_fac_m = (self.Homo_exp-1)/(2*self._Hash_exp[0])
 
-            refval = (Hash_a[0] / Hash_b[0]) ** pow_fac_m_inv
+            refval = cpow(Hash_a[0] / Hash_b[0], pow_fac_m)
 
             for ihash in range(1,nhash):
 
-                pow_fac_m = (2*self._Hash_exp[ihash])/(self.Homo_exp-1)
-                pow_fac_m_inv = 1./pow_fac_m
+                pow_fac_m = (self.Homo_exp-1)/(2*self._Hash_exp[ihash])
 
-                all_test[ihash] = (Hash_a[ihash] / Hash_b[ihash]) ** pow_fac_m_inv - refval
+                all_test[ihash] = cpow(Hash_a[ihash]/Hash_b[ihash], pow_fac_m) - refval
 
         else:
 
@@ -1006,6 +1020,195 @@ cdef class NBodySyst():
         IsSame = (np.linalg.norm(all_test, np.inf) < rtol)
 
         return IsSame
+
+    def DetectXlim(self, segmpos):
+
+        xmin_segm_np = segmpos.min(axis=1)
+        xmax_segm_np = segmpos.max(axis=1)
+
+        cdef double[:,::1] xmin_segm = xmin_segm_np
+        cdef double[:,::1] xmax_segm = xmax_segm_np
+
+        xmin_np = xmin_segm_np.min(axis=0)
+        xmax_np = xmax_segm_np.min(axis=0)
+
+        cdef double[::1] xmin = xmin_np
+        cdef double[::1] xmax = xmax_np
+
+        cdef double[::1] x
+
+        cdef Py_ssize_t ib, iint, idim
+        cdef long isegm
+
+        for ib in range(self.nbody):
+            for iint in range(self.nint_min):
+
+                if self._SegmRequiresDisp[ib,iint]:
+
+                    Sym = self.intersegm_to_all[ib][iint]
+                    isegm = self._bodysegm[ib, iint]
+
+                    x = np.matmul(Sym.SpaceRot, xmin_segm[isegm,:])
+
+                    for idim in range(self.geodim):
+                        if x[idim] < xmin[idim]:
+                            xmin[idim] = x[idim]
+                        if x[idim] > xmax[idim]:
+                            xmax[idim] = x[idim]
+
+                    x = np.matmul(Sym.SpaceRot, xmax_segm[isegm,:])
+
+                    for idim in range(self.geodim):
+                        if x[idim] < xmin[idim]:
+                            xmin[idim] = x[idim]
+                        if x[idim] > xmax[idim]:
+                            xmax[idim] = x[idim]
+
+        return np.asarray(xmin), np.asarray(xmax)
+
+
+    def plot_segmpos_2D(self, segmpos, filename, fig_size=(10,10), dpi=100, color=None, color_list=None, xlim=None, extend=0.03,CloseLoop=True):
+        r"""
+        Plots 2D trajectories with one color per body and saves image in file
+        """
+
+        assert self.geodim == 2
+        assert segmpos.shape[1] == self.segm_store
+        
+        if color_list is None:
+            color_list = plt.rcParams['axes.prop_cycle'].by_key()['color']
+
+        ncol = len(color_list)
+        
+        cb = ['b' for _ in range(self.nbody)]
+        i_loop_plot = 0
+
+#         if (color is None) or (color == "none"):
+#             for il in range(self.nloop):
+#                 for ib in range(self.loopnb[il]):
+#                     if (self.RequiresLoopDispUn[il,ib]) :
+# 
+#                         cb[i_loop_plot] = color_list[0]
+# 
+#                         i_loop_plot +=1
+# 
+#         elif (color == "body"):
+#             for il in range(self.nloop):
+#                 for ib in range(self.loopnb[il]):
+#                     if (self.RequiresLoopDispUn[il,ib]) :
+# 
+#                         cb[i_loop_plot] = color_list[self.Targets[il,ib]%ncol]
+# 
+#                         i_loop_plot +=1
+# 
+#         elif (color == "loop"):
+#             for il in range(self.nloop):
+#                 for ib in range(self.loopnb[il]):
+#                     if (self.RequiresLoopDispUn[il,ib]) :
+# 
+#                         cb[i_loop_plot] = color_list[il%ncol]
+# 
+#                         i_loop_plot +=1
+# 
+#         elif (color == "loop_id"):
+#             for il in range(self.nloop):
+#                 for ib in range(self.loopnb[il]):
+#                     if (self.RequiresLoopDispUn[il,ib]) :
+# 
+#                         cb[i_loop_plot] = color_list[ib%ncol]
+# 
+#                         i_loop_plot +=1
+# 
+#         else:
+#             raise ValueError(f'Unknown color scheme "{color}"')
+
+        if xlim is None:
+
+            xmin_arr, xmax_arr = self.DetectXlim(segmpos)
+
+            xmin = xmin_arr[0]
+            xmax = xmax_arr[0]
+            ymin = xmin_arr[1]
+            ymax = xmax_arr[1]
+
+        else :
+
+            xmin = xlim[0]
+            xmax = xlim[1]
+            ymin = xlim[2]
+            ymax = xlim[3]
+        
+        xinf = xmin - extend*(xmax-xmin)
+        xsup = xmax + extend*(xmax-xmin)
+        
+        yinf = ymin - extend*(ymax-ymin)
+        ysup = ymax + extend*(ymax-ymin)
+        
+        hside = max(xsup-xinf,ysup-yinf)/2
+
+        xmid = (xinf+xsup)/2
+        ymid = (yinf+ysup)/2
+
+        xinf = xmid - hside
+        xsup = xmid + hside
+
+        yinf = ymid - hside
+        ysup = ymid + hside
+
+        # Plot-related
+        fig = plt.figure()
+        fig.set_size_inches(fig_size)
+        fig.set_dpi(dpi)
+        ax = plt.gca()
+
+        pos = np.empty((self.segm_store, self.geodim), dtype=np.float64)
+
+        iplt = 0
+        for ib in range(self.nbody):
+            for iint in range(self.nint_min):
+                if self._SegmRequiresDisp[ib,iint]:
+
+                    iplt += 1
+                    Sym = self.intersegm_to_all[ib][iint]
+                    isegm = self._bodysegm[ib, iint]
+
+                    print(segmpos.shape)
+                    print(segmpos[isegm,:,:].shape)
+
+                    Sym.TransformSegment(segmpos[isegm,:,:], pos)
+
+                    plt.plot(pos[:,0], pos[:,1], color='b' , antialiased=True, zorder=-iplt)
+
+        ax.axis('off')
+        ax.set_xlim([xinf, xsup])
+        ax.set_ylim([yinf, ysup ])
+        ax.set_aspect('equal', adjustable='box')
+        plt.tight_layout()
+
+        plt.savefig(filename)
+        
+        plt.close()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
     @cython.final
@@ -1470,7 +1673,8 @@ cdef class NBodySyst():
             )
 
         return np.asarray(params_hess)
-
+    
+    @cython.final
     def params_to_action(self, double[::1] params_mom_buf):
 
         assert params_mom_buf.shape[0] == self.nparams
@@ -1646,7 +1850,8 @@ cdef class NBodySyst():
             )
 
         return np.asarray(action_hess)
-
+    
+    @cython.final
     def segmpos_params_to_action(self, double[:,:,::1] segmpos, double[::1] params_mom_buf):
         
         assert segmpos.shape[1] == self.segm_store

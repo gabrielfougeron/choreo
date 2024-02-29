@@ -854,7 +854,7 @@ def AccumulateSegmSourceToTargetSym(
             
     return segm_gen_to_target                       
 
-def FindAllBinarySegments(segm_gen_to_target, nbody, nsegm, nint_min, bodysegm, CrashOnIdentity, bodycharge):
+def FindAllBinarySegments(intersegm_to_all, nbody, nsegm, nint_min, bodysegm, CrashOnIdentity, bodycharge):
 
     Identity_detected = False
 
@@ -882,13 +882,11 @@ def FindAllBinarySegments(segm_gen_to_target, nbody, nsegm, nint_min, bodysegm, 
 
                 if (isegm <= isegmp):
                     bisegm = (isegm, isegmp)
-                    # Sym = (segm_gen_to_target[ibp][iint]).Compose(segm_gen_to_target[ib][iint].Inverse())
-                    Sym = (segm_gen_to_target[ibp][iint].Inverse()).Compose(segm_gen_to_target[ib][iint])
+                    Sym = (intersegm_to_all[ibp][iint].Inverse()).Compose(intersegm_to_all[ib][iint])
 
                 else:
                     bisegm = (isegmp, isegm)
-                    # Sym = (segm_gen_to_target[ib][iint]).Compose(segm_gen_to_target[ibp][iint].Inverse())
-                    Sym = (segm_gen_to_target[ib][iint].Inverse()).Compose(segm_gen_to_target[ibp][iint])
+                    Sym = (intersegm_to_all[ib][iint].Inverse()).Compose(intersegm_to_all[ibp][iint])
 
                 if ((isegm == isegmp) and Sym.IsIdentityRotAndTimeRev()):
 
@@ -951,6 +949,41 @@ def ReorganizeBinarySegments(BinarySegm):
     BinProdChargeSum = np.array(BinProdChargeSum, dtype=np.float64)
         
     return BinSourceSegm, BinTargetSegm, BinTimeRev, BinSpaceRot, BinProdChargeSum
+
+def DetectSegmRequiresDisp(SegmGraph, intersegm_to_all, nbody, nint_min):
+    
+    PlotGraph = networkx.Graph()
+    for ib in range(nbody):
+        for iint in range(nint_min):
+            PlotGraph.add_node((ib,iint))
+            
+    for CC in networkx.connected_components(SegmGraph):
+
+        for segm, segmp in itertools.combinations(CC,2):
+
+            ib , iint  = segm
+            ibp, iintp = segmp
+
+            Sym = (intersegm_to_all[ibp][iintp].Inverse()).Compose(intersegm_to_all[ib][iint])
+            
+            if Sym.IsIdentityRot():
+                PlotGraph.add_edge(segm, segmp)
+    
+    SegmRequiresDisp = np.zeros((nbody, nint_min), dtype=np.intc)
+    
+    for CC in networkx.connected_components(PlotGraph):
+        
+        for ib, iint in CC:
+            
+            SegmRequiresDisp[ib,iint] = 1
+            break
+        
+    # for ib in range(nbody):
+    #     for iint in range(nint_min):
+    #         print(ib, iint, SegmRequiresDisp[ib,iint]>0)
+        
+    return SegmRequiresDisp
+    
 
 
 def plot_given_2D(all_pos, filename, fig_size=(10,10), dpi=100, color=None, color_list=None, xlim=None, extend=0.03, CloseLoop=True):
