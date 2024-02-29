@@ -1172,9 +1172,6 @@ cdef class NBodySyst():
                     Sym = self.intersegm_to_all[ib][iint]
                     isegm = self._bodysegm[ib, iint]
 
-                    print(segmpos.shape)
-                    print(segmpos[isegm,:,:].shape)
-
                     Sym.TransformSegment(segmpos[isegm,:,:], pos)
 
                     plt.plot(pos[:,0], pos[:,1], color='b' , antialiased=True, zorder=-iplt)
