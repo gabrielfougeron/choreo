@@ -16,7 +16,7 @@ import scipy
 import json
 import time
 import inspect
-
+import threadpoolctl
 
 
 import choreo.scipy_plus
@@ -67,7 +67,6 @@ def Find_Choreo(
     line_search,
     linesearch_smin,
     Check_Escape,
-    foundsol_tol,
     gradtol_max,
     n_reconverge_it_max,
     plot_extend,
@@ -249,9 +248,9 @@ def Find_Choreo(
             print(f"Norm on entry is {best_sol.f_norm:.2e} which is too big.")
         
         i_optim_param = 0
-
+        current_cvg_lvl = 0 
         n_opt += 1
-
+        
         GoOn = (n_opt <= n_opt_max)
         
         if GoOn:
@@ -274,10 +273,9 @@ def Find_Choreo(
             store_outer_Av = store_outer_Av_list[i_optim_param]
 
             ActionGradNormEnterLoop = best_sol.f_norm
-            current_cvg_lvl = 0
             
             print(f'Action Grad Norm on entry: {ActionGradNormEnterLoop:.2e}')
-            # print(f'Optim level: {i_optim_param+1} / {n_optim_param}    Resize level: {ActionSyst.current_cvg_lvl+1} / {n_reconverge_it_max+1}')
+            print(f'Optim level: {i_optim_param+1} / {n_optim_param}    Resize level: {current_cvg_lvl+1} / {n_reconverge_it_max+1}')
             
             inner_M = None
 
@@ -350,41 +348,27 @@ def Find_Choreo(
                 
             if (GoOn):
                 
-                ParamFoundSol = (best_sol.f_norm < foundsol_tol)
-                ParamPreciseEnough = (best_sol.f_norm < gradtol_max)
-                # print(f'Opt Action Grad Norm : {best_sol.f_norm} from {ActionGradNormEnterLoop}')
+                nint_fac_cur = NBS.nint_fac
+                nint_fac = 2*nint_fac_cur
+                x_fine = NBS.params_resize(best_sol.x, nint_fac)
+                NBS.nint_fac = nint_fac
+                
+                f_fine = NBS.params_to_action_grad(x_fine)
+                f_fine_norm = np.linalg.norm(f_fine)
+                
                 print(f'Opt Action Grad Norm: {best_sol.f_norm:.2e}')
+                print(f'Opt Action Grad Norm Refine : {f_fine_norm:.2e}')
+                
+                ParamPreciseEnough = (f_fine_norm< gradtol_max)
+                # print(f'Opt Action Grad Norm : {best_sol.f_norm} from {ActionGradNormEnterLoop}')
             
                 CanChangeOptimParams = i_optim_param < (n_optim_param-1)
                 
                 CanRefine = (current_cvg_lvl < n_reconverge_it_max)
+                NeedsRefinement = (f_fine_norm > mul_coarse_to_fine*best_sol.f_norm)
                 
-                if CanRefine :
+                NBS.nint_fac = nint_fac_cur
 
-                    nint_fac_cur = NBS.nint_fac
-                    nint_fac = 2*nint_fac_cur
-                    x_fine = NBS.params_resize(best_sol.x, nint_fac)
-                    NBS.nint_fac = nint_fac
-                    
-                    f_fine = NBS.params_to_action_grad(x_fine)
-                    f_fine_norm = np.linalg.norm(f_fine)
-                    
-                    NeedsRefinement = (f_fine_norm > mul_coarse_to_fine*best_sol.f_norm)
-                    
-                    NBS.nint_fac = nint_fac_cur
-
-                else:
-                    
-                    NeedsRefinement = False
-
-                # NeedsChangeOptimParams = GoOn and CanChangeOptimParams and not(ParamPreciseEnough) and not(NewtonPreciseGood) and not(NeedsRefinement)
-                NeedsChangeOptimParams = GoOn and CanChangeOptimParams and not(NeedsRefinement)
-
-                if GoOn and not(ParamFoundSol):
-                
-                    GoOn = False
-                    print('Optimizer could not zero in on a solution.')
-                
                 if GoOn and ParamPreciseEnough and not(NeedsRefinement):
 
                     GoOn=False
@@ -397,7 +381,7 @@ def Find_Choreo(
                     print("Stopping search: found approximate solution.")
                     SaveSol = True
 
-                if GoOn and not(NeedsRefinement) and not(NeedsChangeOptimParams):
+                if GoOn and NeedsRefinement and not(CanRefine) and not(CanChangeOptimParams):
                 
                     GoOn = False
                     print('Could not converge within prescibed optimizer and refinement parameters.')
@@ -466,19 +450,20 @@ def Find_Choreo(
 #                         all_pos_b = ActionSyst.Compute_init_pos_vel(best_sol.x)
 #                         np.save(filename_output+'_init.npy',all_coeffs)
 #                
-                if GoOn and NeedsRefinement:
+                if GoOn and NeedsRefinement and CanRefine:
                     
                     print('Resizing.')
-                    
+
                     best_sol = choreo.scipy_plus.nonlin.current_best(x_fine, f_fine)
                     NBS.nint_fac = 2*NBS.nint_fac
                     current_cvg_lvl += 1
                      
-                if GoOn and NeedsChangeOptimParams:
+                elif GoOn and CanChangeOptimParams:
                     
                     print('Changing optimizer parameters.')
                     
                     i_optim_param += 1
+
                 
             print('')
 
@@ -903,9 +888,6 @@ def ChoreoLoadFromDict(params_dict, Workspace_folder, callback=None, args_list=N
     Plot_trace_anim = True
     # Plot_trace_anim = False
 
-    # Save_Newton_Error = True
-    Save_Newton_Error = False
-
     n_reconverge_it_max = params_dict["Solver_Discr"] ['n_reconverge_it_max'] 
     nint_init = params_dict["Solver_Discr"]["nint_init"]   
 
@@ -934,8 +916,6 @@ def ChoreoLoadFromDict(params_dict, Workspace_folder, callback=None, args_list=N
     n_optim_param = len(gradtol_list)
     
     gradtol_max = 100*gradtol_list[n_optim_param-1]
-    # foundsol_tol = 1000*gradtol_list[0]
-    foundsol_tol = 1e10
 
     escape_fac = 1e0
 
@@ -995,7 +975,7 @@ def Pick_Named_Args_From_Dict(fun, the_dict, MissingArgsAreNone=True):
     return all_kwargs
 
 def ChoreoReadDictAndFind(Workspace_folder, config_filename="choreo_config.json"):
-
+    
     params_filename = os.path.join(Workspace_folder, config_filename)
 
     with open(params_filename) as jsonFile:
@@ -1007,29 +987,25 @@ def ChoreoReadDictAndFind(Workspace_folder, config_filename="choreo_config.json"
 
     if Exec_Mul_Proc == "MultiProc":
 
-        os.environ['OMP_NUM_THREADS'] = str(1)
-        numba.set_num_threads(1)
-
         print(f"Executing with {n_threads} workers")
         
-        with concurrent.futures.ProcessPoolExecutor(max_workers=n_threads) as executor:
-            
-            res = []
-            for i in range(n_threads):
-                res.append(executor.submit(ChoreoFindFromDict,params_dict,Workspace_folder))
-                time.sleep(0.01)
+        with threadpoolctl.threadpool_limits(limits=1):
+            with concurrent.futures.ProcessPoolExecutor(max_workers=n_threads) as executor:
+                
+                res = []
+                for i in range(n_threads):
+                    res.append(executor.submit(ChoreoFindFromDict,params_dict,Workspace_folder))
+                    time.sleep(0.01)
 
     elif Exec_Mul_Proc == "MultiThread":
-
-        os.environ['OMP_NUM_THREADS'] = str(n_threads)
-        numba.set_num_threads(n_threads)
-        ChoreoFindFromDict(params_dict, Workspace_folder)
+        
+        with threadpoolctl.threadpool_limits(limits=n_threads):
+            ChoreoFindFromDict(params_dict, Workspace_folder)
 
     else :
 
-        os.environ['OMP_NUM_THREADS'] = str(1)
-
-        ChoreoFindFromDict(params_dict, Workspace_folder)
+        with threadpoolctl.threadpool_limits(limits=1):
+            ChoreoFindFromDict(params_dict, Workspace_folder)
 
 def UpdateHashDict(store_folder, hash_dict):
     # Creates a list of possible duplicates based on value of the action and hashes
