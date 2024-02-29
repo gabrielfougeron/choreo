@@ -120,25 +120,21 @@ def doit(config_name):
     charge = all_kwargs["charge"]
     Sym_list = all_kwargs["Sym_list"]
     
-    
     inter_pow = all_kwargs["inter_pow"]
     inter_pm = all_kwargs["inter_pm"]
     
+    inter_pm = -1
     
-    inter_law = choreo.numba_funs_new.pow_inter_law(-0.3)
-    
-    # if (inter_pow == -1.) and (inter_pm == 1) :
-    #     inter_law = scipy.LowLevelCallable.from_cython(choreo.cython._NBodySyst, "gravity_pot")
-    #     # inter_law = scipy.LowLevelCallable.from_cython(choreo.cython._NBodySyst, "elastic_pot")
-    # else:
-        # raise NotImplementedError
-    
-    
-    
+    if (inter_pow == -1.) and (inter_pm == 1) :
+        inter_law = scipy.LowLevelCallable.from_cython(choreo.cython._NBodySyst, "gravity_pot")
+    else:
+        inter_law = choreo.numba_funs_new.pow_inter_law(inter_pow/2, inter_pm)
+
     
     
     NBS = choreo.cython._NBodySyst.NBodySyst(geodim, nbody, mass, charge, Sym_list, inter_law)
 
+    print(NBS.Validate_inter_law())
     print(NBS.Detect_homo_inter_law())
 
     return

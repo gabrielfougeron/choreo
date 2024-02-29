@@ -83,20 +83,20 @@ try:
 except:
     pass
 
-try:
-
-    import pyfftw
-    pyfftw.interfaces.cache.enable()
-    pyfftw.interfaces.cache.set_keepalive_time(300000)
+# try:
+# 
+#     import pyfftw
+#     pyfftw.interfaces.cache.enable()
+#     pyfftw.interfaces.cache.set_keepalive_time(300000)
     # pyfftw.config.PLANNER_EFFORT = 'FFTW_ESTIMATE'
-    pyfftw.config.PLANNER_EFFORT = 'FFTW_MEASURE'
+    # pyfftw.config.PLANNER_EFFORT = 'FFTW_MEASURE'
     # pyfftw.config.PLANNER_EFFORT = 'FFTW_PATIENT'
     # pyfftw.config.PLANNER_EFFORT = 'FFTW_EXHAUSTIVE'
     
-    all_backends['PYFFTW'] = pyfftw.interfaces.scipy_fft
+    # all_backends['PYFFTW'] = pyfftw.interfaces.scipy_fft
 
-except:
-    pass
+# except:
+#     pass
 
 def setup(n, backend):
     scipy.fft.set_global_backend(
@@ -117,7 +117,7 @@ all_args = {
 }
 
 all_funs = [
-    fft     ,
+    # fft     ,
     rfft    ,
     # dct_I   ,
     # dst_I   ,
@@ -154,7 +154,7 @@ pyquickbench.plot_benchmark(
 
 relative_to_val = {
     'backend' : 'MKL'                   ,
-    pyquickbench.fun_ax_name : "fft"    ,
+    pyquickbench.fun_ax_name : "rfft"    ,
 }
 
 pyquickbench.plot_benchmark(
