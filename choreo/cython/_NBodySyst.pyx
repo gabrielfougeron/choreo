@@ -1023,6 +1023,8 @@ cdef class NBodySyst():
 
     def DetectXlim(self, segmpos):
 
+        assert segmpos.shape[1] == self.segm_store
+
         xmin_segm_np = segmpos.min(axis=1)
         xmax_segm_np = segmpos.max(axis=1)
 
@@ -1066,6 +1068,82 @@ cdef class NBodySyst():
 
         return np.asarray(xmin), np.asarray(xmax)
 
+    @cython.final
+    @cython.cdivision(True)
+    def DetectEscape(self, segmpos, double fac = 2.):
+
+        assert segmpos.shape[1] == self.segm_store 
+
+        cdef double[:,::1] xmin_segm = segmpos.min(axis=1)
+        cdef double[:,::1] xmax_segm = segmpos.max(axis=1)
+
+        cdef double[:,::1] xmin_body = np.full((self.nbody, self.geodim),  np.inf, dtype=np.float64)
+        cdef double[:,::1] xmax_body = np.full((self.nbody, self.geodim), -np.inf, dtype=np.float64)
+        cdef double[:,::1] xmid_body = np.empty((self.nbody, self.geodim), dtype=np.float64)
+        cdef double[::1] size_body = np.empty((self.nbody), dtype=np.float64)
+
+        cdef double[::1] x
+
+        cdef Py_ssize_t ib, ibp, iint, idim
+        cdef long isegm
+
+        cdef double dist, size, dx
+
+        for ib in range(self.nbody):
+            for iint in range(self.nint_min):
+
+                Sym = self.intersegm_to_all[ib][iint]
+                isegm = self._bodysegm[ib, iint]
+
+                x = np.matmul(Sym.SpaceRot, xmin_segm[isegm,:])
+
+                for idim in range(self.geodim):
+                    if x[idim] < xmin_body[ib,idim]:
+                        xmin_body[ib,idim] = x[idim]
+                    if x[idim] > xmax_body[ib,idim]:
+                        xmax_body[ib,idim] = x[idim]
+
+                x = np.matmul(Sym.SpaceRot, xmax_segm[isegm,:])
+
+                for idim in range(self.geodim):
+                    if x[idim] < xmin_body[ib,idim]:
+                        xmin_body[ib,idim] = x[idim]
+                    if x[idim] > xmax_body[ib,idim]:
+                        xmax_body[ib,idim] = x[idim]
+
+            for idim in range(self.geodim):
+                xmid_body[ib, idim] = (xmax_body[ib,idim] + xmin_body[ib,idim]) / 2
+
+            size = 0
+            for idim in range(self.geodim):
+                dx = xmax_body[ib,idim] - xmin_body[ib,idim] 
+                size += dx*dx
+            size_body[ib] = csqrt(size)
+
+        BodyGraph = networkx.Graph()
+        for ib in range(self.nbody):
+            BodyGraph.add_node(ib)
+
+        for ib in range(self.nbody):
+            for ibp in range(ib+1,self.nbody):
+
+                dist = 0
+                for idim in range(self.geodim):
+                    dx = xmid_body[ib,idim] - xmid_body[ibp,idim] 
+                    dist += dx*dx
+                dist = csqrt(dist)
+
+                if (dist < fac * (size_body[ib] + size_body[ibp])):
+
+                    BodyGraph.add_edge(ib,ibp)
+
+        CC = networkx.connected_components(BodyGraph)
+        
+        cdef long the_len = 0
+        for _ in CC:
+            the_len += 1
+
+        return the_len > 1
 
     def plot_segmpos_2D(self, segmpos, filename, fig_size=(10,10), dpi=100, color=None, color_list=None, xlim=None, extend=0.03,CloseLoop=True):
         r"""

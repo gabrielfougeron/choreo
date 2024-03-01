@@ -326,8 +326,7 @@ def Find_Choreo(
             
             if (GoOn and Check_Escape):
                 
-                Escaped = False
-                # Escaped,_ = NBS.Detect_Escape(best_sol.x)
+                Escaped = NBS.DetectEscape(segmpos)
 
                 if Escaped:
                     print('One loop escaped. Starting over.')    
