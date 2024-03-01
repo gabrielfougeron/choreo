@@ -1137,13 +1137,7 @@ cdef class NBodySyst():
 
                     BodyGraph.add_edge(ib,ibp)
 
-        CC = networkx.connected_components(BodyGraph)
-        
-        cdef long the_len = 0
-        for _ in CC:
-            the_len += 1
-
-        return the_len > 1
+        return not(networkx.is_connected(BodyGraph))
 
     def plot_segmpos_2D(self, segmpos, filename, fig_size=(10,10), dpi=100, color=None, color_list=None, xlim=None, extend=0.03, CloseLoop=True):
         r"""
