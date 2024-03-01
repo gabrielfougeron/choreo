@@ -1145,7 +1145,7 @@ cdef class NBodySyst():
 
         return the_len > 1
 
-    def plot_segmpos_2D(self, segmpos, filename, fig_size=(10,10), dpi=100, color=None, color_list=None, xlim=None, extend=0.03,CloseLoop=True):
+    def plot_segmpos_2D(self, segmpos, filename, fig_size=(10,10), dpi=100, color=None, color_list=None, xlim=None, extend=0.03, CloseLoop=True):
         r"""
         Plots 2D trajectories with one color per body and saves image in file
         """
