@@ -74,6 +74,7 @@ def Find_Choreo(
     duplicate_eps,
     Save_SegmPos,
     img_size,
+    thumb_size,
     color,
     color_list,
 ):
@@ -96,18 +97,28 @@ def Find_Choreo(
 
     NBS.nint_fac = nint_fac_init
 
-#     print('')
-# 
-#     print('Imposed constraints lead to the detection of:')
-#     print(f'    {NBS.nloop:d} independant loops')
-#     print(f'    {NBS.nsegm:d} independant integration segments')
-#     print(f'    {nbi_tot:d} binary interactions')
-#     print(f'    ==> Reduction of {100*(1-nbi_tot/nbi_naive):.2f} % wrt the {nbi_naive:d} naive binary iteractions')
-#     print('')
+    print('')
+    
+    nparam_nosym = NBS.geodim * NBS.nint * NBS.nbody
+    nparam_tot = NBS.nparams_incl_o
+
+    print('Imposed constraints lead to the detection of:')
+    print(f'    {NBS.nloop:d} independant loops')
+    print(f'    {NBS.nint_min:d} integration segments')
+    print(f'    {NBS.nsegm:d} independant generating segments')
+    print(f'    {NBS.nbin_segm_unique:d} binary interactions between segments')
+    print()
+    print(f'The number of free parameters is reduced by a factor of {nparam_nosym / nparam_tot}')
+    print(f'The number of independant interactions is reduced by a factor of {NBS.nbin_segm_tot  / NBS.nbin_segm_unique}')
+    print(f'The number of independant segments is reduced by a factor of {(nbody * NBS.nint_min) / NBS.nsegm}')
+    print()
+    print('Starting search')
+    print()
 
     x_min, x_max = NBS.Make_params_bounds(coeff_ampl_o, k_infl, k_max, coeff_ampl_min)
     x_ptp = x_max - x_min
-
+    
+    del x_max
 
 #     if not(SkipCheckRandomMinDist):
 # 
@@ -195,19 +206,16 @@ def Find_Choreo(
 
             print(f'Saving initial state as {filename_output}.*.')
 
-
             NBS.Write_Descriptor(x, segmpos, filename_output+'.json')
 
             if Save_img :
-                pass
-                # ActionSyst.plot_all_2D(x,nint_plot_img,filename_output+'.png',fig_size=img_size,color=color,color_list=color_list)        
+                NBS.plot_segmpos_2D(segmpos, filename_output+'.png', fig_size=img_size, color=color, color_list=color_list)     
 
             if Save_thumb :
-                pass
-                # ActionSyst.plot_all_2D(x,nint_plot_img,filename_output+'_thumb.png',fig_size=thumb_size,color=color,color_list=color_list)        
+                NBS.plot_segmpos_2D(segmpos, filename_output+'_thumb.png', fig_size=thumb_size, color=color, color_list=color_list)     
                 
-            if Save_anim :
-                pass
+            # if Save_anim :
+                # pass
                 # ActionSyst.plot_all_2D_anim(x,nint_plot_anim,filename_output+'.mp4',nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size,dnint=dnint,color_list=color_list,color=color)
             
 #             if Save_Newton_Error :
@@ -419,11 +427,10 @@ def Find_Choreo(
                     NBS.Write_Descriptor(best_sol.x ,segmpos ,filename = filename_output+'.json', Gradaction=f_fine_norm, Hash_Action=Hash_Action, extend=plot_extend)
 
                     if Save_img :
-
                         NBS.plot_segmpos_2D(segmpos, filename_output+'.png', fig_size=img_size, color=color, color_list=color_list)
-                    # 
-                    # if Save_thumb :
-                    #     ActionSyst.plot_all_2D(best_sol.x,nint_plot_img,filename_output+'_thumb.png',fig_size=thumb_size,color=color,color_list=color_list)
+                    
+                    if Save_thumb :
+                        NBS.plot_segmpos_2D(segmpos, filename_output+'_thumb.png', fig_size=thumb_size, color=color, color_list=color_list)     
                         
 #                     if Save_anim :
 #                         ActionSyst.plot_all_2D_anim(best_sol.x,nint_plot_anim,filename_output+'.mp4',nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size,dnint=dnint,color_list=color_list,color=color)
