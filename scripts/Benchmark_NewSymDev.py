@@ -14,21 +14,21 @@ import json
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy
-# import mkl_fft
-# scipy.fft.set_global_backend(
-#     backend = mkl_fft._scipy_fft_backend   ,
-#     only = True
-# )
+
 import choreo 
 
 if ("--no-show" in sys.argv):
     plt.show = (lambda : None)
 
-def params_to_pot_nrg_grad(NBS, params_buf):
-    NBS.params_to_pot_nrg_grad(params_buf)
+def params_to_action_grad(NBS, params_buf, segmpos):
+    NBS.params_to_action_grad(params_buf)
+    
+def segmpos_params_to_action_grad(NBS, params_buf, segmpos):
+    NBS.segmpos_params_to_action_grad(segmpos, params_buf)
 
 all_funs = [
-    params_to_pot_nrg_grad       ,
+    params_to_action_grad       ,
+    segmpos_params_to_action_grad       ,
 ]
 
 def setup(test_name, nint_fac):
@@ -54,8 +54,10 @@ def setup(test_name, nint_fac):
     NBS.nint_fac = nint_fac
         
     params_buf = np.random.random((NBS.nparams))
+    
+    segmpos = NBS.params_to_segmpos(params_buf)
 
-    return {"NBS":NBS, "params_buf":params_buf}
+    return {"NBS":NBS, "params_buf":params_buf, "segmpos": segmpos}
         
 
         
@@ -97,7 +99,7 @@ all_tests = [
     # '6Ck5',
     # '6Dk5',
     # '5Dq',
-    '2C3C5C',
+    # '2C3C5C',
     # '3C_3dim',
     # '2D1_3dim',
     # '3C',
@@ -109,6 +111,7 @@ all_tests = [
     # "3C29k",
     # "3C37k",
     # '3C101k',
+    '20B',
 ]
 
 min_exp = 3
@@ -152,7 +155,7 @@ plot_intent = {
 
 relative_to_val_list = [
     None    ,
-    # {pyquickbench.fun_ax_name : 'params_to_pot_nrg_grad'},
+    {pyquickbench.fun_ax_name : 'segmpos_params_to_action_grad'},
 ]
 
 for relative_to_val in relative_to_val_list:
