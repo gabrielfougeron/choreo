@@ -132,7 +132,7 @@ all_timings_1 = pyquickbench.run_benchmark(
     setup = setup           ,
     filename = filename     ,
     ShowProgress = True     ,
-    time_per_test = 2.     ,
+    # time_per_test = 2.     ,
     n_repeat = n_repeat     ,
     MonotonicAxes = MonotonicAxes,
     # ForceBenchmark = True,
@@ -148,10 +148,11 @@ all_timings_2 = pyquickbench.run_benchmark(
     setup = setup           ,
     filename = filename     ,
     ShowProgress = True     ,
-    time_per_test = 2.     ,
+    # time_per_test = 2.     ,
     n_repeat = n_repeat     ,
     MonotonicAxes = MonotonicAxes,
     # ForceBenchmark = True,
+    PreventBenchmark = True,
 )
 
 # print(all_timings_1.shape)
