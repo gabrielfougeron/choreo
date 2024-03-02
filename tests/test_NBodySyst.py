@@ -210,6 +210,7 @@ def test_kin(AllNBS, float64_tols):
         )
         
         assert err.min() < float64_tols.rtol
+        print()
         
 def test_pot(AllNBS):
     
@@ -234,6 +235,7 @@ def test_pot(AllNBS):
             vectorize=False         ,
         )
 
+        print(err.min())
         assert (err.min() <  1e-7)
         
         err = choreo.scipy_plus.test.compare_FD_and_exact_grad(
@@ -246,7 +248,9 @@ def test_pot(AllNBS):
             vectorize=False             ,
         )
 
+        print(err.min())
         assert (err.min() <  1e-7)
+        print()
         
 def test_action(AllNBS):
     
@@ -271,6 +275,7 @@ def test_action(AllNBS):
             vectorize=False         ,
         )
 
+        print(err.min())
         assert (err.min() <  1e-7)
         
         err = choreo.scipy_plus.test.compare_FD_and_exact_grad(
@@ -283,7 +288,10 @@ def test_action(AllNBS):
             vectorize=False             ,
         )
 
+        print(err.min())
         assert (err.min() <  1e-7)
+        
+        print()
     
 def test_resize(AllNBS, float64_tols):
     
@@ -315,6 +323,7 @@ def test_resize(AllNBS, float64_tols):
         
         assert np.allclose(segmpos_long, segmpos_long_noopt, rtol = float64_tols.rtol, atol = float64_tols.atol) 
         
+        print(np.linalg.norm(segmpos[:,:small_segm_size,:] - segmpos_long[:,:long_segm_size:fac,:]))
         assert np.allclose(segmpos[:,:small_segm_size,:], segmpos_long[:,:long_segm_size:fac,:], rtol = float64_tols.rtol, atol = float64_tols.atol) 
         
 @ProbabilisticTest()
