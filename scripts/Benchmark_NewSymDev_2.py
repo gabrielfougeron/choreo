@@ -76,7 +76,7 @@ all_tests = [
     # '4D3k',
     # '4C',
     # '4D',
-    '3C',
+    # '3C',
     # '3D',
     # '3D1',
     # '3C2k',
@@ -106,12 +106,13 @@ all_tests = [
     # "3C29k",
     # "3C37k",
     # '3C101k',
+    "20B",
 ]
 
-min_exp = 5
-max_exp = 15
+min_exp = 10
+max_exp = 20
 
-n_repeat = 100
+n_repeat = 10
 
 MonotonicAxes = ["nint_fac"]
 
@@ -126,17 +127,32 @@ timings_folder = os.path.join(__PROJECT_ROOT__,'examples','generated_files_time_
 basename = 'NewSymDev_timing_1'
 filename = os.path.join(timings_folder,basename+'.npz')
 
+
+# scipy.fft.set_global_backend(
+#     backend =  'scipy'   ,
+#     only = True
+# )
+
 all_timings_1 = pyquickbench.run_benchmark(
     all_args                ,
     all_funs                ,
     setup = setup           ,
     filename = filename     ,
     ShowProgress = True     ,
-    time_per_test = 2.     ,
+    # time_per_test = 2.     ,
     n_repeat = n_repeat     ,
     MonotonicAxes = MonotonicAxes,
-    # ForceBenchmark = True,
+    ForceBenchmark = True,
+    # PreventBenchmark = True,
 )
+
+
+# import mkl_fft
+# 
+# scipy.fft.set_global_backend(
+#     backend =  mkl_fft._scipy_fft_backend   ,
+#     only = True
+# )
 
 
 basename = 'NewSymDev_timing_2'
@@ -148,10 +164,11 @@ all_timings_2 = pyquickbench.run_benchmark(
     setup = setup           ,
     filename = filename     ,
     ShowProgress = True     ,
-    time_per_test = 2.     ,
+    # time_per_test = 2.     ,
     n_repeat = n_repeat     ,
     MonotonicAxes = MonotonicAxes,
-    # ForceBenchmark = True,
+    ForceBenchmark = True,
+    # PreventBenchmark = True,
 )
 
 # print(all_timings_1.shape)
