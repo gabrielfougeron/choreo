@@ -15,13 +15,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy
 
-import mkl_fft
-scipy.fft.set_global_backend(
-    backend = mkl_fft._scipy_fft_backend   ,
-    only = True
-)
-
-
 import choreo 
 
 
@@ -115,10 +108,10 @@ all_tests = [
     # '3C101k',
 ]
 
-min_exp = 5
-max_exp = 10
+min_exp = 10
+max_exp = 20
 
-n_repeat = 1000
+n_repeat = 100
 
 MonotonicAxes = ["nint_fac"]
 
@@ -142,7 +135,7 @@ all_timings_1 = pyquickbench.run_benchmark(
     time_per_test = 2.     ,
     n_repeat = n_repeat     ,
     MonotonicAxes = MonotonicAxes,
-    ForceBenchmark = True,
+    # ForceBenchmark = True,
 )
 
 
@@ -158,7 +151,7 @@ all_timings_2 = pyquickbench.run_benchmark(
     time_per_test = 2.     ,
     n_repeat = n_repeat     ,
     MonotonicAxes = MonotonicAxes,
-    ForceBenchmark = True,
+    # ForceBenchmark = True,
 )
 
 # print(all_timings_1.shape)
@@ -172,14 +165,14 @@ plot_intent = {
     "test_name" : 'subplot_grid_y'                  ,
     "nint_fac" : 'points'                           ,
     pyquickbench.fun_ax_name :  'curve_color'       ,
-    pyquickbench.repeat_ax_name :  'reduction_avg'  ,
-    # pyquickbench.repeat_ax_name :  'reduction_min'  ,
+    # pyquickbench.repeat_ax_name :  'reduction_avg'  ,
+    pyquickbench.repeat_ax_name :  'reduction_min'  ,
     # pyquickbench.repeat_ax_name :  'same'  ,
 }
 
 relative_to_val_list = [
     None    ,
-    {pyquickbench.fun_ax_name : 'fftpack'},
+    {pyquickbench.fun_ax_name : '1'},
 ]
 
 for relative_to_val in relative_to_val_list:
@@ -187,7 +180,7 @@ for relative_to_val in relative_to_val_list:
     pyquickbench.plot_benchmark(
         all_timings                             ,
         all_args                                ,
-        all_fun_names = ["fftpack", "mkl"]                      ,
+        all_fun_names = ["1", "2"]                      ,
         plot_intent = plot_intent               ,
         show = True                             ,
         relative_to_val = relative_to_val       ,
