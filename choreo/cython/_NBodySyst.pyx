@@ -3807,31 +3807,30 @@ cdef void segm_pos_to_hash(
             for iint in range(segm_size):
 
                 a = pos[0] - posp[0]
+                dx2 = a*a
                 pos += 1
                 posp += 1
-                dx2 = a*a
                 for idim in range(1,geodim):
                     a = pos[0] - posp[0]
+                    dx2 += a*a
                     pos += 1
                     posp += 1
-                    dx2 += a*a
 
                 for iexp in range(nexp):
                     hash_tmp[iexp] += cpow(dx2, Hash_exp[iexp])
-
 
         else:
             
             # First iteration
             a = pos[0] - posp[0]
+            dx2 = a*a
             pos += 1
             posp += 1
-            dx2 = a*a
             for idim in range(1,geodim):
                 a = pos[0] - posp[0]
+                dx2 += a*a
                 pos += 1
                 posp += 1
-                dx2 += a*a
 
             for iexp in range(nexp):
                 hash_tmp[iexp] += 0.5 * cpow(dx2, Hash_exp[iexp])
@@ -3839,28 +3838,28 @@ cdef void segm_pos_to_hash(
             for iint in range(1,segm_size):
 
                 a = pos[0] - posp[0]
+                dx2 = a*a
                 pos += 1
                 posp += 1
-                dx2 = a*a
                 for idim in range(1,geodim):
                     a = pos[0] - posp[0]
+                    dx2 += a*a
                     pos += 1
                     posp += 1
-                    dx2 += a*a
 
                 for iexp in range(nexp):
                     hash_tmp[iexp] += cpow(dx2, Hash_exp[iexp])
 
             # Last iteration
             a = pos[0] - posp[0]
+            dx2 = a*a
             pos += 1
             posp += 1
-            dx2 = a*a
             for idim in range(1,geodim):
                 a = pos[0] - posp[0]
+                dx2 += a*a
                 pos += 1
                 posp += 1
-                dx2 += a*a
 
             for iexp in range(nexp):
                 hash_tmp[iexp] += 0.5 * cpow(dx2, Hash_exp[iexp])
@@ -3928,14 +3927,14 @@ cdef double segm_pos_to_pot_nrg(
             for iint in range(segm_size):
 
                 a = pos[0] - posp[0]
+                dx2 = a*a
                 pos += 1
                 posp += 1
-                dx2 = a*a
                 for idim in range(1,geodim):
                     a = pos[0] - posp[0]
+                    dx2 += a*a
                     pos += 1
                     posp += 1
-                    dx2 += a*a
 
                 inter_law(dx2, pot)
 
@@ -3945,14 +3944,14 @@ cdef double segm_pos_to_pot_nrg(
             
             # First iteration
             a = pos[0] - posp[0]
+            dx2 = a*a
             pos += 1
             posp += 1
-            dx2 = a*a
             for idim in range(1,geodim):
                 a = pos[0] - posp[0]
+                dx2 += a*a
                 pos += 1
                 posp += 1
-                dx2 += a*a
 
             inter_law(dx2, pot)
 
@@ -3961,14 +3960,14 @@ cdef double segm_pos_to_pot_nrg(
             for iint in range(1,segm_size):
 
                 a = pos[0] - posp[0]
+                dx2 = a*a
                 pos += 1
                 posp += 1
-                dx2 = a*a
                 for idim in range(1,geodim):
                     a = pos[0] - posp[0]
+                    dx2 += a*a
                     pos += 1
                     posp += 1
-                    dx2 += a*a
 
                 inter_law(dx2, pot)
 
@@ -3976,14 +3975,15 @@ cdef double segm_pos_to_pot_nrg(
 
             # Last iteration
             a = pos[0] - posp[0]
+            dx2 = a*a
             pos += 1
             posp += 1
-            dx2 = a*a
             for idim in range(1,geodim):
                 a = pos[0] - posp[0]
+                dx2 += a*a
                 pos += 1
                 posp += 1
-                dx2 += a*a
+
 
             inter_law(dx2, pot)
 
@@ -4019,7 +4019,7 @@ cdef void segm_pos_to_pot_nrg_grad(
 
     cdef bint size_is_store = (segm_size == segm_store) # because nnpr was not given
 
-    cdef double dx2, a, b
+    cdef double dx2
     cdef double bin_fac
     cdef double* dx = <double*> malloc(sizeof(double)*geodim)
 
@@ -4062,85 +4062,73 @@ cdef void segm_pos_to_pot_nrg_grad(
             for iint in range(segm_size):
 
                 dx[0] = pos[0] - posp[0]
+                dx2 = dx[0]*dx[0]
                 pos += 1
                 posp += 1
-                dx2 = dx[0]*dx[0]
                 for idim in range(1,geodim):
                     dx[idim] = pos[0] - posp[0]
+                    dx2 += dx[idim]*dx[idim]
                     pos += 1
                     posp += 1
-                    dx2 += dx[idim]*dx[idim]
 
                 inter_law(dx2, pot)
 
-                a = pot[1]
-
                 for idim in range(geodim):
-                    b = a*dx[idim]
-                    grad[0] += b
+                    grad[0] += pot[1]*dx[idim]
                     grad += 1
 
         else:
             
             # First iteration
             dx[0] = pos[0] - posp[0]
+            dx2 = dx[0]*dx[0]
             pos += 1
             posp += 1
-            dx2 = dx[0]*dx[0]
             for idim in range(1,geodim):
                 dx[idim] = pos[0] - posp[0]
+                dx2 += dx[idim]*dx[idim]
                 pos += 1
                 posp += 1
-                dx2 += dx[idim]*dx[idim]
 
             inter_law(dx2, pot)
 
-            a = 0.5*pot[1]
-
             for idim in range(geodim):
-                b = a*dx[idim]
-                grad[0] += b
+                grad[0] += 0.5*pot[1]*dx[idim]
                 grad += 1
 
             for iint in range(1,segm_size):
 
                 dx[0] = pos[0] - posp[0]
+                dx2 = dx[0]*dx[0]
                 pos += 1
                 posp += 1
-                dx2 = dx[0]*dx[0]
                 for idim in range(1,geodim):
                     dx[idim] = pos[0] - posp[0]
+                    dx2 += dx[idim]*dx[idim]
                     pos += 1
                     posp += 1
-                    dx2 += dx[idim]*dx[idim]
 
                 inter_law(dx2, pot)
 
-                a = pot[1]
-
                 for idim in range(geodim):
-                    b = a*dx[idim]
-                    grad[0] += b
+                    grad[0] += pot[1]*dx[idim]
                     grad += 1
 
             # Last iteration
             dx[0] = pos[0] - posp[0]
+            dx2 = dx[0]*dx[0]
             pos += 1
             posp += 1
-            dx2 = dx[0]*dx[0]
             for idim in range(1,geodim):
                 dx[idim] = pos[0] - posp[0]
+                dx2 += dx[idim]*dx[idim]
                 pos += 1
                 posp += 1
-                dx2 += dx[idim]*dx[idim]
 
             inter_law(dx2, pot)
 
-            a = 0.5*pot[1]
-
             for idim in range(geodim):
-                b = a*dx[idim]
-                grad[0] += b
+                grad[0] += 0.5*pot[1]*dx[idim]
                 grad += 1
 
         bin_fac = 2*BinProdChargeSum[ibin]*globalmul
@@ -4182,7 +4170,7 @@ cdef void segm_pos_to_pot_nrg_hess(
 
     cdef double[3] pot
 
-    cdef double dx2, dxtddx, a, b, ddf
+    cdef double dx2, dxtddx, a, b
     cdef double bin_fac
     cdef double* dx = <double*> malloc(sizeof(double)*geodim)
     cdef double* ddx = <double*> malloc(sizeof(double)*geodim)
@@ -4234,23 +4222,25 @@ cdef void segm_pos_to_pot_nrg_hess(
             for iint in range(segm_size):
 
                 dx[0] = pos[0] - posp[0]
+                dx2 = dx[0]*dx[0]
                 pos += 1
                 posp += 1
-                dx2 = dx[0]*dx[0]
+
                 ddx[0] = dpos[0] - dposp[0]
+                dxtddx = dx[0]*ddx[0]
                 dpos += 1
                 dposp += 1
-                dxtddx = dx[0]*ddx[0]
 
                 for idim in range(1,geodim):
                     dx[idim] = pos[0] - posp[0]
+                    dx2 += dx[idim]*dx[idim]
                     pos += 1
                     posp += 1
-                    dx2 += dx[idim]*dx[idim]
+
                     ddx[idim] = dpos[0] - dposp[0]
+                    dxtddx += dx[idim]*ddx[idim]
                     dpos += 1
                     dposp += 1
-                    dxtddx += dx[idim]*ddx[idim]
 
                 inter_law(dx2, pot)
 
@@ -4258,31 +4248,32 @@ cdef void segm_pos_to_pot_nrg_hess(
                 b = 2*pot[2]*dxtddx
 
                 for idim in range(geodim):
-                    ddf = b*dx[idim]+a*ddx[idim]
-                    hess[0] += ddf
+                    hess[0] += b*dx[idim]+a*ddx[idim]
                     hess += 1
 
         else:
 
             # First iteration
             dx[0] = pos[0] - posp[0]
+            dx2 = dx[0]*dx[0]
             pos += 1
             posp += 1
-            dx2 = dx[0]*dx[0]
+
             ddx[0] = dpos[0] - dposp[0]
+            dxtddx = dx[0]*ddx[0]
             dpos += 1
             dposp += 1
-            dxtddx = dx[0]*ddx[0]
 
             for idim in range(1,geodim):
                 dx[idim] = pos[0] - posp[0]
+                dx2 += dx[idim]*dx[idim]
                 pos += 1
                 posp += 1
-                dx2 += dx[idim]*dx[idim]
+
                 ddx[idim] = dpos[0] - dposp[0]
+                dxtddx += dx[idim]*ddx[idim]
                 dpos += 1
                 dposp += 1
-                dxtddx += dx[idim]*ddx[idim]
 
             inter_law(dx2, pot)
 
@@ -4290,30 +4281,31 @@ cdef void segm_pos_to_pot_nrg_hess(
             b = pot[2]*dxtddx
 
             for idim in range(geodim):
-                ddf = b*dx[idim]+a*ddx[idim]
-                hess[0] += ddf
+                hess[0] += b*dx[idim]+a*ddx[idim]
                 hess += 1
 
             for iint in range(1,segm_size):
 
                 dx[0] = pos[0] - posp[0]
+                dx2 = dx[0]*dx[0]
                 pos += 1
                 posp += 1
-                dx2 = dx[0]*dx[0]
+
                 ddx[0] = dpos[0] - dposp[0]
+                dxtddx = dx[0]*ddx[0]
                 dpos += 1
                 dposp += 1
-                dxtddx = dx[0]*ddx[0]
 
                 for idim in range(1,geodim):
                     dx[idim] = pos[0] - posp[0]
+                    dx2 += dx[idim]*dx[idim]
                     pos += 1
                     posp += 1
-                    dx2 += dx[idim]*dx[idim]
+
                     ddx[idim] = dpos[0] - dposp[0]
+                    dxtddx += dx[idim]*ddx[idim]
                     dpos += 1
                     dposp += 1
-                    dxtddx += dx[idim]*ddx[idim]
 
                 inter_law(dx2, pot)
 
@@ -4321,29 +4313,30 @@ cdef void segm_pos_to_pot_nrg_hess(
                 b = 2*pot[2]*dxtddx
 
                 for idim in range(geodim):
-                    ddf = b*dx[idim]+a*ddx[idim]
-                    hess[0] += ddf
+                    hess[0] += b*dx[idim]+a*ddx[idim]
                     hess += 1
 
             # Last iteration
             dx[0] = pos[0] - posp[0]
+            dx2 = dx[0]*dx[0]
             pos += 1
             posp += 1
-            dx2 = dx[0]*dx[0]
+
             ddx[0] = dpos[0] - dposp[0]
+            dxtddx = dx[0]*ddx[0]
             dpos += 1
             dposp += 1
-            dxtddx = dx[0]*ddx[0]
 
             for idim in range(1,geodim):
                 dx[idim] = pos[0] - posp[0]
+                dx2 += dx[idim]*dx[idim]
                 pos += 1
                 posp += 1
-                dx2 += dx[idim]*dx[idim]
+
                 ddx[idim] = dpos[0] - dposp[0]
+                dxtddx += dx[idim]*ddx[idim]
                 dpos += 1
                 dposp += 1
-                dxtddx += dx[idim]*ddx[idim]
 
             inter_law(dx2, pot)
 
@@ -4351,8 +4344,7 @@ cdef void segm_pos_to_pot_nrg_hess(
             b = pot[2]*dxtddx
 
             for idim in range(geodim):
-                ddf = b*dx[idim]+a*ddx[idim]
-                hess[0] += ddf
+                hess[0] += b*dx[idim]+a*ddx[idim]
                 hess += 1
 
         bin_fac = 2*BinProdChargeSum[ibin]*globalmul

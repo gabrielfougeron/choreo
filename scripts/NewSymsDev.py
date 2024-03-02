@@ -134,7 +134,20 @@ def doit(config_name):
     
     NBS = choreo.cython._NBodySyst.NBodySyst(geodim, nbody, mass, charge, Sym_list, inter_law)
 
-    print(NBS.BinTimeRev)
+    for isegm in range(NBS.nsegm):
+        
+        if NBS.InterTimeRev[isegm] > 0:
+            if NBS.InterSpaceRotIsId[isegm]:
+                print(isegm,'a')
+            else:
+                print(isegm,'b')
+        else:
+            if NBS.InterSpaceRotIsId[isegm]:
+                print(isegm,'c')
+            else:
+                print(isegm,'d')
+        
+        
     
     # assert (NBS.BinTimeRev == 1).all()
 
