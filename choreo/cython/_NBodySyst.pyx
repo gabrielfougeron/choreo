@@ -182,11 +182,6 @@ cdef class NBodySyst():
     def BinTargetSegm(self):
         return np.asarray(self._BinTargetSegm)
         
-    cdef long[::1] _BinTimeRev
-    @property
-    def BinTimeRev(self):
-        return np.asarray(self._BinTimeRev)
-        
     cdef double[:,:,::1] _BinSpaceRot
     @property
     def BinSpaceRot(self):
@@ -398,7 +393,11 @@ cdef class NBodySyst():
         BinarySegm, Identity_detected = FindAllBinarySegments(self.intersegm_to_all, nbody, self.nsegm, self.nint_min, self._bodysegm, CrashOnIdentity, bodycharge)
         self.All_BinSegmTransformId, self.nbin_segm_tot, self.nbin_segm_unique = CountSegmentBinaryInteractions(BinarySegm, self.nsegm)
 
-        self._BinSourceSegm, self._BinTargetSegm, self._BinTimeRev, self._BinSpaceRot, self._BinProdChargeSum = ReorganizeBinarySegments(BinarySegm)
+        self._BinSourceSegm, self._BinTargetSegm, BinTimeRev, self._BinSpaceRot, self._BinProdChargeSum = ReorganizeBinarySegments(BinarySegm)
+
+        # Trying to remove this in this branch
+        assert (np.asarray(BinTimeRev) == 1).all()
+
         assert self._BinSourceSegm.shape[0] == self.nbin_segm_unique
         self._BinSpaceRotIsId = np.zeros((self.nbin_segm_unique), dtype=np.intc)
         for ibin in range(self.nbin_segm_unique):
@@ -1558,7 +1557,7 @@ cdef class NBodySyst():
             segm_pos_to_hash(
                 segmpos                 ,
                 self._BinSourceSegm     , self._BinTargetSegm   ,
-                self._BinTimeRev        , self._BinSpaceRot     , self._BinSpaceRotIsId ,
+                self._BinSpaceRot       , self._BinSpaceRotIsId ,
                 self._BinProdChargeSum  ,
                 self.segm_size          , self.segm_store       ,
                 self._Hash_exp          , Hash                  ,   
@@ -1578,7 +1577,7 @@ cdef class NBodySyst():
             segm_pos_to_hash(
                 segmpos                 ,
                 self._BinSourceSegm     , self._BinTargetSegm   ,
-                self._BinTimeRev        , self._BinSpaceRot     , self._BinSpaceRotIsId ,
+                self._BinSpaceRot       , self._BinSpaceRotIsId ,
                 self._BinProdChargeSum  ,
                 self.segm_size          , self.segm_store       ,
                 self._Hash_exp          , Hash                  ,   
@@ -1614,7 +1613,7 @@ cdef class NBodySyst():
             pot_nrg = segm_pos_to_pot_nrg(
                 segmpos                 ,
                 self._BinSourceSegm     , self._BinTargetSegm   ,
-                self._BinTimeRev        , self._BinSpaceRot     , self._BinSpaceRotIsId ,
+                self._BinSpaceRot       , self._BinSpaceRotIsId ,
                 self._BinProdChargeSum  ,
                 self.segm_size          , self.segm_store       ,
                 self._inter_law         ,
@@ -1651,7 +1650,7 @@ cdef class NBodySyst():
             segm_pos_to_pot_nrg_grad(
                 segmpos                 , pot_nrg_grad          ,
                 self._BinSourceSegm     , self._BinTargetSegm   ,
-                self._BinTimeRev        , self._BinSpaceRot     , self._BinSpaceRotIsId ,
+                self._BinSpaceRot       , self._BinSpaceRotIsId ,
                 self._BinProdChargeSum  ,
                 self.segm_size          , self.segm_store       , 1.                    ,
                 self._inter_law         ,
@@ -1720,7 +1719,7 @@ cdef class NBodySyst():
             segm_pos_to_pot_nrg_hess(
                 segmpos                 , dsegmpos                  , pot_nrg_hess              ,
                 self._BinSourceSegm     , self._BinTargetSegm       ,
-                self._BinTimeRev        , self._BinSpaceRot         , self._BinSpaceRotIsId     ,
+                self._BinSpaceRot       , self._BinSpaceRotIsId     ,
                 self._BinProdChargeSum  ,
                 self.segm_size          , self.segm_store           , 1.                        ,
                 self._inter_law         ,
@@ -1776,7 +1775,7 @@ cdef class NBodySyst():
             action -= segm_pos_to_pot_nrg(
                 segmpos                 ,
                 self._BinSourceSegm     , self._BinTargetSegm   ,
-                self._BinTimeRev        , self._BinSpaceRot     , self._BinSpaceRotIsId ,
+                self._BinSpaceRot       , self._BinSpaceRotIsId ,
                 self._BinProdChargeSum  ,
                 self.segm_size          , self.segm_store       ,
                 self._inter_law         ,
@@ -1814,7 +1813,7 @@ cdef class NBodySyst():
             segm_pos_to_pot_nrg_grad(
                 segmpos                 , pot_nrg_grad          ,
                 self._BinSourceSegm     , self._BinTargetSegm   ,
-                self._BinTimeRev        , self._BinSpaceRot     , self._BinSpaceRotIsId ,
+                self._BinSpaceRot       , self._BinSpaceRotIsId ,
                 self._BinProdChargeSum  ,
                 self.segm_size          , self.segm_store       , -1.                   ,
                 self._inter_law         ,
@@ -1890,7 +1889,7 @@ cdef class NBodySyst():
             segm_pos_to_pot_nrg_hess(
                 segmpos                 , dsegmpos                  , pot_nrg_hess              ,
                 self._BinSourceSegm     , self._BinTargetSegm       ,
-                self._BinTimeRev        , self._BinSpaceRot         , self._BinSpaceRotIsId     ,
+                self._BinSpaceRot       , self._BinSpaceRotIsId     ,
                 self._BinProdChargeSum  ,
                 self.segm_size          , self.segm_store           , -1.                       ,
                 self._inter_law         ,
@@ -1953,7 +1952,7 @@ cdef class NBodySyst():
             action -= segm_pos_to_pot_nrg(
                 segmpos                 ,
                 self._BinSourceSegm     , self._BinTargetSegm   ,
-                self._BinTimeRev        , self._BinSpaceRot     , self._BinSpaceRotIsId ,
+                self._BinSpaceRot       , self._BinSpaceRotIsId ,
                 self._BinProdChargeSum  ,
                 self.segm_size          , self.segm_store       ,
                 self._inter_law         ,
@@ -1975,7 +1974,7 @@ cdef class NBodySyst():
             segm_pos_to_pot_nrg_grad(
                 segmpos                 , pot_nrg_grad          ,
                 self._BinSourceSegm     , self._BinTargetSegm   ,
-                self._BinTimeRev        , self._BinSpaceRot     , self._BinSpaceRotIsId ,
+                self._BinSpaceRot       , self._BinSpaceRotIsId ,
                 self._BinProdChargeSum  ,
                 self.segm_size          , self.segm_store       , -1.                   ,
                 self._inter_law         ,
@@ -2035,7 +2034,7 @@ cdef class NBodySyst():
             segm_pos_to_pot_nrg_hess(
                 segmpos                 , dsegmpos                  , pot_nrg_hess              ,
                 self._BinSourceSegm     , self._BinTargetSegm       ,
-                self._BinTimeRev        , self._BinSpaceRot         , self._BinSpaceRotIsId     ,
+                self._BinSpaceRot       , self._BinSpaceRotIsId     ,
                 self._BinProdChargeSum  ,
                 self.segm_size          , self.segm_store           , -1.                       ,
                 self._inter_law         ,
@@ -3748,11 +3747,11 @@ cdef void segmpos_to_params_T(
 @cython.cdivision(True)
 cdef void segm_pos_to_hash(
     double[:,:,::1] segmpos         ,
-    long[::1] BinSourceSegm         , long[::1] BinTargetSegm       ,
-    long[::1] BinTimeRev            , double[:,:,::1] BinSpaceRot   , bint[::1] BinSpaceRotIsId ,
+    long[::1] BinSourceSegm         , long[::1] BinTargetSegm   ,
+    double[:,:,::1] BinSpaceRot     , bint[::1] BinSpaceRotIsId ,
     double[::1] BinProdChargeSum    ,
-    long segm_size                  , long segm_store               ,
-    double[::1] Hash_exp            , double[::1] Hash              ,           
+    long segm_size                  , long segm_store           ,
+    double[::1] Hash_exp            , double[::1] Hash          ,           
 ) noexcept nogil:
 
     cdef long nbin = BinSourceSegm.shape[0]
@@ -3762,8 +3761,6 @@ cdef void segm_pos_to_hash(
     cdef Py_ssize_t iexp
     cdef Py_ssize_t ibin, idim
     cdef Py_ssize_t isegm, isegmp
-    cdef Py_ssize_t incr
-    cdef Py_ssize_t incrp = geodim
 
     cdef double pot
     cdef double dx2, a
@@ -3791,21 +3788,11 @@ cdef void segm_pos_to_hash(
 
         isegm = BinSourceSegm[ibin]
 
-        if BinTimeRev[ibin] > 0:
-
-            if BinSpaceRotIsId[ibin]:
-                pos = &segmpos[isegm,0,0]
-            else:
-                pos = tmp_loc_pos
-                scipy.linalg.cython_blas.dgemm(transt, transn, &geodim, &segm_store_int, &geodim, &one_double, &BinSpaceRot[ibin,0,0], &geodim, &segmpos[isegm,0,0], &geodim, &zero_double, tmp_loc_pos, &geodim)
-
+        if BinSpaceRotIsId[ibin]:
+            pos = &segmpos[isegm,0,0]
         else:
-
-            if BinSpaceRotIsId[ibin]:
-                pos = &segmpos[isegm,segm_store-1,0]
-            else:
-                pos = tmp_loc_pos + (segm_store-1)*geodim
-                scipy.linalg.cython_blas.dgemm(transt, transn, &geodim, &segm_store_int, &geodim, &one_double, &BinSpaceRot[ibin,0,0], &geodim, &segmpos[isegm,0,0], &geodim, &zero_double, tmp_loc_pos, &geodim)
+            pos = tmp_loc_pos
+            scipy.linalg.cython_blas.dgemm(transt, transn, &geodim, &segm_store_int, &geodim, &one_double, &BinSpaceRot[ibin,0,0], &geodim, &segmpos[isegm,0,0], &geodim, &zero_double, tmp_loc_pos, &geodim)
 
         isegmp = BinTargetSegm[ibin]
         posp = &segmpos[isegmp,0,0]
@@ -3815,58 +3802,64 @@ cdef void segm_pos_to_hash(
 
         memset(hash_tmp, 0, sizeof(double)*nexp)
 
-        incr = geodim*BinTimeRev[ibin]
-
         if size_is_store:
 
             for iint in range(segm_size):
 
                 a = pos[0] - posp[0]
+                pos += 1
+                posp += 1
                 dx2 = a*a
                 for idim in range(1,geodim):
-                    a = pos[idim] - posp[idim]
+                    a = pos[0] - posp[0]
+                    pos += 1
+                    posp += 1
                     dx2 += a*a
 
                 for iexp in range(nexp):
                     hash_tmp[iexp] += cpow(dx2, Hash_exp[iexp])
 
-                pos += incr
-                posp += incrp
 
         else:
             
             # First iteration
             a = pos[0] - posp[0]
+            pos += 1
+            posp += 1
             dx2 = a*a
             for idim in range(1,geodim):
-                a = pos[idim] - posp[idim]
+                a = pos[0] - posp[0]
+                pos += 1
+                posp += 1
                 dx2 += a*a
 
             for iexp in range(nexp):
                 hash_tmp[iexp] += 0.5 * cpow(dx2, Hash_exp[iexp])
 
-            pos += incr
-            posp += incrp
-
             for iint in range(1,segm_size):
 
                 a = pos[0] - posp[0]
+                pos += 1
+                posp += 1
                 dx2 = a*a
                 for idim in range(1,geodim):
-                    a = pos[idim] - posp[idim]
+                    a = pos[0] - posp[0]
+                    pos += 1
+                    posp += 1
                     dx2 += a*a
 
                 for iexp in range(nexp):
                     hash_tmp[iexp] += cpow(dx2, Hash_exp[iexp])
 
-                pos += incr
-                posp += incrp
-
             # Last iteration
             a = pos[0] - posp[0]
+            pos += 1
+            posp += 1
             dx2 = a*a
             for idim in range(1,geodim):
-                a = pos[idim] - posp[idim]
+                a = pos[0] - posp[0]
+                pos += 1
+                posp += 1
                 dx2 += a*a
 
             for iexp in range(nexp):
@@ -3881,10 +3874,10 @@ cdef void segm_pos_to_hash(
 @cython.cdivision(True)
 cdef double segm_pos_to_pot_nrg(
     double[:,:,::1] segmpos         ,
-    long[::1] BinSourceSegm         , long[::1] BinTargetSegm       ,
-    long[::1] BinTimeRev            , double[:,:,::1] BinSpaceRot   , bint[::1] BinSpaceRotIsId ,
+    long[::1] BinSourceSegm         , long[::1] BinTargetSegm   ,
+    double[:,:,::1] BinSpaceRot     , bint[::1] BinSpaceRotIsId ,
     double[::1] BinProdChargeSum    ,
-    long segm_size                  , long segm_store               ,
+    long segm_size                  , long segm_store           ,
     inter_law_fun_type inter_law    ,
 ) noexcept nogil:
 
@@ -3893,8 +3886,6 @@ cdef double segm_pos_to_pot_nrg(
     cdef int segm_store_int = segm_store
     cdef Py_ssize_t ibin, idim
     cdef Py_ssize_t isegm, isegmp
-    cdef Py_ssize_t incr
-    cdef Py_ssize_t incrp = geodim
 
     cdef double pot_nrg = 0.
     cdef double pot_nrg_bin
@@ -3921,29 +3912,15 @@ cdef double segm_pos_to_pot_nrg(
 
         isegm = BinSourceSegm[ibin]
 
-        if BinTimeRev[ibin] > 0:
-
-            if BinSpaceRotIsId[ibin]:
-                pos = &segmpos[isegm,0,0]
-            else:
-                pos = tmp_loc_pos
-                scipy.linalg.cython_blas.dgemm(transt, transn, &geodim, &segm_store_int, &geodim, &one_double, &BinSpaceRot[ibin,0,0], &geodim, &segmpos[isegm,0,0], &geodim, &zero_double, tmp_loc_pos, &geodim)
-
+        if BinSpaceRotIsId[ibin]:
+            pos = &segmpos[isegm,0,0]
         else:
-
-            if BinSpaceRotIsId[ibin]:
-                pos = &segmpos[isegm,segm_store-1,0]
-            else:
-                pos = tmp_loc_pos + (segm_store-1)*geodim
-                scipy.linalg.cython_blas.dgemm(transt, transn, &geodim, &segm_store_int, &geodim, &one_double, &BinSpaceRot[ibin,0,0], &geodim, &segmpos[isegm,0,0], &geodim, &zero_double, tmp_loc_pos, &geodim)
+            pos = tmp_loc_pos
+            scipy.linalg.cython_blas.dgemm(transt, transn, &geodim, &segm_store_int, &geodim, &one_double, &BinSpaceRot[ibin,0,0], &geodim, &segmpos[isegm,0,0], &geodim, &zero_double, tmp_loc_pos, &geodim)
 
         isegmp = BinTargetSegm[ibin]
         posp = &segmpos[isegmp,0,0]
 
-        bin_fac = BinProdChargeSum[ibin]
-        bin_fac /= segm_size
-
-        incr = geodim*BinTimeRev[ibin]
         pot_nrg_bin = 0
 
         if size_is_store:
@@ -3951,59 +3928,69 @@ cdef double segm_pos_to_pot_nrg(
             for iint in range(segm_size):
 
                 a = pos[0] - posp[0]
+                pos += 1
+                posp += 1
                 dx2 = a*a
                 for idim in range(1,geodim):
-                    a = pos[idim] - posp[idim]
+                    a = pos[0] - posp[0]
+                    pos += 1
+                    posp += 1
                     dx2 += a*a
 
                 inter_law(dx2, pot)
 
                 pot_nrg_bin += pot[0]
-
-                pos += incr
-                posp += incrp
 
         else:
             
             # First iteration
             a = pos[0] - posp[0]
+            pos += 1
+            posp += 1
             dx2 = a*a
             for idim in range(1,geodim):
-                a = pos[idim] - posp[idim]
+                a = pos[0] - posp[0]
+                pos += 1
+                posp += 1
                 dx2 += a*a
 
             inter_law(dx2, pot)
 
             pot_nrg_bin += 0.5*pot[0]
 
-            pos += incr
-            posp += incrp
-
             for iint in range(1,segm_size):
 
                 a = pos[0] - posp[0]
+                pos += 1
+                posp += 1
                 dx2 = a*a
                 for idim in range(1,geodim):
-                    a = pos[idim] - posp[idim]
+                    a = pos[0] - posp[0]
+                    pos += 1
+                    posp += 1
                     dx2 += a*a
 
                 inter_law(dx2, pot)
 
                 pot_nrg_bin += pot[0]
 
-                pos += incr
-                posp += incrp
-
             # Last iteration
             a = pos[0] - posp[0]
+            pos += 1
+            posp += 1
             dx2 = a*a
             for idim in range(1,geodim):
-                a = pos[idim] - posp[idim]
+                a = pos[0] - posp[0]
+                pos += 1
+                posp += 1
                 dx2 += a*a
 
             inter_law(dx2, pot)
 
             pot_nrg_bin += 0.5*pot[0]
+
+        bin_fac = BinProdChargeSum[ibin]
+        bin_fac /= segm_size
 
         pot_nrg += pot_nrg_bin * bin_fac
 
@@ -4016,7 +4003,7 @@ cdef double segm_pos_to_pot_nrg(
 cdef void segm_pos_to_pot_nrg_grad(
     double[:,:,::1] segmpos         , double[:,:,::1] pot_nrg_grad  ,
     long[::1] BinSourceSegm         , long[::1] BinTargetSegm       ,
-    long[::1] BinTimeRev            , double[:,:,::1] BinSpaceRot   , bint[::1] BinSpaceRotIsId ,
+    double[:,:,::1] BinSpaceRot     , bint[::1] BinSpaceRotIsId     ,
     double[::1] BinProdChargeSum    ,
     long segm_size                  , long segm_store               , double globalmul          ,
     inter_law_fun_type inter_law    ,
@@ -4029,8 +4016,6 @@ cdef void segm_pos_to_pot_nrg_grad(
     cdef Py_ssize_t nitems = sizeof(double)*segm_store*geodim
     cdef Py_ssize_t ibin, idim
     cdef Py_ssize_t isegm, isegmp
-    cdef Py_ssize_t incr
-    cdef Py_ssize_t incrp = geodim
 
     cdef bint size_is_store = (segm_size == segm_store) # because nnpr was not given
 
@@ -4040,7 +4025,6 @@ cdef void segm_pos_to_pot_nrg_grad(
 
     cdef double* tmp_loc_pos
     cdef double* tmp_loc_grad
-    cdef double* tmp_loc_gradp
     cdef bint NeedsAllocate = False
 
     cdef double[3] pot
@@ -4049,59 +4033,42 @@ cdef void segm_pos_to_pot_nrg_grad(
         NeedsAllocate = (NeedsAllocate or (not(BinSpaceRotIsId[ibin])))
 
     tmp_loc_grad = <double*> malloc(nitems)
-    tmp_loc_gradp = <double*> malloc(nitems)
     if NeedsAllocate:
         tmp_loc_pos = <double*> malloc(nitems)
 
     cdef double* pos
     cdef double* posp
     cdef double* grad
-    cdef double* gradp
 
     for ibin in range(nbin):
 
         isegm = BinSourceSegm[ibin]
 
         memset(tmp_loc_grad, 0, nitems)
-        memset(tmp_loc_gradp, 0, nitems)
 
-        if BinTimeRev[ibin] > 0:
+        grad = tmp_loc_grad
 
-            grad = tmp_loc_grad
-
-            if BinSpaceRotIsId[ibin]:
-                pos = &segmpos[isegm,0,0]
-            else:
-                pos = tmp_loc_pos
-                scipy.linalg.cython_blas.dgemm(transt, transn, &geodim, &segm_store_int, &geodim, &one_double, &BinSpaceRot[ibin,0,0], &geodim, &segmpos[isegm,0,0], &geodim, &zero_double, tmp_loc_pos, &geodim)
-
+        if BinSpaceRotIsId[ibin]:
+            pos = &segmpos[isegm,0,0]
         else:
-
-            grad = tmp_loc_grad + (segm_store-1)*geodim
-
-            if BinSpaceRotIsId[ibin]:
-                pos = &segmpos[isegm,segm_store-1,0]
-            else:
-                pos = tmp_loc_pos + (segm_store-1)*geodim
-                scipy.linalg.cython_blas.dgemm(transt, transn, &geodim, &segm_store_int, &geodim, &one_double, &BinSpaceRot[ibin,0,0], &geodim, &segmpos[isegm,0,0], &geodim, &zero_double, tmp_loc_pos, &geodim)
+            pos = tmp_loc_pos
+            scipy.linalg.cython_blas.dgemm(transt, transn, &geodim, &segm_store_int, &geodim, &one_double, &BinSpaceRot[ibin,0,0], &geodim, &segmpos[isegm,0,0], &geodim, &zero_double, tmp_loc_pos, &geodim)
 
         isegmp = BinTargetSegm[ibin]
         posp = &segmpos[isegmp,0,0]
-        gradp = tmp_loc_gradp
-
-        bin_fac = 2*BinProdChargeSum[ibin]*globalmul
-        bin_fac /= segm_size
-
-        incr = geodim*BinTimeRev[ibin]
 
         if size_is_store:
 
             for iint in range(segm_size):
 
                 dx[0] = pos[0] - posp[0]
+                pos += 1
+                posp += 1
                 dx2 = dx[0]*dx[0]
                 for idim in range(1,geodim):
-                    dx[idim] = pos[idim] - posp[idim]
+                    dx[idim] = pos[0] - posp[0]
+                    pos += 1
+                    posp += 1
                     dx2 += dx[idim]*dx[idim]
 
                 inter_law(dx2, pot)
@@ -4110,22 +4077,20 @@ cdef void segm_pos_to_pot_nrg_grad(
 
                 for idim in range(geodim):
                     b = a*dx[idim]
-                    grad[idim] += b
-                    gradp[idim] -= b
-
-                pos += incr
-                grad += incr
-
-                posp += incrp
-                gradp += incrp
+                    grad[0] += b
+                    grad += 1
 
         else:
             
             # First iteration
             dx[0] = pos[0] - posp[0]
+            pos += 1
+            posp += 1
             dx2 = dx[0]*dx[0]
             for idim in range(1,geodim):
-                dx[idim] = pos[idim] - posp[idim]
+                dx[idim] = pos[0] - posp[0]
+                pos += 1
+                posp += 1
                 dx2 += dx[idim]*dx[idim]
 
             inter_law(dx2, pot)
@@ -4134,21 +4099,19 @@ cdef void segm_pos_to_pot_nrg_grad(
 
             for idim in range(geodim):
                 b = a*dx[idim]
-                grad[idim] += b
-                gradp[idim] -= b
-
-            pos += incr
-            grad += incr
-
-            posp += incrp
-            gradp += incrp
+                grad[0] += b
+                grad += 1
 
             for iint in range(1,segm_size):
 
                 dx[0] = pos[0] - posp[0]
+                pos += 1
+                posp += 1
                 dx2 = dx[0]*dx[0]
                 for idim in range(1,geodim):
-                    dx[idim] = pos[idim] - posp[idim]
+                    dx[idim] = pos[0] - posp[0]
+                    pos += 1
+                    posp += 1
                     dx2 += dx[idim]*dx[idim]
 
                 inter_law(dx2, pot)
@@ -4157,20 +4120,18 @@ cdef void segm_pos_to_pot_nrg_grad(
 
                 for idim in range(geodim):
                     b = a*dx[idim]
-                    grad[idim] += b
-                    gradp[idim] -= b
-
-                pos += incr
-                grad += incr
-
-                posp += incrp
-                gradp += incrp
+                    grad[0] += b
+                    grad += 1
 
             # Last iteration
             dx[0] = pos[0] - posp[0]
+            pos += 1
+            posp += 1
             dx2 = dx[0]*dx[0]
             for idim in range(1,geodim):
-                dx[idim] = pos[idim] - posp[idim]
+                dx[idim] = pos[0] - posp[0]
+                pos += 1
+                posp += 1
                 dx2 += dx[idim]*dx[idim]
 
             inter_law(dx2, pot)
@@ -4179,22 +4140,22 @@ cdef void segm_pos_to_pot_nrg_grad(
 
             for idim in range(geodim):
                 b = a*dx[idim]
-                grad[idim] += b
-                gradp[idim] -= b
+                grad[0] += b
+                grad += 1
 
-            pos += incr
-            grad += incr
-        
+        bin_fac = 2*BinProdChargeSum[ibin]*globalmul
+        bin_fac /= segm_size
+
         if BinSpaceRotIsId[ibin]:
             scipy.linalg.cython_blas.daxpy(&nitems_int, &bin_fac, tmp_loc_grad, &int_one, &pot_nrg_grad[isegm,0,0], &int_one)
         else:
             scipy.linalg.cython_blas.dgemm(transn, transn, &geodim, &segm_store_int, &geodim, &bin_fac, &BinSpaceRot[ibin,0,0], &geodim, tmp_loc_grad, &geodim, &one_double, &pot_nrg_grad[isegm,0,0], &geodim)
 
-        scipy.linalg.cython_blas.daxpy(&nitems_int, &bin_fac, tmp_loc_gradp, &int_one, &pot_nrg_grad[isegmp,0,0], &int_one)
+        bin_fac = -bin_fac
+        scipy.linalg.cython_blas.daxpy(&nitems_int, &bin_fac, tmp_loc_grad, &int_one, &pot_nrg_grad[isegmp,0,0], &int_one)
 
     free(dx)
     free(tmp_loc_grad)
-    free(tmp_loc_gradp)
     if NeedsAllocate:
         free(tmp_loc_pos)
 
@@ -4203,7 +4164,7 @@ cdef void segm_pos_to_pot_nrg_grad(
 cdef void segm_pos_to_pot_nrg_hess(
     double[:,:,::1] segmpos         , double[:,:,::1] dsegmpos      , double[:,:,::1] pot_nrg_hess  ,
     long[::1] BinSourceSegm         , long[::1] BinTargetSegm       ,
-    long[::1] BinTimeRev            , double[:,:,::1] BinSpaceRot   , bint[::1] BinSpaceRotIsId     ,
+    double[:,:,::1] BinSpaceRot     , bint[::1] BinSpaceRotIsId     ,
     double[::1] BinProdChargeSum    ,
     long segm_size                  , long segm_store               , double globalmul              ,
     inter_law_fun_type inter_law    ,
@@ -4216,8 +4177,6 @@ cdef void segm_pos_to_pot_nrg_hess(
     cdef Py_ssize_t nitems = sizeof(double)*segm_store*geodim
     cdef Py_ssize_t ibin, idim
     cdef Py_ssize_t isegm, isegmp
-    cdef Py_ssize_t incr
-    cdef Py_ssize_t incrp = geodim
 
     cdef bint size_is_store = (segm_size == segm_store) # because nnpr was not given
 
@@ -4231,14 +4190,12 @@ cdef void segm_pos_to_pot_nrg_hess(
     cdef double* tmp_loc_pos
     cdef double* tmp_loc_dpos
     cdef double* tmp_loc_hess
-    cdef double* tmp_loc_hessp
     cdef bint NeedsAllocate = False
 
     for ibin in range(nbin):
         NeedsAllocate = (NeedsAllocate or (not(BinSpaceRotIsId[ibin])))
 
     tmp_loc_hess = <double*> malloc(nitems)
-    tmp_loc_hessp = <double*> malloc(nitems)
     if NeedsAllocate:
         tmp_loc_pos = <double*> malloc(nitems)
         tmp_loc_dpos = <double*> malloc(nitems)
@@ -4249,67 +4206,50 @@ cdef void segm_pos_to_pot_nrg_hess(
 
     cdef double* posp
     cdef double* dposp
-    cdef double* hessp
 
     for ibin in range(nbin):
 
         isegm = BinSourceSegm[ibin]
 
         memset(tmp_loc_hess , 0, nitems)
-        memset(tmp_loc_hessp, 0, nitems)
 
-        if BinTimeRev[ibin] > 0:
+        hess = tmp_loc_hess
 
-            hess = tmp_loc_hess
-
-            if BinSpaceRotIsId[ibin]:
-                pos = &segmpos[isegm,0,0]
-                dpos = &dsegmpos[isegm,0,0]
-            else:
-                pos = tmp_loc_pos
-                scipy.linalg.cython_blas.dgemm(transt, transn, &geodim, &segm_store_int, &geodim, &one_double, &BinSpaceRot[ibin,0,0], &geodim, &segmpos[isegm,0,0], &geodim, &zero_double, tmp_loc_pos, &geodim)
-
-                dpos = tmp_loc_dpos
-                scipy.linalg.cython_blas.dgemm(transt, transn, &geodim, &segm_store_int, &geodim, &one_double, &BinSpaceRot[ibin,0,0], &geodim, &dsegmpos[isegm,0,0], &geodim, &zero_double, tmp_loc_dpos, &geodim)
-
+        if BinSpaceRotIsId[ibin]:
+            pos = &segmpos[isegm,0,0]
+            dpos = &dsegmpos[isegm,0,0]
         else:
-            
-            hess = tmp_loc_hess + (segm_store-1)*geodim
+            pos = tmp_loc_pos
+            scipy.linalg.cython_blas.dgemm(transt, transn, &geodim, &segm_store_int, &geodim, &one_double, &BinSpaceRot[ibin,0,0], &geodim, &segmpos[isegm,0,0], &geodim, &zero_double, tmp_loc_pos, &geodim)
 
-            if BinSpaceRotIsId[ibin]:
-                pos = &segmpos[isegm,segm_store-1,0]
-                dpos = &dsegmpos[isegm,segm_store-1,0]
-
-            else:
-                pos = tmp_loc_pos + (segm_store-1)*geodim
-                scipy.linalg.cython_blas.dgemm(transt, transn, &geodim, &segm_store_int, &geodim, &one_double, &BinSpaceRot[ibin,0,0], &geodim, &segmpos[isegm,0,0], &geodim, &zero_double, tmp_loc_pos, &geodim)
-
-                dpos = tmp_loc_dpos + (segm_store-1)*geodim
-                scipy.linalg.cython_blas.dgemm(transt, transn, &geodim, &segm_store_int, &geodim, &one_double, &BinSpaceRot[ibin,0,0], &geodim, &dsegmpos[isegm,0,0], &geodim, &zero_double, tmp_loc_dpos, &geodim)
+            dpos = tmp_loc_dpos
+            scipy.linalg.cython_blas.dgemm(transt, transn, &geodim, &segm_store_int, &geodim, &one_double, &BinSpaceRot[ibin,0,0], &geodim, &dsegmpos[isegm,0,0], &geodim, &zero_double, tmp_loc_dpos, &geodim)
 
         isegmp = BinTargetSegm[ibin]
         posp = &segmpos[isegmp,0,0]
         dposp = &dsegmpos[isegmp,0,0]
-        hessp = tmp_loc_hessp
-
-        bin_fac = 2*BinProdChargeSum[ibin]*globalmul
-        bin_fac /= segm_size
-
-        incr = geodim*BinTimeRev[ibin]
 
         if size_is_store:
             
             for iint in range(segm_size):
 
                 dx[0] = pos[0] - posp[0]
+                pos += 1
+                posp += 1
                 dx2 = dx[0]*dx[0]
                 ddx[0] = dpos[0] - dposp[0]
+                dpos += 1
+                dposp += 1
                 dxtddx = dx[0]*ddx[0]
 
                 for idim in range(1,geodim):
-                    dx[idim] = pos[idim] - posp[idim]
+                    dx[idim] = pos[0] - posp[0]
+                    pos += 1
+                    posp += 1
                     dx2 += dx[idim]*dx[idim]
-                    ddx[idim] = dpos[idim] - dposp[idim]
+                    ddx[idim] = dpos[0] - dposp[0]
+                    dpos += 1
+                    dposp += 1
                     dxtddx += dx[idim]*ddx[idim]
 
                 inter_law(dx2, pot)
@@ -4319,29 +4259,29 @@ cdef void segm_pos_to_pot_nrg_hess(
 
                 for idim in range(geodim):
                     ddf = b*dx[idim]+a*ddx[idim]
-                    hess[idim] += ddf
-                    hessp[idim] -= ddf
-
-                pos += incr
-                dpos += incr
-                hess += incr
-
-                posp += incrp
-                dposp += incrp
-                hessp += incrp
+                    hess[0] += ddf
+                    hess += 1
 
         else:
 
             # First iteration
             dx[0] = pos[0] - posp[0]
+            pos += 1
+            posp += 1
             dx2 = dx[0]*dx[0]
             ddx[0] = dpos[0] - dposp[0]
+            dpos += 1
+            dposp += 1
             dxtddx = dx[0]*ddx[0]
 
             for idim in range(1,geodim):
-                dx[idim] = pos[idim] - posp[idim]
+                dx[idim] = pos[0] - posp[0]
+                pos += 1
+                posp += 1
                 dx2 += dx[idim]*dx[idim]
-                ddx[idim] = dpos[idim] - dposp[idim]
+                ddx[idim] = dpos[0] - dposp[0]
+                dpos += 1
+                dposp += 1
                 dxtddx += dx[idim]*ddx[idim]
 
             inter_law(dx2, pot)
@@ -4351,28 +4291,28 @@ cdef void segm_pos_to_pot_nrg_hess(
 
             for idim in range(geodim):
                 ddf = b*dx[idim]+a*ddx[idim]
-                hess[idim] += ddf
-                hessp[idim] -= ddf
-
-            pos += incr
-            dpos += incr
-            hess += incr
-
-            posp += incrp
-            dposp += incrp
-            hessp += incrp
+                hess[0] += ddf
+                hess += 1
 
             for iint in range(1,segm_size):
 
                 dx[0] = pos[0] - posp[0]
+                pos += 1
+                posp += 1
                 dx2 = dx[0]*dx[0]
                 ddx[0] = dpos[0] - dposp[0]
+                dpos += 1
+                dposp += 1
                 dxtddx = dx[0]*ddx[0]
 
                 for idim in range(1,geodim):
-                    dx[idim] = pos[idim] - posp[idim]
+                    dx[idim] = pos[0] - posp[0]
+                    pos += 1
+                    posp += 1
                     dx2 += dx[idim]*dx[idim]
-                    ddx[idim] = dpos[idim] - dposp[idim]
+                    ddx[idim] = dpos[0] - dposp[0]
+                    dpos += 1
+                    dposp += 1
                     dxtddx += dx[idim]*ddx[idim]
 
                 inter_law(dx2, pot)
@@ -4382,27 +4322,27 @@ cdef void segm_pos_to_pot_nrg_hess(
 
                 for idim in range(geodim):
                     ddf = b*dx[idim]+a*ddx[idim]
-                    hess[idim] += ddf
-                    hessp[idim] -= ddf
-
-                pos += incr
-                dpos += incr
-                hess += incr
-
-                posp += incrp
-                dposp += incrp
-                hessp += incrp
+                    hess[0] += ddf
+                    hess += 1
 
             # Last iteration
             dx[0] = pos[0] - posp[0]
+            pos += 1
+            posp += 1
             dx2 = dx[0]*dx[0]
             ddx[0] = dpos[0] - dposp[0]
+            dpos += 1
+            dposp += 1
             dxtddx = dx[0]*ddx[0]
 
             for idim in range(1,geodim):
-                dx[idim] = pos[idim] - posp[idim]
+                dx[idim] = pos[0] - posp[0]
+                pos += 1
+                posp += 1
                 dx2 += dx[idim]*dx[idim]
-                ddx[idim] = dpos[idim] - dposp[idim]
+                ddx[idim] = dpos[0] - dposp[0]
+                dpos += 1
+                dposp += 1
                 dxtddx += dx[idim]*ddx[idim]
 
             inter_law(dx2, pot)
@@ -4412,20 +4352,23 @@ cdef void segm_pos_to_pot_nrg_hess(
 
             for idim in range(geodim):
                 ddf = b*dx[idim]+a*ddx[idim]
-                hess[idim] += ddf
-                hessp[idim] -= ddf
-            
+                hess[0] += ddf
+                hess += 1
+
+        bin_fac = 2*BinProdChargeSum[ibin]*globalmul
+        bin_fac /= segm_size
+
         if BinSpaceRotIsId[ibin]:
             scipy.linalg.cython_blas.daxpy(&nitems_int, &bin_fac, tmp_loc_hess, &int_one, &pot_nrg_hess[isegm,0,0], &int_one)
         else:
             scipy.linalg.cython_blas.dgemm(transn, transn, &geodim, &segm_store_int, &geodim, &bin_fac, &BinSpaceRot[ibin,0,0], &geodim, tmp_loc_hess, &geodim, &one_double, &pot_nrg_hess[isegm,0,0], &geodim)
 
-        scipy.linalg.cython_blas.daxpy(&nitems_int, &bin_fac, tmp_loc_hessp, &int_one, &pot_nrg_hess[isegmp,0,0], &int_one)
+        bin_fac = -bin_fac
+        scipy.linalg.cython_blas.daxpy(&nitems_int, &bin_fac, tmp_loc_hess, &int_one, &pot_nrg_hess[isegmp,0,0], &int_one)
 
     free(dx)
     free(ddx)
     free(tmp_loc_hess)
-    free(tmp_loc_hessp)
     if NeedsAllocate:
         free(tmp_loc_pos)
         free(tmp_loc_dpos)
