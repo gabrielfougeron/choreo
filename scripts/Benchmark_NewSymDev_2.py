@@ -15,13 +15,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy
 
-import mkl_fft
-scipy.fft.set_global_backend(
-    backend = mkl_fft._scipy_fft_backend   ,
-    only = True
-)
-
-
 import choreo 
 
 
@@ -116,9 +109,9 @@ all_tests = [
 ]
 
 min_exp = 5
-max_exp = 10
+max_exp = 15
 
-n_repeat = 1000
+n_repeat = 100
 
 MonotonicAxes = ["nint_fac"]
 
@@ -142,7 +135,7 @@ all_timings_1 = pyquickbench.run_benchmark(
     time_per_test = 2.     ,
     n_repeat = n_repeat     ,
     MonotonicAxes = MonotonicAxes,
-    ForceBenchmark = True,
+    # ForceBenchmark = True,
 )
 
 
@@ -158,7 +151,7 @@ all_timings_2 = pyquickbench.run_benchmark(
     time_per_test = 2.     ,
     n_repeat = n_repeat     ,
     MonotonicAxes = MonotonicAxes,
-    ForceBenchmark = True,
+    # ForceBenchmark = True,
 )
 
 # print(all_timings_1.shape)
@@ -172,8 +165,8 @@ plot_intent = {
     "test_name" : 'subplot_grid_y'                  ,
     "nint_fac" : 'points'                           ,
     pyquickbench.fun_ax_name :  'curve_color'       ,
-    pyquickbench.repeat_ax_name :  'reduction_avg'  ,
-    # pyquickbench.repeat_ax_name :  'reduction_min'  ,
+    # pyquickbench.repeat_ax_name :  'reduction_avg'  ,
+    pyquickbench.repeat_ax_name :  'reduction_min'  ,
     # pyquickbench.repeat_ax_name :  'same'  ,
 }
 
