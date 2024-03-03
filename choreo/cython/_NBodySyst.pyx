@@ -395,8 +395,8 @@ cdef class NBodySyst():
 
         self._BinSourceSegm, self._BinTargetSegm, BinTimeRev, self._BinSpaceRot, self._BinProdChargeSum = ReorganizeBinarySegments(BinarySegm)
 
-        # Trying to remove this in this branch
-        assert (np.asarray(BinTimeRev) == 1).all()
+        # Not actually sure this is always true.
+        assert (BinTimeRev == 1).all()
 
         assert self._BinSourceSegm.shape[0] == self.nbin_segm_unique
         self._BinSpaceRotIsId = np.zeros((self.nbin_segm_unique), dtype=np.intc)

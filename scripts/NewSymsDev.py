@@ -28,51 +28,52 @@ def proj_to_zero(array, eps=1e-14):
 def main():
         
     all_tests = [
-        '3q',
-        '3q3q',
-        '3q3qD',
-        '2q2q',
-        '4q4q',
-        '4q4qD',
-        '4q4qD3k',
-        '1q2q',
-        '5q5q',
-        '6q6q',
-        '2C3C',
-        '2D3D',   
-        '2C3C5k',
-        '2D3D5k',
-        '2D1',
-        '4C5k',
-        '4D3k',
-        '4C',
-        '4D',
-        '3C',
-        '3D',
-        '3D1',
-        '3C2k',
-        '3D2k',
-        '3Dp',
-        '3C4k',
-        '3D4k',
-        '3C5k',
-        '3D5k',
-        '3C101k',
-        '3D101k',
-        'test_3D5k',
-        '3C7k2',
-        '3D7k2',
-        '6C',
-        '6D',
-        '6Ck5',
-        '6Dk5',
-        '5Dq',
-        '2C3C5C',
-        '3C_3dim',
-        '2D1_3dim', 
-        '3C11k',
-        '5q',
-        '5Dq_',
+        # '3q',
+        # '3q3q',
+        # '3q3qD',
+        # '2q2q',
+        # '4q4q',
+        # '4q4qD',
+        # '4q4qD3k',
+        # '1q2q',
+        # '5q5q',
+        # '6q6q',
+        # '2C3C',
+        # '2D3D',   
+        # '2C3C5k',
+        # '2D3D5k',
+        # '2D1',
+        # '4C5k',
+        # '4D3k',
+        # '4C',
+        # '4D',
+        # '3C',
+        # '3D',
+        # '3D1',
+        # '3C2k',
+        # '3D2k',
+        # '3Dp',
+        # '3C4k',
+        # '3D4k',
+        # '3C5k',
+        # '3D5k',
+        # '3C101k',
+        # '3D101k',
+        # 'test_3D5k',
+        # '3C7k2',
+        # '3D7k2',
+        # '6C',
+        # '6D',
+        # '6Ck5',
+        # '6Dk5',
+        # '5Dq',
+        # '2C3C5C',
+        # '3C_3dim',
+        # '2D1_3dim', 
+        # '3C11k',
+        # '5q',
+        # '5Dq_',
+        'uneven_nnpr',
     ]
 
     TT = pyquickbench.TimeTrain(
@@ -133,25 +134,25 @@ def doit(config_name):
     
     
     NBS = choreo.cython._NBodySyst.NBodySyst(geodim, nbody, mass, charge, Sym_list, inter_law)
-
-    for isegm in range(NBS.nsegm):
-        
-        if NBS.InterTimeRev[isegm] > 0:
-            if NBS.InterSpaceRotIsId[isegm]:
-                print(isegm,'a')
-            else:
-                print(isegm,'b')
-        else:
-            if NBS.InterSpaceRotIsId[isegm]:
-                print(isegm,'c')
-            else:
-                print(isegm,'d')
-        
+# 
+#     for isegm in range(NBS.nsegm):
+#         
+#         if NBS.InterTimeRev[isegm] > 0:
+#             if NBS.InterSpaceRotIsId[isegm]:
+#                 print(isegm,'a')
+#             else:
+#                 print(isegm,'b')
+#         else:
+#             if NBS.InterSpaceRotIsId[isegm]:
+#                 print(isegm,'c')
+#             else:
+#                 print(isegm,'d')
+#         
         
     
     # assert (NBS.BinTimeRev == 1).all()
 
-    return
+    # return
     
     nparam_nosym = geodim * NBS.nint * nbody
     nparam_tot = NBS.nparams_incl_o
@@ -181,7 +182,7 @@ def doit(config_name):
         assert abs((nbody * NBS.nint_min) / NBS.nsegm - reduction_ratio) < eps
 
 
-    return
+    # return
 
     filename = os.path.join(Workspace_folder, config_name+'_graph_segm.pdf')
     choreo.cython._NBodySyst.PlotTimeBodyGraph(NBS.SegmGraph, nbody, NBS.nint_min, filename)
