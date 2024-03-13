@@ -74,6 +74,8 @@ def main():
         # '5q',
         # '5Dq_',
         'uneven_nnpr',
+        # '3C4q4k',
+        # '3D4q4k',
     ]
 
     TT = pyquickbench.TimeTrain(
