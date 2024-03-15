@@ -139,69 +139,20 @@ def doit(config_name):
 
 
 
-    NBS.nint_fac = 1 # Else it will sometime fail for huge symmetries
+    NBS.nint_fac = 5 # Else it will sometime fail for huge symmetries
+
+
     params_buf = np.random.random((NBS.nparams))
-    all_coeffs = NBS.params_to_all_coeffs_noopt(params_buf)  
-    all_pos = scipy.fft.irfft(all_coeffs, axis=1, norm='forward')
+    segmpos = NBS.params_to_segmpos(params_buf)
     
-    segmpos = NBS.all_pos_to_segmpos_noopt(all_pos)
-    all_pos_rt = NBS.segmpos_to_all_pos_noopt(segmpos)
+    segmpos_dual = np.random.random((NBS.nsegm,NBS.segm_store,NBS.geodim))
+    params_buf_dual = NBS.segmpos_to_params_T(segmpos_dual)
     
-    
-    # print(segmpos)
-    # 
-    # print('aaa')
-    # print(all_pos_rt[0,:,:])
-    # print('bbb')
-    # print(all_pos[0,:,:])
-    # print('ccc')
-    # print((all_pos_rt - all_pos)[0,:,:])
-    # 
-    # 
-    
-    
-    
-    
-    
-    print(np.linalg.norm(all_pos_rt - all_pos))
-    # assert np.allclose(all_pos, all_pos_rt, rtol = float64_tols.rtol, atol = float64_tols.atol) 
-            
-    all_coeffs_rt = scipy.fft.rfft(all_pos, axis=1,norm='forward')
-    print(np.linalg.norm(all_coeffs_rt - all_coeffs))
-    # assert np.allclose(all_coeffs, all_coeffs_rt, rtol = float64_tols.rtol, atol = float64_tols.atol) 
+    dot_params = np.dot(params_buf, params_buf_dual)
+    dot_segmpos = np.dot(segmpos_dual.reshape(-1), segmpos.reshape(-1))
 
-    params_buf_rt = NBS.all_coeffs_to_params_noopt(all_coeffs)
-    print(np.linalg.norm(params_buf - params_buf_rt))
-    # assert np.allclose(params_buf, params_buf_rt, rtol = float64_tols.rtol, atol = float64_tols.atol) 
+    print(abs(dot_params - dot_segmpos))
     
-    segmpos_cy = NBS.params_to_segmpos(params_buf)
-    
-    
-    print('aaa')
-    print(segmpos)
-    print('bbb')
-    print(segmpos_cy)
-    print('ccc')
-    print(segmpos - segmpos_cy)
-    
-    print(np.linalg.norm(segmpos - segmpos_cy))
-    
-    
-    
-    
-    
-    
-    
-    
-    params_buf_rt = NBS.segmpos_to_params(segmpos_cy)
-    print(np.linalg.norm(params_buf - params_buf_rt))
-    # assert np.allclose(params_buf, params_buf_rt, rtol = float64_tols.rtol, atol = float64_tols.atol) 
-    
-#     print()
-
-
-
-
 
 
 
