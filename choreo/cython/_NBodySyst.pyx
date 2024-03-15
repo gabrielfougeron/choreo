@@ -960,7 +960,6 @@ cdef class NBodySyst():
 
         # Do better ?
 
-
         xinf = xmin - extend*(xmax-xmin)
         xsup = xmax + extend*(xmax-xmin)
         
@@ -982,9 +981,14 @@ cdef class NBodySyst():
 
         Info_dict["nbody"] = self.nbody
         Info_dict["n_int"] = self.nint
+        Info_dict["segm_size"] = self.segm_size
+        Info_dict["segm_store"] = self.segm_store
 
-        # Info_dict["mass"] = self.mass.tolist()
+        Info_dict["loopmass"] = self.loopmass.tolist()
+        Info_dict["loopcharge"] = self.loopcharge.tolist()
         Info_dict["nloop"] = self.nloop
+        Info_dict["loopnb"] = self.loopnb.tolist()
+        Info_dict["Targets"] = self.Targets.tolist() 
 
         Info_dict["Action"] = Action
         Info_dict["Grad_Action"] = Gradaction
@@ -998,13 +1002,41 @@ cdef class NBodySyst():
         Info_dict["yinf"] = yinf
         Info_dict["ysup"] = ysup
 
-        Info_dict["loopnb"] = self.loopnb.tolist()
-        Info_dict["Targets"] = self.Targets.tolist()
+
+        Info_dict["bodysegm"] = self.bodysegm.tolist()
+        Info_dict["SegmRequiresDisp"] = self.SegmRequiresDisp.tolist()
+
+        InterSegmSpaceRot = []
+        InterSegmTimeRev = []
+
+        for ib in range(self.nbody):
+            InterSegmSpaceRot_b = []
+            InterSegmTimeRev_b = []
+            for iint in range(self.nint_min):
+
+                Sym = self.intersegm_to_all[ib][iint]
+
+                InterSegmSpaceRot_b.append(Sym.SpaceRot.tolist())
+                InterSegmTimeRev_b.append(Sym.TimeRev)
+
+            InterSegmSpaceRot.append(InterSegmSpaceRot_b)
+            InterSegmTimeRev.append(InterSegmTimeRev_b)
+        
+        Info_dict["InterSegmSpaceRot"] = InterSegmSpaceRot
+        Info_dict["InterSegmTimeRev"] = InterSegmTimeRev
+
         # Info_dict["SpaceRotsUn"] = self.SpaceRotsUn.tolist()
         # Info_dict["TimeRevsUn"] = self.TimeRevsUn.tolist()
         # Info_dict["TimeShiftNumUn"] = self.TimeShiftNumUn.tolist()
         # Info_dict["TimeShiftDenUn"] = self.TimeShiftDenUn.tolist()
         # Info_dict["RequiresLoopDispUn"] = self.RequiresLoopDispUn.tolist()
+
+
+
+
+
+
+
 
         with open(filename, "w") as jsonFile:
             jsonString = json.dumps(Info_dict, indent=4, sort_keys=False)
@@ -1207,48 +1239,6 @@ cdef class NBodySyst():
             color_list = plt.rcParams['axes.prop_cycle'].by_key()['color']
 
         ncol = len(color_list)
-        
-        cb = ['b' for _ in range(self.nbody)]
-        i_loop_plot = 0
-
-#         if (color is None) or (color == "none"):
-#             for il in range(self.nloop):
-#                 for ib in range(self.loopnb[il]):
-#                     if (self.RequiresLoopDispUn[il,ib]) :
-# 
-#                         cb[i_loop_plot] = color_list[0]
-# 
-#                         i_loop_plot +=1
-# 
-#         elif (color == "body"):
-#             for il in range(self.nloop):
-#                 for ib in range(self.loopnb[il]):
-#                     if (self.RequiresLoopDispUn[il,ib]) :
-# 
-#                         cb[i_loop_plot] = color_list[self.Targets[il,ib]%ncol]
-# 
-#                         i_loop_plot +=1
-# 
-#         elif (color == "loop"):
-#             for il in range(self.nloop):
-#                 for ib in range(self.loopnb[il]):
-#                     if (self.RequiresLoopDispUn[il,ib]) :
-# 
-#                         cb[i_loop_plot] = color_list[il%ncol]
-# 
-#                         i_loop_plot +=1
-# 
-#         elif (color == "loop_id"):
-#             for il in range(self.nloop):
-#                 for ib in range(self.loopnb[il]):
-#                     if (self.RequiresLoopDispUn[il,ib]) :
-# 
-#                         cb[i_loop_plot] = color_list[ib%ncol]
-# 
-#                         i_loop_plot +=1
-# 
-#         else:
-#             raise ValueError(f'Unknown color scheme "{color}"')
 
         if xlim is None:
 
@@ -1302,7 +1292,22 @@ cdef class NBodySyst():
 
                     Sym.TransformSegment(segmpos[isegm,:,:], pos)
 
-                    plt.plot(pos[:,0], pos[:,1], color='b' , antialiased=True, zorder=-iplt)
+                    if (color is None) or (color == "none"):
+                        current_color = color_list[0]
+                    elif (color == "body"):
+                        current_color = color_list[ib%ncol]
+                    elif (color == "loop"):
+                        current_color = color_list[self._bodyloop[ib]%ncol]
+                    elif (color == "loop_id"):
+                        loop_id = 0
+                        il = self._bodyloop[ib]
+                        while self._Targets[il,loop_id] != ib:
+                            loop_id += 1
+                        current_color = color_list[loop_id%ncol]
+                    else:
+                        raise ValueError(f'Unknown color scheme "{color}"')
+
+                    plt.plot(pos[:,0], pos[:,1], color=current_color , antialiased=True, zorder=-iplt)
 
         ax.axis('off')
         ax.set_xlim([xinf, xsup])
