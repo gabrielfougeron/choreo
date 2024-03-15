@@ -170,9 +170,11 @@ def test_params_segmpos_dual(AllNBS, float64_tols):
         
         dot_params = np.dot(params_buf, params_buf_dual)
         dot_segmpos = np.dot(segmpos_dual.reshape(-1), segmpos.reshape(-1))
-
+        
+        print(abs(dot_params - dot_segmpos))
         assert abs(dot_params - dot_segmpos) < float64_tols.atol
         assert 2*abs(dot_params - dot_segmpos) / (dot_params + dot_segmpos) < float64_tols.rtol
+        print()
     
 def test_kin(AllNBS, float64_tols):
     
