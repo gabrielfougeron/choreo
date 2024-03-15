@@ -968,24 +968,26 @@ def DetectSegmRequiresDisp(SegmGraph, intersegm_to_all, nbody, nint_min):
             
             if Sym.IsIdentityRot():
                 PlotGraph.add_edge(segm, segmp)
+
+    SegmRequiresDisp = -np.ones((nbody, nint_min), dtype=np.intc)
     
-    SegmRequiresDisp = np.zeros((nbody, nint_min), dtype=np.intc)
+    for ib in range(nbody):
+        for iint in range(nint_min):
     
-    for CC in networkx.connected_components(PlotGraph):
-        
-        for ib, iint in CC:
-            
-            SegmRequiresDisp[ib,iint] = 1
-            break
-        
-    # for ib in range(nbody):
-    #     for iint in range(nint_min):
-    #         print(ib, iint, SegmRequiresDisp[ib,iint]>0)
-        
+            if SegmRequiresDisp[ib,iint] < 0:
+                
+                n = 0
+                for ibp, iintp in networkx.dfs_preorder_nodes(PlotGraph, source=(ib,iint)):
+                    
+                    if n == 0:
+                        SegmRequiresDisp[ib,iint] = 1
+                    else:
+                        SegmRequiresDisp[ibp,iintp] = 0
+                        
+                    n += 1
+
     return SegmRequiresDisp
     
-
-
 def plot_given_2D(all_pos, filename, fig_size=(10,10), dpi=100, color=None, color_list=None, xlim=None, extend=0.03, CloseLoop=True):
 
         if color_list is None:

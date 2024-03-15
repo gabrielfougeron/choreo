@@ -97,7 +97,6 @@ elif platform.system() == "Linux":
         extra_compile_args_safe = ["-O3", "-fopenmp", "-lm", "-flto", *ignore_warnings_args]
         extra_link_args = ["-fopenmp", "-lm", "-flto",  *ignore_warnings_args]
 
-
         cython_extnames.append("choreo.cython.funs_parallel")
         cython_safemath_needed.append(False)
 
