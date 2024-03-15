@@ -136,25 +136,83 @@ def doit(config_name):
     
     
     NBS = choreo.cython._NBodySyst.NBodySyst(geodim, nbody, mass, charge, Sym_list, inter_law)
-# 
-#     for isegm in range(NBS.nsegm):
-#         
-#         if NBS.InterTimeRev[isegm] > 0:
-#             if NBS.InterSpaceRotIsId[isegm]:
-#                 print(isegm,'a')
-#             else:
-#                 print(isegm,'b')
-#         else:
-#             if NBS.InterSpaceRotIsId[isegm]:
-#                 print(isegm,'c')
-#             else:
-#                 print(isegm,'d')
-#         
-        
-    
-    # assert (NBS.BinTimeRev == 1).all()
 
-    # return
+
+
+    NBS.nint_fac = 1 # Else it will sometime fail for huge symmetries
+    params_buf = np.random.random((NBS.nparams))
+    all_coeffs = NBS.params_to_all_coeffs_noopt(params_buf)  
+    all_pos = scipy.fft.irfft(all_coeffs, axis=1, norm='forward')
+    
+    segmpos = NBS.all_pos_to_segmpos_noopt(all_pos)
+    all_pos_rt = NBS.segmpos_to_all_pos_noopt(segmpos)
+    
+    
+    # print(segmpos)
+    # 
+    # print('aaa')
+    # print(all_pos_rt[0,:,:])
+    # print('bbb')
+    # print(all_pos[0,:,:])
+    # print('ccc')
+    # print((all_pos_rt - all_pos)[0,:,:])
+    # 
+    # 
+    
+    
+    
+    
+    
+    print(np.linalg.norm(all_pos_rt - all_pos))
+    # assert np.allclose(all_pos, all_pos_rt, rtol = float64_tols.rtol, atol = float64_tols.atol) 
+            
+    all_coeffs_rt = scipy.fft.rfft(all_pos, axis=1,norm='forward')
+    print(np.linalg.norm(all_coeffs_rt - all_coeffs))
+    # assert np.allclose(all_coeffs, all_coeffs_rt, rtol = float64_tols.rtol, atol = float64_tols.atol) 
+
+    params_buf_rt = NBS.all_coeffs_to_params_noopt(all_coeffs)
+    print(np.linalg.norm(params_buf - params_buf_rt))
+    # assert np.allclose(params_buf, params_buf_rt, rtol = float64_tols.rtol, atol = float64_tols.atol) 
+    
+    segmpos_cy = NBS.params_to_segmpos(params_buf)
+    
+    
+    print('aaa')
+    print(segmpos)
+    print('bbb')
+    print(segmpos_cy)
+    print('ccc')
+    print(segmpos - segmpos_cy)
+    
+    print(np.linalg.norm(segmpos - segmpos_cy))
+    
+    
+    
+    
+    
+    
+    
+    
+    params_buf_rt = NBS.segmpos_to_params(segmpos_cy)
+    print(np.linalg.norm(params_buf - params_buf_rt))
+    # assert np.allclose(params_buf, params_buf_rt, rtol = float64_tols.rtol, atol = float64_tols.atol) 
+    
+#     print()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     
     nparam_nosym = geodim * NBS.nint * nbody
     nparam_tot = NBS.nparams_incl_o

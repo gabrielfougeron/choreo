@@ -34,6 +34,7 @@ def test_all_pos_to_segmpos(AllNBS, float64_tols):
         # Optimized version
         segmpos_cy = NBS.params_to_segmpos(params_buf)
         
+        print(np.linalg.norm(segmpos_noopt - segmpos_cy))
         assert np.allclose(segmpos_noopt, segmpos_cy, rtol = float64_tols.rtol, atol = float64_tols.atol) 
      
 def test_segmpos_to_all_pos(AllNBS, float64_tols):
