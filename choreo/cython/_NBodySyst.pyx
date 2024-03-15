@@ -101,12 +101,14 @@ cdef class NBodySyst():
     This class defines a N-body system
     """
     
+    # TODO: Remove this !!!!!
+    cdef readonly long nnpr
+
     cdef readonly long geodim
     cdef readonly long nbody
     cdef readonly long nint_min
     cdef readonly long nloop
     cdef readonly long nsegm
-    cdef readonly long nnpr
     cdef readonly long nbin_segm_tot
     cdef readonly long nbin_segm_unique
 
@@ -172,6 +174,11 @@ cdef class NBodySyst():
     def ngensegm_loop(self):
         return np.asarray(self._ngensegm_loop)
 
+    cdef long[::1] _n_sub_fft
+    @property
+    def n_sub_fft(self):
+        return np.asarray(self._n_sub_fft)
+
     cdef long[::1] _BinSourceSegm
     @property
     def BinSourceSegm(self):
@@ -211,6 +218,23 @@ cdef class NBodySyst():
     @property
     def InterSpaceRot(self):
         return np.asarray(self._InterSpaceRot)
+
+    cdef readonly bint NnprIsUneven
+
+    cdef long[::1] _UnevenNnprIint
+    @property
+    def UnevenNnprIint(self):
+        return np.asarray(self._UnevenNnprIint)
+
+    cdef long[::1] _UnevenNnprTimeRev
+    @property
+    def UnevenNnprTimeRev(self):
+        return np.asarray(self._UnevenNnprTimeRev)
+
+    cdef double[:,:,::1] _UnevenNnprSpaceRot
+    @property
+    def UnevenNnprSpaceRot(self):
+        return np.asarray(self._UnevenNnprSpaceRot)
 
     cdef double[:,:,::1] _InitValPosBasis
     @property
@@ -290,7 +314,7 @@ cdef class NBodySyst():
         
     cdef readonly long ncoeffs
     cdef readonly long segm_size    # number of interacting nodes in segment
-    cdef readonly long segm_store   # number of stored values in segment, including repeated values for nnpr == 1
+    cdef readonly long segm_store   # number of stored values in segment, including repeated values for n_sub_fft == 2
     cdef readonly long nparams
     cdef readonly long nparams_incl_o
 
@@ -636,21 +660,56 @@ cdef class NBodySyst():
 
     def Compute_nnpr(self):
         
-        n_sub_fft = np.zeros((self.nloop), dtype=np.intp)
+        self._n_sub_fft = np.zeros((self.nloop), dtype=np.intp)
+        cdef long max_n_sub_fft = 0
+        cdef long min_n_sub_fft = 3
+        cdef long il
         for il in range(self.nloop):
             
             assert  self.nint_min % self._ncoeff_min_loop[il] == 0
             assert (self.nint_min // self._ncoeff_min_loop[il]) % self._ngensegm_loop[il] == 0        
             assert (self.nint_min // (self._ncoeff_min_loop[il] * self._ngensegm_loop[il])) in [1,2]
             
-            n_sub_fft[il] = (self.nint_min // (self._ncoeff_min_loop[il] * self._ngensegm_loop[il]))
-            
-        assert (n_sub_fft == n_sub_fft[0]).all()
-        
-        if n_sub_fft[0] == 1:
+            self._n_sub_fft[il] = (self.nint_min // (self._ncoeff_min_loop[il] * self._ngensegm_loop[il]))
+
+            max_n_sub_fft = max(max_n_sub_fft, self._n_sub_fft[il])
+            min_n_sub_fft = min(min_n_sub_fft, self._n_sub_fft[il])
+
+        if max_n_sub_fft == 1:
             self.nnpr = 2
         else:
             self.nnpr = 1
+
+        self.NnprIsUneven = (max_n_sub_fft != min_n_sub_fft)
+
+        self._UnevenNnprIint = np.zeros((self.nloop), dtype=np.intp)
+        self._UnevenNnprTimeRev = np.zeros((self.nloop), dtype=np.intp)
+        UnevenNnprSpaceRot_np = np.zeros((self.nloop, self.geodim, self.geodim), dtype=np.float64)
+        self._UnevenNnprSpaceRot = UnevenNnprSpaceRot_np
+
+        cdef long iint_uneven, ib
+        cdef long idim, jdim
+        for il in range(self.nloop):
+            
+            iint_uneven = self._ngensegm_loop[il] % self.nint_min
+
+            print("abc")
+            print(il, iint_uneven)
+
+
+            ib = self._loopgen[il]
+            isegm = self._bodysegm[ib, iint_uneven]
+            Sym = self.gensegm_to_all[ib][iint_uneven]
+
+            self._UnevenNnprIint[il] = self._gensegm_to_iint[isegm]
+            self._UnevenNnprTimeRev[il] = Sym.TimeRev
+            UnevenNnprSpaceRot_np[il,:,:] = Sym.SpaceRot
+
+            print(self._UnevenNnprTimeRev[il])
+            print()
+
+
+
 
     @nint_fac.setter
     @cython.final
@@ -687,13 +746,18 @@ cdef class NBodySyst():
             params_shapes_list.append((npr, self._nnz_k_shapes[il,0], nppl))
             ifft_shapes_list.append((npr+1, self._nnz_k_shapes[il,0], nppl))
             
-            if self.nnpr == 1:
+            if self._n_sub_fft[il] == 2:
                 ninter = npr+1
-            elif self.nnpr == 2:
-                ninter = 2*npr
+            elif self._n_sub_fft[il] == 1:
+                if self.nnpr == 1: 
+                    ninter = 2*npr+1
+                elif self.nnpr == 2:
+                    ninter = 2*npr
+                else:
+                    raise ValueError(f'Impossible value for nnpr {self.nnpr}')
             else:
-                raise ValueError(f'Impossible value for nnpr {self.nnpr}')
-            
+                raise ValueError(f'Impossible value for n_sub_fft[il] {self._n_sub_fft[il]}')   
+
             pos_slice_shapes_list.append((ninter, self.geodim))
             
         self._params_shapes, self._params_shifts = BundleListOfShapes(params_shapes_list)
@@ -865,14 +929,16 @@ cdef class NBodySyst():
 
             params_to_segmpos(
                 params_mom_buf          , self._params_shapes       , self._params_shifts       ,
-                                        self._ifft_shapes         , self._ifft_shifts         ,
+                                          self._ifft_shapes         , self._ifft_shifts         ,
                 self._params_basis_buf  , self._params_basis_shapes , self._params_basis_shifts ,
                 self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
                 self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
-                                        self._pos_slice_shapes    , self._pos_slice_shifts    ,
-                self._ncoeff_min_loop   , self.nnpr                 ,
+                                          self._pos_slice_shapes    , self._pos_slice_shifts    ,
+                self._ncoeff_min_loop   , self.nnpr                 , self._n_sub_fft           ,
                 self._loopnb            , self._loopmass            ,
                 self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
+                self._UnevenNnprIint    , self._UnevenNnprSpaceRot  , self._UnevenNnprTimeRev   ,
+                self.NnprIsUneven       ,
                 self._gensegm_to_body   , self._gensegm_to_iint     ,
                 self._bodyloop          , self.segm_size            , self.segm_store           ,
                 segmpos_mv              ,
@@ -1432,32 +1498,6 @@ cdef class NBodySyst():
         return params_buf_out_np
 
     @cython.final
-    def params_to_segmpos(self, double[::1] params_mom_buf):
-
-        assert params_mom_buf.shape[0] == self.nparams
-
-        cdef double[:,:,::1] segmpos = np.empty((self.nsegm, self.segm_store, self.geodim), dtype=np.float64)
-
-        with nogil:
-
-            params_to_segmpos(
-                params_mom_buf          , self._params_shapes       , self._params_shifts       ,
-                                          self._ifft_shapes         , self._ifft_shifts         ,
-                self._params_basis_buf  , self._params_basis_shapes , self._params_basis_shifts ,
-                self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
-                self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
-                                          self._pos_slice_shapes    , self._pos_slice_shifts    ,
-                self._ncoeff_min_loop   , self.nnpr                 ,
-                self._loopnb            , self._loopmass            ,
-                self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
-                self._gensegm_to_body   , self._gensegm_to_iint     ,
-                self._bodyloop          , self.segm_size            , self.segm_store           ,
-                segmpos                 ,
-            )
-
-        return np.asarray(segmpos)
-
-    @cython.final
     def all_coeffs_to_kin_nrg(self, double complex[:,:,::1] all_coeffs):
 
         cdef double kin = 0.
@@ -1546,9 +1586,11 @@ cdef class NBodySyst():
                 self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
                 self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
                                           self._pos_slice_shapes    , self._pos_slice_shifts    ,
-                self._ncoeff_min_loop   , self.nnpr                 ,
+                self._ncoeff_min_loop   , self.nnpr                 , self._n_sub_fft           ,
                 self._loopnb            , self._loopmass            ,
                 self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
+                self._UnevenNnprIint    , self._UnevenNnprSpaceRot  , self._UnevenNnprTimeRev   ,
+                self.NnprIsUneven       ,
                 self._gensegm_to_body   , self._gensegm_to_iint     ,
                 self._bodyloop          , self.segm_size            , self.segm_store           ,
                 segmpos                 ,
@@ -1602,9 +1644,11 @@ cdef class NBodySyst():
                 self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
                 self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
                                           self._pos_slice_shapes    , self._pos_slice_shifts    ,
-                self._ncoeff_min_loop   , self.nnpr                 ,
+                self._ncoeff_min_loop   , self.nnpr                 , self._n_sub_fft           ,
                 self._loopnb            , self._loopmass            ,
                 self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
+                self._UnevenNnprIint    , self._UnevenNnprSpaceRot  , self._UnevenNnprTimeRev   ,
+                self.NnprIsUneven       ,
                 self._gensegm_to_body   , self._gensegm_to_iint     ,
                 self._bodyloop          , self.segm_size            , self.segm_store           ,
                 segmpos                 ,
@@ -1639,9 +1683,11 @@ cdef class NBodySyst():
                 self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
                 self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
                                           self._pos_slice_shapes    , self._pos_slice_shifts    ,
-                self._ncoeff_min_loop   , self.nnpr                 ,
+                self._ncoeff_min_loop   , self.nnpr                 , self._n_sub_fft           ,
                 self._loopnb            , self._loopmass            ,
                 self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
+                self._UnevenNnprIint    , self._UnevenNnprSpaceRot  , self._UnevenNnprTimeRev   ,
+                self.NnprIsUneven       ,
                 self._gensegm_to_body   , self._gensegm_to_iint     ,
                 self._bodyloop          , self.segm_size            , self.segm_store           ,
                 segmpos                 ,
@@ -1693,9 +1739,11 @@ cdef class NBodySyst():
                 self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
                 self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
                                           self._pos_slice_shapes    , self._pos_slice_shifts    ,
-                self._ncoeff_min_loop   , self.nnpr                 ,
+                self._ncoeff_min_loop   , self.nnpr                 , self._n_sub_fft           ,
                 self._loopnb            , self._loopmass            ,
                 self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
+                self._UnevenNnprIint    , self._UnevenNnprSpaceRot  , self._UnevenNnprTimeRev   ,
+                self.NnprIsUneven       ,
                 self._gensegm_to_body   , self._gensegm_to_iint     ,
                 self._bodyloop          , self.segm_size            , self.segm_store           ,
                 segmpos                 ,
@@ -1708,9 +1756,11 @@ cdef class NBodySyst():
                 self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
                 self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
                                           self._pos_slice_shapes    , self._pos_slice_shifts    ,
-                self._ncoeff_min_loop   , self.nnpr                 ,
+                self._ncoeff_min_loop   , self.nnpr                 , self._n_sub_fft           ,
                 self._loopnb            , self._loopmass            ,
                 self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
+                self._UnevenNnprIint    , self._UnevenNnprSpaceRot  , self._UnevenNnprTimeRev   ,
+                self.NnprIsUneven       ,
                 self._gensegm_to_body   , self._gensegm_to_iint     ,
                 self._bodyloop          , self.segm_size            , self.segm_store           ,
                 dsegmpos                ,
@@ -1764,9 +1814,11 @@ cdef class NBodySyst():
                 self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
                 self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
                                           self._pos_slice_shapes    , self._pos_slice_shifts    ,
-                self._ncoeff_min_loop   , self.nnpr                 ,
+                self._ncoeff_min_loop   , self.nnpr                 , self._n_sub_fft           ,
                 self._loopnb            , self._loopmass            ,
                 self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
+                self._UnevenNnprIint    , self._UnevenNnprSpaceRot  , self._UnevenNnprTimeRev   ,
+                self.NnprIsUneven       ,
                 self._gensegm_to_body   , self._gensegm_to_iint     ,
                 self._bodyloop          , self.segm_size            , self.segm_store           ,
                 segmpos                 ,
@@ -1802,9 +1854,11 @@ cdef class NBodySyst():
                 self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
                 self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
                                           self._pos_slice_shapes    , self._pos_slice_shifts    ,
-                self._ncoeff_min_loop   , self.nnpr                 ,
+                self._ncoeff_min_loop   , self.nnpr                 , self._n_sub_fft           ,
                 self._loopnb            , self._loopmass            ,
                 self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
+                self._UnevenNnprIint    , self._UnevenNnprSpaceRot  , self._UnevenNnprTimeRev   ,
+                self.NnprIsUneven       ,
                 self._gensegm_to_body   , self._gensegm_to_iint     ,
                 self._bodyloop          , self.segm_size            , self.segm_store           ,
                 segmpos                 ,
@@ -1863,9 +1917,11 @@ cdef class NBodySyst():
                 self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
                 self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
                                           self._pos_slice_shapes    , self._pos_slice_shifts    ,
-                self._ncoeff_min_loop   , self.nnpr                 ,
+                self._ncoeff_min_loop   , self.nnpr                 , self._n_sub_fft           ,
                 self._loopnb            , self._loopmass            ,
                 self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
+                self._UnevenNnprIint    , self._UnevenNnprSpaceRot  , self._UnevenNnprTimeRev   ,
+                self.NnprIsUneven       ,
                 self._gensegm_to_body   , self._gensegm_to_iint     ,
                 self._bodyloop          , self.segm_size            , self.segm_store           ,
                 segmpos                 ,
@@ -1878,9 +1934,11 @@ cdef class NBodySyst():
                 self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
                 self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
                                           self._pos_slice_shapes    , self._pos_slice_shifts    ,
-                self._ncoeff_min_loop   , self.nnpr                 ,
+                self._ncoeff_min_loop   , self.nnpr                 , self._n_sub_fft           ,
                 self._loopnb            , self._loopmass            ,
                 self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
+                self._UnevenNnprIint    , self._UnevenNnprSpaceRot  , self._UnevenNnprTimeRev   ,
+                self.NnprIsUneven       ,
                 self._gensegm_to_body   , self._gensegm_to_iint     ,
                 self._bodyloop          , self.segm_size            , self.segm_store           ,
                 dsegmpos                ,
@@ -1941,9 +1999,11 @@ cdef class NBodySyst():
                 self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
                 self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
                                           self._pos_slice_shapes    , self._pos_slice_shifts    ,
-                self._ncoeff_min_loop   , self.nnpr                 ,
+                self._ncoeff_min_loop   , self.nnpr                 , self._n_sub_fft           ,
                 self._loopnb            , self._loopmass            ,
                 self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
+                self._UnevenNnprIint    , self._UnevenNnprSpaceRot  , self._UnevenNnprTimeRev   ,
+                self.NnprIsUneven       ,
                 self._gensegm_to_body   , self._gensegm_to_iint     ,
                 self._bodyloop          , self.segm_size            , self.segm_store           ,
                 segmpos                 ,
@@ -2023,9 +2083,11 @@ cdef class NBodySyst():
                 self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
                 self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
                                           self._pos_slice_shapes    , self._pos_slice_shifts    ,
-                self._ncoeff_min_loop   , self.nnpr                 ,
+                self._ncoeff_min_loop   , self.nnpr                 , self._n_sub_fft           ,
                 self._loopnb            , self._loopmass            ,
                 self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
+                self._UnevenNnprIint    , self._UnevenNnprSpaceRot  , self._UnevenNnprTimeRev   ,
+                self.NnprIsUneven       ,
                 self._gensegm_to_body   , self._gensegm_to_iint     ,
                 self._bodyloop          , self.segm_size            , self.segm_store           ,
                 dsegmpos                ,
@@ -2264,8 +2326,13 @@ cdef class NBodySyst():
                     segmbeg = 0
                     segmend = self.segm_size
                 else:
-                    segmbeg = 1
-                    segmend = self.segm_size+1
+                    if self.nnpr == 1 :
+                    # if self._n_sub_fft[il] == 2 :
+                        segmbeg = 1
+                        segmend = self.segm_size+1
+                    else:
+                        segmbeg = 0
+                        segmend = self.segm_size
 
                 Sym.TransformSegment(segmpos[isegm,segmbeg:segmend,:], all_pos[il,ibeg:iend,:])
 
@@ -2287,9 +2354,11 @@ cdef class NBodySyst():
                 self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
                 self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
                                           self._pos_slice_shapes    , self._pos_slice_shifts    ,
-                self._ncoeff_min_loop   , self.nnpr                 ,
+                self._ncoeff_min_loop   , self.nnpr                 , self._n_sub_fft           ,
                 self._loopnb            , self._loopmass            ,
                 self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
+                self._UnevenNnprIint    , self._UnevenNnprSpaceRot  , self._UnevenNnprTimeRev   ,
+                self.NnprIsUneven       ,
                 self._gensegm_to_body   , self._gensegm_to_iint     ,
                 self._bodyloop          , self.segm_size            , self.segm_store           ,
                 segmpos                 ,
@@ -3003,6 +3072,7 @@ cdef void partial_fft_to_pos_slice_2npr(
     scipy.linalg.cython_blas.dgemm(transt, transn, &geodim, &n_inter, &ndcom, &dfac, params_basis_r, &ndcom, dtmp, &ndcom, &zero_double, pos_slice, &geodim)
 
     free(ztmp)
+
     
 @cython.cdivision(True)
 cdef void pos_slice_to_partial_fft_2npr(
@@ -3173,7 +3243,7 @@ cdef void ifft_to_pos_slice(
     double complex *params_basis_buf_ptr    , long[:,::1] params_basis_shapes   , long[::1] params_basis_shifts ,
     long* nnz_k_buf_ptr                     , long[:,::1] nnz_k_shapes          , long[::1] nnz_k_shifts        ,
     double* pos_slice_buf_ptr               , long[:,::1] pos_slice_shapes      , long[::1] pos_slice_shifts    ,
-    long[::1] ncoeff_min_loop               , long nnpr                         ,
+    long[::1] ncoeff_min_loop               , long nnpr                         , long[::1] n_sub_fft           ,
 ) noexcept nogil:
 
     cdef double complex* ifft
@@ -3182,12 +3252,12 @@ cdef void ifft_to_pos_slice(
     cdef double* pos_slice
 
     cdef int nloop = ncoeff_min_loop.shape[0]
-    cdef Py_ssize_t il, i
+    cdef Py_ssize_t il
 
     cdef int npr
     cdef int ncoeff_min_loop_il
     cdef int ncoeff_min_loop_nnz
-    cdef int geodim
+    cdef int geodim = params_basis_shapes[0,0]
     cdef int nppl
 
     for il in range(nloop):
@@ -3202,10 +3272,9 @@ cdef void ifft_to_pos_slice(
             npr = ifft_shapes[il,0] - 1
             ncoeff_min_loop_nnz = nnz_k_shapes[il,0]
             ncoeff_min_loop_il = ncoeff_min_loop[il]
-            geodim = params_basis_shapes[il,0]
             nppl = ifft_shapes[il,2] 
 
-            if nnpr == 1:
+            if n_sub_fft[il] == 2:
                 partial_fft_to_pos_slice_1npr(
                     ifft, params_basis, nnz_k, pos_slice,
                     npr, ncoeff_min_loop_nnz, ncoeff_min_loop_il, geodim, nppl,
@@ -3215,6 +3284,61 @@ cdef void ifft_to_pos_slice(
                     ifft, params_basis, nnz_k, pos_slice,
                     npr, ncoeff_min_loop_nnz, ncoeff_min_loop_il, geodim, nppl,
                 )
+
+cdef void Adjust_uneven_nnpr(
+    double* pos_slice_buf_ptr         , long[::1] pos_slice_shifts    ,
+    long[:,::1] ifft_shapes           ,
+    long[:,::1] params_basis_shapes     ,
+    long[::1] n_sub_fft     ,
+    long nnpr   ,
+    long[::1] UnevenNnprTimeRev,
+    long[::1] UnevenNnprIint,
+    double[:,:,::1] UnevenNnprSpaceRot,
+    long segm_size,
+)noexcept nogil:
+
+
+
+    cdef double* pos_slice
+    cdef double* pos_slice_uneven_source
+
+    cdef long nloop = params_basis_shapes.shape[0]
+    cdef long geodim = params_basis_shapes[0,0]
+    cdef Py_ssize_t il
+
+    cdef int npr
+
+
+    for il in range(nloop):
+
+        with gil:
+            print("lll", il, n_sub_fft[il], nnpr)
+
+        if params_basis_shapes[il,1] > 0:
+
+            if (n_sub_fft[il] == 1) and (nnpr == 1):
+
+                npr = ifft_shapes[il,0] - 1
+                pos_slice = pos_slice_buf_ptr + pos_slice_shifts[il] + 2*npr*geodim
+
+                if UnevenNnprTimeRev[il] == 1:
+                    pos_slice_uneven_source = pos_slice_buf_ptr + pos_slice_shifts[il] + UnevenNnprIint[il]*segm_size*geodim
+                    with gil:
+                        print("direct", UnevenNnprIint[il])
+                else:
+                    with gil:
+                        print("indirect")
+                    pos_slice_uneven_source = pos_slice_buf_ptr + pos_slice_shifts[il] + ((UnevenNnprIint[il]+1)*segm_size - 1)*geodim
+
+                for idim in range(geodim):
+                    for jdim in range(geodim):
+                        with gil:
+                            print(pos_slice_uneven_source[jdim])
+                        pos_slice[idim] += UnevenNnprSpaceRot[il,idim,jdim] * pos_slice_uneven_source[jdim]
+
+
+
+
 
 cdef void pos_slice_to_ifft(
     double* pos_slice_buf_ptr               , long[:,::1] pos_slice_shapes    , long[::1] pos_slice_shifts    ,
@@ -3514,9 +3638,11 @@ cdef void params_to_segmpos(
     long[::1] nnz_k_buf                     , long[:,::1] nnz_k_shapes          , long[::1] nnz_k_shifts        ,
     bint[::1] co_in_buf                     , long[:,::1] co_in_shapes          , long[::1] co_in_shifts        ,
                                               long[:,::1] pos_slice_shapes      , long[::1] pos_slice_shifts    ,
-    long[::1] ncoeff_min_loop               , long nnpr                         ,
+    long[::1] ncoeff_min_loop               , long nnpr                         , long[::1] n_sub_fft           ,
     long[::1] loopnb                        , double[::1] loopmass              ,
     bint[::1] InterSpaceRotIsId             , double[:,:,::1] InterSpaceRot     , long[::1] InterTimeRev        ,
+    long[::1] UnevenNnprIint                , double[:,:,::1] UnevenNnprSpaceRot, long[::1] UnevenNnprTimeRev   ,
+    bint NnprIsUneven               ,
     long[::1] gensegm_to_body       ,
     long[::1] gensegm_to_iint       ,
     long[::1] BodyLoop              ,
@@ -3564,8 +3690,26 @@ cdef void params_to_segmpos(
         &params_basis_buf[0], params_basis_shapes   , params_basis_shifts   ,
         &nnz_k_buf[0]       , nnz_k_shapes          , nnz_k_shifts          ,
         pos_slice_buf_ptr   , pos_slice_shapes      , pos_slice_shifts      ,
-        ncoeff_min_loop     , nnpr                  ,
+        ncoeff_min_loop     , nnpr                  , n_sub_fft             ,
     )
+
+    if NnprIsUneven:
+        Adjust_uneven_nnpr(
+            pos_slice_buf_ptr         , pos_slice_shifts    ,
+            ifft_shapes           ,
+            params_basis_shapes     ,
+            n_sub_fft     ,
+            nnpr   ,
+            UnevenNnprTimeRev,
+            UnevenNnprIint,
+            UnevenNnprSpaceRot,
+            segm_size,
+        )
+
+
+
+
+
 
     # PYFFTW free ???
     free(ifft_buf_ptr)
