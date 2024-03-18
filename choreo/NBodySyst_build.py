@@ -728,8 +728,6 @@ def PlotTimeBodyGraph(Graph, nbody, nint_min, filename):
     plt.close()
 
 def CountSegmentBinaryInteractions(BinarySegm, nsegm):
-    
-    All_Id = True
 
     nbin_segm_tot = 0
     nbin_segm_unique = 0
@@ -738,11 +736,7 @@ def CountSegmentBinaryInteractions(BinarySegm, nsegm):
             nbin_segm_tot += sum(BinarySegm[(isegm, isegmp)]["SymCount"])
             nbin_segm_unique += len(BinarySegm[(isegm, isegmp)]["SymCount"])
 
-            for Sym in BinarySegm[(isegm, isegmp)]["SymList"]:
-
-                All_Id = All_Id and Sym.IsIdentityRotAndTimeRev()    
-    
-    return All_Id, nbin_segm_tot, nbin_segm_unique
+    return nbin_segm_tot, nbin_segm_unique
 
 def BundleListOfShapes(ListOfShapes):
     
