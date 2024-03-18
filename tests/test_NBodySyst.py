@@ -310,6 +310,7 @@ def test_resize(AllNBS, float64_tols):
         all_pos = scipy.fft.irfft(all_coeffs, axis=1, norm='forward')
         segmpos_noopt = NBS.all_pos_to_segmpos_noopt(all_pos)
         
+        print(np.linalg.norm(segmpos - segmpos_noopt))
         assert np.allclose(segmpos, segmpos_noopt, rtol = float64_tols.rtol, atol = float64_tols.atol) 
         
         fac = 4
@@ -324,10 +325,12 @@ def test_resize(AllNBS, float64_tols):
         all_pos = scipy.fft.irfft(all_coeffs, axis=1, norm='forward')
         segmpos_long_noopt = NBS.all_pos_to_segmpos_noopt(all_pos)
         
+        print(np.linalg.norm(segmpos_long - segmpos_long_noopt))
         assert np.allclose(segmpos_long, segmpos_long_noopt, rtol = float64_tols.rtol, atol = float64_tols.atol) 
         
         print(np.linalg.norm(segmpos[:,:small_segm_size,:] - segmpos_long[:,:long_segm_size:fac,:]))
         assert np.allclose(segmpos[:,:small_segm_size,:], segmpos_long[:,:long_segm_size:fac,:], rtol = float64_tols.rtol, atol = float64_tols.atol) 
+        print()
         
 @ProbabilisticTest()
 def test_pot_indep_resize(AllNBS):
