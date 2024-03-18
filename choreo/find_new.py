@@ -387,7 +387,7 @@ def Find_Choreo(
                     print("Stopping search: found approximate solution.")
                     SaveSol = True
 
-                if GoOn and NeedsRefinement and not(CanRefine) and not(CanChangeOptimParams):
+                if GoOn and not(CanRefine) and not(CanChangeOptimParams):
                 
                     GoOn = False
                     print('Could not converge within prescibed optimizer and refinement parameters.')
@@ -1007,10 +1007,13 @@ def ChoreoReadDictAndFind(Workspace_folder, config_filename="choreo_config.json"
         with threadpoolctl.threadpool_limits(limits=n_threads):
             ChoreoFindFromDict(params_dict, Workspace_folder)
 
-    else :
+    elif Exec_Mul_Proc == "No":
 
         with threadpoolctl.threadpool_limits(limits=1):
             ChoreoFindFromDict(params_dict, Workspace_folder)
+    else :
+
+        raise ValueError(f'Unknown {Exec_Mul_Proc = }. Accepted values : "MultiProc", "MultiThread" or "No"')
 
 def UpdateHashDict(store_folder, hash_dict):
     # Creates a list of possible duplicates based on value of the action and hashes

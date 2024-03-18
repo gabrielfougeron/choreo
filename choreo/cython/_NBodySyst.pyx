@@ -113,6 +113,7 @@ cdef class NBodySyst():
     cdef readonly long nbin_segm_unique
 
     cdef readonly bint All_BinSegmTransformId
+    cdef readonly bint RequiresGreaterNStore
 
     cdef long[::1] _loopnb
     @property
@@ -383,6 +384,10 @@ cdef class NBodySyst():
         # Zero charges are OK but not zero masses
         for ib in range(nbody):
             assert bodymass[ib] != 0.
+
+        self.RequiresGreaterNStore = False
+        for Sym in self.Sym_list:
+            self.RequiresGreaterNStore = self.RequiresGreaterNStore or (Sym.TimeRev < 0)
 
         self.DetectLoops(bodymass, bodycharge)
 
@@ -720,7 +725,15 @@ cdef class NBodySyst():
         self.ncoeffs = self._nint // 2 + 1
         self.segm_size = self._nint // self.nint_min
 
-        if self.nnpr == 1:
+        # if self.nnpr == 1:
+        #     self.segm_store = self.segm_size + 1
+        # else:
+        #     self.segm_store = self.segm_size
+
+
+
+
+        if self.RequiresGreaterNStore:
             self.segm_store = self.segm_size + 1
         else:
             self.segm_store = self.segm_size
@@ -2289,22 +2302,55 @@ cdef class NBodySyst():
 
             ibeg = iint * self.segm_size         
             iend = ibeg + self.segm_store
-            assert iend <= self._nint
 
-            if self._InterTimeRev[isegm] > 0:
+            if iend <= self._nint:
 
-                np.matmul(
-                    all_pos[il,ibeg:iend,:]         ,
-                    self._InterSpaceRot[isegm,:,:]  ,
-                    out = segmpos[isegm,:,:]        ,
-                )            
+                if self._InterTimeRev[isegm] > 0:
+
+                    np.matmul(
+                        all_pos[il,ibeg:iend,:]         ,
+                        self._InterSpaceRot[isegm,:,:]  ,
+                        out = segmpos[isegm,:,:]        ,
+                    )            
+
+                else:
+
+                    segmpos[isegm,:,:] = np.matmul(
+                        all_pos[il,ibeg:iend,:]         ,
+                        self._InterSpaceRot[isegm,:,:]  ,
+                    )[::-1,:]
 
             else:
 
-                segmpos[isegm,:,:] = np.matmul(
-                    all_pos[il,ibeg:iend,:]         ,
-                    self._InterSpaceRot[isegm,:,:]  ,
-                )[::-1,:]
+                iend = iend - 1
+
+                assert iend == self._nint
+
+                if self._InterTimeRev[isegm] > 0:
+
+                    np.matmul(
+                        all_pos[il,ibeg:iend,:]         ,
+                        self._InterSpaceRot[isegm,:,:]  ,
+                        out = segmpos[isegm,:self.segm_store-1,:]        ,
+                    )   
+
+                    np.matmul(
+                        all_pos[il,0,:]         ,
+                        self._InterSpaceRot[isegm,:,:]  ,
+                        out = segmpos[isegm,self.segm_store-1,:]        ,
+                    )            
+
+                else:
+
+                    segmpos[isegm,1:,:] = np.matmul(
+                        all_pos[il,ibeg:iend,:]         ,
+                        self._InterSpaceRot[isegm,:,:]  ,
+                    )[::-1,:]
+
+                    segmpos[isegm,0,:] = np.matmul(
+                        all_pos[il,0,:]         ,
+                        self._InterSpaceRot[isegm,:,:]  ,
+                    )
 
         return segmpos
 
@@ -2334,13 +2380,8 @@ cdef class NBodySyst():
                     segmbeg = 0
                     segmend = self.segm_size
                 else:
-                    if self.nnpr == 1 :
-                    # if self._n_sub_fft[il] == 2 :
-                        segmbeg = 1
-                        segmend = self.segm_size+1
-                    else:
-                        segmbeg = 0
-                        segmend = self.segm_size
+                    segmbeg = 1
+                    segmend = self.segm_size+1
 
                 Sym.TransformSegment(segmpos[isegm,segmbeg:segmend,:], all_pos[il,ibeg:iend,:])
 
@@ -3447,10 +3488,13 @@ cdef void pos_slice_to_segmpos(
 
     cdef int geodim = InterSpaceRot.shape[1]
     cdef int segm_store_int = segm_store
+    cdef int segm_size_int = segm_size
     cdef int nitems_size = segm_size*geodim
     cdef int nitems_store = segm_store*geodim
     cdef Py_ssize_t isegm, ib, il, iint
     cdef Py_ssize_t i, idim
+
+    cdef long ibeg, iend
 
     cdef bint NeedsAllocate = False
 
@@ -3479,26 +3523,65 @@ cdef void pos_slice_to_segmpos(
 
         else:
 
-            pos_slice = pos_slice_buf_ptr + pos_slice_shifts[il] + nitems_size*iint
-            segmpos = segmpos_buf_ptr + nitems_store*(isegm+1) - geodim
+            ibeg = pos_slice_shifts[il] + nitems_size*iint
+            iend = ibeg + segm_store*geodim
 
-            if InterSpaceRotIsId[isegm]:
-                for i in range(segm_store):
+            if (iend <= pos_slice_shifts[il+1]):
+
+                pos_slice = pos_slice_buf_ptr + ibeg
+                segmpos = segmpos_buf_ptr + nitems_store*(isegm+1) - geodim
+
+                if InterSpaceRotIsId[isegm]:
+                    for i in range(segm_store):
+                        for idim in range(geodim):
+                            segmpos[idim] = pos_slice[idim]
+                        segmpos -= geodim
+                        pos_slice += geodim
+                                
+                else:
+                    tmp = tmp_loc
+                    scipy.linalg.cython_blas.dgemm(transn, transn, &geodim, &segm_store_int, &geodim, &one_double, &InterSpaceRot[isegm,0,0], &geodim, pos_slice, &geodim, &zero_double, tmp, &geodim)
+
+                    for i in range(segm_store):
+
+                        for idim in range(geodim):
+                            segmpos[idim] = tmp[idim]
+                        segmpos -= geodim
+                        tmp += geodim
+            else:
+
+                iend = iend - geodim
+
+                pos_slice = pos_slice_buf_ptr + ibeg
+                segmpos = segmpos_buf_ptr + nitems_store*(isegm+1) - geodim
+
+                if InterSpaceRotIsId[isegm]:
+                    for i in range(segm_size):
+                        for idim in range(geodim):
+                            segmpos[idim] = pos_slice[idim]
+                        segmpos -= geodim
+                        pos_slice += geodim
+                            
+                    pos_slice = pos_slice_buf_ptr + pos_slice_shifts[il]
                     for idim in range(geodim):
                         segmpos[idim] = pos_slice[idim]
-                    segmpos -= geodim
-                    pos_slice += geodim
-                            
-            else:
-                tmp = tmp_loc
-                scipy.linalg.cython_blas.dgemm(transn, transn, &geodim, &segm_store_int, &geodim, &one_double, &InterSpaceRot[isegm,0,0], &geodim, pos_slice, &geodim, &zero_double, tmp, &geodim)
 
-                for i in range(segm_store):
+                else:
+                    tmp = tmp_loc
+                    scipy.linalg.cython_blas.dgemm(transn, transn, &geodim, &segm_size_int, &geodim, &one_double, &InterSpaceRot[isegm,0,0], &geodim, pos_slice, &geodim, &zero_double, tmp, &geodim)
+
+                    for i in range(segm_size):
+
+                        for idim in range(geodim):
+                            segmpos[idim] = tmp[idim]
+                        segmpos -= geodim
+                        tmp += geodim
+
+                    pos_slice = pos_slice_buf_ptr + pos_slice_shifts[il]
+                    scipy.linalg.cython_blas.dgemm(transn, transn, &geodim, &int_one, &geodim, &one_double, &InterSpaceRot[isegm,0,0], &geodim, pos_slice, &geodim, &zero_double, tmp, &geodim)
 
                     for idim in range(geodim):
                         segmpos[idim] = tmp[idim]
-                    segmpos -= geodim
-                    tmp += geodim
 
     if NeedsAllocate:
         free(tmp_loc)
@@ -3524,10 +3607,13 @@ cdef void segmpos_to_pos_slice(
 
     cdef int geodim = InterSpaceRot.shape[1]
     cdef int segm_store_int = segm_store
+    cdef int segm_size_int = segm_size
     cdef int nitems_size = segm_size*geodim
     cdef int nitems_store = segm_store*geodim
     cdef Py_ssize_t isegm, ib, il, iint
     cdef Py_ssize_t i, idim
+
+    cdef long ibeg, iend
 
     cdef bint NeedsAllocate = False
 
@@ -3555,31 +3641,74 @@ cdef void segmpos_to_pos_slice(
 
         else:
 
-            pos_slice = pos_slice_buf_ptr + pos_slice_shifts[il] + nitems_size*iint
+            ibeg = pos_slice_shifts[il] + nitems_size*iint
+            iend = ibeg + segm_store*geodim
 
-            if InterSpaceRotIsId[isegm]:
+            if (iend <= pos_slice_shifts[il+1]):
 
-                segmpos = segmpos_buf_ptr + nitems_store*(isegm+1) - geodim
+                pos_slice = pos_slice_buf_ptr + ibeg
 
-                for i in range(segm_store):
-                    for idim in range(geodim):
-                        pos_slice[idim] = segmpos[idim]
-                    segmpos -= geodim
-                    pos_slice += geodim
-                            
+                if InterSpaceRotIsId[isegm]:
+
+                    segmpos = segmpos_buf_ptr + nitems_store*(isegm+1) - geodim
+
+                    for i in range(segm_store):
+                        for idim in range(geodim):
+                            pos_slice[idim] = segmpos[idim]
+                        segmpos -= geodim
+                        pos_slice += geodim
+                                
+                else:
+
+                    segmpos = segmpos_buf_ptr + nitems_store*(isegm)
+                    tmp = tmp_loc
+
+                    scipy.linalg.cython_blas.dgemm(transt, transn, &geodim, &segm_store_int, &geodim, &one_double, &InterSpaceRot[isegm,0,0], &geodim, segmpos, &geodim, &zero_double, tmp, &geodim)
+
+                    tmp = tmp_loc + nitems_store - geodim
+                    for i in range(segm_store):
+                        for idim in range(geodim):
+                            pos_slice[idim] = tmp[idim]
+                        pos_slice += geodim
+                        tmp -= geodim
+
             else:
 
-                segmpos = segmpos_buf_ptr + nitems_store*(isegm)
-                tmp = tmp_loc
+                iend = iend - geodim
 
-                scipy.linalg.cython_blas.dgemm(transt, transn, &geodim, &segm_store_int, &geodim, &one_double, &InterSpaceRot[isegm,0,0], &geodim, segmpos, &geodim, &zero_double, tmp, &geodim)
+                pos_slice = pos_slice_buf_ptr + ibeg
 
-                tmp = tmp_loc + nitems_store - geodim
-                for i in range(segm_store):
+                if InterSpaceRotIsId[isegm]:
+
+                    segmpos = segmpos_buf_ptr + nitems_store*(isegm+1) - geodim
+
+                    for i in range(segm_size):
+                        for idim in range(geodim):
+                            pos_slice[idim] = segmpos[idim]
+                        segmpos -= geodim
+                        pos_slice += geodim
+
+                    pos_slice = pos_slice_buf_ptr + pos_slice_shifts[il]
+                    for idim in range(geodim):
+                        pos_slice[idim] = segmpos[idim]
+
+                else:
+
+                    segmpos = segmpos_buf_ptr + nitems_store*(isegm)
+                    tmp = tmp_loc
+
+                    scipy.linalg.cython_blas.dgemm(transt, transn, &geodim, &segm_store_int, &geodim, &one_double, &InterSpaceRot[isegm,0,0], &geodim, segmpos, &geodim, &zero_double, tmp, &geodim)
+
+                    tmp = tmp_loc + nitems_store - geodim
+                    for i in range(segm_size):
+                        for idim in range(geodim):
+                            pos_slice[idim] = tmp[idim]
+                        pos_slice += geodim
+                        tmp -= geodim
+
+                    pos_slice = pos_slice_buf_ptr + pos_slice_shifts[il]
                     for idim in range(geodim):
                         pos_slice[idim] = tmp[idim]
-                    pos_slice += geodim
-                    tmp -= geodim
 
     if NeedsAllocate:
         free(tmp_loc)
@@ -3605,12 +3734,15 @@ cdef void segmpos_to_pos_slice_T(
 
     cdef int geodim = InterSpaceRot.shape[1]
     cdef int segm_store_int = segm_store
+    cdef int segm_size_int = segm_size
     cdef int nitems_size = segm_size*geodim
     cdef int nitems_store = segm_store*geodim
     cdef Py_ssize_t isegm, ib, il, iint
     cdef Py_ssize_t i, idim
 
     cdef bint NeedsAllocate = False
+
+    cdef long ibeg, iend
 
     for isegm in range(nsegm):
         NeedsAllocate = (NeedsAllocate or ((InterTimeRev[isegm] < 0) and not(InterSpaceRotIsId[isegm])))
@@ -3636,32 +3768,73 @@ cdef void segmpos_to_pos_slice_T(
                 scipy.linalg.cython_blas.dgemm(transt, transn, &geodim, &segm_store_int, &geodim, &one_double, &InterSpaceRot[isegm,0,0], &geodim, segmpos, &geodim, &one_double, pos_slice, &geodim)
 
         else:
+    
+            ibeg = pos_slice_shifts[il] + nitems_size*iint
+            iend = ibeg + segm_store*geodim
 
-            pos_slice = pos_slice_buf_ptr + pos_slice_shifts[il] + nitems_size*iint
+            if (iend <= pos_slice_shifts[il+1]):
 
-            if InterSpaceRotIsId[isegm]:
+                pos_slice = pos_slice_buf_ptr + ibeg
 
-                segmpos = segmpos_buf_ptr + nitems_store*(isegm+1) - geodim
+                if InterSpaceRotIsId[isegm]:
 
-                for i in range(segm_store):
-                    for idim in range(geodim):
-                        pos_slice[idim] += segmpos[idim]
-                    segmpos -= geodim
-                    pos_slice += geodim
-                            
+                    segmpos = segmpos_buf_ptr + nitems_store*(isegm+1) - geodim
+
+                    for i in range(segm_store):
+                        for idim in range(geodim):
+                            pos_slice[idim] += segmpos[idim]
+                        segmpos -= geodim
+                        pos_slice += geodim
+                                
+                else:
+
+                    segmpos = segmpos_buf_ptr + nitems_store*(isegm)
+                    tmp = tmp_loc
+
+                    scipy.linalg.cython_blas.dgemm(transt, transn, &geodim, &segm_store_int, &geodim, &one_double, &InterSpaceRot[isegm,0,0], &geodim, segmpos, &geodim, &zero_double, tmp, &geodim)
+
+                    tmp = tmp_loc + nitems_store - geodim
+                    for i in range(segm_store):
+                        for idim in range(geodim):
+                            pos_slice[idim] += tmp[idim]
+                        pos_slice += geodim
+                        tmp -= geodim
+
             else:
 
-                segmpos = segmpos_buf_ptr + nitems_store*(isegm)
-                tmp = tmp_loc
+                pos_slice = pos_slice_buf_ptr + ibeg
 
-                scipy.linalg.cython_blas.dgemm(transt, transn, &geodim, &segm_store_int, &geodim, &one_double, &InterSpaceRot[isegm,0,0], &geodim, segmpos, &geodim, &zero_double, tmp, &geodim)
+                if InterSpaceRotIsId[isegm]:
 
-                tmp = tmp_loc + nitems_store - geodim
-                for i in range(segm_store):
+                    segmpos = segmpos_buf_ptr + nitems_store*(isegm+1) - geodim
+
+                    for i in range(segm_size):
+                        for idim in range(geodim):
+                            pos_slice[idim] += segmpos[idim]
+                        segmpos -= geodim
+                        pos_slice += geodim
+
+                    pos_slice = pos_slice_buf_ptr + pos_slice_shifts[il]
+                    for idim in range(geodim):
+                        pos_slice[idim] += segmpos[idim]
+                                
+                else:
+
+                    segmpos = segmpos_buf_ptr + nitems_store*(isegm)
+                    tmp = tmp_loc
+
+                    scipy.linalg.cython_blas.dgemm(transt, transn, &geodim, &segm_store_int, &geodim, &one_double, &InterSpaceRot[isegm,0,0], &geodim, segmpos, &geodim, &zero_double, tmp, &geodim)
+
+                    tmp = tmp_loc + nitems_store - geodim
+                    for i in range(segm_size):
+                        for idim in range(geodim):
+                            pos_slice[idim] += tmp[idim]
+                        pos_slice += geodim
+                        tmp -= geodim
+
+                    pos_slice = pos_slice_buf_ptr + pos_slice_shifts[il]
                     for idim in range(geodim):
                         pos_slice[idim] += tmp[idim]
-                    pos_slice += geodim
-                    tmp -= geodim
 
     if NeedsAllocate:
         free(tmp_loc)
