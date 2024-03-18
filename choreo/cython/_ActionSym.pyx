@@ -344,7 +344,6 @@ cdef class ActionSym():
 
         return self.ApplyTInv(tnum, tden)
 
-
     @cython.final
     @cython.cdivision(True)
     cpdef (long, long) ApplyT(ActionSym self, long tnum, long tden):
@@ -368,7 +367,11 @@ cdef class ActionSym():
 
         return self.ApplyT(tnum, tden)
 
-
+    # THIS IS NOT A PERFORMANCE-ORIENTED METHOD
+    @cython.final
+    def TransformPos(ActionSym self, in_segm, out):
+        np.matmul(in_segm, self._SpaceRot.T, out=out)
+            
     # THIS IS NOT A PERFORMANCE-ORIENTED METHOD
     @cython.final
     def TransformSegment(ActionSym self, in_segm, out):
