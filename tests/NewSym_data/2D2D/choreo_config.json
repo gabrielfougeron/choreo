@@ -3,51 +3,34 @@
     "geodim": 2
   },
   "Phys_Bodies": {
-    "nbody": 5,
+    "nbody": 4,
     "MomConsImposed": false,
-    "nsyms": 2,
+    "nsyms": 1,
     "AllSyms": [
       {
         "BodyPerm": [
           1,
-          2,
           0,
           3,
-          4
-        ],
-        "Reflexion": "False",
-        "RotAngleNum": 0,
-        "RotAngleDen": 1,
-        "TimeRev": "False",
-        "TimeShiftNum": 1,
-        "TimeShiftDen": 3
-      },
-      {
-        "BodyPerm": [
-          0,
-          2,
-          1,
-          4,
-          3
+          2
         ],
         "Reflexion": "True",
         "RotAngleNum": 0,
         "RotAngleDen": 1,
         "TimeRev": "True",
         "TimeShiftNum": 0,
-        "TimeShiftDen": 5
+        "TimeShiftDen": 3
       }
     ],
     "nloop": 2,
     "Targets": [
       [
         0,
-        1,
-        2
+        1
       ],
       [
-        3,
-        4
+        2,
+        3
       ]
     ],
     "mass": [
@@ -172,7 +155,7 @@
     "Check_Escape": true
   },
   "Solver_CLI": {
-    "Exec_Mul_Proc": "Yes",
+    "Exec_Mul_Proc": "MultiProc",
     "nproc": 8,
     "GradHess_backend": "Numba",
     "SaveImage": true,

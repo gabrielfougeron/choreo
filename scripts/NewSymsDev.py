@@ -73,9 +73,12 @@ def main():
         # '3C11k',
         # '5q',
         # '5Dq_',
-        'uneven_nnpr',
+        # 'uneven_nnpr',
         # '3C4q4k',
         # '3D4q4k',
+        '2D2D',
+        '2D2D5k',
+        '2D1D1D',
     ]
 
     TT = pyquickbench.TimeTrain(
@@ -138,33 +141,84 @@ def doit(config_name):
     NBS = choreo.cython._NBodySyst.NBodySyst(geodim, nbody, mass, charge, Sym_list, inter_law)
 
 
+    print(f'{NBS.n_sub_fft = }')
+    print(f'{NBS.nnpr = }')
 
-    NBS.nint_fac = 5 # Else it will sometime fail for huge symmetries
 
+    NBS.nint_fac = 1
+    params_buf = np.random.random((NBS.nparams))
+    
+    
+    
 
     params_buf = np.random.random((NBS.nparams))
-    segmpos = NBS.params_to_segmpos(params_buf)
+    all_coeffs = NBS.params_to_all_coeffs_noopt(params_buf)  
+    all_pos = scipy.fft.irfft(all_coeffs, axis=1, norm='forward')
+    segmpos = NBS.all_pos_to_segmpos_noopt(all_pos)
     
-    segmpos_dual = np.random.random((NBS.nsegm,NBS.segm_store,NBS.geodim))
-    params_buf_dual = NBS.segmpos_to_params_T(segmpos_dual)
+    all_pos_rt = NBS.segmpos_to_all_pos_noopt(segmpos)
+    print(np.linalg.norm(all_pos_rt - all_pos))
+    assert (np.linalg.norm(all_pos_rt - all_pos)) < eps
     
-    dot_params = np.dot(params_buf, params_buf_dual)
-    dot_segmpos = np.dot(segmpos_dual.reshape(-1), segmpos.reshape(-1))
-
-    print(abs(dot_params - dot_segmpos))
+            
+    all_coeffs_rt = scipy.fft.rfft(all_pos, axis=1,norm='forward')
+    print(np.linalg.norm(all_coeffs_rt - all_coeffs))
+    assert (np.linalg.norm(all_coeffs_rt - all_coeffs)) < eps
     
 
-
-
-
-
-
-
-
-
-
-
+    params_buf_rt = NBS.all_coeffs_to_params_noopt(all_coeffs)
+    print(np.linalg.norm(params_buf - params_buf_rt))
+    assert np.linalg.norm(params_buf - params_buf_rt) < eps
     
+    segmpos_cy = NBS.params_to_segmpos(params_buf)
+    params_buf_rt = NBS.segmpos_to_params(segmpos_cy)
+    print(np.linalg.norm(params_buf - params_buf_rt))
+    assert (np.linalg.norm(params_buf - params_buf_rt)) < eps
+        
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+    # Unoptimized version
+    all_coeffs = NBS.params_to_all_coeffs_noopt(params_buf)        
+    all_pos = scipy.fft.irfft(all_coeffs, axis=1, norm='forward')
+    
+    NBS.AssertAllSegmGenConstraintsAreRespected(all_pos)
+    NBS.AssertAllBodyConstraintAreRespected(all_pos)
+    
+    segmpos_noopt = NBS.all_pos_to_segmpos_noopt(all_pos)
+    
+    # Optimized version
+    segmpos_cy = NBS.params_to_segmpos(params_buf)
+    # 
+    for isegm in range(NBS.nsegm):
+        print(isegm)
+        print(segmpos_noopt[isegm,:,:])
+        print(segmpos_cy[isegm,:,:])
+        print(segmpos_cy[isegm,:,:]-segmpos_noopt[isegm,:,:])
+    
+        
+        
+        
+        print(np.linalg.norm(segmpos_noopt[isegm,:,:] - segmpos_cy[isegm,:,:]))
+        print()
+        
+    
+    assert np.linalg.norm(segmpos_noopt - segmpos_cy) < eps
+
     nparam_nosym = geodim * NBS.nint * nbody
     nparam_tot = NBS.nparams_incl_o
 
