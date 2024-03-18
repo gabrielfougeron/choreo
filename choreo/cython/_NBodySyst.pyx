@@ -1211,7 +1211,7 @@ cdef class NBodySyst():
 
         return not(networkx.is_connected(BodyGraph))
 
-    def plot_segmpos_2D(self, segmpos, filename, fig_size=(10,10), dpi=100, color=None, color_list=None, xlim=None, extend=0.03, CloseLoop=True):
+    def plot_segmpos_2D(self, segmpos, filename, fig_size=(10,10), dpi=100, color=None, color_list=None, xlim=None, extend=0.03):
         r"""
         Plots 2D trajectories with one color per body and saves image in file
         """
@@ -1263,7 +1263,7 @@ cdef class NBodySyst():
         fig.set_dpi(dpi)
         ax = plt.gca()
 
-        pos = np.empty((self.segm_store, self.geodim), dtype=np.float64)
+        pos = np.empty((self.segm_size+1, self.geodim), dtype=np.float64)
 
         iplt = 0
         for ib in range(self.nbody):
@@ -1271,10 +1271,15 @@ cdef class NBodySyst():
                 if self._SegmRequiresDisp[ib,iint]:
 
                     iplt += 1
+
                     Sym = self.intersegm_to_all[ib][iint]
                     isegm = self._bodysegm[ib, iint]
+                    Sym.TransformSegment(segmpos[isegm,:self.segm_size,:], pos[:self.segm_size,:])   
 
-                    Sym.TransformSegment(segmpos[isegm,:,:], pos)
+                    iintp = (iint+1)%self.nint_min
+                    Sym = self.intersegm_to_all[ib][iintp]
+                    isegmp = self._bodysegm[ib, iintp]
+                    Sym.TransformPos(segmpos[isegmp,0,:], pos[self.segm_size,:])
 
                     if (color is None) or (color == "none"):
                         current_color = color_list[0]
@@ -4157,7 +4162,6 @@ cdef double segm_pos_to_pot_nrg(
                 dx2 += a*a
                 pos += 1
                 posp += 1
-
 
             inter_law(dx2, pot)
 
