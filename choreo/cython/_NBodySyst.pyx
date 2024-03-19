@@ -688,7 +688,6 @@ cdef class NBodySyst():
             self._AfterLastGenTimeRev[il] = Sym.TimeRev
             AfterLastGenSpaceRot_np[il,:,:] = Sym.SpaceRot
 
-
     @nint_fac.setter
     @cython.final
     def nint_fac(self, long nint_fac_in):
@@ -913,7 +912,7 @@ cdef class NBodySyst():
                 self._ncoeff_min_loop   , self._n_sub_fft           ,
                 self._loopnb            , self._loopmass            ,
                 self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
-                self._AfterLastGenIint    , self._AfterLastGenSpaceRot  , self._AfterLastGenTimeRev   ,
+                self._AfterLastGenIint  , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
                 self._gensegm_to_body   , self._gensegm_to_iint     ,
                 self._bodyloop          , self.segm_size            , self.segm_store           ,
                 segmpos_mv              ,
@@ -1279,7 +1278,10 @@ cdef class NBodySyst():
                     iintp = (iint+1)%self.nint_min
                     Sym = self.intersegm_to_all[ib][iintp]
                     isegmp = self._bodysegm[ib, iintp]
-                    Sym.TransformPos(segmpos[isegmp,0,:], pos[self.segm_size,:])
+                    if Sym.TimeRev > 0:
+                        Sym.TransformPos(segmpos[isegmp,0,:], pos[self.segm_size,:])
+                    else:
+                        Sym.TransformPos(segmpos[isegmp,-1,:], pos[self.segm_size,:])
 
                     if (color is None) or (color == "none"):
                         current_color = color_list[0]
@@ -1509,7 +1511,8 @@ cdef class NBodySyst():
     @cython.final
     def all_coeffs_to_kin_nrg_grad(self, double complex[:,:,::1] all_coeffs):
 
-        cdef double complex [:,:,::1] kin_grad = np.zeros((self.nloop, self.ncoeffs, self.geodim), dtype=np.complex128)
+        kin_grad_np = np.zeros((self.nloop, self.ncoeffs, self.geodim), dtype=np.complex128)
+        cdef double complex [:,:,::1] kin_grad = kin_grad_np
         cdef double fac, a
         cdef Py_ssize_t il, k, k2
         cdef int n = 2*self.geodim
@@ -1530,7 +1533,7 @@ cdef class NBodySyst():
 
                 scipy.linalg.cython_blas.daxpy(&n, &a, loc, &int_one, grad_loc, &int_one)
 
-        return np.asarray(kin_grad)
+        return kin_grad_np
 
     @cython.final
     def params_to_kin_nrg(self, double[::1] params_mom_buf):
@@ -1543,7 +1546,8 @@ cdef class NBodySyst():
     @cython.final
     def params_to_kin_nrg_grad(self, double[::1] params_mom_buf):
 
-        cdef double[::1] grad_buf = np.zeros((self.nparams), dtype=np.float64)
+        grad_buf_np = np.zeros((self.nparams), dtype=np.float64)
+        cdef double[::1] grad_buf = grad_buf_np
 
         params_to_kin_nrg_grad_daxpy(
             &params_mom_buf[0]  , self._params_shapes   , self._params_shifts   ,
@@ -1552,15 +1556,17 @@ cdef class NBodySyst():
             &grad_buf[0]        ,
         )
 
-        return np.asarray(grad_buf)
+        return grad_buf_np
 
     @cython.final
     def params_to_hash(self, double[::1] params_mom_buf):
 
         assert params_mom_buf.shape[0] == self.nparams
 
+        Hash_np = np.empty((self._Hash_exp.shape[0]), dtype=np.float64)
+
         cdef double[:,:,::1] segmpos = np.empty((self.nsegm, self.segm_store, self.geodim), dtype=np.float64)
-        cdef double[::1] Hash = np.empty((self._Hash_exp.shape[0]), dtype=np.float64)
+        cdef double[::1] Hash = Hash_np
 
         with nogil:
 
@@ -1574,7 +1580,7 @@ cdef class NBodySyst():
                 self._ncoeff_min_loop   , self._n_sub_fft           ,
                 self._loopnb            , self._loopmass            ,
                 self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
-                self._AfterLastGenIint    , self._AfterLastGenSpaceRot  , self._AfterLastGenTimeRev   ,
+                self._AfterLastGenIint  , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
                 self._gensegm_to_body   , self._gensegm_to_iint     ,
                 self._bodyloop          , self.segm_size            , self.segm_store           ,
                 segmpos                 ,
@@ -1589,14 +1595,15 @@ cdef class NBodySyst():
                 self._Hash_exp          , Hash                  ,   
             )
         
-        return np.asarray(Hash)
+        return Hash_np
         
     @cython.final
     def segmpos_to_hash(self, double[:,:,::1] segmpos):
 
         assert segmpos.shape[1] == self.segm_store
 
-        cdef double[::1] Hash = np.empty((self._Hash_exp.shape[0]), dtype=np.float64)
+        Hash_np = np.empty((self._Hash_exp.shape[0]), dtype=np.float64)
+        cdef double[::1] Hash = Hash_np
 
         with nogil:
 
@@ -1609,7 +1616,7 @@ cdef class NBodySyst():
                 self._Hash_exp          , Hash                  ,   
             )
         
-        return np.asarray(Hash)
+        return Hash_np
 
     @cython.final
     def params_to_pot_nrg(self, double[::1] params_mom_buf):
@@ -1631,7 +1638,7 @@ cdef class NBodySyst():
                 self._ncoeff_min_loop   , self._n_sub_fft           ,
                 self._loopnb            , self._loopmass            ,
                 self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
-                self._AfterLastGenIint    , self._AfterLastGenSpaceRot  , self._AfterLastGenTimeRev   ,
+                self._AfterLastGenIint  , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
                 self._gensegm_to_body   , self._gensegm_to_iint     ,
                 self._bodyloop          , self.segm_size            , self.segm_store           ,
                 segmpos                 ,
@@ -1653,9 +1660,11 @@ cdef class NBodySyst():
 
         assert params_mom_buf.shape[0] == self.nparams
 
+        params_grad_np = np.empty((self.nparams), dtype=np.float64)
+
         cdef double[:,:,::1] segmpos = np.empty((self.nsegm, self.segm_store, self.geodim), dtype=np.float64)
         cdef double[:,:,::1] pot_nrg_grad = np.zeros((self.nsegm, self.segm_store, self.geodim), dtype=np.float64)
-        cdef double[::1] params_grad = np.empty((self.nparams), dtype=np.float64)
+        cdef double[::1] params_grad = params_grad_np
 
         with nogil:
 
@@ -1669,7 +1678,7 @@ cdef class NBodySyst():
                 self._ncoeff_min_loop   , self._n_sub_fft           ,
                 self._loopnb            , self._loopmass            ,
                 self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
-                self._AfterLastGenIint    , self._AfterLastGenSpaceRot  , self._AfterLastGenTimeRev   ,
+                self._AfterLastGenIint  , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
                 self._gensegm_to_body   , self._gensegm_to_iint     ,
                 self._bodyloop          , self.segm_size            , self.segm_store           ,
                 segmpos                 ,
@@ -1694,13 +1703,13 @@ cdef class NBodySyst():
                 self._ncoeff_min_loop   , self._n_sub_fft           ,
                 self._loopnb            , self._loopmass            ,
                 self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
-                self._AfterLastGenIint    , self._AfterLastGenSpaceRot  , self._AfterLastGenTimeRev   ,
+                self._AfterLastGenIint  , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
                 self._gensegm_to_body   , self._gensegm_to_iint     ,
                 self._bodyloop          , self.segm_size            , self.segm_store           ,
                 params_grad             ,
             )
 
-        return np.asarray(params_grad)
+        return params_grad_np
 
     @cython.final
     def params_to_pot_nrg_hess(self, double[::1] params_mom_buf, double[::1] dparams_mom_buf):
@@ -1708,10 +1717,12 @@ cdef class NBodySyst():
         assert params_mom_buf.shape[0] == self.nparams
         assert dparams_mom_buf.shape[0] == self.nparams
 
+        params_hess_np = np.empty((self.nparams), dtype=np.float64)
+
         cdef double[:,:,::1] segmpos = np.empty((self.nsegm, self.segm_store, self.geodim), dtype=np.float64)
         cdef double[:,:,::1] dsegmpos = np.empty((self.nsegm, self.segm_store, self.geodim), dtype=np.float64)
         cdef double[:,:,::1] pot_nrg_hess = np.zeros((self.nsegm, self.segm_store, self.geodim), dtype=np.float64)
-        cdef double[::1] params_hess = np.empty((self.nparams), dtype=np.float64)
+        cdef double[::1] params_hess = params_hess_np
 
         with nogil:
 
@@ -1725,7 +1736,7 @@ cdef class NBodySyst():
                 self._ncoeff_min_loop   , self._n_sub_fft           ,
                 self._loopnb            , self._loopmass            ,
                 self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
-                self._AfterLastGenIint    , self._AfterLastGenSpaceRot  , self._AfterLastGenTimeRev   ,
+                self._AfterLastGenIint  , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
                 self._gensegm_to_body   , self._gensegm_to_iint     ,
                 self._bodyloop          , self.segm_size            , self.segm_store           ,
                 segmpos                 ,
@@ -1741,7 +1752,7 @@ cdef class NBodySyst():
                 self._ncoeff_min_loop   , self._n_sub_fft           ,
                 self._loopnb            , self._loopmass            ,
                 self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
-                self._AfterLastGenIint    , self._AfterLastGenSpaceRot  , self._AfterLastGenTimeRev   ,
+                self._AfterLastGenIint  , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
                 self._gensegm_to_body   , self._gensegm_to_iint     ,
                 self._bodyloop          , self.segm_size            , self.segm_store           ,
                 dsegmpos                ,
@@ -1766,13 +1777,13 @@ cdef class NBodySyst():
                 self._ncoeff_min_loop   , self._n_sub_fft           ,
                 self._loopnb            , self._loopmass            ,
                 self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
-                self._AfterLastGenIint    , self._AfterLastGenSpaceRot  , self._AfterLastGenTimeRev   ,
+                self._AfterLastGenIint  , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
                 self._gensegm_to_body   , self._gensegm_to_iint     ,
                 self._bodyloop          , self.segm_size            , self.segm_store           ,
                 params_hess             ,
             )
 
-        return np.asarray(params_hess)
+        return params_hess_np
     
     @cython.final
     def params_to_action(self, double[::1] params_mom_buf):
@@ -1799,7 +1810,7 @@ cdef class NBodySyst():
                 self._ncoeff_min_loop   , self._n_sub_fft           ,
                 self._loopnb            , self._loopmass            ,
                 self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
-                self._AfterLastGenIint    , self._AfterLastGenSpaceRot  , self._AfterLastGenTimeRev   ,
+                self._AfterLastGenIint  , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
                 self._gensegm_to_body   , self._gensegm_to_iint     ,
                 self._bodyloop          , self.segm_size            , self.segm_store           ,
                 segmpos                 ,
@@ -1824,7 +1835,8 @@ cdef class NBodySyst():
         cdef double pot_nrg
         cdef double[:,:,::1] segmpos = np.empty((self.nsegm, self.segm_store, self.geodim), dtype=np.float64)
         cdef double[:,:,::1] pot_nrg_grad = np.zeros((self.nsegm, self.segm_store, self.geodim), dtype=np.float64)
-        cdef double[::1] action_grad = np.empty((self.nparams), dtype=np.float64)
+        action_grad_np = np.empty((self.nparams), dtype=np.float64)
+        cdef double[::1] action_grad = action_grad_np
 
         with nogil:
 
@@ -1838,7 +1850,7 @@ cdef class NBodySyst():
                 self._ncoeff_min_loop   , self._n_sub_fft           ,
                 self._loopnb            , self._loopmass            ,
                 self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
-                self._AfterLastGenIint    , self._AfterLastGenSpaceRot  , self._AfterLastGenTimeRev   ,
+                self._AfterLastGenIint  , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
                 self._gensegm_to_body   , self._gensegm_to_iint     ,
                 self._bodyloop          , self.segm_size            , self.segm_store           ,
                 segmpos                 ,
@@ -1863,7 +1875,7 @@ cdef class NBodySyst():
                 self._ncoeff_min_loop   , self._n_sub_fft           ,
                 self._loopnb            , self._loopmass            ,
                 self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
-                self._AfterLastGenIint    , self._AfterLastGenSpaceRot  , self._AfterLastGenTimeRev   ,
+                self._AfterLastGenIint  , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
                 self._gensegm_to_body   , self._gensegm_to_iint     ,
                 self._bodyloop          , self.segm_size            , self.segm_store           ,
                 action_grad             ,
@@ -1876,7 +1888,7 @@ cdef class NBodySyst():
                 &action_grad[0]     ,
             )
 
-        return np.asarray(action_grad)
+        return action_grad_np
 
     @cython.final
     def params_to_action_hess(self, double[::1] params_mom_buf, double[::1] dparams_mom_buf):
@@ -1887,7 +1899,8 @@ cdef class NBodySyst():
         cdef double[:,:,::1] segmpos = np.empty((self.nsegm, self.segm_store, self.geodim), dtype=np.float64)
         cdef double[:,:,::1] dsegmpos = np.empty((self.nsegm, self.segm_store, self.geodim), dtype=np.float64)
         cdef double[:,:,::1] pot_nrg_hess = np.zeros((self.nsegm, self.segm_store, self.geodim), dtype=np.float64)
-        cdef double[::1] action_hess = np.empty((self.nparams), dtype=np.float64)
+        action_hess_np =  np.empty((self.nparams), dtype=np.float64)
+        cdef double[::1] action_hess = action_hess_np
 
         with nogil:
 
@@ -1901,7 +1914,7 @@ cdef class NBodySyst():
                 self._ncoeff_min_loop   , self._n_sub_fft           ,
                 self._loopnb            , self._loopmass            ,
                 self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
-                self._AfterLastGenIint    , self._AfterLastGenSpaceRot  , self._AfterLastGenTimeRev   ,
+                self._AfterLastGenIint  , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
                 self._gensegm_to_body   , self._gensegm_to_iint     ,
                 self._bodyloop          , self.segm_size            , self.segm_store           ,
                 segmpos                 ,
@@ -1917,7 +1930,7 @@ cdef class NBodySyst():
                 self._ncoeff_min_loop   , self._n_sub_fft           ,
                 self._loopnb            , self._loopmass            ,
                 self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
-                self._AfterLastGenIint    , self._AfterLastGenSpaceRot  , self._AfterLastGenTimeRev   ,
+                self._AfterLastGenIint  , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
                 self._gensegm_to_body   , self._gensegm_to_iint     ,
                 self._bodyloop          , self.segm_size            , self.segm_store           ,
                 dsegmpos                ,
@@ -1942,7 +1955,7 @@ cdef class NBodySyst():
                 self._ncoeff_min_loop   , self._n_sub_fft           ,
                 self._loopnb            , self._loopmass            ,
                 self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
-                self._AfterLastGenIint    , self._AfterLastGenSpaceRot  , self._AfterLastGenTimeRev   ,
+                self._AfterLastGenIint  , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
                 self._gensegm_to_body   , self._gensegm_to_iint     ,
                 self._bodyloop          , self.segm_size            , self.segm_store           ,
                 action_hess             ,
@@ -1955,7 +1968,7 @@ cdef class NBodySyst():
                 &action_hess[0]     ,
             )
 
-        return np.asarray(action_hess)
+        return action_hess_np
     
     @cython.final
     def segmpos_params_to_action(self, double[:,:,::1] segmpos, double[::1] params_mom_buf):
@@ -1982,7 +1995,7 @@ cdef class NBodySyst():
                 self._ncoeff_min_loop   , self._n_sub_fft           ,
                 self._loopnb            , self._loopmass            ,
                 self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
-                self._AfterLastGenIint    , self._AfterLastGenSpaceRot  , self._AfterLastGenTimeRev   ,
+                self._AfterLastGenIint  , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
                 self._gensegm_to_body   , self._gensegm_to_iint     ,
                 self._bodyloop          , self.segm_size            , self.segm_store           ,
                 segmpos                 ,
@@ -2006,7 +2019,8 @@ cdef class NBodySyst():
         assert params_mom_buf.shape[0] == self.nparams
 
         cdef double[:,:,::1] pot_nrg_grad = np.zeros((self.nsegm, self.segm_store, self.geodim), dtype=np.float64)
-        cdef double[::1] action_grad = np.empty((self.nparams), dtype=np.float64)
+        action_grad_np = np.empty((self.nparams), dtype=np.float64)
+        cdef double[::1] action_grad = action_grad_np
 
         with nogil:
 
@@ -2029,7 +2043,7 @@ cdef class NBodySyst():
                 self._ncoeff_min_loop   , self._n_sub_fft           ,
                 self._loopnb            , self._loopmass            ,
                 self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
-                self._AfterLastGenIint    , self._AfterLastGenSpaceRot  , self._AfterLastGenTimeRev   ,
+                self._AfterLastGenIint  , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
                 self._gensegm_to_body   , self._gensegm_to_iint     ,
                 self._bodyloop          , self.segm_size            , self.segm_store           ,
                 action_grad             ,
@@ -2042,7 +2056,7 @@ cdef class NBodySyst():
                 &action_grad[0]     ,
             )
 
-        return np.asarray(action_grad)
+        return action_grad_np
 
     @cython.final
     def segmpos_dparams_to_action_hess(self, double[:,:,::1] segmpos, double[::1] dparams_mom_buf):
@@ -2052,7 +2066,8 @@ cdef class NBodySyst():
 
         cdef double[:,:,::1] dsegmpos = np.empty((self.nsegm, self.segm_store, self.geodim), dtype=np.float64)
         cdef double[:,:,::1] pot_nrg_hess = np.zeros((self.nsegm, self.segm_store, self.geodim), dtype=np.float64)
-        cdef double[::1] action_hess = np.empty((self.nparams), dtype=np.float64)
+        action_hess_np = np.empty((self.nparams), dtype=np.float64)
+        cdef double[::1] action_hess = action_hess_np
 
         with nogil:
 
@@ -2066,7 +2081,7 @@ cdef class NBodySyst():
                 self._ncoeff_min_loop   , self._n_sub_fft           ,
                 self._loopnb            , self._loopmass            ,
                 self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
-                self._AfterLastGenIint    , self._AfterLastGenSpaceRot  , self._AfterLastGenTimeRev   ,
+                self._AfterLastGenIint  , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
                 self._gensegm_to_body   , self._gensegm_to_iint     ,
                 self._bodyloop          , self.segm_size            , self.segm_store           ,
                 dsegmpos                ,
@@ -2091,7 +2106,7 @@ cdef class NBodySyst():
                 self._ncoeff_min_loop   , self._n_sub_fft           ,
                 self._loopnb            , self._loopmass            ,
                 self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
-                self._AfterLastGenIint    , self._AfterLastGenSpaceRot  , self._AfterLastGenTimeRev   ,
+                self._AfterLastGenIint  , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
                 self._gensegm_to_body   , self._gensegm_to_iint     ,
                 self._bodyloop          , self.segm_size            , self.segm_store           ,
                 action_hess             ,
@@ -2104,7 +2119,7 @@ cdef class NBodySyst():
                 &action_hess[0]     ,
             )
 
-        return np.asarray(action_hess)
+        return action_hess_np
 
     @cython.final
     def params_to_all_coeffs_noopt(self, double[::1] params_mom_buf, bint transpose=False):
@@ -2351,7 +2366,8 @@ cdef class NBodySyst():
 
         assert params_mom_buf.shape[0] == self.nparams
 
-        cdef double[:,:,::1] segmpos = np.empty((self.nsegm, self.segm_store, self.geodim), dtype=np.float64)
+        segmpos_np = np.empty((self.nsegm, self.segm_store, self.geodim), dtype=np.float64)
+        cdef double[:,:,::1] segmpos = segmpos_np
 
         with nogil:
 
@@ -2365,20 +2381,21 @@ cdef class NBodySyst():
                 self._ncoeff_min_loop   , self._n_sub_fft           ,
                 self._loopnb            , self._loopmass            ,
                 self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
-                self._AfterLastGenIint    , self._AfterLastGenSpaceRot  , self._AfterLastGenTimeRev   ,
+                self._AfterLastGenIint  , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
                 self._gensegm_to_body   , self._gensegm_to_iint     ,
                 self._bodyloop          , self.segm_size            , self.segm_store           ,
                 segmpos                 ,
             )
 
-        return np.asarray(segmpos)
+        return segmpos_np
     
     @cython.final
     def segmpos_to_params(self, double[:,:,::1] segmpos):
 
         assert self.segm_store == segmpos.shape[1]
 
-        cdef double[::1] params_mom_buf = np.empty((self.nparams), dtype=np.float64)
+        params_mom_buf_np = np.empty((self.nparams), dtype=np.float64)
+        cdef double[::1] params_mom_buf = params_mom_buf_np
 
         with nogil:
 
@@ -2397,14 +2414,15 @@ cdef class NBodySyst():
                 params_mom_buf          ,
             )
 
-        return np.asarray(params_mom_buf)    
+        return params_mom_buf_np
 
     @cython.final
     def segmpos_to_params_T(self, double[:,:,::1] segmpos):
 
         assert self.segm_store == segmpos.shape[1]
 
-        cdef double[::1] params_mom_buf = np.empty((self.nparams), dtype=np.float64)
+        params_mom_buf_np = np.empty((self.nparams), dtype=np.float64)
+        cdef double[::1] params_mom_buf = params_mom_buf_np
 
         with nogil:
 
@@ -2418,13 +2436,13 @@ cdef class NBodySyst():
                 self._ncoeff_min_loop   , self._n_sub_fft           ,
                 self._loopnb            , self._loopmass            ,
                 self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
-                self._AfterLastGenIint    , self._AfterLastGenSpaceRot  , self._AfterLastGenTimeRev   ,
+                self._AfterLastGenIint  , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
                 self._gensegm_to_body   , self._gensegm_to_iint     ,
                 self._bodyloop          , self.segm_size            , self.segm_store           ,
                 params_mom_buf          ,
             )
 
-        return np.asarray(params_mom_buf)
+        return params_mom_buf_np
  
 @cython.cdivision(True)
 cdef void Make_Init_bounds_coeffs(

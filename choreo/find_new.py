@@ -377,7 +377,7 @@ def Find_Choreo(
 
                 if GoOn and ParamPreciseEnough and not(NeedsRefinement):
 
-                    GoOn=False
+                    GoOn = False
                     print("Stopping search: found solution.")
                     SaveSol = True
 
@@ -387,7 +387,7 @@ def Find_Choreo(
                     print("Stopping search: found approximate solution.")
                     SaveSol = True
 
-                if GoOn and not(CanRefine) and not(CanChangeOptimParams):
+                if GoOn and (not(CanRefine) or not(NeedsRefinement)) and not(CanChangeOptimParams):
                 
                     GoOn = False
                     print('Could not converge within prescibed optimizer and refinement parameters.')
