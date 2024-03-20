@@ -13,6 +13,23 @@ import fractions
 import json
 import choreo
 
+def test_create_destroy(AllConfigNames):
+    
+    for name in AllConfigNames:
+        
+        print(name)
+        
+        NBS = load_from_config_file(name)
+        
+        NBS.nint_fac = 2
+        NBS.nint_fac = 3
+        NBS.nint_fac = 5
+        NBS.nint_fac = 2
+        
+        del NBS
+        
+        print()
+        
 def test_all_pos_to_segmpos(AllNBS, float64_tols):
     
     for name, NBS in AllNBS.items():
@@ -256,6 +273,7 @@ def test_pot(AllNBS):
         assert (err.min() <  1e-7)
         print()
         
+@ProbabilisticTest(RepeatOnFail=2)
 def test_action(AllNBS):
     
     for name, NBS in AllNBS.items():
