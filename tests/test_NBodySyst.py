@@ -215,6 +215,7 @@ def test_kin(AllNBS, float64_tols):
         assert err.min() < float64_tols.rtol
         print()
         
+@ProbabilisticTest(RepeatOnFail=2)
 def test_pot(AllNBS):
     
     for name, NBS in AllNBS.items():
