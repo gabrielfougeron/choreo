@@ -335,6 +335,11 @@ cdef class NBodySyst():
 
     cdef bint BufArraysAllocated
     cdef double* _params_pos_buf
+    cdef double* _pos_slice_buf_ptr
+    cdef double complex* _ifft_buf_ptr
+
+    cdef double[:,:,::1] _segmpos 
+    cdef double[:,:,::1] _pot_nrg_grad
 
     def __init__(
         self                        ,
@@ -398,7 +403,6 @@ cdef class NBodySyst():
 
         self.ChooseInterSegm()
         self.ChooseGenSegm()
-
 
         # Setting up forward ODE:
         # - What are my parameters ?
@@ -466,8 +470,24 @@ cdef class NBodySyst():
         self.nint_fac = 1
 
     def __dealloc__(self):
+        self.free_owned_c_ptrs()
+
+    def free_owned_c_ptrs(self):
         if self.BufArraysAllocated:
             free(self._params_pos_buf)
+            free(self._pos_slice_buf_ptr)
+            free(self._ifft_buf_ptr)
+
+    def allocate_owned_c_ptrs(self):
+
+        self._params_pos_buf = <double*> malloc(sizeof(double)*self._params_shifts[self._params_shapes.shape[0]])
+        self._pos_slice_buf_ptr = <double *> malloc(sizeof(double)*self._pos_slice_shifts[self._pos_slice_shapes.shape[0]])
+        self._ifft_buf_ptr = <double complex *> malloc(sizeof(double complex)*self._ifft_shifts[self._ifft_shapes.shape[0]])
+
+        self._segmpos = np.empty((self.nsegm, self.segm_store, self.geodim), dtype=np.float64)
+        self._pot_nrg_grad = np.empty((self.nsegm, self.segm_store, self.geodim), dtype=np.float64)
+
+        self.BufArraysAllocated = True
 
     @nint_fac.setter
     @cython.final
@@ -523,15 +543,8 @@ cdef class NBodySyst():
         self.nparams_incl_o = self._params_shifts[self.nloop]
         self.nparams = self._params_shifts[self.nloop] - self.nrem
 
-        if self.BufArraysAllocated:
-            free(self._params_pos_buf)
-
-
-        self._params_pos_buf = <double*> malloc(sizeof(double)*self._params_shifts[self._params_shapes.shape[0]])
-
-
-        self.BufArraysAllocated = True
-
+        self.free_owned_c_ptrs()
+        self.allocate_owned_c_ptrs()
 
     def DetectLoops(self, bodymass, bodycharge, nint_min_fac = 1):
 
@@ -921,12 +934,13 @@ cdef class NBodySyst():
             segmpos_mv = segmpos
 
             params_to_segmpos(
-                params_mom_buf          , self._params_shapes       , self._params_shifts       ,
-                self._params_pos_buf    , self._ifft_shapes         , self._ifft_shifts         ,
+                params_mom_buf          ,
+                self._params_pos_buf    , self._params_shapes       , self._params_shifts       ,
+                self._ifft_buf_ptr      , self._ifft_shapes         , self._ifft_shifts         ,
                 self._params_basis_buf  , self._params_basis_shapes , self._params_basis_shifts ,
                 self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
                 self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
-                                          self._pos_slice_shapes    , self._pos_slice_shifts    ,
+                self._pos_slice_buf_ptr , self._pos_slice_shapes    , self._pos_slice_shifts    ,
                 self._ncoeff_min_loop   , self._n_sub_fft           ,
                 self._loopnb            , self._loopmass            ,
                 self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
@@ -1589,12 +1603,13 @@ cdef class NBodySyst():
         with nogil:
 
             params_to_segmpos(
-                params_mom_buf          , self._params_shapes       , self._params_shifts       ,
-                self._params_pos_buf    , self._ifft_shapes         , self._ifft_shifts         ,
+                params_mom_buf          ,
+                self._params_pos_buf    , self._params_shapes       , self._params_shifts       ,
+                self._ifft_buf_ptr      , self._ifft_shapes         , self._ifft_shifts         ,
                 self._params_basis_buf  , self._params_basis_shapes , self._params_basis_shifts ,
                 self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
                 self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
-                                          self._pos_slice_shapes    , self._pos_slice_shifts    ,
+                self._pos_slice_buf_ptr , self._pos_slice_shapes    , self._pos_slice_shifts    ,
                 self._ncoeff_min_loop   , self._n_sub_fft           ,
                 self._loopnb            , self._loopmass            ,
                 self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
@@ -1647,12 +1662,13 @@ cdef class NBodySyst():
         with nogil:
 
             params_to_segmpos(
-                params_mom_buf          , self._params_shapes       , self._params_shifts       ,
-                self._params_pos_buf    , self._ifft_shapes         , self._ifft_shifts         ,
+                params_mom_buf          ,
+                self._params_pos_buf    , self._params_shapes       , self._params_shifts       ,
+                self._ifft_buf_ptr      , self._ifft_shapes         , self._ifft_shifts         ,
                 self._params_basis_buf  , self._params_basis_shapes , self._params_basis_shifts ,
                 self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
                 self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
-                                          self._pos_slice_shapes    , self._pos_slice_shifts    ,
+                self._pos_slice_buf_ptr , self._pos_slice_shapes    , self._pos_slice_shifts    ,
                 self._ncoeff_min_loop   , self._n_sub_fft           ,
                 self._loopnb            , self._loopmass            ,
                 self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
@@ -1679,31 +1695,31 @@ cdef class NBodySyst():
         assert params_mom_buf.shape[0] == self.nparams
 
         params_grad_np = np.empty((self.nparams), dtype=np.float64)
-
-        cdef double[:,:,::1] segmpos = np.empty((self.nsegm, self.segm_store, self.geodim), dtype=np.float64)
-        cdef double[:,:,::1] pot_nrg_grad = np.zeros((self.nsegm, self.segm_store, self.geodim), dtype=np.float64)
         cdef double[::1] params_grad = params_grad_np
 
         with nogil:
 
             params_to_segmpos(
-                params_mom_buf          , self._params_shapes       , self._params_shifts       ,
-                self._params_pos_buf    , self._ifft_shapes         , self._ifft_shifts         ,
+                params_mom_buf          ,
+                self._params_pos_buf    , self._params_shapes       , self._params_shifts       ,
+                self._ifft_buf_ptr      , self._ifft_shapes         , self._ifft_shifts         ,
                 self._params_basis_buf  , self._params_basis_shapes , self._params_basis_shifts ,
                 self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
                 self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
-                                          self._pos_slice_shapes    , self._pos_slice_shifts    ,
+                self._pos_slice_buf_ptr , self._pos_slice_shapes    , self._pos_slice_shifts    ,
                 self._ncoeff_min_loop   , self._n_sub_fft           ,
                 self._loopnb            , self._loopmass            ,
                 self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
                 self._AfterLastGenIint  , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
                 self._gensegm_to_body   , self._gensegm_to_iint     ,
                 self._bodyloop          , self.segm_size            , self.segm_store           ,
-                segmpos                 ,
+                self._segmpos           ,
             )
 
+            memset(&self._pot_nrg_grad[0,0,0], 0, sizeof(double)*self.nsegm*self.segm_store*self.geodim)
+
             segm_pos_to_pot_nrg_grad(
-                segmpos                 , pot_nrg_grad          ,
+                self._segmpos           , self._pot_nrg_grad    ,
                 self._BinSourceSegm     , self._BinTargetSegm   ,
                 self._BinSpaceRot       , self._BinSpaceRotIsId ,
                 self._BinProdChargeSum  ,
@@ -1712,12 +1728,13 @@ cdef class NBodySyst():
             )
 
             segmpos_to_params_T(
-                pot_nrg_grad            , self._params_shapes       , self._params_shifts       ,
-                self._params_pos_buf    , self._ifft_shapes         , self._ifft_shifts         ,
+                self._pot_nrg_grad      ,
+                self._params_pos_buf    , self._params_shapes       , self._params_shifts       ,
+                self._ifft_buf_ptr      , self._ifft_shapes         , self._ifft_shifts         ,
                 self._params_basis_buf  , self._params_basis_shapes , self._params_basis_shifts ,
                 self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
                 self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
-                                          self._pos_slice_shapes    , self._pos_slice_shifts    ,
+                self._pos_slice_buf_ptr , self._pos_slice_shapes    , self._pos_slice_shifts    ,
                 self._ncoeff_min_loop   , self._n_sub_fft           ,
                 self._loopnb            , self._loopmass            ,
                 self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
@@ -1737,36 +1754,36 @@ cdef class NBodySyst():
 
         params_hess_np = np.empty((self.nparams), dtype=np.float64)
 
-        cdef double[:,:,::1] segmpos = np.empty((self.nsegm, self.segm_store, self.geodim), dtype=np.float64)
         cdef double[:,:,::1] dsegmpos = np.empty((self.nsegm, self.segm_store, self.geodim), dtype=np.float64)
-        cdef double[:,:,::1] pot_nrg_hess = np.zeros((self.nsegm, self.segm_store, self.geodim), dtype=np.float64)
         cdef double[::1] params_hess = params_hess_np
 
         with nogil:
 
             params_to_segmpos(
-                params_mom_buf          , self._params_shapes       , self._params_shifts       ,
-                self._params_pos_buf    , self._ifft_shapes         , self._ifft_shifts         ,
+                params_mom_buf          ,
+                self._params_pos_buf    , self._params_shapes       , self._params_shifts       ,
+                self._ifft_buf_ptr      , self._ifft_shapes         , self._ifft_shifts         ,
                 self._params_basis_buf  , self._params_basis_shapes , self._params_basis_shifts ,
                 self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
                 self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
-                                          self._pos_slice_shapes    , self._pos_slice_shifts    ,
+                self._pos_slice_buf_ptr , self._pos_slice_shapes    , self._pos_slice_shifts    ,
                 self._ncoeff_min_loop   , self._n_sub_fft           ,
                 self._loopnb            , self._loopmass            ,
                 self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
                 self._AfterLastGenIint  , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
                 self._gensegm_to_body   , self._gensegm_to_iint     ,
                 self._bodyloop          , self.segm_size            , self.segm_store           ,
-                segmpos                 ,
+                self._segmpos           ,
             )
 
             params_to_segmpos(
-                dparams_mom_buf         , self._params_shapes       , self._params_shifts       ,
-                self._params_pos_buf    , self._ifft_shapes         , self._ifft_shifts         ,
+                dparams_mom_buf         ,
+                self._params_pos_buf    , self._params_shapes       , self._params_shifts       ,
+                self._ifft_buf_ptr      , self._ifft_shapes         , self._ifft_shifts         ,
                 self._params_basis_buf  , self._params_basis_shapes , self._params_basis_shifts ,
                 self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
                 self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
-                                          self._pos_slice_shapes    , self._pos_slice_shifts    ,
+                self._pos_slice_buf_ptr , self._pos_slice_shapes    , self._pos_slice_shifts    ,
                 self._ncoeff_min_loop   , self._n_sub_fft           ,
                 self._loopnb            , self._loopmass            ,
                 self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
@@ -1776,8 +1793,10 @@ cdef class NBodySyst():
                 dsegmpos                ,
             )
 
+            memset(&self._pot_nrg_grad[0,0,0], 0, sizeof(double)*self.nsegm*self.segm_store*self.geodim)
+
             segm_pos_to_pot_nrg_hess(
-                segmpos                 , dsegmpos                  , pot_nrg_hess              ,
+                self._segmpos           , dsegmpos                  , self._pot_nrg_grad        ,
                 self._BinSourceSegm     , self._BinTargetSegm       ,
                 self._BinSpaceRot       , self._BinSpaceRotIsId     ,
                 self._BinProdChargeSum  ,
@@ -1786,12 +1805,13 @@ cdef class NBodySyst():
             )
 
             segmpos_to_params_T(
-                pot_nrg_hess            , self._params_shapes       , self._params_shifts       ,
-                self._params_pos_buf    , self._ifft_shapes         , self._ifft_shifts         ,
+                 self._pot_nrg_grad     ,
+                self._params_pos_buf    , self._params_shapes       , self._params_shifts       ,
+                self._ifft_buf_ptr      , self._ifft_shapes         , self._ifft_shifts         ,
                 self._params_basis_buf  , self._params_basis_shapes , self._params_basis_shifts ,
                 self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
                 self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
-                                          self._pos_slice_shapes    , self._pos_slice_shifts    ,
+                self._pos_slice_buf_ptr , self._pos_slice_shapes    , self._pos_slice_shifts    ,
                 self._ncoeff_min_loop   , self._n_sub_fft           ,
                 self._loopnb            , self._loopmass            ,
                 self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
@@ -1809,7 +1829,6 @@ cdef class NBodySyst():
         assert params_mom_buf.shape[0] == self.nparams
 
         cdef double action
-        cdef double[:,:,::1] segmpos = np.empty((self.nsegm, self.segm_store, self.geodim), dtype=np.float64)
 
         with nogil:
 
@@ -1819,23 +1838,24 @@ cdef class NBodySyst():
             )
 
             params_to_segmpos(
-                params_mom_buf          , self._params_shapes       , self._params_shifts       ,
-                self._params_pos_buf    , self._ifft_shapes         , self._ifft_shifts         ,
+                params_mom_buf          ,
+                self._params_pos_buf    , self._params_shapes       , self._params_shifts       ,
+                self._ifft_buf_ptr      , self._ifft_shapes         , self._ifft_shifts         ,
                 self._params_basis_buf  , self._params_basis_shapes , self._params_basis_shifts ,
                 self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
                 self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
-                                          self._pos_slice_shapes    , self._pos_slice_shifts    ,
+                self._pos_slice_buf_ptr , self._pos_slice_shapes    , self._pos_slice_shifts    ,
                 self._ncoeff_min_loop   , self._n_sub_fft           ,
                 self._loopnb            , self._loopmass            ,
                 self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
                 self._AfterLastGenIint  , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
                 self._gensegm_to_body   , self._gensegm_to_iint     ,
                 self._bodyloop          , self.segm_size            , self.segm_store           ,
-                segmpos                 ,
+                self._segmpos           ,
             )
 
             action -= segm_pos_to_pot_nrg(
-                segmpos                 ,
+                self._segmpos           ,
                 self._BinSourceSegm     , self._BinTargetSegm   ,
                 self._BinSpaceRot       , self._BinSpaceRotIsId ,
                 self._BinProdChargeSum  ,
@@ -1850,32 +1870,32 @@ cdef class NBodySyst():
 
         assert params_mom_buf.shape[0] == self.nparams
 
-        cdef double pot_nrg
-        cdef double[:,:,::1] segmpos = np.empty((self.nsegm, self.segm_store, self.geodim), dtype=np.float64)
-        cdef double[:,:,::1] pot_nrg_grad = np.zeros((self.nsegm, self.segm_store, self.geodim), dtype=np.float64)
         action_grad_np = np.empty((self.nparams), dtype=np.float64)
         cdef double[::1] action_grad = action_grad_np
 
         with nogil:
 
             params_to_segmpos(
-                params_mom_buf          , self._params_shapes       , self._params_shifts       ,
-                self._params_pos_buf    , self._ifft_shapes         , self._ifft_shifts         ,
+                params_mom_buf          ,
+                self._params_pos_buf    , self._params_shapes       , self._params_shifts       ,
+                self._ifft_buf_ptr      , self._ifft_shapes         , self._ifft_shifts         ,
                 self._params_basis_buf  , self._params_basis_shapes , self._params_basis_shifts ,
                 self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
                 self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
-                                          self._pos_slice_shapes    , self._pos_slice_shifts    ,
+                self._pos_slice_buf_ptr , self._pos_slice_shapes    , self._pos_slice_shifts    ,
                 self._ncoeff_min_loop   , self._n_sub_fft           ,
                 self._loopnb            , self._loopmass            ,
                 self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
                 self._AfterLastGenIint  , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
                 self._gensegm_to_body   , self._gensegm_to_iint     ,
                 self._bodyloop          , self.segm_size            , self.segm_store           ,
-                segmpos                 ,
+                self._segmpos           ,
             )
 
+            memset(&self._pot_nrg_grad[0,0,0], 0, sizeof(double)*self.nsegm*self.segm_store*self.geodim)
+
             segm_pos_to_pot_nrg_grad(
-                segmpos                 , pot_nrg_grad          ,
+                self._segmpos           , self._pot_nrg_grad    ,
                 self._BinSourceSegm     , self._BinTargetSegm   ,
                 self._BinSpaceRot       , self._BinSpaceRotIsId ,
                 self._BinProdChargeSum  ,
@@ -1884,12 +1904,13 @@ cdef class NBodySyst():
             )
 
             segmpos_to_params_T(
-                pot_nrg_grad            , self._params_shapes       , self._params_shifts       ,
-                self._params_pos_buf    , self._ifft_shapes         , self._ifft_shifts         ,
+                self._pot_nrg_grad      ,
+                self._params_pos_buf    , self._params_shapes       , self._params_shifts       ,
+                self._ifft_buf_ptr      , self._ifft_shapes         , self._ifft_shifts         ,
                 self._params_basis_buf  , self._params_basis_shapes , self._params_basis_shifts ,
                 self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
                 self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
-                                          self._pos_slice_shapes    , self._pos_slice_shifts    ,
+                self._pos_slice_buf_ptr , self._pos_slice_shapes    , self._pos_slice_shifts    ,
                 self._ncoeff_min_loop   , self._n_sub_fft           ,
                 self._loopnb            , self._loopmass            ,
                 self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
@@ -1914,37 +1935,37 @@ cdef class NBodySyst():
         assert params_mom_buf.shape[0] == self.nparams
         assert dparams_mom_buf.shape[0] == self.nparams
 
-        cdef double[:,:,::1] segmpos = np.empty((self.nsegm, self.segm_store, self.geodim), dtype=np.float64)
         cdef double[:,:,::1] dsegmpos = np.empty((self.nsegm, self.segm_store, self.geodim), dtype=np.float64)
-        cdef double[:,:,::1] pot_nrg_hess = np.zeros((self.nsegm, self.segm_store, self.geodim), dtype=np.float64)
         action_hess_np =  np.empty((self.nparams), dtype=np.float64)
         cdef double[::1] action_hess = action_hess_np
 
         with nogil:
 
             params_to_segmpos(
-                params_mom_buf          , self._params_shapes       , self._params_shifts       ,
-                self._params_pos_buf    , self._ifft_shapes         , self._ifft_shifts         ,
+                params_mom_buf          ,
+                self._params_pos_buf    , self._params_shapes       , self._params_shifts       ,
+                self._ifft_buf_ptr      , self._ifft_shapes         , self._ifft_shifts         ,
                 self._params_basis_buf  , self._params_basis_shapes , self._params_basis_shifts ,
                 self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
                 self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
-                                          self._pos_slice_shapes    , self._pos_slice_shifts    ,
+                self._pos_slice_buf_ptr , self._pos_slice_shapes    , self._pos_slice_shifts    ,
                 self._ncoeff_min_loop   , self._n_sub_fft           ,
                 self._loopnb            , self._loopmass            ,
                 self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
                 self._AfterLastGenIint  , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
                 self._gensegm_to_body   , self._gensegm_to_iint     ,
                 self._bodyloop          , self.segm_size            , self.segm_store           ,
-                segmpos                 ,
+                self._segmpos           ,
             )
 
             params_to_segmpos(
-                dparams_mom_buf         , self._params_shapes       , self._params_shifts       ,
-                self._params_pos_buf    , self._ifft_shapes         , self._ifft_shifts         ,
+                dparams_mom_buf         ,
+                self._params_pos_buf    , self._params_shapes       , self._params_shifts       ,
+                self._ifft_buf_ptr      , self._ifft_shapes         , self._ifft_shifts         ,
                 self._params_basis_buf  , self._params_basis_shapes , self._params_basis_shifts ,
                 self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
                 self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
-                                          self._pos_slice_shapes    , self._pos_slice_shifts    ,
+                self._pos_slice_buf_ptr , self._pos_slice_shapes    , self._pos_slice_shifts    ,
                 self._ncoeff_min_loop   , self._n_sub_fft           ,
                 self._loopnb            , self._loopmass            ,
                 self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
@@ -1954,8 +1975,10 @@ cdef class NBodySyst():
                 dsegmpos                ,
             )
 
+            memset(&self._pot_nrg_grad[0,0,0], 0, sizeof(double)*self.nsegm*self.segm_store*self.geodim)
+
             segm_pos_to_pot_nrg_hess(
-                segmpos                 , dsegmpos                  , pot_nrg_hess              ,
+                self._segmpos           , dsegmpos                  , self._pot_nrg_grad        ,
                 self._BinSourceSegm     , self._BinTargetSegm       ,
                 self._BinSpaceRot       , self._BinSpaceRotIsId     ,
                 self._BinProdChargeSum  ,
@@ -1964,12 +1987,13 @@ cdef class NBodySyst():
             )
 
             segmpos_to_params_T(
-                pot_nrg_hess            , self._params_shapes       , self._params_shifts       ,
-                self._params_pos_buf    , self._ifft_shapes         , self._ifft_shifts         ,
+                self._pot_nrg_grad      ,
+                self._params_pos_buf    , self._params_shapes       , self._params_shifts       ,
+                self._ifft_buf_ptr      , self._ifft_shapes         , self._ifft_shifts         ,
                 self._params_basis_buf  , self._params_basis_shapes , self._params_basis_shifts ,
                 self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
                 self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
-                                          self._pos_slice_shapes    , self._pos_slice_shifts    ,
+                self._pos_slice_buf_ptr , self._pos_slice_shapes    , self._pos_slice_shifts    ,
                 self._ncoeff_min_loop   , self._n_sub_fft           ,
                 self._loopnb            , self._loopmass            ,
                 self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
@@ -2004,12 +2028,13 @@ cdef class NBodySyst():
             )
 
             params_to_segmpos(
-                params_mom_buf          , self._params_shapes       , self._params_shifts       ,
-                self._params_pos_buf    , self._ifft_shapes         , self._ifft_shifts         ,
+                params_mom_buf          ,
+                self._params_pos_buf    , self._params_shapes       , self._params_shifts       ,
+                self._ifft_buf_ptr      , self._ifft_shapes         , self._ifft_shifts         ,
                 self._params_basis_buf  , self._params_basis_shapes , self._params_basis_shifts ,
                 self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
                 self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
-                                          self._pos_slice_shapes    , self._pos_slice_shifts    ,
+                self._pos_slice_buf_ptr , self._pos_slice_shapes    , self._pos_slice_shifts    ,
                 self._ncoeff_min_loop   , self._n_sub_fft           ,
                 self._loopnb            , self._loopmass            ,
                 self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
@@ -2036,14 +2061,15 @@ cdef class NBodySyst():
         assert segmpos.shape[1] == self.segm_store
         assert params_mom_buf.shape[0] == self.nparams
 
-        cdef double[:,:,::1] pot_nrg_grad = np.zeros((self.nsegm, self.segm_store, self.geodim), dtype=np.float64)
         action_grad_np = np.empty((self.nparams), dtype=np.float64)
         cdef double[::1] action_grad = action_grad_np
 
         with nogil:
 
+            memset(&self._pot_nrg_grad[0,0,0], 0, sizeof(double)*self.nsegm*self.segm_store*self.geodim)
+
             segm_pos_to_pot_nrg_grad(
-                segmpos                 , pot_nrg_grad          ,
+                segmpos                 , self._pot_nrg_grad    ,
                 self._BinSourceSegm     , self._BinTargetSegm   ,
                 self._BinSpaceRot       , self._BinSpaceRotIsId ,
                 self._BinProdChargeSum  ,
@@ -2052,12 +2078,13 @@ cdef class NBodySyst():
             )
 
             segmpos_to_params_T(
-                pot_nrg_grad            , self._params_shapes       , self._params_shifts       ,
-                self._params_pos_buf    , self._ifft_shapes         , self._ifft_shifts         ,
+                self._pot_nrg_grad      ,
+                self._params_pos_buf    , self._params_shapes       , self._params_shifts       ,
+                self._ifft_buf_ptr      , self._ifft_shapes         , self._ifft_shifts         ,
                 self._params_basis_buf  , self._params_basis_shapes , self._params_basis_shifts ,
                 self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
                 self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
-                                          self._pos_slice_shapes    , self._pos_slice_shifts    ,
+                self._pos_slice_buf_ptr , self._pos_slice_shapes    , self._pos_slice_shifts    ,
                 self._ncoeff_min_loop   , self._n_sub_fft           ,
                 self._loopnb            , self._loopmass            ,
                 self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
@@ -2082,31 +2109,32 @@ cdef class NBodySyst():
         assert segmpos.shape[1] == self.segm_store
         assert dparams_mom_buf.shape[0] == self.nparams
 
-        cdef double[:,:,::1] dsegmpos = np.empty((self.nsegm, self.segm_store, self.geodim), dtype=np.float64)
-        cdef double[:,:,::1] pot_nrg_hess = np.zeros((self.nsegm, self.segm_store, self.geodim), dtype=np.float64)
         action_hess_np = np.empty((self.nparams), dtype=np.float64)
         cdef double[::1] action_hess = action_hess_np
 
         with nogil:
 
             params_to_segmpos(
-                dparams_mom_buf         , self._params_shapes       , self._params_shifts       ,
-                self._params_pos_buf    , self._ifft_shapes         , self._ifft_shifts         ,
+                dparams_mom_buf         ,
+                self._params_pos_buf    , self._params_shapes       , self._params_shifts       ,
+                self._ifft_buf_ptr      , self._ifft_shapes         , self._ifft_shifts         ,
                 self._params_basis_buf  , self._params_basis_shapes , self._params_basis_shifts ,
                 self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
                 self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
-                                          self._pos_slice_shapes    , self._pos_slice_shifts    ,
+                self._pos_slice_buf_ptr , self._pos_slice_shapes    , self._pos_slice_shifts    ,
                 self._ncoeff_min_loop   , self._n_sub_fft           ,
                 self._loopnb            , self._loopmass            ,
                 self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
                 self._AfterLastGenIint  , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
                 self._gensegm_to_body   , self._gensegm_to_iint     ,
                 self._bodyloop          , self.segm_size            , self.segm_store           ,
-                dsegmpos                ,
+                self._segmpos           , # self._segmpos is actually dsegmpos
             )
 
+            memset(&self._pot_nrg_grad[0,0,0], 0, sizeof(double)*self.nsegm*self.segm_store*self.geodim)
+
             segm_pos_to_pot_nrg_hess(
-                segmpos                 , dsegmpos                  , pot_nrg_hess              ,
+                segmpos                 , self._segmpos             , self._pot_nrg_grad        ,
                 self._BinSourceSegm     , self._BinTargetSegm       ,
                 self._BinSpaceRot       , self._BinSpaceRotIsId     ,
                 self._BinProdChargeSum  ,
@@ -2115,12 +2143,13 @@ cdef class NBodySyst():
             )
 
             segmpos_to_params_T(
-                pot_nrg_hess            , self._params_shapes       , self._params_shifts       ,
-                self._params_pos_buf    , self._ifft_shapes         , self._ifft_shifts         ,
+                self._pot_nrg_grad      ,
+                self._params_pos_buf    , self._params_shapes       , self._params_shifts       ,
+                self._ifft_buf_ptr      , self._ifft_shapes         , self._ifft_shifts         ,
                 self._params_basis_buf  , self._params_basis_shapes , self._params_basis_shifts ,
                 self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
                 self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
-                                          self._pos_slice_shapes    , self._pos_slice_shifts    ,
+                self._pos_slice_buf_ptr , self._pos_slice_shapes    , self._pos_slice_shifts    ,
                 self._ncoeff_min_loop   , self._n_sub_fft           ,
                 self._loopnb            , self._loopmass            ,
                 self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
@@ -2390,12 +2419,13 @@ cdef class NBodySyst():
         with nogil:
 
             params_to_segmpos(
-                params_mom_buf          , self._params_shapes       , self._params_shifts       ,
-                self._params_pos_buf    , self._ifft_shapes         , self._ifft_shifts         ,
+                params_mom_buf          ,
+                self._params_pos_buf    , self._params_shapes       , self._params_shifts       ,
+                self._ifft_buf_ptr      , self._ifft_shapes         , self._ifft_shifts         ,
                 self._params_basis_buf  , self._params_basis_shapes , self._params_basis_shifts ,
                 self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
                 self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
-                                          self._pos_slice_shapes    , self._pos_slice_shifts    ,
+                self._pos_slice_buf_ptr , self._pos_slice_shapes    , self._pos_slice_shifts    ,
                 self._ncoeff_min_loop   , self._n_sub_fft           ,
                 self._loopnb            , self._loopmass            ,
                 self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
@@ -2418,12 +2448,13 @@ cdef class NBodySyst():
         with nogil:
 
             segmpos_to_params(
-                segmpos                 , self._params_shapes       , self._params_shifts       ,
-                self._params_pos_buf    , self._ifft_shapes         , self._ifft_shifts         ,
+                segmpos                 ,
+                self._params_pos_buf    , self._params_shapes       , self._params_shifts       ,
+                self._ifft_buf_ptr      , self._ifft_shapes         , self._ifft_shifts         ,
                 self._params_basis_buf  , self._params_basis_shapes , self._params_basis_shifts ,
                 self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
                 self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
-                                          self._pos_slice_shapes    , self._pos_slice_shifts    ,
+                self._pos_slice_buf_ptr , self._pos_slice_shapes    , self._pos_slice_shifts    ,
                 self._ncoeff_min_loop   , self._n_sub_fft           ,
                 self._loopnb            , self._loopmass            ,
                 self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
@@ -2445,12 +2476,13 @@ cdef class NBodySyst():
         with nogil:
 
             segmpos_to_params_T(
-                segmpos                 , self._params_shapes       , self._params_shifts       ,
-                self._params_pos_buf    , self._ifft_shapes         , self._ifft_shifts         ,
+                segmpos                 ,
+                self._params_pos_buf    , self._params_shapes       , self._params_shifts       ,
+                self._ifft_buf_ptr      , self._ifft_shapes         , self._ifft_shifts         ,
                 self._params_basis_buf  , self._params_basis_shapes , self._params_basis_shifts ,
                 self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
                 self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
-                                          self._pos_slice_shapes    , self._pos_slice_shifts    ,
+                self._pos_slice_buf_ptr , self._pos_slice_shapes    , self._pos_slice_shifts    ,
                 self._ncoeff_min_loop   , self._n_sub_fft           ,
                 self._loopnb            , self._loopmass            ,
                 self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
@@ -2469,20 +2501,13 @@ cdef class NBodySyst():
 
         assert params_mom_buf.shape[0] == self.nparams
 
-        cdef double pot_nrg
-        cdef double[:,:,::1] segmpos = np.empty((self.nsegm, self.segm_store, self.geodim), dtype=np.float64)
-        cdef double[:,:,::1] pot_nrg_grad = np.zeros((self.nsegm, self.segm_store, self.geodim), dtype=np.float64)
         action_grad_np = np.empty((self.nparams), dtype=np.float64)
         cdef double[::1] action_grad = action_grad_np
 
         TT.toc("memory")
 
-        cdef double complex *ifft_buf_ptr
-        cdef double *pos_slice_buf_ptr
-
         cdef int nsegm = self._gensegm_to_body.shape[0]
         cdef int geodim = self._InterSpaceRot.shape[1]
-        cdef int size
 
         changevar_mom(
             &params_mom_buf[0]  , self._params_shapes , self._params_shifts ,
@@ -2495,33 +2520,28 @@ cdef class NBodySyst():
 
         TT.toc("changevar_mom")
 
-        # TODO PYFFTW allocate here if needed.
-        ifft_buf_ptr = <double complex *> malloc(sizeof(double complex)*self._ifft_shifts[self._ifft_shapes.shape[0]])
-
         params_to_ifft(
             self._params_pos_buf  , self._params_shapes , self._params_shifts ,
             self._nnz_k_buf       , self._nnz_k_shapes  , self._nnz_k_shifts  ,
-            ifft_buf_ptr    , self._ifft_shapes   , self._ifft_shifts   ,
+            self._ifft_buf_ptr    , self._ifft_shapes   , self._ifft_shifts   ,
         )
         
         TT.toc("params_to_ifft")
 
-        size = self._pos_slice_shifts[self._pos_slice_shapes.shape[0]]
-        pos_slice_buf_ptr = <double *> malloc(sizeof(double)*size)
-        memset(pos_slice_buf_ptr, 0, sizeof(double)*size)
+        memset(self._pos_slice_buf_ptr, 0, sizeof(double)*self._pos_slice_shifts[self._pos_slice_shapes.shape[0]])
 
         ifft_to_pos_slice(
-            ifft_buf_ptr        , self._ifft_shapes           , self._ifft_shifts           ,
+            self._ifft_buf_ptr        , self._ifft_shapes           , self._ifft_shifts           ,
             &self._params_basis_buf[0], self._params_basis_shapes   , self._params_basis_shifts   ,
             &self._nnz_k_buf[0]       , self._nnz_k_shapes          , self._nnz_k_shifts          ,
-            pos_slice_buf_ptr   , self._pos_slice_shapes      , self._pos_slice_shifts      ,
+            self._pos_slice_buf_ptr   , self._pos_slice_shapes      , self._pos_slice_shifts      ,
             self._ncoeff_min_loop     , self._n_sub_fft             ,
         )
 
         if (self.segm_size != self.segm_store):
 
             Adjust_after_last_gen(
-                pos_slice_buf_ptr   , self._pos_slice_shifts      ,
+                self._pos_slice_buf_ptr   , self._pos_slice_shifts      ,
                 self._ifft_shapes         ,
                 self._params_basis_shapes ,
                 self._n_sub_fft           ,
@@ -2532,12 +2552,9 @@ cdef class NBodySyst():
 
         TT.toc("ifft_to_pos_slice")
 
-        # PYFFTW free ???
-        free(ifft_buf_ptr)
-
         pos_slice_to_segmpos(
-            pos_slice_buf_ptr   , self._pos_slice_shapes  , self._pos_slice_shifts ,
-            &segmpos[0,0,0]     ,
+            self._pos_slice_buf_ptr   , self._pos_slice_shapes  , self._pos_slice_shifts ,
+            &self._segmpos[0,0,0]     ,
             self._InterSpaceRotIsId   ,
             self._InterSpaceRot       ,
             self._InterTimeRev        ,
@@ -2550,10 +2567,11 @@ cdef class NBodySyst():
 
         TT.toc("pos_slice_to_segmpos")
 
-        free(pos_slice_buf_ptr)
+
+        memset(&self._pot_nrg_grad[0,0,0], 0, sizeof(double)*self.nsegm*self.segm_store*self.geodim)
 
         segm_pos_to_pot_nrg_grad(
-            segmpos                 , pot_nrg_grad          ,
+            self._segmpos           , self._pot_nrg_grad    ,
             self._BinSourceSegm     , self._BinTargetSegm   ,
             self._BinSpaceRot       , self._BinSpaceRotIsId ,
             self._BinProdChargeSum  ,
@@ -2563,16 +2581,11 @@ cdef class NBodySyst():
 
         TT.toc("segm_pos_to_pot_nrg_grad")
 
-        cdef double complex *ifft_buf_ptr_T
-        cdef double *pos_slice_buf_ptr_T
-
-        size = self._pos_slice_shifts[self._pos_slice_shapes.shape[0]]
-        pos_slice_buf_ptr_T = <double *> malloc(sizeof(double)*size)
-        memset(pos_slice_buf_ptr_T, 0, sizeof(double)*size)
+        memset(self._pos_slice_buf_ptr, 0, sizeof(double)*self._pos_slice_shifts[self._pos_slice_shapes.shape[0]])
 
         segmpos_to_pos_slice_T(
-            &segmpos[0,0,0]     ,
-            pos_slice_buf_ptr_T   , self._pos_slice_shapes  , self._pos_slice_shifts ,
+            &self._pot_nrg_grad[0,0,0] ,
+            self._pos_slice_buf_ptr   , self._pos_slice_shapes  , self._pos_slice_shifts ,
             self._InterSpaceRotIsId   ,
             self._InterSpaceRot       ,
             self._InterTimeRev        ,
@@ -2585,7 +2598,7 @@ cdef class NBodySyst():
 
         if (self.segm_size != self.segm_store):
             Adjust_after_last_gen_T(
-                pos_slice_buf_ptr_T   , self._pos_slice_shifts      ,
+                self._pos_slice_buf_ptr   , self._pos_slice_shifts      ,
                 self._ifft_shapes         ,
                 self._params_basis_shapes ,
                 self._n_sub_fft           ,
@@ -2596,32 +2609,24 @@ cdef class NBodySyst():
 
         TT.toc("segmpos_to_pos_slice_T")
 
-        # TODO PYFFTW allocate here if needed.
-        ifft_buf_ptr_T = <double complex *> malloc(sizeof(double complex)*self._ifft_shifts[self._ifft_shapes.shape[0]])
-
         pos_slice_to_ifft(
-            pos_slice_buf_ptr_T   , self._pos_slice_shapes      , self._pos_slice_shifts      ,
+            self._pos_slice_buf_ptr   , self._pos_slice_shapes      , self._pos_slice_shifts      ,
             &self._params_basis_buf[0], self._params_basis_shapes   , self._params_basis_shifts   ,
             &self._nnz_k_buf[0]       , self._nnz_k_shapes          , self._nnz_k_shifts          ,
-            ifft_buf_ptr_T        , self._ifft_shapes           , self._ifft_shifts           ,
+            self._ifft_buf_ptr        , self._ifft_shapes           , self._ifft_shifts           ,
             self._ncoeff_min_loop     , self._n_sub_fft             , -1                    ,
         )
 
         TT.toc("pos_slice_to_ifft")
 
-        free(pos_slice_buf_ptr_T)
-
         ifft_to_params(
-            ifft_buf_ptr_T    , self._ifft_shapes   , self._ifft_shifts   ,
+            self._ifft_buf_ptr    , self._ifft_shapes   , self._ifft_shifts   ,
             self._nnz_k_buf       , self._nnz_k_shapes  , self._nnz_k_shifts  ,
             self._params_pos_buf  , self._params_shapes , self._params_shifts ,
             -1              ,
         )
 
         TT.toc("ifft_to_params")
-
-        # PYFFTW free ??
-        free(ifft_buf_ptr_T)
 
         changevar_mom_T(
             self._params_pos_buf      , self._params_shapes , self._params_shifts ,
@@ -3881,30 +3886,27 @@ cdef void segmpos_to_pos_slice_T(
 
 @cython.cdivision(True)
 cdef void params_to_segmpos(
-    double[::1] params_mom_buf              , long[:,::1] params_shapes         , long[::1] params_shifts       ,
-    double* params_pos_buf                  , long[:,::1] ifft_shapes           , long[::1] ifft_shifts         ,
-    double complex[::1] params_basis_buf    , long[:,::1] params_basis_shapes   , long[::1] params_basis_shifts ,
-    long[::1] nnz_k_buf                     , long[:,::1] nnz_k_shapes          , long[::1] nnz_k_shifts        ,
-    bint[::1] co_in_buf                     , long[:,::1] co_in_shapes          , long[::1] co_in_shifts        ,
-                                              long[:,::1] pos_slice_shapes      , long[::1] pos_slice_shifts    ,
-    long[::1] ncoeff_min_loop               , long[::1] n_sub_fft               ,
-    long[::1] loopnb                        , double[::1] loopmass              ,
-    bint[::1] InterSpaceRotIsId             , double[:,:,::1] InterSpaceRot     , long[::1] InterTimeRev        ,
-    long[::1] AfterLastGenIint                , double[:,:,::1] AfterLastGenSpaceRot, long[::1] AfterLastGenTimeRev   ,
-    long[::1] gensegm_to_body       ,
-    long[::1] gensegm_to_iint       ,
-    long[::1] BodyLoop              ,
-    long segm_size                  ,
-    long segm_store                 ,
-    double[:,:,::1] segmpos         ,
+    double[::1] params_mom_buf              ,
+    double* params_pos_buf                  , long[:,::1] params_shapes             , long[::1] params_shifts       ,
+    double complex* ifft_buf_ptr            , long[:,::1] ifft_shapes               , long[::1] ifft_shifts         ,
+    double complex[::1] params_basis_buf    , long[:,::1] params_basis_shapes       , long[::1] params_basis_shifts ,
+    long[::1] nnz_k_buf                     , long[:,::1] nnz_k_shapes              , long[::1] nnz_k_shifts        ,
+    bint[::1] co_in_buf                     , long[:,::1] co_in_shapes              , long[::1] co_in_shifts        ,
+    double *pos_slice_buf_ptr               , long[:,::1] pos_slice_shapes          , long[::1] pos_slice_shifts    ,
+    long[::1] ncoeff_min_loop               , long[::1] n_sub_fft                   ,
+    long[::1] loopnb                        , double[::1] loopmass                  ,
+    bint[::1] InterSpaceRotIsId             , double[:,:,::1] InterSpaceRot         , long[::1] InterTimeRev        ,
+    long[::1] AfterLastGenIint              , double[:,:,::1] AfterLastGenSpaceRot  , long[::1] AfterLastGenTimeRev ,
+    long[::1] gensegm_to_body               ,
+    long[::1] gensegm_to_iint               ,
+    long[::1] BodyLoop                      ,
+    long segm_size                          ,
+    long segm_store                         ,
+    double[:,:,::1] segmpos                 ,
 ) noexcept nogil:
-
-    cdef double complex *ifft_buf_ptr
-    cdef double *pos_slice_buf_ptr
 
     cdef int nsegm = gensegm_to_body.shape[0]
     cdef int geodim = InterSpaceRot.shape[1]
-    cdef int size
 
     changevar_mom(
         &params_mom_buf[0]  , params_shapes , params_shifts ,
@@ -3915,18 +3917,13 @@ cdef void params_to_segmpos(
         params_pos_buf      , 
     )   
 
-    # TODO PYFFTW allocate here if needed.
-    ifft_buf_ptr = <double complex *> malloc(sizeof(double complex)*ifft_shifts[ifft_shapes.shape[0]])
-
     params_to_ifft(
         params_pos_buf  , params_shapes , params_shifts ,
         nnz_k_buf       , nnz_k_shapes  , nnz_k_shifts  ,
         ifft_buf_ptr    , ifft_shapes   , ifft_shifts   ,
     )
  
-    size = pos_slice_shifts[pos_slice_shapes.shape[0]]
-    pos_slice_buf_ptr = <double *> malloc(sizeof(double)*size)
-    memset(pos_slice_buf_ptr, 0, sizeof(double)*size)
+    memset(pos_slice_buf_ptr, 0, sizeof(double)*pos_slice_shifts[pos_slice_shapes.shape[0]])
 
     ifft_to_pos_slice(
         ifft_buf_ptr        , ifft_shapes           , ifft_shifts           ,
@@ -3948,9 +3945,6 @@ cdef void params_to_segmpos(
             segm_size           ,
         )
 
-    # PYFFTW free ???
-    free(ifft_buf_ptr)
-
     pos_slice_to_segmpos(
         pos_slice_buf_ptr   , pos_slice_shapes  , pos_slice_shifts ,
         &segmpos[0,0,0]     ,
@@ -3964,16 +3958,15 @@ cdef void params_to_segmpos(
         segm_store          ,
     )
 
-    free(pos_slice_buf_ptr)
-
 @cython.cdivision(True)
 cdef void segmpos_to_params(
-    double[:,:,::1] segmpos                 , long[:,::1] params_shapes         , long[::1] params_shifts       ,
-    double* params_pos_buf                  , long[:,::1] ifft_shapes           , long[::1] ifft_shifts         ,
+    double[:,:,::1] segmpos                 ,
+    double* params_pos_buf                  , long[:,::1] params_shapes         , long[::1] params_shifts       ,
+    double complex *ifft_buf_ptr            , long[:,::1] ifft_shapes           , long[::1] ifft_shifts         ,
     double complex[::1] params_basis_buf    , long[:,::1] params_basis_shapes   , long[::1] params_basis_shifts ,
     long[::1] nnz_k_buf                     , long[:,::1] nnz_k_shapes          , long[::1] nnz_k_shifts        ,
     bint[::1] co_in_buf                     , long[:,::1] co_in_shapes          , long[::1] co_in_shifts        ,
-                                              long[:,::1] pos_slice_shapes      , long[::1] pos_slice_shifts    ,
+    double* pos_slice_buf_ptr               , long[:,::1] pos_slice_shapes      , long[::1] pos_slice_shifts    ,
     long[::1] ncoeff_min_loop               , long[::1] n_sub_fft               ,
     long[::1] loopnb                        , double[::1] loopmass              ,
     bint[::1] InterSpaceRotIsId             , double[:,:,::1] InterSpaceRot     , long[::1] InterTimeRev        ,
@@ -3985,15 +3978,8 @@ cdef void segmpos_to_params(
     double[::1] params_mom_buf              ,
 ) noexcept nogil:
 
-    cdef double complex *ifft_buf_ptr
-    cdef double *pos_slice_buf_ptr
-
     cdef int nsegm = gensegm_to_body.shape[0]
     cdef int geodim = InterSpaceRot.shape[1]
-    cdef int size
-
-    size = pos_slice_shifts[pos_slice_shapes.shape[0]]
-    pos_slice_buf_ptr = <double *> malloc(sizeof(double)*size)
 
     segmpos_to_pos_slice(
         &segmpos[0,0,0]     ,
@@ -4008,9 +3994,6 @@ cdef void segmpos_to_params(
         segm_store          ,
     )
 
-    # TODO PYFFTW allocate here if needed.
-    ifft_buf_ptr = <double complex *> malloc(sizeof(double complex)*ifft_shifts[ifft_shapes.shape[0]])
-
     pos_slice_to_ifft(
         pos_slice_buf_ptr   , pos_slice_shapes      , pos_slice_shifts      ,
         &params_basis_buf[0], params_basis_shapes   , params_basis_shifts   ,
@@ -4019,17 +4002,12 @@ cdef void segmpos_to_params(
         ncoeff_min_loop     , n_sub_fft             , 1                     ,
     )
 
-    free(pos_slice_buf_ptr)
-
     ifft_to_params(
         ifft_buf_ptr    , ifft_shapes   , ifft_shifts   ,
         nnz_k_buf       , nnz_k_shapes  , nnz_k_shifts  ,
         params_pos_buf  , params_shapes , params_shifts ,
         1               ,
     )
-
-    # PYFFTW free ??
-    free(ifft_buf_ptr)
 
     changevar_mom_inv(
         params_pos_buf      , params_shapes , params_shifts ,
@@ -4042,16 +4020,17 @@ cdef void segmpos_to_params(
 
 @cython.cdivision(True)
 cdef void segmpos_to_params_T(
-    double[:,:,::1] segmpos                 , long[:,::1] params_shapes         , long[::1] params_shifts       ,
-    double* params_pos_buf                  , long[:,::1] ifft_shapes           , long[::1] ifft_shifts         ,
-    double complex[::1] params_basis_buf    , long[:,::1] params_basis_shapes   , long[::1] params_basis_shifts ,
-    long[::1] nnz_k_buf                     , long[:,::1] nnz_k_shapes          , long[::1] nnz_k_shifts        ,
-    bint[::1] co_in_buf                     , long[:,::1] co_in_shapes          , long[::1] co_in_shifts        ,
-                                              long[:,::1] pos_slice_shapes      , long[::1] pos_slice_shifts    ,
-    long[::1] ncoeff_min_loop               , long[::1] n_sub_fft               ,
-    long[::1] loopnb                        , double[::1] loopmass              ,
-    bint[::1] InterSpaceRotIsId             , double[:,:,::1] InterSpaceRot     , long[::1] InterTimeRev        ,
-    long[::1] AfterLastGenIint                , double[:,:,::1] AfterLastGenSpaceRot, long[::1] AfterLastGenTimeRev   ,
+    double[:,:,::1] segmpos                 ,
+    double* params_pos_buf                  , long[:,::1] params_shapes             , long[::1] params_shifts       ,
+    double complex *ifft_buf_ptr            , long[:,::1] ifft_shapes               , long[::1] ifft_shifts         ,
+    double complex[::1] params_basis_buf    , long[:,::1] params_basis_shapes       , long[::1] params_basis_shifts ,
+    long[::1] nnz_k_buf                     , long[:,::1] nnz_k_shapes              , long[::1] nnz_k_shifts        ,
+    bint[::1] co_in_buf                     , long[:,::1] co_in_shapes              , long[::1] co_in_shifts        ,
+    double* pos_slice_buf_ptr               , long[:,::1] pos_slice_shapes          , long[::1] pos_slice_shifts    ,
+    long[::1] ncoeff_min_loop               , long[::1] n_sub_fft                   ,
+    long[::1] loopnb                        , double[::1] loopmass                  ,
+    bint[::1] InterSpaceRotIsId             , double[:,:,::1] InterSpaceRot         , long[::1] InterTimeRev        ,
+    long[::1] AfterLastGenIint              , double[:,:,::1] AfterLastGenSpaceRot  , long[::1] AfterLastGenTimeRev ,
     long[::1] gensegm_to_body               ,
     long[::1] gensegm_to_iint               ,
     long[::1] BodyLoop                      ,
@@ -4060,16 +4039,10 @@ cdef void segmpos_to_params_T(
     double[::1] params_mom_buf              ,
 ) noexcept nogil:
 
-    cdef double complex *ifft_buf_ptr
-    cdef double *pos_slice_buf_ptr
-
     cdef int nsegm = gensegm_to_body.shape[0]
     cdef int geodim = InterSpaceRot.shape[1]
-    cdef int size
 
-    size = pos_slice_shifts[pos_slice_shapes.shape[0]]
-    pos_slice_buf_ptr = <double *> malloc(sizeof(double)*size)
-    memset(pos_slice_buf_ptr, 0, sizeof(double)*size)
+    memset(pos_slice_buf_ptr, 0, sizeof(double)*pos_slice_shifts[pos_slice_shapes.shape[0]])
 
     segmpos_to_pos_slice_T(
         &segmpos[0,0,0]     ,
@@ -4095,9 +4068,6 @@ cdef void segmpos_to_params_T(
             segm_size           ,
         )
 
-    # TODO PYFFTW allocate here if needed.
-    ifft_buf_ptr = <double complex *> malloc(sizeof(double complex)*ifft_shifts[ifft_shapes.shape[0]])
-
     pos_slice_to_ifft(
         pos_slice_buf_ptr   , pos_slice_shapes      , pos_slice_shifts      ,
         &params_basis_buf[0], params_basis_shapes   , params_basis_shifts   ,
@@ -4106,17 +4076,12 @@ cdef void segmpos_to_params_T(
         ncoeff_min_loop     , n_sub_fft             , -1                    ,
     )
 
-    free(pos_slice_buf_ptr)
-
     ifft_to_params(
         ifft_buf_ptr    , ifft_shapes   , ifft_shifts   ,
         nnz_k_buf       , nnz_k_shapes  , nnz_k_shifts  ,
         params_pos_buf  , params_shapes , params_shifts ,
         -1              ,
     )
-
-    # PYFFTW free ??
-    free(ifft_buf_ptr)
 
     changevar_mom_T(
         params_pos_buf      , params_shapes , params_shifts ,
