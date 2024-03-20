@@ -333,6 +333,9 @@ cdef class NBodySyst():
     def pos_slice_shapes(self):
         return np.asarray(self._pos_slice_shapes)
 
+    cdef bint BufArraysAllocated
+    cdef double* _params_pos_buf
+
     def __init__(
         self                        ,
         long geodim                 ,
@@ -343,6 +346,8 @@ cdef class NBodySyst():
         object inter_law = None     , 
         bint CrashOnIdentity = True ,
     ):
+
+        self.BufArraysAllocated = False
 
         cdef Py_ssize_t i, il, ibin, ib
         cdef double eps = 1e-12
@@ -459,6 +464,73 @@ cdef class NBodySyst():
 
         # I'd rather do this twice than leave __init__ in a partially initialized state
         self.nint_fac = 1
+
+    def __dealloc__(self):
+        if self.BufArraysAllocated:
+            free(self._params_pos_buf)
+
+    @nint_fac.setter
+    @cython.final
+    def nint_fac(self, long nint_fac_in):
+        self.nint = 2 * self.nint_min * nint_fac_in
+    
+    @nint.setter
+    @cython.cdivision(True)
+    @cython.final
+    def nint(self, long nint_in):
+
+        if (nint_in % (2 * self.nint_min)) != 0:
+            raise ValueError(f"Provided nint {nint_in} should be divisible by {2 * self.nint_min}")
+
+        self._nint = nint_in
+        self._nint_fac = nint_in // (2 * self.nint_min)
+        self.ncoeffs = self._nint // 2 + 1
+        self.segm_size = self._nint // self.nint_min
+
+        if self.RequiresGreaterNStore:
+            self.segm_store = self.segm_size + 1
+        else:
+            self.segm_store = self.segm_size
+
+        params_shapes_list = []
+        ifft_shapes_list = []
+        pos_slice_shapes_list = []
+        for il in range(self.nloop):
+
+            nppl = self._params_basis_shapes[il,2]
+            assert self._nint % (2*self._ncoeff_min_loop[il]) == 0
+            npr = self._nint //  (2*self._ncoeff_min_loop[il])
+            
+            params_shapes_list.append((npr, self._nnz_k_shapes[il,0], nppl))
+            ifft_shapes_list.append((npr+1, self._nnz_k_shapes[il,0], nppl))
+            
+            if self._n_sub_fft[il] == 2:
+                ninter = npr+1
+            elif self._n_sub_fft[il] == 1:
+                if self.RequiresGreaterNStore: 
+                    ninter = 2*npr+1
+                else:
+                    ninter = 2*npr
+            else:
+                raise ValueError(f'Impossible value for n_sub_fft[il] {self._n_sub_fft[il]}')   
+
+            pos_slice_shapes_list.append((ninter, self.geodim))
+            
+        self._params_shapes, self._params_shifts = BundleListOfShapes(params_shapes_list)
+        self._ifft_shapes, self._ifft_shifts = BundleListOfShapes(ifft_shapes_list)
+        self._pos_slice_shapes, self._pos_slice_shifts = BundleListOfShapes(pos_slice_shapes_list)
+
+        self.nparams_incl_o = self._params_shifts[self.nloop]
+        self.nparams = self._params_shifts[self.nloop] - self.nrem
+
+        if self.BufArraysAllocated:
+            free(self._params_pos_buf)
+
+
+        self._params_pos_buf = <double*> malloc(sizeof(double)*self._params_shifts[self._params_shapes.shape[0]])
+
+
+        self.BufArraysAllocated = True
 
 
     def DetectLoops(self, bodymass, bodycharge, nint_min_fac = 1):
@@ -688,60 +760,6 @@ cdef class NBodySyst():
             self._AfterLastGenTimeRev[il] = Sym.TimeRev
             AfterLastGenSpaceRot_np[il,:,:] = Sym.SpaceRot
 
-    @nint_fac.setter
-    @cython.final
-    def nint_fac(self, long nint_fac_in):
-        self.nint = 2 * self.nint_min * nint_fac_in
-    
-    @nint.setter
-    @cython.cdivision(True)
-    @cython.final
-    def nint(self, long nint_in):
-
-        if (nint_in % (2 * self.nint_min)) != 0:
-            raise ValueError(f"Provided nint {nint_in} should be divisible by {2 * self.nint_min}")
-
-        self._nint = nint_in
-        self._nint_fac = nint_in // (2 * self.nint_min)
-        self.ncoeffs = self._nint // 2 + 1
-        self.segm_size = self._nint // self.nint_min
-
-        if self.RequiresGreaterNStore:
-            self.segm_store = self.segm_size + 1
-        else:
-            self.segm_store = self.segm_size
-
-        params_shapes_list = []
-        ifft_shapes_list = []
-        pos_slice_shapes_list = []
-        for il in range(self.nloop):
-
-            nppl = self._params_basis_shapes[il,2]
-            assert self._nint % (2*self._ncoeff_min_loop[il]) == 0
-            npr = self._nint //  (2*self._ncoeff_min_loop[il])
-            
-            params_shapes_list.append((npr, self._nnz_k_shapes[il,0], nppl))
-            ifft_shapes_list.append((npr+1, self._nnz_k_shapes[il,0], nppl))
-            
-            if self._n_sub_fft[il] == 2:
-                ninter = npr+1
-            elif self._n_sub_fft[il] == 1:
-                if self.RequiresGreaterNStore: 
-                    ninter = 2*npr+1
-                else:
-                    ninter = 2*npr
-            else:
-                raise ValueError(f'Impossible value for n_sub_fft[il] {self._n_sub_fft[il]}')   
-
-            pos_slice_shapes_list.append((ninter, self.geodim))
-            
-        self._params_shapes, self._params_shifts = BundleListOfShapes(params_shapes_list)
-        self._ifft_shapes, self._ifft_shifts = BundleListOfShapes(ifft_shapes_list)
-        self._pos_slice_shapes, self._pos_slice_shifts = BundleListOfShapes(pos_slice_shapes_list)
-
-        self.nparams_incl_o = self._params_shifts[self.nloop]
-        self.nparams = self._params_shifts[self.nloop] - self.nrem
-
     @cython.final
     def AssertAllSegmGenConstraintsAreRespected(self, all_pos, eps=1e-12):
 
@@ -904,7 +922,7 @@ cdef class NBodySyst():
 
             params_to_segmpos(
                 params_mom_buf          , self._params_shapes       , self._params_shifts       ,
-                                          self._ifft_shapes         , self._ifft_shifts         ,
+                self._params_pos_buf    , self._ifft_shapes         , self._ifft_shifts         ,
                 self._params_basis_buf  , self._params_basis_shapes , self._params_basis_shifts ,
                 self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
                 self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
@@ -1279,9 +1297,9 @@ cdef class NBodySyst():
                     Sym = self.intersegm_to_all[ib][iintp]
                     isegmp = self._bodysegm[ib, iintp]
                     if Sym.TimeRev > 0:
-                        Sym.TransformPos(segmpos[isegmp,0,:], pos[self.segm_size,:])
+                        Sym.TransformPos(segmpos[isegmp, 0,:], pos[self.segm_size,:])
                     else:
-                        Sym.TransformPos(segmpos[isegmp,-1,:], pos[self.segm_size,:])
+                        Sym.TransformPos(segmpos[isegmp,-2,:], pos[self.segm_size,:])
 
                     if (color is None) or (color == "none"):
                         current_color = color_list[0]
@@ -1298,7 +1316,7 @@ cdef class NBodySyst():
                     else:
                         raise ValueError(f'Unknown color scheme "{color}"')
 
-                    plt.plot(pos[:,0], pos[:,1], color=current_color , antialiased=True, zorder=-iplt)
+                    plt.plot(pos[:,0], pos[:,1], color=current_color, antialiased=True, zorder=-iplt)
 
         ax.axis('off')
         ax.set_xlim([xinf, xsup])
@@ -1572,7 +1590,7 @@ cdef class NBodySyst():
 
             params_to_segmpos(
                 params_mom_buf          , self._params_shapes       , self._params_shifts       ,
-                                          self._ifft_shapes         , self._ifft_shifts         ,
+                self._params_pos_buf    , self._ifft_shapes         , self._ifft_shifts         ,
                 self._params_basis_buf  , self._params_basis_shapes , self._params_basis_shifts ,
                 self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
                 self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
@@ -1630,7 +1648,7 @@ cdef class NBodySyst():
 
             params_to_segmpos(
                 params_mom_buf          , self._params_shapes       , self._params_shifts       ,
-                                          self._ifft_shapes         , self._ifft_shifts         ,
+                self._params_pos_buf    , self._ifft_shapes         , self._ifft_shifts         ,
                 self._params_basis_buf  , self._params_basis_shapes , self._params_basis_shifts ,
                 self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
                 self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
@@ -1670,7 +1688,7 @@ cdef class NBodySyst():
 
             params_to_segmpos(
                 params_mom_buf          , self._params_shapes       , self._params_shifts       ,
-                                          self._ifft_shapes         , self._ifft_shifts         ,
+                self._params_pos_buf    , self._ifft_shapes         , self._ifft_shifts         ,
                 self._params_basis_buf  , self._params_basis_shapes , self._params_basis_shifts ,
                 self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
                 self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
@@ -1695,7 +1713,7 @@ cdef class NBodySyst():
 
             segmpos_to_params_T(
                 pot_nrg_grad            , self._params_shapes       , self._params_shifts       ,
-                                          self._ifft_shapes         , self._ifft_shifts         ,
+                self._params_pos_buf    , self._ifft_shapes         , self._ifft_shifts         ,
                 self._params_basis_buf  , self._params_basis_shapes , self._params_basis_shifts ,
                 self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
                 self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
@@ -1728,7 +1746,7 @@ cdef class NBodySyst():
 
             params_to_segmpos(
                 params_mom_buf          , self._params_shapes       , self._params_shifts       ,
-                                          self._ifft_shapes         , self._ifft_shifts         ,
+                self._params_pos_buf    , self._ifft_shapes         , self._ifft_shifts         ,
                 self._params_basis_buf  , self._params_basis_shapes , self._params_basis_shifts ,
                 self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
                 self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
@@ -1744,7 +1762,7 @@ cdef class NBodySyst():
 
             params_to_segmpos(
                 dparams_mom_buf         , self._params_shapes       , self._params_shifts       ,
-                                          self._ifft_shapes         , self._ifft_shifts         ,
+                self._params_pos_buf    , self._ifft_shapes         , self._ifft_shifts         ,
                 self._params_basis_buf  , self._params_basis_shapes , self._params_basis_shifts ,
                 self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
                 self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
@@ -1769,7 +1787,7 @@ cdef class NBodySyst():
 
             segmpos_to_params_T(
                 pot_nrg_hess            , self._params_shapes       , self._params_shifts       ,
-                                          self._ifft_shapes         , self._ifft_shifts         ,
+                self._params_pos_buf    , self._ifft_shapes         , self._ifft_shifts         ,
                 self._params_basis_buf  , self._params_basis_shapes , self._params_basis_shifts ,
                 self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
                 self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
@@ -1802,7 +1820,7 @@ cdef class NBodySyst():
 
             params_to_segmpos(
                 params_mom_buf          , self._params_shapes       , self._params_shifts       ,
-                                          self._ifft_shapes         , self._ifft_shifts         ,
+                self._params_pos_buf    , self._ifft_shapes         , self._ifft_shifts         ,
                 self._params_basis_buf  , self._params_basis_shapes , self._params_basis_shifts ,
                 self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
                 self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
@@ -1842,7 +1860,7 @@ cdef class NBodySyst():
 
             params_to_segmpos(
                 params_mom_buf          , self._params_shapes       , self._params_shifts       ,
-                                          self._ifft_shapes         , self._ifft_shifts         ,
+                self._params_pos_buf    , self._ifft_shapes         , self._ifft_shifts         ,
                 self._params_basis_buf  , self._params_basis_shapes , self._params_basis_shifts ,
                 self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
                 self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
@@ -1867,7 +1885,7 @@ cdef class NBodySyst():
 
             segmpos_to_params_T(
                 pot_nrg_grad            , self._params_shapes       , self._params_shifts       ,
-                                          self._ifft_shapes         , self._ifft_shifts         ,
+                self._params_pos_buf    , self._ifft_shapes         , self._ifft_shifts         ,
                 self._params_basis_buf  , self._params_basis_shapes , self._params_basis_shifts ,
                 self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
                 self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
@@ -1906,7 +1924,7 @@ cdef class NBodySyst():
 
             params_to_segmpos(
                 params_mom_buf          , self._params_shapes       , self._params_shifts       ,
-                                          self._ifft_shapes         , self._ifft_shifts         ,
+                self._params_pos_buf    , self._ifft_shapes         , self._ifft_shifts         ,
                 self._params_basis_buf  , self._params_basis_shapes , self._params_basis_shifts ,
                 self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
                 self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
@@ -1922,7 +1940,7 @@ cdef class NBodySyst():
 
             params_to_segmpos(
                 dparams_mom_buf         , self._params_shapes       , self._params_shifts       ,
-                                          self._ifft_shapes         , self._ifft_shifts         ,
+                self._params_pos_buf    , self._ifft_shapes         , self._ifft_shifts         ,
                 self._params_basis_buf  , self._params_basis_shapes , self._params_basis_shifts ,
                 self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
                 self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
@@ -1947,7 +1965,7 @@ cdef class NBodySyst():
 
             segmpos_to_params_T(
                 pot_nrg_hess            , self._params_shapes       , self._params_shifts       ,
-                                          self._ifft_shapes         , self._ifft_shifts         ,
+                self._params_pos_buf    , self._ifft_shapes         , self._ifft_shifts         ,
                 self._params_basis_buf  , self._params_basis_shapes , self._params_basis_shifts ,
                 self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
                 self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
@@ -1987,7 +2005,7 @@ cdef class NBodySyst():
 
             params_to_segmpos(
                 params_mom_buf          , self._params_shapes       , self._params_shifts       ,
-                                          self._ifft_shapes         , self._ifft_shifts         ,
+                self._params_pos_buf    , self._ifft_shapes         , self._ifft_shifts         ,
                 self._params_basis_buf  , self._params_basis_shapes , self._params_basis_shifts ,
                 self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
                 self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
@@ -2035,7 +2053,7 @@ cdef class NBodySyst():
 
             segmpos_to_params_T(
                 pot_nrg_grad            , self._params_shapes       , self._params_shifts       ,
-                                          self._ifft_shapes         , self._ifft_shifts         ,
+                self._params_pos_buf    , self._ifft_shapes         , self._ifft_shifts         ,
                 self._params_basis_buf  , self._params_basis_shapes , self._params_basis_shifts ,
                 self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
                 self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
@@ -2073,7 +2091,7 @@ cdef class NBodySyst():
 
             params_to_segmpos(
                 dparams_mom_buf         , self._params_shapes       , self._params_shifts       ,
-                                          self._ifft_shapes         , self._ifft_shifts         ,
+                self._params_pos_buf    , self._ifft_shapes         , self._ifft_shifts         ,
                 self._params_basis_buf  , self._params_basis_shapes , self._params_basis_shifts ,
                 self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
                 self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
@@ -2098,7 +2116,7 @@ cdef class NBodySyst():
 
             segmpos_to_params_T(
                 pot_nrg_hess            , self._params_shapes       , self._params_shifts       ,
-                                          self._ifft_shapes         , self._ifft_shifts         ,
+                self._params_pos_buf    , self._ifft_shapes         , self._ifft_shifts         ,
                 self._params_basis_buf  , self._params_basis_shapes , self._params_basis_shifts ,
                 self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
                 self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
@@ -2373,7 +2391,7 @@ cdef class NBodySyst():
 
             params_to_segmpos(
                 params_mom_buf          , self._params_shapes       , self._params_shifts       ,
-                                          self._ifft_shapes         , self._ifft_shifts         ,
+                self._params_pos_buf    , self._ifft_shapes         , self._ifft_shifts         ,
                 self._params_basis_buf  , self._params_basis_shapes , self._params_basis_shifts ,
                 self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
                 self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
@@ -2401,7 +2419,7 @@ cdef class NBodySyst():
 
             segmpos_to_params(
                 segmpos                 , self._params_shapes       , self._params_shifts       ,
-                                          self._ifft_shapes         , self._ifft_shifts         ,
+                self._params_pos_buf    , self._ifft_shapes         , self._ifft_shifts         ,
                 self._params_basis_buf  , self._params_basis_shapes , self._params_basis_shifts ,
                 self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
                 self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
@@ -2428,7 +2446,7 @@ cdef class NBodySyst():
 
             segmpos_to_params_T(
                 segmpos                 , self._params_shapes       , self._params_shifts       ,
-                                          self._ifft_shapes         , self._ifft_shifts         ,
+                self._params_pos_buf    , self._ifft_shapes         , self._ifft_shifts         ,
                 self._params_basis_buf  , self._params_basis_shapes , self._params_basis_shifts ,
                 self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
                 self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
@@ -2443,6 +2461,189 @@ cdef class NBodySyst():
             )
 
         return params_mom_buf_np
+
+    @cython.final
+    def TT_params_to_action_grad(self, double[::1] params_mom_buf, object TT):
+
+        TT.toc("start")
+
+        assert params_mom_buf.shape[0] == self.nparams
+
+        cdef double pot_nrg
+        cdef double[:,:,::1] segmpos = np.empty((self.nsegm, self.segm_store, self.geodim), dtype=np.float64)
+        cdef double[:,:,::1] pot_nrg_grad = np.zeros((self.nsegm, self.segm_store, self.geodim), dtype=np.float64)
+        action_grad_np = np.empty((self.nparams), dtype=np.float64)
+        cdef double[::1] action_grad = action_grad_np
+
+        TT.toc("memory")
+
+        cdef double complex *ifft_buf_ptr
+        cdef double *pos_slice_buf_ptr
+
+        cdef int nsegm = self._gensegm_to_body.shape[0]
+        cdef int geodim = self._InterSpaceRot.shape[1]
+        cdef int size
+
+        changevar_mom(
+            &params_mom_buf[0]  , self._params_shapes , self._params_shifts ,
+            self._nnz_k_buf           , self._nnz_k_shapes  , self._nnz_k_shifts  ,
+            self._co_in_buf           , self._co_in_shapes  , self._co_in_shifts  ,
+            self._ncoeff_min_loop     ,
+            self._loopnb              , self._loopmass      ,
+            self._params_pos_buf      , 
+        )   
+
+        TT.toc("changevar_mom")
+
+        # TODO PYFFTW allocate here if needed.
+        ifft_buf_ptr = <double complex *> malloc(sizeof(double complex)*self._ifft_shifts[self._ifft_shapes.shape[0]])
+
+        params_to_ifft(
+            self._params_pos_buf  , self._params_shapes , self._params_shifts ,
+            self._nnz_k_buf       , self._nnz_k_shapes  , self._nnz_k_shifts  ,
+            ifft_buf_ptr    , self._ifft_shapes   , self._ifft_shifts   ,
+        )
+        
+        TT.toc("params_to_ifft")
+
+        size = self._pos_slice_shifts[self._pos_slice_shapes.shape[0]]
+        pos_slice_buf_ptr = <double *> malloc(sizeof(double)*size)
+        memset(pos_slice_buf_ptr, 0, sizeof(double)*size)
+
+        ifft_to_pos_slice(
+            ifft_buf_ptr        , self._ifft_shapes           , self._ifft_shifts           ,
+            &self._params_basis_buf[0], self._params_basis_shapes   , self._params_basis_shifts   ,
+            &self._nnz_k_buf[0]       , self._nnz_k_shapes          , self._nnz_k_shifts          ,
+            pos_slice_buf_ptr   , self._pos_slice_shapes      , self._pos_slice_shifts      ,
+            self._ncoeff_min_loop     , self._n_sub_fft             ,
+        )
+
+        if (self.segm_size != self.segm_store):
+
+            Adjust_after_last_gen(
+                pos_slice_buf_ptr   , self._pos_slice_shifts      ,
+                self._ifft_shapes         ,
+                self._params_basis_shapes ,
+                self._n_sub_fft           ,
+                self._AfterLastGenIint    ,
+                self._AfterLastGenTimeRev , self._AfterLastGenSpaceRot  ,
+                self.segm_size           ,
+            )
+
+        TT.toc("ifft_to_pos_slice")
+
+        # PYFFTW free ???
+        free(ifft_buf_ptr)
+
+        pos_slice_to_segmpos(
+            pos_slice_buf_ptr   , self._pos_slice_shapes  , self._pos_slice_shifts ,
+            &segmpos[0,0,0]     ,
+            self._InterSpaceRotIsId   ,
+            self._InterSpaceRot       ,
+            self._InterTimeRev        ,
+            self._gensegm_to_body     ,
+            self._gensegm_to_iint     ,
+            self._bodyloop            ,
+            self.segm_size           ,
+            self.segm_store          ,
+        )
+
+        TT.toc("pos_slice_to_segmpos")
+
+        free(pos_slice_buf_ptr)
+
+        segm_pos_to_pot_nrg_grad(
+            segmpos                 , pot_nrg_grad          ,
+            self._BinSourceSegm     , self._BinTargetSegm   ,
+            self._BinSpaceRot       , self._BinSpaceRotIsId ,
+            self._BinProdChargeSum  ,
+            self.segm_size          , self.segm_store       , -1.                   ,
+            self._inter_law         ,
+        )
+
+        TT.toc("segm_pos_to_pot_nrg_grad")
+
+        cdef double complex *ifft_buf_ptr_T
+        cdef double *pos_slice_buf_ptr_T
+
+        size = self._pos_slice_shifts[self._pos_slice_shapes.shape[0]]
+        pos_slice_buf_ptr_T = <double *> malloc(sizeof(double)*size)
+        memset(pos_slice_buf_ptr_T, 0, sizeof(double)*size)
+
+        segmpos_to_pos_slice_T(
+            &segmpos[0,0,0]     ,
+            pos_slice_buf_ptr_T   , self._pos_slice_shapes  , self._pos_slice_shifts ,
+            self._InterSpaceRotIsId   ,
+            self._InterSpaceRot       ,
+            self._InterTimeRev        ,
+            self._gensegm_to_body     ,
+            self._gensegm_to_iint     ,
+            self._bodyloop            ,
+            self.segm_size           ,
+            self.segm_store          ,
+        )
+
+        if (self.segm_size != self.segm_store):
+            Adjust_after_last_gen_T(
+                pos_slice_buf_ptr_T   , self._pos_slice_shifts      ,
+                self._ifft_shapes         ,
+                self._params_basis_shapes ,
+                self._n_sub_fft           ,
+                self._AfterLastGenIint    ,
+                self._AfterLastGenTimeRev , self._AfterLastGenSpaceRot  ,
+                self.segm_size           ,
+            )
+
+        TT.toc("segmpos_to_pos_slice_T")
+
+        # TODO PYFFTW allocate here if needed.
+        ifft_buf_ptr_T = <double complex *> malloc(sizeof(double complex)*self._ifft_shifts[self._ifft_shapes.shape[0]])
+
+        pos_slice_to_ifft(
+            pos_slice_buf_ptr_T   , self._pos_slice_shapes      , self._pos_slice_shifts      ,
+            &self._params_basis_buf[0], self._params_basis_shapes   , self._params_basis_shifts   ,
+            &self._nnz_k_buf[0]       , self._nnz_k_shapes          , self._nnz_k_shifts          ,
+            ifft_buf_ptr_T        , self._ifft_shapes           , self._ifft_shifts           ,
+            self._ncoeff_min_loop     , self._n_sub_fft             , -1                    ,
+        )
+
+        TT.toc("pos_slice_to_ifft")
+
+        free(pos_slice_buf_ptr_T)
+
+        ifft_to_params(
+            ifft_buf_ptr_T    , self._ifft_shapes   , self._ifft_shifts   ,
+            self._nnz_k_buf       , self._nnz_k_shapes  , self._nnz_k_shifts  ,
+            self._params_pos_buf  , self._params_shapes , self._params_shifts ,
+            -1              ,
+        )
+
+        TT.toc("ifft_to_params")
+
+        # PYFFTW free ??
+        free(ifft_buf_ptr_T)
+
+        changevar_mom_T(
+            self._params_pos_buf      , self._params_shapes , self._params_shifts ,
+            self._nnz_k_buf           , self._nnz_k_shapes  , self._nnz_k_shifts  ,
+            self._co_in_buf           , self._co_in_shapes  , self._co_in_shifts  ,
+            self._ncoeff_min_loop     ,
+            self._loopnb              , self._loopmass      ,
+            &params_mom_buf[0]  , 
+        )   
+
+        TT.toc("changevar_mom_T")
+
+        params_to_kin_nrg_grad_daxpy(
+            &params_mom_buf[0]  , self._params_shapes   , self._params_shifts   ,
+            self._ncor_loop     , self._nco_in_loop     ,
+            1.                  ,
+            &action_grad[0]     ,
+        )
+
+        TT.toc("params_to_kin_nrg_grad_daxpy")
+
+        return action_grad_np
  
 @cython.cdivision(True)
 cdef void Make_Init_bounds_coeffs(
@@ -2963,7 +3164,7 @@ cdef void inplace_twiddle(
             free(nnz_bin)
 
 @cython.cdivision(True)
-cdef void partial_fft_to_pos_slice_1npr(
+cdef void partial_fft_to_pos_slice_2_sub(
     double complex* const_ifft      ,
     double complex* params_basis    ,  
     long* nnz_k                     ,
@@ -2994,7 +3195,7 @@ cdef void partial_fft_to_pos_slice_1npr(
     scipy.linalg.cython_blas.dgemm(transt, transn, &geodim, &n_inter, &ndcom, &dfac, params_basis_r, &ndcom, ifft_r, &ndcom, &zero_double, pos_slice, &geodim)
 
 @cython.cdivision(True)
-cdef void pos_slice_to_partial_fft_1npr(
+cdef void pos_slice_to_partial_fft_2_sub(
     double* pos_slice               ,
     double complex* params_basis    ,  
     long* nnz_k                     ,
@@ -3035,7 +3236,7 @@ cdef void pos_slice_to_partial_fft_1npr(
     inplace_twiddle(const_ifft, nnz_k, nint, n_inter, ncoeff_min_loop_nnz, nppl, 1)
 
 @cython.cdivision(True)
-cdef void partial_fft_to_pos_slice_2npr(
+cdef void partial_fft_to_pos_slice_1_sub(
     double complex* const_ifft      ,
     double complex* params_basis    ,
     long* nnz_k                     ,
@@ -3101,7 +3302,7 @@ cdef void partial_fft_to_pos_slice_2npr(
 
     
 @cython.cdivision(True)
-cdef void pos_slice_to_partial_fft_2npr(
+cdef void pos_slice_to_partial_fft_1_sub(
     double* const_pos_slice         ,
     double complex* params_basis    ,
     long* nnz_k                     ,
@@ -3301,12 +3502,12 @@ cdef void ifft_to_pos_slice(
             nppl = ifft_shapes[il,2] 
 
             if n_sub_fft[il] == 2:
-                partial_fft_to_pos_slice_1npr(
+                partial_fft_to_pos_slice_2_sub(
                     ifft, params_basis, nnz_k, pos_slice,
                     npr, ncoeff_min_loop_nnz, ncoeff_min_loop_il, geodim, nppl,
                 )
             else:
-                partial_fft_to_pos_slice_2npr(
+                partial_fft_to_pos_slice_1_sub(
                     ifft, params_basis, nnz_k, pos_slice,
                     npr, ncoeff_min_loop_nnz, ncoeff_min_loop_il, geodim, nppl,
                 )
@@ -3350,13 +3551,13 @@ cdef void pos_slice_to_ifft(
             nppl = ifft_shapes[il,2] 
 
             if n_sub_fft[il] == 2:
-                pos_slice_to_partial_fft_1npr(
+                pos_slice_to_partial_fft_2_sub(
                     pos_slice, params_basis, nnz_k, ifft,
                     npr, ncoeff_min_loop_nnz, ncoeff_min_loop_il, geodim, nppl,
                     direction,
                 )
             else:
-                pos_slice_to_partial_fft_2npr(
+                pos_slice_to_partial_fft_1_sub(
                     pos_slice, params_basis, nnz_k, ifft,
                     npr, ncoeff_min_loop_nnz, ncoeff_min_loop_il, geodim, nppl,
                     direction,
@@ -3681,7 +3882,7 @@ cdef void segmpos_to_pos_slice_T(
 @cython.cdivision(True)
 cdef void params_to_segmpos(
     double[::1] params_mom_buf              , long[:,::1] params_shapes         , long[::1] params_shifts       ,
-                                              long[:,::1] ifft_shapes           , long[::1] ifft_shifts         ,
+    double* params_pos_buf                  , long[:,::1] ifft_shapes           , long[::1] ifft_shifts         ,
     double complex[::1] params_basis_buf    , long[:,::1] params_basis_shapes   , long[::1] params_basis_shifts ,
     long[::1] nnz_k_buf                     , long[:,::1] nnz_k_shapes          , long[::1] nnz_k_shifts        ,
     bint[::1] co_in_buf                     , long[:,::1] co_in_shapes          , long[::1] co_in_shifts        ,
@@ -3698,15 +3899,12 @@ cdef void params_to_segmpos(
     double[:,:,::1] segmpos         ,
 ) noexcept nogil:
 
-    cdef double *params_pos_buf
     cdef double complex *ifft_buf_ptr
     cdef double *pos_slice_buf_ptr
 
     cdef int nsegm = gensegm_to_body.shape[0]
     cdef int geodim = InterSpaceRot.shape[1]
     cdef int size
-
-    params_pos_buf = <double*> malloc(sizeof(double)*params_shifts[params_shapes.shape[0]])
 
     changevar_mom(
         &params_mom_buf[0]  , params_shapes , params_shifts ,
@@ -3726,8 +3924,6 @@ cdef void params_to_segmpos(
         ifft_buf_ptr    , ifft_shapes   , ifft_shifts   ,
     )
  
-    free(params_pos_buf)
-
     size = pos_slice_shifts[pos_slice_shapes.shape[0]]
     pos_slice_buf_ptr = <double *> malloc(sizeof(double)*size)
     memset(pos_slice_buf_ptr, 0, sizeof(double)*size)
@@ -3773,7 +3969,7 @@ cdef void params_to_segmpos(
 @cython.cdivision(True)
 cdef void segmpos_to_params(
     double[:,:,::1] segmpos                 , long[:,::1] params_shapes         , long[::1] params_shifts       ,
-                                              long[:,::1] ifft_shapes           , long[::1] ifft_shifts         ,
+    double* params_pos_buf                  , long[:,::1] ifft_shapes           , long[::1] ifft_shifts         ,
     double complex[::1] params_basis_buf    , long[:,::1] params_basis_shapes   , long[::1] params_basis_shifts ,
     long[::1] nnz_k_buf                     , long[:,::1] nnz_k_shapes          , long[::1] nnz_k_shifts        ,
     bint[::1] co_in_buf                     , long[:,::1] co_in_shapes          , long[::1] co_in_shifts        ,
@@ -3789,7 +3985,6 @@ cdef void segmpos_to_params(
     double[::1] params_mom_buf              ,
 ) noexcept nogil:
 
-    cdef double *params_pos_buf
     cdef double complex *ifft_buf_ptr
     cdef double *pos_slice_buf_ptr
 
@@ -3826,8 +4021,6 @@ cdef void segmpos_to_params(
 
     free(pos_slice_buf_ptr)
 
-    params_pos_buf = <double*> malloc(sizeof(double)*params_shifts[params_shapes.shape[0]])
-
     ifft_to_params(
         ifft_buf_ptr    , ifft_shapes   , ifft_shifts   ,
         nnz_k_buf       , nnz_k_shapes  , nnz_k_shifts  ,
@@ -3847,12 +4040,10 @@ cdef void segmpos_to_params(
         &params_mom_buf[0]  , 
     )   
 
-    free(params_pos_buf)
-
 @cython.cdivision(True)
 cdef void segmpos_to_params_T(
     double[:,:,::1] segmpos                 , long[:,::1] params_shapes         , long[::1] params_shifts       ,
-                                              long[:,::1] ifft_shapes           , long[::1] ifft_shifts         ,
+    double* params_pos_buf                  , long[:,::1] ifft_shapes           , long[::1] ifft_shifts         ,
     double complex[::1] params_basis_buf    , long[:,::1] params_basis_shapes   , long[::1] params_basis_shifts ,
     long[::1] nnz_k_buf                     , long[:,::1] nnz_k_shapes          , long[::1] nnz_k_shifts        ,
     bint[::1] co_in_buf                     , long[:,::1] co_in_shapes          , long[::1] co_in_shifts        ,
@@ -3869,7 +4060,6 @@ cdef void segmpos_to_params_T(
     double[::1] params_mom_buf              ,
 ) noexcept nogil:
 
-    cdef double *params_pos_buf
     cdef double complex *ifft_buf_ptr
     cdef double *pos_slice_buf_ptr
 
@@ -3918,8 +4108,6 @@ cdef void segmpos_to_params_T(
 
     free(pos_slice_buf_ptr)
 
-    params_pos_buf = <double*> malloc(sizeof(double)*params_shifts[params_shapes.shape[0]])
-
     ifft_to_params(
         ifft_buf_ptr    , ifft_shapes   , ifft_shifts   ,
         nnz_k_buf       , nnz_k_shapes  , nnz_k_shifts  ,
@@ -3938,8 +4126,6 @@ cdef void segmpos_to_params_T(
         loopnb              , loopmass      ,
         &params_mom_buf[0]  , 
     )   
-
-    free(params_pos_buf)
 
 @cython.cdivision(True)
 cdef void segm_pos_to_hash(
