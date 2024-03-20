@@ -12,6 +12,13 @@ Benchmark of FFT algorithms
 
 import os
 import sys
+
+os.environ['OPENBLAS_NUM_THREADS'] = '1'
+os.environ['NUMEXPR_NUM_THREADS'] = '1'
+os.environ['MKL_NUM_THREADS'] = '1'
+os.environ['OMP_NUM_THREADS'] = '1'
+os.environ['TBB_NUM_THREADS'] = '1'
+
 import multiprocessing
 import itertools
 
@@ -59,8 +66,8 @@ def setup_all(fft_type, nthreads, all_sizes):
         pyfftw.interfaces.cache.enable()
         pyfftw.interfaces.cache.set_keepalive_time(300000)
 
-        planner_effort = 'FFTW_ESTIMATE'
-        # planner_effort = 'FFTW_MEASURE'
+        # planner_effort = 'FFTW_ESTIMATE'
+        planner_effort = 'FFTW_MEASURE'
         # planner_effort = 'FFTW_PATIENT'
         # planner_effort = 'FFTW_EXHAUSTIVE'
 
@@ -109,7 +116,9 @@ def setup_all(fft_type, nthreads, all_sizes):
                 raise ValueError(f'No prepare function for {fft_type}')
             
         
-            fft_object = pyfftw.FFTW(x, y, axes=(0, ), direction=direction, flags=(planner_effort,), threads=nthreads, planning_timelimit=None)
+            # fft_object = pyfftw.FFTW(x, y, axes=(0, ), direction=direction, flags=(planner_effort,), threads=nthreads, planning_timelimit=None)      
+              
+            fft_object = pyfftw.FFTW(x, y, axes=(0, ), direction=direction, flags=(planner_effort,), planning_timelimit=None)
 
             all_custom[n] = fft_object
         
@@ -127,15 +136,23 @@ def setup_all(fft_type, nthreads, all_sizes):
 
     try:
         
-        if (nthreads == (multiprocessing.cpu_count()//2)):
+        # if (nthreads == (multiprocessing.cpu_count()//2)):
+        #     
+        #     # This f***** will always run with the maximum available number of threads
+        #     import mkl_fft
+        #     
+        #     def rfft_mkl(x):
+        #         getattr(mkl_fft, fft_type)(x)
+        #     
+        #     all_funs['mkl'] = rfft_mkl
             
-            # This f***** will always run with the maximum available number of threads
-            import mkl_fft
-            
-            def rfft_mkl(x):
-                getattr(mkl_fft, fft_type)(x)
-            
-            all_funs['mkl'] = rfft_mkl
+        # This f***** will always run with the maximum available number of threads
+        import mkl_fft
+        
+        def rfft_mkl(x):
+            getattr(mkl_fft, fft_type)(x)
+        
+        all_funs['mkl'] = rfft_mkl
 
     except:
         pass
@@ -146,16 +163,16 @@ def setup_all(fft_type, nthreads, all_sizes):
 def plot_all(relative_to = None):
 
     all_fft_types = [
-        'fft',
+        # 'fft',
         'rfft',
     ]
 
     all_nthreads = [
         1, 
-        multiprocessing.cpu_count()//2
+        # multiprocessing.cpu_count()//2
     ]
     
-    all_sizes = np.array([4*3*5 * 2**n for n in range(2)])
+    all_sizes = np.array([4*3*5 * 2**n for n in range(10)])
 
     n_plots = len(all_nthreads) * len(all_fft_types)
 
@@ -205,6 +222,7 @@ def plot_all(relative_to = None):
             setup = prepare_x               ,
             filename = timings_filename     ,
             ShowProgress=True               ,
+            # ForceBenchmark=True             ,
         )
         
         if relative_to is None:
