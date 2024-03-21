@@ -406,3 +406,50 @@ def test_pot_indep_resize(AllNBS):
             print(err)
         
         assert Passed_any
+        
+def test_repeatability(AllNBS, float64_tols):
+    
+    for name, NBS in AllNBS.items():
+        
+        print(f"Config name : {name}")   
+        
+        params_buf = np.random.random((NBS.nparams))
+        params_buf_cp = params_buf.copy()
+        segmpos = NBS.params_to_segmpos(params_buf)
+        
+        print(np.linalg.norm(params_buf - params_buf_cp))
+        assert np.allclose(params_buf, params_buf_cp, rtol = float64_tols.rtol, atol = float64_tols.atol) 
+        
+        segmpos_2 = NBS.params_to_segmpos(params_buf)
+        
+        print(np.linalg.norm(segmpos - segmpos_2))
+        assert np.allclose(segmpos, segmpos_2, rtol = float64_tols.rtol, atol = float64_tols.atol) 
+
+        
+def test_fft_backends(AllNBS, float64_tols):
+    
+    for name, NBS in AllNBS.items():
+        
+        print(f"Config name : {name}")   
+        
+        params_buf = np.random.random((NBS.nparams))
+        params_buf_cp = params_buf.copy()
+        segmpos_ref = NBS.params_to_segmpos(params_buf)
+        
+        for backend in ["scipy", "mkl"]:
+            
+            print(backend)
+            
+            NBS.fft_backend = backend
+            
+            segmpos = NBS.params_to_segmpos(params_buf_cp)
+                
+            print(np.linalg.norm(segmpos - segmpos_ref))
+            assert np.allclose(segmpos, segmpos_ref, rtol = float64_tols.rtol, atol = float64_tols.atol) 
+            
+            params_buf_rt = NBS.segmpos_to_params(segmpos)
+            
+            print(np.linalg.norm(params_buf - params_buf_rt))
+            assert np.allclose(params_buf, params_buf_rt, rtol = float64_tols.rtol, atol = float64_tols.atol) 
+
+        print()

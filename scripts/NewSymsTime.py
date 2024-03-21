@@ -2,7 +2,7 @@ import os
 import sys
 __PROJECT_ROOT__ = os.path.abspath(os.path.join(os.path.dirname(__file__),os.pardir))
 sys.path.append(__PROJECT_ROOT__)
-# 
+
 os.environ['OPENBLAS_NUM_THREADS'] = '1'
 os.environ['NUMEXPR_NUM_THREADS'] = '1'
 os.environ['MKL_NUM_THREADS'] = '1'
@@ -26,9 +26,27 @@ import choreo
 if ("--no-show" in sys.argv):
     plt.show = (lambda : None)
 
-def params_to_action_grad(NBS, params_buf):
+def params_to_action_grad_scipy(NBS, params_buf):
     
-    n_test = 1000
+    NBS.fft_backend = 'scipy'
+    
+    n_test = 10
+    
+    TT = pyquickbench.TimeTrain(
+        include_locs = False    ,
+        names_reduction = "min" ,
+    )
+    
+    for i in range(n_test):
+        NBS.TT_params_to_action_grad(params_buf, TT)
+    
+    return TT
+
+def params_to_action_grad_mkl(NBS, params_buf):
+    
+    NBS.fft_backend = 'mkl'
+    
+    n_test = 10
     
     TT = pyquickbench.TimeTrain(
         include_locs = False    ,
@@ -41,7 +59,8 @@ def params_to_action_grad(NBS, params_buf):
     return TT
     
 all_funs = [
-    params_to_action_grad       ,
+    params_to_action_grad_scipy ,
+    params_to_action_grad_mkl   ,
 ]
 
 def setup(test_name, nint_fac):
@@ -102,7 +121,7 @@ all_tests = [
     # '4D',
     '3C',
     # '20B',
-    '3D',
+    # '3D',
     # '3D1',
     # '3C2k',
     # '3D2k',
@@ -132,8 +151,8 @@ all_tests = [
     # '3C101k',
 ]
 
-min_exp = 3
-max_exp = 15
+min_exp = 0
+max_exp = 20
 
 n_repeat = 1
 
@@ -160,20 +179,23 @@ all_timings = pyquickbench.run_benchmark(
     mode = 'vector_output'  ,
     n_repeat = n_repeat     ,
     MonotonicAxes = MonotonicAxes,
-    ForceBenchmark = True,
+    # ForceBenchmark = True,
 )
 
 plot_intent = {
     # "test_name" : 'subplot_grid_y'                  ,
     "test_name" : 'curve_linestyle'                  ,
+    pyquickbench.fun_ax_name : 'curve_linestyle'                  ,
     "nint_fac" : 'points'                           ,
     pyquickbench.repeat_ax_name :  'reduction_min'  ,
     pyquickbench.out_ax_name :  'curve_color'  ,
+    # pyquickbench.out_ax_name :  'reduction_sum'  ,
 }
 
 relative_to_val_list = [
     None    ,
-    {pyquickbench.out_ax_name : 'params_to_ifft'},
+    # {pyquickbench.out_ax_name : 'params_to_ifft'},
+    {pyquickbench.fun_ax_name : 'params_to_action_grad_scipy'},
 ]
 
 for relative_to_val in relative_to_val_list:

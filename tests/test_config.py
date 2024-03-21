@@ -258,7 +258,11 @@ def load_from_config_file(config_name):
     else:
         raise NotImplementedError
 
-    return choreo.cython._NBodySyst.NBodySyst(geodim, nbody, mass, charge, Sym_list, inter_law)
+    NBS = choreo.cython._NBodySyst.NBodySyst(geodim, nbody, mass, charge, Sym_list, inter_law)
+    
+    NBS.nint_fac = 2
+    
+    return NBS
 
 @pytest.fixture
 def AllNBS(AllConfigNames):
