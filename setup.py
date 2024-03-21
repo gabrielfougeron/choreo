@@ -88,7 +88,7 @@ elif platform.system() == "Linux":
                 os.environ['LDSHARED'] = compiler+' -shared'
                 
                 break
-# 
+
         # extra_compile_args_std = ["-O0","-march=native", "-fopenmp", "-lm", *ignore_warnings_args]
         # extra_compile_args_safe = ["-O0", "-fopenmp", "-lm", *ignore_warnings_args]
         # extra_link_args = ["-fopenmp", "-lm",]

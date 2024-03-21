@@ -54,6 +54,22 @@ try:
 except:
     pass
 
+try:
+    import mkl_fft
+    MKL_FFT_AVAILABLE = True
+except:
+    MKL_FFT_AVAILABLE = False
+
+try:
+    import pyfftw
+    PYFFTW_AVAILABLE = True
+except:
+    PYFFTW_AVAILABLE = False
+
+cdef int USE_SCIPY_FFT = 0
+cdef int USE_MKL_FFT = 1
+cdef int USE_FFTW_FFT = 2
+
 cdef ccallback_signature_t signatures[2]
 
 ctypedef void (*inter_law_fun_type)(double, double*) noexcept nogil 
@@ -110,6 +126,35 @@ cdef class NBodySyst():
     cdef readonly long nbin_segm_unique
 
     cdef readonly bint RequiresGreaterNStore
+    cdef int _fft_backend
+
+    @property
+    def fft_backend(self):
+        if self._fft_backend == USE_SCIPY_FFT:
+            return "scipy"
+        elif self._fft_backend == USE_MKL_FFT:
+            return "mkl"
+        elif self._fft_backend == USE_FFTW_FFT:
+            return "fftw"
+
+    @fft_backend.setter
+    @cython.final
+    def fft_backend(self, backend):
+        if backend == "scipy":
+            self._fft_backend = USE_SCIPY_FFT
+        elif backend == "mkl":
+            if MKL_FFT_AVAILABLE:
+                self._fft_backend = USE_MKL_FFT
+            else:
+                raise ValueError("The package mkl_fft could not be loaded. Please check your local install.")
+        elif backend == "fftw":
+            if PYFFTW_AVAILABLE:
+                self._fft_backend = USE_FFTW_FFT
+                raise NotImplementedError
+            else:
+                raise ValueError("The package pyfftw could not be loaded. Please check your local install.")
+        else:
+            raise ValueError('Invalid FFT backend. Possible options are "scipy", "mkl" or "fftw" ')
 
     cdef long[::1] _loopnb
     @property
@@ -465,6 +510,13 @@ cdef class NBodySyst():
         self._ncoeff_min_loop = np.array([len(All_params_basis[il]) for il in range(self.nloop)], dtype=np.intp)
 
         self.Compute_n_sub_fft()
+# 
+#         if MKL_FFT_AVAILABLE:
+#             self.fft_backend = "mkl"
+#         else:
+#             self.fft_backend = "scipy"
+
+        self.fft_backend = "scipy"
 
         # I'd rather do this twice than leave __init__ in a partially initialized state
         self.nint_fac = 1
@@ -941,7 +993,7 @@ cdef class NBodySyst():
                 self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
                 self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
                 self._pos_slice_buf_ptr , self._pos_slice_shapes    , self._pos_slice_shifts    ,
-                self._ncoeff_min_loop   , self._n_sub_fft           ,
+                self._ncoeff_min_loop   , self._n_sub_fft           , self._fft_backend         ,
                 self._loopnb            , self._loopmass            ,
                 self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
                 self._AfterLastGenIint  , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
@@ -1610,7 +1662,7 @@ cdef class NBodySyst():
                 self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
                 self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
                 self._pos_slice_buf_ptr , self._pos_slice_shapes    , self._pos_slice_shifts    ,
-                self._ncoeff_min_loop   , self._n_sub_fft           ,
+                self._ncoeff_min_loop   , self._n_sub_fft           , self._fft_backend         ,
                 self._loopnb            , self._loopmass            ,
                 self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
                 self._AfterLastGenIint  , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
@@ -1669,7 +1721,7 @@ cdef class NBodySyst():
                 self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
                 self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
                 self._pos_slice_buf_ptr , self._pos_slice_shapes    , self._pos_slice_shifts    ,
-                self._ncoeff_min_loop   , self._n_sub_fft           ,
+                self._ncoeff_min_loop   , self._n_sub_fft           , self._fft_backend         ,
                 self._loopnb            , self._loopmass            ,
                 self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
                 self._AfterLastGenIint  , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
@@ -1707,7 +1759,7 @@ cdef class NBodySyst():
                 self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
                 self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
                 self._pos_slice_buf_ptr , self._pos_slice_shapes    , self._pos_slice_shifts    ,
-                self._ncoeff_min_loop   , self._n_sub_fft           ,
+                self._ncoeff_min_loop   , self._n_sub_fft           , self._fft_backend         ,
                 self._loopnb            , self._loopmass            ,
                 self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
                 self._AfterLastGenIint  , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
@@ -1735,7 +1787,7 @@ cdef class NBodySyst():
                 self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
                 self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
                 self._pos_slice_buf_ptr , self._pos_slice_shapes    , self._pos_slice_shifts    ,
-                self._ncoeff_min_loop   , self._n_sub_fft           ,
+                self._ncoeff_min_loop   , self._n_sub_fft           , self._fft_backend         ,
                 self._loopnb            , self._loopmass            ,
                 self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
                 self._AfterLastGenIint  , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
@@ -1767,7 +1819,7 @@ cdef class NBodySyst():
                 self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
                 self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
                 self._pos_slice_buf_ptr , self._pos_slice_shapes    , self._pos_slice_shifts    ,
-                self._ncoeff_min_loop   , self._n_sub_fft           ,
+                self._ncoeff_min_loop   , self._n_sub_fft           , self._fft_backend         ,
                 self._loopnb            , self._loopmass            ,
                 self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
                 self._AfterLastGenIint  , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
@@ -1784,7 +1836,7 @@ cdef class NBodySyst():
                 self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
                 self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
                 self._pos_slice_buf_ptr , self._pos_slice_shapes    , self._pos_slice_shifts    ,
-                self._ncoeff_min_loop   , self._n_sub_fft           ,
+                self._ncoeff_min_loop   , self._n_sub_fft           , self._fft_backend         ,
                 self._loopnb            , self._loopmass            ,
                 self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
                 self._AfterLastGenIint  , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
@@ -1812,7 +1864,7 @@ cdef class NBodySyst():
                 self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
                 self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
                 self._pos_slice_buf_ptr , self._pos_slice_shapes    , self._pos_slice_shifts    ,
-                self._ncoeff_min_loop   , self._n_sub_fft           ,
+                self._ncoeff_min_loop   , self._n_sub_fft           , self._fft_backend         ,
                 self._loopnb            , self._loopmass            ,
                 self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
                 self._AfterLastGenIint  , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
@@ -1845,7 +1897,7 @@ cdef class NBodySyst():
                 self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
                 self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
                 self._pos_slice_buf_ptr , self._pos_slice_shapes    , self._pos_slice_shifts    ,
-                self._ncoeff_min_loop   , self._n_sub_fft           ,
+                self._ncoeff_min_loop   , self._n_sub_fft           , self._fft_backend         ,
                 self._loopnb            , self._loopmass            ,
                 self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
                 self._AfterLastGenIint  , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
@@ -1883,7 +1935,7 @@ cdef class NBodySyst():
                 self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
                 self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
                 self._pos_slice_buf_ptr , self._pos_slice_shapes    , self._pos_slice_shifts    ,
-                self._ncoeff_min_loop   , self._n_sub_fft           ,
+                self._ncoeff_min_loop   , self._n_sub_fft           , self._fft_backend         ,
                 self._loopnb            , self._loopmass            ,
                 self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
                 self._AfterLastGenIint  , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
@@ -1911,7 +1963,7 @@ cdef class NBodySyst():
                 self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
                 self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
                 self._pos_slice_buf_ptr , self._pos_slice_shapes    , self._pos_slice_shifts    ,
-                self._ncoeff_min_loop   , self._n_sub_fft           ,
+                self._ncoeff_min_loop   , self._n_sub_fft           , self._fft_backend         ,
                 self._loopnb            , self._loopmass            ,
                 self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
                 self._AfterLastGenIint  , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
@@ -1949,7 +2001,7 @@ cdef class NBodySyst():
                 self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
                 self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
                 self._pos_slice_buf_ptr , self._pos_slice_shapes    , self._pos_slice_shifts    ,
-                self._ncoeff_min_loop   , self._n_sub_fft           ,
+                self._ncoeff_min_loop   , self._n_sub_fft           , self._fft_backend         ,
                 self._loopnb            , self._loopmass            ,
                 self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
                 self._AfterLastGenIint  , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
@@ -1966,7 +2018,7 @@ cdef class NBodySyst():
                 self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
                 self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
                 self._pos_slice_buf_ptr , self._pos_slice_shapes    , self._pos_slice_shifts    ,
-                self._ncoeff_min_loop   , self._n_sub_fft           ,
+                self._ncoeff_min_loop   , self._n_sub_fft           , self._fft_backend         ,
                 self._loopnb            , self._loopmass            ,
                 self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
                 self._AfterLastGenIint  , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
@@ -1994,7 +2046,7 @@ cdef class NBodySyst():
                 self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
                 self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
                 self._pos_slice_buf_ptr , self._pos_slice_shapes    , self._pos_slice_shifts    ,
-                self._ncoeff_min_loop   , self._n_sub_fft           ,
+                self._ncoeff_min_loop   , self._n_sub_fft           , self._fft_backend         ,
                 self._loopnb            , self._loopmass            ,
                 self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
                 self._AfterLastGenIint  , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
@@ -2035,7 +2087,7 @@ cdef class NBodySyst():
                 self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
                 self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
                 self._pos_slice_buf_ptr , self._pos_slice_shapes    , self._pos_slice_shifts    ,
-                self._ncoeff_min_loop   , self._n_sub_fft           ,
+                self._ncoeff_min_loop   , self._n_sub_fft           , self._fft_backend         ,
                 self._loopnb            , self._loopmass            ,
                 self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
                 self._AfterLastGenIint  , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
@@ -2085,7 +2137,7 @@ cdef class NBodySyst():
                 self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
                 self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
                 self._pos_slice_buf_ptr , self._pos_slice_shapes    , self._pos_slice_shifts    ,
-                self._ncoeff_min_loop   , self._n_sub_fft           ,
+                self._ncoeff_min_loop   , self._n_sub_fft           , self._fft_backend         ,
                 self._loopnb            , self._loopmass            ,
                 self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
                 self._AfterLastGenIint  , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
@@ -2122,7 +2174,7 @@ cdef class NBodySyst():
                 self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
                 self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
                 self._pos_slice_buf_ptr , self._pos_slice_shapes    , self._pos_slice_shifts    ,
-                self._ncoeff_min_loop   , self._n_sub_fft           ,
+                self._ncoeff_min_loop   , self._n_sub_fft           , self._fft_backend         ,
                 self._loopnb            , self._loopmass            ,
                 self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
                 self._AfterLastGenIint  , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
@@ -2150,7 +2202,7 @@ cdef class NBodySyst():
                 self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
                 self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
                 self._pos_slice_buf_ptr , self._pos_slice_shapes    , self._pos_slice_shifts    ,
-                self._ncoeff_min_loop   , self._n_sub_fft           ,
+                self._ncoeff_min_loop   , self._n_sub_fft           , self._fft_backend         ,
                 self._loopnb            , self._loopmass            ,
                 self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
                 self._AfterLastGenIint  , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
@@ -2426,7 +2478,7 @@ cdef class NBodySyst():
                 self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
                 self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
                 self._pos_slice_buf_ptr , self._pos_slice_shapes    , self._pos_slice_shifts    ,
-                self._ncoeff_min_loop   , self._n_sub_fft           ,
+                self._ncoeff_min_loop   , self._n_sub_fft           , self._fft_backend         ,
                 self._loopnb            , self._loopmass            ,
                 self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
                 self._AfterLastGenIint  , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
@@ -2455,7 +2507,7 @@ cdef class NBodySyst():
                 self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
                 self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
                 self._pos_slice_buf_ptr , self._pos_slice_shapes    , self._pos_slice_shifts    ,
-                self._ncoeff_min_loop   , self._n_sub_fft           ,
+                self._ncoeff_min_loop   , self._n_sub_fft           , self._fft_backend         ,
                 self._loopnb            , self._loopmass            ,
                 self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
                 self._gensegm_to_body   , self._gensegm_to_iint     ,
@@ -2483,7 +2535,7 @@ cdef class NBodySyst():
                 self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
                 self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
                 self._pos_slice_buf_ptr , self._pos_slice_shapes    , self._pos_slice_shifts    ,
-                self._ncoeff_min_loop   , self._n_sub_fft           ,
+                self._ncoeff_min_loop   , self._n_sub_fft           , self._fft_backend         ,
                 self._loopnb            , self._loopmass            ,
                 self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
                 self._AfterLastGenIint  , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
@@ -2524,6 +2576,7 @@ cdef class NBodySyst():
             self._params_pos_buf  , self._params_shapes , self._params_shifts ,
             self._nnz_k_buf       , self._nnz_k_shapes  , self._nnz_k_shifts  ,
             self._ifft_buf_ptr    , self._ifft_shapes   , self._ifft_shifts   ,
+            self._fft_backend     ,
         )
         
         TT.toc("params_to_ifft")
@@ -2623,7 +2676,7 @@ cdef class NBodySyst():
             self._ifft_buf_ptr    , self._ifft_shapes   , self._ifft_shifts   ,
             self._nnz_k_buf       , self._nnz_k_shapes  , self._nnz_k_shifts  ,
             self._params_pos_buf  , self._params_shapes , self._params_shifts ,
-            -1              ,
+            self._fft_backend     , -1                  ,
         )
 
         TT.toc("ifft_to_params")
@@ -3396,6 +3449,7 @@ cdef void params_to_ifft(
     double* params_buf              , long[:,::1] params_shapes     , long[::1] params_shifts   ,
     long[::1] nnz_k_buf             , long[:,::1] nnz_k_shapes      , long[::1] nnz_k_shifts    ,
     double complex *ifft_buf_ptr    , long[:,::1] ifft_shapes       , long[::1] ifft_shifts     ,
+    int fft_backend                 ,
 ) noexcept nogil:
 
     cdef double [:,:,::1] params
@@ -3407,37 +3461,55 @@ cdef void params_to_ifft(
     cdef double complex * dest
     cdef Py_ssize_t il, i
 
-    with gil:
+    if fft_backend == USE_MKL_FFT:
 
-        for il in range(nloop):
+        with gil:
 
-            if params_shapes[il,1] > 0:
+            for il in range(nloop):
 
-                params = <double[:params_shapes[il,0],:params_shapes[il,1],:params_shapes[il,2]:1]> &params_buf[params_shifts[il]]
-                nnz_k = <long[:nnz_k_shapes[il,0]:1]> &nnz_k_buf[nnz_k_shifts[il]]
+                if params_shapes[il,1] > 0:
 
-                if nnz_k.shape[0] > 0:
-                    if nnz_k[0] == 0:
-                        for i in range(params.shape[2]):
-                            params[0,0,i] *= 0.5
+                    params = <double[:params_shapes[il,0],:params_shapes[il,1],:params_shapes[il,2]:1]> &params_buf[params_shifts[il]]
+                    nnz_k = <long[:nnz_k_shapes[il,0]:1]> &nnz_k_buf[nnz_k_shifts[il]]
 
-                ifft = scipy.fft.rfft(params, axis=0, n=2*params.shape[0])
+                    if nnz_k.shape[0] > 0:
+                        if nnz_k[0] == 0:
+                            for i in range(params.shape[2]):
+                                params[0,0,i] *= 0.5
 
-                # TODO : remove this once validation is done
-                if nnz_k.shape[0] > 0:
-                    if nnz_k[0] == 0:
-                        for i in range(params.shape[2]):
-                            params[0,0,i] *= 2
+                    ifft = mkl_fft._numpy_fft.rfft(params, axis=0, n=2*params.shape[0])
 
-                dest = ifft_buf_ptr + ifft_shifts[il]
-                n = ifft_shifts[il+1] - ifft_shifts[il]
-                scipy.linalg.cython_blas.zcopy(&n,&ifft[0,0,0],&int_one,dest,&int_one)
+                    dest = ifft_buf_ptr + ifft_shifts[il]
+                    n = ifft_shifts[il+1] - ifft_shifts[il]
+                    scipy.linalg.cython_blas.zcopy(&n,&ifft[0,0,0],&int_one,dest,&int_one)
+
+    elif fft_backend == USE_SCIPY_FFT:
+
+        with gil:
+
+            for il in range(nloop):
+
+                if params_shapes[il,1] > 0:
+
+                    params = <double[:params_shapes[il,0],:params_shapes[il,1],:params_shapes[il,2]:1]> &params_buf[params_shifts[il]]
+                    nnz_k = <long[:nnz_k_shapes[il,0]:1]> &nnz_k_buf[nnz_k_shifts[il]]
+
+                    if nnz_k.shape[0] > 0:
+                        if nnz_k[0] == 0:
+                            for i in range(params.shape[2]):
+                                params[0,0,i] *= 0.5
+
+                    ifft = scipy.fft.rfft(params, axis=0, n=2*params.shape[0], overwrite_x=True)
+
+                    dest = ifft_buf_ptr + ifft_shifts[il]
+                    n = ifft_shifts[il+1] - ifft_shifts[il]
+                    scipy.linalg.cython_blas.zcopy(&n,&ifft[0,0,0],&int_one,dest,&int_one)
 
 cdef void ifft_to_params(
     double complex *ifft_buf_ptr    , long[:,::1] ifft_shapes       , long[::1] ifft_shifts     ,
     long[::1] nnz_k_buf             , long[:,::1] nnz_k_shapes      , long[::1] nnz_k_shifts    ,
     double* params_buf              , long[:,::1] params_shapes     , long[::1] params_shifts   ,
-    int direction                   ,
+    int fft_backend                 , int direction                 ,
 ) noexcept nogil:
 
     cdef double [:,:,::1] params
@@ -3449,26 +3521,51 @@ cdef void ifft_to_params(
     cdef double* dest
     cdef Py_ssize_t il, i
 
-    with gil:
+    if fft_backend == USE_MKL_FFT:
 
-        for il in range(nloop):
+        with gil:
 
-            if params_shapes[il,1] > 0:
+            for il in range(nloop):
 
-                nnz_k = <long[:nnz_k_shapes[il,0]:1]> &nnz_k_buf[nnz_k_shifts[il]]
-                ifft = <double complex[:ifft_shapes[il,0],:ifft_shapes[il,1],:ifft_shapes[il,2]:1]> &ifft_buf_ptr[ifft_shifts[il]]
+                if params_shapes[il,1] > 0:
 
-                params = scipy.fft.irfft(ifft, axis=0)
+                    nnz_k = <long[:nnz_k_shapes[il,0]:1]> &nnz_k_buf[nnz_k_shifts[il]]
+                    ifft = <double complex[:ifft_shapes[il,0],:ifft_shapes[il,1],:ifft_shapes[il,2]:1]> &ifft_buf_ptr[ifft_shifts[il]]
 
-                if direction < 0:
-                    if nnz_k.shape[0] > 0:
-                        if nnz_k[0] == 0:
-                            for i in range(params.shape[2]):
-                                params[0,0,i] *= 0.5
+                    params = mkl_fft._numpy_fft.irfft(ifft, axis=0)
 
-                dest = params_buf + params_shifts[il]
-                n = params_shifts[il+1] - params_shifts[il]
-                scipy.linalg.cython_blas.dcopy(&n,&params[0,0,0],&int_one,dest,&int_one)
+                    if direction < 0:
+                        if nnz_k.shape[0] > 0:
+                            if nnz_k[0] == 0:
+                                for i in range(params.shape[2]):
+                                    params[0,0,i] *= 0.5
+
+                    dest = params_buf + params_shifts[il]
+                    n = params_shifts[il+1] - params_shifts[il]
+                    scipy.linalg.cython_blas.dcopy(&n,&params[0,0,0],&int_one,dest,&int_one)
+
+    elif fft_backend == USE_SCIPY_FFT:
+
+        with gil:
+
+            for il in range(nloop):
+
+                if params_shapes[il,1] > 0:
+
+                    nnz_k = <long[:nnz_k_shapes[il,0]:1]> &nnz_k_buf[nnz_k_shifts[il]]
+                    ifft = <double complex[:ifft_shapes[il,0],:ifft_shapes[il,1],:ifft_shapes[il,2]:1]> &ifft_buf_ptr[ifft_shifts[il]]
+
+                    params = scipy.fft.irfft(ifft, axis=0, overwrite_x=True)
+
+                    if direction < 0:
+                        if nnz_k.shape[0] > 0:
+                            if nnz_k[0] == 0:
+                                for i in range(params.shape[2]):
+                                    params[0,0,i] *= 0.5
+
+                    dest = params_buf + params_shifts[il]
+                    n = params_shifts[il+1] - params_shifts[il]
+                    scipy.linalg.cython_blas.dcopy(&n,&params[0,0,0],&int_one,dest,&int_one)
 
 cdef void ifft_to_pos_slice(
     double complex *ifft_buf_ptr            , long[:,::1] ifft_shapes           , long[::1] ifft_shifts         ,
@@ -3893,7 +3990,7 @@ cdef void params_to_segmpos(
     long[::1] nnz_k_buf                     , long[:,::1] nnz_k_shapes              , long[::1] nnz_k_shifts        ,
     bint[::1] co_in_buf                     , long[:,::1] co_in_shapes              , long[::1] co_in_shifts        ,
     double *pos_slice_buf_ptr               , long[:,::1] pos_slice_shapes          , long[::1] pos_slice_shifts    ,
-    long[::1] ncoeff_min_loop               , long[::1] n_sub_fft                   ,
+    long[::1] ncoeff_min_loop               , long[::1] n_sub_fft                   , int fft_backend               ,
     long[::1] loopnb                        , double[::1] loopmass                  ,
     bint[::1] InterSpaceRotIsId             , double[:,:,::1] InterSpaceRot         , long[::1] InterTimeRev        ,
     long[::1] AfterLastGenIint              , double[:,:,::1] AfterLastGenSpaceRot  , long[::1] AfterLastGenTimeRev ,
@@ -3921,6 +4018,7 @@ cdef void params_to_segmpos(
         params_pos_buf  , params_shapes , params_shifts ,
         nnz_k_buf       , nnz_k_shapes  , nnz_k_shifts  ,
         ifft_buf_ptr    , ifft_shapes   , ifft_shifts   ,
+        fft_backend     ,
     )
  
     memset(pos_slice_buf_ptr, 0, sizeof(double)*pos_slice_shifts[pos_slice_shapes.shape[0]])
@@ -3967,7 +4065,7 @@ cdef void segmpos_to_params(
     long[::1] nnz_k_buf                     , long[:,::1] nnz_k_shapes          , long[::1] nnz_k_shifts        ,
     bint[::1] co_in_buf                     , long[:,::1] co_in_shapes          , long[::1] co_in_shifts        ,
     double* pos_slice_buf_ptr               , long[:,::1] pos_slice_shapes      , long[::1] pos_slice_shifts    ,
-    long[::1] ncoeff_min_loop               , long[::1] n_sub_fft               ,
+    long[::1] ncoeff_min_loop               , long[::1] n_sub_fft               , int fft_backend               ,
     long[::1] loopnb                        , double[::1] loopmass              ,
     bint[::1] InterSpaceRotIsId             , double[:,:,::1] InterSpaceRot     , long[::1] InterTimeRev        ,
     long[::1] gensegm_to_body               ,
@@ -4006,7 +4104,7 @@ cdef void segmpos_to_params(
         ifft_buf_ptr    , ifft_shapes   , ifft_shifts   ,
         nnz_k_buf       , nnz_k_shapes  , nnz_k_shifts  ,
         params_pos_buf  , params_shapes , params_shifts ,
-        1               ,
+        fft_backend     , 1             ,
     )
 
     changevar_mom_inv(
@@ -4027,7 +4125,7 @@ cdef void segmpos_to_params_T(
     long[::1] nnz_k_buf                     , long[:,::1] nnz_k_shapes              , long[::1] nnz_k_shifts        ,
     bint[::1] co_in_buf                     , long[:,::1] co_in_shapes              , long[::1] co_in_shifts        ,
     double* pos_slice_buf_ptr               , long[:,::1] pos_slice_shapes          , long[::1] pos_slice_shifts    ,
-    long[::1] ncoeff_min_loop               , long[::1] n_sub_fft                   ,
+    long[::1] ncoeff_min_loop               , long[::1] n_sub_fft                   , int fft_backend               ,
     long[::1] loopnb                        , double[::1] loopmass                  ,
     bint[::1] InterSpaceRotIsId             , double[:,:,::1] InterSpaceRot         , long[::1] InterTimeRev        ,
     long[::1] AfterLastGenIint              , double[:,:,::1] AfterLastGenSpaceRot  , long[::1] AfterLastGenTimeRev ,
@@ -4080,7 +4178,7 @@ cdef void segmpos_to_params_T(
         ifft_buf_ptr    , ifft_shapes   , ifft_shifts   ,
         nnz_k_buf       , nnz_k_shapes  , nnz_k_shifts  ,
         params_pos_buf  , params_shapes , params_shifts ,
-        -1              ,
+        fft_backend     , -1            ,
     )
 
     changevar_mom_T(

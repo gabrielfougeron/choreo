@@ -12,7 +12,7 @@ Benchmark of FFT algorithms
 
 import os
 import sys
-
+# 
 os.environ['OPENBLAS_NUM_THREADS'] = '1'
 os.environ['NUMEXPR_NUM_THREADS'] = '1'
 os.environ['MKL_NUM_THREADS'] = '1'
@@ -37,6 +37,14 @@ sys.path.append(__PROJECT_ROOT__)
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy
+
+
+# import mkl_fft
+# scipy.fft.set_global_backend(
+#     backend = mkl_fft._scipy_fft_backend   ,
+#     only = True
+# )
+
 import pyquickbench
 
 if ("--no-show" in sys.argv):
@@ -78,26 +86,26 @@ def setup_all(fft_type, nthreads, all_sizes):
 #             getattr(pyfftw.interfaces.scipy_fftpack, fft_type)(x, threads = nthreads)
 # 
 #         all_funs["pyfftw_interface"] = rfft_pyfftw_interface
+# #         
+#         all_builders = {}
+#         for i in range(len(all_sizes)):
+#             
+#             n = all_sizes[i]
+#             if fft_type in ['fft']:
+#                 x = np.random.random(n) + 1j*np.random.random(n)
+#             elif fft_type in ['rfft']:
+#                 x = np.random.random(n)
+#             else:
+#                 raise ValueError(f'No prepare function for {fft_type}')
+#             
+#             fft_object = getattr(pyfftw.builders, fft_type)(x, threads = nthreads)
+#             all_builders[n] = fft_object
 #         
-        # all_builders = {}
-        # for i in range(len(all_sizes)):
-        #     
-        #     n = all_sizes[i]
-        #     if fft_type in ['fft']:
-        #         x = np.random.random(n) + 1j*np.random.random(n)
-        #     elif fft_type in ['rfft']:
-        #         x = np.random.random(n)
-        #     else:
-        #         raise ValueError(f'No prepare function for {fft_type}')
-        #     
-        #     fft_object = getattr(pyfftw.builders, fft_type)(x, threads = nthreads)
-        #     all_builders[n] = fft_object
-        # 
-        # def prebuilt_fftw(x):
-        #     builder = all_builders[x.shape[0]]
-        #     builder(x)
-        # 
-        # all_funs["pyfftw_prebuilt"] = prebuilt_fftw
+#         def prebuilt_fftw(x):
+#             builder = all_builders[x.shape[0]]
+#             builder(x)
+#         
+#         all_funs["pyfftw_prebuilt"] = prebuilt_fftw
         
         all_custom = {}
         for i in range(len(all_sizes)):
@@ -116,9 +124,7 @@ def setup_all(fft_type, nthreads, all_sizes):
                 raise ValueError(f'No prepare function for {fft_type}')
             
         
-            # fft_object = pyfftw.FFTW(x, y, axes=(0, ), direction=direction, flags=(planner_effort,), threads=nthreads, planning_timelimit=None)      
-              
-            fft_object = pyfftw.FFTW(x, y, axes=(0, ), direction=direction, flags=(planner_effort,), planning_timelimit=None)
+            fft_object = pyfftw.FFTW(x, y, axes=(0, ), direction=direction, flags=(planner_effort,), threads=nthreads, planning_timelimit=None)      
 
             all_custom[n] = fft_object
         
@@ -127,9 +133,9 @@ def setup_all(fft_type, nthreads, all_sizes):
             custom(x)
         
         all_funs["pyfftw_custom"] = custom_fftw
-        
-        wis = pyfftw.export_wisdom()
-        print(wis)
+        # 
+        # wis = pyfftw.export_wisdom()
+        # print(wis)
         
     except Exception as ex:
         print(ex)
@@ -172,7 +178,8 @@ def plot_all(relative_to = None):
         # multiprocessing.cpu_count()//2
     ]
     
-    all_sizes = np.array([4*3*5 * 2**n for n in range(10)])
+    # all_sizes = np.array([3 * 2**n for n in range(15)])
+    all_sizes = np.array([ 2**n for n in range(5,25)])
 
     n_plots = len(all_nthreads) * len(all_fft_types)
 
@@ -222,7 +229,7 @@ def plot_all(relative_to = None):
             setup = prepare_x               ,
             filename = timings_filename     ,
             ShowProgress=True               ,
-            # ForceBenchmark=True             ,
+            ForceBenchmark=True             ,
         )
         
         if relative_to is None:
