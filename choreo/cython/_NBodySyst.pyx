@@ -60,9 +60,12 @@ try:
 except:
     MKL_FFT_AVAILABLE = False
 
+ctypedef void (*fftw_generic_execute)(void *_plan, void *_in, void *_out) nogil
 try:
-    import pyfftw
+        
+    cimport pyfftw
     PYFFTW_AVAILABLE = True
+
 except:
     PYFFTW_AVAILABLE = False
 
@@ -137,24 +140,13 @@ cdef class NBodySyst():
         elif self._fft_backend == USE_FFTW_FFT:
             return "fftw"
 
-    @fft_backend.setter
-    @cython.final
-    def fft_backend(self, backend):
-        if backend == "scipy":
-            self._fft_backend = USE_SCIPY_FFT
-        elif backend == "mkl":
-            if MKL_FFT_AVAILABLE:
-                self._fft_backend = USE_MKL_FFT
-            else:
-                raise ValueError("The package mkl_fft could not be loaded. Please check your local install.")
-        elif backend == "fftw":
-            if PYFFTW_AVAILABLE:
-                self._fft_backend = USE_FFTW_FFT
-                raise NotImplementedError
-            else:
-                raise ValueError("The package pyfftw could not be loaded. Please check your local install.")
-        else:
-            raise ValueError('Invalid FFT backend. Possible options are "scipy", "mkl" or "fftw" ')
+    cdef list _pyfft_rffts
+    cdef void** _rfft_plans
+    cdef fftw_generic_execute* _rfft_executes
+
+    cdef list _pyfft_irffts
+    cdef void** _irfft_plans
+    cdef fftw_generic_execute* _irfft_executes
 
     cdef long[::1] _loopnb
     @property
@@ -510,11 +502,11 @@ cdef class NBodySyst():
         self._ncoeff_min_loop = np.array([len(All_params_basis[il]) for il in range(self.nloop)], dtype=np.intp)
 
         self.Compute_n_sub_fft()
-# 
-#         if MKL_FFT_AVAILABLE:
-#             self.fft_backend = "mkl"
-#         else:
-#             self.fft_backend = "scipy"
+
+        # if MKL_FFT_AVAILABLE:
+        #     self.fft_backend = "mkl"
+        # else:
+        #     self.fft_backend = "scipy"
 
         self.fft_backend = "scipy"
 
@@ -522,6 +514,8 @@ cdef class NBodySyst():
         self.nint_fac = 1
 
     def __dealloc__(self):
+
+        self.free_pyfftw()
         self.free_owned_c_ptrs()
 
     def free_owned_c_ptrs(self):
@@ -529,10 +523,28 @@ cdef class NBodySyst():
             free(self._params_pos_buf)
             free(self._pos_slice_buf_ptr)
             free(self._ifft_buf_ptr)
+    
+    def free_pyfftw(self):
+
+        if self._rfft_plans != NULL:
+            free(self._rfft_plans)
+            self._rfft_plans = NULL
+
+        if self._rfft_executes != NULL:
+            free(self._rfft_executes)
+            self._rfft_executes = NULL
+
+        if self._irfft_plans != NULL:
+            free(self._irfft_plans)
+            self._irfft_plans = NULL
+
+        if self._irfft_executes != NULL:
+            free(self._irfft_executes)
+            self._irfft_executes = NULL
 
     def allocate_owned_c_ptrs(self):
 
-        self._params_pos_buf = <double*> malloc(sizeof(double)*self._params_shifts[self._params_shapes.shape[0]])
+        self._params_pos_buf = <double*> malloc(sizeof(double)*2*self._params_shifts[self._params_shapes.shape[0]])
         self._pos_slice_buf_ptr = <double *> malloc(sizeof(double)*self._pos_slice_shifts[self._pos_slice_shapes.shape[0]])
         self._ifft_buf_ptr = <double complex *> malloc(sizeof(double complex)*self._ifft_shifts[self._ifft_shapes.shape[0]])
 
@@ -592,11 +604,68 @@ cdef class NBodySyst():
         self._ifft_shapes, self._ifft_shifts = BundleListOfShapes(ifft_shapes_list)
         self._pos_slice_shapes, self._pos_slice_shifts = BundleListOfShapes(pos_slice_shapes_list)
 
-        self.nparams_incl_o = self._params_shifts[self.nloop]
+        self.nparams_incl_o = 2*self._params_shifts[self.nloop]
         self.nparams = self._params_shifts[self.nloop] - self.nrem
 
         self.free_owned_c_ptrs()
         self.allocate_owned_c_ptrs()
+
+        self.build_ffts()
+
+    @fft_backend.setter
+    @cython.final
+    def fft_backend(self, backend):
+
+        self.free_pyfftw()
+
+        if backend == "scipy":
+            self._fft_backend = USE_SCIPY_FFT
+        elif backend == "mkl":
+            if MKL_FFT_AVAILABLE:
+                self._fft_backend = USE_MKL_FFT
+            else:
+                raise ValueError("The package mkl_fft could not be loaded. Please check your local install.")
+        elif backend == "fftw":
+
+            if PYFFTW_AVAILABLE:
+                self._fft_backend = USE_FFTW_FFT
+
+                self._pyfft_rffts = []
+                self._rfft_plans = <void**> malloc(sizeof(void*) * self.nloop)
+                self._rfft_executes = <fftw_generic_execute*> malloc(sizeof(fftw_generic_execute) * self.nloop)
+
+                self._pyfft_irffts = []
+                self._irfft_plans = <void**> malloc(sizeof(void*) * self.nloop)
+                self._irfft_executes = <fftw_generic_execute*> malloc(sizeof(fftw_generic_execute) * self.nloop)
+
+            else:
+                raise ValueError("The package pyfftw could not be loaded. Please check your local install.")
+        else:
+            raise ValueError('Invalid FFT backend. Possible options are "scipy", "mkl" or "fftw" ')
+
+    def build_ffts(self):
+
+        cdef Py_ssize_t il
+
+        cdef double [:,:,::1] params
+        cdef long[::1] nnz_k
+        cdef double complex[:,:,::1] ifft
+
+        if self._fft_backend == USE_FFTW_FFT :
+
+            raise NotImplementedError
+
+#             for il in range(self.nloop):
+# 
+#                 if self._params_shapes[il,1] > 0:
+# 
+#                     params = <double[:self._params_shapes[il,0],:self._params_shapes[il,1],:self._params_shapes[il,2]:1]> &self._params_buf[self._params_shifts[il]]
+#                     nnz_k = <long[:self._nnz_k_shapes[il,0]:1]> &self._nnz_k_buf[self._nnz_k_shifts[il]]
+#                     ifft = <double complex[:self._ifft_shapes[il,0],:self._ifft_shapes[il,1],:self._ifft_shapes[il,2]:1]> &self._ifft_buf_ptr[self._ifft_shifts[il]]
+# 
+#                     self._pyfftw_rfft_objects[il] = &pyfftw.FFTW()
+
+
 
     def DetectLoops(self, bodymass, bodycharge, nint_min_fac = 1):
 
@@ -2256,11 +2325,14 @@ cdef class NBodySyst():
             nnz_k = self.nnz_k(il)
             
             npr = (self.ncoeffs-1) //  self._ncoeff_min_loop[il]
+
+            shape = np.asarray(self._params_shapes[il]).copy()
+            shape[0] *= 2
             
-            params_loop = params_pos_buf[self._params_shifts[il]:self._params_shifts[il+1]].reshape(self._params_shapes[il])
+            params_loop = params_pos_buf[2*self._params_shifts[il]:2*self._params_shifts[il+1]].reshape(shape)
 
             coeffs_dense = all_coeffs[il,:(self.ncoeffs-1),:].reshape(npr, self._ncoeff_min_loop[il], self.geodim)                
-            coeffs_dense[:,nnz_k,:] = np.einsum('ijk,ljk->lji', params_basis, params_loop)
+            coeffs_dense[:,nnz_k,:] = np.einsum('ijk,ljk->lji', params_basis, params_loop[:self._params_shapes[il,0],:,:])
             
         all_coeffs[:,0,:].imag = 0
 
@@ -2285,11 +2357,14 @@ cdef class NBodySyst():
 
             npr = (self.ncoeffs-1) //  self._ncoeff_min_loop[il]
 
-            coeffs_dense = all_coeffs[il,:(self.ncoeffs-1),:].reshape(npr, self._ncoeff_min_loop[il], self.geodim)                
+            coeffs_dense = all_coeffs[il,:(self.ncoeffs-1),:].reshape(npr, self._ncoeff_min_loop[il], self.geodim)   
 
-            params_loop = params_pos_buf_np[self._params_shifts[il]:self._params_shifts[il+1]].reshape(self._params_shapes[il])
+            shape = np.asarray(self._params_shapes[il]).copy()
+            shape[0] *= 2             
 
-            params_loop[:] = np.einsum('ijk,lji->ljk', params_basis.conj(), coeffs_dense[:,nnz_k,:]).real
+            params_loop = params_pos_buf_np[2*self._params_shifts[il]:2*self._params_shifts[il+1]].reshape(shape)
+
+            params_loop[:self._params_shapes[il,0],:,:] = np.einsum('ijk,lji->ljk', params_basis.conj(), coeffs_dense[:,nnz_k,:]).real
 
         params_mom_buf_np = np.empty((self.nparams), dtype=np.float64)
         cdef double[::1] params_mom_buf = params_mom_buf_np
@@ -2753,14 +2828,18 @@ cdef void changevar_mom(
 ) noexcept nogil:
 
     cdef double* cur_params_mom_buf = params_mom_buf
-    cdef double* cur_param_pos_buf = params_pos_buf
+    cdef double* cur_param_pos_buf
     cdef double loopmul, mul
 
     cdef int nloop = params_shapes.shape[0]
     cdef Py_ssize_t il, idim, ipr, ik, iparam
     cdef long k, ko
 
+    memset(params_pos_buf, 0, sizeof(double)*2*params_shifts[nloop])
+
     for il in range(nloop):
+
+        cur_param_pos_buf = params_pos_buf + 2*params_shifts[il]
 
         loopmul = 1./csqrt(loopnb[il] * loopmass[il] * cfourpisq)
 
@@ -2836,16 +2915,20 @@ cdef void changevar_mom_invT(
 ) noexcept nogil:
 
     cdef double* cur_params_mom_buf = params_mom_buf
-    cdef double* cur_param_pos_buf = params_pos_buf
+    cdef double* cur_param_pos_buf
     cdef double loopmul, mul
 
     cdef int nloop = params_shapes.shape[0]
     cdef Py_ssize_t il, idim, ipr, ik, iparam
     cdef long k, ko
 
+    memset(params_pos_buf, 0, sizeof(double)*2*params_shifts[nloop])
+
     for il in range(nloop):
 
         loopmul = csqrt(loopnb[il] * loopmass[il] * cfourpisq)
+
+        cur_param_pos_buf = params_pos_buf + 2*params_shifts[il]
 
         # ipr = 0 treated separately
         # ik = 0 treated separately
@@ -2917,7 +3000,7 @@ cdef void changevar_mom_inv(
     double *params_mom_buf      , 
 ) noexcept nogil:
 
-    cdef double* cur_param_pos_buf = params_pos_buf
+    cdef double* cur_param_pos_buf
     cdef double* cur_params_mom_buf = params_mom_buf
     cdef double loopmul, mul
 
@@ -2928,6 +3011,8 @@ cdef void changevar_mom_inv(
     for il in range(nloop):
 
         loopmul = csqrt(loopnb[il] * loopmass[il] * cfourpisq)
+
+        cur_param_pos_buf = params_pos_buf + 2*params_shifts[il]
 
         # ipr = 0 treated separately
         # ik = 0 treated separately
@@ -2999,7 +3084,7 @@ cdef void changevar_mom_T(
     double *params_mom_buf      , 
 ) noexcept nogil:
 
-    cdef double* cur_param_pos_buf = params_pos_buf
+    cdef double* cur_param_pos_buf
     cdef double* cur_params_mom_buf = params_mom_buf
     cdef double loopmul, mul
 
@@ -3010,6 +3095,8 @@ cdef void changevar_mom_T(
     for il in range(nloop):
 
         loopmul = 1./csqrt(loopnb[il] * loopmass[il] * cfourpisq)
+
+        cur_param_pos_buf = params_pos_buf + 2*params_shifts[il]
 
         # ipr = 0 treated separately
         # ik = 0 treated separately
@@ -3469,7 +3556,7 @@ cdef void params_to_ifft(
 
                 if params_shapes[il,1] > 0:
 
-                    params = <double[:params_shapes[il,0],:params_shapes[il,1],:params_shapes[il,2]:1]> &params_buf[params_shifts[il]]
+                    params = <double[:2*params_shapes[il,0],:params_shapes[il,1],:params_shapes[il,2]:1]> &params_buf[2*params_shifts[il]]
                     nnz_k = <long[:nnz_k_shapes[il,0]:1]> &nnz_k_buf[nnz_k_shifts[il]]
 
                     if nnz_k.shape[0] > 0:
@@ -3477,7 +3564,7 @@ cdef void params_to_ifft(
                             for i in range(params.shape[2]):
                                 params[0,0,i] *= 0.5
 
-                    ifft = mkl_fft._numpy_fft.rfft(params, axis=0, n=2*params.shape[0])
+                    ifft = mkl_fft._numpy_fft.rfft(params, axis=0)
 
                     dest = ifft_buf_ptr + ifft_shifts[il]
                     n = ifft_shifts[il+1] - ifft_shifts[il]
@@ -3491,7 +3578,7 @@ cdef void params_to_ifft(
 
                 if params_shapes[il,1] > 0:
 
-                    params = <double[:params_shapes[il,0],:params_shapes[il,1],:params_shapes[il,2]:1]> &params_buf[params_shifts[il]]
+                    params = <double[:2*params_shapes[il,0],:params_shapes[il,1],:params_shapes[il,2]:1]> &params_buf[2*params_shifts[il]]
                     nnz_k = <long[:nnz_k_shapes[il,0]:1]> &nnz_k_buf[nnz_k_shifts[il]]
 
                     if nnz_k.shape[0] > 0:
@@ -3499,7 +3586,7 @@ cdef void params_to_ifft(
                             for i in range(params.shape[2]):
                                 params[0,0,i] *= 0.5
 
-                    ifft = scipy.fft.rfft(params, axis=0, n=2*params.shape[0], overwrite_x=True)
+                    ifft = scipy.fft.rfft(params, axis=0, overwrite_x=True)
 
                     dest = ifft_buf_ptr + ifft_shifts[il]
                     n = ifft_shifts[il+1] - ifft_shifts[il]
@@ -3540,8 +3627,8 @@ cdef void ifft_to_params(
                                 for i in range(params.shape[2]):
                                     params[0,0,i] *= 0.5
 
-                    dest = params_buf + params_shifts[il]
-                    n = params_shifts[il+1] - params_shifts[il]
+                    dest = params_buf + 2*params_shifts[il]
+                    n = (params_shifts[il+1] - params_shifts[il])
                     scipy.linalg.cython_blas.dcopy(&n,&params[0,0,0],&int_one,dest,&int_one)
 
     elif fft_backend == USE_SCIPY_FFT:
@@ -3563,8 +3650,8 @@ cdef void ifft_to_params(
                                 for i in range(params.shape[2]):
                                     params[0,0,i] *= 0.5
 
-                    dest = params_buf + params_shifts[il]
-                    n = params_shifts[il+1] - params_shifts[il]
+                    dest = params_buf + 2*params_shifts[il]
+                    n = (params_shifts[il+1] - params_shifts[il])
                     scipy.linalg.cython_blas.dcopy(&n,&params[0,0,0],&int_one,dest,&int_one)
 
 cdef void ifft_to_pos_slice(
