@@ -131,6 +131,9 @@ cdef class NBodySyst():
     cdef readonly bint RequiresGreaterNStore
     cdef int _fft_backend
 
+    cdef object _fftw_planner_effort
+    cdef object _fftw_nthreads
+
     @property
     def fft_backend(self):
         if self._fft_backend == USE_SCIPY_FFT:
@@ -445,7 +448,6 @@ cdef class NBodySyst():
         # - What are my parameters ?
         # - Integration end + Lack of periodicity
         # - Constraints on initial values => Parametrization 
-
         
         InstConstraintsPos = AccumulateInstConstraints(self.Sym_list, nbody, geodim, self.nint_min, VelSym=False)
         InstConstraintsVel = AccumulateInstConstraints(self.Sym_list, nbody, geodim, self.nint_min, VelSym=True )
@@ -503,12 +505,13 @@ cdef class NBodySyst():
 
         self.Compute_n_sub_fft()
 
-        # if MKL_FFT_AVAILABLE:
-        #     self.fft_backend = "mkl"
-        # else:
-        #     self.fft_backend = "scipy"
+        if MKL_FFT_AVAILABLE:
+            self.fft_backend = "mkl"
+        else:
+            self.fft_backend = "scipy"
 
-        self.fft_backend = "scipy"
+        self._fftw_planner_effort = 'FFTW_ESTIMATE'
+        self._fftw_nthreads = 1
 
         # I'd rather do this twice than leave __init__ in a partially initialized state
         self.nint_fac = 1
@@ -630,11 +633,11 @@ cdef class NBodySyst():
             if PYFFTW_AVAILABLE:
                 self._fft_backend = USE_FFTW_FFT
 
-                self._pyfft_rffts = []
+                self._pyfft_rffts = [None for i in range(self.nloop)]
                 self._rfft_plans = <void**> malloc(sizeof(void*) * self.nloop)
                 self._rfft_executes = <fftw_generic_execute*> malloc(sizeof(fftw_generic_execute) * self.nloop)
 
-                self._pyfft_irffts = []
+                self._pyfft_irffts = [None for i in range(self.nloop)]
                 self._irfft_plans = <void**> malloc(sizeof(void*) * self.nloop)
                 self._irfft_executes = <fftw_generic_execute*> malloc(sizeof(fftw_generic_execute) * self.nloop)
 
@@ -655,15 +658,25 @@ cdef class NBodySyst():
 
             raise NotImplementedError
 
-#             for il in range(self.nloop):
-# 
-#                 if self._params_shapes[il,1] > 0:
-# 
-#                     params = <double[:self._params_shapes[il,0],:self._params_shapes[il,1],:self._params_shapes[il,2]:1]> &self._params_buf[self._params_shifts[il]]
-#                     nnz_k = <long[:self._nnz_k_shapes[il,0]:1]> &self._nnz_k_buf[self._nnz_k_shifts[il]]
-#                     ifft = <double complex[:self._ifft_shapes[il,0],:self._ifft_shapes[il,1],:self._ifft_shapes[il,2]:1]> &self._ifft_buf_ptr[self._ifft_shifts[il]]
-# 
-#                     self._pyfftw_rfft_objects[il] = &pyfftw.FFTW()
+            for il in range(self.nloop):
+
+                if self._params_shapes[il,1] > 0:
+
+                    params = <double[:2*self._params_shapes[il,0],:self._params_shapes[il,1],:self._params_shapes[il,2]:1]> &self._params_buf[2*self._params_shifts[il]]
+                    nnz_k = <long[:self._nnz_k_shapes[il,0]:1]> &self._nnz_k_buf[self._nnz_k_shifts[il]]
+                    ifft = <double complex[:self._ifft_shapes[il,0],:self._ifft_shapes[il,1],:self._ifft_shapes[il,2]:1]> &self._ifft_buf_ptr[self._ifft_shifts[il]]
+
+                    direction = 'FFTW_FORWARD'
+                    pyfft_object = pyfftw.FFTW(params, ifft, axes=(0, ), direction=direction, flags=(self._fftw_planner_effort,), threads=self._fftw_nthreads)     
+
+                    self._pyfft_rffts[il] = pyfft_object
+                    # self._rfft_plans[il] = 
+                    # self._rfft_executes[il] = 
+
+                    direction = 'FFTW_BACKWARD'
+                    pyfft_object = pyfftw.FFTW(ifft, params, axes=(0, ), direction=direction, flags=(self._fftw_planner_effort,), threads=self._fftw_nthreads)   
+
+                    self._pyfft_irffts[il] = pyfft_object
 
 
 

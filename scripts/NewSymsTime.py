@@ -15,23 +15,17 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy
 
-# import mkl_fft
-# scipy.fft.set_global_backend(
-#     backend = mkl_fft._scipy_fft_backend   ,
-#     only = True
-# )
-
 import choreo 
 
 if ("--no-show" in sys.argv):
     plt.show = (lambda : None)
 
+n_test = 1
+    
 def params_to_action_grad_scipy(NBS, params_buf):
     
     NBS.fft_backend = 'scipy'
-    
-    n_test = 10
-    
+
     TT = pyquickbench.TimeTrain(
         include_locs = False    ,
         names_reduction = "min" ,
@@ -45,9 +39,7 @@ def params_to_action_grad_scipy(NBS, params_buf):
 def params_to_action_grad_mkl(NBS, params_buf):
     
     NBS.fft_backend = 'mkl'
-    
-    n_test = 10
-    
+
     TT = pyquickbench.TimeTrain(
         include_locs = False    ,
         names_reduction = "min" ,
@@ -152,7 +144,7 @@ all_tests = [
 ]
 
 min_exp = 0
-max_exp = 20
+max_exp = 23
 
 n_repeat = 1
 
@@ -188,8 +180,8 @@ plot_intent = {
     pyquickbench.fun_ax_name : 'curve_linestyle'                  ,
     "nint_fac" : 'points'                           ,
     pyquickbench.repeat_ax_name :  'reduction_min'  ,
-    # pyquickbench.out_ax_name :  'curve_color'  ,
-    pyquickbench.out_ax_name :  'reduction_sum'  ,
+    pyquickbench.out_ax_name :  'curve_color'  ,
+    # pyquickbench.out_ax_name :  'reduction_sum'  ,
     # pyquickbench.out_ax_name :  'single_value'  ,
 }
 

@@ -6,6 +6,7 @@ requires = [
     "numpy",
     "scipy",
     "build",
+    "pyfftw",
 ]
 build-backend = "setuptools.build_meta"
 
