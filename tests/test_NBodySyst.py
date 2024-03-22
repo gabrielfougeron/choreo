@@ -144,6 +144,7 @@ def test_changevars(AllNBS, float64_tols):
         
         params_pos_buf = NBS.params_changevar(params_mom_buf, inv=False, transpose=False)        
         params_mom_buf_rt = NBS.params_changevar(params_pos_buf, inv=True, transpose=False)        
+
         print(np.linalg.norm(params_mom_buf - params_mom_buf_rt))
         assert np.allclose(params_mom_buf, params_mom_buf_rt, rtol = float64_tols.rtol, atol = float64_tols.atol)     
         
@@ -425,7 +426,6 @@ def test_repeatability(AllNBS, float64_tols):
         print(np.linalg.norm(segmpos - segmpos_2))
         assert np.allclose(segmpos, segmpos_2, rtol = float64_tols.rtol, atol = float64_tols.atol) 
 
-        
 def test_fft_backends(AllNBS, float64_tols):
     
     for name, NBS in AllNBS.items():

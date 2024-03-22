@@ -58,7 +58,7 @@ if not(os.path.isdir(timings_folder)):
 def setup_all(fft_type, nthreads, all_sizes):
 
     def scipy_fft(x):
-        getattr(scipy.fft, fft_type)(x, workers = nthreads)
+        getattr(scipy.fft, fft_type)(x, workers = nthreads, overwrite_x = True)
 
     def numpy_fft(x):
         getattr(np.fft, fft_type)(x)
@@ -156,7 +156,8 @@ def setup_all(fft_type, nthreads, all_sizes):
         import mkl_fft
         
         def rfft_mkl(x):
-            getattr(mkl_fft, fft_type)(x)
+            # getattr(mkl_fft, fft_type)(x)
+            getattr(mkl_fft._numpy_fft, fft_type)(x)
         
         all_funs['mkl'] = rfft_mkl
 
@@ -179,7 +180,7 @@ def plot_all(relative_to = None):
     ]
     
     # all_sizes = np.array([3 * 2**n for n in range(15)])
-    all_sizes = np.array([ 2**n for n in range(5,25)])
+    all_sizes = np.array([ 2**n for n in range(5,20)])
 
     n_plots = len(all_nthreads) * len(all_fft_types)
 
@@ -229,7 +230,7 @@ def plot_all(relative_to = None):
             setup = prepare_x               ,
             filename = timings_filename     ,
             ShowProgress=True               ,
-            ForceBenchmark=True             ,
+            # ForceBenchmark=True             ,
         )
         
         if relative_to is None:

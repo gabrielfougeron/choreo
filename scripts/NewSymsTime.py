@@ -183,13 +183,19 @@ all_timings = pyquickbench.run_benchmark(
 )
 
 plot_intent = {
-    # "test_name" : 'subplot_grid_y'                  ,
-    "test_name" : 'curve_linestyle'                  ,
+    "test_name" : 'subplot_grid_y'                  ,
+    # "test_name" : 'curve_linestyle'                  ,
     pyquickbench.fun_ax_name : 'curve_linestyle'                  ,
     "nint_fac" : 'points'                           ,
     pyquickbench.repeat_ax_name :  'reduction_min'  ,
-    pyquickbench.out_ax_name :  'curve_color'  ,
-    # pyquickbench.out_ax_name :  'reduction_sum'  ,
+    # pyquickbench.out_ax_name :  'curve_color'  ,
+    pyquickbench.out_ax_name :  'reduction_sum'  ,
+    # pyquickbench.out_ax_name :  'single_value'  ,
+}
+
+single_values_val = {
+    pyquickbench.out_ax_name :  'params_to_ifft'  ,
+    # pyquickbench.out_ax_name :  'ifft_to_params'  ,
 }
 
 relative_to_val_list = [
@@ -209,5 +215,6 @@ for relative_to_val in relative_to_val_list:
         mode = 'vector_output'                  ,
         show = True                             ,
         relative_to_val = relative_to_val       ,
+        single_values_val = single_values_val   ,
     )
 
