@@ -154,6 +154,7 @@ def test_changevars(AllNBS, float64_tols):
         dot_mom = np.dot(params_mom_buf, params_mom_buf_dual)
         dot_pos = np.dot(params_pos_buf, params_pos_buf_dual)
         
+        print(abs(dot_mom - dot_pos))
         assert abs(dot_mom - dot_pos) < float64_tols.atol
         assert 2*abs(dot_mom - dot_pos) / (dot_mom + dot_pos) < float64_tols.rtol        
         
@@ -170,8 +171,11 @@ def test_changevars(AllNBS, float64_tols):
         dot_mom = np.dot(params_mom_buf, params_mom_buf_dual)
         dot_pos = np.dot(params_pos_buf, params_pos_buf_dual)
         
+        print(abs(dot_mom - dot_pos))
         assert abs(dot_mom - dot_pos) < float64_tols.atol
         assert 2*abs(dot_mom - dot_pos) / (dot_mom + dot_pos) < float64_tols.rtol        
+        
+        print()
         
 def test_params_segmpos_dual(AllNBS, float64_tols):
     
