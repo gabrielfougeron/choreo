@@ -10,6 +10,8 @@ import mkl_fft
 import itertools
 import pyfftw
 
+import choreo
+
 eps = 1e-13
 
 n = 66
