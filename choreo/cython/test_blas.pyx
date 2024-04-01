@@ -11,8 +11,6 @@ from libc.stdlib cimport abort, malloc, free
 
 from choreo.scipy_plus.cython.blas_consts cimport *
 
-
-
 cdef inline void _blas_matmul_contiguous(
     double[:,::1] a,
     double[:,::1] b,
