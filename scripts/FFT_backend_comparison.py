@@ -33,7 +33,9 @@ y_pyfftw = np.zeros(shape_m, dtype=np.complex128)
 direction = 'FFTW_FORWARD'
 pyfft_object = pyfftw.FFTW(x, y_pyfftw, axes=(0, ), direction=direction, flags=(planner_effort,), threads=nthreads)      
 
-pyfft_object.execute()
+# pyfft_object.execute()
+# choreo.cython.object_execute_in_nogil(pyfft_object)
+choreo.cython.object_execute_in_nogil_test(pyfft_object)
 
 print(np.linalg.norm(y_sp - y_pyfftw))
 assert np.linalg.norm(y_sp - y_pyfftw) < eps
