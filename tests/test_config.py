@@ -218,6 +218,10 @@ def RepeatTest(n = 10):
 
 @pytest.fixture
 def AllConfigNames():
+    
+    DP_Wisdom_file = os.path.join(__PROJECT_ROOT__, "PYFFTW_wisdom.txt")
+    choreo.find_new.Load_wisdom_file(DP_Wisdom_file)
+    
     return [
         '3q'        , '3q3q'    , '3q3qD'   , '2q2q'    , '4q4q'    , '4q4qD'   ,
         '4q4qD3k'   , '1q2q'    , '5q5q'    , '6q6q'    , '2C3C'    , '2D3D'    ,

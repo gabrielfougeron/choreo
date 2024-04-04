@@ -17,6 +17,9 @@ import scipy
 
 import choreo 
 
+DP_Wisdom_file = os.path.join(__PROJECT_ROOT__, "PYFFTW_wisdom.txt")
+choreo.find_new.Load_wisdom_file(DP_Wisdom_file)
+
 if ("--no-show" in sys.argv):
     plt.show = (lambda : None)
 
@@ -125,7 +128,7 @@ all_tests = [
     # 'test_3D5k',
     # '3C7k2',
     # '3D7k2',
-    # '6C',
+    '6C',
     # '6D',
     # '6Ck5',
     # '6Dk5',
@@ -144,9 +147,9 @@ all_tests = [
 ]
 
 min_exp = 0
-max_exp = 23
+max_exp = 20
 
-n_repeat = 1
+n_repeat = 100
 
 MonotonicAxes = ["nint_fac"]
 
@@ -172,6 +175,9 @@ all_timings = pyquickbench.run_benchmark(
     n_repeat = n_repeat     ,
     MonotonicAxes = MonotonicAxes,
     # ForceBenchmark = True,
+    # PreventBenchmark = False,
+    ForceBenchmark = False,
+    PreventBenchmark = True,
 )
 
 plot_intent = {
@@ -179,15 +185,16 @@ plot_intent = {
     # "test_name" : 'curve_linestyle'                  ,
     pyquickbench.fun_ax_name : 'curve_linestyle'                  ,
     "nint_fac" : 'points'                           ,
-    pyquickbench.repeat_ax_name :  'reduction_min'  ,
-    pyquickbench.out_ax_name :  'curve_color'  ,
+    # pyquickbench.repeat_ax_name :  'reduction_min'  ,
+    pyquickbench.repeat_ax_name :  'reduction_avg'  ,
+    # pyquickbench.out_ax_name :  'curve_color'  ,
     # pyquickbench.out_ax_name :  'reduction_sum'  ,
-    # pyquickbench.out_ax_name :  'single_value'  ,
+    pyquickbench.out_ax_name :  'single_value'  ,
 }
 
 single_values_val = {
-    pyquickbench.out_ax_name :  'params_to_ifft'  ,
-    # pyquickbench.out_ax_name :  'ifft_to_params'  ,
+    # pyquickbench.out_ax_name :  'params_to_ifft'  ,
+    pyquickbench.out_ax_name :  'ifft_to_params'  ,
 }
 
 relative_to_val_list = [

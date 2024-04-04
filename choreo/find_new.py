@@ -18,7 +18,6 @@ import time
 import inspect
 import threadpoolctl
 
-
 import choreo.scipy_plus
 from choreo.cython._ActionSym import ActionSym
 from choreo.cython._NBodySyst import NBodySyst
@@ -93,7 +92,7 @@ def Find_Choreo(
 
     NBS = choreo.cython._NBodySyst.NBodySyst(geodim, nbody, mass, charge, Sym_list, inter_law)
 
-    nint_fac_init = 100
+    nint_fac_init = 128
 
     NBS.nint_fac = nint_fac_init
 
@@ -1066,3 +1065,37 @@ def Check_Duplicates(NBS, segmpos, hash_dict, store_folder, duplicate_eps, Hash_
             return True, file_path
 
     return False, None
+
+try:
+    import pyfftw
+    PYFFTW_AVAILABLE = True
+
+    def wisdom_filename_divide(filename):
+        root, ext = os.path.splitext(filename) 
+        return [root+"_"+prec+ext for prec in ['d','f','l']]
+
+    def Load_wisdom_file(DP_Wisdom_file):
+        
+        wis_list = []
+        
+        for i, filename in enumerate(wisdom_filename_divide(DP_Wisdom_file)):
+
+            if os.path.isfile(filename):
+                with open(filename, 'rb') as f:
+                    wis = f.read()
+            else:
+                wis = b''
+                    
+            wis_list.append(wis)
+
+        pyfftw.import_wisdom(wis_list)
+        
+    def Write_wisdom_file(DP_Wisdom_file):    
+        wis = pyfftw.export_wisdom()
+        
+        for i, filename in enumerate(wisdom_filename_divide(DP_Wisdom_file)):
+            with open(filename, 'wb') as f:
+                f.write(wis[i])
+
+except:
+    PYFFTW_AVAILABLE = False
