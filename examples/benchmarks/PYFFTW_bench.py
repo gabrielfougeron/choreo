@@ -21,6 +21,7 @@ os.environ['TBB_NUM_THREADS'] = '1'
 
 import multiprocessing
 import itertools
+import tqdm
 
 try:
     __PROJECT_ROOT__ = os.path.abspath(os.path.join(os.path.dirname(__file__),os.pardir,os.pardir))
@@ -39,6 +40,12 @@ import numpy as np
 import scipy
 
 
+base_shape = [4,4]
+def make_shape(n, axis):
+    shape = base_shape.copy()
+    shape[axis] = n
+    return shape
+
 # import mkl_fft
 # scipy.fft.set_global_backend(
 #     backend = mkl_fft._scipy_fft_backend   ,
@@ -56,12 +63,15 @@ if not(os.path.isdir(timings_folder)):
     os.makedirs(timings_folder)
 
 def setup_all(fft_type, nthreads, all_sizes):
+    
+    all_n = all_sizes['n']
+    all_axis = all_sizes['axis']
 
-    def scipy_fft(x):
-        getattr(scipy.fft, fft_type)(x, workers = nthreads, overwrite_x = True)
+    def scipy_fft(x, axis):
+        getattr(scipy.fft, fft_type)(x, axis=axis, workers = nthreads, overwrite_x = True)
 
-    def numpy_fft(x):
-        getattr(np.fft, fft_type)(x)
+    def numpy_fft(x, axis):
+        getattr(np.fft, fft_type)(x, axis=axis)
 
     all_funs = {
         "numpy" : numpy_fft,
@@ -75,67 +85,57 @@ def setup_all(fft_type, nthreads, all_sizes):
         pyfftw.interfaces.cache.set_keepalive_time(300000)
 
         # planner_effort = 'FFTW_ESTIMATE'
-        planner_effort = 'FFTW_MEASURE'
-        # planner_effort = 'FFTW_PATIENT'
+        # planner_effort = 'FFTW_MEASURE'
+        planner_effort = 'FFTW_PATIENT'
         # planner_effort = 'FFTW_EXHAUSTIVE'
 
         pyfftw.config.NUM_THREADS = nthreads
         pyfftw.config.PLANNER_EFFORT = planner_effort
-
-#         def rfft_pyfftw_interface(x):
-#             getattr(pyfftw.interfaces.scipy_fftpack, fft_type)(x, threads = nthreads)
-# 
-#         all_funs["pyfftw_interface"] = rfft_pyfftw_interface
-# #         
-#         all_builders = {}
-#         for i in range(len(all_sizes)):
-#             
-#             n = all_sizes[i]
-#             if fft_type in ['fft']:
-#                 x = np.random.random(n) + 1j*np.random.random(n)
-#             elif fft_type in ['rfft']:
-#                 x = np.random.random(n)
-#             else:
-#                 raise ValueError(f'No prepare function for {fft_type}')
-#             
-#             fft_object = getattr(pyfftw.builders, fft_type)(x, threads = nthreads)
-#             all_builders[n] = fft_object
-#         
-#         def prebuilt_fftw(x):
-#             builder = all_builders[x.shape[0]]
-#             builder(x)
-#         
-#         all_funs["pyfftw_prebuilt"] = prebuilt_fftw
         
+        print('Planning FFTW')
         all_custom = {}
-        for i in range(len(all_sizes)):
-            
-            n = all_sizes[i]
-            if fft_type in ['fft']:
-                x = np.random.random(n) + 1j*np.random.random(n)
-                y = np.random.random(n) + 1j*np.random.random(n)
-                direction = 'FFTW_FORWARD'
-            elif fft_type in ['rfft']:
-                x = np.random.random(n)
-                m = n//2 + 1
-                y = np.random.random(m) + 1j*np.random.random(m)
-                direction = 'FFTW_FORWARD'
-            else:
-                raise ValueError(f'No prepare function for {fft_type}')
-            
-        
-            fft_object = pyfftw.FFTW(x, y, axes=(0, ), direction=direction, flags=(planner_effort,), threads=nthreads, planning_timelimit=None)      
+        for i in tqdm.tqdm(range(len(all_n))):
+            for j in range(len(all_axis)):
+                
+                n = all_n[i]
+                axis = all_axis[j]
+                
+                if fft_type in ['fft']:
+                    
+                    shape_in = tuple(make_shape(n, axis))
+                    x = pyfftw.empty_aligned(shape_in, dtype=np.complex128)
+                    y = pyfftw.empty_aligned(shape_in, dtype=np.complex128)
+                    direction = 'FFTW_FORWARD'
+                elif fft_type in ['rfft']:
+                    
+                    m = n//2 + 1
+                    shape_in = tuple(make_shape(n, axis))
+                    shape_out = tuple(make_shape(m, axis))
+                    
+                    x = pyfftw.empty_aligned(shape_in, dtype=np.float64)
+                    y = pyfftw.empty_aligned(shape_out, dtype=np.complex128)
+                    direction = 'FFTW_FORWARD'
+                elif fft_type in ['irfft']:
+                    
+                    m = n//2 + 1
+                    shape_in = tuple(make_shape(m, axis))
+                    shape_out = tuple(make_shape(n, axis))
+                    
+                    x = pyfftw.empty_aligned(shape_in, dtype=np.complex128)
+                    y = pyfftw.empty_aligned(shape_out, dtype=np.float64)
+                    direction = 'FFTW_BACKWARD'
+                else:
+                    raise ValueError(f'No prepare function for {fft_type}')
+                
+                fft_object = pyfftw.FFTW(x, y, axes=(axis, ), direction=direction, flags=(planner_effort, 'FFTW_DESTROY_INPUT'), threads=nthreads, planning_timelimit=None)      
 
-            all_custom[n] = fft_object
-        
-        def custom_fftw(x):
-            custom = all_custom[x.shape[0]]
-            custom(x)
+                all_custom[shape_in] = fft_object
+            
+        def custom_fftw(x, axis):
+            custom = all_custom[x.shape]
+            custom()
         
         all_funs["pyfftw_custom"] = custom_fftw
-        # 
-        # wis = pyfftw.export_wisdom()
-        # print(wis)
         
     except Exception as ex:
         print(ex)
@@ -155,9 +155,9 @@ def setup_all(fft_type, nthreads, all_sizes):
         # This f***** will always run with the maximum available number of threads
         import mkl_fft
         
-        def rfft_mkl(x):
+        def rfft_mkl(x, axis):
             # getattr(mkl_fft, fft_type)(x)
-            getattr(mkl_fft._numpy_fft, fft_type)(x)
+            getattr(mkl_fft._numpy_fft, fft_type)(x, axis=axis)
         
         all_funs['mkl'] = rfft_mkl
 
@@ -170,8 +170,9 @@ def setup_all(fft_type, nthreads, all_sizes):
 def plot_all(relative_to = None):
 
     all_fft_types = [
-        # 'fft',
+        'fft',
         'rfft',
+        'irfft',
     ]
 
     all_nthreads = [
@@ -179,8 +180,10 @@ def plot_all(relative_to = None):
         # multiprocessing.cpu_count()//2
     ]
     
-    # all_sizes = np.array([3 * 2**n for n in range(15)])
-    all_sizes = np.array([ 2**n for n in range(5,20)])
+    all_sizes = {
+        "n" : np.array([3* 2**n for n in range(14)]),
+        "axis" : [0,1],
+    }
 
     n_plots = len(all_nthreads) * len(all_fft_types)
 
@@ -205,14 +208,22 @@ def plot_all(relative_to = None):
         all_funs = setup_all(fft_type, nthreads, all_sizes)
             
         if fft_type in ['fft']:
-            def prepare_x(n):
-                x = np.random.random(n) + 1j*np.random.random(n)
-                return {'x': x}
+            def prepare_x(n, axis):
+                shape = make_shape(n, axis)
+                x = np.random.random(shape) + 1j*np.random.random(shape)
+                return {'x': x, 'axis':axis}
             
         elif fft_type in ['rfft']:
-            def prepare_x(n):
-                x = np.random.random(n)
-                return {'x': x}
+            def prepare_x(n, axis):
+                shape = make_shape(n, axis)
+                x = np.random.random(shape)
+                return {'x': x, 'axis':axis}            
+        elif fft_type in ['irfft']:
+            def prepare_x(n, axis):
+                m=n//2+1
+                shape = make_shape(m, axis)
+                x = np.random.random(shape)
+                return {'x': x, 'axis':axis}
         else:
             raise ValueError(f'No prepare function for {fft_type}')
 
@@ -237,6 +248,14 @@ def plot_all(relative_to = None):
             relative_to_val = None
         else:
             relative_to_val = {pyquickbench.fun_ax_name:relative_to}
+            
+        plot_intent = {
+            "n" : 'points'                           ,
+            "axis" : 'curve_linestyle'                  ,
+            pyquickbench.fun_ax_name :  'curve_color'  ,
+            pyquickbench.repeat_ax_name :  'reduction_min'  ,
+            # pyquickbench.repeat_ax_name :  'reduction_avg'  ,
+        }
 
         pyquickbench.plot_benchmark(
             all_times           ,
@@ -246,6 +265,7 @@ def plot_all(relative_to = None):
             ax = axs[iplot,0]   ,
             title = f'{fft_type} on {nthreads} thread{plural}'    ,
             relative_to_val = relative_to_val,
+            plot_intent = plot_intent,  
         )
             
         plt.tight_layout()
