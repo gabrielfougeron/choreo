@@ -11,8 +11,11 @@ from libc.math cimport exp as cexp
 from libc.complex cimport cexp as ccexp
 
 cimport scipy.linalg.cython_blas
-from libc.stdlib cimport malloc, free
+from libc.stdlib cimport malloc, free, rand
 from libc.string cimport memset
+
+cdef extern from "limits.h":
+    int RAND_MAX
 
 from choreo.scipy_plus.cython.blas_consts cimport *
 from choreo.scipy_plus.cython.ccallback cimport ccallback_t, ccallback_prepare, ccallback_release, CCALLBACK_DEFAULTS, ccallback_signature_t
@@ -1279,6 +1282,12 @@ cdef class NBodySyst():
         IsSame = (np.linalg.norm(all_test, np.inf) < rtol)
 
         return IsSame
+
+    @cython.final
+    @cython.cdivision(True)
+    def TestActionSame(self, double Action_a, double Action_b, double rtol=1e-5):
+
+        return cfabs(Action_a - Action_b) / (cfabs(Action_a) + cfabs(Action_b)) < rtol
 
     @cython.final
     def DetectXlim(self, segmpos):
@@ -2871,7 +2880,7 @@ cdef void Make_Init_bounds_coeffs(
     long k_infl                 , long k_max                    ,
 ) noexcept nogil:
 
-    cdef double* cur_param_pos_buf = params_pos_buf
+    cdef double* cur_param_pos_buf
     cdef double ampl
     cdef double randlimfac = 0.1
 
@@ -2882,6 +2891,8 @@ cdef void Make_Init_bounds_coeffs(
     cdef double coeff_slope = clog(cfabs(coeff_ampl_o/coeff_ampl_min))/(k_max-k_infl)
 
     for il in range(nloop):
+
+        cur_param_pos_buf = params_pos_buf + 2*params_shifts[il]
 
         for ipr in range(params_shapes[il,0]):
 
@@ -2898,6 +2909,7 @@ cdef void Make_Init_bounds_coeffs(
                 for iparam in range(params_shapes[il,2]):
 
                     cur_param_pos_buf[0] = ampl
+                    # cur_param_pos_buf[0] = ampl * (1. + 0.1*(<float> rand()) / (<float> RAND_MAX))
                     cur_param_pos_buf += 1
  
 @cython.cdivision(True)

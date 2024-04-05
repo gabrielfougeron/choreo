@@ -73,10 +73,10 @@ elif platform.system() == "Linux":
         extra_compile_args_std = ["-O0",  *ignore_warnings_args]
         extra_compile_args_safe = ["-O0",  *ignore_warnings_args]
         extra_link_args = []
-
-        # extra_compile_args_std = ["-O3","-ffast-math","-flto",  *ignore_warnings_args]
-        # extra_compile_args_safe = ["-O3","-flto",  *ignore_warnings_args]
-        # extra_link_args = ["-flto", ]
+# 
+#         extra_compile_args_std = ["-O3","-ffast-math","-flto",  *ignore_warnings_args]
+#         extra_compile_args_safe = ["-O3","-flto",  *ignore_warnings_args]
+#         extra_link_args = ["-flto", ]
 
     else:
 
