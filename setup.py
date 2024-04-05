@@ -28,7 +28,6 @@ cython_extnames_safemath = [
     ("choreo.cython._NBodySyst"             , False),
     ("choreo.cython.funs_serial"            , False),
     ("choreo.cython.test_blas"              , False),
-    ("choreo.cython.test_pyfftw"            , False),
     ("choreo.scipy_plus.cython.ODE"         , False),
     ("choreo.scipy_plus.cython.SegmQuad"    , False),
     ("choreo.scipy_plus.cython.test"        , False),
@@ -94,13 +93,13 @@ elif platform.system() == "Linux":
                 
                 break
 
-        extra_compile_args_std = ["-O0","-march=native", "-fopenmp", "-lm", *ignore_warnings_args]
-        extra_compile_args_safe = ["-O0", "-fopenmp", "-lm", *ignore_warnings_args]
-        extra_link_args = ["-fopenmp", "-lm",]
+        # extra_compile_args_std = ["-O0","-march=native", "-fopenmp", "-lm", *ignore_warnings_args]
+        # extra_compile_args_safe = ["-O0", "-fopenmp", "-lm", *ignore_warnings_args]
+        # extra_link_args = ["-fopenmp", "-lm",]
 
-        # extra_compile_args_std = ["-Ofast", "-march=native", "-fopenmp", "-lm", "-flto", *ignore_warnings_args]
-        # extra_compile_args_safe = ["-O3", "-fopenmp", "-lm", "-flto", *ignore_warnings_args]
-        # extra_link_args = ["-fopenmp", "-lm", "-flto",  *ignore_warnings_args]
+        extra_compile_args_std = ["-Ofast", "-march=native", "-fopenmp", "-lm", "-flto", *ignore_warnings_args]
+        extra_compile_args_safe = ["-O3", "-fopenmp", "-lm", "-flto", *ignore_warnings_args]
+        extra_link_args = ["-fopenmp", "-lm", "-flto",  *ignore_warnings_args]
 
         cython_extnames.append("choreo.cython.funs_parallel")
         cython_safemath_needed.append(False)

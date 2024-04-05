@@ -25,9 +25,7 @@ if ("--no-show" in sys.argv):
 
 n_test = 1
     
-def params_to_action_grad_scipy(NBS, params_buf):
-    
-    NBS.fft_backend = 'scipy'
+def params_to_action_grad_TT(NBS, params_buf):
 
     TT = pyquickbench.TimeTrain(
         include_locs = False    ,
@@ -39,26 +37,21 @@ def params_to_action_grad_scipy(NBS, params_buf):
     
     return TT
 
-def params_to_action_grad_mkl(NBS, params_buf):
     
-    NBS.fft_backend = 'mkl'
+def params_to_action_grad(NBS, params_buf):
 
-    TT = pyquickbench.TimeTrain(
-        include_locs = False    ,
-        names_reduction = "min" ,
-    )
+    NBS.params_to_action_grad(params_buf)
     
-    for i in range(n_test):
-        NBS.TT_params_to_action_grad(params_buf, TT)
-    
-    return TT
     
 all_funs = [
-    params_to_action_grad_scipy ,
-    params_to_action_grad_mkl   ,
+    # params_to_action_grad_TT ,
+    params_to_action_grad ,
 ]
 
-def setup(test_name, nint_fac):
+# mode = 'vector_output'  
+mode = 'timings'
+
+def setup(test_name, fft_backend, nint_fac):
     
     Workspace_folder = os.path.join(__PROJECT_ROOT__, 'tests', 'NewSym_data', test_name)
     params_filename = os.path.join(Workspace_folder, 'choreo_config.json')
@@ -85,6 +78,18 @@ def setup(test_name, nint_fac):
         inter_law = choreo.numba_funs_new.pow_inter_law(inter_pow/2, inter_pm)
 
     NBS = choreo.cython._NBodySyst.NBodySyst(geodim, nbody, mass, charge, Sym_list, inter_law)
+    
+    # NBS.fftw_planner_effort = 'FFTW_ESTIMATE'
+    # NBS.fftw_planner_effort = 'FFTW_MEASURE'
+    # NBS.fftw_planner_effort = 'FFTW_PATIENT'
+    NBS.fftw_planner_effort = 'FFTW_EXHAUSTIVE'
+    
+    # NBS.fftw_wisdom_only = False
+    NBS.fftw_wisdom_only = True
+    
+    NBS.fftw_nthreads = 1
+    
+    NBS.fft_backend = fft_backend
     
     NBS.nint_fac = nint_fac
         
@@ -128,7 +133,7 @@ all_tests = [
     # 'test_3D5k',
     # '3C7k2',
     # '3D7k2',
-    '6C',
+    # '6C',
     # '6D',
     # '6Ck5',
     # '6Dk5',
@@ -147,7 +152,7 @@ all_tests = [
 ]
 
 min_exp = 0
-max_exp = 20
+max_exp = 15
 
 n_repeat = 100
 
@@ -155,9 +160,9 @@ MonotonicAxes = ["nint_fac"]
 
 all_args = {
     "test_name" : all_tests,
+    "fft_backend" : ['scipy', 'mkl', 'fftw'],
     "nint_fac" : [2**i for i in range(min_exp,max_exp)] 
 }
-
 
 timings_folder = os.path.join(__PROJECT_ROOT__,'examples','generated_files_time_consuming')
 
@@ -171,25 +176,26 @@ all_timings = pyquickbench.run_benchmark(
     filename = filename     ,
     # StopOnExcept = True     ,
     ShowProgress = True     ,
-    mode = 'vector_output'  ,
+    mode = mode  ,
     n_repeat = n_repeat     ,
     MonotonicAxes = MonotonicAxes,
     # ForceBenchmark = True,
     # PreventBenchmark = False,
-    ForceBenchmark = False,
-    PreventBenchmark = True,
+    # ForceBenchmark = False,
+    # PreventBenchmark = True,
 )
 
 plot_intent = {
     "test_name" : 'subplot_grid_y'                  ,
     # "test_name" : 'curve_linestyle'                  ,
-    pyquickbench.fun_ax_name : 'curve_linestyle'                  ,
+    # "fft_backend" : 'curve_linestyle'                  ,
+    "fft_backend" : 'curve_color'                  ,
     "nint_fac" : 'points'                           ,
     # pyquickbench.repeat_ax_name :  'reduction_min'  ,
     pyquickbench.repeat_ax_name :  'reduction_avg'  ,
     # pyquickbench.out_ax_name :  'curve_color'  ,
     # pyquickbench.out_ax_name :  'reduction_sum'  ,
-    pyquickbench.out_ax_name :  'single_value'  ,
+    # pyquickbench.out_ax_name :  'single_value'  ,
 }
 
 single_values_val = {
@@ -200,7 +206,7 @@ single_values_val = {
 relative_to_val_list = [
     None    ,
     # {pyquickbench.out_ax_name : 'params_to_ifft'},
-    {pyquickbench.fun_ax_name : 'params_to_action_grad_scipy'},
+    {"fft_backend" : 'scipy'},
 ]
 
 for relative_to_val in relative_to_val_list:
@@ -211,7 +217,7 @@ for relative_to_val in relative_to_val_list:
         all_funs                                ,
         setup = setup                           ,
         plot_intent = plot_intent               ,
-        mode = 'vector_output'                  ,
+        mode = mode                             ,
         show = True                             ,
         relative_to_val = relative_to_val       ,
         single_values_val = single_values_val   ,
