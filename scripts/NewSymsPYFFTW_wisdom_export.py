@@ -40,9 +40,8 @@ def main():
         '6Dk5'      , '5Dq'     , '2C3C5C'  , '3C_3dim' , '2D1_3dim', '3C11k'   ,
         '5q'        , 'uneven_nnpr'         , '2D2D'    , '2D1D1D'  , '2D2D5k'  ,
         'complex_mass_charge'   ,
-    ]
-    
-        
+    ]        
+
     DP_Wisdom_file = os.path.join(__PROJECT_ROOT__, "PYFFTW_wisdom.txt")
     choreo.find_new.Load_wisdom_file(DP_Wisdom_file)
 
@@ -50,19 +49,22 @@ def main():
         include_locs = False    ,
         align_toc_names = True  ,
     )
+    
+    n_refine = 20
 
-    for test in tqdm.tqdm(all_tests):
-        doit(test)
+    for i_refine in tqdm.tqdm(range(n_refine)):
         
-        TT.toc(test)
+        for test in all_tests:
+            doit(test, i_refine)
+            
+        TT.toc(i_refine)
 
-    choreo.find_new.Write_wisdom_file(DP_Wisdom_file)
+        choreo.find_new.Write_wisdom_file(DP_Wisdom_file)
 
-    # print()
     print(TT)
     
     
-def doit(config_name):
+def doit(config_name, i_refine):
         
     eps = 1e-14
 
@@ -94,8 +96,8 @@ def doit(config_name):
 
     # NBS.fftw_planner_effort = 'FFTW_ESTIMATE'
     # NBS.fftw_planner_effort = 'FFTW_MEASURE'
-    NBS.fftw_planner_effort = 'FFTW_PATIENT'
-    # NBS.fftw_planner_effort = 'FFTW_EXHAUSTIVE'
+    # NBS.fftw_planner_effort = 'FFTW_PATIENT'
+    NBS.fftw_planner_effort = 'FFTW_EXHAUSTIVE'
     
     NBS.fftw_wisdom_only = False
     # NBS.fftw_wisdom_only = True
@@ -104,12 +106,7 @@ def doit(config_name):
     
     NBS.fft_backend = 'fftw'
 
-    nint_fac_base = 1
-    n_refine = 15
-    
-    for i_refine in range(n_refine):
-    
-        NBS.nint_fac = nint_fac_base * 2**i_refine
+    NBS.nint_fac = 2**i_refine
 
 
 

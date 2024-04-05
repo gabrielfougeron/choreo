@@ -92,6 +92,21 @@ def Find_Choreo(
 
     NBS = choreo.cython._NBodySyst.NBodySyst(geodim, nbody, mass, charge, Sym_list, inter_law)
 
+    # NBS.fftw_planner_effort = 'FFTW_ESTIMATE'
+    # NBS.fftw_planner_effort = 'FFTW_MEASURE'
+    # NBS.fftw_planner_effort = 'FFTW_PATIENT'
+    NBS.fftw_planner_effort = 'FFTW_EXHAUSTIVE'
+    
+    # NBS.fftw_wisdom_only = False
+    NBS.fftw_wisdom_only = True
+    
+    NBS.fftw_nthreads = 1
+    
+    # NBS.fft_backend = 'scipy'
+    # NBS.fft_backend = 'mkl'
+    NBS.fft_backend = 'fftw'
+
+
     nint_fac_init = 128
 
     NBS.nint_fac = nint_fac_init
