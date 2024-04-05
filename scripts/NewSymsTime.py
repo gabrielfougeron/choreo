@@ -39,7 +39,7 @@ def params_to_action_grad_TT(NBS, params_buf):
 
     
 def params_to_action_grad(NBS, params_buf):
-
+    
     NBS.params_to_action_grad(params_buf)
     
     
@@ -179,7 +179,7 @@ all_timings = pyquickbench.run_benchmark(
     mode = mode  ,
     n_repeat = n_repeat     ,
     MonotonicAxes = MonotonicAxes,
-    # ForceBenchmark = True,
+    ForceBenchmark = True,
     # PreventBenchmark = False,
     # ForceBenchmark = False,
     # PreventBenchmark = True,
