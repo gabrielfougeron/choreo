@@ -41,6 +41,7 @@ def Find_Choreo(
     n_find_max,
     save_first_init,
     Look_for_duplicates,
+    Duplicates_Hash,
     store_folder,
     freq_erase_dict,
     ReconvergeSol,
@@ -131,7 +132,7 @@ def Find_Choreo(
 
     x_min, x_max = NBS.Make_params_bounds(coeff_ampl_o, k_infl, k_max, coeff_ampl_min)
     x_ptp = x_max - x_min
-    
+
     del x_max
 
 #     if not(SkipCheckRandomMinDist):
@@ -160,6 +161,9 @@ def Find_Choreo(
     n_callback_after_init_list = len(callback_after_init_list)
 
     ForceFirstEntry = save_first_init
+    
+    hash_dict = {}
+    action_dict = {}
 
     while (((n_opt < n_opt_max) and (n_find < n_find_max)) or ForceFirstEntry):
         
@@ -171,7 +175,8 @@ def Find_Choreo(
         if (Look_for_duplicates and ((n_opt % freq_erase_dict) == 0)):
 
             hash_dict = {}
-            UpdateHashDict(store_folder, hash_dict)
+            action_dict = {}
+            UpdateHashDict(store_folder, hash_dict, action_dict)
 
         if (ReconvergeSol):
             raise NotImplementedError
@@ -186,9 +191,10 @@ def Find_Choreo(
             # x_avg = ActionSyst.Package_all_coeffs(all_coeffs_avg)
         else:
             
-            x_avg = np.zeros((NBS.nparams), dtype=np.float64)
+            x_avg = x_min
 
-        x = x_avg + x_min + x_ptp * np.random.random((NBS.nparams))
+        x = x_avg + x_ptp * np.random.random((NBS.nparams))
+        
         segmpos = NBS.params_to_segmpos(x)
         
         if save_all_inits or (save_first_init and n_opt == 0):
@@ -266,16 +272,16 @@ def Find_Choreo(
 
         GoOn = (best_sol.f_norm < max_norm_on_entry)
         
-        if not(GoOn):
+        if not(best_sol.f_norm < max_norm_on_entry):
             print(f"Norm on entry is {best_sol.f_norm:.2e} which is too big.")
         
         i_optim_param = 0
         current_cvg_lvl = 0 
         n_opt += 1
         
-        GoOn = (n_opt <= n_opt_max)
+        GoOn = GoOn and (n_opt <= n_opt_max)
         
-        if GoOn:
+        if (n_opt <= n_opt_max):
             print(f'Optimization attempt number: {n_opt}')
         else:
             print('Reached max number of optimization attempts')
@@ -357,7 +363,7 @@ def Find_Choreo(
                 
             if (GoOn and Look_for_duplicates):
                 
-                Found_duplicate, file_path = Check_Duplicates(NBS, segmpos, hash_dict, store_folder, duplicate_eps, Hash_Action)
+                Found_duplicate, file_path = Check_Duplicates(NBS, segmpos, best_sol.x, hash_dict, action_dict, store_folder, duplicate_eps, Hash_Action=Hash_Action, Duplicates_Hash=Duplicates_Hash)
                 
                 if (Found_duplicate):
                 
@@ -868,6 +874,7 @@ def ChoreoLoadFromDict(params_dict, Workspace_folder, callback=None, args_list=N
     Use_exact_Jacobian = params_dict["Solver_Discr"]["Use_exact_Jacobian"]
 
     Look_for_duplicates = params_dict["Solver_Checks"]["Look_for_duplicates"]
+    Duplicates_Hash = params_dict["Solver_Checks"].get("Duplicates_Hash", True) # Backward compatibility
 
     Check_Escape = params_dict["Solver_Checks"]["Check_Escape"]
 
@@ -1029,7 +1036,7 @@ def ChoreoReadDictAndFind(Workspace_folder, config_filename="choreo_config.json"
 
         raise ValueError(f'Unknown {Exec_Mul_Proc = }. Accepted values : "MultiProc", "MultiThread" or "No"')
 
-def UpdateHashDict(store_folder, hash_dict):
+def UpdateHashDict(store_folder, hash_dict, action_dict):
     # Creates a list of possible duplicates based on value of the action and hashes
 
     file_path_list = []
@@ -1044,11 +1051,12 @@ def UpdateHashDict(store_folder, hash_dict):
             
             if (This_Action_Hash is None) :
 
-                This_Action_Hash = ReadHashFromFile(file_path) 
+                This_Action, This_Action_Hash = ReadHashFromFile(file_path) 
 
                 if not(This_Action_Hash is None):
 
                     hash_dict[file_root] = This_Action_Hash
+                    action_dict[file_root] = This_Action
 
 def ReadHashFromFile(filename):
 
@@ -1056,28 +1064,42 @@ def ReadHashFromFile(filename):
         Info_dict = json.load(jsonFile)
 
     the_hash = Info_dict.get("Hash")
+    the_action = Info_dict.get("Action")
 
     if the_hash is None:
         return None
     else:
-        return np.array(the_hash)
+        return the_action, np.array(the_hash)
 
-def Check_Duplicates(NBS, segmpos, hash_dict, store_folder, duplicate_eps, Hash_Action=None):
+def Check_Duplicates(NBS, segmpos, params, hash_dict, action_dict, store_folder, duplicate_eps, Action=None, Hash_Action=None, Duplicates_Hash=True):
     r"""
     Checks whether there is a duplicate of a given trajecory in the provided folder
     """
     
-    UpdateHashDict(store_folder, hash_dict)
-
-    if Hash_Action is None:
-        Hash_Action = NBS.segmpos_to_hash(segmpos)
+    UpdateHashDict(store_folder, hash_dict, action_dict)
     
-    for file_path, found_hash in hash_dict.items():
-        
-        IsCandidate = NBS.TestHashSame(Hash_Action, found_hash, duplicate_eps)
+    if Duplicates_Hash:
 
-        if IsCandidate:
-            return True, file_path
+        if Hash_Action is None:
+            Hash_Action = NBS.segmpos_to_hash(segmpos)
+        
+        for file_path, found_hash in hash_dict.items():
+            
+            IsCandidate = NBS.TestHashSame(Hash_Action, found_hash, duplicate_eps)
+
+            if IsCandidate:
+                return True, file_path
+    else:
+
+        if Action is None:
+            Action = NBS.segmpos_params_to_action(segmpos, params)
+        
+        for file_path, found_action in action_dict.items():
+            
+            IsCandidate = NBS.TestActionSame(Action, found_action, duplicate_eps)
+
+            if IsCandidate:
+                return True, file_path
 
     return False, None
 

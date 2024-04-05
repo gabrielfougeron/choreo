@@ -624,6 +624,7 @@ function GatherConfigDict() {
     ConfigDict['Solver_Checks'] = {}
 
     ConfigDict['Solver_Checks'] ['Look_for_duplicates'] = document.getElementById('checkbox_duplicates').checked
+    ConfigDict['Solver_Checks'] ['Duplicates_Hash']     = document.getElementById('checkbox_duplicates_Hash').checked
     ConfigDict['Solver_Checks'] ['duplicate_eps']       = parseFloat(document.getElementById('input_duplicate_eps').value)
     ConfigDict['Solver_Checks'] ['Check_Escape']        = document.getElementById('checkbox_escape').checked
 
@@ -833,9 +834,10 @@ function LoadConfigDict(ConfigDict) {
 
     RedistributeClicksTable('table_cvg_loop',1)
 
-    document.getElementById('checkbox_duplicates').checked  = ConfigDict['Solver_Checks'] ['Look_for_duplicates'] 
-    document.getElementById('input_duplicate_eps').value    = ConfigDict['Solver_Checks'] ['duplicate_eps']       
-    document.getElementById('checkbox_escape').checked      = ConfigDict['Solver_Checks'] ['Check_Escape']        
+    document.getElementById('checkbox_duplicates').checked      = ConfigDict['Solver_Checks'] ['Look_for_duplicates'] 
+    document.getElementById('checkbox_duplicates_Hash').checked = ConfigDict['Solver_Checks'] ['Duplicates_Hash'] 
+    document.getElementById('input_duplicate_eps').value        = ConfigDict['Solver_Checks'] ['duplicate_eps']       
+    document.getElementById('checkbox_escape').checked          = ConfigDict['Solver_Checks'] ['Check_Escape']        
 
     document.getElementById('CLI_multiproc').value          = ConfigDict['Solver_CLI'] ['Exec_Mul_Proc']        
     document.getElementById('CLI_nproc').value              = ConfigDict['Solver_CLI'] ['nproc']     
