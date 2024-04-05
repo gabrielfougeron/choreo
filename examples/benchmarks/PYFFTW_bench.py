@@ -84,9 +84,9 @@ def setup_all(fft_type, nthreads, all_sizes):
         pyfftw.interfaces.cache.enable()
         pyfftw.interfaces.cache.set_keepalive_time(300000)
 
-        # planner_effort = 'FFTW_ESTIMATE'
+        planner_effort = 'FFTW_ESTIMATE'
         # planner_effort = 'FFTW_MEASURE'
-        planner_effort = 'FFTW_PATIENT'
+        # planner_effort = 'FFTW_PATIENT'
         # planner_effort = 'FFTW_EXHAUSTIVE'
 
         pyfftw.config.NUM_THREADS = nthreads
