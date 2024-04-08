@@ -15,6 +15,19 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy
 
+
+# import mkl_fft
+# scipy.fft.set_global_backend(
+#     backend = mkl_fft._scipy_fft_backend   ,
+#     only = True
+# )
+
+# import pyfftw
+# scipy.fft.set_global_backend(
+#     backend = pyfftw.interfaces.scipy_fft  ,
+#     only = True
+# )
+
 import choreo 
 
 DP_Wisdom_file = os.path.join(__PROJECT_ROOT__, "PYFFTW_wisdom.txt")
@@ -121,7 +134,7 @@ all_tests = [
     # '4D3k',
     # '4C',
     # '4D',
-    '3C',
+    # '3C',
     # '20B',
     # '3D',
     # '3D1',
@@ -145,22 +158,25 @@ all_tests = [
     # '2D1_3dim',
     # '3C2k',
     # '4C5k',
-    # "3C11k",
+    "3C11k",
     # "3C17k",
     # "3C23k",
     # "3C29k",
     # "3C37k",
     # '3C101k',
+    # '20B',
 ]
 
 min_exp = 0
-max_exp = 15
+max_exp = 14
+# max_exp = 20
 
 MonotonicAxes = ["nint_fac"]
 
 all_args = {
     "test_name" : all_tests,
-    "fft_backend" : ['scipy', 'mkl', 'fftw'],
+    # "fft_backend" : ['scipy', 'mkl', 'fftw'],
+    "fft_backend" : ['fftw'],
     "nint_fac" : [2**i for i in range(min_exp,max_exp)] 
 }
 
@@ -179,16 +195,16 @@ all_timings = pyquickbench.run_benchmark(
     mode = mode  ,
     n_repeat = n_repeat     ,
     MonotonicAxes = MonotonicAxes,
-    ForceBenchmark = True,
+    # ForceBenchmark = True,
     # PreventBenchmark = False,
     # ForceBenchmark = False,
     # PreventBenchmark = True,
 )
 
 plot_intent = {
-    "test_name" : 'subplot_grid_y'                  ,
-    # "test_name" : 'curve_linestyle'                  ,
-    "fft_backend" : 'curve_linestyle'                  ,
+    # "test_name" : 'subplot_grid_y'                  ,
+    "test_name" : 'curve_linestyle'                  ,
+    "fft_backend" : 'curve_pointstyle'                  ,
     # "fft_backend" : 'curve_color'                  ,
     "nint_fac" : 'points'                           ,
     # pyquickbench.repeat_ax_name :  'reduction_min'  ,
@@ -205,8 +221,9 @@ single_values_val = {
 
 relative_to_val_list = [
     None    ,
-    # {pyquickbench.out_ax_name : 'params_to_ifft'},
-    {"fft_backend" : 'scipy'},
+    {pyquickbench.out_ax_name : 'params_to_ifft'},
+    # {"fft_backend" : 'scipy'},
+    # {"test_name" : '3C'},
 ]
 
 for relative_to_val in relative_to_val_list:
@@ -221,5 +238,6 @@ for relative_to_val in relative_to_val_list:
         show = True                             ,
         relative_to_val = relative_to_val       ,
         single_values_val = single_values_val   ,
+        # transform = "pol_growth_order"          ,
     )
 

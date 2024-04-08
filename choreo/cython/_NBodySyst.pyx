@@ -3283,36 +3283,6 @@ cdef double params_to_kin_nrg(
     return kin
  
 @cython.cdivision(True)
-cdef void params_to_kin_nrg_grad(
-    double *params_mom_buf  , long[:,::1] params_shapes , long[::1] params_shifts   ,
-    long[::1] ncor_loop     , long[::1] nco_in_loop     ,
-    double *grad_buf        ,
-) noexcept nogil:
-
-    cdef double* loc = params_mom_buf
-    cdef double* grad_loc = grad_buf
-
-    cdef int nloop = params_shapes.shape[0]
-    cdef Py_ssize_t il
-
-    cdef double kin = 0
-    cdef int beg
-    cdef int n
-
-    for il in range(nloop):
-
-        memset(grad_loc, 0, sizeof(double)*ncor_loop[il])
-
-        loc += ncor_loop[il]
-        grad_loc += ncor_loop[il]
-        n = params_shifts[il+1] - (params_shifts[il] + ncor_loop[il] + nco_in_loop[il])
-        
-        scipy.linalg.cython_blas.dcopy(&n, loc, &int_one, grad_loc, &int_one)
-
-        loc += n
-        grad_loc += n 
-
-@cython.cdivision(True)
 cdef void params_to_kin_nrg_grad_daxpy(
     double *params_mom_buf  , long[:,::1] params_shapes , long[::1] params_shifts   ,
     long[::1] ncor_loop     , long[::1] nco_in_loop     ,
