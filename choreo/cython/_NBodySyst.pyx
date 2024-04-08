@@ -3644,18 +3644,22 @@ cdef void params_to_ifft(
     cdef double complex * dest
     cdef Py_ssize_t il, i
 
+    for il in range(nloop):
+
+        if params_shapes[il,1] > 0:
+
+            buf = params_buf[il]
+
+            if nnz_k_shapes[il,0] > 0:
+                if nnz_k_buf[nnz_k_shifts[il]] == 0:
+                    for i in range(params_shapes[il,2]):
+                        buf[i] *= 0.5
+
     if fft_backend == USE_FFTW_FFT:
 
         for il in range(nloop):
 
             if params_shapes[il,1] > 0:
-
-                buf = params_buf[il]
-
-                if nnz_k_shapes[il,0] > 0:
-                    if nnz_k_buf[nnz_k_shifts[il]] == 0:
-                        for i in range(params_shapes[il,2]):
-                            buf[i] *= 0.5
 
                 pyfftw.execute_in_nogil(pyfftw_rffts_exe[il])
 
@@ -3669,11 +3673,6 @@ cdef void params_to_ifft(
 
                     params = <double[:2*params_shapes[il,0],:params_shapes[il,1],:params_shapes[il,2]:1]> params_buf[il]
                     nnz_k = <long[:nnz_k_shapes[il,0]:1]> &nnz_k_buf[nnz_k_shifts[il]]
-
-                    if nnz_k.shape[0] > 0:
-                        if nnz_k[0] == 0:
-                            for i in range(params.shape[2]):
-                                params[0,0,i] *= 0.5
 
                     ifft = mkl_fft._numpy_fft.rfft(params, axis=0)
 
@@ -3691,11 +3690,6 @@ cdef void params_to_ifft(
 
                     params = <double[:2*params_shapes[il,0],:params_shapes[il,1],:params_shapes[il,2]:1]> params_buf[il]
                     nnz_k = <long[:nnz_k_shapes[il,0]:1]> &nnz_k_buf[nnz_k_shifts[il]]
-
-                    if nnz_k.shape[0] > 0:
-                        if nnz_k[0] == 0:
-                            for i in range(params.shape[2]):
-                                params[0,0,i] *= 0.5
 
                     ifft = scipy.fft.rfft(params, axis=0, overwrite_x=True)
 
@@ -3730,12 +3724,6 @@ cdef void ifft_to_params(
 
                 dest = params_buf[il]
 
-                if direction < 0:
-                    if nnz_k_shapes[il,0] > 0:
-                        if nnz_k_buf[nnz_k_shifts[il]] == 0:
-                            for i in range(params_shapes[il,2]):
-                                dest[i] *= 0.5
-                
                 # Renormalization
                 n = (params_shifts[il+1] - params_shifts[il])
                 fac = 1. / (2*params_shapes[il,0])
@@ -3754,12 +3742,6 @@ cdef void ifft_to_params(
 
                     params = mkl_fft._numpy_fft.irfft(ifft, axis=0)
 
-                    if direction < 0:
-                        if nnz_k.shape[0] > 0:
-                            if nnz_k[0] == 0:
-                                for i in range(params.shape[2]):
-                                    params[0,0,i] *= 0.5
-
                     dest = params_buf[il]
                     n = (params_shifts[il+1] - params_shifts[il])
                     scipy.linalg.cython_blas.dcopy(&n,&params[0,0,0],&int_one,dest,&int_one)
@@ -3777,15 +3759,19 @@ cdef void ifft_to_params(
 
                     params = scipy.fft.irfft(ifft, axis=0, overwrite_x=True)
 
-                    if direction < 0:
-                        if nnz_k.shape[0] > 0:
-                            if nnz_k[0] == 0:
-                                for i in range(params.shape[2]):
-                                    params[0,0,i] *= 0.5
-
                     dest = params_buf[il]
                     n = (params_shifts[il+1] - params_shifts[il])
                     scipy.linalg.cython_blas.dcopy(&n,&params[0,0,0],&int_one,dest,&int_one)
+
+    if direction < 0:
+        for il in range(nloop):
+
+            dest = params_buf[il]
+
+            if nnz_k_shapes[il,0] > 0:
+                if nnz_k_buf[nnz_k_shifts[il]] == 0:
+                    for i in range(params_shapes[il,2]):
+                        dest[i] *= 0.5
 
 cdef void ifft_to_pos_slice(
     double complex **ifft_buf_ptr           , long[:,::1] ifft_shapes           , long[::1] ifft_shifts         ,
