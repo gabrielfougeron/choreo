@@ -23,13 +23,15 @@ choreo.find_new.Load_wisdom_file(DP_Wisdom_file)
 if ("--no-show" in sys.argv):
     plt.show = (lambda : None)
 
-n_test = 1
+n_test = 1000
+n_repeat = 1
     
 def params_to_action_grad_TT(NBS, params_buf):
 
     TT = pyquickbench.TimeTrain(
         include_locs = False    ,
-        names_reduction = "min" ,
+        # names_reduction = "min" ,
+        names_reduction = "avg" ,
     )
     
     for i in range(n_test):
@@ -44,12 +46,12 @@ def params_to_action_grad(NBS, params_buf):
     
     
 all_funs = [
-    # params_to_action_grad_TT ,
-    params_to_action_grad ,
+    params_to_action_grad_TT ,
+    # params_to_action_grad ,
 ]
 
-# mode = 'vector_output'  
-mode = 'timings'
+mode = 'vector_output'  
+# mode = 'timings'
 
 def setup(test_name, fft_backend, nint_fac):
     
@@ -154,8 +156,6 @@ all_tests = [
 min_exp = 0
 max_exp = 15
 
-n_repeat = 100
-
 MonotonicAxes = ["nint_fac"]
 
 all_args = {
@@ -188,12 +188,12 @@ all_timings = pyquickbench.run_benchmark(
 plot_intent = {
     "test_name" : 'subplot_grid_y'                  ,
     # "test_name" : 'curve_linestyle'                  ,
-    # "fft_backend" : 'curve_linestyle'                  ,
-    "fft_backend" : 'curve_color'                  ,
+    "fft_backend" : 'curve_linestyle'                  ,
+    # "fft_backend" : 'curve_color'                  ,
     "nint_fac" : 'points'                           ,
     # pyquickbench.repeat_ax_name :  'reduction_min'  ,
     pyquickbench.repeat_ax_name :  'reduction_avg'  ,
-    # pyquickbench.out_ax_name :  'curve_color'  ,
+    pyquickbench.out_ax_name :  'curve_color'  ,
     # pyquickbench.out_ax_name :  'reduction_sum'  ,
     # pyquickbench.out_ax_name :  'single_value'  ,
 }
