@@ -4651,7 +4651,6 @@ cdef void segm_pos_to_pot_nrg_grad(
     cdef double* tmp_loc_grad
     cdef bint NeedsAllocate = False
 
-    cdef double[3] pot
 
     for ibin in range(nbin):
         NeedsAllocate = (NeedsAllocate or (not(BinSpaceRotIsId[ibin])))
@@ -4681,79 +4680,21 @@ cdef void segm_pos_to_pot_nrg_grad(
         isegmp = BinTargetSegm[ibin]
         posp = &segmpos[isegmp,0,0]
 
-        if size_is_store:
-
-            for iint in range(segm_size):
-
-                dx[0] = pos[0] - posp[0]
-                dx2 = dx[0]*dx[0]
-                pos += 1
-                posp += 1
-                for idim in range(1,geodim):
-                    dx[idim] = pos[0] - posp[0]
-                    dx2 += dx[idim]*dx[idim]
-                    pos += 1
-                    posp += 1
-
-                inter_law(dx2, pot)
-
-                for idim in range(geodim):
-                    grad[0] += pot[1]*dx[idim]
-                    grad += 1
-
-        else:
+        if geodim == 2:
             
-            # First iteration
-            dx[0] = pos[0] - posp[0]
-            dx2 = dx[0]*dx[0]
-            pos += 1
-            posp += 1
-            for idim in range(1,geodim):
-                dx[idim] = pos[0] - posp[0]
-                dx2 += dx[idim]*dx[idim]
-                pos += 1
-                posp += 1
-
-            inter_law(dx2, pot)
-
-            for idim in range(geodim):
-                grad[0] += 0.5*pot[1]*dx[idim]
-                grad += 1
-
-            for iint in range(1,segm_size):
-
-                dx[0] = pos[0] - posp[0]
-                dx2 = dx[0]*dx[0]
-                pos += 1
-                posp += 1
-                for idim in range(1,geodim):
-                    dx[idim] = pos[0] - posp[0]
-                    dx2 += dx[idim]*dx[idim]
-                    pos += 1
-                    posp += 1
-
-                inter_law(dx2, pot)
-
-                for idim in range(geodim):
-                    grad[0] += pot[1]*dx[idim]
-                    grad += 1
-
-            # Last iteration
-            dx[0] = pos[0] - posp[0]
-            dx2 = dx[0]*dx[0]
-            pos += 1
-            posp += 1
-            for idim in range(1,geodim):
-                dx[idim] = pos[0] - posp[0]
-                dx2 += dx[idim]*dx[idim]
-                pos += 1
-                posp += 1
-
-            inter_law(dx2, pot)
-
-            for idim in range(geodim):
-                grad[0] += 0.5*pot[1]*dx[idim]
-                grad += 1
+            pot_nrg_grad_inter_2d(
+                size_is_store   , segm_size ,      
+                pos             , posp      , grad      ,
+                inter_law       ,
+            )
+        
+        else:
+        
+            pot_nrg_grad_inter_nd(
+                size_is_store   , segm_size , geodim    ,      
+                pos             , posp      , grad      ,
+                inter_law       ,
+            )
 
         bin_fac = 2*BinProdChargeSum[ibin]*globalmul
         bin_fac /= segm_size
@@ -4771,6 +4712,188 @@ cdef void segm_pos_to_pot_nrg_grad(
     if NeedsAllocate:
         free(tmp_loc_pos)
 
+@cython.cdivision(True)
+cdef void pot_nrg_grad_inter_nd(
+    bint size_is_store              , long segm_size    , int geodim        ,      
+    double* pos_in                  , double* posp_in   , double* grad_in   ,
+    inter_law_fun_type inter_law    ,
+) noexcept nogil:
+
+    cdef Py_ssize_t iint
+    cdef double dx2
+    cdef double[3] pot
+
+    cdef double* pos = pos_in
+    cdef double* posp = posp_in
+    cdef double* grad = grad_in
+
+    cdef double* dx = <double*>malloc(sizeof(double)*geodim)
+
+    if size_is_store:
+
+        for iint in range(segm_size):
+
+            dx[0] = pos[0] - posp[0]
+            dx2 = dx[0]*dx[0]
+            pos += 1
+            posp += 1
+            for idim in range(1,geodim):
+                dx[idim] = pos[0] - posp[0]
+                dx2 += dx[idim]*dx[idim]
+                pos += 1
+                posp += 1
+
+            inter_law(dx2, pot)
+
+            for idim in range(geodim):
+                grad[0] += pot[1]*dx[idim]
+                grad += 1
+
+    else:
+        
+        # First iteration
+        dx[0] = pos[0] - posp[0]
+        dx2 = dx[0]*dx[0]
+        pos += 1
+        posp += 1
+        for idim in range(1,geodim):
+            dx[idim] = pos[0] - posp[0]
+            dx2 += dx[idim]*dx[idim]
+            pos += 1
+            posp += 1
+
+        inter_law(dx2, pot)
+
+        for idim in range(geodim):
+            grad[0] += 0.5*pot[1]*dx[idim]
+            grad += 1
+
+        for iint in range(1,segm_size):
+
+            dx[0] = pos[0] - posp[0]
+            dx2 = dx[0]*dx[0]
+            pos += 1
+            posp += 1
+            for idim in range(1,geodim):
+                dx[idim] = pos[0] - posp[0]
+                dx2 += dx[idim]*dx[idim]
+                pos += 1
+                posp += 1
+
+            inter_law(dx2, pot)
+
+            for idim in range(geodim):
+                grad[0] += pot[1]*dx[idim]
+                grad += 1
+
+        # Last iteration
+        dx[0] = pos[0] - posp[0]
+        dx2 = dx[0]*dx[0]
+        pos += 1
+        posp += 1
+        for idim in range(1,geodim):
+            dx[idim] = pos[0] - posp[0]
+            dx2 += dx[idim]*dx[idim]
+            pos += 1
+            posp += 1
+
+        inter_law(dx2, pot)
+
+        for idim in range(geodim):
+            grad[0] += 0.5*pot[1]*dx[idim]
+            grad += 1
+
+    free(dx)
+
+@cython.cdivision(True)
+cdef void pot_nrg_grad_inter_2d(
+    bint size_is_store              , long segm_size    ,      
+    double* pos_in                  , double* posp_in   , double* grad_in   ,
+    inter_law_fun_type inter_law    ,
+) noexcept nogil:
+
+    cdef Py_ssize_t iint
+    cdef double dx2
+    cdef double[3] pot
+    cdef double[2] dx
+
+    cdef double* pos = pos_in
+    cdef double* posp = posp_in
+    cdef double* grad = grad_in
+
+    if size_is_store:
+
+        for iint in range(segm_size):
+
+            dx[0] = pos[0] - posp[0]
+            dx2 = dx[0]*dx[0]
+            pos += 1
+            posp += 1
+            dx[1] = pos[0] - posp[0]
+            dx2 += dx[1]*dx[1]
+            pos += 1
+            posp += 1
+
+            inter_law(dx2, pot)
+
+            grad[0] += pot[1]*dx[0]
+            grad += 1
+            grad[0] += pot[1]*dx[1]
+            grad += 1
+
+    else:
+        
+        # First iteration
+        dx[0] = pos[0] - posp[0]
+        dx2 = dx[0]*dx[0]
+        pos += 1
+        posp += 1
+        dx[1] = pos[0] - posp[0]
+        dx2 += dx[1]*dx[1]
+        pos += 1
+        posp += 1
+
+        inter_law(dx2, pot)
+
+        grad[0] += 0.5*pot[1]*dx[0]
+        grad += 1
+        grad[0] += 0.5*pot[1]*dx[1]
+        grad += 1
+
+        for iint in range(1,segm_size):
+
+            dx[0] = pos[0] - posp[0]
+            dx2 = dx[0]*dx[0]
+            pos += 1
+            posp += 1
+            dx[1] = pos[0] - posp[0]
+            dx2 += dx[1]*dx[1]
+            pos += 1
+            posp += 1
+
+            inter_law(dx2, pot)
+
+            grad[0] += pot[1]*dx[0]
+            grad += 1
+            grad[0] += pot[1]*dx[1]
+            grad += 1
+
+        # Last iteration
+        dx[0] = pos[0] - posp[0]
+        dx2 = dx[0]*dx[0]
+        pos += 1
+        posp += 1
+        dx[1] = pos[0] - posp[0]
+        dx2 += dx[1]*dx[1]
+        pos += 1
+        posp += 1
+
+        inter_law(dx2, pot)
+
+        grad[0] += 0.5*pot[1]*dx[0]
+        grad += 1
+        grad[0] += 0.5*pot[1]*dx[1]
+        grad += 1
 
 @cython.cdivision(True)
 cdef void segm_pos_to_pot_nrg_hess(
@@ -4792,12 +4915,7 @@ cdef void segm_pos_to_pot_nrg_hess(
 
     cdef bint size_is_store = (segm_size == segm_store)
 
-    cdef double[3] pot
-
-    cdef double dx2, dxtddx, a, b
     cdef double bin_fac
-    cdef double* dx = <double*> malloc(sizeof(double)*geodim)
-    cdef double* ddx = <double*> malloc(sizeof(double)*geodim)
 
     cdef double* tmp_loc_pos
     cdef double* tmp_loc_dpos
@@ -4841,135 +4959,23 @@ cdef void segm_pos_to_pot_nrg_hess(
         posp = &segmpos[isegmp,0,0]
         dposp = &dsegmpos[isegmp,0,0]
 
-        if size_is_store:
-            
-            for iint in range(segm_size):
+        if (geodim == 2):
 
-                dx[0] = pos[0] - posp[0]
-                dx2 = dx[0]*dx[0]
-                pos += 1
-                posp += 1
-
-                ddx[0] = dpos[0] - dposp[0]
-                dxtddx = dx[0]*ddx[0]
-                dpos += 1
-                dposp += 1
-
-                for idim in range(1,geodim):
-                    dx[idim] = pos[0] - posp[0]
-                    dx2 += dx[idim]*dx[idim]
-                    pos += 1
-                    posp += 1
-
-                    ddx[idim] = dpos[0] - dposp[0]
-                    dxtddx += dx[idim]*ddx[idim]
-                    dpos += 1
-                    dposp += 1
-
-                inter_law(dx2, pot)
-
-                a = pot[1]
-                b = 2*pot[2]*dxtddx
-
-                for idim in range(geodim):
-                    hess[0] += b*dx[idim]+a*ddx[idim]
-                    hess += 1
+            pot_nrg_hess_inter_2d(
+                size_is_store   , segm_size ,      
+                pos             , posp      ,   
+                dpos            , dposp     , hess      ,
+                inter_law       ,
+            )
 
         else:
 
-            # First iteration
-            dx[0] = pos[0] - posp[0]
-            dx2 = dx[0]*dx[0]
-            pos += 1
-            posp += 1
-
-            ddx[0] = dpos[0] - dposp[0]
-            dxtddx = dx[0]*ddx[0]
-            dpos += 1
-            dposp += 1
-
-            for idim in range(1,geodim):
-                dx[idim] = pos[0] - posp[0]
-                dx2 += dx[idim]*dx[idim]
-                pos += 1
-                posp += 1
-
-                ddx[idim] = dpos[0] - dposp[0]
-                dxtddx += dx[idim]*ddx[idim]
-                dpos += 1
-                dposp += 1
-
-            inter_law(dx2, pot)
-
-            a = 0.5*pot[1]
-            b = pot[2]*dxtddx
-
-            for idim in range(geodim):
-                hess[0] += b*dx[idim]+a*ddx[idim]
-                hess += 1
-
-            for iint in range(1,segm_size):
-
-                dx[0] = pos[0] - posp[0]
-                dx2 = dx[0]*dx[0]
-                pos += 1
-                posp += 1
-
-                ddx[0] = dpos[0] - dposp[0]
-                dxtddx = dx[0]*ddx[0]
-                dpos += 1
-                dposp += 1
-
-                for idim in range(1,geodim):
-                    dx[idim] = pos[0] - posp[0]
-                    dx2 += dx[idim]*dx[idim]
-                    pos += 1
-                    posp += 1
-
-                    ddx[idim] = dpos[0] - dposp[0]
-                    dxtddx += dx[idim]*ddx[idim]
-                    dpos += 1
-                    dposp += 1
-
-                inter_law(dx2, pot)
-
-                a = pot[1]
-                b = 2*pot[2]*dxtddx
-
-                for idim in range(geodim):
-                    hess[0] += b*dx[idim]+a*ddx[idim]
-                    hess += 1
-
-            # Last iteration
-            dx[0] = pos[0] - posp[0]
-            dx2 = dx[0]*dx[0]
-            pos += 1
-            posp += 1
-
-            ddx[0] = dpos[0] - dposp[0]
-            dxtddx = dx[0]*ddx[0]
-            dpos += 1
-            dposp += 1
-
-            for idim in range(1,geodim):
-                dx[idim] = pos[0] - posp[0]
-                dx2 += dx[idim]*dx[idim]
-                pos += 1
-                posp += 1
-
-                ddx[idim] = dpos[0] - dposp[0]
-                dxtddx += dx[idim]*ddx[idim]
-                dpos += 1
-                dposp += 1
-
-            inter_law(dx2, pot)
-
-            a = 0.5*pot[1]
-            b = pot[2]*dxtddx
-
-            for idim in range(geodim):
-                hess[0] += b*dx[idim]+a*ddx[idim]
-                hess += 1
+            pot_nrg_hess_inter_nd(
+                size_is_store   , segm_size , geodim    ,      
+                pos             , posp      ,   
+                dpos            , dposp     , hess      ,
+                inter_law       ,
+            )
 
         bin_fac = 2*BinProdChargeSum[ibin]*globalmul
         bin_fac /= segm_size
@@ -4982,12 +4988,310 @@ cdef void segm_pos_to_pot_nrg_hess(
         bin_fac = -bin_fac
         scipy.linalg.cython_blas.daxpy(&nitems_int, &bin_fac, tmp_loc_hess, &int_one, &pot_nrg_hess[isegmp,0,0], &int_one)
 
-    free(dx)
-    free(ddx)
     free(tmp_loc_hess)
     if NeedsAllocate:
         free(tmp_loc_pos)
         free(tmp_loc_dpos)
 
+@cython.cdivision(True)
+cdef void pot_nrg_hess_inter_2d(
+    bint size_is_store              , long segm_size    ,
+    double* pos_in                  , double* posp_in   ,
+    double* dpos_in                 , double* dposp_in  , double* hess_in   ,
+    inter_law_fun_type inter_law    ,
+) noexcept nogil:
 
+    cdef Py_ssize_t iint
+    cdef double[3] pot
+    cdef double dx2, dxtddx, a, b
+    cdef double[2] dx
+    cdef double[2] ddx
 
+    cdef double* pos = pos_in
+    cdef double* posp = posp_in
+    cdef double* dpos = dpos_in
+    cdef double* dposp = dposp_in
+    cdef double* hess = hess_in
+
+    if size_is_store:
+        
+        for iint in range(segm_size):
+
+            dx[0] = pos[0] - posp[0]
+            dx2 = dx[0]*dx[0]
+            pos += 1
+            posp += 1
+
+            dx[1] = pos[0] - posp[0]
+            dx2 += dx[1]*dx[1]
+            pos += 1
+            posp += 1
+
+            ddx[0] = dpos[0] - dposp[0]
+            dxtddx = dx[0]*ddx[0]
+            dpos += 1
+            dposp += 1
+
+            ddx[1] = dpos[0] - dposp[0]
+            dxtddx += dx[1]*ddx[1]
+            dpos += 1
+            dposp += 1
+
+            inter_law(dx2, pot)
+
+            a = pot[1]
+            b = 2*pot[2]*dxtddx
+
+            hess[0] += b*dx[0]+a*ddx[0]
+            hess += 1
+            hess[0] += b*dx[1]+a*ddx[1]
+            hess += 1
+
+    else:
+
+        # First iteration
+        dx[0] = pos[0] - posp[0]
+        dx2 = dx[0]*dx[0]
+        pos += 1
+        posp += 1
+
+        dx[1] = pos[0] - posp[0]
+        dx2 += dx[1]*dx[1]
+        pos += 1
+        posp += 1
+
+        ddx[0] = dpos[0] - dposp[0]
+        dxtddx = dx[0]*ddx[0]
+        dpos += 1
+        dposp += 1
+
+        ddx[1] = dpos[0] - dposp[0]
+        dxtddx += dx[1]*ddx[1]
+        dpos += 1
+        dposp += 1
+
+        inter_law(dx2, pot)
+
+        a = 0.5*pot[1]
+        b = pot[2]*dxtddx
+
+        hess[0] += b*dx[0]+a*ddx[0]
+        hess += 1
+        hess[0] += b*dx[1]+a*ddx[1]
+        hess += 1
+
+        for iint in range(1,segm_size):
+
+            dx[0] = pos[0] - posp[0]
+            dx2 = dx[0]*dx[0]
+            pos += 1
+            posp += 1
+
+            dx[1] = pos[0] - posp[0]
+            dx2 += dx[1]*dx[1]
+            pos += 1
+            posp += 1
+
+            ddx[0] = dpos[0] - dposp[0]
+            dxtddx = dx[0]*ddx[0]
+            dpos += 1
+            dposp += 1
+
+            ddx[1] = dpos[0] - dposp[0]
+            dxtddx += dx[1]*ddx[1]
+            dpos += 1
+            dposp += 1
+
+            inter_law(dx2, pot)
+
+            a = pot[1]
+            b = 2*pot[2]*dxtddx
+
+            hess[0] += b*dx[0]+a*ddx[0]
+            hess += 1
+            hess[0] += b*dx[1]+a*ddx[1]
+            hess += 1
+
+        # Last iteration
+        dx[0] = pos[0] - posp[0]
+        dx2 = dx[0]*dx[0]
+        pos += 1
+        posp += 1
+
+        dx[1] = pos[0] - posp[0]
+        dx2 += dx[1]*dx[1]
+        pos += 1
+        posp += 1
+
+        ddx[0] = dpos[0] - dposp[0]
+        dxtddx = dx[0]*ddx[0]
+        dpos += 1
+        dposp += 1
+
+        ddx[1] = dpos[0] - dposp[0]
+        dxtddx += dx[1]*ddx[1]
+        dpos += 1
+        dposp += 1
+
+        inter_law(dx2, pot)
+
+        a = 0.5*pot[1]
+        b = pot[2]*dxtddx
+
+        hess[0] += b*dx[0]+a*ddx[0]
+        hess += 1
+        hess[0] += b*dx[1]+a*ddx[1]
+        hess += 1
+
+@cython.cdivision(True)
+cdef void pot_nrg_hess_inter_nd(
+    bint size_is_store              , long segm_size    , int geodim        ,      
+    double* pos_in                  , double* posp_in   ,
+    double* dpos_in                 , double* dposp_in  , double* hess_in   ,
+    inter_law_fun_type inter_law    ,
+) noexcept nogil:
+
+    cdef Py_ssize_t iint
+    cdef double[3] pot
+    cdef double dx2, dxtddx, a, b
+    cdef double* dx = <double*> malloc(sizeof(double)*geodim)
+    cdef double* ddx = <double*> malloc(sizeof(double)*geodim)
+
+    cdef double* pos = pos_in
+    cdef double* posp = posp_in
+    cdef double* dpos = dpos_in
+    cdef double* dposp = dposp_in
+    cdef double* hess = hess_in
+
+    if size_is_store:
+        
+        for iint in range(segm_size):
+
+            dx[0] = pos[0] - posp[0]
+            dx2 = dx[0]*dx[0]
+            pos += 1
+            posp += 1
+
+            ddx[0] = dpos[0] - dposp[0]
+            dxtddx = dx[0]*ddx[0]
+            dpos += 1
+            dposp += 1
+
+            for idim in range(1,geodim):
+                dx[idim] = pos[0] - posp[0]
+                dx2 += dx[idim]*dx[idim]
+                pos += 1
+                posp += 1
+
+                ddx[idim] = dpos[0] - dposp[0]
+                dxtddx += dx[idim]*ddx[idim]
+                dpos += 1
+                dposp += 1
+
+            inter_law(dx2, pot)
+
+            a = pot[1]
+            b = 2*pot[2]*dxtddx
+
+            for idim in range(geodim):
+                hess[0] += b*dx[idim]+a*ddx[idim]
+                hess += 1
+
+    else:
+
+        # First iteration
+        dx[0] = pos[0] - posp[0]
+        dx2 = dx[0]*dx[0]
+        pos += 1
+        posp += 1
+
+        ddx[0] = dpos[0] - dposp[0]
+        dxtddx = dx[0]*ddx[0]
+        dpos += 1
+        dposp += 1
+
+        for idim in range(1,geodim):
+            dx[idim] = pos[0] - posp[0]
+            dx2 += dx[idim]*dx[idim]
+            pos += 1
+            posp += 1
+
+            ddx[idim] = dpos[0] - dposp[0]
+            dxtddx += dx[idim]*ddx[idim]
+            dpos += 1
+            dposp += 1
+
+        inter_law(dx2, pot)
+
+        a = 0.5*pot[1]
+        b = pot[2]*dxtddx
+
+        for idim in range(geodim):
+            hess[0] += b*dx[idim]+a*ddx[idim]
+            hess += 1
+
+        for iint in range(1,segm_size):
+
+            dx[0] = pos[0] - posp[0]
+            dx2 = dx[0]*dx[0]
+            pos += 1
+            posp += 1
+
+            ddx[0] = dpos[0] - dposp[0]
+            dxtddx = dx[0]*ddx[0]
+            dpos += 1
+            dposp += 1
+
+            for idim in range(1,geodim):
+                dx[idim] = pos[0] - posp[0]
+                dx2 += dx[idim]*dx[idim]
+                pos += 1
+                posp += 1
+
+                ddx[idim] = dpos[0] - dposp[0]
+                dxtddx += dx[idim]*ddx[idim]
+                dpos += 1
+                dposp += 1
+
+            inter_law(dx2, pot)
+
+            a = pot[1]
+            b = 2*pot[2]*dxtddx
+
+            for idim in range(geodim):
+                hess[0] += b*dx[idim]+a*ddx[idim]
+                hess += 1
+
+        # Last iteration
+        dx[0] = pos[0] - posp[0]
+        dx2 = dx[0]*dx[0]
+        pos += 1
+        posp += 1
+
+        ddx[0] = dpos[0] - dposp[0]
+        dxtddx = dx[0]*ddx[0]
+        dpos += 1
+        dposp += 1
+
+        for idim in range(1,geodim):
+            dx[idim] = pos[0] - posp[0]
+            dx2 += dx[idim]*dx[idim]
+            pos += 1
+            posp += 1
+
+            ddx[idim] = dpos[0] - dposp[0]
+            dxtddx += dx[idim]*ddx[idim]
+            dpos += 1
+            dposp += 1
+
+        inter_law(dx2, pot)
+
+        a = 0.5*pot[1]
+        b = pot[2]*dxtddx
+
+        for idim in range(geodim):
+            hess[0] += b*dx[idim]+a*ddx[idim]
+            hess += 1
+
+    free(dx)
+    free(ddx)
