@@ -36,8 +36,8 @@ choreo.find_new.Load_wisdom_file(DP_Wisdom_file)
 if ("--no-show" in sys.argv):
     plt.show = (lambda : None)
 
-n_test = 1000
-n_repeat = 1
+n_test = 1
+n_repeat = 100
     
 def params_to_action_grad_TT(NBS, params_buf):
 
@@ -59,12 +59,12 @@ def params_to_action_grad(NBS, params_buf):
     
     
 all_funs = [
-    params_to_action_grad_TT ,
-    # params_to_action_grad ,
+    # params_to_action_grad_TT ,
+    params_to_action_grad ,
 ]
 
-mode = 'vector_output'  
-# mode = 'timings'
+# mode = 'vector_output'  
+mode = 'timings'
 
 def setup(test_name, fft_backend, nint_fac):
     
@@ -132,9 +132,9 @@ all_tests = [
     # '2D1',
     # '4C5k',
     # '4D3k',
-    # '4C',
     # '4D',
-    '3C',
+    # '3C',
+    # '4C',
     # '20B',
     # '3D',
     # '3D1',
@@ -164,7 +164,7 @@ all_tests = [
     # "3C29k",
     # "3C37k",
     # '3C101k',
-    # '20B',
+    '20B',
 ]
 
 min_exp = 0
@@ -175,8 +175,8 @@ MonotonicAxes = ["nint_fac"]
 
 all_args = {
     "test_name" : all_tests,
-    # "fft_backend" : ['scipy', 'mkl', 'fftw'],
-    "fft_backend" : ['fftw'],
+    "fft_backend" : ['scipy', 'mkl', 'fftw'],
+    # "fft_backend" : ['fftw'],
     "nint_fac" : [2**i for i in range(min_exp,max_exp)] 
 }
 
@@ -190,7 +190,7 @@ all_timings = pyquickbench.run_benchmark(
     all_funs                ,
     setup = setup           ,
     filename = filename     ,
-    # StopOnExcept = True     ,
+    StopOnExcept = True     ,
     ShowProgress = True     ,
     mode = mode  ,
     n_repeat = n_repeat     ,
@@ -204,8 +204,9 @@ all_timings = pyquickbench.run_benchmark(
 plot_intent = {
     # "test_name" : 'subplot_grid_y'                  ,
     "test_name" : 'curve_linestyle'                  ,
-    "fft_backend" : 'curve_pointstyle'                  ,
+    # "fft_backend" : 'curve_pointstyle'                  ,
     # "fft_backend" : 'curve_color'                  ,
+    "fft_backend" : 'curve_linestyle'                  ,
     "nint_fac" : 'points'                           ,
     # pyquickbench.repeat_ax_name :  'reduction_min'  ,
     pyquickbench.repeat_ax_name :  'reduction_avg'  ,
@@ -221,10 +222,13 @@ single_values_val = {
 
 relative_to_val_list = [
     None    ,
-    {pyquickbench.out_ax_name : 'params_to_ifft'},
-    # {"fft_backend" : 'scipy'},
+    # {pyquickbench.out_ax_name : 'params_to_ifft'},
+    {"fft_backend" : 'scipy'},
     # {"test_name" : '3C'},
 ]
+
+# plot_ylim = [1e-6, 1e-2]
+plot_ylim = None
 
 for relative_to_val in relative_to_val_list:
 
@@ -239,5 +243,6 @@ for relative_to_val in relative_to_val_list:
         relative_to_val = relative_to_val       ,
         single_values_val = single_values_val   ,
         # transform = "pol_growth_order"          ,
+        plot_ylim = plot_ylim                   ,
     )
 
