@@ -28,54 +28,54 @@ def proj_to_zero(array, eps=1e-14):
 def main():
         
     all_tests = [
-        # '3q',
-        # '3q3q',
-        # '3q3qD',
-        # '2q2q',
-        # '4q4q',
-        # '4q4qD',
-        # '4q4qD3k',
-        # '1q2q',
-        # '5q5q',
-        # '6q6q',
-        # '2C3C',
+        '3q',
+        '3q3q',
+        '3q3qD',
+        '2q2q',
+        '4q4q',
+        '4q4qD',
+        '4q4qD3k',
+        '1q2q',
+        '5q5q',
+        '6q6q',
+        '2C3C',
         '2D3D',   
-        # '2C3C5k',
-        # '2D3D5k',
-        # '2D1',
-        # '4C5k',
-        # '4D3k',
-        # '4C',
-        # '4D',
-        # '3C',
-        # '3D',
-        # '3D1',
-        # '3C2k',
-        # '3D2k',
-        # '3Dp',
-        # '3C4k',
-        # '3D4k',
-        # '3C5k',
-        # '3D5k',
-        # '3C101k',
-        # '3D101k',
-        # 'test_3D5k',
-        # '3C7k2',
-        # '3D7k2',
-        # '6C',
-        # '6D',
-        # '6Ck5',
-        # '6Dk5',
-        # '5Dq',
-        # '2C3C5C',
-        # '3C_3dim',
-        # '2D1_3dim', 
-        # '3C11k',
-        # '5q',
-        # '5Dq_',
+        '2C3C5k',
+        '2D3D5k',
+        '2D1',
+        '4C5k',
+        '4D3k',
+        '4C',
+        '4D',
+        '3C',
+        '3D',
+        '3D1',
+        '3C2k',
+        '3D2k',
+        '3Dp',
+        '3C4k',
+        '3D4k',
+        '3C5k',
+        '3D5k',
+        '3C101k',
+        '3D101k',
+        'test_3D5k',
+        '3C7k2',
+        '3D7k2',
+        '6C',
+        '6D',
+        '6Ck5',
+        '6Dk5',
+        '5Dq',
+        '2C3C5C',
+        '3C_3dim',
+        '2D1_3dim', 
+        '3C11k',
+        '5q',
+        '5Dq_',
         'uneven_nnpr',
-        # '3C4q4k',
-        # '3D4q4k',
+        '3C4q4k',
+        '3D4q4k',
         '2D2D',
         '2D2D5k',
         '2D1D1D',
@@ -88,10 +88,10 @@ def main():
 
     for test in all_tests:
         print()
-        print("  OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO  ")
+        # print("  OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO  ")
         print()
         print(test)
-        print()
+        # print()
 
 
         doit(test)
@@ -99,7 +99,7 @@ def main():
         TT.toc(test)
 
     print()
-    # print(TT)
+    print(TT)
   
 
 def proj_to_zero(array, eps=1e-14):
@@ -143,54 +143,33 @@ def doit(config_name):
 
     NBS.nint_fac = 10
     
-    params_buf = np.random.random((NBS.nparams))
-    segmpos = NBS.params_to_segmpos(params_buf)
-    
-    segmpos_dual = np.random.random((NBS.nsegm,NBS.segm_store,NBS.geodim))
-    params_buf_dual = NBS.segmpos_to_params_T(segmpos_dual)
-    
-    
-    print(params_buf_dual)
-    
-    
-    
-    dot_params = np.dot(params_buf, params_buf_dual)
-    dot_segmpos = np.dot(segmpos_dual.reshape(-1), segmpos.reshape(-1))
-    
-    print(abs(dot_params - dot_segmpos))
-    assert abs(dot_params - dot_segmpos) < eps
 
+    for il in range(NBS.nloop):
+        # print()
+        # print(il)
+        pb = NBS.params_basis(il)
+        print(pb.shape)
+        # print(pb)
 
-    
     nparam_nosym = geodim * NBS.nint * nbody
-    nparam_tot = NBS.nparams_incl_o
+    nparam_tot = NBS.nparams_incl_o // 2
 
-    print('*****************************************')
-    print('')
-    # print(f'{Identity_detected = }')
-    print(f'All binary transforms are identity: {NBS.All_BinSegmTransformId}')
-    
-    
-    print()
-    print(f"total binary segment interaction count: {NBS.nbin_segm_tot}")
-    print(f"unique binary segment interaction count: {NBS.nbin_segm_unique}")
-    print(f'{NBS.nsegm = }')
-
-
-    print(f"ratio of total to unique binary interactions : {NBS.nbin_segm_tot  / NBS.nbin_segm_unique}")
-    print(f'ratio of integration intervals to segments : {(nbody * NBS.nint_min) / NBS.nsegm}')
-    print(f"ratio of parameters before and after constraints: {nparam_nosym / nparam_tot}")
+    # print('*****************************************')
+    # print('')
+    # print()
+    # print(f"total binary segment interaction count: {NBS.nbin_segm_tot}")
+    # print(f"unique binary segment interaction count: {NBS.nbin_segm_unique}")
+    # print(f'{NBS.nsegm = }')
+    # print(f"ratio of total to unique binary interactions : {NBS.nbin_segm_tot  / NBS.nbin_segm_unique}")
+    # print(f'ratio of integration intervals to segments : {(nbody * NBS.nint_min) / NBS.nsegm}')
+    # print(f"ratio of parameters before and after constraints: {nparam_nosym / nparam_tot}")
 
     reduction_ratio = nparam_nosym / nparam_tot
 
     assert abs((nparam_nosym / nparam_tot)  - reduction_ratio) < eps
     
-    if NBS.All_BinSegmTransformId:
-        assert abs(NBS.nbin_segm_tot  / NBS.nbin_segm_unique  - reduction_ratio) < eps
-        assert abs((nbody * NBS.nint_min) / NBS.nsegm - reduction_ratio) < eps
 
-
-    # return
+    return
 
     filename = os.path.join(Workspace_folder, config_name+'_graph_segm.pdf')
     choreo.cython._NBodySyst.PlotTimeBodyGraph(NBS.SegmGraph, nbody, NBS.nint_min, filename)
