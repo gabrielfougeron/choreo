@@ -4623,6 +4623,23 @@ cdef double segm_pos_to_pot_nrg(
 
     return pot_nrg
 
+cdef int get_inter_flags(
+    long segm_size                  , long segm_store   ,
+    int geodim                      ,
+    inter_law_fun_type inter_law    ,
+) noexcept nogil:
+
+    cdef int inter_flags = 0
+
+    if (segm_size != segm_store):
+        inter_flags += 1
+    if (geodim == 2):
+        inter_flags += 2
+    if (inter_law == gravity_pot):
+        inter_flags += 4
+
+    return inter_flags
+
 @cython.cdivision(True)
 cdef void segm_pos_to_pot_nrg_grad(
     double[:,:,::1] segmpos         , double[:,:,::1] pot_nrg_grad  ,
@@ -4641,58 +4658,34 @@ cdef void segm_pos_to_pot_nrg_grad(
     cdef Py_ssize_t ibin, idim
     cdef Py_ssize_t isegm, isegmp
 
-    cdef bint size_is_store = (segm_size == segm_store)
+    cdef int inter_flags = get_inter_flags(
+        segm_size   , segm_store    ,
+        geodim      , inter_law     ,
+    )
 
     cdef double dx2
     cdef double bin_fac
     cdef double* dx = <double*> malloc(sizeof(double)*geodim)
 
-    cdef double* tmp_loc_pos
-    cdef double* tmp_loc_grad
-    cdef bint NeedsAllocate = False
-
-
-    for ibin in range(nbin):
-        NeedsAllocate = (NeedsAllocate or (not(BinSpaceRotIsId[ibin])))
-
-    tmp_loc_grad = <double*> malloc(nitems)
-    if NeedsAllocate:
-        tmp_loc_pos = <double*> malloc(nitems)
-
-    cdef double* pos
-    cdef double* posp
-    cdef double* grad
+    cdef double* tmp_loc_dpos = <double*> malloc(nitems)
+    cdef double* tmp_loc_grad = <double*> malloc(nitems)
 
     for ibin in range(nbin):
 
         isegm = BinSourceSegm[ibin]
-
-        memset(tmp_loc_grad, 0, nitems)
-
-        grad = tmp_loc_grad
+        isegmp = BinTargetSegm[ibin]
 
         if BinSpaceRotIsId[ibin]:
-            pos = &segmpos[isegm,0,0]
-        else:
-            pos = tmp_loc_pos
-            scipy.linalg.cython_blas.dgemm(transt, transn, &geodim, &segm_store_int, &geodim, &one_double, &BinSpaceRot[ibin,0,0], &geodim, &segmpos[isegm,0,0], &geodim, &zero_double, tmp_loc_pos, &geodim)
+            scipy.linalg.cython_blas.dcopy(&nitems_int, &segmpos[isegm,0,0], &int_one, tmp_loc_dpos, &int_one)
 
-        isegmp = BinTargetSegm[ibin]
-        posp = &segmpos[isegmp,0,0]
-
-        if geodim == 2:
-            
-            pot_nrg_grad_inter_2d(
-                size_is_store   , segm_size ,      
-                pos             , posp      , grad      ,
-                inter_law       ,
-            )
-        
         else:
-        
-            pot_nrg_grad_inter_nd(
-                size_is_store   , segm_size , geodim    ,      
-                pos             , posp      , grad      ,
+            scipy.linalg.cython_blas.dgemm(transt, transn, &geodim, &segm_store_int, &geodim, &one_double, &BinSpaceRot[ibin,0,0], &geodim, &segmpos[isegm,0,0], &geodim, &zero_double, tmp_loc_dpos, &geodim)
+
+        scipy.linalg.cython_blas.daxpy(&nitems_int, &minusone_double, &segmpos[isegmp,0,0], &int_one, tmp_loc_dpos, &int_one)
+
+        pot_nrg_grad_inter(
+                inter_flags     , segm_size     , geodim    ,      
+                tmp_loc_dpos    , tmp_loc_grad  ,
                 inter_law       ,
             )
 
@@ -4709,191 +4702,370 @@ cdef void segm_pos_to_pot_nrg_grad(
 
     free(dx)
     free(tmp_loc_grad)
-    if NeedsAllocate:
-        free(tmp_loc_pos)
+    free(tmp_loc_dpos)
 
 @cython.cdivision(True)
-cdef void pot_nrg_grad_inter_nd(
-    bint size_is_store              , long segm_size    , int geodim        ,      
-    double* pos_in                  , double* posp_in   , double* grad_in   ,
-    inter_law_fun_type inter_law    ,
+cdef void pot_nrg_grad_inter(
+    int inter_flags , long segm_size    , int geodim        ,      
+    double* dpos_in , double* grad_in   ,
+    inter_law_fun_type inter_law        ,
 ) noexcept nogil:
 
-    cdef Py_ssize_t iint
+    if inter_flags == 0:
+
+        pot_nrg_grad_inter_size_law_nd(
+            segm_size   , geodim    ,      
+            dpos_in     , grad_in   ,
+            inter_law   ,
+        )
+
+    elif inter_flags == 1:
+
+        pot_nrg_grad_inter_store_law_nd(
+            segm_size   , geodim        ,      
+            dpos_in     , grad_in   ,
+            inter_law   ,
+        )
+
+    elif inter_flags == 2:
+
+        pot_nrg_grad_inter_size_law_2d(
+            segm_size   ,      
+            dpos_in     , grad_in   ,
+            inter_law   ,
+        )
+
+    elif inter_flags == 3:
+
+        pot_nrg_grad_inter_store_law_2d(
+            segm_size   ,      
+            dpos_in     , grad_in   ,
+            inter_law   ,
+        )
+
+    elif inter_flags == 4:
+
+        pot_nrg_grad_inter_size_gravity_nd(
+            segm_size   , geodim    ,      
+            dpos_in     , grad_in   ,
+        )
+
+    elif inter_flags == 5:
+
+        pot_nrg_grad_inter_store_gravity_nd(
+            segm_size   , geodim    ,      
+            dpos_in     , grad_in   ,
+        )
+
+    elif inter_flags == 6:
+
+        pot_nrg_grad_inter_size_gravity_2d(
+            segm_size   ,      
+            dpos_in     , grad_in   ,
+        )
+
+    elif inter_flags == 7:
+
+        pot_nrg_grad_inter_store_gravity_2d(
+            segm_size   ,      
+            dpos_in     , grad_in   ,
+        )
+
+@cython.cdivision(True)
+cdef void pot_nrg_grad_inter_size_law_nd(
+    long segm_size  , int geodim        ,      
+    double* dpos_in , double* grad_in   ,
+    inter_law_fun_type inter_law        ,
+) noexcept nogil:
+
+    cdef Py_ssize_t iint, idim
     cdef double dx2
     cdef double[3] pot
 
-    cdef double* pos = pos_in
-    cdef double* posp = posp_in
+    cdef double* dpos = dpos_in
     cdef double* grad = grad_in
 
-    cdef double* dx = <double*>malloc(sizeof(double)*geodim)
+    for iint in range(segm_size):
 
-    if size_is_store:
-
-        for iint in range(segm_size):
-
-            dx[0] = pos[0] - posp[0]
-            dx2 = dx[0]*dx[0]
-            pos += 1
-            posp += 1
-            for idim in range(1,geodim):
-                dx[idim] = pos[0] - posp[0]
-                dx2 += dx[idim]*dx[idim]
-                pos += 1
-                posp += 1
-
-            inter_law(dx2, pot)
-
-            for idim in range(geodim):
-                grad[0] += pot[1]*dx[idim]
-                grad += 1
-
-    else:
-        
-        # First iteration
-        dx[0] = pos[0] - posp[0]
-        dx2 = dx[0]*dx[0]
-        pos += 1
-        posp += 1
+        dx2 = dpos[0]*dpos[0]
         for idim in range(1,geodim):
-            dx[idim] = pos[0] - posp[0]
-            dx2 += dx[idim]*dx[idim]
-            pos += 1
-            posp += 1
+            dx2 += dpos[idim]*dpos[idim]
 
         inter_law(dx2, pot)
 
         for idim in range(geodim):
-            grad[0] += 0.5*pot[1]*dx[idim]
-            grad += 1
+            grad[idim] = pot[1]*dpos[idim]
 
-        for iint in range(1,segm_size):
+        dpos += geodim
+        grad += geodim
 
-            dx[0] = pos[0] - posp[0]
-            dx2 = dx[0]*dx[0]
-            pos += 1
-            posp += 1
-            for idim in range(1,geodim):
-                dx[idim] = pos[0] - posp[0]
-                dx2 += dx[idim]*dx[idim]
-                pos += 1
-                posp += 1
+@cython.cdivision(True)
+cdef void pot_nrg_grad_inter_store_law_nd(
+    long segm_size  , int geodim        ,      
+    double* dpos_in , double* grad_in   ,
+    inter_law_fun_type inter_law        ,
+) noexcept nogil:
 
-            inter_law(dx2, pot)
+    cdef Py_ssize_t iint, idim
+    cdef double dx2
+    cdef double[3] pot
 
-            for idim in range(geodim):
-                grad[0] += pot[1]*dx[idim]
-                grad += 1
+    cdef double* dpos = dpos_in
+    cdef double* grad = grad_in
 
-        # Last iteration
-        dx[0] = pos[0] - posp[0]
-        dx2 = dx[0]*dx[0]
-        pos += 1
-        posp += 1
+    # First iteration
+    dx2 = dpos[0]*dpos[0]
+    for idim in range(1,geodim):
+        dx2 += dpos[idim]*dpos[idim]
+
+    inter_law(dx2, pot)
+
+    for idim in range(geodim):
+        grad[idim] = 0.5*pot[1]*dpos[idim]
+
+    dpos += geodim
+    grad += geodim
+
+    for iint in range(1,segm_size):
+
+        dx2 = dpos[0]*dpos[0]
         for idim in range(1,geodim):
-            dx[idim] = pos[0] - posp[0]
-            dx2 += dx[idim]*dx[idim]
-            pos += 1
-            posp += 1
+            dx2 += dpos[idim]*dpos[idim]
 
         inter_law(dx2, pot)
 
         for idim in range(geodim):
-            grad[0] += 0.5*pot[1]*dx[idim]
-            grad += 1
+            grad[idim] = pot[1]*dpos[idim]
 
-    free(dx)
+        dpos += geodim
+        grad += geodim
+
+    # Last iteration
+    dx2 = dpos[0]*dpos[0]
+    for idim in range(1,geodim):
+        dx2 += dpos[idim]*dpos[idim]
+
+    inter_law(dx2, pot)
+
+    for idim in range(geodim):
+        grad[idim] = 0.5*pot[1]*dpos[idim]
 
 @cython.cdivision(True)
-cdef void pot_nrg_grad_inter_2d(
-    bint size_is_store              , long segm_size    ,      
-    double* pos_in                  , double* posp_in   , double* grad_in   ,
-    inter_law_fun_type inter_law    ,
+cdef void pot_nrg_grad_inter_size_law_2d(
+    long segm_size  ,      
+    double* dpos_in , double* grad_in   ,
+    inter_law_fun_type inter_law        ,
 ) noexcept nogil:
 
-    cdef Py_ssize_t iint
+    cdef Py_ssize_t iint, idim
     cdef double dx2
     cdef double[3] pot
-    cdef double[2] dx
 
-    cdef double* pos = pos_in
-    cdef double* posp = posp_in
+    cdef double* dpos = dpos_in
     cdef double* grad = grad_in
 
-    if size_is_store:
+    for iint in range(segm_size):
 
-        for iint in range(segm_size):
-
-            dx[0] = pos[0] - posp[0]
-            dx2 = dx[0]*dx[0]
-            pos += 1
-            posp += 1
-            dx[1] = pos[0] - posp[0]
-            dx2 += dx[1]*dx[1]
-            pos += 1
-            posp += 1
-
-            inter_law(dx2, pot)
-
-            grad[0] += pot[1]*dx[0]
-            grad += 1
-            grad[0] += pot[1]*dx[1]
-            grad += 1
-
-    else:
-        
-        # First iteration
-        dx[0] = pos[0] - posp[0]
-        dx2 = dx[0]*dx[0]
-        pos += 1
-        posp += 1
-        dx[1] = pos[0] - posp[0]
-        dx2 += dx[1]*dx[1]
-        pos += 1
-        posp += 1
+        dx2 = dpos[0]*dpos[0] + dpos[1]*dpos[1]
 
         inter_law(dx2, pot)
 
-        grad[0] += 0.5*pot[1]*dx[0]
-        grad += 1
-        grad[0] += 0.5*pot[1]*dx[1]
-        grad += 1
+        grad[0] = pot[1]*dpos[0]
+        grad[1] = pot[1]*dpos[1]
 
-        for iint in range(1,segm_size):
+        dpos += 2
+        grad += 2
 
-            dx[0] = pos[0] - posp[0]
-            dx2 = dx[0]*dx[0]
-            pos += 1
-            posp += 1
-            dx[1] = pos[0] - posp[0]
-            dx2 += dx[1]*dx[1]
-            pos += 1
-            posp += 1
+@cython.cdivision(True)
+cdef void pot_nrg_grad_inter_store_law_2d(
+    long segm_size  ,      
+    double* dpos_in , double* grad_in   ,
+    inter_law_fun_type inter_law        ,
+) noexcept nogil:
 
-            inter_law(dx2, pot)
+    cdef Py_ssize_t iint, idim
+    cdef double dx2
+    cdef double[3] pot
 
-            grad[0] += pot[1]*dx[0]
-            grad += 1
-            grad[0] += pot[1]*dx[1]
-            grad += 1
+    cdef double* dpos = dpos_in
+    cdef double* grad = grad_in
 
-        # Last iteration
-        dx[0] = pos[0] - posp[0]
-        dx2 = dx[0]*dx[0]
-        pos += 1
-        posp += 1
-        dx[1] = pos[0] - posp[0]
-        dx2 += dx[1]*dx[1]
-        pos += 1
-        posp += 1
+    # First iteration
+    dx2 = dpos[0]*dpos[0] + dpos[1]*dpos[1]
+
+    inter_law(dx2, pot)
+
+    grad[0] = 0.5*pot[1]*dpos[0]
+    grad[1] = 0.5*pot[1]*dpos[1]
+
+    dpos += 2
+    grad += 2
+
+    for iint in range(1,segm_size):
+
+        dx2 = dpos[0]*dpos[0] + dpos[1]*dpos[1]
 
         inter_law(dx2, pot)
 
-        grad[0] += 0.5*pot[1]*dx[0]
-        grad += 1
-        grad[0] += 0.5*pot[1]*dx[1]
-        grad += 1
+        grad[0] = pot[1]*dpos[0]
+        grad[1] = pot[1]*dpos[1]
+
+        dpos += 2
+        grad += 2
+
+    # Last iteration
+    dx2 = dpos[0]*dpos[0] + dpos[1]*dpos[1]
+
+    inter_law(dx2, pot)
+
+    grad[0] = 0.5*pot[1]*dpos[0]
+    grad[1] = 0.5*pot[1]*dpos[1]
+
+@cython.cdivision(True)
+cdef void pot_nrg_grad_inter_size_gravity_nd(
+    long segm_size  , int geodim        ,      
+    double* dpos_in , double* grad_in   ,
+) noexcept nogil:
+
+    cdef Py_ssize_t iint, idim
+    cdef double dx2
+    cdef double[3] pot
+
+    cdef double* dpos = dpos_in
+    cdef double* grad = grad_in
+
+    for iint in range(segm_size):
+
+        dx2 = dpos[0]*dpos[0]
+        for idim in range(1,geodim):
+            dx2 += dpos[idim]*dpos[idim]
+
+        gravity_pot(dx2, pot)
+
+        for idim in range(geodim):
+            grad[idim] = pot[1]*dpos[idim]
+
+        dpos += geodim
+        grad += geodim
+
+@cython.cdivision(True)
+cdef void pot_nrg_grad_inter_store_gravity_nd(
+    long segm_size  , int geodim        ,      
+    double* dpos_in , double* grad_in   ,
+) noexcept nogil:
+
+    cdef Py_ssize_t iint, idim
+    cdef double dx2
+    cdef double[3] pot
+
+    cdef double* dpos = dpos_in
+    cdef double* grad = grad_in
+
+    # First iteration
+    dx2 = dpos[0]*dpos[0]
+    for idim in range(1,geodim):
+        dx2 += dpos[idim]*dpos[idim]
+
+    gravity_pot(dx2, pot)
+
+    for idim in range(geodim):
+        grad[idim] = 0.5*pot[1]*dpos[idim]
+
+    dpos += geodim
+    grad += geodim
+
+    for iint in range(1,segm_size):
+
+        dx2 = dpos[0]*dpos[0]
+        for idim in range(1,geodim):
+            dx2 += dpos[idim]*dpos[idim]
+
+        gravity_pot(dx2, pot)
+
+        for idim in range(geodim):
+            grad[idim] = pot[1]*dpos[idim]
+
+        dpos += geodim
+        grad += geodim
+
+    # Last iteration
+    dx2 = dpos[0]*dpos[0]
+    for idim in range(1,geodim):
+        dx2 += dpos[idim]*dpos[idim]
+
+    gravity_pot(dx2, pot)
+
+    for idim in range(geodim):
+        grad[idim] = 0.5*pot[1]*dpos[idim]
+
+@cython.cdivision(True)
+cdef void pot_nrg_grad_inter_size_gravity_2d(
+    long segm_size  ,      
+    double* dpos_in , double* grad_in   ,
+) noexcept nogil:
+
+    cdef Py_ssize_t iint, idim
+    cdef double dx2
+    cdef double[3] pot
+
+    cdef double* dpos = dpos_in
+    cdef double* grad = grad_in
+
+    for iint in range(segm_size):
+
+        dx2 = dpos[0]*dpos[0] + dpos[1]*dpos[1]
+
+        gravity_pot(dx2, pot)
+
+        grad[0] = pot[1]*dpos[0]
+        grad[1] = pot[1]*dpos[1]
+
+        dpos += 2
+        grad += 2
+
+@cython.cdivision(True)
+cdef void pot_nrg_grad_inter_store_gravity_2d(
+    long segm_size  ,      
+    double* dpos_in , double* grad_in   ,
+) noexcept nogil:
+
+    cdef Py_ssize_t iint, idim
+    cdef double dx2
+    cdef double[3] pot
+
+    cdef double* dpos = dpos_in
+    cdef double* grad = grad_in
+
+    # First iteration
+    dx2 = dpos[0]*dpos[0] + dpos[1]*dpos[1]
+
+    gravity_pot(dx2, pot)
+
+    grad[0] = 0.5*pot[1]*dpos[0]
+    grad[1] = 0.5*pot[1]*dpos[1]
+
+    dpos += 2
+    grad += 2
+
+    for iint in range(1,segm_size):
+
+        dx2 = dpos[0]*dpos[0] + dpos[1]*dpos[1]
+
+        gravity_pot(dx2, pot)
+
+        grad[0] = pot[1]*dpos[0]
+        grad[1] = pot[1]*dpos[1]
+
+        dpos += 2
+        grad += 2
+
+    # Last iteration
+    dx2 = dpos[0]*dpos[0] + dpos[1]*dpos[1]
+
+    gravity_pot(dx2, pot)
+
+    grad[0] = 0.5*pot[1]*dpos[0]
+    grad[1] = 0.5*pot[1]*dpos[1]
 
 @cython.cdivision(True)
 cdef void segm_pos_to_pot_nrg_hess(

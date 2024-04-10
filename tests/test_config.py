@@ -231,7 +231,7 @@ def AllConfigNames():
         '3D101k'    , '3C7k2'   , '3D7k2'   , '6C'      , '6D'      , '6Ck5'    ,
         '6Dk5'      , '5Dq'     , '2C3C5C'  , '3C_3dim' , '2D1_3dim', '3C11k'   ,
         '5q'        , 'uneven_nnpr'         , '2D2D'    , '2D1D1D'  , '2D2D5k'  ,
-        'complex_mass_charge'   ,
+        'complex_mass_charge'   , 'non_gravity_2dim'    , 'non_gravity_3dim'    ,
     ]
 
 
@@ -260,7 +260,7 @@ def load_from_config_file(config_name):
     if (inter_pow == -1.) and (inter_pm == 1) :
         inter_law = scipy.LowLevelCallable.from_cython(choreo.cython._NBodySyst, "gravity_pot")
     else:
-        raise NotImplementedError
+        inter_law = choreo.numba_funs_new.pow_inter_law(inter_pow/2, inter_pm)
 
     NBS = choreo.cython._NBodySyst.NBodySyst(geodim, nbody, mass, charge, Sym_list, inter_law)
     
