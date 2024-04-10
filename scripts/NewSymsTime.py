@@ -36,15 +36,15 @@ choreo.find_new.Load_wisdom_file(DP_Wisdom_file)
 if ("--no-show" in sys.argv):
     plt.show = (lambda : None)
 
-n_test = 1
-n_repeat = 100
+n_test = 1000
+n_repeat = 1
     
 def params_to_action_grad_TT(NBS, params_buf):
 
     TT = pyquickbench.TimeTrain(
         include_locs = False    ,
-        # names_reduction = "min" ,
-        names_reduction = "avg" ,
+        names_reduction = "min" ,
+        # names_reduction = "avg" ,
     )
     
     for i in range(n_test):
@@ -59,12 +59,12 @@ def params_to_action_grad(NBS, params_buf):
     
     
 all_funs = [
-    # params_to_action_grad_TT ,
-    params_to_action_grad ,
+    params_to_action_grad_TT ,
+    # params_to_action_grad ,
 ]
 
-# mode = 'vector_output'  
-mode = 'timings'
+mode = 'vector_output'  
+# mode = 'timings'
 
 def setup(test_name, fft_backend, nint_fac):
     
@@ -85,15 +85,14 @@ def setup(test_name, fft_backend, nint_fac):
     inter_pow = all_kwargs["inter_pow"]
     inter_pm = all_kwargs["inter_pm"]
     
-    inter_pm = -1
-    
     if (inter_pow == -1.) and (inter_pm == 1) :
         inter_law = scipy.LowLevelCallable.from_cython(choreo.cython._NBodySyst, "gravity_pot")
+        # inter_law = scipy.LowLevelCallable.from_cython(choreo.cython._NBodySyst, "elastic_pot")
     else:
         inter_law = choreo.numba_funs_new.pow_inter_law(inter_pow/2, inter_pm)
-
+        
     NBS = choreo.cython._NBodySyst.NBodySyst(geodim, nbody, mass, charge, Sym_list, inter_law)
-    
+
     # NBS.fftw_planner_effort = 'FFTW_ESTIMATE'
     # NBS.fftw_planner_effort = 'FFTW_MEASURE'
     # NBS.fftw_planner_effort = 'FFTW_PATIENT'
@@ -133,7 +132,7 @@ all_tests = [
     # '4C5k',
     # '4D3k',
     # '4D',
-    # '3C',
+    '3C',
     # '4C',
     # '20B',
     # '3D',
@@ -164,7 +163,7 @@ all_tests = [
     # "3C29k",
     # "3C37k",
     # '3C101k',
-    '20B',
+    # '20B',
 ]
 
 min_exp = 0
@@ -175,8 +174,8 @@ MonotonicAxes = ["nint_fac"]
 
 all_args = {
     "test_name" : all_tests,
-    "fft_backend" : ['scipy', 'mkl', 'fftw'],
-    # "fft_backend" : ['fftw'],
+    # "fft_backend" : ['scipy', 'mkl', 'fftw'],
+    "fft_backend" : ['fftw'],
     "nint_fac" : [2**i for i in range(min_exp,max_exp)] 
 }
 
@@ -195,6 +194,7 @@ all_timings = pyquickbench.run_benchmark(
     mode = mode  ,
     n_repeat = n_repeat     ,
     MonotonicAxes = MonotonicAxes,
+    time_per_test=0.2,
     ForceBenchmark = True,
     # PreventBenchmark = False,
     # ForceBenchmark = False,
@@ -208,8 +208,8 @@ plot_intent = {
     # "fft_backend" : 'curve_color'                  ,
     "fft_backend" : 'curve_linestyle'                  ,
     "nint_fac" : 'points'                           ,
-    # pyquickbench.repeat_ax_name :  'reduction_min'  ,
-    pyquickbench.repeat_ax_name :  'reduction_avg'  ,
+    pyquickbench.repeat_ax_name :  'reduction_min'  ,
+    # pyquickbench.repeat_ax_name :  'reduction_avg'  ,
     pyquickbench.out_ax_name :  'curve_color'  ,
     # pyquickbench.out_ax_name :  'reduction_sum'  ,
     # pyquickbench.out_ax_name :  'single_value'  ,
@@ -223,12 +223,13 @@ single_values_val = {
 relative_to_val_list = [
     None    ,
     # {pyquickbench.out_ax_name : 'params_to_ifft'},
-    {"fft_backend" : 'scipy'},
+    # {"fft_backend" : 'scipy'},
     # {"test_name" : '3C'},
 ]
 
-# plot_ylim = [1e-6, 1e-2]
-plot_ylim = None
+# plot_ylim = [1e-5, 3e-2]
+plot_ylim = [1e-7, 3e-2]
+# plot_ylim = None
 
 for relative_to_val in relative_to_val_list:
 
