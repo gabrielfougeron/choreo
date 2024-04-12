@@ -132,7 +132,7 @@ all_tests = [
     # '4C5k',
     # '4D3k',
     # '4D',
-    '3C',
+    # '3C',
     # '4C',
     # '20B',
     # '3D',
@@ -153,7 +153,7 @@ all_tests = [
     # '6Dk5',
     # '5Dq',
     # '2C3C5C',
-    # '3C_3dim',
+    '3C_3dim',
     # '2D1_3dim',
     # '3C2k',
     # '4C5k',
@@ -208,8 +208,8 @@ plot_intent = {
     # "fft_backend" : 'curve_color'                  ,
     "fft_backend" : 'curve_linestyle'                  ,
     "nint_fac" : 'points'                           ,
-    pyquickbench.repeat_ax_name :  'reduction_min'  ,
-    # pyquickbench.repeat_ax_name :  'reduction_avg'  ,
+    # pyquickbench.repeat_ax_name :  'reduction_min'  ,
+    pyquickbench.repeat_ax_name :  'reduction_avg'  ,
     pyquickbench.out_ax_name :  'curve_color'  ,
     # pyquickbench.out_ax_name :  'reduction_sum'  ,
     # pyquickbench.out_ax_name :  'single_value'  ,
@@ -228,7 +228,7 @@ relative_to_val_list = [
 ]
 
 # plot_ylim = [1e-5, 3e-2]
-plot_ylim = [1e-7, 3e-2]
+plot_ylim = [1e-7, 3e-3]
 # plot_ylim = None
 
 for relative_to_val in relative_to_val_list:
