@@ -232,6 +232,7 @@ def AllConfigNames():
         '6Dk5'      , '5Dq'     , '2C3C5C'  , '3C_3dim' , '2D1_3dim', '3C11k'   ,
         '5q'        , 'uneven_nnpr'         , '2D2D'    , '2D1D1D'  , '2D2D5k'  ,
         'complex_mass_charge'   , 'non_gravity_2dim'    , 'non_gravity_3dim'    ,
+        '2D1_non_gravity'       ,'2D1_3dim_non_gravity' ,
     ]
 
 
