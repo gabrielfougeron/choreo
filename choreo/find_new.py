@@ -77,6 +77,10 @@ def Find_Choreo(
     thumb_size,
     color,
     color_list,
+    fftw_planner_effort,
+    fftw_wisdom_only,
+    fftw_nthreads,
+    fft_backend,
 ):
     """
 
@@ -93,20 +97,17 @@ def Find_Choreo(
 
     NBS = choreo.cython._NBodySyst.NBodySyst(geodim, nbody, mass, charge, Sym_list, inter_law)
 
-    # NBS.fftw_planner_effort = 'FFTW_ESTIMATE'
-    # NBS.fftw_planner_effort = 'FFTW_MEASURE'
-    # NBS.fftw_planner_effort = 'FFTW_PATIENT'
-    NBS.fftw_planner_effort = 'FFTW_EXHAUSTIVE'
+    NBS.fftw_planner_effort = fftw_planner_effort
+    NBS.fftw_wisdom_only = fftw_wisdom_only
+    NBS.fftw_nthreads = fftw_nthreads
+    NBS.fft_backend = fft_backend
     
-    # NBS.fftw_wisdom_only = False
-    NBS.fftw_wisdom_only = True
+    print(fftw_planner_effort)
+    print(fftw_wisdom_only)
+    print(fftw_nthreads)
+    print(fft_backend)
     
-    NBS.fftw_nthreads = 1
-    
-    # NBS.fft_backend = 'scipy'
-    # NBS.fft_backend = 'mkl'
-    NBS.fft_backend = 'fftw'
-
+    return
 
     nint_fac_init = 128
 
@@ -974,7 +975,12 @@ def ChoreoLoadFromDict(params_dict, Workspace_folder, callback=None, args_list=N
     # n_opt_max = 1
     n_opt_max = params_dict["Solver_Optim"]["n_opt"]
     n_find_max = params_dict["Solver_Optim"]["n_opt"]
-
+    
+    fftw_planner_effort = params_dict['Solver_CLI'].get('fftw_planner_effort', 'FFTW_MEASURE')
+    fftw_wisdom_only = params_dict['Solver_CLI'].get('fftw_wisdom_only', False)
+    fftw_nthreads = 1
+    fft_backend = params_dict['Solver_CLI'].get('fft_backend', 'scipy')
+    
     ReconvergeSol = False
     AddNumberToOutputName = True
     
@@ -1020,7 +1026,7 @@ def ChoreoReadDictAndFind(Workspace_folder, config_filename="choreo_config.json"
                 
                 res = []
                 for i in range(n_threads):
-                    res.append(executor.submit(ChoreoFindFromDict,params_dict,Workspace_folder))
+                    res.append(executor.submit(ChoreoFindFromDict, params_dict, Workspace_folder))
                     time.sleep(0.01)
 
     elif Exec_Mul_Proc == "MultiThread":

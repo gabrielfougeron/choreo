@@ -659,7 +659,7 @@ window.addEventListener("drop",function(e){
           </td>
         </tr>
         <td style="border:none;" >
-          <label for="CLI_backend">Gradient and Hessian backend</label>
+          <label for="CLI_backend">Gradient and Hessian backend (deprecated)</label>
         </td>
         <td style="border:none; max-width:200px; text-align: center;">
           <select class="w3-select" id="CLI_backend" style="text-align: center;"> 
@@ -682,6 +682,44 @@ window.addEventListener("drop",function(e){
           </td>
           <td style="border:none; max-width:90px; text-align: center;">
             <input id ="CLI_SaveVideo"  class="w3-check" type="checkbox" style="vertical-align: super">
+          </td>
+        </tr>
+      </table>
+    </div>
+    <h2>Fast Fourier Transforms</h2>
+    <div style = "max-width:400px; ">
+      <table style="font-size:16px; border:none; display:table">
+        <tr>
+          <td style="border:none;" >
+            <label for="fft_backend">FFT backend</label>
+          </td>
+          <td style="border:none; max-width:200px; text-align: center;">
+            <select class="w3-select" id="fft_backend" style="text-align: center;"> 
+              <option value="scipy" selected>Scipy</option>
+              <option value="mkl">MKL</option>
+              <option value="fftw">FFTW</option>
+            </select>
+          </td>
+        </tr>
+        <tr>
+          <td style="border:none;" >
+            <label for="fftw_planner_effort">FFTW planner effort</label>
+          </td>
+          <td style="border:none; max-width:200px; text-align: center;">
+            <select class="w3-select" id="fftw_planner_effort" style="text-align: center;"> 
+              <option value="FFTW_ESTIMATE" selected>FFTW_ESTIMATE</option>
+              <option value="FFTW_MEASURE">FFTW_MEASURE</option>
+              <option value="FFTW_PATIENT">FFTW_PATIENT</option>
+              <option value="FFTW_EXHAUSTIVE">FFTW_EXHAUSTIVE</option>
+            </select>
+          </td>
+        </tr>
+        <tr>
+          <td style="border:none;" >
+            <label for="fftw_wisdom_only">FFTW wisdom only</label>
+          </td>
+          <td style="border:none; max-width:90px; text-align: center;">
+            <input id ="fftw_wisdom_only"  class="w3-check" type="checkbox" style="vertical-align: super">
           </td>
         </tr>
       </table>
