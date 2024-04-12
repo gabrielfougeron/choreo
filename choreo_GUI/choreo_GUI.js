@@ -638,6 +638,10 @@ function GatherConfigDict() {
     ConfigDict['Solver_CLI'] ['SaveImage']    = document.getElementById('CLI_SaveImage').checked   
     ConfigDict['Solver_CLI'] ['SaveVideo']    = document.getElementById('CLI_SaveVideo').checked   
 
+    ConfigDict['Solver_CLI'] ['fft_backend']            = document.getElementById('fft_backend').value
+    ConfigDict['Solver_CLI'] ['fftw_planner_effort']    = document.getElementById('fftw_planner_effort').value
+    ConfigDict['Solver_CLI'] ['fftw_wisdom_only']       = document.getElementById('fftw_wisdom_only').checked
+
     return ConfigDict
 }
 
@@ -845,6 +849,10 @@ function LoadConfigDict(ConfigDict) {
 
     document.getElementById('CLI_SaveImage').checked        = ConfigDict['Solver_CLI'] ['SaveImage']    
     document.getElementById('CLI_SaveVideo').checked        = ConfigDict['Solver_CLI'] ['SaveVideo']    
+
+    document.getElementById('fft_backend').value            = ConfigDict['Solver_CLI'] ['fft_backend']
+    document.getElementById('fftw_planner_effort').value    = ConfigDict['Solver_CLI'] ['fftw_planner_effort']
+    document.getElementById('fftw_wisdom_only').checked     = ConfigDict['Solver_CLI'] ['fftw_wisdom_only']
 
     MakeBodyGraph()
     
