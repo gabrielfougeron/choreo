@@ -101,13 +101,6 @@ def Find_Choreo(
     NBS.fftw_wisdom_only = fftw_wisdom_only
     NBS.fftw_nthreads = fftw_nthreads
     NBS.fft_backend = fft_backend
-    
-    print(fftw_planner_effort)
-    print(fftw_wisdom_only)
-    print(fftw_nthreads)
-    print(fft_backend)
-    
-    return
 
     nint_fac_init = 128
 
@@ -116,7 +109,7 @@ def Find_Choreo(
     print('')
     
     nparam_nosym = NBS.geodim * NBS.nint * NBS.nbody
-    nparam_tot = NBS.nparams_incl_o
+    nparam_tot = NBS.nparams_incl_o // 2
 
     print('Imposed constraints lead to the detection of:')
     print(f'    {NBS.nloop:d} independant loops')

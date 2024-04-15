@@ -2787,7 +2787,6 @@ cdef class NBodySyst():
 
         TT.toc("pos_slice_to_segmpos")
 
-
         memset(&self._pot_nrg_grad[0,0,0], 0, sizeof(double)*self.nsegm*self.segm_store*self.geodim)
 
         segm_pos_to_pot_nrg_grad(
@@ -3510,7 +3509,6 @@ cdef void partial_fft_to_pos_slice_1_sub(
 
     free(ztmp)
 
-    
 @cython.cdivision(True)
 cdef void pos_slice_to_partial_fft_1_sub(
     double* const_pos_slice         ,
@@ -3680,6 +3678,12 @@ cdef void ifft_to_params(
     cdef double fac
     cdef Py_ssize_t il, i
 
+    cdef double complex* zsrc
+    cdef double complex* zdest
+    cdef double* dsrc
+    cdef double* ddest
+    cdef int m
+
     if fft_backend == USE_FFTW_FFT:
 
         for il in range(nloop):
@@ -3726,6 +3730,37 @@ cdef void ifft_to_params(
                     dest = params_buf[il]
                     n = (params_shifts[il+1] - params_shifts[il])
                     scipy.linalg.cython_blas.dcopy(&n,&params[0,0,0],&int_one,dest,&int_one)
+
+#     elif fft_backend == USE_SCIPY_FFT:
+#           # Special MKL version with data copies.
+#         with gil:
+# 
+#             for il in range(nloop):
+# 
+#                 if params_shapes[il,1] > 0:
+# 
+#                     ifft = np.empty((ifft_shapes[il,1], ifft_shapes[il,2], ifft_shapes[il,0]), dtype=np.complex128)
+# 
+#                     m = ifft_shapes[il,1] * ifft_shapes[il,2]
+#                     n = ifft_shapes[il,0]
+# 
+#                     for i in range(m):
+#                         zsrc = ifft_buf_ptr[il] + i
+#                         zdest = (&ifft[0,0,0]) + i * ifft_shapes[il,0]
+#                         scipy.linalg.cython_blas.zcopy(&n,zsrc,&m,zdest,&int_one)
+# 
+#                     params = mkl_fft._numpy_fft.irfft(ifft, axis=2)
+# 
+#                     m = params_shapes[il,1] * params_shapes[il,2]
+#                     n = params_shapes[il,0]
+# 
+#                     for i in range(m):
+#                         dsrc = &params[0,0,0] + i * 2 * params_shapes[il,0]
+#                         ddest = params_buf[il] + i
+#                         scipy.linalg.cython_blas.dcopy(&n,dsrc,&int_one,ddest,&m)
+
+
+
 
     if direction < 0:
         for il in range(nloop):
@@ -3931,6 +3966,7 @@ cdef void pos_slice_to_segmpos(
     cdef double* tmp
 
     cdef int geodim = InterSpaceRot.shape[1]
+    cdef int minus_geodim = -geodim
     cdef int segm_store_int = segm_store
     cdef int nitems_size = segm_size*geodim
     cdef int nitems_store = segm_store*geodim
@@ -3968,6 +4004,7 @@ cdef void pos_slice_to_segmpos(
             segmpos = segmpos_buf_ptr + nitems_store*(isegm+1) - geodim
 
             if InterSpaceRotIsId[isegm]:
+
                 for i in range(segm_store):
                     for idim in range(geodim):
                         segmpos[idim] = pos_slice[idim]
@@ -3979,7 +4016,6 @@ cdef void pos_slice_to_segmpos(
                 scipy.linalg.cython_blas.dgemm(transn, transn, &geodim, &segm_store_int, &geodim, &one_double, &InterSpaceRot[isegm,0,0], &geodim, pos_slice, &geodim, &zero_double, tmp, &geodim)
 
                 for i in range(segm_store):
-
                     for idim in range(geodim):
                         segmpos[idim] = tmp[idim]
                     segmpos -= geodim
