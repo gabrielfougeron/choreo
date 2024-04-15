@@ -22,7 +22,6 @@ dependencies:
   - pytest
   - pytest-xdist
   - attrs
-  - pyfftw
   - build
   - pyodide-build=0.24.1
   - Sphinx

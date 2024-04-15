@@ -39,6 +39,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 import scipy
 
+import choreo
+DP_Wisdom_file = os.path.join(__PROJECT_ROOT__, "PYFFTW_wisdom.txt")
+choreo.find_new.Load_wisdom_file(DP_Wisdom_file)
+
 
 base_shape = [4,4]
 def make_shape(n, axis):
@@ -84,9 +88,9 @@ def setup_all(fft_type, nthreads, all_sizes):
         pyfftw.interfaces.cache.enable()
         pyfftw.interfaces.cache.set_keepalive_time(300000)
 
-        planner_effort = 'FFTW_ESTIMATE'
+        # planner_effort = 'FFTW_ESTIMATE'
         # planner_effort = 'FFTW_MEASURE'
-        # planner_effort = 'FFTW_PATIENT'
+        planner_effort = 'FFTW_PATIENT'
         # planner_effort = 'FFTW_EXHAUSTIVE'
 
         pyfftw.config.NUM_THREADS = nthreads
@@ -167,7 +171,7 @@ def setup_all(fft_type, nthreads, all_sizes):
 
     return all_funs
 
-def plot_all(relative_to = None):
+def plot_all(relative_to_val = None):
 
     all_fft_types = [
         'fft',
@@ -243,11 +247,6 @@ def plot_all(relative_to = None):
             ShowProgress=True               ,
             # ForceBenchmark=True             ,
         )
-        
-        if relative_to is None:
-            relative_to_val = None
-        else:
-            relative_to_val = {pyquickbench.fun_ax_name:relative_to}
             
         plot_intent = {
             "n" : 'points'                           ,
@@ -277,5 +276,13 @@ def plot_all(relative_to = None):
 plot_all()
 
 # %%
-plot_all(relative_to='scipy')
 
+relative_to_val = {
+    pyquickbench.fun_ax_name:'scipy',
+    # 'axis':0,
+}
+
+plot_all(relative_to_val=relative_to_val)
+
+
+choreo.find_new.Write_wisdom_file(DP_Wisdom_file)

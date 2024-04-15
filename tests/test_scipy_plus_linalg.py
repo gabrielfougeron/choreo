@@ -141,9 +141,6 @@ def test_matmulNT(float64_tols: float_tol, Dense_linalg_dims: dimension):
                 
                 assert np.allclose(ABT_np, ABT_blas, rtol = float64_tols.rtol, atol = float64_tols.atol)     
                                 
-
-
-
 @ProbabilisticTest()
 def test_matmul_realpart(float64_tols: float_tol, Dense_linalg_dims: dimension):
     
