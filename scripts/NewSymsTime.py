@@ -36,7 +36,7 @@ choreo.find_new.Load_wisdom_file(DP_Wisdom_file)
 if ("--no-show" in sys.argv):
     plt.show = (lambda : None)
 
-n_test = 1000
+n_test = 10
 n_repeat = 1
     
 def params_to_action_grad_TT(NBS, params_buf):
@@ -132,7 +132,7 @@ all_tests = [
     # '4C5k',
     # '4D3k',
     # '4D',
-    # '3C',
+    '3C',
     # '4C',
     # '20B',
     # '3D',
@@ -153,7 +153,7 @@ all_tests = [
     # '6Dk5',
     # '5Dq',
     # '2C3C5C',
-    '3C_3dim',
+    # '3C_3dim',
     # '2D1_3dim',
     # '3C2k',
     # '4C5k',
@@ -167,15 +167,15 @@ all_tests = [
 ]
 
 min_exp = 0
-max_exp = 14
-# max_exp = 20
+max_exp = 20
 
 MonotonicAxes = ["nint_fac"]
 
 all_args = {
     "test_name" : all_tests,
     # "fft_backend" : ['scipy', 'mkl', 'fftw'],
-    "fft_backend" : ['fftw'],
+    "fft_backend" : ['scipy', 'mkl'],
+    # "fft_backend" : ['fftw'],
     "nint_fac" : [2**i for i in range(min_exp,max_exp)] 
 }
 
@@ -189,7 +189,7 @@ all_timings = pyquickbench.run_benchmark(
     all_funs                ,
     setup = setup           ,
     filename = filename     ,
-    StopOnExcept = True     ,
+    # StopOnExcept = True     ,
     ShowProgress = True     ,
     mode = mode  ,
     n_repeat = n_repeat     ,
@@ -208,8 +208,8 @@ plot_intent = {
     # "fft_backend" : 'curve_color'                  ,
     "fft_backend" : 'curve_linestyle'                  ,
     "nint_fac" : 'points'                           ,
-    # pyquickbench.repeat_ax_name :  'reduction_min'  ,
-    pyquickbench.repeat_ax_name :  'reduction_avg'  ,
+    pyquickbench.repeat_ax_name :  'reduction_min'  ,
+    # pyquickbench.repeat_ax_name :  'reduction_avg'  ,
     pyquickbench.out_ax_name :  'curve_color'  ,
     # pyquickbench.out_ax_name :  'reduction_sum'  ,
     # pyquickbench.out_ax_name :  'single_value'  ,
@@ -227,9 +227,9 @@ relative_to_val_list = [
     # {"test_name" : '3C'},
 ]
 
-# plot_ylim = [1e-5, 3e-2]
-plot_ylim = [1e-7, 3e-3]
-# plot_ylim = None
+# plot_ylim = [1e-6, 8e-3]
+# plot_ylim = [1e-7, 3e-3]
+plot_ylim = None
 
 for relative_to_val in relative_to_val_list:
 

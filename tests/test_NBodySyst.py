@@ -71,6 +71,7 @@ def test_segmpos_to_all_pos(AllNBS, float64_tols):
         all_coeffs = scipy.fft.rfft(all_pos, axis=1,norm='forward')
         params = NBS.all_coeffs_to_params_noopt(all_coeffs)
 
+        print(np.linalg.norm(params_buf-params))
         assert np.allclose(params_buf, params, rtol = float64_tols.rtol, atol = float64_tols.atol) 
         
 def test_capture_co(AllNBS):

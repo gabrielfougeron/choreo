@@ -11,6 +11,7 @@ cdef char *transt = 't'
 cdef int int_zero = 0
 cdef int int_one = 1
 cdef int int_two = 2
+cdef int int_minusone = -1
 
 cdef double minusone_double = -1
 cdef double half_double = 0.5

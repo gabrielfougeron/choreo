@@ -1,4 +1,5 @@
 setuptools>=42
 wheel
-Cython
+Cython>=3.0
 build
+pyfftw @ git+ssh://git@github.com/gabrielfougeron/pyFFTW.git@84e58bdff277bb654b77df1fd20febfbbd1e5dd2
