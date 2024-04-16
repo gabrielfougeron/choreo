@@ -79,6 +79,8 @@ def main():
         '2D2D',
         '2D2D5k',
         '2D1D1D',
+        '1Dx3',
+        '1D1D1D',
     ]
 
     TT = pyquickbench.TimeTrain(
@@ -154,22 +156,22 @@ def doit(config_name):
     nparam_nosym = geodim * NBS.nint * nbody
     nparam_tot = NBS.nparams_incl_o // 2
 
-    # print('*****************************************')
-    # print('')
-    # print()
-    # print(f"total binary segment interaction count: {NBS.nbin_segm_tot}")
-    # print(f"unique binary segment interaction count: {NBS.nbin_segm_unique}")
-    # print(f'{NBS.nsegm = }')
-    # print(f"ratio of total to unique binary interactions : {NBS.nbin_segm_tot  / NBS.nbin_segm_unique}")
-    # print(f'ratio of integration intervals to segments : {(nbody * NBS.nint_min) / NBS.nsegm}')
-    # print(f"ratio of parameters before and after constraints: {nparam_nosym / nparam_tot}")
+    print('*****************************************')
+    print('')
+    print()
+    print(f"total binary segment interaction count: {NBS.nbin_segm_tot}")
+    print(f"unique binary segment interaction count: {NBS.nbin_segm_unique}")
+    print(f'{NBS.nsegm = }')
+    print(f"ratio of total to unique binary interactions : {NBS.nbin_segm_tot  / NBS.nbin_segm_unique}")
+    print(f'ratio of integration intervals to segments : {(nbody * NBS.nint_min) / NBS.nsegm}')
+    print(f"ratio of parameters before and after constraints: {nparam_nosym / nparam_tot}")
 
     reduction_ratio = nparam_nosym / nparam_tot
 
     assert abs((nparam_nosym / nparam_tot)  - reduction_ratio) < eps
     
 
-    return
+    # return
 
     filename = os.path.join(Workspace_folder, config_name+'_graph_segm.pdf')
     choreo.cython._NBodySyst.PlotTimeBodyGraph(NBS.SegmGraph, nbody, NBS.nint_min, filename)
