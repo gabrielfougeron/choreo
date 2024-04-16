@@ -36,7 +36,7 @@ choreo.find_new.Load_wisdom_file(DP_Wisdom_file)
 if ("--no-show" in sys.argv):
     plt.show = (lambda : None)
 
-n_test = 10
+n_test = 100
 n_repeat = 1
     
 def params_to_action_grad_TT(NBS, params_buf):
@@ -167,14 +167,14 @@ all_tests = [
 ]
 
 min_exp = 0
-max_exp = 20
+max_exp = 15
 
 MonotonicAxes = ["nint_fac"]
 
 all_args = {
     "test_name" : all_tests,
-    # "fft_backend" : ['scipy', 'mkl', 'fftw'],
-    "fft_backend" : ['scipy', 'mkl'],
+    "fft_backend" : ['scipy', 'mkl', 'fftw'],
+    # "fft_backend" : ['scipy', 'mkl'],
     # "fft_backend" : ['fftw'],
     "nint_fac" : [2**i for i in range(min_exp,max_exp)] 
 }
@@ -210,9 +210,9 @@ plot_intent = {
     "nint_fac" : 'points'                           ,
     pyquickbench.repeat_ax_name :  'reduction_min'  ,
     # pyquickbench.repeat_ax_name :  'reduction_avg'  ,
-    pyquickbench.out_ax_name :  'curve_color'  ,
+    # pyquickbench.out_ax_name :  'curve_color'  ,
     # pyquickbench.out_ax_name :  'reduction_sum'  ,
-    # pyquickbench.out_ax_name :  'single_value'  ,
+    pyquickbench.out_ax_name :  'single_value'  ,
 }
 
 single_values_val = {
@@ -223,7 +223,7 @@ single_values_val = {
 relative_to_val_list = [
     None    ,
     # {pyquickbench.out_ax_name : 'params_to_ifft'},
-    # {"fft_backend" : 'scipy'},
+    {"fft_backend" : 'scipy'},
     # {"test_name" : '3C'},
 ]
 
