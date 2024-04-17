@@ -159,6 +159,14 @@ cdef class QuadFormula:
         else:
             self._th_cvg_rate = th_cvg_rate
 
+    def __repr__(self):
+
+        res = f'QuadFormula object with {self.nsteps} nodes\n'
+        res += f'Nodes: {self.x}\n'
+        res += f'Weights: {self.w}\n'
+
+        return res
+
     @property
     def nsteps(self):
         return self._w.shape[0]
@@ -174,7 +182,7 @@ cdef class QuadFormula:
     @property
     def th_cvg_rate(self):
         return self._th_cvg_rate
-    
+
 cpdef np.ndarray[double, ndim=1, mode="c"] IntegrateOnSegment(
     object fun              ,
     int ndim                ,

@@ -12,6 +12,134 @@ from choreo.scipy_plus.cython.SegmQuad import QuadFormula
 from choreo.scipy_plus.cython.ODE import ExplicitSymplecticRKTable
 from choreo.scipy_plus.cython.ODE import ImplicitRKTable
 
+def tridiag_eigen(d, e, z = False):
+    """
+    Adapted from mpmath 
+    
+    This subroutine find the eigenvalues and the first components of the
+    eigenvectors of a real symmetric tridiagonal matrix using the implicit
+    QL method.
+
+    parameters:
+
+      d (input/output) real array of length n. on input, d contains the diagonal
+        elements of the input matrix. on output, d contains the eigenvalues in
+        ascending order.
+
+      e (input) real array of length n. on input, e contains the offdiagonal
+        elements of the input matrix in e[0:(n-1)]. On output, e has been
+        destroyed.
+
+      z (input/output) If z is equal to False, no eigenvectors will be computed.
+        Otherwise on input z should have the format z[0:m,0:n] (i.e. a real or
+        complex matrix of dimension (m,n) ). On output this matrix will be
+        multiplied by the matrix of the eigenvectors (i.e. the columns of this
+        matrix are the eigenvectors): z --> z*EV
+        That means if z[i,j]={1 if j==j; 0 otherwise} on input, then on output
+        z will contain the first m components of the eigenvectors. That means
+        if m is equal to n, the i-th eigenvector will be z[:,i].
+
+    This routine is a python translation (in slightly modified form) of the
+    fortran routine imtql2.f in the software library EISPACK (see netlib.org)
+    which itself is based on the algol procudure imtql2 desribed in:
+     - num. math. 12, p. 377-383(1968) by matrin and wilkinson
+     - modified in num. math. 15, p. 450(1970) by dubrulle
+     - handbook for auto. comp., vol. II-linear algebra, p. 241-248 (1971)
+    See also the routine gaussq.f in netlog.org or acm algorithm 726.
+    """
+
+    n = len(d)
+    e[n-1] = 0
+    iterlim = 2 * mpmath.mp.dps
+
+    for l in range(n):
+        j = 0
+        while 1:
+            m = l
+            while 1:
+                # look for a small subdiagonal element
+                if m + 1 == n:
+                    break
+                if abs(e[m]) <= mpmath.mp.eps * (abs(d[m]) + abs(d[m + 1])):
+                    break
+                m = m + 1
+            if m == l:
+                break
+
+            if j >= iterlim:
+                raise RuntimeError("tridiag_eigen: no convergence to an eigenvalue after %d iterations" % iterlim)
+
+            j += 1
+
+            # form shift
+
+            p = d[l]
+            g = (d[l + 1] - p) / (2 * e[l])
+            r = mpmath.mp.hypot(g, 1)
+
+            if g < 0:
+                s = g - r
+            else:
+                s = g + r
+
+            g = d[m] - p + e[l] / s
+
+            s, c, p = 1, 1, 0
+
+            for i in range(m - 1, l - 1, -1):
+                f = s * e[i]
+                b = c * e[i]
+                if abs(f) > abs(g):             # this here is a slight improvement also used in gaussq.f or acm algorithm 726.
+                    c = g / f
+                    r = mpmath.mp.hypot(c, 1)
+                    e[i + 1] = f * r
+                    s = 1 / r
+                    c = c * s
+                else:
+                    s = f / g
+                    r = mpmath.mp.hypot(s, 1)
+                    e[i + 1] = g * r
+                    c = 1 / r
+                    s = s * c
+                g = d[i + 1] - p
+                r = (d[i] - g) * s + 2 * c * b
+                p = s * r
+                d[i + 1] = g + p
+                g = c * r - b
+
+                if not isinstance(z, bool):
+                    # calculate eigenvectors
+                    for w in range(z.rows):
+                        f = z[w,i+1]
+                        z[w,i+1] = s * z[w,i] + c * f
+                        z[w,i  ] = c * z[w,i] - s * f
+
+            d[l] = d[l] - p
+            e[l] = g
+            e[m] = 0
+
+#     for ii in range(1, n):
+#         # sort eigenvalues and eigenvectors (bubble-sort)
+#         i = ii - 1
+#         k = i
+#         p = d[i]
+#         for j in range(ii, n):
+#             if d[j] >= p:
+#                 continue
+#             k = j
+#             p = d[k]
+#         if k == i:
+#             continue
+#         d[k] = d[i]
+#         d[i] = p
+# 
+#         if not isinstance(z, bool):
+#             for w in range(z.rows):
+#                 p = z[w,i]
+#                 z[w,i] = z[w,k]
+#                 z[w,k] = p
+
+
 # 3 terms definition of polynomial families
 # P_n+1 = (X - a_n) P_n - b_n P_n-1
 def GaussLegendre3Term(n):
@@ -61,29 +189,21 @@ def EvalAllFrom3Term(a,b,n,x):
 
 def GaussMatFrom3Term(a,b,n):
     
-    J =  mpmath.matrix(n)
-    
-    for i in range(n):
-        J[i,i] = a[i]
+    d = a.copy()
+    e =  mpmath.matrix(n,1)
 
     for i in range(n-1):
+        e[i] = mpmath.sqrt(b[i+1])
 
-        J[i  ,i+1] = mpmath.sqrt(b[i+1])
-        J[i+1,i  ] = J[i  ,i+1]
-
-    return J
+    return d, e
 
 def LobattoMatFrom3Term(a,b,n):
     
-    J =  mpmath.matrix(n)
-    
-    for i in range(n-1):
-        J[i,i] = a[i]
+    d = a.copy()
+    e =  mpmath.matrix(n,1)
 
     for i in range(n-2):
-
-        J[i  ,i+1] = mpmath.sqrt(b[i+1])
-        J[i+1,i  ] = J[i  ,i+1]
+        e[i] = mpmath.sqrt(b[i+1])
 
     m = n-1
 
@@ -105,54 +225,52 @@ def LobattoMatFrom3Term(a,b,n):
 
     (alpha, beta) = (mat ** -1) * rhs
 
-    J[n-1, n-1] = alpha
-    J[n-2, n-1] = mpmath.sqrt(beta)
-    J[n-1, n-2] = J[n-2, n-1]
+    d[n-1] = alpha
+    e[n-2] = mpmath.sqrt(beta)
 
-    return J
+    return d, e
 
 def RadauMatFrom3Term(a,b,n,x):
     
-    J =  mpmath.matrix(n)
+    d = a.copy()
+    e =  mpmath.matrix(n,1)
     
     for i in range(n-1):
-        J[i,i] = a[i]
-
-    for i in range(n-1):
-
-        J[i  ,i+1] = mpmath.sqrt(b[i+1])
-        J[i+1,i  ] = J[i  ,i+1]
+        e[i] = mpmath.sqrt(b[i+1])
 
     m = n-1
     phim = EvalAllFrom3Term(a,b,m,x)
     alpha = x - b[m] * phim[m-1] / phim[m]
 
-    J[n-1, n-1] = alpha
+    d[n-1] = alpha
 
-    return J
+    return d, e
 
 def QuadFrom3Term(a,b,n, method = "Gauss"):
 
     if method == "Gauss":
-        J = GaussMatFrom3Term(a,b,n)
+        d, e = GaussMatFrom3Term(a,b,n)
     elif method == "Radau_I":
         x = mpmath.mpf(0)
-        J = RadauMatFrom3Term(a,b,n,x)
+        d, e = RadauMatFrom3Term(a,b,n,x)
     elif method == "Radau_II":
         x = mpmath.mpf(1)
-        J = RadauMatFrom3Term(a,b,n,x)
+        d, e = RadauMatFrom3Term(a,b,n,x)
     elif method == "Lobatto_III":
-        J = LobattoMatFrom3Term(a,b,n)
+        d, e = LobattoMatFrom3Term(a,b,n)
     else:
         raise ValueError(f"Unknown method {method}")
     
-    z, P = mpmath.mp.eigsy(J)
-
+    P = mpmath.matrix(1, n)
+    P[0,0] = 1
+       
+    tridiag_eigen(d, e, P)   
+    
     w = mpmath.matrix(n,1)
     for i in range(n):
         w[i] = b[0] * P[0,i] * P[0,i]
 
-    return w, z
+    return w, d
 
 def BuildButcherCMat(z,n,m):
     
@@ -223,7 +341,6 @@ def ComputeButcher_sub_collocation(z,n):
             
     return Butcher_a
 
-
 def SymmetricAdjointQuadrature(w,z,n):
 
     w_ad = mpmath.matrix(n,1)
@@ -267,7 +384,7 @@ def SymplecticAdjointButcher(Butcher_a, Butcher_b, n):
 
 @functools.cache
 def ComputeGaussButcherTables(n, dps=60, method="Gauss"):
-
+    
     mpmath.mp.dps = dps
 
     a, b = ShiftedGaussLegendre3Term(n)
@@ -302,7 +419,7 @@ def ComputeGaussButcherTables(n, dps=60, method="Gauss"):
         
     if not(known_method):
         raise ValueError(f'Unknown method {method}')
-        
+
     return Butcher_a, w, z, Butcher_beta, Butcher_gamma
 
 def GetConvergenceRate(method, n):
