@@ -704,8 +704,8 @@ cdef class NBodySyst():
     def DetectLoops(self, double[::1] bodymass, double[::1] bodycharge, long nint_min_fac = 1):
 
         cdef Py_ssize_t il, ib
-        
         cdef bint AnyTimeRev = False
+        
         All_den_list_on_entry = []
         for Sym in self.Sym_list:
             All_den_list_on_entry.append(Sym.TimeShiftDen)
