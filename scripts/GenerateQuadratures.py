@@ -1,7 +1,6 @@
 import mpmath
 import numpy as np
 
-
 import os
 import multiprocessing
 
@@ -19,105 +18,96 @@ __PROJECT_ROOT__ = os.path.abspath(os.path.join(os.path.dirname(__file__),os.par
 sys.path.append(__PROJECT_ROOT__)
 
 import choreo 
+import pyquickbench
+
+dps = 30
+dps_overkill = 1000
+mpmath.mp.dps = dps
+
+n_max = 8
+
+def eigenvect(n):
+
+    w, z = choreo.scipy_plus.multiprec_tables.QuadFrom3Term(n)  
+    
+
+def vdm(n):
+    
+    a, b = choreo.scipy_plus.multiprec_tables.ShiftedGaussLegendre3Term(n)
+    ww, zz, _ = choreo.scipy_plus.multiprec_tables.QuadFrom3Term_VDM(n)
 
 
 
-n = 2
-a, b = choreo.ShiftedGaussLegendre3Term(n)
+all_funs = [
+    vdm,
+    eigenvect   ,
+]
+
+all_sizes = [2**n for n in range(n_max)]
+ 
+bench_folder = os.path.join(__PROJECT_ROOT__,'examples','generated_files')
+
+if not(os.path.isdir(bench_folder)):
+    os.makedirs(bench_folder)
+    
+basename_bench_filename = 'quadrature_timings.npy'
+timings_filename = os.path.join(bench_folder,basename_bench_filename)
 
 
-print(f'Current precision {mpmath.mp.dps}')
+all_times = pyquickbench.run_benchmark(
+    all_sizes   ,
+    all_funs    ,
+    filename = timings_filename,
+    ForceBenchmark = True,
+)
+
+for relative_to in [
+    None,
+    {pyquickbench.fun_ax_name:"vdm"}
+]:
+    
+    pyquickbench.plot_benchmark(
+        all_times   ,
+        all_sizes   ,
+        all_funs    ,
+        relative_to_val = relative_to,
+    )
+
+    
 
 
 
-
-
-
-w, z = choreo.QuadFrom3Term(a,b,n)
-
-# print(w)
-# print('')
-# print(z)
+# def cp_err(A,B,n):
+#     
+#     err = 0
+#     for i in range(n):
+#         err += abs(A[i] - B[i])
+#             
+#     return float(err)
 # 
-# print('')
-# print('Difference between Eigen weights and closed form')
-# for i in range(n):
-# 
-#     xi = z[i]
-#     phi = choreo.EvalAllFrom3Term(a,b,n,xi)
-# 
-#     wi = 2 * (1 - xi*xi) / ((n * (phi[n-1]) *  mpmath.factorial(2*(n-1))/(mpmath.mpf(2)**(n-1) * mpmath.factorial((n-1))**2) )**2)
-# 
-#     print(abs(wi-w[i]))
-
-print('')
-print('Evaluation of Lagrange on its zeros')
-for i in range(n):
-
-    xi = z[i]
-    phi = choreo.EvalAllFrom3Term(a,b,n,xi)
-    print(phi[n])
-
-
-
-nint = choreo.SafeGLIntOrder(n)
-print('')
-print(n,nint)
-
-
-aint, bint = choreo.ShiftedGaussLegendre3Term(nint)
-wint, zint = choreo.QuadFrom3Term(aint,bint,nint)
-
-
-
-lagint = mpmath.matrix(n,1)
-
-for iint in range(nint):
-
-    lag = choreo.EvalLagrange(a,b,n,z,zint[iint])
-
-    for i in range(n):
-        lagint[i] = lagint[i] + wint[iint] * lag[i]
-
-
-# 
-# print('')
-# print(lagint-w)
-# 
-# 
-# ButcherA = choreo.ComputeButcherA(a,b,n,z=None,wint=None,zint=None,nint=None)
-# 
-# ButcherA_np = np.array(ButcherA.tolist(),dtype=np.float64)
-
-
-# print('')
-# 
-# print(choreo.a_table_Gauss_2)
-# print(choreo.b_table_Gauss_2)
-# print(choreo.c_table_Gauss_2)
-# 
-# 
-# print(ButcherA)
-# print(w)
-# print(z)
-
-Butcher_a_np, Butcher_b_np, Butcher_c_np = choreo.ComputeGaussButcherTables_np(n)
-
-
-print(choreo.a_table_Gauss_2 - Butcher_a_np)
-print(choreo.b_table_Gauss_2 - Butcher_b_np)
-print(choreo.c_table_Gauss_2 - Butcher_c_np)
-
-
-
-# print(ButcherA)
-# print(w)
-# print(z)
-
-imin = 2
-imax = 20
-for i in range(imin,imax+1):
-    tbeg = time.perf_counter()
-    Butcher_a_np, Butcher_b_np, Butcher_c_np = choreo.ComputeGaussButcherTables_np(i)
-    tend = time.perf_counter()
-    print(f'n = {i}, time = {tend-tbeg}')
+# for nm1 in range(n_max):
+#     n = nm1+1
+#     
+#     mpmath.mp.dps = dps_overkill
+#     a, b = choreo.scipy_plus.multiprec_tables.ShiftedGaussLegendre3Term(n)
+#     wo, zo = choreo.scipy_plus.multiprec_tables.QuadFrom3Term(a,b,n)
+#     
+#     mpmath.mp.dps = dps
+#     
+#     a, b = choreo.scipy_plus.multiprec_tables.ShiftedGaussLegendre3Term(n)
+#     w, z = choreo.scipy_plus.multiprec_tables.QuadFrom3Term(a,b,n)
+#     
+#     print("Eigenvec")
+#     
+#     print(cp_err(w,wo,n))
+#     print(cp_err(z,zo,n))
+#     
+#     a, b = choreo.scipy_plus.multiprec_tables.ShiftedGaussLegendre3Term(n)
+#     ww, zz, _ = choreo.scipy_plus.multiprec_tables.QuadFrom3Term_VDM(a,b,n)
+#     
+#     print("VDM solve")
+#     
+#     print(cp_err(ww,wo,n))
+#     print(cp_err(zz,zo,n))
+#     print()
+#     
