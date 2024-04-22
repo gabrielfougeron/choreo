@@ -14,5 +14,6 @@ mpmath.mp.dps = dps
 
 n = 10
 
-rk = choreo.scipy_plus.multiprec_tables.ComputeGaussButcherTables(n,method='Lobatto_IIIC')
-
+parker = choreo.scipy_plus.multiprec_tables.ComputeGaussButcherTables(n, dps=dps, method="Gauss")
+    
+    
