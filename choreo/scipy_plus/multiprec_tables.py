@@ -12,40 +12,10 @@ from choreo.scipy_plus.cython.SegmQuad import QuadFormula
 from choreo.scipy_plus.cython.ODE import ExplicitSymplecticRKTable
 from choreo.scipy_plus.cython.ODE import ImplicitRKTable
 
-def tridiag_eigen(d, e, z = False):
+def tridiag_eigenvalues(d, e):
     """
     Adapted from mpmath 
-    
-    This subroutine find the eigenvalues and the first components of the
-    eigenvectors of a real symmetric tridiagonal matrix using the implicit
-    QL method.
 
-    parameters:
-
-      d (input/output) real array of length n. on input, d contains the diagonal
-        elements of the input matrix. on output, d contains the eigenvalues in
-        ascending order.
-
-      e (input) real array of length n. on input, e contains the offdiagonal
-        elements of the input matrix in e[0:(n-1)]. On output, e has been
-        destroyed.
-
-      z (input/output) If z is equal to False, no eigenvectors will be computed.
-        Otherwise on input z should have the format z[0:m,0:n] (i.e. a real or
-        complex matrix of dimension (m,n) ). On output this matrix will be
-        multiplied by the matrix of the eigenvectors (i.e. the columns of this
-        matrix are the eigenvectors): z --> z*EV
-        That means if z[i,j]={1 if j==j; 0 otherwise} on input, then on output
-        z will contain the first m components of the eigenvectors. That means
-        if m is equal to n, the i-th eigenvector will be z[:,i].
-
-    This routine is a python translation (in slightly modified form) of the
-    fortran routine imtql2.f in the software library EISPACK (see netlib.org)
-    which itself is based on the algol procudure imtql2 desribed in:
-     - num. math. 12, p. 377-383(1968) by matrin and wilkinson
-     - modified in num. math. 15, p. 450(1970) by dubrulle
-     - handbook for auto. comp., vol. II-linear algebra, p. 241-248 (1971)
-    See also the routine gaussq.f in netlog.org or acm algorithm 726.
     """
 
     n = len(d)
@@ -107,37 +77,24 @@ def tridiag_eigen(d, e, z = False):
                 d[i + 1] = g + p
                 g = c * r - b
 
-                if not isinstance(z, bool):
-                    # calculate eigenvectors
-                    for w in range(z.rows):
-                        f = z[w,i+1]
-                        z[w,i+1] = s * z[w,i] + c * f
-                        z[w,i  ] = c * z[w,i] - s * f
-
             d[l] = d[l] - p
             e[l] = g
             e[m] = 0
 
-#     for ii in range(1, n):
-#         # sort eigenvalues and eigenvectors (bubble-sort)
-#         i = ii - 1
-#         k = i
-#         p = d[i]
-#         for j in range(ii, n):
-#             if d[j] >= p:
-#                 continue
-#             k = j
-#             p = d[k]
-#         if k == i:
-#             continue
-#         d[k] = d[i]
-#         d[i] = p
-# 
-#         if not isinstance(z, bool):
-#             for w in range(z.rows):
-#                 p = z[w,i]
-#                 z[w,i] = z[w,k]
-#                 z[w,k] = p
+    for ii in range(1, n):
+        # sort eigenvalues (bubble-sort)
+        i = ii - 1
+        k = i
+        p = d[i]
+        for j in range(ii, n):
+            if d[j] >= p:
+                continue
+            k = j
+            p = d[k]
+        if k == i:
+            continue
+        d[k] = d[i]
+        d[i] = p
 
 
 # 3 terms definition of polynomial families
@@ -246,7 +203,10 @@ def RadauMatFrom3Term(a,b,n,x):
 
     return d, e
 
-def QuadFrom3Term(a,b,n, method = "Gauss"):
+@functools.cache
+def QuadFrom3Term(n, method = "Gauss"):
+    
+    a, b = ShiftedGaussLegendre3Term(n)
 
     if method == "Gauss":
         d, e = GaussMatFrom3Term(a,b,n)
@@ -261,26 +221,125 @@ def QuadFrom3Term(a,b,n, method = "Gauss"):
     else:
         raise ValueError(f"Unknown method {method}")
     
-    P = mpmath.matrix(1, n)
-    P[0,0] = 1
-       
-    tridiag_eigen(d, e, P)   
+    tridiag_eigenvalues(d, e)   
     
-    w = mpmath.matrix(n,1)
+    vdm_inv = ComputeVandermondeInverseParker(n, d)
+    rhs = Build_integration_RHS(d, n)
+    w = rhs * vdm_inv
+
+    return w, d, vdm_inv
+
+def ComputeLagrangeWeights(n, xi):
+    """
+        Computes Lagrange weights for barycentric Lagrange interpolation
+    """
+
+    wmat = mpmath.matrix(n)
+    
+    wmat[0,0] = 1
+    
+    for i in range(1,n):
+        for j in range(i):
+            wmat[j,i] = (xi[j] - xi[i]) * wmat[j,i-1]
+        
+        wmat[i,i] = 1
+        for j in range(i):
+            wmat[i,i] *= (xi[i] - xi[j])
+    
+    wi = mpmath.matrix(n,1)
+    
     for i in range(n):
-        w[i] = b[0] * P[0,i] * P[0,i]
+        wi[i] = 1 / wmat[i,n-1]
 
-    return w, d
+    return wi
 
-def BuildButcherCMat(z,n,m):
+def ComputeAvec(n, xi):
     
-    mat = mpmath.matrix(n,m)
+    amat = mpmath.matrix(n+1)
+    avec = mpmath.matrix(n,1)
+    
+    amat[0,0] = -xi[0]
+    amat[1,0] = 1
+    
+    for j in range(1,n):
+        amat[0,j] = -xi[j] * amat[0,j-1]
+        
+        for i in range(1,j+1):
+            amat[i,j] = amat[i-1,j-1]-xi[j]*amat[i,j-1]
+        
+        amat[j+1,j] = amat[j,j-1]
+    
+    for j in range(n):
+        avec[j] = amat[n-j,n-1] 
+        
+    return avec
+        
+def ComputeVandermondeInverseParker(n, xi):
+
+    l = n-1
+    
+    avec = ComputeAvec(n, xi)
+    wi = ComputeLagrangeWeights(n, xi)
+
+    qmat = mpmath.matrix(n)
 
     for j in range(n):
-        for i in range(m):
+        qmat[l,j] += 1
+        
+    for j in range(n):
+        for i in range(1,n):
+            qmat[l-i,j] += xi[j] * qmat[l-i+1,j] + avec[
+i]
+    
+    for i in range(n):
+        for j in range(n):
+            qmat[l-i,j] *= wi[j]
+    
+    return qmat
+
+
+def ComputeVandermondeInverseParker_new(m, n, xi, A):
+
+    l = n-1
+    
+    avec = ComputeAvec(n, xi)
+    wi = ComputeLagrangeWeights(n, xi)
+
+    qmat = mpmath.matrix(m,n)
+
+    for j in range(n):
+        qmat[l,j] += 1
+        
+    for j in range(n):
+        for i in range(1,n):
+            qmat[l-i,j] += xi[j] * qmat[l-i+1,j] + avec[
+i]
+    
+    for i in range(n):
+        for j in range(n):
+            qmat[l-i,j] *= wi[j]
+    
+    return qmat
+    
+def BuildButcherCMat(z,n):
+    
+    mat = mpmath.matrix(n)
+
+    for j in range(n):
+        for i in range(n):
             mat[j,i] = z[j]**i
             
     return mat
+
+def Build_integration_RHS(z,n):
+    
+    rhs = mpmath.matrix(1,n)
+
+    for j in range(n):
+        rhs[j] = 1
+        rhs[j] /= j+1
+            
+    return rhs
 
 def BuildButcherCRHS(y,z,n,m):
     
@@ -292,17 +351,14 @@ def BuildButcherCRHS(y,z,n,m):
             
     return rhs
 
-def ComputeButcher_collocation(z,n):
-
-    mat = BuildButcherCMat(z,n,n)
-    mat_inv = mat ** (-1)
+def ComputeButcher_collocation(z, vdm_inv, n):
     
     y = mpmath.matrix(n,1)
     for i in range(n):
         y[i] = 0
     
     rhs = BuildButcherCRHS(y,z,n,n)
-    Butcher_a = rhs * mat_inv
+    Butcher_a = rhs * vdm_inv
     
     zp = mpmath.matrix(n,1)
     for i in range(n):
@@ -310,21 +366,20 @@ def ComputeButcher_collocation(z,n):
         zp[i] = 1+z[i]
         
     rhs = BuildButcherCRHS(y,zp,n,n)
-    Butcher_beta = rhs * mat_inv    
+    Butcher_beta = rhs * vdm_inv    
     
     for i in range(n):
         y[i]  = -1 + z[i]
         zp[i] = 0
         
     rhs = BuildButcherCRHS(y,zp,n,n)
-    Butcher_gamma = rhs * mat_inv
+    Butcher_gamma = rhs * vdm_inv
     
     return Butcher_a, Butcher_beta, Butcher_gamma
 
-def ComputeButcher_sub_collocation(z,n):
+def ComputeButcher_sub_collocation(z, n):
 
-    mat = BuildButcherCMat(z,n-1,n-1)
-    mat_inv = mat ** (-1)
+    parker_inv = ComputeVandermondeInverseParker(n-1, z)
     
     y = mpmath.matrix(n,1)
     for i in range(n):
@@ -332,7 +387,7 @@ def ComputeButcher_sub_collocation(z,n):
     
     rhs_plus = BuildButcherCRHS(y,z,n,n)
     rhs = rhs_plus[1:n,0:(n-1)]
-    Butcher_a_sub = rhs * mat_inv
+    Butcher_a_sub = rhs * parker_inv
     
     Butcher_a = mpmath.matrix(n)
     for i in range(n-1):
@@ -387,16 +442,14 @@ def ComputeGaussButcherTables(n, dps=60, method="Gauss"):
     
     mpmath.mp.dps = dps
 
-    a, b = ShiftedGaussLegendre3Term(n)
-    
     for quad_method in ["Gauss", "Radau_II", "Radau_I", "Lobatto_III"]:
         if quad_method in method:
-            w, z = QuadFrom3Term(a,b,n, method=quad_method)
+            w, z , vdm_inv = QuadFrom3Term(n, method=quad_method)
             break
     else:
         return ValueError(f"Unknown associated quadrature method {method}")
     
-    Butcher_a, Butcher_beta , Butcher_gamma = ComputeButcher_collocation(z, n)
+    Butcher_a, Butcher_beta , Butcher_gamma = ComputeButcher_collocation(z, vdm_inv, n)
     
     if method in ["Lobatto_IIIC", "Lobatto_IIIC*", "Lobatto_IIID"]:
         Butcher_a = ComputeButcher_sub_collocation(z,n)
@@ -447,8 +500,7 @@ def ComputeQuadrature(n, dps=30, method="Gauss"):
     th_cvg_rate = GetConvergenceRate(method, n)
     
     mpmath.mp.dps = dps
-    a, b = ShiftedGaussLegendre3Term(n)
-    w, z = QuadFrom3Term(a,b,n,method=method)
+    w, z, _ = QuadFrom3Term(n,method=method)
 
     w_np = np.array(w.tolist(),dtype=np.float64).reshape(n)
     z_np = np.array(z.tolist(),dtype=np.float64).reshape(n)
