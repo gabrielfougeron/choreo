@@ -138,19 +138,22 @@ cdef class QuadFormula:
     
     """
     
-    cdef double[::1] _w
-    cdef double[::1] _x
-    cdef long _th_cvg_rate
+    cdef double[::1] _w         # Integration weights on [0,1]
+    cdef double[::1] _x         # Integration nodes on [0,1]
+    cdef double[::1] _wlag      # Barycentric Lagrange interpolation weights
+    cdef long _th_cvg_rate      # Convergence rate on smooth functions
 
     def __init__(
         self                ,
         w                   ,
         x                   ,
+        wlag                ,
         th_cvg_rate = None  ,
     ):
 
-        self._w = w
-        self._x = x
+        self._w = w.copy()
+        self._x = x.copy()
+        self._wlag = wlag.copy()
 
         assert self._w.shape[0] == self._x.shape[0]
 
@@ -177,7 +180,11 @@ cdef class QuadFormula:
     
     @property
     def w(self):
-        return np.asarray(self._w)    
+        return np.asarray(self._w)      
+
+    @property
+    def wlag(self):
+        return np.asarray(self._wlag)    
 
     @property
     def th_cvg_rate(self):

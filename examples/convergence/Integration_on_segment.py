@@ -46,8 +46,8 @@ if not(os.path.isdir(bench_folder)):
     
 basename_bench_filename = 'quad_cvg_bench_'
 
-# ForceBenchmark = True
-ForceBenchmark = False
+ForceBenchmark = True
+# ForceBenchmark = False
 
 # sphinx_gallery_end_ignore
 
@@ -60,10 +60,13 @@ methods = [
     'Radau_I',
     'Radau_II',
     'Lobatto_III',
+    'Cheb_I',
+    'Cheb_II',
+    'ClenshawCurtis',
 ]
 
 # all_nsteps = range(2,11)
-all_nsteps = [5]
+all_nsteps = [50]
 refinement_lvl = np.array(range(1,100))
 # refinement_lvl = np.array([2**i for i in range(18)])
 
@@ -89,6 +92,8 @@ all_errors = pyquickbench.run_benchmark(
     mode = "scalar_output"          ,
     filename = bench_filename       ,
     ForceBenchmark = ForceBenchmark ,
+    StopOnExcept = True             ,
+    # pooltype = "process"            ,
 )
 
 plot_intent = {

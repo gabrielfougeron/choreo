@@ -756,12 +756,12 @@ cdef void ExplicitSymplecticIVP_ann(
 @cython.final
 cdef class ImplicitRKTable:
     
-    cdef double[:,::1] _a_table
-    cdef double[::1] _b_table
-    cdef double[::1] _c_table
-    cdef double[:,::1] _beta_table
-    cdef double[:,::1] _gamma_table
-    cdef long _th_cvg_rate
+    cdef double[:,::1] _a_table             # A Butcher table.
+    cdef double[::1] _b_table               # b Butcher table. Integration weights on [0,1]
+    cdef double[::1] _c_table               # c Butcher table. Integration nodes on [0,1]
+    cdef double[:,::1] _beta_table          # Beta Butcher table for initial guess in convergence loop. 
+    cdef double[:,::1] _gamma_table         # Beta Butcher table of the symmetric adjoint.
+    cdef long _th_cvg_rate                  # Theoretical convergence rate of the method.
 
     @cython.final
     def __init__(
@@ -867,10 +867,10 @@ cdef class ImplicitRKTable:
         )
 
     @cython.final
-    cpdef double _symmetry_default(
+    cdef double _symmetry_default(
         self                    ,
         ImplicitRKTable other   ,
-    ) noexcept:
+    ) noexcept nogil:
 
         cdef Py_ssize_t nsteps = self._a_table.shape[0]
         cdef Py_ssize_t i,j
@@ -908,7 +908,7 @@ cdef class ImplicitRKTable:
             return self._symmetry_default(other)
     
     @cython.final
-    cpdef bint _is_symmetric_pair(self, ImplicitRKTable other, double tol):
+    cdef bint _is_symmetric_pair(self, ImplicitRKTable other, double tol) noexcept nogil:
         return (self._symmetry_default(other) < tol)
 
     @cython.final
@@ -943,10 +943,10 @@ cdef class ImplicitRKTable:
         )
 
     @cython.final
-    cpdef double _symplectic_default(
+    cdef double _symplectic_default(
         self                    ,
         ImplicitRKTable other   ,
-    ) noexcept:
+    ) noexcept nogil:
 
         cdef Py_ssize_t nsteps = self._a_table.shape[0]
         cdef Py_ssize_t i,j
@@ -1004,8 +1004,7 @@ cpdef ImplicitSymplecticIVP(
     double[:,::1] grad_v0 = None            ,
     long nint = 1                           ,
     long keep_freq = -1                     ,
-    # bint DoEFT = True                       ,
-    bint DoEFT = False                       ,
+    bint DoEFT = True                       ,
     double eps = np.finfo(np.float64).eps   ,
     long maxiter = 50                       ,
 ):

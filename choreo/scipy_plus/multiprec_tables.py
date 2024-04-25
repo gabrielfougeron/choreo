@@ -12,6 +12,14 @@ from choreo.scipy_plus.cython.SegmQuad import QuadFormula
 from choreo.scipy_plus.cython.ODE import ExplicitSymplecticRKTable
 from choreo.scipy_plus.cython.ODE import ImplicitRKTable
 
+# Order is important.
+all_GL_int = [
+    "Gauss"         ,
+    "Radau_II"      ,
+    "Radau_I"       ,
+    "Lobatto_III"   ,
+]
+
 def tridiag_eigenvalues(d, e):
     """
     Adapted from mpmath 
@@ -204,30 +212,50 @@ def RadauMatFrom3Term(a,b,n,x):
     return d, e
 
 @functools.cache
-def QuadFrom3Term(n, method = "Gauss"):
+def ComputeQuadNodes(n, method = "Gauss"):
     
-    a, b = ShiftedGaussLegendre3Term(n)
+    if method in all_GL_int:
+        
+        a, b = ShiftedGaussLegendre3Term(n)
 
-    if method == "Gauss":
-        d, e = GaussMatFrom3Term(a,b,n)
-    elif method == "Radau_I":
-        x = mpmath.mpf(0)
-        d, e = RadauMatFrom3Term(a,b,n,x)
-    elif method == "Radau_II":
-        x = mpmath.mpf(1)
-        d, e = RadauMatFrom3Term(a,b,n,x)
-    elif method == "Lobatto_III":
-        d, e = LobattoMatFrom3Term(a,b,n)
+        if method == "Gauss":
+            z, e = GaussMatFrom3Term(a,b,n)
+        elif method == "Radau_I":
+            x = mpmath.mpf(0)
+            z, e = RadauMatFrom3Term(a,b,n,x)
+        elif method == "Radau_II":
+            x = mpmath.mpf(1)
+            z, e = RadauMatFrom3Term(a,b,n,x)
+        elif method == "Lobatto_III":
+            z, e = LobattoMatFrom3Term(a,b,n)
+        
+        tridiag_eigenvalues(z, e)   
+        
+    elif method == "Cheb_I":
+        
+        z = mpmath.matrix(n,1)
+        alpha = mpmath.mp.pi / (2*n)
+        for i in range(n):
+            z[i] = (1 - mpmath.cos(alpha * (2*i+1)))/2
+    
+    elif method == "Cheb_II":
+        
+        z = mpmath.matrix(n,1)
+        alpha = mpmath.mp.pi / (n+1)
+        for i in range(n):
+            z[i] = (1 + mpmath.cos(alpha * (n-i)))/2    
+            
+    elif method == "ClenshawCurtis":
+        
+        z = mpmath.matrix(n,1)
+        alpha = mpmath.mp.pi / (n-1)
+        for i in range(n):
+            z[i] = (1 + mpmath.cos(alpha * (n-1-i)))/2
+    
     else:
         raise ValueError(f"Unknown method {method}")
-    
-    tridiag_eigenvalues(d, e)   
-    
-    vdm_inv = ComputeVandermondeInverseParker(n, d)
-    rhs = Build_integration_RHS(d, n)
-    w = rhs * vdm_inv
 
-    return w, d, vdm_inv
+    return z
 
 def ComputeLagrangeWeights(n, xi):
     """
@@ -274,12 +302,14 @@ def ComputeAvec(n, xi):
         
     return avec
         
-def ComputeVandermondeInverseParker(n, xi):
+def ComputeVandermondeInverseParker(n, xi, wi=None):
+    
+    if wi is None:
+        wi = ComputeLagrangeWeights(n, xi)
 
     l = n-1
     
     avec = ComputeAvec(n, xi)
-    wi = ComputeLagrangeWeights(n, xi)
 
     qmat = mpmath.matrix(n)
 
@@ -297,30 +327,6 @@ i]
     
     return qmat
 
-
-def ComputeVandermondeInverseParker_new(m, n, xi, A):
-
-    l = n-1
-    
-    avec = ComputeAvec(n, xi)
-    wi = ComputeLagrangeWeights(n, xi)
-
-    qmat = mpmath.matrix(m,n)
-
-    for j in range(n):
-        qmat[l,j] += 1
-        
-    for j in range(n):
-        for i in range(1,n):
-            qmat[l-i,j] += xi[j] * qmat[l-i+1,j] + avec[
-i]
-    
-    for i in range(n):
-        for j in range(n):
-            qmat[l-i,j] *= wi[j]
-    
-    return qmat
-    
 def BuildButcherCMat(z,n):
     
     mat = mpmath.matrix(n)
@@ -442,9 +448,14 @@ def ComputeGaussButcherTables(n, dps=60, method="Gauss"):
     
     mpmath.mp.dps = dps
 
-    for quad_method in ["Gauss", "Radau_II", "Radau_I", "Lobatto_III"]:
+    for quad_method in all_GL_int:
         if quad_method in method:
-            w, z , vdm_inv = QuadFrom3Term(n, method=quad_method)
+            
+            z = ComputeQuadNodes(n, method=quad_method)
+            vdm_inv = ComputeVandermondeInverseParker(n, z)
+            rhs = Build_integration_RHS(z, n)
+            w = rhs * vdm_inv
+
             break
     else:
         return ValueError(f"Unknown associated quadrature method {method}")
@@ -489,6 +500,11 @@ def GetConvergenceRate(method, n):
         if n < 2:
             raise ValueError(f"Incorrect value for n {n}")
         th_cvg_rate = 2*n-2
+    elif "Cheb" in method:
+        th_cvg_rate = n + (n % 2)
+    elif method == "ClenshawCurtis":
+        th_cvg_rate = n + (n % 2)
+            
     else:
         raise ValueError(f"Unknown method {method}")
     
@@ -500,14 +516,22 @@ def ComputeQuadrature(n, dps=30, method="Gauss"):
     th_cvg_rate = GetConvergenceRate(method, n)
     
     mpmath.mp.dps = dps
-    w, z, _ = QuadFrom3Term(n,method=method)
+    
+    z = ComputeQuadNodes(n, method=method)
+    wlag = ComputeLagrangeWeights(n, z)
+    
+    vdm_inv = ComputeVandermondeInverseParker(n, z, wlag)
+    rhs = Build_integration_RHS(z, n)
+    w = rhs * vdm_inv
 
     w_np = np.array(w.tolist(),dtype=np.float64).reshape(n)
     z_np = np.array(z.tolist(),dtype=np.float64).reshape(n)
+    w_lag_np = np.array(wlag.tolist(),dtype=np.float64).reshape(n)
     
     return QuadFormula(
         w = w_np                    ,
         x = z_np                    ,
+        wlag = w_lag_np             ,
         th_cvg_rate = th_cvg_rate   ,
     )
 

@@ -81,6 +81,7 @@ def main():
         '2D1D1D',
         '1Dx3',
         '1D1D1D',
+        '3DD',
     ]
 
     TT = pyquickbench.TimeTrain(
