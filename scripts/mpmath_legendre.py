@@ -8,11 +8,33 @@ import numpy as np
 import choreo 
 import mpmath
 import pyquickbench
+import chaospy
 
-dps = 30
+dps = 300
 mpmath.mp.dps = dps
 
-n = 10
+n = 30
 
-rk = choreo.scipy_plus.multiprec_tables.ComputeGaussButcherTables(n,method='Lobatto_IIIC')
+# quad = choreo.scipy_plus.multiprec_tables.ComputeQuadrature(n, dps=dps, method='Cheb_I')
+# print(quad)
+# 
+# quad = choreo.scipy_plus.multiprec_tables.ComputeQuadrature(n, dps=dps, method='Cheb_II')
+# print(quad)
+
+
+z = choreo.scipy_plus.multiprec_tables.ComputeQuadNodes(n, method = "ClenshawCurtis")
+vdm_inv = choreo.scipy_plus.multiprec_tables.ComputeVandermondeInverseParker(n, z)
+rhs = choreo.scipy_plus.multiprec_tables.Build_integration_RHS(z, n)
+w = rhs * vdm_inv
+
+quad = chaospy.quadrature.clenshaw_curtis(n-1)
+
+for i in range(n):
+    
+    print(abs(z[i] - quad[0][0][i]))
+    # print(quad[0][0][i])
+
+# 
+# print(quad[0])
+# print(quad[1])
 

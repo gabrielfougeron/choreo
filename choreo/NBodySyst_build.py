@@ -23,10 +23,16 @@ def ContainsDoubleEdges(SegmGraph):
 
 def ContainsSelfReferingTimeRevSegment(SegmGraph):
 
+    for edge in SegmGraph.edges:
+        
+        if edge[0] == edge[1]:
+            if SegmGraph.edges[edge]["SymList"][0].TimeRev == -1:
+                return True
+
     CCs = networkx.connected_components(SegmGraph)
-
+    
     for CC in CCs:
-
+        
         for segm, segmp in itertools.combinations(CC,2):
 
             if (segm[1] == segmp[1]):
