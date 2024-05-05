@@ -27,7 +27,7 @@ def Quad_cpte_error_on_test(
         exact = Fun(x_span[1]) - Fun(x_span[0])
 
 
-    quad = ComputeQuadrature(quad_nsteps, method = quad_method)
+    quad = ComputeQuadrature(quad_nsteps, dps = 60, method = quad_method)
 
     approx = IntegrateOnSegment(
         fun = fun       ,
