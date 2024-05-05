@@ -17,6 +17,8 @@ from libc.string cimport memset
 cdef extern from "limits.h":
     int RAND_MAX
 
+import choreo.metadata
+
 from choreo.scipy_plus.cython.blas_consts cimport *
 from choreo.scipy_plus.cython.ccallback cimport ccallback_t, ccallback_prepare, ccallback_release, CCALLBACK_DEFAULTS, ccallback_signature_t
 from choreo.cython._ActionSym cimport ActionSym
@@ -1158,8 +1160,10 @@ cdef class NBodySyst():
 
         Info_dict = {}
 
+        Info_dict["choreo_version"] = choreo.metadata.__version__
         Info_dict["nbody"] = self.nbody
-        Info_dict["n_int"] = self.nint
+        Info_dict["nint_min"] = self.nint_min
+        Info_dict["nint"] = self.nint
         Info_dict["segm_size"] = self.segm_size
         Info_dict["segm_store"] = self.segm_store
 
@@ -1181,7 +1185,7 @@ cdef class NBodySyst():
         Info_dict["yinf"] = yinf
         Info_dict["ysup"] = ysup
 
-
+        Info_dict["nsegm"] = self.nsegm
         Info_dict["bodysegm"] = self.bodysegm.tolist()
         Info_dict["SegmRequiresDisp"] = self.SegmRequiresDisp.tolist()
 
@@ -1203,13 +1207,6 @@ cdef class NBodySyst():
         
         Info_dict["InterSegmSpaceRot"] = InterSegmSpaceRot
         Info_dict["InterSegmTimeRev"] = InterSegmTimeRev
-
-        # Info_dict["SpaceRotsUn"] = self.SpaceRotsUn.tolist()
-        # Info_dict["TimeRevsUn"] = self.TimeRevsUn.tolist()
-        # Info_dict["TimeShiftNumUn"] = self.TimeShiftNumUn.tolist()
-        # Info_dict["TimeShiftDenUn"] = self.TimeShiftDenUn.tolist()
-        # Info_dict["RequiresLoopDispUn"] = self.RequiresLoopDispUn.tolist()
-
 
         with open(filename, "w") as jsonFile:
             jsonString = json.dumps(Info_dict, indent=4, sort_keys=False)

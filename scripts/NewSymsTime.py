@@ -173,9 +173,9 @@ MonotonicAxes = ["nint_fac"]
 
 all_args = {
     "test_name" : all_tests,
-    "fft_backend" : ['scipy', 'mkl', 'fftw'],
+    # "fft_backend" : ['scipy', 'mkl', 'fftw'],
     # "fft_backend" : ['scipy', 'mkl'],
-    # "fft_backend" : ['fftw'],
+    "fft_backend" : ['fftw'],
     "nint_fac" : [2**i for i in range(min_exp,max_exp)] 
 }
 
@@ -195,7 +195,7 @@ all_timings = pyquickbench.run_benchmark(
     n_repeat = n_repeat     ,
     MonotonicAxes = MonotonicAxes,
     time_per_test=0.2,
-    ForceBenchmark = True,
+    # ForceBenchmark = True,
     # PreventBenchmark = False,
     # ForceBenchmark = False,
     # PreventBenchmark = True,
@@ -211,8 +211,8 @@ plot_intent = {
     pyquickbench.repeat_ax_name :  'reduction_min'  ,
     # pyquickbench.repeat_ax_name :  'reduction_avg'  ,
     # pyquickbench.out_ax_name :  'curve_color'  ,
-    # pyquickbench.out_ax_name :  'reduction_sum'  ,
-    pyquickbench.out_ax_name :  'single_value'  ,
+    pyquickbench.out_ax_name :  'reduction_sum'  ,
+    # pyquickbench.out_ax_name :  'single_value'  ,
 }
 
 single_values_val = {
@@ -222,8 +222,8 @@ single_values_val = {
 
 relative_to_val_list = [
     None    ,
-    # {pyquickbench.out_ax_name : 'params_to_ifft'},
-    {"fft_backend" : 'scipy'},
+    {pyquickbench.out_ax_name : 'params_to_ifft'},
+    # {"fft_backend" : 'scipy'},
     # {"test_name" : '3C'},
 ]
 
