@@ -10,12 +10,14 @@ from sphinx_gallery.sorting import FileNameSortKey, ExplicitOrder
 __PROJECT_ROOT__ = os.path.abspath(os.path.join(os.path.dirname(__file__),os.pardir,os.pardir))
 
 import warnings
+import choreo
+
 warnings.filterwarnings("ignore", category=RuntimeWarning) 
 
 project = "Choreo"
 author = "Gabriel Fougeron"
 project_copyright = "2021, Gabriel Fougeron"
-version = '0.2.0'
+version = choreo.__version__
 
 # sys.path.append(os.path.abspath("./_pygments"))
 # from style import PythonVSMintedStyle

@@ -121,6 +121,16 @@ const ffmpeg = createFFmpeg()
 
 function AjaxGet(foldername){ return $.ajax({ url: foldername})}
 
+function GetPlotInfoChoreoVersion() {
+
+	if ("choreo_version" in PlotInfo) {
+		return PlotInfo["choreo_version"]
+	} else {
+		return "legacy"
+	}
+
+}
+
 function GetFileBaseExt(filename) {
 
 	var dotidx = filename.lastIndexOf('.')+1;
@@ -361,8 +371,6 @@ function canvasApp() {
 	}
 
 	function Estimate_FPS(Time_since_origin){
-
-		// console.log(FPS_estimation)
 
 		if (Last_Time_since_origin && Time_since_origin)
 		{
@@ -640,6 +648,12 @@ function canvasApp() {
 
 	function makeParticles() {
 
+		var ib
+		var color
+		var trailColor
+		var color_id
+		var PartRelSize
+
 		particles = new Array(PlotInfo['nbody'])
 
 		CurrentMax_PartRelSize = 0
@@ -652,45 +666,49 @@ function canvasApp() {
 			
 			for (var ilb = 0 ; ilb < nlb ; ilb++){
 
-				var ib = PlotInfo['Targets'][il][ilb];
+				ib = PlotInfo['Targets'][il][ilb]
 
-				var color;
-				var trailColor;
-
-				var color_id;
 
 				if (color_method_input.value == "body") {
-					color_id = ib;
+					color_id = ib
 				} else if (color_method_input.value == "loop") {
-					color_id = il;
+					color_id = il
 				} else if (color_method_input.value == "loop_id") {
-					color_id = ilb;
+					color_id = ilb
 				} else {
-					color_id = 0;
+					color_id = 0
 				}
 				
 				color = colorLookup[color_id % colorLookup.length];
 				trailColor = trailColorLookup[color_id % colorLookup.length];
-
-				if (DoScaleSizeWithMass) {
-					var PartRelSize = Math.sqrt(PlotInfo["mass"][ib]);
+				
+				if (GetPlotInfoChoreoVersion() == "legacy") {
+					if (DoScaleSizeWithMass) {
+						PartRelSize = Math.sqrt(PlotInfo["mass"][ib])
+					} else {
+						PartRelSize = 1.
+					}
 				} else {
-					var PartRelSize = 1.;
+					if (DoScaleSizeWithMass) {
+						PartRelSize = Math.sqrt(PlotInfo["loopmass"][il])
+					} else {
+						PartRelSize = 1.
+					}
 				}
 
-				PartRelSize = Math.min(PartRelSize,Max_PartRelSize);
-				PartRelSize = Math.max(PartRelSize,Min_PartRelSize);
+				PartRelSize = Math.min(PartRelSize, Max_PartRelSize)
+				PartRelSize = Math.max(PartRelSize, Min_PartRelSize)
 				// Min/max ?
 				
-				CurrentMax_PartRelSize = Math.max(CurrentMax_PartRelSize,PartRelSize);
+				CurrentMax_PartRelSize = Math.max(CurrentMax_PartRelSize,PartRelSize)
 						
 				particles[ib] = {
-						x: 0,
-						y: 0,
-						lastX: 0,
-						lastY: 0,
-						color: color,
-						trailColor: trailColor,
+						x: 0.					,
+						y: 0.					,
+						lastX: 0.				,
+						lastY: 0.				,
+						color: color			,
+						trailColor: trailColor	,
 						PartRelSize: PartRelSize,
 				}
 
@@ -731,7 +749,14 @@ function canvasApp() {
 	function anim_path(Time_since_origin){
 
 		clearScreen()
-		DrawAllPaths()
+		DrawAllPaths("particle")
+
+	}
+
+	function anim_path_grey(Time_since_origin){
+
+		clearScreen()
+		DrawAllPaths(FallbackTrailColor)
 
 	}
 
@@ -741,7 +766,47 @@ function canvasApp() {
 
 	}
 
-	function DrawAllPaths() {
+	function DrawAllPaths(color) {
+		if (GetPlotInfoChoreoVersion() == "legacy") {
+			DrawAllPaths_legacy(color)
+		} else {
+			DrawAllPaths_new(color)
+		}
+	}
+
+	function drawPathPortion(lasttime, tInc) {
+
+		if (GetPlotInfoChoreoVersion() == "legacy") {
+			drawPathPortion_legacy(lasttime, tInc)
+		} else {
+			drawPathPortion_new(lasttime, tInc)
+		}
+
+	}
+
+	function setParticlePositions(t) {
+		if (GetPlotInfoChoreoVersion() == "legacy") {
+			setParticlePositions_legacy(t)
+		} else {
+			setParticlePositions_new(t)
+		}
+	}
+	
+	function anim_path_grey(Time_since_origin){
+
+		clearScreen()
+		DrawAllPaths(FallbackTrailColor)
+
+	}
+	
+	function anim_path_grey(Time_since_origin){
+
+		clearScreen()
+		DrawAllPaths(FallbackTrailColor)
+
+	}
+
+	function DrawAllPaths_legacy(color="particle") {
 
 		var n_pos = Pos.shape[2];
 
@@ -763,7 +828,12 @@ function canvasApp() {
 					ib = PlotInfo['Targets'][il][ilb];
 					p = particles[ib];
 					trailLayerContext.lineWidth = p.PartRelSize * base_trailWidth ;
-					trailLayerContext.strokeStyle = p.trailColor;
+
+					if (color == "particle") {
+						trailLayerContext.strokeStyle = p.trailColor;
+					} else {
+						trailLayerContext.strokeStyle = color;
+					}
 
 					// Super ugly
 					xl = Pos.data[  2*il    * n_pos] ;
@@ -814,82 +884,93 @@ function canvasApp() {
 		}
 
 	}
-	
-	function anim_path_grey(Time_since_origin){
 
-		clearScreen()
-		DrawAllPaths_Grey()
+	function DrawAllPaths_new(color="particle") {
 
-	}
+		console.log("In DrawAllPaths_new")
 
-	function DrawAllPaths_Grey() {
+		var xl,yl
+		var x,y
+		var Pixx,Pixy
 
-		var n_pos = Pos.shape[2];
+		var p
+		var ib, iint, isegm
 
-		var xl,yl;
-		var x,y;
-		var Pixx,Pixy;
+		var RotMat
 
-		var il,ib,ilb,nlb;
-		var p;
+		for (ib=0; ib<PlotInfo['nbody']; ib++) {
 
-        for ( il = 0 ; il < PlotInfo['nloop'] ; il++){
+			for (iint=0; iint<PlotInfo['nint_min']; iint++) {
 
-			nlb =  PlotInfo['loopnb'][il];
-			
-			for (ilb = 0 ; ilb < nlb ; ilb++){
+				if (PlotInfo['SegmRequiresDisp'][ib][iint]) {
+					
+					isegm = PlotInfo['bodysegm'][ib][iint]
+					console.log(ib, iint, isegm)
 
-				if (PlotInfo['RequiresLoopDispUn'][il][ilb]) {
+					io = PlotInfo['segm_store'] * isegm * 2
 
-					ib = PlotInfo['Targets'][il][ilb];
 					p = particles[ib];
-					trailLayerContext.lineWidth = p.PartRelSize * base_trailWidth ;
-					trailLayerContext.strokeStyle = FallbackTrailColor;
+					trailLayerContext.lineWidth = p.PartRelSize * base_trailWidth 
+
+					if (color == "particle") {
+						trailLayerContext.strokeStyle = p.trailColor
+					} else {
+						trailLayerContext.strokeStyle = color
+					}
+
+					RotMat = PlotInfo['InterSegmSpaceRot'][ib][iint]
 
 					// Super ugly
-					xl = Pos.data[  2*il    * n_pos] ;
-					yl = Pos.data[ (2*il+1) * n_pos] ;
+					xl = Pos.data[ io     ] 
+					yl = Pos.data[ io + 1 ] 
 
-					x = PlotInfo['SpaceRotsUn'][il][ilb][0][0] * xl + PlotInfo['SpaceRotsUn'][il][ilb][0][1] * yl ;
-					y = PlotInfo['SpaceRotsUn'][il][ilb][1][0] * xl + PlotInfo['SpaceRotsUn'][il][ilb][1][1] * yl ;
+					x = RotMat[0][0] * xl + RotMat[0][1] * yl 
+					y = RotMat[1][0] * xl + RotMat[1][1] * yl 
 
-					Pixx = xPixRate*(x - xMin) ;
-					Pixy = yPixRate*(y - yMax) ;
+					Pixx = xPixRate*(x - xMin) 
+					Pixy = yPixRate*(y - yMax) 
 
-					trailLayerContext.beginPath();
-					trailLayerContext.moveTo(Pixx, Pixy);
+					trailLayerContext.beginPath()
+					trailLayerContext.moveTo(Pixx, Pixy)
 
-					for (i_pos = 1 ; i_pos < n_pos ; i_pos++){
+
+					console.log()
+					
+
+					for (i_pos = 1 ; i_pos < PlotInfo['segm_size'] ; i_pos++){
 
 						// Super ugly
-						xl = Pos.data[ i_pos +  2*il    * n_pos] ;
-						yl = Pos.data[ i_pos + (2*il+1) * n_pos] ;
+						xl = Pos.data[ io + 2*i_pos 	] 
+						yl = Pos.data[ io + 2*i_pos + 1	] 
 
-						x = PlotInfo['SpaceRotsUn'][il][ilb][0][0] * xl + PlotInfo['SpaceRotsUn'][il][ilb][0][1] * yl ;
-						y = PlotInfo['SpaceRotsUn'][il][ilb][1][0] * xl + PlotInfo['SpaceRotsUn'][il][ilb][1][1] * yl ;
+						x = RotMat[0][0] * xl + RotMat[0][1] * yl 
+						y = RotMat[1][0] * xl + RotMat[1][1] * yl 
 		
-						Pixx = xPixRate*(x - xMin) ;
-						Pixy = yPixRate*(y - yMax) ;
+						Pixx = xPixRate*(x - xMin) 
+						Pixy = yPixRate*(y - yMax) 
 
 						trailLayerContext.lineTo(Pixx, Pixy);
 
 					}
 
-					// Super ugly
-					xl = Pos.data[  2*il    * n_pos] ;
-					yl = Pos.data[ (2*il+1) * n_pos] ;
+					trailLayerContext.stroke()
+// 
+// 					// Super ugly
+// 					xl = Pos.data[  2*il    * n_pos] 
+// 					yl = Pos.data[ (2*il+1) * n_pos] 
+// 
+// 					x = RotMat[0][0] * xl + RotMat[0][1] * yl 
+// 					y = RotMat[1][0] * xl + RotMat[1][1] * yl  
+// 
+// 					Pixx = xPixRate*(x - xMin) 
+// 					Pixy = yPixRate*(y - yMax) 
+// 
+// 					trailLayerContext.lineTo(Pixx, Pixy)
+// 					trailLayerContext.stroke()
 
-					x = PlotInfo['SpaceRotsUn'][il][ilb][0][0] * xl + PlotInfo['SpaceRotsUn'][il][ilb][0][1] * yl ;
-					y = PlotInfo['SpaceRotsUn'][il][ilb][1][0] * xl + PlotInfo['SpaceRotsUn'][il][ilb][1][1] * yl ;
 
-					Pixx = xPixRate*(x - xMin) ;
-					Pixy = yPixRate*(y - yMax) ;
-
-					trailLayerContext.lineTo(Pixx, Pixy);
-					trailLayerContext.stroke();
 
 				}
-
 			}
 
 		}
@@ -927,7 +1008,7 @@ function canvasApp() {
 
 	}
 
-	function drawPathPortion(lasttime,tInc) {
+	function drawPathPortion_legacy(lasttime, tInc) {
 
 		var n_pos = Pos.shape[2]
 
@@ -1002,8 +1083,84 @@ function canvasApp() {
 		}
 
 	}
+
+	function drawPathPortion_new(lasttime, tInc) {
+// 
+// 		var n_pos = Pos.shape[2]
+// 
+// 		var xi=0,yi=0
+// 		var xmid,ymid
+// 		var xrot,yrot
+// 		var xrot_glob,yrot_glob
+// 		var p
+// 
+// 		var il,ib,ilb,nlb
+// 		var tb_beg, tb_end
+// 
+// 		var i,di
+// 		var ip,ip_beg,ip_end
+// 
+//         for ( il = 0 ; il < PlotInfo['nloop'] ; il++){
+// 
+// 			nlb =  PlotInfo['loopnb'][il]
+// 			
+// 			for (ilb = 0 ; ilb < nlb ; ilb++){
+// 
+// 				ib = PlotInfo['Targets'][il][ilb]
+// 				p = particles[ib]
+// 				trailLayerContext.strokeStyle = p.trailColor
+// 				trailLayerContext.lineWidth = p.PartRelSize * base_trailWidth 
+// 				lastPixX = xPixRate*(p.lastX - xMin)
+// 				lastPixY = yPixRate*(p.lastY - yMax)
+// 				trailLayerContext.beginPath()
+// 				trailLayerContext.moveTo(lastPixX,lastPixY)
+// 
+// 				tb_beg = ( PlotInfo['TimeRevsUn'][il][ilb] * (lasttime - PlotInfo['TimeShiftNumUn'][il][ilb] / PlotInfo['TimeShiftDenUn'][il][ilb]) +1)
+// 				ip_beg = (Math.floor(tb_beg*n_pos)+1)
+// 
+// 				tb_end = ( PlotInfo['TimeRevsUn'][il][ilb] * ((lasttime+tInc) - PlotInfo['TimeShiftNumUn'][il][ilb] / PlotInfo['TimeShiftDenUn'][il][ilb]) +1)
+// 				ip_end = (Math.floor(tb_end*n_pos)+1)
+// 
+// 				di = PlotInfo['TimeRevsUn'][il][ilb]
+// 
+// 				for (i = ip_beg ; i != ip_end ; i += di){ 
+// 
+// 					ip = (((i%n_pos) + n_pos) % n_pos)
+// 
+// 					// Super ugly
+// 					xi = Pos.data[ ip +  2*il    * n_pos] 
+// 					yi = Pos.data[ ip + (2*il+1) * n_pos] 
+// 
+// 					xrot = PlotInfo['SpaceRotsUn'][il][ilb][0][0] * xi + PlotInfo['SpaceRotsUn'][il][ilb][0][1] * yi - center_x
+// 					yrot = PlotInfo['SpaceRotsUn'][il][ilb][1][0] * xi + PlotInfo['SpaceRotsUn'][il][ilb][1][1] * yi - center_y
+// 
+// 					xrot_glob = center_x + GlobalRot[0][0] * xrot + GlobalRot[0][1] * yrot
+// 					yrot_glob = center_y + GlobalRot[1][0] * xrot + GlobalRot[1][1] * yrot
+// 
+// 					PixX = xPixRate*(xrot_glob - xMin)
+// 					PixY = yPixRate*(yrot_glob - yMax)
+// 
+// 					trailLayerContext.lineTo(PixX, PixY)
+// 					
+// 					lastPixX = PixX
+// 					lastPixY = PixY
+// 
+// 				}
+// 
+// 				PixX = xPixRate*(p.x - xMin);
+// 				PixY = yPixRate*(p.y - yMax);
+// 
+// 				trailLayerContext.lineTo(PixX, PixY)
+// 				trailLayerContext.stroke()
+// 
+// 
+// 			}
+// 		
+// 		}
+
+	}
 	
-	function setParticlePositions(t) {
+	function setParticlePositions_legacy(t) {
 
 		var n_pos = Pos.shape[2];
 
@@ -1060,6 +1217,67 @@ function canvasApp() {
 			}
 		
 		}
+
+	}
+
+	
+	function setParticlePositions_new(t) {
+
+// 		var n_pos = Pos.shape[2];
+// 
+// 		var xlm=0,xlp=0,ylm=0,ylp=0;
+// 		var xmid,ymid;
+// 		var xrot,yrot;
+// 		var xrot_glob,yrot_glob;
+// 
+// 		var il,ib,ilb,nlb;
+// 		var tb;
+// 
+// 		var im,ip,tbn,trem;
+// 
+//         for ( il = 0 ; il < PlotInfo['nloop'] ; il++){
+// 
+// 			nlb =  PlotInfo['loopnb'][il];
+// 			
+// 			for (ilb = 0 ; ilb < nlb ; ilb++){
+// 
+// 				ib = PlotInfo['Targets'][il][ilb];
+// 
+// 				tb = ( PlotInfo['TimeRevsUn'][il][ilb] * (t - PlotInfo['TimeShiftNumUn'][il][ilb] / PlotInfo['TimeShiftDenUn'][il][ilb]) +1) % 1;
+// 
+// 				tbn = tb*n_pos;
+// 				
+// 				im = Math.floor(tbn);
+// 				ip = (im+1) % n_pos;
+// 				
+// 				trem = tbn - im;
+// 
+// 				// Super ugly
+// 				xlm = Pos.data[ im +  2*il    * n_pos] ;
+// 				ylm = Pos.data[ im + (2*il+1) * n_pos] ;
+// 				xlp = Pos.data[ ip +  2*il    * n_pos] ;
+// 				ylp = Pos.data[ ip + (2*il+1) * n_pos] ;
+// 			
+// 				xmid = (1-trem) * xlm + trem * xlp;
+// 				ymid = (1-trem) * ylm + trem * ylp;
+// 
+// 				xrot = PlotInfo['SpaceRotsUn'][il][ilb][0][0] * xmid + PlotInfo['SpaceRotsUn'][il][ilb][0][1] * ymid ;
+// 				yrot = PlotInfo['SpaceRotsUn'][il][ilb][1][0] * xmid + PlotInfo['SpaceRotsUn'][il][ilb][1][1] * ymid ;
+// 
+// 				xrot = xrot - center_x;
+// 				yrot = yrot - center_y;
+// 
+// 				xrot_glob = center_x + GlobalRot[0][0] * xrot + GlobalRot[0][1] * yrot
+// 				yrot_glob = center_y + GlobalRot[1][0] * xrot + GlobalRot[1][1] * yrot
+// 				
+// 				particles[ib].lastX = particles[ib].x;
+// 				particles[ib].lastY = particles[ib].y;
+// 				particles[ib].x = xrot_glob;
+// 				particles[ib].y = yrot_glob;
+// 				
+// 			}
+// 		
+// 		}
 
 	}
 

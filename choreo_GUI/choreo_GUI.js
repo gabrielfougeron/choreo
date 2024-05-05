@@ -1447,7 +1447,7 @@ function checkbox_Mass_Scale_Handler(event) {
 
     var trailLayerCanvas = document.getElementById("trailLayerCanvas")
 
-    DoScaleSizeWithMass = event.currentTarget.checked
+    DoScaleSizeWithMass = event.currentTarget.value
     
     var event = new Event('RemakeParticlesFromOutsideCanvas')
     trailLayerCanvas.dispatchEvent(event)
@@ -2329,15 +2329,32 @@ function UpdateNowPlayingAndShare(SearchOnGoing=false) {
     var NP_nint = document.getElementById("NP_nint")
     
     nloop = PlotInfo["nloop"]
-    loop_mass = FormatMasses(PlotInfo["mass"][PlotInfo["Targets"][0][0]])
-    for (var il = 1 ; il < nloop; il++) {
-        loop_mass = loop_mass + ", " + FormatMasses(PlotInfo["mass"][PlotInfo["Targets"][il][0]])
+
+    if (GetPlotInfoChoreoVersion() == "legacy") {
+        loop_mass = FormatMasses(PlotInfo["mass"][PlotInfo["Targets"][0][0]])
+        for (var il = 1 ; il < nloop; il++) {
+            loop_mass = loop_mass + ", " + FormatMasses(PlotInfo["mass"][PlotInfo["Targets"][il][0]])
+        }
+        loop_charge = "1"
+        for (var il = 1 ; il < nloop; il++) {
+            loop_charge = loop_charge + ", " + "1"
+        }
+    } else {
+        loop_mass = FormatMasses(PlotInfo["loopmass"][0])
+        for (var il = 1 ; il < nloop; il++) {
+            loop_mass = loop_mass + ", " + FormatMasses(PlotInfo["loopmass"][il])
+        }
+        loop_charge = FormatMasses(PlotInfo["loopcharge"][0])
+        for (var il = 1 ; il < nloop; il++) {
+            loop_charge = loop_charge + ", " + FormatMasses(PlotInfo["loopcharge"][il])
+        }
     }
 
     NP_name.innerHTML = SolName
     NP_nbody.innerHTML = PlotInfo["nbody"].toString()
     NP_nloop.innerHTML = nloop.toString()
     NP_mass.innerHTML = loop_mass
+    NP_charge.innerHTML = loop_charge
 
     var CopyCustomURL_btn = document.getElementById("CopyCustomURL_btn")
     
@@ -2355,9 +2372,19 @@ function UpdateNowPlayingAndShare(SearchOnGoing=false) {
 
     } else {
 
-        NP_Newton_Error.innerHTML = PlotInfo["Newton_Error"].toExponential(2)
-        NP_nint.innerHTML = PlotInfo["n_int"].toString()
-        NP_n_Action.innerHTML = PlotInfo["Action"].toExponential(2)
+        if (GetPlotInfoChoreoVersion() == "legacy") {
+
+            NP_Newton_Error.innerHTML = PlotInfo["Newton_Error"].toExponential(2)
+            NP_nint.innerHTML = PlotInfo["n_int"].toString()
+            NP_n_Action.innerHTML = PlotInfo["Action"].toExponential(2)
+
+        } else {
+
+            NP_Newton_Error.innerHTML = PlotInfo["Grad_Action"].toExponential(2)
+            NP_nint.innerHTML = PlotInfo["nint"].toString()
+            NP_n_Action.innerHTML = PlotInfo["Action"].toExponential(2)
+
+        }
 
     }
 
