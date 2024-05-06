@@ -1085,6 +1085,24 @@ cdef class NBodySyst():
 
         return IsHomo, alpha_avg
 
+    # TODO : finish this!
+    @cython.final
+    def GetFullAABB(self, double[:,:,::1] segmpos_minmax):
+
+        cdef double[:,::1] AABB = np.empty((2,self.geodim), dtype=np.float64)
+        cdef Py_ssize_t iint, ib
+
+        for ib in range(self.nbody):
+            for iint in range(self.nint_min):
+
+                isegm = self._bodysegm[ib,iint]
+                Sym = self.intersegm_to_all[ib][iint]
+
+
+
+
+
+
     @cython.final
     def Write_Descriptor(
         self, double[::1] params_mom_buf, segmpos=None, filename=None,
@@ -1134,12 +1152,15 @@ cdef class NBodySyst():
             # TODO : implement this
             max_path_length = 1.
 
-        xmin = segmpos[:,:,0].min()
-        xmax = segmpos[:,:,0].max()
-        ymin = segmpos[:,:,1].min()
-        ymax = segmpos[:,:,1].max()
+        segmpos_minmax = np.empty((self.nsegm, 2, self.geodim), dtype=np.float64)
 
-        # Do better ?
+        segmpos_minmax[:,0,:] = np.min(segmpos, axis=1)
+        segmpos_minmax[:,1,:] = np.max(segmpos, axis=1)
+
+        # TODO: finish this
+        # AABB = self.GetFullAABB(segmpos_minmax)
+
+        # TODO: Do better ?
 
         xinf = xmin - extend*(xmax-xmin)
         xsup = xmax + extend*(xmax-xmin)
