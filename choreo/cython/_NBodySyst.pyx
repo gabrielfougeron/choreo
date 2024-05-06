@@ -16,6 +16,8 @@ from libc.string cimport memset
 
 cdef extern from "limits.h":
     int RAND_MAX
+cdef extern from "float.h":
+    double DBL_MAX
 
 import choreo.metadata
 
@@ -52,6 +54,7 @@ import scipy
 import networkx
 import json
 import types
+import itertools
 
 try:
     from matplotlib import pyplot as plt
@@ -1085,54 +1088,75 @@ cdef class NBodySyst():
 
         return IsHomo, alpha_avg
 
-    # TODO : finish this!
     @cython.final
-    def GetFullAABB(self, double[:,:,::1] segmpos_minmax):
+    def GetFullAABB(
+        self                            ,
+        double[:,:,::1] segmpos_minmax  ,
+        double extend=0.                ,
+        bint MakeSquare = False         ,
+    ):
 
-        cdef double[:,::1] AABB = np.empty((2,self.geodim), dtype=np.float64)
-        cdef Py_ssize_t iint, ib
+        cdef double[:,::1] RotMat
 
-        for ib in range(self.nbody):
-            for iint in range(self.nint_min):
+        AABB_np = np.empty((2,self.geodim), dtype=np.float64)
+        cdef double[:,::1] AABB = AABB_np
+        AABB[:,:] = segmpos_minmax[0,:,:]
 
-                isegm = self._bodysegm[ib,iint]
-                Sym = self.intersegm_to_all[ib][iint]
+        cdef Py_ssize_t iint, ib, isegm
+        cdef Py_ssize_t idim, jdim
+        cdef double x, dx
 
+        cdef Py_ssize_t[::1] iminmax = np.empty((self.geodim), dtype=np.intp)
 
+        # Can't iterate on a memoryview directly
+        for tuple_it in itertools.product(range(2), repeat=self.geodim):
 
+            for idim in range(self.geodim):
+                iminmax[idim] = tuple_it[idim]
 
+            for ib in range(self.nbody):
+                for iint in range(self.nint_min):
 
+                    isegm = self._bodysegm[ib,iint]
+                    RotMat = self.gensegm_to_all[ib][iint].SpaceRot
+
+                    for idim in range(self.geodim):
+
+                        x = 0
+                        for jdim in range(self.geodim):
+                            x += RotMat[idim,jdim]*segmpos_minmax[isegm, iminmax[jdim], jdim]
+
+                        AABB[0,idim] = min(AABB[0,idim], x)
+                        AABB[1,idim] = max(AABB[1,idim], x)
+
+        for i in range(self.geodim):
+            dx = extend * (AABB[1,idim] - AABB[0,idim])
+            AABB[0,idim] -= dx
+            AABB[1,idim] += dx
+
+        if MakeSquare:
+
+            dx = 0.
+            for idim in range(self.geodim):
+                dx = max(dx, AABB[1,idim] - AABB[0,idim])
+            dx = 0.5 * dx
+
+            for idim in range(self.geodim):
+                x = 0.5 * (AABB[1,idim] + AABB[0,idim])
+                AABB[0,idim] = x - dx
+                AABB[1,idim] = x + dx
+
+        return AABB_np
 
     @cython.final
     def Write_Descriptor(
         self, double[::1] params_mom_buf, segmpos=None, filename=None,
-        Action=None, Gradaction=None, dxmin=None, Hash_Action=None, max_path_length=None,
+        Action=None, Gradaction=None, Hash_Action=None,
         extend=0.03,
     ):
 
-        cdef double[:,:,::1] segmpos_mv
         if segmpos is None:
-
-            segmpos = np.empty((self.nsegm, self.segm_store, self.geodim), dtype=np.float64)
-            segmpos_mv = segmpos
-
-            params_to_segmpos(
-                params_mom_buf          ,
-                self._params_pos_buf    , self._params_shapes       , self._params_shifts       ,
-                self._ifft_buf_ptr      , self._ifft_shapes         , self._ifft_shifts         ,
-                self._params_basis_buf  , self._params_basis_shapes , self._params_basis_shifts ,
-                self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
-                self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
-                self._pos_slice_buf_ptr , self._pos_slice_shapes    , self._pos_slice_shifts    ,
-                self._ncoeff_min_loop   , self._n_sub_fft           , self._fft_backend         ,
-                self._pyfftw_rffts_exe  ,
-                self._loopnb            , self._loopmass            ,
-                self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
-                self._AfterLastGenIint  , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
-                self._gensegm_to_body   , self._gensegm_to_iint     ,
-                self._bodyloop          , self.segm_size            , self.segm_store           ,
-                segmpos_mv              ,
-            )
+            segmpos = self.params_to_segmpos(params_mom_buf)
 
         if Action is None:
             Action = self.segmpos_params_to_action(segmpos, params_mom_buf)
@@ -1141,43 +1165,17 @@ cdef class NBodySyst():
             Gradaction_vect = self.segmpos_params_to_action_grad(segmpos, params_mom_buf)
             Gradaction = np.linalg.norm(Gradaction_vect)
 
-        if dxmin is None:
-            # TODO : implement this
-            dxmin = 1.
-
         if Hash_Action is None:
             Hash_Action = self.segmpos_to_hash(segmpos)
 
-        if max_path_length is None:
-            # TODO : implement this
-            max_path_length = 1.
+        bin_dx_min = self.segmpos_to_path_stats(segmpos)
 
         segmpos_minmax = np.empty((self.nsegm, 2, self.geodim), dtype=np.float64)
 
         segmpos_minmax[:,0,:] = np.min(segmpos, axis=1)
         segmpos_minmax[:,1,:] = np.max(segmpos, axis=1)
 
-        # TODO: finish this
-        # AABB = self.GetFullAABB(segmpos_minmax)
-
-        # TODO: Do better ?
-
-        xinf = xmin - extend*(xmax-xmin)
-        xsup = xmax + extend*(xmax-xmin)
-        
-        yinf = ymin - extend*(ymax-ymin)
-        ysup = ymax + extend*(ymax-ymin)
-        
-        hside = max(xsup-xinf,ysup-yinf)/2
-
-        xmid = (xinf+xsup)/2
-        ymid = (yinf+ysup)/2
-
-        xinf = xmid - hside
-        xsup = xmid + hside
-
-        yinf = ymid - hside
-        ysup = ymid + hside
+        AABB = self.GetFullAABB(segmpos_minmax, extend)
 
         Info_dict = {}
 
@@ -1196,15 +1194,11 @@ cdef class NBodySyst():
 
         Info_dict["Action"] = Action
         Info_dict["Grad_Action"] = Gradaction
-        Info_dict["Min_Distance"] = dxmin
-        Info_dict["Max_PathLength"] = max_path_length
+        Info_dict["Min_Bin_Distance"] = bin_dx_min
+        Info_dict["Max_PathLength"] = 1.
 
         Info_dict["Hash"] = Hash_Action.tolist()
-
-        Info_dict["xinf"] = xinf
-        Info_dict["xsup"] = xsup
-        Info_dict["yinf"] = yinf
-        Info_dict["ysup"] = ysup
+        Info_dict["AABB"] = AABB.tolist()
 
         Info_dict["nsegm"] = self.nsegm
         Info_dict["bodysegm"] = self.bodysegm.tolist()
@@ -2886,6 +2880,30 @@ cdef class NBodySyst():
         TT.toc("params_to_kin_nrg_grad_daxpy")
 
         return action_grad_np
+
+    @cython.final
+    def segmpos_to_path_stats(self, double[:,:,::1] segmpos):
+
+        out_bin_dx_min = np.empty((self.nbin_segm_unique), dtype=np.float64)
+        cdef double[::1] out_bin_dx_min_mv = out_bin_dx_min
+
+        with nogil:
+            
+            # segmpos_to_unary_path_stats(
+            #     segmpos                 ,
+            #     self.segm_store         ,
+            #     out_bin_dx_min          ,
+            # )            
+
+            segmpos_to_binary_path_stats(
+                segmpos                 ,
+                self._BinSourceSegm     , self._BinTargetSegm   ,
+                self._BinSpaceRot       , self._BinSpaceRotIsId ,
+                self.segm_store         ,
+                out_bin_dx_min_mv       ,
+            )
+
+        return out_bin_dx_min
  
 @cython.cdivision(True)
 cdef void Make_Init_bounds_coeffs(
@@ -5586,3 +5604,107 @@ cdef void pot_nrg_hess_inter_store_gravity_2d(
 
     hess[0] = b*pos[0]+a*dpos[0]
     hess[1] = b*pos[1]+a*dpos[1]
+
+
+# @cython.cdivision(True)
+# cdef void segm_pos_to_unary_path_stats(
+#     double[:,:,::1] segmpos     ,
+#     long segm_size              , long segm_store   ,
+#     double[::1]  out_segm_len   ,
+# ) noexcept nogil:
+# 
+#     cdef int nsegm = segmpos.shape[0]
+#     cdef int geodim = segmpos.shape[2]
+# 
+#     cdef Py_ssize_t isegm
+
+#     cdef double pot
+#     cdef double dx2, dx
+#     cdef double dx_min
+# 
+#     cdef bint size_is_store = (segm_size == segm_store)
+# 
+#     cdef double* tmp_loc_dpos = <double*> malloc(sizeof(double)*segm_store*geodim)
+#     cdef double* dpos
+# 
+    # for isegm in range(nsegm):
+# 
+#         dpos = tmp_loc_dpos
+# 
+#         isegm = BinSourceSegm[ibin]
+#         isegmp = BinTargetSegm[ibin]
+# 
+#         if BinSpaceRotIsId[ibin]:
+#             scipy.linalg.cython_blas.dcopy(&nitems_int, &segmpos[isegm,0,0], &int_one, tmp_loc_dpos, &int_one)
+# 
+#         else:
+#             scipy.linalg.cython_blas.dgemm(transt, transn, &geodim, &segm_store_int, &geodim, &one_double, &BinSpaceRot[ibin,0,0], &geodim, &segmpos[isegm,0,0], &geodim, &zero_double, tmp_loc_dpos, &geodim)
+# 
+#         scipy.linalg.cython_blas.daxpy(&nitems_int, &minusone_double, &segmpos[isegmp,0,0], &int_one, tmp_loc_dpos, &int_one)
+# 
+#         dx_min = DBL_MAX
+#         for iint in range(segm_size):
+# 
+#             dx2 = dpos[0]*dpos[0]
+#             for idim in range(1,geodim):
+#                 dx2 += dpos[idim]*dpos[idim]
+# 
+#             dx = csqrt(dx2)
+#             dx_min = min(dx_min, dx)
+# 
+#             dpos += geodim
+# 
+#         out_bin_dx_min[ibin] = dx_min
+
+
+@cython.cdivision(True)
+cdef void segmpos_to_binary_path_stats(
+    double[:,:,::1] segmpos         ,
+    long[::1] BinSourceSegm         , long[::1] BinTargetSegm   ,
+    double[:,:,::1] BinSpaceRot     , bint[::1] BinSpaceRotIsId ,
+    long segm_store                 ,
+    double[::1]  out_bin_dx_min     ,
+) noexcept nogil:
+
+    cdef long nbin = BinSourceSegm.shape[0]
+    cdef int geodim = BinSpaceRot.shape[1]
+    cdef int segm_store_int = segm_store
+    cdef int nitems_int = segm_store*geodim
+    cdef Py_ssize_t ibin, idim
+    cdef Py_ssize_t isegm, isegmp
+    cdef Py_ssize_t iint
+
+    cdef double dx2
+    cdef double dx2_min
+
+    cdef double* tmp_loc_dpos = <double*> malloc(sizeof(double)*segm_store*geodim)
+    cdef double* dpos
+
+    for ibin in range(nbin):
+
+        dpos = tmp_loc_dpos
+
+        isegm = BinSourceSegm[ibin]
+        isegmp = BinTargetSegm[ibin]
+
+        if BinSpaceRotIsId[ibin]:
+            scipy.linalg.cython_blas.dcopy(&nitems_int, &segmpos[isegm,0,0], &int_one, tmp_loc_dpos, &int_one)
+
+        else:
+            scipy.linalg.cython_blas.dgemm(transt, transn, &geodim, &segm_store_int, &geodim, &one_double, &BinSpaceRot[ibin,0,0], &geodim, &segmpos[isegm,0,0], &geodim, &zero_double, tmp_loc_dpos, &geodim)
+
+        scipy.linalg.cython_blas.daxpy(&nitems_int, &minusone_double, &segmpos[isegmp,0,0], &int_one, tmp_loc_dpos, &int_one)
+
+        dx2_min = DBL_MAX
+        for iint in range(segm_store):
+
+            dx2 = dpos[0]*dpos[0]
+            for idim in range(1,geodim):
+                dx2 += dpos[idim]*dpos[idim]
+
+            dx2_min = min(dx2_min, dx2)
+            dpos += geodim
+
+        out_bin_dx_min[ibin] = csqrt(dx2_min)
+
+    free(tmp_loc_dpos)

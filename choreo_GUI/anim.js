@@ -1349,11 +1349,33 @@ function canvasApp() {
 	function FinalizeSetOrbit(DoDrawParticles=true,DoXMinMax=true,setTinc=true) {
 
 		if(DoXMinMax) {
-			plotWindow = {
-				xMin : PlotInfo["xinf"],
-				xMax : PlotInfo["xsup"],
-				yMin : PlotInfo["yinf"],
-				yMax : PlotInfo["ysup"],
+
+			if (GetPlotInfoChoreoVersion() == "legacy") {
+				plotWindow = {
+					xMin : PlotInfo["xinf"],
+					xMax : PlotInfo["xsup"],
+					yMin : PlotInfo["yinf"],
+					yMax : PlotInfo["ysup"],
+				}
+			} else {
+
+				hside = 0.5 * Math.max(PlotInfo["AABB"][1][0]-PlotInfo["AABB"][0][0],PlotInfo["AABB"][1][1]-PlotInfo["AABB"][0][1])
+
+				xmid = 0.5*(PlotInfo["AABB"][1][0]+PlotInfo["AABB"][0][0])
+				ymid = 0.5*(PlotInfo["AABB"][1][1]+PlotInfo["AABB"][0][1])
+				
+				console.log("FinalizeSetOrbit")
+				console.log(hside)
+				console.log(xmid)
+				console.log(ymid)
+
+				plotWindow = {
+					xMin : xmid-hside, 
+					xMax : xmid+hside,
+					yMin : ymid-hside,
+					yMax : ymid+hside,
+				}
+
 			}
 
 			setPlotWindow(plotWindow)
