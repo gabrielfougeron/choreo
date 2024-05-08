@@ -17,7 +17,7 @@ warnings.filterwarnings("ignore", category=RuntimeWarning)
 project = "Choreo"
 author = "Gabriel Fougeron"
 project_copyright = "2021, Gabriel Fougeron"
-version = choreo.__version__
+version = choreo.metadata.__version__
 
 # sys.path.append(os.path.abspath("./_pygments"))
 # from style import PythonVSMintedStyle
