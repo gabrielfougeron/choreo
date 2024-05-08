@@ -1168,13 +1168,12 @@ cdef class NBodySyst():
         if Hash_Action is None:
             Hash_Action = self.segmpos_to_hash(segmpos)
 
-        bin_dx_min = self.segmpos_to_path_stats(segmpos)
+        loop_len, bin_dx_min = self.segmpos_to_path_stats(segmpos)
 
         segmpos_minmax = np.empty((self.nsegm, 2, self.geodim), dtype=np.float64)
 
         segmpos_minmax[:,0,:] = np.min(segmpos, axis=1)
         segmpos_minmax[:,1,:] = np.max(segmpos, axis=1)
-
         AABB = self.GetFullAABB(segmpos_minmax, extend)
 
         Info_dict = {}
@@ -1194,8 +1193,9 @@ cdef class NBodySyst():
 
         Info_dict["Action"] = Action
         Info_dict["Grad_Action"] = Gradaction
-        Info_dict["Min_Bin_Distance"] = bin_dx_min
-        Info_dict["Max_PathLength"] = 1.
+        Info_dict["Min_Bin_Distance"] = bin_dx_min.tolist()
+        Info_dict["Loop_Length"] = loop_len.tolist()
+        Info_dict["Max_PathLength"] = loop_len.max() * 7.936969215 # Legacy compatibility magic number
 
         Info_dict["Hash"] = Hash_Action.tolist()
         Info_dict["AABB"] = AABB.tolist()
@@ -2884,16 +2884,21 @@ cdef class NBodySyst():
     @cython.final
     def segmpos_to_path_stats(self, double[:,:,::1] segmpos):
 
+        cdef Py_ssize_t il, isegm, ib
+
+        out_segm_len = np.empty((self.nsegm), dtype=np.float64)
+        cdef double[::1] out_segm_len_mv = out_segm_len
+
         out_bin_dx_min = np.empty((self.nbin_segm_unique), dtype=np.float64)
         cdef double[::1] out_bin_dx_min_mv = out_bin_dx_min
 
         with nogil:
             
-            # segmpos_to_unary_path_stats(
-            #     segmpos                 ,
-            #     self.segm_store         ,
-            #     out_bin_dx_min          ,
-            # )            
+            segmpos_to_unary_path_stats(
+                segmpos                 ,
+                self.segm_store         ,
+                out_segm_len_mv         ,
+            )            
 
             segmpos_to_binary_path_stats(
                 segmpos                 ,
@@ -2903,7 +2908,15 @@ cdef class NBodySyst():
                 out_bin_dx_min_mv       ,
             )
 
-        return out_bin_dx_min
+        out_loop_len = np.zeros((self.nloop), dtype=np.float64)
+        cdef double[::1] out_loop_len_mv = out_loop_len
+
+        for isegm in range(self.nsegm):
+            ib = self._gensegm_to_body[isegm]
+            il = self._bodyloop[ib]
+            out_loop_len_mv[il] += out_segm_len_mv[isegm]
+
+        return out_loop_len, out_bin_dx_min
  
 @cython.cdivision(True)
 cdef void Make_Init_bounds_coeffs(
@@ -3287,7 +3300,7 @@ cdef void changevar_mom_T(
 
                     cur_params_mom_buf += 1
                     cur_param_pos_buf += 1
- 
+
 @cython.cdivision(True)
 cdef double params_to_kin_nrg(
     double *params_mom_buf  , long[:,::1] params_shapes , long[::1] params_shifts   ,
@@ -3794,9 +3807,6 @@ cdef void ifft_to_params(
 #                         dsrc = &params[0,0,0] + i * 2 * params_shapes[il,0]
 #                         ddest = params_buf[il] + i
 #                         scipy.linalg.cython_blas.dcopy(&n,dsrc,&int_one,ddest,&m)
-
-
-
 
     if direction < 0:
         for il in range(nloop):
@@ -5605,57 +5615,36 @@ cdef void pot_nrg_hess_inter_store_gravity_2d(
     hess[0] = b*pos[0]+a*dpos[0]
     hess[1] = b*pos[1]+a*dpos[1]
 
+# Poor man's imprecise and janky version of segment length computation
+# TODO: implement length as time integral of speed, and compare.
+@cython.cdivision(True)
+cdef void segmpos_to_unary_path_stats(
+    double[:,:,::1] segmpos     ,
+     long segm_store            ,
+    double[::1]  out_segm_len   ,
+) noexcept nogil:
 
-# @cython.cdivision(True)
-# cdef void segm_pos_to_unary_path_stats(
-#     double[:,:,::1] segmpos     ,
-#     long segm_size              , long segm_store   ,
-#     double[::1]  out_segm_len   ,
-# ) noexcept nogil:
-# 
-#     cdef int nsegm = segmpos.shape[0]
-#     cdef int geodim = segmpos.shape[2]
-# 
-#     cdef Py_ssize_t isegm
+    cdef int nsegm = segmpos.shape[0]
+    cdef int geodim = segmpos.shape[2]
 
-#     cdef double pot
-#     cdef double dx2, dx
-#     cdef double dx_min
-# 
-#     cdef bint size_is_store = (segm_size == segm_store)
-# 
-#     cdef double* tmp_loc_dpos = <double*> malloc(sizeof(double)*segm_store*geodim)
-#     cdef double* dpos
-# 
-    # for isegm in range(nsegm):
-# 
-#         dpos = tmp_loc_dpos
-# 
-#         isegm = BinSourceSegm[ibin]
-#         isegmp = BinTargetSegm[ibin]
-# 
-#         if BinSpaceRotIsId[ibin]:
-#             scipy.linalg.cython_blas.dcopy(&nitems_int, &segmpos[isegm,0,0], &int_one, tmp_loc_dpos, &int_one)
-# 
-#         else:
-#             scipy.linalg.cython_blas.dgemm(transt, transn, &geodim, &segm_store_int, &geodim, &one_double, &BinSpaceRot[ibin,0,0], &geodim, &segmpos[isegm,0,0], &geodim, &zero_double, tmp_loc_dpos, &geodim)
-# 
-#         scipy.linalg.cython_blas.daxpy(&nitems_int, &minusone_double, &segmpos[isegmp,0,0], &int_one, tmp_loc_dpos, &int_one)
-# 
-#         dx_min = DBL_MAX
-#         for iint in range(segm_size):
-# 
-#             dx2 = dpos[0]*dpos[0]
-#             for idim in range(1,geodim):
-#                 dx2 += dpos[idim]*dpos[idim]
-# 
-#             dx = csqrt(dx2)
-#             dx_min = min(dx_min, dx)
-# 
-#             dpos += geodim
-# 
-#         out_bin_dx_min[ibin] = dx_min
+    cdef Py_ssize_t isegm, iint, jint
 
+    cdef double dx,dx2
+
+    for isegm in range(nsegm):
+
+        out_segm_len[isegm] = 0
+
+        for iint in range(1,segm_store):
+
+            jint = iint - 1
+
+            dx2 = 0
+            for idim in range(geodim):
+                dx = segmpos[isegm,iint,idim] - segmpos[isegm,jint,idim]
+                dx2 += dx*dx
+
+            out_segm_len[isegm] += csqrt(dx2)
 
 @cython.cdivision(True)
 cdef void segmpos_to_binary_path_stats(
