@@ -69,12 +69,9 @@ except:
     MKL_FFT_AVAILABLE = False
 
 try:
-
     import pyfftw as p_pyfftw   
-    
     cimport pyfftw
     PYFFTW_AVAILABLE = True
-
 except:
     PYFFTW_AVAILABLE = False
 

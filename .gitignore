@@ -41,6 +41,7 @@ docs/gh-pages/
 /docs/pytest_out/
 /tests/NewSym_data/**/*.pdf
 /docs/source/sg_execution_times.rst
+include/
 ##########################################################
 #           To be included (with preceding !)
 ##########################################################

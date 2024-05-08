@@ -169,7 +169,7 @@ all_timings = pyquickbench.run_benchmark(
     ShowProgress = True     ,
     n_repeat = n_repeat     ,
     MonotonicAxes = MonotonicAxes,
-    ForceBenchmark = True
+    # ForceBenchmark = True
 )
 
 plot_intent = {
