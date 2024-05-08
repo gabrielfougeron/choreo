@@ -1364,11 +1364,6 @@ function canvasApp() {
 				xmid = 0.5*(PlotInfo["AABB"][1][0]+PlotInfo["AABB"][0][0])
 				ymid = 0.5*(PlotInfo["AABB"][1][1]+PlotInfo["AABB"][0][1])
 				
-				console.log("FinalizeSetOrbit")
-				console.log(hside)
-				console.log(xmid)
-				console.log(ymid)
-
 				plotWindow = {
 					xMin : xmid-hside, 
 					xMax : xmid+hside,

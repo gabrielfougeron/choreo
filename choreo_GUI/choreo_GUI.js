@@ -1433,7 +1433,6 @@ function SlideTrailTime(event) {
     
     trail_vanish_length = input_trail_vanish_length.value;
     
-
     var dx = xMax - xMin
     var dy = yMax - yMin
     var distance_ref = Math.sqrt(dx*dx + dy*dy)
@@ -1965,11 +1964,6 @@ async function PlayFileFromRemote(name,npy_file,json_file) {
         var trailLayerCanvas = document.getElementById("trailLayerCanvas")
         var wasrunning = running
 
-        // if (running) {
-        //     var event = new Event('StopAnimationFromOutsideCanvas')
-        //     trailLayerCanvas.dispatchEvent(event)
-        // }
-
         npyjs_obj = new npyjs()
 
         let finished_json = fetch(json_file,Gallery_cache_behavior)
@@ -1982,7 +1976,7 @@ async function PlayFileFromRemote(name,npy_file,json_file) {
             npyjs_obj.load(npy_file)
             .then((res) => {
                 Pos = res
-            });
+            })
 
         SolName = name
 
