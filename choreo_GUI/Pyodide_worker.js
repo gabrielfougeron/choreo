@@ -43,6 +43,7 @@ async function loadPyodideAndPackages() {
         "mpmath",
         "threadpoolctl",
         "./python_dist/choreo-0.2.0-cp311-cp311-emscripten_3_1_45_wasm32.whl"
+        // "./python_dist/choreo-1.0.0-cp311-cp311-emscripten_3_1_45_wasm32.whl"
     ])
 
 }

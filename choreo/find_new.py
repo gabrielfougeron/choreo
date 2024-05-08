@@ -1,17 +1,11 @@
+import sys
 import os
 try:
     import concurrent.futures
 except:
     pass
 
-try:
-    import numba
-except:
-    pass
-
-# import random
 import numpy as np
-# import math as m
 import scipy
 import json
 import time
@@ -20,8 +14,6 @@ import threadpoolctl
 
 import choreo.scipy_plus
 from choreo.cython._ActionSym import ActionSym
-from choreo.cython._NBodySyst import NBodySyst
-
 
 def Find_Choreo(
     *,
@@ -379,13 +371,14 @@ def Find_Choreo(
                 print(f'Opt Action Grad Norm: {best_sol.f_norm:.2e}')
                 print(f'Opt Action Grad Norm Refine : {f_fine_norm:.2e}')
                 
-                ParamPreciseEnough = (f_fine_norm< gradtol_max)
+                ParamPreciseEnough = (f_fine_norm < gradtol_max)
                 # print(f'Opt Action Grad Norm : {best_sol.f_norm} from {ActionGradNormEnterLoop}')
             
                 CanChangeOptimParams = i_optim_param < (n_optim_param-1)
                 
                 CanRefine = (current_cvg_lvl < n_reconverge_it_max)
                 NeedsRefinement = (f_fine_norm > mul_coarse_to_fine*best_sol.f_norm)
+                OnCollisionCourse = (best_sol.f_norm < gradtol_max) and (f_fine_norm > 1e6 * gradtol_max) 
                 
                 NBS.nint_fac = nint_fac_cur
 
@@ -404,7 +397,12 @@ def Find_Choreo(
                 if GoOn and (not(CanRefine) or not(NeedsRefinement)) and not(CanChangeOptimParams):
                 
                     GoOn = False
-                    print('Could not converge within prescibed optimizer and refinement parameters.')
+                    print('Stopping search: could not converge within prescibed optimizer and refinement parameters.')
+                    
+                if GoOn and (OnCollisionCourse):
+                
+                    GoOn = False
+                    print('Stopping search: solver is likely narrowing in on a collision solution.')
 
                 if SaveSol :
                     
@@ -1005,9 +1003,11 @@ def ChoreoReadDictAndFind(Workspace_folder, config_filename="choreo_config.json"
 
     with open(params_filename) as jsonFile:
         params_dict = json.load(jsonFile)
+        
+    if sys.platform == 'emscripten':
+        params_dict['Solver_CLI']['Exec_Mul_Proc'] = "No"
 
     Exec_Mul_Proc = params_dict['Solver_CLI']['Exec_Mul_Proc']
-
     n_threads = params_dict['Solver_CLI']['nproc']
 
     if Exec_Mul_Proc == "MultiProc":
