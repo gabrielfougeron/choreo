@@ -94,7 +94,7 @@ def Find_Choreo(
     NBS.fftw_nthreads = fftw_nthreads
     NBS.fft_backend = fft_backend
 
-    nint_fac_init = 128
+    # nint_fac_init = 128
 
     NBS.nint_fac = nint_fac_init
 
@@ -906,6 +906,7 @@ def ChoreoLoadFromDict(params_dict, Workspace_folder, callback=None, args_list=N
 
     n_reconverge_it_max = params_dict["Solver_Discr"] ['n_reconverge_it_max'] 
     nint_init = params_dict["Solver_Discr"]["nint_init"]   
+    nint_fac_init = nint_init
 
     disp_scipy_opt =  (params_dict['Solver_Optim'] ['optim_verbose_lvl'] == "full")
     # disp_scipy_opt = False

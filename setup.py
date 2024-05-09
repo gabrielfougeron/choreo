@@ -70,13 +70,13 @@ elif platform.system() == "Linux":
 
     if ("PYODIDE" in os.environ): # Building for Pyodide
 
-        extra_compile_args_std = ["-O0",  *ignore_warnings_args]
-        extra_compile_args_safe = ["-O0",  *ignore_warnings_args]
-        extra_link_args = []
+#         extra_compile_args_std = ["-O0",  *ignore_warnings_args]
+#         extra_compile_args_safe = ["-O0",  *ignore_warnings_args]
+#         extra_link_args = []
 
-        # extra_compile_args_std = ["-O3","-ffast-math","-flto",  *ignore_warnings_args]
-        # extra_compile_args_safe = ["-O3","-flto",  *ignore_warnings_args]
-        # extra_link_args = ["-flto", ]
+        extra_compile_args_std = ["-O3","-ffast-math","-flto",  *ignore_warnings_args]
+        extra_compile_args_safe = ["-O3","-flto",  *ignore_warnings_args]
+        extra_link_args = ["-flto", ]
 
     else:
 
@@ -94,13 +94,13 @@ elif platform.system() == "Linux":
                 
                 break
 
-        extra_compile_args_std = ["-O0","-march=native", "-fopenmp", "-lm", *ignore_warnings_args]
-        extra_compile_args_safe = ["-O0", "-fopenmp", "-lm", *ignore_warnings_args]
-        extra_link_args = ["-fopenmp", "-lm",]
+        # extra_compile_args_std = ["-O0","-march=native", "-fopenmp", "-lm", *ignore_warnings_args]
+        # extra_compile_args_safe = ["-O0", "-fopenmp", "-lm", *ignore_warnings_args]
+        # extra_link_args = ["-fopenmp", "-lm",]
 
-        # extra_compile_args_std = ["-Ofast", "-march=native", "-fopenmp", "-lm", "-flto", *ignore_warnings_args]
-        # extra_compile_args_safe = ["-O3", "-fopenmp", "-lm", "-flto", *ignore_warnings_args]
-        # extra_link_args = ["-fopenmp", "-lm", "-flto",  *ignore_warnings_args]
+        extra_compile_args_std = ["-Ofast", "-march=native", "-fopenmp", "-lm", "-flto", *ignore_warnings_args]
+        extra_compile_args_safe = ["-O3", "-fopenmp", "-lm", "-flto", *ignore_warnings_args]
+        extra_link_args = ["-fopenmp", "-lm", "-flto",  *ignore_warnings_args]
 
         cython_extnames.append("choreo.cython.funs_parallel")
         cython_safemath_needed.append(False)
