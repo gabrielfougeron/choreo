@@ -4,13 +4,7 @@ os.environ['OPENBLAS_NUM_THREADS'] = '1'
 
 import shutil
 import asyncio
-import random
-import time
-import math as m
 import numpy as np
-import sys
-import fractions
-import json
 
 import choreo 
 
@@ -46,14 +40,13 @@ def Send_init_PlotInfo():
     n_find = max_num_file
 
     file_basename = file_basename+str(max_num_file).zfill(5)
-
     filename = os.path.join(store_folder,file_basename+'_init.json')
 
     if os.path.isfile(filename):
 
         with open(filename, 'rt') as fh:
             thefile = fh.read()
-            
+
         blob = js.Blob.new([thefile], {type : 'application/text'})
 
         js.postMessage(
@@ -65,8 +58,44 @@ def Send_init_PlotInfo():
                 dict_converter=js.Object.fromEntries
             )
         )
+        
+    else:
+        
+        raise(ValueError('Toto'))
 
+def Plot_Loops_During_Optim_new(x, f, f_norm, NBS, jacobian):
 
+    segmpos_minmax = np.empty((NBS.nsegm, 2, NBS.geodim), dtype=np.float64)
+    segmpos_minmax[:,0,:] = np.min(jacobian.segmpos, axis=1)
+    segmpos_minmax[:,1,:] = np.max(jacobian.segmpos, axis=1)
+    AABB = NBS.GetFullAABB(segmpos_minmax, 0.)
+
+    hside = max(AABB[1,0]-AABB[0,0],AABB[1,1]-AABB[0,1])/2
+
+    xmid = (AABB[1,0]+AABB[0,0])/2
+    ymid = (AABB[1,1]+AABB[0,1])/2
+
+    windowObject = {}
+
+    windowObject["xMin"] = xmid - hside
+    windowObject["xMax"] = xmid + hside
+
+    windowObject["yMin"] = ymid - hside
+    windowObject["yMax"] = ymid + hside
+
+    js.postMessage(
+
+        funname = "Plot_Loops_During_Optim_From_Python",
+        args    = pyodide.ffi.to_js(
+            {
+                "NPY_data":jacobian.segmpos.reshape(-1),
+                "NPY_shape":jacobian.segmpos.shape,
+                "Current_PlotWindow":windowObject
+            },
+            dict_converter=js.Object.fromEntries
+        )
+    )
+    
 def Plot_Loops_During_Optim(x,f,f_norm,ActionSyst):
 
     xmin,xmax,ymin,ymax = ActionSyst.HeuristicMinMax()
@@ -98,6 +127,14 @@ def Plot_Loops_During_Optim(x,f,f_norm,ActionSyst):
     )
 
 def ListenToNextFromGUI(x,f,f_norm,ActionSyst):
+
+    AskForNext =  (js.AskForNext.to_py()[0] == 1)
+
+    js.AskForNext[0] = 0
+
+    return AskForNext
+
+def ListenToNextFromGUI_new(x,f,f_norm,ActionSyst,jacobian):
 
     AskForNext =  (js.AskForNext.to_py()[0] == 1)
 
@@ -224,9 +261,6 @@ async def main():
 
 
     Sym_list = choreo.Make_ChoreoSymList_From_ActionSymList(Sym_list, nbody)
-
-
-
 
     if ((LookForTarget) and not(params_dict['Phys_Target'] ['RandomJitterTarget'])) :
 
@@ -363,8 +397,6 @@ async def main():
 
         optim_callback_list.append(Plot_Loops_During_Optim)
 
-    # await SyncDiskPromise
-
     store_folder = '/Workspace/GUI solutions'
 
     if not(os.path.isdir(store_folder)):
@@ -398,9 +430,8 @@ async def main():
 
     file_basename = file_basename+str(max_num_file).zfill(5)
 
-    all_kwargs = choreo.Pick_Named_Args_From_Dict(choreo.Find_Choreo,dict(globals(),**locals()))
-
-    choreo.Find_Choreo(**all_kwargs)
+    all_kwargs = choreo.Pick_Named_Args_From_Dict(choreo.find.Find_Choreo,dict(globals(),**locals()))
+    choreo.find.Find_Choreo(**all_kwargs)
 
     filename_output = store_folder+'/'+file_basename
     filename = filename_output+".json"
@@ -449,5 +480,111 @@ async def main():
             )
         )
 
+async def main_new():
+
+    params_dict = js.ConfigDict.to_py()
+    
+    extra_args_dict = {}
+
+    callback_after_init_list = []
+
+    if params_dict['Animation_Search']['DisplayLoopsDuringSearch']:
+        callback_after_init_list.append(Send_init_PlotInfo)
+
+    optim_callback_list = [ListenToNextFromGUI_new]
+
+    if params_dict['Animation_Search']['DisplayLoopsDuringSearch']:
+
+        optim_callback_list.append(Plot_Loops_During_Optim_new)
+
+    extra_args_dict['callback_after_init_list'] = callback_after_init_list
+    extra_args_dict['optim_callback_list'] = optim_callback_list
+
+    store_folder = '/Workspace/GUI solutions'
+
+    if not(os.path.isdir(store_folder)):
+
+        store_folder = 'Sniff_all_sym/'
+
+        if os.path.isdir(store_folder):
+            shutil.rmtree(store_folder)
+            os.makedirs(store_folder)
+        else:
+            os.makedirs(store_folder)
+
+    file_basename = ''
+
+    max_num_file = 0
+    
+    for filename in os.listdir(store_folder):
+        file_path = os.path.join(store_folder, filename)
+        file_root, file_ext = os.path.splitext(os.path.basename(file_path))
+        
+        if (file_basename in file_root) and (file_ext == '.json' ):
+
+            file_root = file_root.replace(file_basename,"")
+
+            try:
+                max_num_file = max(max_num_file,int(file_root))
+            except:
+                pass
+
+    max_num_file = max_num_file + 1
+
+    file_basename = file_basename+str(max_num_file).zfill(5)
+
+    Workspace_folder = '/Workspace'
+    extra_args_dict['store_folder'] = store_folder
+    extra_args_dict['max_num_file'] = max_num_file
+    extra_args_dict['file_basename'] = file_basename
+    
+    choreo.find_new.ChoreoChooseParallelEnvAndFind(Workspace_folder, params_dict, extra_args_dict)
+
+    filename_output = store_folder+'/'+file_basename
+    filename = filename_output+".json"
+    
+    if os.path.isfile(filename):
+
+        with open(filename, 'rt') as fh:
+            thefile = fh.read()
+
+        blob = js.Blob.new([thefile], {type : 'application/text'})
+
+        filename = filename_output+'.npy'
+        all_pos = np.load(filename)
+
+        # os.remove(filename)
+
+        js.postMessage(
+            funname = "Play_Loop_From_Python",
+            args    = pyodide.ffi.to_js(
+                {
+                    "is_sol":True,
+                    "solname":"User generated solution: "+file_basename,
+                    "JSON_data":blob,
+                    "NPY_data":all_pos.reshape(-1),
+                    "NPY_shape":all_pos.shape,
+                    "DoClearScreen":not(params_dict['Animation_Search']['DisplayLoopsDuringSearch']),
+                    "DoXMinMax":not(params_dict['Animation_Search']['DisplayLoopsDuringSearch']),
+                    "ResetRot":False,
+                },
+                dict_converter=js.Object.fromEntries
+            )
+        )
+
+    else:
+
+        print("Solver did not find a solution.")
+
+        js.postMessage(
+            funname = "Python_no_sol_found",
+            args    = pyodide.ffi.to_js(
+                {
+                },
+                dict_converter=js.Object.fromEntries
+            )
+        )
+
 if __name__ == "__main__":
-    asyncio.create_task(main())
+    # asyncio.create_task(main())
+    asyncio.create_task(main_new())

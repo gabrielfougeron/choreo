@@ -67,18 +67,9 @@ try:
     MKL_FFT_AVAILABLE = True
 except:
     MKL_FFT_AVAILABLE = False
-# 
-# try:
-#     import pyfftw as p_pyfftw   
-#     cimport pyfftw
-#     PYFFTW_AVAILABLE = True
-# except:
-#     PYFFTW_AVAILABLE = False
 
 from choreo.cython.optional_pyfftw cimport pyfftw, PYFFTW_AVAILABLE
 from choreo.cython.optional_pyfftw import p_pyfftw
-
-print(f'{PYFFTW_AVAILABLE = }')
 
 cdef int USE_SCIPY_FFT = 0
 cdef int USE_MKL_FFT = 1
@@ -1173,7 +1164,6 @@ cdef class NBodySyst():
         loop_len, bin_dx_min = self.segmpos_to_path_stats(segmpos)
 
         segmpos_minmax = np.empty((self.nsegm, 2, self.geodim), dtype=np.float64)
-
         segmpos_minmax[:,0,:] = np.min(segmpos, axis=1)
         segmpos_minmax[:,1,:] = np.max(segmpos, axis=1)
         AABB = self.GetFullAABB(segmpos_minmax, extend)
@@ -1235,30 +1225,30 @@ cdef class NBodySyst():
         if (Use_exact_Jacobian):
 
             jacobian = scipy.optimize.nonlin.KrylovJacobian(**jac_options_kw)
-            jacobian.NBS = self
-
-            def update(self, x, f):
-
-                self.segmpos = self.NBS.params_to_segmpos(x)
-                scipy.optimize.nonlin.KrylovJacobian.update(self, x, f)
-
-            def setup(self, x, f, func):
-
-                self.segmpos = self.NBS.params_to_segmpos(x)
-                scipy.optimize.nonlin.KrylovJacobian.setup(self, x, f, func)
 
             def matvec(self,v):
     
                 return self.NBS.segmpos_dparams_to_action_hess(self.segmpos, v)
 
-            jacobian.update = types.MethodType(update, jacobian)
-            jacobian.setup = types.MethodType(setup, jacobian)
             jacobian.matvec = types.MethodType(matvec, jacobian)
             jacobian.rmatvec = types.MethodType(matvec, jacobian)
 
         else: 
 
             jacobian = scipy.optimize.nonlin.KrylovJacobian(**jac_options_kw)
+        
+        jacobian.NBS = self
+        
+        def update(self, x, f):
+            self.segmpos = self.NBS.params_to_segmpos(x)
+            scipy.optimize.nonlin.KrylovJacobian.update(self, x, f)
+
+        def setup(self, x, f, func):
+            self.segmpos = self.NBS.params_to_segmpos(x)
+            scipy.optimize.nonlin.KrylovJacobian.setup(self, x, f, func)
+
+        jacobian.update = types.MethodType(update, jacobian)
+        jacobian.setup = types.MethodType(setup, jacobian)
 
         return jacobian
 
@@ -2882,6 +2872,31 @@ cdef class NBodySyst():
         TT.toc("params_to_kin_nrg_grad_daxpy")
 
         return action_grad_np
+
+# 
+#     @cython.final
+#     def segmpos_to_xminmax(self, double[:,:,::1] segmpos):
+# 
+#         out_segm_len = np.empty((self.nsegm), dtype=np.float64)
+#         cdef double[::1] out_segm_len_mv = out_segm_len
+# 
+#         with nogil:
+#             
+#             segmpos_to_unary_path_stats(
+#                 segmpos                 ,
+#                 self.segm_store         ,
+#                 out_segm_len_mv         ,
+#             ) 
+# 
+#         out_loop_len = np.zeros((self.nloop), dtype=np.float64)
+#         cdef double[::1] out_loop_len_mv = out_loop_len
+# 
+#         for isegm in range(self.nsegm):
+#             ib = self._gensegm_to_body[isegm]
+#             il = self._bodyloop[ib]
+#             out_loop_len_mv[il] += out_segm_len_mv[isegm]
+# 
+#         return out_loop_len, out_bin_dx_min
 
     @cython.final
     def segmpos_to_path_stats(self, double[:,:,::1] segmpos):

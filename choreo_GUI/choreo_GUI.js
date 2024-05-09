@@ -3036,7 +3036,7 @@ function MakeLoopData() {
     } else { 
         plural = 's'
     }
-    MassMessage.innerHTML = "<br>Symmetries lead to the discovery of "+nloops.toString()+" independant loop"+plural+":<br><br>"
+    MassMessage.innerHTML = "<br>Symmetries lead to the discovery of "+nloops.toString()+" independent loop"+plural+":<br><br>"
 
     for (il = MassArray.length; il < nloops; il++) {
         MassArray.push(1.)

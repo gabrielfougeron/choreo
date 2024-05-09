@@ -1042,7 +1042,7 @@ class ChoreoAction():
             def rmatvec(self,v):
     
                 return self.ActionSyst.Compute_action_hess_mul_NoPosFFT(self.all_coeffs,self.all_pos,v)
-            
+
             jacobian.update = types.MethodType(update, jacobian)
             jacobian.setup = types.MethodType(setup, jacobian)
             jacobian.matvec = types.MethodType(matvec, jacobian)

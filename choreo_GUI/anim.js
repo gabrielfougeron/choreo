@@ -896,6 +896,13 @@ function canvasApp() {
 
 		var RotMat
 
+		var segm_store = Pos.shape[1]
+		if (PlotInfo["segm_size"] == PlotInfo["segm_store"]){
+			var segm_size = segm_store
+		} else {
+			var segm_size = segm_store - 1
+		}
+
 		for (ib=0; ib<PlotInfo['nbody']; ib++) {
 
 			for (iint=0; iint<PlotInfo['nint_min']; iint++) {
@@ -904,7 +911,7 @@ function canvasApp() {
 					
 					isegm = PlotInfo['bodysegm'][ib][iint]
 
-					io = PlotInfo['segm_store'] * isegm * 2
+					io = segm_store * isegm * 2
 
 					p = particles[ib];
 					trailLayerContext.lineWidth = p.PartRelSize * base_trailWidth 
@@ -930,7 +937,7 @@ function canvasApp() {
 					trailLayerContext.beginPath()
 					trailLayerContext.moveTo(Pixx, Pixy)
 
-					for (i_pos = 1 ; i_pos < PlotInfo['segm_size'] ; i_pos++){
+					for (i_pos = 1 ; i_pos < segm_size ; i_pos++){
 
 						// Super ugly
 						xl = Pos.data[ io + 2*i_pos 	] 
@@ -1075,17 +1082,24 @@ function canvasApp() {
 
 		var ib
 		var PixX, PixY
+
+		var segm_store = Pos.shape[1]
+		if (PlotInfo["segm_size"] == PlotInfo["segm_store"]){
+			var segm_size = segm_store
+		} else {
+			var segm_size = segm_store - 1
+		}
 		
 		var tmul_beg = tbeg*PlotInfo['nint_min']
 		var iint_min_beg = Math.floor(tmul_beg)
 		var trem_beg = tmul_beg - iint_min_beg
-		var irem_beg = Math.floor(trem_beg*PlotInfo['segm_size'])
+		var irem_beg = Math.floor(trem_beg*segm_size)
 		
 		var tend = tbeg + tInc
 		var tmul_end = tend*PlotInfo['nint_min']
 		var iint_min_end = Math.floor(tmul_end)
 		var trem_end = tmul_end - iint_min_end
-		var irem_end = Math.floor(trem_end*PlotInfo['segm_size'])
+		var irem_end = Math.floor(trem_end*segm_size)
 
 		var iint_min_loop, iint_min
 
@@ -1111,10 +1125,10 @@ function canvasApp() {
 
 				RotMat = PlotInfo['InterSegmSpaceRot'][ib][iint_min]
 				isegm = PlotInfo['bodysegm'][ib][iint_min]
-				io = PlotInfo['segm_store'] * isegm * 2
+				io = segm_store * isegm * 2
 
 				ip_beg = 0
-				ip_end = PlotInfo['segm_size']
+				ip_end = segm_size
 
 				if (iint_min_loop == iint_min_beg) {
 					ip_beg = irem_beg
@@ -1130,7 +1144,7 @@ function canvasApp() {
 					if (TimeRev) {
 						iip = io + 2*ip
 					} else {
-						iip = io + 2*(PlotInfo['segm_size']-ip)
+						iip = io + 2*(segm_size-ip)
 					}
 
 					xl = RotMat[0][0] * Pos.data[ iip ] + RotMat[0][1] * Pos.data[ iip + 1 ] - center_x
@@ -1220,6 +1234,13 @@ function canvasApp() {
 
 	function setParticlePositions_new(t) {
 
+		var segm_store = Pos.shape[1]
+		if (PlotInfo["segm_size"] == PlotInfo["segm_store"]){
+			var segm_size = segm_store
+		} else {
+			var segm_size = segm_store - 1
+		}
+
 		var p
 		var iom, iop, ib, im, ip, isegmm, isegmp
 		var iim, iip
@@ -1230,12 +1251,12 @@ function canvasApp() {
 		iint_minm = Math.floor(tmul)
 		trem = tmul - iint_minm
 
-		tmul = trem*PlotInfo['segm_size']
+		tmul = trem*segm_size
 		im = Math.floor(tmul)
 		trem = tmul - im
 
 		ip = im+1
-		if (ip >= PlotInfo['segm_store']) {
+		if (ip >= segm_store) {
 			iint_minp = (iint_minm+1)%PlotInfo['nint_min']
 			ip = 0
 		} else {
@@ -1245,24 +1266,24 @@ function canvasApp() {
 		for (ib=0; ib<PlotInfo['nbody']; ib++) {
 
 			isegmm = PlotInfo['bodysegm'][ib][iint_minm]
-			iom = PlotInfo['segm_store'] * isegmm * 2
+			iom = segm_store * isegmm * 2
 						
 			if (PlotInfo["InterSegmTimeRev"][ib][iint_minm] > 0) {
 				iim = iom + 2*im
 			} else {
-				iim = iom + 2*(PlotInfo['segm_size']-im)
+				iim = iom + 2*(segm_size-im)
 			}		
 
 			xlm = PlotInfo['InterSegmSpaceRot'][ib][iint_minm][0][0] * Pos.data[ iim ] + PlotInfo['InterSegmSpaceRot'][ib][iint_minm][0][1] * Pos.data[ iim + 1 ] 
 			ylm = PlotInfo['InterSegmSpaceRot'][ib][iint_minm][1][0] * Pos.data[ iim ] + PlotInfo['InterSegmSpaceRot'][ib][iint_minm][1][1] * Pos.data[ iim + 1 ] 
 
 			isegmp = PlotInfo['bodysegm'][ib][iint_minp]
-			iop = PlotInfo['segm_store'] * isegmp * 2
+			iop = segm_store * isegmp * 2
 	
 			if (PlotInfo["InterSegmTimeRev"][ib][iint_minp] > 0) {
 				iip = iop + 2*ip
 			} else {
-				iip = iop + 2*(PlotInfo['segm_size']-ip)
+				iip = iop + 2*(segm_size-ip)
 			}
 
 			xlp = PlotInfo['InterSegmSpaceRot'][ib][iint_minp][0][0] * Pos.data[ iip ] + PlotInfo['InterSegmSpaceRot'][ib][iint_minp][0][1] * Pos.data[ iip + 1 ] 
