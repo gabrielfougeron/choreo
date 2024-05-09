@@ -121,25 +121,6 @@ def Find_Choreo(
     Finds periodic solutions
 
     """
-# 
-#     if CurrentlyDeveloppingNewStuff:
-# 
-#         print("WARNING : ENTERING DEV GROUNDS. Proceed with caution")
-# 
-#         ActionSyst = setup_changevar_new(
-#             geodim                                      ,
-#             nbody                                       ,
-#             nint_init                                   ,
-#             mass                                        ,
-#             n_reconverge_it_max                         ,
-#             Sym_list = Sym_list                         ,
-#             MomCons = MomConsImposed                    ,
-#             n_grad_change = n_grad_change               ,
-#             CrashOnIdentity = CrashOnError_changevar    ,
-#             store_folder = store_folder                 ,
-#         )
-# 
-#         return
 
     
     print(f'Searching periodic solutions of {nbody:d} bodies.')
@@ -173,7 +154,7 @@ def Find_Choreo(
     nbi_naive = (nbody*(nbody-1))//2
 
     print('Imposed constraints lead to the detection of:')
-    print(f'    {ActionSyst.nloop:d} independant loops')
+    print(f'    {ActionSyst.nloop:d} independent loops')
     print(f'    {nbi_tot:d} binary interactions')
     print(f'    ==> Reduction of {100*(1-nbi_tot/nbi_naive):.2f} % wrt the {nbi_naive:d} naive binary iteractions')
     print('')
@@ -702,7 +683,7 @@ def GenSymExample(
     nbi_naive = (nbody*(nbody-1))//2
 
     print('Imposed constraints lead to the detection of:')
-    print(f'    {ActionSyst.nloop:d} independant loops')
+    print(f'    {ActionSyst.nloop:d} independent loops')
     print(f'    {nbi_tot:d} binary interactions')
     print(f'    ==> Reduction of {100*(1-nbi_tot/nbi_naive):.2f} % wrt the {nbi_naive:d} naive binary iteractions')
     print('')
@@ -1143,9 +1124,6 @@ def ChoreoLoadFromDict(params_dict, Workspace_folder, callback=None, args_list=N
     if not(os.path.isdir(store_folder)):
 
         os.makedirs(store_folder)
-
-    # print("store_folder: ",store_folder)
-    # print(os.path.isdir(store_folder))
 
     Use_exact_Jacobian = params_dict["Solver_Discr"]["Use_exact_Jacobian"]
 

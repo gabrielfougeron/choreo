@@ -779,8 +779,8 @@ window.addEventListener("drop",function(e){
     &nbsp &nbsp The first step of the solution process is to analyse the symmetry constraints in order to:<br>
     <ul style="margin-left:2em">
       <li>Prune the redundant binary body-body interactions, so that computations can be re-used.</li>
-      <li>Detect independant loops. The motion of every body in a loop can be deduced from that of a single representative.</li>
-      <li>Reformulate the symmetries so that they are understood <i>a priori</i> through parametrization. The shapes of all independant loops are constrained accordingly.</li>
+      <li>Detect independent loops. The motion of every body in a loop can be deduced from that of a single representative.</li>
+      <li>Reformulate the symmetries so that they are understood <i>a priori</i> through parametrization. The shapes of all independent loops are constrained accordingly.</li>
     </ul>
     Then, <b>choreo</b> implements a <a href="https://en.wikipedia.org/wiki/Spectral_method">Fourier spectral method</a> to solve the equations of motion. Starting from an initial random set of parameters, the solver forms better and better guesses until convergence. It is also possible to use previously computed solutions to manufacture an acceptable initial state to the solver in the<button class="in_text_btn" onclick="ClickLeftTabBtn('Phys');ClickTopTabBtn('Phys_Target');"><b>Target</b></button>tab.
     <br>&nbsp 
