@@ -67,13 +67,18 @@ try:
     MKL_FFT_AVAILABLE = True
 except:
     MKL_FFT_AVAILABLE = False
+# 
+# try:
+#     import pyfftw as p_pyfftw   
+#     cimport pyfftw
+#     PYFFTW_AVAILABLE = True
+# except:
+#     PYFFTW_AVAILABLE = False
 
-try:
-    import pyfftw as p_pyfftw   
-    cimport pyfftw
-    PYFFTW_AVAILABLE = True
-except:
-    PYFFTW_AVAILABLE = False
+from choreo.cython.optional_pyfftw cimport pyfftw, PYFFTW_AVAILABLE
+from choreo.cython.optional_pyfftw import p_pyfftw
+
+print(f'{PYFFTW_AVAILABLE = }')
 
 cdef int USE_SCIPY_FFT = 0
 cdef int USE_MKL_FFT = 1

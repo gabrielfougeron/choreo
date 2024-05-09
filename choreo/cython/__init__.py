@@ -3,6 +3,7 @@ from ._NBodySyst import NBodySyst
 from .funs import *
 from .funs_serial import *
 from .test_blas import *
+from .test_blas import *
 
 try:
     from .funs_parallel import *
