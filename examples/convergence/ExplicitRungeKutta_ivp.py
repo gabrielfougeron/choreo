@@ -223,7 +223,7 @@ plt.show()
 # %%
 # We can see 3 distinct phases on these plots:
 # 
-# * A first pre-convergence phase, where the convergence rate is growing towards its theoretical value. the end of the pre-convergence phase occurs for a number of sub-intervals roughtly independant of the convergence order of the quadrature method.
+# * A first pre-convergence phase, where the convergence rate is growing towards its theoretical value. the end of the pre-convergence phase occurs for a number of sub-intervals roughtly independent of the convergence order of the quadrature method.
 # * A steady convergence phase where the convergence remains close to the theoretical value
 # * A final phase, where the relative error stagnates arround 1e-15. The value of the integral is computed with maximal accuracy given floating point precision. The approximation of the convergence rate is dominated by seemingly random floating point errors.
 # 

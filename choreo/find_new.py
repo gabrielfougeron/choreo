@@ -104,14 +104,14 @@ def Find_Choreo(
     nparam_tot = NBS.nparams_incl_o // 2
 
     print('Imposed constraints lead to the detection of:')
-    print(f'    {NBS.nloop:d} independant loops')
+    print(f'    {NBS.nloop:d} independent loops')
     print(f'    {NBS.nint_min:d} integration segments')
-    print(f'    {NBS.nsegm:d} independant generating segments')
+    print(f'    {NBS.nsegm:d} independent generating segments')
     print(f'    {NBS.nbin_segm_unique:d} binary interactions between segments')
     print()
     print(f'The number of free parameters is reduced by a factor of {nparam_nosym / nparam_tot}')
-    print(f'The number of independant interactions is reduced by a factor of {NBS.nbin_segm_tot  / NBS.nbin_segm_unique}')
-    print(f'The number of independant segments is reduced by a factor of {(nbody * NBS.nint_min) / NBS.nsegm}')
+    print(f'The number of independent interactions is reduced by a factor of {NBS.nbin_segm_tot  / NBS.nbin_segm_unique}')
+    print(f'The number of independent segments is reduced by a factor of {(nbody * NBS.nint_min) / NBS.nsegm}')
     print()
     print('Starting search')
     print()
@@ -135,7 +135,7 @@ def Find_Choreo(
 
     n_opt = 0
     n_find = 0
-    
+
     if optim_callback_list is None:
         optim_callback_list = []
     
@@ -143,9 +143,8 @@ def Find_Choreo(
 
     if callback_after_init_list is None:
         callback_after_init_list = []
-    
     n_callback_after_init_list = len(callback_after_init_list)
-
+    
     ForceFirstEntry = save_first_init
     
     hash_dict = {}
@@ -251,6 +250,9 @@ def Find_Choreo(
 #                 np.save(filename_output+'.npy',all_pos)
 
         for i in range(n_callback_after_init_list):
+            
+            print(f'executing {callback_after_init_list[i].__name__}')
+            
             callback_after_init_list[i]()
 
         f0 = NBS.segmpos_params_to_action_grad(segmpos, x)
@@ -305,12 +307,10 @@ def Find_Choreo(
             def optim_callback(x,f,f_norm):
 
                 AskedForNext = False
-                
                 best_sol.update(x,f,f_norm)
 
                 for i in range(n_optim_callback_list):
-
-                    AskedForNext = (AskedForNext or optim_callback_list[i](x,f,f_norm,NBS))
+                    AskedForNext = (AskedForNext or optim_callback_list[i](x,f,f_norm,NBS,jacobian))
 
                 return AskedForNext
 
@@ -325,7 +325,6 @@ def Find_Choreo(
             except Exception as exc:
                 
                 print(exc)
-                print("Value Error occured, skipping.")
                 GoOn = False
                 raise(exc)
                 
@@ -551,7 +550,7 @@ def Find_Choreo(
 #     nbi_naive = (nbody*(nbody-1))//2
 # 
 #     print('Imposed constraints lead to the detection of:')
-#     print(f'    {ActionSyst.nloop:d} independant loops')
+#     print(f'    {ActionSyst.nloop:d} independent loops')
 #     print(f'    {nbi_tot:d} binary interactions')
 #     print(f'    ==> Reduction of {100*(1-nbi_tot/nbi_naive):.2f} % wrt the {nbi_naive:d} naive binary iteractions')
 #     print('')
@@ -640,13 +639,13 @@ def Find_Choreo(
 # 
 #     return True
    
-def ChoreoFindFromDict(params_dict, Workspace_folder):
-
-    all_kwargs = ChoreoLoadFromDict(params_dict, Workspace_folder, callback = Find_Choreo)
+def ChoreoFindFromDict(params_dict, extra_args_dict, Workspace_folder):
+    
+    all_kwargs = ChoreoLoadFromDict(params_dict, Workspace_folder, callback = Find_Choreo, extra_args_dict=extra_args_dict)
 
     Find_Choreo(**all_kwargs)
         
-def ChoreoLoadFromDict(params_dict, Workspace_folder, callback=None, args_list=None):
+def ChoreoLoadFromDict(params_dict, Workspace_folder, callback=None, args_list=None, extra_args_dict={}):
 
     def load_target_files(filename, Workspace_folder, target_speed):
 
@@ -853,13 +852,13 @@ def ChoreoLoadFromDict(params_dict, Workspace_folder, callback=None, args_list=N
 
     CurrentlyDeveloppingNewStuff = params_dict.get("CurrentlyDeveloppingNewStuff",False)
 
+    # if sys.platform == 'emscripten':
+    #     store_folder = os.path.join(Workspace_folder,str(nbody))
+    # else:
+    #     store_folder = os.path.join(Workspace_folder,str(nbody))
     store_folder = os.path.join(Workspace_folder,str(nbody))
     if not(os.path.isdir(store_folder)):
-
         os.makedirs(store_folder)
-
-    # print("store_folder: ",store_folder)
-    # print(os.path.isdir(store_folder))
 
     Use_exact_Jacobian = params_dict["Solver_Discr"]["Use_exact_Jacobian"]
 
@@ -871,7 +870,8 @@ def ChoreoLoadFromDict(params_dict, Workspace_folder, callback=None, args_list=N
     # Penalize_Escape = True
     Penalize_Escape = False
 
-    save_first_init = False
+    save_first_init = (sys.platform == 'emscripten')
+    # save_first_init = False
     # save_first_init = True
 
     save_all_inits = False
@@ -944,7 +944,6 @@ def ChoreoLoadFromDict(params_dict, Workspace_folder, callback=None, args_list=N
 
     n_opt = 0
     n_opt_max = 100
-    n_find_max = 1
 
     mul_coarse_to_fine = params_dict["Solver_Discr"]["mul_coarse_to_fine"]
 
@@ -963,7 +962,10 @@ def ChoreoLoadFromDict(params_dict, Workspace_folder, callback=None, args_list=N
     n_opt = 0
     # n_opt_max = 1
     n_opt_max = params_dict["Solver_Optim"]["n_opt"]
-    n_find_max = params_dict["Solver_Optim"]["n_opt"]
+    if sys.platform == 'emscripten':
+        n_find_max = 1
+    else:
+        n_find_max = params_dict["Solver_Optim"]["n_opt"]
     
     fftw_planner_effort = params_dict['Solver_CLI'].get('fftw_planner_effort', 'FFTW_MEASURE')
     fftw_wisdom_only = params_dict['Solver_CLI'].get('fftw_wisdom_only', False)
@@ -971,17 +973,19 @@ def ChoreoLoadFromDict(params_dict, Workspace_folder, callback=None, args_list=N
     fft_backend = params_dict['Solver_CLI'].get('fft_backend', 'scipy')
     
     ReconvergeSol = False
-    AddNumberToOutputName = True
+    AddNumberToOutputName = not(sys.platform == 'emscripten')
     
     if callback is None:
         if args_list is None:
             return dict(**locals())
         else:
-            loc = locals()
-            return {key:loc[key] for key in args_list}
+            the_dict = dict(**locals())
+            the_dict |= extra_args_dict
+            return {key:the_dict[key] for key in args_list}
     else:
-        return Pick_Named_Args_From_Dict(callback, dict(**locals()))
-
+        the_dict = dict(**locals())
+        the_dict |= extra_args_dict
+        return Pick_Named_Args_From_Dict(callback, the_dict)
 
 def Pick_Named_Args_From_Dict(fun, the_dict, MissingArgsAreNone=True):
     
@@ -1002,8 +1006,16 @@ def ChoreoReadDictAndFind(Workspace_folder, config_filename="choreo_config.json"
     with open(params_filename) as jsonFile:
         params_dict = json.load(jsonFile)
         
+    ChoreoChooseParallelEnvAndFind(Workspace_folder, params_dict)
+    
+def ChoreoChooseParallelEnvAndFind(Workspace_folder, params_dict, extra_args_dict={}):
+    
     if sys.platform == 'emscripten':
         params_dict['Solver_CLI']['Exec_Mul_Proc'] = "No"
+        params_dict['Solver_CLI']['SaveImage'] = False
+        params_dict['Solver_CLI']['SaveVideo'] = False
+        params_dict['Solver_CLI']['fft_backend'] = "scipy" 
+
 
     Exec_Mul_Proc = params_dict['Solver_CLI']['Exec_Mul_Proc']
     n_threads = params_dict['Solver_CLI']['nproc']
@@ -1017,18 +1029,18 @@ def ChoreoReadDictAndFind(Workspace_folder, config_filename="choreo_config.json"
                 
                 res = []
                 for i in range(n_threads):
-                    res.append(executor.submit(ChoreoFindFromDict, params_dict, Workspace_folder))
+                    res.append(executor.submit(ChoreoFindFromDict, params_dict, extra_args_dict, Workspace_folder))
                     time.sleep(0.01)
 
     elif Exec_Mul_Proc == "MultiThread":
         
         with threadpoolctl.threadpool_limits(limits=n_threads):
-            ChoreoFindFromDict(params_dict, Workspace_folder)
+            ChoreoFindFromDict(params_dict, extra_args_dict, Workspace_folder)
 
     elif Exec_Mul_Proc == "No":
 
         with threadpoolctl.threadpool_limits(limits=1):
-            ChoreoFindFromDict(params_dict, Workspace_folder)
+            ChoreoFindFromDict(params_dict, extra_args_dict, Workspace_folder)
     else :
 
         raise ValueError(f'Unknown {Exec_Mul_Proc = }. Accepted values : "MultiProc", "MultiThread" or "No"')
@@ -1102,7 +1114,6 @@ def Check_Duplicates(NBS, segmpos, params, hash_dict, action_dict, store_folder,
 
 try:
     import pyfftw
-    PYFFTW_AVAILABLE = True
 
     def wisdom_filename_divide(filename):
         root, ext = os.path.splitext(filename) 
@@ -1132,4 +1143,4 @@ try:
                 f.write(wis[i])
 
 except:
-    PYFFTW_AVAILABLE = False
+    pass
