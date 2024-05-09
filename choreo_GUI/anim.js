@@ -937,7 +937,7 @@ function canvasApp() {
 					trailLayerContext.beginPath()
 					trailLayerContext.moveTo(Pixx, Pixy)
 
-					for (i_pos = 1 ; i_pos < segm_size ; i_pos++){
+					for (i_pos = 1 ; i_pos < segm_store ; i_pos++){
 
 						// Super ugly
 						xl = Pos.data[ io + 2*i_pos 	] 
