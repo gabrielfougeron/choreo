@@ -338,6 +338,8 @@ def Find_Choreo(
             segmpos = NBS.params_to_segmpos(best_sol.x)
             Hash_Action = NBS.segmpos_to_hash(segmpos)
             
+            print(f'Opt Action Grad Norm: {best_sol.f_norm:.2e}')
+            
             if (GoOn and Check_Escape):
                 
                 Escaped = NBS.DetectEscape(segmpos)
@@ -368,17 +370,13 @@ def Find_Choreo(
                 f_fine = NBS.params_to_action_grad(x_fine)
                 f_fine_norm = np.linalg.norm(f_fine)
                 
-                print(f'Opt Action Grad Norm: {best_sol.f_norm:.2e}')
                 print(f'Opt Action Grad Norm Refine : {f_fine_norm:.2e}')
                 
                 ParamPreciseEnough = (f_fine_norm < gradtol_max)
-                # print(f'Opt Action Grad Norm : {best_sol.f_norm} from {ActionGradNormEnterLoop}')
-            
                 CanChangeOptimParams = i_optim_param < (n_optim_param-1)
-                
                 CanRefine = (current_cvg_lvl < n_reconverge_it_max)
                 NeedsRefinement = (f_fine_norm > mul_coarse_to_fine*best_sol.f_norm)
-                OnCollisionCourse = (best_sol.f_norm < gradtol_max) and (f_fine_norm > 1e6 * gradtol_max) 
+                OnCollisionCourse = (best_sol.f_norm < 1e3*gradtol_max) and (f_fine_norm > 1e6 * best_sol.f_norm) 
                 
                 NBS.nint_fac = nint_fac_cur
 
