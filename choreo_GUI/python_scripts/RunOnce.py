@@ -12,10 +12,6 @@ import choreo
 import js
 import pyodide
 
-import pyquickbench
-
-TT = pyquickbench.TimeTrain(include_locs=False, names_reduction='avg')
-
 def Send_init_PlotInfo():
 
     file_basename = ''
@@ -45,7 +41,7 @@ def Send_init_PlotInfo():
     n_find = max_num_file
 
     file_basename = file_basename+str(max_num_file).zfill(5)
-    filename = os.path.join(store_folder,file_basename+'_init.json')
+    filename = os.path.join(store_folder,file_basename+'init.json')
 
     if os.path.isfile(filename):
 
@@ -69,8 +65,7 @@ def Send_init_PlotInfo():
         raise(ValueError('Toto'))
 
 def Plot_Loops_During_Optim_new(x, f, f_norm, NBS, jacobian):
-    
-    TT.toc("enter new")
+
     AABB = NBS.GetFullAABB(jacobian.segmpos, 0., MakeSquare=True)
 
     windowObject = {
@@ -79,8 +74,7 @@ def Plot_Loops_During_Optim_new(x, f, f_norm, NBS, jacobian):
         "yMin": AABB[0,1]   ,
         "yMax": AABB[1,1]   ,
     }
-    TT.toc("leave new")
-    
+
     js.postMessage(
 
         funname = "Plot_Loops_During_Optim_From_Python",
@@ -546,8 +540,6 @@ async def main_new():
     
     choreo.find_new.ChoreoChooseParallelEnvAndFind(Workspace_folder, params_dict, extra_args_dict)
 
-    print(TT)
-
     filename_output = store_folder+'/'+file_basename
     filename = filename_output+".json"
     
@@ -560,8 +552,6 @@ async def main_new():
 
         filename = filename_output+'.npy'
         all_pos = np.load(filename)
-
-        # os.remove(filename)
 
         js.postMessage(
             funname = "Play_Loop_From_Python",
@@ -594,5 +584,5 @@ async def main_new():
         )
 
 if __name__ == "__main__":
-    asyncio.create_task(main())
-    # asyncio.create_task(main_new())
+    # asyncio.create_task(main())
+    asyncio.create_task(main_new())

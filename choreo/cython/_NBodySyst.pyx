@@ -1129,7 +1129,7 @@ cdef class NBodySyst():
         self                    ,
         double[:,:,::1] segmpos ,
         double extend=0.        ,
-        bint MakeSquare = False ,
+        bint MakeSquare = 0     ,
     ):
 
         cdef double[:,:,::1] segmpos_minmax = self.Get_segmpos_minmax(segmpos)
