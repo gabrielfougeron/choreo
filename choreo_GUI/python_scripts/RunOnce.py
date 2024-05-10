@@ -5,11 +5,16 @@ os.environ['OPENBLAS_NUM_THREADS'] = '1'
 import shutil
 import asyncio
 import numpy as np
+import math as m
 
 import choreo 
 
 import js
 import pyodide
+
+import pyquickbench
+
+TT = pyquickbench.TimeTrain(include_locs=False, names_reduction='avg')
 
 def Send_init_PlotInfo():
 
@@ -64,25 +69,18 @@ def Send_init_PlotInfo():
         raise(ValueError('Toto'))
 
 def Plot_Loops_During_Optim_new(x, f, f_norm, NBS, jacobian):
+    
+    TT.toc("enter new")
+    AABB = NBS.GetFullAABB(jacobian.segmpos, 0., MakeSquare=True)
 
-    segmpos_minmax = np.empty((NBS.nsegm, 2, NBS.geodim), dtype=np.float64)
-    segmpos_minmax[:,0,:] = np.min(jacobian.segmpos, axis=1)
-    segmpos_minmax[:,1,:] = np.max(jacobian.segmpos, axis=1)
-    AABB = NBS.GetFullAABB(segmpos_minmax, 0.)
-
-    hside = max(AABB[1,0]-AABB[0,0],AABB[1,1]-AABB[0,1])/2
-
-    xmid = (AABB[1,0]+AABB[0,0])/2
-    ymid = (AABB[1,1]+AABB[0,1])/2
-
-    windowObject = {}
-
-    windowObject["xMin"] = xmid - hside
-    windowObject["xMax"] = xmid + hside
-
-    windowObject["yMin"] = ymid - hside
-    windowObject["yMax"] = ymid + hside
-
+    windowObject = {
+        "xMin": AABB[0,0]   ,
+        "xMax": AABB[1,0]   ,   
+        "yMin": AABB[0,1]   ,
+        "yMax": AABB[1,1]   ,
+    }
+    TT.toc("leave new")
+    
     js.postMessage(
 
         funname = "Plot_Loops_During_Optim_From_Python",
@@ -97,6 +95,8 @@ def Plot_Loops_During_Optim_new(x, f, f_norm, NBS, jacobian):
     )
     
 def Plot_Loops_During_Optim(x,f,f_norm,ActionSyst):
+    
+    TT.toc("enter old")
 
     xmin,xmax,ymin,ymax = ActionSyst.HeuristicMinMax()
 
@@ -112,6 +112,10 @@ def Plot_Loops_During_Optim(x,f,f_norm,ActionSyst):
 
     windowObject["yMin"] = ymid - hside
     windowObject["yMax"] = ymid + hside
+
+    
+    TT.toc("leave old")
+
 
     js.postMessage(
 
@@ -329,7 +333,7 @@ async def main():
     Save_Newton_Error = False
 
     n_reconverge_it_max = params_dict["Solver_Discr"] ['n_reconverge_it_max'] 
-    nint_init = params_dict["Solver_Discr"]["nint_init"]   
+    nint_init = 2* params_dict["Solver_Discr"]["nint_init"]   
 
     disp_scipy_opt = (params_dict['Solver_Optim'] ['optim_verbose_lvl'] == "full")
     
@@ -432,6 +436,8 @@ async def main():
 
     all_kwargs = choreo.Pick_Named_Args_From_Dict(choreo.find.Find_Choreo,dict(globals(),**locals()))
     choreo.find.Find_Choreo(**all_kwargs)
+    
+    print(TT)
 
     filename_output = store_folder+'/'+file_basename
     filename = filename_output+".json"
@@ -540,6 +546,8 @@ async def main_new():
     
     choreo.find_new.ChoreoChooseParallelEnvAndFind(Workspace_folder, params_dict, extra_args_dict)
 
+    print(TT)
+
     filename_output = store_folder+'/'+file_basename
     filename = filename_output+".json"
     
@@ -586,5 +594,5 @@ async def main_new():
         )
 
 if __name__ == "__main__":
-    # asyncio.create_task(main())
-    asyncio.create_task(main_new())
+    asyncio.create_task(main())
+    # asyncio.create_task(main_new())

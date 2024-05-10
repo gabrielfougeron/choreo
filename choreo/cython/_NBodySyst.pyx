@@ -1082,12 +1082,57 @@ cdef class NBodySyst():
         return IsHomo, alpha_avg
 
     @cython.final
-    def GetFullAABB(
-        self                            ,
-        double[:,:,::1] segmpos_minmax  ,
-        double extend=0.                ,
-        bint MakeSquare = False         ,
+    def Get_segmpos_minmax(
+        self                    ,
+        double[:,:,::1] segmpos ,
     ):
+
+        segmpos_minmax_np = np.empty((self.nsegm,2,self.geodim), dtype=np.float64)
+        cdef double[:,:,::1] segmpos_minmax = segmpos_minmax_np
+
+        cdef Py_ssize_t iint, idim, isegm
+        cdef double* mi = <double*> malloc(sizeof(double)*self.geodim)
+        cdef double* ma = <double*> malloc(sizeof(double)*self.geodim)
+
+        cdef double* segmpos_ptr = &segmpos[0,0,0]
+        cdef double val
+
+        for isegm in range(self.nsegm):
+
+            for idim in range(self.geodim):
+
+                mi[idim] =  DBL_MAX
+                ma[idim] = -DBL_MAX
+
+            for iint in range(self.segm_store):
+                for idim in range(self.geodim):
+
+                    val = segmpos_ptr[0]
+
+                    mi[idim] = min(mi[idim], val)
+                    ma[idim] = max(ma[idim], val)
+
+                    segmpos_ptr += 1
+        
+            for idim in range(self.geodim):
+
+                segmpos_minmax[isegm,0,idim] = mi[idim]
+                segmpos_minmax[isegm,1,idim] = ma[idim]
+
+        free(mi)
+        free(ma)
+
+        return segmpos_minmax_np
+
+    @cython.final
+    def GetFullAABB(
+        self                    ,
+        double[:,:,::1] segmpos ,
+        double extend=0.        ,
+        bint MakeSquare = False ,
+    ):
+
+        cdef double[:,:,::1] segmpos_minmax = self.Get_segmpos_minmax(segmpos)
 
         cdef double[:,::1] RotMat
 
@@ -1162,11 +1207,11 @@ cdef class NBodySyst():
             Hash_Action = self.segmpos_to_hash(segmpos)
 
         loop_len, bin_dx_min = self.segmpos_to_path_stats(segmpos)
-
-        segmpos_minmax = np.empty((self.nsegm, 2, self.geodim), dtype=np.float64)
-        segmpos_minmax[:,0,:] = np.min(segmpos, axis=1)
-        segmpos_minmax[:,1,:] = np.max(segmpos, axis=1)
-        AABB = self.GetFullAABB(segmpos_minmax, extend)
+# 
+#         segmpos_minmax = np.empty((self.nsegm, 2, self.geodim), dtype=np.float64)
+#         segmpos_minmax[:,0,:] = np.min(segmpos, axis=1)
+#         segmpos_minmax[:,1,:] = np.max(segmpos, axis=1)
+        AABB = self.GetFullAABB(segmpos, extend)
 
         Info_dict = {}
 
@@ -1226,8 +1271,7 @@ cdef class NBodySyst():
 
             jacobian = scipy.optimize.nonlin.KrylovJacobian(**jac_options_kw)
 
-            def matvec(self,v):
-    
+            def matvec(self,v):                
                 return self.NBS.segmpos_dparams_to_action_hess(self.segmpos, v)
 
             jacobian.matvec = types.MethodType(matvec, jacobian)

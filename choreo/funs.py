@@ -20,7 +20,6 @@ import networkx
 import random
 import inspect
 import fractions
-import math
 
 from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
@@ -1036,17 +1035,12 @@ class ChoreoAction():
                 scipy.optimize.nonlin.KrylovJacobian.setup(self, x, f, func)
 
             def matvec(self,v):
-    
                 return self.ActionSyst.Compute_action_hess_mul_NoPosFFT(self.all_coeffs,self.all_pos,v)
             
-            def rmatvec(self,v):
-    
-                return self.ActionSyst.Compute_action_hess_mul_NoPosFFT(self.all_coeffs,self.all_pos,v)
-
             jacobian.update = types.MethodType(update, jacobian)
             jacobian.setup = types.MethodType(setup, jacobian)
             jacobian.matvec = types.MethodType(matvec, jacobian)
-            jacobian.rmatvec = types.MethodType(rmatvec, jacobian)
+            jacobian.rmatvec = types.MethodType(matvec, jacobian)
 
         else: 
 
