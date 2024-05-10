@@ -12,6 +12,7 @@ import time
 import inspect
 import threadpoolctl
 
+import choreo.metadata
 import choreo.scipy_plus
 from choreo.cython._ActionSym import ActionSym
 
@@ -250,9 +251,6 @@ def Find_Choreo(
 #                 np.save(filename_output+'.npy',all_pos)
 
         for i in range(n_callback_after_init_list):
-            
-            print(f'executing {callback_after_init_list[i].__name__}')
-            
             callback_after_init_list[i]()
 
         f0 = NBS.segmpos_params_to_action_grad(segmpos, x)
@@ -327,7 +325,7 @@ def Find_Choreo(
                 print(exc)
                 GoOn = False
                 raise(exc)
-                
+
             if (AskedForNext):
                 print("Skipping at user's request")
                 GoOn = False
@@ -1058,28 +1056,34 @@ def UpdateHashDict(store_folder, hash_dict, action_dict):
         if (file_ext == '.json' ):
             
             This_Action_Hash = hash_dict.get(file_root)
+            This_Action = action_dict.get(file_root)
             
             if (This_Action_Hash is None) :
 
-                This_Action, This_Action_Hash = ReadHashFromFile(file_path) 
+                This_hash = ReadHashFromFile(file_path) 
 
-                if not(This_Action_Hash is None):
+                if not(This_hash is None):
 
-                    hash_dict[file_root] = This_Action_Hash
-                    action_dict[file_root] = This_Action
+                    action_dict[file_root] = This_hash[0]
+                    hash_dict[file_root] = This_hash[1]
+
 
 def ReadHashFromFile(filename):
 
     with open(filename,'r') as jsonFile:
         Info_dict = json.load(jsonFile)
 
-    the_hash = Info_dict.get("Hash")
-    the_action = Info_dict.get("Action")
+    if Info_dict.get("choreo_version") == choreo.metadata.__version__:
+        
+        the_hash = Info_dict.get("Hash")
+        the_action = Info_dict.get("Action")
 
-    if the_hash is None:
-        return None
+        if the_hash is None:
+            return None
+        else:
+            return the_action, np.array(the_hash)
     else:
-        return the_action, np.array(the_hash)
+        return None
 
 def Check_Duplicates(NBS, segmpos, params, hash_dict, action_dict, store_folder, duplicate_eps, Action=None, Hash_Action=None, Duplicates_Hash=True):
     r"""
