@@ -276,12 +276,15 @@ cdef class NBodySyst():
     def InitValVelBasis(self):
         return np.asarray(self._InitValVelBasis)
         
-    cdef double complex[::1] _params_basis_buf
+    cdef double complex[::1] _params_basis_buf_pos
+    cdef double complex[::1] _params_basis_buf_vel
     cdef long[:,::1] _params_basis_shapes
     cdef long[::1] _params_basis_shifts
 
-    def params_basis(self, long il):
-        return np.asarray(self._params_basis_buf[self._params_basis_shifts[il]:self._params_basis_shifts[il+1]]).reshape(self._params_basis_shapes[il])
+    def params_basis_pos(self, long il):
+        return np.asarray(self._params_basis_buf_pos[self._params_basis_shifts[il]:self._params_basis_shifts[il+1]]).reshape(self._params_basis_shapes[il])
+    def params_basis_vel(self, long il):
+        return np.asarray(self._params_basis_buf_vel[self._params_basis_shifts[il]:self._params_basis_shifts[il+1]]).reshape(self._params_basis_shapes[il])
 
     cdef long[::1] _nnz_k_buf
     cdef long[:,::1] _nnz_k_shapes
@@ -487,7 +490,11 @@ cdef class NBodySyst():
         All_params_basis_pos = ComputeParamBasis_Loop(self.nloop, self._loopgen, geodim, self.LoopGenConstraints)
         params_basis_reorganized_list, nnz_k_list, co_in_list = reorganize_All_params_basis(All_params_basis_pos)
 
-        self._params_basis_buf, self._params_basis_shapes, self._params_basis_shifts = BundleListOfArrays(params_basis_reorganized_list)
+        self._params_basis_buf_pos, self._params_basis_shapes, self._params_basis_shifts = BundleListOfArrays(params_basis_reorganized_list)
+
+        self._params_basis_buf_vel = np.empty(self._params_basis_buf_pos.shape[0], dtype=np.complex128)
+        for i in range(self._params_basis_buf_pos.shape[0]):
+            self._params_basis_buf_vel[i] = self._params_basis_buf_pos[i] * (-1j)
 
         self._nnz_k_buf, self._nnz_k_shapes, self._nnz_k_shifts = BundleListOfArrays(nnz_k_list)
         self._co_in_buf, self._co_in_shapes, self._co_in_shifts = BundleListOfArrays(co_in_list)
@@ -510,7 +517,7 @@ cdef class NBodySyst():
 #         params_basis_reorganized_list_vel, nnz_k_list_vel, co_in_list_vel = reorganize_All_params_basis(All_params_basis_vel)
 # 
 # 
-#         _params_basis_buf_vel, _params_basis_shapes_vel, _params_basis_shifts_vel = BundleListOfArrays(params_basis_reorganized_list)
+#         _params_basis_buf_pos_vel, _params_basis_shapes_vel, _params_basis_shifts_vel = BundleListOfArrays(params_basis_reorganized_list)
 # 
 #         print("Vel")
 #         print(_params_basis_shapes_vel)
@@ -1864,21 +1871,21 @@ cdef class NBodySyst():
         with nogil:
 
             params_to_segmpos(
-                params_mom_buf          ,
-                self._params_pos_buf    , self._params_shapes       , self._params_shifts       ,
-                self._ifft_buf_ptr      , self._ifft_shapes         , self._ifft_shifts         ,
-                self._params_basis_buf  , self._params_basis_shapes , self._params_basis_shifts ,
-                self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
-                self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
-                self._pos_slice_buf_ptr , self._pos_slice_shapes    , self._pos_slice_shifts    ,
-                self._ncoeff_min_loop   , self._n_sub_fft           , self._fft_backend         ,
-                self._pyfftw_rffts_exe  ,
-                self._loopnb            , self._loopmass            ,
-                self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
-                self._AfterLastGenIint  , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
-                self._gensegm_to_body   , self._gensegm_to_iint     ,
-                self._bodyloop          , self.segm_size            , self.segm_store           ,
-                segmpos                 ,
+                params_mom_buf              ,
+                self._params_pos_buf        , self._params_shapes       , self._params_shifts       ,
+                self._ifft_buf_ptr          , self._ifft_shapes         , self._ifft_shifts         ,
+                self._params_basis_buf_pos  , self._params_basis_shapes , self._params_basis_shifts ,
+                self._nnz_k_buf             , self._nnz_k_shapes        , self._nnz_k_shifts        ,
+                self._co_in_buf             , self._co_in_shapes        , self._co_in_shifts        ,
+                self._pos_slice_buf_ptr     , self._pos_slice_shapes    , self._pos_slice_shifts    ,
+                self._ncoeff_min_loop       , self._n_sub_fft           , self._fft_backend         ,
+                self._pyfftw_rffts_exe      ,
+                self._loopnb                , self._loopmass            ,
+                self._InterSpaceRotIsId     , self._InterSpaceRot       , self._InterTimeRev        ,
+                self._AfterLastGenIint      , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
+                self._gensegm_to_body       , self._gensegm_to_iint     ,
+                self._bodyloop              , self.segm_size            , self.segm_store           ,
+                segmpos                     ,
             )
 
             segm_pos_to_hash(
@@ -1924,21 +1931,21 @@ cdef class NBodySyst():
         with nogil:
 
             params_to_segmpos(
-                params_mom_buf          ,
-                self._params_pos_buf    , self._params_shapes       , self._params_shifts       ,
-                self._ifft_buf_ptr      , self._ifft_shapes         , self._ifft_shifts         ,
-                self._params_basis_buf  , self._params_basis_shapes , self._params_basis_shifts ,
-                self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
-                self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
-                self._pos_slice_buf_ptr , self._pos_slice_shapes    , self._pos_slice_shifts    ,
-                self._ncoeff_min_loop   , self._n_sub_fft           , self._fft_backend         ,
-                self._pyfftw_rffts_exe  ,
-                self._loopnb            , self._loopmass            ,
-                self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
-                self._AfterLastGenIint  , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
-                self._gensegm_to_body   , self._gensegm_to_iint     ,
-                self._bodyloop          , self.segm_size            , self.segm_store           ,
-                segmpos                 ,
+                params_mom_buf              ,
+                self._params_pos_buf        , self._params_shapes       , self._params_shifts       ,
+                self._ifft_buf_ptr          , self._ifft_shapes         , self._ifft_shifts         ,
+                self._params_basis_buf_pos  , self._params_basis_shapes , self._params_basis_shifts ,
+                self._nnz_k_buf             , self._nnz_k_shapes        , self._nnz_k_shifts        ,
+                self._co_in_buf             , self._co_in_shapes        , self._co_in_shifts        ,
+                self._pos_slice_buf_ptr     , self._pos_slice_shapes    , self._pos_slice_shifts    ,
+                self._ncoeff_min_loop       , self._n_sub_fft           , self._fft_backend         ,
+                self._pyfftw_rffts_exe      ,
+                self._loopnb                , self._loopmass            ,
+                self._InterSpaceRotIsId     , self._InterSpaceRot       , self._InterTimeRev        ,
+                self._AfterLastGenIint      , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
+                self._gensegm_to_body       , self._gensegm_to_iint     ,
+                self._bodyloop              , self.segm_size            , self.segm_store           ,
+                segmpos                     ,
             )
 
             pot_nrg = segm_pos_to_pot_nrg(
@@ -1963,21 +1970,21 @@ cdef class NBodySyst():
         with nogil:
 
             params_to_segmpos(
-                params_mom_buf          ,
-                self._params_pos_buf    , self._params_shapes       , self._params_shifts       ,
-                self._ifft_buf_ptr      , self._ifft_shapes         , self._ifft_shifts         ,
-                self._params_basis_buf  , self._params_basis_shapes , self._params_basis_shifts ,
-                self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
-                self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
-                self._pos_slice_buf_ptr , self._pos_slice_shapes    , self._pos_slice_shifts    ,
-                self._ncoeff_min_loop   , self._n_sub_fft           , self._fft_backend         ,
-                self._pyfftw_rffts_exe  ,
-                self._loopnb            , self._loopmass            ,
-                self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
-                self._AfterLastGenIint  , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
-                self._gensegm_to_body   , self._gensegm_to_iint     ,
-                self._bodyloop          , self.segm_size            , self.segm_store           ,
-                self._segmpos           ,
+                params_mom_buf              ,
+                self._params_pos_buf        , self._params_shapes       , self._params_shifts       ,
+                self._ifft_buf_ptr          , self._ifft_shapes         , self._ifft_shifts         ,
+                self._params_basis_buf_pos  , self._params_basis_shapes , self._params_basis_shifts ,
+                self._nnz_k_buf             , self._nnz_k_shapes        , self._nnz_k_shifts        ,
+                self._co_in_buf             , self._co_in_shapes        , self._co_in_shifts        ,
+                self._pos_slice_buf_ptr     , self._pos_slice_shapes    , self._pos_slice_shifts    ,
+                self._ncoeff_min_loop       , self._n_sub_fft           , self._fft_backend         ,
+                self._pyfftw_rffts_exe      ,
+                self._loopnb                , self._loopmass            ,
+                self._InterSpaceRotIsId     , self._InterSpaceRot       , self._InterTimeRev        ,
+                self._AfterLastGenIint      , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
+                self._gensegm_to_body       , self._gensegm_to_iint     ,
+                self._bodyloop              , self.segm_size            , self.segm_store           ,
+                self._segmpos               ,
             )
 
             memset(&self._pot_nrg_grad[0,0,0], 0, sizeof(double)*self.nsegm*self.segm_store*self.geodim)
@@ -1992,21 +1999,21 @@ cdef class NBodySyst():
             )
 
             segmpos_to_params_T(
-                self._pot_nrg_grad      ,
-                self._params_pos_buf    , self._params_shapes       , self._params_shifts       ,
-                self._ifft_buf_ptr      , self._ifft_shapes         , self._ifft_shifts         ,
-                self._params_basis_buf  , self._params_basis_shapes , self._params_basis_shifts ,
-                self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
-                self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
-                self._pos_slice_buf_ptr , self._pos_slice_shapes    , self._pos_slice_shifts    ,
-                self._ncoeff_min_loop   , self._n_sub_fft           , self._fft_backend         ,
-                self._pyfftw_irffts_exe ,
-                self._loopnb            , self._loopmass            ,
-                self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
-                self._AfterLastGenIint  , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
-                self._gensegm_to_body   , self._gensegm_to_iint     ,
-                self._bodyloop          , self.segm_size            , self.segm_store           ,
-                params_grad             ,
+                self._pot_nrg_grad          ,
+                self._params_pos_buf        , self._params_shapes       , self._params_shifts       ,
+                self._ifft_buf_ptr          , self._ifft_shapes         , self._ifft_shifts         ,
+                self._params_basis_buf_pos  , self._params_basis_shapes , self._params_basis_shifts ,
+                self._nnz_k_buf             , self._nnz_k_shapes        , self._nnz_k_shifts        ,
+                self._co_in_buf             , self._co_in_shapes        , self._co_in_shifts        ,
+                self._pos_slice_buf_ptr     , self._pos_slice_shapes    , self._pos_slice_shifts    ,
+                self._ncoeff_min_loop       , self._n_sub_fft           , self._fft_backend         ,
+                self._pyfftw_irffts_exe     ,
+                self._loopnb                , self._loopmass            ,
+                self._InterSpaceRotIsId     , self._InterSpaceRot       , self._InterTimeRev        ,
+                self._AfterLastGenIint      , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
+                self._gensegm_to_body       , self._gensegm_to_iint     ,
+                self._bodyloop              , self.segm_size            , self.segm_store           ,
+                params_grad                 ,
             )
 
         return params_grad_np
@@ -2025,39 +2032,39 @@ cdef class NBodySyst():
         with nogil:
 
             params_to_segmpos(
-                params_mom_buf          ,
-                self._params_pos_buf    , self._params_shapes       , self._params_shifts       ,
-                self._ifft_buf_ptr      , self._ifft_shapes         , self._ifft_shifts         ,
-                self._params_basis_buf  , self._params_basis_shapes , self._params_basis_shifts ,
-                self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
-                self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
-                self._pos_slice_buf_ptr , self._pos_slice_shapes    , self._pos_slice_shifts    ,
-                self._ncoeff_min_loop   , self._n_sub_fft           , self._fft_backend         ,
-                self._pyfftw_rffts_exe  ,
-                self._loopnb            , self._loopmass            ,
-                self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
-                self._AfterLastGenIint  , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
-                self._gensegm_to_body   , self._gensegm_to_iint     ,
-                self._bodyloop          , self.segm_size            , self.segm_store           ,
-                self._segmpos           ,
+                params_mom_buf              ,
+                self._params_pos_buf        , self._params_shapes       , self._params_shifts       ,
+                self._ifft_buf_ptr          , self._ifft_shapes         , self._ifft_shifts         ,
+                self._params_basis_buf_pos  , self._params_basis_shapes , self._params_basis_shifts ,
+                self._nnz_k_buf             , self._nnz_k_shapes        , self._nnz_k_shifts        ,
+                self._co_in_buf             , self._co_in_shapes        , self._co_in_shifts        ,
+                self._pos_slice_buf_ptr     , self._pos_slice_shapes    , self._pos_slice_shifts    ,
+                self._ncoeff_min_loop       , self._n_sub_fft           , self._fft_backend         ,
+                self._pyfftw_rffts_exe      ,
+                self._loopnb                , self._loopmass            ,
+                self._InterSpaceRotIsId     , self._InterSpaceRot       , self._InterTimeRev        ,
+                self._AfterLastGenIint      , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
+                self._gensegm_to_body       , self._gensegm_to_iint     ,
+                self._bodyloop              , self.segm_size            , self.segm_store           ,
+                self._segmpos               ,
             )
 
             params_to_segmpos(
-                dparams_mom_buf         ,
-                self._params_pos_buf    , self._params_shapes       , self._params_shifts       ,
-                self._ifft_buf_ptr      , self._ifft_shapes         , self._ifft_shifts         ,
-                self._params_basis_buf  , self._params_basis_shapes , self._params_basis_shifts ,
-                self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
-                self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
-                self._pos_slice_buf_ptr , self._pos_slice_shapes    , self._pos_slice_shifts    ,
-                self._ncoeff_min_loop   , self._n_sub_fft           , self._fft_backend         ,
-                self._pyfftw_rffts_exe  ,
-                self._loopnb            , self._loopmass            ,
-                self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
-                self._AfterLastGenIint  , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
-                self._gensegm_to_body   , self._gensegm_to_iint     ,
-                self._bodyloop          , self.segm_size            , self.segm_store           ,
-                dsegmpos                ,
+                dparams_mom_buf             ,
+                self._params_pos_buf        , self._params_shapes       , self._params_shifts       ,
+                self._ifft_buf_ptr          , self._ifft_shapes         , self._ifft_shifts         ,
+                self._params_basis_buf_pos  , self._params_basis_shapes , self._params_basis_shifts ,
+                self._nnz_k_buf             , self._nnz_k_shapes        , self._nnz_k_shifts        ,
+                self._co_in_buf             , self._co_in_shapes        , self._co_in_shifts        ,
+                self._pos_slice_buf_ptr     , self._pos_slice_shapes    , self._pos_slice_shifts    ,
+                self._ncoeff_min_loop       , self._n_sub_fft           , self._fft_backend         ,
+                self._pyfftw_rffts_exe      ,
+                self._loopnb                , self._loopmass            ,
+                self._InterSpaceRotIsId     , self._InterSpaceRot       , self._InterTimeRev        ,
+                self._AfterLastGenIint      , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
+                self._gensegm_to_body       , self._gensegm_to_iint     ,
+                self._bodyloop              , self.segm_size            , self.segm_store           ,
+                dsegmpos                    ,
             )
 
             memset(&self._pot_nrg_grad[0,0,0], 0, sizeof(double)*self.nsegm*self.segm_store*self.geodim)
@@ -2072,21 +2079,21 @@ cdef class NBodySyst():
             )
 
             segmpos_to_params_T(
-                self._pot_nrg_grad      ,
-                self._params_pos_buf    , self._params_shapes       , self._params_shifts       ,
-                self._ifft_buf_ptr      , self._ifft_shapes         , self._ifft_shifts         ,
-                self._params_basis_buf  , self._params_basis_shapes , self._params_basis_shifts ,
-                self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
-                self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
-                self._pos_slice_buf_ptr , self._pos_slice_shapes    , self._pos_slice_shifts    ,
-                self._ncoeff_min_loop   , self._n_sub_fft           , self._fft_backend         ,
-                self._pyfftw_irffts_exe ,
-                self._loopnb            , self._loopmass            ,
-                self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
-                self._AfterLastGenIint  , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
-                self._gensegm_to_body   , self._gensegm_to_iint     ,
-                self._bodyloop          , self.segm_size            , self.segm_store           ,
-                params_hess             ,
+                self._pot_nrg_grad          ,
+                self._params_pos_buf        , self._params_shapes       , self._params_shifts       ,
+                self._ifft_buf_ptr          , self._ifft_shapes         , self._ifft_shifts         ,
+                self._params_basis_buf_pos  , self._params_basis_shapes , self._params_basis_shifts ,
+                self._nnz_k_buf             , self._nnz_k_shapes        , self._nnz_k_shifts        ,
+                self._co_in_buf             , self._co_in_shapes        , self._co_in_shifts        ,
+                self._pos_slice_buf_ptr     , self._pos_slice_shapes    , self._pos_slice_shifts    ,
+                self._ncoeff_min_loop       , self._n_sub_fft           , self._fft_backend         ,
+                self._pyfftw_irffts_exe     ,
+                self._loopnb                , self._loopmass            ,
+                self._InterSpaceRotIsId     , self._InterSpaceRot       , self._InterTimeRev        ,
+                self._AfterLastGenIint      , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
+                self._gensegm_to_body       , self._gensegm_to_iint     ,
+                self._bodyloop              , self.segm_size            , self.segm_store           ,
+                params_hess                 ,
             )
 
         return params_hess_np
@@ -2106,21 +2113,21 @@ cdef class NBodySyst():
             )
 
             params_to_segmpos(
-                params_mom_buf          ,
-                self._params_pos_buf    , self._params_shapes       , self._params_shifts       ,
-                self._ifft_buf_ptr      , self._ifft_shapes         , self._ifft_shifts         ,
-                self._params_basis_buf  , self._params_basis_shapes , self._params_basis_shifts ,
-                self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
-                self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
-                self._pos_slice_buf_ptr , self._pos_slice_shapes    , self._pos_slice_shifts    ,
-                self._ncoeff_min_loop   , self._n_sub_fft           , self._fft_backend         ,
-                self._pyfftw_rffts_exe  ,
-                self._loopnb            , self._loopmass            ,
-                self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
-                self._AfterLastGenIint  , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
-                self._gensegm_to_body   , self._gensegm_to_iint     ,
-                self._bodyloop          , self.segm_size            , self.segm_store           ,
-                self._segmpos           ,
+                params_mom_buf              ,
+                self._params_pos_buf        , self._params_shapes       , self._params_shifts       ,
+                self._ifft_buf_ptr          , self._ifft_shapes         , self._ifft_shifts         ,
+                self._params_basis_buf_pos  , self._params_basis_shapes , self._params_basis_shifts ,
+                self._nnz_k_buf             , self._nnz_k_shapes        , self._nnz_k_shifts        ,
+                self._co_in_buf             , self._co_in_shapes        , self._co_in_shifts        ,
+                self._pos_slice_buf_ptr     , self._pos_slice_shapes    , self._pos_slice_shifts    ,
+                self._ncoeff_min_loop       , self._n_sub_fft           , self._fft_backend         ,
+                self._pyfftw_rffts_exe      ,
+                self._loopnb                , self._loopmass            ,
+                self._InterSpaceRotIsId     , self._InterSpaceRot       , self._InterTimeRev        ,
+                self._AfterLastGenIint      , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
+                self._gensegm_to_body       , self._gensegm_to_iint     ,
+                self._bodyloop              , self.segm_size            , self.segm_store           ,
+                self._segmpos               ,
             )
 
             action -= segm_pos_to_pot_nrg(
@@ -2145,21 +2152,21 @@ cdef class NBodySyst():
         with nogil:
 
             params_to_segmpos(
-                params_mom_buf          ,
-                self._params_pos_buf    , self._params_shapes       , self._params_shifts       ,
-                self._ifft_buf_ptr      , self._ifft_shapes         , self._ifft_shifts         ,
-                self._params_basis_buf  , self._params_basis_shapes , self._params_basis_shifts ,
-                self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
-                self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
-                self._pos_slice_buf_ptr , self._pos_slice_shapes    , self._pos_slice_shifts    ,
-                self._ncoeff_min_loop   , self._n_sub_fft           , self._fft_backend         ,
-                self._pyfftw_rffts_exe  ,
-                self._loopnb            , self._loopmass            ,
-                self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
-                self._AfterLastGenIint  , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
-                self._gensegm_to_body   , self._gensegm_to_iint     ,
-                self._bodyloop          , self.segm_size            , self.segm_store           ,
-                self._segmpos           ,
+                params_mom_buf              ,
+                self._params_pos_buf        , self._params_shapes       , self._params_shifts       ,
+                self._ifft_buf_ptr          , self._ifft_shapes         , self._ifft_shifts         ,
+                self._params_basis_buf_pos  , self._params_basis_shapes , self._params_basis_shifts ,
+                self._nnz_k_buf             , self._nnz_k_shapes        , self._nnz_k_shifts        ,
+                self._co_in_buf             , self._co_in_shapes        , self._co_in_shifts        ,
+                self._pos_slice_buf_ptr     , self._pos_slice_shapes    , self._pos_slice_shifts    ,
+                self._ncoeff_min_loop       , self._n_sub_fft           , self._fft_backend         ,
+                self._pyfftw_rffts_exe      ,
+                self._loopnb                , self._loopmass            ,
+                self._InterSpaceRotIsId     , self._InterSpaceRot       , self._InterTimeRev        ,
+                self._AfterLastGenIint      , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
+                self._gensegm_to_body       , self._gensegm_to_iint     ,
+                self._bodyloop              , self.segm_size            , self.segm_store           ,
+                self._segmpos               ,
             )
 
             memset(&self._pot_nrg_grad[0,0,0], 0, sizeof(double)*self.nsegm*self.segm_store*self.geodim)
@@ -2174,21 +2181,21 @@ cdef class NBodySyst():
             )
 
             segmpos_to_params_T(
-                self._pot_nrg_grad      ,
-                self._params_pos_buf    , self._params_shapes       , self._params_shifts       ,
-                self._ifft_buf_ptr      , self._ifft_shapes         , self._ifft_shifts         ,
-                self._params_basis_buf  , self._params_basis_shapes , self._params_basis_shifts ,
-                self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
-                self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
-                self._pos_slice_buf_ptr , self._pos_slice_shapes    , self._pos_slice_shifts    ,
-                self._ncoeff_min_loop   , self._n_sub_fft           , self._fft_backend         ,
-                self._pyfftw_irffts_exe ,
-                self._loopnb            , self._loopmass            ,
-                self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
-                self._AfterLastGenIint  , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
-                self._gensegm_to_body   , self._gensegm_to_iint     ,
-                self._bodyloop          , self.segm_size            , self.segm_store           ,
-                action_grad             ,
+                self._pot_nrg_grad          ,
+                self._params_pos_buf        , self._params_shapes       , self._params_shifts       ,
+                self._ifft_buf_ptr          , self._ifft_shapes         , self._ifft_shifts         ,
+                self._params_basis_buf_pos  , self._params_basis_shapes , self._params_basis_shifts ,
+                self._nnz_k_buf             , self._nnz_k_shapes        , self._nnz_k_shifts        ,
+                self._co_in_buf             , self._co_in_shapes        , self._co_in_shifts        ,
+                self._pos_slice_buf_ptr     , self._pos_slice_shapes    , self._pos_slice_shifts    ,
+                self._ncoeff_min_loop       , self._n_sub_fft           , self._fft_backend         ,
+                self._pyfftw_irffts_exe     ,
+                self._loopnb                , self._loopmass            ,
+                self._InterSpaceRotIsId     , self._InterSpaceRot       , self._InterTimeRev        ,
+                self._AfterLastGenIint      , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
+                self._gensegm_to_body       , self._gensegm_to_iint     ,
+                self._bodyloop              , self.segm_size            , self.segm_store           ,
+                action_grad                 ,
             )
 
             params_to_kin_nrg_grad_daxpy(
@@ -2213,39 +2220,39 @@ cdef class NBodySyst():
         with nogil:
 
             params_to_segmpos(
-                params_mom_buf          ,
-                self._params_pos_buf    , self._params_shapes       , self._params_shifts       ,
-                self._ifft_buf_ptr      , self._ifft_shapes         , self._ifft_shifts         ,
-                self._params_basis_buf  , self._params_basis_shapes , self._params_basis_shifts ,
-                self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
-                self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
-                self._pos_slice_buf_ptr , self._pos_slice_shapes    , self._pos_slice_shifts    ,
-                self._ncoeff_min_loop   , self._n_sub_fft           , self._fft_backend         ,
-                self._pyfftw_rffts_exe  ,
-                self._loopnb            , self._loopmass            ,
-                self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
-                self._AfterLastGenIint  , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
-                self._gensegm_to_body   , self._gensegm_to_iint     ,
-                self._bodyloop          , self.segm_size            , self.segm_store           ,
-                self._segmpos           ,
+                params_mom_buf              ,
+                self._params_pos_buf        , self._params_shapes       , self._params_shifts       ,
+                self._ifft_buf_ptr          , self._ifft_shapes         , self._ifft_shifts         ,
+                self._params_basis_buf_pos  , self._params_basis_shapes , self._params_basis_shifts ,
+                self._nnz_k_buf             , self._nnz_k_shapes        , self._nnz_k_shifts        ,
+                self._co_in_buf             , self._co_in_shapes        , self._co_in_shifts        ,
+                self._pos_slice_buf_ptr     , self._pos_slice_shapes    , self._pos_slice_shifts    ,
+                self._ncoeff_min_loop       , self._n_sub_fft           , self._fft_backend         ,
+                self._pyfftw_rffts_exe      ,
+                self._loopnb                , self._loopmass            ,
+                self._InterSpaceRotIsId     , self._InterSpaceRot       , self._InterTimeRev        ,
+                self._AfterLastGenIint      , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
+                self._gensegm_to_body       , self._gensegm_to_iint     ,
+                self._bodyloop              , self.segm_size            , self.segm_store           ,
+                self._segmpos               ,
             )
 
             params_to_segmpos(
-                dparams_mom_buf         ,
-                self._params_pos_buf    , self._params_shapes       , self._params_shifts       ,
-                self._ifft_buf_ptr      , self._ifft_shapes         , self._ifft_shifts         ,
-                self._params_basis_buf  , self._params_basis_shapes , self._params_basis_shifts ,
-                self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
-                self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
-                self._pos_slice_buf_ptr , self._pos_slice_shapes    , self._pos_slice_shifts    ,
-                self._ncoeff_min_loop   , self._n_sub_fft           , self._fft_backend         ,
-                self._pyfftw_rffts_exe  ,
-                self._loopnb            , self._loopmass            ,
-                self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
-                self._AfterLastGenIint  , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
-                self._gensegm_to_body   , self._gensegm_to_iint     ,
-                self._bodyloop          , self.segm_size            , self.segm_store           ,
-                dsegmpos                ,
+                dparams_mom_buf             ,
+                self._params_pos_buf        , self._params_shapes       , self._params_shifts       ,
+                self._ifft_buf_ptr          , self._ifft_shapes         , self._ifft_shifts         ,
+                self._params_basis_buf_pos  , self._params_basis_shapes , self._params_basis_shifts ,
+                self._nnz_k_buf             , self._nnz_k_shapes        , self._nnz_k_shifts        ,
+                self._co_in_buf             , self._co_in_shapes        , self._co_in_shifts        ,
+                self._pos_slice_buf_ptr     , self._pos_slice_shapes    , self._pos_slice_shifts    ,
+                self._ncoeff_min_loop       , self._n_sub_fft           , self._fft_backend         ,
+                self._pyfftw_rffts_exe      ,
+                self._loopnb                , self._loopmass            ,
+                self._InterSpaceRotIsId     , self._InterSpaceRot       , self._InterTimeRev        ,
+                self._AfterLastGenIint      , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
+                self._gensegm_to_body       , self._gensegm_to_iint     ,
+                self._bodyloop              , self.segm_size            , self.segm_store           ,
+                dsegmpos                    ,
             )
 
             memset(&self._pot_nrg_grad[0,0,0], 0, sizeof(double)*self.nsegm*self.segm_store*self.geodim)
@@ -2260,21 +2267,21 @@ cdef class NBodySyst():
             )
 
             segmpos_to_params_T(
-                self._pot_nrg_grad      ,
-                self._params_pos_buf    , self._params_shapes       , self._params_shifts       ,
-                self._ifft_buf_ptr      , self._ifft_shapes         , self._ifft_shifts         ,
-                self._params_basis_buf  , self._params_basis_shapes , self._params_basis_shifts ,
-                self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
-                self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
-                self._pos_slice_buf_ptr , self._pos_slice_shapes    , self._pos_slice_shifts    ,
-                self._ncoeff_min_loop   , self._n_sub_fft           , self._fft_backend         ,
-                self._pyfftw_irffts_exe ,
-                self._loopnb            , self._loopmass            ,
-                self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
-                self._AfterLastGenIint  , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
-                self._gensegm_to_body   , self._gensegm_to_iint     ,
-                self._bodyloop          , self.segm_size            , self.segm_store           ,
-                action_hess             ,
+                self._pot_nrg_grad          ,
+                self._params_pos_buf        , self._params_shapes       , self._params_shifts       ,
+                self._ifft_buf_ptr          , self._ifft_shapes         , self._ifft_shifts         ,
+                self._params_basis_buf_pos  , self._params_basis_shapes , self._params_basis_shifts ,
+                self._nnz_k_buf             , self._nnz_k_shapes        , self._nnz_k_shifts        ,
+                self._co_in_buf             , self._co_in_shapes        , self._co_in_shifts        ,
+                self._pos_slice_buf_ptr     , self._pos_slice_shapes    , self._pos_slice_shifts    ,
+                self._ncoeff_min_loop       , self._n_sub_fft           , self._fft_backend         ,
+                self._pyfftw_irffts_exe     ,
+                self._loopnb                , self._loopmass            ,
+                self._InterSpaceRotIsId     , self._InterSpaceRot       , self._InterTimeRev        ,
+                self._AfterLastGenIint      , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
+                self._gensegm_to_body       , self._gensegm_to_iint     ,
+                self._bodyloop              , self.segm_size            , self.segm_store           ,
+                action_hess                 ,
             )
 
             params_to_kin_nrg_grad_daxpy(
@@ -2302,21 +2309,21 @@ cdef class NBodySyst():
             )
 
             params_to_segmpos(
-                params_mom_buf          ,
-                self._params_pos_buf    , self._params_shapes       , self._params_shifts       ,
-                self._ifft_buf_ptr      , self._ifft_shapes         , self._ifft_shifts         ,
-                self._params_basis_buf  , self._params_basis_shapes , self._params_basis_shifts ,
-                self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
-                self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
-                self._pos_slice_buf_ptr , self._pos_slice_shapes    , self._pos_slice_shifts    ,
-                self._ncoeff_min_loop   , self._n_sub_fft           , self._fft_backend         ,
-                self._pyfftw_rffts_exe  ,
-                self._loopnb            , self._loopmass            ,
-                self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
-                self._AfterLastGenIint  , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
-                self._gensegm_to_body   , self._gensegm_to_iint     ,
-                self._bodyloop          , self.segm_size            , self.segm_store           ,
-                segmpos                 ,
+                params_mom_buf              ,
+                self._params_pos_buf        , self._params_shapes       , self._params_shifts       ,
+                self._ifft_buf_ptr          , self._ifft_shapes         , self._ifft_shifts         ,
+                self._params_basis_buf_pos  , self._params_basis_shapes , self._params_basis_shifts ,
+                self._nnz_k_buf             , self._nnz_k_shapes        , self._nnz_k_shifts        ,
+                self._co_in_buf             , self._co_in_shapes        , self._co_in_shifts        ,
+                self._pos_slice_buf_ptr     , self._pos_slice_shapes    , self._pos_slice_shifts    ,
+                self._ncoeff_min_loop       , self._n_sub_fft           , self._fft_backend         ,
+                self._pyfftw_rffts_exe      ,
+                self._loopnb                , self._loopmass            ,
+                self._InterSpaceRotIsId     , self._InterSpaceRot       , self._InterTimeRev        ,
+                self._AfterLastGenIint      , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
+                self._gensegm_to_body       , self._gensegm_to_iint     ,
+                self._bodyloop              , self.segm_size            , self.segm_store           ,
+                segmpos                     ,
             )
 
             action -= segm_pos_to_pot_nrg(
@@ -2353,21 +2360,21 @@ cdef class NBodySyst():
             )
 
             segmpos_to_params_T(
-                self._pot_nrg_grad      ,
-                self._params_pos_buf    , self._params_shapes       , self._params_shifts       ,
-                self._ifft_buf_ptr      , self._ifft_shapes         , self._ifft_shifts         ,
-                self._params_basis_buf  , self._params_basis_shapes , self._params_basis_shifts ,
-                self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
-                self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
-                self._pos_slice_buf_ptr , self._pos_slice_shapes    , self._pos_slice_shifts    ,
-                self._ncoeff_min_loop   , self._n_sub_fft           , self._fft_backend         ,
-                self._pyfftw_irffts_exe ,
-                self._loopnb            , self._loopmass            ,
-                self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
-                self._AfterLastGenIint  , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
-                self._gensegm_to_body   , self._gensegm_to_iint     ,
-                self._bodyloop          , self.segm_size            , self.segm_store           ,
-                action_grad             ,
+                self._pot_nrg_grad          ,
+                self._params_pos_buf        , self._params_shapes       , self._params_shifts       ,
+                self._ifft_buf_ptr          , self._ifft_shapes         , self._ifft_shifts         ,
+                self._params_basis_buf_pos  , self._params_basis_shapes , self._params_basis_shifts ,
+                self._nnz_k_buf             , self._nnz_k_shapes        , self._nnz_k_shifts        ,
+                self._co_in_buf             , self._co_in_shapes        , self._co_in_shifts        ,
+                self._pos_slice_buf_ptr     , self._pos_slice_shapes    , self._pos_slice_shifts    ,
+                self._ncoeff_min_loop       , self._n_sub_fft           , self._fft_backend         ,
+                self._pyfftw_irffts_exe     ,
+                self._loopnb                , self._loopmass            ,
+                self._InterSpaceRotIsId     , self._InterSpaceRot       , self._InterTimeRev        ,
+                self._AfterLastGenIint      , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
+                self._gensegm_to_body       , self._gensegm_to_iint     ,
+                self._bodyloop              , self.segm_size            , self.segm_store           ,
+                action_grad                 ,
             )
 
             params_to_kin_nrg_grad_daxpy(
@@ -2391,21 +2398,21 @@ cdef class NBodySyst():
         with nogil:
 
             params_to_segmpos(
-                dparams_mom_buf         ,
-                self._params_pos_buf    , self._params_shapes       , self._params_shifts       ,
-                self._ifft_buf_ptr      , self._ifft_shapes         , self._ifft_shifts         ,
-                self._params_basis_buf  , self._params_basis_shapes , self._params_basis_shifts ,
-                self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
-                self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
-                self._pos_slice_buf_ptr , self._pos_slice_shapes    , self._pos_slice_shifts    ,
-                self._ncoeff_min_loop   , self._n_sub_fft           , self._fft_backend         ,
-                self._pyfftw_rffts_exe  ,
-                self._loopnb            , self._loopmass            ,
-                self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
-                self._AfterLastGenIint  , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
-                self._gensegm_to_body   , self._gensegm_to_iint     ,
-                self._bodyloop          , self.segm_size            , self.segm_store           ,
-                self._segmpos           , # self._segmpos is actually dsegmpos
+                dparams_mom_buf             ,
+                self._params_pos_buf        , self._params_shapes       , self._params_shifts       ,
+                self._ifft_buf_ptr          , self._ifft_shapes         , self._ifft_shifts         ,
+                self._params_basis_buf_pos  , self._params_basis_shapes , self._params_basis_shifts ,
+                self._nnz_k_buf             , self._nnz_k_shapes        , self._nnz_k_shifts        ,
+                self._co_in_buf             , self._co_in_shapes        , self._co_in_shifts        ,
+                self._pos_slice_buf_ptr     , self._pos_slice_shapes    , self._pos_slice_shifts    ,
+                self._ncoeff_min_loop       , self._n_sub_fft           , self._fft_backend         ,
+                self._pyfftw_rffts_exe      ,
+                self._loopnb                , self._loopmass            ,
+                self._InterSpaceRotIsId     , self._InterSpaceRot       , self._InterTimeRev        ,
+                self._AfterLastGenIint      , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
+                self._gensegm_to_body       , self._gensegm_to_iint     ,
+                self._bodyloop              , self.segm_size            , self.segm_store           ,
+                self._segmpos               , # self._segmpos is actually dsegmpos
             )
 
             memset(&self._pot_nrg_grad[0,0,0], 0, sizeof(double)*self.nsegm*self.segm_store*self.geodim)
@@ -2420,21 +2427,21 @@ cdef class NBodySyst():
             )
 
             segmpos_to_params_T(
-                self._pot_nrg_grad      ,
-                self._params_pos_buf    , self._params_shapes       , self._params_shifts       ,
-                self._ifft_buf_ptr      , self._ifft_shapes         , self._ifft_shifts         ,
-                self._params_basis_buf  , self._params_basis_shapes , self._params_basis_shifts ,
-                self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
-                self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
-                self._pos_slice_buf_ptr , self._pos_slice_shapes    , self._pos_slice_shifts    ,
-                self._ncoeff_min_loop   , self._n_sub_fft           , self._fft_backend         ,
-                self._pyfftw_irffts_exe ,
-                self._loopnb            , self._loopmass            ,
-                self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
-                self._AfterLastGenIint  , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
-                self._gensegm_to_body   , self._gensegm_to_iint     ,
-                self._bodyloop          , self.segm_size            , self.segm_store           ,
-                action_hess             ,
+                self._pot_nrg_grad          ,
+                self._params_pos_buf        , self._params_shapes       , self._params_shifts       ,
+                self._ifft_buf_ptr          , self._ifft_shapes         , self._ifft_shifts         ,
+                self._params_basis_buf_pos  , self._params_basis_shapes , self._params_basis_shifts ,
+                self._nnz_k_buf             , self._nnz_k_shapes        , self._nnz_k_shifts        ,
+                self._co_in_buf             , self._co_in_shapes        , self._co_in_shifts        ,
+                self._pos_slice_buf_ptr     , self._pos_slice_shapes    , self._pos_slice_shifts    ,
+                self._ncoeff_min_loop       , self._n_sub_fft           , self._fft_backend         ,
+                self._pyfftw_irffts_exe     ,
+                self._loopnb                , self._loopmass            ,
+                self._InterSpaceRotIsId     , self._InterSpaceRot       , self._InterTimeRev        ,
+                self._AfterLastGenIint      , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
+                self._gensegm_to_body       , self._gensegm_to_iint     ,
+                self._bodyloop              , self.segm_size            , self.segm_store           ,
+                action_hess                 ,
             )
 
             params_to_kin_nrg_grad_daxpy(
@@ -2483,7 +2490,7 @@ cdef class NBodySyst():
 
         for il in range(self.nloop):
             
-            params_basis = self.params_basis(il)
+            params_basis = self.params_basis_pos(il)
             nnz_k = self.nnz_k(il)
             
             npr = (self.ncoeffs-1) //  self._ncoeff_min_loop[il]
@@ -2517,7 +2524,7 @@ cdef class NBodySyst():
 
         for il in range(self.nloop):
 
-            params_basis = self.params_basis(il)
+            params_basis = self.params_basis_pos(il)
             nnz_k = self.nnz_k(il)
 
             npr = (self.ncoeffs-1) //  self._ncoeff_min_loop[il]
@@ -2599,13 +2606,13 @@ cdef class NBodySyst():
         return all_body_pos     
 
     @cython.final
-    def all_pos_to_segmpos_noopt(self, all_pos):
+    def all_to_segm_noopt(self, all_pos, pos=True):
         
         assert self._nint == all_pos.shape[1]
         
         cdef Py_ssize_t ib, iint, il
 
-        segmpos = np.empty((self.nsegm, self.segm_store, self.geodim), dtype=np.float64)
+        segmvals = np.empty((self.nsegm, self.segm_store, self.geodim), dtype=np.float64)
 
         for isegm in range(self.nsegm):
 
@@ -2625,16 +2632,21 @@ cdef class NBodySyst():
                     np.matmul(
                         all_pos[il,ibeg:iend,:]         ,
                         self._InterSpaceRot[isegm,:,:]  ,
-                        out = segmpos[isegm,:,:]        ,
+                        out = segmvals[isegm,:,:]       ,
                     )            
 
                 else:
 
-                    segmpos[isegm,:,:] = np.matmul(
-                        all_pos[il,ibeg:iend,:]         ,
-                        self._InterSpaceRot[isegm,:,:]  ,
-                    )[::-1,:]
-
+                    if pos:
+                        segmvals[isegm,:,:] = np.matmul(
+                            all_pos[il,ibeg:iend,:]         ,
+                            self._InterSpaceRot[isegm,:,:]  ,
+                        )[::-1,:]
+                    else:
+                        segmvals[isegm,:,:] = -np.matmul(
+                            all_pos[il,ibeg:iend,:]         ,
+                            self._InterSpaceRot[isegm,:,:]  ,
+                        )[::-1,:]
             else:
 
                 iend = iend - 1
@@ -2646,31 +2658,45 @@ cdef class NBodySyst():
                     np.matmul(
                         all_pos[il,ibeg:iend,:]         ,
                         self._InterSpaceRot[isegm,:,:]  ,
-                        out = segmpos[isegm,:self.segm_store-1,:]        ,
+                        out = segmvals[isegm,:self.segm_store-1,:]        ,
                     )   
 
                     np.matmul(
                         all_pos[il,0,:]         ,
                         self._InterSpaceRot[isegm,:,:]  ,
-                        out = segmpos[isegm,self.segm_store-1,:]        ,
+                        out = segmvals[isegm,self.segm_store-1,:]        ,
                     )            
 
                 else:
 
-                    segmpos[isegm,1:,:] = np.matmul(
-                        all_pos[il,ibeg:iend,:]         ,
-                        self._InterSpaceRot[isegm,:,:]  ,
-                    )[::-1,:]
+                    if pos:
 
-                    segmpos[isegm,0,:] = np.matmul(
-                        all_pos[il,0,:]         ,
-                        self._InterSpaceRot[isegm,:,:]  ,
-                    )
+                        segmvals[isegm,1:,:] = np.matmul(
+                            all_pos[il,ibeg:iend,:]         ,
+                            self._InterSpaceRot[isegm,:,:]  ,
+                        )[::-1,:]
 
-        return segmpos
+                        segmvals[isegm,0,:] = np.matmul(
+                            all_pos[il,0,:]         ,
+                            self._InterSpaceRot[isegm,:,:]  ,
+                        )
+
+                    else:
+
+                        segmvals[isegm,1:,:] = -np.matmul(
+                            all_pos[il,ibeg:iend,:]         ,
+                            self._InterSpaceRot[isegm,:,:]  ,
+                        )[::-1,:]
+
+                        segmvals[isegm,0,:] = -np.matmul(
+                            all_pos[il,0,:]         ,
+                            self._InterSpaceRot[isegm,:,:]  ,
+                        )
+
+        return segmvals
 
     @cython.final
-    def segmpos_to_all_pos_noopt(self, segmpos):
+    def segmpos_to_all_noopt(self, segmpos, pos=True):
 
         assert self.segm_store == segmpos.shape[1]
 
@@ -2685,7 +2711,11 @@ cdef class NBodySyst():
             for iint in range(self.nint_min):
 
                 isegm = self._bodysegm[ib, iint]
-                Sym = self.intersegm_to_all[ib][iint]
+
+                if pos:
+                    Sym = self.intersegm_to_all[ib][iint]
+                else:
+                    Sym = self.intersegm_to_all[ib][iint].TimeDerivative()
 
                 ibeg = iint * self.segm_size         
                 iend = ibeg + self.segm_size
@@ -2713,24 +2743,54 @@ cdef class NBodySyst():
         with nogil:
 
             params_to_segmpos(
-                params_mom_buf          ,
-                self._params_pos_buf    , self._params_shapes       , self._params_shifts       ,
-                self._ifft_buf_ptr      , self._ifft_shapes         , self._ifft_shifts         ,
-                self._params_basis_buf  , self._params_basis_shapes , self._params_basis_shifts ,
-                self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
-                self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
-                self._pos_slice_buf_ptr , self._pos_slice_shapes    , self._pos_slice_shifts    ,
-                self._ncoeff_min_loop   , self._n_sub_fft           , self._fft_backend         ,
-                self._pyfftw_rffts_exe  ,
-                self._loopnb            , self._loopmass            ,
-                self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
-                self._AfterLastGenIint  , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
-                self._gensegm_to_body   , self._gensegm_to_iint     ,
-                self._bodyloop          , self.segm_size            , self.segm_store           ,
-                segmpos                 ,
+                params_mom_buf              ,
+                self._params_pos_buf        , self._params_shapes       , self._params_shifts       ,
+                self._ifft_buf_ptr          , self._ifft_shapes         , self._ifft_shifts         ,
+                self._params_basis_buf_pos  , self._params_basis_shapes , self._params_basis_shifts ,
+                self._nnz_k_buf             , self._nnz_k_shapes        , self._nnz_k_shifts        ,
+                self._co_in_buf             , self._co_in_shapes        , self._co_in_shifts        ,
+                self._pos_slice_buf_ptr     , self._pos_slice_shapes    , self._pos_slice_shifts    ,
+                self._ncoeff_min_loop       , self._n_sub_fft           , self._fft_backend         ,
+                self._pyfftw_rffts_exe      ,
+                self._loopnb                , self._loopmass            ,
+                self._InterSpaceRotIsId     , self._InterSpaceRot       , self._InterTimeRev        ,
+                self._AfterLastGenIint      , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
+                self._gensegm_to_body       , self._gensegm_to_iint     ,
+                self._bodyloop              , self.segm_size            , self.segm_store           ,
+                segmpos                     ,
             )
 
-        return segmpos_np
+        return segmpos_np        
+
+    @cython.final
+    def params_to_segmvel(self, double[::1] params_mom_buf):
+
+        assert params_mom_buf.shape[0] == self.nparams
+
+        segmvel_np = np.empty((self.nsegm, self.segm_store, self.geodim), dtype=np.float64)
+        cdef double[:,:,::1] segmvel = segmvel_np
+
+        with nogil:
+
+            params_to_segmvel(
+                params_mom_buf              ,
+                self._params_pos_buf        , self._params_shapes       , self._params_shifts       ,
+                self._ifft_buf_ptr          , self._ifft_shapes         , self._ifft_shifts         ,
+                self._params_basis_buf_vel  , self._params_basis_shapes , self._params_basis_shifts ,
+                self._nnz_k_buf             , self._nnz_k_shapes        , self._nnz_k_shifts        ,
+                self._co_in_buf             , self._co_in_shapes        , self._co_in_shifts        ,
+                self._pos_slice_buf_ptr     , self._pos_slice_shapes    , self._pos_slice_shifts    ,
+                self._ncoeff_min_loop       , self._n_sub_fft           , self._fft_backend         ,
+                self._pyfftw_rffts_exe      ,
+                self._loopnb                , self._loopmass            ,
+                self._InterSpaceRotIsId     , self._InterSpaceRot       , self._InterTimeRev        ,
+                self._AfterLastGenIint      , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
+                self._gensegm_to_body       , self._gensegm_to_iint     ,
+                self._bodyloop              , self.segm_size            , self.segm_store           ,
+                segmvel                     ,
+            )
+
+        return segmvel_np
     
     @cython.final
     def segmpos_to_params(self, double[:,:,::1] segmpos):
@@ -2746,7 +2806,7 @@ cdef class NBodySyst():
                 segmpos                 ,
                 self._params_pos_buf    , self._params_shapes       , self._params_shifts       ,
                 self._ifft_buf_ptr      , self._ifft_shapes         , self._ifft_shifts         ,
-                self._params_basis_buf  , self._params_basis_shapes , self._params_basis_shifts ,
+                self._params_basis_buf_pos  , self._params_basis_shapes , self._params_basis_shifts ,
                 self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
                 self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
                 self._pos_slice_buf_ptr , self._pos_slice_shapes    , self._pos_slice_shifts    ,
@@ -2772,21 +2832,21 @@ cdef class NBodySyst():
         with nogil:
 
             segmpos_to_params_T(
-                segmpos                 ,
-                self._params_pos_buf    , self._params_shapes       , self._params_shifts       ,
-                self._ifft_buf_ptr      , self._ifft_shapes         , self._ifft_shifts         ,
-                self._params_basis_buf  , self._params_basis_shapes , self._params_basis_shifts ,
-                self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
-                self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
-                self._pos_slice_buf_ptr , self._pos_slice_shapes    , self._pos_slice_shifts    ,
-                self._ncoeff_min_loop   , self._n_sub_fft           , self._fft_backend         ,
-                self._pyfftw_irffts_exe ,
-                self._loopnb            , self._loopmass            ,
-                self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
-                self._AfterLastGenIint  , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
-                self._gensegm_to_body   , self._gensegm_to_iint     ,
-                self._bodyloop          , self.segm_size            , self.segm_store           ,
-                params_mom_buf          ,
+                segmpos                     ,
+                self._params_pos_buf        , self._params_shapes       , self._params_shifts       ,
+                self._ifft_buf_ptr          , self._ifft_shapes         , self._ifft_shifts         ,
+                self._params_basis_buf_pos  , self._params_basis_shapes , self._params_basis_shifts ,
+                self._nnz_k_buf             , self._nnz_k_shapes        , self._nnz_k_shifts        ,
+                self._co_in_buf             , self._co_in_shapes        , self._co_in_shifts        ,
+                self._pos_slice_buf_ptr     , self._pos_slice_shapes    , self._pos_slice_shifts    ,
+                self._ncoeff_min_loop       , self._n_sub_fft           , self._fft_backend         ,
+                self._pyfftw_irffts_exe     ,
+                self._loopnb                , self._loopmass            ,
+                self._InterSpaceRotIsId     , self._InterSpaceRot       , self._InterTimeRev        ,
+                self._AfterLastGenIint      , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
+                self._gensegm_to_body       , self._gensegm_to_iint     ,
+                self._bodyloop              , self.segm_size            , self.segm_store           ,
+                params_mom_buf              ,
             )
 
         return params_mom_buf_np
@@ -2829,38 +2889,38 @@ cdef class NBodySyst():
         memset(self._pos_slice_buf_ptr, 0, sizeof(double)*self._pos_slice_shifts[self._pos_slice_shapes.shape[0]])
 
         ifft_to_pos_slice(
-            self._ifft_buf_ptr        , self._ifft_shapes           , self._ifft_shifts           ,
-            &self._params_basis_buf[0], self._params_basis_shapes   , self._params_basis_shifts   ,
-            &self._nnz_k_buf[0]       , self._nnz_k_shapes          , self._nnz_k_shifts          ,
-            self._pos_slice_buf_ptr   , self._pos_slice_shapes      , self._pos_slice_shifts      ,
-            self._ncoeff_min_loop     , self._n_sub_fft             ,
+            self._ifft_buf_ptr              , self._ifft_shapes           , self._ifft_shifts           ,
+            &self._params_basis_buf_pos[0]  , self._params_basis_shapes   , self._params_basis_shifts   ,
+            &self._nnz_k_buf[0]             , self._nnz_k_shapes          , self._nnz_k_shifts          ,
+            self._pos_slice_buf_ptr         , self._pos_slice_shapes      , self._pos_slice_shifts      ,
+            self._ncoeff_min_loop           , self._n_sub_fft             ,
         )
 
         if (self.segm_size != self.segm_store):
 
             Adjust_after_last_gen(
-                self._pos_slice_buf_ptr   , self._pos_slice_shifts      ,
-                self._ifft_shapes         ,
-                self._params_basis_shapes ,
-                self._n_sub_fft           ,
-                self._AfterLastGenIint    ,
-                self._AfterLastGenTimeRev , self._AfterLastGenSpaceRot  ,
-                self.segm_size           ,
+                self._pos_slice_buf_ptr     , self._pos_slice_shifts      ,
+                self._ifft_shapes           ,
+                self._params_basis_shapes   ,
+                self._n_sub_fft             ,
+                self._AfterLastGenIint      ,
+                self._AfterLastGenTimeRev   , self._AfterLastGenSpaceRot  ,
+                self.segm_size              ,
             )
 
         TT.toc("ifft_to_pos_slice")
 
         pos_slice_to_segmpos(
-            self._pos_slice_buf_ptr   , self._pos_slice_shapes  , self._pos_slice_shifts ,
-            &self._segmpos[0,0,0]     ,
-            self._InterSpaceRotIsId   ,
-            self._InterSpaceRot       ,
-            self._InterTimeRev        ,
-            self._gensegm_to_body     ,
-            self._gensegm_to_iint     ,
-            self._bodyloop            ,
-            self.segm_size           ,
-            self.segm_store          ,
+            self._pos_slice_buf_ptr , self._pos_slice_shapes  , self._pos_slice_shifts ,
+            &self._segmpos[0,0,0]   ,
+            self._InterSpaceRotIsId ,
+            self._InterSpaceRot     ,
+            self._InterTimeRev      ,
+            self._gensegm_to_body   ,
+            self._gensegm_to_iint   ,
+            self._bodyloop          ,
+            self.segm_size          ,
+            self.segm_store         ,
         )
 
         TT.toc("pos_slice_to_segmpos")
@@ -2901,17 +2961,17 @@ cdef class NBodySyst():
                 self._n_sub_fft           ,
                 self._AfterLastGenIint    ,
                 self._AfterLastGenTimeRev , self._AfterLastGenSpaceRot  ,
-                self.segm_size           ,
+                self.segm_size            ,
             )
 
         TT.toc("segmpos_to_pos_slice_T")
 
         pos_slice_to_ifft(
-            self._pos_slice_buf_ptr   , self._pos_slice_shapes      , self._pos_slice_shifts      ,
-            &self._params_basis_buf[0], self._params_basis_shapes   , self._params_basis_shifts   ,
-            &self._nnz_k_buf[0]       , self._nnz_k_shapes          , self._nnz_k_shifts          ,
-            self._ifft_buf_ptr        , self._ifft_shapes           , self._ifft_shifts           ,
-            self._ncoeff_min_loop     , self._n_sub_fft             , -1                    ,
+            self._pos_slice_buf_ptr         , self._pos_slice_shapes      , self._pos_slice_shifts      ,
+            &self._params_basis_buf_pos[0]  , self._params_basis_shapes   , self._params_basis_shifts   ,
+            &self._nnz_k_buf[0]             , self._nnz_k_shapes          , self._nnz_k_shifts          ,
+            self._ifft_buf_ptr              , self._ifft_shapes           , self._ifft_shifts           ,
+            self._ncoeff_min_loop           , self._n_sub_fft             , -1                          ,
         )
 
         TT.toc("pos_slice_to_ifft")
@@ -4522,49 +4582,47 @@ cdef void params_to_segmvel(
         params_vel_buf      , 
     )   
 
-    # TODO: finish this
-# 
-#     params_to_ifft(
-#         params_vel_buf  , params_shapes , params_shifts ,
-#         nnz_k_buf       , nnz_k_shapes  , nnz_k_shifts  ,
-#         ifft_buf_ptr    , ifft_shapes   , ifft_shifts   ,
-#         fft_backend     , pyfftw_rffts_exe              ,
-#     )
-#  
-#     memset(vel_slice_buf_ptr, 0, sizeof(double)*pos_slice_shifts[pos_slice_shapes.shape[0]])
-# 
-#     ifft_to_pos_slice(
-#         ifft_buf_ptr        , ifft_shapes           , ifft_shifts           ,
-#         &params_basis_buf[0], params_basis_shapes   , params_basis_shifts   ,
-#         &nnz_k_buf[0]       , nnz_k_shapes          , nnz_k_shifts          ,
-#         vel_slice_buf_ptr   , pos_slice_shapes      , pos_slice_shifts      ,
-#         ncoeff_min_loop     , n_sub_fft             ,
-#     )
-# 
-#     if (segm_size != segm_store):
-# 
-#         Adjust_after_last_gen(
-#             vel_slice_buf_ptr   , pos_slice_shifts      ,
-#             ifft_shapes         ,
-#             params_basis_shapes ,
-#             n_sub_fft           ,
-#             AfterLastGenIint    ,
-#             AfterLastGenTimeRev , AfterLastGenSpaceRot  ,
-#             segm_size           ,
-#         )
-# 
-#     pos_slice_to_segmpos( 
-#         vel_slice_buf_ptr   , pos_slice_shapes  , pos_slice_shifts ,
-#         &segmvel[0,0,0]     ,
-#         InterSpaceRotIsId   ,
-#         InterSpaceRot       ,
-#         InterTimeRev        ,
-#         gensegm_to_body     ,
-#         gensegm_to_iint     ,
-#         BodyLoop            ,
-#         segm_size           ,
-#         segm_store          ,
-#     )
+    params_to_ifft(
+        params_vel_buf  , params_shapes , params_shifts ,
+        nnz_k_buf       , nnz_k_shapes  , nnz_k_shifts  ,
+        ifft_buf_ptr    , ifft_shapes   , ifft_shifts   ,
+        fft_backend     , pyfftw_rffts_exe              ,
+    )
+ 
+    memset(vel_slice_buf_ptr, 0, sizeof(double)*pos_slice_shifts[pos_slice_shapes.shape[0]])
+
+    ifft_to_pos_slice(
+        ifft_buf_ptr        , ifft_shapes           , ifft_shifts           ,
+        &params_basis_buf[0], params_basis_shapes   , params_basis_shifts   ,
+        &nnz_k_buf[0]       , nnz_k_shapes          , nnz_k_shifts          ,
+        vel_slice_buf_ptr   , pos_slice_shapes      , pos_slice_shifts      ,
+        ncoeff_min_loop     , n_sub_fft             ,
+    )
+
+    if (segm_size != segm_store):
+
+        Adjust_after_last_gen(
+            vel_slice_buf_ptr   , pos_slice_shifts      ,
+            ifft_shapes         ,
+            params_basis_shapes ,
+            n_sub_fft           ,
+            AfterLastGenIint    ,
+            AfterLastGenTimeRev , AfterLastGenSpaceRot  ,
+            segm_size           ,
+        )
+
+    pos_slice_to_segmpos( 
+        vel_slice_buf_ptr   , pos_slice_shapes  , pos_slice_shifts ,
+        &segmvel[0,0,0]     ,
+        InterSpaceRotIsId   ,
+        InterSpaceRot       ,
+        InterTimeRev        ,
+        gensegm_to_body     ,
+        gensegm_to_iint     ,
+        BodyLoop            ,
+        segm_size           ,
+        segm_store          ,
+    )
 
 @cython.cdivision(True)
 cdef void segmpos_to_params(
