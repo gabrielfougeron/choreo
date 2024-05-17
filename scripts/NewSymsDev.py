@@ -113,7 +113,7 @@ def proj_to_zero(array, eps=1e-14):
 
 def doit(config_name):
         
-    eps = 1e-14
+    eps = 1e-10
 
     Workspace_folder = os.path.join(__PROJECT_ROOT__, 'tests', 'NewSym_data', config_name)
     params_filename = os.path.join(Workspace_folder, 'choreo_config.json')
@@ -139,20 +139,42 @@ def doit(config_name):
     else:
         inter_law = choreo.numba_funs_new.pow_inter_law(inter_pow/2, inter_pm)
 
-    
-    
     NBS = choreo.cython._NBodySyst.NBodySyst(geodim, nbody, mass, charge, Sym_list, inter_law)
 
 
     NBS.nint_fac = 10
-    
+    params_buf = np.random.random((NBS.nparams))
 
+    # Unoptimized version
+    all_coeffs = NBS.params_to_all_coeffs_noopt(params_buf)        
+    kin_tot = NBS.all_coeffs_to_kin_nrg(all_coeffs)
+    print(kin_tot)
+    
+    all_pos = scipy.fft.irfft(all_coeffs, axis=1, norm='forward')
+
+    print(all_coeffs.dtype)
+    print(all_coeffs.shape)
+    print(NBS.nloop)
+    print(NBS.ncoeffs)
+    print(NBS.geodim)
+    
+    NBS.all_coeffs_pos_to_vel_inplace(all_coeffs)
+    all_vel = scipy.fft.irfft(all_coeffs, axis=1, norm='forward')
+    
+    print(all_vel.shape)
+    print(NBS.nint)
+    
+    vel_int = np.sum(all_vel*all_vel.conj(), axis=(1,2)) / NBS.nint
+    kin_tot_noopt = 0
     for il in range(NBS.nloop):
-        # print()
-        # print(il)
-        pb = NBS.params_basis(il)
-        print(pb.shape)
-        # print(pb)
+        kin_tot_noopt += vel_int[il] * np.pi*np.pi*NBS.loopmass[il]*NBS.loopnb[il]
+
+    
+    print(kin_tot_noopt)
+    print(kin_tot - kin_tot_noopt)
+    
+    assert abs(kin_tot - kin_tot_noopt) < eps
+
 
     nparam_nosym = geodim * NBS.nint * nbody
     nparam_tot = NBS.nparams_incl_o // 2
@@ -172,10 +194,10 @@ def doit(config_name):
     assert abs((nparam_nosym / nparam_tot)  - reduction_ratio) < eps
     
 
-    # return
-
-    filename = os.path.join(Workspace_folder, config_name+'_graph_segm.pdf')
-    choreo.cython._NBodySyst.PlotTimeBodyGraph(NBS.SegmGraph, nbody, NBS.nint_min, filename)
+#     # return
+# 
+#     filename = os.path.join(Workspace_folder, config_name+'_graph_segm.pdf')
+#     choreo.cython._NBodySyst.PlotTimeBodyGraph(NBS.SegmGraph, nbody, NBS.nint_min, filename)
 
 
 
