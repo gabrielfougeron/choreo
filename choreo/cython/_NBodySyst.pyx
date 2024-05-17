@@ -958,7 +958,7 @@ cdef class NBodySyst():
             AfterLastGenSpaceRot_np[il,:,:] = Sym.SpaceRot
 
     @cython.final
-    def AssertAllSegmGenConstraintsAreRespected(self, all_pos, eps=1e-12):
+    def AssertAllSegmGenConstraintsAreRespected(self, all_pos, eps=1e-12, pos=True):
 
         for il in range(self.nloop):
             
@@ -968,7 +968,10 @@ cdef class NBodySyst():
                 
                 isegm = self._bodysegm[ib, iint]
                 
-                Sym = self.gensegm_to_all[ib][iint]
+                if pos:
+                    Sym = self.gensegm_to_all[ib][iint]
+                else:
+                    Sym = self.gensegm_to_all[ib][iint].TimeDerivative()
                 
                 ib_source = self._gensegm_to_body[isegm]
                 iint_source = self._gensegm_to_iint[isegm]
@@ -1025,12 +1028,15 @@ cdef class NBodySyst():
                     assert (np.linalg.norm(pos_target_segm[ self.segm_size-1,:] - all_pos[il, 0, :])) < eps
             
     @cython.final
-    def AssertAllBodyConstraintAreRespected(self, all_pos, eps=1e-12):
+    def AssertAllBodyConstraintAreRespected(self, all_pos, eps=1e-12, pos=False):
         # Make sure loop constraints are respected
         
         for il, Constraints in enumerate(self.LoopGenConstraints):
 
             for icstr, Sym in enumerate(Constraints):
+
+                if not pos:
+                    Sym = Sym.TimeDerivative()
 
                 assert (self._nint % Sym.TimeShiftDen) == 0
 
@@ -2803,23 +2809,23 @@ cdef class NBodySyst():
         with nogil:
 
             segmpos_to_params(
-                segmpos                 ,
-                self._params_pos_buf    , self._params_shapes       , self._params_shifts       ,
-                self._ifft_buf_ptr      , self._ifft_shapes         , self._ifft_shifts         ,
+                segmpos                     ,
+                self._params_pos_buf        , self._params_shapes       , self._params_shifts       ,
+                self._ifft_buf_ptr          , self._ifft_shapes         , self._ifft_shifts         ,
                 self._params_basis_buf_pos  , self._params_basis_shapes , self._params_basis_shifts ,
-                self._nnz_k_buf         , self._nnz_k_shapes        , self._nnz_k_shifts        ,
-                self._co_in_buf         , self._co_in_shapes        , self._co_in_shifts        ,
-                self._pos_slice_buf_ptr , self._pos_slice_shapes    , self._pos_slice_shifts    ,
-                self._ncoeff_min_loop   , self._n_sub_fft           , self._fft_backend         ,
-                self._pyfftw_irffts_exe ,
-                self._loopnb            , self._loopmass            ,
-                self._InterSpaceRotIsId , self._InterSpaceRot       , self._InterTimeRev        ,
-                self._gensegm_to_body   , self._gensegm_to_iint     ,
-                self._bodyloop          , self.segm_size            , self.segm_store           ,
-                params_mom_buf          ,
+                self._nnz_k_buf             , self._nnz_k_shapes        , self._nnz_k_shifts        ,
+                self._co_in_buf             , self._co_in_shapes        , self._co_in_shifts        ,
+                self._pos_slice_buf_ptr     , self._pos_slice_shapes    , self._pos_slice_shifts    ,
+                self._ncoeff_min_loop       , self._n_sub_fft           , self._fft_backend         ,
+                self._pyfftw_irffts_exe     ,
+                self._loopnb                , self._loopmass            ,
+                self._InterSpaceRotIsId     , self._InterSpaceRot       , self._InterTimeRev        ,
+                self._gensegm_to_body       , self._gensegm_to_iint     ,
+                self._bodyloop              , self.segm_size            , self.segm_store           ,
+                params_mom_buf              ,
             )
 
-        return params_mom_buf_np
+        return params_mom_buf_np    
 
     @cython.final
     def segmpos_to_params_T(self, double[:,:,::1] segmpos):
