@@ -52,7 +52,31 @@ def test_all_pos_to_segmpos(AllNBS, float64_tols):
         segmpos_cy = NBS.params_to_segmpos(params_buf)
         
         print(np.linalg.norm(segmpos_noopt - segmpos_cy))
-        assert np.allclose(segmpos_noopt, segmpos_cy, rtol = float64_tols.rtol, atol = float64_tols.atol) 
+        assert np.allclose(segmpos_noopt, segmpos_cy, rtol = float64_tols.rtol, atol = float64_tols.atol)     
+#             
+# def test_vel(AllNBS, float64_tols):
+#     
+#     for name, NBS in AllNBS.items():
+#         
+#         print(f"Config name : {name}")     
+# 
+#         NBS.nint_fac = 10
+#         params_buf = np.random.random((NBS.nparams))
+# 
+#         # Unoptimized version
+#         all_coeffs = NBS.params_to_all_coeffs_noopt(params_buf)        
+#         all_pos = scipy.fft.irfft(all_coeffs, axis=1, norm='forward')
+        # 
+        # NBS.AssertAllSegmGenConstraintsAreRespected(all_pos)
+        # NBS.AssertAllBodyConstraintAreRespected(all_pos)
+        # 
+        # segmpos_noopt = NBS.all_pos_to_segmpos_noopt(all_pos)
+        # 
+        # # Optimized version
+        # segmpos_cy = NBS.params_to_segmpos(params_buf)
+        # 
+        # print(np.linalg.norm(segmpos_noopt - segmpos_cy))
+        # assert np.allclose(segmpos_noopt, segmpos_cy, rtol = float64_tols.rtol, atol = float64_tols.atol) 
      
 def test_segmpos_to_all_pos(AllNBS, float64_tols):
     

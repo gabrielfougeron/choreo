@@ -87,12 +87,10 @@ def Build_BodyTimeGraph(nbody, nint, Sym_list, Tfun = None, VelSym = False):
                 node_target = (ib_target, iint_target)
                 
                 if node_source <= node_target :
-
                     edge = (node_source, node_target)
                     EdgeSym = Sym
 
                 else:
-
                     edge = (node_target, node_source)
                     EdgeSym = SymInv
 
@@ -533,7 +531,7 @@ def ComputeParamBasis_InitVal(nbody, geodim, InstConstraints, bodymass, MomCons=
        
     return np.ascontiguousarray(NullSpace)
 
-def ComputeParamBasis_Loop(nbody, nloop, loopgen, geodim, LoopGenConstraints, eps=1e-12):
+def ComputeParamBasis_Loop(nloop, loopgen, geodim, LoopGenConstraints, eps=1e-12):
 
     All_params_basis = []
 
@@ -557,7 +555,7 @@ def ComputeParamBasis_Loop(nbody, nloop, loopgen, geodim, LoopGenConstraints, ep
             cstr_mat = np.zeros((ncstr, geodim, 2, geodim, 2), dtype = np.float64)
 
             for icstr, Sym in enumerate(LoopGenConstraints[il]):
-
+                
                 alpha = - (2 * math.pi * k * Sym.TimeShiftNum) / Sym.TimeShiftDen
                 c = math.cos(alpha)
                 s = math.sin(alpha)
@@ -582,7 +580,6 @@ def ComputeParamBasis_Loop(nbody, nloop, loopgen, geodim, LoopGenConstraints, ep
 
                                 if abs(cstr_mat[icstr, idim, ift, jdim, jft]) < eps :
                                     cstr_mat[icstr, idim, ift, jdim, jft] = 0
-
 
             cstr_mat_reshape = cstr_mat.reshape((ncstr*geodim*2, geodim*2))
 

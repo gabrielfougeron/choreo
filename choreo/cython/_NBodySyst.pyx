@@ -484,9 +484,9 @@ cdef class NBodySyst():
         self.LoopGenConstraints = [BodyConstraints[ib] for ib in self._loopgen]
 
         # Idem, but I'm too lazy to change it and it is not performance critical
-        All_params_basis = ComputeParamBasis_Loop(nbody, self.nloop, self._loopgen, geodim, self.LoopGenConstraints)
-        params_basis_reorganized_list, nnz_k_list, co_in_list = reorganize_All_params_basis(All_params_basis)
-        
+        All_params_basis_pos = ComputeParamBasis_Loop(self.nloop, self._loopgen, geodim, self.LoopGenConstraints)
+        params_basis_reorganized_list, nnz_k_list, co_in_list = reorganize_All_params_basis(All_params_basis_pos)
+
         self._params_basis_buf, self._params_basis_shapes, self._params_basis_shifts = BundleListOfArrays(params_basis_reorganized_list)
 
         self._nnz_k_buf, self._nnz_k_shapes, self._nnz_k_shifts = BundleListOfArrays(nnz_k_list)
@@ -503,7 +503,23 @@ cdef class NBodySyst():
 
         self.nrem = np.sum(self._nco_in_loop)
 
-        self._ncoeff_min_loop = np.array([len(All_params_basis[il]) for il in range(self.nloop)], dtype=np.intp)
+
+
+# 
+#         All_params_basis_vel = ComputeParamBasis_Loop(self.nloop, self._loopgen, geodim, self.LoopGenConstraints, VelSym=False)
+#         params_basis_reorganized_list_vel, nnz_k_list_vel, co_in_list_vel = reorganize_All_params_basis(All_params_basis_vel)
+# 
+# 
+#         _params_basis_buf_vel, _params_basis_shapes_vel, _params_basis_shifts_vel = BundleListOfArrays(params_basis_reorganized_list)
+# 
+#         print("Vel")
+#         print(_params_basis_shapes_vel)
+
+
+
+
+
+        self._ncoeff_min_loop = np.array([len(All_params_basis_pos[il]) for il in range(self.nloop)], dtype=np.intp)
 
         self.Compute_n_sub_fft()
 
@@ -1081,6 +1097,24 @@ cdef class NBodySyst():
 
         return IsHomo, alpha_avg
 
+    # Should really be a class method
+    @cython.final
+    cpdef all_coeffs_pos_to_vel_inplace(
+        self                                ,
+        double complex[:,:,::1] all_coeffs  ,
+    ):
+
+        cdef int nloop = all_coeffs.shape[0]
+        cdef int ncoeffs = all_coeffs.shape[1]
+        cdef int geodim = all_coeffs.shape[2]
+
+        cdef Py_ssize_t il, k, idim
+
+        for il in range(nloop):
+            for k in range(ncoeffs):
+                for idim in range(geodim):
+                    all_coeffs[il,k,idim] *= -1j*k
+
     @cython.final
     def Get_segmpos_minmax(
         self                    ,
@@ -1207,10 +1241,6 @@ cdef class NBodySyst():
             Hash_Action = self.segmpos_to_hash(segmpos)
 
         loop_len, bin_dx_min = self.segmpos_to_path_stats(segmpos)
-# 
-#         segmpos_minmax = np.empty((self.nsegm, 2, self.geodim), dtype=np.float64)
-#         segmpos_minmax[:,0,:] = np.min(segmpos, axis=1)
-#         segmpos_minmax[:,1,:] = np.max(segmpos, axis=1)
         AABB = self.GetFullAABB(segmpos, extend)
 
         Info_dict = {}
@@ -1626,7 +1656,7 @@ cdef class NBodySyst():
                 for il in range(self.nloop):
                     params_pos_buf[il] = &params_buf_out[2*self._params_shifts[il]]
             
-                changevar_mom_invT(
+                changevar_mom_pos_invT(
                     &params_buf_in[0]       , self._params_shapes   , self._params_shifts   ,
                     self._nnz_k_buf         , self._nnz_k_shapes    , self._nnz_k_shifts    ,
                     self._co_in_buf         , self._co_in_shapes    , self._co_in_shifts    ,
@@ -1643,7 +1673,7 @@ cdef class NBodySyst():
                 for il in range(self.nloop):
                     params_pos_buf[il] = &params_buf_in[2*self._params_shifts[il]]
 
-                changevar_mom_inv(
+                changevar_mom_pos_inv(
                     params_pos_buf          , self._params_shapes   , self._params_shifts   ,
                     self._nnz_k_buf         , self._nnz_k_shapes    , self._nnz_k_shifts    ,
                     self._co_in_buf         , self._co_in_shapes    , self._co_in_shifts    ,
@@ -1662,7 +1692,7 @@ cdef class NBodySyst():
                 for il in range(self.nloop):
                     params_pos_buf[il] = &params_buf_in[2*self._params_shifts[il]]
 
-                changevar_mom_T(
+                changevar_mom_pos_T(
                     params_pos_buf          , self._params_shapes   , self._params_shifts   ,
                     self._nnz_k_buf         , self._nnz_k_shapes    , self._nnz_k_shifts    ,
                     self._co_in_buf         , self._co_in_shapes    , self._co_in_shifts    ,
@@ -1679,7 +1709,7 @@ cdef class NBodySyst():
                 for il in range(self.nloop):
                     params_pos_buf[il] = &params_buf_out[2*self._params_shifts[il]]
 
-                changevar_mom(
+                changevar_mom_pos(
                     &params_buf_in[0]       , self._params_shapes   , self._params_shifts   ,
                     self._nnz_k_buf         , self._nnz_k_shapes    , self._nnz_k_shifts    ,
                     self._co_in_buf         , self._co_in_shapes    , self._co_in_shifts    ,
@@ -2429,7 +2459,7 @@ cdef class NBodySyst():
             params_pos_buf[il] = &params_pos_buf_np[2*self._params_shifts[il]]
     
         if transpose:
-            changevar_mom_invT(
+            changevar_mom_pos_invT(
                 &params_mom_buf[0]      , self._params_shapes   , self._params_shifts   ,
                 self._nnz_k_buf         , self._nnz_k_shapes    , self._nnz_k_shifts    ,
                 self._co_in_buf         , self._co_in_shapes    , self._co_in_shifts    ,
@@ -2438,7 +2468,7 @@ cdef class NBodySyst():
                 params_pos_buf          , 
             )   
         else:
-            changevar_mom(
+            changevar_mom_pos(
                 &params_mom_buf[0]      , self._params_shapes   , self._params_shifts   ,
                 self._nnz_k_buf         , self._nnz_k_shapes    , self._nnz_k_shifts    ,
                 self._co_in_buf         , self._co_in_shapes    , self._co_in_shifts    ,
@@ -2505,7 +2535,7 @@ cdef class NBodySyst():
         cdef double[::1] params_mom_buf = params_mom_buf_np
 
         if transpose:
-            changevar_mom_T(
+            changevar_mom_pos_T(
                 &params_pos_buf[0]      , self._params_shapes   , self._params_shifts   ,
                 self._nnz_k_buf         , self._nnz_k_shapes    , self._nnz_k_shifts    ,
                 self._co_in_buf         , self._co_in_shapes    , self._co_in_shifts    ,
@@ -2514,7 +2544,7 @@ cdef class NBodySyst():
                 &params_mom_buf[0]      , 
             )   
         else:
-            changevar_mom_inv(
+            changevar_mom_pos_inv(
                 &params_pos_buf[0]      , self._params_shapes   , self._params_shifts   ,
                 self._nnz_k_buf         , self._nnz_k_shapes    , self._nnz_k_shifts    ,
                 self._co_in_buf         , self._co_in_shapes    , self._co_in_shifts    ,
@@ -2776,7 +2806,7 @@ cdef class NBodySyst():
         cdef int nsegm = self._gensegm_to_body.shape[0]
         cdef int geodim = self._InterSpaceRot.shape[1]
 
-        changevar_mom(
+        changevar_mom_pos(
             &params_mom_buf[0]  , self._params_shapes , self._params_shifts ,
             self._nnz_k_buf           , self._nnz_k_shapes  , self._nnz_k_shifts  ,
             self._co_in_buf           , self._co_in_shapes  , self._co_in_shifts  ,
@@ -2785,7 +2815,7 @@ cdef class NBodySyst():
             self._params_pos_buf      , 
         )   
 
-        TT.toc("changevar_mom")
+        TT.toc("changevar_mom_pos")
 
         params_to_ifft(
             self._params_pos_buf  , self._params_shapes , self._params_shifts ,
@@ -2895,7 +2925,7 @@ cdef class NBodySyst():
 
         TT.toc("ifft_to_params")
 
-        changevar_mom_T(
+        changevar_mom_pos_T(
             self._params_pos_buf      , self._params_shapes , self._params_shifts ,
             self._nnz_k_buf           , self._nnz_k_shapes  , self._nnz_k_shifts  ,
             self._co_in_buf           , self._co_in_shapes  , self._co_in_shifts  ,
@@ -2904,7 +2934,7 @@ cdef class NBodySyst():
             &params_mom_buf[0]  , 
         )   
 
-        TT.toc("changevar_mom_T")
+        TT.toc("changevar_mom_pos_T")
 
         params_to_kin_nrg_grad_daxpy(
             &params_mom_buf[0]  , self._params_shapes   , self._params_shifts   ,
@@ -3022,7 +3052,7 @@ cdef void Make_Init_bounds_coeffs(
                     cur_param_pos_buf += 1
  
 @cython.cdivision(True)
-cdef void changevar_mom(
+cdef void changevar_mom_pos(
     double *params_mom_buf      , long[:,::1] params_shapes     , long[::1] params_shifts   ,
     long[::1] nnz_k_buf         , long[:,::1] nnz_k_shapes      , long[::1] nnz_k_shifts    ,
     bint[::1] co_in_buf         , long[:,::1] co_in_shapes      , long[::1] co_in_shifts    ,
@@ -3109,7 +3139,7 @@ cdef void changevar_mom(
                     cur_param_pos_buf += 1
  
 @cython.cdivision(True)
-cdef void changevar_mom_invT(
+cdef void changevar_mom_pos_invT(
     double *params_mom_buf      , long[:,::1] params_shapes     , long[::1] params_shifts   ,
     long[::1] nnz_k_buf         , long[:,::1] nnz_k_shapes      , long[::1] nnz_k_shifts    ,
     bint[::1] co_in_buf         , long[:,::1] co_in_shapes      , long[::1] co_in_shifts    ,
@@ -3195,7 +3225,7 @@ cdef void changevar_mom_invT(
                     cur_params_mom_buf += 1
                     cur_param_pos_buf += 1
 
-cdef void changevar_mom_inv(
+cdef void changevar_mom_pos_inv(
     double **params_pos_buf     , long[:,::1] params_shapes     , long[::1] params_shifts   ,
     long[::1] nnz_k_buf         , long[:,::1] nnz_k_shapes      , long[::1] nnz_k_shifts    ,
     bint[::1] co_in_buf         , long[:,::1] co_in_shapes      , long[::1] co_in_shifts    ,
@@ -3279,7 +3309,7 @@ cdef void changevar_mom_inv(
                     cur_param_pos_buf += 1
 
 @cython.cdivision(True)
-cdef void changevar_mom_T(
+cdef void changevar_mom_pos_T(
     double **params_pos_buf     , long[:,::1] params_shapes     , long[::1] params_shifts   ,
     long[::1] nnz_k_buf         , long[:,::1] nnz_k_shapes      , long[::1] nnz_k_shifts    ,
     bint[::1] co_in_buf         , long[:,::1] co_in_shapes      , long[::1] co_in_shifts    ,
@@ -3361,6 +3391,94 @@ cdef void changevar_mom_T(
 
                     cur_params_mom_buf += 1
                     cur_param_pos_buf += 1
+
+@cython.cdivision(True)
+cdef void changevar_mom_vel(
+    double *params_mom_buf      , long[:,::1] params_shapes     , long[::1] params_shifts   ,
+    long[::1] nnz_k_buf         , long[:,::1] nnz_k_shapes      , long[::1] nnz_k_shifts    ,
+    bint[::1] co_in_buf         , long[:,::1] co_in_shapes      , long[::1] co_in_shifts    ,
+    long[::1] ncoeff_min_loop   ,
+    long[::1] loopnb            , double[::1] loopmass          ,
+    double **params_vel_buf     , 
+) noexcept nogil:
+
+    cdef double* cur_params_mom_buf = params_mom_buf
+    cdef double* cur_param_vel_buf
+    cdef double loopmul, mul
+
+    cdef int nloop = params_shapes.shape[0]
+    cdef Py_ssize_t il, idim, ipr, ik, iparam, nmem
+    cdef long k, ko
+
+    for il in range(nloop):
+
+        cur_param_vel_buf = params_vel_buf[il]
+        nmem = params_shifts[il+1]-params_shifts[il]
+        memset(cur_param_vel_buf + nmem, 0, sizeof(double)*nmem)
+
+        loopmul = 1./csqrt(loopnb[il] * loopmass[il] * cfourpisq)
+
+        # ipr = 0 treated separately
+        # ik = 0 treated separately
+        if nnz_k_shapes[il,0] > 0:
+
+            k = nnz_k_buf[nnz_k_shifts[il]]
+        
+            if k == 0:
+
+                for iparam in range(params_shapes[il,2]):
+
+                    if co_in_buf[co_in_shifts[il]+iparam]:
+
+                        cur_param_vel_buf[0] = 0
+
+                        cur_params_mom_buf += 1
+                        cur_param_vel_buf += 1
+                    
+                    else:
+                        # DO NOT INCREMENT cur_param_mom_buf !!!
+                        cur_param_vel_buf[0] = 0
+                        cur_param_vel_buf += 1
+
+            else:
+
+                mul = loopmul
+
+                for iparam in range(params_shapes[il,2]):
+
+                    cur_param_vel_buf[0] = mul*cur_params_mom_buf[0]
+
+                    cur_params_mom_buf += 1
+                    cur_param_vel_buf += 1
+
+        for ik in range(1, nnz_k_shapes[il,0]):
+
+            k = nnz_k_buf[nnz_k_shifts[il]+ik]
+            mul = loopmul
+
+            for iparam in range(params_shapes[il,2]):
+
+                cur_param_vel_buf[0] = mul*cur_params_mom_buf[0]
+
+                cur_params_mom_buf += 1
+                cur_param_vel_buf += 1
+
+        for ipr in range(1,params_shapes[il,0]):
+
+            ko = ipr * ncoeff_min_loop[il]
+
+            for ik in range(nnz_k_shapes[il,0]):
+
+                k = ko + nnz_k_buf[nnz_k_shifts[il]+ik]
+                mul = loopmul
+
+                for iparam in range(params_shapes[il,2]):
+
+                    cur_param_vel_buf[0] = mul*cur_params_mom_buf[0]
+
+                    cur_params_mom_buf += 1
+                    cur_param_vel_buf += 1
+ 
 
 @cython.cdivision(True)
 cdef double params_to_kin_nrg(
@@ -4319,7 +4437,7 @@ cdef void params_to_segmpos(
     cdef int nsegm = gensegm_to_body.shape[0]
     cdef int geodim = InterSpaceRot.shape[1]
 
-    changevar_mom(
+    changevar_mom_pos(
         &params_mom_buf[0]  , params_shapes , params_shifts ,
         nnz_k_buf           , nnz_k_shapes  , nnz_k_shifts  ,
         co_in_buf           , co_in_shapes  , co_in_shifts  ,
@@ -4369,6 +4487,84 @@ cdef void params_to_segmpos(
         segm_size           ,
         segm_store          ,
     )
+
+@cython.cdivision(True)
+cdef void params_to_segmvel(
+    double[::1] params_mom_buf              ,
+    double** params_vel_buf                 , long[:,::1] params_shapes             , long[::1] params_shifts       ,
+    double complex** ifft_buf_ptr           , long[:,::1] ifft_shapes               , long[::1] ifft_shifts         ,
+    double complex[::1] params_basis_buf    , long[:,::1] params_basis_shapes       , long[::1] params_basis_shifts ,
+    long[::1] nnz_k_buf                     , long[:,::1] nnz_k_shapes              , long[::1] nnz_k_shifts        ,
+    bint[::1] co_in_buf                     , long[:,::1] co_in_shapes              , long[::1] co_in_shifts        ,
+    double *vel_slice_buf_ptr               , long[:,::1] pos_slice_shapes          , long[::1] pos_slice_shifts    ,
+    long[::1] ncoeff_min_loop               , long[::1] n_sub_fft                   , int fft_backend               ,
+    pyfftw.fftw_exe** pyfftw_rffts_exe      ,
+    long[::1] loopnb                        , double[::1] loopmass                  ,
+    bint[::1] InterSpaceRotIsId             , double[:,:,::1] InterSpaceRot         , long[::1] InterTimeRev        ,
+    long[::1] AfterLastGenIint              , double[:,:,::1] AfterLastGenSpaceRot  , long[::1] AfterLastGenTimeRev ,
+    long[::1] gensegm_to_body               ,
+    long[::1] gensegm_to_iint               ,
+    long[::1] BodyLoop                      ,
+    long segm_size                          ,
+    long segm_store                         ,
+    double[:,:,::1] segmvel                 ,
+) noexcept nogil:
+
+    cdef int nsegm = gensegm_to_body.shape[0]
+    cdef int geodim = InterSpaceRot.shape[1]
+
+    changevar_mom_vel(
+        &params_mom_buf[0]  , params_shapes , params_shifts ,
+        nnz_k_buf           , nnz_k_shapes  , nnz_k_shifts  ,
+        co_in_buf           , co_in_shapes  , co_in_shifts  ,
+        ncoeff_min_loop     ,
+        loopnb              , loopmass      ,
+        params_vel_buf      , 
+    )   
+
+    # TODO: finish this
+# 
+#     params_to_ifft(
+#         params_vel_buf  , params_shapes , params_shifts ,
+#         nnz_k_buf       , nnz_k_shapes  , nnz_k_shifts  ,
+#         ifft_buf_ptr    , ifft_shapes   , ifft_shifts   ,
+#         fft_backend     , pyfftw_rffts_exe              ,
+#     )
+#  
+#     memset(vel_slice_buf_ptr, 0, sizeof(double)*pos_slice_shifts[pos_slice_shapes.shape[0]])
+# 
+#     ifft_to_pos_slice(
+#         ifft_buf_ptr        , ifft_shapes           , ifft_shifts           ,
+#         &params_basis_buf[0], params_basis_shapes   , params_basis_shifts   ,
+#         &nnz_k_buf[0]       , nnz_k_shapes          , nnz_k_shifts          ,
+#         vel_slice_buf_ptr   , pos_slice_shapes      , pos_slice_shifts      ,
+#         ncoeff_min_loop     , n_sub_fft             ,
+#     )
+# 
+#     if (segm_size != segm_store):
+# 
+#         Adjust_after_last_gen(
+#             vel_slice_buf_ptr   , pos_slice_shifts      ,
+#             ifft_shapes         ,
+#             params_basis_shapes ,
+#             n_sub_fft           ,
+#             AfterLastGenIint    ,
+#             AfterLastGenTimeRev , AfterLastGenSpaceRot  ,
+#             segm_size           ,
+#         )
+# 
+#     pos_slice_to_segmpos( 
+#         vel_slice_buf_ptr   , pos_slice_shapes  , pos_slice_shifts ,
+#         &segmvel[0,0,0]     ,
+#         InterSpaceRotIsId   ,
+#         InterSpaceRot       ,
+#         InterTimeRev        ,
+#         gensegm_to_body     ,
+#         gensegm_to_iint     ,
+#         BodyLoop            ,
+#         segm_size           ,
+#         segm_store          ,
+#     )
 
 @cython.cdivision(True)
 cdef void segmpos_to_params(
@@ -4422,7 +4618,7 @@ cdef void segmpos_to_params(
         fft_backend     , 1             , pyfftw_irffts_exe ,
     )
 
-    changevar_mom_inv(
+    changevar_mom_pos_inv(
         params_pos_buf      , params_shapes , params_shifts ,
         nnz_k_buf           , nnz_k_shapes  , nnz_k_shifts  ,
         co_in_buf           , co_in_shapes  , co_in_shifts  ,
@@ -4497,7 +4693,7 @@ cdef void segmpos_to_params_T(
         fft_backend     , -1            , pyfftw_irffts_exe ,
     )
 
-    changevar_mom_T(
+    changevar_mom_pos_T(
         params_pos_buf      , params_shapes , params_shifts ,
         nnz_k_buf           , nnz_k_shapes  , nnz_k_shifts  ,
         co_in_buf           , co_in_shapes  , co_in_shifts  ,
