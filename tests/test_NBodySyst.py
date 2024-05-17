@@ -46,7 +46,7 @@ def test_all_pos_to_segmpos(AllNBS, float64_tols):
         NBS.AssertAllSegmGenConstraintsAreRespected(all_pos)
         NBS.AssertAllBodyConstraintAreRespected(all_pos)
         
-        segmpos_noopt = NBS.all_pos_to_segmpos_noopt(all_pos)
+        segmpos_noopt = NBS.all_to_segm_noopt(all_pos, pos=True)
         
         # Optimized version
         segmpos_cy = NBS.params_to_segmpos(params_buf)
@@ -88,7 +88,7 @@ def test_segmpos_to_all_pos(AllNBS, float64_tols):
         params_buf = np.random.random((NBS.nparams))
         segmpos = NBS.params_to_segmpos(params_buf)
 
-        all_pos = NBS.segmpos_to_all_pos_noopt(segmpos)
+        all_pos = NBS.segmpos_to_all_noopt(segmpos, pos=True)
         NBS.AssertAllSegmGenConstraintsAreRespected(all_pos)
         NBS.AssertAllBodyConstraintAreRespected(all_pos)
         
@@ -110,14 +110,14 @@ def test_capture_co(AllNBS):
         for il in range(NBS.nloop):
             
             nnz_k = NBS.nnz_k(il)
-            params_basis = NBS.params_basis(il)
+            params_basis_pos = NBS.params_basis_pos(il)
             
             if nnz_k.shape[0] > 0:
                 if nnz_k[0] == 0:
 
-                    for iparam in range(params_basis.shape[2]):
+                    for iparam in range(params_basis_pos.shape[2]):
                         
-                        if np.linalg.norm(params_basis[:,0,iparam].imag) > eps:
+                        if np.linalg.norm(params_basis_pos[:,0,iparam].imag) > eps:
                             
                             nnz[il].append(iparam)
 
@@ -127,7 +127,7 @@ def test_capture_co(AllNBS):
                 assert not(co_in[iparam]) == (iparam in nnz[il])
 
 @ProbabilisticTest()
-def test_round_trips(AllNBS, float64_tols):
+def test_round_trips_pos(AllNBS, float64_tols):
     
     for name, NBS in AllNBS.items():
         
@@ -137,9 +137,9 @@ def test_round_trips(AllNBS, float64_tols):
         params_buf = np.random.random((NBS.nparams))
         all_coeffs = NBS.params_to_all_coeffs_noopt(params_buf)  
         all_pos = scipy.fft.irfft(all_coeffs, axis=1, norm='forward')
-        segmpos = NBS.all_pos_to_segmpos_noopt(all_pos)
+        segmpos = NBS.all_to_segm_noopt(all_pos, pos=True)
         
-        all_pos_rt = NBS.segmpos_to_all_pos_noopt(segmpos)
+        all_pos_rt = NBS.segmpos_to_all_noopt(segmpos, pos=True)
         print(np.linalg.norm(all_pos_rt - all_pos))
         assert np.allclose(all_pos, all_pos_rt, rtol = float64_tols.rtol, atol = float64_tols.atol) 
                 
@@ -155,6 +155,39 @@ def test_round_trips(AllNBS, float64_tols):
         params_buf_rt = NBS.segmpos_to_params(segmpos_cy)
         print(np.linalg.norm(params_buf - params_buf_rt))
         assert np.allclose(params_buf, params_buf_rt, rtol = float64_tols.rtol, atol = float64_tols.atol) 
+        
+        print()
+        
+@ProbabilisticTest()
+def test_round_trips_vel(AllNBS, float64_tols):
+    
+    for name, NBS in AllNBS.items():
+        
+        print(f"Config name : {name}")     
+        
+        NBS.nint_fac = 5 # Else it will sometime fail for huge symmetries
+        params_buf = np.random.random((NBS.nparams))
+        all_coeffs = NBS.params_to_all_coeffs_noopt(params_buf)  
+        NBS.all_coeffs_pos_to_vel_inplace(all_coeffs)
+        all_vel = scipy.fft.irfft(all_coeffs, axis=1, norm='forward')
+        segmvel = NBS.all_to_segm_noopt(all_vel, pos=False)
+        
+        all_vel_rt = NBS.segmpos_to_all_noopt(segmvel, pos=False)
+        print(np.linalg.norm(all_vel_rt - all_vel))
+        assert np.allclose(all_vel, all_vel_rt, rtol = float64_tols.rtol, atol = float64_tols.atol) 
+#                 
+#         all_coeffs_rt = scipy.fft.rfft(all_pos, axis=1,norm='forward')
+#         print(np.linalg.norm(all_coeffs_rt - all_coeffs))
+#         assert np.allclose(all_coeffs, all_coeffs_rt, rtol = float64_tols.rtol, atol = float64_tols.atol) 
+# 
+#         params_buf_rt = NBS.all_coeffs_to_params_noopt(all_coeffs)
+#         print(np.linalg.norm(params_buf - params_buf_rt))
+#         assert np.allclose(params_buf, params_buf_rt, rtol = float64_tols.rtol, atol = float64_tols.atol) 
+#         
+#         segmpos_cy = NBS.params_to_segmpos(params_buf)
+#         params_buf_rt = NBS.segmpos_to_params(segmpos_cy)
+#         print(np.linalg.norm(params_buf - params_buf_rt))
+#         assert np.allclose(params_buf, params_buf_rt, rtol = float64_tols.rtol, atol = float64_tols.atol) 
         
         print()
         
@@ -357,7 +390,7 @@ def test_resize(AllNBS, float64_tols):
         
         all_coeffs = NBS.params_to_all_coeffs_noopt(params_buf)  
         all_pos = scipy.fft.irfft(all_coeffs, axis=1, norm='forward')
-        segmpos_noopt = NBS.all_pos_to_segmpos_noopt(all_pos)
+        segmpos_noopt = NBS.all_to_segm_noopt(all_pos, pos=True)
         
         print(np.linalg.norm(segmpos - segmpos_noopt))
         assert np.allclose(segmpos, segmpos_noopt, rtol = float64_tols.rtol, atol = float64_tols.atol) 
@@ -372,7 +405,7 @@ def test_resize(AllNBS, float64_tols):
         
         all_coeffs = NBS.params_to_all_coeffs_noopt(params_buf_long)  
         all_pos = scipy.fft.irfft(all_coeffs, axis=1, norm='forward')
-        segmpos_long_noopt = NBS.all_pos_to_segmpos_noopt(all_pos)
+        segmpos_long_noopt = NBS.all_to_segm_noopt(all_pos, pos=True)
         
         print(np.linalg.norm(segmpos_long - segmpos_long_noopt))
         assert np.allclose(segmpos_long, segmpos_long_noopt, rtol = float64_tols.rtol, atol = float64_tols.atol) 
