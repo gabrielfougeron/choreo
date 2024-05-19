@@ -167,10 +167,11 @@ def doit(config_name):
     vel_int = np.sum(all_vel*all_vel.conj(), axis=(1,2)) / NBS.nint
     kin_tot_noopt = 0
     for il in range(NBS.nloop):
-        kin_tot_noopt += vel_int[il] * np.pi*np.pi*NBS.loopmass[il]*NBS.loopnb[il]
+        kin_tot_noopt += vel_int[il] * NBS.loopmass[il]*NBS.loopnb[il] * 0.25
 
     print(kin_tot_noopt)
     print(kin_tot - kin_tot_noopt)
+    print(kin_tot / kin_tot_noopt)
     
     assert abs(kin_tot - kin_tot_noopt) < eps
     
