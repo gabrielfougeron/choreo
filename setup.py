@@ -19,6 +19,7 @@ if use_Cython:
     import Cython.Compiler
     Cython.Compiler.Options.cimport_from_pyx = True
     Cython.Compiler.Options.fast_fail = True
+    Cython.warn.undeclared = True
     src_ext = '.pyx'
 else:
     src_ext = '.c'

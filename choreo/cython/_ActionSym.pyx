@@ -105,11 +105,11 @@ cdef class ActionSym():
         """        
 
         return ActionSym(
-            BodyPerm  = np.array(range(nbody), dtype = np.intp),
-            SpaceRot  = np.identity(geodim, dtype = np.float64),
-            TimeRev   = 1,
-            TimeShiftNum = 0,
-            TimeShiftDen = 1
+            BodyPerm  = np.array(range(nbody), dtype = np.intp) ,
+            SpaceRot  = np.identity(geodim, dtype = np.float64) ,
+            TimeRev   = 1                                       ,
+            TimeShiftNum = 0                                    ,
+            TimeShiftDen = 1                                    ,
         )
 
     @cython.final
@@ -132,11 +132,11 @@ cdef class ActionSym():
         num = np.random.randint(low = 0, high =    den)
 
         return ActionSym(
-            BodyPerm = perm,
-            SpaceRot = rotmat,
-            TimeRev = timerev,
-            TimeShiftNum = num,
-            TimeShiftDen = den,
+            BodyPerm = perm     ,
+            SpaceRot = rotmat   ,
+            TimeRev = timerev   ,
+            TimeShiftNum = num  ,
+            TimeShiftDen = den  ,
         )
 
     @cython.final
@@ -151,11 +151,11 @@ cdef class ActionSym():
             InvPerm[self._BodyPerm[ib]] = ib
 
         return ActionSym(
-            BodyPerm = InvPerm,
-            SpaceRot = self._SpaceRot.T.copy(),
-            TimeRev = self.TimeRev,         
-            TimeShiftNum = - self.TimeRev * self.TimeShiftNum,
-            TimeShiftDen = self.TimeShiftDen
+            BodyPerm = InvPerm                                  ,
+            SpaceRot = self._SpaceRot.T.copy()                  ,
+            TimeRev = self.TimeRev                              ,         
+            TimeShiftNum = - self.TimeRev * self.TimeShiftNum   ,
+            TimeShiftDen = self.TimeShiftDen                    ,
         )
 
     @cython.final
@@ -171,11 +171,11 @@ cdef class ActionSym():
                 SpaceRot[i, j] *= self.TimeRev
 
         return ActionSym(
-            BodyPerm = self._BodyPerm.copy() ,
-            SpaceRot = SpaceRot             ,
-            TimeRev = self.TimeRev          ,         
-            TimeShiftNum = self.TimeShiftNum,
-            TimeShiftDen = self.TimeShiftDen,
+            BodyPerm = self._BodyPerm.copy()    ,
+            SpaceRot = SpaceRot                 ,
+            TimeRev = self.TimeRev              ,         
+            TimeShiftNum = self.TimeShiftNum    ,
+            TimeShiftDen = self.TimeShiftDen    ,
         )
 
     @cython.final
@@ -201,11 +201,11 @@ cdef class ActionSym():
         den = den // g
 
         return ActionSym(
-            BodyPerm = ComposeBodyPerm,
-            SpaceRot = np.matmul(B._SpaceRot,A._SpaceRot),
-            TimeRev = trev,
-            TimeShiftNum = num,
-            TimeShiftDen = den
+            BodyPerm = ComposeBodyPerm                      ,
+            SpaceRot = np.matmul(B._SpaceRot,A._SpaceRot)   ,
+            TimeRev = trev                                  ,
+            TimeShiftNum = num                              ,
+            TimeShiftDen = den                              ,
         )
 
     @cython.final
