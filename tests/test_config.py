@@ -217,11 +217,14 @@ def RepeatTest(n = 10):
     return decorator
 
 @pytest.fixture
-def AllConfigNames():
-    
+def LoadPYFFTWWisdom():
+
     DP_Wisdom_file = os.path.join(__PROJECT_ROOT__, "PYFFTW_wisdom.txt")
     choreo.find_new.Load_wisdom_file(DP_Wisdom_file)
     
+@pytest.fixture
+def AllConfigNames(LoadPYFFTWWisdom):
+
     return [
         '3q'        , '3q3q'    , '3q3qD'   , '2q2q'    , '4q4q'    , '4q4qD'   ,
         '4q4qD3k'   , '1q2q'    , '5q5q'    , '6q6q'    , '2C3C'    , '2D3D'    ,
@@ -229,12 +232,33 @@ def AllConfigNames():
         '4D'        , '3C'      , '3D'      , '3D1'     , '3C2k'    , '3D2k'    ,
         '3Dp'       , '3C4k'    , '3D4k'    , '3C5k'    , '3D5k'    , '3C101k'  ,
         '3D101k'    , '3C7k2'   , '3D7k2'   , '6C'      , '6D'      , '6Ck5'    ,
-        '6Dk5'      , '5Dq'     , '2C3C5C'  , '3C_3dim' , '2D1_3dim', '3C11k'   ,
+        '6Dk5'      , '5Dq'     , '2C3C5C'  , '3C_3dim' , '2D1_3dim', '3C7k2'   ,
         '5q'        , 'uneven_nnpr'         , '2D2D'    , '2D1D1D'  , '2D2D5k'  ,
         'complex_mass_charge'   , 'non_gravity_2dim'    , 'non_gravity_3dim'    ,
         '2D1_non_gravity'       ,'2D1_3dim_non_gravity' , '1Dx3'                ,
     ]
-
+    
+@pytest.fixture
+def AllConfigSymPairNames(LoadPYFFTWWisdom):
+    """
+    The first item of each pair has strictly more symmetries than the second.
+    """
+    
+    return [
+        ('3D'       , '3C'      ),
+        ('3C2k'     , '3C'      ),
+        ('3C4k'     , '3C'      ),
+        ('3C5k'     , '3C'      ),
+        ('3C101k'   , '3C'      ),
+        ('3C7k2'    , '3C'      ),
+        ('3C7k2'    , '3C'      ),
+        ('4D'       , '4C'      ),
+        ('4C5k'     , '4C'      ),
+        ('6D'       , '6C'      ),
+        ('6Ck5'     , '6C'      ),
+        # ('2D3D'     , '2C3C'    ),
+        ('3D7k2'    , '3D'      ),
+    ]
 
 def load_from_config_file(config_name):
     
@@ -272,4 +296,8 @@ def load_from_config_file(config_name):
 @pytest.fixture
 def AllNBS(AllConfigNames):
     return {config_name:load_from_config_file(config_name) for config_name in AllConfigNames}
+
+@pytest.fixture
+def AllNBSPairs(AllConfigSymPairNames):
+    return {config_name:(load_from_config_file(config_name[0]),load_from_config_file(config_name[1])) for config_name in AllConfigSymPairNames}
 

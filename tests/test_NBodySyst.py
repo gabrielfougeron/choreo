@@ -474,6 +474,8 @@ def test_repeatability(AllNBS, float64_tols):
         
         print(f"Config name : {name}")   
         
+        NBS.nint_fac = 10
+        
         params_buf = np.random.random((NBS.nparams))
         params_buf_cp = params_buf.copy()
         segmpos = NBS.params_to_segmpos(params_buf)
@@ -491,6 +493,8 @@ def test_fft_backends(AllNBS, float64_tols):
     for name, NBS in AllNBS.items():
         
         print(f"Config name : {name}")   
+        
+        NBS.nint_fac = 10
         
         NBS.fftw_planner_effort = 'FFTW_MEASURE'
         NBS.fftw_wisdom_only = False
@@ -516,4 +520,71 @@ def test_fft_backends(AllNBS, float64_tols):
             print(np.linalg.norm(params_buf - params_buf_rt))
             assert np.allclose(params_buf, params_buf_rt, rtol = float64_tols.rtol, atol = float64_tols.atol) 
 
+        print()
+        
+def test_action_cst_sym_pairs(AllNBSPairs, float64_tols):
+    
+    # m => more symmetry. l => less symmetry
+    
+    for (name_m, name_l), (NBS_m, NBS_l) in AllNBSPairs.items():
+        
+        print(f"Config name : {name_m}, {name_l}")
+
+        assert NBS_m.nint_min > NBS_l.nint_min
+        assert NBS_m.nint_min % NBS_l.nint_min == 0
+        
+        nint_fac = 10
+        NBS_m.nint_fac = nint_fac
+        NBS_l.nint = NBS_m.nint
+        
+        params_buf_m = np.random.random((NBS_m.nparams))        
+        all_coeffs = NBS_m.params_to_all_coeffs_noopt(params_buf_m)  
+        params_buf_l = NBS_l.all_coeffs_to_params_noopt(all_coeffs)
+
+        kin_m = NBS_m.all_coeffs_to_kin_nrg(all_coeffs)
+        kin_l = NBS_l.all_coeffs_to_kin_nrg(all_coeffs)
+        
+        print(abs(kin_m - kin_l))
+        assert abs(kin_m - kin_l) < float64_tols.atol
+    
+        kin_m = NBS_m.params_to_kin_nrg(params_buf_m)
+        kin_l = NBS_l.params_to_kin_nrg(params_buf_l)
+        
+        print(abs(kin_m - kin_l))
+        assert abs(kin_m - kin_l) < float64_tols.atol
+
+        pot_m = NBS_m.params_to_pot_nrg(params_buf_m)
+        pot_l = NBS_l.params_to_pot_nrg(params_buf_l)
+        
+        print(abs(pot_m - pot_l))
+        assert abs(pot_m - pot_l) < float64_tols.atol
+        
+        act_m = NBS_m.params_to_action(params_buf_m)
+        act_l = NBS_l.params_to_action(params_buf_l)
+        
+        print(abs(act_m - act_l))
+        assert abs(act_m - act_l) < float64_tols.atol
+        
+        
+        segmpos_m = NBS_m.params_to_segmpos(params_buf_m)
+        segmvel_m = NBS_m.params_to_segmvel(params_buf_m)
+        segmpos_l = NBS_l.params_to_segmpos(params_buf_l)
+        segmvel_l = NBS_l.params_to_segmvel(params_buf_l)
+        
+        loop_len_m, bin_dx_min_m = NBS_m.segm_to_path_stats(segmpos_m, segmvel_m)
+        loop_len_l, bin_dx_min_l = NBS_m.segm_to_path_stats(segmpos_l, segmvel_l)
+        
+        for il in range(NBS_m.nloop):
+            
+            print(abs(loop_len_m[il] - loop_len_l[il]))
+            assert abs(loop_len_m[il] - loop_len_l[il]) < float64_tols.atol     
+        
+        bin_dx_min_m.sort()
+        bin_dx_min_l.sort()
+                        
+        for ibin in range(NBS_m.nbin_segm_unique):
+
+            print(abs(bin_dx_min_m[ibin] - bin_dx_min_l[ibin]))
+            assert abs(bin_dx_min_m[ibin] - bin_dx_min_l[ibin]) < float64_tols.atol        
+    
         print()
