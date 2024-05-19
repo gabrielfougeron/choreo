@@ -1267,13 +1267,17 @@ cdef class NBodySyst():
 
     @cython.final
     def Write_Descriptor(
-        self, double[::1] params_mom_buf, segmpos=None, filename=None,
+        self, double[::1] params_mom_buf, filename=None,
+        segmpos=None, segmvel=None, 
         Action=None, Gradaction=None, Hash_Action=None,
         extend=0.03,
     ):
 
         if segmpos is None:
             segmpos = self.params_to_segmpos(params_mom_buf)
+
+        if segmvel is None:
+            segmvel = self.params_to_segmvel(params_mom_buf)
 
         if Action is None:
             Action = self.segmpos_params_to_action(segmpos, params_mom_buf)
@@ -1285,7 +1289,7 @@ cdef class NBodySyst():
         if Hash_Action is None:
             Hash_Action = self.segmpos_to_hash(segmpos)
 
-        loop_len, bin_dx_min = self.segmpos_to_path_stats(segmpos)
+        loop_len, bin_dx_min = self.segm_to_path_stats(segmpos, segmvel)
         AABB = self.GetFullAABB(segmpos, extend)
 
         Info_dict = {}
@@ -1307,7 +1311,7 @@ cdef class NBodySyst():
         Info_dict["Grad_Action"] = Gradaction
         Info_dict["Min_Bin_Distance"] = bin_dx_min.tolist()
         Info_dict["Loop_Length"] = loop_len.tolist()
-        Info_dict["Max_PathLength"] = loop_len.max() * 7.936969215 # Legacy compatibility magic number
+        Info_dict["Max_PathLength"] = loop_len.max()
 
         Info_dict["Hash"] = Hash_Action.tolist()
         Info_dict["AABB"] = AABB.tolist()
@@ -1829,7 +1833,7 @@ cdef class NBodySyst():
         cdef double fac, a
         cdef Py_ssize_t il, k, k2
         cdef int n = 2*self.geodim
-        cdef double  *loc
+        cdef double *loc
 
         for il in range(self.nloop):
             
@@ -1938,7 +1942,7 @@ cdef class NBodySyst():
                 self._ncoeff_min_loop       , self._n_sub_fft           , self._fft_backend         ,
                 self._pyfftw_rffts_exe      ,
                 self._loopnb                , self._loopmass            ,
-                self._InterSpaceRotPosIsId     , self._InterSpaceRotPos       , self._InterTimeRev        ,
+                self._InterSpaceRotPosIsId  , self._InterSpaceRotPos    , self._InterTimeRev        ,
                 self._ALG_Iint              , self._ALG_SpaceRotPos     , self._ALG_TimeRev         ,
                 self._gensegm_to_body       , self._gensegm_to_iint     ,
                 self._bodyloop              , self.segm_size            , self.segm_store           ,
@@ -1977,7 +1981,7 @@ cdef class NBodySyst():
                 self._ncoeff_min_loop       , self._n_sub_fft           , self._fft_backend         ,
                 self._pyfftw_rffts_exe      ,
                 self._loopnb                , self._loopmass            ,
-                self._InterSpaceRotPosIsId     , self._InterSpaceRotPos       , self._InterTimeRev        ,
+                self._InterSpaceRotPosIsId  , self._InterSpaceRotPos    , self._InterTimeRev        ,
                 self._ALG_Iint              , self._ALG_SpaceRotPos     , self._ALG_TimeRev         ,
                 self._gensegm_to_body       , self._gensegm_to_iint     ,
                 self._bodyloop              , self.segm_size            , self.segm_store           ,
@@ -2006,8 +2010,8 @@ cdef class NBodySyst():
                 self._ncoeff_min_loop       , self._n_sub_fft           , self._fft_backend         ,
                 self._pyfftw_irffts_exe     ,
                 self._loopnb                , self._loopmass            ,
-                self._InterSpaceRotPosIsId     , self._InterSpaceRotPos       , self._InterTimeRev        ,
-                self._ALG_Iint      , self._ALG_SpaceRotPos, self._ALG_TimeRev ,
+                self._InterSpaceRotPosIsId  , self._InterSpaceRotPos    , self._InterTimeRev        ,
+                self._ALG_Iint              , self._ALG_SpaceRotPos     , self._ALG_TimeRev         ,
                 self._gensegm_to_body       , self._gensegm_to_iint     ,
                 self._bodyloop              , self.segm_size            , self.segm_store           ,
                 params_grad                 ,
@@ -2039,7 +2043,7 @@ cdef class NBodySyst():
                 self._ncoeff_min_loop       , self._n_sub_fft           , self._fft_backend         ,
                 self._pyfftw_rffts_exe      ,
                 self._loopnb                , self._loopmass            ,
-                self._InterSpaceRotPosIsId     , self._InterSpaceRotPos       , self._InterTimeRev        ,
+                self._InterSpaceRotPosIsId  , self._InterSpaceRotPos    , self._InterTimeRev        ,
                 self._ALG_Iint              , self._ALG_SpaceRotPos     , self._ALG_TimeRev         ,
                 self._gensegm_to_body       , self._gensegm_to_iint     ,
                 self._bodyloop              , self.segm_size            , self.segm_store           ,
@@ -2057,7 +2061,7 @@ cdef class NBodySyst():
                 self._ncoeff_min_loop       , self._n_sub_fft           , self._fft_backend         ,
                 self._pyfftw_rffts_exe      ,
                 self._loopnb                , self._loopmass            ,
-                self._InterSpaceRotPosIsId     , self._InterSpaceRotPos       , self._InterTimeRev        ,
+                self._InterSpaceRotPosIsId  , self._InterSpaceRotPos    , self._InterTimeRev        ,
                 self._ALG_Iint              , self._ALG_SpaceRotPos     , self._ALG_TimeRev         ,
                 self._gensegm_to_body       , self._gensegm_to_iint     ,
                 self._bodyloop              , self.segm_size            , self.segm_store           ,
@@ -2086,7 +2090,7 @@ cdef class NBodySyst():
                 self._ncoeff_min_loop       , self._n_sub_fft           , self._fft_backend         ,
                 self._pyfftw_irffts_exe     ,
                 self._loopnb                , self._loopmass            ,
-                self._InterSpaceRotPosIsId     , self._InterSpaceRotPos       , self._InterTimeRev        ,
+                self._InterSpaceRotPosIsId  , self._InterSpaceRotPos    , self._InterTimeRev        ,
                 self._ALG_Iint              , self._ALG_SpaceRotPos     , self._ALG_TimeRev         ,
                 self._gensegm_to_body       , self._gensegm_to_iint     ,
                 self._bodyloop              , self.segm_size            , self.segm_store           ,
@@ -2120,7 +2124,7 @@ cdef class NBodySyst():
                 self._ncoeff_min_loop       , self._n_sub_fft           , self._fft_backend         ,
                 self._pyfftw_rffts_exe      ,
                 self._loopnb                , self._loopmass            ,
-                self._InterSpaceRotPosIsId     , self._InterSpaceRotPos       , self._InterTimeRev        ,
+                self._InterSpaceRotPosIsId  , self._InterSpaceRotPos    , self._InterTimeRev        ,
                 self._ALG_Iint              , self._ALG_SpaceRotPos     , self._ALG_TimeRev         ,
                 self._gensegm_to_body       , self._gensegm_to_iint     ,
                 self._bodyloop              , self.segm_size            , self.segm_store           ,
@@ -2159,7 +2163,7 @@ cdef class NBodySyst():
                 self._ncoeff_min_loop       , self._n_sub_fft           , self._fft_backend         ,
                 self._pyfftw_rffts_exe      ,
                 self._loopnb                , self._loopmass            ,
-                self._InterSpaceRotPosIsId     , self._InterSpaceRotPos       , self._InterTimeRev        ,
+                self._InterSpaceRotPosIsId  , self._InterSpaceRotPos    , self._InterTimeRev        ,
                 self._ALG_Iint              , self._ALG_SpaceRotPos     , self._ALG_TimeRev         ,
                 self._gensegm_to_body       , self._gensegm_to_iint     ,
                 self._bodyloop              , self.segm_size            , self.segm_store           ,
@@ -2188,8 +2192,8 @@ cdef class NBodySyst():
                 self._ncoeff_min_loop       , self._n_sub_fft           , self._fft_backend         ,
                 self._pyfftw_irffts_exe     ,
                 self._loopnb                , self._loopmass            ,
-                self._InterSpaceRotPosIsId     , self._InterSpaceRotPos       , self._InterTimeRev        ,
-                self._ALG_Iint      , self._ALG_SpaceRotPos, self._ALG_TimeRev ,
+                self._InterSpaceRotPosIsId  , self._InterSpaceRotPos    , self._InterTimeRev        ,
+                self._ALG_Iint              , self._ALG_SpaceRotPos     , self._ALG_TimeRev         ,
                 self._gensegm_to_body       , self._gensegm_to_iint     ,
                 self._bodyloop              , self.segm_size            , self.segm_store           ,
                 action_grad                 ,
@@ -2227,7 +2231,7 @@ cdef class NBodySyst():
                 self._ncoeff_min_loop       , self._n_sub_fft           , self._fft_backend         ,
                 self._pyfftw_rffts_exe      ,
                 self._loopnb                , self._loopmass            ,
-                self._InterSpaceRotPosIsId     , self._InterSpaceRotPos       , self._InterTimeRev        ,
+                self._InterSpaceRotPosIsId  , self._InterSpaceRotPos    , self._InterTimeRev        ,
                 self._ALG_Iint              , self._ALG_SpaceRotPos     , self._ALG_TimeRev         ,
                 self._gensegm_to_body       , self._gensegm_to_iint     ,
                 self._bodyloop              , self.segm_size            , self.segm_store           ,
@@ -2245,7 +2249,7 @@ cdef class NBodySyst():
                 self._ncoeff_min_loop       , self._n_sub_fft           , self._fft_backend         ,
                 self._pyfftw_rffts_exe      ,
                 self._loopnb                , self._loopmass            ,
-                self._InterSpaceRotPosIsId     , self._InterSpaceRotPos       , self._InterTimeRev        ,
+                self._InterSpaceRotPosIsId  , self._InterSpaceRotPos    , self._InterTimeRev        ,
                 self._ALG_Iint              , self._ALG_SpaceRotPos     , self._ALG_TimeRev         ,
                 self._gensegm_to_body       , self._gensegm_to_iint     ,
                 self._bodyloop              , self.segm_size            , self.segm_store           ,
@@ -2274,7 +2278,7 @@ cdef class NBodySyst():
                 self._ncoeff_min_loop       , self._n_sub_fft           , self._fft_backend         ,
                 self._pyfftw_irffts_exe     ,
                 self._loopnb                , self._loopmass            ,
-                self._InterSpaceRotPosIsId     , self._InterSpaceRotPos       , self._InterTimeRev        ,
+                self._InterSpaceRotPosIsId  , self._InterSpaceRotPos    , self._InterTimeRev        ,
                 self._ALG_Iint              , self._ALG_SpaceRotPos     , self._ALG_TimeRev         ,
                 self._gensegm_to_body       , self._gensegm_to_iint     ,
                 self._bodyloop              , self.segm_size            , self.segm_store           ,
@@ -2316,7 +2320,7 @@ cdef class NBodySyst():
                 self._ncoeff_min_loop       , self._n_sub_fft           , self._fft_backend         ,
                 self._pyfftw_rffts_exe      ,
                 self._loopnb                , self._loopmass            ,
-                self._InterSpaceRotPosIsId     , self._InterSpaceRotPos       , self._InterTimeRev        ,
+                self._InterSpaceRotPosIsId  , self._InterSpaceRotPos    , self._InterTimeRev        ,
                 self._ALG_Iint              , self._ALG_SpaceRotPos     , self._ALG_TimeRev         ,
                 self._gensegm_to_body       , self._gensegm_to_iint     ,
                 self._bodyloop              , self.segm_size            , self.segm_store           ,
@@ -2367,7 +2371,7 @@ cdef class NBodySyst():
                 self._ncoeff_min_loop       , self._n_sub_fft           , self._fft_backend         ,
                 self._pyfftw_irffts_exe     ,
                 self._loopnb                , self._loopmass            ,
-                self._InterSpaceRotPosIsId     , self._InterSpaceRotPos       , self._InterTimeRev        ,
+                self._InterSpaceRotPosIsId  , self._InterSpaceRotPos    , self._InterTimeRev        ,
                 self._ALG_Iint              , self._ALG_SpaceRotPos     , self._ALG_TimeRev         ,
                 self._gensegm_to_body       , self._gensegm_to_iint     ,
                 self._bodyloop              , self.segm_size            , self.segm_store           ,
@@ -2405,7 +2409,7 @@ cdef class NBodySyst():
                 self._ncoeff_min_loop       , self._n_sub_fft           , self._fft_backend         ,
                 self._pyfftw_rffts_exe      ,
                 self._loopnb                , self._loopmass            ,
-                self._InterSpaceRotPosIsId     , self._InterSpaceRotPos       , self._InterTimeRev        ,
+                self._InterSpaceRotPosIsId  , self._InterSpaceRotPos    , self._InterTimeRev        ,
                 self._ALG_Iint              , self._ALG_SpaceRotPos     , self._ALG_TimeRev         ,
                 self._gensegm_to_body       , self._gensegm_to_iint     ,
                 self._bodyloop              , self.segm_size            , self.segm_store           ,
@@ -2434,8 +2438,8 @@ cdef class NBodySyst():
                 self._ncoeff_min_loop       , self._n_sub_fft           , self._fft_backend         ,
                 self._pyfftw_irffts_exe     ,
                 self._loopnb                , self._loopmass            ,
-                self._InterSpaceRotPosIsId     , self._InterSpaceRotPos       , self._InterTimeRev        ,
-                self._ALG_Iint      , self._ALG_SpaceRotPos, self._ALG_TimeRev ,
+                self._InterSpaceRotPosIsId  , self._InterSpaceRotPos    , self._InterTimeRev        ,
+                self._ALG_Iint              , self._ALG_SpaceRotPos     , self._ALG_TimeRev         ,
                 self._gensegm_to_body       , self._gensegm_to_iint     ,
                 self._bodyloop              , self.segm_size            , self.segm_store           ,
                 action_hess                 ,
@@ -2604,6 +2608,7 @@ cdef class NBodySyst():
 
     @cython.final
     def all_to_segm_noopt(self, all_pos, pos=True):
+        # Ugly code.
         
         assert self._nint == all_pos.shape[1]
         
@@ -2652,22 +2657,35 @@ cdef class NBodySyst():
 
                 if self._InterTimeRev[isegm] > 0:
 
-                    np.matmul(
-                        all_pos[il,ibeg:iend,:]         ,
-                        self._InterSpaceRotPos[isegm,:,:]  ,
-                        out = segmvals[isegm,:self.segm_store-1,:]        ,
-                    )   
+                    if pos:
+                        np.matmul(
+                            all_pos[il,ibeg:iend,:]         ,
+                            self._InterSpaceRotPos[isegm,:,:]  ,
+                            out = segmvals[isegm,:self.segm_store-1,:]        ,
+                        )   
 
-                    np.matmul(
-                        all_pos[il,0,:]         ,
-                        self._InterSpaceRotPos[isegm,:,:]  ,
-                        out = segmvals[isegm,self.segm_store-1,:]        ,
-                    )            
+                        np.matmul(
+                            all_pos[il,0,:]         ,
+                            self._InterSpaceRotPos[isegm,:,:]  ,
+                            out = segmvals[isegm,self.segm_store-1,:]        ,
+                        )   
+
+                    else:     
+                        np.matmul(
+                            all_pos[il,ibeg:iend,:]         ,
+                            self._InterSpaceRotVel[isegm,:,:]  ,
+                            out = segmvals[isegm,:self.segm_store-1,:]        ,
+                        )   
+
+                        np.matmul(
+                            all_pos[il,0,:]         ,
+                            self._InterSpaceRotVel[isegm,:,:]  ,
+                            out = segmvals[isegm,self.segm_store-1,:]        ,
+                        )       
 
                 else:
 
                     if pos:
-
                         segmvals[isegm,1:,:] = np.matmul(
                             all_pos[il,ibeg:iend,:]         ,
                             self._InterSpaceRotPos[isegm,:,:]  ,
@@ -2679,15 +2697,14 @@ cdef class NBodySyst():
                         )
 
                     else:
-
-                        segmvals[isegm,1:,:] = -np.matmul(
+                        segmvals[isegm,1:,:] = np.matmul(
                             all_pos[il,ibeg:iend,:]         ,
-                            self._InterSpaceRotPos[isegm,:,:]  ,
+                            self._InterSpaceRotVel[isegm,:,:]  ,
                         )[::-1,:]
 
-                        segmvals[isegm,0,:] = -np.matmul(
+                        segmvals[isegm,0,:] = np.matmul(
                             all_pos[il,0,:]         ,
-                            self._InterSpaceRotPos[isegm,:,:]  ,
+                            self._InterSpaceRotVel[isegm,:,:]  ,
                         )
 
         return segmvals
@@ -2750,7 +2767,7 @@ cdef class NBodySyst():
                 self._ncoeff_min_loop       , self._n_sub_fft           , self._fft_backend         ,
                 self._pyfftw_rffts_exe      ,
                 self._loopnb                , self._loopmass            ,
-                self._InterSpaceRotPosIsId     , self._InterSpaceRotPos       , self._InterTimeRev        ,
+                self._InterSpaceRotPosIsId  , self._InterSpaceRotPos    , self._InterTimeRev        ,
                 self._ALG_Iint              , self._ALG_SpaceRotPos     , self._ALG_TimeRev         ,
                 self._gensegm_to_body       , self._gensegm_to_iint     ,
                 self._bodyloop              , self.segm_size            , self.segm_store           ,
@@ -2810,7 +2827,7 @@ cdef class NBodySyst():
                 self._ncoeff_min_loop       , self._n_sub_fft           , self._fft_backend         ,
                 self._pyfftw_irffts_exe     ,
                 self._loopnb                , self._loopmass            ,
-                self._InterSpaceRotPosIsId     , self._InterSpaceRotPos       , self._InterTimeRev        ,
+                self._InterSpaceRotPosIsId  , self._InterSpaceRotPos    , self._InterTimeRev        ,
                 self._gensegm_to_body       , self._gensegm_to_iint     ,
                 self._bodyloop              , self.segm_size            , self.segm_store           ,
                 params_mom_buf              ,
@@ -2839,7 +2856,7 @@ cdef class NBodySyst():
                 self._ncoeff_min_loop       , self._n_sub_fft           , self._fft_backend         ,
                 self._pyfftw_irffts_exe     ,
                 self._loopnb                , self._loopmass            ,
-                self._InterSpaceRotPosIsId     , self._InterSpaceRotPos       , self._InterTimeRev        ,
+                self._InterSpaceRotPosIsId  , self._InterSpaceRotPos    , self._InterTimeRev        ,
                 self._ALG_Iint              , self._ALG_SpaceRotPos     , self._ALG_TimeRev         ,
                 self._gensegm_to_body       , self._gensegm_to_iint     ,
                 self._bodyloop              , self.segm_size            , self.segm_store           ,
@@ -2908,16 +2925,16 @@ cdef class NBodySyst():
         TT.toc("ifft_to_pos_slice")
 
         pos_slice_to_segmpos(
-            self._pos_slice_buf_ptr , self._pos_slice_shapes  , self._pos_slice_shifts ,
-            &self._segmpos[0,0,0]   ,
-            self._InterSpaceRotPosIsId ,
-            self._InterSpaceRotPos     ,
-            self._InterTimeRev      ,
-            self._gensegm_to_body   ,
-            self._gensegm_to_iint   ,
-            self._bodyloop          ,
-            self.segm_size          ,
-            self.segm_store         ,
+            self._pos_slice_buf_ptr     , self._pos_slice_shapes  , self._pos_slice_shifts ,
+            &self._segmpos[0,0,0]       ,
+            self._InterSpaceRotPosIsId  ,
+            self._InterSpaceRotPos      ,
+            self._InterTimeRev          ,
+            self._gensegm_to_body       ,
+            self._gensegm_to_iint       ,
+            self._bodyloop              ,
+            self.segm_size              ,
+            self.segm_store             ,
         )
 
         TT.toc("pos_slice_to_segmpos")
@@ -2938,16 +2955,16 @@ cdef class NBodySyst():
         memset(self._pos_slice_buf_ptr, 0, sizeof(double)*self._pos_slice_shifts[self._pos_slice_shapes.shape[0]])
 
         segmpos_to_pos_slice_T(
-            &self._pot_nrg_grad[0,0,0] ,
-            self._pos_slice_buf_ptr   , self._pos_slice_shapes  , self._pos_slice_shifts ,
-            self._InterSpaceRotPosIsId   ,
-            self._InterSpaceRotPos       ,
-            self._InterTimeRev        ,
-            self._gensegm_to_body     ,
-            self._gensegm_to_iint     ,
-            self._bodyloop            ,
-            self.segm_size           ,
-            self.segm_store          ,
+            &self._pot_nrg_grad[0,0,0]  ,
+            self._pos_slice_buf_ptr     , self._pos_slice_shapes  , self._pos_slice_shifts ,
+            self._InterSpaceRotPosIsId  ,
+            self._InterSpaceRotPos      ,
+            self._InterTimeRev          ,
+            self._gensegm_to_body       ,
+            self._gensegm_to_iint       ,
+            self._bodyloop              ,
+            self.segm_size              ,
+            self.segm_store             ,
         )
 
         if (self.segm_size != self.segm_store):
@@ -3004,33 +3021,8 @@ cdef class NBodySyst():
 
         return action_grad_np
 
-# 
-#     @cython.final
-#     def segmpos_to_xminmax(self, double[:,:,::1] segmpos):
-# 
-#         out_segm_len = np.empty((self.nsegm), dtype=np.float64)
-#         cdef double[::1] out_segm_len_mv = out_segm_len
-# 
-#         with nogil:
-#             
-#             segmpos_to_unary_path_stats(
-#                 segmpos                 ,
-#                 self.segm_store         ,
-#                 out_segm_len_mv         ,
-#             ) 
-# 
-#         out_loop_len = np.zeros((self.nloop), dtype=np.float64)
-#         cdef double[::1] out_loop_len_mv = out_loop_len
-# 
-#         for isegm in range(self.nsegm):
-#             ib = self._gensegm_to_body[isegm]
-#             il = self._bodyloop[ib]
-#             out_loop_len_mv[il] += out_segm_len_mv[isegm]
-# 
-#         return out_loop_len, out_bin_dx_min
-
     @cython.final
-    def segmpos_to_path_stats(self, double[:,:,::1] segmpos):
+    def segm_to_path_stats(self, double[:,:,::1] segmpos, double[:,:,::1] segmvel):
 
         cdef Py_ssize_t il, isegm, ib
 
@@ -3044,6 +3036,8 @@ cdef class NBodySyst():
             
             segmpos_to_unary_path_stats(
                 segmpos                 ,
+                segmvel                 ,
+                self.segm_size          ,
                 self.segm_store         ,
                 out_segm_len_mv         ,
             )            
@@ -3063,6 +3057,9 @@ cdef class NBodySyst():
             ib = self._gensegm_to_body[isegm]
             il = self._bodyloop[ib]
             out_loop_len_mv[il] += out_segm_len_mv[isegm]
+
+        for il in range(self.nloop):
+            out_loop_len_mv[il] /= self.nint_min 
 
         return out_loop_len, out_bin_dx_min
  
@@ -5927,12 +5924,12 @@ cdef void pot_nrg_hess_inter_store_gravity_2d(
     hess[0] = b*pos[0]+a*dpos[0]
     hess[1] = b*pos[1]+a*dpos[1]
 
-# Poor man's imprecise and janky version of segment length computation
-# TODO: implement length as time integral of speed, and compare.
 @cython.cdivision(True)
 cdef void segmpos_to_unary_path_stats(
     double[:,:,::1] segmpos     ,
-     long segm_store            ,
+    double[:,:,::1] segmvel     ,
+    long segm_size              ,
+    long segm_store             ,
     double[::1]  out_segm_len   ,
 ) noexcept nogil:
 
@@ -5940,23 +5937,51 @@ cdef void segmpos_to_unary_path_stats(
     cdef int geodim = segmpos.shape[2]
 
     cdef Py_ssize_t isegm, iint, jint
+    cdef double vsq
 
-    cdef double dx,dx2
+    cdef double segm_len_val
 
-    for isegm in range(nsegm):
+    if (segm_size == segm_store):
 
-        out_segm_len[isegm] = 0
+        for isegm in range(nsegm):
 
-        for iint in range(1,segm_store):
+            segm_len_val = 0
 
-            jint = iint - 1
+            for iint in range(segm_size):
 
-            dx2 = 0
+                vsq = 0
+                for idim in range(geodim):
+                    vsq += segmvel[isegm,iint,idim] * segmvel[isegm,iint,idim]
+
+                segm_len_val += csqrt(vsq)
+
+            out_segm_len[isegm] = segm_len_val / segm_size
+
+    else:
+
+        for isegm in range(nsegm):
+
+            vsq = 0
             for idim in range(geodim):
-                dx = segmpos[isegm,iint,idim] - segmpos[isegm,jint,idim]
-                dx2 += dx*dx
+                vsq += segmvel[isegm,0,idim] * segmvel[isegm,0,idim]
 
-            out_segm_len[isegm] += csqrt(dx2)
+            segm_len_val = csqrt(vsq) / 2
+
+            for iint in range(1,segm_size):
+
+                vsq = 0
+                for idim in range(geodim):
+                    vsq += segmvel[isegm,iint,idim] * segmvel[isegm,iint,idim]
+
+                segm_len_val += csqrt(vsq)
+
+            vsq = 0
+            for idim in range(geodim):
+                vsq += segmvel[isegm,segm_size,idim] * segmvel[isegm,segm_size,idim]
+
+            segm_len_val += csqrt(vsq) / 2
+
+            out_segm_len[isegm] = segm_len_val / segm_size
 
 @cython.cdivision(True)
 cdef void segmpos_to_binary_path_stats(

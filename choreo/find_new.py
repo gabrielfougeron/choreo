@@ -112,8 +112,9 @@ def Find_Choreo(
 
     x_min, x_max = NBS.Make_params_bounds(coeff_ampl_o, k_infl, k_max, coeff_ampl_min)
     x_ptp = x_max - x_min
-
-    del x_max
+    x_avg = (x_min + x_min) / 2
+    
+    del x_min, x_max
 
 #     if not(SkipCheckRandomMinDist):
 # 
@@ -169,8 +170,7 @@ def Find_Choreo(
 
             # x_avg = ActionSyst.Package_all_coeffs(all_coeffs_avg)
         else:
-            
-            x_avg = x_min
+            pass
 
         x = x_avg + x_ptp * np.random.random((NBS.nparams))
         
@@ -201,7 +201,7 @@ def Find_Choreo(
             else:
                 filename_output = os.path.join(store_folder,file_basename+'init')
 
-            NBS.Write_Descriptor(x, segmpos, filename_output+'.json')
+            NBS.Write_Descriptor(x, segmpos=segmpos, filename = filename_output+'.json')
 
             if Save_img :
                 NBS.plot_segmpos_2D(segmpos, filename_output+'.png', fig_size=img_size, color=color, color_list=color_list)     
@@ -393,7 +393,7 @@ def Find_Choreo(
 
                     print(f'Saving solution as {filename_output}.*.')
              
-                    NBS.Write_Descriptor(best_sol.x ,segmpos ,filename = filename_output+'.json', Gradaction=f_fine_norm, Hash_Action=Hash_Action, extend=plot_extend)
+                    NBS.Write_Descriptor(best_sol.x , filename = filename_output+'.json', segmpos=segmpos, Gradaction=f_fine_norm, Hash_Action=Hash_Action, extend=plot_extend)
 
                     if Save_img :
                         NBS.plot_segmpos_2D(segmpos, filename_output+'.png', fig_size=img_size, color=color, color_list=color_list)

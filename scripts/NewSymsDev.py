@@ -38,14 +38,14 @@ def main():
         # '1q2q',
         # '5q5q',
         # '6q6q',
-        # '2C3C',
+        '2C3C',
         # '2D3D',   
         # '2C3C5k',
         # '2D3D5k',
         # '2D1',
         # '4C5k',
         # '4D3k',
-        # '4C',
+        '4C',
         # '4D',
         '3C',
         # '3D',
@@ -62,7 +62,7 @@ def main():
         # 'test_3D5k',
         # '3C7k2',
         # '3D7k2',
-        # '6C',
+        '6C',
         # '6D',
         # '6Ck5',
         # '6Dk5',
@@ -142,47 +142,60 @@ def doit(config_name):
     NBS = choreo.cython._NBodySyst.NBodySyst(geodim, nbody, mass, charge, Sym_list, inter_law)
 
 
-    NBS.nint_fac = 1
-    params_buf = np.random.random((NBS.nparams))
+    NBS.nint_fac = 10000
+    
+    coeff_ampl_o = 1.
+    k_infl = 3
+    k_max = 30
+    coeff_ampl_min = 1e-16
+    
+    x_min, x_max = NBS.Make_params_bounds(coeff_ampl_o, k_infl, k_max, coeff_ampl_min)
+    x_ptp = x_max - x_min
+    x_avg = (x_min + x_min) / 2
+    
+    params_buf = x_avg + x_ptp * np.random.random((NBS.nparams))
+    
 
     # Unoptimized version
     all_coeffs = NBS.params_to_all_coeffs_noopt(params_buf)        
     kin_tot = NBS.all_coeffs_to_kin_nrg(all_coeffs)
-    print(kin_tot)
+    # print(kin_tot)
     
     all_pos = scipy.fft.irfft(all_coeffs, axis=1, norm='forward')
-
-    print(all_coeffs.dtype)
-    print(all_coeffs.shape)
-    print(NBS.nloop)
-    print(NBS.ncoeffs)
-    print(NBS.geodim)
+# 
+#     print(all_coeffs.dtype)
+#     print(all_coeffs.shape)
+#     print(NBS.nloop)
+#     print(NBS.ncoeffs)
+#     print(NBS.geodim)
     
     NBS.all_coeffs_pos_to_vel_inplace(all_coeffs)
     all_vel = scipy.fft.irfft(all_coeffs, axis=1, norm='forward')
     
-    print(all_vel.shape)
-    print(NBS.nint)
-    
+    # print(all_vel.shape)
+    # print(NBS.nint)
+    # 
     vel_int = np.sum(all_vel*all_vel.conj(), axis=(1,2)) / NBS.nint
     kin_tot_noopt = 0
     for il in range(NBS.nloop):
         kin_tot_noopt += vel_int[il] * NBS.loopmass[il]*NBS.loopnb[il] * 0.25
 
-    print(kin_tot_noopt)
-    print(kin_tot - kin_tot_noopt)
-    print(kin_tot / kin_tot_noopt)
+    # print(kin_tot_noopt)
+    # print(kin_tot - kin_tot_noopt)
+    # print(kin_tot / kin_tot_noopt)
     
     assert abs(kin_tot - kin_tot_noopt) < eps
-    
-    print(all_vel)
     
 
 
     segmvel_cy = NBS.params_to_segmvel(params_buf)
+    segmpos_cy = NBS.params_to_segmpos(params_buf)
     
-    print(segmvel_cy)
+
+    NBS.segm_to_path_stats(segmpos_cy, segmvel_cy)
     
+    print(f'{NBS.nint_min = }')
+
 
     nparam_nosym = geodim * NBS.nint * nbody
     nparam_tot = NBS.nparams_incl_o // 2
