@@ -292,7 +292,7 @@ def Find_Choreo(
 
             print(f'Saving initial state as {filename_output}.*.')
 
-            ActionSyst.Write_Descriptor(x0,filename_output+'.json')
+            ActionSyst.Write_Descriptor(x0, filename_output+'.json')
 
             if Save_img :
                 ActionSyst.plot_all_2D(x0,nint_plot_img,filename_output+'.png',fig_size=img_size,color=color,color_list=color_list)        
