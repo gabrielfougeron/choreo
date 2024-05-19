@@ -77,10 +77,6 @@ def test_all_vel_to_segmvel(AllNBS, float64_tols):
         # Optimized version
         segmvel_cy = NBS.params_to_segmvel(params_buf)
         
-        for isegm in range(NBS.nsegm):
-            print(isegm)
-            print(segmvel_noopt[isegm,:,:] - segmvel_cy[isegm,:,:])
-        
         print(np.linalg.norm(segmvel_noopt - segmvel_cy))
         assert np.allclose(segmvel_noopt, segmvel_cy, rtol = float64_tols.rtol, atol = float64_tols.atol)  
      
@@ -102,8 +98,8 @@ def test_segmpos_to_all_pos(AllNBS, float64_tols):
         params = NBS.all_coeffs_to_params_noopt(all_coeffs)
         
         print(np.linalg.norm(params_buf-params))
-        assert np.allclose(params_buf, params, rtol = float64_tols.rtol, atol = float64_tols.atol) 
-        
+        assert np.allclose(params_buf, params, rtol = float64_tols.rtol, atol = float64_tols.atol)      
+
 def test_capture_co(AllNBS):
     
     for name, NBS in AllNBS.items():
