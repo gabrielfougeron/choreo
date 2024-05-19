@@ -241,30 +241,46 @@ cdef class NBodySyst():
     def InterTimeRev(self):
         return np.asarray(self._InterTimeRev)
 
-    cdef bint[::1] _InterSpaceRotIsId
+    cdef bint[::1] _InterSpaceRotPosIsId
     @property
     def InterSpaceRotIsId(self):
-        return np.asarray(self._InterSpaceRotIsId) > 0
+        return np.asarray(self._InterSpaceRotPosIsId) > 0
 
-    cdef double[:,:,::1] _InterSpaceRot
+    cdef double[:,:,::1] _InterSpaceRotPos
     @property
     def InterSpaceRot(self):
-        return np.asarray(self._InterSpaceRot)
-
-    cdef long[::1] _AfterLastGenIint
+        return np.asarray(self._InterSpaceRotPos)
+        
+    cdef bint[::1] _InterSpaceRotVelIsId
     @property
-    def AfterLastGenIint(self):
-        return np.asarray(self._AfterLastGenIint)
+    def InterSpaceRotIsId(self):
+        return np.asarray(self._InterSpaceRotVelIsId) > 0
 
-    cdef long[::1] _AfterLastGenTimeRev
+    cdef double[:,:,::1] _InterSpaceRotVel
     @property
-    def AfterLastGenTimeRev(self):
-        return np.asarray(self._AfterLastGenTimeRev)
+    def InterSpaceRot(self):
+        return np.asarray(self._InterSpaceRotVel)
 
-    cdef double[:,:,::1] _AfterLastGenSpaceRot
+    # ALG for After Last Gen => interpolation for 1 point mismatch between segm_size and segm_store
+    cdef long[::1] _ALG_Iint
     @property
-    def AfterLastGenSpaceRot(self):
-        return np.asarray(self._AfterLastGenSpaceRot)
+    def ALG_Iint(self):
+        return np.asarray(self._ALG_Iint)
+
+    cdef long[::1] _ALG_TimeRev
+    @property
+    def ALG_TimeRev(self):
+        return np.asarray(self._ALG_TimeRev)
+
+    cdef double[:,:,::1] _ALG_SpaceRotPos
+    @property
+    def ALG_SpaceRot(self):
+        return np.asarray(self._ALG_SpaceRotPos)
+
+    cdef double[:,:,::1] _ALG_SpaceRotVel
+    @property
+    def ALG_SpaceRot(self):
+        return np.asarray(self._ALG_SpaceRotVel)
 
     cdef double[:,:,::1] _InitValPosBasis
     @property
@@ -283,6 +299,7 @@ cdef class NBodySyst():
 
     def params_basis_pos(self, long il):
         return np.asarray(self._params_basis_buf_pos[self._params_basis_shifts[il]:self._params_basis_shifts[il+1]]).reshape(self._params_basis_shapes[il])
+        
     def params_basis_vel(self, long il):
         return np.asarray(self._params_basis_buf_vel[self._params_basis_shifts[il]:self._params_basis_shifts[il+1]]).reshape(self._params_basis_shapes[il])
 
@@ -906,12 +923,16 @@ cdef class NBodySyst():
     def GatherInterSym(self):
         
         InterTimeRev = np.zeros((self.nsegm), dtype=np.intp)
-        InterSpaceRot = np.zeros((self.nsegm, self.geodim, self.geodim), dtype=np.float64)
-        InterSpaceRotIsId = np.zeros((self.nsegm), dtype=np.intc)
+        InterSpaceRotPos = np.zeros((self.nsegm, self.geodim, self.geodim), dtype=np.float64)
+        InterSpaceRotPosIsId = np.zeros((self.nsegm), dtype=np.intc)
+        InterSpaceRotVel = np.zeros((self.nsegm, self.geodim, self.geodim), dtype=np.float64)
+        InterSpaceRotVelIsId = np.zeros((self.nsegm), dtype=np.intc)
 
         self._InterTimeRev = InterTimeRev
-        self._InterSpaceRot = InterSpaceRot
-        self._InterSpaceRotIsId = InterSpaceRotIsId
+        self._InterSpaceRotPos = InterSpaceRotPos
+        self._InterSpaceRotPosIsId = InterSpaceRotPosIsId
+        self._InterSpaceRotVel = InterSpaceRotVel
+        self._InterSpaceRotVelIsId = InterSpaceRotVelIsId
 
         for isegm in range(self.nsegm):
 
@@ -921,9 +942,13 @@ cdef class NBodySyst():
             Sym = self.intersegm_to_all[ib][iint]
             
             InterTimeRev[isegm] = Sym.TimeRev
-            InterSpaceRot[isegm,:,:] = Sym.SpaceRot
+            InterSpaceRotPos[isegm,:,:] = Sym.SpaceRot
+            self._InterSpaceRotPosIsId[isegm] = Sym.IsIdentityRot()
 
-            self._InterSpaceRotIsId[isegm] = Sym.IsIdentityRot()
+            Sym = Sym.TimeDerivative()
+            InterSpaceRotVel[isegm,:,:] = Sym.SpaceRot
+            self._InterSpaceRotVelIsId[isegm] = Sym.IsIdentityRot()
+
     
     @cython.final
     def Compute_n_sub_fft(self):
@@ -938,10 +963,12 @@ cdef class NBodySyst():
             
             self._n_sub_fft[il] = (self.nint_min // (self._ncoeff_min_loop[il] * self._ngensegm_loop[il]))
 
-        self._AfterLastGenIint = np.zeros((self.nloop), dtype=np.intp)
-        self._AfterLastGenTimeRev = np.zeros((self.nloop), dtype=np.intp)
-        AfterLastGenSpaceRot_np = np.zeros((self.nloop, self.geodim, self.geodim), dtype=np.float64)
-        self._AfterLastGenSpaceRot = AfterLastGenSpaceRot_np
+        self._ALG_Iint = np.zeros((self.nloop), dtype=np.intp)
+        self._ALG_TimeRev = np.zeros((self.nloop), dtype=np.intp)
+        ALG_SpaceRotPos_np = np.zeros((self.nloop, self.geodim, self.geodim), dtype=np.float64)
+        self._ALG_SpaceRotPos = ALG_SpaceRotPos_np
+        ALG_SpaceRotVel_np = np.zeros((self.nloop, self.geodim, self.geodim), dtype=np.float64)
+        self._ALG_SpaceRotVel = ALG_SpaceRotVel_np
 
         cdef long iint_uneven, ib
         cdef long idim, jdim
@@ -953,9 +980,12 @@ cdef class NBodySyst():
             isegm = self._bodysegm[ib, iint_uneven]
             Sym = self.gensegm_to_all[ib][iint_uneven]
 
-            self._AfterLastGenIint[il] = self._gensegm_to_iint[isegm]
-            self._AfterLastGenTimeRev[il] = Sym.TimeRev
-            AfterLastGenSpaceRot_np[il,:,:] = Sym.SpaceRot
+            self._ALG_Iint[il] = self._gensegm_to_iint[isegm]
+            self._ALG_TimeRev[il] = Sym.TimeRev
+            ALG_SpaceRotPos_np[il,:,:] = Sym.SpaceRot
+
+            Sym = Sym.TimeDerivative()
+            ALG_SpaceRotVel_np[il,:,:] = Sym.SpaceRot
 
     @cython.final
     def AssertAllSegmGenConstraintsAreRespected(self, all_pos, eps=1e-12, pos=True):
@@ -1123,10 +1153,12 @@ cdef class NBodySyst():
 
         cdef Py_ssize_t il, k, idim
 
+        cdef double complex fac = -1j*ctwopi
+
         for il in range(nloop):
             for k in range(ncoeffs):
                 for idim in range(geodim):
-                    all_coeffs[il,k,idim] *= -1j*k
+                    all_coeffs[il,k,idim] *= fac*k
 
     @cython.final
     def Get_segmpos_minmax(
@@ -1863,47 +1895,6 @@ cdef class NBodySyst():
         )
 
         return grad_buf_np
-
-    @cython.final
-    def params_to_hash(self, double[::1] params_mom_buf):
-
-        assert params_mom_buf.shape[0] == self.nparams
-
-        Hash_np = np.empty((self._Hash_exp.shape[0]), dtype=np.float64)
-
-        cdef double[:,:,::1] segmpos = np.empty((self.nsegm, self.segm_store, self.geodim), dtype=np.float64)
-        cdef double[::1] Hash = Hash_np
-
-        with nogil:
-
-            params_to_segmpos(
-                params_mom_buf              ,
-                self._params_pos_buf        , self._params_shapes       , self._params_shifts       ,
-                self._ifft_buf_ptr          , self._ifft_shapes         , self._ifft_shifts         ,
-                self._params_basis_buf_pos  , self._params_basis_shapes , self._params_basis_shifts ,
-                self._nnz_k_buf             , self._nnz_k_shapes        , self._nnz_k_shifts        ,
-                self._co_in_buf             , self._co_in_shapes        , self._co_in_shifts        ,
-                self._pos_slice_buf_ptr     , self._pos_slice_shapes    , self._pos_slice_shifts    ,
-                self._ncoeff_min_loop       , self._n_sub_fft           , self._fft_backend         ,
-                self._pyfftw_rffts_exe      ,
-                self._loopnb                , self._loopmass            ,
-                self._InterSpaceRotIsId     , self._InterSpaceRot       , self._InterTimeRev        ,
-                self._AfterLastGenIint      , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
-                self._gensegm_to_body       , self._gensegm_to_iint     ,
-                self._bodyloop              , self.segm_size            , self.segm_store           ,
-                segmpos                     ,
-            )
-
-            segm_pos_to_hash(
-                segmpos                 ,
-                self._BinSourceSegm     , self._BinTargetSegm   ,
-                self._BinSpaceRot       , self._BinSpaceRotIsId ,
-                self._BinProdChargeSum  ,
-                self.segm_size          , self.segm_store       ,
-                self._Hash_exp          , Hash                  ,   
-            )
-        
-        return Hash_np
         
     @cython.final
     def segmpos_to_hash(self, double[:,:,::1] segmpos):
@@ -1947,8 +1938,8 @@ cdef class NBodySyst():
                 self._ncoeff_min_loop       , self._n_sub_fft           , self._fft_backend         ,
                 self._pyfftw_rffts_exe      ,
                 self._loopnb                , self._loopmass            ,
-                self._InterSpaceRotIsId     , self._InterSpaceRot       , self._InterTimeRev        ,
-                self._AfterLastGenIint      , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
+                self._InterSpaceRotPosIsId     , self._InterSpaceRotPos       , self._InterTimeRev        ,
+                self._ALG_Iint              , self._ALG_SpaceRotPos     , self._ALG_TimeRev         ,
                 self._gensegm_to_body       , self._gensegm_to_iint     ,
                 self._bodyloop              , self.segm_size            , self.segm_store           ,
                 segmpos                     ,
@@ -1986,8 +1977,8 @@ cdef class NBodySyst():
                 self._ncoeff_min_loop       , self._n_sub_fft           , self._fft_backend         ,
                 self._pyfftw_rffts_exe      ,
                 self._loopnb                , self._loopmass            ,
-                self._InterSpaceRotIsId     , self._InterSpaceRot       , self._InterTimeRev        ,
-                self._AfterLastGenIint      , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
+                self._InterSpaceRotPosIsId     , self._InterSpaceRotPos       , self._InterTimeRev        ,
+                self._ALG_Iint              , self._ALG_SpaceRotPos     , self._ALG_TimeRev         ,
                 self._gensegm_to_body       , self._gensegm_to_iint     ,
                 self._bodyloop              , self.segm_size            , self.segm_store           ,
                 self._segmpos               ,
@@ -2015,8 +2006,8 @@ cdef class NBodySyst():
                 self._ncoeff_min_loop       , self._n_sub_fft           , self._fft_backend         ,
                 self._pyfftw_irffts_exe     ,
                 self._loopnb                , self._loopmass            ,
-                self._InterSpaceRotIsId     , self._InterSpaceRot       , self._InterTimeRev        ,
-                self._AfterLastGenIint      , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
+                self._InterSpaceRotPosIsId     , self._InterSpaceRotPos       , self._InterTimeRev        ,
+                self._ALG_Iint      , self._ALG_SpaceRotPos, self._ALG_TimeRev ,
                 self._gensegm_to_body       , self._gensegm_to_iint     ,
                 self._bodyloop              , self.segm_size            , self.segm_store           ,
                 params_grad                 ,
@@ -2048,8 +2039,8 @@ cdef class NBodySyst():
                 self._ncoeff_min_loop       , self._n_sub_fft           , self._fft_backend         ,
                 self._pyfftw_rffts_exe      ,
                 self._loopnb                , self._loopmass            ,
-                self._InterSpaceRotIsId     , self._InterSpaceRot       , self._InterTimeRev        ,
-                self._AfterLastGenIint      , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
+                self._InterSpaceRotPosIsId     , self._InterSpaceRotPos       , self._InterTimeRev        ,
+                self._ALG_Iint              , self._ALG_SpaceRotPos     , self._ALG_TimeRev         ,
                 self._gensegm_to_body       , self._gensegm_to_iint     ,
                 self._bodyloop              , self.segm_size            , self.segm_store           ,
                 self._segmpos               ,
@@ -2066,8 +2057,8 @@ cdef class NBodySyst():
                 self._ncoeff_min_loop       , self._n_sub_fft           , self._fft_backend         ,
                 self._pyfftw_rffts_exe      ,
                 self._loopnb                , self._loopmass            ,
-                self._InterSpaceRotIsId     , self._InterSpaceRot       , self._InterTimeRev        ,
-                self._AfterLastGenIint      , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
+                self._InterSpaceRotPosIsId     , self._InterSpaceRotPos       , self._InterTimeRev        ,
+                self._ALG_Iint              , self._ALG_SpaceRotPos     , self._ALG_TimeRev         ,
                 self._gensegm_to_body       , self._gensegm_to_iint     ,
                 self._bodyloop              , self.segm_size            , self.segm_store           ,
                 dsegmpos                    ,
@@ -2095,8 +2086,8 @@ cdef class NBodySyst():
                 self._ncoeff_min_loop       , self._n_sub_fft           , self._fft_backend         ,
                 self._pyfftw_irffts_exe     ,
                 self._loopnb                , self._loopmass            ,
-                self._InterSpaceRotIsId     , self._InterSpaceRot       , self._InterTimeRev        ,
-                self._AfterLastGenIint      , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
+                self._InterSpaceRotPosIsId     , self._InterSpaceRotPos       , self._InterTimeRev        ,
+                self._ALG_Iint              , self._ALG_SpaceRotPos     , self._ALG_TimeRev         ,
                 self._gensegm_to_body       , self._gensegm_to_iint     ,
                 self._bodyloop              , self.segm_size            , self.segm_store           ,
                 params_hess                 ,
@@ -2129,8 +2120,8 @@ cdef class NBodySyst():
                 self._ncoeff_min_loop       , self._n_sub_fft           , self._fft_backend         ,
                 self._pyfftw_rffts_exe      ,
                 self._loopnb                , self._loopmass            ,
-                self._InterSpaceRotIsId     , self._InterSpaceRot       , self._InterTimeRev        ,
-                self._AfterLastGenIint      , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
+                self._InterSpaceRotPosIsId     , self._InterSpaceRotPos       , self._InterTimeRev        ,
+                self._ALG_Iint              , self._ALG_SpaceRotPos     , self._ALG_TimeRev         ,
                 self._gensegm_to_body       , self._gensegm_to_iint     ,
                 self._bodyloop              , self.segm_size            , self.segm_store           ,
                 self._segmpos               ,
@@ -2168,8 +2159,8 @@ cdef class NBodySyst():
                 self._ncoeff_min_loop       , self._n_sub_fft           , self._fft_backend         ,
                 self._pyfftw_rffts_exe      ,
                 self._loopnb                , self._loopmass            ,
-                self._InterSpaceRotIsId     , self._InterSpaceRot       , self._InterTimeRev        ,
-                self._AfterLastGenIint      , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
+                self._InterSpaceRotPosIsId     , self._InterSpaceRotPos       , self._InterTimeRev        ,
+                self._ALG_Iint              , self._ALG_SpaceRotPos     , self._ALG_TimeRev         ,
                 self._gensegm_to_body       , self._gensegm_to_iint     ,
                 self._bodyloop              , self.segm_size            , self.segm_store           ,
                 self._segmpos               ,
@@ -2197,8 +2188,8 @@ cdef class NBodySyst():
                 self._ncoeff_min_loop       , self._n_sub_fft           , self._fft_backend         ,
                 self._pyfftw_irffts_exe     ,
                 self._loopnb                , self._loopmass            ,
-                self._InterSpaceRotIsId     , self._InterSpaceRot       , self._InterTimeRev        ,
-                self._AfterLastGenIint      , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
+                self._InterSpaceRotPosIsId     , self._InterSpaceRotPos       , self._InterTimeRev        ,
+                self._ALG_Iint      , self._ALG_SpaceRotPos, self._ALG_TimeRev ,
                 self._gensegm_to_body       , self._gensegm_to_iint     ,
                 self._bodyloop              , self.segm_size            , self.segm_store           ,
                 action_grad                 ,
@@ -2236,8 +2227,8 @@ cdef class NBodySyst():
                 self._ncoeff_min_loop       , self._n_sub_fft           , self._fft_backend         ,
                 self._pyfftw_rffts_exe      ,
                 self._loopnb                , self._loopmass            ,
-                self._InterSpaceRotIsId     , self._InterSpaceRot       , self._InterTimeRev        ,
-                self._AfterLastGenIint      , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
+                self._InterSpaceRotPosIsId     , self._InterSpaceRotPos       , self._InterTimeRev        ,
+                self._ALG_Iint              , self._ALG_SpaceRotPos     , self._ALG_TimeRev         ,
                 self._gensegm_to_body       , self._gensegm_to_iint     ,
                 self._bodyloop              , self.segm_size            , self.segm_store           ,
                 self._segmpos               ,
@@ -2254,8 +2245,8 @@ cdef class NBodySyst():
                 self._ncoeff_min_loop       , self._n_sub_fft           , self._fft_backend         ,
                 self._pyfftw_rffts_exe      ,
                 self._loopnb                , self._loopmass            ,
-                self._InterSpaceRotIsId     , self._InterSpaceRot       , self._InterTimeRev        ,
-                self._AfterLastGenIint      , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
+                self._InterSpaceRotPosIsId     , self._InterSpaceRotPos       , self._InterTimeRev        ,
+                self._ALG_Iint              , self._ALG_SpaceRotPos     , self._ALG_TimeRev         ,
                 self._gensegm_to_body       , self._gensegm_to_iint     ,
                 self._bodyloop              , self.segm_size            , self.segm_store           ,
                 dsegmpos                    ,
@@ -2283,8 +2274,8 @@ cdef class NBodySyst():
                 self._ncoeff_min_loop       , self._n_sub_fft           , self._fft_backend         ,
                 self._pyfftw_irffts_exe     ,
                 self._loopnb                , self._loopmass            ,
-                self._InterSpaceRotIsId     , self._InterSpaceRot       , self._InterTimeRev        ,
-                self._AfterLastGenIint      , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
+                self._InterSpaceRotPosIsId     , self._InterSpaceRotPos       , self._InterTimeRev        ,
+                self._ALG_Iint              , self._ALG_SpaceRotPos     , self._ALG_TimeRev         ,
                 self._gensegm_to_body       , self._gensegm_to_iint     ,
                 self._bodyloop              , self.segm_size            , self.segm_store           ,
                 action_hess                 ,
@@ -2325,8 +2316,8 @@ cdef class NBodySyst():
                 self._ncoeff_min_loop       , self._n_sub_fft           , self._fft_backend         ,
                 self._pyfftw_rffts_exe      ,
                 self._loopnb                , self._loopmass            ,
-                self._InterSpaceRotIsId     , self._InterSpaceRot       , self._InterTimeRev        ,
-                self._AfterLastGenIint      , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
+                self._InterSpaceRotPosIsId     , self._InterSpaceRotPos       , self._InterTimeRev        ,
+                self._ALG_Iint              , self._ALG_SpaceRotPos     , self._ALG_TimeRev         ,
                 self._gensegm_to_body       , self._gensegm_to_iint     ,
                 self._bodyloop              , self.segm_size            , self.segm_store           ,
                 segmpos                     ,
@@ -2376,8 +2367,8 @@ cdef class NBodySyst():
                 self._ncoeff_min_loop       , self._n_sub_fft           , self._fft_backend         ,
                 self._pyfftw_irffts_exe     ,
                 self._loopnb                , self._loopmass            ,
-                self._InterSpaceRotIsId     , self._InterSpaceRot       , self._InterTimeRev        ,
-                self._AfterLastGenIint      , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
+                self._InterSpaceRotPosIsId     , self._InterSpaceRotPos       , self._InterTimeRev        ,
+                self._ALG_Iint              , self._ALG_SpaceRotPos     , self._ALG_TimeRev         ,
                 self._gensegm_to_body       , self._gensegm_to_iint     ,
                 self._bodyloop              , self.segm_size            , self.segm_store           ,
                 action_grad                 ,
@@ -2414,8 +2405,8 @@ cdef class NBodySyst():
                 self._ncoeff_min_loop       , self._n_sub_fft           , self._fft_backend         ,
                 self._pyfftw_rffts_exe      ,
                 self._loopnb                , self._loopmass            ,
-                self._InterSpaceRotIsId     , self._InterSpaceRot       , self._InterTimeRev        ,
-                self._AfterLastGenIint      , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
+                self._InterSpaceRotPosIsId     , self._InterSpaceRotPos       , self._InterTimeRev        ,
+                self._ALG_Iint              , self._ALG_SpaceRotPos     , self._ALG_TimeRev         ,
                 self._gensegm_to_body       , self._gensegm_to_iint     ,
                 self._bodyloop              , self.segm_size            , self.segm_store           ,
                 self._segmpos               , # self._segmpos is actually dsegmpos
@@ -2443,8 +2434,8 @@ cdef class NBodySyst():
                 self._ncoeff_min_loop       , self._n_sub_fft           , self._fft_backend         ,
                 self._pyfftw_irffts_exe     ,
                 self._loopnb                , self._loopmass            ,
-                self._InterSpaceRotIsId     , self._InterSpaceRot       , self._InterTimeRev        ,
-                self._AfterLastGenIint      , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
+                self._InterSpaceRotPosIsId     , self._InterSpaceRotPos       , self._InterTimeRev        ,
+                self._ALG_Iint      , self._ALG_SpaceRotPos, self._ALG_TimeRev ,
                 self._gensegm_to_body       , self._gensegm_to_iint     ,
                 self._bodyloop              , self.segm_size            , self.segm_store           ,
                 action_hess                 ,
@@ -2637,7 +2628,7 @@ cdef class NBodySyst():
 
                     np.matmul(
                         all_pos[il,ibeg:iend,:]         ,
-                        self._InterSpaceRot[isegm,:,:]  ,
+                        self._InterSpaceRotPos[isegm,:,:]  ,
                         out = segmvals[isegm,:,:]       ,
                     )            
 
@@ -2646,12 +2637,12 @@ cdef class NBodySyst():
                     if pos:
                         segmvals[isegm,:,:] = np.matmul(
                             all_pos[il,ibeg:iend,:]         ,
-                            self._InterSpaceRot[isegm,:,:]  ,
+                            self._InterSpaceRotPos[isegm,:,:]  ,
                         )[::-1,:]
                     else:
                         segmvals[isegm,:,:] = -np.matmul(
                             all_pos[il,ibeg:iend,:]         ,
-                            self._InterSpaceRot[isegm,:,:]  ,
+                            self._InterSpaceRotPos[isegm,:,:]  ,
                         )[::-1,:]
             else:
 
@@ -2663,13 +2654,13 @@ cdef class NBodySyst():
 
                     np.matmul(
                         all_pos[il,ibeg:iend,:]         ,
-                        self._InterSpaceRot[isegm,:,:]  ,
+                        self._InterSpaceRotPos[isegm,:,:]  ,
                         out = segmvals[isegm,:self.segm_store-1,:]        ,
                     )   
 
                     np.matmul(
                         all_pos[il,0,:]         ,
-                        self._InterSpaceRot[isegm,:,:]  ,
+                        self._InterSpaceRotPos[isegm,:,:]  ,
                         out = segmvals[isegm,self.segm_store-1,:]        ,
                     )            
 
@@ -2679,24 +2670,24 @@ cdef class NBodySyst():
 
                         segmvals[isegm,1:,:] = np.matmul(
                             all_pos[il,ibeg:iend,:]         ,
-                            self._InterSpaceRot[isegm,:,:]  ,
+                            self._InterSpaceRotPos[isegm,:,:]  ,
                         )[::-1,:]
 
                         segmvals[isegm,0,:] = np.matmul(
                             all_pos[il,0,:]         ,
-                            self._InterSpaceRot[isegm,:,:]  ,
+                            self._InterSpaceRotPos[isegm,:,:]  ,
                         )
 
                     else:
 
                         segmvals[isegm,1:,:] = -np.matmul(
                             all_pos[il,ibeg:iend,:]         ,
-                            self._InterSpaceRot[isegm,:,:]  ,
+                            self._InterSpaceRotPos[isegm,:,:]  ,
                         )[::-1,:]
 
                         segmvals[isegm,0,:] = -np.matmul(
                             all_pos[il,0,:]         ,
-                            self._InterSpaceRot[isegm,:,:]  ,
+                            self._InterSpaceRotPos[isegm,:,:]  ,
                         )
 
         return segmvals
@@ -2759,8 +2750,8 @@ cdef class NBodySyst():
                 self._ncoeff_min_loop       , self._n_sub_fft           , self._fft_backend         ,
                 self._pyfftw_rffts_exe      ,
                 self._loopnb                , self._loopmass            ,
-                self._InterSpaceRotIsId     , self._InterSpaceRot       , self._InterTimeRev        ,
-                self._AfterLastGenIint      , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
+                self._InterSpaceRotPosIsId     , self._InterSpaceRotPos       , self._InterTimeRev        ,
+                self._ALG_Iint              , self._ALG_SpaceRotPos     , self._ALG_TimeRev         ,
                 self._gensegm_to_body       , self._gensegm_to_iint     ,
                 self._bodyloop              , self.segm_size            , self.segm_store           ,
                 segmpos                     ,
@@ -2789,8 +2780,8 @@ cdef class NBodySyst():
                 self._ncoeff_min_loop       , self._n_sub_fft           , self._fft_backend         ,
                 self._pyfftw_rffts_exe      ,
                 self._loopnb                , self._loopmass            ,
-                self._InterSpaceRotIsId     , self._InterSpaceRot       , self._InterTimeRev        ,
-                self._AfterLastGenIint      , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
+                self._InterSpaceRotVelIsId  , self._InterSpaceRotVel    , self._InterTimeRev        ,
+                self._ALG_Iint              , self._ALG_SpaceRotVel     , self._ALG_TimeRev         ,
                 self._gensegm_to_body       , self._gensegm_to_iint     ,
                 self._bodyloop              , self.segm_size            , self.segm_store           ,
                 segmvel                     ,
@@ -2819,7 +2810,7 @@ cdef class NBodySyst():
                 self._ncoeff_min_loop       , self._n_sub_fft           , self._fft_backend         ,
                 self._pyfftw_irffts_exe     ,
                 self._loopnb                , self._loopmass            ,
-                self._InterSpaceRotIsId     , self._InterSpaceRot       , self._InterTimeRev        ,
+                self._InterSpaceRotPosIsId     , self._InterSpaceRotPos       , self._InterTimeRev        ,
                 self._gensegm_to_body       , self._gensegm_to_iint     ,
                 self._bodyloop              , self.segm_size            , self.segm_store           ,
                 params_mom_buf              ,
@@ -2848,8 +2839,8 @@ cdef class NBodySyst():
                 self._ncoeff_min_loop       , self._n_sub_fft           , self._fft_backend         ,
                 self._pyfftw_irffts_exe     ,
                 self._loopnb                , self._loopmass            ,
-                self._InterSpaceRotIsId     , self._InterSpaceRot       , self._InterTimeRev        ,
-                self._AfterLastGenIint      , self._AfterLastGenSpaceRot, self._AfterLastGenTimeRev ,
+                self._InterSpaceRotPosIsId     , self._InterSpaceRotPos       , self._InterTimeRev        ,
+                self._ALG_Iint              , self._ALG_SpaceRotPos     , self._ALG_TimeRev         ,
                 self._gensegm_to_body       , self._gensegm_to_iint     ,
                 self._bodyloop              , self.segm_size            , self.segm_store           ,
                 params_mom_buf              ,
@@ -2870,7 +2861,7 @@ cdef class NBodySyst():
         TT.toc("memory")
 
         cdef int nsegm = self._gensegm_to_body.shape[0]
-        cdef int geodim = self._InterSpaceRot.shape[1]
+        cdef int geodim = self._InterSpaceRotPos.shape[1]
 
         changevar_mom_pos(
             &params_mom_buf[0]  , self._params_shapes , self._params_shifts ,
@@ -2909,8 +2900,8 @@ cdef class NBodySyst():
                 self._ifft_shapes           ,
                 self._params_basis_shapes   ,
                 self._n_sub_fft             ,
-                self._AfterLastGenIint      ,
-                self._AfterLastGenTimeRev   , self._AfterLastGenSpaceRot  ,
+                self._ALG_Iint              ,
+                self._ALG_TimeRev           , self._ALG_SpaceRotPos         ,
                 self.segm_size              ,
             )
 
@@ -2919,8 +2910,8 @@ cdef class NBodySyst():
         pos_slice_to_segmpos(
             self._pos_slice_buf_ptr , self._pos_slice_shapes  , self._pos_slice_shifts ,
             &self._segmpos[0,0,0]   ,
-            self._InterSpaceRotIsId ,
-            self._InterSpaceRot     ,
+            self._InterSpaceRotPosIsId ,
+            self._InterSpaceRotPos     ,
             self._InterTimeRev      ,
             self._gensegm_to_body   ,
             self._gensegm_to_iint   ,
@@ -2949,8 +2940,8 @@ cdef class NBodySyst():
         segmpos_to_pos_slice_T(
             &self._pot_nrg_grad[0,0,0] ,
             self._pos_slice_buf_ptr   , self._pos_slice_shapes  , self._pos_slice_shifts ,
-            self._InterSpaceRotIsId   ,
-            self._InterSpaceRot       ,
+            self._InterSpaceRotPosIsId   ,
+            self._InterSpaceRotPos       ,
             self._InterTimeRev        ,
             self._gensegm_to_body     ,
             self._gensegm_to_iint     ,
@@ -2965,9 +2956,9 @@ cdef class NBodySyst():
                 self._ifft_shapes         ,
                 self._params_basis_shapes ,
                 self._n_sub_fft           ,
-                self._AfterLastGenIint    ,
-                self._AfterLastGenTimeRev , self._AfterLastGenSpaceRot  ,
-                self.segm_size            ,
+                self._ALG_Iint            ,
+                self._ALG_TimeRev         , self._ALG_SpaceRotPos       ,
+                self.segm_size            , 
             )
 
         TT.toc("segmpos_to_pos_slice_T")
@@ -3482,7 +3473,7 @@ cdef void changevar_mom_vel(
         nmem = params_shifts[il+1]-params_shifts[il]
         memset(cur_param_vel_buf + nmem, 0, sizeof(double)*nmem)
 
-        loopmul = 1./csqrt(loopnb[il] * loopmass[il] * cfourpisq)
+        loopmul = 1./csqrt(loopnb[il] * loopmass[il])
 
         # ipr = 0 treated separately
         # ik = 0 treated separately
@@ -4166,8 +4157,8 @@ cdef void Adjust_after_last_gen(
     long[:,::1] ifft_shapes             ,
     long[:,::1] params_basis_shapes     ,
     long[::1] n_sub_fft                 ,
-    long[::1] AfterLastGenIint          ,
-    long[::1] AfterLastGenTimeRev       , double[:,:,::1] AfterLastGenSpaceRot  ,
+    long[::1] ALG_Iint          ,
+    long[::1] ALG_TimeRev       , double[:,:,::1] ALG_SpaceRot  ,
     long segm_size,
 )noexcept nogil:
 
@@ -4189,14 +4180,14 @@ cdef void Adjust_after_last_gen(
                 npr = ifft_shapes[il,0] - 1
                 pos_slice = pos_slice_buf_ptr + pos_slice_shifts[il] + 2*npr*geodim
 
-                if AfterLastGenTimeRev[il] == 1:
-                    pos_slice_uneven_source = pos_slice_buf_ptr + pos_slice_shifts[il] + AfterLastGenIint[il]*segm_size*geodim
+                if ALG_TimeRev[il] == 1:
+                    pos_slice_uneven_source = pos_slice_buf_ptr + pos_slice_shifts[il] + ALG_Iint[il]*segm_size*geodim
                 else:
-                    pos_slice_uneven_source = pos_slice_buf_ptr + pos_slice_shifts[il] + ((AfterLastGenIint[il]+1)*segm_size - 1)*geodim
+                    pos_slice_uneven_source = pos_slice_buf_ptr + pos_slice_shifts[il] + ((ALG_Iint[il]+1)*segm_size - 1)*geodim
 
                 for idim in range(geodim):
                     for jdim in range(geodim):
-                        pos_slice[idim] += AfterLastGenSpaceRot[il,idim,jdim] * pos_slice_uneven_source[jdim]
+                        pos_slice[idim] += ALG_SpaceRot[il,idim,jdim] * pos_slice_uneven_source[jdim]
 
 
 cdef void Adjust_after_last_gen_T(
@@ -4204,8 +4195,8 @@ cdef void Adjust_after_last_gen_T(
     long[:,::1] ifft_shapes             ,
     long[:,::1] params_basis_shapes     ,
     long[::1] n_sub_fft                 ,
-    long[::1] AfterLastGenIint          ,
-    long[::1] AfterLastGenTimeRev       , double[:,:,::1] AfterLastGenSpaceRot  ,
+    long[::1] ALG_Iint          ,
+    long[::1] ALG_TimeRev       , double[:,:,::1] ALG_SpaceRot  ,
     long segm_size                      ,
 )noexcept nogil:
 
@@ -4227,15 +4218,15 @@ cdef void Adjust_after_last_gen_T(
                 npr = ifft_shapes[il,0] - 1
                 pos_slice = pos_slice_buf_ptr + pos_slice_shifts[il] + 2*npr*geodim
 
-                if AfterLastGenTimeRev[il] == 1:
-                    pos_slice_uneven_source = pos_slice_buf_ptr + pos_slice_shifts[il] + AfterLastGenIint[il]*segm_size*geodim
+                if ALG_TimeRev[il] == 1:
+                    pos_slice_uneven_source = pos_slice_buf_ptr + pos_slice_shifts[il] + ALG_Iint[il]*segm_size*geodim
                 else:
-                    pos_slice_uneven_source = pos_slice_buf_ptr + pos_slice_shifts[il] + ((AfterLastGenIint[il]+1)*segm_size - 1)*geodim
+                    pos_slice_uneven_source = pos_slice_buf_ptr + pos_slice_shifts[il] + ((ALG_Iint[il]+1)*segm_size - 1)*geodim
 
                 for idim in range(geodim):
                     for jdim in range(geodim):
 
-                        pos_slice_uneven_source[jdim] += AfterLastGenSpaceRot[il,idim,jdim] * pos_slice[idim]
+                        pos_slice_uneven_source[jdim] += ALG_SpaceRot[il,idim,jdim] * pos_slice[idim]
 
 cdef void pos_slice_to_segmpos(
     double* pos_slice_buf_ptr       , long[:,::1] pos_slice_shapes  , long[::1] pos_slice_shifts    ,
@@ -4491,7 +4482,7 @@ cdef void params_to_segmpos(
     pyfftw.fftw_exe** pyfftw_rffts_exe      ,
     long[::1] loopnb                        , double[::1] loopmass                  ,
     bint[::1] InterSpaceRotIsId             , double[:,:,::1] InterSpaceRot         , long[::1] InterTimeRev        ,
-    long[::1] AfterLastGenIint              , double[:,:,::1] AfterLastGenSpaceRot  , long[::1] AfterLastGenTimeRev ,
+    long[::1] ALG_Iint              , double[:,:,::1] ALG_SpaceRot  , long[::1] ALG_TimeRev ,
     long[::1] gensegm_to_body               ,
     long[::1] gensegm_to_iint               ,
     long[::1] BodyLoop                      ,
@@ -4536,8 +4527,8 @@ cdef void params_to_segmpos(
             ifft_shapes         ,
             params_basis_shapes ,
             n_sub_fft           ,
-            AfterLastGenIint    ,
-            AfterLastGenTimeRev , AfterLastGenSpaceRot  ,
+            ALG_Iint    ,
+            ALG_TimeRev , ALG_SpaceRot  ,
             segm_size           ,
         )
 
@@ -4567,7 +4558,7 @@ cdef void params_to_segmvel(
     pyfftw.fftw_exe** pyfftw_rffts_exe      ,
     long[::1] loopnb                        , double[::1] loopmass                  ,
     bint[::1] InterSpaceRotIsId             , double[:,:,::1] InterSpaceRot         , long[::1] InterTimeRev        ,
-    long[::1] AfterLastGenIint              , double[:,:,::1] AfterLastGenSpaceRot  , long[::1] AfterLastGenTimeRev ,
+    long[::1] ALG_Iint              , double[:,:,::1] ALG_SpaceRot  , long[::1] ALG_TimeRev ,
     long[::1] gensegm_to_body               ,
     long[::1] gensegm_to_iint               ,
     long[::1] BodyLoop                      ,
@@ -4612,8 +4603,8 @@ cdef void params_to_segmvel(
             ifft_shapes         ,
             params_basis_shapes ,
             n_sub_fft           ,
-            AfterLastGenIint    ,
-            AfterLastGenTimeRev , AfterLastGenSpaceRot  ,
+            ALG_Iint            ,
+            ALG_TimeRev         , ALG_SpaceRot          ,
             segm_size           ,
         )
 
@@ -4704,7 +4695,7 @@ cdef void segmpos_to_params_T(
     pyfftw.fftw_exe** pyfftw_irffts_exe     ,
     long[::1] loopnb                        , double[::1] loopmass                  ,
     bint[::1] InterSpaceRotIsId             , double[:,:,::1] InterSpaceRot         , long[::1] InterTimeRev        ,
-    long[::1] AfterLastGenIint              , double[:,:,::1] AfterLastGenSpaceRot  , long[::1] AfterLastGenTimeRev ,
+    long[::1] ALG_Iint              , double[:,:,::1] ALG_SpaceRot  , long[::1] ALG_TimeRev ,
     long[::1] gensegm_to_body               ,
     long[::1] gensegm_to_iint               ,
     long[::1] BodyLoop                      ,
@@ -4737,8 +4728,8 @@ cdef void segmpos_to_params_T(
             ifft_shapes         ,
             params_basis_shapes ,
             n_sub_fft           ,
-            AfterLastGenIint    ,
-            AfterLastGenTimeRev , AfterLastGenSpaceRot  ,
+            ALG_Iint    ,
+            ALG_TimeRev , ALG_SpaceRot  ,
             segm_size           ,
         )
 
