@@ -41,7 +41,7 @@ def Send_init_PlotInfo():
     n_find = max_num_file
 
     file_basename = file_basename+str(max_num_file).zfill(5)
-    filename = os.path.join(store_folder,file_basename+'init.json')
+    filename = os.path.join(store_folder,file_basename+'_init.json')
 
     if os.path.isfile(filename):
 
@@ -49,7 +49,7 @@ def Send_init_PlotInfo():
             thefile = fh.read()
 
         blob = js.Blob.new([thefile], {type : 'application/text'})
-
+    
         js.postMessage(
             funname = "Set_PlotInfo_From_Python",
             args    = pyodide.ffi.to_js(
@@ -62,7 +62,7 @@ def Send_init_PlotInfo():
         
     else:
         
-        raise(ValueError('Toto'))
+        raise ValueError('File not found')
 
 def Plot_Loops_During_Optim_new(x, f, f_norm, NBS, jacobian):
 
@@ -90,8 +90,6 @@ def Plot_Loops_During_Optim_new(x, f, f_norm, NBS, jacobian):
     
 def Plot_Loops_During_Optim(x,f,f_norm,ActionSyst):
     
-    TT.toc("enter old")
-
     xmin,xmax,ymin,ymax = ActionSyst.HeuristicMinMax()
 
     hside = max(xmax-xmin,ymax-ymin)/2
@@ -108,9 +106,6 @@ def Plot_Loops_During_Optim(x,f,f_norm,ActionSyst):
     windowObject["yMax"] = ymid + hside
 
     
-    TT.toc("leave old")
-
-
     js.postMessage(
 
         funname = "Plot_Loops_During_Optim_From_Python",
@@ -144,9 +139,7 @@ def NPY_JS_to_py(npy_js):
 
     return np.asarray(npy_js["data"]).reshape(npy_js["shape"])
 
-async def main():
-
-    params_dict = js.ConfigDict.to_py()
+async def main(params_dict):
 
     geodim = 2
 
@@ -431,8 +424,6 @@ async def main():
     all_kwargs = choreo.Pick_Named_Args_From_Dict(choreo.find.Find_Choreo,dict(globals(),**locals()))
     choreo.find.Find_Choreo(**all_kwargs)
     
-    print(TT)
-
     filename_output = store_folder+'/'+file_basename
     filename = filename_output+".json"
 
@@ -480,9 +471,7 @@ async def main():
             )
         )
 
-async def main_new():
-
-    params_dict = js.ConfigDict.to_py()
+async def main_new(params_dict):
     
     extra_args_dict = {}
 
@@ -584,5 +573,12 @@ async def main_new():
         )
 
 if __name__ == "__main__":
-    # asyncio.create_task(main())
-    asyncio.create_task(main_new())
+    
+    params_dict = js.ConfigDict.to_py()
+    
+    if params_dict['Solver_CLI']['GUI_backend'] == "New":
+        asyncio.create_task(main_new(params_dict))
+    elif params_dict['Solver_CLI']['GUI_backend'] == "Old":
+        asyncio.create_task(main(params_dict))
+
+
