@@ -101,13 +101,13 @@ elif platform.system() == "Linux":
                 
                 break
 
-        # extra_compile_args_std = ["-O0","-march=native", "-fopenmp", "-lm", *ignore_warnings_args]
-        # extra_compile_args_safe = ["-O0", "-fopenmp", "-lm", *ignore_warnings_args]
-        # extra_link_args = ["-fopenmp", "-lm",]
+        extra_compile_args_std = ["-O0","-march=native", "-fopenmp", "-lm", *ignore_warnings_args]
+        extra_compile_args_safe = ["-O0", "-fopenmp", "-lm", *ignore_warnings_args]
+        extra_link_args = ["-fopenmp", "-lm",]
 
-        extra_compile_args_std = ["-Ofast", "-march=native", "-fopenmp", "-lm", "-flto", *ignore_warnings_args]
-        extra_compile_args_safe = ["-O3", "-fopenmp", "-lm", "-flto", *ignore_warnings_args]
-        extra_link_args = ["-fopenmp", "-lm", "-flto",  *ignore_warnings_args]
+        # extra_compile_args_std = ["-Ofast", "-march=native", "-fopenmp", "-lm", "-flto", *ignore_warnings_args]
+        # extra_compile_args_safe = ["-O3", "-fopenmp", "-lm", "-flto", *ignore_warnings_args]
+        # extra_link_args = ["-fopenmp", "-lm", "-flto",  *ignore_warnings_args]
 
         cython_extnames.append("choreo.cython.funs_parallel")
         cython_safemath_needed.append(False)
@@ -130,13 +130,11 @@ if include_pyfftw:
     pyfftw_pxd_str = """
 cimport pyfftw
 import pyfftw as p_pyfftw   
-cdef bint PYFFTW_AVAILABLE
     """
 else:
     pyfftw_pxd_str = """
 cimport choreo.cython.pyfftw_fake as pyfftw
 import choreo.cython.pyfftw_fake as p_pyfftw   
-cdef bint PYFFTW_AVAILABLE
     """
 with open("choreo/cython/optional_pyfftw.pxd", "w") as text_file:
     text_file.write(pyfftw_pxd_str)
@@ -156,17 +154,17 @@ compiler_directives = {
 }
 
 #### Profiler only ####
-# profile_compiler_directives = {
-#     'profile': True,
-#     'linetrace': True,
-#     'binding': True,
-# }
-# compiler_directives.update(profile_compiler_directives)
-# profile_define_macros = [
-#     ('CYTHON_TRACE', '1')   ,
-#     ('CYTHON_TRACE_NOGIL', '1')   ,
-# ]
-# define_macros.extend(profile_define_macros)
+profile_compiler_directives = {
+    'profile': True,
+    'linetrace': True,
+    'binding': True,
+}
+compiler_directives.update(profile_compiler_directives)
+profile_define_macros = [
+    ('CYTHON_TRACE', '1')   ,
+    ('CYTHON_TRACE_NOGIL', '1')   ,
+]
+define_macros.extend(profile_define_macros)
 
 include_dirs = [
     numpy.get_include()                 ,
