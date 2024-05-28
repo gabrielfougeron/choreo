@@ -21,7 +21,7 @@
 *.examples
 *.xml
 .vscode/
-.pyodide-xbuildenv/
+.pyodide-xbuildenv*/
 .tox/
 .hypothesis/
 .pytest_cache

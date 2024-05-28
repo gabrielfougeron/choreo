@@ -11,6 +11,12 @@ import setuptools
 import numpy
 import platform
 
+try:
+    import pyfftw
+    PYFFTW_AVAILABLE = True
+except:
+    PYFFTW_AVAILABLE = False
+
 # use_Cython = False
 use_Cython = True
 
@@ -117,7 +123,7 @@ cython_filenames = [ ext_name.replace('.','/') + src_ext for ext_name in cython_
 cython_extnames.append("choreo.cython.optional_pyfftw")
 cython_safemath_needed.append(False)
 
-include_pyfftw = not("PYODIDE" in os.environ)
+include_pyfftw = PYFFTW_AVAILABLE and not("PYODIDE" in os.environ) and not(platform.system() == "Windows")
 cython_filenames.append(f"choreo.cython.optional_pyfftw_{include_pyfftw}".replace('.','/') + src_ext)
 
 if include_pyfftw:
@@ -196,6 +202,7 @@ if use_Cython:
 packages = setuptools.find_packages()
 
 package_data = {key : ['*.h','*.c','*.pyx','*.pxd'] for key in packages}
+
 
 setuptools.setup(
     platforms = ['any'],

@@ -16,7 +16,8 @@ function RedirectPythonPrint(txt) {
 var AskForNext;
 
 // load pyodide.js
-importScripts("https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js");
+importScripts("https://cdn.jsdelivr.net/pyodide/v0.26.0/full/pyodide.js");
+// importScripts("https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js");
 // importScripts("https://cdn.jsdelivr.net/pyodide/v0.23.4/full/pyodide.js");
 // importScripts("https://cdn.jsdelivr.net/pyodide/v0.22.0/full/pyodide.js");
 // importScripts("https://cdn.jsdelivr.net/pyodide/v0.21.2/full/pyodide.js");
@@ -44,9 +45,8 @@ async function loadPyodideAndPackages() {
         "mpmath",
         "threadpoolctl",
         // "./python_dist/choreo-0.2.0-cp311-cp311-emscripten_3_1_45_wasm32.whl",
-        "./python_dist/choreo-1.0.0-cp311-cp311-emscripten_3_1_45_wasm32.whl",
-        // "./python_dist/pyquickbench-0.2.1-py3-none-any.whl",
-        // "tqdm",
+        // "./python_dist/choreo-1.0.0-cp311-cp311-emscripten_3_1_45_wasm32.whl",
+        "./python_dist/choreo-1.0.0-cp312-cp312-pyodide_2024_0_wasm32.whl",
     ])
 
 }

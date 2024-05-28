@@ -9,6 +9,8 @@ import sys
 import fractions
 import json
 import choreo 
+import asyncio
+
 
 import js
 import pyodide
@@ -17,9 +19,7 @@ def NPY_JS_to_py(npy_js):
 
     return np.asarray(npy_js["data"]).reshape(npy_js["shape"])
 
-def main():
-
-    params_dict = js.ConfigDict.to_py()
+async def main(params_dict):
 
     geodim = 2
 
@@ -154,15 +154,13 @@ def main():
 
 
     store_folder = 'Sniff_all_sym/'
-    # store_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym/')
+
     store_folder = store_folder+str(nbody)
     if os.path.isdir(store_folder):
         shutil.rmtree(store_folder)
         os.makedirs(store_folder)
     else:
         os.makedirs(store_folder)
-    # print("store_folder: ",store_folder)
-    # print(os.path.isdir(store_folder))
 
     Use_exact_Jacobian = params_dict["Solver_Discr"]["Use_exact_Jacobian"]
 
@@ -317,10 +315,8 @@ def main():
             )
         )
 
-def main_new():
+async def main_new(params_dict):
 
-    params_dict = js.ConfigDict.to_py()
-    
     extra_args_dict = {}
 
     store_folder = '/Workspace/GUI solutions'
@@ -346,11 +342,10 @@ def main_new():
     
     choreo.find_new.ChoreoChooseParallelEnvAndFind(Workspace_folder, params_dict, extra_args_dict)
 
-    filename_output = store_folder+'/init'
+    filename_output = store_folder+'/_init'
     filename = filename_output+".json"
     
     if os.path.isfile(filename):
-        pass
 
         with open(filename, 'rt') as fh:
             thefile = fh.read()
@@ -392,5 +387,12 @@ def main_new():
         
         
 if __name__ == "__main__":
-    # main()
-    main_new()
+    
+    params_dict = js.ConfigDict.to_py()
+    
+    if params_dict['Solver_CLI']['GUI_backend'] == "New":
+        asyncio.create_task(main_new(params_dict))
+    elif params_dict['Solver_CLI']['GUI_backend'] == "Old":
+        asyncio.create_task(main(params_dict))
+
+

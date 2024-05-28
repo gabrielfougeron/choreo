@@ -199,7 +199,7 @@ def Find_Choreo(
                 filename_output = os.path.join(store_folder,file_basename+'_init_'+str(max_num_file).zfill(5))
 
             else:
-                filename_output = os.path.join(store_folder,file_basename+'init')
+                filename_output = os.path.join(store_folder,file_basename+'_init')
 
             NBS.Write_Descriptor(x, segmpos=segmpos, filename = filename_output+'.json')
 
