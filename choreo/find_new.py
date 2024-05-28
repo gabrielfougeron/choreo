@@ -16,6 +16,11 @@ import choreo.metadata
 import choreo.scipy_plus
 from choreo.cython._ActionSym import ActionSym
 
+import warnings 
+from choreo.cython.optional_pyfftw import PYFFTW_AVAILABLE
+if PYFFTW_AVAILABLE:
+    import pyfftw
+
 def Find_Choreo(
     *,
     geodim,
@@ -925,15 +930,15 @@ def Check_Duplicates(NBS, segmpos, params, hash_dict, action_dict, store_folder,
 
     return False, None
 
-try:
-    import pyfftw
+def wisdom_filename_divide(filename):
+    root, ext = os.path.splitext(filename) 
+    return [root+"_"+prec+ext for prec in ['d','f','l']]
 
-    def wisdom_filename_divide(filename):
-        root, ext = os.path.splitext(filename) 
-        return [root+"_"+prec+ext for prec in ['d','f','l']]
-
-    def Load_wisdom_file(DP_Wisdom_file):
-        
+def Load_wisdom_file(DP_Wisdom_file):
+    
+    if not(PYFFTW_AVAILABLE):
+        warnings.warn("The package pyfftw could not be loaded. Please check your local install.")
+    else:
         wis_list = []
         
         for i, filename in enumerate(wisdom_filename_divide(DP_Wisdom_file)):
@@ -946,14 +951,14 @@ try:
                     
             wis_list.append(wis)
 
-        pyfftw.import_wisdom(wis_list)
-        
-    def Write_wisdom_file(DP_Wisdom_file):    
+            pyfftw.import_wisdom(wis_list)
+    
+def Write_wisdom_file(DP_Wisdom_file):    
+    if not(PYFFTW_AVAILABLE):
+        warnings.warn("The package pyfftw could not be loaded. Please check your local install.")
+    else:
         wis = pyfftw.export_wisdom()
         
         for i, filename in enumerate(wisdom_filename_divide(DP_Wisdom_file)):
             with open(filename, 'wb') as f:
                 f.write(wis[i])
-
-except:
-    pass

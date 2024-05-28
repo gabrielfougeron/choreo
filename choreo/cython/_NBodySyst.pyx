@@ -68,8 +68,8 @@ try:
 except:
     MKL_FFT_AVAILABLE = False
 
-from choreo.cython.optional_pyfftw cimport pyfftw, PYFFTW_AVAILABLE
-from choreo.cython.optional_pyfftw import p_pyfftw
+from choreo.cython.optional_pyfftw cimport pyfftw
+from choreo.cython.optional_pyfftw import p_pyfftw, PYFFTW_AVAILABLE
 
 cdef int USE_SCIPY_FFT = 0
 cdef int USE_MKL_FFT = 1
