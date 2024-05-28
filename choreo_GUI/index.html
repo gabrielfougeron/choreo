@@ -662,16 +662,29 @@ window.addEventListener("drop",function(e){
             <input id ="CLI_nproc" type="number" value="1" min="1" style="text-align: center;">
           </td>
         </tr>
-        <td style="border:none;" >
-          <label for="CLI_backend">Gradient and Hessian backend (deprecated)</label>
-        </td>
-        <td style="border:none; max-width:200px; text-align: center;">
-          <select class="w3-select" id="CLI_backend" style="text-align: center;"> 
-            <option value="Python">Python</option>
-            <option value="Cython">Cython</option>
-            <option value="Numba" selected>Numba</option>
-          </select>
-        </td>
+        <tr>
+          <td style="border:none;" >
+            <label for="CLI_backend">Gradient and Hessian backend (deprecated)</label>
+          </td>
+          <td style="border:none; max-width:200px; text-align: center;">
+            <select class="w3-select" id="CLI_backend" style="text-align: center;"> 
+              <option value="Python">Python</option>
+              <option value="Cython">Cython</option>
+              <option value="Numba" selected>Numba</option>
+            </select>
+          </td>
+        </tr>
+        <tr>
+          <td style="border:none;" >
+            <label for="GUI_backend">GUI solver version</label>
+          </td>
+          <td style="border:none; max-width:200px; text-align: center;">
+            <select class="w3-select" id="GUI_backend" style="text-align: center;"> 
+              <option value="New" selected>New</option>
+              <option value="Old">Old</option>
+            </select>
+          </td>
+        </tr>
         <tr>
           <td style="border:none;" >
             <label for="CLI_SaveImage">Save image of solutions</label>
