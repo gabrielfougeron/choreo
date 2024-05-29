@@ -100,6 +100,7 @@ def Find_Choreo(
     max_norm_on_entry,
     n_save_pos,
     Save_All_Coeffs,
+    Save_Params,
     Save_All_Pos,
     Save_Init_Pos_Vel_Sol,
     mul_coarse_to_fine,
@@ -114,15 +115,15 @@ def Find_Choreo(
     all_coeffs_init,
     AddNumberToOutputName,
     SkipCheckRandomMinDist,
-    CurrentlyDeveloppingNewStuff,
 ):
     """
 
     Finds periodic solutions
 
     """
-
     
+    # Save_Params = True
+
     print(f'Searching periodic solutions of {nbody:d} bodies.')
 
     print(f'Processing symmetries for {(n_reconverge_it_max+1):d} convergence levels.')
@@ -316,6 +317,9 @@ def Find_Choreo(
 
                 all_coeffs = ActionSyst.Unpackage_all_coeffs(x0)
                 np.save(filename_output+'_coeffs.npy',all_coeffs)
+                
+            if Save_Params:
+                np.save(filename_output+'_params.npy', x0)
 
             if Save_All_Pos:
 
@@ -580,6 +584,9 @@ def Find_Choreo(
                     if Save_All_Coeffs:
                         all_coeffs = ActionSyst.Unpackage_all_coeffs(best_sol.x)
                         np.save(filename_output+'_coeffs.npy',all_coeffs)
+                        
+                    if Save_Params:
+                        np.save(filename_output+'_params.npy', best_sol.x)
 
                     if Save_All_Pos:
                         if n_save_pos is None:
