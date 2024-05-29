@@ -851,7 +851,7 @@ def AccumulateSegmSourceToTargetSym(
             
     return segm_gen_to_target                       
 
-def FindAllBinarySegments(intersegm_to_all, nbody, nsegm, nint_min, bodysegm, CrashOnIdentity, bodycharge):
+def FindAllBinarySegments(intersegm_to_all, nbody, nsegm, nint_min, bodysegm, bodycharge):
 
     Identity_detected = False
 
@@ -887,11 +887,10 @@ def FindAllBinarySegments(intersegm_to_all, nbody, nsegm, nint_min, bodysegm, Cr
 
                 if ((isegm == isegmp) and Sym.IsIdentityRotAndTimeRev()):
 
-                    if CrashOnIdentity:
-                        raise ValueError("Two bodies have identical trajectories")
-                    else:
-                        if not(Identity_detected):
-                            print("Two bodies have identical trajectories")
+                    if not(Identity_detected):
+                        print()
+                        print("WARNING: Two bodies have identical trajectories")
+                        print()
                         
                     Identity_detected = True
 
