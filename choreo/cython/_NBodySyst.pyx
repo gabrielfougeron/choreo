@@ -410,7 +410,6 @@ cdef class NBodySyst():
         double[::1] bodycharge      ,
         list Sym_list               ,
         object inter_law = None     , 
-        bint CrashOnIdentity = True ,
     ):
 
         self._nint_fac = 0 
@@ -483,7 +482,7 @@ cdef class NBodySyst():
 
         self.GatherInterSym()
 
-        BinarySegm, Identity_detected = FindAllBinarySegments(self.intersegm_to_all, nbody, self.nsegm, self.nint_min, self._bodysegm, CrashOnIdentity, bodycharge)
+        BinarySegm, Identity_detected = FindAllBinarySegments(self.intersegm_to_all, nbody, self.nsegm, self.nint_min, self._bodysegm, bodycharge)
         self.nbin_segm_tot, self.nbin_segm_unique = CountSegmentBinaryInteractions(BinarySegm, self.nsegm)
 
         self._BinSourceSegm, self._BinTargetSegm, BinTimeRev, self._BinSpaceRot, self._BinProdChargeSum = ReorganizeBinarySegments(BinarySegm)
@@ -852,8 +851,6 @@ cdef class NBodySyst():
         else:
             
             raise ValueError("Could not find time shift such that all loops have contiguous generating segments")
-
-        # print(f"Required {i_shift} shifts to find reference such that all loops have contiguous generating segments")
 
     @cython.final
     def ChooseLoopGen(self):
