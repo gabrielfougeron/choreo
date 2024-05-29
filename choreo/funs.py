@@ -2689,7 +2689,7 @@ def setup_changevar(geodim,nbody,nint_init,mass,n_reconverge_it_max=6,MomCons=Tr
                         raise ValueError("Two bodies have identical trajectories")
                     else:
                         if not(Identity_detected):
-                            print("Two bodies have identical trajectories")
+                            print("WARNING: Two bodies have identical trajectories")
                         
                     Identity_detected = True
 
