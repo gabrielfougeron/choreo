@@ -15,7 +15,6 @@ import math as m
 import scipy
 
 import scipy.optimize
-import sparseqr
 import networkx
 import random
 import inspect
@@ -27,6 +26,11 @@ from matplotlib.colors import cnames
 from matplotlib.collections import LineCollection
 from matplotlib import animation
 from matplotlib import colormaps
+
+try:
+    import sparseqr
+except:
+    pass
 
 try:
     import ffmpeg

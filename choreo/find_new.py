@@ -71,6 +71,7 @@ def Find_Choreo(
     mul_coarse_to_fine,
     duplicate_eps,
     Save_SegmPos,
+    Save_Params,
     img_size,
     thumb_size,
     color,
@@ -216,6 +217,9 @@ def Find_Choreo(
                 
             if Save_SegmPos:
                 np.save(filename_output+'.npy', segmpos)
+            
+            if Save_Params:
+                np.save(filename_output+'_params.npy', x)
 
         for i in range(n_callback_after_init_list):
             callback_after_init_list[i]()
@@ -424,6 +428,10 @@ def Find_Choreo(
 
                     if Save_SegmPos:
                         np.save(filename_output+'.npy', segmpos)
+
+                    if Save_Params:
+                        np.save(filename_output+'_params.npy', best_sol.x)
+                    
 # 
 #                     if Save_Init_Pos_Vel_Sol:
 #                         all_pos_b = ActionSyst.Compute_init_pos_vel(best_sol.x)
@@ -506,42 +514,42 @@ def ChoreoLoadFromDict(params_dict, Workspace_folder, callback=None, args_list=N
 
     LookForTarget = params_dict['Phys_Target'] ['LookForTarget']
 
-    if (LookForTarget) : # IS LIKELY BROKEN !!!!
-
-        Rotate_fast_with_slow = params_dict['Phys_Target'] ['Rotate_fast_with_slow']
-        Optimize_Init = params_dict['Phys_Target'] ['Optimize_Init']
-        Randomize_Fast_Init =  params_dict['Phys_Target'] ['Randomize_Fast_Init']
-            
-        nT_slow = params_dict['Phys_Target'] ['nT_slow']
-        nT_fast = params_dict['Phys_Target'] ['nT_fast']
-
-        Info_dict_slow_filename = params_dict['Phys_Target'] ["slow_filename"]
-        Info_dict_slow, all_pos_slow = load_target_files(Info_dict_slow_filename,Workspace_folder,"slow")
-
-        ncoeff_slow = Info_dict_slow["n_int"] // 2 + 1
-
-        all_coeffs_slow = AllPosToAllCoeffs(all_pos_slow,ncoeff_slow)
-        Center_all_coeffs(all_coeffs_slow,Info_dict_slow["nloop"],Info_dict_slow["mass"],Info_dict_slow["loopnb"],np.array(Info_dict_slow["Targets"]),np.array(Info_dict_slow["SpaceRotsUn"]))
-
-        Info_dict_fast_list = []
-        all_coeffs_fast_list = []
-
-        for i in range(len(nT_fast)) :
-
-            Info_dict_fast_filename = params_dict['Phys_Target'] ["fast_filenames"] [i]
-            Info_dict_fast, all_pos_fast = load_target_files(Info_dict_fast_filename,Workspace_folder,"fast"+str(i))
-            Info_dict_fast_list.append(Info_dict_fast)
-
-            ncoeff_fast = Info_dict_fast["n_int"] // 2 + 1
-
-            all_coeffs_fast = AllPosToAllCoeffs(all_pos_fast,ncoeff_fast)
-            Center_all_coeffs(all_coeffs_fast,Info_dict_fast_list[i]["nloop"],Info_dict_fast_list[i]["mass"],Info_dict_fast_list[i]["loopnb"],np.array(Info_dict_fast_list[i]["Targets"]),np.array(Info_dict_fast_list[i]["SpaceRotsUn"]))
-
-            all_coeffs_fast_list.append(all_coeffs_fast)
-
-        Sym_list, mass,il_slow_source,ibl_slow_source,il_fast_source,ibl_fast_source = MakeTargetsSyms(Info_dict_slow,Info_dict_fast_list)
-        
-        nbody = len(mass)
+#     if (LookForTarget) : # IS LIKELY BROKEN !!!!
+# 
+#         Rotate_fast_with_slow = params_dict['Phys_Target'] ['Rotate_fast_with_slow']
+#         Optimize_Init = params_dict['Phys_Target'] ['Optimize_Init']
+#         Randomize_Fast_Init =  params_dict['Phys_Target'] ['Randomize_Fast_Init']
+#             
+#         nT_slow = params_dict['Phys_Target'] ['nT_slow']
+#         nT_fast = params_dict['Phys_Target'] ['nT_fast']
+# 
+#         Info_dict_slow_filename = params_dict['Phys_Target'] ["slow_filename"]
+#         Info_dict_slow, all_pos_slow = load_target_files(Info_dict_slow_filename,Workspace_folder,"slow")
+# 
+#         ncoeff_slow = Info_dict_slow["n_int"] // 2 + 1
+# 
+#         all_coeffs_slow = AllPosToAllCoeffs(all_pos_slow,ncoeff_slow)
+#         Center_all_coeffs(all_coeffs_slow,Info_dict_slow["nloop"],Info_dict_slow["mass"],Info_dict_slow["loopnb"],np.array(Info_dict_slow["Targets"]),np.array(Info_dict_slow["SpaceRotsUn"]))
+# 
+#         Info_dict_fast_list = []
+#         all_coeffs_fast_list = []
+# 
+#         for i in range(len(nT_fast)) :
+# 
+#             Info_dict_fast_filename = params_dict['Phys_Target'] ["fast_filenames"] [i]
+#             Info_dict_fast, all_pos_fast = load_target_files(Info_dict_fast_filename,Workspace_folder,"fast"+str(i))
+#             Info_dict_fast_list.append(Info_dict_fast)
+# 
+#             ncoeff_fast = Info_dict_fast["n_int"] // 2 + 1
+# 
+#             all_coeffs_fast = AllPosToAllCoeffs(all_pos_fast,ncoeff_fast)
+#             Center_all_coeffs(all_coeffs_fast,Info_dict_fast_list[i]["nloop"],Info_dict_fast_list[i]["mass"],Info_dict_fast_list[i]["loopnb"],np.array(Info_dict_fast_list[i]["Targets"]),np.array(Info_dict_fast_list[i]["SpaceRotsUn"]))
+# 
+#             all_coeffs_fast_list.append(all_coeffs_fast)
+# 
+#         Sym_list, mass,il_slow_source,ibl_slow_source,il_fast_source,ibl_fast_source = MakeTargetsSyms(Info_dict_slow,Info_dict_fast_list)
+#         
+#         nbody = len(mass)
 
     nbody = params_dict["Phys_Bodies"]["nbody"]
     MomConsImposed = params_dict['Phys_Bodies'] ['MomConsImposed']
@@ -768,6 +776,9 @@ def ChoreoLoadFromDict(params_dict, Workspace_folder, callback=None, args_list=N
     n_save_pos = 'auto'
 
     Save_SegmPos = True
+    
+    # Save_Params = True
+    Save_Params = False
     
     plot_extend = 0.
 

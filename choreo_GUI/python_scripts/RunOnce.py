@@ -292,6 +292,9 @@ async def main(params_dict):
 
     # Save_coeff_profile = True
     Save_coeff_profile = False
+    
+    Save_Params = True
+    # Save_Params = False
 
     # img_size = (12,12) # Image size in inches
     img_size = (8,8) # Image size in inches
