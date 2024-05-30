@@ -36,8 +36,8 @@ choreo.find_new.Load_wisdom_file(DP_Wisdom_file)
 if ("--no-show" in sys.argv):
     plt.show = (lambda : None)
 
-n_test = 100
-n_repeat = 1
+n_test = 1
+n_repeat = 100
     
 def params_to_action_grad_TT(NBS, params_buf):
 
@@ -94,12 +94,12 @@ def setup(test_name, fft_backend, nint_fac):
     NBS = choreo.cython._NBodySyst.NBodySyst(geodim, nbody, mass, charge, Sym_list, inter_law)
 
     # NBS.fftw_planner_effort = 'FFTW_ESTIMATE'
-    # NBS.fftw_planner_effort = 'FFTW_MEASURE'
+    NBS.fftw_planner_effort = 'FFTW_MEASURE'
     # NBS.fftw_planner_effort = 'FFTW_PATIENT'
-    NBS.fftw_planner_effort = 'FFTW_EXHAUSTIVE'
+    # NBS.fftw_planner_effort = 'FFTW_EXHAUSTIVE'
     
-    # NBS.fftw_wisdom_only = False
-    NBS.fftw_wisdom_only = True
+    NBS.fftw_wisdom_only = False
+    # NBS.fftw_wisdom_only = True
     
     NBS.fftw_nthreads = 1
     
@@ -133,7 +133,7 @@ all_tests = [
     # '4D3k',
     # '4D',
     # '3C',
-    '4C',
+    # '4C',
     # '20B',
     # '3D',
     # '3D1',
@@ -163,7 +163,7 @@ all_tests = [
     # "3C29k",
     # "3C37k",
     # '3C101k',
-    # '20B',
+    '20B',
 ]
 
 min_exp = 0
@@ -173,8 +173,10 @@ MonotonicAxes = ["nint_fac"]
 
 all_args = {
     "test_name" : all_tests,
-    # "fft_backend" : ['scipy', 'mkl', 'fftw'],
-    "fft_backend" : ['scipy', 'mkl'],
+    "fft_backend" : ['scipy', 'mkl', 'fftw'],
+    # "fft_backend" : ['scipy', 'mkl'],
+    # "fft_backend" : ['scipy'],
+    # "fft_backend" : ['mkl'],
     # "fft_backend" : ['fftw'],
     "nint_fac" : [2**i for i in range(min_exp,max_exp)] 
 }
@@ -195,7 +197,7 @@ all_timings = pyquickbench.run_benchmark(
     n_repeat = n_repeat     ,
     MonotonicAxes = MonotonicAxes,
     time_per_test=0.2,
-    # ForceBenchmark = True,
+    ForceBenchmark = True,
     # PreventBenchmark = False,
     # ForceBenchmark = False,
     # PreventBenchmark = True,
@@ -222,7 +224,7 @@ single_values_val = {
 
 relative_to_val_list = [
     None    ,
-    # {pyquickbench.out_ax_name : 'params_to_ifft'},
+    {pyquickbench.out_ax_name : 'params_to_ifft'},
     # {"fft_backend" : 'scipy'},
     # {"test_name" : '3C'},
 ]

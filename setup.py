@@ -88,8 +88,8 @@ elif platform.system() == "Linux":
     else:
 
         # all_compilers = ['icx','clang','gcc']
-        # all_compilers = ['clang']
-        all_compilers = ['gcc']
+        all_compilers = ['clang']
+        # all_compilers = ['gcc']
         # all_compilers = ['icx'] 
 
         for compiler in all_compilers:
@@ -101,9 +101,9 @@ elif platform.system() == "Linux":
                 
                 break
 
-#         extra_compile_args_std = ["-O0","-march=native", "-fopenmp", "-lm", *ignore_warnings_args]
-#         extra_compile_args_safe = ["-O0", "-fopenmp", "-lm", *ignore_warnings_args]
-#         extra_link_args = ["-fopenmp", "-lm",]
+        # extra_compile_args_std = ["-O0","-march=native", "-fopenmp", "-lm", *ignore_warnings_args]
+        # extra_compile_args_safe = ["-O0", "-fopenmp", "-lm", *ignore_warnings_args]
+        # extra_link_args = ["-fopenmp", "-lm",]
 
         extra_compile_args_std = ["-Ofast", "-march=native", "-fopenmp", "-lm", "-flto", *ignore_warnings_args]
         extra_compile_args_safe = ["-O3", "-fopenmp", "-lm", "-flto", *ignore_warnings_args]
@@ -124,8 +124,11 @@ cython_extnames.append("choreo.cython.optional_pyfftw")
 cython_safemath_needed.append(False)
 
 include_pyfftw = PYFFTW_AVAILABLE and not("PYODIDE" in os.environ) and not(platform.system() == "Windows")
+print(f'{include_pyfftw = }')
 cython_filenames.append(f"choreo.cython.optional_pyfftw_{include_pyfftw}".replace('.','/') + src_ext)
 
+
+optional_pyfftw_pxd_path = "choreo/cython/optional_pyfftw.pxd"
 if include_pyfftw:
     pyfftw_pxd_str = """
 cimport pyfftw
@@ -134,10 +137,18 @@ import pyfftw as p_pyfftw
 else:
     pyfftw_pxd_str = """
 cimport choreo.cython.pyfftw_fake as pyfftw
-import choreo.cython.pyfftw_fake as p_pyfftw   
+import choreo.cython.pyfftw_fake as p_pyfftw  
     """
-with open("choreo/cython/optional_pyfftw.pxd", "w") as text_file:
-    text_file.write(pyfftw_pxd_str)
+if os.path.isfile(optional_pyfftw_pxd_path):
+    with open(optional_pyfftw_pxd_path, "r") as text_file:
+        write_optional_pyfftw_pxd = (pyfftw_pxd_str != text_file.read())
+            
+else:
+    write_optional_pyfftw_pxd = True
+    
+if write_optional_pyfftw_pxd:    
+    with open(optional_pyfftw_pxd_path, "w") as text_file:
+        text_file.write(pyfftw_pxd_str)
 
 
 
