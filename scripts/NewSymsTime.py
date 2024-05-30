@@ -94,12 +94,12 @@ def setup(test_name, fft_backend, nint_fac):
     NBS = choreo.cython._NBodySyst.NBodySyst(geodim, nbody, mass, charge, Sym_list, inter_law)
 
     # NBS.fftw_planner_effort = 'FFTW_ESTIMATE'
-    NBS.fftw_planner_effort = 'FFTW_MEASURE'
+    # NBS.fftw_planner_effort = 'FFTW_MEASURE'
     # NBS.fftw_planner_effort = 'FFTW_PATIENT'
-    # NBS.fftw_planner_effort = 'FFTW_EXHAUSTIVE'
+    NBS.fftw_planner_effort = 'FFTW_EXHAUSTIVE'
     
-    NBS.fftw_wisdom_only = False
-    # NBS.fftw_wisdom_only = True
+    # NBS.fftw_wisdom_only = False
+    NBS.fftw_wisdom_only = True
     
     NBS.fftw_nthreads = 1
     
