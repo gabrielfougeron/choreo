@@ -65,7 +65,8 @@ def Find_Choreo(
     line_search,
     linesearch_smin,
     Check_Escape,
-    gradtol_max,
+    Newt_err_norm_max,
+    Newt_err_norm_max_save,
     n_reconverge_it_max,
     plot_extend,
     mul_coarse_to_fine,
@@ -340,11 +341,12 @@ def Find_Choreo(
                 
                 print(f'Opt Action Grad Norm Refine : {f_fine_norm:.2e}')
                 
-                ParamPreciseEnough = (f_fine_norm < gradtol_max)
+                ParamPreciseEnough = (f_fine_norm < Newt_err_norm_max)
+                ParamPreciseEnoughSave = (f_fine_norm < Newt_err_norm_max_save)
                 CanChangeOptimParams = i_optim_param < (n_optim_param-1)
                 CanRefine = (current_cvg_lvl < n_reconverge_it_max)
-                NeedsRefinement = (f_fine_norm > mul_coarse_to_fine*best_sol.f_norm)
-                OnCollisionCourse = (best_sol.f_norm < 1e3*gradtol_max) and (f_fine_norm > 1e6 * best_sol.f_norm) 
+                NeedsRefinement = (f_fine_norm > mul_coarse_to_fine*best_sol.f_norm) and (f_fine_norm > ParamPreciseEnoughSave)
+                OnCollisionCourse = (best_sol.f_norm < 1e3*Newt_err_norm_max) and (f_fine_norm > 1e6 * best_sol.f_norm) 
                 
                 NBS.nint_fac = nint_fac_cur
 
@@ -354,7 +356,7 @@ def Find_Choreo(
                     print("Stopping search: found solution.")
                     SaveSol = True
 
-                if GoOn and ParamPreciseEnough and not(CanChangeOptimParams) :
+                if GoOn and ParamPreciseEnoughSave and not(CanChangeOptimParams) and (not(CanRefine) or not(NeedsRefinement)) :
 
                     GoOn = False
                     print("Stopping search: found approximate solution.")
@@ -751,8 +753,6 @@ def ChoreoLoadFromDict(params_dict, Workspace_folder, callback=None, args_list=N
 
     n_optim_param = len(gradtol_list)
     
-    gradtol_max = 100*gradtol_list[n_optim_param-1]
-
     escape_fac = 1e0
 
     escape_min_dist = 1

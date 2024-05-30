@@ -257,7 +257,6 @@ class ChoreoAction():
         all_coeffs_in = self.Unpackage_all_coeffs(xin)
         ncoeff_in = self.ncoeff
 
-
         self.current_cvg_lvl = iout
         ncoeff_out = self.ncoeff
         
