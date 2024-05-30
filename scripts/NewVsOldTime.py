@@ -14,19 +14,7 @@ import json
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy
-
-
-# import mkl_fft
-# scipy.fft.set_global_backend(
-#     backend = mkl_fft._scipy_fft_backend   ,
-#     only = True
-# )
-
-# import pyfftw
-# scipy.fft.set_global_backend(
-#     backend = pyfftw.interfaces.scipy_fft  ,
-#     only = True
-# )
+import mkl_fft
 
 import choreo 
 
@@ -36,35 +24,21 @@ choreo.find_new.Load_wisdom_file(DP_Wisdom_file)
 if ("--no-show" in sys.argv):
     plt.show = (lambda : None)
 
-n_test = 100
-n_repeat = 1
     
-def params_to_action_grad_TT(NBS, params_buf):
+def params_to_action_grad_new(NBS, ActionSyst, params_buf_new, params_buf_old):
+    NBS.params_to_action_grad(params_buf_new)
 
-    TT = pyquickbench.TimeTrain(
-        include_locs = False    ,
-        names_reduction = "min" ,
-        # names_reduction = "avg" ,
-    )
+def params_to_action_grad_old(NBS, ActionSyst, params_buf_new, params_buf_old):
+    ActionSyst.Compute_action(params_buf_old)
     
-    for i in range(n_test):
-        NBS.TT_params_to_action_grad(params_buf, TT)
     
-    return TT
+all_funs = {
+    'New' : params_to_action_grad_new ,
+    'Old' : params_to_action_grad_old ,
+}
 
-    
-def params_to_action_grad(NBS, params_buf):
-    
-    NBS.params_to_action_grad(params_buf)
-    
-    
-all_funs = [
-    params_to_action_grad_TT ,
-    # params_to_action_grad ,
-]
-
-mode = 'vector_output'  
-# mode = 'timings'
+# mode = 'vector_output'  
+mode = 'timings'
 
 def setup(test_name, fft_backend, nint_fac):
     
@@ -106,10 +80,53 @@ def setup(test_name, fft_backend, nint_fac):
     NBS.fft_backend = fft_backend
     
     NBS.nint_fac = nint_fac
-        
-    params_buf = np.random.random((NBS.nparams))
     
-    return {"NBS":NBS, "params_buf":params_buf}
+    Sym_list_old = choreo.helper.Make_ChoreoSymList_From_ActionSymList(Sym_list, nbody)
+    
+    nint_init = NBS.nint
+    n_reconverge_it_max = 0
+
+    ActionSyst = choreo.funs.setup_changevar(
+        geodim                  ,
+        nbody                   ,
+        nint_init               ,
+        mass                    ,
+        n_reconverge_it_max     ,
+        Sym_list = Sym_list_old ,
+        MomCons = False         ,
+        n_grad_change = 1.      ,
+        CrashOnIdentity = True  ,
+        # ForceMatrixChangevar = True  ,
+    )
+
+    GradHessBackend = "Cython"
+    # GradHessBackend = "Numba"
+
+    ActionSyst.SetBackend(parallel=False, TwoD=True, GradHessBackend=GradHessBackend)
+
+    ActionSyst.current_cvg_lvl = 0
+    
+    assert NBS.nint == ActionSyst.nint
+    
+    # print(NBS.nparams, ActionSyst.nparams)
+    # assert NBS.nparams == ActionSyst.nparams
+    
+    params_buf_new = np.random.random((NBS.nparams))
+    params_buf_old = np.random.random((ActionSyst.nparams))
+    
+    if fft_backend == "scipy":
+        
+        ActionSyst.rfft = scipy.fft.rfft
+        ActionSyst.irfft = scipy.fft.irfft
+        
+    elif fft_backend == "mkl":
+                
+        ActionSyst.rfft = mkl_fft._numpy_fft.rfft
+        ActionSyst.irfft = mkl_fft._numpy_fft.irfft
+        
+
+    
+    return {"NBS":NBS, "ActionSyst":ActionSyst, "params_buf_new":params_buf_new, "params_buf_old":params_buf_old}
         
 
         
@@ -132,10 +149,10 @@ all_tests = [
     # '4C5k',
     # '4D3k',
     # '4D',
-    # '3C',
+    '3C',
     '4C',
     # '20B',
-    # '3D',
+    '3D',
     # '3D1',
     # '3C2k',
     # '3D2k',
@@ -166,8 +183,8 @@ all_tests = [
     # '20B',
 ]
 
-min_exp = 0
-max_exp = 15
+min_exp = 3
+max_exp = 20
 
 MonotonicAxes = ["nint_fac"]
 
@@ -175,6 +192,7 @@ all_args = {
     "test_name" : all_tests,
     # "fft_backend" : ['scipy', 'mkl', 'fftw'],
     "fft_backend" : ['scipy', 'mkl'],
+    # "fft_backend" : ['scipy'],
     # "fft_backend" : ['fftw'],
     "nint_fac" : [2**i for i in range(min_exp,max_exp)] 
 }
@@ -184,18 +202,20 @@ timings_folder = os.path.join(__PROJECT_ROOT__,'examples','generated_files_time_
 basename = 'NewSymDev_timing'
 filename = os.path.join(timings_folder,basename+'.npz')
 
+n_repeat = 1
+
 all_timings = pyquickbench.run_benchmark(
     all_args                ,
     all_funs                ,
     setup = setup           ,
     filename = filename     ,
-    # StopOnExcept = True     ,
+    StopOnExcept = True     ,
     ShowProgress = True     ,
     mode = mode  ,
     n_repeat = n_repeat     ,
     MonotonicAxes = MonotonicAxes,
     time_per_test=0.2,
-    # ForceBenchmark = True,
+    ForceBenchmark = True,
     # PreventBenchmark = False,
     # ForceBenchmark = False,
     # PreventBenchmark = True,
@@ -206,7 +226,7 @@ plot_intent = {
     "test_name" : 'curve_linestyle'                  ,
     # "fft_backend" : 'curve_pointstyle'                  ,
     # "fft_backend" : 'curve_color'                  ,
-    "fft_backend" : 'curve_linestyle'                  ,
+    "fft_backend" : 'subplot_grid_y'                  ,
     "nint_fac" : 'points'                           ,
     pyquickbench.repeat_ax_name :  'reduction_min'  ,
     # pyquickbench.repeat_ax_name :  'reduction_avg'  ,
@@ -222,6 +242,7 @@ single_values_val = {
 
 relative_to_val_list = [
     None    ,
+    {pyquickbench.fun_ax_name : 'New'},
     # {pyquickbench.out_ax_name : 'params_to_ifft'},
     # {"fft_backend" : 'scipy'},
     # {"test_name" : '3C'},
