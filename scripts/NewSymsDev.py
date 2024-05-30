@@ -111,6 +111,17 @@ def proj_to_zero(array, eps=1e-14):
             array[idx] = 0.
 
 
+def ortho_err_l(mat):
+    m,n = mat.shape
+    mat2 = np.matmul(mat.conj().T,mat)
+    return np.linalg.norm(mat2 - np.identity(n))
+                          
+def ortho_err_r(mat):
+    m,n = mat.shape
+    mat2 = np.matmul(mat,mat.conj().T)
+    return np.linalg.norm(mat2 - np.identity(m))
+                          
+
 def doit(config_name):
         
     eps = 1e-10
@@ -142,8 +153,41 @@ def doit(config_name):
     NBS = choreo.cython._NBodySyst.NBodySyst(geodim, nbody, mass, charge, Sym_list, inter_law)
 
     for il in range(NBS.nloop):
+        print()
+        print(f'{il = }')
+        params_basis = NBS.params_basis_pos(il)
         
-        print(NBS.params_basis_pos(il).shape)
+        params_basis_r = np.empty((params_basis.shape[0],params_basis.shape[1],params_basis.shape[2],2),dtype=np.float64)
+        
+        params_basis_r[:,:,:,0] = params_basis.real
+        params_basis_r[:,:,:,1] = params_basis.imag
+        
+        m = params_basis.shape[0]
+        n = params_basis.shape[1]*params_basis.shape[2]*2
+        
+        params_basis_r = params_basis_r.reshape(m, n)
+        
+        nn = n*m
+        
+        nz = 0
+        nu = 0
+        for i in range(m):
+            for j in range(n):
+                if abs(params_basis_r[i,j]) < eps:
+                    nz += 1
+                
+                elif abs(abs(params_basis_r[i,j])-1) < eps:
+                    nu +=1
+                    
+        
+        print(f'{nz = } / {nn}')
+        print(f'{nu = } / {nn}')
+        
+        
+        if nz + nu == nn:
+            print("Prime candidate !!!")
+
+
 
 
     nparam_nosym = geodim * NBS.nint * nbody
