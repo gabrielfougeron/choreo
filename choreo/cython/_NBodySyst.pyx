@@ -55,6 +55,7 @@ import networkx
 import json
 import types
 import itertools
+# import pyquickbench
 
 try:
     from matplotlib import pyplot as plt
@@ -1347,28 +1348,34 @@ cdef class NBodySyst():
 
             jacobian = scipy.optimize.nonlin.KrylovJacobian(**jac_options_kw)
 
+            # jacobian.TT = pyquickbench.TimeTrain(include_locs=False, names_reduction ='avg')
+            # def matvec(self,v):  
+            #     self.TT.toc("sync")
+            #     res = self.NBS.segmpos_dparams_to_action_hess(self.segmpos, v)
+            #     self.TT.toc("segmpos_dparams_to_action_hess")
+            #     return res
+
             def matvec(self,v):                
                 return self.NBS.segmpos_dparams_to_action_hess(self.segmpos, v)
 
+            def update(self, x, f):
+                self.segmpos = self.NBS.params_to_segmpos(x)
+                scipy.optimize.nonlin.KrylovJacobian.update(self, x, f)
+
+            def setup(self, x, f, func):
+                self.segmpos = self.NBS.params_to_segmpos(x)
+                scipy.optimize.nonlin.KrylovJacobian.setup(self, x, f, func)
+
             jacobian.matvec = types.MethodType(matvec, jacobian)
             jacobian.rmatvec = types.MethodType(matvec, jacobian)
+            jacobian.update = types.MethodType(update, jacobian)
+            jacobian.setup = types.MethodType(setup, jacobian)
 
         else: 
 
             jacobian = scipy.optimize.nonlin.KrylovJacobian(**jac_options_kw)
         
         jacobian.NBS = self
-        
-        def update(self, x, f):
-            self.segmpos = self.NBS.params_to_segmpos(x)
-            scipy.optimize.nonlin.KrylovJacobian.update(self, x, f)
-
-        def setup(self, x, f, func):
-            self.segmpos = self.NBS.params_to_segmpos(x)
-            scipy.optimize.nonlin.KrylovJacobian.setup(self, x, f, func)
-
-        jacobian.update = types.MethodType(update, jacobian)
-        jacobian.setup = types.MethodType(setup, jacobian)
 
         return jacobian
 
