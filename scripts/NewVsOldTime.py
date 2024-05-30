@@ -99,8 +99,8 @@ def setup(test_name, fft_backend, nint_fac):
         # ForceMatrixChangevar = True  ,
     )
 
-    GradHessBackend = "Cython"
-    # GradHessBackend = "Numba"
+    # GradHessBackend = "Cython"
+    GradHessBackend = "Numba"
 
     ActionSyst.SetBackend(parallel=False, TwoD=True, GradHessBackend=GradHessBackend)
 
@@ -149,10 +149,10 @@ all_tests = [
     # '4C5k',
     # '4D3k',
     # '4D',
-    '3C',
-    '4C',
+    # '3C',
+    # '4C',
     # '20B',
-    '3D',
+    # '3D',
     # '3D1',
     # '3C2k',
     # '3D2k',
@@ -162,7 +162,7 @@ all_tests = [
     # '3D5k',
     # '3D101k',
     # 'test_3D5k',
-    # '3C7k2',
+    '3C7k2',
     # '3D7k2',
     # '6C',
     # '6D',
@@ -183,15 +183,16 @@ all_tests = [
     # '20B',
 ]
 
-min_exp = 3
-max_exp = 20
+min_exp = 0
+max_exp = 15
 
 MonotonicAxes = ["nint_fac"]
 
 all_args = {
     "test_name" : all_tests,
     # "fft_backend" : ['scipy', 'mkl', 'fftw'],
-    "fft_backend" : ['scipy', 'mkl'],
+    # "fft_backend" : ['scipy', 'mkl'],
+    "fft_backend" : ['mkl'],
     # "fft_backend" : ['scipy'],
     # "fft_backend" : ['fftw'],
     "nint_fac" : [2**i for i in range(min_exp,max_exp)] 
@@ -199,7 +200,7 @@ all_args = {
 
 timings_folder = os.path.join(__PROJECT_ROOT__,'examples','generated_files_time_consuming')
 
-basename = 'NewSymDev_timing'
+basename = 'NewVsOld_timing'
 filename = os.path.join(timings_folder,basename+'.npz')
 
 n_repeat = 1
@@ -209,12 +210,12 @@ all_timings = pyquickbench.run_benchmark(
     all_funs                ,
     setup = setup           ,
     filename = filename     ,
-    StopOnExcept = True     ,
+    # StopOnExcept = True     ,
     ShowProgress = True     ,
     mode = mode  ,
     n_repeat = n_repeat     ,
     MonotonicAxes = MonotonicAxes,
-    time_per_test=0.2,
+    # time_per_test=0.2,
     ForceBenchmark = True,
     # PreventBenchmark = False,
     # ForceBenchmark = False,
@@ -231,7 +232,7 @@ plot_intent = {
     pyquickbench.repeat_ax_name :  'reduction_min'  ,
     # pyquickbench.repeat_ax_name :  'reduction_avg'  ,
     # pyquickbench.out_ax_name :  'curve_color'  ,
-    pyquickbench.out_ax_name :  'reduction_sum'  ,
+    # pyquickbench.out_ax_name :  'reduction_sum'  ,
     # pyquickbench.out_ax_name :  'single_value'  ,
 }
 
@@ -243,7 +244,6 @@ single_values_val = {
 relative_to_val_list = [
     None    ,
     {pyquickbench.fun_ax_name : 'New'},
-    # {pyquickbench.out_ax_name : 'params_to_ifft'},
     # {"fft_backend" : 'scipy'},
     # {"test_name" : '3C'},
 ]
