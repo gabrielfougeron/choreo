@@ -488,7 +488,7 @@ def test_repeatability(AllNBS, float64_tols):
         print(np.linalg.norm(segmpos - segmpos_2))
         assert np.allclose(segmpos, segmpos_2, rtol = float64_tols.rtol, atol = float64_tols.atol) 
 
-@pytest.mark.skip(reason="PYFFTW install currently broken")
+# @pytest.mark.skip(reason="PYFFTW install currently broken")
 def test_fft_backends(AllNBS, float64_tols):
     
     for name, NBS in AllNBS.items():
@@ -506,6 +506,7 @@ def test_fft_backends(AllNBS, float64_tols):
         segmpos_ref = NBS.params_to_segmpos(params_buf)
         
         for backend in ["scipy", "mkl", "fftw"]:
+        # for backend in ["scipy", "mkl"]:
             
             print(backend)
             

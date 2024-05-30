@@ -962,9 +962,10 @@ def Load_wisdom_file(DP_Wisdom_file):
                     
             wis_list.append(wis)
 
-            pyfftw.import_wisdom(wis_list)
+        pyfftw.import_wisdom(wis_list)
     
-def Write_wisdom_file(DP_Wisdom_file):    
+def Write_wisdom_file(DP_Wisdom_file): 
+       
     if not(PYFFTW_AVAILABLE):
         warnings.warn("The package pyfftw could not be loaded. Please check your local install.")
     else:
