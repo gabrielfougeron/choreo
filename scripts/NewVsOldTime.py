@@ -149,7 +149,7 @@ all_tests = [
     # '4C5k',
     # '4D3k',
     # '4D',
-    # '3C',
+    '3C',
     # '4C',
     # '20B',
     # '3D',
@@ -162,7 +162,7 @@ all_tests = [
     # '3D5k',
     # '3D101k',
     # 'test_3D5k',
-    '3C7k2',
+    # '3C7k2',
     # '3D7k2',
     # '6C',
     # '6D',
@@ -184,7 +184,7 @@ all_tests = [
 ]
 
 min_exp = 0
-max_exp = 15
+max_exp = 22
 
 MonotonicAxes = ["nint_fac"]
 
