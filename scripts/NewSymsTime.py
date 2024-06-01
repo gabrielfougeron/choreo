@@ -37,14 +37,14 @@ if ("--no-show" in sys.argv):
     plt.show = (lambda : None)
 
 n_test = 1
-n_repeat = 100
+n_repeat = 10
     
 def params_to_action_grad_TT(NBS, params_buf):
 
     TT = pyquickbench.TimeTrain(
         include_locs = False    ,
-        names_reduction = "min" ,
-        # names_reduction = "avg" ,
+        # names_reduction = "min" ,
+        names_reduction = "avg" ,
     )
     
     for i in range(n_test):
@@ -132,6 +132,7 @@ all_tests = [
     # '4C5k',
     # '4D3k',
     # '4D',
+    '3B',
     # '3C',
     # '4C',
     # '20B',
@@ -163,20 +164,20 @@ all_tests = [
     # "3C29k",
     # "3C37k",
     # '3C101k',
-    '20B',
+    # '20B',
 ]
 
 min_exp = 0
-max_exp = 15
+max_exp = 20
 
 MonotonicAxes = ["nint_fac"]
 
 all_args = {
     "test_name" : all_tests,
-    "fft_backend" : ['scipy', 'mkl', 'fftw'],
+    # "fft_backend" : ['scipy', 'mkl', 'fftw'],
     # "fft_backend" : ['scipy', 'mkl'],
     # "fft_backend" : ['scipy'],
-    # "fft_backend" : ['mkl'],
+    "fft_backend" : ['mkl'],
     # "fft_backend" : ['fftw'],
     "nint_fac" : [2**i for i in range(min_exp,max_exp)] 
 }
@@ -212,24 +213,26 @@ plot_intent = {
     "nint_fac" : 'points'                           ,
     pyquickbench.repeat_ax_name :  'reduction_min'  ,
     # pyquickbench.repeat_ax_name :  'reduction_avg'  ,
-    # pyquickbench.out_ax_name :  'curve_color'  ,
-    pyquickbench.out_ax_name :  'reduction_sum'  ,
+    pyquickbench.out_ax_name :  'curve_color'  ,
+    # pyquickbench.out_ax_name :  'reduction_avg'  ,
     # pyquickbench.out_ax_name :  'single_value'  ,
 }
 
 single_values_val = {
     # pyquickbench.out_ax_name :  'params_to_ifft'  ,
-    pyquickbench.out_ax_name :  'ifft_to_params'  ,
+    # pyquickbench.out_ax_name :  'ifft_to_params'  ,
+    pyquickbench.out_ax_name :  'ifft_to_pos_slice'  ,
+    # pyquickbench.out_ax_name :  'segm_pos_to_pot_nrg_grad'  ,
 }
 
 relative_to_val_list = [
     None    ,
-    {pyquickbench.out_ax_name : 'params_to_ifft'},
+    # {pyquickbench.out_ax_name : 'params_to_ifft'},
     # {"fft_backend" : 'scipy'},
     # {"test_name" : '3C'},
 ]
 
-# plot_ylim = [1e-6, 8e-3]
+# plot_ylim = [1e-6, 1e-1]
 # plot_ylim = [1e-7, 3e-3]
 plot_ylim = None
 
