@@ -28,60 +28,60 @@ def proj_to_zero(array, eps=1e-14):
 def main():
         
     all_tests = [
-        # '3q',
+        '3q',
         '3q3q',
-        # '3q3qD',
-        # '2q2q',
-        # '4q4q',
-        # '4q4qD',
-        # '4q4qD3k',
-        # '1q2q',
-        # '5q5q',
-        # '6q6q',
+        '3q3qD',
+        '2q2q',
+        '4q4q',
+        '4q4qD',
+        '4q4qD3k',
+        '1q2q',
+        '5q5q',
+        '6q6q',
         '2C3C',
-        # '2D3D',   
-        # '2C3C5k',
-        # '2D3D5k',
-        # '2D1',
-        # '4C5k',
-        # '4D3k',
-        # '4C',
-        # '4D',
+        '2D3D',   
+        '2C3C5k',
+        '2D3D5k',
+        '2D1',
+        '4C5k',
+        '4D3k',
+        '4C',
+        '4D',
         '3C',
-        # '3D',
-        # '3D1',
-        # '3C2k',
-        # '3D2k',
-        # '3Dp',
-        # '3C4k',
-        # '3D4k',
-        # '3C5k',
-        # '3D5k',
-        # '3C101k',
-        # '3D101k',
-        # 'test_3D5k',
-        # '3C7k2',
-        # '3D7k2',
-        # '6C',
-        # '6D',
-        # '6Ck5',
-        # '6Dk5',
-        # '5Dq',
+        '3D',
+        '3D1',
+        '3C2k',
+        '3D2k',
+        '3Dp',
+        '3C4k',
+        '3D4k',
+        '3C5k',
+        '3D5k',
+        '3C101k',
+        '3D101k',
+        'test_3D5k',
+        '3C7k2',
+        '3D7k2',
+        '6C',
+        '6D',
+        '6Ck5',
+        '6Dk5',
+        '5Dq',
         '2C3C5C',
-        # '3C_3dim',
-        # '2D1_3dim', 
-        # '3C11k',
-        # '5q',
-        # '5Dq_',
-        # 'uneven_nnpr',
-        # '3C4q4k',
-        # '3D4q4k',
-        # '2D2D',
-        # '2D2D5k',
-        # '2D1D1D',
-        # '1Dx3',
-        # '1D1D1D',
-        # '3DD',
+        '3C_3dim',
+        '2D1_3dim', 
+        '3C11k',
+        '5q',
+        '5Dq_',
+        'uneven_nnpr',
+        '3C4q4k',
+        '3D4q4k',
+        '2D2D',
+        '2D2D5k',
+        '2D1D1D',
+        '1Dx3',
+        '1D1D1D',
+        '3DD',
     ]
 
     TT = pyquickbench.TimeTrain(
@@ -109,7 +109,6 @@ def proj_to_zero(array, eps=1e-14):
     for idx in itertools.product(*[range(i)  for i in array.shape]):
         if abs(array[idx]) < eps:
             array[idx] = 0.
-
 
 def ortho_err_l(mat):
     m,n = mat.shape
@@ -184,22 +183,7 @@ def doit(config_name):
                 elif abs(abs(params_basis_r[i,j])-1) < eps:
                     nu +=1
                     
-        
-        print(f'{nz = } / {nn}')
-        print(f'{nu = } / {nn}')
-        
         nnz_k = NBS.nnz_k(il)
-        
-        print(f'{nnz_k = }')
-        print(f'{NBS.params_shapes[il] = }')
-        print(f'{NBS.ncoeff_min_loop[il] = }')
-        
-
-        
-        if nz + nu == nn:
-            print("Prime candidate !!!")
-
-
 
         all_coeffs_loop = all_coeffs[il,:,:]
         
@@ -207,19 +191,30 @@ def doit(config_name):
         ncoeff_min_loop = NBS.ncoeff_min_loop[il]
         nc = ncoeffs_loop//ncoeff_min_loop
         
-        params_loop = params_pos[2*NBS.params_shifts[il]:2*NBS.params_shifts[il]+NBS.params_shifts[il+1]].reshape(-1,geodim,2)
-        # 
-        # print(all_coeffs_loop[:,0].real)
-        # print(params_loop[:,0,0])
-        # 
-        # 
-        
-        print(all_coeffs_loop[0:-1:ncoeff_min_loop,:].real.T)
-        print(params_loop[:,:,0].T)
-        
-        print(all_coeffs_loop[0:-1:ncoeff_min_loop,:].imag.T)
-        print(params_loop[:,:,1].T)
-        
+        params_loop = params_pos[2*NBS.params_shifts[il]:NBS.params_shifts[il]+NBS.params_shifts[il+1]].reshape(-1,geodim,2)
+
+        if nnz_k.shape[0] == 1:
+            if nnz_k[0] == 0:
+                
+                print(f'{nnz_k = }')
+                
+                params_basis = NBS.params_basis_pos(il)
+                
+                m = params_basis.shape[0]
+                n = params_basis.shape[2]
+                 
+                if 2*m == n:
+                    
+                    params_basis_r = np.empty((m,2, n),dtype=np.float64)
+
+                    params_basis_r[:,0,:] = params_basis[:,0,:].real
+                    params_basis_r[:,1,:] = params_basis[:,0,:].imag
+                    
+                    if np.linalg.norm(params_basis_r.reshape(n,n) - np.identity(params_basis.shape[2])) < eps:
+                        
+                        print("Identity transformation")
+
+                        assert np.linalg.norm(all_coeffs_loop[0:-1:ncoeff_min_loop,:] - params_loop[:,:,0] - params_loop[:,:,1] * 1j ) < eps
         
         
         # 
