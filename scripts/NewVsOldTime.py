@@ -96,7 +96,7 @@ def setup(test_name, fft_backend, nint_fac):
         MomCons = False         ,
         n_grad_change = 1.      ,
         CrashOnIdentity = True  ,
-        # ForceMatrixChangevar = True  ,
+        ForceMatrixChangevar = True  ,
     )
 
     # GradHessBackend = "Cython"
@@ -149,7 +149,8 @@ all_tests = [
     # '4C5k',
     # '4D3k',
     # '4D',
-    # '3C',
+    '3C',
+    # '3B',
     # '4C',
     # '20B',
     # '3D',
@@ -162,7 +163,7 @@ all_tests = [
     # '3D5k',
     # '3D101k',
     # 'test_3D5k',
-    '3C7k2',
+    # '3C7k2',
     # '3D7k2',
     # '6C',
     # '6D',
@@ -184,7 +185,7 @@ all_tests = [
 ]
 
 min_exp = 0
-max_exp = 15
+max_exp = 20
 
 MonotonicAxes = ["nint_fac"]
 
@@ -229,8 +230,8 @@ plot_intent = {
     # "fft_backend" : 'curve_color'                  ,
     "fft_backend" : 'subplot_grid_y'                  ,
     "nint_fac" : 'points'                           ,
-    pyquickbench.repeat_ax_name :  'reduction_min'  ,
-    # pyquickbench.repeat_ax_name :  'reduction_avg'  ,
+    # pyquickbench.repeat_ax_name :  'reduction_min'  ,
+    pyquickbench.repeat_ax_name :  'reduction_avg'  ,
     # pyquickbench.out_ax_name :  'curve_color'  ,
     # pyquickbench.out_ax_name :  'reduction_sum'  ,
     # pyquickbench.out_ax_name :  'single_value'  ,
