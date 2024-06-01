@@ -389,6 +389,10 @@ cdef class NBodySyst():
     def pos_slice_shapes(self):
         return np.asarray(self._pos_slice_shapes)
 
+    @property
+    def params_shifts(self):
+        return np.asarray(self._params_shifts)
+
     cdef bint BufArraysAllocated
     cdef double* _pos_slice_buf_ptr
     cdef double** _params_pos_buf
@@ -3674,7 +3678,7 @@ cdef void partial_fft_to_pos_slice_2_sub(
     cdef int n_inter = npr+1
     cdef long nint = 2*ncoeff_min_loop*npr
 
-    cdef double dfac
+    cdef double dfac = 2.
 
     # Casting double complex to double array
     cdef double* params_basis_r = <double*> params_basis
@@ -3683,8 +3687,6 @@ cdef void partial_fft_to_pos_slice_2_sub(
     cdef int ndcom = 2*ncoeff_min_loop_nnz*nppl
 
     inplace_twiddle(const_ifft, nnz_k, nint, n_inter, ncoeff_min_loop_nnz, nppl, -1)
-
-    dfac = 2.
 
     # Computes a.real * b.real.T + a.imag * b.imag.T using clever memory arrangement and a single gemm call
     scipy.linalg.cython_blas.dgemm(transt, transn, &geodim, &n_inter, &ndcom, &dfac, params_basis_r, &ndcom, ifft_r, &ndcom, &zero_double, pos_slice, &geodim)
@@ -3746,7 +3748,7 @@ cdef void partial_fft_to_pos_slice_1_sub(
     cdef int n_inter = npr+1
     cdef long nint = 2*ncoeff_min_loop*npr
 
-    cdef double dfac
+    cdef double dfac = 2.
 
     # Casting double complex to double array
     cdef double* params_basis_r = <double*> params_basis
@@ -3762,8 +3764,6 @@ cdef void partial_fft_to_pos_slice_1_sub(
     cdef Py_ssize_t m, j, i
 
     inplace_twiddle(const_ifft, nnz_k, nint, n_inter, ncoeff_min_loop_nnz, nppl, -1)
-
-    dfac = 2.
 
     # Computes a.real * b.real.T + a.imag * b.imag.T using clever memory arrangement and a single gemm call
     scipy.linalg.cython_blas.dgemm(transt, transn, &geodim, &n_inter, &ndcom, &dfac, params_basis_r, &ndcom, ifft_r, &ndcom, &zero_double, pos_slice, &geodim)
