@@ -398,6 +398,19 @@ cdef class NBodySyst():
     cdef double** _params_pos_buf
     cdef double complex** _ifft_buf_ptr
 
+    def pos_slice(self, il):
+
+        if self._pos_slice_buf_ptr == NULL:
+            return None
+
+        cdef Py_ssize_t _il = il
+        cdef double* pos_slice_ptr = self._pos_slice_buf_ptr + self._pos_slice_shifts[_il]
+
+        # cdef double[:,:,::1] res = <double[:self._pos_slice_shapes[_il,0],:self._pos_slice_shapes[_il,1],:self._pos_slice_shapes[_il,2]]> pos_slice_ptr
+        cdef double[:,::1] res = <double[:self._pos_slice_shapes[_il,0],:self._pos_slice_shapes[_il,1]]> pos_slice_ptr
+
+        return np.asarray(res)
+
     cdef list _pyfftw_rffts
     cdef pyfftw.fftw_exe** _pyfftw_rffts_exe
 
@@ -745,7 +758,7 @@ cdef class NBodySyst():
     @cython.final
     def DetectLoops(self, double[::1] bodymass, double[::1] bodycharge, long nint_min_fac = 1):
 
-        cdef Py_ssize_t il, ib
+        cdef Py_ssize_t il, ib, ilb
         
         All_den_list_on_entry = []
         for Sym in self.Sym_list:
@@ -767,7 +780,7 @@ cdef class NBodySyst():
         
         BodyLoop = np.zeros((self.nbody), dtype = np.intp)
         self._bodyloop = BodyLoop
-        Targets = np.zeros((self.nloop, maxlooplen), dtype=np.intp)
+        cdef long[:,::1] Targets = np.zeros((self.nloop, maxlooplen), dtype=np.intp)
         self._Targets = Targets
         for il, CC in enumerate(networkx.connected_components(BodyGraph)):
             for ilb, ib in enumerate(CC):
@@ -4496,7 +4509,7 @@ cdef void params_to_segmvel(
     pyfftw.fftw_exe** pyfftw_rffts_exe      ,
     long[::1] loopnb                        , double[::1] loopmass                  ,
     bint[::1] InterSpaceRotIsId             , double[:,:,::1] InterSpaceRot         , long[::1] InterTimeRev        ,
-    long[::1] ALG_Iint              , double[:,:,::1] ALG_SpaceRot  , long[::1] ALG_TimeRev ,
+    long[::1] ALG_Iint                      , double[:,:,::1] ALG_SpaceRot          , long[::1] ALG_TimeRev         ,
     long[::1] gensegm_to_body               ,
     long[::1] gensegm_to_iint               ,
     long[::1] BodyLoop                      ,
