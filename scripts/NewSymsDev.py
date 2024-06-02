@@ -111,7 +111,6 @@ def proj_to_zero(array, eps=1e-14):
         if abs(array[idx]) < eps:
             array[idx] = 0.
 
-
 def ortho_err_l(mat):
     m,n = mat.shape
     mat2 = np.matmul(mat.conj().T,mat)
@@ -153,6 +152,11 @@ def doit(config_name):
 
     NBS = choreo.cython._NBodySyst.NBodySyst(geodim, nbody, mass, charge, Sym_list, inter_law)
 
+    NBS.nint_fac = 2
+    params_buf = np.random.random(NBS.nparams)
+    all_coeffs = NBS.params_to_all_coeffs_noopt(params_buf)        
+    params_pos = NBS.params_changevar(params_buf)
+
     for il in range(NBS.nloop):
         print()
         print(f'{il = }')
@@ -186,22 +190,73 @@ def doit(config_name):
             if np.linalg.norm(params_basis_r[:,2*j:2*j+2]) < eps:
                 nzcol += 1
                     
+        nnz_k = NBS.nnz_k(il)
+
+        all_coeffs_loop = all_coeffs[il,:,:]
         
-        print(f'{nz = } / {nn}')
-        print(f'{nu = } / {nn}')
-        print(f'{nzcol = } / {n//2}')
+        ncoeffs_loop = all_coeffs_loop.shape[0]
+        ncoeff_min_loop = NBS.ncoeff_min_loop[il]
+        nc = ncoeffs_loop//ncoeff_min_loop
+        
+        params_loop = params_pos[2*NBS.params_shifts[il]:NBS.params_shifts[il]+NBS.params_shifts[il+1]].reshape(-1,geodim,2)
+
+        if nnz_k.shape[0] == 1:
+            if nnz_k[0] == 0:
+                
+                print(f'{nnz_k = }')
+                
+                params_basis = NBS.params_basis_pos(il)
+                
+                m = params_basis.shape[0]
+                n = params_basis.shape[2]
+                 
+                if 2*m == n:
+                    
+                    params_basis_r = np.empty((m,2, n),dtype=np.float64)
+
+                    params_basis_r[:,0,:] = params_basis[:,0,:].real
+                    params_basis_r[:,1,:] = params_basis[:,0,:].imag
+                    
+                    if np.linalg.norm(params_basis_r.reshape(n,n) - np.identity(params_basis.shape[2])) < eps:
+                        
+                        print("Identity transformation")
+
+                        assert np.linalg.norm(all_coeffs_loop[0:-1:ncoeff_min_loop,:] - params_loop[:,:,0] - params_loop[:,:,1] * 1j ) < eps
         
         
-        print(params_basis_r)
-        
-        coo = scipy.sparse.coo_matrix(params_basis_r)
-        # print()
-        # print(coo.data)
-        # print(coo.col)
-        # print(coo.row)
         # 
-        if nz + nu == nn:
-            print("Prime candidate !!!")
+        # print(nc)
+        # for i in range(min(nc, params_loop.shape[0])):
+        #     
+        #     print(np.linalg.norm(all_coeffs_loop[ncoeff_min_loop*i,:].real - params_loop[i,:,0])+np.linalg.norm(all_coeffs_loop[ncoeff_min_loop*i,:].imag - params_loop[i,:,1]))
+        #     
+        #     assert np.linalg.norm(all_coeffs_loop[ncoeff_min_loop*i,:].real - params_loop[i,:,0])+np.linalg.norm(all_coeffs_loop[ncoeff_min_loop*i,:].imag - params_loop[i,:,1]) < eps
+        
+        
+        # print(all_coeffs_flat.real[:-2] )
+        # print(params_loop[::2])
+        # print(all_coeffs_flat.imag[:-2] )
+        # print(params_loop[1::2])
+        # # 
+        
+        # print(np.linalg.norm(all_coeffs_flat.real[:-2] - params_loop[::2]))
+        # print(np.linalg.norm(all_coeffs_flat.imag[:-2] - params_loop[1::2]))
+        
+    # all_pos = scipy.fft.irfft(all_coeffs, axis=1, norm='forward')
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -124,6 +124,7 @@ cython_extnames.append("choreo.cython.optional_pyfftw")
 cython_safemath_needed.append(False)
 
 include_pyfftw = PYFFTW_AVAILABLE and not("PYODIDE" in os.environ) and not(platform.system() == "Windows")
+# print(f'{include_pyfftw = }')
 cython_filenames.append(f"choreo.cython.optional_pyfftw_{include_pyfftw}".replace('.','/') + src_ext)
 
 
