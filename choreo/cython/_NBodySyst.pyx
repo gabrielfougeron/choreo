@@ -2872,162 +2872,162 @@ cdef class NBodySyst():
             )
 
         return params_mom_buf_np
-
-    @cython.final
-    def TT_params_to_action_grad(self, double[::1] params_mom_buf, object TT):
-
-        TT.toc("start")
-
-        assert params_mom_buf.shape[0] == self.nparams
-
-        action_grad_np = np.empty((self.nparams), dtype=np.float64)
-        cdef double[::1] action_grad = action_grad_np
-
-        TT.toc("memory")
-
-        cdef int nsegm = self._gensegm_to_body.shape[0]
-        cdef int geodim = self._InterSpaceRotPos.shape[1]
-
-        changevar_mom_pos(
-            &params_mom_buf[0]  , self._params_shapes , self._params_shifts ,
-            self._nnz_k_buf           , self._nnz_k_shapes  , self._nnz_k_shifts  ,
-            self._co_in_buf           , self._co_in_shapes  , self._co_in_shifts  ,
-            self._ncoeff_min_loop     ,
-            self._loopnb              , self._loopmass      ,
-            self._params_pos_buf      , 
-        )   
-
-        TT.toc("changevar_mom_pos")
-
-        params_to_ifft(
-            self._params_pos_buf  , self._params_shapes , self._params_shifts ,
-            self._nnz_k_buf       , self._nnz_k_shapes  , self._nnz_k_shifts  ,
-            self._ifft_buf_ptr    , self._ifft_shapes   , self._ifft_shifts   ,
-            self._fft_backend     , self._pyfftw_rffts_exe                    ,
-        )
-        
-        TT.toc("params_to_ifft")
-
-        memset(self._pos_slice_buf_ptr, 0, sizeof(double)*self._pos_slice_shifts[self._pos_slice_shapes.shape[0]])
-
-        ifft_to_pos_slice(
-            self._ifft_buf_ptr              , self._ifft_shapes           , self._ifft_shifts           ,
-            &self._params_basis_buf_pos[0]  , self._params_basis_shapes   , self._params_basis_shifts   ,
-            &self._nnz_k_buf[0]             , self._nnz_k_shapes          , self._nnz_k_shifts          ,
-            self._pos_slice_buf_ptr         , self._pos_slice_shapes      , self._pos_slice_shifts      ,
-            self._ncoeff_min_loop           , self._n_sub_fft             ,
-        )
-
-        if (self.segm_size != self.segm_store):
-
-            Adjust_after_last_gen(
-                self._pos_slice_buf_ptr     , self._pos_slice_shifts      ,
-                self._ifft_shapes           ,
-                self._params_basis_shapes   ,
-                self._n_sub_fft             ,
-                self._ALG_Iint              ,
-                self._ALG_TimeRev           , self._ALG_SpaceRotPos         ,
-                self.segm_size              ,
-            )
-
-        TT.toc("ifft_to_pos_slice")
-
-        pos_slice_to_segmpos(
-            self._pos_slice_buf_ptr     , self._pos_slice_shapes  , self._pos_slice_shifts ,
-            &self._segmpos[0,0,0]       ,
-            self._InterSpaceRotPosIsId  ,
-            self._InterSpaceRotPos      ,
-            self._InterTimeRev          ,
-            self._gensegm_to_body       ,
-            self._gensegm_to_iint       ,
-            self._bodyloop              ,
-            self.segm_size              ,
-            self.segm_store             ,
-        )
-
-        TT.toc("pos_slice_to_segmpos")
-
-        memset(&self._pot_nrg_grad[0,0,0], 0, sizeof(double)*self.nsegm*self.segm_store*self.geodim)
-
-        segm_pos_to_pot_nrg_grad(
-            self._segmpos           , self._pot_nrg_grad    ,
-            self._BinSourceSegm     , self._BinTargetSegm   ,
-            self._BinSpaceRot       , self._BinSpaceRotIsId ,
-            self._BinProdChargeSum  ,
-            self.segm_size          , self.segm_store       , -1.                   ,
-            self._inter_law         ,
-        )
-
-        TT.toc("segm_pos_to_pot_nrg_grad")
-
-        memset(self._pos_slice_buf_ptr, 0, sizeof(double)*self._pos_slice_shifts[self._pos_slice_shapes.shape[0]])
-
-        segmpos_to_pos_slice_T(
-            &self._pot_nrg_grad[0,0,0]  ,
-            self._pos_slice_buf_ptr     , self._pos_slice_shapes  , self._pos_slice_shifts ,
-            self._InterSpaceRotPosIsId  ,
-            self._InterSpaceRotPos      ,
-            self._InterTimeRev          ,
-            self._gensegm_to_body       ,
-            self._gensegm_to_iint       ,
-            self._bodyloop              ,
-            self.segm_size              ,
-            self.segm_store             ,
-        )
-
-        if (self.segm_size != self.segm_store):
-            Adjust_after_last_gen_T(
-                self._pos_slice_buf_ptr   , self._pos_slice_shifts      ,
-                self._ifft_shapes         ,
-                self._params_basis_shapes ,
-                self._n_sub_fft           ,
-                self._ALG_Iint            ,
-                self._ALG_TimeRev         , self._ALG_SpaceRotPos       ,
-                self.segm_size            , 
-            )
-
-        TT.toc("segmpos_to_pos_slice_T")
-
-        pos_slice_to_ifft(
-            self._pos_slice_buf_ptr         , self._pos_slice_shapes      , self._pos_slice_shifts      ,
-            &self._params_basis_buf_pos[0]  , self._params_basis_shapes   , self._params_basis_shifts   ,
-            &self._nnz_k_buf[0]             , self._nnz_k_shapes          , self._nnz_k_shifts          ,
-            self._ifft_buf_ptr              , self._ifft_shapes           , self._ifft_shifts           ,
-            self._ncoeff_min_loop           , self._n_sub_fft             , -1                          ,
-        )
-
-        TT.toc("pos_slice_to_ifft")
-
-        ifft_to_params(
-            self._ifft_buf_ptr    , self._ifft_shapes   , self._ifft_shifts         ,
-            self._nnz_k_buf       , self._nnz_k_shapes  , self._nnz_k_shifts        ,
-            self._params_pos_buf  , self._params_shapes , self._params_shifts       ,
-            self._fft_backend     , -1                  , self._pyfftw_irffts_exe   ,
-        )
-
-        TT.toc("ifft_to_params")
-
-        changevar_mom_pos_T(
-            self._params_pos_buf      , self._params_shapes , self._params_shifts ,
-            self._nnz_k_buf           , self._nnz_k_shapes  , self._nnz_k_shifts  ,
-            self._co_in_buf           , self._co_in_shapes  , self._co_in_shifts  ,
-            self._ncoeff_min_loop     ,
-            self._loopnb              , self._loopmass      ,
-            &params_mom_buf[0]  , 
-        )   
-
-        TT.toc("changevar_mom_pos_T")
-
-        params_to_kin_nrg_grad_daxpy(
-            &params_mom_buf[0]  , self._params_shapes   , self._params_shifts   ,
-            self._ncor_loop     , self._nco_in_loop     ,
-            1.                  ,
-            &action_grad[0]     ,
-        )
-
-        TT.toc("params_to_kin_nrg_grad_daxpy")
-
-        return action_grad_np
+# 
+#     @cython.final
+#     def TT_params_to_action_grad(self, double[::1] params_mom_buf, object TT):
+# 
+#         TT.toc("start")
+# 
+#         assert params_mom_buf.shape[0] == self.nparams
+# 
+#         action_grad_np = np.empty((self.nparams), dtype=np.float64)
+#         cdef double[::1] action_grad = action_grad_np
+# 
+#         TT.toc("memory")
+# 
+#         cdef int nsegm = self._gensegm_to_body.shape[0]
+#         cdef int geodim = self._InterSpaceRotPos.shape[1]
+# 
+#         changevar_mom_pos(
+#             &params_mom_buf[0]  , self._params_shapes , self._params_shifts ,
+#             self._nnz_k_buf           , self._nnz_k_shapes  , self._nnz_k_shifts  ,
+#             self._co_in_buf           , self._co_in_shapes  , self._co_in_shifts  ,
+#             self._ncoeff_min_loop     ,
+#             self._loopnb              , self._loopmass      ,
+#             self._params_pos_buf      , 
+#         )   
+# 
+#         TT.toc("changevar_mom_pos")
+# 
+#         params_to_ifft(
+#             self._params_pos_buf  , self._params_shapes , self._params_shifts ,
+#             self._nnz_k_buf       , self._nnz_k_shapes  , self._nnz_k_shifts  ,
+#             self._ifft_buf_ptr    , self._ifft_shapes   , self._ifft_shifts   ,
+#             self._fft_backend     , self._pyfftw_rffts_exe                    ,
+#         )
+#         
+#         TT.toc("params_to_ifft")
+# 
+#         memset(self._pos_slice_buf_ptr, 0, sizeof(double)*self._pos_slice_shifts[self._pos_slice_shapes.shape[0]])
+# 
+#         ifft_to_pos_slice(
+#             self._ifft_buf_ptr              , self._ifft_shapes           , self._ifft_shifts           ,
+#             &self._params_basis_buf_pos[0]  , self._params_basis_shapes   , self._params_basis_shifts   ,
+#             &self._nnz_k_buf[0]             , self._nnz_k_shapes          , self._nnz_k_shifts          ,
+#             self._pos_slice_buf_ptr         , self._pos_slice_shapes      , self._pos_slice_shifts      ,
+#             self._ncoeff_min_loop           , self._n_sub_fft             ,
+#         )
+# 
+#         if (self.segm_size != self.segm_store):
+# 
+#             Adjust_after_last_gen(
+#                 self._pos_slice_buf_ptr     , self._pos_slice_shifts      ,
+#                 self._ifft_shapes           ,
+#                 self._params_basis_shapes   ,
+#                 self._n_sub_fft             ,
+#                 self._ALG_Iint              ,
+#                 self._ALG_TimeRev           , self._ALG_SpaceRotPos         ,
+#                 self.segm_size              ,
+#             )
+# 
+#         TT.toc("ifft_to_pos_slice")
+# 
+#         pos_slice_to_segmpos(
+#             self._pos_slice_buf_ptr     , self._pos_slice_shapes  , self._pos_slice_shifts ,
+#             &self._segmpos[0,0,0]       ,
+#             self._InterSpaceRotPosIsId  ,
+#             self._InterSpaceRotPos      ,
+#             self._InterTimeRev          ,
+#             self._gensegm_to_body       ,
+#             self._gensegm_to_iint       ,
+#             self._bodyloop              ,
+#             self.segm_size              ,
+#             self.segm_store             ,
+#         )
+# 
+#         TT.toc("pos_slice_to_segmpos")
+# 
+#         memset(&self._pot_nrg_grad[0,0,0], 0, sizeof(double)*self.nsegm*self.segm_store*self.geodim)
+# 
+#         segm_pos_to_pot_nrg_grad(
+#             self._segmpos           , self._pot_nrg_grad    ,
+#             self._BinSourceSegm     , self._BinTargetSegm   ,
+#             self._BinSpaceRot       , self._BinSpaceRotIsId ,
+#             self._BinProdChargeSum  ,
+#             self.segm_size          , self.segm_store       , -1.                   ,
+#             self._inter_law         ,
+#         )
+# 
+#         TT.toc("segm_pos_to_pot_nrg_grad")
+# 
+#         memset(self._pos_slice_buf_ptr, 0, sizeof(double)*self._pos_slice_shifts[self._pos_slice_shapes.shape[0]])
+# 
+#         segmpos_to_pos_slice_T(
+#             &self._pot_nrg_grad[0,0,0]  ,
+#             self._pos_slice_buf_ptr     , self._pos_slice_shapes  , self._pos_slice_shifts ,
+#             self._InterSpaceRotPosIsId  ,
+#             self._InterSpaceRotPos      ,
+#             self._InterTimeRev          ,
+#             self._gensegm_to_body       ,
+#             self._gensegm_to_iint       ,
+#             self._bodyloop              ,
+#             self.segm_size              ,
+#             self.segm_store             ,
+#         )
+# 
+#         if (self.segm_size != self.segm_store):
+#             Adjust_after_last_gen_T(
+#                 self._pos_slice_buf_ptr   , self._pos_slice_shifts      ,
+#                 self._ifft_shapes         ,
+#                 self._params_basis_shapes ,
+#                 self._n_sub_fft           ,
+#                 self._ALG_Iint            ,
+#                 self._ALG_TimeRev         , self._ALG_SpaceRotPos       ,
+#                 self.segm_size            , 
+#             )
+# 
+#         TT.toc("segmpos_to_pos_slice_T")
+# 
+#         pos_slice_to_ifft(
+#             self._pos_slice_buf_ptr         , self._pos_slice_shapes      , self._pos_slice_shifts      ,
+#             &self._params_basis_buf_pos[0]  , self._params_basis_shapes   , self._params_basis_shifts   ,
+#             &self._nnz_k_buf[0]             , self._nnz_k_shapes          , self._nnz_k_shifts          ,
+#             self._ifft_buf_ptr              , self._ifft_shapes           , self._ifft_shifts           ,
+#             self._ncoeff_min_loop           , self._n_sub_fft             , -1                          ,
+#         )
+# 
+#         TT.toc("pos_slice_to_ifft")
+# 
+#         ifft_to_params(
+#             self._ifft_buf_ptr    , self._ifft_shapes   , self._ifft_shifts         ,
+#             self._nnz_k_buf       , self._nnz_k_shapes  , self._nnz_k_shifts        ,
+#             self._params_pos_buf  , self._params_shapes , self._params_shifts       ,
+#             self._fft_backend     , -1                  , self._pyfftw_irffts_exe   ,
+#         )
+# 
+#         TT.toc("ifft_to_params")
+# 
+#         changevar_mom_pos_T(
+#             self._params_pos_buf      , self._params_shapes , self._params_shifts ,
+#             self._nnz_k_buf           , self._nnz_k_shapes  , self._nnz_k_shifts  ,
+#             self._co_in_buf           , self._co_in_shapes  , self._co_in_shifts  ,
+#             self._ncoeff_min_loop     ,
+#             self._loopnb              , self._loopmass      ,
+#             &params_mom_buf[0]  , 
+#         )   
+# 
+#         TT.toc("changevar_mom_pos_T")
+# 
+#         params_to_kin_nrg_grad_daxpy(
+#             &params_mom_buf[0]  , self._params_shapes   , self._params_shifts   ,
+#             self._ncor_loop     , self._nco_in_loop     ,
+#             1.                  ,
+#             &action_grad[0]     ,
+#         )
+# 
+#         TT.toc("params_to_kin_nrg_grad_daxpy")
+# 
+#         return action_grad_np
 
     @cython.final
     def segm_to_path_stats(self, double[:,:,::1] segmpos, double[:,:,::1] segmvel):
@@ -3687,6 +3687,7 @@ cdef void partial_fft_to_pos_slice_2_sub(
     cdef int ndcom = 2*ncoeff_min_loop_nnz*nppl
 
     inplace_twiddle(const_ifft, nnz_k, nint, n_inter, ncoeff_min_loop_nnz, nppl, -1)
+
     # Computes a.real * b.real.T + a.imag * b.imag.T using clever memory arrangement and a single gemm call
     scipy.linalg.cython_blas.dgemm(transt, transn, &geodim, &n_inter, &ndcom, &dfac, params_basis_r, &ndcom, ifft_r, &ndcom, &zero_double, pos_slice, &geodim)
 
@@ -3880,278 +3881,6 @@ cdef void pos_slice_to_partial_fft_1_sub(
 
     inplace_twiddle(const_ifft, nnz_k, nint, n_inter, ncoeff_min_loop_nnz, nppl, 1)
 
-cdef void params_to_ifft(
-    double** params_buf             , long[:,::1] params_shapes     , long[::1] params_shifts   ,
-    long[::1] nnz_k_buf             , long[:,::1] nnz_k_shapes      , long[::1] nnz_k_shifts    ,
-    double complex **ifft_buf_ptr   , long[:,::1] ifft_shapes       , long[::1] ifft_shifts     ,
-    int fft_backend                 , pyfftw.fftw_exe** pyfftw_rffts_exe                        ,
-) noexcept nogil:
-
-    cdef double [:,:,::1] params
-    cdef double complex[:,:,::1] ifft
-
-    cdef int nloop = params_shapes.shape[0]
-    cdef int n
-    cdef double * buf
-    cdef double complex * dest
-    cdef Py_ssize_t il, i
-
-    for il in range(nloop):
-
-        if params_shapes[il,1] > 0:
-
-            buf = params_buf[il]
-
-            if nnz_k_shapes[il,0] > 0:
-                if nnz_k_buf[nnz_k_shifts[il]] == 0:
-                    for i in range(params_shapes[il,2]):
-                        buf[i] *= 0.5
-
-    if fft_backend == USE_FFTW_FFT:
-
-        for il in range(nloop):
-
-            if params_shapes[il,1] > 0:
-
-                pyfftw.execute_in_nogil(pyfftw_rffts_exe[il])
-
-    elif fft_backend == USE_MKL_FFT:
-
-        with gil:
-
-            for il in range(nloop):
-
-                if params_shapes[il,1] > 0:
-
-                    params = <double[:2*params_shapes[il,0],:params_shapes[il,1],:params_shapes[il,2]:1]> params_buf[il]
-
-                    ifft = mkl_fft._numpy_fft.rfft(params, axis=0)
-
-                    dest = ifft_buf_ptr[il]
-                    n = ifft_shifts[il+1] - ifft_shifts[il]
-                    scipy.linalg.cython_blas.zcopy(&n,&ifft[0,0,0],&int_one,dest,&int_one)
-
-    elif fft_backend == USE_SCIPY_FFT:
-
-        with gil:
-
-            for il in range(nloop):
-
-                if params_shapes[il,1] > 0:
-
-                    params = <double[:2*params_shapes[il,0],:params_shapes[il,1],:params_shapes[il,2]:1]> params_buf[il]
-
-                    ifft = scipy.fft.rfft(params, axis=0, overwrite_x=True)
-
-                    dest = ifft_buf_ptr[il]
-                    n = ifft_shifts[il+1] - ifft_shifts[il]
-                    scipy.linalg.cython_blas.zcopy(&n,&ifft[0,0,0],&int_one,dest,&int_one)
-
-cdef void ifft_to_params(
-    double complex **ifft_buf_ptr   , long[:,::1] ifft_shapes       , long[::1] ifft_shifts                 ,
-    long[::1] nnz_k_buf             , long[:,::1] nnz_k_shapes      , long[::1] nnz_k_shifts                ,
-    double **params_buf             , long[:,::1] params_shapes     , long[::1] params_shifts               ,
-    int fft_backend                 , int direction                 , pyfftw.fftw_exe** pyfftw_irffts_exe   ,
-) noexcept nogil:
-
-    cdef double [:,:,::1] params
-    cdef double complex[:,:,::1] ifft
-
-    cdef int nloop = params_shapes.shape[0]
-    cdef int n
-    cdef double* dest
-    cdef double fac
-    cdef Py_ssize_t il, i
-
-    cdef double complex* zsrc
-    cdef double complex* zdest
-    cdef double* dsrc
-    cdef double* ddest
-    cdef int m
-
-    if fft_backend == USE_FFTW_FFT:
-
-        for il in range(nloop):
-
-            if params_shapes[il,1] > 0:
-
-                pyfftw.execute_in_nogil(pyfftw_irffts_exe[il])
-
-                dest = params_buf[il]
-
-                # Renormalization
-                n = (params_shifts[il+1] - params_shifts[il])
-                fac = 1. / (2*params_shapes[il,0])
-                scipy.linalg.cython_blas.dscal(&n,&fac,dest,&int_one)
-
-    elif fft_backend == USE_MKL_FFT:
-
-        with gil:
-
-            for il in range(nloop):
-
-                if params_shapes[il,1] > 0:
-
-                    ifft = <double complex[:ifft_shapes[il,0],:ifft_shapes[il,1],:ifft_shapes[il,2]:1]> ifft_buf_ptr[il]
-
-                    params = mkl_fft._numpy_fft.irfft(ifft, axis=0)
-
-                    dest = params_buf[il]
-                    n = (params_shifts[il+1] - params_shifts[il])
-                    scipy.linalg.cython_blas.dcopy(&n,&params[0,0,0],&int_one,dest,&int_one)
-
-    elif fft_backend == USE_SCIPY_FFT:
-
-        with gil:
-
-            for il in range(nloop):
-
-                if params_shapes[il,1] > 0:
-
-                    ifft = <double complex[:ifft_shapes[il,0],:ifft_shapes[il,1],:ifft_shapes[il,2]:1]> ifft_buf_ptr[il]
-
-                    params = scipy.fft.irfft(ifft, axis=0, overwrite_x=True)
-
-                    dest = params_buf[il]
-                    n = (params_shifts[il+1] - params_shifts[il])
-                    scipy.linalg.cython_blas.dcopy(&n,&params[0,0,0],&int_one,dest,&int_one)
-
-#     elif fft_backend == USE_SCIPY_FFT:
-#           # Special MKL version with data copies.
-#         with gil:
-# 
-#             for il in range(nloop):
-# 
-#                 if params_shapes[il,1] > 0:
-# 
-#                     ifft = np.empty((ifft_shapes[il,1], ifft_shapes[il,2], ifft_shapes[il,0]), dtype=np.complex128)
-# 
-#                     m = ifft_shapes[il,1] * ifft_shapes[il,2]
-#                     n = ifft_shapes[il,0]
-# 
-#                     for i in range(m):
-#                         zsrc = ifft_buf_ptr[il] + i
-#                         zdest = (&ifft[0,0,0]) + i * ifft_shapes[il,0]
-#                         scipy.linalg.cython_blas.zcopy(&n,zsrc,&m,zdest,&int_one)
-# 
-#                     params = mkl_fft._numpy_fft.irfft(ifft, axis=2)
-# 
-#                     m = params_shapes[il,1] * params_shapes[il,2]
-#                     n = params_shapes[il,0]
-# 
-#                     for i in range(m):
-#                         dsrc = &params[0,0,0] + i * 2 * params_shapes[il,0]
-#                         ddest = params_buf[il] + i
-#                         scipy.linalg.cython_blas.dcopy(&n,dsrc,&int_one,ddest,&m)
-
-    if direction < 0:
-        for il in range(nloop):
-
-            dest = params_buf[il]
-
-            if nnz_k_shapes[il,0] > 0:
-                if nnz_k_buf[nnz_k_shifts[il]] == 0:
-                    for i in range(params_shapes[il,2]):
-                        dest[i] *= 0.5
-
-cdef void ifft_to_pos_slice(
-    double complex **ifft_buf_ptr           , long[:,::1] ifft_shapes           , long[::1] ifft_shifts         ,
-    double complex *params_basis_buf_ptr    , long[:,::1] params_basis_shapes   , long[::1] params_basis_shifts ,
-    long* nnz_k_buf_ptr                     , long[:,::1] nnz_k_shapes          , long[::1] nnz_k_shifts        ,
-    double* pos_slice_buf_ptr               , long[:,::1] pos_slice_shapes      , long[::1] pos_slice_shifts    ,
-    long[::1] ncoeff_min_loop               , long[::1] n_sub_fft               ,
-) noexcept nogil:
-
-    cdef double complex* ifft
-    cdef double complex* params_basis
-    cdef long* nnz_k
-    cdef double* pos_slice
-
-    cdef int nloop = ncoeff_min_loop.shape[0]
-    cdef Py_ssize_t il
-
-    cdef int npr
-    cdef int ncoeff_min_loop_il
-    cdef int ncoeff_min_loop_nnz
-    cdef int geodim = params_basis_shapes[0,0]
-    cdef int nppl
-
-    for il in range(nloop):
-
-        if params_basis_shapes[il,1] > 0:
-
-            ifft = ifft_buf_ptr[il]
-            params_basis = params_basis_buf_ptr + params_basis_shifts[il]
-            nnz_k = nnz_k_buf_ptr + nnz_k_shifts[il]
-            pos_slice = pos_slice_buf_ptr + pos_slice_shifts[il]
-
-            npr = ifft_shapes[il,0] - 1
-            ncoeff_min_loop_nnz = nnz_k_shapes[il,0]
-            ncoeff_min_loop_il = ncoeff_min_loop[il]
-            nppl = ifft_shapes[il,2] 
-
-            if n_sub_fft[il] == 2:
-                partial_fft_to_pos_slice_2_sub(
-                    ifft, params_basis, nnz_k, pos_slice,
-                    npr, ncoeff_min_loop_nnz, ncoeff_min_loop_il, geodim, nppl,
-                )
-            else:
-                partial_fft_to_pos_slice_1_sub(
-                    ifft, params_basis, nnz_k, pos_slice,
-                    npr, ncoeff_min_loop_nnz, ncoeff_min_loop_il, geodim, nppl,
-                )
-
-cdef void pos_slice_to_ifft(
-    double* pos_slice_buf_ptr               , long[:,::1] pos_slice_shapes      , long[::1] pos_slice_shifts    ,
-    double complex *params_basis_buf_ptr    , long[:,::1] params_basis_shapes   , long[::1] params_basis_shifts ,
-    long* nnz_k_buf_ptr                     , long[:,::1] nnz_k_shapes          , long[::1] nnz_k_shifts        ,
-    double complex **ifft_buf_ptr           , long[:,::1] ifft_shapes           , long[::1] ifft_shifts         ,
-    long[::1] ncoeff_min_loop               , long[::1] n_sub_fft               , int direction                 ,
-
-) noexcept nogil:
-
-    cdef double complex* ifft
-    cdef double complex* params_basis
-    cdef long* nnz_k
-    cdef double* pos_slice
-
-    cdef int nloop = ncoeff_min_loop.shape[0]
-    cdef Py_ssize_t il, i
-
-    cdef int npr
-    cdef int ncoeff_min_loop_il
-    cdef int ncoeff_min_loop_nnz
-    cdef int geodim
-    cdef int nppl
-
-    for il in range(nloop):
-
-        if params_basis_shapes[il,1] > 0:
-
-            ifft = ifft_buf_ptr[il]
-            params_basis = params_basis_buf_ptr + params_basis_shifts[il]
-            nnz_k = nnz_k_buf_ptr + nnz_k_shifts[il]
-            pos_slice = pos_slice_buf_ptr + pos_slice_shifts[il]
-
-            npr = ifft_shapes[il,0] - 1
-            ncoeff_min_loop_nnz = nnz_k_shapes[il,0]
-            ncoeff_min_loop_il = ncoeff_min_loop[il]
-            geodim = params_basis_shapes[il,0]
-            nppl = ifft_shapes[il,2] 
-
-            if n_sub_fft[il] == 2:
-                pos_slice_to_partial_fft_2_sub(
-                    pos_slice, params_basis, nnz_k, ifft,
-                    npr, ncoeff_min_loop_nnz, ncoeff_min_loop_il, geodim, nppl,
-                    direction,
-                )
-            else:
-                pos_slice_to_partial_fft_1_sub(
-                    pos_slice, params_basis, nnz_k, ifft,
-                    npr, ncoeff_min_loop_nnz, ncoeff_min_loop_il, geodim, nppl,
-                    direction,
-                )
-
 cdef void Adjust_after_last_gen(
     double* pos_slice_buf_ptr           , long[::1] pos_slice_shifts            ,
     long[:,::1] ifft_shapes             ,
@@ -4227,6 +3956,222 @@ cdef void Adjust_after_last_gen_T(
                     for jdim in range(geodim):
 
                         pos_slice_uneven_source[jdim] += ALG_SpaceRot[il,idim,jdim] * pos_slice[idim]
+
+cdef void params_to_pos_slice(
+    double** params_buf                     , long[:,::1] params_shapes         , long[::1] params_shifts       ,
+    long* nnz_k_buf_ptr                     , long[:,::1] nnz_k_shapes          , long[::1] nnz_k_shifts        ,
+    double complex **ifft_buf_ptr           , long[:,::1] ifft_shapes           , long[::1] ifft_shifts         ,
+    int fft_backend                         , pyfftw.fftw_exe** pyfftw_rffts_exe                                ,
+    double complex *params_basis_buf_ptr    , long[:,::1] params_basis_shapes   , long[::1] params_basis_shifts ,
+    double* pos_slice_buf_ptr               , long[:,::1] pos_slice_shapes      , long[::1] pos_slice_shifts    ,
+    long[::1] ncoeff_min_loop               , long[::1] n_sub_fft               ,
+) noexcept nogil:
+
+    cdef double [:,:,::1] params_mv
+    cdef double complex[:,:,::1] ifft_mv
+
+    cdef int nloop = params_shapes.shape[0]
+    cdef int geodim = params_basis_shapes[0,0]
+    cdef int n
+    cdef double * buf
+    cdef double complex * dest
+    cdef Py_ssize_t il, i
+
+    cdef double complex* ifft
+    cdef double complex* params_basis
+    cdef long* nnz_k
+    cdef double* pos_slice
+
+    cdef int npr
+    cdef int ncoeff_min_loop_il
+    cdef int ncoeff_min_loop_nnz
+    cdef int nppl
+
+    memset(pos_slice_buf_ptr, 0, sizeof(double)*pos_slice_shifts[pos_slice_shapes.shape[0]])
+
+    for il in range(nloop):
+
+        # Full general symmetries
+
+        if params_shapes[il,1] > 0:
+
+            buf = params_buf[il]
+
+            if nnz_k_shapes[il,0] > 0:
+                if nnz_k_buf_ptr[nnz_k_shifts[il]] == 0:
+                    for i in range(params_shapes[il,2]):
+                        buf[i] *= 0.5
+
+        if fft_backend == USE_FFTW_FFT:
+
+                if params_shapes[il,1] > 0:
+                    pyfftw.execute_in_nogil(pyfftw_rffts_exe[il])
+
+        elif fft_backend == USE_MKL_FFT:
+
+            with gil:
+
+                if params_shapes[il,1] > 0:
+
+                    params_mv = <double[:2*params_shapes[il,0],:params_shapes[il,1],:params_shapes[il,2]:1]> params_buf[il]
+
+                    ifft_mv = mkl_fft._numpy_fft.rfft(params_mv, axis=0)
+
+                    dest = ifft_buf_ptr[il]
+                    n = ifft_shifts[il+1] - ifft_shifts[il]
+                    scipy.linalg.cython_blas.zcopy(&n,&ifft_mv[0,0,0],&int_one,dest,&int_one)
+
+        elif fft_backend == USE_SCIPY_FFT:
+
+            with gil:
+
+                if params_shapes[il,1] > 0:
+
+                    params_mv = <double[:2*params_shapes[il,0],:params_shapes[il,1],:params_shapes[il,2]:1]> params_buf[il]
+
+                    ifft_mv = scipy.fft.rfft(params_mv, axis=0, overwrite_x=True)
+
+                    dest = ifft_buf_ptr[il]
+                    n = ifft_shifts[il+1] - ifft_shifts[il]
+                    scipy.linalg.cython_blas.zcopy(&n,&ifft_mv[0,0,0],&int_one,dest,&int_one)
+
+        if params_basis_shapes[il,1] > 0:
+
+            ifft = ifft_buf_ptr[il]
+            params_basis = params_basis_buf_ptr + params_basis_shifts[il]
+            nnz_k = nnz_k_buf_ptr + nnz_k_shifts[il]
+            pos_slice = pos_slice_buf_ptr + pos_slice_shifts[il]
+
+            npr = ifft_shapes[il,0] - 1
+            ncoeff_min_loop_nnz = nnz_k_shapes[il,0]
+            ncoeff_min_loop_il = ncoeff_min_loop[il]
+            nppl = ifft_shapes[il,2] 
+
+            if n_sub_fft[il] == 2:
+                partial_fft_to_pos_slice_2_sub(
+                    ifft, params_basis, nnz_k, pos_slice,
+                    npr, ncoeff_min_loop_nnz, ncoeff_min_loop_il, geodim, nppl,
+                )
+            else:
+                partial_fft_to_pos_slice_1_sub(
+                    ifft, params_basis, nnz_k, pos_slice,
+                    npr, ncoeff_min_loop_nnz, ncoeff_min_loop_il, geodim, nppl,
+                )
+
+
+cdef void pos_slice_to_params(
+    double* pos_slice_buf_ptr               , long[:,::1] pos_slice_shapes      , long[::1] pos_slice_shifts    ,
+    double complex *params_basis_buf_ptr    , long[:,::1] params_basis_shapes   , long[::1] params_basis_shifts ,
+    long* nnz_k_buf_ptr                     , long[:,::1] nnz_k_shapes          , long[::1] nnz_k_shifts        ,
+    double complex **ifft_buf_ptr           , long[:,::1] ifft_shapes           , long[::1] ifft_shifts         ,
+    long[::1] ncoeff_min_loop               , long[::1] n_sub_fft               , int direction                 ,
+    double **params_buf                     , long[:,::1] params_shapes         , long[::1] params_shifts       ,
+    int fft_backend                         , pyfftw.fftw_exe** pyfftw_irffts_exe                               ,
+) noexcept nogil:
+
+    cdef double complex* ifft
+    cdef double complex* params_basis
+    cdef long* nnz_k
+    cdef double* pos_slice
+
+    cdef int nloop = ncoeff_min_loop.shape[0]
+    cdef Py_ssize_t il, i
+
+    cdef int npr
+    cdef int ncoeff_min_loop_il
+    cdef int ncoeff_min_loop_nnz
+    cdef int geodim = params_basis_shapes[0,0]
+    cdef int nppl
+
+    cdef double [:,:,::1] params_mv
+    cdef double complex[:,:,::1] ifft_mv
+
+    cdef int n
+    cdef double* dest
+    cdef double fac
+
+    for il in range(nloop):
+
+        if params_basis_shapes[il,1] > 0:
+
+            ifft = ifft_buf_ptr[il]
+            params_basis = params_basis_buf_ptr + params_basis_shifts[il]
+            nnz_k = nnz_k_buf_ptr + nnz_k_shifts[il]
+            pos_slice = pos_slice_buf_ptr + pos_slice_shifts[il]
+
+            npr = ifft_shapes[il,0] - 1
+            ncoeff_min_loop_nnz = nnz_k_shapes[il,0]
+            ncoeff_min_loop_il = ncoeff_min_loop[il]
+            nppl = ifft_shapes[il,2] 
+
+            if n_sub_fft[il] == 2:
+                pos_slice_to_partial_fft_2_sub(
+                    pos_slice, params_basis, nnz_k, ifft,
+                    npr, ncoeff_min_loop_nnz, ncoeff_min_loop_il, geodim, nppl,
+                    direction,
+                )
+            else:
+                pos_slice_to_partial_fft_1_sub(
+                    pos_slice, params_basis, nnz_k, ifft,
+                    npr, ncoeff_min_loop_nnz, ncoeff_min_loop_il, geodim, nppl,
+                    direction,
+                )
+
+
+        if fft_backend == USE_FFTW_FFT:
+
+            if params_shapes[il,1] > 0:
+
+                pyfftw.execute_in_nogil(pyfftw_irffts_exe[il])
+
+                dest = params_buf[il]
+
+                # Renormalization
+                n = (params_shifts[il+1] - params_shifts[il])
+                fac = 1. / (2*params_shapes[il,0])
+                scipy.linalg.cython_blas.dscal(&n,&fac,dest,&int_one)
+
+        elif fft_backend == USE_MKL_FFT:
+
+            with gil:
+
+                if params_shapes[il,1] > 0:
+
+                    ifft_mv = <double complex[:ifft_shapes[il,0],:ifft_shapes[il,1],:ifft_shapes[il,2]:1]> ifft_buf_ptr[il]
+
+                    params_mv = mkl_fft._numpy_fft.irfft(ifft_mv, axis=0)
+
+                    dest = params_buf[il]
+                    n = (params_shifts[il+1] - params_shifts[il])
+                    scipy.linalg.cython_blas.dcopy(&n,&params_mv[0,0,0],&int_one,dest,&int_one)
+
+        elif fft_backend == USE_SCIPY_FFT:
+
+            with gil:
+
+                if params_shapes[il,1] > 0:
+
+                    ifft_mv = <double complex[:ifft_shapes[il,0],:ifft_shapes[il,1],:ifft_shapes[il,2]:1]> ifft_buf_ptr[il]
+
+                    params_mv = scipy.fft.irfft(ifft_mv, axis=0, overwrite_x=True)
+
+                    dest = params_buf[il]
+                    n = (params_shifts[il+1] - params_shifts[il])
+                    scipy.linalg.cython_blas.dcopy(&n,&params_mv[0,0,0],&int_one,dest,&int_one)
+
+        if direction < 0:
+
+            dest = params_buf[il]
+
+            if nnz_k_shapes[il,0] > 0:
+                if nnz_k_buf_ptr[nnz_k_shifts[il]] == 0:
+                    for i in range(params_shapes[il,2]):
+                        dest[i] *= 0.5
+
+
+
+
+
 
 cdef void pos_slice_to_segmpos(
     double* pos_slice_buf_ptr       , long[:,::1] pos_slice_shapes  , long[::1] pos_slice_shifts    ,
@@ -4503,19 +4448,12 @@ cdef void params_to_segmpos(
         params_pos_buf      , 
     )   
 
-    params_to_ifft(
-        params_pos_buf  , params_shapes , params_shifts ,
-        nnz_k_buf       , nnz_k_shapes  , nnz_k_shifts  ,
-        ifft_buf_ptr    , ifft_shapes   , ifft_shifts   ,
-        fft_backend     , pyfftw_rffts_exe              ,
-    )
- 
-    memset(pos_slice_buf_ptr, 0, sizeof(double)*pos_slice_shifts[pos_slice_shapes.shape[0]])
-
-    ifft_to_pos_slice(
-        ifft_buf_ptr        , ifft_shapes           , ifft_shifts           ,
-        &params_basis_buf[0], params_basis_shapes   , params_basis_shifts   ,
+    params_to_pos_slice(
+        params_pos_buf      , params_shapes         , params_shifts         ,
         &nnz_k_buf[0]       , nnz_k_shapes          , nnz_k_shifts          ,
+        ifft_buf_ptr        , ifft_shapes           , ifft_shifts           ,
+        fft_backend         , pyfftw_rffts_exe                              ,
+        &params_basis_buf[0], params_basis_shapes   , params_basis_shifts   ,
         pos_slice_buf_ptr   , pos_slice_shapes      , pos_slice_shifts      ,
         ncoeff_min_loop     , n_sub_fft             ,
     )
@@ -4579,19 +4517,12 @@ cdef void params_to_segmvel(
         params_vel_buf      , 
     )   
 
-    params_to_ifft(
-        params_vel_buf  , params_shapes , params_shifts ,
-        nnz_k_buf       , nnz_k_shapes  , nnz_k_shifts  ,
-        ifft_buf_ptr    , ifft_shapes   , ifft_shifts   ,
-        fft_backend     , pyfftw_rffts_exe              ,
-    )
- 
-    memset(vel_slice_buf_ptr, 0, sizeof(double)*pos_slice_shifts[pos_slice_shapes.shape[0]])
-
-    ifft_to_pos_slice(
-        ifft_buf_ptr        , ifft_shapes           , ifft_shifts           ,
-        &params_basis_buf[0], params_basis_shapes   , params_basis_shifts   ,
+    params_to_pos_slice(
+        params_vel_buf      , params_shapes         , params_shifts         ,
         &nnz_k_buf[0]       , nnz_k_shapes          , nnz_k_shifts          ,
+        ifft_buf_ptr        , ifft_shapes           , ifft_shifts           ,
+        fft_backend         , pyfftw_rffts_exe                              ,
+        &params_basis_buf[0], params_basis_shapes   , params_basis_shifts   ,
         vel_slice_buf_ptr   , pos_slice_shapes      , pos_slice_shifts      ,
         ncoeff_min_loop     , n_sub_fft             ,
     )
@@ -4658,19 +4589,14 @@ cdef void segmpos_to_params(
         segm_store          ,
     )
 
-    pos_slice_to_ifft(
+    pos_slice_to_params(
         pos_slice_buf_ptr   , pos_slice_shapes      , pos_slice_shifts      ,
         &params_basis_buf[0], params_basis_shapes   , params_basis_shifts   ,
         &nnz_k_buf[0]       , nnz_k_shapes          , nnz_k_shifts          ,
         ifft_buf_ptr        , ifft_shapes           , ifft_shifts           ,
         ncoeff_min_loop     , n_sub_fft             , 1                     ,
-    )
-
-    ifft_to_params(
-        ifft_buf_ptr    , ifft_shapes   , ifft_shifts       ,
-        nnz_k_buf       , nnz_k_shapes  , nnz_k_shifts      ,
-        params_pos_buf  , params_shapes , params_shifts     ,
-        fft_backend     , 1             , pyfftw_irffts_exe ,
+        params_pos_buf      , params_shapes         , params_shifts         ,
+        fft_backend         , pyfftw_irffts_exe     ,
     )
 
     changevar_mom_pos_inv(
@@ -4733,19 +4659,14 @@ cdef void segmpos_to_params_T(
             segm_size           ,
         )
 
-    pos_slice_to_ifft(
+    pos_slice_to_params(
         pos_slice_buf_ptr   , pos_slice_shapes      , pos_slice_shifts      ,
         &params_basis_buf[0], params_basis_shapes   , params_basis_shifts   ,
         &nnz_k_buf[0]       , nnz_k_shapes          , nnz_k_shifts          ,
         ifft_buf_ptr        , ifft_shapes           , ifft_shifts           ,
         ncoeff_min_loop     , n_sub_fft             , -1                    ,
-    )
-
-    ifft_to_params(
-        ifft_buf_ptr    , ifft_shapes   , ifft_shifts       ,
-        nnz_k_buf       , nnz_k_shapes  , nnz_k_shifts      ,
-        params_pos_buf  , params_shapes , params_shifts     ,
-        fft_backend     , -1            , pyfftw_irffts_exe ,
+        params_pos_buf      , params_shapes         , params_shifts         ,
+        fft_backend         , pyfftw_irffts_exe     ,
     )
 
     changevar_mom_pos_T(
