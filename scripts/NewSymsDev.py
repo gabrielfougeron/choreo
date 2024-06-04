@@ -29,61 +29,61 @@ def proj_to_zero(array, eps=1e-14):
 def main():
         
     all_tests = [
-        '3q',
-        '3q3q',
-        '3q3qD',
-        '2q2q',
-        '4q4q',
-        '4q4qD',
-        '4q4qD3k',
-        '1q2q',
-        '5q5q',
-        '6q6q',
-        '2C3C',
-        "20B",
-        '2D3D',   
-        '2C3C5k',
-        '2D3D5k',
-        '2D1',
-        '4C5k',
-        '4D3k',
+        # '3q',
+        # '3q3q',
+        # '3q3qD',
+        # '2q2q',
+        # '4q4q',
+        # '4q4qD',
+        # '4q4qD3k',
+        # '1q2q',
+        # '5q5q',
+        # '6q6q',
+        # '2C3C',
+        # "20B",
+        # '2D3D',   
+        # '2C3C5k',
+        # '2D3D5k',
+        # '2D1',
+        # '4C5k',
+        # '4D3k',
         '4C',
         '4D',
         '3C',
-        '3D',
-        '3D1',
-        '3C2k',
-        '3D2k',
-        '3Dp',
-        '3C4k',
-        '3D4k',
-        '3C5k',
-        '3D5k',
-        '3C101k',
-        '3D101k',
-        'test_3D5k',
-        '3C7k2',
-        '3D7k2',
-        '6C',
-        '6D',
-        '6Ck5',
-        '6Dk5',
-        '5Dq',
-        '2C3C5C',
-        '3C_3dim',
-        '2D1_3dim', 
-        '3C11k',
-        '5q',
-        '5Dq_',
-        'uneven_nnpr',
-        '3C4q4k',
-        '3D4q4k',
-        '2D2D',
-        '2D2D5k',
-        '2D1D1D',
-        '1Dx3',
-        '1D1D1D',
-        '3DD',
+        # '3D',
+        # '3D1',
+        # '3C2k',
+        # '3D2k',
+        # '3Dp',
+        # '3C4k',
+        # '3D4k',
+        # '3C5k',
+        # '3D5k',
+        # '3C101k',
+        # '3D101k',
+        # 'test_3D5k',
+        # '3C7k2',
+        # '3D7k2',
+        # '6C',
+        # '6D',
+        # '6Ck5',
+        # '6Dk5',
+        # '5Dq',
+        # '2C3C5C',
+        # '3C_3dim',
+        # '2D1_3dim', 
+        # '3C11k',
+        # '5q',
+        # '5Dq_',
+        # 'uneven_nnpr',
+        # '3C4q4k',
+        # '3D4q4k',
+        # '2D2D',
+        # '2D2D5k',
+        # '2D1D1D',
+        # '1Dx3',
+        # '1D1D1D',
+        # '3DD',
     ]
 
     TT = pyquickbench.TimeTrain(
@@ -153,7 +153,7 @@ def doit(config_name):
 
     NBS = choreo.cython._NBodySyst.NBodySyst(geodim, nbody, mass, charge, Sym_list, inter_law)
 
-    NBS.nint_fac = 1
+    NBS.nint_fac = 10
     params_buf = np.random.random(NBS.nparams)
     all_coeffs = NBS.params_to_all_coeffs_noopt(params_buf)        
     params_pos = NBS.params_changevar(params_buf)
@@ -234,7 +234,11 @@ def doit(config_name):
                         print("Identity transformation")
                                         
                         params_loop = params_pos[2*NBS.params_shifts[il]:NBS.params_shifts[il]+NBS.params_shifts[il+1]+2*geodim].reshape(-1,geodim,2)
-
+                        
+                        print(params_loop.shape[0])
+                        print(NBS.params_shapes)
+                        
+                        
                         params_loop_c = params_loop[:,:,0] + params_loop[:,:,1] * 1j
                         
                         assert np.linalg.norm(all_coeffs_loop[0:-1:ncoeff_min_loop,:] - params_loop_c[:-1,:] ) < eps
