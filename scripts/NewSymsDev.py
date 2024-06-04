@@ -214,6 +214,7 @@ def doit(config_name):
                 print(f'{nnz_k = }')
                 
                 params_basis = NBS.params_basis_pos(il)
+                # params_basis = NBS.params_basis_vel(il)
                 
                 m = params_basis.shape[0]
                 n = params_basis.shape[2]
@@ -222,7 +223,11 @@ def doit(config_name):
                 params_basis_r[:,0,:] = params_basis[:,0,:].real
                 params_basis_r[:,1,:] = params_basis[:,0,:].imag
                     
+                print(params_basis_r)
+                    
                 if 2*m == n:
+                    
+                    print("error on identity ",np.linalg.norm(params_basis_r.reshape(n,n) - np.identity(params_basis.shape[2])))
                     
                     if np.linalg.norm(params_basis_r.reshape(n,n) - np.identity(params_basis.shape[2])) < eps:
                         
