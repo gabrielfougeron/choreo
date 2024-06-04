@@ -76,6 +76,14 @@ cdef int USE_SCIPY_FFT = 0
 cdef int USE_MKL_FFT = 1
 cdef int USE_FFTW_FFT = 2
 
+cdef int GENERAL_SYM = 0
+cdef int RFFT = 1
+
+shortcut_name = {
+    GENERAL_SYM : "general_sym" ,
+    RFFT        : "rfft"        ,
+}
+
 cdef ccallback_signature_t signatures[2]
 
 ctypedef void (*inter_law_fun_type)(double, double*) noexcept nogil 
@@ -405,8 +413,6 @@ cdef class NBodySyst():
 
         cdef Py_ssize_t _il = il
         cdef double* pos_slice_ptr = self._pos_slice_buf_ptr + self._pos_slice_shifts[_il]
-
-        # cdef double[:,:,::1] res = <double[:self._pos_slice_shapes[_il,0],:self._pos_slice_shapes[_il,1],:self._pos_slice_shapes[_il,2]]> pos_slice_ptr
         cdef double[:,::1] res = <double[:self._pos_slice_shapes[_il,0],:self._pos_slice_shapes[_il,1]]> pos_slice_ptr
 
         return np.asarray(res)
@@ -420,14 +426,30 @@ cdef class NBodySyst():
     cdef double[:,:,::1] _segmpos 
     cdef double[:,:,::1] _pot_nrg_grad
 
+    cdef bint _ForceGeneralSym
+    @property
+    def ForceGeneralSym(self):
+        return self._ForceGeneralSym
+
+    cdef int[::1] _ParamBasisShortcutPos
+    @property
+    def ParamBasisShortcutPos(self):
+        return [shortcut_name[shortcut] for shortcut in self._ParamBasisShortcutPos]
+
+    cdef int[::1] _ParamBasisShortcutVel
+    @property
+    def ParamBasisShortcutVel(self):
+        return [shortcut_name[shortcut] for shortcut in self._ParamBasisShortcutVel]
+
     def __init__(
-        self                        ,
-        long geodim                 ,
-        long nbody                  ,
-        double[::1] bodymass        ,
-        double[::1] bodycharge      ,
-        list Sym_list               ,
-        object inter_law = None     , 
+        self                            ,
+        long geodim                     ,
+        long nbody                      ,
+        double[::1] bodymass            ,
+        double[::1] bodycharge          ,
+        list Sym_list                   ,
+        object inter_law = None         , 
+        bint ForceGeneralSym = False    ,
     ):
 
         self._nint_fac = 0 
@@ -522,8 +544,8 @@ cdef class NBodySyst():
 
         # Idem, but I'm too lazy to change it and it is not performance critical
         All_params_basis_pos = ComputeParamBasis_Loop(self.nloop, self._loopgen, geodim, self.LoopGenConstraints)
+        self._ncoeff_min_loop = np.array([len(All_params_basis_pos[il]) for il in range(self.nloop)], dtype=np.intp)
         params_basis_reorganized_list, nnz_k_list, co_in_list = reorganize_All_params_basis(All_params_basis_pos)
-
         self._params_basis_buf_pos, self._params_basis_shapes, self._params_basis_shifts = BundleListOfArrays(params_basis_reorganized_list)
 
         self._params_basis_buf_vel = np.empty(self._params_basis_buf_pos.shape[0], dtype=np.complex128)
@@ -532,6 +554,8 @@ cdef class NBodySyst():
 
         self._nnz_k_buf, self._nnz_k_shapes, self._nnz_k_shifts = BundleListOfArrays(nnz_k_list)
         self._co_in_buf, self._co_in_shapes, self._co_in_shifts = BundleListOfArrays(co_in_list)
+        
+        self.ForceGeneralSym = ForceGeneralSym
 
         self._nco_in_loop = np.zeros((self.nloop), dtype=np.intp)
         self._ncor_loop = np.zeros((self.nloop), dtype=np.intp)
@@ -543,24 +567,6 @@ cdef class NBodySyst():
                     self._nco_in_loop[il] +=1
 
         self.nrem = np.sum(self._nco_in_loop)
-
-
-
-# 
-#         All_params_basis_vel = ComputeParamBasis_Loop(self.nloop, self._loopgen, geodim, self.LoopGenConstraints, VelSym=False)
-#         params_basis_reorganized_list_vel, nnz_k_list_vel, co_in_list_vel = reorganize_All_params_basis(All_params_basis_vel)
-# 
-# 
-#         _params_basis_buf_pos_vel, _params_basis_shapes_vel, _params_basis_shifts_vel = BundleListOfArrays(params_basis_reorganized_list)
-# 
-#         print("Vel")
-#         print(_params_basis_shapes_vel)
-
-
-
-
-
-        self._ncoeff_min_loop = np.array([len(All_params_basis_pos[il]) for il in range(self.nloop)], dtype=np.intp)
 
         self.Compute_n_sub_fft()
 
@@ -754,6 +760,25 @@ cdef class NBodySyst():
 
         if self._nint_fac > 0:
             self.allocate_owned_memory()
+
+    @ForceGeneralSym.setter
+    @cython.cdivision(True)
+    @cython.final
+    def ForceGeneralSym(self, bint force_in):
+
+        cdef Py_ssize_t il
+
+        self._ForceGeneralSym = force_in
+
+        if force_in:
+            for il in range(self.nloop):
+
+                self._ParamBasisShortcutPos[il] = GENERAL_SYM
+                self._ParamBasisShortcutVel[il] = GENERAL_SYM 
+
+        else:
+
+            self.ConfigureShortcutSym()
 
     @cython.final
     def DetectLoops(self, double[::1] bodymass, double[::1] bodycharge, long nint_min_fac = 1):
@@ -964,7 +989,6 @@ cdef class NBodySyst():
             InterSpaceRotVel[isegm,:,:] = Sym.SpaceRot
             self._InterSpaceRotVelIsId[isegm] = Sym.IsIdentityRot()
 
-    
     @cython.final
     def Compute_n_sub_fft(self):
         
@@ -1001,6 +1025,48 @@ cdef class NBodySyst():
 
             Sym = Sym.TimeDerivative()
             ALG_SpaceRotVel_np[il,:,:] = Sym.SpaceRot
+
+    @cython.final
+    def ConfigureShortcutSym(self, double eps=1e-14):
+
+        cdef Py_ssize_t il
+
+        self._ParamBasisShortcutPos = np.empty((self.nloop), dtype=np.intc)
+        self._ParamBasisShortcutVel = np.empty((self.nloop), dtype=np.intc)
+
+        for il in range(self.nloop):
+
+            self._ParamBasisShortcutPos[il] = GENERAL_SYM
+            self._ParamBasisShortcutVel[il] = GENERAL_SYM
+
+            if self._nnz_k_shapes[il,0] == 1:
+                if self._nnz_k_buf[self._nnz_k_shifts[il]] == 0:
+
+                    if (2*self._params_basis_shapes[il,0]) == self._params_basis_shapes[il,2]:
+
+                        params_basis = self.params_basis_pos(il)
+                        m = params_basis.shape[0]
+                        n = params_basis.shape[2]
+                        
+                        params_basis_r = np.empty((m, 2, n),dtype=np.float64)
+                        params_basis_r[:,0,:] = params_basis[:,0,:].real
+                        params_basis_r[:,1,:] = params_basis[:,0,:].imag
+
+                        if np.linalg.norm(params_basis_r.reshape(n,n) - np.identity(params_basis.shape[2])) < eps:
+
+                            self._ParamBasisShortcutPos[il] = RFFT
+
+                        params_basis = self.params_basis_vel(il)
+                        m = params_basis.shape[0]
+                        n = params_basis.shape[2]
+                        
+                        params_basis_r = np.empty((m, 2, n),dtype=np.float64)
+                        params_basis_r[:,0,:] = params_basis[:,0,:].real
+                        params_basis_r[:,1,:] = params_basis[:,0,:].imag
+
+                        if np.linalg.norm(params_basis_r.reshape(n,n) - np.identity(params_basis.shape[2])) < eps:
+
+                            self._ParamBasisShortcutVel[il] = RFFT
 
     @cython.final
     def AssertAllSegmGenConstraintsAreRespected(self, all_pos, eps=1e-12, pos=True):

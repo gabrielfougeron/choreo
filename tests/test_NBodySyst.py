@@ -486,7 +486,40 @@ def test_repeatability(AllNBS, float64_tols):
         segmpos_2 = NBS.params_to_segmpos(params_buf)
         
         print(np.linalg.norm(segmpos - segmpos_2))
-        assert np.allclose(segmpos, segmpos_2, rtol = float64_tols.rtol, atol = float64_tols.atol) 
+        assert np.allclose(segmpos, segmpos_2, rtol = float64_tols.rtol, atol = float64_tols.atol)         
+        
+def test_ForceGeneralSym(AllNBS, float64_tols):
+    
+    for name, NBS in AllNBS.items():
+        
+        print(f"Config name : {name}")   
+        
+        NBS.nint_fac = 10
+        params_buf = np.random.random((NBS.nparams))
+        
+        NBS.ForceGeneralSym = False
+        segmpos = NBS.params_to_segmpos(params_buf)
+        segmvel = NBS.params_to_segmvel(params_buf)
+        params = NBS.segmpos_to_params(segmpos)
+        params_T = NBS.segmpos_to_params_T(segmpos)
+        
+        NBS.ForceGeneralSym = True
+        segmpos_f = NBS.params_to_segmpos(params_buf)
+        segmvel_f = NBS.params_to_segmvel(params_buf)
+        params_f = NBS.segmpos_to_params(segmpos)
+        params_T_f = NBS.segmpos_to_params_T(segmpos)
+        
+        print(np.linalg.norm(segmpos - segmpos_f))
+        assert np.allclose(segmpos, segmpos_f, rtol = float64_tols.rtol, atol = float64_tols.atol)             
+        
+        print(np.linalg.norm(segmvel - segmvel_f))
+        assert np.allclose(segmvel, segmvel_f, rtol = float64_tols.rtol, atol = float64_tols.atol)    
+               
+        print(np.linalg.norm(params - params_f))
+        assert np.allclose(params, params_f, rtol = float64_tols.rtol, atol = float64_tols.atol)            
+             
+        print(np.linalg.norm(params_T - params_T_f))
+        assert np.allclose(params_T, params_T_f, rtol = float64_tols.rtol, atol = float64_tols.atol)     
 
 # @pytest.mark.skip(reason="PYFFTW install currently broken")
 def test_fft_backends(AllNBS, float64_tols):
