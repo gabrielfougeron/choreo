@@ -494,10 +494,8 @@ def test_ForceGeneralSym(AllNBS, float64_tols):
         
         print(f"Config name : {name}")   
         
-        NBS.nint_fac = 1
+        NBS.nint_fac = 10
         params_buf = np.random.random((NBS.nparams))
-        # params_buf = np.zeros((NBS.nparams))
-        # params_buf[0] = 1.
         
         NBS.ForceGeneralSym = False
         segmpos = NBS.params_to_segmpos(params_buf)
@@ -510,22 +508,6 @@ def test_ForceGeneralSym(AllNBS, float64_tols):
         segmvel_f = NBS.params_to_segmvel(params_buf)
         params_f = NBS.segmpos_to_params(segmpos)
         params_T_f = NBS.segmpos_to_params_T(segmpos)
-        
-        
-        print(f'{segmpos_f = }')
-        
-        
-        # print(params)
-        # print(params_f)
-        # print(params_f - params)
-        # print(params/params_f)
-        # 
-        # 
-        print(params_T)
-        print(params_T_f)
-        print(params_T_f - params_T)
-        print(params_T/params_T_f)
-        # 
         
         print(np.linalg.norm(segmpos - segmpos_f))
         assert np.allclose(segmpos, segmpos_f, rtol = float64_tols.rtol, atol = float64_tols.atol)             
