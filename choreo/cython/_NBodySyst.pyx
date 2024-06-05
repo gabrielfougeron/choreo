@@ -2975,162 +2975,148 @@ cdef class NBodySyst():
             )
 
         return params_mom_buf_np
-# 
-#     @cython.final
-#     def TT_params_to_action_grad(self, double[::1] params_mom_buf, object TT):
-# 
-#         TT.toc("start")
-# 
-#         assert params_mom_buf.shape[0] == self.nparams
-# 
-#         action_grad_np = np.empty((self.nparams), dtype=np.float64)
-#         cdef double[::1] action_grad = action_grad_np
-# 
-#         TT.toc("memory")
-# 
-#         cdef int nsegm = self._gensegm_to_body.shape[0]
-#         cdef int geodim = self._InterSpaceRotPos.shape[1]
-# 
-#         changevar_mom_pos(
-#             &params_mom_buf[0]  , self._params_shapes , self._params_shifts ,
-#             self._nnz_k_buf           , self._nnz_k_shapes  , self._nnz_k_shifts  ,
-#             self._co_in_buf           , self._co_in_shapes  , self._co_in_shifts  ,
-#             self._ncoeff_min_loop     ,
-#             self._loopnb              , self._loopmass      ,
-#             self._params_pos_buf      , 
-#         )   
-# 
-#         TT.toc("changevar_mom_pos")
-# 
-#         params_to_ifft(
-#             self._params_pos_buf  , self._params_shapes , self._params_shifts ,
-#             self._nnz_k_buf       , self._nnz_k_shapes  , self._nnz_k_shifts  ,
-#             self._ifft_buf_ptr    , self._ifft_shapes   , self._ifft_shifts   ,
-#             self._fft_backend     , self._pyfftw_rffts_exe                    ,
-#         )
-#         
-#         TT.toc("params_to_ifft")
-# 
-#         memset(self._pos_slice_buf_ptr, 0, sizeof(double)*self._pos_slice_shifts[self._pos_slice_shapes.shape[0]])
-# 
-#         ifft_to_pos_slice(
-#             self._ifft_buf_ptr              , self._ifft_shapes           , self._ifft_shifts           ,
-#             &self._params_basis_buf_pos[0]  , self._params_basis_shapes   , self._params_basis_shifts   ,
-#             &self._nnz_k_buf[0]             , self._nnz_k_shapes          , self._nnz_k_shifts          ,
-#             self._pos_slice_buf_ptr         , self._pos_slice_shapes      , self._pos_slice_shifts      ,
-#             self._ncoeff_min_loop           , self._n_sub_fft             ,
-#         )
-# 
-#         if (self.segm_size != self.segm_store):
-# 
-#             Adjust_after_last_gen(
-#                 self._pos_slice_buf_ptr     , self._pos_slice_shifts      ,
-#                 self._ifft_shapes           ,
-#                 self._params_basis_shapes   ,
-#                 self._n_sub_fft             ,
-#                 self._ALG_Iint              ,
-#                 self._ALG_TimeRev           , self._ALG_SpaceRotPos         ,
-#                 self.segm_size              ,
-#             )
-# 
-#         TT.toc("ifft_to_pos_slice")
-# 
-#         pos_slice_to_segmpos(
-#             self._pos_slice_buf_ptr     , self._pos_slice_shapes  , self._pos_slice_shifts ,
-#             &self._segmpos[0,0,0]       ,
-#             self._InterSpaceRotPosIsId  ,
-#             self._InterSpaceRotPos      ,
-#             self._InterTimeRev          ,
-#             self._gensegm_to_body       ,
-#             self._gensegm_to_iint       ,
-#             self._bodyloop              ,
-#             self.segm_size              ,
-#             self.segm_store             ,
-#         )
-# 
-#         TT.toc("pos_slice_to_segmpos")
-# 
-#         memset(&self._pot_nrg_grad[0,0,0], 0, sizeof(double)*self.nsegm*self.segm_store*self.geodim)
-# 
-#         segm_pos_to_pot_nrg_grad(
-#             self._segmpos           , self._pot_nrg_grad    ,
-#             self._BinSourceSegm     , self._BinTargetSegm   ,
-#             self._BinSpaceRot       , self._BinSpaceRotIsId ,
-#             self._BinProdChargeSum  ,
-#             self.segm_size          , self.segm_store       , -1.                   ,
-#             self._inter_law         ,
-#         )
-# 
-#         TT.toc("segm_pos_to_pot_nrg_grad")
-# 
-#         memset(self._pos_slice_buf_ptr, 0, sizeof(double)*self._pos_slice_shifts[self._pos_slice_shapes.shape[0]])
-# 
-#         segmpos_to_pos_slice_T(
-#             &self._pot_nrg_grad[0,0,0]  ,
-#             self._pos_slice_buf_ptr     , self._pos_slice_shapes  , self._pos_slice_shifts ,
-#             self._InterSpaceRotPosIsId  ,
-#             self._InterSpaceRotPos      ,
-#             self._InterTimeRev          ,
-#             self._gensegm_to_body       ,
-#             self._gensegm_to_iint       ,
-#             self._bodyloop              ,
-#             self.segm_size              ,
-#             self.segm_store             ,
-#         )
-# 
-#         if (self.segm_size != self.segm_store):
-#             Adjust_after_last_gen_T(
-#                 self._pos_slice_buf_ptr   , self._pos_slice_shifts      ,
-#                 self._ifft_shapes         ,
-#                 self._params_basis_shapes ,
-#                 self._n_sub_fft           ,
-#                 self._ALG_Iint            ,
-#                 self._ALG_TimeRev         , self._ALG_SpaceRotPos       ,
-#                 self.segm_size            , 
-#             )
-# 
-#         TT.toc("segmpos_to_pos_slice_T")
-# 
-#         pos_slice_to_ifft(
-#             self._pos_slice_buf_ptr         , self._pos_slice_shapes      , self._pos_slice_shifts      ,
-#             &self._params_basis_buf_pos[0]  , self._params_basis_shapes   , self._params_basis_shifts   ,
-#             &self._nnz_k_buf[0]             , self._nnz_k_shapes          , self._nnz_k_shifts          ,
-#             self._ifft_buf_ptr              , self._ifft_shapes           , self._ifft_shifts           ,
-#             self._ncoeff_min_loop           , self._n_sub_fft             , -1                          ,
-#         )
-# 
-#         TT.toc("pos_slice_to_ifft")
-# 
-#         ifft_to_params(
-#             self._ifft_buf_ptr    , self._ifft_shapes   , self._ifft_shifts         ,
-#             self._nnz_k_buf       , self._nnz_k_shapes  , self._nnz_k_shifts        ,
-#             self._params_pos_buf  , self._params_shapes , self._params_shifts       ,
-#             self._fft_backend     , -1                  , self._pyfftw_irffts_exe   ,
-#         )
-# 
-#         TT.toc("ifft_to_params")
-# 
-#         changevar_mom_pos_T(
-#             self._params_pos_buf      , self._params_shapes , self._params_shifts ,
-#             self._nnz_k_buf           , self._nnz_k_shapes  , self._nnz_k_shifts  ,
-#             self._co_in_buf           , self._co_in_shapes  , self._co_in_shifts  ,
-#             self._ncoeff_min_loop     ,
-#             self._loopnb              , self._loopmass      ,
-#             &params_mom_buf[0]  , 
-#         )   
-# 
-#         TT.toc("changevar_mom_pos_T")
-# 
-#         params_to_kin_nrg_grad_daxpy(
-#             &params_mom_buf[0]  , self._params_shapes   , self._params_shifts   ,
-#             self._ncor_loop     , self._nco_in_loop     ,
-#             1.                  ,
-#             &action_grad[0]     ,
-#         )
-# 
-#         TT.toc("params_to_kin_nrg_grad_daxpy")
-# 
-#         return action_grad_np
+
+    @cython.final
+    def TT_params_to_action_grad(self, double[::1] params_mom_buf, object TT):
+
+        TT.toc("start")
+
+        assert params_mom_buf.shape[0] == self.nparams
+
+        action_grad_np = np.empty((self.nparams), dtype=np.float64)
+        cdef double[::1] action_grad = action_grad_np
+
+        TT.toc("memory")
+
+        cdef int nsegm = self._gensegm_to_body.shape[0]
+        cdef int geodim = self._InterSpaceRotPos.shape[1]
+
+        changevar_mom_pos(
+            &params_mom_buf[0]  , self._params_shapes , self._params_shifts ,
+            self._nnz_k_buf           , self._nnz_k_shapes  , self._nnz_k_shifts  ,
+            self._co_in_buf           , self._co_in_shapes  , self._co_in_shifts  ,
+            self._ncoeff_min_loop     ,
+            self._loopnb              , self._loopmass      ,
+            self._params_pos_buf      , 
+        )   
+
+        TT.toc("changevar_mom_pos")
+
+        params_to_pos_slice(
+            self._params_pos_buf            , self._params_shapes       , self._params_shifts       ,
+            &self._nnz_k_buf[0]             , self._nnz_k_shapes        , self._nnz_k_shifts        ,
+            self._ifft_buf_ptr              , self._ifft_shapes         , self._ifft_shifts         ,
+            self._ParamBasisShortcutPos     ,
+            self._fft_backend               , self._pyfftw_rffts_exe    ,
+            &self._params_basis_buf_pos[0]  , self._params_basis_shapes , self._params_basis_shifts ,
+            self._pos_slice_buf_ptr         , self._pos_slice_shapes    , self._pos_slice_shifts    ,
+            self._ncoeff_min_loop           , self._n_sub_fft           ,
+        )
+
+        if (self.segm_size != self.segm_store):
+
+            Adjust_after_last_gen(
+                self._pos_slice_buf_ptr     , self._pos_slice_shifts      ,
+                self._ifft_shapes           ,
+                self._params_basis_shapes   ,
+                self._n_sub_fft             ,
+                self._ALG_Iint              ,
+                self._ALG_TimeRev           , self._ALG_SpaceRotPos         ,
+                self.segm_size              ,
+            )
+
+        TT.toc("params_to_pos_slice")
+
+        pos_slice_to_segmpos(
+            self._pos_slice_buf_ptr     , self._pos_slice_shapes  , self._pos_slice_shifts ,
+            &self._segmpos[0,0,0]       ,
+            self._InterSpaceRotPosIsId  ,
+            self._InterSpaceRotPos      ,
+            self._InterTimeRev          ,
+            self._gensegm_to_body       ,
+            self._gensegm_to_iint       ,
+            self._bodyloop              ,
+            self.segm_size              ,
+            self.segm_store             ,
+        )
+
+        TT.toc("pos_slice_to_segmpos")
+
+        memset(&self._pot_nrg_grad[0,0,0], 0, sizeof(double)*self.nsegm*self.segm_store*self.geodim)
+
+        segm_pos_to_pot_nrg_grad(
+            self._segmpos           , self._pot_nrg_grad    ,
+            self._BinSourceSegm     , self._BinTargetSegm   ,
+            self._BinSpaceRot       , self._BinSpaceRotIsId ,
+            self._BinProdChargeSum  ,
+            self.segm_size          , self.segm_store       , -1.                   ,
+            self._inter_law         ,
+        )
+
+        TT.toc("segm_pos_to_pot_nrg_grad")
+
+        memset(self._pos_slice_buf_ptr, 0, sizeof(double)*self._pos_slice_shifts[self._pos_slice_shapes.shape[0]])
+
+        segmpos_to_pos_slice_T(
+            &self._pot_nrg_grad[0,0,0]  ,
+            self._pos_slice_buf_ptr     , self._pos_slice_shapes  , self._pos_slice_shifts ,
+            self._InterSpaceRotPosIsId  ,
+            self._InterSpaceRotPos      ,
+            self._InterTimeRev          ,
+            self._gensegm_to_body       ,
+            self._gensegm_to_iint       ,
+            self._bodyloop              ,
+            self.segm_size              ,
+            self.segm_store             ,
+        )
+
+        TT.toc("segmpos_to_pos_slice_T")
+
+        if (self.segm_size != self.segm_store):
+            Adjust_after_last_gen_T(
+                self._pos_slice_buf_ptr   , self._pos_slice_shifts      ,
+                self._ifft_shapes         ,
+                self._params_basis_shapes ,
+                self._n_sub_fft           ,
+                self._ALG_Iint            ,
+                self._ALG_TimeRev         , self._ALG_SpaceRotPos       ,
+                self.segm_size            , 
+            )
+
+        pos_slice_to_params(
+            self._pos_slice_buf_ptr         , self._pos_slice_shapes    , self._pos_slice_shifts    ,
+            &self._params_basis_buf_pos[0]  , self._params_basis_shapes , self._params_basis_shifts ,
+            &self._nnz_k_buf[0]             , self._nnz_k_shapes        , self._nnz_k_shifts        ,
+            self._ifft_buf_ptr              , self._ifft_shapes         , self._ifft_shifts         ,
+            self._ncoeff_min_loop           , self._n_sub_fft           , -1                        ,
+            self._params_pos_buf            , self._params_shapes       , self._params_shifts       ,
+            self._ParamBasisShortcutPos     ,
+            self._fft_backend               , self._pyfftw_irffts_exe   ,
+        )
+
+        TT.toc("pos_slice_to_params")
+
+        changevar_mom_pos_T(
+            self._params_pos_buf      , self._params_shapes , self._params_shifts ,
+            self._nnz_k_buf           , self._nnz_k_shapes  , self._nnz_k_shifts  ,
+            self._co_in_buf           , self._co_in_shapes  , self._co_in_shifts  ,
+            self._ncoeff_min_loop     ,
+            self._loopnb              , self._loopmass      ,
+            &params_mom_buf[0]  , 
+        )   
+
+        TT.toc("changevar_mom_pos_T")
+
+        params_to_kin_nrg_grad_daxpy(
+            &params_mom_buf[0]  , self._params_shapes   , self._params_shifts   ,
+            self._ncor_loop     , self._nco_in_loop     ,
+            1.                  ,
+            &action_grad[0]     ,
+        )
+
+        TT.toc("params_to_kin_nrg_grad_daxpy")
+
+        return action_grad_np
 
     @cython.final
     def segm_to_path_stats(self, double[:,:,::1] segmpos, double[:,:,::1] segmvel):
@@ -4200,7 +4186,7 @@ cdef void params_to_pos_slice(
                     dfac = 2*params_shapes[il,0]
                     scipy.linalg.cython_blas.daxpy(&n,&dfac,&rfft_mv[0,0],&int_one,pos_slice,&int_one)
 
-
+@cython.cdivision(True)
 cdef void pos_slice_to_params(
     double* pos_slice_buf_ptr               , long[:,::1] pos_slice_shapes      , long[::1] pos_slice_shifts    ,
     double complex *params_basis_buf_ptr    , long[:,::1] params_basis_shapes   , long[::1] params_basis_shifts ,

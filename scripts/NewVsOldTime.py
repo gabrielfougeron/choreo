@@ -66,7 +66,7 @@ def setup(test_name, fft_backend, nint_fac):
         inter_law = choreo.numba_funs_new.pow_inter_law(inter_pow/2, inter_pm)
         
     NBS = choreo.cython._NBodySyst.NBodySyst(geodim, nbody, mass, charge, Sym_list, inter_law,
-        # ForceGeneralSym = False,
+        # ForceGeneralSym = True,
     )
 
     # NBS.fftw_planner_effort = 'FFTW_ESTIMATE'
@@ -151,10 +151,11 @@ all_tests = [
     # '4C5k',
     # '4D3k',
     # '4D',
-    '3C',
+    # '3C',
     # '4C',
     # '20B',
-    # '3D',
+    '3D',
+    '3B',
     # '3D1',
     # '3C2k',
     # '3D2k',
