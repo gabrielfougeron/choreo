@@ -494,7 +494,14 @@ def test_ForceGeneralSym(AllNBS, float64_tols):
         
         print(f"Config name : {name}")   
         
-        NBS.nint_fac = 10
+        NBS.fftw_planner_effort = 'FFTW_MEASURE'
+        NBS.fftw_wisdom_only = False
+        NBS.fftw_nthreads = 1
+        NBS.fft_backend = 'fftw'
+        
+        
+        
+        NBS.nint_fac = 1
         params_buf = np.random.random((NBS.nparams))
         
         NBS.ForceGeneralSym = False
@@ -508,6 +515,15 @@ def test_ForceGeneralSym(AllNBS, float64_tols):
         segmvel_f = NBS.params_to_segmvel(params_buf)
         params_f = NBS.segmpos_to_params(segmpos)
         params_T_f = NBS.segmpos_to_params_T(segmpos)
+        
+        
+        
+        print(params)
+        print(params_f)
+        print(params-params_f)
+        print(params_f/params)
+        
+        
         
         print(np.linalg.norm(segmpos - segmpos_f))
         assert np.allclose(segmpos, segmpos_f, rtol = float64_tols.rtol, atol = float64_tols.atol)             

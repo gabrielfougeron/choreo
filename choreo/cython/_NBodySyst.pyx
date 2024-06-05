@@ -412,8 +412,7 @@ cdef class NBodySyst():
             return None
 
         cdef Py_ssize_t _il = il
-        cdef double* pos_slice_ptr = self._pos_slice_buf_ptr[_il]
-        cdef double[:,::1] res = <double[:self._pos_slice_shapes[_il,0],:self._pos_slice_shapes[_il,1]]> pos_slice_ptr
+        cdef double[:,::1] res = <double[:self._pos_slice_shapes[_il,0],:self._pos_slice_shapes[_il,1]]> self._pos_slice_buf_ptr[_il]
 
         return np.asarray(res)
 
@@ -592,7 +591,6 @@ cdef class NBodySyst():
         self.ForceGeneralSym = ForceGeneralSym
 
     def __dealloc__(self):
-
         self.free_owned_memory()
 
     @cython.final
@@ -620,8 +618,9 @@ cdef class NBodySyst():
                     
                     free(self._fftw_genrfft_exe[il])
                     free(self._fftw_genirfft_exe[il])
-                    free(self._fftw_symrfft_exe[il])
-                    free(self._fftw_symirfft_exe[il])
+                    if (self._ParamBasisShortcutPos_th[il] == RFFT) or (self._ParamBasisShortcutVel_th[il] == RFFT):
+                        free(self._fftw_symrfft_exe[il])
+                        free(self._fftw_symirfft_exe[il])
 
                 free(self._fftw_genrfft_exe)
                 free(self._fftw_genirfft_exe)
@@ -649,6 +648,10 @@ cdef class NBodySyst():
 
         cdef double complex[:,::1] pyfftw_input_array_2
         cdef double[:,::1] pyfftw_output_array_2
+
+        cdef double[::1] pos_slice_1d
+        cdef double[:,::1] pos_slice_mv
+        cdef double complex[:,::1] params_c_mv
 
         if self.fft_backend in ['scipy', 'mkl']:
 
@@ -691,15 +694,6 @@ cdef class NBodySyst():
 
                 self._fftw_genrfft_exe[il] = <pyfftw.fftw_exe*> malloc(sizeof(pyfftw.fftw_exe))
                 self._fftw_genrfft_exe[il][0] = pyfftw_object.get_fftw_exe()
-                
-#                 if (self._ParamBasisShortcutPos_th[0] == RFFT) or (self._ParamBasisShortcutVel_th[0] == RFFT):
-#                     pyfftw_input_array_2 = <double complex[:(self._params_shapes[il,0]+1),:geodim]> ( <double complex*> &pyfftw_input_array[0,0,0])
-# 
-#                     pyfftw_output_array_2
-
-
-
-
 
                 direction = 'FFTW_BACKWARD'
                 pyfftw_object = pyfftw.FFTW(ifft, params_pos, axes=(0, ), direction=direction, flags=flags, threads=self.fftw_nthreads)   
@@ -707,6 +701,38 @@ cdef class NBodySyst():
 
                 self._fftw_genirfft_exe[il] = <pyfftw.fftw_exe*> malloc(sizeof(pyfftw.fftw_exe))
                 self._fftw_genirfft_exe[il][0] = pyfftw_object.get_fftw_exe()
+
+                if (self._ParamBasisShortcutPos_th[il] == RFFT) or (self._ParamBasisShortcutVel_th[il] == RFFT):
+
+                    pyfftw_input_array_2 = <double complex[:(self._params_shapes[il,0]+1),:self.geodim]> (<double complex*> &pyfftw_input_array[0,0,0])
+
+                    pos_slice_1d = p_pyfftw.empty_aligned((self._pos_slice_shifts[il+1]-self._pos_slice_shifts[il]), dtype=np.float64)
+                    self._pos_slice_buf_ptr[il] = &pos_slice_1d[0]
+
+                    pyfftw_output_array_2 = <double[:2*self._params_shapes[il,0],:self.geodim:1]> self._pos_slice_buf_ptr[il]
+
+                    direction = 'FFTW_BACKWARD'
+                    pyfftw_object = pyfftw.FFTW(np.asarray(pyfftw_input_array_2), np.asarray(pyfftw_output_array_2), axes=(0, ), direction=direction, flags=flags, threads=self.fftw_nthreads)  
+                    self._fftw_symirfft[il] = pyfftw_object
+
+                    self._fftw_symirfft_exe[il] = <pyfftw.fftw_exe*> malloc(sizeof(pyfftw.fftw_exe))
+                    self._fftw_symirfft_exe[il][0] = pyfftw_object.get_fftw_exe()
+
+                    n = 2*(self._ifft_shapes[il,0] - 1)
+                    pos_slice_mv = <double[:n,:self.geodim:1]> self._pos_slice_buf_ptr[il]
+                    params_c_mv = <double complex[:self._ifft_shapes[il,0],:self.geodim:1]> (<double complex*> self._params_pos_buf[il])
+
+                    direction = 'FFTW_FORWARD'
+                    pyfftw_object = pyfftw.FFTW(np.asarray(pos_slice_mv), np.asarray(params_c_mv), axes=(0, ), direction=direction, flags=flags, threads=self.fftw_nthreads)  
+                    self._fftw_symrfft[il] = pyfftw_object
+
+                    self._fftw_symrfft_exe[il] = <pyfftw.fftw_exe*> malloc(sizeof(pyfftw.fftw_exe))
+                    self._fftw_symrfft_exe[il][0] = pyfftw_object.get_fftw_exe()
+
+                else:
+
+                    self._pos_slice_buf_ptr[il] = <double*> malloc(sizeof(double)*(self._pos_slice_shifts[il+1]-self._pos_slice_shifts[il]))
+
 
         self._segmpos = np.empty((self.nsegm, self.segm_store, self.geodim), dtype=np.float64)
         self._pot_nrg_grad = np.empty((self.nsegm, self.segm_store, self.geodim), dtype=np.float64)
@@ -800,6 +826,8 @@ cdef class NBodySyst():
     @cython.final
     def ForceGeneralSym(self, bint force_in):
 
+        self.free_owned_memory()
+
         self._ForceGeneralSym = force_in
 
         if force_in:
@@ -807,10 +835,9 @@ cdef class NBodySyst():
             self._ParamBasisShortcutVel = np.full((self.nloop), GENERAL_SYM, dtype=np.intc)
 
         else:
-            self._ParamBasisShortcutPos = self._ParamBasisShortcutPos_th
-            self._ParamBasisShortcutVel = self._ParamBasisShortcutVel_th
+            self._ParamBasisShortcutPos = self._ParamBasisShortcutPos_th.copy()
+            self._ParamBasisShortcutVel = self._ParamBasisShortcutVel_th.copy()
 
-        self.free_owned_memory()
         self.allocate_owned_memory()
 
     @cython.final
@@ -2061,7 +2088,7 @@ cdef class NBodySyst():
                 self._pos_slice_buf_ptr     , self._pos_slice_shapes    , self._pos_slice_shifts    ,
                 self._ncoeff_min_loop       , self._n_sub_fft           , self._fft_backend         ,
                 self._ParamBasisShortcutPos ,
-                self._fftw_genrfft_exe      ,
+                self._fftw_genrfft_exe      , self._fftw_symirfft_exe   ,
                 self._loopnb                , self._loopmass            ,
                 self._InterSpaceRotPosIsId  , self._InterSpaceRotPos    , self._InterTimeRev        ,
                 self._ALG_Iint              , self._ALG_SpaceRotPos     , self._ALG_TimeRev         ,
@@ -2101,7 +2128,7 @@ cdef class NBodySyst():
                 self._pos_slice_buf_ptr     , self._pos_slice_shapes    , self._pos_slice_shifts    ,
                 self._ncoeff_min_loop       , self._n_sub_fft           , self._fft_backend         ,
                 self._ParamBasisShortcutPos ,
-                self._fftw_genrfft_exe      ,
+                self._fftw_genrfft_exe      , self._fftw_symirfft_exe   ,
                 self._loopnb                , self._loopmass            ,
                 self._InterSpaceRotPosIsId  , self._InterSpaceRotPos    , self._InterTimeRev        ,
                 self._ALG_Iint              , self._ALG_SpaceRotPos     , self._ALG_TimeRev         ,
@@ -2131,7 +2158,7 @@ cdef class NBodySyst():
                 self._pos_slice_buf_ptr     , self._pos_slice_shapes    , self._pos_slice_shifts    ,
                 self._ncoeff_min_loop       , self._n_sub_fft           , self._fft_backend         ,
                 self._ParamBasisShortcutPos ,
-                self._fftw_genirfft_exe     ,
+                self._fftw_genirfft_exe     , self._fftw_symrfft_exe    ,
                 self._loopnb                , self._loopmass            ,
                 self._InterSpaceRotPosIsId  , self._InterSpaceRotPos    , self._InterTimeRev        ,
                 self._ALG_Iint              , self._ALG_SpaceRotPos     , self._ALG_TimeRev         ,
@@ -2165,7 +2192,7 @@ cdef class NBodySyst():
                 self._pos_slice_buf_ptr     , self._pos_slice_shapes    , self._pos_slice_shifts    ,
                 self._ncoeff_min_loop       , self._n_sub_fft           , self._fft_backend         ,
                 self._ParamBasisShortcutPos ,
-                self._fftw_genrfft_exe      ,
+                self._fftw_genrfft_exe      , self._fftw_symirfft_exe   ,
                 self._loopnb                , self._loopmass            ,
                 self._InterSpaceRotPosIsId  , self._InterSpaceRotPos    , self._InterTimeRev        ,
                 self._ALG_Iint              , self._ALG_SpaceRotPos     , self._ALG_TimeRev         ,
@@ -2184,7 +2211,7 @@ cdef class NBodySyst():
                 self._pos_slice_buf_ptr     , self._pos_slice_shapes    , self._pos_slice_shifts    ,
                 self._ncoeff_min_loop       , self._n_sub_fft           , self._fft_backend         ,
                 self._ParamBasisShortcutPos ,
-                self._fftw_genrfft_exe      ,
+                self._fftw_genrfft_exe      , self._fftw_symirfft_exe   ,
                 self._loopnb                , self._loopmass            ,
                 self._InterSpaceRotPosIsId  , self._InterSpaceRotPos    , self._InterTimeRev        ,
                 self._ALG_Iint              , self._ALG_SpaceRotPos     , self._ALG_TimeRev         ,
@@ -2214,7 +2241,7 @@ cdef class NBodySyst():
                 self._pos_slice_buf_ptr     , self._pos_slice_shapes    , self._pos_slice_shifts    ,
                 self._ncoeff_min_loop       , self._n_sub_fft           , self._fft_backend         ,
                 self._ParamBasisShortcutPos ,
-                self._fftw_genirfft_exe     ,
+                self._fftw_genirfft_exe     , self._fftw_symrfft_exe    ,
                 self._loopnb                , self._loopmass            ,
                 self._InterSpaceRotPosIsId  , self._InterSpaceRotPos    , self._InterTimeRev        ,
                 self._ALG_Iint              , self._ALG_SpaceRotPos     , self._ALG_TimeRev         ,
@@ -2249,7 +2276,7 @@ cdef class NBodySyst():
                 self._pos_slice_buf_ptr     , self._pos_slice_shapes    , self._pos_slice_shifts    ,
                 self._ncoeff_min_loop       , self._n_sub_fft           , self._fft_backend         ,
                 self._ParamBasisShortcutPos ,
-                self._fftw_genrfft_exe      ,
+                self._fftw_genrfft_exe      , self._fftw_symirfft_exe   ,
                 self._loopnb                , self._loopmass            ,
                 self._InterSpaceRotPosIsId  , self._InterSpaceRotPos    , self._InterTimeRev        ,
                 self._ALG_Iint              , self._ALG_SpaceRotPos     , self._ALG_TimeRev         ,
@@ -2289,7 +2316,7 @@ cdef class NBodySyst():
                 self._pos_slice_buf_ptr     , self._pos_slice_shapes    , self._pos_slice_shifts    ,
                 self._ncoeff_min_loop       , self._n_sub_fft           , self._fft_backend         ,
                 self._ParamBasisShortcutPos ,
-                self._fftw_genrfft_exe      ,
+                self._fftw_genrfft_exe      , self._fftw_symirfft_exe   ,
                 self._loopnb                , self._loopmass            ,
                 self._InterSpaceRotPosIsId  , self._InterSpaceRotPos    , self._InterTimeRev        ,
                 self._ALG_Iint              , self._ALG_SpaceRotPos     , self._ALG_TimeRev         ,
@@ -2319,7 +2346,7 @@ cdef class NBodySyst():
                 self._pos_slice_buf_ptr     , self._pos_slice_shapes    , self._pos_slice_shifts    ,
                 self._ncoeff_min_loop       , self._n_sub_fft           , self._fft_backend         ,
                 self._ParamBasisShortcutPos ,
-                self._fftw_genirfft_exe     ,
+                self._fftw_genirfft_exe     , self._fftw_symrfft_exe    ,
                 self._loopnb                , self._loopmass            ,
                 self._InterSpaceRotPosIsId  , self._InterSpaceRotPos    , self._InterTimeRev        ,
                 self._ALG_Iint              , self._ALG_SpaceRotPos     , self._ALG_TimeRev         ,
@@ -2359,7 +2386,7 @@ cdef class NBodySyst():
                 self._pos_slice_buf_ptr     , self._pos_slice_shapes    , self._pos_slice_shifts    ,
                 self._ncoeff_min_loop       , self._n_sub_fft           , self._fft_backend         ,
                 self._ParamBasisShortcutPos ,
-                self._fftw_genrfft_exe      ,
+                self._fftw_genrfft_exe      , self._fftw_symirfft_exe   ,
                 self._loopnb                , self._loopmass            ,
                 self._InterSpaceRotPosIsId  , self._InterSpaceRotPos    , self._InterTimeRev        ,
                 self._ALG_Iint              , self._ALG_SpaceRotPos     , self._ALG_TimeRev         ,
@@ -2378,7 +2405,7 @@ cdef class NBodySyst():
                 self._pos_slice_buf_ptr     , self._pos_slice_shapes    , self._pos_slice_shifts    ,
                 self._ncoeff_min_loop       , self._n_sub_fft           , self._fft_backend         ,
                 self._ParamBasisShortcutPos ,
-                self._fftw_genrfft_exe      ,
+                self._fftw_genrfft_exe      , self._fftw_symirfft_exe   ,
                 self._loopnb                , self._loopmass            ,
                 self._InterSpaceRotPosIsId  , self._InterSpaceRotPos    , self._InterTimeRev        ,
                 self._ALG_Iint              , self._ALG_SpaceRotPos     , self._ALG_TimeRev         ,
@@ -2408,7 +2435,7 @@ cdef class NBodySyst():
                 self._pos_slice_buf_ptr     , self._pos_slice_shapes    , self._pos_slice_shifts    ,
                 self._ncoeff_min_loop       , self._n_sub_fft           , self._fft_backend         ,
                 self._ParamBasisShortcutPos ,
-                self._fftw_genirfft_exe     ,
+                self._fftw_genirfft_exe     , self._fftw_symrfft_exe    ,
                 self._loopnb                , self._loopmass            ,
                 self._InterSpaceRotPosIsId  , self._InterSpaceRotPos    , self._InterTimeRev        ,
                 self._ALG_Iint              , self._ALG_SpaceRotPos     , self._ALG_TimeRev         ,
@@ -2451,7 +2478,7 @@ cdef class NBodySyst():
                 self._pos_slice_buf_ptr     , self._pos_slice_shapes    , self._pos_slice_shifts    ,
                 self._ncoeff_min_loop       , self._n_sub_fft           , self._fft_backend         ,
                 self._ParamBasisShortcutPos ,
-                self._fftw_genrfft_exe      ,
+                self._fftw_genrfft_exe      , self._fftw_symirfft_exe   ,
                 self._loopnb                , self._loopmass            ,
                 self._InterSpaceRotPosIsId  , self._InterSpaceRotPos    , self._InterTimeRev        ,
                 self._ALG_Iint              , self._ALG_SpaceRotPos     , self._ALG_TimeRev         ,
@@ -2503,7 +2530,7 @@ cdef class NBodySyst():
                 self._pos_slice_buf_ptr     , self._pos_slice_shapes    , self._pos_slice_shifts    ,
                 self._ncoeff_min_loop       , self._n_sub_fft           , self._fft_backend         ,
                 self._ParamBasisShortcutPos ,
-                self._fftw_genirfft_exe     ,
+                self._fftw_genirfft_exe     , self._fftw_symrfft_exe    ,
                 self._loopnb                , self._loopmass            ,
                 self._InterSpaceRotPosIsId  , self._InterSpaceRotPos    , self._InterTimeRev        ,
                 self._ALG_Iint              , self._ALG_SpaceRotPos     , self._ALG_TimeRev         ,
@@ -2542,7 +2569,7 @@ cdef class NBodySyst():
                 self._pos_slice_buf_ptr     , self._pos_slice_shapes    , self._pos_slice_shifts    ,
                 self._ncoeff_min_loop       , self._n_sub_fft           , self._fft_backend         ,
                 self._ParamBasisShortcutPos ,
-                self._fftw_genrfft_exe      ,
+                self._fftw_genrfft_exe      , self._fftw_symirfft_exe   ,
                 self._loopnb                , self._loopmass            ,
                 self._InterSpaceRotPosIsId  , self._InterSpaceRotPos    , self._InterTimeRev        ,
                 self._ALG_Iint              , self._ALG_SpaceRotPos     , self._ALG_TimeRev         ,
@@ -2572,7 +2599,7 @@ cdef class NBodySyst():
                 self._pos_slice_buf_ptr     , self._pos_slice_shapes    , self._pos_slice_shifts    ,
                 self._ncoeff_min_loop       , self._n_sub_fft           , self._fft_backend         ,
                 self._ParamBasisShortcutPos ,
-                self._fftw_genirfft_exe     ,
+                self._fftw_genirfft_exe     , self._fftw_symrfft_exe    ,
                 self._loopnb                , self._loopmass            ,
                 self._InterSpaceRotPosIsId  , self._InterSpaceRotPos    , self._InterTimeRev        ,
                 self._ALG_Iint              , self._ALG_SpaceRotPos     , self._ALG_TimeRev         ,
@@ -2902,7 +2929,7 @@ cdef class NBodySyst():
                 self._pos_slice_buf_ptr     , self._pos_slice_shapes    , self._pos_slice_shifts    ,
                 self._ncoeff_min_loop       , self._n_sub_fft           , self._fft_backend         ,
                 self._ParamBasisShortcutPos ,
-                self._fftw_genrfft_exe      ,
+                self._fftw_genrfft_exe      , self._fftw_symirfft_exe   ,
                 self._loopnb                , self._loopmass            ,
                 self._InterSpaceRotPosIsId  , self._InterSpaceRotPos    , self._InterTimeRev        ,
                 self._ALG_Iint              , self._ALG_SpaceRotPos     , self._ALG_TimeRev         ,
@@ -2933,7 +2960,7 @@ cdef class NBodySyst():
                 self._pos_slice_buf_ptr     , self._pos_slice_shapes    , self._pos_slice_shifts    ,
                 self._ncoeff_min_loop       , self._n_sub_fft           , self._fft_backend         ,
                 self._ParamBasisShortcutVel ,
-                self._fftw_genrfft_exe      ,
+                self._fftw_genrfft_exe      , self._fftw_symirfft_exe   ,
                 self._loopnb                , self._loopmass            ,
                 self._InterSpaceRotVelIsId  , self._InterSpaceRotVel    , self._InterTimeRev        ,
                 self._ALG_Iint              , self._ALG_SpaceRotVel     , self._ALG_TimeRev         ,
@@ -2964,7 +2991,7 @@ cdef class NBodySyst():
                 self._pos_slice_buf_ptr     , self._pos_slice_shapes    , self._pos_slice_shifts    ,
                 self._ncoeff_min_loop       , self._n_sub_fft           , self._fft_backend         ,
                 self._ParamBasisShortcutPos ,
-                self._fftw_genirfft_exe     ,
+                self._fftw_genirfft_exe     , self._fftw_symrfft_exe    ,
                 self._loopnb                , self._loopmass            ,
                 self._InterSpaceRotPosIsId  , self._InterSpaceRotPos    , self._InterTimeRev        ,
                 self._gensegm_to_body       , self._gensegm_to_iint     ,
@@ -2994,7 +3021,7 @@ cdef class NBodySyst():
                 self._pos_slice_buf_ptr     , self._pos_slice_shapes    , self._pos_slice_shifts    ,
                 self._ncoeff_min_loop       , self._n_sub_fft           , self._fft_backend         ,
                 self._ParamBasisShortcutPos ,
-                self._fftw_genirfft_exe     ,
+                self._fftw_genirfft_exe     , self._fftw_symrfft_exe    ,
                 self._loopnb                , self._loopmass            ,
                 self._InterSpaceRotPosIsId  , self._InterSpaceRotPos    , self._InterTimeRev        ,
                 self._ALG_Iint              , self._ALG_SpaceRotPos     , self._ALG_TimeRev         ,
@@ -3036,7 +3063,7 @@ cdef class NBodySyst():
             &self._nnz_k_buf[0]             , self._nnz_k_shapes        , self._nnz_k_shifts        ,
             self._ifft_buf_ptr              , self._ifft_shapes         , self._ifft_shifts         ,
             self._ParamBasisShortcutPos     ,
-            self._fft_backend               , self._fftw_genrfft_exe    ,
+            self._fft_backend               , self._fftw_genrfft_exe    , self._fftw_symirfft_exe   ,
             &self._params_basis_buf_pos[0]  , self._params_basis_shapes , self._params_basis_shifts ,
             self._pos_slice_buf_ptr         , self._pos_slice_shapes    , self._pos_slice_shifts    ,
             self._ncoeff_min_loop           , self._n_sub_fft           ,
@@ -3120,7 +3147,7 @@ cdef class NBodySyst():
             self._ncoeff_min_loop           , self._n_sub_fft           , -1                        ,
             self._params_pos_buf            , self._params_shapes       , self._params_shifts       ,
             self._ParamBasisShortcutPos     ,
-            self._fft_backend               , self._fftw_genirfft_exe   ,
+            self._fft_backend               , self._fftw_genirfft_exe   , self._fftw_symrfft_exe    ,
         )
 
         TT.toc("pos_slice_to_params")
@@ -4075,13 +4102,13 @@ cdef void Adjust_after_last_gen_T(
                         pos_slice_uneven_source[jdim] += ALG_SpaceRot[il,idim,jdim] * pos_slice[idim]
 
 cdef void params_to_pos_slice(
-    double** params_buf                     , long[:,::1] params_shapes         , long[::1] params_shifts           ,
-    long* nnz_k_buf_ptr                     , long[:,::1] nnz_k_shapes          , long[::1] nnz_k_shifts            ,
-    double complex **ifft_buf_ptr           , long[:,::1] ifft_shapes           , long[::1] ifft_shifts             ,
+    double** params_buf                     , long[:,::1] params_shapes         , long[::1] params_shifts               ,
+    long* nnz_k_buf_ptr                     , long[:,::1] nnz_k_shapes          , long[::1] nnz_k_shifts                ,
+    double complex **ifft_buf_ptr           , long[:,::1] ifft_shapes           , long[::1] ifft_shifts                 ,
     int[::1] ParamBasisShortcut             ,
-    int fft_backend                         , pyfftw.fftw_exe** fftw_genrfft_exe,
-    double complex *params_basis_buf_ptr    , long[:,::1] params_basis_shapes   , long[::1] params_basis_shifts     ,
-    double** pos_slice_buf_ptr              , long[:,::1] pos_slice_shapes      , long[::1] pos_slice_shifts        ,
+    int fft_backend                         , pyfftw.fftw_exe** fftw_genrfft_exe, pyfftw.fftw_exe** fftw_symirfft_exe   ,
+    double complex *params_basis_buf_ptr    , long[:,::1] params_basis_shapes   , long[::1] params_basis_shifts         ,
+    double** pos_slice_buf_ptr              , long[:,::1] pos_slice_shapes      , long[::1] pos_slice_shifts            ,
     long[::1] ncoeff_min_loop               , long[::1] n_sub_fft               ,
 ) noexcept nogil:
 
@@ -4109,9 +4136,6 @@ cdef void params_to_pos_slice(
     cdef int ncoeff_min_loop_il
     cdef int ncoeff_min_loop_nnz
     cdef int nppl
-    
-    # TODO : Remove this
-    # memset(pos_slice_buf_ptr, 0, sizeof(double)*pos_slice_shifts[pos_slice_shapes.shape[0]])
 
     for il in range(nloop):
 
@@ -4187,9 +4211,8 @@ cdef void params_to_pos_slice(
         elif ParamBasisShortcut[il] == RFFT:
 
             if fft_backend == USE_FFTW_FFT:
-                pass
-#                     if params_shapes[il,1] > 0:
-#                         pyfftw.execute_in_nogil(fftw_genrfft_exe[il])
+
+                pyfftw.execute_in_nogil(fftw_symirfft_exe[il])
 
             elif fft_backend == USE_MKL_FFT:
 
@@ -4219,14 +4242,14 @@ cdef void params_to_pos_slice(
 
 @cython.cdivision(True)
 cdef void pos_slice_to_params(
-    double** pos_slice_buf_ptr              , long[:,::1] pos_slice_shapes      , long[::1] pos_slice_shifts    ,
-    double complex *params_basis_buf_ptr    , long[:,::1] params_basis_shapes   , long[::1] params_basis_shifts ,
-    long* nnz_k_buf_ptr                     , long[:,::1] nnz_k_shapes          , long[::1] nnz_k_shifts        ,
-    double complex **ifft_buf_ptr           , long[:,::1] ifft_shapes           , long[::1] ifft_shifts         ,
-    long[::1] ncoeff_min_loop               , long[::1] n_sub_fft               , int direction                 ,
-    double **params_buf                     , long[:,::1] params_shapes         , long[::1] params_shifts       ,
+    double** pos_slice_buf_ptr              , long[:,::1] pos_slice_shapes          , long[::1] pos_slice_shifts        ,
+    double complex *params_basis_buf_ptr    , long[:,::1] params_basis_shapes       , long[::1] params_basis_shifts     ,
+    long* nnz_k_buf_ptr                     , long[:,::1] nnz_k_shapes              , long[::1] nnz_k_shifts            ,
+    double complex **ifft_buf_ptr           , long[:,::1] ifft_shapes               , long[::1] ifft_shifts             ,
+    long[::1] ncoeff_min_loop               , long[::1] n_sub_fft                   , int direction                     ,
+    double **params_buf                     , long[:,::1] params_shapes             , long[::1] params_shifts           ,
     int[::1] ParamBasisShortcut             ,
-    int fft_backend                         , pyfftw.fftw_exe** fftw_genirfft_exe                               ,
+    int fft_backend                         , pyfftw.fftw_exe** fftw_genirfft_exe   , pyfftw.fftw_exe** fftw_symrfft_exe,
 ) noexcept nogil:
 
     cdef double complex* ifft
@@ -4337,7 +4360,19 @@ cdef void pos_slice_to_params(
         elif ParamBasisShortcut[il] == RFFT:
 
             if fft_backend == USE_FFTW_FFT:
-                pass
+
+                pyfftw.execute_in_nogil(fftw_symrfft_exe[il])
+
+                dest = params_buf[il]
+                n = (params_shifts[il+1] - params_shifts[il])
+                if direction > 0:
+                    fac = 1. / (2*params_shapes[il,0])
+                    scipy.linalg.cython_blas.dscal(&n,&fac,dest,&int_one)
+                else:
+                    fac = 2.
+                    n -= 2*geodim
+                    dest += 2*geodim
+                    scipy.linalg.cython_blas.dscal(&n,&fac,dest,&int_one)
 
             elif fft_backend == USE_MKL_FFT:
 
@@ -4637,10 +4672,10 @@ cdef void params_to_segmpos(
     double** pos_slice_buf_ptr              , long[:,::1] pos_slice_shapes          , long[::1] pos_slice_shifts    ,
     long[::1] ncoeff_min_loop               , long[::1] n_sub_fft                   , int fft_backend               ,
     int[::1] ParamBasisShortcutPos          ,
-    pyfftw.fftw_exe** fftw_genrfft_exe      ,
+    pyfftw.fftw_exe** fftw_genrfft_exe      , pyfftw.fftw_exe** fftw_symirfft_exe   ,
     long[::1] loopnb                        , double[::1] loopmass                  ,
     bint[::1] InterSpaceRotIsId             , double[:,:,::1] InterSpaceRot         , long[::1] InterTimeRev        ,
-    long[::1] ALG_Iint              , double[:,:,::1] ALG_SpaceRot  , long[::1] ALG_TimeRev ,
+    long[::1] ALG_Iint                      , double[:,:,::1] ALG_SpaceRot          , long[::1] ALG_TimeRev         ,
     long[::1] gensegm_to_body               ,
     long[::1] gensegm_to_iint               ,
     long[::1] BodyLoop                      ,
@@ -4666,7 +4701,7 @@ cdef void params_to_segmpos(
         &nnz_k_buf[0]           , nnz_k_shapes          , nnz_k_shifts          ,
         ifft_buf_ptr            , ifft_shapes           , ifft_shifts           ,
         ParamBasisShortcutPos   ,
-        fft_backend             , fftw_genrfft_exe                              ,
+        fft_backend             , fftw_genrfft_exe      , fftw_symirfft_exe     ,
         &params_basis_buf[0]    , params_basis_shapes   , params_basis_shifts   ,
         pos_slice_buf_ptr       , pos_slice_shapes      , pos_slice_shifts      ,
         ncoeff_min_loop         , n_sub_fft             ,
@@ -4708,7 +4743,7 @@ cdef void params_to_segmvel(
     double** vel_slice_buf_ptr              , long[:,::1] pos_slice_shapes          , long[::1] pos_slice_shifts    ,
     long[::1] ncoeff_min_loop               , long[::1] n_sub_fft                   , int fft_backend               ,
     int[::1] ParamBasisShortcutVel          ,
-    pyfftw.fftw_exe** fftw_genrfft_exe      ,
+    pyfftw.fftw_exe** fftw_genrfft_exe      , pyfftw.fftw_exe** fftw_symirfft_exe   ,
     long[::1] loopnb                        , double[::1] loopmass                  ,
     bint[::1] InterSpaceRotIsId             , double[:,:,::1] InterSpaceRot         , long[::1] InterTimeRev        ,
     long[::1] ALG_Iint                      , double[:,:,::1] ALG_SpaceRot          , long[::1] ALG_TimeRev         ,
@@ -4737,7 +4772,7 @@ cdef void params_to_segmvel(
         &nnz_k_buf[0]           , nnz_k_shapes          , nnz_k_shifts          ,
         ifft_buf_ptr            , ifft_shapes           , ifft_shifts           ,
         ParamBasisShortcutVel   ,
-        fft_backend             , fftw_genrfft_exe                              ,
+        fft_backend             , fftw_genrfft_exe      , fftw_symirfft_exe     ,
         &params_basis_buf[0]    , params_basis_shapes   , params_basis_shifts   ,
         vel_slice_buf_ptr       , pos_slice_shapes      , pos_slice_shifts      ,
         ncoeff_min_loop         , n_sub_fft             ,
@@ -4779,7 +4814,7 @@ cdef void segmpos_to_params(
     double** pos_slice_buf_ptr              , long[:,::1] pos_slice_shapes      , long[::1] pos_slice_shifts    ,
     long[::1] ncoeff_min_loop               , long[::1] n_sub_fft               , int fft_backend               ,
     int[::1] ParamBasisShortcutPos          ,
-    pyfftw.fftw_exe** fftw_genirfft_exe     ,
+    pyfftw.fftw_exe** fftw_genirfft_exe     , pyfftw.fftw_exe** fftw_symrfft_exe                                ,
     long[::1] loopnb                        , double[::1] loopmass              ,
     bint[::1] InterSpaceRotIsId             , double[:,:,::1] InterSpaceRot     , long[::1] InterTimeRev        ,
     long[::1] gensegm_to_body               ,
@@ -4814,7 +4849,7 @@ cdef void segmpos_to_params(
         ncoeff_min_loop         , n_sub_fft             , 1                     ,
         params_pos_buf          , params_shapes         , params_shifts         ,
         ParamBasisShortcutPos   ,
-        fft_backend             , fftw_genirfft_exe     ,
+        fft_backend             , fftw_genirfft_exe     , fftw_symrfft_exe      ,
     )
 
     changevar_mom_pos_inv(
@@ -4837,7 +4872,7 @@ cdef void segmpos_to_params_T(
     double** pos_slice_buf_ptr              , long[:,::1] pos_slice_shapes          , long[::1] pos_slice_shifts    ,
     long[::1] ncoeff_min_loop               , long[::1] n_sub_fft                   , int fft_backend               ,
     int[::1] ParamBasisShortcutPos          ,
-    pyfftw.fftw_exe** fftw_genirfft_exe     ,
+    pyfftw.fftw_exe** fftw_genirfft_exe     , pyfftw.fftw_exe** fftw_symrfft_exe                                    ,
     long[::1] loopnb                        , double[::1] loopmass                  ,
     bint[::1] InterSpaceRotIsId             , double[:,:,::1] InterSpaceRot         , long[::1] InterTimeRev        ,
     long[::1] ALG_Iint                      , double[:,:,::1] ALG_SpaceRot  , long[::1] ALG_TimeRev ,
@@ -4853,9 +4888,6 @@ cdef void segmpos_to_params_T(
     cdef int geodim = InterSpaceRot.shape[1]
     cdef long il
     cdef long nloop = ncoeff_min_loop.shape[0]
-
-    # TODO : Remove this
-    # memset(pos_slice_buf_ptr, 0, sizeof(double)*pos_slice_shifts[pos_slice_shapes.shape[0]])
 
     for il in range(nloop):
         memset(pos_slice_buf_ptr[il], 0, sizeof(double)*(pos_slice_shifts[il+1]-pos_slice_shifts[il]))
@@ -4892,7 +4924,7 @@ cdef void segmpos_to_params_T(
         ncoeff_min_loop         , n_sub_fft             , -1                    ,
         params_pos_buf          , params_shapes         , params_shifts         ,
         ParamBasisShortcutPos   ,
-        fft_backend             , fftw_genirfft_exe     ,
+        fft_backend             , fftw_genirfft_exe     , fftw_symrfft_exe      ,
     )
 
     changevar_mom_pos_T(
