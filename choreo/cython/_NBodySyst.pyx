@@ -449,7 +449,7 @@ cdef class NBodySyst():
         double[::1] bodycharge          ,
         list Sym_list                   ,
         object inter_law = None         , 
-        bint ForceGeneralSym = True     ,
+        bint ForceGeneralSym = False    ,
     ):
 
         self._nint_fac = 0 
@@ -4326,7 +4326,8 @@ cdef void pos_slice_to_params(
 
                 with gil:
 
-                    pos_slice_mv = <double[:pos_slice_shapes[il,0],:geodim:1]> (pos_slice_buf_ptr + pos_slice_shifts[il])
+                    n = 2*(ifft_shapes[il,0] - 1)
+                    pos_slice_mv = <double[:n,:geodim:1]> (pos_slice_buf_ptr + pos_slice_shifts[il])
 
                     params_c_mv = mkl_fft._numpy_fft.rfft(pos_slice_mv, axis=0)
 
@@ -4348,7 +4349,8 @@ cdef void pos_slice_to_params(
 
                 with gil:
 
-                    pos_slice_mv = <double[:pos_slice_shapes[il,0],:geodim:1]> (pos_slice_buf_ptr + pos_slice_shifts[il])
+                    n = 2*(ifft_shapes[il,0] - 1)
+                    pos_slice_mv = <double[:n,:geodim:1]> (pos_slice_buf_ptr + pos_slice_shifts[il])
 
                     params_c_mv = scipy.fft.rfft(pos_slice_mv, axis=0)
 

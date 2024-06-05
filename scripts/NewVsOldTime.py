@@ -65,7 +65,9 @@ def setup(test_name, fft_backend, nint_fac):
     else:
         inter_law = choreo.numba_funs_new.pow_inter_law(inter_pow/2, inter_pm)
         
-    NBS = choreo.cython._NBodySyst.NBodySyst(geodim, nbody, mass, charge, Sym_list, inter_law)
+    NBS = choreo.cython._NBodySyst.NBodySyst(geodim, nbody, mass, charge, Sym_list, inter_law,
+        # ForceGeneralSym = False,
+    )
 
     # NBS.fftw_planner_effort = 'FFTW_ESTIMATE'
     # NBS.fftw_planner_effort = 'FFTW_MEASURE'
@@ -96,7 +98,7 @@ def setup(test_name, fft_backend, nint_fac):
         MomCons = False         ,
         n_grad_change = 1.      ,
         CrashOnIdentity = True  ,
-        ForceMatrixChangevar = True  ,
+        # ForceMatrixChangevar = True  ,
     )
 
     # GradHessBackend = "Cython"
@@ -184,7 +186,7 @@ all_tests = [
 ]
 
 min_exp = 0
-max_exp = 15
+max_exp = 20
 
 MonotonicAxes = ["nint_fac"]
 

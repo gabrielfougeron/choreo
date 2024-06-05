@@ -47,9 +47,9 @@ def main():
         # '2D1',
         # '4C5k',
         # '4D3k',
-        '4C',
-        '4D',
-        '3C',
+        # '4C',
+        # '4D',
+        # '3C',
         # '3D',
         # '3D1',
         # '3C2k',
@@ -78,7 +78,8 @@ def main():
         # 'uneven_nnpr',
         # '3C4q4k',
         # '3D4q4k',
-        # '2D2D',
+        '2D2D',
+        '1D1D',
         # '2D2D5k',
         # '2D1D1D',
         # '1Dx3',
@@ -340,9 +341,9 @@ def doit(config_name):
 
     # return
 # 
-#     filename = os.path.join(Workspace_folder, config_name+'_graph_segm.pdf')
-#     choreo.cython._NBodySyst.PlotTimeBodyGraph(NBS.SegmGraph, nbody, NBS.nint_min, filename)
-# 
+    filename = os.path.join(Workspace_folder, config_name+'_graph_segm.pdf')
+    choreo.cython._NBodySyst.PlotTimeBodyGraph(NBS.SegmGraph, nbody, NBS.nint_min, filename)
+
 
 
 
