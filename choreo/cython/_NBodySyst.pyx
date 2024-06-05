@@ -402,6 +402,7 @@ cdef class NBodySyst():
         return np.asarray(self._params_shifts)
 
     cdef bint BufArraysAllocated
+    cdef bint ShortcutAllocated
     cdef double** _pos_slice_buf_ptr
     cdef double** _params_pos_buf
     cdef double complex** _ifft_buf_ptr
@@ -427,6 +428,8 @@ cdef class NBodySyst():
 
     cdef list _fftw_symirfft
     cdef pyfftw.fftw_exe** _fftw_symirfft_exe
+
+    cdef list _fftw_arrays
 
     cdef double[:,:,::1] _segmpos 
     cdef double[:,:,::1] _pot_nrg_grad
@@ -462,6 +465,7 @@ cdef class NBodySyst():
 
         self._nint_fac = 0 
         self.BufArraysAllocated = False
+        self.ShortcutAllocated = False
 
         cdef Py_ssize_t i, il, ibin, ib
         cdef double eps = 1e-12
@@ -618,9 +622,12 @@ cdef class NBodySyst():
                     
                     free(self._fftw_genrfft_exe[il])
                     free(self._fftw_genirfft_exe[il])
-                    if (self._ParamBasisShortcutPos_th[il] == RFFT) or (self._ParamBasisShortcutVel_th[il] == RFFT):
-                        free(self._fftw_symrfft_exe[il])
-                        free(self._fftw_symirfft_exe[il])
+
+                if (self.ShortcutAllocated):
+                    for il in range(self.nloop):
+                        if (self._ParamBasisShortcutPos_th[il] == RFFT) or (self._ParamBasisShortcutVel_th[il] == RFFT):
+                            free(self._fftw_symrfft_exe[il])
+                            free(self._fftw_symirfft_exe[il])
 
                 free(self._fftw_genrfft_exe)
                 free(self._fftw_genirfft_exe)
@@ -632,6 +639,7 @@ cdef class NBodySyst():
             free(self._ifft_buf_ptr)
 
         self.BufArraysAllocated = False
+        self.ShortcutAllocated = False
 
     @cython.final
     def allocate_owned_memory(self):
@@ -666,6 +674,7 @@ cdef class NBodySyst():
             self._fftw_genirfft = [None for _ in range(self.nloop)]
             self._fftw_symrfft = [None for _ in range(self.nloop)]
             self._fftw_symirfft = [None for _ in range(self.nloop)]
+            self._fftw_arrays = []
 
             self._fftw_genrfft_exe = <pyfftw.fftw_exe**> malloc(sizeof(pyfftw.fftw_exe*) * self.nloop)
             self._fftw_genirfft_exe = <pyfftw.fftw_exe**> malloc(sizeof(pyfftw.fftw_exe*) * self.nloop)
@@ -704,6 +713,8 @@ cdef class NBodySyst():
 
                 if (self._ParamBasisShortcutPos_th[il] == RFFT) or (self._ParamBasisShortcutVel_th[il] == RFFT):
 
+                    self.ShortcutAllocated = True
+
                     pyfftw_input_array_2 = <double complex[:(self._params_shapes[il,0]+1),:self.geodim]> (<double complex*> &pyfftw_input_array[0,0,0])
 
                     pos_slice_1d = p_pyfftw.empty_aligned((self._pos_slice_shifts[il+1]-self._pos_slice_shifts[il]), dtype=np.float64)
@@ -713,6 +724,8 @@ cdef class NBodySyst():
 
                     direction = 'FFTW_BACKWARD'
                     pyfftw_object = pyfftw.FFTW(np.asarray(pyfftw_input_array_2), np.asarray(pyfftw_output_array_2), axes=(0, ), direction=direction, flags=flags, threads=self.fftw_nthreads)  
+                    self._fftw_arrays.append(pos_slice_1d)
+
                     self._fftw_symirfft[il] = pyfftw_object
 
                     self._fftw_symirfft_exe[il] = <pyfftw.fftw_exe*> malloc(sizeof(pyfftw.fftw_exe))
