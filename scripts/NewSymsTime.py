@@ -93,15 +93,17 @@ def setup(test_name, fft_backend, nint_fac, ForceGeneralSym):
         
     NBS = choreo.cython._NBodySyst.NBodySyst(geodim, nbody, mass, charge, Sym_list, inter_law, ForceGeneralSym)
 
-    # NBS.fftw_planner_effort = 'FFTW_ESTIMATE'
+    NBS.fftw_planner_effort = 'FFTW_ESTIMATE'
     # NBS.fftw_planner_effort = 'FFTW_MEASURE'
     # NBS.fftw_planner_effort = 'FFTW_PATIENT'
-    NBS.fftw_planner_effort = 'FFTW_EXHAUSTIVE'
+    # NBS.fftw_planner_effort = 'FFTW_EXHAUSTIVE'
     
-    # NBS.fftw_wisdom_only = False
-    NBS.fftw_wisdom_only = True
+    NBS.fftw_wisdom_only = False
+    # NBS.fftw_wisdom_only = True
     
     NBS.fftw_nthreads = 1
+    
+    print(fft_backend)
     
     NBS.fft_backend = fft_backend
     
@@ -128,13 +130,13 @@ all_tests = [
     # '2D3D',   
     # '2C3C5k',
     # '2D3D5k',
-    '2C3C5C',
+    # '2C3C5C',
     # '2D1',
     # '4C5k',
     # '4D3k',
     # '4D',
     # '3B',
-    # '3C',
+    '3C',
     # '4C',
     # '20B',
     # '3D',
@@ -169,7 +171,7 @@ all_tests = [
 ]
 
 min_exp = 0
-max_exp = 20
+max_exp = 10
 
 MonotonicAxes = ["nint_fac"]
 
@@ -177,8 +179,8 @@ all_args = {
     "test_name" : all_tests,
     # "fft_backend" : ['scipy', 'mkl', 'fftw'],
     # "fft_backend" : ['scipy', 'mkl'],
-    # "fft_backend" : ['scipy'],
-    "fft_backend" : ['mkl'],
+    "fft_backend" : ['scipy'],
+    # "fft_backend" : ['mkl'],
     # "fft_backend" : ['fftw'],
     "nint_fac" : [2**i for i in range(min_exp,max_exp)] ,
     "ForceGeneralSym" : [True, False],
@@ -200,7 +202,7 @@ all_timings = pyquickbench.run_benchmark(
     n_repeat = n_repeat     ,
     MonotonicAxes = MonotonicAxes,
     time_per_test=0.2,
-    # ForceBenchmark = True,
+    ForceBenchmark = True,
     # PreventBenchmark = False,
     # ForceBenchmark = False,
     # PreventBenchmark = True,
