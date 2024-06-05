@@ -14,7 +14,6 @@ import json
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy
-import mkl_fft
 
 import choreo 
 
@@ -66,16 +65,16 @@ def setup(test_name, fft_backend, nint_fac):
         inter_law = choreo.numba_funs_new.pow_inter_law(inter_pow/2, inter_pm)
         
     NBS = choreo.cython._NBodySyst.NBodySyst(geodim, nbody, mass, charge, Sym_list, inter_law,
-        # ForceGeneralSym = True,
+        ForceGeneralSym = True,
     )
 
     # NBS.fftw_planner_effort = 'FFTW_ESTIMATE'
-    # NBS.fftw_planner_effort = 'FFTW_MEASURE'
+    NBS.fftw_planner_effort = 'FFTW_MEASURE'
     # NBS.fftw_planner_effort = 'FFTW_PATIENT'
-    NBS.fftw_planner_effort = 'FFTW_EXHAUSTIVE'
+    # NBS.fftw_planner_effort = 'FFTW_EXHAUSTIVE'
     
-    # NBS.fftw_wisdom_only = False
-    NBS.fftw_wisdom_only = True
+    NBS.fftw_wisdom_only = False
+    # NBS.fftw_wisdom_only = True
     
     NBS.fftw_nthreads = 1
     
@@ -121,7 +120,9 @@ def setup(test_name, fft_backend, nint_fac):
         ActionSyst.rfft = scipy.fft.rfft
         ActionSyst.irfft = scipy.fft.irfft
         
-    elif fft_backend == "mkl":
+    elif fft_backend in ["mkl", "fftw"]:
+        
+        import mkl_fft
                 
         ActionSyst.rfft = mkl_fft._numpy_fft.rfft
         ActionSyst.irfft = mkl_fft._numpy_fft.irfft
@@ -162,7 +163,7 @@ all_tests = [
     # '3C4k',
     # '3D4k',
     # '3C5k',
-    # '3D5k',
+    '3D5k',
     # '3D101k',
     # 'test_3D5k',
     # '3C7k2',
@@ -172,7 +173,7 @@ all_tests = [
     # '6Ck5',
     # '6Dk5',
     # '5Dq',
-    '2C3C5C',
+    # '2C3C5C',
     # '3C_3dim',
     # '2D1_3dim',
     # '3C2k',
@@ -195,8 +196,8 @@ all_args = {
     "test_name" : all_tests,
     # "fft_backend" : ['scipy', 'mkl', 'fftw'],
     # "fft_backend" : ['scipy', 'mkl'],
-    "fft_backend" : ['mkl'],
-    # "fft_backend" : ['scipy'],
+    # "fft_backend" : ['mkl'],
+    "fft_backend" : ['scipy'],
     # "fft_backend" : ['fftw'],
     "nint_fac" : [2**i for i in range(min_exp,max_exp)] 
 }
