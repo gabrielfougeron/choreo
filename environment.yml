@@ -1,4 +1,4 @@
-name: choreo
+name: choreo-2
 channels:
   - conda-forge
   - numba
@@ -11,14 +11,14 @@ dependencies:
   - cython
   - ffmpeg
   - suitesparse
-  - tbb 
   - ffmpeg-python
-  - pip
   - numba
   - pytest
   - pytest-xdist
   - attrs
   - threadpoolctl
+  - pyquickbench
+  - pip
   - pip:
     - cffi==1.15.0
     - pycparser==2.21

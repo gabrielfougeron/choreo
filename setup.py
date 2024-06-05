@@ -165,17 +165,17 @@ compiler_directives = {
 }
 
 #### Profiler only ####
-profile_compiler_directives = {
-    'profile': True,
-    'linetrace': True,
-    'binding': True,
-}
-compiler_directives.update(profile_compiler_directives)
-profile_define_macros = [
-    ('CYTHON_TRACE', '1')   ,
-    ('CYTHON_TRACE_NOGIL', '1')   ,
-]
-define_macros.extend(profile_define_macros)
+# profile_compiler_directives = {
+#     'profile': True,
+#     'linetrace': True,
+#     'binding': True,
+# }
+# compiler_directives.update(profile_compiler_directives)
+# profile_define_macros = [
+#     ('CYTHON_TRACE', '1')   ,
+#     ('CYTHON_TRACE_NOGIL', '1')   ,
+# ]
+# define_macros.extend(profile_define_macros)
 
 include_dirs = [
     numpy.get_include()                 ,
