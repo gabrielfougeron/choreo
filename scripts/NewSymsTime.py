@@ -66,7 +66,7 @@ all_funs = [
 mode = 'vector_output'  
 # mode = 'timings'
 
-def setup(test_name, fft_backend, nint_fac):
+def setup(test_name, fft_backend, nint_fac, ForceGeneralSym):
     
     Workspace_folder = os.path.join(__PROJECT_ROOT__, 'tests', 'NewSym_data', test_name)
     params_filename = os.path.join(Workspace_folder, 'choreo_config.json')
@@ -91,7 +91,7 @@ def setup(test_name, fft_backend, nint_fac):
     else:
         inter_law = choreo.numba_funs_new.pow_inter_law(inter_pow/2, inter_pm)
         
-    NBS = choreo.cython._NBodySyst.NBodySyst(geodim, nbody, mass, charge, Sym_list, inter_law)
+    NBS = choreo.cython._NBodySyst.NBodySyst(geodim, nbody, mass, charge, Sym_list, inter_law, ForceGeneralSym)
 
     # NBS.fftw_planner_effort = 'FFTW_ESTIMATE'
     # NBS.fftw_planner_effort = 'FFTW_MEASURE'
@@ -128,11 +128,12 @@ all_tests = [
     # '2D3D',   
     # '2C3C5k',
     # '2D3D5k',
+    '2C3C5C',
     # '2D1',
     # '4C5k',
     # '4D3k',
     # '4D',
-    '3B',
+    # '3B',
     # '3C',
     # '4C',
     # '20B',
@@ -179,7 +180,8 @@ all_args = {
     # "fft_backend" : ['scipy'],
     "fft_backend" : ['mkl'],
     # "fft_backend" : ['fftw'],
-    "nint_fac" : [2**i for i in range(min_exp,max_exp)] 
+    "nint_fac" : [2**i for i in range(min_exp,max_exp)] ,
+    "ForceGeneralSym" : [True, False],
 }
 
 timings_folder = os.path.join(__PROJECT_ROOT__,'examples','generated_files_time_consuming')
@@ -198,19 +200,21 @@ all_timings = pyquickbench.run_benchmark(
     n_repeat = n_repeat     ,
     MonotonicAxes = MonotonicAxes,
     time_per_test=0.2,
-    ForceBenchmark = True,
+    # ForceBenchmark = True,
     # PreventBenchmark = False,
     # ForceBenchmark = False,
     # PreventBenchmark = True,
 )
 
 plot_intent = {
-    # "test_name" : 'subplot_grid_y'                  ,
-    "test_name" : 'curve_linestyle'                  ,
+    "test_name" : 'subplot_grid_y'                  ,
+    # "test_name" : 'curve_linestyle'                  ,
     # "fft_backend" : 'curve_pointstyle'                  ,
     # "fft_backend" : 'curve_color'                  ,
-    "fft_backend" : 'curve_linestyle'                  ,
+    # "fft_backend" : 'curve_linestyle'                  ,
+    "fft_backend" : 'subplot_grid_y'                  ,
     "nint_fac" : 'points'                           ,
+    "ForceGeneralSym" : 'curve_linestyle'                           ,
     pyquickbench.repeat_ax_name :  'reduction_min'  ,
     # pyquickbench.repeat_ax_name :  'reduction_avg'  ,
     pyquickbench.out_ax_name :  'curve_color'  ,
@@ -219,22 +223,23 @@ plot_intent = {
 }
 
 single_values_val = {
-    # pyquickbench.out_ax_name :  'params_to_ifft'  ,
-    # pyquickbench.out_ax_name :  'ifft_to_params'  ,
-    pyquickbench.out_ax_name :  'ifft_to_pos_slice'  ,
-    # pyquickbench.out_ax_name :  'segm_pos_to_pot_nrg_grad'  ,
+    pyquickbench.out_ax_name :  'segm_pos_to_pot_nrg_grad'  ,
 }
 
 relative_to_val_list = [
-    None    ,
-    # {pyquickbench.out_ax_name : 'params_to_ifft'},
+    # None    ,
+    {
+        pyquickbench.out_ax_name : 'params_to_pos_slice',
+        "ForceGeneralSym" : True,
+    },
     # {"fft_backend" : 'scipy'},
     # {"test_name" : '3C'},
 ]
 
 # plot_ylim = [1e-6, 1e-1]
 # plot_ylim = [1e-7, 3e-3]
-plot_ylim = None
+plot_ylim = [1e-2, 2e0]
+# plot_ylim = None
 
 for relative_to_val in relative_to_val_list:
 
