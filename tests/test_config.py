@@ -224,8 +224,6 @@ def LoadPYFFTWWisdom():
     
 @pytest.fixture
 def AllConfigNames(LoadPYFFTWWisdom):
-    
-    # return ['3C']
 
     return [
         '3q'        , '3q3q'    , '3q3qD'   , '2q2q'    , '4q4q'    , '4q4qD'   ,
