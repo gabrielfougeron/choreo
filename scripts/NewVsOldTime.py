@@ -154,8 +154,8 @@ all_tests = [
     # '3C',
     # '4C',
     # '20B',
-    '3D',
-    '3B',
+    # '3D',
+    # '3B',
     # '3D1',
     # '3C2k',
     # '3D2k',
@@ -172,7 +172,7 @@ all_tests = [
     # '6Ck5',
     # '6Dk5',
     # '5Dq',
-    # '2C3C5C',
+    '2C3C5C',
     # '3C_3dim',
     # '2D1_3dim',
     # '3C2k',
@@ -187,7 +187,7 @@ all_tests = [
 ]
 
 min_exp = 0
-max_exp = 20
+max_exp = 15
 
 MonotonicAxes = ["nint_fac"]
 
@@ -213,7 +213,7 @@ all_timings = pyquickbench.run_benchmark(
     all_funs                ,
     setup = setup           ,
     filename = filename     ,
-    # StopOnExcept = True     ,
+    StopOnExcept = True     ,
     ShowProgress = True     ,
     mode = mode  ,
     n_repeat = n_repeat     ,
