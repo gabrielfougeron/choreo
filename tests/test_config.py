@@ -226,14 +226,7 @@ def LoadPYFFTWWisdom():
 def AllConfigNames(LoadPYFFTWWisdom):
     
     return [
-        '4D'        , '3C'      , '3D'      , '3D1'     , '3C2k'    , '3D2k'    ,
-        '3Dp'       , '3C4k'    , '3D4k'    , '3C5k'    , '3D5k'    , '3C101k'  ,
-        '3D101k'    , '3C7k2'   , '3D7k2'   , '6C'      , '6D'      , '6Ck5'    ,
-            ]
-
-    return [
-        # '3q'        , '3q3q'    , '3q3qD'   , '2q2q'    , '4q4q'    , '4q4qD'   ,
-        '3q'        , '3q3qD'   , '2q2q'    , '4q4q'    , '4q4qD'   ,
+        '3q'        , '3q3q'    , '3q3qD'   , '2q2q'    , '4q4q'    , '4q4qD'   ,
         '4q4qD3k'   , '1q2q'    , '5q5q'    , '6q6q'    , '2C3C'    , '2D3D'    ,
         '2C3C5k'    , '2D3D5k'  , '2D1'     , '4C5k'    , '4D3k'    , '4C'      ,
         '4D'        , '3C'      , '3D'      , '3D1'     , '3C2k'    , '3D2k'    ,
@@ -282,9 +275,6 @@ def load_from_config_file(config_name):
     mass = all_kwargs["mass"]
     charge = all_kwargs["charge"]
     Sym_list = all_kwargs["Sym_list"]
-    
-    inter_pow = all_kwargs["inter_pow"]
-    inter_pm = all_kwargs["inter_pm"]
     
     inter_pow = all_kwargs["inter_pow"]
     inter_pm = all_kwargs["inter_pm"]
