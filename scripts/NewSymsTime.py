@@ -45,6 +45,7 @@ def params_to_action_grad_TT(NBS, params_buf):
         include_locs = False    ,
         # names_reduction = "min" ,
         names_reduction = "avg" ,
+        ignore_names = "start" ,
     )
     
     for i in range(n_test):
@@ -91,19 +92,20 @@ def setup(test_name, fft_backend, nint_fac, ForceGeneralSym):
     else:
         inter_law = choreo.numba_funs_new.pow_inter_law(inter_pow/2, inter_pm)
         
-    NBS = choreo.cython._NBodySyst.NBodySyst(geodim, nbody, mass, charge, Sym_list, inter_law, ForceGeneralSym)
+    NBS = choreo.cython._NBodySyst.NBodySyst(
+        geodim, nbody, mass, charge, Sym_list, inter_law,
+        ForceGeneralSym
+    )
 
-    NBS.fftw_planner_effort = 'FFTW_ESTIMATE'
+    # NBS.fftw_planner_effort = 'FFTW_ESTIMATE'
     # NBS.fftw_planner_effort = 'FFTW_MEASURE'
     # NBS.fftw_planner_effort = 'FFTW_PATIENT'
-    # NBS.fftw_planner_effort = 'FFTW_EXHAUSTIVE'
+    NBS.fftw_planner_effort = 'FFTW_EXHAUSTIVE'
     
-    NBS.fftw_wisdom_only = False
-    # NBS.fftw_wisdom_only = True
+    # NBS.fftw_wisdom_only = False
+    NBS.fftw_wisdom_only = True
     
     NBS.fftw_nthreads = 1
-    
-    print(fft_backend)
     
     NBS.fft_backend = fft_backend
     
@@ -114,7 +116,7 @@ def setup(test_name, fft_backend, nint_fac, ForceGeneralSym):
     return {"NBS":NBS, "params_buf":params_buf}
         
 
-        
+
 all_tests = [
     # '3q',
     # '3q3q',
@@ -171,7 +173,7 @@ all_tests = [
 ]
 
 min_exp = 0
-max_exp = 10
+max_exp = 13
 
 MonotonicAxes = ["nint_fac"]
 
@@ -179,9 +181,9 @@ all_args = {
     "test_name" : all_tests,
     # "fft_backend" : ['scipy', 'mkl', 'fftw'],
     # "fft_backend" : ['scipy', 'mkl'],
-    "fft_backend" : ['scipy'],
+    # "fft_backend" : ['scipy'],
     # "fft_backend" : ['mkl'],
-    # "fft_backend" : ['fftw'],
+    "fft_backend" : ['fftw'],
     "nint_fac" : [2**i for i in range(min_exp,max_exp)] ,
     "ForceGeneralSym" : [True, False],
 }
@@ -229,7 +231,7 @@ single_values_val = {
 }
 
 relative_to_val_list = [
-    # None    ,
+    None    ,
     {
         pyquickbench.out_ax_name : 'params_to_pos_slice',
         "ForceGeneralSym" : True,
@@ -240,8 +242,8 @@ relative_to_val_list = [
 
 # plot_ylim = [1e-6, 1e-1]
 # plot_ylim = [1e-7, 3e-3]
-plot_ylim = [1e-2, 2e0]
-# plot_ylim = None
+# plot_ylim = [1e-2, 2e0]
+plot_ylim = None
 
 for relative_to_val in relative_to_val_list:
 
