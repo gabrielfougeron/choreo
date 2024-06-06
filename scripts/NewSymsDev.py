@@ -78,13 +78,14 @@ def main():
         # 'uneven_nnpr',
         # '3C4q4k',
         # '3D4q4k',
-        '2D2D',
-        '1D1D',
+        # '2D2D',
+        # '1D1D',
         # '2D2D5k',
         # '2D1D1D',
         # '1Dx3',
         # '1D1D1D',
         # '3DD',
+        '2D3D4D',
     ]
 
     TT = pyquickbench.TimeTrain(

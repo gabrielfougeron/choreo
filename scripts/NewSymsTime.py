@@ -138,7 +138,7 @@ all_tests = [
     # '4D3k',
     # '4D',
     # '3B',
-    '3C',
+    # '3C',
     # '4C',
     # '20B',
     # '3D',
@@ -158,7 +158,7 @@ all_tests = [
     # '6Ck5',
     # '6Dk5',
     # '5Dq',
-    # '2C3C5C',
+    '2C3C5C',
     # '3C_3dim',
     # '2D1_3dim',
     # '3C2k',
@@ -179,13 +179,14 @@ MonotonicAxes = ["nint_fac"]
 
 all_args = {
     "test_name" : all_tests,
-    # "fft_backend" : ['scipy', 'mkl', 'fftw'],
+    "fft_backend" : ['scipy', 'mkl', 'fftw'],
     # "fft_backend" : ['scipy', 'mkl'],
     # "fft_backend" : ['scipy'],
     # "fft_backend" : ['mkl'],
-    "fft_backend" : ['fftw'],
+    # "fft_backend" : ['fftw'],
     "nint_fac" : [2**i for i in range(min_exp,max_exp)] ,
     "ForceGeneralSym" : [True, False],
+    # "ForceGeneralSym" : [False],
 }
 
 timings_folder = os.path.join(__PROJECT_ROOT__,'examples','generated_files_time_consuming')
@@ -204,6 +205,7 @@ all_timings = pyquickbench.run_benchmark(
     n_repeat = n_repeat     ,
     MonotonicAxes = MonotonicAxes,
     time_per_test=0.2,
+    # timeout = 1.,
     ForceBenchmark = True,
     # PreventBenchmark = False,
     # ForceBenchmark = False,
@@ -232,10 +234,10 @@ single_values_val = {
 
 relative_to_val_list = [
     None    ,
-    {
-        pyquickbench.out_ax_name : 'params_to_pos_slice',
-        "ForceGeneralSym" : True,
-    },
+    # {
+    #     pyquickbench.out_ax_name : 'params_to_pos_slice',
+    #     "ForceGeneralSym" : True,
+    # },
     # {"fft_backend" : 'scipy'},
     # {"test_name" : '3C'},
 ]

@@ -506,6 +506,7 @@ cdef class NBodySyst():
 
         self.DetectLoops(bodymass, bodycharge)
 
+
         self.ExploreGlobalShifts_BuildSegmGraph()
 
         self.ChooseLoopGen()
@@ -1798,6 +1799,9 @@ cdef class NBodySyst():
         plt.close()
 
 
+    @cython.final
+    def PlotTimeBodyGraph(self, filename):
+        PlotTimeBodyGraph(self.SegmGraph, self.nbody, self.nint_min, filename)
 
 
 
@@ -3138,8 +3142,6 @@ cdef class NBodySyst():
             self.segm_store             ,
         )
 
-        TT.toc("segmpos_to_pos_slice_T")
-
         if (self.segm_size != self.segm_store):
             Adjust_after_last_gen_T(
                 self._pos_slice_buf_ptr   , self._pos_slice_shifts      ,
@@ -3150,6 +3152,8 @@ cdef class NBodySyst():
                 self._ALG_TimeRev         , self._ALG_SpaceRotPos       ,
                 self.segm_size            , 
             )
+
+        TT.toc("segmpos_to_pos_slice_T")
 
         pos_slice_to_params(
             self._pos_slice_buf_ptr         , self._pos_slice_shapes    , self._pos_slice_shifts    ,
