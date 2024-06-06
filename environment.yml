@@ -1,4 +1,4 @@
-name: choreo-2
+name: choreo
 channels:
   - conda-forge
   - numba

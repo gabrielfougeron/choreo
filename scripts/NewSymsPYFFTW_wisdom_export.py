@@ -4,29 +4,10 @@ __PROJECT_ROOT__ = os.path.abspath(os.path.join(os.path.dirname(__file__),os.par
 sys.path.append(__PROJECT_ROOT__)
 
 import choreo 
-import time
 import tqdm
 import pyquickbench
 import json
-import numpy as np
 import scipy
-import itertools
-import pyfftw
-import re
-
-np.set_printoptions(
-    precision = 3,
-    edgeitems = 10,
-    # linewidth = 150,
-    linewidth = 300,
-    floatmode = "fixed",
-)
-
-
-def proj_to_zero(array, eps=1e-14):
-    for idx in itertools.product(*[range(i)  for i in array.shape]):
-        if abs(array[idx]) < eps:
-            array[idx] = 0.
 
 def main():
         
@@ -37,11 +18,12 @@ def main():
         '4D'        , '3C'      , '3D'      , '3D1'     , '3C2k'    , '3D2k'    ,
         '3Dp'       , '3C4k'    , '3D4k'    , '3C5k'    , '3D5k'    , '3C101k'  ,
         '3D101k'    , '3C7k2'   , '3D7k2'   , '6C'      , '6D'      , '6Ck5'    ,
-        '6Dk5'      , '5Dq'     , '2C3C5C'  , '3C_3dim' , '2D1_3dim', '3C11k'   ,
+        '6Dk5'      , '5Dq'     , '2C3C5C'  , '3C_3dim' , '2D1_3dim', '3C7k2'   ,
         '5q'        , 'uneven_nnpr'         , '2D2D'    , '2D1D1D'  , '2D2D5k'  ,
-        'complex_mass_charge'   ,
-    ]        
-
+        'complex_mass_charge'   , 'non_gravity_2dim'    , 'non_gravity_3dim'    ,
+        '2D1_non_gravity'       ,'2D1_3dim_non_gravity' , '1Dx3'    , '1D1D'    ,
+    ]
+    
     DP_Wisdom_file = os.path.join(__PROJECT_ROOT__, "PYFFTW_wisdom.txt")
     choreo.find_new.Load_wisdom_file(DP_Wisdom_file)
 
@@ -107,34 +89,6 @@ def doit(config_name, i_refine):
     NBS.fft_backend = 'fftw'
 
     NBS.nint_fac = 2**i_refine
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 if __name__ == "__main__":
