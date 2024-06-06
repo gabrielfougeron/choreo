@@ -69,12 +69,12 @@ def setup(test_name, fft_backend, nint_fac):
     )
 
     # NBS.fftw_planner_effort = 'FFTW_ESTIMATE'
-    NBS.fftw_planner_effort = 'FFTW_MEASURE'
+    # NBS.fftw_planner_effort = 'FFTW_MEASURE'
     # NBS.fftw_planner_effort = 'FFTW_PATIENT'
-    # NBS.fftw_planner_effort = 'FFTW_EXHAUSTIVE'
+    NBS.fftw_planner_effort = 'FFTW_EXHAUSTIVE'
     
-    NBS.fftw_wisdom_only = False
-    # NBS.fftw_wisdom_only = True
+    # NBS.fftw_wisdom_only = False
+    NBS.fftw_wisdom_only = True
     
     NBS.fftw_nthreads = 1
     
@@ -152,7 +152,7 @@ all_tests = [
     # '4C5k',
     # '4D3k',
     # '4D',
-    # '3C',
+    '3C',
     # '4C',
     # '20B',
     # '3D',
@@ -163,7 +163,7 @@ all_tests = [
     # '3C4k',
     # '3D4k',
     # '3C5k',
-    '3D5k',
+    # '3D5k',
     # '3D101k',
     # 'test_3D5k',
     # '3C7k2',
@@ -188,16 +188,16 @@ all_tests = [
 ]
 
 min_exp = 0
-max_exp = 15
+max_exp = 13
 
 MonotonicAxes = ["nint_fac"]
 
 all_args = {
     "test_name" : all_tests,
-    # "fft_backend" : ['scipy', 'mkl', 'fftw'],
+    "fft_backend" : ['scipy', 'mkl', 'fftw'],
     # "fft_backend" : ['scipy', 'mkl'],
     # "fft_backend" : ['mkl'],
-    "fft_backend" : ['scipy'],
+    # "fft_backend" : ['scipy'],
     # "fft_backend" : ['fftw'],
     "nint_fac" : [2**i for i in range(min_exp,max_exp)] 
 }
@@ -227,11 +227,11 @@ all_timings = pyquickbench.run_benchmark(
 )
 
 plot_intent = {
-    # "test_name" : 'subplot_grid_y'                  ,
-    "test_name" : 'curve_linestyle'                  ,
-    # "fft_backend" : 'curve_pointstyle'                  ,
+    "test_name" : 'subplot_grid_y'                  ,
+    # "test_name" : 'curve_linestyle'                  ,
+    "fft_backend" : 'curve_linestyle'                  ,
     # "fft_backend" : 'curve_color'                  ,
-    "fft_backend" : 'subplot_grid_y'                  ,
+    # "fft_backend" : 'subplot_grid_y'                  ,
     "nint_fac" : 'points'                           ,
     # pyquickbench.repeat_ax_name :  'reduction_min'  ,
     pyquickbench.repeat_ax_name :  'reduction_avg'  ,
@@ -247,8 +247,10 @@ single_values_val = {
 
 relative_to_val_list = [
     None    ,
-    {pyquickbench.fun_ax_name : 'New'},
-    # {"fft_backend" : 'scipy'},
+    {
+        pyquickbench.fun_ax_name : 'New',
+        "fft_backend" : 'fftw',
+    },
     # {"test_name" : '3C'},
 ]
 

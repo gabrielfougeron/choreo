@@ -3125,8 +3125,6 @@ cdef class NBodySyst():
 
         TT.toc("segm_pos_to_pot_nrg_grad")
 
-        memset(self._pos_slice_buf_ptr, 0, sizeof(double)*self._pos_slice_shifts[self._pos_slice_shapes.shape[0]])
-
         segmpos_to_pos_slice_T(
             &self._pot_nrg_grad[0,0,0]  ,
             self._pos_slice_buf_ptr     , self._pos_slice_shapes  , self._pos_slice_shifts ,
