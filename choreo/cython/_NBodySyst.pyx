@@ -579,6 +579,10 @@ cdef class NBodySyst():
 
         self.nrem = np.sum(self._nco_in_loop)
 
+        # TODO: Remove this
+        self.PlotTimeBodyGraph('test.pdf')
+
+
         self.Compute_n_sub_fft()
 
         if MKL_FFT_AVAILABLE:
@@ -1070,6 +1074,13 @@ cdef class NBodySyst():
         self._n_sub_fft = np.zeros((self.nloop), dtype=np.intp)
         cdef long il
         for il in range(self.nloop):
+
+            print(f'{il = }')
+            print(f'{self.nint_min = }')
+            print(f'{self._ncoeff_min_loop[il]  = }')
+            print(f'{self._ngensegm_loop[il]  = }')
+            print((self.nint_min // (self._ncoeff_min_loop[il] * self._ngensegm_loop[il])))
+            print()
             
             assert  self.nint_min % self._ncoeff_min_loop[il] == 0
             assert (self.nint_min // self._ncoeff_min_loop[il]) % self._ngensegm_loop[il] == 0        
