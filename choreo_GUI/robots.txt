@@ -1,0 +1,2 @@
+User-agent: *
+Sitemap: https://gabrielfougeron.github.io/choreo/sitemap.xml
