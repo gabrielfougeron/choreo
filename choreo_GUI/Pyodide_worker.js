@@ -40,7 +40,6 @@ async function loadPyodideAndPackages() {
     await pyodide.loadPackage([
         // "micropip",
         "matplotlib",
-        "sparseqr",
         "networkx",
         "mpmath",
         "threadpoolctl",
