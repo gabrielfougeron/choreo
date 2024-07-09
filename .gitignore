@@ -34,7 +34,6 @@ Sniff_all_sym/
 dist/
 GUI_scripts/dist/
 GUI_scripts/build/
-sparseqr/
 docs/build/
 docs/gh-pages/
 /docs/source/_build/
