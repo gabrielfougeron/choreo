@@ -1,26 +1,33 @@
 name: choreo
 channels:
   - conda-forge
-  - numba
 dependencies:
-  - python=3.11.2
+  - python=3.12.1
   - mpmath
   - matplotlib
   - scipy
   - networkx
   - cython
   - ffmpeg
-  - suitesparse
+  - fftw
+  - tbb 
   - ffmpeg-python
+  - pip
+  - mkl_fft
+  - pyamg
   - numba
   - pytest
   - pytest-xdist
   - attrs
-  - threadpoolctl
+  - pyodide-build
+  - Sphinx
+  - pydata-sphinx-theme
+  - sphinx-gallery
+  - sphinx-needs
   - pyquickbench
-  - pip
+  - threadpoolctl
   - pip:
-    - cffi==1.15.0
-    - pycparser==2.21
-    - sparseqr==1.1.2
-    - build>=0.10.0
+    - sphinx-pyproject
+    - sphinx-test-reports
+    - sphinxcontrib.plantuml
+    - pyfftw@git+https://github.com/pyFFTW/pyFFTW.git@92879c332e03e07ce111e817798663c34dddb42e  

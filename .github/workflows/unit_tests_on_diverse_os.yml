@@ -54,9 +54,6 @@ jobs:
       run: |
         conda install -c conda-forge -y suitesparse plantuml
 
-        echo 'INCLUDE=C:\Miniconda\envs\__setup_conda\Library\include\suitesparse;C:\Miniconda\envs\__setup_conda\Lib\site-packages\sparseqr' >> $env:GITHUB_ENV
-        echo 'LIB=C:\Miniconda\envs\__setup_conda\Library\include\suitesparse;C:\Miniconda\envs\__setup_conda\Lib\site-packages\sparseqr' >> $env:GITHUB_ENV
-
     - name: Install dependencies for Ubuntu
       if: startsWith(matrix.os, 'ubuntu')
       run: |
