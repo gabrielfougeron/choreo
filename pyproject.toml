@@ -6,7 +6,7 @@ requires = [
     "numpy",
     "scipy",
     "build",
-    "pyfftw@git+https://github.com/pyFFTW/pyFFTW.git@92879c332e03e07ce111e817798663c34dddb42e",
+    "pyfftw>=0.14.0",
 ]
 build-backend = "setuptools.build_meta"
 
