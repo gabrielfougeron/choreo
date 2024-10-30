@@ -41,6 +41,7 @@ docs/gh-pages/
 /tests/NewSym_data/**/*.pdf
 /docs/source/sg_execution_times.rst
 choreo/cython/optional_pyfftw.pxd
+test.pdf
 ##########################################################
 #           To be included (with preceding !)
 ##########################################################

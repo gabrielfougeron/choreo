@@ -1,12 +1,12 @@
 [build-system]
 requires = [
-    "setuptools>=42",
-    "wheel",
-    "Cython",
-    "numpy",
-    "scipy",
-    "build",
-    "pyfftw@git+https://github.com/pyFFTW/pyFFTW.git@92879c332e03e07ce111e817798663c34dddb42e",
+    "setuptools>=42"  ,
+    "wheel"           ,
+    "Cython"          ,
+    "numpy"           ,
+    "scipy"           ,
+    "build"           ,
+    "pyfftw>=0.14.0.0",
 ]
 build-backend = "setuptools.build_meta"
 
@@ -20,16 +20,16 @@ authors = [
   {name = "Gabriel Fougeron", email = "gabriel.fougeron@hotmail.fr"},
 ]
 classifiers = [
-  "Development Status :: 2 - Pre-Alpha",
-  "Programming Language :: Python :: 3",
-  "Programming Language :: Cython",
-  "Programming Language :: JavaScript",
-  "Environment :: WebAssembly :: Emscripten",
-  "Intended Audience :: Education",
-  "License :: OSI Approved :: BSD License",
-  "Natural Language :: English",
-  "Topic :: Scientific/Engineering :: Mathematics",
-  "Topic :: Scientific/Engineering :: Physics",
+  "Development Status :: 2 - Pre-Alpha"             ,
+  "Programming Language :: Python :: 3"             ,
+  "Programming Language :: Cython"                  ,
+  "Programming Language :: JavaScript"              ,  
+  "Environment :: WebAssembly :: Emscripten"        ,
+  "Intended Audience :: Education"                  ,
+  "License :: OSI Approved :: BSD License"          ,
+  "Natural Language :: English"                     ,
+  "Topic :: Scientific/Engineering :: Mathematics"  ,
+  "Topic :: Scientific/Engineering :: Physics"      ,
 ]
 requires-python = ">= 3.9"
 dynamic = ["dependencies", "optional-dependencies", "version"]
@@ -41,14 +41,14 @@ attr = "choreo.metadata.__version__"
 file = ["requirements/requirements.txt"]
 
 [tool.setuptools.dynamic.optional-dependencies]
-build = {file = ["requirements/requirements-build.txt"]}
-gui = {file = ["requirements/requirements-gui.txt"]}
-cli = {file = ["requirements/requirements-cli.txt"]}
-test_cli = {file = ["requirements/requirements-test-cli.txt"]}
-test_gui = {file = ["requirements/requirements-test-gui.txt"]}
-bench = {file = ["requirements/requirements-bench.txt"]}
-docs = {file = ["requirements/requirements-docs.txt"]}
-full = {file = ["requirements/requirements-full.txt"]}
+build     = {file = ["requirements/requirements-build.txt"]}
+gui       = {file = ["requirements/requirements-gui.txt"]}
+cli       = {file = ["requirements/requirements-cli.txt"]}
+test_cli  = {file = ["requirements/requirements-test-cli.txt"]}
+test_gui  = {file = ["requirements/requirements-test-gui.txt"]}
+bench     = {file = ["requirements/requirements-bench.txt"]}
+docs      = {file = ["requirements/requirements-docs.txt"]}
+full      = {file = ["requirements/requirements-full.txt"]}
 
 [project.scripts]
 choreo_GUI_in_CLI = "choreo.run:entrypoint_GUI_in_CLI"
