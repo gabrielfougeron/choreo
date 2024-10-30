@@ -7,8 +7,6 @@ from libc.math cimport fabs as cfabs
 cimport scipy.linalg.cython_blas
 from libc.stdlib cimport abort, malloc, free
 
-# cimport pyfftw
-
 from choreo.scipy_plus.cython.blas_consts cimport *
 
 cdef inline void _blas_matmul_contiguous(
