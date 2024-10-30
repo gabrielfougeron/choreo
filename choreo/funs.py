@@ -2930,29 +2930,31 @@ def null_space_sparseqr(AT):
     # AT must be in COO format
     # The nullspace of the TRANSPOSE of AT will be returned
 
-    raise NotImplementedError
+    # raise NotImplementedError
+    
+    import sparseqr
 
-#     # tolerance = 1e-5
-#     tolerance = None
-# 
-#     Q, R, E, rank = sparseqr.qr( AT, tolerance=tolerance )
-# 
-#     nrow = AT.shape[0]
-#     
-#     if (nrow <= rank):
-#         
-#         return scipy.sparse.coo_matrix(([],([],[])),shape=(nrow,0))
-#     
-#     else:
-# 
-#         mask = []
-#         iker = 0
-#         while (iker < Q.nnz):
-#             if (Q.col[iker] >= rank):
-#                 mask.append(iker)
-#             iker += 1
-#             
-#         return scipy.sparse.coo_matrix((Q.data[mask],(Q.row[mask],Q.col[mask]-rank)),shape=(nrow,nrow-rank))
+    # tolerance = 1e-5
+    tolerance = None
+
+    Q, R, E, rank = sparseqr.qr( AT, tolerance=tolerance )
+
+    nrow = AT.shape[0]
+    
+    if (nrow <= rank):
+        
+        return scipy.sparse.coo_matrix(([],([],[])),shape=(nrow,0))
+    
+    else:
+
+        mask = []
+        iker = 0
+        while (iker < Q.nnz):
+            if (Q.col[iker] >= rank):
+                mask.append(iker)
+            iker += 1
+            
+        return scipy.sparse.coo_matrix((Q.data[mask],(Q.row[mask],Q.col[mask]-rank)),shape=(nrow,nrow-rank))
      
 def AllPosToAllCoeffs(all_pos,ncoeffs):
 
