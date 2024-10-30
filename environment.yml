@@ -26,8 +26,8 @@ dependencies:
   - sphinx-needs
   - pyquickbench
   - threadpoolctl
+  - pyfftw>=0.14.0
   - pip:
     - sphinx-pyproject
     - sphinx-test-reports
     - sphinxcontrib.plantuml
-    - pyfftw@git+https://github.com/pyFFTW/pyFFTW.git@92879c332e03e07ce111e817798663c34dddb42e  
