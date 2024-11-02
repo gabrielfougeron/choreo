@@ -190,6 +190,11 @@ cdef class NBodySyst():
     def loopgen(self):
         return np.asarray(self._loopgen)
 
+#     cdef long[::1] _loop_iint_start
+#     @property
+#     def loop_iint_start(self):
+#         return np.asarray(self._loop_iint_start)
+
     cdef long[::1] _intersegm_to_body
     @property
     def intersegm_to_body(self):
@@ -210,6 +215,7 @@ cdef class NBodySyst():
     def gensegm_to_iint(self):
         return np.asarray(self._gensegm_to_iint)
 
+    # TODO : Remove this
     cdef long[::1] _ngensegm_loop
     @property
     def ngensegm_loop(self):
@@ -335,6 +341,7 @@ cdef class NBodySyst():
     def ncoeff_min_loop(self):
         return np.asarray(self._ncoeff_min_loop)
 
+    # TODO : Romove this
     cdef bint[::1] _BodyHasContiguousGeneratingSegments
 
     cdef readonly list Sym_list
@@ -506,15 +513,25 @@ cdef class NBodySyst():
 
         self.DetectLoops(bodymass, bodycharge)
 
-
+        # TODO : remove this
         self.ExploreGlobalShifts_BuildSegmGraph()
 
-        self.ChooseLoopGen()
+        self.BuildSegmGraph()
+
+        # self.ChooseLoopGen()
+        # self.ChooseGenSegm()
+
+        self.ChooseInterSegm()
+        self.intersegm_to_all = AccumulateSegmSourceToTargetSym(self.SegmGraph, nbody, geodim, self.nint_min, self.nsegm, self._intersegm_to_iint, self._intersegm_to_body)
+
+        self.ChooseLoopGen_v2()
+        self.gensegm_to_all = AccumulateSegmSourceToTargetSym(self.SegmGraph, nbody, geodim, self.nint_min, self.nsegm, self._gensegm_to_iint, self._gensegm_to_body)
+
+        # return
 
         # SegmConstraints = AccumulateSegmentConstraints(self.SegmGraph, nbody, geodim, self.nsegm, self._bodysegm)
 
-        self.ChooseInterSegm()
-        self.ChooseGenSegm()
+
 
         # Setting up forward ODE:
         # - What are my parameters ?
@@ -528,8 +545,7 @@ cdef class NBodySyst():
         self._InitValVelBasis = ComputeParamBasis_InitVal(nbody, geodim, InstConstraintsVel[0], bodymass, MomCons=True)
 
 
-        self.gensegm_to_all = AccumulateSegmSourceToTargetSym(self.SegmGraph, nbody, geodim, self.nint_min, self.nsegm, self._gensegm_to_iint, self._gensegm_to_body)
-        self.intersegm_to_all = AccumulateSegmSourceToTargetSym(self.SegmGraph, nbody, geodim, self.nint_min, self.nsegm, self._intersegm_to_iint, self._intersegm_to_body)
+        # return
 
         self.GatherInterSym()
 
@@ -537,6 +553,8 @@ cdef class NBodySyst():
         self.nbin_segm_tot, self.nbin_segm_unique = CountSegmentBinaryInteractions(BinarySegm, self.nsegm)
 
         self._BinSourceSegm, self._BinTargetSegm, BinTimeRev, self._BinSpaceRot, self._BinProdChargeSum = ReorganizeBinarySegments(BinarySegm)
+
+        # return
 
         # Not actually sure this is always true.
         assert (BinTimeRev == 1).all()
@@ -548,6 +566,8 @@ cdef class NBodySyst():
             self._BinProdChargeSum[ibin] /= self.nint_min
 
         self._SegmRequiresDisp = DetectSegmRequiresDisp(self.SegmGraph, self.intersegm_to_all, nbody, self.nint_min)
+
+        # return
 
         # This could certainly be made more efficient
         BodyConstraints = AccumulateBodyConstraints(self.Sym_list, nbody, geodim)
@@ -568,6 +588,8 @@ cdef class NBodySyst():
         
         self.ConfigureShortcutSym()
 
+        # return
+
         self._nco_in_loop = np.zeros((self.nloop), dtype=np.intp)
         self._ncor_loop = np.zeros((self.nloop), dtype=np.intp)
         for il in range(self.nloop):
@@ -578,6 +600,8 @@ cdef class NBodySyst():
                     self._nco_in_loop[il] +=1
 
         self.nrem = np.sum(self._nco_in_loop)
+
+        return
 
         # TODO: Remove this
         self.PlotTimeBodyGraph('test.pdf')
@@ -975,10 +999,29 @@ cdef class NBodySyst():
             raise ValueError("Could not find time shift such that all loops have contiguous generating segments")
 
     @cython.final
+    def BuildSegmGraph(self):
+
+        cdef Py_ssize_t ib
+
+        # Making sure nint_min is big enough
+        self.SegmGraph, self.nint_min = Build_SegmGraph_NoPb(self.nbody, self.nint_min, self.Sym_list)
+
+        bodysegm = np.zeros((self.nbody, self.nint_min), dtype = np.intp)
+        self._bodysegm = bodysegm
+        for isegm, CC in enumerate(networkx.connected_components(self.SegmGraph)):
+            for ib, iint in CC:
+                bodysegm[ib, iint] = isegm
+        self.nsegm = isegm + 1
+        
+
+    # TODO : Remove this
+    @cython.final
     def ChooseLoopGen(self):
+
+        cdef long il, ilb
         
         # Choose loop generators with maximal exploitable FFT symmetry
-        loopgen = -np.ones((self.nloop), dtype = np.intp)
+        loopgen = np.empty((self.nloop), dtype = np.intp)
         self._loopgen = loopgen
         for il in range(self.nloop):
             for ilb in range(self._loopnb[il]):
@@ -988,12 +1031,79 @@ cdef class NBodySyst():
                     break
 
             assert loopgen[il] >= 0    
+            
+    @cython.final
+    def ChooseLoopGen_v2(self):
+
+        cdef long il, ilb, isegm, ib, iint, ishift, n_nnid, jint
+
+        bodysegm = np.zeros((self.nbody, self.nint_min), dtype = np.intp)
+        self._bodysegm = bodysegm
+        for isegm, CC in enumerate(networkx.connected_components(self.SegmGraph)):
+            for ib, iint in CC:
+                bodysegm[ib, iint] = isegm
+        
+        loopgen = np.empty((self.nloop), dtype = np.intp)
+        self._loopgen = loopgen
+
+        # loop_iint_start = np.empty((self.nloop), dtype = np.intp)
+        # self._loop_iint_start = loop_iint_start
+
+        gensegm_to_body = -np.ones((self.nsegm), dtype = np.intp)
+        self._gensegm_to_body = gensegm_to_body
+
+        gensegm_to_iint = -np.ones((self.nsegm), dtype = np.intp)
+        self._gensegm_to_iint = gensegm_to_iint
+
+        shifted_bodysegm = np.zeros((self.nint_min), dtype = np.intp)
+
+        cdef long n_nnid_min = self.nsegm + 1
+
+        for il in range(self.nloop):
+            for ilb in range(self._loopnb[il]):
+                ib = self._Targets[il,ilb]
+                for ishift in range(self.nint_min):
+
+                    for iint in range(self.nint_min):
+                        jint = (iint + ishift) % self.nint_min
+                        shifted_bodysegm[iint] = bodysegm[ib, jint]
+
+                    unique, unique_indices, unique_inverse, unique_counts = np.unique(shifted_bodysegm, return_index = True, return_inverse = True, return_counts = True)
+
+                    assert (unique == shifted_bodysegm[unique_indices]).all()
+                    assert (unique[unique_inverse] == shifted_bodysegm).all()
+
+                    # I need contiguous segments
+                    BodyHasContiguousGeneratingSegments = ((unique_indices.max()+1) ==  unique.size)
+                    
+                    n_nnid = 0
+                    for iint in range(unique.size):
+                        jint = (iint + ishift) % self.nint_min
+                        Sym = self.intersegm_to_all[ib][jint]
+                        if not(Sym.IsIdentityRot()):
+                            n_nnid += 1
+
+                    # I want to minimize the number of non identity
+                    if BodyHasContiguousGeneratingSegments:
+
+                        if n_nnid_min > n_nnid:
+                            
+                            loopgen[il] = ib
+                            # loop_iint_start[il] = ishift
+
+                            for iint in range(unique.size):
+                                gensegm_to_body[shifted_bodysegm[iint]] = ib
+                                gensegm_to_iint[shifted_bodysegm[iint]] = (iint + ishift) % self.nint_min
+
+        assert (gensegm_to_body >= 0).all()
+        assert (gensegm_to_iint >= 0).all()
     
     @cython.final
     def ChooseInterSegm(self):
 
-        # Choose interacting segments as earliest possible times.
+        cdef long iint, ib, isegm
 
+        # Choose interacting segments as earliest possible times.
         intersegm_to_body = np.zeros((self.nsegm), dtype = np.intp)
         intersegm_to_iint = np.zeros((self.nsegm), dtype = np.intp)
 
@@ -1013,6 +1123,13 @@ cdef class NBodySyst():
                     intersegm_to_iint[isegm] = iint
                     assigned_segms.add(isegm)
 
+        #Every interaction happens at iint == 0
+        assert (intersegm_to_iint == 0).all()
+        # Number of interacting segments == number of bodies
+        assert (len(set(intersegm_to_body)) == intersegm_to_body.size)
+
+
+    # TODO : Remove this
     @cython.final
     def ChooseGenSegm(self):
         
@@ -1074,19 +1191,22 @@ cdef class NBodySyst():
         self._n_sub_fft = np.zeros((self.nloop), dtype=np.intp)
         cdef long il
         for il in range(self.nloop):
+            
+            assert self._ngensegm_loop[il] == self._loopnb[il]
+
+            assert  self.nint_min % self._ncoeff_min_loop[il] == 0
+            assert (self.nint_min // self._ncoeff_min_loop[il]) % self._ngensegm_loop[il] == 0        
+            
+            self._n_sub_fft[il] = (self.nint_min // (self._ncoeff_min_loop[il] * self._ngensegm_loop[il]))
 
             print(f'{il = }')
             print(f'{self.nint_min = }')
             print(f'{self._ncoeff_min_loop[il]  = }')
             print(f'{self._ngensegm_loop[il]  = }')
-            print((self.nint_min // (self._ncoeff_min_loop[il] * self._ngensegm_loop[il])))
+            print(f'{self._n_sub_fft[il] = }')
             print()
-            
-            assert  self.nint_min % self._ncoeff_min_loop[il] == 0
-            assert (self.nint_min // self._ncoeff_min_loop[il]) % self._ngensegm_loop[il] == 0        
+
             assert (self.nint_min // (self._ncoeff_min_loop[il] * self._ngensegm_loop[il])) in [1,2]
-            
-            self._n_sub_fft[il] = (self.nint_min // (self._ncoeff_min_loop[il] * self._ngensegm_loop[il]))
 
         self._ALG_Iint = np.zeros((self.nloop), dtype=np.intp)
         self._ALG_TimeRev = np.zeros((self.nloop), dtype=np.intp)
