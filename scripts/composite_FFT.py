@@ -51,7 +51,7 @@ print()
 print("="*80)
 print()
 
-# IDEM tranposed
+# IDEM transposed
 
 pint = 2
 qint = 3
