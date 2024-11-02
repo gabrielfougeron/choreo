@@ -20,7 +20,7 @@ def ContainsDoubleEdges(SegmGraph):
     
     return False
 
-def ContainsSelfReferingTimeRevSegment(SegmGraph):
+def ContainsSelfReferringTimeRevSegment(SegmGraph):
 
     for edge in SegmGraph.edges:
         
@@ -138,7 +138,7 @@ def Build_SegmGraph_NoPb(
             max_recursion = max_recursion,
         )
 
-    if ContainsSelfReferingTimeRevSegment(SegmGraph):
+    if ContainsSelfReferringTimeRevSegment(SegmGraph):
 
         return Build_SegmGraph_NoPb(
             nbody = nbody,
@@ -705,8 +705,12 @@ def PlotTimeBodyGraph(Graph, nbody, nint_min, filename):
         cmap = 'turbo',
     )
     
-    color_min = edge_color.min()
-    color_max = edge_color.max()
+    if nedges > 0:
+        color_min = edge_color.min()
+        color_max = edge_color.max()
+    else:
+        color_min = 0
+        color_max = 0
     
     edge_vmax = max(abs(color_min), abs(color_max))
     edge_vmin = - edge_vmax

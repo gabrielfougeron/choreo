@@ -28,7 +28,7 @@ from choreo.cython._ActionSym cimport ActionSym
 # Explicit imports to avoid mysterious problems with CCALLBACK_DEFAULTS
 from choreo.NBodySyst_build import (
     ContainsDoubleEdges                 ,
-    ContainsSelfReferingTimeRevSegment  ,
+    ContainsSelfReferringTimeRevSegment ,
     Build_SegmGraph                     ,
     Build_SegmGraph_NoPb                ,
     Build_BodyGraph                     ,
@@ -215,7 +215,6 @@ cdef class NBodySyst():
     def gensegm_to_iint(self):
         return np.asarray(self._gensegm_to_iint)
 
-    # TODO : Remove this
     cdef long[::1] _ngensegm_loop
     @property
     def ngensegm_loop(self):
@@ -601,10 +600,12 @@ cdef class NBodySyst():
 
         self.nrem = np.sum(self._nco_in_loop)
 
-        return
+        # return
 
         # TODO: Remove this
         self.PlotTimeBodyGraph('test.pdf')
+
+        # return
 
 
         self.Compute_n_sub_fft()
@@ -617,6 +618,8 @@ cdef class NBodySyst():
         self.fftw_planner_effort = 'FFTW_ESTIMATE'
         self.fftw_nthreads = 1
         self.fftw_wisdom_only = False
+
+        # return
 
         self.nint_fac = 1
         self.ForceGeneralSym = ForceGeneralSym
@@ -1046,8 +1049,8 @@ cdef class NBodySyst():
         loopgen = np.empty((self.nloop), dtype = np.intp)
         self._loopgen = loopgen
 
-        # loop_iint_start = np.empty((self.nloop), dtype = np.intp)
-        # self._loop_iint_start = loop_iint_start
+        ngensegm_loop = np.empty((self.nloop), dtype = np.intp)
+        self._ngensegm_loop = ngensegm_loop
 
         gensegm_to_body = -np.ones((self.nsegm), dtype = np.intp)
         self._gensegm_to_body = gensegm_to_body
@@ -1089,7 +1092,7 @@ cdef class NBodySyst():
                         if n_nnid_min > n_nnid:
                             
                             loopgen[il] = ib
-                            # loop_iint_start[il] = ishift
+                            ngensegm_loop[il] = unique.size
 
                             for iint in range(unique.size):
                                 gensegm_to_body[shifted_bodysegm[iint]] = ib
@@ -1130,30 +1133,30 @@ cdef class NBodySyst():
 
 
     # TODO : Remove this
-    @cython.final
-    def ChooseGenSegm(self):
-        
-        assigned_segms = set()
-
-        gensegm_to_body = np.zeros((self.nsegm), dtype = np.intp)
-        gensegm_to_iint = np.zeros((self.nsegm), dtype = np.intp)
-        ngensegm_loop = np.zeros((self.nloop), dtype = np.intp)
-
-        self._gensegm_to_body = gensegm_to_body
-        self._gensegm_to_iint = gensegm_to_iint
-        self._ngensegm_loop = ngensegm_loop
-
-        for iint in range(self.nint_min):
-            for il in range(self.nloop):
-                ib = self._loopgen[il]
-
-                isegm = self._bodysegm[ib,iint]
-
-                if not(isegm in assigned_segms):
-                    gensegm_to_body[isegm] = ib
-                    gensegm_to_iint[isegm] = iint
-                    assigned_segms.add(isegm)
-                    ngensegm_loop[il] += 1
+#     @cython.final
+#     def ChooseGenSegm(self):
+#         
+#         assigned_segms = set()
+# 
+#         gensegm_to_body = np.zeros((self.nsegm), dtype = np.intp)
+#         gensegm_to_iint = np.zeros((self.nsegm), dtype = np.intp)
+#         ngensegm_loop = np.zeros((self.nloop), dtype = np.intp)
+# 
+#         self._gensegm_to_body = gensegm_to_body
+#         self._gensegm_to_iint = gensegm_to_iint
+#         self._ngensegm_loop = ngensegm_loop
+# 
+#         for iint in range(self.nint_min):
+#             for il in range(self.nloop):
+#                 ib = self._loopgen[il]
+# 
+#                 isegm = self._bodysegm[ib,iint]
+# 
+#                 if not(isegm in assigned_segms):
+#                     gensegm_to_body[isegm] = ib
+#                     gensegm_to_iint[isegm] = iint
+#                     assigned_segms.add(isegm)
+#                     ngensegm_loop[il] += 1
 
     @cython.final
     def GatherInterSym(self):
@@ -1192,19 +1195,17 @@ cdef class NBodySyst():
         cdef long il
         for il in range(self.nloop):
             
-            assert self._ngensegm_loop[il] == self._loopnb[il]
-
             assert  self.nint_min % self._ncoeff_min_loop[il] == 0
             assert (self.nint_min // self._ncoeff_min_loop[il]) % self._ngensegm_loop[il] == 0        
             
             self._n_sub_fft[il] = (self.nint_min // (self._ncoeff_min_loop[il] * self._ngensegm_loop[il]))
 
-            print(f'{il = }')
-            print(f'{self.nint_min = }')
-            print(f'{self._ncoeff_min_loop[il]  = }')
-            print(f'{self._ngensegm_loop[il]  = }')
-            print(f'{self._n_sub_fft[il] = }')
-            print()
+            # print(f'{il = }')
+            # print(f'{self.nint_min = }')
+            # print(f'{self._ncoeff_min_loop[il]  = }')
+            # print(f'{self._ngensegm_loop[il]  = }')
+            # print(f'{self._n_sub_fft[il] = }')
+            # print()
 
             assert (self.nint_min // (self._ncoeff_min_loop[il] * self._ngensegm_loop[il])) in [1,2]
 
