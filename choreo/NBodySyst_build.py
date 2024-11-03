@@ -209,6 +209,10 @@ AppendIfNotSamePermAndRot = functools.partial(AppendIfNot, test_callback = Actio
 
 def AccumulateBodyConstraints(Sym_list, nbody, geodim):
 
+    for Sym in Sym_list:
+        print( Sym ) 
+        print()
+    
     BodyConstraints = [list() for _ in range(nbody)]
 
     SimpleBodyGraph = networkx.Graph()
@@ -266,9 +270,6 @@ def AccumulateBodyConstraints(Sym_list, nbody, geodim):
                     Constraint = EdgeSym.Compose(ParallelEdgeSym.Inverse())
                     assert Constraint.BodyPerm[edge[1]] == edge[1]
                     AppendIfNotSameRotAndTime(BodyConstraints[edge[1]], Constraint)
-
-
-
 
     Cycles = networkx.cycle_basis(SimpleBodyGraph)
 
