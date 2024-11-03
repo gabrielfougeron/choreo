@@ -220,6 +220,11 @@ cdef class NBodySyst():
     def ngensegm_loop(self):
         return np.asarray(self._ngensegm_loop)
 
+    cdef long[::1] _gensegm_loop_start
+    @property
+    def gensegm_loop_start(self):
+        return np.asarray(self.gensegm_loop_start)
+
     cdef long[::1] _n_sub_fft
     @property
     def n_sub_fft(self):
@@ -572,8 +577,27 @@ cdef class NBodySyst():
         BodyConstraints = AccumulateBodyConstraints(self.Sym_list, nbody, geodim)
         self.LoopGenConstraints = [BodyConstraints[ib] for ib in self._loopgen]
 
+        ShiftedLoopGenConstraints = []
+        for il in range(self.nloop):
+            ib = self._loopgen[il]
+
+            ShiftedBodyConstraints = []
+            Shift = ActionSym(
+                BodyPerm  = np.array(range(nbody), dtype = np.intp) ,
+                SpaceRot  = np.identity(geodim, dtype = np.float64) ,
+                TimeRev   = 1                                       ,
+                TimeShiftNum = -self._gensegm_loop_start[il]         ,
+                TimeShiftDen = self.nint_min                        ,
+            )
+
+            for Sym in BodyConstraints[ib]:
+                ShiftedBodyConstraints.append(Sym.Conjugate(Shift))
+
+            ShiftedLoopGenConstraints.append(ShiftedBodyConstraints)
+
         # Idem, but I'm too lazy to change it and it is not performance critical
-        All_params_basis_pos = ComputeParamBasis_Loop(self.nloop, self._loopgen, geodim, self.LoopGenConstraints)
+        All_params_basis_pos = ComputeParamBasis_Loop(self.nloop, self._loopgen, geodim, ShiftedLoopGenConstraints)
+
         self._ncoeff_min_loop = np.array([len(All_params_basis_pos[il]) for il in range(self.nloop)], dtype=np.intp)
         params_basis_reorganized_list, nnz_k_list, co_in_list = reorganize_All_params_basis(All_params_basis_pos)
         self._params_basis_buf_pos, self._params_basis_shapes, self._params_basis_shifts = BundleListOfArrays(params_basis_reorganized_list)
@@ -1039,6 +1063,7 @@ cdef class NBodySyst():
     def ChooseLoopGen_v2(self):
 
         cdef long il, ilb, isegm, ib, iint, ishift, n_nnid, jint
+        cdef long n_nnid_min
 
         bodysegm = np.zeros((self.nbody, self.nint_min), dtype = np.intp)
         self._bodysegm = bodysegm
@@ -1052,6 +1077,9 @@ cdef class NBodySyst():
         ngensegm_loop = np.empty((self.nloop), dtype = np.intp)
         self._ngensegm_loop = ngensegm_loop
 
+        gensegm_loop_start = np.empty((self.nloop), dtype = np.intp)
+        self._gensegm_loop_start = gensegm_loop_start
+
         gensegm_to_body = -np.ones((self.nsegm), dtype = np.intp)
         self._gensegm_to_body = gensegm_to_body
 
@@ -1060,9 +1088,10 @@ cdef class NBodySyst():
 
         shifted_bodysegm = np.zeros((self.nint_min), dtype = np.intp)
 
-        cdef long n_nnid_min = self.nsegm + 1
-
         for il in range(self.nloop):
+
+            n_nnid_min = self.nsegm + 1
+
             for ilb in range(self._loopnb[il]):
                 ib = self._Targets[il,ilb]
                 for ishift in range(self.nint_min):
@@ -1076,27 +1105,44 @@ cdef class NBodySyst():
                     assert (unique == shifted_bodysegm[unique_indices]).all()
                     assert (unique[unique_inverse] == shifted_bodysegm).all()
 
-                    # I need contiguous segments
                     BodyHasContiguousGeneratingSegments = ((unique_indices.max()+1) ==  unique.size)
-                    
-                    n_nnid = 0
-                    for iint in range(unique.size):
-                        jint = (iint + ishift) % self.nint_min
-                        Sym = self.intersegm_to_all[ib][jint]
-                        if not(Sym.IsIdentityRot()):
-                            n_nnid += 1
 
-                    # I want to minimize the number of non identity
+                    # I need contiguous segments
                     if BodyHasContiguousGeneratingSegments:
 
+                        n_nnid = 0
+                        for iint in range(unique.size):
+                            jint = (iint + ishift) % self.nint_min
+                            Sym = self.intersegm_to_all[ib][jint]
+                            if not(Sym.IsIdentityRot()):
+                                n_nnid += 1
+
+                        # I want to minimize the number of non identity
                         if n_nnid_min > n_nnid:
+
+                            n_nnid_min = n_nnid
+
+                            # print(
                             
+                            print(f'{ib = }')
                             loopgen[il] = ib
                             ngensegm_loop[il] = unique.size
+                            gensegm_loop_start[il] = ishift
 
-                            for iint in range(unique.size):
-                                gensegm_to_body[shifted_bodysegm[iint]] = ib
-                                gensegm_to_iint[shifted_bodysegm[iint]] = (iint + ishift) % self.nint_min
+                            for iint in range(ngensegm_loop[il]):
+                                jint = (iint + ishift) % self.nint_min
+                                gensegm_to_body[bodysegm[ib, jint]] = ib
+                                gensegm_to_iint[bodysegm[ib, jint]] = jint
+            
+            print()
+            print(f'{il = }')
+            print(f'{loopgen[il] = :d}')
+            print(f'{ngensegm_loop[il] = :d}')
+            print(f'{gensegm_loop_start[il] = :d}')
+
+        print()
+        print(gensegm_to_body)
+        print(gensegm_to_iint)
 
         assert (gensegm_to_body >= 0).all()
         assert (gensegm_to_iint >= 0).all()
@@ -1194,18 +1240,20 @@ cdef class NBodySyst():
         self._n_sub_fft = np.zeros((self.nloop), dtype=np.intp)
         cdef long il
         for il in range(self.nloop):
+
+
+            print(f'{il = }')
+            print(f'{self.nint_min = }')
+            print(f'{self._ncoeff_min_loop[il]  = }')
+            print(f'{self._ngensegm_loop[il]  = }')
             
             assert  self.nint_min % self._ncoeff_min_loop[il] == 0
             assert (self.nint_min // self._ncoeff_min_loop[il]) % self._ngensegm_loop[il] == 0        
             
             self._n_sub_fft[il] = (self.nint_min // (self._ncoeff_min_loop[il] * self._ngensegm_loop[il]))
 
-            # print(f'{il = }')
-            # print(f'{self.nint_min = }')
-            # print(f'{self._ncoeff_min_loop[il]  = }')
-            # print(f'{self._ngensegm_loop[il]  = }')
-            # print(f'{self._n_sub_fft[il] = }')
-            # print()
+            print(f'{self._n_sub_fft[il] = }')
+            print()
 
             assert (self.nint_min // (self._ncoeff_min_loop[il] * self._ngensegm_loop[il])) in [1,2]
 

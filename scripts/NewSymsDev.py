@@ -30,8 +30,8 @@ def proj_to_zero(array, eps=1e-14):
 def main():
         
     all_tests = [
-        '3q',
-        '3q3q',
+        # '3q',
+        # '3q3q',
         # '3q3qD',
         # '2q2q',
         # '4q4q',
@@ -42,7 +42,7 @@ def main():
         # '6q6q',
         # '2C3C',
         # "20B",
-        # '2D3D',   
+        '2D3D',   
         # '2C3C5k',
         # '2D3D5k',
         # '2D1',
