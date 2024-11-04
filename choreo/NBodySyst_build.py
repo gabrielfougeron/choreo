@@ -209,10 +209,6 @@ AppendIfNotSamePermAndRot = functools.partial(AppendIfNot, test_callback = Actio
 
 def AccumulateBodyConstraints(Sym_list, nbody, geodim):
 
-    for Sym in Sym_list:
-        print( Sym ) 
-        print()
-    
     BodyConstraints = [list() for _ in range(nbody)]
 
     SimpleBodyGraph = networkx.Graph()
