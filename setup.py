@@ -47,6 +47,17 @@ cython_extnames_safemath = [
 cython_extnames = [item[0] for item in cython_extnames_safemath]
 cython_safemath_needed = [item[1] for item in cython_extnames_safemath]
 
+for opt_key in ['profile','0','1','2','3','fast']:
+    
+    cmdline_opt = f"-O{opt_key}"
+    
+    if cmdline_opt in sys.argv:
+        opt_lvl = opt_key
+        sys.argv.remove(cmdline_opt)
+        break
+
+else:
+    opt_lvl = 'fast'
 
 if platform.system() == "Windows":
 
@@ -77,13 +88,32 @@ elif platform.system() == "Linux":
 
     if ("PYODIDE" in os.environ): # Building for Pyodide
 
-#         extra_compile_args_std = ["-O0",  *ignore_warnings_args]
-#         extra_compile_args_safe = ["-O0",  *ignore_warnings_args]
-#         extra_link_args = []
+        extra_compile_args_std = {
+            "profile" : ["-O0",  *ignore_warnings_args],
+            "0" : ["-O0",  *ignore_warnings_args],
+            "1" : ["-O1",  *ignore_warnings_args],
+            "2" : ["-O2",  *ignore_warnings_args],
+            "3" : ["-O3",  *ignore_warnings_args],
+            "fast" : ["-O3","-ffast-math","-flto",  *ignore_warnings_args],
+        }[opt_lvl]
+        
+        extra_compile_args_safe = {
+            "profile" : ["-O0",  *ignore_warnings_args],
+            "0" : ["-O0",  *ignore_warnings_args],
+            "1" : ["-O1",  *ignore_warnings_args],
+            "2" : ["-O2",  *ignore_warnings_args],
+            "3" : ["-O3",  *ignore_warnings_args],
+            "fast" : ["-O3","-flto",  *ignore_warnings_args],
+        }[opt_lvl]
 
-        extra_compile_args_std = ["-O3","-ffast-math","-flto",  *ignore_warnings_args]
-        extra_compile_args_safe = ["-O3","-flto",  *ignore_warnings_args]
-        extra_link_args = ["-flto", ]
+        extra_link_args = {
+            "profile" : [*ignore_warnings_args],
+            "0" : [*ignore_warnings_args],
+            "1" : [*ignore_warnings_args],
+            "2" : [*ignore_warnings_args],
+            "3" : [*ignore_warnings_args],
+            "fast" : ["-flto", *ignore_warnings_args],
+        }[opt_lvl]
 
     else:
 
@@ -101,13 +131,32 @@ elif platform.system() == "Linux":
                 
                 break
 
-        # extra_compile_args_std = ["-O0","-march=native", "-fopenmp", "-lm", *ignore_warnings_args]
-        # extra_compile_args_safe = ["-O0", "-fopenmp", "-lm", *ignore_warnings_args]
-        # extra_link_args = ["-fopenmp", "-lm",]
+        extra_compile_args_std = {
+            "profile" : ["-O0", "-fopenmp", "-lm", *ignore_warnings_args],
+            "0" : ["-O0", "-fopenmp", "-lm", *ignore_warnings_args],
+            "1" : ["-O1", "-fopenmp", "-lm", *ignore_warnings_args],
+            "2" : ["-O2", "-march=native", "-fopenmp", "-lm", *ignore_warnings_args],
+            "3" : ["-O3", "-march=native", "-fopenmp", "-lm", *ignore_warnings_args],
+            "fast" : ["-Ofast", "-march=native", "-fopenmp", "-lm", "-flto", *ignore_warnings_args],
+        }[opt_lvl]
+        
+        extra_compile_args_safe = {
+            "profile" : ["-O0", "-fopenmp", "-lm", *ignore_warnings_args],
+            "0" : ["-O0", "-fopenmp", "-lm", *ignore_warnings_args],
+            "1" : ["-O1", "-fopenmp", "-lm", *ignore_warnings_args],
+            "2" : ["-O2", "-march=native", "-fopenmp", "-lm", *ignore_warnings_args],
+            "3" : ["-O3", "-march=native", "-fopenmp", "-lm", *ignore_warnings_args],
+            "fast" : ["-O3", "-march=native", "-fopenmp", "-lm", "-flto", *ignore_warnings_args],
+        }[opt_lvl]
 
-        extra_compile_args_std = ["-Ofast", "-march=native", "-fopenmp", "-lm", "-flto", *ignore_warnings_args]
-        extra_compile_args_safe = ["-O3", "-fopenmp", "-lm", "-flto", *ignore_warnings_args]
-        extra_link_args = ["-fopenmp", "-lm", "-flto",  *ignore_warnings_args]
+        extra_link_args = {
+            "profile" : ["-fopenmp", "-lm", *ignore_warnings_args],
+            "0" : ["-fopenmp", "-lm", *ignore_warnings_args],
+            "1" : ["-fopenmp", "-lm", *ignore_warnings_args],
+            "2" : ["-fopenmp", "-lm", *ignore_warnings_args],
+            "3" : ["-fopenmp", "-lm", *ignore_warnings_args],
+            "fast" : ["-fopenmp", "-lm", "-flto", *ignore_warnings_args],
+        }[opt_lvl]
 
         cython_extnames.append("choreo.cython.funs_parallel")
         cython_safemath_needed.append(False)
@@ -117,7 +166,6 @@ else:
     raise ValueError(f"Unsupported platform: {platform.system()}")
 
 cython_filenames = [ ext_name.replace('.','/') + src_ext for ext_name in cython_extnames]
-
 
 # Special rule for the optional run dependency PyFFTW, disabled in pyodide
 cython_extnames.append("choreo.cython.optional_pyfftw")
@@ -150,8 +198,6 @@ if write_optional_pyfftw_pxd:
     with open(optional_pyfftw_pxd_path, "w") as text_file:
         text_file.write(pyfftw_pxd_str)
 
-
-
 define_macros = [("NPY_NO_DEPRECATED_API", "NPY_1_7_API_VERSION")]
 
 compiler_directives = {
@@ -164,18 +210,19 @@ compiler_directives = {
     'infer_types': True,
 }
 
-#### Profiler only ####
-# profile_compiler_directives = {
-#     'profile': True,
-#     'linetrace': True,
-#     'binding': True,
-# }
-# compiler_directives.update(profile_compiler_directives)
-# profile_define_macros = [
-#     ('CYTHON_TRACE', '1')   ,
-#     ('CYTHON_TRACE_NOGIL', '1')   ,
-# ]
-# define_macros.extend(profile_define_macros)
+if opt_lvl == "profile" : 
+
+    profile_compiler_directives = {
+        'profile': True,
+        'linetrace': True,
+        'binding': True,
+    }
+    compiler_directives.update(profile_compiler_directives)
+    profile_define_macros = [
+        ('CYTHON_TRACE', '1')   ,
+        ('CYTHON_TRACE_NOGIL', '1')   ,
+    ]
+    define_macros.extend(profile_define_macros)
 
 include_dirs = [
     numpy.get_include()                 ,
@@ -211,7 +258,6 @@ if use_Cython:
 packages = setuptools.find_packages()
 
 package_data = {key : ['*.h','*.c','*.pyx','*.pxd'] for key in packages}
-
 
 setuptools.setup(
     platforms = ['any'],
