@@ -282,8 +282,7 @@ def test_kin(AllNBS, float64_tols):
         
         kin_grad_coeffs = NBS.all_coeffs_to_kin_nrg_grad(all_coeffs)
         kin_grad_params_2 = NBS.all_coeffs_to_params_noopt(kin_grad_coeffs, transpose=True)
-        
-        print(np.linalg.norm(kin_grad_params - kin_grad_params_2))
+
         assert np.allclose(kin_grad_params, kin_grad_params_2, rtol = float64_tols.rtol, atol = float64_tols.atol) 
         
         def grad(x, dx):

@@ -2870,11 +2870,7 @@ cdef class NBodySyst():
 
             coeffs_dense = all_coeffs[il,:(self.ncoeffs-1),:].reshape(nrem, self.nint_min, self.geodim)   
 
-            if transpose:
-                alpha = 1j*ctwopi * self._gensegm_loop_start[il] / self.nint_min
-            else:
-                alpha = -1j*ctwopi * self._gensegm_loop_start[il] / self.nint_min
-
+            alpha = -1j*ctwopi * self._gensegm_loop_start[il] / self.nint_min
             for k in range(self.nint_min):
                 w = np.exp(alpha * k)
                 coeffs_dense[:,k,:] *= w
@@ -2906,11 +2902,7 @@ cdef class NBodySyst():
 
             coeffs_dense = all_coeffs[il,:(self.ncoeffs-1),:].reshape(nrem, self.nint_min, self.geodim)   
 
-            if transpose:
-                alpha = -1j*ctwopi * self._gensegm_loop_start[il] / self.nint_min
-            else:
-                alpha = 1j*ctwopi * self._gensegm_loop_start[il] / self.nint_min
-
+            alpha = 1j*ctwopi * self._gensegm_loop_start[il] / self.nint_min
             for k in range(self.nint_min):
                 w = np.exp(alpha * k)
                 coeffs_dense[:,k,:] *= w
