@@ -2883,12 +2883,6 @@ cdef class NBodySyst():
 
         return all_coeffs    
 
-    
-    
-
-
-
-
 
     @cython.final
     def all_coeffs_to_params_noopt(self, all_coeffs, bint transpose=False):
@@ -2906,6 +2900,20 @@ cdef class NBodySyst():
             params_pos_buf[il] = &params_pos_buf_np[2*self._params_shifts[il]]
 
         for il in range(self.nloop):
+
+            assert (self.ncoeffs-1) % self.nint_min == 0
+            nrem = (self.ncoeffs-1) // self.nint_min
+
+            coeffs_dense = all_coeffs[il,:(self.ncoeffs-1),:].reshape(nrem, self.nint_min, self.geodim)   
+
+            if transpose:
+                alpha = -1j*ctwopi * self._gensegm_loop_start[il] / self.nint_min
+            else:
+                alpha = 1j*ctwopi * self._gensegm_loop_start[il] / self.nint_min
+
+            for k in range(self.nint_min):
+                w = np.exp(alpha * k)
+                coeffs_dense[:,k,:] *= w
 
             params_basis = self.params_basis_pos(il)
             nnz_k = self.nnz_k(il)
