@@ -215,6 +215,11 @@ cdef class NBodySyst():
     def gensegm_to_iint(self):
         return np.asarray(self._gensegm_to_iint)
 
+    cdef long[::1] _gensegm_to_iintrel
+    @property
+    def gensegm_to_iintrel(self):
+        return np.asarray(self._gensegm_to_iintrel)
+
     cdef long[::1] _ngensegm_loop
     @property
     def ngensegm_loop(self):
@@ -1086,6 +1091,9 @@ cdef class NBodySyst():
         gensegm_to_iint = -np.ones((self.nsegm), dtype = np.intp)
         self._gensegm_to_iint = gensegm_to_iint
 
+        gensegm_to_iintrel = -np.ones((self.nsegm), dtype = np.intp)
+        self._gensegm_to_iintrel = gensegm_to_iintrel
+
         shifted_bodysegm = np.zeros((self.nint_min), dtype = np.intp)
 
         for il in range(self.nloop):
@@ -1130,9 +1138,11 @@ cdef class NBodySyst():
                                 jint = (iint + ishift) % self.nint_min
                                 gensegm_to_body[bodysegm[ib, jint]] = ib
                                 gensegm_to_iint[bodysegm[ib, jint]] = jint
+                                gensegm_to_iintrel[bodysegm[ib, jint]] = iint
             
         assert (gensegm_to_body >= 0).all()
         assert (gensegm_to_iint >= 0).all()
+        assert (gensegm_to_iintrel >= 0).all()
     
     @cython.final
     def ChooseInterSegm(self):
@@ -2277,7 +2287,7 @@ cdef class NBodySyst():
                 self._loopnb                , self._loopmass            ,
                 self._InterSpaceRotPosIsId  , self._InterSpaceRotPos    , self._InterTimeRev        ,
                 self._ALG_Iint              , self._ALG_SpaceRotPos     , self._ALG_TimeRev         ,
-                self._gensegm_to_body       , self._gensegm_to_iint     ,
+                self._gensegm_to_body       , self._gensegm_to_iintrel  ,
                 self._bodyloop              , self.segm_size            , self.segm_store           ,
                 segmpos                     ,
             )
@@ -2317,7 +2327,7 @@ cdef class NBodySyst():
                 self._loopnb                , self._loopmass            ,
                 self._InterSpaceRotPosIsId  , self._InterSpaceRotPos    , self._InterTimeRev        ,
                 self._ALG_Iint              , self._ALG_SpaceRotPos     , self._ALG_TimeRev         ,
-                self._gensegm_to_body       , self._gensegm_to_iint     ,
+                self._gensegm_to_body       , self._gensegm_to_iintrel  ,
                 self._bodyloop              , self.segm_size            , self.segm_store           ,
                 self._segmpos               ,
             )
@@ -2347,7 +2357,7 @@ cdef class NBodySyst():
                 self._loopnb                , self._loopmass            ,
                 self._InterSpaceRotPosIsId  , self._InterSpaceRotPos    , self._InterTimeRev        ,
                 self._ALG_Iint              , self._ALG_SpaceRotPos     , self._ALG_TimeRev         ,
-                self._gensegm_to_body       , self._gensegm_to_iint     ,
+                self._gensegm_to_body       , self._gensegm_to_iintrel  ,
                 self._bodyloop              , self.segm_size            , self.segm_store           ,
                 params_grad                 ,
             )
@@ -2381,7 +2391,7 @@ cdef class NBodySyst():
                 self._loopnb                , self._loopmass            ,
                 self._InterSpaceRotPosIsId  , self._InterSpaceRotPos    , self._InterTimeRev        ,
                 self._ALG_Iint              , self._ALG_SpaceRotPos     , self._ALG_TimeRev         ,
-                self._gensegm_to_body       , self._gensegm_to_iint     ,
+                self._gensegm_to_body       , self._gensegm_to_iintrel  ,
                 self._bodyloop              , self.segm_size            , self.segm_store           ,
                 self._segmpos               ,
             )
@@ -2400,7 +2410,7 @@ cdef class NBodySyst():
                 self._loopnb                , self._loopmass            ,
                 self._InterSpaceRotPosIsId  , self._InterSpaceRotPos    , self._InterTimeRev        ,
                 self._ALG_Iint              , self._ALG_SpaceRotPos     , self._ALG_TimeRev         ,
-                self._gensegm_to_body       , self._gensegm_to_iint     ,
+                self._gensegm_to_body       , self._gensegm_to_iintrel  ,
                 self._bodyloop              , self.segm_size            , self.segm_store           ,
                 dsegmpos                    ,
             )
@@ -2430,7 +2440,7 @@ cdef class NBodySyst():
                 self._loopnb                , self._loopmass            ,
                 self._InterSpaceRotPosIsId  , self._InterSpaceRotPos    , self._InterTimeRev        ,
                 self._ALG_Iint              , self._ALG_SpaceRotPos     , self._ALG_TimeRev         ,
-                self._gensegm_to_body       , self._gensegm_to_iint     ,
+                self._gensegm_to_body       , self._gensegm_to_iintrel  ,
                 self._bodyloop              , self.segm_size            , self.segm_store           ,
                 params_hess                 ,
             )
@@ -2465,7 +2475,7 @@ cdef class NBodySyst():
                 self._loopnb                , self._loopmass            ,
                 self._InterSpaceRotPosIsId  , self._InterSpaceRotPos    , self._InterTimeRev        ,
                 self._ALG_Iint              , self._ALG_SpaceRotPos     , self._ALG_TimeRev         ,
-                self._gensegm_to_body       , self._gensegm_to_iint     ,
+                self._gensegm_to_body       , self._gensegm_to_iintrel  ,
                 self._bodyloop              , self.segm_size            , self.segm_store           ,
                 self._segmpos               ,
             )
@@ -2505,7 +2515,7 @@ cdef class NBodySyst():
                 self._loopnb                , self._loopmass            ,
                 self._InterSpaceRotPosIsId  , self._InterSpaceRotPos    , self._InterTimeRev        ,
                 self._ALG_Iint              , self._ALG_SpaceRotPos     , self._ALG_TimeRev         ,
-                self._gensegm_to_body       , self._gensegm_to_iint     ,
+                self._gensegm_to_body       , self._gensegm_to_iintrel  ,
                 self._bodyloop              , self.segm_size            , self.segm_store           ,
                 self._segmpos               ,
             )
@@ -2535,7 +2545,7 @@ cdef class NBodySyst():
                 self._loopnb                , self._loopmass            ,
                 self._InterSpaceRotPosIsId  , self._InterSpaceRotPos    , self._InterTimeRev        ,
                 self._ALG_Iint              , self._ALG_SpaceRotPos     , self._ALG_TimeRev         ,
-                self._gensegm_to_body       , self._gensegm_to_iint     ,
+                self._gensegm_to_body       , self._gensegm_to_iintrel  ,
                 self._bodyloop              , self.segm_size            , self.segm_store           ,
                 action_grad                 ,
             )
@@ -2575,7 +2585,7 @@ cdef class NBodySyst():
                 self._loopnb                , self._loopmass            ,
                 self._InterSpaceRotPosIsId  , self._InterSpaceRotPos    , self._InterTimeRev        ,
                 self._ALG_Iint              , self._ALG_SpaceRotPos     , self._ALG_TimeRev         ,
-                self._gensegm_to_body       , self._gensegm_to_iint     ,
+                self._gensegm_to_body       , self._gensegm_to_iintrel  ,
                 self._bodyloop              , self.segm_size            , self.segm_store           ,
                 self._segmpos               ,
             )
@@ -2594,7 +2604,7 @@ cdef class NBodySyst():
                 self._loopnb                , self._loopmass            ,
                 self._InterSpaceRotPosIsId  , self._InterSpaceRotPos    , self._InterTimeRev        ,
                 self._ALG_Iint              , self._ALG_SpaceRotPos     , self._ALG_TimeRev         ,
-                self._gensegm_to_body       , self._gensegm_to_iint     ,
+                self._gensegm_to_body       , self._gensegm_to_iintrel  ,
                 self._bodyloop              , self.segm_size            , self.segm_store           ,
                 dsegmpos                    ,
             )
@@ -2624,7 +2634,7 @@ cdef class NBodySyst():
                 self._loopnb                , self._loopmass            ,
                 self._InterSpaceRotPosIsId  , self._InterSpaceRotPos    , self._InterTimeRev        ,
                 self._ALG_Iint              , self._ALG_SpaceRotPos     , self._ALG_TimeRev         ,
-                self._gensegm_to_body       , self._gensegm_to_iint     ,
+                self._gensegm_to_body       , self._gensegm_to_iintrel  ,
                 self._bodyloop              , self.segm_size            , self.segm_store           ,
                 action_hess                 ,
             )
@@ -2667,7 +2677,7 @@ cdef class NBodySyst():
                 self._loopnb                , self._loopmass            ,
                 self._InterSpaceRotPosIsId  , self._InterSpaceRotPos    , self._InterTimeRev        ,
                 self._ALG_Iint              , self._ALG_SpaceRotPos     , self._ALG_TimeRev         ,
-                self._gensegm_to_body       , self._gensegm_to_iint     ,
+                self._gensegm_to_body       , self._gensegm_to_iintrel  ,
                 self._bodyloop              , self.segm_size            , self.segm_store           ,
                 segmpos                     ,
             )
@@ -2719,7 +2729,7 @@ cdef class NBodySyst():
                 self._loopnb                , self._loopmass            ,
                 self._InterSpaceRotPosIsId  , self._InterSpaceRotPos    , self._InterTimeRev        ,
                 self._ALG_Iint              , self._ALG_SpaceRotPos     , self._ALG_TimeRev         ,
-                self._gensegm_to_body       , self._gensegm_to_iint     ,
+                self._gensegm_to_body       , self._gensegm_to_iintrel  ,
                 self._bodyloop              , self.segm_size            , self.segm_store           ,
                 action_grad                 ,
             )
@@ -2758,7 +2768,7 @@ cdef class NBodySyst():
                 self._loopnb                , self._loopmass            ,
                 self._InterSpaceRotPosIsId  , self._InterSpaceRotPos    , self._InterTimeRev        ,
                 self._ALG_Iint              , self._ALG_SpaceRotPos     , self._ALG_TimeRev         ,
-                self._gensegm_to_body       , self._gensegm_to_iint     ,
+                self._gensegm_to_body       , self._gensegm_to_iintrel  ,
                 self._bodyloop              , self.segm_size            , self.segm_store           ,
                 self._segmpos               , # self._segmpos is actually dsegmpos
             )
@@ -2788,7 +2798,7 @@ cdef class NBodySyst():
                 self._loopnb                , self._loopmass            ,
                 self._InterSpaceRotPosIsId  , self._InterSpaceRotPos    , self._InterTimeRev        ,
                 self._ALG_Iint              , self._ALG_SpaceRotPos     , self._ALG_TimeRev         ,
-                self._gensegm_to_body       , self._gensegm_to_iint     ,
+                self._gensegm_to_body       , self._gensegm_to_iintrel  ,
                 self._bodyloop              , self.segm_size            , self.segm_store           ,
                 action_hess                 ,
             )
@@ -3142,7 +3152,7 @@ cdef class NBodySyst():
                 self._loopnb                , self._loopmass            ,
                 self._InterSpaceRotPosIsId  , self._InterSpaceRotPos    , self._InterTimeRev        ,
                 self._ALG_Iint              , self._ALG_SpaceRotPos     , self._ALG_TimeRev         ,
-                self._gensegm_to_body       , self._gensegm_to_iint     ,
+                self._gensegm_to_body       , self._gensegm_to_iintrel  ,
                 self._bodyloop              , self.segm_size            , self.segm_store           ,
                 segmpos                     ,
             )
@@ -3173,7 +3183,7 @@ cdef class NBodySyst():
                 self._loopnb                , self._loopmass            ,
                 self._InterSpaceRotVelIsId  , self._InterSpaceRotVel    , self._InterTimeRev        ,
                 self._ALG_Iint              , self._ALG_SpaceRotVel     , self._ALG_TimeRev         ,
-                self._gensegm_to_body       , self._gensegm_to_iint     ,
+                self._gensegm_to_body       , self._gensegm_to_iintrel  ,
                 self._bodyloop              , self.segm_size            , self.segm_store           ,
                 segmvel                     ,
             )
@@ -3203,7 +3213,7 @@ cdef class NBodySyst():
                 self._fftw_genirfft_exe     , self._fftw_symrfft_exe    ,
                 self._loopnb                , self._loopmass            ,
                 self._InterSpaceRotPosIsId  , self._InterSpaceRotPos    , self._InterTimeRev        ,
-                self._gensegm_to_body       , self._gensegm_to_iint     ,
+                self._gensegm_to_body       , self._gensegm_to_iintrel  ,
                 self._bodyloop              , self.segm_size            , self.segm_store           ,
                 params_mom_buf              ,
             )
@@ -3234,7 +3244,7 @@ cdef class NBodySyst():
                 self._loopnb                , self._loopmass            ,
                 self._InterSpaceRotPosIsId  , self._InterSpaceRotPos    , self._InterTimeRev        ,
                 self._ALG_Iint              , self._ALG_SpaceRotPos     , self._ALG_TimeRev         ,
-                self._gensegm_to_body       , self._gensegm_to_iint     ,
+                self._gensegm_to_body       , self._gensegm_to_iintrel  ,
                 self._bodyloop              , self.segm_size            , self.segm_store           ,
                 params_mom_buf              ,
             )
@@ -3299,7 +3309,7 @@ cdef class NBodySyst():
             self._InterSpaceRotPos      ,
             self._InterTimeRev          ,
             self._gensegm_to_body       ,
-            self._gensegm_to_iint       ,
+            self._gensegm_to_iintrel    ,
             self._bodyloop              ,
             self.segm_size              ,
             self.segm_store             ,
@@ -3327,7 +3337,7 @@ cdef class NBodySyst():
             self._InterSpaceRotPos      ,
             self._InterTimeRev          ,
             self._gensegm_to_body       ,
-            self._gensegm_to_iint       ,
+            self._gensegm_to_iintrel    ,
             self._bodyloop              ,
             self.segm_size              ,
             self.segm_store             ,
