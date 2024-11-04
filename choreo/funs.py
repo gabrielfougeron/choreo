@@ -1760,11 +1760,12 @@ class ChoreoAction():
         for il in range(self.nloop):
             for ib in range(self.loopnb[il]):
                 # exact time is irrelevant
-                all_pos_b[self.Targets[il,ib],:,:] = np.einsum('ik,kj->ij',self.SpaceRotsUn[il,ib,:,:],all_pos[il,:,:])
+                # all_pos_b[self.Targets[il,ib],:,:] = np.einsum('ik,kj->ij',self.SpaceRotsUn[il,ib,:,:],all_pos[il,:,:])
+                all_pos_b[self.Targets[il,ib],:,:] = np.matmul(self.SpaceRotsUn[il,ib,:,:],all_pos[il,:,:])
         
         all_vel_b = np.zeros((self.nbody,nint_plot+1),dtype=np.float64)
         
-        for il in range(nloself.nloopop):
+        for il in range(self.nloop):
             for ib in range(self.loopnb[il]):
                 for iint in range(nint_plot+1):
                     # exact time is irrelevant

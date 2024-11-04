@@ -1122,9 +1122,6 @@ cdef class NBodySyst():
 
                             n_nnid_min = n_nnid
 
-                            # print(
-                            
-                            print(f'{ib = }')
                             loopgen[il] = ib
                             ngensegm_loop[il] = unique.size
                             gensegm_loop_start[il] = ishift
@@ -1134,16 +1131,6 @@ cdef class NBodySyst():
                                 gensegm_to_body[bodysegm[ib, jint]] = ib
                                 gensegm_to_iint[bodysegm[ib, jint]] = jint
             
-            print()
-            print(f'{il = }')
-            print(f'{loopgen[il] = :d}')
-            print(f'{ngensegm_loop[il] = :d}')
-            print(f'{gensegm_loop_start[il] = :d}')
-
-        print()
-        print(gensegm_to_body)
-        print(gensegm_to_iint)
-
         assert (gensegm_to_body >= 0).all()
         assert (gensegm_to_iint >= 0).all()
     
@@ -1240,20 +1227,20 @@ cdef class NBodySyst():
         self._n_sub_fft = np.zeros((self.nloop), dtype=np.intp)
         cdef long il
         for il in range(self.nloop):
-
-
-            print(f'{il = }')
-            print(f'{self.nint_min = }')
-            print(f'{self._ncoeff_min_loop[il]  = }')
-            print(f'{self._ngensegm_loop[il]  = }')
-            
+# 
+# 
+#             print(f'{il = }')
+#             print(f'{self.nint_min = }')
+#             print(f'{self._ncoeff_min_loop[il]  = }')
+#             print(f'{self._ngensegm_loop[il]  = }')
+#             
             assert  self.nint_min % self._ncoeff_min_loop[il] == 0
             assert (self.nint_min // self._ncoeff_min_loop[il]) % self._ngensegm_loop[il] == 0        
             
             self._n_sub_fft[il] = (self.nint_min // (self._ncoeff_min_loop[il] * self._ngensegm_loop[il]))
 
-            print(f'{self._n_sub_fft[il] = }')
-            print()
+            # print(f'{self._n_sub_fft[il] = }')
+            # print()
 
             assert (self.nint_min // (self._ncoeff_min_loop[il] * self._ngensegm_loop[il])) in [1,2]
 
@@ -2850,11 +2837,14 @@ cdef class NBodySyst():
 
         all_coeffs = np.zeros((self.nloop, self.ncoeffs, self.geodim), dtype=np.complex128)
 
+
         for il in range(self.nloop):
             
             params_basis = self.params_basis_pos(il)
             nnz_k = self.nnz_k(il)
             
+            assert (self.ncoeffs-1) % self._ncoeff_min_loop[il] == 0
+
             npr = (self.ncoeffs-1) //  self._ncoeff_min_loop[il]
 
             shape = np.asarray(self._params_shapes[il]).copy()
@@ -2864,10 +2854,31 @@ cdef class NBodySyst():
 
             coeffs_dense = all_coeffs[il,:(self.ncoeffs-1),:].reshape(npr, self._ncoeff_min_loop[il], self.geodim)                
             coeffs_dense[:,nnz_k,:] = np.einsum('ijk,ljk->lji', params_basis, params_loop[:self._params_shapes[il,0],:,:])
+
+            assert (self.ncoeffs-1) % self.nint_min == 0
+            nrem = (self.ncoeffs-1) // self.nint_min
+
+            coeffs_dense = all_coeffs[il,:(self.ncoeffs-1),:].reshape(nrem, self.nint_min, self.geodim)   
+
+            if transpose:
+                alpha = 1j*ctwopi * self._gensegm_loop_start[il] / self.nint_min
+            else:
+                alpha = -1j*ctwopi * self._gensegm_loop_start[il] / self.nint_min
+
+            for k in range(self.nint_min):
+                w = np.exp(alpha * k)
+                coeffs_dense[:,k,:] *= w
             
         all_coeffs[:,0,:].imag = 0
 
         return all_coeffs    
+
+    
+    
+
+
+
+
 
     @cython.final
     def all_coeffs_to_params_noopt(self, all_coeffs, bint transpose=False):
