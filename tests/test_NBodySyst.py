@@ -36,8 +36,7 @@ def test_all_pos_to_segmpos(AllNBS, float64_tols):
         
         print(f"Config name : {name}")     
 
-        # NBS.nint_fac = 10
-        NBS.nint_fac = 1
+        NBS.nint_fac = 10
         params_buf = np.random.random((NBS.nparams))
 
         # Unoptimized version
@@ -51,21 +50,10 @@ def test_all_pos_to_segmpos(AllNBS, float64_tols):
         
         # # Optimized version
         segmpos_cy = NBS.params_to_segmpos(params_buf)
-        # 
-        # print(np.linalg.norm(segmpos_noopt - segmpos_cy))
-        # 
-        print(f'{segmpos_noopt = }')
-        print(f'{segmpos_cy = }')
-        
+        print(np.linalg.norm(segmpos_noopt - segmpos_cy))
         
         assert np.allclose(segmpos_noopt, segmpos_cy, rtol = float64_tols.rtol, atol = float64_tols.atol)   
         
-        
-        
-        
-        
-          
-
 def test_all_vel_to_segmvel(AllNBS, float64_tols):
     
     for name, NBS in AllNBS.items():
