@@ -41,12 +41,6 @@ cdef class ActionSym():
 
     cf Palais' principle of symmetric criticality
     """
-# 
-#     cdef long[::1] _BodyPerm
-#     cdef double[:,::1] _SpaceRot
-#     cdef readonly long TimeRev
-#     cdef readonly long TimeShiftNum
-#     cdef readonly long TimeShiftDen
 
     @property
     def BodyPerm(self):
