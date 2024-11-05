@@ -153,12 +153,12 @@ all_tests = [
     # 'test_3D5k',
     # '3C7k2',
     # '3D7k2',
-    # '6C',
+    '6C',
     # '6D',
     # '6Ck5',
     # '6Dk5',
     # '5Dq',
-    '2C3C5C',
+    # '2C3C5C',
     # '3C_3dim',
     # '2D1_3dim',
     # '3C2k',
@@ -170,6 +170,7 @@ all_tests = [
     # "3C37k",
     # '3C101k',
     # '20B',
+    # '3D5D',
 ]
 
 min_exp = 0
@@ -179,8 +180,8 @@ MonotonicAxes = ["nint_fac"]
 
 all_args = {
     "test_name" : all_tests,
-    "fft_backend" : ['scipy', 'mkl', 'fftw'],
-    # "fft_backend" : ['scipy', 'mkl'],
+    # "fft_backend" : ['scipy', 'mkl', 'fftw'],
+    "fft_backend" : ['scipy', 'mkl'],
     # "fft_backend" : ['scipy'],
     # "fft_backend" : ['mkl'],
     # "fft_backend" : ['fftw'],
@@ -206,9 +207,9 @@ all_timings = pyquickbench.run_benchmark(
     MonotonicAxes = MonotonicAxes,
     time_per_test=0.2,
     # timeout = 1.,
-    ForceBenchmark = True,
+    # ForceBenchmark = True,
     # PreventBenchmark = False,
-    # ForceBenchmark = False,
+    ForceBenchmark = False,
     # PreventBenchmark = True,
 )
 
