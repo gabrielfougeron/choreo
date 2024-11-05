@@ -47,7 +47,7 @@ def GUI_in_CLI(cli_args):
 
         sys.path.append(__PROJECT_ROOT__)
 
-        choreo.find.ChoreoReadDictAndFind(Workspace_folder)
+        choreo.find_new.ChoreoReadDictAndFind(Workspace_folder)
 
     else:
 
