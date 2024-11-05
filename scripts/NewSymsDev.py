@@ -42,7 +42,7 @@ def main():
         # '6q6q',
         # '2C3C',
         # "20B",
-        '2D3D',   
+        # '2D3D',   
         # '2C3C5k',
         # '2D3D5k',
         # '2D1',
@@ -88,6 +88,8 @@ def main():
         # '3DD',
         # '2D3D4D',
         # '3D7D',
+        '3D5D',
+        # '7D',
         # '3D4D',
         # 'test',
     ]
@@ -161,14 +163,27 @@ def doit(config_name):
         NBS = choreo.cython._NBodySyst.NBodySyst(geodim, nbody, mass, charge, Sym_list, inter_law)
     except Exception as err:
         traceback.print_exc()
-# 
+
+
+    print(NBS.DescribeSystem())
+    
 #     NBS.nint_fac = 10
 #     params_buf = np.random.random(NBS.nparams)
 #     all_coeffs = NBS.params_to_all_coeffs_noopt(params_buf)        
 #     params_pos = NBS.params_changevar(params_buf)
 #     segmpos = NBS.params_to_segmpos(params_buf)
     
-    
+    # print(f'{NBS.intersegm_to_iint = }')
+    # print(f'{NBS.intersegm_to_body = }')
+    # 
+    # print(f'{NBS.gensegm_to_iint = }')
+    # print(f'{NBS.gensegm_to_iintrel = }')
+    # print(f'{NBS.gensegm_to_body = }')
+    # 
+    # 
+    # filename = os.path.join(Workspace_folder, config_name+'_graph_segm.pdf')
+    # choreo.cython._NBodySyst.PlotTimeBodyGraph(NBS.SegmGraph, nbody, NBS.nint_min, filename)
+    # 
     return
 
     for il in range(NBS.nloop):

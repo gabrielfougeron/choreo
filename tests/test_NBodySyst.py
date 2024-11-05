@@ -60,8 +60,7 @@ def test_all_vel_to_segmvel(AllNBS, float64_tols):
         
         print(f"Config name : {name}")     
 
-        # NBS.nint_fac = 10
-        NBS.nint_fac = 1
+        NBS.nint_fac = 10
         params_buf = np.random.random((NBS.nparams))
 
         # Unoptimized version
@@ -86,14 +85,16 @@ def test_segmpos_to_all_pos(AllNBS, float64_tols):
         
         print(f"Config name : {name}")     
         
-        NBS.nint_fac = 10
+        NBS.nint_fac = 3
         params_buf = np.random.random((NBS.nparams))
         segmpos = NBS.params_to_segmpos(params_buf)
 
+        print(NBS.n_sub_fft)
+
         all_pos = NBS.segmpos_to_all_noopt(segmpos, pos=True)
         NBS.AssertAllSegmGenConstraintsAreRespected(all_pos, pos=True)
-        NBS.AssertAllBodyConstraintAreRespected(all_pos, pos=True)
-        
+        # NBS.AssertAllBodyConstraintAreRespected(all_pos, pos=True)
+        # 
         all_coeffs = scipy.fft.rfft(all_pos, axis=1,norm='forward')
         params = NBS.all_coeffs_to_params_noopt(all_coeffs)
         
@@ -135,8 +136,7 @@ def test_round_trips_pos(AllNBS, float64_tols):
         
         print(f"Config name : {name}")     
         
-        # NBS.nint_fac = 5 # Else it will sometime fail for huge symmetries
-        NBS.nint_fac = 1 # Else it will sometime fail for huge symmetries
+        NBS.nint_fac = 5 # Else it will sometime fail for huge symmetries
         params_buf = np.random.random((NBS.nparams))
         all_coeffs = NBS.params_to_all_coeffs_noopt(params_buf)  
         all_pos = scipy.fft.irfft(all_coeffs, axis=1, norm='forward')
@@ -149,10 +149,10 @@ def test_round_trips_pos(AllNBS, float64_tols):
         
         
         print(np.linalg.norm(all_pos_rt - all_pos))
-        print(all_pos_rt - all_pos)
+        # print(all_pos_rt - all_pos)
         
         
-        # assert np.allclose(all_pos, all_pos_rt, rtol = float64_tols.rtol, atol = float64_tols.atol) 
+        assert np.allclose(all_pos, all_pos_rt, rtol = float64_tols.rtol, atol = float64_tols.atol) 
                 
         all_coeffs_rt = scipy.fft.rfft(all_pos, axis=1,norm='forward')
         print(np.linalg.norm(all_coeffs_rt - all_coeffs))

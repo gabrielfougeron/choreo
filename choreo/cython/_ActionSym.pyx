@@ -27,14 +27,14 @@ cdef double default_atol = 1e-10
 
 @cython.final
 cdef class ActionSym():
-    r"""
+    """
     This class defines the symmetries of the action
     Useful to detect loops and constraints.
 
     Syntax : Giving one ActionSym to setup_changevar prescribes the following symmetry / constraint :
 
     .. math::
-        x_{\text{LoopTarget}}(t) = \text{SpaceRot} \cdot x_{\text{LoopSource}} (\text{TimeRev} * (t - \text{TimeShift}))
+        x_{\\text{LoopTarget}}(t) = \\text{SpaceRot} \cdot x_{\\text{LoopSource}} (\\text{TimeRev} * (t - \\text{TimeShift}))
 
     Where SpaceRot is assumed orthogonal (never actually checked, so beware)
     and TimeShift is defined as a rational fraction.
@@ -66,13 +66,18 @@ cdef class ActionSym():
         long TimeShiftDen       ,
     ):
 
-        cdef long num = ((TimeShiftNum % TimeShiftDen) + TimeShiftDen) % TimeShiftDen
         cdef long den
+        cdef long num
+
+        if TimeShiftDen > 0:
+            den = TimeShiftDen
+            num = ((TimeShiftNum % den) + den) % den
+        else:
+            den = - TimeShiftDen
+            num = (((-TimeShiftNum) % den) + den) % den
 
         if (num == 0):
             den = 1
-        else:
-            den = TimeShiftDen
 
         cdef long g = gcd(num,den)
         num = num // g
@@ -87,7 +92,7 @@ cdef class ActionSym():
     @cython.final
     def __str__(self):
 
-        out  = ""
+        out  = "ActionSym object\n"
         out += f"BodyPerm:\n"
         out += f"{self.BodyPerm}\n"
         out += f"SpaceRot:\n"
@@ -96,6 +101,14 @@ cdef class ActionSym():
         out += f"TimeShift: {self.TimeShiftNum} / {self.TimeShiftDen}"
 
         return out
+
+    @cython.final
+    def __repr__(self):
+        return self.__str__()
+
+    @cython.final
+    def __format__(self, format_spec):
+        return self.__str__()
     
     @cython.final
     @staticmethod
@@ -196,10 +209,6 @@ cdef class ActionSym():
         cdef long num = B.TimeRev * A.TimeShiftNum * B.TimeShiftDen + B.TimeShiftNum * A.TimeShiftDen
         cdef long den = A.TimeShiftDen * B.TimeShiftDen
 
-        cdef long g = gcd(num,den)
-        num = num // g
-        den = den // g
-
         return ActionSym(
             BodyPerm = ComposeBodyPerm                      ,
             SpaceRot = np.matmul(B._SpaceRot,A._SpaceRot)   ,
@@ -217,6 +226,29 @@ cdef class ActionSym():
         """
 
         return B.Compose(A.Compose(B.Inverse()))
+
+    @cython.final
+    cpdef bint IsWellFormed(ActionSym self, double atol = default_atol):
+        r"""
+        Returns True if the transformation is well-formed.
+        """       
+        
+        cdef bint res = True
+        cdef Py_ssize_t i, j
+
+        res = res and (self.TimeShiftNum >= 0)
+        res = res and (self.TimeShiftDen >  0)
+        res = res and (self.TimeShiftNum <  self.TimeShiftDen)
+
+        for i in range(self._BodyPerm.shape[0]):
+
+            res = res and (self._BodyPerm[i] >= 0) 
+            res = res and (self._BodyPerm[i] < self._BodyPerm.shape[0]) 
+
+        unique_perm = np.unique(np.asarray(self._BodyPerm))
+        res = res and (unique_perm.shape[0] == self._BodyPerm.shape[0])
+
+        return res
 
     @cython.final
     cpdef bint IsIdentity(ActionSym self, double atol = default_atol):

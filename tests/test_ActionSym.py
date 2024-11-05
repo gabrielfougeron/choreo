@@ -47,6 +47,9 @@ def test_Random(float64_tols, Physical_dims, Few_bodies):
             A = choreo.cython.ActionSym.Random(nbody, geodim)
             AInv = A.Inverse()
 
+            assert A.IsWellFormed(atol = float64_tols.atol)
+            assert AInv.IsWellFormed(atol = float64_tols.atol)
+
             assert Id.IsSame(A.Compose(AInv), atol = float64_tols.atol)
             assert Id.IsSame(AInv.Compose(A), atol = float64_tols.atol)
 
@@ -57,6 +60,9 @@ def test_Random(float64_tols, Physical_dims, Few_bodies):
 
             AB = A.Compose(B)
             BA = B.Compose(A)
+            
+            assert AB.IsWellFormed(atol = float64_tols.atol)
+            assert BA.IsWellFormed(atol = float64_tols.atol)            
 
             n = AB.TimeShiftDen
             for i in range(n):
@@ -65,13 +71,22 @@ def test_Random(float64_tols, Physical_dims, Few_bodies):
                 tab = A.ApplyT(*tb)
 
                 assert tab == AB.ApplyT(i, n)
+                
+            ABInv = AB.Inverse()
+            BAInv = BA.Inverse()
             
-            assert AB.Inverse().IsSame(BInv.Compose(AInv), atol = float64_tols.atol)
-            assert BA.Inverse().IsSame(AInv.Compose(BInv), atol = float64_tols.atol)
+            assert AB.IsWellFormed(atol = float64_tols.atol)
+            assert BA.IsWellFormed(atol = float64_tols.atol)            
+            
+            assert ABInv.IsSame(BInv.Compose(AInv), atol = float64_tols.atol)
+            assert BAInv.IsSame(AInv.Compose(BInv), atol = float64_tols.atol)
 
             C = choreo.cython.ActionSym.Random(nbody, geodim)
 
             A_BC = A.Compose(B.Compose(C))
             AB_C = A.Compose(B).Compose(C)
+            
+            assert A_BC.IsWellFormed(atol = float64_tols.atol)
+            assert AB_C.IsWellFormed(atol = float64_tols.atol)           
 
             assert A_BC.IsSame(AB_C, atol = float64_tols.atol)

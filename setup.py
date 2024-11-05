@@ -57,7 +57,8 @@ for opt_key in ['profile','0','1','2','3','fast']:
         break
 
 else:
-    opt_lvl = 'fast'
+    # opt_lvl = 'fast'
+    opt_lvl = '0'
 
 if platform.system() == "Windows":
 
@@ -89,7 +90,7 @@ elif platform.system() == "Linux":
     if ("PYODIDE" in os.environ): # Building for Pyodide
 
         extra_compile_args_std = {
-            "profile" : ["-O0",  *ignore_warnings_args],
+            "profile" : ["-Og",  *ignore_warnings_args],
             "0" : ["-O0",  *ignore_warnings_args],
             "1" : ["-O1",  *ignore_warnings_args],
             "2" : ["-O2",  *ignore_warnings_args],
@@ -98,7 +99,7 @@ elif platform.system() == "Linux":
         }[opt_lvl]
         
         extra_compile_args_safe = {
-            "profile" : ["-O0",  *ignore_warnings_args],
+            "profile" : ["-Og",  *ignore_warnings_args],
             "0" : ["-O0",  *ignore_warnings_args],
             "1" : ["-O1",  *ignore_warnings_args],
             "2" : ["-O2",  *ignore_warnings_args],
@@ -132,7 +133,7 @@ elif platform.system() == "Linux":
                 break
 
         extra_compile_args_std = {
-            "profile" : ["-O0", "-fopenmp", "-lm", *ignore_warnings_args],
+            "profile" : ["-Og", "-fopenmp", "-lm", *ignore_warnings_args],
             "0" : ["-O0", "-fopenmp", "-lm", *ignore_warnings_args],
             "1" : ["-O1", "-fopenmp", "-lm", *ignore_warnings_args],
             "2" : ["-O2", "-march=native", "-fopenmp", "-lm", *ignore_warnings_args],
@@ -141,7 +142,7 @@ elif platform.system() == "Linux":
         }[opt_lvl]
         
         extra_compile_args_safe = {
-            "profile" : ["-O0", "-fopenmp", "-lm", *ignore_warnings_args],
+            "profile" : ["-Og", "-fopenmp", "-lm", *ignore_warnings_args],
             "0" : ["-O0", "-fopenmp", "-lm", *ignore_warnings_args],
             "1" : ["-O1", "-fopenmp", "-lm", *ignore_warnings_args],
             "2" : ["-O2", "-march=native", "-fopenmp", "-lm", *ignore_warnings_args],

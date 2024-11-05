@@ -190,13 +190,15 @@ def Build_BodyGraph(nbody, Sym_list):
 def AppendIfNot(CstrList, Constraint, test_callback):
 
     if not(test_callback(Constraint)):
+        
+        ConstraintInv = Constraint.Inverse()
 
         for FoundCstr in CstrList:
 
             if test_callback(Constraint.Compose(FoundCstr)):
                 break
 
-            if test_callback(Constraint.Compose(FoundCstr.Inverse())):
+            if test_callback(ConstraintInv.Compose(FoundCstr)):
                 break
 
         else:
@@ -251,7 +253,6 @@ def AccumulateBodyConstraints(Sym_list, nbody, geodim):
                 else:
                     edge = (ib, ib_target)
                     EdgeSym = Sym
-                    
 
                 edge_dict = SimpleBodyGraph.edges.get(edge)
                 
@@ -692,14 +693,16 @@ def PlotTimeBodyGraph(Graph, nbody, nint_min, filename):
     pos = {i:(i[1],i[0]) for i in Graph.nodes }
 
     fig, ax = plt.subplots()
+    
+    node_size = 50
 
     networkx.draw_networkx_nodes(
-        Graph,
-        pos = pos,
-        ax = ax,
-        node_color = node_color,
-        # cmap = 'tab20',
-        cmap = 'turbo',
+        Graph                   ,
+        pos = pos               ,
+        ax = ax                 ,
+        node_color = node_color ,
+        node_size = node_size   ,
+        cmap = 'turbo'          ,
     )
     
     if nedges > 0:
@@ -713,15 +716,16 @@ def PlotTimeBodyGraph(Graph, nbody, nint_min, filename):
     edge_vmin = - edge_vmax
 
     networkx.draw_networkx_edges(
-        Graph,
-        pos = pos,
-        ax = ax,
-        arrows = True,
+        Graph                           ,
+        pos = pos                       ,
+        ax = ax                         ,
+        arrows = True                   ,
         connectionstyle = "arc3,rad=0.1",
-        edge_color = edge_color,
-        edge_vmin = edge_vmin,
-        edge_vmax = edge_vmax,
-        edge_cmap = colormaps['Set1'],
+        edge_color = edge_color         ,
+        edge_vmin = edge_vmin           ,
+        edge_vmax = edge_vmax           ,
+        edge_cmap = colormaps['Set1']   ,
+        node_size = node_size           ,
     )
 
     plt.axis('off')
@@ -966,21 +970,21 @@ def DetectSegmRequiresDisp(SegmGraph, intersegm_to_all, nbody, nint_min):
                 PlotGraph.add_edge(segm, segmp)
 
     SegmRequiresDisp = -np.ones((nbody, nint_min), dtype=np.intc)
-    
+                
+    # More convoluted code because I want to make sure a path has a single color in the GUI
     for ib in range(nbody):
         for iint in range(nint_min):
     
             if SegmRequiresDisp[ib,iint] < 0:
                 
-                n = 0
-                for ibp, iintp in networkx.dfs_preorder_nodes(PlotGraph, source=(ib,iint)):
+                for n, (ibp, iintp) in enumerate(networkx.dfs_preorder_nodes(PlotGraph, source=(ib,iint))):
                     
                     if n == 0:
-                        SegmRequiresDisp[ib,iint] = 1
+                        SegmRequiresDisp[ibp,iintp] = 1
                     else:
                         SegmRequiresDisp[ibp,iintp] = 0
-                        
-                    n += 1
+
+    assert (SegmRequiresDisp >= 0).all()
 
     return SegmRequiresDisp
     
