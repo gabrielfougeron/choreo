@@ -32,7 +32,7 @@ def test_Identity(float64_tols, Physical_dims, Few_bodies):
 
             assert Id.IsSame(InvId, atol = float64_tols.atol)
 
-@ProbabilisticTest()
+@RepeatTest()
 def test_Random(float64_tols, Physical_dims, Few_bodies):
 
     print("Testing group properties on random transformations.")
@@ -75,8 +75,8 @@ def test_Random(float64_tols, Physical_dims, Few_bodies):
             ABInv = AB.Inverse()
             BAInv = BA.Inverse()
             
-            assert AB.IsWellFormed(atol = float64_tols.atol)
-            assert BA.IsWellFormed(atol = float64_tols.atol)            
+            assert ABInv.IsWellFormed(atol = float64_tols.atol)
+            assert BAInv.IsWellFormed(atol = float64_tols.atol)            
             
             assert ABInv.IsSame(BInv.Compose(AInv), atol = float64_tols.atol)
             assert BAInv.IsSame(AInv.Compose(BInv), atol = float64_tols.atol)
