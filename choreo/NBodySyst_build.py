@@ -950,44 +950,6 @@ def ReorganizeBinarySegments(BinarySegm):
         
     return BinSourceSegm, BinTargetSegm, BinTimeRev, BinSpaceRot, BinProdChargeSum
 
-def DetectSegmRequiresDisp(SegmGraph, intersegm_to_all, nbody, nint_min):
-    
-    PlotGraph = networkx.Graph()
-    for ib in range(nbody):
-        for iint in range(nint_min):
-            PlotGraph.add_node((ib,iint))
-            
-    for CC in networkx.connected_components(SegmGraph):
-
-        for segm, segmp in itertools.combinations(CC,2):
-
-            ib , iint  = segm
-            ibp, iintp = segmp
-
-            Sym = (intersegm_to_all[ibp][iintp].Inverse()).Compose(intersegm_to_all[ib][iint])
-            
-            if Sym.IsIdentityRot():
-                PlotGraph.add_edge(segm, segmp)
-
-    SegmRequiresDisp = -np.ones((nbody, nint_min), dtype=np.intc)
-                
-    # More convoluted code because I want to make sure a path has a single color in the GUI
-    for ib in range(nbody):
-        for iint in range(nint_min):
-    
-            if SegmRequiresDisp[ib,iint] < 0:
-                
-                for n, (ibp, iintp) in enumerate(networkx.dfs_preorder_nodes(PlotGraph, source=(ib,iint))):
-                    
-                    if n == 0:
-                        SegmRequiresDisp[ibp,iintp] = 1
-                    else:
-                        SegmRequiresDisp[ibp,iintp] = 0
-
-    assert (SegmRequiresDisp >= 0).all()
-
-    return SegmRequiresDisp
-    
 def plot_given_2D(all_pos, filename, fig_size=(10,10), dpi=100, color=None, color_list=None, xlim=None, extend=0.03, CloseLoop=True):
 
         if color_list is None:

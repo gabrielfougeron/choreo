@@ -41,12 +41,12 @@ cdef class ActionSym():
 
     cf Palais' principle of symmetric criticality
     """
-
-    cdef long[::1] _BodyPerm
-    cdef double[:,::1] _SpaceRot
-    cdef readonly long TimeRev
-    cdef readonly long TimeShiftNum
-    cdef readonly long TimeShiftDen
+# 
+#     cdef long[::1] _BodyPerm
+#     cdef double[:,::1] _SpaceRot
+#     cdef readonly long TimeRev
+#     cdef readonly long TimeShiftNum
+#     cdef readonly long TimeShiftDen
 
     @property
     def BodyPerm(self):
@@ -318,19 +318,30 @@ cdef class ActionSym():
         return self.IsIdentityTimeRev() and self.IsIdentityRot(atol = atol) and self.IsIdentityTimeShift()
 
     @cython.final
-    cpdef bint IsSame(ActionSym self, other, double atol = default_atol):
+    cpdef bint IsSame(ActionSym self, ActionSym other, double atol = default_atol):
         r"""
         Returns True if the two transformations are almost identical.
         """   
         return ((self.Inverse()).Compose(other)).IsIdentity(atol = atol)
     
     @cython.final
-    cpdef bint IsSamePerm(ActionSym self, other):
+    cpdef bint IsSamePerm(ActionSym self, ActionSym other):
         return ((self.Inverse()).Compose(other)).IsIdentityPerm()    
-    
+
     @cython.final
-    cpdef bint IsSameRot(ActionSym self, other, double atol = default_atol):
-        return ((self.Inverse()).Compose(other)).IsIdentityRot(atol = atol)    
+    cpdef bint IsSameRot(ActionSym self, ActionSym other, double atol = default_atol):
+
+        cdef bint isid = True
+        cdef long idim, jdim
+        cdef long geodim = self._SpaceRot.shape[0]
+
+        for idim in range(geodim):
+            for jdim in range(geodim):
+
+                isid = isid and (cfabs(self._SpaceRot[idim, jdim] - other._SpaceRot[idim, jdim]) < atol)
+
+        return isid
+
     
     @cython.final
     cpdef bint IsSameTimeRev(ActionSym self, ActionSym other):
