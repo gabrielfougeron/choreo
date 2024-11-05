@@ -237,7 +237,7 @@ def AllConfigNames(LoadPYFFTWWisdom):
         'complex_mass_charge'   , 'non_gravity_2dim'    , 'non_gravity_3dim'    ,
         '2D1_non_gravity'       , '2D1_3dim_non_gravity', '1Dx3'    , '1D1D'    ,
         '2D3D4D'    , '3D7D'    , '1D1D1D'  , '2D3D4D'  , '3C4q4k'  , '3D4q4k'  ,
-        '3DD'       , '5Dq_'    , '7D'      , '3D7D'    , '2D3D4D'  ,
+        '3DD'       , '5Dq_'    , '7D'      , '3D7D'    , '2D3D4D'  , '3Dp2'    ,
     ]    
 
 @pytest.fixture

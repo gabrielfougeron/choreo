@@ -3,28 +3,14 @@
     "geodim": 2
   },
   "Phys_Bodies": {
-    "nbody": 17,
+    "nbody": 3,
     "MomConsImposed": false,
-    "nsyms": 2,
+    "nsyms": 3,
     "AllSyms": [
       {
         "BodyPerm": [
           1,
           2,
-          3,
-          4,
-          5,
-          6,
-          7,
-          8,
-          9,
-          10,
-          11,
-          12,
-          13,
-          14,
-          15,
-          16,
           0
         ],
         "Reflexion": "False",
@@ -32,34 +18,33 @@
         "RotAngleDen": 1,
         "TimeRev": "False",
         "TimeShiftNum": 1,
-        "TimeShiftDen": 17
+        "TimeShiftDen": 3
       },
       {
         "BodyPerm": [
-          0,
-          16,
-          15,
-          14,
-          13,
-          12,
-          11,
-          10,
-          9,
-          8,
-          7,
-          6,
-          5,
-          4,
-          3,
           2,
-          1
+          1,
+          0
         ],
         "Reflexion": "True",
         "RotAngleNum": 0,
         "RotAngleDen": 1,
         "TimeRev": "True",
         "TimeShiftNum": 0,
-        "TimeShiftDen": 17
+        "TimeShiftDen": 3
+      },
+      {
+        "BodyPerm": [
+          2,
+          1,
+          0
+        ],
+        "Reflexion": "False",
+        "RotAngleNum": 1,
+        "RotAngleDen": 2,
+        "TimeRev": "True",
+        "TimeShiftNum": -1,
+        "TimeShiftDen": 4
       }
     ],
     "nloop": 1,
@@ -67,21 +52,7 @@
       [
         0,
         1,
-        2,
-        3,
-        4,
-        5,
-        6,
-        7,
-        8,
-        9,
-        10,
-        11,
-        12,
-        13,
-        14,
-        15,
-        16
+        2
       ]
     ],
     "mass": [
@@ -117,7 +88,7 @@
       "#a253c4",
       "#ef1010",
       "#25b5bc",
-      "#E86A96",
+      "#e86a96",
       "#edc832",
       "#ad6530",
       "#00773f",
@@ -142,7 +113,7 @@
   },
   "Solver_Discr": {
     "Use_exact_Jacobian": true,
-    "nint_init": 720,
+    "nint_init": 128,
     "n_reconverge_it_max": 4,
     "mul_coarse_to_fine": 3
   },
@@ -208,10 +179,10 @@
     "Exec_Mul_Proc": "MultiProc",
     "nproc": 6,
     "GradHess_backend": "Numba",
-    "GUI_backend": "Old",
+    "GUI_backend": "New",
     "SaveImage": true,
     "SaveVideo": false,
-    "fft_backend": "scipy",
+    "fft_backend": "mkl",
     "fftw_planner_effort": "FFTW_ESTIMATE",
     "fftw_wisdom_only": false
   }
