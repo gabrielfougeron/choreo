@@ -11,8 +11,6 @@ from matplotlib import colormaps
 import choreo.scipy_plus.linalg
 from choreo.cython._ActionSym import ActionSym
 
-import pyquickbench
-
 def ContainsDoubleEdges(SegmGraph):
 
     for edge in SegmGraph.edges:

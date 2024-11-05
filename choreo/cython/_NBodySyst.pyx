@@ -54,7 +54,6 @@ import json
 import types
 import itertools
 import functools
-# import pyquickbench
 
 try:
     from matplotlib import pyplot as plt
