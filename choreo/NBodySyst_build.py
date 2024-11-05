@@ -11,6 +11,8 @@ from matplotlib import colormaps
 import choreo.scipy_plus.linalg
 from choreo.cython._ActionSym import ActionSym
 
+import pyquickbench
+
 def ContainsDoubleEdges(SegmGraph):
 
     for edge in SegmGraph.edges:
@@ -28,31 +30,33 @@ def ContainsSelfReferringTimeRevSegment(SegmGraph):
             if SegmGraph.edges[edge]["SymList"][0].TimeRev == -1:
                 return True
 
-    CCs = networkx.connected_components(SegmGraph)
-    
-    for CC in CCs:
-        
-        for segm, segmp in itertools.combinations(CC,2):
-
-            if (segm[1] == segmp[1]):
-
-                path = networkx.shortest_path(SegmGraph, source = segm, target = segmp)
-
-                TimeRev = 1
-                pathlen = len(path)
-
-                for ipath in range(1,pathlen):
-
-                    if (path[ipath-1] > path[ipath]):
-                        edge = (path[ipath], path[ipath-1])
-                    else:
-                        edge = (path[ipath-1], path[ipath])
-
-                    TimeRev *=  SegmGraph.edges[edge]["SymList"][0].TimeRev
-
-                if (TimeRev == -1):
-                    
-                    return True
+# I don't think this is really needed.
+# 
+#     CCs = networkx.connected_components(SegmGraph)
+#     
+#     for CC in CCs:
+#         
+#         for segm, segmp in itertools.combinations(CC,2):
+# 
+#             if (segm[1] == segmp[1]):
+# 
+#                 path = networkx.shortest_path(SegmGraph, source = segm, target = segmp)
+# 
+#                 TimeRev = 1
+#                 pathlen = len(path)
+# 
+#                 for ipath in range(1,pathlen):
+# 
+#                     if (path[ipath-1] > path[ipath]):
+#                         edge = (path[ipath], path[ipath-1])
+#                     else:
+#                         edge = (path[ipath-1], path[ipath])
+# 
+#                     TimeRev *=  SegmGraph.edges[edge]["SymList"][0].TimeRev
+# 
+#                 if (TimeRev == -1):
+# 
+#                     return True
                 
     return False
 

@@ -25,15 +25,12 @@ from choreo.scipy_plus.cython.blas_consts cimport *
 from choreo.scipy_plus.cython.ccallback cimport ccallback_t, ccallback_prepare, ccallback_release, CCALLBACK_DEFAULTS, ccallback_signature_t
 from choreo.cython._ActionSym cimport ActionSym
 
-import pyquickbench
-
 # Explicit imports to avoid mysterious problems with CCALLBACK_DEFAULTS
 from choreo.NBodySyst_build import (
     ContainsDoubleEdges                 ,
     ContainsSelfReferringTimeRevSegment ,
-    Build_SegmGraph                     ,
-    Build_SegmGraph_NoPb                ,
     Build_BodyGraph                     ,
+    Build_SegmGraph_NoPb                ,
     AccumulateBodyConstraints           ,
     AccumulateSegmentConstraints        ,
     AccumulateInstConstraints           ,
@@ -56,6 +53,7 @@ import networkx
 import json
 import types
 import itertools
+import functools
 # import pyquickbench
 
 try:
@@ -473,11 +471,6 @@ cdef class NBodySyst():
         bint ForceGeneralSym = False    ,
     ):
 
-        self.TT = pyquickbench.TimeTrain(
-            include_locs=False  ,
-            relative_timings = True,
-        )
-
         self._nint_fac = 0 
         self.BufArraysAllocated = False
 
@@ -521,33 +514,14 @@ cdef class NBodySyst():
             self.RequiresGreaterNStore = self.RequiresGreaterNStore or (Sym.TimeRev < 0)
 
         self.DetectLoops(bodymass, bodycharge)
-
-        self.TT.toc('DetectLoops')
-
         self.BuildSegmGraph()
-        
-        self.TT.toc('BuildSegmGraph')
-
         self.ChooseInterSegm()
-
-        self.TT.toc('ChooseInterSegm')
-
         self.intersegm_to_all = AccumulateSegmSourceToTargetSym(self.SegmGraph, nbody, geodim, self.nint_min, self.nsegm, self._intersegm_to_iint, self._intersegm_to_body)
 
-        self.TT.toc('intersegm_to_all')
-
+    
         self.ChooseLoopGen()
-
-        self.TT.toc('ChooseLoopGen')
-
         self.gensegm_to_all = AccumulateSegmSourceToTargetSym(self.SegmGraph, nbody, geodim, self.nint_min, self.nsegm, self._gensegm_to_iint, self._gensegm_to_body)
-
-        self.TT.toc('gensegm_to_all')
-
         self.GatherInterSym()
-
-        self.TT.toc('GatherInterSym')
-
 
         # SegmConstraints = AccumulateSegmentConstraints(self.SegmGraph, nbody, geodim, self.nsegm, self._bodysegm)
 
@@ -555,22 +529,18 @@ cdef class NBodySyst():
         # - What are my parameters ?
         # - Integration end + Lack of periodicity
         # - Constraints on initial values => Parametrization 
-        
-        InstConstraintsPos = AccumulateInstConstraints(self.Sym_list, nbody, geodim, self.nint_min, VelSym=False)
-        InstConstraintsVel = AccumulateInstConstraints(self.Sym_list, nbody, geodim, self.nint_min, VelSym=True )
-
-        self._InitValPosBasis = ComputeParamBasis_InitVal(nbody, geodim, InstConstraintsPos[0], bodymass, MomCons=True)
-        self._InitValVelBasis = ComputeParamBasis_InitVal(nbody, geodim, InstConstraintsVel[0], bodymass, MomCons=True)
-
-        self.TT.toc('forward ODE')
+#         
+#         InstConstraintsPos = AccumulateInstConstraints(self.Sym_list, nbody, geodim, self.nint_min, VelSym=False)
+#         InstConstraintsVel = AccumulateInstConstraints(self.Sym_list, nbody, geodim, self.nint_min, VelSym=True )
+# 
+#         self._InitValPosBasis = ComputeParamBasis_InitVal(nbody, geodim, InstConstraintsPos[0], bodymass, MomCons=True)
+#         self._InitValVelBasis = ComputeParamBasis_InitVal(nbody, geodim, InstConstraintsVel[0], bodymass, MomCons=True)
 
         BinarySegm, Identity_detected = FindAllBinarySegments(self.intersegm_to_all, nbody, self.nsegm, self.nint_min, self._bodysegm, bodycharge)
         self.nbin_segm_tot, self.nbin_segm_unique = CountSegmentBinaryInteractions(BinarySegm, self.nsegm)
 
         self._BinSourceSegm, self._BinTargetSegm, BinTimeRev, self._BinSpaceRot, self._BinProdChargeSum = ReorganizeBinarySegments(BinarySegm)
 
-
-        self.TT.toc('FindAllBinarySegments')
 
         # Not actually sure this is always true.
         assert (BinTimeRev == 1).all()
@@ -581,12 +551,7 @@ cdef class NBodySyst():
             self._BinSpaceRotIsId[ibin] = (np.linalg.norm(self._BinSpaceRot[ibin,:,:] - np.identity(self.geodim)) < eps)
             self._BinProdChargeSum[ibin] /= self.nint_min
 
-        self.TT.toc('small')
-
         self.DetectSegmRequiresDisp()
-
-
-        self.TT.toc('DetectSegmRequiresDisp')
 
         # This could certainly be made more efficient
         BodyConstraints = AccumulateBodyConstraints(self.Sym_list, nbody, geodim)
@@ -611,8 +576,6 @@ cdef class NBodySyst():
 
             ShiftedLoopGenConstraints.append(ShiftedBodyConstraints)
 
-        self.TT.toc('AccumulateBodyConstraints')
-
         # Idem, but I'm too lazy to change it and it is not performance critical
         All_params_basis_pos = ComputeParamBasis_Loop(self.nloop, self._loopgen, geodim, ShiftedLoopGenConstraints)
 
@@ -627,11 +590,7 @@ cdef class NBodySyst():
         self._nnz_k_buf, self._nnz_k_shapes, self._nnz_k_shifts = BundleListOfArrays(nnz_k_list)
         self._co_in_buf, self._co_in_shapes, self._co_in_shifts = BundleListOfArrays(co_in_list)
 
-        self.TT.toc('ComputeParamBasis_Loop')
-        
         self.ConfigureShortcutSym()
-
-        self.TT.toc('ConfigureShortcutSym')
 
         self._nco_in_loop = np.zeros((self.nloop), dtype=np.intp)
         self._ncor_loop = np.zeros((self.nloop), dtype=np.intp)
@@ -646,8 +605,6 @@ cdef class NBodySyst():
 
         self.Compute_n_sub_fft()
 
-        self.TT.toc('Compute_n_sub_fft')
-
         if MKL_FFT_AVAILABLE:
             self.fft_backend = "mkl"
         else:
@@ -659,8 +616,6 @@ cdef class NBodySyst():
 
         self.nint_fac = 1
         self.ForceGeneralSym = ForceGeneralSym
-
-        self.TT.toc('End')
 
     def __dealloc__(self):
         self.free_owned_memory()
@@ -979,6 +934,11 @@ cdef class NBodySyst():
 
         cdef Py_ssize_t ib, iint
         cdef long isegm
+
+        for Sym in self.Sym_list:
+            if (Sym.TimeRev == -1):
+                self.nint_min *= 2
+                break
 
         # Making sure nint_min is big enough
         self.SegmGraph, self.nint_min = Build_SegmGraph_NoPb(self.nbody, self.nint_min, self.Sym_list)
@@ -3415,7 +3375,6 @@ cdef class NBodySyst():
         out += '\n'
 
         return out
-
 
 @cython.cdivision(True)
 cdef void Make_Init_bounds_coeffs(
