@@ -50,7 +50,7 @@ def main():
         # '4D3k',
         # '4C',
         # '4D',
-        # '3C',
+        '3C',
         # '3D',
         # '3D1',
         # '3C2k',
@@ -61,7 +61,7 @@ def main():
         # '3C5k',
         # '3D5k',
         # '3C101k',
-        # '3D101k',
+        '3D101k',
         # 'test_3D5k',
         # '3C7k2',
         # '3D7k2',
@@ -88,7 +88,7 @@ def main():
         # '3DD',
         # '2D3D4D',
         # '3D7D',
-        '3D5D',
+        # '3D5D',
         # '7D',
         # '3D4D',
         # 'test',
@@ -163,9 +163,12 @@ def doit(config_name):
         NBS = choreo.cython._NBodySyst.NBodySyst(geodim, nbody, mass, charge, Sym_list, inter_law)
     except Exception as err:
         traceback.print_exc()
+        
+    
+    print(NBS.TT)
 
 
-    print(NBS.DescribeSystem())
+    # print(NBS.DescribeSystem())
     
 #     NBS.nint_fac = 10
 #     params_buf = np.random.random(NBS.nparams)
