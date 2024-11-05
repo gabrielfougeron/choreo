@@ -268,7 +268,7 @@ def AccumulateBodyConstraints(Sym_list, nbody, geodim):
                     assert Constraint.BodyPerm[edge[1]] == edge[1]
                     AppendIfNotSameRotAndTime(BodyConstraints[edge[1]], Constraint)
 
-    Cycles = networkx.cycle_basis(SimpleBodyGraph)
+    Cycles = networkx.simple_cycles(SimpleBodyGraph)
 
     for Cycle in itertools.chain(SimpleBodyGraph.edges, Cycles):
 

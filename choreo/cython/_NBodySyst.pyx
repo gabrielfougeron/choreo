@@ -563,6 +563,7 @@ cdef class NBodySyst():
 
         ShiftedLoopGenConstraints = []
         for il in range(self.nloop):
+
             ib = self._loopgen[il]
 
             ShiftedBodyConstraints = []
@@ -577,19 +578,7 @@ cdef class NBodySyst():
             for Sym in BodyConstraints[ib]:
                 ShiftedBodyConstraints.append(Sym.Conjugate(Shift))
 
-
-            for Sym in BodyConstraints[ib]:
-                print(f'{il = }, {ib = }')
-                print(f'{Sym = }')
-                # Sym2 = Sym.Compose(Sym)
-                # print(f'{Sym2 = }')
-                print()
-                
-
             ShiftedLoopGenConstraints.append(ShiftedBodyConstraints)
-
-
-
 
         # Idem, but I'm too lazy to change it and it is not performance critical
         All_params_basis_pos = ComputeParamBasis_Loop(self.nloop, self._loopgen, geodim, ShiftedLoopGenConstraints)
