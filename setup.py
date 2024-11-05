@@ -57,8 +57,8 @@ for opt_key in ['profile','0','1','2','3','fast']:
         break
 
 else:
-    # opt_lvl = 'fast'
-    opt_lvl = '0'
+    opt_lvl = 'fast'
+    # opt_lvl = '0'
 
 if platform.system() == "Windows":
 
