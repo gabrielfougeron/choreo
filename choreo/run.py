@@ -124,6 +124,21 @@ def GUI(cli_args):
         print("Gallery not found. Installing official gallery.")
         install_official_gallery()
     
+    dist_dir = os.path.join(args.gallery_root,'python_dist')
+    
+    if os.path.isdir(dist_dir):
+        
+        for f in os.listdir(dist_dir):
+            if ('.whl' in f) and ('pyodide' in f):
+                FoundPyodideWheel = True
+        else:
+            FoundPyodideWheel = False
+    else:
+        FoundPyodideWheel = False
+    
+    if not FoundPyodideWheel:
+        print("Warning : Pyodide wheel not found")
+    
     choreo.GUI.serve_GUI()
 
 

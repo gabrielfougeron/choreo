@@ -18,7 +18,7 @@ def install_official_gallery(gallery_root = default_gallery_root):
     shutil.move('choreo_gallery/choreo-gallery', os.path.join(gallery_root, 'choreo-gallery'))
     shutil.rmtree('choreo_gallery')
     make_gallery_descriptor(gallery_root)
-    
+
 def make_gallery_descriptor(gallery_root = default_gallery_root, out_filename = "gallery_descriptor.json"):
 
     Gallery_dict = {}

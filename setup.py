@@ -173,9 +173,8 @@ cython_extnames.append("choreo.cython.optional_pyfftw")
 cython_safemath_needed.append(False)
 
 include_pyfftw = PYFFTW_AVAILABLE and not("PYODIDE" in os.environ) and not(platform.system() == "Windows")
-# print(f'{include_pyfftw = }')
-cython_filenames.append(f"choreo.cython.optional_pyfftw_{include_pyfftw}".replace('.','/') + src_ext)
 
+cython_filenames.append(f"choreo.cython.optional_pyfftw_{include_pyfftw}".replace('.','/') + src_ext)
 
 optional_pyfftw_pxd_path = "choreo/cython/optional_pyfftw.pxd"
 if include_pyfftw:
@@ -202,32 +201,32 @@ if write_optional_pyfftw_pxd:
 define_macros = [("NPY_NO_DEPRECATED_API", "NPY_1_7_API_VERSION")]
 
 compiler_directives = {
-    'wraparound': False,
-    'boundscheck': False,
-    'nonecheck': False,
-    'initializedcheck': False,
-    'overflowcheck': False,
-    'overflowcheck.fold': False,
-    'infer_types': True,
+    'wraparound': False         ,
+    'boundscheck': False        ,
+    'nonecheck': False          ,
+    'initializedcheck': False   ,
+    'overflowcheck': False      ,
+    'overflowcheck.fold': False ,
+    'infer_types': True         ,
 }
 
 if opt_lvl == "profile" : 
 
     profile_compiler_directives = {
-        'profile': True,
-        'linetrace': True,
-        'binding': True,
+        'profile': True     ,
+        'linetrace': True   ,
+        'binding': True     ,
     }
     compiler_directives.update(profile_compiler_directives)
     profile_define_macros = [
-        ('CYTHON_TRACE', '1')   ,
-        ('CYTHON_TRACE_NOGIL', '1')   ,
+        ('CYTHON_TRACE', '1')       ,
+        ('CYTHON_TRACE_NOGIL', '1') ,
     ]
     define_macros.extend(profile_define_macros)
 
 include_dirs = [
     numpy.get_include()                 ,
-    os.path.join(os.getcwd(), 'include')   ,
+    os.path.join(os.getcwd(), 'include'),
 ]
 
 ext_modules = [
@@ -259,14 +258,18 @@ if use_Cython:
 packages = setuptools.find_packages()
 
 package_data = {key : ['*.h','*.c','*.pyx','*.pxd'] for key in packages}
+package_data['choreo.GUI'].extend(['*.js','*.html','assets/**','img/**','python_scripts/**'])
+
+if not("PYODIDE" in os.environ): #Packaging wasm wheels for GUI
+    package_data['choreo.GUI'].append('python_dist/*.whl')
 
 setuptools.setup(
-    platforms = ['any'],
-    ext_modules = ext_modules,
-    zip_safe = False,
-    packages = packages,
-    package_data = package_data,
-    provides = ['choreo'],
+    platforms = ['any']         ,
+    ext_modules = ext_modules   ,
+    zip_safe = False            ,
+    packages = packages         ,
+    package_data = package_data ,
+    provides = ['choreo']       ,
 )
 
 

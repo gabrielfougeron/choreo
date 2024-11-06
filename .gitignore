@@ -48,7 +48,7 @@ test.pdf
 !build_requirements.txt
 !/choreo/GUI/*
 !/choreo/GUI/img/**
-!/LICENCES/**
+!/LICENSES/**
 !.devcontainer/Dockerfile
 !/NumericalTank_data/*
 !/docs/source/_static/**
