@@ -1,0 +1,3 @@
+[submodule "choreo_gallery"]
+	path = choreo_gallery
+	url = git@github.com:gabrielfougeron/choreo_gallery.git
