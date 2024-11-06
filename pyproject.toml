@@ -4,7 +4,7 @@ requires = [
     "wheel"           ,
     "Cython"          ,
     "numpy"           ,
-    "scipy"           ,
+    "scipy<14.0"      ,
     "build"           ,
     "pyfftw>=0.14.0.0",
 ]
@@ -49,6 +49,9 @@ test_gui  = {file = ["requirements/requirements-test-gui.txt"]}
 bench     = {file = ["requirements/requirements-bench.txt"]}
 docs      = {file = ["requirements/requirements-docs.txt"]}
 full      = {file = ["requirements/requirements-full.txt"]}
+
+[tool.setuptools]
+license-files = ["LICENSES/*.txt"]
 
 [project.scripts]
 choreo_CLI_search = "choreo.run:entrypoint_CLI_search"
