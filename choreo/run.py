@@ -3,11 +3,11 @@ import sys
 import multiprocessing
 import choreo
 
-__PROJECT_ROOT__ = os.path.abspath(os.path.join(os.path.dirname(__file__),os.pardir))
+from choreo.GUI import default_gallery_root, install_official_gallery
 
 import argparse
 
-def GUI_in_CLI(cli_args):
+def CLI_search(cli_args):
 
     parser = argparse.ArgumentParser(
         description = 'Searches periodic solutions to the N-body problem as defined in choreo_GUI')
@@ -25,7 +25,6 @@ def GUI_in_CLI(cli_args):
 
     root_list = [
         '',
-        __PROJECT_ROOT__,
         os.getcwd(),
     ]
 
@@ -44,8 +43,6 @@ def GUI_in_CLI(cli_args):
         os.environ['OPENBLAS_NUM_THREADS'] = '1'
         os.environ['NUMEXPR_NUM_THREADS'] = '1'
         os.environ['MKL_NUM_THREADS'] = '1'
-
-        sys.path.append(__PROJECT_ROOT__)
 
         choreo.find_new.ChoreoReadDictAndFind(Workspace_folder)
 
@@ -53,7 +50,7 @@ def GUI_in_CLI(cli_args):
 
         print(f'Workspace folder {args.Workspace_folder} was not found')
 
-def GUI_in_CLI_old(cli_args):
+def CLI_search_old(cli_args):
 
     parser = argparse.ArgumentParser(
         description = 'Searches periodic solutions to the N-body problem as defined in choreo_GUI')
@@ -71,7 +68,6 @@ def GUI_in_CLI_old(cli_args):
 
     root_list = [
         '',
-        __PROJECT_ROOT__,
         os.getcwd(),
     ]
 
@@ -90,17 +86,46 @@ def GUI_in_CLI_old(cli_args):
         os.environ['OPENBLAS_NUM_THREADS'] = '1'
         os.environ['NUMEXPR_NUM_THREADS'] = '1'
         os.environ['MKL_NUM_THREADS'] = '1'
-
-        sys.path.append(__PROJECT_ROOT__)
-
+        
         choreo.find.ChoreoReadDictAndFind_old(Workspace_folder)
 
     else:
 
         print(f'Workspace folder {args.Workspace_folder} was not found')
 
-def entrypoint_GUI_in_CLI():
-    GUI_in_CLI(sys.argv[1:])
+def entrypoint_CLI_search():
+    CLI_search(sys.argv[1:])
 
-if __name__ == '__main__':
-    entrypoint_GUI_in_CLI()
+def GUI(cli_args):
+    
+    parser = argparse.ArgumentParser(
+        description = 'Launches choreo GUI')
+
+    default_Workspace = './'
+    parser.add_argument(
+        '-f', '--foldername',
+        default = default_gallery_root,
+        dest = 'gallery_root',
+        help = f'Gallery root.',
+        metavar = '',
+    )
+
+    args = parser.parse_args(cli_args)
+    
+    if args.gallery_root != default_gallery_root:
+        raise NotImplementedError
+    
+    GalleryExists = (
+        os.path.isdir(os.path.join(args.gallery_root,'choreo-gallery'))
+        and os.path.isfile(os.path.join(args.gallery_root,'gallery_descriptor.json'))
+    )
+    
+    if not GalleryExists:
+        print("Gallery not found. Installing official gallery.")
+        install_official_gallery()
+    
+    choreo.GUI.serve_GUI()
+
+
+def entrypoint_GUI():
+    GUI(sys.argv[1:])

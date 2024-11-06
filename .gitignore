@@ -46,13 +46,11 @@ test.pdf
 #           To be included (with preceding !)
 ##########################################################
 !build_requirements.txt
-!/choreo_GUI/*
-!/choreo_GUI/img/**
-!/choreo_GUI/choreo-gallery/**
+!/choreo/GUI/*
+!/choreo/GUI/img/**
 !/LICENCES/**
 !.devcontainer/Dockerfile
 !/NumericalTank_data/*
-!/choreo_GUI/SOME3/**
 !/docs/source/_static/**
 !/docs/source/test-report/test_report_template.txt
 !/requirements/requirements*.txt

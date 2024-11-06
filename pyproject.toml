@@ -51,7 +51,8 @@ docs      = {file = ["requirements/requirements-docs.txt"]}
 full      = {file = ["requirements/requirements-full.txt"]}
 
 [project.scripts]
-choreo_GUI_in_CLI = "choreo.run:entrypoint_GUI_in_CLI"
+choreo_CLI_search = "choreo.run:entrypoint_CLI_search"
+choreo_GUI = "choreo.run:entrypoint_GUI"
 
 [project.urls]
 Homepage = "https://gabrielfougeron.github.io/choreo/"
