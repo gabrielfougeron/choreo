@@ -42,8 +42,8 @@ jobs:
       run: |
         pip install --upgrade pip
 
-    - name: Install locally with pip
-      run:  pip install .[full]
+    - name: Install locally in editable mode with pip
+      run:  pip install -e .[full]
 
     - name: Read Emscripten version number
       run: |
@@ -59,11 +59,9 @@ jobs:
         pyodide build
         find ./dist -name '*pyodide*.whl' -exec cp {} ./choreo_GUI/python_dist/ \; 
 
-    - name: Make Gallery Descriptor 
+    - name: Download official gallery
       run: |
-        cd choreo_GUI
-        python MakeGalleryDescriptor.py
-        cd .. 
+        python -c "import choreo; choreo.GUI.install_official_gallery()"
 
     - name: Setup Pages
       uses: actions/configure-pages@v1
@@ -71,7 +69,7 @@ jobs:
     - name: Upload artifact
       uses: actions/upload-pages-artifact@v1
       with:
-        path: './choreo_GUI/'
+        path: './choreo/GUI/'
 
     - name: Deploy to GitHub Pages
       id: deployment
