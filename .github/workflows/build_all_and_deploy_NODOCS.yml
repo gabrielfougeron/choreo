@@ -57,7 +57,7 @@ jobs:
     - name: Build for Pyodide
       run: |
         pyodide build
-        find ./dist -name '*pyodide*.whl' -exec cp {} ./choreo_GUI/python_dist/ \; 
+        find ./dist -name '*pyodide*.whl' -exec cp {} ./choreo/GUI/python_dist/ \; 
 
     - name: Download official gallery
       run: |
