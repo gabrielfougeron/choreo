@@ -63,7 +63,6 @@ jobs:
       uses: conda-incubator/setup-miniconda@v3
       with:
         auto-update-conda: true
-        python-version: ${{ matrix.python-version }}  
 
     - name: Download Pyodide whl
       uses: actions/download-artifact@v4
@@ -76,6 +75,9 @@ jobs:
       shell: bash -el {0} # Needed whenever the commands need something in conda
       run: |
         find ./dist -name '*pyodide*.whl' -exec cp {} ./choreo/GUI/python_dist/ \; 
+        conda create -n build -y
+        conda activate build
+        conda install python=${{ matrix.python-version }}  
         conda install --file environment/environment-linux.txt
         python -m build
 
