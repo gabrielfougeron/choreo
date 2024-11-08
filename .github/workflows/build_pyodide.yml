@@ -18,15 +18,12 @@ jobs:
         python-version: 3.12
         conda-remove-defaults: true
         channels: conda-forge
+        channel-priority: true
         activate-environment: choreo
         environment-file: environment.yml
 
-    - name: Activate conda environment
-      run: |
-        conda init
-        conda activate choreo
-
     - name: Read Emscripten version number
+      shell: bash -el {0}
       run: |
         echo EMSCRIPTEN_VERSION=$(pyodide config get emscripten_version) >> $GITHUB_ENV
 
