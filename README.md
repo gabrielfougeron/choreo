@@ -19,7 +19,7 @@ Till then, the installation process is the following:
 After sourcing emsdk environment, run the following:
 
 ```
-pyodide build && cp ./dist/choreo-1.0.0-cp312-cp312-pyodide_2024_0_wasm32.whl ./choreo_GUI/python_dist/choreo-1.0.0-cp312-cp312-pyodide_2024_0_wasm32.whl
+pyodide build && cp ./dist/choreo-1.0.0-cp312-cp312-pyodide_2024_0_wasm32.whl ./choreo/GUI/python_dist/choreo-1.0.0-cp312-cp312-pyodide_2024_0_wasm32.whl
 ```
 
 ## Power up the GUI solver with the CLI backend
