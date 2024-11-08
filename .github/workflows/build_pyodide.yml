@@ -15,11 +15,10 @@ jobs:
       uses: conda-incubator/setup-miniconda@v3
       with:
         auto-update-conda: true
-        python-version: "3.12"
-
-    - name: Install conda dependencies
-      run: |
-        conda create -f environment.yml
+        python-version: 3.12
+        channels: conda-forge
+        activate-environment: choreo
+        environment-file: environment.yml
 
     - name: Read Emscripten version number
       run: |
