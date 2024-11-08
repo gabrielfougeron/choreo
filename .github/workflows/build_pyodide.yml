@@ -1,10 +1,11 @@
-name: Build for Pyodide
+name: Build whl for all platforms
 
 on:
   workflow_dispatch:
 
 jobs:
-  build:
+  build-pyodide:
+    name: Build whl for Pyodide
     runs-on: ubuntu-latest
     steps:
 
@@ -23,7 +24,7 @@ jobs:
         environment-file: environment.yml
 
     - name: Read Emscripten version number
-      shell: bash -el {0}
+      shell: bash -el {0} # Needed whenever the commands need something in conda
       run: |
         echo EMSCRIPTEN_VERSION=$(pyodide config get emscripten_version) >> $GITHUB_ENV
 
@@ -33,7 +34,7 @@ jobs:
         version: ${{ env.EMSCRIPTEN_VERSION }}
 
     - name: Build for Pyodide
-      shell: bash -el {0}
+      shell: bash -el {0} # Needed whenever the commands need something in conda
       run: |
         pyodide build
         find ./dist -name '*pyodide*.whl' -exec cp {} ./choreo/GUI/python_dist/ \; 
@@ -41,8 +42,76 @@ jobs:
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
       with:
-        name: 'Pyodide wheel'
+        name: pyodide-whl
         path: 'dist/*.whl'
         compression-level: 0
+
+  build-linux:
+    name: Build whl for Linx
+    needs: build-pyodide
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup conda
+      uses: conda-incubator/setup-miniconda@v3
+      with:
+        auto-update-conda: true
+        python-version: 3.12
+        conda-remove-defaults: true
+        channels: conda-forge
+        channel-priority: true
+        activate-environment: choreo
+        environment-file: environment.yml
+
+    - name: Download Pyodide whl
+      uses: actions/download-artifact@v4
+      with:
+        path: dist
+        pattern: pyodide-whl
+        merge-multiple: true
+
+    - name: Build for Linux
+      shell: bash -el {0} # Needed whenever the commands need something in conda
+      run: |
+        find ./dist -name '*pyodide*.whl' -exec cp {} ./choreo/GUI/python_dist/ \; 
+        python -m build
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: linux-3.12-whl
+        path: 'dist/*linux*.whl'
+        compression-level: 0
+
+  gather-all-whl:
+    name: Gather all built whls
+    needs: [build-pyodide, build-linux]
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Download Pyodide whl
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Build for Linux
+        run: |
+          zip -r choreo-dist.zip dist
+      
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: all-whls
+          path: choreo-dist.zip
+          compression-level: 0
+
+
+
+
+
 
 
