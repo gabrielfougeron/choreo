@@ -21,11 +21,10 @@ jobs:
         activate-environment: choreo
         environment-file: environment.yml
 
-    
-    # - name: Setup conda environment
-    #   run: |
-    #     conda env create -f environment.yml
-    #     conda activate choreo
+    - name: Activate conda environment
+      run: |
+        conda init
+        conda activate choreo
 
     - name: Read Emscripten version number
       run: |
