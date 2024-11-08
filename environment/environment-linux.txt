@@ -1,0 +1,13 @@
+scipy<1.14
+networkx
+cython
+fftw
+tbb 
+pip
+mkl_fft
+numba
+pytest
+pytest-xdist
+attrs
+threadpoolctl
+pyfftw>=0.14.0
