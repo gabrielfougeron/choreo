@@ -89,9 +89,100 @@ jobs:
         path: 'dist/*linux*.whl'
         compression-level: 0
 
+  build-macos:
+    name: Build whl for MacOs
+    needs: build-pyodide
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
+    steps:
+
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup conda
+      uses: conda-incubator/setup-miniconda@v3
+      with:
+        auto-update-conda: true
+
+    - name: Download Pyodide whl
+      uses: actions/download-artifact@v4
+      with:
+        path: dist
+        pattern: pyodide-whl
+        merge-multiple: true
+
+    - name: Build for MacOs
+      shell: bash -el {0} # Needed whenever the commands need something in conda
+      run: |
+        find ./dist -name '*pyodide*.whl' -exec cp {} ./choreo/GUI/python_dist/ \; 
+        conda create -n build -y
+        conda activate build
+        conda install python=${{ matrix.python-version }}  
+        conda install --file environment/environment-build-macos.txt
+        pip install build
+        python -m build
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: macos-${{ matrix.python-version }}-whl
+        path: 'dist/*macos*.whl'
+        compression-level: 0
+
+  build-windows:
+    name: Build whl for Windows
+    needs: build-pyodide
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
+    steps:
+
+    - name: Install MSVC
+      uses: TheMrMilchmann/setup-msvc-dev@v3
+      with:
+        arch: x64
+
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup conda
+      uses: conda-incubator/setup-miniconda@v3
+      with:
+        auto-update-conda: true
+
+    - name: Download Pyodide whl
+      uses: actions/download-artifact@v4
+      with:
+        path: dist
+        pattern: pyodide-whl
+        merge-multiple: true
+
+    - name: Build for Windows
+      shell: bash -el {0} # Needed whenever the commands need something in conda
+      run: |
+        find ./dist -name '*pyodide*.whl' -exec cp {} ./choreo/GUI/python_dist/ \; 
+        conda create -n build -y
+        conda activate build
+        conda install python=${{ matrix.python-version }}  
+        conda install --file environment/environment-build-windows.txt
+        pip install build
+        python -m build
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: win-${{ matrix.python-version }}-whl
+        path: 'dist/*win*.whl'
+        compression-level: 0
+
   gather-all-whl:
     name: Gather all built whls
-    needs: [build-pyodide, build-linux]
+    needs: [build-pyodide, build-linux, build-macos, build-windows]
     runs-on: ubuntu-latest
     steps:
 
@@ -110,6 +201,7 @@ jobs:
 
 
 
+        
 
 
 
