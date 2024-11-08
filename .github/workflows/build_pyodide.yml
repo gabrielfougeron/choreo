@@ -33,6 +33,7 @@ jobs:
         version: ${{ env.EMSCRIPTEN_VERSION }}
 
     - name: Build for Pyodide
+      shell: bash -el {0}
       run: |
         pyodide build
         find ./dist -name '*pyodide*.whl' -exec cp {} ./choreo/GUI/python_dist/ \; 
