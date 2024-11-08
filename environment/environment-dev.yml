@@ -2,16 +2,33 @@ name: choreo
 channels:
   - conda-forge
 dependencies:
+  - python=3.12.1
+  # - emscripten=3.1.58
+  - pyodide-build=0.29.0
+  - mpmath
+  - matplotlib
   - scipy<1.14
   - networkx
   - cython
+  - ffmpeg
   - fftw
   - tbb 
+  - ffmpeg-python
   - pip
   - mkl_fft
+  - pyamg
   - numba
   - pytest
   - pytest-xdist
   - attrs
+  - Sphinx
+  - pydata-sphinx-theme
+  - sphinx-gallery
+  - sphinx-needs
+  - pyquickbench
   - threadpoolctl
   - pyfftw>=0.14.0
+  - pip:
+    - sphinx-pyproject
+    - sphinx-test-reports
+    - sphinxcontrib.plantuml
