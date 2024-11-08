@@ -75,6 +75,7 @@ jobs:
       shell: bash -el {0} # Needed whenever the commands need something in conda
       run: |
         find ./dist -name '*pyodide*.whl' -exec cp {} ./choreo/GUI/python_dist/ \; 
+        conda install pip build
         pip install .[full]
         python -m build
 
