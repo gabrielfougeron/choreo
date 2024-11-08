@@ -1,0 +1,4 @@
+fftw
+pip
+mkl_fft
+clang
