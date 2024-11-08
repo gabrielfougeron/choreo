@@ -305,16 +305,12 @@ packages = setuptools.find_packages()
 package_data = {key : ['*.h','*.c','*.pyx','*.pxd'] for key in packages}
 exclude_package_data = {key : [] for key in packages}
 
-# exclude_package_data['*'] = ['*.js','*.html','assets/**','img/**','python_scripts/**','python_dist/*.whl']
-
 GUI_data = ['*.js','*.html','assets/**','img/**','python_scripts/**','python_dist/*.whl']
     
-# if "PYODIDE" in os.environ: # GUI stuff not needed in Pyodide whl
-#     exclude_package_data['choreo.GUI'].extend(GUI_data)
-# else:
-#     package_data['choreo.GUI'].extend(GUI_data)
-
-exclude_package_data['choreo.GUI'].extend(GUI_data)
+if "PYODIDE" in os.environ: # GUI stuff not needed in Pyodide whl
+    exclude_package_data['choreo.GUI'].extend(GUI_data)
+else:
+    package_data['choreo.GUI'].extend(GUI_data)
 
 
 setuptools.setup(
@@ -323,7 +319,6 @@ setuptools.setup(
     zip_safe = False                            ,
     packages = packages                         ,
     package_data = package_data                 ,
-    include_package_data = False                ,
     exclude_package_data = exclude_package_data ,
     provides = ['choreo']                       ,
 )
