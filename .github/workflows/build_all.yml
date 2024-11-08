@@ -169,7 +169,7 @@ jobs:
         conda create -n build -y
         conda activate build
         conda install python=${{ matrix.python-version }}  
-        conda install --file environment/environment-build-windows.txt
+        conda install --file environment/environment-build-win.txt
         pip install build
         python -m build
 
