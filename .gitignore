@@ -27,11 +27,11 @@
 .pytest_cache
 Saves/
 testplots/
-build/
+build/**
+dist/**
 Sniff_all/
 Sniff_all_sym/
 *__pycache__*
-dist/
 GUI_scripts/dist/
 GUI_scripts/build/
 docs/build/
