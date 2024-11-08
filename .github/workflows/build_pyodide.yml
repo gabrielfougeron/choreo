@@ -17,8 +17,11 @@ jobs:
         auto-update-conda: true
         python-version: 3.12
         channels: conda-forge
-        activate-environment: choreo
-        environment-file: environment.yml
+    
+    - name: Setup conda environment
+      run: |
+        conda env create -f environment.yml
+        conda activate choreo
 
     - name: Read Emscripten version number
       run: |
