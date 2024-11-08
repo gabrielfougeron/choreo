@@ -53,7 +53,7 @@ jobs:
     continue-on-error: true
     strategy:
       matrix:
-        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
     steps:
 
     - name: Checkout repository
@@ -76,8 +76,7 @@ jobs:
       shell: bash -el {0} # Needed whenever the commands need something in conda
       run: |
         find ./dist -name '*pyodide*.whl' -exec cp {} ./choreo/GUI/python_dist/ \; 
-        conda install pip build
-        pip install .[full]
+        conda install --file environment/environment-linux.txt
         python -m build
 
     - name: Upload Artifact
