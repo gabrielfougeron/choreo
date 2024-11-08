@@ -60,7 +60,7 @@ jobs:
         echo EMSCRIPTEN_VERSION=$(pyodide config get emscripten_version) >> $GITHUB_ENV
 
     - name: Setup Emscripten
-      uses: mymindstorm/setup-emsdk@v11
+      uses: mymindstorm/setup-emsdk@v14
       with:
         version: ${{ env.EMSCRIPTEN_VERSION }}
 

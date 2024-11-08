@@ -29,7 +29,7 @@ jobs:
         echo EMSCRIPTEN_VERSION=$(pyodide config get emscripten_version) >> $GITHUB_ENV
 
     - name: Setup Emscripten
-      uses: mymindstorm/setup-emsdk@v11
+      uses: mymindstorm/setup-emsdk@v14
       with:
         version: ${{ env.EMSCRIPTEN_VERSION }}
 
@@ -47,7 +47,7 @@ jobs:
         compression-level: 0
 
   build-linux:
-    name: Build whl for Linx
+    name: Build whl for Linux
     needs: build-pyodide
     runs-on: ubuntu-latest
     steps:
