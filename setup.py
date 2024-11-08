@@ -158,8 +158,8 @@ elif platform.system() == "Linux":
     else:
 
         # all_compilers = ['icx','clang','gcc']
-        all_compilers = ['clang']
-        # all_compilers = ['gcc']
+        # all_compilers = ['clang']
+        all_compilers = ['gcc']
         # all_compilers = ['icx'] 
 
         for compiler in all_compilers:

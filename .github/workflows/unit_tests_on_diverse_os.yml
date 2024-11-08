@@ -89,7 +89,7 @@ jobs:
   
     - name: Setup Emscripten
       if:  matrix.os == env.pyodide-os && matrix.python-version == env.pyodide-python-version
-      uses: mymindstorm/setup-emsdk@v11
+      uses: mymindstorm/setup-emsdk@v14
       with:
         version: ${{ env.EMSCRIPTEN_VERSION }}
   
