@@ -78,13 +78,14 @@ jobs:
         conda create -n build -y
         conda activate build
         conda install python=${{ matrix.python-version }}  
-        conda install --file environment/environment-linux.txt
+        conda install --file environment/environment-build-linux.txt
+        pip install build
         python -m build
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
       with:
-        name: linux-3.12-whl
+        name: linux-${{ matrix.python-version }}-whl
         path: 'dist/*linux*.whl'
         compression-level: 0
 
