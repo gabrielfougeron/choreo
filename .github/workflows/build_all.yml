@@ -21,7 +21,7 @@ jobs:
         channels: conda-forge
         channel-priority: true
         activate-environment: choreo
-        environment-file: environment.yml
+        environment-file: environment/environment-dev.yml
 
     - name: Read Emscripten version number
       shell: bash -el {0} # Needed whenever the commands need something in conda
@@ -50,6 +50,9 @@ jobs:
     name: Build whl for Linux
     needs: build-pyodide
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
     steps:
 
     - name: Checkout repository
@@ -59,12 +62,7 @@ jobs:
       uses: conda-incubator/setup-miniconda@v3
       with:
         auto-update-conda: true
-        python-version: 3.12
-        conda-remove-defaults: true
-        channels: conda-forge
-        channel-priority: true
-        activate-environment: choreo
-        environment-file: environment.yml
+        python-version: ${{ matrix.python-version }}  
 
     - name: Download Pyodide whl
       uses: actions/download-artifact@v4
@@ -77,6 +75,7 @@ jobs:
       shell: bash -el {0} # Needed whenever the commands need something in conda
       run: |
         find ./dist -name '*pyodide*.whl' -exec cp {} ./choreo/GUI/python_dist/ \; 
+        pip install .[full]
         python -m build
 
     - name: Upload Artifact
@@ -98,15 +97,11 @@ jobs:
           path: dist
           merge-multiple: true
 
-      - name: Build for Linux
-        run: |
-          zip -r choreo-dist.zip dist
-      
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: all-whls
-          path: choreo-dist.zip
+          path: dist
           compression-level: 0
 
 

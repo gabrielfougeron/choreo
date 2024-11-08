@@ -303,18 +303,27 @@ if use_Cython:
 packages = setuptools.find_packages()
 
 package_data = {key : ['*.h','*.c','*.pyx','*.pxd'] for key in packages}
-package_data['choreo.GUI'].extend(['*.js','*.html','assets/**','img/**','python_scripts/**'])
+exclude_package_data = {key : [] for key in packages}
 
-if not("PYODIDE" in os.environ): #Packaging wasm wheels for GUI
-    package_data['choreo.GUI'].append('python_dist/*.whl')
+# exclude_package_data['*'] = ['*.js','*.html','assets/**','img/**','python_scripts/**','python_dist/*.whl']
+
+GUI_data = ['*.js','*.html','assets/**','img/**','python_scripts/**','python_dist/*.whl']
+    
+# if "PYODIDE" in os.environ: # GUI stuff not needed in Pyodide whl
+#     exclude_package_data['choreo.GUI'].extend(GUI_data)
+# else:
+#     package_data['choreo.GUI'].extend(GUI_data)
+
+exclude_package_data['choreo.GUI'].extend(GUI_data)
+
 
 setuptools.setup(
-    platforms = ['any']         ,
-    ext_modules = ext_modules   ,
-    zip_safe = False            ,
-    packages = packages         ,
-    package_data = package_data ,
-    provides = ['choreo']       ,
+    platforms = ['any']                         ,
+    ext_modules = ext_modules                   ,
+    zip_safe = False                            ,
+    packages = packages                         ,
+    package_data = package_data                 ,
+    include_package_data = False                ,
+    exclude_package_data = exclude_package_data ,
+    provides = ['choreo']                       ,
 )
-
-
