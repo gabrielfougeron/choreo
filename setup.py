@@ -61,15 +61,54 @@ else:
     # opt_lvl = '0'
 
 if platform.system() == "Windows":
+    
+    # 
+    # print(f'{os.environ['CC'] = }')
+    # 
+    #     os.environ['CC'] = compiler
+    #     os.environ['LDSHARED'] = compiler+' -shared'
+    #     
+    ignore_warnings_args = [
+        # "-Wno-unused-variable",
+        # "-Wno-unused-function",
+        # "-Wno-incompatible-pointer-types-discards-qualifiers",
+        # "-Wno-unused-command-line-argument"
+    ] 
 
-    extra_compile_args_std = ["/O2", "/openmp"]
-    extra_compile_args_safe = ["/O2", "/openmp"]
-    extra_link_args = ["/openmp"]
+    extra_compile_args_std = {
+        "profile" : ["/Od", "/openmp", *ignore_warnings_args],
+        "0" : ["/Od", "/openmp", *ignore_warnings_args],
+        "1" : ["/Ox", "/openmp", *ignore_warnings_args],
+        "2" : ["/O2", "/openmp", *ignore_warnings_args],
+        "3" : ["/O2", "/openmp", *ignore_warnings_args],
+        "fast" : ["/O2", "/GL", "/openmp", *ignore_warnings_args],
+    }[opt_lvl]
+    
+    extra_compile_args_safe = {
+        "profile" : ["/Od", "/openmp", *ignore_warnings_args],
+        "0" : ["/Od", "/openmp", *ignore_warnings_args],
+        "1" : ["/Ox", "/openmp", *ignore_warnings_args],
+        "2" : ["/O2", "/openmp", *ignore_warnings_args],
+        "3" : ["/O2", "/openmp", *ignore_warnings_args],
+        "fast" : ["/O2", "/GL","/openmp", *ignore_warnings_args],
+    }[opt_lvl]
+    
+    extra_link_args = {
+        "profile" : [*ignore_warnings_args],
+        "0" : [*ignore_warnings_args],
+        "1" : [*ignore_warnings_args],
+        "2" : [*ignore_warnings_args],
+        "3" : [*ignore_warnings_args],
+        "fast" : ["/GL", *ignore_warnings_args],
+    }[opt_lvl]
 
     cython_extnames.append("choreo.cython.funs_parallel")
     cython_safemath_needed.append(False)
 
 elif platform.system() == "Darwin": # MacOS
+    
+    os.environ['CC'] = "clang"
+    os.environ['LDSHARED'] = 'clang -shared'
 
     extra_compile_args_std = ["-Ofast","-march=native", "-fopenmp"]
     extra_compile_args_safe = ["-O2", "-fopenmp"]
@@ -119,8 +158,8 @@ elif platform.system() == "Linux":
     else:
 
         # all_compilers = ['icx','clang','gcc']
-        # all_compilers = ['clang']
-        all_compilers = ['gcc']
+        all_compilers = ['clang']
+        # all_compilers = ['gcc']
         # all_compilers = ['icx'] 
 
         for compiler in all_compilers:
@@ -200,6 +239,9 @@ if write_optional_pyfftw_pxd:
 
 define_macros = [("NPY_NO_DEPRECATED_API", "NPY_1_7_API_VERSION")]
 
+# if platform.system() == "Windows":
+#     define_macros.append(("CYTHON_CCOMPLEX", 0))
+
 compiler_directives = {
     'wraparound': False         ,
     'boundscheck': False        ,
@@ -243,8 +285,11 @@ ext_modules = [
 
 if use_Cython:
     
-    import multiprocessing
-    nthreads = multiprocessing.cpu_count()
+    if platform.system() == "Windows":
+        nthreads = 0
+    else:
+        import multiprocessing
+        nthreads = multiprocessing.cpu_count()
 
     ext_modules = Cython.Build.cythonize(
         ext_modules,

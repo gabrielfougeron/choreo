@@ -104,18 +104,8 @@ def Find_Choreo(
        
     nparam_nosym = NBS.geodim * NBS.nint * NBS.nbody
     nparam_tot = NBS.nparams_incl_o // 2
-
-    print('System is composed of:')
-    print(f'    {NBS.nbody:d} bodies')
-    print(f'    {NBS.nloop:d} independent loops')
-    print(f'    {NBS.nint_min:d} integration segments')
-    print(f'    {NBS.nsegm:d} independent generating segments')
-    print(f'    {NBS.nbin_segm_unique:d} binary interactions between segments')
-    print()
-    print(f'The number of free parameters is reduced by a factor of {nparam_nosym / nparam_tot}')
-    print(f'The number of independent interactions is reduced by a factor of {NBS.nbin_segm_tot  / NBS.nbin_segm_unique}')
-    print(f'The number of independent segments is reduced by a factor of {(nbody * NBS.nint_min) / NBS.nsegm}')
-    print()
+    
+    print(NBS.DescribeSystem())
 
     x_min, x_max = NBS.Make_params_bounds(coeff_ampl_o, k_infl, k_max, coeff_ampl_min)
     x_ptp = x_max - x_min

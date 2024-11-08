@@ -1,0 +1,45 @@
+name: Build for Pyodide
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup conda
+      uses: conda-incubator/setup-miniconda@v3
+      with:
+        auto-update-conda: true
+        python-version: "3.12"
+
+    - name: Install conda dependencies
+      run: |
+        conda create -f environment.yml
+
+    - name: Read Emscripten version number
+      run: |
+        echo EMSCRIPTEN_VERSION=$(pyodide config get emscripten_version) >> $GITHUB_ENV
+
+    - name: Setup Emscripten
+      uses: mymindstorm/setup-emsdk@v11
+      with:
+        version: ${{ env.EMSCRIPTEN_VERSION }}
+
+    - name: Build for Pyodide
+      run: |
+        pyodide build
+        find ./dist -name '*pyodide*.whl' -exec cp {} ./choreo/GUI/python_dist/ \; 
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: 'Pyodide wheel'
+        path: 'dist/*.whl'
+        compression-level: 0
+
+
