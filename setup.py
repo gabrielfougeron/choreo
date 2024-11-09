@@ -268,11 +268,12 @@ if opt_lvl == "profile" :
 
 include_dirs = [
     numpy.get_include()                 ,
-    os.path.join(os.getcwd(), 'include'),
 ]
 
 if platform.system() == "Windows":
     include_dirs.append(os.path.join(os.getcwd(), 'include', 'win'))
+else:
+    include_dirs.append(os.path.join(os.getcwd(), 'include'))
 
 ext_modules = [
     setuptools.Extension(
@@ -315,6 +316,8 @@ if "PYODIDE" in os.environ: # GUI stuff not needed in Pyodide whl
 else:
     package_data['choreo.GUI'].extend(GUI_data)
 
+
+print(f'{include_dirs = }')
 
 setuptools.setup(
     platforms = ['any']                         ,

@@ -4,7 +4,7 @@ requires = [
     "wheel"           ,
     "Cython"          ,
     "numpy"           ,
-    "scipy<14.0"      ,
+    "scipy<1.14.0"    ,
     "build"           ,
     "pyfftw>=0.14.0.0",
 ]
