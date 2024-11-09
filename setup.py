@@ -271,6 +271,9 @@ include_dirs = [
     os.path.join(os.getcwd(), 'include'),
 ]
 
+if platform.system() == "Windows":
+    include_dirs.append(os.path.join(os.getcwd(), 'include', 'win'))
+
 ext_modules = [
     setuptools.Extension(
         name = name,
