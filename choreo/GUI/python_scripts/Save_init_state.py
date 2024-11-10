@@ -340,7 +340,7 @@ async def main_new(params_dict):
     extra_args_dict['save_first_init'] = True
     extra_args_dict['Save_SegmPos'] = True
     
-    choreo.find_new.ChoreoChooseParallelEnvAndFind(Workspace_folder, params_dict, extra_args_dict)
+    choreo.find.ChoreoChooseParallelEnvAndFind(Workspace_folder, params_dict, extra_args_dict)
 
     filename_output = store_folder+'/_init'
     filename = filename_output+".json"

@@ -8,7 +8,8 @@ from libc.math cimport fabs as cfabs
 from libc.math cimport log as clog
 from libc.math cimport sqrt as csqrt
 from libc.math cimport exp as cexp
-from libc.complex cimport cexp as ccexp
+from libc.math cimport cos as ccos
+from libc.math cimport sin as csin
 
 cimport scipy.linalg.cython_blas
 from libc.stdlib cimport malloc, free, rand
@@ -3918,6 +3919,8 @@ cdef void inplace_twiddle(
     cdef double complex w, wo, winter
     cdef double complex w_pow[16] # minimum size of int on all machines.
 
+    cdef double arg
+
     cdef int ibit
     cdef int nbit = 1
     cdef long twopow = 1
@@ -3931,7 +3934,8 @@ cdef void inplace_twiddle(
 
         if nnz_k[ncoeff_min_loop_nnz-1] > 0:
 
-            wo =  ccexp(direction * citwopi / nint)
+            arg = direction * ctwopi / nint
+            wo =  ccos(arg) + 1j*csin(arg)
             winter = 1.
 
             while (twopow < nnz_k[ncoeff_min_loop_nnz-1]) :
@@ -4065,6 +4069,7 @@ cdef void partial_fft_to_pos_slice_1_sub(
     cdef int nconj
 
     cdef double complex w
+    cdef double arg
     cdef Py_ssize_t m, j, i
 
     inplace_twiddle(const_ifft, nnz_k, nint, n_inter, ncoeff_min_loop_nnz, nppl, -1)
@@ -4075,7 +4080,10 @@ cdef void partial_fft_to_pos_slice_1_sub(
     n_inter = npr-1
     ifft += nzcom
     for j in range(ncoeff_min_loop_nnz):
-        w = ccexp(citwopi*nnz_k[j]/ncoeff_min_loop)
+
+        arg = ctwopi*nnz_k[j]/ncoeff_min_loop
+        w = ccos(arg) + 1j*csin(arg)
+
         for i in range(nppl):
             scipy.linalg.cython_blas.zscal(&n_inter,&w,ifft,&nzcom)
             ifft += 1
@@ -4117,6 +4125,7 @@ cdef void pos_slice_to_partial_fft_1_sub(
     cdef long nint = 2*ncoeff_min_loop*npr
 
     cdef double dfac
+    cdef double arg
 
     # Casting double complex to double array
     cdef double* params_basis_r = <double*> params_basis
@@ -4161,7 +4170,10 @@ cdef void pos_slice_to_partial_fft_1_sub(
 
     ifft += nzcom
     for j in range(ncoeff_min_loop_nnz):
-        w = ccexp(cminusitwopi*nnz_k[j]/ncoeff_min_loop)
+
+        arg = cminustwopi*nnz_k[j]/ncoeff_min_loop
+        w = ccos(arg) + 1j*csin(arg)
+
         for i in range(nppl):
             scipy.linalg.cython_blas.zscal(&n_inter,&w,ifft,&nzcom)
             ifft += 1

@@ -48,7 +48,7 @@ def setup(test_name, nint_fac):
     Sym_list = all_kwargs["Sym_list"]
     
     inter_law_cy = scipy.LowLevelCallable.from_cython(choreo.cython._NBodySyst, "gravity_pot")
-    inter_law_nb = choreo.numba_funs_new.pow_inter_law(0.5, 1)
+    inter_law_nb = choreo.numba_funs.pow_inter_law(0.5, 1)
     
     NBS = choreo.cython._NBodySyst.NBodySyst(geodim, nbody, mass, charge, Sym_list, inter_law_cy)
     NBS.nint_fac = nint_fac

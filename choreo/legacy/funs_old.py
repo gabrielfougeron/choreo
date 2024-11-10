@@ -33,17 +33,17 @@ try:
 except:
     pass
 
-from choreo.cython.funs_serial import Compute_action_Cython_2D_serial, Compute_action_hess_mul_Cython_2D_serial
-from choreo.cython.funs_serial import Compute_action_Cython_nD_serial, Compute_action_hess_mul_Cython_nD_serial
-
-try:
-        
-    from choreo.cython.funs_parallel import Compute_action_Cython_2D_parallel, Compute_action_hess_mul_Cython_2D_parallel
-    from choreo.cython.funs_parallel import Compute_action_Cython_nD_parallel, Compute_action_hess_mul_Cython_nD_parallel
-    from choreo.cython.funs_parallel import Compute_Forces_Cython_parallel, Compute_JacMulMat_Forces_Cython_parallel
-
-except:
-    pass
+# from choreo.cython.funs_serial import Compute_action_Cython_2D_serial, Compute_action_hess_mul_Cython_2D_serial
+# from choreo.cython.funs_serial import Compute_action_Cython_nD_serial, Compute_action_hess_mul_Cython_nD_serial
+# 
+# try:
+#         
+#     from choreo.cython.funs_parallel import Compute_action_Cython_2D_parallel, Compute_action_hess_mul_Cython_2D_parallel
+#     from choreo.cython.funs_parallel import Compute_action_Cython_nD_parallel, Compute_action_hess_mul_Cython_nD_parallel
+#     from choreo.cython.funs_parallel import Compute_Forces_Cython_parallel, Compute_JacMulMat_Forces_Cython_parallel
+# 
+# except:
+#     pass
 
 from choreo.default_fft import *
 

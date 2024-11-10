@@ -41,7 +41,7 @@ import scipy
 
 import choreo
 DP_Wisdom_file = os.path.join(__PROJECT_ROOT__, "PYFFTW_wisdom.txt")
-choreo.find_new.Load_wisdom_file(DP_Wisdom_file)
+choreo.find.Load_wisdom_file(DP_Wisdom_file)
 
 
 base_shape = [4,4]
@@ -283,4 +283,4 @@ relative_to_val = {
 plot_all(relative_to_val=relative_to_val)
 
 
-choreo.find_new.Write_wisdom_file(DP_Wisdom_file)
+choreo.find.Write_wisdom_file(DP_Wisdom_file)

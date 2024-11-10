@@ -23,7 +23,7 @@ use_Cython = True
 if use_Cython:
     import Cython.Build
     import Cython.Compiler
-    # Cython.Compiler.Options.cimport_from_pyx = True
+    Cython.Compiler.Options.cimport_from_pyx = True # Mandatory for scipy.LowLevelCallable.from_cython
     Cython.Compiler.Options.fast_fail = True
     Cython.warn.undeclared = True
     src_ext = '.pyx'
@@ -31,11 +31,8 @@ else:
     src_ext = '.c'
 
 cython_extnames_safemath = [
-    ("choreo.cython.funs"                   , False),
     ("choreo.cython._ActionSym"             , False),
     ("choreo.cython._NBodySyst"             , False),
-    ("choreo.cython.funs_serial"            , False),
-    ("choreo.cython.test_blas"              , False),
     ("choreo.cython.pyfftw_fake"            , False),
     ("choreo.scipy_plus.cython.ODE"         , False),
     ("choreo.scipy_plus.cython.SegmQuad"    , False),
@@ -102,8 +99,8 @@ if platform.system() == "Windows":
         "fast" : ["/GL", *ignore_warnings_args],
     }[opt_lvl]
 
-    cython_extnames.append("choreo.cython.funs_parallel")
-    cython_safemath_needed.append(False)
+    # cython_extnames.append("choreo.cython.funs_parallel")
+    # cython_safemath_needed.append(False)
 
 elif platform.system() == "Darwin": # MacOS
     
@@ -144,8 +141,8 @@ elif platform.system() == "Darwin": # MacOS
         "fast" : ["-fopenmp", "-lm", "-flto", *ignore_warnings_args],
     }[opt_lvl]
 
-    cython_extnames.append("choreo.cython.funs_parallel")
-    cython_safemath_needed.append(False)
+#     cython_extnames.append("choreo.cython.funs_parallel")
+#     cython_safemath_needed.append(False)
 
 elif platform.system() == "Linux":
     
@@ -228,8 +225,8 @@ elif platform.system() == "Linux":
             "fast" : ["-fopenmp", "-lm", "-flto", *ignore_warnings_args],
         }[opt_lvl]
 
-        cython_extnames.append("choreo.cython.funs_parallel")
-        cython_safemath_needed.append(False)
+        # cython_extnames.append("choreo.cython.funs_parallel")
+        # cython_safemath_needed.append(False)
 
 else:
 

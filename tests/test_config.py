@@ -220,7 +220,7 @@ def RepeatTest(n = 10):
 def LoadPYFFTWWisdom():
 
     DP_Wisdom_file = os.path.join(__PROJECT_ROOT__, "PYFFTW_wisdom.txt")
-    choreo.find_new.Load_wisdom_file(DP_Wisdom_file)
+    choreo.find.Load_wisdom_file(DP_Wisdom_file)
     
 @pytest.fixture
 def AllConfigNames(LoadPYFFTWWisdom):
@@ -270,6 +270,7 @@ def load_from_config_file(config_name):
         params_dict = json.load(jsonFile)
 
     all_kwargs = choreo.find.ChoreoLoadFromDict(params_dict, Workspace_folder, args_list=["geodim", "nbody", "mass", "charge", "inter_pow", "inter_pm", "Sym_list"])
+    # all_kwargs = choreo.find.ChoreoLoadFromDict_old(params_dict, Workspace_folder, args_list=["geodim", "nbody", "mass", "charge", "inter_pow", "inter_pm", "Sym_list"])
     
     geodim = all_kwargs["geodim"]
     nbody = all_kwargs["nbody"]
@@ -283,7 +284,7 @@ def load_from_config_file(config_name):
     if (inter_pow == -1.) and (inter_pm == 1) :
         inter_law = scipy.LowLevelCallable.from_cython(choreo.cython._NBodySyst, "gravity_pot")
     else:
-        inter_law = choreo.numba_funs_new.pow_inter_law(inter_pow/2, inter_pm)
+        inter_law = choreo.numba_funs.pow_inter_law(inter_pow/2, inter_pm)
 
     NBS = choreo.cython._NBodySyst.NBodySyst(geodim, nbody, mass, charge, Sym_list, inter_law)
     

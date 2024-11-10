@@ -19,7 +19,7 @@ import scipy
 import choreo 
 
 DP_Wisdom_file = os.path.join(__PROJECT_ROOT__, "PYFFTW_wisdom.txt")
-choreo.find_new.Load_wisdom_file(DP_Wisdom_file)
+choreo.find.Load_wisdom_file(DP_Wisdom_file)
 
 if ("--no-show" in sys.argv):
     plt.show = (lambda : None)
@@ -63,7 +63,7 @@ def setup(test_name, fft_backend, nint_fac):
         inter_law = scipy.LowLevelCallable.from_cython(choreo.cython._NBodySyst, "gravity_pot")
         # inter_law = scipy.LowLevelCallable.from_cython(choreo.cython._NBodySyst, "elastic_pot")
     else:
-        inter_law = choreo.numba_funs_new.pow_inter_law(inter_pow/2, inter_pm)
+        inter_law = choreo.numba_funs.pow_inter_law(inter_pow/2, inter_pm)
         
     NBS = choreo.cython._NBodySyst.NBodySyst(geodim, nbody, mass, charge, Sym_list, inter_law,
         # ForceGeneralSym = True,
