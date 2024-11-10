@@ -53,12 +53,6 @@ else:
 
 if platform.system() == "Windows":
     
-    # 
-    # print(f'{os.environ['CC'] = }')
-    # 
-    #     os.environ['CC'] = compiler
-    #     os.environ['LDSHARED'] = compiler+' -shared'
-    #     
     ignore_warnings_args = [
         # "-Wno-unused-variable",
         # "-Wno-unused-function",
@@ -93,9 +87,6 @@ if platform.system() == "Windows":
         "fast" : ["/GL", *ignore_warnings_args],
     }[opt_lvl]
 
-    # cython_extnames.append("choreo.cython.funs_parallel")
-    # cython_safemath_needed.append(False)
-
 elif platform.system() == "Darwin": # MacOS
     
     os.environ['CC'] = "clang"
@@ -109,34 +100,31 @@ elif platform.system() == "Darwin": # MacOS
     ] 
 
     extra_compile_args_std = {
-        "profile" : ["-Og", "-fopenmp", "-lm", *ignore_warnings_args],
-        "0" : ["-O0", "-fopenmp", "-lm", *ignore_warnings_args],
-        "1" : ["-O1", "-fopenmp", "-lm", *ignore_warnings_args],
-        "2" : ["-O2", "-march=native", "-fopenmp", "-lm", *ignore_warnings_args],
-        "3" : ["-O3", "-march=native", "-fopenmp", "-lm", *ignore_warnings_args],
-        "fast" : ["-Ofast", "-march=native", "-fopenmp", "-lm", "-flto", *ignore_warnings_args],
+        "profile" : ["-Og", "-lm", *ignore_warnings_args],
+        "0" : ["-O0", "-lm", *ignore_warnings_args],
+        "1" : ["-O1", "-lm", *ignore_warnings_args],
+        "2" : ["-O2", "-march=native", "-lm", *ignore_warnings_args],
+        "3" : ["-O3", "-march=native", "-lm", *ignore_warnings_args],
+        "fast" : ["-Ofast", "-march=native", "-lm", "-flto", *ignore_warnings_args],
     }[opt_lvl]
     
     extra_compile_args_safe = {
-        "profile" : ["-Og", "-fopenmp", "-lm", *ignore_warnings_args],
-        "0" : ["-O0", "-fopenmp", "-lm", *ignore_warnings_args],
-        "1" : ["-O1", "-fopenmp", "-lm", *ignore_warnings_args],
-        "2" : ["-O2", "-march=native", "-fopenmp", "-lm", *ignore_warnings_args],
-        "3" : ["-O3", "-march=native", "-fopenmp", "-lm", *ignore_warnings_args],
-        "fast" : ["-O3", "-march=native", "-fopenmp", "-lm", "-flto", *ignore_warnings_args],
+        "profile" : ["-Og", "-lm", *ignore_warnings_args],
+        "0" : ["-O0", "-lm", *ignore_warnings_args],
+        "1" : ["-O1", "-lm", *ignore_warnings_args],
+        "2" : ["-O2", "-march=native", "-lm", *ignore_warnings_args],
+        "3" : ["-O3", "-march=native", "-lm", *ignore_warnings_args],
+        "fast" : ["-O3", "-march=native", "-lm", "-flto", *ignore_warnings_args],
     }[opt_lvl]
 
     extra_link_args = {
-        "profile" : ["-fopenmp", "-lm", *ignore_warnings_args],
-        "0" : ["-fopenmp", "-lm", *ignore_warnings_args],
-        "1" : ["-fopenmp", "-lm", *ignore_warnings_args],
-        "2" : ["-fopenmp", "-lm", *ignore_warnings_args],
-        "3" : ["-fopenmp", "-lm", *ignore_warnings_args],
-        "fast" : ["-fopenmp", "-lm", "-flto", *ignore_warnings_args],
+        "profile" : ["-lm", *ignore_warnings_args],
+        "0" : ["-lm", *ignore_warnings_args],
+        "1" : ["-lm", *ignore_warnings_args],
+        "2" : ["-lm", *ignore_warnings_args],
+        "3" : ["-lm", *ignore_warnings_args],
+        "fast" : ["-lm", "-flto", *ignore_warnings_args],
     }[opt_lvl]
-
-#     cython_extnames.append("choreo.cython.funs_parallel")
-#     cython_safemath_needed.append(False)
 
 elif platform.system() == "Linux":
     
@@ -219,9 +207,6 @@ elif platform.system() == "Linux":
             "fast" : ["-fopenmp", "-lm", "-flto", *ignore_warnings_args],
         }[opt_lvl]
 
-        # cython_extnames.append("choreo.cython.funs_parallel")
-        # cython_safemath_needed.append(False)
-
 else:
 
     raise ValueError(f"Unsupported platform: {platform.system()}")
@@ -232,7 +217,7 @@ cython_filenames = [ ext_name.replace('.','/') + src_ext for ext_name in cython_
 cython_extnames.append("choreo.cython.optional_pyfftw")
 cython_safemath_needed.append(False)
 
-include_pyfftw = PYFFTW_AVAILABLE and not("PYODIDE" in os.environ) and not(platform.system() == "Windows")
+include_pyfftw = PYFFTW_AVAILABLE and not("PYODIDE" in os.environ)
 
 cython_filenames.append(f"choreo.cython.optional_pyfftw_{include_pyfftw}".replace('.','/') + src_ext)
 
