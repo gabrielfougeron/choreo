@@ -139,15 +139,8 @@ def test_round_trips_pos(AllNBS, float64_tols):
         segmpos = NBS.all_to_segm_noopt(all_pos, pos=True)
         
         all_pos_rt = NBS.segmpos_to_all_noopt(segmpos, pos=True)
-        
-        
-        
-        
-        
+
         print(np.linalg.norm(all_pos_rt - all_pos))
-        # print(all_pos_rt - all_pos)
-        
-        
         assert np.allclose(all_pos, all_pos_rt, rtol = float64_tols.rtol, atol = float64_tols.atol) 
                 
         all_coeffs_rt = scipy.fft.rfft(all_pos, axis=1,norm='forward')
@@ -186,11 +179,6 @@ def test_round_trips_vel(AllNBS, float64_tols):
         all_coeffs_rt = scipy.fft.rfft(all_vel, axis=1,norm='forward')
         print(np.linalg.norm(all_coeffs_rt - all_coeffs))
         assert np.allclose(all_coeffs, all_coeffs_rt, rtol = float64_tols.rtol, atol = float64_tols.atol) 
-        
-        # segmvel_cy = NBS.params_to_segmvel(params_buf)
-        # params_buf_rt = NBS.segmvel_to_params(segmvel_cy)
-        # print(np.linalg.norm(params_buf - params_buf_rt))
-        # assert np.allclose(params_buf, params_buf_rt, rtol = float64_tols.rtol, atol = float64_tols.atol) 
         
         print()
         
