@@ -55,4 +55,4 @@ test.pdf
 !/docs/source/test-report/test_report_template.txt
 !/requirements/requirements*.txt
 !tests/NewSym_data/**/choreo_config.json
-!environment/*
+!environment/**
