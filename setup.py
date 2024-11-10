@@ -263,8 +263,10 @@ if write_optional_pyfftw_pxd:
 
 define_macros = [("NPY_NO_DEPRECATED_API", "NPY_1_7_API_VERSION")]
 
-# if platform.system() == "Windows":
-#     define_macros.append(("CYTHON_CCOMPLEX", 0))
+
+if platform.system() == "Windows":
+    define_macros.append(("FFTW_NO_Complex", 1))
+    define_macros.append(("CYTHON_CCOMPLEX", 0))
 
 compiler_directives = {
     'wraparound': False         ,

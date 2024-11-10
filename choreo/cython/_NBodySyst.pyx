@@ -1415,7 +1415,8 @@ cdef class NBodySyst():
         for il in range(nloop):
             for k in range(ncoeffs):
                 for idim in range(geodim):
-                    all_coeffs[il,k,idim] *= fac*k
+                    # all_coeffs[il,k,idim] *= fac*k
+                    all_coeffs[il,k,idim] = all_coeffs[il,k,idim] * (fac*k)
 
     @cython.final
     def Get_segmpos_minmax(
