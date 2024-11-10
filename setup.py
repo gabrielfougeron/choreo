@@ -17,18 +17,12 @@ try:
 except:
     PYFFTW_AVAILABLE = False
 
-# use_Cython = False
-use_Cython = True
-
-if use_Cython:
-    import Cython.Build
-    import Cython.Compiler
-    Cython.Compiler.Options.cimport_from_pyx = True # Mandatory for scipy.LowLevelCallable.from_cython
-    Cython.Compiler.Options.fast_fail = True
-    Cython.warn.undeclared = True
-    src_ext = '.pyx'
-else:
-    src_ext = '.c'
+import Cython.Build
+import Cython.Compiler
+Cython.Compiler.Options.cimport_from_pyx = True # Mandatory for scipy.LowLevelCallable.from_cython
+Cython.Compiler.Options.fast_fail = True
+Cython.warn.undeclared = True
+src_ext = '.pyx'
 
 cython_extnames_safemath = [
     ("choreo.cython._ActionSym"             , False),
@@ -315,27 +309,25 @@ ext_modules = [
     for (name,source,safemath_needed) in zip(cython_extnames,cython_filenames,cython_safemath_needed, strict = True)
 ]
 
-if use_Cython:
-    
-    if platform.system() == "Windows":
-        nthreads = 0
-    else:
-        import multiprocessing
-        nthreads = multiprocessing.cpu_count()
+if platform.system() == "Windows":
+    nthreads = 0
+else:
+    import multiprocessing
+    nthreads = multiprocessing.cpu_count()
 
-    ext_modules = Cython.Build.cythonize(
-        ext_modules,
-        language_level = "3",
-        annotate = True,
-        compiler_directives = compiler_directives,
-        nthreads = nthreads,
-        force = ("-f" in sys.argv),
-    )
+ext_modules = Cython.Build.cythonize(
+    ext_modules,
+    language_level = "3",
+    annotate = True,
+    compiler_directives = compiler_directives,
+    nthreads = nthreads,
+    force = ("-f" in sys.argv),
+)
     
 packages = setuptools.find_packages()
 
-package_data = {key : ['*.h','*.c','*.pyx','*.pxd'] for key in packages}
-exclude_package_data = {key : [] for key in packages}
+package_data = {key : ['*.h','*.pyx','*.pxd'] for key in packages}
+exclude_package_data = {key : ['*.c'] for key in packages}
 
 GUI_data = ['*.js','*.html','assets/**','img/**','python_scripts/**','python_dist/*.whl']
     
@@ -367,7 +359,6 @@ else: # If Pyodide wheel was generated, then copy it!
     package_data['choreo.GUI'].extend(GUI_data)
 
 setuptools.setup(
-    platforms = ['any']                         ,
     ext_modules = ext_modules                   ,
     zip_safe = False                            ,
     packages = packages                         ,
