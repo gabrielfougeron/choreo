@@ -88,9 +88,12 @@ if platform.system() == "Windows":
     }[opt_lvl]
 
 elif platform.system() == "Darwin": # MacOS
+    # 
+    # os.environ['CC'] = "clang"
+    # os.environ['LDSHARED'] = 'clang -shared'
     
-    os.environ['CC'] = "clang"
-    os.environ['LDSHARED'] = 'clang -shared'
+    os.environ['CC'] = "gcc-10"
+    os.environ['LDSHARED'] = 'gcc-10 -shared'
     
     ignore_warnings_args = [
         "-Wno-unused-variable",
@@ -100,21 +103,21 @@ elif platform.system() == "Darwin": # MacOS
     ] 
 
     extra_compile_args_std = {
-        "profile" : ["-Og", "-lm", *ignore_warnings_args],
-        "0" : ["-O0", "-lm", *ignore_warnings_args],
-        "1" : ["-O1", "-lm", *ignore_warnings_args],
-        "2" : ["-O2", "-march=native", "-lm", *ignore_warnings_args],
-        "3" : ["-O3", "-march=native", "-lm", *ignore_warnings_args],
-        "fast" : ["-Ofast", "-march=native", "-lm", "-flto", *ignore_warnings_args],
+        "profile" : ["-Og", "-Xpreprocessor", "-std=c99", "-lm", *ignore_warnings_args],
+        "0" : ["-O0", "-Xpreprocessor", "-std=c99", "-lm", *ignore_warnings_args],
+        "1" : ["-O1", "-Xpreprocessor", "-std=c99", "-lm", *ignore_warnings_args],
+        "2" : ["-O2", "-march=native", "-Xpreprocessor", "-std=c99", "-lm", *ignore_warnings_args],
+        "3" : ["-O3", "-march=native", "-Xpreprocessor", "-std=c99", "-lm", *ignore_warnings_args],
+        "fast" : ["-Ofast", "-march=native", "-Xpreprocessor", "-std=c99", "-lm", "-flto", *ignore_warnings_args],
     }[opt_lvl]
     
     extra_compile_args_safe = {
-        "profile" : ["-Og", "-lm", *ignore_warnings_args],
-        "0" : ["-O0", "-lm", *ignore_warnings_args],
-        "1" : ["-O1", "-lm", *ignore_warnings_args],
-        "2" : ["-O2", "-march=native", "-lm", *ignore_warnings_args],
-        "3" : ["-O3", "-march=native", "-lm", *ignore_warnings_args],
-        "fast" : ["-O3", "-march=native", "-lm", "-flto", *ignore_warnings_args],
+        "profile" : ["-Og", "-Xpreprocessor", "-std=c99", "-lm", *ignore_warnings_args],
+        "0" : ["-O0", "-Xpreprocessor", "-std=c99", "-lm", *ignore_warnings_args],
+        "1" : ["-O1", "-Xpreprocessor", "-std=c99", "-lm", *ignore_warnings_args],
+        "2" : ["-O2", "-march=native", "-Xpreprocessor", "-std=c99", "-lm", *ignore_warnings_args],
+        "3" : ["-O3", "-march=native", "-Xpreprocessor", "-std=c99", "-lm", *ignore_warnings_args],
+        "fast" : ["-O3", "-march=native", "-Xpreprocessor", "-std=c99", "-lm", "-flto", *ignore_warnings_args],
     }[opt_lvl]
 
     extra_link_args = {
@@ -244,7 +247,7 @@ if write_optional_pyfftw_pxd:
         text_file.write(pyfftw_pxd_str)
 
 define_macros = [("NPY_NO_DEPRECATED_API", "NPY_1_7_API_VERSION")]
-
+# 
 if platform.system() == "Windows":
     define_macros.append(("FFTW_NO_Complex", 1))
     define_macros.append(("CYTHON_CCOMPLEX", 0))
