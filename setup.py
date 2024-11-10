@@ -23,7 +23,7 @@ use_Cython = True
 if use_Cython:
     import Cython.Build
     import Cython.Compiler
-    Cython.Compiler.Options.cimport_from_pyx = True
+    # Cython.Compiler.Options.cimport_from_pyx = True
     Cython.Compiler.Options.fast_fail = True
     Cython.warn.undeclared = True
     src_ext = '.pyx'
@@ -270,10 +270,11 @@ include_dirs = [
     numpy.get_include()                 ,
 ]
 
+# Path must be relative for auto inclusion in the manifest
 if platform.system() == "Windows":
-    include_dirs.append(os.path.join(os.getcwd(), 'include', 'win'))
+    include_dirs.append(os.path.relpath(os.path.join(os.getcwd(), 'include', 'win')))
 else:
-    include_dirs.append(os.path.join(os.getcwd(), 'include'))
+    include_dirs.append(os.path.relpath(os.path.join(os.getcwd(), 'include')))
 
 ext_modules = [
     setuptools.Extension(
