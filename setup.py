@@ -105,7 +105,7 @@ elif platform.system() == "Darwin": # MacOS
         "1" : ["-O1", "-lm", *ignore_warnings_args],
         "2" : ["-O2", "-march=native", "-lm", *ignore_warnings_args],
         "3" : ["-O3", "-march=native", "-lm", *ignore_warnings_args],
-        "fast" : ["-Ofast", "-march=native", "-lm", "-flto", *ignore_warnings_args],
+        "fast" : ["-Ofast", "-march=native", "-lm", *ignore_warnings_args],
     }[opt_lvl]
     
     extra_compile_args_safe = {
@@ -114,7 +114,7 @@ elif platform.system() == "Darwin": # MacOS
         "1" : ["-O1", "-lm", *ignore_warnings_args],
         "2" : ["-O2", "-march=native", "-lm", *ignore_warnings_args],
         "3" : ["-O3", "-march=native", "-lm", *ignore_warnings_args],
-        "fast" : ["-O3", "-march=native", "-lm", "-flto", *ignore_warnings_args],
+        "fast" : ["-O3", "-march=native", "-lm", *ignore_warnings_args],
     }[opt_lvl]
 
     extra_link_args = {
@@ -123,7 +123,7 @@ elif platform.system() == "Darwin": # MacOS
         "1" : ["-lm", *ignore_warnings_args],
         "2" : ["-lm", *ignore_warnings_args],
         "3" : ["-lm", *ignore_warnings_args],
-        "fast" : ["-lm", "-flto", *ignore_warnings_args],
+        "fast" : ["-lm", *ignore_warnings_args],
     }[opt_lvl]
 
 elif platform.system() == "Linux":
