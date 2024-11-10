@@ -1,10 +1,7 @@
-name: Build Test and Deploy on Github Pages
+name: Deploy on Github pages no docs no tests
 
 on:
   workflow_dispatch:
-  push:
-    branches:    
-      - GUI_deploy
 
 # Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
 permissions:
@@ -17,7 +14,6 @@ concurrency:
   group: "pages"
   cancel-in-progress: true
 
-
 jobs:
   build:
     environment:
@@ -26,36 +22,22 @@ jobs:
     runs-on: ubuntu-latest
     steps:
 
-    - name: Setup Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: 3.12.1
-
-    - name: Install apt-get dependencies for Ubuntu
-      run: |
-        sudo apt-get update
-        sudo apt-get upgrade
-        sudo apt-get install libomp-dev libsuitesparse-dev clang
-        sudo apt-get install plantuml
-
     - name: Checkout repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
-    - name: Install python build dependencies
-      run: |
-        pip install --upgrade pip
-        pip install build
- 
-    - name: Build for Ubuntu
-      run: python -m build
-
-    - name: Install locally with pip
-      run:  pip install .[full]
-
-    - name: Run setup.py
-      run: python setup.py build_ext --inplace
+    - name: Setup conda
+      uses: conda-incubator/setup-miniconda@v3
+      with:
+        auto-update-conda: true
+        python-version: 3.12
+        conda-remove-defaults: true
+        channels: conda-forge
+        channel-priority: true
+        activate-environment: choreo
+        environment-file: environment/environment-dev.yml
 
     - name: Read Emscripten version number
+      shell: bash -el {0} # Needed whenever the commands need something in conda
       run: |
         echo EMSCRIPTEN_VERSION=$(pyodide config get emscripten_version) >> $GITHUB_ENV
 
@@ -65,15 +47,18 @@ jobs:
         version: ${{ env.EMSCRIPTEN_VERSION }}
 
     - name: Build for Pyodide
+      shell: bash -el {0} # Needed whenever the commands need something in conda
       run: |
         pyodide build
-        find ./dist -name '*emscripten*.whl' -exec cp {} ./choreo_GUI/python_dist/ \; 
 
-    - name: Make Gallery Descriptor 
+    - name: Install locally in editable mode with pip
+      shell: bash -el {0} # Needed whenever the commands need something in conda
+      run:  pip install -e .[full]
+
+    - name: Download official gallery
+      shell: bash -el {0} # Needed whenever the commands need something in conda
       run: |
-        cd choreo_GUI
-        python MakeGalleryDescriptor.py
-        cd .. 
+        python -c "import choreo; choreo.GUI.install_official_gallery()"
 
     - name: Setup Pages
       uses: actions/configure-pages@v1
@@ -81,40 +66,9 @@ jobs:
     - name: Upload artifact
       uses: actions/upload-pages-artifact@v1
       with:
-        path: './choreo_GUI/'
+        path: './choreo/GUI/'
 
     - name: Deploy to GitHub Pages
       id: deployment
       uses: actions/deploy-pages@v1
 
-    - name: Run tests
-      continue-on-error: true
-      run: |
-        python -c 'import choreo' 
-        pytest
-
-    - name: Generate Documentation
-      run: |
-        python ./scripts/run_all_examples.py
-        cd docs
-        make html
-
-    - name: Commit documentation changes
-      run: |
-        git clone https://github.com/ammaraskar/sphinx-action-test.git --branch gh-pages --single-branch gh-pages
-        cp -r docs/build/html/* gh-pages/
-        cd gh-pages
-        touch .nojekyll
-        git config --local user.email "action@github.com"
-        git config --local user.name "GitHub Action"
-        git add .
-        git commit -m "Update documentation" -a || true
-
-    - name: Push documentation changes
-      uses: ad-m/github-push-action@master
-      with:
-        branch: gh-pages
-        directory: gh-pages
-        github_token: ${{ secrets.CHOREO_DOCS_TOKEN }} 
-        repository: gabrielfougeron/choreo-docs
-        force: true
