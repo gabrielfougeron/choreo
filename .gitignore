@@ -42,6 +42,7 @@ docs/gh-pages/
 /docs/source/sg_execution_times.rst
 choreo/cython/optional_pyfftw.pxd
 test.pdf
+pytest_out/**
 ##########################################################
 #           To be included (with preceding !)
 ##########################################################

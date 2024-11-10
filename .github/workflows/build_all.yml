@@ -105,6 +105,26 @@ jobs:
         path: dist/*64.whl
         compression-level: 0
 
+  gather-all-whl:
+    name: Gather all built whls
+    needs: [build-pyodide, build-multi-os]
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Download Pyodide whl
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          pattern: '*-whl'
+          merge-multiple: true
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: all-whls
+          path: dist
+          compression-level: 0
+
   test-multi-os:
     name: Test
     needs: build-pyodide
@@ -150,39 +170,39 @@ jobs:
       shell: bash -el {0} # Needed whenever the commands need something in conda
       run: |
         conda activate build
-        pip install .[full]
+        pip install .[test-cli]
 
     - name: Test
       shell: bash -el {0} # Needed whenever the commands need something in conda
       run: |
         conda activate build
         pytest
+        python ./tests/gather_junit.py -tag ${{ matrix.os }}-${{ matrix.python-version }}
 
-#     - name: Upload Artifact
-#       uses: actions/upload-artifact@v4
-#       with:
-#         name: ${{ matrix.os }}-${{ matrix.python-version }}-whl
-#         path: dist/*64.whl
-#         compression-level: 0
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ matrix.os }}-${{ matrix.python-version }}-junit
+        path: pytest_out/*.xml
 
-  gather-all-whl:
-    name: Gather all built whls
-    needs: [build-pyodide, build-multi-os]
+  gather-all-junit:
+    name: Gather all test outputs
+    needs: test-multi-os
     runs-on: ubuntu-latest
     steps:
 
-      - name: Download Pyodide whl
+      - name: Download test outputs
         uses: actions/download-artifact@v4
         with:
-          path: dist
+          path: pytest_out
+          pattern: '*-junit'
           merge-multiple: true
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: all-whls
-          path: dist
-          compression-level: 0
+          name: all-tests
+          path: pytest_out
 
 
 

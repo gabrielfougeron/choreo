@@ -6,7 +6,6 @@ import time
 import math as m
 import numpy as np
 import sys
-import fractions
 import json
 
 import choreo 
