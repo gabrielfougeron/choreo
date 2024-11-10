@@ -2,7 +2,6 @@ import os
 import sys
 
 __PROJECT_ROOT__ = os.path.abspath(os.path.join(os.path.dirname(__file__),os.pardir))
-sys.path.append(__PROJECT_ROOT__)
 
 import attrs
 import pytest
@@ -270,7 +269,6 @@ def load_from_config_file(config_name):
         params_dict = json.load(jsonFile)
 
     all_kwargs = choreo.find.ChoreoLoadFromDict(params_dict, Workspace_folder, args_list=["geodim", "nbody", "mass", "charge", "inter_pow", "inter_pm", "Sym_list"])
-    # all_kwargs = choreo.find.ChoreoLoadFromDict_old(params_dict, Workspace_folder, args_list=["geodim", "nbody", "mass", "charge", "inter_pow", "inter_pm", "Sym_list"])
     
     geodim = all_kwargs["geodim"]
     nbody = all_kwargs["nbody"]
