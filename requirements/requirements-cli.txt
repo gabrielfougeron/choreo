@@ -1,1 +1,3 @@
 numba
+pyfftw>=0.14.0.0
+mkl-fft
