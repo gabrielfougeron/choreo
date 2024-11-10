@@ -20,7 +20,7 @@ except (NameError, ValueError):
 
     __PROJECT_ROOT__ = os.path.abspath(os.path.join(os.getcwd(),os.pardir,os.pardir))
 
-sys.path.append(__PROJECT_ROOT__)
+timings_folder = os.path.join(__PROJECT_ROOT__,'examples','generated_files')
 
 os.environ['OPENBLAS_NUM_THREADS'] = '1'
 os.environ['NUMEXPR_NUM_THREADS'] = '1'
@@ -39,8 +39,6 @@ import pyquickbench
 
 if ("--no-show" in sys.argv):
     plt.show = (lambda : None)
-
-timings_folder = os.path.join(__PROJECT_ROOT__,'examples','generated_files')
 
 if not(os.path.isdir(timings_folder)):
     os.makedirs(timings_folder)

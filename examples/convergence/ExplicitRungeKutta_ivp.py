@@ -23,7 +23,7 @@ except (NameError, ValueError):
 
     __PROJECT_ROOT__ = os.path.abspath(os.path.join(os.getcwd(),os.pardir,os.pardir))
 
-sys.path.append(__PROJECT_ROOT__)
+timings_folder = os.path.join(__PROJECT_ROOT__,'examples','generated_files')
 
 os.environ['OPENBLAS_NUM_THREADS'] = '1'
 os.environ['NUMEXPR_NUM_THREADS'] = '1'
@@ -41,10 +41,9 @@ import pyquickbench
 
 if ("--no-show" in sys.argv):
     plt.show = (lambda : None)
-bench_folder = os.path.join(__PROJECT_ROOT__,'examples','generated_files')
 
-if not(os.path.isdir(bench_folder)):
-    os.makedirs(bench_folder)
+if not(os.path.isdir(timings_folder)):
+    os.makedirs(timings_folder)
     
 basename_bench_filename = 'ExplicitRK_ivp_cvg_bench_'
 
@@ -123,7 +122,7 @@ for bench_name, all_funs in all_benchs.items():
 
     i_bench += 1
     
-    bench_filename = os.path.join(bench_folder,basename_bench_filename+str(i_bench).zfill(2)+'_error.npy')
+    bench_filename = os.path.join(timings_folder,basename_bench_filename+str(i_bench).zfill(2)+'_error.npy')
     
     all_errors = pyquickbench.run_benchmark(
         all_nint                        ,
@@ -179,7 +178,7 @@ for bench_name, all_funs in all_benchs.items():
 
     i_bench += 1
     
-    bench_filename = os.path.join(bench_folder,basename_bench_filename+str(i_bench).zfill(2)+'_error.npy') 
+    bench_filename = os.path.join(timings_folder,basename_bench_filename+str(i_bench).zfill(2)+'_error.npy') 
 
     all_errors = pyquickbench.run_benchmark(
         all_nint                        ,
@@ -253,7 +252,7 @@ for bench_name, all_funs in all_benchs.items():
 
     i_bench += 1
     
-    bench_filename = os.path.join(bench_folder,basename_bench_filename+str(i_bench).zfill(2)+'_error.npy') 
+    bench_filename = os.path.join(timings_folder,basename_bench_filename+str(i_bench).zfill(2)+'_error.npy') 
 
     all_errors = pyquickbench.run_benchmark(
         all_nint                        ,
@@ -264,7 +263,7 @@ for bench_name, all_funs in all_benchs.items():
         ForceBenchmark = ForceBenchmark ,
     )
     
-    timings_filename = os.path.join(bench_folder,basename_bench_filename+str(i_bench).zfill(2)+'_timings.npy') 
+    timings_filename = os.path.join(timings_folder,basename_bench_filename+str(i_bench).zfill(2)+'_timings.npy') 
     
     all_times = pyquickbench.run_benchmark(
         all_nint                        ,
@@ -344,7 +343,7 @@ for bench_name, all_funs in all_benchs.items():
 
     i_bench += 1
     
-    bench_filename = os.path.join(bench_folder,basename_bench_filename+str(i_bench).zfill(2)+'_error_best.npy') 
+    bench_filename = os.path.join(timings_folder,basename_bench_filename+str(i_bench).zfill(2)+'_error_best.npy') 
 
     all_errors = pyquickbench.run_benchmark(
         all_nint                        ,
@@ -355,7 +354,7 @@ for bench_name, all_funs in all_benchs.items():
         ForceBenchmark = ForceBenchmark ,
     )
     
-    timings_filename = os.path.join(bench_folder,basename_bench_filename+str(i_bench).zfill(2)+'_timings_best.npy') 
+    timings_filename = os.path.join(timings_folder,basename_bench_filename+str(i_bench).zfill(2)+'_timings_best.npy') 
     
     all_times = pyquickbench.run_benchmark(
         all_nint                        ,

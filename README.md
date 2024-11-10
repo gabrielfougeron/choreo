@@ -19,7 +19,7 @@ Till then, the installation process is the following:
 After sourcing emsdk environment, run the following:
 
 ```
-pyodide build && find ./dist -name '*pyodide*.whl' -exec cp {} ./choreo/GUI/python_dist/ \; 
+pyodide build
 ```
 
 ## Power up the GUI solver with the CLI backend

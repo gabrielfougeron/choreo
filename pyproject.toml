@@ -41,14 +41,14 @@ attr = "choreo.metadata.__version__"
 file = ["requirements/requirements.txt"]
 
 [tool.setuptools.dynamic.optional-dependencies]
-build     = {file = ["requirements/requirements-build.txt"]}
-gui       = {file = ["requirements/requirements-gui.txt"]}
-cli       = {file = ["requirements/requirements-cli.txt"]}
-test_cli  = {file = ["requirements/requirements-test-cli.txt"]}
-test_gui  = {file = ["requirements/requirements-test-gui.txt"]}
-bench     = {file = ["requirements/requirements-bench.txt"]}
-docs      = {file = ["requirements/requirements-docs.txt"]}
-full      = {file = ["requirements/requirements-full.txt"]}
+build     = {file = ["requirements/requirements-build.txt"    ]}
+gui       = {file = ["requirements/requirements-gui.txt"      ]}
+cli       = {file = ["requirements/requirements-cli.txt"      ]}
+test_cli  = {file = ["requirements/requirements-test-cli.txt" ]}
+test_gui  = {file = ["requirements/requirements-test-gui.txt" ]}
+bench     = {file = ["requirements/requirements-bench.txt"    ]}
+docs      = {file = ["requirements/requirements-docs.txt"     ]}
+full      = {file = ["requirements/requirements-full.txt"     ]}
 
 [tool.setuptools]
 license-files = ["LICENSES/*.txt"]
