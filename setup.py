@@ -98,11 +98,8 @@ if platform.system() == "Windows":
 
 elif platform.system() == "Darwin": # MacOS
     
-    # os.environ['CC'] = "clang"
-    # os.environ['LDSHARED'] = 'clang -shared'
-    
-    os.environ['CC'] = "gcc"
-    os.environ['LDSHARED'] = 'gcc -shared'
+    os.environ['CC'] = "clang"
+    os.environ['LDSHARED'] = 'clang -shared'
     
     ignore_warnings_args = [
         "-Wno-unused-variable",

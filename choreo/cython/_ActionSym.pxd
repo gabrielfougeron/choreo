@@ -18,11 +18,11 @@ cdef class ActionSym():
     cf Palais' principle of symmetric criticality
     """
 
-    cdef long[::1] _BodyPerm
+    cdef Py_ssize_t[::1] _BodyPerm
     cdef double[:,::1] _SpaceRot
-    cdef readonly long TimeRev
-    cdef readonly long TimeShiftNum
-    cdef readonly long TimeShiftDen
+    cdef readonly Py_ssize_t TimeRev
+    cdef readonly Py_ssize_t TimeShiftNum
+    cdef readonly Py_ssize_t TimeShiftDen
 
     cpdef ActionSym Inverse(ActionSym self)
 
@@ -68,12 +68,12 @@ cdef class ActionSym():
     
     cpdef bint IsSameRotAndTime(ActionSym self, ActionSym other, double atol = *)
 
-    cpdef (long, long) ApplyTInv(ActionSym self, long tnum, long tden)
+    cpdef (Py_ssize_t, Py_ssize_t) ApplyTInv(ActionSym self, Py_ssize_t tnum, Py_ssize_t tden)
 
-    cpdef (long, long) ApplyTInvSegm(ActionSym self, long tnum, long tden)
+    cpdef (Py_ssize_t, Py_ssize_t) ApplyTInvSegm(ActionSym self, Py_ssize_t tnum, Py_ssize_t tden)
 
-    cpdef (long, long) ApplyT(ActionSym self, long tnum, long tden)
+    cpdef (Py_ssize_t, Py_ssize_t) ApplyT(ActionSym self, Py_ssize_t tnum, Py_ssize_t tden)
 
-    cpdef (long, long) ApplyTSegm(ActionSym self, long tnum, long tden)
+    cpdef (Py_ssize_t, Py_ssize_t) ApplyTSegm(ActionSym self, Py_ssize_t tnum, Py_ssize_t tden)
 
 

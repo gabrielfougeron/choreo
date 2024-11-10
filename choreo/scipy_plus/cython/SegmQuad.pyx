@@ -141,7 +141,7 @@ cdef class QuadFormula:
     cdef double[::1] _w         # Integration weights on [0,1]
     cdef double[::1] _x         # Integration nodes on [0,1]
     cdef double[::1] _wlag      # Barycentric Lagrange interpolation weights
-    cdef long _th_cvg_rate      # Convergence rate on smooth functions
+    cdef Py_ssize_t _th_cvg_rate      # Convergence rate on smooth functions
 
     def __init__(
         self                ,
@@ -195,7 +195,7 @@ cpdef np.ndarray[double, ndim=1, mode="c"] IntegrateOnSegment(
     int ndim                ,
     (double, double) x_span ,
     QuadFormula quad        ,
-    long nint = 1           ,
+    Py_ssize_t nint = 1           ,
     bint DoEFT = True       ,
 ):
 
@@ -253,7 +253,7 @@ cdef void IntegrateOnSegment_ann(
     const int py_fun_type           ,
     const int ndim                  ,
     const (double, double) x_span   ,
-    const long nint                 ,
+    const Py_ssize_t nint                 ,
     const bint DoEFT                ,
     const double[::1] w             ,
     const double[::1] x             ,
@@ -262,7 +262,7 @@ cdef void IntegrateOnSegment_ann(
 ) noexcept nogil:
 
     cdef Py_ssize_t istep
-    cdef long iint
+    cdef Py_ssize_t iint
     cdef Py_ssize_t idim
     cdef double xbeg, dx
     cdef double xi

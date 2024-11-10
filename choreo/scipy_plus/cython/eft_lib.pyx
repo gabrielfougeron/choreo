@@ -34,7 +34,7 @@ cdef void TwoSum_incr(double *y, double *d, double *e, int n) noexcept nogil:
         e[j] = e[j] + (a - y[j])
 
 
-cdef void FastVecSum(double* p, double* q, long n) noexcept nogil:
+cdef void FastVecSum(double* p, double* q, Py_ssize_t n) noexcept nogil:
 
     cdef Py_ssize_t i
 
@@ -43,7 +43,7 @@ cdef void FastVecSum(double* p, double* q, long n) noexcept nogil:
 
         q[i], q[i-1] = Fast2Sum(p[i], q[i-1])
 
-cdef void VecSum(double* p, double* q, long n) noexcept nogil:
+cdef void VecSum(double* p, double* q, Py_ssize_t n) noexcept nogil:
 
     cdef Py_ssize_t i
 
@@ -54,12 +54,12 @@ cdef void VecSum(double* p, double* q, long n) noexcept nogil:
 
 cpdef double SumK(
     double[::1] v       ,
-    long k = 0          ,
+    Py_ssize_t k = 0          ,
 ) noexcept:
  
     cdef Py_ssize_t i
 
-    cdef long n = v.shape[0]
+    cdef Py_ssize_t n = v.shape[0]
     cdef double[::1] cp 
     cdef double *p
     cdef double *q
@@ -107,12 +107,12 @@ cpdef double SumK(
 
 cpdef double FastSumK(
     double[::1] v       ,
-    long k = 0          ,
+    Py_ssize_t k = 0          ,
 ):
  
     cdef Py_ssize_t i
 
-    cdef long n = v.shape[0]
+    cdef Py_ssize_t n = v.shape[0]
     cdef double[::1] cp 
     cdef double *p
     cdef double *q
