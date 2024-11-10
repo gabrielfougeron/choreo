@@ -1222,14 +1222,10 @@ cdef class NBodySyst():
 
         for il in range(self.nloop):
 
-            print(f'{il = }')
-            
             ib = self._loopgen[il] # because only loops have been computed in all_pos so far.
             
             for iint in range(self.nint_min):
 
-                print(f'{iint = }')
-                
                 isegm = self._bodysegm[ib, iint]
                 
                 if pos:
@@ -1239,46 +1235,27 @@ cdef class NBodySyst():
                 
                 ib_source = self._gensegm_to_body[isegm]
                 iint_source = self._gensegm_to_iint[isegm]
-                
-                print('aa')
-
                 il_source = self._bodyloop[ib_source]
                 assert il_source == il
-
-                # assert ib == Sym.
-
-                print('bb')
 
                 ibeg_source = iint_source * self.segm_size          
                 iend_source = ibeg_source + self.segm_size
                 assert iend_source <= self._nint
-                
-                print('cc')
 
                 # One position at a time
-#                 for iint_s in range(ibeg_source, iend_source):
-#                     
-#                     tnum, tden = Sym.ApplyT(iint_s, self._nint)
-# 
-#                     print("aaa")
-#                     
-#                     assert self._nint % tden == 0
-#                     iint_t = (tnum * (self._nint // tden) + self._nint) % self._nint
-# 
-#                     print(iint_s, iint_t)
-# 
-#                     xs = np.matmul(Sym.SpaceRot, all_pos[il, iint_s,:])
-#                     xt = all_pos[il, iint_t,:]
-#                     dx = xs - xt
-# 
-#                     print(xs, xt)
-# 
-#                     print("bbb")
-# 
-#                     assert (np.linalg.norm(dx)) < eps
-                
-                print('dd')
+                for iint_s in range(ibeg_source, iend_source):
+                    
+                    tnum, tden = Sym.ApplyT(iint_s, self._nint)
 
+                    assert self._nint % tden == 0
+                    iint_t = (tnum * (self._nint // tden) + self._nint) % self._nint
+
+                    xs = np.matmul(Sym.SpaceRot, all_pos[il, iint_s,:])
+                    xt = all_pos[il, iint_t,:]
+                    dx = xs - xt
+
+                    assert (np.linalg.norm(dx)) < eps
+                
                 # All positions at once
                 tnum_target, tden_target = Sym.ApplyTSegm(iint_source, self.nint_min)
                 assert self.nint_min % tden_target == 0
@@ -1296,20 +1273,10 @@ cdef class NBodySyst():
                 pos_target_segm = np.empty((self.segm_size, self.geodim), dtype=np.float64)
 
                 Sym.TransformSegment(pos_source_segm, pos_target_segm)
-                
-                print('ee')
 
                 if iend_target <= self._nint:
-                    print('a')
-                    print(pos_target_segm)
-                    print(all_pos[il, ibeg_target:iend_target, :])
-                    print(pos_target_segm - all_pos[il, ibeg_target:iend_target, :])
-                
                     assert (np.linalg.norm(pos_target_segm - all_pos[il, ibeg_target:iend_target, :])) < eps
-                    
                 else:
-                    print('b')
-                    
                     assert iend_target == self._nint+1
                     assert (np.linalg.norm(pos_target_segm[:self.segm_size-1,:] - all_pos[il, ibeg_target:iend_target-1, :])) < eps
                     assert (np.linalg.norm(pos_target_segm[ self.segm_size-1,:] - all_pos[il, 0, :])) < eps
