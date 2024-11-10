@@ -96,6 +96,7 @@ jobs:
     - name: Build
       shell: bash -el {0} # Needed whenever the commands need something in conda
       run: |
+        conda activate build
         python -m build
 
     - name: Upload Artifact
