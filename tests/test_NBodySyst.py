@@ -1,12 +1,7 @@
-import os
-import sys
 import pytest
 from test_config import *
-
 import numpy as np
 import scipy
-import fractions
-import json
 import choreo
 
 def test_create_destroy(AllConfigNames):

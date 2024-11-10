@@ -1,8 +1,5 @@
 import os
 import sys
-
-__PROJECT_ROOT__ = os.path.abspath(os.path.join(os.path.dirname(__file__),os.pardir))
-
 import attrs
 import pytest
 import inspect
@@ -13,6 +10,8 @@ import numpy as np
 import json
 import choreo
 import scipy
+
+__PROJECT_ROOT__ = os.path.abspath(os.path.join(os.path.dirname(__file__),os.pardir))
 
 @attrs.define
 class float_tol:
