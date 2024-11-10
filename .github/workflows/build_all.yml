@@ -2,6 +2,9 @@ name: Build whl for all platforms
 
 on:
   workflow_dispatch:
+  push:
+    branches:    
+      - main
 
 jobs:
   build-pyodide:
@@ -104,12 +107,11 @@ jobs:
       uses: conda-incubator/setup-miniconda@v3
       with:
         auto-update-conda: true
-# 
+
     - name: Install Homebrew dependencies
       run: |
         brew install llvm
         brew install libomp
-        brew install gcc
         export PATH="/usr/local/opt/llvm/bin:$PATH"
         export CC="/usr/local/opt/llvm/bin/clang"
         export CXX="/usr/local/opt/llvm/bin/clang++"
