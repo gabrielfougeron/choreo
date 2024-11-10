@@ -39,115 +39,32 @@ jobs:
     - name: Build for Pyodide
       shell: bash -el {0} # Needed whenever the commands need something in conda
       run: |
+        python -m build sdist
         pyodide build
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
       with:
         name: pyodide-whl
-        path: 'dist/*.whl'
+        path: |
+          dist/*.whl
+          dist/*.tar.gz
         compression-level: 0
 
-  build-linux:
-    name: Build whl for Linux
+  build-multi-os:
+    name: Build whl on multiple platforms
     needs: build-pyodide
-    runs-on: ubuntu-latest
-    continue-on-error: true
     strategy:
       matrix:
+        os: ["ubuntu-latest", "macos-latest", "windows-latest"]
         python-version: ["3.10", "3.11", "3.12", "3.13"]
-    steps:
-
-    - name: Checkout repository
-      uses: actions/checkout@v4
-
-    - name: Setup conda
-      uses: conda-incubator/setup-miniconda@v3
-      with:
-        auto-update-conda: true
-
-    - name: Download Pyodide whl
-      uses: actions/download-artifact@v4
-      with:
-        path: dist
-        pattern: pyodide-whl
-        merge-multiple: true
-
-    - name: Build for Linux
-      shell: bash -el {0} # Needed whenever the commands need something in conda
-      run: |
-        conda create -n build -y
-        conda activate build
-        conda install python=${{ matrix.python-version }}  
-        conda install --file environment/environment-build-linux.txt
-        pip install build
-        python -m build
-
-    - name: Upload Artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: linux-${{ matrix.python-version }}-whl
-        path: 'dist/*linux*.whl'
-        compression-level: 0
-
-  build-macos:
-    name: Build whl for MacOs
-    needs: build-pyodide
-    runs-on: macos-latest
+    runs-on: ${{ matrix.os }}
     continue-on-error: true
-    strategy:
-      matrix:
-        python-version: ["3.10", "3.11", "3.12", "3.13"]
-    steps:
 
-    - name: Checkout repository
-      uses: actions/checkout@v4
-
-    - name: Setup conda
-      uses: conda-incubator/setup-miniconda@v3
-      with:
-        auto-update-conda: true
-
-    # - name: Install Homebrew dependencies
-    #   run: |
-    #     brew install llvm
-    #     brew install libomp
-
-    - name: Download Pyodide whl
-      uses: actions/download-artifact@v4
-      with:
-        path: dist
-        pattern: pyodide-whl
-        merge-multiple: true
-
-    - name: Build for MacOs
-      shell: bash -el {0} # Needed whenever the commands need something in conda
-      run: |
-        conda create -n build -y
-        conda activate build
-        conda install python=${{ matrix.python-version }}  
-        conda install --file environment/environment-build-macos.txt
-        pip install build
-        python -m build
-
-    - name: Upload Artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: macos-${{ matrix.python-version }}-whl
-        path: 'dist/*macos*.whl'
-        compression-level: 0
-
-  build-windows:
-    name: Build whl for Windows
-    needs: build-pyodide
-    runs-on: windows-latest
-    continue-on-error: true
-    strategy:
-      matrix:
-        python-version: ["3.10", "3.11", "3.12", "3.13"]
     steps:
 
     - name: Install MSVC
+      if: matrix.os == 'windows-latest'
       uses: TheMrMilchmann/setup-msvc-dev@v3
       with:
         arch: x64
@@ -155,11 +72,6 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    - name: Setup conda
-      uses: conda-incubator/setup-miniconda@v3
-      with:
-        auto-update-conda: true
-
     - name: Download Pyodide whl
       uses: actions/download-artifact@v4
       with:
@@ -167,26 +79,35 @@ jobs:
         pattern: pyodide-whl
         merge-multiple: true
 
-    - name: Build for Windows
+    - name: Setup conda
+      uses: conda-incubator/setup-miniconda@v3
+      with:
+        auto-update-conda: true
+
+    - name: Install conda packages
       shell: bash -el {0} # Needed whenever the commands need something in conda
       run: |
         conda create -n build -y
         conda activate build
         conda install python=${{ matrix.python-version }}  
-        conda install --file environment/environment-build-win.txt
+        conda install --file environment/github-actions/environment-build-${{ matrix.os }}.txt
         pip install build
+
+    - name: Build
+      shell: bash -el {0} # Needed whenever the commands need something in conda
+      run: |
         python -m build
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
       with:
-        name: win-${{ matrix.python-version }}-whl
-        path: 'dist/*win*.whl'
+        name: ${{ matrix.os }}-${{ matrix.python-version }}-whl
+        path: dist/*64.whl
         compression-level: 0
 
   gather-all-whl:
     name: Gather all built whls
-    needs: [build-pyodide, build-linux, build-macos, build-windows]
+    needs: [build-pyodide, build-multi-os]
     runs-on: ubuntu-latest
     steps:
 
