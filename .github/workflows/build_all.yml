@@ -39,7 +39,7 @@ jobs:
     - name: Build for Pyodide
       shell: bash -el {0} # Needed whenever the commands need something in conda
       run: |
-        python -m build sdist
+        python -m build --sdist
         pyodide build
 
     - name: Upload Artifact
