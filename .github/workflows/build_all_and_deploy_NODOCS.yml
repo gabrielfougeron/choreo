@@ -22,36 +22,32 @@ jobs:
     runs-on: ubuntu-latest
     steps:
 
-    - name: Setup Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: 3.12.1
-
-    - name: Install apt-get dependencies for Ubuntu
-      run: |
-        sudo apt-get update
-        sudo apt-get upgrade
-        sudo apt-get install libomp-dev libsuitesparse-dev clang
-        sudo apt-get install plantuml
-        sudo apt-get install libfftw3-dev
-
     - name: Checkout repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
-    - name: Install python build dependencies
-      run: |
-        pip install --upgrade pip
+    - name: Setup conda
+      uses: conda-incubator/setup-miniconda@v3
+      with:
+        auto-update-conda: true
+        python-version: 3.12
+        conda-remove-defaults: true
+        channels: conda-forge
+        channel-priority: true
+        activate-environment: choreo
+        environment-file: environment/environment-dev.yml
 
     - name: Read Emscripten version number
+      shell: bash -el {0} # Needed whenever the commands need something in conda
       run: |
         echo EMSCRIPTEN_VERSION=$(pyodide config get emscripten_version) >> $GITHUB_ENV
-  
+
     - name: Setup Emscripten
       uses: mymindstorm/setup-emsdk@v14
       with:
         version: ${{ env.EMSCRIPTEN_VERSION }}
 
     - name: Build for Pyodide
+      shell: bash -el {0} # Needed whenever the commands need something in conda
       run: |
         pyodide build
 
