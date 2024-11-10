@@ -89,8 +89,8 @@ if platform.system() == "Windows":
 
 elif platform.system() == "Darwin": # MacOS
     # 
-    os.environ['CC'] = "clang"
-    os.environ['LDSHARED'] = 'clang -shared'
+    # os.environ['CC'] = "clang"
+    # os.environ['LDSHARED'] = 'clang -shared'
     
     # os.environ['CC'] = "gcc"
     # os.environ['LDSHARED'] = 'gcc -shared'
@@ -121,12 +121,12 @@ elif platform.system() == "Darwin": # MacOS
     }[opt_lvl]
 
     extra_link_args = {
-        "profile" : ["-lm", *ignore_warnings_args],
-        "0" : ["-lm", *ignore_warnings_args],
-        "1" : ["-lm", *ignore_warnings_args],
-        "2" : ["-lm", *ignore_warnings_args],
-        "3" : ["-lm", *ignore_warnings_args],
-        "fast" : ["-lm", "-flto", *ignore_warnings_args],
+        "profile" : ["-lm", "-lomp", *ignore_warnings_args],
+        "0" : ["-lm", "-lomp", *ignore_warnings_args],
+        "1" : ["-lm", "-lomp", *ignore_warnings_args],
+        "2" : ["-lm", "-lomp", *ignore_warnings_args],
+        "3" : ["-lm", "-lomp", *ignore_warnings_args],
+        "fast" : ["-lm", "-lomp", "-flto", *ignore_warnings_args],
     }[opt_lvl]
 
 elif platform.system() == "Linux":
