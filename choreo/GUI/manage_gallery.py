@@ -18,12 +18,18 @@ def install_official_gallery(gallery_root = default_gallery_root):
     if os.path.isdir(gallery_path):
         shutil.rmtree(gallery_path)
         
-    if os.path.isdir('choreo_gallery'):
-        shutil.rmtree('choreo_gallery')
+    if os.path.isdir('tmp'):
+        shutil.rmtree('tmp')
+    
+    os.mkdir('tmp')
+    os.chdir('tmp')
     
     subprocess.run(["git","clone", "https://github.com/gabrielfougeron/choreo_gallery.git"])
     shutil.move('choreo_gallery/choreo-gallery', gallery_path)
-    shutil.rmtree('choreo_gallery')
+    
+    os.chdir(os.pardir)
+    shutil.rmtree('tmp')
+    
     make_gallery_descriptor(gallery_root)
 
 def make_gallery_descriptor(gallery_root = default_gallery_root, out_filename = "gallery_descriptor.json"):

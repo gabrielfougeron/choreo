@@ -630,7 +630,6 @@ function GatherConfigDict() {
     ConfigDict['Solver_CLI'] ['nproc']                  = parseInt(document.getElementById('CLI_nproc').value ,10)
 
     ConfigDict['Solver_CLI'] ['GradHess_backend']       = document.getElementById('CLI_backend').value
-    ConfigDict['Solver_CLI'] ['GUI_backend']            = document.getElementById('GUI_backend').value
 
     ConfigDict['Solver_CLI'] ['SaveImage']    = document.getElementById('CLI_SaveImage').checked   
     ConfigDict['Solver_CLI'] ['SaveVideo']    = document.getElementById('CLI_SaveVideo').checked   
@@ -843,7 +842,6 @@ function LoadConfigDict(ConfigDict) {
     document.getElementById('CLI_multiproc').value          = ConfigDict['Solver_CLI'] ['Exec_Mul_Proc']        
     document.getElementById('CLI_nproc').value              = ConfigDict['Solver_CLI'] ['nproc']     
     document.getElementById('CLI_backend').value            = ConfigDict['Solver_CLI'] ['GradHess_backend']     
-    document.getElementById('GUI_backend').value            = ConfigDict['Solver_CLI'] ['GUI_backend']     
 
     document.getElementById('CLI_SaveImage').checked        = ConfigDict['Solver_CLI'] ['SaveImage']    
     document.getElementById('CLI_SaveVideo').checked        = ConfigDict['Solver_CLI'] ['SaveVideo']    
