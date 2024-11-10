@@ -834,7 +834,6 @@ def ChoreoLoadFromDict(params_dict, Workspace_folder, callback=None, args_list=N
 
     TwoDBackend = (geodim == 2)
     ParallelBackend = (params_dict['Solver_CLI']['Exec_Mul_Proc'] == "MultiThread")
-    GradHessBackend = params_dict['Solver_CLI']['GradHess_backend']
 
     file_basename = ''
     
