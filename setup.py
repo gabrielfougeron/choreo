@@ -121,12 +121,12 @@ elif platform.system() == "Darwin": # MacOS
     }[opt_lvl]
 
     extra_link_args = {
-        "profile" : ["-lm", "-lgomp", *ignore_warnings_args],
-        "0" : ["-lm", "-lgomp", *ignore_warnings_args],
-        "1" : ["-lm", "-lgomp", *ignore_warnings_args],
-        "2" : ["-lm", "-lgomp", *ignore_warnings_args],
-        "3" : ["-lm", "-lgomp", *ignore_warnings_args],
-        "fast" : ["-lm", "-lgomp", "-flto", *ignore_warnings_args],
+        "profile" : ["-lm", "-lomp", *ignore_warnings_args],
+        "0" : ["-lm", "-lomp", *ignore_warnings_args],
+        "1" : ["-lm", "-lomp", *ignore_warnings_args],
+        "2" : ["-lm", "-lomp", *ignore_warnings_args],
+        "3" : ["-lm", "-lomp", *ignore_warnings_args],
+        "fast" : ["-lm", "-lomp", "-flto", *ignore_warnings_args],
     }[opt_lvl]
 
 elif platform.system() == "Linux":

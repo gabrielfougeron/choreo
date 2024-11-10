@@ -108,10 +108,10 @@ jobs:
       with:
         auto-update-conda: true
 
-    - name: Install Homebrew dependencies
-      run: |
-        brew install llvm
-        brew install libomp
+    # - name: Install Homebrew dependencies
+    #   run: |
+    #     brew install llvm
+    #     brew install libomp
 
     - name: Download Pyodide whl
       uses: actions/download-artifact@v4
