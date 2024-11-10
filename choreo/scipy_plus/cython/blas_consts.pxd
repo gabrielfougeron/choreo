@@ -1,3 +1,27 @@
+cdef extern from *:
+    '''
+    /* Defines complex types that are bit compatible with C99's complex.h
+    * and (crucially) the same type as expected by fftw3.h.
+    * Note, don't use this with complex.h. fftw3.h checks to see whether
+    * complex.h is included and then uses that to set the interface.
+    * Since MSVC doesn't support C99, by using the following types we
+    * have a cross platform/compiler solution.
+    *
+    * */
+
+    #ifndef CHOREO_COMPLEX_H
+    #define CHOREO_COMPLEX_H
+
+    typedef float cfloat[2];
+    typedef double cdouble[2];
+    typedef long double clongdouble[2];
+
+    #endif /* Header guard */
+    '''
+
+    ctypedef float cfloat[2]
+    ctypedef double cdouble[2]
+    ctypedef long double clongdouble[2]
 
 cdef char *transn
 cdef char *transt
@@ -13,14 +37,8 @@ cdef double two_double
 cdef double one_double
 cdef double zero_double
 cdef double ctwopi
+cdef double cminustwopi
 cdef double ctwopisqrt2
 cdef double cfourpi
 cdef double ctwopisq
 cdef double cfourpisq
-
-cdef double complex zero_double_complex
-cdef double complex one_double_complex
-cdef double complex cminusitwopi
-cdef double complex citwopi
-
-

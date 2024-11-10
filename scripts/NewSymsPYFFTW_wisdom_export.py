@@ -25,7 +25,7 @@ def main():
     ]
     
     DP_Wisdom_file = os.path.join(__PROJECT_ROOT__, "PYFFTW_wisdom.txt")
-    choreo.find_new.Load_wisdom_file(DP_Wisdom_file)
+    choreo.find.Load_wisdom_file(DP_Wisdom_file)
 
     TT = pyquickbench.TimeTrain(
         include_locs = False    ,
@@ -41,7 +41,7 @@ def main():
             
         TT.toc(i_refine)
 
-        choreo.find_new.Write_wisdom_file(DP_Wisdom_file)
+        choreo.find.Write_wisdom_file(DP_Wisdom_file)
 
     print(TT)
     
@@ -72,7 +72,7 @@ def doit(config_name, i_refine):
     if (inter_pow == -1.) and (inter_pm == 1) :
         inter_law = scipy.LowLevelCallable.from_cython(choreo.cython._NBodySyst, "gravity_pot")
     else:
-        inter_law = choreo.numba_funs_new.pow_inter_law(inter_pow/2, inter_pm)
+        inter_law = choreo.numba_funs.pow_inter_law(inter_pow/2, inter_pm)
 
     NBS = choreo.cython._NBodySyst.NBodySyst(geodim, nbody, mass, charge, Sym_list, inter_law)
 

@@ -91,7 +91,7 @@ def Find_Choreo(
     if (inter_pow == -1.) and (inter_pm == 1) :
         inter_law = scipy.LowLevelCallable.from_cython(choreo.cython._NBodySyst, "gravity_pot")
     else:
-        inter_law = choreo.numba_funs_new.pow_inter_law(inter_pow/2, inter_pm)
+        inter_law = choreo.numba_funs.pow_inter_law(inter_pow/2, inter_pm)
 
     NBS = choreo.cython._NBodySyst.NBodySyst(geodim, nbody, mass, charge, Sym_list, inter_law)
 
@@ -455,6 +455,342 @@ def ChoreoFindFromDict(params_dict, extra_args_dict, Workspace_folder):
     all_kwargs = ChoreoLoadFromDict(params_dict, Workspace_folder, callback = Find_Choreo, extra_args_dict=extra_args_dict)
 
     Find_Choreo(**all_kwargs)
+
+
+
+def ChoreoLoadFromDict_old(params_dict, Workspace_folder, callback=None, args_list=None):
+
+    def load_target_files(filename, Workspace_folder, target_speed):
+
+        if (filename == "no file"):
+
+            raise ValueError("A target file is missing")
+
+        else:
+
+            path_list = filename.split("/")
+
+            path_beg = path_list.pop(0)
+            path_end = path_list.pop( )
+
+            if (path_beg == "Gallery"):
+
+                json_filename = os.path.join(Workspace_folder,'Temp',target_speed+'.json')
+                npy_filename  = os.path.join(Workspace_folder,'Temp',target_speed+'.npy' )
+
+            elif (path_beg == "Workspace"):
+
+                json_filename = os.path.join(Workspace_folder,*path_list,path_end+'.json')
+                npy_filename  = os.path.join(Workspace_folder,*path_list,path_end+'.npy' )
+
+            else:
+
+                raise ValueError("Unknown path")
+
+        with open(json_filename) as jsonFile:
+            Info_dict = json.load(jsonFile)
+
+        all_pos = np.load(npy_filename)
+
+        return Info_dict, all_pos
+
+    np.random.seed(int(time.time()*10000) % 5000)
+
+    geodim = params_dict['Phys_Gen'] ['geodim']
+
+    TwoDBackend = (geodim == 2)
+    ParallelBackend = (params_dict['Solver_CLI']['Exec_Mul_Proc'] == "MultiThread")
+    GradHessBackend = params_dict['Solver_CLI']['GradHess_backend']
+
+    file_basename = ''
+    
+    CrashOnError_changevar = False
+
+    LookForTarget = params_dict['Phys_Target'] ['LookForTarget']
+
+    if (LookForTarget) : # IS LIKELY BROKEN !!!!
+
+        Rotate_fast_with_slow = params_dict['Phys_Target'] ['Rotate_fast_with_slow']
+        Optimize_Init = params_dict['Phys_Target'] ['Optimize_Init']
+        Randomize_Fast_Init =  params_dict['Phys_Target'] ['Randomize_Fast_Init']
+            
+        nT_slow = params_dict['Phys_Target'] ['nT_slow']
+        nT_fast = params_dict['Phys_Target'] ['nT_fast']
+
+        Info_dict_slow_filename = params_dict['Phys_Target'] ["slow_filename"]
+        Info_dict_slow, all_pos_slow = load_target_files(Info_dict_slow_filename,Workspace_folder,"slow")
+
+        ncoeff_slow = Info_dict_slow["n_int"] // 2 + 1
+
+        all_coeffs_slow = AllPosToAllCoeffs(all_pos_slow,ncoeff_slow)
+        Center_all_coeffs(all_coeffs_slow,Info_dict_slow["nloop"],Info_dict_slow["mass"],Info_dict_slow["loopnb"],np.array(Info_dict_slow["Targets"]),np.array(Info_dict_slow["SpaceRotsUn"]))
+
+        Info_dict_fast_list = []
+        all_coeffs_fast_list = []
+
+        for i in range(len(nT_fast)) :
+
+            Info_dict_fast_filename = params_dict['Phys_Target'] ["fast_filenames"] [i]
+            Info_dict_fast, all_pos_fast = load_target_files(Info_dict_fast_filename,Workspace_folder,"fast"+str(i))
+            Info_dict_fast_list.append(Info_dict_fast)
+
+            ncoeff_fast = Info_dict_fast["n_int"] // 2 + 1
+
+            all_coeffs_fast = AllPosToAllCoeffs(all_pos_fast,ncoeff_fast)
+            Center_all_coeffs(all_coeffs_fast,Info_dict_fast_list[i]["nloop"],Info_dict_fast_list[i]["mass"],Info_dict_fast_list[i]["loopnb"],np.array(Info_dict_fast_list[i]["Targets"]),np.array(Info_dict_fast_list[i]["SpaceRotsUn"]))
+
+            all_coeffs_fast_list.append(all_coeffs_fast)
+
+        Sym_list, mass,il_slow_source,ibl_slow_source,il_fast_source,ibl_fast_source = MakeTargetsSyms(Info_dict_slow,Info_dict_fast_list)
+        
+        nbody = len(mass)
+
+    nbody = params_dict["Phys_Bodies"]["nbody"]
+    MomConsImposed = params_dict['Phys_Bodies'] ['MomConsImposed']
+    nsyms = params_dict["Phys_Bodies"]["nsyms"]
+
+    nloop = params_dict["Phys_Bodies"]["nloop"]
+    
+    mass = np.zeros(nbody)
+    for il in range(nloop):
+        for ilb in range(len(params_dict["Phys_Bodies"]["Targets"][il])):
+            
+            ib = params_dict["Phys_Bodies"]["Targets"][il][ilb]
+            mass[ib] = params_dict["Phys_Bodies"]["mass"][il]    
+            
+    charge = np.zeros(nbody)
+    try:
+        for il in range(nloop):
+            for ilb in range(len(params_dict["Phys_Bodies"]["Targets"][il])):                
+                ib = params_dict["Phys_Bodies"]["Targets"][il][ilb]
+                charge[ib] = params_dict["Phys_Bodies"]["charge"][il]
+    except KeyError:
+        # TODO: Remove this
+        # Replaces charge with mass for backwards compatibility
+        for il in range(nloop):
+            for ilb in range(len(params_dict["Phys_Bodies"]["Targets"][il])):                
+                ib = params_dict["Phys_Bodies"]["Targets"][il][ilb]
+                charge[ib] = params_dict["Phys_Bodies"]["mass"][il]
+
+    # TODO: Remove this
+    # Backwards compatibility again
+    try:
+        inter_pow = params_dict["Phys_Inter"]["inter_pow"]
+        inter_pm_in = params_dict["Phys_Inter"]["inter_pm"]
+        
+        if inter_pm_in == "plus":
+            inter_pm = 1
+        elif inter_pm_in == "minus":
+            inter_pm = -1
+        else:
+            raise ValueError(f"Invalid inter_pm {inter_pm_in}")
+
+    except KeyError:
+        inter_pow = -1.
+        inter_pm = 1
+
+    Sym_list = []
+    
+    for isym in range(nsyms):
+        
+        BodyPerm = np.array(params_dict["Phys_Bodies"]["AllSyms"][isym]["BodyPerm"],dtype=int)
+
+        SpaceRot = params_dict["Phys_Bodies"]["AllSyms"][isym].get("SpaceRot")
+
+        if SpaceRot is None:
+            
+            if geodim == 2:
+                    
+                Reflexion = params_dict["Phys_Bodies"]["AllSyms"][isym]["Reflexion"]
+                if (Reflexion == "True"):
+                    s = -1
+                elif (Reflexion == "False"):
+                    s = 1
+                else:
+                    raise ValueError("Reflexion must be True or False")
+                    
+                rot_angle = 2 * np.pi * params_dict["Phys_Bodies"]["AllSyms"][isym]["RotAngleNum"] / params_dict["Phys_Bodies"]["AllSyms"][isym]["RotAngleDen"]
+
+                SpaceRot = np.array(
+                    [   [ s*np.cos(rot_angle)   , -s*np.sin(rot_angle)  ],
+                        [   np.sin(rot_angle)   ,    np.cos(rot_angle)  ]   ]
+                    , dtype = np.float64
+                )
+
+            else:
+                
+                raise ValueError(f"Provided space dimension: {geodim}. Please give a SpaceRot matrix directly.")
+            
+        else:
+            
+            SpaceRot = np.array(SpaceRot, dtype = np.float64)
+            
+            if SpaceRot.shape != (geodim, geodim):
+                raise  ValueError(f"Invalid SpaceRot dimension. {geodim =}, {SpaceRot.shape =}")
+                
+        TimeRev_str = params_dict["Phys_Bodies"]["AllSyms"][isym]["TimeRev"]
+        if (TimeRev_str == "True"):
+            TimeRev = -1
+        elif (TimeRev_str == "False"):
+            TimeRev = 1
+        else:
+            raise ValueError("TimeRev must be True or False")
+
+        TimeShiftNum = int(params_dict["Phys_Bodies"]["AllSyms"][isym]["TimeShiftNum"])
+        TimeShiftDen = int(params_dict["Phys_Bodies"]["AllSyms"][isym]["TimeShiftDen"])
+
+        Sym_list.append(
+            ActionSym(
+                BodyPerm = BodyPerm     ,
+                SpaceRot = SpaceRot     ,
+                TimeRev = TimeRev       ,
+                TimeShiftNum = TimeShiftNum   ,
+                TimeShiftDen = TimeShiftDen   ,
+            )
+        )
+
+    if ((LookForTarget) and not(params_dict['Phys_Target'] ['RandomJitterTarget'])) :
+
+        coeff_ampl_min  = 0
+        coeff_ampl_o    = 0
+        k_infl          = 2
+        k_max           = 3
+
+    else:
+
+        coeff_ampl_min  = params_dict["Phys_Random"]["coeff_ampl_min"]
+        coeff_ampl_o    = params_dict["Phys_Random"]["coeff_ampl_o"]
+        k_infl          = params_dict["Phys_Random"]["k_infl"]
+        k_max           = params_dict["Phys_Random"]["k_max"]
+
+    CurrentlyDeveloppingNewStuff = params_dict.get("CurrentlyDeveloppingNewStuff",False)
+
+    store_folder = os.path.join(Workspace_folder,str(nbody))
+    if not(os.path.isdir(store_folder)):
+
+        os.makedirs(store_folder)
+
+    Use_exact_Jacobian = params_dict["Solver_Discr"]["Use_exact_Jacobian"]
+
+    Look_for_duplicates = params_dict["Solver_Checks"]["Look_for_duplicates"]
+
+    Check_Escape = params_dict["Solver_Checks"]["Check_Escape"]
+
+    # Penalize_Escape = True
+    Penalize_Escape = False
+
+    save_first_init = False
+    # save_first_init = True
+
+    save_all_inits = False
+    # save_all_inits = True
+
+    Save_img = params_dict['Solver_CLI'] ['SaveImage']
+
+    # Save_thumb = True
+    Save_thumb = False
+
+    # img_size = (12,12) # Image size in inches
+    img_size = (8,8) # Image size in inches
+    thumb_size = (2,2) # Image size in inches
+    
+    color = params_dict["Animation_Colors"]["color_method_input"]
+
+    color_list = params_dict["Animation_Colors"]["colorLookup"]
+
+    Save_anim =  params_dict['Solver_CLI'] ['SaveVideo']
+
+    vid_size = (8,8) # Image size in inches
+    nint_plot_anim = 2*2*2*3*3*5*2
+    # nperiod_anim = 1./nbody
+    dnint = 30
+
+    nint_plot_img = nint_plot_anim * dnint
+
+    nperiod_anim = 1.
+
+    Plot_trace_anim = True
+    # Plot_trace_anim = False
+
+    # Save_Newton_Error = True
+    Save_Newton_Error = False
+
+    n_reconverge_it_max = params_dict["Solver_Discr"] ['n_reconverge_it_max'] 
+    nint_init = params_dict["Solver_Discr"]["nint_init"]   
+
+    disp_scipy_opt =  (params_dict['Solver_Optim'] ['optim_verbose_lvl'] == "full")
+    # disp_scipy_opt = False
+    # disp_scipy_opt = True
+    
+    max_norm_on_entry = 1e20
+
+    Newt_err_norm_max = params_dict["Solver_Optim"]["Newt_err_norm_max"]  
+    Newt_err_norm_max_save = params_dict["Solver_Optim"]["Newt_err_norm_safe"]  
+
+    duplicate_eps =  params_dict['Solver_Checks'] ['duplicate_eps'] 
+
+    krylov_method = params_dict["Solver_Optim"]["krylov_method"]  
+
+    line_search = params_dict["Solver_Optim"]["line_search"]  
+    linesearch_smin = params_dict["Solver_Optim"]["line_search_smin"]  
+
+    gradtol_list =          params_dict["Solver_Loop"]["gradtol_list"]
+    inner_maxiter_list =    params_dict["Solver_Loop"]["inner_maxiter_list"]
+    maxiter_list =          params_dict["Solver_Loop"]["maxiter_list"]
+    outer_k_list =          params_dict["Solver_Loop"]["outer_k_list"]
+    store_outer_Av_list =   params_dict["Solver_Loop"]["store_outer_Av_list"]
+
+    n_optim_param = len(gradtol_list)
+    
+    gradtol_max = 100*gradtol_list[n_optim_param-1]
+    # foundsol_tol = 1000*gradtol_list[0]
+    foundsol_tol = 1e10
+
+    escape_fac = 1e0
+
+    escape_min_dist = 1
+    escape_pow = 2.0
+
+    n_grad_change = 1.
+
+    freq_erase_dict = 100
+
+    n_opt = 0
+    n_opt_max = 100
+    n_find_max = 1
+
+    mul_coarse_to_fine = params_dict["Solver_Discr"]["mul_coarse_to_fine"]
+
+    # Save_All_Coeffs = True
+    Save_All_Coeffs = False
+
+    # Save_Init_Pos_Vel_Sol = True
+    Save_Init_Pos_Vel_Sol = False
+
+    n_save_pos = 'auto'
+
+    Save_All_Pos = True
+    
+    plot_extend = 0.
+
+    n_opt = 0
+    # n_opt_max = 1
+    n_opt_max = params_dict["Solver_Optim"]["n_opt"]
+    n_find_max = params_dict["Solver_Optim"]["n_opt"]
+
+    ReconvergeSol = False
+    AddNumberToOutputName = True
+    
+    if callback is None:
+        if args_list is None:
+            return dict(**locals())
+        else:
+            loc = locals()
+            return {key:loc[key] for key in args_list}
+    else:
+        return Pick_Named_Args_From_Dict(callback, dict(**locals()))
+
+
         
 def ChoreoLoadFromDict(params_dict, Workspace_folder, callback=None, args_list=None, extra_args_dict={}):
 

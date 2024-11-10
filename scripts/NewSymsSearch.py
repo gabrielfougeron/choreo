@@ -8,10 +8,10 @@ import choreo
 def main():
     
     DP_Wisdom_file = os.path.join(__PROJECT_ROOT__, "PYFFTW_wisdom.txt")
-    choreo.find_new.Load_wisdom_file(DP_Wisdom_file)
+    choreo.find.Load_wisdom_file(DP_Wisdom_file)
     
     Workspace_folder = os.path.join(__PROJECT_ROOT__, "Sniff_all_sym")    
-    choreo.find_new.ChoreoReadDictAndFind(Workspace_folder, config_filename="choreo_config.json")
+    choreo.find.ChoreoReadDictAndFind(Workspace_folder, config_filename="choreo_config.json")
 
 
 

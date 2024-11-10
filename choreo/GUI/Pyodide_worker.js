@@ -45,7 +45,6 @@ async function loadPyodideAndPackages() {
         "mpmath",
         "scipy",
         "threadpoolctl",
-        "sparseqr",
         "./python_dist/choreo-1.0.0-cp312-cp312-pyodide_2024_0_wasm32.whl",
     ])
 

@@ -44,50 +44,7 @@ def CLI_search(cli_args):
         os.environ['NUMEXPR_NUM_THREADS'] = '1'
         os.environ['MKL_NUM_THREADS'] = '1'
 
-        choreo.find_new.ChoreoReadDictAndFind(Workspace_folder)
-
-    else:
-
-        print(f'Workspace folder {args.Workspace_folder} was not found')
-
-def CLI_search_old(cli_args):
-
-    parser = argparse.ArgumentParser(
-        description = 'Searches periodic solutions to the N-body problem as defined in choreo_GUI')
-
-    default_Workspace = './'
-    parser.add_argument(
-        '-f', '--foldername',
-        default = default_Workspace,
-        dest = 'Workspace_folder',
-        help = f'Workspace folder as defined in the GUI. Defaults to the current directory.',
-        metavar = '',
-    )
-
-    args = parser.parse_args(cli_args)
-
-    root_list = [
-        '',
-        os.getcwd(),
-    ]
-
-    FoundFile = False
-    for root in root_list:
-
-        Workspace_folder = os.path.join(root,args.Workspace_folder)
-
-        if os.path.isdir(Workspace_folder):
-            FoundFile = True
-            break
-
-    if (FoundFile):
-
-        os.environ['NUMBA_NUM_THREADS'] = str(multiprocessing.cpu_count())
-        os.environ['OPENBLAS_NUM_THREADS'] = '1'
-        os.environ['NUMEXPR_NUM_THREADS'] = '1'
-        os.environ['MKL_NUM_THREADS'] = '1'
-        
-        choreo.find.ChoreoReadDictAndFind_old(Workspace_folder)
+        choreo.find.ChoreoReadDictAndFind(Workspace_folder)
 
     else:
 

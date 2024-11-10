@@ -97,6 +97,11 @@ jobs:
         python-version: ["3.10", "3.11", "3.12", "3.13"]
     steps:
 
+    # - name: Setup xcode
+    #   uses: maxim-lobanov/setup-xcode@v1
+    #   with:
+    #     xcode-version: latest-stable
+
     - name: Checkout repository
       uses: actions/checkout@v4
 
