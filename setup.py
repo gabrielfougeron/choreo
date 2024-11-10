@@ -98,8 +98,11 @@ if platform.system() == "Windows":
 
 elif platform.system() == "Darwin": # MacOS
     
-    os.environ['CC'] = "clang"
-    os.environ['LDSHARED'] = 'clang -shared'
+    # os.environ['CC'] = "clang"
+    # os.environ['LDSHARED'] = 'clang -shared'
+    
+    os.environ['CC'] = "gcc"
+    os.environ['LDSHARED'] = 'gcc -shared'
     
     ignore_warnings_args = [
         "-Wno-unused-variable",
@@ -112,18 +115,18 @@ elif platform.system() == "Darwin": # MacOS
         "profile" : ["-Og", "-fopenmp", "-lm", *ignore_warnings_args],
         "0" : ["-O0", "-fopenmp", "-lm", *ignore_warnings_args],
         "1" : ["-O1", "-fopenmp", "-lm", *ignore_warnings_args],
-        "2" : ["-O2", "-fopenmp", "-lm", *ignore_warnings_args],
-        "3" : ["-O3", "-fopenmp", "-lm", *ignore_warnings_args],
-        "fast" : ["-Ofast", "-fopenmp", "-lm", "-flto", *ignore_warnings_args],
+        "2" : ["-O2", "-march=native", "-fopenmp", "-lm", *ignore_warnings_args],
+        "3" : ["-O3", "-march=native", "-fopenmp", "-lm", *ignore_warnings_args],
+        "fast" : ["-Ofast", "-march=native", "-fopenmp", "-lm", "-flto", *ignore_warnings_args],
     }[opt_lvl]
     
     extra_compile_args_safe = {
         "profile" : ["-Og", "-fopenmp", "-lm", *ignore_warnings_args],
         "0" : ["-O0", "-fopenmp", "-lm", *ignore_warnings_args],
         "1" : ["-O1", "-fopenmp", "-lm", *ignore_warnings_args],
-        "2" : ["-O2", "-fopenmp", "-lm", *ignore_warnings_args],
-        "3" : ["-O3", "-fopenmp", "-lm", *ignore_warnings_args],
-        "fast" : ["-O3", "-fopenmp", "-lm", "-flto", *ignore_warnings_args],
+        "2" : ["-O2", "-march=native", "-fopenmp", "-lm", *ignore_warnings_args],
+        "3" : ["-O3", "-march=native", "-fopenmp", "-lm", *ignore_warnings_args],
+        "fast" : ["-O3", "-march=native", "-fopenmp", "-lm", "-flto", *ignore_warnings_args],
     }[opt_lvl]
 
     extra_link_args = {
