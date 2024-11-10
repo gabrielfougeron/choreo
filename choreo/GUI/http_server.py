@@ -19,10 +19,11 @@ def serve_GUI(port = 8000):
 
             super().end_headers()
 
-
     if sys.version_info < (3, 7, 5):
         # Fix for WASM MIME type for older Python versions
         Handler.extensions_map['.wasm'] = 'application/wasm'
+
+    socketserver.TCPServer.allow_reuse_address = True
 
     with socketserver.TCPServer(("", port), Handler) as httpd:
         print(f"Serving choreo GUI at: http://127.0.0.1:{port}")

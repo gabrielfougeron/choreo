@@ -131,6 +131,7 @@ def GUI(cli_args):
         for f in os.listdir(dist_dir):
             if ('.whl' in f) and ('pyodide' in f):
                 FoundPyodideWheel = True
+                break
         else:
             FoundPyodideWheel = False
     else:

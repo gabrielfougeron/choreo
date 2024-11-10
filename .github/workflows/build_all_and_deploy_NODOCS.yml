@@ -42,13 +42,10 @@ jobs:
       run: |
         pip install --upgrade pip
 
-    - name: Install locally in editable mode with pip
-      run:  pip install -e .[full]
-
     - name: Read Emscripten version number
       run: |
         echo EMSCRIPTEN_VERSION=$(pyodide config get emscripten_version) >> $GITHUB_ENV
-
+  
     - name: Setup Emscripten
       uses: mymindstorm/setup-emsdk@v14
       with:
@@ -57,7 +54,9 @@ jobs:
     - name: Build for Pyodide
       run: |
         pyodide build
-        find ./dist -name '*pyodide*.whl' -exec cp {} ./choreo/GUI/python_dist/ \; 
+
+    - name: Install locally in editable mode with pip
+      run:  pip install -e .[full]
 
     - name: Download official gallery
       run: |

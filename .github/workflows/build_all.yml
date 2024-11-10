@@ -37,7 +37,6 @@ jobs:
       shell: bash -el {0} # Needed whenever the commands need something in conda
       run: |
         pyodide build
-        find ./dist -name '*pyodide*.whl' -exec cp {} ./choreo/GUI/python_dist/ \; 
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
@@ -74,7 +73,6 @@ jobs:
     - name: Build for Linux
       shell: bash -el {0} # Needed whenever the commands need something in conda
       run: |
-        find ./dist -name '*pyodide*.whl' -exec cp {} ./choreo/GUI/python_dist/ \; 
         conda create -n build -y
         conda activate build
         conda install python=${{ matrix.python-version }}  
@@ -117,7 +115,6 @@ jobs:
     - name: Build for MacOs
       shell: bash -el {0} # Needed whenever the commands need something in conda
       run: |
-        find ./dist -name '*pyodide*.whl' -exec cp {} ./choreo/GUI/python_dist/ \; 
         conda create -n build -y
         conda activate build
         conda install python=${{ matrix.python-version }}  
@@ -165,7 +162,6 @@ jobs:
     - name: Build for Windows
       shell: bash -el {0} # Needed whenever the commands need something in conda
       run: |
-        find ./dist -name '*pyodide*.whl' -exec cp {} ./choreo/GUI/python_dist/ \; 
         conda create -n build -y
         conda activate build
         conda install python=${{ matrix.python-version }}  

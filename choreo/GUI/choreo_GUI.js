@@ -1442,12 +1442,10 @@ function SlideTrailTime(event) {
 
 function checkbox_Mass_Scale_Handler(event) {
 
-    var trailLayerCanvas = document.getElementById("trailLayerCanvas")
+    DoScaleSizeWithMass = event.currentTarget.checked
 
-    DoScaleSizeWithMass = event.currentTarget.value
-    
     var event = new Event('RemakeParticlesFromOutsideCanvas')
-    trailLayerCanvas.dispatchEvent(event)
+    document.getElementById("trailLayerCanvas").dispatchEvent(event)
 
 }
 

@@ -660,6 +660,8 @@ function canvasApp() {
 		
 		var color_method_input = document.getElementById("color_method_input")
 
+		var IsLegacy = (GetPlotInfoChoreoVersion() == "legacy")
+
         for ( var il = 0 ; il < PlotInfo['nloop'] ; il++){
 
 			var nlb =  PlotInfo['loopnb'][il]
@@ -682,7 +684,7 @@ function canvasApp() {
 				color = colorLookup[color_id % colorLookup.length];
 				trailColor = trailColorLookup[color_id % colorLookup.length];
 				
-				if (GetPlotInfoChoreoVersion() == "legacy") {
+				if (IsLegacy) {
 					if (DoScaleSizeWithMass) {
 						PartRelSize = Math.sqrt(PlotInfo["mass"][ib])
 					} else {
