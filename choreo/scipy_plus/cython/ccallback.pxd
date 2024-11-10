@@ -18,7 +18,7 @@ cdef extern from "ccallback.h":
         ccallback_signature_t *signature
 
         # Unused variables that can be used by the thunk etc. code for any purpose
-        long info
+        Py_ssize_t info
         void *info_p
 
     int CCALLBACK_DEFAULTS

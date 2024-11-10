@@ -130,13 +130,13 @@ cdef class NBodySyst():
     This class defines a N-body system
     """
 
-    cdef readonly long geodim
-    cdef readonly long nbody
-    cdef readonly long nint_min
-    cdef readonly long nloop
-    cdef readonly long nsegm
-    cdef readonly long nbin_segm_tot
-    cdef readonly long nbin_segm_unique
+    cdef readonly Py_ssize_t geodim
+    cdef readonly Py_ssize_t nbody
+    cdef readonly Py_ssize_t nint_min
+    cdef readonly Py_ssize_t nloop
+    cdef readonly Py_ssize_t nsegm
+    cdef readonly Py_ssize_t nbin_segm_tot
+    cdef readonly Py_ssize_t nbin_segm_unique
 
     cdef readonly bint RequiresGreaterNStore
     cdef int _fft_backend
@@ -154,12 +154,12 @@ cdef class NBodySyst():
         elif self._fft_backend == USE_FFTW_FFT:
             return "fftw"
 
-    cdef long[::1] _loopnb
+    cdef Py_ssize_t[::1] _loopnb
     @property
     def loopnb(self):
         return np.asarray(self._loopnb)
 
-    cdef long[::1] _bodyloop
+    cdef Py_ssize_t[::1] _bodyloop
     @property
     def bodyloop(self):
         return np.asarray(self._bodyloop)
@@ -174,67 +174,67 @@ cdef class NBodySyst():
     def loopcharge(self):
         return np.asarray(self._loopcharge)
 
-    cdef long[:,::1] _Targets
+    cdef Py_ssize_t[:,::1] _Targets
     @property
     def Targets(self):
         return np.asarray(self._Targets)
 
-    cdef long[:,::1] _bodysegm
+    cdef Py_ssize_t[:,::1] _bodysegm
     @property
     def bodysegm(self):
         return np.asarray(self._bodysegm)
 
-    cdef long[::1] _loopgen
+    cdef Py_ssize_t[::1] _loopgen
     @property
     def loopgen(self):
         return np.asarray(self._loopgen)
 
-    cdef long[::1] _intersegm_to_body
+    cdef Py_ssize_t[::1] _intersegm_to_body
     @property
     def intersegm_to_body(self):
         return np.asarray(self._intersegm_to_body)
 
-    cdef long[::1] _intersegm_to_iint
+    cdef Py_ssize_t[::1] _intersegm_to_iint
     @property
     def intersegm_to_iint(self):
         return np.asarray(self._intersegm_to_iint)
 
-    cdef long[::1] _gensegm_to_body
+    cdef Py_ssize_t[::1] _gensegm_to_body
     @property
     def gensegm_to_body(self):
         return np.asarray(self._gensegm_to_body)
 
-    cdef long[::1] _gensegm_to_iint
+    cdef Py_ssize_t[::1] _gensegm_to_iint
     @property
     def gensegm_to_iint(self):
         return np.asarray(self._gensegm_to_iint)
 
-    cdef long[::1] _gensegm_to_iintrel
+    cdef Py_ssize_t[::1] _gensegm_to_iintrel
     @property
     def gensegm_to_iintrel(self):
         return np.asarray(self._gensegm_to_iintrel)
 
-    cdef long[::1] _ngensegm_loop
+    cdef Py_ssize_t[::1] _ngensegm_loop
     @property
     def ngensegm_loop(self):
         return np.asarray(self._ngensegm_loop)
 
-    cdef long[::1] _gensegm_loop_start
+    cdef Py_ssize_t[::1] _gensegm_loop_start
     @property
     def gensegm_loop_start(self):
         return np.asarray(self.gensegm_loop_start)
 
-    cdef long[::1] _n_sub_fft
+    cdef Py_ssize_t[::1] _n_sub_fft
     @property
     def n_sub_fft(self):
         return np.asarray(self._n_sub_fft)
 
-    cdef long[::1] _BinSourceSegm
+    cdef Py_ssize_t[::1] _BinSourceSegm
     @property
     def BinSourceSegm(self):
         return np.asarray(self._BinSourceSegm)
 
-    cdef long[::1] _BinTargetSegm
+    cdef Py_ssize_t[::1] _BinTargetSegm
     @property
     def BinTargetSegm(self):
         return np.asarray(self._BinTargetSegm)
@@ -254,7 +254,7 @@ cdef class NBodySyst():
     def BinProdChargeSum(self):
         return np.asarray(self._BinProdChargeSum)
 
-    cdef long[::1] _InterTimeRev
+    cdef Py_ssize_t[::1] _InterTimeRev
     @property
     def InterTimeRev(self):
         return np.asarray(self._InterTimeRev)
@@ -280,12 +280,12 @@ cdef class NBodySyst():
         return np.asarray(self._InterSpaceRotVel)
 
     # ALG for After Last Gen => interpolation for 1 point mismatch between segm_size and segm_store
-    cdef long[::1] _ALG_Iint
+    cdef Py_ssize_t[::1] _ALG_Iint
     @property
     def ALG_Iint(self):
         return np.asarray(self._ALG_Iint)
 
-    cdef long[::1] _ALG_TimeRev
+    cdef Py_ssize_t[::1] _ALG_TimeRev
     @property
     def ALG_TimeRev(self):
         return np.asarray(self._ALG_TimeRev)
@@ -312,34 +312,34 @@ cdef class NBodySyst():
         
     cdef double complex[::1] _params_basis_buf_pos
     cdef double complex[::1] _params_basis_buf_vel
-    cdef long[:,::1] _params_basis_shapes
-    cdef long[::1] _params_basis_shifts
+    cdef Py_ssize_t[:,::1] _params_basis_shapes
+    cdef Py_ssize_t[::1] _params_basis_shifts
 
-    def params_basis_pos(self, long il):
+    def params_basis_pos(self, Py_ssize_t il):
         return np.asarray(self._params_basis_buf_pos[self._params_basis_shifts[il]:self._params_basis_shifts[il+1]]).reshape(self._params_basis_shapes[il])
         
-    def params_basis_vel(self, long il):
+    def params_basis_vel(self, Py_ssize_t il):
         return np.asarray(self._params_basis_buf_vel[self._params_basis_shifts[il]:self._params_basis_shifts[il+1]]).reshape(self._params_basis_shapes[il])
 
-    cdef long[::1] _nnz_k_buf
-    cdef long[:,::1] _nnz_k_shapes
-    cdef long[::1] _nnz_k_shifts
+    cdef Py_ssize_t[::1] _nnz_k_buf
+    cdef Py_ssize_t[:,::1] _nnz_k_shapes
+    cdef Py_ssize_t[::1] _nnz_k_shifts
 
-    def nnz_k(self, long il):
+    def nnz_k(self, Py_ssize_t il):
         return np.asarray(self._nnz_k_buf[self._nnz_k_shifts[il]:self._nnz_k_shifts[il+1]]).reshape(self._nnz_k_shapes[il])
 
     # Removal of imaginary part of c_o
     cdef bint[::1] _co_in_buf
-    cdef long[:,::1] _co_in_shapes
-    cdef long[::1] _co_in_shifts
-    cdef long[::1] _ncor_loop
-    cdef long[::1] _nco_in_loop
-    cdef readonly long nrem
+    cdef Py_ssize_t[:,::1] _co_in_shapes
+    cdef Py_ssize_t[::1] _co_in_shifts
+    cdef Py_ssize_t[::1] _ncor_loop
+    cdef Py_ssize_t[::1] _nco_in_loop
+    cdef readonly Py_ssize_t nrem
 
-    def co_in(self, long il):
+    def co_in(self, Py_ssize_t il):
         return np.asarray(self._co_in_buf[self._co_in_shifts[il]:self._co_in_shifts[il+1]]).reshape(self._co_in_shapes[il]) > 0
 
-    cdef long[::1] _ncoeff_min_loop
+    cdef Py_ssize_t[::1] _ncoeff_min_loop
     @property
     def ncoeff_min_loop(self):
         return np.asarray(self._ncoeff_min_loop)
@@ -368,31 +368,31 @@ cdef class NBodySyst():
     cdef readonly double Homo_exp
 
     # Things that change with nint
-    cdef long _nint
+    cdef Py_ssize_t _nint
     @property
     def nint(self):
         return self._nint
     
-    cdef long _nint_fac
+    cdef Py_ssize_t _nint_fac
     @property
     def nint_fac(self):
         return self._nint_fac
         
-    cdef readonly long ncoeffs
-    cdef readonly long segm_size    # number of interacting nodes in segment
-    cdef readonly long segm_store   # number of stored values in segment, including repeated values for n_sub_fft == 2
-    cdef readonly long nparams
-    cdef readonly long nparams_incl_o
+    cdef readonly Py_ssize_t ncoeffs
+    cdef readonly Py_ssize_t segm_size    # number of interacting nodes in segment
+    cdef readonly Py_ssize_t segm_store   # number of stored values in segment, including repeated values for n_sub_fft == 2
+    cdef readonly Py_ssize_t nparams
+    cdef readonly Py_ssize_t nparams_incl_o
 
     # WARNING: These are the shapes and shifts of POS params, NOT MOM params!
-    cdef long[:,::1] _params_shapes   
-    cdef long[::1] _params_shifts
+    cdef Py_ssize_t[:,::1] _params_shapes   
+    cdef Py_ssize_t[::1] _params_shifts
 
-    cdef long[:,::1] _ifft_shapes      
-    cdef long[::1] _ifft_shifts
+    cdef Py_ssize_t[:,::1] _ifft_shapes      
+    cdef Py_ssize_t[::1] _ifft_shifts
 
-    cdef long[:,::1] _pos_slice_shapes
-    cdef long[::1] _pos_slice_shifts
+    cdef Py_ssize_t[:,::1] _pos_slice_shapes
+    cdef Py_ssize_t[::1] _pos_slice_shifts
 
     @property
     def params_shapes(self):
@@ -462,8 +462,8 @@ cdef class NBodySyst():
 
     def __init__(
         self                            ,
-        long geodim                     ,
-        long nbody                      ,
+        Py_ssize_t geodim                     ,
+        Py_ssize_t nbody                      ,
         double[::1] bodymass            ,
         double[::1] bodycharge          ,
         list Sym_list                   ,
@@ -780,13 +780,13 @@ cdef class NBodySyst():
 
     @nint_fac.setter
     @cython.final
-    def nint_fac(self, long nint_fac_in):
+    def nint_fac(self, Py_ssize_t nint_fac_in):
         self.nint = 2 * self.nint_min * nint_fac_in
 
     @nint.setter
     @cython.cdivision(True)
     @cython.final
-    def nint(self, long nint_in):
+    def nint(self, Py_ssize_t nint_in):
 
         if (nint_in % (2 * self.nint_min)) != 0:
             raise ValueError(f"Provided nint {nint_in} should be divisible by {2 * self.nint_min}")
@@ -880,7 +880,7 @@ cdef class NBodySyst():
         self.allocate_owned_memory()
 
     @cython.final
-    def DetectLoops(self, double[::1] bodymass, double[::1] bodycharge, long nint_min_fac = 1):
+    def DetectLoops(self, double[::1] bodymass, double[::1] bodycharge, Py_ssize_t nint_min_fac = 1):
 
         cdef Py_ssize_t il, ib, ilb
         
@@ -904,7 +904,7 @@ cdef class NBodySyst():
         
         BodyLoop = np.zeros((self.nbody), dtype = np.intp)
         self._bodyloop = BodyLoop
-        cdef long[:,::1] Targets = np.zeros((self.nloop, maxlooplen), dtype=np.intp)
+        cdef Py_ssize_t[:,::1] Targets = np.zeros((self.nloop, maxlooplen), dtype=np.intp)
         self._Targets = Targets
         for il, CC in enumerate(networkx.connected_components(BodyGraph)):
             for ilb, ib in enumerate(CC):
@@ -933,7 +933,7 @@ cdef class NBodySyst():
     def BuildSegmGraph(self):
 
         cdef Py_ssize_t ib, iint
-        cdef long isegm
+        cdef Py_ssize_t isegm
 
         for Sym in self.Sym_list:
             if (Sym.TimeRev == -1):
@@ -954,8 +954,8 @@ cdef class NBodySyst():
     @cython.cdivision(True)
     def ChooseLoopGen(self):
 
-        cdef long il, ilb, isegm, ib, iint, ishift, n_nnid, jint
-        cdef long n_nnid_min, unique_size
+        cdef Py_ssize_t il, ilb, isegm, ib, iint, ishift, n_nnid, jint
+        cdef Py_ssize_t n_nnid_min, unique_size
 
         cdef ActionSym Sym
     
@@ -966,7 +966,7 @@ cdef class NBodySyst():
         self._gensegm_to_iint = np.empty((self.nsegm), dtype = np.intp)
         self._gensegm_to_iintrel = np.empty((self.nsegm), dtype = np.intp)
 
-        cdef np.ndarray[long, ndim=1, mode='c'] shifted_bodysegm = np.zeros((self.nint_min), dtype = np.intp)
+        cdef np.ndarray[Py_ssize_t, ndim=1, mode='c'] shifted_bodysegm = np.zeros((self.nint_min), dtype = np.intp)
 
         for il in range(self.nloop):
 
@@ -1132,7 +1132,7 @@ cdef class NBodySyst():
     def Compute_n_sub_fft(self):
         
         self._n_sub_fft = np.zeros((self.nloop), dtype=np.intp)
-        cdef long il
+        cdef Py_ssize_t il
         for il in range(self.nloop):
 # 
 # 
@@ -1158,8 +1158,8 @@ cdef class NBodySyst():
         ALG_SpaceRotVel_np = np.zeros((self.nloop, self.geodim, self.geodim), dtype=np.float64)
         self._ALG_SpaceRotVel = ALG_SpaceRotVel_np
 
-        cdef long iint_uneven, ib
-        cdef long idim, jdim
+        cdef Py_ssize_t iint_uneven, ib
+        cdef Py_ssize_t idim, jdim
         for il in range(self.nloop):
             
             iint_uneven = self._ngensegm_loop[il] % self.nint_min
@@ -1370,7 +1370,7 @@ cdef class NBodySyst():
 
     @cython.final
     @cython.cdivision(True)
-    def Detect_homo_inter_law(self, double xsqo=1., double fac=1.1, long n=10, double eps=1e-10):
+    def Detect_homo_inter_law(self, double xsqo=1., double fac=1.1, Py_ssize_t n=10, double eps=1e-10):
 
         cdef double[3] pot
         cdef double xsq = xsqo
@@ -1415,7 +1415,7 @@ cdef class NBodySyst():
         for il in range(nloop):
             for k in range(ncoeffs):
                 for idim in range(geodim):
-                    # all_coeffs[il,k,idim] *= fac*k
+                    # all_coeffs[il,k,idim] *= fac*k # Causes weird Cython error on Windows
                     all_coeffs[il,k,idim] = all_coeffs[il,k,idim] * (fac*k)
 
     @cython.final
@@ -1643,7 +1643,7 @@ cdef class NBodySyst():
     @cython.cdivision(True)
     def TestHashSame(self, double[::1] Hash_a, double[::1] Hash_b, double rtol=1e-5, bint detect_multiples=True):
 
-        cdef long nhash = self._Hash_exp.shape[0]
+        cdef Py_ssize_t nhash = self._Hash_exp.shape[0]
 
         assert Hash_a.shape[0] == nhash
         assert Hash_b.shape[0] == nhash
@@ -1700,7 +1700,7 @@ cdef class NBodySyst():
         cdef double[::1] x
 
         cdef Py_ssize_t ib, iint, idim
-        cdef long isegm
+        cdef Py_ssize_t isegm
 
         for ib in range(self.nbody):
             for iint in range(self.nint_min):
@@ -1745,7 +1745,7 @@ cdef class NBodySyst():
         cdef double[::1] x
 
         cdef Py_ssize_t ib, ibp, iint, idim
-        cdef long isegm
+        cdef Py_ssize_t isegm
 
         cdef double dist, size, dx
 
@@ -1927,7 +1927,7 @@ cdef class NBodySyst():
 
     @cython.final
     @cython.cdivision(True)
-    def Make_params_bounds(self, double coeff_ampl_o=1e-1, long k_infl=1, long k_max=200, double coeff_ampl_min=1e-16):
+    def Make_params_bounds(self, double coeff_ampl_o=1e-1, Py_ssize_t k_infl=1, Py_ssize_t k_max=200, double coeff_ampl_min=1e-16):
 
         cdef double[::1] pos_buf_min = np.zeros((self.nparams_incl_o), dtype=np.float64)
         cdef double[::1] pos_buf_max = np.zeros((self.nparams_incl_o), dtype=np.float64)
@@ -2039,7 +2039,7 @@ cdef class NBodySyst():
         return np.asarray(params_buf_out)
 
     @cython.final
-    def params_resize(self, double[::1] params_buf_in, long nint_fac=1):
+    def params_resize(self, double[::1] params_buf_in, Py_ssize_t nint_fac=1):
 
         assert params_buf_in.shape[0] == self.nparams
 
@@ -2054,11 +2054,11 @@ cdef class NBodySyst():
 
             params_shapes_list.append((npr, self._nnz_k_shapes[il,0], nppl))
 
-        cdef long[:,::1] params_shapes_out
-        cdef long[::1] params_shifts_out
+        cdef Py_ssize_t[:,::1] params_shapes_out
+        cdef Py_ssize_t[::1] params_shifts_out
         params_shapes_out, params_shifts_out = BundleListOfShapes(params_shapes_list)
 
-        cdef long nparams_out = params_shifts_out[self.nloop] - self.nrem
+        cdef Py_ssize_t nparams_out = params_shifts_out[self.nloop] - self.nrem
 
         params_buf_out_np = np.zeros((nparams_out), dtype=np.float64)
         cdef double[::1] params_buf_out = params_buf_out_np
@@ -3379,12 +3379,12 @@ cdef class NBodySyst():
 
 @cython.cdivision(True)
 cdef void Make_Init_bounds_coeffs(
-    double *params_pos_buf      , long[:,::1] params_shapes     , long[::1] params_shifts   ,
-    long[::1] nnz_k_buf         , long[:,::1] nnz_k_shapes      , long[::1] nnz_k_shifts    ,
-    bint[::1] co_in_buf         , long[:,::1] co_in_shapes      , long[::1] co_in_shifts    ,
-    long[::1] ncoeff_min_loop   ,
+    double *params_pos_buf      , Py_ssize_t[:,::1] params_shapes     , Py_ssize_t[::1] params_shifts   ,
+    Py_ssize_t[::1] nnz_k_buf         , Py_ssize_t[:,::1] nnz_k_shapes      , Py_ssize_t[::1] nnz_k_shifts    ,
+    bint[::1] co_in_buf         , Py_ssize_t[:,::1] co_in_shapes      , Py_ssize_t[::1] co_in_shifts    ,
+    Py_ssize_t[::1] ncoeff_min_loop   ,
     double coeff_ampl_o         , double coeff_ampl_min         ,
-    long k_infl                 , long k_max                    ,
+    Py_ssize_t k_infl                 , Py_ssize_t k_max                    ,
 ) noexcept nogil:
 
     cdef double* cur_param_pos_buf
@@ -3393,7 +3393,7 @@ cdef void Make_Init_bounds_coeffs(
 
     cdef int nloop = params_shapes.shape[0]
     cdef Py_ssize_t il, idim, ipr, ik, iparam
-    cdef long k, ko
+    cdef Py_ssize_t k, ko
 
     cdef double coeff_slope = clog(cfabs(coeff_ampl_o/coeff_ampl_min))/(k_max-k_infl)
 
@@ -3421,11 +3421,11 @@ cdef void Make_Init_bounds_coeffs(
  
 @cython.cdivision(True)
 cdef void changevar_mom_pos(
-    double *params_mom_buf      , long[:,::1] params_shapes     , long[::1] params_shifts   ,
-    long[::1] nnz_k_buf         , long[:,::1] nnz_k_shapes      , long[::1] nnz_k_shifts    ,
-    bint[::1] co_in_buf         , long[:,::1] co_in_shapes      , long[::1] co_in_shifts    ,
-    long[::1] ncoeff_min_loop   ,
-    long[::1] loopnb            , double[::1] loopmass          ,
+    double *params_mom_buf      , Py_ssize_t[:,::1] params_shapes     , Py_ssize_t[::1] params_shifts   ,
+    Py_ssize_t[::1] nnz_k_buf         , Py_ssize_t[:,::1] nnz_k_shapes      , Py_ssize_t[::1] nnz_k_shifts    ,
+    bint[::1] co_in_buf         , Py_ssize_t[:,::1] co_in_shapes      , Py_ssize_t[::1] co_in_shifts    ,
+    Py_ssize_t[::1] ncoeff_min_loop   ,
+    Py_ssize_t[::1] loopnb            , double[::1] loopmass          ,
     double **params_pos_buf     , 
 ) noexcept nogil:
 
@@ -3435,7 +3435,7 @@ cdef void changevar_mom_pos(
 
     cdef int nloop = params_shapes.shape[0]
     cdef Py_ssize_t il, idim, ipr, ik, iparam, nmem
-    cdef long k, ko
+    cdef Py_ssize_t k, ko
 
     for il in range(nloop):
 
@@ -3508,11 +3508,11 @@ cdef void changevar_mom_pos(
  
 @cython.cdivision(True)
 cdef void changevar_mom_pos_invT(
-    double *params_mom_buf      , long[:,::1] params_shapes     , long[::1] params_shifts   ,
-    long[::1] nnz_k_buf         , long[:,::1] nnz_k_shapes      , long[::1] nnz_k_shifts    ,
-    bint[::1] co_in_buf         , long[:,::1] co_in_shapes      , long[::1] co_in_shifts    ,
-    long[::1] ncoeff_min_loop   ,
-    long[::1] loopnb            , double[::1] loopmass          ,
+    double *params_mom_buf      , Py_ssize_t[:,::1] params_shapes     , Py_ssize_t[::1] params_shifts   ,
+    Py_ssize_t[::1] nnz_k_buf         , Py_ssize_t[:,::1] nnz_k_shapes      , Py_ssize_t[::1] nnz_k_shifts    ,
+    bint[::1] co_in_buf         , Py_ssize_t[:,::1] co_in_shapes      , Py_ssize_t[::1] co_in_shifts    ,
+    Py_ssize_t[::1] ncoeff_min_loop   ,
+    Py_ssize_t[::1] loopnb            , double[::1] loopmass          ,
     double **params_pos_buf     , 
 ) noexcept nogil:
 
@@ -3522,7 +3522,7 @@ cdef void changevar_mom_pos_invT(
 
     cdef int nloop = params_shapes.shape[0]
     cdef Py_ssize_t il, idim, ipr, ik, iparam, nmem
-    cdef long k, ko
+    cdef Py_ssize_t k, ko
 
     for il in range(nloop):
 
@@ -3594,11 +3594,11 @@ cdef void changevar_mom_pos_invT(
                     cur_param_pos_buf += 1
 
 cdef void changevar_mom_pos_inv(
-    double **params_pos_buf     , long[:,::1] params_shapes     , long[::1] params_shifts   ,
-    long[::1] nnz_k_buf         , long[:,::1] nnz_k_shapes      , long[::1] nnz_k_shifts    ,
-    bint[::1] co_in_buf         , long[:,::1] co_in_shapes      , long[::1] co_in_shifts    ,
-    long[::1] ncoeff_min_loop   ,
-    long[::1] loopnb            , double[::1] loopmass          ,
+    double **params_pos_buf     , Py_ssize_t[:,::1] params_shapes     , Py_ssize_t[::1] params_shifts   ,
+    Py_ssize_t[::1] nnz_k_buf         , Py_ssize_t[:,::1] nnz_k_shapes      , Py_ssize_t[::1] nnz_k_shifts    ,
+    bint[::1] co_in_buf         , Py_ssize_t[:,::1] co_in_shapes      , Py_ssize_t[::1] co_in_shifts    ,
+    Py_ssize_t[::1] ncoeff_min_loop   ,
+    Py_ssize_t[::1] loopnb            , double[::1] loopmass          ,
     double *params_mom_buf      , 
 ) noexcept nogil:
 
@@ -3608,7 +3608,7 @@ cdef void changevar_mom_pos_inv(
 
     cdef int nloop = params_shapes.shape[0]
     cdef Py_ssize_t il, idim, ipr, ik, iparam
-    cdef long k, ko
+    cdef Py_ssize_t k, ko
 
     for il in range(nloop):
 
@@ -3678,11 +3678,11 @@ cdef void changevar_mom_pos_inv(
 
 @cython.cdivision(True)
 cdef void changevar_mom_pos_T(
-    double **params_pos_buf     , long[:,::1] params_shapes     , long[::1] params_shifts   ,
-    long[::1] nnz_k_buf         , long[:,::1] nnz_k_shapes      , long[::1] nnz_k_shifts    ,
-    bint[::1] co_in_buf         , long[:,::1] co_in_shapes      , long[::1] co_in_shifts    ,
-    long[::1] ncoeff_min_loop   ,
-    long[::1] loopnb            , double[::1] loopmass          ,
+    double **params_pos_buf     , Py_ssize_t[:,::1] params_shapes     , Py_ssize_t[::1] params_shifts   ,
+    Py_ssize_t[::1] nnz_k_buf         , Py_ssize_t[:,::1] nnz_k_shapes      , Py_ssize_t[::1] nnz_k_shifts    ,
+    bint[::1] co_in_buf         , Py_ssize_t[:,::1] co_in_shapes      , Py_ssize_t[::1] co_in_shifts    ,
+    Py_ssize_t[::1] ncoeff_min_loop   ,
+    Py_ssize_t[::1] loopnb            , double[::1] loopmass          ,
     double *params_mom_buf      , 
 ) noexcept nogil:
 
@@ -3692,7 +3692,7 @@ cdef void changevar_mom_pos_T(
 
     cdef int nloop = params_shapes.shape[0]
     cdef Py_ssize_t il, idim, ipr, ik, iparam
-    cdef long k, ko
+    cdef Py_ssize_t k, ko
 
     for il in range(nloop):
 
@@ -3762,11 +3762,11 @@ cdef void changevar_mom_pos_T(
 
 @cython.cdivision(True)
 cdef void changevar_mom_vel(
-    double *params_mom_buf      , long[:,::1] params_shapes     , long[::1] params_shifts   ,
-    long[::1] nnz_k_buf         , long[:,::1] nnz_k_shapes      , long[::1] nnz_k_shifts    ,
-    bint[::1] co_in_buf         , long[:,::1] co_in_shapes      , long[::1] co_in_shifts    ,
-    long[::1] ncoeff_min_loop   ,
-    long[::1] loopnb            , double[::1] loopmass          ,
+    double *params_mom_buf      , Py_ssize_t[:,::1] params_shapes     , Py_ssize_t[::1] params_shifts   ,
+    Py_ssize_t[::1] nnz_k_buf         , Py_ssize_t[:,::1] nnz_k_shapes      , Py_ssize_t[::1] nnz_k_shifts    ,
+    bint[::1] co_in_buf         , Py_ssize_t[:,::1] co_in_shapes      , Py_ssize_t[::1] co_in_shifts    ,
+    Py_ssize_t[::1] ncoeff_min_loop   ,
+    Py_ssize_t[::1] loopnb            , double[::1] loopmass          ,
     double **params_vel_buf     , 
 ) noexcept nogil:
 
@@ -3776,7 +3776,7 @@ cdef void changevar_mom_vel(
 
     cdef int nloop = params_shapes.shape[0]
     cdef Py_ssize_t il, idim, ipr, ik, iparam, nmem
-    cdef long k, ko
+    cdef Py_ssize_t k, ko
 
     for il in range(nloop):
 
@@ -3850,8 +3850,8 @@ cdef void changevar_mom_vel(
 
 @cython.cdivision(True)
 cdef double params_to_kin_nrg(
-    double *params_mom_buf  , long[:,::1] params_shapes , long[::1] params_shifts   ,
-    long[::1] ncor_loop     , long[::1] nco_in_loop     ,
+    double *params_mom_buf  , Py_ssize_t[:,::1] params_shapes , Py_ssize_t[::1] params_shifts   ,
+    Py_ssize_t[::1] ncor_loop     , Py_ssize_t[::1] nco_in_loop     ,
 ) noexcept nogil:
 
     cdef double* loc = params_mom_buf
@@ -3879,8 +3879,8 @@ cdef double params_to_kin_nrg(
  
 @cython.cdivision(True)
 cdef void params_to_kin_nrg_grad_daxpy(
-    double *params_mom_buf  , long[:,::1] params_shapes , long[::1] params_shifts   ,
-    long[::1] ncor_loop     , long[::1] nco_in_loop     ,
+    double *params_mom_buf  , Py_ssize_t[:,::1] params_shapes , Py_ssize_t[::1] params_shifts   ,
+    Py_ssize_t[::1] ncor_loop     , Py_ssize_t[::1] nco_in_loop     ,
     double mul              ,
     double *grad_buf        ,
 ) noexcept nogil:
@@ -3909,8 +3909,8 @@ cdef void params_to_kin_nrg_grad_daxpy(
 @cython.cdivision(True)
 cdef void inplace_twiddle(
     double complex* const_ifft  ,
-    long* nnz_k                 ,
-    long nint                   ,
+    Py_ssize_t* nnz_k                 ,
+    Py_ssize_t nint                   ,
     int n_inter                 ,
     int ncoeff_min_loop_nnz     ,
     int nppl                    ,
@@ -3924,7 +3924,7 @@ cdef void inplace_twiddle(
 
     cdef int ibit
     cdef int nbit = 1
-    cdef long twopow = 1
+    cdef Py_ssize_t twopow = 1
     cdef bint *nnz_bin 
 
     cdef double complex* ifft = <double complex*> const_ifft
@@ -3975,7 +3975,7 @@ cdef void inplace_twiddle(
 cdef void partial_fft_to_pos_slice_2_sub(
     double complex* const_ifft      ,
     double complex* params_basis    ,  
-    long* nnz_k                     ,
+    Py_ssize_t* nnz_k                     ,
     double* pos_slice               ,
     int npr                         ,
     int ncoeff_min_loop_nnz         ,
@@ -3985,7 +3985,7 @@ cdef void partial_fft_to_pos_slice_2_sub(
 ) noexcept nogil:
  
     cdef int n_inter = npr+1
-    cdef long nint = 2*ncoeff_min_loop*npr
+    cdef Py_ssize_t nint = 2*ncoeff_min_loop*npr
 
     cdef double dfac = 2.
 
@@ -4004,7 +4004,7 @@ cdef void partial_fft_to_pos_slice_2_sub(
 cdef void pos_slice_to_partial_fft_2_sub(
     double* pos_slice               ,
     double complex* params_basis    ,  
-    long* nnz_k                     ,
+    Py_ssize_t* nnz_k                     ,
     double complex* const_ifft      ,
     int npr                         ,
     int ncoeff_min_loop_nnz         ,
@@ -4015,7 +4015,7 @@ cdef void pos_slice_to_partial_fft_2_sub(
 ) noexcept nogil:
  
     cdef int n_inter = npr+1
-    cdef long nint = 2*ncoeff_min_loop*npr
+    cdef Py_ssize_t nint = 2*ncoeff_min_loop*npr
 
     cdef double dfac
 
@@ -4045,7 +4045,7 @@ cdef void pos_slice_to_partial_fft_2_sub(
 cdef void partial_fft_to_pos_slice_1_sub(
     double complex* const_ifft      ,
     double complex* params_basis    ,
-    long* nnz_k                     ,
+    Py_ssize_t* nnz_k                     ,
     double* const_pos_slice         ,
     int npr                         ,
     int ncoeff_min_loop_nnz         ,
@@ -4055,7 +4055,7 @@ cdef void partial_fft_to_pos_slice_1_sub(
 ) noexcept nogil:
 
     cdef int n_inter = npr+1
-    cdef long nint = 2*ncoeff_min_loop*npr
+    cdef Py_ssize_t nint = 2*ncoeff_min_loop*npr
 
     cdef double dfac = 2.
 
@@ -4112,7 +4112,7 @@ cdef void partial_fft_to_pos_slice_1_sub(
 cdef void pos_slice_to_partial_fft_1_sub(
     double* const_pos_slice         ,
     double complex* params_basis    ,
-    long* nnz_k                     ,
+    Py_ssize_t* nnz_k                     ,
     double complex* const_ifft      ,
     int npr                         ,
     int ncoeff_min_loop_nnz         ,
@@ -4123,7 +4123,7 @@ cdef void pos_slice_to_partial_fft_1_sub(
 ) noexcept nogil:
 
     cdef int n_inter = npr+1
-    cdef long nint = 2*ncoeff_min_loop*npr
+    cdef Py_ssize_t nint = 2*ncoeff_min_loop*npr
 
     cdef double dfac
     cdef double arg
@@ -4199,23 +4199,23 @@ cdef void pos_slice_to_partial_fft_1_sub(
     inplace_twiddle(const_ifft, nnz_k, nint, n_inter, ncoeff_min_loop_nnz, nppl, 1)
 
 cdef void Adjust_after_last_gen(
-    double** pos_slice_buf_ptr          , long[::1] pos_slice_shifts            ,
-    long[:,::1] ifft_shapes             ,
-    long[:,::1] params_basis_shapes     ,
-    long[::1] n_sub_fft                 ,
-    long[::1] ALG_Iint          ,
-    long[::1] ALG_TimeRev       , double[:,:,::1] ALG_SpaceRot  ,
-    long segm_size,
+    double** pos_slice_buf_ptr          , Py_ssize_t[::1] pos_slice_shifts            ,
+    Py_ssize_t[:,::1] ifft_shapes             ,
+    Py_ssize_t[:,::1] params_basis_shapes     ,
+    Py_ssize_t[::1] n_sub_fft                 ,
+    Py_ssize_t[::1] ALG_Iint          ,
+    Py_ssize_t[::1] ALG_TimeRev       , double[:,:,::1] ALG_SpaceRot  ,
+    Py_ssize_t segm_size,
 )noexcept nogil:
 
     cdef double* pos_slice
     cdef double* pos_slice_uneven_source
 
-    cdef long nloop = params_basis_shapes.shape[0]
-    cdef long geodim = params_basis_shapes[0,0]
+    cdef Py_ssize_t nloop = params_basis_shapes.shape[0]
+    cdef Py_ssize_t geodim = params_basis_shapes[0,0]
     cdef Py_ssize_t il
 
-    cdef long npr
+    cdef Py_ssize_t npr
 
     for il in range(nloop):
 
@@ -4236,23 +4236,23 @@ cdef void Adjust_after_last_gen(
                         pos_slice[idim] += ALG_SpaceRot[il,idim,jdim] * pos_slice_uneven_source[jdim]
 
 cdef void Adjust_after_last_gen_T(
-    double** pos_slice_buf_ptr          , long[::1] pos_slice_shifts            ,
-    long[:,::1] ifft_shapes             ,
-    long[:,::1] params_basis_shapes     ,
-    long[::1] n_sub_fft                 ,
-    long[::1] ALG_Iint          ,
-    long[::1] ALG_TimeRev       , double[:,:,::1] ALG_SpaceRot  ,
-    long segm_size                      ,
+    double** pos_slice_buf_ptr          , Py_ssize_t[::1] pos_slice_shifts            ,
+    Py_ssize_t[:,::1] ifft_shapes             ,
+    Py_ssize_t[:,::1] params_basis_shapes     ,
+    Py_ssize_t[::1] n_sub_fft                 ,
+    Py_ssize_t[::1] ALG_Iint          ,
+    Py_ssize_t[::1] ALG_TimeRev       , double[:,:,::1] ALG_SpaceRot  ,
+    Py_ssize_t segm_size                      ,
 )noexcept nogil:
 
     cdef double* pos_slice
     cdef double* pos_slice_uneven_source
 
-    cdef long nloop = params_basis_shapes.shape[0]
-    cdef long geodim = params_basis_shapes[0,0]
+    cdef Py_ssize_t nloop = params_basis_shapes.shape[0]
+    cdef Py_ssize_t geodim = params_basis_shapes[0,0]
     cdef Py_ssize_t il
 
-    cdef long npr
+    cdef Py_ssize_t npr
 
     for il in range(nloop):
 
@@ -4274,14 +4274,14 @@ cdef void Adjust_after_last_gen_T(
                         pos_slice_uneven_source[jdim] += ALG_SpaceRot[il,idim,jdim] * pos_slice[idim]
 
 cdef void params_to_pos_slice(
-    double** params_buf                     , long[:,::1] params_shapes         , long[::1] params_shifts               ,
-    long* nnz_k_buf_ptr                     , long[:,::1] nnz_k_shapes          , long[::1] nnz_k_shifts                ,
-    double complex **ifft_buf_ptr           , long[:,::1] ifft_shapes           , long[::1] ifft_shifts                 ,
+    double** params_buf                     , Py_ssize_t[:,::1] params_shapes         , Py_ssize_t[::1] params_shifts               ,
+    Py_ssize_t* nnz_k_buf_ptr                     , Py_ssize_t[:,::1] nnz_k_shapes          , Py_ssize_t[::1] nnz_k_shifts                ,
+    double complex **ifft_buf_ptr           , Py_ssize_t[:,::1] ifft_shapes           , Py_ssize_t[::1] ifft_shifts                 ,
     int[::1] ParamBasisShortcut             ,
     int fft_backend                         , pyfftw.fftw_exe** fftw_genrfft_exe, pyfftw.fftw_exe** fftw_symirfft_exe   ,
-    double complex *params_basis_buf_ptr    , long[:,::1] params_basis_shapes   , long[::1] params_basis_shifts         ,
-    double** pos_slice_buf_ptr              , long[:,::1] pos_slice_shapes      , long[::1] pos_slice_shifts            ,
-    long[::1] ncoeff_min_loop               , long[::1] n_sub_fft               ,
+    double complex *params_basis_buf_ptr    , Py_ssize_t[:,::1] params_basis_shapes   , Py_ssize_t[::1] params_basis_shifts         ,
+    double** pos_slice_buf_ptr              , Py_ssize_t[:,::1] pos_slice_shapes      , Py_ssize_t[::1] pos_slice_shifts            ,
+    Py_ssize_t[::1] ncoeff_min_loop               , Py_ssize_t[::1] n_sub_fft               ,
 ) noexcept nogil:
 
     cdef double [:,:,::1] params_mv
@@ -4301,7 +4301,7 @@ cdef void params_to_pos_slice(
 
     cdef double complex* ifft
     cdef double complex* params_basis
-    cdef long* nnz_k
+    cdef Py_ssize_t* nnz_k
     cdef double* pos_slice
 
     cdef int npr
@@ -4414,19 +4414,19 @@ cdef void params_to_pos_slice(
 
 @cython.cdivision(True)
 cdef void pos_slice_to_params(
-    double** pos_slice_buf_ptr              , long[:,::1] pos_slice_shapes          , long[::1] pos_slice_shifts        ,
-    double complex *params_basis_buf_ptr    , long[:,::1] params_basis_shapes       , long[::1] params_basis_shifts     ,
-    long* nnz_k_buf_ptr                     , long[:,::1] nnz_k_shapes              , long[::1] nnz_k_shifts            ,
-    double complex **ifft_buf_ptr           , long[:,::1] ifft_shapes               , long[::1] ifft_shifts             ,
-    long[::1] ncoeff_min_loop               , long[::1] n_sub_fft                   , int direction                     ,
-    double **params_buf                     , long[:,::1] params_shapes             , long[::1] params_shifts           ,
+    double** pos_slice_buf_ptr              , Py_ssize_t[:,::1] pos_slice_shapes          , Py_ssize_t[::1] pos_slice_shifts        ,
+    double complex *params_basis_buf_ptr    , Py_ssize_t[:,::1] params_basis_shapes       , Py_ssize_t[::1] params_basis_shifts     ,
+    Py_ssize_t* nnz_k_buf_ptr                     , Py_ssize_t[:,::1] nnz_k_shapes              , Py_ssize_t[::1] nnz_k_shifts            ,
+    double complex **ifft_buf_ptr           , Py_ssize_t[:,::1] ifft_shapes               , Py_ssize_t[::1] ifft_shifts             ,
+    Py_ssize_t[::1] ncoeff_min_loop               , Py_ssize_t[::1] n_sub_fft                   , int direction                     ,
+    double **params_buf                     , Py_ssize_t[:,::1] params_shapes             , Py_ssize_t[::1] params_shifts           ,
     int[::1] ParamBasisShortcut             ,
     int fft_backend                         , pyfftw.fftw_exe** fftw_genirfft_exe   , pyfftw.fftw_exe** fftw_symrfft_exe,
 ) noexcept nogil:
 
     cdef double complex* ifft
     cdef double complex* params_basis
-    cdef long* nnz_k
+    cdef Py_ssize_t* nnz_k
     cdef double* pos_slice
 
     cdef int nloop = ncoeff_min_loop.shape[0]
@@ -4593,16 +4593,16 @@ cdef void pos_slice_to_params(
                         scipy.linalg.cython_blas.dscal(&n,&fac,dest,&int_one)
 
 cdef void pos_slice_to_segmpos(
-    double** pos_slice_buf_ptr      , long[:,::1] pos_slice_shapes  , long[::1] pos_slice_shifts    ,
+    double** pos_slice_buf_ptr      , Py_ssize_t[:,::1] pos_slice_shapes  , Py_ssize_t[::1] pos_slice_shifts    ,
     double* segmpos_buf_ptr         ,
     bint[::1] InterSpaceRotIsId     ,
     double[:,:,::1] InterSpaceRot   ,
-    long[::1] InterTimeRev          ,
-    long[::1] gensegm_to_body       ,
-    long[::1] gensegm_to_iint       ,
-    long[::1] BodyLoop              ,
-    long segm_size                  ,
-    long segm_store                 ,
+    Py_ssize_t[::1] InterTimeRev          ,
+    Py_ssize_t[::1] gensegm_to_body       ,
+    Py_ssize_t[::1] gensegm_to_iint       ,
+    Py_ssize_t[::1] BodyLoop              ,
+    Py_ssize_t segm_size                  ,
+    Py_ssize_t segm_store                 ,
 ) noexcept nogil:
 
     cdef int nsegm = gensegm_to_body.shape[0]
@@ -4672,15 +4672,15 @@ cdef void pos_slice_to_segmpos(
 
 cdef void segmpos_to_pos_slice(
     double* segmpos_buf_ptr         ,
-    double** pos_slice_buf_ptr      , long[:,::1] pos_slice_shapes  , long[::1] pos_slice_shifts    ,
+    double** pos_slice_buf_ptr      , Py_ssize_t[:,::1] pos_slice_shapes  , Py_ssize_t[::1] pos_slice_shifts    ,
     bint[::1] InterSpaceRotIsId     ,
     double[:,:,::1] InterSpaceRot   ,
-    long[::1] InterTimeRev          ,
-    long[::1] gensegm_to_body       ,
-    long[::1] gensegm_to_iint       ,
-    long[::1] BodyLoop              ,
-    long segm_size                  ,
-    long segm_store                 ,
+    Py_ssize_t[::1] InterTimeRev          ,
+    Py_ssize_t[::1] gensegm_to_body       ,
+    Py_ssize_t[::1] gensegm_to_iint       ,
+    Py_ssize_t[::1] BodyLoop              ,
+    Py_ssize_t segm_size                  ,
+    Py_ssize_t segm_store                 ,
 ) noexcept nogil:
 
     cdef int nsegm = gensegm_to_body.shape[0]
@@ -4753,15 +4753,15 @@ cdef void segmpos_to_pos_slice(
 
 cdef void segmpos_to_pos_slice_T(
     double* segmpos_buf_ptr         ,
-    double** pos_slice_buf_ptr      , long[:,::1] pos_slice_shapes  , long[::1] pos_slice_shifts    ,
+    double** pos_slice_buf_ptr      , Py_ssize_t[:,::1] pos_slice_shapes  , Py_ssize_t[::1] pos_slice_shifts    ,
     bint[::1] InterSpaceRotIsId     ,
     double[:,:,::1] InterSpaceRot   ,
-    long[::1] InterTimeRev          ,
-    long[::1] gensegm_to_body       ,
-    long[::1] gensegm_to_iint       ,
-    long[::1] BodyLoop              ,
-    long segm_size                  ,
-    long segm_store                 ,
+    Py_ssize_t[::1] InterTimeRev          ,
+    Py_ssize_t[::1] gensegm_to_body       ,
+    Py_ssize_t[::1] gensegm_to_iint       ,
+    Py_ssize_t[::1] BodyLoop              ,
+    Py_ssize_t segm_size                  ,
+    Py_ssize_t segm_store                 ,
 ) noexcept nogil:
 
     cdef int nsegm = gensegm_to_body.shape[0]
@@ -4836,23 +4836,23 @@ cdef void segmpos_to_pos_slice_T(
 @cython.cdivision(True)
 cdef void params_to_segmpos(
     double[::1] params_mom_buf              ,
-    double** params_pos_buf                 , long[:,::1] params_shapes             , long[::1] params_shifts       ,
-    double complex** ifft_buf_ptr           , long[:,::1] ifft_shapes               , long[::1] ifft_shifts         ,
-    double complex[::1] params_basis_buf    , long[:,::1] params_basis_shapes       , long[::1] params_basis_shifts ,
-    long[::1] nnz_k_buf                     , long[:,::1] nnz_k_shapes              , long[::1] nnz_k_shifts        ,
-    bint[::1] co_in_buf                     , long[:,::1] co_in_shapes              , long[::1] co_in_shifts        ,
-    double** pos_slice_buf_ptr              , long[:,::1] pos_slice_shapes          , long[::1] pos_slice_shifts    ,
-    long[::1] ncoeff_min_loop               , long[::1] n_sub_fft                   , int fft_backend               ,
+    double** params_pos_buf                 , Py_ssize_t[:,::1] params_shapes             , Py_ssize_t[::1] params_shifts       ,
+    double complex** ifft_buf_ptr           , Py_ssize_t[:,::1] ifft_shapes               , Py_ssize_t[::1] ifft_shifts         ,
+    double complex[::1] params_basis_buf    , Py_ssize_t[:,::1] params_basis_shapes       , Py_ssize_t[::1] params_basis_shifts ,
+    Py_ssize_t[::1] nnz_k_buf                     , Py_ssize_t[:,::1] nnz_k_shapes              , Py_ssize_t[::1] nnz_k_shifts        ,
+    bint[::1] co_in_buf                     , Py_ssize_t[:,::1] co_in_shapes              , Py_ssize_t[::1] co_in_shifts        ,
+    double** pos_slice_buf_ptr              , Py_ssize_t[:,::1] pos_slice_shapes          , Py_ssize_t[::1] pos_slice_shifts    ,
+    Py_ssize_t[::1] ncoeff_min_loop               , Py_ssize_t[::1] n_sub_fft                   , int fft_backend               ,
     int[::1] ParamBasisShortcutPos          ,
     pyfftw.fftw_exe** fftw_genrfft_exe      , pyfftw.fftw_exe** fftw_symirfft_exe   ,
-    long[::1] loopnb                        , double[::1] loopmass                  ,
-    bint[::1] InterSpaceRotIsId             , double[:,:,::1] InterSpaceRot         , long[::1] InterTimeRev        ,
-    long[::1] ALG_Iint                      , double[:,:,::1] ALG_SpaceRot          , long[::1] ALG_TimeRev         ,
-    long[::1] gensegm_to_body               ,
-    long[::1] gensegm_to_iint               ,
-    long[::1] BodyLoop                      ,
-    long segm_size                          ,
-    long segm_store                         ,
+    Py_ssize_t[::1] loopnb                        , double[::1] loopmass                  ,
+    bint[::1] InterSpaceRotIsId             , double[:,:,::1] InterSpaceRot         , Py_ssize_t[::1] InterTimeRev        ,
+    Py_ssize_t[::1] ALG_Iint                      , double[:,:,::1] ALG_SpaceRot          , Py_ssize_t[::1] ALG_TimeRev         ,
+    Py_ssize_t[::1] gensegm_to_body               ,
+    Py_ssize_t[::1] gensegm_to_iint               ,
+    Py_ssize_t[::1] BodyLoop                      ,
+    Py_ssize_t segm_size                          ,
+    Py_ssize_t segm_store                         ,
     double[:,:,::1] segmpos                 ,
 ) noexcept nogil:
 
@@ -4907,23 +4907,23 @@ cdef void params_to_segmpos(
 @cython.cdivision(True)
 cdef void params_to_segmvel(
     double[::1] params_mom_buf              ,
-    double** params_vel_buf                 , long[:,::1] params_shapes             , long[::1] params_shifts       ,
-    double complex** ifft_buf_ptr           , long[:,::1] ifft_shapes               , long[::1] ifft_shifts         ,
-    double complex[::1] params_basis_buf    , long[:,::1] params_basis_shapes       , long[::1] params_basis_shifts ,
-    long[::1] nnz_k_buf                     , long[:,::1] nnz_k_shapes              , long[::1] nnz_k_shifts        ,
-    bint[::1] co_in_buf                     , long[:,::1] co_in_shapes              , long[::1] co_in_shifts        ,
-    double** vel_slice_buf_ptr              , long[:,::1] pos_slice_shapes          , long[::1] pos_slice_shifts    ,
-    long[::1] ncoeff_min_loop               , long[::1] n_sub_fft                   , int fft_backend               ,
+    double** params_vel_buf                 , Py_ssize_t[:,::1] params_shapes             , Py_ssize_t[::1] params_shifts       ,
+    double complex** ifft_buf_ptr           , Py_ssize_t[:,::1] ifft_shapes               , Py_ssize_t[::1] ifft_shifts         ,
+    double complex[::1] params_basis_buf    , Py_ssize_t[:,::1] params_basis_shapes       , Py_ssize_t[::1] params_basis_shifts ,
+    Py_ssize_t[::1] nnz_k_buf                     , Py_ssize_t[:,::1] nnz_k_shapes              , Py_ssize_t[::1] nnz_k_shifts        ,
+    bint[::1] co_in_buf                     , Py_ssize_t[:,::1] co_in_shapes              , Py_ssize_t[::1] co_in_shifts        ,
+    double** vel_slice_buf_ptr              , Py_ssize_t[:,::1] pos_slice_shapes          , Py_ssize_t[::1] pos_slice_shifts    ,
+    Py_ssize_t[::1] ncoeff_min_loop               , Py_ssize_t[::1] n_sub_fft                   , int fft_backend               ,
     int[::1] ParamBasisShortcutVel          ,
     pyfftw.fftw_exe** fftw_genrfft_exe      , pyfftw.fftw_exe** fftw_symirfft_exe   ,
-    long[::1] loopnb                        , double[::1] loopmass                  ,
-    bint[::1] InterSpaceRotIsId             , double[:,:,::1] InterSpaceRot         , long[::1] InterTimeRev        ,
-    long[::1] ALG_Iint                      , double[:,:,::1] ALG_SpaceRot          , long[::1] ALG_TimeRev         ,
-    long[::1] gensegm_to_body               ,
-    long[::1] gensegm_to_iint               ,
-    long[::1] BodyLoop                      ,
-    long segm_size                          ,
-    long segm_store                         ,
+    Py_ssize_t[::1] loopnb                        , double[::1] loopmass                  ,
+    bint[::1] InterSpaceRotIsId             , double[:,:,::1] InterSpaceRot         , Py_ssize_t[::1] InterTimeRev        ,
+    Py_ssize_t[::1] ALG_Iint                      , double[:,:,::1] ALG_SpaceRot          , Py_ssize_t[::1] ALG_TimeRev         ,
+    Py_ssize_t[::1] gensegm_to_body               ,
+    Py_ssize_t[::1] gensegm_to_iint               ,
+    Py_ssize_t[::1] BodyLoop                      ,
+    Py_ssize_t segm_size                          ,
+    Py_ssize_t segm_store                         ,
     double[:,:,::1] segmvel                 ,
 ) noexcept nogil:
 
@@ -4978,22 +4978,22 @@ cdef void params_to_segmvel(
 @cython.cdivision(True)
 cdef void segmpos_to_params(
     double[:,:,::1] segmpos                 ,
-    double** params_pos_buf                 , long[:,::1] params_shapes         , long[::1] params_shifts       ,
-    double complex **ifft_buf_ptr           , long[:,::1] ifft_shapes           , long[::1] ifft_shifts         ,
-    double complex[::1] params_basis_buf    , long[:,::1] params_basis_shapes   , long[::1] params_basis_shifts ,
-    long[::1] nnz_k_buf                     , long[:,::1] nnz_k_shapes          , long[::1] nnz_k_shifts        ,
-    bint[::1] co_in_buf                     , long[:,::1] co_in_shapes          , long[::1] co_in_shifts        ,
-    double** pos_slice_buf_ptr              , long[:,::1] pos_slice_shapes      , long[::1] pos_slice_shifts    ,
-    long[::1] ncoeff_min_loop               , long[::1] n_sub_fft               , int fft_backend               ,
+    double** params_pos_buf                 , Py_ssize_t[:,::1] params_shapes         , Py_ssize_t[::1] params_shifts       ,
+    double complex **ifft_buf_ptr           , Py_ssize_t[:,::1] ifft_shapes           , Py_ssize_t[::1] ifft_shifts         ,
+    double complex[::1] params_basis_buf    , Py_ssize_t[:,::1] params_basis_shapes   , Py_ssize_t[::1] params_basis_shifts ,
+    Py_ssize_t[::1] nnz_k_buf                     , Py_ssize_t[:,::1] nnz_k_shapes          , Py_ssize_t[::1] nnz_k_shifts        ,
+    bint[::1] co_in_buf                     , Py_ssize_t[:,::1] co_in_shapes          , Py_ssize_t[::1] co_in_shifts        ,
+    double** pos_slice_buf_ptr              , Py_ssize_t[:,::1] pos_slice_shapes      , Py_ssize_t[::1] pos_slice_shifts    ,
+    Py_ssize_t[::1] ncoeff_min_loop               , Py_ssize_t[::1] n_sub_fft               , int fft_backend               ,
     int[::1] ParamBasisShortcutPos          ,
     pyfftw.fftw_exe** fftw_genirfft_exe     , pyfftw.fftw_exe** fftw_symrfft_exe                                ,
-    long[::1] loopnb                        , double[::1] loopmass              ,
-    bint[::1] InterSpaceRotIsId             , double[:,:,::1] InterSpaceRot     , long[::1] InterTimeRev        ,
-    long[::1] gensegm_to_body               ,
-    long[::1] gensegm_to_iint               ,
-    long[::1] BodyLoop                      ,
-    long segm_size                          ,
-    long segm_store                         ,
+    Py_ssize_t[::1] loopnb                        , double[::1] loopmass              ,
+    bint[::1] InterSpaceRotIsId             , double[:,:,::1] InterSpaceRot     , Py_ssize_t[::1] InterTimeRev        ,
+    Py_ssize_t[::1] gensegm_to_body               ,
+    Py_ssize_t[::1] gensegm_to_iint               ,
+    Py_ssize_t[::1] BodyLoop                      ,
+    Py_ssize_t segm_size                          ,
+    Py_ssize_t segm_store                         ,
     double[::1] params_mom_buf              ,
 ) noexcept nogil:
 
@@ -5036,30 +5036,30 @@ cdef void segmpos_to_params(
 @cython.cdivision(True)
 cdef void segmpos_to_params_T(
     double[:,:,::1] segmpos                 ,
-    double** params_pos_buf                 , long[:,::1] params_shapes             , long[::1] params_shifts       ,
-    double complex **ifft_buf_ptr           , long[:,::1] ifft_shapes               , long[::1] ifft_shifts         ,
-    double complex[::1] params_basis_buf    , long[:,::1] params_basis_shapes       , long[::1] params_basis_shifts ,
-    long[::1] nnz_k_buf                     , long[:,::1] nnz_k_shapes              , long[::1] nnz_k_shifts        ,
-    bint[::1] co_in_buf                     , long[:,::1] co_in_shapes              , long[::1] co_in_shifts        ,
-    double** pos_slice_buf_ptr              , long[:,::1] pos_slice_shapes          , long[::1] pos_slice_shifts    ,
-    long[::1] ncoeff_min_loop               , long[::1] n_sub_fft                   , int fft_backend               ,
+    double** params_pos_buf                 , Py_ssize_t[:,::1] params_shapes             , Py_ssize_t[::1] params_shifts       ,
+    double complex **ifft_buf_ptr           , Py_ssize_t[:,::1] ifft_shapes               , Py_ssize_t[::1] ifft_shifts         ,
+    double complex[::1] params_basis_buf    , Py_ssize_t[:,::1] params_basis_shapes       , Py_ssize_t[::1] params_basis_shifts ,
+    Py_ssize_t[::1] nnz_k_buf                     , Py_ssize_t[:,::1] nnz_k_shapes              , Py_ssize_t[::1] nnz_k_shifts        ,
+    bint[::1] co_in_buf                     , Py_ssize_t[:,::1] co_in_shapes              , Py_ssize_t[::1] co_in_shifts        ,
+    double** pos_slice_buf_ptr              , Py_ssize_t[:,::1] pos_slice_shapes          , Py_ssize_t[::1] pos_slice_shifts    ,
+    Py_ssize_t[::1] ncoeff_min_loop               , Py_ssize_t[::1] n_sub_fft                   , int fft_backend               ,
     int[::1] ParamBasisShortcutPos          ,
     pyfftw.fftw_exe** fftw_genirfft_exe     , pyfftw.fftw_exe** fftw_symrfft_exe                                    ,
-    long[::1] loopnb                        , double[::1] loopmass                  ,
-    bint[::1] InterSpaceRotIsId             , double[:,:,::1] InterSpaceRot         , long[::1] InterTimeRev        ,
-    long[::1] ALG_Iint                      , double[:,:,::1] ALG_SpaceRot  , long[::1] ALG_TimeRev ,
-    long[::1] gensegm_to_body               ,
-    long[::1] gensegm_to_iint               ,
-    long[::1] BodyLoop                      ,
-    long segm_size                          ,
-    long segm_store                         ,
+    Py_ssize_t[::1] loopnb                        , double[::1] loopmass                  ,
+    bint[::1] InterSpaceRotIsId             , double[:,:,::1] InterSpaceRot         , Py_ssize_t[::1] InterTimeRev        ,
+    Py_ssize_t[::1] ALG_Iint                      , double[:,:,::1] ALG_SpaceRot  , Py_ssize_t[::1] ALG_TimeRev ,
+    Py_ssize_t[::1] gensegm_to_body               ,
+    Py_ssize_t[::1] gensegm_to_iint               ,
+    Py_ssize_t[::1] BodyLoop                      ,
+    Py_ssize_t segm_size                          ,
+    Py_ssize_t segm_store                         ,
     double[::1] params_mom_buf              ,
 ) noexcept nogil:
 
     cdef int nsegm = gensegm_to_body.shape[0]
     cdef int geodim = InterSpaceRot.shape[1]
-    cdef long il
-    cdef long nloop = ncoeff_min_loop.shape[0]
+    cdef Py_ssize_t il
+    cdef Py_ssize_t nloop = ncoeff_min_loop.shape[0]
 
     for il in range(nloop):
         memset(pos_slice_buf_ptr[il], 0, sizeof(double)*(pos_slice_shifts[il+1]-pos_slice_shifts[il]))
@@ -5109,7 +5109,7 @@ cdef void segmpos_to_params_T(
     )   
 
 cdef int get_inter_flags(
-    long segm_size                  , long segm_store   ,
+    Py_ssize_t segm_size                  , Py_ssize_t segm_store   ,
     Py_ssize_t geodim               ,
     inter_law_fun_type inter_law    ,
 ) noexcept nogil:
@@ -5128,14 +5128,14 @@ cdef int get_inter_flags(
 @cython.cdivision(True)
 cdef void segm_pos_to_hash(
     double[:,:,::1] segmpos         ,
-    long[::1] BinSourceSegm         , long[::1] BinTargetSegm   ,
+    Py_ssize_t[::1] BinSourceSegm         , Py_ssize_t[::1] BinTargetSegm   ,
     double[:,:,::1] BinSpaceRot     , bint[::1] BinSpaceRotIsId ,
     double[::1] BinProdChargeSum    ,
-    long segm_size                  , long segm_store           ,
+    Py_ssize_t segm_size                  , Py_ssize_t segm_store           ,
     double[::1] Hash_exp            , double[::1] Hash          ,           
 ) noexcept nogil:
 
-    cdef long nbin = BinSourceSegm.shape[0]
+    cdef Py_ssize_t nbin = BinSourceSegm.shape[0]
     cdef int geodim = BinSpaceRot.shape[1]
     cdef int segm_store_int = segm_store
     cdef int nitems_int = segm_store*geodim
@@ -5229,14 +5229,14 @@ cdef void segm_pos_to_hash(
 @cython.cdivision(True)
 cdef double segm_pos_to_pot_nrg(
     double[:,:,::1] segmpos         ,
-    long[::1] BinSourceSegm         , long[::1] BinTargetSegm   ,
+    Py_ssize_t[::1] BinSourceSegm         , Py_ssize_t[::1] BinTargetSegm   ,
     double[:,:,::1] BinSpaceRot     , bint[::1] BinSpaceRotIsId ,
     double[::1] BinProdChargeSum    ,
-    long segm_size                  , long segm_store           ,
+    Py_ssize_t segm_size                  , Py_ssize_t segm_store           ,
     inter_law_fun_type inter_law    ,
 ) noexcept nogil:
 
-    cdef long nbin = BinSourceSegm.shape[0]
+    cdef Py_ssize_t nbin = BinSourceSegm.shape[0]
     cdef int geodim = BinSpaceRot.shape[1]
     cdef Py_ssize_t geodim_size = geodim
     cdef int segm_store_int = segm_store
@@ -5330,14 +5330,14 @@ cdef double segm_pos_to_pot_nrg(
 @cython.cdivision(True)
 cdef void segm_pos_to_pot_nrg_grad(
     double[:,:,::1] segmpos         , double[:,:,::1] pot_nrg_grad  ,
-    long[::1] BinSourceSegm         , long[::1] BinTargetSegm       ,
+    Py_ssize_t[::1] BinSourceSegm         , Py_ssize_t[::1] BinTargetSegm       ,
     double[:,:,::1] BinSpaceRot     , bint[::1] BinSpaceRotIsId     ,
     double[::1] BinProdChargeSum    ,
-    long segm_size                  , long segm_store               , double globalmul          ,
+    Py_ssize_t segm_size                  , Py_ssize_t segm_store               , double globalmul          ,
     inter_law_fun_type inter_law    ,
 ) noexcept nogil:
 
-    cdef long nbin = BinSourceSegm.shape[0]
+    cdef Py_ssize_t nbin = BinSourceSegm.shape[0]
     cdef int geodim = BinSpaceRot.shape[1]
     cdef Py_ssize_t geodim_size = geodim
     cdef int segm_store_int = segm_store
@@ -5394,7 +5394,7 @@ cdef void segm_pos_to_pot_nrg_grad(
 
 @cython.cdivision(True)
 cdef void pot_nrg_grad_inter(
-    int inter_flags , long segm_size    , Py_ssize_t geodim ,      
+    int inter_flags , Py_ssize_t segm_size    , Py_ssize_t geodim ,      
     double* dpos_in , double* grad_in   ,
     inter_law_fun_type inter_law        ,
 ) noexcept nogil:
@@ -5461,7 +5461,7 @@ cdef void pot_nrg_grad_inter(
 
 @cython.cdivision(True)
 cdef void pot_nrg_grad_inter_size_law_nd(
-    long segm_size  , Py_ssize_t geodim ,      
+    Py_ssize_t segm_size  , Py_ssize_t geodim ,      
     double* dpos_in , double* grad_in   ,
     inter_law_fun_type inter_law        ,
 ) noexcept nogil:
@@ -5489,7 +5489,7 @@ cdef void pot_nrg_grad_inter_size_law_nd(
 
 @cython.cdivision(True)
 cdef void pot_nrg_grad_inter_store_law_nd(
-    long segm_size  , Py_ssize_t geodim ,      
+    Py_ssize_t segm_size  , Py_ssize_t geodim ,      
     double* dpos_in , double* grad_in   ,
     inter_law_fun_type inter_law        ,
 ) noexcept nogil:
@@ -5540,7 +5540,7 @@ cdef void pot_nrg_grad_inter_store_law_nd(
 
 @cython.cdivision(True)
 cdef void pot_nrg_grad_inter_size_law_2d(
-    long segm_size  ,      
+    Py_ssize_t segm_size  ,      
     double* dpos_in , double* grad_in   ,
     inter_law_fun_type inter_law        ,
 ) noexcept nogil:
@@ -5566,7 +5566,7 @@ cdef void pot_nrg_grad_inter_size_law_2d(
 
 @cython.cdivision(True)
 cdef void pot_nrg_grad_inter_store_law_2d(
-    long segm_size  ,      
+    Py_ssize_t segm_size  ,      
     double* dpos_in , double* grad_in   ,
     inter_law_fun_type inter_law        ,
 ) noexcept nogil:
@@ -5611,7 +5611,7 @@ cdef void pot_nrg_grad_inter_store_law_2d(
 
 @cython.cdivision(True)
 cdef void pot_nrg_grad_inter_size_gravity_nd(
-    long segm_size  , Py_ssize_t geodim ,        
+    Py_ssize_t segm_size  , Py_ssize_t geodim ,        
     double* dpos_in , double* grad_in   ,
 ) noexcept nogil:
 
@@ -5638,7 +5638,7 @@ cdef void pot_nrg_grad_inter_size_gravity_nd(
 
 @cython.cdivision(True)
 cdef void pot_nrg_grad_inter_store_gravity_nd(
-    long segm_size  , Py_ssize_t geodim ,      
+    Py_ssize_t segm_size  , Py_ssize_t geodim ,      
     double* dpos_in , double* grad_in   ,
 ) noexcept nogil:
 
@@ -5688,7 +5688,7 @@ cdef void pot_nrg_grad_inter_store_gravity_nd(
 
 @cython.cdivision(True)
 cdef void pot_nrg_grad_inter_size_gravity_2d(
-    long segm_size  ,      
+    Py_ssize_t segm_size  ,      
     double* dpos_in , double* grad_in   ,
 ) noexcept nogil:
 
@@ -5713,7 +5713,7 @@ cdef void pot_nrg_grad_inter_size_gravity_2d(
 
 @cython.cdivision(True)
 cdef void pot_nrg_grad_inter_store_gravity_2d(
-    long segm_size  ,      
+    Py_ssize_t segm_size  ,      
     double* dpos_in , double* grad_in   ,
 ) noexcept nogil:
 
@@ -5758,14 +5758,14 @@ cdef void pot_nrg_grad_inter_store_gravity_2d(
 @cython.cdivision(True)
 cdef void segm_pos_to_pot_nrg_hess(
     double[:,:,::1] segmpos         , double[:,:,::1] dsegmpos      , double[:,:,::1] pot_nrg_hess  ,
-    long[::1] BinSourceSegm         , long[::1] BinTargetSegm       ,
+    Py_ssize_t[::1] BinSourceSegm         , Py_ssize_t[::1] BinTargetSegm       ,
     double[:,:,::1] BinSpaceRot     , bint[::1] BinSpaceRotIsId     ,
     double[::1] BinProdChargeSum    ,
-    long segm_size                  , long segm_store               , double globalmul              ,
+    Py_ssize_t segm_size                  , Py_ssize_t segm_store               , double globalmul              ,
     inter_law_fun_type inter_law    ,
 ) noexcept nogil:
 
-    cdef long nbin = BinSourceSegm.shape[0]
+    cdef Py_ssize_t nbin = BinSourceSegm.shape[0]
     cdef int geodim = BinSpaceRot.shape[1]
     cdef Py_ssize_t geodim_size = geodim
     cdef int segm_store_int = segm_store
@@ -5824,7 +5824,7 @@ cdef void segm_pos_to_pot_nrg_hess(
 
 @cython.cdivision(True)
 cdef void pot_nrg_hess_inter(
-    int inter_flags , long segm_size    , Py_ssize_t geodim ,      
+    int inter_flags , Py_ssize_t segm_size    , Py_ssize_t geodim ,      
     double* pos_in  , double* dpos_in   , double* hess_in   ,
     inter_law_fun_type inter_law        ,
 ) noexcept nogil:
@@ -5891,7 +5891,7 @@ cdef void pot_nrg_hess_inter(
 
 @cython.cdivision(True)
 cdef void pot_nrg_hess_inter_size_law_nd(
-    long segm_size  , Py_ssize_t geodim ,      
+    Py_ssize_t segm_size  , Py_ssize_t geodim ,      
     double* pos_in  , double* dpos_in   , double* hess_in   ,
     inter_law_fun_type inter_law        ,
 ) noexcept nogil:
@@ -5926,7 +5926,7 @@ cdef void pot_nrg_hess_inter_size_law_nd(
 
 @cython.cdivision(True)
 cdef void pot_nrg_hess_inter_store_law_nd(
-    long segm_size  , Py_ssize_t geodim ,      
+    Py_ssize_t segm_size  , Py_ssize_t geodim ,      
     double* pos_in  , double* dpos_in   , double* hess_in   ,
     inter_law_fun_type inter_law        ,
 ) noexcept nogil:
@@ -5995,7 +5995,7 @@ cdef void pot_nrg_hess_inter_store_law_nd(
 
 @cython.cdivision(True)
 cdef void pot_nrg_hess_inter_size_law_2d(
-    long segm_size  ,      
+    Py_ssize_t segm_size  ,      
     double* pos_in  , double* dpos_in   , double* hess_in   ,
     inter_law_fun_type inter_law        ,
 ) noexcept nogil:
@@ -6027,7 +6027,7 @@ cdef void pot_nrg_hess_inter_size_law_2d(
 
 @cython.cdivision(True)
 cdef void pot_nrg_hess_inter_store_law_2d(
-    long segm_size  ,
+    Py_ssize_t segm_size  ,
     double* pos_in  , double* dpos_in   , double* hess_in   ,
     inter_law_fun_type inter_law        ,
 ) noexcept nogil:
@@ -6088,7 +6088,7 @@ cdef void pot_nrg_hess_inter_store_law_2d(
 
 @cython.cdivision(True)
 cdef void pot_nrg_hess_inter_size_gravity_nd(
-    long segm_size  , Py_ssize_t geodim ,      
+    Py_ssize_t segm_size  , Py_ssize_t geodim ,      
     double* pos_in  , double* dpos_in   , double* hess_in   ,
 ) noexcept nogil:
 
@@ -6122,7 +6122,7 @@ cdef void pot_nrg_hess_inter_size_gravity_nd(
 
 @cython.cdivision(True)
 cdef void pot_nrg_hess_inter_store_gravity_nd(
-    long segm_size  , Py_ssize_t geodim ,      
+    Py_ssize_t segm_size  , Py_ssize_t geodim ,      
     double* pos_in  , double* dpos_in   , double* hess_in   ,
 ) noexcept nogil:
 
@@ -6190,7 +6190,7 @@ cdef void pot_nrg_hess_inter_store_gravity_nd(
 
 @cython.cdivision(True)
 cdef void pot_nrg_hess_inter_size_gravity_2d(
-    long segm_size  ,      
+    Py_ssize_t segm_size  ,      
     double* pos_in  , double* dpos_in   , double* hess_in   ,
 ) noexcept nogil:
 
@@ -6221,7 +6221,7 @@ cdef void pot_nrg_hess_inter_size_gravity_2d(
 
 @cython.cdivision(True)
 cdef void pot_nrg_hess_inter_store_gravity_2d(
-    long segm_size  ,
+    Py_ssize_t segm_size  ,
     double* pos_in  , double* dpos_in   , double* hess_in   ,
 ) noexcept nogil:
 
@@ -6282,8 +6282,8 @@ cdef void pot_nrg_hess_inter_store_gravity_2d(
 cdef void segmpos_to_unary_path_stats(
     double[:,:,::1] segmpos     ,
     double[:,:,::1] segmvel     ,
-    long segm_size              ,
-    long segm_store             ,
+    Py_ssize_t segm_size              ,
+    Py_ssize_t segm_store             ,
     double[::1]  out_segm_len   ,
 ) noexcept nogil:
 
@@ -6340,13 +6340,13 @@ cdef void segmpos_to_unary_path_stats(
 @cython.cdivision(True)
 cdef void segmpos_to_binary_path_stats(
     double[:,:,::1] segmpos         ,
-    long[::1] BinSourceSegm         , long[::1] BinTargetSegm   ,
+    Py_ssize_t[::1] BinSourceSegm         , Py_ssize_t[::1] BinTargetSegm   ,
     double[:,:,::1] BinSpaceRot     , bint[::1] BinSpaceRotIsId ,
-    long segm_store                 ,
+    Py_ssize_t segm_store                 ,
     double[::1]  out_bin_dx_min     ,
 ) noexcept nogil:
 
-    cdef long nbin = BinSourceSegm.shape[0]
+    cdef Py_ssize_t nbin = BinSourceSegm.shape[0]
     cdef int geodim = BinSpaceRot.shape[1]
     cdef int segm_store_int = segm_store
     cdef int nitems_int = segm_store*geodim

@@ -267,7 +267,7 @@ cdef class ExplicitSymplecticRKTable:
     
     cdef double[::1] _c_table
     cdef double[::1] _d_table
-    cdef long _th_cvg_rate
+    cdef Py_ssize_t _th_cvg_rate
 
     def __init__(
         self                ,
@@ -338,8 +338,8 @@ cpdef ExplicitSymplecticIVP(
     double[:,::1] grad_x0 = None    ,
     double[:,::1] grad_v0 = None    ,
     object mode = "VX"              ,
-    long nint = 1                   ,
-    long keep_freq = -1             ,
+    Py_ssize_t nint = 1                   ,
+    Py_ssize_t keep_freq = -1             ,
     bint DoEFT = True               ,
 ): 
 
@@ -396,8 +396,8 @@ cpdef ExplicitSymplecticIVP(
     if (keep_freq < 0):
         keep_freq = nint
 
-    cdef long ndof = x0.shape[0]
-    cdef long nint_keep = nint // keep_freq
+    cdef Py_ssize_t ndof = x0.shape[0]
+    cdef Py_ssize_t nint_keep = nint // keep_freq
 
     cdef double[::1] x = x0.copy()
     cdef double[::1] v = v0.copy()
@@ -605,8 +605,8 @@ cdef void ExplicitSymplecticIVP_ann(
           double[::1]     res           ,
           double[:,::1]   grad_res      ,
           ExplicitSymplecticRKTable rk  ,
-    const long nint                     ,
-    const long keep_freq                ,
+    const Py_ssize_t nint                     ,
+    const Py_ssize_t keep_freq                ,
     const bint DoEFT                    ,
     const bint DoTanIntegration         ,
           double[:,::1]   x_keep        ,
@@ -620,8 +620,8 @@ cdef void ExplicitSymplecticIVP_ann(
     cdef double dt = (t_span[1] - t_span[0]) / nint
 
     cdef int ndof = x.shape[0]
-    cdef long nint_keep = nint // keep_freq
-    cdef long nsteps = rk._c_table.shape[0]
+    cdef Py_ssize_t nint_keep = nint // keep_freq
+    cdef Py_ssize_t nsteps = rk._c_table.shape[0]
 
     cdef int grad_nvar
     if DoTanIntegration:
@@ -761,7 +761,7 @@ cdef class ImplicitRKTable:
     cdef double[::1] _c_table               # c Butcher table. Integration nodes on [0,1]
     cdef double[:,::1] _beta_table          # Beta Butcher table for initial guess in convergence loop. 
     cdef double[:,::1] _gamma_table         # Beta Butcher table of the symmetric adjoint.
-    cdef long _th_cvg_rate                  # Theoretical convergence rate of the method.
+    cdef Py_ssize_t _th_cvg_rate                  # Theoretical convergence rate of the method.
 
     @cython.final
     def __init__(
@@ -1002,14 +1002,14 @@ cpdef ImplicitSymplecticIVP(
     object grad_gun = None                  ,
     double[:,::1] grad_x0 = None            ,
     double[:,::1] grad_v0 = None            ,
-    long nint = 1                           ,
-    long keep_freq = -1                     ,
+    Py_ssize_t nint = 1                           ,
+    Py_ssize_t keep_freq = -1                     ,
     bint DoEFT = True                       ,
     double eps = np.finfo(np.float64).eps   ,
-    long maxiter = 50                       ,
+    Py_ssize_t maxiter = 50                       ,
 ):
 
-    cdef long nsteps = rk_x._a_table.shape[0]
+    cdef Py_ssize_t nsteps = rk_x._a_table.shape[0]
 
     if (rk_v._a_table.shape[0] != nsteps):
         raise ValueError("rk_x and rk_v must have the same shape")
@@ -1071,8 +1071,8 @@ cpdef ImplicitSymplecticIVP(
     if (keep_freq < 0):
         keep_freq = nint
 
-    cdef long ndof = x0.shape[0]
-    cdef long nint_keep = nint // keep_freq
+    cdef Py_ssize_t ndof = x0.shape[0]
+    cdef Py_ssize_t nint_keep = nint // keep_freq
 
     cdef double[::1] x = x0.copy()
     cdef double[::1] v = v0.copy()
@@ -1306,12 +1306,12 @@ cdef void ImplicitSymplecticIVP_ann(
     const double[::1]     b_table_v     ,
     const double[::1]     c_table_v     ,
     const double[:,::1]   beta_table_v  ,
-    const long nint                     ,
-    const long keep_freq                ,
+    const Py_ssize_t nint                     ,
+    const Py_ssize_t keep_freq                ,
     const bint DoEFT                    ,
     const bint DoTanIntegration         ,
     const double eps                    ,
-    const long maxiter                  ,
+    const Py_ssize_t maxiter                  ,
           double[:,::1]   x_keep        ,
           double[:,::1]   v_keep        ,
           double[:,:,::1] grad_x_keep   ,
@@ -1320,13 +1320,13 @@ cdef void ImplicitSymplecticIVP_ann(
 
     cdef int ndof = x.shape[0]
     cdef int grad_ndof
-    cdef long iGS
+    cdef Py_ssize_t iGS
     cdef Py_ssize_t istep, jdof
     cdef Py_ssize_t iint_keep, ifreq
-    cdef long iint
-    cdef long tot_niter = 0
-    cdef long grad_tot_niter = 0
-    cdef long nint_keep = nint // keep_freq
+    cdef Py_ssize_t iint
+    cdef Py_ssize_t tot_niter = 0
+    cdef Py_ssize_t grad_tot_niter = 0
+    cdef Py_ssize_t nint_keep = nint // keep_freq
 
     cdef bint GoOnGS
 

@@ -12,9 +12,9 @@ import choreo.scipy_plus.linalg
 import networkx
 
 @cython.cdivision(True)
-cdef long gcd (long a, long b) noexcept nogil:
+cdef Py_ssize_t gcd (Py_ssize_t a, Py_ssize_t b) noexcept nogil:
 
-    cdef long c
+    cdef Py_ssize_t c
     while ( a != 0 ):
         c = a
         a = b % a
@@ -52,15 +52,15 @@ cdef class ActionSym():
     @cython.cdivision(True)
     def __init__(
         self                    ,
-        long[::1] BodyPerm      ,
+        Py_ssize_t[::1] BodyPerm      ,
         double[:,::1] SpaceRot  ,
-        long TimeRev            ,
-        long TimeShiftNum       ,
-        long TimeShiftDen       ,
+        Py_ssize_t TimeRev            ,
+        Py_ssize_t TimeShiftNum       ,
+        Py_ssize_t TimeShiftDen       ,
     ):
 
-        cdef long den
-        cdef long num
+        cdef Py_ssize_t den
+        cdef Py_ssize_t num
 
         if TimeShiftDen > 0:
             den = TimeShiftDen
@@ -72,7 +72,7 @@ cdef class ActionSym():
         if (num == 0):
             den = 1
 
-        cdef long g = gcd(num,den)
+        cdef Py_ssize_t g = gcd(num,den)
         num = num // g
         den = den // g
 
@@ -105,7 +105,7 @@ cdef class ActionSym():
     
     @cython.final
     @staticmethod
-    def Identity(long nbody, long geodim):
+    def Identity(Py_ssize_t nbody, Py_ssize_t geodim):
         """
         Identity: Returns the identity transformation
         """        
@@ -120,7 +120,7 @@ cdef class ActionSym():
 
     @cython.final
     @staticmethod
-    def Random(long nbody, long geodim, long maxden = -1):
+    def Random(Py_ssize_t nbody, Py_ssize_t geodim, Py_ssize_t maxden = -1):
         """
         Random Returns a random transformation
         """        
@@ -128,7 +128,7 @@ cdef class ActionSym():
         if maxden < 0:
             maxden = 10*nbody
 
-        perm = np.random.permutation(nbody)
+        perm = np.random.permutation(nbody).astype(np.intp)
 
         rotmat = np.ascontiguousarray(choreo.scipy_plus.linalg.random_orthogonal_matrix(geodim))
 
@@ -151,8 +151,8 @@ cdef class ActionSym():
         Returns the inverse of a symmetry transformation
         """
 
-        cdef long[::1] InvPerm = np.zeros(self._BodyPerm.shape[0], dtype = np.intp)
-        cdef long ib
+        cdef Py_ssize_t[::1] InvPerm = np.zeros(self._BodyPerm.shape[0], dtype = np.intp)
+        cdef Py_ssize_t ib
         for ib in range(self._BodyPerm.shape[0]):
             InvPerm[self._BodyPerm[ib]] = ib
 
@@ -193,14 +193,14 @@ cdef class ActionSym():
         B.Compose(A) returns the composition B o A, i.e. applies A then B.
         """
 
-        cdef long[::1] ComposeBodyPerm = np.zeros(B._BodyPerm.shape[0], dtype = np.intp)
-        cdef long ib
+        cdef Py_ssize_t[::1] ComposeBodyPerm = np.zeros(B._BodyPerm.shape[0], dtype = np.intp)
+        cdef Py_ssize_t ib
         for ib in range(B._BodyPerm.shape[0]):
             ComposeBodyPerm[ib] = B._BodyPerm[A._BodyPerm[ib]]
 
-        cdef long trev = B.TimeRev * A.TimeRev
-        cdef long num = B.TimeRev * A.TimeShiftNum * B.TimeShiftDen + B.TimeShiftNum * A.TimeShiftDen
-        cdef long den = A.TimeShiftDen * B.TimeShiftDen
+        cdef Py_ssize_t trev = B.TimeRev * A.TimeRev
+        cdef Py_ssize_t num = B.TimeRev * A.TimeShiftNum * B.TimeShiftDen + B.TimeShiftNum * A.TimeShiftDen
+        cdef Py_ssize_t den = A.TimeShiftDen * B.TimeShiftDen
 
         return ActionSym(
             BodyPerm = ComposeBodyPerm                      ,
@@ -260,8 +260,8 @@ cdef class ActionSym():
     cpdef bint IsIdentityPerm(ActionSym self):
 
         cdef bint isid = True
-        cdef long ib
-        cdef long nbody = self._BodyPerm.shape[0]
+        cdef Py_ssize_t ib
+        cdef Py_ssize_t nbody = self._BodyPerm.shape[0]
 
         for ib in range(nbody):
             isid = isid and (self._BodyPerm[ib] == ib)
@@ -272,8 +272,8 @@ cdef class ActionSym():
     cpdef bint IsIdentityRot(ActionSym self, double atol = default_atol):
 
         cdef bint isid = True
-        cdef long idim, jdim
-        cdef long geodim = self._SpaceRot.shape[0]
+        cdef Py_ssize_t idim, jdim
+        cdef Py_ssize_t geodim = self._SpaceRot.shape[0]
 
         for idim in range(geodim):
             isid = isid and (cfabs(self._SpaceRot[idim, idim] - 1.) < atol)
@@ -325,8 +325,8 @@ cdef class ActionSym():
     cpdef bint IsSameRot(ActionSym self, ActionSym other, double atol = default_atol):
 
         cdef bint isid = True
-        cdef long idim, jdim
-        cdef long geodim = self._SpaceRot.shape[0]
+        cdef Py_ssize_t idim, jdim
+        cdef Py_ssize_t geodim = self._SpaceRot.shape[0]
 
         for idim in range(geodim):
             for jdim in range(geodim):
@@ -358,13 +358,13 @@ cdef class ActionSym():
 
     @cython.final
     @cython.cdivision(True)
-    cpdef (long, long) ApplyTInv(ActionSym self, long tnum, long tden):
+    cpdef (Py_ssize_t, Py_ssize_t) ApplyTInv(ActionSym self, Py_ssize_t tnum, Py_ssize_t tden):
 
-        cdef long num = self.TimeRev * (tnum * self.TimeShiftDen - self.TimeShiftNum * tden)
-        cdef long den = tden * self.TimeShiftDen
+        cdef Py_ssize_t num = self.TimeRev * (tnum * self.TimeShiftDen - self.TimeShiftNum * tden)
+        cdef Py_ssize_t den = tden * self.TimeShiftDen
         num = ((num % den) + den) % den
 
-        cdef long g = gcd(num,den)
+        cdef Py_ssize_t g = gcd(num,den)
         num = num // g
         den = den // g
 
@@ -372,7 +372,7 @@ cdef class ActionSym():
 
     @cython.final
     @cython.cdivision(True)
-    cpdef (long, long) ApplyTInvSegm(ActionSym self, long tnum, long tden):
+    cpdef (Py_ssize_t, Py_ssize_t) ApplyTInvSegm(ActionSym self, Py_ssize_t tnum, Py_ssize_t tden):
 
         if (self.TimeRev == -1): 
             tnum = ((tnum+1)%tden)
@@ -381,13 +381,13 @@ cdef class ActionSym():
 
     @cython.final
     @cython.cdivision(True)
-    cpdef (long, long) ApplyT(ActionSym self, long tnum, long tden):
+    cpdef (Py_ssize_t, Py_ssize_t) ApplyT(ActionSym self, Py_ssize_t tnum, Py_ssize_t tden):
 
-        cdef long num = self.TimeRev * tnum * self.TimeShiftDen + self.TimeShiftNum * tden
-        cdef long den = tden * self.TimeShiftDen
+        cdef Py_ssize_t num = self.TimeRev * tnum * self.TimeShiftDen + self.TimeShiftNum * tden
+        cdef Py_ssize_t den = tden * self.TimeShiftDen
         
         num = ((num % den) + den) % den
-        cdef long g = gcd(num,den)
+        cdef Py_ssize_t g = gcd(num,den)
         num = num // g
         den = den // g
 
@@ -395,7 +395,7 @@ cdef class ActionSym():
 
     @cython.final
     @cython.cdivision(True)
-    cpdef (long, long) ApplyTSegm(ActionSym self, long tnum, long tden):
+    cpdef (Py_ssize_t, Py_ssize_t) ApplyTSegm(ActionSym self, Py_ssize_t tnum, Py_ssize_t tden):
 
         if (self.TimeRev == -1): 
             tnum = ((tnum+1)%tden)
