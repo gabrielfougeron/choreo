@@ -5,7 +5,6 @@ cimport cython
 
 from libc.stdlib cimport malloc, free
 from libc.math cimport fabs as cfabs
-from libc.complex cimport cexp
 
 cimport scipy.linalg.cython_blas
 

@@ -109,10 +109,40 @@ elif platform.system() == "Darwin": # MacOS
     
     os.environ['CC'] = "clang"
     os.environ['LDSHARED'] = 'clang -shared'
+    
+    ignore_warnings_args = [
+        "-Wno-unused-variable",
+        "-Wno-unused-function",
+        "-Wno-incompatible-pointer-types-discards-qualifiers",
+        "-Wno-unused-command-line-argument"
+    ] 
 
-    extra_compile_args_std = ["-Ofast","-march=native", "-fopenmp"]
-    extra_compile_args_safe = ["-O2", "-fopenmp"]
-    extra_link_args = ["-fopenmp"]
+    extra_compile_args_std = {
+        "profile" : ["-Og", "-fopenmp", "-lm", *ignore_warnings_args],
+        "0" : ["-O0", "-fopenmp", "-lm", *ignore_warnings_args],
+        "1" : ["-O1", "-fopenmp", "-lm", *ignore_warnings_args],
+        "2" : ["-O2", "-fopenmp", "-lm", *ignore_warnings_args],
+        "3" : ["-O3", "-fopenmp", "-lm", *ignore_warnings_args],
+        "fast" : ["-Ofast", "-fopenmp", "-lm", "-flto", *ignore_warnings_args],
+    }[opt_lvl]
+    
+    extra_compile_args_safe = {
+        "profile" : ["-Og", "-fopenmp", "-lm", *ignore_warnings_args],
+        "0" : ["-O0", "-fopenmp", "-lm", *ignore_warnings_args],
+        "1" : ["-O1", "-fopenmp", "-lm", *ignore_warnings_args],
+        "2" : ["-O2", "-fopenmp", "-lm", *ignore_warnings_args],
+        "3" : ["-O3", "-fopenmp", "-lm", *ignore_warnings_args],
+        "fast" : ["-O3", "-fopenmp", "-lm", "-flto", *ignore_warnings_args],
+    }[opt_lvl]
+
+    extra_link_args = {
+        "profile" : ["-fopenmp", "-lm", *ignore_warnings_args],
+        "0" : ["-fopenmp", "-lm", *ignore_warnings_args],
+        "1" : ["-fopenmp", "-lm", *ignore_warnings_args],
+        "2" : ["-fopenmp", "-lm", *ignore_warnings_args],
+        "3" : ["-fopenmp", "-lm", *ignore_warnings_args],
+        "fast" : ["-fopenmp", "-lm", "-flto", *ignore_warnings_args],
+    }[opt_lvl]
 
     cython_extnames.append("choreo.cython.funs_parallel")
     cython_safemath_needed.append(False)
