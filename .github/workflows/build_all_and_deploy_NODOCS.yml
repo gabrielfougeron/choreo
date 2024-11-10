@@ -52,9 +52,11 @@ jobs:
         pyodide build
 
     - name: Install locally in editable mode with pip
+      shell: bash -el {0} # Needed whenever the commands need something in conda
       run:  pip install -e .[full]
 
     - name: Download official gallery
+      shell: bash -el {0} # Needed whenever the commands need something in conda
       run: |
         python -c "import choreo; choreo.GUI.install_official_gallery()"
 
