@@ -39,8 +39,8 @@ jobs:
     - name: Build for Pyodide
       shell: bash -el {0} # Needed whenever the commands need something in conda
       run: |
-        python -m build --sdist
         pyodide build
+        python -m build --sdist
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
@@ -52,7 +52,7 @@ jobs:
         compression-level: 0
 
   build-multi-os:
-    name: Build whl on multiple platforms
+    name: Build
     needs: build-pyodide
     strategy:
       matrix:
@@ -62,7 +62,6 @@ jobs:
     continue-on-error: true
 
     steps:
-
     - name: Install MSVC
       if: matrix.os == 'windows-latest'
       uses: TheMrMilchmann/setup-msvc-dev@v3
@@ -105,6 +104,66 @@ jobs:
         name: ${{ matrix.os }}-${{ matrix.python-version }}-whl
         path: dist/*64.whl
         compression-level: 0
+
+  test-multi-os:
+    name: Test
+    needs: build-pyodide
+    strategy:
+      matrix:
+        os: ["ubuntu-latest", "macos-latest", "windows-latest"]
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
+    runs-on: ${{ matrix.os }}
+    continue-on-error: true
+
+    steps:
+    - name: Install MSVC
+      if: matrix.os == 'windows-latest'
+      uses: TheMrMilchmann/setup-msvc-dev@v3
+      with:
+        arch: x64
+
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Download Pyodide whl
+      uses: actions/download-artifact@v4
+      with:
+        path: dist
+        pattern: pyodide-whl
+        merge-multiple: true
+
+    - name: Setup conda
+      uses: conda-incubator/setup-miniconda@v3
+      with:
+        auto-update-conda: true
+
+    - name: Install conda packages
+      shell: bash -el {0} # Needed whenever the commands need something in conda
+      run: |
+        conda create -n build -y
+        conda activate build
+        conda install python=${{ matrix.python-version }}  
+        conda install --file environment/github-actions/environment-test-${{ matrix.os }}.txt
+        pip install build
+
+    - name: Install
+      shell: bash -el {0} # Needed whenever the commands need something in conda
+      run: |
+        conda activate build
+        pip install .
+
+    - name: Test
+      shell: bash -el {0} # Needed whenever the commands need something in conda
+      run: |
+        conda activate build
+        pytest
+
+#     - name: Upload Artifact
+#       uses: actions/upload-artifact@v4
+#       with:
+#         name: ${{ matrix.os }}-${{ matrix.python-version }}-whl
+#         path: dist/*64.whl
+#         compression-level: 0
 
   gather-all-whl:
     name: Gather all built whls
