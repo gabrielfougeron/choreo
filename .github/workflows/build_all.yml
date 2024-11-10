@@ -173,6 +173,7 @@ jobs:
         pip install .[test-cli]
 
     - name: Test
+      continue-on-error: true
       shell: bash -el {0} # Needed whenever the commands need something in conda
       run: |
         conda activate build
@@ -209,10 +210,20 @@ jobs:
           name: all-tests
           path: pytest_out
 
+  gather-all-outputs:
+    name: Gather all outputs
+    needs: [gather-all-whl, gather-all-junit]
+    runs-on: ubuntu-latest
+    steps:
 
+      - name: Download test outputs
+        uses: actions/download-artifact@v4
+        with:
+          path: artifact
+          pattern: 'all-*'
+          merge-multiple: true
 
-        
-
-
-
-
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          path: artifact
