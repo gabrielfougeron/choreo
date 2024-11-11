@@ -193,10 +193,10 @@ def Find_Choreo(
             max_num_file = max_num_file + 1
 
             if (AddNumberToOutputName):   
-                filename_output = os.path.join(store_folder,file_basename+'_init_'+str(max_num_file).zfill(5))
+                filename_output = os.path.join(store_folder, file_basename+'_init_'+str(max_num_file).zfill(5))
 
             else:
-                filename_output = os.path.join(store_folder,file_basename+'_init')
+                filename_output = os.path.join(store_folder, file_basename+'_init')
 
             NBS.Write_Descriptor(x, segmpos=segmpos, filename = filename_output+'.json')
 
@@ -386,11 +386,11 @@ def Find_Choreo(
 
                     if (AddNumberToOutputName):   
 
-                        filename_output = os.path.join(store_folder,file_basename+str(max_num_file).zfill(5))
+                        filename_output = os.path.join(store_folder, file_basename+str(max_num_file).zfill(5))
 
                     else:
 
-                        filename_output = os.path.join(store_folder,file_basename)
+                        filename_output = os.path.join(store_folder, file_basename)
 
                     print(f'Saving solution as {filename_output}.*.')
              
@@ -455,8 +455,6 @@ def ChoreoFindFromDict(params_dict, extra_args_dict, Workspace_folder):
     all_kwargs = ChoreoLoadFromDict(params_dict, Workspace_folder, callback = Find_Choreo, extra_args_dict=extra_args_dict)
 
     Find_Choreo(**all_kwargs)
-
-
 
 def ChoreoLoadFromDict_old(params_dict, Workspace_folder, callback=None, args_list=None):
 
@@ -662,13 +660,6 @@ def ChoreoLoadFromDict_old(params_dict, Workspace_folder, callback=None, args_li
         coeff_ampl_o    = params_dict["Phys_Random"]["coeff_ampl_o"]
         k_infl          = params_dict["Phys_Random"]["k_infl"]
         k_max           = params_dict["Phys_Random"]["k_max"]
-
-    CurrentlyDeveloppingNewStuff = params_dict.get("CurrentlyDeveloppingNewStuff",False)
-
-    store_folder = os.path.join(Workspace_folder,str(nbody))
-    if not(os.path.isdir(store_folder)):
-
-        os.makedirs(store_folder)
 
     Use_exact_Jacobian = params_dict["Solver_Discr"]["Use_exact_Jacobian"]
 
@@ -996,16 +987,6 @@ def ChoreoLoadFromDict(params_dict, Workspace_folder, callback=None, args_list=N
         k_infl          = params_dict["Phys_Random"]["k_infl"]
         k_max           = params_dict["Phys_Random"]["k_max"]
 
-    CurrentlyDeveloppingNewStuff = params_dict.get("CurrentlyDeveloppingNewStuff",False)
-
-    # if sys.platform == 'emscripten':
-    #     store_folder = os.path.join(Workspace_folder,str(nbody))
-    # else:
-    #     store_folder = os.path.join(Workspace_folder,str(nbody))
-    store_folder = os.path.join(Workspace_folder,str(nbody))
-    if not(os.path.isdir(store_folder)):
-        os.makedirs(store_folder)
-
     Use_exact_Jacobian = params_dict["Solver_Discr"]["Use_exact_Jacobian"]
 
     Look_for_duplicates = params_dict["Solver_Checks"]["Look_for_duplicates"]
@@ -1147,14 +1128,26 @@ def Pick_Named_Args_From_Dict(fun, the_dict, MissingArgsAreNone=True):
     
     return all_kwargs
 
-def ChoreoReadDictAndFind(Workspace_folder, config_filename="choreo_config.json"):
+def ChoreoReadDictAndFind(Workspace_folder, store_folder = None, config_filename="choreo_config.json"):
     
     params_filename = os.path.join(Workspace_folder, config_filename)
 
     with open(params_filename) as jsonFile:
         params_dict = json.load(jsonFile)
         
-    ChoreoChooseParallelEnvAndFind(Workspace_folder, params_dict)
+    if store_folder is None:
+        if sys.platform == 'emscripten':
+            store_folder = os.path.join(Workspace_folder, "GUI solutions")
+        else:
+            store_folder = os.path.join(Workspace_folder, "CLI solutions")
+        extra_args_dict = {"store_folder" : store_folder}
+    else:
+        extra_args_dict = {}
+        
+    if not os.path.isdir(store_folder):
+        os.makedirs(store_folder)
+        
+    ChoreoChooseParallelEnvAndFind(Workspace_folder, params_dict, extra_args_dict)
     
 def ChoreoChooseParallelEnvAndFind(Workspace_folder, params_dict, extra_args_dict={}):
     
@@ -1163,7 +1156,6 @@ def ChoreoChooseParallelEnvAndFind(Workspace_folder, params_dict, extra_args_dic
         params_dict['Solver_CLI']['SaveImage'] = False
         params_dict['Solver_CLI']['SaveVideo'] = False
         params_dict['Solver_CLI']['fft_backend'] = "scipy" 
-
 
     Exec_Mul_Proc = params_dict['Solver_CLI']['Exec_Mul_Proc']
     n_threads = params_dict['Solver_CLI']['nproc']

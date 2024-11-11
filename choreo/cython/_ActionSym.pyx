@@ -330,11 +330,9 @@ cdef class ActionSym():
 
         for idim in range(geodim):
             for jdim in range(geodim):
-
                 isid = isid and (cfabs(self._SpaceRot[idim, jdim] - other._SpaceRot[idim, jdim]) < atol)
 
         return isid
-
     
     @cython.final
     cpdef bint IsSameTimeRev(ActionSym self, ActionSym other):

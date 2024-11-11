@@ -31,7 +31,7 @@ def CLI_search(cli_args):
     FoundFile = False
     for root in root_list:
 
-        Workspace_folder = os.path.join(root,args.Workspace_folder)
+        Workspace_folder = os.path.join(root, args.Workspace_folder)
 
         if os.path.isdir(Workspace_folder):
             FoundFile = True
