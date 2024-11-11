@@ -1084,7 +1084,7 @@ cdef class NBodySyst():
         cdef Py_ssize_t ib , iint
         cdef Py_ssize_t ibp, iintp
 
-        self._SegmRequiresDisp =  -np.ones((self.nbody, self.nint_min), dtype=np.intc)
+        self._SegmRequiresDisp = -np.ones((self.nbody, self.nint_min), dtype=np.intc)
                     
         cdef ActionSym Identity, Sym, EdgeSym, NewSym, Plotted_Sym
                 
@@ -1092,6 +1092,7 @@ cdef class NBodySyst():
 
         # More convoluted code because I want to make sure a path has a single color in the GUI
         for ib in range(self.nbody):
+
             for iint in range(self.nint_min):
         
                 if self._SegmRequiresDisp[ib,iint] < 0:
@@ -1105,11 +1106,11 @@ cdef class NBodySyst():
                     for edge in networkx.dfs_edges(self.SegmGraph, source=segm_source):
 
                         ibp = edge[1][0]
+
                         iintp = edge[1][1]
                         
                         Sym = Sym_dict[edge[0]]
                         EdgeSym = self.SegmGraph.edges[edge]["SymList"][0]    
-
 
                         if edge[0] <= edge[1]:
                             NewSym = EdgeSym.Compose(Sym)
@@ -1118,13 +1119,32 @@ cdef class NBodySyst():
 
                         Sym_dict[edge[1]] = NewSym
 
-                        for Plotted_Sym in Plotted_Syms:
-                            if Plotted_Sym.IsSameRot(NewSym):
-                                self._SegmRequiresDisp[ibp,iintp] = 0
-                                break
-                        else:
-                            self._SegmRequiresDisp[ibp,iintp] = 1
-                            Plotted_Syms.append(NewSym)
+                        if ib == ibp:
+
+                            for Plotted_Sym in Plotted_Syms:
+                                if Plotted_Sym.IsSameRot(NewSym):
+                                    self._SegmRequiresDisp[ibp,iintp] = 0
+                                    break
+                            else:
+                                self._SegmRequiresDisp[ibp,iintp] = 1
+                                Plotted_Syms.append(NewSym)
+
+                    for edge in networkx.dfs_edges(self.SegmGraph, source=segm_source):
+
+                        ibp = edge[1][0]
+
+                        if ib != ibp:
+                            iintp = edge[1][1]
+
+                            NewSym = Sym_dict[edge[1]]
+
+                            for Plotted_Sym in Plotted_Syms:
+                                if Plotted_Sym.IsSameRot(NewSym):
+                                    self._SegmRequiresDisp[ibp,iintp] = 0
+                                    break
+                            else:
+                                self._SegmRequiresDisp[ibp,iintp] = 1
+                                Plotted_Syms.append(NewSym)
 
         assert (np.asarray(self._SegmRequiresDisp) >= 0).all()
 
@@ -1134,20 +1154,11 @@ cdef class NBodySyst():
         self._n_sub_fft = np.zeros((self.nloop), dtype=np.intp)
         cdef Py_ssize_t il
         for il in range(self.nloop):
-# 
-# 
-#             print(f'{il = }')
-#             print(f'{self.nint_min = }')
-#             print(f'{self._ncoeff_min_loop[il]  = }')
-#             print(f'{self._ngensegm_loop[il]  = }')
-#             
+
             assert  self.nint_min % self._ncoeff_min_loop[il] == 0
             assert (self.nint_min // self._ncoeff_min_loop[il]) % self._ngensegm_loop[il] == 0        
             
             self._n_sub_fft[il] = (self.nint_min // (self._ncoeff_min_loop[il] * self._ngensegm_loop[il]))
-
-            # print(f'{self._n_sub_fft[il] = }')
-            # print()
 
             assert (self.nint_min // (self._ncoeff_min_loop[il] * self._ngensegm_loop[il])) in [1,2]
 
