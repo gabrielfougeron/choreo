@@ -590,6 +590,9 @@ cdef class NBodySyst():
         self._nnz_k_buf, self._nnz_k_shapes, self._nnz_k_shifts = BundleListOfArrays(nnz_k_list)
         self._co_in_buf, self._co_in_shapes, self._co_in_shifts = BundleListOfArrays(co_in_list)
 
+        if self._params_shifts[self.nloop] == 0:
+            raise ValueError("Given symmetries resulted in an empty parameter basis.")
+
         self.ConfigureShortcutSym()
 
         self._nco_in_loop = np.zeros((self.nloop), dtype=np.intp)
