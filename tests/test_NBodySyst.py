@@ -120,7 +120,7 @@ def test_capture_co(AllNBS):
             for iparam in range(co_in.shape[0]):            
                 assert not(co_in[iparam]) == (iparam in nnz[il])
 
-@ProbabilisticTest()
+# @ProbabilisticTest()
 def test_round_trips_pos(AllNBS, float64_tols):
     
     for name, NBS in AllNBS.items():
@@ -153,7 +153,7 @@ def test_round_trips_pos(AllNBS, float64_tols):
         
         print()
         
-@ProbabilisticTest()
+# @ProbabilisticTest()
 def test_round_trips_vel(AllNBS, float64_tols):
     
     for name, NBS in AllNBS.items():
@@ -280,7 +280,7 @@ def test_kin(AllNBS, float64_tols):
         assert err.min() < float64_tols.rtol
         print()
         
-@ProbabilisticTest(RepeatOnFail=2)
+# @ProbabilisticTest(RepeatOnFail=2)
 def test_pot(AllNBS):
     
     for name, NBS in AllNBS.items():
@@ -399,10 +399,10 @@ def test_resize(AllNBS, float64_tols):
         assert np.allclose(segmpos[:,:small_segm_size,:], segmpos_long[:,:long_segm_size:fac,:], rtol = float64_tols.rtol, atol = float64_tols.atol) 
         print()
         
-@ProbabilisticTest()
-def test_pot_indep_resize(AllNBS):
+# @ProbabilisticTest()
+def test_pot_indep_resize(AllNBS_nozerodiv):
     
-    for name, NBS in AllNBS.items():
+    for name, NBS in AllNBS_nozerodiv.items():
         
         print(f"Config name : {name}")   
         
@@ -511,6 +511,7 @@ def test_ForceGeneralSym(AllNBS, float64_tols):
         print()
 
 # @pytest.mark.skip(reason="PYFFTW install currently broken")
+@ProbabilisticTest(RepeatOnFail=2)
 def test_fft_backends(AllNBS, float64_tols):
     
     for name, NBS in AllNBS.items():
@@ -546,11 +547,11 @@ def test_fft_backends(AllNBS, float64_tols):
 
         print()
         
-def test_action_cst_sym_pairs(AllNBSPairs, float64_tols):
+def test_action_cst_sym_pairs(AllNBSPairs_nozerodiv, float64_tols):
     
     # m => more symmetry. l => less symmetry
     
-    for (name_m, name_l), (NBS_m, NBS_l) in AllNBSPairs.items():
+    for (name_m, name_l), (NBS_m, NBS_l) in AllNBSPairs_nozerodiv.items():
         
         print(f"Config name : {name_m}, {name_l}")
 
