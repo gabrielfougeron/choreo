@@ -241,10 +241,6 @@ window.addEventListener("drop",function(e){
         <td style="border:none;width:400px;" ><label for="input_nbody">Number of bodies</label></td>
         <td style="border:none;" ><input id ="input_nbody" type="number" value="3" min="2" style="width:50px;" onchange="UpdateNumberofBodies()"></td>
       </tr>
-      <tr>
-        <td style="border:none;width:400px;" ><label for="checkbox_MomCons">Treat momentum conservation as a constraint</label></td>
-        <td style="border:none;"><input id ="checkbox_MomCons" class="w3-check" type="checkbox" style="vertical-align: super" unchecked></td>
-      </tr>
     </table>
     <div>
       A symmetry requires the system to be invariant under the action of:<br>
@@ -531,9 +527,9 @@ window.addEventListener("drop",function(e){
               <option value="lgmres">LGMRES</option>
               <option value="gmres" selected>GMRES</option>
               <option value="bicgstab">BiCGSTAB</option>
-              <option value="cgs">CGS</option>
+              <!-- <option value="cgs">CGS</option>  --> <!-- Kinda buggy rn --> 
               <option value="minres">MINRES</option>
-              <!-- <option value="tfqmr">TFQMR</option> -->
+              <option value="tfqmr">TFQMR</option>
             </select>
           </td>
         </tr>

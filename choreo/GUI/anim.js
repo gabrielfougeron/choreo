@@ -899,21 +899,17 @@ function canvasApp() {
 		var RotMat
 
 		var segm_store = Pos.shape[1]
-		if (PlotInfo["segm_size"] == PlotInfo["segm_store"]){
-			var segm_size = segm_store
-		} else {
-			var segm_size = segm_store - 1
-		}
+		var segm_size = PlotInfo["segm_size"]
+		var nint_min = PlotInfo['nint_min']
 
 		for (ib=0; ib<PlotInfo['nbody']; ib++) {
 
-			for (iint=0; iint<PlotInfo['nint_min']; iint++) {
+			for (iint=0; iint<nint_min; iint++) {
 
 				if (PlotInfo['SegmRequiresDisp'][ib][iint]) {
 					
 					isegm = PlotInfo['bodysegm'][ib][iint]
-
-					io = segm_store * isegm * 2
+					i = segm_store * isegm * 2
 
 					p = particles[ib];
 					trailLayerContext.lineWidth = p.PartRelSize * base_trailWidth 
@@ -927,8 +923,10 @@ function canvasApp() {
 					RotMat = PlotInfo['InterSegmSpaceRot'][ib][iint]
 
 					// Super ugly
-					xl = Pos.data[ io     ] 
-					yl = Pos.data[ io + 1 ] 
+					xl = Pos.data[i]
+					i += 1
+					yl = Pos.data[i] 
+					i += 1
 
 					x = RotMat[0][0] * xl + RotMat[0][1] * yl 
 					y = RotMat[1][0] * xl + RotMat[1][1] * yl 
@@ -942,8 +940,10 @@ function canvasApp() {
 					for (i_pos = 1 ; i_pos < segm_store ; i_pos++){
 
 						// Super ugly
-						xl = Pos.data[ io + 2*i_pos 	] 
-						yl = Pos.data[ io + 2*i_pos + 1	] 
+						xl = Pos.data[i] 
+						i += 1
+						yl = Pos.data[i] 
+						i += 1
 
 						x = RotMat[0][0] * xl + RotMat[0][1] * yl 
 						y = RotMat[1][0] * xl + RotMat[1][1] * yl 
@@ -951,24 +951,34 @@ function canvasApp() {
 						Pixx = xPixRate*(x - xMin) 
 						Pixy = yPixRate*(y - yMax) 
 
-						trailLayerContext.lineTo(Pixx, Pixy);
+						trailLayerContext.lineTo(Pixx, Pixy)
 
 					}
 
+					if (segm_size == segm_store){
+						jint = (iint + 1) % nint_min
+
+						RotMat = PlotInfo['InterSegmSpaceRot'][ib][jint]
+						isegm = PlotInfo['bodysegm'][ib][jint]
+						i = segm_store * isegm * 2
+
+						// Super ugly
+						xl = Pos.data[i]
+						i += 1
+						yl = Pos.data[i] 
+						i += 1
+
+						x = RotMat[0][0] * xl + RotMat[0][1] * yl 
+						y = RotMat[1][0] * xl + RotMat[1][1] * yl 
+
+						Pixx = xPixRate*(x - xMin) 
+						Pixy = yPixRate*(y - yMax) 
+
+						trailLayerContext.lineTo(Pixx, Pixy)
+
+					}
+					
 					trailLayerContext.stroke()
-// 
-// 					// Super ugly
-// 					xl = Pos.data[  2*il    * n_pos] 
-// 					yl = Pos.data[ (2*il+1) * n_pos] 
-// 
-// 					x = RotMat[0][0] * xl + RotMat[0][1] * yl 
-// 					y = RotMat[1][0] * xl + RotMat[1][1] * yl  
-// 
-// 					Pixx = xPixRate*(x - xMin) 
-// 					Pixy = yPixRate*(y - yMax) 
-// 
-// 					trailLayerContext.lineTo(Pixx, Pixy)
-// 					trailLayerContext.stroke()
 
 				}
 			}

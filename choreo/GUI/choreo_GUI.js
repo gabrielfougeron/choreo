@@ -440,8 +440,6 @@ function GatherPhys_Bodies(nbody = -1){
 
     Phys_Bodies ['nbody'] = parseInt(nbody,10)
 
-    Phys_Bodies ['MomConsImposed'] = document.getElementById('checkbox_MomCons').checked
-
     table_sym = document.getElementById('table_sym')
     var nsyms = table_sym.rows[0].cells.length - 1
 
@@ -680,9 +678,6 @@ function LoadPhys_Bodies(Phys_Bodies){
     nbody = Phys_Bodies ['nbody'] 
 
     document.getElementById("input_nbody").value = nbody
-    document.getElementById('checkbox_MomCons').checked = Phys_Bodies ['MomConsImposed']
-    
-    // Phys_Bodies ['mass'] = [] ???
 
     table_sym = document.getElementById('table_sym')
 
