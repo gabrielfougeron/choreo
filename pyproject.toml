@@ -44,8 +44,8 @@ file = ["requirements/requirements.txt"]
 build     = {file = ["requirements/requirements-build.txt"    ]}
 gui       = {file = ["requirements/requirements-gui.txt"      ]}
 cli       = {file = ["requirements/requirements-cli.txt"      ]}
-test_cli  = {file = ["requirements/requirements-test-cli.txt" ]}
-test_gui  = {file = ["requirements/requirements-test-gui.txt" ]}
+test-cli  = {file = ["requirements/requirements-test-cli.txt" ]}
+test-gui  = {file = ["requirements/requirements-test-gui.txt" ]}
 test      = {file = ["requirements/requirements-test.txt"     ]}
 bench     = {file = ["requirements/requirements-bench.txt"    ]}
 docs      = {file = ["requirements/requirements-docs.txt"     ]}
