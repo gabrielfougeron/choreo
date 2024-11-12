@@ -340,7 +340,7 @@ def AccumulateSegmentConstraints(SegmGraph, nbody, geodim, nsegm, bodysegm):
 
     for Cycle in Cycles:
 
-        isegm = bodysegm[*Cycle[0]]
+        isegm = bodysegm[Cycle[0][0],Cycle[0][1]]
         Cycle_len = len(Cycle)
         
         Constraint = ActionSym.Identity(nbody, geodim)
@@ -876,12 +876,12 @@ def FindAllBinarySegments(intersegm_to_all, nbody, nsegm, nint_min, bodysegm, bo
         for ib in range(nbody-1):
             
             segm = (ib, iint)
-            isegm = bodysegm[*segm]
+            isegm = bodysegm[ib, iint]
 
             for ibp in range(ib+1,nbody):
                 
                 segmp = (ibp, iint)
-                isegmp = bodysegm[*segmp] 
+                isegmp = bodysegm[ibp, iint] 
 
                 if (isegm <= isegmp):
                     bisegm = (isegm, isegmp)
