@@ -544,7 +544,6 @@ def ChoreoLoadFromDict_old(params_dict, Workspace_folder, callback=None, args_li
         nbody = len(mass)
 
     nbody = params_dict["Phys_Bodies"]["nbody"]
-    MomConsImposed = params_dict['Phys_Bodies'] ['MomConsImposed']
     nsyms = params_dict["Phys_Bodies"]["nsyms"]
 
     nloop = params_dict["Phys_Bodies"]["nloop"]
@@ -870,7 +869,6 @@ def ChoreoLoadFromDict(params_dict, Workspace_folder, callback=None, args_list=N
 #         nbody = len(mass)
 
     nbody = params_dict["Phys_Bodies"]["nbody"]
-    MomConsImposed = params_dict['Phys_Bodies'] ['MomConsImposed']
     nsyms = params_dict["Phys_Bodies"]["nsyms"]
 
     nloop = params_dict["Phys_Bodies"]["nloop"]
