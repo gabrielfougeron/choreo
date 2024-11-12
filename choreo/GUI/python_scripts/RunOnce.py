@@ -1,11 +1,7 @@
 import os
-
-os.environ['OPENBLAS_NUM_THREADS'] = '1'
-
 import shutil
 import asyncio
 import numpy as np
-import math as m
 
 import choreo 
 
@@ -195,7 +191,10 @@ async def main(params_dict):
     extra_args_dict['max_num_file'] = max_num_file
     extra_args_dict['file_basename'] = file_basename
     
-    choreo.find.ChoreoChooseParallelEnvAndFind(Workspace_folder, params_dict, extra_args_dict)
+    try:
+        choreo.find.ChoreoChooseParallelEnvAndFind(Workspace_folder, params_dict, extra_args_dict)
+    except Exception as exc:
+        print(exc)
 
     filename_output = store_folder+'/'+file_basename
     filename = filename_output+".json"

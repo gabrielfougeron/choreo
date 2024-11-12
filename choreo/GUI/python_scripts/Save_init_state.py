@@ -1,16 +1,8 @@
 import os
-
 import shutil
-import random
-import time
-import math as m
 import numpy as np
-import sys
-import fractions
-import json
 import choreo 
 import asyncio
-
 
 import js
 import pyodide
@@ -44,7 +36,10 @@ async def main(params_dict):
     extra_args_dict['save_first_init'] = True
     extra_args_dict['Save_SegmPos'] = True
     
-    choreo.find.ChoreoChooseParallelEnvAndFind(Workspace_folder, params_dict, extra_args_dict)
+    try:
+        choreo.find.ChoreoChooseParallelEnvAndFind(Workspace_folder, params_dict, extra_args_dict)
+    except Exception as exc:
+        print(exc)
 
     filename_output = store_folder+'/_init'
     filename = filename_output+".json"
