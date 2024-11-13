@@ -92,7 +92,7 @@ signatures[1].signature = NULL
 
 @cython.profile(False)
 @cython.linetrace(False)
-cdef void gravity_pot(double xsq, double* res) noexcept nogil:
+cdef inline void inline_gravity_pot(double xsq, double* res) noexcept nogil:
     
     cdef double a = cpow(xsq,-2.5)
     cdef double b = xsq*a
@@ -100,6 +100,12 @@ cdef void gravity_pot(double xsq, double* res) noexcept nogil:
     res[0] = -xsq*b
     res[1]= 0.5*b
     res[2] = (-0.75)*a
+
+@cython.profile(False)
+@cython.linetrace(False)
+cdef void gravity_pot(double xsq, double* res) noexcept nogil:
+
+    inline_gravity_pot(xsq, res)
 
 @cython.profile(False)
 @cython.linetrace(False)
@@ -139,6 +145,11 @@ cdef class NBodySyst():
     cdef readonly Py_ssize_t nbin_segm_unique
 
     cdef readonly bint RequiresGreaterNStore
+    cdef bint _GreaterNStore
+    @property 
+    def GreaterNStore(self):
+        return self._GreaterNStore
+    
     cdef int _fft_backend
 
     cdef public object fftw_planner_effort
@@ -457,16 +468,17 @@ cdef class NBodySyst():
     @property
     def ParamBasisShortcutVel(self):
         return [shortcut_name[shortcut] for shortcut in self._ParamBasisShortcutVel]
-        
+
     def __init__(
         self                            ,
-        Py_ssize_t geodim                     ,
-        Py_ssize_t nbody                      ,
+        Py_ssize_t geodim               ,
+        Py_ssize_t nbody                ,
         double[::1] bodymass            ,
         double[::1] bodycharge          ,
         list Sym_list                   ,
         object inter_law = None         , 
         bint ForceGeneralSym = False    ,
+        bint ForceGreaterNStore = False ,
     ):
 
         self._nint_fac = 0 
@@ -615,6 +627,7 @@ cdef class NBodySyst():
         self.fftw_nthreads = 1
         self.fftw_wisdom_only = False
 
+        self._GreaterNStore = self.RequiresGreaterNStore or ForceGreaterNStore
         self.nint_fac = 1
         self.ForceGeneralSym = ForceGeneralSym
 
@@ -797,7 +810,7 @@ cdef class NBodySyst():
         self.ncoeffs = self._nint // 2 + 1
         self.segm_size = self._nint // self.nint_min
 
-        if self.RequiresGreaterNStore:
+        if self._GreaterNStore:
             self.segm_store = self.segm_size + 1
         else:
             self.segm_store = self.segm_size
@@ -817,7 +830,7 @@ cdef class NBodySyst():
             if self._n_sub_fft[il] == 2:
                 ninter = npr+1
             elif self._n_sub_fft[il] == 1:
-                if self.RequiresGreaterNStore: 
+                if self._GreaterNStore: 
                     ninter = 2*npr+1
                 else:
                     ninter = 2*npr
@@ -879,6 +892,16 @@ cdef class NBodySyst():
             self._ParamBasisShortcutVel = self._ParamBasisShortcutVel_th.copy()
 
         self.allocate_owned_memory()
+
+    @cython.cdivision(True)
+    @cython.final
+    def ForceGreaterNStore(self, bint force_in):
+
+        cdef bint NewGreaterNStore = force_in or self.RequiresGreaterNStore
+        
+        if NewGreaterNStore != self._GreaterNStore:
+            self._GreaterNStore = NewGreaterNStore
+            self.nint = self._nint
 
     @cython.final
     def DetectLoops(self, double[::1] bodymass, double[::1] bodycharge, Py_ssize_t nint_min_fac = 1):
@@ -2988,13 +3011,16 @@ cdef class NBodySyst():
         return segmvals
 
     @cython.final
-    def segmpos_to_all_noopt(self, segmpos, pos=True):
+    def segmpos_to_all_noopt(self, double[:,:,::1] segmpos, bint pos=True):
 
         assert self.segm_store == segmpos.shape[1]
 
         cdef Py_ssize_t ib, iint, il
+        cdef Py_ssize_t ibeg, segmend
+        cdef Py_ssize_t segmbeg, iend
+        cdef ActionSym Sym
 
-        all_pos = np.empty((self.nloop, self._nint, self.geodim), dtype=np.float64)
+        cdef np.ndarray[double, ndim=3, mode='c'] all_pos = np.empty((self.nloop, self._nint, self.geodim), dtype=np.float64)
 
         for il in range(self.nloop):
 
@@ -3024,6 +3050,102 @@ cdef class NBodySyst():
 
         return all_pos
         
+    @cython.final
+    def segmpos_to_allbody_noopt(self, double[:,:,::1] segmpos, bint pos=True):
+
+        assert self.segm_store == segmpos.shape[1]
+
+        cdef Py_ssize_t ib, iint
+        cdef Py_ssize_t ibeg, segmend
+        cdef Py_ssize_t segmbeg, iend
+        cdef ActionSym Sym
+
+        cdef double[:,:,::1] all_bodypos = np.empty((self.nbody, self._nint, self.geodim), dtype=np.float64)
+
+        for ib in range(self.nbody):
+
+            for iint in range(self.nint_min):
+
+                isegm = self._bodysegm[ib, iint]
+
+                if pos:
+                    Sym = self.intersegm_to_all[ib][iint]
+                else:
+                    Sym = self.intersegm_to_all[ib][iint].TimeDerivative()
+
+                ibeg = iint * self.segm_size         
+                iend = ibeg + self.segm_size
+                assert iend <= self._nint
+
+                if Sym.TimeRev > 0:
+                    segmbeg = 0
+                    segmend = self.segm_size
+                else:
+                    segmbeg = 1
+                    segmend = self.segm_size+1
+
+                Sym.TransformSegment(segmpos[isegm,segmbeg:segmend,:], all_bodypos[ib,ibeg:iend,:])
+
+        return all_bodypos
+        
+    @cython.cdivision(True)
+    @cython.final
+    def ComputeSymDefault(self, double[:,:,::1] segmpos, ActionSym Sym):
+
+        cdef Py_ssize_t ib , iint
+        cdef Py_ssize_t ibp, iintp
+        cdef Py_ssize_t segmbeg, segmend
+        cdef Py_ssize_t isegm
+        cdef ActionSym CSym  
+        cdef int size = self.geodim * self.segm_size
+        cdef np.ndarray[double, ndim=2, mode='c'] trans_pos  = np.empty((self.segm_size, self.geodim), dtype=np.float64)
+        cdef np.ndarray[double, ndim=2, mode='c'] trans_posp = np.empty((self.segm_size, self.geodim), dtype=np.float64)
+
+        cdef double res = 0
+
+        for ib in range(self.nbody):
+
+            for iint in range(self.nint_min):
+
+                # Computing trans_pos
+                isegm = self._bodysegm[ib, iint]
+                CSym = Sym.Compose(self.intersegm_to_all[ib][iint])
+
+                if CSym.TimeRev > 0:
+                    segmbeg = 0
+                    segmend = self.segm_size
+                else:
+                    segmbeg = 1
+                    segmend = self.segm_size+1
+                    assert self._GreaterNStore
+
+                CSym.TransformSegment(segmpos[isegm,segmbeg:segmend,:], trans_pos)
+
+                # Computing trans_posp
+
+                ibp = Sym.BodyPerm[ib]
+                tnum_target, tden_target = Sym.ApplyTSegm(iint, self.nint_min)
+                assert self.nint_min % tden_target == 0
+                iintp = (tnum_target * (self.nint_min // tden_target) + self.nint_min) % self.nint_min
+
+                isegmp = self._bodysegm[ibp, iintp]
+                CSym = self.intersegm_to_all[ibp][iintp]
+
+                if CSym.TimeRev > 0:
+                    segmbeg = 0
+                    segmend = self.segm_size
+                else:
+                    segmbeg = 1
+                    segmend = self.segm_size+1
+                    assert self._GreaterNStore
+
+                CSym.TransformSegment(segmpos[isegmp,segmbeg:segmend,:], trans_posp)
+
+                scipy.linalg.cython_blas.daxpy(&size,&minusone_double,&trans_posp[0,0],&int_one,&trans_pos[0,0],&int_one)
+                res += scipy.linalg.cython_blas.dasum(&size,&trans_pos[0,0],&int_one)
+
+        return res / (self.nbody * self.nint_min * self.segm_size)
+
     @cython.final
     def params_to_segmpos(self, double[::1] params_mom_buf):
 
@@ -5237,7 +5359,6 @@ cdef double segm_pos_to_pot_nrg(
 
         if BinSpaceRotIsId[ibin]:
             scipy.linalg.cython_blas.dcopy(&nitems_int, &segmpos[isegm,0,0], &int_one, tmp_loc_dpos, &int_one)
-
         else:
             scipy.linalg.cython_blas.dgemm(transt, transn, &geodim, &segm_store_int, &geodim, &one_double, &BinSpaceRot[ibin,0,0], &geodim, &segmpos[isegm,0,0], &geodim, &zero_double, tmp_loc_dpos, &geodim)
 
@@ -5337,7 +5458,6 @@ cdef void segm_pos_to_pot_nrg_grad(
 
         if BinSpaceRotIsId[ibin]:
             scipy.linalg.cython_blas.dcopy(&nitems_int, &segmpos[isegm,0,0], &int_one, tmp_loc_dpos, &int_one)
-
         else:
             scipy.linalg.cython_blas.dgemm(transt, transn, &geodim, &segm_store_int, &geodim, &one_double, &BinSpaceRot[ibin,0,0], &geodim, &segmpos[isegm,0,0], &geodim, &zero_double, tmp_loc_dpos, &geodim)
 
@@ -5600,7 +5720,7 @@ cdef void pot_nrg_grad_inter_size_gravity_nd(
         for idim in range(1,geodim):
             dx2 += dpos[idim]*dpos[idim]
 
-        gravity_pot(dx2, pot)
+        inline_gravity_pot(dx2, pot)
 
         for idim in range(geodim):
             grad[idim] = pot[1]*dpos[idim]
@@ -5626,7 +5746,7 @@ cdef void pot_nrg_grad_inter_store_gravity_nd(
     for idim in range(1,geodim):
         dx2 += dpos[idim]*dpos[idim]
 
-    gravity_pot(dx2, pot)
+    inline_gravity_pot(dx2, pot)
 
     for idim in range(geodim):
         grad[idim] = 0.5*pot[1]*dpos[idim]
@@ -5640,7 +5760,7 @@ cdef void pot_nrg_grad_inter_store_gravity_nd(
         for idim in range(1,geodim):
             dx2 += dpos[idim]*dpos[idim]
 
-        gravity_pot(dx2, pot)
+        inline_gravity_pot(dx2, pot)
 
         for idim in range(geodim):
             grad[idim] = pot[1]*dpos[idim]
@@ -5653,7 +5773,7 @@ cdef void pot_nrg_grad_inter_store_gravity_nd(
     for idim in range(1,geodim):
         dx2 += dpos[idim]*dpos[idim]
 
-    gravity_pot(dx2, pot)
+    inline_gravity_pot(dx2, pot)
 
     for idim in range(geodim):
         grad[idim] = 0.5*pot[1]*dpos[idim]
@@ -5675,7 +5795,7 @@ cdef void pot_nrg_grad_inter_size_gravity_2d(
 
         dx2 = dpos[0]*dpos[0] + dpos[1]*dpos[1]
 
-        gravity_pot(dx2, pot)
+        inline_gravity_pot(dx2, pot)
 
         grad[0] = pot[1]*dpos[0]
         grad[1] = pot[1]*dpos[1]
@@ -5699,7 +5819,7 @@ cdef void pot_nrg_grad_inter_store_gravity_2d(
     # First iteration
     dx2 = dpos[0]*dpos[0] + dpos[1]*dpos[1]
 
-    gravity_pot(dx2, pot)
+    inline_gravity_pot(dx2, pot)
 
     grad[0] = 0.5*pot[1]*dpos[0]
     grad[1] = 0.5*pot[1]*dpos[1]
@@ -5711,7 +5831,7 @@ cdef void pot_nrg_grad_inter_store_gravity_2d(
 
         dx2 = dpos[0]*dpos[0] + dpos[1]*dpos[1]
 
-        gravity_pot(dx2, pot)
+        inline_gravity_pot(dx2, pot)
 
         grad[0] = pot[1]*dpos[0]
         grad[1] = pot[1]*dpos[1]
@@ -5722,7 +5842,7 @@ cdef void pot_nrg_grad_inter_store_gravity_2d(
     # Last iteration
     dx2 = dpos[0]*dpos[0] + dpos[1]*dpos[1]
 
-    gravity_pot(dx2, pot)
+    inline_gravity_pot(dx2, pot)
 
     grad[0] = 0.5*pot[1]*dpos[0]
     grad[1] = 0.5*pot[1]*dpos[1]
@@ -5767,7 +5887,6 @@ cdef void segm_pos_to_pot_nrg_hess(
 
         else:
             scipy.linalg.cython_blas.dgemm(transt, transn, &geodim, &segm_store_int, &geodim, &one_double, &BinSpaceRot[ibin,0,0], &geodim, &segmpos[isegm,0,0], &geodim, &zero_double, tmp_loc_pos, &geodim)
-
             scipy.linalg.cython_blas.dgemm(transt, transn, &geodim, &segm_store_int, &geodim, &one_double, &BinSpaceRot[ibin,0,0], &geodim, &dsegmpos[isegm,0,0], &geodim, &zero_double, tmp_loc_dpos, &geodim)
 
         scipy.linalg.cython_blas.daxpy(&nitems_int, &minusone_double, &segmpos[isegmp,0,0], &int_one, tmp_loc_pos, &int_one)
@@ -6080,7 +6199,7 @@ cdef void pot_nrg_hess_inter_size_gravity_nd(
             dx2 += pos[idim]*pos[idim]
             dxtddx += pos[idim]*dpos[idim]
 
-        gravity_pot(dx2, pot)
+        inline_gravity_pot(dx2, pot)
 
         a = pot[1]
         b = 2*pot[2]*dxtddx
@@ -6113,7 +6232,7 @@ cdef void pot_nrg_hess_inter_store_gravity_nd(
         dx2 += pos[idim]*pos[idim]
         dxtddx += pos[idim]*dpos[idim]
 
-    gravity_pot(dx2, pot)
+    inline_gravity_pot(dx2, pot)
 
     a = 0.5*pot[1]
     b = pot[2]*dxtddx
@@ -6133,7 +6252,7 @@ cdef void pot_nrg_hess_inter_store_gravity_nd(
             dx2 += pos[idim]*pos[idim]
             dxtddx += pos[idim]*dpos[idim]
 
-        gravity_pot(dx2, pot)
+        inline_gravity_pot(dx2, pot)
 
         a = pot[1]
         b = 2*pot[2]*dxtddx
@@ -6152,7 +6271,7 @@ cdef void pot_nrg_hess_inter_store_gravity_nd(
         dx2 += pos[idim]*pos[idim]
         dxtddx += pos[idim]*dpos[idim]
 
-    gravity_pot(dx2, pot)
+    inline_gravity_pot(dx2, pot)
 
     a = 0.5*pot[1]
     b = pot[2]*dxtddx
@@ -6179,7 +6298,7 @@ cdef void pot_nrg_hess_inter_size_gravity_2d(
         dx2 = pos[0]*pos[0] + pos[1]*pos[1] 
         dxtddx = pos[0]*dpos[0] + pos[1]*dpos[1]
 
-        gravity_pot(dx2, pot)
+        inline_gravity_pot(dx2, pot)
 
         a = pot[1]
         b = 2*pot[2]*dxtddx
@@ -6209,7 +6328,7 @@ cdef void pot_nrg_hess_inter_store_gravity_2d(
     dx2 = pos[0]*pos[0] + pos[1]*pos[1] 
     dxtddx = pos[0]*dpos[0] + pos[1]*dpos[1]
 
-    gravity_pot(dx2, pot)
+    inline_gravity_pot(dx2, pot)
 
     a = 0.5*pot[1]
     b = pot[2]*dxtddx
@@ -6226,7 +6345,7 @@ cdef void pot_nrg_hess_inter_store_gravity_2d(
         dx2 = pos[0]*pos[0] + pos[1]*pos[1] 
         dxtddx = pos[0]*dpos[0] + pos[1]*dpos[1]
 
-        gravity_pot(dx2, pot)
+        inline_gravity_pot(dx2, pot)
 
         a = pot[1]
         b = 2*pot[2]*dxtddx
@@ -6242,7 +6361,7 @@ cdef void pot_nrg_hess_inter_store_gravity_2d(
     dx2 = pos[0]*pos[0] + pos[1]*pos[1] 
     dxtddx = pos[0]*dpos[0] + pos[1]*dpos[1]
 
-    gravity_pot(dx2, pot)
+    inline_gravity_pot(dx2, pot)
 
     a = 0.5*pot[1]
     b = pot[2]*dxtddx

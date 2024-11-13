@@ -779,8 +779,6 @@ def ChoreoLoadFromDict_old(params_dict, Workspace_folder, callback=None, args_li
             return {key:loc[key] for key in args_list}
     else:
         return Pick_Named_Args_From_Dict(callback, dict(**locals()))
-
-
         
 def ChoreoLoadFromDict(params_dict, Workspace_folder, callback=None, args_list=None, extra_args_dict={}):
 
@@ -1205,7 +1203,6 @@ def UpdateHashDict(store_folder, hash_dict, action_dict):
 
                     action_dict[file_root] = This_hash[0]
                     hash_dict[file_root] = This_hash[1]
-
 
 def ReadHashFromFile(filename):
 
