@@ -92,8 +92,8 @@ cdef LowLevelFun LowLevelFun_init(
     return fun
 
 cdef inline void LowLevelFun_apply(
-    const LowLevelFun fun ,
-    const double x        ,
+    LowLevelFun fun ,
+    double x        ,
     double[::1] res ,
 ) noexcept nogil:
 
@@ -110,11 +110,11 @@ cdef int PY_FUN_FLOAT = 0
 cdef int PY_FUN_NDARRAY = 1 
 
 cdef inline void PyFun_apply(
-    object fun          ,
-    const int res_type  ,
-    const double x      ,
-    double[::1] res     ,
-    int ndim            ,  
+    object fun      ,
+    int res_type    ,
+    double x        ,
+    double[::1] res ,
+    int ndim        ,  
 ):
 
     cdef Py_ssize_t i
@@ -248,17 +248,17 @@ cpdef np.ndarray[double, ndim=1, mode="c"] IntegrateOnSegment(
 
 @cython.cdivision(True)
 cdef void IntegrateOnSegment_ann(
-    LowLevelFun lowlevelfun         ,
-    object py_fun                   ,
-    const int py_fun_type           ,
-    const int ndim                  ,
-    const (double, double) x_span   ,
-    const Py_ssize_t nint                 ,
-    const bint DoEFT                ,
-    const double[::1] w             ,
-    const double[::1] x             ,
-    double[::1] f_res               ,
-    double[::1] f_int               ,
+    LowLevelFun lowlevelfun ,
+    object py_fun           ,
+    int py_fun_type         ,
+    int ndim                ,
+    (double, double) x_span ,
+    Py_ssize_t nint         ,
+    bint DoEFT              ,
+    double[::1] w           ,
+    double[::1] x           ,
+    double[::1] f_res       ,
+    double[::1] f_int       ,
 ) noexcept nogil:
 
     cdef Py_ssize_t istep

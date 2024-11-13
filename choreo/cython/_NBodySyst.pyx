@@ -69,14 +69,7 @@ except:
     MKL_FFT_AVAILABLE = False
 
 from choreo.cython.optional_pyfftw cimport pyfftw
-# PYFFTW_AVAILABLE = False
-# import numpy as p_pyfftw
-# from choreo.cython.optional_pyfftw import p_pyfftw, PYFFTW_AVAILABLE
 from choreo.optional_pyfftw import p_pyfftw, PYFFTW_AVAILABLE
-# import choreo.optional_pyfftw.p_pyfftw as p_pyfftw
-# import choreo.optional_pyfftw.PYFFTW_AVAILABLE as PYFFTW_AVAILABLE
-
-print(f'{PYFFTW_AVAILABLE = }')
 
 cdef int USE_SCIPY_FFT = 0
 cdef int USE_MKL_FFT = 1
@@ -464,9 +457,7 @@ cdef class NBodySyst():
     @property
     def ParamBasisShortcutVel(self):
         return [shortcut_name[shortcut] for shortcut in self._ParamBasisShortcutVel]
-
-    cdef public object TT
-
+        
     def __init__(
         self                            ,
         Py_ssize_t geodim                     ,
@@ -1595,13 +1586,6 @@ cdef class NBodySyst():
         if (Use_exact_Jacobian):
 
             jacobian = scipy.optimize.nonlin.KrylovJacobian(**jac_options_kw)
-
-            # jacobian.TT = pyquickbench.TimeTrain(include_locs=False, names_reduction ='avg')
-            # def matvec(self,v):  
-            #     self.TT.toc("sync")
-            #     res = self.NBS.segmpos_dparams_to_action_hess(self.segmpos, v)
-            #     self.TT.toc("segmpos_dparams_to_action_hess")
-            #     return res
 
             def matvec(self,v):                
                 return self.NBS.segmpos_dparams_to_action_hess(self.segmpos, v)
