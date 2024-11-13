@@ -27,7 +27,7 @@ def test_all_pos_to_segmpos(AllNBS, float64_tols):
         
         print(f"Config name : {name}")     
 
-        NBS.nint_fac = 10
+        NBS.nint_fac = 1
         params_buf = np.random.random((NBS.nparams))
 
         # Unoptimized version
@@ -36,14 +36,17 @@ def test_all_pos_to_segmpos(AllNBS, float64_tols):
         
         NBS.AssertAllSegmGenConstraintsAreRespected(all_pos, pos=True)    
         NBS.AssertAllBodyConstraintAreRespected(all_pos, pos=True)
-        # 
+        
         segmpos_noopt = NBS.all_to_segm_noopt(all_pos, pos=True)
         
-        # # Optimized version
+        # Optimized version
         segmpos_cy = NBS.params_to_segmpos(params_buf)
         print(np.linalg.norm(segmpos_noopt - segmpos_cy))
         
         assert np.allclose(segmpos_noopt, segmpos_cy, rtol = float64_tols.rtol, atol = float64_tols.atol)   
+        
+        for Sym in NBS.Sym_list:
+            assert NBS.ComputeSymDefault(segmpos_cy, Sym) < float64_tols.atol
         
 def test_all_vel_to_segmvel(AllNBS, float64_tols):
     
@@ -79,8 +82,6 @@ def test_segmpos_to_all_pos(AllNBS, float64_tols):
         NBS.nint_fac = 3
         params_buf = np.random.random((NBS.nparams))
         segmpos = NBS.params_to_segmpos(params_buf)
-
-        print(NBS.n_sub_fft)
 
         all_pos = NBS.segmpos_to_all_noopt(segmpos, pos=True)
         NBS.AssertAllSegmGenConstraintsAreRespected(all_pos, pos=True)
@@ -507,6 +508,55 @@ def test_ForceGeneralSym(AllNBS, float64_tols):
              
         print(np.linalg.norm(params_T - params_T_f))
         assert np.allclose(params_T, params_T_f, rtol = float64_tols.rtol, atol = float64_tols.atol)     
+        
+        print()      
+          
+def test_ForceGreaterNstore(AllNBS, float64_tols):
+    
+    for name, NBS in AllNBS.items():
+        
+        print(f"Config name : {name}")   
+
+        NBS.nint_fac = 10
+        params_buf  = np.random.random((NBS.nparams))
+        dparams_buf = np.random.random((NBS.nparams))
+        
+        segm_store_ini = NBS.segm_store 
+        
+        segmpos = NBS.params_to_segmpos(params_buf)
+        action_grad = NBS.params_to_action_grad(params_buf)
+        action_hess = NBS.params_to_action_hess(params_buf, dparams_buf)
+
+        NBS.ForceGreaterNStore(True)
+        assert NBS.segm_store == NBS.segm_size + 1
+        assert NBS.GreaterNStore
+        
+        segmpos_f = NBS.params_to_segmpos(params_buf)
+        action_grad_f = NBS.params_to_action_grad(params_buf)
+        action_hess_f = NBS.params_to_action_hess(params_buf, dparams_buf)
+        
+        for isegm in range(NBS.nsegm):
+            print(isegm, np.linalg.norm(segmpos[isegm,:NBS.segm_size,:] - segmpos_f[isegm,:NBS.segm_size,:]))
+            assert np.allclose(segmpos[isegm,:NBS.segm_size,:], segmpos_f[isegm,:NBS.segm_size,:], rtol = float64_tols.rtol, atol = float64_tols.atol)  
+        
+        print(np.linalg.norm(action_grad - action_grad_f))
+        assert np.allclose(action_grad, action_grad_f, rtol = float64_tols.rtol, atol = float64_tols.atol)  
+        print(np.linalg.norm(action_hess - action_hess_f))
+        assert np.allclose(action_hess, action_hess_f, rtol = float64_tols.rtol, atol = float64_tols.atol)  
+        
+        NBS.ForceGreaterNStore(False)
+        assert segm_store_ini == NBS.segm_store 
+        
+        segmpos_nf = NBS.params_to_segmpos(params_buf)
+        action_grad_nf = NBS.params_to_action_grad(params_buf)
+        action_hess_nf = NBS.params_to_action_hess(params_buf, dparams_buf)
+        
+        print(np.linalg.norm(segmpos - segmpos_nf))
+        assert np.allclose(segmpos, segmpos_nf, rtol = float64_tols.rtol, atol = float64_tols.atol)  
+        print(np.linalg.norm(action_grad - action_grad_nf))
+        assert np.allclose(action_grad, action_grad_nf, rtol = float64_tols.rtol, atol = float64_tols.atol)  
+        print(np.linalg.norm(action_hess - action_hess_nf))
+        assert np.allclose(action_hess, action_hess_nf, rtol = float64_tols.rtol, atol = float64_tols.atol)  
         
         print()
 

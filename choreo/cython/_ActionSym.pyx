@@ -402,12 +402,12 @@ cdef class ActionSym():
 
     # THIS IS NOT A PERFORMANCE-ORIENTED METHOD
     @cython.final
-    def TransformPos(ActionSym self, double[:,::1] in_segm, out):
+    def TransformPos(ActionSym self, in_segm, out):
         np.matmul(in_segm, self._SpaceRot.T, out=out)
             
     # THIS IS NOT A PERFORMANCE-ORIENTED METHOD
     @cython.final
-    def TransformSegment(ActionSym self, double[:,::1] in_segm, out):
+    def TransformSegment(ActionSym self, in_segm, out):
 
         np.matmul(in_segm, self._SpaceRot.T, out=out)
         if self.TimeRev == -1:
