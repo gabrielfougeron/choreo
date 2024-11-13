@@ -17,7 +17,7 @@ import choreo.scipy_plus
 from choreo.cython._ActionSym import ActionSym
 
 import warnings 
-from choreo.cython.optional_pyfftw import PYFFTW_AVAILABLE
+from choreo.optional_pyfftw import PYFFTW_AVAILABLE
 if PYFFTW_AVAILABLE:
     import pyfftw
 

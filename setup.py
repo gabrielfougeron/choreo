@@ -13,9 +13,9 @@ import platform
 
 try:
     import pyfftw
-    PYFFTW_AVAILABLE = True
+    PYFFTW_AVAILABLE_COMPILE = True
 except:
-    PYFFTW_AVAILABLE = False
+    PYFFTW_AVAILABLE_COMPILE = False
 
 import Cython.Build
 import Cython.Compiler
@@ -220,20 +220,32 @@ cython_filenames = [ ext_name.replace('.','/') + src_ext for ext_name in cython_
 cython_extnames.append("choreo.cython.optional_pyfftw")
 cython_safemath_needed.append(False)
 
-include_pyfftw = PYFFTW_AVAILABLE and not("PYODIDE" in os.environ)
+if '--no-fftw' in sys.argv:
+    sys.argv.remove('--no-fftw')
+    include_pyfftw = False
+else:
+    include_pyfftw = PYFFTW_AVAILABLE_COMPILE and not("PYODIDE" in os.environ)
 
 cython_filenames.append(f"choreo.cython.optional_pyfftw_{include_pyfftw}".replace('.','/') + src_ext)
 
 optional_pyfftw_pxd_path = "choreo/cython/optional_pyfftw.pxd"
+# if include_pyfftw:
+#     pyfftw_pxd_str = """
+# cimport pyfftw
+# import pyfftw as p_pyfftw   
+#     """
+# else:
+#     pyfftw_pxd_str = """
+# cimport choreo.cython.pyfftw_fake as pyfftw
+# import choreo.cython.pyfftw_fake as p_pyfftw  
+#     """
 if include_pyfftw:
     pyfftw_pxd_str = """
 cimport pyfftw
-import pyfftw as p_pyfftw   
     """
 else:
     pyfftw_pxd_str = """
 cimport choreo.cython.pyfftw_fake as pyfftw
-import choreo.cython.pyfftw_fake as p_pyfftw  
     """
 if os.path.isfile(optional_pyfftw_pxd_path):
     with open(optional_pyfftw_pxd_path, "r") as text_file:
@@ -247,7 +259,7 @@ if write_optional_pyfftw_pxd:
         text_file.write(pyfftw_pxd_str)
 
 define_macros = [("NPY_NO_DEPRECATED_API", "NPY_1_7_API_VERSION")]
-# 
+
 if platform.system() == "Windows":
     define_macros.append(("FFTW_NO_Complex", 1))
     define_macros.append(("CYTHON_CCOMPLEX", 0))

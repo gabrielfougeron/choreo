@@ -1,8 +1,3 @@
-import numpy as np
-cimport numpy as np
-np.import_array()
-cimport cython
-
 from libc.math cimport pow as cpow
 from libc.math cimport fabs as cfabs
 from libc.math cimport log as clog
@@ -10,6 +5,11 @@ from libc.math cimport sqrt as csqrt
 from libc.math cimport exp as cexp
 from libc.math cimport cos as ccos
 from libc.math cimport sin as csin
+
+import numpy as np
+cimport numpy as np
+np.import_array()
+cimport cython
 
 cimport scipy.linalg.cython_blas
 from libc.stdlib cimport malloc, free, rand
@@ -69,7 +69,14 @@ except:
     MKL_FFT_AVAILABLE = False
 
 from choreo.cython.optional_pyfftw cimport pyfftw
-from choreo.cython.optional_pyfftw import p_pyfftw, PYFFTW_AVAILABLE
+# PYFFTW_AVAILABLE = False
+# import numpy as p_pyfftw
+# from choreo.cython.optional_pyfftw import p_pyfftw, PYFFTW_AVAILABLE
+from choreo.optional_pyfftw import p_pyfftw, PYFFTW_AVAILABLE
+# import choreo.optional_pyfftw.p_pyfftw as p_pyfftw
+# import choreo.optional_pyfftw.PYFFTW_AVAILABLE as PYFFTW_AVAILABLE
+
+print(f'{PYFFTW_AVAILABLE = }')
 
 cdef int USE_SCIPY_FFT = 0
 cdef int USE_MKL_FFT = 1
