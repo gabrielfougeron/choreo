@@ -107,10 +107,10 @@ cdef LowLevelFun LowLevelFun_init(
     return fun
 
 cdef inline void LowLevelFun_apply(
-    const LowLevelFun fun   ,
-    const double t          ,
-    double[::1] x           ,
-    double[::1] res         ,
+    LowLevelFun fun ,
+    double t        ,
+    double[::1] x   ,
+    double[::1] res ,
 ) noexcept nogil:
 
     if fun.fun_type == C_FUN_MEMORYVIEW:
@@ -120,11 +120,11 @@ cdef inline void LowLevelFun_apply(
         fun.c_fun_pointer(t, &x[0], &res[0])
 
 cdef inline void PyFun_apply(
-    object fun          ,
-    const int res_type  ,
-    const double t      ,
-    double[::1] x       ,
-    double[::1] res     ,
+    object fun      ,
+    int res_type    ,
+    double t        ,
+    double[::1] x   ,
+    double[::1] res ,
 ):
 
     cdef int n
@@ -139,11 +139,11 @@ cdef inline void PyFun_apply(
         scipy.linalg.cython_blas.dcopy(&n,&f_res_np[0],&int_one,&res[0],&int_one)
 
 cdef inline void LowLevelFun_grad_apply(
-    const LowLevelFun grad_fun  ,
-    const double t              ,
-    double[::1] x               ,
-    double[:,::1] grad_x        ,
-    double[:,::1] res           ,
+    LowLevelFun grad_fun    ,
+    double t                ,
+    double[::1] x           ,
+    double[:,::1] grad_x    ,
+    double[:,::1] res       ,
 ) noexcept nogil:
 
     if grad_fun.fun_type == C_GRAD_FUN_MEMORYVIEW:
@@ -154,8 +154,8 @@ cdef inline void LowLevelFun_grad_apply(
 
 cdef inline void PyFun_grad_apply(
     object grad_fun         ,
-    const int res_type      ,
-    const double t          ,
+    int res_type            ,
+    double t                ,
     double[::1] x           ,
     double[:,::1] grad_x    ,
     double[:,::1] res       ,
@@ -173,7 +173,7 @@ cdef inline void PyFun_grad_apply(
         scipy.linalg.cython_blas.dcopy(&n,&f_res_np[0,0],&int_one,&res[0,0],&int_one)
 
 cdef inline void LowLevelFun_apply_vectorized(
-    const LowLevelFun fun   ,
+    LowLevelFun fun         ,
     double[::1] all_t       ,
     double[:,::1] all_x     ,
     double[:,::1] all_res   ,
@@ -193,7 +193,7 @@ cdef inline void LowLevelFun_apply_vectorized(
 
 cdef inline void PyFun_apply_vectorized(
     object fun              ,
-    const int res_type      ,
+    int res_type            ,
     double[::1] all_t       ,
     double[:,::1] all_x     ,
     double[:,::1] all_res   ,
@@ -217,7 +217,7 @@ cdef inline void PyFun_apply_vectorized(
             scipy.linalg.cython_blas.dcopy(&n,&f_res_np[0],&int_one,&all_res[i,0],&int_one)
 
 cdef inline void LowLevelFun_apply_grad_vectorized(
-    const LowLevelFun grad_fun  ,
+    LowLevelFun grad_fun        ,
     double[::1] all_t           ,
     double[:,::1] all_x         ,
     double[:,:,::1] all_grad_x  ,
@@ -238,7 +238,7 @@ cdef inline void LowLevelFun_apply_grad_vectorized(
 
 cdef inline void PyFun_apply_grad_vectorized(
     object fun                  ,
-    const int res_type          ,
+    int res_type                ,
     double[::1] all_t           ,
     double[:,::1] all_x         ,
     double[:,:,::1] all_grad_x  ,
@@ -338,8 +338,8 @@ cpdef ExplicitSymplecticIVP(
     double[:,::1] grad_x0 = None    ,
     double[:,::1] grad_v0 = None    ,
     object mode = "VX"              ,
-    Py_ssize_t nint = 1                   ,
-    Py_ssize_t keep_freq = -1             ,
+    Py_ssize_t nint = 1             ,
+    Py_ssize_t keep_freq = -1       ,
     bint DoEFT = True               ,
 ): 
 
@@ -588,31 +588,31 @@ cpdef ExplicitSymplecticIVP(
 
 @cython.cdivision(True)
 cdef void ExplicitSymplecticIVP_ann(
-    const LowLevelFun lowlevelfun       ,
-    const LowLevelFun lowlevelgun       ,
-    const LowLevelFun lowlevelgrad_fun  ,
-    const LowLevelFun lowlevelgrad_gun  ,
-          object py_fun                 ,
-          object py_gun                 ,
-          object py_grad_fun            ,
-          object py_grad_gun            ,
-    const int py_fun_type               ,
-    const (double, double) t_span       ,
-          double[::1]     x             ,
-          double[::1]     v             ,
-          double[:,::1]   grad_x        ,
-          double[:,::1]   grad_v        ,
-          double[::1]     res           ,
-          double[:,::1]   grad_res      ,
-          ExplicitSymplecticRKTable rk  ,
-    const Py_ssize_t nint                     ,
-    const Py_ssize_t keep_freq                ,
-    const bint DoEFT                    ,
-    const bint DoTanIntegration         ,
-          double[:,::1]   x_keep        ,
-          double[:,::1]   v_keep        ,
-          double[:,:,::1] grad_x_keep   ,
-          double[:,:,::1] grad_v_keep   ,
+    LowLevelFun lowlevelfun         ,
+    LowLevelFun lowlevelgun         ,
+    LowLevelFun lowlevelgrad_fun    ,
+    LowLevelFun lowlevelgrad_gun    ,
+    object py_fun                   ,
+    object py_gun                   ,
+    object py_grad_fun              ,
+    object py_grad_gun              ,
+    int py_fun_type                 ,
+    (double, double) t_span         ,
+    double[::1]     x               ,
+    double[::1]     v               ,
+    double[:,::1]   grad_x          ,
+    double[:,::1]   grad_v          ,
+    double[::1]     res             ,
+    double[:,::1]   grad_res        ,
+    ExplicitSymplecticRKTable rk    ,
+    Py_ssize_t nint                 ,
+    Py_ssize_t keep_freq            ,
+    bint DoEFT                      ,
+    bint DoTanIntegration           ,
+    double[:,::1]   x_keep          ,
+    double[:,::1]   v_keep          ,
+    double[:,:,::1] grad_x_keep     ,
+    double[:,:,::1] grad_v_keep     ,
 ) noexcept nogil:
 
     cdef double tx = t_span[0]
@@ -1002,11 +1002,11 @@ cpdef ImplicitSymplecticIVP(
     object grad_gun = None                  ,
     double[:,::1] grad_x0 = None            ,
     double[:,::1] grad_v0 = None            ,
-    Py_ssize_t nint = 1                           ,
-    Py_ssize_t keep_freq = -1                     ,
+    Py_ssize_t nint = 1                     ,
+    Py_ssize_t keep_freq = -1               ,
     bint DoEFT = True                       ,
     double eps = np.finfo(np.float64).eps   ,
-    Py_ssize_t maxiter = 50                       ,
+    Py_ssize_t maxiter = 50                 ,
 ):
 
     cdef Py_ssize_t nsteps = rk_x._a_table.shape[0]
@@ -1270,52 +1270,52 @@ cpdef ImplicitSymplecticIVP(
 
 @cython.cdivision(True)
 cdef void ImplicitSymplecticIVP_ann(
-    const LowLevelFun lowlevelfun       ,
-    const LowLevelFun lowlevelgun       ,
-    const LowLevelFun lowlevelgrad_fun  ,
-    const LowLevelFun lowlevelgrad_gun  ,
-          object py_fun                 ,
-          object py_gun                 ,
-          object py_grad_fun            ,
-          object py_grad_gun            ,
-    const int py_fun_type               ,
-    const (double, double) t_span       ,
-          double[::1]     x             ,
-          double[::1]     v             ,
-          double[:,::1]   grad_x        ,
-          double[:,::1]   grad_v        ,
-          double[:,::1]   K_fun         ,
-          double[:,::1]   K_gun         ,
-          double[:,:,::1] grad_K_fun    ,
-          double[:,:,::1] grad_K_gun    ,
-          double[:,::1]   dX            ,
-          double[:,::1]   dV            ,
-          double[:,:,::1] grad_dX       ,
-          double[:,:,::1] grad_dV       ,
-          double[:,::1]   dX_prev       ,
-          double[:,::1]   dV_prev       ,
-          double[:,:,::1] grad_dX_prev  ,
-          double[:,:,::1] grad_dV_prev  ,
-          double[::1]     all_t_x       ,
-          double[::1]     all_t_v       ,
-    const double[:,::1]   a_table_x     ,
-    const double[::1]     b_table_x     ,
-    const double[::1]     c_table_x     ,
-    const double[:,::1]   beta_table_x  ,
-    const double[:,::1]   a_table_v     ,
-    const double[::1]     b_table_v     ,
-    const double[::1]     c_table_v     ,
-    const double[:,::1]   beta_table_v  ,
-    const Py_ssize_t nint                     ,
-    const Py_ssize_t keep_freq                ,
-    const bint DoEFT                    ,
-    const bint DoTanIntegration         ,
-    const double eps                    ,
-    const Py_ssize_t maxiter                  ,
-          double[:,::1]   x_keep        ,
-          double[:,::1]   v_keep        ,
-          double[:,:,::1] grad_x_keep   ,
-          double[:,:,::1] grad_v_keep   ,
+    LowLevelFun lowlevelfun         ,
+    LowLevelFun lowlevelgun         ,
+    LowLevelFun lowlevelgrad_fun    ,
+    LowLevelFun lowlevelgrad_gun    ,
+    object py_fun                   ,
+    object py_gun                   ,
+    object py_grad_fun              ,
+    object py_grad_gun              ,
+    int py_fun_type                 ,
+    (double, double) t_span         ,
+    double[::1]     x               ,
+    double[::1]     v               ,
+    double[:,::1]   grad_x          ,
+    double[:,::1]   grad_v          ,
+    double[:,::1]   K_fun           ,
+    double[:,::1]   K_gun           ,
+    double[:,:,::1] grad_K_fun      ,
+    double[:,:,::1] grad_K_gun      ,
+    double[:,::1]   dX              ,
+    double[:,::1]   dV              ,
+    double[:,:,::1] grad_dX         ,
+    double[:,:,::1] grad_dV         ,
+    double[:,::1]   dX_prev         ,
+    double[:,::1]   dV_prev         ,
+    double[:,:,::1] grad_dX_prev    ,
+    double[:,:,::1] grad_dV_prev    ,
+    double[::1]     all_t_x         ,
+    double[::1]     all_t_v         ,
+    double[:,::1]   a_table_x       ,
+    double[::1]     b_table_x       ,
+    double[::1]     c_table_x       ,
+    double[:,::1]   beta_table_x    ,
+    double[:,::1]   a_table_v       ,
+    double[::1]     b_table_v       ,
+    double[::1]     c_table_v       ,
+    double[:,::1]   beta_table_v    ,
+    Py_ssize_t nint                 ,
+    Py_ssize_t keep_freq            ,
+    bint DoEFT                      ,
+    bint DoTanIntegration           ,
+    double eps                      ,
+    Py_ssize_t maxiter              ,
+    double[:,::1]   x_keep          ,
+    double[:,::1]   v_keep          ,
+    double[:,:,::1] grad_x_keep     ,
+    double[:,:,::1] grad_v_keep     ,
 ) noexcept nogil:
 
     cdef int ndof = x.shape[0]

@@ -84,8 +84,8 @@ def test_segmpos_to_all_pos(AllNBS, float64_tols):
 
         all_pos = NBS.segmpos_to_all_noopt(segmpos, pos=True)
         NBS.AssertAllSegmGenConstraintsAreRespected(all_pos, pos=True)
-        # NBS.AssertAllBodyConstraintAreRespected(all_pos, pos=True)
-        # 
+        NBS.AssertAllBodyConstraintAreRespected(all_pos, pos=True)
+        
         all_coeffs = scipy.fft.rfft(all_pos, axis=1,norm='forward')
         params = NBS.all_coeffs_to_params_noopt(all_coeffs)
         
@@ -281,9 +281,9 @@ def test_kin(AllNBS, float64_tols):
         print()
         
 # @ProbabilisticTest(RepeatOnFail=2)
-def test_pot(AllNBS):
+def test_pot(AllNBS_nozerodiv):
     
-    for name, NBS in AllNBS.items():
+    for name, NBS in AllNBS_nozerodiv.items():
         
         print(f"Config name : {name}")        
         NBS.nint_fac = 10
@@ -321,10 +321,10 @@ def test_pot(AllNBS):
         assert (err.min() <  1e-7)
         print()
         
-@ProbabilisticTest(RepeatOnFail=2)
-def test_action(AllNBS):
+# @ProbabilisticTest(RepeatOnFail=2)
+def test_action(AllNBS_nozerodiv):
     
-    for name, NBS in AllNBS.items():
+    for name, NBS in AllNBS_nozerodiv.items():
         
         print(f"Config name : {name}")        
         NBS.nint_fac = 10
