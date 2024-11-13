@@ -1,3 +1,2 @@
-cimport pyfftw
-import pyfftw as p_pyfftw   
-PYFFTW_AVAILABLE = True
+cimport choreo.cython.pyfftw_fake as pyfftw
+PYFFTW_AVAILABLE_COMPILE = True
