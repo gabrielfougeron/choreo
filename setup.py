@@ -229,16 +229,6 @@ else:
 cython_filenames.append(f"choreo.cython.optional_pyfftw_{include_pyfftw}".replace('.','/') + src_ext)
 
 optional_pyfftw_pxd_path = "choreo/cython/optional_pyfftw.pxd"
-# if include_pyfftw:
-#     pyfftw_pxd_str = """
-# cimport pyfftw
-# import pyfftw as p_pyfftw   
-#     """
-# else:
-#     pyfftw_pxd_str = """
-# cimport choreo.cython.pyfftw_fake as pyfftw
-# import choreo.cython.pyfftw_fake as p_pyfftw  
-#     """
 if include_pyfftw:
     pyfftw_pxd_str = """
 cimport pyfftw
@@ -289,7 +279,7 @@ if opt_lvl == "profile" :
     define_macros.extend(profile_define_macros)
 
 include_dirs = [
-    numpy.get_include()                 ,
+    numpy.get_include(),
 ]
 
 # Path must be relative for auto inclusion in the manifest
