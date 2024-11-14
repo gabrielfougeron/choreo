@@ -7,6 +7,7 @@ from libc.stdlib cimport malloc, free
 from libc.math cimport fabs as cfabs
 
 cimport scipy.linalg.cython_blas
+from choreo.scipy_plus.cython.blas_consts cimport *
 
 import choreo.scipy_plus.linalg
 import networkx
@@ -411,7 +412,33 @@ cdef class ActionSym():
 
         np.matmul(in_segm, self._SpaceRot.T, out=out)
         if self.TimeRev == -1:
-            out[:,:] = out[::-1,:]
+            out[:,:] = out[::-1,:]          
 
+    @cython.cdivision(True)
+    @classmethod
+    def TimeShifts(cls, Py_ssize_t max_den):
 
+        cdef Py_ssize_t num = 0
+        cdef Py_ssize_t den = 1
+        cdef Py_ssize_t c = 1
+        cdef Py_ssize_t d = max_den
 
+        cdef Py_ssize_t k, p, q, g
+
+        yield (num, den)
+
+        while c < d:
+
+            k = (max_den + den) // d
+
+            p = k * c - num
+            q = k * d - den
+
+            g = gcd(c,d)
+            num = c // g
+            den = d // g
+
+            c = p
+            d = q
+
+            yield (num, den)

@@ -11,7 +11,6 @@ cimport numpy as np
 np.import_array()
 cimport cython
 
-cimport scipy.linalg.cython_blas
 from libc.stdlib cimport malloc, free, rand
 from libc.string cimport memset
 
@@ -22,6 +21,7 @@ cdef extern from "float.h":
 
 import choreo.metadata
 
+cimport scipy.linalg.cython_blas
 from choreo.scipy_plus.cython.blas_consts cimport *
 from choreo.scipy_plus.cython.ccallback cimport ccallback_t, ccallback_prepare, ccallback_release, CCALLBACK_DEFAULTS, ccallback_signature_t
 from choreo.cython._ActionSym cimport ActionSym
@@ -3090,7 +3090,10 @@ cdef class NBodySyst():
         
     @cython.cdivision(True)
     @cython.final
-    def ComputeSymDefault(self, double[:,:,::1] segmpos, ActionSym Sym):
+    def ComputeSymDefault(self, double[:,:,::1] segmpos, ActionSym Sym, Py_ssize_t lnorm = 1):
+
+        if lnorm not in [1,2]:
+            raise ValueError(f'ComputeSymDefault only computes L1 or L2 norms. Received {lnorm = }')
 
         cdef Py_ssize_t ib , iint
         cdef Py_ssize_t ibp, iintp
@@ -3123,7 +3126,7 @@ cdef class NBodySyst():
 
                 # Computing trans_posp
 
-                ibp = Sym.BodyPerm[ib]
+                ibp = Sym._BodyPerm[ib]
                 tnum_target, tden_target = Sym.ApplyTSegm(iint, self.nint_min)
                 assert self.nint_min % tden_target == 0
                 iintp = (tnum_target * (self.nint_min // tden_target) + self.nint_min) % self.nint_min
@@ -3142,9 +3145,15 @@ cdef class NBodySyst():
                 CSym.TransformSegment(segmpos[isegmp,segmbeg:segmend,:], trans_posp)
 
                 scipy.linalg.cython_blas.daxpy(&size,&minusone_double,&trans_posp[0,0],&int_one,&trans_pos[0,0],&int_one)
-                res += scipy.linalg.cython_blas.dasum(&size,&trans_pos[0,0],&int_one)
+                if lnorm == 1:
+                    res += scipy.linalg.cython_blas.dasum(&size,&trans_pos[0,0],&int_one)
+                else:
+                    res += scipy.linalg.cython_blas.ddot(&size, &trans_pos[0,0], &int_one, &trans_pos[0,0], &int_one)
 
-        return res / (self.nbody * self.nint_min * self.segm_size)
+        if lnorm == 1:
+            return res / (self.nbody * self.nint_min * self.segm_size)
+        else:
+            return csqrt(res/ (self.nbody * self.nint_min * self.segm_size))
 
     @cython.final
     def params_to_segmpos(self, double[::1] params_mom_buf):
