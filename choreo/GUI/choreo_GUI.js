@@ -2320,13 +2320,13 @@ function UpdateNowPlayingAndShare(SearchOnGoing=false) {
             loop_charge = loop_charge + ", " + "1"
         }
     } else {
-        loop_mass = FormatMasses(PlotInfo["loopmass"][0])
+        loop_mass = FormatMasses(PlotInfo["bodymass"][PlotInfo["Targets"][0][0]])
         for (var il = 1 ; il < nloop; il++) {
-            loop_mass = loop_mass + ", " + FormatMasses(PlotInfo["loopmass"][il])
+            loop_mass = loop_mass + ", " + FormatMasses(PlotInfo["bodymass"][PlotInfo["Targets"][il][0]])
         }
-        loop_charge = FormatMasses(PlotInfo["loopcharge"][0])
+        loop_charge = FormatMasses(PlotInfo["bodycharge"][PlotInfo["Targets"][0][0]])
         for (var il = 1 ; il < nloop; il++) {
-            loop_charge = loop_charge + ", " + FormatMasses(PlotInfo["loopcharge"][il])
+            loop_charge = loop_charge + ", " + FormatMasses(PlotInfo["bodycharge"][PlotInfo["Targets"][il][0]])
         }
     }
 

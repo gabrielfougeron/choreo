@@ -55,6 +55,7 @@ import json
 import types
 import itertools
 import functools
+import inspect
 
 try:
     from matplotlib import pyplot as plt
@@ -67,6 +68,12 @@ try:
     MKL_FFT_AVAILABLE = True
 except:
     MKL_FFT_AVAILABLE = False
+
+try:
+    from choreo.numba_funs import pow_inter_law, jit_inter_law, jit_inter_law_str
+    NUMBA_AVAILABLE = True
+except:
+    NUMBA_AVAILABLE = False
 
 from choreo.cython.optional_pyfftw cimport pyfftw
 from choreo.optional_pyfftw import p_pyfftw, PYFFTW_AVAILABLE
@@ -374,9 +381,11 @@ cdef class NBodySyst():
         return np.asarray(self._Hash_exp)
 
     cdef inter_law_fun_type _inter_law
+    cdef readonly str _inter_law_str
     
     cdef readonly bint LawIsHomo
     cdef readonly double Homo_exp
+    cdef readonly double Homo_unit
 
     # Things that change with nint
     cdef Py_ssize_t _nint
@@ -477,6 +486,7 @@ cdef class NBodySyst():
         double[::1] bodycharge          ,
         list Sym_list                   ,
         object inter_law = None         , 
+        str inter_law_str = None        , 
         bint ForceGeneralSym = False    ,
         bint ForceGreaterNStore = False ,
     ):
@@ -488,22 +498,67 @@ cdef class NBodySyst():
         cdef double eps = 1e-12
 
         cdef ccallback_t callback_inter_fun
-        if inter_law is None:
-            self._inter_law = gravity_pot
-        else:
-            ccallback_prepare(&callback_inter_fun, signatures, inter_law, CCALLBACK_DEFAULTS)
-
-            if (callback_inter_fun.py_function != NULL):
-                raise ValueError("Provided inter_law is a Python function which is disallowed for performance reasons. Please provide a C function.")
-            elif (callback_inter_fun.signature.value != 0):
-                raise ValueError(f"Provided inter_law is a C function with incorrect signature. Signature should be {signatures[0].signature}")
+        if inter_law_str is None:
+            if inter_law is None:
+                self._inter_law = gravity_pot
+                self._inter_law_str = "gravity_pot"
             else:
+                ccallback_prepare(&callback_inter_fun, signatures, inter_law, CCALLBACK_DEFAULTS)
+
+                if (callback_inter_fun.py_function != NULL):
+
+                    if not NUMBA_AVAILABLE:
+                        raise ValueError("Numba is not available and provided inter_law is a Python function. Using a Python function is disallowed for performance reasons. Please provide a C function or install Numba on your system.")
+
+                    inter_law_numba = jit_inter_law(inter_law)
+                    ccallback_prepare(&callback_inter_fun, signatures, inter_law_numba, CCALLBACK_DEFAULTS)
+                    
+                    if (callback_inter_fun.signature.value != 0):
+                        raise ValueError(f"Provided inter_law is a Python function with incorrect signature.")
+
+                    self._inter_law_str = inspect.getsource(inter_law)
+
+                elif (callback_inter_fun.signature.value != 0):
+                    raise ValueError(f"Provided inter_law is a C function with incorrect signature. Signature should be {signatures[0].signature}")
+                else:
+
+                    self._inter_law_str = "Custom C function"
+
                 self._inter_law = <inter_law_fun_type> callback_inter_fun.c_function
+        else:
+            if inter_law is not None:
+                raise ValueError("Please provide either inter_law or inter_law_str, not both.")
+        
+            if not isinstance(inter_law_str, str):
+                raise ValueError(f"Provided inter_law_str is of type {type(inter_law_str)} but should be of type string")
+
+            if inter_law_str == "gravity_pot":
+                self._inter_law = gravity_pot
+                self._inter_law_str = "gravity_pot"
+            else:
+
+                if not NUMBA_AVAILABLE:
+                    raise ValueError("Numba is not available and provided inter_law_str is a string defining a Python function. Using a Python function is disallowed for performance reasons. Please provide a C function or install Numba on your system.")
+
+                try:
+                    
+                    inter_law_numba = jit_inter_law_str(inter_law_str)
+                    ccallback_prepare(&callback_inter_fun, signatures, inter_law_numba, CCALLBACK_DEFAULTS)
+
+                    if (callback_inter_fun.signature.value != 0):
+                        raise ValueError(f"Provided inter_law_str defines a Python function whose corresponding C function has incorrect signature. Signature should be {signatures[0].signature}")
+                    
+                    self._inter_law_str = inter_law_str
+                    self._inter_law = <inter_law_fun_type> callback_inter_fun.c_function
+
+                except Exception as err:
+                    print(err)
+                    raise ValueError("Could not compile provided string.")
 
         if not(self.Validate_inter_law()):
             raise ValueError(f'Finite differences could not validate the provided potential law.')
 
-        self.LawIsHomo, self.Homo_exp = self.Detect_homo_inter_law()
+        self.LawIsHomo, self.Homo_exp, self.Homo_unit = self.Detect_homo_inter_law()
 
         if (bodymass.shape[0] != nbody):
             raise ValueError(f'Incompatible number of bodies {nbody} vs number of masses {bodymass.shape[0]}')
@@ -1396,8 +1451,10 @@ cdef class NBodySyst():
 
         for i in range(n):
             IsHomo = IsHomo and cfabs(alpha_approx[i] - alpha_avg) < eps
+        
+        self._inter_law(1., pot)
 
-        return IsHomo, alpha_avg
+        return IsHomo, alpha_avg, pot[0]
 
     # Should really be a class method
     @cython.final
@@ -1526,23 +1583,47 @@ cdef class NBodySyst():
         return AABB_np
 
     @cython.final
-    def Write_Descriptor(
-        self, double[::1] params_mom_buf, filename=None,
-        segmpos=None, segmvel=None, 
-        Action=None, Gradaction=None, Hash_Action=None,
-        extend=0.03,
+    def Init_to_dict(self):
+
+        bodymass = [self._loopmass[self._bodyloop[ib]] for ib in range(self.nbody)]
+        bodycharge = [self._loopcharge[self._bodyloop[ib]] for ib in range(self.nbody)]
+
+        return {
+            "choreo_version" : choreo.metadata.__version__          ,
+            "geodim" : self.geodim                                  ,
+            "nbody" : self.nbody                                    ,
+            "bodymass" : bodymass                                   ,
+            "bodycharge" : bodycharge                               ,
+            "Sym_list" : [Sym.to_dict() for Sym in self.Sym_list]   ,
+            "inter_law_str" : self.loopcharge.tolist()              ,
+        }
+
+    @cython.final
+    def Segmpos_Descriptor(self,
+        double[::1] params_mom_buf = None   ,
+        segmpos = None  , segmvel = None    , 
+        Action = None   , Gradaction = None , Hash_Action = None,
+        extend = 0.03   ,
     ):
 
         if segmpos is None:
+            if params_mom_buf is None:
+                raise ValueError("Missing params_mom_buf")
             segmpos = self.params_to_segmpos(params_mom_buf)
 
         if segmvel is None:
+            if params_mom_buf is None:
+                raise ValueError("Missing params_mom_buf")
             segmvel = self.params_to_segmvel(params_mom_buf)
 
         if Action is None:
+            if params_mom_buf is None:
+                raise ValueError("Missing params_mom_buf")
             Action = self.segmpos_params_to_action(segmpos, params_mom_buf)
 
         if Gradaction is None:
+            if params_mom_buf is None:
+                raise ValueError("Missing params_mom_buf")
             Gradaction_vect = self.segmpos_params_to_action_grad(segmpos, params_mom_buf)
             Gradaction = np.linalg.norm(Gradaction_vect)
 
@@ -1554,15 +1635,11 @@ cdef class NBodySyst():
 
         Info_dict = {}
 
-        Info_dict["choreo_version"] = choreo.metadata.__version__
-        Info_dict["nbody"] = self.nbody
         Info_dict["nint_min"] = self.nint_min
         Info_dict["nint"] = self.nint
         Info_dict["segm_size"] = self.segm_size
         Info_dict["segm_store"] = self.segm_store
 
-        Info_dict["loopmass"] = self.loopmass.tolist()
-        Info_dict["loopcharge"] = self.loopcharge.tolist()
         Info_dict["nloop"] = self.nloop
         Info_dict["loopnb"] = self.loopnb.tolist()
         Info_dict["Targets"] = self.Targets.tolist() 
@@ -1599,9 +1676,40 @@ cdef class NBodySyst():
         Info_dict["InterSegmSpaceRot"] = InterSegmSpaceRot
         Info_dict["InterSegmTimeRev"] = InterSegmTimeRev
 
+        return Info_dict
+
+    @cython.final
+    def Write_Descriptor(self, filename = None, **kwargs):
+
+        Info_dict = self.Init_to_dict()
+
+        Info_dict.update(self.Segmpos_Descriptor(**kwargs))
+
         with open(filename, "w") as jsonFile:
             jsonString = json.dumps(Info_dict, indent=4, sort_keys=False)
             jsonFile.write(jsonString)
+
+    @cython.final
+    @classmethod
+    def FromDict(cls, InfoDict):
+    
+        geodim = InfoDict["geodim"]
+        nbody = InfoDict["nbody"]
+        mass = InfoDict["mass"]
+        charge = InfoDict["charge"]
+        Sym_list = InfoDict["Sym_list"]
+        
+        inter_pow = InfoDict["inter_pow"]
+        inter_pm = InfoDict["inter_pm"]
+        
+        if (inter_pow == -1.) and (inter_pm == 1) :
+            inter_law = scipy.LowLevelCallable.from_cython(choreo.cython._NBodySyst, "gravity_pot")
+        else:
+            inter_law = choreo.numba_funs.pow_inter_law(inter_pow/2, inter_pm)
+
+        NBS = choreo.cython._NBodySyst.NBodySyst(geodim, nbody, mass, charge, Sym_list, inter_law)
+        
+
 
     @cython.final
     def GetKrylovJacobian(self, Use_exact_Jacobian=True, jac_options_kw={}):
@@ -1895,30 +2003,9 @@ cdef class NBodySyst():
         
         plt.close()
 
-
     @cython.final
     def PlotTimeBodyGraph(self, filename):
         PlotTimeBodyGraph(self.SegmGraph, self.nbody, self.nint_min, filename)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     @cython.final
     @cython.cdivision(True)
@@ -3479,6 +3566,11 @@ cdef class NBodySyst():
         out += '\n'
 
         return out
+
+    # def FindReflectionSymmetry(self, double[:,:,::1] segmpos):
+
+
+
 
 @cython.cdivision(True)
 cdef void Make_Init_bounds_coeffs(

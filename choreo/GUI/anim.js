@@ -684,18 +684,14 @@ function canvasApp() {
 				color = colorLookup[color_id % colorLookup.length];
 				trailColor = trailColorLookup[color_id % colorLookup.length];
 				
-				if (IsLegacy) {
-					if (DoScaleSizeWithMass) {
+				if (DoScaleSizeWithMass) {
+					if (IsLegacy) { // Really useless distinction but hey ... legacy is not forever, right ?
 						PartRelSize = Math.sqrt(PlotInfo["mass"][ib])
 					} else {
-						PartRelSize = 1.
+						PartRelSize = Math.sqrt(PlotInfo["bodymass"][ib])
 					}
 				} else {
-					if (DoScaleSizeWithMass) {
-						PartRelSize = Math.sqrt(PlotInfo["loopmass"][il])
-					} else {
-						PartRelSize = 1.
-					}
+					PartRelSize = 1.
 				}
 
 				PartRelSize = Math.min(PartRelSize, Max_PartRelSize)
@@ -1232,7 +1228,7 @@ function canvasApp() {
 
 				xrot_glob = center_x + GlobalRot[0][0] * xrot + GlobalRot[0][1] * yrot
 				yrot_glob = center_y + GlobalRot[1][0] * xrot + GlobalRot[1][1] * yrot
-				
+
 				particles[ib].lastX = particles[ib].x;
 				particles[ib].lastY = particles[ib].y;
 				particles[ib].x = xrot_glob;

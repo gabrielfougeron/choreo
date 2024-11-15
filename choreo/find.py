@@ -198,7 +198,7 @@ def Find_Choreo(
             else:
                 filename_output = os.path.join(store_folder, file_basename+'_init')
 
-            NBS.Write_Descriptor(x, segmpos=segmpos, filename = filename_output+'.json')
+            NBS.Write_Descriptor(params_mom_buf=x, segmpos=segmpos, filename=filename_output+'.json')
 
             if Save_img :
                 NBS.plot_segmpos_2D(segmpos, filename_output+'.png', fig_size=img_size, color=color, color_list=color_list)     
@@ -394,7 +394,7 @@ def Find_Choreo(
 
                     print(f'Saving solution as {filename_output}.*.')
              
-                    NBS.Write_Descriptor(best_sol.x , filename = filename_output+'.json', segmpos=segmpos, Gradaction=f_fine_norm, Hash_Action=Hash_Action, extend=plot_extend)
+                    NBS.Write_Descriptor(params_mom_buf=best_sol.x , filename = filename_output+'.json', segmpos=segmpos, Gradaction=f_fine_norm, Hash_Action=Hash_Action, extend=plot_extend)
 
                     if Save_img :
                         NBS.plot_segmpos_2D(segmpos, filename_output+'.png', fig_size=img_size, color=color, color_list=color_list)
