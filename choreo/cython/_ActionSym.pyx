@@ -413,7 +413,21 @@ cdef class ActionSym():
         np.matmul(in_segm, self._SpaceRot.T, out=out)
         if self.TimeRev == -1:
             out[:,:] = out[::-1,:]          
+            
+    
+    @cython.final
+    def to_dict(ActionSym self):
+    # Useful to write to a json file
 
+        return {
+            "BodyPerm"      : self.BodyPerm.tolist()    ,
+            "SpaceRot"      : self.SpaceRot.tolist()    ,
+            "TimeRev"       : self.TimeRev              ,
+            "TimeShiftNum"  : self.TimeShiftNum         ,
+            "TimeShiftDen"  : self.TimeShiftDen         ,
+        }
+
+    @cython.final
     @cython.cdivision(True)
     @classmethod
     def TimeShifts(cls, Py_ssize_t max_den):
