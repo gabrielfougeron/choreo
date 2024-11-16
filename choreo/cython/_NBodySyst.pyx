@@ -69,11 +69,8 @@ try:
 except:
     MKL_FFT_AVAILABLE = False
 
-try:
-    from choreo.numba_funs import pow_inter_law, jit_inter_law, jit_inter_law_str
-    NUMBA_AVAILABLE = True
-except:
-    NUMBA_AVAILABLE = False
+if choreo.NUMBA_AVAILABLE:
+    from choreo.numba_funs import jit_inter_law, jit_inter_law_str
 
 from choreo.cython.optional_pyfftw cimport pyfftw
 from choreo.optional_pyfftw import p_pyfftw, PYFFTW_AVAILABLE
@@ -92,8 +89,8 @@ shortcut_name = {
 
 cdef ccallback_signature_t signatures[2]
 
-ctypedef void (*inter_law_fun_type)(double, double*) noexcept nogil 
-signatures[0].signature = b"void (double, double *)"
+ctypedef void (*inter_law_fun_type)(double*, double, double*) noexcept nogil 
+signatures[0].signature = b"void (double *, double, double *)"
 signatures[0].value = 0
 signatures[1].signature = NULL
 
@@ -110,30 +107,17 @@ cdef inline void inline_gravity_pot(double xsq, double* res) noexcept nogil:
 
 @cython.profile(False)
 @cython.linetrace(False)
-cdef void gravity_pot(double xsq, double* res) noexcept nogil:
-
+cdef void gravity_pot(double* pot_params, double xsq, double* res) noexcept nogil:
     inline_gravity_pot(xsq, res)
 
-@cython.profile(False)
-@cython.linetrace(False)
-cdef void elastic_pot(double xsq, double* res) noexcept nogil:
-    
-    res[0] = xsq
-    res[1] = 1.
-    res[2] = 0.
+cdef void power_law_pot(double* pot_params, double xsq, double* res) noexcept nogil:
 
-cdef void power_law_pot(double xsq, double cn, double* res) noexcept nogil:
-    # cn is the exponent of x^2 in the potential power law
-    
-    cdef double cnm2 = cn-2
-    cdef double cmnnm1 = -cn*(cn-1)
-
-    cdef double a = cpow(xsq,cnm2)
+    cdef double a = pot_params[3]*cpow(xsq, pot_params[2])
     cdef double b = xsq*a
 
     res[0] = -xsq*b
-    res[1] = -cn*b
-    res[2] = cmnnm1*a
+    res[1] = pot_params[0]*b
+    res[2] = pot_params[1]*a
 
 cdef double[::1] default_Hash_exp = np.array([-0.1, -0.2, -0.3, -0.4, -0.5, -0.6, -0.7, -0.8, -0.9])
 
@@ -382,6 +366,8 @@ cdef class NBodySyst():
 
     cdef inter_law_fun_type _inter_law
     cdef readonly str _inter_law_str
+    cdef double[::1] _inter_law_param_buf
+    cdef double* _inter_law_param_ptr
     
     cdef readonly bint LawIsHomo
     cdef readonly double Homo_exp
@@ -487,6 +473,7 @@ cdef class NBodySyst():
         list Sym_list                   ,
         object inter_law = None         , 
         str inter_law_str = None        , 
+        object inter_law_params = None  ,
         bint ForceGeneralSym = False    ,
         bint ForceGreaterNStore = False ,
     ):
@@ -497,73 +484,12 @@ cdef class NBodySyst():
         cdef Py_ssize_t i, il, ibin, ib
         cdef double eps = 1e-12
 
-        cdef ccallback_t callback_inter_fun
-        if inter_law_str is None:
-            if inter_law is None:
-                self._inter_law = gravity_pot
-                self._inter_law_str = "gravity_pot"
-            else:
-                ccallback_prepare(&callback_inter_fun, signatures, inter_law, CCALLBACK_DEFAULTS)
-
-                if (callback_inter_fun.py_function != NULL):
-
-                    if not NUMBA_AVAILABLE:
-                        raise ValueError("Numba is not available and provided inter_law is a Python function. Using a Python function is disallowed for performance reasons. Please provide a C function or install Numba on your system.")
-
-                    inter_law_numba = jit_inter_law(inter_law)
-                    ccallback_prepare(&callback_inter_fun, signatures, inter_law_numba, CCALLBACK_DEFAULTS)
-                    
-                    if (callback_inter_fun.signature.value != 0):
-                        raise ValueError(f"Provided inter_law is a Python function with incorrect signature.")
-
-                    self._inter_law_str = inspect.getsource(inter_law)
-
-                elif (callback_inter_fun.signature.value != 0):
-                    raise ValueError(f"Provided inter_law is a C function with incorrect signature. Signature should be {signatures[0].signature}")
-                else:
-
-                    self._inter_law_str = "Custom C function"
-
-                self._inter_law = <inter_law_fun_type> callback_inter_fun.c_function
-        else:
-            if inter_law is not None:
-                raise ValueError("Please provide either inter_law or inter_law_str, not both.")
-        
-            if not isinstance(inter_law_str, str):
-                raise ValueError(f"Provided inter_law_str is of type {type(inter_law_str)} but should be of type string")
-
-            if inter_law_str == "gravity_pot":
-                self._inter_law = gravity_pot
-                self._inter_law_str = "gravity_pot"
-            else:
-
-                if not NUMBA_AVAILABLE:
-                    raise ValueError("Numba is not available and provided inter_law_str is a string defining a Python function. Using a Python function is disallowed for performance reasons. Please provide a C function or install Numba on your system.")
-
-                try:
-                    
-                    inter_law_numba = jit_inter_law_str(inter_law_str)
-                    ccallback_prepare(&callback_inter_fun, signatures, inter_law_numba, CCALLBACK_DEFAULTS)
-
-                    if (callback_inter_fun.signature.value != 0):
-                        raise ValueError(f"Provided inter_law_str defines a Python function whose corresponding C function has incorrect signature. Signature should be {signatures[0].signature}")
-                    
-                    self._inter_law_str = inter_law_str
-                    self._inter_law = <inter_law_fun_type> callback_inter_fun.c_function
-
-                except Exception as err:
-                    print(err)
-                    raise ValueError("Could not compile provided string.")
-
-        if not(self.Validate_inter_law()):
-            raise ValueError(f'Finite differences could not validate the provided potential law.')
-
-        self.LawIsHomo, self.Homo_exp, self.Homo_unit = self.Detect_homo_inter_law()
-
         if (bodymass.shape[0] != nbody):
             raise ValueError(f'Incompatible number of bodies {nbody} vs number of masses {bodymass.shape[0]}')
         if (bodycharge.shape[0] != nbody):
             raise ValueError(f'Incompatible number of bodies {nbody} vs number of charges {bodycharge.shape[0]}')
+
+        self.Set_inter_law(inter_law, inter_law_str, inter_law_params)
 
         self._Hash_exp = default_Hash_exp
 
@@ -1397,6 +1323,106 @@ cdef class NBodySyst():
 
     @cython.final
     @cython.cdivision(True)
+    def Set_inter_law(self, inter_law = None, inter_law_str = None, inter_law_params = None):
+
+        print(f'{inter_law = }')
+        print(f'{inter_law_str = }')
+        print(f'{inter_law_params = }')
+
+        cdef ccallback_t callback_inter_fun
+        if inter_law_str is None:
+            if inter_law is None:
+                self._inter_law = gravity_pot
+                self._inter_law_str = "gravity_pot"
+                self._inter_law_param_ptr = NULL
+            else:
+                ccallback_prepare(&callback_inter_fun, signatures, inter_law, CCALLBACK_DEFAULTS)
+
+                if (callback_inter_fun.py_function != NULL):
+
+                    if not choreo.NUMBA_AVAILABLE:
+                        raise ValueError("Numba is not available and provided inter_law is a Python function. Using a Python function is disallowed for performance reasons. Please provide a C function or install Numba on your system.")
+
+                    inter_law_numba = jit_inter_law(inter_law)
+                    ccallback_prepare(&callback_inter_fun, signatures, inter_law_numba, CCALLBACK_DEFAULTS)
+                    
+                    if (callback_inter_fun.signature.value != 0):
+                        raise ValueError(f"Provided inter_law is a Python function with incorrect signature.")
+
+                    self._inter_law_str = inspect.getsource(inter_law)
+
+                elif (callback_inter_fun.signature.value != 0):
+                    raise ValueError(f"Provided inter_law is a C function with incorrect signature. Signature should be {signatures[0].signature}")
+                else:
+
+                    self._inter_law_str = "Custom C function"
+
+                self._inter_law = <inter_law_fun_type> callback_inter_fun.c_function
+
+                if inter_law_params is None:
+                    self._inter_law_param_ptr = NULL
+                else:
+                    self._inter_law_param_buf = inter_law_params.copy()
+                    self._inter_law_param_ptr = &self._inter_law_param_buf[0]
+        else:
+            if inter_law is not None:
+                raise ValueError("Please provide either inter_law or inter_law_str, not both.")
+        
+            if not isinstance(inter_law_str, str):
+                raise ValueError(f"Provided inter_law_str is of type {type(inter_law_str)} but should be of type string")
+
+            if inter_law_str == "gravity_pot":
+                self._inter_law = gravity_pot
+                self._inter_law_str = "gravity_pot"
+                self._inter_law_param_ptr = NULL
+            
+            elif inter_law_str == "power_law_pot":
+                if inter_law_params is None:
+                    raise ValueError("Missing inter_law_params = {'alpha': , 'n': }")
+
+                self._inter_law = power_law_pot
+
+                n = inter_law_params["n"]
+                nm2 = n-2
+                mnnm1 = -n*(n-1)
+                alpha = inter_law_params["alpha"]
+                
+                self._inter_law_str = f"power_law_pot({n = }, {alpha = })"
+                self._inter_law_param_buf = np.array([-n, mnnm1, nm2, alpha], dtype=np.float64)
+                self._inter_law_param_ptr = &self._inter_law_param_buf[0]
+            else:
+
+                if not choreo.NUMBA_AVAILABLE:
+                    raise ValueError("Numba is not available and provided inter_law_str is a string defining a Python function. Using a Python function is disallowed for performance reasons. Please provide a C function or install Numba on your system.")
+
+                try:
+                    
+                    inter_law_numba = jit_inter_law_str(inter_law_str)
+                    ccallback_prepare(&callback_inter_fun, signatures, inter_law_numba, CCALLBACK_DEFAULTS)
+
+                    if (callback_inter_fun.signature.value != 0):
+                        raise ValueError(f"Provided inter_law_str defines a Python function whose corresponding C function has incorrect signature. Signature should be {signatures[0].signature}")
+                    
+                    self._inter_law_str = inter_law_str
+                    self._inter_law = <inter_law_fun_type> callback_inter_fun.c_function
+
+                    if inter_law_params is None:
+                        self._inter_law_param_ptr = NULL
+                    else:
+                        self._inter_law_param_buf = inter_law_params.copy()
+                        self._inter_law_param_ptr = &self._inter_law_param_buf[0]
+
+                except Exception as err:
+                    print(err)
+                    raise ValueError("Could not compile provided string.")
+
+        if not(self.Validate_inter_law()):
+            raise ValueError(f'Finite differences could not validate the provided potential law.')
+
+        self.LawIsHomo, self.Homo_exp, self.Homo_unit = self.Detect_homo_inter_law()
+
+    @cython.final
+    @cython.cdivision(True)
     def Validate_inter_law(self, double xsqo=1., double dxsq=1e-4,  double eps=1e-7, bint verbose=False):
 
         cdef double xsqp = xsqo + dxsq
@@ -1406,9 +1432,9 @@ cdef class NBodySyst():
         cdef double[3] potp
         cdef double[3] potm
 
-        self._inter_law(xsqo, poto)
-        self._inter_law(xsqp, potp)
-        self._inter_law(xsqm, potm)
+        self._inter_law(self._inter_law_param_ptr, xsqo, poto)
+        self._inter_law(self._inter_law_param_ptr, xsqp, potp)
+        self._inter_law(self._inter_law_param_ptr, xsqm, potm)
 
         cdef double fd1 = (potp[0] - potm[0]) / (2*dxsq)
         cdef double fd2 = ((potp[0] - poto[0]) + (potm[0] - poto[0])) / (dxsq*dxsq)
@@ -1438,7 +1464,7 @@ cdef class NBodySyst():
 
         for i in range(n):
 
-            self._inter_law(xsq, pot)
+            self._inter_law(self._inter_law_param_ptr, xsq, pot)
 
             alpha_approx[i] = xsq * pot[1] / pot[0]
             alpha_avg += alpha_approx[i]
@@ -1452,7 +1478,7 @@ cdef class NBodySyst():
         for i in range(n):
             IsHomo = IsHomo and cfabs(alpha_approx[i] - alpha_avg) < eps
         
-        self._inter_law(1., pot)
+        self._inter_law(self._inter_law_param_ptr, 1., pot)
 
         return IsHomo, alpha_avg, pot[0]
 
@@ -1689,27 +1715,26 @@ cdef class NBodySyst():
             jsonString = json.dumps(Info_dict, indent=4, sort_keys=False)
             jsonFile.write(jsonString)
 
-    @cython.final
-    @classmethod
-    def FromDict(cls, InfoDict):
-    
-        geodim = InfoDict["geodim"]
-        nbody = InfoDict["nbody"]
-        mass = InfoDict["mass"]
-        charge = InfoDict["charge"]
-        Sym_list = InfoDict["Sym_list"]
-        
-        inter_pow = InfoDict["inter_pow"]
-        inter_pm = InfoDict["inter_pm"]
-        
-        if (inter_pow == -1.) and (inter_pm == 1) :
-            inter_law = scipy.LowLevelCallable.from_cython(choreo.cython._NBodySyst, "gravity_pot")
-        else:
-            inter_law = choreo.numba_funs.pow_inter_law(inter_pow/2, inter_pm)
-
-        NBS = choreo.cython._NBodySyst.NBodySyst(geodim, nbody, mass, charge, Sym_list, inter_law)
-        
-
+# TODO
+#     @cython.final
+#     @classmethod
+#     def FromDict(cls, InfoDict):
+#     
+#         geodim = InfoDict["geodim"]
+#         nbody = InfoDict["nbody"]
+#         mass = InfoDict["mass"]
+#         charge = InfoDict["charge"]
+#         Sym_list = InfoDict["Sym_list"]
+#         
+#         inter_pow = InfoDict["inter_pow"]
+#         inter_pm = InfoDict["inter_pm"]
+#         
+#         if (inter_pow == -1.) and (inter_pm == 1) :
+#             inter_law = scipy.LowLevelCallable.from_cython(choreo.cython._NBodySyst, "gravity_pot")
+#         else:
+#             inter_law = choreo.numba_funs.pow_inter_law(inter_pow/2, inter_pm)
+# 
+#         NBS = choreo.cython._NBodySyst.NBodySyst(geodim, nbody, mass, charge, Sym_list, inter_law)
 
     @cython.final
     def GetKrylovJacobian(self, Use_exact_Jacobian=True, jac_options_kw={}):
@@ -2301,11 +2326,11 @@ cdef class NBodySyst():
 
             pot_nrg = segm_pos_to_pot_nrg(
                 segmpos                 ,
-                self._BinSourceSegm     , self._BinTargetSegm   ,
-                self._BinSpaceRot       , self._BinSpaceRotIsId ,
+                self._BinSourceSegm     , self._BinTargetSegm       ,
+                self._BinSpaceRot       , self._BinSpaceRotIsId     ,
                 self._BinProdChargeSum  ,
-                self.segm_size          , self.segm_store       ,
-                self._inter_law         ,
+                self.segm_size          , self.segm_store           ,
+                self._inter_law         , self._inter_law_param_ptr ,
             )
         
         return pot_nrg
@@ -2342,12 +2367,12 @@ cdef class NBodySyst():
             memset(&self._pot_nrg_grad[0,0,0], 0, sizeof(double)*self.nsegm*self.segm_store*self.geodim)
 
             segm_pos_to_pot_nrg_grad(
-                self._segmpos           , self._pot_nrg_grad    ,
-                self._BinSourceSegm     , self._BinTargetSegm   ,
-                self._BinSpaceRot       , self._BinSpaceRotIsId ,
+                self._segmpos           , self._pot_nrg_grad        ,
+                self._BinSourceSegm     , self._BinTargetSegm       ,
+                self._BinSpaceRot       , self._BinSpaceRotIsId     ,
                 self._BinProdChargeSum  ,
-                self.segm_size          , self.segm_store       , 1.                    ,
-                self._inter_law         ,
+                self.segm_size          , self.segm_store           , 1.    ,
+                self._inter_law         , self._inter_law_param_ptr ,
             )
 
             segmpos_to_params_T(
@@ -2430,7 +2455,7 @@ cdef class NBodySyst():
                 self._BinSpaceRot       , self._BinSpaceRotIsId     ,
                 self._BinProdChargeSum  ,
                 self.segm_size          , self.segm_store           , 1.                        ,
-                self._inter_law         ,
+                self._inter_law         , self._inter_law_param_ptr ,
             )
 
             segmpos_to_params_T(
@@ -2489,11 +2514,11 @@ cdef class NBodySyst():
 
             action -= segm_pos_to_pot_nrg(
                 self._segmpos           ,
-                self._BinSourceSegm     , self._BinTargetSegm   ,
-                self._BinSpaceRot       , self._BinSpaceRotIsId ,
+                self._BinSourceSegm     , self._BinTargetSegm       ,
+                self._BinSpaceRot       , self._BinSpaceRotIsId     ,
                 self._BinProdChargeSum  ,
-                self.segm_size          , self.segm_store       ,
-                self._inter_law         ,
+                self.segm_size          , self.segm_store           ,
+                self._inter_law         , self._inter_law_param_ptr ,
             )
         
         return action
@@ -2530,12 +2555,12 @@ cdef class NBodySyst():
             memset(&self._pot_nrg_grad[0,0,0], 0, sizeof(double)*self.nsegm*self.segm_store*self.geodim)
 
             segm_pos_to_pot_nrg_grad(
-                self._segmpos           , self._pot_nrg_grad    ,
-                self._BinSourceSegm     , self._BinTargetSegm   ,
-                self._BinSpaceRot       , self._BinSpaceRotIsId ,
+                self._segmpos           , self._pot_nrg_grad        ,
+                self._BinSourceSegm     , self._BinTargetSegm       ,
+                self._BinSpaceRot       , self._BinSpaceRotIsId     ,
                 self._BinProdChargeSum  ,
-                self.segm_size          , self.segm_store       , -1.                   ,
-                self._inter_law         ,
+                self.segm_size          , self.segm_store           , -1.   ,
+                self._inter_law         , self._inter_law_param_ptr ,
             )
 
             segmpos_to_params_T(
@@ -2624,7 +2649,7 @@ cdef class NBodySyst():
                 self._BinSpaceRot       , self._BinSpaceRotIsId     ,
                 self._BinProdChargeSum  ,
                 self.segm_size          , self.segm_store           , -1.                       ,
-                self._inter_law         ,
+                self._inter_law         , self._inter_law_param_ptr ,
             )
 
             segmpos_to_params_T(
@@ -2691,11 +2716,11 @@ cdef class NBodySyst():
 
             action -= segm_pos_to_pot_nrg(
                 segmpos                 ,
-                self._BinSourceSegm     , self._BinTargetSegm   ,
-                self._BinSpaceRot       , self._BinSpaceRotIsId ,
+                self._BinSourceSegm     , self._BinTargetSegm       ,
+                self._BinSpaceRot       , self._BinSpaceRotIsId     ,
                 self._BinProdChargeSum  ,
-                self.segm_size          , self.segm_store       ,
-                self._inter_law         ,
+                self.segm_size          , self.segm_store           ,
+                self._inter_law         , self._inter_law_param_ptr ,
             )
         
         return action
@@ -2714,12 +2739,12 @@ cdef class NBodySyst():
             memset(&self._pot_nrg_grad[0,0,0], 0, sizeof(double)*self.nsegm*self.segm_store*self.geodim)
 
             segm_pos_to_pot_nrg_grad(
-                segmpos                 , self._pot_nrg_grad    ,
-                self._BinSourceSegm     , self._BinTargetSegm   ,
-                self._BinSpaceRot       , self._BinSpaceRotIsId ,
+                segmpos                 , self._pot_nrg_grad        ,
+                self._BinSourceSegm     , self._BinTargetSegm       ,
+                self._BinSpaceRot       , self._BinSpaceRotIsId     ,
                 self._BinProdChargeSum  ,
-                self.segm_size          , self.segm_store       , -1.                   ,
-                self._inter_law         ,
+                self.segm_size          , self.segm_store           , -1.   ,
+                self._inter_law         , self._inter_law_param_ptr ,
             )
 
             segmpos_to_params_T(
@@ -2788,7 +2813,7 @@ cdef class NBodySyst():
                 self._BinSpaceRot       , self._BinSpaceRotIsId     ,
                 self._BinProdChargeSum  ,
                 self.segm_size          , self.segm_store           , -1.                       ,
-                self._inter_law         ,
+                self._inter_law         , self._inter_law_param_ptr ,
             )
 
             segmpos_to_params_T(
@@ -3434,12 +3459,12 @@ cdef class NBodySyst():
         memset(&self._pot_nrg_grad[0,0,0], 0, sizeof(double)*self.nsegm*self.segm_store*self.geodim)
 
         segm_pos_to_pot_nrg_grad(
-            self._segmpos           , self._pot_nrg_grad    ,
-            self._BinSourceSegm     , self._BinTargetSegm   ,
-            self._BinSpaceRot       , self._BinSpaceRotIsId ,
+            self._segmpos           , self._pot_nrg_grad        ,
+            self._BinSourceSegm     , self._BinTargetSegm       ,
+            self._BinSpaceRot       , self._BinSpaceRotIsId     ,
             self._BinProdChargeSum  ,
-            self.segm_size          , self.segm_store       , -1.                   ,
-            self._inter_law         ,
+            self.segm_size          , self.segm_store           , -1.   ,
+            self._inter_law         , self._inter_law_param_ptr ,
         )
 
         TT.toc("segm_pos_to_pot_nrg_grad")
@@ -5306,7 +5331,7 @@ cdef void segmpos_to_params_T(
 cdef int get_inter_flags(
     Py_ssize_t segm_size            , Py_ssize_t segm_store ,
     Py_ssize_t geodim               ,
-    inter_law_fun_type inter_law    ,
+    inter_law_fun_type inter_law
 ) noexcept nogil:
 
     cdef int inter_flags = 0
@@ -5428,7 +5453,7 @@ cdef double segm_pos_to_pot_nrg(
     double[:,:,::1] BinSpaceRot     , bint[::1] BinSpaceRotIsId     ,
     double[::1] BinProdChargeSum    ,
     Py_ssize_t segm_size            , Py_ssize_t segm_store         ,
-    inter_law_fun_type inter_law    ,
+    inter_law_fun_type inter_law    , double* inter_law_param_ptr   ,
 ) noexcept nogil:
 
     cdef Py_ssize_t nbin = BinSourceSegm.shape[0]
@@ -5475,7 +5500,7 @@ cdef double segm_pos_to_pot_nrg(
                 for idim in range(1,geodim):
                     dx2 += dpos[idim]*dpos[idim]
 
-                inter_law(dx2, pot)
+                inter_law(inter_law_param_ptr, dx2, pot)
 
                 pot_nrg_bin += pot[0]
                 dpos += geodim
@@ -5487,7 +5512,7 @@ cdef double segm_pos_to_pot_nrg(
             for idim in range(1,geodim):
                 dx2 += dpos[idim]*dpos[idim]
 
-            inter_law(dx2, pot)
+            inter_law(inter_law_param_ptr, dx2, pot)
 
             pot_nrg_bin += 0.5*pot[0]
             dpos += geodim
@@ -5498,7 +5523,7 @@ cdef double segm_pos_to_pot_nrg(
                 for idim in range(1,geodim):
                     dx2 += dpos[idim]*dpos[idim]
 
-                inter_law(dx2, pot)
+                inter_law(inter_law_param_ptr, dx2, pot)
 
                 pot_nrg_bin += pot[0]
                 dpos += geodim
@@ -5508,7 +5533,7 @@ cdef double segm_pos_to_pot_nrg(
             for idim in range(1,geodim):
                 dx2 += dpos[idim]*dpos[idim]
 
-            inter_law(dx2, pot)
+            inter_law(inter_law_param_ptr, dx2, pot)
 
             pot_nrg_bin += 0.5*pot[0]
 
@@ -5528,7 +5553,7 @@ cdef void segm_pos_to_pot_nrg_grad(
     double[:,:,::1] BinSpaceRot     , bint[::1] BinSpaceRotIsId     ,
     double[::1] BinProdChargeSum    ,
     Py_ssize_t segm_size            , Py_ssize_t segm_store         , double globalmul  ,
-    inter_law_fun_type inter_law    ,
+    inter_law_fun_type inter_law    , double* inter_law_param_ptr   ,
 ) noexcept nogil:
 
     cdef Py_ssize_t nbin = BinSourceSegm.shape[0]
@@ -5565,9 +5590,9 @@ cdef void segm_pos_to_pot_nrg_grad(
         scipy.linalg.cython_blas.daxpy(&nitems_int, &minusone_double, &segmpos[isegmp,0,0], &int_one, tmp_loc_dpos, &int_one)
 
         pot_nrg_grad_inter(
-                inter_flags     , segm_size     , geodim_size   ,      
-                tmp_loc_dpos    , tmp_loc_grad  ,
-                inter_law       ,
+                inter_flags     , segm_size             , geodim_size   ,      
+                tmp_loc_dpos    , tmp_loc_grad          ,
+                inter_law       , inter_law_param_ptr   ,
             )
 
         bin_fac = 2*BinProdChargeSum[ibin]*globalmul
@@ -5587,41 +5612,41 @@ cdef void segm_pos_to_pot_nrg_grad(
 
 @cython.cdivision(True)
 cdef void pot_nrg_grad_inter(
-    int inter_flags , Py_ssize_t segm_size  , Py_ssize_t geodim ,      
+    int inter_flags , Py_ssize_t segm_size  , Py_ssize_t geodim             ,      
     double* dpos_in , double* grad_in       ,
-    inter_law_fun_type inter_law            ,
+    inter_law_fun_type inter_law            , double* inter_law_param_ptr   ,
 ) noexcept nogil:
 
     if inter_flags == 0:
 
         pot_nrg_grad_inter_size_law_nd(
-            segm_size   , geodim    ,      
-            dpos_in     , grad_in   ,
-            inter_law   ,
+            segm_size   , geodim                ,      
+            dpos_in     , grad_in               ,
+            inter_law   , inter_law_param_ptr   ,
         )
 
     elif inter_flags == 1:
 
         pot_nrg_grad_inter_store_law_nd(
-            segm_size   , geodim        ,      
-            dpos_in     , grad_in   ,
-            inter_law   ,
+            segm_size   , geodim                ,      
+            dpos_in     , grad_in               ,
+            inter_law   , inter_law_param_ptr   ,
         )
 
     elif inter_flags == 2:
 
         pot_nrg_grad_inter_size_law_2d(
             segm_size   ,      
-            dpos_in     , grad_in   ,
-            inter_law   ,
+            dpos_in     , grad_in               ,
+            inter_law   , inter_law_param_ptr   ,
         )
 
     elif inter_flags == 3:
 
         pot_nrg_grad_inter_store_law_2d(
             segm_size   ,      
-            dpos_in     , grad_in   ,
-            inter_law   ,
+            dpos_in     , grad_in               ,
+            inter_law   , inter_law_param_ptr   ,
         )
 
     elif inter_flags == 4:
@@ -5654,9 +5679,9 @@ cdef void pot_nrg_grad_inter(
 
 @cython.cdivision(True)
 cdef void pot_nrg_grad_inter_size_law_nd(
-    Py_ssize_t segm_size    , Py_ssize_t geodim ,      
-    double* dpos_in         , double* grad_in   ,
-    inter_law_fun_type inter_law                ,
+    Py_ssize_t segm_size            , Py_ssize_t geodim             ,      
+    double* dpos_in                 , double* grad_in               ,
+    inter_law_fun_type inter_law    , double* inter_law_param_ptr   ,
 ) noexcept nogil:
 
     cdef Py_ssize_t iint, idim
@@ -5672,7 +5697,7 @@ cdef void pot_nrg_grad_inter_size_law_nd(
         for idim in range(1,geodim):
             dx2 += dpos[idim]*dpos[idim]
 
-        inter_law(dx2, pot)
+        inter_law(inter_law_param_ptr, dx2, pot)
 
         for idim in range(geodim):
             grad[idim] = pot[1]*dpos[idim]
@@ -5682,9 +5707,9 @@ cdef void pot_nrg_grad_inter_size_law_nd(
 
 @cython.cdivision(True)
 cdef void pot_nrg_grad_inter_store_law_nd(
-    Py_ssize_t segm_size    , Py_ssize_t geodim ,      
-    double* dpos_in         , double* grad_in   ,
-    inter_law_fun_type inter_law                ,
+    Py_ssize_t segm_size            , Py_ssize_t geodim             ,      
+    double* dpos_in                 , double* grad_in               ,
+    inter_law_fun_type inter_law    , double* inter_law_param_ptr   ,
 ) noexcept nogil:
 
     cdef Py_ssize_t iint, idim
@@ -5699,7 +5724,7 @@ cdef void pot_nrg_grad_inter_store_law_nd(
     for idim in range(1,geodim):
         dx2 += dpos[idim]*dpos[idim]
 
-    inter_law(dx2, pot)
+    inter_law(inter_law_param_ptr, dx2, pot)
 
     for idim in range(geodim):
         grad[idim] = 0.5*pot[1]*dpos[idim]
@@ -5713,7 +5738,7 @@ cdef void pot_nrg_grad_inter_store_law_nd(
         for idim in range(1,geodim):
             dx2 += dpos[idim]*dpos[idim]
 
-        inter_law(dx2, pot)
+        inter_law(inter_law_param_ptr, dx2, pot)
 
         for idim in range(geodim):
             grad[idim] = pot[1]*dpos[idim]
@@ -5726,16 +5751,16 @@ cdef void pot_nrg_grad_inter_store_law_nd(
     for idim in range(1,geodim):
         dx2 += dpos[idim]*dpos[idim]
 
-    inter_law(dx2, pot)
+    inter_law(inter_law_param_ptr, dx2, pot)
 
     for idim in range(geodim):
         grad[idim] = 0.5*pot[1]*dpos[idim]
 
 @cython.cdivision(True)
 cdef void pot_nrg_grad_inter_size_law_2d(
-    Py_ssize_t segm_size                ,      
-    double* dpos_in , double* grad_in   ,
-    inter_law_fun_type inter_law        ,
+    Py_ssize_t segm_size            ,      
+    double* dpos_in                 , double* grad_in               ,
+    inter_law_fun_type inter_law    , double* inter_law_param_ptr   ,
 ) noexcept nogil:
 
     cdef Py_ssize_t iint
@@ -5749,7 +5774,7 @@ cdef void pot_nrg_grad_inter_size_law_2d(
 
         dx2 = dpos[0]*dpos[0] + dpos[1]*dpos[1]
 
-        inter_law(dx2, pot)
+        inter_law(inter_law_param_ptr, dx2, pot)
 
         grad[0] = pot[1]*dpos[0]
         grad[1] = pot[1]*dpos[1]
@@ -5759,9 +5784,9 @@ cdef void pot_nrg_grad_inter_size_law_2d(
 
 @cython.cdivision(True)
 cdef void pot_nrg_grad_inter_store_law_2d(
-    Py_ssize_t segm_size                ,      
-    double* dpos_in , double* grad_in   ,
-    inter_law_fun_type inter_law        ,
+    Py_ssize_t segm_size            ,      
+    double* dpos_in                 , double* grad_in               ,
+    inter_law_fun_type inter_law    , double* inter_law_param_ptr   ,
 ) noexcept nogil:
 
     cdef Py_ssize_t iint
@@ -5774,7 +5799,7 @@ cdef void pot_nrg_grad_inter_store_law_2d(
     # First iteration
     dx2 = dpos[0]*dpos[0] + dpos[1]*dpos[1]
 
-    inter_law(dx2, pot)
+    inter_law(inter_law_param_ptr, dx2, pot)
 
     grad[0] = 0.5*pot[1]*dpos[0]
     grad[1] = 0.5*pot[1]*dpos[1]
@@ -5786,7 +5811,7 @@ cdef void pot_nrg_grad_inter_store_law_2d(
 
         dx2 = dpos[0]*dpos[0] + dpos[1]*dpos[1]
 
-        inter_law(dx2, pot)
+        inter_law(inter_law_param_ptr, dx2, pot)
 
         grad[0] = pot[1]*dpos[0]
         grad[1] = pot[1]*dpos[1]
@@ -5797,7 +5822,7 @@ cdef void pot_nrg_grad_inter_store_law_2d(
     # Last iteration
     dx2 = dpos[0]*dpos[0] + dpos[1]*dpos[1]
 
-    inter_law(dx2, pot)
+    inter_law(inter_law_param_ptr, dx2, pot)
 
     grad[0] = 0.5*pot[1]*dpos[0]
     grad[1] = 0.5*pot[1]*dpos[1]
@@ -5955,7 +5980,7 @@ cdef void segm_pos_to_pot_nrg_hess(
     double[:,:,::1] BinSpaceRot     , bint[::1] BinSpaceRotIsId     ,
     double[::1] BinProdChargeSum    ,
     Py_ssize_t segm_size            , Py_ssize_t segm_store         , double globalmul              ,
-    inter_law_fun_type inter_law    ,
+    inter_law_fun_type inter_law    , double* inter_law_param_ptr   ,
 ) noexcept nogil:
 
     cdef Py_ssize_t nbin = BinSourceSegm.shape[0]
@@ -5996,7 +6021,7 @@ cdef void segm_pos_to_pot_nrg_hess(
         pot_nrg_hess_inter(
                 inter_flags     , segm_size     , geodim_size   ,      
                 tmp_loc_pos     , tmp_loc_dpos  , tmp_loc_hess  ,
-                inter_law       ,
+                inter_law       , inter_law_param_ptr           ,
             )
 
         bin_fac = 2*BinProdChargeSum[ibin]*globalmul
@@ -6016,9 +6041,9 @@ cdef void segm_pos_to_pot_nrg_hess(
 
 @cython.cdivision(True)
 cdef void pot_nrg_hess_inter(
-    int inter_flags , Py_ssize_t segm_size  , Py_ssize_t geodim ,      
-    double* pos_in  , double* dpos_in       , double* hess_in   ,
-    inter_law_fun_type inter_law            ,
+    int inter_flags                 , Py_ssize_t segm_size          , Py_ssize_t geodim ,      
+    double* pos_in                  , double* dpos_in               , double* hess_in   ,
+    inter_law_fun_type inter_law    , double* inter_law_param_ptr   ,
 ) noexcept nogil:
 
     if inter_flags == 0:
@@ -6026,7 +6051,7 @@ cdef void pot_nrg_hess_inter(
         pot_nrg_hess_inter_size_law_nd(
             segm_size   , geodim    ,      
             pos_in      , dpos_in   , hess_in   ,
-            inter_law   ,
+            inter_law   , inter_law_param_ptr   ,
         )
 
     elif inter_flags == 1:
@@ -6034,7 +6059,7 @@ cdef void pot_nrg_hess_inter(
         pot_nrg_hess_inter_store_law_nd(
             segm_size   , geodim    ,      
             pos_in      , dpos_in   , hess_in   ,
-            inter_law   ,
+            inter_law   , inter_law_param_ptr   ,
         )
 
     elif inter_flags == 2:
@@ -6042,7 +6067,7 @@ cdef void pot_nrg_hess_inter(
         pot_nrg_hess_inter_size_law_2d(
             segm_size   ,      
             pos_in      , dpos_in   , hess_in   ,
-            inter_law   ,
+            inter_law   , inter_law_param_ptr   ,
         )
 
     elif inter_flags == 3:
@@ -6050,7 +6075,7 @@ cdef void pot_nrg_hess_inter(
         pot_nrg_hess_inter_store_law_2d(
             segm_size   ,      
             pos_in      , dpos_in   , hess_in   ,
-            inter_law   ,
+            inter_law   , inter_law_param_ptr   ,
         )
 
     elif inter_flags == 4:
@@ -6083,9 +6108,9 @@ cdef void pot_nrg_hess_inter(
 
 @cython.cdivision(True)
 cdef void pot_nrg_hess_inter_size_law_nd(
-    Py_ssize_t segm_size    , Py_ssize_t geodim ,      
-    double* pos_in          , double* dpos_in   , double* hess_in   ,
-    inter_law_fun_type inter_law                ,
+    Py_ssize_t segm_size            , Py_ssize_t geodim             ,      
+    double* pos_in                  , double* dpos_in               , double* hess_in   ,
+    inter_law_fun_type inter_law    , double* inter_law_param_ptr   ,
 ) noexcept nogil:
 
     cdef Py_ssize_t iint, idim
@@ -6104,7 +6129,7 @@ cdef void pot_nrg_hess_inter_size_law_nd(
             dx2 += pos[idim]*pos[idim]
             dxtddx += pos[idim]*dpos[idim]
 
-        inter_law(dx2, pot)
+        inter_law(inter_law_param_ptr, dx2, pot)
 
         a = pot[1]
         b = 2*pot[2]*dxtddx
@@ -6118,9 +6143,9 @@ cdef void pot_nrg_hess_inter_size_law_nd(
 
 @cython.cdivision(True)
 cdef void pot_nrg_hess_inter_store_law_nd(
-    Py_ssize_t segm_size    , Py_ssize_t geodim ,      
-    double* pos_in          , double* dpos_in   , double* hess_in   ,
-    inter_law_fun_type inter_law                ,
+    Py_ssize_t segm_size            , Py_ssize_t geodim             ,      
+    double* pos_in                  , double* dpos_in               , double* hess_in   ,
+    inter_law_fun_type inter_law    , double* inter_law_param_ptr   ,
 ) noexcept nogil:
 
     cdef Py_ssize_t iint, idim
@@ -6138,7 +6163,7 @@ cdef void pot_nrg_hess_inter_store_law_nd(
         dx2 += pos[idim]*pos[idim]
         dxtddx += pos[idim]*dpos[idim]
 
-    inter_law(dx2, pot)
+    inter_law(inter_law_param_ptr, dx2, pot)
 
     a = 0.5*pot[1]
     b = pot[2]*dxtddx
@@ -6158,7 +6183,7 @@ cdef void pot_nrg_hess_inter_store_law_nd(
             dx2 += pos[idim]*pos[idim]
             dxtddx += pos[idim]*dpos[idim]
 
-        inter_law(dx2, pot)
+        inter_law(inter_law_param_ptr, dx2, pot)
 
         a = pot[1]
         b = 2*pot[2]*dxtddx
@@ -6177,7 +6202,7 @@ cdef void pot_nrg_hess_inter_store_law_nd(
         dx2 += pos[idim]*pos[idim]
         dxtddx += pos[idim]*dpos[idim]
 
-    inter_law(dx2, pot)
+    inter_law(inter_law_param_ptr, dx2, pot)
 
     a = 0.5*pot[1]
     b = pot[2]*dxtddx
@@ -6187,9 +6212,9 @@ cdef void pot_nrg_hess_inter_store_law_nd(
 
 @cython.cdivision(True)
 cdef void pot_nrg_hess_inter_size_law_2d(
-    Py_ssize_t segm_size    ,      
-    double* pos_in          , double* dpos_in   , double* hess_in   ,
-    inter_law_fun_type inter_law                ,
+    Py_ssize_t segm_size            ,      
+    double* pos_in                  , double* dpos_in               , double* hess_in   ,
+    inter_law_fun_type inter_law    , double* inter_law_param_ptr   ,
 ) noexcept nogil:
 
     cdef Py_ssize_t iint
@@ -6205,7 +6230,7 @@ cdef void pot_nrg_hess_inter_size_law_2d(
         dx2 = pos[0]*pos[0] + pos[1]*pos[1] 
         dxtddx = pos[0]*dpos[0] + pos[1]*dpos[1]
 
-        inter_law(dx2, pot)
+        inter_law(inter_law_param_ptr, dx2, pot)
 
         a = pot[1]
         b = 2*pot[2]*dxtddx
@@ -6219,9 +6244,9 @@ cdef void pot_nrg_hess_inter_size_law_2d(
 
 @cython.cdivision(True)
 cdef void pot_nrg_hess_inter_store_law_2d(
-    Py_ssize_t segm_size    ,
-    double* pos_in          , double* dpos_in   , double* hess_in   ,
-    inter_law_fun_type inter_law                ,
+    Py_ssize_t segm_size            ,
+    double* pos_in                  , double* dpos_in               , double* hess_in   ,
+    inter_law_fun_type inter_law    , double* inter_law_param_ptr   ,
 ) noexcept nogil:
 
     cdef Py_ssize_t iint
@@ -6236,7 +6261,7 @@ cdef void pot_nrg_hess_inter_store_law_2d(
     dx2 = pos[0]*pos[0] + pos[1]*pos[1] 
     dxtddx = pos[0]*dpos[0] + pos[1]*dpos[1]
 
-    inter_law(dx2, pot)
+    inter_law(inter_law_param_ptr, dx2, pot)
 
     a = 0.5*pot[1]
     b = pot[2]*dxtddx
@@ -6253,7 +6278,7 @@ cdef void pot_nrg_hess_inter_store_law_2d(
         dx2 = pos[0]*pos[0] + pos[1]*pos[1] 
         dxtddx = pos[0]*dpos[0] + pos[1]*dpos[1]
 
-        inter_law(dx2, pot)
+        inter_law(inter_law_param_ptr, dx2, pot)
 
         a = pot[1]
         b = 2*pot[2]*dxtddx
@@ -6269,14 +6294,13 @@ cdef void pot_nrg_hess_inter_store_law_2d(
     dx2 = pos[0]*pos[0] + pos[1]*pos[1] 
     dxtddx = pos[0]*dpos[0] + pos[1]*dpos[1]
 
-    inter_law(dx2, pot)
+    inter_law(inter_law_param_ptr, dx2, pot)
 
     a = 0.5*pot[1]
     b = pot[2]*dxtddx
 
     hess[0] = b*pos[0]+a*dpos[0]
     hess[1] = b*pos[1]+a*dpos[1]
-
 
 @cython.cdivision(True)
 cdef void pot_nrg_hess_inter_size_gravity_nd(

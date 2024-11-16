@@ -664,7 +664,7 @@ def test_action_cst_sym_pairs(AllNBSPairs_nozerodiv, float64_tols):
     
         print()
  
-def test_custom_inter_law():
+def test_custom_inter_law(float64_tols):
         
     geodim = 2
     nbody = 3
@@ -676,41 +676,49 @@ def test_custom_inter_law():
     inter_law = scipy.LowLevelCallable.from_cython(choreo.cython._NBodySyst, "gravity_pot")
     NBS = choreo.cython._NBodySyst.NBodySyst(geodim, nbody, bodymass, bodycharge, Sym_list, inter_law)
     params_buf = np.random.random((NBS.nparams))   
-    action_grad = NBS.params_to_action_grad(params_buf)
+    action_grad_grav = NBS.params_to_action_grad(params_buf)
 
-    # Numba pow_inter_law
-    inter_law = choreo.numba_funs.pow_inter_law(1., 1.)
-    NBS = choreo.cython._NBodySyst.NBodySyst(geodim, nbody, bodymass, bodycharge, Sym_list, inter_law)
+    # Parametrized power_law_pot
+    inter_law_str = "power_law_pot"
+    inter_law_param = {'n':-0.5, 'alpha':1.}
+    NBS = choreo.cython._NBodySyst.NBodySyst(geodim, nbody, bodymass, bodycharge, Sym_list, None, inter_law_str, inter_law_param)
     action_grad = NBS.params_to_action_grad(params_buf)
     
+    print(np.linalg.norm(action_grad_grav-action_grad))
+    assert np.allclose(action_grad_grav, action_grad, rtol = float64_tols.rtol, atol = float64_tols.atol)  
+    
     # Python pot_fun
-    n = 1
-    nm2 = n-2
-    mnnm1 = -n*(n-1)
-    def inter_law(xsq, res):
+    def inter_law(ptr, xsq, res):
             
-        a = xsq ** nm2
+        a = xsq ** (-2.5)
         b = xsq*a
 
         res[0] = -xsq*b
-        res[1] = -n*b
-        res[2] = mnnm1*a
-        
+        res[1]= 0.5*b
+        res[2] = (-0.75)*a
+            
     NBS = choreo.cython._NBodySyst.NBodySyst(geodim, nbody, bodymass, bodycharge, Sym_list, inter_law)
     action_grad = NBS.params_to_action_grad(params_buf)
     
+    print(np.linalg.norm(action_grad_grav-action_grad))
+    assert np.allclose(action_grad_grav, action_grad, rtol = float64_tols.rtol, atol = float64_tols.atol)  
+    
     inter_law_str = """
-def inter_law(xsq, res):
+def inter_law(ptr, xsq, res):
         
-    a = xsq ** (-1)
+    a = xsq ** (-2.5)
     b = xsq*a
 
     res[0] = -xsq*b
-    res[1] = -b
-    res[2] = 0.
+    res[1]= 0.5*b
+    res[2] = (-0.75)*a
     """
 
     NBS = choreo.cython._NBodySyst.NBodySyst(geodim, nbody, bodymass, bodycharge, Sym_list, None, inter_law_str)
     action_grad = NBS.params_to_action_grad(params_buf)
+    
+    print(np.linalg.norm(action_grad_grav-action_grad))
+    assert np.allclose(action_grad_grav, action_grad, rtol = float64_tols.rtol, atol = float64_tols.atol)  
+    
     
     

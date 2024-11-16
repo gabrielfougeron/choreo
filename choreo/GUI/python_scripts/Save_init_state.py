@@ -29,6 +29,8 @@ async def main(params_dict):
 
     file_basename = ''
     params_dict["Solver_Optim"]["n_opt"] = 0
+    # params_dict["Phys_Inter"]["inter_pow"] = -1.
+    # params_dict["Phys_Inter"]["inter_pm"] = "plus"
 
     Workspace_folder = '/Workspace'
     extra_args_dict['store_folder'] = store_folder
