@@ -1325,10 +1325,6 @@ cdef class NBodySyst():
     @cython.cdivision(True)
     def Set_inter_law(self, inter_law = None, inter_law_str = None, inter_law_params = None):
 
-        print(f'{inter_law = }')
-        print(f'{inter_law_str = }')
-        print(f'{inter_law_params = }')
-
         cdef ccallback_t callback_inter_fun
         if inter_law_str is None:
             if inter_law is None:
