@@ -86,14 +86,19 @@ def setup(test_name, fft_backend, nint_fac, ForceGeneralSym):
     inter_pow = all_kwargs["inter_pow"]
     inter_pm = all_kwargs["inter_pm"]
     
+    
     if (inter_pow == -1.) and (inter_pm == 1) :
-        inter_law = scipy.LowLevelCallable.from_cython(choreo.cython._NBodySyst, "gravity_pot")
-        # inter_law = scipy.LowLevelCallable.from_cython(choreo.cython._NBodySyst, "elastic_pot")
+        inter_law = None
+        inter_law_str = "gravity_pot"
+        inter_law_params = None
     else:
-        inter_law = choreo.numba_funs.pow_inter_law(inter_pow/2, inter_pm)
-        
+        inter_law = None
+        inter_law_str = "power_law_pot"
+        inter_law_params = {'n': inter_pow/2, 'alpha': inter_pm}
+
     NBS = choreo.cython._NBodySyst.NBodySyst(
-        geodim, nbody, mass, charge, Sym_list, inter_law,
+        geodim, nbody, mass, charge, Sym_list,
+        inter_law, inter_law_str, inter_law_params,
         ForceGeneralSym
     )
 
@@ -133,7 +138,8 @@ all_tests = [
     # '2C3C5k',
     # '2D3D5k',
     # '2C3C5C',
-    # '2D1',
+    '2D1',
+    '2D1_non_gravity',
     # '4C5k',
     # '4D3k',
     # '4D',
@@ -153,7 +159,7 @@ all_tests = [
     # 'test_3D5k',
     # '3C7k2',
     # '3D7k2',
-    '6C',
+    # '6C',
     # '6D',
     # '6Ck5',
     # '6Dk5',
@@ -174,20 +180,20 @@ all_tests = [
 ]
 
 min_exp = 0
-max_exp = 13
+max_exp = 20
 
 MonotonicAxes = ["nint_fac"]
 
 all_args = {
     "test_name" : all_tests,
     # "fft_backend" : ['scipy', 'mkl', 'fftw'],
-    "fft_backend" : ['scipy', 'mkl'],
+    # "fft_backend" : ['scipy', 'mkl'],
     # "fft_backend" : ['scipy'],
-    # "fft_backend" : ['mkl'],
+    "fft_backend" : ['mkl'],
     # "fft_backend" : ['fftw'],
     "nint_fac" : [2**i for i in range(min_exp,max_exp)] ,
-    "ForceGeneralSym" : [True, False],
-    # "ForceGeneralSym" : [False],
+    # "ForceGeneralSym" : [True, False],
+    "ForceGeneralSym" : [False],
 }
 
 timings_folder = os.path.join(__PROJECT_ROOT__,'examples','generated_files_time_consuming')
