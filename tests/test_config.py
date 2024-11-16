@@ -282,13 +282,13 @@ def load_from_config_file(config_name, override_args = {}):
     inter_pm = all_kwargs["inter_pm"]
     
     if (inter_pow == -1.) and (inter_pm == 1) :
-        inter_law = scipy.LowLevelCallable.from_cython(choreo.cython._NBodySyst, "gravity_pot")
+        inter_law_str = "gravity_pot"
+        inter_law_params = None
     else:
-        inter_law = choreo.numba_funs.pow_inter_law(inter_pow/2, inter_pm)
+        inter_law_str = "power_law_pot"
+        inter_law_params = {'n': inter_pow/2, 'alpha': inter_pm}
 
-    NBS = choreo.cython._NBodySyst.NBodySyst(geodim, nbody, mass, charge, Sym_list, inter_law)
-    
-    NBS.nint_fac = 2
+    NBS = choreo.cython.NBodySyst(geodim, nbody, mass, charge, Sym_list, inter_law_str = inter_law_str, inter_law_params = inter_law_params)
     
     return NBS
 

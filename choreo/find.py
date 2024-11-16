@@ -1,5 +1,6 @@
 import sys
 import os
+import signal
 try:
     import concurrent.futures
 except:
@@ -89,11 +90,15 @@ def Find_Choreo(
     """
 
     if (inter_pow == -1.) and (inter_pm == 1) :
-        inter_law = scipy.LowLevelCallable.from_cython(choreo.cython._NBodySyst, "gravity_pot")
+        inter_law = None
+        inter_law_str = "gravity_pot"
+        inter_law_params = None
     else:
-        inter_law = choreo.numba_funs.pow_inter_law(inter_pow/2, inter_pm)
+        inter_law = None
+        inter_law_str = "power_law_pot"
+        inter_law_params = {'n': inter_pow/2, 'alpha': inter_pm}
 
-    NBS = choreo.cython._NBodySyst.NBodySyst(geodim, nbody, mass, charge, Sym_list, inter_law)
+    NBS = choreo.cython._NBodySyst.NBodySyst(geodim, nbody, mass, charge, Sym_list, inter_law, inter_law_str, inter_law_params)
 
     NBS.fftw_planner_effort = fftw_planner_effort
     NBS.fftw_wisdom_only = fftw_wisdom_only
@@ -1162,11 +1167,15 @@ def ChoreoChooseParallelEnvAndFind(Workspace_folder, params_dict, extra_args_dic
         
         with threadpoolctl.threadpool_limits(limits=1):
             with concurrent.futures.ProcessPoolExecutor(max_workers=n_threads) as executor:
-                
+
                 res = []
                 for i in range(n_threads):
                     res.append(executor.submit(ChoreoFindFromDict, params_dict, extra_args_dict, Workspace_folder))
                     time.sleep(0.01)
+                
+                # Useful ?    
+                concurrent.futures.wait(res, return_when=concurrent.futures.FIRST_EXCEPTION)
+                executor.shutdown(wait=False, cancel_futures=True)
 
     elif Exec_Mul_Proc == "MultiThread":
         
