@@ -26,7 +26,7 @@ import choreo.scipy_plus
 from choreo.funs import *
 from choreo.helper import *
 
-from choreo.cython._ActionSym import ActionSym
+from choreo.cython import ActionSym
 
 
 def Find_Choreo(

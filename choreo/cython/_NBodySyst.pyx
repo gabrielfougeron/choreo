@@ -69,7 +69,8 @@ try:
 except:
     MKL_FFT_AVAILABLE = False
 
-if choreo.NUMBA_AVAILABLE:
+from choreo import NUMBA_AVAILABLE
+if NUMBA_AVAILABLE:
     from choreo.numba_funs import jit_inter_law, jit_inter_law_str
 
 from choreo.cython.optional_pyfftw cimport pyfftw
@@ -365,7 +366,8 @@ cdef class NBodySyst():
         return np.asarray(self._Hash_exp)
 
     cdef inter_law_fun_type _inter_law
-    cdef readonly str _inter_law_str
+    cdef readonly str inter_law_str
+    cdef readonly object inter_law_param_dict
     cdef double[::1] _inter_law_param_buf
     cdef double* _inter_law_param_ptr
     
@@ -465,17 +467,17 @@ cdef class NBodySyst():
         return [shortcut_name[shortcut] for shortcut in self._ParamBasisShortcutVel]
 
     def __init__(
-        self                            ,
-        Py_ssize_t geodim               ,
-        Py_ssize_t nbody                ,
-        double[::1] bodymass            ,
-        double[::1] bodycharge          ,
-        list Sym_list                   ,
-        object inter_law = None         , 
-        str inter_law_str = None        , 
-        object inter_law_params = None  ,
-        bint ForceGeneralSym = False    ,
-        bint ForceGreaterNStore = False ,
+        self                                ,
+        Py_ssize_t geodim                   ,
+        Py_ssize_t nbody                    ,
+        double[::1] bodymass                ,
+        double[::1] bodycharge              ,
+        list Sym_list                       ,
+        object inter_law = None             , 
+        str inter_law_str = None            , 
+        object inter_law_param_dict = None  ,
+        bint ForceGeneralSym = False        ,
+        bint ForceGreaterNStore = False     ,
     ):
 
         self._nint_fac = 0 
@@ -489,7 +491,7 @@ cdef class NBodySyst():
         if (bodycharge.shape[0] != nbody):
             raise ValueError(f'Incompatible number of bodies {nbody} vs number of charges {bodycharge.shape[0]}')
 
-        self.Set_inter_law(inter_law, inter_law_str, inter_law_params)
+        self.Set_inter_law(inter_law, inter_law_str, inter_law_param_dict)
 
         self._Hash_exp = default_Hash_exp
 
@@ -1323,20 +1325,25 @@ cdef class NBodySyst():
 
     @cython.final
     @cython.cdivision(True)
-    def Set_inter_law(self, inter_law = None, inter_law_str = None, inter_law_params = None):
+    def Set_inter_law(self, inter_law = None, inter_law_str = None, inter_law_param_dict = None):
 
         cdef ccallback_t callback_inter_fun
         if inter_law_str is None:
             if inter_law is None:
                 self._inter_law = gravity_pot
-                self._inter_law_str = "gravity_pot"
+                self.inter_law_str = "gravity_pot"
+                self.inter_law_param_dict = None
                 self._inter_law_param_ptr = NULL
             else:
+
+                if inter_law_param_dict is not None:
+                    raise ValueError('Argument inter_law_param_dict should be None')
+
                 ccallback_prepare(&callback_inter_fun, signatures, inter_law, CCALLBACK_DEFAULTS)
 
                 if (callback_inter_fun.py_function != NULL):
 
-                    if not choreo.NUMBA_AVAILABLE:
+                    if not NUMBA_AVAILABLE:
                         raise ValueError("Numba is not available and provided inter_law is a Python function. Using a Python function is disallowed for performance reasons. Please provide a C function or install Numba on your system.")
 
                     inter_law_numba = jit_inter_law(inter_law)
@@ -1345,21 +1352,16 @@ cdef class NBodySyst():
                     if (callback_inter_fun.signature.value != 0):
                         raise ValueError(f"Provided inter_law is a Python function with incorrect signature.")
 
-                    self._inter_law_str = inspect.getsource(inter_law)
+                    self.inter_law_str = inspect.getsource(inter_law)
 
                 elif (callback_inter_fun.signature.value != 0):
                     raise ValueError(f"Provided inter_law is a C function with incorrect signature. Signature should be {signatures[0].signature}")
                 else:
 
-                    self._inter_law_str = "Custom C function"
+                    self.inter_law_str = "Custom C function"
 
                 self._inter_law = <inter_law_fun_type> callback_inter_fun.c_function
 
-                if inter_law_params is None:
-                    self._inter_law_param_ptr = NULL
-                else:
-                    self._inter_law_param_buf = inter_law_params.copy()
-                    self._inter_law_param_ptr = &self._inter_law_param_buf[0]
         else:
             if inter_law is not None:
                 raise ValueError("Please provide either inter_law or inter_law_str, not both.")
@@ -1369,27 +1371,31 @@ cdef class NBodySyst():
 
             if inter_law_str == "gravity_pot":
                 self._inter_law = gravity_pot
-                self._inter_law_str = "gravity_pot"
+                self.inter_law_str = "gravity_pot"
+                self.inter_law_param_dict = None
                 self._inter_law_param_ptr = NULL
             
-            elif inter_law_str == "power_law_pot":
-                if inter_law_params is None:
-                    raise ValueError("Missing inter_law_params = {'alpha': , 'n': }")
+            elif inter_law_str.startswith("power_law_pot"):
 
                 self._inter_law = power_law_pot
 
-                n = inter_law_params["n"]
+                self.inter_law_param_dict = { key : inter_law_param_dict[key] for key in ("n", "alpha")}
+
+                n = self.inter_law_param_dict["n"] / 2 # argument is xsq !
                 nm2 = n-2
                 mnnm1 = -n*(n-1)
-                alpha = inter_law_params["alpha"]
+                alpha = self.inter_law_param_dict["alpha"]
                 
-                self._inter_law_str = f"power_law_pot({n = }, {alpha = })"
+                self.inter_law_str = f"power_law_pot"
                 self._inter_law_param_buf = np.array([-n, mnnm1, nm2, alpha], dtype=np.float64)
                 self._inter_law_param_ptr = &self._inter_law_param_buf[0]
             else:
 
-                if not choreo.NUMBA_AVAILABLE:
+                if not NUMBA_AVAILABLE:
                     raise ValueError("Numba is not available and provided inter_law_str is a string defining a Python function. Using a Python function is disallowed for performance reasons. Please provide a C function or install Numba on your system.")
+
+                if inter_law_param_dict is not None:
+                    raise ValueError('Argument inter_law_param_dict should be None')
 
                 try:
                     
@@ -1399,14 +1405,10 @@ cdef class NBodySyst():
                     if (callback_inter_fun.signature.value != 0):
                         raise ValueError(f"Provided inter_law_str defines a Python function whose corresponding C function has incorrect signature. Signature should be {signatures[0].signature}")
                     
-                    self._inter_law_str = inter_law_str
+                    self.inter_law_str = inter_law_str
+                    self.inter_law_param_dict = None
                     self._inter_law = <inter_law_fun_type> callback_inter_fun.c_function
-
-                    if inter_law_params is None:
-                        self._inter_law_param_ptr = NULL
-                    else:
-                        self._inter_law_param_buf = inter_law_params.copy()
-                        self._inter_law_param_ptr = &self._inter_law_param_buf[0]
+                    self._inter_law_param_ptr = NULL
 
                 except Exception as err:
                     print(err)
@@ -1610,15 +1612,20 @@ cdef class NBodySyst():
         bodymass = [self._loopmass[self._bodyloop[ib]] for ib in range(self.nbody)]
         bodycharge = [self._loopcharge[self._bodyloop[ib]] for ib in range(self.nbody)]
 
-        return {
+        Info_dict = {
             "choreo_version" : choreo.metadata.__version__          ,
             "geodim" : self.geodim                                  ,
             "nbody" : self.nbody                                    ,
             "bodymass" : bodymass                                   ,
             "bodycharge" : bodycharge                               ,
             "Sym_list" : [Sym.to_dict() for Sym in self.Sym_list]   ,
-            "inter_law_str" : self.loopcharge.tolist()              ,
+            "inter_law_str" : self.inter_law_str                    ,
         }
+
+        if self.inter_law_param_dict is not None:
+            Info_dict["inter_law_param_dict"] = self.inter_law_param_dict
+
+        return Info_dict
 
     @cython.final
     def Segmpos_Descriptor(self,
@@ -1711,26 +1718,24 @@ cdef class NBodySyst():
             jsonString = json.dumps(Info_dict, indent=4, sort_keys=False)
             jsonFile.write(jsonString)
 
-# TODO
-#     @cython.final
-#     @classmethod
-#     def FromDict(cls, InfoDict):
-#     
-#         geodim = InfoDict["geodim"]
-#         nbody = InfoDict["nbody"]
-#         mass = InfoDict["mass"]
-#         charge = InfoDict["charge"]
-#         Sym_list = InfoDict["Sym_list"]
-#         
-#         inter_pow = InfoDict["inter_pow"]
-#         inter_pm = InfoDict["inter_pm"]
-#         
-#         if (inter_pow == -1.) and (inter_pm == 1) :
-#             inter_law = scipy.LowLevelCallable.from_cython(choreo.cython._NBodySyst, "gravity_pot")
-#         else:
-#             inter_law = choreo.numba_funs.pow_inter_law(inter_pow/2, inter_pm)
-# 
-#         NBS = choreo.cython._NBodySyst.NBodySyst(geodim, nbody, mass, charge, Sym_list, inter_law)
+
+    @cython.final
+    @classmethod
+    def FromDict(cls, InfoDict):
+    
+        geodim = InfoDict["geodim"]
+        nbody = InfoDict["nbody"]
+        mass = InfoDict["mass"]
+        charge = InfoDict["charge"]
+        Sym_list = InfoDict["Sym_list"]
+        
+        inter_law_str = InfoDict["inter_law_str"]
+        inter_law_param_dict = InfoDict.get("inter_law_param_dict")
+
+        NBS = NBodySyst(
+            geodim, nbody, mass, charge, Sym_list,
+            inter_law_str = inter_law_str, inter_law_param_dict = inter_law_param_dict
+        )
 
     @cython.final
     def GetKrylovJacobian(self, Use_exact_Jacobian=True, jac_options_kw={}):

@@ -283,12 +283,15 @@ def load_from_config_file(config_name, override_args = {}):
     
     if (inter_pow == -1.) and (inter_pm == 1) :
         inter_law_str = "gravity_pot"
-        inter_law_params = None
+        inter_law_param_dict = None
     else:
         inter_law_str = "power_law_pot"
-        inter_law_params = {'n': inter_pow/2, 'alpha': inter_pm}
+        inter_law_param_dict = {'n': inter_pow, 'alpha': inter_pm}
 
-    NBS = choreo.cython.NBodySyst(geodim, nbody, mass, charge, Sym_list, inter_law_str = inter_law_str, inter_law_params = inter_law_params)
+    NBS = choreo.cython.NBodySyst(
+        geodim, nbody, mass, charge, Sym_list,
+        inter_law_str = inter_law_str, inter_law_param_dict = inter_law_param_dict
+    )
     
     return NBS
 

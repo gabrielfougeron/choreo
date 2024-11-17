@@ -43,8 +43,8 @@ def params_to_action_grad_TT(NBS, params_buf):
 
     TT = pyquickbench.TimeTrain(
         include_locs = False    ,
-        # names_reduction = "min" ,
-        names_reduction = "avg" ,
+        names_reduction = "min" ,
+        # names_reduction = "avg" ,
         ignore_names = "start" ,
     )
     
@@ -187,9 +187,9 @@ MonotonicAxes = ["nint_fac"]
 all_args = {
     "test_name" : all_tests,
     # "fft_backend" : ['scipy', 'mkl', 'fftw'],
-    # "fft_backend" : ['scipy', 'mkl'],
+    "fft_backend" : ['scipy', 'mkl'],
     # "fft_backend" : ['scipy'],
-    "fft_backend" : ['mkl'],
+    # "fft_backend" : ['mkl'],
     # "fft_backend" : ['fftw'],
     "nint_fac" : [2**i for i in range(min_exp,max_exp)] ,
     # "ForceGeneralSym" : [True, False],
@@ -213,9 +213,9 @@ all_timings = pyquickbench.run_benchmark(
     MonotonicAxes = MonotonicAxes,
     time_per_test=0.2,
     # timeout = 1.,
-    # ForceBenchmark = True,
+    ForceBenchmark = True,
     # PreventBenchmark = False,
-    ForceBenchmark = False,
+    # ForceBenchmark = False,
     # PreventBenchmark = True,
 )
 
@@ -224,8 +224,8 @@ plot_intent = {
     # "test_name" : 'curve_linestyle'                  ,
     # "fft_backend" : 'curve_pointstyle'                  ,
     # "fft_backend" : 'curve_color'                  ,
-    # "fft_backend" : 'curve_linestyle'                  ,
-    "fft_backend" : 'subplot_grid_y'                  ,
+    "fft_backend" : 'curve_linestyle'                  ,
+    # "fft_backend" : 'subplot_grid_y'                  ,
     "nint_fac" : 'points'                           ,
     "ForceGeneralSym" : 'curve_linestyle'                           ,
     pyquickbench.repeat_ax_name :  'reduction_min'  ,

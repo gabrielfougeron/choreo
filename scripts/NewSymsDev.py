@@ -152,15 +152,19 @@ def doit(config_name):
     inter_pow = all_kwargs["inter_pow"]
     inter_pm = all_kwargs["inter_pm"]
     
-    # print(
     
     if (inter_pow == -1.) and (inter_pm == 1) :
-        inter_law = scipy.LowLevelCallable.from_cython(choreo.cython._NBodySyst, "gravity_pot")
+        inter_law_str = "gravity_pot"
+        inter_law_param_dict = None
     else:
-        inter_law = choreo.numba_funs.pow_inter_law(inter_pow/2, inter_pm)
+        inter_law_str = "power_law_pot"
+        inter_law_param_dict = {'n': inter_pow, 'alpha': inter_pm}
 
     try:
-        NBS = choreo.cython._NBodySyst.NBodySyst(geodim, nbody, mass, charge, Sym_list, inter_law)
+        NBS = choreo.cython.NBodySyst(
+            geodim, nbody, mass, charge, Sym_list,
+            inter_law_str = inter_law_str, inter_law_param_dict = inter_law_param_dict
+        )
     except Exception as err:
         traceback.print_exc()
         

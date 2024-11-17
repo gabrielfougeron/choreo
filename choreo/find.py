@@ -15,7 +15,7 @@ import threadpoolctl
 
 import choreo.metadata
 import choreo.scipy_plus
-from choreo.cython._ActionSym import ActionSym
+from choreo.cython import ActionSym
 
 import warnings 
 from choreo.optional_pyfftw import PYFFTW_AVAILABLE
@@ -98,7 +98,7 @@ def Find_Choreo(
         inter_law_str = "power_law_pot"
         inter_law_params = {'n': inter_pow/2, 'alpha': inter_pm}
 
-    NBS = choreo.cython._NBodySyst.NBodySyst(geodim, nbody, mass, charge, Sym_list, inter_law, inter_law_str, inter_law_params)
+    NBS = choreo.cython.NBodySyst(geodim, nbody, mass, charge, Sym_list, inter_law, inter_law_str, inter_law_params)
 
     NBS.fftw_planner_effort = fftw_planner_effort
     NBS.fftw_wisdom_only = fftw_wisdom_only

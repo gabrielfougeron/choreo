@@ -1,4 +1,4 @@
-name: Build whl for all platforms
+name: Build whl for all platforms and test
 
 on:
   workflow_dispatch:

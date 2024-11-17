@@ -9,7 +9,7 @@ from matplotlib import pyplot as plt
 from matplotlib import colormaps
 
 import choreo.scipy_plus.linalg
-from choreo.cython._ActionSym import ActionSym
+from choreo.cython import ActionSym
 
 def ContainsDoubleEdges(SegmGraph):
 

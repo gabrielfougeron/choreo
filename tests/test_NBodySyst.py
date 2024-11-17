@@ -674,14 +674,14 @@ def test_custom_inter_law(float64_tols):
     
     # Classical gravity_pot
     inter_law = scipy.LowLevelCallable.from_cython(choreo.cython._NBodySyst, "gravity_pot")
-    NBS = choreo.cython._NBodySyst.NBodySyst(geodim, nbody, bodymass, bodycharge, Sym_list, inter_law)
+    NBS = choreo.cython.NBodySyst(geodim, nbody, bodymass, bodycharge, Sym_list, inter_law)
     params_buf = np.random.random((NBS.nparams))   
     action_grad_grav = NBS.params_to_action_grad(params_buf)
 
     # Parametrized power_law_pot
     inter_law_str = "power_law_pot"
-    inter_law_param = {'n':-0.5, 'alpha':1.}
-    NBS = choreo.cython._NBodySyst.NBodySyst(geodim, nbody, bodymass, bodycharge, Sym_list, None, inter_law_str, inter_law_param)
+    inter_law_param_dict = {'n':-1., 'alpha':1.}
+    NBS = choreo.cython.NBodySyst(geodim, nbody, bodymass, bodycharge, Sym_list, None, inter_law_str, inter_law_param_dict)
     action_grad = NBS.params_to_action_grad(params_buf)
     
     print(np.linalg.norm(action_grad_grav-action_grad))
@@ -697,7 +697,7 @@ def test_custom_inter_law(float64_tols):
         res[1]= 0.5*b
         res[2] = (-0.75)*a
             
-    NBS = choreo.cython._NBodySyst.NBodySyst(geodim, nbody, bodymass, bodycharge, Sym_list, inter_law)
+    NBS = choreo.cython.NBodySyst(geodim, nbody, bodymass, bodycharge, Sym_list, inter_law)
     action_grad = NBS.params_to_action_grad(params_buf)
     
     print(np.linalg.norm(action_grad_grav-action_grad))
@@ -714,7 +714,7 @@ def inter_law(ptr, xsq, res):
     res[2] = (-0.75)*a
     """
 
-    NBS = choreo.cython._NBodySyst.NBodySyst(geodim, nbody, bodymass, bodycharge, Sym_list, None, inter_law_str)
+    NBS = choreo.cython.NBodySyst(geodim, nbody, bodymass, bodycharge, Sym_list, None, inter_law_str)
     action_grad = NBS.params_to_action_grad(params_buf)
     
     print(np.linalg.norm(action_grad_grav-action_grad))
