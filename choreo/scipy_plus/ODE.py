@@ -3,12 +3,11 @@ ODE.py : Defines ODE-related things I designed I feel ought to be in scipy.
 
 '''
 import scipy
+from choreo import NUMBA_AVAILABLE
 
-try:
-    import numba 
-    UseNumba = True
-except ImportError:
-    UseNumba = False
+if NUMBA_AVAILABLE:
+    import numba
+
 
 from choreo.scipy_plus.cython.ODE import ExplicitSymplecticIVP
 from choreo.scipy_plus.cython.ODE import ExplicitSymplecticRKTable
@@ -53,7 +52,7 @@ def SymplecticIVP(
         raise ValueError(f'Unknown rk type : {type(rk)}')
 
 
-if UseNumba:
+if NUMBA_AVAILABLE:
     # Define decorators to make scipy.LowLevelCallable from python functions using numba
     
     default_numba_kwargs = {

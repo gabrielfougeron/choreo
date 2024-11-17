@@ -11,6 +11,7 @@ from choreo.scipy_plus.cython.blas_consts cimport *
 
 import choreo.scipy_plus.linalg
 import networkx
+import itertools
 
 @cython.cdivision(True)
 cdef Py_ssize_t gcd (Py_ssize_t a, Py_ssize_t b) noexcept nogil:
@@ -52,12 +53,12 @@ cdef class ActionSym():
 
     @cython.cdivision(True)
     def __init__(
-        self                    ,
-        Py_ssize_t[::1] BodyPerm      ,
-        double[:,::1] SpaceRot  ,
-        Py_ssize_t TimeRev            ,
-        Py_ssize_t TimeShiftNum       ,
-        Py_ssize_t TimeShiftDen       ,
+        self                        ,
+        Py_ssize_t[::1] BodyPerm    ,
+        double[:,::1] SpaceRot      ,
+        Py_ssize_t TimeRev          ,
+        Py_ssize_t TimeShiftNum     ,
+        Py_ssize_t TimeShiftDen     ,
     ):
 
         cdef Py_ssize_t den
@@ -456,3 +457,27 @@ cdef class ActionSym():
             d = q
 
             yield (num, den)
+
+#     @cython.final
+#     @classmethod
+#     def InvolutivePermutations(cls, Py_ssize_t n):
+# 
+#         cdef Py_ssize_t[::1] perm = np.array(range(n), dtype=np.intp)
+# 
+# 
+# 
+#     @cython.final
+#     @classmethod
+#     def InvolutivePermutations_ann(cls, Py_ssize_t[::1] perm, Py_ssize_t n, Py_ssize_t ):
+
+
+
+    @cython.final
+    @classmethod
+    def InvolutivePermutations(cls, Py_ssize_t n):
+        for p in itertools.permutations(range(n)):
+            for i in range(n):
+                if p[p[i]] != i:
+                    break
+            else:
+                yield np.array(p, dtype=np.intp)
