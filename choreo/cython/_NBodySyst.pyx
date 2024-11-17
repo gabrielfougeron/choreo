@@ -141,6 +141,10 @@ cdef class NBodySyst():
     @property 
     def GreaterNStore(self):
         return self._GreaterNStore
+
+    @property
+    def ForceGreaterNStore(self):
+        return self._GreaterNStore and (not self.RequiresGreaterNStore)
     
     cdef int _fft_backend
 
@@ -876,7 +880,7 @@ cdef class NBodySyst():
 
         self.allocate_owned_memory()
 
-    @cython.cdivision(True)
+    @ForceGreaterNStore.setter
     @cython.final
     def ForceGreaterNStore(self, bint force_in):
 
@@ -1718,24 +1722,48 @@ cdef class NBodySyst():
             jsonString = json.dumps(Info_dict, indent=4, sort_keys=False)
             jsonFile.write(jsonString)
 
-
     @cython.final
-    @classmethod
-    def FromDict(cls, InfoDict):
+    @staticmethod
+    def FromDict(InfoDict):
     
         geodim = InfoDict["geodim"]
         nbody = InfoDict["nbody"]
-        mass = InfoDict["mass"]
-        charge = InfoDict["charge"]
-        Sym_list = InfoDict["Sym_list"]
+        bodymass = np.array(InfoDict["bodymass"], dtype=np.float64)
+        bodycharge = np.array(InfoDict["bodycharge"], dtype=np.float64)
+        Sym_list = [ActionSym.FromDict(Sym_dict) for Sym_dict in InfoDict["Sym_list"]]
         
         inter_law_str = InfoDict["inter_law_str"]
         inter_law_param_dict = InfoDict.get("inter_law_param_dict")
 
-        NBS = NBodySyst(
-            geodim, nbody, mass, charge, Sym_list,
+        return NBodySyst(
+            geodim, nbody, bodymass, bodycharge, Sym_list,
             inter_law_str = inter_law_str, inter_law_param_dict = inter_law_param_dict
         )
+
+    @cython.final
+    @staticmethod
+    def FromSolutionFile(file_basename):
+    
+        with open(file_basename+'.json') as jsonFile:
+            InfoDict = json.load(jsonFile)
+
+        NBS = NBodySyst.FromDict(InfoDict)
+        NBS.nint = InfoDict["nint"]
+
+        assert NBS.segm_size == InfoDict["segm_size"]
+
+        if InfoDict["segm_size"] != InfoDict["segm_store"]:
+            NBS.ForceGreaterNStore = True
+            assert NBS.segm_store == InfoDict["segm_store"]
+
+        assert NBS.nsegm == InfoDict["nsegm"]
+
+        segmpos = np.load(file_basename+'.npy')
+        assert segmpos.shape[0] == NBS.nsegm
+        assert segmpos.shape[1] == NBS.segm_store
+        assert segmpos.shape[2] == NBS.geodim
+
+        return NBS, segmpos
 
     @cython.final
     def GetKrylovJacobian(self, Use_exact_Jacobian=True, jac_options_kw={}):

@@ -288,7 +288,7 @@ def load_from_config_file(config_name, override_args = {}):
         inter_law_str = "power_law_pot"
         inter_law_param_dict = {'n': inter_pow, 'alpha': inter_pm}
 
-    NBS = choreo.cython.NBodySyst(
+    NBS = choreo.NBodySyst(
         geodim, nbody, mass, charge, Sym_list,
         inter_law_str = inter_law_str, inter_law_param_dict = inter_law_param_dict
     )

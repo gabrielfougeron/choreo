@@ -96,9 +96,9 @@ def Find_Choreo(
     else:
         inter_law = None
         inter_law_str = "power_law_pot"
-        inter_law_params = {'n': inter_pow/2, 'alpha': inter_pm}
+        inter_law_params = {'n': inter_pow, 'alpha': inter_pm}
 
-    NBS = choreo.cython.NBodySyst(geodim, nbody, mass, charge, Sym_list, inter_law, inter_law_str, inter_law_params)
+    NBS = choreo.NBodySyst(geodim, nbody, mass, charge, Sym_list, inter_law, inter_law_str, inter_law_params)
 
     NBS.fftw_planner_effort = fftw_planner_effort
     NBS.fftw_wisdom_only = fftw_wisdom_only
