@@ -107,6 +107,28 @@ cdef class ActionSym():
     
     @cython.final
     @staticmethod
+    def FromDict(Sym_dict):
+
+        TimeRev = Sym_dict["TimeRev"]
+
+        if isinstance(TimeRev, str):
+            if (TimeRev == "True"):
+                TimeRev = -1
+            elif (TimeRev == "False"):
+                TimeRev = 1
+            else:
+                raise ValueError("TimeRev must be True or False")
+
+        return ActionSym(
+            np.array(Sym_dict["BodyPerm"], dtype=np.intp   )    ,
+            np.array(Sym_dict["SpaceRot"], dtype=np.float64)    ,
+            TimeRev                                             ,
+            Sym_dict["TimeShiftNum"]                            ,
+            Sym_dict["TimeShiftDen"]                            ,
+        )
+
+    @cython.final
+    @staticmethod
     def Identity(Py_ssize_t nbody, Py_ssize_t geodim):
         """
         Identity: Returns the identity transformation
@@ -430,8 +452,8 @@ cdef class ActionSym():
 
     @cython.final
     @cython.cdivision(True)
-    @classmethod
-    def TimeShifts(cls, Py_ssize_t max_den):
+    @staticmethod
+    def TimeShifts(Py_ssize_t max_den):
 
         cdef Py_ssize_t num = 0
         cdef Py_ssize_t den = 1
@@ -459,22 +481,22 @@ cdef class ActionSym():
             yield (num, den)
 
 #     @cython.final
-#     @classmethod
-#     def InvolutivePermutations(cls, Py_ssize_t n):
+#     @staticmethod
+#     def InvolutivePermutations(Py_ssize_t n):
 # 
 #         cdef Py_ssize_t[::1] perm = np.array(range(n), dtype=np.intp)
 # 
 # 
 # 
 #     @cython.final
-#     @classmethod
-#     def InvolutivePermutations_ann(cls, Py_ssize_t[::1] perm, Py_ssize_t n, Py_ssize_t ):
+#     @staticmethod
+#     def InvolutivePermutations_ann(Py_ssize_t[::1] perm, Py_ssize_t n, Py_ssize_t ):
 
 
 
     @cython.final
-    @classmethod
-    def InvolutivePermutations(cls, Py_ssize_t n):
+    @staticmethod
+    def InvolutivePermutations(Py_ssize_t n):
         for p in itertools.permutations(range(n)):
             for i in range(n):
                 if p[p[i]] != i:
