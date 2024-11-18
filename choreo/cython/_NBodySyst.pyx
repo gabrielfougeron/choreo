@@ -2876,6 +2876,28 @@ cdef class NBodySyst():
     @cython.final
     def params_to_all_coeffs_noopt(self, double[::1] params_mom_buf, bint transpose=False):
 
+        all_coeffs_dense = self.params_to_all_coeffs_dense_noopt(params_mom_buf, transpose)
+        
+        all_coeffs = np.zeros((self.nloop, self.ncoeffs, self.geodim), dtype=np.complex128)
+
+        for il in range(self.nloop):
+            
+            nnz_k = self.nnz_k(il)
+
+            assert (self.ncoeffs-1) % self._ncoeff_min_loop[il] == 0
+
+            npr = (self.ncoeffs-1) //  self._ncoeff_min_loop[il]
+
+            coeffs_dense = all_coeffs[il,:(self.ncoeffs-1),:].reshape(npr, self._ncoeff_min_loop[il], self.geodim)                
+            coeffs_dense[:,nnz_k,:] = all_coeffs_dense[il]
+
+        all_coeffs[:,0,:].imag = 0
+
+        return all_coeffs    
+
+    @cython.final
+    def params_to_all_coeffs_dense_noopt(self, double[::1] params_mom_buf, bint transpose=False):
+
         assert params_mom_buf.shape[0] == self.nparams
         
         cdef np.ndarray[double, ndim=1, mode='c'] params_pos_buf_np = np.empty((self.nparams_incl_o), dtype=np.float64)
@@ -2906,14 +2928,12 @@ cdef class NBodySyst():
 
         free(params_pos_buf)
 
-        all_coeffs = np.zeros((self.nloop, self.ncoeffs, self.geodim), dtype=np.complex128)
-
-
+        all_coeffs_dense = []
         for il in range(self.nloop):
             
             params_basis = self.params_basis_pos(il)
             nnz_k = self.nnz_k(il)
-            
+
             assert (self.ncoeffs-1) % self._ncoeff_min_loop[il] == 0
 
             npr = (self.ncoeffs-1) //  self._ncoeff_min_loop[il]
@@ -2923,22 +2943,23 @@ cdef class NBodySyst():
             
             params_loop = params_pos_buf_np[2*self._params_shifts[il]:2*self._params_shifts[il+1]].reshape(shape)
 
-            coeffs_dense = all_coeffs[il,:(self.ncoeffs-1),:].reshape(npr, self._ncoeff_min_loop[il], self.geodim)                
-            coeffs_dense[:,nnz_k,:] = np.einsum('ijk,ljk->lji', params_basis, params_loop[:self._params_shapes[il,0],:,:])
-
-            assert (self.ncoeffs-1) % self.nint_min == 0
-            nrem = (self.ncoeffs-1) // self.nint_min
-
-            coeffs_dense = all_coeffs[il,:(self.ncoeffs-1),:].reshape(nrem, self.nint_min, self.geodim)   
+            coeffs_dense = np.einsum('ijk,ljk->lji', params_basis, params_loop[:self._params_shapes[il,0],:,:])
 
             alpha = -1j*ctwopi * self._gensegm_loop_start[il] / self.nint_min
-            for k in range(self.nint_min):
-                w = np.exp(alpha * k)
-                coeffs_dense[:,k,:] *= w
             
-        all_coeffs[:,0,:].imag = 0
+            if nnz_k.shape[0] > 0:
 
-        return all_coeffs    
+                for ikp in range(coeffs_dense.shape[0]):
+                    for ikr in range(coeffs_dense.shape[1]):
+
+                        k = (ikp * self._ncoeff_min_loop[il] + nnz_k[ikr]) % self.nint_min
+
+                        w = np.exp(alpha * k)
+                        coeffs_dense[ikp,ikr,:] *= w
+
+            all_coeffs_dense.append(coeffs_dense)
+
+        return all_coeffs_dense    
 
     @cython.final
     def all_coeffs_to_params_noopt(self, all_coeffs, bint transpose=False):
@@ -3435,7 +3456,7 @@ cdef class NBodySyst():
         cdef int geodim = self._InterSpaceRotPos.shape[1]
 
         changevar_mom_pos(
-            &params_mom_buf[0]  , self._params_shapes , self._params_shifts ,
+            &params_mom_buf[0]        , self._params_shapes , self._params_shifts ,
             self._nnz_k_buf           , self._nnz_k_shapes  , self._nnz_k_shifts  ,
             self._co_in_buf           , self._co_in_shapes  , self._co_in_shifts  ,
             self._ncoeff_min_loop     ,
@@ -3622,6 +3643,50 @@ cdef class NBodySyst():
         return out
 
     # def FindReflectionSymmetry(self, double[:,:,::1] segmpos):
+# 
+# 
+#     @cython.final
+#     def params_to_all_coeffs_noopt(self, double[::1] params_mom_buf, double dt):
+#         
+#         assert params_mom_buf.shape[0] == self.nparams
+#         
+#         cdef np.ndarray[double, ndim=1, mode='c'] params_pos_buf_np = np.empty((self.nparams_incl_o), dtype=np.float64)
+#         cdef double** params_pos_buf = <double**> malloc(sizeof(double*)*self.nloop)
+#         cdef Py_ssize_t il
+# 
+#         for il in range(self.nloop):
+#             params_pos_buf[il] = &params_pos_buf_np[2*self._params_shifts[il]]
+# 
+#         changevar_mom_pos(
+#             &params_mom_buf[0]      , self._params_shapes   , self._params_shifts   ,
+#             self._nnz_k_buf         , self._nnz_k_shapes    , self._nnz_k_shifts    ,
+#             self._co_in_buf         , self._co_in_shapes    , self._co_in_shifts    ,
+#             self._ncoeff_min_loop   ,
+#             self._loopnb            , self._loopmass        ,
+#             params_pos_buf          , 
+#         )   
+# 
+#         free(params_pos_buf)
+# 
+#         for il in range(self.nloop):
+#             
+#             params_basis = self.params_basis_pos(il)
+#             nnz_k = self.nnz_k(il)
+#             
+#             assert (self.ncoeffs-1) % self._ncoeff_min_loop[il] == 0
+# 
+#             npr = (self.ncoeffs-1) //  self._ncoeff_min_loop[il]
+# 
+#             shape = np.asarray(self._params_shapes[il]).copy()
+#             shape[0] *= 2
+#             
+#             params_loop = params_pos_buf_np[2*self._params_shifts[il]:2*self._params_shifts[il+1]].reshape(shape)
+# 
+#             # coeffs_dense = all_coeffs[il,:(self.ncoeffs-1),:].reshape(npr, self._ncoeff_min_loop[il], self.geodim)    
+# 
+#             coeffs_dense = np.einsum('ijk,ljk->lji', params_basis, params_loop[:self._params_shapes[il,0],:,:])
+# 
+# 
 
 
 
@@ -4575,8 +4640,8 @@ cdef void params_to_pos_slice(
 
             if fft_backend == USE_FFTW_FFT:
 
-                    if params_shapes[il,1] > 0:
-                        pyfftw.execute_in_nogil(fftw_genrfft_exe[il])
+                if params_shapes[il,1] > 0:
+                    pyfftw.execute_in_nogil(fftw_genrfft_exe[il])
 
             elif fft_backend == USE_MKL_FFT:
 
