@@ -2895,14 +2895,22 @@ cdef class NBodySyst():
 
         return all_coeffs    
 
+    @cython.cdivision(True)
     @cython.final
     def params_to_all_coeffs_dense_noopt(self, double[::1] params_mom_buf, bint transpose=False):
 
         assert params_mom_buf.shape[0] == self.nparams
-        
+
+        cdef Py_ssize_t il
+        cdef Py_ssize_t ikp, ikr, k
+        cdef double alpha, arg
+        cdef double complex w
+        cdef int geodim = self.geodim
+
+        cdef Py_ssize_t[::1] nnz_k 
+        cdef double complex[:,:,::1] coeffs_dense
         cdef np.ndarray[double, ndim=1, mode='c'] params_pos_buf_np = np.empty((self.nparams_incl_o), dtype=np.float64)
         cdef double** params_pos_buf = <double**> malloc(sizeof(double*)*self.nloop)
-        cdef Py_ssize_t il
 
         for il in range(self.nloop):
             params_pos_buf[il] = &params_pos_buf_np[2*self._params_shifts[il]]
@@ -2934,18 +2942,14 @@ cdef class NBodySyst():
             params_basis = self.params_basis_pos(il)
             nnz_k = self.nnz_k(il)
 
-            assert (self.ncoeffs-1) % self._ncoeff_min_loop[il] == 0
-
-            npr = (self.ncoeffs-1) //  self._ncoeff_min_loop[il]
-
             shape = np.asarray(self._params_shapes[il]).copy()
             shape[0] *= 2
             
             params_loop = params_pos_buf_np[2*self._params_shifts[il]:2*self._params_shifts[il+1]].reshape(shape)
 
-            coeffs_dense = np.einsum('ijk,ljk->lji', params_basis, params_loop[:self._params_shapes[il,0],:,:])
+            coeffs_dense = np.einsum('ijk,ljk->lji', params_basis, params_loop[:self._params_shapes[il,0],:,:]).copy()
 
-            alpha = -1j*ctwopi * self._gensegm_loop_start[il] / self.nint_min
+            alpha = -ctwopi * self._gensegm_loop_start[il] / self.nint_min
             
             if nnz_k.shape[0] > 0:
 
@@ -2954,12 +2958,13 @@ cdef class NBodySyst():
 
                         k = (ikp * self._ncoeff_min_loop[il] + nnz_k[ikr]) % self.nint_min
 
-                        w = np.exp(alpha * k)
-                        coeffs_dense[ikp,ikr,:] *= w
+                        arg = alpha * k
+                        w = ccos(arg) + 1j*csin(arg)
+                        scipy.linalg.cython_blas.zscal(&geodim,&w,&coeffs_dense[ikp,ikr,0],&int_one)
 
             all_coeffs_dense.append(coeffs_dense)
 
-        return all_coeffs_dense    
+        return all_coeffs_dense      
 
     @cython.final
     def all_coeffs_to_params_noopt(self, all_coeffs, bint transpose=False):
@@ -2968,8 +2973,31 @@ cdef class NBodySyst():
         assert all_coeffs.shape[1] == self.ncoeffs
         assert all_coeffs.shape[2] == self.geodim
 
-        cdef Py_ssize_t npr, il
+        all_coeffs_dense = []
 
+        for il in range(self.nloop):
+
+            nnz_k = self.nnz_k(il)
+
+            npr = (self.ncoeffs-1) //  self._ncoeff_min_loop[il]
+
+            coeffs_dense = all_coeffs[il,:(self.ncoeffs-1),:].reshape(npr, self._ncoeff_min_loop[il], self.geodim)[:,nnz_k,:].copy()
+            all_coeffs_dense.append(coeffs_dense)
+
+        return self.all_coeffs_dense_to_params_noopt(all_coeffs_dense, transpose)
+
+    @cython.cdivision(True)
+    @cython.final
+    def all_coeffs_dense_to_params_noopt(self, all_coeffs_dense, bint transpose=False):
+
+        cdef Py_ssize_t il
+        cdef Py_ssize_t ikp, ikr, k
+        cdef double alpha, arg
+        cdef double complex w
+        cdef int geodim = self.geodim
+
+        cdef Py_ssize_t[::1] nnz_k 
+        cdef double complex[:,:,::1] coeffs_dense
         cdef np.ndarray[double, ndim=1, mode='c'] params_pos_buf_np = np.empty((self.nparams_incl_o), dtype=np.float64)
         
         cdef double** params_pos_buf = <double**> malloc(sizeof(double*)*self.nloop)
@@ -2978,29 +3006,30 @@ cdef class NBodySyst():
 
         for il in range(self.nloop):
 
-            assert (self.ncoeffs-1) % self.nint_min == 0
-            nrem = (self.ncoeffs-1) // self.nint_min
-
-            coeffs_dense = all_coeffs[il,:(self.ncoeffs-1),:].reshape(nrem, self.nint_min, self.geodim)   
-
-            alpha = 1j*ctwopi * self._gensegm_loop_start[il] / self.nint_min
-            for k in range(self.nint_min):
-                w = np.exp(alpha * k)
-                coeffs_dense[:,k,:] *= w
-
             params_basis = self.params_basis_pos(il)
             nnz_k = self.nnz_k(il)
 
-            npr = (self.ncoeffs-1) //  self._ncoeff_min_loop[il]
+            coeffs_dense = all_coeffs_dense[il]
 
-            coeffs_dense = all_coeffs[il,:(self.ncoeffs-1),:].reshape(npr, self._ncoeff_min_loop[il], self.geodim)   
+            alpha = ctwopi * self._gensegm_loop_start[il] / self.nint_min
+            
+            if nnz_k.shape[0] > 0:
+
+                for ikp in range(coeffs_dense.shape[0]):
+                    for ikr in range(coeffs_dense.shape[1]):
+
+                        k = (ikp * self._ncoeff_min_loop[il] + nnz_k[ikr]) % self.nint_min
+                        
+                        arg = alpha * k
+                        w = ccos(arg) + 1j*csin(arg)
+                        scipy.linalg.cython_blas.zscal(&geodim,&w,&coeffs_dense[ikp,ikr,0],&int_one)
 
             shape = np.asarray(self._params_shapes[il]).copy()
             shape[0] *= 2             
 
             params_loop = params_pos_buf_np[2*self._params_shifts[il]:2*self._params_shifts[il+1]].reshape(shape)
 
-            params_loop[:self._params_shapes[il,0],:,:] = np.einsum('ijk,lji->ljk', params_basis.conj(), coeffs_dense[:,nnz_k,:]).real
+            params_loop[:self._params_shapes[il,0],:,:] = np.einsum('ijk,lji->ljk', params_basis.conj(), coeffs_dense).real
 
         params_mom_buf_np = np.empty((self.nparams), dtype=np.float64)
         cdef double[::1] params_mom_buf = params_mom_buf_np
