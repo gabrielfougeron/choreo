@@ -151,6 +151,12 @@ def test_round_trips_pos(AllNBS, float64_tols):
         params_buf_rt = NBS.segmpos_to_params(segmpos_cy)
         print(np.linalg.norm(params_buf - params_buf_rt))
         assert np.allclose(params_buf, params_buf_rt, rtol = float64_tols.rtol, atol = float64_tols.atol) 
+    
+        dt = np.random.random()
+        all_coeffs = NBS.params_to_all_coeffs_noopt(params_buf, dt=dt)  
+        params_buf_rt = NBS.all_coeffs_to_params_noopt(all_coeffs, dt=dt)
+        print(np.linalg.norm(params_buf - params_buf_rt))
+        assert np.allclose(params_buf, params_buf_rt, rtol = float64_tols.rtol, atol = float64_tols.atol) 
         
         print()
         
@@ -281,7 +287,7 @@ def test_kin(AllNBS, float64_tols):
         assert err.min() < float64_tols.rtol
         print()
         
-# @ProbabilisticTest(RepeatOnFail=2)
+@ProbabilisticTest(RepeatOnFail=2)
 def test_pot(AllNBS_nozerodiv):
     
     for name, NBS in AllNBS_nozerodiv.items():
@@ -322,7 +328,7 @@ def test_pot(AllNBS_nozerodiv):
         assert (err.min() <  1e-7)
         print()
         
-# @ProbabilisticTest(RepeatOnFail=2)
+@ProbabilisticTest(RepeatOnFail=2)
 def test_action(AllNBS_nozerodiv):
     
     for name, NBS in AllNBS_nozerodiv.items():
