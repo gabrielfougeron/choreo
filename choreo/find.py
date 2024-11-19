@@ -102,12 +102,6 @@ def Find_Choreo(
 
     print(NBS.DescribeSystem())
 
-            
-    for ib in range(NBS.nbody):
-        isegm = NBS.bodysegm[ib, 0]
-        print(ib, isegm)
-
-
     x_min, x_max = NBS.Make_params_bounds(coeff_ampl_o, k_infl, k_max, coeff_ampl_min)
     x_ptp = x_max - x_min
     x_avg = (x_min + x_min) / 2
@@ -384,7 +378,13 @@ def Find_Choreo(
                         filename_output = os.path.join(store_folder, file_basename)
 
                     print(f'Saving solution as {filename_output}.*.')
-             
+                    
+                    xo = NBS.ComputeCenterOfMass(segmpos)
+                    for idim in range(NBS.geodim):
+                        segmpos[:,:,idim] -= xo[idim]
+                        
+                    best_sol.x = NBS.segmpos_to_params(segmpos)
+                        
                     NBS.Write_Descriptor(params_mom_buf=best_sol.x , filename = filename_output+'.json', segmpos=segmpos, Gradaction=f_fine_norm, Hash_Action=Hash_Action, extend=plot_extend)
 
                     if Save_img :
@@ -957,7 +957,7 @@ def Write_wisdom_file(DP_Wisdom_file):
             with open(filename, 'wb') as f:
                 f.write(wis[i])
 
-def FindReflectionSymmetry(NBS, semgpos, ntries = 10, hit_tol = 1e-3):
+def FindReflectionSymmetry(NBS, semgpos, ntries = 1, hit_tol = 1e-7, refl_dim = 0, return_best = False):
     
     IsReflexionInvariant = False
     for Sym in NBS.Sym_list:
@@ -973,7 +973,7 @@ def FindReflectionSymmetry(NBS, semgpos, ntries = 10, hit_tol = 1e-3):
         dt = SymParams[0]
         rot = ActionSym.SurjectiveDirectSpaceRot(SymParams[1:])
         refl = np.identity(rot.shape[0])
-        refl[0,0] = -1
+        refl[refl_dim,refl_dim] = -1
 
         Sym = ActionSym(
             args[0] ,
@@ -1014,8 +1014,8 @@ def FindReflectionSymmetry(NBS, semgpos, ntries = 10, hit_tol = 1e-3):
             if opt_res.fun < hit_tol:
                 
                 return Compute_Sym(opt_res.x, BodyPerm)
-            
-    x, f, f_norm = best_sol.get_best()    
 
-    return Compute_Sym(x[0], x[1])
+    if return_best:            
+        x, f, f_norm = best_sol.get_best()    
+        return Compute_Sym(x[0], x[1])
  
