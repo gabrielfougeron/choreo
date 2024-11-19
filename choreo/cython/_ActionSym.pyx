@@ -5,8 +5,11 @@ cimport cython
 
 from libc.stdlib cimport malloc, free
 from libc.math cimport fabs as cfabs
+from libc.math cimport sqrt as csqrt
+from libc.math cimport floor as cfloor
 
 cimport scipy.linalg.cython_blas
+cimport scipy.linalg.cython_lapack
 from choreo.scipy_plus.cython.blas_consts cimport *
 
 import choreo.scipy_plus.linalg
@@ -503,3 +506,39 @@ cdef class ActionSym():
                     break
             else:
                 yield np.array(p, dtype=np.intp)
+
+    @cython.final
+    @staticmethod
+    def SurjectiveDirectSpaceRot(double[::1] params):
+        # Uses the square of Cayley transform for surjectivity
+        # T = ((I-A)^-1 (I+A))^2
+        # Where A = SkeySym(params)
+
+        cdef Py_ssize_t i,j,k
+
+        cdef double x = 1+8*params.shape[0]
+        cdef int n = <int> cfloor((1+csqrt(x))/2)
+        cdef int info
+        cdef int* ipiv = <int*> malloc(sizeof(int)*n)
+        
+        cdef double[:,::1] ima = np.empty((n,n), dtype=np.float64)
+        cdef np.ndarray[double, ndim=2, mode='c']  res = np.empty((n,n), dtype=np.float64)
+
+        k = 0
+        for i in range(n):
+            ima[i,i] = 1.
+            for j in range(i+1,n):
+
+                ima[i,j] =  params[k]
+                ima[j,i] = -params[k]
+
+                k += 1
+
+        cdef double[:,::1] ipa = ima.T.copy()
+
+        scipy.linalg.cython_lapack.dgesv(&n,&n,&ima[0,0],&n,ipiv,&ipa[0,0],&n,&info)
+        scipy.linalg.cython_blas.dgemm(transn,transn,&n,&n,&n,&one_double,&ipa[0,0],&n,&ipa[0,0],&n,&zero_double,&res[0,0],&n)
+
+        free(ipiv)
+
+        return res

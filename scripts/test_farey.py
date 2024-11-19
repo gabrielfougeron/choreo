@@ -6,6 +6,7 @@ import math as m
 
 import choreo
 import itertools
+import pyquickbench
 
 # for n in range(10):
 #     print()
@@ -13,7 +14,9 @@ import itertools
 #     for a, b in choreo.ActionSym.TimeShifts(n):
 #         print(a,b)
 
-n = 5
+n = 3
+
+ntests  = 10000
 
 # for p in itertools.permutations(range(n)):
     # print(type(p))
@@ -23,7 +26,27 @@ n = 5
             # break
     # else:
         # print(True)
-        
-d = {'a':3,"b":4}
 
-print(d.__repr__())
+
+# for i in range(1,n):
+for i in [n]:
+    
+    print()
+    print(i)
+    m = (i * (i-1)) // 2
+    params = np.random.random(m)
+        
+    TT = pyquickbench.TimeTrain(include_locs=False,relative_timings=True)
+
+    TT.toc("beg")
+        
+    for j in range(ntests):
+        A = choreo.ActionSym.SurjectiveDirectSpaceRot(params)        
+    TT.toc("fast")
+    for j in range(ntests):
+        A = choreo.ActionSym.SurjectiveDirectSpaceRotSlow(params)
+    TT.toc("slow")
+    print(TT)
+        
+
+# SurjectiveDirectSpaceRot
