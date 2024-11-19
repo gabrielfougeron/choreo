@@ -3702,7 +3702,47 @@ cdef class NBodySyst():
         out += f'The number of independent segments is reduced by a factor of {(self.nbody * self.nint_min) / self.nsegm}\n'
         out += '\n'
 
-        return out
+        return out    
+
+    def ComputeCenterOfMass(self, segmpos):
+
+        cdef Py_ssize_t il, ib, iint
+        cdef np.ndarray[double, ndim=2, mode='c'] pos = np.empty((self.segm_size, self.geodim), dtype=np.float64)
+        cdef np.ndarray[double, ndim=2, mode='c'] pos_avg = np.zeros((self.segm_size, self.geodim), dtype=np.float64)
+
+        cdef int size = self.segm_size * self.geodim
+        cdef double mul
+        cdef double totmass = 0.
+
+        for ib in range(self.nbody):
+            for iint in range(self.nint_min):
+
+                isegm = self._bodysegm[ib, iint]
+
+                Sym = self.intersegm_to_all[ib][iint]
+
+                ibeg = iint * self.segm_size         
+                iend = ibeg + self.segm_size
+                assert iend <= self._nint
+
+                if Sym.TimeRev > 0:
+                    segmbeg = 0
+                    segmend = self.segm_size
+                else:
+                    segmbeg = 1
+                    segmend = self.segm_size+1
+
+                Sym.TransformSegment(segmpos[isegm,segmbeg:segmend,:], pos)
+
+                il = self._bodyloop[ib]
+                mul = self.loopmass[il]
+                totmass += mul
+
+                scipy.linalg.cython_blas.daxpy(&size,&mul,&pos[0,0],&int_one,&pos_avg[0,0],&int_one)
+
+        mul = 1. / (self.segm_size * totmass)
+
+        return mul * np.sum(pos_avg, axis=0)
 
 @cython.cdivision(True)
 cdef void Make_Init_bounds_coeffs(
@@ -3745,7 +3785,7 @@ cdef void Make_Init_bounds_coeffs(
                     cur_param_pos_buf[0] = ampl
                     # cur_param_pos_buf[0] = ampl * (1. + 0.1*(<float> rand()) / (<float> RAND_MAX))
                     cur_param_pos_buf += 1
- 
+
 @cython.cdivision(True)
 cdef void changevar_mom_pos(
     double *params_mom_buf          , Py_ssize_t[:,::1] params_shapes   , Py_ssize_t[::1] params_shifts ,

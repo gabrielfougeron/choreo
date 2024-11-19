@@ -1,5 +1,6 @@
 import os
 import numpy as np
+import threadpoolctl
 import choreo 
 import json
 
@@ -24,10 +25,9 @@ def main():
     
     for thefile in os.listdir(input_folder):
         
-        # if os.path.isfile(os.path.join(output_folder, thefile)):
-        #     continue
+        if os.path.isfile(os.path.join(output_folder, thefile)):
+            continue
             
-        
         file_basename, ext = os.path.splitext(thefile)
         
         filename_output = os.path.join(output_folder, file_basename)
@@ -48,21 +48,13 @@ def main():
             
             segmpos = NBS.params_to_segmpos(params_buf)
             
-            Sym, segmpos_dt = choreo.find.FindReflectionSymmetry(NBS, segmpos)
+            res = choreo.find.FindReflectionSymmetry(NBS, segmpos,refl_dim=1)
             
+            if res is None:
+                continue
             
-            for ib in range(NBS.nbody):
-                isegm = NBS.bodysegm[ib, 0]
-                print(ib, isegm)
-                
-            
-            # nint_fac_ini = NBS.nint_fac
-            # params_buf = NBS.segmpos_to_params(segmpos_dt)
-            # params_buf_fine = NBS.params_resize(params_buf, 2*nint_fac_ini)
-            # NBS.nint_fac = 2*nint_fac_ini
-            # segmpos_dt = NBS.params_to_segmpos(params_buf_fine)
-            # NBS.nint_fac = nint_fac_ini
-            
+            Sym, segmpos_dt = res
+
             Sym_list = [choreo.ActionSym.FromDict(Symp) for Symp in extra_args_dict["Sym_list"]]
             Sym_list.append(Sym)
 
@@ -74,15 +66,14 @@ def main():
                 "Sym_list"      : Sym_list      ,
                 "mass"          : np.array(extra_args_dict["bodymass"]),
                 "charge"        : np.array(extra_args_dict["bodycharge"]),
-                "AddNumberToOutputName" : False,
-                "file_basename" : file_basename,
-                "save_first_init" : True,
+                "AddNumberToOutputName" : False ,
+                "file_basename" : file_basename ,
+                # "save_first_init" : True        ,
+                "Look_for_duplicates" : False   ,
             })
             
             choreo.find.ChoreoFindFromDict(params_dict, extra_args_dict, Workspace_folder)
 
-            break
-            
             
             
 
@@ -90,4 +81,5 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    with threadpoolctl.threadpool_limits(limits=1):
+        main()
