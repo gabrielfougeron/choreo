@@ -254,15 +254,7 @@ if platform.system() == "Windows":
     define_macros.append(("FFTW_NO_Complex", 1))
     define_macros.append(("CYTHON_CCOMPLEX", 0))
 
-compiler_directives = {
-    'wraparound': False         ,
-    'boundscheck': False        ,
-    'nonecheck': False          ,
-    'initializedcheck': False   ,
-    'overflowcheck': False      ,
-    'overflowcheck.fold': False ,
-    'infer_types': True         ,
-}
+compiler_directives = {}
 
 if opt_lvl == "profile" : 
 
@@ -277,6 +269,18 @@ if opt_lvl == "profile" :
         ('CYTHON_TRACE_NOGIL', '1') ,
     ]
     define_macros.extend(profile_define_macros)
+
+else:
+    
+    compiler_directives.update({
+        'wraparound': False         ,
+        'boundscheck': False        ,
+        'nonecheck': False          ,
+        'initializedcheck': False   ,
+        'overflowcheck': False      ,
+        'overflowcheck.fold': False ,
+        'infer_types': True         ,
+    })
 
 include_dirs = [
     numpy.get_include(),

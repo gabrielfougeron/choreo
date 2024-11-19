@@ -9,7 +9,7 @@ from matplotlib import pyplot as plt
 from matplotlib import colormaps
 
 import choreo.scipy_plus.linalg
-from choreo.cython import ActionSym
+from choreo.cython import ActionSym # Beware of circular imports
 
 def ContainsDoubleEdges(SegmGraph):
 
@@ -336,7 +336,7 @@ def AccumulateSegmentConstraints(SegmGraph, nbody, geodim, nsegm, bodysegm):
 
     SegmConstraints = [ list() for isegm in range(nsegm)]
 
-    Cycles = networkx.cycle_basis(SegmGraph)
+    Cycles = networkx.simple_cycles(SegmGraph)
 
     for Cycle in Cycles:
 
@@ -433,7 +433,7 @@ def AccumulateInstConstraints(Sym_list, nbody, geodim, nint, VelSym=False):
                     Constraint = EdgeSym.Compose(ParallelEdgeSym.Inverse())
                     AppendIfNotSamePermAndRot(InstConstraints[edge[1]], Constraint)
 
-    Cycles = networkx.cycle_basis(InstGraph)
+    Cycles = networkx.simple_cycles(InstGraph)
 
     for Cycle in itertools.chain(InstGraph.edges, Cycles):
 

@@ -440,7 +440,6 @@ cdef class ActionSym():
         if self.TimeRev == -1:
             out[:,:] = out[::-1,:]          
             
-    
     @cython.final
     def to_dict(ActionSym self):
     # Useful to write to a json file
@@ -482,20 +481,6 @@ cdef class ActionSym():
             d = q
 
             yield (num, den)
-
-#     @cython.final
-#     @staticmethod
-#     def InvolutivePermutations(Py_ssize_t n):
-# 
-#         cdef Py_ssize_t[::1] perm = np.array(range(n), dtype=np.intp)
-# 
-# 
-# 
-#     @cython.final
-#     @staticmethod
-#     def InvolutivePermutations_ann(Py_ssize_t[::1] perm, Py_ssize_t n, Py_ssize_t ):
-
-
 
     @cython.final
     @staticmethod

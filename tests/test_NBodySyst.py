@@ -121,14 +121,14 @@ def test_capture_co(AllNBS):
             for iparam in range(co_in.shape[0]):            
                 assert not(co_in[iparam]) == (iparam in nnz[il])
 
-# @ProbabilisticTest()
+@ProbabilisticTest()
 def test_round_trips_pos(AllNBS, float64_tols):
     
     for name, NBS in AllNBS.items():
         
         print(f"Config name : {name}")     
         
-        NBS.nint_fac = 5 # Else it will sometime fail for huge symmetries
+        NBS.nint_fac = 10
         params_buf = np.random.random((NBS.nparams))
         all_coeffs = NBS.params_to_all_coeffs_noopt(params_buf)  
         all_pos = scipy.fft.irfft(all_coeffs, axis=1, norm='forward')
@@ -156,7 +156,20 @@ def test_round_trips_pos(AllNBS, float64_tols):
         all_coeffs = NBS.params_to_all_coeffs_noopt(params_buf, dt=dt)  
         params_buf_rt = NBS.all_coeffs_to_params_noopt(all_coeffs, dt=dt)
         print(np.linalg.norm(params_buf - params_buf_rt))
-        assert np.allclose(params_buf, params_buf_rt, rtol = float64_tols.rtol, atol = float64_tols.atol) 
+        assert np.allclose(params_buf, params_buf_rt, rtol = float64_tols.rtol, atol = float64_tols.atol)     
+        
+        IsReflexionInvariant = False
+        for Sym in NBS.Sym_list:
+            IsReflexionInvariant = IsReflexionInvariant or (Sym.TimeRev == -1)
+        
+        if not IsReflexionInvariant:
+        
+            all_coeffs = NBS.params_to_all_coeffs_noopt(params_buf)  
+            dt = np.random.random()
+            params_buf_rt = NBS.all_coeffs_to_params_noopt(all_coeffs, dt=dt)
+            all_coeffs_rt = NBS.params_to_all_coeffs_noopt(params_buf_rt, dt=dt)  
+            print(np.linalg.norm(all_coeffs - all_coeffs_rt))
+            assert np.allclose(all_coeffs, all_coeffs_rt, rtol = float64_tols.rtol, atol = float64_tols.atol) 
         
         print()
         

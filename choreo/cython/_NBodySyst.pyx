@@ -944,6 +944,7 @@ cdef class NBodySyst():
     def BuildSegmGraph(self):
 
         cdef Py_ssize_t ib, iint
+        cdef Py_ssize_t ibp, iintp
         cdef Py_ssize_t isegm
 
         for Sym in self.Sym_list:
@@ -954,12 +955,31 @@ cdef class NBodySyst():
         # Making sure nint_min is big enough
         self.SegmGraph, self.nint_min = Build_SegmGraph_NoPb(self.nbody, self.nint_min, self.Sym_list)
 
-        self._bodysegm = np.zeros((self.nbody, self.nint_min), dtype = np.intp)
-        for isegm, CC in enumerate(networkx.connected_components(self.SegmGraph)):
-            for ib, iint in CC:
-                self._bodysegm[ib, iint] = isegm
+        # self._bodysegm = np.zeros((self.nbody, self.nint_min), dtype = np.intp)
+        # for isegm, CC in enumerate(networkx.connected_components(self.SegmGraph)):
+        #     for ib, iint in CC:
+        #         self._bodysegm[ib, iint] = isegm
+        # self.nsegm = isegm + 1
 
-        self.nsegm = isegm + 1
+        # Making sure ib -> self._bodysegm[ib, 0] is increasing
+        
+        isegm = 0
+        self._bodysegm = -np.ones((self.nbody, self.nint_min), dtype = np.intp)
+        for iint in range(self.nint_min):
+            for ib in range(self.nbody):
+                if self._bodysegm[ib, iint] < 0:
+
+                    self._bodysegm[ib, iint] = isegm
+
+                    segm_source = (ib, iint)
+                    for edge in networkx.dfs_edges(self.SegmGraph, source=segm_source):
+                        ibp = edge[1][0]
+                        iintp = edge[1][1]
+                        self._bodysegm[ibp, iintp] = isegm
+
+                    isegm += 1
+
+        self.nsegm = isegm
         
     @cython.final
     @cython.cdivision(True)
@@ -2957,7 +2977,8 @@ cdef class NBodySyst():
                 for ikp in range(coeffs_dense.shape[0]):
                     for ikr in range(coeffs_dense.shape[1]):
 
-                        k = (ikp * self._ncoeff_min_loop[il] + nnz_k[ikr]) % self.nint_min
+                        # k = (ikp * self._ncoeff_min_loop[il] + nnz_k[ikr]) % self.nint_min
+                        k = (ikp * self._ncoeff_min_loop[il] + nnz_k[ikr])
 
                         arg = alpha * k
                         w = ccos(arg) + 1j*csin(arg)
@@ -3020,7 +3041,8 @@ cdef class NBodySyst():
                 for ikp in range(coeffs_dense.shape[0]):
                     for ikr in range(coeffs_dense.shape[1]):
 
-                        k = (ikp * self._ncoeff_min_loop[il] + nnz_k[ikr]) % self.nint_min
+                        # k = (ikp * self._ncoeff_min_loop[il] + nnz_k[ikr]) % self.nint_min
+                        k = (ikp * self._ncoeff_min_loop[il] + nnz_k[ikr])
                         
                         arg = alpha * k
                         w = ccos(arg) + 1j*csin(arg)
@@ -3280,13 +3302,13 @@ cdef class NBodySyst():
                 Sym.TransformSegment(segmpos[isegm,segmbeg:segmend,:], all_bodypos[ib,ibeg:iend,:])
 
         return all_bodypos
-        
+
     @cython.cdivision(True)
     @cython.final
-    def ComputeSymDefault(self, double[:,:,::1] segmpos, ActionSym Sym, Py_ssize_t lnorm = 1):
+    def ComputeSymDefault(self, double[:,:,::1] segmpos, ActionSym Sym, Py_ssize_t lnorm = 1, full = True):
 
-        if lnorm not in [1,2]:
-            raise ValueError(f'ComputeSymDefault only computes L1 or L2 norms. Received {lnorm = }')
+        if lnorm not in [1,2,22]:
+            raise ValueError(f'ComputeSymDefault only computes L1, L2 or L2 squared norms. Received {lnorm = }')
 
         cdef Py_ssize_t ib , iint
         cdef Py_ssize_t ibp, iintp
@@ -3299,9 +3321,16 @@ cdef class NBodySyst():
 
         cdef double res = 0
 
+        if full:
+            all_iints = range(self.nint_min)
+            n_pts = self.nbody * self.nint_min * self.segm_size
+        else:
+            all_iints = [0]
+            n_pts = self.nbody * self.segm_size
+
         for ib in range(self.nbody):
 
-            for iint in range(self.nint_min):
+            for iint in all_iints:
 
                 # Computing trans_pos
                 isegm = self._bodysegm[ib, iint]
@@ -3344,9 +3373,11 @@ cdef class NBodySyst():
                     res += scipy.linalg.cython_blas.ddot(&size, &trans_pos[0,0], &int_one, &trans_pos[0,0], &int_one)
 
         if lnorm == 1:
-            return res / (self.nbody * self.nint_min * self.segm_size)
+            return res / n_pts
+        elif lnorm == 2:
+            return csqrt(res / n_pts)
         else:
-            return csqrt(res/ (self.nbody * self.nint_min * self.segm_size))
+            return res / n_pts
 
     @cython.final
     def params_to_segmpos(self, double[::1] params_mom_buf):
@@ -3672,8 +3703,6 @@ cdef class NBodySyst():
         out += '\n'
 
         return out
-
-    # def FindReflectionSymmetry(self, double[:,:,::1] segmpos):
 
 @cython.cdivision(True)
 cdef void Make_Init_bounds_coeffs(

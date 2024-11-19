@@ -19,7 +19,7 @@ class float_tol:
     rtol: float
 
 @attrs.define
-class likelyhood():
+class likelihood():
     probable:       float
     not_unlikely:   float
     uncommon:       float
@@ -76,8 +76,8 @@ def float32_tols():
     )
 
 @pytest.fixture
-def nonstiff_float64_likelyhood():
-    return likelyhood(
+def nonstiff_float64_likelihood():
+    return likelihood(
         probable        = 1e-1 ,
         not_unlikely    = 1e-3 ,
         uncommon        = 1e-5 ,
@@ -95,7 +95,7 @@ def TwoD_only():
 @pytest.fixture
 def Physical_dims():
     return dimension(
-        all_geodims = [2, 3] ,
+        all_geodims = [2, 3, 4, 5] ,
     )
 
 @pytest.fixture

@@ -13,7 +13,7 @@ def test_Identity(float64_tols, Physical_dims, Few_bodies):
 
             print(f"geodim = {geodim}, nbody = {nbody}")
 
-            Id = choreo.cython.ActionSym.Identity(nbody, geodim)
+            Id = choreo.ActionSym.Identity(nbody, geodim)
 
             assert Id.IsIdentity(atol = float64_tols.atol)
 
@@ -33,11 +33,11 @@ def test_Random(float64_tols, Physical_dims, Few_bodies):
     for geodim in Physical_dims.all_geodims:
         for nbody in Few_bodies.all_nbodies:
 
-            print(f"geodim = {geodim}, nbody = {nbody}")
+            print(f"{geodim = }, {nbody = }")
 
-            Id = choreo.cython.ActionSym.Identity(nbody, geodim)
+            Id = choreo.ActionSym.Identity(nbody, geodim)
 
-            A = choreo.cython.ActionSym.Random(nbody, geodim)
+            A = choreo.ActionSym.Random(nbody, geodim)
             AInv = A.Inverse()
 
             assert A.IsWellFormed(atol = float64_tols.atol)
@@ -46,7 +46,7 @@ def test_Random(float64_tols, Physical_dims, Few_bodies):
             assert Id.IsSame(A.Compose(AInv), atol = float64_tols.atol)
             assert Id.IsSame(AInv.Compose(A), atol = float64_tols.atol)
 
-            B = choreo.cython.ActionSym.Random(nbody, geodim)
+            B = choreo.ActionSym.Random(nbody, geodim)
             BInv = B.Inverse()
 
             assert not(A.IsSame(B, atol = float64_tols.atol))
@@ -74,7 +74,7 @@ def test_Random(float64_tols, Physical_dims, Few_bodies):
             assert ABInv.IsSame(BInv.Compose(AInv), atol = float64_tols.atol)
             assert BAInv.IsSame(AInv.Compose(BInv), atol = float64_tols.atol)
 
-            C = choreo.cython.ActionSym.Random(nbody, geodim)
+            C = choreo.ActionSym.Random(nbody, geodim)
 
             A_BC = A.Compose(B.Compose(C))
             AB_C = A.Compose(B).Compose(C)
@@ -83,3 +83,21 @@ def test_Random(float64_tols, Physical_dims, Few_bodies):
             assert AB_C.IsWellFormed(atol = float64_tols.atol)           
 
             assert A_BC.IsSame(AB_C, atol = float64_tols.atol)
+
+def test_rotation_generation(float64_tols, Physical_dims):
+    
+    for geodim in Physical_dims.all_geodims:
+        
+        print(f"{geodim = }")
+        
+        n = (geodim * (geodim - 1)) // 2
+        params = np.random.random(n)
+        idmat = np.identity(geodim,dtype=np.float64)
+        
+        mat = choreo.ActionSym.SurjectiveDirectSpaceRot(params)
+        matTmat = np.matmul(mat.T,mat  )
+        matmatT = np.matmul(mat  ,mat.T)
+        
+        assert np.allclose(matTmat, idmat, rtol = float64_tols.rtol, atol = float64_tols.atol)  
+        assert np.allclose(matmatT, idmat, rtol = float64_tols.rtol, atol = float64_tols.atol)     
+        assert abs(scipy.linalg.det(mat) - 1.) < float64_tols.atol
