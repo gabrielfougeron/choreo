@@ -25,7 +25,7 @@ class current_best:
             else:
                 self.f_norm = np.linalg.norm(f)
         
-    def update(self,x,f,f_norm=None):
+    def update(self,x,f=None,f_norm=None):
 
         if f_norm is None:
             f_norm = np.linalg.norm(f)
