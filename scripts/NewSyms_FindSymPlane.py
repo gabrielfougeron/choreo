@@ -8,6 +8,8 @@ __PROJECT_ROOT__ = os.path.abspath(os.path.join(os.path.dirname(__file__),os.par
 
 def main():
     
+    Remove_Original = True
+    
     DP_Wisdom_file = os.path.join(__PROJECT_ROOT__, "PYFFTW_wisdom.txt")
     choreo.find.Load_wisdom_file(DP_Wisdom_file)
     
@@ -30,19 +32,19 @@ def main():
             
         file_basename, ext = os.path.splitext(thefile)
         
-        filename_output = os.path.join(output_folder, file_basename)
+        full_in_file_basename = os.path.join(input_folder, file_basename)
+        full_out_file_basename = os.path.join(output_folder, file_basename)
         
         if ext == '.json':
             
             print()
             print(file_basename)
             print()
-            
 
-            with open(os.path.join(input_folder,thefile)) as jsonFile:
+            with open(os.path.join(input_folder, thefile)) as jsonFile:
                 extra_args_dict = json.load(jsonFile)
 
-            NBS, segmpos = choreo.NBodySyst.FromSolutionFile(os.path.join(input_folder, file_basename))
+            NBS, segmpos = choreo.NBodySyst.FromSolutionFile(full_in_file_basename)
             params_buf = NBS.segmpos_to_params(segmpos)
             NBS.ForceGreaterNStore = True
             
@@ -73,7 +75,28 @@ def main():
             })
             
             choreo.find.ChoreoFindFromDict(params_dict, extra_args_dict, Workspace_folder)
-
+            
+            if Remove_Original:
+            
+                # Test hash!
+                
+                Hash_in = np.array(extra_args_dict["Hash"])
+                
+                with open(full_out_file_basename + '.json') as jsonFile:
+                    out_sol_dict = json.load(jsonFile)
+                
+                Hash_out = np.array(out_sol_dict["Hash"])
+                
+                if NBS.TestHashSame(Hash_in, Hash_out):
+                    
+                    try:
+                        for ext in ['.json','.npy','.png']:
+                            os.remove(full_in_file_basename+ext)
+                    except:
+                        pass
+                
+                else:
+                    print("WARNING : Found solution is not the same")
             
             
 

@@ -983,8 +983,12 @@ def FindReflectionSymmetry(NBS, semgpos, ntries = 1, hit_tol = 1e-7, refl_dim = 
             1       ,
         )
 
-        all_coeffs = np.matmul(NBS.params_to_all_coeffs_dense_noopt(params_ini, dt=dt) , rot)
-        params_dt = NBS.all_coeffs_dense_to_params_noopt(all_coeffs)
+        all_coeffs_dense = NBS.params_to_all_coeffs_dense_noopt(params_ini, dt=dt) 
+        
+        for i in range(NBS.nloop):
+            all_coeffs_dense[i] = np.matmul(all_coeffs_dense[i] , rot)
+
+        params_dt = NBS.all_coeffs_dense_to_params_noopt(all_coeffs_dense)
         segmpos_dt = NBS.params_to_segmpos(params_dt)
         
         return Sym, segmpos_dt
