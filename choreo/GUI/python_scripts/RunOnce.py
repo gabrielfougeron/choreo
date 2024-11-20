@@ -60,7 +60,11 @@ def Send_init_PlotInfo():
         
         raise ValueError('File not found')
 
-def Plot_Loops_During_Optim_new(x, f, f_norm, NBS, jacobian):
+def Plot_Loops_During_Optim(x, f, f_norm, NBS, jacobian):
+
+    xo = NBS.ComputeCenterOfMass(jacobian.segmpos)
+    for idim in range(NBS.geodim):
+        jacobian.segmpos[:,:,idim] -= xo[idim]
 
     AABB = NBS.GetFullAABB(jacobian.segmpos, 0., MakeSquare=True)
 
@@ -83,47 +87,8 @@ def Plot_Loops_During_Optim_new(x, f, f_norm, NBS, jacobian):
             dict_converter=js.Object.fromEntries
         )
     )
-    
-def Plot_Loops_During_Optim(x,f,f_norm,ActionSyst):
-    
-    xmin,xmax,ymin,ymax = ActionSyst.HeuristicMinMax()
 
-    hside = max(xmax-xmin,ymax-ymin)/2
-
-    xmid = (xmin+xmax)/2
-    ymid = (ymin+ymax)/2
-
-    windowObject = {}
-
-    windowObject["xMin"] = xmid - hside
-    windowObject["xMax"] = xmid + hside
-
-    windowObject["yMin"] = ymid - hside
-    windowObject["yMax"] = ymid + hside
-
-    
-    js.postMessage(
-
-        funname = "Plot_Loops_During_Optim_From_Python",
-        args    = pyodide.ffi.to_js(
-            {
-                "NPY_data":ActionSyst.last_all_pos.reshape(-1),
-                "NPY_shape":ActionSyst.last_all_pos.shape,
-                "Current_PlotWindow":windowObject
-            },
-            dict_converter=js.Object.fromEntries
-        )
-    )
-
-def ListenToNextFromGUI(x,f,f_norm,ActionSyst):
-
-    AskForNext =  (js.AskForNext.to_py()[0] == 1)
-
-    js.AskForNext[0] = 0
-
-    return AskForNext
-
-def ListenToNextFromGUI_new(x,f,f_norm,ActionSyst,jacobian):
+def ListenToNextFromGUI(x,f,f_norm,ActionSyst,jacobian):
 
     AskForNext =  (js.AskForNext.to_py()[0] == 1)
 
@@ -144,11 +109,11 @@ async def main(params_dict):
     if params_dict['Animation_Search']['DisplayLoopsDuringSearch']:
         callback_after_init_list.append(Send_init_PlotInfo)
 
-    optim_callback_list = [ListenToNextFromGUI_new]
+    optim_callback_list = [ListenToNextFromGUI]
 
     if params_dict['Animation_Search']['DisplayLoopsDuringSearch']:
 
-        optim_callback_list.append(Plot_Loops_During_Optim_new)
+        optim_callback_list.append(Plot_Loops_During_Optim)
 
     extra_args_dict['callback_after_init_list'] = callback_after_init_list
     extra_args_dict['optim_callback_list'] = optim_callback_list
