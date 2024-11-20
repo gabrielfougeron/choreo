@@ -1260,7 +1260,7 @@ cdef class NBodySyst():
                             self._ParamBasisShortcutVel_th[il] = RFFT
 
     @cython.final
-    def AssertAllSegmGenConstraintsAreRespected(self, all_pos, eps=1e-12, pos=True):
+    def AssertAllSegmGenConstraintsAreRespected(self, all_pos, eps=1e-12, pos=True, verbose=False):
 
         for il in range(self.nloop):
 
@@ -1317,14 +1317,21 @@ cdef class NBodySyst():
                 Sym.TransformSegment(pos_source_segm, pos_target_segm)
 
                 if iend_target <= self._nint:
-                    assert (np.linalg.norm(pos_target_segm - all_pos[il, ibeg_target:iend_target, :])) < eps
+                    err = (np.linalg.norm(pos_target_segm - all_pos[il, ibeg_target:iend_target, :]))
+                    if verbose:
+                        print(err)
+                    assert err < eps
                 else:
+
+                    err = (np.linalg.norm(pos_target_segm[:self.segm_size-1,:] - all_pos[il, ibeg_target:iend_target-1, :]))
+                    if verbose:
+                        print(err)
                     assert iend_target == self._nint+1
-                    assert (np.linalg.norm(pos_target_segm[:self.segm_size-1,:] - all_pos[il, ibeg_target:iend_target-1, :])) < eps
+                    assert err < eps
                     assert (np.linalg.norm(pos_target_segm[ self.segm_size-1,:] - all_pos[il, 0, :])) < eps
             
     @cython.final
-    def AssertAllBodyConstraintAreRespected(self, all_pos, eps=1e-12, pos=False):
+    def AssertAllBodyConstraintAreRespected(self, all_pos, eps=1e-12, pos=False, verbose=False):
         # Make sure loop constraints are respected
         
         for il, Constraints in enumerate(self.LoopGenConstraints):
@@ -1344,6 +1351,8 @@ cdef class NBodySyst():
                     jint = tnum * self._nint // tden
                     
                     err = np.linalg.norm(all_pos[il,jint,:] - np.matmul(Sym.SpaceRot, all_pos[il,iint,:]))
+                    if verbose:
+                        print(err)
 
                     assert (err < eps)
 
@@ -2922,8 +2931,8 @@ cdef class NBodySyst():
         assert params_mom_buf.shape[0] == self.nparams
 
         cdef Py_ssize_t il
-        cdef Py_ssize_t ikp, ikr, k
-        cdef double alpha, arg
+        cdef Py_ssize_t ikp, ikr, k, kmod
+        cdef double alpha, arg, alpha_dt
         cdef double complex w
         cdef int geodim = self.geodim
 
@@ -2970,17 +2979,18 @@ cdef class NBodySyst():
             coeffs_dense = np.einsum('ijk,ljk->lji', params_basis, params_loop[:self._params_shapes[il,0],:,:]).copy()
 
             arg = self._gensegm_loop_start[il]
-            alpha =  - ctwopi * (dt + arg / self.nint_min)
+            alpha =  - ctwopi * (arg / self.nint_min)
+            alpha_dt =  - ctwopi * dt # Beware of loss of precision
             
             if nnz_k.shape[0] > 0:
 
                 for ikp in range(coeffs_dense.shape[0]):
                     for ikr in range(coeffs_dense.shape[1]):
 
-                        # k = (ikp * self._ncoeff_min_loop[il] + nnz_k[ikr]) % self.nint_min
                         k = (ikp * self._ncoeff_min_loop[il] + nnz_k[ikr])
+                        kmod = k % self.nint_min
 
-                        arg = alpha * k
+                        arg = alpha * kmod + alpha_dt*k
                         w = ccos(arg) + 1j*csin(arg)
                         scipy.linalg.cython_blas.zscal(&geodim,&w,&coeffs_dense[ikp,ikr,0],&int_one)
 
@@ -3013,8 +3023,8 @@ cdef class NBodySyst():
     def all_coeffs_dense_to_params_noopt(self, all_coeffs_dense, bint transpose = False, double dt = 0.):
 
         cdef Py_ssize_t il
-        cdef Py_ssize_t ikp, ikr, k
-        cdef double alpha, arg
+        cdef Py_ssize_t ikp, ikr, k, kmod
+        cdef double alpha, arg, alpha_dt
         cdef double complex w
         cdef int geodim = self.geodim
 
@@ -3034,17 +3044,18 @@ cdef class NBodySyst():
             coeffs_dense = all_coeffs_dense[il]
             
             arg = self._gensegm_loop_start[il]
-            alpha = ctwopi * (dt + arg / self.nint_min)
+            alpha = ctwopi * arg / self.nint_min
+            alpha_dt = ctwopi * dt # Beware of loss of precision
             
             if nnz_k.shape[0] > 0:
 
                 for ikp in range(coeffs_dense.shape[0]):
                     for ikr in range(coeffs_dense.shape[1]):
 
-                        # k = (ikp * self._ncoeff_min_loop[il] + nnz_k[ikr]) % self.nint_min
                         k = (ikp * self._ncoeff_min_loop[il] + nnz_k[ikr])
+                        kmod = k % self.nint_min
                         
-                        arg = alpha * k
+                        arg = alpha * kmod + alpha_dt*k
                         w = ccos(arg) + 1j*csin(arg)
                         scipy.linalg.cython_blas.zscal(&geodim,&w,&coeffs_dense[ikp,ikr,0],&int_one)
 
@@ -3684,6 +3695,7 @@ cdef class NBodySyst():
 
         return out_loop_len, out_bin_dx_min
     
+    @cython.final
     def DescribeSystem(self):
 
         nparam_nosym = self.geodim * self.nint * self.nbody
@@ -3704,15 +3716,20 @@ cdef class NBodySyst():
 
         return out    
 
+    @cython.cdivision(True)
+    @cython.final
     def ComputeCenterOfMass(self, segmpos):
 
         cdef Py_ssize_t il, ib, iint
+        cdef Py_ssize_t isegm, segmbeg, segmend
         cdef np.ndarray[double, ndim=2, mode='c'] pos = np.empty((self.segm_size, self.geodim), dtype=np.float64)
         cdef np.ndarray[double, ndim=2, mode='c'] pos_avg = np.zeros((self.segm_size, self.geodim), dtype=np.float64)
 
         cdef int size = self.segm_size * self.geodim
         cdef double mul
         cdef double totmass = 0.
+
+        cdef ActionSym Sym
 
         for ib in range(self.nbody):
             for iint in range(self.nint_min):
@@ -3735,7 +3752,7 @@ cdef class NBodySyst():
                 Sym.TransformSegment(segmpos[isegm,segmbeg:segmend,:], pos)
 
                 il = self._bodyloop[ib]
-                mul = self.loopmass[il]
+                mul = self._loopmass[il]
                 totmass += mul
 
                 scipy.linalg.cython_blas.daxpy(&size,&mul,&pos[0,0],&int_one,&pos_avg[0,0],&int_one)

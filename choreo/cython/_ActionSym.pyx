@@ -521,7 +521,8 @@ cdef class ActionSym():
 
         cdef double[:,::1] ipa = ima.T.copy()
 
-        scipy.linalg.cython_lapack.dgesv(&n,&n,&ima[0,0],&n,ipiv,&ipa[0,0],&n,&info)
+        # scipy.linalg.cython_lapack.dgesv(&n,&n,&ima[0,0],&n,ipiv,&ipa[0,0],&n,&info)
+        ipa = np.linalg.solve(ima, ipa)
         scipy.linalg.cython_blas.dgemm(transn,transn,&n,&n,&n,&one_double,&ipa[0,0],&n,&ipa[0,0],&n,&zero_double,&res[0,0],&n)
 
         free(ipiv)
