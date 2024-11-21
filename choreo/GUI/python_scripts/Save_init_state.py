@@ -39,7 +39,7 @@ async def main(params_dict):
     try:
         choreo.find.ChoreoChooseParallelEnvAndFind(Workspace_folder, params_dict, extra_args_dict)
     except Exception as exc:
-        print(exc)
+        print("Error: ", exc)
         
         js.postMessage(
             funname = "Error_From_Python",

@@ -1,11 +1,11 @@
 import sys
 import os
-import signal
 try:
     import concurrent.futures
 except:
     pass
 
+import math as m
 import numpy as np
 import scipy
 import json
@@ -197,16 +197,19 @@ def Find_Choreo(
             if Save_Params:
                 np.save(filename_output+'_params.npy', x)
 
-        for i in range(n_callback_after_init_list):
-            callback_after_init_list[i]()
-
         f0 = NBS.segmpos_params_to_action_grad(segmpos, x)
         best_sol = choreo.scipy_plus.nonlin.current_best(x, f0)
 
+        if m.isnan(best_sol.f_norm):
+            raise ValueError(f"Norm on entry is {best_sol.f_norm:.2e} which indicates a problem with constraints.")
+            
         GoOn = (best_sol.f_norm < max_norm_on_entry)
         
         if not(best_sol.f_norm < max_norm_on_entry):
             print(f"Norm on entry is {best_sol.f_norm:.2e} which is too big.")
+        
+        for i in range(n_callback_after_init_list):
+            callback_after_init_list[i]()
         
         i_optim_param = 0
         current_cvg_lvl = 0 
