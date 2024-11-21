@@ -859,8 +859,6 @@ def AccumulateSegmSourceToTargetSym(
 
 def FindAllBinarySegments(intersegm_to_all, nbody, nsegm, nint_min, bodysegm, bodycharge):
 
-    Identity_detected = False
-
     BinarySegm = {}
 
     for isegm in range(nsegm):
@@ -892,13 +890,7 @@ def FindAllBinarySegments(intersegm_to_all, nbody, nsegm, nint_min, bodysegm, bo
                     Sym = (intersegm_to_all[ib][iint].Inverse()).Compose(intersegm_to_all[ibp][iint])
 
                 if ((isegm == isegmp) and Sym.IsIdentityRotAndTimeRev()):
-
-                    if not(Identity_detected):
-                        print()
-                        print("WARNING: Two bodies have identical trajectories")
-                        print()
-                        
-                    Identity_detected = True
+                        raise ValueError("Provided symmetries resulted in two bodies having identical trajectories.")
 
                 AlreadyFound = False
                 for isym, FoundSym in enumerate(BinarySegm[bisegm]["SymList"]):
@@ -919,7 +911,7 @@ def FindAllBinarySegments(intersegm_to_all, nbody, nsegm, nint_min, bodysegm, bo
                     BinarySegm[bisegm]["SymCount"].append(1)
                     BinarySegm[bisegm]["ProdChargeSum"].append(bodycharge[ib]*bodycharge[ibp])
 
-    return BinarySegm, Identity_detected
+    return BinarySegm
 
 def ReorganizeBinarySegments(BinarySegm):
     

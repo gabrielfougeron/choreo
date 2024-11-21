@@ -250,16 +250,16 @@ function canvasApp() {
 	trailLayerCanvas = document.getElementById("trailLayerCanvas");
 	trailLayerContext = trailLayerCanvas.getContext("2d");
 	trailLayerContext.lineCap = "round";
-	trailLayerCanvas.addEventListener("FinalizeSetOrbitFromOutsideCanvas", FinalizeSetOrbitFromOutsideCanvasHandler, true);
-	trailLayerCanvas.addEventListener("FinalizeAndPlayFromOutsideCanvas", FinalizeAndPlayFromOutsideCanvasHandler, true);
-	// trailLayerCanvas.addEventListener("StopAnimationFromOutsideCanvas", StopAnimationFromOutsideCanvasHandler, true);
-	trailLayerCanvas.addEventListener("DisableAnimationFromOutsideCanvas", DisableAnimationFromOutsideCanvasHandler, true);
-	trailLayerCanvas.addEventListener("EnableAnimationFromOutsideCanvas", EnableAnimationFromOutsideCanvasHandler, true);
-	trailLayerCanvas.addEventListener("StartAnimationFromOutsideCanvas", StartAnimationFromOutsideCanvasHandler, true);
-	trailLayerCanvas.addEventListener("RemakeParticlesFromOutsideCanvas", RemakeParticlesFromOutsideCanvasHandler, true);
-	trailLayerCanvas.addEventListener("ChangeColorsFromOutsideCanvas", ChangeColorsFromOutsideCanvasHandler, true);
-	trailLayerCanvas.addEventListener("DrawAllPathsFromOutsideCanvas", DrawAllPathsFromOutsideCanvasHandler, true);
-	trailLayerCanvas.addEventListener("CompleteSetOrbitFromOutsideCanvas", CompleteSetOrbitFromOutsideCanvasHandler, true);
+	trailLayerCanvas.addEventListener("FinalizeSetOrbitFromOutsideCanvas"	, FinalizeSetOrbitFromOutsideCanvasHandler	, true)
+	trailLayerCanvas.addEventListener("FinalizeAndPlayFromOutsideCanvas"	, FinalizeAndPlayFromOutsideCanvasHandler	, true)
+	trailLayerCanvas.addEventListener("DisableAnimationFromOutsideCanvas"	, DisableAnimationFromOutsideCanvasHandler	, true)
+	trailLayerCanvas.addEventListener("EnableAnimationFromOutsideCanvas"	, EnableAnimationFromOutsideCanvasHandler	, true)
+	trailLayerCanvas.addEventListener("StartAnimationFromOutsideCanvas"		, StartAnimationFromOutsideCanvasHandler	, true)
+	trailLayerCanvas.addEventListener("RemakeParticlesFromOutsideCanvas"	, RemakeParticlesFromOutsideCanvasHandler	, true)
+	trailLayerCanvas.addEventListener("ChangeColorsFromOutsideCanvas"		, ChangeColorsFromOutsideCanvasHandler		, true)
+	trailLayerCanvas.addEventListener("DrawAllPathsFromOutsideCanvas"		, DrawAllPathsFromOutsideCanvasHandler		, true)
+	trailLayerCanvas.addEventListener("CompleteSetOrbitFromOutsideCanvas"	, CompleteSetOrbitFromOutsideCanvasHandler	, true)
+	trailLayerCanvas.addEventListener("ErrorFromOutsideCanvas"				, ErrorFromOutsideCanvasHandler				, true)
 	
 	particleLayerCanvas = document.getElementById("particleLayerCanvas");
 	particleLayerContext = particleLayerCanvas.getContext("2d");
@@ -527,6 +527,16 @@ function canvasApp() {
 		
 		FinalizeSetOrbit(DoDrawParticles = true, DoXMinMax = e.DoXMinMax, setTinc = e.setTinc)
 		startAnimation()
+		
+	}
+
+	function ErrorFromOutsideCanvasHandler(e) {
+
+		stopAnimation()
+		clearParticleLayer()
+
+		trailLayerContext.fillStyle = "#FF0000"
+		trailLayerContext.fillRect(0,0,displayWidth,displayHeight)
 		
 	}
 

@@ -491,9 +491,9 @@ cdef class NBodySyst():
         cdef double eps = 1e-12
 
         if (bodymass.shape[0] != nbody):
-            raise ValueError(f'Incompatible number of bodies {nbody} vs number of masses {bodymass.shape[0]}')
+            raise ValueError(f'Incompatible number of bodies {nbody} vs number of masses {bodymass.shape[0]}.')
         if (bodycharge.shape[0] != nbody):
-            raise ValueError(f'Incompatible number of bodies {nbody} vs number of charges {bodycharge.shape[0]}')
+            raise ValueError(f'Incompatible number of bodies {nbody} vs number of charges {bodycharge.shape[0]}.')
 
         self.Set_inter_law(inter_law, inter_law_str, inter_law_param_dict)
 
@@ -533,11 +533,10 @@ cdef class NBodySyst():
 #         self._InitValPosBasis = ComputeParamBasis_InitVal(nbody, geodim, InstConstraintsPos[0], bodymass, MomCons=True)
 #         self._InitValVelBasis = ComputeParamBasis_InitVal(nbody, geodim, InstConstraintsVel[0], bodymass, MomCons=True)
 
-        BinarySegm, Identity_detected = FindAllBinarySegments(self.intersegm_to_all, nbody, self.nsegm, self.nint_min, self._bodysegm, bodycharge)
+        BinarySegm = FindAllBinarySegments(self.intersegm_to_all, nbody, self.nsegm, self.nint_min, self._bodysegm, bodycharge)
         self.nbin_segm_tot, self.nbin_segm_unique = CountSegmentBinaryInteractions(BinarySegm, self.nsegm)
 
         self._BinSourceSegm, self._BinTargetSegm, BinTimeRev, self._BinSpaceRot, self._BinProdChargeSum = ReorganizeBinarySegments(BinarySegm)
-
 
         # Not actually sure this is always true.
         assert (BinTimeRev == 1).all()
@@ -588,7 +587,7 @@ cdef class NBodySyst():
         self._co_in_buf, self._co_in_shapes, self._co_in_shifts = BundleListOfArrays(co_in_list)
 
         if self._nnz_k_shifts[self.nloop] == 0:
-            raise ValueError("Given symmetries resulted in an empty parameter basis.")
+            raise ValueError("Provided symmetries resulted in an empty parameter basis.")
 
         self.ConfigureShortcutSym()
 
@@ -822,7 +821,7 @@ cdef class NBodySyst():
                 else:
                     ninter = 2*npr
             else:
-                raise ValueError(f'Impossible value for n_sub_fft[il] {self._n_sub_fft[il]}')   
+                raise ValueError(f'Impossible value for n_sub_fft[il]: {self._n_sub_fft[il]}. Allowed values are either 1 or 2.')   
 
             pos_slice_shapes_list.append((ninter, self.geodim))
             
@@ -856,7 +855,7 @@ cdef class NBodySyst():
             else:
                 raise ValueError("The package pyfftw could not be loaded. Please check your local install.")
         else:
-            raise ValueError('Invalid FFT backend. Possible options are "scipy", "mkl" or "fftw" ')
+            raise ValueError('Invalid FFT backend. Possible options are "scipy", "mkl" or "fftw".')
 
         if self._nint_fac > 0:
             self.allocate_owned_memory()
@@ -1370,7 +1369,7 @@ cdef class NBodySyst():
             else:
 
                 if inter_law_param_dict is not None:
-                    raise ValueError('Argument inter_law_param_dict should be None')
+                    raise ValueError('Argument inter_law_param_dict should be None.')
 
                 ccallback_prepare(&callback_inter_fun, signatures, inter_law, CCALLBACK_DEFAULTS)
 
@@ -1388,7 +1387,7 @@ cdef class NBodySyst():
                     self.inter_law_str = inspect.getsource(inter_law)
 
                 elif (callback_inter_fun.signature.value != 0):
-                    raise ValueError(f"Provided inter_law is a C function with incorrect signature. Signature should be {signatures[0].signature}")
+                    raise ValueError(f"Provided inter_law is a C function with incorrect signature. Signature should be {signatures[0].signature}.")
                 else:
 
                     self.inter_law_str = "Custom C function"
@@ -1400,7 +1399,7 @@ cdef class NBodySyst():
                 raise ValueError("Please provide either inter_law or inter_law_str, not both.")
         
             if not isinstance(inter_law_str, str):
-                raise ValueError(f"Provided inter_law_str is of type {type(inter_law_str)} but should be of type string")
+                raise ValueError(f"Provided inter_law_str is of type {type(inter_law_str)} but should be of type string.")
 
             if inter_law_str == "gravity_pot":
                 self._inter_law = gravity_pot
@@ -1428,7 +1427,7 @@ cdef class NBodySyst():
                     raise ValueError("Numba is not available and provided inter_law_str is a string defining a Python function. Using a Python function is disallowed for performance reasons. Please provide a C function or install Numba on your system.")
 
                 if inter_law_param_dict is not None:
-                    raise ValueError('Argument inter_law_param_dict should be None')
+                    raise ValueError('Argument inter_law_param_dict should be None.')
 
                 try:
                     
@@ -1436,7 +1435,7 @@ cdef class NBodySyst():
                     ccallback_prepare(&callback_inter_fun, signatures, inter_law_numba, CCALLBACK_DEFAULTS)
 
                     if (callback_inter_fun.signature.value != 0):
-                        raise ValueError(f"Provided inter_law_str defines a Python function whose corresponding C function has incorrect signature. Signature should be {signatures[0].signature}")
+                        raise ValueError(f"Provided inter_law_str defines a Python function whose corresponding C function has incorrect signature. Signature should be {signatures[0].signature}.")
                     
                     self.inter_law_str = inter_law_str
                     self.inter_law_param_dict = None
@@ -1670,22 +1669,22 @@ cdef class NBodySyst():
 
         if segmpos is None:
             if params_mom_buf is None:
-                raise ValueError("Missing params_mom_buf")
+                raise ValueError("Missing params_mom_buf.")
             segmpos = self.params_to_segmpos(params_mom_buf)
 
         if segmvel is None:
             if params_mom_buf is None:
-                raise ValueError("Missing params_mom_buf")
+                raise ValueError("Missing params_mom_buf.")
             segmvel = self.params_to_segmvel(params_mom_buf)
 
         if Action is None:
             if params_mom_buf is None:
-                raise ValueError("Missing params_mom_buf")
+                raise ValueError("Missing params_mom_buf.")
             Action = self.segmpos_params_to_action(segmpos, params_mom_buf)
 
         if Gradaction is None:
             if params_mom_buf is None:
-                raise ValueError("Missing params_mom_buf")
+                raise ValueError("Missing params_mom_buf.")
             Gradaction_vect = self.segmpos_params_to_action_grad(segmpos, params_mom_buf)
             Gradaction = np.linalg.norm(Gradaction_vect)
 
@@ -2072,7 +2071,7 @@ cdef class NBodySyst():
                             loop_id += 1
                         current_color = color_list[loop_id%ncol]
                     else:
-                        raise ValueError(f'Unknown color scheme "{color}"')
+                        raise ValueError(f'Unknown color scheme "{color}".')
 
                     plt.plot(pos[:,0], pos[:,1], color=current_color, antialiased=True, zorder=-iplt)
 
@@ -3319,7 +3318,7 @@ cdef class NBodySyst():
     def ComputeSymDefault(self, double[:,:,::1] segmpos, ActionSym Sym, Py_ssize_t lnorm = 1, full = True):
 
         if lnorm not in [1,2,22]:
-            raise ValueError(f'ComputeSymDefault only computes L1, L2 or L2 squared norms. Received {lnorm = }')
+            raise ValueError(f'ComputeSymDefault only computes L1, L2 or L2 squared norms. Received {lnorm = }.')
 
         cdef Py_ssize_t ib , iint
         cdef Py_ssize_t ibp, iintp
