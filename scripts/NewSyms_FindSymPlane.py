@@ -8,6 +8,7 @@ __PROJECT_ROOT__ = os.path.abspath(os.path.join(os.path.dirname(__file__),os.par
 
 def main():
     
+    # Remove_Original = False
     Remove_Original = True
     
     DP_Wisdom_file = os.path.join(__PROJECT_ROOT__, "PYFFTW_wisdom.txt")
@@ -50,7 +51,7 @@ def main():
             
             segmpos = NBS.params_to_segmpos(params_buf)
             
-            res = choreo.find.FindReflectionSymmetry(NBS, segmpos,refl_dim=1)
+            res = choreo.find.FindTimeRevSymmetry(NBS, segmpos, refl_dim=[1])
             
             if res is None:
                 continue
@@ -73,31 +74,33 @@ def main():
                 # "save_first_init" : True        ,
                 "Look_for_duplicates" : False   ,
             })
-            
-            choreo.find.ChoreoFindFromDict(params_dict, extra_args_dict, Workspace_folder)
-            
-            if Remove_Original:
-            
-                # Test hash!
+            try:
+                choreo.find.ChoreoFindFromDict(params_dict, extra_args_dict, Workspace_folder)
+
+                if Remove_Original:
                 
-                Hash_in = np.array(extra_args_dict["Hash"])
-                
-                with open(full_out_file_basename + '.json') as jsonFile:
-                    out_sol_dict = json.load(jsonFile)
-                
-                Hash_out = np.array(out_sol_dict["Hash"])
-                
-                if NBS.TestHashSame(Hash_in, Hash_out):
+                    # Test hash!
                     
-                    try:
-                        for ext in ['.json','.npy','.png']:
-                            os.remove(full_in_file_basename+ext)
-                    except:
-                        pass
-                
-                else:
-                    print("WARNING : Found solution is not the same")
+                    Hash_in = np.array(extra_args_dict["Hash"])
+                    
+                    with open(full_out_file_basename + '.json') as jsonFile:
+                        out_sol_dict = json.load(jsonFile)
+                    
+                    Hash_out = np.array(out_sol_dict["Hash"])
+                    
+                    if NBS.TestHashSame(Hash_in, Hash_out):
+                        
+                        try:
+                            for ext in ['.json','.npy','.png']:
+                                os.remove(full_in_file_basename+ext)
+                        except:
+                            pass
+                    
+                    else:
+                        print("WARNING : Found solution is not the same")
             
+            except:
+                pass
             
 
 

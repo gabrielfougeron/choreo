@@ -160,6 +160,16 @@ async def main(params_dict):
         choreo.find.ChoreoChooseParallelEnvAndFind(Workspace_folder, params_dict, extra_args_dict)
     except Exception as exc:
         print(exc)
+        
+        js.postMessage(
+            funname = "Error_From_Python",
+            args    = pyodide.ffi.to_js(
+                { },
+                dict_converter=js.Object.fromEntries
+            )
+        )
+
+        return
 
     filename_output = store_folder+'/'+file_basename
     filename = filename_output+".json"

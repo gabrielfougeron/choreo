@@ -39,6 +39,43 @@ var DownloadTxtFile = (function () {
     };
 }());
 
+async function Error_From_Python(args){
+
+	var trailLayerCanvas = document.getElementById("trailLayerCanvas")
+
+    var event = new Event('EnableAnimationFromOutsideCanvas')
+    trailLayerCanvas.dispatchEvent(event)
+
+    if (document.getElementById('checkbox_DisplayLoopsDuringSearch').checked) {
+        trajectoriesOn = true
+        document.getElementById("trajectoryButton").textContent ="Hide trails"
+    } 
+
+    var event = new Event('ErrorFromOutsideCanvas')
+    trailLayerCanvas.dispatchEvent(event)
+
+    setTimeout(() => { // remove whatever is printed on requestAnimationFrame
+        var event = new Event('ErrorFromOutsideCanvas')
+        trailLayerCanvas.dispatchEvent(event)
+      }, "30")
+
+    SearchIsOnGoing = false
+    var ChoreoDispInitStateBtn = document.getElementById("ChoreoDispInitStateBtn")
+    ChoreoDispInitStateBtn.disabled = ""
+    AskForNext[0] = 0
+
+    var RotSlider = $("#RotSlider").data("roundSlider")
+    RotSlider.enable()
+
+    var Python_State_Div = document.getElementById("Python_State_Div")
+    Python_State_Div.innerHTML = "Find solution!"
+    Python_State_Div.classList.add('w3-green')
+    Python_State_Div.classList.add('w3-hover-pale-green')
+    Python_State_Div.classList.remove('w3-orange')
+    Python_State_Div.classList.remove('w3-red')
+
+}
+
 async function Play_Loop_From_Python(args){
 
 	var trailLayerCanvas = document.getElementById("trailLayerCanvas")

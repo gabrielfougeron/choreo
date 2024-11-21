@@ -957,13 +957,17 @@ def Write_wisdom_file(DP_Wisdom_file):
             with open(filename, 'wb') as f:
                 f.write(wis[i])
 
-def FindReflectionSymmetry(NBS, semgpos, ntries = 1, hit_tol = 1e-7, refl_dim = 0, return_best = False):
+def FindTimeRevSymmetry(NBS, semgpos, ntries = 1, hit_tol = 1e-7, refl_dim = [0], return_best = False):
+    
+    if isinstance(refl_dim, int):
+        refl_dim = [refl_dim]
     
     IsReflexionInvariant = False
     for Sym in NBS.Sym_list:
         IsReflexionInvariant = IsReflexionInvariant or (Sym.TimeRev == -1)
     
     if IsReflexionInvariant:
+        # I want at most one TimeRev == -1 symmetry
         return 
     
     params_ini = NBS.segmpos_to_params(semgpos)
@@ -972,8 +976,11 @@ def FindReflectionSymmetry(NBS, semgpos, ntries = 1, hit_tol = 1e-7, refl_dim = 
         
         dt = SymParams[0]
         rot = ActionSym.SurjectiveDirectSpaceRot(SymParams[1:])
-        refl = np.identity(rot.shape[0])
-        refl[refl_dim,refl_dim] = -1
+        refl = np.identity(NBS.geodim)
+        
+        for idim in refl_dim:
+            if idim >= 0:
+                refl[idim,idim] = -1
 
         Sym = ActionSym(
             args[0] ,
@@ -1001,13 +1008,69 @@ def FindReflectionSymmetry(NBS, semgpos, ntries = 1, hit_tol = 1e-7, refl_dim = 
     
     n_SymParams = 1 + (NBS.geodim * (NBS.geodim-1) // 2)
     
-    best_sol = choreo.scipy_plus.nonlin.current_best((np.random.random(n_SymParams),np.array(range(NBS.nbody))), np.inf)
+    best_sol = choreo.scipy_plus.nonlin.current_best((np.zeros(n_SymParams,dtype=np.float64),np.array(range(NBS.nbody))), np.inf)
     
     for itry in range(ntries):
 
         for BodyPerm in ActionSym.InvolutivePermutations(NBS.nbody):
-
+            
             x0 = np.random.random(n_SymParams)
+    
+            # method = "BFGS"
+            method = "L-BFGS-B"
+            # method = "SLSQP"
+            opt_res = scipy.optimize.minimize(EvalSym, x0, args=(BodyPerm,), method=method, tol=1e-8, callback=None, options={"maxiter":100})
+
+            best_sol.update((opt_res.x, BodyPerm), opt_res.fun)
+
+            if opt_res.fun < hit_tol:
+                
+                return Compute_Sym(opt_res.x, BodyPerm)
+
+    if return_best:            
+        x, f, f_norm = best_sol.get_best()    
+        return Compute_Sym(x[0], x[1])
+ 
+
+def FindTimeDirectSymmetry(NBS, semgpos, ntries = 1, refl_dim = [0], hit_tol = 1e-7, return_best = False):
+
+    def Compute_Sym(SymParams, *args):
+        
+        rot = ActionSym.SurjectiveDirectSpaceRot(SymParams)
+        
+        for idim in refl_dim:
+            if idim >= 0:
+                rot[idim,idim] = -1
+
+        Sym = ActionSym(
+            args[0] ,
+            rot     ,
+            -1      ,
+            0       ,
+            1       ,
+        )
+
+        return Sym
+    
+    def EvalSym(SymParams, *args):
+        
+        Sym, segmpos_dt = Compute_Sym(SymParams, *args)
+
+        return NBS.ComputeSymDefault(segmpos_dt, Sym, lnorm = 22, full=False)
+    
+    n_SymParams = 1 + (NBS.geodim * (NBS.geodim-1) // 2)
+    
+    best_sol = choreo.scipy_plus.nonlin.current_best((np.zeros(n_SymParams,dtype=np.float64),np.array(range(NBS.nbody))), np.inf)
+    
+    for itry in range(ntries):
+
+        for BodyPerm in ActionSym.InvolutivePermutations(NBS.nbody):
+            
+            if random_init:
+                x0 = np.random.random(n_SymParams)
+            else:
+                x0 = np.zeros(n_SymParams,dtype=np.float64)
+                
             # method = "BFGS"
             method = "L-BFGS-B"
             # method = "SLSQP"
