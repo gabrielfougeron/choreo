@@ -150,7 +150,8 @@ cdef class ActionSym():
     @staticmethod
     def Random(Py_ssize_t nbody, Py_ssize_t geodim, Py_ssize_t maxden = -1):
         """
-        Random Returns a random transformation
+        Random Returns a random transformation.
+        Warning: the underlying density is **NOT** uniform.
         """        
 
         if maxden < 0:
@@ -196,7 +197,7 @@ cdef class ActionSym():
     cpdef ActionSym TimeDerivative(ActionSym self):
         r"""
         Returns the time derivative of a symmetry transformation.
-        If self transforms positions, then self.TimeDerivative() transforms speeds
+        If self transforms positions, then self.TimeDerivative() transforms speeds.
         """
 
         cdef double[:, ::1] SpaceRot = self._SpaceRot.copy()
@@ -268,6 +269,13 @@ cdef class ActionSym():
 
         unique_perm = np.unique(np.asarray(self._BodyPerm))
         res = res and (unique_perm.shape[0] == self._BodyPerm.shape[0])
+
+        res = res and (self._SpaceRot.shape[0] == self._SpaceRot.shape[1])
+
+        for i in range(self._SpaceRot.shape[0]):
+            for j in range(i,self._SpaceRot.shape[0]):
+            
+                res = res and (abs(self._SpaceRot[i,j] - self._SpaceRot[j,i]) < atol)
 
         return res
 
@@ -343,11 +351,24 @@ cdef class ActionSym():
         r"""
         Returns True if the two transformations are almost identical.
         """   
-        return ((self.Inverse()).Compose(other)).IsIdentity(atol = atol)
+        return ( 
+            self.IsSamePerm(other) and
+            self.IsSameRot(other, atol = atol) and
+            self.IsSameTimeRev(other) and
+            self.IsSameTimeShift(other)
+        )
     
     @cython.final
     cpdef bint IsSamePerm(ActionSym self, ActionSym other):
-        return ((self.Inverse()).Compose(other)).IsIdentityPerm()    
+
+        cdef bint isid = True
+        cdef Py_ssize_t ib
+        cdef Py_ssize_t nbody = self._BodyPerm.shape[0]
+
+        for ib in range(nbody):
+            isid = isid and (self._BodyPerm[ib] == other._BodyPerm[ib])
+
+        return isid  
 
     @cython.final
     cpdef bint IsSameRot(ActionSym self, ActionSym other, double atol = default_atol):
@@ -364,23 +385,19 @@ cdef class ActionSym():
     
     @cython.final
     cpdef bint IsSameTimeRev(ActionSym self, ActionSym other):
-        return ((self.Inverse()).Compose(other)).IsIdentityTimeRev()    
+        return self.TimeRev == other.TimeRev
     
     @cython.final
     cpdef bint IsSameTimeShift(ActionSym self, ActionSym other, double atol = default_atol):
-        return ((self.Inverse()).Compose(other)).IsIdentityTimeShift()
-
-    @cython.final    
-    cpdef bint IsSamePermAndRot(ActionSym self, ActionSym other, double atol = default_atol):
-        return ((self.Inverse()).Compose(other)).IsIdentityPermAndRot(atol = atol)
+        return self.TimeShiftNum * other.TimeShiftDen == self.TimeShiftDen * other.TimeShiftNum    
 
     @cython.final
     cpdef bint IsSameRotAndTimeRev(ActionSym self, ActionSym other, double atol = default_atol):
-        return ((self.Inverse()).Compose(other)).IsIdentityRotAndTimeRev(atol = atol)
+        return self.IsSameTimeRev(other) and self.IsSameRot(other, atol = atol)    
     
     @cython.final
     cpdef bint IsSameRotAndTime(ActionSym self, ActionSym other, double atol = default_atol):
-        return ((self.Inverse()).Compose(other)).IsIdentityRotAndTime(atol = atol)
+        return self.IsSameTimeShift(other) and self.IsSameTimeRev(other) and self.IsSameRot(other, atol = atol)    
 
     @cython.final
     @cython.cdivision(True)
@@ -544,9 +561,6 @@ def BuildCayleyGraph(Py_ssize_t nbody, Py_ssize_t geodim, list GeneratorList = [
     HangingNodesDict = {"":Sym}
 
     for i_layer in range(max_layers):
-
-        print()
-        print(f'{i_layer = }')
 
         HangingNodesDict = BuildOneCayleyLayer(Graph, GeneratorList, HangingNodesDict, alphabet)
         

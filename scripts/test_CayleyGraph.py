@@ -24,7 +24,7 @@ geodim = params_dict['Phys_Gen']['geodim']
 nbody = params_dict["Phys_Bodies"]["nbody"]
 Sym_list = choreo.find.ChoreoLoadSymList(params_dict)
 
-Sym_list.pop()
+# Sym_list.pop()
 
 print(Sym_list)
 
