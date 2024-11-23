@@ -583,13 +583,12 @@ def BuildCayleyGraph(Py_ssize_t nbody, Py_ssize_t geodim, list GeneratorList = [
 def BuildOneCayleyLayer(Graph, list GeneratorList, dict HangingNodesDict, alphabet):
 
     cdef ActionSym GenSym, HSym, NewSym, Sym
-    cdef Py_ssize_t i, j, n
+    cdef Py_ssize_t i, j
 
     cdef dict NewHangingNodesDict = dict()
     cdef list NextLayer = []
     cdef list UniqueNextLayer = []
 
-    n = 0
     for hkey, HSym in HangingNodesDict.items():
 
         for i, GenSym in enumerate(GeneratorList):
@@ -601,30 +600,41 @@ def BuildOneCayleyLayer(Graph, list GeneratorList, dict HangingNodesDict, alphab
                     Graph.add_edge(hkey, key, GenSym = GenSym)
                     break
             else:
-                n += 1
-                NextLayer.append((hkey,alphabet[i],NewSym, GenSym))
+                NextLayer.append((NewSym, hkey, alphabet[i]+hkey, GenSym))
 
     for layer_item in NextLayer:
 
-        NewSym = layer_item[2]
+        NewSym = layer_item[0]
 
         for next_layer_item in UniqueNextLayer:
 
-            Sym = next_layer_item[2]
+            Sym = next_layer_item[0]
 
             if NewSym.IsSame(Sym):
-                break
+                next_layer_item[1].append(layer_item[1])
+                next_layer_item[2].append(layer_item[2])
+                next_layer_item[3].append(layer_item[3])
         else:
 
-            UniqueNextLayer.append(layer_item)
+            UniqueNextLayer.append((layer_item[0], [layer_item[1]], [layer_item[2]], [layer_item[3]]))
 
-    for hkey, p, NewSym, GenSym in UniqueNextLayer:
+    for NewSym, hkey_list, key_list, GenSym_list in UniqueNextLayer:
 
-        key = p + hkey
-        Graph.add_node(key, Sym=NewSym)
-        Graph.add_edge(hkey, key, GenSym=GenSym)
+        new_keylen = len(key_list[0])        
+        new_key = key_list[0]
 
-        NewHangingNodesDict[key] = NewSym
+        for key in key_list[1:]:
+            keylen = len(key)
+            if keylen < new_keylen:
+                new_keylen = keylen
+                new_key = key
+
+        Graph.add_node(new_key, Sym=NewSym)
+        NewHangingNodesDict[new_key] = NewSym
+
+        for hkey, GenSym in zip(hkey_list, GenSym_list):
+
+            Graph.add_edge(hkey, new_key, GenSym=GenSym)
 
     return NewHangingNodesDict
 
