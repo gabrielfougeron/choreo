@@ -449,6 +449,73 @@ def ChoreoFindFromDict(params_dict, extra_args_dict, Workspace_folder):
 
     Find_Choreo(**all_kwargs)
 
+def ChoreoLoadSymList(params_dict):
+    
+    geodim = params_dict['Phys_Gen']['geodim']
+    nbody = params_dict["Phys_Bodies"]["nbody"]
+    nsyms = params_dict["Phys_Bodies"]["nsyms"]
+    Sym_list = []
+    
+    for isym in range(nsyms):
+        
+        BodyPerm = np.array(params_dict["Phys_Bodies"]["AllSyms"][isym]["BodyPerm"],dtype=int)
+
+        SpaceRot = params_dict["Phys_Bodies"]["AllSyms"][isym].get("SpaceRot")
+
+        if SpaceRot is None:
+            
+            if geodim == 2:
+                    
+                Reflexion = params_dict["Phys_Bodies"]["AllSyms"][isym]["Reflexion"]
+                if (Reflexion == "True"):
+                    s = -1
+                elif (Reflexion == "False"):
+                    s = 1
+                else:
+                    raise ValueError("Reflexion must be True or False")
+                    
+                rot_angle = 2 * np.pi * params_dict["Phys_Bodies"]["AllSyms"][isym]["RotAngleNum"] / params_dict["Phys_Bodies"]["AllSyms"][isym]["RotAngleDen"]
+
+                SpaceRot = np.array(
+                    [   [ s*np.cos(rot_angle)   , -s*np.sin(rot_angle)  ],
+                        [   np.sin(rot_angle)   ,    np.cos(rot_angle)  ]   ]
+                    , dtype = np.float64
+                )
+
+            else:
+                
+                raise ValueError(f"Provided space dimension: {geodim}. Please give a SpaceRot matrix directly.")
+            
+        else:
+            
+            SpaceRot = np.array(SpaceRot, dtype = np.float64)
+            
+            if SpaceRot.shape != (geodim, geodim):
+                raise  ValueError(f"Invalid SpaceRot dimension. {geodim =}, {SpaceRot.shape =}")
+                
+        TimeRev_str = params_dict["Phys_Bodies"]["AllSyms"][isym]["TimeRev"]
+        if (TimeRev_str == "True"):
+            TimeRev = -1
+        elif (TimeRev_str == "False"):
+            TimeRev = 1
+        else:
+            raise ValueError("TimeRev must be True or False")
+
+        TimeShiftNum = int(params_dict["Phys_Bodies"]["AllSyms"][isym]["TimeShiftNum"])
+        TimeShiftDen = int(params_dict["Phys_Bodies"]["AllSyms"][isym]["TimeShiftDen"])
+
+        Sym_list.append(
+            ActionSym(
+                BodyPerm = BodyPerm     ,
+                SpaceRot = SpaceRot     ,
+                TimeRev = TimeRev       ,
+                TimeShiftNum = TimeShiftNum   ,
+                TimeShiftDen = TimeShiftDen   ,
+            )
+        )
+        
+    return Sym_list
+
 def ChoreoLoadFromDict(params_dict, Workspace_folder, callback=None, args_list=None, extra_args_dict={}):
 
     def load_target_files(filename, Workspace_folder, target_speed):
@@ -536,7 +603,6 @@ def ChoreoLoadFromDict(params_dict, Workspace_folder, callback=None, args_list=N
 #         nbody = len(mass)
 
     nbody = params_dict["Phys_Bodies"]["nbody"]
-    nsyms = params_dict["Phys_Bodies"]["nsyms"]
 
     nloop = params_dict["Phys_Bodies"]["nloop"]
     
@@ -578,65 +644,7 @@ def ChoreoLoadFromDict(params_dict, Workspace_folder, callback=None, args_list=N
         inter_pow = -1.
         inter_pm = 1
 
-    Sym_list = []
-    
-    for isym in range(nsyms):
-        
-        BodyPerm = np.array(params_dict["Phys_Bodies"]["AllSyms"][isym]["BodyPerm"],dtype=int)
-
-        SpaceRot = params_dict["Phys_Bodies"]["AllSyms"][isym].get("SpaceRot")
-
-        if SpaceRot is None:
-            
-            if geodim == 2:
-                    
-                Reflexion = params_dict["Phys_Bodies"]["AllSyms"][isym]["Reflexion"]
-                if (Reflexion == "True"):
-                    s = -1
-                elif (Reflexion == "False"):
-                    s = 1
-                else:
-                    raise ValueError("Reflexion must be True or False")
-                    
-                rot_angle = 2 * np.pi * params_dict["Phys_Bodies"]["AllSyms"][isym]["RotAngleNum"] / params_dict["Phys_Bodies"]["AllSyms"][isym]["RotAngleDen"]
-
-                SpaceRot = np.array(
-                    [   [ s*np.cos(rot_angle)   , -s*np.sin(rot_angle)  ],
-                        [   np.sin(rot_angle)   ,    np.cos(rot_angle)  ]   ]
-                    , dtype = np.float64
-                )
-
-            else:
-                
-                raise ValueError(f"Provided space dimension: {geodim}. Please give a SpaceRot matrix directly.")
-            
-        else:
-            
-            SpaceRot = np.array(SpaceRot, dtype = np.float64)
-            
-            if SpaceRot.shape != (geodim, geodim):
-                raise  ValueError(f"Invalid SpaceRot dimension. {geodim =}, {SpaceRot.shape =}")
-                
-        TimeRev_str = params_dict["Phys_Bodies"]["AllSyms"][isym]["TimeRev"]
-        if (TimeRev_str == "True"):
-            TimeRev = -1
-        elif (TimeRev_str == "False"):
-            TimeRev = 1
-        else:
-            raise ValueError("TimeRev must be True or False")
-
-        TimeShiftNum = int(params_dict["Phys_Bodies"]["AllSyms"][isym]["TimeShiftNum"])
-        TimeShiftDen = int(params_dict["Phys_Bodies"]["AllSyms"][isym]["TimeShiftDen"])
-
-        Sym_list.append(
-            ActionSym(
-                BodyPerm = BodyPerm     ,
-                SpaceRot = SpaceRot     ,
-                TimeRev = TimeRev       ,
-                TimeShiftNum = TimeShiftNum   ,
-                TimeShiftDen = TimeShiftDen   ,
-            )
-        )
+    Sym_list = ChoreoLoadSymList(params_dict)
 
     if ((LookForTarget) and not(params_dict['Phys_Target'] ['RandomJitterTarget'])) :
 

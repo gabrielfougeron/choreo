@@ -15,6 +15,7 @@ from choreo.scipy_plus.cython.blas_consts cimport *
 import choreo.scipy_plus.linalg
 import networkx
 import itertools
+import string
 
 @cython.cdivision(True)
 cdef Py_ssize_t gcd (Py_ssize_t a, Py_ssize_t b) noexcept nogil:
@@ -528,3 +529,85 @@ cdef class ActionSym():
         free(ipiv)
 
         return res
+
+def BuildCayleyGraph(Py_ssize_t nbody, Py_ssize_t geodim, list GeneratorList = [], Py_ssize_t max_layers = 100):
+
+    cdef Py_ssize_t i_layer
+
+    alphabet = string.ascii_lowercase
+
+    assert len(GeneratorList) < len(alphabet)
+
+    Graph = networkx.Graph()
+    Sym = ActionSym.Identity(nbody, geodim)
+    Graph.add_node("", Sym=Sym)
+    HangingNodesDict = {"":Sym}
+
+    for i_layer in range(max_layers):
+
+        print()
+        print(f'{i_layer = }')
+
+        HangingNodesDict = BuildOneCayleyLayer(Graph, GeneratorList, HangingNodesDict, alphabet)
+        
+        if len(HangingNodesDict) == 0:
+            break
+    
+    else:
+
+        raise ValueError('Exceeded maximum number of iterations in BuildCayleyGraph')
+
+    return Graph
+
+def BuildOneCayleyLayer(Graph, list GeneratorList, dict HangingNodesDict, alphabet):
+
+    cdef ActionSym GenSym, HSym, NewSym, Sym
+    cdef Py_ssize_t i, j, n
+
+    cdef dict NewHangingNodesDict = dict()
+    cdef list NextLayer = []
+    cdef list UniqueNextLayer = []
+
+    n = 0
+    for hkey, HSym in HangingNodesDict.items():
+
+        for i, GenSym in enumerate(GeneratorList):
+
+            NewSym = GenSym.Compose(HSym)
+
+            for key, Sym in Graph.nodes.data("Sym"):
+                if NewSym.IsSame(Sym):
+                    Graph.add_edge(hkey, key, GenSym = GenSym)
+                    break
+            else:
+                n += 1
+                NextLayer.append((hkey,alphabet[i],NewSym, GenSym))
+
+    for layer_item in NextLayer:
+
+        NewSym = layer_item[2]
+
+        for next_layer_item in UniqueNextLayer:
+
+            Sym = next_layer_item[2]
+
+            if NewSym.IsSame(Sym):
+                break
+        else:
+
+            UniqueNextLayer.append(layer_item)
+
+    for hkey, p, NewSym, GenSym in UniqueNextLayer:
+
+        key = p + hkey
+        Graph.add_node(key, Sym=NewSym)
+        Graph.add_edge(hkey, key, GenSym=GenSym)
+
+        NewHangingNodesDict[key] = NewSym
+
+    return NewHangingNodesDict
+
+
+
+
+        
