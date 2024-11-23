@@ -62,8 +62,6 @@ cdef class ActionSym():
     
     cpdef bint IsSameTimeShift(ActionSym self, ActionSym other, double atol = *)
 
-    cpdef bint IsSamePermAndRot(ActionSym self, ActionSym other, double atol = *)
-
     cpdef bint IsSameRotAndTimeRev(ActionSym self, ActionSym other, double atol = *)
     
     cpdef bint IsSameRotAndTime(ActionSym self, ActionSym other, double atol = *)

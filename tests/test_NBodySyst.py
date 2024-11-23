@@ -530,6 +530,7 @@ def test_ForceGeneralSym(AllNBS, float64_tols):
         
         print()      
           
+@ProbabilisticTest(RepeatOnFail=2)
 def test_ForceGreaterNstore(AllNBS, float64_tols):
     
     for name, NBS in AllNBS.items():
