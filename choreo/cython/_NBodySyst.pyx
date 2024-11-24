@@ -675,6 +675,9 @@ cdef class NBodySyst():
         self._params_pos_buf = <double**> malloc(sizeof(double*)*self.nloop)
         self._ifft_buf_ptr = <double complex**> malloc(sizeof(double complex**)*self.nloop)
 
+        cdef double *pyfftw_input_array_start
+        cdef double complex *pyfftw_output_array_start
+
         cdef pyfftw.FFTW pyfftw_object
         cdef double[:,:,::1] pyfftw_input_array
         cdef double complex[:,:,::1] pyfftw_output_array
@@ -721,10 +724,18 @@ cdef class NBodySyst():
                 self._fftw_genrfft[il] = pyfftw_object
 
                 pyfftw_input_array = pyfftw_object.input_array
-                self._params_pos_buf[il] = &pyfftw_input_array[0,0,0]
+                if self._params_shapes[il,1] > 0:
+                    pyfftw_input_array_start = &pyfftw_input_array[0,0,0]
+                else:
+                    pyfftw_input_array_start = NULL
+                self._params_pos_buf[il] = pyfftw_input_array_start
 
                 pyfftw_output_array = pyfftw_object.output_array
-                self._ifft_buf_ptr[il] = &pyfftw_output_array[0,0,0]
+                if self._params_shapes[il,1] > 0:
+                    pyfftw_output_array_start = &pyfftw_output_array[0,0,0]
+                else:
+                    pyfftw_output_array_start = NULL
+                self._ifft_buf_ptr[il] = pyfftw_output_array_start
 
                 self._fftw_genrfft_exe[il] = <pyfftw.fftw_exe*> malloc(sizeof(pyfftw.fftw_exe))
                 self._fftw_genrfft_exe[il][0] = pyfftw_object.get_fftw_exe()
@@ -738,7 +749,7 @@ cdef class NBodySyst():
 
                 if (self._ParamBasisShortcutPos_th[il] == RFFT) or (self._ParamBasisShortcutVel_th[il] == RFFT):
 
-                    pyfftw_input_array_2 = <double complex[:(self._params_shapes[il,0]+1),:self.geodim]> (<double complex*> &pyfftw_input_array[0,0,0])
+                    pyfftw_input_array_2 = <double complex[:(self._params_shapes[il,0]+1),:self.geodim]> (<double complex*> pyfftw_input_array_start)
 
                     pos_slice_1d = p_pyfftw.empty_aligned((self._pos_slice_shifts[il+1]-self._pos_slice_shifts[il]), dtype=np.float64)
                     self._pos_slice_buf_ptr[il] = &pos_slice_1d[0]
