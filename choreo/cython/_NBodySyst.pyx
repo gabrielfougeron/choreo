@@ -56,6 +56,7 @@ import types
 import itertools
 import functools
 import inspect
+import time
 
 try:
     from matplotlib import pyplot as plt
@@ -514,7 +515,6 @@ cdef class NBodySyst():
         self.BuildSegmGraph()
         self.ChooseInterSegm()
         self.intersegm_to_all = AccumulateSegmSourceToTargetSym(self.SegmGraph, nbody, geodim, self.nint_min, self.nsegm, self._intersegm_to_iint, self._intersegm_to_body)
-
     
         self.ChooseLoopGen()
         self.gensegm_to_all = AccumulateSegmSourceToTargetSym(self.SegmGraph, nbody, geodim, self.nint_min, self.nsegm, self._gensegm_to_iint, self._gensegm_to_body)
