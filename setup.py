@@ -254,6 +254,9 @@ if platform.system() == "Windows":
     define_macros.append(("FFTW_NO_Complex", 1))
     define_macros.append(("CYTHON_CCOMPLEX", 0))
 
+if opt_lvl == "fast":
+    define_macros.append(("CYTHON_WITHOUT_ASSERTIONS", 1))
+
 compiler_directives = {}
 
 if opt_lvl == "profile" : 

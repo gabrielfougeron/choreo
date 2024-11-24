@@ -16,6 +16,7 @@ def test_Identity(float64_tols, Physical_dims, Few_bodies):
             Id = choreo.ActionSym.Identity(nbody, geodim)
 
             assert Id.IsIdentity(atol = float64_tols.atol)
+            assert Id.IsWellFormed(atol = float64_tols.atol)
 
             Id2 = Id.Compose(Id)
 

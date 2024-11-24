@@ -256,7 +256,8 @@ cdef class ActionSym():
         """       
         
         cdef bint res = True
-        cdef Py_ssize_t i, j
+        cdef Py_ssize_t i, j,k
+        cdef double dot
 
         res = res and (self.TimeShiftNum >= 0)
         res = res and (self.TimeShiftDen >  0)
@@ -273,9 +274,15 @@ cdef class ActionSym():
         res = res and (self._SpaceRot.shape[0] == self._SpaceRot.shape[1])
 
         for i in range(self._SpaceRot.shape[0]):
-            for j in range(i,self._SpaceRot.shape[0]):
-            
-                res = res and (abs(self._SpaceRot[i,j] - self._SpaceRot[j,i]) < atol)
+            for j in range(self._SpaceRot.shape[0]):
+                dot = 0.
+                for k in range(self._SpaceRot.shape[0]):
+                    dot += self._SpaceRot[i,k] *  self._SpaceRot[j,k]
+
+                if i == j :
+                    res = res and (cfabs(dot - 1.) < atol)
+                else:
+                    res = res and (cfabs(dot) < atol)
 
         return res
 
