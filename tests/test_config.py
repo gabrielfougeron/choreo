@@ -259,13 +259,27 @@ def AllConfigSymPairNames(LoadPYFFTWWisdom):
         ('3D7k2'    , '3D'      ),
     ]
 
-def load_from_config_file(config_name, override_args = {}):
+def params_from_config_file(config_name):
     
     Workspace_folder = os.path.join(__PROJECT_ROOT__, 'tests', 'NewSym_data', config_name)
     params_filename = os.path.join(Workspace_folder, 'choreo_config.json')
     
     with open(params_filename) as jsonFile:
         params_dict = json.load(jsonFile)
+
+    return params_dict
+
+def SymList_from_config_file(config_name):
+    
+    params_dict = params_from_config_file(config_name)
+    
+    return choreo.find.ChoreoLoadSymList(params_dict)
+
+def load_from_config_file(config_name, override_args = {}):
+    
+    params_dict = params_from_config_file(config_name)
+    
+    Workspace_folder = os.path.join(__PROJECT_ROOT__, 'tests', 'NewSym_data', config_name)
 
     all_kwargs = choreo.find.ChoreoLoadFromDict(params_dict, Workspace_folder, args_list=["geodim", "nbody", "mass", "charge", "inter_pow", "inter_pm", "Sym_list"])
 
@@ -312,4 +326,8 @@ def AllNBS_nozerodiv(AllConfigNames):
 def AllNBSPairs_nozerodiv(AllConfigSymPairNames):
     override_args = {"inter_pow" : 1.}
     return {config_name:(load_from_config_file(config_name[0], override_args),load_from_config_file(config_name[1], override_args)) for config_name in AllConfigSymPairNames}
+
+@pytest.fixture
+def AllSymList(AllConfigNames):
+    return {config_name:SymList_from_config_file(config_name) for config_name in AllConfigNames}
 

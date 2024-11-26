@@ -19,7 +19,10 @@ import matplotlib.animation as animation
 __PROJECT_ROOT__ = os.path.abspath(os.path.join(os.path.dirname(__file__),os.pardir))
 sys.path.append(__PROJECT_ROOT__)
 
-Workspace_folder = os.path.join(__PROJECT_ROOT__, "Sniff_all_sym")
+# Workspace_folder = os.path.join(__PROJECT_ROOT__, "Sniff_all_sym")
+Workspace_folder = os.path.join(__PROJECT_ROOT__, "tests", "NewSym_data", "4q4qD")
+
+output_folder = os.path.join(__PROJECT_ROOT__, "Sniff_all_sym")
 
 params_filename = os.path.join(Workspace_folder, "choreo_config.json")
 with open(params_filename) as jsonFile:
@@ -37,6 +40,13 @@ Graph = choreo.BuildCayleyGraph(nbody, geodim, GeneratorList = Sym_list)
 
 print(Graph)
 
+
+# assert  len(Sym_list) * Graph.number_of_nodes() == Graph.number_of_edges()
+
+
+
+# exit()
+
 fig, ax = plt.subplots()
 pos = networkx.spring_layout(Graph, dim=2)
 # pos = networkx.spectral_layout(Graph, dim=2)
@@ -46,10 +56,10 @@ networkx.draw_networkx_labels(Graph, pos)
 plt.axis('off')
 fig.tight_layout()
 
-plt.savefig(os.path.join(Workspace_folder,"Cayley_Graph.pdf"))
+plt.savefig(os.path.join(output_folder,"Cayley_Graph.pdf"))
 plt.close()
 
-
+exit()
 
 
 from mpl_toolkits.mplot3d.proj3d import proj_transform
@@ -117,5 +127,5 @@ anim = animation.FuncAnimation(
 )
 
 writervideo = animation.FFMpegWriter(fps=framerate) 
-anim.save(os.path.join(Workspace_folder,'Cayley_Graph_3D.mp4'), writer=writervideo) 
+anim.save(os.path.join(output_folder,'Cayley_Graph_3D.mp4'), writer=writervideo) 
 plt.close() 
