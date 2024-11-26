@@ -9,7 +9,7 @@ max_num_threads = multiprocessing.cpu_count()
 
 numba_kwargs = {
     'nopython':True     ,
-    'cache':True        ,
+    # 'cache':True        ,
     'fastmath':True     ,
     'nogil':True        ,
 }

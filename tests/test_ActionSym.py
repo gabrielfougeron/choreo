@@ -102,3 +102,30 @@ def test_rotation_generation(float64_tols, Physical_dims):
         assert np.allclose(matTmat, idmat, rtol = float64_tols.rtol, atol = float64_tols.atol)  
         assert np.allclose(matmatT, idmat, rtol = float64_tols.rtol, atol = float64_tols.atol)     
         assert abs(scipy.linalg.det(mat) - 1.) < float64_tols.atol
+
+def test_Cayley_graph(AllSymList):
+    
+    for name, Sym_list in AllSymList.items():
+    
+        print(f"Config name : {name}") 
+        
+        nsym = len(Sym_list)
+        
+        if nsym < 1:
+            return
+
+        Sym = Sym_list[0]
+        nbody = Sym.BodyPerm.shape[0]
+        geodim = Sym.SpaceRot.shape[0]
+        
+        Graph = choreo.BuildCayleyGraph(nbody, geodim, GeneratorList = Sym_list)
+
+        assert  len(Sym_list) * Graph.number_of_nodes() == Graph.number_of_edges()
+        
+        for node in Graph:
+            
+            nneigh = 0
+            for neigh in Graph.successors(node):
+                nneigh += 1
+            
+            assert nneigh == nsym

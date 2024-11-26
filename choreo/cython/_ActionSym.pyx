@@ -554,7 +554,7 @@ cdef class ActionSym():
 
         return res
 
-def BuildCayleyGraph(Py_ssize_t nbody, Py_ssize_t geodim, list GeneratorList = [], Py_ssize_t max_layers = 100):
+def BuildCayleyGraph(Py_ssize_t nbody, Py_ssize_t geodim, list GeneratorList = [], Py_ssize_t max_layers = 1000):
 
     cdef Py_ssize_t i_layer
 
@@ -562,7 +562,8 @@ def BuildCayleyGraph(Py_ssize_t nbody, Py_ssize_t geodim, list GeneratorList = [
 
     assert len(GeneratorList) < len(alphabet)
 
-    Graph = networkx.Graph()
+    # Graph = networkx.Graph()
+    Graph = networkx.DiGraph()
     Sym = ActionSym.Identity(nbody, geodim)
     Graph.add_node("", Sym=Sym)
     HangingNodesDict = {"":Sym}
@@ -614,6 +615,7 @@ def BuildOneCayleyLayer(Graph, list GeneratorList, dict HangingNodesDict, alphab
                 next_layer_item[1].append(layer_item[1])
                 next_layer_item[2].append(layer_item[2])
                 next_layer_item[3].append(layer_item[3])
+                break
         else:
 
             UniqueNextLayer.append((layer_item[0], [layer_item[1]], [layer_item[2]], [layer_item[3]]))
