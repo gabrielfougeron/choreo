@@ -20,7 +20,7 @@ __PROJECT_ROOT__ = os.path.abspath(os.path.join(os.path.dirname(__file__),os.par
 sys.path.append(__PROJECT_ROOT__)
 
 # Workspace_folder = os.path.join(__PROJECT_ROOT__, "Sniff_all_sym")
-Workspace_folder = os.path.join(__PROJECT_ROOT__, "tests", "NewSym_data", "4q4qD")
+Workspace_folder = os.path.join(__PROJECT_ROOT__, "tests", "NewSym_data", "3C101k")
 
 output_folder = os.path.join(__PROJECT_ROOT__, "Sniff_all_sym")
 
@@ -41,6 +41,9 @@ Graph = choreo.BuildCayleyGraph(nbody, geodim, GeneratorList = Sym_list)
 print(Graph)
 
 
+for node in Graph:
+    Graph.nodes[node].pop("Sym",None)
+
 # assert  len(Sym_list) * Graph.number_of_nodes() == Graph.number_of_edges()
 
 
@@ -48,10 +51,16 @@ print(Graph)
 # exit()
 
 fig, ax = plt.subplots()
-pos = networkx.spring_layout(Graph, dim=2)
+# pos = networkx.spring_layout(Graph, dim=2)
 # pos = networkx.spectral_layout(Graph, dim=2)
+pos = networkx.nx_pydot.graphviz_layout(Graph, prog='neato')
+# pos = networkx.nx_pydot.graphviz_layout(Graph, prog='dot')
+
+# graphviz_layout(G, prog='neato',
+
+
 networkx.draw(Graph, pos)
-networkx.draw_networkx_labels(Graph, pos)
+# networkx.draw_networkx_labels(Graph, pos)
 
 plt.axis('off')
 fig.tight_layout()

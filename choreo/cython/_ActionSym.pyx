@@ -554,7 +554,7 @@ cdef class ActionSym():
 
         return res
 
-def BuildCayleyGraph(Py_ssize_t nbody, Py_ssize_t geodim, list GeneratorList = [], Py_ssize_t max_layers = 1000):
+def BuildCayleyGraph(Py_ssize_t nbody, Py_ssize_t geodim, list GeneratorList = [], Py_ssize_t max_layers = 1000, bint add_edge_data = False):
 
     cdef Py_ssize_t i_layer
 
@@ -562,15 +562,15 @@ def BuildCayleyGraph(Py_ssize_t nbody, Py_ssize_t geodim, list GeneratorList = [
 
     assert len(GeneratorList) < len(alphabet)
 
-    # Graph = networkx.Graph()
     Graph = networkx.DiGraph()
     Sym = ActionSym.Identity(nbody, geodim)
     Graph.add_node("", Sym=Sym)
+
     HangingNodesDict = {"":Sym}
 
     for i_layer in range(max_layers):
 
-        HangingNodesDict = BuildOneCayleyLayer(Graph, GeneratorList, HangingNodesDict, alphabet)
+        HangingNodesDict = BuildOneCayleyLayer(Graph, GeneratorList, HangingNodesDict, alphabet, add_edge_data)
         
         if len(HangingNodesDict) == 0:
             break
@@ -581,7 +581,7 @@ def BuildCayleyGraph(Py_ssize_t nbody, Py_ssize_t geodim, list GeneratorList = [
 
     return Graph
 
-def BuildOneCayleyLayer(Graph, list GeneratorList, dict HangingNodesDict, alphabet):
+def BuildOneCayleyLayer(Graph, list GeneratorList, dict HangingNodesDict, alphabet, bint add_edge_data = False):
 
     cdef ActionSym GenSym, HSym, NewSym, Sym
     cdef Py_ssize_t i, j
@@ -598,7 +598,11 @@ def BuildOneCayleyLayer(Graph, list GeneratorList, dict HangingNodesDict, alphab
 
             for key, Sym in Graph.nodes.data("Sym"):
                 if NewSym.IsSame(Sym):
-                    Graph.add_edge(hkey, key, GenSym = GenSym)
+                    if add_edge_data:
+                        Graph.add_edge(hkey, key, GenSym = GenSym)
+                    else:
+                        Graph.add_edge(hkey, key)
+
                     break
             else:
                 NextLayer.append((NewSym, hkey, alphabet[i]+hkey, GenSym))
@@ -632,11 +636,15 @@ def BuildOneCayleyLayer(Graph, list GeneratorList, dict HangingNodesDict, alphab
                 new_key = key
 
         Graph.add_node(new_key, Sym=NewSym)
+
         NewHangingNodesDict[new_key] = NewSym
 
         for hkey, GenSym in zip(hkey_list, GenSym_list):
 
-            Graph.add_edge(hkey, new_key, GenSym=GenSym)
+            if add_edge_data:
+                Graph.add_edge(hkey, new_key, GenSym=GenSym)
+            else:
+                Graph.add_edge(hkey, new_key)
 
     return NewHangingNodesDict
 

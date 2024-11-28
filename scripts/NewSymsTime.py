@@ -1,5 +1,7 @@
 import os
 import sys
+import threadpoolctl
+
 __PROJECT_ROOT__ = os.path.abspath(os.path.join(os.path.dirname(__file__),os.pardir))
 sys.path.append(__PROJECT_ROOT__)
 
@@ -9,35 +11,23 @@ os.environ['MKL_NUM_THREADS'] = '1'
 os.environ['OMP_NUM_THREADS'] = '1'
 os.environ['TBB_NUM_THREADS'] = '1'
 
+threadpoolctl.threadpool_limits(limits=1).__enter__()
+
 import pyquickbench
 import json
 import numpy as np
 import matplotlib.pyplot as plt
-import scipy
-
-
-# import mkl_fft
-# scipy.fft.set_global_backend(
-#     backend = mkl_fft._scipy_fft_backend   ,
-#     only = True
-# )
-
-# import pyfftw
-# scipy.fft.set_global_backend(
-#     backend = pyfftw.interfaces.scipy_fft  ,
-#     only = True
-# )
 
 import choreo 
 
-DP_Wisdom_file = os.path.join(__PROJECT_ROOT__, "PYFFTW_wisdom.txt")
-choreo.find.Load_wisdom_file(DP_Wisdom_file)
+Wisdom_file = os.path.join(__PROJECT_ROOT__, "PYFFTW_wisdom.json")
+choreo.find.Load_wisdom_file(Wisdom_file)
 
 if ("--no-show" in sys.argv):
     plt.show = (lambda : None)
 
 n_test = 1
-n_repeat = 10
+n_repeat = 100
     
 def params_to_action_grad_TT(NBS, params_buf):
 
@@ -86,20 +76,17 @@ def setup(test_name, fft_backend, nint_fac, ForceGeneralSym):
     inter_pow = all_kwargs["inter_pow"]
     inter_pm = all_kwargs["inter_pm"]
     
-    
     if (inter_pow == -1.) and (inter_pm == 1) :
-        inter_law = None
         inter_law_str = "gravity_pot"
-        inter_law_params = None
+        inter_law_param_dict = None
     else:
-        inter_law = None
         inter_law_str = "power_law_pot"
-        inter_law_params = {'n': inter_pow/2, 'alpha': inter_pm}
+        inter_law_param_dict = {'n': inter_pow, 'alpha': inter_pm}
 
-    NBS = choreo.cython._NBodySyst.NBodySyst(
+    NBS = choreo.NBodySyst(
         geodim, nbody, mass, charge, Sym_list,
-        inter_law, inter_law_str, inter_law_params,
-        ForceGeneralSym
+        inter_law_str = inter_law_str, inter_law_param_dict = inter_law_param_dict,
+        ForceGeneralSym = ForceGeneralSym,
     )
 
     # NBS.fftw_planner_effort = 'FFTW_ESTIMATE'
@@ -123,77 +110,28 @@ def setup(test_name, fft_backend, nint_fac, ForceGeneralSym):
 
 
 all_tests = [
-    # '3q',
-    # '3q3q',
-    # '3q3qD',
-    # '2q2q',
-    # '4q4q',
-    # '4q4qD',
-    # '4q4qD3k',
-    # '1q2q',
-    # '5q5q',
-    # '6q6q',
-    # '2C3C',
-    # '2D3D',   
-    # '2C3C5k',
-    # '2D3D5k',
-    # '2C3C5C',
-    '2D1',
-    '2D1_non_gravity',
-    # '4C5k',
-    # '4D3k',
-    # '4D',
-    # '3B',
-    # '3C',
-    # '4C',
-    # '20B',
-    # '3D',
-    # '3D1',
-    # '3C2k',
-    # '3D2k',
-    # '3C4k',
-    # '3D4k',
-    # '3C5k',
-    # '3D5k',
-    # '3D101k',
-    # 'test_3D5k',
-    # '3C7k2',
-    # '3D7k2',
-    # '6C',
-    # '6D',
-    # '6Ck5',
-    # '6Dk5',
-    # '5Dq',
-    # '2C3C5C',
-    # '3C_3dim',
-    # '2D1_3dim',
-    # '3C2k',
-    # '4C5k',
-    # "3C11k",
-    # "3C17k",
-    # "3C23k",
-    # "3C29k",
-    # "3C37k",
-    # '3C101k',
-    # '20B',
-    # '3D5D',
+    '3C'      ,
+    # '3D'      ,
+    # '3D1'     ,
+    # '3C2k'    ,
+    # '3D2k'      ,
 ]
 
 min_exp = 0
-max_exp = 20
+max_exp = 12
 
 MonotonicAxes = ["nint_fac"]
 
 all_args = {
     "test_name" : all_tests,
-    # "fft_backend" : ['scipy', 'mkl', 'fftw'],
-    "fft_backend" : ['scipy', 'mkl'],
+    "fft_backend" : ['scipy', 'mkl', 'fftw'],
+    # "fft_backend" : ['scipy', 'mkl'],
     # "fft_backend" : ['scipy'],
     # "fft_backend" : ['mkl'],
     # "fft_backend" : ['fftw'],
     "nint_fac" : [2**i for i in range(min_exp,max_exp)] ,
-    # "ForceGeneralSym" : [True, False],
-    "ForceGeneralSym" : [False],
+    "ForceGeneralSym" : [True, False],
+    # "ForceGeneralSym" : [False],
 }
 
 timings_folder = os.path.join(__PROJECT_ROOT__,'examples','generated_files_time_consuming')
@@ -206,14 +144,12 @@ all_timings = pyquickbench.run_benchmark(
     all_funs                ,
     setup = setup           ,
     filename = filename     ,
-    # StopOnExcept = True     ,
-    ShowProgress = True     ,
     mode = mode  ,
     n_repeat = n_repeat     ,
     MonotonicAxes = MonotonicAxes,
     time_per_test=0.2,
     # timeout = 1.,
-    ForceBenchmark = True,
+    # ForceBenchmark = True,
     # PreventBenchmark = False,
     # ForceBenchmark = False,
     # PreventBenchmark = True,
@@ -227,22 +163,25 @@ plot_intent = {
     "fft_backend" : 'curve_linestyle'                  ,
     # "fft_backend" : 'subplot_grid_y'                  ,
     "nint_fac" : 'points'                           ,
-    "ForceGeneralSym" : 'curve_linestyle'                           ,
-    pyquickbench.repeat_ax_name :  'reduction_min'  ,
-    # pyquickbench.repeat_ax_name :  'reduction_avg'  ,
+    "ForceGeneralSym" : 'subplot_grid_y'                           ,
+    # "ForceGeneralSym" : 'curve_color'                           ,
+    # pyquickbench.repeat_ax_name :  'reduction_min'  ,
+    pyquickbench.repeat_ax_name :  'reduction_avg'  ,
     pyquickbench.out_ax_name :  'curve_color'  ,
-    # pyquickbench.out_ax_name :  'reduction_avg'  ,
+    # pyquickbench.out_ax_name :  'reduction_sum'  ,
     # pyquickbench.out_ax_name :  'single_value'  ,
 }
 
 single_values_val = {
-    pyquickbench.out_ax_name :  'segm_pos_to_pot_nrg_grad'  ,
+    # pyquickbench.out_ax_name :  'segm_pos_to_pot_nrg_grad'  ,
+    # pyquickbench.out_ax_name :  'pos_slice_to_params'  ,
+    pyquickbench.out_ax_name :  'params_to_pos_slice'  ,
 }
 
 relative_to_val_list = [
     None    ,
     # {
-    #     pyquickbench.out_ax_name : 'params_to_pos_slice',
+    #     "fft_backend" : 'scipy',
     #     "ForceGeneralSym" : True,
     # },
     # {"fft_backend" : 'scipy'},
@@ -269,4 +208,3 @@ for relative_to_val in relative_to_val_list:
         # transform = "pol_growth_order"          ,
         plot_ylim = plot_ylim                   ,
     )
-
