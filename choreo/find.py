@@ -934,39 +934,40 @@ def Check_Duplicates(NBS, segmpos, params, hash_dict, action_dict, store_folder,
 
     return False, None
 
-def wisdom_filename_divide(filename):
-    root, ext = os.path.splitext(filename) 
-    return [root+"_"+prec+ext for prec in ['d','f','l']]
-
-def Load_wisdom_file(DP_Wisdom_file):
+def Load_wisdom_file(Wisdom_file):
     
     if not(PYFFTW_AVAILABLE):
         warnings.warn("The package pyfftw could not be loaded. Please check your local install.")
     else:
-        wis_list = []
+
+        if os.path.isfile(Wisdom_file):
+            with open(Wisdom_file,'r') as jsonFile:
+                Wis_dict = json.load(jsonFile)
         
-        for i, filename in enumerate(wisdom_filename_divide(DP_Wisdom_file)):
+            wis = (
+                Wis_dict["double"].encode('utf-8'),
+                Wis_dict["single"].encode('utf-8'),
+                Wis_dict["long"]  .encode('utf-8'),
+            )
 
-            if os.path.isfile(filename):
-                with open(filename, 'rb') as f:
-                    wis = f.read()
-            else:
-                wis = b''
-                    
-            wis_list.append(wis)
-
-        pyfftw.import_wisdom(wis_list)
-    
-def Write_wisdom_file(DP_Wisdom_file): 
+            pyfftw.import_wisdom(wis)
+        
+def Write_wisdom_file(Wisdom_file): 
        
     if not(PYFFTW_AVAILABLE):
         warnings.warn("The package pyfftw could not be loaded. Please check your local install.")
     else:
         wis = pyfftw.export_wisdom()
         
-        for i, filename in enumerate(wisdom_filename_divide(DP_Wisdom_file)):
-            with open(filename, 'wb') as f:
-                f.write(wis[i])
+        Wis_dict = {
+            "double": wis[0].decode('utf-8') , 
+            "single": wis[1].decode('utf-8') ,
+            "long":   wis[2].decode('utf-8') ,
+        }
+            
+        with open(Wisdom_file, "w") as jsonFile:
+            jsonString = json.dumps(Wis_dict, indent=4, sort_keys=False)
+            jsonFile.write(jsonString)
 
 def FindTimeRevSymmetry(NBS, semgpos, ntries = 1, hit_tol = 1e-7, refl_dim = [0], return_best = False):
     

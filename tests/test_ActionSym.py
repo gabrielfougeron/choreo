@@ -2,6 +2,7 @@ import pytest
 from test_config import *
 import numpy as np
 import scipy
+import networkx
 import choreo
 
 def test_Identity(float64_tols, Physical_dims, Few_bodies):
@@ -118,14 +119,22 @@ def test_Cayley_graph(AllSymList):
         nbody = Sym.BodyPerm.shape[0]
         geodim = Sym.SpaceRot.shape[0]
         
-        Graph = choreo.BuildCayleyGraph(nbody, geodim, GeneratorList = Sym_list)
-
-        assert  len(Sym_list) * Graph.number_of_nodes() == Graph.number_of_edges()
+        CayleyGraph = choreo.BuildCayleyGraph(nbody, geodim, GeneratorList = Sym_list)
         
-        for node in Graph:
+        assert networkx.is_strongly_connected(CayleyGraph)
+
+        assert  len(Sym_list) * CayleyGraph.number_of_nodes() == CayleyGraph.number_of_edges()
+        
+        for node in CayleyGraph:
             
             nneigh = 0
-            for neigh in Graph.successors(node):
+            for neigh in CayleyGraph.successors(node):
+                nneigh += 1
+            
+            assert nneigh == nsym            
+            
+            nneigh = 0
+            for neigh in CayleyGraph.predecessors(node):
                 nneigh += 1
             
             assert nneigh == nsym

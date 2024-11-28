@@ -12,14 +12,14 @@ Benchmark of FFT algorithms
 
 import os
 import sys
-# 
+
 os.environ['OPENBLAS_NUM_THREADS'] = '1'
 os.environ['NUMEXPR_NUM_THREADS'] = '1'
 os.environ['MKL_NUM_THREADS'] = '1'
 os.environ['OMP_NUM_THREADS'] = '1'
 os.environ['TBB_NUM_THREADS'] = '1'
 
-import multiprocessing
+
 import itertools
 import tqdm
 
@@ -40,8 +40,8 @@ import numpy as np
 import scipy
 
 import choreo
-DP_Wisdom_file = os.path.join(__PROJECT_ROOT__, "PYFFTW_wisdom.txt")
-choreo.find.Load_wisdom_file(DP_Wisdom_file)
+Wisdom_file = os.path.join(__PROJECT_ROOT__, "PYFFTW_wisdom.json")
+choreo.find.Load_wisdom_file(Wisdom_file)
 
 
 base_shape = [4,4]

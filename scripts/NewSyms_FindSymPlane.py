@@ -11,8 +11,8 @@ def main():
     # Remove_Original = False
     Remove_Original = True
     
-    DP_Wisdom_file = os.path.join(__PROJECT_ROOT__, "PYFFTW_wisdom.txt")
-    choreo.find.Load_wisdom_file(DP_Wisdom_file)
+    Wisdom_file = os.path.join(__PROJECT_ROOT__, "PYFFTW_wisdom.json")
+    choreo.find.Load_wisdom_file(Wisdom_file)
     
     Workspace_folder = os.path.join(__PROJECT_ROOT__, "Sniff_all_sym")
     
