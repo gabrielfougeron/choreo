@@ -37,6 +37,9 @@ def CLI_search(cli_args):
             FoundFile = True
             break
 
+    Wisdom_file = os.path.join(Workspace_folder, "PYFFTW_wisdom.json")
+    choreo.find.Load_wisdom_file(Wisdom_file)
+
     if (FoundFile):
 
         os.environ['NUMBA_NUM_THREADS'] = str(multiprocessing.cpu_count())
