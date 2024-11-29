@@ -72,7 +72,11 @@ def main():
             looplength_new = np.array(des_new["Loop_Length"])
             
             
+            print(hash_new[0])
+            print(action_new)
+            print(looplength_new)
             
+            continue
             # Comparison
             
             print(np.linalg.norm(hash_old - hash_new))
