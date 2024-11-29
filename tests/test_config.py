@@ -12,6 +12,11 @@ import choreo
 import scipy
 
 __PROJECT_ROOT__ = os.path.abspath(os.path.join(os.path.dirname(__file__),os.pardir))
+gallery_root = os.path.join(__PROJECT_ROOT__, "choreo", "GUI")
+gallery_dir = os.path.join(gallery_root, "choreo-gallery")
+# 
+# if not os.path.isdir(gallery_dir):
+#     choreo.GUI.install_official_gallery(gallery_root)
 
 @attrs.define
 class float_tol:

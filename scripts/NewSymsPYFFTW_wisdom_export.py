@@ -37,18 +37,19 @@ def main():
         align_toc_names = True  ,
     )
     
-    n_refine = 7 + 6
+    # n_refine = 7 + 6
+    n_refine = 22
 
     for i_refine in tqdm.tqdm(range(n_refine)):
         
-        # for test in all_tests:
-        #     Workspace_folder = os.path.join(__PROJECT_ROOT__, 'tests', 'NewSym_data', test)
-        #     doit(Workspace_folder, i_refine)
-        #     choreo.find.Write_wisdom_file(Wisdom_file)              
+        for test in all_tests:
+            Workspace_folder = os.path.join(__PROJECT_ROOT__, 'tests', 'NewSym_data', test)
+            doit(Workspace_folder, i_refine)
+            choreo.find.Write_wisdom_file(Wisdom_file)              
             
-        Workspace_folder = os.path.join(__PROJECT_ROOT__, 'Sniff_all_sym')
-        doit(Workspace_folder, i_refine)
-        choreo.find.Write_wisdom_file(Wisdom_file)     
+        # Workspace_folder = os.path.join(__PROJECT_ROOT__, 'Sniff_all_sym')
+        # doit(Workspace_folder, i_refine)
+        # choreo.find.Write_wisdom_file(Wisdom_file)     
             
         TT.toc(i_refine)
 

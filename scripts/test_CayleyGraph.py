@@ -20,7 +20,7 @@ __PROJECT_ROOT__ = os.path.abspath(os.path.join(os.path.dirname(__file__),os.par
 sys.path.append(__PROJECT_ROOT__)
 
 # Workspace_folder = os.path.join(__PROJECT_ROOT__, "Sniff_all_sym")
-Workspace_folder = os.path.join(__PROJECT_ROOT__, "tests", "NewSym_data", "3C101k")
+Workspace_folder = os.path.join(__PROJECT_ROOT__, "tests", "NewSym_data", "3D2k")
 
 output_folder = os.path.join(__PROJECT_ROOT__, "Sniff_all_sym")
 
@@ -34,29 +34,17 @@ Sym_list = choreo.find.ChoreoLoadSymList(params_dict)
 
 # Sym_list.pop()
 
-print(Sym_list)
+# print(Sym_list)
 
 Graph = choreo.BuildCayleyGraph(nbody, geodim, GeneratorList = Sym_list)
 
 print(Graph)
 
-
-for node in Graph:
-    Graph.nodes[node].pop("Sym",None)
-
-# assert  len(Sym_list) * Graph.number_of_nodes() == Graph.number_of_edges()
-
-
-
-# exit()
-
 fig, ax = plt.subplots()
-# pos = networkx.spring_layout(Graph, dim=2)
+pos = networkx.spring_layout(Graph, dim=2)
 # pos = networkx.spectral_layout(Graph, dim=2)
-pos = networkx.nx_pydot.graphviz_layout(Graph, prog='neato')
+# pos = networkx.nx_pydot.graphviz_layout(Graph, prog='neato')
 # pos = networkx.nx_pydot.graphviz_layout(Graph, prog='dot')
-
-# graphviz_layout(G, prog='neato',
 
 
 networkx.draw(Graph, pos)
@@ -68,7 +56,6 @@ fig.tight_layout()
 plt.savefig(os.path.join(output_folder,"Cayley_Graph.pdf"))
 plt.close()
 
-exit()
 
 
 from mpl_toolkits.mplot3d.proj3d import proj_transform
@@ -92,7 +79,8 @@ def annotate3D(ax, s, *args, **kwargs):
     tag = Annotation3D(s, *args, **kwargs)
     ax.add_artist(tag)
 
-pos = networkx.spring_layout(Graph, dim=3, iterations=1000)
+# pos = networkx.spring_layout(Graph, dim=3, iterations=1000)
+pos = networkx.spectral_layout(Graph, dim=3)
 
 labels = [v for v in Graph]
 nodes = np.array([pos[v] for v in Graph])

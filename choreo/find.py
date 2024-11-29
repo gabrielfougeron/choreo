@@ -1043,7 +1043,6 @@ def FindTimeRevSymmetry(NBS, semgpos, ntries = 1, hit_tol = 1e-7, refl_dim = [0]
         x, f, f_norm = best_sol.get_best()    
         return Compute_Sym(x[0], x[1])
  
-
 def FindTimeDirectSymmetry(NBS, semgpos, ntries = 1, refl_dim = [0], hit_tol = 1e-7, return_best = False):
 
     def Compute_Sym(SymParams, *args):
