@@ -418,6 +418,7 @@ def test_resize(AllNBS, float64_tols):
         print(np.linalg.norm(segmpos[:,:small_segm_size,:] - segmpos_long[:,:long_segm_size:fac,:]))
         assert np.allclose(segmpos[:,:small_segm_size,:], segmpos_long[:,:long_segm_size:fac,:], rtol = float64_tols.rtol, atol = float64_tols.atol) 
         print()
+
         
 # @ProbabilisticTest()
 def test_pot_indep_resize(AllNBS_nozerodiv):
