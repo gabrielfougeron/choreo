@@ -3681,6 +3681,7 @@ cdef class NBodySyst():
                 segmvel                 ,
                 self.segm_size          ,
                 self.segm_store         ,
+                self.nint_min           ,
                 out_segm_len_mv         ,
             )            
 
@@ -6674,6 +6675,7 @@ cdef void segmpos_to_unary_path_stats(
     double[:,:,::1] segmvel     ,
     Py_ssize_t segm_size        ,
     Py_ssize_t segm_store       ,
+    Py_ssize_t nint_min         ,
     double[::1]  out_segm_len   ,
 ) noexcept nogil:
 
@@ -6699,7 +6701,7 @@ cdef void segmpos_to_unary_path_stats(
 
                 segm_len_val += csqrt(vsq)
 
-            out_segm_len[isegm] = segm_len_val / segm_size
+            out_segm_len[isegm] = nint_min * segm_len_val / segm_size
 
     else:
 
@@ -6725,7 +6727,7 @@ cdef void segmpos_to_unary_path_stats(
 
             segm_len_val += csqrt(vsq) / 2
 
-            out_segm_len[isegm] = segm_len_val / segm_size
+            out_segm_len[isegm] = nint_min * segm_len_val / segm_size
 
 @cython.cdivision(True)
 cdef void segmpos_to_binary_path_stats(
