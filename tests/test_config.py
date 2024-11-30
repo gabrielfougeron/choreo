@@ -1,19 +1,12 @@
 import os
-import sys
 import attrs
 import pytest
-import inspect
-import typing
-import warnings
 import functools
 import numpy as np
 import json
 import choreo
-import scipy
 
 __PROJECT_ROOT__ = os.path.abspath(os.path.join(os.path.dirname(__file__),os.pardir))
-gallery_root = os.path.join(__PROJECT_ROOT__, "choreo_GUI", "choreo_GUI")
-gallery_dir = os.path.join(gallery_root, "choreo-gallery")
 
 @attrs.define
 class float_tol:

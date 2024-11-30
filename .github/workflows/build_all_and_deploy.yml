@@ -23,6 +23,8 @@ jobs:
 
     - name: Checkout repository
       uses: actions/checkout@v4
+      with:
+        submodules: 'true'
 
     - name: Setup conda
       uses: conda-incubator/setup-miniconda@v3
@@ -52,12 +54,16 @@ jobs:
 
     - name: Install locally in editable mode with pip
       shell: bash -el {0} # Needed whenever the commands need something in conda
-      run:  pip install -e .[full]
+      run: |
+        cd choreo_GUI
+        pip install -e .
+        cd ..
+        pip install -e .[full]
 
     - name: Download official gallery
       shell: bash -el {0} # Needed whenever the commands need something in conda
       run: |
-        python -c "import choreo; choreo.GUI.install_official_gallery()"
+        python -c "import choreo_GUI; choreo_GUI.install_official_gallery()"
 
     - name: Setup Pages
       uses: actions/configure-pages@v5
@@ -65,7 +71,7 @@ jobs:
     - name: Upload artifact
       uses: actions/upload-pages-artifact@v3
       with:
-        path: './choreo/GUI/'
+        path: './choreo_GUI/choreo_GUI/'
 
     - name: Deploy to GitHub Pages
       id: deployment
