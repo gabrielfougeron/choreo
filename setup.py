@@ -328,7 +328,6 @@ packages = setuptools.find_packages()
 package_data = {key : ['*.h','*.pyx','*.pxd'] for key in packages}
 exclude_package_data = {key : ['*.c'] for key in packages}
 
-# TODO: change this when choreo_GUI is its own published package.
 # If Pyodide wheel was generated, then copy it!
 basedir = os.path.dirname(__file__)
 distdir = os.path.join(basedir, "dist")
@@ -341,7 +340,7 @@ if os.path.isdir(distdir):
         if 'pyodide' in basename and ext == '.whl':
             
             src = os.path.join(basedir, "dist", filename)
-            dstdir = os.path.join(basedir, "choreo_GUI", "choreo_GUI", "python_dist")
+            dstdir = os.path.join(basedir, "choreo-GUI", "choreo_GUI", "python_dist")
             dst = os.path.join(dstdir, filename)
             
             if os.path.isdir(dstdir):
