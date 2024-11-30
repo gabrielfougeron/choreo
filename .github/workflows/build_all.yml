@@ -172,7 +172,7 @@ jobs:
       shell: bash -el {0} # Needed whenever the commands need something in conda
       run: |
         conda activate build
-        cd choreo_GUI
+        cd choreo-GUI
         pip install .
         cd ..
         pip install .[test-cli]
