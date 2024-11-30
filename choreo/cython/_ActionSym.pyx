@@ -30,6 +30,7 @@ cdef Py_ssize_t gcd (Py_ssize_t a, Py_ssize_t b) noexcept nogil:
 
 cdef double default_atol = 1e-10
 
+@cython.auto_pickle(False)
 @cython.final
 cdef class ActionSym():
     """
@@ -647,8 +648,3 @@ def BuildOneCayleyLayer(Graph, list GeneratorList, dict HangingNodesDict, alphab
                 Graph.add_edge(hkey, new_key)
 
     return NewHangingNodesDict
-
-
-
-
-        

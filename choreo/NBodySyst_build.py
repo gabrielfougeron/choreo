@@ -126,7 +126,7 @@ def Build_SegmGraph_NoPb(
 ):
 
     if (current_recursion > max_recursion):
-        raise ValueError("Achieved max recursion level in Build_SegmGraph")
+        raise ValueError("Achieved max recursion level in Build_SegmGraph.\nThere is likely a problem with provided symmetries.")
 
     SegmGraph = Build_SegmGraph(nbody, nint, Sym_list)
 

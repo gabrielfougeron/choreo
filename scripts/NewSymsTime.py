@@ -27,7 +27,7 @@ if ("--no-show" in sys.argv):
     plt.show = (lambda : None)
 
 n_test = 1
-n_repeat = 1000
+n_repeat = 100
     
 def params_to_action_grad_TT(NBS, params_buf):
 
@@ -120,7 +120,7 @@ all_tests = [
 
 min_exp = 0
 # max_exp = 13
-max_exp = 16
+max_exp = 18
 
 MonotonicAxes = ["nint_fac"]
 
@@ -163,31 +163,32 @@ plot_intent = {
     # "test_name" : 'curve_linestyle'                  ,
     # "fft_backend" : 'curve_pointstyle'                  ,
     # "fft_backend" : 'curve_color'                  ,
-    # "fft_backend" : 'curve_linestyle'                  ,
-    "fft_backend" : 'subplot_grid_y'                  ,
+    "fft_backend" : 'curve_linestyle'                  ,
+    # "fft_backend" : 'subplot_grid_y'                  ,
     "nint_fac" : 'points'                           ,
     "ForceGeneralSym" : 'subplot_grid_y'                           ,
     # "ForceGeneralSym" : 'curve_color'                           ,
     # pyquickbench.repeat_ax_name :  'reduction_min'  ,
     pyquickbench.repeat_ax_name :  'reduction_avg'  ,
-    pyquickbench.out_ax_name :  'curve_color'  ,
-    # pyquickbench.out_ax_name :  'reduction_sum'  ,
+    # pyquickbench.out_ax_name :  'curve_color'  ,
+    pyquickbench.out_ax_name :  'reduction_sum'  ,
     # pyquickbench.out_ax_name :  'single_value'  ,
 }
 
 single_values_val = {
     # pyquickbench.out_ax_name :  'segm_pos_to_pot_nrg_grad'  ,
-    # pyquickbench.out_ax_name :  'pos_slice_to_params'  ,
-    pyquickbench.out_ax_name :  'params_to_pos_slice'  ,
+    pyquickbench.out_ax_name :  'pos_slice_to_params'  ,
+    # pyquickbench.out_ax_name :  'params_to_pos_slice'  ,
 }
 
 relative_to_val_list = [
-    None    ,
+    # None    ,
     # {
     #     "fft_backend" : 'scipy',
     #     "ForceGeneralSym" : True,
     # },+
     # {"fft_backend" : 'scipy'},
+    {"fft_backend" : 'mkl'},
     # {"test_name" : '3C'},
 ]
 
@@ -208,6 +209,6 @@ for relative_to_val in relative_to_val_list:
         show = True                             ,
         relative_to_val = relative_to_val       ,
         single_values_val = single_values_val   ,
-        transform = "relative_curve_fraction"   ,
+        # transform = "relative_curve_fraction"   ,
         plot_ylim = plot_ylim                   ,
     )

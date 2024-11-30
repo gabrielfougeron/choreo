@@ -123,6 +123,7 @@ cdef void power_law_pot(double* pot_params, double xsq, double* res) noexcept no
 
 cdef double[::1] default_Hash_exp = np.array([-0.1, -0.2, -0.3, -0.4, -0.5, -0.6, -0.7, -0.8, -0.9])
 
+@cython.auto_pickle(False)
 @cython.final
 cdef class NBodySyst():
     r"""

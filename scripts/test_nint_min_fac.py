@@ -49,6 +49,8 @@ def main():
 
             NBS, segmpos = choreo.NBodySyst.FromSolutionFile(full_in_file_basename)
             params_buf = NBS.segmpos_to_params(segmpos)
+            
+            print(NBS.nint_min)
 
             des_old = NBS.Segmpos_Descriptor(params_buf)
             hash_old = np.array(des_old["Hash"])
