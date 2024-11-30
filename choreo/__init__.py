@@ -8,7 +8,6 @@ except:
 
 from .cython            import NBodySyst, ActionSym, BuildCayleyGraph
 from .                  import scipy_plus
-from .                  import GUI
 from .                  import run
 
 from .find              import *

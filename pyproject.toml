@@ -56,7 +56,7 @@ license-files = ["LICENSES/*.txt"]
 
 [project.scripts]
 choreo_CLI_search = "choreo.run:entrypoint_CLI_search"
-choreo_GUI = "choreo.run:entrypoint_GUI"
+# choreo_GUI = "choreo.run:entrypoint_GUI"
 
 [project.urls]
 Homepage = "https://gabrielfougeron.github.io/choreo/"

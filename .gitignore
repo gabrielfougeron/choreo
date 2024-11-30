@@ -47,8 +47,6 @@ pytest_out/**
 #           To be included (with preceding !)
 ##########################################################
 !build_requirements.txt
-!/choreo/GUI/*
-!/choreo/GUI/img/**
 !/LICENSES/**
 !.devcontainer/Dockerfile
 !/NumericalTank_data/*
