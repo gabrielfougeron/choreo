@@ -55,7 +55,7 @@ jobs:
     - name: Install locally in editable mode with pip
       shell: bash -el {0} # Needed whenever the commands need something in conda
       run: |
-        cd choreo_GUI
+        cd choreo-GUI
         pip install -e .
         cd ..
         pip install -e .[full]
@@ -71,7 +71,7 @@ jobs:
     - name: Upload artifact
       uses: actions/upload-pages-artifact@v3
       with:
-        path: './choreo_GUI/choreo_GUI/'
+        path: './choreo-GUI/choreo_GUI/'
 
     - name: Deploy to GitHub Pages
       id: deployment
