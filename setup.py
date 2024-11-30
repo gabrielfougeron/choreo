@@ -328,34 +328,30 @@ packages = setuptools.find_packages()
 package_data = {key : ['*.h','*.pyx','*.pxd'] for key in packages}
 exclude_package_data = {key : ['*.c'] for key in packages}
 
-GUI_data = ['*.js','*.html','assets/**','img/**','python_scripts/**','python_dist/*.whl']
+# GUI_data = ['*.js','*.html','assets/**','img/**','python_scripts/**','python_dist/*.whl']
     
-if "PYODIDE" in os.environ: # GUI stuff not needed in Pyodide whl
-    exclude_package_data['choreo.GUI'].extend(GUI_data)
+# If Pyodide wheel was generated, then copy it!
+basedir = os.path.dirname(__file__)
+distdir = os.path.join(basedir, "dist")
+
+if os.path.isdir(distdir):
     
-else: # If Pyodide wheel was generated, then copy it!
-    
-    basedir = os.path.dirname(__file__)
-    distdir = os.path.join(basedir, "dist")
-    
-    if os.path.isdir(distdir):
+    for filename in os.listdir(os.path.join(basedir, "dist")):
+        basename, ext = os.path.splitext(filename)
         
-        for filename in os.listdir(os.path.join(basedir, "dist")):
-            basename, ext = os.path.splitext(filename)
+        if 'pyodide' in basename and ext == '.whl':
             
-            if 'pyodide' in basename and ext == '.whl':
-                
-                src = os.path.join(basedir, "dist", filename)
-                dst = os.path.join(basedir, "choreo", "GUI", "python_dist", filename)
-                
+            src = os.path.join(basedir, "dist", filename)
+            dstdir = os.path.join(basedir, "choreo_GUI", "choreo_GUI", "python_dist")
+            dst = os.path.join(dstdir, filename)
+            
+            if os.path.isdir(dstdir):
                 if os.path.isfile(src):
                         
                     if os.path.isfile(dst):
                         os.remove(dst)
                     
                     shutil.copyfile(src, dst)
-    
-    package_data['choreo.GUI'].extend(GUI_data)
 
 setuptools.setup(
     ext_modules = ext_modules                   ,
@@ -363,5 +359,4 @@ setuptools.setup(
     packages = packages                         ,
     package_data = package_data                 ,
     exclude_package_data = exclude_package_data ,
-    provides = ['choreo']                       ,
 )
