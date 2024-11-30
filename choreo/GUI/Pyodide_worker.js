@@ -16,14 +16,7 @@ function RedirectPythonPrint(txt) {
 var AskForNext;
 
 // load pyodide.js
-importScripts("https://cdn.jsdelivr.net/pyodide/v0.26.3/full/pyodide.js");
-// importScripts("https://cdn.jsdelivr.net/pyodide/v0.26.0/full/pyodide.js");
-// importScripts("https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js");
-// importScripts("https://cdn.jsdelivr.net/pyodide/v0.23.4/full/pyodide.js");
-// importScripts("https://cdn.jsdelivr.net/pyodide/v0.22.0/full/pyodide.js");
-// importScripts("https://cdn.jsdelivr.net/pyodide/v0.21.2/full/pyodide.js");
-// importScripts("https://cdn.jsdelivr.net/pyodide/v0.21.3/full/pyodide.js");
-// importScripts("https://cdn.jsdelivr.net/pyodide/dev/full/pyodide.js");
+importScripts("assets/pyodide/pyodide.js");
 
 async function loadPyodideAndPackages() {
 
