@@ -26,7 +26,7 @@ def main():
     #     '3DD'       , '5Dq_'    , '7D'      , '3D7D'    , '2D3D4D'  , '3Dp2'    ,
     # ]            
     all_tests = [
-        '3C'  
+        '20B'  
     ]    
         
     Wisdom_file = os.path.join(__PROJECT_ROOT__, "PYFFTW_wisdom.json")
@@ -38,7 +38,7 @@ def main():
     )
     
     # n_refine = 7 + 6
-    n_refine = 22
+    n_refine = 24
 
     for i_refine in tqdm.tqdm(range(n_refine)):
         

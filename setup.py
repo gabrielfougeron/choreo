@@ -256,6 +256,7 @@ if platform.system() == "Windows":
 
 if opt_lvl == "fast":
     define_macros.append(("CYTHON_WITHOUT_ASSERTIONS", 1))
+    define_macros.append(("CYTHON_CLINE_IN_TRACEBACK", 0))
 
 compiler_directives = {}
 
