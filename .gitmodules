@@ -1,6 +1,6 @@
-[submodule "choreo_gallery"]
-	path = choreo_gallery
-	url = git@github.com:gabrielfougeron/choreo_gallery.git
-[submodule "choreo_GUI"]
-	path = choreo_GUI
+[submodule "choreo-GUI"]
+	path = choreo-GUI
 	url = git@github.com:gabrielfougeron/choreo_GUI.git
+[submodule "choreo-gallery"]
+	path = choreo-gallery
+	url = git@github.com:gabrielfougeron/choreo_gallery.git
