@@ -8,12 +8,14 @@ on:
 
 jobs:
   build-pyodide:
-    name: Build whl for Pyodide
+    name: Build whl for Pyodide and choreo_GUI
     runs-on: ubuntu-latest
     steps:
 
     - name: Checkout repository
       uses: actions/checkout@v4
+      with:
+        submodules: 'true'
 
     - name: Setup conda
       uses: conda-incubator/setup-miniconda@v3
@@ -41,6 +43,9 @@ jobs:
       run: |
         pyodide build
         python -m build --sdist
+        cd choreo_GUI
+        python -m build
+        cp dist/* ../dist/
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
