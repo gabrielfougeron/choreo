@@ -6,7 +6,7 @@ try:
 except:
     NUMBA_AVAILABLE = False
 
-from .cython            import NBodySyst, ActionSym, BuildCayleyGraph
+from .cython            import NBodySyst, ActionSym
 from .                  import scipy_plus
 from .                  import run
 

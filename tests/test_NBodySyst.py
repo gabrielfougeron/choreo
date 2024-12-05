@@ -591,30 +591,33 @@ def test_fft_backends(AllNBS, float64_tols):
         
         NBS.nint_fac = 10
         
-        NBS.fftw_planner_effort = 'FFTW_MEASURE'
+        NBS.fft_backend = "scipy"
+        NBS.fftw_planner_effort = 'FFTW_ESTIMATE'
         NBS.fftw_wisdom_only = False
         NBS.fftw_nthreads = 1
         
         params_buf = np.random.random((NBS.nparams))
-        params_buf_cp = params_buf.copy()
         segmpos_ref = NBS.params_to_segmpos(params_buf)
         
-        for backend in ["scipy", "mkl", "fftw"]:
-        # for backend in ["scipy", "mkl"]:
+        for ForceGeneralSym in [True, False]:
             
-            print(backend)
+            NBS.ForceGeneralSym = ForceGeneralSym
             
-            NBS.fft_backend = backend
-            
-            segmpos = NBS.params_to_segmpos(params_buf_cp)
+            for backend in ["scipy", "mkl", "fftw", "ducc"]:
                 
-            print(np.linalg.norm(segmpos - segmpos_ref))
-            assert np.allclose(segmpos, segmpos_ref, rtol = float64_tols.rtol, atol = float64_tols.atol) 
-            
-            params_buf_rt = NBS.segmpos_to_params(segmpos)
+                print(f'{backend = }, {ForceGeneralSym = }')
+                
+                NBS.fft_backend = backend
+                params_buf_cp = params_buf.copy()
+                segmpos = NBS.params_to_segmpos(params_buf_cp)
+                    
+                print(np.linalg.norm(segmpos - segmpos_ref))
+                assert np.allclose(segmpos, segmpos_ref, rtol = float64_tols.rtol, atol = float64_tols.atol) 
+                
+                params_buf_rt = NBS.segmpos_to_params(segmpos)
 
-            print(np.linalg.norm(params_buf - params_buf_rt))
-            assert np.allclose(params_buf, params_buf_rt, rtol = float64_tols.rtol, atol = float64_tols.atol) 
+                print(np.linalg.norm(params_buf - params_buf_rt))
+                assert np.allclose(params_buf, params_buf_rt, rtol = float64_tols.rtol, atol = float64_tols.atol) 
 
         print()
         

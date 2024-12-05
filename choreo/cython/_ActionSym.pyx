@@ -555,32 +555,34 @@ cdef class ActionSym():
 
         return res
 
-def BuildCayleyGraph(Py_ssize_t nbody, Py_ssize_t geodim, list GeneratorList = [], Py_ssize_t max_layers = 1000, bint add_edge_data = False):
+    @cython.final
+    @staticmethod
+    def BuildCayleyGraph(Py_ssize_t nbody, Py_ssize_t geodim, list GeneratorList = [], Py_ssize_t max_layers = 1000, bint add_edge_data = False):
 
-    cdef Py_ssize_t i_layer
+        cdef Py_ssize_t i_layer
 
-    alphabet = string.ascii_lowercase
+        alphabet = string.ascii_lowercase
 
-    assert len(GeneratorList) < len(alphabet)
+        assert len(GeneratorList) < len(alphabet)
 
-    Graph = networkx.DiGraph()
-    Sym = ActionSym.Identity(nbody, geodim)
-    Graph.add_node("", Sym=Sym)
+        Graph = networkx.DiGraph()
+        Sym = ActionSym.Identity(nbody, geodim)
+        Graph.add_node("", Sym=Sym)
 
-    HangingNodesDict = {"":Sym}
+        HangingNodesDict = {"":Sym}
 
-    for i_layer in range(max_layers):
+        for i_layer in range(max_layers):
 
-        HangingNodesDict = BuildOneCayleyLayer(Graph, GeneratorList, HangingNodesDict, alphabet, add_edge_data)
+            HangingNodesDict = BuildOneCayleyLayer(Graph, GeneratorList, HangingNodesDict, alphabet, add_edge_data)
+            
+            if len(HangingNodesDict) == 0:
+                break
         
-        if len(HangingNodesDict) == 0:
-            break
-    
-    else:
+        else:
 
-        raise ValueError('Exceeded maximum number of iterations in BuildCayleyGraph')
+            raise ValueError('Exceeded maximum number of iterations in BuildCayleyGraph')
 
-    return Graph
+        return Graph
 
 def BuildOneCayleyLayer(Graph, list GeneratorList, dict HangingNodesDict, alphabet, bint add_edge_data = False):
 

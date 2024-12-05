@@ -119,7 +119,7 @@ def test_Cayley_graph(AllSymList):
         nbody = Sym.BodyPerm.shape[0]
         geodim = Sym.SpaceRot.shape[0]
         
-        CayleyGraph = choreo.BuildCayleyGraph(nbody, geodim, GeneratorList = Sym_list)
+        CayleyGraph = choreo.ActionSym.BuildCayleyGraph(nbody, geodim, GeneratorList = Sym_list)
         
         assert networkx.is_strongly_connected(CayleyGraph)
 
