@@ -9,6 +9,7 @@ dependencies:
   - tbb 
   - pip
   - mkl_fft
+  - ducc0
   - numba
   - pytest
   - pytest-xdist

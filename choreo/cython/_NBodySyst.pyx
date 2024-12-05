@@ -70,6 +70,12 @@ try:
 except:
     MKL_FFT_AVAILABLE = False
 
+try:
+    import ducc0
+    DUCC_FFT_AVAILABLE = True
+except:
+    DUCC_FFT_AVAILABLE = False
+
 from choreo import NUMBA_AVAILABLE
 if NUMBA_AVAILABLE:
     from choreo.numba_funs import jit_inter_law, jit_inter_law_str
@@ -80,6 +86,7 @@ from choreo.optional_pyfftw import p_pyfftw, PYFFTW_AVAILABLE
 cdef int USE_SCIPY_FFT = 0
 cdef int USE_MKL_FFT = 1
 cdef int USE_FFTW_FFT = 2
+cdef int USE_DUCC_FFT = 3
 
 cdef int GENERAL_SYM = 0
 cdef int RFFT = 1
@@ -160,8 +167,12 @@ cdef class NBodySyst():
             return "scipy"
         elif self._fft_backend == USE_MKL_FFT:
             return "mkl"
+        elif self._fft_backend == USE_DUCC_FFT:
+            return "ducc"
         elif self._fft_backend == USE_FFTW_FFT:
             return "fftw"
+        else:
+            raise ValueError("This error should never be triggered. This is a bug.")
 
     cdef Py_ssize_t[::1] _loopnb
     @property
@@ -628,7 +639,7 @@ cdef class NBodySyst():
 
         if self.BufArraysAllocated:
 
-            if self.fft_backend in ['scipy', 'mkl']:
+            if self.fft_backend in ['scipy', 'mkl', 'ducc']:
                 
                 for il in range(self.nloop):
                     free(self._pos_slice_buf_ptr[il])
@@ -690,7 +701,7 @@ cdef class NBodySyst():
         cdef double[:,::1] pos_slice_mv
         cdef double complex[:,::1] params_c_mv
 
-        if self.fft_backend in ['scipy', 'mkl']:
+        if self.fft_backend in ['scipy', 'mkl', 'ducc']:
 
             for il in range(self.nloop):
                 self._pos_slice_buf_ptr[il] = <double*> malloc(sizeof(double)*(self._pos_slice_shifts[il+1]-self._pos_slice_shifts[il]))
@@ -860,6 +871,11 @@ cdef class NBodySyst():
                 self._fft_backend = USE_MKL_FFT
             else:
                 raise ValueError("The package mkl_fft could not be loaded. Please check your local install.")
+        elif backend == "ducc":
+            if DUCC_FFT_AVAILABLE:
+                self._fft_backend = USE_DUCC_FFT
+            else:
+                raise ValueError("The package ducc0 could not be loaded. Please check your local install.")
         elif backend == "fftw":
 
             if PYFFTW_AVAILABLE:
@@ -867,7 +883,7 @@ cdef class NBodySyst():
             else:
                 raise ValueError("The package pyfftw could not be loaded. Please check your local install.")
         else:
-            raise ValueError('Invalid FFT backend. Possible options are "scipy", "mkl" or "fftw".')
+            raise ValueError('Invalid FFT backend. Possible options are "scipy", "mkl", "ducc" or "fftw".')
 
         if self._nint_fac > 0:
             self.allocate_owned_memory()
@@ -4680,9 +4696,10 @@ cdef void params_to_pos_slice(
     Py_ssize_t[::1] ncoeff_min_loop         , Py_ssize_t[::1] n_sub_fft             ,
 ) noexcept nogil:
 
+    cdef Py_ssize_t idim, k, kmax, ddk
+
     cdef double [:,:,::1] params_mv
     cdef double complex[:,:,::1] ifft_mv
-
     cdef double complex [:,::1] params_c_mv
     cdef double[:,::1] rfft_mv
 
@@ -4691,8 +4708,8 @@ cdef void params_to_pos_slice(
     cdef int nloop = params_shapes.shape[0]
     cdef int geodim = params_basis_shapes[0,0]
     cdef int n
-    cdef double * buf
-    cdef double complex * dest
+    cdef double* buf
+    cdef double complex* dest
     cdef Py_ssize_t il, i
 
     cdef double complex* ifft
@@ -4734,6 +4751,21 @@ cdef void params_to_pos_slice(
                         params_mv = <double[:2*params_shapes[il,0],:params_shapes[il,1],:params_shapes[il,2]:1]> params_buf[il]
 
                         ifft_mv = mkl_fft._numpy_fft.rfft(params_mv, axis=0)
+
+                        dest = ifft_buf_ptr[il]
+                        n = ifft_shifts[il+1] - ifft_shifts[il]
+                        scipy.linalg.cython_blas.zcopy(&n,&ifft_mv[0,0,0],&int_one,dest,&int_one)
+
+            elif fft_backend == USE_DUCC_FFT:
+
+                with gil:
+
+                    if params_shapes[il,1] > 0:
+
+                        ifft_mv = ducc0.fft.r2c(
+                            np.asarray(<double[:2*params_shapes[il,0],:params_shapes[il,1],:params_shapes[il,2]:1]> (params_buf[il])), 
+                            axes=[0]    ,
+                        )
 
                         dest = ifft_buf_ptr[il]
                         n = ifft_shifts[il+1] - ifft_shifts[il]
@@ -4786,7 +4818,7 @@ cdef void params_to_pos_slice(
 
                 with gil:
 
-                    params_c_mv = <double complex[:(params_shapes[il,0]+1),:geodim]> ( <double complex*> params_buf[il])
+                    params_c_mv = <double complex[:(params_shapes[il,0]+1),:geodim]> (<double complex*> params_buf[il])
 
                     rfft_mv = mkl_fft._numpy_fft.irfft(params_c_mv, axis=0)
 
@@ -4794,6 +4826,37 @@ cdef void params_to_pos_slice(
                     n = 2*geodim*params_shapes[il,0]
                     dfac = 2*params_shapes[il,0]
                     scipy.linalg.cython_blas.daxpy(&n,&dfac,&rfft_mv[0,0],&int_one,pos_slice,&int_one)
+
+            elif fft_backend == USE_DUCC_FFT:
+
+                with gil:
+
+                    rfft_mv = ducc0.fft.c2r(
+                        np.asarray(<double complex[:(params_shapes[il,0]+1),:geodim]> (<double complex*> params_buf[il])),
+                        axes=[0]                            ,
+                        allow_overwriting_input = True      ,
+                        lastsize = 2*params_shapes[il,0]    ,
+                    )
+                    
+                    ddk = 2*geodim
+                    kmax = 2*params_shapes[il,0]
+                    pos_slice = pos_slice_buf_ptr[il]
+                    buf = &rfft_mv[0,0]
+
+                    for idim in range(geodim):
+                        pos_slice[0] = buf[0]
+                        pos_slice += 1
+                        buf += 1
+
+                    buf = &rfft_mv[kmax-1,0]
+                    for k in range(1,kmax):
+                        for idim in range(geodim):
+
+                            pos_slice[0] = buf[0]
+                            pos_slice += 1
+                            buf += 1
+                        
+                        buf -= ddk
 
             elif fft_backend == USE_SCIPY_FFT:
 
@@ -4819,6 +4882,8 @@ cdef void pos_slice_to_params(
     int[::1] ParamBasisShortcut             ,
     int fft_backend                         , pyfftw.fftw_exe** fftw_genirfft_exe   , pyfftw.fftw_exe** fftw_symrfft_exe    ,
 ) noexcept nogil:
+
+    cdef Py_ssize_t k, kmax, dk, ddk
 
     cdef double complex* ifft
     cdef double complex* params_basis
@@ -4902,6 +4967,41 @@ cdef void pos_slice_to_params(
                         n = (params_shifts[il+1] - params_shifts[il])
                         scipy.linalg.cython_blas.dcopy(&n,&params_mv[0,0,0],&int_one,dest,&int_one)
 
+            elif fft_backend == USE_DUCC_FFT:
+
+                with gil:
+
+                    if params_shapes[il,1] > 0:
+
+                        params_mv = ducc0.fft.c2r(
+                            np.asarray(<double complex[:ifft_shapes[il,0],:ifft_shapes[il,1],:ifft_shapes[il,2]:1]> (ifft_buf_ptr[il])),
+                            axes=[0]                            ,
+                            allow_overwriting_input = True      ,
+                            lastsize = 2*ifft_shapes[il,0]-2    ,
+                        )
+
+                        dk = ifft_shapes[il,1]*ifft_shapes[il,2]
+                        ddk = 2*ifft_shapes[il,1]*ifft_shapes[il,2]
+                        kmax = 2*(ifft_shapes[il,0]-1)
+                        dest = params_buf[il]
+                        src = &params_mv[0,0,0]
+                        fac = 1. / (2*params_shapes[il,0])
+
+                        for idim in range(dk):
+                            dest[0] = fac * src[0]
+                            dest += 1
+                            src += 1
+
+                        src = &params_mv[kmax-1,0,0]
+                        for k in range(1,kmax):
+                            for idim in range(dk):
+
+                                dest[0] = fac * src[0]
+                                dest += 1
+                                src += 1
+                            
+                            src -= ddk
+
             elif fft_backend == USE_SCIPY_FFT:
 
                 with gil:
@@ -4950,6 +5050,31 @@ cdef void pos_slice_to_params(
                     pos_slice_mv = <double[:n,:geodim:1]> (pos_slice_buf_ptr[il])
 
                     params_c_mv = mkl_fft._numpy_fft.rfft(pos_slice_mv, axis=0)
+
+                    dest = params_buf[il]
+                    src = <double*> &params_c_mv[0,0]
+                    n = (params_shifts[il+1] - params_shifts[il])
+                    scipy.linalg.cython_blas.dcopy(&n,src,&int_one,dest,&int_one)
+
+                    if direction > 0:
+                        fac = 1. / (2*params_shapes[il,0])
+                        scipy.linalg.cython_blas.dscal(&n,&fac,dest,&int_one)
+                    else:
+                        fac = 2.
+                        n -= 2*geodim
+                        dest += 2*geodim
+                        scipy.linalg.cython_blas.dscal(&n,&fac,dest,&int_one)
+
+            elif fft_backend == USE_DUCC_FFT:
+
+                with gil:
+
+                    n = 2*(ifft_shapes[il,0] - 1)
+
+                    params_c_mv = ducc0.fft.r2c(
+                        np.asarray(<double[:n,:geodim:1]> (pos_slice_buf_ptr[il])),
+                        axes=[0],
+                    )
 
                     dest = params_buf[il]
                     src = <double*> &params_c_mv[0,0]

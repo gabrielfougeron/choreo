@@ -36,7 +36,7 @@ Sym_list = choreo.find.ChoreoLoadSymList(params_dict)
 
 # print(Sym_list)
 
-Graph = choreo.BuildCayleyGraph(nbody, geodim, GeneratorList = Sym_list)
+Graph = choreo.ActionSym.BuildCayleyGraph(nbody, geodim, GeneratorList = Sym_list)
 
 print(Graph)
 

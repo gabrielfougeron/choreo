@@ -302,6 +302,15 @@ def load_from_config_file(config_name, override_args = {}):
         inter_law_str = inter_law_str, inter_law_param_dict = inter_law_param_dict
     )
     
+    # NBS.fft_backend = 'scipy'
+    # NBS.fft_backend = 'mkl'
+    # NBS.fft_backend = 'ducc'
+
+    # NBS.fft_backend = 'fftw'    
+    # NBS.fftw_planner_effort = 'FFTW_ESTIMATE'
+    # NBS.fftw_wisdom_only = False
+    # NBS.fftw_nthreads = 1
+    
     return NBS
 
 @pytest.fixture
