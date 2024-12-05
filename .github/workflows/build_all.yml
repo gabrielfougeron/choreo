@@ -93,8 +93,8 @@ jobs:
       run: |
         conda create -n build -y
         conda activate build
-        conda install python=${{ matrix.python-version }}  
-        conda install --file environment/github-actions/environment-build-${{ matrix.os }}.txt
+        conda install python=${{ matrix.python-version }} -c conda-forge
+        conda install --file environment/github-actions/environment-build-${{ matrix.os }}.txt -c conda-forge
         pip install build
 
     - name: Build
@@ -169,8 +169,8 @@ jobs:
       run: |
         conda create -n build -y
         conda activate build
-        conda install python=${{ matrix.python-version }}  
-        conda install --file environment/github-actions/environment-test-${{ matrix.os }}.txt
+        conda install python=${{ matrix.python-version }} -c conda-forge
+        conda install --file environment/github-actions/environment-test-${{ matrix.os }}.txt -c conda-forge
         pip install build
 
     - name: Install
