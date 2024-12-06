@@ -178,9 +178,9 @@ jobs:
       run: |
         conda activate build
         cd choreo-GUI
-        pip install .
+        pip install -e .
         cd ..
-        pip install .[test-cli]
+        pip install -e .[test-cli]
 
     - name: Test
       continue-on-error: true
