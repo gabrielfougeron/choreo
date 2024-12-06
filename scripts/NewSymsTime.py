@@ -126,14 +126,14 @@ MonotonicAxes = ["nint_fac"]
 
 all_args = {
     "test_name" : all_tests,
-    "fft_backend" : ['scipy', 'mkl', 'fftw'],
+    "fft_backend" : ['scipy', 'mkl', 'fftw', 'ducc'],
     # "fft_backend" : ['scipy', 'mkl'],
     # "fft_backend" : ['scipy'],
     # "fft_backend" : ['mkl'],
     # "fft_backend" : ['fftw'],
     "nint_fac" : [2**i for i in range(min_exp,max_exp)] ,
-    # "ForceGeneralSym" : [True, False],
-    "ForceGeneralSym" : [False],
+    "ForceGeneralSym" : [True, False],
+    # "ForceGeneralSym" : [False],
 }
 
 timings_folder = os.path.join(__PROJECT_ROOT__,'examples','generated_files_time_consuming')
@@ -166,8 +166,8 @@ plot_intent = {
     "fft_backend" : 'curve_linestyle'                  ,
     # "fft_backend" : 'subplot_grid_y'                  ,
     "nint_fac" : 'points'                           ,
-    "ForceGeneralSym" : 'subplot_grid_y'                           ,
-    # "ForceGeneralSym" : 'curve_color'                           ,
+    # "ForceGeneralSym" : 'subplot_grid_y'                           ,
+    "ForceGeneralSym" : 'curve_color'                           ,
     # pyquickbench.repeat_ax_name :  'reduction_min'  ,
     pyquickbench.repeat_ax_name :  'reduction_avg'  ,
     # pyquickbench.out_ax_name :  'curve_color'  ,
@@ -183,19 +183,20 @@ single_values_val = {
 
 relative_to_val_list = [
     # None    ,
-    # {
-    #     "fft_backend" : 'scipy',
-    #     "ForceGeneralSym" : True,
-    # },+
+    {
+        "fft_backend" : 'scipy',
+        "ForceGeneralSym" : True,
+    },
     # {"fft_backend" : 'scipy'},
-    {"fft_backend" : 'mkl'},
+    # {"fft_backend" : 'mkl'},
     # {"test_name" : '3C'},
 ]
 
 # plot_ylim = [1e-6, 1e-1]
 # plot_ylim = [3e-7, 8e-3]
 # plot_ylim = [0., 0.5]
-plot_ylim = None
+plot_ylim = [0.1, 1.1]
+# plot_ylim = None
 
 for relative_to_val in relative_to_val_list:
 
