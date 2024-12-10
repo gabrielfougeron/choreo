@@ -152,7 +152,7 @@ all_timings = pyquickbench.run_benchmark(
     time_per_test=0.2       ,
     ShowProgress=True       ,
     # timeout = 1.,
-    ForceBenchmark = True,
+    # ForceBenchmark = True,
     # PreventBenchmark = False,
     # ForceBenchmark = False,
     # PreventBenchmark = True,
@@ -171,32 +171,32 @@ plot_intent = {
     # pyquickbench.repeat_ax_name :  'reduction_min'  ,
     pyquickbench.repeat_ax_name :  'reduction_avg'  ,
     # pyquickbench.out_ax_name :  'curve_color'  ,
-    pyquickbench.out_ax_name :  'reduction_sum'  ,
-    # pyquickbench.out_ax_name :  'single_value'  ,
+    # pyquickbench.out_ax_name :  'reduction_sum'  ,
+    pyquickbench.out_ax_name :  'single_value'  ,
 }
 
 single_values_val = {
     # pyquickbench.out_ax_name :  'segm_pos_to_pot_nrg_grad'  ,
-    pyquickbench.out_ax_name :  'pos_slice_to_params'  ,
-    # pyquickbench.out_ax_name :  'params_to_pos_slice'  ,
+    # pyquickbench.out_ax_name :  'pos_slice_to_par ams'  ,
+    pyquickbench.out_ax_name :  'params_to_pos_slice'  ,
 }
 
 relative_to_val_list = [
-    None    ,
+    # None    ,
     # {
     #     "fft_backend" : 'scipy',
     #     "ForceGeneralSym" : True,
     # },
-    # {"fft_backend" : 'scipy'},
+    {"fft_backend" : 'scipy'},
     # {"fft_backend" : 'mkl'},
     # {"test_name" : '3C'},
 ]
 
-plot_ylim = [7e-6, 1.5e-1]
+# plot_ylim = [7e-6, 1.5e-1]
 # plot_ylim = [3e-7, 8e-3]
 # plot_ylim = [0., 0.5]
 # plot_ylim = [0.1, 1.1]
-# plot_ylim = None
+plot_ylim = None
 
 for relative_to_val in relative_to_val_list:
 
