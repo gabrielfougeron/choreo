@@ -33,7 +33,6 @@ cdef void TwoSum_incr(double *y, double *d, double *e, int n) noexcept nogil:
         y[j] = a + e[j]
         e[j] = e[j] + (a - y[j])
 
-
 cdef void FastVecSum(double* p, double* q, Py_ssize_t n) noexcept nogil:
 
     cdef Py_ssize_t i
@@ -144,11 +143,8 @@ cpdef double FastSumK(
                 res += p[i]
 
             if (k % 2) == 0:
-
                 free(q)
-
             else:
-
                 free(p)
 
     else:
