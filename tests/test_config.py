@@ -7,40 +7,13 @@ import json
 import choreo
 
 __PROJECT_ROOT__ = os.path.abspath(os.path.join(os.path.dirname(__file__),os.pardir))
+Wisdom_file = os.path.join(__PROJECT_ROOT__, "PYFFTW_wisdom.json")
+choreo.find.Load_wisdom_file(Wisdom_file)
 
 @attrs.define
 class float_tol:
     atol: float
     rtol: float
-
-@attrs.define
-class likelihood():
-    probable:       float
-    not_unlikely:   float
-    uncommon:       float
-    unlikely:       float
-    unbelievable:   float
-    impossible:     float
-
-@attrs.define
-class dimension:
-    all_geodims:    list[int]
-
-@attrs.define
-class nbody:
-    all_nbodies:    list[int]
-    
-@attrs.define
-class order:
-    all_orders:    list[int]
-    
-@attrs.define
-class ImplicitRKMethods:
-    all_methods:    list[str]      
-    
-@attrs.define
-class ImplicitRKMethodPairs:
-    all_method_pairs:    list[tuple[str]]    
 
 @pytest.fixture
 def float64_tols_strict():
@@ -70,98 +43,46 @@ def float32_tols():
         rtol = 1e-3,
     )
 
-@pytest.fixture
-def nonstiff_float64_likelihood():
-    return likelihood(
-        probable        = 1e-1 ,
-        not_unlikely    = 1e-3 ,
-        uncommon        = 1e-5 ,
-        unlikely        = 1e-8 ,
-        unbelievable    = 1e-12,
-        impossible      = 1e-16,
-    )
+Physical_dims = [2, 3, 4, 5]
+Few_bodies = [2, 3, 4, 5]
+Dense_linalg_dims = [2, 10, 20] 
+Small_orders = list(range(2,11))
+    
+ClassicalImplicitRKMethods = [
+    "Gauss"         ,
+    "Radau_IA"      ,
+    "Radau_IIA"     ,
+    "Radau_IB"      ,
+    "Radau_IIB"     ,
+    "Lobatto_IIIA"  ,
+    "Lobatto_IIIB"  ,
+    "Lobatto_IIIC"  ,
+    "Lobatto_IIIC*" ,
+    'Lobatto_IIID'  ,            
+    'Lobatto_IIIS'  ,     
+]
 
-@pytest.fixture
-def TwoD_only():
-    return dimension(
-        all_geodims = [2] ,
-    )
+SymplecticImplicitRKMethodPairs = [
+    ("Gauss"        , "Gauss"           ),
+    ("Radau_IB"     , "Radau_IB"        ),
+    ("Radau_IIB"    , "Radau_IIB"       ),
+    ("Lobatto_IIID" , "Lobatto_IIID"    ),
+    ("Lobatto_IIIS" , "Lobatto_IIIS"    ),
+    ("Lobatto_IIIA" , "Lobatto_IIIB"    ),
+    ("Lobatto_IIIC" , "Lobatto_IIIC*"   ),
+]   
 
-@pytest.fixture
-def Physical_dims():
-    return dimension(
-        all_geodims = [2, 3, 4, 5] ,
-    )
+SymmetricImplicitRKMethodPairs = [
+    ("Gauss"        , "Gauss"           ),
+    ("Lobatto_IIIA" , "Lobatto_IIIA"    ),
+    ("Radau_IB"     , "Radau_IIB"       ),
+    ("Lobatto_IIIS" , "Lobatto_IIIS"    ),
+    ("Lobatto_IIID" , "Lobatto_IIID"    ),
+]  
 
-@pytest.fixture
-def Few_bodies():
-    return nbody(
-        all_nbodies = [2, 3, 4, 5] ,
-    )
-
-@pytest.fixture
-def Dense_linalg_dims():
-    return dimension(
-        all_geodims = [2, 10, 20] ,
-    )
-    
-@pytest.fixture
-def Small_orders():
-    return order(
-        all_orders = list(range(2,11)) ,
-    )
-    
-@pytest.fixture
-def ClassicalImplicitRKMethods():
-    return ImplicitRKMethods(
-        all_methods = [
-            "Gauss"         ,
-            "Radau_IA"      ,
-            "Radau_IIA"     ,
-            "Radau_IB"      ,
-            "Radau_IIB"     ,
-            "Lobatto_IIIA"  ,
-            "Lobatto_IIIB"  ,
-            "Lobatto_IIIC"  ,
-            "Lobatto_IIIC*" ,
-            'Lobatto_IIID'  ,            
-            'Lobatto_IIIS'  ,     
-        ]
-    )    
-    
-@pytest.fixture
-def SymplecticImplicitRKMethodPairs():
-    return ImplicitRKMethodPairs(
-        all_method_pairs = [
-            ("Gauss"        , "Gauss"           ),
-            ("Radau_IB"     , "Radau_IB"        ),
-            ("Radau_IIB"    , "Radau_IIB"       ),
-            ("Lobatto_IIID" , "Lobatto_IIID"    ),
-            ("Lobatto_IIIS" , "Lobatto_IIIS"    ),
-            ("Lobatto_IIIA" , "Lobatto_IIIB"    ),
-            ("Lobatto_IIIC" , "Lobatto_IIIC*"   ),
-        ]   
-    )    
-    
-@pytest.fixture
-def SymmetricImplicitRKMethodPairs():
-    return ImplicitRKMethodPairs(
-        all_method_pairs = [
-            ("Gauss"        , "Gauss"           ),
-            ("Lobatto_IIIA" , "Lobatto_IIIA"    ),
-            ("Radau_IB"     , "Radau_IIB"       ),
-            ("Lobatto_IIIS" , "Lobatto_IIIS"    ),
-            ("Lobatto_IIID" , "Lobatto_IIID"    ),
-        ]   
-    )
-    
-@pytest.fixture
-def SymmetricSymplecticImplicitRKMethodPairs():
-    return ImplicitRKMethodPairs(
-        all_method_pairs = [
-            ("Radau_IA"     , "Radau_IIA"       ),
-        ]   
-    )
+SymmetricSymplecticImplicitRKMethodPairs = [
+    ("Radau_IA"     , "Radau_IIA"       ),
+]   
 
 def ProbabilisticTest(RepeatOnFail = 10):
 
@@ -184,7 +105,7 @@ def ProbabilisticTest(RepeatOnFail = 10):
                 print(head_foot)
                 print('')
 
-                for i in range(RepeatOnFail):
+                for _ in range(RepeatOnFail):
                     res = test(*args, **kwargs)
 
                 return res
@@ -209,16 +130,7 @@ def RepeatTest(n = 10):
     
     return decorator
 
-@pytest.fixture
-def LoadPYFFTWWisdom():
-
-    Wisdom_file = os.path.join(__PROJECT_ROOT__, "PYFFTW_wisdom.json")
-    choreo.find.Load_wisdom_file(Wisdom_file)
-    
-@pytest.fixture
-def AllConfigNames(LoadPYFFTWWisdom):
-    
-    return [
+AllConfigNames_list = [
         '3q'        , '3q3q'    , '3q3qD'   , '2q2q'    , '4q4q'    , '4q4qD'   ,
         '4q4qD3k'   , '1q2q'    , '5q5q'    , '6q6q'    , '2C3C'    , '2D3D'    ,
         '2C3C5k'    , '2D3D5k'  , '2D1'     , '4C5k'    , '4D3k'    , '4C'      ,
@@ -231,28 +143,25 @@ def AllConfigNames(LoadPYFFTWWisdom):
         '2D1_non_gravity'       , '2D1_3dim_non_gravity', '1Dx3'    , '1D1D'    ,
         '2D3D4D'    , '3D7D'    , '1D1D1D'  , '2D3D4D'  , '3C4q4k'  , '3D4q4k'  ,
         '3DD'       , '5Dq_'    , '7D'      , '3D7D'    , '2D3D4D'  , '3Dp2'    ,
-    ]    
+    ]   
 
-@pytest.fixture
-def AllConfigSymPairNames(LoadPYFFTWWisdom):
-    """
-    The first item of each pair has strictly more symmetries than the second.
-    """
-    
-    return [
-        ('3D'       , '3C'      ),
-        ('3C2k'     , '3C'      ),
-        ('3C4k'     , '3C'      ),
-        ('3C5k'     , '3C'      ),
-        ('3C101k'   , '3C'      ),
-        ('3C7k2'    , '3C'      ),
-        ('3C7k2'    , '3C'      ),
-        ('4D'       , '4C'      ),
-        ('4C5k'     , '4C'      ),
-        ('6D'       , '6C'      ),
-        ('6Ck5'     , '6C'      ),
-        ('3D7k2'    , '3D'      ),
-    ]
+"""
+The first item of each pair has strictly more symmetries than the second.
+"""
+AllConfigSymPairNames_list = [
+    ('3D'       , '3C'      ),
+    ('3C2k'     , '3C'      ),
+    ('3C4k'     , '3C'      ),
+    ('3C5k'     , '3C'      ),
+    ('3C101k'   , '3C'      ),
+    ('3C7k2'    , '3C'      ),
+    ('3C7k2'    , '3C'      ),
+    ('4D'       , '4C'      ),
+    ('4C5k'     , '4C'      ),
+    ('6D'       , '6C'      ),
+    ('6Ck5'     , '6C'      ),
+    ('3D7k2'    , '3D'      ),
+]
 
 def params_from_config_file(config_name):
     
@@ -313,25 +222,7 @@ def load_from_config_file(config_name, override_args = {}):
     
     return NBS
 
-@pytest.fixture
-def AllNBS(AllConfigNames):
-    return {config_name:load_from_config_file(config_name) for config_name in AllConfigNames}
-
-@pytest.fixture
-def AllNBSPairs(AllConfigSymPairNames):
-    return {config_name:(load_from_config_file(config_name[0]),load_from_config_file(config_name[1])) for config_name in AllConfigSymPairNames}
-
-@pytest.fixture
-def AllNBS_nozerodiv(AllConfigNames):
-    override_args = {"inter_pow" : 1.}
-    return {config_name:load_from_config_file(config_name, override_args) for config_name in AllConfigNames}
-
-@pytest.fixture
-def AllNBSPairs_nozerodiv(AllConfigSymPairNames):
-    override_args = {"inter_pow" : 1.}
-    return {config_name:(load_from_config_file(config_name[0], override_args),load_from_config_file(config_name[1], override_args)) for config_name in AllConfigSymPairNames}
-
-@pytest.fixture
-def AllSymList(AllConfigNames):
-    return {config_name:SymList_from_config_file(config_name) for config_name in AllConfigNames}
-
+NBS_dict =  {config_name:load_from_config_file(config_name) for config_name in AllConfigNames_list}
+NBS_nozerodiv_dict = {config_name:load_from_config_file(config_name, {"inter_pow" : 1.}) for config_name in AllConfigNames_list}
+NBS_pairs_dict = {f'{config_name[0]}-{config_name[1]}':(load_from_config_file(config_name[0]),load_from_config_file(config_name[1])) for config_name in AllConfigSymPairNames_list}
+SymList_dict = {config_name:SymList_from_config_file(config_name) for config_name in AllConfigNames_list}
