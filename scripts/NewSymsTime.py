@@ -152,10 +152,10 @@ all_timings = pyquickbench.run_benchmark(
     time_per_test=0.2       ,
     ShowProgress=True       ,
     # timeout = 1.,
-    # ForceBenchmark = True,
+    ForceBenchmark = True,
     # PreventBenchmark = False,
     # ForceBenchmark = False,
-    PreventBenchmark = True,
+    # PreventBenchmark = True,
 )
 
 plot_intent = {
@@ -182,20 +182,20 @@ single_values_val = {
 }
 
 relative_to_val_list = [
-    # None    ,
-    {
-        "fft_backend" : 'scipy',
-        "ForceGeneralSym" : True,
-    },
+    None    ,
+    # {
+    #     "fft_backend" : 'scipy',
+    #     "ForceGeneralSym" : True,
+    # },
     # {"fft_backend" : 'scipy'},
     # {"fft_backend" : 'mkl'},
     # {"test_name" : '3C'},
 ]
 
-# plot_ylim = [1e-6, 1e-1]
+plot_ylim = [7e-6, 1.5e-1]
 # plot_ylim = [3e-7, 8e-3]
 # plot_ylim = [0., 0.5]
-plot_ylim = [0.1, 1.1]
+# plot_ylim = [0.1, 1.1]
 # plot_ylim = None
 
 for relative_to_val in relative_to_val_list:

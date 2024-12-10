@@ -4762,14 +4762,11 @@ cdef void params_to_pos_slice(
 
                     if params_shapes[il,1] > 0:
 
-                        ifft_mv = ducc0.fft.r2c(
+                        ducc0.fft.r2c(
                             np.asarray(<double[:2*params_shapes[il,0],:params_shapes[il,1],:params_shapes[il,2]:1]> (params_buf[il])), 
                             axes=[0]    ,
+                            out = np.asarray(<double complex[:ifft_shapes[il,0],:ifft_shapes[il,1],:ifft_shapes[il,2]:1]> (ifft_buf_ptr[il])), 
                         )
-
-                        dest = ifft_buf_ptr[il]
-                        n = ifft_shifts[il+1] - ifft_shifts[il]
-                        scipy.linalg.cython_blas.zcopy(&n,&ifft_mv[0,0,0],&int_one,dest,&int_one)
 
             elif fft_backend == USE_SCIPY_FFT:
 
@@ -4784,6 +4781,7 @@ cdef void params_to_pos_slice(
                         dest = ifft_buf_ptr[il]
                         n = ifft_shifts[il+1] - ifft_shifts[il]
                         scipy.linalg.cython_blas.zcopy(&n,&ifft_mv[0,0,0],&int_one,dest,&int_one)
+                        
 
             if params_basis_shapes[il,1] > 0:
 
@@ -4836,27 +4834,9 @@ cdef void params_to_pos_slice(
                         axes=[0]                            ,
                         allow_overwriting_input = True      ,
                         lastsize = 2*params_shapes[il,0]    ,
+                        forward = False                     ,
+                        out = np.asarray(<double[:2*params_shapes[il,0],:geodim]> (pos_slice_buf_ptr[il])),
                     )
-                    
-                    ddk = 2*geodim
-                    kmax = 2*params_shapes[il,0]
-                    pos_slice = pos_slice_buf_ptr[il]
-                    buf = &rfft_mv[0,0]
-
-                    for idim in range(geodim):
-                        pos_slice[0] = buf[0]
-                        pos_slice += 1
-                        buf += 1
-
-                    buf = &rfft_mv[kmax-1,0]
-                    for k in range(1,kmax):
-                        for idim in range(geodim):
-
-                            pos_slice[0] = buf[0]
-                            pos_slice += 1
-                            buf += 1
-                        
-                        buf -= ddk
 
             elif fft_backend == USE_SCIPY_FFT:
 
@@ -4978,29 +4958,10 @@ cdef void pos_slice_to_params(
                             axes=[0]                            ,
                             allow_overwriting_input = True      ,
                             lastsize = 2*ifft_shapes[il,0]-2    ,
+                            forward = False                     ,
+                            inorm = 2                           ,
+                            out = np.asarray(<double[:2*params_shapes[il,0],:params_shapes[il,1],:params_shapes[il,2]:1]> (params_buf[il])),
                         )
-
-                        dk = ifft_shapes[il,1]*ifft_shapes[il,2]
-                        ddk = 2*ifft_shapes[il,1]*ifft_shapes[il,2]
-                        kmax = 2*(ifft_shapes[il,0]-1)
-                        dest = params_buf[il]
-                        src = &params_mv[0,0,0]
-                        fac = 1. / (2*params_shapes[il,0])
-
-                        for idim in range(dk):
-                            dest[0] = fac * src[0]
-                            dest += 1
-                            src += 1
-
-                        src = &params_mv[kmax-1,0,0]
-                        for k in range(1,kmax):
-                            for idim in range(dk):
-
-                                dest[0] = fac * src[0]
-                                dest += 1
-                                src += 1
-                            
-                            src -= ddk
 
             elif fft_backend == USE_SCIPY_FFT:
 
@@ -5069,25 +5030,31 @@ cdef void pos_slice_to_params(
 
                 with gil:
 
-                    n = 2*(ifft_shapes[il,0] - 1)
-
-                    params_c_mv = ducc0.fft.r2c(
-                        np.asarray(<double[:n,:geodim:1]> (pos_slice_buf_ptr[il])),
-                        axes=[0],
-                    )
-
-                    dest = params_buf[il]
-                    src = <double*> &params_c_mv[0,0]
-                    n = (params_shifts[il+1] - params_shifts[il])
-                    scipy.linalg.cython_blas.dcopy(&n,src,&int_one,dest,&int_one)
-
                     if direction > 0:
-                        fac = 1. / (2*params_shapes[il,0])
-                        scipy.linalg.cython_blas.dscal(&n,&fac,dest,&int_one)
+
+                        n = 2*(ifft_shapes[il,0] - 1)
+
+                        params_c_mv = ducc0.fft.r2c(
+                            np.asarray(<double[:n,:geodim:1]> (pos_slice_buf_ptr[il])),
+                            axes=[0],
+                            inorm = 2,
+                            out = np.asarray(<double complex[:ifft_shapes[il,0],:geodim:1]> (<double complex*>params_buf[il])),
+                        )
+
                     else:
+
+                        n = 2*(ifft_shapes[il,0] - 1)
+
+                        params_c_mv = ducc0.fft.r2c(
+                            np.asarray(<double[:n,:geodim:1]> (pos_slice_buf_ptr[il])),
+                            axes=[0],
+                            out = np.asarray(<double complex[:ifft_shapes[il,0],:geodim:1]> (<double complex*>params_buf[il])),
+                        )
+
+                        dest = params_buf[il] + 2*geodim
+                        src = <double*> &params_c_mv[0,0]
+                        n = (params_shifts[il+1] - params_shifts[il]) - 2*geodim
                         fac = 2.
-                        n -= 2*geodim
-                        dest += 2*geodim
                         scipy.linalg.cython_blas.dscal(&n,&fac,dest,&int_one)
 
             elif fft_backend == USE_SCIPY_FFT:
@@ -5629,7 +5596,7 @@ cdef void segmpos_to_params_T(
         &params_mom_buf[0]  , 
     )   
 
-cdef int get_inter_flags(
+cdef inline int get_inter_flags(
     Py_ssize_t segm_size            , Py_ssize_t segm_store ,
     Py_ssize_t geodim               ,
     inter_law_fun_type inter_law

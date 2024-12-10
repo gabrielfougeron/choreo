@@ -88,13 +88,7 @@ if platform.system() == "Windows":
     }[opt_lvl]
 
 elif platform.system() == "Darwin": # MacOS
-    # 
-    # os.environ['CC'] = "clang"
-    # os.environ['LDSHARED'] = 'clang -shared'
-    
-    # os.environ['CC'] = "gcc"
-    # os.environ['LDSHARED'] = 'gcc -shared'
-    
+
     ignore_warnings_args = [
         "-Wno-unused-variable",
         "-Wno-unused-function",
@@ -168,20 +162,6 @@ elif platform.system() == "Linux":
         }[opt_lvl]
 
     else:
-
-        # all_compilers = ['icx','clang','gcc']
-        # all_compilers = ['clang']
-        all_compilers = ['gcc']
-        # all_compilers = ['icx'] 
-
-        for compiler in all_compilers:
-
-            if not(shutil.which(compiler) is None):
-
-                os.environ['CC'] = compiler
-                os.environ['LDSHARED'] = compiler+' -shared'
-                
-                break
 
         extra_compile_args_std = {
             "profile" : ["-Og", "-fopenmp", "-lm", *ignore_warnings_args],
