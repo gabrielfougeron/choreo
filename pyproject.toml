@@ -56,7 +56,6 @@ license-files = ["LICENSES/*.txt"]
 
 [project.scripts]
 choreo_CLI_search = "choreo.run:entrypoint_CLI_search"
-# choreo_GUI = "choreo.run:entrypoint_GUI"
 
 [project.urls]
 Homepage = "https://gabrielfougeron.github.io/choreo/"
@@ -66,7 +65,8 @@ Changelog = "https://github.com/gabrielfougeron/choreo/releases/"
 
 [tool.pytest.ini_options]
 minversion = "6.0"
-addopts = "-ra --junit-xml=docs/pytest_out/junit.xml -n auto"
+# addopts = "-ra --junit-xml=docs/pytest_out/junit.xml -n auto"
+addopts = "-ra --junit-xml=docs/pytest_out/junit.xml"
 testpaths = [
     "tests",
 ]
