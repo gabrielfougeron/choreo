@@ -25,7 +25,7 @@ def SymplecticIVP(
     **kwargs    ,
 ): 
 
-    if isinstance(rk,ExplicitSymplecticRKTable):
+    if isinstance(rk, ExplicitSymplecticRKTable):
         return ExplicitSymplecticIVP(
             fun         ,
             gun         ,
@@ -36,16 +36,16 @@ def SymplecticIVP(
             **kwargs    ,
         )
     
-    elif isinstance(rk,ImplicitRKTable):
+    elif isinstance(rk, ImplicitRKTable):
         return ImplicitSymplecticIVP(
-            fun         ,
-            gun         ,
-            t_span      ,
-            x0          ,
-            v0          ,
-            rk_x = rk   ,
-            rk_v = rk.symplectic_adjoint()   ,
-            **kwargs    ,
+            fun                             ,
+            gun                             ,
+            t_span                          ,
+            x0                              ,
+            v0                              ,
+            rk_x = rk                       ,
+            rk_v = rk.symplectic_adjoint()  ,
+            **kwargs                        ,
         )
 
     else:

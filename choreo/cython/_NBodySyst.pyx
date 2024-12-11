@@ -502,6 +502,7 @@ cdef class NBodySyst():
 
         cdef Py_ssize_t i, il, ibin, ib
         cdef double eps = 1e-12
+        cdef ActionSym Sym, Shift
 
         if (bodymass.shape[0] != nbody):
             raise ValueError(f'Incompatible number of bodies {nbody} vs number of masses {bodymass.shape[0]}.')
@@ -532,7 +533,7 @@ cdef class NBodySyst():
         self.gensegm_to_all = AccumulateSegmSourceToTargetSym(self.SegmGraph, nbody, geodim, self.nint_min, self.nsegm, self._gensegm_to_iint, self._gensegm_to_body)
         self.GatherInterSym()
 
-        # SegmConstraints = AccumulateSegmentConstraints(self.SegmGraph, nbody, geodim, self.nsegm, self._bodysegm)
+        # self.SegmConstraints = AccumulateSegmentConstraints(self.SegmGraph, nbody, geodim, self.nsegm, self._bodysegm)
 
         # Setting up forward ODE:
         # - What are my parameters ?
@@ -900,7 +901,6 @@ cdef class NBodySyst():
         if force_in:
             self._ParamBasisShortcutPos = np.full((self.nloop), GENERAL_SYM, dtype=np.intc)
             self._ParamBasisShortcutVel = np.full((self.nloop), GENERAL_SYM, dtype=np.intc)
-
         else:
             self._ParamBasisShortcutPos = self._ParamBasisShortcutPos_th.copy()
             self._ParamBasisShortcutVel = self._ParamBasisShortcutVel_th.copy()
@@ -982,14 +982,7 @@ cdef class NBodySyst():
         # Making sure nint_min is big enough
         self.SegmGraph, self.nint_min = Build_SegmGraph_NoPb(self.nbody, self.nint_min, self.Sym_list)
 
-        # self._bodysegm = np.zeros((self.nbody, self.nint_min), dtype = np.intp)
-        # for isegm, CC in enumerate(networkx.connected_components(self.SegmGraph)):
-        #     for ib, iint in CC:
-        #         self._bodysegm[ib, iint] = isegm
-        # self.nsegm = isegm + 1
-
         # Making sure ib -> self._bodysegm[ib, 0] is increasing
-        
         isegm = 0
         self._bodysegm = -np.ones((self.nbody, self.nint_min), dtype = np.intp)
         for iint in range(self.nint_min):
@@ -3788,6 +3781,81 @@ cdef class NBodySyst():
         mul = 1. / (self.segm_size * totmass)
 
         return mul * np.sum(pos_avg, axis=0)
+
+    @cython.final
+    def Compute_init_pos_mom(self, double[::1] params_mom_buf):
+
+        cdef Py_ssize_t isegm, idim, i
+        cdef double mass
+
+        segmpos = self.params_to_segmpos(params_mom_buf)
+        cdef np.ndarray[double, ndim=1, mode='c'] xo = segmpos[:,0,:].copy().reshape(-1)
+
+        segmvel = self.params_to_segmvel(params_mom_buf)
+        cdef np.ndarray[double, ndim=1, mode='c'] po = segmvel[:,0,:].copy().reshape(-1)
+
+        for isegm in range(self.nsegm):
+            mass = self._loopmass[self._bodyloop[self._intersegm_to_body[isegm]]]
+            for idim in range(self.geodim):
+                i = isegm*self.geodim + idim
+                po[i] *= mass
+
+        return xo, po
+
+    @cython.final
+    @cython.cdivision(True)
+    def Compute_velocities(self, t, double[::1] mom_flat):
+
+        assert mom_flat.shape[0] == self.nsegm * self.geodim
+
+        cdef Py_ssize_t isegm, idim, i
+        cdef double mass
+
+        cdef np.ndarray[double, ndim=1, mode='c'] res = np.empty((self.nsegm * self.geodim), dtype=np.float64)
+
+        for isegm in range(self.nsegm):
+            mass = self._loopmass[self._bodyloop[self._intersegm_to_body[isegm]]]
+            for idim in range(self.geodim):
+                i = isegm * self.geodim + idim
+                res[i] = mom_flat[i] / mass
+
+        return res
+
+    @cython.final
+    def Compute_forces(self, t, double[::1] pos_flat):
+
+        assert pos_flat.shape[0] == self.nsegm * self.geodim
+
+        cdef double[:,::1] pos = <double[:self.nsegm ,:self.geodim:1]> &pos_flat[0]
+        cdef np.ndarray[double, ndim=1, mode='c'] res = np.zeros((self.nsegm * self.geodim), dtype=np.float64)
+
+        Compute_forces(
+            pos                                                 ,
+            res.reshape((self.nsegm,self.geodim))               ,
+            self._BinSourceSegm     , self._BinTargetSegm       ,
+            self._BinSpaceRot       , self._BinSpaceRotIsId     ,
+            self._BinProdChargeSum  ,
+            self._inter_law         , self._inter_law_param_ptr ,
+        )
+
+        return res
+
+    @cython.final
+    @cython.cdivision(True)
+    def Get_ODE_def(self, double[::1] params_mom_buf):
+
+        xo, po = self.Compute_init_pos_mom(params_mom_buf)
+        t_span = (0., 1./self.nint_min)
+
+        return {
+            "fun" : self.Compute_velocities ,
+            "gun" : self.Compute_forces     ,
+            "t_span" : t_span               ,
+            "x0" : xo                       ,
+            "v0" : po                       ,
+        }
+
+
 
 @cython.cdivision(True)
 cdef void Make_Init_bounds_coeffs(
@@ -6873,3 +6941,76 @@ cdef void segmpos_to_binary_path_stats(
         out_bin_dx_min[ibin] = csqrt(dx2_min)
 
     free(tmp_loc_dpos)
+
+cdef void Compute_forces(
+    double[:,::1] pos               , double[:,::1] pot_nrg_grad    ,
+    Py_ssize_t[::1] BinSourceSegm   , Py_ssize_t[::1] BinTargetSegm ,
+    double[:,:,::1] BinSpaceRot     , bint[::1] BinSpaceRotIsId     ,
+    double[::1] BinProdChargeSum    ,
+    inter_law_fun_type inter_law    , double* inter_law_param_ptr   ,
+) noexcept nogil:
+
+    cdef Py_ssize_t nbin = BinSourceSegm.shape[0]
+    cdef Py_ssize_t geodim = BinSpaceRot.shape[1]
+    cdef Py_ssize_t ibin, idim, jdim
+    cdef Py_ssize_t isegm, isegmp
+
+    # cdef int inter_flags = get_inter_flags(
+    #     segm_size   , segm_store    ,
+    #     geodim_size , inter_law     ,
+    # )
+
+    cdef double dx2
+    cdef double bin_fac
+    cdef double[3] pot
+
+    cdef double* dx = <double*> malloc(sizeof(double)*geodim)
+    cdef double* df = <double*> malloc(sizeof(double)*geodim)
+
+    for ibin in range(nbin):
+
+        isegm = BinSourceSegm[ibin]
+        isegmp = BinTargetSegm[ibin]
+
+        if BinSpaceRotIsId[ibin]:
+                
+            for idim in range(geodim):
+                dx[idim] = pos[isegm,idim] - pos[isegmp,idim]
+
+        else:
+
+            for idim in range(geodim):
+                dx[idim] = -pos[isegmp,idim]
+                for jdim in range(geodim):
+                    dx[idim] += BinSpaceRot[ibin,idim,jdim] * pos[isegm,jdim] 
+
+        dx2 = dx[0]*dx[0]
+        for idim in range(1,geodim):
+            dx2 += dx[idim]*dx[idim]
+
+        inter_law(inter_law_param_ptr, dx2, pot)
+
+        bin_fac = 2*BinProdChargeSum[ibin]
+
+        pot[1] *= bin_fac
+
+        for idim in range(geodim):
+            df[idim] = pot[1]*dx[idim]
+
+        if BinSpaceRotIsId[ibin]:
+
+            for idim in range(geodim):
+                pot_nrg_grad[isegm,idim] += df[idim]
+                
+        else:
+
+            for jdim in range(geodim):
+                for idim in range(geodim):
+                    pot_nrg_grad[isegm,idim] += BinSpaceRot[ibin,jdim,idim] *  df[jdim]
+
+        for idim in range(geodim):
+            pot_nrg_grad[isegmp,idim] -= df[idim]
+                
+    free(dx)
+    free(df)
+
