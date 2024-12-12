@@ -1177,6 +1177,7 @@ cpdef ImplicitSymplecticIVP(
 
             if isinstance(py_fun_res, float) and isinstance(py_gun_res, float):
                 py_fun_type = PY_FUN_FLOAT
+                correct_shapes = True
             elif isinstance(py_fun_res, np.ndarray) and isinstance(py_gun_res, np.ndarray):
                 py_fun_type = PY_FUN_NDARRAY
 
@@ -1188,7 +1189,6 @@ cpdef ImplicitSymplecticIVP(
 
         if not(correct_shapes):
             raise ValueError("Python functions fun and gun returned numpy.ndarray with wrong shape")
-
 
     else:
         py_fun = None
@@ -1338,6 +1338,7 @@ cpdef ImplicitSymplecticIVP(
 
             if isinstance(py_grad_fun_res, float) and isinstance(py_grad_gun_res, float):
                 py_grad_fun_type = PY_FUN_FLOAT
+                correct_shapes = True
             elif isinstance(py_grad_fun_res, np.ndarray) and isinstance(py_grad_gun_res, np.ndarray):
                 py_grad_fun_type = PY_FUN_NDARRAY
 

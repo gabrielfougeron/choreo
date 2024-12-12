@@ -16,6 +16,7 @@ def main():
     
     # input_folder = os.path.join(Workspace_folder, "CLI solutions")    
     input_folder = os.path.join(Workspace_folder, "GUI solutions")    
+    # input_folder = os.path.join(Workspace_folder, "6q6q")    
     output_folder = os.path.join(Workspace_folder, "out")    
     
     TT = pyquickbench.TimeTrain(
@@ -73,6 +74,13 @@ def main():
 
             NBS.plot_segmpos_2D(segmpos_ODE, os.path.join(full_out_file_basename+'.png'))
             print(np.linalg.norm(segmpos - segmpos_ODE))
+            
+            xo = np.ascontiguousarray(segmpos_ODE[:,0 ,:].reshape(-1))
+            xf = np.ascontiguousarray(segmpos_ODE[:,-1,:].reshape(-1))
+            
+            dx = NBS.Compute_periodicity_default(xo, xf)
+            
+            print(np.linalg.norm(dx))
             
             TT.toc("plot")
 

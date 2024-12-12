@@ -320,6 +320,26 @@ cdef class NBodySyst():
     def ALG_SpaceRot(self):
         return np.asarray(self._ALG_SpaceRotVel)
 
+    cdef Py_ssize_t[::1] _PerDef_Isegm
+    @property
+    def PerDef_Isegm(self):
+        return np.asarray(self._PerDef_Isegm)
+
+    cdef Py_ssize_t[::1] _PerDef_TimeRev
+    @property
+    def PerDef_TimeRev(self):
+        return np.asarray(self._PerDef_TimeRev)
+
+    cdef double[:,:,::1] _PerDef_SpaceRotPos
+    @property
+    def PerDef_SpaceRotPos(self):
+        return np.asarray(self._PerDef_SpaceRotPos)
+
+    cdef double[:,:,::1] _PerDef_SpaceRotVel
+    @property
+    def PerDef_SpaceRotVel(self):
+        return np.asarray(self._PerDef_SpaceRotVel)
+
     cdef double[:,:,::1] _InitValPosBasis
     @property
     def InitValPosBasis(self):
@@ -552,7 +572,8 @@ cdef class NBodySyst():
         self._BinSourceSegm, self._BinTargetSegm, BinTimeRev, self._BinSpaceRot, self._BinProdChargeSum = ReorganizeBinarySegments(BinarySegm)
 
         # Not actually sure this is always true.
-        assert (BinTimeRev == 1).all()
+        if not (BinTimeRev == 1).all():
+            raise ValueError("Catastrophic failure: BinTimeRev not as expected")
 
         assert self._BinSourceSegm.shape[0] == self.nbin_segm_unique
         self._BinSpaceRotIsId = np.zeros((self.nbin_segm_unique), dtype=np.intc)
@@ -1023,53 +1044,46 @@ cdef class NBodySyst():
 
             n_nnid_min = self.nsegm + 1
 
-            # for ilb in range(self._loopnb[il]):
-            for ilb in range(1):
-                ib = self._Targets[il,ilb]
-                for ishift in range(self.nint_min):
+            ib = self._Targets[il,0]
+            for ishift in range(self.nint_min):
 
-                    for iint in range(self.nint_min):
+                for iint in range(self.nint_min):
+                    jint = (iint + ishift) % self.nint_min
+                    shifted_bodysegm[iint] = self._bodysegm[ib, jint]
+
+                unique, unique_indices = np.unique(shifted_bodysegm, return_index = True)
+                assert (unique == shifted_bodysegm[unique_indices]).all()
+
+                unique_size = unique.size
+
+                BodyHasContiguousGeneratingSegments = ((unique_indices.max()+1) == unique_size)
+
+                # I need contiguous segments
+                if BodyHasContiguousGeneratingSegments:
+                    
+                    n_nnid = 0
+                    for iint in range(unique_size):
                         jint = (iint + ishift) % self.nint_min
-                        shifted_bodysegm[iint] = self._bodysegm[ib, jint]
+                        Sym = self.intersegm_to_all[ib][jint]
+                        if not(Sym.IsIdentityRot()):
+                            n_nnid += 1
 
-                    # unique, unique_indices, unique_inverse, unique_counts = np.unique(shifted_bodysegm, return_index = True, return_inverse = True, return_counts = True)
-                    # assert (unique == shifted_bodysegm[unique_indices]).all()
-                    # assert (unique[unique_inverse] == shifted_bodysegm).all()
+                    # I want to minimize the number of non identity
+                    if n_nnid_min > n_nnid:
 
-                    unique, unique_indices = np.unique(shifted_bodysegm, return_index = True)
-                    # assert (unique == shifted_bodysegm[unique_indices]).all()
-                    # assert (unique[unique_inverse] == shifted_bodysegm).all()
+                        n_nnid_min = n_nnid
 
-                    unique_size = unique.size
+                        self._loopgen[il] = ib
+                        self._ngensegm_loop[il] = unique_size
+                        self._gensegm_loop_start[il] = ishift
 
-                    BodyHasContiguousGeneratingSegments = ((unique_indices.max()+1) == unique_size)
-
-                    # I need contiguous segments
-                    if BodyHasContiguousGeneratingSegments:
-                        
-                        n_nnid = 0
-                        for iint in range(unique_size):
+                        for iint in range(self._ngensegm_loop[il]):
                             jint = (iint + ishift) % self.nint_min
-                            Sym = self.intersegm_to_all[ib][jint]
-                            if not(Sym.IsIdentityRot()):
-                                n_nnid += 1
+                            isegm = self._bodysegm[ib, jint]
 
-                        # I want to minimize the number of non identity
-                        if n_nnid_min > n_nnid:
-
-                            n_nnid_min = n_nnid
-
-                            self._loopgen[il] = ib
-                            self._ngensegm_loop[il] = unique_size
-                            self._gensegm_loop_start[il] = ishift
-
-                            for iint in range(self._ngensegm_loop[il]):
-                                jint = (iint + ishift) % self.nint_min
-                                isegm = self._bodysegm[ib, jint]
-
-                                self._gensegm_to_body[isegm] = ib
-                                self._gensegm_to_iint[isegm] = jint
-                                self._gensegm_to_iintrel[isegm] = iint
+                            self._gensegm_to_body[isegm] = ib
+                            self._gensegm_to_iint[isegm] = jint
+                            self._gensegm_to_iintrel[isegm] = iint
 
     @cython.final
     def ChooseInterSegm(self):
@@ -1097,7 +1111,8 @@ cdef class NBodySyst():
                     assigned_segms.add(isegm)
 
         #Every interaction happens at iint == 0
-        assert (intersegm_to_iint == 0).all()
+        if not (intersegm_to_iint == 0).all():
+            raise ValueError("Catastrophic failure: interacting segments are not all at initial positions")
 
     @cython.final
     def GatherInterSym(self):
@@ -1210,14 +1225,16 @@ cdef class NBodySyst():
             
             self._n_sub_fft[il] = (self.nint_min // (self._ncoeff_min_loop[il] * self._ngensegm_loop[il]))
 
-            assert (self.nint_min // (self._ncoeff_min_loop[il] * self._ngensegm_loop[il])) in [1,2]
+            if (self._n_sub_fft[il]) not in [1,2]:
+                raise ValueError(f"Catastrophic failure : {self._n_sub_fft[il] = } not in [1,2]")
+
+        cdef ActionSym Sym
+        cdef Py_ssize_t isegm
 
         self._ALG_Iint = np.zeros((self.nloop), dtype=np.intp)
         self._ALG_TimeRev = np.zeros((self.nloop), dtype=np.intp)
-        ALG_SpaceRotPos_np = np.zeros((self.nloop, self.geodim, self.geodim), dtype=np.float64)
-        self._ALG_SpaceRotPos = ALG_SpaceRotPos_np
-        ALG_SpaceRotVel_np = np.zeros((self.nloop, self.geodim, self.geodim), dtype=np.float64)
-        self._ALG_SpaceRotVel = ALG_SpaceRotVel_np
+        self._ALG_SpaceRotPos = np.zeros((self.nloop, self.geodim, self.geodim), dtype=np.float64)
+        self._ALG_SpaceRotVel = np.zeros((self.nloop, self.geodim, self.geodim), dtype=np.float64)
 
         cdef Py_ssize_t iint_uneven, ib
         cdef Py_ssize_t idim, jdim
@@ -1231,10 +1248,30 @@ cdef class NBodySyst():
 
             self._ALG_Iint[il] = self._gensegm_to_iint[isegm]
             self._ALG_TimeRev[il] = Sym.TimeRev
-            ALG_SpaceRotPos_np[il,:,:] = Sym.SpaceRot
+            self._ALG_SpaceRotPos[il,:,:] = Sym._SpaceRot[:,:]
 
             Sym = Sym.TimeDerivative()
-            ALG_SpaceRotVel_np[il,:,:] = Sym.SpaceRot
+            self._ALG_SpaceRotVel[il,:,:] = Sym._SpaceRot[:,:]
+
+        self._PerDef_Isegm = np.zeros((self.nsegm), dtype=np.intp)
+        self._PerDef_TimeRev = np.zeros((self.nsegm), dtype=np.intp)
+        self._PerDef_SpaceRotPos = np.zeros((self.nsegm, self.geodim, self.geodim), dtype=np.float64)
+        self._PerDef_SpaceRotVel = np.zeros((self.nsegm, self.geodim, self.geodim), dtype=np.float64)
+
+        for isegm in range(self.nsegm):
+
+            iint_uneven = 1 % self.nint_min
+
+            ib = self._intersegm_to_body[isegm]
+
+            self._PerDef_Isegm[isegm] = self._bodysegm[ib, iint_uneven]
+
+            Sym = self.intersegm_to_all[ib][iint_uneven]
+            self._PerDef_TimeRev[isegm] = Sym.TimeRev
+            self._PerDef_SpaceRotPos[isegm,:,:] = Sym._SpaceRot[:,:]
+
+            Sym = Sym.TimeDerivative()
+            self._PerDef_SpaceRotVel[isegm,:,:] = Sym._SpaceRot[:,:]
 
     @cython.final
     def ConfigureShortcutSym(self, double eps=1e-14):
@@ -3782,6 +3819,54 @@ cdef class NBodySyst():
         return mul * np.sum(pos_avg, axis=0)
 
     @cython.final
+    def Compute_periodicity_default(self, double[::1] xo, double[::1] xf):
+
+        assert xo.shape[0] == self.nsegm * self.geodim
+        assert xf.shape[0] == self.nsegm * self.geodim
+
+        cdef np.ndarray[double, ndim=1, mode='c'] res = np.empty((self.nsegm * self.geodim), dtype=np.float64)
+
+        cdef Py_ssize_t isegm, idim, jdim, i, j
+
+        for isegm in range(self.nsegm):
+
+            if self._PerDef_TimeRev[isegm] > 0:
+
+                i = isegm * self.geodim
+
+                for idim in range(self.geodim):
+
+                    res[i] = xf[i]
+
+                    j = self._PerDef_Isegm[isegm] * self.geodim
+                    
+                    for jdim in range(self.geodim):
+
+                        res[i] -= self._PerDef_SpaceRotPos[isegm,idim,jdim] * xo[j]
+                        j += 1
+
+                    i += 1
+
+            else:
+
+                i = isegm * self.geodim
+
+                for idim in range(self.geodim):
+
+                    res[i] = xf[i]
+
+                    j = self._PerDef_Isegm[isegm] * self.geodim
+                    
+                    for jdim in range(self.geodim):
+
+                        res[i] -= self._PerDef_SpaceRotPos[isegm,idim,jdim] * xf[j]
+                        j += 1
+
+                    i += 1
+
+        return res
+
+    @cython.final
     def Compute_init_pos_mom(self, double[::1] params_mom_buf):
 
         cdef Py_ssize_t isegm, idim, i
@@ -4742,7 +4827,7 @@ cdef void Adjust_after_last_gen(
     Py_ssize_t[::1] n_sub_fft               ,
     Py_ssize_t[::1] ALG_Iint                ,
     Py_ssize_t[::1] ALG_TimeRev             , double[:,:,::1] ALG_SpaceRot      ,
-    Py_ssize_t segm_size,
+    Py_ssize_t segm_size                    ,
 )noexcept nogil:
 
     cdef double* pos_slice
@@ -5495,12 +5580,12 @@ cdef void params_to_segmpos(
     if (segm_size != segm_store):
 
         Adjust_after_last_gen(
-            pos_slice_buf_ptr   , pos_slice_shifts      ,
+            pos_slice_buf_ptr   , pos_slice_shifts  ,
             ifft_shapes         ,
             params_basis_shapes ,
             n_sub_fft           ,
-            ALG_Iint    ,
-            ALG_TimeRev , ALG_SpaceRot  ,
+            ALG_Iint            ,
+            ALG_TimeRev         , ALG_SpaceRot      ,
             segm_size           ,
         )
 
@@ -5692,12 +5777,12 @@ cdef void segmpos_to_params_T(
 
     if (segm_size != segm_store):
         Adjust_after_last_gen_T(
-            pos_slice_buf_ptr   , pos_slice_shifts      ,
+            pos_slice_buf_ptr   , pos_slice_shifts  ,
             ifft_shapes         ,
             params_basis_shapes ,
             n_sub_fft           ,
-            ALG_Iint    ,
-            ALG_TimeRev , ALG_SpaceRot  ,
+            ALG_Iint            ,
+            ALG_TimeRev         , ALG_SpaceRot      ,
             segm_size           ,
         )
 
