@@ -52,7 +52,7 @@ def main():
             ODE_Syst = NBS.Get_ODE_def(params_buf, vector_calls=vector_calls)
             
             nsteps = 10
-            keep_freq = 10
+            keep_freq = 1
             nint_ODE = (NBS.segm_store-1) * keep_freq
             method = "Gauss"
             

@@ -28,6 +28,13 @@ def float64_tols():
         atol = 1e-12,
         rtol = 1e-10,
     )
+    
+@pytest.fixture
+def float64_tols_loose():
+    return float_tol(
+        atol = 1e-9,
+        rtol = 1e-7,
+    )
 
 @pytest.fixture
 def float32_tols_strict():
@@ -226,3 +233,23 @@ NBS_dict =  {config_name:load_from_config_file(config_name) for config_name in A
 NBS_nozerodiv_dict = {config_name:load_from_config_file(config_name, {"inter_pow" : 1.}) for config_name in AllConfigNames_list}
 NBS_pairs_dict = {f'{config_name[0]}-{config_name[1]}':(load_from_config_file(config_name[0]),load_from_config_file(config_name[1])) for config_name in AllConfigSymPairNames_list}
 SymList_dict = {config_name:SymList_from_config_file(config_name) for config_name in AllConfigNames_list}
+
+def load_from_solution_file(file_basename):
+    
+    Workspace_folder = os.path.join(__PROJECT_ROOT__, 'tests', 'NewSym_sols')
+    
+    full_in_file_basename = os.path.join(Workspace_folder, file_basename)
+    
+    NBS, segmpos = choreo.NBodySyst.FromSolutionFile(full_in_file_basename)
+    params_buf = NBS.segmpos_to_params(segmpos)
+    
+    return NBS, params_buf
+
+Sols_dict = {}
+for thefile in os.listdir(os.path.join(__PROJECT_ROOT__, 'tests', 'NewSym_sols')):
+
+    file_basename, ext = os.path.splitext(thefile)
+    
+    if ext == '.json':
+        
+        Sols_dict[file_basename] = load_from_solution_file(file_basename)

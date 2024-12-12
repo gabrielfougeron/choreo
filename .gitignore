@@ -54,4 +54,5 @@ pytest_out/**
 !/docs/source/test-report/test_report_template.txt
 !/requirements/requirements*.txt
 !tests/NewSym_data/**/choreo_config.json
+!tests/NewSym_sols/**
 !environment/**

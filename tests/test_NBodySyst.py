@@ -675,5 +675,48 @@ def inter_law(ptr, xsq, res):
     print(np.linalg.norm(action_grad_grav-action_grad))
     assert np.allclose(action_grad_grav, action_grad, rtol = float64_tols.rtol, atol = float64_tols.atol)  
         
+@pytest.mark.parametrize("NBS,params_buf", [pytest.param(NBS, params_buf, id=name) for name, (NBS, params_buf) in Sols_dict.items()])
+def test_periodicity_default(float64_tols, NBS, params_buf):
         
+    NBS.ForceGreaterNStore = True
+    segmpos = NBS.params_to_segmpos(params_buf)
+
+    xo = np.ascontiguousarray(segmpos[:,0 ,:].reshape(-1))
+    xf = np.ascontiguousarray(segmpos[:,-1,:].reshape(-1))
+    
+    dx = NBS.Compute_periodicity_default(xo, xf)
+    ndof = dx.shape[0]
+    
+    assert np.allclose(dx, np.zeros((ndof), dtype=np.float64), rtol = float64_tols.rtol, atol = float64_tols.atol)  
         
+@pytest.mark.parametrize("vector_calls", [True, False])
+@pytest.mark.parametrize("NBS,params_buf", [pytest.param(NBS, params_buf, id=name) for name, (NBS, params_buf) in Sols_dict.items()])
+def test_ODE_vs_spectral(float64_tols_loose, NBS, params_buf, vector_calls):
+        
+    NBS.ForceGreaterNStore = True
+    segmpos = NBS.params_to_segmpos(params_buf)
+
+    # vector_calls = False
+    vector_calls = True
+    
+    ODE_Syst = NBS.Get_ODE_def(params_buf, vector_calls=vector_calls)
+    
+    nsteps = 10
+    keep_freq = 1
+    nint_ODE = (NBS.segm_store-1) * keep_freq
+    method = "Gauss"
+    
+    rk = choreo.scipy_plus.multiprec_tables.ComputeImplicitRKTable_Gauss(nsteps, method=method)
+    
+    segmpos_ODE, segmvel_ODE = choreo.scipy_plus.ODE.SymplecticIVP(
+        rk = rk                 ,
+        keep_freq = keep_freq   ,
+        nint = nint_ODE         ,
+        keep_init = True        ,
+        **ODE_Syst              ,
+    )
+
+    segmpos_ODE = np.ascontiguousarray(segmpos_ODE.reshape((NBS.segm_store, NBS.nsegm, NBS.geodim)).swapaxes(0, 1))
+
+    print(np.linalg.norm(segmpos - segmpos_ODE))
+    assert np.allclose(segmpos, segmpos_ODE, rtol = float64_tols_loose.rtol, atol = float64_tols_loose.atol)
