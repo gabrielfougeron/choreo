@@ -340,8 +340,11 @@ cpdef ExplicitSymplecticIVP(
     object mode = "VX"              ,
     Py_ssize_t nint = 1             ,
     Py_ssize_t keep_freq = -1       ,
+    bint keep_init = False          ,
     bint DoEFT = True               ,
 ): 
+
+    cdef Py_ssize_t keep_start
 
     if (x0.shape[0] != v0.shape[0]):
         raise ValueError("x0 and v0 must have the same shape")
@@ -399,6 +402,12 @@ cpdef ExplicitSymplecticIVP(
     cdef Py_ssize_t ndof = x0.shape[0]
     cdef Py_ssize_t nint_keep = nint // keep_freq
 
+    if keep_init:
+        nint_keep += 1
+        keep_start = 1
+    else:
+        keep_start = 0
+
     cdef double[::1] x = x0.copy()
     cdef double[::1] v = v0.copy()
 
@@ -406,8 +415,13 @@ cpdef ExplicitSymplecticIVP(
 
     cdef np.ndarray[double, ndim=2, mode="c"] x_keep_np = np.empty((nint_keep, ndof), dtype=np.float64)
     cdef np.ndarray[double, ndim=2, mode="c"] v_keep_np = np.empty((nint_keep, ndof), dtype=np.float64)
-    cdef double[:,::1] x_keep = x_keep_np
-    cdef double[:,::1] v_keep = v_keep_np
+
+    if keep_init:
+      x_keep_np[0,:] = x[:]  
+      v_keep_np[0,:] = v[:]  
+
+    cdef double[:,::1] x_keep = <double[:(nint_keep-keep_start),:ndof:1]> &x_keep_np[keep_start,0]
+    cdef double[:,::1] v_keep = <double[:(nint_keep-keep_start),:ndof:1]> &v_keep_np[keep_start,0]
 
     cdef double[:,::1] grad_x
     cdef double[:,::1] grad_v
@@ -453,8 +467,12 @@ cpdef ExplicitSymplecticIVP(
         grad_x_keep_np = np.empty((nint_keep, ndof, grad_ndof), dtype=np.float64)
         grad_v_keep_np = np.empty((nint_keep, ndof, grad_ndof), dtype=np.float64)
 
-        grad_x_keep = grad_x_keep_np
-        grad_v_keep = grad_v_keep_np
+        if keep_init:
+            grad_x_keep_np[0,:] = grad_x[:]  
+            grad_v_keep_np[0,:] = grad_v[:]  
+
+        grad_x_keep = <double[:(nint_keep-keep_start),:ndof,:grad_ndof:1]> &grad_x_keep_np[keep_start,0,0]
+        grad_v_keep = <double[:(nint_keep-keep_start),:ndof,:grad_ndof:1]> &grad_v_keep_np[keep_start,0,0]
 
         grad_res = np.empty((ndof, grad_ndof), dtype=np.float64)
 
@@ -541,6 +559,7 @@ cpdef ExplicitSymplecticIVP(
     elif mode == 'XV':
 
         with nogil:
+
             ExplicitSymplecticIVP_ann(
                 lowlevelgun         ,
                 lowlevelfun         ,
@@ -1004,12 +1023,14 @@ cpdef ImplicitSymplecticIVP(
     double[:,::1] grad_v0 = None            ,
     Py_ssize_t nint = 1                     ,
     Py_ssize_t keep_freq = -1               ,
+    bint keep_init = False                  ,
     bint DoEFT = True                       ,
     double eps = np.finfo(np.float64).eps   ,
     Py_ssize_t maxiter = 50                 ,
 ):
 
     cdef Py_ssize_t nsteps = rk_x._a_table.shape[0]
+    cdef Py_ssize_t keep_start
 
     if (rk_v._a_table.shape[0] != nsteps):
         raise ValueError("rk_x and rk_v must have the same shape")
@@ -1074,6 +1095,12 @@ cpdef ImplicitSymplecticIVP(
     cdef Py_ssize_t ndof = x0.shape[0]
     cdef Py_ssize_t nint_keep = nint // keep_freq
 
+    if keep_init:
+        nint_keep += 1
+        keep_start = 1
+    else:
+        keep_start = 0
+
     cdef double[::1] x = x0.copy()
     cdef double[::1] v = v0.copy()
     cdef double[:,::1] K_fun = np.zeros((nsteps, ndof), dtype=np.float64)
@@ -1088,8 +1115,13 @@ cpdef ImplicitSymplecticIVP(
 
     cdef np.ndarray[double, ndim=2, mode="c"] x_keep_np = np.empty((nint_keep, ndof), dtype=np.float64)
     cdef np.ndarray[double, ndim=2, mode="c"] v_keep_np = np.empty((nint_keep, ndof), dtype=np.float64)
-    cdef double[:,::1] x_keep = x_keep_np
-    cdef double[:,::1] v_keep = v_keep_np
+
+    if keep_init:
+      x_keep_np[0,:] = x[:]  
+      v_keep_np[0,:] = v[:]  
+
+    cdef double[:,::1] x_keep = <double[:(nint_keep-keep_start),:ndof:1]> &x_keep_np[keep_start,0]
+    cdef double[:,::1] v_keep = <double[:(nint_keep-keep_start),:ndof:1]> &v_keep_np[keep_start,0]
 
     cdef double[:,::1] grad_x
     cdef double[:,::1] grad_v
@@ -1140,8 +1172,12 @@ cpdef ImplicitSymplecticIVP(
         grad_x_keep_np = np.empty((nint_keep, ndof, grad_ndof), dtype=np.float64)
         grad_v_keep_np = np.empty((nint_keep, ndof, grad_ndof), dtype=np.float64)
 
-        grad_x_keep = grad_x_keep_np
-        grad_v_keep = grad_v_keep_np
+        if keep_init:
+            grad_x_keep_np[0,:] = grad_x[:]  
+            grad_v_keep_np[0,:] = grad_v[:]  
+
+        grad_x_keep = <double[:(nint_keep-keep_start),:ndof,:grad_ndof:1]> &grad_x_keep_np[keep_start,0,0]
+        grad_v_keep = <double[:(nint_keep-keep_start),:ndof,:grad_ndof:1]> &grad_v_keep_np[keep_start,0,0]
 
         grad_K_fun = np.zeros((nsteps, ndof, grad_ndof), dtype=np.float64)
         grad_K_gun = np.zeros((nsteps, ndof, grad_ndof), dtype=np.float64)

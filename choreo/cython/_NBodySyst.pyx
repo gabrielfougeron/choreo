@@ -594,7 +594,7 @@ cdef class NBodySyst():
 
         self._params_basis_buf_vel = np.empty(self._params_basis_buf_pos.shape[0], dtype=np.complex128)
         for i in range(self._params_basis_buf_pos.shape[0]):
-            self._params_basis_buf_vel[i] = self._params_basis_buf_pos[i] * (-1j)
+            self._params_basis_buf_vel[i] = self._params_basis_buf_pos[i] * 1j
 
         self._nnz_k_buf, self._nnz_k_shapes, self._nnz_k_shifts = BundleListOfArrays(nnz_k_list)
         self._co_in_buf, self._co_in_shapes, self._co_in_shifts = BundleListOfArrays(co_in_list)
@@ -1546,7 +1546,7 @@ cdef class NBodySyst():
 
         cdef Py_ssize_t il, k, idim
 
-        cdef double complex fac = -1j*ctwopi
+        cdef double complex fac = 1j*ctwopi
 
         for il in range(nloop):
             for k in range(ncoeffs):
@@ -6990,7 +6990,7 @@ cdef void Compute_forces(
 
         inter_law(inter_law_param_ptr, dx2, pot)
 
-        bin_fac = 2*BinProdChargeSum[ibin]
+        bin_fac = (-4)*BinProdChargeSum[ibin]
 
         pot[1] *= bin_fac
 

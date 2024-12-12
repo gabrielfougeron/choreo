@@ -6,6 +6,17 @@ import json
 
 __PROJECT_ROOT__ = os.path.abspath(os.path.join(os.path.dirname(__file__),os.pardir))
 
+
+# a = np.array([[0,1],[2,3]],dtype=np.float64)
+# b = a.swapaxes(0, 1)
+# 
+# for i in range(2):
+#     for j in range(2):
+#         assert a[i,j] == b[j,i]
+# 
+# assert a.data.c_contiguous
+# assert b.data.c_contiguous
+
 def main():
     
     Wisdom_file = os.path.join(__PROJECT_ROOT__, "PYFFTW_wisdom.json")
@@ -35,13 +46,15 @@ def main():
 
             NBS, segmpos = choreo.NBodySyst.FromSolutionFile(full_in_file_basename)
             params_buf = NBS.segmpos_to_params(segmpos)
-            # NBS.ForceGreaterNStore = True
+            
+            NBS.ForceGreaterNStore = True
+            segmpos = NBS.params_to_segmpos(params_buf)
             
             ODE_Syst = NBS.Get_ODE_def(params_buf)
             
             nsteps = 10
             keep_freq = 10
-            nint_ODE = NBS.segm_store * keep_freq
+            nint_ODE = (NBS.segm_store-1) * keep_freq
             method = "Gauss"
             
             rk = choreo.scipy_plus.multiprec_tables.ComputeImplicitRKTable_Gauss(nsteps, method=method)
@@ -50,13 +63,14 @@ def main():
                 rk = rk                 ,
                 keep_freq = keep_freq   ,
                 nint = nint_ODE         ,
+                keep_init = True        ,
                 **ODE_Syst              ,
             )
             
-            segmpos_ODE = segmpos_ODE.reshape((NBS.segm_store, NBS.nsegm, NBS.geodim)).swapaxes(0, 1)
+            segmpos_ODE = np.ascontiguousarray(segmpos_ODE.reshape((NBS.segm_store, NBS.nsegm, NBS.geodim)).swapaxes(0, 1))
 
             NBS.plot_segmpos_2D(segmpos_ODE, os.path.join(full_out_file_basename+'.png'))
-            # print(segmpos[:,1:,:] - segmpos_ODE)
+            print(np.linalg.norm(segmpos - segmpos_ODE))
 
 
 if __name__ == "__main__":
