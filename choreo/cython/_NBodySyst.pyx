@@ -1135,7 +1135,7 @@ cdef class NBodySyst():
         cdef Py_ssize_t ib , iint
         cdef Py_ssize_t ibp, iintp
 
-        self._SegmRequiresDisp = -np.ones((self.nbody, self.nint_min), dtype=np.intc)
+        self._SegmRequiresDisp = - np.ones((self.nbody, self.nint_min), dtype=np.intc)
                     
         cdef ActionSym Identity, Sym, EdgeSym, NewSym, Plotted_Sym
                 
@@ -1157,7 +1157,6 @@ cdef class NBodySyst():
                     for edge in networkx.dfs_edges(self.SegmGraph, source=segm_source):
 
                         ibp = edge[1][0]
-
                         iintp = edge[1][1]
                         
                         Sym = Sym_dict[edge[0]]

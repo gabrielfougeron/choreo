@@ -35,40 +35,65 @@ from choreo.scipy_plus.cython.blas_consts cimport *
 
 cdef int PY_FUN = -1
 cdef int C_FUN_MEMORYVIEW = 0
-cdef int C_FUN_POINTER = 1
-cdef int C_GRAD_FUN_MEMORYVIEW = 2
-cdef int C_GRAD_FUN_POINTER = 3
+cdef int C_FUN_MEMORYVIEW_VEC = 1
+cdef int C_FUN_POINTER = 2
+cdef int C_FUN_POINTER_VEC = 3
+cdef int C_GRAD_FUN_MEMORYVIEW = 4
+cdef int C_GRAD_FUN_MEMORYVIEW_VEC = 5
+cdef int C_GRAD_FUN_POINTER = 6
+cdef int C_GRAD_FUN_POINTER_VEC = 7
+cdef int N_SIGNATURES = 8
+
+cdef ccallback_signature_t signatures[9]
 
 cdef int PY_FUN_FLOAT = 0
 cdef int PY_FUN_NDARRAY = 1 
-
-cdef ccallback_signature_t signatures[5]
 
 ctypedef void (*c_fun_type_memoryview)(double, double[::1], double[::1]) noexcept nogil 
 signatures[C_FUN_MEMORYVIEW].signature = b"void (double, __Pyx_memviewslice, __Pyx_memviewslice)"
 signatures[C_FUN_MEMORYVIEW].value = C_FUN_MEMORYVIEW
 
+ctypedef void (*c_fun_type_memoryview_vec)(double[::1], double[:,::1], double[:,::1]) noexcept nogil 
+signatures[C_FUN_MEMORYVIEW_VEC].signature = b"void (__Pyx_memviewslice, __Pyx_memviewslice, __Pyx_memviewslice)"
+signatures[C_FUN_MEMORYVIEW_VEC].value = C_FUN_MEMORYVIEW_VEC
+
 ctypedef void (*c_fun_type_pointer)(double, double*, double*) noexcept nogil 
 signatures[C_FUN_POINTER].signature = b"void (double, double *, double *)"
 signatures[C_FUN_POINTER].value = C_FUN_POINTER
+
+ctypedef void (*c_fun_type_pointer_vec)(double*, double*, double*) noexcept nogil 
+signatures[C_FUN_POINTER_VEC].signature = b"void (double *, double *, double *)"
+signatures[C_FUN_POINTER_VEC].value = C_FUN_POINTER_VEC
 
 ctypedef void (*c_grad_fun_type_memoryview)(double, double[::1], double[:,::1], double[:,::1]) noexcept nogil 
 signatures[C_GRAD_FUN_MEMORYVIEW].signature = b"void (double, __Pyx_memviewslice, __Pyx_memviewslice, __Pyx_memviewslice)"
 signatures[C_GRAD_FUN_MEMORYVIEW].value = C_GRAD_FUN_MEMORYVIEW
 
+ctypedef void (*c_grad_fun_type_memoryview_vec)(double[::1], double[:,::1], double[:,:,::1], double[:,:,::1]) noexcept nogil 
+signatures[C_GRAD_FUN_MEMORYVIEW_VEC].signature = b"void (__Pyx_memviewslice, __Pyx_memviewslice, __Pyx_memviewslice, __Pyx_memviewslice)"
+signatures[C_GRAD_FUN_MEMORYVIEW_VEC].value = C_GRAD_FUN_MEMORYVIEW_VEC
+
 ctypedef void (*c_grad_fun_type_pointer)(double, double*, double*, double*) noexcept nogil 
 signatures[C_GRAD_FUN_POINTER].signature = b"void (double, double *, double *, double *)"
 signatures[C_GRAD_FUN_POINTER].value = C_GRAD_FUN_POINTER
 
-signatures[4].signature = NULL
+ctypedef void (*c_grad_fun_type_pointer_vec)(double*, double*, double*, double*) noexcept nogil 
+signatures[C_GRAD_FUN_POINTER_VEC].signature = b"void (double *, double *, double *, double *)"
+signatures[C_GRAD_FUN_POINTER_VEC].value = C_GRAD_FUN_POINTER_VEC
+
+signatures[N_SIGNATURES].signature = NULL
 
 cdef struct s_LowLevelFun:
     int fun_type
     void *py_fun
     c_fun_type_memoryview c_fun_memoryview
+    c_fun_type_memoryview_vec c_fun_memoryview_vec
     c_fun_type_pointer c_fun_pointer
+    c_fun_type_pointer_vec c_fun_pointer_vec
     c_grad_fun_type_memoryview c_grad_fun_memoryview
+    c_grad_fun_type_memoryview_vec c_grad_fun_memoryview_vec
     c_grad_fun_type_pointer c_grad_fun_pointer
+    c_grad_fun_type_pointer_vec c_grad_fun_pointer_vec
 
 ctypedef s_LowLevelFun LowLevelFun
 
@@ -173,6 +198,7 @@ cdef inline void PyFun_grad_apply(
         scipy.linalg.cython_blas.dcopy(&n,&f_res_np[0,0],&int_one,&res[0,0],&int_one)
 
 cdef inline void LowLevelFun_apply_vectorized(
+    bint vector_calls       ,
     LowLevelFun fun         ,
     double[::1] all_t       ,
     double[:,::1] all_x     ,
@@ -181,17 +207,30 @@ cdef inline void LowLevelFun_apply_vectorized(
 
     cdef Py_ssize_t i
 
-    if fun.fun_type == C_FUN_MEMORYVIEW:
+    if vector_calls:
 
-        for i in range(all_t.shape[0]):
-            fun.c_fun_memoryview(all_t[i], all_x[i,:], all_res[i,:])
+        if fun.fun_type == C_FUN_MEMORYVIEW_VEC:
 
-    elif fun.fun_type == C_FUN_POINTER:
+            fun.c_fun_memoryview_vec(all_t, all_x, all_res)
 
-        for i in range(all_t.shape[0]):
-            fun.c_fun_pointer(all_t[i], &all_x[i,0], &all_res[i,0])
+        elif fun.fun_type == C_FUN_POINTER_VEC:
+
+            fun.c_fun_pointer_vec(&all_t[0], &all_x[0,0], &all_res[0,0])
+
+    else:
+
+        if fun.fun_type == C_FUN_MEMORYVIEW:
+
+            for i in range(all_t.shape[0]):
+                fun.c_fun_memoryview(all_t[i], all_x[i,:], all_res[i,:])
+
+        elif fun.fun_type == C_FUN_POINTER:
+
+            for i in range(all_t.shape[0]):
+                fun.c_fun_pointer(all_t[i], &all_x[i,0], &all_res[i,0])
 
 cdef inline void PyFun_apply_vectorized(
+    bint vector_calls       ,
     object fun              ,
     int res_type            ,
     double[::1] all_t       ,
@@ -202,21 +241,32 @@ cdef inline void PyFun_apply_vectorized(
     cdef Py_ssize_t i
     cdef int n 
     cdef np.ndarray[double, ndim=1, mode="c"] f_res_np
+    cdef np.ndarray[double, ndim=2, mode="c"] f_res_vec_np
 
-    if (res_type == PY_FUN_FLOAT): 
-        for i in range(all_t.shape[0]):  
-            all_res[i,0] = fun(all_t[i], all_x[i,:])
+    if vector_calls:
+
+        f_res_vec_np = fun(all_t, all_x)
+
+        n = all_res.shape[0] * all_res.shape[1]
+        scipy.linalg.cython_blas.dcopy(&n,&f_res_vec_np[0,0],&int_one,&all_res[0,0],&int_one)
 
     else:
-        
-        n = all_x.shape[1]
-        
-        for i in range(all_t.shape[0]):  
-            f_res_np = fun(all_t[i], all_x[i,:])
 
-            scipy.linalg.cython_blas.dcopy(&n,&f_res_np[0],&int_one,&all_res[i,0],&int_one)
+        if (res_type == PY_FUN_FLOAT): 
+            for i in range(all_t.shape[0]):  
+                all_res[i,0] = fun(all_t[i], all_x[i,:])
+
+        else:
+            
+            n = all_x.shape[1]
+            
+            for i in range(all_t.shape[0]):  
+                f_res_np = fun(all_t[i], all_x[i,:])
+
+                scipy.linalg.cython_blas.dcopy(&n,&f_res_np[0],&int_one,&all_res[i,0],&int_one)
 
 cdef inline void LowLevelFun_apply_grad_vectorized(
+    bint vector_calls           ,
     LowLevelFun grad_fun        ,
     double[::1] all_t           ,
     double[:,::1] all_x         ,
@@ -226,17 +276,30 @@ cdef inline void LowLevelFun_apply_grad_vectorized(
 
     cdef Py_ssize_t i
 
-    if grad_fun.fun_type == C_GRAD_FUN_MEMORYVIEW:
+    if vector_calls:
 
-        for i in range(all_t.shape[0]):
-            grad_fun.c_grad_fun_memoryview(all_t[i], all_x[i,:], all_grad_x[i,:,:], all_res[i,:,:])
+        if grad_fun.fun_type == C_GRAD_FUN_MEMORYVIEW_VEC:
 
-    elif grad_fun.fun_type == C_GRAD_FUN_POINTER:
+            grad_fun.c_grad_fun_memoryview_vec(all_t, all_x, all_grad_x, all_res)
 
-        for i in range(all_t.shape[0]):
-            grad_fun.c_grad_fun_pointer(all_t[i], &all_x[i,0], &all_grad_x[i,0,0], &all_res[i,0,0])
+        elif grad_fun.fun_type == C_GRAD_FUN_POINTER_VEC:
+
+            grad_fun.c_grad_fun_pointer_vec(&all_t[0], &all_x[0,0], &all_grad_x[0,0,0], &all_res[0,0,0])
+
+    else:
+
+        if grad_fun.fun_type == C_GRAD_FUN_MEMORYVIEW:
+
+            for i in range(all_t.shape[0]):
+                grad_fun.c_grad_fun_memoryview(all_t[i], all_x[i,:], all_grad_x[i,:,:], all_res[i,:,:])
+
+        elif grad_fun.fun_type == C_GRAD_FUN_POINTER:
+
+            for i in range(all_t.shape[0]):
+                grad_fun.c_grad_fun_pointer(all_t[i], &all_x[i,0], &all_grad_x[i,0,0], &all_res[i,0,0])
 
 cdef inline void PyFun_apply_grad_vectorized(
+    bint vector_calls           ,
     object fun                  ,
     int res_type                ,
     double[::1] all_t           ,
@@ -248,19 +311,29 @@ cdef inline void PyFun_apply_grad_vectorized(
     cdef Py_ssize_t i
     cdef int n 
     cdef np.ndarray[double, ndim=2, mode="c"] f_res_np
+    cdef np.ndarray[double, ndim=3, mode="c"] f_res_vec_np
 
-    if (res_type == PY_FUN_FLOAT): 
-        for i in range(all_t.shape[0]):  
-            all_res[i,0,:] = fun(all_t[i], all_x[i,:], all_grad_x[i,:,:])
+    if vector_calls:
+
+        f_res_vec_np = fun(all_t, all_x, all_grad_x)
+
+        n = all_grad_x.shape[0] * all_grad_x.shape[1] * all_grad_x.shape[2]
+        scipy.linalg.cython_blas.dcopy(&n,&f_res_vec_np[0,0,0],&int_one,&all_res[0,0,0],&int_one)
 
     else:
-        
-        n = all_grad_x.shape[1] * all_grad_x.shape[2]
-        
-        for i in range(all_t.shape[0]):  
-            f_res_np = fun(all_t[i], all_x[i,:], all_grad_x[i,:,:])
 
-            scipy.linalg.cython_blas.dcopy(&n,&f_res_np[0,0],&int_one,&all_res[i,0,0],&int_one)
+        if (res_type == PY_FUN_FLOAT): 
+            for i in range(all_t.shape[0]):  
+                all_res[i,0,:] = fun(all_t[i], all_x[i,:], all_grad_x[i,:,:])
+
+        else:
+            
+            n = all_grad_x.shape[1] * all_grad_x.shape[2]
+            
+            for i in range(all_t.shape[0]):  
+                f_res_np = fun(all_t[i], all_x[i,:], all_grad_x[i,:,:])
+
+                scipy.linalg.cython_blas.dcopy(&n,&f_res_np[0,0],&int_one,&all_res[i,0,0],&int_one)
 
 @cython.final
 cdef class ExplicitSymplecticRKTable:
@@ -1017,6 +1090,7 @@ cpdef ImplicitSymplecticIVP(
     double[::1] v0                          ,
     ImplicitRKTable rk_x                    ,
     ImplicitRKTable rk_v                    ,
+    bint vector_calls = False               ,
     object grad_fun = None                  ,
     object grad_gun = None                  ,
     double[:,::1] grad_x0 = None            ,
@@ -1037,6 +1111,8 @@ cpdef ImplicitSymplecticIVP(
 
     if (x0.shape[0] != v0.shape[0]):
         raise ValueError("x0 and v0 must have the same shape")
+
+    cdef Py_ssize_t ndof = x0.shape[0]
 
     cdef ccallback_t callback_fun
     ccallback_prepare(&callback_fun, signatures, fun, CCALLBACK_DEFAULTS)
@@ -1065,9 +1141,21 @@ cpdef ImplicitSymplecticIVP(
             py_fun_type = PY_FUN_FLOAT
         elif isinstance(py_fun_res, np.ndarray) and isinstance(py_gun_res, np.ndarray):
             py_fun_type = PY_FUN_NDARRAY
+
+            correct_shapes = True
             
-            assert py_fun_res.shape[0] == x0.shape[0]
-            assert py_gun_res.shape[0] == x0.shape[0]
+            if vector_calls:
+                correct_shapes = correct_shapes and (py_fun_res.shape[0] == nsteps)
+                correct_shapes = correct_shapes and (py_gun_res.shape[0] == nsteps)
+                correct_shapes = correct_shapes and (py_fun_res.shape[1] == ndof)
+                correct_shapes = correct_shapes and (py_gun_res.shape[1] == ndof)
+
+            else:
+                correct_shapes = correct_shapes and (py_fun_res.shape[0] == ndof)
+                correct_shapes = correct_shapes and (py_gun_res.shape[0] == ndof)
+
+            if not(correct_shapes):
+                raise ValueError("Python functions fun and gun returned numpy.ndarray with wrong shape")
 
         else:
             raise ValueError(f"Could not recognize return type of python callable. Found {type(py_fun_res)} and {type(py_gun_res)}.")
@@ -1092,7 +1180,6 @@ cpdef ImplicitSymplecticIVP(
     if (keep_freq < 0):
         keep_freq = nint
 
-    cdef Py_ssize_t ndof = x0.shape[0]
     cdef Py_ssize_t nint_keep = nint // keep_freq
 
     if keep_init:
@@ -1211,6 +1298,26 @@ cpdef ImplicitSymplecticIVP(
                 py_grad_fun_type = PY_FUN_FLOAT
             elif isinstance(py_fun_res, np.ndarray) and isinstance(py_grad_gun_res, np.ndarray):
                 py_grad_fun_type = PY_FUN_NDARRAY
+
+                correct_shapes = True
+                
+                if vector_calls:
+                    correct_shapes = correct_shapes and (py_grad_fun_res.shape[0] == nsteps)
+                    correct_shapes = correct_shapes and (py_grad_gun_res.shape[0] == nsteps)
+                    correct_shapes = correct_shapes and (py_grad_fun_res.shape[1] == ndof)
+                    correct_shapes = correct_shapes and (py_grad_gun_res.shape[1] == ndof)
+                    correct_shapes = correct_shapes and (py_grad_fun_res.shape[2] == grad_ndof)
+                    correct_shapes = correct_shapes and (py_grad_gun_res.shape[2] == grad_ndof)
+
+                else:
+                    correct_shapes = correct_shapes and (py_grad_fun_res.shape[0] == ndof)
+                    correct_shapes = correct_shapes and (py_grad_gun_res.shape[0] == ndof)
+                    correct_shapes = correct_shapes and (py_grad_fun_res.shape[1] == grad_ndof)
+                    correct_shapes = correct_shapes and (py_grad_gun_res.shape[1] == grad_ndof)
+
+                if not(correct_shapes):
+                    raise ValueError("Python functions grad_fun and grad_gun returned numpy.ndarray with wrong shape")
+
             else:
                 raise ValueError(f"Could not recognize return type of python callable. Found {type(py_grad_fun_res)} and {type(py_grad_gun_res)}.")
 
@@ -1251,6 +1358,7 @@ cpdef ImplicitSymplecticIVP(
             py_grad_fun     ,
             py_grad_gun     ,
             py_fun_type     ,
+            vector_calls    ,
             t_span          ,
             x               ,
             v               ,
@@ -1315,6 +1423,7 @@ cdef void ImplicitSymplecticIVP_ann(
     object py_grad_fun              ,
     object py_grad_gun              ,
     int py_fun_type                 ,
+    bint vector_calls               ,
     (double, double) t_span         ,
     double[::1]     x               ,
     double[::1]     v               ,
@@ -1460,9 +1569,9 @@ cdef void ImplicitSymplecticIVP_ann(
 
                 if py_fun_type > 0:
                     with gil:
-                        PyFun_apply_vectorized(py_fun, py_fun_type, all_t_v, dV, K_fun)
+                        PyFun_apply_vectorized(vector_calls, py_fun, py_fun_type, all_t_v, dV, K_fun)
                 else:
-                    LowLevelFun_apply_vectorized(lowlevelfun, all_t_v, dV, K_fun)
+                    LowLevelFun_apply_vectorized(vector_calls,lowlevelfun, all_t_v, dV, K_fun)
 
                 scipy.linalg.cython_blas.dscal(&dX_size,&dt,&K_fun[0,0],&int_one)
 
@@ -1482,9 +1591,9 @@ cdef void ImplicitSymplecticIVP_ann(
 
                 if py_fun_type > 0:
                     with gil:
-                        PyFun_apply_vectorized(py_gun, py_fun_type, all_t_x, dX, K_gun)
+                        PyFun_apply_vectorized(vector_calls, py_gun, py_fun_type, all_t_x, dX, K_gun)
                 else:
-                    LowLevelFun_apply_vectorized(lowlevelgun, all_t_x, dX, K_gun)
+                    LowLevelFun_apply_vectorized(vector_calls, lowlevelgun, all_t_x, dX, K_gun)
 
                 scipy.linalg.cython_blas.dscal(&dX_size,&dt,&K_gun[0,0],&int_one)
 
@@ -1537,9 +1646,9 @@ cdef void ImplicitSymplecticIVP_ann(
 
                     if py_fun_type > 0:
                         with gil:
-                            PyFun_apply_grad_vectorized(py_grad_fun, py_fun_type, all_t_v, dV, grad_dV, grad_K_fun)
+                            PyFun_apply_grad_vectorized(vector_calls, py_grad_fun, py_fun_type, all_t_v, dV, grad_dV, grad_K_fun)
                     else:
-                        LowLevelFun_apply_grad_vectorized(lowlevelgrad_fun, all_t_v, dV, grad_dV, grad_K_fun)
+                        LowLevelFun_apply_grad_vectorized(vector_calls, lowlevelgrad_fun, all_t_v, dV, grad_dV, grad_K_fun)
 
                     scipy.linalg.cython_blas.dscal(&grad_dX_size,&dt,&grad_K_fun[0,0,0],&int_one)
 
@@ -1559,9 +1668,9 @@ cdef void ImplicitSymplecticIVP_ann(
 
                     if py_fun_type > 0:
                         with gil:
-                            PyFun_apply_grad_vectorized(py_grad_gun, py_fun_type, all_t_x, dX, grad_dX, grad_K_gun)
+                            PyFun_apply_grad_vectorized(vector_calls, py_grad_gun, py_fun_type, all_t_x, dX, grad_dX, grad_K_gun)
                     else:
-                        LowLevelFun_apply_grad_vectorized(lowlevelgrad_gun, all_t_x, dX, grad_dX, grad_K_gun)
+                        LowLevelFun_apply_grad_vectorized(vector_calls, lowlevelgrad_gun, all_t_x, dX, grad_dX, grad_K_gun)
 
                     scipy.linalg.cython_blas.dscal(&grad_dX_size,&dt,&grad_K_gun[0,0,0],&int_one)
 

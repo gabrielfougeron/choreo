@@ -6,17 +6,6 @@ import json
 
 __PROJECT_ROOT__ = os.path.abspath(os.path.join(os.path.dirname(__file__),os.pardir))
 
-
-# a = np.array([[0,1],[2,3]],dtype=np.float64)
-# b = a.swapaxes(0, 1)
-# 
-# for i in range(2):
-#     for j in range(2):
-#         assert a[i,j] == b[j,i]
-# 
-# assert a.data.c_contiguous
-# assert b.data.c_contiguous
-
 def main():
     
     Wisdom_file = os.path.join(__PROJECT_ROOT__, "PYFFTW_wisdom.json")
