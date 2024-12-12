@@ -3803,7 +3803,7 @@ cdef class NBodySyst():
 
     @cython.final
     @cython.cdivision(True)
-    def Compute_velocities(self, t, double[::1] mom_flat):
+    def Compute_velocities(self, double t, double[::1] mom_flat):
 
         assert mom_flat.shape[0] == self.nsegm * self.geodim
 
@@ -3821,7 +3821,30 @@ cdef class NBodySyst():
         return res
 
     @cython.final
-    def Compute_forces(self, t, double[::1] pos_flat):
+    @cython.cdivision(True)
+    def Compute_velocities_vectorized(self, double[::1] t, double[:,::1] mom_flat):
+
+        assert mom_flat.shape[1] == self.nsegm * self.geodim
+
+        cdef Py_ssize_t nsteps = mom_flat.shape[0]
+        cdef Py_ssize_t istep
+
+        cdef Py_ssize_t isegm, idim, i
+        cdef double mass
+
+        cdef np.ndarray[double, ndim=2, mode='c'] res = np.empty((nsteps, self.nsegm * self.geodim), dtype=np.float64)
+
+        for istep in range(nsteps):
+            for isegm in range(self.nsegm):
+                mass = self._loopmass[self._bodyloop[self._intersegm_to_body[isegm]]]
+                for idim in range(self.geodim):
+                    i = isegm * self.geodim + idim
+                    res[istep,i] = mom_flat[istep,i] / mass
+
+        return res
+
+    @cython.final
+    def Compute_forces(self, double t, double[::1] pos_flat):
 
         assert pos_flat.shape[0] == self.nsegm * self.geodim
 
@@ -3830,7 +3853,28 @@ cdef class NBodySyst():
 
         Compute_forces(
             pos                                                 ,
-            res.reshape((self.nsegm,self.geodim))               ,
+            res.reshape((self.nsegm, self.geodim))              ,
+            self._BinSourceSegm     , self._BinTargetSegm       ,
+            self._BinSpaceRot       , self._BinSpaceRotIsId     ,
+            self._BinProdChargeSum  ,
+            self._inter_law         , self._inter_law_param_ptr ,
+        )
+
+        return res
+
+    @cython.final
+    def Compute_forces_vectorized(self, double[::1] t, double[:,::1] pos_flat):
+
+        assert pos_flat.shape[1] == self.nsegm * self.geodim
+
+        cdef Py_ssize_t nsteps = pos_flat.shape[0]
+
+        cdef double[:,:,::1] pos = <double[:nsteps,:self.nsegm ,:self.geodim:1]> &pos_flat[0,0]
+        cdef np.ndarray[double, ndim=2, mode='c'] res = np.zeros((nsteps, self.nsegm * self.geodim), dtype=np.float64)
+
+        Compute_forces_vectorized(
+            pos                                                 ,
+            res.reshape((nsteps, self.nsegm, self.geodim))      ,
             self._BinSourceSegm     , self._BinTargetSegm       ,
             self._BinSpaceRot       , self._BinSpaceRotIsId     ,
             self._BinProdChargeSum  ,
@@ -3841,18 +3885,32 @@ cdef class NBodySyst():
 
     @cython.final
     @cython.cdivision(True)
-    def Get_ODE_def(self, double[::1] params_mom_buf):
+    def Get_ODE_def(self, double[::1] params_mom_buf, vector_calls = False):
 
         xo, po = self.Compute_init_pos_mom(params_mom_buf)
         t_span = (0., 1./self.nint_min)
 
-        return {
-            "fun" : self.Compute_velocities ,
-            "gun" : self.Compute_forces     ,
-            "t_span" : t_span               ,
-            "x0" : xo                       ,
-            "v0" : po                       ,
-        }
+        if vector_calls:
+
+            return {
+                "fun" : self.Compute_velocities_vectorized  ,
+                "gun" : self.Compute_forces_vectorized      ,
+                "t_span" : t_span                           ,
+                "x0" : xo                                   ,
+                "v0" : po                                   ,
+                "vector_calls" : True                       ,
+            }
+
+        else:
+
+            return {
+                "fun" : self.Compute_velocities ,
+                "gun" : self.Compute_forces     ,
+                "t_span" : t_span               ,
+                "x0" : xo                       ,
+                "v0" : po                       ,
+                "vector_calls" : False          ,
+            }
 
 
 
@@ -7009,6 +7067,83 @@ cdef void Compute_forces(
 
         for idim in range(geodim):
             pot_nrg_grad[isegmp,idim] -= df[idim]
+                
+    free(dx)
+    free(df)
+
+cdef void Compute_forces_vectorized(
+    double[:,:,::1] pos             , double[:,:,::1] pot_nrg_grad    ,
+    Py_ssize_t[::1] BinSourceSegm   , Py_ssize_t[::1] BinTargetSegm ,
+    double[:,:,::1] BinSpaceRot     , bint[::1] BinSpaceRotIsId     ,
+    double[::1] BinProdChargeSum    ,
+    inter_law_fun_type inter_law    , double* inter_law_param_ptr   ,
+) noexcept nogil:
+
+    cdef Py_ssize_t nbin = BinSourceSegm.shape[0]
+    cdef Py_ssize_t geodim = BinSpaceRot.shape[1]
+    cdef Py_ssize_t ibin, idim, jdim
+    cdef Py_ssize_t isegm, isegmp
+    cdef Py_ssize_t ivec, nvec
+
+    # cdef int inter_flags = get_inter_flags(
+    #     segm_size   , segm_store    ,
+    #     geodim_size , inter_law     ,
+    # )
+
+    cdef double dx2
+    cdef double bin_fac
+    cdef double[3] pot
+
+    cdef double* dx = <double*> malloc(sizeof(double)*geodim)
+    cdef double* df = <double*> malloc(sizeof(double)*geodim)
+
+    nvec = pos.shape[0]
+
+    for ivec in range(nvec):
+
+        for ibin in range(nbin):
+
+            isegm = BinSourceSegm[ibin]
+            isegmp = BinTargetSegm[ibin]
+
+            if BinSpaceRotIsId[ibin]:
+                    
+                for idim in range(geodim):
+                    dx[idim] = pos[ivec,isegm,idim] - pos[ivec,isegmp,idim]
+
+            else:
+
+                for idim in range(geodim):
+                    dx[idim] = - pos[ivec,isegmp,idim]
+                    for jdim in range(geodim):
+                        dx[idim] += BinSpaceRot[ibin,idim,jdim] * pos[ivec,isegm,jdim] 
+
+            dx2 = dx[0]*dx[0]
+            for idim in range(1,geodim):
+                dx2 += dx[idim]*dx[idim]
+
+            inter_law(inter_law_param_ptr, dx2, pot)
+
+            bin_fac = (-4)*BinProdChargeSum[ibin]
+
+            pot[1] *= bin_fac
+
+            for idim in range(geodim):
+                df[idim] = pot[1]*dx[idim]
+
+            if BinSpaceRotIsId[ibin]:
+
+                for idim in range(geodim):
+                    pot_nrg_grad[ivec,isegm,idim] += df[idim]
+                    
+            else:
+
+                for jdim in range(geodim):
+                    for idim in range(geodim):
+                        pot_nrg_grad[ivec,isegm,idim] += BinSpaceRot[ibin,jdim,idim] *  df[jdim]
+
+            for idim in range(geodim):
+                pot_nrg_grad[ivec,isegmp,idim] -= df[idim]
                 
     free(dx)
     free(df)

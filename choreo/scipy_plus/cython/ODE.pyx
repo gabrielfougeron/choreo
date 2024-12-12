@@ -247,7 +247,7 @@ cdef inline void PyFun_apply_vectorized(
 
         f_res_vec_np = fun(all_t, all_x)
 
-        n = all_res.shape[0] * all_res.shape[1]
+        n = all_x.shape[0] * all_x.shape[1]
         scipy.linalg.cython_blas.dcopy(&n,&f_res_vec_np[0,0],&int_one,&all_res[0,0],&int_one)
 
     else:
@@ -1105,6 +1105,9 @@ cpdef ImplicitSymplecticIVP(
 
     cdef Py_ssize_t nsteps = rk_x._a_table.shape[0]
     cdef Py_ssize_t keep_start
+    cdef bint correct_shapes
+    cdef Py_ssize_t istep
+    cdef Py_ssize_t i,j
 
     if (rk_v._a_table.shape[0] != nsteps):
         raise ValueError("rk_x and rk_v must have the same shape")
@@ -1130,64 +1133,6 @@ cpdef ImplicitSymplecticIVP(
     cdef object py_fun, py_gun
     cdef int py_fun_type
 
-    if lowlevelfun.fun_type == PY_FUN:
-        py_fun = <object> lowlevelfun.py_fun
-        py_gun = <object> lowlevelgun.py_fun
-        
-        py_fun_res = py_fun(t_span[0], v0)
-        py_gun_res = py_gun(t_span[0], x0)
-
-        if isinstance(py_fun_res, float) and isinstance(py_gun_res, float):
-            py_fun_type = PY_FUN_FLOAT
-        elif isinstance(py_fun_res, np.ndarray) and isinstance(py_gun_res, np.ndarray):
-            py_fun_type = PY_FUN_NDARRAY
-
-            correct_shapes = True
-            
-            if vector_calls:
-                correct_shapes = correct_shapes and (py_fun_res.shape[0] == nsteps)
-                correct_shapes = correct_shapes and (py_gun_res.shape[0] == nsteps)
-                correct_shapes = correct_shapes and (py_fun_res.shape[1] == ndof)
-                correct_shapes = correct_shapes and (py_gun_res.shape[1] == ndof)
-
-            else:
-                correct_shapes = correct_shapes and (py_fun_res.shape[0] == ndof)
-                correct_shapes = correct_shapes and (py_gun_res.shape[0] == ndof)
-
-            if not(correct_shapes):
-                raise ValueError("Python functions fun and gun returned numpy.ndarray with wrong shape")
-
-        else:
-            raise ValueError(f"Could not recognize return type of python callable. Found {type(py_fun_res)} and {type(py_gun_res)}.")
-
-    else:
-        py_fun = None
-        py_gun = None
-        py_fun_type = -1
-
-    cdef bint DoTanIntegration = not(grad_fun is None) or not(grad_gun is None) or not(grad_x0 is None) or not(grad_v0 is None)
-
-    cdef ccallback_t callback_grad_fun
-    cdef LowLevelFun lowlevelgrad_fun
-
-    cdef ccallback_t callback_grad_gun
-    cdef LowLevelFun lowlevelgrad_gun
-
-    cdef object py_grad_fun_res = None
-    cdef object py_grad_gun_res = None
-    cdef object py_grad_fun, py_grad_gun
-
-    if (keep_freq < 0):
-        keep_freq = nint
-
-    cdef Py_ssize_t nint_keep = nint // keep_freq
-
-    if keep_init:
-        nint_keep += 1
-        keep_start = 1
-    else:
-        keep_start = 0
-
     cdef double[::1] x = x0.copy()
     cdef double[::1] v = v0.copy()
     cdef double[:,::1] K_fun = np.zeros((nsteps, ndof), dtype=np.float64)
@@ -1200,15 +1145,90 @@ cpdef ImplicitSymplecticIVP(
     cdef double[::1] all_t_x = np.empty((nsteps), dtype=np.float64) 
     cdef double[::1] all_t_v = np.empty((nsteps), dtype=np.float64) 
 
+    if lowlevelfun.fun_type == PY_FUN:
+
+        py_fun = <object> lowlevelfun.py_fun
+        py_gun = <object> lowlevelgun.py_fun
+
+        if vector_calls:
+            
+            py_fun_type = PY_FUN_NDARRAY
+
+            for istep in range(nsteps):
+                dX[istep,:] = x[:]
+                dV[istep,:] = v[:]
+                all_t_x[istep] = t_span[0]
+
+            py_fun_res = py_fun(all_t_x, dV)
+            py_gun_res = py_gun(all_t_x, dX)
+
+            if not(isinstance(py_fun_res, np.ndarray) and isinstance(py_gun_res, np.ndarray)):
+                raise ValueError("Incompatible fun or gun retur types. Provided {type(py_fun_res)} {type(py_gun_res)}")
+
+            correct_shapes = (py_fun_res.shape[0] == nsteps)
+            correct_shapes = (py_gun_res.shape[0] == nsteps)    and correct_shapes
+            correct_shapes = (py_fun_res.shape[1] == ndof)      and correct_shapes
+            correct_shapes = (py_gun_res.shape[1] == ndof)      and correct_shapes
+
+        else:
+
+            py_fun_res = py_fun(t_span[0], v0)
+            py_gun_res = py_gun(t_span[0], x0)
+
+            if isinstance(py_fun_res, float) and isinstance(py_gun_res, float):
+                py_fun_type = PY_FUN_FLOAT
+            elif isinstance(py_fun_res, np.ndarray) and isinstance(py_gun_res, np.ndarray):
+                py_fun_type = PY_FUN_NDARRAY
+
+                correct_shapes = (py_fun_res.shape[0] == ndof)
+                correct_shapes = (py_gun_res.shape[0] == ndof) and correct_shapes
+
+            else:
+                raise ValueError(f"Could not recognize return type of python callable. Found {type(py_fun_res)} and {type(py_gun_res)}.")
+
+        if not(correct_shapes):
+            raise ValueError("Python functions fun and gun returned numpy.ndarray with wrong shape")
+
+
+    else:
+        py_fun = None
+        py_gun = None
+        py_fun_type = -1
+
+    if (keep_freq < 0):
+        keep_freq = nint
+
+    cdef Py_ssize_t nint_keep = nint // keep_freq
+
+    if keep_init:
+        nint_keep += 1
+        keep_start = 1
+    else:
+        keep_start = 0
+
     cdef np.ndarray[double, ndim=2, mode="c"] x_keep_np = np.empty((nint_keep, ndof), dtype=np.float64)
     cdef np.ndarray[double, ndim=2, mode="c"] v_keep_np = np.empty((nint_keep, ndof), dtype=np.float64)
 
-    if keep_init:
-      x_keep_np[0,:] = x[:]  
-      v_keep_np[0,:] = v[:]  
+    istep = nint_keep-keep_start
 
-    cdef double[:,::1] x_keep = <double[:(nint_keep-keep_start),:ndof:1]> &x_keep_np[keep_start,0]
-    cdef double[:,::1] v_keep = <double[:(nint_keep-keep_start),:ndof:1]> &v_keep_np[keep_start,0]
+    cdef double[:,::1] x_keep = <double[:istep,:ndof:1]> &x_keep_np[keep_start,0]
+    cdef double[:,::1] v_keep = <double[:istep,:ndof:1]> &v_keep_np[keep_start,0]
+
+    if keep_init:
+        x_keep_np[0,:] = x[:]  
+        v_keep_np[0,:] = v[:]  
+
+    cdef bint DoTanIntegration = not(grad_fun is None) or not(grad_gun is None) or not(grad_x0 is None) or not(grad_v0 is None)
+
+    cdef ccallback_t callback_grad_fun
+    cdef LowLevelFun lowlevelgrad_fun
+
+    cdef ccallback_t callback_grad_gun
+    cdef LowLevelFun lowlevelgrad_gun
+
+    cdef object py_grad_fun_res = None
+    cdef object py_grad_gun_res = None
+    cdef object py_grad_fun, py_grad_gun
 
     cdef double[:,::1] grad_x
     cdef double[:,::1] grad_v
@@ -1224,7 +1244,6 @@ cpdef ImplicitSymplecticIVP(
     cdef double[:,:,::1] grad_x_keep
     cdef double[:,:,::1] grad_v_keep
     cdef int grad_ndof
-    cdef Py_ssize_t i,j
 
     if DoTanIntegration:
 
@@ -1290,36 +1309,48 @@ cpdef ImplicitSymplecticIVP(
         if lowlevelgrad_fun.fun_type == PY_FUN:
             py_grad_fun = <object> lowlevelgrad_fun.py_fun
             py_grad_gun = <object> lowlevelgrad_gun.py_fun
+
+        if vector_calls:
             
+            py_fun_type = PY_FUN_NDARRAY
+
+            for istep in range(nsteps):
+                dX[istep,:] = x[:]
+                dV[istep,:] = v[:]
+                grad_dX[istep,:,:] = grad_x[:,:]
+                grad_dV[istep,:,:] = grad_v[:,:]
+                all_t_x[istep] = t_span[0]
+
+            py_grad_fun_res = py_grad_fun(all_t_x, dV, grad_dV)
+            py_grad_gun_res = py_grad_gun(all_t_x, dX, grad_dX)
+
+            correct_shapes = (py_grad_fun_res.shape[0] == nsteps)
+            correct_shapes = (py_grad_gun_res.shape[0] == nsteps)       and correct_shapes
+            correct_shapes = (py_grad_fun_res.shape[1] == ndof)         and correct_shapes
+            correct_shapes = (py_grad_gun_res.shape[1] == ndof)         and correct_shapes
+            correct_shapes = (py_grad_fun_res.shape[2] == grad_ndof)    and correct_shapes
+            correct_shapes = (py_grad_gun_res.shape[2] == grad_ndof)    and correct_shapes
+
+        else:
+
             py_grad_fun_res = py_grad_fun(t_span[0], v0, grad_v)
             py_grad_gun_res = py_grad_gun(t_span[0], x0, grad_x)
 
             if isinstance(py_grad_fun_res, float) and isinstance(py_grad_gun_res, float):
                 py_grad_fun_type = PY_FUN_FLOAT
-            elif isinstance(py_fun_res, np.ndarray) and isinstance(py_grad_gun_res, np.ndarray):
+            elif isinstance(py_grad_fun_res, np.ndarray) and isinstance(py_grad_gun_res, np.ndarray):
                 py_grad_fun_type = PY_FUN_NDARRAY
 
-                correct_shapes = True
-                
-                if vector_calls:
-                    correct_shapes = correct_shapes and (py_grad_fun_res.shape[0] == nsteps)
-                    correct_shapes = correct_shapes and (py_grad_gun_res.shape[0] == nsteps)
-                    correct_shapes = correct_shapes and (py_grad_fun_res.shape[1] == ndof)
-                    correct_shapes = correct_shapes and (py_grad_gun_res.shape[1] == ndof)
-                    correct_shapes = correct_shapes and (py_grad_fun_res.shape[2] == grad_ndof)
-                    correct_shapes = correct_shapes and (py_grad_gun_res.shape[2] == grad_ndof)
-
-                else:
-                    correct_shapes = correct_shapes and (py_grad_fun_res.shape[0] == ndof)
-                    correct_shapes = correct_shapes and (py_grad_gun_res.shape[0] == ndof)
-                    correct_shapes = correct_shapes and (py_grad_fun_res.shape[1] == grad_ndof)
-                    correct_shapes = correct_shapes and (py_grad_gun_res.shape[1] == grad_ndof)
-
-                if not(correct_shapes):
-                    raise ValueError("Python functions grad_fun and grad_gun returned numpy.ndarray with wrong shape")
+                correct_shapes = (py_grad_fun_res.shape[0] == ndof)
+                correct_shapes = (py_grad_gun_res.shape[0] == ndof)         and correct_shapes
+                correct_shapes = (py_grad_fun_res.shape[1] == grad_ndof)    and correct_shapes
+                correct_shapes = (py_grad_gun_res.shape[1] == grad_ndof)    and correct_shapes
 
             else:
                 raise ValueError(f"Could not recognize return type of python callable. Found {type(py_grad_fun_res)} and {type(py_grad_gun_res)}.")
+
+        if not(correct_shapes):
+            raise ValueError("Python functions grad_fun and grad_gun returned numpy.ndarray with wrong shape")
 
         else:
             py_grad_fun = None
