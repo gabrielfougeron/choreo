@@ -252,7 +252,7 @@ def test_kin(NBS, float64_tols):
     def grad(x, dx):
         return np.dot(NBS.params_to_kin_nrg_grad(x), dx)
     
-    err = choreo.scipy_plus.test.compare_FD_and_exact_grad(
+    err = compare_FD_and_exact_grad(
         NBS.params_to_kin_nrg   ,
         grad                    ,
         params_buf              ,
@@ -276,7 +276,7 @@ def test_pot(NBS):
     
     dx = np.random.random((NBS.nparams))
 
-    err = choreo.scipy_plus.test.compare_FD_and_exact_grad(
+    err = compare_FD_and_exact_grad(
         NBS.params_to_pot_nrg   ,
         grad                    ,
         params_buf              ,
@@ -289,7 +289,7 @@ def test_pot(NBS):
     print(err.min())
     assert (err.min() <  1e-7)
     
-    err = choreo.scipy_plus.test.compare_FD_and_exact_grad(
+    err = compare_FD_and_exact_grad(
         NBS.params_to_pot_nrg_grad  ,
         NBS.params_to_pot_nrg_hess  ,
         params_buf                  ,
@@ -314,7 +314,7 @@ def test_action(NBS):
     
     dx = np.random.random((NBS.nparams))
 
-    err = choreo.scipy_plus.test.compare_FD_and_exact_grad(
+    err = compare_FD_and_exact_grad(
         NBS.params_to_action    ,
         grad                    ,
         params_buf              ,
@@ -327,7 +327,7 @@ def test_action(NBS):
     print(err.min())
     assert (err.min() <  1e-7)
     
-    err = choreo.scipy_plus.test.compare_FD_and_exact_grad(
+    err = compare_FD_and_exact_grad(
         NBS.params_to_action_grad   ,
         NBS.params_to_action_hess   ,
         params_buf                  ,

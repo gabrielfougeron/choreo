@@ -4,7 +4,6 @@ import numpy as np
 import scipy
 import choreo
 
-
 @pytest.mark.parametrize("method", ClassicalImplicitRKMethods)
 @pytest.mark.parametrize("nsteps", Small_orders)
 def test_ImplicitRKDefaultDPSIsEnough(float64_tols_strict, method, nsteps):

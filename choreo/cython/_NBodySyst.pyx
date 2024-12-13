@@ -26,6 +26,8 @@ from choreo.scipy_plus.cython.blas_consts cimport *
 from choreo.scipy_plus.cython.ccallback cimport ccallback_t, ccallback_prepare, ccallback_release, CCALLBACK_DEFAULTS, ccallback_signature_t
 from choreo.cython._ActionSym cimport ActionSym
 
+import ctypes
+
 # Explicit imports to avoid mysterious problems with CCALLBACK_DEFAULTS
 from choreo.NBodySyst_build import (
     ContainsDoubleEdges                 ,
@@ -7084,7 +7086,7 @@ cdef void segmpos_to_binary_path_stats(
 
     free(tmp_loc_dpos)
 
-cdef void Compute_forces(
+cdef inline void Compute_forces(
     double[:,::1] pos               , double[:,::1] pot_nrg_grad    ,
     Py_ssize_t[::1] BinSourceSegm   , Py_ssize_t[::1] BinTargetSegm ,
     double[:,:,::1] BinSpaceRot     , bint[::1] BinSpaceRotIsId     ,
@@ -7096,11 +7098,6 @@ cdef void Compute_forces(
     cdef Py_ssize_t geodim = BinSpaceRot.shape[1]
     cdef Py_ssize_t ibin, idim, jdim
     cdef Py_ssize_t isegm, isegmp
-
-    # cdef int inter_flags = get_inter_flags(
-    #     segm_size   , segm_store    ,
-    #     geodim_size , inter_law     ,
-    # )
 
     cdef double dx2
     cdef double bin_fac
@@ -7156,7 +7153,7 @@ cdef void Compute_forces(
     free(dx)
     free(df)
 
-cdef void Compute_forces_vectorized(
+cdef inline void Compute_forces_vectorized(
     double[:,:,::1] pos             , double[:,:,::1] pot_nrg_grad    ,
     Py_ssize_t[::1] BinSourceSegm   , Py_ssize_t[::1] BinTargetSegm ,
     double[:,:,::1] BinSpaceRot     , bint[::1] BinSpaceRotIsId     ,
@@ -7169,11 +7166,6 @@ cdef void Compute_forces_vectorized(
     cdef Py_ssize_t ibin, idim, jdim
     cdef Py_ssize_t isegm, isegmp
     cdef Py_ssize_t ivec, nvec
-
-    # cdef int inter_flags = get_inter_flags(
-    #     segm_size   , segm_store    ,
-    #     geodim_size , inter_law     ,
-    # )
 
     cdef double dx2
     cdef double bin_fac
