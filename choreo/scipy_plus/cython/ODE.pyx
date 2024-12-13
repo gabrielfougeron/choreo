@@ -301,7 +301,10 @@ cdef class ExplicitSymplecticRKTable:
     @cython.final
     @property
     def th_cvg_rate(self):
-        return self._th_cvg_rate
+        if self._th_cvg_rate > 0:
+            return self._th_cvg_rate
+        else:
+            return None
 
     @cython.final
     def symmetric_adjoint(self):

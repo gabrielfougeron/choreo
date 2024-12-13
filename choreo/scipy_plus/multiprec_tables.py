@@ -650,7 +650,6 @@ def Yoshida_w_to_cd_reduced(w, th_cvg_rate):
         val = w[m-1-i]
         d_table[i]      = val
         d_table[n-2-i]  = val
-
         
     c_table[0]   = w[m-1] / 2
     c_table[n-1] = w[m-1] / 2

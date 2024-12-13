@@ -57,17 +57,17 @@ if NUMBA_AVAILABLE:
     
     default_numba_kwargs = {
         'nopython':True     ,
-        'cache':True        ,
+        # 'cache':True        ,
         'fastmath':True     ,
         'nogil':True        ,
     }
 
-    def nb_jit_inplace_double_array(integrand_function, numba_kwargs = default_numba_kwargs):
-        jitted_function = numba.jit(integrand_function, **numba_kwargs)
+    def nb_jit_c_fun_pointer(py_fun, numba_kwargs = default_numba_kwargs):
 
         #func(double t, double *x, double *res)
-        @numba.cfunc(numba.types.void(numba.types.float64, numba.types.CPointer(numba.types.float64), numba.types.CPointer(numba.types.float64)))
-        def wrapped(t, x, res):   
-            jitted_function(t, x, res)
+        sig = numba.types.void(numba.types.float64, numba.types.CPointer(numba.types.float64), numba.types.CPointer(numba.types.float64))
+
+        cfunc_fun = numba.cfunc(sig, **numba_kwargs)(py_fun)
         
-        return scipy.LowLevelCallable(wrapped.ctypes)
+        return scipy.LowLevelCallable(cfunc_fun.ctypes)
+        

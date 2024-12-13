@@ -6,6 +6,7 @@ test functions
 
 import os
 cimport scipy.linalg.cython_blas
+from choreo.scipy_plus.cython.blas_consts cimport *
 from libc.stdlib cimport malloc, free
 
 import numpy as np
@@ -14,13 +15,60 @@ np.import_array()
 
 cimport cython
 
-from libc.math cimport pow as cpow
-from libc.math cimport fabs as cfabs
-from libc.math cimport cos as ccos
 from libc.math cimport sin as csin
-from libc.math cimport sqrt as csqrt
-from libc.math cimport isnan as cisnan
-from libc.math cimport isinf as cisinf
+
+
+# y'' = -y
+cdef void ypp_eq_my_c_fun_memoryview(
+    double t        ,
+    double[::1] x   ,
+    double[::1] res ,
+) noexcept nogil:
+
+    cdef int n = res.shape[0]
+
+    scipy.linalg.cython_blas.dcopy(&n,&x[0],&int_one,&res[0],&int_one)
+
+cdef void ypp_eq_my_c_gun_memoryview(
+    double t        ,
+    double[::1] v   ,
+    double[::1] res ,
+) noexcept nogil:
+
+    cdef int n = res.shape[0]
+
+    scipy.linalg.cython_blas.dcopy(&n,&v[0],&int_one,&res[0],&int_one)
+    scipy.linalg.cython_blas.dscal(&n,&minusone_double,&res[0],&int_one)
+
+cdef void ypp_eq_my_c_fun_memoryview_vec(
+    double t            ,
+    double[:,::1] x     ,
+    double[:,::1] res   ,
+) noexcept nogil:
+
+    cdef int n = res.shape[0] * res.shape[1]
+
+    scipy.linalg.cython_blas.dcopy(&n,&x[0,0],&int_one,&res[0,0],&int_one)
+
+cdef void ypp_eq_my_c_gun_memoryview_vec(
+    double t            ,
+    double[:,::1] v     ,
+    double[:,::1] res   ,
+) noexcept nogil:
+
+    cdef int n = res.shape[0] * res.shape[1]
+
+    scipy.linalg.cython_blas.dcopy(&n,&v[0,0],&int_one,&res[0,0],&int_one)
+    scipy.linalg.cython_blas.dscal(&n,&minusone_double,&res[0,0],&int_one)
+
+
+
+
+
+
+
+
+
 
 
 cdef inline void single_cy_fun_pointer(

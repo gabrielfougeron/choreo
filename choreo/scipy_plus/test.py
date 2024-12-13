@@ -50,7 +50,7 @@ def ODE_define_test(eq_name):
 
         test_ndim = 2
 
-        ex_sol = lambda t : np.array( [ np.cos(t) , np.sin(t),-np.sin(t), np.cos(t) ]  )
+        ex_sol = lambda t : np.array( [ np.cos(t) , np.sin(t), -np.sin(t), np.cos(t) ]  )
 
         fun = lambda t,y:   np.asarray(y)
         gun = lambda t,x:  -np.asarray(x)
