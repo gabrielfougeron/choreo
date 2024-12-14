@@ -38,16 +38,20 @@ cdef int C_FUN_MEMORYVIEW = 0
 cdef int C_FUN_MEMORYVIEW_VEC = 1
 cdef int C_FUN_POINTER = 2
 cdef int C_FUN_POINTER_VEC = 3
-cdef int C_GRAD_FUN_MEMORYVIEW = 4
-cdef int C_GRAD_FUN_MEMORYVIEW_VEC = 5
-cdef int C_GRAD_FUN_POINTER = 6
-cdef int C_GRAD_FUN_POINTER_VEC = 7
-cdef int N_SIGNATURES = 8
-
-cdef ccallback_signature_t signatures[9]
-
-cdef int PY_FUN_FLOAT = 0
-cdef int PY_FUN_NDARRAY = 1 
+cdef int C_FUN_MEMORYVIEW_DATA = 4
+cdef int C_FUN_MEMORYVIEW_VEC_DATA = 5
+cdef int C_FUN_POINTER_DATA = 6
+cdef int C_FUN_POINTER_VEC_DATA = 7
+cdef int C_GRAD_FUN_MEMORYVIEW = 8
+cdef int C_GRAD_FUN_MEMORYVIEW_VEC = 9
+cdef int C_GRAD_FUN_POINTER = 10
+cdef int C_GRAD_FUN_POINTER_VEC = 11
+cdef int C_GRAD_FUN_MEMORYVIEW_DATA = 12
+cdef int C_GRAD_FUN_MEMORYVIEW_VEC_DATA = 13
+cdef int C_GRAD_FUN_POINTER_DATA = 14
+cdef int C_GRAD_FUN_POINTER_VEC_DATA = 15
+cdef int N_SIGNATURES = 16
+cdef ccallback_signature_t signatures[17]
 
 ctypedef void (*c_fun_type_memoryview)(double, double[::1], double[::1]) noexcept nogil 
 signatures[C_FUN_MEMORYVIEW].signature = b"void (double, __Pyx_memviewslice, __Pyx_memviewslice)"
@@ -65,6 +69,22 @@ ctypedef void (*c_fun_type_pointer_vec)(double*, double*, double*) noexcept nogi
 signatures[C_FUN_POINTER_VEC].signature = b"void (double *, double *, double *)"
 signatures[C_FUN_POINTER_VEC].value = C_FUN_POINTER_VEC
 
+ctypedef void (*c_fun_type_memoryview_data)(double, double[::1], double[::1], void*) noexcept nogil 
+signatures[C_FUN_MEMORYVIEW_DATA].signature = b"void (double, __Pyx_memviewslice, __Pyx_memviewslice, void *)"
+signatures[C_FUN_MEMORYVIEW_DATA].value = C_FUN_MEMORYVIEW_DATA
+
+ctypedef void (*c_fun_type_memoryview_vec_data)(double[::1], double[:,::1], double[:,::1], void*) noexcept nogil 
+signatures[C_FUN_MEMORYVIEW_VEC_DATA].signature = b"void (__Pyx_memviewslice, __Pyx_memviewslice, __Pyx_memviewslice, void *)"
+signatures[C_FUN_MEMORYVIEW_VEC_DATA].value = C_FUN_MEMORYVIEW_VEC_DATA
+
+ctypedef void (*c_fun_type_pointer_data)(double, double*, double*, void*) noexcept nogil 
+signatures[C_FUN_POINTER_DATA].signature = b"void (double, double *, double *, void *)"
+signatures[C_FUN_POINTER_DATA].value = C_FUN_POINTER_DATA
+
+ctypedef void (*c_fun_type_pointer_vec_data)(double*, double*, double*, void*) noexcept nogil 
+signatures[C_FUN_POINTER_VEC_DATA].signature = b"void (double *, double *, double *, void *)"
+signatures[C_FUN_POINTER_VEC_DATA].value = C_FUN_POINTER_VEC_DATA
+
 ctypedef void (*c_grad_fun_type_memoryview)(double, double[::1], double[:,::1], double[:,::1]) noexcept nogil 
 signatures[C_GRAD_FUN_MEMORYVIEW].signature = b"void (double, __Pyx_memviewslice, __Pyx_memviewslice, __Pyx_memviewslice)"
 signatures[C_GRAD_FUN_MEMORYVIEW].value = C_GRAD_FUN_MEMORYVIEW
@@ -81,6 +101,22 @@ ctypedef void (*c_grad_fun_type_pointer_vec)(double*, double*, double*, double*)
 signatures[C_GRAD_FUN_POINTER_VEC].signature = b"void (double *, double *, double *, double *)"
 signatures[C_GRAD_FUN_POINTER_VEC].value = C_GRAD_FUN_POINTER_VEC
 
+ctypedef void (*c_grad_fun_type_memoryview_data)(double, double[::1], double[:,::1], double[:,::1], void*) noexcept nogil 
+signatures[C_GRAD_FUN_MEMORYVIEW_DATA].signature = b"void (double, __Pyx_memviewslice, __Pyx_memviewslice, __Pyx_memviewslice, void *)"
+signatures[C_GRAD_FUN_MEMORYVIEW_DATA].value = C_GRAD_FUN_MEMORYVIEW_DATA
+
+ctypedef void (*c_grad_fun_type_memoryview_vec_data)(double[::1], double[:,::1], double[:,:,::1], double[:,:,::1], void*) noexcept nogil 
+signatures[C_GRAD_FUN_MEMORYVIEW_VEC_DATA].signature = b"void (__Pyx_memviewslice, __Pyx_memviewslice, __Pyx_memviewslice, __Pyx_memviewslice, void *)"
+signatures[C_GRAD_FUN_MEMORYVIEW_VEC_DATA].value = C_GRAD_FUN_MEMORYVIEW_VEC_DATA
+
+ctypedef void (*c_grad_fun_type_pointer_data)(double, double*, double*, double*, void*) noexcept nogil 
+signatures[C_GRAD_FUN_POINTER_DATA].signature = b"void (double, double *, double *, double *, void *)"
+signatures[C_GRAD_FUN_POINTER_DATA].value = C_GRAD_FUN_POINTER_DATA
+
+ctypedef void (*c_grad_fun_type_pointer_vec_data)(double*, double*, double*, double*, void*) noexcept nogil 
+signatures[C_GRAD_FUN_POINTER_VEC_DATA].signature = b"void (double *, double *, double *, double *, void *)"
+signatures[C_GRAD_FUN_POINTER_VEC_DATA].value = C_GRAD_FUN_POINTER_VEC_DATA
+
 signatures[N_SIGNATURES].signature = NULL
 
 cdef inline void LowLevelFun_apply(
@@ -94,15 +130,34 @@ cdef inline void LowLevelFun_apply(
     cdef double[::1] res_1D
 
     if (callback.py_function == NULL):
-        
-        if callback.signature.value == C_FUN_MEMORYVIEW:
 
-            (<c_fun_type_memoryview> callback.c_function)(t, x, res)
+        if (callback.user_data == NULL):
+            
+            if callback.signature.value == C_FUN_MEMORYVIEW:
 
-        elif callback.signature.value == C_FUN_POINTER:
+                (<c_fun_type_memoryview> callback.c_function)(t, x, res)
 
-            (<c_fun_type_pointer> callback.c_function)(t, &x[0], &res[0])
+            elif callback.signature.value == C_FUN_POINTER:
 
+                (<c_fun_type_pointer> callback.c_function)(t, &x[0], &res[0])
+
+            else:
+                with gil:
+                    raise ValueError("Incompatible function signature.")
+
+        else:
+
+            if callback.signature.value == C_FUN_MEMORYVIEW_DATA:
+
+                (<c_fun_type_memoryview_data> callback.c_function)(t, x, res, callback.user_data)
+
+            elif callback.signature.value == C_FUN_POINTER_DATA:
+
+                (<c_fun_type_pointer_data> callback.c_function)(t, &x[0], &res[0], callback.user_data)
+
+            else:
+                with gil:
+                    raise ValueError("Incompatible function signature.")
     else:
 
         with gil:
@@ -123,15 +178,33 @@ cdef inline void LowLevelFun_grad_apply(
     cdef double[:,::1] res_2D
 
     if (callback.py_function == NULL):
-        
-        if callback.signature.value == C_GRAD_FUN_MEMORYVIEW:
 
-            (<c_grad_fun_type_memoryview> callback.c_function)(t, x, grad_x, res)
+        if (callback.user_data == NULL):
+            
+            if callback.signature.value == C_GRAD_FUN_MEMORYVIEW:
 
-        elif callback.signature.value == C_GRAD_FUN_POINTER:
+                (<c_grad_fun_type_memoryview> callback.c_function)(t, x, grad_x, res)
 
-            (<c_grad_fun_type_pointer> callback.c_function)(t, &x[0], &grad_x[0,0], &res[0,0])
+            elif callback.signature.value == C_GRAD_FUN_POINTER:
 
+                (<c_grad_fun_type_pointer> callback.c_function)(t, &x[0], &grad_x[0,0], &res[0,0])
+
+            else:
+                with gil:
+                    raise ValueError("Incompatible function signature.")
+        else:
+
+            if callback.signature.value == C_GRAD_FUN_MEMORYVIEW_DATA:
+
+                (<c_grad_fun_type_memoryview_data> callback.c_function)(t, x, grad_x, res, callback.user_data)
+
+            elif callback.signature.value == C_GRAD_FUN_POINTER_DATA:
+
+                (<c_grad_fun_type_pointer_data> callback.c_function)(t, &x[0], &grad_x[0,0], &res[0,0], callback.user_data)
+
+            else:
+                with gil:
+                    raise ValueError("Incompatible function signature.")
     else:
 
         with gil:
@@ -155,28 +228,73 @@ cdef inline void LowLevelFun_apply_vectorized(
     cdef double[:,::1] res_2D
 
     if (callback.py_function == NULL):
-        
-        if vector_calls:
 
-            if callback.signature.value == C_FUN_MEMORYVIEW_VEC:
+        if (callback.user_data == NULL):
+                
+            if vector_calls:
 
-                (<c_fun_type_memoryview_vec> callback.c_function)(all_t, all_x, all_res)
+                if callback.signature.value == C_FUN_MEMORYVIEW_VEC:
 
-            elif callback.signature.value == C_FUN_POINTER_VEC:
+                    (<c_fun_type_memoryview_vec> callback.c_function)(all_t, all_x, all_res)
 
-                (<c_fun_type_pointer_vec> callback.c_function)(&all_t[0], &all_x[0,0], &all_res[0,0])
+                elif callback.signature.value == C_FUN_POINTER_VEC:
+
+                    (<c_fun_type_pointer_vec> callback.c_function)(&all_t[0], &all_x[0,0], &all_res[0,0])
+
+                else:
+                    with gil:
+                        raise ValueError("Incompatible function signature.")
+
+            else:
+
+                if callback.signature.value == C_FUN_MEMORYVIEW:
+
+                    for i in range(all_t.shape[0]):
+                        (<c_fun_type_memoryview> callback.c_function)(all_t[i], all_x[i,:], all_res[i,:])
+
+                elif callback.signature.value == C_FUN_POINTER:
+
+                    for i in range(all_t.shape[0]):
+                        (<c_fun_type_pointer> callback.c_function)(all_t[i], &all_x[i,0], &all_res[i,0])
+
+                else:
+                    with gil:
+                        raise ValueError("Incompatible function signature.")
 
         else:
+                
+            if vector_calls:
 
-            if callback.signature.value == C_FUN_MEMORYVIEW:
+                if callback.signature.value == C_FUN_MEMORYVIEW_VEC_DATA:
 
-                for i in range(all_t.shape[0]):
-                    (<c_fun_type_memoryview> callback.c_function)(all_t[i], all_x[i,:], all_res[i,:])
+                    with gil:
+                        print("C_FUN_MEMORYVIEW_VEC_DATA")
 
-            elif callback.signature.value == C_FUN_POINTER:
+                    (<c_fun_type_memoryview_vec_data> callback.c_function)(all_t, all_x, all_res, callback.user_data)
 
-                for i in range(all_t.shape[0]):
-                    (<c_fun_type_pointer> callback.c_function)(all_t[i], &all_x[i,0], &all_res[i,0])
+                elif callback.signature.value == C_FUN_POINTER_VEC_DATA:
+
+                    (<c_fun_type_pointer_vec_data> callback.c_function)(&all_t[0], &all_x[0,0], &all_res[0,0], callback.user_data)
+
+                else:
+                    with gil:
+                        raise ValueError("Incompatible function signature.")
+
+            else:
+
+                if callback.signature.value == C_FUN_MEMORYVIEW_DATA:
+
+                    for i in range(all_t.shape[0]):
+                        (<c_fun_type_memoryview_data> callback.c_function)(all_t[i], all_x[i,:], all_res[i,:], callback.user_data)
+
+                elif callback.signature.value == C_FUN_POINTER_DATA:
+
+                    for i in range(all_t.shape[0]):
+                        (<c_fun_type_pointer_data> callback.c_function)(all_t[i], &all_x[i,0], &all_res[i,0], callback.user_data)
+
+                else:
+                    with gil:
+                        raise ValueError("Incompatible function signature.")
 
     else:
 
@@ -216,28 +334,68 @@ cdef inline void LowLevelFun_apply_grad_vectorized(
 
     if (callback.py_function == NULL):
             
-        if vector_calls:
+        if (callback.user_data == NULL):
+                    
+            if vector_calls:
 
-            if callback.signature.value == C_GRAD_FUN_MEMORYVIEW_VEC:
+                if callback.signature.value == C_GRAD_FUN_MEMORYVIEW_VEC:
 
-                (<c_grad_fun_type_memoryview_vec> callback.c_function)(all_t, all_x, all_grad_x, all_res)
+                    (<c_grad_fun_type_memoryview_vec> callback.c_function)(all_t, all_x, all_grad_x, all_res)
 
-            elif callback.signature.value == C_GRAD_FUN_POINTER_VEC:
+                elif callback.signature.value == C_GRAD_FUN_POINTER_VEC:
 
-                (<c_grad_fun_type_pointer_vec> callback.c_function)(&all_t[0], &all_x[0,0], &all_grad_x[0,0,0], &all_res[0,0,0])
+                    (<c_grad_fun_type_pointer_vec> callback.c_function)(&all_t[0], &all_x[0,0], &all_grad_x[0,0,0], &all_res[0,0,0])
 
+                else:
+                    with gil:
+                        raise ValueError("Incompatible function signature.")
+            else:
+
+                if callback.signature.value == C_GRAD_FUN_MEMORYVIEW:
+
+                    for i in range(all_t.shape[0]):
+                        (<c_grad_fun_type_memoryview> callback.c_function)(all_t[i], all_x[i,:], all_grad_x[i,:,:], all_res[i,:,:])
+
+                elif callback.signature.value == C_GRAD_FUN_POINTER:
+
+                    for i in range(all_t.shape[0]):
+                        (<c_grad_fun_type_pointer> callback.c_function)(all_t[i], &all_x[i,0], &all_grad_x[i,0,0], &all_res[i,0,0])
+
+                else:
+                    with gil:
+                        raise ValueError("Incompatible function signature.")
+        
         else:
 
-            if callback.signature.value == C_GRAD_FUN_MEMORYVIEW:
+            if vector_calls:
 
-                for i in range(all_t.shape[0]):
-                    (<c_grad_fun_type_memoryview> callback.c_function)(all_t[i], all_x[i,:], all_grad_x[i,:,:], all_res[i,:,:])
+                if callback.signature.value == C_GRAD_FUN_MEMORYVIEW_VEC_DATA:
 
-            elif callback.signature.value == C_GRAD_FUN_POINTER:
+                    (<c_grad_fun_type_memoryview_vec_data> callback.c_function)(all_t, all_x, all_grad_x, all_res, callback.user_data)
 
-                for i in range(all_t.shape[0]):
-                    (<c_grad_fun_type_pointer> callback.c_function)(all_t[i], &all_x[i,0], &all_grad_x[i,0,0], &all_res[i,0,0])
+                elif callback.signature.value == C_GRAD_FUN_POINTER_VEC_DATA:
 
+                    (<c_grad_fun_type_pointer_vec_data> callback.c_function)(&all_t[0], &all_x[0,0], &all_grad_x[0,0,0], &all_res[0,0,0], callback.user_data)
+
+                else:
+                    with gil:
+                        raise ValueError("Incompatible function signature.")
+            else:
+
+                if callback.signature.value == C_GRAD_FUN_MEMORYVIEW_DATA:
+
+                    for i in range(all_t.shape[0]):
+                        (<c_grad_fun_type_memoryview_data> callback.c_function)(all_t[i], all_x[i,:], all_grad_x[i,:,:], all_res[i,:,:], callback.user_data)
+
+                elif callback.signature.value == C_GRAD_FUN_POINTER_DATA:
+
+                    for i in range(all_t.shape[0]):
+                        (<c_grad_fun_type_pointer_data> callback.c_function)(all_t[i], &all_x[i,0], &all_grad_x[i,0,0], &all_res[i,0,0], callback.user_data)
+
+                else:
+                    with gil:
+                        raise ValueError("Incompatible function signature.")
+                        
     else:
 
         with gil:

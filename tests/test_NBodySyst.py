@@ -689,17 +689,15 @@ def test_periodicity_default(float64_tols, NBS, params_buf):
     
     assert np.allclose(dx, np.zeros((ndof), dtype=np.float64), rtol = float64_tols.rtol, atol = float64_tols.atol)  
         
+@pytest.mark.parametrize("LowLevel", [True, False])
 @pytest.mark.parametrize("vector_calls", [True, False])
 @pytest.mark.parametrize("NBS,params_buf", [pytest.param(NBS, params_buf, id=name) for name, (NBS, params_buf) in Sols_dict.items()])
-def test_ODE_vs_spectral(float64_tols_loose, NBS, params_buf, vector_calls):
+def test_ODE_vs_spectral(float64_tols_loose, NBS, params_buf, vector_calls, LowLevel):
         
     NBS.ForceGreaterNStore = True
     segmpos = NBS.params_to_segmpos(params_buf)
-
-    # vector_calls = False
-    vector_calls = True
     
-    ODE_Syst = NBS.Get_ODE_def(params_buf, vector_calls=vector_calls)
+    ODE_Syst = NBS.Get_ODE_def(params_buf, vector_calls = vector_calls, LowLevel = LowLevel)
     
     nsteps = 10
     keep_freq = 1
