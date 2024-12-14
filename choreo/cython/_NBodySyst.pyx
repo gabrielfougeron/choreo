@@ -4012,7 +4012,13 @@ cdef class NBodySyst():
     def Get_ODE_def(self, double[::1] params_mom_buf, vector_calls = False, LowLevel = False):
 
         xo, po = self.Compute_init_pos_mom(params_mom_buf)
-        t_span = (0., 1./self.nint_min)
+
+        dict_res = {
+            "t_span" : (0., 1./self.nint_min)   ,
+            "x0" : xo                           ,
+            "v0" : po                           ,
+            "vector_calls" : vector_calls       ,
+        }
 
         if LowLevel:
 
@@ -4022,65 +4028,45 @@ cdef class NBodySyst():
 
             if vector_calls:
 
-                return {
-                    "fun" : scipy.LowLevelCallable.from_cython(
-                        choreo.cython._NBodySyst                    ,
-                        "Compute_velocities_vectorized_user_data"   ,
-                        user_data                                   ,
-                    )                       ,
-                    "gun" : scipy.LowLevelCallable.from_cython(
-                        choreo.cython._NBodySyst                    ,
-                        "Compute_forces_vectorized_user_data"       ,
-                        user_data                                   ,
-                    )                       ,
-                    "t_span" : t_span       ,
-                    "x0" : xo               ,
-                    "v0" : po               ,
-                    "vector_calls" : True   ,
-                }
+                dict_res["fun"] = scipy.LowLevelCallable.from_cython(
+                    choreo.cython._NBodySyst                    ,
+                    "Compute_velocities_vectorized_user_data"   ,
+                    user_data                                   ,
+                )
+
+                dict_res["gun"] = scipy.LowLevelCallable.from_cython(
+                    choreo.cython._NBodySyst                    ,
+                    "Compute_forces_vectorized_user_data"       ,
+                    user_data                                   ,
+                )
 
             else:
 
-                return {
-                    "fun" : scipy.LowLevelCallable.from_cython(
-                        choreo.cython._NBodySyst                    ,
-                        "Compute_velocities_user_data"              ,
-                        user_data                                   ,
-                    )  ,
-                    "gun" : scipy.LowLevelCallable.from_cython(
-                        choreo.cython._NBodySyst                    ,
-                        "Compute_forces_user_data"                  ,
-                        user_data                                   ,
-                    )                       ,
-                    "t_span" : t_span       ,
-                    "x0" : xo               ,
-                    "v0" : po               ,
-                    "vector_calls" : False  ,
-                }
+                dict_res["fun"] = scipy.LowLevelCallable.from_cython(
+                    choreo.cython._NBodySyst                    ,
+                    "Compute_velocities_user_data"              ,
+                    user_data                                   ,
+                )
+
+                dict_res["gun"] = scipy.LowLevelCallable.from_cython(
+                    choreo.cython._NBodySyst                    ,
+                    "Compute_forces_user_data"                  ,
+                    user_data                                   ,
+                )
 
         else:
 
             if vector_calls:
 
-                return {
-                    "fun" : self.Compute_velocities_vectorized  ,
-                    "gun" : self.Compute_forces_vectorized      ,
-                    "t_span" : t_span                           ,
-                    "x0" : xo                                   ,
-                    "v0" : po                                   ,
-                    "vector_calls" : True                       ,
-                }
+                dict_res["fun"] = self.Compute_velocities_vectorized
+                dict_res["gun"] = self.Compute_forces_vectorized
 
             else:
 
-                return {
-                    "fun" : self.Compute_velocities ,
-                    "gun" : self.Compute_forces     ,
-                    "t_span" : t_span               ,
-                    "x0" : xo                       ,
-                    "v0" : po                       ,
-                    "vector_calls" : False          ,
-                }
+                dict_res["fun"] = self.Compute_velocities
+                dict_res["gun"] = self.Compute_forces
+
+        return dict_res
 
 @cython.cdivision(True)
 cdef void Make_Init_bounds_coeffs(

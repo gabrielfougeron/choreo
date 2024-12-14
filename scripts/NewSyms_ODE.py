@@ -33,9 +33,9 @@ def main():
         
         if ext == '.json':
             
-            print()
-            print(file_basename)
-            print()
+            # print()
+            # print(file_basename)
+            # print()
 
             with open(os.path.join(input_folder, thefile)) as jsonFile:
                 extra_args_dict = json.load(jsonFile)
@@ -46,8 +46,8 @@ def main():
             NBS.ForceGreaterNStore = True
             segmpos = NBS.params_to_segmpos(params_buf)
             
-            vector_calls = False
-            # vector_calls = True
+            # vector_calls = False
+            vector_calls = True
             
             # LowLevel = False
             LowLevel = True
@@ -75,15 +75,15 @@ def main():
             
             segmpos_ODE = np.ascontiguousarray(segmpos_ODE.reshape((NBS.segm_store, NBS.nsegm, NBS.geodim)).swapaxes(0, 1))
 
-            NBS.plot_segmpos_2D(segmpos_ODE, os.path.join(full_out_file_basename+'.png'))
-            print(np.linalg.norm(segmpos - segmpos_ODE))
+            # NBS.plot_segmpos_2D(segmpos_ODE, os.path.join(full_out_file_basename+'.png'))
+            # print(np.linalg.norm(segmpos - segmpos_ODE))
             
             xo = np.ascontiguousarray(segmpos_ODE[:,0 ,:].reshape(-1))
             xf = np.ascontiguousarray(segmpos_ODE[:,-1,:].reshape(-1))
             
             dx = NBS.Compute_periodicity_default(xo, xf)
             
-            print(np.linalg.norm(dx))
+            # print(np.linalg.norm(dx))
             
             TT.toc("plot")
 
