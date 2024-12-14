@@ -658,11 +658,13 @@ cdef class NBodySyst():
 
         self.nrem = np.sum(self._nco_in_loop)
 
+        self.Compute_n_sub_fft()
+
         self._invsegmmass = np.empty((self.nsegm), dtype=np.float64)
         for isegm in range(self.nsegm):
             self._invsegmmass[isegm] = 1. / self._loopmass[self._bodyloop[self._intersegm_to_body[isegm]]]
 
-        self.Compute_n_sub_fft()
+        self.Update_ODE_params()
 
         if MKL_FFT_AVAILABLE:
             self.fft_backend = "mkl"
@@ -3935,16 +3937,14 @@ cdef class NBodySyst():
 
         assert mom_flat.shape[0] == self.nsegm * self.geodim
 
-        cdef Py_ssize_t isegm, idim, i
-        cdef double mass
-
         cdef np.ndarray[double, ndim=1, mode='c'] res = np.empty((self.nsegm * self.geodim), dtype=np.float64)
 
-        for isegm in range(self.nsegm):
-            mass = self._loopmass[self._bodyloop[self._intersegm_to_body[isegm]]]
-            for idim in range(self.geodim):
-                i = isegm * self.geodim + idim
-                res[i] = mom_flat[i] / mass
+        Compute_velocities_vectorized(
+            &mom_flat[0]            , &res[0]       ,
+            self.nbin_segm_unique   , self.geodim   ,   
+            self.nsegm              , 1             ,  
+            &self._invsegmmass[0]   , 
+        )
 
         return res
 
@@ -3954,20 +3954,16 @@ cdef class NBodySyst():
 
         assert mom_flat.shape[1] == self.nsegm * self.geodim
 
-        cdef Py_ssize_t nsteps = mom_flat.shape[0]
-        cdef Py_ssize_t istep
+        cdef Py_ssize_t nvec = mom_flat.shape[0]
 
-        cdef Py_ssize_t isegm, idim, i
-        cdef double mass
+        cdef np.ndarray[double, ndim=2, mode='c'] res = np.empty((nvec, self.nsegm * self.geodim), dtype=np.float64)
 
-        cdef np.ndarray[double, ndim=2, mode='c'] res = np.empty((nsteps, self.nsegm * self.geodim), dtype=np.float64)
-
-        for istep in range(nsteps):
-            for isegm in range(self.nsegm):
-                mass = self._loopmass[self._bodyloop[self._intersegm_to_body[isegm]]]
-                for idim in range(self.geodim):
-                    i = isegm * self.geodim + idim
-                    res[istep,i] = mom_flat[istep,i] / mass
+        Compute_velocities_vectorized(
+            &mom_flat[0,0]          , &res[0,0]     ,
+            self.nbin_segm_unique   , self.geodim   ,   
+            self.nsegm              , nvec          ,  
+            &self._invsegmmass[0]   , 
+        )
 
         return res
 
@@ -3976,7 +3972,7 @@ cdef class NBodySyst():
 
         assert pos_flat.shape[0] == self.nsegm * self.geodim
 
-        cdef np.ndarray[double, ndim=1, mode='c'] res = np.zeros((self.nsegm * self.geodim), dtype=np.float64)
+        cdef np.ndarray[double, ndim=1, mode='c'] res = np.empty((self.nsegm * self.geodim), dtype=np.float64)
 
         Compute_forces_vectorized(
             &pos_flat[0]                , &res[0]                   ,
@@ -3997,7 +3993,7 @@ cdef class NBodySyst():
 
         cdef Py_ssize_t nvec = pos_flat.shape[0]
 
-        cdef np.ndarray[double, ndim=2, mode='c'] res = np.zeros((nvec, self.nsegm * self.geodim), dtype=np.float64)
+        cdef np.ndarray[double, ndim=2, mode='c'] res = np.empty((nvec, self.nsegm * self.geodim), dtype=np.float64)
 
         Compute_forces_vectorized(
             &pos_flat[0,0]              , &res[0,0]                 ,
@@ -4021,10 +4017,6 @@ cdef class NBodySyst():
         if LowLevel:
 
             self.Update_ODE_params()
-
-            # intval = <uintptr_t> self._ODE_params_ptr
-            # print(type(intval), intval)
-            # user_data = ctypes.c_void_p(intval)
 
             user_data = ctypes.c_void_p(<uintptr_t> self._ODE_params_ptr)
 
@@ -7204,6 +7196,9 @@ cdef inline void Compute_forces_vectorized(
     cdef double* dx = <double*> malloc(sizeof(double)*geodim)
     cdef double* df = <double*> malloc(sizeof(double)*geodim)
 
+    cdef Py_ssize_t nmem = nvec * nsegm * geodim
+    memset(forces, 0, sizeof(double)*nmem)
+
     for ivec in range(nvec):
 
         vec_pos     = pos    + ivec * vec_size
@@ -7324,7 +7319,7 @@ cdef inline void Compute_velocities_vectorized(
     double* InvSegmMass , 
 ) noexcept nogil:
 
-    cdef Py_ssize_t isegm, idim, i, ivec
+    cdef Py_ssize_t isegm, idim, ivec
     cdef Py_ssize_t vec_size = nsegm * geodim
     cdef double* cur_mom
     cdef double* cur_res
@@ -7342,7 +7337,7 @@ cdef inline void Compute_velocities_vectorized(
 
             for idim in range(geodim):
 
-                res[i] = cur_mom[i] * invmass
+                cur_res[0] = cur_mom[0] * invmass
 
                 cur_mom += 1
                 cur_res += 1

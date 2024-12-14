@@ -46,13 +46,16 @@ def main():
             NBS.ForceGreaterNStore = True
             segmpos = NBS.params_to_segmpos(params_buf)
             
-            # vector_calls = False
-            vector_calls = True
+            vector_calls = False
+            # vector_calls = True
             
-            ODE_Syst = NBS.Get_ODE_def(params_buf, vector_calls=vector_calls)
+            # LowLevel = False
+            LowLevel = True
+            
+            ODE_Syst = NBS.Get_ODE_def(params_buf, vector_calls=vector_calls, LowLevel=LowLevel)
             
             nsteps = 10
-            keep_freq = 1
+            keep_freq = 100
             nint_ODE = (NBS.segm_store-1) * keep_freq
             method = "Gauss"
             

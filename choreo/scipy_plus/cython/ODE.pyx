@@ -267,9 +267,6 @@ cdef inline void LowLevelFun_apply_vectorized(
 
                 if callback.signature.value == C_FUN_MEMORYVIEW_VEC_DATA:
 
-                    with gil:
-                        print("C_FUN_MEMORYVIEW_VEC_DATA")
-
                     (<c_fun_type_memoryview_vec_data> callback.c_function)(all_t, all_x, all_res, callback.user_data)
 
                 elif callback.signature.value == C_FUN_POINTER_VEC_DATA:
