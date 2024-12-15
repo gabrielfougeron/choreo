@@ -1,3 +1,4 @@
 fftw
 pip
 llvm-openmp
+openblas
