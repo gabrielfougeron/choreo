@@ -48,8 +48,8 @@ if not(os.path.isdir(timings_folder)):
 
 basename_timings_filename = 'SegmQuad_bench_'
 
-ForceBenchmark = True
-# ForceBenchmark = False
+# ForceBenchmark = True
+ForceBenchmark = False
 
 ndim = 1
 x_span = (0., 1.)

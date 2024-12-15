@@ -85,7 +85,7 @@ def mul_py_fun_inplace_pointer(t,x, res):
         val = (i+1) * x[i]
         res[i] = np.sin(t*val)
 
-mul_nb_fun_inplace_pointer = choreo.scipy_plus.ODE.nb_jit_inplace_double_array(mul_py_fun_inplace_pointer)
+mul_nb_fun_inplace_pointer = choreo.scipy_plus.ODE.nb_jit_c_fun_pointer(mul_py_fun_inplace_pointer)
 
 # sphinx_gallery_end_ignore
 

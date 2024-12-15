@@ -46,6 +46,8 @@ import pyquickbench
 if ("--no-show" in sys.argv):
     plt.show = (lambda : None)
 
+bench_folder = os.path.join(__PROJECT_ROOT__,'examples','generated_files')
+
 if not(os.path.isdir(bench_folder)):
     os.makedirs(bench_folder)
     

@@ -60,11 +60,21 @@ templates_path = ['templates']
 exclude_patterns = []
 
 intersphinx_mapping = {
-    "python":       ("https://docs.python.org/3"                    , None) ,
-    "sphinx":       ("https://www.sphinx-doc.org/en/master/"        , None) ,
-    "numpy":        ("http://docs.scipy.org/doc/numpy"              , None) ,
-    "scipy":        ("http://docs.scipy.org/doc/scipy/reference/"   , None) ,
-    "matplotlib":   ("http://matplotlib.sourceforge.net/"           , None) , 
+    "python"        : ("https://docs.python.org/3"                      , None),
+    "sphinx"        : ("https://www.sphinx-doc.org/en/master/"          , None),
+    'numpy'         : ('https://numpy.org/doc/stable/'                  , None),
+    "scipy"         : ("http://docs.scipy.org/doc/scipy/reference/"     , None),
+    "matplotlib"    : ("https://matplotlib.org/stable/"                 , None), 
+    # 'Pillow'        : ('https://pillow.readthedocs.io/en/stable/'       , None),
+    # 'cycler'        : ('https://matplotlib.org/cycler/'                 , None),
+    # 'dateutil'      : ('https://dateutil.readthedocs.io/en/stable/'     , None),
+    # 'ipykernel'     : ('https://ipykernel.readthedocs.io/en/latest/'    , None),
+    # 'pandas'        : ('https://pandas.pydata.org/pandas-docs/stable/'  , None),
+    # 'pytest'        : ('https://pytest.org/en/stable/'                  , None),
+    # 'tornado'       : ('https://www.tornadoweb.org/en/stable/'          , None),
+    # 'xarray'        : ('https://docs.xarray.dev/en/stable/'             , None),
+    # 'meson-python'  : ('https://meson-python.readthedocs.io/en/stable/' , None),
+    # 'pip'           : ('https://pip.pypa.io/en/stable/'                 , None),
 }
 
 intersphinx_disabled_reftypes = ["*"]
@@ -162,6 +172,9 @@ html_js_files = [
 
 tr_report_template = "./test-report/test_report_template.txt"
 
+tr_suite_id_length = 3
+tr_case_id_length = 10
+
 # sphinx-gallery configuration
 
 sphinx_gallery_conf = {
@@ -175,7 +188,7 @@ sphinx_gallery_conf = {
         "../../examples/convergence"        ,
         "../../examples/benchmarks"         ,
     ])                                                      ,
-    "within_subsection_order": FileNameSortKey              ,
+    "within_subsection_order": "FileNameSortKey"            ,
     "backreferences_dir": "_build/generated"                ,
     "image_scrapers": ("matplotlib",)                       ,
     "default_thumb_file": html_logo_abs                     ,

@@ -692,10 +692,14 @@ def test_periodicity_default(float64_tols, NBS, params_buf):
 @pytest.mark.parametrize("LowLevel", [True, False])
 @pytest.mark.parametrize("vector_calls", [True, False])
 @pytest.mark.parametrize("NBS,params_buf", [pytest.param(NBS, params_buf, id=name) for name, (NBS, params_buf) in Sols_dict.items()])
-def test_ODE_vs_spectral(float64_tols_loose, NBS, params_buf, vector_calls, LowLevel):
+def test_ODE_vs_spectral(NBS, params_buf, vector_calls, LowLevel):
         
     NBS.ForceGreaterNStore = True
     segmpos = NBS.params_to_segmpos(params_buf)
+    
+    action_grad = NBS.segmpos_params_to_action_grad(segmpos, params_buf)
+    action_grad_norm = np.linalg.norm(action_grad, ord = np.inf)
+    tol = 100 * action_grad_norm
     
     ODE_Syst = NBS.Get_ODE_def(params_buf, vector_calls = vector_calls, LowLevel = LowLevel)
     
@@ -717,4 +721,4 @@ def test_ODE_vs_spectral(float64_tols_loose, NBS, params_buf, vector_calls, LowL
     segmpos_ODE = np.ascontiguousarray(segmpos_ODE.reshape((NBS.segm_store, NBS.nsegm, NBS.geodim)).swapaxes(0, 1))
 
     print(np.linalg.norm(segmpos - segmpos_ODE))
-    assert np.allclose(segmpos, segmpos_ODE, rtol = float64_tols_loose.rtol, atol = float64_tols_loose.atol)
+    assert np.allclose(segmpos, segmpos_ODE, rtol = tol, atol = tol)
