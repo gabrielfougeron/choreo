@@ -9,3 +9,4 @@ sphinxcontrib.plantuml
 seed-intersphinx-mapping
 myst-parser
 sphinxext-rediraffe
+sphinxcontrib-bibtex

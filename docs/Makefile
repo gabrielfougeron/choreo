@@ -14,9 +14,13 @@ help:
 
 .PHONY: help Makefile
 
+clean_api:
+	rm -rf source/_generated/
+
 clean:
 	rm -rf $(BUILDDIR)/
 	rm -rf source/_build/
+	rm -rf source/_generated/
 
 all:
 	make html

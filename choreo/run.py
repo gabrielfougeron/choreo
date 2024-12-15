@@ -1,3 +1,11 @@
+"""
+Toto
+
+
+
+"""
+
+
 import os
 import sys
 import multiprocessing
@@ -52,4 +60,9 @@ def CLI_search(cli_args):
         print(f'Workspace folder {args.Workspace_folder} was not found')
 
 def entrypoint_CLI_search():
+    """ Search in CLI 
+    
+    Toto
+    
+    """
     CLI_search(sys.argv[1:])

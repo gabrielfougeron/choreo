@@ -1,3 +1,30 @@
+"""
+===================
+Defining Symmetries
+===================
+
+.. autosummary::
+   :toctree: _generated/
+   :caption: Symmetries
+   :nosignatures:
+
+   ActionSym
+      
+===========
+Entrypoints
+===========
+
+.. autosummary::
+   :toctree: _generated/
+   :caption: Symmetries
+   :nosignatures:
+
+   choreo.run.entrypoint_CLI_search
+      
+"""
+
+
+
 from .metadata import *
 
 try:

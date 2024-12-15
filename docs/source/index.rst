@@ -26,8 +26,8 @@ Indices and tables
    :includehidden:
    :maxdepth: 1
 
-
    usage
+   theory
    _build/auto_examples/index
    test-report/test-report
    api

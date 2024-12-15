@@ -1,3 +1,7 @@
+Theory
+======
+
+
 Ordinary differential equations in choreo
 =========================================
 
@@ -20,8 +24,8 @@ A Hamiltonian system is a specific case of :ref:`first order system of ordinary 
 Given a sufficiently regular function :math:`H(p,q)` called the **Hamiltonian**, a Hamiltonian system reads:
 
 .. math::
-    \frac{\mathrm{d} q(t)}{\mathrm{d}t}  &= \frac{\partial H}{\partial p}(q(t),p(t)) \\
-    \frac{\mathrm{d} p(t)}{\mathrm{d}t}  &= -\frac{\partial H}{\partial q}(q(t),p(t))  \\
+    \frac{\mathrm{d} q}{\mathrm{d}t}(t)  &= \frac{\partial H}{\partial p}(q(t),p(t)) \\
+    \frac{\mathrm{d} p}{\mathrm{d}t}(t)  &= -\frac{\partial H}{\partial q}(q(t),p(t))  \\
 
 .. _ode_PHS:
 

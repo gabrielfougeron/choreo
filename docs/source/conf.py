@@ -11,6 +11,7 @@ __PROJECT_ROOT__ = os.path.abspath(os.path.join(os.path.dirname(__file__),os.par
 
 import warnings
 import choreo
+import choreo_GUI
 
 warnings.filterwarnings("ignore", category=RuntimeWarning) 
 
@@ -42,6 +43,7 @@ extensions = [
     "sphinxcontrib.plantuml"        ,
     "myst_parser"                   ,
     "sphinxext.rediraffe"           ,
+    "sphinxcontrib.bibtex"          ,
 ]
 
 # The suffix of source filenames.
@@ -107,8 +109,8 @@ html_theme_options = {
     "show_prev_next": False,
     "header_links_before_dropdown": 7,
     "use_edit_page_button": True,
-    "pygment_light_style": 'tango',
-    "pygment_dark_style":  'monokai',
+    "pygments_light_style": 'tango',
+    "pygments_dark_style":  'monokai',
     "icon_links": [
         {
             "name": "GitHub",
@@ -250,3 +252,13 @@ napoleon_type_aliases = None
 napoleon_attr_annotations = True
 
 autodoc_typehints = "description"
+autosummary_generate = True
+
+###################
+# Bibtex settings #
+###################
+
+bibtex_bibfiles = ["references.bib"]
+
+# bibtex_default_style = 'alpha'
+bibtex_default_style = 'unsrt'

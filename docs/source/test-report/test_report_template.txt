@@ -1,10 +1,26 @@
-| **Test suites:** :need_count:`'{id}' in tags and type=='{suite_need}'`
-| **Test cases:** :need_count:`'{id}' in tags and type=='{case_need}'`
-| **Failed test cases:** :need_count:`'{id}' in tags and 'failure' == result and type=='{case_need}'`
-| **Skipped test cases:** :need_count:`'{id}' in tags and 'skipped' == result and type=='{case_need}'`
+| Test suites: :need_count:`'{id}' in tags and type=='{suite_need}'`
+| Test cases: :need_count:`'{id}' in tags and type=='{case_need}'`
+| Failed test cases: :need_count:`'{id}' in tags and 'failure' == result and type=='{case_need}'`
+| Skipped test cases: :need_count:`'{id}' in tags and 'skipped' == result and type=='{case_need}'`
+
+**Test cases**:
 
 .. needtable::
    :filter: '{id}' in tags and type == '{case_need}'
+   :columns: id, title, result
+   :style_row: tr_[[copy('result')]]
+
+**Failed test cases**:
+
+.. needtable::
+   :filter: '{id}' in tags and 'failure' == result
+   :columns: id, title, result
+   :style_row: tr_[[copy('result')]]
+
+**Skipped test cases**:
+
+.. needtable::
+   :filter: '{id}' in tags and 'skipped' == result
    :columns: id, title, result
    :style_row: tr_[[copy('result')]]
 
@@ -14,6 +30,6 @@
    :file: {file}
    :auto_suites:
    :auto_cases:
+   :collapse: TRUE
 
    {content}
-

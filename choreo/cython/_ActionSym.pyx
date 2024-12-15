@@ -33,19 +33,23 @@ cdef double default_atol = 1e-10
 @cython.auto_pickle(False)
 @cython.final
 cdef class ActionSym():
-    """
-    This class defines the symmetries of the action
-    Useful to detect loops and constraints.
+    """This class defines the symmetries of the action.
 
-    Syntax : Giving one ActionSym to setup_changevar prescribes the following symmetry / constraint :
+    A symmetry of the action is a transformation of paths that leaves the action invariant.
 
     .. math::
         x_{\\text{LoopTarget}}(t) = \\text{SpaceRot} \cdot x_{\\text{LoopSource}} (\\text{TimeRev} * (t - \\text{TimeShift}))
 
-    Where SpaceRot is assumed orthogonal (never actually checked, so beware)
-    and TimeShift is defined as a rational fraction.
+    Where SpaceRot is assumed orthogonal and TimeShift is defined as a rational fraction.
 
-    cf Palais' principle of symmetric criticality
+
+    Useful to detect loops and constraints.
+
+    cf Palais' principle of symmetric criticality in :cite:`palais1979principle`
+
+    .. bibliography::
+    :cited:
+
     """
 
     @property
@@ -65,6 +69,24 @@ cdef class ActionSym():
         Py_ssize_t TimeShiftNum     ,
         Py_ssize_t TimeShiftDen     ,
     ):
+        """Specify a symmetry of the Action functional.
+
+        _extended_summary_
+
+        Parameters
+        ----------
+        BodyPerm : np.ndarray(nbody, dtype=np.intp)
+            Permutation of the bodies.
+        SpaceRot : np.ndarray(geodim, dtype=np.float64)
+            Isometry of space.
+        TimeRev : int
+            _description_
+        TimeShiftNum : int
+            _description_
+        TimeShiftDen : int
+            _description_
+        """    
+
 
         cdef Py_ssize_t den
         cdef Py_ssize_t num
@@ -177,7 +199,7 @@ cdef class ActionSym():
 
     @cython.final
     cpdef ActionSym Inverse(ActionSym self):
-        r"""
+        """
         Returns the inverse of a symmetry transformation
         """
 
@@ -196,7 +218,7 @@ cdef class ActionSym():
 
     @cython.final
     cpdef ActionSym TimeDerivative(ActionSym self):
-        r"""
+        """
         Returns the time derivative of a symmetry transformation.
         If self transforms positions, then self.TimeDerivative() transforms speeds.
         """
@@ -217,7 +239,7 @@ cdef class ActionSym():
     @cython.final
     @cython.cdivision(True)
     cpdef ActionSym Compose(ActionSym B, ActionSym A):
-        r"""
+        """
         Returns the composition of two transformations.
 
         B.Compose(A) returns the composition B o A, i.e. applies A then B.
@@ -242,7 +264,7 @@ cdef class ActionSym():
 
     @cython.final
     cpdef ActionSym Conjugate(ActionSym A, ActionSym B):
-        r"""
+        """
         Returns the conjugation of a transformation wrt another transformation.
 
         A.Conjugate(B) returns the conjugation B o A o B^-1.
@@ -252,7 +274,7 @@ cdef class ActionSym():
 
     @cython.final
     cpdef bint IsWellFormed(ActionSym self, double atol = default_atol):
-        r"""
+        """
         Returns True if the transformation is well-formed.
         """       
         
@@ -289,7 +311,7 @@ cdef class ActionSym():
 
     @cython.final
     cpdef bint IsIdentity(ActionSym self, double atol = default_atol):
-        r"""
+        """
         Returns True if the transformation is close to identity.
         """       
 
@@ -356,7 +378,7 @@ cdef class ActionSym():
 
     @cython.final
     cpdef bint IsSame(ActionSym self, ActionSym other, double atol = default_atol):
-        r"""
+        """
         Returns True if the two transformations are almost identical.
         """   
         return ( 
