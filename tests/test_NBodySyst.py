@@ -689,10 +689,11 @@ def test_periodicity_default(float64_tols, NBS, params_buf):
     
     assert np.allclose(dx, np.zeros((ndof), dtype=np.float64), rtol = float64_tols.rtol, atol = float64_tols.atol)  
         
+@pytest.mark.parametrize("NoSymIfPossible", [True, False])
 @pytest.mark.parametrize("LowLevel", [True, False])
 @pytest.mark.parametrize("vector_calls", [True, False])
 @pytest.mark.parametrize("NBS,params_buf", [pytest.param(NBS, params_buf, id=name) for name, (NBS, params_buf) in Sols_dict.items()])
-def test_ODE_vs_spectral(NBS, params_buf, vector_calls, LowLevel):
+def test_ODE_vs_spectral(NBS, params_buf, vector_calls, LowLevel, NoSymIfPossible):
         
     NBS.ForceGreaterNStore = True
     segmpos = NBS.params_to_segmpos(params_buf)
@@ -701,7 +702,7 @@ def test_ODE_vs_spectral(NBS, params_buf, vector_calls, LowLevel):
     action_grad_norm = np.linalg.norm(action_grad, ord = np.inf)
     tol = 100 * action_grad_norm
     
-    ODE_Syst = NBS.Get_ODE_def(params_buf, vector_calls = vector_calls, LowLevel = LowLevel)
+    ODE_Syst = NBS.Get_ODE_def(params_buf, vector_calls = vector_calls, LowLevel = LowLevel, NoSymIfPossible = NoSymIfPossible)
     
     nsteps = 10
     keep_freq = 1

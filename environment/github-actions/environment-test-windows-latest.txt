@@ -3,3 +3,5 @@ pip
 mkl_fft
 ducc0
 openblas
+gfortran
+pkg-config

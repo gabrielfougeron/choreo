@@ -33,9 +33,8 @@ def main():
         
         if ext == '.json':
             
-            # print()
-            # print(file_basename)
-            # print()
+            print()
+            print(file_basename)
 
             with open(os.path.join(input_folder, thefile)) as jsonFile:
                 extra_args_dict = json.load(jsonFile)
@@ -46,13 +45,22 @@ def main():
             NBS.ForceGreaterNStore = True
             segmpos = NBS.params_to_segmpos(params_buf)
             
+            action_grad = NBS.segmpos_params_to_action_grad(segmpos, params_buf)
+            action_grad_norm = np.linalg.norm(action_grad)
+            print(action_grad_norm)
+            
             # vector_calls = False
             vector_calls = True
             
             # LowLevel = False
             LowLevel = True
             
-            ODE_Syst = NBS.Get_ODE_def(params_buf, vector_calls=vector_calls, LowLevel=LowLevel)
+            NoSymIfPossible = False
+            # NoSymIfPossible = True
+            
+            eps = 1e-5
+            
+            ODE_Syst = NBS.Get_ODE_def(params_buf, vector_calls=vector_calls, LowLevel=LowLevel, NoSymIfPossible=NoSymIfPossible)
             
             nsteps = 10
             keep_freq = 100
@@ -63,20 +71,26 @@ def main():
             
             TT.toc("Load")
             
+            NBS.params_to_action_grad(params_buf)
+            
+            TT.toc("Spectral")
+            
             segmpos_ODE, segmvel_ODE = choreo.scipy_plus.ODE.SymplecticIVP(
                 rk = rk                 ,
                 keep_freq = keep_freq   ,
                 nint = nint_ODE         ,
                 keep_init = True        ,
+                eps = eps               ,
                 **ODE_Syst              ,
             )
             
-            TT.toc("ODE")
+            TT.toc("Runge-Kutta")
             
             segmpos_ODE = np.ascontiguousarray(segmpos_ODE.reshape((NBS.segm_store, NBS.nsegm, NBS.geodim)).swapaxes(0, 1))
 
             # NBS.plot_segmpos_2D(segmpos_ODE, os.path.join(full_out_file_basename+'.png'))
-            # print(np.linalg.norm(segmpos - segmpos_ODE))
+            print(np.linalg.norm(segmpos - segmpos_ODE))
+            print(np.linalg.norm(segmpos - segmpos_ODE) / action_grad_norm)
             
             xo = np.ascontiguousarray(segmpos_ODE[:,0 ,:].reshape(-1))
             xf = np.ascontiguousarray(segmpos_ODE[:,-1,:].reshape(-1))

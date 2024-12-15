@@ -73,6 +73,12 @@ jobs:
       with:
         arch: x64
 
+    - name: Install rtools (mingw-w64)
+      if: matrix.os == 'windows-latest'
+      run: |
+        choco install rtools -y --no-progress --force --version=4.0.0.20220206
+        echo "c:\rtools40\ucrt64\bin;" >> $env:GITHUB_PATH
+
     - name: Checkout repository
       uses: actions/checkout@v4
 

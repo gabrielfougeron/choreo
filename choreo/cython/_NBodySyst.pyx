@@ -141,6 +141,7 @@ ctypedef struct ODE_params_t:
     Py_ssize_t*         BinSourceSegm_ptr   
     Py_ssize_t*         BinTargetSegm_ptr 
     double*             InvSegmMass
+    double*             SegmCharge
     double*             BinSpaceRot_ptr     
     bint*               BinSpaceRotIsId_ptr     
     double*             BinProdChargeSum_ptr    
@@ -207,6 +208,7 @@ cdef class NBodySyst():
         return np.asarray(self._loopmass)
 
     cdef double[::1] _invsegmmass
+    cdef double[::1] _segmcharge
 
     cdef double[::1] _loopcharge
     @property
@@ -661,8 +663,10 @@ cdef class NBodySyst():
         self.Compute_n_sub_fft()
 
         self._invsegmmass = np.empty((self.nsegm), dtype=np.float64)
+        self._segmcharge = np.empty((self.nsegm), dtype=np.float64)
         for isegm in range(self.nsegm):
             self._invsegmmass[isegm] = 1. / self._loopmass[self._bodyloop[self._intersegm_to_body[isegm]]]
+            self._segmcharge[isegm] = self._loopcharge[self._bodyloop[self._intersegm_to_body[isegm]]]
 
         self.Update_ODE_params()
 
@@ -973,6 +977,7 @@ cdef class NBodySyst():
         self._ODE_params.geodim                     =  self.geodim
         self._ODE_params.nsegm                      =  self.nsegm
         self._ODE_params.InvSegmMass                = &self._invsegmmass[0]
+        self._ODE_params.SegmCharge                 = &self._segmcharge[0]
         self._ODE_params.BinSourceSegm_ptr          = &self._BinSourceSegm[0]
         self._ODE_params.BinTargetSegm_ptr          = &self._BinTargetSegm[0]
         self._ODE_params.BinSpaceRot_ptr            = &self._BinSpaceRot[0,0,0]
@@ -3987,6 +3992,23 @@ cdef class NBodySyst():
         return res
 
     @cython.final
+    def Compute_forces_nosym(self, double t, double[::1] pos_flat):
+
+        assert pos_flat.shape[0] == self.nsegm * self.geodim
+
+        cdef np.ndarray[double, ndim=1, mode='c'] res = np.empty((self.nsegm * self.geodim), dtype=np.float64)
+
+        Compute_forces_vectorized_nosym(
+            &pos_flat[0]            , &res[0]                   ,
+            self.geodim             ,   
+            self.nsegm              , 1                         ,           
+            &self._segmcharge[0]    ,
+            self._inter_law         , self._inter_law_param_ptr ,
+        )
+
+        return res
+
+    @cython.final
     def Compute_forces_vectorized(self, double[::1] t, double[:,::1] pos_flat):
 
         assert pos_flat.shape[1] == self.nsegm * self.geodim
@@ -4008,8 +4030,27 @@ cdef class NBodySyst():
         return res
 
     @cython.final
+    def Compute_forces_vectorized_nosym(self, double[::1] t, double[:,::1] pos_flat):
+
+        assert pos_flat.shape[1] == self.nsegm * self.geodim
+
+        cdef Py_ssize_t nvec = pos_flat.shape[0]
+
+        cdef np.ndarray[double, ndim=2, mode='c'] res = np.empty((nvec, self.nsegm * self.geodim), dtype=np.float64)
+
+        Compute_forces_vectorized_nosym(
+            &pos_flat[0,0]          , &res[0,0]                 ,
+            self.geodim             , 
+            self.nsegm              , nvec                      ,       
+            &self._segmcharge[0]    ,
+            self._inter_law         , self._inter_law_param_ptr ,
+        )
+
+        return res
+
+    @cython.final
     @cython.cdivision(True)
-    def Get_ODE_def(self, double[::1] params_mom_buf, vector_calls = False, LowLevel = False):
+    def Get_ODE_def(self, double[::1] params_mom_buf, vector_calls = True, LowLevel = True, NoSymIfPossible = True):
 
         xo, po = self.Compute_init_pos_mom(params_mom_buf)
 
@@ -4019,6 +4060,9 @@ cdef class NBodySyst():
             "v0" : po                           ,
             "vector_calls" : vector_calls       ,
         }
+
+        NoSymPossible = self.BinSpaceRotIsId.all()
+        NoSym = NoSymIfPossible and NoSymPossible
 
         if LowLevel:
 
@@ -4034,11 +4078,18 @@ cdef class NBodySyst():
                     user_data                                   ,
                 )
 
-                dict_res["gun"] = scipy.LowLevelCallable.from_cython(
-                    choreo.cython._NBodySyst                    ,
-                    "Compute_forces_vectorized_user_data"       ,
-                    user_data                                   ,
-                )
+                if NoSym:
+                    dict_res["gun"] = scipy.LowLevelCallable.from_cython(
+                        choreo.cython._NBodySyst                    ,
+                        "Compute_forces_vectorized_nosym_user_data" ,
+                        user_data                                   ,
+                    )
+                else:
+                    dict_res["gun"] = scipy.LowLevelCallable.from_cython(
+                        choreo.cython._NBodySyst                    ,
+                        "Compute_forces_vectorized_user_data"       ,
+                        user_data                                   ,
+                    )
 
             else:
 
@@ -4048,23 +4099,36 @@ cdef class NBodySyst():
                     user_data                                   ,
                 )
 
-                dict_res["gun"] = scipy.LowLevelCallable.from_cython(
-                    choreo.cython._NBodySyst                    ,
-                    "Compute_forces_user_data"                  ,
-                    user_data                                   ,
-                )
+                if NoSym:
+                    dict_res["gun"] = scipy.LowLevelCallable.from_cython(
+                        choreo.cython._NBodySyst                ,
+                        "Compute_forces_nosym_user_data"        ,
+                        user_data                               ,
+                    )
+                else:
+                    dict_res["gun"] = scipy.LowLevelCallable.from_cython(
+                        choreo.cython._NBodySyst                ,
+                        "Compute_forces_user_data"              ,
+                        user_data                               ,
+                    )
 
         else:
 
             if vector_calls:
 
                 dict_res["fun"] = self.Compute_velocities_vectorized
-                dict_res["gun"] = self.Compute_forces_vectorized
+                if NoSym:
+                    dict_res["gun"] = self.Compute_forces_vectorized_nosym
+                else:
+                    dict_res["gun"] = self.Compute_forces_vectorized
 
             else:
 
                 dict_res["fun"] = self.Compute_velocities
-                dict_res["gun"] = self.Compute_forces
+                if NoSym:
+                    dict_res["gun"] = self.Compute_forces_nosym
+                else:
+                    dict_res["gun"] = self.Compute_forces
 
         return dict_res
 
@@ -7295,6 +7359,109 @@ cdef void Compute_forces_vectorized_user_data(
         ODE_params.BinSourceSegm_ptr    , ODE_params.BinTargetSegm_ptr      ,
         ODE_params.BinSpaceRot_ptr      , ODE_params.BinSpaceRotIsId_ptr    ,
         ODE_params.BinProdChargeSum_ptr ,
+        ODE_params.inter_law            , ODE_params.inter_law_param_ptr    ,
+    )
+
+cdef inline void Compute_forces_vectorized_nosym(
+    double* pos                     , double* forces                ,
+    Py_ssize_t geodim               ,
+    Py_ssize_t nsegm                , Py_ssize_t nvec               ,
+    double* SegmCharge              ,
+    inter_law_fun_type inter_law    , double* inter_law_param_ptr   ,
+) noexcept nogil:
+
+    cdef Py_ssize_t idim, jdim, ivec
+    cdef Py_ssize_t isegm, isegmp
+    cdef Py_ssize_t vec_size = nsegm * geodim
+
+    cdef double* vec_pos
+    cdef double* vec_forces
+    cdef double* cur_pos
+    cdef double* cur_posp
+    cdef double* cur_forces
+
+    cdef double dx2
+    cdef double bin_fac
+    cdef double[3] pot
+
+    cdef double* dx = <double*> malloc(sizeof(double)*geodim)
+    cdef double* df = <double*> malloc(sizeof(double)*geodim)
+
+    cdef Py_ssize_t nmem = nvec * nsegm * geodim
+    memset(forces, 0, sizeof(double)*nmem)
+
+    for ivec in range(nvec):
+
+        vec_pos     = pos    + ivec * vec_size
+        vec_forces  = forces + ivec * vec_size
+
+        for isegm in range(nsegm-1):
+            for isegmp in range(isegm+1, nsegm):
+
+                cur_pos  = vec_pos + isegm *geodim
+                cur_posp = vec_pos + isegmp*geodim
+                    
+                for idim in range(geodim):
+                    dx[idim] = cur_pos[0] - cur_posp[0]
+                    cur_pos  += 1
+                    cur_posp += 1
+
+                dx2 = dx[0]*dx[0]
+                for idim in range(1,geodim):
+                    dx2 += dx[idim]*dx[idim]
+
+                inter_law(inter_law_param_ptr, dx2, pot)
+
+                bin_fac = (-4)*SegmCharge[isegm]*SegmCharge[isegmp]
+
+                pot[1] *= bin_fac
+
+                for idim in range(geodim):
+                    df[idim] = pot[1]*dx[idim]
+
+                cur_forces = vec_forces + isegm*geodim
+
+                for idim in range(geodim):
+                    cur_forces[0] += df[idim]
+                    cur_forces += 1
+                        
+                cur_forces = vec_forces + isegmp*geodim
+
+                for idim in range(geodim):
+                    cur_forces[0] -= df[idim]
+                    cur_forces += 1
+                    
+    free(dx)
+    free(df)
+
+cdef void Compute_forces_nosym_user_data(
+    double t    , double[::1] pos   , double[::1] forces    , void* user_data   ,
+) noexcept nogil:
+
+    cdef ODE_params_t* ODE_params_ptr = <ODE_params_t*> user_data
+    cdef ODE_params_t ODE_params = ODE_params_ptr[0]
+
+    Compute_forces_vectorized_nosym(
+        &pos[0]                         , &forces[0]                        ,
+        ODE_params.geodim               , 
+        ODE_params.nsegm                , 1                                 ,
+        ODE_params.SegmCharge           ,
+        ODE_params.inter_law            , ODE_params.inter_law_param_ptr    ,
+    )
+
+cdef void Compute_forces_vectorized_nosym_user_data(
+    double[::1] all_t   , double[:,::1] all_pos , double[:,::1] all_forces, void* user_data ,
+) noexcept nogil:
+
+    cdef Py_ssize_t nvec = all_pos.shape[0]
+    cdef ODE_params_t* ODE_params_ptr = <ODE_params_t*> user_data
+    cdef ODE_params_t ODE_params = ODE_params_ptr[0]
+
+    Compute_forces_vectorized_nosym(
+        &all_pos[0,0]                   , &all_forces[0,0]                  ,
+        ODE_params.geodim               , 
+        ODE_params.nsegm                , nvec                              ,
+        ODE_params.SegmCharge           ,
         ODE_params.inter_law            , ODE_params.inter_law_param_ptr    ,
     )
 
