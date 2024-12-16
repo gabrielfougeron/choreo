@@ -28,10 +28,9 @@ all:
 	make deploy
 
 deploy:
-	rm -rf gh-pages/
-	mkdir gh-pages/
-	cp -r build/html/* gh-pages/
-	touch gh-pages/.nojekyll
+	rm -rf ../choreo-docs/*
+	cp -r build/html/* ../choreo-docs/
+	touch ../choreo-docs/.nojekyll
 
 # Catch-all target: route all unknown targets to Sphinx using the new
 # "make mode" option.  $(O) is meant as a shortcut for $(SPHINXOPTS).

@@ -33,9 +33,9 @@ cdef double default_atol = 1e-10
 @cython.auto_pickle(False)
 @cython.final
 cdef class ActionSym():
-    """This class defines the symmetries of the action.
+    """This class defines the symmetries in a N-body system.
 
-    A symmetry of the action is a transformation of paths that leaves the action invariant.
+    A symmetry :math:`\sigma` is a transformation of paths that leaves the physics of a N-body system invariant.
 
     .. math::
         x_{\\text{LoopTarget}}(t) = \\text{SpaceRot} \cdot x_{\\text{LoopSource}} (\\text{TimeRev} * (t - \\text{TimeShift}))
@@ -75,16 +75,16 @@ cdef class ActionSym():
 
         Parameters
         ----------
-        BodyPerm : np.ndarray(nbody, dtype=np.intp)
+        BodyPerm : :class:`np.ndarray(shape = (nbody), dtype = np.intp)`
             Permutation of the bodies.
-        SpaceRot : np.ndarray(geodim, dtype=np.float64)
+        SpaceRot : np.ndarray(shape = (geodim, geodim), dtype = np.float64)
             Isometry of space.
         TimeRev : int
-            _description_
+            A value of `-1` denotes time reversal, and a value of `1` denotes no time reversal.
         TimeShiftNum : int
-            _description_
+            Numerator of the rational time shift.
         TimeShiftDen : int
-            _description_
+            Denominator of the rational time shift.
         """    
 
 

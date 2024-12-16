@@ -45,9 +45,8 @@ if not(os.path.isdir(timings_folder)):
 
 basename_timings_filename = 'ODE_ivp_lowlevel_bench'
 
-# ForceBenchmark = True
-ForceBenchmark = False
-
+ForceBenchmark = True
+# ForceBenchmark = False
 
 ndim_mul = choreo.scipy_plus.cython.test.mul_size_py
 

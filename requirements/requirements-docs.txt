@@ -1,9 +1,9 @@
 choreo[test,bench,cli]
-Sphinx
+Sphinx<8
 pydata-sphinx-theme
 sphinx-gallery
 sphinx-pyproject
-sphinx-needs
+sphinx-needs<4
 sphinx-test-reports
 sphinxcontrib.plantuml
 seed-intersphinx-mapping

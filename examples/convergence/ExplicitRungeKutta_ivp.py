@@ -4,6 +4,7 @@ Convergence analysis of explicit Runge-Kutta methods for ODE IVP
 """
 
 # %%
+# TODO: Redo this example using more modern features of pyquickbench (like plot_intent) to avoid loops 
 # Evaluation of relative quadrature error with the following parameters:
 
 # sphinx_gallery_start_ignore
@@ -100,7 +101,7 @@ figsize = (1600/dpi, n_bench * 800 / dpi)
 # sphinx_gallery_end_ignore
 
 # %%
-# The following plots give the measured relative error as a function of the number of quadrature subintervals
+# The following plots give the measured relative error as a function of the number of time steps.
 
 # sphinx_gallery_start_ignore
 
@@ -222,9 +223,9 @@ plt.show()
 # %%
 # We can see 3 distinct phases on these plots:
 # 
-# * A first pre-convergence phase, where the convergence rate is growing towards its theoretical value. the end of the pre-convergence phase occurs for a number of sub-intervals roughtly independent of the convergence order of the quadrature method.
-# * A steady convergence phase where the convergence remains close to the theoretical value
-# * A final phase, where the relative error stagnates arround 1e-15. The value of the integral is computed with maximal accuracy given floating point precision. The approximation of the convergence rate is dominated by seemingly random floating point errors.
+# * A first pre-convergence phase, where the convergence rate is growing towards its theoretical value. The end of this pre-convergence phase occurs for a number of time steps roughly independent of the convergence order of the quadrature method.
+# * A steady convergence phase where the convergence remains close to the theoretical value.
+# * A final phase, where the relative error stagnates arround 1e-15. The solution to the ODE is computed with maximal accuracy given floating point precision. The approximation of the convergence rate is dominated by seemingly random floating point errors.
 # 
 
 # %%
@@ -366,15 +367,17 @@ for bench_name, all_funs in all_benchs.items():
     )
     
     pyquickbench.plot_benchmark(
-        all_errors                                  ,
-        all_nint                                    ,
-        all_funs                                    ,
-        all_xvalues = all_times                     ,
-        plot_ylim = plot_ylim                       ,
-        logx_plot = True                            ,
-        fig = fig                                   ,
-        ax = axs[i_bench,0]                         ,
-        title = f'Relative error as a function of computational cost for equation {bench_name}' ,
+        all_errors                      ,
+        all_nint                        ,
+        all_funs                        ,
+        all_xvalues = all_times         ,
+        plot_ylim = plot_ylim           ,
+        logx_plot = True                ,
+        fig = fig                       ,
+        ax = axs[i_bench,0]             ,
+        # title = f'Relative error as a function of computational cost for equation {bench_name}' ,
+        xlabel = "Time (s)"             ,
+        ylabel = "Relative Error"       ,
     )
 
 plt.tight_layout()
@@ -384,3 +387,5 @@ plt.tight_layout()
 plt.show()
 
 
+
+# %%

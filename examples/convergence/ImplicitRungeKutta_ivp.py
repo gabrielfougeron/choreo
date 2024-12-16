@@ -4,6 +4,7 @@ Convergence analysis of implicit Runge-Kutta methods for ODE IVP
 """
 
 # %%
+# TODO: Redo this example using more modern features of pyquickbench (like plot_intent) to avoid loops 
 # Evaluation of relative quadrature error with the following parameters:
 
 # sphinx_gallery_start_ignore

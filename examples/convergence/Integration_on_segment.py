@@ -56,19 +56,17 @@ all_integrands = [
 ]
 
 methods = [
-    'Gauss',
-    'Radau_I',
-    'Radau_II',
-    'Lobatto_III',
-    'Cheb_I',
-    'Cheb_II',
+    'Gauss'         ,
+    'Radau_I'       ,
+    'Radau_II'      ,
+    'Lobatto_III'   ,
+    'Cheb_I'        ,
+    'Cheb_II'       ,
     'ClenshawCurtis',
 ]
 
-# all_nsteps = range(2,11)
-all_nsteps = [50]
+all_nsteps = [5,6]
 refinement_lvl = np.array(range(1,100))
-# refinement_lvl = np.array([2**i for i in range(18)])
 
 def setup(fun_name, quad_method, quad_nsteps, nint):
     return {'fun_name': fun_name, 'quad_method': quad_method, 'quad_nsteps': quad_nsteps, 'nint': nint}
@@ -81,7 +79,6 @@ all_args = {
 }
     
 all_funs = [choreo.scipy_plus.test.Quad_cpte_error_on_test]
-    
 
 bench_filename = os.path.join(bench_folder,basename_bench_filename+'.npz')
 
@@ -121,7 +118,7 @@ fig.show()
 # The dotted lines are theoretical convergence rates.
 
  
-plot_ylim = [0,20]
+plot_ylim = [0,15]
 
 fig, ax = pyquickbench.plot_benchmark(
     all_errors                              ,

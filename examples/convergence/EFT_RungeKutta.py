@@ -136,32 +136,8 @@ pyquickbench.plot_benchmark(
     show = True                             ,
     plot_ylim = plot_ylim                   ,
     plot_intent = plot_intent               ,
-    title = f'Relative error on integrand'  ,
+    title = 'Relative error on integrand'   ,
 )
     
-
-# %%
-# Error as a function of running time
-
-bench_filename = os.path.join(bench_folder, basename_bench_filename+'_timings.npz')
-
-all_timings = pyquickbench.run_benchmark(
-    all_args                        ,
-    all_funs                        ,  
-    setup = setup                   ,
-    filename = bench_filename       ,
-    ForceBenchmark = ForceBenchmark ,
-)
-
-pyquickbench.plot_benchmark(
-    all_errors                  ,
-    all_args                    ,
-    all_funs                    ,
-    all_xvalues = all_timings   ,
-    show = True                 ,
-    plot_ylim = plot_ylim       ,
-    plot_intent = plot_intent   ,
-    xlabel = 'Time (s)'         ,
-    ylabel = 'Relative error'   ,
-)
-
+# %% 
+# TODO: Add interpretative blabla

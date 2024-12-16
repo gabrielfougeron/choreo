@@ -33,102 +33,134 @@ from choreo.scipy_plus.cython.blas_consts cimport *
 
 cdef int PY_FUN = -1
 cdef int C_FUN_MEMORYVIEW = 0
-cdef int C_FUN_POINTER = 1
-cdef int C_FUN_ONEVAL = 2
-
-cdef ccallback_signature_t signatures[4]
+cdef int C_FUN_MEMORYVIEW_DATA = 1
+cdef int C_FUN_POINTER = 2
+cdef int C_FUN_POINTER_DATA = 3
+cdef int C_FUN_ONEVAL = 4
+cdef int C_FUN_ONEVAL_DATA = 5
+cdef int N_SIGNATURES = 6
+cdef ccallback_signature_t signatures[7]
 
 ctypedef void (*c_fun_type_memoryview)(double, double[::1]) noexcept nogil 
 signatures[C_FUN_MEMORYVIEW].signature = b"void (double, __Pyx_memviewslice)"
 signatures[C_FUN_MEMORYVIEW].value = C_FUN_MEMORYVIEW
 
+ctypedef void (*c_fun_type_memoryview_data)(double, double[::1], void*) noexcept nogil 
+signatures[C_FUN_MEMORYVIEW_DATA].signature = b"void (double, __Pyx_memviewslice, void *)"
+signatures[C_FUN_MEMORYVIEW_DATA].value = C_FUN_MEMORYVIEW_DATA
+
 ctypedef void (*c_fun_type_pointer)(double, double*) noexcept nogil 
 signatures[C_FUN_POINTER].signature = b"void (double, double *)"
 signatures[C_FUN_POINTER].value = C_FUN_POINTER
+
+ctypedef void (*c_fun_type_pointer_data)(double, double*, void*) noexcept nogil 
+signatures[C_FUN_POINTER_DATA].signature = b"void (double, double *, void *)"
+signatures[C_FUN_POINTER_DATA].value = C_FUN_POINTER_DATA
 
 ctypedef double (*c_fun_type_oneval)(double) noexcept nogil 
 signatures[C_FUN_ONEVAL].signature = b"double (double)"
 signatures[C_FUN_ONEVAL].value = C_FUN_ONEVAL
 
-signatures[3].signature = NULL
+ctypedef double (*c_fun_type_oneval_data)(double, void*) noexcept nogil 
+signatures[C_FUN_ONEVAL_DATA].signature = b"double (double, void *)"
+signatures[C_FUN_ONEVAL_DATA].value = C_FUN_ONEVAL_DATA
 
-cdef struct s_LowLevelFun:
-    int fun_type
-    void *py_fun
-    c_fun_type_memoryview c_fun_memoryview
-    c_fun_type_pointer c_fun_pointer
-    c_fun_type_oneval c_fun_oneval
+signatures[N_SIGNATURES].signature = NULL
 
-ctypedef s_LowLevelFun LowLevelFun
-
-cdef LowLevelFun LowLevelFun_init(
-    ccallback_t callback
-):
-
-    cdef LowLevelFun fun
-
-    fun.py_fun = NULL
-    fun.c_fun_memoryview = NULL
-    fun.c_fun_pointer = NULL
-    fun.c_fun_oneval = NULL
-
-    if (callback.py_function == NULL):
-        fun.fun_type = callback.signature.value
-    else:
-        fun.fun_type = PY_FUN
-
-    if fun.fun_type == PY_FUN:
-        fun.py_fun = callback.py_function
-
-    elif fun.fun_type == C_FUN_MEMORYVIEW:
-        fun.c_fun_memoryview = <c_fun_type_memoryview> callback.c_function
-
-    elif fun.fun_type == C_FUN_POINTER:
-        fun.c_fun_pointer = <c_fun_type_pointer> callback.c_function
-
-    elif fun.fun_type == C_FUN_ONEVAL:
-        fun.c_fun_oneval = <c_fun_type_oneval> callback.c_function
-
-    return fun
+# cdef struct s_LowLevelFun:
+#     int fun_type
+#     void *py_fun
+#     c_fun_type_memoryview c_fun_memoryview
+#     c_fun_type_pointer c_fun_pointer
+#     c_fun_type_oneval c_fun_oneval
+# 
+# ctypedef s_LowLevelFun LowLevelFun
+# 
+# cdef LowLevelFun LowLevelFun_init(
+#     ccallback_t callback
+# ):
+# 
+#     cdef LowLevelFun fun
+# 
+#     fun.py_fun = NULL
+#     fun.c_fun_memoryview = NULL
+#     fun.c_fun_pointer = NULL
+#     fun.c_fun_oneval = NULL
+# 
+#     if (callback.py_function == NULL):
+#         fun.fun_type = callback.signature.value
+#     else:
+#         fun.fun_type = PY_FUN
+# 
+#     if fun.fun_type == PY_FUN:
+#         fun.py_fun = callback.py_function
+# 
+#     elif fun.fun_type == C_FUN_MEMORYVIEW:
+#         fun.c_fun_memoryview = <c_fun_type_memoryview> callback.c_function
+# 
+#     elif fun.fun_type == C_FUN_POINTER:
+#         fun.c_fun_pointer = <c_fun_type_pointer> callback.c_function
+# 
+#     elif fun.fun_type == C_FUN_ONEVAL:
+#         fun.c_fun_oneval = <c_fun_type_oneval> callback.c_function
+# 
+#     return fun
 
 cdef inline void LowLevelFun_apply(
-    LowLevelFun fun ,
-    double x        ,
-    double[::1] res ,
+    ccallback_t callback    ,
+    double x                ,
+    double[::1] res         ,
 ) noexcept nogil:
 
-    if fun.fun_type == C_FUN_MEMORYVIEW:
-        fun.c_fun_memoryview(x, res)
+    if (callback.py_function == NULL):
 
-    elif fun.fun_type == C_FUN_POINTER:
-        fun.c_fun_pointer(x, &res[0])
+        if (callback.user_data == NULL):
 
-    elif fun.fun_type == C_FUN_ONEVAL:
-        res[0] = fun.c_fun_oneval(x)
+            if callback.signature.value == C_FUN_MEMORYVIEW:
+                (<c_fun_type_memoryview> callback.c_function)(x, res)
 
-cdef int PY_FUN_FLOAT = 0
-cdef int PY_FUN_NDARRAY = 1 
+            elif callback.signature.value == C_FUN_POINTER:
+                (<c_fun_type_pointer> callback.c_function)(x, &res[0])
 
-cdef inline void PyFun_apply(
-    object fun      ,
-    int res_type    ,
-    double x        ,
-    double[::1] res ,
-    int ndim        ,  
+            elif callback.signature.value == C_FUN_ONEVAL:
+                res[0] = (<c_fun_type_oneval> callback.c_function)(x)
+
+            else:
+                with gil:
+                    raise ValueError("Incompatible function signature.")
+
+        else:
+
+            if callback.signature.value == C_FUN_MEMORYVIEW_DATA:
+                (<c_fun_type_memoryview_data> callback.c_function)(x, res, callback.user_data)
+
+            elif callback.signature.value == C_FUN_POINTER_DATA:
+                (<c_fun_type_pointer_data> callback.c_function)(x, &res[0], callback.user_data)
+
+            elif callback.signature.value == C_FUN_ONEVAL_DATA:
+                res[0] = (<c_fun_type_oneval_data> callback.c_function)(x, callback.user_data)
+
+            else:
+                with gil:
+                    raise ValueError("Incompatible function signature.")
+
+    else:
+
+        with gil:
+
+            PyFun_apply(callback, x, res)
+
+cdef void PyFun_apply(
+    ccallback_t callback    ,
+    double x                ,
+    double[::1] res         ,
 ):
 
-    cdef Py_ssize_t i
-    cdef np.ndarray[double, ndim=1, mode="c"] f_res_np
+    cdef int n = res.shape[0]
+    cdef double[::1] res_1D = (<object> callback.py_function)(x)
 
-    if (res_type == PY_FUN_FLOAT):   
-        res[0] = fun(x)
-    else:
-        f_res_np = fun(x)
-        
-        scipy.linalg.cython_blas.dcopy(&ndim,&f_res_np[0],&int_one,&res[0],&int_one)
-        # for i in range(ndim):
-            # res[i] = f_res_np[i]
-            
+    scipy.linalg.cython_blas.dcopy(&n,&res_1D[0],&int_one,&res[0],&int_one)
+
 @cython.final
 cdef class QuadFormula:
 
@@ -138,10 +170,10 @@ cdef class QuadFormula:
     
     """
     
-    cdef double[::1] _w         # Integration weights on [0,1]
-    cdef double[::1] _x         # Integration nodes on [0,1]
-    cdef double[::1] _wlag      # Barycentric Lagrange interpolation weights
-    cdef Py_ssize_t _th_cvg_rate      # Convergence rate on smooth functions
+    cdef double[::1] _w             # Integration weights on [0,1]
+    cdef double[::1] _x             # Integration nodes on [0,1]
+    cdef double[::1] _wlag          # Barycentric Lagrange interpolation weights
+    cdef Py_ssize_t _th_cvg_rate    # Self-reported convergence rate on smooth functions
 
     def __init__(
         self                ,
@@ -195,33 +227,12 @@ cpdef np.ndarray[double, ndim=1, mode="c"] IntegrateOnSegment(
     int ndim                ,
     (double, double) x_span ,
     QuadFormula quad        ,
-    Py_ssize_t nint = 1           ,
+    Py_ssize_t nint = 1     ,
     bint DoEFT = True       ,
 ):
 
     cdef ccallback_t callback
     ccallback_prepare(&callback, signatures, fun, CCALLBACK_DEFAULTS)
-    cdef LowLevelFun lowlevelfun = LowLevelFun_init(callback)
-    
-    cdef object py_fun_res = None
-    cdef object py_fun
-    cdef int py_fun_type
-    if lowlevelfun.fun_type == PY_FUN:
-        py_fun = <object> lowlevelfun.py_fun
-        
-        py_fun_res = py_fun(x_span[0])
-
-        if isinstance(py_fun_res, float):
-            py_fun_type = PY_FUN_FLOAT
-        elif isinstance(py_fun_res, np.ndarray):
-            py_fun_type = PY_FUN_NDARRAY
-        else:
-            raise ValueError(f"Could not recognize return type of python callable. Found {type(py_fun_res)}.")
-
-    else:
-
-        py_fun = None
-        py_fun_type = -1
 
     cdef double[::1] f_res = np.empty((ndim),dtype=np.float64)
     cdef np.ndarray[double, ndim=1, mode="c"] f_int_np = np.zeros((ndim),dtype=np.float64)
@@ -229,9 +240,7 @@ cpdef np.ndarray[double, ndim=1, mode="c"] IntegrateOnSegment(
 
     with nogil:
         IntegrateOnSegment_ann(
-            lowlevelfun ,
-            py_fun      ,
-            py_fun_type ,
+            callback    ,
             ndim        ,
             x_span      ,
             nint        ,
@@ -248,9 +257,7 @@ cpdef np.ndarray[double, ndim=1, mode="c"] IntegrateOnSegment(
 
 @cython.cdivision(True)
 cdef void IntegrateOnSegment_ann(
-    LowLevelFun lowlevelfun ,
-    object py_fun           ,
-    int py_fun_type         ,
+    ccallback_t callback    ,
     int ndim                ,
     (double, double) x_span ,
     Py_ssize_t nint         ,
@@ -290,11 +297,7 @@ cdef void IntegrateOnSegment_ann(
             xi = xbeg + cdx[istep]
 
             # f_res = f(xi)
-            if py_fun_type > 0:
-                with gil:
-                    PyFun_apply(py_fun, py_fun_type, xi, f_res, ndim)
-            else:
-                LowLevelFun_apply(lowlevelfun, xi, f_res)
+            LowLevelFun_apply(callback, xi, f_res)
 
             # f_int = f_int + w * f_res
             if DoEFT:

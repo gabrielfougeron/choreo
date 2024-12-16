@@ -151,7 +151,7 @@ ctypedef struct ODE_params_t:
 @cython.auto_pickle(False)
 @cython.final
 cdef class NBodySyst():
-    r"""
+    """
     This class defines a N-body system
     """
 
@@ -2093,7 +2093,7 @@ cdef class NBodySyst():
 
     @cython.final
     def plot_segmpos_2D(self, segmpos, filename, fig_size=(10,10), dpi=100, color=None, color_list=None, xlim=None, extend=0.03):
-        r"""
+        """
         Plots 2D trajectories with one color per body and saves image in file
         """
 

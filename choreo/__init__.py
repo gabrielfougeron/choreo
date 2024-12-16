@@ -1,4 +1,9 @@
 """
+======
+choreo
+======
+
+
 ===================
 Defining Symmetries
 ===================
@@ -8,6 +13,7 @@ Defining Symmetries
    :caption: Symmetries
    :nosignatures:
 
+   NBodySyst
    ActionSym
       
 ===========
@@ -19,7 +25,7 @@ Entrypoints
    :caption: Symmetries
    :nosignatures:
 
-   choreo.run.entrypoint_CLI_search
+   run.entrypoint_CLI_search
       
 """
 

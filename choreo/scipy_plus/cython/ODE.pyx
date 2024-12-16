@@ -126,9 +126,6 @@ cdef inline void LowLevelFun_apply(
     double[::1] res         ,
 ) noexcept nogil:
 
-    cdef int n
-    cdef double[::1] res_1D
-
     if (callback.py_function == NULL):
 
         if (callback.user_data == NULL):
@@ -158,13 +155,24 @@ cdef inline void LowLevelFun_apply(
             else:
                 with gil:
                     raise ValueError("Incompatible function signature.")
+
     else:
 
         with gil:
-            res_1D =  (<object> callback.py_function)(t, x)
+        
+            PyFun_apply(callback, t, x, res)
 
-            n = res.shape[0]
-            scipy.linalg.cython_blas.dcopy(&n,&res_1D[0],&int_one,&res[0],&int_one)
+cdef void PyFun_apply(
+    ccallback_t callback    ,
+    double t                ,
+    double[::1] x           ,
+    double[::1] res         ,
+):
+
+    cdef int n = res.shape[0]
+    cdef double[::1] res_1D = (<object> callback.py_function)(t, x)
+
+    scipy.linalg.cython_blas.dcopy(&n,&res_1D[0],&int_one,&res[0],&int_one)
 
 cdef inline void LowLevelFun_grad_apply(
     ccallback_t callback    ,
@@ -173,9 +181,6 @@ cdef inline void LowLevelFun_grad_apply(
     double[:,::1] grad_x    ,
     double[:,::1] res       ,
 ) noexcept nogil:
-
-    cdef int n
-    cdef double[:,::1] res_2D
 
     if (callback.py_function == NULL):
 
@@ -208,10 +213,21 @@ cdef inline void LowLevelFun_grad_apply(
     else:
 
         with gil:
-            res_2D = (<object> callback.py_function)(t, x, grad_x)
 
-            n = res.shape[0] * res.shape[1]
-            scipy.linalg.cython_blas.dcopy(&n,&res_2D[0,0],&int_one,&res[0,0],&int_one)
+            PyFun_grad_apply(callback, t, x, grad_x, res)
+
+cdef inline void PyFun_grad_apply(
+    ccallback_t callback    ,
+    double t                ,
+    double[::1] x           ,
+    double[:,::1] grad_x    ,
+    double[:,::1] res       ,
+):
+
+    cdef int n = res.shape[0] * res.shape[1]
+    cdef double[:,::1] res_2D = (<object> callback.py_function)(t, x, grad_x)
+
+    scipy.linalg.cython_blas.dcopy(&n,&res_2D[0,0],&int_one,&res[0,0],&int_one)
 
 cdef inline void LowLevelFun_apply_vectorized(
     bint vector_calls       ,
@@ -222,10 +238,6 @@ cdef inline void LowLevelFun_apply_vectorized(
 ) noexcept nogil:
 
     cdef Py_ssize_t i
-    cdef int n
-
-    cdef double[::1] res_1D
-    cdef double[:,::1] res_2D
 
     if (callback.py_function == NULL):
 
@@ -297,22 +309,38 @@ cdef inline void LowLevelFun_apply_vectorized(
 
         with gil:
 
-            if vector_calls:
+            PyFun_apply_vectorized(vector_calls, callback, all_t, all_x, all_res)
 
-                res_2D = (<object> callback.py_function)(all_t, all_x)
+cdef void PyFun_apply_vectorized(
+    bint vector_calls       ,
+    ccallback_t callback    ,
+    double[::1] all_t       ,
+    double[:,::1] all_x     ,
+    double[:,::1] all_res   ,
+):
 
-                n = all_res.shape[0] * all_res.shape[1]
-                scipy.linalg.cython_blas.dcopy(&n,&res_2D[0,0],&int_one,&all_res[0,0],&int_one)
+    cdef Py_ssize_t i
+    cdef int n
 
-            else:
+    cdef double[::1] res_1D
+    cdef double[:,::1] res_2D
 
-                n = all_res.shape[1]
+    if vector_calls:
 
-                for i in range(all_t.shape[0]):  
+        res_2D = (<object> callback.py_function)(all_t, all_x)
 
-                    res_1D = (<object> callback.py_function)(all_t[i], all_x[i,:])
+        n = all_res.shape[0] * all_res.shape[1]
+        scipy.linalg.cython_blas.dcopy(&n,&res_2D[0,0],&int_one,&all_res[0,0],&int_one)
 
-                    scipy.linalg.cython_blas.dcopy(&n,&res_1D[0],&int_one,&all_res[i,0],&int_one)                    
+    else:
+
+        n = all_res.shape[1]
+
+        for i in range(all_t.shape[0]):  
+
+            res_1D = (<object> callback.py_function)(all_t[i], all_x[i,:])
+
+            scipy.linalg.cython_blas.dcopy(&n,&res_1D[0],&int_one,&all_res[i,0],&int_one)                    
 
 cdef inline void LowLevelFun_apply_grad_vectorized(
     bint vector_calls           ,
@@ -324,10 +352,6 @@ cdef inline void LowLevelFun_apply_grad_vectorized(
 ) noexcept nogil:
 
     cdef Py_ssize_t i
-    cdef int n
-
-    cdef double[:,::1] res_2D
-    cdef double[:,:,::1] res_3D
 
     if (callback.py_function == NULL):
             
@@ -397,22 +421,39 @@ cdef inline void LowLevelFun_apply_grad_vectorized(
 
         with gil:
 
-            if vector_calls:
+            PyFun_apply_grad_vectorized(vector_calls, callback, all_t, all_x, all_grad_x, all_res)
 
-                res_3D = (<object> callback.py_function)(all_t, all_x, all_grad_x)
+cdef void PyFun_apply_grad_vectorized(
+    bint vector_calls           ,
+    ccallback_t callback        ,
+    double[::1] all_t           ,
+    double[:,::1] all_x         ,
+    double[:,:,::1] all_grad_x  ,
+    double[:,:,::1] all_res     ,
+):
 
-                n = all_res.shape[0] * all_res.shape[1] * all_res.shape[2]
-                scipy.linalg.cython_blas.dcopy(&n,&res_3D[0,0,0],&int_one,&all_res[0,0,0],&int_one)
+    cdef Py_ssize_t i
+    cdef int n
 
-            else:
+    cdef double[:,::1] res_2D
+    cdef double[:,:,::1] res_3D
 
-                n = all_res.shape[1] * all_res.shape[2]
+    if vector_calls:
 
-                for i in range(all_t.shape[0]):  
+        res_3D = (<object> callback.py_function)(all_t, all_x, all_grad_x)
 
-                    res_2D = (<object> callback.py_function)(all_t[i], all_x[i,:], all_grad_x[i,:,:])
+        n = all_res.shape[0] * all_res.shape[1] * all_res.shape[2]
+        scipy.linalg.cython_blas.dcopy(&n,&res_3D[0,0,0],&int_one,&all_res[0,0,0],&int_one)
 
-                    scipy.linalg.cython_blas.dcopy(&n,&res_2D[0,0],&int_one,&all_res[i,0,0],&int_one)
+    else:
+
+        n = all_res.shape[1] * all_res.shape[2]
+
+        for i in range(all_t.shape[0]):  
+
+            res_2D = (<object> callback.py_function)(all_t[i], all_x[i,:], all_grad_x[i,:,:])
+
+            scipy.linalg.cython_blas.dcopy(&n,&res_2D[0,0],&int_one,&all_res[i,0,0],&int_one)
 
 @cython.final
 cdef class ExplicitSymplecticRKTable:
