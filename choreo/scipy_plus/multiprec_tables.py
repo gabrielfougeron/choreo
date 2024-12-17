@@ -318,8 +318,7 @@ def ComputeVandermondeInverseParker(n, xi, wi=None):
         
     for j in range(n):
         for i in range(1,n):
-            qmat[l-i,j] += xi[j] * qmat[l-i+1,j] + avec[
-i]
+            qmat[l-i,j] += xi[j] * qmat[l-i+1,j] + avec[i]
     
     for i in range(n):
         for j in range(n):

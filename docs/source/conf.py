@@ -56,10 +56,11 @@ source_encoding = "utf-8"
 
 add_module_names = False
 
+autodoc_typehints = "description"
+autosummary_imported_members = True
 autosummary_generate = True
-
-templates_path = ['templates']
-exclude_patterns = []
+templates_path = ['_templates']
+autodoc_default_flags = ['members', 'undoc-members', 'private-members', 'show-inheritance']
 
 intersphinx_mapping = {
     "python"        : ("https://docs.python.org/3"                      , None),
@@ -182,7 +183,7 @@ tr_case_id_length = 10
 sphinx_gallery_conf = {
     # path to your examples scripts
     'filename_pattern': '/'                                 ,
-    'ignore_pattern': r'NOTREADY'                           ,
+    'ignore_pattern': 'NOTREADY'                            ,
     'examples_dirs': "../../examples/"                      ,
     "gallery_dirs": "_build/auto_examples/"                 ,
     "subsection_order"          : ExplicitOrder([

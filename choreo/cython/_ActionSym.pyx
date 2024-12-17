@@ -46,9 +46,9 @@ cdef class ActionSym():
     Useful to detect loops and constraints.
 
     cf Palais' principle of symmetric criticality in :cite:`palais1979principle`
-
-    .. bibliography::
+    
     :cited:
+    .. bibliography::
 
     """
 
@@ -77,16 +77,15 @@ cdef class ActionSym():
         ----------
         BodyPerm : :class:`np.ndarray(shape = (nbody), dtype = np.intp)`
             Permutation of the bodies.
-        SpaceRot : np.ndarray(shape = (geodim, geodim), dtype = np.float64)
+        SpaceRot : :class:`np.ndarray(shape = (geodim, geodim), dtype = np.float64)`
             Isometry of space.
-        TimeRev : int
-            A value of `-1` denotes time reversal, and a value of `1` denotes no time reversal.
-        TimeShiftNum : int
+        TimeRev : :class:`int`
+            A value of ``-1`` denotes time reversal, and a value of ``1`` denotes no time reversal.
+        TimeShiftNum : :class:`int`
             Numerator of the rational time shift.
-        TimeShiftDen : int
+        TimeShiftDen : :class:`int`
             Denominator of the rational time shift.
         """    
-
 
         cdef Py_ssize_t den
         cdef Py_ssize_t num
@@ -157,9 +156,22 @@ cdef class ActionSym():
     @cython.final
     @staticmethod
     def Identity(Py_ssize_t nbody, Py_ssize_t geodim):
-        """
-        Identity: Returns the identity transformation
-        """        
+        """Returns the identity transformation
+  
+          _extended_summary_
+
+        Parameters
+        ----------
+        nbody : :class:`int`
+            Number of bodies in the system.
+        geodim : :class:`int`
+            Dimension of ambiant space.
+
+        Returns
+        -------
+        ActionSym
+            An identity transformation
+        """          
 
         return ActionSym(
             BodyPerm  = np.array(range(nbody), dtype = np.intp) ,

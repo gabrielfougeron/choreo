@@ -11,7 +11,7 @@ Defining Symmetries
 .. autosummary::
    :toctree: _generated/
    :caption: Symmetries
-   :nosignatures:
+
 
    NBodySyst
    ActionSym
@@ -22,8 +22,7 @@ Entrypoints
 
 .. autosummary::
    :toctree: _generated/
-   :caption: Symmetries
-   :nosignatures:
+   :caption: Entrypoints
 
    run.entrypoint_CLI_search
       
