@@ -2,6 +2,8 @@
 
 .. autosummary::
     :toctree: _generated/
+    :template: tests-formatting/base.rst
+    :nosignatures:
 
     test_create_destroy
     test_all_pos_to_segmpos
@@ -34,6 +36,7 @@ import numpy as np
 import scipy
 import choreo
 
+@ParametrizeDocstrings
 @pytest.mark.parametrize("name", AllConfigNames_list)
 def test_create_destroy(name):
     """ This is a docstring for the function test_create_destroy
@@ -48,7 +51,8 @@ def test_create_destroy(name):
     NBS.nint_fac = 2
     
     del NBS
-        
+
+@ParametrizeDocstrings        
 @pytest.mark.parametrize("NBS", [pytest.param(NBS, id=name) for name, NBS in NBS_dict.items()])
 def test_all_pos_to_segmpos(NBS, float64_tols):
 
@@ -73,6 +77,7 @@ def test_all_pos_to_segmpos(NBS, float64_tols):
     for Sym in NBS.Sym_list:
         assert NBS.ComputeSymDefault(segmpos_cy, Sym) < float64_tols.atol
         
+@ParametrizeDocstrings
 @pytest.mark.parametrize("NBS", [pytest.param(NBS, id=name) for name, NBS in NBS_dict.items()])
 def test_all_vel_to_segmvel(NBS, float64_tols):
 
@@ -95,6 +100,7 @@ def test_all_vel_to_segmvel(NBS, float64_tols):
     print(np.linalg.norm(segmvel_noopt - segmvel_cy))
     assert np.allclose(segmvel_noopt, segmvel_cy, rtol = float64_tols.rtol, atol = float64_tols.atol)  
     
+@ParametrizeDocstrings
 @pytest.mark.parametrize("NBS", [pytest.param(NBS, id=name) for name, NBS in NBS_dict.items()])
 def test_segmpos_to_all_pos(NBS, float64_tols):
     
@@ -112,6 +118,7 @@ def test_segmpos_to_all_pos(NBS, float64_tols):
     print(np.linalg.norm(params_buf-params))
     assert np.allclose(params_buf, params, rtol = float64_tols.rtol, atol = float64_tols.atol)      
 
+@ParametrizeDocstrings
 @pytest.mark.parametrize("NBS", [pytest.param(NBS, id=name) for name, NBS in NBS_dict.items()])
 def test_capture_co(NBS):
 
@@ -138,6 +145,7 @@ def test_capture_co(NBS):
         for iparam in range(co_in.shape[0]):            
             assert not(co_in[iparam]) == (iparam in nnz[il])
 
+@ParametrizeDocstrings
 @ProbabilisticTest()
 @pytest.mark.parametrize("NBS", [pytest.param(NBS, id=name) for name, NBS in NBS_dict.items()])
 def test_round_trips_pos(NBS, float64_tols):
@@ -185,6 +193,7 @@ def test_round_trips_pos(NBS, float64_tols):
         print(np.linalg.norm(all_coeffs - all_coeffs_rt))
         assert np.allclose(all_coeffs, all_coeffs_rt, rtol = float64_tols.rtol, atol = float64_tols.atol) 
         
+@ParametrizeDocstrings
 @ProbabilisticTest()
 @pytest.mark.parametrize("NBS", [pytest.param(NBS, id=name) for name, NBS in NBS_dict.items()])
 def test_round_trips_vel(NBS, float64_tols):
@@ -204,6 +213,7 @@ def test_round_trips_vel(NBS, float64_tols):
     print(np.linalg.norm(all_coeffs_rt - all_coeffs))
     assert np.allclose(all_coeffs, all_coeffs_rt, rtol = float64_tols.rtol, atol = float64_tols.atol) 
     
+@ParametrizeDocstrings
 @pytest.mark.parametrize("NBS", [pytest.param(NBS, id=name) for name, NBS in NBS_dict.items()])
 def test_changevars(NBS, float64_tols):
     
@@ -244,6 +254,7 @@ def test_changevars(NBS, float64_tols):
     assert abs(dot_mom - dot_pos) < float64_tols.atol
     assert 2*abs(dot_mom - dot_pos) / (dot_mom + dot_pos) < float64_tols.rtol        
         
+@ParametrizeDocstrings
 @pytest.mark.parametrize("NBS", [pytest.param(NBS, id=name) for name, NBS in NBS_dict.items()])
 def test_params_segmpos_dual(NBS, float64_tols):
         
@@ -262,6 +273,7 @@ def test_params_segmpos_dual(NBS, float64_tols):
     assert abs(dot_params - dot_segmpos) < float64_tols.atol
     assert 2*abs(dot_params - dot_segmpos) / (dot_params + dot_segmpos) < float64_tols.rtol
     
+@ParametrizeDocstrings
 @pytest.mark.parametrize("NBS", [pytest.param(NBS, id=name) for name, NBS in NBS_dict.items()])
 def test_kin(NBS, float64_tols):
         
@@ -297,6 +309,7 @@ def test_kin(NBS, float64_tols):
     
     assert err.min() < float64_tols.rtol
         
+@ParametrizeDocstrings
 @ProbabilisticTest(RepeatOnFail=2)
 @pytest.mark.parametrize("NBS", [pytest.param(NBS, id=name) for name, NBS in NBS_nozerodiv_dict.items()])
 def test_pot(NBS):
@@ -335,6 +348,7 @@ def test_pot(NBS):
     print(err.min())
     assert (err.min() <  1e-7)
         
+@ParametrizeDocstrings
 @ProbabilisticTest(RepeatOnFail=2)
 @pytest.mark.parametrize("NBS", [pytest.param(NBS, id=name) for name, NBS in NBS_nozerodiv_dict.items()])
 def test_action(NBS):
@@ -373,6 +387,7 @@ def test_action(NBS):
     print(err.min())
     assert (err.min() <  1e-7)
     
+@ParametrizeDocstrings
 @pytest.mark.parametrize("NBS", [pytest.param(NBS, id=name) for name, NBS in NBS_nozerodiv_dict.items()])
 def test_resize(NBS, float64_tols):
 
@@ -406,6 +421,7 @@ def test_resize(NBS, float64_tols):
     print(np.linalg.norm(segmpos[:,:small_segm_size,:] - segmpos_long[:,:long_segm_size:fac,:]))
     assert np.allclose(segmpos[:,:small_segm_size,:], segmpos_long[:,:long_segm_size:fac,:], rtol = float64_tols.rtol, atol = float64_tols.atol) 
 
+@ParametrizeDocstrings
 @pytest.mark.parametrize("NBS", [pytest.param(NBS, id=name) for name, NBS in NBS_nozerodiv_dict.items()])
 def test_pot_indep_resize(NBS):
 
@@ -458,6 +474,7 @@ def test_pot_indep_resize(NBS):
     
     assert Passed_any
     
+@ParametrizeDocstrings
 @pytest.mark.parametrize("NBS", [pytest.param(NBS, id=name) for name, NBS in NBS_dict.items()])
 def test_repeatability(NBS, float64_tols):
 
@@ -475,6 +492,7 @@ def test_repeatability(NBS, float64_tols):
     print(np.linalg.norm(segmpos - segmpos_2))
     assert np.allclose(segmpos, segmpos_2, rtol = float64_tols.rtol, atol = float64_tols.atol)         
         
+@ParametrizeDocstrings
 @pytest.mark.parametrize("NBS", [pytest.param(NBS, id=name) for name, NBS in NBS_dict.items()])
 def test_ForceGeneralSym(NBS, float64_tols):
 
@@ -505,6 +523,7 @@ def test_ForceGeneralSym(NBS, float64_tols):
     print(np.linalg.norm(params_T - params_T_f))
     assert np.allclose(params_T, params_T_f, rtol = float64_tols.rtol, atol = float64_tols.atol)     
     
+@ParametrizeDocstrings
 @ProbabilisticTest(RepeatOnFail=2)
 @pytest.mark.parametrize("NBS", [pytest.param(NBS, id=name) for name, NBS in NBS_dict.items()])
 def test_ForceGreaterNstore(NBS, float64_tols):
@@ -552,7 +571,7 @@ def test_ForceGreaterNstore(NBS, float64_tols):
     print(np.linalg.norm(action_hess - action_hess_nf))
     assert np.allclose(action_hess, action_hess_nf, rtol = float64_tols.rtol, atol = float64_tols.atol)  
     
-# @pytest.mark.skip(reason="PYFFTW install currently broken")
+@ParametrizeDocstrings
 @ProbabilisticTest(RepeatOnFail=2)
 @pytest.mark.parametrize("NBS", [pytest.param(NBS, id=name) for name, NBS in NBS_dict.items()])
 @pytest.mark.parametrize("backend", ["scipy", "mkl", "fftw", "ducc"])
@@ -588,6 +607,7 @@ def test_fft_backends(float64_tols, ForceGeneralSym, backend, NBS):
     NBS.ForceGeneralSym = False
     NBS.fft_backend = "scipy"
     
+@ParametrizeDocstrings
 @ProbabilisticTest(RepeatOnFail=2)
 @pytest.mark.parametrize("NBS_pair", [pytest.param(NBS_pair, id=name) for name, NBS_pair in NBS_pairs_dict.items()])
 def test_action_cst_sym_pairs(NBS_pair, float64_tols):
@@ -708,7 +728,8 @@ def inter_law(ptr, xsq, res):
     print(np.linalg.norm(action_grad_grav-action_grad))
     assert np.allclose(action_grad_grav, action_grad, rtol = float64_tols.rtol, atol = float64_tols.atol)  
         
-@pytest.mark.parametrize("NBS,params_buf", [pytest.param(NBS, params_buf, id=name) for name, (NBS, params_buf) in Sols_dict.items()])
+@ParametrizeDocstrings
+@pytest.mark.parametrize(("NBS", "params_buf"), [pytest.param(NBS, params_buf, id=name) for name, (NBS, params_buf) in Sols_dict.items()])
 def test_periodicity_default(float64_tols, NBS, params_buf):
         
     NBS.ForceGreaterNStore = True
@@ -722,10 +743,11 @@ def test_periodicity_default(float64_tols, NBS, params_buf):
     
     assert np.allclose(dx, np.zeros((ndof), dtype=np.float64), rtol = float64_tols.rtol, atol = float64_tols.atol)  
         
+@ParametrizeDocstrings
 @pytest.mark.parametrize("NoSymIfPossible", [True, False])
 @pytest.mark.parametrize("LowLevel", [True, False])
 @pytest.mark.parametrize("vector_calls", [True, False])
-@pytest.mark.parametrize("NBS,params_buf", [pytest.param(NBS, params_buf, id=name) for name, (NBS, params_buf) in Sols_dict.items()])
+@pytest.mark.parametrize(("NBS", "params_buf"), [pytest.param(NBS, params_buf, id=name) for name, (NBS, params_buf) in Sols_dict.items()])
 def test_ODE_vs_spectral(NBS, params_buf, vector_calls, LowLevel, NoSymIfPossible):
         
     NBS.ForceGreaterNStore = True

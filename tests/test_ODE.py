@@ -1,7 +1,9 @@
-""" Docstring for tests_ODE
+""" Docstring for test_ODE
 
 .. autosummary::
     :toctree: _generated/
+    :template: tests-formatting/base.rst
+    :nosignatures:
 
     test_Implicit_ODE
     test_Explicit_ODE
@@ -13,12 +15,13 @@ from .test_config import *
 import numpy as np
 import choreo
 
-@pytest.mark.parametrize("DoEFT", [True, False])
-@pytest.mark.parametrize("vector_calls", [True, False])
-@pytest.mark.parametrize("fun_type", all_fun_types)
-@pytest.mark.parametrize("ivp", [pytest.param(define_ODE_ivp(eq_name), id=eq_name) for eq_name in all_eq_names])
+@ParametrizeDocstrings
+@pytest.mark.parametrize(("method_x", "method_v"), [(method_x, method_v) for (method_x, method_v) in SymplecticImplicitRKMethodPairs])
 @pytest.mark.parametrize("nsteps", Small_orders)
-@pytest.mark.parametrize("method_x,method_v", [pytest.param(method_x, method_v) for (method_x, method_v) in SymplecticImplicitRKMethodPairs])
+@pytest.mark.parametrize("ivp", [pytest.param(define_ODE_ivp(eq_name), id=eq_name) for eq_name in all_eq_names])
+@pytest.mark.parametrize("fun_type", all_fun_types)
+@pytest.mark.parametrize("vector_calls", [True, False])
+@pytest.mark.parametrize("DoEFT", [True, False])
 def test_Implicit_ODE(float64_tols, method_x, method_v, nsteps, ivp, fun_type, vector_calls, DoEFT):
     """ This is a docstring for the function test_Implicit_ODE
     
@@ -71,12 +74,14 @@ def test_Implicit_ODE(float64_tols, method_x, method_v, nsteps, ivp, fun_type, v
     if nint_OK is not None:
         assert np.allclose(vf, vf_ex, rtol = float64_tols.rtol, atol = float64_tols.atol) 
     
-@pytest.mark.parametrize("DoEFT", [True, False])
-@pytest.mark.parametrize("fun_type", all_fun_types)
-@pytest.mark.parametrize("ivp", [pytest.param(define_ODE_ivp(eq_name), id=eq_name) for eq_name in all_eq_names])
+@ParametrizeDocstrings
 @pytest.mark.parametrize("rk", [pytest.param(rk, id=name) for name, rk in Explicit_tables_dict.items()])
+@pytest.mark.parametrize("ivp", [pytest.param(define_ODE_ivp(eq_name), id=eq_name) for eq_name in all_eq_names])
+@pytest.mark.parametrize("fun_type", all_fun_types)
+@pytest.mark.parametrize("DoEFT", [True, False])
 def test_Explicit_ODE(float64_tols, rk, ivp, fun_type, DoEFT):
-
+    """This is a docstring for the function test_Explicit_ODE
+    """
     fgun = ivp["fgun"].get((fun_type, False))
     
     if fgun is None:

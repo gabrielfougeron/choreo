@@ -12,9 +12,7 @@ Dense_linalg_dims = [2, 10, 20]
 
 AllConfigNames_list = [name for name in os.listdir(os.path.join(__PROJECT_ROOT__, 'tests', 'NewSym_data'))]
 
-"""
-The first item of each pair has strictly more symmetries than the second.
-"""
+# The first item of each pair has strictly more symmetries than the second.
 AllConfigSymPairNames_list = [
     ('3D'       , '3C'      ),
     ('3C2k'     , '3C'      ),

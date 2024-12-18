@@ -9,6 +9,14 @@ class float_tol:
 
 @pytest.fixture
 def float64_tols_strict():
+    """ Strict double-precision tolerance.
+    
+    To be used for testing whether two double-precision floating point numbers are equal within maximum accuracy.
+    
+    >>> atol = 2.220446049250313e-16
+    >>> rtol = 2.220446049250313e-16
+    
+    """
     return float_tol(
         atol = np.finfo(np.float64).eps,
         rtol = np.finfo(np.float64).eps,
@@ -16,6 +24,14 @@ def float64_tols_strict():
     
 @pytest.fixture
 def float64_tols():
+    """ Regular double-precision tolerance.
+    
+    To be used for testing whether two double-precision floating point numbers are almost equal when only small numerical errors are expected.
+    
+    >>> atol = 1e-12
+    >>> rtol = 1e-10
+    
+    """
     return float_tol(
         atol = 1e-12,
         rtol = 1e-10,
@@ -23,6 +39,14 @@ def float64_tols():
     
 @pytest.fixture
 def float64_tols_loose():
+    """ Loose double-precision tolerance.
+    
+    To be used for testing whether two double-precision floating point numbers are almost equal when large numerical errors are expected.
+    
+    >>> atol = 1e-9
+    >>> rtol = 1e-7
+    
+    """
     return float_tol(
         atol = 1e-9,
         rtol = 1e-7,
@@ -30,6 +54,14 @@ def float64_tols_loose():
 
 @pytest.fixture
 def float32_tols_strict():
+    """ Strict simple-precision tolerance.
+    
+    To be used for testing whether two simple-precision floating point numbers are equal within maximum accuracy.
+    
+    >>> atol = 1.1920929e-07
+    >>> rtol = 1.1920929e-07
+    
+    """
     return float_tol(
         atol = np.finfo(np.float32).eps,
         rtol = np.finfo(np.float32).eps,
@@ -37,6 +69,14 @@ def float32_tols_strict():
 
 @pytest.fixture
 def float32_tols():
+    """ Regular simple-precision tolerance.
+    
+    To be used for testing whether two simple-precision floating point numbers are almost equal when numerical errors are expected.
+    
+    >>> atol = 1.1920929e-07
+    >>> rtol = 1.1920929e-07
+    
+    """
     return float_tol(
         atol = 1e-5,
         rtol = 1e-3,

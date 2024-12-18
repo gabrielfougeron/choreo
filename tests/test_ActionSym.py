@@ -2,6 +2,8 @@
 
 .. autosummary::
     :toctree: _generated/
+    :template: tests-formatting/base.rst
+    :nosignatures:
 
     test_Identity
     test_Random
@@ -17,7 +19,7 @@ import scipy
 import networkx
 import choreo
 
-
+@ParametrizeDocstrings
 @pytest.mark.parametrize("geodim", Physical_dims)
 @pytest.mark.parametrize("nbody", Few_bodies)
 def test_Identity(float64_tols, geodim, nbody):
@@ -35,6 +37,7 @@ def test_Identity(float64_tols, geodim, nbody):
 
     assert Id.IsSame(InvId, atol = float64_tols.atol)
 
+@ParametrizeDocstrings
 @RepeatTest()
 @pytest.mark.parametrize("geodim", Physical_dims)
 @pytest.mark.parametrize("nbody", Few_bodies)
@@ -89,6 +92,7 @@ def test_Random(float64_tols, geodim, nbody):
 
         assert A_BC.IsSame(AB_C, atol = float64_tols.atol)
 
+@ParametrizeDocstrings
 @pytest.mark.parametrize("geodim", Physical_dims)
 def test_rotation_generation(float64_tols, geodim):
 
@@ -104,6 +108,7 @@ def test_rotation_generation(float64_tols, geodim):
     assert np.allclose(matmatT, idmat, rtol = float64_tols.rtol, atol = float64_tols.atol)     
     assert abs(scipy.linalg.det(mat) - 1.) < float64_tols.atol
 
+@ParametrizeDocstrings
 @pytest.mark.parametrize("Sym_list", [pytest.param(Sym_list, id=name) for name, Sym_list in SymList_dict.items()])
 def test_Cayley_graph(Sym_list):
 

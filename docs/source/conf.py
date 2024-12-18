@@ -56,12 +56,6 @@ source_encoding = "utf-8"
 
 add_module_names = False
 
-exclude_patterns = [
-    "test-report/test-report-macos-latest-3.10.rst"
-    "test-report/test-report-ubuntu-latest-3.10.rst"
-    "test-report/test-report-ubuntu-latest-3.11.rst"
-]
-
 autodoc_typehints = "description"
 autosummary_imported_members = True
 autosummary_generate = True
@@ -79,7 +73,7 @@ intersphinx_mapping = {
     # 'dateutil'      : ('https://dateutil.readthedocs.io/en/stable/'     , None),
     # 'ipykernel'     : ('https://ipykernel.readthedocs.io/en/latest/'    , None),
     # 'pandas'        : ('https://pandas.pydata.org/pandas-docs/stable/'  , None),
-    # 'pytest'        : ('https://pytest.org/en/stable/'                  , None),
+    'pytest'        : ('https://pytest.org/en/stable/'                  , None),
     # 'tornado'       : ('https://www.tornadoweb.org/en/stable/'          , None),
     # 'xarray'        : ('https://docs.xarray.dev/en/stable/'             , None),
     # 'meson-python'  : ('https://meson-python.readthedocs.io/en/stable/' , None),

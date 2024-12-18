@@ -2,6 +2,8 @@
 
 .. autosummary::
     :toctree: _generated/
+    :template: tests-formatting/base.rst
+    :nosignatures:
 
     test_random_orthogonal_matrix
     test_nullspace
@@ -13,6 +15,7 @@ from .test_config import *
 import numpy as np
 import choreo
 
+@ParametrizeDocstrings
 @ProbabilisticTest()
 @pytest.mark.parametrize("n", Dense_linalg_dims)
 def test_random_orthogonal_matrix(float64_tols, n):
@@ -25,6 +28,7 @@ def test_random_orthogonal_matrix(float64_tols, n):
     assert np.allclose(np.matmul(rot  , rot.T), np.identity(n), rtol = float64_tols.rtol, atol = float64_tols.atol) 
     assert np.allclose(np.matmul(rot.T, rot  ), np.identity(n), rtol = float64_tols.rtol, atol = float64_tols.atol) 
 
+@ParametrizeDocstrings
 @ProbabilisticTest()
 @pytest.mark.parametrize("m", Dense_linalg_dims)
 @pytest.mark.parametrize("n", Dense_linalg_dims)

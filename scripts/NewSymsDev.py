@@ -75,7 +75,7 @@ def main():
         '2D1_3dim', 
         '3C11k',
         '5q',
-        '5Dq_',
+        '5Dq_bis',
         'uneven_nnpr',
         '3C4q4k',
         '3D4q4k',

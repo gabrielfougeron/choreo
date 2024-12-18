@@ -1,7 +1,7 @@
 Tests
 =====
 
-During the development of the package choreo
+During the development of the package choreo, a large battery of parametrized tests is ran at frequent intervals to ensure the codebase is in working conditions. Running the tests on your local machine is a great way to detect broken or missing features in your local install.
 
 To run tests locally on your machine, first checkout this reposity and install dependencies using pip:
 

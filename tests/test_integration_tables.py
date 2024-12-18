@@ -1,7 +1,9 @@
-""" Docstring for tests_Butcher_tables
+""" Tests related to the construction of integration tables.
 
 .. autosummary::
     :toctree: _generated/
+    :template: tests-formatting/base.rst
+    :nosignatures:
 
     test_ImplicitRKDefaultDPSIsEnough
     test_ImplicitSymplecticPairs
@@ -16,9 +18,15 @@ import numpy as np
 import scipy
 import choreo
 
+@ParametrizeDocstrings
 @pytest.mark.parametrize("method", ClassicalImplicitRKMethods)
 @pytest.mark.parametrize("nsteps", Small_orders)
 def test_ImplicitRKDefaultDPSIsEnough(float64_tols_strict, method, nsteps):
+    """ Tests whether the default precision is sufficient for computing implicit Runge-Kutta tables.
+    
+Tests whether the default value of the dps parameter of :func:`choreo.scipy_plus.multiprec_tables.ComputeImplicitRKTable_Gauss` is large enough to ensure that that the Runge-Kutta tables are exact at least up to double precision.
+    
+    """
 
     dps_overkill = 1000
 
@@ -70,9 +78,12 @@ def test_ImplicitRKDefaultDPSIsEnough(float64_tols_strict, method, nsteps):
     print(rk.symmetry_default(rk_ad))
     assert rk.is_symmetric_pair(rk_ad, tol = float64_tols_strict.atol)
     
+@ParametrizeDocstrings
 @pytest.mark.parametrize("method_pair", SymplecticImplicitRKMethodPairs)
 @pytest.mark.parametrize("nsteps", Small_orders)
 def test_ImplicitSymplecticPairs(float64_tols_strict, method_pair, nsteps):
+    """ Tests whether symplectic pairs of implicit Runge-Kutta tables are indeed symplectic at least up to double precision.    
+    """
 
     rk      = choreo.scipy_plus.multiprec_tables.ComputeImplicitRKTable_Gauss(nsteps, method=method_pair[0])
     rk_ad   = choreo.scipy_plus.multiprec_tables.ComputeImplicitRKTable_Gauss(nsteps, method=method_pair[1])
@@ -81,10 +92,11 @@ def test_ImplicitSymplecticPairs(float64_tols_strict, method_pair, nsteps):
     
     assert rk.is_symplectic_pair(rk_ad, tol = float64_tols_strict.atol)
 
+@ParametrizeDocstrings
 @pytest.mark.parametrize("method_pair", SymmetricImplicitRKMethodPairs)
 @pytest.mark.parametrize("nsteps", Small_orders)
 def test_ImplicitSymmetricPairs(float64_tols_strict, method_pair, nsteps):
-
+    
     rk      = choreo.scipy_plus.multiprec_tables.ComputeImplicitRKTable_Gauss(nsteps, method=method_pair[0])
     rk_ad   = choreo.scipy_plus.multiprec_tables.ComputeImplicitRKTable_Gauss(nsteps, method=method_pair[1])
     
@@ -92,6 +104,7 @@ def test_ImplicitSymmetricPairs(float64_tols_strict, method_pair, nsteps):
     
     assert rk.is_symmetric_pair(rk_ad, tol = float64_tols_strict.atol)
 
+@ParametrizeDocstrings
 @pytest.mark.parametrize("method_pair", SymmetricSymplecticImplicitRKMethodPairs)
 @pytest.mark.parametrize("nsteps", Small_orders)
 def test_ImplicitSymmetricSymplecticPairs(float64_tols_strict, method_pair, nsteps):
@@ -102,8 +115,3 @@ def test_ImplicitSymmetricSymplecticPairs(float64_tols_strict, method_pair, nste
     print(rk.symplectic_default(rk_ad))
     
     assert rk.is_symplectic_pair(rk_ad, tol = float64_tols_strict.atol)
-
-
-
-
-
