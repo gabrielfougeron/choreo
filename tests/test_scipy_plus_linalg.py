@@ -1,12 +1,24 @@
+""" Docstring for tests_scipy
+
+.. autosummary::
+    :toctree: _generated/
+
+    test_random_orthogonal_matrix
+    test_nullspace
+
+"""
+
 import pytest
-from test_config import *
+from .test_config import *
 import numpy as np
-import scipy
 import choreo
 
 @ProbabilisticTest()
 @pytest.mark.parametrize("n", Dense_linalg_dims)
 def test_random_orthogonal_matrix(float64_tols, n):
+    """ docstring of test_random_orthogonal_matrix
+    
+    """
 
     rot = choreo.scipy_plus.linalg.random_orthogonal_matrix(n)
 
@@ -17,6 +29,9 @@ def test_random_orthogonal_matrix(float64_tols, n):
 @pytest.mark.parametrize("m", Dense_linalg_dims)
 @pytest.mark.parametrize("n", Dense_linalg_dims)
 def test_nullspace(float64_tols, n, m):
+    """ docstring of test_nullspace
+    
+    """
 
     P = choreo.scipy_plus.linalg.random_orthogonal_matrix(n)
 

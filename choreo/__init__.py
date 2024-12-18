@@ -12,7 +12,6 @@ Defining Symmetries
    :toctree: _generated/
    :caption: Symmetries
 
-
    NBodySyst
    ActionSym
       

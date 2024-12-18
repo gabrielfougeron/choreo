@@ -16,11 +16,13 @@ help:
 
 clean_api:
 	rm -rf source/_generated/
+	rm -rf source/test-report/_generated/
 
 clean:
 	rm -rf $(BUILDDIR)/
 	rm -rf source/_build/
 	rm -rf source/_generated/
+	rm -rf source/test-report/_generated/
 
 all:
 	make html
@@ -35,5 +37,5 @@ deploy:
 # Catch-all target: route all unknown targets to Sphinx using the new
 # "make mode" option.  $(O) is meant as a shortcut for $(SPHINXOPTS).
 %: Makefile
-	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
+	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O) -j auto
 

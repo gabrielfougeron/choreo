@@ -1,5 +1,17 @@
+""" Docstring for tests_Butcher_tables
+
+.. autosummary::
+    :toctree: _generated/
+
+    test_ImplicitRKDefaultDPSIsEnough
+    test_ImplicitSymplecticPairs
+    test_ImplicitSymmetricPairs
+    test_ImplicitSymmetricSymplecticPairs
+
+"""
+
 import pytest
-from test_config import *
+from .test_config import *
 import numpy as np
 import scipy
 import choreo

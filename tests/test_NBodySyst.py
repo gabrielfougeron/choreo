@@ -1,11 +1,44 @@
+""" Docstring for tests_NBody_Syst
+
+.. autosummary::
+    :toctree: _generated/
+
+    test_create_destroy
+    test_all_pos_to_segmpos
+    test_all_vel_to_segmvel
+    test_segmpos_to_all_pos
+    test_capture_co
+    test_round_trips_pos
+    test_round_trips_vel
+    test_changevars
+    test_params_segmpos_dual
+    test_kin
+    test_pot
+    test_action
+    test_resize
+    test_pot_indep_resize
+    test_repeatability
+    test_ForceGeneralSym
+    test_ForceGreaterNstore
+    test_fft_backends
+    test_action_cst_sym_pairs
+    test_custom_inter_law
+    test_periodicity_default
+    test_ODE_vs_spectral
+
+"""
+
 import pytest
-from test_config import *
+from .test_config import *
 import numpy as np
 import scipy
 import choreo
 
 @pytest.mark.parametrize("name", AllConfigNames_list)
 def test_create_destroy(name):
+    """ This is a docstring for the function test_create_destroy
+    
+    """
 
     NBS = load_from_config_file(name)
     
@@ -152,7 +185,7 @@ def test_round_trips_pos(NBS, float64_tols):
         print(np.linalg.norm(all_coeffs - all_coeffs_rt))
         assert np.allclose(all_coeffs, all_coeffs_rt, rtol = float64_tols.rtol, atol = float64_tols.atol) 
         
-# @ProbabilisticTest()
+@ProbabilisticTest()
 @pytest.mark.parametrize("NBS", [pytest.param(NBS, id=name) for name, NBS in NBS_dict.items()])
 def test_round_trips_vel(NBS, float64_tols):
 

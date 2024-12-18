@@ -56,6 +56,12 @@ source_encoding = "utf-8"
 
 add_module_names = False
 
+exclude_patterns = [
+    "test-report/test-report-macos-latest-3.10.rst"
+    "test-report/test-report-ubuntu-latest-3.10.rst"
+    "test-report/test-report-ubuntu-latest-3.11.rst"
+]
+
 autodoc_typehints = "description"
 autosummary_imported_members = True
 autosummary_generate = True

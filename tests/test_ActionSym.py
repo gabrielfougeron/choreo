@@ -1,5 +1,17 @@
+""" Docstring for tests_ActionSym
+
+.. autosummary::
+    :toctree: _generated/
+
+    test_Identity
+    test_Random
+    test_rotation_generation
+    test_Cayley_graph
+
+"""
+
 import pytest
-from test_config import *
+from .test_config import *
 import numpy as np
 import scipy
 import networkx

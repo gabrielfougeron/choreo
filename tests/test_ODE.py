@@ -1,10 +1,17 @@
+""" Docstring for tests_ODE
+
+.. autosummary::
+    :toctree: _generated/
+
+    test_Implicit_ODE
+    test_Explicit_ODE
+
+"""
+
 import pytest
-from test_config import *
+from .test_config import *
 import numpy as np
 import choreo
-
-define_ODE_ivp
-
 
 @pytest.mark.parametrize("DoEFT", [True, False])
 @pytest.mark.parametrize("vector_calls", [True, False])
@@ -13,6 +20,9 @@ define_ODE_ivp
 @pytest.mark.parametrize("nsteps", Small_orders)
 @pytest.mark.parametrize("method_x,method_v", [pytest.param(method_x, method_v) for (method_x, method_v) in SymplecticImplicitRKMethodPairs])
 def test_Implicit_ODE(float64_tols, method_x, method_v, nsteps, ivp, fun_type, vector_calls, DoEFT):
+    """ This is a docstring for the function test_Implicit_ODE
+    
+    """
 
     rk_x = choreo.scipy_plus.multiprec_tables.ComputeImplicitRKTable_Gauss(nsteps, method = method_x)
     rk_v = choreo.scipy_plus.multiprec_tables.ComputeImplicitRKTable_Gauss(nsteps, method = method_v)
