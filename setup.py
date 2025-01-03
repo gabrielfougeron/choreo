@@ -243,9 +243,11 @@ compiler_directives = {}
 if opt_lvl == "profile" : 
 
     profile_compiler_directives = {
-        'profile': True     ,
-        'linetrace': True   ,
-        'binding': True     ,
+        'profile': True             ,
+        'linetrace': True           ,
+        'binding': True             ,
+        'embedsignature' : True     ,
+        'emit_code_comments' : True , 
     }
     compiler_directives.update(profile_compiler_directives)
     profile_define_macros = [
@@ -264,6 +266,7 @@ else:
         'overflowcheck': False      ,
         'overflowcheck.fold': False ,
         'infer_types': True         ,
+        'binding' : False           , 
     })
 
 include_dirs = [

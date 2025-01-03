@@ -4,26 +4,33 @@ choreo
 ======
 
 
+===================================
+Systems of interacting point masses
+===================================
+
+.. autosummary::
+    :toctree: _generated/
+    :caption: N-body system
+    :nosignatures:
+
+    NBodySyst
+    
 ===================
 Defining Symmetries
 ===================
 
 .. autosummary::
-   :toctree: _generated/
-   :caption: Symmetries
+    :toctree: _generated/
+    :caption: Symmetries
+    :nosignatures:
 
-   NBodySyst
-   ActionSym
+    ActionSym
       
 ===========
 Entrypoints
 ===========
 
-.. autosummary::
-   :toctree: _generated/
-   :caption: Entrypoints
-
-   run.entrypoint_CLI_search
+.. autoprogram:: choreo.run:CLI_search_parser
       
 """
 

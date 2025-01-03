@@ -1,4 +1,4 @@
-""" Docstring for tests_NBody_Syst
+""" Tests properties of :class:`choreo.NBodySyst`
 
 .. autosummary::
     :toctree: _generated/
@@ -18,7 +18,7 @@
     test_pot
     test_action
     test_resize
-    test_pot_indep_resize
+    test_action_indep_resize
     test_repeatability
     test_ForceGeneralSym
     test_ForceGreaterNstore
@@ -39,8 +39,7 @@ import choreo
 @ParametrizeDocstrings
 @pytest.mark.parametrize("name", AllConfigNames_list)
 def test_create_destroy(name):
-    """ This is a docstring for the function test_create_destroy
-    
+    """ Tests initialization and destruction of NBodySyst.
     """
 
     NBS = load_from_config_file(name)
@@ -55,6 +54,14 @@ def test_create_destroy(name):
 @ParametrizeDocstrings        
 @pytest.mark.parametrize("NBS", [pytest.param(NBS, id=name) for name, NBS in NBS_dict.items()])
 def test_all_pos_to_segmpos(NBS, float64_tols):
+    """ Tests whether ``all_pos`` and ``segmpos`` agree.
+
+Tests:   
+ 
+* Whether the unoptimized track ``params_buf`` => ``all_pos`` => ``segmpos_noopt`` and the optimized track ``params_buf`` => ``segmpos_cy`` agree.
+* That ``all_pos`` and ``segmpos`` respects all symmetry constraints.
+
+    """
 
     NBS.nint_fac = 10
     params_buf = np.random.random((NBS.nparams))
@@ -80,6 +87,14 @@ def test_all_pos_to_segmpos(NBS, float64_tols):
 @ParametrizeDocstrings
 @pytest.mark.parametrize("NBS", [pytest.param(NBS, id=name) for name, NBS in NBS_dict.items()])
 def test_all_vel_to_segmvel(NBS, float64_tols):
+    """ Tests whether ``all_vel`` and ``segmvel`` agree.
+
+Tests:  
+  
+* Whether the unoptimized track ``params_buf`` => ``all_vel`` => ``segmvel_noopt`` and the optimized track ``params_buf`` => ``segmvel_cy`` agree.
+* That ``all_vel`` and ``segmvel`` respects all symmetry constraints.
+
+    """
 
     NBS.nint_fac = 10
     params_buf = np.random.random((NBS.nparams))
@@ -100,19 +115,25 @@ def test_all_vel_to_segmvel(NBS, float64_tols):
     print(np.linalg.norm(segmvel_noopt - segmvel_cy))
     assert np.allclose(segmvel_noopt, segmvel_cy, rtol = float64_tols.rtol, atol = float64_tols.atol)  
     
+    for Sym in NBS.Sym_list:
+        assert NBS.ComputeSymDefault(segmvel_cy, Sym.TimeDerivative(), pos = False) < float64_tols.atol
+    
 @ParametrizeDocstrings
 @pytest.mark.parametrize("NBS", [pytest.param(NBS, id=name) for name, NBS in NBS_dict.items()])
 def test_segmpos_to_all_pos(NBS, float64_tols):
+    """ Tests going from ``segmpos`` to ``all_pos`` and back.
+
+Tests:  
+  
+* Whether the track ``params_buf`` => ``segmpos`` => ``all_pos`` => ``all_coeffs`` => ``params_buf`` is the identity.
+
+    """
     
-    NBS.nint_fac = 3
+    NBS.nint_fac = 10
     params_buf = np.random.random((NBS.nparams))
     segmpos = NBS.params_to_segmpos(params_buf)
-
     all_pos = NBS.segmpos_to_all_noopt(segmpos, pos=True)
-    NBS.AssertAllSegmGenConstraintsAreRespected(all_pos, pos=True)
-    NBS.AssertAllBodyConstraintAreRespected(all_pos, pos=True)
-    
-    all_coeffs = scipy.fft.rfft(all_pos, axis=1,norm='forward')
+    all_coeffs = scipy.fft.rfft(all_pos, axis=1, norm='forward')
     params = NBS.all_coeffs_to_params_noopt(all_coeffs)
     
     print(np.linalg.norm(params_buf-params))
@@ -120,11 +141,14 @@ def test_segmpos_to_all_pos(NBS, float64_tols):
 
 @ParametrizeDocstrings
 @pytest.mark.parametrize("NBS", [pytest.param(NBS, id=name) for name, NBS in NBS_dict.items()])
-def test_capture_co(NBS):
+def test_capture_co(float64_tols, NBS):
+    """ Checks consistency of parameters definition for :math:`c_o`.
+
+Tests whether the parameter corresponding to the imaginary part of the coefficient of index 0 in the Fourier expansion is included only if it needs to be.
+    """
 
     NBS.nint_fac = 10
 
-    eps = 1e-12
     nnz = [[] for il in range(NBS.nloop)]
     for il in range(NBS.nloop):
         
@@ -136,7 +160,7 @@ def test_capture_co(NBS):
 
                 for iparam in range(params_basis_pos.shape[2]):
                     
-                    if np.linalg.norm(params_basis_pos[:,0,iparam].imag) > eps:
+                    if np.linalg.norm(params_basis_pos[:,0,iparam].imag) > float64_tols.atol:
                         
                         nnz[il].append(iparam)
 
@@ -148,7 +172,18 @@ def test_capture_co(NBS):
 @ParametrizeDocstrings
 @ProbabilisticTest()
 @pytest.mark.parametrize("NBS", [pytest.param(NBS, id=name) for name, NBS in NBS_dict.items()])
-def test_round_trips_pos(NBS, float64_tols):
+def test_round_trips_pos(float64_tols, NBS):
+    """ Tests whether several ways of going back and forth in the chain ``param_buf`` => ``segmpos`` indeed give the same result.
+
+Tests:  
+  
+* That ``all_pos`` => ``segmpos`` => ``all_pos`` is the identity.
+* That ``all_coeffs`` => ``all_pos`` => ``all_coeffs`` is the identity.
+* That ``params_buf`` => ``all_coeffs`` => ``params_buf`` is the identity.
+* That ``params_buf`` => shifted ``all_coeffs`` => ``params_buf`` is the identity.
+* That ``all_coeffs`` => shifted ``params_buf`` => ``all_coeffs`` is the identity in cases where it makes sense (i.e. no invariance wrt space orientation reversing  transformations).
+
+    """
 
     NBS.nint_fac = 10
     params_buf = np.random.random((NBS.nparams))
@@ -196,7 +231,14 @@ def test_round_trips_pos(NBS, float64_tols):
 @ParametrizeDocstrings
 @ProbabilisticTest()
 @pytest.mark.parametrize("NBS", [pytest.param(NBS, id=name) for name, NBS in NBS_dict.items()])
-def test_round_trips_vel(NBS, float64_tols):
+def test_round_trips_vel(float64_tols, NBS):
+    """ Tests whether several ways of going back and forth in the chain ``param_buf`` => ``segmvel`` indeed give the same result.
+
+Tests:  
+  
+* That ``all_vel`` => ``segmvel`` => ``all_vel`` is the identity.
+* That ``all_coeffs`` => ``all_vel`` => ``all_coeffs`` is the identity.
+    """
 
     NBS.nint_fac = 10 # Else it will sometime fail for huge symmetries
     params_buf = np.random.random((NBS.nparams))
@@ -209,13 +251,21 @@ def test_round_trips_vel(NBS, float64_tols):
     print(np.linalg.norm(all_vel_rt - all_vel))
     assert np.allclose(all_vel, all_vel_rt, rtol = float64_tols.rtol, atol = float64_tols.atol) 
             
-    all_coeffs_rt = scipy.fft.rfft(all_vel, axis=1,norm='forward')
+    all_coeffs_rt = scipy.fft.rfft(all_vel, axis=1, norm='forward')
     print(np.linalg.norm(all_coeffs_rt - all_coeffs))
     assert np.allclose(all_coeffs, all_coeffs_rt, rtol = float64_tols.rtol, atol = float64_tols.atol) 
     
 @ParametrizeDocstrings
 @pytest.mark.parametrize("NBS", [pytest.param(NBS, id=name) for name, NBS in NBS_dict.items()])
-def test_changevars(NBS, float64_tols):
+def test_changevars(float64_tols, NBS):
+    """ Tests properties of change of variables of parameters.
+
+Tests:  
+  
+* That ``params_mom_buf`` => ``params_pos_buf`` => ``params_mom_buf`` is the identity.
+* That ``params_pos_buf`` => ``params_mom_buf`` => ``params_pos_buf`` is the identity.
+* That scalar poducts are conserved by the (dual) change of variables.
+    """
     
     NBS.nint_fac = 10
     
@@ -256,7 +306,9 @@ def test_changevars(NBS, float64_tols):
         
 @ParametrizeDocstrings
 @pytest.mark.parametrize("NBS", [pytest.param(NBS, id=name) for name, NBS in NBS_dict.items()])
-def test_params_segmpos_dual(NBS, float64_tols):
+def test_params_segmpos_dual(float64_tols, NBS):
+    """ Tests invariance of dot product  by the transformation ``params`` => ``segmpos``.
+    """
         
     NBS.nint_fac = 10
     
@@ -275,7 +327,16 @@ def test_params_segmpos_dual(NBS, float64_tols):
     
 @ParametrizeDocstrings
 @pytest.mark.parametrize("NBS", [pytest.param(NBS, id=name) for name, NBS in NBS_dict.items()])
-def test_kin(NBS, float64_tols):
+def test_kin(float64_tols, NBS):
+    """ Tests computation of kinetic energy.
+    
+Tests:  
+  
+* That optimized and non optimized computations of kinetic energy give the same result.
+* Idem for the gradient of the kinetic energy.
+* That the gradient of the kinetic energy agrees with its finite difference approximation.
+    
+    """
         
     NBS.nint_fac = 10
     params_buf = np.random.random((NBS.nparams))
@@ -312,7 +373,15 @@ def test_kin(NBS, float64_tols):
 @ParametrizeDocstrings
 @ProbabilisticTest(RepeatOnFail=2)
 @pytest.mark.parametrize("NBS", [pytest.param(NBS, id=name) for name, NBS in NBS_nozerodiv_dict.items()])
-def test_pot(NBS):
+def test_pot(float64_tols_loose, NBS):
+    """ Tests computation of potential energy.
+    
+Tests:  
+  
+* That the gradient of the potential energy agrees with its finite difference approximation.
+* That the hessian of the potential energy agrees with its finite difference approximation.
+    
+    """
     
     NBS.nint_fac = 10
     params_buf = np.random.random((NBS.nparams))
@@ -333,7 +402,7 @@ def test_pot(NBS):
     )
 
     print(err.min())
-    assert (err.min() <  1e-7)
+    assert (err.min() < float64_tols_loose.rtol)
     
     err = compare_FD_and_exact_grad(
         NBS.params_to_pot_nrg_grad  ,
@@ -346,12 +415,19 @@ def test_pot(NBS):
     )
 
     print(err.min())
-    assert (err.min() <  1e-7)
+    assert (err.min() < float64_tols_loose.rtol)
         
 @ParametrizeDocstrings
 @ProbabilisticTest(RepeatOnFail=2)
 @pytest.mark.parametrize("NBS", [pytest.param(NBS, id=name) for name, NBS in NBS_nozerodiv_dict.items()])
-def test_action(NBS):
+def test_action(float64_tols_loose, NBS):
+    """ Tests computation of the action.
+    
+Tests:  
+  
+* That the gradient of the action agrees with its finite difference approximation.
+* That the hessian of the action agrees with its finite difference approximation.
+    """
 
     NBS.nint_fac = 10
     params_buf = np.random.random((NBS.nparams))
@@ -372,7 +448,7 @@ def test_action(NBS):
     )
 
     print(err.min())
-    assert (err.min() <  1e-7)
+    assert (err.min() < float64_tols_loose.rtol)
     
     err = compare_FD_and_exact_grad(
         NBS.params_to_action_grad   ,
@@ -385,11 +461,13 @@ def test_action(NBS):
     )
 
     print(err.min())
-    assert (err.min() <  1e-7)
+    assert (err.min() < float64_tols_loose.rtol)
     
 @ParametrizeDocstrings
 @pytest.mark.parametrize("NBS", [pytest.param(NBS, id=name) for name, NBS in NBS_nozerodiv_dict.items()])
-def test_resize(NBS, float64_tols):
+def test_resize(float64_tols, NBS):
+    """ Tests nested properties of Fourier spaces on positions.
+    """
 
     NBS.nint_fac = 10
     small_segm_size = NBS.segm_size
@@ -423,7 +501,13 @@ def test_resize(NBS, float64_tols):
 
 @ParametrizeDocstrings
 @pytest.mark.parametrize("NBS", [pytest.param(NBS, id=name) for name, NBS in NBS_nozerodiv_dict.items()])
-def test_pot_indep_resize(NBS):
+def test_action_indep_resize(float64_tols_loose, NBS):
+    """ Tests that action is left **similar** by resizing.
+
+.. note::
+    This test is very susceptible to false positives. It should be replaced by a better test.
+    
+    """
 
     Passed_any = False
     
@@ -458,11 +542,11 @@ def test_pot_indep_resize(NBS):
         err[itry,2] = abs(pot_nrg - pot_nrg_big)
         err[itry,3] = 2*abs(pot_nrg - pot_nrg_big) / abs(pot_nrg + pot_nrg_big) 
 
-        Passed = Passed and err[itry,0] < 1e-7
-        Passed = Passed and err[itry,1] < 1e-7    
+        Passed = Passed and err[itry,0] < float64_tols_loose.rtol
+        Passed = Passed and err[itry,1] < float64_tols_loose.rtol  
         
-        Passed = Passed and err[itry,2] < 1e-7
-        Passed = Passed and err[itry,3] < 1e-7
+        Passed = Passed and err[itry,2] < float64_tols_loose.rtol
+        Passed = Passed and err[itry,3] < float64_tols_loose.rtol
         
         Passed_any = Passed_any or Passed
         
@@ -476,17 +560,19 @@ def test_pot_indep_resize(NBS):
     
 @ParametrizeDocstrings
 @pytest.mark.parametrize("NBS", [pytest.param(NBS, id=name) for name, NBS in NBS_dict.items()])
-def test_repeatability(NBS, float64_tols):
+def test_repeatability(float64_tols, NBS):
+    """ Tests that computing ``params_buf`` => ``segmpos`` twice give the same result.
+    """
 
     NBS.nint_fac = 10
     
     params_buf = np.random.random((NBS.nparams))
     params_buf_cp = params_buf.copy()
-    segmpos = NBS.params_to_segmpos(params_buf)
     
     print(np.linalg.norm(params_buf - params_buf_cp))
     assert np.allclose(params_buf, params_buf_cp, rtol = float64_tols.rtol, atol = float64_tols.atol) 
     
+    segmpos = NBS.params_to_segmpos(params_buf)
     segmpos_2 = NBS.params_to_segmpos(params_buf)
     
     print(np.linalg.norm(segmpos - segmpos_2))
@@ -494,7 +580,17 @@ def test_repeatability(NBS, float64_tols):
         
 @ParametrizeDocstrings
 @pytest.mark.parametrize("NBS", [pytest.param(NBS, id=name) for name, NBS in NBS_dict.items()])
-def test_ForceGeneralSym(NBS, float64_tols):
+def test_ForceGeneralSym(float64_tols, NBS):
+    """ Tests that computations results are independant of :meth:`choreo.NBodySyst.ForceGeneralSym`.
+    
+Tests that the following computations are independant of :meth:`choreo.NBodySyst.ForceGeneralSym`:
+
+* ``params`` => ``segmpos``
+* ``params`` => ``segmvel``
+* ``segmpos`` => ``params``
+* ``segmpos`` => ``params_T``
+
+    """
 
     NBS.nint_fac = 10
     params_buf = np.random.random((NBS.nparams))
@@ -526,7 +622,15 @@ def test_ForceGeneralSym(NBS, float64_tols):
 @ParametrizeDocstrings
 @ProbabilisticTest(RepeatOnFail=2)
 @pytest.mark.parametrize("NBS", [pytest.param(NBS, id=name) for name, NBS in NBS_dict.items()])
-def test_ForceGreaterNstore(NBS, float64_tols):
+def test_ForceGreaterNstore(float64_tols, NBS):
+    """ Tests that computations results are independant of :meth:`choreo.NBodySyst.ForceGreaterNStore`.
+    
+Tests that the following computations are independant of :meth:`choreo.NBodySyst.ForceGreaterNStore`:
+
+* ``params`` => ``segmpos``
+* ``params`` => ``action_grad``
+* ``params`` => ``action_hess``
+    """
 
     NBS.ForceGreaterNStore = False
 
@@ -577,6 +681,13 @@ def test_ForceGreaterNstore(NBS, float64_tols):
 @pytest.mark.parametrize("backend", ["scipy", "mkl", "fftw", "ducc"])
 @pytest.mark.parametrize("ForceGeneralSym", [True, False])
 def test_fft_backends(float64_tols, ForceGeneralSym, backend, NBS):
+    """ Tests that computations results are independant of :meth:`choreo.NBodySyst.fft_backend`.
+    
+Tests that the following computations are independant of :meth:`choreo.NBodySyst.fft_backend`:
+
+* ``params`` => ``segmpos``
+* ``segmpos`` => ``params``
+    """
 
     NBS.nint_fac = 10
     
@@ -587,8 +698,6 @@ def test_fft_backends(float64_tols, ForceGeneralSym, backend, NBS):
     
     params_buf = np.random.random((NBS.nparams))
     segmpos_ref = NBS.params_to_segmpos(params_buf)
-
-    print(f'{backend = }, {ForceGeneralSym = }')
 
     NBS.ForceGeneralSym = ForceGeneralSym
     NBS.fft_backend = backend
@@ -610,7 +719,18 @@ def test_fft_backends(float64_tols, ForceGeneralSym, backend, NBS):
 @ParametrizeDocstrings
 @ProbabilisticTest(RepeatOnFail=2)
 @pytest.mark.parametrize("NBS_pair", [pytest.param(NBS_pair, id=name) for name, NBS_pair in NBS_pairs_dict.items()])
-def test_action_cst_sym_pairs(NBS_pair, float64_tols):
+def test_action_cst_sym_pairs(float64_tols, NBS_pair):
+    """ Tests that computations results are independant of the prescribed symmetries.
+    
+Tests that the following computations results are independant of the prescribed symmetries:
+
+* ``all_coeffs`` => ``kinetic energy``
+* ``params`` => ``kinetic energy``
+* ``params`` => ``potential energy``
+* ``params`` => ``action``
+* ``params`` => ``path_stats``
+
+    """
     
     NBS_m, NBS_l = NBS_pair
     
@@ -672,7 +792,10 @@ def test_action_cst_sym_pairs(NBS_pair, float64_tols):
         print(abs(bin_dx_min_m[ibin] - bin_dx_min_l[ibin]))
         assert abs(bin_dx_min_m[ibin] - bin_dx_min_l[ibin]) < float64_tols.atol        
 
+@ParametrizeDocstrings
 def test_custom_inter_law(float64_tols):
+    """ Tests that custom interaction laws are correctly handled.
+    """
         
     geodim = 2
     nbody = 3
@@ -731,6 +854,8 @@ def inter_law(ptr, xsq, res):
 @ParametrizeDocstrings
 @pytest.mark.parametrize(("NBS", "params_buf"), [pytest.param(NBS, params_buf, id=name) for name, (NBS, params_buf) in Sols_dict.items()])
 def test_periodicity_default(float64_tols, NBS, params_buf):
+    """ Tests that Fourier periodic solutions have zero periodicity default.
+    """
         
     NBS.ForceGreaterNStore = True
     segmpos = NBS.params_to_segmpos(params_buf)
@@ -749,6 +874,8 @@ def test_periodicity_default(float64_tols, NBS, params_buf):
 @pytest.mark.parametrize("vector_calls", [True, False])
 @pytest.mark.parametrize(("NBS", "params_buf"), [pytest.param(NBS, params_buf, id=name) for name, (NBS, params_buf) in Sols_dict.items()])
 def test_ODE_vs_spectral(NBS, params_buf, vector_calls, LowLevel, NoSymIfPossible):
+    """ Tests that the Fourier periodic spectral solver agrees with the time forward Runge-Kutta solver.
+    """
         
     NBS.ForceGreaterNStore = True
     segmpos = NBS.params_to_segmpos(params_buf)

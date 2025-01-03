@@ -1166,6 +1166,9 @@ cdef class NBodySyst():
 
     @cython.final
     def GatherInterSym(self):
+
+        cdef Py_ssize_t isegm
+        cdef ActionSym Sym
         
         InterTimeRev = np.zeros((self.nsegm), dtype=np.intp)
         InterSpaceRotPos = np.zeros((self.nsegm, self.geodim, self.geodim), dtype=np.float64)
@@ -3422,7 +3425,7 @@ cdef class NBodySyst():
 
     @cython.cdivision(True)
     @cython.final
-    def ComputeSymDefault(self, double[:,:,::1] segmpos, ActionSym Sym, Py_ssize_t lnorm = 1, full = True):
+    def ComputeSymDefault(self, double[:,:,::1] segmpos, ActionSym Sym, Py_ssize_t lnorm = 1, full = True, pos = True):
 
         if lnorm not in [1,2,22]:
             raise ValueError(f'ComputeSymDefault only computes L1, L2 or L2 squared norms. Received {lnorm = }.')
@@ -3451,7 +3454,10 @@ cdef class NBodySyst():
 
                 # Computing trans_pos
                 isegm = self._bodysegm[ib, iint]
-                CSym = Sym.Compose(self.intersegm_to_all[ib][iint])
+                if pos:
+                    CSym = Sym.Compose(self.intersegm_to_all[ib][iint])
+                else:
+                    CSym = Sym.Compose(self.intersegm_to_all[ib][iint].TimeDerivative())
 
                 if CSym.TimeRev > 0:
                     segmbeg = 0
@@ -3471,7 +3477,10 @@ cdef class NBodySyst():
                 iintp = (tnum_target * (self.nint_min // tden_target) + self.nint_min) % self.nint_min
 
                 isegmp = self._bodysegm[ibp, iintp]
-                CSym = self.intersegm_to_all[ibp][iintp]
+                if pos:
+                    CSym = self.intersegm_to_all[ibp][iintp]
+                else:
+                    CSym = self.intersegm_to_all[ibp][iintp].TimeDerivative()
 
                 if CSym.TimeRev > 0:
                     segmbeg = 0

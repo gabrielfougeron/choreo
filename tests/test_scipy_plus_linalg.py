@@ -19,8 +19,7 @@ import choreo
 @ProbabilisticTest()
 @pytest.mark.parametrize("n", Dense_linalg_dims)
 def test_random_orthogonal_matrix(float64_tols, n):
-    """ docstring of test_random_orthogonal_matrix
-    
+    """ Tests whether random orthogonal matrices are indeed orthogonal enough.
     """
 
     rot = choreo.scipy_plus.linalg.random_orthogonal_matrix(n)
@@ -33,8 +32,7 @@ def test_random_orthogonal_matrix(float64_tols, n):
 @pytest.mark.parametrize("m", Dense_linalg_dims)
 @pytest.mark.parametrize("n", Dense_linalg_dims)
 def test_nullspace(float64_tols, n, m):
-    """ docstring of test_nullspace
-    
+    """ Tests properties of nullspace computation.
     """
 
     P = choreo.scipy_plus.linalg.random_orthogonal_matrix(n)

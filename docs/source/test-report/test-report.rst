@@ -16,26 +16,44 @@ Then, run tests using `pytest <https://docs.pytest.org/en/latest/>`_:
 .. code-block:: sh
 
     pytest
+   
+Description of tests
+--------------------
+
+.. automodule:: tests
 
 Tests results on Github Actions
-===============================
+-------------------------------
 
 As part of the Continuous Integration workflow of choreo, tests are regularly ran on several Python versions and on platforms provided by GitHub Actions. The corresponding test results are listed here.
+
+..
+
+* :doc:`test-report-ubuntu-latest-3.10`
+* :doc:`test-report-ubuntu-latest-3.11`
+* :doc:`test-report-ubuntu-latest-3.12`
+* :doc:`test-report-ubuntu-latest-3.13`
+
+..
+
+* :doc:`test-report-windows-latest-3.10`
+* :doc:`test-report-windows-latest-3.11`
+* :doc:`test-report-windows-latest-3.12`
+* :doc:`test-report-windows-latest-3.13`
+
+..
+
 
 * :doc:`test-report-macos-latest-3.10`
 * :doc:`test-report-macos-latest-3.11`
 * :doc:`test-report-macos-latest-3.12`
 * :doc:`test-report-macos-latest-3.13`
-    
-* :doc:`test-report-ubuntu-latest-3.10`
-* :doc:`test-report-ubuntu-latest-3.11`
-* :doc:`test-report-ubuntu-latest-3.12`
-* :doc:`test-report-ubuntu-latest-3.13`
-    
-* :doc:`test-report-windows-latest-3.10`
-* :doc:`test-report-windows-latest-3.11`
-* :doc:`test-report-windows-latest-3.12`
-* :doc:`test-report-windows-latest-3.13`
+
+..
+
+.. needtable::
+   :types: Test-File
+   :columns: id, cases, passed, skipped, errors, failed
 
 .. toctree::
     :maxdepth: 1
@@ -56,9 +74,5 @@ As part of the Continuous Integration workflow of choreo, tests are regularly ra
     test-report-windows-latest-3.11
     test-report-windows-latest-3.12
     test-report-windows-latest-3.13
-   
-Description of test functions
-=============================
 
-.. automodule:: tests
 

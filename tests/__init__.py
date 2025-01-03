@@ -1,4 +1,4 @@
-""" This is a docstring for tests
+"""
 
 .. autosummary::
     :toctree: _generated/

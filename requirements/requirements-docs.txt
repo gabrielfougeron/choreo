@@ -10,3 +10,5 @@ seed-intersphinx-mapping
 myst-parser
 sphinxext-rediraffe
 sphinxcontrib-bibtex
+sphinx-copybutton
+sphinxcontrib-autoprogram

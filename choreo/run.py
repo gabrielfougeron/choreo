@@ -1,7 +1,4 @@
 """
-Toto
-
-
 
 """
 
@@ -13,21 +10,23 @@ import choreo
 
 import argparse
 
+CLI_search_parser = argparse.ArgumentParser(
+    description = 'Searches periodic solutions to the N-body problem as defined in :mod:`choreo_GUI`',
+    prog = 'choreo_CLI_search',
+)
+
+default_Workspace = './'
+CLI_search_parser.add_argument(
+    '-f', '--foldername',
+    default = default_Workspace,
+    dest = 'Workspace_folder',
+    help = f'Workspace folder as defined in the GUI. Defaults to the current directory.',
+    metavar = '',
+)
+
 def CLI_search(cli_args):
 
-    parser = argparse.ArgumentParser(
-        description = 'Searches periodic solutions to the N-body problem as defined in choreo_GUI')
-
-    default_Workspace = './'
-    parser.add_argument(
-        '-f', '--foldername',
-        default = default_Workspace,
-        dest = 'Workspace_folder',
-        help = f'Workspace folder as defined in the GUI. Defaults to the current directory.',
-        metavar = '',
-    )
-
-    args = parser.parse_args(cli_args)
+    args = CLI_search_parser.parse_args(cli_args)
 
     root_list = [
         '',
@@ -60,9 +59,4 @@ def CLI_search(cli_args):
         print(f'Workspace folder {args.Workspace_folder} was not found')
 
 def entrypoint_CLI_search():
-    """ Search in CLI 
-    
-    Toto
-    
-    """
     CLI_search(sys.argv[1:])

@@ -82,7 +82,7 @@ Tests whether the default value of the dps parameter of :func:`choreo.scipy_plus
 @pytest.mark.parametrize("method_pair", SymplecticImplicitRKMethodPairs)
 @pytest.mark.parametrize("nsteps", Small_orders)
 def test_ImplicitSymplecticPairs(float64_tols_strict, method_pair, nsteps):
-    """ Tests whether symplectic pairs of implicit Runge-Kutta tables are indeed symplectic at least up to double precision.    
+    """ Tests whether symplectic pairs of implicit Runge-Kutta tables are indeed symplectic at least up to double precision accuracy.    
     """
 
     rk      = choreo.scipy_plus.multiprec_tables.ComputeImplicitRKTable_Gauss(nsteps, method=method_pair[0])
@@ -96,6 +96,8 @@ def test_ImplicitSymplecticPairs(float64_tols_strict, method_pair, nsteps):
 @pytest.mark.parametrize("method_pair", SymmetricImplicitRKMethodPairs)
 @pytest.mark.parametrize("nsteps", Small_orders)
 def test_ImplicitSymmetricPairs(float64_tols_strict, method_pair, nsteps):
+    """ Tests whether symmetric pairs of implicit Runge-Kutta tables are indeed symmetric at least up to double precision accuracy.
+    """   
     
     rk      = choreo.scipy_plus.multiprec_tables.ComputeImplicitRKTable_Gauss(nsteps, method=method_pair[0])
     rk_ad   = choreo.scipy_plus.multiprec_tables.ComputeImplicitRKTable_Gauss(nsteps, method=method_pair[1])

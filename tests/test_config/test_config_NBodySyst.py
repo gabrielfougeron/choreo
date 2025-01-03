@@ -2,7 +2,7 @@ import os
 import json
 import choreo
 
-__PROJECT_ROOT__ = os.path.abspath(os.path.join(os.path.dirname(__file__),os.pardir))
+__PROJECT_ROOT__ = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir, os.pardir))
 Wisdom_file = os.path.join(__PROJECT_ROOT__, "PYFFTW_wisdom.json")
 choreo.find.Load_wisdom_file(Wisdom_file)
 

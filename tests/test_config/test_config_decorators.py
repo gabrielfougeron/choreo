@@ -53,6 +53,17 @@ def RepeatTest(n = 10):
     
     return decorator
 
+def add_intersphinx_type(type_str):
+    
+    if type_str in ["str", "int", "dict", "bool", "list", "tuple"]:
+        res = f'python:{type_str}'
+    elif type_str in ["numpy.ndarray"]:
+        res = f'numpy:{type_str}'
+    else:
+        res = type_str
+        
+    return res
+
 def ParametrizeDocstrings(test):
     
     max_len_value = 800 # Values of parametrized arguments longer that this length will not be included in docs
@@ -89,7 +100,7 @@ def ParametrizeDocstrings(test):
             if 'ParameterSet' in type_str:
                 type_str = f'{type(elem_0.values[0])}'[8:-2]
             
-            param_ptm_doc += f'{arg_name} : :class:`{type_str}`\n'
+            param_ptm_doc += f'{arg_name} : :class:`{add_intersphinx_type(type_str)}`\n'
             
             arg_list_str = f'{arg_list}'
             if len(arg_list_str) < max_len_value:
@@ -110,8 +121,8 @@ def ParametrizeDocstrings(test):
                     type_str = f'{type(elem_0.values[i_arg])}'[8:-2]
                 else:
                     type_str = f'{type(elem_0[i_arg])}'[8:-2]
-                
-                param_ptm_doc += f'{arg_name} : :class:`{type_str}`\n' 
+                   
+                param_ptm_doc += f'{arg_name} : :class:`{add_intersphinx_type(type_str)}`\n' 
                 
                 arg_list_str = f'{[arg[i_arg] for arg in arg_list]}'
                 if len(arg_list_str) < max_len_value:

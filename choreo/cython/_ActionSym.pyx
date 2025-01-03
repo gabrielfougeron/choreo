@@ -69,21 +69,19 @@ cdef class ActionSym():
         Py_ssize_t TimeShiftNum     ,
         Py_ssize_t TimeShiftDen     ,
     ):
-        """Specify a symmetry of the Action functional.
-
-        _extended_summary_
+        """Specifies a symmetry of the Action functional.
 
         Parameters
         ----------
-        BodyPerm : :class:`np.ndarray(shape = (nbody), dtype = np.intp)`
+        BodyPerm : :class:`numpy:numpy.ndarray`:class:`(shape = (nbody), dtype = np.intp)`
             Permutation of the bodies.
-        SpaceRot : :class:`np.ndarray(shape = (geodim, geodim), dtype = np.float64)`
+        SpaceRot : :class:`numpy:numpy.ndarray`:class:`(shape = (geodim, geodim), dtype = np.float64)`
             Isometry of space.
-        TimeRev : :class:`int`
+        TimeRev : :class:`python:int`
             A value of ``-1`` denotes time reversal, and a value of ``1`` denotes no time reversal.
-        TimeShiftNum : :class:`int`
+        TimeShiftNum : :class:`python:int`
             Numerator of the rational time shift.
-        TimeShiftDen : :class:`int`
+        TimeShiftDen : :class:`python:int`
             Denominator of the rational time shift.
         """    
 
@@ -134,6 +132,19 @@ cdef class ActionSym():
     @cython.final
     @staticmethod
     def FromDict(Sym_dict):
+        """Returns a new :class:`choreo.ActionSym` from a :class:`python:dict`.
+
+        This is a helper function designed to facilitate loading symmetries from configuration files.
+
+        Parameters
+        ----------
+        Sym_dict : :class:`python:dict` 
+
+        Returns
+        -------
+        :class:`choreo.ActionSym`
+
+        """
 
         TimeRev = Sym_dict["TimeRev"]
 
@@ -157,20 +168,18 @@ cdef class ActionSym():
     @staticmethod
     def Identity(Py_ssize_t nbody, Py_ssize_t geodim):
         """Returns the identity transformation
-  
-          _extended_summary_
 
         Parameters
         ----------
-        nbody : :class:`int`
+        nbody : :class:`python:int`
             Number of bodies in the system.
-        geodim : :class:`int`
+        geodim : :class:`python:int`
             Dimension of ambiant space.
 
         Returns
         -------
-        ActionSym
-            An identity transformation
+        :class:`choreo.ActionSym`
+            An identity transformation of a system of ``nbody`` point masses in dimension ``geodim``.
         """          
 
         return ActionSym(
@@ -184,10 +193,25 @@ cdef class ActionSym():
     @cython.final
     @staticmethod
     def Random(Py_ssize_t nbody, Py_ssize_t geodim, Py_ssize_t maxden = -1):
-        """
-        Random Returns a random transformation.
+        """Returns a random transformation.
+
         Warning: the underlying density is **NOT** uniform.
-        """        
+
+        Parameters
+        ----------
+        nbody : :class:`python:int`
+            Number of bodies in the system.
+        geodim : :class:`python:int`
+            Dimension of ambiant space.
+        maxden : :class:`python:int`, optional
+            Maximum denominator of the time shift. Negative values will be given a maximum denominator equal to ``10 * nbody``\n
+            By default -1
+
+        Returns
+        -------
+        :class:`choreo.ActionSym`
+            A random transformation of a system of ``nbody`` point masses in dimension ``geodim``.
+        """          
 
         if maxden < 0:
             maxden = 10*nbody

@@ -1,4 +1,4 @@
-""" Docstring for test_ODE
+""" Test the properties of ODE solvers
 
 .. autosummary::
     :toctree: _generated/
@@ -23,7 +23,7 @@ import choreo
 @pytest.mark.parametrize("vector_calls", [True, False])
 @pytest.mark.parametrize("DoEFT", [True, False])
 def test_Implicit_ODE(float64_tols, method_x, method_v, nsteps, ivp, fun_type, vector_calls, DoEFT):
-    """ This is a docstring for the function test_Implicit_ODE
+    """Tests the accuracy of implicit ODE solvers.
     
     """
 
@@ -80,7 +80,7 @@ def test_Implicit_ODE(float64_tols, method_x, method_v, nsteps, ivp, fun_type, v
 @pytest.mark.parametrize("fun_type", all_fun_types)
 @pytest.mark.parametrize("DoEFT", [True, False])
 def test_Explicit_ODE(float64_tols, rk, ivp, fun_type, DoEFT):
-    """This is a docstring for the function test_Explicit_ODE
+    """Tests the accuracy of explicit ODE solvers.
     """
     fgun = ivp["fgun"].get((fun_type, False))
     

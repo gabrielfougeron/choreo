@@ -31,6 +31,7 @@ extensions = [
     "sphinx.ext.doctest"            ,
     "sphinx.ext.autodoc"            ,
     "sphinx.ext.viewcode"           ,
+    # "sphinx.ext.linkcode"           ,
     "sphinx.ext.todo"               ,
     "sphinx.ext.autosummary"        ,
     "sphinx.ext.mathjax"            ,
@@ -44,6 +45,10 @@ extensions = [
     "myst_parser"                   ,
     "sphinxext.rediraffe"           ,
     "sphinxcontrib.bibtex"          ,
+    # "sphinx-prompt"                 , # Incompatible versions
+    "sphinxcontrib.autoprogram"     ,
+    "sphinx_copybutton"             ,
+    "sphinx_design"                 ,
 ]
 
 # The suffix of source filenames.
@@ -173,10 +178,20 @@ html_js_files = [
     "js/custom-icon.js",
 ]
 
+################# 
+# Tests-reports #
+#################
+
 tr_report_template = "./test-report/test_report_template.txt"
 
 tr_suite_id_length = 3
 tr_case_id_length = 10
+
+tr_file = ['test-file', 'testfile', 'Test-File', 'TF_', '#ffffff', 'node']
+tr_suite = ['test-suite', 'testsuite', 'Test-Suite', 'TS_', '#cccccc', 'node']
+tr_case = ['test-case', 'testcase', 'Test-Case', 'TC_', '#999999', 'node']
+
+needs_extra_options = ['introduced', 'updated', 'impacts']
 
 # sphinx-gallery configuration
 
@@ -207,7 +222,6 @@ sphinx_gallery_conf = {
 # Latex PDF #
 #############
 latex_engine = "pdflatex"
-
 
 # latex_documents = [("startdocname", "targetname", "title", "author", "theme", "toctree_only")]
 
