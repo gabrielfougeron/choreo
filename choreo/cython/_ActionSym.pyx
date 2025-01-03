@@ -54,10 +54,14 @@ cdef class ActionSym():
 
     @property
     def BodyPerm(self):
+        """:class:`numpy:numpy.ndarray`:class:`(shape = (nbody), dtype = np.intp)` Permutation of the bodies.
+        """
         return np.asarray(self._BodyPerm)
 
     @property
     def SpaceRot(self):
+        """ :class:`numpy:numpy.ndarray`:class:`(shape = (nbody), dtype = np.intp)` Isometry of space.
+        """
         return np.asarray(self._SpaceRot)
 
     @cython.cdivision(True)
@@ -69,7 +73,7 @@ cdef class ActionSym():
         Py_ssize_t TimeShiftNum     ,
         Py_ssize_t TimeShiftDen     ,
     ):
-        """Specifies a symmetry of the Action functional.
+        """Specifies a symmetry of the action functional.
 
         Parameters
         ----------
@@ -134,7 +138,7 @@ cdef class ActionSym():
     def FromDict(Sym_dict):
         """Returns a new :class:`choreo.ActionSym` from a :class:`python:dict`.
 
-        This is a helper function designed to facilitate loading symmetries from configuration files.
+        This is a helper function designed to facilitate loading symmetries from configuration and solution files.
 
         Parameters
         ----------
@@ -167,7 +171,7 @@ cdef class ActionSym():
     @cython.final
     @staticmethod
     def Identity(Py_ssize_t nbody, Py_ssize_t geodim):
-        """Returns the identity transformation
+        """Returns the identity transformation.
 
         Parameters
         ----------
@@ -204,7 +208,7 @@ cdef class ActionSym():
         geodim : :class:`python:int`
             Dimension of ambiant space.
         maxden : :class:`python:int`, optional
-            Maximum denominator of the time shift. Negative values will be given a maximum denominator equal to ``10 * nbody``\n
+            Maximum denominator of the time shift. Negative values will be given a maximum denominator equal to ``10 * nbody``.\n
             By default -1
 
         Returns
@@ -236,7 +240,12 @@ cdef class ActionSym():
     @cython.final
     cpdef ActionSym Inverse(ActionSym self):
         """
-        Returns the inverse of a symmetry transformation
+        Returns the inverse of a symmetry transformation.
+
+        Returns
+        -------
+        :class:`choreo.ActionSym`
+            The inverse transformation.
         """
 
         cdef Py_ssize_t[::1] InvPerm = np.zeros(self._BodyPerm.shape[0], dtype = np.intp)
@@ -254,9 +263,15 @@ cdef class ActionSym():
 
     @cython.final
     cpdef ActionSym TimeDerivative(ActionSym self):
-        """
-        Returns the time derivative of a symmetry transformation.
-        If self transforms positions, then self.TimeDerivative() transforms speeds.
+        """ Returns the time derivative of a symmetry transformation.
+
+        If ``A`` transforms positions, then ``A.TimeDerivative()`` transforms speeds.
+
+        Returns
+        -------
+        :class:`choreo.ActionSym`
+            The time derivative of the input transformation
+
         """
 
         cdef double[:, ::1] SpaceRot = self._SpaceRot.copy()
@@ -275,10 +290,19 @@ cdef class ActionSym():
     @cython.final
     @cython.cdivision(True)
     cpdef ActionSym Compose(ActionSym B, ActionSym A):
-        """
-        Returns the composition of two transformations.
+        """ Returns the composition of two transformations.
 
-        B.Compose(A) returns the composition B o A, i.e. applies A then B.
+        ``B.Compose(A)`` returns the composition :math:`B \circ A`, i.e. applies ``A`` then ``B``.
+
+        Parameters
+        ----------
+        B, A : :class:`choreo.ActionSym`
+            Input transformation.
+
+        Returns
+        -------
+        :class:`choreo.ActionSym`
+            The composition of the input transformations.
         """
 
         cdef Py_ssize_t[::1] ComposeBodyPerm = np.zeros(B._BodyPerm.shape[0], dtype = np.intp)
@@ -300,18 +324,37 @@ cdef class ActionSym():
 
     @cython.final
     cpdef ActionSym Conjugate(ActionSym A, ActionSym B):
-        """
-        Returns the conjugation of a transformation wrt another transformation.
+        """Returns the conjugation of a transformation with respect to another transformation.
 
-        A.Conjugate(B) returns the conjugation B o A o B^-1.
+        ``A.Conjugate(B)`` returns the conjugation :math:`B \circ A \circ B^{-1}`.
+        
+        Parameters
+        ----------
+        A, B: :class:`choreo.ActionSym`
+            Input transformation.
+
+        Returns
+        -------
+        :class:`choreo.ActionSym`
+            The conjugation of the input transformations.
+
         """
 
         return B.Compose(A.Compose(B.Inverse()))
 
     @cython.final
     cpdef bint IsWellFormed(ActionSym self, double atol = default_atol):
-        """
-        Returns True if the transformation is well-formed.
+        """Returns :data:`python:True` if the transformation is well-formed.
+        
+        Parameters
+        ----------
+        atol : :class:`python:float`, optional
+            Absolute tolerance.
+
+        Returns
+        -------
+        :class:`python:bool`
+
         """       
         
         cdef bint res = True
@@ -347,9 +390,26 @@ cdef class ActionSym():
 
     @cython.final
     cpdef bint IsIdentity(ActionSym self, double atol = default_atol):
-        """
-        Returns True if the transformation is close to identity.
-        """       
+        """Returns :data:`python:True` if the transformation is within ``atol`` of the identity.
+        
+        Parameters
+        ----------
+        atol : :class:`python:float`, optional
+            Absolute tolerance.
+
+        Returns
+        -------
+        :class:`python:bool`
+
+        See Also
+        --------
+
+        * :meth:`choreo.ActionSym.IsIdentityPerm`
+        * :meth:`choreo.ActionSym.IsIdentityRot`
+        * :meth:`choreo.ActionSym.IsIdentityTimeRev`
+        * :meth:`choreo.ActionSym.IsIdentityTimeShift`
+        
+        """    
 
         return ( 
             self.IsIdentityPerm() and
@@ -360,6 +420,13 @@ cdef class ActionSym():
 
     @cython.final
     cpdef bint IsIdentityPerm(ActionSym self):
+        """Returns :data:`python:True` if the body permutation part of the transformation is the identity permutation.
+
+        Returns
+        -------
+        :class:`python:bool`
+        
+        """    
 
         cdef bint isid = True
         cdef Py_ssize_t ib
@@ -372,6 +439,18 @@ cdef class ActionSym():
     
     @cython.final
     cpdef bint IsIdentityRot(ActionSym self, double atol = default_atol):
+        """Returns :data:`python:True` if the space isometry part of the transformation is within ``atol`` of the identity.
+        
+        Parameters
+        ----------
+        atol : :class:`python:float`, optional
+            Absolute tolerance.
+
+        Returns
+        -------
+        :class:`python:bool`
+        
+        """    
 
         cdef bint isid = True
         cdef Py_ssize_t idim, jdim
@@ -390,32 +469,160 @@ cdef class ActionSym():
 
     @cython.final
     cpdef bint IsIdentityTimeRev(ActionSym self):
+        """Returns :data:`python:True` if the transformation does not reverse time.
+
+        Returns
+        -------
+        :class:`python:bool`
+        
+        """    
         return (self.TimeRev == 1)
 
     @cython.final    
     cpdef bint IsIdentityTimeShift(ActionSym self):
+        """Returns :data:`python:True` if the transformation does not shift time.
+
+        Returns
+        -------
+        :class:`python:bool`
+        
+        """    
         return (self.TimeShiftNum == 0)
 
     @cython.final    
     cpdef bint IsIdentityPermAndRot(ActionSym self, double atol = default_atol):
+        """ Returns :data:`python:True` if parts of the transformation are within ``atol`` of the identity.
+        
+        Returns :data:`python:True` if:
+        
+        * The body permutation part of the transformation is the identity permutation.
+        * The space isometry part of the transformation is within ``atol`` of the identity.
+
+        Parameters
+        ----------
+        atol : :class:`python:float`, optional
+            Absolute tolerance.
+
+        Returns
+        -------
+        :class:`python:bool`
+
+        See Also
+        --------
+
+        * :meth:`choreo.ActionSym.IsIdentityPerm`
+        * :meth:`choreo.ActionSym.IsIdentityRot`
+
+        """    
         return self.IsIdentityPerm() and self.IsIdentityRot(atol = atol)    
 
     @cython.final    
     cpdef bint IsIdentityPermAndRotAndTimeRev(ActionSym self, double atol = default_atol):
+        """ Returns :data:`python:True` if parts of the transformation are within ``atol`` of the identity.
+        
+        Returns :data:`python:True` if:
+        
+        * The body permutation part of the transformation is the identity permutation.
+        * The space isometry part of the transformation is within ``atol`` of the identity.
+        * The transformation does not reverse time.
+
+        Parameters
+        ----------
+        atol : :class:`python:float`, optional
+            Absolute tolerance.
+
+        Returns
+        -------
+        :class:`python:bool`
+
+        See Also
+        --------
+
+        * :meth:`choreo.ActionSym.IsIdentityPerm`
+        * :meth:`choreo.ActionSym.IsIdentityRot`
+        * :meth:`choreo.ActionSym.IsIdentityTimeRev`
+
+        """  
         return self.IsIdentityPerm() and self.IsIdentityRot(atol = atol) and self.IsIdentityTimeRev()
 
     @cython.final    
     cpdef bint IsIdentityRotAndTimeRev(ActionSym self, double atol = default_atol):
+        """ Returns :data:`python:True` if parts of the transformation are within ``atol`` of the identity.
+        
+        Returns :data:`python:True` if:
+
+        * The space isometry part of the transformation is within ``atol`` of the identity.
+        * The transformation does not reverse time.
+
+        Parameters
+        ----------
+        atol : :class:`python:float`, optional
+            Absolute tolerance.
+
+        Returns
+        -------
+        :class:`python:bool`
+
+        See Also
+        --------
+
+        * :meth:`choreo.ActionSym.IsIdentityRot`
+        * :meth:`choreo.ActionSym.IsIdentityTimeRev`
+
+        """  
         return self.IsIdentityTimeRev() and self.IsIdentityRot(atol = atol)    
 
     @cython.final
     cpdef bint IsIdentityRotAndTime(ActionSym self, double atol = default_atol):
-        return self.IsIdentityTimeRev() and self.IsIdentityRot(atol = atol) and self.IsIdentityTimeShift()
+        """ Returns :data:`python:True` if parts of the transformation are within ``atol`` of the identity.
+        
+        Returns :data:`python:True` if:
+        
+        * The space isometry part of the transformation is within ``atol`` of the identity.
+        * The transformation does not shift or reverse time.
+
+        Parameters
+        ----------
+        atol : :class:`python:float`, optional
+            Absolute tolerance.
+
+        Returns
+        -------
+        :class:`python:bool`
+
+        See Also
+        --------
+
+        * :meth:`choreo.ActionSym.IsIdentityRot`
+        * :meth:`choreo.ActionSym.IsIdentityTimeRev`
+        * :meth:`choreo.ActionSym.IsIdentityTimeShift`
+
+        """  
+        return self.IsIdentityTimeRev() and self.IsIdentityTimeShift() and self.IsIdentityRot(atol = atol) 
 
     @cython.final
     cpdef bint IsSame(ActionSym self, ActionSym other, double atol = default_atol):
-        """
-        Returns True if the two transformations are almost identical.
+        """Returns :data:`python:True` if the two transformations are within ``atol`` of each other.
+
+        Parameters
+        ----------
+        other : :class:`choreo.ActionSym`
+            Input transformation.
+        atol : :class:`python:float`, optional
+            Absolute tolerance.
+
+        Returns
+        -------
+        :class:`python:bool`
+
+        See Also
+        --------
+
+        * :meth:`choreo.ActionSym.IsSamePerm`
+        * :meth:`choreo.ActionSym.IsSameRot`
+        * :meth:`choreo.ActionSym.IsSameTimeRev`
+        * :meth:`choreo.ActionSym.IsSameTimeShift`
+
         """   
         return ( 
             self.IsSamePerm(other) and
@@ -426,6 +633,18 @@ cdef class ActionSym():
     
     @cython.final
     cpdef bint IsSamePerm(ActionSym self, ActionSym other):
+        """Returns :data:`python:True` if the two transformations have identical body permutations.
+
+        Parameters
+        ----------
+        other : :class:`choreo.ActionSym`
+            Input transformation.
+
+        Returns
+        -------
+        :class:`python:bool`
+
+        """   
 
         cdef bint isid = True
         cdef Py_ssize_t ib
@@ -438,6 +657,20 @@ cdef class ActionSym():
 
     @cython.final
     cpdef bint IsSameRot(ActionSym self, ActionSym other, double atol = default_atol):
+        """Returns :data:`python:True` if the two transformations have space isometries within ``atol`` of each other.
+
+        Parameters
+        ----------
+        other : :class:`choreo.ActionSym`
+            Input transformation.
+        atol : :class:`python:float`, optional
+            Absolute tolerance.
+
+        Returns
+        -------
+        :class:`python:bool`
+
+        """   
 
         cdef bint isid = True
         cdef Py_ssize_t idim, jdim
@@ -451,23 +684,113 @@ cdef class ActionSym():
     
     @cython.final
     cpdef bint IsSameTimeRev(ActionSym self, ActionSym other):
+        """Returns :data:`python:True` if the two transformations have identical time reversal.
+
+        Parameters
+        ----------
+        other : :class:`choreo.ActionSym`
+            Input transformation.
+
+        Returns
+        -------
+        :class:`python:bool`
+
+        """   
         return self.TimeRev == other.TimeRev
     
     @cython.final
     cpdef bint IsSameTimeShift(ActionSym self, ActionSym other, double atol = default_atol):
+        """Returns :data:`python:True` if the two transformations have identical time shifts.
+
+        Parameters
+        ----------
+        other : :class:`choreo.ActionSym`
+            Input transformation.
+
+        Returns
+        -------
+        :class:`python:bool`
+
+        """   
         return self.TimeShiftNum * other.TimeShiftDen == self.TimeShiftDen * other.TimeShiftNum    
 
     @cython.final
     cpdef bint IsSameRotAndTimeRev(ActionSym self, ActionSym other, double atol = default_atol):
+        """Returns :data:`python:True` if the two transformations have properties within ``atol`` of each other.
+
+        ``A.IsSameRotAndTimeRev(B)`` returns :data:`python:True` if ``A`` and ``B`` have:
+
+        * The space isometry part of the transformation within ``atol`` of each other.
+        * Identical time reversal.
+
+        Parameters
+        ----------
+        other : :class:`choreo.ActionSym`
+            Input transformation.
+        atol : :class:`python:float`, optional
+            Absolute tolerance.
+
+        Returns
+        -------
+        :class:`python:bool`
+
+        See Also
+        --------
+
+        * :meth:`choreo.ActionSym.IsSameRot`
+        * :meth:`choreo.ActionSym.IsSameTimeRev``
+
+        """   
         return self.IsSameTimeRev(other) and self.IsSameRot(other, atol = atol)    
     
     @cython.final
     cpdef bint IsSameRotAndTime(ActionSym self, ActionSym other, double atol = default_atol):
+        """Returns :data:`python:True` if the two transformations have properties within ``atol`` of each other.
+
+        ``A.IsSameRotAndTimeRev(B)`` returns :data:`python:True` if ``A`` and ``B`` have:
+
+        * The space isometry part of the transformation within ``atol`` of each other.
+        * Identical time shifts and reversal.
+
+        Parameters
+        ----------
+        other : :class:`choreo.ActionSym`
+            Input transformation.
+        atol : :class:`python:float`, optional
+            Absolute tolerance.
+
+        Returns
+        -------
+        :class:`python:bool`
+
+        See Also
+        --------
+
+        * :meth:`choreo.ActionSym.IsSameRot`
+        * :meth:`choreo.ActionSym.IsSameTimeShift``
+        * :meth:`choreo.ActionSym.IsSameTimeRev``
+
+        """   
         return self.IsSameTimeShift(other) and self.IsSameTimeRev(other) and self.IsSameRot(other, atol = atol)    
 
     @cython.final
     @cython.cdivision(True)
     cpdef (Py_ssize_t, Py_ssize_t) ApplyTInv(ActionSym self, Py_ssize_t tnum, Py_ssize_t tden):
+        """Returns a rational inverse transformed time instant given an input rational time instant.
+
+        Parameters
+        ----------
+        tnum : :class:`python:int`
+            Numerator of the input time instant.
+        tden : :class:`python:int`
+            Denominator of the input time instant.
+
+        Returns
+        -------
+        :class:`python:int`, :class:`python:int`
+            The numerator and denominator of the transformed time instant.
+
+        """    
 
         cdef Py_ssize_t num = self.TimeRev * (tnum * self.TimeShiftDen - self.TimeShiftNum * tden)
         cdef Py_ssize_t den = tden * self.TimeShiftDen
@@ -482,6 +805,21 @@ cdef class ActionSym():
     @cython.final
     @cython.cdivision(True)
     cpdef (Py_ssize_t, Py_ssize_t) ApplyTInvSegm(ActionSym self, Py_ssize_t tnum, Py_ssize_t tden):
+        """Returns a rational inverse transformed time segment given an input rational time segment.
+
+        Parameters
+        ----------
+        tnum : :class:`python:int`
+            Numerator of the input time segment.
+        tden : :class:`python:int`
+            Denominator of the input time segment.
+
+        Returns
+        -------
+        :class:`python:int`, :class:`python:int`
+            The numerator and denominator of the transformed time segment.
+
+        """ 
 
         if (self.TimeRev == -1): 
             tnum = ((tnum+1)%tden)
@@ -491,6 +829,22 @@ cdef class ActionSym():
     @cython.final
     @cython.cdivision(True)
     cpdef (Py_ssize_t, Py_ssize_t) ApplyT(ActionSym self, Py_ssize_t tnum, Py_ssize_t tden):
+        """Returns a rational transformed time instant given an input rational time instant.
+
+        Parameters
+        ----------
+        tnum : :class:`python:int`
+            Numerator of the input time instant.
+        tden : :class:`python:int`
+            Denominator of the input time instant.
+
+        Returns
+        -------
+        :class:`python:int`, :class:`python:int`
+            The numerator and denominator of the transformed time instant.
+
+        """ 
+
 
         cdef Py_ssize_t num = self.TimeRev * tnum * self.TimeShiftDen + self.TimeShiftNum * tden
         cdef Py_ssize_t den = tden * self.TimeShiftDen
@@ -505,6 +859,21 @@ cdef class ActionSym():
     @cython.final
     @cython.cdivision(True)
     cpdef (Py_ssize_t, Py_ssize_t) ApplyTSegm(ActionSym self, Py_ssize_t tnum, Py_ssize_t tden):
+        """Returns a rational transformed time segment given an input rational time segment.
+
+        Parameters
+        ----------
+        tnum : :class:`python:int`
+            Numerator of the input time segment.
+        tden : :class:`python:int`
+            Denominator of the input time segment.
+
+        Returns
+        -------
+        :class:`python:int`, :class:`python:int`
+            The numerator and denominator of the transformed time segment.
+
+        """ 
 
         if (self.TimeRev == -1): 
             tnum = ((tnum+1)%tden)
@@ -513,12 +882,32 @@ cdef class ActionSym():
 
     # THIS IS NOT A PERFORMANCE-ORIENTED METHOD
     @cython.final
-    def TransformPos(ActionSym self, in_segm, out):
-        np.matmul(in_segm, self._SpaceRot.T, out=out)
+    def TransformPos(ActionSym self, in_pos, out):
+        """Computes a transformed position by the space isometry.
+
+        Parameters
+        ----------
+        in_pos : :class:`numpy:numpy.ndarray`:class:`(shape = (..., geodim), dtype = np.float64)`
+            Input position.
+        out : :class:`numpy:numpy.ndarray`:class:`(shape = (..., geodim), dtype = np.float64)`
+            Output transformed position.
+
+        """ 
+        np.matmul(in_pos, self._SpaceRot.T, out=out)
             
     # THIS IS NOT A PERFORMANCE-ORIENTED METHOD
     @cython.final
     def TransformSegment(ActionSym self, in_segm, out):
+        """Computes a transformed segment of positions by the time and space isometry.
+
+        Parameters
+        ----------
+        in_pos : :class:`numpy:numpy.ndarray`:class:`(shape = (nsegm, geodim), dtype = np.float64)`
+            Input segment of positions.
+        out : :class:`numpy:numpy.ndarray`:class:`(shape = (nsegm, geodim), dtype = np.float64)`
+            Output transformed segment of positions.
+
+        """ 
 
         np.matmul(in_segm, self._SpaceRot.T, out=out)
         if self.TimeRev == -1:
@@ -526,7 +915,15 @@ cdef class ActionSym():
             
     @cython.final
     def to_dict(ActionSym self):
-    # Useful to write to a json file
+        """Returns a :class:`python:dict` containing the transformation informations.
+
+        This is a helper function designed to facilitate writing configuration and solution files.
+
+        Returns
+        -------
+        :class:`python:dict`
+
+        """ 
 
         return {
             "BodyPerm"      : self.BodyPerm.tolist()    ,
@@ -540,6 +937,43 @@ cdef class ActionSym():
     @cython.cdivision(True)
     @staticmethod
     def TimeShifts(Py_ssize_t max_den):
+        """Generates all rational fractions in :math:`[0,1[` with denominator lower or equal to ``max_den``.
+
+        The generated rational time shifts are given in reduced form and increasing order.
+
+        Example
+        -------
+
+        >>> for a,b in choreo.ActionSym.TimeShifts(5):
+        ...     print(a,b)
+        ...
+        0 1
+        1 5
+        1 4
+        1 3
+        2 5
+        1 2
+        3 5
+        2 3
+        3 4
+        4 5
+
+        Parameters
+        ----------
+        max_den : :class:`python:int`
+            Maximum fraction denominator.
+        
+        Returns
+        -------
+        :class:`python:int`, :class:`python:int`
+            The fraction numerator and denominator.
+
+        See Also
+        --------
+
+        * `Farey sequence on Wikipedia <https://en.wikipedia.org/wiki/Farey_sequence>`_
+        
+        """ 
 
         cdef Py_ssize_t num = 0
         cdef Py_ssize_t den = 1
@@ -569,6 +1003,37 @@ cdef class ActionSym():
     @cython.final
     @staticmethod
     def InvolutivePermutations(Py_ssize_t n):
+        """Generates all involutive permutations of size ``n``.
+
+        The generated rational time shifts are given in reduced form and increasing order.
+
+        Example
+        -------
+
+        >>> for p in choreo.ActionSym.InvolutivePermutations(4):
+        ...     print(p)
+        ...
+        [0 1 2 3]
+        [0 1 3 2]
+        [0 2 1 3]
+        [0 3 2 1]
+        [1 0 2 3]
+        [1 0 3 2]
+        [2 1 0 3]
+        [2 3 0 1]
+        [3 1 2 0]
+        [3 2 1 0]
+
+        Parameters
+        ----------
+        n : :class:`python:int`
+            Permutation size
+        
+        Returns
+        -------
+        :class:`numpy:numpy.ndarray`:class:`(shape = n, dtype = np.intp)`
+        
+        """ 
         for p in itertools.permutations(range(n)):
             for i in range(n):
                 if p[p[i]] != i:
@@ -579,9 +1044,35 @@ cdef class ActionSym():
     @cython.final
     @staticmethod
     def SurjectiveDirectSpaceRot(double[::1] params):
-        # Uses the square of Cayley transform for surjectivity
-        # T = ((I-A)^-1 (I+A))^2
-        # Where A = SkeySym(params)
+        """Surjective parametrization of direct isometries.
+
+        This function computes a direct isometry :math:`R \in SO(n)` from a set of :math:`\\frac{n(n-1)}{2}` parameters using the squared Cayley transform, ensuring surjectivity:
+
+        .. math::
+            R = ((I_n-A)^{-1}(I_n+A))^2
+
+        where :math:`A` denotes the skew-symmetric matrix whose upper triangular entries are given in ``params``.
+
+        Example
+        -------
+
+        >>> R = choreo.ActionSym.SurjectiveDirectSpaceRot(np.array([1.,2.,3.]))
+        >>> np.linalg.norm(np.matmul(R,R.T) - np.identity(3)) < 1e-14
+        np.True_
+        >>> abs(np.linalg.det(R) - 1.) < 1e-14
+        np.True_
+
+        Parameters
+        ----------
+        params : :class:`numpy:numpy.ndarray`:class:`(shape = n*(n-1)/2, dtype = np.float64)`
+            Upper part of the Cayley skew-symmetric matrix.
+        
+        Returns
+        -------
+        :class:`numpy:numpy.ndarray`:class:`(shape = (n,n), dtype = np.float64)`
+            A direct orthonormal transformation.
+        
+        """ 
 
         cdef Py_ssize_t i,j,k
 
@@ -616,6 +1107,32 @@ cdef class ActionSym():
     @cython.final
     @staticmethod
     def BuildCayleyGraph(Py_ssize_t nbody, Py_ssize_t geodim, list GeneratorList = [], Py_ssize_t max_layers = 1000, bint add_edge_data = False):
+        """ Builds the `Cayley graph <https://en.wikipedia.org/wiki/Cayley_graph>`_ of a list of group generators.
+
+        Parameters
+        ----------
+        nbody : :class:`python:int`
+            Number of bodies in the system.
+        geodim : :class:`python:int`
+            Dimension of ambiant space.
+        GeneratorList : :class:`python:list` of :class:`choreo.ActionSym`, optional
+            List of generators, by default [].
+        max_layers : :class:`python:int`, optional
+            Maximum number of layers in the graph before raising an error, by default 1000.
+        add_edge_data : :class:`python:bool`, optional
+            Whether to add the generator to edges of the graph, by default :data:`python:False`.
+        
+        Returns
+        -------
+        :class:`networkx:networkx.DiGraph`
+            The Cayley graph.
+
+        Raises
+        ------
+        ValueError
+            If the number of layers in the graph is larger than ``max_layers``.
+
+        """    
 
         cdef Py_ssize_t i_layer
 

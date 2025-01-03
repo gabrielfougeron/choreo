@@ -3,26 +3,20 @@ cimport cython
 
 @cython.final
 cdef class ActionSym():
-    """
-    This class defines the symmetries of the action
-    Useful to detect loops and constraints.
-
-    Syntax : Giving one ActionSym to setup_changevar prescribes the following symmetry / constraint :
-
-    .. math::
-        x_{\\text{LoopTarget}}(t) = \\text{SpaceRot} \cdot x_{\\text{LoopSource}} (\\text{TimeRev} * (t - \\text{TimeShift}))
-
-    Where SpaceRot is assumed orthogonal (never actually checked, so beware)
-    and TimeShift is defined as a rational fraction.
-
-    cf Palais' principle of symmetric criticality
-    """
 
     cdef Py_ssize_t[::1] _BodyPerm
     cdef double[:,::1] _SpaceRot
     cdef readonly Py_ssize_t TimeRev
+    """:class:`python:int` Time reversal
+    
+    A value of ``-1`` denotes time reversal, and a value of ``1`` denotes no time reversal.
+    """
     cdef readonly Py_ssize_t TimeShiftNum
+    """:class:`python:int` Numerator of the rational time shift.
+    """
     cdef readonly Py_ssize_t TimeShiftDen
+    """:class:`python:int` Denominator of the rational time shift.
+    """
 
     cpdef ActionSym Inverse(ActionSym self)
 

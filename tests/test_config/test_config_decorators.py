@@ -55,7 +55,7 @@ def RepeatTest(n = 10):
 
 def add_intersphinx_type(type_str):
     
-    if type_str in ["str", "int", "dict", "bool", "list", "tuple"]:
+    if type_str in ["str", "int", "dict", "bool", "list", "tuple", "float"]:
         res = f'python:{type_str}'
     elif type_str in ["numpy.ndarray"]:
         res = f'numpy:{type_str}'

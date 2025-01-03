@@ -73,6 +73,7 @@ intersphinx_mapping = {
     'numpy'         : ('https://numpy.org/doc/stable/'                  , None),
     "scipy"         : ("http://docs.scipy.org/doc/scipy/reference/"     , None),
     "matplotlib"    : ("https://matplotlib.org/stable/"                 , None), 
+    "networkx"      : ("https://networkx.org/documentation/stable/"     , None), 
     # 'Pillow'        : ('https://pillow.readthedocs.io/en/stable/'       , None),
     # 'cycler'        : ('https://matplotlib.org/cycler/'                 , None),
     # 'dateutil'      : ('https://dateutil.readthedocs.io/en/stable/'     , None),
