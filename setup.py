@@ -238,7 +238,9 @@ if opt_lvl == "fast":
     define_macros.append(("CYTHON_WITHOUT_ASSERTIONS", 1))
     define_macros.append(("CYTHON_CLINE_IN_TRACEBACK", 0))
 
-compiler_directives = {}
+compiler_directives = {
+    'cpow' : True   ,
+}
 
 if opt_lvl == "profile" : 
 
@@ -250,6 +252,7 @@ if opt_lvl == "profile" :
         'emit_code_comments' : True , 
     }
     compiler_directives.update(profile_compiler_directives)
+    
     profile_define_macros = [
         ('CYTHON_TRACE', '1')       ,
         ('CYTHON_TRACE_NOGIL', '1') ,
@@ -288,7 +291,7 @@ ext_modules = [
         extra_link_args = extra_link_args,
         define_macros  = define_macros ,
     )
-    for (name,source,safemath_needed) in zip(cython_extnames,cython_filenames,cython_safemath_needed, strict = True)
+    for (name,source,safemath_needed) in zip(cython_extnames, cython_filenames, cython_safemath_needed, strict = True)
 ]
 
 if platform.system() == "Windows":

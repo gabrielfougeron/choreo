@@ -157,44 +157,71 @@ cdef class NBodySyst():
     """
 
     cdef readonly Py_ssize_t geodim
-    """ :class:`python:int` Dimension of ambiant space."""
+    """ :class:`python:int` Dimension of ambiant space.
+    
+    Read-only attribute.
+    """
 
     cdef readonly Py_ssize_t nbody
-    """ :class:`python:int` Number of bodies in system."""
+    """ :class:`python:int` Number of bodies in system.
+    
+    Read-only attribute.
+    """
 
     cdef readonly Py_ssize_t nint_min
-    """ :class:`python:int` Minimum number of integration points."""
+    """ :class:`python:int` Minimum number of integration points.
+    
+    Read-only attribute.
+    """
 
     cdef readonly Py_ssize_t nloop
-    """ :class:`python:int` Number of loops in system."""
+    """ :class:`python:int` Number of loops in system.
+    
+    Read-only attribute.
+    """
 
     cdef readonly Py_ssize_t nsegm
-    """ :class:`python:int` Number of segments in system."""
+    """ :class:`python:int` Number of segments in system.
+    
+    Read-only attribute.
+    """
 
     cdef readonly Py_ssize_t nbin_segm_tot
-    """ :class:`python:int` Total number of binary interactions between segments."""
+    """ :class:`python:int` Total number of binary interactions between segments.
+    
+    Read-only attribute.
+    """
 
     cdef readonly Py_ssize_t nbin_segm_unique
-    """ :class:`python:int` Number of **unique** binary interactions between segments."""
+    """ :class:`python:int` Number of **unique** binary interactions between segments.
+    
+    Read-only attribute.
+    """
 
     cdef readonly bint RequiresGreaterNStore
-    """ :class:`python:bool` Whether the symmetry constraints require the rightmost integration point to be included in segments."""
+    """ :class:`python:bool` Whether the symmetry constraints require the rightmost integration point to be included in segments.
+    
+    Read-only attribute.
+    """
 
     cdef readonly bint GreaterNStore
-    """ :class:`python:bool` Whether the rightmost integration point is included in segments."""
+    """ :class:`python:bool` Whether the rightmost integration point is included in segments.
+    
+    Read-only attribute.
+    """
 
     @property
     def ForceGreaterNStore(self):
         """ :class:`python:bool` Whether to force the rightmost integration point to be included in segments.
         
         .. note :: 
-            Regardless of the value of :attr:`choreo.NBodySyst.ForceGreaterNStore`
+            Regardless of the value of :attr:`ForceGreaterNStore`, 
 
         See Also
         --------
 
-        * :attr:`choreo.NBodySyst.GreaterNStore`
-        * :attr:`choreo.NBodySyst.RequiresGreaterNStore`
+        * :attr:`GreaterNStore`
+        * :attr:`RequiresGreaterNStore`
 
         """
         return self.GreaterNStore and (not self.RequiresGreaterNStore)
@@ -573,10 +600,49 @@ cdef class NBodySyst():
         self.nint = 2 * self.nint_min * nint_fac_in
 
     cdef readonly Py_ssize_t ncoeffs
+    """ :class:`python:int` Number of Fourier coefficients in each loop.
+    
+    Read-only attribute.
+    """
+
     cdef readonly Py_ssize_t segm_size    # number of interacting nodes in segment
+    """ :class:`python:int` Number of interacting positions in a segment.
+    
+    .. note ::
+        The value of :attr:`segm_size` can differ from that of :attr:`segm_store` if both endpoints are explicitely stored.
+
+    See Also
+    --------
+
+    * :attr:`ForceGreaterNStore`
+
+    Read-only attribute.
+    """
     cdef readonly Py_ssize_t segm_store   # number of stored values in segment, including repeated values for n_sub_fft == 2
+    """ :class:`python:int` Number of stored positions in a segment.
+
+    Read-only attribute.
+
+    .. note ::
+        The value of :attr:`segm_size` can differ from that of :attr:`segm_store` if both endpoints are explicitely stored.
+
+    See Also
+    --------
+
+    * :attr:`ForceGreaterNStore`
+
+    """
     cdef readonly Py_ssize_t nparams
+    """ :class:`python:int` Number of parameters.
+    
+    Read-only attribute.
+    """
+    
     cdef readonly Py_ssize_t nparams_incl_o
+    """ :class:`python:int` Number of parameters after removal of unnecessary parts of zero-indexed Fourier coefficients.
+    
+    Read-only attribute.
+    """
 
     # WARNING: These are the shapes and shifts of POS params, NOT MOM params!
     cdef Py_ssize_t[:,::1] _params_shapes   
@@ -2723,6 +2789,20 @@ cdef class NBodySyst():
 
     @cython.final
     def params_to_action_grad(self, double[::1] params_mom_buf):
+        """ _summary_
+
+        _extended_summary_
+
+        Parameters
+        ----------
+        double : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
 
         assert params_mom_buf.shape[0] == self.nparams
 
@@ -3661,6 +3741,39 @@ cdef class NBodySyst():
 
     @cython.final
     def TT_params_to_action_grad(self, double[::1] params_mom_buf, object TT):
+        """ Profiles the computation of the gradient of the action with respect to parameters.
+
+        Parameters
+        ----------
+        params_mom_buf : :class:`numpy:numpy.ndarray`:class:`(shape = nparams, dtype = np.float64)`
+            Buffer of parameters.
+        TT : :class:`pyquickbench:pyquickbench.TimeTrain`
+            Profiler object that records the following intermediate times:
+
+            * start
+            * memory
+            * changevar_mom_pos
+            * params_to_pos_slice
+            * pos_slice_to_segmpos
+            * segm_pos_to_pot_nrg_grad
+            * segmpos_to_pos_slice_T
+            * pos_slice_to_params
+            * changevar_mom_pos_T
+            * params_to_kin_nrg_grad_daxpy
+
+        Returns
+        -------
+        :class:`numpy:numpy.ndarray`:class:`(shape = nparams, dtype = np.float64)`
+            Gradient of the action with respect to parameters.
+
+        See Also
+        --------
+
+        * :attr:`nparams`
+        * :meth:`params_to_action_grad`
+        * :mod:`pyquickbench:pyquickbench`
+
+        """
 
         TT.toc("start")
 

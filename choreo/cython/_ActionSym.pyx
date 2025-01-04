@@ -199,7 +199,7 @@ cdef class ActionSym():
     def Random(Py_ssize_t nbody, Py_ssize_t geodim, Py_ssize_t maxden = -1):
         """Returns a random transformation.
 
-        Warning: the underlying density is **NOT** uniform.
+        .. warning :: The underlying probability density is **NOT** uniform.
 
         Parameters
         ----------
@@ -222,7 +222,9 @@ cdef class ActionSym():
 
         perm = np.random.permutation(nbody).astype(np.intp)
 
-        rotmat = np.ascontiguousarray(choreo.scipy_plus.linalg.random_orthogonal_matrix(geodim))
+        rotmat = ActionSym.SurjectiveDirectSpaceRot(np.random.random(geodim*(geodim-1)//2))
+        if np.random.random_sample() < 0.5:
+            rotmat[0,:] *= -1
 
         timerev = 1 if np.random.random_sample() < 0.5 else -1
 
