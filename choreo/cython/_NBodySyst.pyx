@@ -101,8 +101,8 @@ shortcut_name = {
 
 cdef ccallback_signature_t signatures[2]
 
-ctypedef void (*inter_law_fun_type)(double*, double, double*) noexcept nogil 
-signatures[0].signature = b"void (double *, double, double *)"
+ctypedef void (*inter_law_fun_type)(double, double*, void*) noexcept nogil 
+signatures[0].signature = b"void (double, double *, void *)"
 signatures[0].value = 0
 signatures[1].signature = NULL
 
@@ -119,17 +119,18 @@ cdef inline void inline_gravity_pot(double xsq, double* res) noexcept nogil:
 
 @cython.profile(False)
 @cython.linetrace(False)
-cdef void gravity_pot(double* pot_params, double xsq, double* res) noexcept nogil:
+cdef void gravity_pot(double xsq, double* res, void* pot_params) noexcept nogil:
     inline_gravity_pot(xsq, res)
 
-cdef void power_law_pot(double* pot_params, double xsq, double* res) noexcept nogil:
+cdef void power_law_pot(double xsq, double* res, void* pot_params) noexcept nogil:
 
-    cdef double a = pot_params[3]*cpow(xsq, pot_params[2])
+    cdef double * pot_params_d = <double*> pot_params
+    cdef double a = pot_params_d[3]*cpow(xsq, pot_params_d[2])
     cdef double b = xsq*a
 
     res[0] = -xsq*b
-    res[1] = pot_params[0]*b
-    res[2] = pot_params[1]*a
+    res[1] = pot_params_d[0]*b
+    res[2] = pot_params_d[1]*a
 
 cdef double[::1] default_Hash_exp = np.array([-0.1, -0.2, -0.3, -0.4, -0.5, -0.6, -0.7, -0.8, -0.9])
 
@@ -146,7 +147,7 @@ ctypedef struct ODE_params_t:
     bint*               BinSpaceRotIsId_ptr     
     double*             BinProdChargeSum_ptr    
     inter_law_fun_type  inter_law   
-    double*             inter_law_param_ptr
+    void*               inter_law_param_ptr
 
 @cython.auto_pickle(False)
 @cython.final
@@ -156,23 +157,58 @@ cdef class NBodySyst():
     """
 
     cdef readonly Py_ssize_t geodim
+    """ :class:`python:int` Dimension of ambiant space."""
+
     cdef readonly Py_ssize_t nbody
+    """ :class:`python:int` Number of bodies in system."""
+
     cdef readonly Py_ssize_t nint_min
+    """ :class:`python:int` Minimum number of integration points."""
+
     cdef readonly Py_ssize_t nloop
+    """ :class:`python:int` Number of loops in system."""
+
     cdef readonly Py_ssize_t nsegm
+    """ :class:`python:int` Number of segments in system."""
+
     cdef readonly Py_ssize_t nbin_segm_tot
+    """ :class:`python:int` Total number of binary interactions between segments."""
+
     cdef readonly Py_ssize_t nbin_segm_unique
+    """ :class:`python:int` Number of **unique** binary interactions between segments."""
 
     cdef readonly bint RequiresGreaterNStore
-    cdef bint _GreaterNStore
-    @property 
-    def GreaterNStore(self):
-        return self._GreaterNStore
+    """ :class:`python:bool` Whether the symmetry constraints require the rightmost integration point to be included in segments."""
+
+    cdef readonly bint GreaterNStore
+    """ :class:`python:bool` Whether the rightmost integration point is included in segments."""
 
     @property
     def ForceGreaterNStore(self):
-        return self._GreaterNStore and (not self.RequiresGreaterNStore)
+        """ :class:`python:bool` Whether to force the rightmost integration point to be included in segments.
+        
+        .. note :: 
+            Regardless of the value of :attr:`choreo.NBodySyst.ForceGreaterNStore`
+
+        See Also
+        --------
+
+        * :attr:`choreo.NBodySyst.GreaterNStore`
+        * :attr:`choreo.NBodySyst.RequiresGreaterNStore`
+
+        """
+        return self.GreaterNStore and (not self.RequiresGreaterNStore)
     
+    @ForceGreaterNStore.setter
+    @cython.final
+    def ForceGreaterNStore(self, bint force_in):
+
+        cdef bint NewGreaterNStore = force_in or self.RequiresGreaterNStore
+        
+        if NewGreaterNStore != self.GreaterNStore:
+            self.GreaterNStore = NewGreaterNStore
+            self.nint = self._nint
+
     cdef int _fft_backend
 
     cdef public object fftw_planner_effort
@@ -181,6 +217,9 @@ cdef class NBodySyst():
 
     @property
     def fft_backend(self):
+        """ Docstring of fft_backend
+        """
+
         if self._fft_backend == USE_SCIPY_FFT:
             return "scipy"
         elif self._fft_backend == USE_MKL_FFT:
@@ -191,6 +230,38 @@ cdef class NBodySyst():
             return "fftw"
         else:
             raise ValueError("This error should never be triggered. This is a bug.")
+
+    @fft_backend.setter
+    @cython.final
+    def fft_backend(self, backend):
+
+        self.free_owned_memory()
+
+        if backend == "scipy":
+            self._fft_backend = USE_SCIPY_FFT
+        
+        elif backend == "mkl":
+            if MKL_FFT_AVAILABLE:
+                self._fft_backend = USE_MKL_FFT
+            else:
+                raise ValueError("The package mkl_fft could not be loaded. Please check your local install.")
+        
+        elif backend == "ducc":
+            if DUCC_FFT_AVAILABLE:
+                self._fft_backend = USE_DUCC_FFT
+            else:
+                raise ValueError("The package ducc0 could not be loaded. Please check your local install.")
+        
+        elif backend == "fftw":
+            if PYFFTW_AVAILABLE:
+                self._fft_backend = USE_FFTW_FFT
+            else:
+                raise ValueError("The package pyfftw could not be loaded. Please check your local install.")
+        else:
+            raise ValueError('Invalid FFT backend. Possible options are "scipy", "mkl", "ducc" or "fftw".')
+
+        if self._nint_fac > 0:
+            self.allocate_owned_memory()
 
     cdef Py_ssize_t[::1] _loopnb
     @property
@@ -427,7 +498,7 @@ cdef class NBodySyst():
     cdef readonly str inter_law_str
     cdef readonly object inter_law_param_dict
     cdef double[::1] _inter_law_param_buf
-    cdef double* _inter_law_param_ptr
+    cdef void* _inter_law_param_ptr
     
     cdef readonly bint LawIsHomo
     cdef readonly double Homo_exp
@@ -438,12 +509,69 @@ cdef class NBodySyst():
     @property
     def nint(self):
         return self._nint
+
+    @nint.setter
+    @cython.cdivision(True)
+    @cython.final
+    def nint(self, Py_ssize_t nint_in):
+
+        if (nint_in % (2 * self.nint_min)) != 0:
+            raise ValueError(f"Provided nint {nint_in} should be divisible by {2 * self.nint_min}")
+
+        self._nint = nint_in
+        self._nint_fac = nint_in // (2 * self.nint_min)
+        self.ncoeffs = self._nint // 2 + 1
+        self.segm_size = self._nint // self.nint_min
+
+        if self.GreaterNStore:
+            self.segm_store = self.segm_size + 1
+        else:
+            self.segm_store = self.segm_size
+
+        params_shapes_list = []
+        ifft_shapes_list = []
+        pos_slice_shapes_list = []
+        for il in range(self.nloop):
+
+            nppl = self._params_basis_shapes[il,2]
+            assert self._nint % (2*self._ncoeff_min_loop[il]) == 0
+            npr = self._nint //  (2*self._ncoeff_min_loop[il])
+            
+            params_shapes_list.append((npr, self._nnz_k_shapes[il,0], nppl))
+            ifft_shapes_list.append((npr+1, self._nnz_k_shapes[il,0], nppl))
+            
+            if self._n_sub_fft[il] == 2:
+                ninter = npr+1
+            elif self._n_sub_fft[il] == 1:
+                if self.GreaterNStore: 
+                    ninter = 2*npr+1
+                else:
+                    ninter = 2*npr
+            else:
+                raise ValueError(f'Impossible value for n_sub_fft[il]: {self._n_sub_fft[il]}. Allowed values are either 1 or 2.')   
+
+            pos_slice_shapes_list.append((ninter, self.geodim))
+            
+        self._params_shapes, self._params_shifts = BundleListOfShapes(params_shapes_list)
+        self._ifft_shapes, self._ifft_shifts = BundleListOfShapes(ifft_shapes_list)
+        self._pos_slice_shapes, self._pos_slice_shifts = BundleListOfShapes(pos_slice_shapes_list)
+
+        self.nparams_incl_o = 2*self._params_shifts[self.nloop]
+        self.nparams = self._params_shifts[self.nloop] - self.nrem
+
+        self.free_owned_memory()
+        self.allocate_owned_memory()
     
     cdef Py_ssize_t _nint_fac
     @property
     def nint_fac(self):
         return self._nint_fac
-        
+
+    @nint_fac.setter
+    @cython.final
+    def nint_fac(self, Py_ssize_t nint_fac_in):
+        self.nint = 2 * self.nint_min * nint_fac_in
+
     cdef readonly Py_ssize_t ncoeffs
     cdef readonly Py_ssize_t segm_size    # number of interacting nodes in segment
     cdef readonly Py_ssize_t segm_store   # number of stored values in segment, including repeated values for n_sub_fft == 2
@@ -510,6 +638,24 @@ cdef class NBodySyst():
     @property
     def ForceGeneralSym(self):
         return self._ForceGeneralSym
+
+    @ForceGeneralSym.setter
+    @cython.cdivision(True)
+    @cython.final
+    def ForceGeneralSym(self, bint force_in):
+
+        self.free_owned_memory()
+
+        self._ForceGeneralSym = force_in
+
+        if force_in:
+            self._ParamBasisShortcutPos = np.full((self.nloop), GENERAL_SYM, dtype=np.intc)
+            self._ParamBasisShortcutVel = np.full((self.nloop), GENERAL_SYM, dtype=np.intc)
+        else:
+            self._ParamBasisShortcutPos = self._ParamBasisShortcutPos_th.copy()
+            self._ParamBasisShortcutVel = self._ParamBasisShortcutVel_th.copy()
+
+        self.allocate_owned_memory()
 
     cdef int[::1] _ParamBasisShortcutPos_th
     cdef int[::1] _ParamBasisShortcutVel_th
@@ -679,7 +825,7 @@ cdef class NBodySyst():
         self.fftw_nthreads = 1
         self.fftw_wisdom_only = False
 
-        self._GreaterNStore = self.RequiresGreaterNStore or ForceGreaterNStore
+        self.GreaterNStore = self.RequiresGreaterNStore or ForceGreaterNStore
         self.nint_fac = 1
         self.ForceGeneralSym = ForceGeneralSym
 
@@ -854,121 +1000,6 @@ cdef class NBodySyst():
         self._pot_nrg_grad = np.empty((self.nsegm, self.segm_store, self.geodim), dtype=np.float64)
 
         self.BufArraysAllocated = True
-
-    @nint_fac.setter
-    @cython.final
-    def nint_fac(self, Py_ssize_t nint_fac_in):
-        self.nint = 2 * self.nint_min * nint_fac_in
-
-    @nint.setter
-    @cython.cdivision(True)
-    @cython.final
-    def nint(self, Py_ssize_t nint_in):
-
-        if (nint_in % (2 * self.nint_min)) != 0:
-            raise ValueError(f"Provided nint {nint_in} should be divisible by {2 * self.nint_min}")
-
-        self._nint = nint_in
-        self._nint_fac = nint_in // (2 * self.nint_min)
-        self.ncoeffs = self._nint // 2 + 1
-        self.segm_size = self._nint // self.nint_min
-
-        if self._GreaterNStore:
-            self.segm_store = self.segm_size + 1
-        else:
-            self.segm_store = self.segm_size
-
-        params_shapes_list = []
-        ifft_shapes_list = []
-        pos_slice_shapes_list = []
-        for il in range(self.nloop):
-
-            nppl = self._params_basis_shapes[il,2]
-            assert self._nint % (2*self._ncoeff_min_loop[il]) == 0
-            npr = self._nint //  (2*self._ncoeff_min_loop[il])
-            
-            params_shapes_list.append((npr, self._nnz_k_shapes[il,0], nppl))
-            ifft_shapes_list.append((npr+1, self._nnz_k_shapes[il,0], nppl))
-            
-            if self._n_sub_fft[il] == 2:
-                ninter = npr+1
-            elif self._n_sub_fft[il] == 1:
-                if self._GreaterNStore: 
-                    ninter = 2*npr+1
-                else:
-                    ninter = 2*npr
-            else:
-                raise ValueError(f'Impossible value for n_sub_fft[il]: {self._n_sub_fft[il]}. Allowed values are either 1 or 2.')   
-
-            pos_slice_shapes_list.append((ninter, self.geodim))
-            
-        self._params_shapes, self._params_shifts = BundleListOfShapes(params_shapes_list)
-        self._ifft_shapes, self._ifft_shifts = BundleListOfShapes(ifft_shapes_list)
-        self._pos_slice_shapes, self._pos_slice_shifts = BundleListOfShapes(pos_slice_shapes_list)
-
-        self.nparams_incl_o = 2*self._params_shifts[self.nloop]
-        self.nparams = self._params_shifts[self.nloop] - self.nrem
-
-        self.free_owned_memory()
-        self.allocate_owned_memory()
-
-    @fft_backend.setter
-    @cython.final
-    def fft_backend(self, backend):
-
-        self.free_owned_memory()
-
-        if backend == "scipy":
-            self._fft_backend = USE_SCIPY_FFT
-        elif backend == "mkl":
-            if MKL_FFT_AVAILABLE:
-                self._fft_backend = USE_MKL_FFT
-            else:
-                raise ValueError("The package mkl_fft could not be loaded. Please check your local install.")
-        elif backend == "ducc":
-            if DUCC_FFT_AVAILABLE:
-                self._fft_backend = USE_DUCC_FFT
-            else:
-                raise ValueError("The package ducc0 could not be loaded. Please check your local install.")
-        elif backend == "fftw":
-
-            if PYFFTW_AVAILABLE:
-                self._fft_backend = USE_FFTW_FFT
-            else:
-                raise ValueError("The package pyfftw could not be loaded. Please check your local install.")
-        else:
-            raise ValueError('Invalid FFT backend. Possible options are "scipy", "mkl", "ducc" or "fftw".')
-
-        if self._nint_fac > 0:
-            self.allocate_owned_memory()
-
-    @ForceGeneralSym.setter
-    @cython.cdivision(True)
-    @cython.final
-    def ForceGeneralSym(self, bint force_in):
-
-        self.free_owned_memory()
-
-        self._ForceGeneralSym = force_in
-
-        if force_in:
-            self._ParamBasisShortcutPos = np.full((self.nloop), GENERAL_SYM, dtype=np.intc)
-            self._ParamBasisShortcutVel = np.full((self.nloop), GENERAL_SYM, dtype=np.intc)
-        else:
-            self._ParamBasisShortcutPos = self._ParamBasisShortcutPos_th.copy()
-            self._ParamBasisShortcutVel = self._ParamBasisShortcutVel_th.copy()
-
-        self.allocate_owned_memory()
-
-    @ForceGreaterNStore.setter
-    @cython.final
-    def ForceGreaterNStore(self, bint force_in):
-
-        cdef bint NewGreaterNStore = force_in or self.RequiresGreaterNStore
-        
-        if NewGreaterNStore != self._GreaterNStore:
-            self._GreaterNStore = NewGreaterNStore
-            self.nint = self._nint
 
     @cython.final
     def Update_ODE_params(self):
@@ -1530,7 +1561,7 @@ cdef class NBodySyst():
                 
                 self.inter_law_str = f"power_law_pot"
                 self._inter_law_param_buf = np.array([-n, mnnm1, nm2, alpha], dtype=np.float64)
-                self._inter_law_param_ptr = &self._inter_law_param_buf[0]
+                self._inter_law_param_ptr = <void*> &self._inter_law_param_buf[0]
             else:
 
                 if not NUMBA_AVAILABLE:
@@ -1572,9 +1603,9 @@ cdef class NBodySyst():
         cdef double[3] potp
         cdef double[3] potm
 
-        self._inter_law(self._inter_law_param_ptr, xsqo, poto)
-        self._inter_law(self._inter_law_param_ptr, xsqp, potp)
-        self._inter_law(self._inter_law_param_ptr, xsqm, potm)
+        self._inter_law(xsqo, poto, self._inter_law_param_ptr)
+        self._inter_law(xsqp, potp, self._inter_law_param_ptr)
+        self._inter_law(xsqm, potm, self._inter_law_param_ptr)
 
         cdef double fd1 = (potp[0] - potm[0]) / (2*dxsq)
         cdef double fd2 = ((potp[0] - poto[0]) + (potm[0] - poto[0])) / (dxsq*dxsq)
@@ -1604,7 +1635,7 @@ cdef class NBodySyst():
 
         for i in range(n):
 
-            self._inter_law(self._inter_law_param_ptr, xsq, pot)
+            self._inter_law(xsq, pot, self._inter_law_param_ptr)
 
             alpha_approx[i] = xsq * pot[1] / pot[0]
             alpha_avg += alpha_approx[i]
@@ -1618,7 +1649,7 @@ cdef class NBodySyst():
         for i in range(n):
             IsHomo = IsHomo and cfabs(alpha_approx[i] - alpha_avg) < eps
         
-        self._inter_law(self._inter_law_param_ptr, 1., pot)
+        self._inter_law(1., pot, self._inter_law_param_ptr)
 
         return IsHomo, alpha_avg, pot[0]
 
@@ -1807,7 +1838,7 @@ cdef class NBodySyst():
         Info_dict = {}
 
         Info_dict["nint_min"] = self.nint_min
-        Info_dict["nint"] = self.nint
+        Info_dict["nint"] = self._nint
         Info_dict["segm_size"] = self.segm_size
         Info_dict["segm_store"] = self.segm_store
 
@@ -3465,7 +3496,7 @@ cdef class NBodySyst():
                 else:
                     segmbeg = 1
                     segmend = self.segm_size+1
-                    assert self._GreaterNStore
+                    assert self.GreaterNStore
 
                 CSym.TransformSegment(segmpos[isegm,segmbeg:segmend,:], trans_pos)
 
@@ -3488,7 +3519,7 @@ cdef class NBodySyst():
                 else:
                     segmbeg = 1
                     segmend = self.segm_size+1
-                    assert self._GreaterNStore
+                    assert self.GreaterNStore
 
                 CSym.TransformSegment(segmpos[isegmp,segmbeg:segmend,:], trans_posp)
 
@@ -3814,7 +3845,7 @@ cdef class NBodySyst():
     @cython.final
     def DescribeSystem(self):
 
-        nparam_nosym = self.geodim * self.nint * self.nbody
+        nparam_nosym = self.geodim * self._nint * self.nbody
         nparam_tot = self.nparams_incl_o // 2
 
         out = ""
@@ -6073,7 +6104,7 @@ cdef double segm_pos_to_pot_nrg(
     double[:,:,::1] BinSpaceRot     , bint[::1] BinSpaceRotIsId     ,
     double[::1] BinProdChargeSum    ,
     Py_ssize_t segm_size            , Py_ssize_t segm_store         ,
-    inter_law_fun_type inter_law    , double* inter_law_param_ptr   ,
+    inter_law_fun_type inter_law    , void* inter_law_param_ptr     ,
 ) noexcept nogil:
 
     cdef Py_ssize_t nbin = BinSourceSegm.shape[0]
@@ -6120,7 +6151,7 @@ cdef double segm_pos_to_pot_nrg(
                 for idim in range(1,geodim):
                     dx2 += dpos[idim]*dpos[idim]
 
-                inter_law(inter_law_param_ptr, dx2, pot)
+                inter_law(dx2, pot, inter_law_param_ptr)
 
                 pot_nrg_bin += pot[0]
                 dpos += geodim
@@ -6132,7 +6163,7 @@ cdef double segm_pos_to_pot_nrg(
             for idim in range(1,geodim):
                 dx2 += dpos[idim]*dpos[idim]
 
-            inter_law(inter_law_param_ptr, dx2, pot)
+            inter_law(dx2, pot, inter_law_param_ptr)
 
             pot_nrg_bin += 0.5*pot[0]
             dpos += geodim
@@ -6143,7 +6174,7 @@ cdef double segm_pos_to_pot_nrg(
                 for idim in range(1,geodim):
                     dx2 += dpos[idim]*dpos[idim]
 
-                inter_law(inter_law_param_ptr, dx2, pot)
+                inter_law(dx2, pot, inter_law_param_ptr)
 
                 pot_nrg_bin += pot[0]
                 dpos += geodim
@@ -6153,7 +6184,7 @@ cdef double segm_pos_to_pot_nrg(
             for idim in range(1,geodim):
                 dx2 += dpos[idim]*dpos[idim]
 
-            inter_law(inter_law_param_ptr, dx2, pot)
+            inter_law(dx2, pot, inter_law_param_ptr)
 
             pot_nrg_bin += 0.5*pot[0]
 
@@ -6173,7 +6204,7 @@ cdef void segm_pos_to_pot_nrg_grad(
     double[:,:,::1] BinSpaceRot     , bint[::1] BinSpaceRotIsId     ,
     double[::1] BinProdChargeSum    ,
     Py_ssize_t segm_size            , Py_ssize_t segm_store         , double globalmul  ,
-    inter_law_fun_type inter_law    , double* inter_law_param_ptr   ,
+    inter_law_fun_type inter_law    , void* inter_law_param_ptr     ,
 ) noexcept nogil:
 
     cdef Py_ssize_t nbin = BinSourceSegm.shape[0]
@@ -6232,9 +6263,9 @@ cdef void segm_pos_to_pot_nrg_grad(
 
 @cython.cdivision(True)
 cdef void pot_nrg_grad_inter(
-    int inter_flags , Py_ssize_t segm_size  , Py_ssize_t geodim             ,      
+    int inter_flags , Py_ssize_t segm_size  , Py_ssize_t geodim         ,      
     double* dpos_in , double* grad_in       ,
-    inter_law_fun_type inter_law            , double* inter_law_param_ptr   ,
+    inter_law_fun_type inter_law            , void* inter_law_param_ptr ,
 ) noexcept nogil:
 
     if inter_flags == 0:
@@ -6299,9 +6330,9 @@ cdef void pot_nrg_grad_inter(
 
 @cython.cdivision(True)
 cdef void pot_nrg_grad_inter_size_law_nd(
-    Py_ssize_t segm_size            , Py_ssize_t geodim             ,      
-    double* dpos_in                 , double* grad_in               ,
-    inter_law_fun_type inter_law    , double* inter_law_param_ptr   ,
+    Py_ssize_t segm_size            , Py_ssize_t geodim         ,      
+    double* dpos_in                 , double* grad_in           ,
+    inter_law_fun_type inter_law    , void* inter_law_param_ptr ,
 ) noexcept nogil:
 
     cdef Py_ssize_t iint, idim
@@ -6317,7 +6348,7 @@ cdef void pot_nrg_grad_inter_size_law_nd(
         for idim in range(1,geodim):
             dx2 += dpos[idim]*dpos[idim]
 
-        inter_law(inter_law_param_ptr, dx2, pot)
+        inter_law(dx2, pot, inter_law_param_ptr)
 
         for idim in range(geodim):
             grad[idim] = pot[1]*dpos[idim]
@@ -6327,9 +6358,9 @@ cdef void pot_nrg_grad_inter_size_law_nd(
 
 @cython.cdivision(True)
 cdef void pot_nrg_grad_inter_store_law_nd(
-    Py_ssize_t segm_size            , Py_ssize_t geodim             ,      
-    double* dpos_in                 , double* grad_in               ,
-    inter_law_fun_type inter_law    , double* inter_law_param_ptr   ,
+    Py_ssize_t segm_size            , Py_ssize_t geodim         ,      
+    double* dpos_in                 , double* grad_in           ,
+    inter_law_fun_type inter_law    , void* inter_law_param_ptr ,
 ) noexcept nogil:
 
     cdef Py_ssize_t iint, idim
@@ -6344,7 +6375,7 @@ cdef void pot_nrg_grad_inter_store_law_nd(
     for idim in range(1,geodim):
         dx2 += dpos[idim]*dpos[idim]
 
-    inter_law(inter_law_param_ptr, dx2, pot)
+    inter_law(dx2, pot, inter_law_param_ptr)
 
     for idim in range(geodim):
         grad[idim] = 0.5*pot[1]*dpos[idim]
@@ -6358,7 +6389,7 @@ cdef void pot_nrg_grad_inter_store_law_nd(
         for idim in range(1,geodim):
             dx2 += dpos[idim]*dpos[idim]
 
-        inter_law(inter_law_param_ptr, dx2, pot)
+        inter_law(dx2, pot, inter_law_param_ptr)
 
         for idim in range(geodim):
             grad[idim] = pot[1]*dpos[idim]
@@ -6371,7 +6402,7 @@ cdef void pot_nrg_grad_inter_store_law_nd(
     for idim in range(1,geodim):
         dx2 += dpos[idim]*dpos[idim]
 
-    inter_law(inter_law_param_ptr, dx2, pot)
+    inter_law(dx2, pot, inter_law_param_ptr)
 
     for idim in range(geodim):
         grad[idim] = 0.5*pot[1]*dpos[idim]
@@ -6379,8 +6410,8 @@ cdef void pot_nrg_grad_inter_store_law_nd(
 @cython.cdivision(True)
 cdef void pot_nrg_grad_inter_size_law_2d(
     Py_ssize_t segm_size            ,      
-    double* dpos_in                 , double* grad_in               ,
-    inter_law_fun_type inter_law    , double* inter_law_param_ptr   ,
+    double* dpos_in                 , double* grad_in           ,
+    inter_law_fun_type inter_law    , void* inter_law_param_ptr ,
 ) noexcept nogil:
 
     cdef Py_ssize_t iint
@@ -6394,7 +6425,7 @@ cdef void pot_nrg_grad_inter_size_law_2d(
 
         dx2 = dpos[0]*dpos[0] + dpos[1]*dpos[1]
 
-        inter_law(inter_law_param_ptr, dx2, pot)
+        inter_law(dx2, pot, inter_law_param_ptr)
 
         grad[0] = pot[1]*dpos[0]
         grad[1] = pot[1]*dpos[1]
@@ -6405,8 +6436,8 @@ cdef void pot_nrg_grad_inter_size_law_2d(
 @cython.cdivision(True)
 cdef void pot_nrg_grad_inter_store_law_2d(
     Py_ssize_t segm_size            ,      
-    double* dpos_in                 , double* grad_in               ,
-    inter_law_fun_type inter_law    , double* inter_law_param_ptr   ,
+    double* dpos_in                 , double* grad_in           ,
+    inter_law_fun_type inter_law    , void* inter_law_param_ptr ,
 ) noexcept nogil:
 
     cdef Py_ssize_t iint
@@ -6419,7 +6450,7 @@ cdef void pot_nrg_grad_inter_store_law_2d(
     # First iteration
     dx2 = dpos[0]*dpos[0] + dpos[1]*dpos[1]
 
-    inter_law(inter_law_param_ptr, dx2, pot)
+    inter_law(dx2, pot, inter_law_param_ptr)
 
     grad[0] = 0.5*pot[1]*dpos[0]
     grad[1] = 0.5*pot[1]*dpos[1]
@@ -6431,7 +6462,7 @@ cdef void pot_nrg_grad_inter_store_law_2d(
 
         dx2 = dpos[0]*dpos[0] + dpos[1]*dpos[1]
 
-        inter_law(inter_law_param_ptr, dx2, pot)
+        inter_law(dx2, pot, inter_law_param_ptr)
 
         grad[0] = pot[1]*dpos[0]
         grad[1] = pot[1]*dpos[1]
@@ -6442,7 +6473,7 @@ cdef void pot_nrg_grad_inter_store_law_2d(
     # Last iteration
     dx2 = dpos[0]*dpos[0] + dpos[1]*dpos[1]
 
-    inter_law(inter_law_param_ptr, dx2, pot)
+    inter_law(dx2, pot, inter_law_param_ptr)
 
     grad[0] = 0.5*pot[1]*dpos[0]
     grad[1] = 0.5*pot[1]*dpos[1]
@@ -6600,7 +6631,7 @@ cdef void segm_pos_to_pot_nrg_hess(
     double[:,:,::1] BinSpaceRot     , bint[::1] BinSpaceRotIsId     ,
     double[::1] BinProdChargeSum    ,
     Py_ssize_t segm_size            , Py_ssize_t segm_store         , double globalmul              ,
-    inter_law_fun_type inter_law    , double* inter_law_param_ptr   ,
+    inter_law_fun_type inter_law    , void* inter_law_param_ptr     ,
 ) noexcept nogil:
 
     cdef Py_ssize_t nbin = BinSourceSegm.shape[0]
@@ -6661,9 +6692,9 @@ cdef void segm_pos_to_pot_nrg_hess(
 
 @cython.cdivision(True)
 cdef void pot_nrg_hess_inter(
-    int inter_flags                 , Py_ssize_t segm_size          , Py_ssize_t geodim ,      
-    double* pos_in                  , double* dpos_in               , double* hess_in   ,
-    inter_law_fun_type inter_law    , double* inter_law_param_ptr   ,
+    int inter_flags                 , Py_ssize_t segm_size      , Py_ssize_t geodim ,      
+    double* pos_in                  , double* dpos_in           , double* hess_in   ,
+    inter_law_fun_type inter_law    , void* inter_law_param_ptr ,
 ) noexcept nogil:
 
     if inter_flags == 0:
@@ -6728,9 +6759,9 @@ cdef void pot_nrg_hess_inter(
 
 @cython.cdivision(True)
 cdef void pot_nrg_hess_inter_size_law_nd(
-    Py_ssize_t segm_size            , Py_ssize_t geodim             ,      
-    double* pos_in                  , double* dpos_in               , double* hess_in   ,
-    inter_law_fun_type inter_law    , double* inter_law_param_ptr   ,
+    Py_ssize_t segm_size            , Py_ssize_t geodim         ,      
+    double* pos_in                  , double* dpos_in           , double* hess_in   ,
+    inter_law_fun_type inter_law    , void* inter_law_param_ptr ,
 ) noexcept nogil:
 
     cdef Py_ssize_t iint, idim
@@ -6749,7 +6780,7 @@ cdef void pot_nrg_hess_inter_size_law_nd(
             dx2 += pos[idim]*pos[idim]
             dxtddx += pos[idim]*dpos[idim]
 
-        inter_law(inter_law_param_ptr, dx2, pot)
+        inter_law(dx2, pot, inter_law_param_ptr)
 
         a = pot[1]
         b = 2*pot[2]*dxtddx
@@ -6763,9 +6794,9 @@ cdef void pot_nrg_hess_inter_size_law_nd(
 
 @cython.cdivision(True)
 cdef void pot_nrg_hess_inter_store_law_nd(
-    Py_ssize_t segm_size            , Py_ssize_t geodim             ,      
-    double* pos_in                  , double* dpos_in               , double* hess_in   ,
-    inter_law_fun_type inter_law    , double* inter_law_param_ptr   ,
+    Py_ssize_t segm_size            , Py_ssize_t geodim         ,      
+    double* pos_in                  , double* dpos_in           , double* hess_in   ,
+    inter_law_fun_type inter_law    , void* inter_law_param_ptr ,
 ) noexcept nogil:
 
     cdef Py_ssize_t iint, idim
@@ -6783,7 +6814,7 @@ cdef void pot_nrg_hess_inter_store_law_nd(
         dx2 += pos[idim]*pos[idim]
         dxtddx += pos[idim]*dpos[idim]
 
-    inter_law(inter_law_param_ptr, dx2, pot)
+    inter_law(dx2, pot, inter_law_param_ptr)
 
     a = 0.5*pot[1]
     b = pot[2]*dxtddx
@@ -6803,7 +6834,7 @@ cdef void pot_nrg_hess_inter_store_law_nd(
             dx2 += pos[idim]*pos[idim]
             dxtddx += pos[idim]*dpos[idim]
 
-        inter_law(inter_law_param_ptr, dx2, pot)
+        inter_law(dx2, pot, inter_law_param_ptr)
 
         a = pot[1]
         b = 2*pot[2]*dxtddx
@@ -6822,7 +6853,7 @@ cdef void pot_nrg_hess_inter_store_law_nd(
         dx2 += pos[idim]*pos[idim]
         dxtddx += pos[idim]*dpos[idim]
 
-    inter_law(inter_law_param_ptr, dx2, pot)
+    inter_law(dx2, pot, inter_law_param_ptr)
 
     a = 0.5*pot[1]
     b = pot[2]*dxtddx
@@ -6833,8 +6864,8 @@ cdef void pot_nrg_hess_inter_store_law_nd(
 @cython.cdivision(True)
 cdef void pot_nrg_hess_inter_size_law_2d(
     Py_ssize_t segm_size            ,      
-    double* pos_in                  , double* dpos_in               , double* hess_in   ,
-    inter_law_fun_type inter_law    , double* inter_law_param_ptr   ,
+    double* pos_in                  , double* dpos_in           , double* hess_in   ,
+    inter_law_fun_type inter_law    , void* inter_law_param_ptr ,
 ) noexcept nogil:
 
     cdef Py_ssize_t iint
@@ -6850,7 +6881,7 @@ cdef void pot_nrg_hess_inter_size_law_2d(
         dx2 = pos[0]*pos[0] + pos[1]*pos[1] 
         dxtddx = pos[0]*dpos[0] + pos[1]*dpos[1]
 
-        inter_law(inter_law_param_ptr, dx2, pot)
+        inter_law(dx2, pot, inter_law_param_ptr)
 
         a = pot[1]
         b = 2*pot[2]*dxtddx
@@ -6865,8 +6896,8 @@ cdef void pot_nrg_hess_inter_size_law_2d(
 @cython.cdivision(True)
 cdef void pot_nrg_hess_inter_store_law_2d(
     Py_ssize_t segm_size            ,
-    double* pos_in                  , double* dpos_in               , double* hess_in   ,
-    inter_law_fun_type inter_law    , double* inter_law_param_ptr   ,
+    double* pos_in                  , double* dpos_in           , double* hess_in   ,
+    inter_law_fun_type inter_law    , void* inter_law_param_ptr ,
 ) noexcept nogil:
 
     cdef Py_ssize_t iint
@@ -6881,7 +6912,7 @@ cdef void pot_nrg_hess_inter_store_law_2d(
     dx2 = pos[0]*pos[0] + pos[1]*pos[1] 
     dxtddx = pos[0]*dpos[0] + pos[1]*dpos[1]
 
-    inter_law(inter_law_param_ptr, dx2, pot)
+    inter_law(dx2, pot, inter_law_param_ptr)
 
     a = 0.5*pot[1]
     b = pot[2]*dxtddx
@@ -6898,7 +6929,7 @@ cdef void pot_nrg_hess_inter_store_law_2d(
         dx2 = pos[0]*pos[0] + pos[1]*pos[1] 
         dxtddx = pos[0]*dpos[0] + pos[1]*dpos[1]
 
-        inter_law(inter_law_param_ptr, dx2, pot)
+        inter_law(dx2, pot, inter_law_param_ptr)
 
         a = pot[1]
         b = 2*pot[2]*dxtddx
@@ -6914,7 +6945,7 @@ cdef void pot_nrg_hess_inter_store_law_2d(
     dx2 = pos[0]*pos[0] + pos[1]*pos[1] 
     dxtddx = pos[0]*dpos[0] + pos[1]*dpos[1]
 
-    inter_law(inter_law_param_ptr, dx2, pot)
+    inter_law(dx2, pot, inter_law_param_ptr)
 
     a = 0.5*pot[1]
     b = pot[2]*dxtddx
@@ -7227,13 +7258,13 @@ cdef void segmpos_to_binary_path_stats(
     free(tmp_loc_dpos)
 
 cdef inline void Compute_forces_vectorized(
-    double* pos                     , double* forces                ,
-    Py_ssize_t nbin                 , Py_ssize_t geodim             ,
-    Py_ssize_t nsegm                , Py_ssize_t nvec               ,
-    Py_ssize_t* BinSourceSegm       , Py_ssize_t* BinTargetSegm     ,
-    double* BinSpaceRot             , bint* BinSpaceRotIsId         ,
+    double* pos                     , double* forces            ,
+    Py_ssize_t nbin                 , Py_ssize_t geodim         ,
+    Py_ssize_t nsegm                , Py_ssize_t nvec           ,
+    Py_ssize_t* BinSourceSegm       , Py_ssize_t* BinTargetSegm ,
+    double* BinSpaceRot             , bint* BinSpaceRotIsId     ,
     double* BinProdChargeSum        ,
-    inter_law_fun_type inter_law    , double* inter_law_param_ptr   ,
+    inter_law_fun_type inter_law    , void* inter_law_param_ptr ,
 ) noexcept nogil:
 
     cdef Py_ssize_t ibin, idim, jdim, ivec
@@ -7297,7 +7328,7 @@ cdef inline void Compute_forces_vectorized(
             for idim in range(1,geodim):
                 dx2 += dx[idim]*dx[idim]
 
-            inter_law(inter_law_param_ptr, dx2, pot)
+            inter_law(dx2, pot, inter_law_param_ptr)
 
             bin_fac = (-4)*BinProdChargeSum[ibin]
 
@@ -7372,11 +7403,11 @@ cdef void Compute_forces_vectorized_user_data(
     )
 
 cdef inline void Compute_forces_vectorized_nosym(
-    double* pos                     , double* forces                ,
+    double* pos                     , double* forces            ,
     Py_ssize_t geodim               ,
-    Py_ssize_t nsegm                , Py_ssize_t nvec               ,
+    Py_ssize_t nsegm                , Py_ssize_t nvec           ,
     double* SegmCharge              ,
-    inter_law_fun_type inter_law    , double* inter_law_param_ptr   ,
+    inter_law_fun_type inter_law    , void* inter_law_param_ptr ,
 ) noexcept nogil:
 
     cdef Py_ssize_t idim, jdim, ivec
@@ -7419,7 +7450,7 @@ cdef inline void Compute_forces_vectorized_nosym(
                 for idim in range(1,geodim):
                     dx2 += dx[idim]*dx[idim]
 
-                inter_law(inter_law_param_ptr, dx2, pot)
+                inter_law(dx2, pot, inter_law_param_ptr)
 
                 bin_fac = (-4)*SegmCharge[isegm]*SegmCharge[isegmp]
 

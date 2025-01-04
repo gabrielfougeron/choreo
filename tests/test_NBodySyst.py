@@ -819,7 +819,7 @@ def test_custom_inter_law(float64_tols):
     assert np.allclose(action_grad_grav, action_grad, rtol = float64_tols.rtol, atol = float64_tols.atol)  
     
     # Python pot_fun
-    def inter_law(ptr, xsq, res):
+    def inter_law(xsq, res, ptr):
             
         a = xsq ** (-2.5)
         b = xsq*a
@@ -835,7 +835,7 @@ def test_custom_inter_law(float64_tols):
     assert np.allclose(action_grad_grav, action_grad, rtol = float64_tols.rtol, atol = float64_tols.atol)  
     
     inter_law_str = """
-def inter_law(ptr, xsq, res):
+def inter_law(xsq, res, ptr):
         
     a = xsq ** (-2.5)
     b = xsq*a

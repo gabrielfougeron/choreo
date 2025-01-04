@@ -14,15 +14,20 @@ help:
 
 .PHONY: help Makefile
 
-clean_api:
-	rm -rf source/_generated/
-	rm -rf source/test-report/_generated/
-
 clean:
 	rm -rf $(BUILDDIR)/
 	rm -rf source/_build/
 	rm -rf source/_generated/
 	rm -rf source/test-report/_generated/
+
+clean_api:
+	rm -rf source/_generated/
+	rm -rf source/test-report/_generated/
+
+html_api:
+	make clean_api
+	cd .. ; python setup.py build_ext -i -Oprofile -j8
+	make html
 
 all:
 	make html
