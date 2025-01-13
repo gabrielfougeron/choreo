@@ -1,4 +1,4 @@
-""" Tests properties of :class:`choreo.NBodySyst`
+""" Tests properties of :class:`choreo.NBodySyst`.
 
 .. autosummary::
     :toctree: _generated/
@@ -27,6 +27,7 @@
     test_custom_inter_law
     test_periodicity_default
     test_ODE_vs_spectral
+    test_segmpos_param
 
 """
 
@@ -904,4 +905,32 @@ def test_ODE_vs_spectral(NBS, params_buf, vector_calls, LowLevel, NoSymIfPossibl
     segmpos_ODE = np.ascontiguousarray(segmpos_ODE.reshape((NBS.segm_store, NBS.nsegm, NBS.geodim)).swapaxes(0, 1))
 
     print(np.linalg.norm(segmpos - segmpos_ODE))
-    assert np.allclose(segmpos, segmpos_ODE, rtol = tol, atol = tol)
+    assert np.allclose(segmpos, segmpos_ODE, rtol = tol, atol = tol)        
+    
+@ParametrizeDocstrings
+@pytest.mark.parametrize("NBS", [pytest.param(NBS, id=name) for name, NBS in NBS_dict.items()])
+def test_segmpos_param(float64_tols_strict, NBS):
+    """ Tests whether functions taking advantage of ``segmpos`` caching give the same result as those that do not.
+    """
+
+    NBS.nint_fac = 10
+    params_buf = np.random.random((NBS.nparams))
+    dparams_buf = np.random.random((NBS.nparams))
+    segmpos = NBS.params_to_segmpos(params_buf)
+    
+    action_ref = NBS.params_to_action(params_buf)
+    action_grad_ref = NBS.params_to_action_grad(params_buf)
+    action_hess_ref = NBS.params_to_action_hess(params_buf, dparams_buf)
+    
+    action_opt = NBS.segmpos_params_to_action(segmpos, params_buf)
+    action_grad_opt = NBS.segmpos_params_to_action_grad(segmpos, params_buf)
+    action_hess_opt = NBS.segmpos_dparams_to_action_hess(segmpos, dparams_buf)
+    
+    print(abs(action_ref - action_opt))
+    assert abs(action_ref - action_opt) < float64_tols_strict.atol
+
+    print(np.linalg.norm(action_grad_ref - action_grad_opt))
+    assert np.allclose(action_grad_ref, action_grad_opt, rtol = float64_tols_strict.rtol, atol = float64_tols_strict.atol)
+      
+    print(np.linalg.norm(action_hess_ref - action_hess_opt))
+    assert np.allclose(action_hess_ref, action_hess_opt, rtol = float64_tols_strict.rtol, atol = float64_tols_strict.atol)  

@@ -1,4 +1,4 @@
-""" Docstring for tests_scipy
+""" Tests for a few numerical methods that could be a part of scipy.
 
 .. autosummary::
     :toctree: _generated/

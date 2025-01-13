@@ -2663,6 +2663,9 @@ cdef class NBodySyst():
     @cython.final
     def params_to_pot_nrg_hess(self, double[::1] params_mom_buf, double[::1] dparams_mom_buf):
 
+        # Not actually used in optimization to allow for segmpos caching.
+        # This explains the non pre-allocation of dsegmpos
+
         assert params_mom_buf.shape[0] == self.nparams
         assert dparams_mom_buf.shape[0] == self.nparams
 
@@ -2872,6 +2875,9 @@ cdef class NBodySyst():
     @cython.final
     def params_to_action_hess(self, double[::1] params_mom_buf, double[::1] dparams_mom_buf):
 
+        # Not actually used in optimization to allow for segmpos caching.
+        # This explains the non pre-allocation of dsegmpos
+
         assert params_mom_buf.shape[0] == self.nparams
         assert dparams_mom_buf.shape[0] == self.nparams
 
@@ -2973,25 +2979,6 @@ cdef class NBodySyst():
                 self._ncor_loop         , self._nco_in_loop         ,
             )
 
-            params_to_segmpos(
-                params_mom_buf              ,
-                self._params_pos_buf        , self._params_shapes       , self._params_shifts       ,
-                self._ifft_buf_ptr          , self._ifft_shapes         , self._ifft_shifts         ,
-                self._params_basis_buf_pos  , self._params_basis_shapes , self._params_basis_shifts ,
-                self._nnz_k_buf             , self._nnz_k_shapes        , self._nnz_k_shifts        ,
-                self._co_in_buf             , self._co_in_shapes        , self._co_in_shifts        ,
-                self._pos_slice_buf_ptr     , self._pos_slice_shapes    , self._pos_slice_shifts    ,
-                self._ncoeff_min_loop       , self._n_sub_fft           , self._fft_backend         ,
-                self._ParamBasisShortcutPos ,
-                self._fftw_genrfft_exe      , self._fftw_symirfft_exe   ,
-                self._loopnb                , self._loopmass            ,
-                self._InterSpaceRotPosIsId  , self._InterSpaceRotPos    , self._InterTimeRev        ,
-                self._ALG_Iint              , self._ALG_SpaceRotPos     , self._ALG_TimeRev         ,
-                self._gensegm_to_body       , self._gensegm_to_iintrel  ,
-                self._bodyloop              , self.segm_size            , self.segm_store           ,
-                segmpos                     ,
-            )
-
             action -= segm_pos_to_pot_nrg(
                 segmpos                 ,
                 self._BinSourceSegm     , self._BinTargetSegm       ,
@@ -3080,7 +3067,7 @@ cdef class NBodySyst():
                 self._ALG_Iint              , self._ALG_SpaceRotPos     , self._ALG_TimeRev         ,
                 self._gensegm_to_body       , self._gensegm_to_iintrel  ,
                 self._bodyloop              , self.segm_size            , self.segm_store           ,
-                self._segmpos               , # self._segmpos is actually dsegmpos
+                self._segmpos               , # self._segmpos is actually dsegmpos. Prevents allocation of a new buffer.
             )
 
             memset(&self._pot_nrg_grad[0,0,0], 0, sizeof(double)*self.nsegm*self.segm_store*self.geodim)

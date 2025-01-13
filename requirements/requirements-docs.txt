@@ -1,6 +1,6 @@
 choreo[test,bench,cli]
 Sphinx<8
-pydata-sphinx-theme
+pydata-sphinx-theme>=0.16.1
 sphinx-gallery
 sphinx-pyproject
 sphinx-needs<4
@@ -12,3 +12,4 @@ sphinxext-rediraffe
 sphinxcontrib-bibtex
 sphinx-copybutton
 sphinxcontrib-autoprogram
+sphinx_design

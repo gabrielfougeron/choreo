@@ -9,10 +9,6 @@ Try it yourself online, no installation needed!
 At this address: `https://gabrielfougeron.github.io/choreo/ <https://gabrielfougeron.github.io/choreo/>`_ !
 
 
-
-
-
-
 Indices and tables
 ------------------
 
@@ -20,14 +16,13 @@ Indices and tables
 * :ref:`modindex`
 * :ref:`search`
 
-
 .. toctree::
    :hidden:
    :includehidden:
    :maxdepth: 1
 
    usage
-   theory
+   theory/theory_main
    _build/auto_examples/index
    test-report/test-report
    api

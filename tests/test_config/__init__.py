@@ -1,4 +1,4 @@
-""" Configuration module for tests
+""" Configuration module for tests.
 
 This module defines several useful functions and :py:func:`pytest:pytest.fixture` for running and parameterizing tests.
 

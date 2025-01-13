@@ -108,12 +108,12 @@ html_baseurl = "https://gabrielfougeron.github.io/choreo-docs"
 html_show_sourcelink = True
 
 html_theme_options = {
-    # 'navigation_depth': -1,
+    # 'navigation_depth': 4,
     # "sidebar_includehidden" : True,
     # "search_bar_text" : "Search the docs ...",
     # "search_bar_position" : "sidebar",
-    # "show_nav_level" : 0 ,
-    # "show_toc_level" : 0 ,
+    # "show_nav_level" : 4 ,
+    # "show_toc_level" : 4 ,
     "show_prev_next": False,
     "header_links_before_dropdown": 7,
     "use_edit_page_button": True,
@@ -150,15 +150,16 @@ html_theme_options = {
     # "external_links": [{"name": "GUI", "url": "https://gabrielfougeron.github.io/choreo/", "icon": html_logo,}],
     "footer_start" : "",
     "footer_end" : "",
+    "secondary_sidebar_items": ["page-toc"],
 }
 
 # Add / remove things from left sidebar
 html_sidebars = {
+    master_doc: [],
     "**": [
             "navbar-logo"       ,
             "sidebar-nav-bs"    ,
         ],
-    # "**": [],
 }
 
 html_context = {
@@ -242,11 +243,15 @@ latex_theme = "manual"
 ##################
 # Math rendering #
 ##################
-# 
-# mathjax3_config = {
-#   'loader': {'load': ['[tex]/xfrac']},
-#   'tex': {'packages': {'[+]': ['xfrac']}},
-# }
+
+mathjax3_config = {
+    'tex': {
+        'macros': {
+            "dd": r"\operatorname{\mathrm{d}}",
+            "eqdef": r"\mathrel{\stackrel{\mathrm{def}}{=}}",
+        }
+   }
+}
 
 
 #####################

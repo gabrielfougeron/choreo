@@ -48,6 +48,7 @@ cdef class ActionSym():
     cf Palais' principle of symmetric criticality in :cite:`palais1979principle`
     
     :cited:
+
     .. bibliography::
 
     """
