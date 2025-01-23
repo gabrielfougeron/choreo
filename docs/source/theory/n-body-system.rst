@@ -48,7 +48,7 @@ This convention is compatible with both the classical Newtonian gravitational po
 
     V(x) \propto \frac{1}{x}
 
-.. note:: Independance wrt the proportionality constant for homogeneous potentials.
+.. note:: Independence wrt the proportionality constant for homogeneous potentials.
 
 While equation :eq:`Newton` as it is could be directly plugged in a `general purpose ODE solver <https://docs.scipy.org/doc/scipy/reference/integrate.html#solving-initial-value-problems-for-ode-systems>`_ to get an approximate solution, the next two sections highlight how variations on the problem formulation can be exploited for more performance, and to better deal with :ref:`periodicity constraints<periodicity>`.
 
@@ -59,7 +59,7 @@ The Hamiltonian point of view
 
 While Newton's law of motion :eq:`Newton` completely determines the evolution of a n-body system, their Hamiltonian reformulation reveal hidden mathematical structure that can be exploited to find more precise approximate solutions at a lower computational cost.
 
-The unknown **independant** variables in the Hamiltonian formulations are both the positions :math:`\mathbf{q}(t) = (x_0(t), \dots, x_{n-1}(t))`, and the momenta :math:`\mathbf{p}(t) \eqdef (p_0(t), \dots, p_{n-1}(t))`. Given a *scalar* function of the momenta and positions denoted :math:`H(\mathbf{q}, \mathbf{p})` and called the *Hamiltonian* of the system, the equations of motion for the evolution of the inpendant variables read:
+The unknown **independent** variables in the Hamiltonian formulations are both the positions :math:`\mathbf{q}(t) = (x_0(t), \dots, x_{n-1}(t))`, and the momenta :math:`\mathbf{p}(t) \eqdef (p_0(t), \dots, p_{n-1}(t))`. Given a *scalar* function of the momenta and positions denoted :math:`H(\mathbf{q}, \mathbf{p})` and called the *Hamiltonian* of the system, the equations of motion for the evolution of the inpendant variables read:
 
 .. math:: \frac{\dd \mathbf{q}}{\dd t}  &= \frac{\partial H}{\partial \mathbf{p}} \\
     \frac{\dd \mathbf{p}}{\dd t}  &= -\frac{\partial H}{\partial \mathbf{q}}  \\
@@ -72,7 +72,7 @@ The Newton equations of motion :eq:`Newton` are retrieved for the following choi
     &= \sum_{i=0}^{n-1} \frac{p_i^2}{2 m_i} + \sum_{i=0}^{n-1} \sum_{j\neq i} q_i q_j V(\|x_i - x_j\|)\\
     :label: Hamiltonian_of_nbodysyst
 
-This particular Hamiltonian is called **partionned** since it decomposes into the sum of a **kinetic energy** :math:`T(\mathbf{p})` that is a function of the momenta *only*, and a **potential energy** :math:`V(\mathbf{q})` that is a function of the positions *only*. This partitionned structure is exploited in the ODE RK methods ref ???
+This particular Hamiltonian is called **partionned** since it decomposes into the sum of a **kinetic energy** :math:`T(\mathbf{p})` that is a function of the momenta *only*, and a **potential energy** :math:`V(\mathbf{q})` that is a function of the positions *only*. This partitioned structure is exploited in the ODE RK methods ref ???
 
 
 

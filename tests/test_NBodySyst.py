@@ -582,9 +582,9 @@ def test_repeatability(float64_tols, NBS):
 @ParametrizeDocstrings
 @pytest.mark.parametrize("NBS", [pytest.param(NBS, id=name) for name, NBS in NBS_dict.items()])
 def test_ForceGeneralSym(float64_tols, NBS):
-    """ Tests that computations results are independant of :meth:`choreo.NBodySyst.ForceGeneralSym`.
+    """ Tests that computations results are independent of :meth:`choreo.NBodySyst.ForceGeneralSym`.
     
-Tests that the following computations are independant of :meth:`choreo.NBodySyst.ForceGeneralSym`:
+Tests that the following computations are independent of :meth:`choreo.NBodySyst.ForceGeneralSym`:
 
 * ``params`` => ``segmpos``
 * ``params`` => ``segmvel``
@@ -624,9 +624,9 @@ Tests that the following computations are independant of :meth:`choreo.NBodySyst
 @ProbabilisticTest(RepeatOnFail=2)
 @pytest.mark.parametrize("NBS", [pytest.param(NBS, id=name) for name, NBS in NBS_dict.items()])
 def test_ForceGreaterNstore(float64_tols, NBS):
-    """ Tests that computations results are independant of :meth:`choreo.NBodySyst.ForceGreaterNStore`.
+    """ Tests that computations results are independent of :meth:`choreo.NBodySyst.ForceGreaterNStore`.
     
-Tests that the following computations are independant of :meth:`choreo.NBodySyst.ForceGreaterNStore`:
+Tests that the following computations are independent of :meth:`choreo.NBodySyst.ForceGreaterNStore`:
 
 * ``params`` => ``segmpos``
 * ``params`` => ``action_grad``
@@ -682,9 +682,9 @@ Tests that the following computations are independant of :meth:`choreo.NBodySyst
 @pytest.mark.parametrize("backend", ["scipy", "mkl", "fftw", "ducc"])
 @pytest.mark.parametrize("ForceGeneralSym", [True, False])
 def test_fft_backends(float64_tols, ForceGeneralSym, backend, NBS):
-    """ Tests that computations results are independant of :meth:`choreo.NBodySyst.fft_backend`.
+    """ Tests that computations results are independent of :meth:`choreo.NBodySyst.fft_backend`.
     
-Tests that the following computations are independant of :meth:`choreo.NBodySyst.fft_backend`:
+Tests that the following computations are independent of :meth:`choreo.NBodySyst.fft_backend`:
 
 * ``params`` => ``segmpos``
 * ``segmpos`` => ``params``
@@ -721,9 +721,9 @@ Tests that the following computations are independant of :meth:`choreo.NBodySyst
 @ProbabilisticTest(RepeatOnFail=2)
 @pytest.mark.parametrize("NBS_pair", [pytest.param(NBS_pair, id=name) for name, NBS_pair in NBS_pairs_dict.items()])
 def test_action_cst_sym_pairs(float64_tols, NBS_pair):
-    """ Tests that computations results are independant of the prescribed symmetries.
+    """ Tests that computations results are independent of the prescribed symmetries.
     
-Tests that the following computations results are independant of the prescribed symmetries:
+Tests that the following computations results are independent of the prescribed symmetries:
 
 * ``all_coeffs`` => ``kinetic energy``
 * ``params`` => ``kinetic energy``
@@ -934,3 +934,55 @@ def test_segmpos_param(float64_tols_strict, NBS):
       
     print(np.linalg.norm(action_hess_ref - action_hess_opt))
     assert np.allclose(action_hess_ref, action_hess_opt, rtol = float64_tols_strict.rtol, atol = float64_tols_strict.atol)  
+
+@ParametrizeDocstrings
+# @pytest.mark.parametrize("NoSymIfPossible", [True, False])
+@pytest.mark.parametrize("NoSymIfPossible", [False])
+@pytest.mark.parametrize(("NBS", "params_buf"), [pytest.param(NBS, params_buf, id=name) for name, (NBS, params_buf) in Sols_dict.items()])
+def test_ODE_grad_FD(float64_tols_loose, NBS, params_buf, NoSymIfPossible):
+    """ Tests that the Fourier periodic spectral solver agrees with the time forward Runge-Kutta solver.
+    """
+        
+    NBS.ForceGreaterNStore = True
+    
+    ODE_Syst = NBS.Get_ODE_def(params_buf, vector_calls = False, LowLevel = False, NoSymIfPossible = NoSymIfPossible, grad = True)
+    
+    ndof = NBS.nsegm * NBS.geodim
+    xo = ODE_Syst["x0"]
+    dx = np.random.random((ndof))
+    
+    fun = lambda x : ODE_Syst["fun"](0., x)
+    grad_fun = lambda x, dx : ODE_Syst["grad_fun"](0., x, dx)
+    
+    err = compare_FD_and_exact_grad(
+        fun             ,
+        grad_fun        ,
+        xo              ,
+        dx=dx           ,
+        epslist=None    ,
+        order=2         ,
+        vectorize=True ,
+    )
+
+    print(err.min())
+    assert (err.min() < float64_tols_loose.rtol)
+    
+    po = ODE_Syst["v0"]
+    dp = np.random.random((ndof))
+    
+    gun = lambda p : ODE_Syst["gun"](0., p)
+    grad_gun = lambda p, dp : ODE_Syst["grad_gun"](0., p, dp)
+    
+    err = compare_FD_and_exact_grad(
+        gun             ,
+        grad_gun        ,
+        po              ,
+        dx=dp           ,
+        epslist=None    ,
+        order=2         ,
+        vectorize=True ,
+    )
+
+    print(err.min())
+    assert (err.min() < float64_tols_loose.rtol)
+    
