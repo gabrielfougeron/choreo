@@ -363,8 +363,6 @@ Tests:
         NBS.params_to_kin_nrg   ,
         grad                    ,
         params_buf              ,
-        dx=None                 ,
-        epslist=None            ,
         order=2                 ,
         vectorize=False         ,
     )
@@ -389,15 +387,11 @@ Tests:
     
     def grad(x,dx):
         return np.dot(NBS.params_to_pot_nrg_grad(x), dx)
-    
-    dx = np.random.random((NBS.nparams))
 
     err = compare_FD_and_exact_grad(
         NBS.params_to_pot_nrg   ,
         grad                    ,
         params_buf              ,
-        dx=dx                   ,
-        epslist=None            ,
         order=2                 ,
         vectorize=False         ,
     )
@@ -409,8 +403,6 @@ Tests:
         NBS.params_to_pot_nrg_grad  ,
         NBS.params_to_pot_nrg_hess  ,
         params_buf                  ,
-        dx=dx                       ,
-        epslist=None                ,
         order=2                     ,
         vectorize=False             ,
     )
@@ -442,8 +434,6 @@ Tests:
         NBS.params_to_action    ,
         grad                    ,
         params_buf              ,
-        dx=dx                   ,
-        epslist=None            ,
         order=2                 ,
         vectorize=False         ,
     )
@@ -455,8 +445,6 @@ Tests:
         NBS.params_to_action_grad   ,
         NBS.params_to_action_hess   ,
         params_buf                  ,
-        dx=dx                       ,
-        epslist=None                ,
         order=2                     ,
         vectorize=False             ,
     )
@@ -936,10 +924,9 @@ def test_segmpos_param(float64_tols_strict, NBS):
     assert np.allclose(action_hess_ref, action_hess_opt, rtol = float64_tols_strict.rtol, atol = float64_tols_strict.atol)  
 
 @ParametrizeDocstrings
-# @pytest.mark.parametrize("NoSymIfPossible", [True, False])
-@pytest.mark.parametrize("NoSymIfPossible", [False])
+@pytest.mark.parametrize("NoSymIfPossible", [True, False])
 @pytest.mark.parametrize(("NBS", "params_buf"), [pytest.param(NBS, params_buf, id=name) for name, (NBS, params_buf) in Sols_dict.items()])
-def test_ODE_grad_FD(float64_tols_loose, NBS, params_buf, NoSymIfPossible):
+def test_grad_fun_FD(float64_tols_loose, NBS, params_buf, NoSymIfPossible):
     """ Tests that the Fourier periodic spectral solver agrees with the time forward Runge-Kutta solver.
     """
         
@@ -959,7 +946,6 @@ def test_ODE_grad_FD(float64_tols_loose, NBS, params_buf, NoSymIfPossible):
         grad_fun        ,
         xo              ,
         dx=dx           ,
-        epslist=None    ,
         order=2         ,
         vectorize=True ,
     )
@@ -968,7 +954,6 @@ def test_ODE_grad_FD(float64_tols_loose, NBS, params_buf, NoSymIfPossible):
     assert (err.min() < float64_tols_loose.rtol)
     
     po = ODE_Syst["v0"]
-    dp = np.random.random((ndof))
     
     gun = lambda p : ODE_Syst["gun"](0., p)
     grad_gun = lambda p, dp : ODE_Syst["grad_gun"](0., p, dp)
@@ -977,12 +962,122 @@ def test_ODE_grad_FD(float64_tols_loose, NBS, params_buf, NoSymIfPossible):
         gun             ,
         grad_gun        ,
         po              ,
-        dx=dp           ,
-        epslist=None    ,
         order=2         ,
         vectorize=True ,
     )
 
     print(err.min())
     assert (err.min() < float64_tols_loose.rtol)
+        
+@ParametrizeDocstrings
+@pytest.mark.parametrize("NoSymIfPossible", [True, False])
+@pytest.mark.parametrize("vector_calls", [True, False])
+@pytest.mark.parametrize(("NBS", "params_buf"), [pytest.param(NBS, params_buf, id=name) for name, (NBS, params_buf) in Sols_dict.items()])
+def test_ODE_grad_vs_FD(float64_tols_loose, NBS, params_buf, vector_calls, NoSymIfPossible):
+    """ Tests that the Fourier periodic spectral solver agrees with the time forward Runge-Kutta solver.
+    """
+        
+    NBS.ForceGreaterNStore = True
+    segmpos = NBS.params_to_segmpos(params_buf)
     
+    action_grad = NBS.segmpos_params_to_action_grad(segmpos, params_buf)
+    action_grad_norm = np.linalg.norm(action_grad, ord = np.inf)
+    tol = 100 * action_grad_norm
+    
+    ODE_Syst = NBS.Get_ODE_def(params_buf, vector_calls = vector_calls, LowLevel = False, NoSymIfPossible = NoSymIfPossible, grad=True)
+    
+    nsteps = 20
+    nint_ODE = (NBS.segm_store-1)
+    keep_freq = nint_ODE
+    method = "Gauss"
+    
+    rk = choreo.scipy_plus.multiprec_tables.ComputeImplicitRKTable_Gauss(nsteps, method=method)
+
+    t_span = ODE_Syst["t_span"]
+    fun = ODE_Syst["fun"]
+    gun = ODE_Syst["gun"]
+    grad_fun = ODE_Syst["grad_fun"]
+    grad_gun = ODE_Syst["grad_gun"]
+
+    def fun_fd(x):
+        
+        nn = x.shape[0]
+        assert nn % 2 == 0
+        
+        n = nn // 2
+        
+        x0 = x[0:  n]
+        v0 = x[n:2*n]
+        
+        segmpos_ODE, segmvel_ODE = choreo.scipy_plus.ODE.SymplecticIVP(
+            fun = fun                   ,
+            gun = gun                   ,
+            x0 = x0                     ,
+            v0 = v0                     ,
+            rk = rk                     ,
+            keep_freq = keep_freq       ,
+            nint = nint_ODE             ,
+            t_span = t_span             ,
+            vector_calls = vector_calls ,
+        )
+        
+        res = np.empty((nn), dtype=np.float64)
+        
+        res[0:  n] = segmpos_ODE[-1,:]
+        res[n:2*n] = segmvel_ODE[-1,:]
+
+        return res
+    
+    def grad_fun_fd(x, dx):
+        
+        nn = x.shape[0]
+        assert nn % 2 == 0
+        
+        n = nn // 2
+        
+        x0 = x[0:  n]
+        v0 = x[n:2*n]
+        
+        grad_x0 = dx[0:  n].reshape((n,1))
+        grad_v0 = dx[n:2*n].reshape((n,1))
+        
+        segmpos_ODE, segmvel_ODE, segmpos_grad_ODE, segmvel_grad_ODE = choreo.scipy_plus.ODE.SymplecticIVP(
+            fun = fun                   ,
+            grad_fun = grad_fun         ,
+            gun = gun                   ,
+            grad_gun = grad_gun         ,
+            x0 = x0                     ,
+            grad_x0 = grad_x0           ,
+            v0 = v0                     ,
+            grad_v0 = grad_v0           ,
+            rk = rk                     ,
+            keep_freq = keep_freq       ,
+            nint = nint_ODE             ,
+            t_span = t_span             ,
+            vector_calls = vector_calls ,
+        )
+        
+        res = np.empty((nn), dtype=np.float64)
+        
+        res[0:  n] = segmpos_grad_ODE[0,:,0]
+        res[n:2*n] = segmvel_grad_ODE[0,:,0]
+
+        return res
+    
+    n = ODE_Syst["x0"].shape[0]
+    nn = 2*n
+    
+    xo = np.empty((nn), dtype=np.float64)
+    xo[0:n ] = ODE_Syst["x0"]
+    xo[n:nn] = ODE_Syst["v0"]
+    
+    err = compare_FD_and_exact_grad(
+        fun_fd          ,
+        grad_fun_fd     ,
+        xo              ,
+        order=2         ,
+        vectorize=False ,
+    )
+
+    print(err.min())
+    assert (err.min() < float64_tols_loose.rtol)

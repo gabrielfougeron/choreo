@@ -113,7 +113,7 @@ def compare_FD_and_exact_grad(fun, gradfun, xo, dx=None, epslist=None, order=1, 
         epslist = [10**(-i) for i in range(16)]
         
     if dx is None:
-        dx = np.array(np.random.rand(*xo.shape), dtype= xo.dtype)
+        dx = np.array(np.random.rand(*xo.shape), dtype=xo.dtype)
     
     fo = fun(xo)
     if vectorize:

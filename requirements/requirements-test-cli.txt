@@ -2,3 +2,4 @@ choreo[cli]
 attrs
 pytest
 pytest-xdist
+pytest-timeout

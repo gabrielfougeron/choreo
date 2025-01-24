@@ -4207,6 +4207,24 @@ cdef class NBodySyst():
         return res
 
     @cython.final
+    def Compute_grad_forces_nosym(self, double t, double[::1] pos_flat, double[:,::1] dpos_flat):
+
+        assert pos_flat.shape[0] == self.nsegm * self.geodim
+
+        cdef Py_ssize_t grad_ndof = dpos_flat.shape[1]
+        cdef np.ndarray[double, ndim=2, mode='c'] res = np.empty((self.nsegm * self.geodim, grad_ndof), dtype=np.float64)
+
+        Compute_grad_forces_vectorized_nosym(
+            &pos_flat[0]            , &dpos_flat[0,0]           , &res[0,0] ,
+            self.geodim             ,   
+            self.nsegm              , 1                         , grad_ndof ,
+            &self._segmcharge[0]    ,
+            self._inter_law         , self._inter_law_param_ptr ,
+        )
+
+        return res
+
+    @cython.final
     def Compute_forces_vectorized(self, double[::1] t, double[:,::1] pos_flat):
 
         assert pos_flat.shape[1] == self.nsegm * self.geodim
@@ -4268,6 +4286,26 @@ cdef class NBodySyst():
         return res
 
     @cython.final
+    def Compute_grad_forces_vectorized_nosym(self, double[::1] t, double[:,::1] pos_flat, double[:,:,::1] dpos_flat):
+
+        assert pos_flat.shape[1] == self.nsegm * self.geodim
+
+        cdef Py_ssize_t nvec = pos_flat.shape[0]
+        cdef Py_ssize_t grad_ndof = dpos_flat.shape[2]
+
+        cdef np.ndarray[double, ndim=3, mode='c'] res = np.empty((nvec, self.nsegm * self.geodim, grad_ndof), dtype=np.float64)
+
+        Compute_grad_forces_vectorized_nosym(
+            &pos_flat[0,0]          , &dpos_flat[0,0,0]         , &res[0,0,0]   ,
+            self.geodim             , 
+            self.nsegm              , nvec                      , grad_ndof     ,
+            &self._segmcharge[0]    ,
+            self._inter_law         , self._inter_law_param_ptr ,
+        )
+
+        return res
+
+    @cython.final
     @cython.cdivision(True)
     def Get_ODE_def(self, double[::1] params_mom_buf, vector_calls = True, LowLevel = True, NoSymIfPossible = True, grad = False):
 
@@ -4296,9 +4334,7 @@ cdef class NBodySyst():
                     "Compute_velocities_vectorized_user_data"   ,
                     user_data                                   ,
                 )
-
                 if grad:
-
                     dict_res["grad_fun"] = scipy.LowLevelCallable.from_cython(
                         choreo.cython._NBodySyst                        ,
                         "Compute_grad_velocities_vectorized_user_data"  ,
@@ -4311,12 +4347,25 @@ cdef class NBodySyst():
                         "Compute_forces_vectorized_nosym_user_data" ,
                         user_data                                   ,
                     )
+                    if grad:
+                        dict_res["grad_gun"] = scipy.LowLevelCallable.from_cython(
+                            choreo.cython._NBodySyst                            ,
+                            "Compute_grad_forces_vectorized_nosym_user_data"    ,
+                            user_data                                           ,
+                        )
+
                 else:
                     dict_res["gun"] = scipy.LowLevelCallable.from_cython(
                         choreo.cython._NBodySyst                    ,
                         "Compute_forces_vectorized_user_data"       ,
                         user_data                                   ,
                     )
+                    if grad:
+                        dict_res["grad_gun"] = scipy.LowLevelCallable.from_cython(
+                            choreo.cython._NBodySyst                    ,
+                            "Compute_grad_forces_vectorized_user_data"  ,
+                            user_data                                   ,
+                        )
 
             else:
 
@@ -4325,9 +4374,7 @@ cdef class NBodySyst():
                     "Compute_velocities_user_data"              ,
                     user_data                                   ,
                 )
-
                 if grad:
-
                     dict_res["grad_fun"] = scipy.LowLevelCallable.from_cython(
                         choreo.cython._NBodySyst                    ,
                         "Compute_grad_velocities_user_data"         ,
@@ -4340,12 +4387,25 @@ cdef class NBodySyst():
                         "Compute_forces_nosym_user_data"        ,
                         user_data                               ,
                     )
+                    if grad:
+                        dict_res["grad_gun"] = scipy.LowLevelCallable.from_cython(
+                            choreo.cython._NBodySyst                ,
+                            "Compute_grad_forces_nosym_user_data"   ,
+                            user_data                               ,
+                        )
+
                 else:
                     dict_res["gun"] = scipy.LowLevelCallable.from_cython(
                         choreo.cython._NBodySyst                ,
                         "Compute_forces_user_data"              ,
                         user_data                               ,
                     )
+                    if grad:
+                        dict_res["grad_gun"] = scipy.LowLevelCallable.from_cython(
+                            choreo.cython._NBodySyst        ,
+                            "Compute_grad_forces_user_data" ,
+                            user_data                       ,
+                        )
 
         else:
 
@@ -4357,8 +4417,10 @@ cdef class NBodySyst():
 
                 if NoSym:
                     dict_res["gun"] = self.Compute_forces_vectorized_nosym
-                else:
+                    if grad:
+                        dict_res["grad_gun"] = self.Compute_grad_forces_vectorized_nosym
 
+                else:
                     dict_res["gun"] = self.Compute_forces_vectorized
                     if grad:
                         dict_res["grad_gun"] = self.Compute_grad_forces_vectorized
@@ -4371,8 +4433,10 @@ cdef class NBodySyst():
                 
                 if NoSym:
                     dict_res["gun"] = self.Compute_forces_nosym
-                else:
+                    if grad:
+                        dict_res["grad_gun"] = self.Compute_grad_forces_nosym
 
+                else:
                     dict_res["gun"] = self.Compute_forces
                     if grad:
                         dict_res["grad_gun"] = self.Compute_grad_forces
@@ -7574,145 +7638,6 @@ cdef inline void Compute_forces_vectorized(
     free(dx)
     free(df)
 
-cdef inline void Compute_grad_forces_vectorized_grad_ndof1(
-    double* pos                     , double* dpos              , double* grad_forces   ,
-    Py_ssize_t nbin                 , Py_ssize_t geodim         ,
-    Py_ssize_t nsegm                , Py_ssize_t nvec           , Py_ssize_t grad_ndof  ,
-    Py_ssize_t* BinSourceSegm       , Py_ssize_t* BinTargetSegm ,
-    double* BinSpaceRot             , bint* BinSpaceRotIsId     ,
-    double* BinProdChargeSum        ,
-    inter_law_fun_type inter_law    , void* inter_law_param_ptr ,
-) noexcept nogil:
-
-    cdef Py_ssize_t ibin, idim, jdim, ivec
-    cdef Py_ssize_t isegm, isegmp
-    cdef Py_ssize_t geodim_sq = geodim * geodim
-    cdef Py_ssize_t vec_size = nsegm * geodim
-    cdef Py_ssize_t vec_grad_size = vec_size * grad_ndof
-
-    cdef double* matel
-    cdef double* vec_pos
-    cdef double* vec_dpos
-    cdef double* vec_grad_forces
-
-    cdef double* cur_pos
-    cdef double* cur_posp
-    cdef double* cur_dpos
-    cdef double* cur_dposp
-    cdef double* cur_grad_forces
-
-    cdef double dx2, dxtddx, a ,b
-    cdef double bin_fac
-    cdef double[3] pot
-
-    cdef double* dx = <double*> malloc(sizeof(double)*geodim)
-    cdef double* ddx = <double*> malloc(sizeof(double)*geodim)
-    cdef double* ddf = <double*> malloc(sizeof(double)*geodim)
-
-    cdef Py_ssize_t nmem = nvec * vec_size * grad_ndof
-    memset(grad_forces, 0, sizeof(double)*nmem)
-
-    for ivec in range(nvec):
-
-        vec_pos     = pos   + ivec * vec_size
-        vec_dpos    = dpos  + ivec * vec_size
-        vec_grad_forces = grad_forces + ivec * vec_grad_size
-
-        for ibin in range(nbin):
-
-            isegm = BinSourceSegm[ibin]
-            isegmp = BinTargetSegm[ibin]
-
-            if BinSpaceRotIsId[ibin]:
-
-                cur_pos  = vec_pos  + isegm * geodim
-                cur_dpos = vec_dpos + isegm * geodim
-
-                cur_posp  = vec_pos  + isegmp * geodim
-                cur_dposp = vec_dpos + isegmp * geodim
-                    
-                for idim in range(geodim):
-
-                    dx[idim]  = cur_pos[0]  - cur_posp[0]
-                    ddx[idim] = cur_dpos[0] - cur_dposp[0]
-
-                    cur_pos   += 1
-                    cur_dpos  += 1
-                    cur_posp  += 1
-                    cur_dposp += 1
-
-            else:
-
-                matel = BinSpaceRot + ibin * geodim_sq
-                cur_posp  = vec_pos  + isegmp * geodim
-                cur_dposp = vec_dpos + isegmp * geodim
-
-                for idim in range(geodim):
-                    
-                    dx[idim]  = -cur_posp[0]
-                    ddx[idim] = -cur_dposp[0]
-                    cur_pos   = pos  + isegm * geodim
-                    cur_dpos  = dpos + isegm * geodim
-
-                    for jdim in range(geodim):
-                    
-                        dx[idim]  += matel[0] * cur_pos[0]
-                        ddx[idim] += matel[0] * cur_dpos[0]
-                    
-                        matel += 1 
-                        cur_pos += 1
-                        cur_dpos += 1
-
-                    cur_posp += 1
-                    cur_dposp += 1
-
-            dx2    = dx[0]*dx[0]
-            dxtddx = dx[0]*ddx[0]
-            for idim in range(1,geodim):
-                dx2    += dx[idim]*dx[idim]
-                dxtddx += dx[idim]*ddx[idim]
-
-            inter_law(dx2, pot, inter_law_param_ptr)
-
-            bin_fac = (-4)*BinProdChargeSum[ibin]
-
-            a = pot[1]*bin_fac
-            b = 2*pot[2]*dxtddx*bin_fac            
-
-            for idim in range(geodim):
-                ddf[idim] = b*dx[idim]+a*ddx[idim]
-
-            if BinSpaceRotIsId[ibin]:
-
-                cur_grad_forces = vec_grad_forces + isegm*geodim
-
-                for idim in range(geodim):
-                    cur_grad_forces[0] += ddf[idim]
-                    cur_grad_forces += 1
-                    
-            else:
-
-                matel = BinSpaceRot + ibin*geodim_sq
-
-                for jdim in range(geodim):
-
-                    cur_grad_forces = vec_grad_forces + isegm*geodim
-
-                    for idim in range(geodim):
-                        cur_grad_forces[0] += matel[0] * ddf[jdim]
-                        matel += 1 
-                        cur_grad_forces += 1
-
-            cur_grad_forces = vec_grad_forces + isegmp*geodim
-
-            for idim in range(geodim):
-                cur_grad_forces[0] -= ddf[idim]
-                cur_grad_forces += 1
-                
-    free(dx)
-    free(ddx)
-    free(ddf)
-
 cdef inline void Compute_grad_forces_vectorized(
     double* pos                     , double* dpos              , double* grad_forces   ,
     Py_ssize_t nbin                 , Py_ssize_t geodim         ,
@@ -7745,8 +7670,6 @@ cdef inline void Compute_grad_forces_vectorized(
     cdef double* cur_posp
     cdef double* cur_dpos
     cdef double* cur_dposp
-    cdef double* cur_grad_forces
-    cdef double* cur_grad_forcesp
 
     cdef double dx2, dxtddx, a ,b
     cdef double bin_fac
@@ -7884,7 +7807,7 @@ cdef void Compute_forces_user_data(
     )
 
 cdef void Compute_grad_forces_user_data(
-    double t    , double[::1] pos   , double[:,::1] dpos    , double[:,::1] grad_forces , void* user_data   ,
+    double t    , double[::1] pos   , double[:,::1] dpos   , double[:,::1] grad_forces  , void* user_data   ,
 ) noexcept nogil:
 
     cdef Py_ssize_t grad_ndof = dpos.shape[1]
@@ -8010,6 +7933,111 @@ cdef inline void Compute_forces_vectorized_nosym(
     free(dx)
     free(df)
 
+cdef inline void Compute_grad_forces_vectorized_nosym(
+    double* pos                     , double* dpos              , double* grad_forces   ,
+    Py_ssize_t geodim               ,
+    Py_ssize_t nsegm                , Py_ssize_t nvec           , Py_ssize_t grad_ndof  ,
+    double* SegmCharge              ,
+    inter_law_fun_type inter_law    , void* inter_law_param_ptr ,
+) noexcept nogil:
+
+    cdef Py_ssize_t idim, jdim, ivec
+    cdef Py_ssize_t isegm, isegmp
+    cdef Py_ssize_t vec_size = nsegm * geodim
+
+    cdef int geodim_int = geodim
+    cdef int grad_ndof_int = grad_ndof
+    cdef int dsegm_size = geodim * grad_ndof
+
+    cdef double* vec_pos
+    cdef double* vec_dpos
+    cdef double* cur_pos
+    cdef double* cur_posp
+    cdef double* cur_dpos
+    cdef double* cur_dposp
+    cdef double* vec_grad_forces
+    cdef double* grad_forces_loc
+    cdef double* grad_forces_locp
+
+    cdef double dx2, dxtddx, a ,b
+    cdef double bin_fac
+    cdef double[3] pot
+
+    cdef double* dx = <double*> malloc(sizeof(double)*geodim)
+    cdef double* ddx = <double*> malloc(sizeof(double)*geodim*grad_ndof)
+    cdef double* ddf = <double*> malloc(sizeof(double)*geodim*grad_ndof)
+
+    cdef double* ddx_cur
+    cdef double* ddf_cur
+
+    cdef Py_ssize_t nmem = nvec * vec_size * grad_ndof
+    memset(grad_forces, 0, sizeof(double)*nmem)
+
+    for ivec in range(nvec):
+
+        vec_pos         = pos         + ivec * vec_size
+        vec_dpos        = dpos        + ivec * vec_size * grad_ndof
+        vec_grad_forces = grad_forces + ivec * vec_size * grad_ndof
+
+        for isegm in range(nsegm-1):
+
+            cur_dpos  = vec_dpos + isegm  * geodim * grad_ndof
+            grad_forces_loc  = vec_grad_forces + isegm  * geodim * grad_ndof
+        
+            for isegmp in range(isegm+1, nsegm):
+
+                cur_pos  = vec_pos + isegm *geodim
+                cur_posp = vec_pos + isegmp*geodim
+                    
+                for idim in range(geodim):
+                    dx[idim] = cur_pos[0] - cur_posp[0]
+                    cur_pos  += 1
+                    cur_posp += 1
+
+                dx2 = dx[0]*dx[0]
+                for idim in range(1,geodim):
+                    dx2 += dx[idim]*dx[idim]
+
+                inter_law(dx2, pot, inter_law_param_ptr)
+
+                bin_fac = (-4)*SegmCharge[isegm]*SegmCharge[isegmp]
+                
+                a = pot[1]*bin_fac
+                pot[2] *= 2*bin_fac
+
+
+                cur_dposp = vec_dpos + isegmp * geodim * grad_ndof
+
+                scipy.linalg.cython_blas.dcopy(&dsegm_size,cur_dpos,&int_one,ddx,&int_one)
+                scipy.linalg.cython_blas.daxpy(&dsegm_size,&minusone_double, cur_dposp, &int_one, ddx, &int_one)
+
+                ddx_cur = ddx
+                ddf_cur = ddf
+
+                # TODO: Remove this for loop ?
+                for i_grad_dof in range(grad_ndof):
+
+                    dxtddx = dx[0]*ddx_cur[0]
+                    for idim in range(1,geodim):
+                        dxtddx += dx[idim]*ddx_cur[idim*grad_ndof]
+
+                    b = pot[2]*dxtddx
+
+                    for idim in range(geodim):
+                        ddf_cur[idim*grad_ndof] = b*dx[idim]+a*ddx_cur[idim*grad_ndof]
+
+                    ddx_cur += 1
+                    ddf_cur += 1
+
+                grad_forces_locp = vec_grad_forces + isegmp * geodim * grad_ndof
+
+                scipy.linalg.cython_blas.daxpy(&dsegm_size,&one_double, ddf, &int_one, grad_forces_loc, &int_one)
+                scipy.linalg.cython_blas.daxpy(&dsegm_size,&minusone_double, ddf, &int_one, grad_forces_locp, &int_one)
+                    
+    free(dx)
+    free(ddx)
+    free(ddf)
+
 cdef void Compute_forces_nosym_user_data(
     double t    , double[::1] pos   , double[::1] forces    , void* user_data   ,
 ) noexcept nogil:
@@ -8021,6 +8049,23 @@ cdef void Compute_forces_nosym_user_data(
         &pos[0]                         , &forces[0]                        ,
         ODE_params.geodim               , 
         ODE_params.nsegm                , 1                                 ,
+        ODE_params.SegmCharge           ,
+        ODE_params.inter_law            , ODE_params.inter_law_param_ptr    ,
+    )
+
+cdef void Compute_grad_forces_nosym_user_data(
+    double t    , double[::1] pos   , double[:,::1] dpos    , double[:,::1] grad_forces , void* user_data   ,
+) noexcept nogil:
+
+    cdef ODE_params_t* ODE_params_ptr = <ODE_params_t*> user_data
+    cdef ODE_params_t ODE_params = ODE_params_ptr[0]
+
+    cdef Py_ssize_t grad_ndof = dpos.shape[1]
+
+    Compute_grad_forces_vectorized_nosym(
+        &pos[0]                         , &dpos[0,0]                        , &grad_forces[0,0] ,
+        ODE_params.geodim               , 
+        ODE_params.nsegm                , 1                                 , grad_ndof         ,
         ODE_params.SegmCharge           ,
         ODE_params.inter_law            , ODE_params.inter_law_param_ptr    ,
     )
@@ -8037,6 +8082,23 @@ cdef void Compute_forces_vectorized_nosym_user_data(
         &all_pos[0,0]                   , &all_forces[0,0]                  ,
         ODE_params.geodim               , 
         ODE_params.nsegm                , nvec                              ,
+        ODE_params.SegmCharge           ,
+        ODE_params.inter_law            , ODE_params.inter_law_param_ptr    ,
+    )
+
+cdef void Compute_grad_forces_vectorized_nosym_user_data(
+    double[::1] all_t   , double[:,::1] all_pos , double[:,:,::1] all_dpos  , double[:,:,::1] all_grad_forces   , void* user_data ,
+) noexcept nogil:
+
+    cdef Py_ssize_t nvec = all_pos.shape[0]
+    cdef Py_ssize_t grad_ndof = all_dpos.shape[2]
+    cdef ODE_params_t* ODE_params_ptr = <ODE_params_t*> user_data
+    cdef ODE_params_t ODE_params = ODE_params_ptr[0]
+
+    Compute_grad_forces_vectorized_nosym(
+        &all_pos[0,0]                   , &all_dpos[0,0,0]                  , &all_grad_forces[0,0,0]   ,
+        ODE_params.geodim               , 
+        ODE_params.nsegm                , nvec                              , grad_ndof                 ,
         ODE_params.SegmCharge           ,
         ODE_params.inter_law            , ODE_params.inter_law_param_ptr    ,
     )
