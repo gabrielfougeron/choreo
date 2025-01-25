@@ -66,8 +66,9 @@ Changelog = "https://github.com/gabrielfougeron/choreo/releases/"
 [tool.pytest.ini_options]
 timeout = 1
 minversion = "6.0"
-# addopts = "-ra --junit-xml=docs/pytest_out/junit.xml -n auto"
-addopts = "-ra --junit-xml=docs/pytest_out/junit.xml"
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "session"
+addopts = "-ra --junit-xml=docs/pytest_out/junit.xml -n auto --dist worksteal"
 testpaths = [
     "tests",
 ]

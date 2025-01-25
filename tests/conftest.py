@@ -2,13 +2,15 @@ import os
 import sys
 import choreo_GUI
 import pytest
+import threadpoolctl
 
-from pytest_timeout import _get_item_settings, SESSION_TIMEOUT_KEY # BAAAAD !!!
+from pytest_timeout import _get_item_settings, SESSION_TIMEOUT_KEY # BAAAAD !!! Works wit timeout-2.3.1, might not work with other version
 
 from . import test_config
 
 def pytest_sessionstart(session):
     choreo_GUI.install_official_gallery()
+    threadpoolctl.threadpool_limits(limits=1).__enter__()
 
 def pytest_addoption(parser):
     parser.addoption(

@@ -28,6 +28,8 @@
     test_periodicity_default
     test_ODE_vs_spectral
     test_segmpos_param
+    test_grad_fun_FD
+    test_ODE_grad_vs_FD
 
 """
 
@@ -927,7 +929,7 @@ def test_segmpos_param(float64_tols_strict, NBS):
 @pytest.mark.parametrize("NoSymIfPossible", [True, False])
 @pytest.mark.parametrize(("NBS", "params_buf"), [pytest.param(NBS, params_buf, id=name) for name, (NBS, params_buf) in Sols_dict.items()])
 def test_grad_fun_FD(float64_tols_loose, NBS, params_buf, NoSymIfPossible):
-    """ Tests that the Fourier periodic spectral solver agrees with the time forward Runge-Kutta solver.
+    """ Tests that the gradient of velocities and forces agree with their finite difference estimations.
     """
         
     NBS.ForceGreaterNStore = True
@@ -973,14 +975,15 @@ def test_grad_fun_FD(float64_tols_loose, NBS, params_buf, NoSymIfPossible):
 @ParametrizeDocstrings
 @pytest.mark.parametrize("NoSymIfPossible", [True, False])
 @pytest.mark.parametrize("vector_calls", [True, False])
+@pytest.mark.parametrize("LowLevel", [True, False])
 @pytest.mark.parametrize(("NBS", "params_buf"), [pytest.param(NBS, params_buf, id=name) for name, (NBS, params_buf) in Sols_dict.items()])
-def test_ODE_grad_vs_FD(float64_tols_loose, NBS, params_buf, vector_calls, NoSymIfPossible):
-    """ Tests that the Fourier periodic spectral solver agrees with the time forward Runge-Kutta solver.
+def test_ODE_grad_vs_FD(float64_tols_loose, NBS, params_buf, vector_calls, LowLevel, NoSymIfPossible):
+    """ Tests that the solution of the tangent system agrees with its finite difference estimation.
     """
         
     NBS.ForceGreaterNStore = True
     
-    ODE_Syst = NBS.Get_ODE_def(params_buf, vector_calls = vector_calls, LowLevel = False, NoSymIfPossible = NoSymIfPossible, grad=True)
+    ODE_Syst = NBS.Get_ODE_def(params_buf, vector_calls = vector_calls, LowLevel = LowLevel, NoSymIfPossible = NoSymIfPossible, grad=True)
     
     nsteps = 20
     nint_ODE = (NBS.segm_store-1)
