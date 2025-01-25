@@ -1,5 +1,6 @@
 import functools
 import inspect
+import pytest
 
 from . import test_config_precision
 from . import test_config_ODE
@@ -87,6 +88,9 @@ def ParametrizeDocstrings(test):
     
     for mark in reversed(ptm):
         
+        if len(mark.args) < 2:
+            continue
+        
         if isinstance(mark.args[0], str):
             arg_name = mark.args[0]
             arg_list = mark.args[1]
@@ -146,4 +150,4 @@ def ParametrizeDocstrings(test):
     wrapper.__doc__ = init_doc + param_doc + param_fix_doc + param_ptm_doc
 
     return wrapper
-    
+

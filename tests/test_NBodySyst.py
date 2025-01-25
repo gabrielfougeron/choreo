@@ -969,6 +969,7 @@ def test_grad_fun_FD(float64_tols_loose, NBS, params_buf, NoSymIfPossible):
     print(err.min())
     assert (err.min() < float64_tols_loose.rtol)
         
+@pytest.mark.slow(required_time = 10)
 @ParametrizeDocstrings
 @pytest.mark.parametrize("NoSymIfPossible", [True, False])
 @pytest.mark.parametrize("vector_calls", [True, False])
@@ -978,11 +979,6 @@ def test_ODE_grad_vs_FD(float64_tols_loose, NBS, params_buf, vector_calls, NoSym
     """
         
     NBS.ForceGreaterNStore = True
-    segmpos = NBS.params_to_segmpos(params_buf)
-    
-    action_grad = NBS.segmpos_params_to_action_grad(segmpos, params_buf)
-    action_grad_norm = np.linalg.norm(action_grad, ord = np.inf)
-    tol = 100 * action_grad_norm
     
     ODE_Syst = NBS.Get_ODE_def(params_buf, vector_calls = vector_calls, LowLevel = False, NoSymIfPossible = NoSymIfPossible, grad=True)
     

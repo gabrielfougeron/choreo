@@ -1,7 +1,52 @@
 import os
+import sys
 import choreo_GUI
+import pytest
+
+from pytest_timeout import _get_item_settings, SESSION_TIMEOUT_KEY # BAAAAD !!!
+
 from . import test_config
 
 def pytest_sessionstart(session):
-
     choreo_GUI.install_official_gallery()
+
+def pytest_addoption(parser):
+    parser.addoption(
+        "--runslow", action="store_true", default=False, help="run slow tests"
+    )
+
+def pytest_configure(config):
+    config.addinivalue_line("markers", "slow: mark test as slow to run")
+
+def robust_min(*args):
+    
+    res = sys.float_info.max
+    for item in args:
+        
+        try:
+            if res > item:
+                res = item
+        except:
+            pass
+    
+    return res
+
+def pytest_collection_modifyitems(config, items):
+    if config.getoption("--runslow"):
+        return
+
+    for item in items:
+        if "slow" in item.keywords:
+            
+            timeout_settings = _get_item_settings(item)
+            timeout_config = item.session.config.stash[SESSION_TIMEOUT_KEY]
+            if timeout_config == 0:
+                timeout_config = sys.float_info.max
+            
+            timeout = robust_min(timeout_settings.timeout, timeout_config)
+            
+            slow_marker = item.get_closest_marker(name="slow")
+            required_time = slow_marker.kwargs.get("required_time", sys.float_info.max)
+
+            if required_time > timeout:
+                item.add_marker(pytest.mark.skip(reason=f"Test marked slow with {required_time = }, but timeout is {timeout = }. Run with --runslow CLI option or increase timeout."))
