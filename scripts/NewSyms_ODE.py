@@ -95,7 +95,7 @@ def main():
             xo = np.ascontiguousarray(segmpos_ODE[:,0 ,:].reshape(-1))
             xf = np.ascontiguousarray(segmpos_ODE[:,-1,:].reshape(-1))
             
-            dx = NBS.Compute_periodicity_default(xo, xf)
+            dx = NBS.Compute_periodicity_default_pos(xo, xf)
             
             # print(np.linalg.norm(dx))
             

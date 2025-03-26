@@ -439,25 +439,45 @@ cdef class NBodySyst():
     def ALG_SpaceRot(self):
         return np.asarray(self._ALG_SpaceRotVel)
 
-    cdef Py_ssize_t[::1] _PerDef_Isegm
+    cdef Py_ssize_t[::1] _PerDefBeg_Isegm
     @property
-    def PerDef_Isegm(self):
-        return np.asarray(self._PerDef_Isegm)
+    def PerDefBeg_Isegm(self):
+        return np.asarray(self._PerDefBeg_Isegm)
 
-    cdef Py_ssize_t[::1] _PerDef_TimeRev
+    cdef Py_ssize_t[::1] _PerDefBeg_TimeRev
     @property
-    def PerDef_TimeRev(self):
-        return np.asarray(self._PerDef_TimeRev)
+    def PerDefBeg_TimeRev(self):
+        return np.asarray(self._PerDefBeg_TimeRev)
 
-    cdef double[:,:,::1] _PerDef_SpaceRotPos
+    cdef double[:,:,::1] _PerDefBeg_SpaceRotPos
     @property
-    def PerDef_SpaceRotPos(self):
-        return np.asarray(self._PerDef_SpaceRotPos)
+    def PerDefBeg_SpaceRotPos(self):
+        return np.asarray(self._PerDefBeg_SpaceRotPos)
 
-    cdef double[:,:,::1] _PerDef_SpaceRotVel
+    cdef double[:,:,::1] _PerDefBeg_SpaceRotVel
     @property
-    def PerDef_SpaceRotVel(self):
-        return np.asarray(self._PerDef_SpaceRotVel)
+    def PerDefBeg_SpaceRotVel(self):
+        return np.asarray(self._PerDefBeg_SpaceRotVel)
+
+    cdef Py_ssize_t[::1] _PerDefEnd_Isegm
+    @property
+    def PerDefEnd_Isegm(self):
+        return np.asarray(self._PerDefEnd_Isegm)
+
+    cdef Py_ssize_t[::1] _PerDefEnd_TimeRev
+    @property
+    def PerDefEnd_TimeRev(self):
+        return np.asarray(self._PerDefEnd_TimeRev)
+
+    cdef double[:,:,::1] _PerDefEnd_SpaceRotPos
+    @property
+    def PerDefEnd_SpaceRotPos(self):
+        return np.asarray(self._PerDefEnd_SpaceRotPos)
+
+    cdef double[:,:,::1] _PerDefEnd_SpaceRotVel
+    @property
+    def PerDefEnd_SpaceRotVel(self):
+        return np.asarray(self._PerDefEnd_SpaceRotVel)
 
     cdef double[:,:,::1] _InitValPosBasis
     @property
@@ -1381,10 +1401,10 @@ cdef class NBodySyst():
         cdef ActionSym Sym
         cdef Py_ssize_t isegm
 
-        self._ALG_Iint = np.zeros((self.nloop), dtype=np.intp)
-        self._ALG_TimeRev = np.zeros((self.nloop), dtype=np.intp)
-        self._ALG_SpaceRotPos = np.zeros((self.nloop, self.geodim, self.geodim), dtype=np.float64)
-        self._ALG_SpaceRotVel = np.zeros((self.nloop, self.geodim, self.geodim), dtype=np.float64)
+        self._ALG_Iint = np.empty((self.nloop), dtype=np.intp)
+        self._ALG_TimeRev = np.empty((self.nloop), dtype=np.intp)
+        self._ALG_SpaceRotPos = np.empty((self.nloop, self.geodim, self.geodim), dtype=np.float64)
+        self._ALG_SpaceRotVel = np.empty((self.nloop, self.geodim, self.geodim), dtype=np.float64)
 
         cdef Py_ssize_t iint_uneven, ib
         cdef Py_ssize_t idim, jdim
@@ -1403,10 +1423,30 @@ cdef class NBodySyst():
             Sym = Sym.TimeDerivative()
             self._ALG_SpaceRotVel[il,:,:] = Sym._SpaceRot[:,:]
 
-        self._PerDef_Isegm = np.zeros((self.nsegm), dtype=np.intp)
-        self._PerDef_TimeRev = np.zeros((self.nsegm), dtype=np.intp)
-        self._PerDef_SpaceRotPos = np.zeros((self.nsegm, self.geodim, self.geodim), dtype=np.float64)
-        self._PerDef_SpaceRotVel = np.zeros((self.nsegm, self.geodim, self.geodim), dtype=np.float64)
+        self._PerDefBeg_Isegm = np.empty((self.nsegm), dtype=np.intp)
+        self._PerDefBeg_TimeRev = np.empty((self.nsegm), dtype=np.intp)
+        self._PerDefBeg_SpaceRotPos = np.empty((self.nsegm, self.geodim, self.geodim), dtype=np.float64)
+        self._PerDefBeg_SpaceRotVel = np.empty((self.nsegm, self.geodim, self.geodim), dtype=np.float64)
+
+        for isegm in range(self.nsegm):
+
+            iint_uneven = self.nint_min - 1
+
+            ib = self._intersegm_to_body[isegm]
+
+            self._PerDefBeg_Isegm[isegm] = self._bodysegm[ib, iint_uneven]
+
+            Sym = self.intersegm_to_all[ib][iint_uneven]
+            self._PerDefBeg_TimeRev[isegm] = Sym.TimeRev
+            self._PerDefBeg_SpaceRotPos[isegm,:,:] = Sym._SpaceRot[:,:]
+
+            Sym = Sym.TimeDerivative()
+            self._PerDefBeg_SpaceRotVel[isegm,:,:] = Sym._SpaceRot[:,:]
+
+        self._PerDefEnd_Isegm = np.empty((self.nsegm), dtype=np.intp)
+        self._PerDefEnd_TimeRev = np.empty((self.nsegm), dtype=np.intp)
+        self._PerDefEnd_SpaceRotPos = np.empty((self.nsegm, self.geodim, self.geodim), dtype=np.float64)
+        self._PerDefEnd_SpaceRotVel = np.empty((self.nsegm, self.geodim, self.geodim), dtype=np.float64)
 
         for isegm in range(self.nsegm):
 
@@ -1414,14 +1454,14 @@ cdef class NBodySyst():
 
             ib = self._intersegm_to_body[isegm]
 
-            self._PerDef_Isegm[isegm] = self._bodysegm[ib, iint_uneven]
+            self._PerDefEnd_Isegm[isegm] = self._bodysegm[ib, iint_uneven]
 
             Sym = self.intersegm_to_all[ib][iint_uneven]
-            self._PerDef_TimeRev[isegm] = Sym.TimeRev
-            self._PerDef_SpaceRotPos[isegm,:,:] = Sym._SpaceRot[:,:]
+            self._PerDefEnd_TimeRev[isegm] = Sym.TimeRev
+            self._PerDefEnd_SpaceRotPos[isegm,:,:] = Sym._SpaceRot[:,:]
 
             Sym = Sym.TimeDerivative()
-            self._PerDef_SpaceRotVel[isegm,:,:] = Sym._SpaceRot[:,:]
+            self._PerDefEnd_SpaceRotVel[isegm,:,:] = Sym._SpaceRot[:,:]
 
     @cython.final
     def ConfigureShortcutSym(self, double eps=1e-14):
@@ -4009,7 +4049,7 @@ cdef class NBodySyst():
         return mul * np.sum(pos_avg, axis=0)
 
     @cython.final
-    def Compute_periodicity_default(self, double[::1] xo, double[::1] xf):
+    def Compute_periodicity_default_pos(self, double[::1] xo, double[::1] xf):
 
         assert xo.shape[0] == self.nsegm * self.geodim
         assert xf.shape[0] == self.nsegm * self.geodim
@@ -4020,7 +4060,7 @@ cdef class NBodySyst():
 
         for isegm in range(self.nsegm):
 
-            if self._PerDef_TimeRev[isegm] > 0:
+            if self._PerDefEnd_TimeRev[isegm] > 0:
 
                 i = isegm * self.geodim
 
@@ -4028,11 +4068,11 @@ cdef class NBodySyst():
 
                     res[i] = xf[i]
 
-                    j = self._PerDef_Isegm[isegm] * self.geodim
+                    j = self._PerDefEnd_Isegm[isegm] * self.geodim
                     
                     for jdim in range(self.geodim):
 
-                        res[i] -= self._PerDef_SpaceRotPos[isegm,idim,jdim] * xo[j]
+                        res[i] -= self._PerDefEnd_SpaceRotPos[isegm,idim,jdim] * xo[j]
                         j += 1
 
                     i += 1
@@ -4045,11 +4085,119 @@ cdef class NBodySyst():
 
                     res[i] = xf[i]
 
-                    j = self._PerDef_Isegm[isegm] * self.geodim
+                    j = self._PerDefEnd_Isegm[isegm] * self.geodim
                     
                     for jdim in range(self.geodim):
 
-                        res[i] -= self._PerDef_SpaceRotPos[isegm,idim,jdim] * xf[j]
+                        res[i] -= self._PerDefEnd_SpaceRotPos[isegm,idim,jdim] * xf[j]
+                        j += 1
+
+                    i += 1
+
+        return res
+        
+    @cython.final
+    def Compute_periodicity_default_vel(self, double[::1] vo, double[::1] vf):
+
+        assert vo.shape[0] == self.nsegm * self.geodim
+        assert vf.shape[0] == self.nsegm * self.geodim
+
+        cdef np.ndarray[double, ndim=1, mode='c'] res = np.empty((self.nsegm * self.geodim), dtype=np.float64)
+
+        cdef Py_ssize_t isegm, idim, jdim, i, j
+
+        for isegm in range(self.nsegm):
+
+            if self._PerDefEnd_TimeRev[isegm] > 0:
+
+                i = isegm * self.geodim
+
+                for idim in range(self.geodim):
+
+                    res[i] = vf[i]
+
+                    j = self._PerDefEnd_Isegm[isegm] * self.geodim
+                    
+                    for jdim in range(self.geodim):
+
+                        res[i] -= self._PerDefEnd_SpaceRotVel[isegm,idim,jdim] * vo[j]
+                        j += 1
+
+                    i += 1
+
+            else:
+
+                i = isegm * self.geodim
+
+                for idim in range(self.geodim):
+
+                    res[i] = vf[i]
+
+                    j = self._PerDefEnd_Isegm[isegm] * self.geodim
+                    
+                    for jdim in range(self.geodim):
+
+                        res[i] -= self._PerDefEnd_SpaceRotVel[isegm,idim,jdim] * vf[j]
+                        j += 1
+
+                    i += 1
+
+        return res
+
+    @cython.final
+    def Compute_initial_constraint_default_pos(self, double[::1] xo):
+
+        assert xo.shape[0] == self.nsegm * self.geodim
+
+        cdef np.ndarray[double, ndim=1, mode='c'] res = np.empty((self.nsegm * self.geodim), dtype=np.float64)
+
+        cdef Py_ssize_t isegm, idim, jdim, i, j
+
+        for isegm in range(self.nsegm):
+
+            if self._PerDefBeg_TimeRev[isegm] < 0:
+
+                i = isegm * self.geodim
+
+                for idim in range(self.geodim):
+
+                    res[i] = xo[i]
+
+                    j = self._PerDefBeg_Isegm[isegm] * self.geodim
+                    
+                    for jdim in range(self.geodim):
+
+                        res[i] -= self._PerDefBeg_SpaceRotPos[isegm,idim,jdim] * xo[j]
+                        j += 1
+
+                    i += 1
+
+        return res
+        
+    @cython.final
+    def Compute_initial_constraint_default_vel(self, double[::1] vo):
+
+        assert vo.shape[0] == self.nsegm * self.geodim
+
+        cdef np.ndarray[double, ndim=1, mode='c'] res = np.empty((self.nsegm * self.geodim), dtype=np.float64)
+
+        cdef Py_ssize_t isegm, idim, jdim, i, j
+
+        for isegm in range(self.nsegm):
+
+            if self._PerDefBeg_TimeRev[isegm] < 0:
+
+                i = isegm * self.geodim
+
+                for idim in range(self.geodim):
+
+                    res[i] = vo[i]
+
+                    j = self._PerDefBeg_Isegm[isegm] * self.geodim
+                    
+                    for jdim in range(self.geodim):
+
+                        res[i] -= self._PerDefBeg_SpaceRotVel[isegm,idim,jdim] * vo[j]
                         j += 1
 
                     i += 1

@@ -24,7 +24,6 @@ import choreo
 @pytest.mark.parametrize("DoEFT", [True, False])
 def test_Implicit_ODE(float64_tols, method_x, method_v, nsteps, ivp, fun_type, vector_calls, DoEFT):
     """Tests the accuracy of implicit ODE solvers.
-    
     """
 
     rk_x = choreo.scipy_plus.multiprec_tables.ComputeImplicitRKTable_Gauss(nsteps, method = method_x)

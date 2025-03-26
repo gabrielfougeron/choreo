@@ -51,4 +51,4 @@ def pytest_collection_modifyitems(config, items):
             required_time = slow_marker.kwargs.get("required_time", sys.float_info.max)
 
             if required_time > timeout:
-                item.add_marker(pytest.mark.skip(reason=f"Test marked slow with {required_time = }, but timeout is {timeout = }. Run with --runslow CLI option or increase timeout."))
+                item.add_marker(pytest.mark.skip(reason=f"Test marked slow with {required_time = }, but {timeout = }. Run with --runslow CLI option or increase --timeout."))

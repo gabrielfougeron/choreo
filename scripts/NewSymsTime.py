@@ -72,7 +72,7 @@ def setup(test_name, fft_backend, nint_fac, ForceGeneralSym):
     mass = all_kwargs["mass"]
     charge = all_kwargs["charge"]
     Sym_list = all_kwargs["Sym_list"]
-    
+    ²
     inter_pow = all_kwargs["inter_pow"]
     inter_pm = all_kwargs["inter_pm"]
     
@@ -89,13 +89,13 @@ def setup(test_name, fft_backend, nint_fac, ForceGeneralSym):
         ForceGeneralSym = ForceGeneralSym,
     )
 
-    # NBS.fftw_planner_effort = 'FFTW_ESTIMATE'
+    NBS.fftw_planner_effort = 'FFTW_ESTIMATE'
     # NBS.fftw_planner_effort = 'FFTW_MEASURE'
     # NBS.fftw_planner_effort = 'FFTW_PATIENT'
-    NBS.fftw_planner_effort = 'FFTW_EXHAUSTIVE'
+    # NBS.fftw_planner_effort = 'FFTW_EXHAUSTIVE'
     
-    # NBS.fftw_wisdom_only = False
-    NBS.fftw_wisdom_only = True
+    NBS.fftw_wisdom_only = False
+    # NBS.fftw_wisdom_only = True
     
     NBS.fftw_nthreads = 1
     
@@ -108,7 +108,6 @@ def setup(test_name, fft_backend, nint_fac, ForceGeneralSym):
     return {"NBS":NBS, "params_buf":params_buf}
         
 
-
 all_tests = [
     # 'test'      ,
     '3C'      ,
@@ -120,13 +119,14 @@ all_tests = [
 
 min_exp = 0
 # max_exp = 13
-max_exp = 18
+max_exp = 20
 
 MonotonicAxes = ["nint_fac"]
 
 all_args = {
     "test_name" : all_tests,
     "fft_backend" : ['scipy', 'mkl', 'fftw', 'ducc'],
+    # "fft_backend" : ['scipy', 'mkl', 'ducc'],
     # "fft_backend" : ['scipy', 'mkl'],
     # "fft_backend" : ['scipy'],
     # "fft_backend" : ['mkl'],
@@ -166,13 +166,13 @@ plot_intent = {
     "fft_backend" : 'curve_linestyle'                  ,
     # "fft_backend" : 'subplot_grid_y'                  ,
     "nint_fac" : 'points'                           ,
-    # "ForceGeneralSym" : 'subplot_grid_y'                           ,
-    "ForceGeneralSym" : 'curve_color'                           ,
+    "ForceGeneralSym" : 'subplot_grid_y'                           ,
+    # "ForceGeneralSym" : 'curve_color'                           ,
     # pyquickbench.repeat_ax_name :  'reduction_min'  ,
     pyquickbench.repeat_ax_name :  'reduction_avg'  ,
     # pyquickbench.out_ax_name :  'curve_color'  ,
-    # pyquickbench.out_ax_name :  'reduction_sum'  ,
-    pyquickbench.out_ax_name :  'single_value'  ,
+    pyquickbench.out_ax_name :  'reduction_sum'  ,
+    # pyquickbench.out_ax_name :  'single_value'  ,
 }
 
 single_values_val = {

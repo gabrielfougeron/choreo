@@ -845,20 +845,32 @@ def inter_law(xsq, res, ptr):
 @ParametrizeDocstrings
 @pytest.mark.parametrize(("NBS", "params_buf"), [pytest.param(NBS, params_buf, id=name) for name, (NBS, params_buf) in Sols_dict.items()])
 def test_periodicity_default(float64_tols, NBS, params_buf):
-    """ Tests that Fourier periodic solutions have zero periodicity default.
+    """ Tests that Fourier periodic trajectories have zero periodicity default and satisfy initial constraints.
     """
         
     NBS.ForceGreaterNStore = True
     segmpos = NBS.params_to_segmpos(params_buf)
+    segmvel = NBS.params_to_segmvel(params_buf)
 
     xo = np.ascontiguousarray(segmpos[:,0 ,:].reshape(-1))
     xf = np.ascontiguousarray(segmpos[:,-1,:].reshape(-1))
     
-    dx = NBS.Compute_periodicity_default(xo, xf)
+    vo = np.ascontiguousarray(segmvel[:,0 ,:].reshape(-1))
+    vf = np.ascontiguousarray(segmvel[:,-1,:].reshape(-1))
+    
+    dx = NBS.Compute_periodicity_default_pos(xo, xf)
+    dv = NBS.Compute_periodicity_default_vel(vo, vf)
     ndof = dx.shape[0]
     
     assert np.allclose(dx, np.zeros((ndof), dtype=np.float64), rtol = float64_tols.rtol, atol = float64_tols.atol)  
-        
+    assert np.allclose(dv, np.zeros((ndof), dtype=np.float64), rtol = float64_tols.rtol, atol = float64_tols.atol)         
+     
+    dx = NBS.Compute_initial_constraint_default_pos(xo)
+    dv = NBS.Compute_initial_constraint_default_vel(vo)
+    
+    assert np.allclose(dx, np.zeros((ndof), dtype=np.float64), rtol = float64_tols.rtol, atol = float64_tols.atol)  
+    assert np.allclose(dv, np.zeros((ndof), dtype=np.float64), rtol = float64_tols.rtol, atol = float64_tols.atol)         
+    
 @ParametrizeDocstrings
 @pytest.mark.parametrize("NoSymIfPossible", [True, False])
 @pytest.mark.parametrize("LowLevel", [True, False])
