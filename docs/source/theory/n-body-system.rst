@@ -25,7 +25,7 @@ The Newtonian formulation of the equations of motion of a n-body system states t
 
 This equation alone specifies the evolution of the unknown variables, *i.e.* the positions :math:`\mathbf{q}(t) \eqdef (x_0(t), \dots, x_{n-1}(t))`.
 
-..note:: Although the usage of the letter :math:`\mathbf{q}` here is confusing, it follows standard notation in the study of Hamiltonian and Lagrangian systems. It should not be mistaken for the *charges* that we denote :math:`q` in this documentation.
+.. note:: Although the usage of the letter :math:`\mathbf{q}` here is confusing, it follows standard notation in the study of Hamiltonian and Lagrangian systems. It should not be mistaken for the *charges* that we denote :math:`q` in this documentation.
 
 The force :math:`f_i` in the above equation is the resultant of binary interactions with all the other bodies in the system.
 Moreover, the force that body :math:`i` applies on body :math:`j` is the opposite of the force that body :math:`j` applies on body :math:`i`. It is pointed in the direction of the other body, and its magnitude is a function of the inter-body distance :math:`\|x_j = x_i\|`. These restrictions constraint the forces in the system to be conservative:

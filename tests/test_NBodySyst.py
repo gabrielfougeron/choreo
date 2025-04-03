@@ -843,10 +843,13 @@ def inter_law(xsq, res, ptr):
     assert np.allclose(action_grad_grav, action_grad, rtol = float64_tols.rtol, atol = float64_tols.atol)  
         
 @ParametrizeDocstrings
-@pytest.mark.parametrize(("NBS", "params_buf"), [pytest.param(NBS, params_buf, id=name) for name, (NBS, params_buf) in Sols_dict.items()])
-def test_periodicity_default(float64_tols, NBS, params_buf):
+@pytest.mark.parametrize("NBS", [pytest.param(NBS, id=name) for name, NBS in NBS_dict.items()])
+def test_periodicity_default(float64_tols, NBS):
     """ Tests that Fourier periodic trajectories have zero periodicity default and satisfy initial constraints.
     """
+        
+    NBS.nint_fac = 10
+    params_buf = np.random.random((NBS.nparams))
         
     NBS.ForceGreaterNStore = True
     segmpos = NBS.params_to_segmpos(params_buf)

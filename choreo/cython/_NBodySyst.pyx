@@ -244,9 +244,22 @@ cdef class NBodySyst():
 
     @property
     def fft_backend(self):
-        """ Docstring of fft_backend
-        """
+        """ :class:`python:str` Name of the FFT backend currently in use.
+            
+        Possible values are:
 
+        * "scipy": Use the SciPy FFT implementation.
+        * "mkl": Use the Intel MKL FFT implementation, if available.
+        * "ducc": Use the DUCC FFT implementation, if available.
+        * "fftw": Use the FFTW FFT implementation, if available.
+
+        .. note:: Setting this property will trigger a re-initialization of the FFT backend.
+
+        Raises:
+            ValueError: If an invalid FFT backend is provided or if the required package for the specified backend is not available.
+
+        """
+        
         if self._fft_backend == USE_SCIPY_FFT:
             return "scipy"
         elif self._fft_backend == USE_MKL_FFT:

@@ -27,7 +27,7 @@ if ("--no-show" in sys.argv):
     plt.show = (lambda : None)
 
 n_test = 1
-n_repeat = 100
+n_repeat = 10
     
 def params_to_action_grad_TT(NBS, params_buf):
 
@@ -72,7 +72,6 @@ def setup(test_name, fft_backend, nint_fac, ForceGeneralSym):
     mass = all_kwargs["mass"]
     charge = all_kwargs["charge"]
     Sym_list = all_kwargs["Sym_list"]
-    ²
     inter_pow = all_kwargs["inter_pow"]
     inter_pm = all_kwargs["inter_pm"]
     
@@ -89,13 +88,13 @@ def setup(test_name, fft_backend, nint_fac, ForceGeneralSym):
         ForceGeneralSym = ForceGeneralSym,
     )
 
-    NBS.fftw_planner_effort = 'FFTW_ESTIMATE'
+    # NBS.fftw_planner_effort = 'FFTW_ESTIMATE'
     # NBS.fftw_planner_effort = 'FFTW_MEASURE'
     # NBS.fftw_planner_effort = 'FFTW_PATIENT'
-    # NBS.fftw_planner_effort = 'FFTW_EXHAUSTIVE'
+    NBS.fftw_planner_effort = 'FFTW_EXHAUSTIVE'
     
-    NBS.fftw_wisdom_only = False
-    # NBS.fftw_wisdom_only = True
+    # NBS.fftw_wisdom_only = False
+    NBS.fftw_wisdom_only = True
     
     NBS.fftw_nthreads = 1
     
@@ -119,7 +118,7 @@ all_tests = [
 
 min_exp = 0
 # max_exp = 13
-max_exp = 20
+max_exp = 18
 
 MonotonicAxes = ["nint_fac"]
 
@@ -168,10 +167,10 @@ plot_intent = {
     "nint_fac" : 'points'                           ,
     "ForceGeneralSym" : 'subplot_grid_y'                           ,
     # "ForceGeneralSym" : 'curve_color'                           ,
-    # pyquickbench.repeat_ax_name :  'reduction_min'  ,
-    pyquickbench.repeat_ax_name :  'reduction_avg'  ,
-    # pyquickbench.out_ax_name :  'curve_color'  ,
-    pyquickbench.out_ax_name :  'reduction_sum'  ,
+    pyquickbench.repeat_ax_name :  'reduction_min'  ,
+    # pyquickbench.repeat_ax_name :  'reduction_avg'  ,
+    pyquickbench.out_ax_name :  'curve_color'  ,
+    # pyquickbench.out_ax_name :  'reduction_sum'  ,
     # pyquickbench.out_ax_name :  'single_value'  ,
 }
 
@@ -182,12 +181,12 @@ single_values_val = {
 }
 
 relative_to_val_list = [
-    # None    ,
+    None    ,
     # {
     #     "fft_backend" : 'scipy',
     #     "ForceGeneralSym" : True,
     # },
-    {"fft_backend" : 'scipy'},
+    # {"fft_backend" : 'scipy'},
     # {"fft_backend" : 'mkl'},
     # {"test_name" : '3C'},
 ]
