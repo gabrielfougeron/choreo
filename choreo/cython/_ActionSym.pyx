@@ -33,15 +33,19 @@ cdef double default_atol = 1e-10
 @cython.auto_pickle(False)
 @cython.final
 cdef class ActionSym():
-    """This class defines the symmetries in a N-body system.
+    r"""This class defines the symmetries in a N-body system.
 
     A symmetry :math:`\sigma` is a transformation of paths that leaves the physics of a N-body system invariant.
 
     .. math::
-        x_{\\text{LoopTarget}}(t) = \\text{SpaceRot} \cdot x_{\\text{LoopSource}} (\\text{TimeRev} * (t - \\text{TimeShift}))
+        x_j(t) = \mathrm{R} \cdot x_i (s \cdot (t - \Delta t))
 
-    Where SpaceRot is assumed orthogonal and TimeShift is defined as a rational fraction.
-
+    where:
+    
+    * :math:`x_i` and :math:`x_j` where :math:`j =`:attr:`BodyPerm`:math:`(i)`  are the positions in the source and target loops, respectively.
+    * :math:`\mathrm{R}` is an orthogonal matrix corresponding to :attr:`SpaceRot`.
+    * :math:`s` corresponds to :attr:`TimeRev` is either ``1`` or ``-1`` and denotes whether time flows forwards or backwards.
+    * :math:`\Delta t` denotes a **rationnal** time shift of the form :attr:`TimeShiftNum` / :attr:`TimeShiftDen` .
 
     Useful to detect loops and constraints.
 
@@ -74,14 +78,14 @@ cdef class ActionSym():
         Py_ssize_t TimeShiftNum     ,
         Py_ssize_t TimeShiftDen     ,
     ):
-        """Specifies a symmetry of the action functional.
+        """Defines a symmetry of the action functional.
 
         Parameters
         ----------
         BodyPerm : :class:`numpy:numpy.ndarray`:class:`(shape = (nbody), dtype = np.intp)`
             Permutation of the bodies.
         SpaceRot : :class:`numpy:numpy.ndarray`:class:`(shape = (geodim, geodim), dtype = np.float64)`
-            Isometry of space.
+            Isometry of space. This matrix is assumed orthogonal, which is not automatically checked (cf :meth:`IsWellFormed`).
         TimeRev : :class:`python:int`
             A value of ``-1`` denotes time reversal, and a value of ``1`` denotes no time reversal.
         TimeShiftNum : :class:`python:int`
@@ -159,7 +163,7 @@ cdef class ActionSym():
             elif (TimeRev == "False"):
                 TimeRev = 1
             else:
-                raise ValueError("TimeRev must be True or False")
+                raise ValueError('TimeRev given as a string must be "True" or "False"')
 
         return ActionSym(
             np.array(Sym_dict["BodyPerm"], dtype=np.intp   )    ,
@@ -173,6 +177,26 @@ cdef class ActionSym():
     @staticmethod
     def Identity(Py_ssize_t nbody, Py_ssize_t geodim):
         """Returns the identity transformation.
+
+        Example
+        -------
+
+        >>> import choreo
+        >>> nbody = 10
+        >>> geodim = 4
+        >>> choreo.ActionSym.Identity(nbody, geodim).IsIdentity()
+        True
+        >>> print(choreo.ActionSym.Identity(nbody, geodim))
+        ActionSym object
+        BodyPerm:
+        [0 1 2 3 4 5 6 7 8 9]
+        SpaceRot:
+        [[1. 0. 0. 0.]
+        [0. 1. 0. 0.]
+        [0. 0. 1. 0.]
+        [0. 0. 0. 1.]]
+        TimeRev: 1
+        TimeShift: 0 / 1
 
         Parameters
         ----------
@@ -242,8 +266,19 @@ cdef class ActionSym():
 
     @cython.final
     cpdef ActionSym Inverse(ActionSym self):
-        """
-        Returns the inverse of a symmetry transformation.
+        """ Returns the inverse of a symmetry transformation.
+
+        For all well-formed transformation  ``A``, the inverse transformation ``A.Inverse()`` satisfies ``A.Inverse().Compose(A).IsIdentity() is True``.
+
+        Example
+        -------
+
+        >>> import choreo
+        >>> nbody = 10
+        >>> geodim = 4
+        >>> A = choreo.ActionSym.Random(nbody, geodim)
+        >>> A.Inverse().Compose(A).IsIdentity()
+        True
 
         Returns
         -------
@@ -268,7 +303,7 @@ cdef class ActionSym():
     cpdef ActionSym TimeDerivative(ActionSym self):
         """ Returns the time derivative of a symmetry transformation.
 
-        If ``A`` transforms positions, then ``A.TimeDerivative()`` transforms speeds.
+        If ``A`` transforms positions, then ``A.TimeDerivative()`` transforms velocities.
 
         Returns
         -------
@@ -348,11 +383,17 @@ cdef class ActionSym():
     @cython.final
     cpdef bint IsWellFormed(ActionSym self, double atol = default_atol):
         """Returns :data:`python:True` if the transformation is well-formed.
+
+        This function will return :data:`python:True` if and only if **all** the following constraints are satisfied:
+
+        * TimeShift = :attr:`TimeShiftNum` / :attr:`TimeShiftDen`  is an irreducible fraction in :math:`[0,1[`.
+        * :attr:`BodyPerm` defines a permutation of [0, ..., n-1], where n = :attr:`BodyPerm`.shape(0).
+        * :attr:`SpaceRot` is an orthogonal matrix.
         
         Parameters
         ----------
         atol : :class:`python:float`, optional
-            Absolute tolerance.
+            Absolute tolerance for the orthogonality test.
 
         Returns
         -------
@@ -394,7 +435,16 @@ cdef class ActionSym():
     @cython.final
     cpdef bint IsIdentity(ActionSym self, double atol = default_atol):
         """Returns :data:`python:True` if the transformation is within ``atol`` of the identity.
-        
+
+        Example
+        -------
+
+        >>> import choreo
+        >>> nbody = 10
+        >>> geodim = 4
+        >>> choreo.ActionSym.Identity(nbody, geodim).IsIdentity()
+        True
+
         Parameters
         ----------
         atol : :class:`python:float`, optional
@@ -947,6 +997,7 @@ cdef class ActionSym():
         Example
         -------
 
+        >>> import choreo
         >>> for a,b in choreo.ActionSym.TimeShifts(5):
         ...     print(a,b)
         ...
@@ -1013,6 +1064,7 @@ cdef class ActionSym():
         Example
         -------
 
+        >>> import choreo
         >>> for p in choreo.ActionSym.InvolutivePermutations(4):
         ...     print(p)
         ...

@@ -169,7 +169,7 @@ cdef class NBodySyst():
     """
 
     cdef readonly Py_ssize_t nint_min
-    """ :class:`python:int` Minimum number of integration points.
+    """ :class:`python:int` Minimum number of integration points per period.
     
     Read-only attribute.
     """
@@ -201,11 +201,24 @@ cdef class NBodySyst():
     cdef readonly bint RequiresGreaterNStore
     """ :class:`python:bool` Whether the symmetry constraints require the rightmost integration point to be included in segments.
     
+        See Also
+        --------
+        * :attr:`GreaterNStore`
+        * :attr:`ForceGreaterNStore`
+        * :attr:`segm_size`
+        * :attr:`segm_store`
+
     Read-only attribute.
     """
 
     cdef readonly bint GreaterNStore
     """ :class:`python:bool` Whether the rightmost integration point is included in segments.
+
+     If :attr:`GreaterNStore` is True, then :attr:`segm_store` equals :attr:`segm_size` + 1, otherwise :attr:`segm_store` equals :attr:`segm_size`.
+
+        See Also
+        --------
+        * :attr:`RequiresGreaterNStore`
     
     Read-only attribute.
     """
@@ -214,14 +227,15 @@ cdef class NBodySyst():
     def ForceGreaterNStore(self):
         """ :class:`python:bool` Whether to force the rightmost integration point to be included in segments.
         
-        .. note :: 
-            Regardless of the value of :attr:`ForceGreaterNStore`, 
+        .. note:: The symmetries constraints might require the rightmost integration point to be included in segments. In this case, :attr:`ForceGreaterNStore` is ignored.
 
         See Also
         --------
 
         * :attr:`GreaterNStore`
         * :attr:`RequiresGreaterNStore`
+        * :attr:`segm_size`
+        * :attr:`segm_store`
 
         """
         return self.GreaterNStore and (not self.RequiresGreaterNStore)
@@ -568,6 +582,12 @@ cdef class NBodySyst():
     cdef Py_ssize_t _nint
     @property
     def nint(self):
+        """ :class:`python:int` The number of integration points per period.
+
+        Raises:
+            ValueError: If the provided :attr:`nint` is not divisible by :math:`2 *` :attr:`nint_min`.
+        """
+
         return self._nint
 
     @nint.setter
@@ -621,10 +641,13 @@ cdef class NBodySyst():
 
         self.free_owned_memory()
         self.allocate_owned_memory()
-    
+
     cdef Py_ssize_t _nint_fac
     @property
     def nint_fac(self):
+        """ :class:`python:int` Half the size of a segment. Changing this value is the preferred way to change the number of integration points because there are no constraints on :attr:`segm_store` besides that it be a positive integer.
+        """
+        
         return self._nint_fac
 
     @nint_fac.setter
@@ -933,7 +956,9 @@ cdef class NBodySyst():
 
     @cython.final
     def free_owned_memory(self):
-
+        """ Frees the memory allocated for the buffer arrays used in :class:`NBodySyst`.
+        """
+        
         cdef Py_ssize_t il
 
         if self.BufArraysAllocated:
@@ -979,13 +1004,14 @@ cdef class NBodySyst():
 
     @cython.final
     def allocate_owned_memory(self):
-
+        """ Allocates the buffer arrays used in :class:`NBodySyst` depending on the value of :attr:`nint` and :attr:`fft_backend`.
+        """
+        
         cdef Py_ssize_t il
 
         self._pos_slice_buf_ptr = <double**> malloc(sizeof(double*)*self.nloop)
         self._params_pos_buf = <double**> malloc(sizeof(double*)*self.nloop)
         self._ifft_buf_ptr = <double complex**> malloc(sizeof(double complex**)*self.nloop)
-
         cdef double *pyfftw_input_array_start
         cdef double complex *pyfftw_output_array_start
 
@@ -1093,7 +1119,6 @@ cdef class NBodySyst():
                     self._fftw_symrfft_exe[il]  = NULL
 
                     self._pos_slice_buf_ptr[il] = <double*> malloc(sizeof(double)*(self._pos_slice_shifts[il+1]-self._pos_slice_shifts[il]))
-
 
         self._segmpos = np.empty((self.nsegm, self.segm_store, self.geodim), dtype=np.float64)
         self._pot_nrg_grad = np.empty((self.nsegm, self.segm_store, self.geodim), dtype=np.float64)
