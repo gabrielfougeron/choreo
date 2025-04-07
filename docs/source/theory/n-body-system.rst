@@ -4,13 +4,13 @@
 What is a n-body system ?
 =========================
 
-A n-body system is a set of :math:`n` classical **non-relativistic** point masses undergoing **binary** interactions. These interactions are modelled by forces following a direction **aligned** with the straight line joining the bodies positions, and whose magnitude only depends on the **inter-body distance**.
+A n-body system is a set of :math:`n` classical **non-relativistic** point masses undergoing **binary** interactions. These interactions are modelled by forces following the direction of the straight line joining the bodies positions, and whose magnitude only depends on the **inter-body distance**.
 
 In :mod:`choreo`, n-body systems are represented by the class :class:`choreo.NBodySyst`.
 
 .. note:: Dimensionality of the system (geodim)
 
-The following sections detail three different formulations of the evolution equations of n-body systems.
+The following sections detail three different formulations of the evolution equations of n-body systems. While all three descriptions are equivalent in the sense that they predict the same evolution for the system, each description shines when exploring a particular aspect of the dynamics the n-body system.
 
 .. _newtonian-pov:
 
@@ -23,12 +23,12 @@ The Newtonian formulation of the equations of motion of a n-body system states t
 .. math:: m_i \frac{\dd^2 x_i}{\dd t^2} = f_i
     :label: Newton
 
-This equation alone specifies the evolution of the unknown variables, *i.e.* the positions :math:`\mathbf{q}(t) \eqdef (x_0(t), \dots, x_{n-1}(t))`.
+This equation alone specifies the evolution of the unknown variables, *i.e.* the positions :math:`\mathbf{q}(t) \eqdef (x_0(t), \dots, x_{n-1}(t))` as soon as the forces can be written as a function of the positions.
 
-.. note:: Although the usage of the letter :math:`\mathbf{q}` here is confusing, it follows standard notation in the study of Hamiltonian and Lagrangian systems. It should not be mistaken for the *charges* that we denote :math:`q` in this documentation.
+.. note:: Although the usage of the letter :math:`\mathbf{q}` here might seem confusing, it follows standard notation in the study of Hamiltonian and Lagrangian systems. It should not be mistaken for the *charges* that we denote :math:`q` in this documentation.
 
-The force :math:`f_i` in the above equation is the resultant of binary interactions with all the other bodies in the system.
-Moreover, the force that body :math:`i` applies on body :math:`j` is the opposite of the force that body :math:`j` applies on body :math:`i`. It is pointed in the direction of the other body, and its magnitude is a function of the inter-body distance :math:`\|x_j = x_i\|`. These restrictions constraint the forces in the system to be conservative:
+The force :math:`f_i` in the above equation is the resultant of binary interactions with all the other bodies in the system. In other terms, it is the sum of all the forces that all other bodies :math:`j \neq i` apply to body :math:`i`.
+Moreover, the force that body :math:`i` applies on body :math:`j` is the opposite of the force that body :math:`j` applies on body :math:`i`. This force points in the direction of the other body, and its magnitude is a function of the inter-body distance :math:`\|x_j = x_i\|`. These restrictions constraint the forces in the system to be conservative:
 
 .. math::
 

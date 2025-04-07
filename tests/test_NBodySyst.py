@@ -5,6 +5,7 @@
     :template: tests-formatting/base.rst
     :nosignatures:
 
+    test_bad_init_args
     test_create_destroy
     test_all_pos_to_segmpos
     test_all_vel_to_segmvel
@@ -39,6 +40,20 @@ import numpy as np
 import scipy
 import choreo
 
+@ParametrizeDocstrings
+def test_bad_init_args():
+    """ Tests that missing or mismatched init arguments are properly handled.
+    """
+    
+    geodim = 3
+    nbody = 3
+    NBS = choreo.NBodySyst(geodim, nbody)
+    
+    with pytest.raises(ValueError):    
+        NBS = choreo.NBodySyst(-1, nbody)
+    with pytest.raises(ValueError):    
+        NBS = choreo.NBodySyst(geodim, -1)
+    
 @ParametrizeDocstrings
 @pytest.mark.parametrize("name", AllConfigNames_list)
 def test_create_destroy(name):

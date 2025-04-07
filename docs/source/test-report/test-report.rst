@@ -1,11 +1,11 @@
 Tests
 =====
 
-During the development of the package choreo, a large battery of parametrized tests is ran at frequent intervals to ensure the codebase is in working conditions. Running the tests on your local machine is a great way to detect broken or missing features in your local install.
+During the development of the package choreo, a large battery of parametrized tests is run at frequent intervals to ensure the codebase is in working conditions. Running the tests on your local machine is a great way to detect broken or missing features in your local install.
 
-To run tests locally on your machine, first checkout this reposity and install dependencies using pip:
+To run tests locally on your machine, first checkout this repository and install dependencies using pip:
 
-.. code-block:: sh
+.. code-block:: bash
 
     git clone git@github.com:gabrielfougeron/choreo.git
     cd choreo
@@ -13,7 +13,7 @@ To run tests locally on your machine, first checkout this reposity and install d
 
 Then, run tests using `pytest <https://docs.pytest.org/en/latest/>`_:
 
-.. code-block:: sh
+.. code-block:: bash
 
     pytest
    
@@ -25,7 +25,7 @@ Description of tests
 Tests results on Github Actions
 -------------------------------
 
-As part of the Continuous Integration workflow of choreo, tests are regularly ran on several Python versions and on platforms provided by GitHub Actions. The corresponding test results are listed here.
+As part of the Continuous Integration workflow of choreo, tests are regularly run on several Python versions and on platforms provided by GitHub Actions. The corresponding test results are listed here.
 
 ..
 

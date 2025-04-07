@@ -570,6 +570,8 @@ cdef class NBodySyst():
 
     cdef inter_law_fun_type _inter_law
     cdef readonly str inter_law_str
+    """ :class:`python:str` A description of the interaction law"""
+
     cdef readonly object inter_law_param_dict
     cdef double[::1] _inter_law_param_buf
     cdef void* _inter_law_param_ptr
@@ -799,25 +801,68 @@ cdef class NBodySyst():
         self                                ,
         Py_ssize_t geodim                   ,
         Py_ssize_t nbody                    ,
-        double[::1] bodymass                ,
-        double[::1] bodycharge              ,
-        list Sym_list                       ,
+        double[::1] bodymass = None         ,
+        double[::1] bodycharge  = None      ,
+        list Sym_list = []                  ,
         object inter_law = None             , 
         str inter_law_str = None            , 
         object inter_law_param_dict = None  ,
         bint ForceGeneralSym = False        ,
         bint ForceGreaterNStore = False     ,
     ):
+        """ Defines a N-Body System.
+
+        See Also
+        --------
+
+        * :meth:`Set_inter_law`
+
+        Parameters
+        ----------
+        geodim : :class:`python:int`
+            Number of dimensions of ambiant space. Typically 2 or 3, but can be any positive integer.
+        nbody : :class:`python:int`
+            Number of bodies in the system.
+        bodymass :  :class:`numpy:numpy.ndarray`:class:`(shape = (nbody), dtype = np.float64)`
+            Masses of the bodies in the system.
+        bodycharge : :class:`numpy:numpy.ndarray`:class:`(shape = (nbody), dtype = np.float64)`
+            Charges of the bodies.
+        Sym_list : :class:`python:list`, optional
+            List of a priori symmetries in the system, by default [ ].
+        inter_law : optional
+            Function defining the interaction law, by default :data:`python:None`.
+        inter_law_str : :class:`python:str`, optional
+            Description of the interaction law dictating the dynamics of the system, by default :data:`python:None`.
+        inter_law_param_dict : :class:`python:dict`, optional
+            Parameters pertaining to the interaction law, by default :data:`python:None`.
+        ForceGeneralSym : :class:`python:bool`, optional
+            Whether to force the symmetries to be treated in full generality when computing positions or velocities from parameters (and vice-versa, both in direct or adjoint mode), or to try an optimized route instead. Most users should leave this option to its default value, which is :data:`python:False`.
+        ForceGreaterNStore : :class:`python:bool`, optional
+            Whether to force the number of stored segment positions to be increased, even though the symmetries might not require it. Most users should leave this option to its default value, which is :data:`python:False`.
+
+        """    
 
         self._nint_fac = 0 
         self.BufArraysAllocated = False
+
+        if geodim < 1:
+            raise ValueError(f"geodim should be a positive integer. Received {geodim = }")
+        self.geodim = geodim
+        
+        if nbody < 1:
+            raise ValueError(f"nbody should be a positive integer. Received {nbody = }")
+        self.nbody = nbody
 
         cdef Py_ssize_t i, il, ibin, ib
         cdef double eps = 1e-12
         cdef ActionSym Sym, Shift
 
+        if bodymass is None:
+            bodymass = np.ones((nbody), dtype = np.float64)
         if (bodymass.shape[0] != nbody):
             raise ValueError(f'Incompatible number of bodies {nbody} vs number of masses {bodymass.shape[0]}.')
+        if bodycharge is None:
+            bodycharge = np.ones((nbody), dtype = np.float64)
         if (bodycharge.shape[0] != nbody):
             raise ValueError(f'Incompatible number of bodies {nbody} vs number of charges {bodycharge.shape[0]}.')
 
@@ -825,8 +870,7 @@ cdef class NBodySyst():
 
         self._Hash_exp = default_Hash_exp
 
-        self.geodim = geodim
-        self.nbody = nbody
+
         self.Sym_list = Sym_list
         # Zero charges are OK but not zero masses
         for ib in range(nbody):
@@ -1643,8 +1687,49 @@ cdef class NBodySyst():
     @cython.final
     @cython.cdivision(True)
     def Set_inter_law(self, inter_law = None, inter_law_str = None, inter_law_param_dict = None):
+        """ Sets the interaction law of the system.
+
+        There are several ways to set the interaction law:
+
+        * Through **inter_law**. This argument can be:
+            * A C function with signature ``void (double, double *, void *)``.
+                * The first argument denotes the squared inter-body distance : :math:`\Delta x^2 = \sum_{i=0}^{\\text{geodim}-1} \Delta x_i^2`
+                * The second argument denotes an array of :obj:`numpy:numpy.float64` with 3 elements. The function should write the value of the interaction, its first, and its second derivative to the first, second, and third elements of this array respectively. **WARNING** : These derivatives should be understood with respect to the variable :math:`\Delta x^2`, namely the **squared** inter-body distance.
+                * The third argument denotes a pointer to parameters that can be used during the computation.
+            * A `Python <https://www.python.org/>`_ function that will be compiled to a C function using `Numba <https://numba.pydata.org/>`_ if available on the user's system. For performance reasons, using pure Python functions is not allowed. The arguments are similar to the ones defined above in the case of a C function. For instance, the following function defines the Newtonian gravitational potential:
+
+        .. code-block:: Python
+
+            def inter_law(xsq, res, ptr):
+
+                a = xsq ** (-2.5)
+                b = xsq*a
+            
+                res[0] = -xsq*b
+                res[1]= 0.5*b
+                res[2] = (-0.75)*a
+
+
+        * Through **inter_law_str**, whose possible values are:
+            * ``"gravity_pot"`` : the potential is the classical Newtonian gravitational potential: :math:`V(x) = \\frac{1}{x}`
+            * ``"power_law_pot"`` : the potential is a power law : :math:`V(x) = \\frac{\\alpha}{x^n}`. Its parameters should be given through the :class:`python:dict` **inter_law_param_dict** with keys "alpha" and "n".
+            * A string defining a `Python <https://www.python.org/>`_ function to be compiled with `Numba <https://numba.pydata.org/>`_ . The process is similar to passing a `Python <https://www.python.org/>`_ function directly as described above.
+
+        * If both **inter_law** and **inter_law_str** are :data:`python:None`, the interaction law is the classical gravitational potential.
+
+        Parameters
+        ----------
+        inter_law : optional
+            Function defining the interaction law, by default :data:`python:None`.
+        inter_law_str : :class:`python:str`, optional
+            Description of the interaction law dictating the dynamics of the system, by default :data:`python:None`.
+        inter_law_param_dict : :class:`python:dict`, optional
+            Parameters pertaining to the interaction law, by default :data:`python:None`.
+
+        """    
 
         cdef ccallback_t callback_inter_fun
+
         if inter_law_str is None:
             if inter_law is None:
                 self._inter_law = gravity_pot
@@ -1703,7 +1788,7 @@ cdef class NBodySyst():
                 mnnm1 = -n*(n-1)
                 alpha = self.inter_law_param_dict["alpha"]
                 
-                self.inter_law_str = f"power_law_pot"
+                self.inter_law_str = f"power_law_pot({n=},{alpha=})"
                 self._inter_law_param_buf = np.array([-n, mnnm1, nm2, alpha], dtype=np.float64)
                 self._inter_law_param_ptr = <void*> &self._inter_law_param_buf[0]
             else:
