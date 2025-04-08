@@ -28,11 +28,11 @@ cython_extnames_safemath = [
     ("choreo.cython._ActionSym"             , False),
     ("choreo.cython._NBodySyst"             , False),
     ("choreo.cython.pyfftw_fake"            , False),
-    ("choreo.scipy_plus.cython.ODE"         , False),
-    ("choreo.scipy_plus.cython.SegmQuad"    , False),
-    ("choreo.scipy_plus.cython.test"        , False),
+    ("choreo.segm.cython.ODE"               , False),
+    ("choreo.segm.cython.quad"              , False),
+    ("choreo.segm.cython.test"              , False),
+    ("choreo.segm.cython.eft_lib"           , True ),
     ("choreo.scipy_plus.cython.blas_consts" , False),
-    ("choreo.scipy_plus.cython.eft_lib"     , True ),
 ]
 
 cython_extnames = [item[0] for item in cython_extnames_safemath]

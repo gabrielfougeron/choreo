@@ -8,9 +8,9 @@ import math
 import mpmath
 import numpy as np
 
-from choreo.scipy_plus.cython.SegmQuad import QuadFormula
-from choreo.scipy_plus.cython.ODE import ExplicitSymplecticRKTable
-from choreo.scipy_plus.cython.ODE import ImplicitRKTable
+from choreo.segm.cython.quad    import QuadFormula
+from choreo.segm.cython.ODE     import ExplicitSymplecticRKTable
+from choreo.segm.cython.ODE     import ImplicitRKTable
 
 # Order is important.
 all_GL_int = [

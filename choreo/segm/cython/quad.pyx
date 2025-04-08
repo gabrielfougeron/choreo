@@ -1,5 +1,5 @@
 '''
-SegmQuad.pyx : Defines segment quadrature related things I designed I feel ought to be in scipy ... but faster !
+quad.pyx : Defines segment quadrature related things.
 
 '''
 
@@ -8,7 +8,7 @@ __all__ = [
     'IntegrateOnSegment',
 ]
 
-from choreo.scipy_plus.cython.eft_lib cimport TwoSum_incr
+from choreo.segm.cython.eft_lib cimport TwoSum_incr
 
 cimport scipy.linalg.cython_blas
 from libc.stdlib cimport malloc, free
@@ -66,45 +66,6 @@ signatures[C_FUN_ONEVAL_DATA].signature = b"double (double, void *)"
 signatures[C_FUN_ONEVAL_DATA].value = C_FUN_ONEVAL_DATA
 
 signatures[N_SIGNATURES].signature = NULL
-
-# cdef struct s_LowLevelFun:
-#     int fun_type
-#     void *py_fun
-#     c_fun_type_memoryview c_fun_memoryview
-#     c_fun_type_pointer c_fun_pointer
-#     c_fun_type_oneval c_fun_oneval
-# 
-# ctypedef s_LowLevelFun LowLevelFun
-# 
-# cdef LowLevelFun LowLevelFun_init(
-#     ccallback_t callback
-# ):
-# 
-#     cdef LowLevelFun fun
-# 
-#     fun.py_fun = NULL
-#     fun.c_fun_memoryview = NULL
-#     fun.c_fun_pointer = NULL
-#     fun.c_fun_oneval = NULL
-# 
-#     if (callback.py_function == NULL):
-#         fun.fun_type = callback.signature.value
-#     else:
-#         fun.fun_type = PY_FUN
-# 
-#     if fun.fun_type == PY_FUN:
-#         fun.py_fun = callback.py_function
-# 
-#     elif fun.fun_type == C_FUN_MEMORYVIEW:
-#         fun.c_fun_memoryview = <c_fun_type_memoryview> callback.c_function
-# 
-#     elif fun.fun_type == C_FUN_POINTER:
-#         fun.c_fun_pointer = <c_fun_type_pointer> callback.c_function
-# 
-#     elif fun.fun_type == C_FUN_ONEVAL:
-#         fun.c_fun_oneval = <c_fun_type_oneval> callback.c_function
-# 
-#     return fun
 
 cdef inline void LowLevelFun_apply(
     ccallback_t callback    ,
@@ -196,7 +157,7 @@ cdef class QuadFormula:
 
     def __repr__(self):
 
-        res = f'QuadFormula object with {self.nsteps} nodes\n'
+        res = f'QuadFormula object with {self._w.shape[0]} nodes\n'
         res += f'Nodes: {self.x}\n'
         res += f'Weights: {self.w}\n'
 

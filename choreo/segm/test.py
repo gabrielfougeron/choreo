@@ -1,9 +1,9 @@
 import math as m
 import numpy as np
 import scipy
-from choreo.scipy_plus.ODE import SymplecticIVP, ImplicitSymplecticIVP
-from choreo.scipy_plus.multiprec_tables import ComputeQuadrature
-from choreo.scipy_plus.SegmQuad import IntegrateOnSegment
+from choreo.segm.ODE import SymplecticIVP, ImplicitSymplecticIVP
+from choreo.segm.multiprec_tables import ComputeQuadrature
+from choreo.segm.quad import IntegrateOnSegment
 
 
 def Quad_cpte_error_on_test(

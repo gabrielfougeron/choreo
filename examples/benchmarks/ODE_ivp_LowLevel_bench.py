@@ -48,7 +48,7 @@ basename_timings_filename = 'ODE_ivp_lowlevel_bench'
 # ForceBenchmark = True
 ForceBenchmark = False
 
-ndim_mul = choreo.scipy_plus.cython.test.mul_size_py
+ndim_mul = choreo.segm.cython.test.mul_size_py
 
 t_span = (0., 1.)
 
@@ -56,11 +56,11 @@ x0 = np.random.random(ndim_mul)
 v0 = np.random.random(ndim_mul)
 
 nsteps = 8
-rk_method = choreo.scipy_plus.multiprec_tables.ComputeImplicitRKTable_Gauss(nsteps)
+rk_method = choreo.segm.multiprec_tables.ComputeImplicitRKTable_Gauss(nsteps)
 
 def test_from_fun(fun):
     
-    return lambda nint : choreo.scipy_plus.ODE.SymplecticIVP(
+    return lambda nint : choreo.segm.ODE.SymplecticIVP(
         fun             ,
         fun             ,
         t_span          ,
@@ -77,23 +77,23 @@ def mul_py_fun_array(t,x):
         res[i] = np.sin(t*val)
     return res
 
-# mul_nb_fun_pointer = choreo.scipy_plus.SegmQuad.nb_jit_array_double(mul_py_fun_array)
+# mul_nb_fun_pointer = choreo.segm.quad.nb_jit_array_double(mul_py_fun_array)
 
 def mul_py_fun_inplace_pointer(t,x, res):
     for i in range(ndim_mul):
         val = (i+1) * x[i]
         res[i] = np.sin(t*val)
 
-mul_nb_fun_inplace_pointer = choreo.scipy_plus.ODE.nb_jit_c_fun_pointer(mul_py_fun_inplace_pointer)
+mul_nb_fun_inplace_pointer = choreo.segm.ODE.nb_jit_c_fun_pointer(mul_py_fun_inplace_pointer)
 
 # sphinx_gallery_end_ignore
 
 all_funs = {
     'mul_py_fun_array' : test_from_fun(mul_py_fun_array),
     'mul_nb_fun_inplace_pointer' : test_from_fun(mul_nb_fun_inplace_pointer),
-    'py_fun_in_pyx' : test_from_fun(choreo.scipy_plus.cython.test.mul_py_fun_tx) ,
-    'cy_fun_pointer_LowLevel' : test_from_fun(scipy.LowLevelCallable.from_cython(choreo.scipy_plus.cython.test, "mul_cy_fun_pointer_tx")),
-    'cy_fun_memoryview_LowLevel' : test_from_fun(scipy.LowLevelCallable.from_cython(choreo.scipy_plus.cython.test, "mul_cy_fun_memoryview_tx")),
+    'py_fun_in_pyx' : test_from_fun(choreo.segm.cython.test.mul_py_fun_tx) ,
+    'cy_fun_pointer_LowLevel' : test_from_fun(scipy.LowLevelCallable.from_cython(choreo.segm.cython.test, "mul_cy_fun_pointer_tx")),
+    'cy_fun_memoryview_LowLevel' : test_from_fun(scipy.LowLevelCallable.from_cython(choreo.segm.cython.test, "mul_cy_fun_memoryview_tx")),
 }
 
 # sphinx_gallery_start_ignore

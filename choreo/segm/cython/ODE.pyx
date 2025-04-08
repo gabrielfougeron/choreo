@@ -10,7 +10,7 @@ __all__ = [
     'ImplicitSymplecticIVP'     ,
 ]
 
-from choreo.scipy_plus.cython.eft_lib cimport TwoSum_incr
+from choreo.segm.cython.eft_lib cimport TwoSum_incr
 
 cimport scipy.linalg.cython_blas
 from libc.stdlib cimport malloc, free

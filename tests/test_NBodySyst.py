@@ -914,9 +914,9 @@ def test_ODE_vs_spectral(NBS, params_buf, vector_calls, LowLevel, NoSymIfPossibl
     nint_ODE = (NBS.segm_store-1) * keep_freq
     method = "Gauss"
     
-    rk = choreo.scipy_plus.multiprec_tables.ComputeImplicitRKTable_Gauss(nsteps, method=method)
+    rk = choreo.segm.multiprec_tables.ComputeImplicitRKTable_Gauss(nsteps, method=method)
     
-    segmpos_ODE, segmvel_ODE = choreo.scipy_plus.ODE.SymplecticIVP(
+    segmpos_ODE, segmvel_ODE = choreo.segm.ODE.SymplecticIVP(
         rk = rk                 ,
         keep_freq = keep_freq   ,
         nint = nint_ODE         ,
@@ -1022,7 +1022,7 @@ def test_ODE_grad_vs_FD(float64_tols_loose, NBS, params_buf, vector_calls, LowLe
     keep_freq = nint_ODE
     method = "Gauss"
     
-    rk = choreo.scipy_plus.multiprec_tables.ComputeImplicitRKTable_Gauss(nsteps, method=method)
+    rk = choreo.segm.multiprec_tables.ComputeImplicitRKTable_Gauss(nsteps, method=method)
 
     t_span = ODE_Syst["t_span"]
     fun = ODE_Syst["fun"]
@@ -1040,7 +1040,7 @@ def test_ODE_grad_vs_FD(float64_tols_loose, NBS, params_buf, vector_calls, LowLe
         x0 = x[0:  n]
         v0 = x[n:2*n]
         
-        segmpos_ODE, segmvel_ODE = choreo.scipy_plus.ODE.SymplecticIVP(
+        segmpos_ODE, segmvel_ODE = choreo.segm.ODE.SymplecticIVP(
             fun = fun                   ,
             gun = gun                   ,
             x0 = x0                     ,
@@ -1072,7 +1072,7 @@ def test_ODE_grad_vs_FD(float64_tols_loose, NBS, params_buf, vector_calls, LowLe
         grad_x0 = dx[0:  n].reshape((n,1))
         grad_v0 = dx[n:2*n].reshape((n,1))
         
-        segmpos_ODE, segmvel_ODE, segmpos_grad_ODE, segmvel_grad_ODE = choreo.scipy_plus.ODE.SymplecticIVP(
+        segmpos_ODE, segmvel_ODE, segmpos_grad_ODE, segmvel_grad_ODE = choreo.segm.ODE.SymplecticIVP(
             fun = fun                   ,
             grad_fun = grad_fun         ,
             gun = gun                   ,

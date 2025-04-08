@@ -83,7 +83,7 @@ def setup(alpha):
         
     n = int(1e5)
     x = np.zeros((n),dtype=np.float64)
-    choreo.scipy_plus.cython.test.inplace_taylor_poly(x, -alpha)
+    choreo.segm.cython.test.inplace_taylor_poly(x, -alpha)
     
     return {'x' : x}
 

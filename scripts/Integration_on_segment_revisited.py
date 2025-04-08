@@ -78,7 +78,7 @@ all_args = {
     'nint': refinement_lvl,
 }
     
-all_funs = [choreo.scipy_plus.test.Quad_cpte_error_on_test]
+all_funs = [choreo.segm.test.Quad_cpte_error_on_test]
     
 
 bench_filename = os.path.join(bench_folder,basename_bench_filename+'.npz')

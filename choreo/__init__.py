@@ -15,7 +15,7 @@ Systems of interacting point masses
     NBodySyst
     
 ===================
-Defining Symmetries
+Defining symmetries
 ===================
 
 .. autosummary::
@@ -23,7 +23,18 @@ Defining Symmetries
     :caption: Symmetries
     :nosignatures:
 
-    ActionSym
+    ActionSym    
+    
+==========================
+Numerical tools on segment
+==========================
+
+.. autosummary::
+    :toctree: _generated/
+    :caption: Segment
+    :nosignatures:
+
+    segm
       
 ===========
 Entrypoints
@@ -44,6 +55,7 @@ except:
     NUMBA_AVAILABLE = False
 
 from .cython            import NBodySyst, ActionSym
+from .                  import segm
 from .                  import scipy_plus
 from .                  import run
 

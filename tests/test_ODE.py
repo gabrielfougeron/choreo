@@ -26,8 +26,8 @@ def test_Implicit_ODE(float64_tols, method_x, method_v, nsteps, ivp, fun_type, v
     """Tests the accuracy of implicit ODE solvers.
     """
 
-    rk_x = choreo.scipy_plus.multiprec_tables.ComputeImplicitRKTable_Gauss(nsteps, method = method_x)
-    rk_v = choreo.scipy_plus.multiprec_tables.ComputeImplicitRKTable_Gauss(nsteps, method = method_v)
+    rk_x = choreo.segm.multiprec_tables.ComputeImplicitRKTable_Gauss(nsteps, method = method_x)
+    rk_v = choreo.segm.multiprec_tables.ComputeImplicitRKTable_Gauss(nsteps, method = method_v)
    
     fgun = ivp["fgun"].get((fun_type, vector_calls))
     
@@ -49,7 +49,7 @@ def test_Implicit_ODE(float64_tols, method_x, method_v, nsteps, ivp, fun_type, v
     x0 = ex_sol_x(t_span[0])
     v0 = ex_sol_v(t_span[0])
     
-    xf, vf = choreo.scipy_plus.ODE.ImplicitSymplecticIVP(
+    xf, vf = choreo.segm.ODE.ImplicitSymplecticIVP(
         fun                         ,
         gun                         ,
         t_span                      ,
@@ -101,7 +101,7 @@ def test_Explicit_ODE(float64_tols, rk, ivp, fun_type, DoEFT):
     x0 = ex_sol_x(t_span[0])
     v0 = ex_sol_v(t_span[0])
     
-    xf, vf = choreo.scipy_plus.ODE.ExplicitSymplecticIVP(
+    xf, vf = choreo.segm.ODE.ExplicitSymplecticIVP(
         fun             ,
         gun             ,
         t_span          ,

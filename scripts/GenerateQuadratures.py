@@ -28,13 +28,13 @@ n_max = 8
 
 def eigenvect(n):
 
-    w, z = choreo.scipy_plus.multiprec_tables.QuadFrom3Term(n)  
+    w, z = choreo.segm.multiprec_tables.QuadFrom3Term(n)  
     
 
 def vdm(n):
     
-    a, b = choreo.scipy_plus.multiprec_tables.ShiftedGaussLegendre3Term(n)
-    ww, zz, _ = choreo.scipy_plus.multiprec_tables.QuadFrom3Term_VDM(n)
+    a, b = choreo.segm.multiprec_tables.ShiftedGaussLegendre3Term(n)
+    ww, zz, _ = choreo.segm.multiprec_tables.QuadFrom3Term_VDM(n)
 
 
 
@@ -89,21 +89,21 @@ for relative_to in [
 #     n = nm1+1
 #     
 #     mpmath.mp.dps = dps_overkill
-#     a, b = choreo.scipy_plus.multiprec_tables.ShiftedGaussLegendre3Term(n)
-#     wo, zo = choreo.scipy_plus.multiprec_tables.QuadFrom3Term(a,b,n)
+#     a, b = choreo.segm.multiprec_tables.ShiftedGaussLegendre3Term(n)
+#     wo, zo = choreo.segm.multiprec_tables.QuadFrom3Term(a,b,n)
 #     
 #     mpmath.mp.dps = dps
 #     
-#     a, b = choreo.scipy_plus.multiprec_tables.ShiftedGaussLegendre3Term(n)
-#     w, z = choreo.scipy_plus.multiprec_tables.QuadFrom3Term(a,b,n)
+#     a, b = choreo.segm.multiprec_tables.ShiftedGaussLegendre3Term(n)
+#     w, z = choreo.segm.multiprec_tables.QuadFrom3Term(a,b,n)
 #     
 #     print("Eigenvec")
 #     
 #     print(cp_err(w,wo,n))
 #     print(cp_err(z,zo,n))
 #     
-#     a, b = choreo.scipy_plus.multiprec_tables.ShiftedGaussLegendre3Term(n)
-#     ww, zz, _ = choreo.scipy_plus.multiprec_tables.QuadFrom3Term_VDM(a,b,n)
+#     a, b = choreo.segm.multiprec_tables.ShiftedGaussLegendre3Term(n)
+#     ww, zz, _ = choreo.segm.multiprec_tables.QuadFrom3Term_VDM(a,b,n)
 #     
 #     print("VDM solve")
 #     

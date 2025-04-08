@@ -36,7 +36,7 @@ import math as m
 import scipy
 
 import choreo
-import choreo.scipy_plus.precomputed_tables as precomputed_tables
+import choreo.segm.precomputed_tables as precomputed_tables
 
 import pyquickbench
 
@@ -55,7 +55,7 @@ ForceBenchmark = False
 
 def get_implicit_table_pair(rk_name, order):
 
-    return choreo.scipy_plus.multiprec_tables.ComputeImplicitSymplecticRKTablePair_Gauss(order)
+    return choreo.segm.multiprec_tables.ComputeImplicitSymplecticRKTablePair_Gauss(order)
     
     raise ValueError(f"Unknown {rk_name = }")
 
@@ -69,8 +69,8 @@ eq_names = [
 ]
 
 implicit_methods = {
-    f'{rk_name} {order}' : choreo.scipy_plus.multiprec_tables.ComputeImplicitSymplecticRKTablePair_Gauss(order,method=rk_name) for rk_name, order in itertools.product(["Gauss"], [2,4,6,8])
-    # f'{rk_name} {order}' : choreo.scipy_plus.multiprec_tables.ComputeImplicitSymplecticRKTablePair_Gauss(order, method=rk_name) for rk_name, order in itertools.product(["Radau_IIA"], [2,3,4,5])
+    f'{rk_name} {order}' : choreo.segm.multiprec_tables.ComputeImplicitSymplecticRKTablePair_Gauss(order,method=rk_name) for rk_name, order in itertools.product(["Gauss"], [2,4,6,8])
+    # f'{rk_name} {order}' : choreo.segm.multiprec_tables.ComputeImplicitSymplecticRKTablePair_Gauss(order, method=rk_name) for rk_name, order in itertools.product(["Radau_IIA"], [2,3,4,5])
 }
 
 explicit_methods = {
@@ -103,7 +103,7 @@ for eq_name in eq_names:
     for method, (rk, rk_ad) in implicit_methods.items():
         
         bench[f'{method}'] = functools.partial(
-            choreo.scipy_plus.test.ISPRK_ODE_cpte_error_on_test ,
+            choreo.segm.test.ISPRK_ODE_cpte_error_on_test ,
             eq_name     ,
             rk          ,
             rk_ad       ,
@@ -112,7 +112,7 @@ for eq_name in eq_names:
     for method, rk in explicit_methods.items():
         
         bench[f'{method}'] = functools.partial(
-            choreo.scipy_plus.test.ODE_cpte_error_on_test ,
+            choreo.segm.test.ODE_cpte_error_on_test ,
             eq_name    ,
             rk
         )  
@@ -120,7 +120,7 @@ for eq_name in eq_names:
     for method in scipy_methods:
         
         bench[f'{method}'] = functools.partial(
-            choreo.scipy_plus.test.scipy_ODE_cpte_error_on_test ,
+            choreo.segm.test.scipy_ODE_cpte_error_on_test ,
             eq_name ,
             method  ,     
         )

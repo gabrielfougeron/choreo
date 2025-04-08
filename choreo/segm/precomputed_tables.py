@@ -1,14 +1,14 @@
 '''
-ODE.py : Defines ODE-related things I designed I feel ought to be in scipy.
+precomputed_tables.py : Defines pre-computed tables for ODE solvers
 
 '''
 
 import math as m
 import numpy as np
 
-from choreo.scipy_plus.cython.SegmQuad import QuadFormula
-from choreo.scipy_plus.cython.ODE import ExplicitSymplecticRKTable
-from choreo.scipy_plus.multiprec_tables import Yoshida_w_to_cd, Yoshida_w_to_cd_reduced
+from choreo.segm.cython.quad        import QuadFormula
+from choreo.segm.cython.ODE         import ExplicitSymplecticRKTable
+from choreo.segm.multiprec_tables   import Yoshida_w_to_cd, Yoshida_w_to_cd_reduced
 
 
 #####################

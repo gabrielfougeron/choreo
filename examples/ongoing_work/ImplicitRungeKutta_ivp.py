@@ -36,7 +36,7 @@ import math as m
 import scipy
 
 import choreo
-import choreo.scipy_plus.precomputed_tables as precomputed_tables
+import choreo.segm.precomputed_tables as precomputed_tables
 
 import pyquickbench
 
@@ -88,10 +88,10 @@ for eq_name in eq_names:
     bench = {}
     for rk_name, order in itertools.product(method_names, all_orders):
         
-        rk, rk_ad = choreo.scipy_plus.multiprec_tables.ComputeImplicitSymplecticRKTablePair_Gauss(order,method=rk_name)
+        rk, rk_ad = choreo.segm.multiprec_tables.ComputeImplicitSymplecticRKTablePair_Gauss(order,method=rk_name)
         
         bench[f'{rk_name} {order}'] = functools.partial(
-            choreo.scipy_plus.test.ISPRK_ODE_cpte_error_on_test ,
+            choreo.segm.test.ISPRK_ODE_cpte_error_on_test ,
             eq_name ,
             rk      ,     
             rk_ad   ,     

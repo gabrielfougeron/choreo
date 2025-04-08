@@ -9,8 +9,8 @@ import mpmath
 import functools
 import scipy
 
-from choreo.scipy_plus.cython.SegmQuad import IntegrateOnSegment
-from choreo.scipy_plus.cython.SegmQuad import QuadFormula
+from choreo.segm.cython.quad import IntegrateOnSegment
+from choreo.segm.cython.quad import QuadFormula
 
 try:
     import numba 

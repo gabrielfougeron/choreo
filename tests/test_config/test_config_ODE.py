@@ -41,28 +41,28 @@ SymmetricSymplecticImplicitRKMethodPairs = [
 ]   
 
 Explicit_tables_dict = {
-    "SymplecticEuler"   : choreo.scipy_plus.precomputed_tables.SymplecticEuler  ,
-    "StormerVerlet"     : choreo.scipy_plus.precomputed_tables.StormerVerlet    ,
-    "McAte2"            : choreo.scipy_plus.precomputed_tables.McAte2           ,
-    "Ruth3"             : choreo.scipy_plus.precomputed_tables.Ruth3            ,
-    "McAte3"            : choreo.scipy_plus.precomputed_tables.McAte3           ,
-    "Ruth4"             : choreo.scipy_plus.precomputed_tables.Ruth4            ,
-    "Ruth4Rat"          : choreo.scipy_plus.precomputed_tables.Ruth4Rat         ,
-    "McAte4"            : choreo.scipy_plus.precomputed_tables.McAte4           ,
-    "CalvoSanz4"        : choreo.scipy_plus.precomputed_tables.CalvoSanz4       ,
-    "McAte5"            : choreo.scipy_plus.precomputed_tables.McAte5           ,
-    "Yoshida6A"         : choreo.scipy_plus.precomputed_tables.Yoshida6A        ,
-    "Yoshida6B"         : choreo.scipy_plus.precomputed_tables.Yoshida6B        ,
-    "Yoshida6C"         : choreo.scipy_plus.precomputed_tables.Yoshida6C        ,
-    "KahanLi6"          : choreo.scipy_plus.precomputed_tables.KahanLi6         ,
-    "McAte8"            : choreo.scipy_plus.precomputed_tables.McAte8           ,
-    "KahanLi8"          : choreo.scipy_plus.precomputed_tables.KahanLi8         ,
-    "Yoshida8A"         : choreo.scipy_plus.precomputed_tables.Yoshida8A        ,
-    "Yoshida8B"         : choreo.scipy_plus.precomputed_tables.Yoshida8B        ,
-    "Yoshida8C"         : choreo.scipy_plus.precomputed_tables.Yoshida8C        ,
-    "Yoshida8D"         : choreo.scipy_plus.precomputed_tables.Yoshida8D        ,
-    "Yoshida8E"         : choreo.scipy_plus.precomputed_tables.Yoshida8E        ,
-    "SofSpa10"          : choreo.scipy_plus.precomputed_tables.SofSpa10         ,
+    "SymplecticEuler"   : choreo.segm.precomputed_tables.SymplecticEuler,
+    "StormerVerlet"     : choreo.segm.precomputed_tables.StormerVerlet  ,
+    "McAte2"            : choreo.segm.precomputed_tables.McAte2         ,
+    "Ruth3"             : choreo.segm.precomputed_tables.Ruth3          ,
+    "McAte3"            : choreo.segm.precomputed_tables.McAte3         ,
+    "Ruth4"             : choreo.segm.precomputed_tables.Ruth4          ,
+    "Ruth4Rat"          : choreo.segm.precomputed_tables.Ruth4Rat       ,
+    "McAte4"            : choreo.segm.precomputed_tables.McAte4         ,
+    "CalvoSanz4"        : choreo.segm.precomputed_tables.CalvoSanz4     ,
+    "McAte5"            : choreo.segm.precomputed_tables.McAte5         ,
+    "Yoshida6A"         : choreo.segm.precomputed_tables.Yoshida6A      ,
+    "Yoshida6B"         : choreo.segm.precomputed_tables.Yoshida6B      ,
+    "Yoshida6C"         : choreo.segm.precomputed_tables.Yoshida6C      ,
+    "KahanLi6"          : choreo.segm.precomputed_tables.KahanLi6       ,
+    "McAte8"            : choreo.segm.precomputed_tables.McAte8         ,
+    "KahanLi8"          : choreo.segm.precomputed_tables.KahanLi8       ,
+    "Yoshida8A"         : choreo.segm.precomputed_tables.Yoshida8A      ,
+    "Yoshida8B"         : choreo.segm.precomputed_tables.Yoshida8B      ,
+    "Yoshida8C"         : choreo.segm.precomputed_tables.Yoshida8C      ,
+    "Yoshida8D"         : choreo.segm.precomputed_tables.Yoshida8D      ,
+    "Yoshida8E"         : choreo.segm.precomputed_tables.Yoshida8E      ,
+    "SofSpa10"          : choreo.segm.precomputed_tables.SofSpa10       ,
 }
 
 all_fun_types = [
@@ -113,14 +113,14 @@ def define_ODE_ivp(eq_name):
             for i in range(ndim):
                 res[i] = -x[i]   
         
-        c_fun_pointer = choreo.scipy_plus.ODE.nb_jit_c_fun_pointer(py_fun_inplace)
-        c_gun_pointer = choreo.scipy_plus.ODE.nb_jit_c_fun_pointer(py_gun_inplace)
+        c_fun_pointer = choreo.segm.ODE.nb_jit_c_fun_pointer(py_fun_inplace)
+        c_gun_pointer = choreo.segm.ODE.nb_jit_c_fun_pointer(py_gun_inplace)
         
-        c_fun_memoryview = scipy.LowLevelCallable.from_cython(choreo.scipy_plus.cython.test, "ypp_eq_my_c_fun_memoryview")
-        c_gun_memoryview = scipy.LowLevelCallable.from_cython(choreo.scipy_plus.cython.test, "ypp_eq_my_c_gun_memoryview")
+        c_fun_memoryview = scipy.LowLevelCallable.from_cython(choreo.segm.cython.test, "ypp_eq_my_c_fun_memoryview")
+        c_gun_memoryview = scipy.LowLevelCallable.from_cython(choreo.segm.cython.test, "ypp_eq_my_c_gun_memoryview")
         
-        c_fun_memoryview_vec = scipy.LowLevelCallable.from_cython(choreo.scipy_plus.cython.test, "ypp_eq_my_c_fun_memoryview_vec")
-        c_gun_memoryview_vec = scipy.LowLevelCallable.from_cython(choreo.scipy_plus.cython.test, "ypp_eq_my_c_gun_memoryview_vec")
+        c_fun_memoryview_vec = scipy.LowLevelCallable.from_cython(choreo.segm.cython.test, "ypp_eq_my_c_fun_memoryview_vec")
+        c_gun_memoryview_vec = scipy.LowLevelCallable.from_cython(choreo.segm.cython.test, "ypp_eq_my_c_gun_memoryview_vec")
         
         return {
             "nint" : nint                   ,

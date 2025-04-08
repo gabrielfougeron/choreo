@@ -9,7 +9,7 @@ API
     
     * :class:`choreo.ActionSym`
     * :class:`choreo.NBodySyst`
-    * :mod:`choreo.scipy_plus.ODE`
+    * :mod:`choreo.segm.ODE`
 
 
 .. automodule:: choreo

@@ -1,5 +1,5 @@
 from . import ODE
-from . import SegmQuad
+from . import quad
 
 from .test import *
 from .eft_lib import *

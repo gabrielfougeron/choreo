@@ -78,7 +78,7 @@ all_args = {
     'nint': refinement_lvl,
 }
     
-all_funs = [choreo.scipy_plus.test.Quad_cpte_error_on_test]
+all_funs = [choreo.segm.test.Quad_cpte_error_on_test]
 
 bench_filename = os.path.join(bench_folder,basename_bench_filename+'.npz')
 
@@ -137,7 +137,7 @@ fig, ax = pyquickbench.plot_benchmark(
 for iy, nstep in enumerate(all_nsteps):
     for method in methods:
 
-        quad = choreo.scipy_plus.multiprec_tables.ComputeQuadrature(nstep, method=method)
+        quad = choreo.segm.multiprec_tables.ComputeQuadrature(nstep, method=method)
         th_order = quad.th_cvg_rate
         xlim = ax[iy,0].get_xlim()
 

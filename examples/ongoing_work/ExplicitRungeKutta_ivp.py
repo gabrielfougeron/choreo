@@ -36,7 +36,7 @@ import math as m
 import scipy
 
 import choreo
-import choreo.scipy_plus.precomputed_tables as precomputed_tables
+import choreo.segm.precomputed_tables as precomputed_tables
 
 import pyquickbench
 
@@ -82,7 +82,7 @@ all_nint = np.array([2**i for i in range(10)])
 all_benchs = {
     f'{eq_name} methods of order {order}' : {
         f'{rk_name}' : functools.partial(
-            choreo.scipy_plus.test.ODE_cpte_error_on_test ,
+            choreo.segm.test.ODE_cpte_error_on_test ,
             eq_name    ,
             rk,
             mode = 'VX'       ,
@@ -315,7 +315,7 @@ best_method_by_order = {
 all_benchs = {
     f'{eq_name}' : {
         f'{rk_name}' : functools.partial(
-            choreo.scipy_plus.test.ODE_cpte_error_on_test ,
+            choreo.segm.test.ODE_cpte_error_on_test ,
             eq_name    ,
             all_methods[rk_name],
             mode = 'VX'       ,

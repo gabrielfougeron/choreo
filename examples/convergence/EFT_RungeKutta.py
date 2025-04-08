@@ -39,7 +39,7 @@ import math as m
 import scipy
 
 import choreo
-import choreo.scipy_plus.precomputed_tables as precomputed_tables
+import choreo.segm.precomputed_tables as precomputed_tables
 
 import pyquickbench
 
@@ -66,7 +66,7 @@ eq_names = [
 ]
 
 implicit_methods = {
-    f'{rk_name} {order}' : choreo.scipy_plus.multiprec_tables.ComputeImplicitRKTable_Gauss(order, method=rk_name) for rk_name, order in itertools.product(["Gauss"], [2,4,6,8])
+    f'{rk_name} {order}' : choreo.segm.multiprec_tables.ComputeImplicitRKTable_Gauss(order, method=rk_name) for rk_name, order in itertools.product(["Gauss"], [2,4,6,8])
 }
 
 explicit_methods = {
@@ -89,7 +89,7 @@ all_EFT = ["True", "False"]
 
 all_funs = {
     rk_name : functools.partial(
-        choreo.scipy_plus.test.ODE_cpte_error_on_test   ,
+        choreo.segm.test.ODE_cpte_error_on_test   ,
         rk_method = rk                                  ,
     ) for (rk_name, rk) in all_methods.items()
 }

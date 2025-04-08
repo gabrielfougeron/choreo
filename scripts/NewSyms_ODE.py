@@ -67,7 +67,7 @@ def main():
             nint_ODE = (NBS.segm_store-1) * keep_freq
             method = "Gauss"
             
-            rk = choreo.scipy_plus.multiprec_tables.ComputeImplicitRKTable_Gauss(nsteps, method=method)
+            rk = choreo.segm.multiprec_tables.ComputeImplicitRKTable_Gauss(nsteps, method=method)
             
             TT.toc("Load")
             

@@ -8,12 +8,11 @@ from choreo import NUMBA_AVAILABLE
 if NUMBA_AVAILABLE:
     import numba
 
+from choreo.segm.cython.ODE import ExplicitSymplecticIVP
+from choreo.segm.cython.ODE import ExplicitSymplecticRKTable
 
-from choreo.scipy_plus.cython.ODE import ExplicitSymplecticIVP
-from choreo.scipy_plus.cython.ODE import ExplicitSymplecticRKTable
-
-from choreo.scipy_plus.cython.ODE import ImplicitSymplecticIVP
-from choreo.scipy_plus.cython.ODE import ImplicitRKTable
+from choreo.segm.cython.ODE import ImplicitSymplecticIVP
+from choreo.segm.cython.ODE import ImplicitRKTable
 
 def SymplecticIVP(
     fun         ,
