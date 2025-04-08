@@ -75,7 +75,7 @@ def main():
             
             TT.toc("Spectral")
             
-            segmpos_ODE, segmvel_ODE = choreo.scipy_plus.ODE.SymplecticIVP(
+            segmpos_ODE, segmvel_ODE = choreo.segm.ODE.SymplecticIVP(
                 rk = rk                 ,
                 keep_freq = keep_freq   ,
                 nint = nint_ODE         ,

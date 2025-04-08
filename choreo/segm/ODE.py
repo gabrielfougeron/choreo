@@ -1,5 +1,5 @@
 '''
-ODE.py : Defines ODE-related things I designed I feel ought to be in scipy.
+ODE.py : Defines ODE-related things.
 
 '''
 import scipy

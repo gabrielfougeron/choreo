@@ -1,5 +1,5 @@
 '''
-ODE.py : Defines ODE-related things I designed I feel ought to be in scipy.
+multiprec_tables.py : Computation of quadrature and Runge-Kutta tables in multiprecision.
 
 '''
 
@@ -8,7 +8,7 @@ import math
 import mpmath
 import numpy as np
 
-from choreo.segm.cython.quad    import QuadFormula
+from choreo.segm.cython.quad    import QuadTable
 from choreo.segm.cython.ODE     import ExplicitSymplecticRKTable
 from choreo.segm.cython.ODE     import ImplicitRKTable
 
@@ -442,22 +442,19 @@ def SymplecticAdjointButcher(Butcher_a, Butcher_b, n):
             
     return Butcher_a_ad
 
+def Get_quad_method_from_RK_method(method="Gauss"):
+    for quad_method in all_GL_int:
+        if quad_method in method:
+            return quad_method
+    else:
+        return ValueError(f"Unknown associated quadrature method {method}")
+
 @functools.cache
 def ComputeGaussButcherTables(n, dps=60, method="Gauss"):
     
     mpmath.mp.dps = dps
-
-    for quad_method in all_GL_int:
-        if quad_method in method:
-            
-            z = ComputeQuadNodes(n, method=quad_method)
-            vdm_inv = ComputeVandermondeInverseParker(n, z)
-            rhs = Build_integration_RHS(z, n)
-            w = rhs * vdm_inv
-
-            break
-    else:
-        return ValueError(f"Unknown associated quadrature method {method}")
+    quad_method = Get_quad_method_from_RK_method(method)
+    w, z, wlag, vdm_inv = ComputeQuadratureTables(n, dps, quad_method)
     
     Butcher_a, Butcher_beta , Butcher_gamma = ComputeButcher_collocation(z, vdm_inv, n)
     
@@ -510,10 +507,8 @@ def GetConvergenceRate(method, n):
     return th_cvg_rate
 
 @functools.cache
-def ComputeQuadrature(n, dps=30, method="Gauss"):
+def ComputeQuadratureTables(n, dps=30, method="Gauss"):
 
-    th_cvg_rate = GetConvergenceRate(method, n)
-    
     mpmath.mp.dps = dps
     
     z = ComputeQuadNodes(n, method=method)
@@ -522,12 +517,19 @@ def ComputeQuadrature(n, dps=30, method="Gauss"):
     vdm_inv = ComputeVandermondeInverseParker(n, z, wlag)
     rhs = Build_integration_RHS(z, n)
     w = rhs * vdm_inv
+    
+    return w, z, wlag, vdm_inv
+
+def ComputeQuadrature(n, dps=30, method="Gauss"):
+
+    th_cvg_rate = GetConvergenceRate(method, n)
+    w, z, wlag, vdm_inv = ComputeQuadratureTables(n, dps=dps, method=method)
 
     w_np = np.array(w.tolist(),dtype=np.float64).reshape(n)
     z_np = np.array(z.tolist(),dtype=np.float64).reshape(n)
     w_lag_np = np.array(wlag.tolist(),dtype=np.float64).reshape(n)
     
-    return QuadFormula(
+    return QuadTable(
         w = w_np                    ,
         x = z_np                    ,
         wlag = w_lag_np             ,
@@ -538,18 +540,17 @@ def ComputeImplicitRKTable_Gauss(n, dps=60, method="Gauss"):
 
     th_cvg_rate = GetConvergenceRate(method, n)
     
+    quad_method = Get_quad_method_from_RK_method(method)
+    quad_table = ComputeQuadrature(n, dps=dps, method=quad_method)
     Butcher_a, Butcher_b, Butcher_c, Butcher_beta, Butcher_gamma = ComputeGaussButcherTables(n, dps=dps, method=method)
 
     Butcher_a_np = np.array(Butcher_a.tolist(),dtype=np.float64)
-    Butcher_b_np = np.array(Butcher_b.tolist(),dtype=np.float64).reshape(n)
-    Butcher_c_np = np.array(Butcher_c.tolist(),dtype=np.float64).reshape(n)
     Butcher_beta_np = np.array(Butcher_beta.tolist(),dtype=np.float64)
     Butcher_gamma_np = np.array(Butcher_gamma.tolist(),dtype=np.float64)
     
     return ImplicitRKTable(
         a_table     = Butcher_a_np      ,
-        b_table     = Butcher_b_np      ,
-        c_table     = Butcher_c_np      ,
+        quad_table  = quad_table        ,
         beta_table  = Butcher_beta_np   ,
         gamma_table = Butcher_gamma_np  ,
         th_cvg_rate = th_cvg_rate       ,
@@ -559,20 +560,18 @@ def ComputeImplicitSymplecticRKTablePair_Gauss(n, dps=60, method="Gauss"):
     
     th_cvg_rate = GetConvergenceRate(method, n)
     
+    quad_table = ComputeQuadrature(n, dps=dps, method=method)
     Butcher_a, Butcher_b, Butcher_c, Butcher_beta, Butcher_gamma = ComputeGaussButcherTables(n, dps=dps, method=method)
     Butcher_a_ad = SymplecticAdjointButcher(Butcher_a, Butcher_b, n)  
     
     Butcher_a_np = np.array(Butcher_a.tolist(),dtype=np.float64)
-    Butcher_b_np = np.array(Butcher_b.tolist(),dtype=np.float64).reshape(n)
-    Butcher_c_np = np.array(Butcher_c.tolist(),dtype=np.float64).reshape(n)
     Butcher_beta_np = np.array(Butcher_beta.tolist(),dtype=np.float64)
     Butcher_gamma_np = np.array(Butcher_gamma.tolist(),dtype=np.float64)
     Butcher_a_ad_np = np.array(Butcher_a_ad.tolist(),dtype=np.float64)
     
     rk = ImplicitRKTable(
         a_table     = Butcher_a_np      ,
-        b_table     = Butcher_b_np      ,
-        c_table     = Butcher_c_np      ,
+        quad_table  = quad_table        ,
         beta_table  = Butcher_beta_np   ,
         gamma_table = Butcher_gamma_np  ,
         th_cvg_rate = th_cvg_rate       ,
@@ -580,8 +579,7 @@ def ComputeImplicitSymplecticRKTablePair_Gauss(n, dps=60, method="Gauss"):
     
     rk_ad = ImplicitRKTable(
         a_table     = Butcher_a_ad_np   ,
-        b_table     = Butcher_b_np      ,
-        c_table     = Butcher_c_np      ,
+        quad_table  = quad_table        ,
         beta_table  = Butcher_beta_np   ,
         gamma_table = Butcher_gamma_np  ,
         th_cvg_rate = th_cvg_rate       ,

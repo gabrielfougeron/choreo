@@ -1,5 +1,5 @@
 '''
-ODE.py : Defines ODE-related things I designed I feel ought to be in scipy.
+quad.py : Defines segment quadrature related things.
 
 '''
 
@@ -10,7 +10,7 @@ import functools
 import scipy
 
 from choreo.segm.cython.quad import IntegrateOnSegment
-from choreo.segm.cython.quad import QuadFormula
+from choreo.segm.cython.quad import QuadTable
 
 try:
     import numba 

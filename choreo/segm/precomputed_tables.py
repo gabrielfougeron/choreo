@@ -6,7 +6,7 @@ precomputed_tables.py : Defines pre-computed tables for ODE solvers
 import math as m
 import numpy as np
 
-from choreo.segm.cython.quad        import QuadFormula
+from choreo.segm.cython.quad        import QuadTable
 from choreo.segm.cython.ODE         import ExplicitSymplecticRKTable
 from choreo.segm.multiprec_tables   import Yoshida_w_to_cd, Yoshida_w_to_cd_reduced
 

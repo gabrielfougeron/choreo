@@ -11,6 +11,7 @@ __all__ = [
 ]
 
 from choreo.segm.cython.eft_lib cimport TwoSum_incr
+from choreo.segm.cython.quad cimport QuadTable
 
 cimport scipy.linalg.cython_blas
 from libc.stdlib cimport malloc, free
@@ -871,34 +872,40 @@ cdef void ExplicitSymplecticIVP_ann(
 
 @cython.final
 cdef class ImplicitRKTable:
+    """ Butcher Tables for fully implicit Runge-Kutta methods
+
+    """
     
-    cdef double[:,::1] _a_table             # A Butcher table.
-    cdef double[::1] _b_table               # b Butcher table. Integration weights on [0,1]
-    cdef double[::1] _c_table               # c Butcher table. Integration nodes on [0,1]
+    cdef double[:,::1] _a_table
+    """ A Butcher table"""
+
+    cdef QuadTable _quad_table
+    """ b and c Butcher tables"""
+    # cdef double[::1] _b_table               # b Butcher table. Integration weights on [0,1]
+    # cdef double[::1] _c_table               # c Butcher table. Integration nodes on [0,1]
+
     cdef double[:,::1] _beta_table          # Beta Butcher table for initial guess in convergence loop. 
     cdef double[:,::1] _gamma_table         # Beta Butcher table of the symmetric adjoint.
-    cdef Py_ssize_t _th_cvg_rate                  # Theoretical convergence rate of the method.
+    cdef Py_ssize_t _th_cvg_rate            # Theoretical convergence rate of the method.
 
     @cython.final
     def __init__(
         self                ,
         a_table     = None  ,
-        b_table     = None  ,
-        c_table     = None  ,
+        quad_table  = None  ,
         beta_table  = None  ,
         gamma_table = None  ,
         th_cvg_rate = None  ,
     ):
 
         self._a_table = a_table.copy()
-        self._b_table = b_table.copy()
-        self._c_table = c_table.copy()
+        self._quad_table = quad_table
         self._beta_table = beta_table.copy()
         self._gamma_table = gamma_table.copy()
 
         assert self._a_table.shape[0] == self._a_table.shape[1]
-        assert self._a_table.shape[0] == self._b_table.shape[0]
-        assert self._a_table.shape[0] == self._c_table.shape[0]
+        assert self._a_table.shape[0] == self._quad_table._w.shape[0]
+        assert self._a_table.shape[0] == self._quad_table._x.shape[0]
         assert self._a_table.shape[0] == self._beta_table.shape[0]
         assert self._a_table.shape[0] == self._beta_table.shape[1]
         assert self._a_table.shape[0] == self._gamma_table.shape[0]
@@ -922,12 +929,17 @@ cdef class ImplicitRKTable:
     @cython.final
     @property
     def b_table(self):
-        return np.asarray(self._b_table)
+        return np.asarray(self._quad_table._w)
 
     @cython.final
     @property
     def c_table(self):
-        return np.asarray(self._c_table)
+        return np.asarray(self._quad_table._x)
+
+    @cython.final
+    @property
+    def quad_table(self):
+        return self._quad_table
     
     @cython.final
     @property
@@ -956,27 +968,21 @@ cdef class ImplicitRKTable:
         cdef Py_ssize_t i, j
 
         cdef double[:,::1] a_table_sym = np.empty((n,n), dtype=np.float64)
-        cdef double[::1] b_table_sym = np.empty((n), dtype=np.float64)
-        cdef double[::1] c_table_sym = np.empty((n), dtype=np.float64)
         cdef double[:,::1] beta_table_sym = np.empty((n,n), dtype=np.float64)
         cdef double[:,::1] gamma_table_sym = np.empty((n,n), dtype=np.float64)
 
-        for i in range(n):
-
-            b_table_sym[i] = self._b_table[n-1-i]
-            c_table_sym[i] = 1. - self._c_table[n-1-i]
+        cdef QuadTable quad_table_sym = self._quad_table.symmetric_adjoint()
 
         for i in range(n):
             for j in range(n):
                 
-                a_table_sym[i,j] = self._b_table[n-1-j] - self._a_table[n-1-i,n-1-j]
+                a_table_sym[i,j] = self._quad_table._w[n-1-j] - self._a_table[n-1-i,n-1-j]
                 beta_table_sym[i,j]  = self._gamma_table[n-1-i,n-1-j]
                 gamma_table_sym[i,j] = self._beta_table[n-1-i,n-1-j]
 
         return ImplicitRKTable(
             a_table     = a_table_sym       ,
-            b_table     = b_table_sym       ,
-            c_table     = c_table_sym       ,
+            quad_table  = quad_table_sym    ,
             beta_table  = beta_table_sym    ,
             gamma_table = gamma_table_sym   ,
             th_cvg_rate = self._th_cvg_rate ,
@@ -995,14 +1001,8 @@ cdef class ImplicitRKTable:
 
         for i in range(nsteps):
 
-            val = self._b_table[i] - other._b_table[nsteps-1-i] 
-            maxi = max(maxi, cfabs(val))
-
-            val = self._c_table[i] + other._c_table[nsteps-1-i] - 1
-            maxi = max(maxi, cfabs(val))
-
             for j in range(self._a_table.shape[0]):
-                val = self._a_table[i,j] - self._b_table[j] + other._a_table[nsteps-1-i,nsteps-1-j]
+                val = self._a_table[i,j] - self._quad_table._w[j] + other._a_table[nsteps-1-i,nsteps-1-j]
                 maxi = max(maxi, cfabs(val))
                 
                 val = self._beta_table[i,j] - other._gamma_table[nsteps-1-i,nsteps-1-j]
@@ -1047,12 +1047,11 @@ cdef class ImplicitRKTable:
         for i in range(nsteps):
             for j in range(nsteps):
                 
-                a_table_sym[i,j] = self._b_table[j] * (1. - self._a_table[j,i] / self._b_table[i])
+                a_table_sym[i,j] = self._quad_table._w[j] * (1. - self._a_table[j,i] / self._quad_table._w[i])
 
         return ImplicitRKTable(
             a_table     = a_table_sym       ,
-            b_table     = self._b_table     ,
-            c_table     = self._c_table     ,
+            quad_table  = self.quad_table   ,
             beta_table  = self._beta_table  ,
             gamma_table = self._gamma_table ,
             th_cvg_rate = self._th_cvg_rate ,
@@ -1071,14 +1070,14 @@ cdef class ImplicitRKTable:
 
         for i in range(nsteps):
 
-            val = self._b_table[i] - other._b_table[i] 
+            val = self._quad_table._w[i] - other._quad_table._w[i] 
             maxi = max(maxi, cfabs(val))
 
-            val = self._c_table[i] - other._c_table[i] 
+            val = self._quad_table._x[i] - other._quad_table._x[i] 
             maxi = max(maxi, cfabs(val))
 
             for j in range(nsteps):
-                val = self._b_table[i] * other._a_table[i,j] + other._b_table[j] * self._a_table[j,i] - self._b_table[i] * other._b_table[j] 
+                val = self._quad_table._w[i] * other._a_table[i,j] + other._quad_table._w[j] * self._a_table[j,i] - self._quad_table._w[i] * other._quad_table._w[j] 
                 maxi = max(maxi, cfabs(val))
 
         return maxi
@@ -1303,12 +1302,12 @@ cpdef ImplicitSymplecticIVP(
             all_t_x             ,
             all_t_v             ,
             rk_x._a_table       ,
-            rk_x._b_table       ,
-            rk_x._c_table       ,
+            rk_x._quad_table._w ,
+            rk_x._quad_table._x ,
             rk_x._beta_table    ,
             rk_v._a_table       ,
-            rk_v._b_table       ,
-            rk_v._c_table       ,
+            rk_v._quad_table._w ,
+            rk_v._quad_table._x ,
             rk_v._beta_table    ,
             nint                ,
             keep_freq           ,

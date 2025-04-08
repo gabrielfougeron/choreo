@@ -4,8 +4,8 @@ quad.pyx : Defines segment quadrature related things.
 '''
 
 __all__ = [
-    'QuadFormula',
-    'IntegrateOnSegment',
+    'QuadTable'             ,
+    'IntegrateOnSegment'    ,
 ]
 
 from choreo.segm.cython.eft_lib cimport TwoSum_incr
@@ -123,18 +123,12 @@ cdef void PyFun_apply(
     scipy.linalg.cython_blas.dcopy(&n,&res_1D[0],&int_one,&res[0],&int_one)
 
 @cython.final
-cdef class QuadFormula:
-
+cdef class QuadTable:
     """
 
     integral( f ) ~ sum w_i f( x_i )
     
     """
-    
-    cdef double[::1] _w             # Integration weights on [0,1]
-    cdef double[::1] _x             # Integration nodes on [0,1]
-    cdef double[::1] _wlag          # Barycentric Lagrange interpolation weights
-    cdef Py_ssize_t _th_cvg_rate    # Self-reported convergence rate on smooth functions
 
     def __init__(
         self                ,
@@ -157,7 +151,7 @@ cdef class QuadFormula:
 
     def __repr__(self):
 
-        res = f'QuadFormula object with {self._w.shape[0]} nodes\n'
+        res = f'QuadTable object with {self._w.shape[0]} nodes\n'
         res += f'Nodes: {self.x}\n'
         res += f'Weights: {self.w}\n'
 
@@ -183,11 +177,77 @@ cdef class QuadFormula:
     def th_cvg_rate(self):
         return self._th_cvg_rate
 
+    @cython.final
+    cpdef QuadTable symmetric_adjoint(self):
+
+        cdef Py_ssize_t n = self._w.shape[0]
+        cdef Py_ssize_t i, j
+
+        cdef double[::1] w_sym = np.empty((n), dtype=np.float64)
+        cdef double[::1] x_sym = np.empty((n), dtype=np.float64)
+        cdef double[::1] wlag_sym = np.empty((n), dtype=np.float64)
+
+        for i in range(n):
+
+            w_sym[i] = self._w[n-1-i]
+            x_sym[i] = 1. - self._x[n-1-i]
+            wlag_sym[i] = self._wlag[n-1-i]
+
+        return QuadTable(
+            w_sym               ,
+            x_sym               ,
+            wlag_sym            ,
+            self._th_cvg_rate   ,
+        )
+
+    @cython.final
+    cdef double _symmetry_default(
+        self            ,
+        QuadTable other ,
+    ) noexcept nogil:
+
+        cdef Py_ssize_t nsteps = self._w.shape[0]
+        cdef Py_ssize_t i,j
+        cdef double maxi = -1
+        cdef double val
+
+        for i in range(nsteps):
+
+            val = self._w[i] - other._w[nsteps-1-i] 
+            maxi = max(maxi, cfabs(val))
+
+            val = self._x[i] + other._x[nsteps-1-i] - 1
+            maxi = max(maxi, cfabs(val))
+
+        return maxi    
+
+    @cython.final
+    def symmetry_default(
+        self        ,
+        other = None,
+    ):
+        if other is None:
+            return self._symmetry_default(self)
+        else:
+            return self._symmetry_default(other)
+    
+    @cython.final
+    cdef bint _is_symmetric_pair(self, QuadTable other, double tol) noexcept nogil:
+        return (self._symmetry_default(other) < tol)
+
+    @cython.final
+    def is_symmetric_pair(self, QuadTable other, double tol = 1e-12):
+        return self._is_symmetric_pair(other, tol)
+
+    @cython.final
+    def is_symmetric(self, double tol = 1e-12):
+        return self._is_symmetric_pair(self, tol)        
+
 cpdef np.ndarray[double, ndim=1, mode="c"] IntegrateOnSegment(
     object fun              ,
     int ndim                ,
     (double, double) x_span ,
-    QuadFormula quad        ,
+    QuadTable quad          ,
     Py_ssize_t nint = 1     ,
     bint DoEFT = True       ,
 ):

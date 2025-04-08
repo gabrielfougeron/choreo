@@ -61,7 +61,7 @@ eq_names = [
 ]
 
 
-all_methods = { name : getattr(precomputed_tables,name) for name in dir(precomputed_tables) if isinstance(getattr(precomputed_tables,name),choreo.scipy_plus.ODE.ExplicitSymplecticRKTable) }
+all_methods = { name : getattr(precomputed_tables,name) for name in dir(precomputed_tables) if isinstance(getattr(precomputed_tables,name),choreo.segm.ODE.ExplicitSymplecticRKTable) }
 
 method_order_hierarchy = {}
 for name, rk in all_methods.items():
