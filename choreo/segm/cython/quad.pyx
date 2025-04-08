@@ -124,9 +124,12 @@ cdef void PyFun_apply(
 
 @cython.final
 cdef class QuadTable:
-    """
+    r"""Numerical integration and approximation.
 
-    integral( f ) ~ sum w_i f( x_i )
+    This class implements useful methods for the approximate integration (or quadrature) of regular functions on a segment, as well as other related numerical methods.
+
+    .. math::
+        \int_{0}^{1} f(x)\  \mathrm{d}x \approx \sum_{i=0}^{n-1} w_i f(x_i)
     
     """
 
@@ -137,12 +140,28 @@ cdef class QuadTable:
         wlag                ,
         th_cvg_rate = None  ,
     ):
+        """_summary_
+
+        _extended_summary_
+
+        Parameters
+        ----------
+        w : :class:`numpy:numpy.ndarray`:class:`(shape = (n), dtype = np.float64)`
+            Quadrature weights.
+        x : :class:`numpy:numpy.ndarray`:class:`(shape = (n), dtype = np.float64)`
+            Quadrature nodes on :math:`[0,1]`.
+        wlag : :class:`numpy:numpy.ndarray`:class:`(shape = (n), dtype = np.float64)`
+            Barycentric Lagrange interpolation weights.
+        th_cvg_rate : :class:`python:int`, optional
+            Theoretical convergence rate of the quadrature formula, by default :data:`python:None`.
+        """    
 
         self._w = w.copy()
         self._x = x.copy()
         self._wlag = wlag.copy()
 
         assert self._w.shape[0] == self._x.shape[0]
+        assert self._wlag.shape[0] == self._x.shape[0]
 
         if th_cvg_rate is None:
             self._th_cvg_rate = -1
@@ -154,31 +173,46 @@ cdef class QuadTable:
         res = f'QuadTable object with {self._w.shape[0]} nodes\n'
         res += f'Nodes: {self.x}\n'
         res += f'Weights: {self.w}\n'
+        res += f'Barycentric Lagrange interpolation weights: {self.wlag}\n'
 
         return res
 
     @property
     def nsteps(self):
+        """Number of steps (*i.e.* functions evaluations required) of the method."""
         return self._w.shape[0]
 
     @property
     def x(self):
+        """Nodes of the method in :math:`[-1,1]`."""
         return np.asarray(self._x)
     
     @property
     def w(self):
+        """Integration weights of the method on :math:`[-1,1]`."""
         return np.asarray(self._w)      
 
     @property
     def wlag(self):
+        """Barycentric Lagrange interpolation weights relative to the nodes."""
         return np.asarray(self._wlag)    
 
     @property
     def th_cvg_rate(self):
+        """Theoretical congergence rate of the quadrature for smooth functions."""
         return self._th_cvg_rate
 
     @cython.final
     cpdef QuadTable symmetric_adjoint(self):
+        """Computes the symmetric adjoint of a :class:`QuadTable`.
+
+        The symmetric adjoint applied to :math:`x\mapsto f(1-x)` gives the same result as the original method applied to :math:`f`.
+
+        Returns
+        -------
+        :class:`choreo.segm.quad.QuadTable`
+            The adjoint quadrature.
+        """ 
 
         cdef Py_ssize_t n = self._w.shape[0]
         cdef Py_ssize_t i, j
@@ -226,6 +260,34 @@ cdef class QuadTable:
         self        ,
         other = None,
     ):
+        """Computes the symmetry default of a single / a pair of :class:`QuadTable`.
+
+        A method is said to be symmetric if its symmetry default is zero, namely if it coincides with its :meth:`symmetric_adjoint`.
+
+        Example
+        -------
+
+        >>> import choreo
+        >>> Gauss = choreo.segm.multiprec_tables.ComputeQuadrature(10, method="Gauss")
+        >>> Gauss.symmetry_default()
+        0.0
+        >>> Radau_I = choreo.segm.multiprec_tables.ComputeQuadrature(10, method="Radau_I")
+        >>> Radau_I.symmetry_default()
+        0.08008763577630496
+        >>> Radau_I.symmetry_default(Radau_I.symmetric_adjoint())
+        0.0
+
+        Parameters
+        ----------
+        other : :class:`QuadTable`, optional
+            By default :data:`python:None`.
+
+        Returns
+        -------
+        :obj:`numpy:numpy.float64`
+            The maximum symmetry violation.
+        """    
+
         if other is None:
             return self._symmetry_default(self)
         else:

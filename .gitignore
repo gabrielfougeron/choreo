@@ -46,6 +46,7 @@ docs/gh-pages/
 choreo/cython/optional_pyfftw.pxd
 test.pdf
 pytest_out/**
+objects_inv/**
 ##########################################################
 #           To be included (with preceding !)
 ##########################################################

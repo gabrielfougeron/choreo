@@ -31,10 +31,13 @@ Numerical tools on segment
 
 .. autosummary::
     :toctree: _generated/
-    :caption: Segment
+    :caption: Segment quadrature / ODE
     :nosignatures:
 
-    segm
+    segm.quad.QuadTable
+    segm.multiprec_tables.ComputeQuadrature
+    segm.quad.IntegrateOnSegment
+
       
 ===========
 Entrypoints

@@ -521,6 +521,42 @@ def ComputeQuadratureTables(n, dps=30, method="Gauss"):
     return w, z, wlag, vdm_inv
 
 def ComputeQuadrature(n, dps=30, method="Gauss"):
+    """ComputeQuadrature Computes a :class:`choreo.segm.quad.QuadTable`
+
+    The computation is performed at a user-defined precision using `mpmath <https://mpmath.org/doc/current>`_ to ensure that the resulting 
+    
+    Available choices for ``method`` are:
+    
+    * ``"Gauss"``
+    * ``"Radau_I"`` and ``"Radau_II"``
+    * ``"Lobatto_III"``
+    * ``"Cheb_I"`` and ``"Cheb_II"``
+    * ``"ClenshawCurtis"``
+    
+    Example
+    -------
+    
+    >>> import choreo
+    >>> choreo.segm.multiprec_tables.ComputeQuadrature(2, dps=60, method="Lobatto_III")
+    QuadTable object with 2 nodes
+    Nodes: [7.7787691e-62 1.0000000e+00]
+    Weights: [0.5 0.5]
+    Barycentric Lagrange interpolation weights: [-1.  1.]
+
+    Parameters
+    ----------
+    n : :class:`python:int`
+        Order of the method.
+    dps : :class:`python:int`, optional
+        Context precision in `mpmath <https://mpmath.org/doc/current>`_. See :doc:`mpmath:contexts` for more info. By default `30`.
+    method : :class:`python:str`, optional
+        Name of the method, by default "Gauss"
+
+    Returns
+    -------
+    :class:`choreo.segm.quad.QuadTable`
+        The resulting nodes and weights of the quadrature.
+    """    
 
     th_cvg_rate = GetConvergenceRate(method, n)
     w, z, wlag, vdm_inv = ComputeQuadratureTables(n, dps=dps, method=method)

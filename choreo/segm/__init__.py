@@ -1,4 +1,5 @@
-# import choreo.segm.cython
+""" segm
+"""
 
 from .                          import ODE
 from .                          import quad

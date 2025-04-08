@@ -76,6 +76,7 @@ intersphinx_mapping = {
     "networkx"      : ("https://networkx.org/documentation/stable/"     , None), 
     'pytest'        : ('https://pytest.org/en/stable/'                  , None),
     'pyquickbench'  : ('https://gabrielfougeron.github.io/pyquickbench/', None),
+    'mpmath'        : ('https://mpmath.org/doc/current/'                , None),
     # 'Pillow'        : ('https://pillow.readthedocs.io/en/stable/'       , None),
     # 'cycler'        : ('https://matplotlib.org/cycler/'                 , None),
     # 'dateutil'      : ('https://dateutil.readthedocs.io/en/stable/'     , None),

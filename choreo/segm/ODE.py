@@ -50,7 +50,6 @@ def SymplecticIVP(
     else:
         raise ValueError(f'Unknown rk type : {type(rk)}')
 
-
 if NUMBA_AVAILABLE:
     # Define decorators to make scipy.LowLevelCallable from python functions using numba
     
