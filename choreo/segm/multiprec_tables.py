@@ -523,7 +523,7 @@ def ComputeQuadratureTables(n, dps=30, method="Gauss"):
 def ComputeQuadrature(n, dps=30, method="Gauss"):
     """ComputeQuadrature Computes a :class:`choreo.segm.quad.QuadTable`
 
-    The computation is performed at a user-defined precision using `mpmath <https://mpmath.org/doc/current>`_ to ensure that the resulting 
+    The computation is performed at a user-defined precision using `mpmath <https://mpmath.org/doc/current>`_ to ensure that the result does not suffer from precision loss, even at relatively high orders.
     
     Available choices for ``method`` are:
     
@@ -548,9 +548,9 @@ def ComputeQuadrature(n, dps=30, method="Gauss"):
     n : :class:`python:int`
         Order of the method.
     dps : :class:`python:int`, optional
-        Context precision in `mpmath <https://mpmath.org/doc/current>`_. See :doc:`mpmath:contexts` for more info. By default `30`.
+        Context precision in `mpmath <https://mpmath.org/doc/current>`_. See :doc:`mpmath:contexts` for more info. By default ``30``.
     method : :class:`python:str`, optional
-        Name of the method, by default "Gauss"
+        Name of the method, by default "Gauss".
 
     Returns
     -------

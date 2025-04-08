@@ -140,9 +140,7 @@ cdef class QuadTable:
         wlag                ,
         th_cvg_rate = None  ,
     ):
-        """_summary_
-
-        _extended_summary_
+        """Builds a :class:`QuadTable` from input node and weight arrays.
 
         Parameters
         ----------
@@ -204,7 +202,7 @@ cdef class QuadTable:
 
     @cython.final
     cpdef QuadTable symmetric_adjoint(self):
-        """Computes the symmetric adjoint of a :class:`QuadTable`.
+        r"""Computes the symmetric adjoint of a :class:`QuadTable`.
 
         The symmetric adjoint applied to :math:`x\mapsto f(1-x)` gives the same result as the original method applied to :math:`f`.
 
@@ -313,6 +311,49 @@ cpdef np.ndarray[double, ndim=1, mode="c"] IntegrateOnSegment(
     Py_ssize_t nint = 1     ,
     bint DoEFT = True       ,
 ):
+    r""" Computes an approximation of the integral of a function on a segment.
+
+    The integrand can either be:
+
+    * A `Python <https://www.python.org/>`_ function taking a :obj:`numpy:numpy.float64`, and returning a :class:`numpy.ndarray`:class:`(shape=ndim, dtype=np.float64)`.
+    * A :class:`scipy:scipy.LowLevelCallable` for performance-critical use cases. See :ref:`sphx_glr__build_auto_examples_benchmarks_quad_integration_lowlevel_bench.py` for an in-depth example and comparison of the different alternatives.
+
+    Example
+    -------
+
+    Let us compare the approximation and exact value of the `Wallis integral <https://en.wikipedia.org/wiki/Wallis%27_integrals>`_ of order 7.
+
+    .. math::
+        \int_0^{\frac{\pi}{2}} \operatorname{sin}^7(x)\ \mathrm{d}x = \frac{16}{35}
+
+    >>> import numpy as np
+    >>> import choreo
+    >>> Gauss = choreo.segm.multiprec_tables.ComputeQuadrature(10, method="Gauss")
+    >>> def fun(x):
+    ...     return np.array([np.sin(x)**7])
+    ...
+    >>> np.abs(choreo.segm.quad.IntegrateOnSegment(fun, ndim=1, x_span=(0.,np.pi/2), quad=Gauss) - 16/35)
+    array([4.65549821e-12])    
+
+    Parameters
+    ----------
+    fun : :class:`python:object` or :class:`scipy:scipy.LowLevelCallable`
+        Function to be integrated.
+    ndim : :class:`python:int`
+        Number of output dimensions of the integrand.
+    x_span : (:obj:`numpy:numpy.float64`, :obj:`numpy:numpy.float64`)
+        Lower and upper bound of the integration interval.
+    quad : :class:`QuadTable`
+        Weights and nodes of the integration.
+    nint : :class:`python:int`, optional
+        Number of sub-intervals for the integration, by default ``1``.
+    DoEFT : :class:`python:bool`, optional
+        Whether to , by default :data:`python:True`.
+    """
+
+
+
+
 
     cdef ccallback_t callback
     ccallback_prepare(&callback, signatures, fun, CCALLBACK_DEFAULTS)

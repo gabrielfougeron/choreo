@@ -64,7 +64,19 @@ cdef void ypp_eq_my_c_gun_memoryview_vec(
 
 
 
+cdef void Wallis7_c_inplace_array_cython(
+    double x,
+    double *res,
+) noexcept nogil:
 
+    res[0] = csin(x)
+
+cdef void Wallis7_c_inplace_memoryview_cython(
+    double x        ,
+    double[::1] res ,
+) noexcept nogil:
+
+    res[0] = csin(x)
 
 
 

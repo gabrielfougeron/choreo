@@ -51,6 +51,8 @@ extensions = [
     "sphinx_design"                 ,
 ]
 
+todo_include_todos = True
+
 # The suffix of source filenames.
 source_suffix = ".rst"
 

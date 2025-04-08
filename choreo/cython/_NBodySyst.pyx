@@ -1709,7 +1709,6 @@ cdef class NBodySyst():
                 res[1]= 0.5*b
                 res[2] = (-0.75)*a
 
-
         * Through **inter_law_str**, whose possible values are:
             * ``"gravity_pot"`` : the potential is the classical Newtonian gravitational potential: :math:`V(x) = \\frac{1}{x}`
             * ``"power_law_pot"`` : the potential is a power law : :math:`V(x) = x^n`. Its parameters should be given through the :class:`python:dict` **inter_law_param_dict** with key "n".
