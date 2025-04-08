@@ -42,8 +42,10 @@ import choreo
 
 @ParametrizeDocstrings
 def test_bad_init_args():
-    """ Tests that missing or mismatched init arguments are properly handled.
+    """ Tests that mismatched init arguments are properly handled during initialization of a :class:`choreo.NBodySyst`.
     """
+    
+    NBS = choreo.NBodySyst()
     
     geodim = 3
     nbody = 3
@@ -817,7 +819,7 @@ def test_custom_inter_law(float64_tols):
 
     # Parametrized power_law_pot
     inter_law_str = "power_law_pot"
-    inter_law_param_dict = {'n':-1., 'alpha':1.}
+    inter_law_param_dict = {'n':-1.}
     NBS = choreo.NBodySyst(geodim, nbody, bodymass, bodycharge, Sym_list, None, inter_law_str, inter_law_param_dict)
     action_grad = NBS.params_to_action_grad(params_buf)
     

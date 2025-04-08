@@ -48,7 +48,11 @@ This convention is compatible with both the classical Newtonian gravitational po
 
     V(x) \propto \frac{1}{x}
 
-.. note:: Independence wrt the proportionality constant for homogeneous potentials.
+The classical Newtonian gravitational potential is the default in :mod:`choreo`. This default behavior can be changed using :meth:`choreo.NBodySyst.Set_inter_law`.
+
+.. warning::
+    TODO
+    Independence wrt the proportionality constant for homogeneous potentials.
 
 While equation :eq:`Newton` as it is could be directly plugged in a `general purpose ODE solver <https://docs.scipy.org/doc/scipy/reference/integrate.html#solving-initial-value-problems-for-ode-systems>`_ to get an approximate solution, the next two sections highlight how variations on the problem formulation can be exploited for more performance, and to better deal with :ref:`periodicity constraints<periodicity>`.
 
@@ -69,7 +73,7 @@ The Newton equations of motion :eq:`Newton` are retrieved for the following choi
 
 .. math::
     H(\mathbf{q}, \mathbf{p}) &= T(\mathbf{p}) + V(\mathbf{q})  \\
-    &= \sum_{i=0}^{n-1} \frac{p_i^2}{2 m_i} + \sum_{i=0}^{n-1} \sum_{j\neq i} q_i q_j V(\|x_i - x_j\|)\\
+    &= \sum_{i=0}^{n-1} \frac{p_i^2}{2 m_i} + \sum_{i=0}^{n-1} \sum_{j\neq i} q_i q_j V_{\mathrm{u}}(\|x_i - x_j\|)\\
     :label: Hamiltonian_of_nbodysyst
 
 This particular Hamiltonian is called **partionned** since it decomposes into the sum of a **kinetic energy** :math:`T(\mathbf{p})` that is a function of the momenta *only*, and a **potential energy** :math:`V(\mathbf{q})` that is a function of the positions *only*. This partitioned structure is exploited in the ODE RK methods ref ???

@@ -124,8 +124,8 @@ cdef void gravity_pot(double xsq, double* res, void* pot_params) noexcept nogil:
 
 cdef void power_law_pot(double xsq, double* res, void* pot_params) noexcept nogil:
 
-    cdef double * pot_params_d = <double*> pot_params
-    cdef double a = pot_params_d[3]*cpow(xsq, pot_params_d[2])
+    cdef double* pot_params_d = <double*> pot_params
+    cdef double a = cpow(xsq, pot_params_d[2])
     cdef double b = xsq*a
 
     res[0] = -xsq*b
@@ -799,8 +799,8 @@ cdef class NBodySyst():
 
     def __init__(
         self                                ,
-        Py_ssize_t geodim                   ,
-        Py_ssize_t nbody                    ,
+        Py_ssize_t geodim = 2               ,
+        Py_ssize_t nbody = 2                ,
         double[::1] bodymass = None         ,
         double[::1] bodycharge  = None      ,
         list Sym_list = []                  ,
@@ -819,16 +819,16 @@ cdef class NBodySyst():
 
         Parameters
         ----------
-        geodim : :class:`python:int`
-            Number of dimensions of ambiant space. Typically 2 or 3, but can be any positive integer.
-        nbody : :class:`python:int`
-            Number of bodies in the system.
-        bodymass :  :class:`numpy:numpy.ndarray`:class:`(shape = (nbody), dtype = np.float64)`
-            Masses of the bodies in the system.
-        bodycharge : :class:`numpy:numpy.ndarray`:class:`(shape = (nbody), dtype = np.float64)`
-            Charges of the bodies.
+        geodim : :class:`python:int`, optional
+            Number of dimensions of ambiant space. Typically 2 or 3, but can be any positive integer. By default: 2.
+        nbody : :class:`python:int`, optional
+            Number of bodies in the system, by default 2.
+        bodymass :  :class:`numpy:numpy.ndarray`:class:`(shape = (nbody), dtype = np.float64)`, optional
+            Masses of the bodies in the system, by default :obj:`numpy:numpy.ones`.
+        bodycharge : :class:`numpy:numpy.ndarray`:class:`(shape = (nbody), dtype = np.float64)`, optional
+            Charges of the bodies, by default :obj:`numpy:numpy.ones`.
         Sym_list : :class:`python:list`, optional
-            List of a priori symmetries in the system, by default [ ].
+            List of a priori symmetries in the system, by default ``[]``.
         inter_law : optional
             Function defining the interaction law, by default :data:`python:None`.
         inter_law_str : :class:`python:str`, optional
@@ -1712,7 +1712,7 @@ cdef class NBodySyst():
 
         * Through **inter_law_str**, whose possible values are:
             * ``"gravity_pot"`` : the potential is the classical Newtonian gravitational potential: :math:`V(x) = \\frac{1}{x}`
-            * ``"power_law_pot"`` : the potential is a power law : :math:`V(x) = \\frac{\\alpha}{x^n}`. Its parameters should be given through the :class:`python:dict` **inter_law_param_dict** with keys "alpha" and "n".
+            * ``"power_law_pot"`` : the potential is a power law : :math:`V(x) = x^n`. Its parameters should be given through the :class:`python:dict` **inter_law_param_dict** with key "n".
             * A string defining a `Python <https://www.python.org/>`_ function to be compiled with `Numba <https://numba.pydata.org/>`_ . The process is similar to passing a `Python <https://www.python.org/>`_ function directly as described above.
 
         * If both **inter_law** and **inter_law_str** are :data:`python:None`, the interaction law is the classical gravitational potential.
@@ -1780,16 +1780,14 @@ cdef class NBodySyst():
             elif inter_law_str.startswith("power_law_pot"):
 
                 self._inter_law = power_law_pot
-
-                self.inter_law_param_dict = { key : inter_law_param_dict[key] for key in ("n", "alpha")}
+                self.inter_law_param_dict = { key : inter_law_param_dict[key] for key in ("n")}
 
                 n = self.inter_law_param_dict["n"] / 2 # argument is xsq !
                 nm2 = n-2
                 mnnm1 = -n*(n-1)
-                alpha = self.inter_law_param_dict["alpha"]
                 
-                self.inter_law_str = f"power_law_pot({n=},{alpha=})"
-                self._inter_law_param_buf = np.array([-n, mnnm1, nm2, alpha], dtype=np.float64)
+                self.inter_law_str = f"power_law_pot({n=})"
+                self._inter_law_param_buf = np.array([-n, mnnm1, nm2], dtype=np.float64)
                 self._inter_law_param_ptr = <void*> &self._inter_law_param_buf[0]
             else:
 
