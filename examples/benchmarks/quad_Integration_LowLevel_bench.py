@@ -1,6 +1,6 @@
 """
-Benchmark of LowLevelCallable for ODE IVP
-=========================================
+Benchmark of LowLevelCallable for quadrature on segment
+=======================================================
 """
 
 # %%

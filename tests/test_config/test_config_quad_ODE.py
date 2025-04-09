@@ -3,7 +3,84 @@ import scipy
 import choreo
 
 Small_orders = list(range(2,11))
-    
+
+all_fun_types = [
+    "py_fun"            ,
+    "c_fun_memoryview"  ,
+    "c_fun_pointer"     ,
+]
+       
+QuadMethods = [
+    "Gauss"             ,
+    "Radau_I"           ,
+    "Radau_II"          ,
+    "Lobatto_III"       ,
+    "Cheb_I"            ,
+    "Cheb_II"           ,
+    "ClenshawCurtis"    ,
+]    
+
+all_quad_problem_names = [
+    "Wallis"    ,
+]
+
+def define_quad_problem(eq_name):
+        
+    if eq_name == "Wallis":
+
+        def nint(th_cvg_rate):
+            
+            if th_cvg_rate > 20:
+                return 1
+            elif th_cvg_rate > 7:
+                return 10
+            elif th_cvg_rate > 4:
+                return 100
+            elif th_cvg_rate > 2:
+                return 2000
+            else:
+                return 100000
+            
+        x_span = (0., np.pi/2)
+        
+        ndim = 10
+
+        ex_sol = np.empty((ndim), dtype=np.float64)
+        for i in range(ndim):
+            ex_sol[i] = scipy.special.beta((i+1)/2, 1/2)/2
+
+        def py_fun(x):
+            res = np.empty((ndim), dtype=np.float64)
+            res[0] = 1.
+            s = np.sin(x)
+            for i in range(1,ndim):
+                res[i] = res[i-1] * s
+            return res
+            
+        def py_fun_inplace(x,res):
+            res[0] = 1.
+            s = np.sin(x)
+            for i in range(1,ndim):
+                res[i] = res[i-1] * s
+                 
+        c_fun_pointer = choreo.segm.quad.nb_jit_inplace_double_array(py_fun_inplace)
+        c_fun_memoryview = scipy.LowLevelCallable.from_cython(choreo.segm.cython.test, "Wallis_c_fun_memoryview")
+        
+        return {
+            "ndim" : ndim               ,
+            "nint" : nint               ,
+            "x_span" : x_span           ,
+            "ex_sol" : ex_sol           ,
+            "fun" : {
+                "py_fun" : py_fun                       ,                                       
+                "c_fun_pointer" : c_fun_pointer         ,
+                "c_fun_memoryview" : c_fun_memoryview   ,
+            }                           ,
+        }
+        
+    else:
+        raise ValueError(f'Unknown {eq_name = }')
+
 ClassicalImplicitRKMethods = [
     "Gauss"         ,
     "Radau_IA"      ,
@@ -65,13 +142,7 @@ Explicit_tables_dict = {
     "SofSpa10"          : choreo.segm.precomputed_tables.SofSpa10       ,
 }
 
-all_fun_types = [
-    "py_fun"            ,
-    "c_fun_memoryview"  ,
-    "c_fun_pointer"     ,
-]
-
-all_eq_names = [
+all_ODE_names = [
     "ypp=minus_y"       ,
 ]
 
@@ -136,4 +207,7 @@ def define_ODE_ivp(eq_name):
                 # ("c_fun_pointer", True ) : (nb_c_fun_pointer, nb_c_gun_pointer) ,
             }                               ,
         }
+        
+    else:
+        raise ValueError(f'Unknown {eq_name = }')
             

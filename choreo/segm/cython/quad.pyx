@@ -315,7 +315,7 @@ cpdef np.ndarray[double, ndim=1, mode="c"] IntegrateOnSegment(
 
     The integrand can either be:
 
-    * A `Python <https://www.python.org/>`_ function taking a :obj:`numpy:numpy.float64`, and returning a :class:`numpy.ndarray`:class:`(shape=ndim, dtype=np.float64)`.
+    * A `Python <https://www.python.org/>`_ function taking a :obj:`numpy:numpy.float64`, and returning a :class:`numpy:numpy.ndarray`:class:`(shape=ndim, dtype=np.float64)`.
     * A :class:`scipy:scipy.LowLevelCallable` for performance-critical use cases. See :ref:`sphx_glr__build_auto_examples_benchmarks_quad_integration_lowlevel_bench.py` for an in-depth example and comparison of the different alternatives.
 
     Example
@@ -350,10 +350,6 @@ cpdef np.ndarray[double, ndim=1, mode="c"] IntegrateOnSegment(
     DoEFT : :class:`python:bool`, optional
         Whether to , by default :data:`python:True`.
     """
-
-
-
-
 
     cdef ccallback_t callback
     ccallback_prepare(&callback, signatures, fun, CCALLBACK_DEFAULTS)

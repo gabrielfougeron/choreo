@@ -1,10 +1,11 @@
-""" Test the properties of ODE solvers
+""" Tests the properties of quadratures and ODE solvers.
 
 .. autosummary::
     :toctree: _generated/
     :template: tests-formatting/base.rst
     :nosignatures:
 
+    test_quad
     test_Implicit_ODE
     test_Explicit_ODE
 
@@ -16,9 +17,50 @@ import numpy as np
 import choreo
 
 @ParametrizeDocstrings
+@pytest.mark.parametrize("method", QuadMethods)
+@pytest.mark.parametrize("nsteps", Small_orders)
+@pytest.mark.parametrize("quad_problem", [pytest.param(define_quad_problem(eq_name), id=eq_name) for eq_name in all_quad_problem_names])
+@pytest.mark.parametrize("fun_type", all_fun_types)
+@pytest.mark.parametrize("DoEFT", [True, False])
+def test_quad(float64_tols, method, nsteps, quad_problem, fun_type, DoEFT):
+    """Tests the accuracy of quadratures.
+    """
+
+    quad = choreo.segm.multiprec_tables.ComputeQuadrature(nsteps, method=method)
+   
+    fun = quad_problem["fun"].get(fun_type)
+    
+    if fun is None:
+        return
+
+    x_span = quad_problem["x_span"]
+    ndim = quad_problem["ndim"]
+    ex_sol = quad_problem["ex_sol"]
+    nint_OK = quad_problem["nint"](quad.th_cvg_rate)
+    
+    if nint_OK is None:
+        nint = 1
+    else:
+        nint = nint_OK
+
+    num_sol = choreo.segm.quad.IntegrateOnSegment(
+        fun             ,
+        ndim = ndim     ,
+        x_span = x_span ,
+        quad = quad     ,
+        nint = nint     ,
+        DoEFT = DoEFT   ,
+    )
+    
+    print(quad.th_cvg_rate)
+    print(np.linalg.norm(num_sol-ex_sol))
+    if nint_OK is not None:
+        assert np.allclose(num_sol, ex_sol, rtol = float64_tols.rtol, atol = float64_tols.atol) 
+
+@ParametrizeDocstrings
 @pytest.mark.parametrize(("method_x", "method_v"), [(method_x, method_v) for (method_x, method_v) in SymplecticImplicitRKMethodPairs])
 @pytest.mark.parametrize("nsteps", Small_orders)
-@pytest.mark.parametrize("ivp", [pytest.param(define_ODE_ivp(eq_name), id=eq_name) for eq_name in all_eq_names])
+@pytest.mark.parametrize("ivp", [pytest.param(define_ODE_ivp(eq_name), id=eq_name) for eq_name in all_ODE_names])
 @pytest.mark.parametrize("fun_type", all_fun_types)
 @pytest.mark.parametrize("vector_calls", [True, False])
 @pytest.mark.parametrize("DoEFT", [True, False])
@@ -75,7 +117,7 @@ def test_Implicit_ODE(float64_tols, method_x, method_v, nsteps, ivp, fun_type, v
     
 @ParametrizeDocstrings
 @pytest.mark.parametrize("rk", [pytest.param(rk, id=name) for name, rk in Explicit_tables_dict.items()])
-@pytest.mark.parametrize("ivp", [pytest.param(define_ODE_ivp(eq_name), id=eq_name) for eq_name in all_eq_names])
+@pytest.mark.parametrize("ivp", [pytest.param(define_ODE_ivp(eq_name), id=eq_name) for eq_name in all_ODE_names])
 @pytest.mark.parametrize("fun_type", all_fun_types)
 @pytest.mark.parametrize("DoEFT", [True, False])
 def test_Explicit_ODE(float64_tols, rk, ivp, fun_type, DoEFT):

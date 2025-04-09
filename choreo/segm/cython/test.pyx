@@ -63,6 +63,18 @@ cdef void ypp_eq_my_c_gun_memoryview_vec(
 
 
 
+cdef void Wallis_c_fun_memoryview(
+    double x        ,
+    double[::1] res ,
+) noexcept nogil:
+
+    cdef Py_ssize_t i
+    res[0] = 1.
+    cdef double s = csin(x)
+    for i in range(1,res.shape[0]):
+        res[i] = res[i-1] * s
+
+
 
 cdef void Wallis7_c_inplace_array_cython(
     double x,

@@ -3,10 +3,10 @@ import inspect
 import pytest
 
 from . import test_config_precision
-from . import test_config_ODE
+from . import test_config_quad_ODE
 from . import test_config_NBodySyst
 
-all_fixture_modules = [test_config_precision, test_config_ODE, test_config_NBodySyst]
+all_fixture_modules = [test_config_precision, test_config_quad_ODE, test_config_NBodySyst]
 
 def ProbabilisticTest(RepeatOnFail = 10):
 
@@ -101,34 +101,63 @@ def ParametrizeDocstrings(test):
             
             type_str = f'{type(elem_0)}'[8:-2] # get type from remove <class 'type'>
             
-            if 'ParameterSet' in type_str:
+            IsParam = ('ParameterSet' in type_str)
+            
+            if IsParam:
                 type_str = f'{type(elem_0.values[0])}'[8:-2]
             
             param_ptm_doc += f'{arg_name} : :class:`{add_intersphinx_type(type_str)}`\n'
             
-            arg_list_str = f'{arg_list}'
+            if IsParam:
+                try:
+                    arg_list_str = f'{[elem.id for elem in arg_list]}'
+                except:
+                    arg_list_str = f'{arg_list}'
+            else:
+                arg_list_str = f'{arg_list}'
+                
             if len(arg_list_str) < max_len_value:
                 param_ptm_doc += f'    {arg_list_str}\n'
             
         else:
+        
+            arg_list = mark.args[1]
+            elem_0 = arg_list[0]
+            elem_0_name = mark.args[0][0]
             
             for i_arg, arg_name in enumerate(mark.args[0]):
                
                 all_ptm_args.append(arg_name)
-               
-                arg_list = mark.args[1]
-                elem_0 = arg_list[0]
-                
+
                 type_str = f'{type(elem_0)}'[8:-2] # get type from remove <class 'type'>
                 
-                if 'ParameterSet' in type_str:
+                IsParam = ('ParameterSet' in type_str)
+            
+                if IsParam:
                     type_str = f'{type(elem_0.values[i_arg])}'[8:-2]
                 else:
                     type_str = f'{type(elem_0[i_arg])}'[8:-2]
                    
                 param_ptm_doc += f'{arg_name} : :class:`{add_intersphinx_type(type_str)}`\n' 
                 
-                arg_list_str = f'{[arg[i_arg] for arg in arg_list]}'
+                if IsParam:
+                    
+                    if i_arg == 0:
+                        try:
+                            Id_succeed = True
+                            arg_list_str = f'{[arg.id for arg in arg_list]}'
+                        except:
+                            Id_succeed = False
+                            arg_list_str = f'{[arg[i_arg] for arg in arg_list]}'
+                    else:
+                        if Id_succeed:
+                            arg_list_str = f'See **{elem_0_name}** above.'
+                        else:
+                            arg_list_str = f'{[arg[i_arg] for arg in arg_list]}'
+                            
+                else:
+                    arg_list_str = f'{[arg[i_arg] for arg in arg_list]}'
+
                 if len(arg_list_str) < max_len_value:
                     param_ptm_doc += f'    {arg_list_str}\n'
                 
