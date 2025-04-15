@@ -50,8 +50,7 @@ This convention is compatible with both the classical Newtonian gravitational po
 
 The classical Newtonian gravitational potential is the default in :mod:`choreo`. This default behavior can be changed using :meth:`choreo.NBodySyst.Set_inter_law`.
 
-.. warning::
-    TODO
+.. todo::
     Independence wrt the proportionality constant for homogeneous potentials.
 
 While equation :eq:`Newton` as it is could be directly plugged in a `general purpose ODE solver <https://docs.scipy.org/doc/scipy/reference/integrate.html#solving-initial-value-problems-for-ode-systems>`_ to get an approximate solution, the next two sections highlight how variations on the problem formulation can be exploited for more performance, and to better deal with :ref:`periodicity constraints<periodicity>`.
@@ -80,7 +79,7 @@ This particular Hamiltonian is called **partionned** since it decomposes into th
 
 
 
-.. note:: TODO : Lagrangian least action principle vs Hamiltonian least action principle. Stability ?
+.. todo:: Lagrangian least action principle vs Hamiltonian least action principle. Stability ?
 
 
 

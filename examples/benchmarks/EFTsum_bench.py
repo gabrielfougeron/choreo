@@ -32,15 +32,15 @@ import functools
 import matplotlib.pyplot as plt
 import numpy as np
 import math as m
-import scipy
+from fractions import Fraction
 import choreo
 import pyquickbench
 
 if ("--no-show" in sys.argv):
     plt.show = (lambda : None)
 
-# ForceBenchmark = True
-ForceBenchmark = False
+ForceBenchmark = True
+# ForceBenchmark = False
 
 if not(os.path.isdir(timings_folder)):
     os.makedirs(timings_folder)
@@ -48,10 +48,7 @@ if not(os.path.isdir(timings_folder)):
 # sphinx_gallery_end_ignore
 
 def naive_sum(x):
-    return choreo.scipy_plus.cython.eft_lib.FastSumK(x,0)
-
-def builtin_sum(x):
-    return sum(x)
+    return choreo.segm.cython.eft_lib.SumK(x,0)
 
 def np_sum(x):
     return np.sum(x)
@@ -60,66 +57,53 @@ def m_fsum(x):
     return m.fsum(x)
 
 def SumK_1(x):
-    return choreo.scipy_plus.cython.eft_lib.SumK(x,1)
+    return choreo.segm.cython.eft_lib.SumK(x,1)
 
 def SumK_2(x):
-    return choreo.scipy_plus.cython.eft_lib.SumK(x,2)
+    return choreo.segm.cython.eft_lib.SumK(x,2)
 
 def SumK_3(x):
-    return choreo.scipy_plus.cython.eft_lib.SumK(x,3)
+    return choreo.segm.cython.eft_lib.SumK(x,3)
 
-def FastSumK_1(x):
-    return choreo.scipy_plus.cython.eft_lib.FastSumK(x,1)
+def SumK_4(x):
+    return choreo.segm.cython.eft_lib.SumK(x,4)
 
-def FastSumK_2(x):
-    return choreo.scipy_plus.cython.eft_lib.FastSumK(x,2)
-
-def FastSumK_3(x):
-    return choreo.scipy_plus.cython.eft_lib.FastSumK(x,3)
+def SumK_5(x):
+    return choreo.segm.cython.eft_lib.SumK(x,5)
 
 # sphinx_gallery_start_ignore
-
-def setup(alpha):
         
-    n = int(1e5)
-    x = np.zeros((n),dtype=np.float64)
-    choreo.segm.cython.test.inplace_taylor_poly(x, -alpha)
-    
-    return {'x' : x}
+n = int(1e2)
+def setup(alpha):
 
-@functools.cache
-def exact_sum(alpha):
-    y = setup(alpha)['x']
-    return m.fsum(y)
+    x, ex = choreo.segm.test.GenSum(n, alpha)
+
+    return {'x' : x, 'ex' : ex}
+
+def compute_error(f, x, ex):
     
-def compute_error(f, x):
-    
-    ex_res =  exact_sum(-x[1])
     res = f(x)
+    rel_err = 2 * abs(ex - Fraction(res)) / (abs(ex) + abs(res))
     
-    rel_err = abs(ex_res - res) / abs(ex_res)
-    
-    return rel_err + 1e-40
+    return float(rel_err) + 1e-20
 
 basename = 'sum_bench_accuracy'
-error_filename = os.path.join(timings_folder,basename+'.npz')
+error_filename = os.path.join(timings_folder, basename+'.npz')
 
-all_alphas = {"alpha" : np.array([float(alpha) for alpha in range(200)])}
+all_alphas = {"alpha" : np.array([2**alpha for alpha in range(2,500)])}
 
 all_funs = [
     naive_sum   ,
-    builtin_sum ,
     np_sum      ,
     m_fsum      ,
     SumK_1      ,
     SumK_2      ,
     SumK_3      ,
-    FastSumK_1  ,
-    FastSumK_2  ,
-    FastSumK_3  ,
+    SumK_4      ,
+    SumK_5      ,
 ]
 
-all_error_funs = { f.__name__ :  functools.partial(compute_error, f) for f in all_funs if f is not m_fsum}
+all_error_funs = { f.__name__ :  functools.partial(compute_error, f) for f in all_funs}
 
 all_times = pyquickbench.run_benchmark(
     all_alphas                      ,
@@ -127,7 +111,9 @@ all_times = pyquickbench.run_benchmark(
     setup = setup                   ,
     mode = "scalar_output"          ,
     filename = error_filename       ,
+    allow_pickle = True             ,
     ForceBenchmark = ForceBenchmark ,
+    StopOnExcept = True ,
 )
 
 pyquickbench.plot_benchmark(
@@ -136,6 +122,8 @@ pyquickbench.plot_benchmark(
     all_error_funs  ,
     show = True     ,
     title = "Relative error for increasing conditionning"   ,
+    xlabel = "Approximate condition number" ,
+    ylabel = "Relative error on sum" ,
 )
     
 # sphinx_gallery_end_ignore
@@ -150,24 +138,35 @@ def prepare_x(n):
 # sphinx_gallery_start_ignore
 
 basename = 'sum_bench_time'
-timings_filename = os.path.join(timings_folder,basename+'.npz')
+timings_filename = os.path.join(timings_folder, basename+'.npz')
 
-all_sizes = {"n" : np.array([2**n for n in range(21)])}
+all_sizes = {"n" : np.array([2**n for n in range(30)])}
 
-all_times = pyquickbench.run_benchmark(
-    all_sizes                       ,
-    all_funs                        ,
-    setup = prepare_x               ,
-    filename = timings_filename     ,
-    ForceBenchmark = ForceBenchmark ,
-)
+MonotonicAxes = ["n"]
 
-pyquickbench.plot_benchmark(
-    all_times   ,
-    all_sizes   ,
-    all_funs    ,
-    show = True ,
-    title = "Time (s) as a function of array size"   ,
-)
+# all_times = pyquickbench.run_benchmark(
+#     all_sizes                       ,
+#     all_funs                        ,
+#     setup = prepare_x               ,
+#     MonotonicAxes = MonotonicAxes   ,
+#     filename = timings_filename     ,
+#     ForceBenchmark = ForceBenchmark ,
+#     StopOnExcept = True             ,
+# )
+# 
+# for relative_to_val in [
+#     None    ,
+#     {
+#         pyquickbench.fun_ax_name: "naive_sum"    ,
+#     }
+# ]:
+# 
+#     pyquickbench.plot_benchmark(
+#         all_times   ,
+#         all_sizes   ,
+#         all_funs    ,
+#         show = True ,
+#         relative_to_val = relative_to_val      ,
+#     )
 
 # sphinx_gallery_end_ignore

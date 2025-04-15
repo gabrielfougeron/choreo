@@ -7,16 +7,20 @@ test functions
 import os
 cimport scipy.linalg.cython_blas
 from choreo.scipy_plus.cython.blas_consts cimport *
-from libc.stdlib cimport malloc, free
+from libc.stdlib cimport malloc, free, rand
+cdef extern from "limits.h":
+    int RAND_MAX
+
+from libc.math cimport sin as csin
+from libc.math cimport log2 as clog2
+from libc.math cimport roundf as cround
+from libc.math cimport pow as cpow
 
 import numpy as np
 cimport numpy as np
 np.import_array()
 
 cimport cython
-
-from libc.math cimport sin as csin
-
 
 # y'' = -y
 cdef void ypp_eq_my_c_fun_memoryview(
@@ -228,7 +232,7 @@ def mul_py_fun_tx(double t, double[::1] x):
     return np.asarray(res)
 
 @cython.cdivision(True)
-cpdef inplace_taylor_poly(double[:] v, x):
+cpdef inplace_taylor_poly(double[::1] v, double x):
 
     cdef Py_ssize_t i
     cdef double cur_term = 1.
@@ -241,4 +245,16 @@ cpdef inplace_taylor_poly(double[:] v, x):
 
         v[i] = cur_term
 
-        
+@cython.cdivision(True)
+cpdef inplace_taylor_poly_perm(double[::1] v, double x, Py_ssize_t[::1] perm):
+
+    cdef Py_ssize_t i
+    cdef double cur_term = 1.
+
+    v[perm[0]] = cur_term
+
+    for i in range(1,v.shape[0]):
+
+        cur_term = cur_term * (x / i)
+
+        v[perm[i]] = cur_term

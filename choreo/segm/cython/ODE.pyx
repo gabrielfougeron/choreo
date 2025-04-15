@@ -15,6 +15,7 @@ from choreo.segm.cython.quad cimport QuadTable
 
 cimport scipy.linalg.cython_blas
 from libc.stdlib cimport malloc, free
+from libc.string cimport memset
 
 import numpy as np
 cimport numpy as np
@@ -775,22 +776,18 @@ cdef void ExplicitSymplecticIVP_ann(
     if DoEFT:
 
         x_eft_comp = <double *> malloc(sizeof(double) * ndof)
-        for istep in range(ndof):
-            x_eft_comp[istep] = 0.
+        memset(x_eft_comp, 0, sizeof(double)*ndof)
 
         v_eft_comp = <double *> malloc(sizeof(double) * ndof)
-        for istep in range(ndof):
-            v_eft_comp[istep] = 0.
+        memset(v_eft_comp, 0, sizeof(double)*ndof)
 
         if DoTanIntegration:
 
             grad_x_eft_comp = <double *> malloc(sizeof(double) * grad_nvar)
-            for istep in range(grad_nvar):
-                grad_x_eft_comp[istep] = 0.
+            memset(grad_x_eft_comp, 0, sizeof(double)*grad_nvar)
 
             grad_v_eft_comp = <double *> malloc(sizeof(double) * grad_nvar)
-            for istep in range(grad_nvar):
-                grad_v_eft_comp[istep] = 0.
+            memset(grad_v_eft_comp, 0, sizeof(double)*grad_nvar)
 
     for istep in range(nsteps):
         cdt[istep] = rk._c_table[istep] * dt
@@ -1423,33 +1420,28 @@ cdef void ImplicitSymplecticIVP_ann(
         dxv = <double *> malloc(sizeof(double) * ndof)
 
         x_eft_comp = <double *> malloc(sizeof(double) * ndof)
-        for istep in range(ndof):
-            x_eft_comp[istep] = 0.
+        memset(x_eft_comp, 0, sizeof(double)*ndof)        
 
         v_eft_comp = <double *> malloc(sizeof(double) * ndof)
-        for istep in range(ndof):
-            v_eft_comp[istep] = 0.
+        memset(v_eft_comp, 0, sizeof(double)*ndof)        
 
         if DoTanIntegration:
 
             grad_dxv = <double *> malloc(sizeof(double) * grad_nvar)
 
             grad_x_eft_comp = <double *> malloc(sizeof(double) * grad_nvar)
-            for istep in range(grad_nvar):
-                grad_x_eft_comp[istep] = 0.
+            memset(grad_x_eft_comp, 0, sizeof(double)*grad_nvar)        
 
             grad_v_eft_comp = <double *> malloc(sizeof(double) * grad_nvar)
-            for istep in range(grad_nvar):
-                grad_v_eft_comp[istep] = 0.
+            memset(grad_v_eft_comp, 0, sizeof(double)*grad_nvar)        
 
     cdef double *cdt_x = <double *> malloc(sizeof(double) * nsteps)
-    cdef double *cdt_v = <double *> malloc(sizeof(double) * nsteps)
-
-    for istep in range(nsteps):
-        cdt_v[istep] = c_table_v[istep]*dt
-
     for istep in range(nsteps):
         cdt_x[istep] = c_table_x[istep]*dt
+
+    cdef double *cdt_v = <double *> malloc(sizeof(double) * nsteps)
+    for istep in range(nsteps):
+        cdt_v[istep] = c_table_v[istep]*dt
 
     for iint_keep in range(nint_keep):
 

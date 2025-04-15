@@ -171,7 +171,7 @@ elif platform.system() == "Linux":
             "3" : ["-O3", "-march=native", "-fopenmp", "-lm", *ignore_warnings_args],
             "fast" : ["-Ofast", "-march=native", "-fopenmp", "-lm", "-flto", *ignore_warnings_args],
         }[opt_lvl]
-        
+
         extra_compile_args_safe = {
             "profile" : ["-Og", "-fopenmp", "-lm", *ignore_warnings_args],
             "0" : ["-O0", "-fopenmp", "-lm", *ignore_warnings_args],
@@ -180,6 +180,7 @@ elif platform.system() == "Linux":
             "3" : ["-O3", "-march=native", "-fopenmp", "-lm", *ignore_warnings_args],
             "fast" : ["-O3", "-march=native", "-fopenmp", "-lm", "-flto", *ignore_warnings_args],
         }[opt_lvl]
+        
 
         extra_link_args = {
             "profile" : ["-fopenmp", "-lm", *ignore_warnings_args],
@@ -291,7 +292,7 @@ ext_modules = [
         extra_link_args = extra_link_args,
         define_macros  = define_macros ,
     )
-    for (name,source,safemath_needed) in zip(cython_extnames, cython_filenames, cython_safemath_needed, strict = True)
+    for (name, source, safemath_needed) in zip(cython_extnames, cython_filenames, cython_safemath_needed, strict = True)
 ]
 
 if platform.system() == "Windows":

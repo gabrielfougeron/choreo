@@ -5,4 +5,5 @@ cdef void FastVecSum(double* p, double* q, Py_ssize_t n) noexcept nogil
 cdef void VecSum(double* p, double* q, Py_ssize_t n) noexcept nogil
 cpdef double SumK(double[::1] v, Py_ssize_t k = *) noexcept
 cpdef double FastSumK(double[::1] v, Py_ssize_t k = *)
-cpdef double naive_sum_vect(double[:] v) noexcept nogil
+cpdef void compute_r_vec(double[::1] v, double[::1] w, double[::1] r) noexcept nogil
+cpdef double DotK(double[::1] v, double[::1] w, Py_ssize_t k = *)

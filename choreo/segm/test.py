@@ -1,10 +1,11 @@
 import math as m
 import numpy as np
 import scipy
+from choreo.segm.cython.eft_lib import compute_r_vec
+
 from choreo.segm.ODE import SymplecticIVP, ImplicitSymplecticIVP
 from choreo.segm.multiprec_tables import ComputeQuadrature
 from choreo.segm.quad import IntegrateOnSegment
-
 
 def Quad_cpte_error_on_test(
     fun_name,
@@ -112,7 +113,6 @@ def ODE_define_test(eq_name):
             fxy[3] = t*xy[1]
             
             return fxy
-        
         
     if eq_name == "y' = Az; z' = By" :
 
@@ -301,3 +301,106 @@ def compare_FD_and_exact_grad(fun, gradfun, xo, dx=None, epslist=None, order=1, 
     
     return np.array(error_list)
         
+# Adapted from a base implementation of Algorithm 6.1 of [1] available at https://github.com/python/cpython/blob/main/Lib/test/test_math.py
+# [1] Ogita, T., Rump, S. M., & Oishi, S. I. (2005). Accurate sum and dot product. SIAM Journal on Scientific Computing, 26(6), 1955-1988.
+
+import operator
+from fractions import Fraction
+from itertools import starmap
+from collections import namedtuple
+from math import log2, exp2, fabs
+from random import choices, uniform, shuffle
+from statistics import median
+
+def SumExact(x, n=None):
+    if n is None:
+        return sum(map(Fraction, x))
+    else:
+        return sum(map(Fraction, x[:n]))
+
+def SumCondition(x):
+    return 2.0 * SumExact(map(abs, x)) / abs(SumExact(x))
+
+def SumCondition_given_ex(x, ex):
+    return 2.0 * SumExact(map(abs, x)) / abs(ex)
+
+def DotExact(x, y, n=None):
+    
+    if n is None:
+        vec1 = map(Fraction, x)
+        vec2 = map(Fraction, y)
+    else:
+        vec1 = map(Fraction, x[:n])
+        vec2 = map(Fraction, y[:n])
+        
+    return sum(starmap(operator.mul, zip(vec1, vec2, strict=True)))
+
+def DotCondition(x, y):
+    return 2.0 * DotExact(map(abs, x), map(abs, y)) / abs(DotExact(x, y))
+
+def linspace(lo, hi, n):
+    width = (hi - lo) / (n - 1)
+    return [lo + width * i for i in range(n)]
+
+def GenDot(n, c):
+    """ Algorithm 6.1 (GenDot) works as follows. The condition number (5.7) of
+    the dot product xT y is proportional to the degree of cancellation. In
+    order to achieve a prescribed cancellation, we generate the first half of
+    the vectors x and y randomly within a large exponent range. This range is
+    chosen according to the anticipated condition number. The second half of x
+    and y is then constructed choosing xi randomly with decreasing exponent,
+    and calculating yi such that some cancellation occurs. Finally, we permute
+    the vectors x, y randomly and calculate the achieved condition number.
+    """
+
+    assert n >= 6
+    assert c >= 2.
+    
+    n2 = n // 2
+    x = [0.0] * n
+    y = [0.0] * n
+    b = log2(c)
+
+    # First half with exponents from 0 to |_b/2_| and random ints in between
+    
+    e = choices(range(int(b/2)), k=n2)
+    e[0] = int(b / 2) + 1
+    e[-1] = 0.0
+
+    x[:n2] = [uniform(-1.0, 1.0) * exp2(p) for p in e]
+    y[:n2] = [uniform(-1.0, 1.0) * exp2(p) for p in e]
+
+    dot_exact = DotExact(x, y, n2)
+    # Second half
+    e = list(map(round, linspace(b/2, 0.0 , n-n2)))
+    for i in range(n2, n):
+        x[i] = uniform(-1.0, 1.0) * exp2(e[i - n2])
+        y[i] = (uniform(-1.0, 1.0) * exp2(e[i - n2]) - dot_exact) / x[i]
+        
+        dot_exact += Fraction(x[i]) * Fraction(y[i])
+
+    return np.array(x), np.array(y), dot_exact
+
+def GenSum(n,c):
+
+    assert n >= 6
+    assert c >= 2.
+
+    n2 = n // 2
+    x = [0.0] * n
+    b = log2(c)
+
+    e = choices(range(int(b)), k=n2)
+    e[0] = int(b) + 1
+    e[-1] = 0.0
+
+    x[:n2] = [uniform(-1.0, 1.0) * exp2(p) for p in e]
+    
+    sum_exact = SumExact(x, n2)
+    # Second half
+    e = list(map(round, linspace(b/2, 0.0 , n-n2)))
+    for i in range(n2, n):
+        x[i] = uniform(-1.0, 1.0) * exp2(e[i - n2]) - sum_exact
+        sum_exact += Fraction(x[i])
+        
+    return np.array(x), sum_exact

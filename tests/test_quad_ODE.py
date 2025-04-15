@@ -16,6 +16,7 @@ from .test_config import *
 import numpy as np
 import choreo
 
+
 @ParametrizeDocstrings
 @pytest.mark.parametrize("method", QuadMethods)
 @pytest.mark.parametrize("nsteps", Small_orders)

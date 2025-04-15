@@ -12,6 +12,7 @@ from choreo.segm.cython.eft_lib cimport TwoSum_incr
 
 cimport scipy.linalg.cython_blas
 from libc.stdlib cimport malloc, free
+from libc.string cimport memset
 
 import numpy as np
 cimport numpy as np
@@ -397,15 +398,12 @@ cdef void IntegrateOnSegment_ann(
     cdef double* f_eft_comp
 
     if DoEFT:
-
-        f_eft_comp = <double *> malloc(sizeof(double) * ndim)
-        for istep in range(ndim):
-            f_eft_comp[istep] = 0.
+        f_eft_comp = <double *> malloc(sizeof(double)*ndim)
+        memset(f_eft_comp, 0, sizeof(double)*ndim)
 
     cdef double *cdx = <double*> malloc(sizeof(double)*w.shape[0])
 
     dx = (x_span[1] - x_span[0]) / nint
-
     for istep in range(w.shape[0]):
         cdx[istep] = x[istep] * dx
 

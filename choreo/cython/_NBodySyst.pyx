@@ -4750,7 +4750,7 @@ cdef void Make_Init_bounds_coeffs(
                 for iparam in range(params_shapes[il,2]):
 
                     cur_param_pos_buf[0] = ampl
-                    # cur_param_pos_buf[0] = ampl * (1. + 0.1*(<float> rand()) / (<float> RAND_MAX))
+                    # cur_param_pos_buf[0] = ampl * (1. + 0.1*(<double> rand()) / (<double> RAND_MAX))
                     cur_param_pos_buf += 1
 
 @cython.cdivision(True)
