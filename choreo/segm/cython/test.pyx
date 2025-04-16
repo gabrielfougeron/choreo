@@ -12,6 +12,7 @@ cdef extern from "limits.h":
     int RAND_MAX
 
 from libc.math cimport sin as csin
+from libc.math cimport exp as cexp
 from libc.math cimport log2 as clog2
 from libc.math cimport roundf as cround
 from libc.math cimport pow as cpow
@@ -258,3 +259,13 @@ cpdef inplace_taylor_poly_perm(double[::1] v, double x, Py_ssize_t[::1] perm):
         cur_term = cur_term * (x / i)
 
         v[perm[i]] = cur_term
+
+
+@cython.cdivision(True)
+cdef void exp_fun(double x, double* res, void* param):
+
+    cdef Py_ssize_t test_ndim = <Py_ssize_t> (<Py_ssize_t*>param)[0]
+    cdef Py_ssize_t i
+
+    for i in range(test_ndim):
+        res[i] = i * cexp(i*x)

@@ -35,7 +35,6 @@ Numerical tools on segment
     :nosignatures:
 
     segm.quad.QuadTable
-    segm.quad.QuadTable
     segm.multiprec_tables.ComputeQuadrature
     segm.quad.IntegrateOnSegment
 

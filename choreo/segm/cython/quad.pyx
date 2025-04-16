@@ -131,7 +131,8 @@ cdef class QuadTable:
 
     .. math::
         \int_{0}^{1} f(x)\  \mathrm{d}x \approx \sum_{i=0}^{n-1} w_i f(x_i)
-    
+        :label: QuadTable_int_approx
+
     """
 
     def __init__(
@@ -314,10 +315,22 @@ cpdef np.ndarray[double, ndim=1, mode="c"] IntegrateOnSegment(
 ):
     r""" Computes an approximation of the integral of a function on a segment.
 
+    Denoting :math:`a \eqdef \text{span}[0]`, :math:`b \eqdef \text{span}[1]` and :math:`\Delta \eqdef \text{span}[1]-\text{span}[0]`, the integral is first decomposed into ``nint`` smaller integrals as:
+
+    .. math::
+        \int_a^b \operatorname{fun}(x) \ \mathrm{d}x = \sum_{i = 0}^{\text{nint}-1} \int_{a + \frac{i}{\text{nint}} * \Delta}^{a + \frac{i+1}{\text{nint}} * \Delta}  \operatorname{fun}(x) \ \mathrm{d}x 
+
+    Each of the smaller integrals is then approximated using the :class:`QuadTable` ``quad`` (cf formula :eq:`QuadTable_int_approx`).
+
     The integrand can either be:
 
-    * A `Python <https://www.python.org/>`_ function taking a :obj:`numpy:numpy.float64`, and returning a :class:`numpy:numpy.ndarray`:class:`(shape=ndim, dtype=np.float64)`.
-    * A :class:`scipy:scipy.LowLevelCallable` for performance-critical use cases. See :ref:`sphx_glr__build_auto_examples_benchmarks_quad_integration_lowlevel_bench.py` for an in-depth example and comparison of the different alternatives.
+    * A `Python <https://www.python.org/>`_ function taking a :obj:`numpy:numpy.float64` as its sole argument, and returning a :class:`numpy:numpy.ndarray`:class:`(shape=ndim, dtype=np.float64)`.
+    * A :class:`scipy:scipy.LowLevelCallable` for performance-critical use cases.
+
+    See Also
+    --------
+    * :ref:`sphx_glr__build_auto_examples_convergence_integration_on_segment.py` for a quick demonstration on smooth functions, and the role of compensated summation.
+    * :ref:`sphx_glr__build_auto_examples_benchmarks_quad_integration_lowlevel_bench.py` for an in-depth example and comparison of the different types of function input.
 
     Example
     -------
@@ -342,14 +355,14 @@ cpdef np.ndarray[double, ndim=1, mode="c"] IntegrateOnSegment(
         Function to be integrated.
     ndim : :class:`python:int`
         Number of output dimensions of the integrand.
-    x_span : (:obj:`numpy:numpy.float64`, :obj:`numpy:numpy.float64`)
+    x_span : :class:`python:tuple` (:obj:`numpy:numpy.float64`, :obj:`numpy:numpy.float64`)
         Lower and upper bound of the integration interval.
     quad : :class:`QuadTable`
         Weights and nodes of the integration.
     nint : :class:`python:int`, optional
         Number of sub-intervals for the integration, by default ``1``.
     DoEFT : :class:`python:bool`, optional
-        Whether to , by default :data:`python:True`.
+        Whether to use an error-free transformation for summation, by default :data:`python:True`.
     """
 
     cdef ccallback_t callback

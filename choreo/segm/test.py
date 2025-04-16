@@ -1,17 +1,20 @@
 import math as m
 import numpy as np
 import scipy
-from choreo.segm.cython.eft_lib import compute_r_vec
+import ctypes
+
+import choreo.segm.cython.test
 
 from choreo.segm.ODE import SymplecticIVP, ImplicitSymplecticIVP
 from choreo.segm.multiprec_tables import ComputeQuadrature
 from choreo.segm.quad import IntegrateOnSegment
 
 def Quad_cpte_error_on_test(
-    fun_name,
-    quad_method,
-    quad_nsteps,
-    nint,
+    fun_name    = "exp"     ,
+    quad_method = "Gauss"   ,
+    quad_nsteps = 1         ,
+    nint        = 1         ,
+    DoEFT       = False     ,
 ):
 
     if fun_name == "exp" :
@@ -20,13 +23,21 @@ def Quad_cpte_error_on_test(
         # F(x) = exp(y*x)
 
         test_ndim = 20
+        
+        test_ndim_array = np.array([test_ndim], dtype=np.intp)
+        user_data = test_ndim_array.ctypes.data_as(ctypes.c_void_p)
 
-        fun = lambda x: np.array([y*m.exp(y*x) for y in range(test_ndim)])
+        fun = scipy.LowLevelCallable.from_cython(
+                    choreo.segm.cython.test ,
+                    "exp_fun"               ,
+                    user_data               ,
+                )
+
+        # fun = lambda x: np.array([y*m.exp(y*x) for y in range(test_ndim)])
         Fun = lambda x: np.array([m.exp(y*x) for y in range(test_ndim)])
         
         x_span = (0.,1.)
         exact = Fun(x_span[1]) - Fun(x_span[0])
-
 
     quad = ComputeQuadrature(quad_nsteps, dps = 60, method = quad_method)
 
@@ -36,6 +47,7 @@ def Quad_cpte_error_on_test(
         x_span = x_span ,
         quad = quad     ,
         nint = nint     ,
+        DoEFT = DoEFT   ,
     )
 
     error = np.linalg.norm(approx-exact)/np.linalg.norm(exact)

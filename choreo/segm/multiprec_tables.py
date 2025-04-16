@@ -550,7 +550,7 @@ def ComputeQuadrature(n, dps=30, method="Gauss"):
     dps : :class:`python:int`, optional
         Context precision in `mpmath <https://mpmath.org/doc/current>`_. See :doc:`mpmath:contexts` for more info. By default ``30``.
     method : :class:`python:str`, optional
-        Name of the method, by default "Gauss".
+        Name of the method, by default `"Gauss"`.
 
     Returns
     -------

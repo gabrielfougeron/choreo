@@ -2,9 +2,8 @@
 Convergence analysis of integration methods on segment
 ======================================================
 """
-
 # %%
-# Evaluation of relative quadrature error with the following parameters:
+# The following plots show the relative error made by different quadrature methods available as :class:`choreo.segm.quad.QuadTable` on the integration of a smooth function (a scaled exponential).
 
 # sphinx_gallery_start_ignore
 
@@ -44,8 +43,6 @@ bench_folder = os.path.join(__PROJECT_ROOT__,'examples','generated_files')
 if not(os.path.isdir(bench_folder)):
     os.makedirs(bench_folder)
     
-basename_bench_filename = 'quad_cvg_bench_'
-
 # ForceBenchmark = True
 ForceBenchmark = False
 
@@ -68,19 +65,19 @@ methods = [
 all_nsteps = [5,6]
 refinement_lvl = np.array(range(1,100))
 
-def setup(fun_name, quad_method, quad_nsteps, nint):
-    return {'fun_name': fun_name, 'quad_method': quad_method, 'quad_nsteps': quad_nsteps, 'nint': nint}
+def setup(fun_name, quad_method, quad_nsteps, nint, DoEFT = False):
+    return {'fun_name': fun_name, 'quad_method': quad_method, 'quad_nsteps': quad_nsteps, 'nint': nint, 'DoEFT':DoEFT}
 
 all_args = {
-    'integrand': all_integrands,
-    'quad_method': methods,
-    'quad_nsteps': all_nsteps,
-    'nint': refinement_lvl,
+    'integrand': all_integrands ,
+    'quad_method': methods      ,
+    'quad_nsteps': all_nsteps   ,
+    'nint': refinement_lvl      ,
 }
     
 all_funs = [choreo.segm.test.Quad_cpte_error_on_test]
 
-bench_filename = os.path.join(bench_folder,basename_bench_filename+'.npz')
+bench_filename = os.path.join(bench_folder, 'quad_cvg_bench.npz')
 
 all_errors = pyquickbench.run_benchmark(
     all_args                        ,
@@ -90,7 +87,7 @@ all_errors = pyquickbench.run_benchmark(
     filename = bench_filename       ,
     ForceBenchmark = ForceBenchmark ,
     StopOnExcept = True             ,
-    # pooltype = "process"            ,
+    pooltype = "process"            ,
 )
 
 plot_intent = {
@@ -106,7 +103,8 @@ fig, ax = pyquickbench.plot_benchmark(
     all_args                                ,
     all_funs                                ,
     plot_intent = plot_intent               ,
-    title = 'Absolute error of quadrature'  ,
+    title = 'Relative error of quadrature'  ,
+    ylabel = "Relative error"               ,
 )
 
 plot_xlim = ax[0,0].get_xlim()
@@ -146,8 +144,6 @@ for iy, nstep in enumerate(all_nsteps):
 fig.tight_layout()
 fig.show()
 
-
-
 # %%
 # We can see 3 distinct phases on these plots:
 # 
@@ -155,4 +151,46 @@ fig.show()
 # * A steady convergence phase where the convergence remains close to the theoretical value
 # * A final phase, where the relative error stagnates arround 1e-15. The value of the integral is computed with maximal accuracy given floating point precision. The approximation of the convergence rate is dominated by seemingly random floating point errors.
 # 
+# Now, if the number of integration steps is increased beyond what is necessary, these floating points error will start to steadily grow. This effect can be mitigated using a compensated summation algorithm. This is enabled by setting the argument ``DoEFT = True`` as shown below.
 
+bench_filename = os.path.join(bench_folder,'quad_cvg_bench_EFT.npz')
+
+refinement_lvl = np.array([2**n for n in range(30)])
+
+all_args = {
+    'integrand': all_integrands ,
+    'quad_method': ['Gauss']    ,
+    'quad_nsteps': [1, 2, 3, 4] ,
+    'nint': refinement_lvl      ,
+    'DoEFT': [False, True]      ,
+}
+
+plot_intent = {
+    'integrand': "subplot_grid_x"       ,
+    'quad_method': "subplot_grid_y"     ,
+    'quad_nsteps': "curve_color"        ,
+    'nint': "points"                    ,
+    pyquickbench.fun_ax_name : "same"   ,
+    'DoEFT' : "curve_linestyle"         ,
+}
+
+all_errors = pyquickbench.run_benchmark(
+    all_args                        ,
+    all_funs                        ,
+    setup = setup                   ,
+    mode = "scalar_output"          ,
+    filename = bench_filename       ,
+    ForceBenchmark = ForceBenchmark ,
+    StopOnExcept = True             ,
+    pooltype = "process"            ,
+)
+
+fig, ax = pyquickbench.plot_benchmark(
+    all_errors                              ,
+    all_args                                ,
+    all_funs                                ,
+    plot_intent = plot_intent               ,
+    title = 'Relative error of quadrature'  ,
+    ylabel = "Relative error"               ,
+    
+)
