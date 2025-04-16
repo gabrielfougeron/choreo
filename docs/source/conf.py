@@ -261,7 +261,7 @@ mathjax3_config = {
 # Napoleon settings #
 #####################
 
-napoleon_google_docstring = True
+napoleon_google_docstring = False
 napoleon_numpy_docstring = True
 napoleon_include_init_with_doc = False
 napoleon_include_private_with_doc = False
@@ -277,6 +277,8 @@ napoleon_type_aliases = None
 napoleon_attr_annotations = True
 autodoc_typehints = "description"
 autosummary_generate = True
+
+napoleon_custom_sections = ['See Also']
 
 ###################
 # Bibtex settings #

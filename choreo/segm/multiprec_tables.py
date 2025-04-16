@@ -521,7 +521,7 @@ def ComputeQuadratureTables(n, dps=30, method="Gauss"):
     return w, z, wlag, vdm_inv
 
 def ComputeQuadrature(n, dps=30, method="Gauss"):
-    """ComputeQuadrature Computes a :class:`choreo.segm.quad.QuadTable`
+    """Computes a :class:`choreo.segm.quad.QuadTable`
 
     The computation is performed at a user-defined precision using `mpmath <https://mpmath.org/doc/current>`_ to ensure that the result does not suffer from precision loss, even at relatively high orders.
     

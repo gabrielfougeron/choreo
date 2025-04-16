@@ -200,13 +200,14 @@ cdef class NBodySyst():
 
     cdef readonly bint RequiresGreaterNStore
     """ :class:`python:bool` Whether the symmetry constraints require the rightmost integration point to be included in segments.
+
+    See Also
+    --------
     
-        See Also
-        --------
-        * :attr:`GreaterNStore`
-        * :attr:`ForceGreaterNStore`
-        * :attr:`segm_size`
-        * :attr:`segm_store`
+    * :attr:`GreaterNStore`
+    * :attr:`ForceGreaterNStore`
+    * :attr:`segm_size`
+    * :attr:`segm_store`
 
     Read-only attribute.
     """
@@ -216,9 +217,10 @@ cdef class NBodySyst():
 
      If :attr:`GreaterNStore` is True, then :attr:`segm_store` equals :attr:`segm_size` + 1, otherwise :attr:`segm_store` equals :attr:`segm_size`.
 
-        See Also
-        --------
-        * :attr:`RequiresGreaterNStore`
+    See Also
+    --------
+
+    * :attr:`RequiresGreaterNStore`
     
     Read-only attribute.
     """

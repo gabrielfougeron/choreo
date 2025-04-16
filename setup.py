@@ -97,18 +97,18 @@ elif platform.system() == "Darwin": # MacOS
     ] 
 
     extra_compile_args_std = {
-        "profile" : ["-Og", "-Xpreprocessor", "-std=c99", "-lm", *ignore_warnings_args],
-        "0" : ["-O0", "-Xpreprocessor", "-std=c99", "-lm", *ignore_warnings_args],
-        "1" : ["-O1", "-Xpreprocessor", "-std=c99", "-lm", *ignore_warnings_args],
+        "profile" : ["-Og", "-march=native", "-Xpreprocessor", "-std=c99", "-lm", *ignore_warnings_args],
+        "0" : ["-O0", "-march=native", "-Xpreprocessor", "-std=c99", "-lm", *ignore_warnings_args],
+        "1" : ["-O1", "-march=native", "-Xpreprocessor", "-std=c99", "-lm", *ignore_warnings_args],
         "2" : ["-O2", "-march=native", "-Xpreprocessor", "-std=c99", "-lm", *ignore_warnings_args],
         "3" : ["-O3", "-march=native", "-Xpreprocessor", "-std=c99", "-lm", *ignore_warnings_args],
         "fast" : ["-Ofast", "-march=native", "-Xpreprocessor", "-std=c99", "-lm", "-flto", *ignore_warnings_args],
     }[opt_lvl]
     
     extra_compile_args_safe = {
-        "profile" : ["-Og", "-Xpreprocessor", "-std=c99", "-lm", *ignore_warnings_args],
-        "0" : ["-O0", "-Xpreprocessor", "-std=c99", "-lm", *ignore_warnings_args],
-        "1" : ["-O1", "-Xpreprocessor", "-std=c99", "-lm", *ignore_warnings_args],
+        "profile" : ["-Og", "-march=native", "-Xpreprocessor", "-std=c99", "-lm", *ignore_warnings_args],
+        "0" : ["-O0", "-march=native", "-Xpreprocessor", "-std=c99", "-lm", *ignore_warnings_args],
+        "1" : ["-O1", "-march=native", "-Xpreprocessor", "-std=c99", "-lm", *ignore_warnings_args],
         "2" : ["-O2", "-march=native", "-Xpreprocessor", "-std=c99", "-lm", *ignore_warnings_args],
         "3" : ["-O3", "-march=native", "-Xpreprocessor", "-std=c99", "-lm", *ignore_warnings_args],
         "fast" : ["-O3", "-march=native", "-Xpreprocessor", "-std=c99", "-lm", "-flto", *ignore_warnings_args],
@@ -164,23 +164,22 @@ elif platform.system() == "Linux":
     else:
 
         extra_compile_args_std = {
-            "profile" : ["-Og", "-fopenmp", "-lm", *ignore_warnings_args],
-            "0" : ["-O0", "-fopenmp", "-lm", *ignore_warnings_args],
-            "1" : ["-O1", "-fopenmp", "-lm", *ignore_warnings_args],
+            "profile" : ["-Og", "-march=native", "-fopenmp", "-lm", *ignore_warnings_args],
+            "0" : ["-O0", "-march=native", "-fopenmp", "-lm", *ignore_warnings_args],
+            "1" : ["-O1", "-march=native", "-fopenmp", "-lm", *ignore_warnings_args],
             "2" : ["-O2", "-march=native", "-fopenmp", "-lm", *ignore_warnings_args],
             "3" : ["-O3", "-march=native", "-fopenmp", "-lm", *ignore_warnings_args],
             "fast" : ["-Ofast", "-march=native", "-fopenmp", "-lm", "-flto", *ignore_warnings_args],
         }[opt_lvl]
 
         extra_compile_args_safe = {
-            "profile" : ["-Og", "-fopenmp", "-lm", *ignore_warnings_args],
-            "0" : ["-O0", "-fopenmp", "-lm", *ignore_warnings_args],
-            "1" : ["-O1", "-fopenmp", "-lm", *ignore_warnings_args],
-            "2" : ["-O2", "-march=native", "-fopenmp", "-lm", *ignore_warnings_args],
-            "3" : ["-O3", "-march=native", "-fopenmp", "-lm", *ignore_warnings_args],
-            "fast" : ["-O3", "-march=native", "-fopenmp", "-lm", "-flto", *ignore_warnings_args],
+            "profile" : ["-Og", "-march=native", "-fopenmp", "-lm", *ignore_warnings_args],
+            "0" : ["-O0", "-march=native", "-fopenmp", "-ffp-contract=on", "-lm", *ignore_warnings_args],
+            "1" : ["-O1", "-march=native", "-fopenmp", "-ffp-contract=on", "-lm", *ignore_warnings_args],
+            "2" : ["-O2", "-march=native", "-ffp-contract=on", "-fopenmp", "-lm", *ignore_warnings_args],
+            "3" : ["-O3", "-march=native", "-ffp-contract=on", "-fopenmp", "-lm", *ignore_warnings_args],
+            "fast" : ["-O3", "-march=native", "-ffp-contract=on", "-fopenmp", "-lm", *ignore_warnings_args],
         }[opt_lvl]
-        
 
         extra_link_args = {
             "profile" : ["-fopenmp", "-lm", *ignore_warnings_args],

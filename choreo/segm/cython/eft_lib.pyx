@@ -2,15 +2,17 @@
 eft_lib.ptx : Error-free transformations
 Warning: this file needs to be compiled without unsafe optimizations. No -Ofast. No -ffast-math.
 
-EXTRA WARNING ABOUT GCC !!!
-
-
 Essentially follows the implementation described in [1]
 
 [1] Ogita, T., Rump, S. M., & Oishi, S. I. (2005). Accurate sum and dot product. SIAM Journal on Scientific Computing, 26(6), 1955-1988.
 '''
 
 from libc.stdlib cimport malloc, free
+
+import numpy as np
+cimport numpy as np
+np.import_array()
+
 cimport cython
 
 cimport scipy.linalg.cython_blas
@@ -19,7 +21,7 @@ from choreo.scipy_plus.cython.blas_consts cimport *
 from libc.math cimport pow as cpow
 
 cdef Py_ssize_t s_double = 27
-cdef double split_factor = cpow(2., s_double) + 1
+cdef double split_factor = cpow(2., s_double) + 1 # = 134217729
 
 cdef inline (double, double) Fast2Sum(double a, double b) noexcept nogil: 
 
@@ -41,7 +43,9 @@ def TwoSum_py(a, b):
 
 cdef inline (double, double) Split(double a) noexcept nogil: 
 
-    cdef double c = split_factor * a
+    # cdef double c = split_factor * a
+    cdef double c = 134217729 * a
+
     cdef double x = c-(c-a)
     cdef double y = a-x
 
@@ -171,6 +175,7 @@ cpdef double FastSumK(
 
     cdef Py_ssize_t n = v.shape[0]
     cdef double[::1] cp 
+    cdef double *arr
     cdef double *p
     cdef double *q
     cdef double *r
@@ -187,7 +192,8 @@ cpdef double FastSumK(
         with nogil:
 
             p = &cp[0]
-            q = <double*> malloc(sizeof(double) * n)
+            arr = <double*> malloc(sizeof(double) * n)
+            q = arr
 
             for i in range(k):
 
@@ -200,10 +206,7 @@ cpdef double FastSumK(
             for i in range(n):
                 res += p[i]
 
-            if (k % 2) == 0:
-                free(q)
-            else:
-                free(p)
+            free(arr)
 
     else:
 
@@ -228,6 +231,18 @@ cpdef void compute_r_vec(double[::1] v, double[::1] w, double[::1] r) noexcept n
 
     r[j] = p
 
+cpdef double naive_dot(double[::1] v, double[::1] w):
+
+    assert v.shape[0] == w.shape[0]
+
+    cdef double res = 0.
+    cdef Py_ssize_t i
+
+    for i in range(v.shape[0]):
+        res += v[i]*w[i]
+
+    return res
+
 cpdef double DotK(double[::1] v, double[::1] w, Py_ssize_t k = 0):
 
     assert v.shape[0] == w.shape[0]
@@ -242,7 +257,7 @@ cpdef double DotK(double[::1] v, double[::1] w, Py_ssize_t k = 0):
 
     else:
 
-        r = <double[:2*v.shape[0]:1]> malloc(sizeof(double)*2*v.shape[0])
+        r = np.empty(2*v.shape[0], dtype=np.float64)
 
         compute_r_vec(v, w, r)
         res = SumK(r, k-1)
