@@ -10,6 +10,7 @@ NBodySyst Timings
 #   :nocontrols:
 #   :autoplay:
 #   :muted:
+#   :width: 
 #   :playsinline:
 #   :loop:
 #   :align: center

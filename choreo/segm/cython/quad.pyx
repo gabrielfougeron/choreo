@@ -130,7 +130,7 @@ cdef class QuadTable:
     This class implements useful methods for the approximate integration (or quadrature) of regular functions on a segment, as well as other related numerical methods.
 
     .. math::
-        \int_{0}^{1} f(x)\  \mathrm{d}x \approx \sum_{i=0}^{n-1} w_i f(x_i)
+        \int_{0}^{1} f(x) \dd x \approx \sum_{i=0}^{n-1} w_i f(x_i)
         :label: QuadTable_int_approx
 
     """
@@ -179,17 +179,17 @@ cdef class QuadTable:
 
     @property
     def nsteps(self):
-        """Number of steps (*i.e.* functions evaluations required) of the method."""
+        """Number of steps of the method."""
         return self._w.shape[0]
 
     @property
     def x(self):
-        """Nodes of the method in :math:`[-1,1]`."""
+        """Nodes of the method in :math:`[0,1]`."""
         return np.asarray(self._x)
     
     @property
     def w(self):
-        """Integration weights of the method on :math:`[-1,1]`."""
+        """Integration weights of the method on :math:`[0,1]`."""
         return np.asarray(self._w)      
 
     @property
@@ -208,6 +208,18 @@ cdef class QuadTable:
 
         The symmetric adjoint applied to :math:`x\mapsto f(1-x)` gives the same result as the original method applied to :math:`f`.
 
+        Example
+        -------
+        >>> import choreo
+        >>> Radau_I.symmetry_default(Radau_I.symmetric_adjoint())
+        True
+
+        See Also
+        --------
+
+        * :meth:`symmetry_default`
+        * :meth:`is_symmetric_pair`
+
         Returns
         -------
         :class:`choreo.segm.quad.QuadTable`
@@ -225,7 +237,7 @@ cdef class QuadTable:
 
             w_sym[i] = self._w[n-1-i]
             x_sym[i] = 1. - self._x[n-1-i]
-            wlag_sym[i] = self._wlag[n-1-i]
+            wlag_sym[i] = - self._wlag[n-1-i]
 
         return QuadTable(
             w_sym               ,
@@ -248,6 +260,9 @@ cdef class QuadTable:
         for i in range(nsteps):
 
             val = self._w[i] - other._w[nsteps-1-i] 
+            maxi = max(maxi, cfabs(val))
+
+            val = self._wlag[i] + other._wlag[nsteps-1-i]
             maxi = max(maxi, cfabs(val))
 
             val = self._x[i] + other._x[nsteps-1-i] - 1
@@ -277,6 +292,12 @@ cdef class QuadTable:
         >>> Radau_I.symmetry_default(Radau_I.symmetric_adjoint())
         0.0
 
+        See Also
+        --------
+
+        * :meth:`is_symmetric`
+        * :meth:`is_symmetric_pair`
+
         Parameters
         ----------
         other : :class:`QuadTable`, optional
@@ -299,10 +320,78 @@ cdef class QuadTable:
 
     @cython.final
     def is_symmetric_pair(self, QuadTable other, double tol = 1e-12):
-        return self._is_symmetric_pair(other, tol)
+        r"""Returns :data:`python:True` if the pair of integration methods is symmetric.
+
+        The pair of methods ``(self, other)`` is inferred symmetric if its symmetry default falls under the specified tolerance ``tol``.
+
+        Example
+        -------
+
+        >>> import choreo
+        >>> Radau_I = choreo.segm.multiprec_tables.ComputeQuadrature(10, method="Radau_I")
+        >>> Radau_II = choreo.segm.multiprec_tables.ComputeQuadrature(10, method="Radau_II")
+        >>> Radau_I.is_symmetric_pair(Radau_I)
+        False
+        >>> Radau_I.is_symmetric_pair(Radau_II)
+        True
+
+        See Also
+        --------
+
+        * :meth:`symmetry_default`
+        * :meth:`is_symmetric`
+
+        Parameters
+        ----------
+        tol : :obj:`numpy:numpy.float64` , optional
+            Tolerance on symmetry default, by default 1e-12        
+
+        Returns
+        -------
+        :class:`python:bool`
+            Whether the method is symmetric given the tolerance ``tol``.
+        """ 
+
+        if self._w.shape[0] == other._w.shape[0]:
+            return self._is_symmetric_pair(other, tol)
+        else:
+            return False
+        
 
     @cython.final
     def is_symmetric(self, double tol = 1e-12):
+        r"""Returns :data:`python:True` if the integration method is symmetric.
+
+        The method is inferred symmetric if its symmetry default falls under the specified tolerance ``tol``.
+
+        Example
+        -------
+
+        >>> import choreo
+        >>> Gauss = choreo.segm.multiprec_tables.ComputeQuadrature(10, method="Gauss")
+        >>> Gauss.is_symmetric()
+        True
+        >>> Radau_I = choreo.segm.multiprec_tables.ComputeQuadrature(10, method="Radau_I")
+        >>> Radau_I.is_symmetric()
+        False
+
+        See Also
+        --------
+
+        * :meth:`symmetry_default`
+        * :meth:`is_symmetric_pair`
+
+        Parameters
+        ----------
+        tol : :obj:`numpy:numpy.float64` , optional
+            Tolerance on symmetry default, by default 1e-12        
+
+        Returns
+        -------
+        :class:`python:bool`
+            Whether the method is symmetric given the tolerance ``tol``.
+        """ 
+
         return self._is_symmetric_pair(self, tol)        
 
 cpdef np.ndarray[double, ndim=1, mode="c"] IntegrateOnSegment(
@@ -318,7 +407,7 @@ cpdef np.ndarray[double, ndim=1, mode="c"] IntegrateOnSegment(
     Denoting :math:`a \eqdef \text{span}[0]`, :math:`b \eqdef \text{span}[1]` and :math:`\Delta \eqdef \text{span}[1]-\text{span}[0]`, the integral is first decomposed into ``nint`` smaller integrals as:
 
     .. math::
-        \int_a^b \operatorname{fun}(x) \ \mathrm{d}x = \sum_{i = 0}^{\text{nint}-1} \int_{a + \frac{i}{\text{nint}} * \Delta}^{a + \frac{i+1}{\text{nint}} * \Delta}  \operatorname{fun}(x) \ \mathrm{d}x 
+        \int_a^b \operatorname{fun}(x) \dd  x = \sum_{i = 0}^{\text{nint}-1} \int_{a + \frac{i}{\text{nint}} * \Delta}^{a + \frac{i+1}{\text{nint}} * \Delta}  \operatorname{fun}(x) \dd x 
 
     Each of the smaller integrals is then approximated using the :class:`QuadTable` ``quad`` (cf formula :eq:`QuadTable_int_approx`).
 
@@ -338,7 +427,7 @@ cpdef np.ndarray[double, ndim=1, mode="c"] IntegrateOnSegment(
     Let us compare the approximation and exact value of the `Wallis integral <https://en.wikipedia.org/wiki/Wallis%27_integrals>`_ of order 7.
 
     .. math::
-        \int_0^{\frac{\pi}{2}} \operatorname{sin}^7(x)\ \mathrm{d}x = \frac{16}{35}
+        \int_0^{\frac{\pi}{2}} \operatorname{sin}^7(x) \dd x = \frac{16}{35}
 
     >>> import numpy as np
     >>> import choreo
