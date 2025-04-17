@@ -13,3 +13,4 @@ sphinxcontrib-bibtex
 sphinx-copybutton
 sphinxcontrib-autoprogram
 sphinx_design
+sphinxcontrib-video

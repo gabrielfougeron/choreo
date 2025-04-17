@@ -3037,7 +3037,7 @@ cdef class NBodySyst():
     @cython.final
     def params_to_action_hess(self, double[::1] params_mom_buf, double[::1] dparams_mom_buf):
 
-        # Not actually used in optimization to allow for segmpos caching.
+        # Not actually used in optimization loop to allow for segmpos caching.
         # This explains the non pre-allocation of dsegmpos
 
         assert params_mom_buf.shape[0] == self.nparams

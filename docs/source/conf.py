@@ -6,6 +6,7 @@ import sys
 sys.path.insert(0, pathlib.Path(__file__).parents[2].resolve().as_posix())
 
 from sphinx_gallery.sorting import FileNameSortKey, ExplicitOrder
+import docs
 
 __PROJECT_ROOT__ = os.path.abspath(os.path.join(os.path.dirname(__file__),os.pardir,os.pardir))
 
@@ -47,6 +48,7 @@ extensions = [
     "sphinxcontrib.bibtex"          ,
     # "sphinx-prompt"                 , # Incompatible versions
     "sphinxcontrib.autoprogram"     ,
+    "sphinxcontrib.video"           ,
     "sphinx_copybutton"             ,
     "sphinx_design"                 ,
 ]
@@ -214,7 +216,10 @@ sphinx_gallery_conf = {
     ])                                                      ,
     "within_subsection_order": "FileNameSortKey"            ,
     "backreferences_dir": "_build/generated"                ,
-    "image_scrapers": ("matplotlib",)                       ,
+    "image_scrapers": (
+        "matplotlib",
+        "docs.file_scraper.ext_scraper"
+    )                                                       ,
     "default_thumb_file": html_logo_abs                     ,
     "plot_gallery": True                                    ,
     'matplotlib_animations': True                           ,
@@ -222,7 +227,6 @@ sphinx_gallery_conf = {
     "reference_url"             : {"sphinx_gallery": None,} ,
     "min_reported_time"         : 10000                     ,
 }
-
 
 #############
 # Latex PDF #
@@ -277,8 +281,6 @@ napoleon_type_aliases = None
 napoleon_attr_annotations = True
 autodoc_typehints = "description"
 autosummary_generate = True
-
-napoleon_custom_sections = ['See Also']
 
 ###################
 # Bibtex settings #

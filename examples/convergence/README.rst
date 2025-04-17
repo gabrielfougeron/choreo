@@ -1,2 +1,2 @@
-Convergence analysis of numerical methods
-=========================================
+Analysis of numerical methods
+=============================

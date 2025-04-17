@@ -95,32 +95,35 @@ elif platform.system() == "Darwin": # MacOS
         "-Wno-incompatible-pointer-types-discards-qualifiers",
         "-Wno-unused-command-line-argument"
     ] 
+    
+    std_args = ["-march=native", "-Xpreprocessor", "-std=c99", "-lm"]
+    std_link_args = ["-lm", "-lomp"]
 
     extra_compile_args_std = {
-        "profile" : ["-Og", "-march=native", "-Xpreprocessor", "-std=c99", "-lm", *ignore_warnings_args],
-        "0" : ["-O0", "-march=native", "-Xpreprocessor", "-std=c99", "-lm", *ignore_warnings_args],
-        "1" : ["-O1", "-march=native", "-Xpreprocessor", "-std=c99", "-lm", *ignore_warnings_args],
-        "2" : ["-O2", "-march=native", "-Xpreprocessor", "-std=c99", "-lm", *ignore_warnings_args],
-        "3" : ["-O3", "-march=native", "-Xpreprocessor", "-std=c99", "-lm", *ignore_warnings_args],
-        "fast" : ["-Ofast", "-march=native", "-Xpreprocessor", "-std=c99", "-lm", "-flto", *ignore_warnings_args],
+        "profile" : ["-Og", *std_args, *ignore_warnings_args],
+        "0" : ["-O0", *std_args, *ignore_warnings_args],
+        "1" : ["-O1", *std_args, *ignore_warnings_args],
+        "2" : ["-O2", *std_args, *ignore_warnings_args],
+        "3" : ["-O3", *std_args, *ignore_warnings_args],
+        "fast" : ["-Ofast", "-flto", *std_args, *ignore_warnings_args],
     }[opt_lvl]
     
     extra_compile_args_safe = {
-        "profile" : ["-Og", "-march=native", "-Xpreprocessor", "-std=c99", "-lm", *ignore_warnings_args],
-        "0" : ["-O0", "-march=native", "-Xpreprocessor", "-std=c99", "-lm", *ignore_warnings_args],
-        "1" : ["-O1", "-march=native", "-Xpreprocessor", "-std=c99", "-lm", *ignore_warnings_args],
-        "2" : ["-O2", "-march=native", "-Xpreprocessor", "-std=c99", "-lm", *ignore_warnings_args],
-        "3" : ["-O3", "-march=native", "-Xpreprocessor", "-std=c99", "-lm", *ignore_warnings_args],
-        "fast" : ["-O3", "-march=native", "-Xpreprocessor", "-std=c99", "-lm", "-flto", *ignore_warnings_args],
+        "profile" : ["-Og", *std_args, *ignore_warnings_args],
+        "0" : ["-O0", *std_args, *ignore_warnings_args],
+        "1" : ["-O1", *std_args, *ignore_warnings_args],
+        "2" : ["-O2", *std_args, *ignore_warnings_args],
+        "3" : ["-O3", *std_args, *ignore_warnings_args],
+        "fast" : ["-O3", "-flto", *std_args, *ignore_warnings_args],
     }[opt_lvl]
 
     extra_link_args = {
-        "profile" : ["-lm", "-lomp", *ignore_warnings_args],
-        "0" : ["-lm", "-lomp", *ignore_warnings_args],
-        "1" : ["-lm", "-lomp", *ignore_warnings_args],
-        "2" : ["-lm", "-lomp", *ignore_warnings_args],
-        "3" : ["-lm", "-lomp", *ignore_warnings_args],
-        "fast" : ["-lm", "-lomp", "-flto", *ignore_warnings_args],
+        "profile" : [*std_link_args, *ignore_warnings_args],
+        "0" : [*std_link_args, *ignore_warnings_args],
+        "1" : [*std_link_args, *ignore_warnings_args],
+        "2" : [*std_link_args, *ignore_warnings_args],
+        "3" : [*std_link_args, *ignore_warnings_args],
+        "fast" : ["-flto", *std_link_args, *ignore_warnings_args],
     }[opt_lvl]
 
 elif platform.system() == "Linux":
@@ -162,32 +165,35 @@ elif platform.system() == "Linux":
         }[opt_lvl]
 
     else:
+        
+        std_args = ["-march=native", "-fopenmp", "-lm"]
+        std_link_args = ["-lm", "-fopenmp"]
 
         extra_compile_args_std = {
-            "profile" : ["-Og", "-march=native", "-fopenmp", "-lm", *ignore_warnings_args],
-            "0" : ["-O0", "-march=native", "-fopenmp", "-lm", *ignore_warnings_args],
-            "1" : ["-O1", "-march=native", "-fopenmp", "-lm", *ignore_warnings_args],
-            "2" : ["-O2", "-march=native", "-fopenmp", "-lm", *ignore_warnings_args],
-            "3" : ["-O3", "-march=native", "-fopenmp", "-lm", *ignore_warnings_args],
-            "fast" : ["-Ofast", "-march=native", "-fopenmp", "-lm", "-flto", *ignore_warnings_args],
+            "profile" : ["-Og", *std_args, *ignore_warnings_args],
+            "0" : ["-O0", *std_args, *ignore_warnings_args],
+            "1" : ["-O1", *std_args, *ignore_warnings_args],
+            "2" : ["-O2", *std_args, *ignore_warnings_args],
+            "3" : ["-O3", *std_args, *ignore_warnings_args],
+            "fast" : ["-Ofast", "-flto", *std_args, *ignore_warnings_args],
         }[opt_lvl]
 
         extra_compile_args_safe = {
-            "profile" : ["-Og", "-march=native", "-fopenmp", "-lm", *ignore_warnings_args],
-            "0" : ["-O0", "-march=native", "-fopenmp", "-ffp-contract=on", "-lm", *ignore_warnings_args],
-            "1" : ["-O1", "-march=native", "-fopenmp", "-ffp-contract=on", "-lm", *ignore_warnings_args],
-            "2" : ["-O2", "-march=native", "-ffp-contract=on", "-fopenmp", "-lm", *ignore_warnings_args],
-            "3" : ["-O3", "-march=native", "-ffp-contract=on", "-fopenmp", "-lm", *ignore_warnings_args],
-            "fast" : ["-O3", "-march=native", "-ffp-contract=on", "-fopenmp", "-lm", *ignore_warnings_args],
+            "profile" : ["-Og", "-ffp-contract=on", *std_args, *ignore_warnings_args],
+            "0" : ["-O0", "-ffp-contract=on", *std_args, *ignore_warnings_args],
+            "1" : ["-O1", "-ffp-contract=on", *std_args, *ignore_warnings_args],
+            "2" : ["-O2", "-ffp-contract=on", *std_args, *ignore_warnings_args],
+            "3" : ["-O3", "-ffp-contract=on", *std_args, *ignore_warnings_args],
+            "fast" : ["-O3", "-ffp-contract=on", "-flto", *std_args, *ignore_warnings_args],
         }[opt_lvl]
 
         extra_link_args = {
-            "profile" : ["-fopenmp", "-lm", *ignore_warnings_args],
-            "0" : ["-fopenmp", "-lm", *ignore_warnings_args],
-            "1" : ["-fopenmp", "-lm", *ignore_warnings_args],
-            "2" : ["-fopenmp", "-lm", *ignore_warnings_args],
-            "3" : ["-fopenmp", "-lm", *ignore_warnings_args],
-            "fast" : ["-fopenmp", "-lm", "-flto", *ignore_warnings_args],
+            "profile" : [*std_link_args, *ignore_warnings_args],
+            "0" : [*std_link_args, *ignore_warnings_args],
+            "1" : [*std_link_args, *ignore_warnings_args],
+            "2" : [*std_link_args, *ignore_warnings_args],
+            "3" : [*std_link_args, *ignore_warnings_args],
+            "fast" : ["-flto", *std_link_args, *ignore_warnings_args],
         }[opt_lvl]
 
 else:
