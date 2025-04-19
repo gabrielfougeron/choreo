@@ -25,14 +25,15 @@ Cython.warn.undeclared = True
 src_ext = '.pyx'
 
 cython_extnames_safemath = [
-    ("choreo.cython._ActionSym"             , False),
-    ("choreo.cython._NBodySyst"             , False),
-    ("choreo.cython.pyfftw_fake"            , False),
-    ("choreo.segm.cython.ODE"               , False),
-    ("choreo.segm.cython.quad"              , False),
-    ("choreo.segm.cython.test"              , False),
-    ("choreo.segm.cython.eft_lib"           , True ),
-    ("choreo.scipy_plus.cython.blas_consts" , False),
+    ("choreo.cython._ActionSym"                 , False),
+    ("choreo.cython._NBodySyst"                 , False),
+    ("choreo.cython.pyfftw_fake"                , False),
+    ("choreo.segm.cython.ODE"                   , False),
+    ("choreo.segm.cython.quad"                  , False),
+    ("choreo.segm.cython.test"                  , False),
+    ("choreo.segm.cython.eft_lib"               , True ),
+    ("choreo.scipy_plus.cython.blas_consts"     , False),
+    ("choreo.scipy_plus.cython.blas_cheatsheet" , False),
 ]
 
 cython_extnames = [item[0] for item in cython_extnames_safemath]
@@ -305,6 +306,8 @@ if platform.system() == "Windows":
 else:
     import multiprocessing
     nthreads = multiprocessing.cpu_count()
+    
+nthreads = 0
 
 ext_modules = Cython.Build.cythonize(
     ext_modules,

@@ -6,6 +6,7 @@
     :nosignatures:
 
     test_quad
+    test_interp
     test_Implicit_ODE
     test_Explicit_ODE
 
@@ -57,6 +58,56 @@ def test_quad(float64_tols, method, nsteps, quad_problem, fun_type, DoEFT):
     print(np.linalg.norm(num_sol-ex_sol))
     if nint_OK is not None:
         assert np.allclose(num_sol, ex_sol, rtol = float64_tols.rtol, atol = float64_tols.atol) 
+        
+@ParametrizeDocstrings
+@pytest.mark.parametrize("method", QuadMethods)
+@pytest.mark.parametrize("nsteps", High_orders)
+@pytest.mark.parametrize("quad_problem", [pytest.param(define_quad_problem(eq_name), id=eq_name) for eq_name in all_quad_problem_names])
+@pytest.mark.parametrize("fun_type", all_fun_types)
+def test_interp(float64_tols, method, nsteps, quad_problem, fun_type):
+    """Tests the accuracy of barycentric Lagrange interpolation.
+    """
+
+    quad = choreo.segm.multiprec_tables.ComputeQuadrature(nsteps, method=method)
+   
+    py_fun = quad_problem["fun"]["py_fun"]
+    fun = quad_problem["fun"].get(fun_type)
+    
+    if fun is None:
+        return
+    
+    x_span = quad_problem["x_span"]
+    ndim = quad_problem["ndim"]
+
+    funvals = choreo.segm.quad.EvalOnNodes(fun, ndim, x_span, quad)
+    x_quad = quad.x
+    
+    for istep in range(nsteps):
+        
+        x = x_span[0] + (x_span[1]-x_span[0])*x_quad[istep]
+        res = py_fun(x)
+        
+        assert np.allclose(res, funvals[istep,:], rtol = float64_tols.rtol, atol = float64_tols.atol) 
+
+    ntests = 10
+    x_test = x_span[0] + (x_span[1]-x_span[0])*np.random.random((ntests))
+    
+    funvals_exact = np.empty((ntests, ndim), dtype=np.float64)
+    for itest in range(ntests):
+        x = x_test[itest]
+        funvals_exact[itest,:] = py_fun(x)
+    
+    fun_approx = choreo.segm.quad.InterpolateOnSegment(
+        funvals ,
+        x_test  ,
+        x_span  ,
+        quad    ,
+    )
+    
+    assert fun_approx.shape[0] == ntests
+    assert fun_approx.shape[1] == ndim
+    assert np.allclose(funvals_exact, fun_approx, rtol = float64_tols.rtol, atol = float64_tols.atol) 
+
 
 @ParametrizeDocstrings
 @pytest.mark.parametrize(("method_x", "method_v"), [(method_x, method_v) for (method_x, method_v) in SymplecticImplicitRKMethodPairs])

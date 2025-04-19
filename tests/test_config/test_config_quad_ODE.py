@@ -3,6 +3,7 @@ import scipy
 import choreo
 
 Small_orders = list(range(2,11))
+High_orders = [25,50,100]
 
 all_fun_types = [
     "py_fun"            ,

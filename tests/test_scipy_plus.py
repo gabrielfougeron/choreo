@@ -70,5 +70,22 @@ def test_nullspace(float64_tols, n, m):
         # Orthogonality
         assert np.allclose(np.matmul(Z.T,Z), np.identity(nullspace_dim), rtol = float64_tols.rtol, atol = float64_tols.atol) 
 
+@ParametrizeDocstrings
+@ProbabilisticTest()
+@pytest.mark.parametrize("m", Dense_linalg_dims)
+@pytest.mark.parametrize("n", Dense_linalg_dims)
+@pytest.mark.parametrize("k", Dense_linalg_dims)
+def test_blas_matmul(float64_tols, m, n, k):
+    """ Tests calling dgemm directly from blas for regular matmul.
+    """
+    
+    A = np.random.random((m,k))
+    B = np.random.random((k,n))
+
+    AB_np = np.matmul(A,B)
+    AB_blas = choreo.scipy_plus.cython.blas_cheatsheet.blas_matmul(A,B)
+    
+    print(np.linalg.norm(AB_np - AB_blas))
+    assert np.allclose(AB_np, AB_blas, rtol = float64_tols.rtol, atol = float64_tols.atol) 
             
 

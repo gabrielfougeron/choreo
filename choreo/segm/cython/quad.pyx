@@ -5,14 +5,20 @@ quad.pyx : Defines segment quadrature related things.
 
 __all__ = [
     'QuadTable'             ,
+    'EvalOnNodes'           ,
     'IntegrateOnSegment'    ,
+    'InterpolateOnSegment'  ,
 ]
 
 from choreo.segm.cython.eft_lib cimport TwoSum_incr
 
 cimport scipy.linalg.cython_blas
+from libc.math cimport fabs as cfabs
 from libc.stdlib cimport malloc, free
 from libc.string cimport memset
+
+cdef extern from "float.h":
+    double DBL_MAX
 
 import numpy as np
 cimport numpy as np
@@ -394,6 +400,57 @@ cdef class QuadTable:
 
         return self._is_symmetric_pair(self, tol)        
 
+cpdef np.ndarray[double, ndim=2, mode="c"] EvalOnNodes(
+    object fun              ,
+    Py_ssize_t ndim         ,
+    (double, double) x_span ,
+    QuadTable quad          ,
+):
+    """ Evaluates a function on quadrature nodes of an interval.
+
+    Parameters
+    ----------
+    fun : :class:`python:object` or :class:`scipy:scipy.LowLevelCallable`
+        Function to be evaluated.
+    ndim : :class:`python:int`
+        Number of output dimensions of the integrand.
+    x_span : :class:`python:tuple` (:obj:`numpy:numpy.float64`, :obj:`numpy:numpy.float64`)
+        Lower and upper bound of the evaluation interval.
+    quad : :class:`QuadTable`
+        Normalized evaluation nodes.
+
+    Returns
+    -------
+    :class:`numpy:numpy.ndarray`:class:`(shape = (ndim), dtype = np.float64)`
+        The approximated value of the integral.
+
+    """  
+
+    cdef Py_ssize_t nsteps = quad._w.shape[0]
+    cdef Py_ssize_t isteps
+
+    cdef ccallback_t callback
+    ccallback_prepare(&callback, signatures, fun, CCALLBACK_DEFAULTS)
+
+    cdef np.ndarray[double, ndim=2, mode="c"] funvals_np = np.empty((nsteps, ndim),dtype=np.float64)
+    cdef double[:,::1] funvals = funvals_np
+
+    cdef double dx = x_span[1] - x_span[0]
+    cdef double xi
+
+    with nogil:
+
+        for istep in range(nsteps):
+
+            xi = x_span[0] + dx * quad._x[istep]
+
+            # f_res = f(xi)
+            LowLevelFun_apply(callback, xi, funvals[istep,:])
+
+    ccallback_release(&callback)
+
+    return funvals_np
+
 cpdef np.ndarray[double, ndim=1, mode="c"] IntegrateOnSegment(
     object fun              ,
     int ndim                ,
@@ -452,6 +509,11 @@ cpdef np.ndarray[double, ndim=1, mode="c"] IntegrateOnSegment(
         Number of sub-intervals for the integration, by default ``1``.
     DoEFT : :class:`python:bool`, optional
         Whether to use an error-free transformation for summation, by default :data:`python:True`.
+
+    Returns
+    -------
+    :class:`numpy:numpy.ndarray`:class:`(shape = (ndim), dtype = np.float64)`
+        The approximated value of the integral.
     """
 
     cdef ccallback_t callback
@@ -533,3 +595,139 @@ cdef void IntegrateOnSegment_ann(
 
     if DoEFT:
         free(f_eft_comp)
+
+cpdef np.ndarray[double, ndim=2, mode="c"] InterpolateOnSegment(
+    double[:,::1] funvals   ,
+    double[::1] x           ,
+    (double, double) x_span ,
+    QuadTable quad          ,
+    double eps = 1e-14      ,
+):
+    """ Interpolates a function given its value on quadrature nodes of an interval.
+
+    TODO : blabla
+
+    Parameters
+    ----------
+    fun : :class:`python:object` or :class:`scipy:scipy.LowLevelCallable`
+        Function to be evaluated.
+    ndim : :class:`python:int`
+        Number of output dimensions of the integrand.
+    x_span : :class:`python:tuple` (:obj:`numpy:numpy.float64`, :obj:`numpy:numpy.float64`)
+        Lower and upper bound of the evaluation interval.
+    quad : :class:`QuadTable`
+        Normalized evaluation nodes.
+    eps : :obj:`numpy:numpy.float64`
+        TODO description, by default ``1e-14``.
+
+    Returns
+    -------
+    :class:`numpy:numpy.ndarray`:class:`(shape = (ndim), dtype = np.float64)`
+        The approximated value of the integral.
+
+    """  
+
+    assert funvals.shape[0] == quad._w.shape[0]
+    assert x_span[1] > x_span[0]
+
+    cdef int ndim = funvals.shape[1]
+    cdef int nx = x.shape[0]
+    cdef int nsteps = quad._w.shape[0]
+
+    cdef np.ndarray[double, ndim=2, mode="c"] res = np.empty((nx,ndim) ,dtype=np.float64)
+
+    cdef double *l
+    cdef double *xscal
+    cdef int i
+    cdef double dxinv
+
+    with nogil:
+        
+        l = <double*> malloc(sizeof(double)*nx*nsteps)
+        xscal = <double*> malloc(sizeof(double)*nx)
+        
+        dxinv = 1./(x_span[1] - x_span[0])
+
+        for i in range(nx):
+            xscal[i] = (x[i] - x_span[0]) * dxinv
+
+        ComputeLagrangeWeights(
+            xscal       ,
+            nx          ,
+            quad._wlag  , 
+            quad._x     ,
+            l           ,
+            eps         ,
+        )
+
+        # res = l . funvals
+        scipy.linalg.cython_blas.dgemm(transn,transn,&ndim,&nx,&nsteps,&one_double,&funvals[0,0],&ndim,l,&nsteps,&zero_double,&res[0,0],&ndim)
+
+        free(xscal)
+        free(l)
+
+    return res
+
+@cython.cdivision(True)
+cdef inline void ComputeLagrangeWeights(
+    double *xscal       ,
+    int nx              ,
+    double[::1] wlag    ,
+    double[::1] x       ,
+    double *l           ,
+    double eps          ,
+) noexcept nogil:
+
+    cdef double* cur_l
+    cdef double* cur_x_l
+    cdef double* cur_xscal = xscal
+    cdef double xscal_val
+
+    cdef int ix
+    cdef int min_istep = 0
+    cdef int istep
+    cdef int nsteps = wlag.shape[0]
+
+    cdef double cursum
+    cdef double absdx
+    cdef double min_dx
+    cdef double dx
+
+    for ix in range(nx):
+
+        min_dx = DBL_MAX
+
+        cur_x_l = l + ix * nsteps
+        cur_l = cur_x_l
+        xscal_val = xscal[ix]
+
+        for istep in range(nsteps):
+
+            cur_l[0] = xscal_val - x[istep]
+            absdx = cfabs(cur_l[0])
+            
+            if absdx < min_dx:
+                min_dx = absdx
+                min_istep = istep
+
+            cur_l += 1
+
+        if min_dx < eps:
+
+            memset(cur_x_l, 0, sizeof(double)*nsteps)
+            cur_x_l[min_istep] = 1.
+
+        else:
+
+            cursum = 0.
+            cur_l = cur_x_l
+
+            for istep in range(nsteps):
+
+                cur_l[0] = wlag[istep] / cur_l[0] 
+                cursum += cur_l[0]
+
+                cur_l += 1
+
+            cursum = 1./cursum
+            scipy.linalg.cython_blas.dscal(&nsteps, &cursum, cur_x_l, &int_one)
