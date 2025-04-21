@@ -94,6 +94,9 @@ ClassicalImplicitRKMethods = [
     "Lobatto_IIIC*" ,
     "Lobatto_IIID"  ,            
     "Lobatto_IIIS"  ,     
+    "Cheb_I"        ,
+    "Cheb_II"       ,
+    "ClenshawCurtis",
 ]
 
 SymplecticImplicitRKMethodPairs = [

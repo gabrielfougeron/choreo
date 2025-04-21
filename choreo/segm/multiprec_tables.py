@@ -23,7 +23,6 @@ all_GL_int = [
 def tridiag_eigenvalues(d, e):
     """
     Adapted from mpmath 
-
     """
 
     n = len(d)
@@ -447,10 +446,10 @@ def Get_quad_method_from_RK_method(method="Gauss"):
         if quad_method in method:
             return quad_method
     else:
-        return ValueError(f"Unknown associated quadrature method {method}")
+        return method
 
 @functools.cache
-def ComputeGaussButcherTables(n, dps=60, method="Gauss"):
+def ComputeNamedGaussButcherTables(n, dps=60, method="Gauss"):
     
     mpmath.mp.dps = dps
     quad_method = Get_quad_method_from_RK_method(method)
@@ -462,7 +461,7 @@ def ComputeGaussButcherTables(n, dps=60, method="Gauss"):
         Butcher_a = ComputeButcher_sub_collocation(z,n)
     
     known_method = False
-    if method in ["Gauss", "Lobatto_IIIA", "Radau_IIA", "Lobatto_IIIC*"]:
+    if method in ["Gauss", "Lobatto_IIIA", "Radau_IIA", "Lobatto_IIIC*", "Cheb_I", "Cheb_II", "ClenshawCurtis"]:
         # No transformation is required
         known_method = True
         
@@ -510,8 +509,23 @@ def GetConvergenceRate(method, n):
 def ComputeQuadratureTables(n, dps=30, method="Gauss"):
 
     mpmath.mp.dps = dps
-    
     z = ComputeQuadNodes(n, method=method)
+    return ComputeQuadratureTablesFromNodes(z, dps=30)
+
+def ComputeQuadratureTablesFromNodes(nodes, dps=30):
+
+    mpmath.mp.dps = dps
+
+    n = len(nodes)
+    
+    if isinstance(nodes, mpmath.matrix):
+        z = nodes
+    else:
+        # Not sure how to cast properly
+        z = mpmath.matrix(n,1)
+        for i in range(n):
+            z[i] = nodes[i]
+        
     wlag = ComputeLagrangeWeights(n, z)
     
     vdm_inv = ComputeVandermondeInverseParker(n, z, wlag)
@@ -520,7 +534,7 @@ def ComputeQuadratureTables(n, dps=30, method="Gauss"):
     
     return w, z, wlag, vdm_inv
 
-def ComputeQuadrature(n, dps=30, method="Gauss"):
+def ComputeQuadrature(n=10, dps=30, method="Gauss", nodes=None):
     """Computes a :class:`choreo.segm.quad.QuadTable`
 
     The computation is performed at a user-defined precision using `mpmath <https://mpmath.org/doc/current>`_ to ensure that the result does not suffer from precision loss, even at relatively high orders.
@@ -533,24 +547,34 @@ def ComputeQuadrature(n, dps=30, method="Gauss"):
     * ``"Cheb_I"`` and ``"Cheb_II"``
     * ``"ClenshawCurtis"``
     
+    Alternatively, the user can supply an array of node values between ``0.`` and ``1.``. The result is then the associated collocation method.
+    
     Example
     -------
     
     >>> import choreo
-    >>> choreo.segm.multiprec_tables.ComputeQuadrature(2, dps=60, method="Lobatto_III")
+    >>> choreo.segm.multiprec_tables.ComputeQuadrature(n=2, dps=60, method="Lobatto_III")
     QuadTable object with 2 nodes
     Nodes: [7.7787691e-62 1.0000000e+00]
     Weights: [0.5 0.5]
     Barycentric Lagrange interpolation weights: [-1.  1.]
+    >>> 
+    >>> choreo.segm.multiprec_tables.ComputeQuadrature(nodes=[0., 0.25, 0.5, 0.75, 1.])
+    QuadTable object with 5 nodes
+    Nodes: [0.   0.25 0.5  0.75 1.  ]
+    Weights: [0.07777778 0.35555556 0.13333333 0.35555556 0.07777778]
+    Barycentric Lagrange interpolation weights: [ 10.66666667 -42.66666667  64.         -42.66666667  10.66666667]
 
     Parameters
     ----------
-    n : :class:`python:int`
-        Order of the method.
+    n : :class:`python:int`, optional
+        Order of the method. By default ``10``.
     dps : :class:`python:int`, optional
         Context precision in `mpmath <https://mpmath.org/doc/current>`_. See :doc:`mpmath:contexts` for more info. By default ``30``.
     method : :class:`python:str`, optional
-        Name of the method, by default `"Gauss"`.
+        Name of the method, by default ``"Gauss"``.
+    nodes: :class:`numpy:numpy.ndarray` | :class:`mpmath:mpmath.matrix` | :data:`python:None`, optional
+        Array of integration node values. By default, :data:`python:None`.
 
     Returns
     -------
@@ -558,8 +582,13 @@ def ComputeQuadrature(n, dps=30, method="Gauss"):
         The resulting nodes and weights of the quadrature.
     """    
 
-    th_cvg_rate = GetConvergenceRate(method, n)
-    w, z, wlag, vdm_inv = ComputeQuadratureTables(n, dps=dps, method=method)
+    if nodes is None:
+        th_cvg_rate = GetConvergenceRate(method, n)
+        w, z, wlag, vdm_inv = ComputeQuadratureTables(n, dps=dps, method=method)
+    else:
+        n = len(nodes)
+        th_cvg_rate = n
+        w, z, wlag, vdm_inv = ComputeQuadratureTablesFromNodes(nodes, dps=dps)
 
     w_np = np.array(w.tolist(),dtype=np.float64).reshape(n)
     z_np = np.array(z.tolist(),dtype=np.float64).reshape(n)
@@ -572,14 +601,83 @@ def ComputeQuadrature(n, dps=30, method="Gauss"):
         th_cvg_rate = th_cvg_rate   ,
     )
 
-def ComputeImplicitRKTable_Gauss(n, dps=60, method="Gauss"):
+def ComputeImplicitRKTable(n=10, dps=60, method="Gauss", nodes=None):
+    """Computes a :class:`choreo.segm.ODE.ImplicitRKTable`
 
-    th_cvg_rate = GetConvergenceRate(method, n)
+    The computation is performed at a user-defined precision using `mpmath <https://mpmath.org/doc/current>`_ to ensure that the result does not suffer from precision loss, even at relatively high orders.
     
-    quad_method = Get_quad_method_from_RK_method(method)
-    quad_table = ComputeQuadrature(n, dps=dps, method=quad_method)
-    Butcher_a, Butcher_b, Butcher_c, Butcher_beta, Butcher_gamma = ComputeGaussButcherTables(n, dps=dps, method=method)
+    Available choices for ``method`` are:
+    
+    * ``"Gauss"``
+    * ``"Radau_IA"``, ``"Radau_IIA"``, ``"Radau_IB"`` and ``"Radau_IIB"``
+    * ``"Lobatto_IIIA"``, ``"Lobatto_IIIB"``, ``"Lobatto_IIIC"``, ``"Lobatto_IIIC*"``, ``"Lobatto_IIID"`` and ``"Lobatto_IIIS"`` 
+    * ``"Cheb_I"`` and ``"Cheb_II"``
+    * ``"ClenshawCurtis"``
+    
+    Alternatively, the user can supply an array of node values between ``0.`` and ``1.``. The result is then the associated collocation method. Cf Theorem 7.7 of :footcite:`hairer1987solvingODEI` for more details.
+    
+    :cited:
+    .. footbibliography::
+    
+    Example
+    -------
+    
+    >>> import choreo
+    >>> Gauss = choreo.segm.multiprec_tables.ComputeImplicitRKTable(n=2, dps=60, method="Gauss")
+    >>> Gauss
+    ImplicitRKTable object of order 2
+    >>> Gauss.a_table
+    array([[ 0.25      , -0.03867513],
+        [ 0.53867513,  0.25      ]])
+    >>> Gauss.b_table
+    array([0.5, 0.5])
+    >>> Gauss.c_table
+    array([0.21132487, 0.78867513])
+    
+    Parameters
+    ----------
+    n : :class:`python:int`, optional
+        Order of the method. By default ``10``.
+    dps : :class:`python:int`, optional
+        Context precision in `mpmath <https://mpmath.org/doc/current>`_. See :doc:`mpmath:contexts` for more info. By default ``30``.
+    method : :class:`python:str`, optional
+        Name of the method, by default ``"Gauss"``.
+    nodes: :class:`numpy:numpy.ndarray` | :class:`mpmath:mpmath.matrix` | :data:`python:None`, optional
+        Array of integration node values. By default, :data:`python:None`.
 
+    Returns
+    -------
+    :class:`choreo.segm.quad.QuadTable`
+        The resulting nodes and weights of the quadrature.
+    """    
+    
+
+    if nodes is None:
+
+        th_cvg_rate = GetConvergenceRate(method, n)
+        
+        quad_method = Get_quad_method_from_RK_method(method)
+        quad_table = ComputeQuadrature(n, dps=dps, method=quad_method)
+        Butcher_a, Butcher_b, Butcher_c, Butcher_beta, Butcher_gamma = ComputeNamedGaussButcherTables(n, dps=dps, method=method)
+        
+    else:
+        n = len(nodes)
+        th_cvg_rate = n
+        w, z, wlag, vdm_inv = ComputeQuadratureTablesFromNodes(nodes, dps=dps)
+        
+        w_np = np.array(w.tolist(),dtype=np.float64).reshape(n)
+        z_np = np.array(z.tolist(),dtype=np.float64).reshape(n)
+        w_lag_np = np.array(wlag.tolist(),dtype=np.float64).reshape(n)
+        
+        quad_table = QuadTable(
+            w = w_np                    ,
+            x = z_np                    ,
+            wlag = w_lag_np             ,
+            th_cvg_rate = th_cvg_rate   ,
+        )
+        
+        Butcher_a, Butcher_beta , Butcher_gamma = ComputeButcher_collocation(z, vdm_inv, n)
+        
     Butcher_a_np = np.array(Butcher_a.tolist(),dtype=np.float64)
     Butcher_beta_np = np.array(Butcher_beta.tolist(),dtype=np.float64)
     Butcher_gamma_np = np.array(Butcher_gamma.tolist(),dtype=np.float64)
@@ -592,12 +690,34 @@ def ComputeImplicitRKTable_Gauss(n, dps=60, method="Gauss"):
         th_cvg_rate = th_cvg_rate       ,
     )
         
-def ComputeImplicitSymplecticRKTablePair_Gauss(n, dps=60, method="Gauss"):
-    
-    th_cvg_rate = GetConvergenceRate(method, n)
-    
-    quad_table = ComputeQuadrature(n, dps=dps, method=method)
-    Butcher_a, Butcher_b, Butcher_c, Butcher_beta, Butcher_gamma = ComputeGaussButcherTables(n, dps=dps, method=method)
+def ComputeImplicitSymplecticRKTablePair_Gauss(n=10, dps=60, method="Gauss", nodes=None):
+
+    if nodes is None:
+
+        th_cvg_rate = GetConvergenceRate(method, n)
+        
+        quad_method = Get_quad_method_from_RK_method(method)
+        quad_table = ComputeQuadrature(n, dps=dps, method=quad_method)
+        Butcher_a, Butcher_b, Butcher_c, Butcher_beta, Butcher_gamma = ComputeNamedGaussButcherTables(n, dps=dps, method=method)
+        
+    else:
+        n = len(nodes)
+        th_cvg_rate = n
+        w, z, wlag, vdm_inv = ComputeQuadratureTablesFromNodes(nodes, dps=dps)
+        
+        w_np = np.array(w.tolist(),dtype=np.float64).reshape(n)
+        z_np = np.array(z.tolist(),dtype=np.float64).reshape(n)
+        w_lag_np = np.array(wlag.tolist(),dtype=np.float64).reshape(n)
+        
+        quad_table = QuadTable(
+            w = w_np                    ,
+            x = z_np                    ,
+            wlag = w_lag_np             ,
+            th_cvg_rate = th_cvg_rate   ,
+        )
+        
+        Butcher_a, Butcher_beta , Butcher_gamma = ComputeButcher_collocation(z, vdm_inv, n)
+        
     Butcher_a_ad = SymplecticAdjointButcher(Butcher_a, Butcher_b, n)  
     
     Butcher_a_np = np.array(Butcher_a.tolist(),dtype=np.float64)

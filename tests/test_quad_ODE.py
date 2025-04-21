@@ -120,8 +120,8 @@ def test_Implicit_ODE(float64_tols, method_x, method_v, nsteps, ivp, fun_type, v
     """Tests the accuracy of implicit ODE solvers.
     """
 
-    rk_x = choreo.segm.multiprec_tables.ComputeImplicitRKTable_Gauss(nsteps, method = method_x)
-    rk_v = choreo.segm.multiprec_tables.ComputeImplicitRKTable_Gauss(nsteps, method = method_v)
+    rk_x = choreo.segm.multiprec_tables.ComputeImplicitRKTable(nsteps, method = method_x)
+    rk_v = choreo.segm.multiprec_tables.ComputeImplicitRKTable(nsteps, method = method_v)
    
     fgun = ivp["fgun"].get((fun_type, vector_calls))
     

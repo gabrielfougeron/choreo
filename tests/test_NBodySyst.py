@@ -914,7 +914,7 @@ def test_ODE_vs_spectral(NBS, params_buf, vector_calls, LowLevel, NoSymIfPossibl
     nint_ODE = (NBS.segm_store-1) * keep_freq
     method = "Gauss"
     
-    rk = choreo.segm.multiprec_tables.ComputeImplicitRKTable_Gauss(nsteps, method=method)
+    rk = choreo.segm.multiprec_tables.ComputeImplicitRKTable(nsteps, method=method)
     
     segmpos_ODE, segmvel_ODE = choreo.segm.ODE.SymplecticIVP(
         rk = rk                 ,
@@ -1022,7 +1022,7 @@ def test_ODE_grad_vs_FD(float64_tols_loose, NBS, params_buf, vector_calls, LowLe
     keep_freq = nint_ODE
     method = "Gauss"
     
-    rk = choreo.segm.multiprec_tables.ComputeImplicitRKTable_Gauss(nsteps, method=method)
+    rk = choreo.segm.multiprec_tables.ComputeImplicitRKTable(nsteps, method=method)
 
     t_span = ODE_Syst["t_span"]
     fun = ODE_Syst["fun"]

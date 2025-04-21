@@ -185,7 +185,10 @@ cdef class QuadTable:
 
     @property
     def nsteps(self):
-        """Number of steps of the method."""
+        """Number of steps of the method.
+        
+        This is the number of function evaluations needed to approximate an integral.
+        """
         return self._w.shape[0]
 
     @property
@@ -205,7 +208,7 @@ cdef class QuadTable:
 
     @property
     def th_cvg_rate(self):
-        """Theoretical congergence rate of the quadrature for smooth functions."""
+        """Theoretical convergence rate of the quadrature for smooth functions."""
         return self._th_cvg_rate
 
     @cython.final
@@ -278,12 +281,13 @@ cdef class QuadTable:
 
     @cython.final
     def symmetry_default(
-        self        ,
-        other = None,
+        self                    ,
+        QuadTable other = None  ,
     ):
         """Computes the symmetry default of a single / a pair of :class:`QuadTable`.
 
         A method is said to be symmetric if its symmetry default is zero, namely if it coincides with its :meth:`symmetric_adjoint`.
+        If the two methods do not have the same number of steps, the symmetry default is infinite by convention.
 
         Example
         -------
@@ -318,7 +322,10 @@ cdef class QuadTable:
         if other is None:
             return self._symmetry_default(self)
         else:
-            return self._symmetry_default(other)
+            if self._w.shape[0] == other._w.shape[0]:
+                return self._symmetry_default(other)
+            else:
+                return np.inf
     
     @cython.final
     cdef bint _is_symmetric_pair(self, QuadTable other, double tol) noexcept nogil:
@@ -350,7 +357,7 @@ cdef class QuadTable:
         Parameters
         ----------
         tol : :obj:`numpy:numpy.float64` , optional
-            Tolerance on symmetry default, by default 1e-12        
+            Tolerance on symmetry default, by default ``1e-12``.        
 
         Returns
         -------
@@ -390,7 +397,7 @@ cdef class QuadTable:
         Parameters
         ----------
         tol : :obj:`numpy:numpy.float64` , optional
-            Tolerance on symmetry default, by default 1e-12        
+            Tolerance on symmetry default, by default ``1e-12``.        
 
         Returns
         -------
@@ -410,7 +417,7 @@ cpdef np.ndarray[double, ndim=2, mode="c"] EvalOnNodes(
 
     Parameters
     ----------
-    fun : :class:`python:object` or :class:`scipy:scipy.LowLevelCallable`
+    fun : :obj:`python:callable` or :class:`scipy:scipy.LowLevelCallable`
         Function to be evaluated.
     ndim : :class:`python:int`
         Number of output dimensions of the integrand.
@@ -461,7 +468,7 @@ cpdef np.ndarray[double, ndim=1, mode="c"] IntegrateOnSegment(
 ):
     r""" Computes an approximation of the integral of a function on a segment.
 
-    Denoting :math:`a \eqdef \text{span}[0]`, :math:`b \eqdef \text{span}[1]` and :math:`\Delta \eqdef \text{span}[1]-\text{span}[0]`, the integral is first decomposed into ``nint`` smaller integrals as:
+    Denoting :math:`a \eqdef \text{x_span}[0]`, :math:`b \eqdef \text{x_span}[1]` and :math:`\Delta \eqdef \text{x_span}[1]-\text{x_span}[0]`, the integral is first decomposed into ``nint`` smaller integrals as:
 
     .. math::
         \int_a^b \operatorname{fun}(x) \dd  x = \sum_{i = 0}^{\text{nint}-1} \int_{a + \frac{i}{\text{nint}} * \Delta}^{a + \frac{i+1}{\text{nint}} * \Delta}  \operatorname{fun}(x) \dd x 
@@ -470,7 +477,7 @@ cpdef np.ndarray[double, ndim=1, mode="c"] IntegrateOnSegment(
 
     The integrand can either be:
 
-    * A `Python <https://www.python.org/>`_ function taking a :obj:`numpy:numpy.float64` as its sole argument, and returning a :class:`numpy:numpy.ndarray`:class:`(shape=ndim, dtype=np.float64)`.
+    * A Python :obj:`python:callable` taking a :obj:`numpy:numpy.float64` as its sole argument, and returning a :class:`numpy:numpy.ndarray`:class:`(shape=ndim, dtype=np.float64)`.
     * A :class:`scipy:scipy.LowLevelCallable` for performance-critical use cases.
 
     See Also
@@ -497,7 +504,7 @@ cpdef np.ndarray[double, ndim=1, mode="c"] IntegrateOnSegment(
 
     Parameters
     ----------
-    fun : :class:`python:object` or :class:`scipy:scipy.LowLevelCallable`
+    fun : :obj:`python:callable` or :class:`scipy:scipy.LowLevelCallable`
         Function to be integrated.
     ndim : :class:`python:int`
         Number of output dimensions of the integrand.
@@ -512,7 +519,7 @@ cpdef np.ndarray[double, ndim=1, mode="c"] IntegrateOnSegment(
 
     Returns
     -------
-    :class:`numpy:numpy.ndarray`:class:`(shape = (ndim), dtype = np.float64)`
+    :class:`numpy:numpy.ndarray`:class:`(shape = (nsteps, ndim), dtype = np.float64)`
         The approximated value of the integral.
     """
 
@@ -603,22 +610,24 @@ cpdef np.ndarray[double, ndim=2, mode="c"] InterpolateOnSegment(
     QuadTable quad          ,
     double eps = 1e-14      ,
 ):
-    """ Interpolates a function given its value on quadrature nodes of an interval.
+    r""" Interpolates a function given its value on quadrature nodes of an interval.
 
-    TODO : blabla
+    `Lagrange interpolation <https://en.wikipedia.org/wiki/Lagrange_polynomial>`_ of a function evaluated at quadrature nodes of an interval.
+    
+    Given the :math:`n` function values :math:`f_i`, the Lagrange interpolating polynomial is the unique polynomial :math:`L_f` of degree :math:`n-1` such that :math:`L_f(x_i)=f_i`.
 
     Parameters
     ----------
-    fun : :class:`python:object` or :class:`scipy:scipy.LowLevelCallable`
-        Function to be evaluated.
-    ndim : :class:`python:int`
-        Number of output dimensions of the integrand.
+    funvals : :class:`numpy:numpy.ndarray`:class:`(shape = (nx, ndim), dtype = np.float64)`
+        Function values to be interpolated. See also :func:`EvalOnNodes`.
+    x : :class:`numpy:numpy.ndarray`:class:`(shape = (nx), dtype = np.float64)`
+        Array of nodes where the interpolation should be evaluated.
     x_span : :class:`python:tuple` (:obj:`numpy:numpy.float64`, :obj:`numpy:numpy.float64`)
         Lower and upper bound of the evaluation interval.
     quad : :class:`QuadTable`
         Normalized evaluation nodes.
     eps : :obj:`numpy:numpy.float64`
-        TODO description, by default ``1e-14``.
+        If :math:`|x-x_i|<\text{eps}`, then the approximation :math:`l_i(x)=1.` is used to avoid division by zero. By default ``1e-14``.
 
     Returns
     -------

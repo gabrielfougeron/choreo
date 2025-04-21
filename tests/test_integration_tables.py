@@ -24,14 +24,14 @@ import choreo
 def test_ImplicitRKDefaultDPSIsEnough(float64_tols_strict, method, nsteps):
     """ Tests whether the default precision is sufficient for computing implicit Runge-Kutta tables.
     
-Tests whether the default value of the dps parameter of :func:`choreo.segm.multiprec_tables.ComputeImplicitRKTable_Gauss` is large enough to ensure that that the Runge-Kutta tables are exact at least up to double precision.
+Tests whether the default value of the dps parameter of :func:`choreo.segm.multiprec_tables.ComputeImplicitRKTable` is large enough to ensure that that the Runge-Kutta tables are exact at least up to double precision.
     
     """
 
     dps_overkill = 1000
 
-    rk = choreo.segm.multiprec_tables.ComputeImplicitRKTable_Gauss(nsteps, method=method)
-    rk_overkill = choreo.segm.multiprec_tables.ComputeImplicitRKTable_Gauss(nsteps, dps=dps_overkill, method=method)
+    rk = choreo.segm.multiprec_tables.ComputeImplicitRKTable(nsteps, method=method)
+    rk_overkill = choreo.segm.multiprec_tables.ComputeImplicitRKTable(nsteps, dps=dps_overkill, method=method)
 
     print(np.linalg.norm(rk.a_table  - rk_overkill.a_table))
     print(np.linalg.norm(rk.b_table  - rk_overkill.b_table))
@@ -85,8 +85,8 @@ def test_ImplicitSymplecticPairs(float64_tols_strict, method_pair, nsteps):
     """ Tests whether symplectic pairs of implicit Runge-Kutta tables are indeed symplectic at least up to double precision accuracy.    
     """
 
-    rk      = choreo.segm.multiprec_tables.ComputeImplicitRKTable_Gauss(nsteps, method=method_pair[0])
-    rk_ad   = choreo.segm.multiprec_tables.ComputeImplicitRKTable_Gauss(nsteps, method=method_pair[1])
+    rk      = choreo.segm.multiprec_tables.ComputeImplicitRKTable(nsteps, method=method_pair[0])
+    rk_ad   = choreo.segm.multiprec_tables.ComputeImplicitRKTable(nsteps, method=method_pair[1])
     
     print(rk.symplectic_default(rk_ad))
     
@@ -99,8 +99,8 @@ def test_ImplicitSymmetricPairs(float64_tols_strict, method_pair, nsteps):
     """ Tests whether symmetric pairs of implicit Runge-Kutta tables are indeed symmetric at least up to double precision accuracy.
     """   
     
-    rk      = choreo.segm.multiprec_tables.ComputeImplicitRKTable_Gauss(nsteps, method=method_pair[0])
-    rk_ad   = choreo.segm.multiprec_tables.ComputeImplicitRKTable_Gauss(nsteps, method=method_pair[1])
+    rk      = choreo.segm.multiprec_tables.ComputeImplicitRKTable(nsteps, method=method_pair[0])
+    rk_ad   = choreo.segm.multiprec_tables.ComputeImplicitRKTable(nsteps, method=method_pair[1])
     
     print(rk.symmetry_default(rk_ad))
     
@@ -111,8 +111,8 @@ def test_ImplicitSymmetricPairs(float64_tols_strict, method_pair, nsteps):
 @pytest.mark.parametrize("nsteps", Small_orders)
 def test_ImplicitSymmetricSymplecticPairs(float64_tols_strict, method_pair, nsteps):
 
-    rk      = choreo.segm.multiprec_tables.ComputeImplicitRKTable_Gauss(nsteps, method=method_pair[0])
-    rk_ad   = choreo.segm.multiprec_tables.ComputeImplicitRKTable_Gauss(nsteps, method=method_pair[1]).symmetric_adjoint()
+    rk      = choreo.segm.multiprec_tables.ComputeImplicitRKTable(nsteps, method=method_pair[0])
+    rk_ad   = choreo.segm.multiprec_tables.ComputeImplicitRKTable(nsteps, method=method_pair[1]).symmetric_adjoint()
     
     print(rk.symplectic_default(rk_ad))
     

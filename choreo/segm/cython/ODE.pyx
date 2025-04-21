@@ -459,11 +459,10 @@ cdef void PyFun_apply_grad_vectorized(
 
 @cython.final
 cdef class ExplicitSymplecticRKTable:
-    
-    cdef double[::1] _c_table
-    cdef double[::1] _d_table
-    cdef Py_ssize_t _th_cvg_rate
+    """ Butcher Tables for explicit symplectic Runge-Kutta methods
 
+    """
+    
     def __init__(
         self                ,
         c_table     = None  ,
@@ -481,9 +480,19 @@ cdef class ExplicitSymplecticRKTable:
         else:
             self._th_cvg_rate = th_cvg_rate
     
+    def __repr__(self):
+
+        res = f'ExplicitSymplecticRKTable object of order {self._c_table.shape[0]}\n'
+
+        return res
+
     @cython.final
     @property
     def nsteps(self):
+        """ Number of steps of the method. 
+
+        This is the number of functions evaluations needed to solve the ODE for a single timestep.
+        """
         return self._c_table.shape[0]
 
     @cython.final
@@ -499,13 +508,24 @@ cdef class ExplicitSymplecticRKTable:
     @cython.final
     @property
     def th_cvg_rate(self):
+        """Theoretical convergence rate of the method for smooth initial value problems."""
         if self._th_cvg_rate > 0:
             return self._th_cvg_rate
         else:
             return None
 
     @cython.final
-    def symmetric_adjoint(self):
+    cpdef ExplicitSymplecticRKTable symmetric_adjoint(self):
+        """Computes the symmetric adjoint of a :class:`ExplicitSymplecticRKTable`.
+
+        .. todo:: Define symmetric adjoint
+
+        Returns
+        -------
+        :class:`choreo.segm.ODE.ExplicitSymplecticRKTable`
+            The adjoint Runge-Kutta method.
+
+        """
 
         cdef Py_ssize_t nsteps = self.nsteps
         cdef Py_ssize_t i
@@ -522,6 +542,136 @@ cdef class ExplicitSymplecticRKTable:
             d_table = d_table_reversed      ,
             th_cvg_rate = self._th_cvg_rate ,
         )
+
+    @cython.final
+    cdef double _symmetry_default(
+        self                            ,
+        ExplicitSymplecticRKTable other ,
+    ) noexcept nogil:
+
+        cdef Py_ssize_t nsteps = self._c_table.shape[0]
+        cdef Py_ssize_t i,j
+        cdef double maxi = -1
+        cdef double val
+
+        for i in range(nsteps):
+
+            val = self._c_table[i] - other._d_table[nsteps-1-i] 
+            maxi = max(maxi, cfabs(val))
+
+            val = self._d_table[i] - other._c_table[nsteps-1-i] 
+            maxi = max(maxi, cfabs(val))
+
+        return maxi  
+
+    @cython.final
+    def symmetry_default(
+        self                                    ,
+        ExplicitSymplecticRKTable other = None   ,
+    ):
+        r"""Computes the symmetry default of a single / a pair of :class:`ExplicitSymplecticRKTable`.
+
+        A method is said to be symmetric if its symmetry default is zero, namely if it coincides with its :meth:`symmetric_adjoint`.
+
+        Example
+        -------
+
+        See Also
+        --------
+
+        * :meth:`is_symmetric`
+        * :meth:`is_symmetric_pair`
+
+        Parameters
+        ----------
+        other : :class:`ExplicitSymplecticRKTable`, optional
+            By default :data:`python:None`.
+
+        Returns
+        -------
+        :obj:`numpy:numpy.float64`
+            The maximum symmetry violation.
+        """    
+
+        if other is None:
+            return self._symmetry_default(self)
+        else:
+            if self._c_table.shape[0] == other._c_table.shape[0]:
+                return self._symmetry_default(other)
+            else:
+                return np.inf
+
+    @cython.final
+    cdef bint _is_symmetric_pair(self, ExplicitSymplecticRKTable other, double tol) noexcept nogil:
+        return (self._symmetry_default(other) < tol)
+
+    @cython.final
+    def is_symmetric_pair(self, ExplicitSymplecticRKTable other, double tol = 1e-12):
+        r"""Returns :data:`python:True` if the pair of Runge-Kutta methods is symmetric.
+
+        The pair of methods ``(self, other)`` is inferred symmetric if its symmetry default falls under the specified tolerance ``tol``.
+
+        Example
+        -------
+
+        .. todo:: Ex
+
+        See Also
+        --------
+
+        * :meth:`symmetry_default`
+        * :meth:`is_symmetric`
+
+        Parameters
+        ----------
+        other : :class:`ExplicitSymplecticRKTable`
+        tol : :obj:`numpy:numpy.float64` , optional
+            Tolerance on symmetry default, by default ``1e-12``.        
+
+        Returns
+        -------
+        :class:`python:bool`
+            Whether the method is symmetric given the tolerance ``tol``.
+        """ 
+
+        if self._c_table.shape[0] == other._c_table.shape[0]:
+            return self._is_symmetric_pair(other, tol)
+        else:
+            return False
+        
+
+    @cython.final
+    def is_symmetric(self, double tol = 1e-12):
+        r"""Returns :data:`python:True` if the Runge-Kutta method is symmetric.
+
+        The method is inferred symmetric if its symmetry default falls under the specified tolerance ``tol``.
+
+        Example
+        -------
+
+
+        .. todo:: Ex
+
+
+
+        See Also
+        --------
+
+        * :meth:`symmetry_default`
+        * :meth:`is_symmetric_pair`
+
+        Parameters
+        ----------
+        tol : :obj:`numpy:numpy.float64` , optional
+            Tolerance on symmetry default, by default ``1e-12``.
+
+        Returns
+        -------
+        :class:`python:bool`
+            Whether the method is symmetric given the tolerance ``tol``.
+        """ 
+
+        return self._is_symmetric_pair(self, tol)   
 
 @cython.cdivision(True)
 cpdef ExplicitSymplecticIVP(
@@ -541,6 +691,44 @@ cpdef ExplicitSymplecticIVP(
     bint keep_init = False          ,
     bint DoEFT = True               ,
 ): 
+    """Explicit symplectic integration of a partitionned initial value problem.
+
+    Parameters
+    ----------
+    fun : :obj:`python:callable` or :class:`scipy:scipy.LowLevelCallable`
+        Function defining the IVP.
+    gun : :obj:`python:callable` or :class:`scipy:scipy.LowLevelCallable`
+        Function defining the IVP.
+    t_span : :class:`python:tuple` (:obj:`numpy:numpy.float64`, :obj:`numpy:numpy.float64`)
+        Initial and final time of integration.
+    x0 : :class:`numpy:numpy.ndarray`:class:`(shape = (n), dtype = np.float64)`
+        Initial value for x.
+    v0 : :class:`numpy:numpy.ndarray`:class:`(shape = (n), dtype = np.float64)`
+        Initial value for v.
+    rk_x : :class:`ExplicitSymplecticRKTable`
+        Runge-Kutta tables for the integration of the IVP.
+    grad_fun : :obj:`python:callable` or :class:`scipy:scipy.LowLevelCallable`, optional
+        Gradient of the function defining the IVP, by default :data:`python:None`.
+    grad_gun : :obj:`python:callable` or :class:`scipy:scipy.LowLevelCallable`, optional
+        Gradient of the function defining the IVP, by default :data:`python:None`.
+    mode : :class:`python:str`, optional
+        Whether to start the staggered integration with x or v, by default ``"VX"``.
+    nint : :class:`python:int`, optional
+        Number of integration steps, by default ``1``.
+    keep_freq : :class:`python:int`, optional
+        Number of integration steps to be taken before saving output, by default ``-1``.
+    keep_init : :class:`python:bool`, optional
+        Whether to save the initial values, by default :data:`python:False`.
+    DoEFT : :class:`python:bool`, optional
+        Whether to use an error-free transformation for summation, by default :data:`python:True`.
+
+    Returns
+    -------
+    :class:`python:tuple` of :class:`numpy:numpy.ndarray`.
+        Arrays containing the computed approximation of the solution to the IVP at evaluation points.
+
+    """
+
 
     cdef Py_ssize_t keep_start
 
@@ -871,19 +1059,13 @@ cdef void ExplicitSymplecticIVP_ann(
 cdef class ImplicitRKTable:
     """ Butcher Tables for fully implicit Runge-Kutta methods
 
-    """
+
+    Butcher tables defined in :footcite:`butcher2008numerical` and :footcite:`hairer2005numerical`.
     
-    cdef double[:,::1] _a_table
-    """ A Butcher table"""
+    :cited:
+    .. footbibliography::
 
-    cdef QuadTable _quad_table
-    """ b and c Butcher tables"""
-    # cdef double[::1] _b_table               # b Butcher table. Integration weights on [0,1]
-    # cdef double[::1] _c_table               # c Butcher table. Integration nodes on [0,1]
-
-    cdef double[:,::1] _beta_table          # Beta Butcher table for initial guess in convergence loop. 
-    cdef double[:,::1] _gamma_table         # Beta Butcher table of the symmetric adjoint.
-    cdef Py_ssize_t _th_cvg_rate            # Theoretical convergence rate of the method.
+    """
 
     @cython.final
     def __init__(
@@ -912,6 +1094,12 @@ cdef class ImplicitRKTable:
             self._th_cvg_rate = -1
         else:
             self._th_cvg_rate = th_cvg_rate
+
+    def __repr__(self):
+
+        res = f'ImplicitRKTable object of order {self._a_table.shape[0]}\n'
+
+        return res
 
     @cython.final
     @property
@@ -960,6 +1148,31 @@ cdef class ImplicitRKTable:
 
     @cython.final
     cpdef ImplicitRKTable symmetric_adjoint(self):
+        r"""Computes the symmetric adjoint of a :class:`ImplicitRKTable`.
+
+        An integration method for an initial value problem maps a function value at an initial time to a final value. The symmetric adjoint of a method applied to the time-reversed system is the method that maps the final value given by the original method to the initial value. A method that is equal to its own symmetric adjoint is called symmetric.
+        
+        Example
+        -------
+
+        >>> import numpy as np
+        >>> import choreo
+        >>> random_method = choreo.segm.multiprec_tables.ComputeImplicitRKTable(nodes=np.random.random(10))
+        >>> random_method.is_symmetric_pair(random_method.symmetric_adjoint())
+        True
+
+        See Also
+        --------
+
+        * :meth:`is_symmetric`
+        * :meth:`is_symmetric_pair`
+
+        Returns
+        -------
+        :class:`choreo.segm.ODE.ImplicitRKTable`
+            The adjoint Runge-Kutta method.
+
+        """
 
         cdef Py_ssize_t n = self._a_table.shape[0]
         cdef Py_ssize_t i, j
@@ -997,8 +1210,8 @@ cdef class ImplicitRKTable:
         cdef double val
 
         for i in range(nsteps):
+            for j in range(nsteps):
 
-            for j in range(self._a_table.shape[0]):
                 val = self._a_table[i,j] - self._quad_table._w[j] + other._a_table[nsteps-1-i,nsteps-1-j]
                 maxi = max(maxi, cfabs(val))
                 
@@ -1012,13 +1225,52 @@ cdef class ImplicitRKTable:
 
     @cython.final
     def symmetry_default(
-        self        ,
-        other = None,
+        self                            ,
+        ImplicitRKTable other = None    ,
     ):
+        r"""Computes the symmetry default of a single / a pair of :class:`ImplicitRKTable`.
+
+        A method is symmetric if its symmetry default is zero, namely if it coincides with its :meth:`symmetric_adjoint`. Cf Theorem 2.3 of :footcite:`hairer2005numerical`.
+        If the two methods do not have the same number of steps, the symmetry default is infinite by convention.
+
+        :cited:
+        .. footbibliography::
+
+        Example
+        -------
+
+        >>> import choreo
+        >>> Radau_IB = choreo.segm.multiprec_tables.ComputeImplicitRKTable(method="Radau_IB")
+        >>> Radau_IIB = choreo.segm.multiprec_tables.ComputeImplicitRKTable(method="Radau_IIB")
+        >>> Radau_IB.symmetry_default(Radau_IIB)
+        2.7755575615628914e-17
+        >>> Radau_IIB = choreo.segm.multiprec_tables.ComputeImplicitRKTable(n=2, method="Radau_IIB")
+        >>> Radau_IB.symmetry_default(Radau_IIB)
+        inf
+
+        See Also
+        --------
+
+        * :meth:`is_symmetric`
+        * :meth:`is_symmetric_pair`
+
+        Parameters
+        ----------
+        other : :class:`ImplicitRKTable`, optional
+            By default :data:`python:None`.
+
+        Returns
+        -------
+        :obj:`numpy:numpy.float64`
+            The maximum symmetry violation.
+        """   
         if other is None:
             return self._symmetry_default(self)
         else:
-            return self._symmetry_default(other)
+            if self._a_table.shape[0] == other._a_table.shape[0]:
+                return self._symmetry_default(other)
+            else:
+                return np.inf
     
     @cython.final
     cdef bint _is_symmetric_pair(self, ImplicitRKTable other, double tol) noexcept nogil:
@@ -1026,15 +1278,108 @@ cdef class ImplicitRKTable:
 
     @cython.final
     def is_symmetric_pair(self, ImplicitRKTable other, double tol = 1e-12):
+        r"""Returns :data:`python:True` if the pair of Runge-Kutta methods is symmetric.
+
+        The pair of methods ``(self, other)`` is inferred symmetric if its symmetry default falls under the specified tolerance ``tol``.
+
+        Example
+        -------
+
+        >>> import choreo
+        >>> Radau_IA = choreo.segm.multiprec_tables.ComputeImplicitRKTable(method="Radau_IA")
+        >>> Radau_IB = choreo.segm.multiprec_tables.ComputeImplicitRKTable(method="Radau_IB")
+        >>> Radau_IB.is_symmetric_pair(Radau_IB)
+        False
+        >>> Radau_IIB = choreo.segm.multiprec_tables.ComputeImplicitRKTable(method="Radau_IIB")
+        >>> Radau_IB.is_symmetric_pair(Radau_IIB)
+        True
+
+        See Also
+        --------
+
+        * :meth:`symmetry_default`
+        * :meth:`is_symmetric`
+
+        Parameters
+        ----------
+        other : :class:`ImplicitRKTable`
+        tol : :obj:`numpy:numpy.float64` , optional
+            Tolerance on symmetry default, by default ``1e-12``.        
+
+        Returns
+        -------
+        :class:`python:bool`
+            Whether the method is symmetric given the tolerance ``tol``.
+        """ 
         return self._is_symmetric_pair(other, tol)
 
     @cython.final
     def is_symmetric(self, double tol = 1e-12):
+        r"""Returns :data:`python:True` if the Runge-Kutta method is symmetric.
+
+        The method is inferred symmetric if its symmetry default falls under the specified tolerance ``tol``.
+
+        Example
+        -------
+
+        >>> import choreo
+        >>> Gauss = choreo.segm.multiprec_tables.ComputeImplicitRKTable(method="Gauss")
+        >>> Gauss.is_symmetric()
+        True
+        >>> Lobatto_IIIC = choreo.segm.multiprec_tables.ComputeImplicitRKTable(method="Lobatto_IIIC")
+        >>> Lobatto_IIIC.is_symmetric()
+        False
+
+        See Also
+        --------
+
+        * :meth:`symmetry_default`
+        * :meth:`is_symmetric_pair`
+
+        Parameters
+        ----------
+        tol : :obj:`numpy:numpy.float64` , optional
+            Tolerance on symmetry default, by default ``1e-12``.
+
+        Returns
+        -------
+        :class:`python:bool`
+            Whether the method is symmetric given the tolerance ``tol``.
+        """ 
         return self._is_symmetric_pair(self, tol)
 
     @cython.final
     @cython.cdivision(True)
     cpdef ImplicitRKTable symplectic_adjoint(self):
+        r"""Computes the symplectic adjoint of a :class:`ImplicitRKTable`.
+
+        The flow defined by a Hamiltonian initial value problem preserves the symplectic form. A Runge-Kutta method is said symplectic if this conservation property holds at the discrete level. 
+        In the particular case of separable Hamiltonian initial value problems, a Runge-Kutta method paired with its symplectic adjoint in a partitionned integrator is symplectic. Cf :footcite:`butcher2008numerical` and :footcite:`sun2018symmetricadjointsymplecticadjointmethodsapplications` for more details about symplectic adjoints and associated conservation properties.
+                
+        :cited:
+        .. footbibliography::
+
+        Example
+        -------
+
+        >>> import choreo
+        >>> import numpy as np
+        >>> random_method = choreo.segm.multiprec_tables.ComputeImplicitRKTable(nodes=np.random.random(10))
+        >>> random_method.is_symplectic_pair(random_method.symplectic_adjoint())
+        True
+
+        See Also
+        --------
+
+        * :meth:`is_symplectic`
+        * :meth:`is_symplectic_pair`
+
+        Returns
+        -------
+        :class:`choreo.segm.ODE.ImplicitRKTable`
+            The adjoint Runge-Kutta method.
+
+        """
 
         cdef Py_ssize_t nsteps = self._a_table.shape[0]
         cdef Py_ssize_t i, j
@@ -1081,24 +1426,124 @@ cdef class ImplicitRKTable:
 
     @cython.final
     def symplectic_default(
-        self        ,
-        other = None,
+        self                        ,
+        ImplicitRKTable other = None,
     ):
+        r"""Computes the symplecticity default of a single / a pair of :class:`ImplicitRKTable`.
+
+        A method is symplectic if its symplecticity default is zero, namely if it coincides with its :meth:`symplectic_adjoint`. Cf Theorem 4.3 and 4.6 in chapter VI of :footcite:`hairer2005numerical`, as well as Theorem 2.5 of :footcite:`sun2018symmetricadjointsymplecticadjointmethodsapplications`.
+        If the two methods do not have the same number of steps, the symplecticity default is infinite by convention.
+
+        :cited:
+        .. footbibliography::
+
+        Example
+        -------
+
+        >>> import choreo
+        >>> Radau_IA = choreo.segm.multiprec_tables.ComputeImplicitRKTable(method="Radau_IA")
+        >>> Radau_IA.symplectic_default()
+        0.0010229259742953571
+        >>> Radau_IB = choreo.segm.multiprec_tables.ComputeImplicitRKTable(method="Radau_IB")
+        >>> Radau_IB.symplectic_default()
+        3.469446951953614e-18
+
+        See Also
+        --------
+
+        * :meth:`is_symplectic`
+        * :meth:`is_symplectic_pair`
+
+        Parameters
+        ----------
+        other : :class:`ImplicitRKTable`, optional
+            By default :data:`python:None`.
+
+        Returns
+        -------
+        :obj:`numpy:numpy.float64`
+            The maximum symplecticity violation.
+        """   
         if other is None:
             return self._symplectic_default(self)
         else:
             return self._symplectic_default(other)
     
     @cython.final
-    cpdef bint _is_symplectic_pair(self, ImplicitRKTable other, double tol):
+    cpdef bint _is_symplectic_pair(self, ImplicitRKTable other, double tol) noexcept nogil:
         return (self._symplectic_default(other) < tol)
 
     @cython.final
     def is_symplectic_pair(self, ImplicitRKTable other, double tol = 1e-12):
+        r"""Returns :data:`python:True` if the pair of Runge-Kutta methods is symplectic.
+
+        The pair of methods ``(self, other)`` is inferred symplectic if its symplecticity default falls under the specified tolerance ``tol``.
+
+        Example
+        -------
+
+        >>> import choreo
+        >>> Radau_IA = choreo.segm.multiprec_tables.ComputeImplicitRKTable(method="Radau_IA")
+        >>> Radau_IIA = choreo.segm.multiprec_tables.ComputeImplicitRKTable(method="Radau_IIA")
+        >>> Radau_IA.is_symplectic_pair(Radau_IIA)
+        False
+        >>> Lobatto_IIIA = choreo.segm.multiprec_tables.ComputeImplicitRKTable(method="Lobatto_IIIA")
+        >>> Lobatto_IIIB = choreo.segm.multiprec_tables.ComputeImplicitRKTable(method="Lobatto_IIIB")
+        >>> Lobatto_IIIA.is_symplectic_pair(Lobatto_IIIB)
+        True
+
+        See Also
+        --------
+
+        * :meth:`symplectic_default`
+        * :meth:`is_symplectic`
+
+        Parameters
+        ----------
+        other : :class:`ImplicitRKTable`
+        tol : :obj:`numpy:numpy.float64` , optional
+            Tolerance on symplecticity default, by default ``1e-12``.        
+
+        Returns
+        -------
+        :class:`python:bool`
+            Whether the method is symplectic given the tolerance ``tol``.
+        """ 
         return self._is_symplectic_pair(other, tol)
 
     @cython.final
     def is_symplectic(self, double tol = 1e-12):
+        r"""Returns :data:`python:True` if the Runge-Kutta method is symplectic.
+
+        The method is inferred symplectic if its symplecticity default falls under the specified tolerance ``tol``.
+
+        Example
+        -------
+
+        >>> import choreo
+        >>> Radau_IA = choreo.segm.multiprec_tables.ComputeImplicitRKTable(method="Radau_IA")
+        >>> Radau_IA.is_symplectic()
+        False
+        >>> Radau_IB = choreo.segm.multiprec_tables.ComputeImplicitRKTable(method="Radau_IB")
+        >>> Radau_IB.is_symplectic()
+        True
+
+        See Also
+        --------
+
+        * :meth:`symplectic_default`
+        * :meth:`is_symplectic_pair`
+
+        Parameters
+        ----------
+        tol : :obj:`numpy:numpy.float64` , optional
+            Tolerance on symplecticity default, by default ``1e-12``.
+
+        Returns
+        -------
+        :class:`python:bool`
+            Whether the method is symplectic given the tolerance ``tol``.
+        """ 
         return self._is_symplectic_pair(self, tol)
 
 @cython.cdivision(True)
@@ -1122,6 +1567,53 @@ cpdef ImplicitSymplecticIVP(
     double eps = np.finfo(np.float64).eps   ,
     Py_ssize_t maxiter = 50                 ,
 ):
+    """Implicit symplectic integration of a partitionned initial value problem.
+
+    Follows closely the implementation tips detailled in chapter VIII of :footcite:`hairer2005numerical`
+
+    :cited:
+    .. footbibliography::
+
+    Parameters
+    ----------
+    fun : :obj:`python:callable` or :class:`scipy:scipy.LowLevelCallable`
+        Function defining the IVP.
+    gun : :obj:`python:callable` or :class:`scipy:scipy.LowLevelCallable`
+        Function defining the IVP.
+    t_span : :class:`python:tuple` (:obj:`numpy:numpy.float64`, :obj:`numpy:numpy.float64`)
+        Initial and final time of integration.
+    x0 : :class:`numpy:numpy.ndarray`:class:`(shape = (n), dtype = np.float64)`
+        Initial value for x.
+    v0 : :class:`numpy:numpy.ndarray`:class:`(shape = (n), dtype = np.float64)`
+        Initial value for v.
+    rk_x : :class:`ImplicitRKTable`
+        Runge-Kutta tables for the integration of the IVP.
+    rk_v : :class:`ImplicitRKTable`
+        Runge-Kutta tables for the integration of the IVP.
+    vector_calls : :class:`python:bool`, optional
+        Whether to call functions on multiple inputs at once or not, by default :data:`python:False`.
+    grad_fun : :obj:`python:callable` or :class:`scipy:scipy.LowLevelCallable`, optional
+        Gradient of the function defining the IVP, by default :data:`python:None`.
+    grad_gun : :obj:`python:callable` or :class:`scipy:scipy.LowLevelCallable`, optional
+        Gradient of the function defining the IVP, by default :data:`python:None`.
+    nint : :class:`python:int`, optional
+        Number of integration steps, by default ``1``.
+    keep_freq : :class:`python:int`, optional
+        Number of integration steps to be taken before saving output, by default ``-1``.
+    keep_init : :class:`python:bool`, optional
+        Whether to save the initial values, by default :data:`python:False`.
+    DoEFT : :class:`python:bool`, optional
+        Whether to use an error-free transformation for summation, by default :data:`python:True`.
+    eps : :class:`numpy:numpy.float64`, optional
+        Tolerence on the error of each implicit problem, by default ``np.finfo(np.float64).eps``.
+    maxiter : :class:`python:int`, optional
+        Maximum number of iterations to solve each implicit problem, by default ``50``.
+
+    Returns
+    -------
+    :class:`python:tuple` of :class:`numpy:numpy.ndarray`.
+        Arrays containing the computed approximation of the solution to the IVP at evaluation points.
+    """
 
     cdef Py_ssize_t nsteps = rk_x._a_table.shape[0]
     cdef Py_ssize_t keep_start

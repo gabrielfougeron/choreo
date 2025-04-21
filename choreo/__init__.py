@@ -36,7 +36,14 @@ Numerical tools on segment
 
     segm.quad.QuadTable
     segm.multiprec_tables.ComputeQuadrature
+    segm.quad.EvalOnNodes
     segm.quad.IntegrateOnSegment
+    segm.quad.InterpolateOnSegment
+    segm.ODE.ExplicitSymplecticRKTable
+    segm.ODE.ExplicitSymplecticIVP
+    segm.ODE.ImplicitRKTable
+    segm.multiprec_tables.ComputeImplicitRKTable
+    segm.ODE.ImplicitSymplecticIVP
 
       
 ===========

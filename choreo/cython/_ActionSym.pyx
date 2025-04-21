@@ -49,11 +49,11 @@ cdef class ActionSym():
 
     Useful to detect loops and constraints.
 
-    cf Palais' principle of symmetric criticality in :cite:`palais1979principle`
+    .. todo:: link to better explanation whend done
+        cf Palais' principle of symmetric criticality in :footcite:`palais1979principle`
     
     :cited:
-
-    .. bibliography::
+    .. footbibliography::
 
     """
 

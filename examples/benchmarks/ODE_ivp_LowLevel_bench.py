@@ -56,7 +56,7 @@ x0 = np.random.random(ndim_mul)
 v0 = np.random.random(ndim_mul)
 
 nsteps = 8
-rk_method = choreo.segm.multiprec_tables.ComputeImplicitRKTable_Gauss(nsteps)
+rk_method = choreo.segm.multiprec_tables.ComputeImplicitRKTable(nsteps)
 
 def test_from_fun(fun):
     
