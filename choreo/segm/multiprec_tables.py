@@ -249,7 +249,21 @@ def ComputeQuadNodes(n, method = "Gauss"):
         z = mpmath.matrix(n,1)
         alpha = mpmath.mp.pi / (n-1)
         for i in range(n):
-            z[i] = (1 + mpmath.cos(alpha * (n-1-i)))/2
+            z[i] = (1 + mpmath.cos(alpha * (n-1-i)))/2    
+                    
+    elif method == "NewtonCotesOpen":
+        
+        z = mpmath.matrix(n,1)
+        alpha = mpmath.fraction(1,n+1)
+        for i in range(n):
+            z[i] = alpha * (i+1)    
+                            
+    elif method == "NewtonCotesClosed":
+        
+        z = mpmath.matrix(n,1)
+        alpha = mpmath.fraction(1,n-1)
+        for i in range(n):
+            z[i] = alpha * i
     
     else:
         raise ValueError(f"Unknown method {method}")
@@ -461,7 +475,7 @@ def ComputeNamedGaussButcherTables(n, dps=60, method="Gauss"):
         Butcher_a = ComputeButcher_sub_collocation(z,n)
     
     known_method = False
-    if method in ["Gauss", "Lobatto_IIIA", "Radau_IIA", "Lobatto_IIIC*", "Cheb_I", "Cheb_II", "ClenshawCurtis"]:
+    if method in ["Gauss", "Lobatto_IIIA", "Radau_IIA", "Lobatto_IIIC*", "Cheb_I", "Cheb_II", "ClenshawCurtis", "NewtonCotesOpen", "NewtonCotesClosed"]:
         # No transformation is required
         known_method = True
         
@@ -499,9 +513,10 @@ def GetConvergenceRate(method, n):
         th_cvg_rate = n + (n % 2)
     elif method == "ClenshawCurtis":
         th_cvg_rate = n + (n % 2)
-            
-    else:
-        raise ValueError(f"Unknown method {method}")
+    elif method == "NewtonCotesOpen":
+        th_cvg_rate = n + (n % 2)
+    elif method == "NewtonCotesClosed":
+        th_cvg_rate = n + (n % 2)
     
     return th_cvg_rate
 
@@ -546,6 +561,7 @@ def ComputeQuadrature(n=10, dps=30, method="Gauss", nodes=None):
     * ``"Lobatto_III"``
     * ``"Cheb_I"`` and ``"Cheb_II"``
     * ``"ClenshawCurtis"``
+    * ``"NewtonCotesOpen"`` and ``"NewtonCotesClosed"``
     
     Alternatively, the user can supply an array of node values between ``0.`` and ``1.``. The result is then the associated collocation method.
     
@@ -613,6 +629,7 @@ def ComputeImplicitRKTable(n=10, dps=60, method="Gauss", nodes=None):
     * ``"Lobatto_IIIA"``, ``"Lobatto_IIIB"``, ``"Lobatto_IIIC"``, ``"Lobatto_IIIC*"``, ``"Lobatto_IIID"`` and ``"Lobatto_IIIS"`` 
     * ``"Cheb_I"`` and ``"Cheb_II"``
     * ``"ClenshawCurtis"``
+    * ``"NewtonCotesOpen"`` and ``"NewtonCotesClosed"``
     
     Alternatively, the user can supply an array of node values between ``0.`` and ``1.``. The result is then the associated collocation method. Cf Theorem 7.7 of :footcite:`hairer1987solvingODEI` for more details.
     
@@ -774,7 +791,7 @@ def Yoshida_w_to_cd(w_in, th_cvg_rate):
     c_table[2*m+1] = w[m] / 2
     for i in range(m): 
         val = (w[m-i]+w[m-1-i]) / 2
-        c_table[i+1]      = val
+        c_table[i+1]    = val
         c_table[2*m-i]  = val
         
     return ExplicitSymplecticRKTable(

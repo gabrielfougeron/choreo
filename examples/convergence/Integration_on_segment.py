@@ -29,6 +29,7 @@ os.environ['NUMEXPR_NUM_THREADS'] = '1'
 os.environ['MKL_NUM_THREADS'] = '1'
 
 import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 import numpy as np
 import math as m
 
@@ -53,13 +54,15 @@ all_integrands = [
 ]
 
 methods = [
-    'Gauss'         ,
-    'Radau_I'       ,
-    'Radau_II'      ,
-    'Lobatto_III'   ,
-    'Cheb_I'        ,
-    'Cheb_II'       ,
-    'ClenshawCurtis',
+    'Gauss'             ,
+    'Radau_I'           ,
+    'Radau_II'          ,
+    'Lobatto_III'       ,
+    'Cheb_I'            ,
+    'Cheb_II'           ,
+    'ClenshawCurtis'    ,
+    'NewtonCotesOpen'   ,
+    'NewtonCotesClosed' ,
 ]
 
 all_nsteps = [5,6]

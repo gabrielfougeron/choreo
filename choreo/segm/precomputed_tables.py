@@ -1,5 +1,98 @@
-'''
-precomputed_tables.py : Defines pre-computed tables for ODE solvers
+'''Pre-computed tables for ODE solvers
+
+Order 1
+=======
+
+.. autosummary::
+    :toctree: _generated/
+    :caption: Order 1
+    :nosignatures:
+
+    SymplecticEuler
+    
+Order 2
+=======
+    
+.. autosummary::
+    :toctree: _generated/
+    :caption: Order 2
+    :nosignatures:
+
+    StormerVerlet
+    McAte2    
+    
+Order 3
+=======
+    
+.. autosummary::
+    :toctree: _generated/
+    :caption: Order 3
+    :nosignatures:
+    
+    Ruth3
+    McAte3
+    
+Order 4
+=======
+    
+.. autosummary::
+    :toctree: _generated/
+    :caption: Order 4
+    :nosignatures:
+    
+    Ruth4
+    Ruth4Rat
+    McAte4
+    CalvoSanz4
+    
+Order 5
+=======
+    
+.. autosummary::
+    :toctree: _generated/
+    :caption: Order 5
+    :nosignatures:
+    
+    McAte5
+    
+Order 6
+=======
+    
+.. autosummary::
+    :toctree: _generated/
+    :caption: Order 5
+    :nosignatures:
+    
+    Yoshida6A
+    Yoshida6B
+    Yoshida6C
+    KahanLi6  
+    
+Order 8
+=======
+    
+.. autosummary::
+    :toctree: _generated/
+    :caption: Order 8
+    :nosignatures:
+    
+    McLahan8
+    KahanLi8
+    Yoshida8A
+    Yoshida8B
+    Yoshida8C
+    Yoshida8D
+    Yoshida8E
+  
+Order 10
+========
+    
+.. autosummary::
+    :toctree: _generated/
+    :caption: Order 10
+    :nosignatures:
+    
+    SofSpa10
 
 '''
 
@@ -9,7 +102,6 @@ import numpy as np
 from choreo.segm.cython.quad        import QuadTable
 from choreo.segm.cython.ODE         import ExplicitSymplecticRKTable
 from choreo.segm.multiprec_tables   import Yoshida_w_to_cd, Yoshida_w_to_cd_reduced
-
 
 #####################
 # EXPLICIT RK STUFF #
@@ -22,6 +114,7 @@ SymplecticEuler = ExplicitSymplecticRKTable(
     d_table = np.array([1.])    ,
     th_cvg_rate = 1             ,
 )
+"""Symplectic Euler"""
 
 # Order 2
 
@@ -30,6 +123,7 @@ StormerVerlet = ExplicitSymplecticRKTable(
     d_table = np.array([1./2  ,1./2    ])   ,
     th_cvg_rate = 2                         ,
 )
+"""Störmer-Verlet """
 
 sq2s2 = m.sqrt(2)/2
 McAte2 = ExplicitSymplecticRKTable(
@@ -37,6 +131,14 @@ McAte2 = ExplicitSymplecticRKTable(
     d_table = np.array([sq2s2       , 1.-sq2s2  ])  ,
     th_cvg_rate = 2  ,
 )
+"""McLachlan-Atela method of order 2
+
+Optimal method with 2 stage by McLachlan and Atela :footcite:`mclachlan1992accuracy`.
+
+:cited:
+.. footbibliography::
+
+"""
 
 # Order 3
 
@@ -45,12 +147,28 @@ Ruth3 = ExplicitSymplecticRKTable(
     d_table = np.array([-1./24    , 3./4  ,7./24  ])    ,
     th_cvg_rate = 3                                     ,
 )
+""" Ruth method of order 3
+
+Cf :footcite:`ruth1983canonical`.
+
+:cited:
+.. footbibliography::
+
+"""
 
 McAte3 = ExplicitSymplecticRKTable(
     c_table = np.array([0.2683300957817599  ,-0.18799161879915982  , 0.9196615230173999     ])  ,
     d_table = np.array([0.9196615230173999 , -0.18799161879915982   ,0.2683300957817599     ])  ,
     th_cvg_rate = 3                                                                             ,
 )
+"""McLachlan-Atela method of order 3
+
+Optimal method with 3 stages by McLachlan and Atela :footcite:`mclachlan1992accuracy`.
+
+:cited:
+.. footbibliography::
+
+"""
 
 # Order 4
 
@@ -60,24 +178,48 @@ Ruth4 = ExplicitSymplecticRKTable(
     d_table = np.array([1./(2-curt2)      ,-curt2/(2-curt2)           ,1./(2-curt2)               ,0.                 ])    ,
     th_cvg_rate = 4                                                                                                         ,
 )
+"""Ruth and Forrest method of order 4
+
+Cf :footcite:`forest1990fourth`.
+
+:cited:
+.. footbibliography::
+
+"""
 
 Ruth4Rat = ExplicitSymplecticRKTable(
     c_table = np.array([0.     , 1./3  , -1./3     , 1.        , -1./3 , 1./3  ])   ,
     d_table = np.array([7./48  , 3./8  , -1./48    , -1./48    ,  3./8 , 7./48 ])   ,
     th_cvg_rate = 4                                                                 ,
 )
+""" Rational Ruth method of order 4"""
 
 McAte4 = ExplicitSymplecticRKTable(
     c_table = np.array([0.128846158365384185    ,  0.441583023616466524 ,-0.085782019412973646  , 0.515352837431122936  ])  ,
     d_table = np.array([ 0.334003603286321425   , 0.756320000515668291  , -0.224819803079420806 ,0.134496199277431089   ])  ,
+  
     th_cvg_rate = 4                                                                                                         ,
 )
+"""McLachlan-Atela method of order 4
+
+Optimal method with 4 stages by McLachlan and Atela :footcite:`mclachlan1992accuracy`.
+
+:cited:
+.. footbibliography::
+"""
 
 CalvoSanz4 = ExplicitSymplecticRKTable(
     c_table = np.array([0.0             , 0.512721933192410 ,-0.12092087633891  ,0.403021281604210  , 0.205177661542290 ])  ,
     d_table = np.array([0.12501982279453,-0.14054801465937  , 0.61479130717558  ,0.33897802655364   , 0.061758858135626 ])  ,
     th_cvg_rate = 4                                                                                                         ,
 )
+"""Calvo and Sanz-Serna method of order 4
+
+Cf :footcite:`sanz1993symplectic`.
+
+:cited:
+.. footbibliography::
+"""
 
 # Order 5
 
@@ -100,6 +242,13 @@ McAte5 = ExplicitSymplecticRKTable(
     ]),
     th_cvg_rate = 5             ,
 )
+"""McLachlan-Atela method of order 5
+
+Optimal method with 6 stages by McLachlan and Atela :footcite:`mclachlan1992accuracy`.
+
+:cited:
+.. footbibliography::
+"""
 
 # Order 6
 
@@ -110,6 +259,13 @@ Yoshida6A = Yoshida_w_to_cd(np.array([
 ]),
     th_cvg_rate = 6     ,
 )
+"""Method A of order 6 by Yoshida
+
+First published in :footcite:`yoshida1990construction`.
+
+:cited:
+.. footbibliography::
+"""
 
 Yoshida6B = Yoshida_w_to_cd(np.array([
     -2.13228522200144   ,
@@ -118,14 +274,28 @@ Yoshida6B = Yoshida_w_to_cd(np.array([
 ]),
     th_cvg_rate = 6     ,
 )
+"""Method B of order 6 by Yoshida
+
+First published in :footcite:`yoshida1990construction`.
+
+:cited:
+.. footbibliography::
+"""
     
 Yoshida6C = Yoshida_w_to_cd(np.array([
     0.152886228424922e-2    ,
     - 2.14403531630539      ,
     1.44778256239930        ,
 ]),
-    th_cvg_rate = 6     ,
+    th_cvg_rate = 6         ,
 )
+"""Method C of order 6 by Yoshida
+
+First published in :footcite:`yoshida1990construction`.
+
+:cited:
+.. footbibliography::
+"""
     
 KahanLi6 = Yoshida_w_to_cd(np.array([
     0.79854399093482996339895035    , 
@@ -136,10 +306,17 @@ KahanLi6 = Yoshida_w_to_cd(np.array([
 ]),
     th_cvg_rate = 6     ,
 ).symmetric_adjoint()
+""" Method s9odr6a by Kahan and Li
+
+cf :footcite:`kahan1997composition`.
+
+:cited:
+.. footbibliography::
+"""
 
 # Order 8
 
-McAte8 = Yoshida_w_to_cd_reduced(np.array([
+McLahan8 = Yoshida_w_to_cd_reduced(np.array([
     -0.79688793935291635401978884   ,    
     0.31529309239676659663205666    ,
     0.33462491824529818378495798    ,
@@ -149,8 +326,15 @@ McAte8 = Yoshida_w_to_cd_reduced(np.array([
     -0.40910082580003159399730010   ,
     0.74167036435061295344822780    ,
 ]),
-    th_cvg_rate = 8     ,
+    th_cvg_rate = 8                 ,
 ).symmetric_adjoint()
+""" McLahan SS method of order 8 and error 0.14
+
+cf :footcite:`mclachlan1995numerical`.
+
+:cited:
+.. footbibliography::
+"""
 
 KahanLi8 = Yoshida_w_to_cd_reduced(np.array([
     -0.60550853383003451169892108   ,    
@@ -165,6 +349,13 @@ KahanLi8 = Yoshida_w_to_cd_reduced(np.array([
 ]),
     th_cvg_rate = 8                     ,
 ).symmetric_adjoint()
+""" Method s17odr8a by Kahan and Li
+
+cf :footcite:`kahan1997composition`.
+
+:cited:
+.. footbibliography::
+"""
 
 Yoshida8A =  Yoshida_w_to_cd(np.array([
     -0.161582374150097e1    ,
@@ -175,8 +366,15 @@ Yoshida8A =  Yoshida_w_to_cd(np.array([
     0.182020630970714e1     ,
     0.104242620869991e1     ,
 ]),
-    th_cvg_rate = 8     ,
+    th_cvg_rate = 8         ,
 )
+"""Method A of order 8 by Yoshida
+
+First published in :footcite:`yoshida1990construction`.
+
+:cited:
+.. footbibliography::
+"""
 
 Yoshida8B =  Yoshida_w_to_cd(np.array([
     -0.169248587770116e-2   ,
@@ -187,8 +385,15 @@ Yoshida8B =  Yoshida_w_to_cd(np.array([
     -0.233864815101035e1    ,
     0.148819229202922e1     ,
 ]),
-    th_cvg_rate = 8     ,
+    th_cvg_rate = 8         ,
 )
+"""Method B of order 8 by Yoshida
+
+First published in :footcite:`yoshida1990construction`.
+
+:cited:
+.. footbibliography::
+"""
 
 Yoshida8C =  Yoshida_w_to_cd(np.array([
     0.311790812418427       ,
@@ -199,8 +404,15 @@ Yoshida8C =  Yoshida_w_to_cd(np.array([
     0.136934946416871e1     ,
     0.629030650210433e0     ,
 ]),
-    th_cvg_rate = 8     ,
+    th_cvg_rate = 8         ,
 )
+"""Method C of order 8 by Yoshida
+
+First published in :footcite:`yoshida1990construction`.
+
+:cited:
+.. footbibliography::
+"""
 
 Yoshida8D =  Yoshida_w_to_cd(np.array([
     0.102799849391985E0     ,
@@ -211,8 +423,15 @@ Yoshida8D =  Yoshida_w_to_cd(np.array([
     0.253693336566229e0     ,   
     0.914844246229740e0     ,
 ]),
-    th_cvg_rate = 8     ,
+    th_cvg_rate = 8         ,
 )
+"""Method D of order 8 by Yoshida
+
+First published in :footcite:`yoshida1990construction`.
+
+:cited:
+.. footbibliography::
+"""
 
 Yoshida8E =  Yoshida_w_to_cd(np.array([
     0.227738840094906e-1    ,
@@ -223,8 +442,15 @@ Yoshida8E =  Yoshida_w_to_cd(np.array([
     0.107990467703699e0     , 
     0.130300165760014e1     ,
 ]),
-    th_cvg_rate = 8     ,
+    th_cvg_rate = 8         ,
 )
+"""Method E of order 8 by Yoshida
+
+First published in :footcite:`yoshida1990construction`.
+
+:cited:
+.. footbibliography::
+"""
 
 # Order 10
 
@@ -248,5 +474,12 @@ SofSpa10 = Yoshida_w_to_cd_reduced(np.array([
     0.31309610341510852776481247   ,
     0.07879572252168641926390768   ,   
 ]),
-    th_cvg_rate = 10                     ,
+    th_cvg_rate = 10                ,
 ).symmetric_adjoint()
+"""Sofroniou and Spaletta method of order 10
+
+Cf :footcite:`sofroniou2005derivation`
+
+:cited:
+.. footbibliography::
+"""

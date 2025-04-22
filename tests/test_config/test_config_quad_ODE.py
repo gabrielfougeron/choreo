@@ -10,6 +10,16 @@ all_fun_types = [
     "c_fun_memoryview"  ,
     "c_fun_pointer"     ,
 ]
+     
+StableInterpMethods = [
+    "Gauss"             ,
+    "Radau_I"           ,
+    "Radau_II"          ,
+    "Lobatto_III"       ,
+    "Cheb_I"            ,
+    "Cheb_II"           ,
+    "ClenshawCurtis"    ,
+]  
        
 QuadMethods = [
     "Gauss"             ,
@@ -19,6 +29,8 @@ QuadMethods = [
     "Cheb_I"            ,
     "Cheb_II"           ,
     "ClenshawCurtis"    ,
+    "NewtonCotesOpen"   ,
+    "NewtonCotesClosed" ,
 ]    
 
 all_quad_problem_names = [
@@ -83,20 +95,22 @@ def define_quad_problem(eq_name):
         raise ValueError(f'Unknown {eq_name = }')
 
 ClassicalImplicitRKMethods = [
-    "Gauss"         ,
-    "Radau_IA"      ,
-    "Radau_IIA"     ,
-    "Radau_IB"      ,
-    "Radau_IIB"     ,
-    "Lobatto_IIIA"  ,
-    "Lobatto_IIIB"  ,
-    "Lobatto_IIIC"  ,
-    "Lobatto_IIIC*" ,
-    "Lobatto_IIID"  ,            
-    "Lobatto_IIIS"  ,     
-    "Cheb_I"        ,
-    "Cheb_II"       ,
-    "ClenshawCurtis",
+    "Gauss"             ,
+    "Radau_IA"          ,
+    "Radau_IIA"         ,
+    "Radau_IB"          ,
+    "Radau_IIB"         ,
+    "Lobatto_IIIA"      ,
+    "Lobatto_IIIB"      ,
+    "Lobatto_IIIC"      ,
+    "Lobatto_IIIC*"     ,
+    "Lobatto_IIID"      ,            
+    "Lobatto_IIIS"      ,     
+    "Cheb_I"            ,
+    "Cheb_II"           ,
+    "ClenshawCurtis"    ,
+    "NewtonCotesOpen"   ,
+    "NewtonCotesClosed" ,
 ]
 
 SymplecticImplicitRKMethodPairs = [
@@ -136,7 +150,7 @@ Explicit_tables_dict = {
     "Yoshida6B"         : choreo.segm.precomputed_tables.Yoshida6B      ,
     "Yoshida6C"         : choreo.segm.precomputed_tables.Yoshida6C      ,
     "KahanLi6"          : choreo.segm.precomputed_tables.KahanLi6       ,
-    "McAte8"            : choreo.segm.precomputed_tables.McAte8         ,
+    "McLahan8"          : choreo.segm.precomputed_tables.McLahan8       ,
     "KahanLi8"          : choreo.segm.precomputed_tables.KahanLi8       ,
     "Yoshida8A"         : choreo.segm.precomputed_tables.Yoshida8A      ,
     "Yoshida8B"         : choreo.segm.precomputed_tables.Yoshida8B      ,

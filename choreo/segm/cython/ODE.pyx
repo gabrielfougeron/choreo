@@ -459,7 +459,17 @@ cdef void PyFun_apply_grad_vectorized(
 
 @cython.final
 cdef class ExplicitSymplecticRKTable:
-    """ Butcher Tables for explicit symplectic Runge-Kutta methods
+    r""" Butcher Tables for explicit symplectic Runge-Kutta methods applied to partitionned Hamiltonian problems
+
+    cf :footcite:`sanz1992symplectic`
+
+    :cited:
+    .. footbibliography::
+
+    See Also
+    --------
+
+    * :mod:`choreo.segm.precomputed_tables`
 
     """
     
@@ -482,7 +492,12 @@ cdef class ExplicitSymplecticRKTable:
     
     def __repr__(self):
 
-        res = f'ExplicitSymplecticRKTable object of order {self._c_table.shape[0]}\n'
+        res = f'ExplicitSymplecticRKTable object' 
+
+        if self._th_cvg_rate > 0:
+            res += f' of order {self._th_cvg_rate}'
+        
+        res += f' with {self._c_table.shape[0]} steps\n'
 
         return res
 
@@ -1059,7 +1074,6 @@ cdef void ExplicitSymplecticIVP_ann(
 cdef class ImplicitRKTable:
     """ Butcher Tables for fully implicit Runge-Kutta methods
 
-
     Butcher tables defined in :footcite:`butcher2008numerical` and :footcite:`hairer2005numerical`.
     
     :cited:
@@ -1097,7 +1111,7 @@ cdef class ImplicitRKTable:
 
     def __repr__(self):
 
-        res = f'ImplicitRKTable object of order {self._a_table.shape[0]}\n'
+        res = f'ImplicitRKTable object with {self._a_table.shape[0]} steps\n'
 
         return res
 
@@ -1373,12 +1387,11 @@ cdef class ImplicitRKTable:
 
         * :meth:`is_symplectic`
         * :meth:`is_symplectic_pair`
-
+        
         Returns
         -------
         :class:`choreo.segm.ODE.ImplicitRKTable`
             The adjoint Runge-Kutta method.
-
         """
 
         cdef Py_ssize_t nsteps = self._a_table.shape[0]

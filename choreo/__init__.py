@@ -40,6 +40,7 @@ Numerical tools on segment
     segm.quad.IntegrateOnSegment
     segm.quad.InterpolateOnSegment
     segm.ODE.ExplicitSymplecticRKTable
+    segm.precomputed_tables
     segm.ODE.ExplicitSymplecticIVP
     segm.ODE.ImplicitRKTable
     segm.multiprec_tables.ComputeImplicitRKTable

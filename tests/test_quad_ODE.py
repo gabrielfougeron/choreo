@@ -60,7 +60,7 @@ def test_quad(float64_tols, method, nsteps, quad_problem, fun_type, DoEFT):
         assert np.allclose(num_sol, ex_sol, rtol = float64_tols.rtol, atol = float64_tols.atol) 
         
 @ParametrizeDocstrings
-@pytest.mark.parametrize("method", QuadMethods)
+@pytest.mark.parametrize("method", StableInterpMethods)
 @pytest.mark.parametrize("nsteps", High_orders)
 @pytest.mark.parametrize("quad_problem", [pytest.param(define_quad_problem(eq_name), id=eq_name) for eq_name in all_quad_problem_names])
 @pytest.mark.parametrize("fun_type", all_fun_types)
@@ -106,6 +106,8 @@ def test_interp(float64_tols, method, nsteps, quad_problem, fun_type):
     
     assert fun_approx.shape[0] == ntests
     assert fun_approx.shape[1] == ndim
+    
+    print(np.linalg.norm(funvals_exact-fun_approx))
     assert np.allclose(funvals_exact, fun_approx, rtol = float64_tols.rtol, atol = float64_tols.atol) 
 
 
