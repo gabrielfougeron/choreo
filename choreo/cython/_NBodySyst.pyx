@@ -1190,6 +1190,16 @@ cdef class NBodySyst():
         self._ODE_params_ptr = <void*> &self._ODE_params
 
     @cython.final
+    def Get_ODE_params(self):
+        """ Retrieve a pointer to ODE parameters definition
+        """
+
+        self.Update_ODE_params()
+        user_data = ctypes.c_void_p(<uintptr_t> self._ODE_params_ptr)
+
+        return user_data
+
+    @cython.final
     def DetectLoops(self, double[::1] bodymass, double[::1] bodycharge, Py_ssize_t nint_min_fac = 1):
 
         cdef Py_ssize_t il, ib, ilb
@@ -3826,7 +3836,25 @@ cdef class NBodySyst():
             )
 
         return segmvel_np
-    
+
+    def inplace_segmvel_to_segmmom(self, double[:,:,:] segmvel):
+
+        cdef double mass
+        cdef int n = self.segm_store * self.geodim
+        cdef Py_ssize_t isegm
+
+        for isegm in range(self.nsegm):
+            mass = self._loopmass[self._bodyloop[self._intersegm_to_body[isegm]]]
+            scipy.linalg.cython_blas.dscal(&n,&mass,&segmvel[isegm,0,0],&int_one)
+
+    @cython.final
+    def params_to_segmmom(self, double[::1] params_mom_buf):
+
+        segmom = self.params_to_segmvel(params_mom_buf)
+        self.inplace_segmvel_to_segmmom(segmom)
+
+        return segmom
+
     @cython.final
     def segmpos_to_params(self, double[:,:,::1] segmpos):
 
@@ -4593,9 +4621,7 @@ cdef class NBodySyst():
 
         if LowLevel:
 
-            self.Update_ODE_params()
-
-            user_data = ctypes.c_void_p(<uintptr_t> self._ODE_params_ptr)
+            user_data = self.Get_ODE_params()
 
             if vector_calls:
 

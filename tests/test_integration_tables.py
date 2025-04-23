@@ -153,6 +153,8 @@ def test_ImplicitSymmetricPairs(float64_tols_strict, method_pair, nsteps):
 @pytest.mark.parametrize("method_pair", SymmetricSymplecticImplicitRKMethodPairs)
 @pytest.mark.parametrize("nsteps", Small_orders)
 def test_ImplicitSymmetricSymplecticPairs(float64_tols_strict, method_pair, nsteps):
+    """ Tests whether symmetric-symplectic pairs of explicit Runge-Kutta tables are indeed symmetric-symplectic at least up to double precision accuracy.
+    """   
 
     rk      = choreo.segm.multiprec_tables.ComputeImplicitRKTable(nsteps, method=method_pair[0])
     rk_ad   = choreo.segm.multiprec_tables.ComputeImplicitRKTable(nsteps, method=method_pair[1]).symmetric_adjoint()

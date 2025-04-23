@@ -17,7 +17,6 @@ from .test_config import *
 import numpy as np
 import choreo
 
-
 @ParametrizeDocstrings
 @pytest.mark.parametrize("method", QuadMethods)
 @pytest.mark.parametrize("nsteps", Small_orders)
@@ -33,7 +32,7 @@ def test_quad(float64_tols, method, nsteps, quad_problem, fun_type, DoEFT):
     fun = quad_problem["fun"].get(fun_type)
     
     if fun is None:
-        return
+        pytest.skip("NotImplemented")
 
     x_span = quad_problem["x_span"]
     ndim = quad_problem["ndim"]
@@ -74,7 +73,7 @@ def test_interp(float64_tols, method, nsteps, quad_problem, fun_type):
     fun = quad_problem["fun"].get(fun_type)
     
     if fun is None:
-        return
+        pytest.skip("NotImplemented")
     
     x_span = quad_problem["x_span"]
     ndim = quad_problem["ndim"]
@@ -110,7 +109,6 @@ def test_interp(float64_tols, method, nsteps, quad_problem, fun_type):
     print(np.linalg.norm(funvals_exact-fun_approx))
     assert np.allclose(funvals_exact, fun_approx, rtol = float64_tols.rtol, atol = float64_tols.atol) 
 
-
 @ParametrizeDocstrings
 @pytest.mark.parametrize(("method_x", "method_v"), [(method_x, method_v) for (method_x, method_v) in SymplecticImplicitRKMethodPairs])
 @pytest.mark.parametrize("nsteps", Small_orders)
@@ -128,13 +126,11 @@ def test_Implicit_ODE(float64_tols, method_x, method_v, nsteps, ivp, fun_type, v
     fgun = ivp["fgun"].get((fun_type, vector_calls))
     
     if fgun is None:
-        return
+        pytest.skip("NotImplemented")
     
     fun, gun = fgun
     
     t_span = ivp["t_span"]
-    ex_sol_x = ivp["ex_sol_x"]
-    ex_sol_v = ivp["ex_sol_v"]
     nint_OK = ivp["nint"](rk_x.th_cvg_rate)
     
     if nint_OK is None:
@@ -142,8 +138,8 @@ def test_Implicit_ODE(float64_tols, method_x, method_v, nsteps, ivp, fun_type, v
     else:
         nint = nint_OK
     
-    x0 = ex_sol_x(t_span[0])
-    v0 = ex_sol_v(t_span[0])
+    x0 = ivp["x0"]
+    v0 = ivp["v0"]
     
     xf, vf = choreo.segm.ODE.ImplicitSymplecticIVP(
         fun                         ,
@@ -158,8 +154,8 @@ def test_Implicit_ODE(float64_tols, method_x, method_v, nsteps, ivp, fun_type, v
         DoEFT = DoEFT               ,
     )
     
-    xf_ex = ex_sol_x(t_span[1])
-    vf_ex = ex_sol_v(t_span[1])
+    xf_ex = ivp["ex_sol_x"]
+    vf_ex = ivp["ex_sol_v"]
     
     print(np.linalg.norm(xf-xf_ex))
     if nint_OK is not None:
@@ -180,13 +176,11 @@ def test_Explicit_ODE(float64_tols, rk, ivp, fun_type, DoEFT):
     fgun = ivp["fgun"].get((fun_type, False))
     
     if fgun is None:
-        return
+        pytest.skip("NotImplemented")
     
     fun, gun = fgun
     
     t_span = ivp["t_span"]
-    ex_sol_x = ivp["ex_sol_x"]
-    ex_sol_v = ivp["ex_sol_v"]
     nint_OK = ivp["nint"](rk.th_cvg_rate)
     
     if nint_OK is None:
@@ -194,8 +188,8 @@ def test_Explicit_ODE(float64_tols, rk, ivp, fun_type, DoEFT):
     else:
         nint = nint_OK
         
-    x0 = ex_sol_x(t_span[0])
-    v0 = ex_sol_v(t_span[0])
+    x0 = ivp["x0"]
+    v0 = ivp["v0"]
     
     xf, vf = choreo.segm.ODE.ExplicitSymplecticIVP(
         fun             ,
@@ -208,8 +202,8 @@ def test_Explicit_ODE(float64_tols, rk, ivp, fun_type, DoEFT):
         DoEFT = DoEFT   ,
     )
     
-    xf_ex = ex_sol_x(t_span[1])
-    vf_ex = ex_sol_v(t_span[1])
+    xf_ex = ivp["ex_sol_x"]
+    vf_ex = ivp["ex_sol_v"]
     
     print(np.linalg.norm(xf-xf_ex))
     if nint_OK is not None:

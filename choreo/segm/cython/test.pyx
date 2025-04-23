@@ -46,7 +46,7 @@ cdef void ypp_eq_my_c_gun_memoryview(
     scipy.linalg.cython_blas.dscal(&n,&minusone_double,&res[0],&int_one)
 
 cdef void ypp_eq_my_c_fun_memoryview_vec(
-    double t            ,
+    double[::1] t       ,
     double[:,::1] x     ,
     double[:,::1] res   ,
 ) noexcept nogil:
@@ -56,7 +56,7 @@ cdef void ypp_eq_my_c_fun_memoryview_vec(
     scipy.linalg.cython_blas.dcopy(&n,&x[0,0],&int_one,&res[0,0],&int_one)
 
 cdef void ypp_eq_my_c_gun_memoryview_vec(
-    double t            ,
+    double[::1] t       ,
     double[:,::1] v     ,
     double[:,::1] res   ,
 ) noexcept nogil:
@@ -66,7 +66,53 @@ cdef void ypp_eq_my_c_gun_memoryview_vec(
     scipy.linalg.cython_blas.dcopy(&n,&v[0,0],&int_one,&res[0,0],&int_one)
     scipy.linalg.cython_blas.dscal(&n,&minusone_double,&res[0,0],&int_one)
 
+# y'' = t*y
+cdef void ypp_eq_ty_c_fun_memoryview(
+    double t        ,
+    double[::1] x   ,
+    double[::1] res ,
+) noexcept nogil:
 
+    cdef int n = res.shape[0]
+
+    scipy.linalg.cython_blas.dcopy(&n,&x[0],&int_one,&res[0],&int_one)
+
+cdef void ypp_eq_ty_c_gun_memoryview(
+    double t        ,
+    double[::1] v   ,
+    double[::1] res ,
+) noexcept nogil:
+
+    cdef int n = res.shape[0]
+
+    scipy.linalg.cython_blas.dcopy(&n,&v[0],&int_one,&res[0],&int_one)
+    scipy.linalg.cython_blas.dscal(&n,&t,&res[0],&int_one)
+
+cdef void ypp_eq_ty_c_fun_memoryview_vec(
+    double[::1] t            ,
+    double[:,::1] x     ,
+    double[:,::1] res   ,
+) noexcept nogil:
+
+    cdef int n = res.shape[0] * res.shape[1]
+
+    scipy.linalg.cython_blas.dcopy(&n,&x[0,0],&int_one,&res[0,0],&int_one)
+
+cdef void ypp_eq_ty_c_gun_memoryview_vec(
+    double[::1] t            ,
+    double[:,::1] v     ,
+    double[:,::1] res   ,
+) noexcept nogil:
+
+    cdef int n = res.shape[0] * res.shape[1]
+    cdef Py_ssize_t i
+
+    scipy.linalg.cython_blas.dcopy(&n,&v[0,0],&int_one,&res[0,0],&int_one)
+
+    n = res.shape[1]
+
+    for i in range(res.shape[0]):
+        scipy.linalg.cython_blas.dscal(&n,&t[i],&res[i,0],&int_one)
 
 cdef void Wallis_c_fun_memoryview(
     double x        ,

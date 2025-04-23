@@ -1,6 +1,7 @@
 import numpy as np
 import scipy
 import choreo
+from tests.test_config.test_config_NBodySyst import load_from_solution_file
 
 Small_orders = list(range(2,11))
 High_orders = [25,50,100]
@@ -162,11 +163,14 @@ Explicit_tables_dict = {
 
 all_ODE_names = [
     "ypp=minus_y"       ,
+    "ypp=xy"            ,
 ]
 
 def define_ODE_ivp(eq_name):
         
     if eq_name == "ypp=minus_y":
+        # y'' = - y
+        # y(x) = A cos(x) + B sin(x)
 
         def nint(th_cvg_rate):
 
@@ -185,14 +189,17 @@ def define_ODE_ivp(eq_name):
         
         ndim = 2
 
-        ex_sol_x = lambda t : np.array([ np.cos(t), np.sin(t)])
-        ex_sol_v = lambda t : np.array([-np.sin(t), np.cos(t)])
+        ex_sol_fun_x = lambda t : np.array([ np.cos(t), np.sin(t)])
+        ex_sol_fun_v = lambda t : np.array([-np.sin(t), np.cos(t)])
 
         def py_fun(t,v):
             return np.asarray(v)
         
         def py_gun(t,x):
             return -np.asarray(x)
+        
+        py_fun_vec = py_fun
+        py_gun_vec = py_gun
         
         def py_fun_inplace(t,v,res):
             for i in range(ndim):
@@ -209,23 +216,166 @@ def define_ODE_ivp(eq_name):
         c_gun_memoryview = scipy.LowLevelCallable.from_cython(choreo.segm.cython.test, "ypp_eq_my_c_gun_memoryview")
         
         c_fun_memoryview_vec = scipy.LowLevelCallable.from_cython(choreo.segm.cython.test, "ypp_eq_my_c_fun_memoryview_vec")
-        c_gun_memoryview_vec = scipy.LowLevelCallable.from_cython(choreo.segm.cython.test, "ypp_eq_my_c_gun_memoryview_vec")
+        c_gun_memoryview_vec = scipy.LowLevelCallable.from_cython(choreo.segm.cython.test, "ypp_eq_my_c_gun_memoryview_vec")        
         
-        return {
-            "nint" : nint                   ,
-            "t_span" : t_span               ,
-            "ex_sol_x" : ex_sol_x           ,
-            "ex_sol_v" : ex_sol_v           ,
-            "fgun" : {
-                ("py_fun", False) : (py_fun, py_gun)                                        ,
-                ("py_fun", True ) : (py_fun, py_gun)                                        ,
-                ("c_fun_memoryview", False ) : (c_fun_memoryview, c_gun_memoryview)         ,
-                ("c_fun_memoryview_vec", True  ) : (c_fun_memoryview_vec, c_gun_memoryview_vec) ,
-                ("c_fun_pointer", False) : (c_fun_pointer, c_gun_pointer)                   ,
-                # ("c_fun_pointer", True ) : (nb_c_fun_pointer, nb_c_gun_pointer) ,
-            }                               ,
-        }
+    elif eq_name == "ypp=xy":
+
+        def nint(th_cvg_rate):
+
+            if th_cvg_rate > 20:
+                return 1
+            elif th_cvg_rate > 10:
+                return 2
+            elif th_cvg_rate > 7:
+                return 30
+            elif th_cvg_rate > 5:
+                return 50
+            elif th_cvg_rate > 4:
+                return 200
+            
+        t_span = (0., 1.)
         
+        ndim = 2
+        
+        def ex_sol_fun_x(t):
+            ai, _, bi, _ = scipy.special.airy(t)
+            return np.array([ai,bi])    
+            
+        def ex_sol_fun_v(t):
+            _, aip, _, bip = scipy.special.airy(t)
+            return np.array([aip,bip])
+
+        def py_fun(t,v):
+            return np.asarray(v)
+        
+        def py_gun(t,x):
+            return t*np.asarray(x)
+        
+        py_fun_vec = py_fun
+        
+        def py_gun_vec(t,x):
+            return np.einsum('i,ij->ij', np.asarray(t), np.asarray(x))
+        
+        def py_fun_inplace(t,v,res):
+            for i in range(ndim):
+                res[i] = v[i]   
+                 
+        def py_gun_inplace(t,x,res):
+            for i in range(ndim):
+                res[i] = t*x[i]   
+                
+        c_fun_pointer = choreo.segm.ODE.nb_jit_c_fun_pointer(py_fun_inplace)
+        c_gun_pointer = choreo.segm.ODE.nb_jit_c_fun_pointer(py_gun_inplace)
+        
+        c_fun_memoryview = scipy.LowLevelCallable.from_cython(choreo.segm.cython.test, "ypp_eq_ty_c_fun_memoryview")
+        c_gun_memoryview = scipy.LowLevelCallable.from_cython(choreo.segm.cython.test, "ypp_eq_ty_c_gun_memoryview")
+        
+        c_fun_memoryview_vec = scipy.LowLevelCallable.from_cython(choreo.segm.cython.test, "ypp_eq_ty_c_fun_memoryview_vec")
+        c_gun_memoryview_vec = scipy.LowLevelCallable.from_cython(choreo.segm.cython.test, "ypp_eq_ty_c_gun_memoryview_vec")
+
+    elif eq_name.startswith("choreo_"): 
+
+        sol_name = eq_name.removeprefix("choreo_")
+        
+        NBS, params_buf = load_from_solution_file(sol_name)
+        
+        t_span = (0., 1.)
+        x0, v0 = NBS.Compute_init_pos_mom(params_buf)
+        
+        ex_sol_x = x0
+        ex_sol_v = v0
+
+        NoSym = NBS.BinSpaceRotIsId.all()
+        user_data = NBS.Get_ODE_params()
+        
+        py_fun = NBS.Compute_velocities
+        py_gun = NBS.Compute_forces_nosym if NoSym else NBS.Compute_forces
+        
+        py_fun_vec = NBS.Compute_velocities_vectorized
+        py_gun_vec = NBS.Compute_forces_vectorized_nosym if NoSym else NBS.Compute_forces_vectorized
+        
+        c_fun_memoryview = scipy.LowLevelCallable.from_cython(
+            choreo.cython._NBodySyst                    ,
+            "Compute_velocities_user_data"              ,
+            user_data                                   ,
+        )
+        c_gun_memoryview = scipy.LowLevelCallable.from_cython(
+            choreo.cython._NBodySyst                ,
+            "Compute_forces_nosym_user_data"        ,
+            user_data                               ,
+        ) if NoSym else scipy.LowLevelCallable.from_cython(
+            choreo.cython._NBodySyst                ,
+            "Compute_forces_user_data"              ,
+            user_data                               ,
+        )
+        
+        c_fun_memoryview_vec = scipy.LowLevelCallable.from_cython(
+            choreo.cython._NBodySyst                    ,
+            "Compute_velocities_vectorized_user_data"   ,
+            user_data                                   ,
+        )
+        c_gun_memoryview_vec = scipy.LowLevelCallable.from_cython(
+            choreo.cython._NBodySyst                    ,
+            "Compute_forces_vectorized_nosym_user_data" ,
+            user_data                                   ,
+        ) if NoSym else scipy.LowLevelCallable.from_cython(
+            choreo.cython._NBodySyst                    ,
+            "Compute_forces_vectorized_user_data"       ,
+            user_data                                   ,
+        )
+
     else:
         raise ValueError(f'Unknown {eq_name = }')
+    
+    loc = locals()
+    fgun = {}
+
+    py_fun = loc.get("py_fun")
+    py_gun = loc.get("py_gun")
+    if py_fun is not None and py_gun is not None:
+        fgun[("py_fun", False)] = (py_fun, py_gun)    
+        
+    py_fun_vec = loc.get("py_fun_vec")
+    py_gun_vec = loc.get("py_gun_vec")
+    if py_fun_vec is not None and py_gun_vec is not None:
+        fgun[("py_fun", True)] = (py_fun_vec, py_gun_vec)  
+          
+    c_fun_memoryview = loc.get("c_fun_memoryview")
+    c_gun_memoryview = loc.get("c_gun_memoryview")
+    if c_fun_memoryview is not None and c_gun_memoryview is not None:
+        fgun[("c_fun_memoryview", False)] = (c_fun_memoryview, c_gun_memoryview)    
+        
+    c_fun_memoryview_vec = loc.get("c_fun_memoryview_vec")
+    c_gun_memoryview_vec = loc.get("c_gun_memoryview_vec")
+    if c_fun_memoryview_vec is not None and c_gun_memoryview_vec is not None:
+        fgun[("c_fun_memoryview", True)] = (c_fun_memoryview_vec, c_gun_memoryview_vec)  
+          
+    c_fun_pointer = loc.get("c_fun_pointer")
+    c_gun_pointer = loc.get("c_gun_pointer")
+    if c_fun_pointer is not None and c_gun_pointer is not None:
+        fgun[("c_fun_pointer", False)] = (c_fun_pointer, c_gun_pointer)    
+              
+    c_fun_pointer_vec = loc.get("c_fun_pointer_vec")
+    c_gun_pointer_vec = loc.get("c_gun_pointer_vec")
+    if c_fun_pointer_vec is not None and c_gun_pointer_vec is not None:
+        fgun[("py_fun", True)] = (c_fun_pointer_vec, c_gun_pointer_vec)
+
+    res = {"fgun":fgun}
+    
+    for key in ["nint", "t_span", "ex_sol_fun_x",  "ex_sol_fun_v", "x0", "v0", "ex_sol_x", "ex_sol_v"]:
+        # Facultative keys
+        res[key] = loc.get(key)
+        
+    if res.get("x0") is None:
+        res["x0"] = ex_sol_fun_x(t_span[0])
+    if res.get("v0") is None:
+        res["v0"] = ex_sol_fun_v(t_span[0])
+    if res.get("ex_sol_x") is None:
+        res["ex_sol_x"] = ex_sol_fun_x(t_span[1])
+    if res.get("ex_sol_v") is None:
+        res["ex_sol_v"] = ex_sol_fun_v(t_span[1])
+
+    return res
+    
+    
             

@@ -7,6 +7,7 @@
 
     test_random_orthogonal_matrix
     test_nullspace
+    test_blas_matmul
 
 """
 
