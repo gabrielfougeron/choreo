@@ -278,12 +278,18 @@ def define_ODE_ivp(eq_name):
         sol_name = eq_name.removeprefix("choreo_")
         
         NBS, params_buf = load_from_solution_file(sol_name)
+        NBS.ForceGreaterNStore = True
         
-        t_span = (0., 1.)
-        x0, v0 = NBS.Compute_init_pos_mom(params_buf)
+        reg_x0 = np.ascontiguousarray(NBS.params_to_segmpos(params_buf).swapaxes(0, 1).reshape(NBS.segm_store,-1))
+        reg_v0 = np.ascontiguousarray(NBS.params_to_segmmom(params_buf).swapaxes(0, 1).reshape(NBS.segm_store,-1))
         
-        ex_sol_x = x0
-        ex_sol_v = v0
+        t_span = (0., 1. / NBS.nint_min)
+        
+        x0 = reg_x0[0,:].copy()
+        v0 = reg_v0[0,:].copy()
+        
+        ex_sol_x = reg_x0[-1,:].copy()
+        ex_sol_v = reg_v0[-1,:].copy()
 
         NoSym = NBS.BinSpaceRotIsId.all()
         user_data = NBS.Get_ODE_params()
@@ -362,7 +368,7 @@ def define_ODE_ivp(eq_name):
 
     res = {"fgun":fgun}
     
-    for key in ["nint", "t_span", "ex_sol_fun_x",  "ex_sol_fun_v", "x0", "v0", "ex_sol_x", "ex_sol_v"]:
+    for key in ["nint", "t_span", "ex_sol_fun_x",  "ex_sol_fun_v", "x0", "v0", "ex_sol_x", "ex_sol_v", "reg_x0", "reg_v0"]:
         # Facultative keys
         res[key] = loc.get(key)
         

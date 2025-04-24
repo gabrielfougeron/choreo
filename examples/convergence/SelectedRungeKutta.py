@@ -55,7 +55,7 @@ ForceBenchmark = False
 
 def get_implicit_table_pair(rk_name, order):
 
-    return choreo.segm.multiprec_tables.ComputeImplicitSymplecticRKTablePair_Gauss(order)
+    return choreo.segm.multiprec_tables.ComputeImplicitSymplecticRKTablePair(order)
     
     raise ValueError(f"Unknown {rk_name = }")
 
@@ -69,8 +69,8 @@ eq_names = [
 ]
 
 implicit_methods = {
-    f'{rk_name} {order}' : choreo.segm.multiprec_tables.ComputeImplicitSymplecticRKTablePair_Gauss(order,method=rk_name) for rk_name, order in itertools.product(["Gauss"], [2,4,6,8])
-    # f'{rk_name} {order}' : choreo.segm.multiprec_tables.ComputeImplicitSymplecticRKTablePair_Gauss(order, method=rk_name) for rk_name, order in itertools.product(["Radau_IIA"], [2,3,4,5])
+    f'{rk_name} {order}' : choreo.segm.multiprec_tables.ComputeImplicitSymplecticRKTablePair(order,method=rk_name) for rk_name, order in itertools.product(["Gauss"], [2,4,6,8])
+    # f'{rk_name} {order}' : choreo.segm.multiprec_tables.ComputeImplicitSymplecticRKTablePair(order, method=rk_name) for rk_name, order in itertools.product(["Radau_IIA"], [2,3,4,5])
 }
 
 explicit_methods = {

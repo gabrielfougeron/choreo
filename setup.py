@@ -306,8 +306,6 @@ if platform.system() == "Windows":
 else:
     import multiprocessing
     nthreads = multiprocessing.cpu_count()
-    
-nthreads = 0
 
 ext_modules = Cython.Build.cythonize(
     ext_modules,

@@ -102,21 +102,46 @@ def ODE_cpte_error_on_test(rk, ivp, nint, fun_type, DoEFT,tend):
     res = 2 * (np.linalg.norm(xf-xf_ex) + np.linalg.norm(vf-vf_ex)) / (np.linalg.norm(xf) + np.linalg.norm(vf) + np.linalg.norm(xf_ex) + np.linalg.norm(vf_ex))
     
     return res
+
+# def ODE_cpte_error_on_test(rk, ivp, nint, fun_type, DoEFT, tend):
+# 
+#     fun, gun = ivp["fgun"][(fun_type, False)]
+#     t_span = (0., tend)
+#     nint = nint * tend
+#         
+#     x0 = ivp["ex_sol_fun_x"](t_span[0])
+#     v0 = ivp["ex_sol_fun_v"](t_span[0])
+#     
+#     xf, vf = choreo.segm.ODE.SymplecticIVP(
+#         fun             ,
+#         gun             ,
+#         t_span          ,
+#         x0              ,
+#         v0              ,
+#         rk = rk         ,
+#         nint = nint     ,
+#         DoEFT = DoEFT   ,
+#     )
+#     
+#     xf_ex = ivp["ex_sol_fun_x"](t_span[1])
+#     vf_ex = ivp["ex_sol_fun_v"](t_span[1])
+#     
+#     res = 2 * (np.linalg.norm(xf-xf_ex) + np.linalg.norm(vf-vf_ex)) / (np.linalg.norm(xf) + np.linalg.norm(vf) + np.linalg.norm(xf_ex) + np.linalg.norm(vf_ex))
+#     
+#     return res
     
 def setup(rk, ivp, nint, fun_type, DoEFT, tend):
     
     if rk in tests.test_config.Explicit_tables_dict:
         rk_ = tests.test_config.Explicit_tables_dict[rk]
     else:
-        rk_ = choreo.segm.multiprec_tables.ComputeImplicitSymplecticRKTablePair(n=40, method=rk, dps=1000)
+        rk_ = choreo.segm.multiprec_tables.ComputeImplicitSymplecticRKTablePair(n=20, method=rk, dps=1000)
         
     ivp_ = tests.test_config.define_ODE_ivp(ivp)
     
     return {'rk': rk_, 'ivp': ivp_, 'nint': nint, 'fun_type': fun_type, 'DoEFT': DoEFT, 'tend': tend}
 
 eq_names = [
-    # "ypp=minus_y",
-    # "ypp=xy",
     # "choreo_3C-Figure_eight"        ,
     # "choreo_3D-Heart"        ,
     # "choreo_5C3k-Double_lobes"        ,
@@ -124,7 +149,12 @@ eq_names = [
     # "choreo_5D3k-Flower"        ,
     # "choreo_complex_mass_charges"        ,
     # "choreo_2C2C1C-Double_blob"        ,
-    "choreo_2D-Circle"        ,
+    # "choreo_2D-Circle"        ,
+    "choreo_00003"        ,
+    "choreo_00004"        ,
+    "choreo_00005"        ,
+    "choreo_00006"        ,
+    "choreo_00007"        ,
 ]
 
 
@@ -149,7 +179,7 @@ all_args = {
     # "rk" : [name for name, method in tests.test_config.Explicit_tables_dict.items()],
     # "rk" : [name for name, method in tests.test_config.Explicit_tables_dict.items() if method.th_cvg_rate == 8],
     # "rk" : ["Gauss", "Radau_IA", "Radau_IIA", "Radau_IB", "Radau_IIB", "Lobatto_IIIA", "Lobatto_IIIB", "Lobatto_IIIC","Lobatto_IIIC*" , "Lobatto_IIID" , "Lobatto_IIIS", "Cheb_I", "Cheb_II", "ClenshawCurtis", "NewtonCotesOpen","NewtonCotesClosed"],
-    "rk" : ["Gauss", "Radau_IA", "Radau_IIA", "Radau_IB", "Radau_IIB", "Lobatto_IIIA", "Lobatto_IIIB", "Lobatto_IIIC","Lobatto_IIIC*" , "Lobatto_IIID" , "Lobatto_IIIS", "Cheb_I", "Cheb_II", "ClenshawCurtis"],
+    "rk" : ["Gauss", "Radau_IA", "Radau_IIA", "Radau_IB", "Radau_IIB", "Lobatto_IIIA", "Lobatto_IIIB", "Lobatto_IIIC","Lobatto_IIIC*" , "Lobatto_IIID" , "Lobatto_IIIS"],
     # "rk" : ["Gauss", "SofSpa10"],
     "ivp" : eq_names,
     # "nint" : np.array([2**i for i in range(20)]) ,
@@ -157,7 +187,8 @@ all_args = {
     "fun_type" : ["c_fun_memoryview"] ,
     "DoEFT" : [True] ,
     # "DoEFT" : [False, True] ,
-    "tend" : np.array([2**i for i in range(15)]) ,
+    "tend" : np.array([2**i for i in range(10)]) ,
+    # "tend" : np.array(range(1,1000)) ,
 }
 
 plot_intent = {
@@ -189,10 +220,10 @@ all_vals = pyquickbench.run_benchmark(
     ForceBenchmark = ForceBenchmark ,
 )
 
-for transform in [
+for (transform, ylabel) in zip([
     None,
     "pol_growth_order",
-]:
+], ["Relative error", "Relative error growth order"]):
 
     pyquickbench.plot_benchmark(
         all_vals                    ,
@@ -202,6 +233,7 @@ for transform in [
         plot_intent = plot_intent   ,
         plot_ylim = plot_ylim       ,
         transform = transform       ,
+        ylabel = ylabel             ,
     )
 
 

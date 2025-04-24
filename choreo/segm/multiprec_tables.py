@@ -549,7 +549,7 @@ def ComputeQuadratureTablesFromNodes(nodes, dps=30):
     
     return w, z, wlag, vdm_inv
 
-def ComputeQuadrature(n=10, dps=30, method="Gauss", nodes=None):
+def ComputeQuadrature(n=2, dps=30, method="Gauss", nodes=None):
     """Computes a :class:`choreo.segm.quad.QuadTable`
 
     The computation is performed at a user-defined precision using `mpmath <https://mpmath.org/doc/current>`_ to ensure that the result does not suffer from precision loss, even at relatively high orders.
@@ -617,7 +617,7 @@ def ComputeQuadrature(n=10, dps=30, method="Gauss", nodes=None):
         th_cvg_rate = th_cvg_rate   ,
     )
 
-def ComputeImplicitRKTable(n=10, dps=60, method="Gauss", nodes=None):
+def ComputeImplicitRKTable(n=2, dps=60, method="Gauss", nodes=None):
     """Computes a :class:`choreo.segm.ODE.ImplicitRKTable`
 
     The computation is performed at a user-defined precision using `mpmath <https://mpmath.org/doc/current>`_ to ensure that the result does not suffer from precision loss, even at relatively high orders.
@@ -654,7 +654,7 @@ def ComputeImplicitRKTable(n=10, dps=60, method="Gauss", nodes=None):
     Parameters
     ----------
     n : :class:`python:int`, optional
-        Order of the method. By default ``10``.
+        Order of the method. By default ``2``.
     dps : :class:`python:int`, optional
         Context precision in `mpmath <https://mpmath.org/doc/current>`_. See :doc:`mpmath:contexts` for more info. By default ``30``.
     method : :class:`python:str`, optional
@@ -707,7 +707,7 @@ def ComputeImplicitRKTable(n=10, dps=60, method="Gauss", nodes=None):
         th_cvg_rate = th_cvg_rate       ,
     )
         
-def ComputeImplicitSymplecticRKTablePair_Gauss(n=10, dps=60, method="Gauss", nodes=None):
+def ComputeImplicitSymplecticRKTablePair(n=10, dps=60, method="Gauss", nodes=None):
 
     if nodes is None:
 

@@ -133,7 +133,7 @@ McAte2 = ExplicitSymplecticRKTable(
 )
 """McLachlan-Atela method of order 2
 
-Optimal method with 2 stage by McLachlan and Atela :footcite:`mclachlan1992accuracy`.
+Optimal method with 2 stages by McLachlan and Atela :footcite:`mclachlan1992accuracy`.
 
 :cited:
 .. footbibliography::

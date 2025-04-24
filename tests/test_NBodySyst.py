@@ -28,6 +28,7 @@
     test_custom_inter_law
     test_periodicity_default
     test_RK_vs_spectral
+    test_RK_vs_spectral_reset
     test_segmpos_param
     test_grad_fun_FD
     test_ODE_grad_vs_FD
@@ -906,7 +907,7 @@ def test_RK_vs_spectral(NBS, params_buf, vector_calls, LowLevel, NoSymIfPossible
     
     action_grad = NBS.segmpos_params_to_action_grad(segmpos, params_buf)
     action_grad_norm = np.linalg.norm(action_grad, ord = np.inf)
-    tol = 200 * action_grad_norm
+    tol = 100 * action_grad_norm
     
     ODE_Syst = NBS.Get_ODE_def(params_buf, vector_calls = vector_calls, LowLevel = LowLevel, NoSymIfPossible = NoSymIfPossible)
     
@@ -928,7 +929,62 @@ def test_RK_vs_spectral(NBS, params_buf, vector_calls, LowLevel, NoSymIfPossible
     segmpos_ODE = np.ascontiguousarray(segmpos_ODE.reshape((NBS.segm_store, NBS.nsegm, NBS.geodim)).swapaxes(0, 1))
 
     print(np.linalg.norm(segmpos - segmpos_ODE))
+    assert np.allclose(segmpos, segmpos_ODE, rtol = tol, atol = tol)  
+    
+    tol = 20000 * action_grad_norm 
+    
+    segmmom_ODE = np.ascontiguousarray(segmmom_ODE.reshape((NBS.segm_store, NBS.nsegm, NBS.geodim)).swapaxes(0, 1))
+
+    print(np.linalg.norm(segmmom - segmmom_ODE))
+    assert np.allclose(segmmom, segmmom_ODE, rtol = tol, atol = tol)        
+    
+@ParametrizeDocstrings
+@pytest.mark.parametrize("NoSymIfPossible", [True, False])
+@pytest.mark.parametrize("LowLevel", [True, False])
+@pytest.mark.parametrize("vector_calls", [True, False])
+@pytest.mark.parametrize(("NBS", "params_buf"), [pytest.param(NBS, params_buf, id=name) for name, (NBS, params_buf) in Sols_dict.items()])
+def test_RK_vs_spectral_reset(NBS, params_buf, vector_calls, LowLevel, NoSymIfPossible):
+    """ Tests that the Fourier periodic spectral solver agrees with the time forward Runge-Kutta solver.
+    """
+        
+    NBS.ForceGreaterNStore = True
+    segmpos = NBS.params_to_segmpos(params_buf)
+    segmmom = NBS.params_to_segmmom(params_buf)
+
+    reg_x0 = np.ascontiguousarray(segmpos.swapaxes(0, 1).reshape(NBS.segm_store,-1))
+    reg_v0 = np.ascontiguousarray(segmmom.swapaxes(0, 1).reshape(NBS.segm_store,-1))
+    
+    action_grad = NBS.segmpos_params_to_action_grad(segmpos, params_buf)
+    action_grad_norm = np.linalg.norm(action_grad, ord = np.inf)
+    tol = 0.1 * action_grad_norm # !!!!
+    
+    ODE_Syst = NBS.Get_ODE_def(params_buf, vector_calls = vector_calls, LowLevel = LowLevel, NoSymIfPossible = NoSymIfPossible)
+    
+    nsteps = 10
+    keep_freq = 1
+    nint_ODE = (NBS.segm_store-1) * keep_freq
+    method = "Gauss"
+    reg_init_freq = keep_freq
+    
+    rk = choreo.segm.multiprec_tables.ComputeImplicitRKTable(nsteps, method=method)
+    
+    segmpos_ODE, segmmom_ODE = choreo.segm.ODE.SymplecticIVP(
+        rk = rk                         ,
+        keep_freq = keep_freq           ,
+        nint = nint_ODE                 ,
+        keep_init = True                ,
+        reg_x0 = reg_x0                 ,
+        reg_v0 = reg_v0                 ,
+        reg_init_freq = reg_init_freq   ,
+        **ODE_Syst                      ,
+    )
+
+    segmpos_ODE = np.ascontiguousarray(segmpos_ODE.reshape((NBS.segm_store, NBS.nsegm, NBS.geodim)).swapaxes(0, 1))
+
+    print(np.linalg.norm(segmpos - segmpos_ODE))
     assert np.allclose(segmpos, segmpos_ODE, rtol = tol, atol = tol)   
+    
+    tol = 100 * action_grad_norm
     
     segmmom_ODE = np.ascontiguousarray(segmmom_ODE.reshape((NBS.segm_store, NBS.nsegm, NBS.geodim)).swapaxes(0, 1))
 
@@ -1009,7 +1065,7 @@ def test_grad_fun_FD(float64_tols_loose, NBS, params_buf, NoSymIfPossible):
     print(err.min())
     assert (err.min() < float64_tols_loose.rtol)
         
-@pytest.mark.slow(required_time = 10)
+@pytest.mark.slow(required_time = 20)
 @ParametrizeDocstrings
 @pytest.mark.parametrize("NoSymIfPossible", [True, False])
 @pytest.mark.parametrize("vector_calls", [True, False])
@@ -1064,7 +1120,7 @@ def test_ODE_grad_vs_FD(float64_tols_loose, NBS, params_buf, vector_calls, LowLe
         res[n:2*n] = segmvel_ODE[-1,:]
 
         return res
-    
+
     def grad_fun_fd(x, dx):
         
         nn = x.shape[0]

@@ -35,6 +35,15 @@ from choreo.scipy_plus.cython.ccallback cimport ccallback_t, ccallback_prepare, 
 
 from choreo.scipy_plus.cython.blas_consts cimport *
 
+from choreo.segm.multiprec_tables import ComputeImplicitRKTable
+
+default_implicit_rk = ComputeImplicitRKTable()
+default_explicit_rk = ExplicitSymplecticRKTable(
+    c_table = np.array([0.    ,1.      ])   ,
+    d_table = np.array([1./2  ,1./2    ])   ,
+    th_cvg_rate = 2                         ,
+) # Störmer-Verlet 
+
 cdef int PY_FUN = -1
 cdef int C_FUN_MEMORYVIEW = 0
 cdef int C_FUN_MEMORYVIEW_VEC = 1
@@ -690,21 +699,24 @@ cdef class ExplicitSymplecticRKTable:
 
 @cython.cdivision(True)
 cpdef ExplicitSymplecticIVP(
-    object fun                      ,
-    object gun                      ,
-    (double, double) t_span         ,
-    double[::1] x0                  ,
-    double[::1] v0                  ,
-    ExplicitSymplecticRKTable rk    ,
-    object grad_fun = None          ,
-    object grad_gun = None          ,
-    double[:,::1] grad_x0 = None    ,
-    double[:,::1] grad_v0 = None    ,
-    object mode = "VX"              ,
-    Py_ssize_t nint = 1             ,
-    Py_ssize_t keep_freq = -1       ,
-    bint keep_init = False          ,
-    bint DoEFT = True               ,
+    object fun                                          ,
+    object gun                                          ,
+    (double, double) t_span                             ,
+    double[::1] x0 = None                               ,
+    double[::1] v0 = None                               ,
+    ExplicitSymplecticRKTable rk = default_explicit_rk  ,
+    object grad_fun = None                              ,
+    object grad_gun = None                              ,
+    double[:,::1] grad_x0 = None                        ,
+    double[:,::1] grad_v0 = None                        ,
+    object mode = "VX"                                  ,
+    Py_ssize_t nint = 1                                 ,
+    Py_ssize_t keep_freq = -1                           ,
+    double[:,::1] reg_x0 = None                         ,
+    double[:,::1] reg_v0 = None                         ,
+    Py_ssize_t reg_init_freq = -1                       ,
+    bint keep_init = False                              ,
+    bint DoEFT = True                                   ,
 ): 
     """Explicit symplectic integration of a partitionned initial value problem.
 
@@ -716,12 +728,12 @@ cpdef ExplicitSymplecticIVP(
         Function defining the IVP.
     t_span : :class:`python:tuple` (:obj:`numpy:numpy.float64`, :obj:`numpy:numpy.float64`)
         Initial and final time of integration.
-    x0 : :class:`numpy:numpy.ndarray`:class:`(shape = (n), dtype = np.float64)`
-        Initial value for x.
-    v0 : :class:`numpy:numpy.ndarray`:class:`(shape = (n), dtype = np.float64)`
-        Initial value for v.
-    rk_x : :class:`ExplicitSymplecticRKTable`
-        Runge-Kutta tables for the integration of the IVP.
+    x0 : :class:`numpy:numpy.ndarray`:class:`(shape = (n), dtype = np.float64)`, optional
+        Initial value for x. Overriden by reg_x0 if provided. By default, :data:`python:None`.
+    v0 : :class:`numpy:numpy.ndarray`:class:`(shape = (n), dtype = np.float64)`, optional
+        Initial value for v. Overriden by reg_x0 if provided. By default, :data:`python:None`.
+    rk_x : :class:`ExplicitSymplecticRKTable`, optional
+        Runge-Kutta tables for the integration of the IVP. By default, :data:`choreo.segm.precomputed_tables.StormerVerlet`.
     grad_fun : :obj:`python:callable` or :class:`scipy:scipy.LowLevelCallable`, optional
         Gradient of the function defining the IVP, by default :data:`python:None`.
     grad_gun : :obj:`python:callable` or :class:`scipy:scipy.LowLevelCallable`, optional
@@ -732,6 +744,12 @@ cpdef ExplicitSymplecticIVP(
         Number of integration steps, by default ``1``.
     keep_freq : :class:`python:int`, optional
         Number of integration steps to be taken before saving output, by default ``-1``.
+    reg_x0 : :class:`numpy:numpy.ndarray`:class:`(shape = (nreg, n), dtype = np.float64)`
+        Array of initial values for x for regular reset.
+    reg_v0 : :class:`numpy:numpy.ndarray`:class:`(shape = (nreg, n), dtype = np.float64)`
+        Array of initial values for v for regular reset.
+    reg_init_freq : :class:`python:int`, optional
+        Number of timesteps before resetting initial values for x and v. Non-positive values disable the reset, by default ``-1``.
     keep_init : :class:`python:bool`, optional
         Whether to save the initial values, by default :data:`python:False`.
     DoEFT : :class:`python:bool`, optional
@@ -747,7 +765,37 @@ cpdef ExplicitSymplecticIVP(
 
     cdef Py_ssize_t keep_start
 
-    if (x0.shape[0] != v0.shape[0]):
+    if x0 is None:
+        if reg_x0 is None:
+            raise ValueError("Missing x0 or reg_x0")
+        else:
+            x0 = reg_x0[0,:].copy()
+
+    if v0 is None:
+        if reg_v0 is None:
+            raise ValueError("Missing v0 or reg_v0")
+        else:
+            v0 = reg_v0[0,:].copy()
+
+    cdef Py_ssize_t ndof = x0.shape[0]
+    cdef Py_ssize_t nreg_init
+
+    if (reg_x0 is None) == (reg_v0 is None):
+        if reg_x0 is None:
+            reg_x0 = np.empty((0, 0), dtype=np.float64)
+            reg_v0 = np.empty((0, 0), dtype=np.float64)
+
+        else:
+            nreg_init = reg_x0.shape[0]
+            if (reg_v0.shape[0] != nreg_init) or (reg_x0.shape[1] != ndof) or (reg_x0.shape[1] != ndof):
+                raise ValueError("reg_x0 and reg_v0 have incorrect shapes.")
+
+            if reg_init_freq < 1:
+                reg_init_freq = nint + 1
+    else:
+        raise ValueError("Only one of reg_x0 and reg_v0 was provided.")
+
+    if (v0.shape[0] != ndof):
         raise ValueError("x0 and v0 must have the same shape")
 
     cdef ccallback_t callback_fun
@@ -764,7 +812,6 @@ cpdef ExplicitSymplecticIVP(
     if (keep_freq < 0):
         keep_freq = nint
 
-    cdef Py_ssize_t ndof = x0.shape[0]
     cdef Py_ssize_t nint_keep = nint // keep_freq
 
     if keep_init:
@@ -876,6 +923,9 @@ cpdef ExplicitSymplecticIVP(
                 rk                  ,
                 nint                ,
                 keep_freq           ,
+                reg_x0              ,
+                reg_v0              ,
+                reg_init_freq       ,
                 DoEFT               ,
                 DoTanIntegration    ,
                 x_keep              ,
@@ -903,6 +953,9 @@ cpdef ExplicitSymplecticIVP(
                 rk                  ,
                 nint                ,
                 keep_freq           ,
+                reg_v0              ,
+                reg_x0              ,
+                reg_init_freq       ,
                 DoEFT               ,
                 DoTanIntegration    ,
                 v_keep              ,
@@ -944,6 +997,9 @@ cdef void ExplicitSymplecticIVP_ann(
     ExplicitSymplecticRKTable rk    ,
     Py_ssize_t nint                 ,
     Py_ssize_t keep_freq            ,
+    double[:,::1]   reg_x0          ,
+    double[:,::1]   reg_v0          ,
+    Py_ssize_t reg_init_freq        ,
     bint DoEFT                      ,
     bint DoTanIntegration           ,
     double[:,::1]   x_keep          ,
@@ -957,8 +1013,9 @@ cdef void ExplicitSymplecticIVP_ann(
     cdef double dt = (t_span[1] - t_span[0]) / nint
 
     cdef int ndof = x.shape[0]
-    cdef Py_ssize_t nint_keep = nint // keep_freq
+    cdef bint DoRegInit = reg_init_freq > 0
     cdef Py_ssize_t nsteps = rk._c_table.shape[0]
+    cdef Py_ssize_t iint
 
     cdef int grad_nvar
     if DoTanIntegration:
@@ -974,7 +1031,9 @@ cdef void ExplicitSymplecticIVP_ann(
     cdef double tx_comp = 0.
     cdef double tv_comp = 0.
 
-    cdef Py_ssize_t istep, iint_keep
+    cdef Py_ssize_t iint_keep = 0
+    cdef Py_ssize_t ireg_init = 0
+    cdef Py_ssize_t istep
 
     if DoEFT:
 
@@ -996,67 +1055,84 @@ cdef void ExplicitSymplecticIVP_ann(
         cdt[istep] = rk._c_table[istep] * dt
         ddt[istep] = rk._d_table[istep] * dt
 
-    for iint_keep in range(nint_keep):
+    for iint in range(nint):
 
-        for ifreq in range(keep_freq):
+        for istep in range(nsteps):
+            
+            # res = f(t,v)
+            LowLevelFun_apply(callback_fun, tv, v, res)
+            
+            if DoTanIntegration:
+                # grad_res = grad_f(t,v,grad_v)
+                LowLevelFun_grad_apply(callback_grad_fun, tv, v, grad_v, grad_res)
 
-            for istep in range(nsteps):
-                
-                # res = f(t,v)
-                LowLevelFun_apply(callback_fun, tv, v, res)
-                
-                if DoTanIntegration:
-                    # grad_res = grad_f(t,v,grad_v)
-                    LowLevelFun_grad_apply(callback_grad_fun, tv, v, grad_v, grad_res)
-
-                # x = x + cdt * res
-                if DoEFT:
-                    scipy.linalg.cython_blas.dscal(&ndof,&cdt[istep],&res[0],&int_one)
-                    TwoSum_incr(&x[0],&res[0],x_eft_comp,ndof)
-                    TwoSum_incr(&tx,&cdt[istep],&tx_comp,1)
-
-                    if DoTanIntegration:
-                        scipy.linalg.cython_blas.dscal(&grad_nvar,&cdt[istep],&grad_res[0,0],&int_one)
-                        TwoSum_incr(&grad_x[0,0],&grad_res[0,0],grad_x_eft_comp,grad_nvar)
-
-                else:
-                    scipy.linalg.cython_blas.daxpy(&ndof,&cdt[istep],&res[0],&int_one,&x[0],&int_one)
-                    tx += cdt[istep]
-
-                    if DoTanIntegration:
-                        scipy.linalg.cython_blas.daxpy(&grad_nvar,&cdt[istep],&grad_res[0,0],&int_one,&grad_x[0,0],&int_one)
-
-                # res = g(t,x)
-                LowLevelFun_apply(callback_gun, tx, x, res)
+            # x = x + cdt * res
+            if DoEFT:
+                scipy.linalg.cython_blas.dscal(&ndof,&cdt[istep],&res[0],&int_one)
+                TwoSum_incr(&x[0],&res[0],x_eft_comp,ndof)
+                TwoSum_incr(&tx,&cdt[istep],&tx_comp,1)
 
                 if DoTanIntegration:
-                    # grad_res = grad_g(t,x,grad_x)
-                    LowLevelFun_grad_apply(callback_grad_gun, tx, x, grad_x, grad_res)
+                    scipy.linalg.cython_blas.dscal(&grad_nvar,&cdt[istep],&grad_res[0,0],&int_one)
+                    TwoSum_incr(&grad_x[0,0],&grad_res[0,0],grad_x_eft_comp,grad_nvar)
 
-                # v = v + ddt * res
+            else:
+                scipy.linalg.cython_blas.daxpy(&ndof,&cdt[istep],&res[0],&int_one,&x[0],&int_one)
+                tx += cdt[istep]
+
+                if DoTanIntegration:
+                    scipy.linalg.cython_blas.daxpy(&grad_nvar,&cdt[istep],&grad_res[0,0],&int_one,&grad_x[0,0],&int_one)
+
+            # res = g(t,x)
+            LowLevelFun_apply(callback_gun, tx, x, res)
+
+            if DoTanIntegration:
+                # grad_res = grad_g(t,x,grad_x)
+                LowLevelFun_grad_apply(callback_grad_gun, tx, x, grad_x, grad_res)
+
+            # v = v + ddt * res
+            if DoEFT:
+                scipy.linalg.cython_blas.dscal(&ndof,&ddt[istep],&res[0],&int_one)
+                TwoSum_incr(&v[0],&res[0],v_eft_comp,ndof)
+                TwoSum_incr(&tv,&ddt[istep],&tv_comp,1)
+
+                if DoTanIntegration:
+                    scipy.linalg.cython_blas.dscal(&grad_nvar,&ddt[istep],&grad_res[0,0],&int_one)
+                    TwoSum_incr(&grad_v[0,0],&grad_res[0,0],grad_v_eft_comp,grad_nvar)
+
+            else:
+                scipy.linalg.cython_blas.daxpy(&ndof,&ddt[istep],&res[0],&int_one,&v[0],&int_one)
+                tv += ddt[istep]
+
+                if DoTanIntegration:
+                    scipy.linalg.cython_blas.daxpy(&grad_nvar,&ddt[istep],&grad_res[0,0],&int_one,&grad_v[0,0],&int_one)
+
+        if (iint+1) % keep_freq == 0:
+
+            scipy.linalg.cython_blas.dcopy(&ndof,&x[0],&int_one,&x_keep[iint_keep,0],&int_one)
+            scipy.linalg.cython_blas.dcopy(&ndof,&v[0],&int_one,&v_keep[iint_keep,0],&int_one)
+
+            if DoTanIntegration:
+
+                scipy.linalg.cython_blas.dcopy(&grad_nvar,&grad_x[0,0],&int_one,&grad_x_keep[iint_keep,0,0],&int_one)
+                scipy.linalg.cython_blas.dcopy(&grad_nvar,&grad_v[0,0],&int_one,&grad_v_keep[iint_keep,0,0],&int_one)
+
+            iint_keep += 1
+
+        if DoRegInit:
+
+            if (iint+1) % reg_init_freq == 0:
+
+                # First items of reg_x0 and reg_v0 are to be ignored
+                ireg_init += 1
+
+                scipy.linalg.cython_blas.dcopy(&ndof,&reg_x0[ireg_init,0],&int_one,&x[0],&int_one)
+                scipy.linalg.cython_blas.dcopy(&ndof,&reg_v0[ireg_init,0],&int_one,&v[0],&int_one)
+
                 if DoEFT:
-                    scipy.linalg.cython_blas.dscal(&ndof,&ddt[istep],&res[0],&int_one)
-                    TwoSum_incr(&v[0],&res[0],v_eft_comp,ndof)
-                    TwoSum_incr(&tv,&ddt[istep],&tv_comp,1)
 
-                    if DoTanIntegration:
-                        scipy.linalg.cython_blas.dscal(&grad_nvar,&ddt[istep],&grad_res[0,0],&int_one)
-                        TwoSum_incr(&grad_v[0,0],&grad_res[0,0],grad_v_eft_comp,grad_nvar)
-
-                else:
-                    scipy.linalg.cython_blas.daxpy(&ndof,&ddt[istep],&res[0],&int_one,&v[0],&int_one)
-                    tv += ddt[istep]
-
-                    if DoTanIntegration:
-                        scipy.linalg.cython_blas.daxpy(&grad_nvar,&ddt[istep],&grad_res[0,0],&int_one,&grad_v[0,0],&int_one)
-
-        scipy.linalg.cython_blas.dcopy(&ndof,&x[0],&int_one,&x_keep[iint_keep,0],&int_one)
-        scipy.linalg.cython_blas.dcopy(&ndof,&v[0],&int_one,&v_keep[iint_keep,0],&int_one)
-
-        if DoTanIntegration:
-
-            scipy.linalg.cython_blas.dcopy(&grad_nvar,&grad_x[0,0],&int_one,&grad_x_keep[iint_keep,0,0],&int_one)
-            scipy.linalg.cython_blas.dcopy(&grad_nvar,&grad_v[0,0],&int_one,&grad_v_keep[iint_keep,0,0],&int_one)
+                    memset(x_eft_comp, 0, sizeof(double)*ndof)        
+                    memset(v_eft_comp, 0, sizeof(double)*ndof)
 
     free(cdt)
     free(ddt)
@@ -1257,8 +1333,8 @@ cdef class ImplicitRKTable:
         >>> Radau_IB = choreo.segm.multiprec_tables.ComputeImplicitRKTable(method="Radau_IB")
         >>> Radau_IIB = choreo.segm.multiprec_tables.ComputeImplicitRKTable(method="Radau_IIB")
         >>> Radau_IB.symmetry_default(Radau_IIB)
-        2.7755575615628914e-17
-        >>> Radau_IIB = choreo.segm.multiprec_tables.ComputeImplicitRKTable(n=2, method="Radau_IIB")
+        2.0816681711721685e-17
+        >>> Radau_IIB = choreo.segm.multiprec_tables.ComputeImplicitRKTable(n=10, method="Radau_IIB")
         >>> Radau_IB.symmetry_default(Radau_IIB)
         inf
 
@@ -1456,10 +1532,10 @@ cdef class ImplicitRKTable:
         >>> import choreo
         >>> Radau_IA = choreo.segm.multiprec_tables.ComputeImplicitRKTable(method="Radau_IA")
         >>> Radau_IA.symplectic_default()
-        0.0010229259742953571
+        0.0625
         >>> Radau_IB = choreo.segm.multiprec_tables.ComputeImplicitRKTable(method="Radau_IB")
         >>> Radau_IB.symplectic_default()
-        3.469446951953614e-18
+        0.0
 
         See Also
         --------
@@ -1561,24 +1637,27 @@ cdef class ImplicitRKTable:
 
 @cython.cdivision(True)
 cpdef ImplicitSymplecticIVP(
-    object fun                              ,
-    object gun                              ,
-    (double, double) t_span                 ,
-    double[::1] x0                          ,
-    double[::1] v0                          ,
-    ImplicitRKTable rk_x                    ,
-    ImplicitRKTable rk_v                    ,
-    bint vector_calls = False               ,
-    object grad_fun = None                  ,
-    object grad_gun = None                  ,
-    double[:,::1] grad_x0 = None            ,
-    double[:,::1] grad_v0 = None            ,
-    Py_ssize_t nint = 1                     ,
-    Py_ssize_t keep_freq = -1               ,
-    bint keep_init = False                  ,
-    bint DoEFT = True                       ,
-    double eps = np.finfo(np.float64).eps   ,
-    Py_ssize_t maxiter = 50                 ,
+    object fun                                  ,
+    object gun                                  ,
+    (double, double) t_span                     ,
+    double[::1] x0 = None                       ,
+    double[::1] v0 = None                       ,
+    ImplicitRKTable rk_x = default_implicit_rk  ,
+    ImplicitRKTable rk_v = default_implicit_rk  ,
+    bint vector_calls = False                   ,
+    object grad_fun = None                      ,
+    object grad_gun = None                      ,
+    double[:,::1] grad_x0 = None                ,
+    double[:,::1] grad_v0 = None                ,
+    Py_ssize_t nint = 1                         ,
+    Py_ssize_t keep_freq = -1                   ,
+    double[:,::1] reg_x0 = None                 ,
+    double[:,::1] reg_v0 = None                 ,
+    Py_ssize_t reg_init_freq = -1               ,
+    bint keep_init = False                      ,
+    bint DoEFT = True                           ,
+    double eps = np.finfo(np.float64).eps       ,
+    Py_ssize_t maxiter = 50                     ,
 ):
     """Implicit symplectic integration of a partitionned initial value problem.
 
@@ -1595,14 +1674,14 @@ cpdef ImplicitSymplecticIVP(
         Function defining the IVP.
     t_span : :class:`python:tuple` (:obj:`numpy:numpy.float64`, :obj:`numpy:numpy.float64`)
         Initial and final time of integration.
-    x0 : :class:`numpy:numpy.ndarray`:class:`(shape = (n), dtype = np.float64)`
-        Initial value for x.
-    v0 : :class:`numpy:numpy.ndarray`:class:`(shape = (n), dtype = np.float64)`
-        Initial value for v.
-    rk_x : :class:`ImplicitRKTable`
-        Runge-Kutta tables for the integration of the IVP.
-    rk_v : :class:`ImplicitRKTable`
-        Runge-Kutta tables for the integration of the IVP.
+    x0 : :class:`numpy:numpy.ndarray`:class:`(shape = (n), dtype = np.float64)`, optional
+        Initial value for x. Overriden by reg_x0 if provided. By default, :data:`python:None`.
+    v0 : :class:`numpy:numpy.ndarray`:class:`(shape = (n), dtype = np.float64)`, optional
+        Initial value for v. Overriden by reg_x0 if provided. By default, :data:`python:None`.
+    rk_x : :class:`ImplicitRKTable`, optional
+        Runge-Kutta tables for the integration of the IVP. By default, :func:`choreo.segm.multiprec_tables.ComputeImplicitRKTable`.
+    rk_v : :class:`ImplicitRKTable`, optional
+        Runge-Kutta tables for the integration of the IVP. By default, :func:`choreo.segm.multiprec_tables.ComputeImplicitRKTable`.
     vector_calls : :class:`python:bool`, optional
         Whether to call functions on multiple inputs at once or not, by default :data:`python:False`.
     grad_fun : :obj:`python:callable` or :class:`scipy:scipy.LowLevelCallable`, optional
@@ -1613,6 +1692,12 @@ cpdef ImplicitSymplecticIVP(
         Number of integration steps, by default ``1``.
     keep_freq : :class:`python:int`, optional
         Number of integration steps to be taken before saving output, by default ``-1``.
+    reg_x0 : :class:`numpy:numpy.ndarray`:class:`(shape = (nreg, n), dtype = np.float64)`
+        Array of initial values for x for regular reset.
+    reg_v0 : :class:`numpy:numpy.ndarray`:class:`(shape = (nreg, n), dtype = np.float64)`
+        Array of initial values for v for regular reset.
+    reg_init_freq : :class:`python:int`, optional
+        Number of timesteps before resetting initial values for x and v. Non-positive values disable the reset, by default ``-1``.
     keep_init : :class:`python:bool`, optional
         Whether to save the initial values, by default :data:`python:False`.
     DoEFT : :class:`python:bool`, optional
@@ -1637,10 +1722,39 @@ cpdef ImplicitSymplecticIVP(
     if (rk_v._a_table.shape[0] != nsteps):
         raise ValueError("rk_x and rk_v must have the same shape")
 
-    if (x0.shape[0] != v0.shape[0]):
-        raise ValueError("x0 and v0 must have the same shape")
+    if x0 is None:
+        if reg_x0 is None:
+            raise ValueError("Missing x0 or reg_x0")
+        else:
+            x0 = reg_x0[0,:].copy()
+
+    if v0 is None:
+        if reg_v0 is None:
+            raise ValueError("Missing v0 or reg_v0")
+        else:
+            v0 = reg_v0[0,:].copy()
 
     cdef Py_ssize_t ndof = x0.shape[0]
+    cdef Py_ssize_t nreg_init
+
+    if (reg_x0 is None) == (reg_v0 is None):
+        if reg_x0 is None:
+            reg_x0 = np.empty((0, 0), dtype=np.float64)
+            reg_v0 = np.empty((0, 0), dtype=np.float64)
+
+        else:
+            nreg_init = reg_x0.shape[0]
+            if (reg_v0.shape[0] != nreg_init) or (reg_x0.shape[1] != ndof) or (reg_x0.shape[1] != ndof):
+                raise ValueError("reg_x0 and reg_v0 have incorrect shapes.")
+
+            if reg_init_freq < 1:
+                reg_init_freq = nint + 1
+
+    else:
+        raise ValueError("Only one of reg_x0 and reg_v0 was provided.")
+
+    if (v0.shape[0] != ndof):
+        raise ValueError("x0 and v0 must have the same shape")
 
     cdef ccallback_t callback_fun
     ccallback_prepare(&callback_fun, signatures, fun, CCALLBACK_DEFAULTS)
@@ -1813,6 +1927,9 @@ cpdef ImplicitSymplecticIVP(
             rk_v._beta_table    ,
             nint                ,
             keep_freq           ,
+            reg_x0              ,
+            reg_v0              ,
+            reg_init_freq       ,
             DoEFT               ,
             DoTanIntegration    ,
             eps                 ,
@@ -1873,6 +1990,9 @@ cdef void ImplicitSymplecticIVP_ann(
     double[:,::1]   beta_table_v    ,
     Py_ssize_t nint                 ,
     Py_ssize_t keep_freq            ,
+    double[:,::1]   reg_x0          ,
+    double[:,::1]   reg_v0          ,
+    Py_ssize_t reg_init_freq        ,
     bint DoEFT                      ,
     bint DoTanIntegration           ,
     double eps                      ,
@@ -1884,14 +2004,15 @@ cdef void ImplicitSymplecticIVP_ann(
 ) noexcept nogil:
 
     cdef int ndof = x.shape[0]
+    cdef bint DoRegInit = reg_init_freq > 0
     cdef int grad_ndof
     cdef Py_ssize_t iGS
     cdef Py_ssize_t istep, jdof
-    cdef Py_ssize_t iint_keep, ifreq
+    cdef Py_ssize_t iint_keep = 0
+    cdef Py_ssize_t ireg_init = 0
     cdef Py_ssize_t iint
     cdef Py_ssize_t tot_niter = 0
     cdef Py_ssize_t grad_tot_niter = 0
-    cdef Py_ssize_t nint_keep = nint // keep_freq
 
     cdef bint GoOnGS
 
@@ -1948,197 +2069,212 @@ cdef void ImplicitSymplecticIVP_ann(
     for istep in range(nsteps):
         cdt_v[istep] = c_table_v[istep]*dt
 
-    for iint_keep in range(nint_keep):
+    for iint in range(nint):
 
-        for ifreq in range(keep_freq):
+        tbeg = t_span[0] + iint * dt    
+        for istep in range(nsteps):
+            all_t_v[istep] = tbeg + cdt_v[istep]
 
-            iint = iint_keep * keep_freq + ifreq
+        for istep in range(nsteps):
+            all_t_x[istep] = tbeg + cdt_x[istep]
 
-            tbeg = t_span[0] + iint * dt    
+        # dV = beta_table_v . K_gun
+        scipy.linalg.cython_blas.dgemm(transn,transn,&ndof,&nsteps,&nsteps,&one_double,&K_gun[0,0],&ndof,&beta_table_v[0,0],&nsteps,&zero_double,&dV[0,0],&ndof)
+
+        # dX = beta_table_x . K_fun
+        scipy.linalg.cython_blas.dgemm(transn,transn,&ndof,&nsteps,&nsteps,&one_double,&K_fun[0,0],&ndof,&beta_table_x[0,0],&nsteps,&zero_double,&dX[0,0],&ndof)
+
+        # dX_prev = dX
+        scipy.linalg.cython_blas.dcopy(&dX_size,&dX[0,0],&int_one,&dX_prev[0,0],&int_one)
+
+        iGS = 0
+        GoOnGS = True
+
+        while GoOnGS:
+
+            # dV_prev = dV
+            scipy.linalg.cython_blas.dcopy(&dX_size,&dV[0,0],&int_one,&dV_prev[0,0],&int_one)
+
+            # K_fun = dt * fun(t,v+dV)
             for istep in range(nsteps):
-                all_t_v[istep] = tbeg + cdt_v[istep]
+                scipy.linalg.cython_blas.daxpy(&ndof,&one_double,&v[0],&int_one,&dV[istep,0],&int_one)
 
-            for istep in range(nsteps):
-                all_t_x[istep] = tbeg + cdt_x[istep]
+            LowLevelFun_apply_vectorized(vector_calls, callback_fun, all_t_v, dV, K_fun)
 
-            # dV = beta_table_v . K_gun
-            scipy.linalg.cython_blas.dgemm(transn,transn,&ndof,&nsteps,&nsteps,&one_double,&K_gun[0,0],&ndof,&beta_table_v[0,0],&nsteps,&zero_double,&dV[0,0],&ndof)
+            scipy.linalg.cython_blas.dscal(&dX_size,&dt,&K_fun[0,0],&int_one)
 
-            # dX = beta_table_x . K_fun
-            scipy.linalg.cython_blas.dgemm(transn,transn,&ndof,&nsteps,&nsteps,&one_double,&K_fun[0,0],&ndof,&beta_table_x[0,0],&nsteps,&zero_double,&dX[0,0],&ndof)
+            # dX = a_table_x .K_fun
+            scipy.linalg.cython_blas.dgemm(transn,transn,&ndof,&nsteps,&nsteps,&one_double,&K_fun[0,0],&ndof,&a_table_x[0,0],&nsteps,&zero_double,&dX[0,0],&ndof)
+
+            # dX_prev = dX_prev - dX
+            scipy.linalg.cython_blas.daxpy(&dX_size,&minusone_double,&dX[0,0],&int_one,&dX_prev[0,0],&int_one)
+            dX_err = scipy.linalg.cython_blas.dasum(&dX_size,&dX_prev[0,0],&int_one)
 
             # dX_prev = dX
             scipy.linalg.cython_blas.dcopy(&dX_size,&dX[0,0],&int_one,&dX_prev[0,0],&int_one)
 
+            # K_gun = dt * gun(t,x+dX)
+            for istep in range(nsteps):
+                scipy.linalg.cython_blas.daxpy(&ndof,&one_double,&x[0],&int_one,&dX[istep,0],&int_one)
+
+            LowLevelFun_apply_vectorized(vector_calls, callback_gun, all_t_x, dX, K_gun)
+
+            scipy.linalg.cython_blas.dscal(&dX_size,&dt,&K_gun[0,0],&int_one)
+
+            # dV = a_table_v . K_gun
+            scipy.linalg.cython_blas.dgemm(transn,transn,&ndof,&nsteps,&nsteps,&one_double,&K_gun[0,0],&ndof,&a_table_v[0,0],&nsteps,&zero_double,&dV[0,0],&ndof)
+
+            # dV_prev = dV_prev - dV
+            scipy.linalg.cython_blas.daxpy(&dX_size,&minusone_double,&dV[0,0],&int_one,&dV_prev[0,0],&int_one)
+            dV_err = scipy.linalg.cython_blas.dasum(&dX_size,&dV_prev[0,0],&int_one)
+
+            dXV_err = dX_err + dV_err  
+
+            iGS += 1
+
+            GoOnGS = (iGS < maxiter) and (dXV_err > eps_mul)
+
+        # if (iGS >= maxiter):
+            # print("Max iter exceeded. Rel error : ",dX_err/eps_mul,dV_err/eps_mul)
+
+        tot_niter += iGS
+
+        if DoTanIntegration:
+
             iGS = 0
             GoOnGS = True
 
+            # ONLY dV here! dX was updated before !!
+
+            # dV = v + dV
+            for istep in range(nsteps):
+                scipy.linalg.cython_blas.daxpy(&ndof,&one_double,&v[0],&int_one,&dV[istep,0],&int_one)
+
+            # grad_dV = beta_table_v . grad_K_gun
+            scipy.linalg.cython_blas.dgemm(transn,transn,&grad_nvar,&nsteps,&nsteps,&one_double,&grad_K_gun[0,0,0],&grad_nvar,&beta_table_v[0,0],&nsteps,&zero_double,&grad_dV[0,0,0],&grad_nvar)
+
+            # grad_dX = beta_table_x . grad_K_fun
+            scipy.linalg.cython_blas.dgemm(transn,transn,&grad_nvar,&nsteps,&nsteps,&one_double,&grad_K_fun[0,0,0],&grad_nvar,&beta_table_x[0,0],&nsteps,&zero_double,&grad_dX[0,0,0],&grad_nvar)
+
+            # grad_dX_prev = grad_dX
+            scipy.linalg.cython_blas.dcopy(&grad_dX_size,&grad_dX[0,0,0],&int_one,&grad_dX_prev[0,0,0],&int_one)
+
             while GoOnGS:
 
-                # dV_prev = dV
-                scipy.linalg.cython_blas.dcopy(&dX_size,&dV[0,0],&int_one,&dV_prev[0,0],&int_one)
+                # grad_dV_prev = grad_dV_prev - grad_dV
+                scipy.linalg.cython_blas.daxpy(&grad_dX_size,&minusone_double,&grad_dV[0,0,0],&int_one,&grad_dV_prev[0,0,0],&int_one)
 
-                # K_fun = dt * fun(t,v+dV)
+                # grad_K_fun = dt * grad_fun(t,grad_v+grad_dV)
                 for istep in range(nsteps):
-                    scipy.linalg.cython_blas.daxpy(&ndof,&one_double,&v[0],&int_one,&dV[istep,0],&int_one)
+                    scipy.linalg.cython_blas.daxpy(&grad_nvar,&one_double,&grad_v[0,0],&int_one,&grad_dV[istep,0,0],&int_one)
 
-                LowLevelFun_apply_vectorized(vector_calls, callback_fun, all_t_v, dV, K_fun)
+                LowLevelFun_apply_grad_vectorized(vector_calls, callback_grad_fun, all_t_v, dV, grad_dV, grad_K_fun)
 
-                scipy.linalg.cython_blas.dscal(&dX_size,&dt,&K_fun[0,0],&int_one)
+                scipy.linalg.cython_blas.dscal(&grad_dX_size,&dt,&grad_K_fun[0,0,0],&int_one)
 
-                # dX = a_table_x .K_fun
-                scipy.linalg.cython_blas.dgemm(transn,transn,&ndof,&nsteps,&nsteps,&one_double,&K_fun[0,0],&ndof,&a_table_x[0,0],&nsteps,&zero_double,&dX[0,0],&ndof)
+                # grad_dX = a_table_x . grad_K_fun
+                scipy.linalg.cython_blas.dgemm(transn,transn,&grad_nvar,&nsteps,&nsteps,&one_double,&grad_K_fun[0,0,0],&grad_nvar,&a_table_x[0,0],&nsteps,&zero_double,&grad_dX[0,0,0],&grad_nvar)
 
-                # dX_prev = dX_prev - dX
-                scipy.linalg.cython_blas.daxpy(&dX_size,&minusone_double,&dX[0,0],&int_one,&dX_prev[0,0],&int_one)
-                dX_err = scipy.linalg.cython_blas.dasum(&dX_size,&dX_prev[0,0],&int_one)
+                # grad_dX_prev = grad_dX_prev - grad_dX
+                scipy.linalg.cython_blas.daxpy(&grad_dX_size,&minusone_double,&grad_dX[0,0,0],&int_one,&grad_dX_prev[0,0,0],&int_one)
+                dX_err = scipy.linalg.cython_blas.dasum(&grad_dX_size,&grad_dX_prev[0,0,0],&int_one)
 
-                # dX_prev = dX
-                scipy.linalg.cython_blas.dcopy(&dX_size,&dX[0,0],&int_one,&dX_prev[0,0],&int_one)
+                # grad_dX_prev = grad_dX
+                scipy.linalg.cython_blas.dcopy(&grad_dX_size,&grad_dX[0,0,0],&int_one,&grad_dX_prev[0,0,0],&int_one)
 
-                # K_gun = dt * gun(t,x+dX)
+                # grad_K_gun = dt * grad_gun(t,grad_x+grad_dX)
                 for istep in range(nsteps):
-                    scipy.linalg.cython_blas.daxpy(&ndof,&one_double,&x[0],&int_one,&dX[istep,0],&int_one)
+                    scipy.linalg.cython_blas.daxpy(&grad_nvar,&one_double,&grad_x[0,0],&int_one,&grad_dX[istep,0,0],&int_one)
 
-                LowLevelFun_apply_vectorized(vector_calls, callback_gun, all_t_x, dX, K_gun)
+                LowLevelFun_apply_grad_vectorized(vector_calls, callback_grad_gun, all_t_x, dX, grad_dX, grad_K_gun)
 
-                scipy.linalg.cython_blas.dscal(&dX_size,&dt,&K_gun[0,0],&int_one)
+                scipy.linalg.cython_blas.dscal(&grad_dX_size,&dt,&grad_K_gun[0,0,0],&int_one)
 
-                # dV = a_table_v . K_gun
-                scipy.linalg.cython_blas.dgemm(transn,transn,&ndof,&nsteps,&nsteps,&one_double,&K_gun[0,0],&ndof,&a_table_v[0,0],&nsteps,&zero_double,&dV[0,0],&ndof)
+                # grad_dV = a_table_v . grad_K_gun
+                scipy.linalg.cython_blas.dgemm(transn,transn,&grad_nvar,&nsteps,&nsteps,&one_double,&grad_K_gun[0,0,0],&grad_nvar,&a_table_v[0,0],&nsteps,&zero_double,&grad_dV[0,0,0],&grad_nvar)
 
-                # dV_prev = dV_prev - dV
-                scipy.linalg.cython_blas.daxpy(&dX_size,&minusone_double,&dV[0,0],&int_one,&dV_prev[0,0],&int_one)
-                dV_err = scipy.linalg.cython_blas.dasum(&dX_size,&dV_prev[0,0],&int_one)
+                # grad_dV_prev = grad_dV_prev - grad_dV
+                scipy.linalg.cython_blas.daxpy(&grad_dX_size,&minusone_double,&grad_dV[0,0,0],&int_one,&grad_dV_prev[0,0,0],&int_one)
+                dV_err = scipy.linalg.cython_blas.dasum(&grad_dX_size,&grad_dV_prev[0,0,0],&int_one)
 
                 dXV_err = dX_err + dV_err  
 
                 iGS += 1
 
-                GoOnGS = (iGS < maxiter) and (dXV_err > eps_mul)
+                GoOnGS = (iGS < maxiter) and (dXV_err > grad_eps_mul)
 
             # if (iGS >= maxiter):
-                # print("Max iter exceeded. Rel error : ",dX_err/eps_mul,dV_err/eps_mul)
+            #     with gil:
+            #         print("Tangent Max iter exceeded. Rel error : ",dXV_err/grad_eps_mul,iint)
 
-            tot_niter += iGS
+            grad_tot_niter += iGS
+
+        if DoEFT:
+
+            # dxv = b_table_x^T . K_fun
+            scipy.linalg.cython_blas.dgemv(transn,&ndof,&nsteps,&one_double,&K_fun[0,0],&ndof,&b_table_x[0],&int_one,&zero_double,dxv,&int_one)
+            # x = x + dxv
+            TwoSum_incr(&x[0],dxv,x_eft_comp,ndof)
+
+            # dxv = b_table_v^T . K_gun
+            scipy.linalg.cython_blas.dgemv(transn,&ndof,&nsteps,&one_double,&K_gun[0,0],&ndof,&b_table_v[0],&int_one,&zero_double,dxv,&int_one)
+            # v = v + dxv
+            TwoSum_incr(&v[0],dxv,v_eft_comp,ndof)
 
             if DoTanIntegration:
 
-                iGS = 0
-                GoOnGS = True
+                # grad_dxv = b_table_x^T . grad_K_fun
+                scipy.linalg.cython_blas.dgemv(transn,&grad_nvar,&nsteps,&one_double,&grad_K_fun[0,0,0],&grad_nvar,&b_table_x[0],&int_one,&zero_double,grad_dxv,&int_one)
+                # grad_x = grad_x + grad_dxv
+                TwoSum_incr(&grad_x[0,0],grad_dxv,grad_x_eft_comp,grad_nvar)
 
-                # ONLY dV here! dX was updated before !!
+                # grad_dxv = b_table_v^T . grad_K_gun
+                scipy.linalg.cython_blas.dgemv(transn,&grad_nvar,&nsteps,&one_double,&grad_K_gun[0,0,0],&grad_nvar,&b_table_v[0],&int_one,&zero_double,grad_dxv,&int_one)
+                # grad_v = grad_v + grad_dxv
+                TwoSum_incr(&grad_v[0,0],grad_dxv,grad_v_eft_comp,grad_nvar)
 
-                # dV = v + dV
-                for istep in range(nsteps):
-                    scipy.linalg.cython_blas.daxpy(&ndof,&one_double,&v[0],&int_one,&dV[istep,0],&int_one)
+        else:
 
-                # grad_dV = beta_table_v . grad_K_gun
-                scipy.linalg.cython_blas.dgemm(transn,transn,&grad_nvar,&nsteps,&nsteps,&one_double,&grad_K_gun[0,0,0],&grad_nvar,&beta_table_v[0,0],&nsteps,&zero_double,&grad_dV[0,0,0],&grad_nvar)
+            # x = x + b_table_x^T . K_fun
+            scipy.linalg.cython_blas.dgemv(transn,&ndof,&nsteps,&one_double,&K_fun[0,0],&ndof,&b_table_x[0],&int_one,&one_double,&x[0],&int_one)
 
-                # grad_dX = beta_table_x . grad_K_fun
-                scipy.linalg.cython_blas.dgemm(transn,transn,&grad_nvar,&nsteps,&nsteps,&one_double,&grad_K_fun[0,0,0],&grad_nvar,&beta_table_x[0,0],&nsteps,&zero_double,&grad_dX[0,0,0],&grad_nvar)
+            # v = v + b_table_v^T . K_gun
+            scipy.linalg.cython_blas.dgemv(transn,&ndof,&nsteps,&one_double,&K_gun[0,0],&ndof,&b_table_v[0],&int_one,&one_double,&v[0],&int_one)
 
-                # grad_dX_prev = grad_dX
-                scipy.linalg.cython_blas.dcopy(&grad_dX_size,&grad_dX[0,0,0],&int_one,&grad_dX_prev[0,0,0],&int_one)
+            if DoTanIntegration:
 
-                while GoOnGS:
+                # grad_x = grad_x + b_table_x^T . grad_K_fun
+                scipy.linalg.cython_blas.dgemv(transn,&grad_nvar,&nsteps,&one_double,&grad_K_fun[0,0,0],&grad_nvar,&b_table_x[0],&int_one,&one_double,&grad_x[0,0],&int_one)
 
-                    # grad_dV_prev = grad_dV_prev - grad_dV
-                    scipy.linalg.cython_blas.daxpy(&grad_dX_size,&minusone_double,&grad_dV[0,0,0],&int_one,&grad_dV_prev[0,0,0],&int_one)
+                # grad_v = grad_v + b_table_v^T . grad_K_gun
+                scipy.linalg.cython_blas.dgemv(transn,&grad_nvar,&nsteps,&one_double,&grad_K_gun[0,0,0],&grad_nvar,&b_table_v[0],&int_one,&one_double,&grad_v[0,0],&int_one)
 
-                    # grad_K_fun = dt * grad_fun(t,grad_v+grad_dV)
-                    for istep in range(nsteps):
-                        scipy.linalg.cython_blas.daxpy(&grad_nvar,&one_double,&grad_v[0,0],&int_one,&grad_dV[istep,0,0],&int_one)
+        if (iint+1) % keep_freq == 0:
 
-                    LowLevelFun_apply_grad_vectorized(vector_calls, callback_grad_fun, all_t_v, dV, grad_dV, grad_K_fun)
+            scipy.linalg.cython_blas.dcopy(&ndof,&x[0],&int_one,&x_keep[iint_keep,0],&int_one)
+            scipy.linalg.cython_blas.dcopy(&ndof,&v[0],&int_one,&v_keep[iint_keep,0],&int_one)
 
-                    scipy.linalg.cython_blas.dscal(&grad_dX_size,&dt,&grad_K_fun[0,0,0],&int_one)
+            if DoTanIntegration:
 
-                    # grad_dX = a_table_x . grad_K_fun
-                    scipy.linalg.cython_blas.dgemm(transn,transn,&grad_nvar,&nsteps,&nsteps,&one_double,&grad_K_fun[0,0,0],&grad_nvar,&a_table_x[0,0],&nsteps,&zero_double,&grad_dX[0,0,0],&grad_nvar)
+                scipy.linalg.cython_blas.dcopy(&grad_nvar,&grad_x[0,0],&int_one,&grad_x_keep[iint_keep,0,0],&int_one)
+                scipy.linalg.cython_blas.dcopy(&grad_nvar,&grad_v[0,0],&int_one,&grad_v_keep[iint_keep,0,0],&int_one)
 
-                    # grad_dX_prev = grad_dX_prev - grad_dX
-                    scipy.linalg.cython_blas.daxpy(&grad_dX_size,&minusone_double,&grad_dX[0,0,0],&int_one,&grad_dX_prev[0,0,0],&int_one)
-                    dX_err = scipy.linalg.cython_blas.dasum(&grad_dX_size,&grad_dX_prev[0,0,0],&int_one)
+            iint_keep += 1
 
-                    # grad_dX_prev = grad_dX
-                    scipy.linalg.cython_blas.dcopy(&grad_dX_size,&grad_dX[0,0,0],&int_one,&grad_dX_prev[0,0,0],&int_one)
+        if DoRegInit:
 
-                    # grad_K_gun = dt * grad_gun(t,grad_x+grad_dX)
-                    for istep in range(nsteps):
-                        scipy.linalg.cython_blas.daxpy(&grad_nvar,&one_double,&grad_x[0,0],&int_one,&grad_dX[istep,0,0],&int_one)
+            if (iint+1) % reg_init_freq == 0:
 
-                    LowLevelFun_apply_grad_vectorized(vector_calls, callback_grad_gun, all_t_x, dX, grad_dX, grad_K_gun)
+                # First items of reg_x0 and reg_v0 are to be ignored
+                ireg_init += 1
 
-                    scipy.linalg.cython_blas.dscal(&grad_dX_size,&dt,&grad_K_gun[0,0,0],&int_one)
+                scipy.linalg.cython_blas.dcopy(&ndof,&reg_x0[ireg_init,0],&int_one,&x[0],&int_one)
+                scipy.linalg.cython_blas.dcopy(&ndof,&reg_v0[ireg_init,0],&int_one,&v[0],&int_one)
 
-                    # grad_dV = a_table_v . grad_K_gun
-                    scipy.linalg.cython_blas.dgemm(transn,transn,&grad_nvar,&nsteps,&nsteps,&one_double,&grad_K_gun[0,0,0],&grad_nvar,&a_table_v[0,0],&nsteps,&zero_double,&grad_dV[0,0,0],&grad_nvar)
+                if DoEFT:
 
-                    # grad_dV_prev = grad_dV_prev - grad_dV
-                    scipy.linalg.cython_blas.daxpy(&grad_dX_size,&minusone_double,&grad_dV[0,0,0],&int_one,&grad_dV_prev[0,0,0],&int_one)
-                    dV_err = scipy.linalg.cython_blas.dasum(&grad_dX_size,&grad_dV_prev[0,0,0],&int_one)
-
-                    dXV_err = dX_err + dV_err  
-
-                    iGS += 1
-
-                    GoOnGS = (iGS < maxiter) and (dXV_err > grad_eps_mul)
-
-                # if (iGS >= maxiter):
-                #     with gil:
-                #         print("Tangent Max iter exceeded. Rel error : ",dXV_err/grad_eps_mul,iint)
-
-                grad_tot_niter += iGS
-
-            if DoEFT:
-
-                # dxv = b_table_x^T . K_fun
-                scipy.linalg.cython_blas.dgemv(transn,&ndof,&nsteps,&one_double,&K_fun[0,0],&ndof,&b_table_x[0],&int_one,&zero_double,dxv,&int_one)
-                # x = x + dxv
-                TwoSum_incr(&x[0],dxv,x_eft_comp,ndof)
-
-                # dxv = b_table_v^T . K_gun
-                scipy.linalg.cython_blas.dgemv(transn,&ndof,&nsteps,&one_double,&K_gun[0,0],&ndof,&b_table_v[0],&int_one,&zero_double,dxv,&int_one)
-                # v = v + dxv
-                TwoSum_incr(&v[0],dxv,v_eft_comp,ndof)
-
-                if DoTanIntegration:
-
-                    # grad_dxv = b_table_x^T . grad_K_fun
-                    scipy.linalg.cython_blas.dgemv(transn,&grad_nvar,&nsteps,&one_double,&grad_K_fun[0,0,0],&grad_nvar,&b_table_x[0],&int_one,&zero_double,grad_dxv,&int_one)
-                    # grad_x = grad_x + grad_dxv
-                    TwoSum_incr(&grad_x[0,0],grad_dxv,grad_x_eft_comp,grad_nvar)
-
-                    # grad_dxv = b_table_v^T . grad_K_gun
-                    scipy.linalg.cython_blas.dgemv(transn,&grad_nvar,&nsteps,&one_double,&grad_K_gun[0,0,0],&grad_nvar,&b_table_v[0],&int_one,&zero_double,grad_dxv,&int_one)
-                    # grad_v = grad_v + grad_dxv
-                    TwoSum_incr(&grad_v[0,0],grad_dxv,grad_v_eft_comp,grad_nvar)
-
-            else:
-
-                # x = x + b_table_x^T . K_fun
-                scipy.linalg.cython_blas.dgemv(transn,&ndof,&nsteps,&one_double,&K_fun[0,0],&ndof,&b_table_x[0],&int_one,&one_double,&x[0],&int_one)
-
-                # v = v + b_table_v^T . K_gun
-                scipy.linalg.cython_blas.dgemv(transn,&ndof,&nsteps,&one_double,&K_gun[0,0],&ndof,&b_table_v[0],&int_one,&one_double,&v[0],&int_one)
-
-                if DoTanIntegration:
-
-                    # grad_x = grad_x + b_table_x^T . grad_K_fun
-                    scipy.linalg.cython_blas.dgemv(transn,&grad_nvar,&nsteps,&one_double,&grad_K_fun[0,0,0],&grad_nvar,&b_table_x[0],&int_one,&one_double,&grad_x[0,0],&int_one)
-
-                    # grad_v = grad_v + b_table_v^T . grad_K_gun
-                    scipy.linalg.cython_blas.dgemv(transn,&grad_nvar,&nsteps,&one_double,&grad_K_gun[0,0,0],&grad_nvar,&b_table_v[0],&int_one,&one_double,&grad_v[0,0],&int_one)
-
-        scipy.linalg.cython_blas.dcopy(&ndof,&x[0],&int_one,&x_keep[iint_keep,0],&int_one)
-        scipy.linalg.cython_blas.dcopy(&ndof,&v[0],&int_one,&v_keep[iint_keep,0],&int_one)
-
-        if DoTanIntegration:
-
-            scipy.linalg.cython_blas.dcopy(&grad_nvar,&grad_x[0,0],&int_one,&grad_x_keep[iint_keep,0,0],&int_one)
-            scipy.linalg.cython_blas.dcopy(&grad_nvar,&grad_v[0,0],&int_one,&grad_v_keep[iint_keep,0,0],&int_one)
+                    memset(x_eft_comp, 0, sizeof(double)*ndof)        
+                    memset(v_eft_comp, 0, sizeof(double)*ndof)
 
     # print(tot_niter / nint)
     # print(1+nsteps*tot_niter)
