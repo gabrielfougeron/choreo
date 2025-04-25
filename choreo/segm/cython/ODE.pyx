@@ -539,7 +539,6 @@ cdef class ExplicitSymplecticRKTable:
         # self._separate_res_buf = True
         self._separate_res_buf = False
 
-
     def __repr__(self):
 
         res = f'ExplicitSymplecticRKTable object' 
@@ -2001,14 +2000,8 @@ cpdef ImplicitSymplecticIVP(
             grad_dV_prev        ,
             all_t_x             ,
             all_t_v             ,
-            rk_x._a_table       ,
-            rk_x._quad_table._w ,
-            rk_x._quad_table._x ,
-            rk_x._beta_table    ,
-            rk_v._a_table       ,
-            rk_v._quad_table._w ,
-            rk_v._quad_table._x ,
-            rk_v._beta_table    ,
+            rk_x                ,
+            rk_v                ,
             nint                ,
             keep_freq           ,
             reg_x0              ,
@@ -2064,14 +2057,8 @@ cdef void ImplicitSymplecticIVP_ann(
     double[:,:,::1] grad_dV_prev    ,
     double[::1]     all_t_x         ,
     double[::1]     all_t_v         ,
-    double[:,::1]   a_table_x       ,
-    double[::1]     b_table_x       ,
-    double[::1]     c_table_x       ,
-    double[:,::1]   beta_table_x    ,
-    double[:,::1]   a_table_v       ,
-    double[::1]     b_table_v       ,
-    double[::1]     c_table_v       ,
-    double[:,::1]   beta_table_v    ,
+    ImplicitRKTable rk_x            ,
+    ImplicitRKTable rk_v            ,
     Py_ssize_t nint                 ,
     Py_ssize_t keep_freq            ,
     double[:,::1]   reg_x0          ,
@@ -2103,7 +2090,7 @@ cdef void ImplicitSymplecticIVP_ann(
     cdef double dXV_err, dX_err, dV_err, diff
     cdef double tbeg
     cdef double dt = (t_span[1] - t_span[0]) / nint
-    cdef int nsteps = a_table_x.shape[0]
+    cdef int nsteps = rk_x._a_table.shape[0]
     cdef int dX_size = nsteps*ndof
     cdef double eps_mul = eps * dX_size * dt
     cdef double grad_eps_mul
@@ -2147,11 +2134,11 @@ cdef void ImplicitSymplecticIVP_ann(
 
     cdef double *cdt_x = <double *> malloc(sizeof(double) * nsteps)
     for istep in range(nsteps):
-        cdt_x[istep] = c_table_x[istep]*dt
+        cdt_x[istep] = rk_x._quad_table._x[istep]*dt
 
     cdef double *cdt_v = <double *> malloc(sizeof(double) * nsteps)
     for istep in range(nsteps):
-        cdt_v[istep] = c_table_v[istep]*dt
+        cdt_v[istep] = rk_v._quad_table._x[istep]*dt
 
     for iint in range(nint):
 
@@ -2162,11 +2149,11 @@ cdef void ImplicitSymplecticIVP_ann(
         for istep in range(nsteps):
             all_t_x[istep] = tbeg + cdt_x[istep]
 
-        # dV = beta_table_v . K_gun
-        scipy.linalg.cython_blas.dgemm(transn,transn,&ndof,&nsteps,&nsteps,&one_double,&K_gun[0,0],&ndof,&beta_table_v[0,0],&nsteps,&zero_double,&dV[0,0],&ndof)
+        # dV = rk_v._beta_table . K_gun
+        scipy.linalg.cython_blas.dgemm(transn,transn,&ndof,&nsteps,&nsteps,&one_double,&K_gun[0,0],&ndof,&rk_v._beta_table[0,0],&nsteps,&zero_double,&dV[0,0],&ndof)
 
-        # dX = beta_table_x . K_fun
-        scipy.linalg.cython_blas.dgemm(transn,transn,&ndof,&nsteps,&nsteps,&one_double,&K_fun[0,0],&ndof,&beta_table_x[0,0],&nsteps,&zero_double,&dX[0,0],&ndof)
+        # dX = rk_x._beta_table . K_fun
+        scipy.linalg.cython_blas.dgemm(transn,transn,&ndof,&nsteps,&nsteps,&one_double,&K_fun[0,0],&ndof,&rk_x._beta_table[0,0],&nsteps,&zero_double,&dX[0,0],&ndof)
 
         # dX_prev = dX
         scipy.linalg.cython_blas.dcopy(&dX_size,&dX[0,0],&int_one,&dX_prev[0,0],&int_one)
@@ -2187,8 +2174,8 @@ cdef void ImplicitSymplecticIVP_ann(
 
             scipy.linalg.cython_blas.dscal(&dX_size,&dt,&K_fun[0,0],&int_one)
 
-            # dX = a_table_x . K_fun
-            scipy.linalg.cython_blas.dgemm(transn,transn,&ndof,&nsteps,&nsteps,&one_double,&K_fun[0,0],&ndof,&a_table_x[0,0],&nsteps,&zero_double,&dX[0,0],&ndof)
+            # dX = rk_x._a_table . K_fun
+            scipy.linalg.cython_blas.dgemm(transn,transn,&ndof,&nsteps,&nsteps,&one_double,&K_fun[0,0],&ndof,&rk_x._a_table[0,0],&nsteps,&zero_double,&dX[0,0],&ndof)
 
             # dX_prev = dX_prev - dX
             scipy.linalg.cython_blas.daxpy(&dX_size,&minusone_double,&dX[0,0],&int_one,&dX_prev[0,0],&int_one)
@@ -2205,8 +2192,8 @@ cdef void ImplicitSymplecticIVP_ann(
 
             scipy.linalg.cython_blas.dscal(&dX_size,&dt,&K_gun[0,0],&int_one)
 
-            # dV = a_table_v . K_gun
-            scipy.linalg.cython_blas.dgemm(transn,transn,&ndof,&nsteps,&nsteps,&one_double,&K_gun[0,0],&ndof,&a_table_v[0,0],&nsteps,&zero_double,&dV[0,0],&ndof)
+            # dV = rk_v._a_table . K_gun
+            scipy.linalg.cython_blas.dgemm(transn,transn,&ndof,&nsteps,&nsteps,&one_double,&K_gun[0,0],&ndof,&rk_v._a_table[0,0],&nsteps,&zero_double,&dV[0,0],&ndof)
 
             # dV_prev = dV_prev - dV
             scipy.linalg.cython_blas.daxpy(&dX_size,&minusone_double,&dV[0,0],&int_one,&dV_prev[0,0],&int_one)
@@ -2234,11 +2221,11 @@ cdef void ImplicitSymplecticIVP_ann(
             for istep in range(nsteps):
                 scipy.linalg.cython_blas.daxpy(&ndof,&one_double,&v[0],&int_one,&dV[istep,0],&int_one)
 
-            # grad_dV = beta_table_v . grad_K_gun
-            scipy.linalg.cython_blas.dgemm(transn,transn,&grad_nvar,&nsteps,&nsteps,&one_double,&grad_K_gun[0,0,0],&grad_nvar,&beta_table_v[0,0],&nsteps,&zero_double,&grad_dV[0,0,0],&grad_nvar)
+            # grad_dV = rk_v._beta_table . grad_K_gun
+            scipy.linalg.cython_blas.dgemm(transn,transn,&grad_nvar,&nsteps,&nsteps,&one_double,&grad_K_gun[0,0,0],&grad_nvar,&rk_v._beta_table[0,0],&nsteps,&zero_double,&grad_dV[0,0,0],&grad_nvar)
 
-            # grad_dX = beta_table_x . grad_K_fun
-            scipy.linalg.cython_blas.dgemm(transn,transn,&grad_nvar,&nsteps,&nsteps,&one_double,&grad_K_fun[0,0,0],&grad_nvar,&beta_table_x[0,0],&nsteps,&zero_double,&grad_dX[0,0,0],&grad_nvar)
+            # grad_dX = rk_x._beta_table . grad_K_fun
+            scipy.linalg.cython_blas.dgemm(transn,transn,&grad_nvar,&nsteps,&nsteps,&one_double,&grad_K_fun[0,0,0],&grad_nvar,&rk_x._beta_table[0,0],&nsteps,&zero_double,&grad_dX[0,0,0],&grad_nvar)
 
             # grad_dX_prev = grad_dX
             scipy.linalg.cython_blas.dcopy(&grad_dX_size,&grad_dX[0,0,0],&int_one,&grad_dX_prev[0,0,0],&int_one)
@@ -2256,8 +2243,8 @@ cdef void ImplicitSymplecticIVP_ann(
 
                 scipy.linalg.cython_blas.dscal(&grad_dX_size,&dt,&grad_K_fun[0,0,0],&int_one)
 
-                # grad_dX = a_table_x . grad_K_fun
-                scipy.linalg.cython_blas.dgemm(transn,transn,&grad_nvar,&nsteps,&nsteps,&one_double,&grad_K_fun[0,0,0],&grad_nvar,&a_table_x[0,0],&nsteps,&zero_double,&grad_dX[0,0,0],&grad_nvar)
+                # grad_dX = rk_x._a_table . grad_K_fun
+                scipy.linalg.cython_blas.dgemm(transn,transn,&grad_nvar,&nsteps,&nsteps,&one_double,&grad_K_fun[0,0,0],&grad_nvar,&rk_x._a_table[0,0],&nsteps,&zero_double,&grad_dX[0,0,0],&grad_nvar)
 
                 # grad_dX_prev = grad_dX_prev - grad_dX
                 scipy.linalg.cython_blas.daxpy(&grad_dX_size,&minusone_double,&grad_dX[0,0,0],&int_one,&grad_dX_prev[0,0,0],&int_one)
@@ -2274,8 +2261,8 @@ cdef void ImplicitSymplecticIVP_ann(
 
                 scipy.linalg.cython_blas.dscal(&grad_dX_size,&dt,&grad_K_gun[0,0,0],&int_one)
 
-                # grad_dV = a_table_v . grad_K_gun
-                scipy.linalg.cython_blas.dgemm(transn,transn,&grad_nvar,&nsteps,&nsteps,&one_double,&grad_K_gun[0,0,0],&grad_nvar,&a_table_v[0,0],&nsteps,&zero_double,&grad_dV[0,0,0],&grad_nvar)
+                # grad_dV = rk_v._a_table . grad_K_gun
+                scipy.linalg.cython_blas.dgemm(transn,transn,&grad_nvar,&nsteps,&nsteps,&one_double,&grad_K_gun[0,0,0],&grad_nvar,&rk_v._a_table[0,0],&nsteps,&zero_double,&grad_dV[0,0,0],&grad_nvar)
 
                 # grad_dV_prev = grad_dV_prev - grad_dV
                 scipy.linalg.cython_blas.daxpy(&grad_dX_size,&minusone_double,&grad_dV[0,0,0],&int_one,&grad_dV_prev[0,0,0],&int_one)
@@ -2295,43 +2282,43 @@ cdef void ImplicitSymplecticIVP_ann(
 
         if DoEFT:
 
-            # dxv = b_table_x^T . K_fun
-            scipy.linalg.cython_blas.dgemv(transn,&ndof,&nsteps,&one_double,&K_fun[0,0],&ndof,&b_table_x[0],&int_one,&zero_double,dxv,&int_one)
+            # dxv = rk_x._quad_table._w^T . K_fun
+            scipy.linalg.cython_blas.dgemv(transn,&ndof,&nsteps,&one_double,&K_fun[0,0],&ndof,&rk_x._quad_table._w[0],&int_one,&zero_double,dxv,&int_one)
             # x = x + dxv
             TwoSum_incr(&x[0],dxv,x_eft_comp,ndof)
 
-            # dxv = b_table_v^T . K_gun
-            scipy.linalg.cython_blas.dgemv(transn,&ndof,&nsteps,&one_double,&K_gun[0,0],&ndof,&b_table_v[0],&int_one,&zero_double,dxv,&int_one)
+            # dxv = rk_v._quad_table._w^T . K_gun
+            scipy.linalg.cython_blas.dgemv(transn,&ndof,&nsteps,&one_double,&K_gun[0,0],&ndof,&rk_v._quad_table._w[0],&int_one,&zero_double,dxv,&int_one)
             # v = v + dxv
             TwoSum_incr(&v[0],dxv,v_eft_comp,ndof)
 
             if DoTanIntegration:
 
-                # grad_dxv = b_table_x^T . grad_K_fun
-                scipy.linalg.cython_blas.dgemv(transn,&grad_nvar,&nsteps,&one_double,&grad_K_fun[0,0,0],&grad_nvar,&b_table_x[0],&int_one,&zero_double,grad_dxv,&int_one)
+                # grad_dxv = rk_x._quad_table._w^T . grad_K_fun
+                scipy.linalg.cython_blas.dgemv(transn,&grad_nvar,&nsteps,&one_double,&grad_K_fun[0,0,0],&grad_nvar,&rk_x._quad_table._w[0],&int_one,&zero_double,grad_dxv,&int_one)
                 # grad_x = grad_x + grad_dxv
                 TwoSum_incr(&grad_x[0,0],grad_dxv,grad_x_eft_comp,grad_nvar)
 
-                # grad_dxv = b_table_v^T . grad_K_gun
-                scipy.linalg.cython_blas.dgemv(transn,&grad_nvar,&nsteps,&one_double,&grad_K_gun[0,0,0],&grad_nvar,&b_table_v[0],&int_one,&zero_double,grad_dxv,&int_one)
+                # grad_dxv = rk_v._quad_table._w^T . grad_K_gun
+                scipy.linalg.cython_blas.dgemv(transn,&grad_nvar,&nsteps,&one_double,&grad_K_gun[0,0,0],&grad_nvar,&rk_v._quad_table._w[0],&int_one,&zero_double,grad_dxv,&int_one)
                 # grad_v = grad_v + grad_dxv
                 TwoSum_incr(&grad_v[0,0],grad_dxv,grad_v_eft_comp,grad_nvar)
 
         else:
 
-            # x = x + b_table_x^T . K_fun
-            scipy.linalg.cython_blas.dgemv(transn,&ndof,&nsteps,&one_double,&K_fun[0,0],&ndof,&b_table_x[0],&int_one,&one_double,&x[0],&int_one)
+            # x = x + rk_x._quad_table._w^T . K_fun
+            scipy.linalg.cython_blas.dgemv(transn,&ndof,&nsteps,&one_double,&K_fun[0,0],&ndof,&rk_x._quad_table._w[0],&int_one,&one_double,&x[0],&int_one)
 
-            # v = v + b_table_v^T . K_gun
-            scipy.linalg.cython_blas.dgemv(transn,&ndof,&nsteps,&one_double,&K_gun[0,0],&ndof,&b_table_v[0],&int_one,&one_double,&v[0],&int_one)
+            # v = v + rk_v._quad_table._w^T . K_gun
+            scipy.linalg.cython_blas.dgemv(transn,&ndof,&nsteps,&one_double,&K_gun[0,0],&ndof,&rk_v._quad_table._w[0],&int_one,&one_double,&v[0],&int_one)
 
             if DoTanIntegration:
 
-                # grad_x = grad_x + b_table_x^T . grad_K_fun
-                scipy.linalg.cython_blas.dgemv(transn,&grad_nvar,&nsteps,&one_double,&grad_K_fun[0,0,0],&grad_nvar,&b_table_x[0],&int_one,&one_double,&grad_x[0,0],&int_one)
+                # grad_x = grad_x + rk_x._quad_table._w^T . grad_K_fun
+                scipy.linalg.cython_blas.dgemv(transn,&grad_nvar,&nsteps,&one_double,&grad_K_fun[0,0,0],&grad_nvar,&rk_x._quad_table._w[0],&int_one,&one_double,&grad_x[0,0],&int_one)
 
-                # grad_v = grad_v + b_table_v^T . grad_K_gun
-                scipy.linalg.cython_blas.dgemv(transn,&grad_nvar,&nsteps,&one_double,&grad_K_gun[0,0,0],&grad_nvar,&b_table_v[0],&int_one,&one_double,&grad_v[0,0],&int_one)
+                # grad_v = grad_v + rk_v._quad_table._w^T . grad_K_gun
+                scipy.linalg.cython_blas.dgemv(transn,&grad_nvar,&nsteps,&one_double,&grad_K_gun[0,0,0],&grad_nvar,&rk_v._quad_table._w[0],&int_one,&one_double,&grad_v[0,0],&int_one)
 
         if (iint+1) % keep_freq == 0:
 
