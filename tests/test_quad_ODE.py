@@ -119,7 +119,7 @@ def test_interp(float64_tols, method, nsteps, quad_problem, fun_type):
 def test_Implicit_ODE(float64_tols, method_x, method_v, nsteps, ivp, fun_type, vector_calls, DoEFT):
     """Tests the accuracy of implicit ODE solvers.
     """
-
+    
     rk_x = choreo.segm.multiprec_tables.ComputeImplicitRKTable(nsteps, method = method_x)
     rk_v = choreo.segm.multiprec_tables.ComputeImplicitRKTable(nsteps, method = method_v)
    
@@ -174,7 +174,7 @@ def test_Explicit_ODE(float64_tols, rk, ivp, fun_type, DoEFT):
     """Tests the accuracy of explicit ODE solvers.
     """
     fgun = ivp["fgun"].get((fun_type, False))
-    
+
     if fgun is None:
         pytest.skip("NotImplemented")
     

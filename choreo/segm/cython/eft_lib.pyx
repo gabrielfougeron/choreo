@@ -81,6 +81,18 @@ cdef inline void TwoSum_incr(double *y, double *d, double *e, int n) noexcept no
         y[j] = a + e[j]
         e[j] = e[j] + (a - y[j])
 
+cdef inline void TwoSumScal_incr(double *y, double *d, double s, double *e, int n) noexcept nogil: 
+    
+    cdef Py_ssize_t j
+    cdef double a
+
+    for j in range(n):
+
+        a = y[j]
+        e[j] = e[j] + s*d[j]
+        y[j] = a + e[j]
+        e[j] = e[j] + (a - y[j])
+
 cdef inline double SumXBLAS(double* p, Py_ssize_t n) noexcept nogil:
 
     cdef Py_ssize_t i

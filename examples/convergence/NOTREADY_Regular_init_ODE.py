@@ -81,8 +81,6 @@ def ODE_cpte_error_on_test(rk, ivp, nint, fun_type, DoEFT):
             fun                             ,
             gun                             ,
             t_span                          ,
-            x0                              ,
-            v0                              ,
             rk = rk                         ,
             nint = nint                     ,
             keep_freq = keep_freq           ,
@@ -97,8 +95,6 @@ def ODE_cpte_error_on_test(rk, ivp, nint, fun_type, DoEFT):
             fun                             ,
             gun                             ,
             t_span                          ,
-            x0                              ,
-            v0                              ,
             rk_x = rk[0]                    ,
             rk_v = rk[1]                    ,
             nint = nint                     ,
@@ -113,9 +109,9 @@ def ODE_cpte_error_on_test(rk, ivp, nint, fun_type, DoEFT):
             # maxiter = 100                   ,
         )
     
-    # res = 2 * (np.linalg.norm(segmpos_ODE-reg_x0) + np.linalg.norm(segmmom_ODE-reg_v0)) / (np.linalg.norm(segmpos_ODE) + np.linalg.norm(segmmom_ODE) + np.linalg.norm(reg_x0) + np.linalg.norm(reg_v0))
+    res = 2 * (np.linalg.norm(segmpos_ODE-reg_x0) + np.linalg.norm(segmmom_ODE-reg_v0)) / (np.linalg.norm(segmpos_ODE) + np.linalg.norm(segmmom_ODE) + np.linalg.norm(reg_x0) + np.linalg.norm(reg_v0))
     # 
-    res = 2 * (np.linalg.norm(segmpos_ODE[-1,:]-reg_x0[-1,:]) + np.linalg.norm(segmmom_ODE[-1,:]-reg_v0[-1,:])) / (np.linalg.norm(segmpos_ODE[-1,:]) + np.linalg.norm(segmmom_ODE[-1,:]) + np.linalg.norm(reg_x0[-1,:]) + np.linalg.norm(reg_v0[-1,:]))
+    # res = 2 * (np.linalg.norm(segmpos_ODE[-1,:]-reg_x0[-1,:]) + np.linalg.norm(segmmom_ODE[-1,:]-reg_v0[-1,:])) / (np.linalg.norm(segmpos_ODE[-1,:]) + np.linalg.norm(segmmom_ODE[-1,:]) + np.linalg.norm(reg_x0[-1,:]) + np.linalg.norm(reg_v0[-1,:]))
     
     return res
 
@@ -124,14 +120,14 @@ def setup(rk, ivp, nint, fun_type, DoEFT):
     if rk in tests.test_config.Explicit_tables_dict:
         rk_ = tests.test_config.Explicit_tables_dict[rk]
     else:
-        rk_ = choreo.segm.multiprec_tables.ComputeImplicitSymplecticRKTablePair(n=10, method=rk, dps=1000)
+        rk_ = choreo.segm.multiprec_tables.ComputeImplicitSymplecticRKTablePair(n=2, method=rk, dps=1000)
         
     ivp_ = tests.test_config.define_ODE_ivp(ivp)
     
     return {'rk': rk_, 'ivp': ivp_, 'nint': nint, 'fun_type': fun_type, 'DoEFT': DoEFT}
 
 eq_names = [
-    # "choreo_3C-Figure_eight"        ,
+    "choreo_3C-Figure_eight"        ,
     # "choreo_3D-Heart"        ,
     # "choreo_5C3k-Double_lobes"        ,
     # "choreo_5C-Pinched_circle"        ,
@@ -139,7 +135,7 @@ eq_names = [
     # "choreo_complex_mass_charges"        ,
     # "choreo_2C2C1C-Double_blob"        ,
     # "choreo_2D-Circle"        ,
-    "choreo_1C1C-Ellipse"        ,
+    # "choreo_1C1C-Ellipse"        ,
 ]
 
 
@@ -162,10 +158,10 @@ eq_names = [
 
 all_args = {
     # "rk" : [name for name, method in tests.test_config.Explicit_tables_dict.items()],
-    # "rk" : [name for name, method in tests.test_config.Explicit_tables_dict.items() if method.th_cvg_rate == 2],
+    "rk" : [name for name, method in tests.test_config.Explicit_tables_dict.items() if method.th_cvg_rate == 2],
     # "rk" : ["Gauss", "Radau_IA", "Radau_IIA", "Radau_IB", "Radau_IIB", "Lobatto_IIIA", "Lobatto_IIIB", "Lobatto_IIIC","Lobatto_IIIC*" , "Lobatto_IIID" , "Lobatto_IIIS", "Cheb_I", "Cheb_II", "ClenshawCurtis", "NewtonCotesOpen","NewtonCotesClosed"],
     # "rk" : ["Gauss", "Radau_IA", "Radau_IIA", "Radau_IB", "Radau_IIB", "Lobatto_IIIA", "Lobatto_IIIB", "Lobatto_IIIC","Lobatto_IIIC*" , "Lobatto_IIID" , "Lobatto_IIIS"],
-    "rk" : ["Gauss"],
+    # "rk" : ["Gauss"],
     # "rk" : ["Gauss", "SofSpa10"],
     "ivp" : eq_names,
     "nint" : np.array([2**i for i in range(10)]) ,
@@ -205,7 +201,10 @@ all_vals = pyquickbench.run_benchmark(
 for (transform, ylabel) in zip([
     None,
     "pol_cvgence_order",
-], ["Relative error", "Convergence rate"]):
+], [
+    "Relative error",
+    "Convergence rate"
+]):
 
     pyquickbench.plot_benchmark(
         all_vals                    ,

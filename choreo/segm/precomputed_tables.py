@@ -312,7 +312,7 @@ cf :footcite:`kahan1997composition`.
 
 :cited:
 .. footbibliography::
-"""
+"""    
 
 # Order 8
 

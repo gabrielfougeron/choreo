@@ -10,7 +10,7 @@ __all__ = [
     'ImplicitSymplecticIVP'     ,
 ]
 
-from choreo.segm.cython.eft_lib cimport TwoSum_incr
+from choreo.segm.cython.eft_lib cimport TwoSum_incr, TwoSumScal_incr
 from choreo.segm.cython.quad cimport QuadTable
 
 cimport scipy.linalg.cython_blas
@@ -483,22 +483,63 @@ cdef class ExplicitSymplecticRKTable:
     """
     
     def __init__(
-        self                ,
-        c_table     = None  ,
-        d_table     = None  ,
-        th_cvg_rate = None  ,
+        self                        ,
+        c_table     = None          ,
+        d_table     = None          ,
+        th_cvg_rate = None          ,
+        OptimizeFGunCalls = True    ,
     ):
+
+        cdef Py_ssize_t istep
+        cdef Py_ssize_t nsteps = c_table.shape[0]
 
         self._c_table = c_table.copy()
         self._d_table = d_table.copy()
 
-        assert c_table.shape[0] == d_table.shape[0]
+        assert nsteps == d_table.shape[0]
 
         if th_cvg_rate is None:
             self._th_cvg_rate = -1
         else:
             self._th_cvg_rate = th_cvg_rate
-    
+
+        self._cant_skip_f_eval = np.empty((nsteps), dtype=np.intc)
+        self._cant_skip_x_updt = np.empty((nsteps), dtype=np.intc)
+        self._cant_skip_g_eval = np.empty((nsteps), dtype=np.intc)
+        self._cant_skip_v_updt = np.empty((nsteps), dtype=np.intc)
+
+        # Update loop is (in this order):
+        #     - res <- f(t,v)
+        #     - x <- x + cdt * res
+        #     - res <- g(t,x)
+        #     - v <- v + ddt * res
+
+        for istep in range(nsteps):
+            self._cant_skip_x_updt[istep] = not (OptimizeFGunCalls and (self._c_table[istep] == 0.))
+            self._cant_skip_v_updt[istep] = not (OptimizeFGunCalls and (self._d_table[istep] == 0.))
+
+        for istep in range(nsteps):
+            self._cant_skip_f_eval[istep] = self._cant_skip_x_updt[istep] and self._cant_skip_v_updt[(istep-1+nsteps)%nsteps]
+            self._cant_skip_g_eval[istep] = self._cant_skip_v_updt[istep] and self._cant_skip_x_updt[istep]
+
+        cdef Py_ssize_t n_eff_steps = 0
+
+        for istep in range(nsteps):
+
+            if self._cant_skip_f_eval[istep]:
+                n_eff_steps += 1
+            if self._cant_skip_g_eval[istep]:
+                n_eff_steps += 1
+
+        n_eff_steps = n_eff_steps // 2
+
+        self.n_eff_steps = n_eff_steps
+
+        # Needed ? Tests so far indicate that no ...
+        # self._separate_res_buf = True
+        self._separate_res_buf = False
+
+
     def __repr__(self):
 
         res = f'ExplicitSymplecticRKTable object' 
@@ -506,7 +547,7 @@ cdef class ExplicitSymplecticRKTable:
         if self._th_cvg_rate > 0:
             res += f' of order {self._th_cvg_rate}'
         
-        res += f' with {self._c_table.shape[0]} steps\n'
+        res += f' with {self.n_eff_steps} effective step{"s" if self.n_eff_steps > 1 else ""}\n'
 
         return res
 
@@ -710,6 +751,7 @@ cpdef ExplicitSymplecticIVP(
     double[:,::1] grad_x0 = None                        ,
     double[:,::1] grad_v0 = None                        ,
     object mode = "VX"                                  ,
+    # object mode = "XV"                                  ,
     Py_ssize_t nint = 1                                 ,
     Py_ssize_t keep_freq = -1                           ,
     double[:,::1] reg_x0 = None                         ,
@@ -732,7 +774,7 @@ cpdef ExplicitSymplecticIVP(
         Initial value for x. Overriden by reg_x0 if provided. By default, :data:`python:None`.
     v0 : :class:`numpy:numpy.ndarray`:class:`(shape = (n), dtype = np.float64)`, optional
         Initial value for v. Overriden by reg_x0 if provided. By default, :data:`python:None`.
-    rk_x : :class:`ExplicitSymplecticRKTable`, optional
+    rk : :class:`ExplicitSymplecticRKTable`, optional
         Runge-Kutta tables for the integration of the IVP. By default, :data:`choreo.segm.precomputed_tables.StormerVerlet`.
     grad_fun : :obj:`python:callable` or :class:`scipy:scipy.LowLevelCallable`, optional
         Gradient of the function defining the IVP, by default :data:`python:None`.
@@ -761,7 +803,6 @@ cpdef ExplicitSymplecticIVP(
         Arrays containing the computed approximation of the solution to the IVP at evaluation points.
 
     """
-
 
     cdef Py_ssize_t keep_start
 
@@ -823,7 +864,13 @@ cpdef ExplicitSymplecticIVP(
     cdef double[::1] x = x0.copy()
     cdef double[::1] v = v0.copy()
 
-    cdef double[::1] res = np.empty((ndof), dtype=np.float64)
+    cdef double[::1] res_x = np.empty((ndof), dtype=np.float64)
+    cdef double[::1] res_v 
+
+    if rk._separate_res_buf:
+        res_v = np.empty((ndof), dtype=np.float64)
+    else:
+        res_v = res_x
 
     cdef np.ndarray[double, ndim=2, mode="c"] x_keep_np = np.empty((nint_keep, ndof), dtype=np.float64)
     cdef np.ndarray[double, ndim=2, mode="c"] v_keep_np = np.empty((nint_keep, ndof), dtype=np.float64)
@@ -837,7 +884,8 @@ cpdef ExplicitSymplecticIVP(
 
     cdef double[:,::1] grad_x
     cdef double[:,::1] grad_v
-    cdef double[:,::1] grad_res
+    cdef double[:,::1] grad_res_x
+    cdef double[:,::1] grad_res_v
 
     cdef np.ndarray[double, ndim=3, mode="c"] grad_x_keep_np
     cdef np.ndarray[double, ndim=3, mode="c"] grad_v_keep_np
@@ -886,7 +934,11 @@ cpdef ExplicitSymplecticIVP(
         grad_x_keep = <double[:(nint_keep-keep_start),:ndof,:grad_ndof:1]> &grad_x_keep_np[keep_start,0,0]
         grad_v_keep = <double[:(nint_keep-keep_start),:ndof,:grad_ndof:1]> &grad_v_keep_np[keep_start,0,0]
 
-        grad_res = np.empty((ndof, grad_ndof), dtype=np.float64)
+        grad_res_x = np.empty((ndof, grad_ndof), dtype=np.float64)
+        if rk._separate_res_buf:
+            grad_res_v = np.empty((ndof, grad_ndof), dtype=np.float64)
+        else:
+            grad_res_v = grad_res_x
 
         ccallback_prepare(&callback_grad_fun, signatures, grad_fun, CCALLBACK_DEFAULTS)
         ccallback_prepare(&callback_grad_gun, signatures, grad_gun, CCALLBACK_DEFAULTS)
@@ -894,15 +946,16 @@ cpdef ExplicitSymplecticIVP(
     else:
 
         grad_x = np.zeros((0, 0), dtype=np.float64)
-        grad_v = np.zeros((0, 0), dtype=np.float64)
+        grad_v = grad_x
 
         grad_x_keep_np = np.empty((0, 0, 0), dtype=np.float64)
-        grad_v_keep_np = np.empty((0, 0, 0), dtype=np.float64)
+        grad_v_keep_np = grad_x_keep_np
 
         grad_x_keep = grad_x_keep_np
         grad_v_keep = grad_v_keep_np
 
-        grad_res = np.empty((0, 0), dtype=np.float64)
+        grad_res_x = grad_x
+        grad_res_v = grad_x
 
     if mode == 'VX':
 
@@ -918,8 +971,10 @@ cpdef ExplicitSymplecticIVP(
                 v                   ,
                 grad_x              ,
                 grad_v              ,
-                res                 ,
-                grad_res            ,
+                res_x               ,
+                res_v               ,
+                grad_res_x          ,
+                grad_res_v          ,
                 rk                  ,
                 nint                ,
                 keep_freq           ,
@@ -948,8 +1003,10 @@ cpdef ExplicitSymplecticIVP(
                 x                   ,
                 grad_v              ,
                 grad_x              ,
-                res                 ,
-                grad_res            ,
+                res_v               ,
+                res_x               ,
+                grad_res_v          ,
+                grad_res_x          ,
                 rk                  ,
                 nint                ,
                 keep_freq           ,
@@ -992,8 +1049,10 @@ cdef void ExplicitSymplecticIVP_ann(
     double[::1]     v               ,
     double[:,::1]   grad_x          ,
     double[:,::1]   grad_v          ,
-    double[::1]     res             ,
-    double[:,::1]   grad_res        ,
+    double[::1]     res_x           ,
+    double[::1]     res_v           ,
+    double[:,::1]   grad_res_x      ,
+    double[:,::1]   grad_res_v      ,
     ExplicitSymplecticRKTable rk    ,
     Py_ssize_t nint                 ,
     Py_ssize_t keep_freq            ,
@@ -1055,57 +1114,81 @@ cdef void ExplicitSymplecticIVP_ann(
         cdt[istep] = rk._c_table[istep] * dt
         ddt[istep] = rk._d_table[istep] * dt
 
+    # Make sure res_x is properly initialized
+    if (not rk._cant_skip_f_eval[0]) and rk._cant_skip_x_updt[0]:
+
+        # res_x = f(t,v)
+        LowLevelFun_apply(callback_fun, tv, v, res_x)
+        
+        if DoTanIntegration:
+            # grad_res_x = grad_f(t,v,grad_v)
+            LowLevelFun_grad_apply(callback_grad_fun, tv, v, grad_v, grad_res_x)
+
+    # Make sure res_v is properly initialized
+    if (not rk._cant_skip_g_eval[0]) and rk._cant_skip_v_updt[0]:
+
+        # res_v = g(t,x)
+        LowLevelFun_apply(callback_gun, tx, x, res_v)
+
+        if DoTanIntegration:
+            # grad_res_v = grad_g(t,x,grad_x)
+            LowLevelFun_grad_apply(callback_grad_gun, tx, x, grad_x, grad_res_v)
+
     for iint in range(nint):
 
         for istep in range(nsteps):
-            
-            # res = f(t,v)
-            LowLevelFun_apply(callback_fun, tv, v, res)
-            
-            if DoTanIntegration:
-                # grad_res = grad_f(t,v,grad_v)
-                LowLevelFun_grad_apply(callback_grad_fun, tv, v, grad_v, grad_res)
 
-            # x = x + cdt * res
-            if DoEFT:
-                scipy.linalg.cython_blas.dscal(&ndof,&cdt[istep],&res[0],&int_one)
-                TwoSum_incr(&x[0],&res[0],x_eft_comp,ndof)
-                TwoSum_incr(&tx,&cdt[istep],&tx_comp,1)
+            if rk._cant_skip_f_eval[istep]:
+                
+                # res_x = f(t,v)
+                LowLevelFun_apply(callback_fun, tv, v, res_x)
+                
+                if DoTanIntegration:
+                    # grad_res_x = grad_f(t,v,grad_v)
+                    LowLevelFun_grad_apply(callback_grad_fun, tv, v, grad_v, grad_res_x)
+
+            if rk._cant_skip_x_updt[istep]:
+
+                # x = x + cdt * res_x
+                if DoEFT:
+                    TwoSumScal_incr(&x[0],&res_x[0],cdt[istep],x_eft_comp,ndof)
+                    TwoSum_incr(&tx,&cdt[istep],&tx_comp,1)
+
+                    if DoTanIntegration:
+                        TwoSumScal_incr(&grad_x[0,0],&grad_res_x[0,0],cdt[istep],grad_x_eft_comp,grad_nvar)
+
+                else:
+                    scipy.linalg.cython_blas.daxpy(&ndof,&cdt[istep],&res_x[0],&int_one,&x[0],&int_one)
+                    tx += cdt[istep]
+
+                    if DoTanIntegration:
+                        scipy.linalg.cython_blas.daxpy(&grad_nvar,&cdt[istep],&grad_res_x[0,0],&int_one,&grad_x[0,0],&int_one)
+
+            if rk._cant_skip_g_eval[istep]:
+
+                # res_v = g(t,x)
+                LowLevelFun_apply(callback_gun, tx, x, res_v)
 
                 if DoTanIntegration:
-                    scipy.linalg.cython_blas.dscal(&grad_nvar,&cdt[istep],&grad_res[0,0],&int_one)
-                    TwoSum_incr(&grad_x[0,0],&grad_res[0,0],grad_x_eft_comp,grad_nvar)
+                    # grad_res_v = grad_g(t,x,grad_x)
+                    LowLevelFun_grad_apply(callback_grad_gun, tx, x, grad_x, grad_res_v)
 
-            else:
-                scipy.linalg.cython_blas.daxpy(&ndof,&cdt[istep],&res[0],&int_one,&x[0],&int_one)
-                tx += cdt[istep]
+            if rk._cant_skip_v_updt[istep]:
 
-                if DoTanIntegration:
-                    scipy.linalg.cython_blas.daxpy(&grad_nvar,&cdt[istep],&grad_res[0,0],&int_one,&grad_x[0,0],&int_one)
+                # v = v + ddt * res_v
+                if DoEFT:
+                    TwoSumScal_incr(&v[0],&res_v[0],ddt[istep],v_eft_comp,ndof)
+                    TwoSum_incr(&tv,&ddt[istep],&tv_comp,1)
 
-            # res = g(t,x)
-            LowLevelFun_apply(callback_gun, tx, x, res)
+                    if DoTanIntegration:
+                        TwoSumScal_incr(&grad_v[0,0],&grad_res_v[0,0],ddt[istep],grad_v_eft_comp,grad_nvar)
 
-            if DoTanIntegration:
-                # grad_res = grad_g(t,x,grad_x)
-                LowLevelFun_grad_apply(callback_grad_gun, tx, x, grad_x, grad_res)
+                else:
+                    scipy.linalg.cython_blas.daxpy(&ndof,&ddt[istep],&res_v[0],&int_one,&v[0],&int_one)
+                    tv += ddt[istep]
 
-            # v = v + ddt * res
-            if DoEFT:
-                scipy.linalg.cython_blas.dscal(&ndof,&ddt[istep],&res[0],&int_one)
-                TwoSum_incr(&v[0],&res[0],v_eft_comp,ndof)
-                TwoSum_incr(&tv,&ddt[istep],&tv_comp,1)
-
-                if DoTanIntegration:
-                    scipy.linalg.cython_blas.dscal(&grad_nvar,&ddt[istep],&grad_res[0,0],&int_one)
-                    TwoSum_incr(&grad_v[0,0],&grad_res[0,0],grad_v_eft_comp,grad_nvar)
-
-            else:
-                scipy.linalg.cython_blas.daxpy(&ndof,&ddt[istep],&res[0],&int_one,&v[0],&int_one)
-                tv += ddt[istep]
-
-                if DoTanIntegration:
-                    scipy.linalg.cython_blas.daxpy(&grad_nvar,&ddt[istep],&grad_res[0,0],&int_one,&grad_v[0,0],&int_one)
+                    if DoTanIntegration:
+                        scipy.linalg.cython_blas.daxpy(&grad_nvar,&ddt[istep],&grad_res_v[0,0],&int_one,&grad_v[0,0],&int_one)
 
         if (iint+1) % keep_freq == 0:
 
@@ -1138,6 +1221,7 @@ cdef void ExplicitSymplecticIVP_ann(
     free(ddt)
 
     if DoEFT:
+
         free(x_eft_comp)
         free(v_eft_comp)
 
@@ -2103,7 +2187,7 @@ cdef void ImplicitSymplecticIVP_ann(
 
             scipy.linalg.cython_blas.dscal(&dX_size,&dt,&K_fun[0,0],&int_one)
 
-            # dX = a_table_x .K_fun
+            # dX = a_table_x . K_fun
             scipy.linalg.cython_blas.dgemm(transn,transn,&ndof,&nsteps,&nsteps,&one_double,&K_fun[0,0],&ndof,&a_table_x[0,0],&nsteps,&zero_double,&dX[0,0],&ndof)
 
             # dX_prev = dX_prev - dX

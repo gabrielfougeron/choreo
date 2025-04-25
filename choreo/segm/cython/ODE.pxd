@@ -5,9 +5,19 @@ from choreo.segm.cython.quad cimport QuadTable
 @cython.final
 cdef class ExplicitSymplecticRKTable():
 
-    cdef double[::1] _c_table
-    cdef double[::1] _d_table
-    cdef Py_ssize_t _th_cvg_rate    # Self-reported convergence rate on smooth functions
+    cdef double[::1] _c_table               # Component of A butcher table for explicit symplectic RK
+    cdef double[::1] _d_table               # Component of A butcher table for explicit symplectic RK
+    cdef Py_ssize_t _th_cvg_rate            # Self-reported convergence rate on smooth functions
+
+    cdef bint[::1] _cant_skip_f_eval        # Whether calls to fun can be skipped or not
+    cdef bint[::1] _cant_skip_x_updt        # Whether update to x can be skipped or not
+    cdef bint[::1] _cant_skip_g_eval        # Whether calls to gun can be skipped or not
+    cdef bint[::1] _cant_skip_v_updt        # Whether update to x can be skipped or not
+
+    cdef public Py_ssize_t n_eff_steps
+    """ Number of effective steps of the method """
+
+    cdef bint _separate_res_buf             # Whether to separate res_x and _res_v
 
     cpdef ExplicitSymplecticRKTable symmetric_adjoint(self)
     cdef double _symmetry_default(self, ExplicitSymplecticRKTable other) noexcept nogil
@@ -21,7 +31,6 @@ cdef class ImplicitRKTable:
     cdef double[:,::1] _beta_table          # Beta Butcher table for initial guess in convergence loop. 
     cdef double[:,::1] _gamma_table         # Beta Butcher table of the symmetric adjoint.
     cdef Py_ssize_t _th_cvg_rate            # Theoretical convergence rate of the method.
-
 
     cpdef ImplicitRKTable symmetric_adjoint(self)
     cdef double _symmetry_default(self, ImplicitRKTable other) noexcept nogil
