@@ -872,7 +872,6 @@ cdef class NBodySyst():
 
         self._Hash_exp = default_Hash_exp
 
-
         self.Sym_list = Sym_list
         # Zero charges are OK but not zero masses
         for ib in range(nbody):
@@ -1352,11 +1351,8 @@ cdef class NBodySyst():
         cdef Py_ssize_t iint, ib, isegm
 
         # Choose interacting segments as earliest possible times.
-        intersegm_to_body = np.zeros((self.nsegm), dtype = np.intp)
-        intersegm_to_iint = np.zeros((self.nsegm), dtype = np.intp)
-
-        self._intersegm_to_body = intersegm_to_body
-        self._intersegm_to_iint = intersegm_to_iint
+        self._intersegm_to_body = np.empty((self.nsegm), dtype = np.intp)
+        self._intersegm_to_iint = np.empty((self.nsegm), dtype = np.intp)
 
         assigned_segms = set()
 
@@ -1367,12 +1363,12 @@ cdef class NBodySyst():
 
                 if not(isegm in assigned_segms):
                     
-                    intersegm_to_body[isegm] = ib
-                    intersegm_to_iint[isegm] = iint
+                    self._intersegm_to_body[isegm] = ib
+                    self._intersegm_to_iint[isegm] = iint
                     assigned_segms.add(isegm)
 
         #Every interaction happens at iint == 0
-        if not (intersegm_to_iint == 0).all():
+        if not (np.asarray(self._intersegm_to_iint) == 0).all():
             raise ValueError("Catastrophic failure: interacting segments are not all at initial positions")
 
     @cython.final
@@ -1380,18 +1376,13 @@ cdef class NBodySyst():
 
         cdef Py_ssize_t isegm
         cdef ActionSym Sym
-        
-        InterTimeRev = np.zeros((self.nsegm), dtype=np.intp)
-        InterSpaceRotPos = np.zeros((self.nsegm, self.geodim, self.geodim), dtype=np.float64)
-        InterSpaceRotPosIsId = np.zeros((self.nsegm), dtype=np.intc)
-        InterSpaceRotVel = np.zeros((self.nsegm, self.geodim, self.geodim), dtype=np.float64)
-        InterSpaceRotVelIsId = np.zeros((self.nsegm), dtype=np.intc)
 
-        self._InterTimeRev = InterTimeRev
-        self._InterSpaceRotPos = InterSpaceRotPos
-        self._InterSpaceRotPosIsId = InterSpaceRotPosIsId
-        self._InterSpaceRotVel = InterSpaceRotVel
-        self._InterSpaceRotVelIsId = InterSpaceRotVelIsId
+        self._InterTimeRev = np.empty((self.nsegm), dtype=np.intp)
+        self._InterSpaceRotPos = np.empty((self.nsegm, self.geodim, self.geodim), dtype=np.float64)
+        self._InterSpaceRotPosIsId = np.empty((self.nsegm), dtype=np.intc)
+        self._InterSpaceRotVel = np.empty((self.nsegm, self.geodim, self.geodim), dtype=np.float64)
+        self._InterSpaceRotVelIsId = np.empty((self.nsegm), dtype=np.intc)
+
 
         for isegm in range(self.nsegm):
 
@@ -1400,12 +1391,12 @@ cdef class NBodySyst():
 
             Sym = self.intersegm_to_all[ib][iint]
             
-            InterTimeRev[isegm] = Sym.TimeRev
-            InterSpaceRotPos[isegm,:,:] = Sym.SpaceRot
+            self._InterTimeRev[isegm] = Sym.TimeRev
+            self._InterSpaceRotPos[isegm,:,:] = Sym._SpaceRot[:,:]
             self._InterSpaceRotPosIsId[isegm] = Sym.IsIdentityRot()
 
             Sym = Sym.TimeDerivative()
-            InterSpaceRotVel[isegm,:,:] = Sym.SpaceRot
+            self._InterSpaceRotVel[isegm,:,:] = Sym._SpaceRot[:,:]
             self._InterSpaceRotVelIsId[isegm] = Sym.IsIdentityRot()
 
     @cython.final
@@ -4475,6 +4466,17 @@ cdef class NBodySyst():
 
         assert pos_flat.shape[0] == self.nsegm * self.geodim
 
+        print(f'{self.nbin_segm_unique = }')
+        print(f'{self.nsegm = }')
+        print(f'{self.BinSourceSegm = }')
+        print(f'{self.BinTargetSegm = }')
+        print(f'{self.BinSpaceRotIsId = }')
+        print()
+
+        # assert False
+
+        # TODO : Put that back
+
         cdef Py_ssize_t grad_ndof = dpos_flat.shape[1]
         cdef np.ndarray[double, ndim=2, mode='c'] res = np.empty((self.nsegm * self.geodim, grad_ndof), dtype=np.float64)
 
@@ -4741,6 +4743,16 @@ cdef class NBodySyst():
                         dict_res["grad_gun"] = self.Compute_grad_forces
 
         return dict_res
+
+
+    @cython.final
+    @cython.cdivision(True)
+    def PropagateMonodromy(self, double[:,:,::1] segmpos_grad_ODE_full, double[:,:,::1] segmvel_grad_ODE_full):   
+        pass  
+            # if edge[0] <= edge[1]:
+            #     EdgeSym = SegmGraph.edges[edge]["SymList"][0]
+            # else:
+            #     EdgeSym = SegmGraph.edges[edge]["SymList"][0].Inverse()
 
 @cython.cdivision(True)
 cdef void Make_Init_bounds_coeffs(
@@ -7970,13 +7982,13 @@ cdef inline void Compute_grad_forces_vectorized(
     cdef double* cur_dpos
     cdef double* cur_dposp
 
-    cdef double dx2, dxtddx, a ,b
+    cdef double dx2, dxtddx, a, b
     cdef double bin_fac
     cdef double[3] pot
 
     cdef double* dx = <double*> malloc(sizeof(double)*geodim)
-    cdef double* ddx = <double*> malloc(sizeof(double)*geodim*grad_ndof)
-    cdef double* ddf = <double*> malloc(sizeof(double)*geodim*grad_ndof)
+    cdef double* ddx = <double*> malloc(sizeof(double)*dsegm_size)
+    cdef double* ddf = <double*> malloc(sizeof(double)*dsegm_size)
 
     cdef double* ddx_cur
     cdef double* ddf_cur
@@ -8001,8 +8013,7 @@ cdef inline void Compute_grad_forces_vectorized(
                 cur_posp = vec_pos  + isegmp * geodim
                     
                 for idim in range(geodim):
-
-                    dx[idim] = cur_pos[0]  - cur_posp[0]
+                    dx[idim] = cur_pos[0] - cur_posp[0]
 
                     cur_pos  += 1
                     cur_posp += 1
@@ -8019,7 +8030,6 @@ cdef inline void Compute_grad_forces_vectorized(
                     cur_pos   = pos + isegm * geodim
 
                     for jdim in range(geodim):
-                    
                         dx[idim] += RotMat[0] * cur_pos[0]
                     
                         RotMat += 1 
@@ -8073,7 +8083,6 @@ cdef inline void Compute_grad_forces_vectorized(
             grad_forces_locp = vec_grad_forces + isegmp * geodim * grad_ndof
 
             if BinSpaceRotIsId[ibin]:
-
                 scipy.linalg.cython_blas.daxpy(&dsegm_size,&one_double, ddf, &int_one, grad_forces_loc, &int_one)
 
             else:
@@ -8081,7 +8090,6 @@ cdef inline void Compute_grad_forces_vectorized(
                 RotMat = BinSpaceRot + ibin * geodim_sq
                 scipy.linalg.cython_blas.dgemm(transn, transt, &grad_ndof_int, &geodim_int, &geodim_int, &one_double, ddf, &grad_ndof_int, RotMat, &geodim_int, &one_double, grad_forces_loc, &grad_ndof_int)
 
-            
             scipy.linalg.cython_blas.daxpy(&dsegm_size,&minusone_double, ddf, &int_one, grad_forces_locp, &int_one)
                     
     free(dx)

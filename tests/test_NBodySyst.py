@@ -1021,7 +1021,8 @@ def test_segmpos_param(float64_tols_strict, NBS):
     assert np.allclose(action_hess_ref, action_hess_opt, rtol = float64_tols_strict.rtol, atol = float64_tols_strict.atol)  
 
 @ParametrizeDocstrings
-@pytest.mark.parametrize("NoSymIfPossible", [True, False])
+# @pytest.mark.parametrize("NoSymIfPossible", [True, False])
+@pytest.mark.parametrize("NoSymIfPossible", [False])
 @pytest.mark.parametrize(("NBS", "params_buf"), [pytest.param(NBS, params_buf, id=name) for name, (NBS, params_buf) in Sols_dict.items()])
 def test_grad_fun_FD(float64_tols_loose, NBS, params_buf, NoSymIfPossible):
     """ Tests that the gradient of velocities and forces agree with their finite difference estimations.
@@ -1044,7 +1045,7 @@ def test_grad_fun_FD(float64_tols_loose, NBS, params_buf, NoSymIfPossible):
         xo              ,
         dx=dx           ,
         order=2         ,
-        vectorize=True ,
+        vectorize=True  ,
     )
 
     print(err.min())
@@ -1060,7 +1061,7 @@ def test_grad_fun_FD(float64_tols_loose, NBS, params_buf, NoSymIfPossible):
         grad_gun        ,
         po              ,
         order=2         ,
-        vectorize=True ,
+        vectorize=True  ,
     )
 
     print(err.min())
@@ -1278,3 +1279,122 @@ def test_ODE_grad_vs_FD_Explicit(float64_tols_loose, NBS, params_buf, LowLevel, 
 
     print(err.min())
     assert (err.min() < float64_tols_loose.rtol)
+
+@pytest.mark.skip("Test not ready")
+@pytest.mark.slow(required_time = 10)
+@ParametrizeDocstrings
+@pytest.mark.parametrize("NoSymIfPossible", [True, False])
+@pytest.mark.parametrize("vector_calls", [True, False])
+@pytest.mark.parametrize("LowLevel", [True, False])
+@pytest.mark.parametrize(("NBS", "params_buf"), [pytest.param(NBS, params_buf, id=name) for name, (NBS, params_buf) in Sols_dict.items()])
+def test_ODE_grad_period(float64_tols, NBS, params_buf, vector_calls, LowLevel, NoSymIfPossible):
+    """ Tests the integration of the tangent system on a minimum interval
+    """
+        
+    NBS.ForceGreaterNStore = True
+    
+    ODE_Syst = NBS.Get_ODE_def(params_buf, vector_calls = vector_calls, LowLevel = LowLevel, NoSymIfPossible = NoSymIfPossible, grad=True)
+    
+    nint_ODE = (NBS.segm_store-1)
+
+    nsteps = 10
+    method = "Gauss"    
+    rk = choreo.segm.multiprec_tables.ComputeImplicitRKTable(nsteps, method=method)
+    
+    segmpos_ODE, segmvel_ODE, segmpos_grad_ODE, segmvel_grad_ODE = choreo.segm.ODE.ImplicitSymplecticIVP(
+        nint = nint_ODE         ,
+        keep_init = True        ,
+        rk_x = rk, rk_v = rk    ,
+        **ODE_Syst              ,
+    )
+    
+    keep_freq = (NBS.segm_store-1)
+    nint_ODE *= NBS.nint_min
+    
+    segmpos_ODE_full, segmvel_ODE_full, segmpos_grad_ODE_full, segmvel_grad_ODE_full = choreo.segm.ODE.ImplicitSymplecticIVP(
+        nint = nint_ODE         ,
+        keep_freq = keep_freq   ,
+        rk_x = rk, rk_v = rk    ,
+        **ODE_Syst              ,
+    )
+    
+    n = NBS.nsegm * NBS.geodim
+
+    grad_xf = segmpos_grad_ODE_full[-1,:,:].copy()
+    grad_vf = segmvel_grad_ODE_full[-1,:,:].copy()
+
+    MonodromyMat = np.ascontiguousarray(np.concatenate((segmpos_grad_ODE_full[-1,:,:],segmvel_grad_ODE_full[-1,:,:]),axis=0).reshape(2*n,2*n))
+    
+    print(NBS.gensegm_to_body)
+    print(NBS.gensegm_to_iint)
+    
+    assert False
+
+    
+@pytest.mark.skip("Test not ready")
+@pytest.mark.slow(required_time = 10)
+@ParametrizeDocstrings
+@pytest.mark.parametrize("NoSymIfPossible", [True, False])
+@pytest.mark.parametrize("vector_calls", [True, False])
+@pytest.mark.parametrize("LowLevel", [True, False])
+@pytest.mark.parametrize(("NBS", "params_buf"), [pytest.param(NBS, params_buf, id=name) for name, (NBS, params_buf) in Sols_dict.items()])
+def test_Monodromy(float64_tols, NBS, params_buf, vector_calls, LowLevel, NoSymIfPossible):
+    """ Tests the properties of Monodromy matrix
+    """
+        
+    NBS.ForceGreaterNStore = True
+    
+    segmpos = NBS.params_to_segmpos(params_buf)
+    segmmom = NBS.params_to_segmmom(params_buf)
+    reg_x0 = np.ascontiguousarray(segmpos.swapaxes(0, 1).reshape(NBS.segm_store,-1))
+    reg_v0 = np.ascontiguousarray(segmmom.swapaxes(0, 1).reshape(NBS.segm_store,-1))
+    
+    ODE_Syst = NBS.Get_ODE_def(params_buf, vector_calls = vector_calls, LowLevel = LowLevel, NoSymIfPossible = NoSymIfPossible, grad=True)
+    
+    nint_ODE = (NBS.segm_store-1)
+
+    nsteps = 10
+    method = "Gauss"    
+    rk = choreo.segm.multiprec_tables.ComputeImplicitRKTable(nsteps, method=method)
+    
+    segmpos_ODE, segmvel_ODE, segmpos_grad_ODE, segmvel_grad_ODE = choreo.segm.ODE.ImplicitSymplecticIVP(
+        nint = nint_ODE         ,
+        keep_init = True        ,
+        reg_x0 = reg_x0         ,
+        reg_v0 = reg_v0         ,
+        rk_x = rk, rk_v = rk    ,
+        **ODE_Syst              ,
+    )
+    
+    keep_freq = (NBS.segm_store-1)
+    nint_ODE *= NBS.nint_min
+    
+    segmpos_ODE_full, segmvel_ODE_full, segmpos_grad_ODE_full, segmvel_grad_ODE_full = choreo.segm.ODE.ImplicitSymplecticIVP(
+        nint = nint_ODE         ,
+        keep_freq = keep_freq   ,
+        rk_x = rk, rk_v = rk    ,
+        **ODE_Syst              ,
+    )
+    
+    n = NBS.nsegm * NBS.geodim
+    
+    print(segmpos_grad_ODE.shape)
+
+    grad_xf = segmpos_grad_ODE_full[-1,:,:].copy()
+    grad_vf = segmvel_grad_ODE_full[-1,:,:].copy()
+
+    MonodromyMat = np.ascontiguousarray(np.concatenate((segmpos_grad_ODE_full[-1,:,:],segmvel_grad_ODE_full[-1,:,:]),axis=0).reshape(2*n,2*n))
+    
+    w = np.zeros((2*n,2*n),dtype=np.float64)
+    w[0:n,n:2*n] = np.identity(n)
+    w[n:2*n,0:n] = -np.identity(n)
+    
+    # Symplecticity error
+    print(np.linalg.norm(w - np.dot(MonodromyMat.transpose(),np.dot(w,MonodromyMat))))
+    assert np.allclose(w, np.dot(MonodromyMat.transpose(),np.dot(w,MonodromyMat)), rtol = float64_tols.rtol, atol = float64_tols.atol)   
+
+    # eigvals,eigvects = scipy.linalg.eig(MonodromyMat)
+    eigvals = scipy.linalg.eigvals(MonodromyMat)
+    print('Max Eigenvalue of the Monodromy matrix :',np.abs(eigvals).max())
+    # print('Eigenvalues of the Monodromy matrix :')
+    

@@ -23,6 +23,9 @@ np.import_array()
 
 cimport cython
 
+cpdef void AssertFalse():
+    assert False
+
 # y'' = -y
 cdef void ypp_eq_my_c_fun_memoryview(
     double t        ,

@@ -3,14 +3,23 @@ import sys
 import choreo_GUI
 import pytest
 import threadpoolctl
+import warnings
 
 from pytest_timeout import _get_item_settings, SESSION_TIMEOUT_KEY # BAAAAD !!! Works wit timeout-2.3.1, might not work with other version
 
 from . import test_config
+import choreo
 
 def pytest_sessionstart(session):
     choreo_GUI.install_official_gallery()
     threadpoolctl.threadpool_limits(limits=1).__enter__()
+    
+    try:
+        choreo.segm.cython.test.AssertFalse()
+        warnings.warn("The package choreo was compiled with flag CYTHON_WITHOUT_ASSERTIONS")
+    except AssertionError:
+        pass
+    
 
 def pytest_addoption(parser):
     parser.addoption(
