@@ -127,13 +127,13 @@ def compare_FD_and_exact_grad(fun, gradfun, xo, dx=None, epslist=None, order=1, 
         dfdx_FD = compute_FD(fun,xo,dx,eps,fo=fo,order=order)
         
         # print()
-        # print(eps)
-        # print(dfdx_FD)
-        # print(dfdx_exact)
-        # print(dfdx_FD / dfdx_exact)
+        # print(f'{eps = }')
+        # print(f'{dfdx_FD = }')
+        # print(f'{dfdx_exact = }')
+        # print(f'{dfdx_FD / dfdx_exact = }')
         
         if relative:
-            error = np.linalg.norm(dfdx_FD - dfdx_exact) / dfdx_exact_magn 
+            error = 2 * np.linalg.norm(dfdx_FD - dfdx_exact) / (dfdx_exact_magn + np.linalg.norm(dfdx_FD))
         else:
             error = np.linalg.norm(dfdx_FD - dfdx_exact)
             

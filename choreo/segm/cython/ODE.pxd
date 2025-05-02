@@ -32,6 +32,18 @@ cdef class ImplicitRKTable:
     cdef double[:,::1] _gamma_table         # Beta Butcher table of the symmetric adjoint.
     cdef Py_ssize_t _th_cvg_rate            # Theoretical convergence rate of the method.
 
+#     # TODO: Maybe finish this someday
+#     cdef bint[::1] _cant_skip_updt          # Whether the dXV update can be skipped in convergence loop
+#     cdef bint[::1] _cant_skip_eval          # Whether calls to fun/gun can be skipped or not
+# 
+#     cdef public Py_ssize_t n_eff_steps_updt
+#     """ Number of effective steps of the method """
+#     cdef public Py_ssize_t n_eff_steps_eval
+#     """ Number of effective steps of the method """
+# 
+#     cdef int vec_eval_beg
+#     cdef int vec_eval_end
+
     cpdef ImplicitRKTable symmetric_adjoint(self)
     cdef double _symmetry_default(self, ImplicitRKTable other) noexcept nogil
     cdef bint _is_symmetric_pair(self, ImplicitRKTable other, double tol) noexcept nogil

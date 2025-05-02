@@ -2369,6 +2369,9 @@ cdef class NBodySyst():
         Plots 2D trajectories with one color per body and saves image in file
         """
 
+        cdef Py_ssize_t ib, iint 
+        cdef Py_ssize_t il, loop_id
+
         assert self.geodim == 2
         assert segmpos.shape[1] == self.segm_store
         

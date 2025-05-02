@@ -31,7 +31,8 @@
     test_RK_vs_spectral_reset
     test_segmpos_param
     test_grad_fun_FD
-    test_ODE_grad_vs_FD
+    test_ODE_grad_vs_FD_Implicit
+    test_ODE_grad_vs_FD_Explicit
 
 """
 
@@ -1065,26 +1066,133 @@ def test_grad_fun_FD(float64_tols_loose, NBS, params_buf, NoSymIfPossible):
     print(err.min())
     assert (err.min() < float64_tols_loose.rtol)
         
-@pytest.mark.slow(required_time = 20)
+@pytest.mark.slow(required_time = 10)
 @ParametrizeDocstrings
 @pytest.mark.parametrize("NoSymIfPossible", [True, False])
 @pytest.mark.parametrize("vector_calls", [True, False])
 @pytest.mark.parametrize("LowLevel", [True, False])
 @pytest.mark.parametrize(("NBS", "params_buf"), [pytest.param(NBS, params_buf, id=name) for name, (NBS, params_buf) in Sols_dict.items()])
-def test_ODE_grad_vs_FD(float64_tols_loose, NBS, params_buf, vector_calls, LowLevel, NoSymIfPossible):
-    """ Tests that the solution of the tangent system agrees with its finite difference estimation.
+def test_ODE_grad_vs_FD_Implicit(float64_tols_loose, NBS, params_buf, vector_calls, LowLevel, NoSymIfPossible):
+    """ Tests that the solution of the tangent system using an implicit integration agrees with its finite difference estimation.
     """
         
     NBS.ForceGreaterNStore = True
     
     ODE_Syst = NBS.Get_ODE_def(params_buf, vector_calls = vector_calls, LowLevel = LowLevel, NoSymIfPossible = NoSymIfPossible, grad=True)
     
-    nsteps = 20
     nint_ODE = (NBS.segm_store-1)
     keep_freq = nint_ODE
-    method = "Gauss"
-    
+
+    nsteps = 10
+    method = "Gauss"    
     rk = choreo.segm.multiprec_tables.ComputeImplicitRKTable(nsteps, method=method)
+
+    t_span = ODE_Syst["t_span"]
+    fun = ODE_Syst["fun"]
+    gun = ODE_Syst["gun"]
+    grad_fun = ODE_Syst["grad_fun"]
+    grad_gun = ODE_Syst["grad_gun"]
+
+    def fun_fd(x):
+        
+        nn = x.shape[0]
+        assert nn % 2 == 0
+        
+        n = nn // 2
+        
+        x0 = x[0:  n]
+        v0 = x[n:2*n]
+        
+        segmpos_ODE, segmvel_ODE = choreo.segm.ODE.ImplicitSymplecticIVP(
+            fun = fun                   ,
+            gun = gun                   ,
+            x0 = x0                     ,
+            v0 = v0                     ,
+            rk_x = rk                   ,
+            rk_v = rk                   ,
+            nint = nint_ODE             ,
+            t_span = t_span             ,
+            vector_calls = vector_calls ,
+        )
+        
+        res = np.empty((nn), dtype=np.float64)
+        
+        res[0:  n] = segmpos_ODE[-1,:]
+        res[n:2*n] = segmvel_ODE[-1,:]
+
+        return res
+
+    def grad_fun_fd(x, dx):
+        
+        nn = x.shape[0]
+        assert nn % 2 == 0
+        
+        n = nn // 2
+        
+        x0 = x[0:  n]
+        v0 = x[n:2*n]
+        
+        grad_x0 = dx[0:  n].reshape((n,1))
+        grad_v0 = dx[n:2*n].reshape((n,1))
+        
+        segmpos_ODE, segmvel_ODE, segmpos_grad_ODE, segmvel_grad_ODE = choreo.segm.ODE.ImplicitSymplecticIVP(
+            fun = fun                   ,
+            grad_fun = grad_fun         ,
+            gun = gun                   ,
+            grad_gun = grad_gun         ,
+            x0 = x0                     ,
+            grad_x0 = grad_x0           ,
+            v0 = v0                     ,
+            grad_v0 = grad_v0           ,
+            rk_x = rk                   ,
+            rk_v = rk                   ,
+            nint = nint_ODE             ,
+            t_span = t_span             ,
+            vector_calls = vector_calls ,
+        )
+        
+        res = np.empty((nn), dtype=np.float64)
+        
+        res[0:  n] = segmpos_grad_ODE[0,:,0]
+        res[n:2*n] = segmvel_grad_ODE[0,:,0]
+
+        return res
+    
+    n = ODE_Syst["x0"].shape[0]
+    nn = 2*n
+    
+    xo = np.empty((nn), dtype=np.float64)
+    xo[0:n ] = ODE_Syst["x0"]
+    xo[n:nn] = ODE_Syst["v0"]
+    
+    err = compare_FD_and_exact_grad(
+        fun_fd          ,
+        grad_fun_fd     ,
+        xo              ,
+        order=2         ,
+        vectorize=False ,
+    )
+
+    print(err.min())
+    assert (err.min() < float64_tols_loose.rtol)
+       
+@pytest.mark.slow(required_time = 10)
+@ParametrizeDocstrings
+@pytest.mark.parametrize("NoSymIfPossible", [True, False])
+@pytest.mark.parametrize("LowLevel", [True, False])
+@pytest.mark.parametrize(("NBS", "params_buf"), [pytest.param(NBS, params_buf, id=name) for name, (NBS, params_buf) in Sols_dict.items()])
+def test_ODE_grad_vs_FD_Explicit(float64_tols_loose, NBS, params_buf, LowLevel, NoSymIfPossible):
+    """ Tests that the solution of the tangent system using an explicit integration agrees with its finite difference estimation.
+    """
+        
+    NBS.ForceGreaterNStore = True
+    
+    ODE_Syst = NBS.Get_ODE_def(params_buf, vector_calls = False, LowLevel = LowLevel, NoSymIfPossible = NoSymIfPossible, grad=True)
+    
+    nint_ODE = (NBS.segm_store-1)
+    keep_freq = nint_ODE
+    
+    rk = choreo.segm.precomputed_tables.SofSpa10
 
     t_span = ODE_Syst["t_span"]
     fun = ODE_Syst["fun"]
@@ -1108,10 +1216,8 @@ def test_ODE_grad_vs_FD(float64_tols_loose, NBS, params_buf, vector_calls, LowLe
             x0 = x0                     ,
             v0 = v0                     ,
             rk = rk                     ,
-            keep_freq = keep_freq       ,
             nint = nint_ODE             ,
             t_span = t_span             ,
-            vector_calls = vector_calls ,
         )
         
         res = np.empty((nn), dtype=np.float64)
@@ -1144,10 +1250,8 @@ def test_ODE_grad_vs_FD(float64_tols_loose, NBS, params_buf, vector_calls, LowLe
             v0 = v0                     ,
             grad_v0 = grad_v0           ,
             rk = rk                     ,
-            keep_freq = keep_freq       ,
             nint = nint_ODE             ,
             t_span = t_span             ,
-            vector_calls = vector_calls ,
         )
         
         res = np.empty((nn), dtype=np.float64)

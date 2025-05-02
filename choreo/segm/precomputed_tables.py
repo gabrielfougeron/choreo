@@ -125,6 +125,14 @@ StormerVerlet = ExplicitSymplecticRKTable(
 )
 """Störmer-Verlet """
 
+StormerVerlet_noopt = ExplicitSymplecticRKTable(
+    c_table = np.array([0.    ,1.      ])   ,
+    d_table = np.array([1./2  ,1./2    ])   ,
+    th_cvg_rate = 2                         ,
+    OptimizeFGunCalls = False               ,
+)
+"""Störmer-Verlet """
+
 sq2s2 = m.sqrt(2)/2
 McAte2 = ExplicitSymplecticRKTable(
     c_table = np.array([1. - sq2s2  , sq2s2     ])  ,

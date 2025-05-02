@@ -488,6 +488,7 @@ cdef class ExplicitSymplecticRKTable:
         d_table     = None          ,
         th_cvg_rate = None          ,
         OptimizeFGunCalls = True    ,
+        eps = 0.                    ,
     ):
 
         cdef Py_ssize_t istep
@@ -515,8 +516,8 @@ cdef class ExplicitSymplecticRKTable:
         #     - v <- v + ddt * res
 
         for istep in range(nsteps):
-            self._cant_skip_x_updt[istep] = not (OptimizeFGunCalls and (self._c_table[istep] == 0.))
-            self._cant_skip_v_updt[istep] = not (OptimizeFGunCalls and (self._d_table[istep] == 0.))
+            self._cant_skip_x_updt[istep] = not (OptimizeFGunCalls and (cfabs(self._c_table[istep]) <= eps))
+            self._cant_skip_v_updt[istep] = not (OptimizeFGunCalls and (cfabs(self._d_table[istep]) <= eps))
 
         for istep in range(nsteps):
             self._cant_skip_f_eval[istep] = self._cant_skip_x_updt[istep] and self._cant_skip_v_updt[(istep-1+nsteps)%nsteps]
@@ -1242,12 +1243,14 @@ cdef class ImplicitRKTable:
 
     @cython.final
     def __init__(
-        self                ,
-        a_table     = None  ,
-        quad_table  = None  ,
-        beta_table  = None  ,
-        gamma_table = None  ,
-        th_cvg_rate = None  ,
+        self                        ,
+        a_table     = None          ,
+        quad_table  = None          ,
+        beta_table  = None          ,
+        gamma_table = None          ,
+        th_cvg_rate = None          ,
+        OptimizeFGunCalls = True    ,
+        eps = 1e-17                 ,
     ):
 
         self._a_table = a_table.copy()
@@ -1255,18 +1258,36 @@ cdef class ImplicitRKTable:
         self._beta_table = beta_table.copy()
         self._gamma_table = gamma_table.copy()
 
-        assert self._a_table.shape[0] == self._a_table.shape[1]
-        assert self._a_table.shape[0] == self._quad_table._w.shape[0]
-        assert self._a_table.shape[0] == self._quad_table._x.shape[0]
-        assert self._a_table.shape[0] == self._beta_table.shape[0]
-        assert self._a_table.shape[0] == self._beta_table.shape[1]
-        assert self._a_table.shape[0] == self._gamma_table.shape[0]
-        assert self._a_table.shape[0] == self._gamma_table.shape[1]
+        cdef Py_ssize_t nsteps = self._a_table.shape[0]
+
+        assert nsteps == self._a_table.shape[0]
+        assert nsteps == self._a_table.shape[1]
+        assert nsteps == self._quad_table._w.shape[0]
+        assert nsteps == self._quad_table._x.shape[0]
+        assert nsteps == self._beta_table.shape[0]
+        assert nsteps == self._beta_table.shape[1]
+        assert nsteps == self._gamma_table.shape[0]
+        assert nsteps == self._gamma_table.shape[1]
 
         if th_cvg_rate is None:
             self._th_cvg_rate = -1
         else:
             self._th_cvg_rate = th_cvg_rate
+
+#         self._cant_skip_updt = np.empty((nsteps), dtype=np.intc)
+#         self._cant_skip_eval = np.empty((nsteps), dtype=np.intc)
+#         for istep in range(nsteps):
+#             self._cant_skip_updt[istep] = not (OptimizeFGunCalls and (np.linalg.norm(a_table[istep,:]) <= eps))
+#             self._cant_skip_eval[istep] = not (OptimizeFGunCalls and (np.linalg.norm(a_table[:,istep]) <= eps))
+# 
+#         self.n_eff_steps_updt = 0
+#         self.n_eff_steps_eval = 0
+# 
+#         for istep in range(nsteps):
+#             if self._cant_skip_updt[istep]:
+#                 self.n_eff_steps_updt += 1
+#             if self._cant_skip_eval[istep]:
+#                 self.n_eff_steps_eval += 1
 
     def __repr__(self):
 
@@ -1945,7 +1966,7 @@ cpdef ImplicitSymplecticIVP(
         grad_dX = np.empty((nsteps, ndof, grad_ndof), dtype=np.float64)
         grad_dV = np.empty((nsteps, ndof, grad_ndof), dtype=np.float64) 
         grad_dX_prev = np.empty((nsteps, ndof, grad_ndof), dtype=np.float64)
-        grad_dV_prev = np.empty((nsteps, ndof, grad_ndof), dtype=np.float64) 
+        grad_dV_prev = np.empty((nsteps, ndof, grad_ndof), dtype=np.float64)
 
         if grad_fun is None:
             raise ValueError(f"grad_fun was not provided")
@@ -2232,8 +2253,8 @@ cdef void ImplicitSymplecticIVP_ann(
 
             while GoOnGS:
 
-                # grad_dV_prev = grad_dV_prev - grad_dV
-                scipy.linalg.cython_blas.daxpy(&grad_dX_size,&minusone_double,&grad_dV[0,0,0],&int_one,&grad_dV_prev[0,0,0],&int_one)
+                # grad_dV_prev = grad_dV
+                scipy.linalg.cython_blas.dcopy(&grad_dX_size,&grad_dV[0,0,0],&int_one,&grad_dV_prev[0,0,0],&int_one)
 
                 # grad_K_fun = dt * grad_fun(t,grad_v+grad_dV)
                 for istep in range(nsteps):
