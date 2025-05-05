@@ -1021,8 +1021,7 @@ def test_segmpos_param(float64_tols_strict, NBS):
     assert np.allclose(action_hess_ref, action_hess_opt, rtol = float64_tols_strict.rtol, atol = float64_tols_strict.atol)  
 
 @ParametrizeDocstrings
-# @pytest.mark.parametrize("NoSymIfPossible", [True, False])
-@pytest.mark.parametrize("NoSymIfPossible", [False])
+@pytest.mark.parametrize("NoSymIfPossible", [True, False])
 @pytest.mark.parametrize(("NBS", "params_buf"), [pytest.param(NBS, params_buf, id=name) for name, (NBS, params_buf) in Sols_dict.items()])
 def test_grad_fun_FD(float64_tols_loose, NBS, params_buf, NoSymIfPossible):
     """ Tests that the gradient of velocities and forces agree with their finite difference estimations.

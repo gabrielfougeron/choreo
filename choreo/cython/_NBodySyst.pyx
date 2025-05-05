@@ -975,6 +975,7 @@ cdef class NBodySyst():
 
         self.Compute_n_sub_fft()
 
+        # For ODE  IVP integration. What about Syms ???
         self._invsegmmass = np.empty((self.nsegm), dtype=np.float64)
         self._segmcharge = np.empty((self.nsegm), dtype=np.float64)
         for isegm in range(self.nsegm):
@@ -7881,7 +7882,8 @@ cdef inline void Compute_forces_vectorized(
             isegm = BinSourceSegm[ibin]
             isegmp = BinTargetSegm[ibin]
 
-            if BinSpaceRotIsId[ibin]:
+            # if BinSpaceRotIsId[ibin]:
+            if False:
 
                 cur_pos  = vec_pos + isegm *geodim
                 cur_posp = vec_pos + isegmp*geodim
@@ -7898,7 +7900,7 @@ cdef inline void Compute_forces_vectorized(
 
                 for idim in range(geodim):
                     dx[idim] = -cur_posp[0]
-                    cur_pos  = pos + isegm *geodim
+                    cur_pos  = vec_pos + isegm *geodim
                     for jdim in range(geodim):
                         dx[idim] += matel[0] * cur_pos[0]
                         matel += 1 
@@ -7919,7 +7921,8 @@ cdef inline void Compute_forces_vectorized(
             for idim in range(geodim):
                 df[idim] = pot[1]*dx[idim]
 
-            if BinSpaceRotIsId[ibin]:
+            # if BinSpaceRotIsId[ibin]:
+            if False:
 
                 cur_forces = vec_forces + isegm*geodim
 
@@ -8026,8 +8029,7 @@ cdef inline void Compute_grad_forces_vectorized(
                 for idim in range(geodim):
                     
                     dx[idim]  = -cur_posp[0]
-                    ddx[idim] = -cur_dposp[0]
-                    cur_pos   = pos + isegm * geodim
+                    cur_pos   = vec_pos + isegm * geodim
 
                     for jdim in range(geodim):
                         dx[idim] += RotMat[0] * cur_pos[0]
@@ -8311,7 +8313,6 @@ cdef inline void Compute_grad_forces_vectorized_nosym(
                 
                 a = pot[1]*bin_fac
                 pot[2] *= 2*bin_fac
-
 
                 cur_dposp = vec_dpos + isegmp * geodim * grad_ndof
 
