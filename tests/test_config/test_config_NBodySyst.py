@@ -21,6 +21,7 @@ AllConfigSymPairNames_list = [
     ('3C101k'   , '3C'      ),
     ('3C7k2'    , '3C'      ),
     ('3C7k2'    , '3C'      ),
+    # ('3q'       , '3B'      ),
     ('4D'       , '4C'      ),
     ('4C5k'     , '4C'      ),
     ('6D'       , '6C'      ),

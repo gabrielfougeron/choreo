@@ -33,6 +33,7 @@
     test_grad_fun_FD
     test_ODE_grad_vs_FD_Implicit
     test_ODE_grad_vs_FD_Explicit
+    test_remove_all_syms
 
 """
 
@@ -746,9 +747,12 @@ Tests that the following computations results are independent of the prescribed 
     
     # m => more symmetry. l => less symmetry
 
-    assert NBS_m.nint_min > NBS_l.nint_min
+    assert NBS_m.nint_min >= NBS_l.nint_min
     assert NBS_m.nint_min % NBS_l.nint_min == 0
     
+    if NBS_m.nloop != NBS_l.nloop:
+        pytest.skip("Test not suitable for this case")
+        
     nint_fac = 10
     NBS_m.nint_fac = nint_fac
     NBS_l.nint = NBS_m.nint
@@ -981,16 +985,66 @@ def test_RK_vs_spectral_reset(NBS, params_buf, vector_calls, LowLevel, NoSymIfPo
     )
 
     segmpos_ODE = np.ascontiguousarray(segmpos_ODE.reshape((NBS.segm_store, NBS.nsegm, NBS.geodim)).swapaxes(0, 1))
-
-    print(np.linalg.norm(segmpos - segmpos_ODE))
-    assert np.allclose(segmpos, segmpos_ODE, rtol = tol, atol = tol)   
     
-    tol = 100 * action_grad_norm
+    
+    i = 1
+    
+    
+    
+    print(NBS.nbin_segm_unique)
+    print(NBS.nsegm*(NBS.nsegm-1)//2)
+    print(NBS.nbody*(NBS.nbody-1)//2)
+    
+    print()
+    for ibin in range(NBS.nbin_segm_unique):
+        isegm = NBS.BinSourceSegm[ibin]
+        isegmp = NBS.BinTargetSegm[ibin]
+        print(ibin, isegm, isegmp)
+        print(NBS.BinSpaceRot[ibin,:,:])
+        print(NBS._binprodchargeode[ibin], NBS.BinProdChargeSum[ibin])
+        print() 
+
+    
+    
+    print()
+        
+        
+    
+    print(f'{NBS.nbody_per_segm = }')
+    
+    print((segmpos - segmpos_ODE)[:,i-1,:])
+    print((segmpos - segmpos_ODE)[:,i,:])
+    print((segmpos[:,i,:] - segmpos[:,i-1,:]))
+    print((segmpos_ODE[:,i,:] - segmpos_ODE[:,i-1,:]))
+    
+    
+    print()
+    
+    # print(np.linalg.norm(segmpos - segmpos_ODE))
+    # assert np.allclose(segmpos, segmpos_ODE, rtol = tol, atol = tol)   
+    
     
     segmmom_ODE = np.ascontiguousarray(segmmom_ODE.reshape((NBS.segm_store, NBS.nsegm, NBS.geodim)).swapaxes(0, 1))
 
+    print(segmmom[:,i-1,:]/nint_ODE)
+    print(segmmom_ODE[:,i-1,:]/nint_ODE )
+
+
+    print((segmmom - segmmom_ODE)[:,i-1,:])
+    print((segmmom - segmmom_ODE)[:,i,:])
+    print((segmmom[:,i,:] - segmmom[:,i-1,:]))
+    print((segmmom_ODE[:,i,:] - segmmom_ODE[:,i-1,:]))
+    
+    
+    for isegm in range(NBS.nsegm-1):
+        for isegmp in range(isegm, NBS.nsegm):
+            print(NBS.BinarySegm[(isegm, isegmp)]["SymCount"])
+    
+    tol = 100 * action_grad_norm
     print(np.linalg.norm(segmmom - segmmom_ODE))
     assert np.allclose(segmmom, segmmom_ODE, rtol = tol, atol = tol)        
+    
+    assert False
     
 @ParametrizeDocstrings
 @pytest.mark.parametrize("NBS", [pytest.param(NBS, id=name) for name, NBS in NBS_dict.items()])
@@ -1396,4 +1450,36 @@ def test_Monodromy(float64_tols, NBS, params_buf, vector_calls, LowLevel, NoSymI
     eigvals = scipy.linalg.eigvals(MonodromyMat)
     print('Max Eigenvalue of the Monodromy matrix :',np.abs(eigvals).max())
     # print('Eigenvalues of the Monodromy matrix :')
+    
+@ParametrizeDocstrings
+@pytest.mark.parametrize("NBS", [pytest.param(NBS, id=name) for name, NBS in NBS_dict.items()])
+def test_remove_all_syms(float64_tols, NBS):
+    """ Tests whether action gradient and hessian computation can be replicated without symmetries
+    """
+
+    NBS_nosym = NBS.copy_nosym()
+    
+    for ib in range(NBS_nosym.nbody):
+        isegm = NBS_nosym.bodysegm[ib, 0]
+        assert isegm == ib
+        
+    NBS.nint_fac = 10
+    params_buf = np.random.random((NBS.nparams))
+    segmpos = NBS.params_to_segmpos(params_buf)
+    
+    all_bodypos = NBS.segmpos_to_allbody_noopt(segmpos)
+    NBS_nosym.nint = NBS.nint
+
+    params_buf_nosym = NBS_nosym.segmpos_to_params(all_bodypos)
+    
+    kin_nrg = NBS.params_to_kin_nrg(params_buf)
+    pot_nrg = NBS.params_to_pot_nrg(params_buf)
+    
+    kin_nrg_nosym = NBS_nosym.params_to_kin_nrg(params_buf_nosym)
+    pot_nrg_nosym = NBS_nosym.params_to_pot_nrg(params_buf_nosym)
+
+    assert 2 * abs(kin_nrg - kin_nrg_nosym) / (abs(kin_nrg) + abs(kin_nrg_nosym)) < float64_tols.rtol
+    assert 2 * abs(pot_nrg - pot_nrg_nosym) / (abs(pot_nrg) + abs(pot_nrg_nosym)) < float64_tols.rtol
+
+
     

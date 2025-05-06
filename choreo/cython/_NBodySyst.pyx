@@ -334,8 +334,10 @@ cdef class NBodySyst():
     def loopmass(self):
         return np.asarray(self._loopmass)
 
+    cdef double[::1] _segmmass
     cdef double[::1] _invsegmmass
     cdef double[::1] _segmcharge
+    cdef public double[::1] _binprodchargeode
 
     cdef double[::1] _loopcharge
     @property
@@ -765,6 +767,10 @@ cdef class NBodySyst():
     def ForceGeneralSym(self):
         return self._ForceGeneralSym
 
+    # Todo : remove this
+    cdef public object nbody_per_segm
+    cdef public object BinarySegm
+
     @ForceGeneralSym.setter
     @cython.cdivision(True)
     @cython.final
@@ -904,6 +910,7 @@ cdef class NBodySyst():
 #         self._InitValVelBasis = ComputeParamBasis_InitVal(nbody, geodim, InstConstraintsVel[0], bodymass, MomCons=True)
 
         BinarySegm = FindAllBinarySegments(self.intersegm_to_all, nbody, self.nsegm, self.nint_min, self._bodysegm, bodycharge)
+
         self.nbin_segm_tot, self.nbin_segm_unique = CountSegmentBinaryInteractions(BinarySegm, self.nsegm)
 
         self._BinSourceSegm, self._BinTargetSegm, BinTimeRev, self._BinSpaceRot, self._BinProdChargeSum = ReorganizeBinarySegments(BinarySegm)
@@ -975,12 +982,37 @@ cdef class NBodySyst():
 
         self.Compute_n_sub_fft()
 
+
+        nbody_per_segm = np.zeros((self.nsegm), dtype=np.intp)
+        for ib in range(nbody):
+            nbody_per_segm[self._bodysegm[ib,0]] += 1
+# 
+#         
+#         assert (nbody_per_segm == 1).all()
+
+        self.nbody_per_segm = nbody_per_segm
+
         # For ODE  IVP integration. What about Syms ???
+        self._segmmass = np.empty((self.nsegm), dtype=np.float64)
         self._invsegmmass = np.empty((self.nsegm), dtype=np.float64)
         self._segmcharge = np.empty((self.nsegm), dtype=np.float64)
+        self._binprodchargeode = np.empty((self.nbin_segm_unique), dtype=np.float64)
+
         for isegm in range(self.nsegm):
-            self._invsegmmass[isegm] = 1. / self._loopmass[self._bodyloop[self._intersegm_to_body[isegm]]]
+
+            self._segmmass[isegm] = self._loopmass[self._bodyloop[self._intersegm_to_body[isegm]]]
+            self._invsegmmass[isegm] = 1. / (self._loopmass[self._bodyloop[self._intersegm_to_body[isegm]]])
             self._segmcharge[isegm] = self._loopcharge[self._bodyloop[self._intersegm_to_body[isegm]]]
+
+        for ibin in range(self.nbin_segm_unique):
+            isegm = self._BinSourceSegm[ibin]
+            isegmp = self._BinTargetSegm[ibin]
+            # self._binprodchargeode[ibin] = self._segmcharge[isegm] * self._segmcharge[isegmp]
+            self._binprodchargeode[ibin] = self._BinProdChargeSum[ibin]
+
+        self.BinarySegm = BinarySegm
+
+
 
         self.Update_ODE_params()
 
@@ -1183,7 +1215,10 @@ cdef class NBodySyst():
         self._ODE_params.BinTargetSegm_ptr          = &self._BinTargetSegm[0]
         self._ODE_params.BinSpaceRot_ptr            = &self._BinSpaceRot[0,0,0]
         self._ODE_params.BinSpaceRotIsId_ptr        = &self._BinSpaceRotIsId[0]
-        self._ODE_params.BinProdChargeSum_ptr       = &self._BinProdChargeSum[0]
+
+        # self._ODE_params.BinProdChargeSum_ptr       = &self._BinProdChargeSum[0]
+        self._ODE_params.BinProdChargeSum_ptr       = &self._binprodchargeode[0]
+
         self._ODE_params.inter_law                  =  self._inter_law
         self._ODE_params.inter_law_param_ptr        =  self._inter_law_param_ptr
 
@@ -1946,6 +1981,27 @@ cdef class NBodySyst():
         free(ma)
 
         return segmpos_minmax_np
+
+    @cython.final
+    def copy_nosym(self):
+
+        cdef Py_ssize_t ib
+        cdef double[::1] bodymass = np.empty((self.nbody), dtype=np.float64)
+        cdef double[::1] bodycharge = np.empty((self.nbody), dtype=np.float64)
+
+        for ib in range(self.nbody):
+            bodymass[ib] = self._loopmass[self._bodyloop[ib]]
+            bodycharge[ib] = self._loopcharge[self._bodyloop[ib]]
+
+        return  NBodySyst(
+            geodim = self.geodim                                ,
+            nbody = self.nbody                                  ,
+            bodymass = bodymass                                 ,
+            bodycharge = bodycharge                             ,
+            Sym_list = []                                       ,
+            inter_law_str = self.inter_law_str                  ,
+            inter_law_param_dict = self.inter_law_param_dict    ,
+        )
 
     @cython.final
     def GetFullAABB(
@@ -3660,7 +3716,7 @@ cdef class NBodySyst():
         cdef Py_ssize_t segmbeg, iend
         cdef ActionSym Sym
 
-        cdef double[:,:,::1] all_bodypos = np.empty((self.nbody, self._nint, self.geodim), dtype=np.float64)
+        cdef np.ndarray[double, ndim=3, mode='c'] all_bodypos = np.empty((self.nbody, self._nint, self.geodim), dtype=np.float64)
 
         for ib in range(self.nbody):
 
@@ -3839,7 +3895,8 @@ cdef class NBodySyst():
         cdef Py_ssize_t isegm
 
         for isegm in range(self.nsegm):
-            mass = self._loopmass[self._bodyloop[self._intersegm_to_body[isegm]]]
+            # mass = self._loopmass[self._bodyloop[self._intersegm_to_body[isegm]]]
+            mass = self._segmmass[isegm]
             scipy.linalg.cython_blas.dscal(&n,&mass,&segmvel[isegm,0,0],&int_one)
 
     @cython.final
@@ -4456,7 +4513,7 @@ cdef class NBodySyst():
             self.nsegm                  , 1                         ,           
             &self._BinSourceSegm[0]     , &self._BinTargetSegm[0]   ,
             &self._BinSpaceRot[0,0,0]   , &self._BinSpaceRotIsId[0] ,
-            &self._BinProdChargeSum[0]  ,
+            &self._binprodchargeode[0]  ,
             self._inter_law             , self._inter_law_param_ptr ,
         )
 
@@ -4467,17 +4524,6 @@ cdef class NBodySyst():
 
         assert pos_flat.shape[0] == self.nsegm * self.geodim
 
-        print(f'{self.nbin_segm_unique = }')
-        print(f'{self.nsegm = }')
-        print(f'{self.BinSourceSegm = }')
-        print(f'{self.BinTargetSegm = }')
-        print(f'{self.BinSpaceRotIsId = }')
-        print()
-
-        # assert False
-
-        # TODO : Put that back
-
         cdef Py_ssize_t grad_ndof = dpos_flat.shape[1]
         cdef np.ndarray[double, ndim=2, mode='c'] res = np.empty((self.nsegm * self.geodim, grad_ndof), dtype=np.float64)
 
@@ -4487,7 +4533,7 @@ cdef class NBodySyst():
             self.nsegm                  , 1                         , grad_ndof ,
             &self._BinSourceSegm[0]     , &self._BinTargetSegm[0]   ,
             &self._BinSpaceRot[0,0,0]   , &self._BinSpaceRotIsId[0] ,
-            &self._BinProdChargeSum[0]  ,
+            &self._binprodchargeode[0]  ,
             self._inter_law             , self._inter_law_param_ptr ,
         )
 
@@ -4543,7 +4589,7 @@ cdef class NBodySyst():
             self.nsegm                  , nvec                      ,       
             &self._BinSourceSegm[0]     , &self._BinTargetSegm[0]   ,
             &self._BinSpaceRot[0,0,0]   , &self._BinSpaceRotIsId[0] ,
-            &self._BinProdChargeSum[0]  ,
+            &self._binprodchargeode[0]  ,
             self._inter_law             , self._inter_law_param_ptr ,
         )
 
@@ -4564,7 +4610,7 @@ cdef class NBodySyst():
             self.nsegm                  , nvec                      , grad_ndof     ,
             &self._BinSourceSegm[0]     , &self._BinTargetSegm[0]   ,
             &self._BinSpaceRot[0,0,0]   , &self._BinSpaceRotIsId[0] ,
-            &self._BinProdChargeSum[0]  ,
+            &self._binprodchargeode[0]  ,
             self._inter_law             , self._inter_law_param_ptr ,
         )
 
@@ -7882,8 +7928,7 @@ cdef inline void Compute_forces_vectorized(
             isegm = BinSourceSegm[ibin]
             isegmp = BinTargetSegm[ibin]
 
-            # if BinSpaceRotIsId[ibin]:
-            if False:
+            if BinSpaceRotIsId[ibin]:
 
                 cur_pos  = vec_pos + isegm *geodim
                 cur_posp = vec_pos + isegmp*geodim
@@ -7921,8 +7966,7 @@ cdef inline void Compute_forces_vectorized(
             for idim in range(geodim):
                 df[idim] = pot[1]*dx[idim]
 
-            # if BinSpaceRotIsId[ibin]:
-            if False:
+            if BinSpaceRotIsId[ibin]:
 
                 cur_forces = vec_forces + isegm*geodim
 
