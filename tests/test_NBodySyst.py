@@ -33,7 +33,8 @@
     test_grad_fun_FD
     test_ODE_grad_vs_FD_Implicit
     test_ODE_grad_vs_FD_Explicit
-    test_remove_all_syms
+    test_remove_all_syms_nrg
+    test_remove_all_syms_ODE
 
 """
 
@@ -961,7 +962,6 @@ def test_RK_vs_spectral_reset(NBS, params_buf, vector_calls, LowLevel, NoSymIfPo
     
     action_grad = NBS.segmpos_params_to_action_grad(segmpos, params_buf)
     action_grad_norm = np.linalg.norm(action_grad, ord = np.inf)
-    tol = 0.1 * action_grad_norm # !!!!
     
     ODE_Syst = NBS.Get_ODE_def(vector_calls = vector_calls, LowLevel = LowLevel, NoSymIfPossible = NoSymIfPossible)
     
@@ -985,61 +985,12 @@ def test_RK_vs_spectral_reset(NBS, params_buf, vector_calls, LowLevel, NoSymIfPo
     )
 
     segmpos_ODE = np.ascontiguousarray(segmpos_ODE.reshape((NBS.segm_store, NBS.nsegm, NBS.geodim)).swapaxes(0, 1))
-    
-    
-    i = 1
-    
-    
-    
-    print(NBS.nbin_segm_unique)
-    print(NBS.nsegm*(NBS.nsegm-1)//2)
-    print(NBS.nbody*(NBS.nbody-1)//2)
-    
-    print()
-    for ibin in range(NBS.nbin_segm_unique):
-        isegm = NBS.BinSourceSegm[ibin]
-        isegmp = NBS.BinTargetSegm[ibin]
-        print(ibin, isegm, isegmp)
-        print(NBS.BinSpaceRot[ibin,:,:])
-        print(NBS._binprodchargeode[ibin], NBS.BinProdChargeSum[ibin])
-        print() 
-
-    
-    
-    print()
-        
-        
-    
-    print(f'{NBS.nbody_per_segm = }')
-    
-    print((segmpos - segmpos_ODE)[:,i-1,:])
-    print((segmpos - segmpos_ODE)[:,i,:])
-    print((segmpos[:,i,:] - segmpos[:,i-1,:]))
-    print((segmpos_ODE[:,i,:] - segmpos_ODE[:,i-1,:]))
-    
-    
-    print()
-    
-    # print(np.linalg.norm(segmpos - segmpos_ODE))
-    # assert np.allclose(segmpos, segmpos_ODE, rtol = tol, atol = tol)   
-    
-    
     segmmom_ODE = np.ascontiguousarray(segmmom_ODE.reshape((NBS.segm_store, NBS.nsegm, NBS.geodim)).swapaxes(0, 1))
-
-    print(segmmom[:,i-1,:]/nint_ODE)
-    print(segmmom_ODE[:,i-1,:]/nint_ODE )
-
-
-    print((segmmom - segmmom_ODE)[:,i-1,:])
-    print((segmmom - segmmom_ODE)[:,i,:])
-    print((segmmom[:,i,:] - segmmom[:,i-1,:]))
-    print((segmmom_ODE[:,i,:] - segmmom_ODE[:,i-1,:]))
     
-    
-    for isegm in range(NBS.nsegm-1):
-        for isegmp in range(isegm, NBS.nsegm):
-            print(NBS.BinarySegm[(isegm, isegmp)]["SymCount"])
-    
+    tol = 0.1 * action_grad_norm # !!!!
+    print(np.linalg.norm(segmpos - segmpos_ODE))
+    assert np.allclose(segmpos, segmpos_ODE, rtol = tol, atol = tol)   
+
     tol = 100 * action_grad_norm
     print(np.linalg.norm(segmmom - segmmom_ODE))
     assert np.allclose(segmmom, segmmom_ODE, rtol = tol, atol = tol)        
@@ -1133,7 +1084,6 @@ def test_ODE_grad_vs_FD_Implicit(float64_tols_loose, NBS, params_buf, vector_cal
     ODE_Syst = NBS.Get_ODE_def(params_buf, vector_calls = vector_calls, LowLevel = LowLevel, NoSymIfPossible = NoSymIfPossible, grad=True)
     
     nint_ODE = (NBS.segm_store-1)
-    keep_freq = nint_ODE
 
     nsteps = 10
     method = "Gauss"    
@@ -1380,7 +1330,6 @@ def test_ODE_grad_period(float64_tols, NBS, params_buf, vector_calls, LowLevel, 
     print(NBS.gensegm_to_iint)
     
     assert False
-
     
 @pytest.mark.skip("Test not ready")
 @pytest.mark.slow(required_time = 10)
@@ -1489,18 +1438,12 @@ def test_remove_all_syms_nrg(float64_tols, NBS):
 def test_remove_all_syms_ODE(float64_tols, NBS, params_buf, vector_calls, LowLevel, NoSymIfPossible):
     """ Tests whether ODE computations can be replicated without symmetries
     """
-    
-    # NBS.ForceGreaterNStore = True
-    
+
     NBS_nosym = NBS.copy_nosym()
     
     for ib in range(NBS_nosym.nbody):
         isegm = NBS_nosym.bodysegm[ib, 0]
-        assert isegm == ib
-        
-        # # TODO On reglera ça plus tard
-        # isegm = NBS.bodysegm[ib, 0]
-        # assert isegm == ib        
+        assert isegm == ib    
 
     segmpos = NBS.params_to_segmpos(params_buf)
     segmmom = NBS.params_to_segmmom(params_buf)
@@ -1543,30 +1486,6 @@ def test_remove_all_syms_ODE(float64_tols, NBS, params_buf, vector_calls, LowLev
     # We need to drop the last timestep
     all_bodypos_ODE = np.ascontiguousarray(all_bodypos_ODE.reshape((NBS_nosym.segm_store+1, NBS_nosym.nsegm, NBS_nosym.geodim))[:NBS_nosym.segm_store,:,:].swapaxes(0, 1))    
     all_bodymom_ODE = np.ascontiguousarray(all_bodymom_ODE.reshape((NBS_nosym.segm_store+1, NBS_nosym.nsegm, NBS_nosym.geodim))[:NBS_nosym.segm_store,:,:].swapaxes(0, 1))
-
-
-# 
-    # import matplotlib.pyplot as plt
-    
-    # plt.plot(all_bodypos[:,:,0].swapaxes(0,1),all_bodypos[:,:,1].swapaxes(0,1))
-    # 
-    # i=0
-    # plt.plot(all_bodypos[i,:,0],all_bodypos[i,:,1])
-    # plt.plot(all_bodypos_ODE[i,:,0],all_bodypos_ODE[i,:,1])
-    # plt.axis('equal')
-    # plt.show()
-
-
-
-
-
-
-
-
-
-
-
-
 
     tol = 0.1 * action_grad_norm 
     print(np.linalg.norm(all_bodypos - all_bodypos_ODE))

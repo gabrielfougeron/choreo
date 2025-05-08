@@ -337,7 +337,7 @@ cdef class NBodySyst():
     cdef double[::1] _segmmass
     cdef double[::1] _invsegmmass
     cdef double[::1] _segmcharge
-    cdef public double[::1] _binprodchargeode
+    cdef public double[::1] _BinProdChargeSum_ODE
 
     cdef double[::1] _loopcharge
     @property
@@ -767,10 +767,6 @@ cdef class NBodySyst():
     def ForceGeneralSym(self):
         return self._ForceGeneralSym
 
-    # Todo : remove this
-    cdef public object nbody_per_segm
-    cdef public object BinarySegm
-
     @ForceGeneralSym.setter
     @cython.cdivision(True)
     @cython.final
@@ -902,18 +898,12 @@ cdef class NBodySyst():
         # - What are my parameters ?
         # - Integration end + Lack of periodicity
         # - Constraints on initial values => Parametrization 
-#         
-#         InstConstraintsPos = AccumulateInstConstraints(self.Sym_list, nbody, geodim, self.nint_min, VelSym=False)
-#         InstConstraintsVel = AccumulateInstConstraints(self.Sym_list, nbody, geodim, self.nint_min, VelSym=True )
-# 
-#         self._InitValPosBasis = ComputeParamBasis_InitVal(nbody, geodim, InstConstraintsPos[0], bodymass, MomCons=True)
-#         self._InitValVelBasis = ComputeParamBasis_InitVal(nbody, geodim, InstConstraintsVel[0], bodymass, MomCons=True)
 
-        BinarySegm = FindAllBinarySegments(self.intersegm_to_all, nbody, self.nsegm, self.nint_min, self._bodysegm, bodycharge)
+        BinarySegm = FindAllBinarySegments(self.intersegm_to_all, nbody, self.nsegm, self.nint_min, self._intersegm_to_body, self._bodysegm, bodycharge)
 
         self.nbin_segm_tot, self.nbin_segm_unique = CountSegmentBinaryInteractions(BinarySegm, self.nsegm)
 
-        self._BinSourceSegm, self._BinTargetSegm, BinTimeRev, self._BinSpaceRot, self._BinProdChargeSum = ReorganizeBinarySegments(BinarySegm)
+        self._BinSourceSegm, self._BinTargetSegm, BinTimeRev, self._BinSpaceRot, self._BinProdChargeSum, self._BinProdChargeSum_ODE = ReorganizeBinarySegments(BinarySegm)
 
         # Not actually sure this is always true.
         if not (BinTimeRev == 1).all():
@@ -982,37 +972,14 @@ cdef class NBodySyst():
 
         self.Compute_n_sub_fft()
 
-
-        nbody_per_segm = np.zeros((self.nsegm), dtype=np.intp)
-        for ib in range(nbody):
-            nbody_per_segm[self._bodysegm[ib,0]] += 1
-# 
-#         
-#         assert (nbody_per_segm == 1).all()
-
-        self.nbody_per_segm = nbody_per_segm
-
-        # For ODE  IVP integration. What about Syms ???
+        # For ODE  IVP integration.
         self._segmmass = np.empty((self.nsegm), dtype=np.float64)
         self._invsegmmass = np.empty((self.nsegm), dtype=np.float64)
         self._segmcharge = np.empty((self.nsegm), dtype=np.float64)
-        self._binprodchargeode = np.empty((self.nbin_segm_unique), dtype=np.float64)
-
         for isegm in range(self.nsegm):
-
             self._segmmass[isegm] = self._loopmass[self._bodyloop[self._intersegm_to_body[isegm]]]
             self._invsegmmass[isegm] = 1. / (self._loopmass[self._bodyloop[self._intersegm_to_body[isegm]]])
             self._segmcharge[isegm] = self._loopcharge[self._bodyloop[self._intersegm_to_body[isegm]]]
-
-        for ibin in range(self.nbin_segm_unique):
-            isegm = self._BinSourceSegm[ibin]
-            isegmp = self._BinTargetSegm[ibin]
-            self._binprodchargeode[ibin] = self._segmcharge[isegm] * self._segmcharge[isegmp]
-            # self._binprodchargeode[ibin] = self._BinProdChargeSum[ibin]
-
-        self.BinarySegm = BinarySegm
-
-
 
         self.Update_ODE_params()
 
@@ -1217,7 +1184,7 @@ cdef class NBodySyst():
         self._ODE_params.BinSpaceRotIsId_ptr        = &self._BinSpaceRotIsId[0]
 
         # self._ODE_params.BinProdChargeSum_ptr       = &self._BinProdChargeSum[0]
-        self._ODE_params.BinProdChargeSum_ptr       = &self._binprodchargeode[0]
+        self._ODE_params.BinProdChargeSum_ptr       = &self._BinProdChargeSum_ODE[0]
 
         self._ODE_params.inter_law                  =  self._inter_law
         self._ODE_params.inter_law_param_ptr        =  self._inter_law_param_ptr
@@ -4512,13 +4479,13 @@ cdef class NBodySyst():
         cdef np.ndarray[double, ndim=1, mode='c'] res = np.empty((self.nsegm * self.geodim), dtype=np.float64)
 
         Compute_forces_vectorized(
-            &pos_flat[0]                , &res[0]                   ,
-            self.nbin_segm_unique       , self.geodim               ,   
-            self.nsegm                  , 1                         ,           
-            &self._BinSourceSegm[0]     , &self._BinTargetSegm[0]   ,
-            &self._BinSpaceRot[0,0,0]   , &self._BinSpaceRotIsId[0] ,
-            &self._binprodchargeode[0]  ,
-            self._inter_law             , self._inter_law_param_ptr ,
+            &pos_flat[0]                    , &res[0]                   ,
+            self.nbin_segm_unique           , self.geodim               ,   
+            self.nsegm                      , 1                         ,           
+            &self._BinSourceSegm[0]         , &self._BinTargetSegm[0]   ,
+            &self._BinSpaceRot[0,0,0]       , &self._BinSpaceRotIsId[0] ,
+            &self._BinProdChargeSum_ODE[0]  ,
+            self._inter_law                 , self._inter_law_param_ptr ,
         )
 
         return res
@@ -4532,13 +4499,13 @@ cdef class NBodySyst():
         cdef np.ndarray[double, ndim=2, mode='c'] res = np.empty((self.nsegm * self.geodim, grad_ndof), dtype=np.float64)
 
         Compute_grad_forces_vectorized(
-            &pos_flat[0]                , &dpos_flat[0,0]           , &res[0,0] ,
-            self.nbin_segm_unique       , self.geodim               ,   
-            self.nsegm                  , 1                         , grad_ndof ,
-            &self._BinSourceSegm[0]     , &self._BinTargetSegm[0]   ,
-            &self._BinSpaceRot[0,0,0]   , &self._BinSpaceRotIsId[0] ,
-            &self._binprodchargeode[0]  ,
-            self._inter_law             , self._inter_law_param_ptr ,
+            &pos_flat[0]                    , &dpos_flat[0,0]           , &res[0,0] ,
+            self.nbin_segm_unique           , self.geodim               ,   
+            self.nsegm                      , 1                         , grad_ndof ,
+            &self._BinSourceSegm[0]         , &self._BinTargetSegm[0]   ,
+            &self._BinSpaceRot[0,0,0]       , &self._BinSpaceRotIsId[0] ,
+            &self._BinProdChargeSum_ODE[0]  ,
+            self._inter_law                 , self._inter_law_param_ptr ,
         )
 
         return res
@@ -4588,13 +4555,13 @@ cdef class NBodySyst():
         cdef np.ndarray[double, ndim=2, mode='c'] res = np.empty((nvec, self.nsegm * self.geodim), dtype=np.float64)
 
         Compute_forces_vectorized(
-            &pos_flat[0,0]              , &res[0,0]                 ,
-            self.nbin_segm_unique       , self.geodim               , 
-            self.nsegm                  , nvec                      ,       
-            &self._BinSourceSegm[0]     , &self._BinTargetSegm[0]   ,
-            &self._BinSpaceRot[0,0,0]   , &self._BinSpaceRotIsId[0] ,
-            &self._binprodchargeode[0]  ,
-            self._inter_law             , self._inter_law_param_ptr ,
+            &pos_flat[0,0]                  , &res[0,0]                 ,
+            self.nbin_segm_unique           , self.geodim               , 
+            self.nsegm                      , nvec                      ,       
+            &self._BinSourceSegm[0]         , &self._BinTargetSegm[0]   ,
+            &self._BinSpaceRot[0,0,0]       , &self._BinSpaceRotIsId[0] ,
+            &self._BinProdChargeSum_ODE[0]  ,
+            self._inter_law                 , self._inter_law_param_ptr ,
         )
 
         return res
@@ -4609,13 +4576,13 @@ cdef class NBodySyst():
         cdef np.ndarray[double, ndim=3, mode='c'] res = np.empty((nvec, self.nsegm * self.geodim, grad_ndof), dtype=np.float64)
 
         Compute_grad_forces_vectorized(
-            &pos_flat[0,0]              , &dpos_flat[0,0,0]         , &res[0,0,0]   ,
-            self.nbin_segm_unique       , self.geodim               , 
-            self.nsegm                  , nvec                      , grad_ndof     ,
-            &self._BinSourceSegm[0]     , &self._BinTargetSegm[0]   ,
-            &self._BinSpaceRot[0,0,0]   , &self._BinSpaceRotIsId[0] ,
-            &self._binprodchargeode[0]  ,
-            self._inter_law             , self._inter_law_param_ptr ,
+            &pos_flat[0,0]                  , &dpos_flat[0,0,0]         , &res[0,0,0]   ,
+            self.nbin_segm_unique           , self.geodim               , 
+            self.nsegm                      , nvec                      , grad_ndof     ,
+            &self._BinSourceSegm[0]         , &self._BinTargetSegm[0]   ,
+            &self._BinSpaceRot[0,0,0]       , &self._BinSpaceRotIsId[0] ,
+            &self._BinProdChargeSum_ODE[0]  ,
+            self._inter_law                 , self._inter_law_param_ptr ,
         )
 
         return res
@@ -4661,7 +4628,7 @@ cdef class NBodySyst():
 
     @cython.final
     @cython.cdivision(True)
-    def Get_ODE_def(self, double[::1] params_mom_buf = None, vector_calls = True, LowLevel = True, NoSymIfPossible = True, grad = False):
+    def Get_ODE_def(self, double[::1] params_mom_buf = None, vector_calls = True, LowLevel = True, NoSymIfPossible = True, grad = False, regular_init = False):
 
         dict_res = {
             "t_span" : (0., 1./self.nint_min)   ,
@@ -4669,7 +4636,14 @@ cdef class NBodySyst():
         }
 
         if params_mom_buf is not None:
-            dict_res["x0"], dict_res["v0"] = self.Compute_init_pos_mom(params_mom_buf) 
+            if regular_init:
+                segmpos = self.params_to_segmpos(params_mom_buf)
+                segmmom = self.params_to_segmmom(params_mom_buf)
+                dict_res["reg_x0"] = np.ascontiguousarray(segmpos.swapaxes(0, 1).reshape(self.segm_store,-1))
+                dict_res["reg_v0"] = np.ascontiguousarray(segmmom.swapaxes(0, 1).reshape(self.segm_store,-1))
+            
+            else:
+                dict_res["x0"], dict_res["v0"] = self.Compute_init_pos_mom(params_mom_buf) 
 
         NoSymPossible = self.BinSpaceRotIsId.all()
         NoSym = NoSymIfPossible and NoSymPossible

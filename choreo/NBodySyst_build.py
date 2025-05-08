@@ -857,16 +857,16 @@ def AccumulateSegmSourceToTargetSym(
             
     return segm_gen_to_target                       
 
-def FindAllBinarySegments(intersegm_to_all, nbody, nsegm, nint_min, bodysegm, bodycharge):
+def FindAllBinarySegments(intersegm_to_all, nbody, nsegm, nint_min, intersegm_to_body, bodysegm, bodycharge):
 
     BinarySegm = {}
 
     for isegm in range(nsegm):
         for isegmp in range(isegm,nsegm):
             BinarySegm[(isegm, isegmp)] = {
-                "SymList" : []      ,
-                "SymCount" : []     ,
-                "ProdChargeSum" : []  ,
+                "SymList" : []          ,
+                "SymCount" : []         ,
+                "ProdChargeSum" : []    ,
             }
 
     for iint in range(nint_min):
@@ -911,6 +911,51 @@ def FindAllBinarySegments(intersegm_to_all, nbody, nsegm, nint_min, bodysegm, bo
                     BinarySegm[bisegm]["SymCount"].append(1)
                     BinarySegm[bisegm]["ProdChargeSum"].append(bodycharge[ib]*bodycharge[ibp])
 
+    for isegm in range(nsegm):
+        for isegmp in range(isegm,nsegm):
+            BinarySegm[(isegm, isegmp)]["ProdChargeSum_ODE"] = [0]*len(BinarySegm[(isegm, isegmp)]["SymList"])
+
+    iint = 0
+    
+    for isegm in range(nsegm):
+        ib = intersegm_to_body[isegm]
+        
+        for ibp in range(nbody):
+            
+            if ib == ibp:
+                fac = 1.
+            else:
+                fac = 0.5
+                
+                isegmp = bodysegm[ibp, iint]
+
+                if (isegm <= isegmp):
+                    bisegm = (isegm, isegmp)
+                    Sym = (intersegm_to_all[ibp][iint].Inverse()).Compose(intersegm_to_all[ib][iint])
+
+                else:
+                    bisegm = (isegmp, isegm)
+                    Sym = (intersegm_to_all[ib][iint].Inverse()).Compose(intersegm_to_all[ibp][iint])
+
+                if ((isegm == isegmp) and Sym.IsIdentityRotAndTimeRev()):
+                        raise ValueError("Provided symmetries resulted in two bodies having identical trajectories.")
+
+                AlreadyFound = False
+                for isym, FoundSym in enumerate(BinarySegm[bisegm]["SymList"]):
+                    
+                    AlreadyFound = AlreadyFound or Sym.IsSameRotAndTimeRev(FoundSym)
+
+                    if (isegm == isegmp):
+                        SymInv = Sym.Inverse()
+                        AlreadyFound = AlreadyFound or SymInv.IsSameRotAndTimeRev(FoundSym)
+
+                    if AlreadyFound:
+                        BinarySegm[bisegm]["ProdChargeSum_ODE"][isym] += fac * bodycharge[ib]*bodycharge[ibp]
+                        break
+
+                else:
+                    raise ValueError("This should never happen")
+
     return BinarySegm
 
 def ReorganizeBinarySegments(BinarySegm):
@@ -920,29 +965,30 @@ def ReorganizeBinarySegments(BinarySegm):
     BinTimeRev = []
     BinSpaceRot = []
     BinProdChargeSum = []
+    BinProdChargeSum_ODE = []
     
     for (isegm, isegmp), bin_data in BinarySegm.items():
         
-        assert len(bin_data["SymList"]) == len(bin_data["SymCount"]) 
-        assert len(bin_data["SymList"]) == len(bin_data["ProdChargeSum"]) 
-
-        for(Sym, prodchargesum) in zip(bin_data["SymList"], bin_data["ProdChargeSum"]):
+        for(Sym, prodchargesum, prodchargesum_ode) in zip(bin_data["SymList"], bin_data["ProdChargeSum"], bin_data["ProdChargeSum_ODE"], strict=True):
 
             assert prodchargesum != 0.
+            assert prodchargesum_ode != 0.
 
             BinSourceSegm.append(isegm)
             BinTargetSegm.append(isegmp)
             BinTimeRev.append(Sym.TimeRev)
             BinSpaceRot.append(Sym.SpaceRot)
             BinProdChargeSum.append(prodchargesum)
+            BinProdChargeSum_ODE.append(prodchargesum_ode)
 
     BinSourceSegm = np.array(BinSourceSegm, dtype=np.intp)
     BinTargetSegm = np.array(BinTargetSegm, dtype=np.intp)
     BinTimeRev = np.array(BinTimeRev, dtype=np.intp)
     BinSpaceRot = np.array(BinSpaceRot, dtype=np.float64)
     BinProdChargeSum = np.array(BinProdChargeSum, dtype=np.float64)
+    BinProdChargeSum_ODE = np.array(BinProdChargeSum_ODE, dtype=np.float64)
         
-    return BinSourceSegm, BinTargetSegm, BinTimeRev, BinSpaceRot, BinProdChargeSum
+    return BinSourceSegm, BinTargetSegm, BinTimeRev, BinSpaceRot, BinProdChargeSum, BinProdChargeSum_ODE
 
 def plot_given_2D(all_pos, filename, fig_size=(10,10), dpi=100, color=None, color_list=None, xlim=None, extend=0.03, CloseLoop=True):
 
