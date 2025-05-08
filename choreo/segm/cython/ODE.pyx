@@ -804,40 +804,60 @@ cpdef ExplicitSymplecticIVP(
 
     """
 
-    cdef Py_ssize_t keep_start
-
-    if x0 is None:
-        if reg_x0 is None:
-            raise ValueError("Missing x0 or reg_x0")
-        else:
-            x0 = reg_x0[0,:].copy()
-
-    if v0 is None:
-        if reg_v0 is None:
-            raise ValueError("Missing v0 or reg_v0")
-        else:
-            v0 = reg_v0[0,:].copy()
-
-    cdef Py_ssize_t ndof = x0.shape[0]
-    cdef Py_ssize_t nreg_init
-
-    if (reg_x0 is None) == (reg_v0 is None):
-        if reg_x0 is None:
-            reg_x0 = np.empty((0, 0), dtype=np.float64)
-            reg_v0 = np.empty((0, 0), dtype=np.float64)
-
-        else:
-            nreg_init = reg_x0.shape[0]
-            if (reg_v0.shape[0] != nreg_init) or (reg_x0.shape[1] != ndof) or (reg_x0.shape[1] != ndof):
-                raise ValueError("reg_x0 and reg_v0 have incorrect shapes.")
-
-            if reg_init_freq < 1:
-                reg_init_freq = nint + 1
-    else:
+    if (x0 is None) != (v0 is None):
         raise ValueError("Only one of reg_x0 and reg_v0 was provided.")
 
-    if (v0.shape[0] != ndof):
+    if (reg_x0 is None) != (reg_v0 is None):
+        raise ValueError("Only one of reg_x0 and reg_v0 was provided.")
+
+    if (x0 is None) == (reg_x0 is None):
+        raise ValueError("Exactly one of x0 or reg_x0 should be provided")
+
+    if (v0 is None) == (reg_v0 is None):
+        raise ValueError("Exactly one of v0 or reg_v0 should be provided")
+
+    cdef Py_ssize_t ndof
+
+    cdef double[::1] x
+    cdef double[::1] v
+
+    if (x0 is None):
+        x = reg_x0[0,:].copy()
+    else:
+        x = x0.copy()
+
+    if (v0 is None):
+        v = reg_v0[0,:].copy()
+    else:
+        v = v0.copy()
+
+    ndof = x.shape[0]
+
+    if (v.shape[0] != ndof):
         raise ValueError("x0 and v0 must have the same shape")
+    
+    cdef Py_ssize_t nreg_init
+    cdef Py_ssize_t nreg_needed
+
+    if reg_x0 is None:
+        reg_x0 = np.empty((0, 0), dtype=np.float64)
+        reg_v0 = np.empty((0, 0), dtype=np.float64)
+
+    else:
+        if (reg_x0.shape[1] != ndof) or (reg_x0.shape[1] != ndof):
+            raise ValueError("reg_x0 or reg_v0 have incorrect shapes: reg_x0.shape[1] should be the number of degrees of freedom.")
+
+        nreg_init = reg_x0.shape[0]
+        if (reg_v0.shape[0] != nreg_init): 
+            raise ValueError("reg_x0 and reg_v0 should have the same shape.")
+
+        if reg_init_freq < 1:
+            reg_init_freq = nint + 1
+
+        nreg_needed = nint // reg_init_freq
+
+        if (nreg_init < nreg_needed):
+            raise ValueError("reg_x0 and reg_v0 do not store enough values")
 
     cdef ccallback_t callback_fun
     ccallback_prepare(&callback_fun, signatures, fun, CCALLBACK_DEFAULTS)
@@ -854,15 +874,12 @@ cpdef ExplicitSymplecticIVP(
         keep_freq = nint
 
     cdef Py_ssize_t nint_keep = nint // keep_freq
-
+    cdef Py_ssize_t keep_start
     if keep_init:
         nint_keep += 1
         keep_start = 1
     else:
         keep_start = 0
-
-    cdef double[::1] x = x0.copy()
-    cdef double[::1] v = v0.copy()
 
     cdef double[::1] res_x = np.empty((ndof), dtype=np.float64)
     cdef double[::1] res_v 
@@ -1136,6 +1153,20 @@ cdef void ExplicitSymplecticIVP_ann(
 
     for iint in range(nint):
 
+        if DoRegInit:
+
+            if iint % reg_init_freq == 0:
+
+                scipy.linalg.cython_blas.dcopy(&ndof,&reg_x0[ireg_init,0],&int_one,&x[0],&int_one)
+                scipy.linalg.cython_blas.dcopy(&ndof,&reg_v0[ireg_init,0],&int_one,&v[0],&int_one)
+
+                if DoEFT:
+
+                    memset(x_eft_comp, 0, sizeof(double)*ndof)        
+                    memset(v_eft_comp, 0, sizeof(double)*ndof)
+
+                ireg_init += 1
+
         for istep in range(nsteps):
 
             if rk._cant_skip_f_eval[istep]:
@@ -1201,21 +1232,6 @@ cdef void ExplicitSymplecticIVP_ann(
                 scipy.linalg.cython_blas.dcopy(&grad_nvar,&grad_v[0,0],&int_one,&grad_v_keep[iint_keep,0,0],&int_one)
 
             iint_keep += 1
-
-        if DoRegInit:
-
-            if (iint+1) % reg_init_freq == 0:
-
-                # First items of reg_x0 and reg_v0 are to be ignored
-                ireg_init += 1
-
-                scipy.linalg.cython_blas.dcopy(&ndof,&reg_x0[ireg_init,0],&int_one,&x[0],&int_one)
-                scipy.linalg.cython_blas.dcopy(&ndof,&reg_v0[ireg_init,0],&int_one,&v[0],&int_one)
-
-                if DoEFT:
-
-                    memset(x_eft_comp, 0, sizeof(double)*ndof)        
-                    memset(v_eft_comp, 0, sizeof(double)*ndof)
 
     free(cdt)
     free(ddt)
@@ -1826,39 +1842,60 @@ cpdef ImplicitSymplecticIVP(
     if (rk_v._a_table.shape[0] != nsteps):
         raise ValueError("rk_x and rk_v must have the same shape")
 
-    if x0 is None:
-        if reg_x0 is None:
-            raise ValueError("Missing x0 or reg_x0")
-        else:
-            x0 = reg_x0[0,:].copy()
-
-    if v0 is None:
-        if reg_v0 is None:
-            raise ValueError("Missing v0 or reg_v0")
-        else:
-            v0 = reg_v0[0,:].copy()
-
-    cdef Py_ssize_t ndof = x0.shape[0]
-    cdef Py_ssize_t nreg_init
-
-    if (reg_x0 is None) == (reg_v0 is None):
-        if reg_x0 is None:
-            reg_x0 = np.empty((0, 0), dtype=np.float64)
-            reg_v0 = np.empty((0, 0), dtype=np.float64)
-
-        else:
-            nreg_init = reg_x0.shape[0]
-            if (reg_v0.shape[0] != nreg_init) or (reg_x0.shape[1] != ndof) or (reg_x0.shape[1] != ndof):
-                raise ValueError("reg_x0 and reg_v0 have incorrect shapes.")
-
-            if reg_init_freq < 1:
-                reg_init_freq = nint + 1
-
-    else:
+    if (x0 is None) != (v0 is None):
         raise ValueError("Only one of reg_x0 and reg_v0 was provided.")
 
-    if (v0.shape[0] != ndof):
+    if (reg_x0 is None) != (reg_v0 is None):
+        raise ValueError("Only one of reg_x0 and reg_v0 was provided.")
+
+    if (x0 is None) == (reg_x0 is None):
+        raise ValueError("Exactly one of x0 or reg_x0 should be provided")
+
+    if (v0 is None) == (reg_v0 is None):
+        raise ValueError("Exactly one of v0 or reg_v0 should be provided")
+
+    cdef Py_ssize_t ndof
+
+    cdef double[::1] x
+    cdef double[::1] v
+
+    if (x0 is None):
+        x = reg_x0[0,:].copy()
+    else:
+        x = x0.copy()
+
+    if (v0 is None):
+        v = reg_v0[0,:].copy()
+    else:
+        v = v0.copy()
+
+    ndof = x.shape[0]
+
+    if (v.shape[0] != ndof):
         raise ValueError("x0 and v0 must have the same shape")
+    
+    cdef Py_ssize_t nreg_init
+    cdef Py_ssize_t nreg_needed
+
+    if reg_x0 is None:
+        reg_x0 = np.empty((0, 0), dtype=np.float64)
+        reg_v0 = np.empty((0, 0), dtype=np.float64)
+
+    else:
+        if (reg_x0.shape[1] != ndof) or (reg_x0.shape[1] != ndof):
+            raise ValueError("reg_x0 or reg_v0 have incorrect shapes: reg_x0.shape[1] should be the number of degrees of freedom.")
+
+        nreg_init = reg_x0.shape[0]
+        if (reg_v0.shape[0] != nreg_init): 
+            raise ValueError("reg_x0 and reg_v0 should have the same shape.")
+
+        if reg_init_freq < 1:
+            reg_init_freq = nint + 1
+
+        nreg_needed = nint // reg_init_freq
+
+        if (nreg_init < nreg_needed):
+            raise ValueError("reg_x0 and reg_v0 do not store enough values")
 
     cdef ccallback_t callback_fun
     ccallback_prepare(&callback_fun, signatures, fun, CCALLBACK_DEFAULTS)
@@ -1866,8 +1903,6 @@ cpdef ImplicitSymplecticIVP(
     cdef ccallback_t callback_gun
     ccallback_prepare(&callback_gun, signatures, gun, CCALLBACK_DEFAULTS)
 
-    cdef double[::1] x = x0.copy()
-    cdef double[::1] v = v0.copy()
     cdef double[:,::1] K_fun = np.zeros((nsteps, ndof), dtype=np.float64)
     cdef double[:,::1] K_gun = np.zeros((nsteps, ndof), dtype=np.float64)
     cdef double[:,::1] dX = np.empty((nsteps, ndof), dtype=np.float64)
@@ -2170,6 +2205,20 @@ cdef void ImplicitSymplecticIVP_ann(
         for istep in range(nsteps):
             all_t_x[istep] = tbeg + cdt_x[istep]
 
+        if DoRegInit:
+
+            if iint % reg_init_freq == 0:
+
+                scipy.linalg.cython_blas.dcopy(&ndof,&reg_x0[ireg_init,0],&int_one,&x[0],&int_one)
+                scipy.linalg.cython_blas.dcopy(&ndof,&reg_v0[ireg_init,0],&int_one,&v[0],&int_one)
+
+                if DoEFT:
+
+                    memset(x_eft_comp, 0, sizeof(double)*ndof)        
+                    memset(v_eft_comp, 0, sizeof(double)*ndof)
+
+                ireg_init += 1
+
         # dV = rk_v._beta_table . K_gun
         scipy.linalg.cython_blas.dgemm(transn,transn,&ndof,&nsteps,&nsteps,&one_double,&K_gun[0,0],&ndof,&rk_v._beta_table[0,0],&nsteps,&zero_double,&dV[0,0],&ndof)
 
@@ -2352,21 +2401,6 @@ cdef void ImplicitSymplecticIVP_ann(
                 scipy.linalg.cython_blas.dcopy(&grad_nvar,&grad_v[0,0],&int_one,&grad_v_keep[iint_keep,0,0],&int_one)
 
             iint_keep += 1
-
-        if DoRegInit:
-
-            if (iint+1) % reg_init_freq == 0:
-
-                # First items of reg_x0 and reg_v0 are to be ignored
-                ireg_init += 1
-
-                scipy.linalg.cython_blas.dcopy(&ndof,&reg_x0[ireg_init,0],&int_one,&x[0],&int_one)
-                scipy.linalg.cython_blas.dcopy(&ndof,&reg_v0[ireg_init,0],&int_one,&v[0],&int_one)
-
-                if DoEFT:
-
-                    memset(x_eft_comp, 0, sizeof(double)*ndof)        
-                    memset(v_eft_comp, 0, sizeof(double)*ndof)
 
     # print(tot_niter / nint)
     # print(1+nsteps*tot_niter)

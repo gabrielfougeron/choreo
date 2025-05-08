@@ -963,7 +963,7 @@ def test_RK_vs_spectral_reset(NBS, params_buf, vector_calls, LowLevel, NoSymIfPo
     action_grad_norm = np.linalg.norm(action_grad, ord = np.inf)
     tol = 0.1 * action_grad_norm # !!!!
     
-    ODE_Syst = NBS.Get_ODE_def(params_buf, vector_calls = vector_calls, LowLevel = LowLevel, NoSymIfPossible = NoSymIfPossible)
+    ODE_Syst = NBS.Get_ODE_def(vector_calls = vector_calls, LowLevel = LowLevel, NoSymIfPossible = NoSymIfPossible)
     
     nsteps = 10
     keep_freq = 1
@@ -973,8 +973,8 @@ def test_RK_vs_spectral_reset(NBS, params_buf, vector_calls, LowLevel, NoSymIfPo
     
     rk = choreo.segm.multiprec_tables.ComputeImplicitRKTable(nsteps, method=method)
     
-    segmpos_ODE, segmmom_ODE = choreo.segm.ODE.SymplecticIVP(
-        rk = rk                         ,
+    segmpos_ODE, segmmom_ODE = choreo.segm.ODE.ImplicitSymplecticIVP(
+        rk_x = rk, rk_v = rk            ,
         keep_freq = keep_freq           ,
         nint = nint_ODE                 ,
         keep_init = True                ,
@@ -1043,8 +1043,6 @@ def test_RK_vs_spectral_reset(NBS, params_buf, vector_calls, LowLevel, NoSymIfPo
     tol = 100 * action_grad_norm
     print(np.linalg.norm(segmmom - segmmom_ODE))
     assert np.allclose(segmmom, segmmom_ODE, rtol = tol, atol = tol)        
-    
-    assert False
     
 @ParametrizeDocstrings
 @pytest.mark.parametrize("NBS", [pytest.param(NBS, id=name) for name, NBS in NBS_dict.items()])
@@ -1404,19 +1402,21 @@ def test_Monodromy(float64_tols, NBS, params_buf, vector_calls, LowLevel, NoSymI
     
     ODE_Syst = NBS.Get_ODE_def(params_buf, vector_calls = vector_calls, LowLevel = LowLevel, NoSymIfPossible = NoSymIfPossible, grad=True)
     
-    nint_ODE = (NBS.segm_store-1)
+    reg_init_freq = 1
+    nint_ODE = (NBS.segm_store-1) * reg_init_freq
 
     nsteps = 10
     method = "Gauss"    
     rk = choreo.segm.multiprec_tables.ComputeImplicitRKTable(nsteps, method=method)
     
     segmpos_ODE, segmvel_ODE, segmpos_grad_ODE, segmvel_grad_ODE = choreo.segm.ODE.ImplicitSymplecticIVP(
-        nint = nint_ODE         ,
-        keep_init = True        ,
-        reg_x0 = reg_x0         ,
-        reg_v0 = reg_v0         ,
-        rk_x = rk, rk_v = rk    ,
-        **ODE_Syst              ,
+        nint = nint_ODE                 ,
+        keep_init = True                ,
+        reg_x0 = reg_x0                 ,
+        reg_v0 = reg_v0                 ,
+        reg_init_freq = reg_init_freq   ,
+        rk_x = rk, rk_v = rk            ,
+        **ODE_Syst                      ,
     )
     
     keep_freq = (NBS.segm_store-1)
@@ -1453,19 +1453,19 @@ def test_Monodromy(float64_tols, NBS, params_buf, vector_calls, LowLevel, NoSymI
     
 @ParametrizeDocstrings
 @pytest.mark.parametrize("NBS", [pytest.param(NBS, id=name) for name, NBS in NBS_dict.items()])
-def test_remove_all_syms(float64_tols, NBS):
+def test_remove_all_syms_nrg(float64_tols, NBS):
     """ Tests whether action gradient and hessian computation can be replicated without symmetries
     """
+    
+    NBS.nint_fac = 10
+    params_buf = np.random.random((NBS.nparams))
+    segmpos = NBS.params_to_segmpos(params_buf)
 
     NBS_nosym = NBS.copy_nosym()
     
     for ib in range(NBS_nosym.nbody):
         isegm = NBS_nosym.bodysegm[ib, 0]
         assert isegm == ib
-        
-    NBS.nint_fac = 10
-    params_buf = np.random.random((NBS.nparams))
-    segmpos = NBS.params_to_segmpos(params_buf)
     
     all_bodypos = NBS.segmpos_to_allbody_noopt(segmpos)
     NBS_nosym.nint = NBS.nint
@@ -1481,5 +1481,97 @@ def test_remove_all_syms(float64_tols, NBS):
     assert 2 * abs(kin_nrg - kin_nrg_nosym) / (abs(kin_nrg) + abs(kin_nrg_nosym)) < float64_tols.rtol
     assert 2 * abs(pot_nrg - pot_nrg_nosym) / (abs(pot_nrg) + abs(pot_nrg_nosym)) < float64_tols.rtol
 
-
+@ParametrizeDocstrings
+@pytest.mark.parametrize(("NBS", "params_buf"), [pytest.param(NBS, params_buf, id=name) for name, (NBS, params_buf) in Sols_dict.items()])
+@pytest.mark.parametrize("NoSymIfPossible", [True, False])
+@pytest.mark.parametrize("vector_calls", [True, False])
+@pytest.mark.parametrize("LowLevel", [True, False])
+def test_remove_all_syms_ODE(float64_tols, NBS, params_buf, vector_calls, LowLevel, NoSymIfPossible):
+    """ Tests whether ODE computations can be replicated without symmetries
+    """
     
+    # NBS.ForceGreaterNStore = True
+    
+    NBS_nosym = NBS.copy_nosym()
+    
+    for ib in range(NBS_nosym.nbody):
+        isegm = NBS_nosym.bodysegm[ib, 0]
+        assert isegm == ib
+        
+        # # TODO On reglera ça plus tard
+        # isegm = NBS.bodysegm[ib, 0]
+        # assert isegm == ib        
+
+    segmpos = NBS.params_to_segmpos(params_buf)
+    segmmom = NBS.params_to_segmmom(params_buf)
+    
+    action_grad = NBS.segmpos_params_to_action_grad(segmpos, params_buf)
+    action_grad_norm = np.linalg.norm(action_grad, ord = np.inf)
+    
+    all_bodypos = NBS.segmpos_to_allbody_noopt(segmpos, pos = True )
+    all_bodymom = NBS.segmpos_to_allbody_noopt(segmmom, pos = False)
+
+    params_buf_nosym = NBS_nosym.segmpos_to_params(all_bodypos)
+
+    reg_x0 = np.ascontiguousarray(all_bodypos.swapaxes(0, 1).reshape(NBS_nosym.segm_store,-1))
+    reg_v0 = np.ascontiguousarray(all_bodymom.swapaxes(0, 1).reshape(NBS_nosym.segm_store,-1))
+    
+    ODE_Syst = NBS_nosym.Get_ODE_def(vector_calls = vector_calls, LowLevel = LowLevel, NoSymIfPossible = NoSymIfPossible)
+    
+    keep_freq = 1     
+    reg_init_freq = keep_freq
+    nint_ODE = (NBS_nosym.segm_store) * keep_freq
+    
+    nsteps = 10
+    method = "Gauss"    
+    rk = choreo.segm.multiprec_tables.ComputeImplicitRKTable(nsteps, method=method)
+
+    all_bodypos_ODE, all_bodymom_ODE = choreo.segm.ODE.ImplicitSymplecticIVP(
+        nint = nint_ODE                 ,
+        keep_init = True                ,
+        keep_freq = keep_freq           ,
+        reg_x0 = reg_x0                 ,
+        reg_v0 = reg_v0                 ,
+        reg_init_freq = reg_init_freq   ,
+        rk_x = rk, rk_v = rk            ,
+        t_span = (0, 1.)                ,
+        vector_calls = vector_calls     ,
+        fun = ODE_Syst["fun"]           ,
+        gun = ODE_Syst["gun"]           ,
+    )
+    
+    # We need to drop the last timestep
+    all_bodypos_ODE = np.ascontiguousarray(all_bodypos_ODE.reshape((NBS_nosym.segm_store+1, NBS_nosym.nsegm, NBS_nosym.geodim))[:NBS_nosym.segm_store,:,:].swapaxes(0, 1))    
+    all_bodymom_ODE = np.ascontiguousarray(all_bodymom_ODE.reshape((NBS_nosym.segm_store+1, NBS_nosym.nsegm, NBS_nosym.geodim))[:NBS_nosym.segm_store,:,:].swapaxes(0, 1))
+
+
+# 
+    # import matplotlib.pyplot as plt
+    
+    # plt.plot(all_bodypos[:,:,0].swapaxes(0,1),all_bodypos[:,:,1].swapaxes(0,1))
+    # 
+    # i=0
+    # plt.plot(all_bodypos[i,:,0],all_bodypos[i,:,1])
+    # plt.plot(all_bodypos_ODE[i,:,0],all_bodypos_ODE[i,:,1])
+    # plt.axis('equal')
+    # plt.show()
+
+
+
+
+
+
+
+
+
+
+
+
+
+    tol = 0.1 * action_grad_norm 
+    print(np.linalg.norm(all_bodypos - all_bodypos_ODE))
+    assert np.allclose(all_bodypos, all_bodypos_ODE, rtol = tol, atol = tol)   
+    
+    tol = 100 * action_grad_norm
+    print(np.linalg.norm(all_bodymom - all_bodymom_ODE))
+    assert np.allclose(all_bodymom, all_bodymom_ODE, rtol = tol, atol = tol)      

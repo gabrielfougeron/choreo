@@ -1007,8 +1007,8 @@ cdef class NBodySyst():
         for ibin in range(self.nbin_segm_unique):
             isegm = self._BinSourceSegm[ibin]
             isegmp = self._BinTargetSegm[ibin]
-            # self._binprodchargeode[ibin] = self._segmcharge[isegm] * self._segmcharge[isegmp]
-            self._binprodchargeode[ibin] = self._BinProdChargeSum[ibin]
+            self._binprodchargeode[ibin] = self._segmcharge[isegm] * self._segmcharge[isegmp]
+            # self._binprodchargeode[ibin] = self._BinProdChargeSum[ibin]
 
         self.BinarySegm = BinarySegm
 
@@ -1993,7 +1993,7 @@ cdef class NBodySyst():
             bodymass[ib] = self._loopmass[self._bodyloop[ib]]
             bodycharge[ib] = self._loopcharge[self._bodyloop[ib]]
 
-        return  NBodySyst(
+        NBS = NBodySyst(
             geodim = self.geodim                                ,
             nbody = self.nbody                                  ,
             bodymass = bodymass                                 ,
@@ -2002,6 +2002,10 @@ cdef class NBodySyst():
             inter_law_str = self.inter_law_str                  ,
             inter_law_param_dict = self.inter_law_param_dict    ,
         )
+
+        NBS.nint = self.nint
+
+        return NBS
 
     @cython.final
     def GetFullAABB(
@@ -4657,16 +4661,15 @@ cdef class NBodySyst():
 
     @cython.final
     @cython.cdivision(True)
-    def Get_ODE_def(self, double[::1] params_mom_buf, vector_calls = True, LowLevel = True, NoSymIfPossible = True, grad = False):
-
-        xo, po = self.Compute_init_pos_mom(params_mom_buf)
+    def Get_ODE_def(self, double[::1] params_mom_buf = None, vector_calls = True, LowLevel = True, NoSymIfPossible = True, grad = False):
 
         dict_res = {
             "t_span" : (0., 1./self.nint_min)   ,
-            "x0" : xo                           ,
-            "v0" : po                           ,
             "vector_calls" : vector_calls       ,
         }
+
+        if params_mom_buf is not None:
+            dict_res["x0"], dict_res["v0"] = self.Compute_init_pos_mom(params_mom_buf) 
 
         NoSymPossible = self.BinSpaceRotIsId.all()
         NoSym = NoSymIfPossible and NoSymPossible
