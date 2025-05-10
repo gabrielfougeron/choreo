@@ -937,7 +937,7 @@ def Check_Duplicates(NBS, segmpos, params, hash_dict, action_dict, store_folder,
 def Load_wisdom_file(Wisdom_file):
     
     if not(PYFFTW_AVAILABLE):
-        warnings.warn("The package pyfftw could not be loaded. Please check your local install.")
+        warnings.warn("The package pyfftw could not be loaded. Please check your local install.", stacklevel=2)
     else:
 
         if os.path.isfile(Wisdom_file):
@@ -955,7 +955,7 @@ def Load_wisdom_file(Wisdom_file):
 def Write_wisdom_file(Wisdom_file): 
        
     if not(PYFFTW_AVAILABLE):
-        warnings.warn("The package pyfftw could not be loaded. Please check your local install.")
+        warnings.warn("The package pyfftw could not be loaded. Please check your local install.", stacklevel=2)
     else:
         wis = pyfftw.export_wisdom()
         

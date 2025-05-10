@@ -16,7 +16,7 @@ def pytest_sessionstart(session):
     
     try:
         choreo.segm.cython.test.AssertFalse()
-        warnings.warn("The package choreo was compiled with flag CYTHON_WITHOUT_ASSERTIONS")
+        warnings.warn("The package choreo was compiled with flag CYTHON_WITHOUT_ASSERTIONS", stacklevel=2)
     except AssertionError:
         pass
     

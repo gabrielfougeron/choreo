@@ -53,6 +53,8 @@ def random_orthogonal_matrix(geodim):
     return scipy.linalg.expm(sksymmat)
 
 def InstabilityDecomposition(Mat, eps=1e-12):
+    """ Order and pairs up the complex eivenvalues / eigenspaces of a real matrix.
+    """
 
     n,m = Mat.shape
     assert n==m
@@ -87,8 +89,10 @@ def InstabilityDecomposition(Mat, eps=1e-12):
             Instability_directions[i+1,:] = eigvects[:,idx_sort[i]].imag
 
             i += 2
+            
+    assert i == n 
 
-    return Instability_magnitude,Instability_directions
+    return Instability_magnitude, Instability_directions
 
 def algo_H(n,k,z):
 

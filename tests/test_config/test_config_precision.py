@@ -141,3 +141,10 @@ def compare_FD_and_exact_grad(fun, gradfun, xo, dx=None, epslist=None, order=1, 
     
     return np.array(error_list)
         
+def inarray(val, arr, rtol, atol):
+     
+    minval = np.min(np.abs(arr-val))
+    nrm = np.linalg.norm(arr, ord = np.inf)
+    
+    return (minval < atol) and (minval < rtol * nrm)
+    

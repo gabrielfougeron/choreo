@@ -341,7 +341,7 @@ def ExecName(the_name, input_folder, store_folder):
     # U,Instability_magnitude,Instability_directions = scipy.linalg.svd(MonodromyMat, full_matrices=True, compute_uv=True, overwrite_a=False, check_finite=True, lapack_driver='gesdd')
 # 
     '''Eigendecomposition'''
-    Instability_magnitude,Instability_directions = choreo.InstabilityDecomposition(MonodromyMat)
+    Instability_magnitude, Instability_directions = choreo.InstabilityDecomposition(MonodromyMat)
 
     # print(Instability_magnitude)
 

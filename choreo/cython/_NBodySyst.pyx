@@ -335,9 +335,24 @@ cdef class NBodySyst():
         return np.asarray(self._loopmass)
 
     cdef double[::1] _segmmass
+    @property
+    def segmmass(self):
+        return np.asarray(self._segmmass)
+
     cdef double[::1] _invsegmmass
+    @property
+    def invsegmmass(self):
+        return np.asarray(self._invsegmmass)
+
     cdef double[::1] _segmcharge
-    cdef public double[::1] _BinProdChargeSum_ODE
+    @property
+    def segmcharge(self):
+        return np.asarray(self._segmcharge)
+
+    cdef double[::1] _BinProdChargeSum_ODE
+    @property
+    def BinProdChargeSum_ODE(self):
+        return np.asarray(self._BinProdChargeSum_ODE)
 
     cdef double[::1] _loopcharge
     @property

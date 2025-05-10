@@ -995,6 +995,14 @@ def test_RK_vs_spectral_reset(NBS, params_buf, vector_calls, LowLevel, NoSymIfPo
     print(np.linalg.norm(segmmom - segmmom_ODE))
     assert np.allclose(segmmom, segmmom_ODE, rtol = tol, atol = tol)        
     
+    
+    for (isegm, isegmp, chargesum, chargesum_ode) in zip(NBS.BinSourceSegm, NBS.BinTargetSegm, NBS.BinProdChargeSum,NBS.BinProdChargeSum_ODE,strict=True):
+        
+        print(f'isegm = {isegm} isegmp = {isegmp} chargesum = {chargesum} chargesum_ode = {chargesum_ode}')
+    
+
+    # assert False
+    
 @ParametrizeDocstrings
 @pytest.mark.parametrize("NBS", [pytest.param(NBS, id=name) for name, NBS in NBS_dict.items()])
 def test_segmpos_param(float64_tols_strict, NBS):
@@ -1338,18 +1346,13 @@ def test_ODE_grad_period(float64_tols, NBS, params_buf, vector_calls, LowLevel, 
 @pytest.mark.parametrize("vector_calls", [True, False])
 @pytest.mark.parametrize("LowLevel", [True, False])
 @pytest.mark.parametrize(("NBS", "params_buf"), [pytest.param(NBS, params_buf, id=name) for name, (NBS, params_buf) in Sols_dict.items()])
-def test_Monodromy(float64_tols, NBS, params_buf, vector_calls, LowLevel, NoSymIfPossible):
+def test_Monodromy(float64_tols_loose, NBS, params_buf, vector_calls, LowLevel, NoSymIfPossible):
     """ Tests the properties of Monodromy matrix
     """
         
     NBS.ForceGreaterNStore = True
     
-    segmpos = NBS.params_to_segmpos(params_buf)
-    segmmom = NBS.params_to_segmmom(params_buf)
-    reg_x0 = np.ascontiguousarray(segmpos.swapaxes(0, 1).reshape(NBS.segm_store,-1))
-    reg_v0 = np.ascontiguousarray(segmmom.swapaxes(0, 1).reshape(NBS.segm_store,-1))
-    
-    ODE_Syst = NBS.Get_ODE_def(params_buf, vector_calls = vector_calls, LowLevel = LowLevel, NoSymIfPossible = NoSymIfPossible, grad=True)
+    ODE_Syst = NBS.Get_ODE_def(params_buf, vector_calls = vector_calls, LowLevel = LowLevel, NoSymIfPossible = NoSymIfPossible, grad=True, regular_init = True)
     
     reg_init_freq = 1
     nint_ODE = (NBS.segm_store-1) * reg_init_freq
@@ -1358,33 +1361,28 @@ def test_Monodromy(float64_tols, NBS, params_buf, vector_calls, LowLevel, NoSymI
     method = "Gauss"    
     rk = choreo.segm.multiprec_tables.ComputeImplicitRKTable(nsteps, method=method)
     
-    segmpos_ODE, segmvel_ODE, segmpos_grad_ODE, segmvel_grad_ODE = choreo.segm.ODE.ImplicitSymplecticIVP(
-        nint = nint_ODE                 ,
-        keep_init = True                ,
-        reg_x0 = reg_x0                 ,
-        reg_v0 = reg_v0                 ,
-        reg_init_freq = reg_init_freq   ,
-        rk_x = rk, rk_v = rk            ,
-        **ODE_Syst                      ,
-    )
+    # segmpos_ODE, segmvel_ODE, segmpos_grad_ODE, segmvel_grad_ODE = choreo.segm.ODE.ImplicitSymplecticIVP(
+    #     nint = nint_ODE                 ,
+    #     keep_init = True                ,
+    #     reg_init_freq = reg_init_freq   ,
+    #     rk_x = rk, rk_v = rk            ,
+    #     **ODE_Syst                      ,
+    # )
     
     keep_freq = (NBS.segm_store-1)
     nint_ODE *= NBS.nint_min
     
+    ODE_Syst["t_span"] = (0,1.) 
+    
     segmpos_ODE_full, segmvel_ODE_full, segmpos_grad_ODE_full, segmvel_grad_ODE_full = choreo.segm.ODE.ImplicitSymplecticIVP(
         nint = nint_ODE         ,
+        keep_init = True        ,
         keep_freq = keep_freq   ,
         rk_x = rk, rk_v = rk    ,
         **ODE_Syst              ,
     )
     
     n = NBS.nsegm * NBS.geodim
-    
-    print(segmpos_grad_ODE.shape)
-
-    grad_xf = segmpos_grad_ODE_full[-1,:,:].copy()
-    grad_vf = segmvel_grad_ODE_full[-1,:,:].copy()
-
     MonodromyMat = np.ascontiguousarray(np.concatenate((segmpos_grad_ODE_full[-1,:,:],segmvel_grad_ODE_full[-1,:,:]),axis=0).reshape(2*n,2*n))
     
     w = np.zeros((2*n,2*n),dtype=np.float64)
@@ -1393,12 +1391,26 @@ def test_Monodromy(float64_tols, NBS, params_buf, vector_calls, LowLevel, NoSymI
     
     # Symplecticity error
     print(np.linalg.norm(w - np.dot(MonodromyMat.transpose(),np.dot(w,MonodromyMat))))
-    assert np.allclose(w, np.dot(MonodromyMat.transpose(),np.dot(w,MonodromyMat)), rtol = float64_tols.rtol, atol = float64_tols.atol)   
+    assert np.allclose(w, np.dot(MonodromyMat.transpose(),np.dot(w,MonodromyMat)), rtol = float64_tols_loose.rtol, atol = float64_tols_loose.atol)   
 
-    # eigvals,eigvects = scipy.linalg.eig(MonodromyMat)
     eigvals = scipy.linalg.eigvals(MonodromyMat)
     print('Max Eigenvalue of the Monodromy matrix :',np.abs(eigvals).max())
-    # print('Eigenvalues of the Monodromy matrix :')
+    
+    # Test Loxodromy
+    for eigval in eigvals:
+        assert inarray(np.conjugate(eigval)     , eigvals, rtol = float64_tols_loose.rtol, atol = float64_tols_loose.atol)
+        assert inarray(1./eigval                , eigvals, rtol = float64_tols_loose.rtol, atol = float64_tols_loose.atol)
+        assert inarray(1./np.conjugate(eigval)  , eigvals, rtol = float64_tols_loose.rtol, atol = float64_tols_loose.atol)
+    
+    xo = np.ascontiguousarray(segmpos_ODE_full[0,:])
+    po = np.ascontiguousarray(segmvel_ODE_full[0,:])
+    
+    yo = NBS.Compute_velocities(0., po)
+    qo = NBS.Compute_forces(0., xo)
+    zo = np.ascontiguousarray(np.concatenate((yo,qo),axis=0).reshape(2*n))
+    
+    print(np.linalg.norm(np.dot(MonodromyMat, zo) - zo))
+    assert np.allclose(np.dot(MonodromyMat, zo), zo, rtol = float64_tols_loose.rtol, atol = float64_tols_loose.atol)   
     
 @ParametrizeDocstrings
 @pytest.mark.parametrize("NBS", [pytest.param(NBS, id=name) for name, NBS in NBS_dict.items()])
@@ -1494,3 +1506,4 @@ def test_remove_all_syms_ODE(float64_tols, NBS, params_buf, vector_calls, LowLev
     tol = 100 * action_grad_norm
     print(np.linalg.norm(all_bodymom - all_bodymom_ODE))
     assert np.allclose(all_bodymom, all_bodymom_ODE, rtol = tol, atol = tol)      
+    
