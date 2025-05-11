@@ -146,6 +146,8 @@ ctypedef struct ODE_params_t:
     double*             BinSpaceRot_ptr     
     bint*               BinSpaceRotIsId_ptr     
     double*             BinProdChargeSum_ptr    
+    double*             BinProdChargeSumSource_ptr    
+    double*             BinProdChargeSumTarget_ptr    
     inter_law_fun_type  inter_law   
     void*               inter_law_param_ptr
 
@@ -349,10 +351,15 @@ cdef class NBodySyst():
     def segmcharge(self):
         return np.asarray(self._segmcharge)
 
-    cdef double[::1] _BinProdChargeSum_ODE
+    cdef double[::1] _BinProdChargeSumSource_ODE
     @property
-    def BinProdChargeSum_ODE(self):
-        return np.asarray(self._BinProdChargeSum_ODE)
+    def BinProdChargeSumSource_ODE(self):
+        return np.asarray(self._BinProdChargeSumSource_ODE)
+
+    cdef double[::1] _BinProdChargeSumTarget_ODE
+    @property
+    def BinProdChargeSumTarget_ODE(self):
+        return np.asarray(self._BinProdChargeSumTarget_ODE)
 
     cdef double[::1] _loopcharge
     @property
@@ -918,7 +925,7 @@ cdef class NBodySyst():
 
         self.nbin_segm_tot, self.nbin_segm_unique = CountSegmentBinaryInteractions(BinarySegm, self.nsegm)
 
-        self._BinSourceSegm, self._BinTargetSegm, BinTimeRev, self._BinSpaceRot, self._BinProdChargeSum, self._BinProdChargeSum_ODE = ReorganizeBinarySegments(BinarySegm)
+        self._BinSourceSegm, self._BinTargetSegm, BinTimeRev, self._BinSpaceRot, self._BinProdChargeSum, self._BinProdChargeSumSource_ODE, self._BinProdChargeSumTarget_ODE = ReorganizeBinarySegments(BinarySegm)
 
         # Not actually sure this is always true.
         if not (BinTimeRev == 1).all():
@@ -1197,9 +1204,8 @@ cdef class NBodySyst():
         self._ODE_params.BinTargetSegm_ptr          = &self._BinTargetSegm[0]
         self._ODE_params.BinSpaceRot_ptr            = &self._BinSpaceRot[0,0,0]
         self._ODE_params.BinSpaceRotIsId_ptr        = &self._BinSpaceRotIsId[0]
-
-        # self._ODE_params.BinProdChargeSum_ptr       = &self._BinProdChargeSum[0]
-        self._ODE_params.BinProdChargeSum_ptr       = &self._BinProdChargeSum_ODE[0]
+        self._ODE_params.BinProdChargeSumSource_ptr = &self._BinProdChargeSumSource_ODE[0]
+        self._ODE_params.BinProdChargeSumTarget_ptr = &self._BinProdChargeSumTarget_ODE[0]
 
         self._ODE_params.inter_law                  =  self._inter_law
         self._ODE_params.inter_law_param_ptr        =  self._inter_law_param_ptr
@@ -2550,7 +2556,8 @@ cdef class NBodySyst():
                 params_buf_out = np.empty((self.nparams_incl_o), dtype=np.float64)
 
                 for il in range(self.nloop):
-                    params_pos_buf[il] = &params_buf_out[2*self._params_shifts[il]]
+                    if (2*self._params_shifts[il] < self.nparams_incl_o):
+                        params_pos_buf[il] = &params_buf_out[2*self._params_shifts[il]]
             
                 changevar_mom_pos_invT(
                     &params_buf_in[0]       , self._params_shapes   , self._params_shifts   ,
@@ -2567,7 +2574,8 @@ cdef class NBodySyst():
                 params_buf_out = np.empty((self.nparams), dtype=np.float64)
 
                 for il in range(self.nloop):
-                    params_pos_buf[il] = &params_buf_in[2*self._params_shifts[il]]
+                    if (2*self._params_shifts[il] < self.nparams_incl_o):
+                        params_pos_buf[il] = &params_buf_in[2*self._params_shifts[il]]
 
                 changevar_mom_pos_inv(
                     params_pos_buf          , self._params_shapes   , self._params_shifts   ,
@@ -2586,7 +2594,8 @@ cdef class NBodySyst():
                 params_buf_out = np.empty((self.nparams), dtype=np.float64)
 
                 for il in range(self.nloop):
-                    params_pos_buf[il] = &params_buf_in[2*self._params_shifts[il]]
+                    if (2*self._params_shifts[il] < self.nparams_incl_o):
+                        params_pos_buf[il] = &params_buf_in[2*self._params_shifts[il]]
 
                 changevar_mom_pos_T(
                     params_pos_buf          , self._params_shapes   , self._params_shifts   ,
@@ -2603,7 +2612,8 @@ cdef class NBodySyst():
                 params_buf_out = np.empty((self.nparams_incl_o), dtype=np.float64)
 
                 for il in range(self.nloop):
-                    params_pos_buf[il] = &params_buf_out[2*self._params_shifts[il]]
+                    if (2*self._params_shifts[il] < self.nparams_incl_o):
+                        params_pos_buf[il] = &params_buf_out[2*self._params_shifts[il]]
 
                 changevar_mom_pos(
                     &params_buf_in[0]       , self._params_shapes   , self._params_shifts   ,
@@ -3358,7 +3368,8 @@ cdef class NBodySyst():
         cdef double** params_pos_buf = <double**> malloc(sizeof(double*)*self.nloop)
 
         for il in range(self.nloop):
-            params_pos_buf[il] = &params_pos_buf_np[2*self._params_shifts[il]]
+            if (2*self._params_shifts[il] < self.nparams_incl_o):
+                params_pos_buf[il] = &params_pos_buf_np[2*self._params_shifts[il]]
     
         if transpose:
             changevar_mom_pos_invT(
@@ -3450,7 +3461,8 @@ cdef class NBodySyst():
         
         cdef double** params_pos_buf = <double**> malloc(sizeof(double*)*self.nloop)
         for il in range(self.nloop):
-            params_pos_buf[il] = &params_pos_buf_np[2*self._params_shifts[il]]
+            if (2*self._params_shifts[il] < self.nparams_incl_o):
+                params_pos_buf[il] = &params_pos_buf_np[2*self._params_shifts[il]]
 
         for il in range(self.nloop):
 
@@ -3881,7 +3893,6 @@ cdef class NBodySyst():
         cdef Py_ssize_t isegm
 
         for isegm in range(self.nsegm):
-            # mass = self._loopmass[self._bodyloop[self._intersegm_to_body[isegm]]]
             mass = self._segmmass[isegm]
             scipy.linalg.cython_blas.dscal(&n,&mass,&segmvel[isegm,0,0],&int_one)
 
@@ -4494,13 +4505,13 @@ cdef class NBodySyst():
         cdef np.ndarray[double, ndim=1, mode='c'] res = np.empty((self.nsegm * self.geodim), dtype=np.float64)
 
         Compute_forces_vectorized(
-            &pos_flat[0]                    , &res[0]                   ,
-            self.nbin_segm_unique           , self.geodim               ,   
-            self.nsegm                      , 1                         ,           
-            &self._BinSourceSegm[0]         , &self._BinTargetSegm[0]   ,
-            &self._BinSpaceRot[0,0,0]       , &self._BinSpaceRotIsId[0] ,
-            &self._BinProdChargeSum_ODE[0]  ,
-            self._inter_law                 , self._inter_law_param_ptr ,
+            &pos_flat[0]                            , &res[0]                               ,
+            self.nbin_segm_unique                   , self.geodim                           ,   
+            self.nsegm                              , 1                                     ,           
+            &self._BinSourceSegm[0]                 , &self._BinTargetSegm[0]               ,
+            &self._BinSpaceRot[0,0,0]               , &self._BinSpaceRotIsId[0]             ,
+            &self._BinProdChargeSumSource_ODE[0]    , &self._BinProdChargeSumTarget_ODE[0]  ,
+            self._inter_law                         , self._inter_law_param_ptr             ,
         )
 
         return res
@@ -4514,13 +4525,13 @@ cdef class NBodySyst():
         cdef np.ndarray[double, ndim=2, mode='c'] res = np.empty((self.nsegm * self.geodim, grad_ndof), dtype=np.float64)
 
         Compute_grad_forces_vectorized(
-            &pos_flat[0]                    , &dpos_flat[0,0]           , &res[0,0] ,
-            self.nbin_segm_unique           , self.geodim               ,   
-            self.nsegm                      , 1                         , grad_ndof ,
-            &self._BinSourceSegm[0]         , &self._BinTargetSegm[0]   ,
-            &self._BinSpaceRot[0,0,0]       , &self._BinSpaceRotIsId[0] ,
-            &self._BinProdChargeSum_ODE[0]  ,
-            self._inter_law                 , self._inter_law_param_ptr ,
+            &pos_flat[0]                            , &dpos_flat[0,0]                       , &res[0,0] ,
+            self.nbin_segm_unique                   , self.geodim                           ,   
+            self.nsegm                              , 1                                     , grad_ndof ,
+            &self._BinSourceSegm[0]                 , &self._BinTargetSegm[0]               ,
+            &self._BinSpaceRot[0,0,0]               , &self._BinSpaceRotIsId[0]             ,
+            &self._BinProdChargeSumSource_ODE[0]    , &self._BinProdChargeSumTarget_ODE[0]  ,
+            self._inter_law                         , self._inter_law_param_ptr             ,
         )
 
         return res
@@ -4570,13 +4581,13 @@ cdef class NBodySyst():
         cdef np.ndarray[double, ndim=2, mode='c'] res = np.empty((nvec, self.nsegm * self.geodim), dtype=np.float64)
 
         Compute_forces_vectorized(
-            &pos_flat[0,0]                  , &res[0,0]                 ,
-            self.nbin_segm_unique           , self.geodim               , 
-            self.nsegm                      , nvec                      ,       
-            &self._BinSourceSegm[0]         , &self._BinTargetSegm[0]   ,
-            &self._BinSpaceRot[0,0,0]       , &self._BinSpaceRotIsId[0] ,
-            &self._BinProdChargeSum_ODE[0]  ,
-            self._inter_law                 , self._inter_law_param_ptr ,
+            &pos_flat[0,0]                          , &res[0,0]                             ,
+            self.nbin_segm_unique                   , self.geodim                           , 
+            self.nsegm                              , nvec                                  ,       
+            &self._BinSourceSegm[0]                 , &self._BinTargetSegm[0]               ,
+            &self._BinSpaceRot[0,0,0]               , &self._BinSpaceRotIsId[0]             ,
+            &self._BinProdChargeSumSource_ODE[0]    , &self._BinProdChargeSumTarget_ODE[0]  ,
+            self._inter_law                         , self._inter_law_param_ptr             ,
         )
 
         return res
@@ -4591,13 +4602,13 @@ cdef class NBodySyst():
         cdef np.ndarray[double, ndim=3, mode='c'] res = np.empty((nvec, self.nsegm * self.geodim, grad_ndof), dtype=np.float64)
 
         Compute_grad_forces_vectorized(
-            &pos_flat[0,0]                  , &dpos_flat[0,0,0]         , &res[0,0,0]   ,
-            self.nbin_segm_unique           , self.geodim               , 
-            self.nsegm                      , nvec                      , grad_ndof     ,
-            &self._BinSourceSegm[0]         , &self._BinTargetSegm[0]   ,
-            &self._BinSpaceRot[0,0,0]       , &self._BinSpaceRotIsId[0] ,
-            &self._BinProdChargeSum_ODE[0]  ,
-            self._inter_law                 , self._inter_law_param_ptr ,
+            &pos_flat[0,0]                          , &dpos_flat[0,0,0]                     , &res[0,0,0]   ,
+            self.nbin_segm_unique                   , self.geodim                           , 
+            self.nsegm                              , nvec                                  , grad_ndof     ,
+            &self._BinSourceSegm[0]                 , &self._BinTargetSegm[0]               ,
+            &self._BinSpaceRot[0,0,0]               , &self._BinSpaceRotIsId[0]             ,
+            &self._BinProdChargeSumSource_ODE[0]    , &self._BinProdChargeSumTarget_ODE[0]  ,
+            self._inter_law                         , self._inter_law_param_ptr             ,
         )
 
         return res
@@ -7879,13 +7890,13 @@ cdef void segmpos_to_binary_path_stats(
     free(tmp_loc_dpos)
 
 cdef inline void Compute_forces_vectorized(
-    double* pos                     , double* forces            ,
-    Py_ssize_t nbin                 , Py_ssize_t geodim         ,
-    Py_ssize_t nsegm                , Py_ssize_t nvec           ,
-    Py_ssize_t* BinSourceSegm       , Py_ssize_t* BinTargetSegm ,
-    double* BinSpaceRot             , bint* BinSpaceRotIsId     ,
-    double* BinProdChargeSum        ,
-    inter_law_fun_type inter_law    , void* inter_law_param_ptr ,
+    double* pos                     , double* forces                    ,
+    Py_ssize_t nbin                 , Py_ssize_t geodim                 ,
+    Py_ssize_t nsegm                , Py_ssize_t nvec                   ,
+    Py_ssize_t* BinSourceSegm       , Py_ssize_t* BinTargetSegm         ,
+    double* BinSpaceRot             , bint* BinSpaceRotIsId             ,
+    double* BinProdChargeSumSource  , double* BinProdChargeSumTarget    ,
+    inter_law_fun_type inter_law    , void* inter_law_param_ptr         ,
 ) noexcept nogil:
 
     cdef Py_ssize_t ibin, idim, jdim, ivec
@@ -7951,51 +7962,58 @@ cdef inline void Compute_forces_vectorized(
 
             inter_law(dx2, pot, inter_law_param_ptr)
 
-            bin_fac = (-4)*BinProdChargeSum[ibin]
+            if BinProdChargeSumSource[ibin] != 0.:
 
-            pot[1] *= bin_fac
-
-            for idim in range(geodim):
-                df[idim] = pot[1]*dx[idim]
-
-            if BinSpaceRotIsId[ibin]:
-
-                cur_forces = vec_forces + isegm*geodim
-
+                bin_fac = pot[1]*(-4)*BinProdChargeSumSource[ibin]
+            
                 for idim in range(geodim):
-                    cur_forces[0] += df[idim]
-                    cur_forces += 1
-                    
-            else:
+                    df[idim] = bin_fac*dx[idim]
 
-                matel = BinSpaceRot + ibin*geodim_sq
-
-                for jdim in range(geodim):
+                if BinSpaceRotIsId[ibin]:
 
                     cur_forces = vec_forces + isegm*geodim
 
                     for idim in range(geodim):
-                        cur_forces[0] += matel[0] * df[jdim]
-                        matel += 1 
+                        cur_forces[0] += df[idim]
                         cur_forces += 1
+                        
+                else:
 
-            cur_forces = vec_forces + isegmp*geodim
+                    matel = BinSpaceRot + ibin*geodim_sq
 
-            for idim in range(geodim):
-                cur_forces[0] -= df[idim]
-                cur_forces += 1
+                    for jdim in range(geodim):
+
+                        cur_forces = vec_forces + isegm*geodim
+
+                        for idim in range(geodim):
+                            cur_forces[0] += matel[0] * df[jdim]
+                            matel += 1 
+                            cur_forces += 1
+
+            if BinProdChargeSumTarget[ibin] != 0.:
+
+                bin_fac = pot[1]*4*BinProdChargeSumTarget[ibin]
+
+                for idim in range(geodim):
+                    df[idim] = bin_fac*dx[idim]
+
+                cur_forces = vec_forces + isegmp*geodim
+
+                for idim in range(geodim):
+                    cur_forces[0] += df[idim]
+                    cur_forces += 1
                 
     free(dx)
     free(df)
 
 cdef inline void Compute_grad_forces_vectorized(
-    double* pos                     , double* dpos              , double* grad_forces   ,
-    Py_ssize_t nbin                 , Py_ssize_t geodim         ,
-    Py_ssize_t nsegm                , Py_ssize_t nvec           , Py_ssize_t grad_ndof  ,
-    Py_ssize_t* BinSourceSegm       , Py_ssize_t* BinTargetSegm ,
-    double* BinSpaceRot             , bint* BinSpaceRotIsId     ,
-    double* BinProdChargeSum        ,
-    inter_law_fun_type inter_law    , void* inter_law_param_ptr ,
+    double* pos                     , double* dpos                      , double* grad_forces   ,
+    Py_ssize_t nbin                 , Py_ssize_t geodim                 ,
+    Py_ssize_t nsegm                , Py_ssize_t nvec                   , Py_ssize_t grad_ndof  ,
+    Py_ssize_t* BinSourceSegm       , Py_ssize_t* BinTargetSegm         ,
+    double* BinSpaceRot             , bint* BinSpaceRotIsId             ,
+    double* BinProdChargeSumSource  , double* BinProdChargeSumTarget    ,
+    inter_law_fun_type inter_law    , void* inter_law_param_ptr         ,
 ) noexcept nogil:
 
     cdef Py_ssize_t ibin, idim, jdim, ivec
@@ -8081,10 +8099,8 @@ cdef inline void Compute_grad_forces_vectorized(
 
             inter_law(dx2, pot, inter_law_param_ptr)
 
-            bin_fac = (-4)*BinProdChargeSum[ibin]
-
-            a = pot[1]*bin_fac
-            pot[2] *= 2*bin_fac
+            a = pot[1]
+            pot[2] *= 2
 
             cur_dpos  = vec_dpos + isegm  * geodim * grad_ndof
             cur_dposp = vec_dpos + isegmp * geodim * grad_ndof
@@ -8120,15 +8136,22 @@ cdef inline void Compute_grad_forces_vectorized(
             grad_forces_loc  = vec_grad_forces + isegm  * geodim * grad_ndof
             grad_forces_locp = vec_grad_forces + isegmp * geodim * grad_ndof
 
-            if BinSpaceRotIsId[ibin]:
-                scipy.linalg.cython_blas.daxpy(&dsegm_size,&one_double, ddf, &int_one, grad_forces_loc, &int_one)
+            if BinProdChargeSumSource[ibin] != 0.:
 
-            else:
+                bin_fac = (-4)*BinProdChargeSumSource[ibin]
 
-                RotMat = BinSpaceRot + ibin * geodim_sq
-                scipy.linalg.cython_blas.dgemm(transn, transt, &grad_ndof_int, &geodim_int, &geodim_int, &one_double, ddf, &grad_ndof_int, RotMat, &geodim_int, &one_double, grad_forces_loc, &grad_ndof_int)
+                if BinSpaceRotIsId[ibin]:
+                    scipy.linalg.cython_blas.daxpy(&dsegm_size,&bin_fac, ddf, &int_one, grad_forces_loc, &int_one)
 
-            scipy.linalg.cython_blas.daxpy(&dsegm_size,&minusone_double, ddf, &int_one, grad_forces_locp, &int_one)
+                else:
+
+                    RotMat = BinSpaceRot + ibin * geodim_sq
+                    scipy.linalg.cython_blas.dgemm(transn, transt, &grad_ndof_int, &geodim_int, &geodim_int, &bin_fac, ddf, &grad_ndof_int, RotMat, &geodim_int, &one_double, grad_forces_loc, &grad_ndof_int)
+
+            if BinProdChargeSumTarget[ibin] != 0.:
+
+                bin_fac = 4*BinProdChargeSumTarget[ibin]
+                scipy.linalg.cython_blas.daxpy(&dsegm_size,&bin_fac, ddf, &int_one, grad_forces_locp, &int_one)
                     
     free(dx)
     free(ddx)
@@ -8142,13 +8165,13 @@ cdef void Compute_forces_user_data(
     cdef ODE_params_t ODE_params = ODE_params_ptr[0]
 
     Compute_forces_vectorized(
-        &pos[0]                         , &forces[0]                        ,
-        ODE_params.nbin                 , ODE_params.geodim                 , 
-        ODE_params.nsegm                , 1                                 ,
-        ODE_params.BinSourceSegm_ptr    , ODE_params.BinTargetSegm_ptr      ,
-        ODE_params.BinSpaceRot_ptr      , ODE_params.BinSpaceRotIsId_ptr    ,
-        ODE_params.BinProdChargeSum_ptr ,
-        ODE_params.inter_law            , ODE_params.inter_law_param_ptr    ,
+        &pos[0]                                 , &forces[0]                            ,
+        ODE_params.nbin                         , ODE_params.geodim                     , 
+        ODE_params.nsegm                        , 1                                     ,
+        ODE_params.BinSourceSegm_ptr            , ODE_params.BinTargetSegm_ptr          ,
+        ODE_params.BinSpaceRot_ptr              , ODE_params.BinSpaceRotIsId_ptr        ,
+        ODE_params.BinProdChargeSumSource_ptr   , ODE_params.BinProdChargeSumTarget_ptr ,
+        ODE_params.inter_law                    , ODE_params.inter_law_param_ptr        ,
     )
 
 cdef void Compute_grad_forces_user_data(
@@ -8160,13 +8183,13 @@ cdef void Compute_grad_forces_user_data(
     cdef ODE_params_t ODE_params = ODE_params_ptr[0]
 
     Compute_grad_forces_vectorized(
-        &pos[0]                         , &dpos[0,0]                        , &grad_forces[0,0] ,
-        ODE_params.nbin                 , ODE_params.geodim                 , 
-        ODE_params.nsegm                , 1                                 , grad_ndof         ,
-        ODE_params.BinSourceSegm_ptr    , ODE_params.BinTargetSegm_ptr      ,
-        ODE_params.BinSpaceRot_ptr      , ODE_params.BinSpaceRotIsId_ptr    ,
-        ODE_params.BinProdChargeSum_ptr ,
-        ODE_params.inter_law            , ODE_params.inter_law_param_ptr    ,
+        &pos[0]                                 , &dpos[0,0]                            , &grad_forces[0,0] ,
+        ODE_params.nbin                         , ODE_params.geodim                     , 
+        ODE_params.nsegm                        , 1                                     , grad_ndof         ,
+        ODE_params.BinSourceSegm_ptr            , ODE_params.BinTargetSegm_ptr          ,
+        ODE_params.BinSpaceRot_ptr              , ODE_params.BinSpaceRotIsId_ptr        ,
+        ODE_params.BinProdChargeSumSource_ptr   , ODE_params.BinProdChargeSumTarget_ptr ,
+        ODE_params.inter_law                    , ODE_params.inter_law_param_ptr        ,
     )
 
 cdef void Compute_forces_vectorized_user_data(
@@ -8178,13 +8201,13 @@ cdef void Compute_forces_vectorized_user_data(
     cdef ODE_params_t ODE_params = ODE_params_ptr[0]
 
     Compute_forces_vectorized(
-        &all_pos[0,0]                   , &all_forces[0,0]                  ,
-        ODE_params.nbin                 , ODE_params.geodim                 ,
-        ODE_params.nsegm                , nvec                              ,
-        ODE_params.BinSourceSegm_ptr    , ODE_params.BinTargetSegm_ptr      ,
-        ODE_params.BinSpaceRot_ptr      , ODE_params.BinSpaceRotIsId_ptr    ,
-        ODE_params.BinProdChargeSum_ptr ,
-        ODE_params.inter_law            , ODE_params.inter_law_param_ptr    ,
+        &all_pos[0,0]                           , &all_forces[0,0]                      ,
+        ODE_params.nbin                         , ODE_params.geodim                     ,
+        ODE_params.nsegm                        , nvec                                  ,
+        ODE_params.BinSourceSegm_ptr            , ODE_params.BinTargetSegm_ptr          ,
+        ODE_params.BinSpaceRot_ptr              , ODE_params.BinSpaceRotIsId_ptr        ,
+        ODE_params.BinProdChargeSumSource_ptr   , ODE_params.BinProdChargeSumTarget_ptr ,
+        ODE_params.inter_law                    , ODE_params.inter_law_param_ptr        ,
     )
 
 cdef void Compute_grad_forces_vectorized_user_data(
@@ -8197,13 +8220,13 @@ cdef void Compute_grad_forces_vectorized_user_data(
     cdef ODE_params_t ODE_params = ODE_params_ptr[0]
 
     Compute_grad_forces_vectorized(
-        &all_pos[0,0]                   , &all_dpos[0,0,0]                  , &all_grad_forces[0,0,0]   ,
-        ODE_params.nbin                 , ODE_params.geodim                 ,
-        ODE_params.nsegm                , nvec                              , grad_ndof                 ,
-        ODE_params.BinSourceSegm_ptr    , ODE_params.BinTargetSegm_ptr      ,
-        ODE_params.BinSpaceRot_ptr      , ODE_params.BinSpaceRotIsId_ptr    ,
-        ODE_params.BinProdChargeSum_ptr ,
-        ODE_params.inter_law            , ODE_params.inter_law_param_ptr    ,
+        &all_pos[0,0]                           , &all_dpos[0,0,0]                      , &all_grad_forces[0,0,0]   ,
+        ODE_params.nbin                         , ODE_params.geodim                     ,
+        ODE_params.nsegm                        , nvec                                  , grad_ndof                 ,
+        ODE_params.BinSourceSegm_ptr            , ODE_params.BinTargetSegm_ptr          ,
+        ODE_params.BinSpaceRot_ptr              , ODE_params.BinSpaceRotIsId_ptr        ,
+        ODE_params.BinProdChargeSumSource_ptr   , ODE_params.BinProdChargeSumTarget_ptr ,
+        ODE_params.inter_law                    , ODE_params.inter_law_param_ptr        ,
     )
 
 cdef inline void Compute_forces_vectorized_nosym(

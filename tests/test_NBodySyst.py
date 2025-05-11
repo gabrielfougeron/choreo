@@ -995,14 +995,6 @@ def test_RK_vs_spectral_reset(NBS, params_buf, vector_calls, LowLevel, NoSymIfPo
     print(np.linalg.norm(segmmom - segmmom_ODE))
     assert np.allclose(segmmom, segmmom_ODE, rtol = tol, atol = tol)        
     
-    
-    for (isegm, isegmp, chargesum, chargesum_ode) in zip(NBS.BinSourceSegm, NBS.BinTargetSegm, NBS.BinProdChargeSum,NBS.BinProdChargeSum_ODE,strict=True):
-        
-        print(f'isegm = {isegm} isegmp = {isegmp} chargesum = {chargesum} chargesum_ode = {chargesum_ode}')
-    
-
-    # assert False
-    
 @ParametrizeDocstrings
 @pytest.mark.parametrize("NBS", [pytest.param(NBS, id=name) for name, NBS in NBS_dict.items()])
 def test_segmpos_param(float64_tols_strict, NBS):

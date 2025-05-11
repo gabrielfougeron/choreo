@@ -913,7 +913,8 @@ def FindAllBinarySegments(intersegm_to_all, nbody, nsegm, nint_min, intersegm_to
 
     for isegm in range(nsegm):
         for isegmp in range(isegm,nsegm):
-            BinarySegm[(isegm, isegmp)]["ProdChargeSum_ODE"] = [0]*len(BinarySegm[(isegm, isegmp)]["SymList"])
+            BinarySegm[(isegm, isegmp)]["ProdChargeSumSource_ODE"] = [0]*len(BinarySegm[(isegm, isegmp)]["SymList"])
+            BinarySegm[(isegm, isegmp)]["ProdChargeSumTarget_ODE"] = [0]*len(BinarySegm[(isegm, isegmp)]["SymList"])
 
     iint = 0
     
@@ -922,11 +923,8 @@ def FindAllBinarySegments(intersegm_to_all, nbody, nsegm, nint_min, intersegm_to
         
         for ibp in range(nbody):
             
-            if ib == ibp:
-                fac = 1.
-            else:
-                fac = 0.5
-                
+            if ib != ibp:
+
                 isegmp = bodysegm[ibp, iint]
 
                 if (isegm <= isegmp):
@@ -950,7 +948,17 @@ def FindAllBinarySegments(intersegm_to_all, nbody, nsegm, nint_min, intersegm_to
                         AlreadyFound = AlreadyFound or SymInv.IsSameRotAndTimeRev(FoundSym)
 
                     if AlreadyFound:
-                        BinarySegm[bisegm]["ProdChargeSum_ODE"][isym] += fac * bodycharge[ib]*bodycharge[ibp]
+
+                        if (isegm < isegmp):
+                            BinarySegm[bisegm]["ProdChargeSumSource_ODE"][isym] += bodycharge[ib]*bodycharge[ibp]
+
+                        if (isegmp < isegm):
+                            BinarySegm[bisegm]["ProdChargeSumTarget_ODE"][isym] += bodycharge[ib]*bodycharge[ibp]
+                             
+                        if (isegm == isegmp):
+                            BinarySegm[bisegm]["ProdChargeSumSource_ODE"][isym] += bodycharge[ib]*bodycharge[ibp] / 2
+                            BinarySegm[bisegm]["ProdChargeSumTarget_ODE"][isym] += bodycharge[ib]*bodycharge[ibp] / 2
+                                             
                         break
 
                 else:
@@ -965,30 +973,34 @@ def ReorganizeBinarySegments(BinarySegm):
     BinTimeRev = []
     BinSpaceRot = []
     BinProdChargeSum = []
-    BinProdChargeSum_ODE = []
+    BinProdChargeSumSource_ODE = []
+    BinProdChargeSumTarget_ODE = []
     
     for (isegm, isegmp), bin_data in BinarySegm.items():
         
-        for(Sym, prodchargesum, prodchargesum_ode) in zip(bin_data["SymList"], bin_data["ProdChargeSum"], bin_data["ProdChargeSum_ODE"], strict=True):
+        for(Sym, prodchargesum, prodchargesumsource_ode, prodchargesumtarget_ode) in zip(bin_data["SymList"], bin_data["ProdChargeSum"], bin_data["ProdChargeSumSource_ODE"], bin_data["ProdChargeSumTarget_ODE"], strict=True):
 
             assert prodchargesum != 0.
-            assert prodchargesum_ode != 0.
+            # assert prodchargesumsource_ode != 0.
+            # assert prodchargesumtarget_ode != 0.
 
             BinSourceSegm.append(isegm)
             BinTargetSegm.append(isegmp)
             BinTimeRev.append(Sym.TimeRev)
             BinSpaceRot.append(Sym.SpaceRot)
             BinProdChargeSum.append(prodchargesum)
-            BinProdChargeSum_ODE.append(prodchargesum_ode)
+            BinProdChargeSumSource_ODE.append(prodchargesumsource_ode)
+            BinProdChargeSumTarget_ODE.append(prodchargesumtarget_ode)
 
     BinSourceSegm = np.array(BinSourceSegm, dtype=np.intp)
     BinTargetSegm = np.array(BinTargetSegm, dtype=np.intp)
     BinTimeRev = np.array(BinTimeRev, dtype=np.intp)
     BinSpaceRot = np.array(BinSpaceRot, dtype=np.float64)
     BinProdChargeSum = np.array(BinProdChargeSum, dtype=np.float64)
-    BinProdChargeSum_ODE = np.array(BinProdChargeSum_ODE, dtype=np.float64)
+    BinProdChargeSumSource_ODE = np.array(BinProdChargeSumSource_ODE, dtype=np.float64)
+    BinProdChargeSumTarget_ODE = np.array(BinProdChargeSumTarget_ODE, dtype=np.float64)
         
-    return BinSourceSegm, BinTargetSegm, BinTimeRev, BinSpaceRot, BinProdChargeSum, BinProdChargeSum_ODE
+    return BinSourceSegm, BinTargetSegm, BinTimeRev, BinSpaceRot, BinProdChargeSum, BinProdChargeSumSource_ODE, BinProdChargeSumTarget_ODE
 
 def plot_given_2D(all_pos, filename, fig_size=(10,10), dpi=100, color=None, color_list=None, xlim=None, extend=0.03, CloseLoop=True):
 
