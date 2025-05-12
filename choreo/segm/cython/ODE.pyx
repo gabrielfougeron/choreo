@@ -1990,8 +1990,8 @@ cpdef ImplicitSymplecticIVP(
         grad_v_keep_np = np.empty((nint_keep, ndof, grad_ndof), dtype=np.float64)
 
         if keep_init:
-            grad_x_keep_np[0,:] = grad_x[:]  
-            grad_v_keep_np[0,:] = grad_v[:]  
+            grad_x_keep_np[0,:,:] = grad_x[:,:]  
+            grad_v_keep_np[0,:,:] = grad_v[:,:]  
 
         grad_x_keep = <double[:(nint_keep-keep_start),:ndof,:grad_ndof:1]> &grad_x_keep_np[keep_start,0,0]
         grad_v_keep = <double[:(nint_keep-keep_start),:ndof,:grad_ndof:1]> &grad_v_keep_np[keep_start,0,0]
