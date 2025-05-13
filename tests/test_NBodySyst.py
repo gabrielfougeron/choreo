@@ -35,6 +35,8 @@
     test_ODE_grad_vs_FD_Explicit
     test_remove_all_syms_nrg
     test_remove_all_syms_ODE
+    test_ODE_grad_period_noopt
+    test_ODE_grad_period_opt
 
 """
 
@@ -205,7 +207,7 @@ Tests:
 * That ``all_coeffs`` => ``all_pos`` => ``all_coeffs`` is the identity.
 * That ``params_buf`` => ``all_coeffs`` => ``params_buf`` is the identity.
 * That ``params_buf`` => shifted ``all_coeffs`` => ``params_buf`` is the identity.
-* That ``all_coeffs`` => shifted ``params_buf`` => ``all_coeffs`` is the identity in cases where it makes sense (i.e. no invariance wrt space orientation reversing  transformations).
+* That ``all_coeffs`` => shifted ``params_buf`` => ``all_coeffs`` is the identity in cases where it makes sense (i.e. no invariance wrt space orientation reversing transformations).
 
     """
 
@@ -1287,7 +1289,7 @@ def test_ODE_grad_vs_FD_Explicit(float64_tols_loose, NBS, params_buf, LowLevel, 
 @pytest.mark.parametrize("vector_calls", [True, False])
 @pytest.mark.parametrize("LowLevel", [True, False])
 @pytest.mark.parametrize(("NBS", "params_buf"), [pytest.param(NBS, params_buf, id=name) for name, (NBS, params_buf) in Sols_dict.items()])
-def test_ODE_grad_period(float64_tols_loose, NBS, params_buf, vector_calls, LowLevel, NoSymIfPossible):
+def test_ODE_grad_period_noopt(float64_tols, NBS, params_buf, vector_calls, LowLevel, NoSymIfPossible):
     """ Tests the integration of the tangent system on a minimum interval
     """
         
@@ -1311,13 +1313,12 @@ def test_ODE_grad_period(float64_tols_loose, NBS, params_buf, vector_calls, LowL
         
     segmpos_ODE, segmmom_ODE, segmpos_grad_ODE, segmmom_grad_ODE = choreo.segm.ODE.ImplicitSymplecticIVP(
         nint = nint_ODE         ,
-        keep_init = True        ,
         rk_x = rk, rk_v = rk    ,
         reg_init_freq = 1       ,
         **ODE_Syst              ,
     )
 
-    MonodromyMat_propagated = NBS.PropagateMonodromy(segmpos_grad_ODE, segmmom_grad_ODE)
+    MonodromyMat_propagated = NBS.PropagateMonodromy_noopt(segmpos_grad_ODE, segmmom_grad_ODE, OnlyFinal = False)
     
     keep_freq = (NBS.segm_store-1)
     nint_ODE *= NBS.nint_min
@@ -1325,23 +1326,53 @@ def test_ODE_grad_period(float64_tols_loose, NBS, params_buf, vector_calls, LowL
     
     segmpos_ODE_full, segmmom_ODE_full, segmpos_grad_ODE_full, segmmom_grad_ODE_full = choreo.segm.ODE.ImplicitSymplecticIVP(
         nint = nint_ODE         ,
-        keep_init = True        ,
         keep_freq = keep_freq   ,
         rk_x = rk, rk_v = rk    ,
         reg_init_freq = 1       ,
         **ODE_Syst              ,
     )
     
-    MonodromyMat_direct = np.ascontiguousarray(np.concatenate((segmpos_grad_ODE_full,segmmom_grad_ODE_full),axis=1)).reshape(NBS.nint_min+1, 2, NBS.nsegm, NBS.geodim, 2, NBS.nsegm, NBS.geodim)
+    MonodromyMat_direct = np.ascontiguousarray(np.concatenate((segmpos_grad_ODE_full,segmmom_grad_ODE_full),axis=1)).reshape(NBS.nint_min, 2, NBS.nsegm, NBS.geodim, 2, NBS.nsegm, NBS.geodim)
     
-    n = 2 * NBS.nsegm * NBS.geodim
-    
-    for i in range(NBS.nint_min+1):
+    for i in range(NBS.nint_min):
         print(i, np.linalg.norm(MonodromyMat_propagated[i,...] - MonodromyMat_direct[i,...]))
+        assert np.allclose(MonodromyMat_propagated[i,...], MonodromyMat_direct[i,...], rtol = float64_tols.rtol, atol = float64_tols.atol)
 
-    print(np.linalg.norm(MonodromyMat_propagated - MonodromyMat_direct))
-    assert np.allclose(MonodromyMat_propagated, MonodromyMat_direct, rtol = float64_tols_loose.rtol, atol = float64_tols_loose.atol)
+
+@pytest.mark.slow(required_time = 10)
+@ParametrizeDocstrings
+@pytest.mark.parametrize("NoSymIfPossible", [True, False])
+@pytest.mark.parametrize("vector_calls", [True, False])
+@pytest.mark.parametrize("LowLevel", [True, False])
+@pytest.mark.parametrize(("NBS", "params_buf"), [pytest.param(NBS, params_buf, id=name) for name, (NBS, params_buf) in Sols_dict.items()])
+def test_ODE_grad_period_opt(float64_tols, NBS, params_buf, vector_calls, LowLevel, NoSymIfPossible):
+    """ Tests the integration of the tangent system on a minimum interval
+    """
+        
+    NBS.ForceGreaterNStore = True
+
+    ODE_Syst = NBS.Get_ODE_def(params_buf, vector_calls = vector_calls, LowLevel = LowLevel, NoSymIfPossible = NoSymIfPossible, grad=True, regular_init = True)
     
+    reg_init_freq = 1
+    nint_ODE = (NBS.segm_store-1)*reg_init_freq
+
+    nsteps = 10
+    method = "Gauss"    
+    rk = choreo.segm.multiprec_tables.ComputeImplicitRKTable(nsteps, method=method)
+  
+    segmpos_ODE, segmmom_ODE, segmpos_grad_ODE, segmmom_grad_ODE = choreo.segm.ODE.ImplicitSymplecticIVP(
+        nint = nint_ODE                 ,
+        rk_x = rk, rk_v = rk            ,
+        reg_init_freq = reg_init_freq   ,
+        **ODE_Syst                      ,
+    )
+
+    MonodromyMat_noopt = NBS.PropagateMonodromy_noopt(segmpos_grad_ODE, segmmom_grad_ODE)
+    MonodromyMat_opt = NBS.PropagateMonodromy(segmpos_grad_ODE, segmmom_grad_ODE)
+
+    print(np.linalg.norm(MonodromyMat_noopt - MonodromyMat_opt))
+    assert np.allclose(MonodromyMat_noopt, MonodromyMat_opt, rtol = float64_tols.rtol, atol = float64_tols.atol)
+
 @pytest.mark.skip("Test not ready")
 @pytest.mark.slow(required_time = 10)
 @ParametrizeDocstrings

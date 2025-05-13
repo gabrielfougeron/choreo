@@ -421,6 +421,11 @@ cdef class NBodySyst():
     def n_sub_fft(self):
         return np.asarray(self._n_sub_fft)
 
+    cdef Py_ssize_t[::1] _iint_TimeRev
+    @property
+    def iint_TimeRev(self):
+        return np.asarray(self._iint_TimeRev)
+
     cdef Py_ssize_t[::1] _BinSourceSegm
     @property
     def BinSourceSegm(self):
@@ -909,6 +914,11 @@ cdef class NBodySyst():
         self.BuildSegmGraph()
         self.ChooseInterSegm()
         self.intersegm_to_all = AccumulateSegmSourceToTargetSym(self.SegmGraph, nbody, geodim, self.nint_min, self.nsegm, self._intersegm_to_iint, self._intersegm_to_body)
+
+
+
+
+
     
         self.ChooseLoopGen()
         self.gensegm_to_all = AccumulateSegmSourceToTargetSym(self.SegmGraph, nbody, geodim, self.nint_min, self.nsegm, self._gensegm_to_iint, self._gensegm_to_body)
@@ -994,15 +1004,7 @@ cdef class NBodySyst():
 
         self.Compute_n_sub_fft()
 
-        # For ODE  IVP integration.
-        self._segmmass = np.empty((self.nsegm), dtype=np.float64)
-        self._invsegmmass = np.empty((self.nsegm), dtype=np.float64)
-        self._segmcharge = np.empty((self.nsegm), dtype=np.float64)
-        for isegm in range(self.nsegm):
-            self._segmmass[isegm] = self._loopmass[self._bodyloop[self._intersegm_to_body[isegm]]]
-            self._invsegmmass[isegm] = 1. / (self._loopmass[self._bodyloop[self._intersegm_to_body[isegm]]])
-            self._segmcharge[isegm] = self._loopcharge[self._bodyloop[self._intersegm_to_body[isegm]]]
-
+        self.SetODEArrays()
         self.Update_ODE_params()
 
         if MKL_FFT_AVAILABLE:
@@ -1017,11 +1019,6 @@ cdef class NBodySyst():
         self.GreaterNStore = self.RequiresGreaterNStore or ForceGreaterNStore
         self.nint_fac = 1
         self.ForceGeneralSym = ForceGeneralSym
-
-        # TODO : Transfer this to tests
-        for iint in range(self.nint_min):
-            for ib in range(self.nbody):
-                assert self.intersegm_to_all[ib][iint].TimeRev == self.intersegm_to_all[0][iint].TimeRev
 
     def __dealloc__(self):
         self.free_owned_memory()
@@ -1909,6 +1906,28 @@ cdef class NBodySyst():
         self._inter_law(1., pot, self._inter_law_param_ptr)
 
         return IsHomo, alpha_avg, pot[0]
+    
+    @cython.final
+    def SetODEArrays(self):
+
+        cdef Py_ssize_t isegm, iint, ib
+
+        self._segmmass = np.empty((self.nsegm), dtype=np.float64)
+        self._invsegmmass = np.empty((self.nsegm), dtype=np.float64)
+        self._segmcharge = np.empty((self.nsegm), dtype=np.float64)
+        for isegm in range(self.nsegm):
+            self._segmmass[isegm] = self._loopmass[self._bodyloop[self._intersegm_to_body[isegm]]]
+            self._invsegmmass[isegm] = 1. / (self._loopmass[self._bodyloop[self._intersegm_to_body[isegm]]])
+            self._segmcharge[isegm] = self._loopcharge[self._bodyloop[self._intersegm_to_body[isegm]]]
+
+        self._iint_TimeRev = np.empty((self.nint_min), dtype=np.intp)
+        for iint in range(self.nint_min):
+            # Is this always true ?
+            for ib in range(self.nbody):
+                assert self.intersegm_to_all[ib][iint].TimeRev == self.intersegm_to_all[0][iint].TimeRev
+
+            self._iint_TimeRev[iint] = self.intersegm_to_all[0][iint].TimeRev
+
 
     # Should really be a class method
     @cython.final
@@ -3678,7 +3697,7 @@ cdef class NBodySyst():
         cdef Py_ssize_t segmbeg, iend
         cdef ActionSym Sym
 
-        cdef np.ndarray[double, ndim=3, mode='c'] all_pos = np.empty((self.nloop, self._nint, self.segm_store, self.geodim), dtype=np.float64)
+        cdef np.ndarray[double, ndim=3, mode='c'] all_pos = np.empty((self.nloop, self._nint, self.geodim), dtype=np.float64)
 
         for il in range(self.nloop):
 
@@ -4838,10 +4857,10 @@ cdef class NBodySyst():
 
         return dict_res
 
-
     @cython.final
     @cython.cdivision(True)
-    def PropagateMonodromy(self, double[:,:,::1] segmpos_grad_ODE, double[:,:,::1] segmmom_grad_ODE):
+    def PropagateMonodromy_noopt(self, double[:,:,::1] segmpos_grad_ODE, double[:,:,::1] segmmom_grad_ODE, bint OnlyFinal = True):
+        # Expects segmpos_grad_ODE and segmmom_grad_ODE generated with keep_init = False, and t_span = (0., 1./nint_min). Only final values.
 
         cdef Py_ssize_t iint
         cdef Py_ssize_t i, j, k
@@ -4851,152 +4870,191 @@ cdef class NBodySyst():
         cdef Py_ssize_t ksegm_source, ksegm_target
         cdef Py_ssize_t n = self.nsegm * self.geodim
 
-        cdef idim, jdim, kdim
+        cdef Py_ssize_t idim, jdim, kdim
 
-        cdef ActionSym Sym
-        cdef ActionSym Sym_i, Sym_j, Sym_k
+        cdef ActionSym Sym_target_i, Sym_target_k
 
         cdef int nelem
 
-        assert segmpos_grad_ODE.shape[0] == 2
+        assert segmpos_grad_ODE.shape[0] == 1
         assert segmpos_grad_ODE.shape[1] == n
         assert segmpos_grad_ODE.shape[2] == 2*n
 
-        assert segmmom_grad_ODE.shape[0] == 2
+        assert segmmom_grad_ODE.shape[0] == 1
         assert segmmom_grad_ODE.shape[1] == n
         assert segmmom_grad_ODE.shape[2] == 2*n
 
-        cdef np.ndarray[double, ndim=7, mode='c'] MonodromyMat_np = np.zeros((self.nint_min+1, 2, self.nsegm, self.geodim, 2, self.nsegm, self.geodim), dtype=np.float64)        
+        cdef np.ndarray[double, ndim=7, mode='c'] MonodromyMat_np = np.zeros((self.nint_min, 2, self.nsegm, self.geodim, 2, self.nsegm, self.geodim), dtype=np.float64)        
         cdef double[:,:,:,:,:,:,::1] MonodromyMat = MonodromyMat_np
         
         nelem = 2*n*n
-        for i in range(2):
-            scipy.linalg.cython_blas.dcopy(&nelem,&segmpos_grad_ODE[i,0,0],&int_one,&MonodromyMat[i,0,0,0,0,0,0],&int_one)
-            scipy.linalg.cython_blas.dcopy(&nelem,&segmmom_grad_ODE[i,0,0],&int_one,&MonodromyMat[i,1,0,0,0,0,0],&int_one)    
+        scipy.linalg.cython_blas.dcopy(&nelem,&segmpos_grad_ODE[0,0,0],&int_one,&MonodromyMat[0,0,0,0,0,0,0],&int_one)
+        scipy.linalg.cython_blas.dcopy(&nelem,&segmmom_grad_ODE[0,0,0],&int_one,&MonodromyMat[0,1,0,0,0,0,0],&int_one)    
 
+        cdef double[:,:,:,:,:,::1] MonodromyMat_in = MonodromyMat_np[0,:,:,:,:,:,:]
+        cdef double[:,::1] MM
 
-        MonodromyMat_in = MonodromyMat_np[1,:,:,:,:,:,:].reshape(2*n,2*n).copy()
-
-        w = np.zeros((2*n,2*n),dtype=np.float64)
-        w[0:n,n:2*n] = np.identity(n)
-        w[n:2*n,0:n] = -np.identity(n)
-
-        MonodromyMat_in_inv = - w @ MonodromyMat_in.T @ w
-
-        # print()
-        # print("a", np.linalg.norm(np.identity(2*n) - MonodromyMat_in @ MonodromyMat_in_inv))
-        # print()
-
-        MonodromyMat_in = MonodromyMat_in.reshape(2, self.nsegm, self.geodim, 2, self.nsegm, self.geodim)
-        MonodromyMat_in_inv = MonodromyMat_in_inv.reshape(2, self.nsegm, self.geodim, 2, self.nsegm, self.geodim)
-
-
-
-
-        for iint in range(1,self.nint_min):
-        # for iint in range(1,2):
+        for iint in range(1, self.nint_min):
 
             for isegm_target in range(self.nsegm):
 
                 ib = self._intersegm_to_body[isegm_target]
                 isegm_source = self._bodysegm[ib, iint]
 
-                for jsegm_target in range(self.nsegm):
+                Sym_target_i = self.intersegm_to_all[ib][iint]
+                R_target_i = Sym_target_i.SpaceRot
 
-                    jb = self._intersegm_to_body[jsegm_target]
-                    jsegm_source = self._bodysegm[jb, iint]
+                for ksegm_target in range(self.nsegm):
 
-                    for ksegm_target in range(self.nsegm):
+                    kb = self._intersegm_to_body[ksegm_target]
+                    ksegm_source = self._bodysegm[kb, iint]
 
-                        kb = self._intersegm_to_body[ksegm_target]
-                        ksegm_source = self._bodysegm[kb, iint]
+                    Sym_target_k = self.intersegm_to_all[kb][iint]
+                    R_target_k = Sym_target_k.SpaceRot
 
+                    for jsegm_target in range(self.nsegm):
+
+                        jb = self._intersegm_to_body[jsegm_target]
+                        jsegm_source = self._bodysegm[jb, iint]
 
                         for i in range(2):
                             for j in range(2):
                                 for k in range(2):
 
-                                    # Sym_i = self.intersegm_to_all[ib][jint]
-
-
-                                    # Validated in the case SymRot = Id and TimeRev = 1
-                                    # for idim in range(self.geodim):
-                                    #     for jdim in range(self.geodim):
-                                    #         for kdim in range(self.geodim):
-
-                                                # MonodromyMat[iint+1,i,isegm_target,idim,j,jsegm_target,jdim] += MonodromyMat[1,i,isegm_source,idim,k,ksegm_source,kdim] * MonodromyMat[iint,k,ksegm_target ,kdim,j,jsegm_target,jdim]
-
-
-                                    # Validated in the case SymRot = Id and TimeRev = 1
-#                                     MM = np.matmul(MonodromyMat[1,i,isegm_source,:,k,ksegm_source,:], MonodromyMat[iint,k,ksegm_target ,:,j,jsegm_target,:])
-# 
-#                                     for idim in range(self.geodim):
-#                                         for jdim in range(self.geodim):
-# 
-#                                             MonodromyMat[iint+1,i,isegm_target,idim,j,jsegm_target,jdim] += MM[idim,jdim]
-
-
-
-                                    # Validated in the case TimeRev = 1
-#                                     MM_source = np.asarray(MonodromyMat[1,i,isegm_source,:,k,ksegm_source,:])
-#                                     MM_target = np.asarray(MonodromyMat[iint,k,ksegm_target ,:,j,jsegm_target,:])
-# 
-#                                     Sym_target_i = self.intersegm_to_all[ib][iint]
-#                                     Sym_target_k = self.intersegm_to_all[kb][iint]
-# 
-#                                     R_target_i = Sym_target_i.SpaceRot
-#                                     R_target_k = Sym_target_k.SpaceRot
-# 
-#                                     MM =   R_target_i @ MM_source  @ R_target_k.T @   MM_target 
-# 
-#                                     for idim in range(self.geodim):
-#                                         for jdim in range(self.geodim):
-# 
-#                                             MonodromyMat[iint+1,i,isegm_target,idim,j,jsegm_target,jdim] += MM[idim,jdim]
-
-
-
-
-
-                                    if self.intersegm_to_all[ib][iint].TimeRev == 1:
+                                    if self._iint_TimeRev[iint] > 0:
                                         MM_source = np.asarray(MonodromyMat_in[i,isegm_source,:,k,ksegm_source,:])
+
                                     else:
-                                        MM_source = np.asarray(MonodromyMat_in_inv[i,isegm_source,:,k,ksegm_source,:])
+                                        # Circumvents the computation of the inverse of MonodromyMat_in, taking advantage of symplecticity
+                                        if (i==0) == (k==0):
+                                            MM_source = np.asarray(MonodromyMat_in[1-i,ksegm_source,:,1-k,isegm_source,:]).T
+                                        else:
+                                            MM_source = np.asarray(MonodromyMat_in[i,ksegm_source,:,k,isegm_source,:]).T
 
+                                    MM_target = np.asarray(MonodromyMat[iint-1,k,ksegm_target ,:,j,jsegm_target,:])
 
-                                    
-                                    MM_target = np.asarray(MonodromyMat[iint,k,ksegm_target ,:,j,jsegm_target,:])
-
-                                    assert self.intersegm_to_all[ib][iint].TimeRev == self.intersegm_to_all[kb][iint].TimeRev
-
-                                    if i == 0:
-                                        Sym_target_i = self.intersegm_to_all[ib][iint]
-                                    else:
-                                        Sym_target_i = self.intersegm_to_all[ib][iint].TimeDerivative()
-
-                                    if k == 0:
-                                        Sym_target_k = self.intersegm_to_all[kb][iint]
-                                    else:
-                                        Sym_target_k = self.intersegm_to_all[kb][iint].TimeDerivative()
-
-
-
-
-                                    R_target_i = Sym_target_i.SpaceRot
-                                    R_target_k = Sym_target_k.SpaceRot
-
-                                    MM =   R_target_i @ MM_source  @ R_target_k.T @   MM_target 
+                                    MM = R_target_i @ MM_source @ R_target_k.T @ MM_target 
 
                                     for idim in range(self.geodim):
                                         for jdim in range(self.geodim):
 
-                                            MonodromyMat[iint+1,i,isegm_target,idim,j,jsegm_target,jdim] += MM[idim,jdim]
+                                            MonodromyMat[iint,i,isegm_target,idim,j,jsegm_target,jdim] += MM[idim,jdim]
+
+        if OnlyFinal:
+            return np.asarray(MonodromyMat_np[self.nint_min-1,:,:,:,:,:,:])
+        else:
+            return MonodromyMat_np
 
 
+    @cython.final
+    @cython.cdivision(True)
+    def PropagateMonodromy(self, double[:,:,::1] segmpos_grad_ODE, double[:,:,::1] segmmom_grad_ODE):
+        # Expects segmpos_grad_ODE and segmmom_grad_ODE generated with keep_init = False, and t_span = (0., 1./nint_min). Only final value
 
+        cdef Py_ssize_t iint
+        cdef Py_ssize_t i, j, k
+        cdef Py_ssize_t ib, jb, kb
+        cdef Py_ssize_t isegm_source, isegm_target
+        cdef Py_ssize_t jsegm_source, jsegm_target
+        cdef Py_ssize_t ksegm_source, ksegm_target
+        cdef int n = self.nsegm * self.geodim
 
+        cdef ActionSym Sym_target_i, Sym_target_k
 
-        return MonodromyMat_np
+        cdef int nelem
+
+        assert segmpos_grad_ODE.shape[0] == 1
+        assert segmpos_grad_ODE.shape[1] == n
+        assert segmpos_grad_ODE.shape[2] == 2*n
+
+        assert segmmom_grad_ODE.shape[0] == 1
+        assert segmmom_grad_ODE.shape[1] == n
+        assert segmmom_grad_ODE.shape[2] == 2*n
+      
+        cdef double[:,:,:,:,:,::1] MonodromyMat_prev = np.empty((2, self.nsegm, self.geodim, 2, self.nsegm, self.geodim), dtype=np.float64)        
+        cdef double[:,:,:,:,:,::1] MonodromyMat = np.empty((2, self.nsegm, self.geodim, 2, self.nsegm, self.geodim), dtype=np.float64)        
+        nelem = 2*n*n
+        scipy.linalg.cython_blas.dcopy(&nelem,&segmpos_grad_ODE[0,0,0],&int_one,&MonodromyMat[0,0,0,0,0,0],&int_one)
+        scipy.linalg.cython_blas.dcopy(&nelem,&segmmom_grad_ODE[0,0,0],&int_one,&MonodromyMat[1,0,0,0,0,0],&int_one)    
+
+        cdef double[:,:,:,:,::1] segmpos_grad_in = <double[:self.nsegm,:self.geodim,:2,:self.nsegm,:self.geodim:1]> &segmpos_grad_ODE[0,0,0]
+        cdef double[:,:,:,:,::1] segmmom_grad_in = <double[:self.nsegm,:self.geodim,:2,:self.nsegm,:self.geodim:1]> &segmmom_grad_ODE[0,0,0]
+
+        cdef double* R_target_i_ptr
+        cdef double* MM_source_ptr
+        cdef double* R_target_k_ptr
+        cdef double* MM_target_ptr
+
+        cdef int geodim = self.geodim
+        cdef int ld = 2*n
+        cdef char* trans_MM 
+
+        cdef double* buf_1  = <double*> malloc(sizeof(double)*geodim*geodim)
+        cdef double* buf_2  = <double*> malloc(sizeof(double)*geodim*geodim)
+
+        for iint in range(1, self.nint_min):
+
+            MonodromyMat, MonodromyMat_prev = MonodromyMat_prev, MonodromyMat
+            memset(&MonodromyMat[0,0,0,0,0,0], 0, sizeof(double)*4*n*n)
+
+            for isegm_target in range(self.nsegm):
+
+                ib = self._intersegm_to_body[isegm_target]
+                isegm_source = self._bodysegm[ib, iint]
+
+                Sym_target_i = self.intersegm_to_all[ib][iint]
+                R_target_i_ptr = &Sym_target_i._SpaceRot[0,0]
+
+                for ksegm_target in range(self.nsegm):
+
+                    kb = self._intersegm_to_body[ksegm_target]
+                    ksegm_source = self._bodysegm[kb, iint]
+
+                    Sym_target_k = self.intersegm_to_all[kb][iint]
+                    R_target_k_ptr = &Sym_target_k._SpaceRot[0,0]   
+
+                    for jsegm_target in range(self.nsegm):
+
+                        jb = self._intersegm_to_body[jsegm_target]
+                        jsegm_source = self._bodysegm[jb, iint]
+                        
+                        for i in range(2):
+                            for j in range(2):
+                                for k in range(2):
+
+                                    if self._iint_TimeRev[iint] > 0:
+
+                                        if (i == 0):
+                                            MM_source_ptr = &segmpos_grad_in[isegm_source,0,k,ksegm_source,0]
+                                        else:
+                                            MM_source_ptr = &segmmom_grad_in[isegm_source,0,k,ksegm_source,0]
+
+                                        trans_MM = transn
+
+                                    else:
+                                        # Circumvents the computation of the inverse of MonodromyMat_in, taking advantage of symplecticity
+                                        if (k == 0):
+                                            MM_source_ptr = &segmmom_grad_in[ksegm_source,0,1-i,isegm_source,0]
+                                        else:
+                                            MM_source_ptr = &segmpos_grad_in[ksegm_source,0,1-i,isegm_source,0]
+
+                                        trans_MM = transt
+
+                                    MM_target_ptr = &MonodromyMat_prev[k,ksegm_target,0,j,jsegm_target,0]
+
+                                    # buf_1 = R_target_k.T . MM_target 
+                                    scipy.linalg.cython_blas.dgemm(transn,transt,&geodim,&geodim,&geodim,&one_double,MM_target_ptr,&ld,R_target_k_ptr,&geodim,&zero_double,buf_1,&geodim)
+
+                                    # buf_2 = MM_source . buf_1
+                                    scipy.linalg.cython_blas.dgemm(transn,trans_MM,&geodim,&geodim,&geodim,&one_double,buf_1,&geodim,MM_source_ptr,&ld,&zero_double,buf_2,&geodim)
+
+                                    # MonodromyMat += R_target_i . buf_2
+                                    scipy.linalg.cython_blas.dgemm(transn,transn,&geodim,&geodim,&geodim,&one_double,buf_2,&geodim,R_target_i_ptr,&geodim,&one_double,&MonodromyMat[i,isegm_target,0,j,jsegm_target,0],&ld)
+
+        free(buf_1)
+        free(buf_2)
+
+        return np.asarray(MonodromyMat)
 
 @cython.cdivision(True)
 cdef void Make_Init_bounds_coeffs(
