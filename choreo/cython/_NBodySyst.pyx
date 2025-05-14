@@ -64,6 +64,7 @@ import time
 try:
     from matplotlib import pyplot as plt
     from matplotlib import colormaps
+    import matplotlib.animation
 except:
     pass
 
@@ -2427,13 +2428,14 @@ cdef class NBodySyst():
         return not(networkx.is_connected(BodyGraph))
 
     @cython.final
-    def plot_segmpos_2D(self, segmpos, filename, fig_size=(10,10), dpi=100, color=None, color_list=None, xlim=None, extend=0.03):
+    def plot_segmpos_2D(self, segmpos, filename, fig_size=(10,10), dpi=100, color=None, color_list=None, xlim=None, extend=0.03,Mass_Scale=True, trail_width=2.2):
         """
         Plots 2D trajectories with one color per body and saves image in file
         """
 
         cdef Py_ssize_t ib, iint 
         cdef Py_ssize_t il, loop_id
+        cdef double mass, line_width, point_size
 
         assert self.geodim == 2
         assert segmpos.shape[1] == self.segm_store
@@ -2518,7 +2520,13 @@ cdef class NBodySyst():
                     else:
                         raise ValueError(f'Unknown color scheme "{color}".')
 
-                    plt.plot(pos[:,0], pos[:,1], color=current_color, antialiased=True, zorder=-iplt)
+                    line_width = trail_width
+
+                    if Mass_Scale:
+                        mass = self._loopmass[self._bodyloop[ib]]
+                        line_width = line_width * mass
+
+                    plt.plot(pos[:,0], pos[:,1], color=current_color, antialiased=True, zorder=-iplt, linewidth=line_width)
 
         ax.axis('off')
         ax.set_xlim([xinf, xsup])
@@ -2528,6 +2536,127 @@ cdef class NBodySyst():
 
         plt.savefig(filename)
         
+        plt.close()
+
+    @cython.final
+    def plot_all_2D_anim(self, allpos, filename, fig_size=(10,10), dpi=100, color=None, color_list=None, xlim=None, extend=0.03, fps=60.,Mass_Scale=True, body_size=6., trail_width=2.2, tInc_fac = 0.35, Max_PathLength=None):
+        """
+        Plots 2D trajectories with one color per body and saves image in file
+        """
+
+        cdef Py_ssize_t ib, iint 
+        cdef Py_ssize_t il, loop_id
+        cdef double mass, line_width, point_size
+
+        assert self.geodim == 2
+        assert self.geodim == allpos.shape[2]
+        assert self.nbody == allpos.shape[0]
+        
+        if color_list is None:
+            color_list = plt.rcParams['axes.prop_cycle'].by_key()['color']
+
+        ncol = len(color_list)
+
+        if xlim is None:
+
+            xmin, ymin = allpos.min(axis=(0,1))
+            xmax, ymax = allpos.max(axis=(0,1))
+
+        else :
+
+            xmin = xlim[0]
+            xmax = xlim[1]
+            ymin = xlim[2]
+            ymax = xlim[3]
+        
+        xinf = xmin - extend*(xmax-xmin)
+        xsup = xmax + extend*(xmax-xmin)
+        
+        yinf = ymin - extend*(ymax-ymin)
+        ysup = ymax + extend*(ymax-ymin)
+        
+        hside = max(xsup-xinf,ysup-yinf)/2
+
+        xmid = (xinf+xsup)/2
+        ymid = (yinf+ysup)/2
+
+        xinf = xmid - hside
+        xsup = xmid + hside
+
+        yinf = ymid - hside
+        ysup = ymid + hside
+
+        dx = xsup - xinf
+        dy = ysup - yinf
+        distance_ref = np.sqrt(dx*dx + dy*dy)
+
+        if Max_PathLength is None:
+            d_allpos = allpos[:,1:,:] - allpos[:,:-1,:]
+            Max_PathLength = np.max(np.sum(np.hypot(d_allpos[:,:,0], d_allpos[:,:,1]), axis=1), axis=0)
+
+        distance_rel = Max_PathLength / distance_ref
+
+        tInc = tInc_fac / (fps * distance_rel) 
+
+        # Plot-related
+        fig = plt.figure()
+        fig.set_size_inches(fig_size)
+        fig.set_dpi(dpi)
+        ax = plt.gca()
+
+        plt_lines = []
+        plt_points = []
+        iplt = 0
+        for ib in range(self.nbody):
+
+            if (color is None) or (color == "none"):
+                current_color = color_list[0]
+            elif (color == "body"):
+                current_color = color_list[ib%ncol]
+            elif (color == "loop"):
+                current_color = color_list[self._bodyloop[ib]%ncol]
+            elif (color == "loop_id"):
+                loop_id = 0
+                il = self._bodyloop[ib]
+                while self._Targets[il,loop_id] != ib:
+                    loop_id += 1
+                current_color = color_list[loop_id%ncol]
+            else:
+                raise ValueError(f'Unknown color scheme "{color}".')
+
+            line_width = trail_width
+            point_size = body_size * 25
+
+            if Mass_Scale:
+                mass = self._loopmass[self._bodyloop[ib]]
+                line_width = line_width * mass
+                point_size = point_size * (mass*mass)
+
+            plt_lines.append(ax.plot(allpos[ib,:,0], allpos[ib,:,1], color=current_color, antialiased=True, zorder=-iplt, linewidth=line_width))
+            plt_points.append(ax.scatter(allpos[ib,0,0], allpos[ib,0,1], color=current_color, antialiased=True, marker = 'o', edgecolors='k', s=point_size))
+
+        ax.axis('off')
+        ax.set_xlim([xinf, xsup])
+        ax.set_ylim([yinf, ysup ])
+        ax.set_aspect('equal', adjustable='box')
+        plt.tight_layout()
+
+        def update(i_frame):
+
+            t = i_frame * tInc * allpos.shape[1]
+            
+            tp = min(math.ceil(t), allpos.shape[1]-1)
+            tm = tp-1
+
+            alpha = tp - t
+            
+            for ib in range(self.nbody):
+                pos = alpha * allpos[ib,tm,:] + (1.-alpha)*allpos[ib,tp,:]
+                plt_points[ib].set_offsets(pos)
+                
+        n_frames = math.floor(1. / tInc)
+        ani = matplotlib.animation.FuncAnimation(fig=fig, func=update, frames=n_frames)
+        ani.save(filename, fps=fps)
         plt.close()
 
     @cython.final
@@ -4204,7 +4333,7 @@ cdef class NBodySyst():
     @cython.final
     def segm_to_path_stats(self, double[:,:,::1] segmpos, double[:,:,::1] segmvel):
 
-        cdef Py_ssize_t il, isegm, ib
+        cdef Py_ssize_t il, isegm, ib, iint
 
         out_segm_len = np.empty((self.nsegm), dtype=np.float64)
         cdef double[::1] out_segm_len_mv = out_segm_len
@@ -4219,7 +4348,6 @@ cdef class NBodySyst():
                 segmvel                 ,
                 self.segm_size          ,
                 self.segm_store         ,
-                self.nint_min           ,
                 out_segm_len_mv         ,
             )            
 
@@ -4234,13 +4362,14 @@ cdef class NBodySyst():
         out_loop_len = np.zeros((self.nloop), dtype=np.float64)
         cdef double[::1] out_loop_len_mv = out_loop_len
 
-        for isegm in range(self.nsegm):
-            ib = self._gensegm_to_body[isegm]
-            il = self._bodyloop[ib]
-            out_loop_len_mv[il] += out_segm_len_mv[isegm]
-
         for il in range(self.nloop):
-            out_loop_len_mv[il] /= self.nint_min 
+            ib = self._Targets[il,0]
+            
+            for iint in range(self.nint_min):
+                isegm = self._bodysegm[ib, iint]
+                out_loop_len_mv[il] += out_segm_len_mv[isegm]
+            
+            out_loop_len_mv[il] /= self.nint_min
 
         return out_loop_len, out_bin_dx_min
     
@@ -4892,7 +5021,8 @@ cdef class NBodySyst():
         scipy.linalg.cython_blas.dcopy(&nelem,&segmmom_grad_ODE[0,0,0],&int_one,&MonodromyMat[0,1,0,0,0,0,0],&int_one)    
 
         cdef double[:,:,:,:,:,::1] MonodromyMat_in = MonodromyMat_np[0,:,:,:,:,:,:]
-        cdef double[:,::1] MM
+
+
 
         for iint in range(1, self.nint_min):
 
@@ -8035,7 +8165,6 @@ cdef void segmpos_to_unary_path_stats(
     double[:,:,::1] segmvel     ,
     Py_ssize_t segm_size        ,
     Py_ssize_t segm_store       ,
-    Py_ssize_t nint_min         ,
     double[::1]  out_segm_len   ,
 ) noexcept nogil:
 
@@ -8061,7 +8190,7 @@ cdef void segmpos_to_unary_path_stats(
 
                 segm_len_val += csqrt(vsq)
 
-            out_segm_len[isegm] = nint_min * segm_len_val / segm_size
+            out_segm_len[isegm] = segm_len_val / segm_size
 
     else:
 
@@ -8087,7 +8216,7 @@ cdef void segmpos_to_unary_path_stats(
 
             segm_len_val += csqrt(vsq) / 2
 
-            out_segm_len[isegm] = nint_min * segm_len_val / segm_size
+            out_segm_len[isegm] = segm_len_val / segm_size
 
 @cython.cdivision(True)
 cdef void segmpos_to_binary_path_stats(

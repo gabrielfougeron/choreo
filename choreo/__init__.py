@@ -69,6 +69,7 @@ from .cython            import NBodySyst, ActionSym
 from .                  import segm
 from .                  import scipy_plus
 from .                  import run
+from .                  import tools
 
 from .find              import *
 

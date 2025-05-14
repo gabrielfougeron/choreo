@@ -53,6 +53,9 @@ def Find_Choreo(
     Save_img,
     Save_thumb,
     Save_anim,
+    plot_Mass_Scale,
+    plot_body_size,
+    plot_trail_width,
     callback_after_init_list,
     optim_callback_list,
     max_norm_on_entry,
@@ -190,6 +193,10 @@ def Find_Choreo(
 
             if Save_thumb :
                 NBS.plot_segmpos_2D(segmpos, filename_output+'_thumb.png', fig_size=thumb_size, color=color, color_list=color_list)     
+                
+            if Save_anim :
+                allbodypos = NBS.segmpos_to_allbody_noopt(segmpos)
+                NBS.plot_all_2D_anim(allbodypos, filename_output+'.mp4', fig_size=img_size, color=color, color_list=color_list, Mass_Scale = plot_Mass_Scale, body_size = plot_body_size, trail_width = plot_trail_width)    
                 
             if Save_SegmPos:
                 np.save(filename_output+'.npy', segmpos)
@@ -395,22 +402,10 @@ def Find_Choreo(
                     
                     if Save_thumb :
                         NBS.plot_segmpos_2D(segmpos, filename_output+'_thumb.png', fig_size=thumb_size, color=color, color_list=color_list)     
-                        
-#                     if Save_anim :
-#                         ActionSyst.plot_all_2D_anim(best_sol.x,nint_plot_anim,filename_output+'.mp4',nperiod_anim,Plot_trace=Plot_trace_anim,fig_size=vid_size,dnint=dnint,color_list=color_list,color=color)
-# 
-#                     if Save_Newton_Error :
-#                         ActionSyst.plot_Newton_Error(best_sol.x,filename_output+'_newton.png')
-# 
-#                     if Save_GradientAction_Error :
-#                         ActionSyst.plot_GradientAction_Error(best_sol.x,filename_output+'_gradaction.png')
-# 
-#                     if Save_coeff_profile:
-#                         ActionSyst.plot_coeff_profile(best_sol.x,filename_output+'_coeff_profile.png')
-# 
-#                     if Save_All_Coeffs:
-#                         all_coeffs = ActionSyst.Unpackage_all_coeffs(best_sol.x)
-#                         np.save(filename_output+'_coeffs.npy',all_coeffs)
+                    
+                    if Save_anim :
+                        allbodypos = NBS.segmpos_to_allbody_noopt(segmpos)
+                        NBS.plot_all_2D_anim(allbodypos, filename_output+'.mp4', fig_size=img_size, color=color, color_list=color_list, Mass_Scale = plot_Mass_Scale, body_size = plot_body_size, trail_width = plot_trail_width)     
 
                     if Save_SegmPos:
                         np.save(filename_output+'.npy', segmpos)
@@ -603,7 +598,6 @@ def ChoreoLoadFromDict(params_dict, Workspace_folder, callback=None, args_list=N
 #         nbody = len(mass)
 
     nbody = params_dict["Phys_Bodies"]["nbody"]
-
     nloop = params_dict["Phys_Bodies"]["nloop"]
     
     mass = np.zeros(nbody)
@@ -693,16 +687,10 @@ def ChoreoLoadFromDict(params_dict, Workspace_folder, callback=None, args_list=N
     Save_anim =  params_dict['Solver_CLI'] ['SaveVideo']
 
     vid_size = (8,8) # Image size in inches
-    nint_plot_anim = 2*2*2*3*3*5*2
-    # nperiod_anim = 1./nbody
-    dnint = 30
-
-    nint_plot_img = nint_plot_anim * dnint
-
-    nperiod_anim = 1.
-
-    Plot_trace_anim = True
-    # Plot_trace_anim = False
+    
+    plot_Mass_Scale = params_dict['Animation_Size'] ['checkbox_Mass_Scale']
+    plot_body_size = float(params_dict['Animation_Size'] ['input_body_radius'])
+    plot_trail_width = float(params_dict['Animation_Size'] ['input_trail_width'])
 
     n_reconverge_it_max = params_dict["Solver_Discr"] ['n_reconverge_it_max'] 
     nint_init = params_dict["Solver_Discr"]["nint_init"]   
