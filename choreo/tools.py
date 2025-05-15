@@ -5,6 +5,7 @@
 
 import os
 import sys
+import shutil
 import math
 
 try:
@@ -35,7 +36,7 @@ def VideoGrid(input_list, output_filename, nxy = None, ordering='RowMajor'):
 
     if nvid == 1:
         
-        os.rename(input_list[0], output_filename)
+        shutil.copy(input_list[0], output_filename)
 
     else:
         

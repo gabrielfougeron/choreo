@@ -63,7 +63,7 @@ import time
 
 try:
     from matplotlib import pyplot as plt
-    from matplotlib import colormaps
+    import matplotlib
     import matplotlib.animation
 except:
     pass
@@ -151,6 +151,22 @@ ctypedef struct ODE_params_t:
     double*             BinProdChargeSumTarget_ptr    
     inter_law_fun_type  inter_law   
     void*               inter_law_param_ptr
+
+default_GUI_colors = [
+	"#50ce4d", # Moderate Lime Green
+	"#ff7006", # Vivid Orange
+	"#a253c4", # Moderate Violet
+	"#ef1010", # Vivid Red
+	"#25b5bc", # Strong Cyan
+	"#E86A96", # Soft Pink
+	"#edc832", # Bright Yellow
+	"#ad6530", # Dark Orange [Brown tone]
+	"#00773f", # Dark cyan - lime green 
+	"#d6d6d6", # Light gray
+]
+
+FallbackTrailColor = "#d5d5d5"
+bgColor = "#F1F1F1"
 
 @cython.auto_pickle(False)
 @cython.final
@@ -2428,7 +2444,7 @@ cdef class NBodySyst():
         return not(networkx.is_connected(BodyGraph))
 
     @cython.final
-    def plot_segmpos_2D(self, segmpos, filename, fig_size=(10,10), dpi=100, color=None, color_list=None, xlim=None, extend=0.03,Mass_Scale=True, trail_width=2.2):
+    def plot_segmpos_2D(self, segmpos, filename, fig_size=(10,10), dpi=100, color=None, color_list=default_GUI_colors, xlim=None, extend=0.03, Mass_Scale=True, trail_width=3.):
         """
         Plots 2D trajectories with one color per body and saves image in file
         """
@@ -2440,9 +2456,6 @@ cdef class NBodySyst():
         assert self.geodim == 2
         assert segmpos.shape[1] == self.segm_store
         
-        if color_list is None:
-            color_list = plt.rcParams['axes.prop_cycle'].by_key()['color']
-
         ncol = len(color_list)
 
         if xlim is None:
@@ -2479,7 +2492,7 @@ cdef class NBodySyst():
         ysup = ymid + hside
 
         # Plot-related
-        fig = plt.figure()
+        fig = plt.figure(facecolor=bgColor)
         fig.set_size_inches(fig_size)
         fig.set_dpi(dpi)
         ax = plt.gca()
@@ -2539,7 +2552,7 @@ cdef class NBodySyst():
         plt.close()
 
     @cython.final
-    def plot_all_2D_anim(self, allpos, filename, fig_size=(10,10), dpi=100, color=None, color_list=None, xlim=None, extend=0.03, fps=60.,Mass_Scale=True, body_size=6., trail_width=2.2, tInc_fac = 0.35, Max_PathLength=None):
+    def plot_all_2D_anim(self, allpos, filename, fig_size=(10,10), dpi=100, color=None, color_list=default_GUI_colors, xlim=None, extend=0.03, fps=60.,Mass_Scale=True, body_size=6., trail_width=3., tInc_fac = 0.35, Max_PathLength=None, ShootingStars=True, Periodic=True, rel_trail_length_half_life = 0.03):
         """
         Plots 2D trajectories with one color per body and saves image in file
         """
@@ -2548,12 +2561,13 @@ cdef class NBodySyst():
         cdef Py_ssize_t il, loop_id
         cdef double mass, line_width, point_size
 
+        cdef np.ndarray[double, ndim=1, mode='c'] alpha_arr
+
         assert self.geodim == 2
         assert self.geodim == allpos.shape[2]
         assert self.nbody == allpos.shape[0]
-        
-        if color_list is None:
-            color_list = plt.rcParams['axes.prop_cycle'].by_key()['color']
+
+        npts = allpos.shape[1]
 
         ncol = len(color_list)
 
@@ -2599,15 +2613,17 @@ cdef class NBodySyst():
         tInc = tInc_fac / (fps * distance_rel) 
 
         # Plot-related
-        fig = plt.figure()
+        fig = plt.figure(facecolor=bgColor)
         fig.set_size_inches(fig_size)
         fig.set_dpi(dpi)
         ax = plt.gca()
 
         plt_lines = []
+        plt_varcolor_lines = []
         plt_points = []
         iplt = 0
         for ib in range(self.nbody):
+            iplt += 1
 
             if (color is None) or (color == "none"):
                 current_color = color_list[0]
@@ -2632,8 +2648,24 @@ cdef class NBodySyst():
                 line_width = line_width * mass
                 point_size = point_size * (mass*mass)
 
-            plt_lines.append(ax.plot(allpos[ib,:,0], allpos[ib,:,1], color=current_color, antialiased=True, zorder=-iplt, linewidth=line_width))
-            plt_points.append(ax.scatter(allpos[ib,0,0], allpos[ib,0,1], color=current_color, antialiased=True, marker = 'o', edgecolors='k', s=point_size))
+            point_color = current_color
+            if ShootingStars:
+                lines_color = FallbackTrailColor
+            else:
+                lines_color = current_color
+
+            plt_lines.append(ax.plot(allpos[ib,:,0], allpos[ib,:,1], color=lines_color, antialiased=True, zorder=-iplt, linewidth=line_width))
+
+            if ShootingStars:
+
+                transparent_color = matplotlib.colors.to_rgba(current_color, alpha=0.)
+
+                segments = np.stack((allpos[ib,:-1,:], allpos[ib,1:,:]), axis=1)
+                lc = matplotlib.collections.LineCollection(segments, colors=transparent_color, linewidths=line_width, antialiased=False)
+                plt_varcolor_lines.append(ax.add_collection(lc))
+
+            zorder = 3+iplt
+            plt_points.append(ax.scatter(allpos[ib,0,0], allpos[ib,0,1], color=point_color, antialiased=True, zorder=zorder, marker = 'o', edgecolors='k', s=point_size))
 
         ax.axis('off')
         ax.set_xlim([xinf, xsup])
@@ -2641,22 +2673,51 @@ cdef class NBodySyst():
         ax.set_aspect('equal', adjustable='box')
         plt.tight_layout()
 
-        def update(i_frame):
+        if ShootingStars:
+            alpha_arr = np.zeros((npts-1), dtype=np.float64)
+        else:
+            alpha_arr = None
 
-            t = i_frame * tInc * allpos.shape[1]
-            
-            tp = min(math.ceil(t), allpos.shape[1]-1)
-            tm = tp-1
+        alpha_fac_in = 2**(-1./(npts*rel_trail_length_half_life))
 
-            alpha = tp - t
+        def update(i_frame, np.ndarray[double, ndim=1, mode='c'] alpha_buf = alpha_arr, double alpha_fac = alpha_fac_in):
+
+            cdef double t = i_frame * tInc * allpos.shape[1]
             
+            cdef Py_ssize_t tp = min(math.ceil(t), allpos.shape[1]-1)
+            cdef Py_ssize_t tm = tp-1
+
+            cdef double a = tp - t
+            cdef double alpha = 1.
+
+            cdef Py_ssize_t i, j
+            cdef Py_ssize_t n = npts-1
+            cdef Py_ssize_t no = n+tp
+
+            if ShootingStars:
+
+                if Periodic:
+                    for i in range(n):
+                        j = (no-i) % n
+                        alpha_buf[j] = alpha
+                        alpha *= alpha_fac
+                else:
+                    for i in range(tp):
+                        j = tp-i
+                        alpha_buf[j] = alpha
+                        alpha *= alpha_fac
+
             for ib in range(self.nbody):
-                pos = alpha * allpos[ib,tm,:] + (1.-alpha)*allpos[ib,tp,:]
+                pos = a * allpos[ib,tm,:] + (1.-a)*allpos[ib,tp,:]
                 plt_points[ib].set_offsets(pos)
-                
+
+                if ShootingStars:
+                    plt_varcolor_lines[ib].set_alpha(alpha_buf)
+        
         n_frames = math.floor(1. / tInc)
         ani = matplotlib.animation.FuncAnimation(fig=fig, func=update, frames=n_frames)
-        ani.save(filename, fps=fps)
+        writer = matplotlib.animation.FFMpegWriter(fps=fps, codec="h264", extra_args=["-preset", "veryslow","-crf","0"])
+        ani.save(filename, writer=writer)
         plt.close()
 
     @cython.final
