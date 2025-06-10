@@ -254,7 +254,7 @@ latex_theme = "manual"
 mathjax3_config = {
     'tex': {
         'macros': {
-            "dd": r"\operatorname{\mathrm{d}}",
+            "dd": r"\ \mathrm{d}",
             "eqdef": r"\mathrel{\stackrel{\mathrm{def}}{=}}",
         }
    }

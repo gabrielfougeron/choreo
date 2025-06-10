@@ -1540,3 +1540,21 @@ def test_remove_all_syms_ODE(NBS, params_buf, vector_calls, LowLevel, NoSymIfPos
     print(np.linalg.norm(all_bodymom - all_bodymom_ODE))
     assert np.allclose(all_bodymom, all_bodymom_ODE, rtol = tol, atol = tol)      
     
+@ParametrizeDocstrings
+@pytest.mark.parametrize("nbody", [2,3,5,10,15])
+@pytest.mark.parametrize("eccentricity", [0.,0.5,0.8,0.95])
+def test_Kepler(float64_tols, nbody, eccentricity):
+    """ Tests on exact Kepler solutions
+    """
+    
+    mass = 1. + np.random.random()
+    nint_fac = 1024
+
+    NBS, segmpos = choreo.NBodySyst.KeplerEllipse(nbody, nint_fac, mass, eccentricity)
+    params_buf = NBS.segmpos_to_params(segmpos)
+    action_grad = NBS.segmpos_params_to_action_grad(segmpos, params_buf)
+
+    ndof = action_grad.shape[0]
+
+    print(np.linalg.norm(action_grad))
+    assert np.allclose(action_grad, np.zeros((ndof), dtype=np.float64), rtol = float64_tols.rtol, atol = float64_tols.atol*10)  

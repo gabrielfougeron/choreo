@@ -75,7 +75,7 @@ The Newton equations of motion :eq:`Newton` are retrieved for the following choi
     &= \sum_{i=0}^{n-1} \frac{p_i^2}{2 m_i} + \sum_{i=0}^{n-1} \sum_{j\neq i} q_i q_j V_{\mathrm{u}}(\|x_i - x_j\|)\\
     :label: Hamiltonian_of_nbodysyst
 
-This particular Hamiltonian is called **partionned** since it decomposes into the sum of a **kinetic energy** :math:`T(\mathbf{p})` that is a function of the momenta *only*, and a **potential energy** :math:`V(\mathbf{q})` that is a function of the positions *only*. This partitioned structure is exploited in the ODE RK methods ref ???
+This particular Hamiltonian is called **partionned** since it decomposes into the sum of a **kinetic energy** :math:`T(\mathbf{p})` that is a function of the momenta *only*, and a **potential energy** :math:`V(\mathbf{q})` that is a function of the positions *only*. This partitioned structure is exploited using dedicated :ref:`ODE-RK`.
 
 
 

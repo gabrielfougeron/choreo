@@ -54,6 +54,7 @@ from choreo.NBodySyst_build import (
 import math
 import scipy
 import networkx
+import kepler
 import json
 import types
 import itertools
@@ -2251,6 +2252,93 @@ cdef class NBodySyst():
         assert segmpos.shape[2] == NBS.geodim
 
         return NBS, segmpos
+
+    @cython.final
+    @cython.cdivision(True)
+    @staticmethod
+    def KeplerEllipse(Py_ssize_t nbody, Py_ssize_t nint_fac, double mass, double eccentricity):
+
+        assert nbody > 1
+        assert nint_fac > 0
+        assert mass > 0.
+        assert eccentricity >= 0.
+        assert eccentricity < 1.
+
+        geodim = 2
+        bodymass = np.full(nbody, mass, dtype=np.float64)
+        bodycharge = bodymass.copy()
+
+        cdef Py_ssize_t ib, iint
+        cdef Py_ssize_t[::1] BodyPerm = np.empty(nbody, dtype=np.intp)
+
+        for ib in range(nbody-1):
+            BodyPerm[ib] = ib+1
+
+        BodyPerm[nbody-1] = 0
+
+        cdef double angle = ctwopi / nbody 
+        cdef double cos_angle = ccos(angle)
+        cdef double sin_angle = csin(angle)
+        cdef double[:,::1] SpaceRot = np.array([[cos_angle, sin_angle],[-sin_angle, cos_angle]])
+
+        Sym_1 = ActionSym(
+            BodyPerm.copy() ,
+            SpaceRot.copy() ,
+            1               ,
+            0               ,
+            1               ,
+        )
+
+        BodyPerm[0] = 0
+        for ib in range(1,nbody):
+            BodyPerm[ib] = nbody-ib
+
+        SpaceRot = np.array([[1., 0.],[0., -1.]])
+
+        Sym_2 = ActionSym(
+            BodyPerm.copy() ,
+            SpaceRot.copy() ,
+            -1              ,
+            0               ,
+            1               ,
+        )
+
+        Sym_list = [Sym_1, Sym_2]
+
+        NBS = NBodySyst(geodim, nbody, bodymass, bodycharge, Sym_list)
+        NBS.nint_fac = nint_fac
+
+        cdef double[::1] cos_true_anomaly
+        cdef double[::1] sin_true_anomaly
+
+        mean_anomaly = np.linspace(0, np.pi, num=NBS.segm_store, endpoint=True)
+        eccentric_anomaly, cos_true_anomaly, sin_true_anomaly = kepler.kepler(mean_anomaly, eccentricity)
+
+        assert NBS.nsegm == 1
+        assert NBS.geodim == 2
+
+        cdef np.ndarray[double, ndim=3, mode='c'] segmpos_np = np.empty((NBS.nsegm, NBS.segm_store, NBS.geodim), dtype=np.float64)
+        cdef double[:,:,::1] segmpos = segmpos_np
+
+        cdef double r, p, fac
+        
+        fac = 0.
+        for ib in range(1,nbody):
+            angle = ctwopi * ib / nbody
+            cos_angle = ccos(angle) - 1.
+            sin_angle = csin(angle)
+            fac += 1./csqrt(cos_angle*cos_angle + sin_angle*sin_angle)
+
+        p = ((1 - eccentricity)*(1+eccentricity)) * ((fac*mass) / (cfourpisq)) ** (1./3)
+
+        for iint in range(NBS.segm_store):
+
+            r = p / (1. + eccentricity * cos_true_anomaly[iint])
+
+            segmpos[0, iint, 0] = r * cos_true_anomaly[iint]
+            segmpos[0, iint, 1] = r * sin_true_anomaly[iint]
+
+        return NBS, segmpos_np
 
     @cython.final
     def GetKrylovJacobian(self, Use_exact_Jacobian=True, jac_options_kw={}):
@@ -5082,8 +5170,6 @@ cdef class NBodySyst():
         scipy.linalg.cython_blas.dcopy(&nelem,&segmmom_grad_ODE[0,0,0],&int_one,&MonodromyMat[0,1,0,0,0,0,0],&int_one)    
 
         cdef double[:,:,:,:,:,::1] MonodromyMat_in = MonodromyMat_np[0,:,:,:,:,:,:]
-
-
 
         for iint in range(1, self.nint_min):
 
