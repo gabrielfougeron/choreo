@@ -11,6 +11,7 @@ cdef double half_double
 cdef double two_double
 cdef double one_double
 cdef double zero_double
+cdef double cpi
 cdef double ctwopi
 cdef double cminustwopi
 cdef double ctwopisqrt2

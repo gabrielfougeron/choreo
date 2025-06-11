@@ -18,6 +18,7 @@ cdef double half_double = 0.5
 cdef double two_double = 2.
 cdef double one_double = 1.
 cdef double zero_double = 0.
+cdef double cpi = np.pi
 cdef double ctwopi = 2*np.pi
 cdef double cminustwopi = -ctwopi
 cdef double ctwopisqrt2 = ctwopi*csqrt(2.)

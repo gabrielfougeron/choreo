@@ -89,4 +89,14 @@ def test_blas_matmul(float64_tols, m, n, k):
     print(np.linalg.norm(AB_np - AB_blas))
     assert np.allclose(AB_np, AB_blas, rtol = float64_tols.rtol, atol = float64_tols.atol) 
             
+@ParametrizeDocstrings
+@pytest.mark.parametrize("M", [0., 0.5, 10., 100.])
+@pytest.mark.parametrize("ecc", [0., 0.5, 0.8, 0.95, 0.99, 0.99999])
+def test_kepler(float64_tols_strict, M, ecc):
+    """ Tests Kepler solver.
+    """
+    
+    E = choreo.scipy_plus.cython.kepler.solve(M, ecc)
 
+    print(abs(E - ecc * np.sin(E) - M))
+    assert abs(E - ecc * np.sin(E) - M) <= float64_tols_strict.atol + float64_tols_strict.rtol * M

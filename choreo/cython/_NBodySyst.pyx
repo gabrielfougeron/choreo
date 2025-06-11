@@ -25,6 +25,8 @@ import choreo.metadata
 cimport scipy.linalg.cython_blas
 from choreo.scipy_plus.cython.blas_consts cimport *
 from choreo.scipy_plus.cython.ccallback cimport ccallback_t, ccallback_prepare, ccallback_release, CCALLBACK_DEFAULTS, ccallback_signature_t
+
+from choreo.scipy_plus.cython.kepler cimport kepler
 from choreo.cython._ActionSym cimport ActionSym
 
 import ctypes
@@ -54,7 +56,6 @@ from choreo.NBodySyst_build import (
 import math
 import scipy
 import networkx
-import kepler
 import json
 import types
 import itertools
@@ -2256,7 +2257,7 @@ cdef class NBodySyst():
     @cython.final
     @cython.cdivision(True)
     @staticmethod
-    def KeplerEllipse(Py_ssize_t nbody, Py_ssize_t nint_fac, double mass, double eccentricity):
+    def KeplerEllipse(Py_ssize_t nbody = 2, Py_ssize_t nint_fac = 128, double mass = 1., double eccentricity = 0.):
 
         assert nbody > 1
         assert nint_fac > 0
@@ -2308,11 +2309,7 @@ cdef class NBodySyst():
         NBS = NBodySyst(geodim, nbody, bodymass, bodycharge, Sym_list)
         NBS.nint_fac = nint_fac
 
-        cdef double[::1] cos_true_anomaly
-        cdef double[::1] sin_true_anomaly
-
-        mean_anomaly = np.linspace(0, np.pi, num=NBS.segm_store, endpoint=True)
-        eccentric_anomaly, cos_true_anomaly, sin_true_anomaly = kepler.kepler(mean_anomaly, eccentricity)
+        cdef double eccentric_anomaly, cos_true_anomaly, sin_true_anomaly, mean_anomaly 
 
         assert NBS.nsegm == 1
         assert NBS.geodim == 2
@@ -2333,10 +2330,14 @@ cdef class NBodySyst():
 
         for iint in range(NBS.segm_store):
 
-            r = p / (1. + eccentricity * cos_true_anomaly[iint])
+            mean_anomaly = (cpi * iint) / NBS.segm_size
 
-            segmpos[0, iint, 0] = r * cos_true_anomaly[iint]
-            segmpos[0, iint, 1] = r * sin_true_anomaly[iint]
+            eccentric_anomaly, cos_true_anomaly, sin_true_anomaly = kepler(mean_anomaly, eccentricity)
+
+            r = p / (1. + eccentricity * cos_true_anomaly)
+
+            segmpos[0, iint, 0] = r * cos_true_anomaly
+            segmpos[0, iint, 1] = r * sin_true_anomaly
 
         return NBS, segmpos_np
 
