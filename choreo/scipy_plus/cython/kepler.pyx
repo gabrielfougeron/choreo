@@ -98,7 +98,7 @@ cpdef double solve(double M, double ecc) noexcept nogil:
     return E + R
 
 @cython.cdivision(True)
-cpdef (double, double, double) kepler(double M, double ecc) noexcept nogil:
+cpdef (double, double, double, double, double) kepler(double M, double ecc) noexcept nogil:
 
     cdef double E = solve(M, ecc)
 
@@ -107,22 +107,35 @@ cpdef (double, double, double) kepler(double M, double ecc) noexcept nogil:
 
     cdef double sE, tanf2, tanf2_2
     cdef double cosf, sinf
+    cdef double sqrt_alpha, fac, tfp
+
+    sqrt_alpha = csqrt((1+ecc)/(1-ecc))
 
     if denom > 1e-16:
 
         sE = csin(E)
 
-        tanf2 = csqrt((1+ecc)/(1-ecc)) * sE / denom
+        fac = sqrt_alpha  / denom
+
+        tanf2 = fac * sE
         tanf2_2 = tanf2 * tanf2
 
-        denom = 1 / (1 + tanf2_2)
+        tfp = fac  / (1 - ecc * cE)
+
+        denom = 1. / (1 + tanf2_2)
         cosf = (1 - tanf2_2) * denom
         sinf = 2 * tanf2 * denom
+
+        cosfp = (-2) * sinf * denom * tfp
+        sinfp = 2 * cosf * denom * tfp
 
     else:
 
         cosf = -1.
         sinf = 0.
 
-    return E, cosf, sinf
+        cosfp = 0.
+        sinfp = -1. / ((1+ecc) * sqrt_alpha)
+
+    return E, cosf, sinf, cosfp, sinfp
 

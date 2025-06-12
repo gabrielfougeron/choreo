@@ -12,7 +12,7 @@ cdef int RFFT
 
 ctypedef void (*inter_law_fun_type)(double, double*, void*) noexcept nogil 
 
-cdef inline void inline_gravity_pot(double xsq, double* res) noexcept nogil
+cdef void inline_gravity_pot(double xsq, double* res) noexcept nogil
 cdef void gravity_pot(double xsq, double* res, void* pot_params) noexcept nogil
 cdef void power_law_pot(double xsq, double* res, void* pot_params) noexcept nogil
 
@@ -329,7 +329,7 @@ cdef void segmpos_to_params_T(
     double[::1] params_mom_buf              ,
 ) noexcept nogil
 
-cdef inline int get_inter_flags(
+cdef int get_inter_flags(
     Py_ssize_t segm_size            , Py_ssize_t segm_store ,
     Py_ssize_t geodim               ,
     inter_law_fun_type inter_law
@@ -487,7 +487,7 @@ cdef void segmpos_to_binary_path_stats(
     double[::1]  out_bin_dx_min     ,
 ) noexcept nogil
 
-cdef inline void Compute_forces_vectorized(
+cdef void Compute_forces_vectorized(
     double* pos                     , double* forces                    ,
     Py_ssize_t nbin                 , Py_ssize_t geodim                 ,
     Py_ssize_t nsegm                , Py_ssize_t nvec                   ,
@@ -497,7 +497,7 @@ cdef inline void Compute_forces_vectorized(
     inter_law_fun_type inter_law    , void* inter_law_param_ptr         ,
 ) noexcept nogil
 
-cdef inline void Compute_grad_forces_vectorized(
+cdef void Compute_grad_forces_vectorized(
     double* pos                     , double* dpos                      , double* grad_forces   ,
     Py_ssize_t nbin                 , Py_ssize_t geodim                 ,
     Py_ssize_t nsegm                , Py_ssize_t nvec                   , Py_ssize_t grad_ndof  ,
@@ -523,7 +523,7 @@ cdef void Compute_grad_forces_vectorized_user_data(
     double[::1] all_t   , double[:,::1] all_pos , double[:,:,::1] all_dpos  , double[:,:,::1] all_grad_forces   , void* user_data ,
 ) noexcept nogil
 
-cdef inline void Compute_forces_vectorized_nosym(
+cdef void Compute_forces_vectorized_nosym(
     double* pos                     , double* forces            ,
     Py_ssize_t geodim               ,
     Py_ssize_t nsegm                , Py_ssize_t nvec           ,
@@ -531,7 +531,7 @@ cdef inline void Compute_forces_vectorized_nosym(
     inter_law_fun_type inter_law    , void* inter_law_param_ptr ,
 ) noexcept nogil
 
-cdef inline void Compute_grad_forces_vectorized_nosym(
+cdef void Compute_grad_forces_vectorized_nosym(
     double* pos                     , double* dpos              , double* grad_forces   ,
     Py_ssize_t geodim               ,
     Py_ssize_t nsegm                , Py_ssize_t nvec           , Py_ssize_t grad_ndof  ,
@@ -555,14 +555,14 @@ cdef void Compute_grad_forces_vectorized_nosym_user_data(
     double[::1] all_t   , double[:,::1] all_pos , double[:,:,::1] all_dpos  , double[:,:,::1] all_grad_forces   , void* user_data ,
 ) noexcept nogil
 
-cdef inline void Compute_velocities_vectorized(
+cdef void Compute_velocities_vectorized(
     double* mom         , double* res       ,
     Py_ssize_t nbin     , Py_ssize_t geodim ,
     Py_ssize_t nsegm    , Py_ssize_t nvec   ,
     double* InvSegmMass , 
 ) noexcept nogil
 
-cdef inline void Compute_grad_velocities_vectorized(
+cdef void Compute_grad_velocities_vectorized(
     double* mom         , double* grad_mom  , double* res           ,
     Py_ssize_t nbin     , Py_ssize_t geodim ,
     Py_ssize_t nsegm    , Py_ssize_t nvec   , Py_ssize_t grad_ndof  ,

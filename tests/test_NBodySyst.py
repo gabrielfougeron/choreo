@@ -1543,18 +1543,67 @@ def test_remove_all_syms_ODE(NBS, params_buf, vector_calls, LowLevel, NoSymIfPos
 @ParametrizeDocstrings
 @pytest.mark.parametrize("nbody", [2,3,5,10,15])
 @pytest.mark.parametrize("eccentricity", [0.,0.5,0.8,0.95])
-def test_Kepler(float64_tols, nbody, eccentricity):
+def test_Kepler(float64_tols, float64_tols_loose, nbody, eccentricity):
     """ Tests on exact Kepler solutions
     """
     
     mass = 1. + np.random.random()
     nint_fac = 1024
+    # nint_fac = 2048
 
-    NBS, segmpos = choreo.NBodySyst.KeplerEllipse(nbody, nint_fac, mass, eccentricity)
+    NBS, ODE_dict = choreo.NBodySyst.KeplerEllipse(nbody, nint_fac, mass, eccentricity)
+    segmpos = ODE_dict["segmpos"]
     params_buf = NBS.segmpos_to_params(segmpos)
     action_grad = NBS.segmpos_params_to_action_grad(segmpos, params_buf)
+    action_grad_norm = np.linalg.norm(action_grad, ord = np.inf)
 
     ndof = action_grad.shape[0]
 
-    print(np.linalg.norm(action_grad))
+    print(action_grad_norm)
     assert np.allclose(action_grad, np.zeros((ndof), dtype=np.float64), rtol = float64_tols.rtol, atol = float64_tols.atol*10)  
+
+    segmmom = ODE_dict["segmmom"]
+    segmmom_rt = NBS.params_to_segmmom(params_buf)
+    
+    print(np.linalg.norm(segmmom - segmmom_rt))
+    assert np.allclose(segmmom, segmmom_rt, rtol = float64_tols_loose.rtol, atol = float64_tols_loose.atol)  
+
+    reg_x0 = ODE_dict["reg_x0"]
+    reg_v0 = ODE_dict["reg_v0"]
+
+    nsteps = 10
+    keep_freq = 1
+    nint_ODE = (NBS.segm_store-1) * keep_freq
+    method = "Gauss"
+    reg_init_freq = keep_freq
+    
+    rk = choreo.segm.multiprec_tables.ComputeImplicitRKTable(nsteps, method=method)
+    
+    vector_calls = ODE_dict["vector_calls"]
+    fun = ODE_dict["fun"]
+    gun = ODE_dict["gun"]
+    t_span = ODE_dict["t_span"]
+    
+    segmpos_ODE, segmmom_ODE = choreo.segm.ODE.ImplicitSymplecticIVP(
+        fun = fun                       ,
+        gun = gun                       ,
+        t_span = t_span                 ,
+        rk_x = rk, rk_v = rk            ,
+        keep_freq = keep_freq           ,
+        nint = nint_ODE                 ,
+        keep_init = True                ,
+        reg_x0 = reg_x0                 ,
+        reg_v0 = reg_v0                 ,
+        reg_init_freq = reg_init_freq   ,
+        vector_calls = vector_calls     ,
+    )
+
+    segmpos_ODE = np.ascontiguousarray(segmpos_ODE.reshape((NBS.segm_store, NBS.nsegm, NBS.geodim)).swapaxes(0, 1))
+    segmmom_ODE = np.ascontiguousarray(segmmom_ODE.reshape((NBS.segm_store, NBS.nsegm, NBS.geodim)).swapaxes(0, 1))
+    
+    print(np.linalg.norm(segmpos - segmpos_ODE))
+    assert np.allclose(segmpos, segmpos_ODE, rtol = float64_tols.rtol, atol = float64_tols.atol)  
+
+    print(np.linalg.norm(segmmom - segmmom_ODE))
+    assert np.allclose(segmmom, segmmom_ODE, rtol = float64_tols_loose.rtol, atol = float64_tols_loose.atol)  
+    

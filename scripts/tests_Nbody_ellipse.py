@@ -2,97 +2,42 @@ import numpy as np
 import cmath
 import math
 
-import kepler
+import choreo
+
+from choreo.scipy_plus.cython.kepler import kepler
+
 import pyquickbench
 
 
-# Solves E - e * sin(E) = M for E given M and e with 0 <= e < 1
-def kepler_solve(M, e, tol=1e-12):
-    
-    assert e >= 0.
-    assert e < 1.
-    
-    twopi = 2*math.pi
-    
-    R = math.floor(M / twopi)
-    dEo = R * twopi
-    
-    Mo = M - dEo
-    
-    E = Mo
-    fE = Mo + e * math.sin(E)
-    r = fE - E
-    
-    n = 1
-    
-    while np.abs(r) > tol:
-            
-        E = fE
-        fE = Mo + e * math.sin(E)
-        r = fE - E
-        
-        n += 1
-    
-    return dEo + fE, r, n
+ecc = 0.5
+M = np.pi
 
+E, cosf, sinf, dcosf, dsinf = kepler(M, ecc)
 
-e = 0.9
+print(E)
+print(cosf)
+print(sinf)
+print(dcosf)
+print(dsinf)
+print()
 
-tol = 1e-12
+dM = 1e-5
 
-N = 10000
+Ep, cosfp, sinfp, dcosfp, dsinfp = kepler(M+dM, ecc)
+Em, cosfm, sinfm, dcosfm, dsinfm = kepler(M-dM, ecc)
 
-Mo = 0.
-arr_M = np.linspace(0., math.pi, num=N, endpoint=True) + Mo
+dcosf_fd = (cosfp - cosfm)/(2*dM)
+dsinf_fd = (sinfp - sinfm)/(2*dM)
 
-arr_r = np.empty(N, dtype=np.float64)
-arr_n = np.empty(N, dtype=np.intp)
+print()
+print(dcosf)
+print(dcosf_fd)
 
-arr_diff = np.empty(N, dtype=np.float64)
+print()
+print(dsinf)
+print(dsinf_fd)
 
-# for i in range(N):
-#             
-#     E, arr_r[i], arr_n[i] = kepler_solve(arr_M[i] , e, tol)
-#     Ek = kepler.solve(arr_M[i], e)
-#     
-#     arr_diff[i] = E - Ek
-#     
-#     
-#     
-#     
-# 
-# imax = arr_n.argmax()
-# print(arr_n[imax])
-# print(arr_r[imax])
-# print()
-#     
-# imax = abs(arr_r).argmax()
-# print(arr_n[imax])
-# print(arr_r[imax])
-#     
-# print()    
-#     
-# imax = abs(arr_diff).argmax()
-# print(abs(arr_diff[imax]))
-# print(arr_n[imax])
-# print(arr_r[imax])
-#     
+print()
+print(abs(dcosf_fd - dcosf))
+print(abs(dsinf_fd - dsinf))
 
-TT = pyquickbench.TimeTrain()
-    
-
-
-for i in range(N):            
-    _ = kepler_solve(arr_M[i] , e, tol)
-
-TT.toc("iterated fun")
-
-arr_E = kepler.solve(arr_M, e)
-TT.toc("Kepler")
-
-print(TT)
-
-arr_r = np.abs(arr_E - e*np.sin(arr_E)-arr_M)
-    
-print(arr_r.max())
-            

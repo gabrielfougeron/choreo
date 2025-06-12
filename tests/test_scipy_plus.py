@@ -90,7 +90,7 @@ def test_blas_matmul(float64_tols, m, n, k):
     assert np.allclose(AB_np, AB_blas, rtol = float64_tols.rtol, atol = float64_tols.atol) 
             
 @ParametrizeDocstrings
-def test_kepler(float64_tols_strict):
+def test_kepler(float64_tols_strict, float64_tols_loose):
     """ Tests Kepler solver.
     """
     
@@ -101,6 +101,26 @@ def test_kepler(float64_tols_strict):
 
             print(abs(E - ecc * np.sin(E) - M))
             assert abs(E - ecc * np.sin(E) - M) <= float64_tols_strict.atol + 2 * float64_tols_strict.rtol * M
+                
+            def f(x):
+                Ep, cosfp, sinfp, dcosfp, dsinfp = choreo.scipy_plus.cython.kepler.kepler(x[0], ecc)
+                return np.array([cosfp, sinfp])
+                
+            def grad_f(x, dx):
+                Ep, cosfp, sinfp, dcosfp, dsinfp = choreo.scipy_plus.cython.kepler.kepler(x[0], ecc)
+                return np.array([dcosfp * dx[0], dsinfp * dx[0]])
+                    
+            err = compare_FD_and_exact_grad(
+                f               ,
+                grad_f          ,
+                np.array([M])   ,
+                order=2         ,
+                vectorize=False ,
+                relative = True ,
+            )
+            
+            print(err.min())
+            assert err.min() < 100 * float64_tols_loose.rtol # precision is not great when e is near 1
             
     imax = 2**12
     for i in range(imax):

@@ -23,7 +23,6 @@ cdef extern from "float.h":
 cimport scipy.linalg.cython_blas
 from choreo.scipy_plus.cython.blas_consts cimport *
 
-from choreo.scipy_plus.cython.kepler cimport kepler
 from choreo.cython._ActionSym cimport ActionSym
 
 import scipy

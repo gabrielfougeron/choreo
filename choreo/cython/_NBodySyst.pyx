@@ -2262,9 +2262,7 @@ cdef class NBodySyst():
         assert NBS.nsegm == 1
         assert NBS.geodim == 2
 
-        dict_res = {
-            "t_span" : (0., 1./NBS.nint_min)   ,
-        }
+        dict_res = NBS.Get_ODE_def()
 
         cdef np.ndarray[double, ndim=3, mode='c'] segmpos_np = np.empty((NBS.nsegm, NBS.segm_store, NBS.geodim), dtype=np.float64)
         cdef double[:,:,::1] segmpos = segmpos_np
@@ -2275,8 +2273,8 @@ cdef class NBodySyst():
         dict_res["segmmom"] = segmmom_np
 
         cdef double r, p, fac, a
-        cdef double drdtrue_anomaly
         cdef double eccentric_anomaly, cos_true_anomaly, sin_true_anomaly, mean_anomaly 
+        cdef double dcos_true_anomaly, dsin_true_anomaly
         
         fac = 0.
         for ib in range(1,nbody):
@@ -2293,23 +2291,27 @@ cdef class NBodySyst():
 
             mean_anomaly = (cpi * iint) / NBS.segm_size
 
-            eccentric_anomaly, cos_true_anomaly, sin_true_anomaly = kepler(mean_anomaly, eccentricity)
+            eccentric_anomaly, cos_true_anomaly, sin_true_anomaly, dcos_true_anomaly, dsin_true_anomaly = kepler(mean_anomaly, eccentricity)
 
-            a = 1. / (1. + eccentricity * cos_true_anomaly)
+            dcos_true_anomaly *= ctwopi
+            dsin_true_anomaly *= ctwopi
 
-            r = p * a
-            drdtrue_anomaly = - r * a * (1. - eccentricity * sin_true_anomaly)
+            fac = 1. / (1. + eccentricity * cos_true_anomaly)
+
+            r = p * fac
 
             segmpos[0, iint, 0] = r * cos_true_anomaly
             segmpos[0, iint, 1] = r * sin_true_anomaly
 
-
+            segmmom[0, iint, 0] =  r * fac * dcos_true_anomaly
+            segmmom[0, iint, 1] =  r *( ( - eccentricity * sin_true_anomaly) * fac * dcos_true_anomaly + dsin_true_anomaly)
 
         NBS.inplace_segmvel_to_segmmom(segmmom)
 
-        
+        dict_res["reg_x0"] = np.ascontiguousarray(segmpos_np.swapaxes(0, 1).reshape(NBS.segm_store,-1))
+        dict_res["reg_v0"] = np.ascontiguousarray(segmmom_np.swapaxes(0, 1).reshape(NBS.segm_store,-1))
 
-        return NBS, segmpos_np
+        return NBS, dict_res
 
     @cython.final
     def GetKrylovJacobian(self, Use_exact_Jacobian=True, jac_options_kw={}):
