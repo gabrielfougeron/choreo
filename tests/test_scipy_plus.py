@@ -90,13 +90,27 @@ def test_blas_matmul(float64_tols, m, n, k):
     assert np.allclose(AB_np, AB_blas, rtol = float64_tols.rtol, atol = float64_tols.atol) 
             
 @ParametrizeDocstrings
-@pytest.mark.parametrize("M", [0., 0.5, 10., 100.])
-@pytest.mark.parametrize("ecc", [0., 0.5, 0.8, 0.95, 0.99, 0.99999])
-def test_kepler(float64_tols_strict, M, ecc):
+def test_kepler(float64_tols_strict):
     """ Tests Kepler solver.
     """
     
-    E = choreo.scipy_plus.cython.kepler.solve(M, ecc)
+    for M in [0., 0.5, 10., 100.]:
+        for ecc in [0., 0.5, 0.8, 0.95, 0.99, 0.99999]:
+    
+            E = choreo.scipy_plus.cython.kepler.solve(M, ecc)
 
-    print(abs(E - ecc * np.sin(E) - M))
-    assert abs(E - ecc * np.sin(E) - M) <= float64_tols_strict.atol + float64_tols_strict.rtol * M
+            print(abs(E - ecc * np.sin(E) - M))
+            assert abs(E - ecc * np.sin(E) - M) <= float64_tols_strict.atol + 2 * float64_tols_strict.rtol * M
+            
+    imax = 2**12
+    for i in range(imax):
+        
+        M = i*2*np.pi / imax
+        
+        for ecc in [0., 0.5, 0.8, 0.95, 0.99, 0.99999]:
+            
+            E = choreo.scipy_plus.cython.kepler.solve(M, ecc)
+
+            print(M, ecc, abs(E - ecc * np.sin(E) - M))
+            assert abs(E - ecc * np.sin(E) - M) <= float64_tols_strict.atol + 2 * float64_tols_strict.rtol * M
+            

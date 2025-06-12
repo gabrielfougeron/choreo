@@ -105,19 +105,19 @@ cpdef (double, double, double) kepler(double M, double ecc) noexcept nogil:
     cdef double cE = ccos(E)
     cdef double denom = 1. + cE
 
-    cdef double sE, tanf2, tanf2_2, denom2
+    cdef double sE, tanf2, tanf2_2
     cdef double cosf, sinf
 
-    if denom > 1e-10:
+    if denom > 1e-16:
 
         sE = csin(E)
 
         tanf2 = csqrt((1+ecc)/(1-ecc)) * sE / denom
         tanf2_2 = tanf2 * tanf2
 
-        denom2 = 1 / (1 + tanf2_2)
-        cosf = (1 - tanf2_2) * denom2
-        sinf = 2 * tanf2 * denom2
+        denom = 1 / (1 + tanf2_2)
+        cosf = (1 - tanf2_2) * denom
+        sinf = 2 * tanf2 * denom
 
     else:
 

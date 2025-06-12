@@ -821,7 +821,7 @@ def test_custom_inter_law(float64_tols):
     Sym_list = []
     
     # Classical gravity_pot
-    inter_law = scipy.LowLevelCallable.from_cython(choreo.cython._NBodySyst, "gravity_pot")
+    inter_law = scipy.LowLevelCallable.from_cython(choreo.cython._NBodySyst_ann, "gravity_pot")
     NBS = choreo.NBodySyst(geodim, nbody, bodymass, bodycharge, Sym_list, inter_law)
     params_buf = np.random.random((NBS.nparams))   
     action_grad_grav = NBS.params_to_action_grad(params_buf)

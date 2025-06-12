@@ -27,6 +27,7 @@ src_ext = '.pyx'
 cython_extnames_safemath = [
     ("choreo.cython._ActionSym"                 , False),
     ("choreo.cython._NBodySyst"                 , False),
+    ("choreo.cython._NBodySyst_ann"             , False),
     ("choreo.cython.pyfftw_fake"                , False),
     ("choreo.segm.cython.ODE"                   , False),
     ("choreo.segm.cython.quad"                  , False),
