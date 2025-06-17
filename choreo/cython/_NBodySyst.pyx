@@ -2230,7 +2230,7 @@ cdef class NBodySyst():
         cdef double angle = ctwopi / nbody 
         cdef double cos_angle = ccos(angle)
         cdef double sin_angle = csin(angle)
-        cdef double[:,::1] SpaceRot = np.array([[cos_angle, sin_angle],[-sin_angle, cos_angle]])
+        cdef double[:,::1] SpaceRot = np.array([[cos_angle, sin_angle],[-sin_angle, cos_angle]], dtype=np.float64)
 
         Sym_1 = ActionSym(
             BodyPerm.copy() ,
@@ -2244,7 +2244,7 @@ cdef class NBodySyst():
         for ib in range(1,nbody):
             BodyPerm[ib] = nbody-ib
 
-        SpaceRot = np.array([[1., 0.],[0., -1.]])
+        SpaceRot = np.array([[1., 0.],[0., -1.]], dtype=np.float64)
 
         Sym_2 = ActionSym(
             BodyPerm.copy() ,
@@ -2293,9 +2293,6 @@ cdef class NBodySyst():
 
             eccentric_anomaly, cos_true_anomaly, sin_true_anomaly, dcos_true_anomaly, dsin_true_anomaly = kepler(mean_anomaly, eccentricity)
 
-            dcos_true_anomaly *= ctwopi
-            dsin_true_anomaly *= ctwopi
-
             fac = 1. / (1. + eccentricity * cos_true_anomaly)
 
             r = p * fac
@@ -2303,8 +2300,11 @@ cdef class NBodySyst():
             segmpos[0, iint, 0] = r * cos_true_anomaly
             segmpos[0, iint, 1] = r * sin_true_anomaly
 
-            segmmom[0, iint, 0] =  r * fac * dcos_true_anomaly
-            segmmom[0, iint, 1] =  r *( ( - eccentricity * sin_true_anomaly) * fac * dcos_true_anomaly + dsin_true_anomaly)
+            r *= ctwopi
+            dcos_true_anomaly *= fac
+
+            segmmom[0, iint, 0] =  r * dcos_true_anomaly
+            segmmom[0, iint, 1] =  r * ( ( - eccentricity * sin_true_anomaly) * dcos_true_anomaly + dsin_true_anomaly)
 
         NBS.inplace_segmvel_to_segmmom(segmmom)
 
@@ -4716,6 +4716,69 @@ cdef class NBodySyst():
                     i += 1
 
         return res
+
+    # Constraints + periodicity + ODE ?
+    @cython.final
+    cpdef Compute_ODE_default(self, double[:,:,::1] xo, double[:,:,::1] vo, double[:,:,::1] xf, double[:,:,::1] vf):
+
+        assert xo.shape[0] == self.segm_store
+        assert xo.shape[1] == self.nsegm
+        assert xo.shape[2] == self.geodim
+
+        assert vo.shape[0] == self.segm_store
+        assert vo.shape[1] == self.nsegm
+        assert vo.shape[2] == self.geodim
+
+        assert xf.shape[0] == self.segm_store
+        assert xf.shape[1] == self.nsegm
+        assert xf.shape[2] == self.geodim
+
+        assert vf.shape[0] == self.segm_store
+        assert vf.shape[1] == self.nsegm
+        assert vf.shape[2] == self.geodim
+
+        cdef int nelem
+
+        cdef Py_ssize_t isegm, jsegm
+        cdef Py_ssize_t idim, jdim
+        cdef Py_ssize_t iint, iend
+
+        iend = self.segm_store-1
+
+        cdef np.ndarray[double, ndim=3, mode='c'] dx_np = np.empty((self.segm_store, self.nsegm, self.geodim), dtype=np.float64)
+        cdef np.ndarray[double, ndim=3, mode='c'] dv_np = np.empty((self.segm_store, self.nsegm, self.geodim), dtype=np.float64)
+
+        cdef double[:,:,::1] dx = dx_np
+        cdef double[:,:,::1] dv = dv_np
+
+        for isegm in range(self.nsegm):
+
+            if self._PerDefEnd_TimeRev[isegm] > 0:
+                iint = 0
+            else:
+                iint = iend
+
+            jsegm = self._PerDefEnd_Isegm[isegm]
+
+            for idim in range(self.geodim):
+
+                dx[0,isegm,idim] = xf[iend,isegm,idim]
+                for jdim in range(self.geodim):
+                    dx[0,isegm,idim] -= self._PerDefEnd_SpaceRotPos[isegm,idim,jdim] * xo[iint,jsegm,jdim]
+
+                dv[0,isegm,idim] = vf[iend,isegm,idim]
+                for jdim in range(self.geodim):
+                    dv[0,isegm,idim] -= self._PerDefEnd_SpaceRotVel[isegm,idim,jdim] * vo[iint,jsegm,jdim]
+
+        nelem = (self.segm_store-1) * self.nsegm * self.geodim
+
+        scipy.linalg.cython_blas.dcopy(&nelem,&xf[1,0,0],&int_one,&dx[1,0,0],&int_one)
+        scipy.linalg.cython_blas.dcopy(&nelem,&vf[1,0,0],&int_one,&dv[1,0,0],&int_one)
+
+        scipy.linalg.cython_blas.daxpy(&nelem,&minusone_double,&xo[1,0,0],&int_one,&dx[1,0,0],&int_one)
+        scipy.linalg.cython_blas.daxpy(&nelem,&minusone_double,&vo[1,0,0],&int_one,&dv[1,0,0],&int_one)
+
+        return dx_np, dv_np
 
     @cython.final
     def Compute_init_pos_mom(self, double[::1] params_mom_buf):

@@ -1,43 +1,28 @@
 import numpy as np
 import cmath
 import math
-
-import choreo
-
-from choreo.scipy_plus.cython.kepler import kepler
-
+import matplotlib.pyplot as plt
 import pyquickbench
 
 
-ecc = 0.5
-M = np.pi
+ecc = 0.99
+num = 1000
 
-E, cosf, sinf, dcosf, dsinf = kepler(M, ecc)
+bsa = np.sqrt(1-ecc*ecc)
 
-print(E)
-print(cosf)
-print(sinf)
-print(dcosf)
-print(dsinf)
-print()
+x = np.empty(num)
+y = np.empty(num)
 
-dM = 1e-5
+for i in range(num):
+    
+    t = 2*np.pi * i / (num-1)
+    
+    x[i] = np.cos(t)
+    y[i] = bsa*np.sin(t)
+    
 
-Ep, cosfp, sinfp, dcosfp, dsinfp = kepler(M+dM, ecc)
-Em, cosfm, sinfm, dcosfm, dsinfm = kepler(M-dM, ecc)
+plt.plot(x,y)
+plt.axis('equal')
+plt.show()
 
-dcosf_fd = (cosfp - cosfm)/(2*dM)
-dsinf_fd = (sinfp - sinfm)/(2*dM)
-
-print()
-print(dcosf)
-print(dcosf_fd)
-
-print()
-print(dsinf)
-print(dsinf_fd)
-
-print()
-print(abs(dcosf_fd - dcosf))
-print(abs(dsinf_fd - dsinf))
 

@@ -915,7 +915,6 @@ def test_RK_vs_spectral(NBS, params_buf, vector_calls, LowLevel, NoSymIfPossible
     
     action_grad = NBS.segmpos_params_to_action_grad(segmpos, params_buf)
     action_grad_norm = np.linalg.norm(action_grad, ord = np.inf)
-    tol = 100 * action_grad_norm
     
     ODE_Syst = NBS.Get_ODE_def(params_buf, vector_calls = vector_calls, LowLevel = LowLevel, NoSymIfPossible = NoSymIfPossible)
     
@@ -936,13 +935,13 @@ def test_RK_vs_spectral(NBS, params_buf, vector_calls, LowLevel, NoSymIfPossible
 
     segmpos_ODE = np.ascontiguousarray(segmpos_ODE.reshape((NBS.segm_store, NBS.nsegm, NBS.geodim)).swapaxes(0, 1))
 
+    tol = 100 * action_grad_norm
     print(np.linalg.norm(segmpos - segmpos_ODE))
     assert np.allclose(segmpos, segmpos_ODE, rtol = tol, atol = tol)  
     
-    tol = 20000 * action_grad_norm 
-    
     segmmom_ODE = np.ascontiguousarray(segmmom_ODE.reshape((NBS.segm_store, NBS.nsegm, NBS.geodim)).swapaxes(0, 1))
-
+    
+    tol = 20000 * action_grad_norm 
     print(np.linalg.norm(segmmom - segmmom_ODE))
     assert np.allclose(segmmom, segmmom_ODE, rtol = tol, atol = tol)        
     
@@ -1607,3 +1606,80 @@ def test_Kepler(float64_tols, float64_tols_loose, nbody, eccentricity):
     print(np.linalg.norm(segmmom - segmmom_ODE))
     assert np.allclose(segmmom, segmmom_ODE, rtol = float64_tols_loose.rtol, atol = float64_tols_loose.atol)  
     
+@ParametrizeDocstrings
+@pytest.mark.parametrize("NoSymIfPossible", [True, False])
+@pytest.mark.parametrize("LowLevel", [True, False])
+@pytest.mark.parametrize("vector_calls", [True, False])
+@pytest.mark.parametrize(("NBS", "params_buf"), [pytest.param(NBS, params_buf, id=name) for name, (NBS, params_buf) in Sols_dict.items()])
+def test_RK_vs_spectral_periodicity_default(float64_tols, NBS, params_buf, vector_calls, LowLevel, NoSymIfPossible):
+    """ Tests that the Fourier periodic spectral solver agrees with the time forward Runge-Kutta solver.
+    Tests that Fourier periodic trajectories have zero periodicity default and satisfy initial constraints.
+    """
+        
+    NBS.ForceGreaterNStore = True
+    
+    action_grad = NBS.params_to_action_grad(params_buf)
+    action_grad_norm = np.linalg.norm(action_grad, ord = np.inf)
+    
+    ODE_Syst = NBS.Get_ODE_def(params_buf, vector_calls = vector_calls, LowLevel = LowLevel, NoSymIfPossible = NoSymIfPossible, regular_init=True)
+    
+    nsteps = 10
+    keep_freq = 1
+    nint_ODE = (NBS.segm_store-1) * keep_freq
+    method = "Gauss"
+    
+    rk = choreo.segm.multiprec_tables.ComputeImplicitRKTable(nsteps, method=method)
+    
+    xf, vf = choreo.segm.ODE.ImplicitSymplecticIVP(
+        rk_x = rk               ,
+        rk_v = rk               ,
+        keep_freq = keep_freq   ,
+        nint = nint_ODE         ,
+        keep_init = True        ,
+        **ODE_Syst              ,
+    )
+    
+    xo = ODE_Syst["reg_x0"].reshape(NBS.segm_store, NBS.nsegm, NBS.geodim)
+    vo = ODE_Syst["reg_v0"].reshape(NBS.segm_store, NBS.nsegm, NBS.geodim)    
+    xf = xf.reshape(NBS.segm_store, NBS.nsegm, NBS.geodim)
+    vf = vf.reshape(NBS.segm_store, NBS.nsegm, NBS.geodim)
+    
+    tol = 100 * action_grad_norm
+    dx = xf-xo
+    print(np.linalg.norm(dx))
+    assert np.allclose(dx, np.zeros_like(dx), rtol = tol, atol = tol)  
+    
+    tol = 20000 * action_grad_norm 
+    dv = vf-vo
+    print(np.linalg.norm(dv))
+    assert np.allclose(dv, np.zeros_like(dv), rtol = tol, atol = tol)   
+    
+    n = (NBS.segm_store-1)
+    
+    dx = NBS.Compute_periodicity_default_pos(xo[0,:,:].reshape(-1), xo[n,:,:].reshape(-1))
+    print(np.linalg.norm(dx))
+    assert np.allclose(dx, np.zeros_like(dx), rtol = float64_tols.rtol, atol = float64_tols.atol)  
+    
+    tol = 100 * action_grad_norm
+    dx = NBS.Compute_periodicity_default_pos(xf[0,:,:].reshape(-1), xf[n,:,:].reshape(-1))
+    print(np.linalg.norm(dx))
+    assert np.allclose(dx, np.zeros_like(dx), rtol = tol, atol = tol)   
+      
+    dv = NBS.Compute_periodicity_default_vel(vo[0,:,:].reshape(-1), vo[n,:,:].reshape(-1))
+    print(np.linalg.norm(dv))
+    assert np.allclose(dv, np.zeros_like(dv), rtol = float64_tols.rtol, atol = float64_tols.atol)  
+    
+    tol = 20000 * action_grad_norm 
+    dv = NBS.Compute_periodicity_default_vel(vf[0,:,:].reshape(-1), vf[n,:,:].reshape(-1))
+    print(np.linalg.norm(dv))
+    assert np.allclose(dv, np.zeros_like(dv), rtol = tol, atol = tol) 
+
+    dx, dv = NBS.Compute_ODE_default(xo, vo, xf, vf)
+
+    tol = 100 * action_grad_norm
+    print(np.linalg.norm(dx))
+    assert np.allclose(dx, np.zeros_like(dx), rtol = tol, atol = tol)  
+    
+    tol = 20000 * action_grad_norm 
+    print(np.linalg.norm(dv))
+    assert np.allclose(dv, np.zeros_like(dv), rtol = tol, atol = tol)   
