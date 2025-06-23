@@ -41,7 +41,7 @@ def null_space(A, eps = 1e-12):
         # nullspace_dim = m - rank
         # nullspace = np.zeros((m, nullspace_dim), dtype=np.float64)
 
-        return Q[:, rank:]
+        return np.ascontiguousarray(Q[:, rank:])
 
         # return scipy.linalg.null_space(A, rcond=eps)
 

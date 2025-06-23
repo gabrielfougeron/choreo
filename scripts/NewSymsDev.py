@@ -37,9 +37,9 @@ def main():
         relative_timings = True  ,
     )
 
-    # for config_name in tests.test_config.AllConfigNames_list:
-    # for config_name in ['3q3q']:
-    for config_name in ['6q6q']:
+    for config_name in tests.test_config.AllConfigNames_list:
+    # for config_name in ['2D1_3dim']:
+    # for config_name in ['6q6q']:
         print()
         # print("  OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO  ")
         print()
@@ -59,21 +59,7 @@ def doit(config_name):
     
     NBS = tests.test_config.load_from_config_file(config_name)
     
-    assert (NBS.BinSpaceRotIsId.all() == (NBS.BinSourceSegm != NBS.BinTargetSegm).all())
-    
-    for ibin in range(NBS.nbin_segm_unique):
-    #     
-        print(ibin, NBS.BinSpaceRotIsId[ibin], NBS.BinSourceSegm[ibin], NBS.BinTargetSegm[ibin])
-        # print()
-    #     
-
-        # print(f'{self.nbin_segm_unique = }')
-        # print(f'{self.nsegm = }')
-        # print(f'{self.BinSourceSegm = }')
-        # print(f'{self.BinTargetSegm = }')
-        # print(f'{self.BinSpaceRotIsId = }')
-        # print()
-
+    print(NBS.params_basis_initpos)
     
     
     

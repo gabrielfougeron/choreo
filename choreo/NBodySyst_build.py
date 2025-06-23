@@ -8,6 +8,7 @@ import math
 from matplotlib import pyplot as plt
 from matplotlib import colormaps
 
+import choreo.scipy_plus.cython.misc
 import choreo.scipy_plus.linalg
 from choreo.cython import ActionSym # Beware of circular imports
 
@@ -492,14 +493,7 @@ def ComputeParamBasis_InitVal(nbody, geodim, InstConstraints, bodymass, MomCons=
     
     nparam = NullSpace.shape[1]
     NullSpace = NullSpace.reshape(nbody, geodim, nparam)
-
-    for ib in range(nbody): 
-        for idim in range(geodim):
-            for iparam in range(nparam):
-
-                if abs(NullSpace[ib, idim, iparam]) < eps:
-                    NullSpace[ib, idim, iparam] = 0
-       
+    choreo.scipy_plus.cython.misc.proj_to_zero(NullSpace, eps=eps)
     return np.ascontiguousarray(NullSpace)
 
 def ComputeParamBasis_Loop(nloop, loopgen, geodim, LoopGenConstraints, eps=1e-12):
@@ -542,28 +536,14 @@ def ComputeParamBasis_Loop(nloop, loopgen, geodim, LoopGenConstraints, eps=1e-12
                     cstr_mat[icstr, idim, 0, idim, 0] -= 1
                     cstr_mat[icstr, idim, 1, idim, 1] -= 1
 
-            # Projection towards 0 will increase sparsity of NullSpace
-            for icstr in range(ncstr):
-                for idim in range(geodim):
-                    for ift in range(2):
-                        for jdim in range(geodim):
-                            for jft in range(2):
-
-                                if abs(cstr_mat[icstr, idim, ift, jdim, jft]) < eps :
-                                    cstr_mat[icstr, idim, ift, jdim, jft] = 0
-
+            choreo.scipy_plus.cython.misc.proj_to_zero(cstr_mat, eps=eps)
             cstr_mat_reshape = cstr_mat.reshape((ncstr*geodim*2, geodim*2))
 
             NullSpace = choreo.scipy_plus.linalg.null_space(cstr_mat_reshape)
             nparam = NullSpace.shape[1]
             NullSpace = NullSpace.reshape(geodim,2,nparam)
 
-            for idim in range(geodim):
-                for ift in range(2):
-                    for iparam in range(nparam):
-
-                        if abs(NullSpace[idim, ift, iparam]) < eps:
-                            NullSpace[idim, ift, iparam] = 0
+            choreo.scipy_plus.cython.misc.proj_to_zero(NullSpace, eps=eps)
 
             NullSpace_all.append(NullSpace)
 

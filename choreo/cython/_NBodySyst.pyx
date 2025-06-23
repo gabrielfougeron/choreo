@@ -22,6 +22,7 @@ cdef extern from "float.h":
 
 import choreo.metadata
 
+import choreo.scipy_plus.cython.misc
 cimport scipy.linalg.cython_blas
 from choreo.scipy_plus.cython.blas_consts cimport *
 from choreo.scipy_plus.cython.ccallback cimport ccallback_t, ccallback_prepare, ccallback_release, CCALLBACK_DEFAULTS, ccallback_signature_t
@@ -545,6 +546,16 @@ cdef class NBodySyst():
     def ncoeff_min_loop(self):
         return np.asarray(self._ncoeff_min_loop)
 
+    cdef double[:,::1] _params_basis_initpos
+    @property
+    def params_basis_initpos(self):
+        return np.asarray(self._params_basis_initpos)
+
+    cdef double[:,::1] _params_basis_initmom
+    @property
+    def params_basis_initmom(self):
+        return np.asarray(self._params_basis_initmom)
+
     cdef readonly list Sym_list
     cdef readonly object BodyGraph
     cdef readonly object SegmGraph
@@ -612,7 +623,7 @@ cdef class NBodySyst():
 
             nppl = self._params_basis_shapes[il,2]
             assert self._nint % (2*self._ncoeff_min_loop[il]) == 0
-            npr = self._nint //  (2*self._ncoeff_min_loop[il])
+            npr = self._nint // (2*self._ncoeff_min_loop[il])
             
             params_shapes_list.append((npr, self._nnz_k_shapes[il,0], nppl))
             ifft_shapes_list.append((npr+1, self._nnz_k_shapes[il,0], nppl))
@@ -1535,7 +1546,7 @@ cdef class NBodySyst():
         cdef int size
         cdef Py_ssize_t iint
 
-        self._CoMMat = np.zeros((self.nsegm, self.geodim, self.geodim), dtype=np.float64)
+        self._CoMMat = np.zeros((self.geodim, self.nsegm, self.geodim), dtype=np.float64)
 
         size = self.geodim * self.geodim
 
@@ -1550,7 +1561,9 @@ cdef class NBodySyst():
 
             assert Sym.TimeRev == 1
 
-            scipy.linalg.cython_blas.daxpy(&size,&mul,&Sym._SpaceRot[0,0],&int_one,&self._CoMMat[isegm,0,0],&int_one)
+            for idim in range(self.geodim):
+                for jdim in range(self.geodim):
+                   self._CoMMat[idim, isegm, jdim] += mul * Sym._SpaceRot[idim, jdim]
 
         size = self.nsegm * self.geodim * self.geodim
         mass = 1./totmass
@@ -1904,20 +1917,77 @@ cdef class NBodySyst():
             self._segmcharge[isegm] = self._loopcharge[self._bodyloop[self._intersegm_to_body[isegm]]]
 
     @cython.final
-    def Find_ODE_params_basis(self):
+    def Find_ODE_params_basis(self, bint MomCons = True):
 
-        cdef Py_ssize_t ncstr, isegm
+        cdef Py_ssize_t ncstr, icstr, isegm, jsegm, idim, jdim, iparam
+        cdef double[:,:,:,::1] cstr_mat
+        cdef double eps = 1e-12
 
         ncstr = 0
-        for isegm in range(self.nsegm):
-            if self.TimeRev < 0:
-                ncstr += 1
 
-        cstr_mat = np.zeros((ncstr, self.nsegm, self.geodim), dtype = np.float64)
+        if MomCons:
+            ncstr += 1
 
+        if self.TimeRev < 0:
+            ncstr += self.nsegm
 
+        cstr_mat = np.zeros((ncstr, self.geodim, self.nsegm, self.geodim), dtype=np.float64)
+        icstr = -1
 
+        if MomCons:
+            icstr += 1
+            for idim in range(self.geodim):
+                for isegm in range(self.nsegm):
+                    for jdim in range(self.geodim):
+                        cstr_mat[icstr, idim, isegm, jdim] = self._CoMMat[idim, isegm, jdim]
 
+        if self.TimeRev < 0:
+
+            for isegm in range(self.nsegm):
+
+                icstr += 1
+                jsegm = self._PerDefBeg_Isegm[isegm]
+
+                for idim in range(self.geodim):
+                    cstr_mat[icstr, idim, isegm, idim] += 1.
+                    for jdim in range(self.geodim):
+                        cstr_mat[icstr, idim, jsegm, jdim] -= self._PerDefBeg_SpaceRotPos[jsegm, idim, jdim]
+
+        cstr_mat_reshape = np.asarray(cstr_mat).reshape((ncstr*self.geodim, self.nsegm*self.geodim))
+        choreo.scipy_plus.cython.misc.proj_to_zero(cstr_mat_reshape, eps=eps)
+        NullSpace_pos = choreo.scipy_plus.linalg.null_space(cstr_mat_reshape)
+        choreo.scipy_plus.cython.misc.proj_to_zero(NullSpace_pos, eps=eps)
+
+        self._params_basis_initpos = NullSpace_pos
+
+        cstr_mat = np.zeros((ncstr, self.geodim, self.nsegm, self.geodim), dtype=np.float64)
+        icstr = -1
+
+        if MomCons:
+            icstr += 1
+            for idim in range(self.geodim):
+                for isegm in range(self.nsegm):
+                    for jdim in range(self.geodim):
+                        cstr_mat[icstr, idim, isegm, jdim] = self._CoMMat[idim, isegm, jdim]
+
+        if self.TimeRev < 0:
+
+            for isegm in range(self.nsegm):
+
+                icstr += 1
+                jsegm = self._PerDefBeg_Isegm[isegm]
+
+                for idim in range(self.geodim):
+                    cstr_mat[icstr, idim, isegm, idim] += 1.
+                    for jdim in range(self.geodim):
+                        cstr_mat[icstr, idim, jsegm, jdim] -= self._PerDefBeg_SpaceRotVel[jsegm, idim, jdim]
+
+        cstr_mat_reshape = np.asarray(cstr_mat).reshape((ncstr*self.geodim, self.nsegm*self.geodim))
+        choreo.scipy_plus.cython.misc.proj_to_zero(cstr_mat_reshape, eps=eps)
+        NullSpace_mom = choreo.scipy_plus.linalg.null_space(cstr_mat_reshape)
+        choreo.scipy_plus.cython.misc.proj_to_zero(NullSpace_mom, eps=eps)
+        
+        self._params_basis_initmom = NullSpace_mom
 
     @cython.final
     @staticmethod
@@ -4546,9 +4616,18 @@ cdef class NBodySyst():
     @cython.final
     def ComputeCenterOfMass(self, double[:,:,::1] segmpos):
 
-        # return np.einsum("iqk,ipk->pq", np.asarray(self._CoMMat), np.asarray(segmpos))
+        # return np.einsum("qik,ik->q", np.asarray(self._CoMMat), np.asarray(segmpos).sum(axis=1))/self.segm_store
 
-        return np.einsum("iqk,ik->q", np.asarray(self._CoMMat), np.asarray(segmpos).sum(axis=1))/self.segm_store
+        cdef np.ndarray[double, ndim=2, mode='c'] segmpossum = np.asarray(segmpos).sum(axis=1)
+        cdef np.ndarray[double, ndim=1, mode='c'] res = np.empty(self.geodim, dtype=np.float64) 
+        
+        cdef int geodim = self.geodim
+        cdef int n = self.nsegm * self.geodim
+        cdef double mul = (1./segmpos.shape[1])
+
+        scipy.linalg.cython_blas.dgemv(transn,&n,&geodim,&mul,&self._CoMMat[0,0,0],&geodim,&segmpossum[0,0],&int_one,&zero_double,&res[0],&int_one)
+
+        return res
 
     @cython.final
     def Compute_periodicity_default_pos(self, double[::1] xo, double[::1] xf):

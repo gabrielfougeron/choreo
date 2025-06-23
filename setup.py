@@ -36,6 +36,7 @@ cython_extnames_safemath = [
     ("choreo.scipy_plus.cython.blas_consts"     , False),
     ("choreo.scipy_plus.cython.blas_cheatsheet" , False),
     ("choreo.scipy_plus.cython.kepler"          , False),
+    ("choreo.scipy_plus.cython.misc"            , False),
 ]
 
 cython_extnames = [item[0] for item in cython_extnames_safemath]
