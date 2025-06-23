@@ -393,11 +393,6 @@ cdef class NBodySyst():
     def n_sub_fft(self):
         return np.asarray(self._n_sub_fft)
 
-    cdef Py_ssize_t[::1] _iint_TimeRev
-    @property
-    def iint_TimeRev(self):
-        return np.asarray(self._iint_TimeRev)
-
     cdef Py_ssize_t[::1] _BinSourceSegm
     @property
     def BinSourceSegm(self):
@@ -474,11 +469,6 @@ cdef class NBodySyst():
     def PerDefBeg_Isegm(self):
         return np.asarray(self._PerDefBeg_Isegm)
 
-    cdef Py_ssize_t[::1] _PerDefBeg_TimeRev
-    @property
-    def PerDefBeg_TimeRev(self):
-        return np.asarray(self._PerDefBeg_TimeRev)
-
     cdef double[:,:,::1] _PerDefBeg_SpaceRotPos
     @property
     def PerDefBeg_SpaceRotPos(self):
@@ -494,10 +484,7 @@ cdef class NBodySyst():
     def PerDefEnd_Isegm(self):
         return np.asarray(self._PerDefEnd_Isegm)
 
-    cdef Py_ssize_t[::1] _PerDefEnd_TimeRev
-    @property
-    def PerDefEnd_TimeRev(self):
-        return np.asarray(self._PerDefEnd_TimeRev)
+    cdef readonly Py_ssize_t TimeRev
 
     cdef double[:,:,::1] _PerDefEnd_SpaceRotPos
     @property
@@ -900,11 +887,7 @@ cdef class NBodySyst():
 
         self.nbin_segm_tot, self.nbin_segm_unique = CountSegmentBinaryInteractions(BinarySegm, self.nsegm)
 
-        self._BinSourceSegm, self._BinTargetSegm, BinTimeRev, self._BinSpaceRot, self._BinProdChargeSum, self._BinProdChargeSumSource_ODE, self._BinProdChargeSumTarget_ODE = ReorganizeBinarySegments(BinarySegm)
-
-        # Not actually sure this is always true.
-        if not (BinTimeRev == 1).all():
-            raise ValueError("Catastrophic failure: BinTimeRev not as expected")
+        self._BinSourceSegm, self._BinTargetSegm, self._BinSpaceRot, self._BinProdChargeSum, self._BinProdChargeSumSource_ODE, self._BinProdChargeSumTarget_ODE = ReorganizeBinarySegments(BinarySegm)
 
         assert self._BinSourceSegm.shape[0] == self.nbin_segm_unique
         self._BinSpaceRotIsId = np.zeros((self.nbin_segm_unique), dtype=np.intc)
@@ -972,6 +955,8 @@ cdef class NBodySyst():
         self.SetConvenienceArrays()
         self.SetODEArrays()
         self.Update_ODE_params()
+
+        self.Find_ODE_params_basis()
 
         if MKL_FFT_AVAILABLE:
             self.fft_backend = "mkl"
@@ -1479,6 +1464,8 @@ cdef class NBodySyst():
     @cython.final
     def SetConvenienceArrays(self):
 
+        self.TimeRev = self.intersegm_to_all[0][1%self.nint_min].TimeRev
+
         cdef ActionSym Sym
         cdef Py_ssize_t isegm
 
@@ -1505,7 +1492,6 @@ cdef class NBodySyst():
             self._ALG_SpaceRotVel[il,:,:] = Sym._SpaceRot[:,:]
 
         self._PerDefBeg_Isegm = np.empty((self.nsegm), dtype=np.intp)
-        self._PerDefBeg_TimeRev = np.empty((self.nsegm), dtype=np.intp)
         self._PerDefBeg_SpaceRotPos = np.empty((self.nsegm, self.geodim, self.geodim), dtype=np.float64)
         self._PerDefBeg_SpaceRotVel = np.empty((self.nsegm, self.geodim, self.geodim), dtype=np.float64)
 
@@ -1518,14 +1504,13 @@ cdef class NBodySyst():
             self._PerDefBeg_Isegm[isegm] = self._bodysegm[ib, iint_uneven]
 
             Sym = self.intersegm_to_all[ib][iint_uneven]
-            self._PerDefBeg_TimeRev[isegm] = Sym.TimeRev
+            assert self.TimeRev == Sym.TimeRev
             self._PerDefBeg_SpaceRotPos[isegm,:,:] = Sym._SpaceRot[:,:]
 
             Sym = Sym.TimeDerivative()
             self._PerDefBeg_SpaceRotVel[isegm,:,:] = Sym._SpaceRot[:,:]
 
         self._PerDefEnd_Isegm = np.empty((self.nsegm), dtype=np.intp)
-        self._PerDefEnd_TimeRev = np.empty((self.nsegm), dtype=np.intp)
         self._PerDefEnd_SpaceRotPos = np.empty((self.nsegm, self.geodim, self.geodim), dtype=np.float64)
         self._PerDefEnd_SpaceRotVel = np.empty((self.nsegm, self.geodim, self.geodim), dtype=np.float64)
 
@@ -1538,7 +1523,7 @@ cdef class NBodySyst():
             self._PerDefEnd_Isegm[isegm] = self._bodysegm[ib, iint_uneven]
 
             Sym = self.intersegm_to_all[ib][iint_uneven]
-            self._PerDefEnd_TimeRev[isegm] = Sym.TimeRev
+            assert self.TimeRev == Sym.TimeRev
             self._PerDefEnd_SpaceRotPos[isegm,:,:] = Sym._SpaceRot[:,:]
 
             Sym = Sym.TimeDerivative()
@@ -1918,13 +1903,21 @@ cdef class NBodySyst():
             self._invsegmmass[isegm] = 1. / (self._loopmass[self._bodyloop[self._intersegm_to_body[isegm]]])
             self._segmcharge[isegm] = self._loopcharge[self._bodyloop[self._intersegm_to_body[isegm]]]
 
-        self._iint_TimeRev = np.empty((self.nint_min), dtype=np.intp)
-        for iint in range(self.nint_min):
-            # Is this always true ?
-            for ib in range(self.nbody):
-                assert self.intersegm_to_all[ib][iint].TimeRev == self.intersegm_to_all[0][iint].TimeRev
+    @cython.final
+    def Find_ODE_params_basis(self):
 
-            self._iint_TimeRev[iint] = self.intersegm_to_all[0][iint].TimeRev
+        cdef Py_ssize_t ncstr, isegm
+
+        ncstr = 0
+        for isegm in range(self.nsegm):
+            if self.TimeRev < 0:
+                ncstr += 1
+
+        cstr_mat = np.zeros((ncstr, self.nsegm, self.geodim), dtype = np.float64)
+
+
+
+
 
     @cython.final
     @staticmethod
@@ -1939,12 +1932,14 @@ cdef class NBodySyst():
         cdef Py_ssize_t il, k, idim
 
         cdef double complex fac = 1j*ctwopi
+        cdef double complex mul
 
         for il in range(nloop):
             for k in range(ncoeffs):
+                mul = fac*k
                 for idim in range(geodim):
-                    # all_coeffs[il,k,idim] *= fac*k # Causes weird Cython error on Windows
-                    all_coeffs[il,k,idim] = all_coeffs[il,k,idim] * (fac*k)
+                    # all_coeffs[il,k,idim] *= mul # Causes weird Cython error on Windows
+                    all_coeffs[il,k,idim] = all_coeffs[il,k,idim] * mul
 
     @cython.final
     @staticmethod
@@ -4567,7 +4562,7 @@ cdef class NBodySyst():
 
         for isegm in range(self.nsegm):
 
-            if self._PerDefEnd_TimeRev[isegm] > 0:
+            if self.TimeRev > 0:
 
                 i = isegm * self.geodim
 
@@ -4615,7 +4610,7 @@ cdef class NBodySyst():
 
         for isegm in range(self.nsegm):
 
-            if self._PerDefEnd_TimeRev[isegm] > 0:
+            if self.TimeRev > 0:
 
                 i = isegm * self.geodim
 
@@ -4662,7 +4657,7 @@ cdef class NBodySyst():
 
         for isegm in range(self.nsegm):
 
-            if self._PerDefBeg_TimeRev[isegm] < 0:
+            if self.TimeRev < 0:
 
                 i = isegm * self.geodim
 
@@ -4692,7 +4687,7 @@ cdef class NBodySyst():
 
         for isegm in range(self.nsegm):
 
-            if self._PerDefBeg_TimeRev[isegm] < 0:
+            if self.TimeRev < 0:
 
                 i = isegm * self.geodim
 
@@ -4744,12 +4739,12 @@ cdef class NBodySyst():
         cdef double[:,:,::1] dx = dx_np
         cdef double[:,:,::1] dv = dv_np
 
-        for isegm in range(self.nsegm):
+        if self.TimeRev > 0:
+            iint = 0
+        else:
+            iint = iend
 
-            if self._PerDefEnd_TimeRev[isegm] > 0:
-                iint = 0
-            else:
-                iint = iend
+        for isegm in range(self.nsegm):
 
             jsegm = self._PerDefEnd_Isegm[isegm]
 
@@ -5227,7 +5222,7 @@ cdef class NBodySyst():
                             for j in range(2):
                                 for k in range(2):
 
-                                    if self._iint_TimeRev[iint] > 0:
+                                    if ((iint % 2) == 0) or (self.TimeRev > 0):
                                         MM_source = np.asarray(MonodromyMat_in[i,isegm_source,:,k,ksegm_source,:])
 
                                     else:
@@ -5327,7 +5322,7 @@ cdef class NBodySyst():
                             for j in range(2):
                                 for k in range(2):
 
-                                    if self._iint_TimeRev[iint] > 0:
+                                    if ((iint % 2) == 0) or (self.TimeRev > 0):
 
                                         if (i == 0):
                                             MM_source_ptr = &segmpos_grad_in[isegm_source,0,k,ksegm_source,0]

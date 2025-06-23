@@ -942,7 +942,6 @@ def ReorganizeBinarySegments(BinarySegm):
     
     BinSourceSegm = []
     BinTargetSegm = []
-    BinTimeRev = []
     BinSpaceRot = []
     BinProdChargeSum = []
     BinProdChargeSumSource_ODE = []
@@ -958,7 +957,6 @@ def ReorganizeBinarySegments(BinarySegm):
 
             BinSourceSegm.append(isegm)
             BinTargetSegm.append(isegmp)
-            BinTimeRev.append(Sym.TimeRev)
             BinSpaceRot.append(Sym.SpaceRot)
             BinProdChargeSum.append(prodchargesum)
             BinProdChargeSumSource_ODE.append(prodchargesumsource_ode)
@@ -966,13 +964,12 @@ def ReorganizeBinarySegments(BinarySegm):
 
     BinSourceSegm = np.array(BinSourceSegm, dtype=np.intp)
     BinTargetSegm = np.array(BinTargetSegm, dtype=np.intp)
-    BinTimeRev = np.array(BinTimeRev, dtype=np.intp)
     BinSpaceRot = np.array(BinSpaceRot, dtype=np.float64)
     BinProdChargeSum = np.array(BinProdChargeSum, dtype=np.float64)
     BinProdChargeSumSource_ODE = np.array(BinProdChargeSumSource_ODE, dtype=np.float64)
     BinProdChargeSumTarget_ODE = np.array(BinProdChargeSumTarget_ODE, dtype=np.float64)
         
-    return BinSourceSegm, BinTargetSegm, BinTimeRev, BinSpaceRot, BinProdChargeSum, BinProdChargeSumSource_ODE, BinProdChargeSumTarget_ODE
+    return BinSourceSegm, BinTargetSegm, BinSpaceRot, BinProdChargeSum, BinProdChargeSumSource_ODE, BinProdChargeSumTarget_ODE
 
 def plot_given_2D(all_pos, filename, fig_size=(10,10), dpi=100, color=None, color_list=None, xlim=None, extend=0.03, CloseLoop=True):
 

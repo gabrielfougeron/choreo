@@ -37,6 +37,9 @@
     test_remove_all_syms_ODE
     test_ODE_grad_period_noopt
     test_ODE_grad_period_opt
+    test_Kepler
+    test_RK_vs_spectral_periodicity_default
+    test_center_of_mass
 
 """
 
@@ -1703,3 +1706,35 @@ def test_center_of_mass(float64_tols, NBS):
 
     print(np.linalg.norm(cm))
     assert np.linalg.norm(cm) < float64_tols.atol
+
+@ParametrizeDocstrings
+@pytest.mark.parametrize("NBS", [pytest.param(NBS, id=name) for name, NBS in NBS_dict.items()])
+def test_perdef(float64_tols, NBS):
+    """ A bunch of things that I use more or less implicitely. Them not being true would likely break something.
+    """
+        
+    assert NBS.RequiresGreaterNStore == (NBS.TimeRev < 0)
+        
+    for iint in range(NBS.nint_min):
+        
+        jint = (iint + 2) % NBS.nint_min
+        
+        for ib in range(NBS.nbody):
+            
+            Sym_i = NBS.intersegm_to_all[ib][iint]
+            Sym_j = NBS.intersegm_to_all[ib][jint]
+            
+            assert Sym_i.TimeRev == Sym_j.TimeRev
+    
+    for iint in range(NBS.nint_min):
+        # Is this always true ?
+        for ib in range(NBS.nbody):
+            
+            if (iint % 2) == 0:
+                TimeRev =  1
+            else:
+                TimeRev = NBS.TimeRev
+                
+            assert NBS.intersegm_to_all[ib][iint].TimeRev == TimeRev
+        
+            
