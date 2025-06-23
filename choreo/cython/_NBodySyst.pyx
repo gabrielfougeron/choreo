@@ -89,6 +89,14 @@ if NUMBA_AVAILABLE:
 from choreo.cython.optional_pyfftw cimport pyfftw
 from choreo.optional_pyfftw import p_pyfftw, PYFFTW_AVAILABLE
 
+# available, use_id, package_name
+All_fft_backends = {
+    "scipy" : (True                 , USE_SCIPY_FFT , "scipy"   ),
+    "mkl"   : (MKL_FFT_AVAILABLE    , USE_MKL_FFT   , "mkl_fft" ),
+    "ducc"  : (DUCC_FFT_AVAILABLE   , USE_DUCC_FFT  , "ducc0"   ),
+    "fftw"  : (PYFFTW_AVAILABLE     , USE_FFTW_FFT  , "pyfftw"  ),
+}
+
 from choreo.cython._NBodySyst_ann cimport *
 
 shortcut_name = {
@@ -262,28 +270,25 @@ cdef class NBodySyst():
 
         self.free_owned_memory()
 
-        if backend == "scipy":
-            self._fft_backend = USE_SCIPY_FFT
+        backend_prop = All_fft_backends.get(backend)
+
+        if backend_prop is None:
+
+            err_message = 'Invalid FFT backend. Here is an overview of possible options:\n'
+            available_dict = {True:"available",False:"unavailable"}
+
+            for name, (available, use_id, package_name) in All_fft_backends.items():
+                err_message += f'Backend "{name}" from package {package_name} is {available_dict[available]}.\n'
+
+            raise ValueError(err_message)
         
-        elif backend == "mkl":
-            if MKL_FFT_AVAILABLE:
-                self._fft_backend = USE_MKL_FFT
-            else:
-                raise ValueError("The package mkl_fft could not be loaded. Please check your local install.")
-        
-        elif backend == "ducc":
-            if DUCC_FFT_AVAILABLE:
-                self._fft_backend = USE_DUCC_FFT
-            else:
-                raise ValueError("The package ducc0 could not be loaded. Please check your local install.")
-        
-        elif backend == "fftw":
-            if PYFFTW_AVAILABLE:
-                self._fft_backend = USE_FFTW_FFT
-            else:
-                raise ValueError("The package pyfftw could not be loaded. Please check your local install.")
         else:
-            raise ValueError('Invalid FFT backend. Possible options are "scipy", "mkl", "ducc" or "fftw".')
+
+            available, use_id, package_name = backend_prop
+            if available:
+                self._fft_backend = use_id
+            else:
+                raise ValueError(f"The package {package_name} could not be loaded. Please check your local install.")
 
         if self._nint_fac > 0:
             self.allocate_owned_memory()
@@ -503,6 +508,11 @@ cdef class NBodySyst():
     @property
     def PerDefEnd_SpaceRotVel(self):
         return np.asarray(self._PerDefEnd_SpaceRotVel)
+
+    cdef double[:,:,::1] _CoMMat
+    @property
+    def CoMMat(self):
+        return np.asarray(self._CoMMat)
 
     cdef double[:,:,::1] _InitValPosBasis
     @property
@@ -882,21 +892,9 @@ cdef class NBodySyst():
         self.ChooseInterSegm()
         self.intersegm_to_all = AccumulateSegmSourceToTargetSym(self.SegmGraph, nbody, geodim, self.nint_min, self.nsegm, self._intersegm_to_iint, self._intersegm_to_body)
 
-
-
-
-
-    
         self.ChooseLoopGen()
         self.gensegm_to_all = AccumulateSegmSourceToTargetSym(self.SegmGraph, nbody, geodim, self.nint_min, self.nsegm, self._gensegm_to_iint, self._gensegm_to_body)
         self.GatherInterSym()
-
-        # self.SegmConstraints = AccumulateSegmentConstraints(self.SegmGraph, nbody, geodim, self.nsegm, self._bodysegm)
-
-        # Setting up forward ODE:
-        # - What are my parameters ?
-        # - Integration end + Lack of periodicity
-        # - Constraints on initial values => Parametrization 
 
         BinarySegm = FindAllBinarySegments(self.intersegm_to_all, nbody, self.nsegm, self.nint_min, self._intersegm_to_body, self._bodysegm, bodycharge)
 
@@ -971,11 +969,14 @@ cdef class NBodySyst():
 
         self.Compute_n_sub_fft()
 
+        self.SetConvenienceArrays()
         self.SetODEArrays()
         self.Update_ODE_params()
 
         if MKL_FFT_AVAILABLE:
             self.fft_backend = "mkl"
+        elif DUCC_FFT_AVAILABLE:
+            self.fft_backend = "ducc"
         else:
             self.fft_backend = "scipy"
 
@@ -1475,6 +1476,9 @@ cdef class NBodySyst():
             if (self._n_sub_fft[il]) not in [1,2]:
                 raise ValueError(f"Catastrophic failure : {self._n_sub_fft[il] = } not in [1,2]")
 
+    @cython.final
+    def SetConvenienceArrays(self):
+
         cdef ActionSym Sym
         cdef Py_ssize_t isegm
 
@@ -1539,6 +1543,33 @@ cdef class NBodySyst():
 
             Sym = Sym.TimeDerivative()
             self._PerDefEnd_SpaceRotVel[isegm,:,:] = Sym._SpaceRot[:,:]
+
+        cdef double mass, totmass
+        totmass = 0.
+
+        cdef int size
+        cdef Py_ssize_t iint
+
+        self._CoMMat = np.zeros((self.nsegm, self.geodim, self.geodim), dtype=np.float64)
+
+        size = self.geodim * self.geodim
+
+        for ib in range(self.nbody):
+
+            il = self._bodyloop[ib]
+            mul = self._loopmass[il]
+            totmass += mul
+
+            isegm = self._bodysegm[ib, 0]
+            Sym = self.intersegm_to_all[ib][0]
+
+            assert Sym.TimeRev == 1
+
+            scipy.linalg.cython_blas.daxpy(&size,&mul,&Sym._SpaceRot[0,0],&int_one,&self._CoMMat[isegm,0,0],&int_one)
+
+        size = self.nsegm * self.geodim * self.geodim
+        mass = 1./totmass
+        scipy.linalg.cython_blas.dscal(&size,&mass,&self._CoMMat[0,0,0],&int_one)
 
     @cython.final
     def ConfigureShortcutSym(self, double eps=1e-14):
@@ -4518,48 +4549,11 @@ cdef class NBodySyst():
 
     @cython.cdivision(True)
     @cython.final
-    def ComputeCenterOfMass(self, segmpos):
+    def ComputeCenterOfMass(self, double[:,:,::1] segmpos):
 
-        cdef Py_ssize_t il, ib, iint
-        cdef Py_ssize_t isegm, segmbeg, segmend
-        cdef np.ndarray[double, ndim=2, mode='c'] pos = np.empty((self.segm_size, self.geodim), dtype=np.float64)
-        cdef np.ndarray[double, ndim=2, mode='c'] pos_avg = np.zeros((self.segm_size, self.geodim), dtype=np.float64)
+        # return np.einsum("iqk,ipk->pq", np.asarray(self._CoMMat), np.asarray(segmpos))
 
-        cdef int size = self.segm_size * self.geodim
-        cdef double mul
-        cdef double totmass = 0.
-
-        cdef ActionSym Sym
-
-        for ib in range(self.nbody):
-            for iint in range(self.nint_min):
-
-                isegm = self._bodysegm[ib, iint]
-
-                Sym = self.intersegm_to_all[ib][iint]
-
-                ibeg = iint * self.segm_size         
-                iend = ibeg + self.segm_size
-                assert iend <= self._nint
-
-                if Sym.TimeRev > 0:
-                    segmbeg = 0
-                    segmend = self.segm_size
-                else:
-                    segmbeg = 1
-                    segmend = self.segm_size+1
-
-                Sym.TransformSegment(segmpos[isegm,segmbeg:segmend,:], pos)
-
-                il = self._bodyloop[ib]
-                mul = self._loopmass[il]
-                totmass += mul
-
-                scipy.linalg.cython_blas.daxpy(&size,&mul,&pos[0,0],&int_one,&pos_avg[0,0],&int_one)
-
-        mul = 1. / (self.segm_size * totmass)
-
-        return mul * np.sum(pos_avg, axis=0)
+        return np.einsum("iqk,ik->q", np.asarray(self._CoMMat), np.asarray(segmpos).sum(axis=1))/self.segm_store
 
     @cython.final
     def Compute_periodicity_default_pos(self, double[::1] xo, double[::1] xf):
@@ -4717,7 +4711,6 @@ cdef class NBodySyst():
 
         return res
 
-    # Constraints + periodicity + ODE ?
     @cython.final
     cpdef Compute_ODE_default(self, double[:,:,::1] xo, double[:,:,::1] vo, double[:,:,::1] xf, double[:,:,::1] vf):
 

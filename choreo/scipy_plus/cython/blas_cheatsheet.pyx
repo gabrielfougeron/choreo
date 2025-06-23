@@ -1,5 +1,5 @@
 '''
-blas_cheatsheet.pyx This file is the answer to the questions I always aks myself calling blas/lapack functions in cython: WTF am I doing ?
+blas_cheatsheet.pyx This file is the answer to the question I always ask myself calling blas/lapack functions in cython: WTF am I doing ?
 '''
 
 import os

@@ -1683,3 +1683,23 @@ def test_RK_vs_spectral_periodicity_default(float64_tols, NBS, params_buf, vecto
     tol = 20000 * action_grad_norm 
     print(np.linalg.norm(dv))
     assert np.allclose(dv, np.zeros_like(dv), rtol = tol, atol = tol)   
+
+@ParametrizeDocstrings
+@pytest.mark.parametrize("NBS", [pytest.param(NBS, id=name) for name, NBS in NBS_dict.items()])
+def test_center_of_mass(float64_tols, NBS):
+    """ Tests properties of center of mass
+    """
+        
+    NBS.nint_fac = 10
+    params_buf  = np.random.random((NBS.nparams))
+    segmpos = NBS.params_to_segmpos(params_buf)
+    
+    cm = NBS.ComputeCenterOfMass(segmpos)
+
+    for idim in range(NBS.geodim):
+        segmpos[:,:,idim] -= cm[idim]
+        
+    cm = NBS.ComputeCenterOfMass(segmpos)
+
+    print(np.linalg.norm(cm))
+    assert np.linalg.norm(cm) < float64_tols.atol
