@@ -2709,7 +2709,7 @@ cdef class NBodySyst():
         plt.close()
 
     @cython.final
-    def plot_all_2D_anim(self, allpos, filename, fig_size=(10,10), dpi=100, color=None, color_list=default_GUI_colors, xlim=None, extend=0.03, fps=60.,Mass_Scale=True, body_size=6., trail_width=3., tInc_fac = 0.35, Max_PathLength=None, ShootingStars=True, Periodic=True, rel_trail_length_half_life = 0.03):
+    def plot_all_2D_anim(self, allpos, filename, fig_size=(10,10), dpi=100, color="body", color_list=default_GUI_colors, xlim=None, extend=0.03, fps=60.,Mass_Scale=True, body_size=6., trail_width=3., tInc_fac = 0.35, Max_PathLength=None, ShootingStars=True, Periodic=True, rel_trail_length_half_life = 0.03):
         """
         Plots 2D trajectories with one color per body and saves image in file
         """

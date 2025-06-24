@@ -23,12 +23,6 @@ np.set_printoptions(
     floatmode = "fixed",
 )
 
-
-def proj_to_zero(array, eps=1e-14):
-    for idx in itertools.product(*[range(i)  for i in array.shape]):
-        if abs(array[idx]) < eps:
-            array[idx] = 0.
-
 def main():
         
     TT = pyquickbench.TimeTrain(
