@@ -380,11 +380,8 @@ def Find_Choreo(
                     n_find = max_num_file
 
                     if (AddNumberToOutputName):   
-
                         filename_output = os.path.join(store_folder, file_basename+str(max_num_file).zfill(5))
-
                     else:
-
                         filename_output = os.path.join(store_folder, file_basename)
 
                     print(f'Saving solution as {filename_output}.*.')
@@ -413,7 +410,6 @@ def Find_Choreo(
                     if Save_Params:
                         np.save(filename_output+'_params.npy', best_sol.x)
                     
-# 
 #                     if Save_Init_Pos_Vel_Sol:
 #                         all_pos_b = ActionSyst.Compute_init_pos_vel(best_sol.x)
 #                         np.save(filename_output+'_init.npy',all_coeffs)

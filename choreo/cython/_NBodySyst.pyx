@@ -546,15 +546,19 @@ cdef class NBodySyst():
     def ncoeff_min_loop(self):
         return np.asarray(self._ncoeff_min_loop)
 
-    cdef double[:,::1] _params_basis_initpos
+    cdef double[:,::1] _ODEinitparams_basis_pos
     @property
-    def params_basis_initpos(self):
-        return np.asarray(self._params_basis_initpos)
+    def ODEinitparams_basis_pos(self):
+        return np.asarray(self._ODEinitparams_basis_pos)
 
-    cdef double[:,::1] _params_basis_initmom
+    cdef double[:,::1] _ODEinitparams_basis_mom
     @property
-    def params_basis_initmom(self):
-        return np.asarray(self._params_basis_initmom)
+    def ODEinitparams_basis_mom(self):
+        return np.asarray(self._ODEinitparams_basis_mom)
+
+    cdef readonly Py_ssize_t n_ODEinitparams_pos
+    cdef readonly Py_ssize_t n_ODEinitparams_mom
+    cdef readonly Py_ssize_t n_ODEinitparams
 
     cdef readonly list Sym_list
     cdef readonly object BodyGraph
@@ -1958,7 +1962,7 @@ cdef class NBodySyst():
         NullSpace_pos = choreo.scipy_plus.linalg.null_space(cstr_mat_reshape)
         choreo.scipy_plus.cython.misc.proj_to_zero(NullSpace_pos, eps=eps)
 
-        self._params_basis_initpos = NullSpace_pos
+        self._ODEinitparams_basis_pos = NullSpace_pos
 
         cstr_mat = np.zeros((ncstr, self.geodim, self.nsegm, self.geodim), dtype=np.float64)
         icstr = -1
@@ -1987,13 +1991,53 @@ cdef class NBodySyst():
         NullSpace_mom = choreo.scipy_plus.linalg.null_space(cstr_mat_reshape)
         choreo.scipy_plus.cython.misc.proj_to_zero(NullSpace_mom, eps=eps)
         
-        self._params_basis_initmom = NullSpace_mom
+        self._ODEinitparams_basis_mom = NullSpace_mom
+
+        self.n_ODEinitparams_pos = self._ODEinitparams_basis_pos.shape[1]
+        self.n_ODEinitparams_mom = self._ODEinitparams_basis_mom.shape[1]
+        self.n_ODEinitparams = self.n_ODEinitparams_pos + self.n_ODEinitparams_mom
+
+    @cython.final
+    def ODE_params_to_initposmom(self, double[::1] ODEinitparams):
+
+        cdef int n = self.nsegm*self.geodim
+        cdef int m
+
+        assert ODEinitparams.shape[0] == self.n_ODEinitparams
+
+        cdef np.ndarray[double, ndim=1, mode='c'] x0 = np.empty((n), dtype=np.float64)
+        cdef np.ndarray[double, ndim=1, mode='c'] v0 = np.empty((n), dtype=np.float64)
+
+        m = self.n_ODEinitparams_pos
+        scipy.linalg.cython_blas.dgemv(transt,&m,&n,&one_double,&self._ODEinitparams_basis_pos[0,0],&m,&ODEinitparams[0],&int_one,&zero_double,&x0[0],&int_one)
+
+        m = self.n_ODEinitparams_mom
+        scipy.linalg.cython_blas.dgemv(transt,&m,&n,&one_double,&self._ODEinitparams_basis_mom[0,0],&m,&ODEinitparams[self.n_ODEinitparams_pos],&int_one,&zero_double,&v0[0],&int_one)
+
+        return (x0, v0)
+
+    @cython.final
+    def initposmom_to_ODE_params(self, double[::1] x0, double[::1] v0):
+    
+        cdef int n = self.nsegm*self.geodim
+        cdef int m
+
+        assert x0.shape[0] == n
+        assert v0.shape[0] == n
+
+        cdef np.ndarray[double, ndim=1, mode='c'] ODEinitparams = np.empty((self.n_ODEinitparams), dtype=np.float64)
+
+        m = self.n_ODEinitparams_pos
+        scipy.linalg.cython_blas.dgemv(transn,&m,&n,&one_double,&self._ODEinitparams_basis_pos[0,0],&m,&x0[0],&int_one,&zero_double,&ODEinitparams[0],&int_one)
+
+        m = self.n_ODEinitparams_mom
+        scipy.linalg.cython_blas.dgemv(transn,&m,&n,&one_double,&self._ODEinitparams_basis_mom[0,0],&m,&v0[0],&int_one,&zero_double,&ODEinitparams[self.n_ODEinitparams_pos],&int_one)
+
+        return ODEinitparams
 
     @cython.final
     @staticmethod
-    def all_coeffs_pos_to_vel_inplace(
-        double complex[:,:,::1] all_coeffs  ,
-    ):
+    def all_coeffs_pos_to_vel_inplace(double complex[:,:,::1] all_coeffs):
 
         cdef int nloop = all_coeffs.shape[0]
         cdef int ncoeffs = all_coeffs.shape[1]
@@ -2709,14 +2753,14 @@ cdef class NBodySyst():
         plt.close()
 
     @cython.final
-    def plot_all_2D_anim(self, allpos, filename, fig_size=(10,10), dpi=100, color="body", color_list=default_GUI_colors, xlim=None, extend=0.03, fps=60.,Mass_Scale=True, body_size=6., trail_width=3., tInc_fac = 0.35, Max_PathLength=None, ShootingStars=True, Periodic=True, rel_trail_length_half_life = 0.03):
+    def plot_all_2D_anim(self, allpos, filename, fig_size=(10,10), dpi=100, color="body", color_list=default_GUI_colors, xlim=None, extend=0.03, fps=60., bint Mass_Scale=True, body_size=6., trail_width=3., tInc_fac = 0.35, Max_PathLength=None, bint ShootingStars=True, bint Periodic=True, rel_trail_length_half_life = 0.03):
         """
         Plots 2D trajectories with one color per body and saves image in file
         """
 
         cdef Py_ssize_t ib, iint 
         cdef Py_ssize_t il, loop_id
-        cdef double mass, line_width, point_size
+        cdef double mass, line_width, point_size, mul
 
         cdef np.ndarray[double, ndim=1, mode='c'] alpha_arr
 
@@ -2802,8 +2846,9 @@ cdef class NBodySyst():
 
             if Mass_Scale:
                 mass = self._loopmass[self._bodyloop[ib]]
-                line_width = line_width * mass
-                point_size = point_size * (mass*mass)
+                mul = csqrt(mass)
+                line_width = line_width * mul
+                point_size = point_size * mul
 
             point_color = current_color
             if ShootingStars:
@@ -2849,7 +2894,7 @@ cdef class NBodySyst():
 
             cdef Py_ssize_t i, j
             cdef Py_ssize_t n = npts-1
-            cdef Py_ssize_t no = n+tp
+            cdef Py_ssize_t no = n+tp-1
 
             if ShootingStars:
 
@@ -4625,7 +4670,7 @@ cdef class NBodySyst():
         cdef int n = self.nsegm * self.geodim
         cdef double mul = (1./segmpos.shape[1])
 
-        scipy.linalg.cython_blas.dgemv(transn,&n,&geodim,&mul,&self._CoMMat[0,0,0],&geodim,&segmpossum[0,0],&int_one,&zero_double,&res[0],&int_one)
+        scipy.linalg.cython_blas.dgemv(transt,&n,&geodim,&mul,&self._CoMMat[0,0,0],&n,&segmpossum[0,0],&int_one,&zero_double,&res[0],&int_one)
 
         return res
 
@@ -4730,7 +4775,7 @@ cdef class NBodySyst():
 
         assert xo.shape[0] == self.nsegm * self.geodim
 
-        cdef np.ndarray[double, ndim=1, mode='c'] res = np.empty((self.nsegm * self.geodim), dtype=np.float64)
+        cdef np.ndarray[double, ndim=1, mode='c'] res = np.zeros((self.nsegm * self.geodim), dtype=np.float64)
 
         cdef Py_ssize_t isegm, idim, jdim, i, j
 
@@ -4760,7 +4805,7 @@ cdef class NBodySyst():
 
         assert vo.shape[0] == self.nsegm * self.geodim
 
-        cdef np.ndarray[double, ndim=1, mode='c'] res = np.empty((self.nsegm * self.geodim), dtype=np.float64)
+        cdef np.ndarray[double, ndim=1, mode='c'] res = np.zeros((self.nsegm * self.geodim), dtype=np.float64)
 
         cdef Py_ssize_t isegm, idim, jdim, i, j
 

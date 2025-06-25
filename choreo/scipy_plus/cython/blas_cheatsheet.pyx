@@ -29,3 +29,21 @@ cpdef np.ndarray[double, ndim=2, mode="c"] blas_matmul(
     scipy.linalg.cython_blas.dgemm(transn,transn,&m,&n,&k,&one_double,&bmat[0,0],&m,&amat[0,0],&k,&zero_double,&res[0,0],&m)
 
     return res
+
+cpdef np.ndarray[double, ndim=1, mode="c"] blas_matvecmul(
+    double[:,::1] mat  ,
+    double[::1]   vec  ,
+):
+
+    assert mat.shape[1] == vec.shape[0]
+
+    cdef int n = mat.shape[0]
+    cdef int m = mat.shape[1]
+
+    cdef np.ndarray[double, ndim=1, mode="c"] res = np.empty((n) ,dtype=np.float64)
+
+    # res = mat . vec
+    scipy.linalg.cython_blas.dgemv(transt,&m,&n,&one_double,&mat[0,0],&m,&vec[0],&int_one,&zero_double,&res[0],&int_one)
+
+    return res
+

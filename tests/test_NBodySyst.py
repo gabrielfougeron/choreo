@@ -1737,4 +1737,28 @@ def test_perdef(float64_tols, NBS):
                 
             assert NBS.intersegm_to_all[ib][iint].TimeRev == TimeRev
         
-            
+@ParametrizeDocstrings
+@pytest.mark.parametrize("NBS", [pytest.param(NBS, id=name) for name, NBS in NBS_dict.items()])
+def test_initposmom(float64_tols, NBS):
+    """ 
+        Tests that ODEinitparams and (x0, v0) 
+    """
+    
+    ODEinitparams = np.random.random((NBS.n_ODEinitparams))
+    
+    x0, v0 = NBS.ODE_params_to_initposmom(ODEinitparams)
+    
+    dx = NBS.Compute_initial_constraint_default_pos(x0)
+    dv = NBS.Compute_initial_constraint_default_vel(v0)
+    ndof = NBS.nsegm * NBS.geodim
+    
+    print(np.linalg.norm(dx))
+    assert np.allclose(dx, np.zeros((ndof), dtype=np.float64), rtol = float64_tols.rtol, atol = float64_tols.atol)  
+    print(np.linalg.norm(dv))
+    assert np.allclose(dv, np.zeros((ndof), dtype=np.float64), rtol = float64_tols.rtol, atol = float64_tols.atol)   
+    
+    ODEinitparams_rt = NBS.initposmom_to_ODE_params(x0, v0)
+    
+    print(np.linalg.norm(ODEinitparams-ODEinitparams_rt))
+    assert np.allclose(ODEinitparams, ODEinitparams_rt, rtol = float64_tols.rtol, atol = float64_tols.atol)  
+    

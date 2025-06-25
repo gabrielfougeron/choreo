@@ -21,6 +21,8 @@ store_folder = os.path.join(__PROJECT_ROOT__,'Sniff_all_sym','Simo_tests')
 NT_init_filename = os.path.join(__PROJECT_ROOT__,'NumericalTank_data','Simo_init_cond.txt')
 all_NT_init = np.loadtxt(NT_init_filename)
 
+import pyquickbench
+
 def Integrate(n_NT_init):
     
     print('')
@@ -59,24 +61,16 @@ def Integrate(n_NT_init):
         1               ,
     )
     
-    
-    
-
     Sym_list = [Sym_choreo, Sym_reflexion]
 
     NBS = choreo.NBodySyst(geodim, nbody, bodymass, bodycharge, Sym_list)
 
     NBS.ForceGreaterNStore = True
 
-    NBS.nint_fac = 1024 * 128
-
     print(NBS.DescribeSystem())
 
-
     file_basename = 'Simo_'+(str(n_NT_init).zfill(5))
-    Info_filename = os.path.join(store_folder,file_basename + '.json')
-    Anim_filename = os.path.join(store_folder,file_basename + '.mp4')
-    Image_filename = os.path.join(store_folder,file_basename + '.png')
+    save_filename = os.path.join(store_folder, file_basename)
 
     ndof = NBS.geodim * NBS.nsegm
 
@@ -113,72 +107,89 @@ def Integrate(n_NT_init):
 
     x0 *= rfac
     v0 *= rfac * T_NT 
-    
 
     ODE_Syst = NBS.Get_ODE_def()
     
-    nsteps = 10
-    keep_freq = 1
-    nint_ODE = (NBS.segm_store-1) * keep_freq
-    method = "Gauss"
+    NBS.nint_fac = 32
     
-    rk = choreo.segm.multiprec_tables.ComputeImplicitRKTable(nsteps, method=method)
+    dx = np.ones(NBS.geodim)
+    
+    while np.linalg.norm(dx) > 1e-6:
+        
+        NBS.nint_fac = NBS.nint_fac * 2
 
-    xf, vf = choreo.segm.ODE.ImplicitSymplecticIVP(
-        x0 = x0                 ,
-        v0 = v0                 ,
-        rk_x = rk               ,
-        rk_v = rk               ,
-        keep_freq = keep_freq   ,
-        nint = nint_ODE         ,
-        keep_init = True        ,
-        **ODE_Syst              ,
-    )
-    
-    xf = xf.reshape(NBS.segm_store, NBS.nsegm, NBS.geodim)
-    vf = vf.reshape(NBS.segm_store, NBS.nsegm, NBS.geodim)
-    
-    n = (NBS.segm_store-1)
-    
-    dx = NBS.Compute_periodicity_default_pos(xf[0,:,:].reshape(-1), xf[n,:,:].reshape(-1))
-    print(np.linalg.norm(dx))
+        nsteps = 10
+        keep_freq = 1
+        nint_ODE = (NBS.segm_store-1) * keep_freq
+        method = "Gauss"
+        
+        rk = choreo.segm.multiprec_tables.ComputeImplicitRKTable(nsteps, method=method)
+
+        xf, vf = choreo.segm.ODE.ImplicitSymplecticIVP(
+            x0 = x0                 ,
+            v0 = v0                 ,
+            rk_x = rk               ,
+            rk_v = rk               ,
+            keep_freq = keep_freq   ,
+            nint = nint_ODE         ,
+            keep_init = True        ,
+            **ODE_Syst              ,
+        )
+        
+        xf = xf.reshape(NBS.segm_store, NBS.nsegm, NBS.geodim)
+        vf = vf.reshape(NBS.segm_store, NBS.nsegm, NBS.geodim)
+        
+        n = (NBS.segm_store-1)
+        
+        dx = NBS.Compute_periodicity_default_pos(xf[0,:,:].reshape(-1), xf[n,:,:].reshape(-1))
+        
+        print(f'{NBS.nint_fac = }')
+        print(f'error = {np.linalg.norm(dx)}')
     
     assert np.linalg.norm(dx) < 1e-6
+# 
+    # segmpos_ODE = np.ascontiguousarray(xf.reshape((NBS.segm_store, NBS.nsegm, NBS.geodim)).swapaxes(0, 1))
+#     segmmom_ODE = np.ascontiguousarray(vf.reshape((NBS.segm_store, NBS.nsegm, NBS.geodim)).swapaxes(0, 1))
 
-    segmpos_ODE = np.ascontiguousarray(xf.reshape((NBS.segm_store, NBS.nsegm, NBS.geodim)).swapaxes(0, 1))
-    segmmom_ODE = np.ascontiguousarray(vf.reshape((NBS.segm_store, NBS.nsegm, NBS.geodim)).swapaxes(0, 1))
+    # params_mom_buf = NBS.segmpos_to_params(segmpos_ODE)
 
     # allbodypos = NBS.segmpos_to_allbody_noopt(segmpos_ODE)
-    # NBS.plot_all_2D_anim(allbodypos, Anim_filename, Periodic=False)
-
-    NBS.plot_segmpos_2D(segmpos_ODE, Image_filename)
+    # NBS.plot_all_2D_anim(allbodypos, save_filename + '.mp4')
+    # NBS.plot_segmpos_2D(segmpos_ODE, save_filename + '.png')
+    # np.save(save_filename + '.npy', segmpos_ODE)
+    # NBS.Write_Descriptor(params_mom_buf=params_mom_buf, segmpos=segmpos_ODE, filename = save_filename+'.json')
 
 
 the_NT_init = range(len(all_NT_init))
-# the_NT_init = range(13,len(all_NT_init))
+# the_NT_init = range(5)
 
 # the_NT_init = [0]
 # the_NT_init.extend(range(25,len(all_NT_init)))
 
 # # 
-
+# 
 if __name__ == "__main__":
 
-#     for n_NT_init in the_NT_init:
-# 
-#         Integrate(n_NT_init)
+    TT = pyquickbench.TimeTrain()
 
-    # 
-
-
-    # n = 5
-    n = multiprocessing.cpu_count()
-    # n = 4
-    # 
-    print(f"Executing with {n} workers")
-    
-    with concurrent.futures.ProcessPoolExecutor(max_workers=n) as executor:
+    for n_NT_init in the_NT_init:
         
-        res = []
-        for n_NT_init in range(len(all_NT_init)):
-            res.append(executor.submit(Integrate,n_NT_init))
+        Integrate(n_NT_init)
+        TT.toc(n_NT_init)
+        
+    # print(TT)
+
+
+
+#     # n = multiprocessing.cpu_count() // 2
+#     n = 8
+# 
+#     print(f"Executing with {n} workers")
+# 
+#     with concurrent.futures.ProcessPoolExecutor(max_workers=n) as executor:
+#         
+#         res = []
+#         for n_NT_init in range(len(all_NT_init)):
+#             res.append(executor.submit(Integrate,n_NT_init))
+# 
+

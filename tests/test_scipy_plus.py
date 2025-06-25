@@ -88,6 +88,23 @@ def test_blas_matmul(float64_tols, m, n, k):
     
     print(np.linalg.norm(AB_np - AB_blas))
     assert np.allclose(AB_np, AB_blas, rtol = float64_tols.rtol, atol = float64_tols.atol) 
+    
+@ParametrizeDocstrings
+@ProbabilisticTest()
+@pytest.mark.parametrize("m", Dense_linalg_dims)
+@pytest.mark.parametrize("n", Dense_linalg_dims)
+def test_blas_matmul(float64_tols, m, n):
+    """ Tests calling dgemv directly from blas for regular matmul.
+    """
+    
+    A = np.random.random((m,n))
+    v = np.random.random((n))
+
+    Av_np = np.matmul(A,v)
+    Av_blas = choreo.scipy_plus.cython.blas_cheatsheet.blas_matvecmul(A,v)
+    
+    print(np.linalg.norm(Av_np - Av_blas))
+    assert np.allclose(Av_np, Av_blas, rtol = float64_tols.rtol, atol = float64_tols.atol) 
             
 @ParametrizeDocstrings
 def test_kepler(float64_tols_strict, float64_tols_loose):
