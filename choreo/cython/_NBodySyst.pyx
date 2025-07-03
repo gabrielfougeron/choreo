@@ -2108,8 +2108,6 @@ cdef class NBodySyst():
 
         assert self.n_ODEperdef_eqproj == self.n_ODEinitparams
 
-
-
     @cython.final
     def ODE_params_to_initposmom(self, double[::1] ODEinitparams):
 
@@ -2118,35 +2116,103 @@ cdef class NBodySyst():
 
         assert ODEinitparams.shape[0] == self.n_ODEinitparams
 
-        cdef np.ndarray[double, ndim=1, mode='c'] x0 = np.empty((n), dtype=np.float64)
-        cdef np.ndarray[double, ndim=1, mode='c'] v0 = np.empty((n), dtype=np.float64)
+        cdef np.ndarray[double, ndim=1, mode='c'] xo = np.empty((n), dtype=np.float64)
+        cdef np.ndarray[double, ndim=1, mode='c'] vo = np.empty((n), dtype=np.float64)
 
         m = self.n_ODEinitparams_pos
-        scipy.linalg.cython_blas.dgemv(transt,&m,&n,&one_double,&self._ODEinitparams_basis_pos[0,0],&m,&ODEinitparams[0],&int_one,&zero_double,&x0[0],&int_one)
+        scipy.linalg.cython_blas.dgemv(transt,&m,&n,&one_double,&self._ODEinitparams_basis_pos[0,0],&m,&ODEinitparams[0],&int_one,&zero_double,&xo[0],&int_one)
 
         m = self.n_ODEinitparams_mom
-        scipy.linalg.cython_blas.dgemv(transt,&m,&n,&one_double,&self._ODEinitparams_basis_mom[0,0],&m,&ODEinitparams[self.n_ODEinitparams_pos],&int_one,&zero_double,&v0[0],&int_one)
+        scipy.linalg.cython_blas.dgemv(transt,&m,&n,&one_double,&self._ODEinitparams_basis_mom[0,0],&m,&ODEinitparams[self.n_ODEinitparams_pos],&int_one,&zero_double,&vo[0],&int_one)
 
-        return (x0, v0)
+        return (xo, vo)
 
     @cython.final
-    def initposmom_to_ODE_params(self, double[::1] x0, double[::1] v0):
+    def initposmom_to_ODE_params(self, double[::1] xo, double[::1] vo):
     
         cdef int n = self.nsegm*self.geodim
         cdef int m
 
-        assert x0.shape[0] == n
-        assert v0.shape[0] == n
+        assert xo.shape[0] == n
+        assert vo.shape[0] == n
 
         cdef np.ndarray[double, ndim=1, mode='c'] ODEinitparams = np.empty((self.n_ODEinitparams), dtype=np.float64)
 
         m = self.n_ODEinitparams_pos
-        scipy.linalg.cython_blas.dgemv(transn,&m,&n,&one_double,&self._ODEinitparams_basis_pos[0,0],&m,&x0[0],&int_one,&zero_double,&ODEinitparams[0],&int_one)
+        scipy.linalg.cython_blas.dgemv(transn,&m,&n,&one_double,&self._ODEinitparams_basis_pos[0,0],&m,&xo[0],&int_one,&zero_double,&ODEinitparams[0],&int_one)
 
         m = self.n_ODEinitparams_mom
-        scipy.linalg.cython_blas.dgemv(transn,&m,&n,&one_double,&self._ODEinitparams_basis_mom[0,0],&m,&v0[0],&int_one,&zero_double,&ODEinitparams[self.n_ODEinitparams_pos],&int_one)
+        scipy.linalg.cython_blas.dgemv(transn,&m,&n,&one_double,&self._ODEinitparams_basis_mom[0,0],&m,&vo[0],&int_one,&zero_double,&ODEinitparams[self.n_ODEinitparams_pos],&int_one)
 
         return ODEinitparams
+
+    @cython.final
+    def endposmom_to_perdef(self, double[::1] xo, double[::1] vo, double[::1] xf, double[::1] vf):
+    
+        cdef int n
+        cdef int m = self.nsegm*self.geodim
+
+        assert xo.shape[0] == m
+        assert vo.shape[0] == m
+        assert xf.shape[0] == m
+        assert vf.shape[0] == m
+
+        cdef np.ndarray[double, ndim=1, mode='c'] ODEperdef = np.empty((self.n_ODEperdef_eqproj), dtype=np.float64)
+        cdef np.ndarray[double, ndim=1, mode='c'] buf
+
+        if self.TimeRev > 0:
+
+            buf = np.empty((self.nsegm * self.geodim), dtype=np.float64)
+
+            for isegm in range(self.nsegm):
+
+                i = isegm * self.geodim
+
+                for idim in range(self.geodim):
+
+                    buf[i] = xf[i]
+
+                    j = self._PerDefEnd_Isegm[isegm] * self.geodim
+                    
+                    for jdim in range(self.geodim):
+
+                        buf[i] -= self._PerDefEnd_SpaceRotPos[isegm,idim,jdim] * xo[j]
+                        j += 1
+
+                    i += 1
+
+            n = self.n_ODEperdef_eqproj_pos
+            scipy.linalg.cython_blas.dgemv(transt,&m,&n,&one_double,&self._ODEperdef_eqproj_pos[0,0],&m,&buf[0],&int_one,&zero_double,&ODEperdef[0],&int_one)
+
+            for isegm in range(self.nsegm):
+
+                i = isegm * self.geodim
+
+                for idim in range(self.geodim):
+
+                    buf[i] = vf[i]
+
+                    j = self._PerDefEnd_Isegm[isegm] * self.geodim
+                    
+                    for jdim in range(self.geodim):
+
+                        buf[i] -= self._PerDefEnd_SpaceRotVel[isegm,idim,jdim] * vo[j]
+                        j += 1
+
+                    i += 1
+
+            n = self.n_ODEperdef_eqproj_mom
+            scipy.linalg.cython_blas.dgemv(transt,&m,&n,&one_double,&self._ODEperdef_eqproj_mom[0,0],&m,&buf[0],&int_one,&zero_double,&ODEperdef[self.n_ODEperdef_eqproj_pos],&int_one)
+
+        else:
+
+            n = self.n_ODEperdef_eqproj_pos
+            scipy.linalg.cython_blas.dgemv(transt,&m,&n,&one_double,&self._ODEperdef_eqproj_pos[0,0],&m,&xf[0],&int_one,&zero_double,&ODEperdef[0],&int_one)
+
+            n = self.n_ODEperdef_eqproj_mom
+            scipy.linalg.cython_blas.dgemv(transt,&m,&n,&one_double,&self._ODEperdef_eqproj_mom[0,0],&m,&vf[0],&int_one,&zero_double,&ODEperdef[self.n_ODEperdef_eqproj_pos],&int_one)
+
+        return ODEperdef
 
     @cython.final
     @staticmethod
@@ -2561,8 +2627,8 @@ cdef class NBodySyst():
 
         NBS.inplace_segmvel_to_segmmom(segmmom)
 
-        dict_res["reg_x0"] = np.ascontiguousarray(segmpos_np.swapaxes(0, 1).reshape(NBS.segm_store,-1))
-        dict_res["reg_v0"] = np.ascontiguousarray(segmmom_np.swapaxes(0, 1).reshape(NBS.segm_store,-1))
+        dict_res["reg_xo"] = np.ascontiguousarray(segmpos_np.swapaxes(0, 1).reshape(NBS.segm_store,-1))
+        dict_res["reg_vo"] = np.ascontiguousarray(segmmom_np.swapaxes(0, 1).reshape(NBS.segm_store,-1))
 
         return NBS, dict_res
 
@@ -4797,9 +4863,9 @@ cdef class NBodySyst():
 
         cdef Py_ssize_t isegm, idim, jdim, i, j
 
-        for isegm in range(self.nsegm):
+        if self.TimeRev > 0:
 
-            if self.TimeRev > 0:
+            for isegm in range(self.nsegm):
 
                 i = isegm * self.geodim
 
@@ -4816,7 +4882,9 @@ cdef class NBodySyst():
 
                     i += 1
 
-            else:
+        else:
+
+            for isegm in range(self.nsegm):
 
                 i = isegm * self.geodim
 
@@ -4845,9 +4913,9 @@ cdef class NBodySyst():
 
         cdef Py_ssize_t isegm, idim, jdim, i, j
 
-        for isegm in range(self.nsegm):
+        if self.TimeRev > 0:
 
-            if self.TimeRev > 0:
+            for isegm in range(self.nsegm):
 
                 i = isegm * self.geodim
 
@@ -4864,7 +4932,9 @@ cdef class NBodySyst():
 
                     i += 1
 
-            else:
+        else:
+
+            for isegm in range(self.nsegm):
 
                 i = isegm * self.geodim
 
@@ -4892,23 +4962,23 @@ cdef class NBodySyst():
 
         cdef Py_ssize_t isegm, idim, jdim, i, j
 
-        for isegm in range(self.nsegm):
+        if self.TimeRev < 0:
 
-            if self.TimeRev < 0:
+            for isegm in range(self.nsegm):
 
-                j = self._PerDefBeg_Isegm[isegm] * self.geodim
+                    j = self._PerDefBeg_Isegm[isegm] * self.geodim
 
-                for idim in range(self.geodim):
+                    for idim in range(self.geodim):
 
-                    res[j] += xo[j]
-                    i = isegm * self.geodim
+                        res[j] += xo[j]
+                        i = isegm * self.geodim
 
-                    for jdim in range(self.geodim):
+                        for jdim in range(self.geodim):
 
-                        res[j] -= self._PerDefBeg_SpaceRotPos[isegm,idim,jdim] * xo[i]
-                        i += 1
+                            res[j] -= self._PerDefBeg_SpaceRotPos[isegm,idim,jdim] * xo[i]
+                            i += 1
 
-                    j += 1
+                        j += 1
 
         return res
         
@@ -4921,9 +4991,9 @@ cdef class NBodySyst():
 
         cdef Py_ssize_t isegm, idim, jdim, i, j
 
-        for isegm in range(self.nsegm):
+        if self.TimeRev < 0:
 
-            if self.TimeRev < 0:
+            for isegm in range(self.nsegm):
 
                 j = self._PerDefBeg_Isegm[isegm] * self.geodim
 
@@ -5265,11 +5335,11 @@ cdef class NBodySyst():
             if regular_init:
                 segmpos = self.params_to_segmpos(params_mom_buf)
                 segmmom = self.params_to_segmmom(params_mom_buf)
-                dict_res["reg_x0"] = np.ascontiguousarray(segmpos.swapaxes(0, 1).reshape(self.segm_store,-1))
-                dict_res["reg_v0"] = np.ascontiguousarray(segmmom.swapaxes(0, 1).reshape(self.segm_store,-1))
+                dict_res["reg_xo"] = np.ascontiguousarray(segmpos.swapaxes(0, 1).reshape(self.segm_store,-1))
+                dict_res["reg_vo"] = np.ascontiguousarray(segmmom.swapaxes(0, 1).reshape(self.segm_store,-1))
             
             else:
-                dict_res["x0"], dict_res["v0"] = self.Compute_init_pos_mom(params_mom_buf) 
+                dict_res["xo"], dict_res["vo"] = self.Compute_init_pos_mom(params_mom_buf) 
 
         NoSymPossible = self.BinSpaceRotIsId.all()
         NoSym = NoSymIfPossible and NoSymPossible

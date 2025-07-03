@@ -743,19 +743,19 @@ cpdef ExplicitSymplecticIVP(
     object fun                                          ,
     object gun                                          ,
     (double, double) t_span                             ,
-    double[::1] x0 = None                               ,
-    double[::1] v0 = None                               ,
+    double[::1] xo = None                               ,
+    double[::1] vo = None                               ,
     ExplicitSymplecticRKTable rk = default_explicit_rk  ,
     object grad_fun = None                              ,
     object grad_gun = None                              ,
-    double[:,::1] grad_x0 = None                        ,
-    double[:,::1] grad_v0 = None                        ,
+    double[:,::1] grad_xo = None                        ,
+    double[:,::1] grad_vo = None                        ,
     object mode = "VX"                                  ,
     # object mode = "XV"                                  ,
     Py_ssize_t nint = 1                                 ,
     Py_ssize_t keep_freq = -1                           ,
-    double[:,::1] reg_x0 = None                         ,
-    double[:,::1] reg_v0 = None                         ,
+    double[:,::1] reg_xo = None                         ,
+    double[:,::1] reg_vo = None                         ,
     Py_ssize_t reg_init_freq = -1                       ,
     bint keep_init = False                              ,
     bint DoEFT = True                                   ,
@@ -770,10 +770,10 @@ cpdef ExplicitSymplecticIVP(
         Function defining the IVP.
     t_span : :class:`python:tuple` (:obj:`numpy:numpy.float64`, :obj:`numpy:numpy.float64`)
         Initial and final time of integration.
-    x0 : :class:`numpy:numpy.ndarray`:class:`(shape = (n), dtype = np.float64)`, optional
-        Initial value for x. Overriden by reg_x0 if provided. By default, :data:`python:None`.
-    v0 : :class:`numpy:numpy.ndarray`:class:`(shape = (n), dtype = np.float64)`, optional
-        Initial value for v. Overriden by reg_x0 if provided. By default, :data:`python:None`.
+    xo : :class:`numpy:numpy.ndarray`:class:`(shape = (n), dtype = np.float64)`, optional
+        Initial value for x. Overriden by reg_xo if provided. By default, :data:`python:None`.
+    vo : :class:`numpy:numpy.ndarray`:class:`(shape = (n), dtype = np.float64)`, optional
+        Initial value for v. Overriden by reg_xo if provided. By default, :data:`python:None`.
     rk : :class:`ExplicitSymplecticRKTable`, optional
         Runge-Kutta tables for the integration of the IVP. By default, :data:`choreo.segm.precomputed_tables.StormerVerlet`.
     grad_fun : :obj:`python:callable` or :class:`scipy:scipy.LowLevelCallable`, optional
@@ -786,9 +786,9 @@ cpdef ExplicitSymplecticIVP(
         Number of integration steps, by default ``1``.
     keep_freq : :class:`python:int`, optional
         Number of integration steps to be taken before saving output, by default ``-1``.
-    reg_x0 : :class:`numpy:numpy.ndarray`:class:`(shape = (nreg, n), dtype = np.float64)`
+    reg_xo : :class:`numpy:numpy.ndarray`:class:`(shape = (nreg, n), dtype = np.float64)`
         Array of initial values for x for regular reset.
-    reg_v0 : :class:`numpy:numpy.ndarray`:class:`(shape = (nreg, n), dtype = np.float64)`
+    reg_vo : :class:`numpy:numpy.ndarray`:class:`(shape = (nreg, n), dtype = np.float64)`
         Array of initial values for v for regular reset.
     reg_init_freq : :class:`python:int`, optional
         Number of timesteps before resetting initial values for x and v. Non-positive values disable the reset, by default ``-1``.
@@ -804,52 +804,52 @@ cpdef ExplicitSymplecticIVP(
 
     """
 
-    if (x0 is None) != (v0 is None):
-        raise ValueError("Only one of reg_x0 and reg_v0 was provided.")
+    if (xo is None) != (vo is None):
+        raise ValueError("Only one of reg_xo and reg_vo was provided.")
 
-    if (reg_x0 is None) != (reg_v0 is None):
-        raise ValueError("Only one of reg_x0 and reg_v0 was provided.")
+    if (reg_xo is None) != (reg_vo is None):
+        raise ValueError("Only one of reg_xo and reg_vo was provided.")
 
-    if (x0 is None) == (reg_x0 is None):
-        raise ValueError("Exactly one of x0 or reg_x0 should be provided")
+    if (xo is None) == (reg_xo is None):
+        raise ValueError("Exactly one of xo or reg_xo should be provided")
 
-    if (v0 is None) == (reg_v0 is None):
-        raise ValueError("Exactly one of v0 or reg_v0 should be provided")
+    if (vo is None) == (reg_vo is None):
+        raise ValueError("Exactly one of vo or reg_vo should be provided")
 
     cdef Py_ssize_t ndof
 
     cdef double[::1] x
     cdef double[::1] v
 
-    if (x0 is None):
-        x = reg_x0[0,:].copy()
+    if (xo is None):
+        x = reg_xo[0,:].copy()
     else:
-        x = x0.copy()
+        x = xo.copy()
 
-    if (v0 is None):
-        v = reg_v0[0,:].copy()
+    if (vo is None):
+        v = reg_vo[0,:].copy()
     else:
-        v = v0.copy()
+        v = vo.copy()
 
     ndof = x.shape[0]
 
     if (v.shape[0] != ndof):
-        raise ValueError("x0 and v0 must have the same shape")
+        raise ValueError("xo and vo must have the same shape")
     
     cdef Py_ssize_t nreg_init
     cdef Py_ssize_t nreg_needed
 
-    if reg_x0 is None:
-        reg_x0 = np.empty((0, 0), dtype=np.float64)
-        reg_v0 = np.empty((0, 0), dtype=np.float64)
+    if reg_xo is None:
+        reg_xo = np.empty((0, 0), dtype=np.float64)
+        reg_vo = np.empty((0, 0), dtype=np.float64)
 
     else:
-        if (reg_x0.shape[1] != ndof) or (reg_x0.shape[1] != ndof):
-            raise ValueError("reg_x0 or reg_v0 have incorrect shapes: reg_x0.shape[1] should be the number of degrees of freedom.")
+        if (reg_xo.shape[1] != ndof) or (reg_xo.shape[1] != ndof):
+            raise ValueError("reg_xo or reg_vo have incorrect shapes: reg_xo.shape[1] should be the number of degrees of freedom.")
 
-        nreg_init = reg_x0.shape[0]
-        if (reg_v0.shape[0] != nreg_init): 
-            raise ValueError("reg_x0 and reg_v0 should have the same shape.")
+        nreg_init = reg_xo.shape[0]
+        if (reg_vo.shape[0] != nreg_init): 
+            raise ValueError("reg_xo and reg_vo should have the same shape.")
 
         if reg_init_freq < 1:
             reg_init_freq = nint + 1
@@ -857,7 +857,7 @@ cpdef ExplicitSymplecticIVP(
         nreg_needed = nint // reg_init_freq
 
         if (nreg_init < nreg_needed):
-            raise ValueError("reg_x0 and reg_v0 do not store enough values")
+            raise ValueError("reg_xo and reg_vo do not store enough values")
 
     cdef ccallback_t callback_fun
     ccallback_prepare(&callback_fun, signatures, fun, CCALLBACK_DEFAULTS)
@@ -865,7 +865,7 @@ cpdef ExplicitSymplecticIVP(
     cdef ccallback_t callback_gun
     ccallback_prepare(&callback_gun, signatures, gun, CCALLBACK_DEFAULTS)
 
-    cdef bint DoTanIntegration = not(grad_fun is None) or not(grad_gun is None) or not(grad_x0 is None) or not(grad_v0 is None)
+    cdef bint DoTanIntegration = not(grad_fun is None) or not(grad_gun is None) or not(grad_xo is None) or not(grad_vo is None)
 
     cdef ccallback_t callback_grad_fun
     cdef ccallback_t callback_grad_gun
@@ -913,7 +913,7 @@ cpdef ExplicitSymplecticIVP(
 
     if DoTanIntegration:
 
-        if (grad_x0 is None) and (grad_v0 is None):
+        if (grad_xo is None) and (grad_vo is None):
 
             grad_ndof = 2*ndof
 
@@ -927,10 +927,10 @@ cpdef ExplicitSymplecticIVP(
                 j = ndof+i
                 grad_v[i,j] = 1.
 
-        elif not(grad_x0 is None) and not(grad_v0 is None):
+        elif not(grad_xo is None) and not(grad_vo is None):
 
-            grad_x = grad_x0.copy()
-            grad_v = grad_v0.copy()
+            grad_x = grad_xo.copy()
+            grad_v = grad_vo.copy()
 
             assert grad_x.shape[0] == ndof
             assert grad_v.shape[0] == ndof
@@ -939,7 +939,7 @@ cpdef ExplicitSymplecticIVP(
             assert grad_v.shape[1] == grad_ndof
 
         else:
-            raise ValueError('Wrong values for grad_x0 and/or grad_v0')
+            raise ValueError('Wrong values for grad_xo and/or grad_vo')
 
         grad_x_keep_np = np.empty((nint_keep, ndof, grad_ndof), dtype=np.float64)
         grad_v_keep_np = np.empty((nint_keep, ndof, grad_ndof), dtype=np.float64)
@@ -995,8 +995,8 @@ cpdef ExplicitSymplecticIVP(
                 rk                  ,
                 nint                ,
                 keep_freq           ,
-                reg_x0              ,
-                reg_v0              ,
+                reg_xo              ,
+                reg_vo              ,
                 reg_init_freq       ,
                 DoEFT               ,
                 DoTanIntegration    ,
@@ -1027,8 +1027,8 @@ cpdef ExplicitSymplecticIVP(
                 rk                  ,
                 nint                ,
                 keep_freq           ,
-                reg_v0              ,
-                reg_x0              ,
+                reg_vo              ,
+                reg_xo              ,
                 reg_init_freq       ,
                 DoEFT               ,
                 DoTanIntegration    ,
@@ -1073,8 +1073,8 @@ cdef void ExplicitSymplecticIVP_ann(
     ExplicitSymplecticRKTable rk    ,
     Py_ssize_t nint                 ,
     Py_ssize_t keep_freq            ,
-    double[:,::1]   reg_x0          ,
-    double[:,::1]   reg_v0          ,
+    double[:,::1]   reg_xo          ,
+    double[:,::1]   reg_vo          ,
     Py_ssize_t reg_init_freq        ,
     bint DoEFT                      ,
     bint DoTanIntegration           ,
@@ -1157,8 +1157,8 @@ cdef void ExplicitSymplecticIVP_ann(
 
             if iint % reg_init_freq == 0:
 
-                scipy.linalg.cython_blas.dcopy(&ndof,&reg_x0[ireg_init,0],&int_one,&x[0],&int_one)
-                scipy.linalg.cython_blas.dcopy(&ndof,&reg_v0[ireg_init,0],&int_one,&v[0],&int_one)
+                scipy.linalg.cython_blas.dcopy(&ndof,&reg_xo[ireg_init,0],&int_one,&x[0],&int_one)
+                scipy.linalg.cython_blas.dcopy(&ndof,&reg_vo[ireg_init,0],&int_one,&v[0],&int_one)
 
                 if DoEFT:
 
@@ -1760,19 +1760,19 @@ cpdef ImplicitSymplecticIVP(
     object fun                                  ,
     object gun                                  ,
     (double, double) t_span                     ,
-    double[::1] x0 = None                       ,
-    double[::1] v0 = None                       ,
+    double[::1] xo = None                       ,
+    double[::1] vo = None                       ,
     ImplicitRKTable rk_x = default_implicit_rk  ,
     ImplicitRKTable rk_v = default_implicit_rk  ,
     bint vector_calls = False                   ,
     object grad_fun = None                      ,
     object grad_gun = None                      ,
-    double[:,::1] grad_x0 = None                ,
-    double[:,::1] grad_v0 = None                ,
+    double[:,::1] grad_xo = None                ,
+    double[:,::1] grad_vo = None                ,
     Py_ssize_t nint = 1                         ,
     Py_ssize_t keep_freq = -1                   ,
-    double[:,::1] reg_x0 = None                 ,
-    double[:,::1] reg_v0 = None                 ,
+    double[:,::1] reg_xo = None                 ,
+    double[:,::1] reg_vo = None                 ,
     Py_ssize_t reg_init_freq = -1               ,
     bint keep_init = False                      ,
     bint DoEFT = True                           ,
@@ -1794,10 +1794,10 @@ cpdef ImplicitSymplecticIVP(
         Function defining the IVP.
     t_span : :class:`python:tuple` (:obj:`numpy:numpy.float64`, :obj:`numpy:numpy.float64`)
         Initial and final time of integration.
-    x0 : :class:`numpy:numpy.ndarray`:class:`(shape = (n), dtype = np.float64)`, optional
-        Initial value for x. Overriden by reg_x0 if provided. By default, :data:`python:None`.
-    v0 : :class:`numpy:numpy.ndarray`:class:`(shape = (n), dtype = np.float64)`, optional
-        Initial value for v. Overriden by reg_x0 if provided. By default, :data:`python:None`.
+    xo : :class:`numpy:numpy.ndarray`:class:`(shape = (n), dtype = np.float64)`, optional
+        Initial value for x. Overriden by reg_xo if provided. By default, :data:`python:None`.
+    vo : :class:`numpy:numpy.ndarray`:class:`(shape = (n), dtype = np.float64)`, optional
+        Initial value for v. Overriden by reg_xo if provided. By default, :data:`python:None`.
     rk_x : :class:`ImplicitRKTable`, optional
         Runge-Kutta tables for the integration of the IVP. By default, :func:`choreo.segm.multiprec_tables.ComputeImplicitRKTable`.
     rk_v : :class:`ImplicitRKTable`, optional
@@ -1812,9 +1812,9 @@ cpdef ImplicitSymplecticIVP(
         Number of integration steps, by default ``1``.
     keep_freq : :class:`python:int`, optional
         Number of integration steps to be taken before saving output, by default ``-1``.
-    reg_x0 : :class:`numpy:numpy.ndarray`:class:`(shape = (nreg, n), dtype = np.float64)`
+    reg_xo : :class:`numpy:numpy.ndarray`:class:`(shape = (nreg, n), dtype = np.float64)`
         Array of initial values for x for regular reset.
-    reg_v0 : :class:`numpy:numpy.ndarray`:class:`(shape = (nreg, n), dtype = np.float64)`
+    reg_vo : :class:`numpy:numpy.ndarray`:class:`(shape = (nreg, n), dtype = np.float64)`
         Array of initial values for v for regular reset.
     reg_init_freq : :class:`python:int`, optional
         Number of timesteps before resetting initial values for x and v. Non-positive values disable the reset, by default ``-1``.
@@ -1842,52 +1842,52 @@ cpdef ImplicitSymplecticIVP(
     if (rk_v._a_table.shape[0] != nsteps):
         raise ValueError("rk_x and rk_v must have the same shape")
 
-    if (x0 is None) != (v0 is None):
-        raise ValueError("Only one of reg_x0 and reg_v0 was provided.")
+    if (xo is None) != (vo is None):
+        raise ValueError("Only one of reg_xo and reg_vo was provided.")
 
-    if (reg_x0 is None) != (reg_v0 is None):
-        raise ValueError("Only one of reg_x0 and reg_v0 was provided.")
+    if (reg_xo is None) != (reg_vo is None):
+        raise ValueError("Only one of reg_xo and reg_vo was provided.")
 
-    if (x0 is None) == (reg_x0 is None):
-        raise ValueError("Exactly one of x0 or reg_x0 should be provided")
+    if (xo is None) == (reg_xo is None):
+        raise ValueError("Exactly one of xo or reg_xo should be provided")
 
-    if (v0 is None) == (reg_v0 is None):
-        raise ValueError("Exactly one of v0 or reg_v0 should be provided")
+    if (vo is None) == (reg_vo is None):
+        raise ValueError("Exactly one of vo or reg_vo should be provided")
 
     cdef Py_ssize_t ndof
 
     cdef double[::1] x
     cdef double[::1] v
 
-    if (x0 is None):
-        x = reg_x0[0,:].copy()
+    if (xo is None):
+        x = reg_xo[0,:].copy()
     else:
-        x = x0.copy()
+        x = xo.copy()
 
-    if (v0 is None):
-        v = reg_v0[0,:].copy()
+    if (vo is None):
+        v = reg_vo[0,:].copy()
     else:
-        v = v0.copy()
+        v = vo.copy()
 
     ndof = x.shape[0]
 
     if (v.shape[0] != ndof):
-        raise ValueError("x0 and v0 must have the same shape")
+        raise ValueError("xo and vo must have the same shape")
     
     cdef Py_ssize_t nreg_init
     cdef Py_ssize_t nreg_needed
 
-    if reg_x0 is None:
-        reg_x0 = np.empty((0, 0), dtype=np.float64)
-        reg_v0 = np.empty((0, 0), dtype=np.float64)
+    if reg_xo is None:
+        reg_xo = np.empty((0, 0), dtype=np.float64)
+        reg_vo = np.empty((0, 0), dtype=np.float64)
 
     else:
-        if (reg_x0.shape[1] != ndof) or (reg_x0.shape[1] != ndof):
-            raise ValueError("reg_x0 or reg_v0 have incorrect shapes: reg_x0.shape[1] should be the number of degrees of freedom.")
+        if (reg_xo.shape[1] != ndof) or (reg_xo.shape[1] != ndof):
+            raise ValueError("reg_xo or reg_vo have incorrect shapes: reg_xo.shape[1] should be the number of degrees of freedom.")
 
-        nreg_init = reg_x0.shape[0]
-        if (reg_v0.shape[0] != nreg_init): 
-            raise ValueError("reg_x0 and reg_v0 should have the same shape.")
+        nreg_init = reg_xo.shape[0]
+        if (reg_vo.shape[0] != nreg_init): 
+            raise ValueError("reg_xo and reg_vo should have the same shape.")
 
         if reg_init_freq < 1:
             reg_init_freq = nint + 1
@@ -1895,7 +1895,7 @@ cpdef ImplicitSymplecticIVP(
         nreg_needed = nint // reg_init_freq
 
         if (nreg_init < nreg_needed):
-            raise ValueError("reg_x0 and reg_v0 do not store enough values")
+            raise ValueError("reg_xo and reg_vo do not store enough values")
 
     cdef ccallback_t callback_fun
     ccallback_prepare(&callback_fun, signatures, fun, CCALLBACK_DEFAULTS)
@@ -1936,7 +1936,7 @@ cpdef ImplicitSymplecticIVP(
         x_keep_np[0,:] = x[:]  
         v_keep_np[0,:] = v[:]  
 
-    cdef bint DoTanIntegration = not(grad_fun is None) or not(grad_gun is None) or not(grad_x0 is None) or not(grad_v0 is None)
+    cdef bint DoTanIntegration = not(grad_fun is None) or not(grad_gun is None) or not(grad_xo is None) or not(grad_vo is None)
 
     cdef ccallback_t callback_grad_fun
     cdef ccallback_t callback_grad_gun
@@ -1958,7 +1958,7 @@ cpdef ImplicitSymplecticIVP(
 
     if DoTanIntegration:
 
-        if (grad_x0 is None) and (grad_v0 is None):
+        if (grad_xo is None) and (grad_vo is None):
 
             grad_ndof = 2*ndof
 
@@ -1972,10 +1972,10 @@ cpdef ImplicitSymplecticIVP(
                 j = ndof+i
                 grad_v[i,j] = 1.
 
-        elif not(grad_x0 is None) and not(grad_v0 is None):
+        elif not(grad_xo is None) and not(grad_vo is None):
 
-            grad_x = grad_x0.copy()
-            grad_v = grad_v0.copy()
+            grad_x = grad_xo.copy()
+            grad_v = grad_vo.copy()
 
             assert grad_x.shape[0] == ndof
             assert grad_v.shape[0] == ndof
@@ -1984,7 +1984,7 @@ cpdef ImplicitSymplecticIVP(
             assert grad_v.shape[1] == grad_ndof
 
         else:
-            raise ValueError('Wrong values for grad_x0 and/or grad_v0')
+            raise ValueError('Wrong values for grad_xo and/or grad_vo')
 
         grad_x_keep_np = np.empty((nint_keep, ndof, grad_ndof), dtype=np.float64)
         grad_v_keep_np = np.empty((nint_keep, ndof, grad_ndof), dtype=np.float64)
@@ -2060,8 +2060,8 @@ cpdef ImplicitSymplecticIVP(
             rk_v                ,
             nint                ,
             keep_freq           ,
-            reg_x0              ,
-            reg_v0              ,
+            reg_xo              ,
+            reg_vo              ,
             reg_init_freq       ,
             DoEFT               ,
             DoTanIntegration    ,
@@ -2117,8 +2117,8 @@ cdef void ImplicitSymplecticIVP_ann(
     ImplicitRKTable rk_v            ,
     Py_ssize_t nint                 ,
     Py_ssize_t keep_freq            ,
-    double[:,::1]   reg_x0          ,
-    double[:,::1]   reg_v0          ,
+    double[:,::1]   reg_xo          ,
+    double[:,::1]   reg_vo          ,
     Py_ssize_t reg_init_freq        ,
     bint DoEFT                      ,
     bint DoTanIntegration           ,
@@ -2209,8 +2209,8 @@ cdef void ImplicitSymplecticIVP_ann(
 
             if iint % reg_init_freq == 0:
 
-                scipy.linalg.cython_blas.dcopy(&ndof,&reg_x0[ireg_init,0],&int_one,&x[0],&int_one)
-                scipy.linalg.cython_blas.dcopy(&ndof,&reg_v0[ireg_init,0],&int_one,&v[0],&int_one)
+                scipy.linalg.cython_blas.dcopy(&ndof,&reg_xo[ireg_init,0],&int_one,&x[0],&int_one)
+                scipy.linalg.cython_blas.dcopy(&ndof,&reg_vo[ireg_init,0],&int_one,&v[0],&int_one)
 
                 if DoEFT:
 

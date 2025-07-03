@@ -901,8 +901,12 @@ def test_periodicity_default(float64_tols, NBS):
     dv = NBS.Compute_initial_constraint_default_vel(vo)
     
     assert np.allclose(dx, np.zeros((ndof), dtype=np.float64), rtol = float64_tols.rtol, atol = float64_tols.atol)  
-    assert np.allclose(dv, np.zeros((ndof), dtype=np.float64), rtol = float64_tols.rtol, atol = float64_tols.atol)         
+    assert np.allclose(dv, np.zeros((ndof), dtype=np.float64), rtol = float64_tols.rtol, atol = float64_tols.atol)
     
+    perdef = NBS.endposmom_to_perdef(xo, vo, xf, vf)
+    
+    assert np.allclose(perdef, np.zeros((NBS.n_ODEperdef_eqproj), dtype=np.float64), rtol = float64_tols.rtol, atol = float64_tols.atol)  
+
 @ParametrizeDocstrings
 @pytest.mark.parametrize("NoSymIfPossible", [True, False])
 @pytest.mark.parametrize("LowLevel", [True, False])
@@ -961,8 +965,8 @@ def test_RK_vs_spectral_reset(NBS, params_buf, vector_calls, LowLevel, NoSymIfPo
     segmpos = NBS.params_to_segmpos(params_buf)
     segmmom = NBS.params_to_segmmom(params_buf)
 
-    reg_x0 = np.ascontiguousarray(segmpos.swapaxes(0, 1).reshape(NBS.segm_store,-1))
-    reg_v0 = np.ascontiguousarray(segmmom.swapaxes(0, 1).reshape(NBS.segm_store,-1))
+    reg_xo = np.ascontiguousarray(segmpos.swapaxes(0, 1).reshape(NBS.segm_store,-1))
+    reg_vo = np.ascontiguousarray(segmmom.swapaxes(0, 1).reshape(NBS.segm_store,-1))
     
     action_grad = NBS.segmpos_params_to_action_grad(segmpos, params_buf)
     action_grad_norm = np.linalg.norm(action_grad, ord = np.inf)
@@ -982,8 +986,8 @@ def test_RK_vs_spectral_reset(NBS, params_buf, vector_calls, LowLevel, NoSymIfPo
         keep_freq = keep_freq           ,
         nint = nint_ODE                 ,
         keep_init = True                ,
-        reg_x0 = reg_x0                 ,
-        reg_v0 = reg_v0                 ,
+        reg_xo = reg_xo                 ,
+        reg_vo = reg_vo                 ,
         reg_init_freq = reg_init_freq   ,
         **ODE_Syst                      ,
     )
@@ -1039,7 +1043,7 @@ def test_grad_fun_FD(float64_tols_loose, NBS, params_buf, NoSymIfPossible):
     ODE_Syst = NBS.Get_ODE_def(params_buf, vector_calls = False, LowLevel = False, NoSymIfPossible = NoSymIfPossible, grad = True)
     
     ndof = NBS.nsegm * NBS.geodim
-    xo = ODE_Syst["x0"]
+    xo = ODE_Syst["xo"]
     dx = np.random.random((ndof))
     
     fun = lambda x : ODE_Syst["fun"](0., x)
@@ -1057,7 +1061,7 @@ def test_grad_fun_FD(float64_tols_loose, NBS, params_buf, NoSymIfPossible):
     print(err.min())
     assert (err.min() < float64_tols_loose.rtol)
     
-    po = ODE_Syst["v0"]
+    po = ODE_Syst["vo"]
     
     gun = lambda p : ODE_Syst["gun"](0., p)
     grad_gun = lambda p, dp : ODE_Syst["grad_gun"](0., p, dp)
@@ -1106,14 +1110,14 @@ def test_ODE_grad_vs_FD_Implicit(float64_tols_loose, NBS, params_buf, vector_cal
         
         n = nn // 2
         
-        x0 = x[0:  n]
-        v0 = x[n:2*n]
+        xo = x[0:  n]
+        vo = x[n:2*n]
         
         segmpos_ODE, segmvel_ODE = choreo.segm.ODE.ImplicitSymplecticIVP(
             fun = fun                   ,
             gun = gun                   ,
-            x0 = x0                     ,
-            v0 = v0                     ,
+            xo = xo                     ,
+            vo = vo                     ,
             rk_x = rk                   ,
             rk_v = rk                   ,
             nint = nint_ODE             ,
@@ -1135,21 +1139,21 @@ def test_ODE_grad_vs_FD_Implicit(float64_tols_loose, NBS, params_buf, vector_cal
         
         n = nn // 2
         
-        x0 = x[0:  n]
-        v0 = x[n:2*n]
+        xo = x[0:  n]
+        vo = x[n:2*n]
         
-        grad_x0 = dx[0:  n].reshape((n,1))
-        grad_v0 = dx[n:2*n].reshape((n,1))
+        grad_xo = dx[0:  n].reshape((n,1))
+        grad_vo = dx[n:2*n].reshape((n,1))
         
         segmpos_ODE, segmvel_ODE, segmpos_grad_ODE, segmvel_grad_ODE = choreo.segm.ODE.ImplicitSymplecticIVP(
             fun = fun                   ,
             grad_fun = grad_fun         ,
             gun = gun                   ,
             grad_gun = grad_gun         ,
-            x0 = x0                     ,
-            grad_x0 = grad_x0           ,
-            v0 = v0                     ,
-            grad_v0 = grad_v0           ,
+            xo = xo                     ,
+            grad_xo = grad_xo           ,
+            vo = vo                     ,
+            grad_vo = grad_vo           ,
             rk_x = rk                   ,
             rk_v = rk                   ,
             nint = nint_ODE             ,
@@ -1164,12 +1168,12 @@ def test_ODE_grad_vs_FD_Implicit(float64_tols_loose, NBS, params_buf, vector_cal
 
         return res
     
-    n = ODE_Syst["x0"].shape[0]
+    n = ODE_Syst["xo"].shape[0]
     nn = 2*n
     
     xo = np.empty((nn), dtype=np.float64)
-    xo[0:n ] = ODE_Syst["x0"]
-    xo[n:nn] = ODE_Syst["v0"]
+    xo[0:n ] = ODE_Syst["xo"]
+    xo[n:nn] = ODE_Syst["vo"]
     
     err = compare_FD_and_exact_grad(
         fun_fd          ,
@@ -1213,14 +1217,14 @@ def test_ODE_grad_vs_FD_Explicit(float64_tols_loose, NBS, params_buf, LowLevel, 
         
         n = nn // 2
         
-        x0 = x[0:  n]
-        v0 = x[n:2*n]
+        xo = x[0:  n]
+        vo = x[n:2*n]
         
         segmpos_ODE, segmvel_ODE = choreo.segm.ODE.SymplecticIVP(
             fun = fun                   ,
             gun = gun                   ,
-            x0 = x0                     ,
-            v0 = v0                     ,
+            xo = xo                     ,
+            vo = vo                     ,
             rk = rk                     ,
             nint = nint_ODE             ,
             t_span = t_span             ,
@@ -1240,21 +1244,21 @@ def test_ODE_grad_vs_FD_Explicit(float64_tols_loose, NBS, params_buf, LowLevel, 
         
         n = nn // 2
         
-        x0 = x[0:  n]
-        v0 = x[n:2*n]
+        xo = x[0:  n]
+        vo = x[n:2*n]
         
-        grad_x0 = dx[0:  n].reshape((n,1))
-        grad_v0 = dx[n:2*n].reshape((n,1))
+        grad_xo = dx[0:  n].reshape((n,1))
+        grad_vo = dx[n:2*n].reshape((n,1))
         
         segmpos_ODE, segmvel_ODE, segmpos_grad_ODE, segmvel_grad_ODE = choreo.segm.ODE.SymplecticIVP(
             fun = fun                   ,
             grad_fun = grad_fun         ,
             gun = gun                   ,
             grad_gun = grad_gun         ,
-            x0 = x0                     ,
-            grad_x0 = grad_x0           ,
-            v0 = v0                     ,
-            grad_v0 = grad_v0           ,
+            xo = xo                     ,
+            grad_xo = grad_xo           ,
+            vo = vo                     ,
+            grad_vo = grad_vo           ,
             rk = rk                     ,
             nint = nint_ODE             ,
             t_span = t_span             ,
@@ -1267,12 +1271,12 @@ def test_ODE_grad_vs_FD_Explicit(float64_tols_loose, NBS, params_buf, LowLevel, 
 
         return res
     
-    n = ODE_Syst["x0"].shape[0]
+    n = ODE_Syst["xo"].shape[0]
     nn = 2*n
     
     xo = np.empty((nn), dtype=np.float64)
-    xo[0:n ] = ODE_Syst["x0"]
-    xo[n:nn] = ODE_Syst["v0"]
+    xo[0:n ] = ODE_Syst["xo"]
+    xo[n:nn] = ODE_Syst["vo"]
     
     err = compare_FD_and_exact_grad(
         fun_fd          ,
@@ -1307,8 +1311,8 @@ def test_ODE_grad_period_noopt(float64_tols, NBS, params_buf):
     segmmom = NBS.params_to_segmmom(params_buf)
     segmmom_all = NBS.segmpos_to_allsegm_noopt(segmmom, pos=False)
     
-    ODE_Syst["reg_x0"] = np.ascontiguousarray(segmpos_all.swapaxes(0, 1).reshape(NBS.nint,-1))
-    ODE_Syst["reg_v0"] = np.ascontiguousarray(segmmom_all.swapaxes(0, 1).reshape(NBS.nint,-1))
+    ODE_Syst["reg_xo"] = np.ascontiguousarray(segmpos_all.swapaxes(0, 1).reshape(NBS.nint,-1))
+    ODE_Syst["reg_vo"] = np.ascontiguousarray(segmmom_all.swapaxes(0, 1).reshape(NBS.nint,-1))
         
     segmpos_ODE, segmmom_ODE, segmpos_grad_ODE, segmmom_grad_ODE = choreo.segm.ODE.ImplicitSymplecticIVP(
         nint = nint_ODE         ,
@@ -1433,8 +1437,8 @@ def test_Monodromy(float64_tols, NBS_in, params_buf_in):
         assert inarray(1./eigval                , eigvals, rtol = rtol, atol = atol)
         assert inarray(1./np.conjugate(eigval)  , eigvals, rtol = rtol, atol = atol)
     
-    xo = np.ascontiguousarray(ODE_Syst['reg_x0'][0,:])
-    po = np.ascontiguousarray(ODE_Syst['reg_v0'][0,:])
+    xo = np.ascontiguousarray(ODE_Syst['reg_xo'][0,:])
+    po = np.ascontiguousarray(ODE_Syst['reg_vo'][0,:])
     
     # Periodicity of the solution gives an eigenvector for free
     yo = NBS.Compute_velocities(0., po)
@@ -1503,8 +1507,8 @@ def test_remove_all_syms_ODE(NBS, params_buf, vector_calls, LowLevel, NoSymIfPos
 
     params_buf_nosym = NBS_nosym.segmpos_to_params(all_bodypos)
 
-    reg_x0 = np.ascontiguousarray(all_bodypos.swapaxes(0, 1).reshape(NBS_nosym.segm_store,-1))
-    reg_v0 = np.ascontiguousarray(all_bodymom.swapaxes(0, 1).reshape(NBS_nosym.segm_store,-1))
+    reg_xo = np.ascontiguousarray(all_bodypos.swapaxes(0, 1).reshape(NBS_nosym.segm_store,-1))
+    reg_vo = np.ascontiguousarray(all_bodymom.swapaxes(0, 1).reshape(NBS_nosym.segm_store,-1))
     
     ODE_Syst = NBS_nosym.Get_ODE_def(vector_calls = vector_calls, LowLevel = LowLevel, NoSymIfPossible = NoSymIfPossible)
     
@@ -1520,8 +1524,8 @@ def test_remove_all_syms_ODE(NBS, params_buf, vector_calls, LowLevel, NoSymIfPos
         nint = nint_ODE                 ,
         keep_init = True                ,
         keep_freq = keep_freq           ,
-        reg_x0 = reg_x0                 ,
-        reg_v0 = reg_v0                 ,
+        reg_xo = reg_xo                 ,
+        reg_vo = reg_vo                 ,
         reg_init_freq = reg_init_freq   ,
         rk_x = rk, rk_v = rk            ,
         t_span = (0, 1.)                ,
@@ -1570,8 +1574,8 @@ def test_Kepler(float64_tols, float64_tols_loose, nbody, eccentricity):
     print(np.linalg.norm(segmmom - segmmom_rt))
     assert np.allclose(segmmom, segmmom_rt, rtol = float64_tols_loose.rtol, atol = float64_tols_loose.atol)  
 
-    reg_x0 = ODE_dict["reg_x0"]
-    reg_v0 = ODE_dict["reg_v0"]
+    reg_xo = ODE_dict["reg_xo"]
+    reg_vo = ODE_dict["reg_vo"]
 
     nsteps = 10
     keep_freq = 1
@@ -1594,8 +1598,8 @@ def test_Kepler(float64_tols, float64_tols_loose, nbody, eccentricity):
         keep_freq = keep_freq           ,
         nint = nint_ODE                 ,
         keep_init = True                ,
-        reg_x0 = reg_x0                 ,
-        reg_v0 = reg_v0                 ,
+        reg_xo = reg_xo                 ,
+        reg_vo = reg_vo                 ,
         reg_init_freq = reg_init_freq   ,
         vector_calls = vector_calls     ,
     )
@@ -1642,8 +1646,8 @@ def test_RK_vs_spectral_periodicity_default(float64_tols, NBS, params_buf, vecto
         **ODE_Syst              ,
     )
     
-    xo = ODE_Syst["reg_x0"].reshape(NBS.segm_store, NBS.nsegm, NBS.geodim)
-    vo = ODE_Syst["reg_v0"].reshape(NBS.segm_store, NBS.nsegm, NBS.geodim)    
+    xo = ODE_Syst["reg_xo"].reshape(NBS.segm_store, NBS.nsegm, NBS.geodim)
+    vo = ODE_Syst["reg_vo"].reshape(NBS.segm_store, NBS.nsegm, NBS.geodim)    
     xf = xf.reshape(NBS.segm_store, NBS.nsegm, NBS.geodim)
     vf = vf.reshape(NBS.segm_store, NBS.nsegm, NBS.geodim)
     
@@ -1742,24 +1746,15 @@ def test_perdef(float64_tols, NBS):
 @pytest.mark.parametrize("NBS", [pytest.param(NBS, id=name) for name, NBS in NBS_dict.items()])
 def test_initposmom(float64_tols, NBS):
     """ 
-        Tests that ODEinitparams and (x0, v0) behave correctly
+        Tests that ODEinitparams and (xo, vo) behave correctly
     """
     
     ODEinitparams = np.random.random((NBS.n_ODEinitparams))
     
-    x0, v0 = NBS.ODE_params_to_initposmom(ODEinitparams)
+    xo, vo = NBS.ODE_params_to_initposmom(ODEinitparams)
     
-    print(x0)
-    print(v0)
-    
-    print(np.linalg.norm(x0))
-    print(np.linalg.norm(v0))
-    
-    # assert False
-    
-    
-    dx = NBS.Compute_initial_constraint_default_pos(x0)
-    dv = NBS.Compute_initial_constraint_default_vel(v0)
+    dx = NBS.Compute_initial_constraint_default_pos(xo)
+    dv = NBS.Compute_initial_constraint_default_vel(vo)
     ndof = NBS.nsegm * NBS.geodim
     
     print(np.linalg.norm(dx))
@@ -1767,8 +1762,10 @@ def test_initposmom(float64_tols, NBS):
     print(np.linalg.norm(dv))
     assert np.allclose(dv, np.zeros((ndof), dtype=np.float64), rtol = float64_tols.rtol, atol = float64_tols.atol)   
     
-    ODEinitparams_rt = NBS.initposmom_to_ODE_params(x0, v0)
+    ODEinitparams_rt = NBS.initposmom_to_ODE_params(xo, vo)
     
     print(np.linalg.norm(ODEinitparams-ODEinitparams_rt))
     assert np.allclose(ODEinitparams, ODEinitparams_rt, rtol = float64_tols.rtol, atol = float64_tols.atol)  
+    
+
     
