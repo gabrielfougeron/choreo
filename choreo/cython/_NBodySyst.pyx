@@ -560,6 +560,20 @@ cdef class NBodySyst():
     cdef readonly Py_ssize_t n_ODEinitparams_mom
     cdef readonly Py_ssize_t n_ODEinitparams
 
+    cdef double[:,::1] _ODEperdef_eqproj_pos
+    @property
+    def ODEperdef_eqproj_pos(self):
+        return np.asarray(self._ODEperdef_eqproj_pos)
+
+    cdef double[:,::1] _ODEperdef_eqproj_mom
+    @property
+    def ODEperdef_eqproj_mom(self):
+        return np.asarray(self._ODEperdef_eqproj_mom)
+
+    cdef readonly Py_ssize_t n_ODEperdef_eqproj_pos
+    cdef readonly Py_ssize_t n_ODEperdef_eqproj_mom
+    cdef readonly Py_ssize_t n_ODEperdef_eqproj
+
     cdef readonly list Sym_list
     cdef readonly object BodyGraph
     cdef readonly object SegmGraph
@@ -1955,7 +1969,7 @@ cdef class NBodySyst():
                 for idim in range(self.geodim):
                     cstr_mat[icstr, idim, isegm, idim] += 1.
                     for jdim in range(self.geodim):
-                        cstr_mat[icstr, idim, jsegm, jdim] -= self._PerDefBeg_SpaceRotPos[jsegm, idim, jdim]
+                        cstr_mat[icstr, idim, jsegm, jdim] -= self._PerDefBeg_SpaceRotPos[isegm, idim, jdim]
 
         cstr_mat_reshape = np.asarray(cstr_mat).reshape((ncstr*self.geodim, self.nsegm*self.geodim))
         choreo.scipy_plus.cython.misc.proj_to_zero(cstr_mat_reshape, eps=eps)
@@ -1984,7 +1998,7 @@ cdef class NBodySyst():
                 for idim in range(self.geodim):
                     cstr_mat[icstr, idim, isegm, idim] += 1.
                     for jdim in range(self.geodim):
-                        cstr_mat[icstr, idim, jsegm, jdim] -= self._PerDefBeg_SpaceRotVel[jsegm, idim, jdim]
+                        cstr_mat[icstr, idim, jsegm, jdim] -= self._PerDefBeg_SpaceRotVel[isegm, idim, jdim]
 
         cstr_mat_reshape = np.asarray(cstr_mat).reshape((ncstr*self.geodim, self.nsegm*self.geodim))
         choreo.scipy_plus.cython.misc.proj_to_zero(cstr_mat_reshape, eps=eps)
@@ -1996,6 +2010,105 @@ cdef class NBodySyst():
         self.n_ODEinitparams_pos = self._ODEinitparams_basis_pos.shape[1]
         self.n_ODEinitparams_mom = self._ODEinitparams_basis_mom.shape[1]
         self.n_ODEinitparams = self.n_ODEinitparams_pos + self.n_ODEinitparams_mom
+
+        if MomCons:
+
+            ncstr = 1
+            cstr_mat = np.zeros((ncstr, self.geodim, self.nsegm, self.geodim), dtype=np.float64)
+
+            # Use dcopy ?
+            for idim in range(self.geodim):
+                for isegm in range(self.nsegm):
+                    for jdim in range(self.geodim):
+                        cstr_mat[0, idim, isegm, jdim] += self._CoMMat[idim, isegm, jdim]
+
+            cstr_mat_reshape = np.asarray(cstr_mat).reshape((ncstr*self.geodim, self.nsegm*self.geodim))
+            choreo.scipy_plus.cython.misc.proj_to_zero(cstr_mat_reshape, eps=eps)
+            NullSpace_MomCons = choreo.scipy_plus.linalg.null_space(cstr_mat_reshape)
+            choreo.scipy_plus.cython.misc.proj_to_zero(NullSpace_MomCons, eps=eps)
+
+            # dgemm
+            MomCons_proj = np.matmul(NullSpace_MomCons, NullSpace_MomCons.T)
+
+
+        ncstr = self.nsegm
+        cstr_mat = np.zeros((ncstr, self.geodim, self.nsegm, self.geodim), dtype=np.float64)
+        icstr = -1
+
+        if self.TimeRev > 0:
+
+            for isegm in range(self.nsegm):
+                icstr += 1
+
+                for idim in range(self.geodim):
+                    cstr_mat[icstr, idim, isegm, idim] += 1.
+
+        else:
+
+            for isegm in range(self.nsegm):
+
+                icstr += 1
+                jsegm = self._PerDefEnd_Isegm[isegm]
+
+                for idim in range(self.geodim):
+                    cstr_mat[icstr, idim, isegm, idim] += 1.
+                    for jdim in range(self.geodim):
+                        cstr_mat[icstr, idim, jsegm, jdim] -= self._PerDefEnd_SpaceRotPos[jsegm, idim, jdim]
+
+
+        cstr_mat_reshape = np.asarray(cstr_mat).reshape((ncstr*self.geodim, self.nsegm*self.geodim))
+        if MomCons:
+            cstr_mat_reshape = np.matmul(cstr_mat_reshape, MomCons_proj)
+
+        choreo.scipy_plus.cython.misc.proj_to_zero(cstr_mat_reshape, eps=eps)
+        ImageSpace_pos = np.ascontiguousarray(scipy.linalg.orth(cstr_mat_reshape, eps).T)
+        choreo.scipy_plus.cython.misc.proj_to_zero(ImageSpace_pos, eps=eps)
+
+        self._ODEperdef_eqproj_pos = ImageSpace_pos
+
+
+        ncstr = self.nsegm
+        cstr_mat = np.zeros((ncstr, self.geodim, self.nsegm, self.geodim), dtype=np.float64)
+        icstr = -1
+
+        if self.TimeRev > 0:
+
+            for isegm in range(self.nsegm):
+                icstr += 1
+
+                for idim in range(self.geodim):
+                    cstr_mat[icstr, idim, isegm, idim] += 1.
+
+        else:
+
+            for isegm in range(self.nsegm):
+
+                icstr += 1
+                jsegm = self._PerDefEnd_Isegm[isegm]
+
+                for idim in range(self.geodim):
+                    cstr_mat[icstr, idim, isegm, idim] += 1.
+                    for jdim in range(self.geodim):
+                        cstr_mat[icstr, idim, jsegm, jdim] -= self._PerDefEnd_SpaceRotVel[jsegm, idim, jdim]
+
+
+        cstr_mat_reshape = np.asarray(cstr_mat).reshape((ncstr*self.geodim, self.nsegm*self.geodim))
+        if MomCons:
+            cstr_mat_reshape = np.matmul(cstr_mat_reshape, MomCons_proj)
+
+        choreo.scipy_plus.cython.misc.proj_to_zero(cstr_mat_reshape, eps=eps)
+        ImageSpace_mom = np.ascontiguousarray(scipy.linalg.orth(cstr_mat_reshape, eps).T)
+        choreo.scipy_plus.cython.misc.proj_to_zero(ImageSpace_mom, eps=eps)
+
+        self._ODEperdef_eqproj_mom = ImageSpace_mom
+
+        self.n_ODEperdef_eqproj_pos = self._ODEperdef_eqproj_pos.shape[0]
+        self.n_ODEperdef_eqproj_mom = self._ODEperdef_eqproj_mom.shape[0]
+        self.n_ODEperdef_eqproj = self.n_ODEperdef_eqproj_pos + self.n_ODEperdef_eqproj_mom
+
+        assert self.n_ODEperdef_eqproj == self.n_ODEinitparams
+
+
 
     @cython.final
     def ODE_params_to_initposmom(self, double[::1] ODEinitparams):
@@ -4783,20 +4896,19 @@ cdef class NBodySyst():
 
             if self.TimeRev < 0:
 
-                i = isegm * self.geodim
+                j = self._PerDefBeg_Isegm[isegm] * self.geodim
 
                 for idim in range(self.geodim):
 
-                    res[i] = xo[i]
+                    res[j] += xo[j]
+                    i = isegm * self.geodim
 
-                    j = self._PerDefBeg_Isegm[isegm] * self.geodim
-                    
                     for jdim in range(self.geodim):
 
-                        res[i] -= self._PerDefBeg_SpaceRotPos[isegm,idim,jdim] * xo[j]
-                        j += 1
+                        res[j] -= self._PerDefBeg_SpaceRotPos[isegm,idim,jdim] * xo[i]
+                        i += 1
 
-                    i += 1
+                    j += 1
 
         return res
         
@@ -4813,20 +4925,19 @@ cdef class NBodySyst():
 
             if self.TimeRev < 0:
 
-                i = isegm * self.geodim
+                j = self._PerDefBeg_Isegm[isegm] * self.geodim
 
                 for idim in range(self.geodim):
 
-                    res[i] = vo[i]
+                    res[j] += vo[j]
+                    i = isegm * self.geodim
 
-                    j = self._PerDefBeg_Isegm[isegm] * self.geodim
-                    
                     for jdim in range(self.geodim):
 
-                        res[i] -= self._PerDefBeg_SpaceRotVel[isegm,idim,jdim] * vo[j]
-                        j += 1
+                        res[j] -= self._PerDefBeg_SpaceRotVel[isegm,idim,jdim] * vo[i]
+                        i += 1
 
-                    i += 1
+                    j += 1
 
         return res
 

@@ -46,7 +46,7 @@ def SymList_from_config_file(config_name):
     return choreo.find.ChoreoLoadSymList(params_dict)
 
 def load_from_config_file(config_name, override_args = {}):
-    
+
     params_dict = params_from_config_file(config_name)
     
     Workspace_folder = os.path.join(__PROJECT_ROOT__, 'tests', 'NewSym_data', config_name)

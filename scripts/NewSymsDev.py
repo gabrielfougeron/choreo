@@ -32,7 +32,7 @@ def main():
     )
 
     for config_name in tests.test_config.AllConfigNames_list:
-    # for config_name in ['2D1_3dim']:
+    # for config_name in ['3D']:
     # for config_name in ['6q6q']:
         print()
         # print("  OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO  ")
@@ -46,15 +46,41 @@ def main():
         TT.toc(config_name)
 
     print()
-    print(TT)
+    # print(TT)
         
 
 def doit(config_name):
     
     NBS = tests.test_config.load_from_config_file(config_name)
     
-    print(NBS.params_basis_initpos)
+    # if NBS.TimeRev > 0:
+    #     return
     
+    print(f'{NBS.n_ODEinitparams = }')
+    print(f'{NBS.n_ODEinitparams_pos = }')
+    print(f'{NBS.n_ODEinitparams_mom = }')
+    print()
+    print(f'{NBS.n_ODEperdef_eqproj = }')
+    print(f'{NBS.n_ODEperdef_eqproj_pos = }')
+    print(f'{NBS.n_ODEperdef_eqproj_mom = }')
+
+    
+    # for isegm in range(NBS.nsegm):
+    #     
+    # # 
+    #     assert NBS.PerDefBeg_Isegm[NBS.PerDefBeg_Isegm[isegm]] == isegm
+    #     assert NBS.PerDefEnd_Isegm[NBS.PerDefEnd_Isegm[isegm]] == isegm
+    #     
+    #     print(isegm)
+    #     print(NBS.PerDefBeg_Isegm[isegm])
+    #     print(NBS.PerDefEnd_Isegm[isegm])
+    #     # print(NBS.PerDefEnd_Isegm[NBS.PerDefBeg_Isegm[isegm]])
+    #     # print(NBS.PerDefBeg_Isegm[NBS.PerDefEnd_Isegm[isegm]])
+    #     print()
+    #     
+    #     # print(NBS.PerDefBeg_SpaceRotVel[isegm,:,:].T)
+    #     # print(NBS.PerDefEnd_SpaceRotVel[isegm,:,:].T)
+    # 
     
     
         

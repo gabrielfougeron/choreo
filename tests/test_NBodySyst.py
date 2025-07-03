@@ -1713,6 +1713,7 @@ def test_perdef(float64_tols, NBS):
     """ A bunch of things that I use more or less implicitely. Them not being true would likely break something.
     """
         
+    assert NBS.n_ODEperdef_eqproj == NBS.n_ODEinitparams
     assert NBS.RequiresGreaterNStore == (NBS.TimeRev < 0)
         
     for iint in range(NBS.nint_min):
@@ -1736,17 +1737,26 @@ def test_perdef(float64_tols, NBS):
                 TimeRev = NBS.TimeRev
                 
             assert NBS.intersegm_to_all[ib][iint].TimeRev == TimeRev
-        
+            
 @ParametrizeDocstrings
 @pytest.mark.parametrize("NBS", [pytest.param(NBS, id=name) for name, NBS in NBS_dict.items()])
 def test_initposmom(float64_tols, NBS):
     """ 
-        Tests that ODEinitparams and (x0, v0) 
+        Tests that ODEinitparams and (x0, v0) behave correctly
     """
     
     ODEinitparams = np.random.random((NBS.n_ODEinitparams))
     
     x0, v0 = NBS.ODE_params_to_initposmom(ODEinitparams)
+    
+    print(x0)
+    print(v0)
+    
+    print(np.linalg.norm(x0))
+    print(np.linalg.norm(v0))
+    
+    # assert False
+    
     
     dx = NBS.Compute_initial_constraint_default_pos(x0)
     dv = NBS.Compute_initial_constraint_default_vel(v0)

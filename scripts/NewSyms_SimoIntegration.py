@@ -69,6 +69,18 @@ def Integrate(n_NT_init):
 
     print(NBS.DescribeSystem())
 
+    
+    ODEinitparams = np.random.random((NBS.n_ODEinitparams))
+    
+    x0, v0 = NBS.ODE_params_to_initposmom(ODEinitparams)
+    
+    print(x0)
+    print(v0)
+    
+    exit()
+
+
+
     file_basename = 'Simo_'+(str(n_NT_init).zfill(5))
     save_filename = os.path.join(store_folder, file_basename)
 
