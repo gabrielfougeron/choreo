@@ -93,7 +93,10 @@ def Find_Choreo(
     Finds periodic solutions
 
     """
-
+    
+    SpectralSolve = False
+    # SpectralSolve = True
+    
     NBS = choreo.NBodySyst(geodim, nbody, mass, charge, Sym_list, inter_law, inter_law_str, inter_law_params)
 
     NBS.fftw_planner_effort = fftw_planner_effort
@@ -105,11 +108,17 @@ def Find_Choreo(
 
     print(NBS.DescribeSystem())
 
-    x_min, x_max = NBS.Make_params_bounds(coeff_ampl_o, k_infl, k_max, coeff_ampl_min)
-    x_ptp = x_max - x_min
-    x_avg = (x_min + x_min) / 2
-    
-    del x_min, x_max
+    if SpectralSolve:
+        x_min, x_max = NBS.Make_params_bounds(coeff_ampl_o, k_infl, k_max, coeff_ampl_min)
+        x_ptp = x_max - x_min
+        
+        del x_max
+        
+    else:
+        
+        x_ptp = np.ones(NBS.n_ODEinitparams, dtype=np.float64) * (1e0)
+        x_min = (-0.5)*x_ptp
+        # x_min = np.array([-0.48768493 , 0.17985661, -1.95718566,  3.31937318])
 
     n_opt = 0
     n_find = 0
@@ -127,7 +136,45 @@ def Find_Choreo(
     
     hash_dict = {}
     action_dict = {}
+    
+    if not SpectralSolve:
+        
+        NBS.ForceGreaterNStore = True
+        ODE_Syst = NBS.Get_ODE_def()
+        
+        nsteps = 10
+        keep_freq = 1
+        method = "Gauss"
+        
+        rk_x = choreo.segm.multiprec_tables.ComputeImplicitRKTable(nsteps, method=method)
+        rk_v = rk_x
+        
+        Use_exact_Jacobian = False
+        
+        def Periodicity_default(ODE_params):
+            
+            xo, vo = NBS.ODE_params_to_initposmom(ODE_params)
+            
+            nint_ODE = (NBS.segm_store-1) * keep_freq
+            
+            segmpos_ODE, segmmom_ODE = choreo.segm.ODE.ImplicitSymplecticIVP(
+                xo = xo                 ,
+                vo = vo                 ,
+                rk_x = rk_x             ,
+                rk_v = rk_v             ,
+                nint = nint_ODE         ,
+                keep_freq = keep_freq   ,
+                keep_init = True        ,
+                **ODE_Syst              ,
+            )
+            
+            xf = segmpos_ODE[NBS.segm_store-1,:].reshape(-1)
+            vf = segmmom_ODE[NBS.segm_store-1,:].reshape(-1)
+            
+            NBS.segmpos = np.ascontiguousarray(segmpos_ODE.reshape((NBS.segm_store, NBS.nsegm, NBS.geodim)).swapaxes(0, 1))
 
+            return NBS.endposmom_to_perdef(xo, vo, xf, vf)
+        
     while (((n_opt < n_opt_max) and (n_find < n_find_max)) or ForceFirstEntry):
         
         NBS.nint_fac = nint_fac_init
@@ -155,11 +202,17 @@ def Find_Choreo(
 
             # all_coeffs_avg = ActionSyst.Gen_init_avg_2D(nT_slow,nT_fast,Info_dict_slow,all_coeffs_slow,Info_dict_fast_list,all_coeffs_fast_list,il_slow_source,ibl_slow_source,il_fast_source,ibl_fast_source,Rotate_fast_with_slow,Optimize_Init,Randomize_Fast_Init)
 
-            # x_avg = ActionSyst.Package_all_coeffs(all_coeffs_avg)
+            # x_min = ActionSyst.Package_all_coeffs(all_coeffs_avg)
         else:
 
-            x = x_avg + x_ptp * np.random.random((NBS.nparams))
-            segmpos = NBS.params_to_segmpos(x)
+            if SpectralSolve:
+                x = x_min + x_ptp * np.random.random((NBS.nparams))
+                segmpos = NBS.params_to_segmpos(x)
+                f0 = NBS.segmpos_params_to_action_grad(segmpos, x)
+            else:
+                x = x_min + x_ptp * np.random.random((NBS.n_ODEinitparams))
+                f0 = Periodicity_default(x)
+                segmpos = NBS.segmpos.copy()
         
         if save_all_inits or (save_first_init and n_opt == 0):
 
@@ -204,7 +257,6 @@ def Find_Choreo(
             if Save_Params:
                 np.save(filename_output+'_params.npy', x)
 
-        f0 = NBS.segmpos_params_to_action_grad(segmpos, x)
         best_sol = choreo.scipy_plus.nonlin.current_best(x, f0)
 
         if m.isnan(best_sol.f_norm):
@@ -231,7 +283,7 @@ def Find_Choreo(
 
         while GoOn:
             # Set correct optim params
-
+            
             x = np.copy(best_sol.x)
             
             inner_tol = 0.
@@ -269,12 +321,16 @@ def Find_Choreo(
 
                 return AskedForNext
 
+            if SpectralSolve:
+                F = NBS.params_to_action_grad
+            else:
+                F = Periodicity_default
+
             try : 
                 
-                opt_result , info = choreo.scipy_plus.nonlin.nonlin_solve_pp(
-                    F=NBS.params_to_action_grad, x0=x, jacobian=jacobian, 
-                    verbose=disp_scipy_opt, maxiter=maxiter, f_tol=gradtol,  line_search=line_search, callback=optim_callback, raise_exception=False,smin=linesearch_smin, full_output=True, tol_norm=np.linalg.norm)
-
+                opt_result, info = choreo.scipy_plus.nonlin.nonlin_solve_pp(
+                    F=F, x0=x, jacobian=jacobian, 
+                    verbose=disp_scipy_opt, maxiter=maxiter, f_tol=gradtol,  line_search=line_search, callback=optim_callback, raise_exception=False, smin=linesearch_smin, full_output=True, tol_norm=np.linalg.norm)
                 AskedForNext = (info['status'] == 0)
 
             except Exception as exc:
@@ -289,7 +345,14 @@ def Find_Choreo(
 
             SaveSol = False
 
-            segmpos = NBS.params_to_segmpos(best_sol.x)
+            if SpectralSolve:
+                segmpos = NBS.params_to_segmpos(best_sol.x)
+                spectral_params = best_sol.x
+            else:
+                Periodicity_default(best_sol.x)
+                segmpos = NBS.segmpos
+                spectral_params = NBS.segmpos_to_params(segmpos)
+                
             Hash_Action = NBS.segmpos_to_hash(segmpos)
             
             print(f'Opt Action Grad Norm: {best_sol.f_norm:.2e}')
@@ -305,7 +368,7 @@ def Find_Choreo(
                 
             if (GoOn and Look_for_duplicates):
                 
-                Found_duplicate, file_path = Check_Duplicates(NBS, segmpos, best_sol.x, hash_dict, action_dict, store_folder, duplicate_eps, Hash_Action=Hash_Action, Duplicates_Hash=Duplicates_Hash)
+                Found_duplicate, file_path = Check_Duplicates(NBS, segmpos, spectral_params, hash_dict, action_dict, store_folder, duplicate_eps, Hash_Action=Hash_Action, Duplicates_Hash=Duplicates_Hash)
                 
                 if (Found_duplicate):
                 
@@ -318,11 +381,15 @@ def Find_Choreo(
                 
                 nint_fac_cur = NBS.nint_fac
                 nint_fac = 2*nint_fac_cur
-                x_fine = NBS.params_resize(best_sol.x, nint_fac)
-                NBS.nint_fac = nint_fac
-                
-                f_fine = NBS.params_to_action_grad(x_fine)
-                f_fine_norm = np.linalg.norm(f_fine)
+                if SpectralSolve:
+                    x_fine = NBS.params_resize(spectral_params, nint_fac)
+                    NBS.nint_fac = nint_fac
+                    f_fine = NBS.params_to_action_grad(x_fine)
+                    f_fine_norm = np.linalg.norm(f_fine)
+                else:
+                    NBS.nint_fac = nint_fac
+                    f_fine = Periodicity_default(x)
+                    f_fine_norm = np.linalg.norm(f_fine)
                 
                 print(f'Opt Action Grad Norm Refine : {f_fine_norm:.2e}')
                 
@@ -352,10 +419,10 @@ def Find_Choreo(
                     GoOn = False
                     print('Stopping search: could not converge within prescibed optimizer and refinement parameters.')
                     
-                if GoOn and (OnCollisionCourse):
-                
-                    GoOn = False
-                    print('Stopping search: solver is likely narrowing in on a collision solution.')
+                # if GoOn and (OnCollisionCourse):
+                # 
+                #     GoOn = False
+                #     print('Stopping search: solver is likely narrowing in on a collision solution.')
 
                 if SaveSol :
                     
@@ -390,9 +457,9 @@ def Find_Choreo(
                     for idim in range(NBS.geodim):
                         segmpos[:,:,idim] -= xo[idim]
                         
-                    best_sol.x = NBS.segmpos_to_params(segmpos)
+                    spectral_params = NBS.segmpos_to_params(segmpos)
                         
-                    NBS.Write_Descriptor(params_mom_buf=best_sol.x , filename = filename_output+'.json', segmpos=segmpos, Gradaction=f_fine_norm, Hash_Action=Hash_Action, extend=plot_extend)
+                    NBS.Write_Descriptor(params_mom_buf=spectral_params , filename = filename_output+'.json', segmpos=segmpos, Gradaction=f_fine_norm, Hash_Action=Hash_Action, extend=plot_extend)
 
                     if Save_img :
                         NBS.plot_segmpos_2D(segmpos, filename_output+'.png', fig_size=img_size, color=color, color_list=color_list)
@@ -408,18 +475,25 @@ def Find_Choreo(
                         np.save(filename_output+'.npy', segmpos)
 
                     if Save_Params:
-                        np.save(filename_output+'_params.npy', best_sol.x)
+                        np.save(filename_output+'_params.npy', spectral_params)
                     
 #                     if Save_Init_Pos_Vel_Sol:
-#                         all_pos_b = ActionSyst.Compute_init_pos_vel(best_sol.x)
+#                         all_pos_b = ActionSyst.Compute_init_pos_vel(spectral_params)
 #                         np.save(filename_output+'_init.npy',all_coeffs)
 #                
                 if GoOn and NeedsRefinement and CanRefine:
                     
                     print('Resizing.')
 
-                    best_sol = choreo.scipy_plus.nonlin.current_best(x_fine, f_fine)
-                    NBS.nint_fac = 2*NBS.nint_fac
+                    if SpectralSolve:
+                        best_sol = choreo.scipy_plus.nonlin.current_best(x_fine, f_fine)
+                        NBS.nint_fac = 2*NBS.nint_fac
+                    else:
+                        NBS.nint_fac = 2*NBS.nint_fac
+                        x = best_sol.x
+                        f0 = Periodicity_default(x)
+                        best_sol = choreo.scipy_plus.nonlin.current_best(x, f0)
+
                     current_cvg_lvl += 1
                      
                 elif GoOn and CanChangeOptimParams:

@@ -106,8 +106,10 @@ def Integrate(n_NT_init):
     vo_ini = vo.copy()
     
     ODEparams_ini = NBS.initposmom_to_ODE_params(xo, vo)
+    
+    print(ODEparams_ini)
 
-    ODEparams_ini += np.random.random(NBS.n_ODEinitparams) * 1e0
+    ODEparams_ini += (2*np.random.random(NBS.n_ODEinitparams)-1)/2 * 1e0
                                       
     ODE_Syst = NBS.Get_ODE_def()
     

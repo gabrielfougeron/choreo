@@ -780,6 +780,16 @@ cdef class NBodySyst():
     cdef list _fftw_arrays
 
     cdef double[:,:,::1] _segmpos 
+    @property
+    def segmpos(self):
+        return np.asarray(self._segmpos)
+
+    @segmpos.setter
+    @cython.cdivision(True)
+    @cython.final
+    def segmpos(self, double[:,:,::1] segmpos_in):
+        self._segmpos = segmpos_in
+
     cdef double[:,:,::1] _pot_nrg_grad
 
     cdef bint _ForceGeneralSym
@@ -2642,23 +2652,24 @@ cdef class NBodySyst():
             def matvec(self,v):                
                 return self.NBS.segmpos_dparams_to_action_hess(self.segmpos, v)
 
-            def update(self, x, f):
-                self.segmpos = self.NBS.params_to_segmpos(x)
-                scipy.optimize.nonlin.KrylovJacobian.update(self, x, f)
-
-            def setup(self, x, f, func):
-                self.segmpos = self.NBS.params_to_segmpos(x)
-                scipy.optimize.nonlin.KrylovJacobian.setup(self, x, f, func)
-
             jacobian.matvec = types.MethodType(matvec, jacobian)
             jacobian.rmatvec = types.MethodType(matvec, jacobian)
-            jacobian.update = types.MethodType(update, jacobian)
-            jacobian.setup = types.MethodType(setup, jacobian)
 
         else: 
 
             jacobian = scipy.optimize.nonlin.KrylovJacobian(**jac_options_kw)
-        
+    
+        def update(self, x, f):
+            self.segmpos = self.NBS.segmpos.copy()
+            scipy.optimize.nonlin.KrylovJacobian.update(self, x, f)
+
+        def setup(self, x, f, func):
+            self.segmpos = self.NBS.segmpos.copy()
+            scipy.optimize.nonlin.KrylovJacobian.setup(self, x, f, func)
+
+        jacobian.update = types.MethodType(update, jacobian)
+        jacobian.setup = types.MethodType(setup, jacobian)
+
         jacobian.NBS = self
 
         return jacobian
