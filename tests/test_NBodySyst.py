@@ -1767,5 +1767,3 @@ def test_initposmom(float64_tols, NBS):
     print(np.linalg.norm(ODEinitparams-ODEinitparams_rt))
     assert np.allclose(ODEinitparams, ODEinitparams_rt, rtol = float64_tols.rtol, atol = float64_tols.atol)  
     
-
-    
