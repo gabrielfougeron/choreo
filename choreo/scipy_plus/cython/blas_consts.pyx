@@ -25,4 +25,4 @@ cdef double ctwopisqrt2 = ctwopi*csqrt(2.)
 cdef double cfourpi = 2*ctwopi
 cdef double ctwopisq = 2*np.pi*np.pi
 cdef double cfourpisq = ctwopi*ctwopi
-
+cdef double ceightpisq = 2*cfourpisq

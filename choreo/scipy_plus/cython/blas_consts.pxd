@@ -18,3 +18,4 @@ cdef double ctwopisqrt2
 cdef double cfourpi
 cdef double ctwopisq
 cdef double cfourpisq
+cdef double ceightpisq

@@ -116,9 +116,12 @@ def Find_Choreo(
         
     else:
         
-        x_ptp = np.ones(NBS.n_ODEinitparams, dtype=np.float64) * (1e0)
+        max_norm_on_entry = 1000
+        # x_ptp = np.ones(NBS.n_ODEinitparams, dtype=np.float64) * max_norm_on_entry / 5
+        
+        
+        x_ptp = np.ones(NBS.n_ODEinitparams, dtype=np.float64) * 2e-1
         x_min = (-0.5)*x_ptp
-        # x_min = np.array([-0.48768493 , 0.17985661, -1.95718566,  3.31937318])
 
     n_opt = 0
     n_find = 0
@@ -393,6 +396,7 @@ def Find_Choreo(
                 
                 print(f'Opt Action Grad Norm Refine : {f_fine_norm:.2e}')
                 
+                ParamsDivergence = (f_fine_norm > max_norm_on_entry)
                 ParamPreciseEnough = (f_fine_norm < Newt_err_norm_max)
                 ParamPreciseEnoughSave = (f_fine_norm < Newt_err_norm_max_save)
                 CanChangeOptimParams = i_optim_param < (n_optim_param-1)
@@ -401,6 +405,11 @@ def Find_Choreo(
                 OnCollisionCourse = (best_sol.f_norm < 1e3*Newt_err_norm_max) and (f_fine_norm > 1e6 * best_sol.f_norm) 
                 
                 NBS.nint_fac = nint_fac_cur
+
+                if GoOn and ParamsDivergence:
+                
+                    GoOn = False
+                    print('Stopping search: solver is diverging.')                    
 
                 if GoOn and ParamPreciseEnough and not(NeedsRefinement):
 
@@ -419,10 +428,10 @@ def Find_Choreo(
                     GoOn = False
                     print('Stopping search: could not converge within prescibed optimizer and refinement parameters.')
                     
-                # if GoOn and (OnCollisionCourse):
-                # 
-                #     GoOn = False
-                #     print('Stopping search: solver is likely narrowing in on a collision solution.')
+                if GoOn and (OnCollisionCourse):
+                
+                    GoOn = False
+                    print('Stopping search: solver is likely narrowing in on a collision solution.')
 
                 if SaveSol :
                     

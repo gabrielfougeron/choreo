@@ -2459,23 +2459,23 @@ cdef class NBodySyst():
         Info_dict["SegmRequiresDisp"] = self.SegmRequiresDisp.tolist()
 
         InterSegmSpaceRot = []
-        InterSegmTimeRev = []
+        # InterSegmTimeRev = []
 
         for ib in range(self.nbody):
             InterSegmSpaceRot_b = []
-            InterSegmTimeRev_b = []
+            # InterSegmTimeRev_b = []
             for iint in range(self.nint_min):
 
                 Sym = self.intersegm_to_all[ib][iint]
 
                 InterSegmSpaceRot_b.append(Sym.SpaceRot.tolist())
-                InterSegmTimeRev_b.append(Sym.TimeRev)
+                # InterSegmTimeRev_b.append(Sym.TimeRev)
 
             InterSegmSpaceRot.append(InterSegmSpaceRot_b)
-            InterSegmTimeRev.append(InterSegmTimeRev_b)
+            # InterSegmTimeRev.append(InterSegmTimeRev_b)
         
         Info_dict["InterSegmSpaceRot"] = InterSegmSpaceRot
-        Info_dict["InterSegmTimeRev"] = InterSegmTimeRev
+        Info_dict["TimeRev"] = self.TimeRev
 
         return Info_dict
 
@@ -2604,15 +2604,13 @@ cdef class NBodySyst():
         cdef double r, p, fac, a
         cdef double eccentric_anomaly, cos_true_anomaly, sin_true_anomaly, mean_anomaly 
         cdef double dcos_true_anomaly, dsin_true_anomaly
-        
+
         fac = 0.
         for ib in range(1,nbody):
-            angle = ctwopi * ib / nbody
-            cos_angle = ccos(angle) - 1.
-            sin_angle = csin(angle)
-            fac += 1./csqrt(cos_angle*cos_angle + sin_angle*sin_angle)
+            angle = cpi * ib / nbody
+            fac += 1./csin(angle)
 
-        fac /= cfourpisq
+        fac /= ceightpisq
 
         p = ((1 - eccentricity) * (1 + eccentricity)) * (fac*mass) ** (1./3)
 
