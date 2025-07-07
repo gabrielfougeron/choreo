@@ -904,8 +904,13 @@ def test_periodicity_default(float64_tols, NBS):
     assert np.allclose(dv, np.zeros((ndof), dtype=np.float64), rtol = float64_tols.rtol, atol = float64_tols.atol)
     
     perdef = NBS.endposmom_to_perdef(xo, vo, xf, vf)
-    
     assert np.allclose(perdef, np.zeros((NBS.n_ODEperdef_eqproj), dtype=np.float64), rtol = float64_tols.rtol, atol = float64_tols.atol)  
+
+    xf = xf.reshape(1,-1)
+    vf = vf.reshape(1,-1)
+    
+    perdef_bulk = NBS.endposmom_to_perdef_bulk(xo, vo, xf, vf)
+    assert np.allclose(perdef_bulk, np.zeros((1,NBS.n_ODEperdef_eqproj), dtype=np.float64), rtol = float64_tols.rtol, atol = float64_tols.atol)  
 
 @ParametrizeDocstrings
 @pytest.mark.parametrize("NoSymIfPossible", [True, False])
