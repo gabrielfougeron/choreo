@@ -1,0 +1,1 @@
+Sitemap: https://gabrielfougeron.github.io/pyquickbench/sitemap.xml

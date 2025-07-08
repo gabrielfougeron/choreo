@@ -60,3 +60,4 @@ objects_inv/**
 !tests/NewSym_data/**/choreo_config.json
 !tests/NewSym_sols/**
 !environment/**
+!docs/source/robots.txt

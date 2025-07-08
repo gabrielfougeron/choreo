@@ -9,6 +9,7 @@ sphinxcontrib.plantuml
 seed-intersphinx-mapping
 myst-parser
 sphinxext-rediraffe
+sphinx-sitemap
 sphinxcontrib-bibtex
 sphinx-copybutton
 sphinxcontrib-autoprogram

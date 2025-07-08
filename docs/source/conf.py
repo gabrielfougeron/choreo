@@ -45,6 +45,7 @@ extensions = [
     "sphinxcontrib.plantuml"        ,
     "myst_parser"                   ,
     "sphinxext.rediraffe"           ,
+    "sphinx_sitemap"                ,
     "sphinxcontrib.bibtex"          ,
     # "sphinx-prompt"                 , # Incompatible versions
     "sphinxcontrib.autoprogram"     ,
@@ -111,6 +112,15 @@ html_logo = html_logo_rel
 html_favicon = html_logo_rel
 html_baseurl = "https://gabrielfougeron.github.io/choreo-docs"
 html_show_sourcelink = True
+
+##########################
+# Sitemap and robots.txt #
+##########################
+
+sitemap_url_scheme = "{link}"
+html_extra_path = [
+    "./robots.txt"    ,
+]
 
 html_theme_options = {
     # 'navigation_depth': 4,
