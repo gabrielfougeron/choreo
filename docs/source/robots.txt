@@ -1,1 +1,1 @@
-Sitemap: https://gabrielfougeron.github.io/pyquickbench/sitemap.xml
+Sitemap: https://gabrielfougeron.github.io/choreo-docs/sitemap.xml
