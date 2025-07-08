@@ -336,7 +336,7 @@ McLahan8 = Yoshida_w_to_cd_reduced(np.array([
 ]),
     th_cvg_rate = 8                 ,
 ).symmetric_adjoint()
-""" McLahan SS method of order 8 and error 0.14
+""" McLachlan SS method of order 8 and error 0.14
 
 cf :footcite:`mclachlan1995numerical`.
 

@@ -66,6 +66,13 @@ def Find_Choreo(
     store_outer_Av_list,
     n_optim_param,
     krylov_method,
+    SpectralSolve,
+    rk_explicit,
+    rk_implicit_x,
+    rk_implicit_v,
+    pos_mom_scaling,
+    init_pos_BB_size,
+    init_mom_BB_size,
     Use_exact_Jacobian,
     disp_scipy_opt,
     line_search,
@@ -94,9 +101,6 @@ def Find_Choreo(
 
     """
     
-    SpectralSolve = False
-    # SpectralSolve = True
-    
     NBS = choreo.NBodySyst(geodim, nbody, mass, charge, Sym_list, inter_law, inter_law_str, inter_law_params)
 
     NBS.fftw_planner_effort = fftw_planner_effort
@@ -115,12 +119,13 @@ def Find_Choreo(
         del x_max
         
     else:
+
+        NBS.ODEperdef_eqproj_pos_mul = pos_mom_scaling
         
-        max_norm_on_entry = 1000
-        # x_ptp = np.ones(NBS.n_ODEinitparams, dtype=np.float64) * max_norm_on_entry / 5
+        x_ptp_x = np.ones(NBS.n_ODEinitparams_pos, dtype=np.float64) * init_pos_BB_size
+        x_ptp_v = np.ones(NBS.n_ODEinitparams_mom, dtype=np.float64) * init_mom_BB_size
         
-        
-        x_ptp = np.ones(NBS.n_ODEinitparams, dtype=np.float64) * 2e-1
+        x_ptp = np.ascontiguousarray(np.concatenate((x_ptp_x, x_ptp_v)))
         x_min = (-0.5)*x_ptp
 
     n_opt = 0
@@ -143,34 +148,92 @@ def Find_Choreo(
     if not SpectralSolve:
         
         NBS.ForceGreaterNStore = True
+        
         ODE_Syst = NBS.Get_ODE_def()
         
-        nsteps = 10
         keep_freq = 1
-        method = "Gauss"
-        
-        rk_x = choreo.segm.multiprec_tables.ComputeImplicitRKTable(nsteps, method=method)
-        rk_v = rk_x
         
         Use_exact_Jacobian = False
         
+        def Choose_Init_ODE_params():
+            
+            ODE_params = x_min + x_ptp * np.random.random((NBS.n_ODEinitparams))
+            xo, vo = NBS.ODE_params_to_initposmom(ODE_params)
+            
+            fac = 10
+            nint_ODE = fac * (NBS.segm_store-1) * keep_freq
+            
+            if rk_explicit is None:
+            
+                segmpos_ODE, segmmom_ODE = choreo.segm.ODE.ImplicitSymplecticIVP(
+                    xo = xo                 ,
+                    vo = vo                 ,
+                    rk_x = rk_implicit_x    ,
+                    rk_v = rk_implicit_v    ,
+                    nint = nint_ODE         ,
+                    keep_freq = keep_freq   ,
+                    keep_init = False       ,
+                    **ODE_Syst              ,
+                )
+            
+            else:
+                
+                segmpos_ODE, segmmom_ODE = choreo.segm.ODE.ExplicitSymplecticIVP(
+                    xo = xo                 ,
+                    vo = vo                 ,
+                    rk = rk_explicit        ,
+                    nint = nint_ODE         ,
+                    keep_freq = keep_freq   ,
+                    keep_init = False       ,
+                    **ODE_Syst              ,
+                )
+            
+            ODEperdef = NBS.endposmom_to_perdef_bulk(xo, vo, segmpos_ODE, segmmom_ODE)
+            
+            NBS.scale_ODEperdef_lin(ODEperdef)
+            ODEperdef_norm = np.linalg.norm(ODEperdef, axis=1)
+            
+            i_min = np.argmin(ODEperdef_norm)
+            
+            # Rescale period
+            T = (i_min+1) / nint_ODE * keep_freq
+            
+            NBS.scale_init_period(T, xo, vo)
+            ODEparams_ini = NBS.initposmom_to_ODE_params(xo, vo)
+            
+            return ODEparams_ini
+      
         def Periodicity_default(ODE_params):
             
             xo, vo = NBS.ODE_params_to_initposmom(ODE_params)
             
             nint_ODE = (NBS.segm_store-1) * keep_freq
             
-            segmpos_ODE, segmmom_ODE = choreo.segm.ODE.ImplicitSymplecticIVP(
-                xo = xo                 ,
-                vo = vo                 ,
-                rk_x = rk_x             ,
-                rk_v = rk_v             ,
-                nint = nint_ODE         ,
-                keep_freq = keep_freq   ,
-                keep_init = True        ,
-                **ODE_Syst              ,
-            )
+            if rk_explicit is None:
+                
+                segmpos_ODE, segmmom_ODE = choreo.segm.ODE.ImplicitSymplecticIVP(
+                    xo = xo                 ,
+                    vo = vo                 ,
+                    rk_x = rk_implicit_x    ,
+                    rk_v = rk_implicit_v    ,
+                    nint = nint_ODE         ,
+                    keep_freq = keep_freq   ,
+                    keep_init = True        ,
+                    **ODE_Syst              ,
+                )
             
+            else:
+                
+                segmpos_ODE, segmmom_ODE = choreo.segm.ODE.ExplicitSymplecticIVP(
+                    xo = xo                 ,
+                    vo = vo                 ,
+                    rk = rk_explicit        ,
+                    nint = nint_ODE         ,
+                    keep_freq = keep_freq   ,
+                    keep_init = True        ,
+                    **ODE_Syst              ,
+                )                
+                
             xf = segmpos_ODE[NBS.segm_store-1,:].reshape(-1)
             vf = segmmom_ODE[NBS.segm_store-1,:].reshape(-1)
             
@@ -212,10 +275,13 @@ def Find_Choreo(
                 x = x_min + x_ptp * np.random.random((NBS.nparams))
                 segmpos = NBS.params_to_segmpos(x)
                 f0 = NBS.segmpos_params_to_action_grad(segmpos, x)
+                spectral_params = x
             else:
-                x = x_min + x_ptp * np.random.random((NBS.n_ODEinitparams))
+                # x = x_min + x_ptp * np.random.random((NBS.n_ODEinitparams))
+                x = Choose_Init_ODE_params()
                 f0 = Periodicity_default(x)
                 segmpos = NBS.segmpos.copy()
+                spectral_params = NBS.segmpos_to_params(segmpos)
         
         if save_all_inits or (save_first_init and n_opt == 0):
 
@@ -242,7 +308,7 @@ def Find_Choreo(
             else:
                 filename_output = os.path.join(store_folder, file_basename+'_init')
 
-            NBS.Write_Descriptor(params_mom_buf=x, segmpos=segmpos, filename=filename_output+'.json')
+            NBS.Write_Descriptor(params_mom_buf=spectral_params, segmpos=segmpos, filename=filename_output+'.json')
 
             if Save_img :
                 NBS.plot_segmpos_2D(segmpos, filename_output+'.png', fig_size=img_size, color=color, color_list=color_list)     
@@ -258,12 +324,14 @@ def Find_Choreo(
                 np.save(filename_output+'.npy', segmpos)
             
             if Save_Params:
-                np.save(filename_output+'_params.npy', x)
+                np.save(filename_output+'_params.npy', spectral_params)
 
         best_sol = choreo.scipy_plus.nonlin.current_best(x, f0)
 
         if m.isnan(best_sol.f_norm):
             raise ValueError(f"Norm on entry is {best_sol.f_norm:.2e} which indicates a problem with constraints.")
+            
+        # print(f"Norm on entry is {best_sol.f_norm:.2e}")
             
         GoOn = (best_sol.f_norm < max_norm_on_entry)
         
@@ -391,7 +459,7 @@ def Find_Choreo(
                     f_fine_norm = np.linalg.norm(f_fine)
                 else:
                     NBS.nint_fac = nint_fac
-                    f_fine = Periodicity_default(x)
+                    f_fine = Periodicity_default(best_sol.x)
                     f_fine_norm = np.linalg.norm(f_fine)
                 
                 print(f'Opt Action Grad Norm Refine : {f_fine_norm:.2e}')
@@ -626,7 +694,7 @@ def ChoreoLoadFromDict(params_dict, Workspace_folder, callback=None, args_list=N
 
         return Info_dict, all_pos
 
-    np.random.seed(int(time.time()*10000) % 5000)
+    np.random.seed(int(time.time()*10000) % 5000) # ???
 
     geodim = params_dict['Phys_Gen'] ['geodim']
 
@@ -732,7 +800,21 @@ def ChoreoLoadFromDict(params_dict, Workspace_folder, callback=None, args_list=N
         coeff_ampl_o    = params_dict["Phys_Random"]["coeff_ampl_o"]
         k_infl          = params_dict["Phys_Random"]["k_infl"]
         k_max           = params_dict["Phys_Random"]["k_max"]
+        
+    init_pos_BB_size = params_dict["Phys_Random"].get("init_pos_BB_size", 1.)
+    init_mom_BB_size = params_dict["Phys_Random"].get("init_mom_BB_size", 1.)
 
+    SpectralSolve = params_dict["Solver_Discr"].get("SolverType") == "Spectral"
+    
+    rk_method =  params_dict["Solver_Discr"].get("RK_method","Gauss")
+    rk_explicit = getattr(choreo.segm.precomputed_tables, rk_method, None)
+    
+    if rk_explicit is None:
+        rk_nsteps = params_dict["Solver_Discr"].get("rk_nsteps", 10)    
+        rk_implicit_x , rk_implicit_v = choreo.segm.multiprec_tables.ComputeImplicitSymplecticRKTablePair(rk_nsteps, method=rk_method)
+        
+    pos_mom_scaling = params_dict["Solver_Discr"].get("pos_mom_scaling", 1.)    
+    
     Use_exact_Jacobian = params_dict["Solver_Discr"]["Use_exact_Jacobian"]
 
     Look_for_duplicates = params_dict["Solver_Checks"]["Look_for_duplicates"]

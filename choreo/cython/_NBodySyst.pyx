@@ -574,6 +574,8 @@ cdef class NBodySyst():
     cdef readonly Py_ssize_t n_ODEperdef_eqproj_mom
     cdef readonly Py_ssize_t n_ODEperdef_eqproj
 
+    cdef public double ODEperdef_eqproj_pos_mul
+
     cdef readonly list Sym_list
     cdef readonly object BodyGraph
     cdef readonly object SegmGraph
@@ -2118,6 +2120,8 @@ cdef class NBodySyst():
 
         assert self.n_ODEperdef_eqproj == self.n_ODEinitparams
 
+        self.ODEperdef_eqproj_pos_mul = 1.
+
     @cython.final
     def ODE_params_to_initposmom(self, double[::1] ODEinitparams):
 
@@ -2194,7 +2198,7 @@ cdef class NBodySyst():
                     i += 1
 
             n = self.n_ODEperdef_eqproj_pos
-            scipy.linalg.cython_blas.dgemv(transt,&m,&n,&one_double,&self._ODEperdef_eqproj_pos[0,0],&m,&buf[0],&int_one,&zero_double,&ODEperdef[0],&int_one)
+            scipy.linalg.cython_blas.dgemv(transt,&m,&n,&self.ODEperdef_eqproj_pos_mul,&self._ODEperdef_eqproj_pos[0,0],&m,&buf[0],&int_one,&zero_double,&ODEperdef[0],&int_one)
 
             for isegm in range(self.nsegm):
 
@@ -2214,15 +2218,15 @@ cdef class NBodySyst():
                     i += 1
 
             n = self.n_ODEperdef_eqproj_mom
-            scipy.linalg.cython_blas.dgemv(transt,&m,&n,&one_double,&self._ODEperdef_eqproj_mom[0,0],&m,&buf[0],&int_one,&zero_double,&ODEperdef[self.n_ODEperdef_eqproj_pos],&int_one)
+            scipy.linalg.cython_blas.dgemv(transt,&m,&n,&self.ODEperdef_eqproj_pos_mul,&self._ODEperdef_eqproj_mom[0,0],&m,&buf[0],&int_one,&zero_double,&ODEperdef[self.n_ODEperdef_eqproj_pos],&int_one)
 
         else:
 
             n = self.n_ODEperdef_eqproj_pos
-            scipy.linalg.cython_blas.dgemv(transt,&m,&n,&one_double,&self._ODEperdef_eqproj_pos[0,0],&m,&xf[0],&int_one,&zero_double,&ODEperdef[0],&int_one)
+            scipy.linalg.cython_blas.dgemv(transt,&m,&n,&self.ODEperdef_eqproj_pos_mul,&self._ODEperdef_eqproj_pos[0,0],&m,&xf[0],&int_one,&zero_double,&ODEperdef[0],&int_one)
 
             n = self.n_ODEperdef_eqproj_mom
-            scipy.linalg.cython_blas.dgemv(transt,&m,&n,&one_double,&self._ODEperdef_eqproj_mom[0,0],&m,&vf[0],&int_one,&zero_double,&ODEperdef[self.n_ODEperdef_eqproj_pos],&int_one)
+            scipy.linalg.cython_blas.dgemv(transt,&m,&n,&self.ODEperdef_eqproj_pos_mul,&self._ODEperdef_eqproj_mom[0,0],&m,&vf[0],&int_one,&zero_double,&ODEperdef[self.n_ODEperdef_eqproj_pos],&int_one)
 
         return ODEperdef
  
@@ -2250,7 +2254,6 @@ cdef class NBodySyst():
 
         if self.TimeRev > 0:
 
-            # buf = np.zeros((m), dtype=np.float64)
             buf = <double*> malloc(sizeof(double)*m)
             memset(&buf[0], 0, sizeof(double)*m)
 
@@ -2269,7 +2272,6 @@ cdef class NBodySyst():
 
                     i += 1
 
-            # df = np.empty((k, m), dtype=np.float64)
             df = <double*> malloc(sizeof(double)*km)
             scipy.linalg.cython_blas.dcopy(&km,&xf[0,0],&int_one,df,&int_one)
 
@@ -2280,7 +2282,7 @@ cdef class NBodySyst():
 
             n = self.n_ODEperdef_eqproj_pos
 
-            scipy.linalg.cython_blas.dgemm(transt,transn,&n,&k,&m,&one_double,&self._ODEperdef_eqproj_pos[0,0],&m,df,&m,&zero_double,&ODEperdef[0,0],&ldc)
+            scipy.linalg.cython_blas.dgemm(transt,transn,&n,&k,&m,&self.ODEperdef_eqproj_pos_mul,&self._ODEperdef_eqproj_pos[0,0],&m,df,&m,&zero_double,&ODEperdef[0,0],&ldc)
 
             memset(&buf[0], 0, sizeof(double)*m)
 
@@ -2307,19 +2309,49 @@ cdef class NBodySyst():
 
             n = self.n_ODEperdef_eqproj_mom
 
-            scipy.linalg.cython_blas.dgemm(transt,transn,&n,&k,&m,&one_double,&self._ODEperdef_eqproj_mom[0,0],&m,df,&m,&zero_double,&ODEperdef[0,self.n_ODEperdef_eqproj_pos],&ldc)
+            scipy.linalg.cython_blas.dgemm(transt,transn,&n,&k,&m,&self.ODEperdef_eqproj_pos_mul,&self._ODEperdef_eqproj_mom[0,0],&m,df,&m,&zero_double,&ODEperdef[0,self.n_ODEperdef_eqproj_pos],&ldc)
 
             free(buf)
             free(df)
+            
         else:
 
             n = self.n_ODEperdef_eqproj_pos
-            scipy.linalg.cython_blas.dgemm(transt,transn,&n,&k,&m,&one_double,&self._ODEperdef_eqproj_pos[0,0],&m,&xf[0,0],&m,&zero_double,&ODEperdef[0,0],&ldc)
+            scipy.linalg.cython_blas.dgemm(transt,transn,&n,&k,&m,&self.ODEperdef_eqproj_pos_mul,&self._ODEperdef_eqproj_pos[0,0],&m,&xf[0,0],&m,&zero_double,&ODEperdef[0,0],&ldc)
 
             n = self.n_ODEperdef_eqproj_mom
-            scipy.linalg.cython_blas.dgemm(transt,transn,&n,&k,&m,&one_double,&self._ODEperdef_eqproj_mom[0,0],&m,&vf[0,0],&m,&zero_double,&ODEperdef[0,self.n_ODEperdef_eqproj_pos],&ldc)
+            scipy.linalg.cython_blas.dgemm(transt,transn,&n,&k,&m,&self.ODEperdef_eqproj_pos_mul,&self._ODEperdef_eqproj_mom[0,0],&m,&vf[0,0],&m,&zero_double,&ODEperdef[0,self.n_ODEperdef_eqproj_pos],&ldc)
 
         return ODEperdef
+
+    @cython.final
+    @cython.cdivision(True)
+    def scale_ODEperdef_lin(self, double[:,::1] ODEperdef):
+
+        cdef Py_ssize_t np = ODEperdef.shape[0]
+        cdef Py_ssize_t i
+        cdef double fac, t
+        cdef int size = self.n_ODEperdef_eqproj_pos
+        # cdef int size = self.n_ODEperdef_eqproj
+        
+        t = 0
+        for i in range(np):
+            t += 1
+            fac = 1. / t
+            scipy.linalg.cython_blas.dscal(&size,&fac,&ODEperdef[i,0],&int_one)
+    
+    @cython.final
+    @cython.cdivision(True)
+    def scale_init_period(self, double T,  double[::1] xo, double[::1] vo):
+
+        cdef double phys_exp = 1./(self.Homo_exp-1.)
+        cdef double fac = cpow(T, phys_exp)
+        cdef int size = self.nsegm * self.geodim
+
+        scipy.linalg.cython_blas.dscal(&size,&fac,&xo[0],&int_one)
+
+        fac *= T
+        scipy.linalg.cython_blas.dscal(&size,&fac,&vo[0],&int_one)
 
     @cython.final
     @staticmethod
