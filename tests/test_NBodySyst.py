@@ -517,6 +517,7 @@ def test_resize(float64_tols, NBS):
     assert np.allclose(segmpos[:,:small_segm_size,:], segmpos_long[:,:long_segm_size:fac,:], rtol = float64_tols.rtol, atol = float64_tols.atol) 
 
 @ParametrizeDocstrings
+@RetryTest(n=100)
 @pytest.mark.parametrize("NBS", [pytest.param(NBS, id=name) for name, NBS in NBS_nozerodiv_dict.items()])
 def test_action_indep_resize(float64_tols_loose, NBS):
     """ Tests that action is left **similar** by resizing.
@@ -526,55 +527,29 @@ def test_action_indep_resize(float64_tols_loose, NBS):
     
     """
 
-    Passed_any = False
+    nint_fac_short = 5
+    nint_fac_mid = 200
+    nint_fac_big = nint_fac_mid*2
     
-    ntries = 100
+    NBS.nint_fac = nint_fac_short
+    params_buf_short = np.random.random((NBS.nparams))
     
-    err = np.zeros((ntries,4))
-    
-    for itry in range(ntries): 
-        
-        Passed = True
-        
-        nint_fac_short = 5
-        nint_fac_mid = 200
-        nint_fac_big = nint_fac_mid*2
-        
-        NBS.nint_fac = nint_fac_short
-        params_buf_short = np.random.random((NBS.nparams))
-        
-        params_buf_mid = NBS.params_resize(params_buf_short, nint_fac_mid) 
-        params_buf_big = NBS.params_resize(params_buf_short, nint_fac_big) 
+    params_buf_mid = NBS.params_resize(params_buf_short, nint_fac_mid) 
+    params_buf_big = NBS.params_resize(params_buf_short, nint_fac_big) 
 
-        NBS.nint_fac = nint_fac_mid
-        kin_nrg = NBS.params_to_kin_nrg(params_buf_mid)
-        pot_nrg = NBS.params_to_pot_nrg(params_buf_mid)
-        
-        NBS.nint_fac = nint_fac_big
-        kin_nrg_big= NBS.params_to_kin_nrg(params_buf_big)
-        pot_nrg_big= NBS.params_to_pot_nrg(params_buf_big)
-        
-        err[itry,0] = abs(kin_nrg - kin_nrg_big)
-        err[itry,1] = 2*abs(kin_nrg - kin_nrg_big) / abs(kin_nrg + kin_nrg_big)
-        err[itry,2] = abs(pot_nrg - pot_nrg_big)
-        err[itry,3] = 2*abs(pot_nrg - pot_nrg_big) / abs(pot_nrg + pot_nrg_big) 
+    NBS.nint_fac = nint_fac_mid
+    kin_nrg = NBS.params_to_kin_nrg(params_buf_mid)
+    pot_nrg = NBS.params_to_pot_nrg(params_buf_mid)
+    
+    NBS.nint_fac = nint_fac_big
+    kin_nrg_big= NBS.params_to_kin_nrg(params_buf_big)
+    pot_nrg_big= NBS.params_to_pot_nrg(params_buf_big)
+    
+    assert abs(kin_nrg - kin_nrg_big) < float64_tols_loose.rtol
+    assert 2*abs(kin_nrg - kin_nrg_big) / abs(kin_nrg + kin_nrg_big) < float64_tols_loose.rtol
+    assert abs(pot_nrg - pot_nrg_big) < float64_tols_loose.rtol
+    assert 2*abs(pot_nrg - pot_nrg_big) / abs(pot_nrg + pot_nrg_big) < float64_tols_loose.rtol
 
-        Passed = Passed and err[itry,0] < float64_tols_loose.rtol
-        Passed = Passed and err[itry,1] < float64_tols_loose.rtol  
-        
-        Passed = Passed and err[itry,2] < float64_tols_loose.rtol
-        Passed = Passed and err[itry,3] < float64_tols_loose.rtol
-        
-        Passed_any = Passed_any or Passed
-        
-        if Passed_any:
-            break
-        
-    if not(Passed_any):
-        print(err)
-    
-    assert Passed_any
-    
 @ParametrizeDocstrings
 @pytest.mark.parametrize("NBS", [pytest.param(NBS, id=name) for name, NBS in NBS_dict.items()])
 def test_repeatability(float64_tols, NBS):
@@ -1772,3 +1747,33 @@ def test_initposmom(float64_tols, NBS):
     print(np.linalg.norm(ODEinitparams-ODEinitparams_rt))
     assert np.allclose(ODEinitparams, ODEinitparams_rt, rtol = float64_tols.rtol, atol = float64_tols.atol)  
     
+    
+@pytest.mark.slow(required_time = 10)
+@ParametrizeDocstrings
+@RetryTest(n = 2)
+@pytest.mark.parametrize("NBS", [pytest.param(NBS, id=name) for name, NBS in NBS_dict.items()])
+def test_params_to_periodicity_default_grad_vs_FD(float64_tols_loose, NBS):
+    # """ Tests that the solution of the tangent system using an explicit integration agrees with its finite difference estimation.
+    # """
+        
+    rk_explicit = choreo.segm.precomputed_tables.SofSpa10
+    
+    nint_fac_ini = NBS.nint_fac
+    
+    NBS.nint_fac = 512    
+    NBS.setup_params_to_periodicity_default(rk_explicit = rk_explicit)
+
+    xo = np.random.random((NBS.n_ODEinitparams)) * 100
+    
+    err = compare_FD_and_exact_grad(
+        NBS.params_to_periodicity_default       ,
+        NBS.params_to_periodicity_default_grad  ,
+        xo                                      ,
+        order=2                                 ,
+        vectorize=False                         ,
+    )
+
+    print(err.min())
+    assert (err.min() < float64_tols_loose.rtol)
+
+    NBS.nint_fac = nint_fac_ini

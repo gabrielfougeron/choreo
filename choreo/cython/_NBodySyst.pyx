@@ -830,6 +830,12 @@ cdef class NBodySyst():
     def ParamBasisShortcutVel(self):
         return [shortcut_name[shortcut] for shortcut in self._ParamBasisShortcutVel]
 
+    cdef object _implicit_rk_solve
+    cdef object _rk_implicit_x
+    cdef object _rk_implicit_v
+    cdef object _rk_explicit
+    cdef object _ODE_Syst
+
     cdef ODE_params_t _ODE_params 
     cdef void *_ODE_params_ptr
 
@@ -2244,8 +2250,8 @@ cdef class NBodySyst():
 
         assert xo.shape[0] == m
         assert vo.shape[0] == m
-        assert xf.shape[0] == m
-        assert vf.shape[0] == m
+        assert xf.shape[1] == m
+        assert vf.shape[1] == m
 
         cdef np.ndarray[double, ndim=2, mode='c'] ODEperdef = np.empty((k, self.n_ODEperdef_eqproj), dtype=np.float64)
         cdef double* buf
@@ -2324,18 +2330,139 @@ cdef class NBodySyst():
 
         return ODEperdef
 
+    def setup_params_to_periodicity_default(self, rk_explicit = None, rk_implicit_x=None, rk_implicit_v=None):
+        """ Specially designed for search, so some things might not make total sense in another context"""
+
+        assert (rk_implicit_x == None) == (rk_implicit_v == None)
+        assert (rk_explicit == None) != (rk_implicit_x == None) 
+
+        self._implicit_rk_solve = (rk_explicit == None)
+        self._rk_implicit_x = rk_implicit_x
+        self._rk_implicit_v = rk_implicit_v
+        self._rk_explicit = rk_explicit
+
+        self._ODE_Syst = self.Get_ODE_def(vector_calls = self._implicit_rk_solve, grad = True)
+
+        self.ForceGreaterNStore = True
+
+    @cython.final
+    @cython.cdivision(True)
+    def params_to_periodicity_default(self, double[::1] ODE_params):
+        """ Specially designed for search, so some things might not make total sense in another context"""
+
+        cdef Py_ssize_t nint_ODE = self.segm_store-1
+        cdef double[::1] xo, vo
+
+        xo, vo = self.ODE_params_to_initposmom(ODE_params)
+        
+        cdef np.ndarray[double, ndim=2, mode='c'] segmpos_ODE, segmmom_ODE
+
+        if self._implicit_rk_solve:
+            
+            segmpos_ODE, segmmom_ODE = choreo.segm.ODE.ImplicitSymplecticIVP(
+                xo = xo                                         ,
+                vo = vo                                         ,
+                rk_x = self._rk_implicit_x                      ,
+                rk_v = self._rk_implicit_v                      ,
+                nint = nint_ODE                                 ,
+                keep_freq = 1                                   ,
+                keep_init = True                                ,
+                t_span = self._ODE_Syst["t_span"]               ,
+                vector_calls = self._ODE_Syst["vector_calls"]   ,
+                fun = self._ODE_Syst["fun"]                     ,
+                gun = self._ODE_Syst["gun"]                     ,
+            )
+        
+        else:
+            
+            segmpos_ODE, segmmom_ODE = choreo.segm.ODE.ExplicitSymplecticIVP(
+                xo = xo                             ,
+                vo = vo                             ,
+                rk = self._rk_explicit              ,
+                nint = nint_ODE                     ,
+                keep_freq = 1                       ,
+                keep_init = True                    ,
+                t_span = self._ODE_Syst["t_span"]   ,
+                fun = self._ODE_Syst["fun"]         ,
+                gun = self._ODE_Syst["gun"]         ,
+            )                
+            
+        cdef double[::1] xf = segmpos_ODE[nint_ODE,:].reshape(-1)
+        cdef double[::1] vf = segmmom_ODE[nint_ODE,:].reshape(-1)
+        
+        self._segmpos = np.ascontiguousarray(segmpos_ODE.reshape((self.segm_store, self.nsegm, self.geodim)).swapaxes(0, 1))
+
+        return self.endposmom_to_perdef(xo, vo, xf, vf)
+
+    @cython.final
+    @cython.cdivision(True)
+    def params_to_periodicity_default_grad(self, double[::1] ODE_params, double[::1] d_ODE_params):
+
+        cdef Py_ssize_t nint_ODE = self.segm_store-1
+        
+        cdef double[::1] xo, vo
+        xo, vo = self.ODE_params_to_initposmom(ODE_params)
+        
+        cdef np.ndarray[double, ndim=1, mode='c'] dxo, dvo        
+        dxo, dvo = self.ODE_params_to_initposmom(d_ODE_params)
+
+        cdef np.ndarray[double, ndim=2, mode='c'] segmpos_ODE, segmmom_ODE
+        cdef np.ndarray[double, ndim=3, mode="c"] d_segmpos_ODE, d_segmmom_ODE
+
+        cdef double[:,::1] grad_xo = dxo.reshape(-1,1)
+        cdef double[:,::1] grad_vo = dvo.reshape(-1,1)
+
+        if self._implicit_rk_solve:
+            
+            segmpos_ODE, segmmom_ODE, d_segmpos_ODE , d_segmmom_ODE = choreo.segm.ODE.ImplicitSymplecticIVP(
+                xo = xo                                         ,
+                vo = vo                                         ,
+                grad_xo = grad_xo                               ,
+                grad_vo = grad_vo                               ,
+                rk_x = self._rk_implicit_x                      ,
+                rk_v = self._rk_implicit_v                      ,
+                nint = nint_ODE                                 ,
+                t_span = self._ODE_Syst["t_span"]               ,
+                vector_calls = self._ODE_Syst["vector_calls"]   ,
+                fun = self._ODE_Syst["fun"]                     ,
+                gun = self._ODE_Syst["gun"]                     ,
+                grad_fun = self._ODE_Syst["grad_fun"]           ,
+                grad_gun = self._ODE_Syst["grad_gun"]           ,
+            )
+        
+        else:
+            
+            segmpos_ODE, segmmom_ODE, d_segmpos_ODE , d_segmmom_ODE = choreo.segm.ODE.ExplicitSymplecticIVP(
+                xo = xo                                 ,
+                vo = vo                                 ,
+                grad_xo = grad_xo                       ,
+                grad_vo = grad_vo                       ,
+                rk = self._rk_explicit                  ,
+                nint = nint_ODE                         ,
+                t_span = self._ODE_Syst["t_span"]       ,
+                fun = self._ODE_Syst["fun"]             ,
+                gun = self._ODE_Syst["gun"]             ,
+                grad_fun = self._ODE_Syst["grad_fun"]   ,
+                grad_gun = self._ODE_Syst["grad_gun"]   ,
+            )    
+
+        cdef double[::1] dxf = d_segmpos_ODE[0,:,0].reshape(-1)
+        cdef double[::1] dvf = d_segmmom_ODE[0,:,0].reshape(-1)
+
+        return self.endposmom_to_perdef(dxo, dvo, dxf, dvf)
+
     @cython.final
     @cython.cdivision(True)
     def scale_ODEperdef_lin(self, double[:,::1] ODEperdef):
 
-        cdef Py_ssize_t np = ODEperdef.shape[0]
+        cdef Py_ssize_t n = ODEperdef.shape[0]
         cdef Py_ssize_t i
         cdef double fac, t
         cdef int size = self.n_ODEperdef_eqproj_pos
         # cdef int size = self.n_ODEperdef_eqproj
         
         t = 0
-        for i in range(np):
+        for i in range(n):
             t += 1
             fac = 1. / t
             scipy.linalg.cython_blas.dscal(&size,&fac,&ODEperdef[i,0],&int_one)

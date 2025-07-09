@@ -45,14 +45,49 @@ def RepeatTest(n = 10):
         @functools.wraps(test)
         def wrapper(*args, **kwargs):
             
-            for i in range(n):
-                res = test(*args, **kwargs)
+            for _ in range(n):
+                    res = test(*args, **kwargs)
 
             return res
 
         return wrapper
     
     return decorator
+
+def RetryTest(n = 10):
+
+    def decorator(test):
+
+        @functools.wraps(test)
+        def wrapper(*args, **kwargs):
+            
+            n_fail = 0
+            
+            for _ in range(n):
+                try:
+                    res = test(*args, **kwargs)
+                    break
+                except AssertionError:
+                    
+                    n_fail += 1
+                    out_str = f"Test failed {n_fail} / {n} time{"" if n==1 else "s"}."
+                    head_foot = '='*len(out_str)
+
+                    print('')
+                    print(head_foot)
+                    print(out_str)
+                    print(head_foot)
+                    print('')
+
+            else:
+                raise ValueError(f"Test failed {n} / {n} time{"" if n==1 else "s"}.")
+
+            return res
+
+        return wrapper
+    
+    return decorator
+
 
 def add_intersphinx_type(type_str):
     

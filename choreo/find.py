@@ -147,18 +147,17 @@ def Find_Choreo(
     
     if not SpectralSolve:
         
-        NBS.ForceGreaterNStore = True
-        
+        NBS.setup_params_to_periodicity_default(rk_explicit, rk_implicit_x, rk_implicit_v)
+
+        # TODO remove this and adapt Choose_Init_ODE_params
         Implicit = (rk_explicit is None)
-        
         ODE_Syst = NBS.Get_ODE_def(vector_calls = Implicit)
-        
         if not Implicit:
             ODE_Syst.pop('vector_calls', None)
         
-        keep_freq = 1
-        
         Use_exact_Jacobian = False
+        
+        min_size_fac = 0.2
         
         def Choose_Init_ODE_params():
             
@@ -166,7 +165,7 @@ def Find_Choreo(
             xo, vo = NBS.ODE_params_to_initposmom(ODE_params)
             
             fac = 10
-            nint_ODE = fac * (NBS.segm_store-1) * keep_freq
+            nint_ODE = fac * (NBS.segm_store-1)
 
             if Implicit:
             
@@ -176,7 +175,7 @@ def Find_Choreo(
                     rk_x = rk_implicit_x    ,
                     rk_v = rk_implicit_v    ,
                     nint = nint_ODE         ,
-                    keep_freq = keep_freq   ,
+                    keep_freq = 1           ,
                     keep_init = False       ,
                     **ODE_Syst              ,
                 )
@@ -188,64 +187,28 @@ def Find_Choreo(
                     vo = vo                 ,
                     rk = rk_explicit        ,
                     nint = nint_ODE         ,
-                    keep_freq = keep_freq   ,
+                    keep_freq = 1           ,
                     keep_init = False       ,
                     **ODE_Syst              ,
                 )
             
             ODEperdef = NBS.endposmom_to_perdef_bulk(xo, vo, segmpos_ODE, segmmom_ODE)
             
-            NBS.scale_ODEperdef_lin(ODEperdef)
-            ODEperdef_norm = np.linalg.norm(ODEperdef, axis=1)
+            min_size = int(min_size_fac * ODEperdef.shape[0])
             
-            i_min = np.argmin(ODEperdef_norm)
+            NBS.scale_ODEperdef_lin(ODEperdef)
+            ODEperdef_norm = np.linalg.norm(ODEperdef[min_size:], axis=1)
+            
+            i_min = np.argmin(ODEperdef_norm) + min_size
             
             # Rescale period
-            T = (i_min+1) / nint_ODE * keep_freq
+            T = (i_min+1) / nint_ODE
             
             NBS.scale_init_period(T, xo, vo)
             ODEparams_ini = NBS.initposmom_to_ODE_params(xo, vo)
             
             return ODEparams_ini
-      
-        def Periodicity_default(ODE_params):
-            
-            xo, vo = NBS.ODE_params_to_initposmom(ODE_params)
-            
-            nint_ODE = (NBS.segm_store-1) * keep_freq
-            
-            if rk_explicit is None:
-                
-                segmpos_ODE, segmmom_ODE = choreo.segm.ODE.ImplicitSymplecticIVP(
-                    xo = xo                 ,
-                    vo = vo                 ,
-                    rk_x = rk_implicit_x    ,
-                    rk_v = rk_implicit_v    ,
-                    nint = nint_ODE         ,
-                    keep_freq = keep_freq   ,
-                    keep_init = True        ,
-                    **ODE_Syst              ,
-                )
-            
-            else:
-                
-                segmpos_ODE, segmmom_ODE = choreo.segm.ODE.ExplicitSymplecticIVP(
-                    xo = xo                 ,
-                    vo = vo                 ,
-                    rk = rk_explicit        ,
-                    nint = nint_ODE         ,
-                    keep_freq = keep_freq   ,
-                    keep_init = True        ,
-                    **ODE_Syst              ,
-                )                
-                
-            xf = segmpos_ODE[NBS.segm_store-1,:].reshape(-1)
-            vf = segmmom_ODE[NBS.segm_store-1,:].reshape(-1)
-            
-            NBS.segmpos = np.ascontiguousarray(segmpos_ODE.reshape((NBS.segm_store, NBS.nsegm, NBS.geodim)).swapaxes(0, 1))
 
-            return NBS.endposmom_to_perdef(xo, vo, xf, vf)
-        
     while (((n_opt < n_opt_max) and (n_find < n_find_max)) or ForceFirstEntry):
         
         NBS.nint_fac = nint_fac_init
@@ -284,7 +247,7 @@ def Find_Choreo(
             else:
                 # x = x_min + x_ptp * np.random.random((NBS.n_ODEinitparams))
                 x = Choose_Init_ODE_params()
-                f0 = Periodicity_default(x)
+                f0 = NBS.params_to_periodicity_default(x)
                 segmpos = NBS.segmpos.copy()
                 spectral_params = NBS.segmpos_to_params(segmpos)
         
@@ -400,7 +363,7 @@ def Find_Choreo(
             if SpectralSolve:
                 F = NBS.params_to_action_grad
             else:
-                F = Periodicity_default
+                F = NBS.params_to_periodicity_default
 
             try : 
                 
@@ -425,7 +388,7 @@ def Find_Choreo(
                 segmpos = NBS.params_to_segmpos(best_sol.x)
                 spectral_params = best_sol.x
             else:
-                Periodicity_default(best_sol.x)
+                NBS.params_to_periodicity_default(best_sol.x)
                 segmpos = NBS.segmpos
                 spectral_params = NBS.segmpos_to_params(segmpos)
                 
@@ -464,7 +427,7 @@ def Find_Choreo(
                     f_fine_norm = np.linalg.norm(f_fine)
                 else:
                     NBS.nint_fac = nint_fac
-                    f_fine = Periodicity_default(best_sol.x)
+                    f_fine = NBS.params_to_periodicity_default(best_sol.x)
                     f_fine_norm = np.linalg.norm(f_fine)
                 
                 print(f'Opt Action Grad Norm Refine : {f_fine_norm:.2e}')
@@ -573,7 +536,7 @@ def Find_Choreo(
                     else:
                         NBS.nint_fac = 2*NBS.nint_fac
                         x = best_sol.x
-                        f0 = Periodicity_default(x)
+                        f0 = NBS.params_to_periodicity_default(x)
                         best_sol = choreo.scipy_plus.nonlin.current_best(x, f0)
 
                     current_cvg_lvl += 1
