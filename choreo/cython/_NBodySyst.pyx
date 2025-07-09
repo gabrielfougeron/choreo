@@ -2218,7 +2218,7 @@ cdef class NBodySyst():
                     i += 1
 
             n = self.n_ODEperdef_eqproj_mom
-            scipy.linalg.cython_blas.dgemv(transt,&m,&n,&self.ODEperdef_eqproj_pos_mul,&self._ODEperdef_eqproj_mom[0,0],&m,&buf[0],&int_one,&zero_double,&ODEperdef[self.n_ODEperdef_eqproj_pos],&int_one)
+            scipy.linalg.cython_blas.dgemv(transt,&m,&n,&one_double,&self._ODEperdef_eqproj_mom[0,0],&m,&buf[0],&int_one,&zero_double,&ODEperdef[self.n_ODEperdef_eqproj_pos],&int_one)
 
         else:
 
@@ -2226,7 +2226,7 @@ cdef class NBodySyst():
             scipy.linalg.cython_blas.dgemv(transt,&m,&n,&self.ODEperdef_eqproj_pos_mul,&self._ODEperdef_eqproj_pos[0,0],&m,&xf[0],&int_one,&zero_double,&ODEperdef[0],&int_one)
 
             n = self.n_ODEperdef_eqproj_mom
-            scipy.linalg.cython_blas.dgemv(transt,&m,&n,&self.ODEperdef_eqproj_pos_mul,&self._ODEperdef_eqproj_mom[0,0],&m,&vf[0],&int_one,&zero_double,&ODEperdef[self.n_ODEperdef_eqproj_pos],&int_one)
+            scipy.linalg.cython_blas.dgemv(transt,&m,&n,&one_double,&self._ODEperdef_eqproj_mom[0,0],&m,&vf[0],&int_one,&zero_double,&ODEperdef[self.n_ODEperdef_eqproj_pos],&int_one)
 
         return ODEperdef
  

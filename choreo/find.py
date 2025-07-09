@@ -149,7 +149,12 @@ def Find_Choreo(
         
         NBS.ForceGreaterNStore = True
         
-        ODE_Syst = NBS.Get_ODE_def()
+        Implicit = (rk_explicit is None)
+        
+        ODE_Syst = NBS.Get_ODE_def(vector_calls = Implicit)
+        
+        if not Implicit:
+            ODE_Syst.pop('vector_calls', None)
         
         keep_freq = 1
         
@@ -162,8 +167,8 @@ def Find_Choreo(
             
             fac = 10
             nint_ODE = fac * (NBS.segm_store-1) * keep_freq
-            
-            if rk_explicit is None:
+
+            if Implicit:
             
                 segmpos_ODE, segmmom_ODE = choreo.segm.ODE.ImplicitSymplecticIVP(
                     xo = xo                 ,
