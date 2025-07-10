@@ -66,8 +66,6 @@ minversion = "6.0"
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "session"
 addopts = "-ra --junit-xml=docs/pytest_out/junit.xml -n 4 --dist worksteal"
-# addopts = "-ra --junit-xml=docs/pytest_out/junit.xml -n auto --dist worksteal"
-# addopts = "-ra --junit-xml=docs/pytest_out/junit.xml --dist worksteal"
 testpaths = [
     "tests",
 ]
