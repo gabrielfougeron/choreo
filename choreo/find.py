@@ -111,6 +111,13 @@ def Find_Choreo(
     NBS.nint_fac = nint_fac_init
 
     print(NBS.DescribeSystem())
+    
+    if SpectralSolve:
+        print("Searching for periodic solutions using the spectral solver")
+    else:
+        print("Searching for periodic solutions using the Runge-Kutta solver")
+
+    print()
 
     if SpectralSolve:
         x_min, x_max = NBS.Make_params_bounds(coeff_ampl_o, k_infl, k_max, coeff_ampl_min)
@@ -146,7 +153,7 @@ def Find_Choreo(
     action_dict = {}
     
     if not SpectralSolve:
-        
+
         NBS.setup_params_to_periodicity_default(rk_explicit, rk_implicit_x, rk_implicit_v)
 
         # TODO remove this and adapt Choose_Init_ODE_params
@@ -154,8 +161,6 @@ def Find_Choreo(
         ODE_Syst = NBS.Get_ODE_def(vector_calls = Implicit)
         if not Implicit:
             ODE_Syst.pop('vector_calls', None)
-        
-        Use_exact_Jacobian = False
         
         min_size_fac = 0.2
         
@@ -348,7 +353,7 @@ def Find_Choreo(
             else:
                 jac_options = {'method':krylov_method,'rdiff':rdiff,'outer_k':outer_k,'inner_tol':inner_tol,'inner_M':inner_M }
 
-            jacobian = NBS.GetKrylovJacobian(Use_exact_Jacobian, jac_options)
+            jacobian = NBS.GetKrylovJacobian(Use_exact_Jacobian, SpectralSolve, jac_options)
 
             def optim_callback(x,f,f_norm):
 
@@ -420,6 +425,7 @@ def Find_Choreo(
                 
                 nint_fac_cur = NBS.nint_fac
                 nint_fac = 2*nint_fac_cur
+                
                 if SpectralSolve:
                     x_fine = NBS.params_resize(spectral_params, nint_fac)
                     NBS.nint_fac = nint_fac
@@ -530,11 +536,12 @@ def Find_Choreo(
                     
                     print('Resizing.')
 
+                    NBS.nint_fac = 2*NBS.nint_fac
+
                     if SpectralSolve:
                         best_sol = choreo.scipy_plus.nonlin.current_best(x_fine, f_fine)
-                        NBS.nint_fac = 2*NBS.nint_fac
+
                     else:
-                        NBS.nint_fac = 2*NBS.nint_fac
                         x = best_sol.x
                         f0 = NBS.params_to_periodicity_default(x)
                         best_sol = choreo.scipy_plus.nonlin.current_best(x, f0)

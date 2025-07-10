@@ -2897,34 +2897,39 @@ cdef class NBodySyst():
         return NBS, dict_res
 
     @cython.final
-    def GetKrylovJacobian(self, Use_exact_Jacobian=True, jac_options_kw={}):
+    def GetKrylovJacobian(self, Use_exact_Jacobian = True, SpectralSolve = True, jac_options_kw={}):
 
-        if (Use_exact_Jacobian):
+        jacobian = scipy.optimize.nonlin.KrylovJacobian(**jac_options_kw)
+        jacobian.NBS = self
 
-            jacobian = scipy.optimize.nonlin.KrylovJacobian(**jac_options_kw)
-
-            def matvec(self,v):                
-                return self.NBS.segmpos_dparams_to_action_hess(self.segmpos, v)
-
-            jacobian.matvec = types.MethodType(matvec, jacobian)
-            jacobian.rmatvec = types.MethodType(matvec, jacobian)
-
-        else: 
-
-            jacobian = scipy.optimize.nonlin.KrylovJacobian(**jac_options_kw)
-    
         def update(self, x, f):
-            self.segmpos = self.NBS.segmpos.copy()
+            self.x = x
+            self.segmpos = self.NBS.segmpos.copy() # Copy is needed because NBS._segmpos is used as a buffer in hessian computation
             scipy.optimize.nonlin.KrylovJacobian.update(self, x, f)
 
         def setup(self, x, f, func):
-            self.segmpos = self.NBS.segmpos.copy()
+            self.x = x
+            self.segmpos = self.NBS.segmpos.copy() # Copy is needed because NBS._segmpos is used as a buffer in hessian computation
             scipy.optimize.nonlin.KrylovJacobian.setup(self, x, f, func)
 
         jacobian.update = types.MethodType(update, jacobian)
         jacobian.setup = types.MethodType(setup, jacobian)
 
-        jacobian.NBS = self
+        if (Use_exact_Jacobian):
+
+            if SpectralSolve:
+
+                def matvec(self,v):                
+                    return self.NBS.segmpos_dparams_to_action_hess(self.segmpos, v)
+
+                jacobian.rmatvec = types.MethodType(matvec, jacobian)
+
+            else:
+
+                def matvec(self,v):                
+                    return self.NBS.params_to_periodicity_default_grad(self.x, v)
+
+            jacobian.matvec = types.MethodType(matvec, jacobian)
 
         return jacobian
 
@@ -5097,7 +5102,7 @@ cdef class NBodySyst():
         out += f'The number of free parameters is reduced by a factor of {nparam_nosym / nparam_tot}\n'
         out += f'The number of independent interactions is reduced by a factor of {self.nbin_segm_tot  / self.nbin_segm_unique}\n'
         out += f'The number of independent segments is reduced by a factor of {(self.nbody * self.nint_min) / self.nsegm}\n'
-        out += '\n'
+        # out += '\n'
 
         return out    
 

@@ -40,6 +40,9 @@
     test_Kepler
     test_RK_vs_spectral_periodicity_default
     test_center_of_mass
+    test_perdef
+    test_initposmom
+    test_params_to_periodicity_default_grad_vs_FD
 
 """
 
@@ -1753,8 +1756,7 @@ def test_initposmom(float64_tols, NBS):
 @RetryTest(n = 2)
 @pytest.mark.parametrize("NBS", [pytest.param(NBS, id=name) for name, NBS in NBS_dict.items()])
 def test_params_to_periodicity_default_grad_vs_FD(float64_tols_loose, NBS):
-    # """ Tests that the solution of the tangent system using an explicit integration agrees with its finite difference estimation.
-    # """
+    """ Tests that the gradient of the RK periodicity default computation agrees with its FD approximation """
         
     rk_explicit = choreo.segm.precomputed_tables.SofSpa10
     
