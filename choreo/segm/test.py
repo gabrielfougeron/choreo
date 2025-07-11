@@ -319,10 +319,8 @@ def compare_FD_and_exact_grad(fun, gradfun, xo, dx=None, epslist=None, order=1, 
 import operator
 from fractions import Fraction
 from itertools import starmap
-from collections import namedtuple
-from math import log2, exp2, fabs
-from random import choices, uniform, shuffle
-from statistics import median
+from math import log2
+from random import choices, uniform
 
 def SumExact(x, n=None):
     if n is None:
@@ -379,15 +377,15 @@ def GenDot(n, c):
     e[0] = int(b / 2) + 1
     e[-1] = 0.0
 
-    x[:n2] = [uniform(-1.0, 1.0) * exp2(p) for p in e]
-    y[:n2] = [uniform(-1.0, 1.0) * exp2(p) for p in e]
+    x[:n2] = [uniform(-1.0, 1.0) * 2**p for p in e]
+    y[:n2] = [uniform(-1.0, 1.0) * 2**p for p in e]
 
     dot_exact = DotExact(x, y, n2)
     # Second half
     e = list(map(round, linspace(b/2, 0.0 , n-n2)))
     for i in range(n2, n):
-        x[i] = uniform(-1.0, 1.0) * exp2(e[i - n2])
-        y[i] = (uniform(-1.0, 1.0) * exp2(e[i - n2]) - dot_exact) / x[i]
+        x[i] = uniform(-1.0, 1.0) * 2**(e[i - n2])
+        y[i] = (uniform(-1.0, 1.0) * 2**(e[i - n2]) - dot_exact) / x[i]
         
         dot_exact += Fraction(x[i]) * Fraction(y[i])
 
@@ -406,13 +404,13 @@ def GenSum(n,c):
     e[0] = int(b) + 1
     e[-1] = 0.0
 
-    x[:n2] = [uniform(-1.0, 1.0) * exp2(p) for p in e]
+    x[:n2] = [uniform(-1.0, 1.0) * 2**(p) for p in e]
     
     sum_exact = SumExact(x, n2)
     # Second half
     e = list(map(round, linspace(b/2, 0.0 , n-n2)))
     for i in range(n2, n):
-        x[i] = uniform(-1.0, 1.0) * exp2(e[i - n2]) - sum_exact
+        x[i] = uniform(-1.0, 1.0) * 2**(e[i - n2]) - sum_exact
         sum_exact += Fraction(x[i])
         
     return np.array(x), sum_exact

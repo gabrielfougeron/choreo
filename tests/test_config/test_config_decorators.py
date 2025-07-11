@@ -70,7 +70,7 @@ def RetryTest(n = 10):
                 except AssertionError:
                     
                     n_fail += 1
-                    out_str = f"Test failed {n_fail} / {n} time{"" if n==1 else "s"}."
+                    out_str = f"Test failed {n_fail} / {n} time{'' if n==1 else 's'}."
                     head_foot = '='*len(out_str)
 
                     print('')
@@ -80,7 +80,7 @@ def RetryTest(n = 10):
                     print('')
 
             else:
-                raise ValueError(f"Test failed {n} / {n} time{"" if n==1 else "s"}.")
+                raise ValueError(f"Test failed {n} / {n} time{'' if n==1 else 's'}.")
 
             return res
 

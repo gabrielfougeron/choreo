@@ -1,4 +1,4 @@
-choreo[test-cli]
+choreo[test-cli,gui]
 pytest-pyodide
 pytest-httpserver
 selenium

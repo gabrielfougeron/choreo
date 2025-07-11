@@ -77,4 +77,14 @@ junit_logging = "system-out"
 junit_suite_name = "Pytest test results"
 junit_log_passing_tests = true
 
+[tool.cibuildwheel]
+skip = ["*-musllinux*"]
+pyodide-version = "0.27.6"
+
+# before-test = "pip install .[test]"
+# test-command = "pytest tests"
+# test-sources = ["tests", "pyproject.toml"]
+
+# [tool.cibuildwheel.linux]
+# before-all = "yum install -y openblas-devel fftw-devel"
 
