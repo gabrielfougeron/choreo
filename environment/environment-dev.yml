@@ -2,12 +2,12 @@ name: choreo
 channels:
   - conda-forge
 dependencies:
-  - python=3.12.1
+  - python=3.13.2
   # - emscripten=3.1.58
-  - pyodide-build=0.29.0
+  - pyodide-build=0.30.5
   - mpmath
   - matplotlib
-  - scipy<1.14.0
+  - scipy
   - networkx
   - cython
   - ffmpeg

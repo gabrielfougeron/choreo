@@ -48,6 +48,7 @@ def main(cli_args):
         
     dst = os.path.join(args.dst, f'junit{tag}.xml')
     
+    os.makedirs(os.path.dirname(dst), exist_ok=True)
     shutil.copy(args.src, dst)
     
 if __name__ == "__main__":
