@@ -93,5 +93,5 @@ test-command = 'if pytest tests; then echo "Tests all succeeded"; else echo "At 
 test-sources = ["tests", "pyproject.toml"]
 
 # [tool.cibuildwheel.linux]
-before-all = "yum install -y openblas-devel fftw-devel"
+# before-all = "yum install -y openblas-devel fftw-devel"
 
