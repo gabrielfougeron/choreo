@@ -2899,18 +2899,18 @@ cdef class NBodySyst():
     @cython.final
     def GetKrylovJacobian(self, Use_exact_Jacobian = True, SpectralSolve = True, jac_options_kw={}):
 
-        jacobian = scipy.optimize.nonlin.KrylovJacobian(**jac_options_kw)
+        jacobian = scipy.optimize.KrylovJacobian(**jac_options_kw)
         jacobian.NBS = self
 
         def update(self, x, f):
             self.x = x
             self.segmpos = self.NBS.segmpos.copy() # Copy is needed because NBS._segmpos is used as a buffer in hessian computation
-            scipy.optimize.nonlin.KrylovJacobian.update(self, x, f)
+            scipy.optimize.KrylovJacobian.update(self, x, f)
 
         def setup(self, x, f, func):
             self.x = x
             self.segmpos = self.NBS.segmpos.copy() # Copy is needed because NBS._segmpos is used as a buffer in hessian computation
-            scipy.optimize.nonlin.KrylovJacobian.setup(self, x, f, func)
+            scipy.optimize.KrylovJacobian.setup(self, x, f, func)
 
         jacobian.update = types.MethodType(update, jacobian)
         jacobian.setup = types.MethodType(setup, jacobian)

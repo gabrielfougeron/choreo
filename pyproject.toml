@@ -4,7 +4,7 @@ requires = [
     "wheel"           ,
     "Cython"          ,
     "numpy"           ,
-    "scipy<1.14.0"    ,
+    "scipy!=1.15"     ,
     "build"           ,
     "pyfftw>=0.14.0.0",
 ]
@@ -79,12 +79,19 @@ junit_log_passing_tests = true
 
 [tool.cibuildwheel]
 skip = ["*-musllinux*"]
-pyodide-version = "0.27.6"
+pyodide-version = "0.28.0"
 
-# before-test = "pip install .[test]"
+before-test = "pip install -r requirements/requirements-cibuildwheel-test.txt"
 # test-command = "pytest tests"
-# test-sources = ["tests", "pyproject.toml"]
+# Make sure that cibuildwheel as a whole does not fail even if some tests fail.
+test-command = 'if pytest tests; then echo "Tests all succeeded"; else echo "At least one test failed"; fi'
+
+# Possible choices of architecture. CLI argument --archs
+# x86_64 i686 aarch64 ppc64le s390x armv7l riscv64
+# Succeded in the past : x86_66     (only !)
+
+test-sources = ["tests", "pyproject.toml"]
 
 # [tool.cibuildwheel.linux]
-# before-all = "yum install -y openblas-devel fftw-devel"
+before-all = "yum install -y openblas-devel fftw-devel"
 

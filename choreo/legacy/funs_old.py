@@ -1023,7 +1023,7 @@ class ChoreoAction():
                 self.all_coeffs = self.ActionSyst.last_all_coeffs.copy()
                 self.all_pos = self.ActionSyst.last_all_pos.copy()
 
-                scipy.optimize.nonlin.KrylovJacobian.update(self, x, f)
+                scipy.optimize.KrylovJacobian.update(self, x, f)
 
             def setup(self, x, f, func):
 
@@ -1031,7 +1031,7 @@ class ChoreoAction():
                 self.all_coeffs = self.ActionSyst.last_all_coeffs.copy()
                 self.all_pos = self.ActionSyst.last_all_pos.copy()
 
-                scipy.optimize.nonlin.KrylovJacobian.setup(self, x, f, func)
+                scipy.optimize.KrylovJacobian.setup(self, x, f, func)
 
             def matvec(self,v):
                 return self.ActionSyst.Compute_action_hess_mul_NoPosFFT(self.all_coeffs,self.all_pos,v)
@@ -1043,7 +1043,7 @@ class ChoreoAction():
 
         else: 
 
-            jacobian = scipy.optimize.nonlin.KrylovJacobian(**jac_options_kw)
+            jacobian = scipy.optimize.KrylovJacobian(**jac_options_kw)
 
         return jacobian
 

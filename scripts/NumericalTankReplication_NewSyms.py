@@ -267,7 +267,7 @@ for n_NT_init in [0]:
             jacobian = choreo.ExactKrylovJacobian(exactgrad=grad_only_mul,**jac_options)
 
         else: 
-            jacobian = scipy.optimize.nonlin.KrylovJacobian(**jac_options)
+            jacobian = scipy.optimize.KrylovJacobian(**jac_options)
 
 
         opt_result , info = choreo.nonlin_solve_pp(F=loss,x0=vx0,jacobian=jacobian,verbose=True,maxiter=maxiter_period_opt,f_tol=1e-15,line_search=line_search,raise_exception=False,smin=linesearch_smin,full_output=True,callback=best_sol.update,tol_norm=np.linalg.norm)

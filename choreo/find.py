@@ -118,6 +118,7 @@ def Find_Choreo(
         print("Searching for periodic solutions using the Runge-Kutta solver")
 
     print()
+    print("Toto va à la peche")
 
     if SpectralSolve:
         x_min, x_max = NBS.Make_params_bounds(coeff_ampl_o, k_infl, k_max, coeff_ampl_min)

@@ -423,9 +423,9 @@ def ExecName(the_name, input_folder, store_folder):
 
 
     jac_options = {'method':krylov_method}
-    jacobian = scipy.optimize.nonlin.KrylovJacobian(**jac_options)
+    jacobian = scipy.optimize.KrylovJacobian(**jac_options)
 
-    opt_result , info = scipy.optimize.nonlin.nonlin_solve(F=F,x0=x0,jacobian=jacobian,verbose=disp_scipy_opt,maxiter=maxiter,f_tol=gradtol,line_search=line_search,raise_exception=False,full_output=True)
+    opt_result , info = scipy.optimize.nonlin_solve(F=F,x0=x0,jacobian=jacobian,verbose=disp_scipy_opt,maxiter=maxiter,f_tol=gradtol,line_search=line_search,raise_exception=False,full_output=True)
 
     print(opt_result)
 

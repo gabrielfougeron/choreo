@@ -21,6 +21,11 @@ jobs:
         with:
           submodules: 'true'
 
+      - name: Install LibOMP
+        if: matrix.os == 'macos-13' || matrix.os == 'macos-14'
+        run: |
+          brew install libomp
+
       - name: Build wheels
         uses: pypa/cibuildwheel@v3.0.1
         # env:

@@ -1,0 +1,8 @@
+numba
+pyfftw>=0.14.0.0
+choreo_GUI
+attrs
+pytest
+pytest-xdist
+pytest-timeout
+pytest-asyncio

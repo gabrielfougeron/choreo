@@ -259,7 +259,7 @@ def Integrate(n_NT_init):
         # krylov_method_T = 'tfqmr'
 
         jac_options = {'method':krylov_method_T,'rdiff':None,'inner_tol':0,'inner_M':None }
-        jacobian = scipy.optimize.nonlin.KrylovJacobian(**jac_options)
+        jacobian = scipy.optimize.KrylovJacobian(**jac_options)
 
         # verbose=True
         verbose=False

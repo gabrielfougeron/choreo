@@ -4,11 +4,8 @@ nonlin.py : Define non-linear optimization things I designed I feel ought to be 
 '''
 
 import numpy as np
-import math as m
 import scipy.optimize
-import scipy.linalg as la
-import scipy.sparse as sp
-import functools
+from scipy.optimize._linesearch import scalar_search_wolfe1, scalar_search_armijo
 
 class current_best:
     # Class meant to store the best solution during scipy optimization / root finding
@@ -38,11 +35,11 @@ class current_best:
     def get_best(self):
         return self.x,self.f,self.f_norm
 
-class ExactKrylovJacobian(scipy.optimize.nonlin.KrylovJacobian):
+class ExactKrylovJacobian(scipy.optimize.KrylovJacobian):
 
     def __init__(self,exactgrad, rdiff=None, method='lgmres', inner_maxiter=20,inner_M=None, outer_k=10, **kw):
 
-        scipy.optimize.nonlin.KrylovJacobian.__init__(self, rdiff, method, inner_maxiter,inner_M, outer_k, **kw)
+        scipy.optimize.KrylovJacobian.__init__(self, rdiff, method, inner_maxiter,inner_M, outer_k, **kw)
         self.exactgrad = exactgrad
 
     def matvec(self, v):
@@ -50,6 +47,9 @@ class ExactKrylovJacobian(scipy.optimize.nonlin.KrylovJacobian):
     
     def rmatvec(self, v):
         return self.exactgrad(self.x0,v)
+
+def maxnorm(x):
+    return np.absolute(x).max()
 
 def nonlin_solve_pp(
         F,
@@ -75,8 +75,8 @@ def nonlin_solve_pp(
     """
     # Can't use default parameters because it's being explicitly passed as None
     # from the calling function, so we need to set it here.
-    tol_norm = scipy.optimize.nonlin.maxnorm if tol_norm is None else tol_norm
-    condition = scipy.optimize.nonlin.TerminationCondition(f_tol=f_tol, f_rtol=f_rtol,x_tol=x_tol, x_rtol=x_rtol,iter=iter, norm=tol_norm)
+    tol_norm = maxnorm if tol_norm is None else tol_norm
+    condition = TerminationCondition(f_tol=f_tol, f_rtol=f_rtol,x_tol=x_tol, x_rtol=x_rtol,iter=iter, norm=tol_norm)
 
     x0 = _as_inexact_pp(x0)
     func = lambda z: _as_inexact_pp(F(_array_like_pp(z, x0))).flatten()
@@ -86,7 +86,7 @@ def nonlin_solve_pp(
     Fx = func(x)
     Fx_norm = np.linalg.norm(Fx)
 
-    jacobian = scipy.optimize.nonlin.asjacobian(jacobian)
+    # jacobian = scipy.optimize.asjacobian(jacobian) # If this line is needed, go get it in scipy.
     jacobian.setup(x.copy(), Fx, func)
 
     if maxiter is None:
@@ -215,9 +215,9 @@ def _nonlin_line_search_pp(func, x, Fx, dx, search_type='armijo', rdiff=1e-8, sm
         return (phi(s+ds, store=False) - phi(s)) / ds
 
     if search_type == 'wolfe':
-        s, phi1, phi0 = scipy.optimize.nonlin.scalar_search_wolfe1(phi, derphi, tmp_phi[0], xtol=1e-2, amin=smin)
+        s, phi1, phi0 = scalar_search_wolfe1(phi, derphi, tmp_phi[0], xtol=1e-2, amin=smin)
     elif search_type == 'armijo':
-        s, phi1 = scipy.optimize.nonlin.scalar_search_armijo(phi, tmp_phi[0], -tmp_phi[0], amin=smin)
+        s, phi1 = scalar_search_armijo(phi, tmp_phi[0], -tmp_phi[0], amin=smin)
     else :
         s = None
 
@@ -232,3 +232,62 @@ def _nonlin_line_search_pp(func, x, Fx, dx, search_type='armijo', rdiff=1e-8, sm
     Fx_norm = np.linalg.norm(Fx)
 
     return s, x, Fx, Fx_norm
+
+class TerminationCondition:
+    """
+    Termination condition for an iteration. It is terminated if
+
+    - |F| < f_rtol*|F_0|, AND
+    - |F| < f_tol
+
+    AND
+
+    - |dx| < x_rtol*|x|, AND
+    - |dx| < x_tol
+
+    """
+    def __init__(self, f_tol=None, f_rtol=None, x_tol=None, x_rtol=None,
+                 iter=None, norm=maxnorm):
+
+        if f_tol is None:
+            f_tol = np.finfo(np.float64).eps ** (1./3)
+        if f_rtol is None:
+            f_rtol = np.inf
+        if x_tol is None:
+            x_tol = np.inf
+        if x_rtol is None:
+            x_rtol = np.inf
+
+        self.x_tol = x_tol
+        self.x_rtol = x_rtol
+        self.f_tol = f_tol
+        self.f_rtol = f_rtol
+
+        self.norm = norm
+
+        self.iter = iter
+
+        self.f0_norm = None
+        self.iteration = 0
+
+    def check(self, f, x, dx):
+        self.iteration += 1
+        f_norm = self.norm(f)
+        x_norm = self.norm(x)
+        dx_norm = self.norm(dx)
+
+        if self.f0_norm is None:
+            self.f0_norm = f_norm
+
+        if f_norm == 0:
+            return 1
+
+        if self.iter is not None:
+            # backwards compatibility with SciPy 0.6.0
+            return 2 * (self.iteration > self.iter)
+
+        # NB: condition must succeed for rtol=inf even if norm == 0
+        return int((f_norm <= self.f_tol
+                    and f_norm/self.f_rtol <= self.f0_norm)
+                   and (dx_norm <= self.x_tol
+                        and dx_norm/self.x_rtol <= x_norm))
