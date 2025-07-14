@@ -79,7 +79,8 @@ junit_log_passing_tests = true
 
 [tool.cibuildwheel]
 skip = ["*-musllinux*"]
-pyodide-version = "0.28.0"
+# pyodide-version = "0.28.0"
+pyodide-version = "0.26.3"
 
 before-test = "pip install -r requirements/requirements-cibuildwheel-test.txt"
 # test-command = "pytest tests"
