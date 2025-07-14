@@ -1,4 +1,4 @@
-name: choreo
+name: choreo-actions
 channels:
   - conda-forge
 dependencies:
@@ -8,7 +8,7 @@ dependencies:
   - pyodide-build=0.29.0
   - mpmath
   - matplotlib
-  - scipy<1.14,>=1.16
+  - scipy<1.14|>=1.16
   - networkx
   - cython
   - ffmpeg
