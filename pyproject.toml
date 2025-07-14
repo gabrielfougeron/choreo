@@ -4,7 +4,7 @@ requires = [
     "wheel"               ,
     "Cython"              ,
     "numpy"               ,
-    "scipy!=1.14,!=1.15"  ,
+    "scipy!=1.14.0,!=1.14.1,!=1.15.0,!=1.15.1,!=1.15.2,!=1.15.3"  , # Truc relou ptin
     "build"               ,
     "pyfftw>=0.14.0.0"    ,
 ]
