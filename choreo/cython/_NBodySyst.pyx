@@ -54,6 +54,7 @@ from choreo.NBodySyst_build import (
     ReorganizeBinarySegments            ,
 )
 
+import sys
 import math
 import scipy
 import networkx
@@ -2176,7 +2177,7 @@ cdef class NBodySyst():
 
         cdef np.ndarray[double, ndim=1, mode='c'] ODEperdef = np.empty((self.n_ODEperdef_eqproj), dtype=np.float64)
 
-        endposmom_to_perdef_bulk(
+        endposmom_to_perdef_mul(
             &xo[0]  , &vo[0]    , &xf[0]        , &vf[0]    , &ODEperdef[0]     ,
             self._PerDefEnd_SpaceRotPos         , self._PerDefEnd_SpaceRotVel   ,
             self._ODEperdef_eqproj_pos          , self._ODEperdef_eqproj_mom    ,
@@ -2187,7 +2188,7 @@ cdef class NBodySyst():
         return ODEperdef
  
     @cython.final
-    cpdef np.ndarray[double, ndim=2, mode='c'] endposmom_to_perdef_bulk(self, double[:,::1] xo, double[:,::1] vo, double[:,::1] xf, double[:,::1] vf):
+    cpdef np.ndarray[double, ndim=2, mode='c'] endposmom_to_perdef_mul(self, double[:,::1] xo, double[:,::1] vo, double[:,::1] xf, double[:,::1] vf):
 
         assert xo.shape[0] == self.nsegm*self.geodim
         assert vo.shape[0] == self.nsegm*self.geodim
@@ -2198,13 +2199,107 @@ cdef class NBodySyst():
         cdef np.ndarray[double, ndim=2, mode='c'] ODEperdef = np.empty((self.n_ODEperdef_eqproj, xf.shape[1]), dtype=np.float64)
         cdef int k = xf.shape[1]
 
-        endposmom_to_perdef_bulk(
+        endposmom_to_perdef_mul(
             &xo[0,0]    , &vo[0,0]  , &xf[0,0]  , &vf[0,0]  , &ODEperdef[0,0]   ,
             self._PerDefEnd_SpaceRotPos         , self._PerDefEnd_SpaceRotVel   ,
             self._ODEperdef_eqproj_pos          , self._ODEperdef_eqproj_mom    ,
             self._PerDefEnd_Isegm               ,
             self.ODEperdef_eqproj_pos_mul       , self.TimeRev  , k             , 
         )
+
+        return ODEperdef
+
+    @cython.final
+    def endposmom_to_perdef_bulk(self, double[::1] xo, double[::1] vo, double[:,::1] xf, double[:,::1] vf):
+
+        cdef int n
+        cdef int k = xf.shape[0]
+        cdef int m = self.nsegm*self.geodim
+        cdef int km = k*m
+        cdef int ldc = self.n_ODEperdef_eqproj
+
+        cdef Py_ssize_t i, j, idim, jdim, isegm
+        cdef Py_ssize_t iif
+
+        assert xo.shape[0] == m
+        assert vo.shape[0] == m
+        assert xf.shape[1] == m
+        assert vf.shape[1] == m
+
+        cdef np.ndarray[double, ndim=2, mode='c'] ODEperdef = np.empty((k, self.n_ODEperdef_eqproj), dtype=np.float64)
+        cdef double* buf
+        cdef double* df
+        cdef double* df_incr
+
+        if self.TimeRev > 0:
+
+            buf = <double*> malloc(sizeof(double)*m)
+            memset(&buf[0], 0, sizeof(double)*m)
+
+            for isegm in range(self.nsegm):
+
+                i = isegm * self.geodim
+
+                for idim in range(self.geodim):
+
+                    j = self._PerDefEnd_Isegm[isegm] * self.geodim
+                    
+                    for jdim in range(self.geodim):
+
+                        buf[i] -= self._PerDefEnd_SpaceRotPos[isegm,idim,jdim] * xo[j]
+                        j += 1
+
+                    i += 1
+
+            df = <double*> malloc(sizeof(double)*km)
+            scipy.linalg.cython_blas.dcopy(&km,&xf[0,0],&int_one,df,&int_one)
+
+            df_incr = df
+            for iif in range(k):
+                scipy.linalg.cython_blas.daxpy(&m, &one_double, &buf[0], &int_one,df_incr, &int_one)
+                df_incr += m
+
+            n = self.n_ODEperdef_eqproj_pos
+
+            scipy.linalg.cython_blas.dgemm(transt,transn,&n,&k,&m,&self.ODEperdef_eqproj_pos_mul,&self._ODEperdef_eqproj_pos[0,0],&m,df,&m,&zero_double,&ODEperdef[0,0],&ldc)
+
+            memset(&buf[0], 0, sizeof(double)*m)
+
+            for isegm in range(self.nsegm):
+
+                i = isegm * self.geodim
+
+                for idim in range(self.geodim):
+
+                    j = self._PerDefEnd_Isegm[isegm] * self.geodim
+                    
+                    for jdim in range(self.geodim):
+
+                        buf[i] -= self._PerDefEnd_SpaceRotVel[isegm,idim,jdim] * vo[j]
+                        j += 1
+
+                    i += 1
+
+            scipy.linalg.cython_blas.dcopy(&km,&vf[0,0],&int_one,df,&int_one)
+            df_incr = df
+            for iif in range(k):
+                scipy.linalg.cython_blas.daxpy(&m, &one_double, &buf[0], &int_one,df_incr, &int_one)
+                df_incr += m
+
+            n = self.n_ODEperdef_eqproj_mom
+
+            scipy.linalg.cython_blas.dgemm(transt,transn,&n,&k,&m,&one_double,&self._ODEperdef_eqproj_mom[0,0],&m,df,&m,&zero_double,&ODEperdef[0,self.n_ODEperdef_eqproj_pos],&ldc)
+
+            free(buf)
+            free(df)
+            
+        else:
+
+            n = self.n_ODEperdef_eqproj_pos
+            scipy.linalg.cython_blas.dgemm(transt,transn,&n,&k,&m,&self.ODEperdef_eqproj_pos_mul,&self._ODEperdef_eqproj_pos[0,0],&m,&xf[0,0],&m,&zero_double,&ODEperdef[0,0],&ldc)
+
+            n = self.n_ODEperdef_eqproj_mom
+            scipy.linalg.cython_blas.dgemm(transt,transn,&n,&k,&m,&one_double,&self._ODEperdef_eqproj_mom[0,0],&m,&vf[0,0],&m,&zero_double,&ODEperdef[0,self.n_ODEperdef_eqproj_pos],&ldc)
 
         return ODEperdef
 
@@ -2343,8 +2438,6 @@ cdef class NBodySyst():
         cdef np.ndarray[double, ndim=2, mode='c'] segmpos_ODE, segmmom_ODE
         cdef np.ndarray[double, ndim=3, mode="c"] d_segmpos_ODE, d_segmmom_ODE
 
-        # cdef double[:,::1] grad_xo = self._ODEinitparams_basis_pos
-        # cdef double[:,::1] grad_vo = self._ODEinitparams_basis_mom
         cdef double[:,::1] grad_xo = np.zeros((self.nsegm*self.geodim, self.n_ODEinitparams), dtype=np.float64)
         cdef double[:,::1] grad_vo = np.zeros((self.nsegm*self.geodim, self.n_ODEinitparams), dtype=np.float64)
 
@@ -2367,6 +2460,8 @@ cdef class NBodySyst():
                 rk_x = self._rk_implicit_x                      ,
                 rk_v = self._rk_implicit_v                      ,
                 nint = nint_ODE                                 ,
+                keep_freq = 1                                   ,
+                keep_init = True                                ,
                 t_span = self._ODE_Syst["t_span"]               ,
                 vector_calls = self._ODE_Syst["vector_calls"]   ,
                 fun = self._ODE_Syst["fun"]                     ,
@@ -2384,23 +2479,24 @@ cdef class NBodySyst():
                 grad_vo = grad_vo                       ,
                 rk = self._rk_explicit                  ,
                 nint = nint_ODE                         ,
+                keep_freq = 1                           ,
+                keep_init = True                        ,
                 t_span = self._ODE_Syst["t_span"]       ,
                 fun = self._ODE_Syst["fun"]             ,
                 gun = self._ODE_Syst["gun"]             ,
                 grad_fun = self._ODE_Syst["grad_fun"]   ,
                 grad_gun = self._ODE_Syst["grad_gun"]   ,
             )    
+        
+        self._segmpos = np.ascontiguousarray(segmpos_ODE.reshape((self.segm_store, self.nsegm, self.geodim)).swapaxes(0, 1))
 
-        cdef double[::1] xf = segmpos_ODE[0,:].reshape(-1)
-        cdef double[::1] vf = segmmom_ODE[0,:].reshape(-1)
+        cdef double[::1] xf = segmpos_ODE[self.segm_store-1,:].reshape(-1)
+        cdef double[::1] vf = segmmom_ODE[self.segm_store-1,:].reshape(-1)
 
-        cdef double[:,::1] dxf = d_segmpos_ODE[0,:,:].reshape(-1, self.n_ODEinitparams)
-        cdef double[:,::1] dvf = d_segmmom_ODE[0,:,:].reshape(-1, self.n_ODEinitparams)
+        cdef double[:,::1] dxf = d_segmpos_ODE[self.segm_store-1,:,:].reshape(-1, self.n_ODEinitparams)
+        cdef double[:,::1] dvf = d_segmmom_ODE[self.segm_store-1,:,:].reshape(-1, self.n_ODEinitparams)
 
-        # cdef double[:,::1] dxf = np.ascontiguousarray(d_segmpos_ODE[0,:,:].reshape(-1, self.n_ODEinitparams).T)
-        # cdef double[:,::1] dvf = np.ascontiguousarray(d_segmmom_ODE[0,:,:].reshape(-1, self.n_ODEinitparams).T)
-
-        return self.endposmom_to_perdef(xo, vo, xf, vf), self.endposmom_to_perdef_bulk(grad_xo, grad_vo, dxf, dvf)
+        return self.endposmom_to_perdef(xo, vo, xf, vf), self.endposmom_to_perdef_mul(grad_xo, grad_vo, dxf, dvf)
 
     @cython.final
     @cython.cdivision(True)
@@ -2410,8 +2506,7 @@ cdef class NBodySyst():
         cdef Py_ssize_t i
         cdef double fac, t
         cdef int size = self.n_ODEperdef_eqproj_pos
-        # cdef int size = self.n_ODEperdef_eqproj
-        
+
         t = 0
         for i in range(n):
             t += 1
@@ -2850,37 +2945,58 @@ cdef class NBodySyst():
     @cython.final
     def GetKrylovJacobian(self, Use_exact_Jacobian = True, SpectralSolve = True, jac_options_kw={}):
 
-        jacobian = scipy.optimize.KrylovJacobian(**jac_options_kw)
-        jacobian.NBS = self
+        if jac_options_kw.get('method') == "hybr":
 
-        def update(self, x, f):
-            self.x = x
-            self.segmpos = self.NBS.segmpos.copy() # Copy is needed because NBS._segmpos is used as a buffer in hessian computation
-            scipy.optimize.KrylovJacobian.update(self, x, f)
+            class MockKrylovJacobian:
+                pass
 
-        def setup(self, x, f, func):
-            self.x = x
-            self.segmpos = self.NBS.segmpos.copy() # Copy is needed because NBS._segmpos is used as a buffer in hessian computation
-            scipy.optimize.KrylovJacobian.setup(self, x, f, func)
+            jacobian = MockKrylovJacobian()
+            jacobian.NBS = self
 
-        jacobian.update = types.MethodType(update, jacobian)
-        jacobian.setup = types.MethodType(setup, jacobian)
+            def update(self, x, f):
+                self.x = x
+                self.segmpos = self.NBS.segmpos.copy() # Copy is needed because NBS._segmpos is used as a buffer in hessian computation
 
-        if (Use_exact_Jacobian):
+            def setup(self, x, f, func):
+                self.x = x
+                self.segmpos = self.NBS.segmpos.copy() # Copy is needed because NBS._segmpos is used as a buffer in hessian computation        
 
-            if SpectralSolve:
+            jacobian.update = types.MethodType(update, jacobian)
+            jacobian.setup = types.MethodType(setup, jacobian)
+            
+        else:
 
-                def matvec(self,v):                
-                    return self.NBS.segmpos_dparams_to_action_hess(self.segmpos, v)
+            jacobian = scipy.optimize.KrylovJacobian(**jac_options_kw)
+            jacobian.NBS = self
 
-                jacobian.rmatvec = types.MethodType(matvec, jacobian)
+            def update(self, x, f):
+                self.x = x
+                self.segmpos = self.NBS.segmpos.copy() # Copy is needed because NBS._segmpos is used as a buffer in hessian computation
+                scipy.optimize.KrylovJacobian.update(self, x, f)
 
-            else:
+            def setup(self, x, f, func):
+                self.x = x
+                self.segmpos = self.NBS.segmpos.copy() # Copy is needed because NBS._segmpos is used as a buffer in hessian computation
+                scipy.optimize.KrylovJacobian.setup(self, x, f, func)
 
-                def matvec(self,v):                
-                    return self.NBS.params_to_periodicity_default_grad(self.x, v)
+            jacobian.update = types.MethodType(update, jacobian)
+            jacobian.setup = types.MethodType(setup, jacobian)
 
-            jacobian.matvec = types.MethodType(matvec, jacobian)
+            if (Use_exact_Jacobian):
+
+                if SpectralSolve:
+
+                    def matvec(self,v):                
+                        return self.NBS.segmpos_dparams_to_action_hess(self.segmpos, v)
+
+                    jacobian.rmatvec = types.MethodType(matvec, jacobian)
+
+                else:
+
+                    def matvec(self,v):                
+                        return self.NBS.params_to_periodicity_default_grad(self.x, v)
+
+                jacobian.matvec = types.MethodType(matvec, jacobian)
 
         return jacobian
 

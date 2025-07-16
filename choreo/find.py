@@ -348,8 +348,6 @@ def Find_Choreo(
 
             if (krylov_method == 'lgmres'):
                 jac_options = {'method':krylov_method,'rdiff':rdiff,'outer_k':outer_k,'inner_inner_m':inner_maxiter,'inner_store_outer_Av':store_outer_Av,'inner_tol':inner_tol,'inner_M':inner_M }
-            elif (krylov_method == 'gmres'):
-                jac_options = {'method':krylov_method,'rdiff':rdiff,'outer_k':outer_k,'inner_tol':inner_tol,'inner_M':inner_M }
             else:
                 jac_options = {'method':krylov_method,'rdiff':rdiff,'outer_k':outer_k,'inner_tol':inner_tol,'inner_M':inner_M }
 
@@ -365,23 +363,43 @@ def Find_Choreo(
 
                 return AskedForNext
 
-            if SpectralSolve:
-                F = NBS.params_to_action_grad
+            if krylov_method == "hybr":
+                
+                if SpectralSolve:
+                    raise ValueError("SpectralSolve is unsupported with method = 'hybr'")
+
+                jacobian.setup(best_sol.x, best_sol.f, NBS.params_to_periodicity_default)
+                
+                F = NBS.params_to_periodicity_default_gradmat
+                
+                opt_result = scipy.optimize.root(
+                    method='hybr', fun=F, x0=x, jac=True, 
+                    tol=gradtol,
+                    # callback=optim_callback , # callback is not supported yet :'(
+                    options = {"maxfev":maxiter}    )
+
+                jacobian.update(best_sol.x, best_sol.f)
+                AskedForNext = optim_callback(opt_result.x, opt_result.fun, np.linalg.norm(opt_result.fun)) # callback is not supported yet :'(
+
             else:
-                F = NBS.params_to_periodicity_default
-
-            try : 
                 
-                opt_result, info = choreo.scipy_plus.nonlin.nonlin_solve_pp(
-                    F=F, x0=x, jacobian=jacobian, 
-                    verbose=disp_scipy_opt, maxiter=maxiter, f_tol=gradtol,  line_search=line_search, callback=optim_callback, raise_exception=False, smin=linesearch_smin, full_output=True, tol_norm=np.linalg.norm)
-                AskedForNext = (info['status'] == 0)
+                if SpectralSolve:
+                    F = NBS.params_to_action_grad
+                else:
+                    F = NBS.params_to_periodicity_default
 
-            except Exception as exc:
-                
-                print(exc)
-                GoOn = False
-                raise(exc)
+                try : 
+
+                    opt_result, info = choreo.scipy_plus.nonlin.nonlin_solve_pp(
+                        F=F, x0=x, jacobian=jacobian, 
+                        verbose=disp_scipy_opt, maxiter=maxiter, f_tol=gradtol,  line_search=line_search, callback=optim_callback, raise_exception=False, smin=linesearch_smin, full_output=True, tol_norm=np.linalg.norm)
+                    AskedForNext = (info['status'] == 0)
+
+                except Exception as exc:
+                    
+                    print(exc)
+                    GoOn = False
+                    raise(exc)
 
             if (AskedForNext):
                 print("Skipping at user's request")

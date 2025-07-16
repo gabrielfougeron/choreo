@@ -3872,7 +3872,7 @@ cdef void Compute_grad_velocities_vectorized_user_data(
         ODE_params.InvSegmMass  ,
     )
 
-cdef void endposmom_to_perdef_bulk(
+cdef void endposmom_to_perdef_mul(
     double* xo  , double* vo    , double* xf    , double* vf    , double* ODEperdef     ,
     double[:,:,::1] PerDefEnd_SpaceRotPos       , double[:,:,::1] PerDefEnd_SpaceRotVel ,
     double[:,::1] ODEperdef_eqproj_pos          , double[:,::1] ODEperdef_eqproj_mom    ,
