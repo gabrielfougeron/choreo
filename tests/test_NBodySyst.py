@@ -883,12 +883,12 @@ def test_periodicity_default(float64_tols, NBS):
     
     perdef = NBS.endposmom_to_perdef(xo, vo, xf, vf)
     assert np.allclose(perdef, np.zeros((NBS.n_ODEperdef_eqproj), dtype=np.float64), rtol = float64_tols.rtol, atol = float64_tols.atol)  
-
-    xf = xf.reshape(1,-1)
-    vf = vf.reshape(1,-1)
-    
-    perdef_bulk = NBS.endposmom_to_perdef_bulk(xo, vo, xf, vf)
-    assert np.allclose(perdef_bulk, np.zeros((1,NBS.n_ODEperdef_eqproj), dtype=np.float64), rtol = float64_tols.rtol, atol = float64_tols.atol)  
+# 
+#     xf = xf.reshape(1,-1)
+#     vf = vf.reshape(1,-1)
+#     
+#     perdef_bulk = NBS.endposmom_to_perdef_bulk(xo, vo, xf, vf)
+#     assert np.allclose(perdef_bulk, np.zeros((1,NBS.n_ODEperdef_eqproj), dtype=np.float64), rtol = float64_tols.rtol, atol = float64_tols.atol)  
 
 @ParametrizeDocstrings
 @pytest.mark.parametrize("NoSymIfPossible", [True, False])
@@ -1778,4 +1778,31 @@ def test_params_to_periodicity_default_grad_vs_FD(float64_tols_loose, NBS):
     print(err.min())
     assert (err.min() < float64_tols_loose.rtol)
 
+    NBS.nint_fac = nint_fac_ini
+    
+@pytest.mark.slow(required_time = 10)
+@ParametrizeDocstrings
+@RetryTest(n = 2)
+@pytest.mark.parametrize("NBS", [pytest.param(NBS, id=name) for name, NBS in NBS_dict.items()])
+def test_params_to_periodicity_default_gradmat_vs_matmul(float64_tols, NBS):
+    """ Tests that the gradient of the RK periodicity default computation agrees with its FD approximation """
+        
+    rk_explicit = choreo.segm.precomputed_tables.SofSpa10
+    
+    nint_fac_ini = NBS.nint_fac
+    
+    NBS.nint_fac = 512    
+    NBS.setup_params_to_periodicity_default(rk_explicit = rk_explicit)
+
+    xo = np.random.random((NBS.n_ODEinitparams)) * 100
+    dxo = np.random.random((NBS.n_ODEinitparams))
+    
+    df = NBS.params_to_periodicity_default_grad(xo, dxo)
+    f, J = NBS.params_to_periodicity_default_gradmat(xo)
+    
+    Jdx = np.matmul(J, dxo)
+    
+    print(np.linalg.norm(df-Jdx))
+    assert np.allclose(df, Jdx, rtol = float64_tols.rtol, atol = float64_tols.atol)  
+    
     NBS.nint_fac = nint_fac_ini

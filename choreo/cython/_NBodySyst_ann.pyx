@@ -3871,3 +3871,86 @@ cdef void Compute_grad_velocities_vectorized_user_data(
         ODE_params.nsegm        , nvec                  , grad_ndof         , 
         ODE_params.InvSegmMass  ,
     )
+
+cdef void endposmom_to_perdef_bulk(
+    double* xo  , double* vo    , double* xf    , double* vf    , double* ODEperdef     ,
+    double[:,:,::1] PerDefEnd_SpaceRotPos       , double[:,:,::1] PerDefEnd_SpaceRotVel ,
+    double[:,::1] ODEperdef_eqproj_pos          , double[:,::1] ODEperdef_eqproj_mom    ,
+    Py_ssize_t[::1] PerDefEnd_Isegm             , 
+    double ODEperdef_eqproj_pos_mul             , Py_ssize_t TimeRev    , int k         ,
+) noexcept nogil:
+
+    cdef Py_ssize_t nsegm = PerDefEnd_SpaceRotPos.shape[0]
+    cdef Py_ssize_t geodim = PerDefEnd_SpaceRotPos.shape[1]
+
+    cdef Py_ssize_t n_ODEperdef_eqproj_pos = ODEperdef_eqproj_pos.shape[0]
+    cdef Py_ssize_t n_ODEperdef_eqproj_mom = ODEperdef_eqproj_mom.shape[0]
+
+    cdef int n
+    cdef int m = nsegm*geodim
+    cdef int km = k*m
+
+    cdef Py_ssize_t i, j, idim, jdim, isegm
+    cdef double* df
+    cdef double* ODEperdef_mom
+
+    if TimeRev > 0:
+
+        df = <double*> malloc(sizeof(double)*km)
+
+        scipy.linalg.cython_blas.dcopy(&km,xf,&int_one,df,&int_one)
+        for isegm in range(nsegm):
+
+            for idim in range(geodim):
+
+                j = PerDefEnd_Isegm[isegm] * geodim * k
+                
+                for jdim in range(geodim):
+
+                    i = (isegm * geodim + idim) * k
+
+                    for ik in range(k):
+                        
+                        df[i] -= PerDefEnd_SpaceRotPos[isegm,idim,jdim] * xo[j]
+                        i += 1
+                        j += 1
+
+        n = n_ODEperdef_eqproj_pos
+        scipy.linalg.cython_blas.dgemm(transn,transn,&k,&n,&m,&ODEperdef_eqproj_pos_mul,df,&k,&ODEperdef_eqproj_pos[0,0],&m,&zero_double,ODEperdef,&k)
+
+        scipy.linalg.cython_blas.dcopy(&km,vf,&int_one,df,&int_one)
+        for isegm in range(nsegm):
+
+            for idim in range(geodim):
+
+                j = PerDefEnd_Isegm[isegm] * geodim * k
+                
+                for jdim in range(geodim):
+
+                    i = (isegm * geodim + idim) * k
+
+                    for ik in range(k):
+                        
+                        df[i] -= PerDefEnd_SpaceRotVel[isegm,idim,jdim] * vo[j]
+
+                        i += 1
+                        j += 1
+
+        n = n_ODEperdef_eqproj_mom
+        ODEperdef_mom = ODEperdef + k * n_ODEperdef_eqproj_pos
+        scipy.linalg.cython_blas.dgemm(transn,transn,&k,&n,&m,&one_double,df,&k,&ODEperdef_eqproj_mom[0,0],&m,&zero_double,ODEperdef_mom,&k)
+
+        free(df)
+
+    else:
+
+        n = n_ODEperdef_eqproj_pos
+        scipy.linalg.cython_blas.dgemm(transn,transn,&k,&n,&m,&ODEperdef_eqproj_pos_mul,xf,&k,&ODEperdef_eqproj_pos[0,0],&m,&zero_double,ODEperdef,&k)
+
+        n = n_ODEperdef_eqproj_mom
+        ODEperdef_mom = ODEperdef + k * n_ODEperdef_eqproj_pos
+        scipy.linalg.cython_blas.dgemm(transn,transn,&k,&n,&m,&one_double,vf,&k,&ODEperdef_eqproj_mom[0,0],&m,&zero_double,ODEperdef_mom,&k)
+
+
+
+

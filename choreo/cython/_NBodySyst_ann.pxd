@@ -584,3 +584,11 @@ cdef void Compute_velocities_vectorized_user_data(
 cdef void Compute_grad_velocities_vectorized_user_data(
     double[::1] all_t   , double[:,::1] all_mom , double[:,:,::1] all_grad_mom , double[:,:,::1] all_res , void* user_data   ,
 ) noexcept nogil
+
+cdef void endposmom_to_perdef_bulk(
+    double* xo  , double* vo    , double* xf    , double* vf    , double* ODEperdef     ,
+    double[:,:,::1] PerDefEnd_SpaceRotPos       , double[:,:,::1] PerDefEnd_SpaceRotVel ,
+    double[:,::1] ODEperdef_eqproj_pos          , double[:,::1] ODEperdef_eqproj_mom    ,
+    Py_ssize_t[::1] PerDefEnd_Isegm             , 
+    double ODEperdef_eqproj_pos_mul             , Py_ssize_t TimeRev    , int k         ,
+) noexcept nogil

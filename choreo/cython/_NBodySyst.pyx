@@ -2167,166 +2167,44 @@ cdef class NBodySyst():
         return ODEinitparams
 
     @cython.final
-    def endposmom_to_perdef(self, double[::1] xo, double[::1] vo, double[::1] xf, double[::1] vf):
-    
-        cdef int n
-        cdef int m = self.nsegm*self.geodim
+    cpdef np.ndarray[double, ndim=1, mode='c'] endposmom_to_perdef(self, double[::1] xo, double[::1] vo, double[::1] xf, double[::1] vf):
 
-        cdef Py_ssize_t i, j, idim, jdim, isegm
-
-        assert xo.shape[0] == m
-        assert vo.shape[0] == m
-        assert xf.shape[0] == m
-        assert vf.shape[0] == m
+        assert xo.shape[0] == self.nsegm*self.geodim
+        assert vo.shape[0] == self.nsegm*self.geodim
+        assert xf.shape[0] == self.nsegm*self.geodim
+        assert vf.shape[0] == self.nsegm*self.geodim
 
         cdef np.ndarray[double, ndim=1, mode='c'] ODEperdef = np.empty((self.n_ODEperdef_eqproj), dtype=np.float64)
-        cdef np.ndarray[double, ndim=1, mode='c'] buf
 
-        if self.TimeRev > 0:
-
-            buf = np.empty((self.nsegm * self.geodim), dtype=np.float64)
-
-            for isegm in range(self.nsegm):
-
-                i = isegm * self.geodim
-
-                for idim in range(self.geodim):
-
-                    buf[i] = xf[i]
-
-                    j = self._PerDefEnd_Isegm[isegm] * self.geodim
-                    
-                    for jdim in range(self.geodim):
-
-                        buf[i] -= self._PerDefEnd_SpaceRotPos[isegm,idim,jdim] * xo[j]
-                        j += 1
-
-                    i += 1
-
-            n = self.n_ODEperdef_eqproj_pos
-            scipy.linalg.cython_blas.dgemv(transt,&m,&n,&self.ODEperdef_eqproj_pos_mul,&self._ODEperdef_eqproj_pos[0,0],&m,&buf[0],&int_one,&zero_double,&ODEperdef[0],&int_one)
-
-            for isegm in range(self.nsegm):
-
-                i = isegm * self.geodim
-
-                for idim in range(self.geodim):
-
-                    buf[i] = vf[i]
-
-                    j = self._PerDefEnd_Isegm[isegm] * self.geodim
-                    
-                    for jdim in range(self.geodim):
-
-                        buf[i] -= self._PerDefEnd_SpaceRotVel[isegm,idim,jdim] * vo[j]
-                        j += 1
-
-                    i += 1
-
-            n = self.n_ODEperdef_eqproj_mom
-            scipy.linalg.cython_blas.dgemv(transt,&m,&n,&one_double,&self._ODEperdef_eqproj_mom[0,0],&m,&buf[0],&int_one,&zero_double,&ODEperdef[self.n_ODEperdef_eqproj_pos],&int_one)
-
-        else:
-
-            n = self.n_ODEperdef_eqproj_pos
-            scipy.linalg.cython_blas.dgemv(transt,&m,&n,&self.ODEperdef_eqproj_pos_mul,&self._ODEperdef_eqproj_pos[0,0],&m,&xf[0],&int_one,&zero_double,&ODEperdef[0],&int_one)
-
-            n = self.n_ODEperdef_eqproj_mom
-            scipy.linalg.cython_blas.dgemv(transt,&m,&n,&one_double,&self._ODEperdef_eqproj_mom[0,0],&m,&vf[0],&int_one,&zero_double,&ODEperdef[self.n_ODEperdef_eqproj_pos],&int_one)
+        endposmom_to_perdef_bulk(
+            &xo[0]  , &vo[0]    , &xf[0]        , &vf[0]    , &ODEperdef[0]     ,
+            self._PerDefEnd_SpaceRotPos         , self._PerDefEnd_SpaceRotVel   ,
+            self._ODEperdef_eqproj_pos          , self._ODEperdef_eqproj_mom    ,
+            self._PerDefEnd_Isegm               ,
+            self.ODEperdef_eqproj_pos_mul       , self.TimeRev  , 1             , 
+        )
 
         return ODEperdef
  
     @cython.final
-    def endposmom_to_perdef_bulk(self, double[::1] xo, double[::1] vo, double[:,::1] xf, double[:,::1] vf):
+    cpdef np.ndarray[double, ndim=2, mode='c'] endposmom_to_perdef_bulk(self, double[:,::1] xo, double[:,::1] vo, double[:,::1] xf, double[:,::1] vf):
 
-        cdef int n
-        cdef int k = xf.shape[0]
-        cdef int m = self.nsegm*self.geodim
-        cdef int km = k*m
-        cdef int ldc = self.n_ODEperdef_eqproj
+        assert xo.shape[0] == self.nsegm*self.geodim
+        assert vo.shape[0] == self.nsegm*self.geodim
+        assert xf.shape[0] == self.nsegm*self.geodim
+        assert vf.shape[0] == self.nsegm*self.geodim
+        assert vf.shape[1] == xf.shape[1]        
 
-        cdef Py_ssize_t i, j, idim, jdim, isegm
-        cdef Py_ssize_t iif
+        cdef np.ndarray[double, ndim=2, mode='c'] ODEperdef = np.empty((self.n_ODEperdef_eqproj, xf.shape[1]), dtype=np.float64)
+        cdef int k = xf.shape[1]
 
-        assert xo.shape[0] == m
-        assert vo.shape[0] == m
-        assert xf.shape[1] == m
-        assert vf.shape[1] == m
-
-        cdef np.ndarray[double, ndim=2, mode='c'] ODEperdef = np.empty((k, self.n_ODEperdef_eqproj), dtype=np.float64)
-        cdef double* buf
-        cdef double* df
-        cdef double* df_incr
-
-        if self.TimeRev > 0:
-
-            buf = <double*> malloc(sizeof(double)*m)
-            memset(&buf[0], 0, sizeof(double)*m)
-
-            for isegm in range(self.nsegm):
-
-                i = isegm * self.geodim
-
-                for idim in range(self.geodim):
-
-                    j = self._PerDefEnd_Isegm[isegm] * self.geodim
-                    
-                    for jdim in range(self.geodim):
-
-                        buf[i] -= self._PerDefEnd_SpaceRotPos[isegm,idim,jdim] * xo[j]
-                        j += 1
-
-                    i += 1
-
-            df = <double*> malloc(sizeof(double)*km)
-            scipy.linalg.cython_blas.dcopy(&km,&xf[0,0],&int_one,df,&int_one)
-
-            df_incr = df
-            for iif in range(k):
-                scipy.linalg.cython_blas.daxpy(&m, &one_double, &buf[0], &int_one,df_incr, &int_one)
-                df_incr += m
-
-            n = self.n_ODEperdef_eqproj_pos
-
-            scipy.linalg.cython_blas.dgemm(transt,transn,&n,&k,&m,&self.ODEperdef_eqproj_pos_mul,&self._ODEperdef_eqproj_pos[0,0],&m,df,&m,&zero_double,&ODEperdef[0,0],&ldc)
-
-            memset(&buf[0], 0, sizeof(double)*m)
-
-            for isegm in range(self.nsegm):
-
-                i = isegm * self.geodim
-
-                for idim in range(self.geodim):
-
-                    j = self._PerDefEnd_Isegm[isegm] * self.geodim
-                    
-                    for jdim in range(self.geodim):
-
-                        buf[i] -= self._PerDefEnd_SpaceRotVel[isegm,idim,jdim] * vo[j]
-                        j += 1
-
-                    i += 1
-
-            scipy.linalg.cython_blas.dcopy(&km,&vf[0,0],&int_one,df,&int_one)
-            df_incr = df
-            for iif in range(k):
-                scipy.linalg.cython_blas.daxpy(&m, &one_double, &buf[0], &int_one,df_incr, &int_one)
-                df_incr += m
-
-            n = self.n_ODEperdef_eqproj_mom
-
-            scipy.linalg.cython_blas.dgemm(transt,transn,&n,&k,&m,&self.ODEperdef_eqproj_pos_mul,&self._ODEperdef_eqproj_mom[0,0],&m,df,&m,&zero_double,&ODEperdef[0,self.n_ODEperdef_eqproj_pos],&ldc)
-
-            free(buf)
-            free(df)
-            
-        else:
-
-            n = self.n_ODEperdef_eqproj_pos
-            scipy.linalg.cython_blas.dgemm(transt,transn,&n,&k,&m,&self.ODEperdef_eqproj_pos_mul,&self._ODEperdef_eqproj_pos[0,0],&m,&xf[0,0],&m,&zero_double,&ODEperdef[0,0],&ldc)
-
-            n = self.n_ODEperdef_eqproj_mom
-            scipy.linalg.cython_blas.dgemm(transt,transn,&n,&k,&m,&self.ODEperdef_eqproj_pos_mul,&self._ODEperdef_eqproj_mom[0,0],&m,&vf[0,0],&m,&zero_double,&ODEperdef[0,self.n_ODEperdef_eqproj_pos],&ldc)
+        endposmom_to_perdef_bulk(
+            &xo[0,0]    , &vo[0,0]  , &xf[0,0]  , &vf[0,0]  , &ODEperdef[0,0]   ,
+            self._PerDefEnd_SpaceRotPos         , self._PerDefEnd_SpaceRotVel   ,
+            self._ODEperdef_eqproj_pos          , self._ODEperdef_eqproj_mom    ,
+            self._PerDefEnd_Isegm               ,
+            self.ODEperdef_eqproj_pos_mul       , self.TimeRev  , k             , 
+        )
 
         return ODEperdef
 
@@ -2450,6 +2328,79 @@ cdef class NBodySyst():
         cdef double[::1] dvf = d_segmmom_ODE[0,:,0].reshape(-1)
 
         return self.endposmom_to_perdef(dxo, dvo, dxf, dvf)
+
+    @cython.final
+    @cython.cdivision(True)
+    def params_to_periodicity_default_gradmat(self, double[::1] ODE_params):
+
+        cdef Py_ssize_t nint_ODE = self.segm_store-1
+        cdef Py_ssize_t i, k, idof
+        cdef Py_ssize_t ndof = self.nsegm*self.geodim
+        
+        cdef double[::1] xo, vo
+        xo, vo = self.ODE_params_to_initposmom(ODE_params)
+
+        cdef np.ndarray[double, ndim=2, mode='c'] segmpos_ODE, segmmom_ODE
+        cdef np.ndarray[double, ndim=3, mode="c"] d_segmpos_ODE, d_segmmom_ODE
+
+        # cdef double[:,::1] grad_xo = self._ODEinitparams_basis_pos
+        # cdef double[:,::1] grad_vo = self._ODEinitparams_basis_mom
+        cdef double[:,::1] grad_xo = np.zeros((self.nsegm*self.geodim, self.n_ODEinitparams), dtype=np.float64)
+        cdef double[:,::1] grad_vo = np.zeros((self.nsegm*self.geodim, self.n_ODEinitparams), dtype=np.float64)
+
+        for idof in range(ndof):
+            i = 0
+            for k in range(self.n_ODEinitparams_pos):
+                grad_xo[idof, i] = self._ODEinitparams_basis_pos[idof, k]
+                i += 1
+            for k in range(self.n_ODEinitparams_mom):
+                grad_vo[idof, i] = self._ODEinitparams_basis_mom[idof, k]
+                i += 1
+
+        if self._implicit_rk_solve:
+            
+            segmpos_ODE, segmmom_ODE, d_segmpos_ODE , d_segmmom_ODE = choreo.segm.ODE.ImplicitSymplecticIVP(
+                xo = xo                                         ,
+                vo = vo                                         ,
+                grad_xo = grad_xo                               ,
+                grad_vo = grad_vo                               ,
+                rk_x = self._rk_implicit_x                      ,
+                rk_v = self._rk_implicit_v                      ,
+                nint = nint_ODE                                 ,
+                t_span = self._ODE_Syst["t_span"]               ,
+                vector_calls = self._ODE_Syst["vector_calls"]   ,
+                fun = self._ODE_Syst["fun"]                     ,
+                gun = self._ODE_Syst["gun"]                     ,
+                grad_fun = self._ODE_Syst["grad_fun"]           ,
+                grad_gun = self._ODE_Syst["grad_gun"]           ,
+            )
+        
+        else:
+            
+            segmpos_ODE, segmmom_ODE, d_segmpos_ODE , d_segmmom_ODE = choreo.segm.ODE.ExplicitSymplecticIVP(
+                xo = xo                                 ,
+                vo = vo                                 ,
+                grad_xo = grad_xo                       ,
+                grad_vo = grad_vo                       ,
+                rk = self._rk_explicit                  ,
+                nint = nint_ODE                         ,
+                t_span = self._ODE_Syst["t_span"]       ,
+                fun = self._ODE_Syst["fun"]             ,
+                gun = self._ODE_Syst["gun"]             ,
+                grad_fun = self._ODE_Syst["grad_fun"]   ,
+                grad_gun = self._ODE_Syst["grad_gun"]   ,
+            )    
+
+        cdef double[::1] xf = segmpos_ODE[0,:].reshape(-1)
+        cdef double[::1] vf = segmmom_ODE[0,:].reshape(-1)
+
+        cdef double[:,::1] dxf = d_segmpos_ODE[0,:,:].reshape(-1, self.n_ODEinitparams)
+        cdef double[:,::1] dvf = d_segmmom_ODE[0,:,:].reshape(-1, self.n_ODEinitparams)
+
+        # cdef double[:,::1] dxf = np.ascontiguousarray(d_segmpos_ODE[0,:,:].reshape(-1, self.n_ODEinitparams).T)
+        # cdef double[:,::1] dvf = np.ascontiguousarray(d_segmmom_ODE[0,:,:].reshape(-1, self.n_ODEinitparams).T)
+
+        return self.endposmom_to_perdef(xo, vo, xf, vf), self.endposmom_to_perdef_bulk(grad_xo, grad_vo, dxf, dvf)
 
     @cython.final
     @cython.cdivision(True)
