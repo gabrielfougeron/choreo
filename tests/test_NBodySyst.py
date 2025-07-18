@@ -43,6 +43,7 @@
     test_perdef
     test_initposmom
     test_params_to_periodicity_default_grad_vs_FD
+    test_params_to_periodicity_default_gradmat_vs_matmul
 
 """
 
@@ -1750,7 +1751,6 @@ def test_initposmom(float64_tols, NBS):
     print(np.linalg.norm(ODEinitparams-ODEinitparams_rt))
     assert np.allclose(ODEinitparams, ODEinitparams_rt, rtol = float64_tols.rtol, atol = float64_tols.atol)  
     
-    
 @pytest.mark.slow(required_time = 10)
 @ParametrizeDocstrings
 @RetryTest(n = 2)
@@ -1761,6 +1761,7 @@ def test_params_to_periodicity_default_grad_vs_FD(float64_tols_loose, NBS):
     rk_explicit = choreo.segm.precomputed_tables.SofSpa10
     
     nint_fac_ini = NBS.nint_fac
+    NBS.ODEperdef_eqproj_pos_mul = np.random.random()
     
     NBS.nint_fac = 512    
     NBS.setup_params_to_periodicity_default(rk_explicit = rk_explicit)
@@ -1779,13 +1780,14 @@ def test_params_to_periodicity_default_grad_vs_FD(float64_tols_loose, NBS):
     assert (err.min() < float64_tols_loose.rtol)
 
     NBS.nint_fac = nint_fac_ini
+    NBS.ODEperdef_eqproj_pos_mul = 1.
     
 @pytest.mark.slow(required_time = 10)
 @ParametrizeDocstrings
 # @RetryTest(n = 2)
 @pytest.mark.parametrize("NBS", [pytest.param(NBS, id=name) for name, NBS in NBS_dict.items()])
 def test_params_to_periodicity_default_gradmat_vs_matmul(float64_tols, NBS):
-    """ Tests that the gradient of the RK periodicity default computation agrees with its FD approximation """
+    """ Tests that several methods computing the gradient of the RK periodicity default are consistent wrt each other """
         
     rk_explicit = choreo.segm.precomputed_tables.SofSpa10
     

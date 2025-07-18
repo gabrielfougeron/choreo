@@ -3893,6 +3893,7 @@ cdef void endposmom_to_perdef_mul(
     cdef Py_ssize_t i, j, idim, jdim, isegm
     cdef double* df
     cdef double* ODEperdef_mom
+    cdef double dfac
 
     if TimeRev > 0:
 
@@ -3904,16 +3905,14 @@ cdef void endposmom_to_perdef_mul(
             for idim in range(geodim):
 
                 j = PerDefEnd_Isegm[isegm] * geodim * k
+                i = (isegm * geodim + idim) * k
                 
                 for jdim in range(geodim):
 
-                    i = (isegm * geodim + idim) * k
+                    dfac = -PerDefEnd_SpaceRotPos[isegm,idim,jdim]
+                    scipy.linalg.cython_blas.daxpy(&k,&dfac,&xo[j],&int_one,df+i,&int_one)
 
-                    for ik in range(k):
-                        
-                        df[i] -= PerDefEnd_SpaceRotPos[isegm,idim,jdim] * xo[j]
-                        i += 1
-                        j += 1
+                    j += k
 
         n = n_ODEperdef_eqproj_pos
         scipy.linalg.cython_blas.dgemm(transn,transn,&k,&n,&m,&ODEperdef_eqproj_pos_mul,df,&k,&ODEperdef_eqproj_pos[0,0],&m,&zero_double,ODEperdef,&k)
@@ -3924,17 +3923,14 @@ cdef void endposmom_to_perdef_mul(
             for idim in range(geodim):
 
                 j = PerDefEnd_Isegm[isegm] * geodim * k
+                i = (isegm * geodim + idim) * k
                 
                 for jdim in range(geodim):
 
-                    i = (isegm * geodim + idim) * k
+                    dfac = -PerDefEnd_SpaceRotVel[isegm,idim,jdim]
+                    scipy.linalg.cython_blas.daxpy(&k,&dfac,&vo[j],&int_one,df+i,&int_one)
 
-                    for ik in range(k):
-                        
-                        df[i] -= PerDefEnd_SpaceRotVel[isegm,idim,jdim] * vo[j]
-
-                        i += 1
-                        j += 1
+                    j += k
 
         n = n_ODEperdef_eqproj_mom
         ODEperdef_mom = ODEperdef + k * n_ODEperdef_eqproj_pos
