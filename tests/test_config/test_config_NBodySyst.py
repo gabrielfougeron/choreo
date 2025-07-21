@@ -8,7 +8,7 @@ choreo.find.Load_wisdom_file(Wisdom_file)
 
 Physical_dims = [2, 3, 4, 5]
 Few_bodies = [2, 3, 4, 5]
-Dense_linalg_dims = [2, 10, 20] 
+Dense_linalg_dims = [2, 3, 4, 10, 20] 
 
 AllConfigNames_list = [name for name in os.listdir(os.path.join(__PROJECT_ROOT__, 'tests', 'NewSym_data'))]
 

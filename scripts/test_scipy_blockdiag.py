@@ -15,7 +15,15 @@ def main():
     
     n = 3
     
-    Mat = choreo.scipy_plus.random_orthogonal_matrix(n)
+    P = choreo.scipy_plus.random_orthogonal_matrix(n)
+    
+    # Mat = choreo.scipy_plus.random_orthogonal_matrix(n)
+    
+    angle = 2 * np.pi * 2/3
+    
+    Mat = P @ np.array([[np.cos(angle),np.sin(angle),0],[-np.sin(angle),np.cos(angle),0.],[0.,0.,1.]]) @ P.T
+    
+    print(Mat)
     
     # D, P = choreo.scipy_plus.InstabilityDecomposition(Mat, eps=1e-12)
     # 
@@ -46,12 +54,13 @@ def main():
             
             angle = choreo.scipy_plus.cs_to_angle(cs_angles[i], cs_angles[i+1])
             print(angle / (2*np.pi))
-            
-            print(abs(cs_angles[i]-cos, cs_angles[i+1]
+
         
         
         i += d
     
+
+# Fraction(1.1).limit_denominator()
 
 
 

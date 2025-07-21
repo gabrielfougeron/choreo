@@ -169,3 +169,62 @@ def test_cs_angle(float64_tols_strict):
     assert abs(c - np.cos(angle_res)) < tol
     assert abs(s - np.sin(angle_res)) < tol
     assert abs(angle_exact - angle_res) < tol
+            
+@ParametrizeDocstrings
+@RepeatTest(100)
+@pytest.mark.parametrize("n", Dense_linalg_dims)
+def test_DecomposeRotation_nD(float64_tols, n):
+    """ Tests decomposition of rotation in nD
+    """
+    
+    q, r = divmod(n,2)
+    
+    P = choreo.scipy_plus.random_orthogonal_matrix(n)
+    
+    D_init = np.zeros((n,n), dtype=np.float64)
+    angles = np.sort(np.pi * np.random.random(q))
+    
+    for i in range(q):
+        D_init[2*i:2*(i+1),2*i:2*(i+1)] = choreo.scipy_plus.angle_to_2D_rot(angles[i])
+ 
+    if r > 0:
+        
+        if np.random.random() < 0.5:
+            refl = 1.
+        else:
+            refl = -1.
+        
+        D_init[n-1,n-1] = refl
+    
+    
+    Mat = P @ D_init @ P.T
+    
+    cs_angles, subspace_dim, vr = choreo.scipy_plus.DecomposeRotation(Mat, eps=1e-12)
+    
+    angles_res = []
+    i = 0
+    for d in subspace_dim:
+        
+        if d == 2:
+            
+            angles_res.append(choreo.scipy_plus.cs_to_angle(cs_angles[i], cs_angles[i+1]))
+        
+        elif d == 1:
+            
+            refl_res = cs_angles[i]
+
+        else:
+            raise ValueError("This should never happen")
+        
+        i += d
+    
+    angles_res = np.sort(np.array(angles_res))
+    
+    print(np.linalg.norm(angles - angles_res))    
+    assert np.allclose(angles, angles_res, rtol = float64_tols.rtol, atol = float64_tols.atol) 
+    
+    if r > 0:
+        assert refl == refl_res
+    
+    
+    

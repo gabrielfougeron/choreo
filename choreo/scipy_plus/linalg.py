@@ -45,7 +45,6 @@ def null_space(A, eps = 1e-12):
 
         # return scipy.linalg.null_space(A, rcond=eps)
 
-
 def random_orthogonal_matrix(geodim):
 
     mat = np.random.random_sample((geodim,geodim))
@@ -122,6 +121,7 @@ def DecomposeRotation(Mat, eps=1e-12):
             
             cs_angles[i  ] = eigvals_r[i,i  ]   # cos
             cs_angles[i+1] = eigvals_r[i,i+1]   # sin
+                        
             subspace_dim.append(2)
             i += 2
 
@@ -146,6 +146,13 @@ def cs_to_angle_ann(c, s, eps=1e-12):
         return np.pi*0.5 - cs_to_angle_ann(s, c, eps)
     
     return np.asin(s)
+
+def angle_to_2D_rot(angle):
+    
+    c = np.cos(angle)
+    s = np.sin(angle)
+    
+    return np.array([[c,-s],[s,c]])
 
 def algo_H(n,k,z):
 
