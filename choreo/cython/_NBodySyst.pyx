@@ -612,6 +612,8 @@ cdef class NBodySyst():
     cdef readonly double Homo_exp
     cdef readonly double Homo_unit
 
+    cdef readonly bint run_in_pyodide
+
     # Things that change with nint
     cdef Py_ssize_t _nint
     @property
@@ -1025,6 +1027,8 @@ cdef class NBodySyst():
         self.GreaterNStore = self.RequiresGreaterNStore or ForceGreaterNStore
         self.nint_fac = 1
         self.ForceGeneralSym = ForceGeneralSym
+
+        self.run_in_pyodide = (sys.platform == 'emscripten')
 
     def __dealloc__(self):
         self.free_owned_memory()
@@ -1981,6 +1985,7 @@ cdef class NBodySyst():
         cdef Py_ssize_t ncstr, icstr, isegm, jsegm, idim, jdim, iparam
         cdef double[:,:,:,::1] cstr_mat
         cdef double eps = 1e-12
+        cdef int size
 
         ncstr = 0
 
@@ -2054,21 +2059,11 @@ cdef class NBodySyst():
 
         if MomCons:
 
-            ncstr = 1
-            cstr_mat = np.zeros((ncstr, self.geodim, self.nsegm, self.geodim), dtype=np.float64)
-
-            # Use dcopy ?
-            for idim in range(self.geodim):
-                for isegm in range(self.nsegm):
-                    for jdim in range(self.geodim):
-                        cstr_mat[0, idim, isegm, jdim] += self._CoMMat_pos[idim, isegm, jdim]
-
-            cstr_mat_reshape = np.asarray(cstr_mat).reshape((ncstr*self.geodim, self.nsegm*self.geodim))
+            cstr_mat_reshape = np.asarray(self._CoMMat_pos).reshape((self.geodim, self.nsegm*self.geodim))
             choreo.scipy_plus.cython.misc.proj_to_zero(cstr_mat_reshape, eps=eps)
             NullSpace_MomCons = choreo.scipy_plus.linalg.null_space(cstr_mat_reshape)
             choreo.scipy_plus.cython.misc.proj_to_zero(NullSpace_MomCons, eps=eps)
 
-            # TODO: dgemm
             MomCons_proj = np.matmul(NullSpace_MomCons, NullSpace_MomCons.T)
 
         ncstr = self.nsegm
@@ -2097,6 +2092,7 @@ cdef class NBodySyst():
 
 
         cstr_mat_reshape = np.asarray(cstr_mat).reshape((ncstr*self.geodim, self.nsegm*self.geodim))
+        
         if MomCons:
             cstr_mat_reshape = np.matmul(cstr_mat_reshape, MomCons_proj)
 
@@ -2108,21 +2104,11 @@ cdef class NBodySyst():
 
         if MomCons:
 
-            ncstr = 1
-            cstr_mat = np.zeros((ncstr, self.geodim, self.nsegm, self.geodim), dtype=np.float64)
-
-            # Use dcopy ?
-            for idim in range(self.geodim):
-                for isegm in range(self.nsegm):
-                    for jdim in range(self.geodim):
-                        cstr_mat[0, idim, isegm, jdim] += self._CoMMat_mom[idim, isegm, jdim]
-
-            cstr_mat_reshape = np.asarray(cstr_mat).reshape((ncstr*self.geodim, self.nsegm*self.geodim))
+            cstr_mat_reshape = np.asarray(self._CoMMat_mom).reshape((self.geodim, self.nsegm*self.geodim))
             choreo.scipy_plus.cython.misc.proj_to_zero(cstr_mat_reshape, eps=eps)
             NullSpace_MomCons = choreo.scipy_plus.linalg.null_space(cstr_mat_reshape)
             choreo.scipy_plus.cython.misc.proj_to_zero(NullSpace_MomCons, eps=eps)
 
-            # TODO: dgemm
             MomCons_proj = np.matmul(NullSpace_MomCons, NullSpace_MomCons.T)
 
         ncstr = self.nsegm
@@ -2148,7 +2134,6 @@ cdef class NBodySyst():
                     cstr_mat[icstr, idim, isegm, idim] += 1.
                     for jdim in range(self.geodim):
                         cstr_mat[icstr, idim, jsegm, jdim] -= self._PerDefEnd_SpaceRotVel[jsegm, idim, jdim]
-
 
         cstr_mat_reshape = np.asarray(cstr_mat).reshape((ncstr*self.geodim, self.nsegm*self.geodim))
         if MomCons:
@@ -2800,20 +2785,15 @@ cdef class NBodySyst():
         Info_dict["SegmRequiresDisp"] = self.SegmRequiresDisp.tolist()
 
         InterSegmSpaceRot = []
-        # InterSegmTimeRev = []
 
         for ib in range(self.nbody):
             InterSegmSpaceRot_b = []
-            # InterSegmTimeRev_b = []
             for iint in range(self.nint_min):
 
                 Sym = self.intersegm_to_all[ib][iint]
-
                 InterSegmSpaceRot_b.append(Sym.SpaceRot.tolist())
-                # InterSegmTimeRev_b.append(Sym.TimeRev)
 
             InterSegmSpaceRot.append(InterSegmSpaceRot_b)
-            # InterSegmTimeRev.append(InterSegmTimeRev_b)
         
         Info_dict["InterSegmSpaceRot"] = InterSegmSpaceRot
         Info_dict["TimeRev"] = self.TimeRev
@@ -2994,11 +2974,13 @@ cdef class NBodySyst():
 
             def update(self, x, f):
                 self.x = x
-                self.segmpos = self.NBS.segmpos.copy() # Copy is needed because NBS._segmpos is used as a buffer in hessian computation
+                if self.NBS.run_in_pyodide:
+                    self.segmpos = self.NBS.segmpos.copy()
 
             def setup(self, x, f, func):
                 self.x = x
-                self.segmpos = self.NBS.segmpos.copy() # Copy is needed because NBS._segmpos is used as a buffer in hessian computation        
+                if self.NBS.run_in_pyodide:
+                    self.segmpos = self.NBS.segmpos.copy()
 
             jacobian.update = types.MethodType(update, jacobian)
             jacobian.setup = types.MethodType(setup, jacobian)

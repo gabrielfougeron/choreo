@@ -8,8 +8,8 @@ __PROJECT_ROOT__ = os.path.abspath(os.path.join(os.path.dirname(__file__),os.par
 
 def main():
     
-    # Remove_Original = False
-    Remove_Original = True
+    Remove_Original = False
+    # Remove_Original = True
     
     Wisdom_file = os.path.join(__PROJECT_ROOT__, "PYFFTW_wisdom.json")
     choreo.find.Load_wisdom_file(Wisdom_file)
@@ -26,34 +26,41 @@ def main():
         
     params_dict["Solver_Optim"]["n_opt"] = 1
     
-    for thefile in os.listdir(input_folder):
+    all_files = os.listdir(input_folder)
+    all_files.sort()
+    
+    for thefile in all_files:
         
-        if os.path.isfile(os.path.join(output_folder, thefile)):
-            continue
-            
         file_basename, ext = os.path.splitext(thefile)
+        if ext != '.json':
+            continue
         
         full_in_file_basename = os.path.join(input_folder, file_basename)
         full_out_file_basename = os.path.join(output_folder, file_basename)
+                    
+        print()
+        print(file_basename)
+        # print()
+
+        NBS, segmpos = choreo.NBodySyst.FromSolutionFile(full_in_file_basename)
         
-        if ext == '.json':
-            
-            print()
-            print(file_basename)
-            print()
+        if not os.path.isfile(os.path.join(output_folder, thefile)):
 
             with open(os.path.join(input_folder, thefile)) as jsonFile:
                 extra_args_dict = json.load(jsonFile)
 
-            NBS, segmpos = choreo.NBodySyst.FromSolutionFile(full_in_file_basename)
             params_buf = NBS.segmpos_to_params(segmpos)
             NBS.ForceGreaterNStore = True
             
             segmpos = NBS.params_to_segmpos(params_buf)
             
-            res = choreo.find.FindTimeRevSymmetry(NBS, segmpos, refl_dim=[1])
+            if NBS.TimeRev < 0:
+                continue
+            
+            res = choreo.find.FindTimeRevSymmetry(NBS, segmpos, refl_dim=[1], ntries = 10)
             
             if res is None:
+                print("Could not find TimeRev symmetry")
                 continue
             
             Sym, segmpos_dt = res
@@ -63,7 +70,8 @@ def main():
 
             extra_args_dict.update({
                 "store_folder"  : output_folder ,
-                "nint_fac_init" : NBS.nint_fac //2 ,
+                # "nint_fac_init" : NBS.nint_fac //2 ,
+                "nint_fac_init" : NBS.nint_fac ,
                 "ReconvergeSol" : True          ,
                 "segmpos_ini"   : segmpos_dt    ,
                 "Sym_list"      : Sym_list      ,
@@ -71,37 +79,38 @@ def main():
                 "charge"        : np.array(extra_args_dict["bodycharge"]),
                 "AddNumberToOutputName" : False ,
                 "file_basename" : file_basename ,
-                # "save_first_init" : True        ,
+                "save_first_init" : True        ,
                 "Look_for_duplicates" : False   ,
             })
-            try:
-                choreo.find.ChoreoFindFromDict(params_dict, extra_args_dict, Workspace_folder)
-
-                if Remove_Original:
+        
+            choreo.find.ChoreoFindFromDict(params_dict, extra_args_dict, Workspace_folder)
+            
+        if os.path.isfile(full_out_file_basename + '.json'): # Solution was found
+        
+            with open(os.path.join(input_folder, thefile)) as jsonFile:
+                in_sol_dict = json.load(jsonFile)
                 
-                    # Test hash!
-                    
-                    Hash_in = np.array(extra_args_dict["Hash"])
-                    
-                    with open(full_out_file_basename + '.json') as jsonFile:
-                        out_sol_dict = json.load(jsonFile)
-                    
-                    Hash_out = np.array(out_sol_dict["Hash"])
-                    
-                    if NBS.TestHashSame(Hash_in, Hash_out):
-                        
-                        try:
-                            for ext in ['.json','.npy','.png']:
-                                os.remove(full_in_file_basename+ext)
-                        except:
-                            pass
-                    
-                    else:
-                        print("WARNING : Found solution is not the same")
+            with open(full_out_file_basename + '.json') as jsonFile:
+                out_sol_dict = json.load(jsonFile)
             
-            except:
-                pass
+            print(f"Solution grad norm : {out_sol_dict['Grad_Action']}")
             
+            Hash_in = np.array(in_sol_dict["Hash"])
+            Hash_out = np.array(out_sol_dict["Hash"])
+            
+            Solutions_are_same = NBS.TestHashSame(Hash_in, Hash_out)
+            
+            if not Solutions_are_same:
+                print("WARNING : Found solution is not the same")
+            
+            if Remove_Original and Solutions_are_same:
+
+                for ext in ['.json','.npy','.png']:                        
+                    try:
+                        os.remove(full_in_file_basename+ext)
+                    except:
+                        pass
+
 
 
 

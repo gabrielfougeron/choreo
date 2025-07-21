@@ -45,7 +45,9 @@ def RepeatTest(n = 10):
         @functools.wraps(test)
         def wrapper(*args, **kwargs):
             
-            for _ in range(n):
+            for i in range(n):
+                    print('')                
+                    print(f'Test {i} / {n}:')
                     res = test(*args, **kwargs)
 
             return res

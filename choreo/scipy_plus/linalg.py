@@ -64,7 +64,7 @@ def InstabilityDecomposition(Mat, eps=1e-12):
     idx_sort = np.argsort(-abs(eigvals))
     Instability_magnitude = abs(eigvals)[idx_sort]
     
-    Instability_directions = np.zeros((n,n))
+    Instability_directions = np.empty((n,n))
 
     i = 0
     while (i < n):
@@ -93,6 +93,59 @@ def InstabilityDecomposition(Mat, eps=1e-12):
     assert i == n 
 
     return Instability_magnitude, Instability_directions
+
+def DecomposeRotation(Mat, eps=1e-12):
+    
+    n,m = Mat.shape
+    assert n==m
+
+    eigvals, eigvects = scipy.linalg.eig(a=Mat, b=None, left=False, right=True, overwrite_a=False, overwrite_b=False, check_finite=True, homogeneous_eigvals=False)
+    eigvals_r, eigvects_r = scipy.linalg.cdf2rdf(eigvals, eigvects)
+
+    cs_angles = np.empty(n, dtype=np.float64)
+    subspace_dim = []
+
+    i = 0
+    while (i < n):
+        
+        is_dim1 = 1-abs(eigvals_r[i,i]) < eps
+        
+        if is_dim1:
+            
+            cs_angles[i] = np.sign(eigvals_r[i,i]) # +/- 1
+            subspace_dim.append(1)
+            i += 1
+            
+        else:
+            
+            assert (i+1) < n
+            
+            cs_angles[i  ] = eigvals_r[i,i  ]   # cos
+            cs_angles[i+1] = eigvals_r[i,i+1]   # sin
+            subspace_dim.append(2)
+            i += 2
+
+    return cs_angles, np.array(subspace_dim), eigvects_r
+
+def cs_to_angle(c, s, eps=1e-12):
+    
+    assert abs(c*c + s*s - 1.) < eps
+    a = cs_to_angle_ann(c, s, eps)
+    if a < 0:
+        return a + 2*np.pi
+    else:
+        return a
+    
+def cs_to_angle_ann(c, s, eps=1e-12):
+    
+    if c < 0:
+        return np.pi - cs_to_angle_ann(-c, s, eps)
+    if s < 0:
+        return - cs_to_angle_ann(c, -s, eps)
+    if c < s:
+        return np.pi*0.5 - cs_to_angle_ann(s, c, eps)
+    
+    return np.asin(s)
 
 def algo_H(n,k,z):
 

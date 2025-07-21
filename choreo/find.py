@@ -232,9 +232,21 @@ def Find_Choreo(
             assert segmpos_ini.shape[0] == NBS.nsegm
             assert segmpos_ini.shape[1] >= NBS.segm_store
             assert segmpos_ini.shape[2] == NBS.geodim
+            
+            if SpectralSolve:
 
-            segmpos = segmpos_ini[:,0:NBS.segm_store,:].copy()
-            x = NBS.segmpos_to_params(segmpos)
+                segmpos = segmpos_ini[:,0:NBS.segm_store,:].copy()
+                spectral_params = NBS.segmpos_to_params(segmpos)
+                x = spectral_params
+                f0 = NBS.segmpos_params_to_action_grad(segmpos, spectral_params)
+                
+            else:
+                
+                segmpos = segmpos_ini[:,0:NBS.segm_store,:].copy()
+                spectral_params = NBS.segmpos_to_params(segmpos)
+                xo, vo = NBS.Compute_init_pos_mom(spectral_params) 
+                x = NBS.initposmom_to_ODE_params(xo, vo)
+                f0 = NBS.params_to_periodicity_default(x)
             
         elif (LookForTarget):
             raise NotImplementedError
@@ -246,9 +258,10 @@ def Find_Choreo(
 
             if SpectralSolve:
                 x = x_min + x_ptp * np.random.random((NBS.nparams))
-                segmpos = NBS.params_to_segmpos(x)
-                f0 = NBS.segmpos_params_to_action_grad(segmpos, x)
                 spectral_params = x
+                segmpos = NBS.params_to_segmpos(spectral_params)
+                f0 = NBS.segmpos_params_to_action_grad(segmpos, spectral_params)
+
             else:
                 # x = x_min + x_ptp * np.random.random((NBS.n_ODEinitparams))
                 x = Choose_Init_ODE_params()
@@ -1116,17 +1129,14 @@ def FindTimeRevSymmetry(NBS, semgpos, ntries = 1, hit_tol = 1e-7, refl_dim = [0]
     if isinstance(refl_dim, int):
         refl_dim = [refl_dim]
     
-    IsReflexionInvariant = False
-    for Sym in NBS.Sym_list:
-        IsReflexionInvariant = IsReflexionInvariant or (Sym.TimeRev == -1)
-    
-    if IsReflexionInvariant:
-        # I want at most one TimeRev == -1 symmetry
-        return 
+    if NBS.TimeRev < 0 : # TimeRevSymmetry was already found
+        return
     
     params_ini = NBS.segmpos_to_params(semgpos)
     
     def Compute_Sym(SymParams, *args):
+        
+        BodyPerm = args[0]
         
         dt = SymParams[0]
         rot = ActionSym.SurjectiveDirectSpaceRot(SymParams[1:])
@@ -1137,11 +1147,11 @@ def FindTimeRevSymmetry(NBS, semgpos, ntries = 1, hit_tol = 1e-7, refl_dim = [0]
                 refl[idim,idim] = -1
 
         Sym = ActionSym(
-            args[0] ,
-            refl    ,
-            -1      ,
-            0       ,
-            1       ,
+            BodyPerm    ,
+            refl        ,
+            -1          ,
+            0           ,
+            1           ,
         )
 
         all_coeffs_dense = NBS.params_to_all_coeffs_dense_noopt(params_ini, dt=dt) 
@@ -1173,21 +1183,22 @@ def FindTimeRevSymmetry(NBS, semgpos, ntries = 1, hit_tol = 1e-7, refl_dim = [0]
             # method = "BFGS"
             method = "L-BFGS-B"
             # method = "SLSQP"
-            opt_res = scipy.optimize.minimize(EvalSym, x0, args=(BodyPerm,), method=method, tol=1e-8, callback=None, options={"maxiter":100})
+            opt_res = scipy.optimize.minimize(EvalSym, x0, args=(BodyPerm,), method=method, tol= 0.1*hit_tol, callback=None, options={"maxiter":100})
 
             best_sol.update((opt_res.x, BodyPerm), opt_res.fun)
 
             if opt_res.fun < hit_tol:
-                
                 return Compute_Sym(opt_res.x, BodyPerm)
 
     if return_best:            
         x, f, f_norm = best_sol.get_best()    
         return Compute_Sym(x[0], x[1])
  
-def FindTimeDirectSymmetry(NBS, semgpos, ntries = 1, refl_dim = [0], hit_tol = 1e-7, return_best = False):
+def FindTimeDirectSymmetry(NBS, semgpos, ntries = 1, refl_dim = [0], hit_tol = 1e-7, return_best = False, random_init = True):
 
     def Compute_Sym(SymParams, *args):
+        
+        BodyPerm = args[0]
         
         rot = ActionSym.SurjectiveDirectSpaceRot(SymParams)
         
@@ -1196,11 +1207,11 @@ def FindTimeDirectSymmetry(NBS, semgpos, ntries = 1, refl_dim = [0], hit_tol = 1
                 rot[idim,idim] = -1
 
         Sym = ActionSym(
-            args[0] ,
-            rot     ,
-            -1      ,
-            0       ,
-            1       ,
+            BodyPerm    ,
+            rot         ,
+            -1          ,
+            0           ,
+            1           ,
         )
 
         return Sym
@@ -1227,12 +1238,11 @@ def FindTimeDirectSymmetry(NBS, semgpos, ntries = 1, refl_dim = [0], hit_tol = 1
             # method = "BFGS"
             method = "L-BFGS-B"
             # method = "SLSQP"
-            opt_res = scipy.optimize.minimize(EvalSym, x0, args=(BodyPerm,), method=method, tol=1e-8, callback=None, options={"maxiter":100})
+            opt_res = scipy.optimize.minimize(EvalSym, x0, args=(BodyPerm,), method=method, tol=0.1*hit_tol, callback=None, options={"maxiter":100})
 
             best_sol.update((opt_res.x, BodyPerm), opt_res.fun)
 
             if opt_res.fun < hit_tol:
-                
                 return Compute_Sym(opt_res.x, BodyPerm)
 
     if return_best:            

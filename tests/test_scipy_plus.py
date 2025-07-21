@@ -151,3 +151,21 @@ def test_kepler(float64_tols_strict, float64_tols_loose):
             print(M, ecc, abs(E - ecc * np.sin(E) - M))
             assert abs(E - ecc * np.sin(E) - M) <= float64_tols_strict.atol + 2 * float64_tols_strict.rtol * M
             
+            
+@ParametrizeDocstrings
+@RepeatTest(100)
+def test_cs_angle(float64_tols_strict):
+    """ Tests cos sin to angle.
+    """
+    
+    tol = 3 * float64_tols_strict.atol
+    
+    angle_exact = 2*np.pi * np.random.random()
+    c = np.cos(angle_exact)
+    s = np.sin(angle_exact)   
+    
+    angle_res = choreo.scipy_plus.cs_to_angle(c,s)
+    
+    assert abs(c - np.cos(angle_res)) < tol
+    assert abs(s - np.sin(angle_res)) < tol
+    assert abs(angle_exact - angle_res) < tol

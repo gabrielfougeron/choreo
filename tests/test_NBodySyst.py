@@ -1784,7 +1784,6 @@ def test_params_to_periodicity_default_grad_vs_FD(float64_tols_loose, NBS):
     
 @pytest.mark.slow(required_time = 10)
 @ParametrizeDocstrings
-# @RetryTest(n = 2)
 @pytest.mark.parametrize("NBS", [pytest.param(NBS, id=name) for name, NBS in NBS_dict.items()])
 def test_params_to_periodicity_default_gradmat_vs_matmul(float64_tols, NBS):
     """ Tests that several methods computing the gradient of the RK periodicity default are consistent wrt each other """
