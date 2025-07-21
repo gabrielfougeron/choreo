@@ -9,6 +9,7 @@
     test_Random
     test_rotation_generation
     test_Cayley_graph
+    test_CycleDecomposition
 
 """
 
@@ -154,3 +155,33 @@ Tests:
             nneigh += 1
         
         assert nneigh == nsym
+
+@ParametrizeDocstrings
+@pytest.mark.parametrize("n", Dense_linalg_dims)
+def test_CycleDecomposition(n):
+
+    perm = np.random.permutation(n).astype(np.intp)
+    cycles = choreo.ActionSym.CycleDecomposition(perm)
+    
+    m = 0
+    for cycle in cycles:
+        m += len(cycle)
+    
+    assert m == n
+    
+    for cycle in cycles:
+        
+        m = len(cycle)
+        
+        i = 0
+        p = cycle[0]
+        
+        for _ in range(n): # Overkill
+            
+            i = (i+1) % m
+            q = cycle[i]
+            
+            assert perm[p] == q
+            
+            p = q
+            

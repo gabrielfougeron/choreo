@@ -41,31 +41,32 @@ def main():
         relative_timings = True  ,
     )
 # 
-#     for name in tests.test_config.Sols_dict:
-#     # for name in ['5C-Pinched_circle']:
-#     # for name in ['2D-Circle']:
-#         print()
-#         # print("  OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO  ")
-#         print()
-#         print(name)
-#         # print()
-# 
-#         doit(name)
-#                 
-#         TT.toc(name)
-# 
-#     print()
-#     print(TT)    
+    # for name in tests.test_config.Sols_dict:
+    for name in ['5C-Pinched_circle']:
+    # for name in ['2D-Circle']:
+    # for name in ['3C-Figure_eight']:
+        print()
+        # print("  OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO  ")
+        print()
+        print(name)
+        # print()
+
+        doit(name)
+                
+        TT.toc(name)
+
+    print()
+    print(TT)    
     
 
-    n_threads = 16
-    with threadpoolctl.threadpool_limits(limits=1):
-        with concurrent.futures.ProcessPoolExecutor(max_workers=n_threads) as executor:
-
-            res = []
-            for name in tests.test_config.Sols_dict:
-                res.append(executor.submit(doit, name))
-            
+#     n_threads = 16
+#     with threadpoolctl.threadpool_limits(limits=1):
+#         with concurrent.futures.ProcessPoolExecutor(max_workers=n_threads) as executor:
+# 
+#             res = []
+#             for name in tests.test_config.Sols_dict:
+#                 res.append(executor.submit(doit, name))
+#             
             # Useful ?    
             # concurrent.futures.wait(res, return_when=concurrent.futures.FIRST_EXCEPTION)
             # executor.shutdown(wait=False, cancel_futures=True)
@@ -105,7 +106,7 @@ def doit(name):
     reg_init_freq = 1
     nint_ODE = (NBS.segm_store-1)*reg_init_freq
 
-    nsteps = 20
+    nsteps = 10
     method = "Gauss"    
     rk = choreo.segm.multiprec_tables.ComputeImplicitRKTable(nsteps, method=method)
   
@@ -123,8 +124,24 @@ def doit(name):
     
     Instability_magnitude, Instability_directions = choreo.scipy_plus.linalg.InstabilityDecomposition(MonodromyMat_sq)
     
-    # print(Instability_magnitude)
-    # print(Instability_magnitude)
+    print(Instability_magnitude)
+    # print(Instability_directions)
+    
+    w, v = scipy.linalg.eig(MonodromyMat_sq)
+    print(np.linalg.norm( MonodromyMat_sq @ v - v @ np.diag(w))) 
+
+    wr, vr = scipy.linalg.cdf2rdf(w, v)
+    print(np.linalg.norm( MonodromyMat_sq @ vr - vr @ wr))     
+    
+    print(w)
+    print(wr)
+    # print(vr)
+    
+    
+    return
+    
+    
+    
     
     ODE_Syst = NBS.Get_ODE_def(params_buf)
     x0 = ODE_Syst['x0'].copy()

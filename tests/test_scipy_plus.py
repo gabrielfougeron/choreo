@@ -8,6 +8,10 @@
     test_random_orthogonal_matrix
     test_nullspace
     test_blas_matmul
+    test_blas_matvecmul
+    test_kepler
+    test_cs_angle
+    test_DecomposeRotation_nD
 
 """
 
@@ -93,7 +97,7 @@ def test_blas_matmul(float64_tols, m, n, k):
 @ProbabilisticTest()
 @pytest.mark.parametrize("m", Dense_linalg_dims)
 @pytest.mark.parametrize("n", Dense_linalg_dims)
-def test_blas_matmul(float64_tols, m, n):
+def test_blas_matvecmul(float64_tols, m, n):
     """ Tests calling dgemv directly from blas for regular matmul.
     """
     
@@ -151,7 +155,6 @@ def test_kepler(float64_tols_strict, float64_tols_loose):
             print(M, ecc, abs(E - ecc * np.sin(E) - M))
             assert abs(E - ecc * np.sin(E) - M) <= float64_tols_strict.atol + 2 * float64_tols_strict.rtol * M
             
-            
 @ParametrizeDocstrings
 @RepeatTest(100)
 def test_cs_angle(float64_tols_strict):
@@ -182,7 +185,7 @@ def test_DecomposeRotation_nD(float64_tols, n):
     P = choreo.scipy_plus.random_orthogonal_matrix(n)
     
     D_init = np.zeros((n,n), dtype=np.float64)
-    angles = np.sort(np.pi * np.random.random(q))
+    angles = np.sort(np.pi * np.random.random(q)) # angles 0 and pi will fail !
     
     for i in range(q):
         D_init[2*i:2*(i+1),2*i:2*(i+1)] = choreo.scipy_plus.angle_to_2D_rot(angles[i])
@@ -196,7 +199,6 @@ def test_DecomposeRotation_nD(float64_tols, n):
         
         D_init[n-1,n-1] = refl
     
-    
     Mat = P @ D_init @ P.T
     
     cs_angles, subspace_dim, vr = choreo.scipy_plus.DecomposeRotation(Mat, eps=1e-12)
@@ -206,11 +208,9 @@ def test_DecomposeRotation_nD(float64_tols, n):
     for d in subspace_dim:
         
         if d == 2:
-            
             angles_res.append(choreo.scipy_plus.cs_to_angle(cs_angles[i], cs_angles[i+1]))
         
         elif d == 1:
-            
             refl_res = cs_angles[i]
 
         else:

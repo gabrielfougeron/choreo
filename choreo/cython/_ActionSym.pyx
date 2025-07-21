@@ -1161,6 +1161,35 @@ cdef class ActionSym():
 
     @cython.final
     @staticmethod
+    def CycleDecomposition(Py_ssize_t[::1] perm):
+
+        cdef Py_ssize_t n = perm.shape[0]
+        cdef Py_ssize_t i
+        cdef Py_ssize_t k, l
+
+        cdef Py_ssize_t[::1] perm_cp = perm.copy()
+
+        cycles = []
+        for i in range(n):
+
+            if perm_cp[i] >= 0:
+
+                cur_cycle = [i]
+                k = perm_cp[i]
+
+                while k != i:
+                    cur_cycle.append(k)
+
+                    l = perm_cp[k]
+                    perm_cp[k] = -1
+                    k = l
+
+                cycles.append(cur_cycle)
+
+        return cycles
+
+    @cython.final
+    @staticmethod
     def BuildCayleyGraph(Py_ssize_t nbody, Py_ssize_t geodim, list GeneratorList = [], Py_ssize_t max_layers = 1000, bint add_edge_data = False):
         """ Builds the `Cayley graph <https://en.wikipedia.org/wiki/Cayley_graph>`_ of a list of group generators.
 
@@ -1280,3 +1309,6 @@ def BuildOneCayleyLayer(Graph, list GeneratorList, dict HangingNodesDict, alphab
                 Graph.add_edge(hkey, new_key)
 
     return NewHangingNodesDict
+
+
+
