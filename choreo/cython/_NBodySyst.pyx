@@ -4355,7 +4355,7 @@ cdef class NBodySyst():
             
             params_loop = params_pos_buf_np[2*self._params_shifts[il]:2*self._params_shifts[il+1]].reshape(shape)
 
-            coeffs_dense = np.einsum('ijk,ljk->lji', params_basis, params_loop[:self._params_shapes[il,0],:,:]).copy()
+            coeffs_dense = np.ascontiguousarray(np.einsum('ijk,ljk->lji', params_basis, params_loop[:self._params_shapes[il,0],:,:]))
 
             arg = self._gensegm_loop_start[il]
             alpha =  - ctwopi * (arg / self.nint_min)
@@ -4377,11 +4377,33 @@ cdef class NBodySyst():
 
         return all_coeffs_dense      
 
+    @cython.cdivision(True)
+    @cython.final
+    def Transfer_NBS_segmpos(self, double[:,:,::1] segmpos_in, NBodySyst NBS_out):
+        """ NBS_out is assumed to have MORE SYMMETRIES than self. Otherwise they describe the SAME SYSTEM"""
+
+        assert self.nint == NBS_out.nint
+        assert self.nbody == NBS_out.nbody
+        assert self.geodim == NBS_out.geodim
+
+        segmpos_out = np.empty((NBS_out.nsegm, NBS_out.segm_store, NBS_out.geodim), dtype=np.float64)
+
+        for isegm_out in range(NBS_out.nsegm):
+
+            ib = NBS_out._intersegm_to_body[isegm_out]
+            iint = NBS_out._intersegm_to_iint[isegm_out]
+
+            isegm_in = self._bodysegm[ib,iint]
+
+            segmpos_out[isegm_out,:,:] = segmpos_in[isegm_in, :NBS_out.segm_store, :]
+
+        return segmpos_out
+
     @cython.final
     def all_coeffs_to_params_noopt(self, all_coeffs, bint transpose = False, double dt = 0.):
 
         assert all_coeffs.shape[0] == self.nloop
-        assert all_coeffs.shape[1] == self.ncoeffs
+        assert all_coeffs.shape[1] >= self.ncoeffs  # ?
         assert all_coeffs.shape[2] == self.geodim
 
         all_coeffs_dense = []
@@ -4389,10 +4411,9 @@ cdef class NBodySyst():
         for il in range(self.nloop):
 
             nnz_k = self.nnz_k(il)
-
             npr = (self.ncoeffs-1) //  self._ncoeff_min_loop[il]
 
-            coeffs_dense = all_coeffs[il,:(self.ncoeffs-1),:].reshape(npr, self._ncoeff_min_loop[il], self.geodim)[:,nnz_k,:].copy()
+            coeffs_dense = np.ascontiguousarray(all_coeffs[il,:(self.ncoeffs-1),:].reshape(npr, self._ncoeff_min_loop[il], self.geodim)[:,nnz_k,:])
             all_coeffs_dense.append(coeffs_dense)
 
         return self.all_coeffs_dense_to_params_noopt(all_coeffs_dense, transpose, dt)
@@ -4443,7 +4464,6 @@ cdef class NBodySyst():
             shape[0] *= 2             
 
             params_loop = params_pos_buf_np[2*self._params_shifts[il]:2*self._params_shifts[il+1]].reshape(shape)
-
             params_loop[:self._params_shapes[il,0],:,:] = np.einsum('ijk,lji->ljk', params_basis.conj(), coeffs_dense).real
 
         params_mom_buf_np = np.empty((self.nparams), dtype=np.float64)
@@ -5434,14 +5454,19 @@ cdef class NBodySyst():
     @cython.final
     def Compute_init_pos_mom(self, double[::1] params_mom_buf):
 
+        cdef double[:,:,::1] segmpos = self.params_to_segmpos(params_mom_buf)
+        cdef double[:,:,::1] segmvel = self.params_to_segmvel(params_mom_buf)
+
+        return self.Get_init_pos_mom(segmpos, segmvel)
+
+    @cython.final
+    def Get_init_pos_mom(self, double[:,:,::1] segmpos, double[:,:,::1] segmvel):
+
         cdef Py_ssize_t isegm, idim, i
         cdef double mass
 
-        segmpos = self.params_to_segmpos(params_mom_buf)
-        cdef np.ndarray[double, ndim=1, mode='c'] xo = segmpos[:,0,:].copy().reshape(-1)
-
-        segmvel = self.params_to_segmvel(params_mom_buf)
-        cdef np.ndarray[double, ndim=1, mode='c'] po = segmvel[:,0,:].copy().reshape(-1)
+        cdef np.ndarray[double, ndim=1, mode='c'] xo = np.asarray(segmpos)[:,0,:].reshape(-1).copy()
+        cdef np.ndarray[double, ndim=1, mode='c'] po = np.asarray(segmvel)[:,0,:].reshape(-1).copy()
 
         for isegm in range(self.nsegm):
             mass = self._loopmass[self._bodyloop[self._intersegm_to_body[isegm]]]

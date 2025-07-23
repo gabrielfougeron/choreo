@@ -45,6 +45,7 @@ def Find_Choreo(
     store_folder,
     freq_erase_dict,
     ReconvergeSol,
+    NBS_ini,
     segmpos_ini,
     LookForTarget,
     save_all_inits,
@@ -228,22 +229,19 @@ def Find_Choreo(
             UpdateHashDict(store_folder, hash_dict, action_dict)
 
         if (ReconvergeSol):
-            
-            assert segmpos_ini.shape[0] == NBS.nsegm
-            assert segmpos_ini.shape[1] >= NBS.segm_store
-            assert segmpos_ini.shape[2] == NBS.geodim
+
+            assert NBS_ini.nint == NBS.nint
+
+            segmpos = NBS_ini.Transfer_NBS_segmpos(segmpos_ini, NBS)
+            spectral_params = NBS.segmpos_to_params(segmpos)
             
             if SpectralSolve:
-
-                segmpos = segmpos_ini[:,0:NBS.segm_store,:].copy()
-                spectral_params = NBS.segmpos_to_params(segmpos)
+                
                 x = spectral_params
                 f0 = NBS.segmpos_params_to_action_grad(segmpos, spectral_params)
                 
             else:
                 
-                segmpos = segmpos_ini[:,0:NBS.segm_store,:].copy()
-                spectral_params = NBS.segmpos_to_params(segmpos)
                 xo, vo = NBS.Compute_init_pos_mom(spectral_params) 
                 x = NBS.initposmom_to_ODE_params(xo, vo)
                 f0 = NBS.params_to_periodicity_default(x)
@@ -1124,7 +1122,7 @@ def Write_wisdom_file(Wisdom_file):
             jsonString = json.dumps(Wis_dict, indent=4, sort_keys=False)
             jsonFile.write(jsonString)
 
-def FindTimeRevSymmetry(NBS, semgpos, ntries = 1, hit_tol = 1e-7, refl_dim = [0], return_best = False):
+def FindTimeRevSymmetry(NBS, semgpos, ntries = 1, hit_tol = 1e-9, refl_dim = [0], return_best = False):
     
     if isinstance(refl_dim, int):
         refl_dim = [refl_dim]
