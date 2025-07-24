@@ -4,6 +4,7 @@ np.import_array()
 cimport cython
 
 from libc.stdlib cimport malloc, free
+from libc.string cimport memset
 from libc.math cimport fabs as cfabs
 from libc.math cimport sqrt as csqrt
 from libc.math cimport floor as cfloor
@@ -1055,29 +1056,50 @@ cdef class ActionSym():
             yield (num, den)
 
     @cython.final
+    @cython.cdivision(True)
     @staticmethod
-    def InvolutivePermutations(Py_ssize_t n):
-        """Generates all involutive permutations of size ``n``.
+    def Permutations(Py_ssize_t n):
+        """Generates all permutations of size ``n``.
 
-        The generated rational time shifts are given in reduced form and increasing order.
+        This generator yields all permutations of size ``n`` using `Heap's algorithm <https://en.wikipedia.org/wiki/Heap%27s_algorithm>`_.
 
         Example
         -------
 
         >>> import choreo
-        >>> for p in choreo.ActionSym.InvolutivePermutations(4):
+        >>> for p in choreo.ActionSym.Permutations(4):
         ...     print(p)
         ...
         [0 1 2 3]
-        [0 1 3 2]
-        [0 2 1 3]
-        [0 3 2 1]
         [1 0 2 3]
-        [1 0 3 2]
+        [2 0 1 3]
+        [0 2 1 3]
+        [1 2 0 3]
         [2 1 0 3]
+        [3 1 0 2]
+        [1 3 0 2]
+        [0 3 1 2]
+        [3 0 1 2]
+        [1 0 3 2]
+        [0 1 3 2]
+        [0 2 3 1]
+        [2 0 3 1]
+        [3 0 2 1]
+        [0 3 2 1]
         [2 3 0 1]
-        [3 1 2 0]
+        [3 2 0 1]
         [3 2 1 0]
+        [2 3 1 0]
+        [1 3 2 0]
+        [3 1 2 0]
+        [2 1 3 0]
+        [1 2 3 0]
+
+        See Also
+        --------
+
+        :func:`python:itertools.permutations`
+
 
         Parameters
         ----------
@@ -1089,12 +1111,143 @@ cdef class ActionSym():
         :class:`numpy:numpy.ndarray`:class:`(shape = n, dtype = np.intp)`
         
         """ 
-        for p in itertools.permutations(range(n)):
+
+        cdef Py_ssize_t i
+        cdef Py_ssize_t tmp
+        cdef Py_ssize_t[::1] perm = np.array(range(n), dtype=np.intp)
+        cdef Py_ssize_t *c = <Py_ssize_t*> malloc(sizeof(Py_ssize_t)*n)
+        memset(c, 0, sizeof(Py_ssize_t)*n)
+
+        perm_np = np.asarray(perm)
+
+        yield perm_np
+
+        i = 1
+        while i < n:
+
+            if c[i] < i:
+
+                if i % 2 == 0: 
+
+                    tmp = perm[0]
+                    perm[0] = perm[i]
+                    perm[i] = tmp
+
+                else:
+
+                    tmp = perm[c[i]]
+                    perm[c[i]] = perm[i]
+                    perm[i] = tmp
+
+                yield perm_np
+
+                c[i] += 1
+                i = 1
+
+            else:
+
+                c[i] = 0
+                i += 1
+
+        free(c)
+
+    @cython.final
+    @staticmethod
+    def InvolutivePermutations(Py_ssize_t n):
+        """Generates all involutive permutations of size ``n``.
+
+        This generator yields all permutations of size ``n`` that are involutive, namely that verify ``p[p[i]] == i`` for all ``0 <= i < n``. 
+
+        Example
+        -------
+
+        >>> import choreo
+        >>> for p in choreo.ActionSym.InvolutivePermutations(4):
+        ...     print(p)
+        ...
+        [0 1 2 3]
+        [1 0 2 3]
+        [0 2 1 3]
+        [2 1 0 3]
+        [1 0 3 2]
+        [0 1 3 2]
+        [0 3 2 1]
+        [2 3 0 1]
+        [3 2 1 0]
+        [3 1 2 0]
+
+        Parameters
+        ----------
+        n : :class:`python:int`
+            Permutation size
+        
+        Returns
+        -------
+        :class:`numpy:numpy.ndarray`:class:`(shape = n, dtype = np.intp)`
+        
+        """ 
+
+        cdef Py_ssize_t i
+        cdef Py_ssize_t[::1] perm
+
+        for perm in ActionSym.Permutations(n):
             for i in range(n):
-                if p[p[i]] != i:
+                if perm[perm[i]] != i:
                     break
             else:
-                yield np.array(p, dtype=np.intp)
+                yield np.asarray(perm)
+
+    @cython.final
+    @cython.cdivision(True)
+    @staticmethod
+    def GeneralizedInvolutivePermutations(Py_ssize_t n, Py_ssize_t a):
+        """Generates all ``a``-involutive permutations of size ``n``.
+
+        This generator yields all permutations of size ``n`` that are ``a``-involutive, namely that verify ``p^a[i] == i`` for all ``0 <= i < n``. 
+
+        Example
+        -------
+
+        >>> import choreo
+        >>> for p in choreo.ActionSym.GeneralizedInvolutivePermutations(4,3):
+        ...     print(p)
+        ...
+        [0 1 2 3]
+        [2 0 1 3]
+        [1 2 0 3]
+        [3 1 0 2]
+        [0 3 1 2]
+        [0 2 3 1]
+        [3 0 2 1]
+        [1 3 2 0]
+        [2 1 3 0]
+
+        Parameters
+        ----------
+        n : :class:`python:int`
+            Permutation size
+        a : :class:`python:int`
+            Permutation size
+        
+        Returns
+        -------
+        :class:`numpy:numpy.ndarray`:class:`(shape = n, dtype = np.intp)`
+        
+        """ 
+
+        cdef Py_ssize_t[::1] perm
+
+        for perm in ActionSym.Permutations(n):
+
+            cycles = ActionSym.CycleDecomposition(perm)
+
+            for cycle in cycles:
+
+                if a % len(cycle) != 0:
+                    break
+
+            else:
+                yield np.asarray(perm)
 
     @cython.final
     @staticmethod

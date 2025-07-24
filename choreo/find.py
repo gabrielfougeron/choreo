@@ -43,7 +43,6 @@ def Find_Choreo(
     Look_for_duplicates,
     Duplicates_Hash,
     store_folder,
-    freq_erase_dict,
     ReconvergeSol,
     NBS_ini,
     segmpos_ini,
@@ -214,6 +213,12 @@ def Find_Choreo(
             ODEparams_ini = NBS.initposmom_to_ODE_params(xo, vo)
             
             return ODEparams_ini
+        
+    if (Look_for_duplicates):
+
+        hash_dict = {}
+        action_dict = {}
+        UpdateHashDict(store_folder, hash_dict, action_dict)
 
     while (((n_opt < n_opt_max) and (n_find < n_find_max)) or ForceFirstEntry):
         
@@ -221,12 +226,12 @@ def Find_Choreo(
 
         ForceFirstEntry = False
         AskedForNext = False
-
-        if (Look_for_duplicates and ((n_opt % freq_erase_dict) == 0)):
-
-            hash_dict = {}
-            action_dict = {}
-            UpdateHashDict(store_folder, hash_dict, action_dict)
+# 
+#         if (Look_for_duplicates):
+# 
+#             hash_dict = {}
+#             action_dict = {}
+#             UpdateHashDict(store_folder, hash_dict, action_dict)
 
         if (ReconvergeSol):
 
@@ -269,20 +274,7 @@ def Find_Choreo(
         
         if save_all_inits or (save_first_init and n_opt == 0):
 
-            max_num_file = 0
-            
-            for filename in os.listdir(store_folder):
-                file_path = os.path.join(store_folder, filename)
-                file_root, file_ext = os.path.splitext(os.path.basename(file_path))
-                
-                if (file_basename in file_root) and (file_ext == '.json' ):
-
-                    file_root = file_root.replace(file_basename,"")
-
-                    try:
-                        max_num_file = max(max_num_file,int(file_root))
-                    except:
-                        pass
+            max_num_file = FindNextMaxNumFile(store_folder, file_basename)
 
             max_num_file = max_num_file + 1
 
@@ -508,20 +500,7 @@ def Find_Choreo(
                     
                     GoOn  = False
 
-                    max_num_file = 0
-                    
-                    for filename in os.listdir(store_folder):
-                        file_path = os.path.join(store_folder, filename)
-                        file_root, file_ext = os.path.splitext(os.path.basename(file_path))
-                        
-                        if (file_basename in file_root) and (file_ext == '.json' ):
-
-                            file_root = file_root.replace(file_basename,"")
-
-                            try:
-                                max_num_file = max(max_num_file,int(file_root))
-                            except:
-                                pass
+                    max_num_file = FindNextMaxNumFile(store_folder, file_basename)
 
                     max_num_file = max_num_file + 1
                     n_find = max_num_file
@@ -661,6 +640,28 @@ def ChoreoLoadSymList(params_dict):
         )
         
     return Sym_list
+
+def FindNextMaxNumFile(store_folder, file_basename):
+    
+    max_num_file = -1
+    
+    for dirpath, dirnames, filenames in os.walk(store_folder):
+        
+        for filename in filenames:
+
+            file_path = os.path.join(dirpath, filename)
+            file_root, file_ext = os.path.splitext(os.path.basename(file_path))
+            
+            if (file_basename in file_root) and (file_ext == '.json' ):
+
+                file_root = file_root.replace(file_basename,"")
+
+                try:
+                    max_num_file = max(max_num_file,int(file_root))
+                except:
+                    pass
+            
+    return max_num_file
 
 def ChoreoLoadFromDict(params_dict, Workspace_folder, callback=None, args_list=None, extra_args_dict={}):
 
@@ -892,8 +893,6 @@ def ChoreoLoadFromDict(params_dict, Workspace_folder, callback=None, args_list=N
 
     n_grad_change = 1.
 
-    freq_erase_dict = 100
-
     n_opt = 0
     n_opt_max = 100
 
@@ -1018,25 +1017,25 @@ def ChoreoChooseParallelEnvAndFind(Workspace_folder, params_dict, extra_args_dic
 def UpdateHashDict(store_folder, hash_dict, action_dict):
     # Creates a list of possible duplicates based on value of the action and hashes
 
-    file_path_list = []
-    for file_path in os.listdir(store_folder):
-
-        file_path = os.path.join(store_folder, file_path)
-        file_root, file_ext = os.path.splitext(os.path.basename(file_path))
+    for dirpath, dirnames, filenames in os.walk(store_folder):
         
-        if (file_ext == '.json' ):
+        for filename in filenames:
+
+            file_path = os.path.join(dirpath, filename)
+            file_root, file_ext = os.path.splitext(os.path.relpath(file_path, store_folder))
             
-            This_Action_Hash = hash_dict.get(file_root)
-            This_Action = action_dict.get(file_root)
-            
-            if (This_Action_Hash is None) :
+            if (file_ext == '.json' ):
+                
+                This_Action_Hash = hash_dict.get(file_root)
+                
+                if (This_Action_Hash is None) :
 
-                This_hash = ReadHashFromFile(file_path) 
+                    This_hash = ReadHashFromFile(file_path) 
 
-                if not(This_hash is None):
+                    if not(This_hash is None):
 
-                    action_dict[file_root] = This_hash[0]
-                    hash_dict[file_root] = This_hash[1]
+                        action_dict[file_root] = This_hash[0]
+                        hash_dict[file_root] = This_hash[1]
 
 def ReadHashFromFile(filename):
 
@@ -1055,13 +1054,11 @@ def ReadHashFromFile(filename):
     else:
         return None
 
-def Check_Duplicates(NBS, segmpos, params, hash_dict, action_dict, store_folder, duplicate_eps, Action=None, Hash_Action=None, Duplicates_Hash=True):
-    r"""
+def Check_Duplicates(NBS, segmpos, params, hash_dict, action_dict, store_folder, duplicate_eps, Action=None, Hash_Action=None, Duplicates_Hash=True, lastpass = False):
+    """
     Checks whether there is a duplicate of a given trajecory in the provided folder
     """
-    
-    UpdateHashDict(store_folder, hash_dict, action_dict)
-    
+
     if Duplicates_Hash:
 
         if Hash_Action is None:
@@ -1070,9 +1067,9 @@ def Check_Duplicates(NBS, segmpos, params, hash_dict, action_dict, store_folder,
         for file_path, found_hash in hash_dict.items():
             
             IsCandidate = NBS.TestHashSame(Hash_Action, found_hash, duplicate_eps)
-
             if IsCandidate:
-                return True, file_path
+                break
+
     else:
 
         if Action is None:
@@ -1081,11 +1078,17 @@ def Check_Duplicates(NBS, segmpos, params, hash_dict, action_dict, store_folder,
         for file_path, found_action in action_dict.items():
             
             IsCandidate = NBS.TestActionSame(Action, found_action, duplicate_eps)
-
             if IsCandidate:
-                return True, file_path
+                break
 
-    return False, None
+    if IsCandidate:
+        return True, file_path
+    else:
+        if lastpass:
+            return False, None
+        else:
+            UpdateHashDict(store_folder, hash_dict, action_dict)
+            return Check_Duplicates(NBS, segmpos, params, hash_dict, action_dict, store_folder, duplicate_eps, Action, Hash_Action, Duplicates_Hash, True)
 
 def Load_wisdom_file(Wisdom_file):
     

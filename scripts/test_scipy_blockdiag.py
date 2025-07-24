@@ -7,21 +7,35 @@ import json
 
 __PROJECT_ROOT__ = os.path.abspath(os.path.join(os.path.dirname(__file__),os.pardir))
 
+import pyquickbench
+
+
+
 def main():
     
-    n = 20
+    def inv(n):
+        
+        for p in choreo.ActionSym.InvolutivePermutations(n):
+            pass
     
-    perm = np.random.permutation(n).astype(np.intp)
-    cycles = choreo.ActionSym.CycleDecomposition(perm)
+    def gen_inv(n):
+        for p in choreo.ActionSym.GeneralizedInvolutivePermutations(n, 2):
+            pass
     
-    print(perm)
-    print()
+    all_funs = [
+        inv     ,
+        gen_inv ,
+    ]
     
-    for cycle in cycles:
-        print(cycle)
-    
-    
-    
+    n_bench = 10
+    all_sizes = range(n_bench)
+        
+    pyquickbench.run_benchmark(
+        all_sizes   ,
+        all_funs    ,
+        show = True ,
+        MonotonicAxes = ["n"],
+    )
     
 
 

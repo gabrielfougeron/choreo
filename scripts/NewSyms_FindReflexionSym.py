@@ -22,8 +22,9 @@ def main():
     # input_folder = os.path.join(Workspace_folder, "test")    
     input_folder = os.path.join(Workspace_folder, "CLI solutions")    
     # input_folder = os.path.join(Workspace_folder, "GUI solutions")    
-    output_folder = os.path.join(Workspace_folder, "out")    
     
+    
+    output_folder = os.path.join(Workspace_folder, "ReflexionSymmetry")    
     params_filename = os.path.join(Workspace_folder, "choreo_config_reconverge.json")
     with open(params_filename) as jsonFile:
         params_dict = json.load(jsonFile)
