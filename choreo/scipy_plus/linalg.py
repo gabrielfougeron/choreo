@@ -98,17 +98,17 @@ def DecomposeRotation(Mat, eps=1e-12):
     n,m = Mat.shape
     assert n==m
 
-    eigvals, eigvects = scipy.linalg.eig(a=Mat, b=None, left=False, right=True, overwrite_a=False, overwrite_b=False, check_finite=True, homogeneous_eigvals=False)
-    eigvals_r, eigvects_r = scipy.linalg.cdf2rdf(eigvals, eigvects)
+    eigvals_r, eigvects_r = scipy.linalg.schur(Mat)
+    
+    eigvals_r = np.ascontiguousarray(eigvals_r)
+    eigvects_r = np.ascontiguousarray(eigvects_r)
 
     cs_angles = np.empty(n, dtype=np.float64)
     subspace_dim = []
-    
-    sqrt2 = math.sqrt(2)
 
     i = 0
     while (i < n):
-        
+
         is_dim1 = abs(1-abs(eigvals_r[i,i])) < eps
         
         if is_dim1:
@@ -120,14 +120,13 @@ def DecomposeRotation(Mat, eps=1e-12):
         else:
             
             assert (i+1) < n
+            
+            if eigvals_r[i+1,i  ] <= 0:
 
-            assert eigvals_r[i+1,i  ] <= 0 # Feature of cdf2rdf
-            
-            eigvals_r[i  ,i+1] *= -1
-            eigvals_r[i+1,i  ] *= -1
-            
-            eigvects_r[:,i  ] *= (-sqrt2)
-            eigvects_r[:,i+1] *= sqrt2
+                eigvals_r[i  ,i+1] *= -1
+                eigvals_r[i+1,i  ] *= -1
+                
+                eigvects_r[:,i  ] *= -1
 
             cs_angles[i  ] = eigvals_r[i  ,i]   # cos
             cs_angles[i+1] = eigvals_r[i+1,i]   # sin    
@@ -153,8 +152,6 @@ def DecomposeRotation(Mat, eps=1e-12):
             
             cs_angles[1] *= -1
             
-    # assert np.linalg.norm(Mat @ eigvects_r - eigvects_r @ eigvals_r ) < 1e-10
-
     return cs_angles, np.array(subspace_dim), eigvects_r
 
 def cs_to_angle(c, s, eps=1e-12):

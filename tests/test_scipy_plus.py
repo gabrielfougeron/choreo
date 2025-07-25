@@ -19,6 +19,7 @@ import pytest
 from .test_config import *
 import numpy as np
 import choreo
+import random
 
 @ParametrizeDocstrings
 @ProbabilisticTest()
@@ -180,37 +181,45 @@ def test_DecomposeRotation_nD(float64_tols, n):
     """ Tests decomposition of rotation in nD
     """
     
-    q, r = divmod(n,2)
+    q = n // 2
     
     P = choreo.scipy_plus.random_orthogonal_matrix(n)
     
     D_init = np.zeros((n,n), dtype=np.float64)
-    angles = 100* np.random.random(q) # angles == 0 mod pi will fail
+    
+    n2DBlocks = random.randint(0, q)
+    n1DBlocks = n - 2*n2DBlocks
+    angles = 100* np.random.random(n2DBlocks) # angles == 0 mod pi will fail
+    
+    print(n2DBlocks, n1DBlocks)
     
     angles_norm = angles - (2*np.pi) * (angles // (2*np.pi))
-    for i in range(q):
+    for i in range(n2DBlocks):
         if angles_norm[i] > np.pi:
             angles_norm[i] = 2*np.pi - angles_norm[i]
     
     angles_norm = np.sort(angles_norm)
     
-    for i in range(q):
+    for i in range(n2DBlocks):
         D_init[2*i:2*(i+1),2*i:2*(i+1)] = choreo.scipy_plus.angle_to_2D_rot(angles[i])
  
-    if r > 0:
-        
-        if np.random.random() < 0.5:
-            refl = 1.
-        else:
-            refl = -1.
-        
-        D_init[n-1,n-1] = refl
+    for i in range(n1DBlocks):
+        D_init[n-1-i,n-1-i] = 1
+ 
+    if np.random.random() < 0.5:
+        refl = 1.
+    else:
+        refl = -1.
+    
+    if n1DBlocks > 0:
+        irefl = random.randint(0, n1DBlocks-1)
+        D_init[n-1-irefl,n-1-irefl] *= refl
     
     Mat = P @ D_init @ P.T
     
     cs_angles, subspace_dim, vr = choreo.scipy_plus.DecomposeRotation(Mat, eps=1e-12)
     
-    print(np.linalg.norm(np.matmul(vr, vr.T)- np.identity(n)))
+    print(np.linalg.norm(np.matmul(vr, vr.T) - np.identity(n)))
     assert np.allclose(np.matmul(vr, vr.T), np.identity(n), rtol = 10*float64_tols.rtol, atol = 10*float64_tols.atol) 
     
     det = np.linalg.det(vr)
@@ -236,16 +245,14 @@ def test_DecomposeRotation_nD(float64_tols, n):
         elif d == 1:
             refl_res = cs_angles[i]
             D_res[i,i] = refl_res
-
+            
         else:
             raise ValueError("This should never happen")
         
         i += d
-    
-    assert n_2D == q
-    
+
     print(np.linalg.norm(np.matmul(Mat, vr) - np.matmul(vr, D_res)))
-    assert np.allclose(np.matmul(Mat, vr), np.matmul(vr, D_res), rtol = 10*float64_tols.rtol, atol = 10*float64_tols.atol) 
+    assert np.allclose(np.matmul(Mat, vr), np.matmul(vr, D_res), rtol = float64_tols.rtol, atol = float64_tols.atol) 
 
     if len(angles_res) > 0:
         if angles_res[0] > np.pi:
@@ -255,8 +262,6 @@ def test_DecomposeRotation_nD(float64_tols, n):
 
     print(np.linalg.norm(angles_norm - angles_res))    
     assert np.allclose(angles_norm, angles_res, rtol = float64_tols.rtol, atol = float64_tols.atol) 
-    
-    if r > 0:
-        assert refl == refl_res
+    assert n_2D == n2DBlocks
     
     
