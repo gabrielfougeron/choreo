@@ -3023,14 +3023,14 @@ cdef class NBodySyst():
 
     @cython.final
     @cython.cdivision(True)
-    def TestHashSame(self, double[::1] Hash_a, double[::1] Hash_b, double rtol=1e-5, bint detect_multiples=True):
+    def ComputeHashDist(self, double[::1] Hash_a, double[::1] Hash_b, bint detect_multiples=True):
 
         cdef Py_ssize_t nhash = self._Hash_exp.shape[0]
 
         assert Hash_a.shape[0] == nhash
         assert Hash_b.shape[0] == nhash
         
-        cdef double[::1] all_test = np.zeros(self._Hash_exp.shape[0])
+        cdef double[::1] hash_dist = np.zeros(self._Hash_exp.shape[0])
         cdef Py_ssize_t ihash
         cdef double pow_fac_m, refval
 
@@ -3044,17 +3044,21 @@ cdef class NBodySyst():
 
                 pow_fac_m = (self.Homo_exp-1)/(2*self._Hash_exp[ihash])
 
-                all_test[ihash] = cpow(Hash_a[ihash]/Hash_b[ihash], pow_fac_m) - refval
+                hash_dist[ihash] = cpow(Hash_a[ihash]/Hash_b[ihash], pow_fac_m) - refval
 
         else:
 
             for ihash in range(nhash):
 
-                all_test[ihash] = (Hash_b[ihash]-Hash_a[ihash]) / (Hash_b[ihash] + Hash_a[ihash])
+                hash_dist[ihash] = (Hash_b[ihash]-Hash_a[ihash]) / (Hash_b[ihash] + Hash_a[ihash])
 
-        IsSame = (np.linalg.norm(all_test, np.inf) < rtol)
+        return hash_dist
 
-        return IsSame
+    @cython.final
+    @cython.cdivision(True)
+    def TestHashSame(self, double[::1] Hash_a, double[::1] Hash_b, double rtol=1e-5, bint detect_multiples=True):
+
+        return np.linalg.norm(self.ComputeHashDist(Hash_a, Hash_b, detect_multiples), np.inf) < rtol
 
     @cython.final
     @cython.cdivision(True)

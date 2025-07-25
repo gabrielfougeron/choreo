@@ -185,7 +185,14 @@ def test_DecomposeRotation_nD(float64_tols, n):
     P = choreo.scipy_plus.random_orthogonal_matrix(n)
     
     D_init = np.zeros((n,n), dtype=np.float64)
-    angles = np.sort(np.pi * np.random.random(q)) # angles 0 and pi will fail !
+    angles = 100* np.random.random(q) # angles == 0 mod pi will fail
+    
+    angles_norm = angles - (2*np.pi) * (angles // (2*np.pi))
+    for i in range(q):
+        if angles_norm[i] > np.pi:
+            angles_norm[i] = 2*np.pi - angles_norm[i]
+    
+    angles_norm = np.sort(angles_norm)
     
     for i in range(q):
         D_init[2*i:2*(i+1),2*i:2*(i+1)] = choreo.scipy_plus.angle_to_2D_rot(angles[i])
@@ -203,28 +210,53 @@ def test_DecomposeRotation_nD(float64_tols, n):
     
     cs_angles, subspace_dim, vr = choreo.scipy_plus.DecomposeRotation(Mat, eps=1e-12)
     
+    print(np.linalg.norm(np.matmul(vr, vr.T)- np.identity(n)))
+    assert np.allclose(np.matmul(vr, vr.T), np.identity(n), rtol = 10*float64_tols.rtol, atol = 10*float64_tols.atol) 
+    
+    det = np.linalg.det(vr)
+    
+    assert abs(abs(det) - 1) < float64_tols.atol
+    assert abs(det - 1) < float64_tols.atol
+
     angles_res = []
+    D_res = np.zeros((n,n), dtype=np.float64)
     i = 0
+    n_2D = 0
     for d in subspace_dim:
         
         if d == 2:
-            angles_res.append(choreo.scipy_plus.cs_to_angle(cs_angles[i], cs_angles[i+1]))
+            
+            angle_res = choreo.scipy_plus.cs_to_angle(cs_angles[i], cs_angles[i+1])
+            angles_res.append(angle_res)
+            
+            D_res[i:i+2,i:i+2] = choreo.scipy_plus.angle_to_2D_rot(angle_res)
+
+            n_2D += 1
         
         elif d == 1:
             refl_res = cs_angles[i]
+            D_res[i,i] = refl_res
 
         else:
             raise ValueError("This should never happen")
         
         i += d
     
-    angles_res = np.sort(np.array(angles_res))
+    assert n_2D == q
     
-    print(np.linalg.norm(angles - angles_res))    
-    assert np.allclose(angles, angles_res, rtol = float64_tols.rtol, atol = float64_tols.atol) 
+    print(np.linalg.norm(np.matmul(Mat, vr) - np.matmul(vr, D_res)))
+    assert np.allclose(np.matmul(Mat, vr), np.matmul(vr, D_res), rtol = 10*float64_tols.rtol, atol = 10*float64_tols.atol) 
+
+    if len(angles_res) > 0:
+        if angles_res[0] > np.pi:
+            angles_res[0] = 2*np.pi - angles_res[0]
+    
+    angles_res = np.sort(np.array(angles_res))
+
+    print(np.linalg.norm(angles_norm - angles_res))    
+    assert np.allclose(angles_norm, angles_res, rtol = float64_tols.rtol, atol = float64_tols.atol) 
     
     if r > 0:
         assert refl == refl_res
-    
     
     

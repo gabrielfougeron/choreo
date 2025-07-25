@@ -33,6 +33,62 @@ cdef double default_atol = 1e-10
 
 @cython.auto_pickle(False)
 @cython.final
+cdef class DiscreteActionSymSignature():
+
+    @cython.cdivision(True)
+    def __init__(
+        self                        ,
+        Py_ssize_t[::1] BodyPerm    ,
+        Py_ssize_t[::1] SpaceRotSig ,
+        Py_ssize_t n2DBlocks        ,
+        Py_ssize_t TimeRev          ,
+        Py_ssize_t TimeShiftNum     ,
+        Py_ssize_t TimeShiftDen     ,
+    ):
+        """
+        Defines a discrete signature for a symmetry of the action functional.
+        """  
+
+        self._BodyPerm = BodyPerm
+        self._SpaceRotSig = SpaceRotSig
+        self.TimeRev = TimeRev
+        self.TimeShiftNum = TimeShiftNum
+        self.TimeShiftDen = TimeShiftDen
+# 
+#         cdef Py_ssize_t issp
+#         cdef Py_ssize_t i, d
+#         cdef nrefl = 0
+# 
+#         cdef prev_num = 1
+#         cdef prev_den = 1
+# 
+#         i = 0
+#         for issp in range(RotSubSpaceDim.shape[0]):
+#             # Ensure that :
+#                 # - All 2D blocks are at the beginning
+# 
+# 
+#             d = RotSubSpaceDim[issp]
+# 
+#             if d == 2:
+#                  num = RatSpaceRot[i  ]
+#                  den = RatSpaceRot[i+1]
+# 
+#             elif d == 1:
+#                 refl_res = cs_angles[i]
+# 
+#             else:
+#                 raise ValueError(f"Subspace dimension can only be 1 or 2. Found {d = }.")
+# 
+
+
+
+
+
+
+
+@cython.auto_pickle(False)
+@cython.final
 cdef class ActionSym():
     r"""This class defines the symmetries in a N-body system.
 
@@ -58,18 +114,21 @@ cdef class ActionSym():
 
     """
 
+    @cython.final
     @property
     def BodyPerm(self):
         """:class:`numpy:numpy.ndarray`:class:`(shape = (nbody), dtype = np.intp)` Permutation of the bodies.
         """
         return np.asarray(self._BodyPerm)
 
+    @cython.final
     @property
     def SpaceRot(self):
         """ :class:`numpy:numpy.ndarray`:class:`(shape = (nbody), dtype = np.intp)` Isometry of space.
         """
         return np.asarray(self._SpaceRot)
 
+    @cython.final
     @cython.cdivision(True)
     def __init__(
         self                        ,
@@ -899,7 +958,6 @@ cdef class ActionSym():
 
         """ 
 
-
         cdef Py_ssize_t num = self.TimeRev * tnum * self.TimeShiftDen + self.TimeShiftNum * tden
         cdef Py_ssize_t den = tden * self.TimeShiftDen
         
@@ -986,6 +1044,39 @@ cdef class ActionSym():
             "TimeShiftNum"  : self.TimeShiftNum         ,
             "TimeShiftDen"  : self.TimeShiftDen         ,
         }
+
+    @cython.final
+    @property
+    def signature(ActionSym self):
+        """
+        TODO
+        """
+
+        cdef double[::1] cs_angles
+        cdef Py_ssize_t[::1] subspace_dim
+        cdef Py_ssize_t issp, i,d
+
+        cs_angles, subspace_dim, _ = choreo.scipy_plus.DecomposeRotation(self.SpaceRot, eps=default_atol)
+
+        cdef Py_ssize_t nrefl = 0
+
+        i = 0
+        for issp in range(subspace_dim.shape[0]):
+
+            d = subspace_dim[issp]
+#             
+#             if d == 2:
+#                 angles_res.append(choreo.scipy_plus.cs_to_angle(cs_angles[i], cs_angles[i+1]))
+#             
+#             elif d == 1:
+#                 refl_res = cs_angles[i]
+# 
+#             else:
+#                 raise ValueError("This should never happen")
+#             
+            i += d
+
+
 
     @cython.final
     @cython.cdivision(True)
@@ -1236,6 +1327,7 @@ cdef class ActionSym():
         """ 
 
         cdef Py_ssize_t[::1] perm
+        cdef list cycle, cycles
 
         for perm in ActionSym.Permutations(n):
 
@@ -1322,7 +1414,9 @@ cdef class ActionSym():
 
         cdef Py_ssize_t[::1] perm_cp = perm.copy()
 
-        cycles = []
+        cdef list cycles = []
+        cdef list cur_cycle
+        
         for i in range(n):
 
             if perm_cp[i] >= 0:

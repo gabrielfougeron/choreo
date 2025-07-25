@@ -1,6 +1,31 @@
 cimport numpy as np
 cimport cython
 
+@cython.auto_pickle(False)
+@cython.final
+cdef class DiscreteActionSymSignature():
+
+    cdef Py_ssize_t[::1] _BodyPerm
+    
+    cdef Py_ssize_t[::1] _SpaceRotSig
+    cdef readonly Py_ssize_t n2DBlocks
+    """:class:`python:int` Number of 2D blocks in space isometry.
+    """
+
+    cdef readonly Py_ssize_t TimeRev
+    """:class:`python:int` Time reversal
+    
+    A value of ``-1`` denotes time reversal, and a value of ``1`` denotes no time reversal.
+    """
+    cdef readonly Py_ssize_t TimeShiftNum
+    """:class:`python:int` Numerator of the rational time shift.
+    """
+    cdef readonly Py_ssize_t TimeShiftDen
+    """:class:`python:int` Denominator of the rational time shift.
+    """
+
+
+
 @cython.final
 cdef class ActionSym():
 

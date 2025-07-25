@@ -1054,7 +1054,7 @@ def ReadHashFromFile(filename):
     else:
         return None
 
-def Check_Duplicates(NBS, segmpos, params, hash_dict, action_dict, store_folder, duplicate_eps, Action=None, Hash_Action=None, Duplicates_Hash=True, lastpass = False):
+def Check_Duplicates(NBS, segmpos, params, hash_dict, action_dict, store_folder, duplicate_eps, Action=None, Hash_Action=None, Duplicates_Hash=True, HashDictAlreadyUpdated = False):
     """
     Checks whether there is a duplicate of a given trajecory in the provided folder
     """
@@ -1084,11 +1084,11 @@ def Check_Duplicates(NBS, segmpos, params, hash_dict, action_dict, store_folder,
     if IsCandidate:
         return True, file_path
     else:
-        if lastpass:
+        if HashDictAlreadyUpdated:
             return False, None
         else:
             UpdateHashDict(store_folder, hash_dict, action_dict)
-            return Check_Duplicates(NBS, segmpos, params, hash_dict, action_dict, store_folder, duplicate_eps, Action, Hash_Action, Duplicates_Hash, True)
+            return Check_Duplicates(NBS, segmpos, params, hash_dict, action_dict, store_folder, duplicate_eps, Action, Hash_Action, Duplicates_Hash, HashDictAlreadyUpdated = True)
 
 def Load_wisdom_file(Wisdom_file):
     
@@ -1195,7 +1195,8 @@ def FindTimeRevSymmetry(NBS, semgpos, ntries = 1, hit_tol = 1e-9, refl_dim = [0]
         x, f, f_norm = best_sol.get_best()    
         return Compute_Sym(x[0], x[1])
  
-def FindTimeDirectSymmetry(NBS, semgpos, ntries = 1, refl_dim = [0], hit_tol = 1e-7, return_best = False, random_init = True):
+def FindTimeDirectSymmetry(NBS, semgpos, ntries = 1, refl_dim = [0], hit_tol = 1e-9, return_best = False, random_init = True, maxden = 10):
+    # NOT DONE
 
     def Compute_Sym(SymParams, *args):
         
@@ -1228,6 +1229,17 @@ def FindTimeDirectSymmetry(NBS, semgpos, ntries = 1, refl_dim = [0], hit_tol = 1
     best_sol = choreo.scipy_plus.nonlin.current_best((np.zeros(n_SymParams,dtype=np.float64),np.array(range(NBS.nbody))), np.inf)
     
     for itry in range(ntries):
+        # 
+        # for timeshift_num, timeshift_den in ActionSym.TimeShifts(maxden):
+        # 
+        # 
+        # 
+        # 
+        # 
+        # 
+        
+        
+        
 
         for BodyPerm in ActionSym.InvolutivePermutations(NBS.nbody):
             

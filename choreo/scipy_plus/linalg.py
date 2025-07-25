@@ -4,7 +4,7 @@ linalg.py : Define linear algebra related things I designed I feel ought to be i
 '''
 
 import numpy as np
-import math as m
+import math
 import scipy.linalg
 
 def null_space(A, eps = 1e-12):
@@ -103,11 +103,13 @@ def DecomposeRotation(Mat, eps=1e-12):
 
     cs_angles = np.empty(n, dtype=np.float64)
     subspace_dim = []
+    
+    sqrt2 = math.sqrt(2)
 
     i = 0
     while (i < n):
         
-        is_dim1 = 1-abs(eigvals_r[i,i]) < eps
+        is_dim1 = abs(1-abs(eigvals_r[i,i])) < eps
         
         if is_dim1:
             
@@ -118,12 +120,40 @@ def DecomposeRotation(Mat, eps=1e-12):
         else:
             
             assert (i+1) < n
+
+            assert eigvals_r[i+1,i  ] <= 0 # Feature of cdf2rdf
             
-            cs_angles[i  ] = eigvals_r[i,i  ]   # cos
-            cs_angles[i+1] = eigvals_r[i,i+1]   # sin
+            eigvals_r[i  ,i+1] *= -1
+            eigvals_r[i+1,i  ] *= -1
+            
+            eigvects_r[:,i  ] *= (-sqrt2)
+            eigvects_r[:,i+1] *= sqrt2
+
+            cs_angles[i  ] = eigvals_r[i  ,i]   # cos
+            cs_angles[i+1] = eigvals_r[i+1,i]   # sin    
                         
             subspace_dim.append(2)
             i += 2
+            
+    det = np.linalg.det(eigvects_r)
+
+    if det < 0:
+        # Ensure that basis has positive orientation
+        
+        is_dim1 = abs(1-abs(eigvals_r[0,0])) < eps
+        
+        if is_dim1:
+            eigvects_r[:,0] *= -1
+            
+        else:
+            eigvects_r[:,0] *= -1
+            
+            eigvals_r[0,1] *= -1
+            eigvals_r[1,0] *= -1
+            
+            cs_angles[1] *= -1
+            
+    # assert np.linalg.norm(Mat @ eigvects_r - eigvects_r @ eigvals_r ) < 1e-10
 
     return cs_angles, np.array(subspace_dim), eigvects_r
 
@@ -161,7 +191,7 @@ def algo_H(n,k,z):
     sig = 0.
     for i in range(k,n):
         sig += z[i]*z[i]
-    sig = m.sqrt(sig)
+    sig = math.sqrt(sig)
 
     if z[k] > 0 :
         w[k] = z[k] + sig
@@ -261,18 +291,18 @@ def sqrt_2x2_mat(a,b,c):
     
     bc = b*c
     delta = a*a - bc
-    p = (a + m.sqrt(delta))/2
+    p = (a + math.sqrt(delta))/2
     q = bc / (4*p)
 
     sign =  1
     # sign = -1
 
-    alpha = sign * m.sqrt(p)
+    alpha = sign * math.sqrt(p)
 
     if b > 0:
-        beta =   sign * m.sqrt(q*b/c)
+        beta =   sign * math.sqrt(q*b/c)
     else:
-        beta = - sign * m.sqrt(q*b/c)
+        beta = - sign * math.sqrt(q*b/c)
 
     gamma = q / beta
 
