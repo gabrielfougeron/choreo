@@ -17,6 +17,7 @@ import choreo.scipy_plus.linalg
 import networkx
 import itertools
 import string
+import fractions
 
 @cython.cdivision(True)
 cdef Py_ssize_t gcd (Py_ssize_t a, Py_ssize_t b) noexcept nogil:
@@ -51,38 +52,112 @@ cdef class DiscreteActionSymSignature():
 
         self._BodyPerm = BodyPerm
         self._SpaceRotSig = SpaceRotSig
+        self.n2DBlocks = n2DBlocks
         self.TimeRev = TimeRev
         self.TimeShiftNum = TimeShiftNum
         self.TimeShiftDen = TimeShiftDen
-# 
-#         cdef Py_ssize_t issp
-#         cdef Py_ssize_t i, d
-#         cdef nrefl = 0
-# 
-#         cdef prev_num = 1
-#         cdef prev_den = 1
-# 
-#         i = 0
-#         for issp in range(RotSubSpaceDim.shape[0]):
-#             # Ensure that :
-#                 # - All 2D blocks are at the beginning
-# 
-# 
-#             d = RotSubSpaceDim[issp]
-# 
-#             if d == 2:
-#                  num = RatSpaceRot[i  ]
-#                  den = RatSpaceRot[i+1]
-# 
-#             elif d == 1:
-#                 refl_res = cs_angles[i]
-# 
-#             else:
-#                 raise ValueError(f"Subspace dimension can only be 1 or 2. Found {d = }.")
-# 
 
+    def __eq__(self, DiscreteActionSymSignature other):
+        
+        cdef bint eq_possible = True
+        cdef Py_ssize_t i
 
+        # Make sure shapes are the same before looping
+        eq_possible = eq_possible and (self._BodyPerm.shape[0] == other._BodyPerm.shape[0])
+        eq_possible = eq_possible and (self._SpaceRotSig.shape[0] == other._SpaceRotSig.shape[0])
+        eq_possible = eq_possible and (self.n2DBlocks == other.n2DBlocks)
 
+        eq_possible = eq_possible and (self.TimeRev == other.TimeRev)
+        eq_possible = eq_possible and (self.TimeShiftNum == other.TimeShiftNum)
+        eq_possible = eq_possible and (self.TimeShiftDen == other.TimeShiftDen)
+
+        if not eq_possible:
+            return False
+
+        for i in range(self._BodyPerm.shape[0]):
+            eq_possible = eq_possible and (self._BodyPerm[i] == other._BodyPerm[i])
+
+        for i in range(self._SpaceRotSig.shape[0]):
+            eq_possible = eq_possible and (self._SpaceRotSig[i] == other._SpaceRotSig[i])
+
+        return eq_possible
+
+    @cython.final
+    def __str__(self):
+
+        cdef Py_ssize_t i, d
+
+        out  = "DiscreteActionSymSignature object\n"
+        out += f"BodyPerm: {self.BodyPerm}\n"
+        out += f"SpaceRotSig:"
+
+        i = 0
+        for d in range(self.n2DBlocks):
+            out += f' {self._SpaceRotSig[i]} / {self._SpaceRotSig[i+1]}'
+            i += 2
+
+        for d in range(self._SpaceRotSig.shape[0]-2*self.n2DBlocks):
+            out += f' {self._SpaceRotSig[i]}'
+            i += 1
+
+        out += f"\n"
+        out += f"TimeRev: {self.TimeRev}\n"
+        out += f"TimeShift: {self.TimeShiftNum} / {self.TimeShiftDen}"
+
+        return out
+
+    @cython.final
+    def __repr__(self):
+        return self.__str__()
+
+    @cython.final
+    def __format__(self, format_spec):
+        return self.__str__()
+
+    @cython.final
+    @property
+    def IsWellFormed(ActionSym self):
+        """Returns :data:`python:True` if the signature is well-formed.
+
+        This function will return :data:`python:True` if and only if **all** the following constraints are satisfied:
+
+        TODO
+
+        Returns
+        -------
+        :class:`python:bool`
+
+        """       
+        
+        return True
+
+    @cython.final
+    @property
+    def BodyPerm(self):
+        """:class:`numpy:numpy.ndarray`:class:`(shape = (nbody), dtype = np.intp)` Permutation of the bodies.
+        """
+        return np.asarray(self._BodyPerm)
+
+    @cython.final
+    @property
+    def nbody(self):
+        """:class:`python:int` Number of bodies
+        """
+        return self._BodyPerm.shape[0]
+
+    @cython.final
+    @property
+    def SpaceRotSig(self):
+        """ :class:`numpy:numpy.ndarray`:class:`(shape = (geodim), dtype = np.intp)` Signature of space isometry.
+        """
+        return np.asarray(self._SpaceRotSig)
+
+    @cython.final
+    @property
+    def geodim(self):
+        """:class:`python:int` Number of dimensions of space.
+        """
+        return self._SpaceRotSig.shape[0]
 
 
 
@@ -123,10 +198,24 @@ cdef class ActionSym():
 
     @cython.final
     @property
+    def nbody(self):
+        """:class:`python:int` Number of bodies
+        """
+        return self._BodyPerm.shape[0]
+
+    @cython.final
+    @property
     def SpaceRot(self):
-        """ :class:`numpy:numpy.ndarray`:class:`(shape = (nbody), dtype = np.intp)` Isometry of space.
+        """ :class:`numpy:numpy.ndarray`:class:`(shape = (geodim,geodim), dtype = np.float64)` Isometry of space.
         """
         return np.asarray(self._SpaceRot)
+
+    @cython.final
+    @property
+    def geodim(self):
+        """:class:`python:int` Number of dimensions of space.
+        """
+        return self._SpaceRot.shape[0]
 
     @cython.final
     @cython.cdivision(True)
@@ -1044,7 +1133,7 @@ cdef class ActionSym():
             "TimeShiftNum"  : self.TimeShiftNum         ,
             "TimeShiftDen"  : self.TimeShiftDen         ,
         }
-
+  
     @cython.final
     @property
     def signature(ActionSym self):
@@ -1052,31 +1141,70 @@ cdef class ActionSym():
         TODO
         """
 
+        cdef Py_ssize_t maxden = int(1./default_atol)
+
         cdef double[::1] cs_angles
         cdef Py_ssize_t[::1] subspace_dim
         cdef Py_ssize_t issp, i,d
+        cdef Py_ssize_t geodim, n2DBlocks, n1DBlocks, n_refl
 
+        cdef double angle
+        cdef list angles = []
         cs_angles, subspace_dim, _ = choreo.scipy_plus.DecomposeRotation(self.SpaceRot, eps=default_atol)
 
         cdef Py_ssize_t nrefl = 0
+
+        n2DBlocks = 0
+        n_refl = 0
 
         i = 0
         for issp in range(subspace_dim.shape[0]):
 
             d = subspace_dim[issp]
-#             
-#             if d == 2:
-#                 angles_res.append(choreo.scipy_plus.cs_to_angle(cs_angles[i], cs_angles[i+1]))
-#             
-#             elif d == 1:
-#                 refl_res = cs_angles[i]
-# 
-#             else:
-#                 raise ValueError("This should never happen")
-#             
+            
+            if d == 2:
+                angles.append(choreo.scipy_plus.cs_to_angle(cs_angles[i], cs_angles[i+1]))
+                n2DBlocks += 1
+
+            elif d == 1:
+                if cs_angles[i] < 0:
+                    n_refl += 1
+
+            else:
+                raise ValueError("This should never happen")
+            
             i += d
 
+        angles.sort(reverse=True)
 
+        geodim = self._SpaceRot.shape[0]
+        cdef Py_ssize_t[::1] SpaceRotSig = np.empty(geodim, dtype=np.intp)
+
+        i = 0
+        for issp in range(n2DBlocks):
+
+            frac = fractions.Fraction(angles[issp] / (ctwopi)).limit_denominator(max_denominator = maxden)
+            SpaceRotSig[i  ] = frac.numerator
+            SpaceRotSig[i+1] = frac.denominator
+
+            i+=2
+
+        n1DBlocks = geodim - 2*n2DBlocks
+        for issp in range(n1DBlocks):
+            SpaceRotSig[i] = 1
+            i+=1
+        
+        if (n_refl > 0):
+            SpaceRotSig[geodim-1] = -1
+
+        return DiscreteActionSymSignature(
+            self._BodyPerm.copy()   ,
+            SpaceRotSig             ,
+            n2DBlocks               ,
+            self.TimeRev            ,
+            self.TimeShiftNum       ,
+            self.TimeShiftDen       ,
+        )
 
     @cython.final
     @cython.cdivision(True)
@@ -1556,6 +1684,3 @@ def BuildOneCayleyLayer(Graph, list GeneratorList, dict HangingNodesDict, alphab
                 Graph.add_edge(hkey, new_key)
 
     return NewHangingNodesDict
-
-
-

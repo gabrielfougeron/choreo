@@ -10,6 +10,7 @@
     test_rotation_generation
     test_Cayley_graph
     test_CycleDecomposition
+    test_DiscreteActionSymSignature
 
 """
 
@@ -130,11 +131,15 @@ Tests:
     nsym = len(Sym_list)
     
     if nsym < 1:
-        return
+        
+        nbody = 1
+        geodim = 1  
+        
+    else:
 
-    Sym = Sym_list[0]
-    nbody = Sym.BodyPerm.shape[0]
-    geodim = Sym.SpaceRot.shape[0]
+        Sym = Sym_list[0]
+        nbody = Sym.BodyPerm.shape[0]
+        geodim = Sym.SpaceRot.shape[0]
     
     CayleyGraph = choreo.ActionSym.BuildCayleyGraph(nbody, geodim, GeneratorList = Sym_list)
     
@@ -155,6 +160,50 @@ Tests:
             nneigh += 1
         
         assert nneigh == nsym
+        
+
+@ParametrizeDocstrings
+@pytest.mark.parametrize("Sym_list", [pytest.param(Sym_list, id=name) for name, Sym_list in SymList_dict.items()])
+def test_DiscreteActionSymSignature(Sym_list):
+    """ Tests properties of DiscreteActionSymSignature.
+    
+Tests:
+
+TODO
+    """
+    
+    nsym = len(Sym_list)
+    
+    if nsym < 1:
+        
+        nbody = 1
+        geodim = 1  
+        
+    else:
+
+        Sym = Sym_list[0]
+        nbody = Sym.BodyPerm.shape[0]
+        geodim = Sym.SpaceRot.shape[0]
+    
+    CayleyGraph = choreo.ActionSym.BuildCayleyGraph(nbody, geodim, GeneratorList = Sym_list)    
+    
+    all_signatures = []
+    for nodename, node in CayleyGraph.nodes(data=True):
+        
+        Sym = node.get('Sym')
+        SymSig = Sym.signature
+        all_signatures.append(SymSig)
+        
+    n = len(all_signatures)
+    
+    for i in range(n-1):
+        for j in range(i+1,n):
+            
+            # Still true if geodim > 2 ????
+            assert all_signatures[i] != all_signatures[j]
+        
+        
+    # assert False
 
 @ParametrizeDocstrings
 @pytest.mark.parametrize("n", Dense_linalg_dims)

@@ -206,14 +206,15 @@ def test_DecomposeRotation_nD(float64_tols, n):
     for i in range(n1DBlocks):
         D_init[n-1-i,n-1-i] = 1
  
-    if np.random.random() < 0.5:
-        refl = 1.
-    else:
-        refl = -1.
-    
     if n1DBlocks > 0:
+            
+        if np.random.random() < 0.5:
+            refl_init = 1.
+        else:
+            refl_init = -1.
+        
         irefl = random.randint(0, n1DBlocks-1)
-        D_init[n-1-irefl,n-1-irefl] *= refl
+        D_init[n-1-irefl,n-1-irefl] *= refl_init
     
     Mat = P @ D_init @ P.T
     
@@ -231,6 +232,7 @@ def test_DecomposeRotation_nD(float64_tols, n):
     D_res = np.zeros((n,n), dtype=np.float64)
     i = 0
     n_2D = 0
+    n_refl = 0
     for d in subspace_dim:
         
         if d == 2:
@@ -243,8 +245,12 @@ def test_DecomposeRotation_nD(float64_tols, n):
             n_2D += 1
         
         elif d == 1:
+            
             refl_res = cs_angles[i]
             D_res[i,i] = refl_res
+            
+            if refl_res < 0:
+                n_refl += 1
             
         else:
             raise ValueError("This should never happen")
@@ -264,4 +270,10 @@ def test_DecomposeRotation_nD(float64_tols, n):
     assert np.allclose(angles_norm, angles_res, rtol = float64_tols.rtol, atol = float64_tols.atol) 
     assert n_2D == n2DBlocks
     
+    if n1DBlocks > 0:
+    
+        print(refl_init)
+        print(n_refl)
+        assert (refl_init > 0) == (n_refl == 0)
+        assert (refl_init < 0) == (n_refl == 1)
     
