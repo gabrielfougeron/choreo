@@ -24,6 +24,9 @@ cdef class DiscreteActionSymSignature():
     """:class:`python:int` Denominator of the rational time shift.
     """
 
+    cdef double[:,::1] _basis
+
+    # cpdef ActionSym to_ActionSym(self, double[:,::1] basis = *)
 
 
 @cython.final

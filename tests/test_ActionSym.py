@@ -10,7 +10,7 @@
     test_rotation_generation
     test_Cayley_graph
     test_CycleDecomposition
-    test_DiscreteActionSymSignature
+    test_DiscreteActionSymSignature_CayleyGraph
 
 """
 
@@ -161,15 +161,11 @@ Tests:
         
         assert nneigh == nsym
         
-
 @ParametrizeDocstrings
 @pytest.mark.parametrize("Sym_list", [pytest.param(Sym_list, id=name) for name, Sym_list in SymList_dict.items()])
-def test_DiscreteActionSymSignature(Sym_list):
-    """ Tests properties of DiscreteActionSymSignature.
-    
-Tests:
+def test_DiscreteActionSymSignature_CayleyGraph(Sym_list):
+    """ Tests that all signatures in a Cayley graph are unique.
 
-TODO
     """
     
     nsym = len(Sym_list)
@@ -202,12 +198,36 @@ TODO
             # Still true if geodim > 2 ????
             assert all_signatures[i] != all_signatures[j]
         
+@ParametrizeDocstrings
+@pytest.mark.parametrize("Sym_list", [pytest.param(Sym_list, id=name) for name, Sym_list in SymList_dict.items()])
+def test_DiscreteActionSymSignature(Sym_list, float64_tols):
+    """ Tests properties of DiscreteActionSymSignature.
+    
+        Tests that going back and forth from ActionSym to DiscreteActionSymSignature is idempotent.
+
+    """
+
+    for Sym in Sym_list:
+
+        SymSig = Sym.signature
+        Symp = SymSig.ActionSym
+
+        assert Sym.IsSame(Symp, atol=float64_tols.atol)
         
-    # assert False
+        geodim = Sym.geodim
+        new_basis = choreo.ActionSym.SurjectiveDirectSpaceRot(np.random.random(geodim*(geodim-1)//2))
+        SymSig.basis = new_basis
+        
+        Symp = SymSig.ActionSym
+        SymSigp = Symp.signature
+        
+        assert SymSig == SymSigp
 
 @ParametrizeDocstrings
 @pytest.mark.parametrize("n", Dense_linalg_dims)
 def test_CycleDecomposition(n):
+    """ Tests properties of cycle decomposition of permutations.
+    """
 
     perm = np.random.permutation(n).astype(np.intp)
     cycles = choreo.ActionSym.CycleDecomposition(perm)
@@ -233,4 +253,5 @@ def test_CycleDecomposition(n):
             assert perm[p] == q
             
             p = q
+      
             

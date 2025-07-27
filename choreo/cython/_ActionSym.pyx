@@ -8,10 +8,13 @@ from libc.string cimport memset
 from libc.math cimport fabs as cfabs
 from libc.math cimport sqrt as csqrt
 from libc.math cimport floor as cfloor
+from libc.math cimport cos as ccos
+from libc.math cimport sin as csin
 
 cimport scipy.linalg.cython_blas
 cimport scipy.linalg.cython_lapack
 from choreo.scipy_plus.cython.blas_consts cimport *
+from choreo.scipy_plus.cython.misc cimport *
 
 import choreo.scipy_plus.linalg
 import networkx
@@ -45,6 +48,7 @@ cdef class DiscreteActionSymSignature():
         Py_ssize_t TimeRev          ,
         Py_ssize_t TimeShiftNum     ,
         Py_ssize_t TimeShiftDen     ,
+        double[:,::1] basis = None  ,
     ):
         """
         Defines a discrete signature for a symmetry of the action functional.
@@ -57,7 +61,18 @@ cdef class DiscreteActionSymSignature():
         self.TimeShiftNum = TimeShiftNum
         self.TimeShiftDen = TimeShiftDen
 
+        if basis is None:
+            self._basis = np.identity(self._SpaceRotSig.shape[0])
+        else:
+            self._basis = basis
+
     def __eq__(self, DiscreteActionSymSignature other):
+        """
+        TODO
+
+        DOES NOT CARE FOR BASIS !!!!!
+
+        """
         
         cdef bint eq_possible = True
         cdef Py_ssize_t i
@@ -159,8 +174,80 @@ cdef class DiscreteActionSymSignature():
         """
         return self._SpaceRotSig.shape[0]
 
+    @cython.final
+    @property
+    def basis(self):
+        """
+        TODO
+        """
+        return np.asarray(self._basis)
 
+    @basis.setter
+    @cython.cdivision(True)
+    @cython.final
+    def basis(self, double[:,::1] new_basis):
 
+        assert self._SpaceRotSig.shape[0] == new_basis.shape[0]
+        assert self._SpaceRotSig.shape[0] == new_basis.shape[1]
+
+        self._basis = new_basis.copy()
+
+    @cython.final
+    @cython.cdivision(True)
+    @property
+    def ActionSym(self):
+        """
+        TODO
+        """
+
+        cdef Py_ssize_t geodim = self._SpaceRotSig.shape[0]
+
+        cdef double[:,::1] SpaceRot = np.zeros((geodim, geodim), dtype=np.float64)
+        cdef double angle, c, s
+
+        cdef Py_ssize_t i,d
+        cdef Py_ssize_t idim
+
+        i = 0
+        for d in range(self.n2DBlocks):
+
+            angle = ctwopi * self.SpaceRotSig[i] / self.SpaceRotSig[i+1]
+            c = ccos(angle)
+            s = csin(angle)
+
+            for idim in range(geodim):
+                for jdim in range(geodim):
+
+                    SpaceRot[idim,jdim] += c*(self._basis[i  ,idim]*self._basis[i,jdim] + self._basis[i+1,idim]*self._basis[i+1,jdim])
+                    SpaceRot[idim,jdim] += s*(self._basis[i+1,idim]*self._basis[i,jdim] - self._basis[i  ,idim]*self._basis[i+1,jdim])
+
+            i += 2
+
+        for d in range(geodim - 2*self.n2DBlocks):
+
+            if self.SpaceRotSig[i] > 0:
+
+                for idim in range(geodim):
+                    for jdim in range(geodim):
+
+                        SpaceRot[idim,jdim] += self._basis[i,idim]*self._basis[i,jdim]
+
+            else:
+
+                for idim in range(geodim):
+                    for jdim in range(geodim):
+
+                        SpaceRot[idim,jdim] -= self._basis[i,idim]*self._basis[i,jdim]
+
+            i += 1
+
+        return ActionSym(
+            self.BodyPerm.copy()    ,
+            SpaceRot                ,
+            self.TimeRev            ,
+            self.TimeShiftNum       ,
+            self.TimeShiftDen       ,
+        )
 
 @cython.auto_pickle(False)
 @cython.final
@@ -802,6 +889,22 @@ cdef class ActionSym():
         """  
         return self.IsIdentityTimeRev() and self.IsIdentityTimeShift() and self.IsIdentityRot(atol = atol) 
 
+    def __eq__(self, ActionSym other):
+        """Returns :data:`python:True` if the two transformations are within ``default_atol`` of each other.
+
+        Returns
+        -------
+        :class:`python:bool`
+
+        See Also
+        --------
+
+        * :meth:`choreo.ActionSym.IsSame
+
+        """   
+
+        return self.IsSame(other)
+
     @cython.final
     cpdef bint IsSame(ActionSym self, ActionSym other, double atol = default_atol):
         """Returns :data:`python:True` if the two transformations are within ``atol`` of each other.
@@ -1135,67 +1238,86 @@ cdef class ActionSym():
         }
   
     @cython.final
+    @cython.cdivision(True)
     @property
     def signature(ActionSym self):
         """
         TODO
         """
 
-        cdef Py_ssize_t maxden = int(1./default_atol)
+        cdef double shift_1D = 2.
 
         cdef double[::1] cs_angles
         cdef Py_ssize_t[::1] subspace_dim
-        cdef Py_ssize_t issp, i,d
-        cdef Py_ssize_t geodim, n2DBlocks, n1DBlocks, n_refl
+        cdef double[:,::1] basis
+        cs_angles, subspace_dim, basis = choreo.scipy_plus.DecomposeRotation(self.SpaceRot, eps=default_atol)
+
+        cdef Py_ssize_t maxden = int(1./default_atol)
+        cdef Py_ssize_t issp, issp_sorted, i, d, j
+        cdef Py_ssize_t geodim, n2DBlocks, n1DBlocks
 
         cdef double angle
-        cdef list angles = []
-        cs_angles, subspace_dim, _ = choreo.scipy_plus.DecomposeRotation(self.SpaceRot, eps=default_atol)
+        cdef double[::1] angles = np.empty((subspace_dim.shape[0]), dtype=np.float64)
+        cdef Py_ssize_t[::1] idim_arr = np.empty((subspace_dim.shape[0]), dtype=np.intp)
 
         cdef Py_ssize_t nrefl = 0
 
         n2DBlocks = 0
-        n_refl = 0
+
+        geodim = self._SpaceRot.shape[0]
+        cdef double[:,::1] basis_sorted = np.empty((geodim,geodim), dtype=np.float64)
 
         i = 0
         for issp in range(subspace_dim.shape[0]):
 
             d = subspace_dim[issp]
-            
+            idim_arr[issp] = i
+
             if d == 2:
-                angles.append(choreo.scipy_plus.cs_to_angle(cs_angles[i], cs_angles[i+1]))
+                angles[issp] = choreo.scipy_plus.cs_to_angle(cs_angles[i], cs_angles[i+1])
                 n2DBlocks += 1
 
             elif d == 1:
-                if cs_angles[i] < 0:
-                    n_refl += 1
+                angles[issp] = cs_angles[i] - shift_1D
 
             else:
                 raise ValueError("This should never happen")
             
             i += d
 
-        angles.sort(reverse=True)
-
-        geodim = self._SpaceRot.shape[0]
+        n1DBlocks = geodim - 2*n2DBlocks
+        
+        cdef Py_ssize_t[::1] idx_sort = np.argsort(angles)
         cdef Py_ssize_t[::1] SpaceRotSig = np.empty(geodim, dtype=np.intp)
 
-        i = 0
+        i = geodim-1
+        for issp in range(n1DBlocks):
+
+            issp_sorted = idx_sort[issp]
+            j = idim_arr[issp_sorted]
+
+            if angles[issp_sorted] + shift_1D > 0: 
+                SpaceRotSig[i] = 1
+            else:
+                SpaceRotSig[i] = -1
+
+            basis_sorted[i,:] = basis[:,j]
+
+            i -= 1
+
         for issp in range(n2DBlocks):
 
-            frac = fractions.Fraction(angles[issp] / (ctwopi)).limit_denominator(max_denominator = maxden)
-            SpaceRotSig[i  ] = frac.numerator
-            SpaceRotSig[i+1] = frac.denominator
+            issp_sorted = idx_sort[n1DBlocks+issp]
+            j = idim_arr[issp_sorted]
 
-            i+=2
+            frac = fractions.Fraction(angles[issp_sorted] / (ctwopi)).limit_denominator(max_denominator = maxden)
+            SpaceRotSig[i-1] = frac.numerator
+            SpaceRotSig[i  ] = frac.denominator
 
-        n1DBlocks = geodim - 2*n2DBlocks
-        for issp in range(n1DBlocks):
-            SpaceRotSig[i] = 1
-            i+=1
-        
-        if (n_refl > 0):
-            SpaceRotSig[geodim-1] = -1
+            basis_sorted[i-1,:] = basis[:,j  ]
+            basis_sorted[i  ,:] = basis[:,j+1]
+
+            i-=2
 
         return DiscreteActionSymSignature(
             self._BodyPerm.copy()   ,
@@ -1204,6 +1326,7 @@ cdef class ActionSym():
             self.TimeRev            ,
             self.TimeShiftNum       ,
             self.TimeShiftDen       ,
+            basis_sorted            ,
         )
 
     @cython.final
@@ -1524,8 +1647,9 @@ cdef class ActionSym():
 
         cdef double[:,::1] ipa = ima.T.copy()
 
-        # scipy.linalg.cython_lapack.dgesv(&n,&n,&ima[0,0],&n,ipiv,&ipa[0,0],&n,&info)
+        # scipy.linalg.cython_lapack.dgesv(&n,&n,&ima[0,0],&n,ipiv,&ipa[0,0],&n,&info) # Tests OK but BUG in pyodide.
         ipa = np.linalg.solve(ima, ipa)
+
         scipy.linalg.cython_blas.dgemm(transn,transn,&n,&n,&n,&one_double,&ipa[0,0],&n,&ipa[0,0],&n,&zero_double,&res[0,0],&n)
 
         free(ipiv)
@@ -1634,7 +1758,7 @@ def BuildOneCayleyLayer(Graph, list GeneratorList, dict HangingNodesDict, alphab
             NewSym = GenSym.Compose(HSym)
 
             for key, Sym in Graph.nodes.data("Sym"):
-                if NewSym.IsSame(Sym):
+                if NewSym == Sym:
                     if add_edge_data:
                         Graph.add_edge(hkey, key, GenSym = GenSym)
                     else:
@@ -1652,7 +1776,7 @@ def BuildOneCayleyLayer(Graph, list GeneratorList, dict HangingNodesDict, alphab
 
             Sym = next_layer_item[0]
 
-            if NewSym.IsSame(Sym):
+            if NewSym == Sym:
                 next_layer_item[1].append(layer_item[1])
                 next_layer_item[2].append(layer_item[2])
                 next_layer_item[3].append(layer_item[3])
